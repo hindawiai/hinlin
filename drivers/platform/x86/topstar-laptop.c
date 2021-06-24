@@ -1,400 +1,401 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Topstar Laptop ACPI Extras driver
  *
- * Copyright (c) 2009 Herton Ronaldo Krzesinski <herton@mandriva.com.br>
- * Copyright (c) 2018 Guillaume Douézan-Grard
+ * Copyright (c) 2009 Herton Ronalकरो Krzesinski <herton@mandriva.com.br>
+ * Copyright (c) 2018 Guillaume Douथऊzan-Grard
  *
- * Implementation inspired by existing x86 platform drivers, in special
+ * Implementation inspired by existing x86 platक्रमm drivers, in special
  * asus/eepc/fujitsu-laptop, thanks to their authors.
  */
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/init.h>
-#include <linux/slab.h>
-#include <linux/acpi.h>
-#include <linux/dmi.h>
-#include <linux/input.h>
-#include <linux/input/sparse-keymap.h>
-#include <linux/leds.h>
-#include <linux/platform_device.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/init.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/acpi.h>
+#समावेश <linux/dmi.h>
+#समावेश <linux/input.h>
+#समावेश <linux/input/sparse-keymap.h>
+#समावेश <linux/leds.h>
+#समावेश <linux/platक्रमm_device.h>
 
-#define TOPSTAR_LAPTOP_CLASS "topstar"
+#घोषणा TOPSTAR_LAPTOP_CLASS "topstar"
 
-struct topstar_laptop {
-	struct acpi_device *device;
-	struct platform_device *platform;
-	struct input_dev *input;
-	struct led_classdev led;
-};
+काष्ठा topstar_laptop अणु
+	काष्ठा acpi_device *device;
+	काष्ठा platक्रमm_device *platक्रमm;
+	काष्ठा input_dev *input;
+	काष्ठा led_classdev led;
+पूर्ण;
 
 /*
  * LED
  */
 
-static enum led_brightness topstar_led_get(struct led_classdev *led)
-{
-	return led->brightness;
-}
+अटल क्रमागत led_brightness topstar_led_get(काष्ठा led_classdev *led)
+अणु
+	वापस led->brightness;
+पूर्ण
 
-static int topstar_led_set(struct led_classdev *led,
-		enum led_brightness state)
-{
-	struct topstar_laptop *topstar = container_of(led,
-			struct topstar_laptop, led);
+अटल पूर्णांक topstar_led_set(काष्ठा led_classdev *led,
+		क्रमागत led_brightness state)
+अणु
+	काष्ठा topstar_laptop *topstar = container_of(led,
+			काष्ठा topstar_laptop, led);
 
-	struct acpi_object_list params;
-	union acpi_object in_obj;
-	unsigned long long int ret;
+	काष्ठा acpi_object_list params;
+	जोड़ acpi_object in_obj;
+	अचिन्हित दीर्घ दीर्घ पूर्णांक ret;
 	acpi_status status;
 
 	params.count = 1;
-	params.pointer = &in_obj;
+	params.poपूर्णांकer = &in_obj;
 	in_obj.type = ACPI_TYPE_INTEGER;
-	in_obj.integer.value = 0x83;
+	in_obj.पूर्णांकeger.value = 0x83;
 
 	/*
-	 * Topstar ACPI returns 0x30001 when the LED is ON and 0x30000 when it
+	 * Topstar ACPI वापसs 0x30001 when the LED is ON and 0x30000 when it
 	 * is OFF.
 	 */
-	status = acpi_evaluate_integer(topstar->device->handle,
+	status = acpi_evaluate_पूर्णांकeger(topstar->device->handle,
 			"GETX", &params, &ret);
-	if (ACPI_FAILURE(status))
-		return -1;
+	अगर (ACPI_FAILURE(status))
+		वापस -1;
 
 	/*
 	 * FNCX(0x83) toggles the LED (more precisely, it is supposed to
-	 * act as an hardware switch and disconnect the WLAN adapter but
+	 * act as an hardware चयन and disconnect the WLAN adapter but
 	 * it seems to be faulty on some models like the Topstar U931
 	 * Notebook).
 	 */
-	if ((ret == 0x30001 && state == LED_OFF)
-			|| (ret == 0x30000 && state != LED_OFF)) {
+	अगर ((ret == 0x30001 && state == LED_OFF)
+			|| (ret == 0x30000 && state != LED_OFF)) अणु
 		status = acpi_execute_simple_method(topstar->device->handle,
 				"FNCX", 0x83);
-		if (ACPI_FAILURE(status))
-			return -1;
-	}
+		अगर (ACPI_FAILURE(status))
+			वापस -1;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int topstar_led_init(struct topstar_laptop *topstar)
-{
-	topstar->led = (struct led_classdev) {
-		.default_trigger = "rfkill0",
+अटल पूर्णांक topstar_led_init(काष्ठा topstar_laptop *topstar)
+अणु
+	topstar->led = (काष्ठा led_classdev) अणु
+		.शेष_trigger = "rfkill0",
 		.brightness_get = topstar_led_get,
 		.brightness_set_blocking = topstar_led_set,
 		.name = TOPSTAR_LAPTOP_CLASS "::wlan",
-	};
+	पूर्ण;
 
-	return led_classdev_register(&topstar->platform->dev, &topstar->led);
-}
+	वापस led_classdev_रेजिस्टर(&topstar->platक्रमm->dev, &topstar->led);
+पूर्ण
 
-static void topstar_led_exit(struct topstar_laptop *topstar)
-{
-	led_classdev_unregister(&topstar->led);
-}
+अटल व्योम topstar_led_निकास(काष्ठा topstar_laptop *topstar)
+अणु
+	led_classdev_unरेजिस्टर(&topstar->led);
+पूर्ण
 
 /*
  * Input
  */
 
-static const struct key_entry topstar_keymap[] = {
-	{ KE_KEY, 0x80, { KEY_BRIGHTNESSUP } },
-	{ KE_KEY, 0x81, { KEY_BRIGHTNESSDOWN } },
-	{ KE_KEY, 0x83, { KEY_VOLUMEUP } },
-	{ KE_KEY, 0x84, { KEY_VOLUMEDOWN } },
-	{ KE_KEY, 0x85, { KEY_MUTE } },
-	{ KE_KEY, 0x86, { KEY_SWITCHVIDEOMODE } },
-	{ KE_KEY, 0x87, { KEY_F13 } }, /* touchpad enable/disable key */
-	{ KE_KEY, 0x88, { KEY_WLAN } },
-	{ KE_KEY, 0x8a, { KEY_WWW } },
-	{ KE_KEY, 0x8b, { KEY_MAIL } },
-	{ KE_KEY, 0x8c, { KEY_MEDIA } },
+अटल स्थिर काष्ठा key_entry topstar_keymap[] = अणु
+	अणु KE_KEY, 0x80, अणु KEY_BRIGHTNESSUP पूर्ण पूर्ण,
+	अणु KE_KEY, 0x81, अणु KEY_BRIGHTNESSDOWN पूर्ण पूर्ण,
+	अणु KE_KEY, 0x83, अणु KEY_VOLUMEUP पूर्ण पूर्ण,
+	अणु KE_KEY, 0x84, अणु KEY_VOLUMEDOWN पूर्ण पूर्ण,
+	अणु KE_KEY, 0x85, अणु KEY_MUTE पूर्ण पूर्ण,
+	अणु KE_KEY, 0x86, अणु KEY_SWITCHVIDEOMODE पूर्ण पूर्ण,
+	अणु KE_KEY, 0x87, अणु KEY_F13 पूर्ण पूर्ण, /* touchpad enable/disable key */
+	अणु KE_KEY, 0x88, अणु KEY_WLAN पूर्ण पूर्ण,
+	अणु KE_KEY, 0x8a, अणु KEY_WWW पूर्ण पूर्ण,
+	अणु KE_KEY, 0x8b, अणु KEY_MAIL पूर्ण पूर्ण,
+	अणु KE_KEY, 0x8c, अणु KEY_MEDIA पूर्ण पूर्ण,
 
-	/* Known non hotkey events don't handled or that we don't care yet */
-	{ KE_IGNORE, 0x82, }, /* backlight event */
-	{ KE_IGNORE, 0x8e, },
-	{ KE_IGNORE, 0x8f, },
-	{ KE_IGNORE, 0x90, },
+	/* Known non hotkey events करोn't handled or that we don't care yet */
+	अणु KE_IGNORE, 0x82, पूर्ण, /* backlight event */
+	अणु KE_IGNORE, 0x8e, पूर्ण,
+	अणु KE_IGNORE, 0x8f, पूर्ण,
+	अणु KE_IGNORE, 0x90, पूर्ण,
 
 	/*
 	 * 'G key' generate two event codes, convert to only
-	 * one event/key code for now, consider replacing by
-	 * a switch (3G switch - SW_3G?)
+	 * one event/key code क्रम now, consider replacing by
+	 * a चयन (3G चयन - SW_3G?)
 	 */
-	{ KE_KEY, 0x96, { KEY_F14 } },
-	{ KE_KEY, 0x97, { KEY_F14 } },
+	अणु KE_KEY, 0x96, अणु KEY_F14 पूर्ण पूर्ण,
+	अणु KE_KEY, 0x97, अणु KEY_F14 पूर्ण पूर्ण,
 
-	{ KE_END, 0 }
-};
+	अणु KE_END, 0 पूर्ण
+पूर्ण;
 
-static void topstar_input_notify(struct topstar_laptop *topstar, int event)
-{
-	if (!sparse_keymap_report_event(topstar->input, event, 1, true))
+अटल व्योम topstar_input_notअगरy(काष्ठा topstar_laptop *topstar, पूर्णांक event)
+अणु
+	अगर (!sparse_keymap_report_event(topstar->input, event, 1, true))
 		pr_info("unknown event = 0x%02x\n", event);
-}
+पूर्ण
 
-static int topstar_input_init(struct topstar_laptop *topstar)
-{
-	struct input_dev *input;
-	int err;
+अटल पूर्णांक topstar_input_init(काष्ठा topstar_laptop *topstar)
+अणु
+	काष्ठा input_dev *input;
+	पूर्णांक err;
 
 	input = input_allocate_device();
-	if (!input)
-		return -ENOMEM;
+	अगर (!input)
+		वापस -ENOMEM;
 
 	input->name = "Topstar Laptop extra buttons";
 	input->phys = TOPSTAR_LAPTOP_CLASS "/input0";
 	input->id.bustype = BUS_HOST;
-	input->dev.parent = &topstar->platform->dev;
+	input->dev.parent = &topstar->platक्रमm->dev;
 
-	err = sparse_keymap_setup(input, topstar_keymap, NULL);
-	if (err) {
+	err = sparse_keymap_setup(input, topstar_keymap, शून्य);
+	अगर (err) अणु
 		pr_err("Unable to setup input device keymap\n");
-		goto err_free_dev;
-	}
+		जाओ err_मुक्त_dev;
+	पूर्ण
 
-	err = input_register_device(input);
-	if (err) {
+	err = input_रेजिस्टर_device(input);
+	अगर (err) अणु
 		pr_err("Unable to register input device\n");
-		goto err_free_dev;
-	}
+		जाओ err_मुक्त_dev;
+	पूर्ण
 
 	topstar->input = input;
-	return 0;
+	वापस 0;
 
-err_free_dev:
-	input_free_device(input);
-	return err;
-}
+err_मुक्त_dev:
+	input_मुक्त_device(input);
+	वापस err;
+पूर्ण
 
-static void topstar_input_exit(struct topstar_laptop *topstar)
-{
-	input_unregister_device(topstar->input);
-}
+अटल व्योम topstar_input_निकास(काष्ठा topstar_laptop *topstar)
+अणु
+	input_unरेजिस्टर_device(topstar->input);
+पूर्ण
 
 /*
- * Platform
+ * Platक्रमm
  */
 
-static struct platform_driver topstar_platform_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver topstar_platक्रमm_driver = अणु
+	.driver = अणु
 		.name = TOPSTAR_LAPTOP_CLASS,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static int topstar_platform_init(struct topstar_laptop *topstar)
-{
-	int err;
+अटल पूर्णांक topstar_platक्रमm_init(काष्ठा topstar_laptop *topstar)
+अणु
+	पूर्णांक err;
 
-	topstar->platform = platform_device_alloc(TOPSTAR_LAPTOP_CLASS, -1);
-	if (!topstar->platform)
-		return -ENOMEM;
+	topstar->platक्रमm = platक्रमm_device_alloc(TOPSTAR_LAPTOP_CLASS, -1);
+	अगर (!topstar->platक्रमm)
+		वापस -ENOMEM;
 
-	platform_set_drvdata(topstar->platform, topstar);
+	platक्रमm_set_drvdata(topstar->platक्रमm, topstar);
 
-	err = platform_device_add(topstar->platform);
-	if (err)
-		goto err_device_put;
+	err = platक्रमm_device_add(topstar->platक्रमm);
+	अगर (err)
+		जाओ err_device_put;
 
-	return 0;
+	वापस 0;
 
 err_device_put:
-	platform_device_put(topstar->platform);
-	return err;
-}
+	platक्रमm_device_put(topstar->platक्रमm);
+	वापस err;
+पूर्ण
 
-static void topstar_platform_exit(struct topstar_laptop *topstar)
-{
-	platform_device_unregister(topstar->platform);
-}
+अटल व्योम topstar_platक्रमm_निकास(काष्ठा topstar_laptop *topstar)
+अणु
+	platक्रमm_device_unरेजिस्टर(topstar->platक्रमm);
+पूर्ण
 
 /*
  * ACPI
  */
 
-static int topstar_acpi_fncx_switch(struct acpi_device *device, bool state)
-{
+अटल पूर्णांक topstar_acpi_fncx_चयन(काष्ठा acpi_device *device, bool state)
+अणु
 	acpi_status status;
 	u64 arg = state ? 0x86 : 0x87;
 
 	status = acpi_execute_simple_method(device->handle, "FNCX", arg);
-	if (ACPI_FAILURE(status)) {
+	अगर (ACPI_FAILURE(status)) अणु
 		pr_err("Unable to switch FNCX notifications\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void topstar_acpi_notify(struct acpi_device *device, u32 event)
-{
-	struct topstar_laptop *topstar = acpi_driver_data(device);
-	static bool dup_evnt[2];
+अटल व्योम topstar_acpi_notअगरy(काष्ठा acpi_device *device, u32 event)
+अणु
+	काष्ठा topstar_laptop *topstar = acpi_driver_data(device);
+	अटल bool dup_evnt[2];
 	bool *dup;
 
 	/* 0x83 and 0x84 key events comes duplicated... */
-	if (event == 0x83 || event == 0x84) {
+	अगर (event == 0x83 || event == 0x84) अणु
 		dup = &dup_evnt[event - 0x83];
-		if (*dup) {
+		अगर (*dup) अणु
 			*dup = false;
-			return;
-		}
+			वापस;
+		पूर्ण
 		*dup = true;
-	}
+	पूर्ण
 
-	topstar_input_notify(topstar, event);
-}
+	topstar_input_notअगरy(topstar, event);
+पूर्ण
 
-static int topstar_acpi_init(struct topstar_laptop *topstar)
-{
-	return topstar_acpi_fncx_switch(topstar->device, true);
-}
+अटल पूर्णांक topstar_acpi_init(काष्ठा topstar_laptop *topstar)
+अणु
+	वापस topstar_acpi_fncx_चयन(topstar->device, true);
+पूर्ण
 
-static void topstar_acpi_exit(struct topstar_laptop *topstar)
-{
-	topstar_acpi_fncx_switch(topstar->device, false);
-}
+अटल व्योम topstar_acpi_निकास(काष्ठा topstar_laptop *topstar)
+अणु
+	topstar_acpi_fncx_चयन(topstar->device, false);
+पूर्ण
 
 /*
- * Enable software-based WLAN LED control on systems with defective
- * hardware switch.
+ * Enable software-based WLAN LED control on प्रणालीs with defective
+ * hardware चयन.
  */
-static bool led_workaround;
+अटल bool led_workaround;
 
-static int dmi_led_workaround(const struct dmi_system_id *id)
-{
+अटल पूर्णांक dmi_led_workaround(स्थिर काष्ठा dmi_प्रणाली_id *id)
+अणु
 	led_workaround = true;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct dmi_system_id topstar_dmi_ids[] = {
-	{
+अटल स्थिर काष्ठा dmi_प्रणाली_id topstar_dmi_ids[] = अणु
+	अणु
 		.callback = dmi_led_workaround,
 		.ident = "Topstar U931/RVP7",
-		.matches = {
+		.matches = अणु
 			DMI_MATCH(DMI_BOARD_NAME, "U931"),
 			DMI_MATCH(DMI_BOARD_VERSION, "RVP7"),
-		},
-	},
-	{}
-};
+		पूर्ण,
+	पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
-static int topstar_acpi_add(struct acpi_device *device)
-{
-	struct topstar_laptop *topstar;
-	int err;
+अटल पूर्णांक topstar_acpi_add(काष्ठा acpi_device *device)
+अणु
+	काष्ठा topstar_laptop *topstar;
+	पूर्णांक err;
 
-	dmi_check_system(topstar_dmi_ids);
+	dmi_check_प्रणाली(topstar_dmi_ids);
 
-	topstar = kzalloc(sizeof(struct topstar_laptop), GFP_KERNEL);
-	if (!topstar)
-		return -ENOMEM;
+	topstar = kzalloc(माप(काष्ठा topstar_laptop), GFP_KERNEL);
+	अगर (!topstar)
+		वापस -ENOMEM;
 
-	strcpy(acpi_device_name(device), "Topstar TPSACPI");
-	strcpy(acpi_device_class(device), TOPSTAR_LAPTOP_CLASS);
+	म_नकल(acpi_device_name(device), "Topstar TPSACPI");
+	म_नकल(acpi_device_class(device), TOPSTAR_LAPTOP_CLASS);
 	device->driver_data = topstar;
 	topstar->device = device;
 
 	err = topstar_acpi_init(topstar);
-	if (err)
-		goto err_free;
+	अगर (err)
+		जाओ err_मुक्त;
 
-	err = topstar_platform_init(topstar);
-	if (err)
-		goto err_acpi_exit;
+	err = topstar_platक्रमm_init(topstar);
+	अगर (err)
+		जाओ err_acpi_निकास;
 
 	err = topstar_input_init(topstar);
-	if (err)
-		goto err_platform_exit;
+	अगर (err)
+		जाओ err_platक्रमm_निकास;
 
-	if (led_workaround) {
+	अगर (led_workaround) अणु
 		err = topstar_led_init(topstar);
-		if (err)
-			goto err_input_exit;
-	}
+		अगर (err)
+			जाओ err_input_निकास;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
-err_input_exit:
-	topstar_input_exit(topstar);
-err_platform_exit:
-	topstar_platform_exit(topstar);
-err_acpi_exit:
-	topstar_acpi_exit(topstar);
-err_free:
-	kfree(topstar);
-	return err;
-}
+err_input_निकास:
+	topstar_input_निकास(topstar);
+err_platक्रमm_निकास:
+	topstar_platक्रमm_निकास(topstar);
+err_acpi_निकास:
+	topstar_acpi_निकास(topstar);
+err_मुक्त:
+	kमुक्त(topstar);
+	वापस err;
+पूर्ण
 
-static int topstar_acpi_remove(struct acpi_device *device)
-{
-	struct topstar_laptop *topstar = acpi_driver_data(device);
+अटल पूर्णांक topstar_acpi_हटाओ(काष्ठा acpi_device *device)
+अणु
+	काष्ठा topstar_laptop *topstar = acpi_driver_data(device);
 
-	if (led_workaround)
-		topstar_led_exit(topstar);
+	अगर (led_workaround)
+		topstar_led_निकास(topstar);
 
-	topstar_input_exit(topstar);
-	topstar_platform_exit(topstar);
-	topstar_acpi_exit(topstar);
+	topstar_input_निकास(topstar);
+	topstar_platक्रमm_निकास(topstar);
+	topstar_acpi_निकास(topstar);
 
-	kfree(topstar);
-	return 0;
-}
+	kमुक्त(topstar);
+	वापस 0;
+पूर्ण
 
-static const struct acpi_device_id topstar_device_ids[] = {
-	{ "TPS0001", 0 },
-	{ "TPSACPI01", 0 },
-	{ "", 0 },
-};
+अटल स्थिर काष्ठा acpi_device_id topstar_device_ids[] = अणु
+	अणु "TPS0001", 0 पूर्ण,
+	अणु "TPSACPI01", 0 पूर्ण,
+	अणु "", 0 पूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(acpi, topstar_device_ids);
 
-static struct acpi_driver topstar_acpi_driver = {
+अटल काष्ठा acpi_driver topstar_acpi_driver = अणु
 	.name = "Topstar laptop ACPI driver",
 	.class = TOPSTAR_LAPTOP_CLASS,
 	.ids = topstar_device_ids,
-	.ops = {
+	.ops = अणु
 		.add = topstar_acpi_add,
-		.remove = topstar_acpi_remove,
-		.notify = topstar_acpi_notify,
-	},
-};
+		.हटाओ = topstar_acpi_हटाओ,
+		.notअगरy = topstar_acpi_notअगरy,
+	पूर्ण,
+पूर्ण;
 
-static int __init topstar_laptop_init(void)
-{
-	int ret;
+अटल पूर्णांक __init topstar_laptop_init(व्योम)
+अणु
+	पूर्णांक ret;
 
-	ret = platform_driver_register(&topstar_platform_driver);
-	if (ret < 0)
-		return ret;
+	ret = platक्रमm_driver_रेजिस्टर(&topstar_platक्रमm_driver);
+	अगर (ret < 0)
+		वापस ret;
 
-	ret = acpi_bus_register_driver(&topstar_acpi_driver);
-	if (ret < 0)
-		goto err_driver_unreg;
+	ret = acpi_bus_रेजिस्टर_driver(&topstar_acpi_driver);
+	अगर (ret < 0)
+		जाओ err_driver_unreg;
 
 	pr_info("ACPI extras driver loaded\n");
-	return 0;
+	वापस 0;
 
 err_driver_unreg:
-	platform_driver_unregister(&topstar_platform_driver);
-	return ret;
-}
+	platक्रमm_driver_unरेजिस्टर(&topstar_platक्रमm_driver);
+	वापस ret;
+पूर्ण
 
-static void __exit topstar_laptop_exit(void)
-{
-	acpi_bus_unregister_driver(&topstar_acpi_driver);
-	platform_driver_unregister(&topstar_platform_driver);
-}
+अटल व्योम __निकास topstar_laptop_निकास(व्योम)
+अणु
+	acpi_bus_unरेजिस्टर_driver(&topstar_acpi_driver);
+	platक्रमm_driver_unरेजिस्टर(&topstar_platक्रमm_driver);
+पूर्ण
 
 module_init(topstar_laptop_init);
-module_exit(topstar_laptop_exit);
+module_निकास(topstar_laptop_निकास);
 
 MODULE_AUTHOR("Herton Ronaldo Krzesinski");
-MODULE_AUTHOR("Guillaume Douézan-Grard");
+MODULE_AUTHOR("Guillaume Douथऊzan-Grard");
 MODULE_DESCRIPTION("Topstar Laptop ACPI Extras driver");
 MODULE_LICENSE("GPL");

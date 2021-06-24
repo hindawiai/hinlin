@@ -1,30 +1,31 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __ASM_SH_PERF_EVENT_H
-#define __ASM_SH_PERF_EVENT_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __ASM_SH_PERF_EVENT_H
+#घोषणा __ASM_SH_PERF_EVENT_H
 
-struct hw_perf_event;
+काष्ठा hw_perf_event;
 
-#define MAX_HWEVENTS	2
+#घोषणा MAX_HWEVENTS	2
 
-struct sh_pmu {
-	const char	*name;
-	unsigned int	num_events;
-	void		(*disable_all)(void);
-	void		(*enable_all)(void);
-	void		(*enable)(struct hw_perf_event *, int);
-	void		(*disable)(struct hw_perf_event *, int);
-	u64		(*read)(int);
-	int		(*event_map)(int);
-	unsigned int	max_events;
-	unsigned long	raw_event_mask;
-	const int	(*cache_events)[PERF_COUNT_HW_CACHE_MAX]
+काष्ठा sh_pmu अणु
+	स्थिर अक्षर	*name;
+	अचिन्हित पूर्णांक	num_events;
+	व्योम		(*disable_all)(व्योम);
+	व्योम		(*enable_all)(व्योम);
+	व्योम		(*enable)(काष्ठा hw_perf_event *, पूर्णांक);
+	व्योम		(*disable)(काष्ठा hw_perf_event *, पूर्णांक);
+	u64		(*पढ़ो)(पूर्णांक);
+	पूर्णांक		(*event_map)(पूर्णांक);
+	अचिन्हित पूर्णांक	max_events;
+	अचिन्हित दीर्घ	raw_event_mask;
+	स्थिर पूर्णांक	(*cache_events)[PERF_COUNT_HW_CACHE_MAX]
 				       [PERF_COUNT_HW_CACHE_OP_MAX]
 				       [PERF_COUNT_HW_CACHE_RESULT_MAX];
-};
+पूर्ण;
 
 /* arch/sh/kernel/perf_event.c */
-extern int register_sh_pmu(struct sh_pmu *);
-extern int reserve_pmc_hardware(void);
-extern void release_pmc_hardware(void);
+बाह्य पूर्णांक रेजिस्टर_sh_pmu(काष्ठा sh_pmu *);
+बाह्य पूर्णांक reserve_pmc_hardware(व्योम);
+बाह्य व्योम release_pmc_hardware(व्योम);
 
-#endif /* __ASM_SH_PERF_EVENT_H */
+#पूर्ण_अगर /* __ASM_SH_PERF_EVENT_H */

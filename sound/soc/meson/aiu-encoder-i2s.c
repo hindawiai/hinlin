@@ -1,104 +1,105 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 //
 // Copyright (c) 2020 BayLibre, SAS.
 // Author: Jerome Brunet <jbrunet@baylibre.com>
 
-#include <linux/bitfield.h>
-#include <linux/clk.h>
-#include <sound/pcm_params.h>
-#include <sound/soc.h>
-#include <sound/soc-dai.h>
+#समावेश <linux/bitfield.h>
+#समावेश <linux/clk.h>
+#समावेश <sound/pcm_params.h>
+#समावेश <sound/soc.h>
+#समावेश <sound/soc-dai.h>
 
-#include "aiu.h"
+#समावेश "aiu.h"
 
-#define AIU_I2S_SOURCE_DESC_MODE_8CH	BIT(0)
-#define AIU_I2S_SOURCE_DESC_MODE_24BIT	BIT(5)
-#define AIU_I2S_SOURCE_DESC_MODE_32BIT	BIT(9)
-#define AIU_I2S_SOURCE_DESC_MODE_SPLIT	BIT(11)
-#define AIU_RST_SOFT_I2S_FAST		BIT(0)
+#घोषणा AIU_I2S_SOURCE_DESC_MODE_8CH	BIT(0)
+#घोषणा AIU_I2S_SOURCE_DESC_MODE_24BIT	BIT(5)
+#घोषणा AIU_I2S_SOURCE_DESC_MODE_32BIT	BIT(9)
+#घोषणा AIU_I2S_SOURCE_DESC_MODE_SPLIT	BIT(11)
+#घोषणा AIU_RST_SOFT_I2S_FAST		BIT(0)
 
-#define AIU_I2S_DAC_CFG_MSB_FIRST	BIT(2)
-#define AIU_I2S_MISC_HOLD_EN		BIT(2)
-#define AIU_CLK_CTRL_I2S_DIV_EN		BIT(0)
-#define AIU_CLK_CTRL_I2S_DIV		GENMASK(3, 2)
-#define AIU_CLK_CTRL_AOCLK_INVERT	BIT(6)
-#define AIU_CLK_CTRL_LRCLK_INVERT	BIT(7)
-#define AIU_CLK_CTRL_LRCLK_SKEW		GENMASK(9, 8)
-#define AIU_CLK_CTRL_MORE_HDMI_AMCLK	BIT(6)
-#define AIU_CLK_CTRL_MORE_I2S_DIV	GENMASK(5, 0)
-#define AIU_CODEC_DAC_LRCLK_CTRL_DIV	GENMASK(11, 0)
+#घोषणा AIU_I2S_DAC_CFG_MSB_FIRST	BIT(2)
+#घोषणा AIU_I2S_MISC_HOLD_EN		BIT(2)
+#घोषणा AIU_CLK_CTRL_I2S_DIV_EN		BIT(0)
+#घोषणा AIU_CLK_CTRL_I2S_DIV		GENMASK(3, 2)
+#घोषणा AIU_CLK_CTRL_AOCLK_INVERT	BIT(6)
+#घोषणा AIU_CLK_CTRL_LRCLK_INVERT	BIT(7)
+#घोषणा AIU_CLK_CTRL_LRCLK_SKEW		GENMASK(9, 8)
+#घोषणा AIU_CLK_CTRL_MORE_HDMI_AMCLK	BIT(6)
+#घोषणा AIU_CLK_CTRL_MORE_I2S_DIV	GENMASK(5, 0)
+#घोषणा AIU_CODEC_DAC_LRCLK_CTRL_DIV	GENMASK(11, 0)
 
-static void aiu_encoder_i2s_divider_enable(struct snd_soc_component *component,
+अटल व्योम aiu_encoder_i2s_भागider_enable(काष्ठा snd_soc_component *component,
 					   bool enable)
-{
+अणु
 	snd_soc_component_update_bits(component, AIU_CLK_CTRL,
 				      AIU_CLK_CTRL_I2S_DIV_EN,
 				      enable ? AIU_CLK_CTRL_I2S_DIV_EN : 0);
-}
+पूर्ण
 
-static void aiu_encoder_i2s_hold(struct snd_soc_component *component,
+अटल व्योम aiu_encoder_i2s_hold(काष्ठा snd_soc_component *component,
 				 bool enable)
-{
+अणु
 	snd_soc_component_update_bits(component, AIU_I2S_MISC,
 				      AIU_I2S_MISC_HOLD_EN,
 				      enable ? AIU_I2S_MISC_HOLD_EN : 0);
-}
+पूर्ण
 
-static int aiu_encoder_i2s_trigger(struct snd_pcm_substream *substream, int cmd,
-				   struct snd_soc_dai *dai)
-{
-	struct snd_soc_component *component = dai->component;
+अटल पूर्णांक aiu_encoder_i2s_trigger(काष्ठा snd_pcm_substream *substream, पूर्णांक cmd,
+				   काष्ठा snd_soc_dai *dai)
+अणु
+	काष्ठा snd_soc_component *component = dai->component;
 
-	switch (cmd) {
-	case SNDRV_PCM_TRIGGER_START:
-	case SNDRV_PCM_TRIGGER_RESUME:
-	case SNDRV_PCM_TRIGGER_PAUSE_RELEASE:
+	चयन (cmd) अणु
+	हाल SNDRV_PCM_TRIGGER_START:
+	हाल SNDRV_PCM_TRIGGER_RESUME:
+	हाल SNDRV_PCM_TRIGGER_PAUSE_RELEASE:
 		aiu_encoder_i2s_hold(component, false);
-		return 0;
+		वापस 0;
 
-	case SNDRV_PCM_TRIGGER_STOP:
-	case SNDRV_PCM_TRIGGER_SUSPEND:
-	case SNDRV_PCM_TRIGGER_PAUSE_PUSH:
+	हाल SNDRV_PCM_TRIGGER_STOP:
+	हाल SNDRV_PCM_TRIGGER_SUSPEND:
+	हाल SNDRV_PCM_TRIGGER_PAUSE_PUSH:
 		aiu_encoder_i2s_hold(component, true);
-		return 0;
+		वापस 0;
 
-	default:
-		return -EINVAL;
-	}
-}
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+पूर्ण
 
-static int aiu_encoder_i2s_setup_desc(struct snd_soc_component *component,
-				      struct snd_pcm_hw_params *params)
-{
-	/* Always operate in split (classic interleaved) mode */
-	unsigned int desc = AIU_I2S_SOURCE_DESC_MODE_SPLIT;
+अटल पूर्णांक aiu_encoder_i2s_setup_desc(काष्ठा snd_soc_component *component,
+				      काष्ठा snd_pcm_hw_params *params)
+अणु
+	/* Always operate in split (classic पूर्णांकerleaved) mode */
+	अचिन्हित पूर्णांक desc = AIU_I2S_SOURCE_DESC_MODE_SPLIT;
 
 	/* Reset required to update the pipeline */
-	snd_soc_component_write(component, AIU_RST_SOFT, AIU_RST_SOFT_I2S_FAST);
-	snd_soc_component_read(component, AIU_I2S_SYNC);
+	snd_soc_component_ग_लिखो(component, AIU_RST_SOFT, AIU_RST_SOFT_I2S_FAST);
+	snd_soc_component_पढ़ो(component, AIU_I2S_SYNC);
 
-	switch (params_physical_width(params)) {
-	case 16: /* Nothing to do */
-		break;
+	चयन (params_physical_width(params)) अणु
+	हाल 16: /* Nothing to करो */
+		अवरोध;
 
-	case 32:
+	हाल 32:
 		desc |= (AIU_I2S_SOURCE_DESC_MODE_24BIT |
 			 AIU_I2S_SOURCE_DESC_MODE_32BIT);
-		break;
+		अवरोध;
 
-	default:
-		return -EINVAL;
-	}
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	switch (params_channels(params)) {
-	case 2: /* Nothing to do */
-		break;
-	case 8:
+	चयन (params_channels(params)) अणु
+	हाल 2: /* Nothing to करो */
+		अवरोध;
+	हाल 8:
 		desc |= AIU_I2S_SOURCE_DESC_MODE_8CH;
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
 	snd_soc_component_update_bits(component, AIU_I2S_SOURCE_DESC,
 				      AIU_I2S_SOURCE_DESC_MODE_8CH |
@@ -107,25 +108,25 @@ static int aiu_encoder_i2s_setup_desc(struct snd_soc_component *component,
 				      AIU_I2S_SOURCE_DESC_MODE_SPLIT,
 				      desc);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int aiu_encoder_i2s_set_legacy_div(struct snd_soc_component *component,
-					  struct snd_pcm_hw_params *params,
-					  unsigned int bs)
-{
-	switch (bs) {
-	case 1:
-	case 2:
-	case 4:
-	case 8:
-		/* These are the only valid legacy dividers */
-		break;
+अटल पूर्णांक aiu_encoder_i2s_set_legacy_भाग(काष्ठा snd_soc_component *component,
+					  काष्ठा snd_pcm_hw_params *params,
+					  अचिन्हित पूर्णांक bs)
+अणु
+	चयन (bs) अणु
+	हाल 1:
+	हाल 2:
+	हाल 4:
+	हाल 8:
+		/* These are the only valid legacy भागiders */
+		अवरोध;
 
-	default:
+	शेष:
 		dev_err(component->dev, "Unsupported i2s divider: %u\n", bs);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	snd_soc_component_update_bits(component, AIU_CLK_CTRL,
 				      AIU_CLK_CTRL_I2S_DIV,
@@ -137,30 +138,30 @@ static int aiu_encoder_i2s_set_legacy_div(struct snd_soc_component *component,
 				      FIELD_PREP(AIU_CLK_CTRL_MORE_I2S_DIV,
 						 0));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int aiu_encoder_i2s_set_more_div(struct snd_soc_component *component,
-					struct snd_pcm_hw_params *params,
-					unsigned int bs)
-{
+अटल पूर्णांक aiu_encoder_i2s_set_more_भाग(काष्ठा snd_soc_component *component,
+					काष्ठा snd_pcm_hw_params *params,
+					अचिन्हित पूर्णांक bs)
+अणु
 	/*
 	 * NOTE: this HW is odd.
-	 * In most configuration, the i2s divider is 'mclk / blck'.
+	 * In most configuration, the i2s भागider is 'mclk / blck'.
 	 * However, in 16 bits - 8ch mode, this factor needs to be
 	 * increased by 50% to get the correct output rate.
 	 * No idea why !
 	 */
-	if (params_width(params) == 16 && params_channels(params) == 8) {
-		if (bs % 2) {
+	अगर (params_width(params) == 16 && params_channels(params) == 8) अणु
+		अगर (bs % 2) अणु
 			dev_err(component->dev,
 				"Cannot increase i2s divider by 50%%\n");
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 		bs += bs / 2;
-	}
+	पूर्ण
 
-	/* Use CLK_MORE for mclk to bclk divider */
+	/* Use CLK_MORE क्रम mclk to bclk भागider */
 	snd_soc_component_update_bits(component, AIU_CLK_CTRL,
 				      AIU_CLK_CTRL_I2S_DIV,
 				      FIELD_PREP(AIU_CLK_CTRL_I2S_DIV, 0));
@@ -170,22 +171,22 @@ static int aiu_encoder_i2s_set_more_div(struct snd_soc_component *component,
 				      FIELD_PREP(AIU_CLK_CTRL_MORE_I2S_DIV,
 						 bs - 1));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int aiu_encoder_i2s_set_clocks(struct snd_soc_component *component,
-				      struct snd_pcm_hw_params *params)
-{
-	struct aiu *aiu = snd_soc_component_get_drvdata(component);
-	unsigned int srate = params_rate(params);
-	unsigned int fs, bs;
-	int ret;
+अटल पूर्णांक aiu_encoder_i2s_set_घड़ीs(काष्ठा snd_soc_component *component,
+				      काष्ठा snd_pcm_hw_params *params)
+अणु
+	काष्ठा aiu *aiu = snd_soc_component_get_drvdata(component);
+	अचिन्हित पूर्णांक srate = params_rate(params);
+	अचिन्हित पूर्णांक fs, bs;
+	पूर्णांक ret;
 
 	/* Get the oversampling factor */
 	fs = DIV_ROUND_CLOSEST(clk_get_rate(aiu->i2s.clks[MCLK].clk), srate);
 
-	if (fs % 64)
-		return -EINVAL;
+	अगर (fs % 64)
+		वापस -EINVAL;
 
 	/* Send data MSB first */
 	snd_soc_component_update_bits(component, AIU_I2S_DAC_CFG,
@@ -200,91 +201,91 @@ static int aiu_encoder_i2s_set_clocks(struct snd_soc_component *component,
 
 	bs = fs / 64;
 
-	if (aiu->platform->has_clk_ctrl_more_i2s_div)
-		ret = aiu_encoder_i2s_set_more_div(component, params, bs);
-	else
-		ret = aiu_encoder_i2s_set_legacy_div(component, params, bs);
+	अगर (aiu->platक्रमm->has_clk_ctrl_more_i2s_भाग)
+		ret = aiu_encoder_i2s_set_more_भाग(component, params, bs);
+	अन्यथा
+		ret = aiu_encoder_i2s_set_legacy_भाग(component, params, bs);
 
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	/* Make sure amclk is used for HDMI i2s as well */
+	/* Make sure amclk is used क्रम HDMI i2s as well */
 	snd_soc_component_update_bits(component, AIU_CLK_CTRL_MORE,
 				      AIU_CLK_CTRL_MORE_HDMI_AMCLK,
 				      AIU_CLK_CTRL_MORE_HDMI_AMCLK);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int aiu_encoder_i2s_hw_params(struct snd_pcm_substream *substream,
-				     struct snd_pcm_hw_params *params,
-				     struct snd_soc_dai *dai)
-{
-	struct snd_soc_component *component = dai->component;
-	int ret;
+अटल पूर्णांक aiu_encoder_i2s_hw_params(काष्ठा snd_pcm_substream *substream,
+				     काष्ठा snd_pcm_hw_params *params,
+				     काष्ठा snd_soc_dai *dai)
+अणु
+	काष्ठा snd_soc_component *component = dai->component;
+	पूर्णांक ret;
 
-	/* Disable the clock while changing the settings */
-	aiu_encoder_i2s_divider_enable(component, false);
+	/* Disable the घड़ी जबतक changing the settings */
+	aiu_encoder_i2s_भागider_enable(component, false);
 
 	ret = aiu_encoder_i2s_setup_desc(component, params);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dai->dev, "setting i2s desc failed\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	ret = aiu_encoder_i2s_set_clocks(component, params);
-	if (ret) {
+	ret = aiu_encoder_i2s_set_घड़ीs(component, params);
+	अगर (ret) अणु
 		dev_err(dai->dev, "setting i2s clocks failed\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	aiu_encoder_i2s_divider_enable(component, true);
+	aiu_encoder_i2s_भागider_enable(component, true);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int aiu_encoder_i2s_hw_free(struct snd_pcm_substream *substream,
-				   struct snd_soc_dai *dai)
-{
-	struct snd_soc_component *component = dai->component;
+अटल पूर्णांक aiu_encoder_i2s_hw_मुक्त(काष्ठा snd_pcm_substream *substream,
+				   काष्ठा snd_soc_dai *dai)
+अणु
+	काष्ठा snd_soc_component *component = dai->component;
 
-	aiu_encoder_i2s_divider_enable(component, false);
+	aiu_encoder_i2s_भागider_enable(component, false);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int aiu_encoder_i2s_set_fmt(struct snd_soc_dai *dai, unsigned int fmt)
-{
-	struct snd_soc_component *component = dai->component;
-	unsigned int inv = fmt & SND_SOC_DAIFMT_INV_MASK;
-	unsigned int val = 0;
-	unsigned int skew;
+अटल पूर्णांक aiu_encoder_i2s_set_fmt(काष्ठा snd_soc_dai *dai, अचिन्हित पूर्णांक fmt)
+अणु
+	काष्ठा snd_soc_component *component = dai->component;
+	अचिन्हित पूर्णांक inv = fmt & SND_SOC_DAIFMT_INV_MASK;
+	अचिन्हित पूर्णांक val = 0;
+	अचिन्हित पूर्णांक skew;
 
 	/* Only CPU Master / Codec Slave supported ATM */
-	if ((fmt & SND_SOC_DAIFMT_MASTER_MASK) != SND_SOC_DAIFMT_CBS_CFS)
-		return -EINVAL;
+	अगर ((fmt & SND_SOC_DAIFMT_MASTER_MASK) != SND_SOC_DAIFMT_CBS_CFS)
+		वापस -EINVAL;
 
-	if (inv == SND_SOC_DAIFMT_NB_IF ||
+	अगर (inv == SND_SOC_DAIFMT_NB_IF ||
 	    inv == SND_SOC_DAIFMT_IB_IF)
 		val |= AIU_CLK_CTRL_LRCLK_INVERT;
 
-	if (inv == SND_SOC_DAIFMT_IB_NF ||
+	अगर (inv == SND_SOC_DAIFMT_IB_NF ||
 	    inv == SND_SOC_DAIFMT_IB_IF)
 		val |= AIU_CLK_CTRL_AOCLK_INVERT;
 
 	/* Signal skew */
-	switch (fmt & SND_SOC_DAIFMT_FORMAT_MASK) {
-	case SND_SOC_DAIFMT_I2S:
-		/* Invert sample clock for i2s */
+	चयन (fmt & SND_SOC_DAIFMT_FORMAT_MASK) अणु
+	हाल SND_SOC_DAIFMT_I2S:
+		/* Invert sample घड़ी क्रम i2s */
 		val ^= AIU_CLK_CTRL_LRCLK_INVERT;
 		skew = 1;
-		break;
-	case SND_SOC_DAIFMT_LEFT_J:
+		अवरोध;
+	हाल SND_SOC_DAIFMT_LEFT_J:
 		skew = 0;
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
 	val |= FIELD_PREP(AIU_CLK_CTRL_LRCLK_SKEW, skew);
 	snd_soc_component_update_bits(component, AIU_CLK_CTRL,
@@ -293,72 +294,72 @@ static int aiu_encoder_i2s_set_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 				      AIU_CLK_CTRL_LRCLK_SKEW,
 				      val);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int aiu_encoder_i2s_set_sysclk(struct snd_soc_dai *dai, int clk_id,
-				      unsigned int freq, int dir)
-{
-	struct aiu *aiu = snd_soc_component_get_drvdata(dai->component);
-	int ret;
+अटल पूर्णांक aiu_encoder_i2s_set_sysclk(काष्ठा snd_soc_dai *dai, पूर्णांक clk_id,
+				      अचिन्हित पूर्णांक freq, पूर्णांक dir)
+अणु
+	काष्ठा aiu *aiu = snd_soc_component_get_drvdata(dai->component);
+	पूर्णांक ret;
 
-	if (WARN_ON(clk_id != 0))
-		return -EINVAL;
+	अगर (WARN_ON(clk_id != 0))
+		वापस -EINVAL;
 
-	if (dir == SND_SOC_CLOCK_IN)
-		return 0;
+	अगर (dir == SND_SOC_CLOCK_IN)
+		वापस 0;
 
 	ret = clk_set_rate(aiu->i2s.clks[MCLK].clk, freq);
-	if (ret)
+	अगर (ret)
 		dev_err(dai->dev, "Failed to set sysclk to %uHz", freq);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const unsigned int hw_channels[] = {2, 8};
-static const struct snd_pcm_hw_constraint_list hw_channel_constraints = {
+अटल स्थिर अचिन्हित पूर्णांक hw_channels[] = अणु2, 8पूर्ण;
+अटल स्थिर काष्ठा snd_pcm_hw_स्थिरraपूर्णांक_list hw_channel_स्थिरraपूर्णांकs = अणु
 	.list = hw_channels,
 	.count = ARRAY_SIZE(hw_channels),
 	.mask = 0,
-};
+पूर्ण;
 
-static int aiu_encoder_i2s_startup(struct snd_pcm_substream *substream,
-				   struct snd_soc_dai *dai)
-{
-	struct aiu *aiu = snd_soc_component_get_drvdata(dai->component);
-	int ret;
+अटल पूर्णांक aiu_encoder_i2s_startup(काष्ठा snd_pcm_substream *substream,
+				   काष्ठा snd_soc_dai *dai)
+अणु
+	काष्ठा aiu *aiu = snd_soc_component_get_drvdata(dai->component);
+	पूर्णांक ret;
 
-	/* Make sure the encoder gets either 2 or 8 channels */
-	ret = snd_pcm_hw_constraint_list(substream->runtime, 0,
+	/* Make sure the encoder माला_लो either 2 or 8 channels */
+	ret = snd_pcm_hw_स्थिरraपूर्णांक_list(substream->runसमय, 0,
 					 SNDRV_PCM_HW_PARAM_CHANNELS,
-					 &hw_channel_constraints);
-	if (ret) {
+					 &hw_channel_स्थिरraपूर्णांकs);
+	अगर (ret) अणु
 		dev_err(dai->dev, "adding channels constraints failed\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	ret = clk_bulk_prepare_enable(aiu->i2s.clk_num, aiu->i2s.clks);
-	if (ret)
+	अगर (ret)
 		dev_err(dai->dev, "failed to enable i2s clocks\n");
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void aiu_encoder_i2s_shutdown(struct snd_pcm_substream *substream,
-				     struct snd_soc_dai *dai)
-{
-	struct aiu *aiu = snd_soc_component_get_drvdata(dai->component);
+अटल व्योम aiu_encoder_i2s_shutकरोwn(काष्ठा snd_pcm_substream *substream,
+				     काष्ठा snd_soc_dai *dai)
+अणु
+	काष्ठा aiu *aiu = snd_soc_component_get_drvdata(dai->component);
 
 	clk_bulk_disable_unprepare(aiu->i2s.clk_num, aiu->i2s.clks);
-}
+पूर्ण
 
-const struct snd_soc_dai_ops aiu_encoder_i2s_dai_ops = {
+स्थिर काष्ठा snd_soc_dai_ops aiu_encoder_i2s_dai_ops = अणु
 	.trigger	= aiu_encoder_i2s_trigger,
 	.hw_params	= aiu_encoder_i2s_hw_params,
-	.hw_free	= aiu_encoder_i2s_hw_free,
+	.hw_मुक्त	= aiu_encoder_i2s_hw_मुक्त,
 	.set_fmt	= aiu_encoder_i2s_set_fmt,
 	.set_sysclk	= aiu_encoder_i2s_set_sysclk,
 	.startup	= aiu_encoder_i2s_startup,
-	.shutdown	= aiu_encoder_i2s_shutdown,
-};
+	.shutकरोwn	= aiu_encoder_i2s_shutकरोwn,
+पूर्ण;
 

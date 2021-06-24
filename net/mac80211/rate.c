@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright 2002-2005, Instant802 Networks, Inc.
  * Copyright 2005-2006, Devicescape Software, Inc.
@@ -6,375 +7,375 @@
  * Copyright 2017	Intel Deutschland GmbH
  */
 
-#include <linux/kernel.h>
-#include <linux/rtnetlink.h>
-#include <linux/module.h>
-#include <linux/slab.h>
-#include "rate.h"
-#include "ieee80211_i.h"
-#include "debugfs.h"
+#समावेश <linux/kernel.h>
+#समावेश <linux/rtnetlink.h>
+#समावेश <linux/module.h>
+#समावेश <linux/slab.h>
+#समावेश "rate.h"
+#समावेश "ieee80211_i.h"
+#समावेश "debugfs.h"
 
-struct rate_control_alg {
-	struct list_head list;
-	const struct rate_control_ops *ops;
-};
+काष्ठा rate_control_alg अणु
+	काष्ठा list_head list;
+	स्थिर काष्ठा rate_control_ops *ops;
+पूर्ण;
 
-static LIST_HEAD(rate_ctrl_algs);
-static DEFINE_MUTEX(rate_ctrl_mutex);
+अटल LIST_HEAD(rate_ctrl_algs);
+अटल DEFINE_MUTEX(rate_ctrl_mutex);
 
-static char *ieee80211_default_rc_algo = CONFIG_MAC80211_RC_DEFAULT;
-module_param(ieee80211_default_rc_algo, charp, 0644);
-MODULE_PARM_DESC(ieee80211_default_rc_algo,
+अटल अक्षर *ieee80211_शेष_rc_algo = CONFIG_MAC80211_RC_DEFAULT;
+module_param(ieee80211_शेष_rc_algo, अक्षरp, 0644);
+MODULE_PARM_DESC(ieee80211_शेष_rc_algo,
 		 "Default rate control algorithm for mac80211 to use");
 
-void rate_control_rate_init(struct sta_info *sta)
-{
-	struct ieee80211_local *local = sta->sdata->local;
-	struct rate_control_ref *ref = sta->rate_ctrl;
-	struct ieee80211_sta *ista = &sta->sta;
-	void *priv_sta = sta->rate_ctrl_priv;
-	struct ieee80211_supported_band *sband;
-	struct ieee80211_chanctx_conf *chanctx_conf;
+व्योम rate_control_rate_init(काष्ठा sta_info *sta)
+अणु
+	काष्ठा ieee80211_local *local = sta->sdata->local;
+	काष्ठा rate_control_ref *ref = sta->rate_ctrl;
+	काष्ठा ieee80211_sta *ista = &sta->sta;
+	व्योम *priv_sta = sta->rate_ctrl_priv;
+	काष्ठा ieee80211_supported_band *sband;
+	काष्ठा ieee80211_chanctx_conf *chanctx_conf;
 
 	ieee80211_sta_set_rx_nss(sta);
 
-	if (!ref)
-		return;
+	अगर (!ref)
+		वापस;
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 
-	chanctx_conf = rcu_dereference(sta->sdata->vif.chanctx_conf);
-	if (WARN_ON(!chanctx_conf)) {
-		rcu_read_unlock();
-		return;
-	}
+	chanctx_conf = rcu_dereference(sta->sdata->vअगर.chanctx_conf);
+	अगर (WARN_ON(!chanctx_conf)) अणु
+		rcu_पढ़ो_unlock();
+		वापस;
+	पूर्ण
 
 	sband = local->hw.wiphy->bands[chanctx_conf->def.chan->band];
 
-	/* TODO: check for minstrel_s1g ? */
-	if (sband->band == NL80211_BAND_S1GHZ) {
+	/* TODO: check क्रम minstrel_s1g ? */
+	अगर (sband->band == NL80211_BAND_S1GHZ) अणु
 		ieee80211_s1g_sta_rate_init(sta);
-		rcu_read_unlock();
-		return;
-	}
+		rcu_पढ़ो_unlock();
+		वापस;
+	पूर्ण
 
 	spin_lock_bh(&sta->rate_ctrl_lock);
 	ref->ops->rate_init(ref->priv, sband, &chanctx_conf->def, ista,
 			    priv_sta);
 	spin_unlock_bh(&sta->rate_ctrl_lock);
-	rcu_read_unlock();
+	rcu_पढ़ो_unlock();
 	set_sta_flag(sta, WLAN_STA_RATE_CONTROL);
-}
+पूर्ण
 
-void rate_control_tx_status(struct ieee80211_local *local,
-			    struct ieee80211_supported_band *sband,
-			    struct ieee80211_tx_status *st)
-{
-	struct rate_control_ref *ref = local->rate_ctrl;
-	struct sta_info *sta = container_of(st->sta, struct sta_info, sta);
-	void *priv_sta = sta->rate_ctrl_priv;
+व्योम rate_control_tx_status(काष्ठा ieee80211_local *local,
+			    काष्ठा ieee80211_supported_band *sband,
+			    काष्ठा ieee80211_tx_status *st)
+अणु
+	काष्ठा rate_control_ref *ref = local->rate_ctrl;
+	काष्ठा sta_info *sta = container_of(st->sta, काष्ठा sta_info, sta);
+	व्योम *priv_sta = sta->rate_ctrl_priv;
 
-	if (!ref || !test_sta_flag(sta, WLAN_STA_RATE_CONTROL))
-		return;
+	अगर (!ref || !test_sta_flag(sta, WLAN_STA_RATE_CONTROL))
+		वापस;
 
 	spin_lock_bh(&sta->rate_ctrl_lock);
-	if (ref->ops->tx_status_ext)
+	अगर (ref->ops->tx_status_ext)
 		ref->ops->tx_status_ext(ref->priv, sband, priv_sta, st);
-	else if (st->skb)
+	अन्यथा अगर (st->skb)
 		ref->ops->tx_status(ref->priv, sband, st->sta, priv_sta, st->skb);
-	else
+	अन्यथा
 		WARN_ON_ONCE(1);
 
 	spin_unlock_bh(&sta->rate_ctrl_lock);
-}
+पूर्ण
 
-void rate_control_rate_update(struct ieee80211_local *local,
-				    struct ieee80211_supported_band *sband,
-				    struct sta_info *sta, u32 changed)
-{
-	struct rate_control_ref *ref = local->rate_ctrl;
-	struct ieee80211_sta *ista = &sta->sta;
-	void *priv_sta = sta->rate_ctrl_priv;
-	struct ieee80211_chanctx_conf *chanctx_conf;
+व्योम rate_control_rate_update(काष्ठा ieee80211_local *local,
+				    काष्ठा ieee80211_supported_band *sband,
+				    काष्ठा sta_info *sta, u32 changed)
+अणु
+	काष्ठा rate_control_ref *ref = local->rate_ctrl;
+	काष्ठा ieee80211_sta *ista = &sta->sta;
+	व्योम *priv_sta = sta->rate_ctrl_priv;
+	काष्ठा ieee80211_chanctx_conf *chanctx_conf;
 
-	if (ref && ref->ops->rate_update) {
-		rcu_read_lock();
+	अगर (ref && ref->ops->rate_update) अणु
+		rcu_पढ़ो_lock();
 
-		chanctx_conf = rcu_dereference(sta->sdata->vif.chanctx_conf);
-		if (WARN_ON(!chanctx_conf)) {
-			rcu_read_unlock();
-			return;
-		}
+		chanctx_conf = rcu_dereference(sta->sdata->vअगर.chanctx_conf);
+		अगर (WARN_ON(!chanctx_conf)) अणु
+			rcu_पढ़ो_unlock();
+			वापस;
+		पूर्ण
 
 		spin_lock_bh(&sta->rate_ctrl_lock);
 		ref->ops->rate_update(ref->priv, sband, &chanctx_conf->def,
 				      ista, priv_sta, changed);
 		spin_unlock_bh(&sta->rate_ctrl_lock);
-		rcu_read_unlock();
-	}
+		rcu_पढ़ो_unlock();
+	पूर्ण
 	drv_sta_rc_update(local, sta->sdata, &sta->sta, changed);
-}
+पूर्ण
 
-int ieee80211_rate_control_register(const struct rate_control_ops *ops)
-{
-	struct rate_control_alg *alg;
+पूर्णांक ieee80211_rate_control_रेजिस्टर(स्थिर काष्ठा rate_control_ops *ops)
+अणु
+	काष्ठा rate_control_alg *alg;
 
-	if (!ops->name)
-		return -EINVAL;
+	अगर (!ops->name)
+		वापस -EINVAL;
 
 	mutex_lock(&rate_ctrl_mutex);
-	list_for_each_entry(alg, &rate_ctrl_algs, list) {
-		if (!strcmp(alg->ops->name, ops->name)) {
-			/* don't register an algorithm twice */
+	list_क्रम_each_entry(alg, &rate_ctrl_algs, list) अणु
+		अगर (!म_भेद(alg->ops->name, ops->name)) अणु
+			/* करोn't रेजिस्टर an algorithm twice */
 			WARN_ON(1);
 			mutex_unlock(&rate_ctrl_mutex);
-			return -EALREADY;
-		}
-	}
+			वापस -EALREADY;
+		पूर्ण
+	पूर्ण
 
-	alg = kzalloc(sizeof(*alg), GFP_KERNEL);
-	if (alg == NULL) {
+	alg = kzalloc(माप(*alg), GFP_KERNEL);
+	अगर (alg == शून्य) अणु
 		mutex_unlock(&rate_ctrl_mutex);
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 	alg->ops = ops;
 
 	list_add_tail(&alg->list, &rate_ctrl_algs);
 	mutex_unlock(&rate_ctrl_mutex);
 
-	return 0;
-}
-EXPORT_SYMBOL(ieee80211_rate_control_register);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL(ieee80211_rate_control_रेजिस्टर);
 
-void ieee80211_rate_control_unregister(const struct rate_control_ops *ops)
-{
-	struct rate_control_alg *alg;
+व्योम ieee80211_rate_control_unरेजिस्टर(स्थिर काष्ठा rate_control_ops *ops)
+अणु
+	काष्ठा rate_control_alg *alg;
 
 	mutex_lock(&rate_ctrl_mutex);
-	list_for_each_entry(alg, &rate_ctrl_algs, list) {
-		if (alg->ops == ops) {
+	list_क्रम_each_entry(alg, &rate_ctrl_algs, list) अणु
+		अगर (alg->ops == ops) अणु
 			list_del(&alg->list);
-			kfree(alg);
-			break;
-		}
-	}
+			kमुक्त(alg);
+			अवरोध;
+		पूर्ण
+	पूर्ण
 	mutex_unlock(&rate_ctrl_mutex);
-}
-EXPORT_SYMBOL(ieee80211_rate_control_unregister);
+पूर्ण
+EXPORT_SYMBOL(ieee80211_rate_control_unरेजिस्टर);
 
-static const struct rate_control_ops *
-ieee80211_try_rate_control_ops_get(const char *name)
-{
-	struct rate_control_alg *alg;
-	const struct rate_control_ops *ops = NULL;
+अटल स्थिर काष्ठा rate_control_ops *
+ieee80211_try_rate_control_ops_get(स्थिर अक्षर *name)
+अणु
+	काष्ठा rate_control_alg *alg;
+	स्थिर काष्ठा rate_control_ops *ops = शून्य;
 
-	if (!name)
-		return NULL;
+	अगर (!name)
+		वापस शून्य;
 
 	mutex_lock(&rate_ctrl_mutex);
-	list_for_each_entry(alg, &rate_ctrl_algs, list) {
-		if (!strcmp(alg->ops->name, name)) {
+	list_क्रम_each_entry(alg, &rate_ctrl_algs, list) अणु
+		अगर (!म_भेद(alg->ops->name, name)) अणु
 			ops = alg->ops;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 	mutex_unlock(&rate_ctrl_mutex);
-	return ops;
-}
+	वापस ops;
+पूर्ण
 
 /* Get the rate control algorithm. */
-static const struct rate_control_ops *
-ieee80211_rate_control_ops_get(const char *name)
-{
-	const struct rate_control_ops *ops;
-	const char *alg_name;
+अटल स्थिर काष्ठा rate_control_ops *
+ieee80211_rate_control_ops_get(स्थिर अक्षर *name)
+अणु
+	स्थिर काष्ठा rate_control_ops *ops;
+	स्थिर अक्षर *alg_name;
 
 	kernel_param_lock(THIS_MODULE);
-	if (!name)
-		alg_name = ieee80211_default_rc_algo;
-	else
+	अगर (!name)
+		alg_name = ieee80211_शेष_rc_algo;
+	अन्यथा
 		alg_name = name;
 
 	ops = ieee80211_try_rate_control_ops_get(alg_name);
-	if (!ops && name)
-		/* try default if specific alg requested but not found */
-		ops = ieee80211_try_rate_control_ops_get(ieee80211_default_rc_algo);
+	अगर (!ops && name)
+		/* try शेष अगर specअगरic alg requested but not found */
+		ops = ieee80211_try_rate_control_ops_get(ieee80211_शेष_rc_algo);
 
-	/* Note: check for > 0 is intentional to avoid clang warning */
-	if (!ops && (strlen(CONFIG_MAC80211_RC_DEFAULT) > 0))
-		/* try built-in one if specific alg requested but not found */
+	/* Note: check क्रम > 0 is पूर्णांकentional to aव्योम clang warning */
+	अगर (!ops && (म_माप(CONFIG_MAC80211_RC_DEFAULT) > 0))
+		/* try built-in one अगर specअगरic alg requested but not found */
 		ops = ieee80211_try_rate_control_ops_get(CONFIG_MAC80211_RC_DEFAULT);
 
 	kernel_param_unlock(THIS_MODULE);
 
-	return ops;
-}
+	वापस ops;
+पूर्ण
 
-#ifdef CONFIG_MAC80211_DEBUGFS
-static ssize_t rcname_read(struct file *file, char __user *userbuf,
-			   size_t count, loff_t *ppos)
-{
-	struct rate_control_ref *ref = file->private_data;
-	int len = strlen(ref->ops->name);
+#अगर_घोषित CONFIG_MAC80211_DEBUGFS
+अटल sमाप_प्रकार rcname_पढ़ो(काष्ठा file *file, अक्षर __user *userbuf,
+			   माप_प्रकार count, loff_t *ppos)
+अणु
+	काष्ठा rate_control_ref *ref = file->निजी_data;
+	पूर्णांक len = म_माप(ref->ops->name);
 
-	return simple_read_from_buffer(userbuf, count, ppos,
+	वापस simple_पढ़ो_from_buffer(userbuf, count, ppos,
 				       ref->ops->name, len);
-}
+पूर्ण
 
-const struct file_operations rcname_ops = {
-	.read = rcname_read,
-	.open = simple_open,
-	.llseek = default_llseek,
-};
-#endif
+स्थिर काष्ठा file_operations rcname_ops = अणु
+	.पढ़ो = rcname_पढ़ो,
+	.खोलो = simple_खोलो,
+	.llseek = शेष_llseek,
+पूर्ण;
+#पूर्ण_अगर
 
-static struct rate_control_ref *
-rate_control_alloc(const char *name, struct ieee80211_local *local)
-{
-	struct rate_control_ref *ref;
+अटल काष्ठा rate_control_ref *
+rate_control_alloc(स्थिर अक्षर *name, काष्ठा ieee80211_local *local)
+अणु
+	काष्ठा rate_control_ref *ref;
 
-	ref = kmalloc(sizeof(struct rate_control_ref), GFP_KERNEL);
-	if (!ref)
-		return NULL;
+	ref = kदो_स्मृति(माप(काष्ठा rate_control_ref), GFP_KERNEL);
+	अगर (!ref)
+		वापस शून्य;
 	ref->ops = ieee80211_rate_control_ops_get(name);
-	if (!ref->ops)
-		goto free;
+	अगर (!ref->ops)
+		जाओ मुक्त;
 
 	ref->priv = ref->ops->alloc(&local->hw);
-	if (!ref->priv)
-		goto free;
-	return ref;
+	अगर (!ref->priv)
+		जाओ मुक्त;
+	वापस ref;
 
-free:
-	kfree(ref);
-	return NULL;
-}
+मुक्त:
+	kमुक्त(ref);
+	वापस शून्य;
+पूर्ण
 
-static void rate_control_free(struct ieee80211_local *local,
-			      struct rate_control_ref *ctrl_ref)
-{
-	ctrl_ref->ops->free(ctrl_ref->priv);
+अटल व्योम rate_control_मुक्त(काष्ठा ieee80211_local *local,
+			      काष्ठा rate_control_ref *ctrl_ref)
+अणु
+	ctrl_ref->ops->मुक्त(ctrl_ref->priv);
 
-#ifdef CONFIG_MAC80211_DEBUGFS
-	debugfs_remove_recursive(local->debugfs.rcdir);
-	local->debugfs.rcdir = NULL;
-#endif
+#अगर_घोषित CONFIG_MAC80211_DEBUGFS
+	debugfs_हटाओ_recursive(local->debugfs.rcdir);
+	local->debugfs.rcdir = शून्य;
+#पूर्ण_अगर
 
-	kfree(ctrl_ref);
-}
+	kमुक्त(ctrl_ref);
+पूर्ण
 
-void ieee80211_check_rate_mask(struct ieee80211_sub_if_data *sdata)
-{
-	struct ieee80211_local *local = sdata->local;
-	struct ieee80211_supported_band *sband;
-	u32 user_mask, basic_rates = sdata->vif.bss_conf.basic_rates;
-	enum nl80211_band band;
+व्योम ieee80211_check_rate_mask(काष्ठा ieee80211_sub_अगर_data *sdata)
+अणु
+	काष्ठा ieee80211_local *local = sdata->local;
+	काष्ठा ieee80211_supported_band *sband;
+	u32 user_mask, basic_rates = sdata->vअगर.bss_conf.basic_rates;
+	क्रमागत nl80211_band band;
 
-	if (WARN_ON(!sdata->vif.bss_conf.chandef.chan))
-		return;
+	अगर (WARN_ON(!sdata->vअगर.bss_conf.chandef.chan))
+		वापस;
 
-	band = sdata->vif.bss_conf.chandef.chan->band;
-	if (band == NL80211_BAND_S1GHZ) {
+	band = sdata->vअगर.bss_conf.chandef.chan->band;
+	अगर (band == NL80211_BAND_S1GHZ) अणु
 		/* TODO */
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (WARN_ON_ONCE(!basic_rates))
-		return;
+	अगर (WARN_ON_ONCE(!basic_rates))
+		वापस;
 
 	user_mask = sdata->rc_rateidx_mask[band];
 	sband = local->hw.wiphy->bands[band];
 
-	if (user_mask & basic_rates)
-		return;
+	अगर (user_mask & basic_rates)
+		वापस;
 
 	sdata_dbg(sdata,
 		  "no overlap between basic rates (0x%x) and user mask (0x%x on band %d) - clearing the latter",
 		  basic_rates, user_mask, band);
 	sdata->rc_rateidx_mask[band] = (1 << sband->n_bitrates) - 1;
-}
+पूर्ण
 
-static bool rc_no_data_or_no_ack_use_min(struct ieee80211_tx_rate_control *txrc)
-{
-	struct sk_buff *skb = txrc->skb;
-	struct ieee80211_hdr *hdr = (struct ieee80211_hdr *) skb->data;
-	struct ieee80211_tx_info *info = IEEE80211_SKB_CB(skb);
+अटल bool rc_no_data_or_no_ack_use_min(काष्ठा ieee80211_tx_rate_control *txrc)
+अणु
+	काष्ठा sk_buff *skb = txrc->skb;
+	काष्ठा ieee80211_hdr *hdr = (काष्ठा ieee80211_hdr *) skb->data;
+	काष्ठा ieee80211_tx_info *info = IEEE80211_SKB_CB(skb);
 	__le16 fc;
 
 	fc = hdr->frame_control;
 
-	return (info->flags & (IEEE80211_TX_CTL_NO_ACK |
+	वापस (info->flags & (IEEE80211_TX_CTL_NO_ACK |
 			       IEEE80211_TX_CTL_USE_MINRATE)) ||
 		!ieee80211_is_data(fc);
-}
+पूर्ण
 
-static void rc_send_low_basicrate(struct ieee80211_tx_rate *rate,
+अटल व्योम rc_send_low_basicrate(काष्ठा ieee80211_tx_rate *rate,
 				  u32 basic_rates,
-				  struct ieee80211_supported_band *sband)
-{
+				  काष्ठा ieee80211_supported_band *sband)
+अणु
 	u8 i;
 
-	if (sband->band == NL80211_BAND_S1GHZ) {
+	अगर (sband->band == NL80211_BAND_S1GHZ) अणु
 		/* TODO */
 		rate->flags |= IEEE80211_TX_RC_S1G_MCS;
 		rate->idx = 0;
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (basic_rates == 0)
-		return; /* assume basic rates unknown and accept rate */
-	if (rate->idx < 0)
-		return;
-	if (basic_rates & (1 << rate->idx))
-		return; /* selected rate is a basic rate */
+	अगर (basic_rates == 0)
+		वापस; /* assume basic rates unknown and accept rate */
+	अगर (rate->idx < 0)
+		वापस;
+	अगर (basic_rates & (1 << rate->idx))
+		वापस; /* selected rate is a basic rate */
 
-	for (i = rate->idx + 1; i <= sband->n_bitrates; i++) {
-		if (basic_rates & (1 << i)) {
+	क्रम (i = rate->idx + 1; i <= sband->n_bitrates; i++) अणु
+		अगर (basic_rates & (1 << i)) अणु
 			rate->idx = i;
-			return;
-		}
-	}
+			वापस;
+		पूर्ण
+	पूर्ण
 
 	/* could not find a basic rate; use original selection */
-}
+पूर्ण
 
-static void __rate_control_send_low(struct ieee80211_hw *hw,
-				    struct ieee80211_supported_band *sband,
-				    struct ieee80211_sta *sta,
-				    struct ieee80211_tx_info *info,
+अटल व्योम __rate_control_send_low(काष्ठा ieee80211_hw *hw,
+				    काष्ठा ieee80211_supported_band *sband,
+				    काष्ठा ieee80211_sta *sta,
+				    काष्ठा ieee80211_tx_info *info,
 				    u32 rate_mask)
-{
-	int i;
+अणु
+	पूर्णांक i;
 	u32 rate_flags =
 		ieee80211_chandef_rate_flags(&hw->conf.chandef);
 
-	if (sband->band == NL80211_BAND_S1GHZ) {
+	अगर (sband->band == NL80211_BAND_S1GHZ) अणु
 		info->control.rates[0].flags |= IEEE80211_TX_RC_S1G_MCS;
 		info->control.rates[0].idx = 0;
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if ((sband->band == NL80211_BAND_2GHZ) &&
+	अगर ((sband->band == NL80211_BAND_2GHZ) &&
 	    (info->flags & IEEE80211_TX_CTL_NO_CCK_RATE))
 		rate_flags |= IEEE80211_RATE_ERP_G;
 
 	info->control.rates[0].idx = 0;
-	for (i = 0; i < sband->n_bitrates; i++) {
-		if (!(rate_mask & BIT(i)))
-			continue;
+	क्रम (i = 0; i < sband->n_bitrates; i++) अणु
+		अगर (!(rate_mask & BIT(i)))
+			जारी;
 
-		if ((rate_flags & sband->bitrates[i].flags) != rate_flags)
-			continue;
+		अगर ((rate_flags & sband->bitrates[i].flags) != rate_flags)
+			जारी;
 
-		if (!rate_supported(sta, sband->band, i))
-			continue;
+		अगर (!rate_supported(sta, sband->band, i))
+			जारी;
 
 		info->control.rates[0].idx = i;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 	WARN_ONCE(i == sband->n_bitrates,
 		  "no supported rates for sta %pM (0x%x, band %d) in rate_mask 0x%x with flags 0x%x\n",
-		  sta ? sta->addr : NULL,
+		  sta ? sta->addr : शून्य,
 		  sta ? sta->supp_rates[sband->band] : -1,
 		  sband->band,
 		  rate_mask, rate_flags);
@@ -384,155 +385,155 @@ static void __rate_control_send_low(struct ieee80211_hw *hw,
 		1 : hw->max_rate_tries;
 
 	info->control.skip_table = 1;
-}
+पूर्ण
 
 
-static bool rate_control_send_low(struct ieee80211_sta *pubsta,
-				  struct ieee80211_tx_rate_control *txrc)
-{
-	struct ieee80211_tx_info *info = IEEE80211_SKB_CB(txrc->skb);
-	struct ieee80211_supported_band *sband = txrc->sband;
-	struct sta_info *sta;
-	int mcast_rate;
+अटल bool rate_control_send_low(काष्ठा ieee80211_sta *pubsta,
+				  काष्ठा ieee80211_tx_rate_control *txrc)
+अणु
+	काष्ठा ieee80211_tx_info *info = IEEE80211_SKB_CB(txrc->skb);
+	काष्ठा ieee80211_supported_band *sband = txrc->sband;
+	काष्ठा sta_info *sta;
+	पूर्णांक mcast_rate;
 	bool use_basicrate = false;
 
-	if (!pubsta || rc_no_data_or_no_ack_use_min(txrc)) {
+	अगर (!pubsta || rc_no_data_or_no_ack_use_min(txrc)) अणु
 		__rate_control_send_low(txrc->hw, sband, pubsta, info,
 					txrc->rate_idx_mask);
 
-		if (!pubsta && txrc->bss) {
+		अगर (!pubsta && txrc->bss) अणु
 			mcast_rate = txrc->bss_conf->mcast_rate[sband->band];
-			if (mcast_rate > 0) {
+			अगर (mcast_rate > 0) अणु
 				info->control.rates[0].idx = mcast_rate - 1;
-				return true;
-			}
+				वापस true;
+			पूर्ण
 			use_basicrate = true;
-		} else if (pubsta) {
-			sta = container_of(pubsta, struct sta_info, sta);
-			if (ieee80211_vif_is_mesh(&sta->sdata->vif))
+		पूर्ण अन्यथा अगर (pubsta) अणु
+			sta = container_of(pubsta, काष्ठा sta_info, sta);
+			अगर (ieee80211_vअगर_is_mesh(&sta->sdata->vअगर))
 				use_basicrate = true;
-		}
+		पूर्ण
 
-		if (use_basicrate)
+		अगर (use_basicrate)
 			rc_send_low_basicrate(&info->control.rates[0],
 					      txrc->bss_conf->basic_rates,
 					      sband);
 
-		return true;
-	}
-	return false;
-}
+		वापस true;
+	पूर्ण
+	वापस false;
+पूर्ण
 
-static bool rate_idx_match_legacy_mask(s8 *rate_idx, int n_bitrates, u32 mask)
-{
-	int j;
+अटल bool rate_idx_match_legacy_mask(s8 *rate_idx, पूर्णांक n_bitrates, u32 mask)
+अणु
+	पूर्णांक j;
 
 	/* See whether the selected rate or anything below it is allowed. */
-	for (j = *rate_idx; j >= 0; j--) {
-		if (mask & (1 << j)) {
+	क्रम (j = *rate_idx; j >= 0; j--) अणु
+		अगर (mask & (1 << j)) अणु
 			/* Okay, found a suitable rate. Use it. */
 			*rate_idx = j;
-			return true;
-		}
-	}
+			वापस true;
+		पूर्ण
+	पूर्ण
 
 	/* Try to find a higher rate that would be allowed */
-	for (j = *rate_idx + 1; j < n_bitrates; j++) {
-		if (mask & (1 << j)) {
+	क्रम (j = *rate_idx + 1; j < n_bitrates; j++) अणु
+		अगर (mask & (1 << j)) अणु
 			/* Okay, found a suitable rate. Use it. */
 			*rate_idx = j;
-			return true;
-		}
-	}
-	return false;
-}
+			वापस true;
+		पूर्ण
+	पूर्ण
+	वापस false;
+पूर्ण
 
-static bool rate_idx_match_mcs_mask(s8 *rate_idx, u8 *mcs_mask)
-{
-	int i, j;
-	int ridx, rbit;
+अटल bool rate_idx_match_mcs_mask(s8 *rate_idx, u8 *mcs_mask)
+अणु
+	पूर्णांक i, j;
+	पूर्णांक ridx, rbit;
 
 	ridx = *rate_idx / 8;
 	rbit = *rate_idx % 8;
 
 	/* sanity check */
-	if (ridx < 0 || ridx >= IEEE80211_HT_MCS_MASK_LEN)
-		return false;
+	अगर (ridx < 0 || ridx >= IEEE80211_HT_MCS_MASK_LEN)
+		वापस false;
 
 	/* See whether the selected rate or anything below it is allowed. */
-	for (i = ridx; i >= 0; i--) {
-		for (j = rbit; j >= 0; j--)
-			if (mcs_mask[i] & BIT(j)) {
+	क्रम (i = ridx; i >= 0; i--) अणु
+		क्रम (j = rbit; j >= 0; j--)
+			अगर (mcs_mask[i] & BIT(j)) अणु
 				*rate_idx = i * 8 + j;
-				return true;
-			}
+				वापस true;
+			पूर्ण
 		rbit = 7;
-	}
+	पूर्ण
 
 	/* Try to find a higher rate that would be allowed */
 	ridx = (*rate_idx + 1) / 8;
 	rbit = (*rate_idx + 1) % 8;
 
-	for (i = ridx; i < IEEE80211_HT_MCS_MASK_LEN; i++) {
-		for (j = rbit; j < 8; j++)
-			if (mcs_mask[i] & BIT(j)) {
+	क्रम (i = ridx; i < IEEE80211_HT_MCS_MASK_LEN; i++) अणु
+		क्रम (j = rbit; j < 8; j++)
+			अगर (mcs_mask[i] & BIT(j)) अणु
 				*rate_idx = i * 8 + j;
-				return true;
-			}
+				वापस true;
+			पूर्ण
 		rbit = 0;
-	}
-	return false;
-}
+	पूर्ण
+	वापस false;
+पूर्ण
 
-static bool rate_idx_match_vht_mcs_mask(s8 *rate_idx, u16 *vht_mask)
-{
-	int i, j;
-	int ridx, rbit;
+अटल bool rate_idx_match_vht_mcs_mask(s8 *rate_idx, u16 *vht_mask)
+अणु
+	पूर्णांक i, j;
+	पूर्णांक ridx, rbit;
 
 	ridx = *rate_idx >> 4;
 	rbit = *rate_idx & 0xf;
 
-	if (ridx < 0 || ridx >= NL80211_VHT_NSS_MAX)
-		return false;
+	अगर (ridx < 0 || ridx >= NL80211_VHT_NSS_MAX)
+		वापस false;
 
 	/* See whether the selected rate or anything below it is allowed. */
-	for (i = ridx; i >= 0; i--) {
-		for (j = rbit; j >= 0; j--) {
-			if (vht_mask[i] & BIT(j)) {
+	क्रम (i = ridx; i >= 0; i--) अणु
+		क्रम (j = rbit; j >= 0; j--) अणु
+			अगर (vht_mask[i] & BIT(j)) अणु
 				*rate_idx = (i << 4) | j;
-				return true;
-			}
-		}
+				वापस true;
+			पूर्ण
+		पूर्ण
 		rbit = 15;
-	}
+	पूर्ण
 
 	/* Try to find a higher rate that would be allowed */
 	ridx = (*rate_idx + 1) >> 4;
 	rbit = (*rate_idx + 1) & 0xf;
 
-	for (i = ridx; i < NL80211_VHT_NSS_MAX; i++) {
-		for (j = rbit; j < 16; j++) {
-			if (vht_mask[i] & BIT(j)) {
+	क्रम (i = ridx; i < NL80211_VHT_NSS_MAX; i++) अणु
+		क्रम (j = rbit; j < 16; j++) अणु
+			अगर (vht_mask[i] & BIT(j)) अणु
 				*rate_idx = (i << 4) | j;
-				return true;
-			}
-		}
+				वापस true;
+			पूर्ण
+		पूर्ण
 		rbit = 0;
-	}
-	return false;
-}
+	पूर्ण
+	वापस false;
+पूर्ण
 
-static void rate_idx_match_mask(s8 *rate_idx, u16 *rate_flags,
-				struct ieee80211_supported_band *sband,
-				enum nl80211_chan_width chan_width,
+अटल व्योम rate_idx_match_mask(s8 *rate_idx, u16 *rate_flags,
+				काष्ठा ieee80211_supported_band *sband,
+				क्रमागत nl80211_chan_width chan_width,
 				u32 mask,
 				u8 mcs_mask[IEEE80211_HT_MCS_MASK_LEN],
 				u16 vht_mask[NL80211_VHT_NSS_MAX])
-{
-	if (*rate_flags & IEEE80211_TX_RC_VHT_MCS) {
+अणु
+	अगर (*rate_flags & IEEE80211_TX_RC_VHT_MCS) अणु
 		/* handle VHT rates */
-		if (rate_idx_match_vht_mcs_mask(rate_idx, vht_mask))
-			return;
+		अगर (rate_idx_match_vht_mcs_mask(rate_idx, vht_mask))
+			वापस;
 
 		*rate_idx = 0;
 		/* keep protection flags */
@@ -541,22 +542,22 @@ static void rate_idx_match_mask(s8 *rate_idx, u16 *rate_flags,
 				IEEE80211_TX_RC_USE_SHORT_PREAMBLE);
 
 		*rate_flags |= IEEE80211_TX_RC_MCS;
-		if (chan_width == NL80211_CHAN_WIDTH_40)
+		अगर (chan_width == NL80211_CHAN_WIDTH_40)
 			*rate_flags |= IEEE80211_TX_RC_40_MHZ_WIDTH;
 
-		if (rate_idx_match_mcs_mask(rate_idx, mcs_mask))
-			return;
+		अगर (rate_idx_match_mcs_mask(rate_idx, mcs_mask))
+			वापस;
 
 		/* also try the legacy rates. */
 		*rate_flags &= ~(IEEE80211_TX_RC_MCS |
 				 IEEE80211_TX_RC_40_MHZ_WIDTH);
-		if (rate_idx_match_legacy_mask(rate_idx, sband->n_bitrates,
+		अगर (rate_idx_match_legacy_mask(rate_idx, sband->n_bitrates,
 					       mask))
-			return;
-	} else if (*rate_flags & IEEE80211_TX_RC_MCS) {
+			वापस;
+	पूर्ण अन्यथा अगर (*rate_flags & IEEE80211_TX_RC_MCS) अणु
 		/* handle HT rates */
-		if (rate_idx_match_mcs_mask(rate_idx, mcs_mask))
-			return;
+		अगर (rate_idx_match_mcs_mask(rate_idx, mcs_mask))
+			वापस;
 
 		/* also try the legacy rates. */
 		*rate_idx = 0;
@@ -564,24 +565,24 @@ static void rate_idx_match_mask(s8 *rate_idx, u16 *rate_flags,
 		*rate_flags &= (IEEE80211_TX_RC_USE_RTS_CTS |
 				IEEE80211_TX_RC_USE_CTS_PROTECT |
 				IEEE80211_TX_RC_USE_SHORT_PREAMBLE);
-		if (rate_idx_match_legacy_mask(rate_idx, sband->n_bitrates,
+		अगर (rate_idx_match_legacy_mask(rate_idx, sband->n_bitrates,
 					       mask))
-			return;
-	} else {
+			वापस;
+	पूर्ण अन्यथा अणु
 		/* handle legacy rates */
-		if (rate_idx_match_legacy_mask(rate_idx, sband->n_bitrates,
+		अगर (rate_idx_match_legacy_mask(rate_idx, sband->n_bitrates,
 					       mask))
-			return;
+			वापस;
 
-		/* if HT BSS, and we handle a data frame, also try HT rates */
-		switch (chan_width) {
-		case NL80211_CHAN_WIDTH_20_NOHT:
-		case NL80211_CHAN_WIDTH_5:
-		case NL80211_CHAN_WIDTH_10:
-			return;
-		default:
-			break;
-		}
+		/* अगर HT BSS, and we handle a data frame, also try HT rates */
+		चयन (chan_width) अणु
+		हाल NL80211_CHAN_WIDTH_20_NOHT:
+		हाल NL80211_CHAN_WIDTH_5:
+		हाल NL80211_CHAN_WIDTH_10:
+			वापस;
+		शेष:
+			अवरोध;
+		पूर्ण
 
 		*rate_idx = 0;
 		/* keep protection flags */
@@ -591,12 +592,12 @@ static void rate_idx_match_mask(s8 *rate_idx, u16 *rate_flags,
 
 		*rate_flags |= IEEE80211_TX_RC_MCS;
 
-		if (chan_width == NL80211_CHAN_WIDTH_40)
+		अगर (chan_width == NL80211_CHAN_WIDTH_40)
 			*rate_flags |= IEEE80211_TX_RC_40_MHZ_WIDTH;
 
-		if (rate_idx_match_mcs_mask(rate_idx, mcs_mask))
-			return;
-	}
+		अगर (rate_idx_match_mcs_mask(rate_idx, mcs_mask))
+			वापस;
+	पूर्ण
 
 	/*
 	 * Uh.. No suitable rate exists. This should not really happen with
@@ -605,349 +606,349 @@ static void rate_idx_match_mask(s8 *rate_idx, u16 *rate_flags,
 	 * allow the frame to be transmitted with whatever the rate control
 	 * selected.
 	 */
-}
+पूर्ण
 
-static void rate_fixup_ratelist(struct ieee80211_vif *vif,
-				struct ieee80211_supported_band *sband,
-				struct ieee80211_tx_info *info,
-				struct ieee80211_tx_rate *rates,
-				int max_rates)
-{
-	struct ieee80211_rate *rate;
+अटल व्योम rate_fixup_ratelist(काष्ठा ieee80211_vअगर *vअगर,
+				काष्ठा ieee80211_supported_band *sband,
+				काष्ठा ieee80211_tx_info *info,
+				काष्ठा ieee80211_tx_rate *rates,
+				पूर्णांक max_rates)
+अणु
+	काष्ठा ieee80211_rate *rate;
 	bool inval = false;
-	int i;
+	पूर्णांक i;
 
 	/*
 	 * Set up the RTS/CTS rate as the fastest basic rate
 	 * that is not faster than the data rate unless there
 	 * is no basic rate slower than the data rate, in which
-	 * case we pick the slowest basic rate
+	 * हाल we pick the slowest basic rate
 	 *
 	 * XXX: Should this check all retry rates?
 	 */
-	if (!(rates[0].flags &
-	      (IEEE80211_TX_RC_MCS | IEEE80211_TX_RC_VHT_MCS))) {
-		u32 basic_rates = vif->bss_conf.basic_rates;
+	अगर (!(rates[0].flags &
+	      (IEEE80211_TX_RC_MCS | IEEE80211_TX_RC_VHT_MCS))) अणु
+		u32 basic_rates = vअगर->bss_conf.basic_rates;
 		s8 baserate = basic_rates ? ffs(basic_rates) - 1 : 0;
 
 		rate = &sband->bitrates[rates[0].idx];
 
-		for (i = 0; i < sband->n_bitrates; i++) {
+		क्रम (i = 0; i < sband->n_bitrates; i++) अणु
 			/* must be a basic rate */
-			if (!(basic_rates & BIT(i)))
-				continue;
+			अगर (!(basic_rates & BIT(i)))
+				जारी;
 			/* must not be faster than the data rate */
-			if (sband->bitrates[i].bitrate > rate->bitrate)
-				continue;
+			अगर (sband->bitrates[i].bitrate > rate->bitrate)
+				जारी;
 			/* maximum */
-			if (sband->bitrates[baserate].bitrate <
+			अगर (sband->bitrates[baserate].bitrate <
 			     sband->bitrates[i].bitrate)
 				baserate = i;
-		}
+		पूर्ण
 
 		info->control.rts_cts_rate_idx = baserate;
-	}
+	पूर्ण
 
-	for (i = 0; i < max_rates; i++) {
+	क्रम (i = 0; i < max_rates; i++) अणु
 		/*
 		 * make sure there's no valid rate following
-		 * an invalid one, just in case drivers don't
+		 * an invalid one, just in हाल drivers करोn't
 		 * take the API seriously to stop at -1.
 		 */
-		if (inval) {
+		अगर (inval) अणु
 			rates[i].idx = -1;
-			continue;
-		}
-		if (rates[i].idx < 0) {
+			जारी;
+		पूर्ण
+		अगर (rates[i].idx < 0) अणु
 			inval = true;
-			continue;
-		}
+			जारी;
+		पूर्ण
 
 		/*
-		 * For now assume MCS is already set up correctly, this
+		 * For now assume MCS is alपढ़ोy set up correctly, this
 		 * needs to be fixed.
 		 */
-		if (rates[i].flags & IEEE80211_TX_RC_MCS) {
+		अगर (rates[i].flags & IEEE80211_TX_RC_MCS) अणु
 			WARN_ON(rates[i].idx > 76);
 
-			if (!(rates[i].flags & IEEE80211_TX_RC_USE_RTS_CTS) &&
+			अगर (!(rates[i].flags & IEEE80211_TX_RC_USE_RTS_CTS) &&
 			    info->control.use_cts_prot)
 				rates[i].flags |=
 					IEEE80211_TX_RC_USE_CTS_PROTECT;
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		if (rates[i].flags & IEEE80211_TX_RC_VHT_MCS) {
+		अगर (rates[i].flags & IEEE80211_TX_RC_VHT_MCS) अणु
 			WARN_ON(ieee80211_rate_get_vht_mcs(&rates[i]) > 9);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		/* set up RTS protection if desired */
-		if (info->control.use_rts) {
+		/* set up RTS protection अगर desired */
+		अगर (info->control.use_rts) अणु
 			rates[i].flags |= IEEE80211_TX_RC_USE_RTS_CTS;
 			info->control.use_cts_prot = false;
-		}
+		पूर्ण
 
 		/* RC is busted */
-		if (WARN_ON_ONCE(rates[i].idx >= sband->n_bitrates)) {
+		अगर (WARN_ON_ONCE(rates[i].idx >= sband->n_bitrates)) अणु
 			rates[i].idx = -1;
-			continue;
-		}
+			जारी;
+		पूर्ण
 
 		rate = &sband->bitrates[rates[i].idx];
 
-		/* set up short preamble */
-		if (info->control.short_preamble &&
+		/* set up लघु preamble */
+		अगर (info->control.लघु_preamble &&
 		    rate->flags & IEEE80211_RATE_SHORT_PREAMBLE)
 			rates[i].flags |= IEEE80211_TX_RC_USE_SHORT_PREAMBLE;
 
 		/* set up G protection */
-		if (!(rates[i].flags & IEEE80211_TX_RC_USE_RTS_CTS) &&
+		अगर (!(rates[i].flags & IEEE80211_TX_RC_USE_RTS_CTS) &&
 		    info->control.use_cts_prot &&
 		    rate->flags & IEEE80211_RATE_ERP_G)
 			rates[i].flags |= IEEE80211_TX_RC_USE_CTS_PROTECT;
-	}
-}
+	पूर्ण
+पूर्ण
 
 
-static void rate_control_fill_sta_table(struct ieee80211_sta *sta,
-					struct ieee80211_tx_info *info,
-					struct ieee80211_tx_rate *rates,
-					int max_rates)
-{
-	struct ieee80211_sta_rates *ratetbl = NULL;
-	int i;
+अटल व्योम rate_control_fill_sta_table(काष्ठा ieee80211_sta *sta,
+					काष्ठा ieee80211_tx_info *info,
+					काष्ठा ieee80211_tx_rate *rates,
+					पूर्णांक max_rates)
+अणु
+	काष्ठा ieee80211_sta_rates *ratetbl = शून्य;
+	पूर्णांक i;
 
-	if (sta && !info->control.skip_table)
+	अगर (sta && !info->control.skip_table)
 		ratetbl = rcu_dereference(sta->rates);
 
-	/* Fill remaining rate slots with data from the sta rate table. */
-	max_rates = min_t(int, max_rates, IEEE80211_TX_RATE_TABLE_SIZE);
-	for (i = 0; i < max_rates; i++) {
-		if (i < ARRAY_SIZE(info->control.rates) &&
+	/* Fill reमुख्यing rate slots with data from the sta rate table. */
+	max_rates = min_t(पूर्णांक, max_rates, IEEE80211_TX_RATE_TABLE_SIZE);
+	क्रम (i = 0; i < max_rates; i++) अणु
+		अगर (i < ARRAY_SIZE(info->control.rates) &&
 		    info->control.rates[i].idx >= 0 &&
-		    info->control.rates[i].count) {
-			if (rates != info->control.rates)
+		    info->control.rates[i].count) अणु
+			अगर (rates != info->control.rates)
 				rates[i] = info->control.rates[i];
-		} else if (ratetbl) {
+		पूर्ण अन्यथा अगर (ratetbl) अणु
 			rates[i].idx = ratetbl->rate[i].idx;
 			rates[i].flags = ratetbl->rate[i].flags;
-			if (info->control.use_rts)
+			अगर (info->control.use_rts)
 				rates[i].count = ratetbl->rate[i].count_rts;
-			else if (info->control.use_cts_prot)
+			अन्यथा अगर (info->control.use_cts_prot)
 				rates[i].count = ratetbl->rate[i].count_cts;
-			else
+			अन्यथा
 				rates[i].count = ratetbl->rate[i].count;
-		} else {
+		पूर्ण अन्यथा अणु
 			rates[i].idx = -1;
 			rates[i].count = 0;
-		}
+		पूर्ण
 
-		if (rates[i].idx < 0 || !rates[i].count)
-			break;
-	}
-}
+		अगर (rates[i].idx < 0 || !rates[i].count)
+			अवरोध;
+	पूर्ण
+पूर्ण
 
-static bool rate_control_cap_mask(struct ieee80211_sub_if_data *sdata,
-				  struct ieee80211_supported_band *sband,
-				  struct ieee80211_sta *sta, u32 *mask,
+अटल bool rate_control_cap_mask(काष्ठा ieee80211_sub_अगर_data *sdata,
+				  काष्ठा ieee80211_supported_band *sband,
+				  काष्ठा ieee80211_sta *sta, u32 *mask,
 				  u8 mcs_mask[IEEE80211_HT_MCS_MASK_LEN],
 				  u16 vht_mask[NL80211_VHT_NSS_MAX])
-{
+अणु
 	u32 i, flags;
 
 	*mask = sdata->rc_rateidx_mask[sband->band];
-	flags = ieee80211_chandef_rate_flags(&sdata->vif.bss_conf.chandef);
-	for (i = 0; i < sband->n_bitrates; i++) {
-		if ((flags & sband->bitrates[i].flags) != flags)
+	flags = ieee80211_chandef_rate_flags(&sdata->vअगर.bss_conf.chandef);
+	क्रम (i = 0; i < sband->n_bitrates; i++) अणु
+		अगर ((flags & sband->bitrates[i].flags) != flags)
 			*mask &= ~BIT(i);
-	}
+	पूर्ण
 
-	if (*mask == (1 << sband->n_bitrates) - 1 &&
+	अगर (*mask == (1 << sband->n_bitrates) - 1 &&
 	    !sdata->rc_has_mcs_mask[sband->band] &&
 	    !sdata->rc_has_vht_mcs_mask[sband->band])
-		return false;
+		वापस false;
 
-	if (sdata->rc_has_mcs_mask[sband->band])
-		memcpy(mcs_mask, sdata->rc_rateidx_mcs_mask[sband->band],
+	अगर (sdata->rc_has_mcs_mask[sband->band])
+		स_नकल(mcs_mask, sdata->rc_rateidx_mcs_mask[sband->band],
 		       IEEE80211_HT_MCS_MASK_LEN);
-	else
-		memset(mcs_mask, 0xff, IEEE80211_HT_MCS_MASK_LEN);
+	अन्यथा
+		स_रखो(mcs_mask, 0xff, IEEE80211_HT_MCS_MASK_LEN);
 
-	if (sdata->rc_has_vht_mcs_mask[sband->band])
-		memcpy(vht_mask, sdata->rc_rateidx_vht_mcs_mask[sband->band],
-		       sizeof(u16) * NL80211_VHT_NSS_MAX);
-	else
-		memset(vht_mask, 0xff, sizeof(u16) * NL80211_VHT_NSS_MAX);
+	अगर (sdata->rc_has_vht_mcs_mask[sband->band])
+		स_नकल(vht_mask, sdata->rc_rateidx_vht_mcs_mask[sband->band],
+		       माप(u16) * NL80211_VHT_NSS_MAX);
+	अन्यथा
+		स_रखो(vht_mask, 0xff, माप(u16) * NL80211_VHT_NSS_MAX);
 
-	if (sta) {
+	अगर (sta) अणु
 		__le16 sta_vht_cap;
 		u16 sta_vht_mask[NL80211_VHT_NSS_MAX];
 
-		/* Filter out rates that the STA does not support */
+		/* Filter out rates that the STA करोes not support */
 		*mask &= sta->supp_rates[sband->band];
-		for (i = 0; i < IEEE80211_HT_MCS_MASK_LEN; i++)
+		क्रम (i = 0; i < IEEE80211_HT_MCS_MASK_LEN; i++)
 			mcs_mask[i] &= sta->ht_cap.mcs.rx_mask[i];
 
 		sta_vht_cap = sta->vht_cap.vht_mcs.rx_mcs_map;
 		ieee80211_get_vht_mask_from_cap(sta_vht_cap, sta_vht_mask);
-		for (i = 0; i < NL80211_VHT_NSS_MAX; i++)
+		क्रम (i = 0; i < NL80211_VHT_NSS_MAX; i++)
 			vht_mask[i] &= sta_vht_mask[i];
-	}
+	पूर्ण
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static void
-rate_control_apply_mask_ratetbl(struct sta_info *sta,
-				struct ieee80211_supported_band *sband,
-				struct ieee80211_sta_rates *rates)
-{
-	int i;
+अटल व्योम
+rate_control_apply_mask_ratetbl(काष्ठा sta_info *sta,
+				काष्ठा ieee80211_supported_band *sband,
+				काष्ठा ieee80211_sta_rates *rates)
+अणु
+	पूर्णांक i;
 	u32 mask;
 	u8 mcs_mask[IEEE80211_HT_MCS_MASK_LEN];
 	u16 vht_mask[NL80211_VHT_NSS_MAX];
-	enum nl80211_chan_width chan_width;
+	क्रमागत nl80211_chan_width chan_width;
 
-	if (!rate_control_cap_mask(sta->sdata, sband, &sta->sta, &mask,
+	अगर (!rate_control_cap_mask(sta->sdata, sband, &sta->sta, &mask,
 				   mcs_mask, vht_mask))
-		return;
+		वापस;
 
-	chan_width = sta->sdata->vif.bss_conf.chandef.width;
-	for (i = 0; i < IEEE80211_TX_RATE_TABLE_SIZE; i++) {
-		if (rates->rate[i].idx < 0)
-			break;
+	chan_width = sta->sdata->vअगर.bss_conf.chandef.width;
+	क्रम (i = 0; i < IEEE80211_TX_RATE_TABLE_SIZE; i++) अणु
+		अगर (rates->rate[i].idx < 0)
+			अवरोध;
 
 		rate_idx_match_mask(&rates->rate[i].idx, &rates->rate[i].flags,
 				    sband, chan_width, mask, mcs_mask,
 				    vht_mask);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void rate_control_apply_mask(struct ieee80211_sub_if_data *sdata,
-				    struct ieee80211_sta *sta,
-				    struct ieee80211_supported_band *sband,
-				    struct ieee80211_tx_rate *rates,
-				    int max_rates)
-{
-	enum nl80211_chan_width chan_width;
+अटल व्योम rate_control_apply_mask(काष्ठा ieee80211_sub_अगर_data *sdata,
+				    काष्ठा ieee80211_sta *sta,
+				    काष्ठा ieee80211_supported_band *sband,
+				    काष्ठा ieee80211_tx_rate *rates,
+				    पूर्णांक max_rates)
+अणु
+	क्रमागत nl80211_chan_width chan_width;
 	u8 mcs_mask[IEEE80211_HT_MCS_MASK_LEN];
 	u32 mask;
 	u16 rate_flags, vht_mask[NL80211_VHT_NSS_MAX];
-	int i;
+	पूर्णांक i;
 
 	/*
-	 * Try to enforce the rateidx mask the user wanted. skip this if the
-	 * default mask (allow all rates) is used to save some processing for
-	 * the common case.
+	 * Try to enक्रमce the rateidx mask the user wanted. skip this अगर the
+	 * शेष mask (allow all rates) is used to save some processing क्रम
+	 * the common हाल.
 	 */
-	if (!rate_control_cap_mask(sdata, sband, sta, &mask, mcs_mask,
+	अगर (!rate_control_cap_mask(sdata, sband, sta, &mask, mcs_mask,
 				   vht_mask))
-		return;
+		वापस;
 
 	/*
-	 * Make sure the rate index selected for each TX rate is
+	 * Make sure the rate index selected क्रम each TX rate is
 	 * included in the configured mask and change the rate indexes
-	 * if needed.
+	 * अगर needed.
 	 */
-	chan_width = sdata->vif.bss_conf.chandef.width;
-	for (i = 0; i < max_rates; i++) {
+	chan_width = sdata->vअगर.bss_conf.chandef.width;
+	क्रम (i = 0; i < max_rates; i++) अणु
 		/* Skip invalid rates */
-		if (rates[i].idx < 0)
-			break;
+		अगर (rates[i].idx < 0)
+			अवरोध;
 
 		rate_flags = rates[i].flags;
 		rate_idx_match_mask(&rates[i].idx, &rate_flags, sband,
 				    chan_width, mask, mcs_mask, vht_mask);
 		rates[i].flags = rate_flags;
-	}
-}
+	पूर्ण
+पूर्ण
 
-void ieee80211_get_tx_rates(struct ieee80211_vif *vif,
-			    struct ieee80211_sta *sta,
-			    struct sk_buff *skb,
-			    struct ieee80211_tx_rate *dest,
-			    int max_rates)
-{
-	struct ieee80211_sub_if_data *sdata;
-	struct ieee80211_hdr *hdr = (struct ieee80211_hdr *) skb->data;
-	struct ieee80211_tx_info *info = IEEE80211_SKB_CB(skb);
-	struct ieee80211_supported_band *sband;
+व्योम ieee80211_get_tx_rates(काष्ठा ieee80211_vअगर *vअगर,
+			    काष्ठा ieee80211_sta *sta,
+			    काष्ठा sk_buff *skb,
+			    काष्ठा ieee80211_tx_rate *dest,
+			    पूर्णांक max_rates)
+अणु
+	काष्ठा ieee80211_sub_अगर_data *sdata;
+	काष्ठा ieee80211_hdr *hdr = (काष्ठा ieee80211_hdr *) skb->data;
+	काष्ठा ieee80211_tx_info *info = IEEE80211_SKB_CB(skb);
+	काष्ठा ieee80211_supported_band *sband;
 
 	rate_control_fill_sta_table(sta, info, dest, max_rates);
 
-	if (!vif)
-		return;
+	अगर (!vअगर)
+		वापस;
 
-	sdata = vif_to_sdata(vif);
+	sdata = vअगर_to_sdata(vअगर);
 	sband = sdata->local->hw.wiphy->bands[info->band];
 
-	if (ieee80211_is_data(hdr->frame_control))
+	अगर (ieee80211_is_data(hdr->frame_control))
 		rate_control_apply_mask(sdata, sta, sband, dest, max_rates);
 
-	if (dest[0].idx < 0)
+	अगर (dest[0].idx < 0)
 		__rate_control_send_low(&sdata->local->hw, sband, sta, info,
 					sdata->rc_rateidx_mask[info->band]);
 
-	if (sta)
-		rate_fixup_ratelist(vif, sband, info, dest, max_rates);
-}
+	अगर (sta)
+		rate_fixup_ratelist(vअगर, sband, info, dest, max_rates);
+पूर्ण
 EXPORT_SYMBOL(ieee80211_get_tx_rates);
 
-void rate_control_get_rate(struct ieee80211_sub_if_data *sdata,
-			   struct sta_info *sta,
-			   struct ieee80211_tx_rate_control *txrc)
-{
-	struct rate_control_ref *ref = sdata->local->rate_ctrl;
-	void *priv_sta = NULL;
-	struct ieee80211_sta *ista = NULL;
-	struct ieee80211_tx_info *info = IEEE80211_SKB_CB(txrc->skb);
-	int i;
+व्योम rate_control_get_rate(काष्ठा ieee80211_sub_अगर_data *sdata,
+			   काष्ठा sta_info *sta,
+			   काष्ठा ieee80211_tx_rate_control *txrc)
+अणु
+	काष्ठा rate_control_ref *ref = sdata->local->rate_ctrl;
+	व्योम *priv_sta = शून्य;
+	काष्ठा ieee80211_sta *ista = शून्य;
+	काष्ठा ieee80211_tx_info *info = IEEE80211_SKB_CB(txrc->skb);
+	पूर्णांक i;
 
-	for (i = 0; i < IEEE80211_TX_MAX_RATES; i++) {
+	क्रम (i = 0; i < IEEE80211_TX_MAX_RATES; i++) अणु
 		info->control.rates[i].idx = -1;
 		info->control.rates[i].flags = 0;
 		info->control.rates[i].count = 0;
-	}
+	पूर्ण
 
-	if (rate_control_send_low(sta ? &sta->sta : NULL, txrc))
-		return;
+	अगर (rate_control_send_low(sta ? &sta->sta : शून्य, txrc))
+		वापस;
 
-	if (ieee80211_hw_check(&sdata->local->hw, HAS_RATE_CONTROL))
-		return;
+	अगर (ieee80211_hw_check(&sdata->local->hw, HAS_RATE_CONTROL))
+		वापस;
 
-	if (sta && test_sta_flag(sta, WLAN_STA_RATE_CONTROL)) {
+	अगर (sta && test_sta_flag(sta, WLAN_STA_RATE_CONTROL)) अणु
 		ista = &sta->sta;
 		priv_sta = sta->rate_ctrl_priv;
-	}
+	पूर्ण
 
-	if (ista) {
+	अगर (ista) अणु
 		spin_lock_bh(&sta->rate_ctrl_lock);
 		ref->ops->get_rate(ref->priv, ista, priv_sta, txrc);
 		spin_unlock_bh(&sta->rate_ctrl_lock);
-	} else {
-		rate_control_send_low(NULL, txrc);
-	}
+	पूर्ण अन्यथा अणु
+		rate_control_send_low(शून्य, txrc);
+	पूर्ण
 
-	if (ieee80211_hw_check(&sdata->local->hw, SUPPORTS_RC_TABLE))
-		return;
+	अगर (ieee80211_hw_check(&sdata->local->hw, SUPPORTS_RC_TABLE))
+		वापस;
 
-	ieee80211_get_tx_rates(&sdata->vif, ista, txrc->skb,
+	ieee80211_get_tx_rates(&sdata->vअगर, ista, txrc->skb,
 			       info->control.rates,
 			       ARRAY_SIZE(info->control.rates));
-}
+पूर्ण
 
-int rate_control_set_rates(struct ieee80211_hw *hw,
-			   struct ieee80211_sta *pubsta,
-			   struct ieee80211_sta_rates *rates)
-{
-	struct sta_info *sta = container_of(pubsta, struct sta_info, sta);
-	struct ieee80211_sta_rates *old;
-	struct ieee80211_supported_band *sband;
+पूर्णांक rate_control_set_rates(काष्ठा ieee80211_hw *hw,
+			   काष्ठा ieee80211_sta *pubsta,
+			   काष्ठा ieee80211_sta_rates *rates)
+अणु
+	काष्ठा sta_info *sta = container_of(pubsta, काष्ठा sta_info, sta);
+	काष्ठा ieee80211_sta_rates *old;
+	काष्ठा ieee80211_supported_band *sband;
 
 	sband = ieee80211_get_sband(sta->sdata);
-	if (!sband)
-		return -EINVAL;
+	अगर (!sband)
+		वापस -EINVAL;
 	rate_control_apply_mask_ratetbl(sta, sband, rates);
 	/*
 	 * mac80211 guarantees that this function will not be called
@@ -955,42 +956,42 @@ int rate_control_set_rates(struct ieee80211_hw *hw,
 	 * extra locking. This can not be checked easily, so we just set
 	 * the condition to true.
 	 */
-	old = rcu_dereference_protected(pubsta->rates, true);
-	rcu_assign_pointer(pubsta->rates, rates);
-	if (old)
-		kfree_rcu(old, rcu_head);
+	old = rcu_dereference_रक्षित(pubsta->rates, true);
+	rcu_assign_poपूर्णांकer(pubsta->rates, rates);
+	अगर (old)
+		kमुक्त_rcu(old, rcu_head);
 
-	if (sta->uploaded)
+	अगर (sta->uploaded)
 		drv_sta_rate_tbl_update(hw_to_local(hw), sta->sdata, pubsta);
 
 	ieee80211_sta_set_expected_throughput(pubsta, sta_get_expected_throughput(sta));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(rate_control_set_rates);
 
-int ieee80211_init_rate_ctrl_alg(struct ieee80211_local *local,
-				 const char *name)
-{
-	struct rate_control_ref *ref;
+पूर्णांक ieee80211_init_rate_ctrl_alg(काष्ठा ieee80211_local *local,
+				 स्थिर अक्षर *name)
+अणु
+	काष्ठा rate_control_ref *ref;
 
 	ASSERT_RTNL();
 
-	if (local->open_count)
-		return -EBUSY;
+	अगर (local->खोलो_count)
+		वापस -EBUSY;
 
-	if (ieee80211_hw_check(&local->hw, HAS_RATE_CONTROL)) {
-		if (WARN_ON(!local->ops->set_rts_threshold))
-			return -EINVAL;
-		return 0;
-	}
+	अगर (ieee80211_hw_check(&local->hw, HAS_RATE_CONTROL)) अणु
+		अगर (WARN_ON(!local->ops->set_rts_threshold))
+			वापस -EINVAL;
+		वापस 0;
+	पूर्ण
 
 	ref = rate_control_alloc(name, local);
-	if (!ref) {
+	अगर (!ref) अणु
 		wiphy_warn(local->hw.wiphy,
 			   "Failed to select rate control algorithm\n");
-		return -ENOENT;
-	}
+		वापस -ENOENT;
+	पूर्ण
 
 	WARN_ON(local->rate_ctrl);
 	local->rate_ctrl = ref;
@@ -998,18 +999,18 @@ int ieee80211_init_rate_ctrl_alg(struct ieee80211_local *local,
 	wiphy_debug(local->hw.wiphy, "Selected rate control algorithm '%s'\n",
 		    ref->ops->name);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void rate_control_deinitialize(struct ieee80211_local *local)
-{
-	struct rate_control_ref *ref;
+व्योम rate_control_deinitialize(काष्ठा ieee80211_local *local)
+अणु
+	काष्ठा rate_control_ref *ref;
 
 	ref = local->rate_ctrl;
 
-	if (!ref)
-		return;
+	अगर (!ref)
+		वापस;
 
-	local->rate_ctrl = NULL;
-	rate_control_free(local, ref);
-}
+	local->rate_ctrl = शून्य;
+	rate_control_मुक्त(local, ref);
+पूर्ण

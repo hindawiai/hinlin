@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2013 Red Hat Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -21,142 +22,142 @@
  *
  * Authors: Ben Skeggs <bskeggs@redhat.com>
  */
-#define anx9805_pad(p) container_of((p), struct anx9805_pad, base)
-#define anx9805_bus(p) container_of((p), struct anx9805_bus, base)
-#define anx9805_aux(p) container_of((p), struct anx9805_aux, base)
-#include "aux.h"
-#include "bus.h"
+#घोषणा anx9805_pad(p) container_of((p), काष्ठा anx9805_pad, base)
+#घोषणा anx9805_bus(p) container_of((p), काष्ठा anx9805_bus, base)
+#घोषणा anx9805_aux(p) container_of((p), काष्ठा anx9805_aux, base)
+#समावेश "aux.h"
+#समावेश "bus.h"
 
-struct anx9805_pad {
-	struct nvkm_i2c_pad base;
-	struct nvkm_i2c_bus *bus;
+काष्ठा anx9805_pad अणु
+	काष्ठा nvkm_i2c_pad base;
+	काष्ठा nvkm_i2c_bus *bus;
 	u8 addr;
-};
+पूर्ण;
 
-struct anx9805_bus {
-	struct nvkm_i2c_bus base;
-	struct anx9805_pad *pad;
+काष्ठा anx9805_bus अणु
+	काष्ठा nvkm_i2c_bus base;
+	काष्ठा anx9805_pad *pad;
 	u8 addr;
-};
+पूर्ण;
 
-static int
-anx9805_bus_xfer(struct nvkm_i2c_bus *base, struct i2c_msg *msgs, int num)
-{
-	struct anx9805_bus *bus = anx9805_bus(base);
-	struct anx9805_pad *pad = bus->pad;
-	struct i2c_adapter *adap = &pad->bus->i2c;
-	struct i2c_msg *msg = msgs;
-	int ret = -ETIMEDOUT;
-	int i, j, cnt = num;
-	u8 seg = 0x00, off = 0x00, tmp;
+अटल पूर्णांक
+anx9805_bus_xfer(काष्ठा nvkm_i2c_bus *base, काष्ठा i2c_msg *msgs, पूर्णांक num)
+अणु
+	काष्ठा anx9805_bus *bus = anx9805_bus(base);
+	काष्ठा anx9805_pad *pad = bus->pad;
+	काष्ठा i2c_adapter *adap = &pad->bus->i2c;
+	काष्ठा i2c_msg *msg = msgs;
+	पूर्णांक ret = -ETIMEDOUT;
+	पूर्णांक i, j, cnt = num;
+	u8 seg = 0x00, off = 0x00, पंचांगp;
 
-	tmp = nvkm_rdi2cr(adap, pad->addr, 0x07) & ~0x10;
-	nvkm_wri2cr(adap, pad->addr, 0x07, tmp | 0x10);
-	nvkm_wri2cr(adap, pad->addr, 0x07, tmp);
+	पंचांगp = nvkm_rdi2cr(adap, pad->addr, 0x07) & ~0x10;
+	nvkm_wri2cr(adap, pad->addr, 0x07, पंचांगp | 0x10);
+	nvkm_wri2cr(adap, pad->addr, 0x07, पंचांगp);
 	nvkm_wri2cr(adap, bus->addr, 0x43, 0x05);
 	mdelay(5);
 
-	while (cnt--) {
-		if ( (msg->flags & I2C_M_RD) && msg->addr == 0x50) {
+	जबतक (cnt--) अणु
+		अगर ( (msg->flags & I2C_M_RD) && msg->addr == 0x50) अणु
 			nvkm_wri2cr(adap, bus->addr, 0x40, msg->addr << 1);
 			nvkm_wri2cr(adap, bus->addr, 0x41, seg);
 			nvkm_wri2cr(adap, bus->addr, 0x42, off);
 			nvkm_wri2cr(adap, bus->addr, 0x44, msg->len);
 			nvkm_wri2cr(adap, bus->addr, 0x45, 0x00);
 			nvkm_wri2cr(adap, bus->addr, 0x43, 0x01);
-			for (i = 0; i < msg->len; i++) {
+			क्रम (i = 0; i < msg->len; i++) अणु
 				j = 0;
-				while (nvkm_rdi2cr(adap, bus->addr, 0x46) & 0x10) {
+				जबतक (nvkm_rdi2cr(adap, bus->addr, 0x46) & 0x10) अणु
 					mdelay(5);
-					if (j++ == 32)
-						goto done;
-				}
+					अगर (j++ == 32)
+						जाओ करोne;
+				पूर्ण
 				msg->buf[i] = nvkm_rdi2cr(adap, bus->addr, 0x47);
-			}
-		} else
-		if (!(msg->flags & I2C_M_RD)) {
-			if (msg->addr == 0x50 && msg->len == 0x01) {
+			पूर्ण
+		पूर्ण अन्यथा
+		अगर (!(msg->flags & I2C_M_RD)) अणु
+			अगर (msg->addr == 0x50 && msg->len == 0x01) अणु
 				off = msg->buf[0];
-			} else
-			if (msg->addr == 0x30 && msg->len == 0x01) {
+			पूर्ण अन्यथा
+			अगर (msg->addr == 0x30 && msg->len == 0x01) अणु
 				seg = msg->buf[0];
-			} else
-				goto done;
-		} else {
-			goto done;
-		}
+			पूर्ण अन्यथा
+				जाओ करोne;
+		पूर्ण अन्यथा अणु
+			जाओ करोne;
+		पूर्ण
 		msg++;
-	}
+	पूर्ण
 
 	ret = num;
-done:
+करोne:
 	nvkm_wri2cr(adap, bus->addr, 0x43, 0x00);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const struct nvkm_i2c_bus_func
-anx9805_bus_func = {
+अटल स्थिर काष्ठा nvkm_i2c_bus_func
+anx9805_bus_func = अणु
 	.xfer = anx9805_bus_xfer,
-};
+पूर्ण;
 
-static int
-anx9805_bus_new(struct nvkm_i2c_pad *base, int id, u8 drive,
-		struct nvkm_i2c_bus **pbus)
-{
-	struct anx9805_pad *pad = anx9805_pad(base);
-	struct anx9805_bus *bus;
-	int ret;
+अटल पूर्णांक
+anx9805_bus_new(काष्ठा nvkm_i2c_pad *base, पूर्णांक id, u8 drive,
+		काष्ठा nvkm_i2c_bus **pbus)
+अणु
+	काष्ठा anx9805_pad *pad = anx9805_pad(base);
+	काष्ठा anx9805_bus *bus;
+	पूर्णांक ret;
 
-	if (!(bus = kzalloc(sizeof(*bus), GFP_KERNEL)))
-		return -ENOMEM;
+	अगर (!(bus = kzalloc(माप(*bus), GFP_KERNEL)))
+		वापस -ENOMEM;
 	*pbus = &bus->base;
 	bus->pad = pad;
 
 	ret = nvkm_i2c_bus_ctor(&anx9805_bus_func, &pad->base, id, &bus->base);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	switch (pad->addr) {
-	case 0x39: bus->addr = 0x3d; break;
-	case 0x3b: bus->addr = 0x3f; break;
-	default:
-		return -ENOSYS;
-	}
+	चयन (pad->addr) अणु
+	हाल 0x39: bus->addr = 0x3d; अवरोध;
+	हाल 0x3b: bus->addr = 0x3f; अवरोध;
+	शेष:
+		वापस -ENOSYS;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-struct anx9805_aux {
-	struct nvkm_i2c_aux base;
-	struct anx9805_pad *pad;
+काष्ठा anx9805_aux अणु
+	काष्ठा nvkm_i2c_aux base;
+	काष्ठा anx9805_pad *pad;
 	u8 addr;
-};
+पूर्ण;
 
-static int
-anx9805_aux_xfer(struct nvkm_i2c_aux *base, bool retry,
+अटल पूर्णांक
+anx9805_aux_xfer(काष्ठा nvkm_i2c_aux *base, bool retry,
 		 u8 type, u32 addr, u8 *data, u8 *size)
-{
-	struct anx9805_aux *aux = anx9805_aux(base);
-	struct anx9805_pad *pad = aux->pad;
-	struct i2c_adapter *adap = &pad->bus->i2c;
-	int i, ret = -ETIMEDOUT;
-	u8 buf[16] = {};
-	u8 tmp;
+अणु
+	काष्ठा anx9805_aux *aux = anx9805_aux(base);
+	काष्ठा anx9805_pad *pad = aux->pad;
+	काष्ठा i2c_adapter *adap = &pad->bus->i2c;
+	पूर्णांक i, ret = -ETIMEDOUT;
+	u8 buf[16] = अणुपूर्ण;
+	u8 पंचांगp;
 
 	AUX_DBG(&aux->base, "%02x %05x %d", type, addr, *size);
 
-	tmp = nvkm_rdi2cr(adap, pad->addr, 0x07) & ~0x04;
-	nvkm_wri2cr(adap, pad->addr, 0x07, tmp | 0x04);
-	nvkm_wri2cr(adap, pad->addr, 0x07, tmp);
+	पंचांगp = nvkm_rdi2cr(adap, pad->addr, 0x07) & ~0x04;
+	nvkm_wri2cr(adap, pad->addr, 0x07, पंचांगp | 0x04);
+	nvkm_wri2cr(adap, pad->addr, 0x07, पंचांगp);
 	nvkm_wri2cr(adap, pad->addr, 0xf7, 0x01);
 
 	nvkm_wri2cr(adap, aux->addr, 0xe4, 0x80);
-	if (!(type & 1)) {
-		memcpy(buf, data, *size);
+	अगर (!(type & 1)) अणु
+		स_नकल(buf, data, *size);
 		AUX_DBG(&aux->base, "%16ph", buf);
-		for (i = 0; i < *size; i++)
+		क्रम (i = 0; i < *size; i++)
 			nvkm_wri2cr(adap, aux->addr, 0xf0 + i, buf[i]);
-	}
+	पूर्ण
 	nvkm_wri2cr(adap, aux->addr, 0xe5, ((*size - 1) << 4) | type);
 	nvkm_wri2cr(adap, aux->addr, 0xe6, (addr & 0x000ff) >>  0);
 	nvkm_wri2cr(adap, aux->addr, 0xe7, (addr & 0x0ff00) >>  8);
@@ -164,38 +165,38 @@ anx9805_aux_xfer(struct nvkm_i2c_aux *base, bool retry,
 	nvkm_wri2cr(adap, aux->addr, 0xe9, 0x01);
 
 	i = 0;
-	while ((tmp = nvkm_rdi2cr(adap, aux->addr, 0xe9)) & 0x01) {
+	जबतक ((पंचांगp = nvkm_rdi2cr(adap, aux->addr, 0xe9)) & 0x01) अणु
 		mdelay(5);
-		if (i++ == 32)
-			goto done;
-	}
+		अगर (i++ == 32)
+			जाओ करोne;
+	पूर्ण
 
-	if ((tmp = nvkm_rdi2cr(adap, pad->addr, 0xf7)) & 0x01) {
+	अगर ((पंचांगp = nvkm_rdi2cr(adap, pad->addr, 0xf7)) & 0x01) अणु
 		ret = -EIO;
-		goto done;
-	}
+		जाओ करोne;
+	पूर्ण
 
-	if (type & 1) {
-		for (i = 0; i < *size; i++)
+	अगर (type & 1) अणु
+		क्रम (i = 0; i < *size; i++)
 			buf[i] = nvkm_rdi2cr(adap, aux->addr, 0xf0 + i);
 		AUX_DBG(&aux->base, "%16ph", buf);
-		memcpy(data, buf, *size);
-	}
+		स_नकल(data, buf, *size);
+	पूर्ण
 
 	ret = 0;
-done:
+करोne:
 	nvkm_wri2cr(adap, pad->addr, 0xf7, 0x01);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int
-anx9805_aux_lnk_ctl(struct nvkm_i2c_aux *base,
-		    int link_nr, int link_bw, bool enh)
-{
-	struct anx9805_aux *aux = anx9805_aux(base);
-	struct anx9805_pad *pad = aux->pad;
-	struct i2c_adapter *adap = &pad->bus->i2c;
-	u8 tmp, i;
+अटल पूर्णांक
+anx9805_aux_lnk_ctl(काष्ठा nvkm_i2c_aux *base,
+		    पूर्णांक link_nr, पूर्णांक link_bw, bool enh)
+अणु
+	काष्ठा anx9805_aux *aux = anx9805_aux(base);
+	काष्ठा anx9805_pad *pad = aux->pad;
+	काष्ठा i2c_adapter *adap = &pad->bus->i2c;
+	u8 पंचांगp, i;
 
 	AUX_DBG(&aux->base, "ANX9805 train %d %02x %d",
 		link_nr, link_bw, enh);
@@ -206,73 +207,73 @@ anx9805_aux_lnk_ctl(struct nvkm_i2c_aux *base,
 	nvkm_wri2cr(adap, aux->addr, 0xa8, 0x01);
 
 	i = 0;
-	while ((tmp = nvkm_rdi2cr(adap, aux->addr, 0xa8)) & 0x01) {
+	जबतक ((पंचांगp = nvkm_rdi2cr(adap, aux->addr, 0xa8)) & 0x01) अणु
 		mdelay(5);
-		if (i++ == 100) {
+		अगर (i++ == 100) अणु
 			AUX_ERR(&aux->base, "link training timeout");
-			return -ETIMEDOUT;
-		}
-	}
+			वापस -ETIMEDOUT;
+		पूर्ण
+	पूर्ण
 
-	if (tmp & 0x70) {
+	अगर (पंचांगp & 0x70) अणु
 		AUX_ERR(&aux->base, "link training failed");
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct nvkm_i2c_aux_func
-anx9805_aux_func = {
+अटल स्थिर काष्ठा nvkm_i2c_aux_func
+anx9805_aux_func = अणु
 	.xfer = anx9805_aux_xfer,
 	.lnk_ctl = anx9805_aux_lnk_ctl,
-};
+पूर्ण;
 
-static int
-anx9805_aux_new(struct nvkm_i2c_pad *base, int id, u8 drive,
-		struct nvkm_i2c_aux **pbus)
-{
-	struct anx9805_pad *pad = anx9805_pad(base);
-	struct anx9805_aux *aux;
-	int ret;
+अटल पूर्णांक
+anx9805_aux_new(काष्ठा nvkm_i2c_pad *base, पूर्णांक id, u8 drive,
+		काष्ठा nvkm_i2c_aux **pbus)
+अणु
+	काष्ठा anx9805_pad *pad = anx9805_pad(base);
+	काष्ठा anx9805_aux *aux;
+	पूर्णांक ret;
 
-	if (!(aux = kzalloc(sizeof(*aux), GFP_KERNEL)))
-		return -ENOMEM;
+	अगर (!(aux = kzalloc(माप(*aux), GFP_KERNEL)))
+		वापस -ENOMEM;
 	*pbus = &aux->base;
 	aux->pad = pad;
 
 	ret = nvkm_i2c_aux_ctor(&anx9805_aux_func, &pad->base, id, &aux->base);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	switch (pad->addr) {
-	case 0x39: aux->addr = 0x38; break;
-	case 0x3b: aux->addr = 0x3c; break;
-	default:
-		return -ENOSYS;
-	}
+	चयन (pad->addr) अणु
+	हाल 0x39: aux->addr = 0x38; अवरोध;
+	हाल 0x3b: aux->addr = 0x3c; अवरोध;
+	शेष:
+		वापस -ENOSYS;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct nvkm_i2c_pad_func
-anx9805_pad_func = {
+अटल स्थिर काष्ठा nvkm_i2c_pad_func
+anx9805_pad_func = अणु
 	.bus_new_4 = anx9805_bus_new,
 	.aux_new_6 = anx9805_aux_new,
-};
+पूर्ण;
 
-int
-anx9805_pad_new(struct nvkm_i2c_bus *bus, int id, u8 addr,
-		struct nvkm_i2c_pad **ppad)
-{
-	struct anx9805_pad *pad;
+पूर्णांक
+anx9805_pad_new(काष्ठा nvkm_i2c_bus *bus, पूर्णांक id, u8 addr,
+		काष्ठा nvkm_i2c_pad **ppad)
+अणु
+	काष्ठा anx9805_pad *pad;
 
-	if (!(pad = kzalloc(sizeof(*pad), GFP_KERNEL)))
-		return -ENOMEM;
+	अगर (!(pad = kzalloc(माप(*pad), GFP_KERNEL)))
+		वापस -ENOMEM;
 	*ppad = &pad->base;
 
 	nvkm_i2c_pad_ctor(&anx9805_pad_func, bus->pad->i2c, id, &pad->base);
 	pad->bus = bus;
 	pad->addr = addr;
-	return 0;
-}
+	वापस 0;
+पूर्ण

@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2012-16 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -23,19 +24,19 @@
  *
  */
 
-#ifndef _DCE_DCE_TRANSFORM_H_
-#define _DCE_DCE_TRANSFORM_H_
+#अगर_अघोषित _DCE_DCE_TRANSFORM_H_
+#घोषणा _DCE_DCE_TRANSFORM_H_
 
 
-#include "transform.h"
+#समावेश "transform.h"
 
-#define TO_DCE_TRANSFORM(transform)\
-	container_of(transform, struct dce_transform, base)
+#घोषणा TO_DCE_TRANSFORM(transक्रमm)\
+	container_of(transक्रमm, काष्ठा dce_transक्रमm, base)
 
-#define LB_TOTAL_NUMBER_OF_ENTRIES 1712
-#define LB_BITS_PER_ENTRY 144
+#घोषणा LB_TOTAL_NUMBER_OF_ENTRIES 1712
+#घोषणा LB_BITS_PER_ENTRY 144
 
-#define XFM_COMMON_REG_LIST_DCE_BASE(id) \
+#घोषणा XFM_COMMON_REG_LIST_DCE_BASE(id) \
 	SRI(LB_DATA_FORMAT, LB, id), \
 	SRI(GAMUT_REMAP_CONTROL, DCP, id), \
 	SRI(GAMUT_REMAP_C11_C12, DCP, id), \
@@ -94,22 +95,22 @@
 	SRI(SCL_UPDATE, SCL, id), \
 	SRI(SCL_F_SHARP_CONTROL, SCL, id)
 
-#define XFM_COMMON_REG_LIST_DCE80(id) \
+#घोषणा XFM_COMMON_REG_LIST_DCE80(id) \
 	XFM_COMMON_REG_LIST_DCE_BASE(id), \
 	SRI(DCFE_MEM_LIGHT_SLEEP_CNTL, CRTC, id)
 
-#define XFM_COMMON_REG_LIST_DCE100(id) \
+#घोषणा XFM_COMMON_REG_LIST_DCE100(id) \
 	XFM_COMMON_REG_LIST_DCE_BASE(id), \
 	SRI(DCFE_MEM_PWR_CTRL, CRTC, id), \
 	SRI(DCFE_MEM_PWR_STATUS, CRTC, id)
 
-#define XFM_COMMON_REG_LIST_DCE110(id) \
+#घोषणा XFM_COMMON_REG_LIST_DCE110(id) \
 	XFM_COMMON_REG_LIST_DCE_BASE(id), \
 	SRI(DCFE_MEM_PWR_CTRL, DCFE, id), \
 	SRI(DCFE_MEM_PWR_STATUS, DCFE, id)
 
-#if defined(CONFIG_DRM_AMD_DC_SI)
-#define XFM_COMMON_REG_LIST_DCE60_BASE(id) \
+#अगर defined(CONFIG_DRM_AMD_DC_SI)
+#घोषणा XFM_COMMON_REG_LIST_DCE60_BASE(id) \
 	SRI(DATA_FORMAT, LB, id), \
 	SRI(GAMUT_REMAP_CONTROL, DCP, id), \
 	SRI(GAMUT_REMAP_C11_C12, DCP, id), \
@@ -165,15 +166,15 @@
 	SRI(SCL_UPDATE, SCL, id), \
 	SRI(SCL_F_SHARP_CONTROL, SCL, id)
 
-#define XFM_COMMON_REG_LIST_DCE60(id) \
+#घोषणा XFM_COMMON_REG_LIST_DCE60(id) \
 	XFM_COMMON_REG_LIST_DCE60_BASE(id), \
 	SRI(DCFE_MEM_LIGHT_SLEEP_CNTL, CRTC, id)
-#endif
+#पूर्ण_अगर
 
-#define XFM_SF(reg_name, field_name, post_fix)\
+#घोषणा XFM_SF(reg_name, field_name, post_fix)\
 	.field_name = reg_name ## __ ## field_name ## post_fix
 
-#define XFM_COMMON_MASK_SH_LIST_DCE_COMMON_BASE(mask_sh) \
+#घोषणा XFM_COMMON_MASK_SH_LIST_DCE_COMMON_BASE(mask_sh) \
 	XFM_SF(OUT_CLAMP_CONTROL_B_CB, OUT_CLAMP_MIN_B_CB, mask_sh), \
 	XFM_SF(OUT_CLAMP_CONTROL_B_CB, OUT_CLAMP_MAX_B_CB, mask_sh), \
 	XFM_SF(OUT_CLAMP_CONTROL_G_Y, OUT_CLAMP_MIN_G_Y, mask_sh), \
@@ -251,13 +252,13 @@
 	XFM_SF(SCL_UPDATE, SCL_COEF_UPDATE_COMPLETE, mask_sh), \
 	XFM_SF(LB_DATA_FORMAT, ALPHA_EN, mask_sh)
 
-#define XFM_COMMON_MASK_SH_LIST_DCE80(mask_sh) \
+#घोषणा XFM_COMMON_MASK_SH_LIST_DCE80(mask_sh) \
 	XFM_COMMON_MASK_SH_LIST_DCE_COMMON_BASE(mask_sh), \
 	OPP_SF(DCFE_MEM_LIGHT_SLEEP_CNTL, REGAMMA_LUT_LIGHT_SLEEP_DIS, mask_sh),\
 	OPP_SF(DCFE_MEM_LIGHT_SLEEP_CNTL, DCP_LUT_LIGHT_SLEEP_DIS, mask_sh),\
 	OPP_SF(DCFE_MEM_LIGHT_SLEEP_CNTL, REGAMMA_LUT_MEM_PWR_STATE, mask_sh)
 
-#define XFM_COMMON_MASK_SH_LIST_DCE110(mask_sh) \
+#घोषणा XFM_COMMON_MASK_SH_LIST_DCE110(mask_sh) \
 	XFM_COMMON_MASK_SH_LIST_DCE_COMMON_BASE(mask_sh), \
 	XFM_SF(DCFE_MEM_PWR_CTRL, SCL_COEFF_MEM_PWR_DIS, mask_sh), \
 	XFM_SF(DCFE_MEM_PWR_STATUS, SCL_COEFF_MEM_PWR_STATE, mask_sh), \
@@ -266,14 +267,14 @@
 	XFM_SF(DCFE_MEM_PWR_STATUS, DCP_REGAMMA_MEM_PWR_STATE, mask_sh),\
 	XFM_SF(SCL_MODE, SCL_PSCL_EN, mask_sh)
 
-#if defined(CONFIG_DRM_AMD_DC_SI)
-#define XFM_COMMON_MASK_SH_LIST_DCE60(mask_sh) \
+#अगर defined(CONFIG_DRM_AMD_DC_SI)
+#घोषणा XFM_COMMON_MASK_SH_LIST_DCE60(mask_sh) \
 	XFM_COMMON_MASK_SH_LIST_DCE60_COMMON_BASE(mask_sh), \
 	OPP_SF(DCFE_MEM_LIGHT_SLEEP_CNTL, REGAMMA_LUT_LIGHT_SLEEP_DIS, mask_sh),\
 	OPP_SF(DCFE_MEM_LIGHT_SLEEP_CNTL, DCP_LUT_LIGHT_SLEEP_DIS, mask_sh),\
 	OPP_SF(DCFE_MEM_LIGHT_SLEEP_CNTL, REGAMMA_LUT_MEM_PWR_STATE, mask_sh)
 
-#define XFM_COMMON_MASK_SH_LIST_DCE60_COMMON_BASE(mask_sh) \
+#घोषणा XFM_COMMON_MASK_SH_LIST_DCE60_COMMON_BASE(mask_sh) \
 	XFM_SF(OUT_ROUND_CONTROL, OUT_ROUND_TRUNC_MODE, mask_sh), \
 	XFM_SF(DCP_SPATIAL_DITHER_CNTL, DCP_SPATIAL_DITHER_EN, mask_sh), \
 	XFM_SF(DCP_SPATIAL_DITHER_CNTL, DCP_SPATIAL_DITHER_MODE, mask_sh), \
@@ -341,9 +342,9 @@
 	XFM_SF(SCL_VERT_FILTER_CONTROL, SCL_V_FILTER_PICK_NEAREST, mask_sh), \
 	XFM_SF(DC_LB_MEMORY_SPLIT, DC_LB_MEMORY_CONFIG, mask_sh), \
 	XFM_SF(DC_LB_MEM_SIZE, DC_LB_MEM_SIZE, mask_sh)
-#endif
+#पूर्ण_अगर
 
-#define XFM_COMMON_MASK_SH_LIST_SOC_BASE(mask_sh) \
+#घोषणा XFM_COMMON_MASK_SH_LIST_SOC_BASE(mask_sh) \
 	XFM_SF(DCP0_OUT_CLAMP_CONTROL_B_CB, OUT_CLAMP_MIN_B_CB, mask_sh), \
 	XFM_SF(DCP0_OUT_CLAMP_CONTROL_B_CB, OUT_CLAMP_MAX_B_CB, mask_sh), \
 	XFM_SF(DCP0_OUT_CLAMP_CONTROL_G_Y, OUT_CLAMP_MIN_G_Y, mask_sh), \
@@ -426,7 +427,7 @@
 	XFM_SF(DCFE0_DCFE_MEM_PWR_STATUS, SCL_COEFF_MEM_PWR_STATE, mask_sh), \
 	XFM_SF(SCL0_SCL_MODE, SCL_PSCL_EN, mask_sh)
 
-#define XFM_REG_FIELD_LIST(type) \
+#घोषणा XFM_REG_FIELD_LIST(type) \
 	type OUT_CLAMP_MIN_B_CB; \
 	type OUT_CLAMP_MAX_B_CB; \
 	type OUT_CLAMP_MIN_G_Y; \
@@ -522,174 +523,174 @@
 	type SCL_COEF_UPDATE_COMPLETE; \
 	type ALPHA_EN
 
-struct dce_transform_shift {
-	XFM_REG_FIELD_LIST(uint8_t);
-};
+काष्ठा dce_transक्रमm_shअगरt अणु
+	XFM_REG_FIELD_LIST(uपूर्णांक8_t);
+पूर्ण;
 
-struct dce_transform_mask {
-	XFM_REG_FIELD_LIST(uint32_t);
-};
+काष्ठा dce_transक्रमm_mask अणु
+	XFM_REG_FIELD_LIST(uपूर्णांक32_t);
+पूर्ण;
 
-struct dce_transform_registers {
-#if defined(CONFIG_DRM_AMD_DC_SI)
-	uint32_t DATA_FORMAT;
-#endif
-	uint32_t LB_DATA_FORMAT;
-	uint32_t GAMUT_REMAP_CONTROL;
-	uint32_t GAMUT_REMAP_C11_C12;
-	uint32_t GAMUT_REMAP_C13_C14;
-	uint32_t GAMUT_REMAP_C21_C22;
-	uint32_t GAMUT_REMAP_C23_C24;
-	uint32_t GAMUT_REMAP_C31_C32;
-	uint32_t GAMUT_REMAP_C33_C34;
-	uint32_t OUTPUT_CSC_C11_C12;
-	uint32_t OUTPUT_CSC_C13_C14;
-	uint32_t OUTPUT_CSC_C21_C22;
-	uint32_t OUTPUT_CSC_C23_C24;
-	uint32_t OUTPUT_CSC_C31_C32;
-	uint32_t OUTPUT_CSC_C33_C34;
-	uint32_t OUTPUT_CSC_CONTROL;
-	uint32_t DCFE_MEM_LIGHT_SLEEP_CNTL;
-	uint32_t REGAMMA_CNTLA_START_CNTL;
-	uint32_t REGAMMA_CNTLA_SLOPE_CNTL;
-	uint32_t REGAMMA_CNTLA_END_CNTL1;
-	uint32_t REGAMMA_CNTLA_END_CNTL2;
-	uint32_t REGAMMA_CNTLA_REGION_0_1;
-	uint32_t REGAMMA_CNTLA_REGION_2_3;
-	uint32_t REGAMMA_CNTLA_REGION_4_5;
-	uint32_t REGAMMA_CNTLA_REGION_6_7;
-	uint32_t REGAMMA_CNTLA_REGION_8_9;
-	uint32_t REGAMMA_CNTLA_REGION_10_11;
-	uint32_t REGAMMA_CNTLA_REGION_12_13;
-	uint32_t REGAMMA_CNTLA_REGION_14_15;
-	uint32_t REGAMMA_LUT_WRITE_EN_MASK;
-	uint32_t REGAMMA_LUT_INDEX;
-	uint32_t REGAMMA_LUT_DATA;
-	uint32_t REGAMMA_CONTROL;
-	uint32_t DENORM_CONTROL;
-	uint32_t DCP_SPATIAL_DITHER_CNTL;
-	uint32_t OUT_ROUND_CONTROL;
-	uint32_t OUT_CLAMP_CONTROL_R_CR;
-	uint32_t OUT_CLAMP_CONTROL_G_Y;
-	uint32_t OUT_CLAMP_CONTROL_B_CB;
-	uint32_t SCL_MODE;
-	uint32_t SCL_TAP_CONTROL;
-	uint32_t SCL_CONTROL;
-	uint32_t SCL_BYPASS_CONTROL;
-	uint32_t EXT_OVERSCAN_LEFT_RIGHT;
-	uint32_t EXT_OVERSCAN_TOP_BOTTOM;
-	uint32_t SCL_VERT_FILTER_CONTROL;
-	uint32_t SCL_HORZ_FILTER_CONTROL;
-	uint32_t DCFE_MEM_PWR_CTRL;
-	uint32_t DCFE_MEM_PWR_STATUS;
-	uint32_t SCL_COEF_RAM_SELECT;
-	uint32_t SCL_COEF_RAM_TAP_DATA;
-	uint32_t VIEWPORT_START;
-	uint32_t VIEWPORT_SIZE;
-	uint32_t SCL_HORZ_FILTER_SCALE_RATIO;
-	uint32_t SCL_VERT_FILTER_SCALE_RATIO;
-	uint32_t SCL_HORZ_FILTER_INIT;
-#if defined(CONFIG_DRM_AMD_DC_SI)
-	uint32_t SCL_HORZ_FILTER_INIT_RGB_LUMA;
-	uint32_t SCL_HORZ_FILTER_INIT_CHROMA;
-#endif
-	uint32_t SCL_VERT_FILTER_INIT;
-	uint32_t SCL_AUTOMATIC_MODE_CONTROL;
-#if defined(CONFIG_DRM_AMD_DC_SI)
-	uint32_t DC_LB_MEMORY_SPLIT;
-	uint32_t DC_LB_MEM_SIZE;
-#endif
-	uint32_t LB_MEMORY_CTRL;
-	uint32_t SCL_UPDATE;
-	uint32_t SCL_F_SHARP_CONTROL;
-};
+काष्ठा dce_transक्रमm_रेजिस्टरs अणु
+#अगर defined(CONFIG_DRM_AMD_DC_SI)
+	uपूर्णांक32_t DATA_FORMAT;
+#पूर्ण_अगर
+	uपूर्णांक32_t LB_DATA_FORMAT;
+	uपूर्णांक32_t GAMUT_REMAP_CONTROL;
+	uपूर्णांक32_t GAMUT_REMAP_C11_C12;
+	uपूर्णांक32_t GAMUT_REMAP_C13_C14;
+	uपूर्णांक32_t GAMUT_REMAP_C21_C22;
+	uपूर्णांक32_t GAMUT_REMAP_C23_C24;
+	uपूर्णांक32_t GAMUT_REMAP_C31_C32;
+	uपूर्णांक32_t GAMUT_REMAP_C33_C34;
+	uपूर्णांक32_t OUTPUT_CSC_C11_C12;
+	uपूर्णांक32_t OUTPUT_CSC_C13_C14;
+	uपूर्णांक32_t OUTPUT_CSC_C21_C22;
+	uपूर्णांक32_t OUTPUT_CSC_C23_C24;
+	uपूर्णांक32_t OUTPUT_CSC_C31_C32;
+	uपूर्णांक32_t OUTPUT_CSC_C33_C34;
+	uपूर्णांक32_t OUTPUT_CSC_CONTROL;
+	uपूर्णांक32_t DCFE_MEM_LIGHT_SLEEP_CNTL;
+	uपूर्णांक32_t REGAMMA_CNTLA_START_CNTL;
+	uपूर्णांक32_t REGAMMA_CNTLA_SLOPE_CNTL;
+	uपूर्णांक32_t REGAMMA_CNTLA_END_CNTL1;
+	uपूर्णांक32_t REGAMMA_CNTLA_END_CNTL2;
+	uपूर्णांक32_t REGAMMA_CNTLA_REGION_0_1;
+	uपूर्णांक32_t REGAMMA_CNTLA_REGION_2_3;
+	uपूर्णांक32_t REGAMMA_CNTLA_REGION_4_5;
+	uपूर्णांक32_t REGAMMA_CNTLA_REGION_6_7;
+	uपूर्णांक32_t REGAMMA_CNTLA_REGION_8_9;
+	uपूर्णांक32_t REGAMMA_CNTLA_REGION_10_11;
+	uपूर्णांक32_t REGAMMA_CNTLA_REGION_12_13;
+	uपूर्णांक32_t REGAMMA_CNTLA_REGION_14_15;
+	uपूर्णांक32_t REGAMMA_LUT_WRITE_EN_MASK;
+	uपूर्णांक32_t REGAMMA_LUT_INDEX;
+	uपूर्णांक32_t REGAMMA_LUT_DATA;
+	uपूर्णांक32_t REGAMMA_CONTROL;
+	uपूर्णांक32_t DENORM_CONTROL;
+	uपूर्णांक32_t DCP_SPATIAL_DITHER_CNTL;
+	uपूर्णांक32_t OUT_ROUND_CONTROL;
+	uपूर्णांक32_t OUT_CLAMP_CONTROL_R_CR;
+	uपूर्णांक32_t OUT_CLAMP_CONTROL_G_Y;
+	uपूर्णांक32_t OUT_CLAMP_CONTROL_B_CB;
+	uपूर्णांक32_t SCL_MODE;
+	uपूर्णांक32_t SCL_TAP_CONTROL;
+	uपूर्णांक32_t SCL_CONTROL;
+	uपूर्णांक32_t SCL_BYPASS_CONTROL;
+	uपूर्णांक32_t EXT_OVERSCAN_LEFT_RIGHT;
+	uपूर्णांक32_t EXT_OVERSCAN_TOP_BOTTOM;
+	uपूर्णांक32_t SCL_VERT_FILTER_CONTROL;
+	uपूर्णांक32_t SCL_HORZ_FILTER_CONTROL;
+	uपूर्णांक32_t DCFE_MEM_PWR_CTRL;
+	uपूर्णांक32_t DCFE_MEM_PWR_STATUS;
+	uपूर्णांक32_t SCL_COEF_RAM_SELECT;
+	uपूर्णांक32_t SCL_COEF_RAM_TAP_DATA;
+	uपूर्णांक32_t VIEWPORT_START;
+	uपूर्णांक32_t VIEWPORT_SIZE;
+	uपूर्णांक32_t SCL_HORZ_FILTER_SCALE_RATIO;
+	uपूर्णांक32_t SCL_VERT_FILTER_SCALE_RATIO;
+	uपूर्णांक32_t SCL_HORZ_FILTER_INIT;
+#अगर defined(CONFIG_DRM_AMD_DC_SI)
+	uपूर्णांक32_t SCL_HORZ_FILTER_INIT_RGB_LUMA;
+	uपूर्णांक32_t SCL_HORZ_FILTER_INIT_CHROMA;
+#पूर्ण_अगर
+	uपूर्णांक32_t SCL_VERT_FILTER_INIT;
+	uपूर्णांक32_t SCL_AUTOMATIC_MODE_CONTROL;
+#अगर defined(CONFIG_DRM_AMD_DC_SI)
+	uपूर्णांक32_t DC_LB_MEMORY_SPLIT;
+	uपूर्णांक32_t DC_LB_MEM_SIZE;
+#पूर्ण_अगर
+	uपूर्णांक32_t LB_MEMORY_CTRL;
+	uपूर्णांक32_t SCL_UPDATE;
+	uपूर्णांक32_t SCL_F_SHARP_CONTROL;
+पूर्ण;
 
-struct init_int_and_frac {
-	uint32_t integer;
-	uint32_t fraction;
-};
+काष्ठा init_पूर्णांक_and_frac अणु
+	uपूर्णांक32_t पूर्णांकeger;
+	uपूर्णांक32_t fraction;
+पूर्ण;
 
-struct scl_ratios_inits {
-	uint32_t h_int_scale_ratio;
-	uint32_t v_int_scale_ratio;
-	struct init_int_and_frac h_init;
-	struct init_int_and_frac v_init;
-};
+काष्ठा scl_ratios_inits अणु
+	uपूर्णांक32_t h_पूर्णांक_scale_ratio;
+	uपूर्णांक32_t v_पूर्णांक_scale_ratio;
+	काष्ठा init_पूर्णांक_and_frac h_init;
+	काष्ठा init_पूर्णांक_and_frac v_init;
+पूर्ण;
 
-#if defined(CONFIG_DRM_AMD_DC_SI)
-struct sclh_ratios_inits {
-	uint32_t h_int_scale_ratio;
-	uint32_t v_int_scale_ratio;
-	struct init_int_and_frac h_init_luma;
-	struct init_int_and_frac h_init_chroma;
-	struct init_int_and_frac v_init;
-};
-#endif
+#अगर defined(CONFIG_DRM_AMD_DC_SI)
+काष्ठा sclh_ratios_inits अणु
+	uपूर्णांक32_t h_पूर्णांक_scale_ratio;
+	uपूर्णांक32_t v_पूर्णांक_scale_ratio;
+	काष्ठा init_पूर्णांक_and_frac h_init_luma;
+	काष्ठा init_पूर्णांक_and_frac h_init_chroma;
+	काष्ठा init_पूर्णांक_and_frac v_init;
+पूर्ण;
+#पूर्ण_अगर
 
-enum ram_filter_type {
+क्रमागत ram_filter_type अणु
 	FILTER_TYPE_RGB_Y_VERTICAL	= 0, /* 0 - RGB/Y Vertical filter */
 	FILTER_TYPE_CBCR_VERTICAL	= 1, /* 1 - CbCr  Vertical filter */
 	FILTER_TYPE_RGB_Y_HORIZONTAL	= 2, /* 1 - RGB/Y Horizontal filter */
 	FILTER_TYPE_CBCR_HORIZONTAL	= 3, /* 3 - CbCr  Horizontal filter */
 	FILTER_TYPE_ALPHA_VERTICAL	= 4, /* 4 - Alpha Vertical filter. */
 	FILTER_TYPE_ALPHA_HORIZONTAL	= 5, /* 5 - Alpha Horizontal filter. */
-};
+पूर्ण;
 
-struct dce_transform {
-	struct transform base;
-	const struct dce_transform_registers *regs;
-	const struct dce_transform_shift *xfm_shift;
-	const struct dce_transform_mask *xfm_mask;
+काष्ठा dce_transक्रमm अणु
+	काष्ठा transक्रमm base;
+	स्थिर काष्ठा dce_transक्रमm_रेजिस्टरs *regs;
+	स्थिर काष्ठा dce_transक्रमm_shअगरt *xfm_shअगरt;
+	स्थिर काष्ठा dce_transक्रमm_mask *xfm_mask;
 
-	const uint16_t *filter_v;
-	const uint16_t *filter_h;
-	const uint16_t *filter_v_c;
-	const uint16_t *filter_h_c;
-	int lb_pixel_depth_supported;
-	int lb_memory_size;
-	int lb_bits_per_entry;
+	स्थिर uपूर्णांक16_t *filter_v;
+	स्थिर uपूर्णांक16_t *filter_h;
+	स्थिर uपूर्णांक16_t *filter_v_c;
+	स्थिर uपूर्णांक16_t *filter_h_c;
+	पूर्णांक lb_pixel_depth_supported;
+	पूर्णांक lb_memory_size;
+	पूर्णांक lb_bits_per_entry;
 	bool prescaler_on;
-};
+पूर्ण;
 
-void dce_transform_construct(struct dce_transform *xfm_dce,
-	struct dc_context *ctx,
-	uint32_t inst,
-	const struct dce_transform_registers *regs,
-	const struct dce_transform_shift *xfm_shift,
-	const struct dce_transform_mask *xfm_mask);
+व्योम dce_transक्रमm_स्थिरruct(काष्ठा dce_transक्रमm *xfm_dce,
+	काष्ठा dc_context *ctx,
+	uपूर्णांक32_t inst,
+	स्थिर काष्ठा dce_transक्रमm_रेजिस्टरs *regs,
+	स्थिर काष्ठा dce_transक्रमm_shअगरt *xfm_shअगरt,
+	स्थिर काष्ठा dce_transक्रमm_mask *xfm_mask);
 
-#if defined(CONFIG_DRM_AMD_DC_SI)
-void dce60_transform_construct(struct dce_transform *xfm_dce,
-	struct dc_context *ctx,
-	uint32_t inst,
-	const struct dce_transform_registers *regs,
-	const struct dce_transform_shift *xfm_shift,
-	const struct dce_transform_mask *xfm_mask);
-#endif
+#अगर defined(CONFIG_DRM_AMD_DC_SI)
+व्योम dce60_transक्रमm_स्थिरruct(काष्ठा dce_transक्रमm *xfm_dce,
+	काष्ठा dc_context *ctx,
+	uपूर्णांक32_t inst,
+	स्थिर काष्ठा dce_transक्रमm_रेजिस्टरs *regs,
+	स्थिर काष्ठा dce_transक्रमm_shअगरt *xfm_shअगरt,
+	स्थिर काष्ठा dce_transक्रमm_mask *xfm_mask);
+#पूर्ण_अगर
 
-bool dce_transform_get_optimal_number_of_taps(
-	struct transform *xfm,
-	struct scaler_data *scl_data,
-	const struct scaling_taps *in_taps);
+bool dce_transक्रमm_get_optimal_number_of_taps(
+	काष्ठा transक्रमm *xfm,
+	काष्ठा scaler_data *scl_data,
+	स्थिर काष्ठा scaling_taps *in_taps);
 
-void dce110_opp_set_csc_adjustment(
-	struct transform *xfm,
-	const struct out_csc_color_matrix *tbl_entry);
+व्योम dce110_opp_set_csc_adjusपंचांगent(
+	काष्ठा transक्रमm *xfm,
+	स्थिर काष्ठा out_csc_color_matrix *tbl_entry);
 
-void dce110_opp_set_csc_default(
-	struct transform *xfm,
-	const struct default_adjustment *default_adjust);
+व्योम dce110_opp_set_csc_शेष(
+	काष्ठा transक्रमm *xfm,
+	स्थिर काष्ठा शेष_adjusपंचांगent *शेष_adjust);
 
 /* REGAMMA RELATED */
-void dce110_opp_power_on_regamma_lut(
-	struct transform *xfm,
-	bool power_on);
+व्योम dce110_opp_घातer_on_regamma_lut(
+	काष्ठा transक्रमm *xfm,
+	bool घातer_on);
 
-void dce110_opp_program_regamma_pwl(
-	struct transform *xfm,
-	const struct pwl_params *params);
+व्योम dce110_opp_program_regamma_pwl(
+	काष्ठा transक्रमm *xfm,
+	स्थिर काष्ठा pwl_params *params);
 
-void dce110_opp_set_regamma_mode(struct transform *xfm,
-		enum opp_regamma mode);
+व्योम dce110_opp_set_regamma_mode(काष्ठा transक्रमm *xfm,
+		क्रमागत opp_regamma mode);
 
-#endif /* _DCE_DCE_TRANSFORM_H_ */
+#पूर्ण_अगर /* _DCE_DCE_TRANSFORM_H_ */

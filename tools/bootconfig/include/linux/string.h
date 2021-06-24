@@ -1,32 +1,33 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _SKC_LINUX_STRING_H
-#define _SKC_LINUX_STRING_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _SKC_LINUX_STRING_H
+#घोषणा _SKC_LINUX_STRING_H
 
-#include <string.h>
+#समावेश <माला.स>
 
 /* Copied from lib/string.c */
-static inline char *skip_spaces(const char *str)
-{
-	while (isspace(*str))
+अटल अंतरभूत अक्षर *skip_spaces(स्थिर अक्षर *str)
+अणु
+	जबतक (है_खाली(*str))
 		++str;
-	return (char *)str;
-}
+	वापस (अक्षर *)str;
+पूर्ण
 
-static inline char *strim(char *s)
-{
-	size_t size;
-	char *end;
+अटल अंतरभूत अक्षर *strim(अक्षर *s)
+अणु
+	माप_प्रकार size;
+	अक्षर *end;
 
-	size = strlen(s);
-	if (!size)
-		return s;
+	size = म_माप(s);
+	अगर (!size)
+		वापस s;
 
 	end = s + size - 1;
-	while (end >= s && isspace(*end))
+	जबतक (end >= s && है_खाली(*end))
 		end--;
 	*(end + 1) = '\0';
 
-	return skip_spaces(s);
-}
+	वापस skip_spaces(s);
+पूर्ण
 
-#endif
+#पूर्ण_अगर

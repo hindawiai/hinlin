@@ -1,24 +1,25 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- * Copyright (C) 2006 Atmark Techno, Inc.
+ * Copyright (C) 2006 Aपंचांगark Techno, Inc.
  */
-#ifndef _ASM_MICROBLAZE_PTRACE_H
-#define _ASM_MICROBLAZE_PTRACE_H
+#अगर_अघोषित _ASM_MICROBLAZE_PTRACE_H
+#घोषणा _ASM_MICROBLAZE_PTRACE_H
 
-#include <uapi/asm/ptrace.h>
+#समावेश <uapi/यंत्र/ptrace.h>
 
-#ifndef __ASSEMBLY__
-#define kernel_mode(regs)		((regs)->pt_mode)
-#define user_mode(regs)			(!kernel_mode(regs))
+#अगर_अघोषित __ASSEMBLY__
+#घोषणा kernel_mode(regs)		((regs)->pt_mode)
+#घोषणा user_mode(regs)			(!kernel_mode(regs))
 
-#define instruction_pointer(regs)	((regs)->pc)
-#define profile_pc(regs)		instruction_pointer(regs)
-#define user_stack_pointer(regs)	((regs)->r1)
+#घोषणा inकाष्ठाion_poपूर्णांकer(regs)	((regs)->pc)
+#घोषणा profile_pc(regs)		inकाष्ठाion_poपूर्णांकer(regs)
+#घोषणा user_stack_poपूर्णांकer(regs)	((regs)->r1)
 
-static inline long regs_return_value(struct pt_regs *regs)
-{
-	return regs->r3;
-}
+अटल अंतरभूत दीर्घ regs_वापस_value(काष्ठा pt_regs *regs)
+अणु
+	वापस regs->r3;
+पूर्ण
 
-#endif /* __ASSEMBLY__ */
-#endif /* _ASM_MICROBLAZE_PTRACE_H */
+#पूर्ण_अगर /* __ASSEMBLY__ */
+#पूर्ण_अगर /* _ASM_MICROBLAZE_PTRACE_H */

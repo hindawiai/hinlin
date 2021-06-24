@@ -1,161 +1,162 @@
+<शैली गुरु>
 /*
  * Copyright (c) 2014, Lorenzo Bianconi <lorenzo.bianconi83@gmail.com>
  *
- * Permission to use, copy, modify, and/or distribute this software for any
+ * Permission to use, copy, modअगरy, and/or distribute this software क्रम any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
  * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
  * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
- * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * ANY SPECIAL, सूचीECT, INसूचीECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
  * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include "ath9k.h"
-#include "hw.h"
-#include "dynack.h"
+#समावेश "ath9k.h"
+#समावेश "hw.h"
+#समावेश "dynack.h"
 
-#define COMPUTE_TO		(5 * HZ)
-#define LATEACK_DELAY		(10 * HZ)
-#define EWMA_LEVEL		96
-#define EWMA_DIV		128
+#घोषणा COMPUTE_TO		(5 * HZ)
+#घोषणा LATEACK_DELAY		(10 * HZ)
+#घोषणा EWMA_LEVEL		96
+#घोषणा EWMA_DIV		128
 
 /**
- * ath_dynack_get_max_to - set max timeout according to channel width
+ * ath_dynack_get_max_to - set max समयout according to channel width
  * @ah: ath hw
  *
  */
-static u32 ath_dynack_get_max_to(struct ath_hw *ah)
-{
-	const struct ath9k_channel *chan = ah->curchan;
+अटल u32 ath_dynack_get_max_to(काष्ठा ath_hw *ah)
+अणु
+	स्थिर काष्ठा ath9k_channel *chan = ah->curchan;
 
-	if (!chan)
-		return 300;
+	अगर (!chan)
+		वापस 300;
 
-	if (IS_CHAN_HT40(chan))
-		return 300;
-	if (IS_CHAN_HALF_RATE(chan))
-		return 750;
-	if (IS_CHAN_QUARTER_RATE(chan))
-		return 1500;
-	return 600;
-}
+	अगर (IS_CHAN_HT40(chan))
+		वापस 300;
+	अगर (IS_CHAN_HALF_RATE(chan))
+		वापस 750;
+	अगर (IS_CHAN_QUARTER_RATE(chan))
+		वापस 1500;
+	वापस 600;
+पूर्ण
 
 /*
  * ath_dynack_ewma - EWMA (Exponentially Weighted Moving Average) calculation
  */
-static inline int ath_dynack_ewma(int old, int new)
-{
-	if (old > 0)
-		return (new * (EWMA_DIV - EWMA_LEVEL) +
+अटल अंतरभूत पूर्णांक ath_dynack_ewma(पूर्णांक old, पूर्णांक new)
+अणु
+	अगर (old > 0)
+		वापस (new * (EWMA_DIV - EWMA_LEVEL) +
 			old * EWMA_LEVEL) / EWMA_DIV;
-	else
-		return new;
-}
+	अन्यथा
+		वापस new;
+पूर्ण
 
 /**
- * ath_dynack_get_sifs - get sifs time based on phy used
+ * ath_dynack_get_sअगरs - get sअगरs समय based on phy used
  * @ah: ath hw
  * @phy: phy used
  *
  */
-static inline u32 ath_dynack_get_sifs(struct ath_hw *ah, int phy)
-{
-	u32 sifs = CCK_SIFS_TIME;
+अटल अंतरभूत u32 ath_dynack_get_sअगरs(काष्ठा ath_hw *ah, पूर्णांक phy)
+अणु
+	u32 sअगरs = CCK_SIFS_TIME;
 
-	if (phy == WLAN_RC_PHY_OFDM) {
-		if (IS_CHAN_QUARTER_RATE(ah->curchan))
-			sifs = OFDM_SIFS_TIME_QUARTER;
-		else if (IS_CHAN_HALF_RATE(ah->curchan))
-			sifs = OFDM_SIFS_TIME_HALF;
-		else
-			sifs = OFDM_SIFS_TIME;
-	}
-	return sifs;
-}
+	अगर (phy == WLAN_RC_PHY_OFDM) अणु
+		अगर (IS_CHAN_QUARTER_RATE(ah->curchan))
+			sअगरs = OFDM_SIFS_TIME_QUARTER;
+		अन्यथा अगर (IS_CHAN_HALF_RATE(ah->curchan))
+			sअगरs = OFDM_SIFS_TIME_HALF;
+		अन्यथा
+			sअगरs = OFDM_SIFS_TIME;
+	पूर्ण
+	वापस sअगरs;
+पूर्ण
 
 /**
  * ath_dynack_bssidmask - filter out ACK frames based on BSSID mask
  * @ah: ath hw
  * @mac: receiver address
  */
-static inline bool ath_dynack_bssidmask(struct ath_hw *ah, const u8 *mac)
-{
-	int i;
-	struct ath_common *common = ath9k_hw_common(ah);
+अटल अंतरभूत bool ath_dynack_bssidmask(काष्ठा ath_hw *ah, स्थिर u8 *mac)
+अणु
+	पूर्णांक i;
+	काष्ठा ath_common *common = ath9k_hw_common(ah);
 
-	for (i = 0; i < ETH_ALEN; i++) {
-		if ((common->macaddr[i] & common->bssidmask[i]) !=
+	क्रम (i = 0; i < ETH_ALEN; i++) अणु
+		अगर ((common->macaddr[i] & common->bssidmask[i]) !=
 		    (mac[i] & common->bssidmask[i]))
-			return false;
-	}
+			वापस false;
+	पूर्ण
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
 /**
- * ath_dynack_set_timeout - configure timeouts/slottime registers
+ * ath_dynack_set_समयout - configure समयouts/slotसमय रेजिस्टरs
  * @ah: ath hw
- * @to: timeout value
+ * @to: समयout value
  *
  */
-static void ath_dynack_set_timeout(struct ath_hw *ah, int to)
-{
-	struct ath_common *common = ath9k_hw_common(ah);
-	int slottime = (to - 3) / 2;
+अटल व्योम ath_dynack_set_समयout(काष्ठा ath_hw *ah, पूर्णांक to)
+अणु
+	काष्ठा ath_common *common = ath9k_hw_common(ah);
+	पूर्णांक slotसमय = (to - 3) / 2;
 
 	ath_dbg(common, DYNACK, "ACK timeout %u slottime %u\n",
-		to, slottime);
-	ath9k_hw_setslottime(ah, slottime);
-	ath9k_hw_set_ack_timeout(ah, to);
-	ath9k_hw_set_cts_timeout(ah, to);
-}
+		to, slotसमय);
+	ath9k_hw_setslotसमय(ah, slotसमय);
+	ath9k_hw_set_ack_समयout(ah, to);
+	ath9k_hw_set_cts_समयout(ah, to);
+पूर्ण
 
 /**
- * ath_dynack_compute_ackto - compute ACK timeout as the maximum STA timeout
+ * ath_dynack_compute_ackto - compute ACK समयout as the maximum STA समयout
  * @ah: ath hw
  *
- * should be called while holding qlock
+ * should be called जबतक holding qlock
  */
-static void ath_dynack_compute_ackto(struct ath_hw *ah)
-{
-	struct ath_dynack *da = &ah->dynack;
-	struct ath_node *an;
-	int to = 0;
+अटल व्योम ath_dynack_compute_ackto(काष्ठा ath_hw *ah)
+अणु
+	काष्ठा ath_dynack *da = &ah->dynack;
+	काष्ठा ath_node *an;
+	पूर्णांक to = 0;
 
-	list_for_each_entry(an, &da->nodes, list)
-		if (an->ackto > to)
+	list_क्रम_each_entry(an, &da->nodes, list)
+		अगर (an->ackto > to)
 			to = an->ackto;
 
-	if (to && da->ackto != to) {
-		ath_dynack_set_timeout(ah, to);
+	अगर (to && da->ackto != to) अणु
+		ath_dynack_set_समयout(ah, to);
 		da->ackto = to;
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
- * ath_dynack_compute_to - compute STA ACK timeout
+ * ath_dynack_compute_to - compute STA ACK समयout
  * @ah: ath hw
  *
- * should be called while holding qlock
+ * should be called जबतक holding qlock
  */
-static void ath_dynack_compute_to(struct ath_hw *ah)
-{
-	struct ath_dynack *da = &ah->dynack;
+अटल व्योम ath_dynack_compute_to(काष्ठा ath_hw *ah)
+अणु
+	काष्ठा ath_dynack *da = &ah->dynack;
 	u32 ackto, ack_ts, max_to;
-	struct ieee80211_sta *sta;
-	struct ts_info *st_ts;
-	struct ath_node *an;
+	काष्ठा ieee80211_sta *sta;
+	काष्ठा ts_info *st_ts;
+	काष्ठा ath_node *an;
 	u8 *dst, *src;
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 
 	max_to = ath_dynack_get_max_to(ah);
-	while (da->st_rbf.h_rb != da->st_rbf.t_rb &&
-	       da->ack_rbf.h_rb != da->ack_rbf.t_rb) {
+	जबतक (da->st_rbf.h_rb != da->st_rbf.t_rb &&
+	       da->ack_rbf.h_rb != da->ack_rbf.t_rb) अणु
 		ack_ts = da->ack_rbf.tstamp[da->ack_rbf.h_rb];
 		st_ts = &da->st_rbf.ts[da->st_rbf.h_rb];
 		dst = da->st_rbf.addr[da->st_rbf.h_rb].h_dest;
@@ -166,111 +167,111 @@ static void ath_dynack_compute_to(struct ath_hw *ah)
 			ack_ts, st_ts->tstamp, st_ts->dur,
 			da->ack_rbf.h_rb, da->st_rbf.h_rb);
 
-		if (ack_ts > st_ts->tstamp + st_ts->dur) {
+		अगर (ack_ts > st_ts->tstamp + st_ts->dur) अणु
 			ackto = ack_ts - st_ts->tstamp - st_ts->dur;
 
-			if (ackto < max_to) {
-				sta = ieee80211_find_sta_by_ifaddr(ah->hw, dst,
+			अगर (ackto < max_to) अणु
+				sta = ieee80211_find_sta_by_अगरaddr(ah->hw, dst,
 								   src);
-				if (sta) {
-					an = (struct ath_node *)sta->drv_priv;
+				अगर (sta) अणु
+					an = (काष्ठा ath_node *)sta->drv_priv;
 					an->ackto = ath_dynack_ewma(an->ackto,
 								    ackto);
 					ath_dbg(ath9k_hw_common(ah), DYNACK,
 						"%pM to %d [%u]\n", dst,
 						an->ackto, ackto);
-					if (time_is_before_jiffies(da->lto)) {
+					अगर (समय_is_beक्रमe_jअगरfies(da->lto)) अणु
 						ath_dynack_compute_ackto(ah);
-						da->lto = jiffies + COMPUTE_TO;
-					}
-				}
+						da->lto = jअगरfies + COMPUTE_TO;
+					पूर्ण
+				पूर्ण
 				INCR(da->ack_rbf.h_rb, ATH_DYN_BUF);
-			}
+			पूर्ण
 			INCR(da->st_rbf.h_rb, ATH_DYN_BUF);
-		} else {
+		पूर्ण अन्यथा अणु
 			INCR(da->ack_rbf.h_rb, ATH_DYN_BUF);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	rcu_read_unlock();
-}
+	rcu_पढ़ो_unlock();
+पूर्ण
 
 /**
- * ath_dynack_sample_tx_ts - status timestamp sampling method
+ * ath_dynack_sample_tx_ts - status बारtamp sampling method
  * @ah: ath hw
  * @skb: socket buffer
  * @ts: tx status info
- * @sta: station pointer
+ * @sta: station poपूर्णांकer
  *
  */
-void ath_dynack_sample_tx_ts(struct ath_hw *ah, struct sk_buff *skb,
-			     struct ath_tx_status *ts,
-			     struct ieee80211_sta *sta)
-{
-	struct ieee80211_hdr *hdr;
-	struct ath_dynack *da = &ah->dynack;
-	struct ath_common *common = ath9k_hw_common(ah);
-	struct ieee80211_tx_info *info = IEEE80211_SKB_CB(skb);
+व्योम ath_dynack_sample_tx_ts(काष्ठा ath_hw *ah, काष्ठा sk_buff *skb,
+			     काष्ठा ath_tx_status *ts,
+			     काष्ठा ieee80211_sta *sta)
+अणु
+	काष्ठा ieee80211_hdr *hdr;
+	काष्ठा ath_dynack *da = &ah->dynack;
+	काष्ठा ath_common *common = ath9k_hw_common(ah);
+	काष्ठा ieee80211_tx_info *info = IEEE80211_SKB_CB(skb);
 	u32 dur = ts->duration;
 	u8 ridx;
 
-	if (!da->enabled || (info->flags & IEEE80211_TX_CTL_NO_ACK))
-		return;
+	अगर (!da->enabled || (info->flags & IEEE80211_TX_CTL_NO_ACK))
+		वापस;
 
 	spin_lock_bh(&da->qlock);
 
-	hdr = (struct ieee80211_hdr *)skb->data;
+	hdr = (काष्ठा ieee80211_hdr *)skb->data;
 
 	/* late ACK */
-	if (ts->ts_status & ATH9K_TXERR_XRETRY) {
-		if (ieee80211_is_assoc_req(hdr->frame_control) ||
+	अगर (ts->ts_status & ATH9K_TXERR_XRETRY) अणु
+		अगर (ieee80211_is_assoc_req(hdr->frame_control) ||
 		    ieee80211_is_assoc_resp(hdr->frame_control) ||
-		    ieee80211_is_auth(hdr->frame_control)) {
+		    ieee80211_is_auth(hdr->frame_control)) अणु
 			u32 max_to = ath_dynack_get_max_to(ah);
 
 			ath_dbg(common, DYNACK, "late ack\n");
-			ath_dynack_set_timeout(ah, max_to);
-			if (sta) {
-				struct ath_node *an;
+			ath_dynack_set_समयout(ah, max_to);
+			अगर (sta) अणु
+				काष्ठा ath_node *an;
 
-				an = (struct ath_node *)sta->drv_priv;
+				an = (काष्ठा ath_node *)sta->drv_priv;
 				an->ackto = -1;
-			}
-			da->lto = jiffies + LATEACK_DELAY;
-		}
+			पूर्ण
+			da->lto = jअगरfies + LATEACK_DELAY;
+		पूर्ण
 
 		spin_unlock_bh(&da->qlock);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	ridx = ts->ts_rateindex;
 
 	da->st_rbf.ts[da->st_rbf.t_rb].tstamp = ts->ts_tstamp;
 
-	/* ether_addr_copy() gives a false warning on gcc-10 so use memcpy()
+	/* ether_addr_copy() gives a false warning on gcc-10 so use स_नकल()
 	 * https://gcc.gnu.org/bugzilla/show_bug.cgi?id=97490
 	 */
-	memcpy(da->st_rbf.addr[da->st_rbf.t_rb].h_dest, hdr->addr1, ETH_ALEN);
-	memcpy(da->st_rbf.addr[da->st_rbf.t_rb].h_src, hdr->addr2, ETH_ALEN);
+	स_नकल(da->st_rbf.addr[da->st_rbf.t_rb].h_dest, hdr->addr1, ETH_ALEN);
+	स_नकल(da->st_rbf.addr[da->st_rbf.t_rb].h_src, hdr->addr2, ETH_ALEN);
 
-	if (!(info->status.rates[ridx].flags & IEEE80211_TX_RC_MCS)) {
-		const struct ieee80211_rate *rate;
-		struct ieee80211_tx_rate *rates = info->status.rates;
+	अगर (!(info->status.rates[ridx].flags & IEEE80211_TX_RC_MCS)) अणु
+		स्थिर काष्ठा ieee80211_rate *rate;
+		काष्ठा ieee80211_tx_rate *rates = info->status.rates;
 		u32 phy;
 
 		rate = &common->sbands[info->band].bitrates[rates[ridx].idx];
-		if (info->band == NL80211_BAND_2GHZ &&
+		अगर (info->band == NL80211_BAND_2GHZ &&
 		    !(rate->flags & IEEE80211_RATE_ERP_G))
 			phy = WLAN_RC_PHY_CCK;
-		else
+		अन्यथा
 			phy = WLAN_RC_PHY_OFDM;
 
-		dur -= ath_dynack_get_sifs(ah, phy);
-	}
+		dur -= ath_dynack_get_sअगरs(ah, phy);
+	पूर्ण
 	da->st_rbf.ts[da->st_rbf.t_rb].dur = dur;
 
 	INCR(da->st_rbf.t_rb, ATH_DYN_BUF);
-	if (da->st_rbf.t_rb == da->st_rbf.h_rb)
+	अगर (da->st_rbf.t_rb == da->st_rbf.h_rb)
 		INCR(da->st_rbf.h_rb, ATH_DYN_BUF);
 
 	ath_dbg(common, DYNACK, "{%pM} tx sample %u [dur %u][h %u-t %u]\n",
@@ -280,31 +281,31 @@ void ath_dynack_sample_tx_ts(struct ath_hw *ah, struct sk_buff *skb,
 	ath_dynack_compute_to(ah);
 
 	spin_unlock_bh(&da->qlock);
-}
+पूर्ण
 EXPORT_SYMBOL(ath_dynack_sample_tx_ts);
 
 /**
- * ath_dynack_sample_ack_ts - ACK timestamp sampling method
+ * ath_dynack_sample_ack_ts - ACK बारtamp sampling method
  * @ah: ath hw
  * @skb: socket buffer
- * @ts: rx timestamp
+ * @ts: rx बारtamp
  *
  */
-void ath_dynack_sample_ack_ts(struct ath_hw *ah, struct sk_buff *skb,
+व्योम ath_dynack_sample_ack_ts(काष्ठा ath_hw *ah, काष्ठा sk_buff *skb,
 			      u32 ts)
-{
-	struct ath_dynack *da = &ah->dynack;
-	struct ath_common *common = ath9k_hw_common(ah);
-	struct ieee80211_hdr *hdr = (struct ieee80211_hdr *)skb->data;
+अणु
+	काष्ठा ath_dynack *da = &ah->dynack;
+	काष्ठा ath_common *common = ath9k_hw_common(ah);
+	काष्ठा ieee80211_hdr *hdr = (काष्ठा ieee80211_hdr *)skb->data;
 
-	if (!da->enabled || !ath_dynack_bssidmask(ah, hdr->addr1))
-		return;
+	अगर (!da->enabled || !ath_dynack_bssidmask(ah, hdr->addr1))
+		वापस;
 
 	spin_lock_bh(&da->qlock);
 	da->ack_rbf.tstamp[da->ack_rbf.t_rb] = ts;
 
 	INCR(da->ack_rbf.t_rb, ATH_DYN_BUF);
-	if (da->ack_rbf.t_rb == da->ack_rbf.h_rb)
+	अगर (da->ack_rbf.t_rb == da->ack_rbf.h_rb)
 		INCR(da->ack_rbf.h_rb, ATH_DYN_BUF);
 
 	ath_dbg(common, DYNACK, "rx sample %u [h %u-t %u]\n",
@@ -313,7 +314,7 @@ void ath_dynack_sample_ack_ts(struct ath_hw *ah, struct sk_buff *skb,
 	ath_dynack_compute_to(ah);
 
 	spin_unlock_bh(&da->qlock);
-}
+पूर्ण
 EXPORT_SYMBOL(ath_dynack_sample_ack_ts);
 
 /**
@@ -322,16 +323,16 @@ EXPORT_SYMBOL(ath_dynack_sample_ack_ts);
  * @an: ath node
  *
  */
-void ath_dynack_node_init(struct ath_hw *ah, struct ath_node *an)
-{
-	struct ath_dynack *da = &ah->dynack;
+व्योम ath_dynack_node_init(काष्ठा ath_hw *ah, काष्ठा ath_node *an)
+अणु
+	काष्ठा ath_dynack *da = &ah->dynack;
 
 	an->ackto = da->ackto;
 
 	spin_lock_bh(&da->qlock);
 	list_add_tail(&an->list, &da->nodes);
 	spin_unlock_bh(&da->qlock);
-}
+पूर्ण
 EXPORT_SYMBOL(ath_dynack_node_init);
 
 /**
@@ -340,14 +341,14 @@ EXPORT_SYMBOL(ath_dynack_node_init);
  * @an: ath node
  *
  */
-void ath_dynack_node_deinit(struct ath_hw *ah, struct ath_node *an)
-{
-	struct ath_dynack *da = &ah->dynack;
+व्योम ath_dynack_node_deinit(काष्ठा ath_hw *ah, काष्ठा ath_node *an)
+अणु
+	काष्ठा ath_dynack *da = &ah->dynack;
 
 	spin_lock_bh(&da->qlock);
 	list_del(&an->list);
 	spin_unlock_bh(&da->qlock);
-}
+पूर्ण
 EXPORT_SYMBOL(ath_dynack_node_deinit);
 
 /**
@@ -355,14 +356,14 @@ EXPORT_SYMBOL(ath_dynack_node_deinit);
  * @ah: ath hw
  *
  */
-void ath_dynack_reset(struct ath_hw *ah)
-{
-	struct ath_dynack *da = &ah->dynack;
-	struct ath_node *an;
+व्योम ath_dynack_reset(काष्ठा ath_hw *ah)
+अणु
+	काष्ठा ath_dynack *da = &ah->dynack;
+	काष्ठा ath_node *an;
 
 	spin_lock_bh(&da->qlock);
 
-	da->lto = jiffies + COMPUTE_TO;
+	da->lto = jअगरfies + COMPUTE_TO;
 
 	da->st_rbf.t_rb = 0;
 	da->st_rbf.h_rb = 0;
@@ -370,31 +371,31 @@ void ath_dynack_reset(struct ath_hw *ah)
 	da->ack_rbf.h_rb = 0;
 
 	da->ackto = ath_dynack_get_max_to(ah);
-	list_for_each_entry(an, &da->nodes, list)
+	list_क्रम_each_entry(an, &da->nodes, list)
 		an->ackto = da->ackto;
 
-	/* init acktimeout */
-	ath_dynack_set_timeout(ah, da->ackto);
+	/* init ackसमयout */
+	ath_dynack_set_समयout(ah, da->ackto);
 
 	spin_unlock_bh(&da->qlock);
-}
+पूर्ण
 EXPORT_SYMBOL(ath_dynack_reset);
 
 /**
- * ath_dynack_init - init dynack data structure
+ * ath_dynack_init - init dynack data काष्ठाure
  * @ah: ath hw
  *
  */
-void ath_dynack_init(struct ath_hw *ah)
-{
-	struct ath_dynack *da = &ah->dynack;
+व्योम ath_dynack_init(काष्ठा ath_hw *ah)
+अणु
+	काष्ठा ath_dynack *da = &ah->dynack;
 
-	memset(da, 0, sizeof(struct ath_dynack));
+	स_रखो(da, 0, माप(काष्ठा ath_dynack));
 
 	spin_lock_init(&da->qlock);
 	INIT_LIST_HEAD(&da->nodes);
-	/* ackto = slottime + sifs + air delay */
+	/* ackto = slotसमय + sअगरs + air delay */
 	da->ackto = 9 + 16 + 64;
 
 	ah->hw->wiphy->features |= NL80211_FEATURE_ACKTO_ESTIMATION;
-}
+पूर्ण

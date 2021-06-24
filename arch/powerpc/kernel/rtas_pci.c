@@ -1,241 +1,242 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Copyright (C) 2001 Dave Engebretsen, IBM Corporation
- * Copyright (C) 2003 Anton Blanchard <anton@au.ibm.com>, IBM
+ * Copyright (C) 2003 Anton Blanअक्षरd <anton@au.ibm.com>, IBM
  *
- * RTAS specific routines for PCI.
+ * RTAS specअगरic routines क्रम PCI.
  *
  * Based on code from pci.c, chrp_pci.c and pSeries_pci.c
  */
 
-#include <linux/kernel.h>
-#include <linux/threads.h>
-#include <linux/pci.h>
-#include <linux/string.h>
-#include <linux/init.h>
-#include <linux/pgtable.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/thपढ़ोs.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/init.h>
+#समावेश <linux/pgtable.h>
 
-#include <asm/io.h>
-#include <asm/irq.h>
-#include <asm/prom.h>
-#include <asm/machdep.h>
-#include <asm/pci-bridge.h>
-#include <asm/iommu.h>
-#include <asm/rtas.h>
-#include <asm/mpic.h>
-#include <asm/ppc-pci.h>
-#include <asm/eeh.h>
+#समावेश <यंत्र/पन.स>
+#समावेश <यंत्र/irq.h>
+#समावेश <यंत्र/prom.h>
+#समावेश <यंत्र/machdep.h>
+#समावेश <यंत्र/pci-bridge.h>
+#समावेश <यंत्र/iommu.h>
+#समावेश <यंत्र/rtas.h>
+#समावेश <यंत्र/mpic.h>
+#समावेश <यंत्र/ppc-pci.h>
+#समावेश <यंत्र/eeh.h>
 
 /* RTAS tokens */
-static int read_pci_config;
-static int write_pci_config;
-static int ibm_read_pci_config;
-static int ibm_write_pci_config;
+अटल पूर्णांक पढ़ो_pci_config;
+अटल पूर्णांक ग_लिखो_pci_config;
+अटल पूर्णांक ibm_पढ़ो_pci_config;
+अटल पूर्णांक ibm_ग_लिखो_pci_config;
 
-static inline int config_access_valid(struct pci_dn *dn, int where)
-{
-	if (where < 256)
-		return 1;
-	if (where < 4096 && dn->pci_ext_config_space)
-		return 1;
+अटल अंतरभूत पूर्णांक config_access_valid(काष्ठा pci_dn *dn, पूर्णांक where)
+अणु
+	अगर (where < 256)
+		वापस 1;
+	अगर (where < 4096 && dn->pci_ext_config_space)
+		वापस 1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int rtas_read_config(struct pci_dn *pdn, int where, int size, u32 *val)
-{
-	int returnval = -1;
-	unsigned long buid, addr;
-	int ret;
+पूर्णांक rtas_पढ़ो_config(काष्ठा pci_dn *pdn, पूर्णांक where, पूर्णांक size, u32 *val)
+अणु
+	पूर्णांक वापसval = -1;
+	अचिन्हित दीर्घ buid, addr;
+	पूर्णांक ret;
 
-	if (!pdn)
-		return PCIBIOS_DEVICE_NOT_FOUND;
-	if (!config_access_valid(pdn, where))
-		return PCIBIOS_BAD_REGISTER_NUMBER;
-#ifdef CONFIG_EEH
-	if (pdn->edev && pdn->edev->pe &&
+	अगर (!pdn)
+		वापस PCIBIOS_DEVICE_NOT_FOUND;
+	अगर (!config_access_valid(pdn, where))
+		वापस PCIBIOS_BAD_REGISTER_NUMBER;
+#अगर_घोषित CONFIG_EEH
+	अगर (pdn->edev && pdn->edev->pe &&
 	    (pdn->edev->pe->state & EEH_PE_CFG_BLOCKED))
-		return PCIBIOS_SET_FAILED;
-#endif
+		वापस PCIBIOS_SET_FAILED;
+#पूर्ण_अगर
 
 	addr = rtas_config_addr(pdn->busno, pdn->devfn, where);
 	buid = pdn->phb->buid;
-	if (buid) {
-		ret = rtas_call(ibm_read_pci_config, 4, 2, &returnval,
+	अगर (buid) अणु
+		ret = rtas_call(ibm_पढ़ो_pci_config, 4, 2, &वापसval,
 				addr, BUID_HI(buid), BUID_LO(buid), size);
-	} else {
-		ret = rtas_call(read_pci_config, 2, 2, &returnval, addr, size);
-	}
-	*val = returnval;
+	पूर्ण अन्यथा अणु
+		ret = rtas_call(पढ़ो_pci_config, 2, 2, &वापसval, addr, size);
+	पूर्ण
+	*val = वापसval;
 
-	if (ret)
-		return PCIBIOS_DEVICE_NOT_FOUND;
+	अगर (ret)
+		वापस PCIBIOS_DEVICE_NOT_FOUND;
 
-	return PCIBIOS_SUCCESSFUL;
-}
+	वापस PCIBIOS_SUCCESSFUL;
+पूर्ण
 
-static int rtas_pci_read_config(struct pci_bus *bus,
-				unsigned int devfn,
-				int where, int size, u32 *val)
-{
-	struct pci_dn *pdn;
-	int ret;
+अटल पूर्णांक rtas_pci_पढ़ो_config(काष्ठा pci_bus *bus,
+				अचिन्हित पूर्णांक devfn,
+				पूर्णांक where, पूर्णांक size, u32 *val)
+अणु
+	काष्ठा pci_dn *pdn;
+	पूर्णांक ret;
 
 	*val = 0xFFFFFFFF;
 
 	pdn = pci_get_pdn_by_devfn(bus, devfn);
 
 	/* Validity of pdn is checked in here */
-	ret = rtas_read_config(pdn, where, size, val);
-	if (*val == EEH_IO_ERROR_VALUE(size) &&
+	ret = rtas_पढ़ो_config(pdn, where, size, val);
+	अगर (*val == EEH_IO_ERROR_VALUE(size) &&
 	    eeh_dev_check_failure(pdn_to_eeh_dev(pdn)))
-		return PCIBIOS_DEVICE_NOT_FOUND;
+		वापस PCIBIOS_DEVICE_NOT_FOUND;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int rtas_write_config(struct pci_dn *pdn, int where, int size, u32 val)
-{
-	unsigned long buid, addr;
-	int ret;
+पूर्णांक rtas_ग_लिखो_config(काष्ठा pci_dn *pdn, पूर्णांक where, पूर्णांक size, u32 val)
+अणु
+	अचिन्हित दीर्घ buid, addr;
+	पूर्णांक ret;
 
-	if (!pdn)
-		return PCIBIOS_DEVICE_NOT_FOUND;
-	if (!config_access_valid(pdn, where))
-		return PCIBIOS_BAD_REGISTER_NUMBER;
-#ifdef CONFIG_EEH
-	if (pdn->edev && pdn->edev->pe &&
+	अगर (!pdn)
+		वापस PCIBIOS_DEVICE_NOT_FOUND;
+	अगर (!config_access_valid(pdn, where))
+		वापस PCIBIOS_BAD_REGISTER_NUMBER;
+#अगर_घोषित CONFIG_EEH
+	अगर (pdn->edev && pdn->edev->pe &&
 	    (pdn->edev->pe->state & EEH_PE_CFG_BLOCKED))
-		return PCIBIOS_SET_FAILED;
-#endif
+		वापस PCIBIOS_SET_FAILED;
+#पूर्ण_अगर
 
 	addr = rtas_config_addr(pdn->busno, pdn->devfn, where);
 	buid = pdn->phb->buid;
-	if (buid) {
-		ret = rtas_call(ibm_write_pci_config, 5, 1, NULL, addr,
-			BUID_HI(buid), BUID_LO(buid), size, (ulong) val);
-	} else {
-		ret = rtas_call(write_pci_config, 3, 1, NULL, addr, size, (ulong)val);
-	}
+	अगर (buid) अणु
+		ret = rtas_call(ibm_ग_लिखो_pci_config, 5, 1, शून्य, addr,
+			BUID_HI(buid), BUID_LO(buid), size, (uदीर्घ) val);
+	पूर्ण अन्यथा अणु
+		ret = rtas_call(ग_लिखो_pci_config, 3, 1, शून्य, addr, size, (uदीर्घ)val);
+	पूर्ण
 
-	if (ret)
-		return PCIBIOS_DEVICE_NOT_FOUND;
+	अगर (ret)
+		वापस PCIBIOS_DEVICE_NOT_FOUND;
 
-	return PCIBIOS_SUCCESSFUL;
-}
+	वापस PCIBIOS_SUCCESSFUL;
+पूर्ण
 
-static int rtas_pci_write_config(struct pci_bus *bus,
-				 unsigned int devfn,
-				 int where, int size, u32 val)
-{
-	struct pci_dn *pdn;
+अटल पूर्णांक rtas_pci_ग_लिखो_config(काष्ठा pci_bus *bus,
+				 अचिन्हित पूर्णांक devfn,
+				 पूर्णांक where, पूर्णांक size, u32 val)
+अणु
+	काष्ठा pci_dn *pdn;
 
 	pdn = pci_get_pdn_by_devfn(bus, devfn);
 
 	/* Validity of pdn is checked in here. */
-	return rtas_write_config(pdn, where, size, val);
-}
+	वापस rtas_ग_लिखो_config(pdn, where, size, val);
+पूर्ण
 
-static struct pci_ops rtas_pci_ops = {
-	.read = rtas_pci_read_config,
-	.write = rtas_pci_write_config,
-};
+अटल काष्ठा pci_ops rtas_pci_ops = अणु
+	.पढ़ो = rtas_pci_पढ़ो_config,
+	.ग_लिखो = rtas_pci_ग_लिखो_config,
+पूर्ण;
 
-static int is_python(struct device_node *dev)
-{
-	const char *model = of_get_property(dev, "model", NULL);
+अटल पूर्णांक is_python(काष्ठा device_node *dev)
+अणु
+	स्थिर अक्षर *model = of_get_property(dev, "model", शून्य);
 
-	if (model && strstr(model, "Python"))
-		return 1;
+	अगर (model && म_माला(model, "Python"))
+		वापस 1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void python_countermeasures(struct device_node *dev)
-{
-	struct resource registers;
-	void __iomem *chip_regs;
-	volatile u32 val;
+अटल व्योम python_countermeasures(काष्ठा device_node *dev)
+अणु
+	काष्ठा resource रेजिस्टरs;
+	व्योम __iomem *chip_regs;
+	अस्थिर u32 val;
 
-	if (of_address_to_resource(dev, 0, &registers)) {
-		printk(KERN_ERR "Can't get address for Python workarounds !\n");
-		return;
-	}
+	अगर (of_address_to_resource(dev, 0, &रेजिस्टरs)) अणु
+		prपूर्णांकk(KERN_ERR "Can't get address for Python workarounds !\n");
+		वापस;
+	पूर्ण
 
-	/* Python's register file is 1 MB in size. */
-	chip_regs = ioremap(registers.start & ~(0xfffffUL), 0x100000);
+	/* Python's रेजिस्टर file is 1 MB in size. */
+	chip_regs = ioremap(रेजिस्टरs.start & ~(0xfffffUL), 0x100000);
 
 	/*
-	 * Firmware doesn't always clear this bit which is critical
-	 * for good performance - Anton
+	 * Firmware करोesn't always clear this bit which is critical
+	 * क्रम good perक्रमmance - Anton
 	 */
 
-#define PRG_CL_RESET_VALID 0x00010000
+#घोषणा PRG_CL_RESET_VALID 0x00010000
 
 	val = in_be32(chip_regs + 0xf6030);
-	if (val & PRG_CL_RESET_VALID) {
-		printk(KERN_INFO "Python workaround: ");
+	अगर (val & PRG_CL_RESET_VALID) अणु
+		prपूर्णांकk(KERN_INFO "Python workaround: ");
 		val &= ~PRG_CL_RESET_VALID;
 		out_be32(chip_regs + 0xf6030, val);
 		/*
-		 * We must read it back for changes to
+		 * We must पढ़ो it back क्रम changes to
 		 * take effect
 		 */
 		val = in_be32(chip_regs + 0xf6030);
-		printk("reg0: %x\n", val);
-	}
+		prपूर्णांकk("reg0: %x\n", val);
+	पूर्ण
 
 	iounmap(chip_regs);
-}
+पूर्ण
 
-void __init init_pci_config_tokens(void)
-{
-	read_pci_config = rtas_token("read-pci-config");
-	write_pci_config = rtas_token("write-pci-config");
-	ibm_read_pci_config = rtas_token("ibm,read-pci-config");
-	ibm_write_pci_config = rtas_token("ibm,write-pci-config");
-}
+व्योम __init init_pci_config_tokens(व्योम)
+अणु
+	पढ़ो_pci_config = rtas_token("read-pci-config");
+	ग_लिखो_pci_config = rtas_token("write-pci-config");
+	ibm_पढ़ो_pci_config = rtas_token("ibm,read-pci-config");
+	ibm_ग_लिखो_pci_config = rtas_token("ibm,write-pci-config");
+पूर्ण
 
-unsigned long get_phb_buid(struct device_node *phb)
-{
-	struct resource r;
+अचिन्हित दीर्घ get_phb_buid(काष्ठा device_node *phb)
+अणु
+	काष्ठा resource r;
 
-	if (ibm_read_pci_config == -1)
-		return 0;
-	if (of_address_to_resource(phb, 0, &r))
-		return 0;
-	return r.start;
-}
+	अगर (ibm_पढ़ो_pci_config == -1)
+		वापस 0;
+	अगर (of_address_to_resource(phb, 0, &r))
+		वापस 0;
+	वापस r.start;
+पूर्ण
 
-static int phb_set_bus_ranges(struct device_node *dev,
-			      struct pci_controller *phb)
-{
-	const __be32 *bus_range;
-	unsigned int len;
+अटल पूर्णांक phb_set_bus_ranges(काष्ठा device_node *dev,
+			      काष्ठा pci_controller *phb)
+अणु
+	स्थिर __be32 *bus_range;
+	अचिन्हित पूर्णांक len;
 
 	bus_range = of_get_property(dev, "bus-range", &len);
-	if (bus_range == NULL || len < 2 * sizeof(int)) {
-		return 1;
- 	}
+	अगर (bus_range == शून्य || len < 2 * माप(पूर्णांक)) अणु
+		वापस 1;
+ 	पूर्ण
 
 	phb->first_busno = be32_to_cpu(bus_range[0]);
 	phb->last_busno  = be32_to_cpu(bus_range[1]);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int rtas_setup_phb(struct pci_controller *phb)
-{
-	struct device_node *dev = phb->dn;
+पूर्णांक rtas_setup_phb(काष्ठा pci_controller *phb)
+अणु
+	काष्ठा device_node *dev = phb->dn;
 
-	if (is_python(dev))
+	अगर (is_python(dev))
 		python_countermeasures(dev);
 
-	if (phb_set_bus_ranges(dev, phb))
-		return 1;
+	अगर (phb_set_bus_ranges(dev, phb))
+		वापस 1;
 
 	phb->ops = &rtas_pci_ops;
 	phb->buid = get_phb_buid(dev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

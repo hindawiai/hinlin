@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * lib/btree.c	- Simple In-memory B+Tree
  *
@@ -11,24 +12,24 @@
  * A relatively simple B+Tree implementation.  I have written it as a learning
  * exercise to understand how B+Trees work.  Turned out to be useful as well.
  *
- * B+Trees can be used similar to Linux radix trees (which don't have anything
- * in common with textbook radix trees, beware).  Prerequisite for them working
- * well is that access to a random tree node is much faster than a large number
+ * B+Trees can be used similar to Linux radix trees (which करोn't have anything
+ * in common with textbook radix trees, beware).  Prerequisite क्रम them working
+ * well is that access to a अक्रमom tree node is much faster than a large number
  * of operations within each node.
  *
- * Disks have fulfilled the prerequisite for a long time.  More recently DRAM
- * has gained similar properties, as memory access times, when measured in cpu
+ * Disks have fulfilled the prerequisite क्रम a दीर्घ समय.  More recently DRAM
+ * has gained similar properties, as memory access बार, when measured in cpu
  * cycles, have increased.  Cacheline sizes have increased as well, which also
  * helps B+Trees.
  *
  * Compared to radix trees, B+Trees are more efficient when dealing with a
  * sparsely populated address space.  Between 25% and 50% of the memory is
- * occupied with valid pointers.  When densely populated, radix trees contain
- * ~98% pointers - hard to beat.  Very sparse radix trees contain only ~2%
- * pointers.
+ * occupied with valid poपूर्णांकers.  When densely populated, radix trees contain
+ * ~98% poपूर्णांकers - hard to beat.  Very sparse radix trees contain only ~2%
+ * poपूर्णांकers.
  *
- * This particular implementation stores pointers identified by a long value.
- * Storing NULL pointers is illegal, lookup will return NULL when no entry
+ * This particular implementation stores poपूर्णांकers identअगरied by a दीर्घ value.
+ * Storing शून्य poपूर्णांकers is illegal, lookup will वापस शून्य when no entry
  * was found.
  *
  * A tricks was used that is not commonly found in textbooks.  The lowest
@@ -37,427 +38,427 @@
  * simply loop once over all slots and terminate on the first NUL.
  */
 
-#include <linux/btree.h>
-#include <linux/cache.h>
-#include <linux/kernel.h>
-#include <linux/slab.h>
-#include <linux/module.h>
+#समावेश <linux/btree.h>
+#समावेश <linux/cache.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/module.h>
 
-#define MAX(a, b) ((a) > (b) ? (a) : (b))
-#define NODESIZE MAX(L1_CACHE_BYTES, 128)
+#घोषणा MAX(a, b) ((a) > (b) ? (a) : (b))
+#घोषणा NODESIZE MAX(L1_CACHE_BYTES, 128)
 
-struct btree_geo {
-	int keylen;
-	int no_pairs;
-	int no_longs;
-};
+काष्ठा btree_geo अणु
+	पूर्णांक keylen;
+	पूर्णांक no_pairs;
+	पूर्णांक no_दीर्घs;
+पूर्ण;
 
-struct btree_geo btree_geo32 = {
+काष्ठा btree_geo btree_geo32 = अणु
 	.keylen = 1,
-	.no_pairs = NODESIZE / sizeof(long) / 2,
-	.no_longs = NODESIZE / sizeof(long) / 2,
-};
+	.no_pairs = NODESIZE / माप(दीर्घ) / 2,
+	.no_दीर्घs = NODESIZE / माप(दीर्घ) / 2,
+पूर्ण;
 EXPORT_SYMBOL_GPL(btree_geo32);
 
-#define LONG_PER_U64 (64 / BITS_PER_LONG)
-struct btree_geo btree_geo64 = {
+#घोषणा LONG_PER_U64 (64 / BITS_PER_LONG)
+काष्ठा btree_geo btree_geo64 = अणु
 	.keylen = LONG_PER_U64,
-	.no_pairs = NODESIZE / sizeof(long) / (1 + LONG_PER_U64),
-	.no_longs = LONG_PER_U64 * (NODESIZE / sizeof(long) / (1 + LONG_PER_U64)),
-};
+	.no_pairs = NODESIZE / माप(दीर्घ) / (1 + LONG_PER_U64),
+	.no_दीर्घs = LONG_PER_U64 * (NODESIZE / माप(दीर्घ) / (1 + LONG_PER_U64)),
+पूर्ण;
 EXPORT_SYMBOL_GPL(btree_geo64);
 
-struct btree_geo btree_geo128 = {
+काष्ठा btree_geo btree_geo128 = अणु
 	.keylen = 2 * LONG_PER_U64,
-	.no_pairs = NODESIZE / sizeof(long) / (1 + 2 * LONG_PER_U64),
-	.no_longs = 2 * LONG_PER_U64 * (NODESIZE / sizeof(long) / (1 + 2 * LONG_PER_U64)),
-};
+	.no_pairs = NODESIZE / माप(दीर्घ) / (1 + 2 * LONG_PER_U64),
+	.no_दीर्घs = 2 * LONG_PER_U64 * (NODESIZE / माप(दीर्घ) / (1 + 2 * LONG_PER_U64)),
+पूर्ण;
 EXPORT_SYMBOL_GPL(btree_geo128);
 
-#define MAX_KEYLEN	(2 * LONG_PER_U64)
+#घोषणा MAX_KEYLEN	(2 * LONG_PER_U64)
 
-static struct kmem_cache *btree_cachep;
+अटल काष्ठा kmem_cache *btree_cachep;
 
-void *btree_alloc(gfp_t gfp_mask, void *pool_data)
-{
-	return kmem_cache_alloc(btree_cachep, gfp_mask);
-}
+व्योम *btree_alloc(gfp_t gfp_mask, व्योम *pool_data)
+अणु
+	वापस kmem_cache_alloc(btree_cachep, gfp_mask);
+पूर्ण
 EXPORT_SYMBOL_GPL(btree_alloc);
 
-void btree_free(void *element, void *pool_data)
-{
-	kmem_cache_free(btree_cachep, element);
-}
-EXPORT_SYMBOL_GPL(btree_free);
+व्योम btree_मुक्त(व्योम *element, व्योम *pool_data)
+अणु
+	kmem_cache_मुक्त(btree_cachep, element);
+पूर्ण
+EXPORT_SYMBOL_GPL(btree_मुक्त);
 
-static unsigned long *btree_node_alloc(struct btree_head *head, gfp_t gfp)
-{
-	unsigned long *node;
+अटल अचिन्हित दीर्घ *btree_node_alloc(काष्ठा btree_head *head, gfp_t gfp)
+अणु
+	अचिन्हित दीर्घ *node;
 
 	node = mempool_alloc(head->mempool, gfp);
-	if (likely(node))
-		memset(node, 0, NODESIZE);
-	return node;
-}
+	अगर (likely(node))
+		स_रखो(node, 0, NODESIZE);
+	वापस node;
+पूर्ण
 
-static int longcmp(const unsigned long *l1, const unsigned long *l2, size_t n)
-{
-	size_t i;
+अटल पूर्णांक दीर्घcmp(स्थिर अचिन्हित दीर्घ *l1, स्थिर अचिन्हित दीर्घ *l2, माप_प्रकार n)
+अणु
+	माप_प्रकार i;
 
-	for (i = 0; i < n; i++) {
-		if (l1[i] < l2[i])
-			return -1;
-		if (l1[i] > l2[i])
-			return 1;
-	}
-	return 0;
-}
+	क्रम (i = 0; i < n; i++) अणु
+		अगर (l1[i] < l2[i])
+			वापस -1;
+		अगर (l1[i] > l2[i])
+			वापस 1;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static unsigned long *longcpy(unsigned long *dest, const unsigned long *src,
-		size_t n)
-{
-	size_t i;
+अटल अचिन्हित दीर्घ *दीर्घcpy(अचिन्हित दीर्घ *dest, स्थिर अचिन्हित दीर्घ *src,
+		माप_प्रकार n)
+अणु
+	माप_प्रकार i;
 
-	for (i = 0; i < n; i++)
+	क्रम (i = 0; i < n; i++)
 		dest[i] = src[i];
-	return dest;
-}
+	वापस dest;
+पूर्ण
 
-static unsigned long *longset(unsigned long *s, unsigned long c, size_t n)
-{
-	size_t i;
+अटल अचिन्हित दीर्घ *दीर्घset(अचिन्हित दीर्घ *s, अचिन्हित दीर्घ c, माप_प्रकार n)
+अणु
+	माप_प्रकार i;
 
-	for (i = 0; i < n; i++)
+	क्रम (i = 0; i < n; i++)
 		s[i] = c;
-	return s;
-}
+	वापस s;
+पूर्ण
 
-static void dec_key(struct btree_geo *geo, unsigned long *key)
-{
-	unsigned long val;
-	int i;
+अटल व्योम dec_key(काष्ठा btree_geo *geo, अचिन्हित दीर्घ *key)
+अणु
+	अचिन्हित दीर्घ val;
+	पूर्णांक i;
 
-	for (i = geo->keylen - 1; i >= 0; i--) {
+	क्रम (i = geo->keylen - 1; i >= 0; i--) अणु
 		val = key[i];
 		key[i] = val - 1;
-		if (val)
-			break;
-	}
-}
+		अगर (val)
+			अवरोध;
+	पूर्ण
+पूर्ण
 
-static unsigned long *bkey(struct btree_geo *geo, unsigned long *node, int n)
-{
-	return &node[n * geo->keylen];
-}
+अटल अचिन्हित दीर्घ *bkey(काष्ठा btree_geo *geo, अचिन्हित दीर्घ *node, पूर्णांक n)
+अणु
+	वापस &node[n * geo->keylen];
+पूर्ण
 
-static void *bval(struct btree_geo *geo, unsigned long *node, int n)
-{
-	return (void *)node[geo->no_longs + n];
-}
+अटल व्योम *bval(काष्ठा btree_geo *geo, अचिन्हित दीर्घ *node, पूर्णांक n)
+अणु
+	वापस (व्योम *)node[geo->no_दीर्घs + n];
+पूर्ण
 
-static void setkey(struct btree_geo *geo, unsigned long *node, int n,
-		   unsigned long *key)
-{
-	longcpy(bkey(geo, node, n), key, geo->keylen);
-}
+अटल व्योम setkey(काष्ठा btree_geo *geo, अचिन्हित दीर्घ *node, पूर्णांक n,
+		   अचिन्हित दीर्घ *key)
+अणु
+	दीर्घcpy(bkey(geo, node, n), key, geo->keylen);
+पूर्ण
 
-static void setval(struct btree_geo *geo, unsigned long *node, int n,
-		   void *val)
-{
-	node[geo->no_longs + n] = (unsigned long) val;
-}
+अटल व्योम setval(काष्ठा btree_geo *geo, अचिन्हित दीर्घ *node, पूर्णांक n,
+		   व्योम *val)
+अणु
+	node[geo->no_दीर्घs + n] = (अचिन्हित दीर्घ) val;
+पूर्ण
 
-static void clearpair(struct btree_geo *geo, unsigned long *node, int n)
-{
-	longset(bkey(geo, node, n), 0, geo->keylen);
-	node[geo->no_longs + n] = 0;
-}
+अटल व्योम clearpair(काष्ठा btree_geo *geo, अचिन्हित दीर्घ *node, पूर्णांक n)
+अणु
+	दीर्घset(bkey(geo, node, n), 0, geo->keylen);
+	node[geo->no_दीर्घs + n] = 0;
+पूर्ण
 
-static inline void __btree_init(struct btree_head *head)
-{
-	head->node = NULL;
+अटल अंतरभूत व्योम __btree_init(काष्ठा btree_head *head)
+अणु
+	head->node = शून्य;
 	head->height = 0;
-}
+पूर्ण
 
-void btree_init_mempool(struct btree_head *head, mempool_t *mempool)
-{
+व्योम btree_init_mempool(काष्ठा btree_head *head, mempool_t *mempool)
+अणु
 	__btree_init(head);
 	head->mempool = mempool;
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(btree_init_mempool);
 
-int btree_init(struct btree_head *head)
-{
+पूर्णांक btree_init(काष्ठा btree_head *head)
+अणु
 	__btree_init(head);
-	head->mempool = mempool_create(0, btree_alloc, btree_free, NULL);
-	if (!head->mempool)
-		return -ENOMEM;
-	return 0;
-}
+	head->mempool = mempool_create(0, btree_alloc, btree_मुक्त, शून्य);
+	अगर (!head->mempool)
+		वापस -ENOMEM;
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(btree_init);
 
-void btree_destroy(struct btree_head *head)
-{
-	mempool_free(head->node, head->mempool);
+व्योम btree_destroy(काष्ठा btree_head *head)
+अणु
+	mempool_मुक्त(head->node, head->mempool);
 	mempool_destroy(head->mempool);
-	head->mempool = NULL;
-}
+	head->mempool = शून्य;
+पूर्ण
 EXPORT_SYMBOL_GPL(btree_destroy);
 
-void *btree_last(struct btree_head *head, struct btree_geo *geo,
-		 unsigned long *key)
-{
-	int height = head->height;
-	unsigned long *node = head->node;
+व्योम *btree_last(काष्ठा btree_head *head, काष्ठा btree_geo *geo,
+		 अचिन्हित दीर्घ *key)
+अणु
+	पूर्णांक height = head->height;
+	अचिन्हित दीर्घ *node = head->node;
 
-	if (height == 0)
-		return NULL;
+	अगर (height == 0)
+		वापस शून्य;
 
-	for ( ; height > 1; height--)
+	क्रम ( ; height > 1; height--)
 		node = bval(geo, node, 0);
 
-	longcpy(key, bkey(geo, node, 0), geo->keylen);
-	return bval(geo, node, 0);
-}
+	दीर्घcpy(key, bkey(geo, node, 0), geo->keylen);
+	वापस bval(geo, node, 0);
+पूर्ण
 EXPORT_SYMBOL_GPL(btree_last);
 
-static int keycmp(struct btree_geo *geo, unsigned long *node, int pos,
-		  unsigned long *key)
-{
-	return longcmp(bkey(geo, node, pos), key, geo->keylen);
-}
+अटल पूर्णांक keycmp(काष्ठा btree_geo *geo, अचिन्हित दीर्घ *node, पूर्णांक pos,
+		  अचिन्हित दीर्घ *key)
+अणु
+	वापस दीर्घcmp(bkey(geo, node, pos), key, geo->keylen);
+पूर्ण
 
-static int keyzero(struct btree_geo *geo, unsigned long *key)
-{
-	int i;
+अटल पूर्णांक keyzero(काष्ठा btree_geo *geo, अचिन्हित दीर्घ *key)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < geo->keylen; i++)
-		if (key[i])
-			return 0;
+	क्रम (i = 0; i < geo->keylen; i++)
+		अगर (key[i])
+			वापस 0;
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-void *btree_lookup(struct btree_head *head, struct btree_geo *geo,
-		unsigned long *key)
-{
-	int i, height = head->height;
-	unsigned long *node = head->node;
+व्योम *btree_lookup(काष्ठा btree_head *head, काष्ठा btree_geo *geo,
+		अचिन्हित दीर्घ *key)
+अणु
+	पूर्णांक i, height = head->height;
+	अचिन्हित दीर्घ *node = head->node;
 
-	if (height == 0)
-		return NULL;
+	अगर (height == 0)
+		वापस शून्य;
 
-	for ( ; height > 1; height--) {
-		for (i = 0; i < geo->no_pairs; i++)
-			if (keycmp(geo, node, i, key) <= 0)
-				break;
-		if (i == geo->no_pairs)
-			return NULL;
+	क्रम ( ; height > 1; height--) अणु
+		क्रम (i = 0; i < geo->no_pairs; i++)
+			अगर (keycmp(geo, node, i, key) <= 0)
+				अवरोध;
+		अगर (i == geo->no_pairs)
+			वापस शून्य;
 		node = bval(geo, node, i);
-		if (!node)
-			return NULL;
-	}
+		अगर (!node)
+			वापस शून्य;
+	पूर्ण
 
-	if (!node)
-		return NULL;
+	अगर (!node)
+		वापस शून्य;
 
-	for (i = 0; i < geo->no_pairs; i++)
-		if (keycmp(geo, node, i, key) == 0)
-			return bval(geo, node, i);
-	return NULL;
-}
+	क्रम (i = 0; i < geo->no_pairs; i++)
+		अगर (keycmp(geo, node, i, key) == 0)
+			वापस bval(geo, node, i);
+	वापस शून्य;
+पूर्ण
 EXPORT_SYMBOL_GPL(btree_lookup);
 
-int btree_update(struct btree_head *head, struct btree_geo *geo,
-		 unsigned long *key, void *val)
-{
-	int i, height = head->height;
-	unsigned long *node = head->node;
+पूर्णांक btree_update(काष्ठा btree_head *head, काष्ठा btree_geo *geo,
+		 अचिन्हित दीर्घ *key, व्योम *val)
+अणु
+	पूर्णांक i, height = head->height;
+	अचिन्हित दीर्घ *node = head->node;
 
-	if (height == 0)
-		return -ENOENT;
+	अगर (height == 0)
+		वापस -ENOENT;
 
-	for ( ; height > 1; height--) {
-		for (i = 0; i < geo->no_pairs; i++)
-			if (keycmp(geo, node, i, key) <= 0)
-				break;
-		if (i == geo->no_pairs)
-			return -ENOENT;
+	क्रम ( ; height > 1; height--) अणु
+		क्रम (i = 0; i < geo->no_pairs; i++)
+			अगर (keycmp(geo, node, i, key) <= 0)
+				अवरोध;
+		अगर (i == geo->no_pairs)
+			वापस -ENOENT;
 		node = bval(geo, node, i);
-		if (!node)
-			return -ENOENT;
-	}
+		अगर (!node)
+			वापस -ENOENT;
+	पूर्ण
 
-	if (!node)
-		return -ENOENT;
+	अगर (!node)
+		वापस -ENOENT;
 
-	for (i = 0; i < geo->no_pairs; i++)
-		if (keycmp(geo, node, i, key) == 0) {
+	क्रम (i = 0; i < geo->no_pairs; i++)
+		अगर (keycmp(geo, node, i, key) == 0) अणु
 			setval(geo, node, i, val);
-			return 0;
-		}
-	return -ENOENT;
-}
+			वापस 0;
+		पूर्ण
+	वापस -ENOENT;
+पूर्ण
 EXPORT_SYMBOL_GPL(btree_update);
 
 /*
  * Usually this function is quite similar to normal lookup.  But the key of
  * a parent node may be smaller than the smallest key of all its siblings.
- * In such a case we cannot just return NULL, as we have only proven that no
+ * In such a हाल we cannot just वापस शून्य, as we have only proven that no
  * key smaller than __key, but larger than this parent key exists.
  * So we set __key to the parent key and retry.  We have to use the smallest
  * such parent key, which is the last parent key we encountered.
  */
-void *btree_get_prev(struct btree_head *head, struct btree_geo *geo,
-		     unsigned long *__key)
-{
-	int i, height;
-	unsigned long *node, *oldnode;
-	unsigned long *retry_key = NULL, key[MAX_KEYLEN];
+व्योम *btree_get_prev(काष्ठा btree_head *head, काष्ठा btree_geo *geo,
+		     अचिन्हित दीर्घ *__key)
+अणु
+	पूर्णांक i, height;
+	अचिन्हित दीर्घ *node, *oldnode;
+	अचिन्हित दीर्घ *retry_key = शून्य, key[MAX_KEYLEN];
 
-	if (keyzero(geo, __key))
-		return NULL;
+	अगर (keyzero(geo, __key))
+		वापस शून्य;
 
-	if (head->height == 0)
-		return NULL;
-	longcpy(key, __key, geo->keylen);
+	अगर (head->height == 0)
+		वापस शून्य;
+	दीर्घcpy(key, __key, geo->keylen);
 retry:
 	dec_key(geo, key);
 
 	node = head->node;
-	for (height = head->height ; height > 1; height--) {
-		for (i = 0; i < geo->no_pairs; i++)
-			if (keycmp(geo, node, i, key) <= 0)
-				break;
-		if (i == geo->no_pairs)
-			goto miss;
+	क्रम (height = head->height ; height > 1; height--) अणु
+		क्रम (i = 0; i < geo->no_pairs; i++)
+			अगर (keycmp(geo, node, i, key) <= 0)
+				अवरोध;
+		अगर (i == geo->no_pairs)
+			जाओ miss;
 		oldnode = node;
 		node = bval(geo, node, i);
-		if (!node)
-			goto miss;
+		अगर (!node)
+			जाओ miss;
 		retry_key = bkey(geo, oldnode, i);
-	}
+	पूर्ण
 
-	if (!node)
-		goto miss;
+	अगर (!node)
+		जाओ miss;
 
-	for (i = 0; i < geo->no_pairs; i++) {
-		if (keycmp(geo, node, i, key) <= 0) {
-			if (bval(geo, node, i)) {
-				longcpy(__key, bkey(geo, node, i), geo->keylen);
-				return bval(geo, node, i);
-			} else
-				goto miss;
-		}
-	}
+	क्रम (i = 0; i < geo->no_pairs; i++) अणु
+		अगर (keycmp(geo, node, i, key) <= 0) अणु
+			अगर (bval(geo, node, i)) अणु
+				दीर्घcpy(__key, bkey(geo, node, i), geo->keylen);
+				वापस bval(geo, node, i);
+			पूर्ण अन्यथा
+				जाओ miss;
+		पूर्ण
+	पूर्ण
 miss:
-	if (retry_key) {
-		longcpy(key, retry_key, geo->keylen);
-		retry_key = NULL;
-		goto retry;
-	}
-	return NULL;
-}
+	अगर (retry_key) अणु
+		दीर्घcpy(key, retry_key, geo->keylen);
+		retry_key = शून्य;
+		जाओ retry;
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 EXPORT_SYMBOL_GPL(btree_get_prev);
 
-static int getpos(struct btree_geo *geo, unsigned long *node,
-		unsigned long *key)
-{
-	int i;
+अटल पूर्णांक getpos(काष्ठा btree_geo *geo, अचिन्हित दीर्घ *node,
+		अचिन्हित दीर्घ *key)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < geo->no_pairs; i++) {
-		if (keycmp(geo, node, i, key) <= 0)
-			break;
-	}
-	return i;
-}
+	क्रम (i = 0; i < geo->no_pairs; i++) अणु
+		अगर (keycmp(geo, node, i, key) <= 0)
+			अवरोध;
+	पूर्ण
+	वापस i;
+पूर्ण
 
-static int getfill(struct btree_geo *geo, unsigned long *node, int start)
-{
-	int i;
+अटल पूर्णांक getfill(काष्ठा btree_geo *geo, अचिन्हित दीर्घ *node, पूर्णांक start)
+अणु
+	पूर्णांक i;
 
-	for (i = start; i < geo->no_pairs; i++)
-		if (!bval(geo, node, i))
-			break;
-	return i;
-}
+	क्रम (i = start; i < geo->no_pairs; i++)
+		अगर (!bval(geo, node, i))
+			अवरोध;
+	वापस i;
+पूर्ण
 
 /*
  * locate the correct leaf node in the btree
  */
-static unsigned long *find_level(struct btree_head *head, struct btree_geo *geo,
-		unsigned long *key, int level)
-{
-	unsigned long *node = head->node;
-	int i, height;
+अटल अचिन्हित दीर्घ *find_level(काष्ठा btree_head *head, काष्ठा btree_geo *geo,
+		अचिन्हित दीर्घ *key, पूर्णांक level)
+अणु
+	अचिन्हित दीर्घ *node = head->node;
+	पूर्णांक i, height;
 
-	for (height = head->height; height > level; height--) {
-		for (i = 0; i < geo->no_pairs; i++)
-			if (keycmp(geo, node, i, key) <= 0)
-				break;
+	क्रम (height = head->height; height > level; height--) अणु
+		क्रम (i = 0; i < geo->no_pairs; i++)
+			अगर (keycmp(geo, node, i, key) <= 0)
+				अवरोध;
 
-		if ((i == geo->no_pairs) || !bval(geo, node, i)) {
+		अगर ((i == geo->no_pairs) || !bval(geo, node, i)) अणु
 			/* right-most key is too large, update it */
 			/* FIXME: If the right-most key on higher levels is
 			 * always zero, this wouldn't be necessary. */
 			i--;
 			setkey(geo, node, i, key);
-		}
+		पूर्ण
 		BUG_ON(i < 0);
 		node = bval(geo, node, i);
-	}
+	पूर्ण
 	BUG_ON(!node);
-	return node;
-}
+	वापस node;
+पूर्ण
 
-static int btree_grow(struct btree_head *head, struct btree_geo *geo,
+अटल पूर्णांक btree_grow(काष्ठा btree_head *head, काष्ठा btree_geo *geo,
 		      gfp_t gfp)
-{
-	unsigned long *node;
-	int fill;
+अणु
+	अचिन्हित दीर्घ *node;
+	पूर्णांक fill;
 
 	node = btree_node_alloc(head, gfp);
-	if (!node)
-		return -ENOMEM;
-	if (head->node) {
+	अगर (!node)
+		वापस -ENOMEM;
+	अगर (head->node) अणु
 		fill = getfill(geo, head->node, 0);
 		setkey(geo, node, 0, bkey(geo, head->node, fill - 1));
 		setval(geo, node, 0, head->node);
-	}
+	पूर्ण
 	head->node = node;
 	head->height++;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void btree_shrink(struct btree_head *head, struct btree_geo *geo)
-{
-	unsigned long *node;
-	int fill;
+अटल व्योम btree_shrink(काष्ठा btree_head *head, काष्ठा btree_geo *geo)
+अणु
+	अचिन्हित दीर्घ *node;
+	पूर्णांक fill;
 
-	if (head->height <= 1)
-		return;
+	अगर (head->height <= 1)
+		वापस;
 
 	node = head->node;
 	fill = getfill(geo, node, 0);
 	BUG_ON(fill > 1);
 	head->node = bval(geo, node, 0);
 	head->height--;
-	mempool_free(node, head->mempool);
-}
+	mempool_मुक्त(node, head->mempool);
+पूर्ण
 
-static int btree_insert_level(struct btree_head *head, struct btree_geo *geo,
-			      unsigned long *key, void *val, int level,
+अटल पूर्णांक btree_insert_level(काष्ठा btree_head *head, काष्ठा btree_geo *geo,
+			      अचिन्हित दीर्घ *key, व्योम *val, पूर्णांक level,
 			      gfp_t gfp)
-{
-	unsigned long *node;
-	int i, pos, fill, err;
+अणु
+	अचिन्हित दीर्घ *node;
+	पूर्णांक i, pos, fill, err;
 
 	BUG_ON(!val);
-	if (head->height < level) {
+	अगर (head->height < level) अणु
 		err = btree_grow(head, geo, gfp);
-		if (err)
-			return err;
-	}
+		अगर (err)
+			वापस err;
+	पूर्ण
 
 retry:
 	node = find_level(head, geo, key, level);
@@ -466,335 +467,335 @@ retry:
 	/* two identical keys are not allowed */
 	BUG_ON(pos < fill && keycmp(geo, node, pos, key) == 0);
 
-	if (fill == geo->no_pairs) {
+	अगर (fill == geo->no_pairs) अणु
 		/* need to split node */
-		unsigned long *new;
+		अचिन्हित दीर्घ *new;
 
 		new = btree_node_alloc(head, gfp);
-		if (!new)
-			return -ENOMEM;
+		अगर (!new)
+			वापस -ENOMEM;
 		err = btree_insert_level(head, geo,
 				bkey(geo, node, fill / 2 - 1),
 				new, level + 1, gfp);
-		if (err) {
-			mempool_free(new, head->mempool);
-			return err;
-		}
-		for (i = 0; i < fill / 2; i++) {
+		अगर (err) अणु
+			mempool_मुक्त(new, head->mempool);
+			वापस err;
+		पूर्ण
+		क्रम (i = 0; i < fill / 2; i++) अणु
 			setkey(geo, new, i, bkey(geo, node, i));
 			setval(geo, new, i, bval(geo, node, i));
 			setkey(geo, node, i, bkey(geo, node, i + fill / 2));
 			setval(geo, node, i, bval(geo, node, i + fill / 2));
 			clearpair(geo, node, i + fill / 2);
-		}
-		if (fill & 1) {
+		पूर्ण
+		अगर (fill & 1) अणु
 			setkey(geo, node, i, bkey(geo, node, fill - 1));
 			setval(geo, node, i, bval(geo, node, fill - 1));
 			clearpair(geo, node, fill - 1);
-		}
-		goto retry;
-	}
+		पूर्ण
+		जाओ retry;
+	पूर्ण
 	BUG_ON(fill >= geo->no_pairs);
 
-	/* shift and insert */
-	for (i = fill; i > pos; i--) {
+	/* shअगरt and insert */
+	क्रम (i = fill; i > pos; i--) अणु
 		setkey(geo, node, i, bkey(geo, node, i - 1));
 		setval(geo, node, i, bval(geo, node, i - 1));
-	}
+	पूर्ण
 	setkey(geo, node, pos, key);
 	setval(geo, node, pos, val);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int btree_insert(struct btree_head *head, struct btree_geo *geo,
-		unsigned long *key, void *val, gfp_t gfp)
-{
+पूर्णांक btree_insert(काष्ठा btree_head *head, काष्ठा btree_geo *geo,
+		अचिन्हित दीर्घ *key, व्योम *val, gfp_t gfp)
+अणु
 	BUG_ON(!val);
-	return btree_insert_level(head, geo, key, val, 1, gfp);
-}
+	वापस btree_insert_level(head, geo, key, val, 1, gfp);
+पूर्ण
 EXPORT_SYMBOL_GPL(btree_insert);
 
-static void *btree_remove_level(struct btree_head *head, struct btree_geo *geo,
-		unsigned long *key, int level);
-static void merge(struct btree_head *head, struct btree_geo *geo, int level,
-		unsigned long *left, int lfill,
-		unsigned long *right, int rfill,
-		unsigned long *parent, int lpos)
-{
-	int i;
+अटल व्योम *btree_हटाओ_level(काष्ठा btree_head *head, काष्ठा btree_geo *geo,
+		अचिन्हित दीर्घ *key, पूर्णांक level);
+अटल व्योम merge(काष्ठा btree_head *head, काष्ठा btree_geo *geo, पूर्णांक level,
+		अचिन्हित दीर्घ *left, पूर्णांक lfill,
+		अचिन्हित दीर्घ *right, पूर्णांक rfill,
+		अचिन्हित दीर्घ *parent, पूर्णांक lpos)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < rfill; i++) {
+	क्रम (i = 0; i < rfill; i++) अणु
 		/* Move all keys to the left */
 		setkey(geo, left, lfill + i, bkey(geo, right, i));
 		setval(geo, left, lfill + i, bval(geo, right, i));
-	}
+	पूर्ण
 	/* Exchange left and right child in parent */
 	setval(geo, parent, lpos, right);
 	setval(geo, parent, lpos + 1, left);
-	/* Remove left (formerly right) child from parent */
-	btree_remove_level(head, geo, bkey(geo, parent, lpos), level + 1);
-	mempool_free(right, head->mempool);
-}
+	/* Remove left (क्रमmerly right) child from parent */
+	btree_हटाओ_level(head, geo, bkey(geo, parent, lpos), level + 1);
+	mempool_मुक्त(right, head->mempool);
+पूर्ण
 
-static void rebalance(struct btree_head *head, struct btree_geo *geo,
-		unsigned long *key, int level, unsigned long *child, int fill)
-{
-	unsigned long *parent, *left = NULL, *right = NULL;
-	int i, no_left, no_right;
+अटल व्योम rebalance(काष्ठा btree_head *head, काष्ठा btree_geo *geo,
+		अचिन्हित दीर्घ *key, पूर्णांक level, अचिन्हित दीर्घ *child, पूर्णांक fill)
+अणु
+	अचिन्हित दीर्घ *parent, *left = शून्य, *right = शून्य;
+	पूर्णांक i, no_left, no_right;
 
-	if (fill == 0) {
-		/* Because we don't steal entries from a neighbour, this case
+	अगर (fill == 0) अणु
+		/* Because we करोn't steal entries from a neighbour, this हाल
 		 * can happen.  Parent node contains a single child, this
 		 * node, so merging with a sibling never happens.
 		 */
-		btree_remove_level(head, geo, key, level + 1);
-		mempool_free(child, head->mempool);
-		return;
-	}
+		btree_हटाओ_level(head, geo, key, level + 1);
+		mempool_मुक्त(child, head->mempool);
+		वापस;
+	पूर्ण
 
 	parent = find_level(head, geo, key, level + 1);
 	i = getpos(geo, parent, key);
 	BUG_ON(bval(geo, parent, i) != child);
 
-	if (i > 0) {
+	अगर (i > 0) अणु
 		left = bval(geo, parent, i - 1);
 		no_left = getfill(geo, left, 0);
-		if (fill + no_left <= geo->no_pairs) {
+		अगर (fill + no_left <= geo->no_pairs) अणु
 			merge(head, geo, level,
 					left, no_left,
 					child, fill,
 					parent, i - 1);
-			return;
-		}
-	}
-	if (i + 1 < getfill(geo, parent, i)) {
+			वापस;
+		पूर्ण
+	पूर्ण
+	अगर (i + 1 < getfill(geo, parent, i)) अणु
 		right = bval(geo, parent, i + 1);
 		no_right = getfill(geo, right, 0);
-		if (fill + no_right <= geo->no_pairs) {
+		अगर (fill + no_right <= geo->no_pairs) अणु
 			merge(head, geo, level,
 					child, fill,
 					right, no_right,
 					parent, i);
-			return;
-		}
-	}
+			वापस;
+		पूर्ण
+	पूर्ण
 	/*
 	 * We could also try to steal one entry from the left or right
-	 * neighbor.  By not doing so we changed the invariant from
+	 * neighbor.  By not करोing so we changed the invariant from
 	 * "all nodes are at least half full" to "no two neighboring
 	 * nodes can be merged".  Which means that the average fill of
 	 * all nodes is still half or better.
 	 */
-}
+पूर्ण
 
-static void *btree_remove_level(struct btree_head *head, struct btree_geo *geo,
-		unsigned long *key, int level)
-{
-	unsigned long *node;
-	int i, pos, fill;
-	void *ret;
+अटल व्योम *btree_हटाओ_level(काष्ठा btree_head *head, काष्ठा btree_geo *geo,
+		अचिन्हित दीर्घ *key, पूर्णांक level)
+अणु
+	अचिन्हित दीर्घ *node;
+	पूर्णांक i, pos, fill;
+	व्योम *ret;
 
-	if (level > head->height) {
+	अगर (level > head->height) अणु
 		/* we recursed all the way up */
 		head->height = 0;
-		head->node = NULL;
-		return NULL;
-	}
+		head->node = शून्य;
+		वापस शून्य;
+	पूर्ण
 
 	node = find_level(head, geo, key, level);
 	pos = getpos(geo, node, key);
 	fill = getfill(geo, node, pos);
-	if ((level == 1) && (keycmp(geo, node, pos, key) != 0))
-		return NULL;
+	अगर ((level == 1) && (keycmp(geo, node, pos, key) != 0))
+		वापस शून्य;
 	ret = bval(geo, node, pos);
 
-	/* remove and shift */
-	for (i = pos; i < fill - 1; i++) {
+	/* हटाओ and shअगरt */
+	क्रम (i = pos; i < fill - 1; i++) अणु
 		setkey(geo, node, i, bkey(geo, node, i + 1));
 		setval(geo, node, i, bval(geo, node, i + 1));
-	}
+	पूर्ण
 	clearpair(geo, node, fill - 1);
 
-	if (fill - 1 < geo->no_pairs / 2) {
-		if (level < head->height)
+	अगर (fill - 1 < geo->no_pairs / 2) अणु
+		अगर (level < head->height)
 			rebalance(head, geo, key, level, node, fill - 1);
-		else if (fill - 1 == 1)
+		अन्यथा अगर (fill - 1 == 1)
 			btree_shrink(head, geo);
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-void *btree_remove(struct btree_head *head, struct btree_geo *geo,
-		unsigned long *key)
-{
-	if (head->height == 0)
-		return NULL;
+व्योम *btree_हटाओ(काष्ठा btree_head *head, काष्ठा btree_geo *geo,
+		अचिन्हित दीर्घ *key)
+अणु
+	अगर (head->height == 0)
+		वापस शून्य;
 
-	return btree_remove_level(head, geo, key, 1);
-}
-EXPORT_SYMBOL_GPL(btree_remove);
+	वापस btree_हटाओ_level(head, geo, key, 1);
+पूर्ण
+EXPORT_SYMBOL_GPL(btree_हटाओ);
 
-int btree_merge(struct btree_head *target, struct btree_head *victim,
-		struct btree_geo *geo, gfp_t gfp)
-{
-	unsigned long key[MAX_KEYLEN];
-	unsigned long dup[MAX_KEYLEN];
-	void *val;
-	int err;
+पूर्णांक btree_merge(काष्ठा btree_head *target, काष्ठा btree_head *victim,
+		काष्ठा btree_geo *geo, gfp_t gfp)
+अणु
+	अचिन्हित दीर्घ key[MAX_KEYLEN];
+	अचिन्हित दीर्घ dup[MAX_KEYLEN];
+	व्योम *val;
+	पूर्णांक err;
 
 	BUG_ON(target == victim);
 
-	if (!(target->node)) {
+	अगर (!(target->node)) अणु
 		/* target is empty, just copy fields over */
 		target->node = victim->node;
 		target->height = victim->height;
 		__btree_init(victim);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	/* TODO: This needs some optimizations.  Currently we do three tree
-	 * walks to remove a single object from the victim.
+	/* TODO: This needs some optimizations.  Currently we करो three tree
+	 * walks to हटाओ a single object from the victim.
 	 */
-	for (;;) {
-		if (!btree_last(victim, geo, key))
-			break;
+	क्रम (;;) अणु
+		अगर (!btree_last(victim, geo, key))
+			अवरोध;
 		val = btree_lookup(victim, geo, key);
 		err = btree_insert(target, geo, key, val, gfp);
-		if (err)
-			return err;
+		अगर (err)
+			वापस err;
 		/* We must make a copy of the key, as the original will get
-		 * mangled inside btree_remove. */
-		longcpy(dup, key, geo->keylen);
-		btree_remove(victim, geo, dup);
-	}
-	return 0;
-}
+		 * mangled inside btree_हटाओ. */
+		दीर्घcpy(dup, key, geo->keylen);
+		btree_हटाओ(victim, geo, dup);
+	पूर्ण
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(btree_merge);
 
-static size_t __btree_for_each(struct btree_head *head, struct btree_geo *geo,
-			       unsigned long *node, unsigned long opaque,
-			       void (*func)(void *elem, unsigned long opaque,
-					    unsigned long *key, size_t index,
-					    void *func2),
-			       void *func2, int reap, int height, size_t count)
-{
-	int i;
-	unsigned long *child;
+अटल माप_प्रकार __btree_क्रम_each(काष्ठा btree_head *head, काष्ठा btree_geo *geo,
+			       अचिन्हित दीर्घ *node, अचिन्हित दीर्घ opaque,
+			       व्योम (*func)(व्योम *elem, अचिन्हित दीर्घ opaque,
+					    अचिन्हित दीर्घ *key, माप_प्रकार index,
+					    व्योम *func2),
+			       व्योम *func2, पूर्णांक reap, पूर्णांक height, माप_प्रकार count)
+अणु
+	पूर्णांक i;
+	अचिन्हित दीर्घ *child;
 
-	for (i = 0; i < geo->no_pairs; i++) {
+	क्रम (i = 0; i < geo->no_pairs; i++) अणु
 		child = bval(geo, node, i);
-		if (!child)
-			break;
-		if (height > 1)
-			count = __btree_for_each(head, geo, child, opaque,
+		अगर (!child)
+			अवरोध;
+		अगर (height > 1)
+			count = __btree_क्रम_each(head, geo, child, opaque,
 					func, func2, reap, height - 1, count);
-		else
+		अन्यथा
 			func(child, opaque, bkey(geo, node, i), count++,
 					func2);
-	}
-	if (reap)
-		mempool_free(node, head->mempool);
-	return count;
-}
+	पूर्ण
+	अगर (reap)
+		mempool_मुक्त(node, head->mempool);
+	वापस count;
+पूर्ण
 
-static void empty(void *elem, unsigned long opaque, unsigned long *key,
-		  size_t index, void *func2)
-{
-}
+अटल व्योम empty(व्योम *elem, अचिन्हित दीर्घ opaque, अचिन्हित दीर्घ *key,
+		  माप_प्रकार index, व्योम *func2)
+अणु
+पूर्ण
 
-void visitorl(void *elem, unsigned long opaque, unsigned long *key,
-	      size_t index, void *__func)
-{
+व्योम visitorl(व्योम *elem, अचिन्हित दीर्घ opaque, अचिन्हित दीर्घ *key,
+	      माप_प्रकार index, व्योम *__func)
+अणु
 	visitorl_t func = __func;
 
 	func(elem, opaque, *key, index);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(visitorl);
 
-void visitor32(void *elem, unsigned long opaque, unsigned long *__key,
-	       size_t index, void *__func)
-{
+व्योम visitor32(व्योम *elem, अचिन्हित दीर्घ opaque, अचिन्हित दीर्घ *__key,
+	       माप_प्रकार index, व्योम *__func)
+अणु
 	visitor32_t func = __func;
-	u32 *key = (void *)__key;
+	u32 *key = (व्योम *)__key;
 
 	func(elem, opaque, *key, index);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(visitor32);
 
-void visitor64(void *elem, unsigned long opaque, unsigned long *__key,
-	       size_t index, void *__func)
-{
+व्योम visitor64(व्योम *elem, अचिन्हित दीर्घ opaque, अचिन्हित दीर्घ *__key,
+	       माप_प्रकार index, व्योम *__func)
+अणु
 	visitor64_t func = __func;
-	u64 *key = (void *)__key;
+	u64 *key = (व्योम *)__key;
 
 	func(elem, opaque, *key, index);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(visitor64);
 
-void visitor128(void *elem, unsigned long opaque, unsigned long *__key,
-		size_t index, void *__func)
-{
+व्योम visitor128(व्योम *elem, अचिन्हित दीर्घ opaque, अचिन्हित दीर्घ *__key,
+		माप_प्रकार index, व्योम *__func)
+अणु
 	visitor128_t func = __func;
-	u64 *key = (void *)__key;
+	u64 *key = (व्योम *)__key;
 
 	func(elem, opaque, key[0], key[1], index);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(visitor128);
 
-size_t btree_visitor(struct btree_head *head, struct btree_geo *geo,
-		     unsigned long opaque,
-		     void (*func)(void *elem, unsigned long opaque,
-		     		  unsigned long *key,
-		     		  size_t index, void *func2),
-		     void *func2)
-{
-	size_t count = 0;
+माप_प्रकार btree_visitor(काष्ठा btree_head *head, काष्ठा btree_geo *geo,
+		     अचिन्हित दीर्घ opaque,
+		     व्योम (*func)(व्योम *elem, अचिन्हित दीर्घ opaque,
+		     		  अचिन्हित दीर्घ *key,
+		     		  माप_प्रकार index, व्योम *func2),
+		     व्योम *func2)
+अणु
+	माप_प्रकार count = 0;
 
-	if (!func2)
+	अगर (!func2)
 		func = empty;
-	if (head->node)
-		count = __btree_for_each(head, geo, head->node, opaque, func,
+	अगर (head->node)
+		count = __btree_क्रम_each(head, geo, head->node, opaque, func,
 				func2, 0, head->height, 0);
-	return count;
-}
+	वापस count;
+पूर्ण
 EXPORT_SYMBOL_GPL(btree_visitor);
 
-size_t btree_grim_visitor(struct btree_head *head, struct btree_geo *geo,
-			  unsigned long opaque,
-			  void (*func)(void *elem, unsigned long opaque,
-				       unsigned long *key,
-				       size_t index, void *func2),
-			  void *func2)
-{
-	size_t count = 0;
+माप_प्रकार btree_grim_visitor(काष्ठा btree_head *head, काष्ठा btree_geo *geo,
+			  अचिन्हित दीर्घ opaque,
+			  व्योम (*func)(व्योम *elem, अचिन्हित दीर्घ opaque,
+				       अचिन्हित दीर्घ *key,
+				       माप_प्रकार index, व्योम *func2),
+			  व्योम *func2)
+अणु
+	माप_प्रकार count = 0;
 
-	if (!func2)
+	अगर (!func2)
 		func = empty;
-	if (head->node)
-		count = __btree_for_each(head, geo, head->node, opaque, func,
+	अगर (head->node)
+		count = __btree_क्रम_each(head, geo, head->node, opaque, func,
 				func2, 1, head->height, 0);
 	__btree_init(head);
-	return count;
-}
+	वापस count;
+पूर्ण
 EXPORT_SYMBOL_GPL(btree_grim_visitor);
 
-static int __init btree_module_init(void)
-{
+अटल पूर्णांक __init btree_module_init(व्योम)
+अणु
 	btree_cachep = kmem_cache_create("btree_node", NODESIZE, 0,
-			SLAB_HWCACHE_ALIGN, NULL);
-	return 0;
-}
+			SLAB_HWCACHE_ALIGN, शून्य);
+	वापस 0;
+पूर्ण
 
-static void __exit btree_module_exit(void)
-{
+अटल व्योम __निकास btree_module_निकास(व्योम)
+अणु
 	kmem_cache_destroy(btree_cachep);
-}
+पूर्ण
 
 /* If core code starts using btree, initialization should happen even earlier */
 module_init(btree_module_init);
-module_exit(btree_module_exit);
+module_निकास(btree_module_निकास);
 
 MODULE_AUTHOR("Joern Engel <joern@logfs.org>");
 MODULE_AUTHOR("Johannes Berg <johannes@sipsolutions.net>");

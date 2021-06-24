@@ -1,30 +1,31 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Copyright (c) 2019 MediaTek Inc.
  * Author: Min.Guo <min.guo@mediatek.com>
  */
 
-#include <dt-bindings/pinctrl/mt65xx.h>
-#include <linux/of.h>
-#include <linux/of_device.h>
-#include <linux/module.h>
-#include <linux/pinctrl/pinctrl.h>
-#include <linux/platform_device.h>
-#include <linux/regmap.h>
+#समावेश <dt-bindings/pinctrl/mt65xx.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/module.h>
+#समावेश <linux/pinctrl/pinctrl.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/regmap.h>
 
-#include "pinctrl-mtk-common.h"
-#include "pinctrl-mtk-mt8516.h"
+#समावेश "pinctrl-mtk-common.h"
+#समावेश "pinctrl-mtk-mt8516.h"
 
-static const struct mtk_drv_group_desc mt8516_drv_grp[] = {
+अटल स्थिर काष्ठा mtk_drv_group_desc mt8516_drv_grp[] = अणु
 	/* 0E4E8SR 4/8/12/16 */
 	MTK_DRV_GRP(4, 16, 1, 2, 4),
 	/* 0E2E4SR  2/4/6/8 */
 	MTK_DRV_GRP(2, 8, 1, 2, 2),
 	/* E8E4E2  2/4/6/8/10/12/14/16 */
 	MTK_DRV_GRP(2, 16, 0, 2, 2)
-};
+पूर्ण;
 
-static const struct mtk_pin_drv_grp mt8516_pin_drv[] = {
+अटल स्थिर काष्ठा mtk_pin_drv_grp mt8516_pin_drv[] = अणु
 	MTK_PIN_DRV_GRP(0, 0xd00, 0, 0),
 	MTK_PIN_DRV_GRP(1, 0xd00, 0, 0),
 	MTK_PIN_DRV_GRP(2, 0xd00, 0, 0),
@@ -143,9 +144,9 @@ static const struct mtk_pin_drv_grp mt8516_pin_drv[] = {
 	MTK_PIN_DRV_GRP(118, 0xd70, 0, 2),
 	MTK_PIN_DRV_GRP(119, 0xd70, 0, 2),
 	MTK_PIN_DRV_GRP(120, 0xd70, 0, 2),
-};
+पूर्ण;
 
-static const struct mtk_pin_spec_pupd_set_samereg mt8516_spec_pupd[] = {
+अटल स्थिर काष्ठा mtk_pin_spec_pupd_set_samereg mt8516_spec_pupd[] = अणु
 	MTK_PIN_PUPD_SPEC_SR(14, 0xe50, 14, 13, 12),
 	MTK_PIN_PUPD_SPEC_SR(15, 0xe60, 2, 1, 0),
 	MTK_PIN_PUPD_SPEC_SR(16, 0xe60, 6, 5, 4),
@@ -184,16 +185,16 @@ static const struct mtk_pin_spec_pupd_set_samereg mt8516_spec_pupd[] = {
 	MTK_PIN_PUPD_SPEC_SR(118, 0xe00, 10, 9, 8),
 	MTK_PIN_PUPD_SPEC_SR(119, 0xe00, 6, 5, 4),
 	MTK_PIN_PUPD_SPEC_SR(120, 0xe00, 2, 1, 0),
-};
+पूर्ण;
 
-static int mt8516_spec_pull_set(struct regmap *regmap, unsigned int pin,
-			unsigned char align, bool isup, unsigned int r1r0)
-{
-	return mtk_pctrl_spec_pull_set_samereg(regmap, mt8516_spec_pupd,
+अटल पूर्णांक mt8516_spec_pull_set(काष्ठा regmap *regmap, अचिन्हित पूर्णांक pin,
+			अचिन्हित अक्षर align, bool isup, अचिन्हित पूर्णांक r1r0)
+अणु
+	वापस mtk_pctrl_spec_pull_set_samereg(regmap, mt8516_spec_pupd,
 		ARRAY_SIZE(mt8516_spec_pupd), pin, align, isup, r1r0);
-}
+पूर्ण
 
-static const struct mtk_pin_ies_smt_set mt8516_ies_set[] = {
+अटल स्थिर काष्ठा mtk_pin_ies_smt_set mt8516_ies_set[] = अणु
 	MTK_PIN_IES_SMT_SPEC(0, 6, 0x900, 2),
 	MTK_PIN_IES_SMT_SPEC(7, 10, 0x900, 3),
 	MTK_PIN_IES_SMT_SPEC(11, 13, 0x900, 12),
@@ -240,9 +241,9 @@ static const struct mtk_pin_ies_smt_set mt8516_ies_set[] = {
 	MTK_PIN_IES_SMT_SPEC(119, 119, 0x920, 3),
 	MTK_PIN_IES_SMT_SPEC(120, 120, 0x920, 2),
 	MTK_PIN_IES_SMT_SPEC(121, 124, 0x910, 9),
-};
+पूर्ण;
 
-static const struct mtk_pin_ies_smt_set mt8516_smt_set[] = {
+अटल स्थिर काष्ठा mtk_pin_ies_smt_set mt8516_smt_set[] = अणु
 	MTK_PIN_IES_SMT_SPEC(0, 6, 0xA00, 2),
 	MTK_PIN_IES_SMT_SPEC(7, 10, 0xA00, 3),
 	MTK_PIN_IES_SMT_SPEC(11, 13, 0xA00, 12),
@@ -290,21 +291,21 @@ static const struct mtk_pin_ies_smt_set mt8516_smt_set[] = {
 	MTK_PIN_IES_SMT_SPEC(119, 119, 0xA20, 3),
 	MTK_PIN_IES_SMT_SPEC(120, 120, 0xA20, 2),
 	MTK_PIN_IES_SMT_SPEC(121, 124, 0xA10, 9),
-};
+पूर्ण;
 
-static int mt8516_ies_smt_set(struct regmap *regmap, unsigned int pin,
-		unsigned char align, int value, enum pin_config_param arg)
-{
-	if (arg == PIN_CONFIG_INPUT_ENABLE)
-		return mtk_pconf_spec_set_ies_smt_range(regmap, mt8516_ies_set,
+अटल पूर्णांक mt8516_ies_smt_set(काष्ठा regmap *regmap, अचिन्हित पूर्णांक pin,
+		अचिन्हित अक्षर align, पूर्णांक value, क्रमागत pin_config_param arg)
+अणु
+	अगर (arg == PIN_CONFIG_INPUT_ENABLE)
+		वापस mtk_pconf_spec_set_ies_smt_range(regmap, mt8516_ies_set,
 			ARRAY_SIZE(mt8516_ies_set), pin, align, value);
-	else if (arg == PIN_CONFIG_INPUT_SCHMITT_ENABLE)
-		return mtk_pconf_spec_set_ies_smt_range(regmap, mt8516_smt_set,
+	अन्यथा अगर (arg == PIN_CONFIG_INPUT_SCHMITT_ENABLE)
+		वापस mtk_pconf_spec_set_ies_smt_range(regmap, mt8516_smt_set,
 			ARRAY_SIZE(mt8516_smt_set), pin, align, value);
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static const struct mtk_pinctrl_devdata mt8516_pinctrl_data = {
+अटल स्थिर काष्ठा mtk_pinctrl_devdata mt8516_pinctrl_data = अणु
 	.pins = mtk_pins_mt8516,
 	.npins = ARRAY_SIZE(mtk_pins_mt8516),
 	.grp_desc = mt8516_drv_grp,
@@ -316,7 +317,7 @@ static const struct mtk_pinctrl_devdata mt8516_pinctrl_data = {
 	.dir_offset = 0x0000,
 	.pullen_offset = 0x0500,
 	.pullsel_offset = 0x0600,
-	.dout_offset = 0x0100,
+	.करोut_offset = 0x0100,
 	.din_offset = 0x0200,
 	.pinmux_offset = 0x0300,
 	.type1_start = 125,
@@ -324,39 +325,39 @@ static const struct mtk_pinctrl_devdata mt8516_pinctrl_data = {
 	.port_shf = 4,
 	.port_mask = 0xf,
 	.port_align = 4,
-	.eint_hw = {
+	.eपूर्णांक_hw = अणु
 		.port_mask = 7,
 		.ports     = 6,
 		.ap_num    = 169,
 		.db_cnt    = 64,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static int mt8516_pinctrl_probe(struct platform_device *pdev)
-{
-	return mtk_pctrl_init(pdev, &mt8516_pinctrl_data, NULL);
-}
+अटल पूर्णांक mt8516_pinctrl_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	वापस mtk_pctrl_init(pdev, &mt8516_pinctrl_data, शून्य);
+पूर्ण
 
-static const struct of_device_id mt8516_pctrl_match[] = {
-	{
+अटल स्थिर काष्ठा of_device_id mt8516_pctrl_match[] = अणु
+	अणु
 		.compatible = "mediatek,mt8516-pinctrl",
-	},
-	{}
-};
+	पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
 MODULE_DEVICE_TABLE(of, mt8516_pctrl_match);
 
-static struct platform_driver mtk_pinctrl_driver = {
+अटल काष्ठा platक्रमm_driver mtk_pinctrl_driver = अणु
 	.probe = mt8516_pinctrl_probe,
-	.driver = {
+	.driver = अणु
 		.name = "mediatek-mt8516-pinctrl",
 		.of_match_table = mt8516_pctrl_match,
-		.pm = &mtk_eint_pm_ops,
-	},
-};
+		.pm = &mtk_eपूर्णांक_pm_ops,
+	पूर्ण,
+पूर्ण;
 
-static int __init mtk_pinctrl_init(void)
-{
-	return platform_driver_register(&mtk_pinctrl_driver);
-}
+अटल पूर्णांक __init mtk_pinctrl_init(व्योम)
+अणु
+	वापस platक्रमm_driver_रेजिस्टर(&mtk_pinctrl_driver);
+पूर्ण
 arch_initcall(mtk_pinctrl_init);

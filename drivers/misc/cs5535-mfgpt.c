@@ -1,271 +1,272 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * Driver for the CS5535/CS5536 Multi-Function General Purpose Timers (MFGPT)
+ * Driver क्रम the CS5535/CS5536 Multi-Function General Purpose Timers (MFGPT)
  *
  * Copyright (C) 2006, Advanced Micro Devices, Inc.
  * Copyright (C) 2007  Andres Salomon <dilinger@debian.org>
  * Copyright (C) 2009  Andres Salomon <dilinger@collabora.co.uk>
  *
- * The MFGPTs are documented in AMD Geode CS5536 Companion Device Data Book.
+ * The MFGPTs are करोcumented in AMD Geode CS5536 Companion Device Data Book.
  */
 
-#include <linux/kernel.h>
-#include <linux/spinlock.h>
-#include <linux/interrupt.h>
-#include <linux/module.h>
-#include <linux/platform_device.h>
-#include <linux/cs5535.h>
-#include <linux/slab.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/module.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/cs5535.h>
+#समावेश <linux/slab.h>
 
-#define DRV_NAME "cs5535-mfgpt"
+#घोषणा DRV_NAME "cs5535-mfgpt"
 
-static int mfgpt_reset_timers;
-module_param_named(mfgptfix, mfgpt_reset_timers, int, 0644);
+अटल पूर्णांक mfgpt_reset_समयrs;
+module_param_named(mfgptfix, mfgpt_reset_समयrs, पूर्णांक, 0644);
 MODULE_PARM_DESC(mfgptfix, "Try to reset the MFGPT timers during init; "
 		"required by some broken BIOSes (ie, TinyBIOS < 0.99) or kexec "
 		"(1 = reset the MFGPT using an undocumented bit, "
 		"2 = perform a soft reset by unconfiguring all timers); "
 		"use what works best for you.");
 
-struct cs5535_mfgpt_timer {
-	struct cs5535_mfgpt_chip *chip;
-	int nr;
-};
+काष्ठा cs5535_mfgpt_समयr अणु
+	काष्ठा cs5535_mfgpt_chip *chip;
+	पूर्णांक nr;
+पूर्ण;
 
-static struct cs5535_mfgpt_chip {
+अटल काष्ठा cs5535_mfgpt_chip अणु
 	DECLARE_BITMAP(avail, MFGPT_MAX_TIMERS);
-	resource_size_t base;
+	resource_माप_प्रकार base;
 
-	struct platform_device *pdev;
+	काष्ठा platक्रमm_device *pdev;
 	spinlock_t lock;
-	int initialized;
-} cs5535_mfgpt_chip;
+	पूर्णांक initialized;
+पूर्ण cs5535_mfgpt_chip;
 
-int cs5535_mfgpt_toggle_event(struct cs5535_mfgpt_timer *timer, int cmp,
-		int event, int enable)
-{
-	uint32_t msr, mask, value, dummy;
-	int shift = (cmp == MFGPT_CMP1) ? 0 : 8;
+पूर्णांक cs5535_mfgpt_toggle_event(काष्ठा cs5535_mfgpt_समयr *समयr, पूर्णांक cmp,
+		पूर्णांक event, पूर्णांक enable)
+अणु
+	uपूर्णांक32_t msr, mask, value, dummy;
+	पूर्णांक shअगरt = (cmp == MFGPT_CMP1) ? 0 : 8;
 
-	if (!timer) {
+	अगर (!समयr) अणु
 		WARN_ON(1);
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
 	/*
-	 * The register maps for these are described in sections 6.17.1.x of
+	 * The रेजिस्टर maps क्रम these are described in sections 6.17.1.x of
 	 * the AMD Geode CS5536 Companion Device Data Book.
 	 */
-	switch (event) {
-	case MFGPT_EVENT_RESET:
+	चयन (event) अणु
+	हाल MFGPT_EVENT_RESET:
 		/*
-		 * XXX: According to the docs, we cannot reset timers above
-		 * 6; that is, resets for 7 and 8 will be ignored.  Is this
+		 * XXX: According to the करोcs, we cannot reset समयrs above
+		 * 6; that is, resets क्रम 7 and 8 will be ignored.  Is this
 		 * a problem?   -dilinger
 		 */
 		msr = MSR_MFGPT_NR;
-		mask = 1 << (timer->nr + 24);
-		break;
+		mask = 1 << (समयr->nr + 24);
+		अवरोध;
 
-	case MFGPT_EVENT_NMI:
+	हाल MFGPT_EVENT_NMI:
 		msr = MSR_MFGPT_NR;
-		mask = 1 << (timer->nr + shift);
-		break;
+		mask = 1 << (समयr->nr + shअगरt);
+		अवरोध;
 
-	case MFGPT_EVENT_IRQ:
+	हाल MFGPT_EVENT_IRQ:
 		msr = MSR_MFGPT_IRQ;
-		mask = 1 << (timer->nr + shift);
-		break;
+		mask = 1 << (समयr->nr + shअगरt);
+		अवरोध;
 
-	default:
-		return -EIO;
-	}
+	शेष:
+		वापस -EIO;
+	पूर्ण
 
 	rdmsr(msr, value, dummy);
 
-	if (enable)
+	अगर (enable)
 		value |= mask;
-	else
+	अन्यथा
 		value &= ~mask;
 
 	wrmsr(msr, value, dummy);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(cs5535_mfgpt_toggle_event);
 
-int cs5535_mfgpt_set_irq(struct cs5535_mfgpt_timer *timer, int cmp, int *irq,
-		int enable)
-{
-	uint32_t zsel, lpc, dummy;
-	int shift;
+पूर्णांक cs5535_mfgpt_set_irq(काष्ठा cs5535_mfgpt_समयr *समयr, पूर्णांक cmp, पूर्णांक *irq,
+		पूर्णांक enable)
+अणु
+	uपूर्णांक32_t zsel, lpc, dummy;
+	पूर्णांक shअगरt;
 
-	if (!timer) {
+	अगर (!समयr) अणु
 		WARN_ON(1);
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
 	/*
-	 * Unfortunately, MFGPTs come in pairs sharing their IRQ lines. If VSA
-	 * is using the same CMP of the timer's Siamese twin, the IRQ is set to
+	 * Unक्रमtunately, MFGPTs come in pairs sharing their IRQ lines. If VSA
+	 * is using the same CMP of the समयr's Siamese twin, the IRQ is set to
 	 * 2, and we mustn't use nor change it.
-	 * XXX: Likewise, 2 Linux drivers might clash if the 2nd overwrites the
-	 * IRQ of the 1st. This can only happen if forcing an IRQ, calling this
+	 * XXX: Likewise, 2 Linux drivers might clash अगर the 2nd overग_लिखोs the
+	 * IRQ of the 1st. This can only happen अगर क्रमcing an IRQ, calling this
 	 * with *irq==0 is safe. Currently there _are_ no 2 drivers.
 	 */
 	rdmsr(MSR_PIC_ZSEL_LOW, zsel, dummy);
-	shift = ((cmp == MFGPT_CMP1 ? 0 : 4) + timer->nr % 4) * 4;
-	if (((zsel >> shift) & 0xF) == 2)
-		return -EIO;
+	shअगरt = ((cmp == MFGPT_CMP1 ? 0 : 4) + समयr->nr % 4) * 4;
+	अगर (((zsel >> shअगरt) & 0xF) == 2)
+		वापस -EIO;
 
-	/* Choose IRQ: if none supplied, keep IRQ already set or use default */
-	if (!*irq)
-		*irq = (zsel >> shift) & 0xF;
-	if (!*irq)
+	/* Choose IRQ: अगर none supplied, keep IRQ alपढ़ोy set or use शेष */
+	अगर (!*irq)
+		*irq = (zsel >> shअगरt) & 0xF;
+	अगर (!*irq)
 		*irq = CONFIG_CS5535_MFGPT_DEFAULT_IRQ;
 
 	/* Can't use IRQ if it's 0 (=disabled), 2, or routed to LPC */
-	if (*irq < 1 || *irq == 2 || *irq > 15)
-		return -EIO;
+	अगर (*irq < 1 || *irq == 2 || *irq > 15)
+		वापस -EIO;
 	rdmsr(MSR_PIC_IRQM_LPC, lpc, dummy);
-	if (lpc & (1 << *irq))
-		return -EIO;
+	अगर (lpc & (1 << *irq))
+		वापस -EIO;
 
-	/* All chosen and checked - go for it */
-	if (cs5535_mfgpt_toggle_event(timer, cmp, MFGPT_EVENT_IRQ, enable))
-		return -EIO;
-	if (enable) {
-		zsel = (zsel & ~(0xF << shift)) | (*irq << shift);
+	/* All chosen and checked - go क्रम it */
+	अगर (cs5535_mfgpt_toggle_event(समयr, cmp, MFGPT_EVENT_IRQ, enable))
+		वापस -EIO;
+	अगर (enable) अणु
+		zsel = (zsel & ~(0xF << shअगरt)) | (*irq << shअगरt);
 		wrmsr(MSR_PIC_ZSEL_LOW, zsel, dummy);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(cs5535_mfgpt_set_irq);
 
-struct cs5535_mfgpt_timer *cs5535_mfgpt_alloc_timer(int timer_nr, int domain)
-{
-	struct cs5535_mfgpt_chip *mfgpt = &cs5535_mfgpt_chip;
-	struct cs5535_mfgpt_timer *timer = NULL;
-	unsigned long flags;
-	int max;
+काष्ठा cs5535_mfgpt_समयr *cs5535_mfgpt_alloc_समयr(पूर्णांक समयr_nr, पूर्णांक करोमुख्य)
+अणु
+	काष्ठा cs5535_mfgpt_chip *mfgpt = &cs5535_mfgpt_chip;
+	काष्ठा cs5535_mfgpt_समयr *समयr = शून्य;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक max;
 
-	if (!mfgpt->initialized)
-		goto done;
+	अगर (!mfgpt->initialized)
+		जाओ करोne;
 
-	/* only allocate timers from the working domain if requested */
-	if (domain == MFGPT_DOMAIN_WORKING)
+	/* only allocate समयrs from the working करोमुख्य अगर requested */
+	अगर (करोमुख्य == MFGPT_DOMAIN_WORKING)
 		max = 6;
-	else
+	अन्यथा
 		max = MFGPT_MAX_TIMERS;
 
-	if (timer_nr >= max) {
+	अगर (समयr_nr >= max) अणु
 		/* programmer error.  silly programmers! */
 		WARN_ON(1);
-		goto done;
-	}
+		जाओ करोne;
+	पूर्ण
 
 	spin_lock_irqsave(&mfgpt->lock, flags);
-	if (timer_nr < 0) {
-		unsigned long t;
+	अगर (समयr_nr < 0) अणु
+		अचिन्हित दीर्घ t;
 
-		/* try to find any available timer */
+		/* try to find any available समयr */
 		t = find_first_bit(mfgpt->avail, max);
-		/* set timer_nr to -1 if no timers available */
-		timer_nr = t < max ? (int) t : -1;
-	} else {
-		/* check if the requested timer's available */
-		if (!test_bit(timer_nr, mfgpt->avail))
-			timer_nr = -1;
-	}
+		/* set समयr_nr to -1 अगर no समयrs available */
+		समयr_nr = t < max ? (पूर्णांक) t : -1;
+	पूर्ण अन्यथा अणु
+		/* check अगर the requested समयr's available */
+		अगर (!test_bit(समयr_nr, mfgpt->avail))
+			समयr_nr = -1;
+	पूर्ण
 
-	if (timer_nr >= 0)
-		/* if timer_nr is not -1, it's an available timer */
-		__clear_bit(timer_nr, mfgpt->avail);
+	अगर (समयr_nr >= 0)
+		/* अगर समयr_nr is not -1, it's an available समयr */
+		__clear_bit(समयr_nr, mfgpt->avail);
 	spin_unlock_irqrestore(&mfgpt->lock, flags);
 
-	if (timer_nr < 0)
-		goto done;
+	अगर (समयr_nr < 0)
+		जाओ करोne;
 
-	timer = kmalloc(sizeof(*timer), GFP_KERNEL);
-	if (!timer) {
+	समयr = kदो_स्मृति(माप(*समयr), GFP_KERNEL);
+	अगर (!समयr) अणु
 		/* aw hell */
 		spin_lock_irqsave(&mfgpt->lock, flags);
-		__set_bit(timer_nr, mfgpt->avail);
+		__set_bit(समयr_nr, mfgpt->avail);
 		spin_unlock_irqrestore(&mfgpt->lock, flags);
-		goto done;
-	}
-	timer->chip = mfgpt;
-	timer->nr = timer_nr;
-	dev_info(&mfgpt->pdev->dev, "registered timer %d\n", timer_nr);
+		जाओ करोne;
+	पूर्ण
+	समयr->chip = mfgpt;
+	समयr->nr = समयr_nr;
+	dev_info(&mfgpt->pdev->dev, "registered timer %d\n", समयr_nr);
 
-done:
-	return timer;
-}
-EXPORT_SYMBOL_GPL(cs5535_mfgpt_alloc_timer);
+करोne:
+	वापस समयr;
+पूर्ण
+EXPORT_SYMBOL_GPL(cs5535_mfgpt_alloc_समयr);
 
 /*
- * XXX: This frees the timer memory, but never resets the actual hardware
- * timer.  The old geode_mfgpt code did this; it would be good to figure
- * out a way to actually release the hardware timer.  See comments below.
+ * XXX: This मुक्तs the समयr memory, but never resets the actual hardware
+ * समयr.  The old geode_mfgpt code did this; it would be good to figure
+ * out a way to actually release the hardware समयr.  See comments below.
  */
-void cs5535_mfgpt_free_timer(struct cs5535_mfgpt_timer *timer)
-{
-	unsigned long flags;
-	uint16_t val;
+व्योम cs5535_mfgpt_मुक्त_समयr(काष्ठा cs5535_mfgpt_समयr *समयr)
+अणु
+	अचिन्हित दीर्घ flags;
+	uपूर्णांक16_t val;
 
-	/* timer can be made available again only if never set up */
-	val = cs5535_mfgpt_read(timer, MFGPT_REG_SETUP);
-	if (!(val & MFGPT_SETUP_SETUP)) {
-		spin_lock_irqsave(&timer->chip->lock, flags);
-		__set_bit(timer->nr, timer->chip->avail);
-		spin_unlock_irqrestore(&timer->chip->lock, flags);
-	}
+	/* समयr can be made available again only अगर never set up */
+	val = cs5535_mfgpt_पढ़ो(समयr, MFGPT_REG_SETUP);
+	अगर (!(val & MFGPT_SETUP_SETUP)) अणु
+		spin_lock_irqsave(&समयr->chip->lock, flags);
+		__set_bit(समयr->nr, समयr->chip->avail);
+		spin_unlock_irqrestore(&समयr->chip->lock, flags);
+	पूर्ण
 
-	kfree(timer);
-}
-EXPORT_SYMBOL_GPL(cs5535_mfgpt_free_timer);
+	kमुक्त(समयr);
+पूर्ण
+EXPORT_SYMBOL_GPL(cs5535_mfgpt_मुक्त_समयr);
 
-uint16_t cs5535_mfgpt_read(struct cs5535_mfgpt_timer *timer, uint16_t reg)
-{
-	return inw(timer->chip->base + reg + (timer->nr * 8));
-}
-EXPORT_SYMBOL_GPL(cs5535_mfgpt_read);
+uपूर्णांक16_t cs5535_mfgpt_पढ़ो(काष्ठा cs5535_mfgpt_समयr *समयr, uपूर्णांक16_t reg)
+अणु
+	वापस inw(समयr->chip->base + reg + (समयr->nr * 8));
+पूर्ण
+EXPORT_SYMBOL_GPL(cs5535_mfgpt_पढ़ो);
 
-void cs5535_mfgpt_write(struct cs5535_mfgpt_timer *timer, uint16_t reg,
-		uint16_t value)
-{
-	outw(value, timer->chip->base + reg + (timer->nr * 8));
-}
-EXPORT_SYMBOL_GPL(cs5535_mfgpt_write);
+व्योम cs5535_mfgpt_ग_लिखो(काष्ठा cs5535_mfgpt_समयr *समयr, uपूर्णांक16_t reg,
+		uपूर्णांक16_t value)
+अणु
+	outw(value, समयr->chip->base + reg + (समयr->nr * 8));
+पूर्ण
+EXPORT_SYMBOL_GPL(cs5535_mfgpt_ग_लिखो);
 
 /*
- * This is a sledgehammer that resets all MFGPT timers. This is required by
- * some broken BIOSes which leave the system in an unstable state
- * (TinyBIOS 0.98, for example; fixed in 0.99).  It's uncertain as to
- * whether or not this secret MSR can be used to release individual timers.
+ * This is a sledgehammer that resets all MFGPT समयrs. This is required by
+ * some broken BIOSes which leave the प्रणाली in an unstable state
+ * (TinyBIOS 0.98, क्रम example; fixed in 0.99).  It's uncertain as to
+ * whether or not this secret MSR can be used to release inभागidual समयrs.
  * Jordan tells me that he and Mitch once played w/ it, but it's unclear
  * what the results of that were (and they experienced some instability).
  */
-static void reset_all_timers(void)
-{
-	uint32_t val, dummy;
+अटल व्योम reset_all_समयrs(व्योम)
+अणु
+	uपूर्णांक32_t val, dummy;
 
-	/* The following undocumented bit resets the MFGPT timers */
+	/* The following unकरोcumented bit resets the MFGPT समयrs */
 	val = 0xFF; dummy = 0;
 	wrmsr(MSR_MFGPT_SETUP, val, dummy);
-}
+पूर्ण
 
 /*
- * This is another sledgehammer to reset all MFGPT timers.
- * Instead of using the undocumented bit method it clears
+ * This is another sledgehammer to reset all MFGPT समयrs.
+ * Instead of using the unकरोcumented bit method it clears
  * IRQ, NMI and RESET settings.
  */
-static void soft_reset(void)
-{
-	int i;
-	struct cs5535_mfgpt_timer t;
+अटल व्योम soft_reset(व्योम)
+अणु
+	पूर्णांक i;
+	काष्ठा cs5535_mfgpt_समयr t;
 
-	for (i = 0; i < MFGPT_MAX_TIMERS; i++) {
+	क्रम (i = 0; i < MFGPT_MAX_TIMERS; i++) अणु
 		t.nr = i;
 
 		cs5535_mfgpt_toggle_event(&t, MFGPT_CMP1, MFGPT_EVENT_RESET, 0);
@@ -274,103 +275,103 @@ static void soft_reset(void)
 		cs5535_mfgpt_toggle_event(&t, MFGPT_CMP2, MFGPT_EVENT_NMI, 0);
 		cs5535_mfgpt_toggle_event(&t, MFGPT_CMP1, MFGPT_EVENT_IRQ, 0);
 		cs5535_mfgpt_toggle_event(&t, MFGPT_CMP2, MFGPT_EVENT_IRQ, 0);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
- * Check whether any MFGPTs are available for the kernel to use.  In most
- * cases, firmware that uses AMD's VSA code will claim all timers during
- * bootup; we certainly don't want to take them if they're already in use.
- * In other cases (such as with VSAless OpenFirmware), the system firmware
- * leaves timers available for us to use.
+ * Check whether any MFGPTs are available क्रम the kernel to use.  In most
+ * हालs, firmware that uses AMD's VSA code will claim all समयrs during
+ * bootup; we certainly करोn't want to take them if they're alपढ़ोy in use.
+ * In other हालs (such as with VSAless OpenFirmware), the प्रणाली firmware
+ * leaves समयrs available क्रम us to use.
  */
-static int scan_timers(struct cs5535_mfgpt_chip *mfgpt)
-{
-	struct cs5535_mfgpt_timer timer = { .chip = mfgpt };
-	unsigned long flags;
-	int timers = 0;
-	uint16_t val;
-	int i;
+अटल पूर्णांक scan_समयrs(काष्ठा cs5535_mfgpt_chip *mfgpt)
+अणु
+	काष्ठा cs5535_mfgpt_समयr समयr = अणु .chip = mfgpt पूर्ण;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक समयrs = 0;
+	uपूर्णांक16_t val;
+	पूर्णांक i;
 
 	/* bios workaround */
-	if (mfgpt_reset_timers == 1)
-		reset_all_timers();
-	else if (mfgpt_reset_timers == 2)
+	अगर (mfgpt_reset_समयrs == 1)
+		reset_all_समयrs();
+	अन्यथा अगर (mfgpt_reset_समयrs == 2)
 		soft_reset();
 
 	/* just to be safe, protect this section w/ lock */
 	spin_lock_irqsave(&mfgpt->lock, flags);
-	for (i = 0; i < MFGPT_MAX_TIMERS; i++) {
-		timer.nr = i;
-		val = cs5535_mfgpt_read(&timer, MFGPT_REG_SETUP);
-		if (!(val & MFGPT_SETUP_SETUP) || mfgpt_reset_timers == 2) {
+	क्रम (i = 0; i < MFGPT_MAX_TIMERS; i++) अणु
+		समयr.nr = i;
+		val = cs5535_mfgpt_पढ़ो(&समयr, MFGPT_REG_SETUP);
+		अगर (!(val & MFGPT_SETUP_SETUP) || mfgpt_reset_समयrs == 2) अणु
 			__set_bit(i, mfgpt->avail);
-			timers++;
-		}
-	}
+			समयrs++;
+		पूर्ण
+	पूर्ण
 	spin_unlock_irqrestore(&mfgpt->lock, flags);
 
-	return timers;
-}
+	वापस समयrs;
+पूर्ण
 
-static int cs5535_mfgpt_probe(struct platform_device *pdev)
-{
-	struct resource *res;
-	int err = -EIO, t;
+अटल पूर्णांक cs5535_mfgpt_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा resource *res;
+	पूर्णांक err = -EIO, t;
 
-	if (mfgpt_reset_timers < 0 || mfgpt_reset_timers > 2) {
+	अगर (mfgpt_reset_समयrs < 0 || mfgpt_reset_समयrs > 2) अणु
 		dev_err(&pdev->dev, "Bad mfgpt_reset_timers value: %i\n",
-			mfgpt_reset_timers);
-		goto done;
-	}
+			mfgpt_reset_समयrs);
+		जाओ करोne;
+	पूर्ण
 
 	/* There are two ways to get the MFGPT base address; one is by
-	 * fetching it from MSR_LBAR_MFGPT, the other is by reading the
+	 * fetching it from MSR_LBAR_MFGPT, the other is by पढ़ोing the
 	 * PCI BAR info.  The latter method is easier (especially across
-	 * different architectures), so we'll stick with that for now.  If
+	 * dअगरferent architectures), so we'll stick with that क्रम now.  If
 	 * it turns out to be unreliable in the face of crappy BIOSes, we
 	 * can always go back to using MSRs.. */
 
-	res = platform_get_resource(pdev, IORESOURCE_IO, 0);
-	if (!res) {
+	res = platक्रमm_get_resource(pdev, IORESOURCE_IO, 0);
+	अगर (!res) अणु
 		dev_err(&pdev->dev, "can't fetch device resource info\n");
-		goto done;
-	}
+		जाओ करोne;
+	पूर्ण
 
-	if (!request_region(res->start, resource_size(res), pdev->name)) {
+	अगर (!request_region(res->start, resource_size(res), pdev->name)) अणु
 		dev_err(&pdev->dev, "can't request region\n");
-		goto done;
-	}
+		जाओ करोne;
+	पूर्ण
 
-	/* set up the driver-specific struct */
+	/* set up the driver-specअगरic काष्ठा */
 	cs5535_mfgpt_chip.base = res->start;
 	cs5535_mfgpt_chip.pdev = pdev;
 	spin_lock_init(&cs5535_mfgpt_chip.lock);
 
 	dev_info(&pdev->dev, "reserved resource region %pR\n", res);
 
-	/* detect the available timers */
-	t = scan_timers(&cs5535_mfgpt_chip);
+	/* detect the available समयrs */
+	t = scan_समयrs(&cs5535_mfgpt_chip);
 	dev_info(&pdev->dev, "%d MFGPT timers available\n", t);
 	cs5535_mfgpt_chip.initialized = 1;
-	return 0;
+	वापस 0;
 
-done:
-	return err;
-}
+करोne:
+	वापस err;
+पूर्ण
 
-static struct platform_driver cs5535_mfgpt_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver cs5535_mfgpt_driver = अणु
+	.driver = अणु
 		.name = DRV_NAME,
-	},
+	पूर्ण,
 	.probe = cs5535_mfgpt_probe,
-};
+पूर्ण;
 
 
-static int __init cs5535_mfgpt_init(void)
-{
-	return platform_driver_register(&cs5535_mfgpt_driver);
-}
+अटल पूर्णांक __init cs5535_mfgpt_init(व्योम)
+अणु
+	वापस platक्रमm_driver_रेजिस्टर(&cs5535_mfgpt_driver);
+पूर्ण
 
 module_init(cs5535_mfgpt_init);
 

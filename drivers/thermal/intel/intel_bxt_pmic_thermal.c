@@ -1,32 +1,33 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Intel Broxton PMIC thermal driver
  *
  * Copyright (C) 2016 Intel Corporation. All rights reserved.
  */
 
-#include <linux/module.h>
-#include <linux/kernel.h>
-#include <linux/slab.h>
-#include <linux/delay.h>
-#include <linux/interrupt.h>
-#include <linux/device.h>
-#include <linux/thermal.h>
-#include <linux/platform_device.h>
-#include <linux/sched.h>
-#include <linux/mfd/intel_soc_pmic.h>
+#समावेश <linux/module.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/device.h>
+#समावेश <linux/thermal.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/mfd/पूर्णांकel_soc_pmic.h>
 
-#define BXTWC_THRM0IRQ		0x4E04
-#define BXTWC_THRM1IRQ		0x4E05
-#define BXTWC_THRM2IRQ		0x4E06
-#define BXTWC_MTHRM0IRQ		0x4E12
-#define BXTWC_MTHRM1IRQ		0x4E13
-#define BXTWC_MTHRM2IRQ		0x4E14
-#define BXTWC_STHRM0IRQ		0x4F19
-#define BXTWC_STHRM1IRQ		0x4F1A
-#define BXTWC_STHRM2IRQ		0x4F1B
+#घोषणा BXTWC_THRM0IRQ		0x4E04
+#घोषणा BXTWC_THRM1IRQ		0x4E05
+#घोषणा BXTWC_THRM2IRQ		0x4E06
+#घोषणा BXTWC_MTHRM0IRQ		0x4E12
+#घोषणा BXTWC_MTHRM1IRQ		0x4E13
+#घोषणा BXTWC_MTHRM2IRQ		0x4E14
+#घोषणा BXTWC_STHRM0IRQ		0x4F19
+#घोषणा BXTWC_STHRM1IRQ		0x4F1A
+#घोषणा BXTWC_STHRM2IRQ		0x4F1B
 
-struct trip_config_map {
+काष्ठा trip_config_map अणु
 	u16 irq_reg;
 	u16 irq_en;
 	u16 evt_stat;
@@ -34,21 +35,21 @@ struct trip_config_map {
 	u8 irq_en_mask;
 	u8 evt_mask;
 	u8 trip_num;
-};
+पूर्ण;
 
-struct thermal_irq_map {
-	char handle[20];
-	int num_trips;
-	const struct trip_config_map *trip_config;
-};
+काष्ठा thermal_irq_map अणु
+	अक्षर handle[20];
+	पूर्णांक num_trips;
+	स्थिर काष्ठा trip_config_map *trip_config;
+पूर्ण;
 
-struct pmic_thermal_data {
-	const struct thermal_irq_map *maps;
-	int num_maps;
-};
+काष्ठा pmic_thermal_data अणु
+	स्थिर काष्ठा thermal_irq_map *maps;
+	पूर्णांक num_maps;
+पूर्ण;
 
-static const struct trip_config_map bxtwc_str0_trip_config[] = {
-	{
+अटल स्थिर काष्ठा trip_config_map bxtwc_str0_trip_config[] = अणु
+	अणु
 		.irq_reg = BXTWC_THRM0IRQ,
 		.irq_mask = 0x01,
 		.irq_en = BXTWC_MTHRM0IRQ,
@@ -56,8 +57,8 @@ static const struct trip_config_map bxtwc_str0_trip_config[] = {
 		.evt_stat = BXTWC_STHRM0IRQ,
 		.evt_mask = 0x01,
 		.trip_num = 0
-	},
-	{
+	पूर्ण,
+	अणु
 		.irq_reg = BXTWC_THRM0IRQ,
 		.irq_mask = 0x10,
 		.irq_en = BXTWC_MTHRM0IRQ,
@@ -65,11 +66,11 @@ static const struct trip_config_map bxtwc_str0_trip_config[] = {
 		.evt_stat = BXTWC_STHRM0IRQ,
 		.evt_mask = 0x10,
 		.trip_num = 1
-	}
-};
+	पूर्ण
+पूर्ण;
 
-static const struct trip_config_map bxtwc_str1_trip_config[] = {
-	{
+अटल स्थिर काष्ठा trip_config_map bxtwc_str1_trip_config[] = अणु
+	अणु
 		.irq_reg = BXTWC_THRM0IRQ,
 		.irq_mask = 0x02,
 		.irq_en = BXTWC_MTHRM0IRQ,
@@ -77,8 +78,8 @@ static const struct trip_config_map bxtwc_str1_trip_config[] = {
 		.evt_stat = BXTWC_STHRM0IRQ,
 		.evt_mask = 0x02,
 		.trip_num = 0
-	},
-	{
+	पूर्ण,
+	अणु
 		.irq_reg = BXTWC_THRM0IRQ,
 		.irq_mask = 0x20,
 		.irq_en = BXTWC_MTHRM0IRQ,
@@ -86,11 +87,11 @@ static const struct trip_config_map bxtwc_str1_trip_config[] = {
 		.evt_stat = BXTWC_STHRM0IRQ,
 		.evt_mask = 0x20,
 		.trip_num = 1
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static const struct trip_config_map bxtwc_str2_trip_config[] = {
-	{
+अटल स्थिर काष्ठा trip_config_map bxtwc_str2_trip_config[] = अणु
+	अणु
 		.irq_reg = BXTWC_THRM0IRQ,
 		.irq_mask = 0x04,
 		.irq_en = BXTWC_MTHRM0IRQ,
@@ -98,8 +99,8 @@ static const struct trip_config_map bxtwc_str2_trip_config[] = {
 		.evt_stat = BXTWC_STHRM0IRQ,
 		.evt_mask = 0x04,
 		.trip_num = 0
-	},
-	{
+	पूर्ण,
+	अणु
 		.irq_reg = BXTWC_THRM0IRQ,
 		.irq_mask = 0x40,
 		.irq_en = BXTWC_MTHRM0IRQ,
@@ -107,11 +108,11 @@ static const struct trip_config_map bxtwc_str2_trip_config[] = {
 		.evt_stat = BXTWC_STHRM0IRQ,
 		.evt_mask = 0x40,
 		.trip_num = 1
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static const struct trip_config_map bxtwc_str3_trip_config[] = {
-	{
+अटल स्थिर काष्ठा trip_config_map bxtwc_str3_trip_config[] = अणु
+	अणु
 		.irq_reg = BXTWC_THRM2IRQ,
 		.irq_mask = 0x10,
 		.irq_en = BXTWC_MTHRM2IRQ,
@@ -119,171 +120,171 @@ static const struct trip_config_map bxtwc_str3_trip_config[] = {
 		.evt_stat = BXTWC_STHRM2IRQ,
 		.evt_mask = 0x10,
 		.trip_num = 0
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static const struct thermal_irq_map bxtwc_thermal_irq_map[] = {
-	{
+अटल स्थिर काष्ठा thermal_irq_map bxtwc_thermal_irq_map[] = अणु
+	अणु
 		.handle = "STR0",
 		.trip_config = bxtwc_str0_trip_config,
 		.num_trips = ARRAY_SIZE(bxtwc_str0_trip_config),
-	},
-	{
+	पूर्ण,
+	अणु
 		.handle = "STR1",
 		.trip_config = bxtwc_str1_trip_config,
 		.num_trips = ARRAY_SIZE(bxtwc_str1_trip_config),
-	},
-	{
+	पूर्ण,
+	अणु
 		.handle = "STR2",
 		.trip_config = bxtwc_str2_trip_config,
 		.num_trips = ARRAY_SIZE(bxtwc_str2_trip_config),
-	},
-	{
+	पूर्ण,
+	अणु
 		.handle = "STR3",
 		.trip_config = bxtwc_str3_trip_config,
 		.num_trips = ARRAY_SIZE(bxtwc_str3_trip_config),
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static const struct pmic_thermal_data bxtwc_thermal_data = {
+अटल स्थिर काष्ठा pmic_thermal_data bxtwc_thermal_data = अणु
 	.maps = bxtwc_thermal_irq_map,
 	.num_maps = ARRAY_SIZE(bxtwc_thermal_irq_map),
-};
+पूर्ण;
 
-static irqreturn_t pmic_thermal_irq_handler(int irq, void *data)
-{
-	struct platform_device *pdev = data;
-	struct thermal_zone_device *tzd;
-	struct pmic_thermal_data *td;
-	struct intel_soc_pmic *pmic;
-	struct regmap *regmap;
+अटल irqवापस_t pmic_thermal_irq_handler(पूर्णांक irq, व्योम *data)
+अणु
+	काष्ठा platक्रमm_device *pdev = data;
+	काष्ठा thermal_zone_device *tzd;
+	काष्ठा pmic_thermal_data *td;
+	काष्ठा पूर्णांकel_soc_pmic *pmic;
+	काष्ठा regmap *regmap;
 	u8 reg_val, mask, irq_stat;
 	u16 reg, evt_stat_reg;
-	int i, j, ret;
+	पूर्णांक i, j, ret;
 
 	pmic = dev_get_drvdata(pdev->dev.parent);
 	regmap = pmic->regmap;
-	td = (struct pmic_thermal_data *)
-		platform_get_device_id(pdev)->driver_data;
+	td = (काष्ठा pmic_thermal_data *)
+		platक्रमm_get_device_id(pdev)->driver_data;
 
 	/* Resolve thermal irqs */
-	for (i = 0; i < td->num_maps; i++) {
-		for (j = 0; j < td->maps[i].num_trips; j++) {
+	क्रम (i = 0; i < td->num_maps; i++) अणु
+		क्रम (j = 0; j < td->maps[i].num_trips; j++) अणु
 			reg = td->maps[i].trip_config[j].irq_reg;
 			mask = td->maps[i].trip_config[j].irq_mask;
 			/*
-			 * Read the irq register to resolve whether the
-			 * interrupt was triggered for this sensor
+			 * Read the irq रेजिस्टर to resolve whether the
+			 * पूर्णांकerrupt was triggered क्रम this sensor
 			 */
-			if (regmap_read(regmap, reg, &ret))
-				return IRQ_HANDLED;
+			अगर (regmap_पढ़ो(regmap, reg, &ret))
+				वापस IRQ_HANDLED;
 
 			reg_val = (u8)ret;
 			irq_stat = ((u8)ret & mask);
 
-			if (!irq_stat)
-				continue;
+			अगर (!irq_stat)
+				जारी;
 
 			/*
-			 * Read the status register to find out what
+			 * Read the status रेजिस्टर to find out what
 			 * event occurred i.e a high or a low
 			 */
 			evt_stat_reg = td->maps[i].trip_config[j].evt_stat;
-			if (regmap_read(regmap, evt_stat_reg, &ret))
-				return IRQ_HANDLED;
+			अगर (regmap_पढ़ो(regmap, evt_stat_reg, &ret))
+				वापस IRQ_HANDLED;
 
 			tzd = thermal_zone_get_zone_by_name(td->maps[i].handle);
-			if (!IS_ERR(tzd))
+			अगर (!IS_ERR(tzd))
 				thermal_zone_device_update(tzd,
 						THERMAL_EVENT_UNSPECIFIED);
 
 			/* Clear the appropriate irq */
-			regmap_write(regmap, reg, reg_val & mask);
-		}
-	}
+			regmap_ग_लिखो(regmap, reg, reg_val & mask);
+		पूर्ण
+	पूर्ण
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static int pmic_thermal_probe(struct platform_device *pdev)
-{
-	struct regmap_irq_chip_data *regmap_irq_chip;
-	struct pmic_thermal_data *thermal_data;
-	int ret, irq, virq, i, j, pmic_irq_count;
-	struct intel_soc_pmic *pmic;
-	struct regmap *regmap;
-	struct device *dev;
+अटल पूर्णांक pmic_thermal_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा regmap_irq_chip_data *regmap_irq_chip;
+	काष्ठा pmic_thermal_data *thermal_data;
+	पूर्णांक ret, irq, virq, i, j, pmic_irq_count;
+	काष्ठा पूर्णांकel_soc_pmic *pmic;
+	काष्ठा regmap *regmap;
+	काष्ठा device *dev;
 	u16 reg;
 	u8 mask;
 
 	dev = &pdev->dev;
 	pmic = dev_get_drvdata(pdev->dev.parent);
-	if (!pmic) {
+	अगर (!pmic) अणु
 		dev_err(dev, "Failed to get struct intel_soc_pmic pointer\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	thermal_data = (struct pmic_thermal_data *)
-				platform_get_device_id(pdev)->driver_data;
-	if (!thermal_data) {
+	thermal_data = (काष्ठा pmic_thermal_data *)
+				platक्रमm_get_device_id(pdev)->driver_data;
+	अगर (!thermal_data) अणु
 		dev_err(dev, "No thermal data initialized!!\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
 	regmap = pmic->regmap;
 	regmap_irq_chip = pmic->irq_chip_data;
 
 	pmic_irq_count = 0;
-	while ((irq = platform_get_irq(pdev, pmic_irq_count)) != -ENXIO) {
+	जबतक ((irq = platक्रमm_get_irq(pdev, pmic_irq_count)) != -ENXIO) अणु
 		virq = regmap_irq_get_virq(regmap_irq_chip, irq);
-		if (virq < 0) {
+		अगर (virq < 0) अणु
 			dev_err(dev, "failed to get virq by irq %d\n", irq);
-			return virq;
-		}
+			वापस virq;
+		पूर्ण
 
-		ret = devm_request_threaded_irq(&pdev->dev, virq,
-				NULL, pmic_thermal_irq_handler,
+		ret = devm_request_thपढ़ोed_irq(&pdev->dev, virq,
+				शून्य, pmic_thermal_irq_handler,
 				IRQF_ONESHOT, "pmic_thermal", pdev);
 
-		if (ret) {
+		अगर (ret) अणु
 			dev_err(dev, "request irq(%d) failed: %d\n", virq, ret);
-			return ret;
-		}
+			वापस ret;
+		पूर्ण
 		pmic_irq_count++;
-	}
+	पूर्ण
 
-	/* Enable thermal interrupts */
-	for (i = 0; i < thermal_data->num_maps; i++) {
-		for (j = 0; j < thermal_data->maps[i].num_trips; j++) {
+	/* Enable thermal पूर्णांकerrupts */
+	क्रम (i = 0; i < thermal_data->num_maps; i++) अणु
+		क्रम (j = 0; j < thermal_data->maps[i].num_trips; j++) अणु
 			reg = thermal_data->maps[i].trip_config[j].irq_en;
 			mask = thermal_data->maps[i].trip_config[j].irq_en_mask;
 			ret = regmap_update_bits(regmap, reg, mask, 0x00);
-			if (ret)
-				return ret;
-		}
-	}
+			अगर (ret)
+				वापस ret;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct platform_device_id pmic_thermal_id_table[] = {
-	{
+अटल स्थिर काष्ठा platक्रमm_device_id pmic_thermal_id_table[] = अणु
+	अणु
 		.name = "bxt_wcove_thermal",
-		.driver_data = (kernel_ulong_t)&bxtwc_thermal_data,
-	},
-	{},
-};
+		.driver_data = (kernel_uदीर्घ_t)&bxtwc_thermal_data,
+	पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 
-static struct platform_driver pmic_thermal_driver = {
+अटल काष्ठा platक्रमm_driver pmic_thermal_driver = अणु
 	.probe = pmic_thermal_probe,
-	.driver = {
+	.driver = अणु
 		.name = "pmic_thermal",
-	},
+	पूर्ण,
 	.id_table = pmic_thermal_id_table,
-};
+पूर्ण;
 
-MODULE_DEVICE_TABLE(platform, pmic_thermal_id_table);
-module_platform_driver(pmic_thermal_driver);
+MODULE_DEVICE_TABLE(platक्रमm, pmic_thermal_id_table);
+module_platक्रमm_driver(pmic_thermal_driver);
 
 MODULE_AUTHOR("Yegnesh S Iyer <yegnesh.s.iyer@intel.com>");
 MODULE_DESCRIPTION("Intel Broxton PMIC Thermal Driver");

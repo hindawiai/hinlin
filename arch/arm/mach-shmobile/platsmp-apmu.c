@@ -1,95 +1,96 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * SMP support for SoCs with APMU
+ * SMP support क्रम SoCs with APMU
  *
  * Copyright (C) 2014  Renesas Electronics Corporation
  * Copyright (C) 2013  Magnus Damm
  */
-#include <linux/cpu_pm.h>
-#include <linux/delay.h>
-#include <linux/init.h>
-#include <linux/io.h>
-#include <linux/ioport.h>
-#include <linux/of_address.h>
-#include <linux/smp.h>
-#include <linux/suspend.h>
-#include <linux/threads.h>
-#include <asm/cacheflush.h>
-#include <asm/cp15.h>
-#include <asm/proc-fns.h>
-#include <asm/smp_plat.h>
-#include <asm/suspend.h>
-#include "common.h"
-#include "rcar-gen2.h"
+#समावेश <linux/cpu_pm.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/init.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/ioport.h>
+#समावेश <linux/of_address.h>
+#समावेश <linux/smp.h>
+#समावेश <linux/suspend.h>
+#समावेश <linux/thपढ़ोs.h>
+#समावेश <यंत्र/cacheflush.h>
+#समावेश <यंत्र/cp15.h>
+#समावेश <यंत्र/proc-fns.h>
+#समावेश <यंत्र/smp_plat.h>
+#समावेश <यंत्र/suspend.h>
+#समावेश "common.h"
+#समावेश "rcar-gen2.h"
 
-static struct {
-	void __iomem *iomem;
-	int bit;
-} apmu_cpus[NR_CPUS];
+अटल काष्ठा अणु
+	व्योम __iomem *iomem;
+	पूर्णांक bit;
+पूर्ण apmu_cpus[NR_CPUS];
 
-#define WUPCR_OFFS	 0x10		/* Wake Up Control Register */
-#define PSTR_OFFS	 0x40		/* Power Status Register */
-#define CPUNCR_OFFS(n)	(0x100 + (0x10 * (n)))
+#घोषणा WUPCR_OFFS	 0x10		/* Wake Up Control Register */
+#घोषणा PSTR_OFFS	 0x40		/* Power Status Register */
+#घोषणा CPUNCR_OFFS(n)	(0x100 + (0x10 * (n)))
 					/* CPUn Power Status Control Register */
-#define DBGRCR_OFFS	0x180		/* Debug Resource Reset Control Reg. */
+#घोषणा DBGRCR_OFFS	0x180		/* Debug Resource Reset Control Reg. */
 
 /* Power Status Register */
-#define CPUNST(r, n)	(((r) >> (n * 4)) & 3)	/* CPUn Status Bit */
-#define CPUST_RUN	0		/* Run Mode */
-#define CPUST_STANDBY	3		/* CoreStandby Mode */
+#घोषणा CPUNST(r, n)	(((r) >> (n * 4)) & 3)	/* CPUn Status Bit */
+#घोषणा CPUST_RUN	0		/* Run Mode */
+#घोषणा CPUST_STANDBY	3		/* CoreStandby Mode */
 
 /* Debug Resource Reset Control Register */
-#define DBGCPUREN	BIT(24)		/* CPU Other Reset Request Enable */
-#define DBGCPUNREN(n)	BIT((n) + 20)	/* CPUn Reset Request Enable */
-#define DBGCPUPREN	BIT(19)		/* CPU Peripheral Reset Req. Enable */
+#घोषणा DBGCPUREN	BIT(24)		/* CPU Other Reset Request Enable */
+#घोषणा DBGCPUNREN(n)	BIT((n) + 20)	/* CPUn Reset Request Enable */
+#घोषणा DBGCPUPREN	BIT(19)		/* CPU Peripheral Reset Req. Enable */
 
-static int __maybe_unused apmu_power_on(void __iomem *p, int bit)
-{
-	/* request power on */
-	writel_relaxed(BIT(bit), p + WUPCR_OFFS);
+अटल पूर्णांक __maybe_unused apmu_घातer_on(व्योम __iomem *p, पूर्णांक bit)
+अणु
+	/* request घातer on */
+	ग_लिखोl_relaxed(BIT(bit), p + WUPCR_OFFS);
 
-	/* wait for APMU to finish */
-	while (readl_relaxed(p + WUPCR_OFFS) != 0)
+	/* रुको क्रम APMU to finish */
+	जबतक (पढ़ोl_relaxed(p + WUPCR_OFFS) != 0)
 		;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __maybe_unused apmu_power_off(void __iomem *p, int bit)
-{
-	/* request Core Standby for next WFI */
-	writel_relaxed(3, p + CPUNCR_OFFS(bit));
-	return 0;
-}
+अटल पूर्णांक __maybe_unused apmu_घातer_off(व्योम __iomem *p, पूर्णांक bit)
+अणु
+	/* request Core Standby क्रम next WFI */
+	ग_लिखोl_relaxed(3, p + CPUNCR_OFFS(bit));
+	वापस 0;
+पूर्ण
 
-static int __maybe_unused apmu_power_off_poll(void __iomem *p, int bit)
-{
-	int k;
+अटल पूर्णांक __maybe_unused apmu_घातer_off_poll(व्योम __iomem *p, पूर्णांक bit)
+अणु
+	पूर्णांक k;
 
-	for (k = 0; k < 1000; k++) {
-		if (CPUNST(readl_relaxed(p + PSTR_OFFS), bit) == CPUST_STANDBY)
-			return 1;
+	क्रम (k = 0; k < 1000; k++) अणु
+		अगर (CPUNST(पढ़ोl_relaxed(p + PSTR_OFFS), bit) == CPUST_STANDBY)
+			वापस 1;
 
 		mdelay(1);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __maybe_unused apmu_wrap(int cpu, int (*fn)(void __iomem *p, int cpu))
-{
-	void __iomem *p = apmu_cpus[cpu].iomem;
+अटल पूर्णांक __maybe_unused apmu_wrap(पूर्णांक cpu, पूर्णांक (*fn)(व्योम __iomem *p, पूर्णांक cpu))
+अणु
+	व्योम __iomem *p = apmu_cpus[cpu].iomem;
 
-	return p ? fn(p, apmu_cpus[cpu].bit) : -EINVAL;
-}
+	वापस p ? fn(p, apmu_cpus[cpu].bit) : -EINVAL;
+पूर्ण
 
-#if defined(CONFIG_HOTPLUG_CPU) || defined(CONFIG_SUSPEND)
+#अगर defined(CONFIG_HOTPLUG_CPU) || defined(CONFIG_SUSPEND)
 /* nicked from arch/arm/mach-exynos/hotplug.c */
-static inline void cpu_enter_lowpower_a15(void)
-{
-	unsigned int v;
+अटल अंतरभूत व्योम cpu_enter_lowघातer_a15(व्योम)
+अणु
+	अचिन्हित पूर्णांक v;
 
-	asm volatile(
+	यंत्र अस्थिर(
 	"       mrc     p15, 0, %0, c1, c0, 0\n"
 	"       bic     %0, %0, %1\n"
 	"       mcr     p15, 0, %0, c1, c0, 0\n"
@@ -99,7 +100,7 @@ static inline void cpu_enter_lowpower_a15(void)
 
 	flush_cache_louis();
 
-	asm volatile(
+	यंत्र अस्थिर(
 	/*
 	 * Turn off coherency
 	 */
@@ -112,52 +113,52 @@ static inline void cpu_enter_lowpower_a15(void)
 
 	isb();
 	dsb();
-}
+पूर्ण
 
-static void shmobile_smp_apmu_cpu_shutdown(unsigned int cpu)
-{
+अटल व्योम shmobile_smp_apmu_cpu_shutकरोwn(अचिन्हित पूर्णांक cpu)
+अणु
 
 	/* Select next sleep mode using the APMU */
-	apmu_wrap(cpu, apmu_power_off);
+	apmu_wrap(cpu, apmu_घातer_off);
 
-	/* Do ARM specific CPU shutdown */
-	cpu_enter_lowpower_a15();
-}
-#endif
+	/* Do ARM specअगरic CPU shutकरोwn */
+	cpu_enter_lowघातer_a15();
+पूर्ण
+#पूर्ण_अगर
 
-#if defined(CONFIG_HOTPLUG_CPU)
-static void shmobile_smp_apmu_cpu_die(unsigned int cpu)
-{
-	/* For this particular CPU deregister boot vector */
+#अगर defined(CONFIG_HOTPLUG_CPU)
+अटल व्योम shmobile_smp_apmu_cpu_die(अचिन्हित पूर्णांक cpu)
+अणु
+	/* For this particular CPU deरेजिस्टर boot vector */
 	shmobile_smp_hook(cpu, 0, 0);
 
-	/* Shutdown CPU core */
-	shmobile_smp_apmu_cpu_shutdown(cpu);
+	/* Shutकरोwn CPU core */
+	shmobile_smp_apmu_cpu_shutकरोwn(cpu);
 
 	/* jump to shared mach-shmobile sleep / reset code */
 	shmobile_smp_sleep();
-}
+पूर्ण
 
-static int shmobile_smp_apmu_cpu_kill(unsigned int cpu)
-{
-	return apmu_wrap(cpu, apmu_power_off_poll);
-}
-#endif
+अटल पूर्णांक shmobile_smp_apmu_cpu_समाप्त(अचिन्हित पूर्णांक cpu)
+अणु
+	वापस apmu_wrap(cpu, apmu_घातer_off_poll);
+पूर्ण
+#पूर्ण_अगर
 
-#if defined(CONFIG_SUSPEND)
-static int shmobile_smp_apmu_do_suspend(unsigned long cpu)
-{
+#अगर defined(CONFIG_SUSPEND)
+अटल पूर्णांक shmobile_smp_apmu_करो_suspend(अचिन्हित दीर्घ cpu)
+अणु
 	shmobile_smp_hook(cpu, __pa_symbol(cpu_resume), 0);
-	shmobile_smp_apmu_cpu_shutdown(cpu);
-	cpu_do_idle(); /* WFI selects Core Standby */
-	return 1;
-}
+	shmobile_smp_apmu_cpu_shutकरोwn(cpu);
+	cpu_करो_idle(); /* WFI selects Core Standby */
+	वापस 1;
+पूर्ण
 
-static inline void cpu_leave_lowpower(void)
-{
-	unsigned int v;
+अटल अंतरभूत व्योम cpu_leave_lowघातer(व्योम)
+अणु
+	अचिन्हित पूर्णांक v;
 
-	asm volatile("mrc    p15, 0, %0, c1, c0, 0\n"
+	यंत्र अस्थिर("mrc    p15, 0, %0, c1, c0, 0\n"
 		     "       orr     %0, %0, %1\n"
 		     "       mcr     p15, 0, %0, c1, c0, 0\n"
 		     "       mrc     p15, 0, %0, c1, c0, 1\n"
@@ -166,121 +167,121 @@ static inline void cpu_leave_lowpower(void)
 		     : "=&r" (v)
 		     : "Ir" (CR_C), "Ir" (0x40)
 		     : "cc");
-}
+पूर्ण
 
-static int shmobile_smp_apmu_enter_suspend(suspend_state_t state)
-{
-	cpu_suspend(smp_processor_id(), shmobile_smp_apmu_do_suspend);
-	cpu_leave_lowpower();
-	return 0;
-}
+अटल पूर्णांक shmobile_smp_apmu_enter_suspend(suspend_state_t state)
+अणु
+	cpu_suspend(smp_processor_id(), shmobile_smp_apmu_करो_suspend);
+	cpu_leave_lowघातer();
+	वापस 0;
+पूर्ण
 
-void __init shmobile_smp_apmu_suspend_init(void)
-{
+व्योम __init shmobile_smp_apmu_suspend_init(व्योम)
+अणु
 	shmobile_suspend_ops.enter = shmobile_smp_apmu_enter_suspend;
-}
-#endif
+पूर्ण
+#पूर्ण_अगर
 
-#ifdef CONFIG_SMP
-static void apmu_init_cpu(struct resource *res, int cpu, int bit)
-{
+#अगर_घोषित CONFIG_SMP
+अटल व्योम apmu_init_cpu(काष्ठा resource *res, पूर्णांक cpu, पूर्णांक bit)
+अणु
 	u32 x;
 
-	if ((cpu >= ARRAY_SIZE(apmu_cpus)) || apmu_cpus[cpu].iomem)
-		return;
+	अगर ((cpu >= ARRAY_SIZE(apmu_cpus)) || apmu_cpus[cpu].iomem)
+		वापस;
 
 	apmu_cpus[cpu].iomem = ioremap(res->start, resource_size(res));
 	apmu_cpus[cpu].bit = bit;
 
 	pr_debug("apmu ioremap %d %d %pr\n", cpu, bit, res);
 
-	/* Setup for debug mode */
-	x = readl(apmu_cpus[cpu].iomem + DBGRCR_OFFS);
+	/* Setup क्रम debug mode */
+	x = पढ़ोl(apmu_cpus[cpu].iomem + DBGRCR_OFFS);
 	x |= DBGCPUREN | DBGCPUNREN(bit) | DBGCPUPREN;
-	writel(x, apmu_cpus[cpu].iomem + DBGRCR_OFFS);
-}
+	ग_लिखोl(x, apmu_cpus[cpu].iomem + DBGRCR_OFFS);
+पूर्ण
 
-static const struct of_device_id apmu_ids[] = {
-	{ .compatible = "renesas,apmu" },
-	{ /*sentinel*/ }
-};
+अटल स्थिर काष्ठा of_device_id apmu_ids[] = अणु
+	अणु .compatible = "renesas,apmu" पूर्ण,
+	अणु /*sentinel*/ पूर्ण
+पूर्ण;
 
-static void apmu_parse_dt(void (*fn)(struct resource *res, int cpu, int bit))
-{
-	struct device_node *np_apmu, *np_cpu;
-	struct resource res;
-	int bit, index;
+अटल व्योम apmu_parse_dt(व्योम (*fn)(काष्ठा resource *res, पूर्णांक cpu, पूर्णांक bit))
+अणु
+	काष्ठा device_node *np_apmu, *np_cpu;
+	काष्ठा resource res;
+	पूर्णांक bit, index;
 	u32 id;
 
-	for_each_matching_node(np_apmu, apmu_ids) {
+	क्रम_each_matching_node(np_apmu, apmu_ids) अणु
 		/* only enable the cluster that includes the boot CPU */
 		bool is_allowed = false;
 
-		for (bit = 0; bit < CONFIG_NR_CPUS; bit++) {
+		क्रम (bit = 0; bit < CONFIG_NR_CPUS; bit++) अणु
 			np_cpu = of_parse_phandle(np_apmu, "cpus", bit);
-			if (np_cpu) {
-				if (!of_property_read_u32(np_cpu, "reg", &id)) {
-					if (id == cpu_logical_map(0)) {
+			अगर (np_cpu) अणु
+				अगर (!of_property_पढ़ो_u32(np_cpu, "reg", &id)) अणु
+					अगर (id == cpu_logical_map(0)) अणु
 						is_allowed = true;
 						of_node_put(np_cpu);
-						break;
-					}
+						अवरोध;
+					पूर्ण
 
-				}
+				पूर्ण
 				of_node_put(np_cpu);
-			}
-		}
-		if (!is_allowed)
-			continue;
+			पूर्ण
+		पूर्ण
+		अगर (!is_allowed)
+			जारी;
 
-		for (bit = 0; bit < CONFIG_NR_CPUS; bit++) {
+		क्रम (bit = 0; bit < CONFIG_NR_CPUS; bit++) अणु
 			np_cpu = of_parse_phandle(np_apmu, "cpus", bit);
-			if (np_cpu) {
-				if (!of_property_read_u32(np_cpu, "reg", &id)) {
+			अगर (np_cpu) अणु
+				अगर (!of_property_पढ़ो_u32(np_cpu, "reg", &id)) अणु
 					index = get_logical_index(id);
-					if ((index >= 0) &&
+					अगर ((index >= 0) &&
 					    !of_address_to_resource(np_apmu,
 								    0, &res))
 						fn(&res, index, bit);
-				}
+				पूर्ण
 				of_node_put(np_cpu);
-			}
-		}
-	}
-}
+			पूर्ण
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static void __init shmobile_smp_apmu_setup_boot(void)
-{
+अटल व्योम __init shmobile_smp_apmu_setup_boot(व्योम)
+अणु
 	/* install boot code shared by all CPUs */
 	shmobile_boot_fn = __pa_symbol(shmobile_smp_boot);
 	shmobile_boot_fn_gen2 = shmobile_boot_fn;
-}
+पूर्ण
 
-static int shmobile_smp_apmu_boot_secondary(unsigned int cpu,
-					    struct task_struct *idle)
-{
-	/* For this particular CPU register boot vector */
+अटल पूर्णांक shmobile_smp_apmu_boot_secondary(अचिन्हित पूर्णांक cpu,
+					    काष्ठा task_काष्ठा *idle)
+अणु
+	/* For this particular CPU रेजिस्टर boot vector */
 	shmobile_smp_hook(cpu, __pa_symbol(shmobile_boot_apmu), 0);
 
-	return apmu_wrap(cpu, apmu_power_on);
-}
+	वापस apmu_wrap(cpu, apmu_घातer_on);
+पूर्ण
 
-static void __init shmobile_smp_apmu_prepare_cpus_dt(unsigned int max_cpus)
-{
+अटल व्योम __init shmobile_smp_apmu_prepare_cpus_dt(अचिन्हित पूर्णांक max_cpus)
+अणु
 	shmobile_smp_apmu_setup_boot();
 	apmu_parse_dt(apmu_init_cpu);
 	rcar_gen2_pm_init();
-}
+पूर्ण
 
-static struct smp_operations apmu_smp_ops __initdata = {
+अटल काष्ठा smp_operations apmu_smp_ops __initdata = अणु
 	.smp_prepare_cpus	= shmobile_smp_apmu_prepare_cpus_dt,
 	.smp_boot_secondary	= shmobile_smp_apmu_boot_secondary,
-#ifdef CONFIG_HOTPLUG_CPU
+#अगर_घोषित CONFIG_HOTPLUG_CPU
 	.cpu_can_disable	= shmobile_smp_cpu_can_disable,
 	.cpu_die		= shmobile_smp_apmu_cpu_die,
-	.cpu_kill		= shmobile_smp_apmu_cpu_kill,
-#endif
-};
+	.cpu_समाप्त		= shmobile_smp_apmu_cpu_समाप्त,
+#पूर्ण_अगर
+पूर्ण;
 
 CPU_METHOD_OF_DECLARE(shmobile_smp_apmu, "renesas,apmu", &apmu_smp_ops);
-#endif /* CONFIG_SMP */
+#पूर्ण_अगर /* CONFIG_SMP */

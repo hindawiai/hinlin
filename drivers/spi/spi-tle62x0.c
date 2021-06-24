@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Support Infineon TLE62x0 driver chips
  *
@@ -6,63 +7,63 @@
  *	Ben Dooks, <ben@simtec.co.uk>
  */
 
-#include <linux/device.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/slab.h>
+#समावेश <linux/device.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/slab.h>
 
-#include <linux/spi/spi.h>
-#include <linux/spi/tle62x0.h>
+#समावेश <linux/spi/spi.h>
+#समावेश <linux/spi/tle62x0.h>
 
 
-#define CMD_READ	0x00
-#define CMD_SET		0xff
+#घोषणा CMD_READ	0x00
+#घोषणा CMD_SET		0xff
 
-#define DIAG_NORMAL	0x03
-#define DIAG_OVERLOAD	0x02
-#define DIAG_OPEN	0x01
-#define DIAG_SHORTGND	0x00
+#घोषणा DIAG_NORMAL	0x03
+#घोषणा DIAG_OVERLOAD	0x02
+#घोषणा DIAG_OPEN	0x01
+#घोषणा DIAG_SHORTGND	0x00
 
-struct tle62x0_state {
-	struct spi_device	*us;
-	struct mutex		lock;
-	unsigned int		nr_gpio;
-	unsigned int		gpio_state;
+काष्ठा tle62x0_state अणु
+	काष्ठा spi_device	*us;
+	काष्ठा mutex		lock;
+	अचिन्हित पूर्णांक		nr_gpio;
+	अचिन्हित पूर्णांक		gpio_state;
 
-	unsigned char		tx_buff[4];
-	unsigned char		rx_buff[4];
-};
+	अचिन्हित अक्षर		tx_buff[4];
+	अचिन्हित अक्षर		rx_buff[4];
+पूर्ण;
 
-static int to_gpio_num(struct device_attribute *attr);
+अटल पूर्णांक to_gpio_num(काष्ठा device_attribute *attr);
 
-static inline int tle62x0_write(struct tle62x0_state *st)
-{
-	unsigned char *buff = st->tx_buff;
-	unsigned int gpio_state = st->gpio_state;
+अटल अंतरभूत पूर्णांक tle62x0_ग_लिखो(काष्ठा tle62x0_state *st)
+अणु
+	अचिन्हित अक्षर *buff = st->tx_buff;
+	अचिन्हित पूर्णांक gpio_state = st->gpio_state;
 
 	buff[0] = CMD_SET;
 
-	if (st->nr_gpio == 16) {
+	अगर (st->nr_gpio == 16) अणु
 		buff[1] = gpio_state >> 8;
 		buff[2] = gpio_state;
-	} else {
+	पूर्ण अन्यथा अणु
 		buff[1] = gpio_state;
-	}
+	पूर्ण
 
 	dev_dbg(&st->us->dev, "buff %3ph\n", buff);
 
-	return spi_write(st->us, buff, (st->nr_gpio == 16) ? 3 : 2);
-}
+	वापस spi_ग_लिखो(st->us, buff, (st->nr_gpio == 16) ? 3 : 2);
+पूर्ण
 
-static inline int tle62x0_read(struct tle62x0_state *st)
-{
-	unsigned char *txbuff = st->tx_buff;
-	struct spi_transfer xfer = {
+अटल अंतरभूत पूर्णांक tle62x0_पढ़ो(काष्ठा tle62x0_state *st)
+अणु
+	अचिन्हित अक्षर *txbuff = st->tx_buff;
+	काष्ठा spi_transfer xfer = अणु
 		.tx_buf		= txbuff,
 		.rx_buf		= st->rx_buff,
 		.len		= (st->nr_gpio * 2) / 8,
-	};
-	struct spi_message msg;
+	पूर्ण;
+	काष्ठा spi_message msg;
 
 	txbuff[0] = CMD_READ;
 	txbuff[1] = 0x00;
@@ -72,140 +73,140 @@ static inline int tle62x0_read(struct tle62x0_state *st)
 	spi_message_init(&msg);
 	spi_message_add_tail(&xfer, &msg);
 
-	return spi_sync(st->us, &msg);
-}
+	वापस spi_sync(st->us, &msg);
+पूर्ण
 
-static unsigned char *decode_fault(unsigned int fault_code)
-{
+अटल अचिन्हित अक्षर *decode_fault(अचिन्हित पूर्णांक fault_code)
+अणु
 	fault_code &= 3;
 
-	switch (fault_code) {
-	case DIAG_NORMAL:
-		return "N";
-	case DIAG_OVERLOAD:
-		return "V";
-	case DIAG_OPEN:
-		return "O";
-	case DIAG_SHORTGND:
-		return "G";
-	}
+	चयन (fault_code) अणु
+	हाल DIAG_NORMAL:
+		वापस "N";
+	हाल DIAG_OVERLOAD:
+		वापस "V";
+	हाल DIAG_OPEN:
+		वापस "O";
+	हाल DIAG_SHORTGND:
+		वापस "G";
+	पूर्ण
 
-	return "?";
-}
+	वापस "?";
+पूर्ण
 
-static ssize_t tle62x0_status_show(struct device *dev,
-		struct device_attribute *attr, char *buf)
-{
-	struct tle62x0_state *st = dev_get_drvdata(dev);
-	char *bp = buf;
-	unsigned char *buff = st->rx_buff;
-	unsigned long fault = 0;
-	int ptr;
-	int ret;
+अटल sमाप_प्रकार tle62x0_status_show(काष्ठा device *dev,
+		काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा tle62x0_state *st = dev_get_drvdata(dev);
+	अक्षर *bp = buf;
+	अचिन्हित अक्षर *buff = st->rx_buff;
+	अचिन्हित दीर्घ fault = 0;
+	पूर्णांक ptr;
+	पूर्णांक ret;
 
 	mutex_lock(&st->lock);
-	ret = tle62x0_read(st);
+	ret = tle62x0_पढ़ो(st);
 	dev_dbg(dev, "tle62x0_read() returned %d\n", ret);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		mutex_unlock(&st->lock);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	for (ptr = 0; ptr < (st->nr_gpio * 2)/8; ptr += 1) {
+	क्रम (ptr = 0; ptr < (st->nr_gpio * 2)/8; ptr += 1) अणु
 		fault <<= 8;
-		fault  |= ((unsigned long)buff[ptr]);
+		fault  |= ((अचिन्हित दीर्घ)buff[ptr]);
 
 		dev_dbg(dev, "byte %d is %02x\n", ptr, buff[ptr]);
-	}
+	पूर्ण
 
-	for (ptr = 0; ptr < st->nr_gpio; ptr++) {
-		bp += sprintf(bp, "%s ", decode_fault(fault >> (ptr * 2)));
-	}
+	क्रम (ptr = 0; ptr < st->nr_gpio; ptr++) अणु
+		bp += प्र_लिखो(bp, "%s ", decode_fault(fault >> (ptr * 2)));
+	पूर्ण
 
 	*bp++ = '\n';
 
 	mutex_unlock(&st->lock);
-	return bp - buf;
-}
+	वापस bp - buf;
+पूर्ण
 
-static DEVICE_ATTR(status_show, S_IRUGO, tle62x0_status_show, NULL);
+अटल DEVICE_ATTR(status_show, S_IRUGO, tle62x0_status_show, शून्य);
 
-static ssize_t tle62x0_gpio_show(struct device *dev,
-		struct device_attribute *attr, char *buf)
-{
-	struct tle62x0_state *st = dev_get_drvdata(dev);
-	int gpio_num = to_gpio_num(attr);
-	int value;
+अटल sमाप_प्रकार tle62x0_gpio_show(काष्ठा device *dev,
+		काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा tle62x0_state *st = dev_get_drvdata(dev);
+	पूर्णांक gpio_num = to_gpio_num(attr);
+	पूर्णांक value;
 
 	mutex_lock(&st->lock);
 	value = (st->gpio_state >> gpio_num) & 1;
 	mutex_unlock(&st->lock);
 
-	return snprintf(buf, PAGE_SIZE, "%d", value);
-}
+	वापस snम_लिखो(buf, PAGE_SIZE, "%d", value);
+पूर्ण
 
-static ssize_t tle62x0_gpio_store(struct device *dev,
-		struct device_attribute *attr,
-		const char *buf, size_t len)
-{
-	struct tle62x0_state *st = dev_get_drvdata(dev);
-	int gpio_num = to_gpio_num(attr);
-	unsigned long val;
-	char *endp;
+अटल sमाप_प्रकार tle62x0_gpio_store(काष्ठा device *dev,
+		काष्ठा device_attribute *attr,
+		स्थिर अक्षर *buf, माप_प्रकार len)
+अणु
+	काष्ठा tle62x0_state *st = dev_get_drvdata(dev);
+	पूर्णांक gpio_num = to_gpio_num(attr);
+	अचिन्हित दीर्घ val;
+	अक्षर *endp;
 
-	val = simple_strtoul(buf, &endp, 0);
-	if (buf == endp)
-		return -EINVAL;
+	val = simple_म_से_अदीर्घ(buf, &endp, 0);
+	अगर (buf == endp)
+		वापस -EINVAL;
 
 	dev_dbg(dev, "setting gpio %d to %ld\n", gpio_num, val);
 
 	mutex_lock(&st->lock);
 
-	if (val)
+	अगर (val)
 		st->gpio_state |= 1 << gpio_num;
-	else
+	अन्यथा
 		st->gpio_state &= ~(1 << gpio_num);
 
-	tle62x0_write(st);
+	tle62x0_ग_लिखो(st);
 	mutex_unlock(&st->lock);
 
-	return len;
-}
+	वापस len;
+पूर्ण
 
-static DEVICE_ATTR(gpio1, S_IWUSR|S_IRUGO,
+अटल DEVICE_ATTR(gpio1, S_IWUSR|S_IRUGO,
 		tle62x0_gpio_show, tle62x0_gpio_store);
-static DEVICE_ATTR(gpio2, S_IWUSR|S_IRUGO,
+अटल DEVICE_ATTR(gpio2, S_IWUSR|S_IRUGO,
 		tle62x0_gpio_show, tle62x0_gpio_store);
-static DEVICE_ATTR(gpio3, S_IWUSR|S_IRUGO,
+अटल DEVICE_ATTR(gpio3, S_IWUSR|S_IRUGO,
 		tle62x0_gpio_show, tle62x0_gpio_store);
-static DEVICE_ATTR(gpio4, S_IWUSR|S_IRUGO,
+अटल DEVICE_ATTR(gpio4, S_IWUSR|S_IRUGO,
 		tle62x0_gpio_show, tle62x0_gpio_store);
-static DEVICE_ATTR(gpio5, S_IWUSR|S_IRUGO,
+अटल DEVICE_ATTR(gpio5, S_IWUSR|S_IRUGO,
 		tle62x0_gpio_show, tle62x0_gpio_store);
-static DEVICE_ATTR(gpio6, S_IWUSR|S_IRUGO,
+अटल DEVICE_ATTR(gpio6, S_IWUSR|S_IRUGO,
 		tle62x0_gpio_show, tle62x0_gpio_store);
-static DEVICE_ATTR(gpio7, S_IWUSR|S_IRUGO,
+अटल DEVICE_ATTR(gpio7, S_IWUSR|S_IRUGO,
 		tle62x0_gpio_show, tle62x0_gpio_store);
-static DEVICE_ATTR(gpio8, S_IWUSR|S_IRUGO,
+अटल DEVICE_ATTR(gpio8, S_IWUSR|S_IRUGO,
 		tle62x0_gpio_show, tle62x0_gpio_store);
-static DEVICE_ATTR(gpio9, S_IWUSR|S_IRUGO,
+अटल DEVICE_ATTR(gpio9, S_IWUSR|S_IRUGO,
 		tle62x0_gpio_show, tle62x0_gpio_store);
-static DEVICE_ATTR(gpio10, S_IWUSR|S_IRUGO,
+अटल DEVICE_ATTR(gpio10, S_IWUSR|S_IRUGO,
 		tle62x0_gpio_show, tle62x0_gpio_store);
-static DEVICE_ATTR(gpio11, S_IWUSR|S_IRUGO,
+अटल DEVICE_ATTR(gpio11, S_IWUSR|S_IRUGO,
 		tle62x0_gpio_show, tle62x0_gpio_store);
-static DEVICE_ATTR(gpio12, S_IWUSR|S_IRUGO,
+अटल DEVICE_ATTR(gpio12, S_IWUSR|S_IRUGO,
 		tle62x0_gpio_show, tle62x0_gpio_store);
-static DEVICE_ATTR(gpio13, S_IWUSR|S_IRUGO,
+अटल DEVICE_ATTR(gpio13, S_IWUSR|S_IRUGO,
 		tle62x0_gpio_show, tle62x0_gpio_store);
-static DEVICE_ATTR(gpio14, S_IWUSR|S_IRUGO,
+अटल DEVICE_ATTR(gpio14, S_IWUSR|S_IRUGO,
 		tle62x0_gpio_show, tle62x0_gpio_store);
-static DEVICE_ATTR(gpio15, S_IWUSR|S_IRUGO,
+अटल DEVICE_ATTR(gpio15, S_IWUSR|S_IRUGO,
 		tle62x0_gpio_show, tle62x0_gpio_store);
-static DEVICE_ATTR(gpio16, S_IWUSR|S_IRUGO,
+अटल DEVICE_ATTR(gpio16, S_IWUSR|S_IRUGO,
 		tle62x0_gpio_show, tle62x0_gpio_store);
 
-static struct device_attribute *gpio_attrs[] = {
+अटल काष्ठा device_attribute *gpio_attrs[] = अणु
 	[0]		= &dev_attr_gpio1,
 	[1]		= &dev_attr_gpio2,
 	[2]		= &dev_attr_gpio3,
@@ -222,36 +223,36 @@ static struct device_attribute *gpio_attrs[] = {
 	[13]		= &dev_attr_gpio14,
 	[14]		= &dev_attr_gpio15,
 	[15]		= &dev_attr_gpio16
-};
+पूर्ण;
 
-static int to_gpio_num(struct device_attribute *attr)
-{
-	int ptr;
+अटल पूर्णांक to_gpio_num(काष्ठा device_attribute *attr)
+अणु
+	पूर्णांक ptr;
 
-	for (ptr = 0; ptr < ARRAY_SIZE(gpio_attrs); ptr++) {
-		if (gpio_attrs[ptr] == attr)
-			return ptr;
-	}
+	क्रम (ptr = 0; ptr < ARRAY_SIZE(gpio_attrs); ptr++) अणु
+		अगर (gpio_attrs[ptr] == attr)
+			वापस ptr;
+	पूर्ण
 
-	return -1;
-}
+	वापस -1;
+पूर्ण
 
-static int tle62x0_probe(struct spi_device *spi)
-{
-	struct tle62x0_state *st;
-	struct tle62x0_pdata *pdata;
-	int ptr;
-	int ret;
+अटल पूर्णांक tle62x0_probe(काष्ठा spi_device *spi)
+अणु
+	काष्ठा tle62x0_state *st;
+	काष्ठा tle62x0_pdata *pdata;
+	पूर्णांक ptr;
+	पूर्णांक ret;
 
 	pdata = dev_get_platdata(&spi->dev);
-	if (pdata == NULL) {
+	अगर (pdata == शून्य) अणु
 		dev_err(&spi->dev, "no device data specified\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	st = kzalloc(sizeof(struct tle62x0_state), GFP_KERNEL);
-	if (st == NULL)
-		return -ENOMEM;
+	st = kzalloc(माप(काष्ठा tle62x0_state), GFP_KERNEL);
+	अगर (st == शून्य)
+		वापस -ENOMEM;
 
 	st->us = spi;
 	st->nr_gpio = pdata->gpio_count;
@@ -260,54 +261,54 @@ static int tle62x0_probe(struct spi_device *spi)
 	mutex_init(&st->lock);
 
 	ret = device_create_file(&spi->dev, &dev_attr_status_show);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&spi->dev, "cannot create status attribute\n");
-		goto err_status;
-	}
+		जाओ err_status;
+	पूर्ण
 
-	for (ptr = 0; ptr < pdata->gpio_count; ptr++) {
+	क्रम (ptr = 0; ptr < pdata->gpio_count; ptr++) अणु
 		ret = device_create_file(&spi->dev, gpio_attrs[ptr]);
-		if (ret) {
+		अगर (ret) अणु
 			dev_err(&spi->dev, "cannot create gpio attribute\n");
-			goto err_gpios;
-		}
-	}
+			जाओ err_gpios;
+		पूर्ण
+	पूर्ण
 
-	/* tle62x0_write(st); */
+	/* tle62x0_ग_लिखो(st); */
 	spi_set_drvdata(spi, st);
-	return 0;
+	वापस 0;
 
  err_gpios:
-	while (--ptr >= 0)
-		device_remove_file(&spi->dev, gpio_attrs[ptr]);
+	जबतक (--ptr >= 0)
+		device_हटाओ_file(&spi->dev, gpio_attrs[ptr]);
 
-	device_remove_file(&spi->dev, &dev_attr_status_show);
+	device_हटाओ_file(&spi->dev, &dev_attr_status_show);
 
  err_status:
-	kfree(st);
-	return ret;
-}
+	kमुक्त(st);
+	वापस ret;
+पूर्ण
 
-static int tle62x0_remove(struct spi_device *spi)
-{
-	struct tle62x0_state *st = spi_get_drvdata(spi);
-	int ptr;
+अटल पूर्णांक tle62x0_हटाओ(काष्ठा spi_device *spi)
+अणु
+	काष्ठा tle62x0_state *st = spi_get_drvdata(spi);
+	पूर्णांक ptr;
 
-	for (ptr = 0; ptr < st->nr_gpio; ptr++)
-		device_remove_file(&spi->dev, gpio_attrs[ptr]);
+	क्रम (ptr = 0; ptr < st->nr_gpio; ptr++)
+		device_हटाओ_file(&spi->dev, gpio_attrs[ptr]);
 
-	device_remove_file(&spi->dev, &dev_attr_status_show);
-	kfree(st);
-	return 0;
-}
+	device_हटाओ_file(&spi->dev, &dev_attr_status_show);
+	kमुक्त(st);
+	वापस 0;
+पूर्ण
 
-static struct spi_driver tle62x0_driver = {
-	.driver = {
+अटल काष्ठा spi_driver tle62x0_driver = अणु
+	.driver = अणु
 		.name	= "tle62x0",
-	},
+	पूर्ण,
 	.probe		= tle62x0_probe,
-	.remove		= tle62x0_remove,
-};
+	.हटाओ		= tle62x0_हटाओ,
+पूर्ण;
 
 module_spi_driver(tle62x0_driver);
 

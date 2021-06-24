@@ -1,37 +1,38 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Intel Alder Lake PCH pinctrl/GPIO driver
  *
  * Copyright (C) 2020, Intel Corporation
- * Author: Andy Shevchenko <andriy.shevchenko@linux.intel.com>
+ * Author: Andy Shevchenko <andriy.shevchenko@linux.पूर्णांकel.com>
  */
 
-#include <linux/mod_devicetable.h>
-#include <linux/module.h>
-#include <linux/platform_device.h>
+#समावेश <linux/mod_devicetable.h>
+#समावेश <linux/module.h>
+#समावेश <linux/platक्रमm_device.h>
 
-#include <linux/pinctrl/pinctrl.h>
+#समावेश <linux/pinctrl/pinctrl.h>
 
-#include "pinctrl-intel.h"
+#समावेश "pinctrl-intel.h"
 
-#define ADL_PAD_OWN	0x0a0
-#define ADL_PADCFGLOCK	0x110
-#define ADL_HOSTSW_OWN	0x150
-#define ADL_GPI_IS	0x200
-#define ADL_GPI_IE	0x220
+#घोषणा ADL_PAD_OWN	0x0a0
+#घोषणा ADL_PADCFGLOCK	0x110
+#घोषणा ADL_HOSTSW_OWN	0x150
+#घोषणा ADL_GPI_IS	0x200
+#घोषणा ADL_GPI_IE	0x220
 
-#define ADL_GPP(r, s, e, g)				\
-	{						\
+#घोषणा ADL_GPP(r, s, e, g)				\
+	अणु						\
 		.reg_num = (r),				\
 		.base = (s),				\
 		.size = ((e) - (s) + 1),		\
 		.gpio_base = (g),			\
-	}
+	पूर्ण
 
-#define ADL_COMMUNITY(b, s, e, g)			\
-	{						\
+#घोषणा ADL_COMMUNITY(b, s, e, g)			\
+	अणु						\
 		.barno = (b),				\
-		.padown_offset = ADL_PAD_OWN,		\
+		.paकरोwn_offset = ADL_PAD_OWN,		\
 		.padcfglock_offset = ADL_PADCFGLOCK,	\
 		.hostown_offset = ADL_HOSTSW_OWN,	\
 		.is_offset = ADL_GPI_IS,		\
@@ -40,10 +41,10 @@
 		.npins = ((e) - (s) + 1),		\
 		.gpps = (g),				\
 		.ngpps = ARRAY_SIZE(g),			\
-	}
+	पूर्ण
 
 /* Alder Lake-S */
-static const struct pinctrl_pin_desc adls_pins[] = {
+अटल स्थिर काष्ठा pinctrl_pin_desc adls_pins[] = अणु
 	/* GPP_I */
 	PINCTRL_PIN(0, "EXT_PWR_GATEB"),
 	PINCTRL_PIN(1, "DDSP_HPD_1"),
@@ -365,72 +366,72 @@ static const struct pinctrl_pin_desc adls_pins[] = {
 	PINCTRL_PIN(301, "JTAG_TCK"),
 	PINCTRL_PIN(302, "DBG_PMODE"),
 	PINCTRL_PIN(303, "CPU_TRSTB"),
-};
+पूर्ण;
 
-static const struct intel_padgroup adls_community0_gpps[] = {
+अटल स्थिर काष्ठा पूर्णांकel_padgroup adls_community0_gpps[] = अणु
 	ADL_GPP(0, 0, 24, 0),				/* GPP_I */
 	ADL_GPP(1, 25, 47, 32),				/* GPP_R */
 	ADL_GPP(2, 48, 59, 64),				/* GPP_J */
 	ADL_GPP(3, 60, 86, 96),				/* vGPIO */
 	ADL_GPP(4, 87, 94, 128),			/* vGPIO_0 */
-};
+पूर्ण;
 
-static const struct intel_padgroup adls_community1_gpps[] = {
+अटल स्थिर काष्ठा पूर्णांकel_padgroup adls_community1_gpps[] = अणु
 	ADL_GPP(0, 95, 118, 160),			/* GPP_B */
 	ADL_GPP(1, 119, 126, 192),			/* GPP_G */
 	ADL_GPP(2, 127, 150, 224),			/* GPP_H */
-};
+पूर्ण;
 
-static const struct intel_padgroup adls_community3_gpps[] = {
+अटल स्थिर काष्ठा पूर्णांकel_padgroup adls_community3_gpps[] = अणु
 	ADL_GPP(0, 151, 159, INTEL_GPIO_BASE_NOMAP),	/* SPI0 */
 	ADL_GPP(1, 160, 175, 256),			/* GPP_A */
 	ADL_GPP(2, 176, 199, 288),			/* GPP_C */
-};
+पूर्ण;
 
-static const struct intel_padgroup adls_community4_gpps[] = {
+अटल स्थिर काष्ठा पूर्णांकel_padgroup adls_community4_gpps[] = अणु
 	ADL_GPP(0, 200, 207, 320),			/* GPP_S */
 	ADL_GPP(1, 208, 230, 352),			/* GPP_E */
 	ADL_GPP(2, 231, 245, 384),			/* GPP_K */
 	ADL_GPP(3, 246, 269, 416),			/* GPP_F */
-};
+पूर्ण;
 
-static const struct intel_padgroup adls_community5_gpps[] = {
+अटल स्थिर काष्ठा पूर्णांकel_padgroup adls_community5_gpps[] = अणु
 	ADL_GPP(0, 270, 294, 448),			/* GPP_D */
 	ADL_GPP(1, 295, 303, INTEL_GPIO_BASE_NOMAP),	/* JTAG */
-};
+पूर्ण;
 
-static const struct intel_community adls_communities[] = {
+अटल स्थिर काष्ठा पूर्णांकel_community adls_communities[] = अणु
 	ADL_COMMUNITY(0, 0, 94, adls_community0_gpps),
 	ADL_COMMUNITY(1, 95, 150, adls_community1_gpps),
 	ADL_COMMUNITY(2, 151, 199, adls_community3_gpps),
 	ADL_COMMUNITY(3, 200, 269, adls_community4_gpps),
 	ADL_COMMUNITY(4, 270, 303, adls_community5_gpps),
-};
+पूर्ण;
 
-static const struct intel_pinctrl_soc_data adls_soc_data = {
+अटल स्थिर काष्ठा पूर्णांकel_pinctrl_soc_data adls_soc_data = अणु
 	.pins = adls_pins,
 	.npins = ARRAY_SIZE(adls_pins),
 	.communities = adls_communities,
 	.ncommunities = ARRAY_SIZE(adls_communities),
-};
+पूर्ण;
 
-static const struct acpi_device_id adl_pinctrl_acpi_match[] = {
-	{ "INTC1056", (kernel_ulong_t)&adls_soc_data },
-	{ }
-};
+अटल स्थिर काष्ठा acpi_device_id adl_pinctrl_acpi_match[] = अणु
+	अणु "INTC1056", (kernel_uदीर्घ_t)&adls_soc_data पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(acpi, adl_pinctrl_acpi_match);
 
-static INTEL_PINCTRL_PM_OPS(adl_pinctrl_pm_ops);
+अटल INTEL_PINCTRL_PM_OPS(adl_pinctrl_pm_ops);
 
-static struct platform_driver adl_pinctrl_driver = {
-	.probe = intel_pinctrl_probe_by_hid,
-	.driver = {
+अटल काष्ठा platक्रमm_driver adl_pinctrl_driver = अणु
+	.probe = पूर्णांकel_pinctrl_probe_by_hid,
+	.driver = अणु
 		.name = "alderlake-pinctrl",
 		.acpi_match_table = adl_pinctrl_acpi_match,
 		.pm = &adl_pinctrl_pm_ops,
-	},
-};
-module_platform_driver(adl_pinctrl_driver);
+	पूर्ण,
+पूर्ण;
+module_platक्रमm_driver(adl_pinctrl_driver);
 
 MODULE_AUTHOR("Andy Shevchenko <andriy.shevchenko@linux.intel.com>");
 MODULE_DESCRIPTION("Intel Alder Lake PCH pinctrl/GPIO driver");

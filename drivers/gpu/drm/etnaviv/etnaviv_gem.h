@@ -1,127 +1,128 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * Copyright (C) 2015-2018 Etnaviv Project
  */
 
-#ifndef __ETNAVIV_GEM_H__
-#define __ETNAVIV_GEM_H__
+#अगर_अघोषित __ETNAVIV_GEM_H__
+#घोषणा __ETNAVIV_GEM_H__
 
-#include <linux/dma-resv.h>
-#include "etnaviv_cmdbuf.h"
-#include "etnaviv_drv.h"
+#समावेश <linux/dma-resv.h>
+#समावेश "etnaviv_cmdbuf.h"
+#समावेश "etnaviv_drv.h"
 
-struct dma_fence;
-struct etnaviv_gem_ops;
-struct etnaviv_gem_object;
+काष्ठा dma_fence;
+काष्ठा etnaviv_gem_ops;
+काष्ठा etnaviv_gem_object;
 
-struct etnaviv_gem_userptr {
-	uintptr_t ptr;
-	struct mm_struct *mm;
+काष्ठा etnaviv_gem_userptr अणु
+	uपूर्णांकptr_t ptr;
+	काष्ठा mm_काष्ठा *mm;
 	bool ro;
-};
+पूर्ण;
 
-struct etnaviv_vram_mapping {
-	struct list_head obj_node;
-	struct list_head scan_node;
-	struct list_head mmu_node;
-	struct etnaviv_gem_object *object;
-	struct etnaviv_iommu_context *context;
-	struct drm_mm_node vram_node;
-	unsigned int use;
+काष्ठा etnaviv_vram_mapping अणु
+	काष्ठा list_head obj_node;
+	काष्ठा list_head scan_node;
+	काष्ठा list_head mmu_node;
+	काष्ठा etnaviv_gem_object *object;
+	काष्ठा etnaviv_iommu_context *context;
+	काष्ठा drm_mm_node vram_node;
+	अचिन्हित पूर्णांक use;
 	u32 iova;
-};
+पूर्ण;
 
-struct etnaviv_gem_object {
-	struct drm_gem_object base;
-	const struct etnaviv_gem_ops *ops;
-	struct mutex lock;
+काष्ठा etnaviv_gem_object अणु
+	काष्ठा drm_gem_object base;
+	स्थिर काष्ठा etnaviv_gem_ops *ops;
+	काष्ठा mutex lock;
 
 	u32 flags;
 
-	struct list_head gem_node;
-	struct etnaviv_gpu *gpu;     /* non-null if active */
+	काष्ठा list_head gem_node;
+	काष्ठा etnaviv_gpu *gpu;     /* non-null अगर active */
 	atomic_t gpu_active;
 	u32 access;
 
-	struct page **pages;
-	struct sg_table *sgt;
-	void *vaddr;
+	काष्ठा page **pages;
+	काष्ठा sg_table *sgt;
+	व्योम *vaddr;
 
-	struct list_head vram_list;
+	काष्ठा list_head vram_list;
 
-	/* cache maintenance */
+	/* cache मुख्यtenance */
 	u32 last_cpu_prep_op;
 
-	struct etnaviv_gem_userptr userptr;
-};
+	काष्ठा etnaviv_gem_userptr userptr;
+पूर्ण;
 
-static inline
-struct etnaviv_gem_object *to_etnaviv_bo(struct drm_gem_object *obj)
-{
-	return container_of(obj, struct etnaviv_gem_object, base);
-}
+अटल अंतरभूत
+काष्ठा etnaviv_gem_object *to_etnaviv_bo(काष्ठा drm_gem_object *obj)
+अणु
+	वापस container_of(obj, काष्ठा etnaviv_gem_object, base);
+पूर्ण
 
-struct etnaviv_gem_ops {
-	int (*get_pages)(struct etnaviv_gem_object *);
-	void (*release)(struct etnaviv_gem_object *);
-	void *(*vmap)(struct etnaviv_gem_object *);
-	int (*mmap)(struct etnaviv_gem_object *, struct vm_area_struct *);
-};
+काष्ठा etnaviv_gem_ops अणु
+	पूर्णांक (*get_pages)(काष्ठा etnaviv_gem_object *);
+	व्योम (*release)(काष्ठा etnaviv_gem_object *);
+	व्योम *(*vmap)(काष्ठा etnaviv_gem_object *);
+	पूर्णांक (*mmap)(काष्ठा etnaviv_gem_object *, काष्ठा vm_area_काष्ठा *);
+पूर्ण;
 
-static inline bool is_active(struct etnaviv_gem_object *etnaviv_obj)
-{
-	return atomic_read(&etnaviv_obj->gpu_active) != 0;
-}
+अटल अंतरभूत bool is_active(काष्ठा etnaviv_gem_object *etnaviv_obj)
+अणु
+	वापस atomic_पढ़ो(&etnaviv_obj->gpu_active) != 0;
+पूर्ण
 
-#define MAX_CMDS 4
+#घोषणा MAX_CMDS 4
 
-struct etnaviv_gem_submit_bo {
+काष्ठा etnaviv_gem_submit_bo अणु
 	u32 flags;
 	u64 va;
-	struct etnaviv_gem_object *obj;
-	struct etnaviv_vram_mapping *mapping;
-	struct dma_fence *excl;
-	unsigned int nr_shared;
-	struct dma_fence **shared;
-};
+	काष्ठा etnaviv_gem_object *obj;
+	काष्ठा etnaviv_vram_mapping *mapping;
+	काष्ठा dma_fence *excl;
+	अचिन्हित पूर्णांक nr_shared;
+	काष्ठा dma_fence **shared;
+पूर्ण;
 
 /* Created per submit-ioctl, to track bo's and cmdstream bufs, etc,
- * associated with the cmdstream submission for synchronization (and
+ * associated with the cmdstream submission क्रम synchronization (and
  * make it easier to unwind when things go wrong, etc).
  */
-struct etnaviv_gem_submit {
-	struct drm_sched_job sched_job;
-	struct kref refcount;
-	struct etnaviv_file_private *ctx;
-	struct etnaviv_gpu *gpu;
-	struct etnaviv_iommu_context *mmu_context, *prev_mmu_context;
-	struct dma_fence *out_fence, *in_fence;
-	int out_fence_id;
-	struct list_head node; /* GPU active submit list */
-	struct etnaviv_cmdbuf cmdbuf;
-	bool runtime_resumed;
+काष्ठा etnaviv_gem_submit अणु
+	काष्ठा drm_sched_job sched_job;
+	काष्ठा kref refcount;
+	काष्ठा etnaviv_file_निजी *ctx;
+	काष्ठा etnaviv_gpu *gpu;
+	काष्ठा etnaviv_iommu_context *mmu_context, *prev_mmu_context;
+	काष्ठा dma_fence *out_fence, *in_fence;
+	पूर्णांक out_fence_id;
+	काष्ठा list_head node; /* GPU active submit list */
+	काष्ठा etnaviv_cmdbuf cmdbuf;
+	bool runसमय_resumed;
 	u32 exec_state;
 	u32 flags;
-	unsigned int nr_pmrs;
-	struct etnaviv_perfmon_request *pmrs;
-	unsigned int nr_bos;
-	struct etnaviv_gem_submit_bo bos[];
+	अचिन्हित पूर्णांक nr_pmrs;
+	काष्ठा etnaviv_perfmon_request *pmrs;
+	अचिन्हित पूर्णांक nr_bos;
+	काष्ठा etnaviv_gem_submit_bo bos[];
 	/* No new members here, the previous one is variable-length! */
-};
+पूर्ण;
 
-void etnaviv_submit_put(struct etnaviv_gem_submit * submit);
+व्योम etnaviv_submit_put(काष्ठा etnaviv_gem_submit * submit);
 
-int etnaviv_gem_wait_bo(struct etnaviv_gpu *gpu, struct drm_gem_object *obj,
-	struct drm_etnaviv_timespec *timeout);
-int etnaviv_gem_new_private(struct drm_device *dev, size_t size, u32 flags,
-	const struct etnaviv_gem_ops *ops, struct etnaviv_gem_object **res);
-void etnaviv_gem_obj_add(struct drm_device *dev, struct drm_gem_object *obj);
-struct page **etnaviv_gem_get_pages(struct etnaviv_gem_object *obj);
-void etnaviv_gem_put_pages(struct etnaviv_gem_object *obj);
+पूर्णांक etnaviv_gem_रुको_bo(काष्ठा etnaviv_gpu *gpu, काष्ठा drm_gem_object *obj,
+	काष्ठा drm_etnaviv_बारpec *समयout);
+पूर्णांक etnaviv_gem_new_निजी(काष्ठा drm_device *dev, माप_प्रकार size, u32 flags,
+	स्थिर काष्ठा etnaviv_gem_ops *ops, काष्ठा etnaviv_gem_object **res);
+व्योम etnaviv_gem_obj_add(काष्ठा drm_device *dev, काष्ठा drm_gem_object *obj);
+काष्ठा page **etnaviv_gem_get_pages(काष्ठा etnaviv_gem_object *obj);
+व्योम etnaviv_gem_put_pages(काष्ठा etnaviv_gem_object *obj);
 
-struct etnaviv_vram_mapping *etnaviv_gem_mapping_get(
-	struct drm_gem_object *obj, struct etnaviv_iommu_context *mmu_context,
+काष्ठा etnaviv_vram_mapping *etnaviv_gem_mapping_get(
+	काष्ठा drm_gem_object *obj, काष्ठा etnaviv_iommu_context *mmu_context,
 	u64 va);
-void etnaviv_gem_mapping_unreference(struct etnaviv_vram_mapping *mapping);
+व्योम etnaviv_gem_mapping_unreference(काष्ठा etnaviv_vram_mapping *mapping);
 
-#endif /* __ETNAVIV_GEM_H__ */
+#पूर्ण_अगर /* __ETNAVIV_GEM_H__ */

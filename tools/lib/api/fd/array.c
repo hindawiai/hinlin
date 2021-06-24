@@ -1,132 +1,133 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * Copyright (C) 2014, Red Hat Inc, Arnaldo Carvalho de Melo <acme@redhat.com>
+ * Copyright (C) 2014, Red Hat Inc, Arnalकरो Carvalho de Melo <acme@redhat.com>
  */
-#include "array.h"
-#include <errno.h>
-#include <fcntl.h>
-#include <poll.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <string.h>
+#समावेश "array.h"
+#समावेश <त्रुटिसं.स>
+#समावेश <fcntl.h>
+#समावेश <poll.h>
+#समावेश <मानककोष.स>
+#समावेश <unistd.h>
+#समावेश <माला.स>
 
-void fdarray__init(struct fdarray *fda, int nr_autogrow)
-{
-	fda->entries	 = NULL;
-	fda->priv	 = NULL;
+व्योम fdarray__init(काष्ठा fdarray *fda, पूर्णांक nr_स्वतःgrow)
+अणु
+	fda->entries	 = शून्य;
+	fda->priv	 = शून्य;
 	fda->nr		 = fda->nr_alloc = 0;
-	fda->nr_autogrow = nr_autogrow;
-}
+	fda->nr_स्वतःgrow = nr_स्वतःgrow;
+पूर्ण
 
-int fdarray__grow(struct fdarray *fda, int nr)
-{
-	struct priv *priv;
-	int nr_alloc = fda->nr_alloc + nr;
-	size_t psize = sizeof(fda->priv[0]) * nr_alloc;
-	size_t size  = sizeof(struct pollfd) * nr_alloc;
-	struct pollfd *entries = realloc(fda->entries, size);
+पूर्णांक fdarray__grow(काष्ठा fdarray *fda, पूर्णांक nr)
+अणु
+	काष्ठा priv *priv;
+	पूर्णांक nr_alloc = fda->nr_alloc + nr;
+	माप_प्रकार psize = माप(fda->priv[0]) * nr_alloc;
+	माप_प्रकार size  = माप(काष्ठा pollfd) * nr_alloc;
+	काष्ठा pollfd *entries = पुनः_स्मृति(fda->entries, size);
 
-	if (entries == NULL)
-		return -ENOMEM;
+	अगर (entries == शून्य)
+		वापस -ENOMEM;
 
-	priv = realloc(fda->priv, psize);
-	if (priv == NULL) {
-		free(entries);
-		return -ENOMEM;
-	}
+	priv = पुनः_स्मृति(fda->priv, psize);
+	अगर (priv == शून्य) अणु
+		मुक्त(entries);
+		वापस -ENOMEM;
+	पूर्ण
 
-	memset(&entries[fda->nr_alloc], 0, sizeof(struct pollfd) * nr);
-	memset(&priv[fda->nr_alloc], 0, sizeof(fda->priv[0]) * nr);
+	स_रखो(&entries[fda->nr_alloc], 0, माप(काष्ठा pollfd) * nr);
+	स_रखो(&priv[fda->nr_alloc], 0, माप(fda->priv[0]) * nr);
 
 	fda->nr_alloc = nr_alloc;
 	fda->entries  = entries;
 	fda->priv     = priv;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-struct fdarray *fdarray__new(int nr_alloc, int nr_autogrow)
-{
-	struct fdarray *fda = calloc(1, sizeof(*fda));
+काष्ठा fdarray *fdarray__new(पूर्णांक nr_alloc, पूर्णांक nr_स्वतःgrow)
+अणु
+	काष्ठा fdarray *fda = सुस्मृति(1, माप(*fda));
 
-	if (fda != NULL) {
-		if (fdarray__grow(fda, nr_alloc)) {
-			free(fda);
-			fda = NULL;
-		} else {
-			fda->nr_autogrow = nr_autogrow;
-		}
-	}
+	अगर (fda != शून्य) अणु
+		अगर (fdarray__grow(fda, nr_alloc)) अणु
+			मुक्त(fda);
+			fda = शून्य;
+		पूर्ण अन्यथा अणु
+			fda->nr_स्वतःgrow = nr_स्वतःgrow;
+		पूर्ण
+	पूर्ण
 
-	return fda;
-}
+	वापस fda;
+पूर्ण
 
-void fdarray__exit(struct fdarray *fda)
-{
-	free(fda->entries);
-	free(fda->priv);
+व्योम fdarray__निकास(काष्ठा fdarray *fda)
+अणु
+	मुक्त(fda->entries);
+	मुक्त(fda->priv);
 	fdarray__init(fda, 0);
-}
+पूर्ण
 
-void fdarray__delete(struct fdarray *fda)
-{
-	fdarray__exit(fda);
-	free(fda);
-}
+व्योम fdarray__delete(काष्ठा fdarray *fda)
+अणु
+	fdarray__निकास(fda);
+	मुक्त(fda);
+पूर्ण
 
-int fdarray__add(struct fdarray *fda, int fd, short revents, enum fdarray_flags flags)
-{
-	int pos = fda->nr;
+पूर्णांक fdarray__add(काष्ठा fdarray *fda, पूर्णांक fd, लघु revents, क्रमागत fdarray_flags flags)
+अणु
+	पूर्णांक pos = fda->nr;
 
-	if (fda->nr == fda->nr_alloc &&
-	    fdarray__grow(fda, fda->nr_autogrow) < 0)
-		return -ENOMEM;
+	अगर (fda->nr == fda->nr_alloc &&
+	    fdarray__grow(fda, fda->nr_स्वतःgrow) < 0)
+		वापस -ENOMEM;
 
 	fda->entries[fda->nr].fd     = fd;
 	fda->entries[fda->nr].events = revents;
 	fda->priv[fda->nr].flags = flags;
 	fda->nr++;
-	return pos;
-}
+	वापस pos;
+पूर्ण
 
-int fdarray__filter(struct fdarray *fda, short revents,
-		    void (*entry_destructor)(struct fdarray *fda, int fd, void *arg),
-		    void *arg)
-{
-	int fd, nr = 0;
+पूर्णांक fdarray__filter(काष्ठा fdarray *fda, लघु revents,
+		    व्योम (*entry_deकाष्ठाor)(काष्ठा fdarray *fda, पूर्णांक fd, व्योम *arg),
+		    व्योम *arg)
+अणु
+	पूर्णांक fd, nr = 0;
 
-	if (fda->nr == 0)
-		return 0;
+	अगर (fda->nr == 0)
+		वापस 0;
 
-	for (fd = 0; fd < fda->nr; ++fd) {
-		if (!fda->entries[fd].events)
-			continue;
+	क्रम (fd = 0; fd < fda->nr; ++fd) अणु
+		अगर (!fda->entries[fd].events)
+			जारी;
 
-		if (fda->entries[fd].revents & revents) {
-			if (entry_destructor)
-				entry_destructor(fda, fd, arg);
+		अगर (fda->entries[fd].revents & revents) अणु
+			अगर (entry_deकाष्ठाor)
+				entry_deकाष्ठाor(fda, fd, arg);
 
 			fda->entries[fd].revents = fda->entries[fd].events = 0;
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		if (!(fda->priv[fd].flags & fdarray_flag__nonfilterable))
+		अगर (!(fda->priv[fd].flags & fdarray_flag__nonfilterable))
 			++nr;
-	}
+	पूर्ण
 
-	return nr;
-}
+	वापस nr;
+पूर्ण
 
-int fdarray__poll(struct fdarray *fda, int timeout)
-{
-	return poll(fda->entries, fda->nr, timeout);
-}
+पूर्णांक fdarray__poll(काष्ठा fdarray *fda, पूर्णांक समयout)
+अणु
+	वापस poll(fda->entries, fda->nr, समयout);
+पूर्ण
 
-int fdarray__fprintf(struct fdarray *fda, FILE *fp)
-{
-	int fd, printed = fprintf(fp, "%d [ ", fda->nr);
+पूर्णांक fdarray__ख_लिखो(काष्ठा fdarray *fda, खाता *fp)
+अणु
+	पूर्णांक fd, prपूर्णांकed = ख_लिखो(fp, "%d [ ", fda->nr);
 
-	for (fd = 0; fd < fda->nr; ++fd)
-		printed += fprintf(fp, "%s%d", fd ? ", " : "", fda->entries[fd].fd);
+	क्रम (fd = 0; fd < fda->nr; ++fd)
+		prपूर्णांकed += ख_लिखो(fp, "%s%d", fd ? ", " : "", fda->entries[fd].fd);
 
-	return printed + fprintf(fp, " ]");
-}
+	वापस prपूर्णांकed + ख_लिखो(fp, " ]");
+पूर्ण

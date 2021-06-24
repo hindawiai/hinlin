@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * drivers/mfd/mfd-core.c
  *
@@ -7,138 +8,138 @@
  * Copyright (c) 2007,2008 Dmitry Baryshkov
  */
 
-#include <linux/kernel.h>
-#include <linux/platform_device.h>
-#include <linux/acpi.h>
-#include <linux/list.h>
-#include <linux/property.h>
-#include <linux/mfd/core.h>
-#include <linux/pm_runtime.h>
-#include <linux/slab.h>
-#include <linux/module.h>
-#include <linux/irqdomain.h>
-#include <linux/of.h>
-#include <linux/of_address.h>
-#include <linux/regulator/consumer.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/acpi.h>
+#समावेश <linux/list.h>
+#समावेश <linux/property.h>
+#समावेश <linux/mfd/core.h>
+#समावेश <linux/pm_runसमय.स>
+#समावेश <linux/slab.h>
+#समावेश <linux/module.h>
+#समावेश <linux/irqकरोमुख्य.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_address.h>
+#समावेश <linux/regulator/consumer.h>
 
-static LIST_HEAD(mfd_of_node_list);
+अटल LIST_HEAD(mfd_of_node_list);
 
-struct mfd_of_node_entry {
-	struct list_head list;
-	struct device *dev;
-	struct device_node *np;
-};
+काष्ठा mfd_of_node_entry अणु
+	काष्ठा list_head list;
+	काष्ठा device *dev;
+	काष्ठा device_node *np;
+पूर्ण;
 
-static struct device_type mfd_dev_type = {
+अटल काष्ठा device_type mfd_dev_type = अणु
 	.name	= "mfd_device",
-};
+पूर्ण;
 
-int mfd_cell_enable(struct platform_device *pdev)
-{
-	const struct mfd_cell *cell = mfd_get_cell(pdev);
+पूर्णांक mfd_cell_enable(काष्ठा platक्रमm_device *pdev)
+अणु
+	स्थिर काष्ठा mfd_cell *cell = mfd_get_cell(pdev);
 
-	if (!cell->enable) {
+	अगर (!cell->enable) अणु
 		dev_dbg(&pdev->dev, "No .enable() call-back registered\n");
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	return cell->enable(pdev);
-}
+	वापस cell->enable(pdev);
+पूर्ण
 EXPORT_SYMBOL(mfd_cell_enable);
 
-int mfd_cell_disable(struct platform_device *pdev)
-{
-	const struct mfd_cell *cell = mfd_get_cell(pdev);
+पूर्णांक mfd_cell_disable(काष्ठा platक्रमm_device *pdev)
+अणु
+	स्थिर काष्ठा mfd_cell *cell = mfd_get_cell(pdev);
 
-	if (!cell->disable) {
+	अगर (!cell->disable) अणु
 		dev_dbg(&pdev->dev, "No .disable() call-back registered\n");
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	return cell->disable(pdev);
-}
+	वापस cell->disable(pdev);
+पूर्ण
 EXPORT_SYMBOL(mfd_cell_disable);
 
-#if IS_ENABLED(CONFIG_ACPI)
-static void mfd_acpi_add_device(const struct mfd_cell *cell,
-				struct platform_device *pdev)
-{
-	const struct mfd_cell_acpi_match *match = cell->acpi_match;
-	struct acpi_device *parent, *child;
-	struct acpi_device *adev = NULL;
+#अगर IS_ENABLED(CONFIG_ACPI)
+अटल व्योम mfd_acpi_add_device(स्थिर काष्ठा mfd_cell *cell,
+				काष्ठा platक्रमm_device *pdev)
+अणु
+	स्थिर काष्ठा mfd_cell_acpi_match *match = cell->acpi_match;
+	काष्ठा acpi_device *parent, *child;
+	काष्ठा acpi_device *adev = शून्य;
 
 	parent = ACPI_COMPANION(pdev->dev.parent);
-	if (!parent)
-		return;
+	अगर (!parent)
+		वापस;
 
 	/*
-	 * MFD child device gets its ACPI handle either from the ACPI device
+	 * MFD child device माला_लो its ACPI handle either from the ACPI device
 	 * directly under the parent that matches the either _HID or _CID, or
-	 * _ADR or it will use the parent handle if is no ID is given.
+	 * _ADR or it will use the parent handle अगर is no ID is given.
 	 *
-	 * Note that use of _ADR is a grey area in the ACPI specification,
+	 * Note that use of _ADR is a grey area in the ACPI specअगरication,
 	 * though at least Intel Galileo Gen 2 is using it to distinguish
 	 * the children devices.
 	 */
-	if (match) {
-		if (match->pnpid) {
-			struct acpi_device_id ids[2] = {};
+	अगर (match) अणु
+		अगर (match->pnpid) अणु
+			काष्ठा acpi_device_id ids[2] = अणुपूर्ण;
 
-			strlcpy(ids[0].id, match->pnpid, sizeof(ids[0].id));
-			list_for_each_entry(child, &parent->children, node) {
-				if (!acpi_match_device_ids(child, ids)) {
+			strlcpy(ids[0].id, match->pnpid, माप(ids[0].id));
+			list_क्रम_each_entry(child, &parent->children, node) अणु
+				अगर (!acpi_match_device_ids(child, ids)) अणु
 					adev = child;
-					break;
-				}
-			}
-		} else {
+					अवरोध;
+				पूर्ण
+			पूर्ण
+		पूर्ण अन्यथा अणु
 			adev = acpi_find_child_device(parent, match->adr, false);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	ACPI_COMPANION_SET(&pdev->dev, adev ?: parent);
-}
-#else
-static inline void mfd_acpi_add_device(const struct mfd_cell *cell,
-				       struct platform_device *pdev)
-{
-}
-#endif
+पूर्ण
+#अन्यथा
+अटल अंतरभूत व्योम mfd_acpi_add_device(स्थिर काष्ठा mfd_cell *cell,
+				       काष्ठा platक्रमm_device *pdev)
+अणु
+पूर्ण
+#पूर्ण_अगर
 
-static int mfd_match_of_node_to_dev(struct platform_device *pdev,
-				    struct device_node *np,
-				    const struct mfd_cell *cell)
-{
-#if IS_ENABLED(CONFIG_OF)
-	struct mfd_of_node_entry *of_entry;
-	const __be32 *reg;
+अटल पूर्णांक mfd_match_of_node_to_dev(काष्ठा platक्रमm_device *pdev,
+				    काष्ठा device_node *np,
+				    स्थिर काष्ठा mfd_cell *cell)
+अणु
+#अगर IS_ENABLED(CONFIG_OF)
+	काष्ठा mfd_of_node_entry *of_entry;
+	स्थिर __be32 *reg;
 	u64 of_node_addr;
 
-	/* Skip if OF node has previously been allocated to a device */
-	list_for_each_entry(of_entry, &mfd_of_node_list, list)
-		if (of_entry->np == np)
-			return -EAGAIN;
+	/* Skip अगर OF node has previously been allocated to a device */
+	list_क्रम_each_entry(of_entry, &mfd_of_node_list, list)
+		अगर (of_entry->np == np)
+			वापस -EAGAIN;
 
-	if (!cell->use_of_reg)
-		/* No of_reg defined - allocate first free compatible match */
-		goto allocate_of_node;
+	अगर (!cell->use_of_reg)
+		/* No of_reg defined - allocate first मुक्त compatible match */
+		जाओ allocate_of_node;
 
 	/* We only care about each node's first defined address */
-	reg = of_get_address(np, 0, NULL, NULL);
-	if (!reg)
-		/* OF node does not contatin a 'reg' property to match to */
-		return -EAGAIN;
+	reg = of_get_address(np, 0, शून्य, शून्य);
+	अगर (!reg)
+		/* OF node करोes not contatin a 'reg' property to match to */
+		वापस -EAGAIN;
 
-	of_node_addr = of_read_number(reg, of_n_addr_cells(np));
+	of_node_addr = of_पढ़ो_number(reg, of_n_addr_cells(np));
 
-	if (cell->of_reg != of_node_addr)
+	अगर (cell->of_reg != of_node_addr)
 		/* No match */
-		return -EAGAIN;
+		वापस -EAGAIN;
 
 allocate_of_node:
-	of_entry = kzalloc(sizeof(*of_entry), GFP_KERNEL);
-	if (!of_entry)
-		return -ENOMEM;
+	of_entry = kzalloc(माप(*of_entry), GFP_KERNEL);
+	अगर (!of_entry)
+		वापस -ENOMEM;
 
 	of_entry->dev = &pdev->dev;
 	of_entry->np = np;
@@ -146,39 +147,39 @@ allocate_of_node:
 
 	pdev->dev.of_node = np;
 	pdev->dev.fwnode = &np->fwnode;
-#endif
-	return 0;
-}
+#पूर्ण_अगर
+	वापस 0;
+पूर्ण
 
-static int mfd_add_device(struct device *parent, int id,
-			  const struct mfd_cell *cell,
-			  struct resource *mem_base,
-			  int irq_base, struct irq_domain *domain)
-{
-	struct resource *res;
-	struct platform_device *pdev;
-	struct device_node *np = NULL;
-	struct mfd_of_node_entry *of_entry, *tmp;
-	int ret = -ENOMEM;
-	int platform_id;
-	int r;
+अटल पूर्णांक mfd_add_device(काष्ठा device *parent, पूर्णांक id,
+			  स्थिर काष्ठा mfd_cell *cell,
+			  काष्ठा resource *mem_base,
+			  पूर्णांक irq_base, काष्ठा irq_करोमुख्य *करोमुख्य)
+अणु
+	काष्ठा resource *res;
+	काष्ठा platक्रमm_device *pdev;
+	काष्ठा device_node *np = शून्य;
+	काष्ठा mfd_of_node_entry *of_entry, *पंचांगp;
+	पूर्णांक ret = -ENOMEM;
+	पूर्णांक platक्रमm_id;
+	पूर्णांक r;
 
-	if (id == PLATFORM_DEVID_AUTO)
-		platform_id = id;
-	else
-		platform_id = id + cell->id;
+	अगर (id == PLATFORM_DEVID_AUTO)
+		platक्रमm_id = id;
+	अन्यथा
+		platक्रमm_id = id + cell->id;
 
-	pdev = platform_device_alloc(cell->name, platform_id);
-	if (!pdev)
-		goto fail_alloc;
+	pdev = platक्रमm_device_alloc(cell->name, platक्रमm_id);
+	अगर (!pdev)
+		जाओ fail_alloc;
 
-	pdev->mfd_cell = kmemdup(cell, sizeof(*cell), GFP_KERNEL);
-	if (!pdev->mfd_cell)
-		goto fail_device;
+	pdev->mfd_cell = kmemdup(cell, माप(*cell), GFP_KERNEL);
+	अगर (!pdev->mfd_cell)
+		जाओ fail_device;
 
-	res = kcalloc(cell->num_resources, sizeof(*res), GFP_KERNEL);
-	if (!res)
-		goto fail_device;
+	res = kसुस्मृति(cell->num_resources, माप(*res), GFP_KERNEL);
+	अगर (!res)
+		जाओ fail_device;
 
 	pdev->dev.parent = parent;
 	pdev->dev.type = &mfd_dev_type;
@@ -186,249 +187,249 @@ static int mfd_add_device(struct device *parent, int id,
 	pdev->dev.dma_parms = parent->dma_parms;
 	pdev->dev.coherent_dma_mask = parent->coherent_dma_mask;
 
-	ret = regulator_bulk_register_supply_alias(
+	ret = regulator_bulk_रेजिस्टर_supply_alias(
 			&pdev->dev, cell->parent_supplies,
 			parent, cell->parent_supplies,
 			cell->num_parent_supplies);
-	if (ret < 0)
-		goto fail_res;
+	अगर (ret < 0)
+		जाओ fail_res;
 
-	if (IS_ENABLED(CONFIG_OF) && parent->of_node && cell->of_compatible) {
-		for_each_child_of_node(parent->of_node, np) {
-			if (of_device_is_compatible(np, cell->of_compatible)) {
-				/* Ignore 'disabled' devices error free */
-				if (!of_device_is_available(np)) {
+	अगर (IS_ENABLED(CONFIG_OF) && parent->of_node && cell->of_compatible) अणु
+		क्रम_each_child_of_node(parent->of_node, np) अणु
+			अगर (of_device_is_compatible(np, cell->of_compatible)) अणु
+				/* Ignore 'disabled' devices error मुक्त */
+				अगर (!of_device_is_available(np)) अणु
 					ret = 0;
-					goto fail_alias;
-				}
+					जाओ fail_alias;
+				पूर्ण
 
 				ret = mfd_match_of_node_to_dev(pdev, np, cell);
-				if (ret == -EAGAIN)
-					continue;
-				if (ret)
-					goto fail_alias;
+				अगर (ret == -EAGAIN)
+					जारी;
+				अगर (ret)
+					जाओ fail_alias;
 
-				break;
-			}
-		}
+				अवरोध;
+			पूर्ण
+		पूर्ण
 
-		if (!pdev->dev.of_node)
+		अगर (!pdev->dev.of_node)
 			pr_warn("%s: Failed to locate of_node [id: %d]\n",
-				cell->name, platform_id);
-	}
+				cell->name, platक्रमm_id);
+	पूर्ण
 
 	mfd_acpi_add_device(cell, pdev);
 
-	if (cell->pdata_size) {
-		ret = platform_device_add_data(pdev,
-					cell->platform_data, cell->pdata_size);
-		if (ret)
-			goto fail_of_entry;
-	}
+	अगर (cell->pdata_size) अणु
+		ret = platक्रमm_device_add_data(pdev,
+					cell->platक्रमm_data, cell->pdata_size);
+		अगर (ret)
+			जाओ fail_of_entry;
+	पूर्ण
 
-	if (cell->swnode) {
+	अगर (cell->swnode) अणु
 		ret = device_add_software_node(&pdev->dev, cell->swnode);
-		if (ret)
-			goto fail_of_entry;
-	}
+		अगर (ret)
+			जाओ fail_of_entry;
+	पूर्ण
 
-	for (r = 0; r < cell->num_resources; r++) {
+	क्रम (r = 0; r < cell->num_resources; r++) अणु
 		res[r].name = cell->resources[r].name;
 		res[r].flags = cell->resources[r].flags;
 
 		/* Find out base to use */
-		if ((cell->resources[r].flags & IORESOURCE_MEM) && mem_base) {
+		अगर ((cell->resources[r].flags & IORESOURCE_MEM) && mem_base) अणु
 			res[r].parent = mem_base;
 			res[r].start = mem_base->start +
 				cell->resources[r].start;
 			res[r].end = mem_base->start +
 				cell->resources[r].end;
-		} else if (cell->resources[r].flags & IORESOURCE_IRQ) {
-			if (domain) {
-				/* Unable to create mappings for IRQ ranges. */
+		पूर्ण अन्यथा अगर (cell->resources[r].flags & IORESOURCE_IRQ) अणु
+			अगर (करोमुख्य) अणु
+				/* Unable to create mappings क्रम IRQ ranges. */
 				WARN_ON(cell->resources[r].start !=
 					cell->resources[r].end);
 				res[r].start = res[r].end = irq_create_mapping(
-					domain, cell->resources[r].start);
-			} else {
+					करोमुख्य, cell->resources[r].start);
+			पूर्ण अन्यथा अणु
 				res[r].start = irq_base +
 					cell->resources[r].start;
 				res[r].end   = irq_base +
 					cell->resources[r].end;
-			}
-		} else {
+			पूर्ण
+		पूर्ण अन्यथा अणु
 			res[r].parent = cell->resources[r].parent;
 			res[r].start = cell->resources[r].start;
 			res[r].end   = cell->resources[r].end;
-		}
+		पूर्ण
 
-		if (!cell->ignore_resource_conflicts) {
-			if (has_acpi_companion(&pdev->dev)) {
+		अगर (!cell->ignore_resource_conflicts) अणु
+			अगर (has_acpi_companion(&pdev->dev)) अणु
 				ret = acpi_check_resource_conflict(&res[r]);
-				if (ret)
-					goto fail_of_entry;
-			}
-		}
-	}
+				अगर (ret)
+					जाओ fail_of_entry;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	ret = platform_device_add_resources(pdev, res, cell->num_resources);
-	if (ret)
-		goto fail_of_entry;
+	ret = platक्रमm_device_add_resources(pdev, res, cell->num_resources);
+	अगर (ret)
+		जाओ fail_of_entry;
 
-	ret = platform_device_add(pdev);
-	if (ret)
-		goto fail_of_entry;
+	ret = platक्रमm_device_add(pdev);
+	अगर (ret)
+		जाओ fail_of_entry;
 
-	if (cell->pm_runtime_no_callbacks)
-		pm_runtime_no_callbacks(&pdev->dev);
+	अगर (cell->pm_runसमय_no_callbacks)
+		pm_runसमय_no_callbacks(&pdev->dev);
 
-	kfree(res);
+	kमुक्त(res);
 
-	return 0;
+	वापस 0;
 
 fail_of_entry:
-	list_for_each_entry_safe(of_entry, tmp, &mfd_of_node_list, list)
-		if (of_entry->dev == &pdev->dev) {
+	list_क्रम_each_entry_safe(of_entry, पंचांगp, &mfd_of_node_list, list)
+		अगर (of_entry->dev == &pdev->dev) अणु
 			list_del(&of_entry->list);
-			kfree(of_entry);
-		}
-	device_remove_software_node(&pdev->dev);
+			kमुक्त(of_entry);
+		पूर्ण
+	device_हटाओ_software_node(&pdev->dev);
 fail_alias:
-	regulator_bulk_unregister_supply_alias(&pdev->dev,
+	regulator_bulk_unरेजिस्टर_supply_alias(&pdev->dev,
 					       cell->parent_supplies,
 					       cell->num_parent_supplies);
 fail_res:
-	kfree(res);
+	kमुक्त(res);
 fail_device:
-	platform_device_put(pdev);
+	platक्रमm_device_put(pdev);
 fail_alloc:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * mfd_add_devices - register child devices
+ * mfd_add_devices - रेजिस्टर child devices
  *
- * @parent:	Pointer to parent device.
- * @id:		Can be PLATFORM_DEVID_AUTO to let the Platform API take care
+ * @parent:	Poपूर्णांकer to parent device.
+ * @id:		Can be PLATFORM_DEVID_AUTO to let the Platक्रमm API take care
  *		of device numbering, or will be added to a device's cell_id.
- * @cells:	Array of (struct mfd_cell)s describing child devices.
- * @n_devs:	Number of child devices to register.
- * @mem_base:	Parent register range resource for child devices.
- * @irq_base:	Base of the range of virtual interrupt numbers allocated for
- *		this MFD device. Unused if @domain is specified.
- * @domain:	Interrupt domain to create mappings for hardware interrupts.
+ * @cells:	Array of (काष्ठा mfd_cell)s describing child devices.
+ * @n_devs:	Number of child devices to रेजिस्टर.
+ * @mem_base:	Parent रेजिस्टर range resource क्रम child devices.
+ * @irq_base:	Base of the range of भव पूर्णांकerrupt numbers allocated क्रम
+ *		this MFD device. Unused अगर @करोमुख्य is specअगरied.
+ * @करोमुख्य:	Interrupt करोमुख्य to create mappings क्रम hardware पूर्णांकerrupts.
  */
-int mfd_add_devices(struct device *parent, int id,
-		    const struct mfd_cell *cells, int n_devs,
-		    struct resource *mem_base,
-		    int irq_base, struct irq_domain *domain)
-{
-	int i;
-	int ret;
+पूर्णांक mfd_add_devices(काष्ठा device *parent, पूर्णांक id,
+		    स्थिर काष्ठा mfd_cell *cells, पूर्णांक n_devs,
+		    काष्ठा resource *mem_base,
+		    पूर्णांक irq_base, काष्ठा irq_करोमुख्य *करोमुख्य)
+अणु
+	पूर्णांक i;
+	पूर्णांक ret;
 
-	for (i = 0; i < n_devs; i++) {
+	क्रम (i = 0; i < n_devs; i++) अणु
 		ret = mfd_add_device(parent, id, cells + i, mem_base,
-				     irq_base, domain);
-		if (ret)
-			goto fail;
-	}
+				     irq_base, करोमुख्य);
+		अगर (ret)
+			जाओ fail;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 fail:
-	if (i)
-		mfd_remove_devices(parent);
+	अगर (i)
+		mfd_हटाओ_devices(parent);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL(mfd_add_devices);
 
-static int mfd_remove_devices_fn(struct device *dev, void *data)
-{
-	struct platform_device *pdev;
-	const struct mfd_cell *cell;
-	int *level = data;
+अटल पूर्णांक mfd_हटाओ_devices_fn(काष्ठा device *dev, व्योम *data)
+अणु
+	काष्ठा platक्रमm_device *pdev;
+	स्थिर काष्ठा mfd_cell *cell;
+	पूर्णांक *level = data;
 
-	if (dev->type != &mfd_dev_type)
-		return 0;
+	अगर (dev->type != &mfd_dev_type)
+		वापस 0;
 
-	pdev = to_platform_device(dev);
+	pdev = to_platक्रमm_device(dev);
 	cell = mfd_get_cell(pdev);
 
-	if (level && cell->level > *level)
-		return 0;
+	अगर (level && cell->level > *level)
+		वापस 0;
 
-	regulator_bulk_unregister_supply_alias(dev, cell->parent_supplies,
+	regulator_bulk_unरेजिस्टर_supply_alias(dev, cell->parent_supplies,
 					       cell->num_parent_supplies);
 
-	device_remove_software_node(&pdev->dev);
+	device_हटाओ_software_node(&pdev->dev);
 
-	platform_device_unregister(pdev);
-	return 0;
-}
+	platक्रमm_device_unरेजिस्टर(pdev);
+	वापस 0;
+पूर्ण
 
-void mfd_remove_devices_late(struct device *parent)
-{
-	int level = MFD_DEP_LEVEL_HIGH;
+व्योम mfd_हटाओ_devices_late(काष्ठा device *parent)
+अणु
+	पूर्णांक level = MFD_DEP_LEVEL_HIGH;
 
-	device_for_each_child_reverse(parent, &level, mfd_remove_devices_fn);
-}
-EXPORT_SYMBOL(mfd_remove_devices_late);
+	device_क्रम_each_child_reverse(parent, &level, mfd_हटाओ_devices_fn);
+पूर्ण
+EXPORT_SYMBOL(mfd_हटाओ_devices_late);
 
-void mfd_remove_devices(struct device *parent)
-{
-	int level = MFD_DEP_LEVEL_NORMAL;
+व्योम mfd_हटाओ_devices(काष्ठा device *parent)
+अणु
+	पूर्णांक level = MFD_DEP_LEVEL_NORMAL;
 
-	device_for_each_child_reverse(parent, &level, mfd_remove_devices_fn);
-}
-EXPORT_SYMBOL(mfd_remove_devices);
+	device_क्रम_each_child_reverse(parent, &level, mfd_हटाओ_devices_fn);
+पूर्ण
+EXPORT_SYMBOL(mfd_हटाओ_devices);
 
-static void devm_mfd_dev_release(struct device *dev, void *res)
-{
-	mfd_remove_devices(dev);
-}
+अटल व्योम devm_mfd_dev_release(काष्ठा device *dev, व्योम *res)
+अणु
+	mfd_हटाओ_devices(dev);
+पूर्ण
 
 /**
  * devm_mfd_add_devices - Resource managed version of mfd_add_devices()
  *
  * Returns 0 on success or an appropriate negative error number on failure.
- * All child-devices of the MFD will automatically be removed when it gets
+ * All child-devices of the MFD will स्वतःmatically be हटाओd when it माला_लो
  * unbinded.
  *
- * @dev:	Pointer to parent device.
- * @id:		Can be PLATFORM_DEVID_AUTO to let the Platform API take care
+ * @dev:	Poपूर्णांकer to parent device.
+ * @id:		Can be PLATFORM_DEVID_AUTO to let the Platक्रमm API take care
  *		of device numbering, or will be added to a device's cell_id.
- * @cells:	Array of (struct mfd_cell)s describing child devices.
- * @n_devs:	Number of child devices to register.
- * @mem_base:	Parent register range resource for child devices.
- * @irq_base:	Base of the range of virtual interrupt numbers allocated for
- *		this MFD device. Unused if @domain is specified.
- * @domain:	Interrupt domain to create mappings for hardware interrupts.
+ * @cells:	Array of (काष्ठा mfd_cell)s describing child devices.
+ * @n_devs:	Number of child devices to रेजिस्टर.
+ * @mem_base:	Parent रेजिस्टर range resource क्रम child devices.
+ * @irq_base:	Base of the range of भव पूर्णांकerrupt numbers allocated क्रम
+ *		this MFD device. Unused अगर @करोमुख्य is specअगरied.
+ * @करोमुख्य:	Interrupt करोमुख्य to create mappings क्रम hardware पूर्णांकerrupts.
  */
-int devm_mfd_add_devices(struct device *dev, int id,
-			 const struct mfd_cell *cells, int n_devs,
-			 struct resource *mem_base,
-			 int irq_base, struct irq_domain *domain)
-{
-	struct device **ptr;
-	int ret;
+पूर्णांक devm_mfd_add_devices(काष्ठा device *dev, पूर्णांक id,
+			 स्थिर काष्ठा mfd_cell *cells, पूर्णांक n_devs,
+			 काष्ठा resource *mem_base,
+			 पूर्णांक irq_base, काष्ठा irq_करोमुख्य *करोमुख्य)
+अणु
+	काष्ठा device **ptr;
+	पूर्णांक ret;
 
-	ptr = devres_alloc(devm_mfd_dev_release, sizeof(*ptr), GFP_KERNEL);
-	if (!ptr)
-		return -ENOMEM;
+	ptr = devres_alloc(devm_mfd_dev_release, माप(*ptr), GFP_KERNEL);
+	अगर (!ptr)
+		वापस -ENOMEM;
 
 	ret = mfd_add_devices(dev, id, cells, n_devs, mem_base,
-			      irq_base, domain);
-	if (ret < 0) {
-		devres_free(ptr);
-		return ret;
-	}
+			      irq_base, करोमुख्य);
+	अगर (ret < 0) अणु
+		devres_मुक्त(ptr);
+		वापस ret;
+	पूर्ण
 
 	*ptr = dev;
 	devres_add(dev, ptr);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL(devm_mfd_add_devices);
 
 MODULE_LICENSE("GPL");

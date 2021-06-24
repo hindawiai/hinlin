@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
  * OWL S900 Pinctrl driver
  *
@@ -9,203 +10,203 @@
  * Author: Manivannan Sadhasivam <manivannan.sadhasivam@linaro.org>
  */
 
-#include <linux/module.h>
-#include <linux/of.h>
-#include <linux/platform_device.h>
-#include <linux/pinctrl/pinctrl.h>
-#include <linux/pinctrl/pinconf-generic.h>
-#include "pinctrl-owl.h"
+#समावेश <linux/module.h>
+#समावेश <linux/of.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/pinctrl/pinctrl.h>
+#समावेश <linux/pinctrl/pinconf-generic.h>
+#समावेश "pinctrl-owl.h"
 
-/* Pinctrl registers offset */
-#define MFCTL0			(0x0040)
-#define MFCTL1			(0x0044)
-#define MFCTL2			(0x0048)
-#define MFCTL3			(0x004C)
-#define PAD_PULLCTL0		(0x0060)
-#define PAD_PULLCTL1		(0x0064)
-#define PAD_PULLCTL2		(0x0068)
-#define PAD_ST0			(0x006C)
-#define PAD_ST1			(0x0070)
-#define PAD_CTL			(0x0074)
-#define PAD_DRV0		(0x0080)
-#define PAD_DRV1		(0x0084)
-#define PAD_DRV2		(0x0088)
-#define PAD_SR0			(0x0270)
-#define PAD_SR1			(0x0274)
-#define PAD_SR2			(0x0278)
+/* Pinctrl रेजिस्टरs offset */
+#घोषणा MFCTL0			(0x0040)
+#घोषणा MFCTL1			(0x0044)
+#घोषणा MFCTL2			(0x0048)
+#घोषणा MFCTL3			(0x004C)
+#घोषणा PAD_PULLCTL0		(0x0060)
+#घोषणा PAD_PULLCTL1		(0x0064)
+#घोषणा PAD_PULLCTL2		(0x0068)
+#घोषणा PAD_ST0			(0x006C)
+#घोषणा PAD_ST1			(0x0070)
+#घोषणा PAD_CTL			(0x0074)
+#घोषणा PAD_DRV0		(0x0080)
+#घोषणा PAD_DRV1		(0x0084)
+#घोषणा PAD_DRV2		(0x0088)
+#घोषणा PAD_SR0			(0x0270)
+#घोषणा PAD_SR1			(0x0274)
+#घोषणा PAD_SR2			(0x0278)
 
-#define _GPIOA(offset)		(offset)
-#define _GPIOB(offset)		(32 + (offset))
-#define _GPIOC(offset)		(64 + (offset))
-#define _GPIOD(offset)		(76 + (offset))
-#define _GPIOE(offset)		(106 + (offset))
-#define _GPIOF(offset)		(138 + (offset))
+#घोषणा _GPIOA(offset)		(offset)
+#घोषणा _GPIOB(offset)		(32 + (offset))
+#घोषणा _GPIOC(offset)		(64 + (offset))
+#घोषणा _GPIOD(offset)		(76 + (offset))
+#घोषणा _GPIOE(offset)		(106 + (offset))
+#घोषणा _GPIOF(offset)		(138 + (offset))
 
-#define NUM_GPIOS		(_GPIOF(7) + 1)
-#define _PIN(offset)		(NUM_GPIOS + (offset))
+#घोषणा NUM_GPIOS		(_GPIOF(7) + 1)
+#घोषणा _PIN(offset)		(NUM_GPIOS + (offset))
 
-#define ETH_TXD0		_GPIOA(0)
-#define ETH_TXD1		_GPIOA(1)
-#define ETH_TXEN		_GPIOA(2)
-#define ETH_RXER		_GPIOA(3)
-#define ETH_CRS_DV		_GPIOA(4)
-#define ETH_RXD1		_GPIOA(5)
-#define ETH_RXD0		_GPIOA(6)
-#define ETH_REF_CLK		_GPIOA(7)
-#define ETH_MDC			_GPIOA(8)
-#define ETH_MDIO		_GPIOA(9)
-#define SIRQ0			_GPIOA(10)
-#define SIRQ1			_GPIOA(11)
-#define SIRQ2			_GPIOA(12)
-#define I2S_D0			_GPIOA(13)
-#define I2S_BCLK0		_GPIOA(14)
-#define I2S_LRCLK0		_GPIOA(15)
-#define I2S_MCLK0		_GPIOA(16)
-#define I2S_D1			_GPIOA(17)
-#define I2S_BCLK1		_GPIOA(18)
-#define I2S_LRCLK1		_GPIOA(19)
-#define I2S_MCLK1		_GPIOA(20)
-#define ERAM_A5			_GPIOA(21)
-#define ERAM_A6			_GPIOA(22)
-#define ERAM_A7			_GPIOA(23)
-#define ERAM_A8			_GPIOA(24)
-#define ERAM_A9			_GPIOA(25)
-#define ERAM_A10		_GPIOA(26)
-#define ERAM_A11		_GPIOA(27)
-#define SD0_D0			_GPIOA(28)
-#define SD0_D1			_GPIOA(29)
-#define SD0_D2			_GPIOA(30)
-#define SD0_D3			_GPIOA(31)
+#घोषणा ETH_TXD0		_GPIOA(0)
+#घोषणा ETH_TXD1		_GPIOA(1)
+#घोषणा ETH_TXEN		_GPIOA(2)
+#घोषणा ETH_RXER		_GPIOA(3)
+#घोषणा ETH_CRS_DV		_GPIOA(4)
+#घोषणा ETH_RXD1		_GPIOA(5)
+#घोषणा ETH_RXD0		_GPIOA(6)
+#घोषणा ETH_REF_CLK		_GPIOA(7)
+#घोषणा ETH_MDC			_GPIOA(8)
+#घोषणा ETH_MDIO		_GPIOA(9)
+#घोषणा SIRQ0			_GPIOA(10)
+#घोषणा SIRQ1			_GPIOA(11)
+#घोषणा SIRQ2			_GPIOA(12)
+#घोषणा I2S_D0			_GPIOA(13)
+#घोषणा I2S_BCLK0		_GPIOA(14)
+#घोषणा I2S_LRCLK0		_GPIOA(15)
+#घोषणा I2S_MCLK0		_GPIOA(16)
+#घोषणा I2S_D1			_GPIOA(17)
+#घोषणा I2S_BCLK1		_GPIOA(18)
+#घोषणा I2S_LRCLK1		_GPIOA(19)
+#घोषणा I2S_MCLK1		_GPIOA(20)
+#घोषणा ERAM_A5			_GPIOA(21)
+#घोषणा ERAM_A6			_GPIOA(22)
+#घोषणा ERAM_A7			_GPIOA(23)
+#घोषणा ERAM_A8			_GPIOA(24)
+#घोषणा ERAM_A9			_GPIOA(25)
+#घोषणा ERAM_A10		_GPIOA(26)
+#घोषणा ERAM_A11		_GPIOA(27)
+#घोषणा SD0_D0			_GPIOA(28)
+#घोषणा SD0_D1			_GPIOA(29)
+#घोषणा SD0_D2			_GPIOA(30)
+#घोषणा SD0_D3			_GPIOA(31)
 
-#define SD1_D0			_GPIOB(0)
-#define SD1_D1			_GPIOB(1)
-#define SD1_D2			_GPIOB(2)
-#define SD1_D3			_GPIOB(3)
-#define SD0_CMD			_GPIOB(4)
-#define SD0_CLK			_GPIOB(5)
-#define SD1_CMD			_GPIOB(6)
-#define SD1_CLK			_GPIOB(7)
-#define SPI0_SCLK		_GPIOB(8)
-#define SPI0_SS			_GPIOB(9)
-#define SPI0_MISO		_GPIOB(10)
-#define SPI0_MOSI		_GPIOB(11)
-#define UART0_RX		_GPIOB(12)
-#define UART0_TX		_GPIOB(13)
-#define UART2_RX		_GPIOB(14)
-#define UART2_TX		_GPIOB(15)
-#define UART2_RTSB		_GPIOB(16)
-#define UART2_CTSB		_GPIOB(17)
-#define UART4_RX		_GPIOB(18)
-#define UART4_TX		_GPIOB(19)
-#define I2C0_SCLK		_GPIOB(20)
-#define I2C0_SDATA		_GPIOB(21)
-#define I2C1_SCLK		_GPIOB(22)
-#define I2C1_SDATA		_GPIOB(23)
-#define I2C2_SCLK		_GPIOB(24)
-#define I2C2_SDATA		_GPIOB(25)
-#define CSI0_DN0		_GPIOB(26)
-#define CSI0_DP0		_GPIOB(27)
-#define CSI0_DN1		_GPIOB(28)
-#define CSI0_DP1		_GPIOB(29)
-#define CSI0_CN			_GPIOB(30)
-#define CSI0_CP			_GPIOB(31)
+#घोषणा SD1_D0			_GPIOB(0)
+#घोषणा SD1_D1			_GPIOB(1)
+#घोषणा SD1_D2			_GPIOB(2)
+#घोषणा SD1_D3			_GPIOB(3)
+#घोषणा SD0_CMD			_GPIOB(4)
+#घोषणा SD0_CLK			_GPIOB(5)
+#घोषणा SD1_CMD			_GPIOB(6)
+#घोषणा SD1_CLK			_GPIOB(7)
+#घोषणा SPI0_SCLK		_GPIOB(8)
+#घोषणा SPI0_SS			_GPIOB(9)
+#घोषणा SPI0_MISO		_GPIOB(10)
+#घोषणा SPI0_MOSI		_GPIOB(11)
+#घोषणा UART0_RX		_GPIOB(12)
+#घोषणा UART0_TX		_GPIOB(13)
+#घोषणा UART2_RX		_GPIOB(14)
+#घोषणा UART2_TX		_GPIOB(15)
+#घोषणा UART2_RTSB		_GPIOB(16)
+#घोषणा UART2_CTSB		_GPIOB(17)
+#घोषणा UART4_RX		_GPIOB(18)
+#घोषणा UART4_TX		_GPIOB(19)
+#घोषणा I2C0_SCLK		_GPIOB(20)
+#घोषणा I2C0_SDATA		_GPIOB(21)
+#घोषणा I2C1_SCLK		_GPIOB(22)
+#घोषणा I2C1_SDATA		_GPIOB(23)
+#घोषणा I2C2_SCLK		_GPIOB(24)
+#घोषणा I2C2_SDATA		_GPIOB(25)
+#घोषणा CSI0_DN0		_GPIOB(26)
+#घोषणा CSI0_DP0		_GPIOB(27)
+#घोषणा CSI0_DN1		_GPIOB(28)
+#घोषणा CSI0_DP1		_GPIOB(29)
+#घोषणा CSI0_CN			_GPIOB(30)
+#घोषणा CSI0_CP			_GPIOB(31)
 
-#define CSI0_DN2		_GPIOC(0)
-#define CSI0_DP2		_GPIOC(1)
-#define CSI0_DN3		_GPIOC(2)
-#define CSI0_DP3		_GPIOC(3)
-#define SENSOR0_PCLK		_GPIOC(4)
-#define CSI1_DN0		_GPIOC(5)
-#define CSI1_DP0		_GPIOC(6)
-#define CSI1_DN1		_GPIOC(7)
-#define CSI1_DP1		_GPIOC(8)
-#define CSI1_CN			_GPIOC(9)
-#define CSI1_CP			_GPIOC(10)
-#define SENSOR0_CKOUT		_GPIOC(11)
+#घोषणा CSI0_DN2		_GPIOC(0)
+#घोषणा CSI0_DP2		_GPIOC(1)
+#घोषणा CSI0_DN3		_GPIOC(2)
+#घोषणा CSI0_DP3		_GPIOC(3)
+#घोषणा SENSOR0_PCLK		_GPIOC(4)
+#घोषणा CSI1_DN0		_GPIOC(5)
+#घोषणा CSI1_DP0		_GPIOC(6)
+#घोषणा CSI1_DN1		_GPIOC(7)
+#घोषणा CSI1_DP1		_GPIOC(8)
+#घोषणा CSI1_CN			_GPIOC(9)
+#घोषणा CSI1_CP			_GPIOC(10)
+#घोषणा SENSOR0_CKOUT		_GPIOC(11)
 
-#define LVDS_OEP		_GPIOD(0)
-#define LVDS_OEN		_GPIOD(1)
-#define LVDS_ODP		_GPIOD(2)
-#define LVDS_ODN		_GPIOD(3)
-#define LVDS_OCP		_GPIOD(4)
-#define LVDS_OCN		_GPIOD(5)
-#define LVDS_OBP		_GPIOD(6)
-#define LVDS_OBN		_GPIOD(7)
-#define LVDS_OAP		_GPIOD(8)
-#define LVDS_OAN		_GPIOD(9)
-#define LVDS_EEP		_GPIOD(10)
-#define LVDS_EEN		_GPIOD(11)
-#define LVDS_EDP		_GPIOD(12)
-#define LVDS_EDN		_GPIOD(13)
-#define LVDS_ECP		_GPIOD(14)
-#define LVDS_ECN		_GPIOD(15)
-#define LVDS_EBP		_GPIOD(16)
-#define LVDS_EBN		_GPIOD(17)
-#define LVDS_EAP		_GPIOD(18)
-#define LVDS_EAN		_GPIOD(19)
-#define DSI_DP3			_GPIOD(20)
-#define DSI_DN3			_GPIOD(21)
-#define DSI_DP1			_GPIOD(22)
-#define DSI_DN1			_GPIOD(23)
-#define DSI_CP			_GPIOD(24)
-#define DSI_CN			_GPIOD(25)
-#define DSI_DP0			_GPIOD(26)
-#define DSI_DN0			_GPIOD(27)
-#define DSI_DP2			_GPIOD(28)
-#define DSI_DN2			_GPIOD(29)
+#घोषणा LVDS_OEP		_GPIOD(0)
+#घोषणा LVDS_OEN		_GPIOD(1)
+#घोषणा LVDS_ODP		_GPIOD(2)
+#घोषणा LVDS_ODN		_GPIOD(3)
+#घोषणा LVDS_OCP		_GPIOD(4)
+#घोषणा LVDS_OCN		_GPIOD(5)
+#घोषणा LVDS_OBP		_GPIOD(6)
+#घोषणा LVDS_OBN		_GPIOD(7)
+#घोषणा LVDS_OAP		_GPIOD(8)
+#घोषणा LVDS_OAN		_GPIOD(9)
+#घोषणा LVDS_EEP		_GPIOD(10)
+#घोषणा LVDS_EEN		_GPIOD(11)
+#घोषणा LVDS_EDP		_GPIOD(12)
+#घोषणा LVDS_EDN		_GPIOD(13)
+#घोषणा LVDS_ECP		_GPIOD(14)
+#घोषणा LVDS_ECN		_GPIOD(15)
+#घोषणा LVDS_EBP		_GPIOD(16)
+#घोषणा LVDS_EBN		_GPIOD(17)
+#घोषणा LVDS_EAP		_GPIOD(18)
+#घोषणा LVDS_EAN		_GPIOD(19)
+#घोषणा DSI_DP3			_GPIOD(20)
+#घोषणा DSI_DN3			_GPIOD(21)
+#घोषणा DSI_DP1			_GPIOD(22)
+#घोषणा DSI_DN1			_GPIOD(23)
+#घोषणा DSI_CP			_GPIOD(24)
+#घोषणा DSI_CN			_GPIOD(25)
+#घोषणा DSI_DP0			_GPIOD(26)
+#घोषणा DSI_DN0			_GPIOD(27)
+#घोषणा DSI_DP2			_GPIOD(28)
+#घोषणा DSI_DN2			_GPIOD(29)
 
-#define NAND0_D0		_GPIOE(0)
-#define NAND0_D1		_GPIOE(1)
-#define NAND0_D2		_GPIOE(2)
-#define NAND0_D3		_GPIOE(3)
-#define NAND0_D4		_GPIOE(4)
-#define NAND0_D5		_GPIOE(5)
-#define NAND0_D6		_GPIOE(6)
-#define NAND0_D7		_GPIOE(7)
-#define NAND0_DQS		_GPIOE(8)
-#define NAND0_DQSN		_GPIOE(9)
-#define NAND0_ALE		_GPIOE(10)
-#define NAND0_CLE		_GPIOE(11)
-#define NAND0_CEB0		_GPIOE(12)
-#define NAND0_CEB1		_GPIOE(13)
-#define NAND0_CEB2		_GPIOE(14)
-#define NAND0_CEB3		_GPIOE(15)
-#define NAND1_D0		_GPIOE(16)
-#define NAND1_D1		_GPIOE(17)
-#define NAND1_D2		_GPIOE(18)
-#define NAND1_D3		_GPIOE(19)
-#define NAND1_D4		_GPIOE(20)
-#define NAND1_D5		_GPIOE(21)
-#define NAND1_D6		_GPIOE(22)
-#define NAND1_D7		_GPIOE(23)
-#define NAND1_DQS		_GPIOE(24)
-#define NAND1_DQSN		_GPIOE(25)
-#define NAND1_ALE		_GPIOE(26)
-#define NAND1_CLE		_GPIOE(27)
-#define NAND1_CEB0		_GPIOE(28)
-#define NAND1_CEB1		_GPIOE(29)
-#define NAND1_CEB2		_GPIOE(30)
-#define NAND1_CEB3		_GPIOE(31)
+#घोषणा न_अंकD0_D0		_GPIOE(0)
+#घोषणा न_अंकD0_D1		_GPIOE(1)
+#घोषणा न_अंकD0_D2		_GPIOE(2)
+#घोषणा न_अंकD0_D3		_GPIOE(3)
+#घोषणा न_अंकD0_D4		_GPIOE(4)
+#घोषणा न_अंकD0_D5		_GPIOE(5)
+#घोषणा न_अंकD0_D6		_GPIOE(6)
+#घोषणा न_अंकD0_D7		_GPIOE(7)
+#घोषणा न_अंकD0_DQS		_GPIOE(8)
+#घोषणा न_अंकD0_DQSN		_GPIOE(9)
+#घोषणा न_अंकD0_ALE		_GPIOE(10)
+#घोषणा न_अंकD0_CLE		_GPIOE(11)
+#घोषणा न_अंकD0_CEB0		_GPIOE(12)
+#घोषणा न_अंकD0_CEB1		_GPIOE(13)
+#घोषणा न_अंकD0_CEB2		_GPIOE(14)
+#घोषणा न_अंकD0_CEB3		_GPIOE(15)
+#घोषणा न_अंकD1_D0		_GPIOE(16)
+#घोषणा न_अंकD1_D1		_GPIOE(17)
+#घोषणा न_अंकD1_D2		_GPIOE(18)
+#घोषणा न_अंकD1_D3		_GPIOE(19)
+#घोषणा न_अंकD1_D4		_GPIOE(20)
+#घोषणा न_अंकD1_D5		_GPIOE(21)
+#घोषणा न_अंकD1_D6		_GPIOE(22)
+#घोषणा न_अंकD1_D7		_GPIOE(23)
+#घोषणा न_अंकD1_DQS		_GPIOE(24)
+#घोषणा न_अंकD1_DQSN		_GPIOE(25)
+#घोषणा न_अंकD1_ALE		_GPIOE(26)
+#घोषणा न_अंकD1_CLE		_GPIOE(27)
+#घोषणा न_अंकD1_CEB0		_GPIOE(28)
+#घोषणा न_अंकD1_CEB1		_GPIOE(29)
+#घोषणा न_अंकD1_CEB2		_GPIOE(30)
+#घोषणा न_अंकD1_CEB3		_GPIOE(31)
 
-#define PCM1_IN			_GPIOF(0)
-#define PCM1_CLK		_GPIOF(1)
-#define PCM1_SYNC		_GPIOF(2)
-#define PCM1_OUT		_GPIOF(3)
-#define UART3_RX		_GPIOF(4)
-#define UART3_TX		_GPIOF(5)
-#define UART3_RTSB		_GPIOF(6)
-#define UART3_CTSB		_GPIOF(7)
+#घोषणा PCM1_IN			_GPIOF(0)
+#घोषणा PCM1_CLK		_GPIOF(1)
+#घोषणा PCM1_SYNC		_GPIOF(2)
+#घोषणा PCM1_OUT		_GPIOF(3)
+#घोषणा UART3_RX		_GPIOF(4)
+#घोषणा UART3_TX		_GPIOF(5)
+#घोषणा UART3_RTSB		_GPIOF(6)
+#घोषणा UART3_CTSB		_GPIOF(7)
 
 /* System */
-#define SGPIO0			_PIN(0)
-#define SGPIO1			_PIN(1)
-#define SGPIO2			_PIN(2)
-#define SGPIO3			_PIN(3)
+#घोषणा SGPIO0			_PIN(0)
+#घोषणा SGPIO1			_PIN(1)
+#घोषणा SGPIO2			_PIN(2)
+#घोषणा SGPIO3			_PIN(3)
 
-#define NUM_PADS		(_PIN(3) + 1)
+#घोषणा NUM_PADS		(_PIN(3) + 1)
 
-/* Pad names as specified in datasheet */
-static const struct pinctrl_pin_desc s900_pads[] = {
+/* Pad names as specअगरied in datasheet */
+अटल स्थिर काष्ठा pinctrl_pin_desc s900_pads[] = अणु
 	PINCTRL_PIN(ETH_TXD0, "eth_txd0"),
 	PINCTRL_PIN(ETH_TXD1, "eth_txd1"),
 	PINCTRL_PIN(ETH_TXEN, "eth_txen"),
@@ -320,45 +321,45 @@ static const struct pinctrl_pin_desc s900_pads[] = {
 	PINCTRL_PIN(CSI1_CN, "csi1_cn"),
 	PINCTRL_PIN(CSI1_CP, "csi1_cp"),
 	PINCTRL_PIN(SENSOR0_CKOUT, "sensor0_ckout"),
-	PINCTRL_PIN(NAND0_D0, "nand0_d0"),
-	PINCTRL_PIN(NAND0_D1, "nand0_d1"),
-	PINCTRL_PIN(NAND0_D2, "nand0_d2"),
-	PINCTRL_PIN(NAND0_D3, "nand0_d3"),
-	PINCTRL_PIN(NAND0_D4, "nand0_d4"),
-	PINCTRL_PIN(NAND0_D5, "nand0_d5"),
-	PINCTRL_PIN(NAND0_D6, "nand0_d6"),
-	PINCTRL_PIN(NAND0_D7, "nand0_d7"),
-	PINCTRL_PIN(NAND0_DQS, "nand0_dqs"),
-	PINCTRL_PIN(NAND0_DQSN, "nand0_dqsn"),
-	PINCTRL_PIN(NAND0_ALE, "nand0_ale"),
-	PINCTRL_PIN(NAND0_CLE, "nand0_cle"),
-	PINCTRL_PIN(NAND0_CEB0, "nand0_ceb0"),
-	PINCTRL_PIN(NAND0_CEB1, "nand0_ceb1"),
-	PINCTRL_PIN(NAND0_CEB2, "nand0_ceb2"),
-	PINCTRL_PIN(NAND0_CEB3, "nand0_ceb3"),
-	PINCTRL_PIN(NAND1_D0, "nand1_d0"),
-	PINCTRL_PIN(NAND1_D1, "nand1_d1"),
-	PINCTRL_PIN(NAND1_D2, "nand1_d2"),
-	PINCTRL_PIN(NAND1_D3, "nand1_d3"),
-	PINCTRL_PIN(NAND1_D4, "nand1_d4"),
-	PINCTRL_PIN(NAND1_D5, "nand1_d5"),
-	PINCTRL_PIN(NAND1_D6, "nand1_d6"),
-	PINCTRL_PIN(NAND1_D7, "nand1_d7"),
-	PINCTRL_PIN(NAND1_DQS, "nand1_dqs"),
-	PINCTRL_PIN(NAND1_DQSN, "nand1_dqsn"),
-	PINCTRL_PIN(NAND1_ALE, "nand1_ale"),
-	PINCTRL_PIN(NAND1_CLE, "nand1_cle"),
-	PINCTRL_PIN(NAND1_CEB0, "nand1_ceb0"),
-	PINCTRL_PIN(NAND1_CEB1, "nand1_ceb1"),
-	PINCTRL_PIN(NAND1_CEB2, "nand1_ceb2"),
-	PINCTRL_PIN(NAND1_CEB3, "nand1_ceb3"),
+	PINCTRL_PIN(न_अंकD0_D0, "nand0_d0"),
+	PINCTRL_PIN(न_अंकD0_D1, "nand0_d1"),
+	PINCTRL_PIN(न_अंकD0_D2, "nand0_d2"),
+	PINCTRL_PIN(न_अंकD0_D3, "nand0_d3"),
+	PINCTRL_PIN(न_अंकD0_D4, "nand0_d4"),
+	PINCTRL_PIN(न_अंकD0_D5, "nand0_d5"),
+	PINCTRL_PIN(न_अंकD0_D6, "nand0_d6"),
+	PINCTRL_PIN(न_अंकD0_D7, "nand0_d7"),
+	PINCTRL_PIN(न_अंकD0_DQS, "nand0_dqs"),
+	PINCTRL_PIN(न_अंकD0_DQSN, "nand0_dqsn"),
+	PINCTRL_PIN(न_अंकD0_ALE, "nand0_ale"),
+	PINCTRL_PIN(न_अंकD0_CLE, "nand0_cle"),
+	PINCTRL_PIN(न_अंकD0_CEB0, "nand0_ceb0"),
+	PINCTRL_PIN(न_अंकD0_CEB1, "nand0_ceb1"),
+	PINCTRL_PIN(न_अंकD0_CEB2, "nand0_ceb2"),
+	PINCTRL_PIN(न_अंकD0_CEB3, "nand0_ceb3"),
+	PINCTRL_PIN(न_अंकD1_D0, "nand1_d0"),
+	PINCTRL_PIN(न_अंकD1_D1, "nand1_d1"),
+	PINCTRL_PIN(न_अंकD1_D2, "nand1_d2"),
+	PINCTRL_PIN(न_अंकD1_D3, "nand1_d3"),
+	PINCTRL_PIN(न_अंकD1_D4, "nand1_d4"),
+	PINCTRL_PIN(न_अंकD1_D5, "nand1_d5"),
+	PINCTRL_PIN(न_अंकD1_D6, "nand1_d6"),
+	PINCTRL_PIN(न_अंकD1_D7, "nand1_d7"),
+	PINCTRL_PIN(न_अंकD1_DQS, "nand1_dqs"),
+	PINCTRL_PIN(न_अंकD1_DQSN, "nand1_dqsn"),
+	PINCTRL_PIN(न_अंकD1_ALE, "nand1_ale"),
+	PINCTRL_PIN(न_अंकD1_CLE, "nand1_cle"),
+	PINCTRL_PIN(न_अंकD1_CEB0, "nand1_ceb0"),
+	PINCTRL_PIN(न_अंकD1_CEB1, "nand1_ceb1"),
+	PINCTRL_PIN(न_अंकD1_CEB2, "nand1_ceb2"),
+	PINCTRL_PIN(न_अंकD1_CEB3, "nand1_ceb3"),
 	PINCTRL_PIN(SGPIO0, "sgpio0"),
 	PINCTRL_PIN(SGPIO1, "sgpio1"),
 	PINCTRL_PIN(SGPIO2, "sgpio2"),
 	PINCTRL_PIN(SGPIO3, "sgpio3")
-};
+पूर्ण;
 
-enum s900_pinmux_functions {
+क्रमागत s900_pinmux_functions अणु
 	S900_MUX_ERAM,
 	S900_MUX_ETH_RMII,
 	S900_MUX_ETH_SMII,
@@ -402,8 +403,8 @@ enum s900_pinmux_functions {
 	S900_MUX_MIPI_CSI0,
 	S900_MUX_MIPI_CSI1,
 	S900_MUX_MIPI_DSI,
-	S900_MUX_NAND0,
-	S900_MUX_NAND1,
+	S900_MUX_न_अंकD0,
+	S900_MUX_न_अंकD1,
 	S900_MUX_SPDIF,
 	S900_MUX_SIRQ0,
 	S900_MUX_SIRQ1,
@@ -411,209 +412,209 @@ enum s900_pinmux_functions {
 	S900_MUX_AUX_START,
 	S900_MUX_MAX,
 	S900_MUX_RESERVED
-};
+पूर्ण;
 
 /* mfp0_22 */
-static unsigned int lvds_oxx_uart4_mfp_pads[]	= { LVDS_OAP, LVDS_OAN };
-static unsigned int lvds_oxx_uart4_mfp_funcs[]	= { S900_MUX_ERAM,
-						    S900_MUX_UART4 };
+अटल अचिन्हित पूर्णांक lvds_oxx_uart4_mfp_pads[]	= अणु LVDS_OAP, LVDS_OAN पूर्ण;
+अटल अचिन्हित पूर्णांक lvds_oxx_uart4_mfp_funcs[]	= अणु S900_MUX_ERAM,
+						    S900_MUX_UART4 पूर्ण;
 /* mfp0_21_20 */
-static unsigned int rmii_mdc_mfp_pads[]		= { ETH_MDC };
-static unsigned int rmii_mdc_mfp_funcs[]	= { S900_MUX_ETH_RMII,
+अटल अचिन्हित पूर्णांक rmii_mdc_mfp_pads[]		= अणु ETH_MDC पूर्ण;
+अटल अचिन्हित पूर्णांक rmii_mdc_mfp_funcs[]	= अणु S900_MUX_ETH_RMII,
 						    S900_MUX_PWM2,
 						    S900_MUX_UART2,
-						    S900_MUX_RESERVED };
-static unsigned int rmii_mdio_mfp_pads[]	= { ETH_MDIO };
-static unsigned int rmii_mdio_mfp_funcs[]	= { S900_MUX_ETH_RMII,
+						    S900_MUX_RESERVED पूर्ण;
+अटल अचिन्हित पूर्णांक rmii_mdio_mfp_pads[]	= अणु ETH_MDIO पूर्ण;
+अटल अचिन्हित पूर्णांक rmii_mdio_mfp_funcs[]	= अणु S900_MUX_ETH_RMII,
 						    S900_MUX_PWM3,
 						    S900_MUX_UART2,
-						    S900_MUX_RESERVED };
+						    S900_MUX_RESERVED पूर्ण;
 /* mfp0_19 */
-static unsigned int sirq0_mfp_pads[]		= { SIRQ0 };
-static unsigned int sirq0_mfp_funcs[]		= { S900_MUX_SIRQ0,
-						    S900_MUX_PWM0 };
-static unsigned int sirq1_mfp_pads[]		= { SIRQ1 };
-static unsigned int sirq1_mfp_funcs[]		= { S900_MUX_SIRQ1,
-						    S900_MUX_PWM1 };
+अटल अचिन्हित पूर्णांक sirq0_mfp_pads[]		= अणु SIRQ0 पूर्ण;
+अटल अचिन्हित पूर्णांक sirq0_mfp_funcs[]		= अणु S900_MUX_SIRQ0,
+						    S900_MUX_PWM0 पूर्ण;
+अटल अचिन्हित पूर्णांक sirq1_mfp_pads[]		= अणु SIRQ1 पूर्ण;
+अटल अचिन्हित पूर्णांक sirq1_mfp_funcs[]		= अणु S900_MUX_SIRQ1,
+						    S900_MUX_PWM1 पूर्ण;
 /* mfp0_18_16 */
-static unsigned int rmii_txd0_mfp_pads[]	= { ETH_TXD0 };
-static unsigned int rmii_txd0_mfp_funcs[]	= { S900_MUX_ETH_RMII,
+अटल अचिन्हित पूर्णांक rmii_txd0_mfp_pads[]	= अणु ETH_TXD0 पूर्ण;
+अटल अचिन्हित पूर्णांक rmii_txd0_mfp_funcs[]	= अणु S900_MUX_ETH_RMII,
 						    S900_MUX_ETH_SMII,
 						    S900_MUX_SPI2,
 						    S900_MUX_UART6,
 						    S900_MUX_SENS0,
-						    S900_MUX_PWM0 };
-static unsigned int rmii_txd1_mfp_pads[]	= { ETH_TXD1 };
-static unsigned int rmii_txd1_mfp_funcs[]	= { S900_MUX_ETH_RMII,
+						    S900_MUX_PWM0 पूर्ण;
+अटल अचिन्हित पूर्णांक rmii_txd1_mfp_pads[]	= अणु ETH_TXD1 पूर्ण;
+अटल अचिन्हित पूर्णांक rmii_txd1_mfp_funcs[]	= अणु S900_MUX_ETH_RMII,
 						    S900_MUX_ETH_SMII,
 						    S900_MUX_SPI2,
 						    S900_MUX_UART6,
 						    S900_MUX_SENS0,
-						    S900_MUX_PWM1 };
+						    S900_MUX_PWM1 पूर्ण;
 /* mfp0_15_13 */
-static unsigned int rmii_txen_mfp_pads[]	= { ETH_TXEN };
-static unsigned int rmii_txen_mfp_funcs[]	= { S900_MUX_ETH_RMII,
+अटल अचिन्हित पूर्णांक rmii_txen_mfp_pads[]	= अणु ETH_TXEN पूर्ण;
+अटल अचिन्हित पूर्णांक rmii_txen_mfp_funcs[]	= अणु S900_MUX_ETH_RMII,
 						    S900_MUX_UART2,
 						    S900_MUX_SPI3,
 						    S900_MUX_RESERVED,
 						    S900_MUX_RESERVED,
 						    S900_MUX_PWM2,
-						    S900_MUX_SENS0 };
+						    S900_MUX_SENS0 पूर्ण;
 
-static unsigned int rmii_rxer_mfp_pads[]	= { ETH_RXER };
-static unsigned int rmii_rxer_mfp_funcs[]	= { S900_MUX_ETH_RMII,
+अटल अचिन्हित पूर्णांक rmii_rxer_mfp_pads[]	= अणु ETH_RXER पूर्ण;
+अटल अचिन्हित पूर्णांक rmii_rxer_mfp_funcs[]	= अणु S900_MUX_ETH_RMII,
 						    S900_MUX_UART2,
 						    S900_MUX_SPI3,
 						    S900_MUX_RESERVED,
 						    S900_MUX_RESERVED,
 						    S900_MUX_PWM3,
-						    S900_MUX_SENS0 };
+						    S900_MUX_SENS0 पूर्ण;
 /* mfp0_12_11 */
-static unsigned int rmii_crs_dv_mfp_pads[]	= { ETH_CRS_DV };
-static unsigned int rmii_crs_dv_mfp_funcs[]	= { S900_MUX_ETH_RMII,
+अटल अचिन्हित पूर्णांक rmii_crs_dv_mfp_pads[]	= अणु ETH_CRS_DV पूर्ण;
+अटल अचिन्हित पूर्णांक rmii_crs_dv_mfp_funcs[]	= अणु S900_MUX_ETH_RMII,
 						    S900_MUX_ETH_SMII,
 						    S900_MUX_SPI2,
-						    S900_MUX_UART4 };
+						    S900_MUX_UART4 पूर्ण;
 /* mfp0_10_8 */
-static unsigned int rmii_rxd1_mfp_pads[]	= { ETH_RXD1 };
-static unsigned int rmii_rxd1_mfp_funcs[]	= { S900_MUX_ETH_RMII,
+अटल अचिन्हित पूर्णांक rmii_rxd1_mfp_pads[]	= अणु ETH_RXD1 पूर्ण;
+अटल अचिन्हित पूर्णांक rmii_rxd1_mfp_funcs[]	= अणु S900_MUX_ETH_RMII,
 						    S900_MUX_UART2,
 						    S900_MUX_SPI3,
 						    S900_MUX_RESERVED,
 						    S900_MUX_UART5,
 						    S900_MUX_PWM0,
-						    S900_MUX_SENS0 };
-static unsigned int rmii_rxd0_mfp_pads[]	= { ETH_RXD0 };
-static unsigned int rmii_rxd0_mfp_funcs[]	= { S900_MUX_ETH_RMII,
+						    S900_MUX_SENS0 पूर्ण;
+अटल अचिन्हित पूर्णांक rmii_rxd0_mfp_pads[]	= अणु ETH_RXD0 पूर्ण;
+अटल अचिन्हित पूर्णांक rmii_rxd0_mfp_funcs[]	= अणु S900_MUX_ETH_RMII,
 						    S900_MUX_UART2,
 						    S900_MUX_SPI3,
 						    S900_MUX_RESERVED,
 						    S900_MUX_UART5,
 						    S900_MUX_PWM1,
-						    S900_MUX_SENS0 };
+						    S900_MUX_SENS0 पूर्ण;
 /* mfp0_7_6 */
-static unsigned int rmii_ref_clk_mfp_pads[]	= { ETH_REF_CLK };
-static unsigned int rmii_ref_clk_mfp_funcs[]	= { S900_MUX_ETH_RMII,
+अटल अचिन्हित पूर्णांक rmii_ref_clk_mfp_pads[]	= अणु ETH_REF_CLK पूर्ण;
+अटल अचिन्हित पूर्णांक rmii_ref_clk_mfp_funcs[]	= अणु S900_MUX_ETH_RMII,
 						    S900_MUX_UART4,
 						    S900_MUX_SPI2,
-						    S900_MUX_RESERVED };
+						    S900_MUX_RESERVED पूर्ण;
 /* mfp0_5 */
-static unsigned int i2s_d0_mfp_pads[]		= { I2S_D0 };
-static unsigned int i2s_d0_mfp_funcs[]		= { S900_MUX_I2S0,
-						    S900_MUX_PCM0 };
-static unsigned int i2s_d1_mfp_pads[]		= { I2S_D1 };
-static unsigned int i2s_d1_mfp_funcs[]		= { S900_MUX_I2S1,
-						    S900_MUX_PCM0 };
+अटल अचिन्हित पूर्णांक i2s_d0_mfp_pads[]		= अणु I2S_D0 पूर्ण;
+अटल अचिन्हित पूर्णांक i2s_d0_mfp_funcs[]		= अणु S900_MUX_I2S0,
+						    S900_MUX_PCM0 पूर्ण;
+अटल अचिन्हित पूर्णांक i2s_d1_mfp_pads[]		= अणु I2S_D1 पूर्ण;
+अटल अचिन्हित पूर्णांक i2s_d1_mfp_funcs[]		= अणु S900_MUX_I2S1,
+						    S900_MUX_PCM0 पूर्ण;
 
 /* mfp0_4_3 */
-static unsigned int i2s_lr_m_clk0_mfp_pads[]	= { I2S_LRCLK0,
-						    I2S_MCLK0 };
-static unsigned int i2s_lr_m_clk0_mfp_funcs[]	= { S900_MUX_I2S0,
+अटल अचिन्हित पूर्णांक i2s_lr_m_clk0_mfp_pads[]	= अणु I2S_LRCLK0,
+						    I2S_MCLK0 पूर्ण;
+अटल अचिन्हित पूर्णांक i2s_lr_m_clk0_mfp_funcs[]	= अणु S900_MUX_I2S0,
 						    S900_MUX_PCM0,
 						    S900_MUX_PCM1,
-						    S900_MUX_RESERVED };
+						    S900_MUX_RESERVED पूर्ण;
 /* mfp0_2 */
-static unsigned int i2s_bclk0_mfp_pads[]	= { I2S_BCLK0 };
-static unsigned int i2s_bclk0_mfp_funcs[]	= { S900_MUX_I2S0,
-						    S900_MUX_PCM0 };
-static unsigned int i2s_bclk1_mclk1_mfp_pads[]	= { I2S_BCLK1,
+अटल अचिन्हित पूर्णांक i2s_bclk0_mfp_pads[]	= अणु I2S_BCLK0 पूर्ण;
+अटल अचिन्हित पूर्णांक i2s_bclk0_mfp_funcs[]	= अणु S900_MUX_I2S0,
+						    S900_MUX_PCM0 पूर्ण;
+अटल अचिन्हित पूर्णांक i2s_bclk1_mclk1_mfp_pads[]	= अणु I2S_BCLK1,
 						    I2S_LRCLK1,
-						    I2S_MCLK1 };
-static unsigned int i2s_bclk1_mclk1_mfp_funcs[] = { S900_MUX_I2S1,
-						    S900_MUX_PCM0 };
+						    I2S_MCLK1 पूर्ण;
+अटल अचिन्हित पूर्णांक i2s_bclk1_mclk1_mfp_funcs[] = अणु S900_MUX_I2S1,
+						    S900_MUX_PCM0 पूर्ण;
 /* mfp0_1_0 */
-static unsigned int pcm1_in_out_mfp_pads[]	= { PCM1_IN,
-						    PCM1_OUT };
-static unsigned int pcm1_in_out_mfp_funcs[]	= { S900_MUX_PCM1,
+अटल अचिन्हित पूर्णांक pcm1_in_out_mfp_pads[]	= अणु PCM1_IN,
+						    PCM1_OUT पूर्ण;
+अटल अचिन्हित पूर्णांक pcm1_in_out_mfp_funcs[]	= अणु S900_MUX_PCM1,
 						    S900_MUX_SPI1,
 						    S900_MUX_I2C3,
-						    S900_MUX_UART4 };
-static unsigned int pcm1_clk_mfp_pads[]		= { PCM1_CLK };
-static unsigned int pcm1_clk_mfp_funcs[]	= { S900_MUX_PCM1,
+						    S900_MUX_UART4 पूर्ण;
+अटल अचिन्हित पूर्णांक pcm1_clk_mfp_pads[]		= अणु PCM1_CLK पूर्ण;
+अटल अचिन्हित पूर्णांक pcm1_clk_mfp_funcs[]	= अणु S900_MUX_PCM1,
 						    S900_MUX_SPI1,
 						    S900_MUX_PWM4,
-						    S900_MUX_UART4 };
-static unsigned int pcm1_sync_mfp_pads[]	= { PCM1_SYNC };
-static unsigned int pcm1_sync_mfp_funcs[]	= { S900_MUX_PCM1,
+						    S900_MUX_UART4 पूर्ण;
+अटल अचिन्हित पूर्णांक pcm1_sync_mfp_pads[]	= अणु PCM1_SYNC पूर्ण;
+अटल अचिन्हित पूर्णांक pcm1_sync_mfp_funcs[]	= अणु S900_MUX_PCM1,
 						    S900_MUX_SPI1,
 						    S900_MUX_PWM5,
-						    S900_MUX_UART4 };
+						    S900_MUX_UART4 पूर्ण;
 /* mfp1_31_29 */
-static unsigned int eram_a5_mfp_pads[]		= { ERAM_A5 };
-static unsigned int eram_a5_mfp_funcs[]		= { S900_MUX_UART4,
+अटल अचिन्हित पूर्णांक eram_a5_mfp_pads[]		= अणु ERAM_A5 पूर्ण;
+अटल अचिन्हित पूर्णांक eram_a5_mfp_funcs[]		= अणु S900_MUX_UART4,
 						    S900_MUX_JTAG,
 						    S900_MUX_ERAM,
 						    S900_MUX_PWM0,
 						    S900_MUX_RESERVED,
-						    S900_MUX_SENS0 };
-static unsigned int eram_a6_mfp_pads[]		= { ERAM_A6 };
-static unsigned int eram_a6_mfp_funcs[]		= { S900_MUX_UART4,
+						    S900_MUX_SENS0 पूर्ण;
+अटल अचिन्हित पूर्णांक eram_a6_mfp_pads[]		= अणु ERAM_A6 पूर्ण;
+अटल अचिन्हित पूर्णांक eram_a6_mfp_funcs[]		= अणु S900_MUX_UART4,
 						    S900_MUX_JTAG,
 						    S900_MUX_ERAM,
 						    S900_MUX_PWM1,
 						    S900_MUX_RESERVED,
 						    S900_MUX_SENS0,
-};
-static unsigned int eram_a7_mfp_pads[]		= { ERAM_A7 };
-static unsigned int eram_a7_mfp_funcs[]		= { S900_MUX_RESERVED,
+पूर्ण;
+अटल अचिन्हित पूर्णांक eram_a7_mfp_pads[]		= अणु ERAM_A7 पूर्ण;
+अटल अचिन्हित पूर्णांक eram_a7_mfp_funcs[]		= अणु S900_MUX_RESERVED,
 						    S900_MUX_JTAG,
 						    S900_MUX_ERAM,
 						    S900_MUX_RESERVED,
 						    S900_MUX_RESERVED,
-						    S900_MUX_SENS0 };
+						    S900_MUX_SENS0 पूर्ण;
 /* mfp1_28_26 */
-static unsigned int eram_a8_mfp_pads[]		= { ERAM_A8 };
-static unsigned int eram_a8_mfp_funcs[]		= { S900_MUX_RESERVED,
+अटल अचिन्हित पूर्णांक eram_a8_mfp_pads[]		= अणु ERAM_A8 पूर्ण;
+अटल अचिन्हित पूर्णांक eram_a8_mfp_funcs[]		= अणु S900_MUX_RESERVED,
 						    S900_MUX_JTAG,
 						    S900_MUX_ERAM,
 						    S900_MUX_PWM1,
 						    S900_MUX_RESERVED,
-						    S900_MUX_SENS0 };
-static unsigned int eram_a9_mfp_pads[]		= { ERAM_A9 };
-static unsigned int eram_a9_mfp_funcs[]		= { S900_MUX_USB20,
+						    S900_MUX_SENS0 पूर्ण;
+अटल अचिन्हित पूर्णांक eram_a9_mfp_pads[]		= अणु ERAM_A9 पूर्ण;
+अटल अचिन्हित पूर्णांक eram_a9_mfp_funcs[]		= अणु S900_MUX_USB20,
 						    S900_MUX_UART5,
 						    S900_MUX_ERAM,
 						    S900_MUX_PWM2,
 						    S900_MUX_RESERVED,
-						    S900_MUX_SENS0 };
-static unsigned int eram_a10_mfp_pads[]		= { ERAM_A10 };
-static unsigned int eram_a10_mfp_funcs[]	= { S900_MUX_USB30,
+						    S900_MUX_SENS0 पूर्ण;
+अटल अचिन्हित पूर्णांक eram_a10_mfp_pads[]		= अणु ERAM_A10 पूर्ण;
+अटल अचिन्हित पूर्णांक eram_a10_mfp_funcs[]	= अणु S900_MUX_USB30,
 						    S900_MUX_JTAG,
 						    S900_MUX_ERAM,
 						    S900_MUX_PWM3,
 						    S900_MUX_RESERVED,
 						    S900_MUX_SENS0,
 						    S900_MUX_RESERVED,
-						    S900_MUX_RESERVED };
+						    S900_MUX_RESERVED पूर्ण;
 /* mfp1_25_23 */
-static unsigned int eram_a11_mfp_pads[]		= { ERAM_A11 };
-static unsigned int eram_a11_mfp_funcs[]	= { S900_MUX_RESERVED,
+अटल अचिन्हित पूर्णांक eram_a11_mfp_pads[]		= अणु ERAM_A11 पूर्ण;
+अटल अचिन्हित पूर्णांक eram_a11_mfp_funcs[]	= अणु S900_MUX_RESERVED,
 						    S900_MUX_RESERVED,
 						    S900_MUX_ERAM,
 						    S900_MUX_PWM2,
 						    S900_MUX_UART5,
 						    S900_MUX_RESERVED,
 						    S900_MUX_SENS0,
-						    S900_MUX_RESERVED };
+						    S900_MUX_RESERVED पूर्ण;
 /* mfp1_22 */
-static unsigned int lvds_oep_odn_mfp_pads[]	= { LVDS_OEP,
+अटल अचिन्हित पूर्णांक lvds_oep_odn_mfp_pads[]	= अणु LVDS_OEP,
 						    LVDS_OEN,
 						    LVDS_ODP,
-						    LVDS_ODN };
-static unsigned int lvds_oep_odn_mfp_funcs[]	= { S900_MUX_LVDS,
-						    S900_MUX_UART2 };
-static unsigned int lvds_ocp_obn_mfp_pads[]	= { LVDS_OCP,
+						    LVDS_ODN पूर्ण;
+अटल अचिन्हित पूर्णांक lvds_oep_odn_mfp_funcs[]	= अणु S900_MUX_LVDS,
+						    S900_MUX_UART2 पूर्ण;
+अटल अचिन्हित पूर्णांक lvds_ocp_obn_mfp_pads[]	= अणु LVDS_OCP,
 						    LVDS_OCN,
 						    LVDS_OBP,
-						    LVDS_OBN };
-static unsigned int lvds_ocp_obn_mfp_funcs[]	= { S900_MUX_LVDS,
-						    S900_MUX_PCM1 };
-static unsigned int lvds_oap_oan_mfp_pads[]	= { LVDS_OAP,
-						    LVDS_OAN };
-static unsigned int lvds_oap_oan_mfp_funcs[]	= { S900_MUX_LVDS,
-						    S900_MUX_ERAM };
+						    LVDS_OBN पूर्ण;
+अटल अचिन्हित पूर्णांक lvds_ocp_obn_mfp_funcs[]	= अणु S900_MUX_LVDS,
+						    S900_MUX_PCM1 पूर्ण;
+अटल अचिन्हित पूर्णांक lvds_oap_oan_mfp_pads[]	= अणु LVDS_OAP,
+						    LVDS_OAN पूर्ण;
+अटल अचिन्हित पूर्णांक lvds_oap_oan_mfp_funcs[]	= अणु S900_MUX_LVDS,
+						    S900_MUX_ERAM पूर्ण;
 /* mfp1_21 */
-static unsigned int lvds_e_mfp_pads[]		= { LVDS_EEP,
+अटल अचिन्हित पूर्णांक lvds_e_mfp_pads[]		= अणु LVDS_EEP,
 						    LVDS_EEN,
 						    LVDS_EDP,
 						    LVDS_EDN,
@@ -622,273 +623,273 @@ static unsigned int lvds_e_mfp_pads[]		= { LVDS_EEP,
 						    LVDS_EBP,
 						    LVDS_EBN,
 						    LVDS_EAP,
-						    LVDS_EAN };
-static unsigned int lvds_e_mfp_funcs[]		= { S900_MUX_LVDS,
-						    S900_MUX_ERAM };
+						    LVDS_EAN पूर्ण;
+अटल अचिन्हित पूर्णांक lvds_e_mfp_funcs[]		= अणु S900_MUX_LVDS,
+						    S900_MUX_ERAM पूर्ण;
 /* mfp1_5_4 */
-static unsigned int spi0_sclk_mosi_mfp_pads[]	= { SPI0_SCLK,
-						    SPI0_MOSI };
-static unsigned int spi0_sclk_mosi_mfp_funcs[]	= { S900_MUX_SPI0,
+अटल अचिन्हित पूर्णांक spi0_sclk_mosi_mfp_pads[]	= अणु SPI0_SCLK,
+						    SPI0_MOSI पूर्ण;
+अटल अचिन्हित पूर्णांक spi0_sclk_mosi_mfp_funcs[]	= अणु S900_MUX_SPI0,
 						    S900_MUX_ERAM,
 						    S900_MUX_I2C3,
-						    S900_MUX_PCM0 };
+						    S900_MUX_PCM0 पूर्ण;
 /* mfp1_3_1 */
-static unsigned int spi0_ss_mfp_pads[]		= { SPI0_SS };
-static unsigned int spi0_ss_mfp_funcs[]		= { S900_MUX_SPI0,
+अटल अचिन्हित पूर्णांक spi0_ss_mfp_pads[]		= अणु SPI0_SS पूर्ण;
+अटल अचिन्हित पूर्णांक spi0_ss_mfp_funcs[]		= अणु S900_MUX_SPI0,
 						    S900_MUX_ERAM,
 						    S900_MUX_I2S1,
 						    S900_MUX_PCM1,
 						    S900_MUX_PCM0,
-						    S900_MUX_PWM4 };
-static unsigned int spi0_miso_mfp_pads[]	= { SPI0_MISO };
-static unsigned int spi0_miso_mfp_funcs[]	= { S900_MUX_SPI0,
+						    S900_MUX_PWM4 पूर्ण;
+अटल अचिन्हित पूर्णांक spi0_miso_mfp_pads[]	= अणु SPI0_MISO पूर्ण;
+अटल अचिन्हित पूर्णांक spi0_miso_mfp_funcs[]	= अणु S900_MUX_SPI0,
 						    S900_MUX_ERAM,
 						    S900_MUX_I2S1,
 						    S900_MUX_PCM1,
 						    S900_MUX_PCM0,
-						    S900_MUX_PWM5 };
+						    S900_MUX_PWM5 पूर्ण;
 /* mfp2_23 */
-static unsigned int uart2_rtsb_mfp_pads[]	= { UART2_RTSB };
-static unsigned int uart2_rtsb_mfp_funcs[]	= { S900_MUX_UART2,
-						    S900_MUX_UART0 };
+अटल अचिन्हित पूर्णांक uart2_rtsb_mfp_pads[]	= अणु UART2_RTSB पूर्ण;
+अटल अचिन्हित पूर्णांक uart2_rtsb_mfp_funcs[]	= अणु S900_MUX_UART2,
+						    S900_MUX_UART0 पूर्ण;
 /* mfp2_22 */
-static unsigned int uart2_ctsb_mfp_pads[]	= { UART2_CTSB };
-static unsigned int uart2_ctsb_mfp_funcs[]	= { S900_MUX_UART2,
-						    S900_MUX_UART0 };
+अटल अचिन्हित पूर्णांक uart2_ctsb_mfp_pads[]	= अणु UART2_CTSB पूर्ण;
+अटल अचिन्हित पूर्णांक uart2_ctsb_mfp_funcs[]	= अणु S900_MUX_UART2,
+						    S900_MUX_UART0 पूर्ण;
 /* mfp2_21 */
-static unsigned int uart3_rtsb_mfp_pads[]	= { UART3_RTSB };
-static unsigned int uart3_rtsb_mfp_funcs[]	= { S900_MUX_UART3,
-						    S900_MUX_UART5 };
+अटल अचिन्हित पूर्णांक uart3_rtsb_mfp_pads[]	= अणु UART3_RTSB पूर्ण;
+अटल अचिन्हित पूर्णांक uart3_rtsb_mfp_funcs[]	= अणु S900_MUX_UART3,
+						    S900_MUX_UART5 पूर्ण;
 /* mfp2_20 */
-static unsigned int uart3_ctsb_mfp_pads[]	= { UART3_CTSB };
-static unsigned int uart3_ctsb_mfp_funcs[]	= { S900_MUX_UART3,
-						    S900_MUX_UART5 };
+अटल अचिन्हित पूर्णांक uart3_ctsb_mfp_pads[]	= अणु UART3_CTSB पूर्ण;
+अटल अचिन्हित पूर्णांक uart3_ctsb_mfp_funcs[]	= अणु S900_MUX_UART3,
+						    S900_MUX_UART5 पूर्ण;
 /* mfp2_19_17 */
-static unsigned int sd0_d0_mfp_pads[]		= { SD0_D0 };
-static unsigned int sd0_d0_mfp_funcs[]		= { S900_MUX_SD0,
+अटल अचिन्हित पूर्णांक sd0_d0_mfp_pads[]		= अणु SD0_D0 पूर्ण;
+अटल अचिन्हित पूर्णांक sd0_d0_mfp_funcs[]		= अणु S900_MUX_SD0,
 						    S900_MUX_ERAM,
 						    S900_MUX_RESERVED,
 						    S900_MUX_JTAG,
 						    S900_MUX_UART2,
 						    S900_MUX_UART5,
-						    S900_MUX_GPU };
+						    S900_MUX_GPU पूर्ण;
 /* mfp2_16_14 */
-static unsigned int sd0_d1_mfp_pads[]		= { SD0_D1 };
-static unsigned int sd0_d1_mfp_funcs[]		= { S900_MUX_SD0,
+अटल अचिन्हित पूर्णांक sd0_d1_mfp_pads[]		= अणु SD0_D1 पूर्ण;
+अटल अचिन्हित पूर्णांक sd0_d1_mfp_funcs[]		= अणु S900_MUX_SD0,
 						    S900_MUX_ERAM,
 						    S900_MUX_GPU,
 						    S900_MUX_RESERVED,
 						    S900_MUX_UART2,
-						    S900_MUX_UART5 };
+						    S900_MUX_UART5 पूर्ण;
 /* mfp_13_11 */
-static unsigned int sd0_d2_d3_mfp_pads[]	= { SD0_D2,
-						    SD0_D3 };
-static unsigned int sd0_d2_d3_mfp_funcs[]	= { S900_MUX_SD0,
+अटल अचिन्हित पूर्णांक sd0_d2_d3_mfp_pads[]	= अणु SD0_D2,
+						    SD0_D3 पूर्ण;
+अटल अचिन्हित पूर्णांक sd0_d2_d3_mfp_funcs[]	= अणु S900_MUX_SD0,
 						    S900_MUX_ERAM,
 						    S900_MUX_RESERVED,
 						    S900_MUX_JTAG,
 						    S900_MUX_UART2,
 						    S900_MUX_UART1,
-						    S900_MUX_GPU };
+						    S900_MUX_GPU पूर्ण;
 /* mfp2_10_9 */
-static unsigned int sd1_d0_d3_mfp_pads[]	= { SD1_D0, SD1_D1,
-						    SD1_D2, SD1_D3 };
-static unsigned int sd1_d0_d3_mfp_funcs[]	= { S900_MUX_SD1,
-						    S900_MUX_ERAM };
+अटल अचिन्हित पूर्णांक sd1_d0_d3_mfp_pads[]	= अणु SD1_D0, SD1_D1,
+						    SD1_D2, SD1_D3 पूर्ण;
+अटल अचिन्हित पूर्णांक sd1_d0_d3_mfp_funcs[]	= अणु S900_MUX_SD1,
+						    S900_MUX_ERAM पूर्ण;
 /* mfp2_8_7 */
-static unsigned int sd0_cmd_mfp_pads[]		= { SD0_CMD };
-static unsigned int sd0_cmd_mfp_funcs[]		= { S900_MUX_SD0,
+अटल अचिन्हित पूर्णांक sd0_cmd_mfp_pads[]		= अणु SD0_CMD पूर्ण;
+अटल अचिन्हित पूर्णांक sd0_cmd_mfp_funcs[]		= अणु S900_MUX_SD0,
 						    S900_MUX_ERAM,
 						    S900_MUX_GPU,
-						    S900_MUX_JTAG };
+						    S900_MUX_JTAG पूर्ण;
 /* mfp2_6_5 */
-static unsigned int sd0_clk_mfp_pads[]		= { SD0_CLK };
-static unsigned int sd0_clk_mfp_funcs[]		= { S900_MUX_SD0,
+अटल अचिन्हित पूर्णांक sd0_clk_mfp_pads[]		= अणु SD0_CLK पूर्ण;
+अटल अचिन्हित पूर्णांक sd0_clk_mfp_funcs[]		= अणु S900_MUX_SD0,
 						    S900_MUX_ERAM,
 						    S900_MUX_JTAG,
-						    S900_MUX_GPU };
+						    S900_MUX_GPU पूर्ण;
 /* mfp2_4_3 */
-static unsigned int sd1_cmd_clk_mfp_pads[]	= { SD1_CMD, SD1_CLK };
-static unsigned int sd1_cmd_clk_mfp_funcs[]	= { S900_MUX_SD1,
-						    S900_MUX_ERAM };
+अटल अचिन्हित पूर्णांक sd1_cmd_clk_mfp_pads[]	= अणु SD1_CMD, SD1_CLK पूर्ण;
+अटल अचिन्हित पूर्णांक sd1_cmd_clk_mfp_funcs[]	= अणु S900_MUX_SD1,
+						    S900_MUX_ERAM पूर्ण;
 /* mfp2_2_0 */
-static unsigned int uart0_rx_mfp_pads[]		= { UART0_RX };
-static unsigned int uart0_rx_mfp_funcs[]	= { S900_MUX_UART0,
+अटल अचिन्हित पूर्णांक uart0_rx_mfp_pads[]		= अणु UART0_RX पूर्ण;
+अटल अचिन्हित पूर्णांक uart0_rx_mfp_funcs[]	= अणु S900_MUX_UART0,
 						    S900_MUX_UART2,
 						    S900_MUX_SPI1,
 						    S900_MUX_I2C5,
 						    S900_MUX_PCM1,
-						    S900_MUX_I2S1 };
+						    S900_MUX_I2S1 पूर्ण;
 /* mfp3_27 */
-static unsigned int nand0_d0_ceb3_mfp_pads[]	= { NAND0_D0, NAND0_D1,
-						    NAND0_D2, NAND0_D3,
-						    NAND0_D4, NAND0_D5,
-						    NAND0_D6, NAND0_D7,
-						    NAND0_DQSN, NAND0_CEB3 };
-static unsigned int nand0_d0_ceb3_mfp_funcs[]	= { S900_MUX_NAND0,
-						    S900_MUX_SD2 };
+अटल अचिन्हित पूर्णांक nand0_d0_ceb3_mfp_pads[]	= अणु न_अंकD0_D0, न_अंकD0_D1,
+						    न_अंकD0_D2, न_अंकD0_D3,
+						    न_अंकD0_D4, न_अंकD0_D5,
+						    न_अंकD0_D6, न_अंकD0_D7,
+						    न_अंकD0_DQSN, न_अंकD0_CEB3 पूर्ण;
+अटल अचिन्हित पूर्णांक nand0_d0_ceb3_mfp_funcs[]	= अणु S900_MUX_न_अंकD0,
+						    S900_MUX_SD2 पूर्ण;
 /* mfp3_21_19 */
-static unsigned int uart0_tx_mfp_pads[]		= { UART0_TX };
-static unsigned int uart0_tx_mfp_funcs[]	= { S900_MUX_UART0,
+अटल अचिन्हित पूर्णांक uart0_tx_mfp_pads[]		= अणु UART0_TX पूर्ण;
+अटल अचिन्हित पूर्णांक uart0_tx_mfp_funcs[]	= अणु S900_MUX_UART0,
 						    S900_MUX_UART2,
 						    S900_MUX_SPI1,
 						    S900_MUX_I2C5,
 						    S900_MUX_SPDIF,
 						    S900_MUX_PCM1,
-						    S900_MUX_I2S1 };
+						    S900_MUX_I2S1 पूर्ण;
 /* mfp3_18_16 */
-static unsigned int i2c0_mfp_pads[]		= { I2C0_SCLK, I2C0_SDATA };
-static unsigned int i2c0_mfp_funcs[]		= { S900_MUX_I2C0,
+अटल अचिन्हित पूर्णांक i2c0_mfp_pads[]		= अणु I2C0_SCLK, I2C0_SDATA पूर्ण;
+अटल अचिन्हित पूर्णांक i2c0_mfp_funcs[]		= अणु S900_MUX_I2C0,
 						    S900_MUX_UART2,
 						    S900_MUX_I2C1,
 						    S900_MUX_UART1,
-						    S900_MUX_SPI1 };
+						    S900_MUX_SPI1 पूर्ण;
 /* mfp3_15 */
-static unsigned int csi0_cn_cp_mfp_pads[]	= { CSI0_CN, CSI0_CP };
-static unsigned int csi0_cn_cp_mfp_funcs[]	= { S900_MUX_SENS0,
-						    S900_MUX_SENS0 };
+अटल अचिन्हित पूर्णांक csi0_cn_cp_mfp_pads[]	= अणु CSI0_CN, CSI0_CP पूर्ण;
+अटल अचिन्हित पूर्णांक csi0_cn_cp_mfp_funcs[]	= अणु S900_MUX_SENS0,
+						    S900_MUX_SENS0 पूर्ण;
 /* mfp3_14 */
-static unsigned int csi0_dn0_dp3_mfp_pads[]	= { CSI0_DN0, CSI0_DP0,
+अटल अचिन्हित पूर्णांक csi0_dn0_dp3_mfp_pads[]	= अणु CSI0_DN0, CSI0_DP0,
 						    CSI0_DN1, CSI0_DP1,
 						    CSI0_CN, CSI0_CP,
 						    CSI0_DP2, CSI0_DN2,
-						    CSI0_DN3, CSI0_DP3 };
-static unsigned int csi0_dn0_dp3_mfp_funcs[]	= { S900_MUX_MIPI_CSI0,
-						    S900_MUX_SENS0 };
+						    CSI0_DN3, CSI0_DP3 पूर्ण;
+अटल अचिन्हित पूर्णांक csi0_dn0_dp3_mfp_funcs[]	= अणु S900_MUX_MIPI_CSI0,
+						    S900_MUX_SENS0 पूर्ण;
 /* mfp3_13 */
-static unsigned int csi1_dn0_cp_mfp_pads[]	= { CSI1_DN0, CSI1_DP0,
+अटल अचिन्हित पूर्णांक csi1_dn0_cp_mfp_pads[]	= अणु CSI1_DN0, CSI1_DP0,
 						    CSI1_DN1, CSI1_DP1,
-						    CSI1_CN, CSI1_CP };
-static unsigned int csi1_dn0_cp_mfp_funcs[]	= { S900_MUX_MIPI_CSI1,
-						    S900_MUX_SENS0 };
+						    CSI1_CN, CSI1_CP पूर्ण;
+अटल अचिन्हित पूर्णांक csi1_dn0_cp_mfp_funcs[]	= अणु S900_MUX_MIPI_CSI1,
+						    S900_MUX_SENS0 पूर्ण;
 /* mfp3_12_dsi */
-static unsigned int dsi_dp3_dn1_mfp_pads[]	= { DSI_DP3, DSI_DN2,
-						    DSI_DP1, DSI_DN1 };
-static unsigned int dsi_dp3_dn1_mfp_funcs[]	= { S900_MUX_MIPI_DSI,
-						    S900_MUX_UART2 };
-static unsigned int dsi_cp_dn0_mfp_pads[]	= { DSI_CP, DSI_CN,
-						    DSI_DP0, DSI_DN0 };
-static unsigned int dsi_cp_dn0_mfp_funcs[]	= { S900_MUX_MIPI_DSI,
-						    S900_MUX_PCM1 };
-static unsigned int dsi_dp2_dn2_mfp_pads[]	= { DSI_DP2, DSI_DN2 };
-static unsigned int dsi_dp2_dn2_mfp_funcs[]	= { S900_MUX_MIPI_DSI,
-						    S900_MUX_UART4 };
+अटल अचिन्हित पूर्णांक dsi_dp3_dn1_mfp_pads[]	= अणु DSI_DP3, DSI_DN2,
+						    DSI_DP1, DSI_DN1 पूर्ण;
+अटल अचिन्हित पूर्णांक dsi_dp3_dn1_mfp_funcs[]	= अणु S900_MUX_MIPI_DSI,
+						    S900_MUX_UART2 पूर्ण;
+अटल अचिन्हित पूर्णांक dsi_cp_dn0_mfp_pads[]	= अणु DSI_CP, DSI_CN,
+						    DSI_DP0, DSI_DN0 पूर्ण;
+अटल अचिन्हित पूर्णांक dsi_cp_dn0_mfp_funcs[]	= अणु S900_MUX_MIPI_DSI,
+						    S900_MUX_PCM1 पूर्ण;
+अटल अचिन्हित पूर्णांक dsi_dp2_dn2_mfp_pads[]	= अणु DSI_DP2, DSI_DN2 पूर्ण;
+अटल अचिन्हित पूर्णांक dsi_dp2_dn2_mfp_funcs[]	= अणु S900_MUX_MIPI_DSI,
+						    S900_MUX_UART4 पूर्ण;
 /* mfp3_11 */
-static unsigned int nand1_d0_ceb1_mfp_pads[]	= { NAND1_D0, NAND1_D1,
-						    NAND1_D2, NAND1_D3,
-						    NAND1_D4, NAND1_D5,
-						    NAND1_D6, NAND1_D7,
-						    NAND1_DQSN, NAND1_CEB1 };
-static unsigned int nand1_d0_ceb1_mfp_funcs[]	= { S900_MUX_NAND1,
-						    S900_MUX_SD3 };
+अटल अचिन्हित पूर्णांक nand1_d0_ceb1_mfp_pads[]	= अणु न_अंकD1_D0, न_अंकD1_D1,
+						    न_अंकD1_D2, न_अंकD1_D3,
+						    न_अंकD1_D4, न_अंकD1_D5,
+						    न_अंकD1_D6, न_अंकD1_D7,
+						    न_अंकD1_DQSN, न_अंकD1_CEB1 पूर्ण;
+अटल अचिन्हित पूर्णांक nand1_d0_ceb1_mfp_funcs[]	= अणु S900_MUX_न_अंकD1,
+						    S900_MUX_SD3 पूर्ण;
 /* mfp3_10 */
-static unsigned int nand1_ceb3_mfp_pads[]	= { NAND1_CEB3 };
-static unsigned int nand1_ceb3_mfp_funcs[]	= { S900_MUX_NAND1,
-						    S900_MUX_PWM0 };
-static unsigned int nand1_ceb0_mfp_pads[]	= { NAND1_CEB0 };
-static unsigned int nand1_ceb0_mfp_funcs[]	= { S900_MUX_NAND1,
-						    S900_MUX_PWM1 };
+अटल अचिन्हित पूर्णांक nand1_ceb3_mfp_pads[]	= अणु न_अंकD1_CEB3 पूर्ण;
+अटल अचिन्हित पूर्णांक nand1_ceb3_mfp_funcs[]	= अणु S900_MUX_न_अंकD1,
+						    S900_MUX_PWM0 पूर्ण;
+अटल अचिन्हित पूर्णांक nand1_ceb0_mfp_pads[]	= अणु न_अंकD1_CEB0 पूर्ण;
+अटल अचिन्हित पूर्णांक nand1_ceb0_mfp_funcs[]	= अणु S900_MUX_न_अंकD1,
+						    S900_MUX_PWM1 पूर्ण;
 /* mfp3_9 */
-static unsigned int csi1_dn0_dp0_mfp_pads[]	= { CSI1_DN0, CSI1_DP0 };
-static unsigned int csi1_dn0_dp0_mfp_funcs[]	= { S900_MUX_SENS0,
-						    S900_MUX_SENS0 };
+अटल अचिन्हित पूर्णांक csi1_dn0_dp0_mfp_pads[]	= अणु CSI1_DN0, CSI1_DP0 पूर्ण;
+अटल अचिन्हित पूर्णांक csi1_dn0_dp0_mfp_funcs[]	= अणु S900_MUX_SENS0,
+						    S900_MUX_SENS0 पूर्ण;
 /* mfp3_8 */
-static unsigned int uart4_rx_tx_mfp_pads[]	= { UART4_RX, UART4_TX };
-static unsigned int uart4_rx_tx_mfp_funcs[]	= { S900_MUX_UART4,
-						    S900_MUX_I2C4 };
+अटल अचिन्हित पूर्णांक uart4_rx_tx_mfp_pads[]	= अणु UART4_RX, UART4_TX पूर्ण;
+अटल अचिन्हित पूर्णांक uart4_rx_tx_mfp_funcs[]	= अणु S900_MUX_UART4,
+						    S900_MUX_I2C4 पूर्ण;
 /* PADDRV group data */
 /* drv0 */
-static unsigned int sgpio3_drv_pads[]		= { SGPIO3 };
-static unsigned int sgpio2_drv_pads[]		= { SGPIO2 };
-static unsigned int sgpio1_drv_pads[]		= { SGPIO1 };
-static unsigned int sgpio0_drv_pads[]		= { SGPIO0 };
-static unsigned int rmii_tx_d0_d1_drv_pads[]	= { ETH_TXD0, ETH_TXD1 };
-static unsigned int rmii_txen_rxer_drv_pads[]	= { ETH_TXEN, ETH_RXER };
-static unsigned int rmii_crs_dv_drv_pads[]	= { ETH_CRS_DV };
-static unsigned int rmii_rx_d1_d0_drv_pads[]	= { ETH_RXD1, ETH_RXD0 };
-static unsigned int rmii_ref_clk_drv_pads[]	= { ETH_REF_CLK };
-static unsigned int rmii_mdc_mdio_drv_pads[]	= { ETH_MDC, ETH_MDIO };
-static unsigned int sirq_0_1_drv_pads[]		= { SIRQ0, SIRQ1 };
-static unsigned int sirq2_drv_pads[]		= { SIRQ2 };
-static unsigned int i2s_d0_d1_drv_pads[]	= { I2S_D0, I2S_D1 };
-static unsigned int i2s_lr_m_clk0_drv_pads[]	= { I2S_LRCLK0, I2S_MCLK0 };
-static unsigned int i2s_blk1_mclk1_drv_pads[]	= { I2S_BCLK0, I2S_BCLK1,
-						    I2S_LRCLK1, I2S_MCLK1 };
-static unsigned int pcm1_in_out_drv_pads[]	= { PCM1_IN, PCM1_CLK,
-						    PCM1_SYNC, PCM1_OUT };
+अटल अचिन्हित पूर्णांक sgpio3_drv_pads[]		= अणु SGPIO3 पूर्ण;
+अटल अचिन्हित पूर्णांक sgpio2_drv_pads[]		= अणु SGPIO2 पूर्ण;
+अटल अचिन्हित पूर्णांक sgpio1_drv_pads[]		= अणु SGPIO1 पूर्ण;
+अटल अचिन्हित पूर्णांक sgpio0_drv_pads[]		= अणु SGPIO0 पूर्ण;
+अटल अचिन्हित पूर्णांक rmii_tx_d0_d1_drv_pads[]	= अणु ETH_TXD0, ETH_TXD1 पूर्ण;
+अटल अचिन्हित पूर्णांक rmii_txen_rxer_drv_pads[]	= अणु ETH_TXEN, ETH_RXER पूर्ण;
+अटल अचिन्हित पूर्णांक rmii_crs_dv_drv_pads[]	= अणु ETH_CRS_DV पूर्ण;
+अटल अचिन्हित पूर्णांक rmii_rx_d1_d0_drv_pads[]	= अणु ETH_RXD1, ETH_RXD0 पूर्ण;
+अटल अचिन्हित पूर्णांक rmii_ref_clk_drv_pads[]	= अणु ETH_REF_CLK पूर्ण;
+अटल अचिन्हित पूर्णांक rmii_mdc_mdio_drv_pads[]	= अणु ETH_MDC, ETH_MDIO पूर्ण;
+अटल अचिन्हित पूर्णांक sirq_0_1_drv_pads[]		= अणु SIRQ0, SIRQ1 पूर्ण;
+अटल अचिन्हित पूर्णांक sirq2_drv_pads[]		= अणु SIRQ2 पूर्ण;
+अटल अचिन्हित पूर्णांक i2s_d0_d1_drv_pads[]	= अणु I2S_D0, I2S_D1 पूर्ण;
+अटल अचिन्हित पूर्णांक i2s_lr_m_clk0_drv_pads[]	= अणु I2S_LRCLK0, I2S_MCLK0 पूर्ण;
+अटल अचिन्हित पूर्णांक i2s_blk1_mclk1_drv_pads[]	= अणु I2S_BCLK0, I2S_BCLK1,
+						    I2S_LRCLK1, I2S_MCLK1 पूर्ण;
+अटल अचिन्हित पूर्णांक pcm1_in_out_drv_pads[]	= अणु PCM1_IN, PCM1_CLK,
+						    PCM1_SYNC, PCM1_OUT पूर्ण;
 /* drv1 */
-static unsigned int lvds_oap_oan_drv_pads[]	= { LVDS_OAP, LVDS_OAN };
-static unsigned int lvds_oep_odn_drv_pads[]	= { LVDS_OEP, LVDS_OEN,
-						    LVDS_ODP, LVDS_ODN };
-static unsigned int lvds_ocp_obn_drv_pads[]	= { LVDS_OCP, LVDS_OCN,
-						    LVDS_OBP, LVDS_OBN };
-static unsigned int lvds_e_drv_pads[]		= { LVDS_EEP, LVDS_EEN,
+अटल अचिन्हित पूर्णांक lvds_oap_oan_drv_pads[]	= अणु LVDS_OAP, LVDS_OAN पूर्ण;
+अटल अचिन्हित पूर्णांक lvds_oep_odn_drv_pads[]	= अणु LVDS_OEP, LVDS_OEN,
+						    LVDS_ODP, LVDS_ODN पूर्ण;
+अटल अचिन्हित पूर्णांक lvds_ocp_obn_drv_pads[]	= अणु LVDS_OCP, LVDS_OCN,
+						    LVDS_OBP, LVDS_OBN पूर्ण;
+अटल अचिन्हित पूर्णांक lvds_e_drv_pads[]		= अणु LVDS_EEP, LVDS_EEN,
 						    LVDS_EDP, LVDS_EDN,
 						    LVDS_ECP, LVDS_ECN,
-						    LVDS_EBP, LVDS_EBN };
-static unsigned int sd0_d3_d0_drv_pads[]	= { SD0_D3, SD0_D2,
-						    SD0_D1, SD0_D0 };
-static unsigned int sd1_d3_d0_drv_pads[]	= { SD1_D3, SD1_D2,
-						    SD1_D1, SD1_D0 };
-static unsigned int sd0_sd1_cmd_clk_drv_pads[]	= { SD0_CLK, SD0_CMD,
-						    SD1_CLK, SD1_CMD };
-static unsigned int spi0_sclk_mosi_drv_pads[]	= { SPI0_SCLK, SPI0_MOSI };
-static unsigned int spi0_ss_miso_drv_pads[]	= { SPI0_SS, SPI0_MISO };
-static unsigned int uart0_rx_tx_drv_pads[]	= { UART0_RX, UART0_TX };
-static unsigned int uart4_rx_tx_drv_pads[]	= { UART4_RX, UART4_TX };
-static unsigned int uart2_drv_pads[]		= { UART2_RX, UART2_TX,
-						    UART2_RTSB, UART2_CTSB };
-static unsigned int uart3_drv_pads[]		= { UART3_RX, UART3_TX,
-						    UART3_RTSB, UART3_CTSB };
+						    LVDS_EBP, LVDS_EBN पूर्ण;
+अटल अचिन्हित पूर्णांक sd0_d3_d0_drv_pads[]	= अणु SD0_D3, SD0_D2,
+						    SD0_D1, SD0_D0 पूर्ण;
+अटल अचिन्हित पूर्णांक sd1_d3_d0_drv_pads[]	= अणु SD1_D3, SD1_D2,
+						    SD1_D1, SD1_D0 पूर्ण;
+अटल अचिन्हित पूर्णांक sd0_sd1_cmd_clk_drv_pads[]	= अणु SD0_CLK, SD0_CMD,
+						    SD1_CLK, SD1_CMD पूर्ण;
+अटल अचिन्हित पूर्णांक spi0_sclk_mosi_drv_pads[]	= अणु SPI0_SCLK, SPI0_MOSI पूर्ण;
+अटल अचिन्हित पूर्णांक spi0_ss_miso_drv_pads[]	= अणु SPI0_SS, SPI0_MISO पूर्ण;
+अटल अचिन्हित पूर्णांक uart0_rx_tx_drv_pads[]	= अणु UART0_RX, UART0_TX पूर्ण;
+अटल अचिन्हित पूर्णांक uart4_rx_tx_drv_pads[]	= अणु UART4_RX, UART4_TX पूर्ण;
+अटल अचिन्हित पूर्णांक uart2_drv_pads[]		= अणु UART2_RX, UART2_TX,
+						    UART2_RTSB, UART2_CTSB पूर्ण;
+अटल अचिन्हित पूर्णांक uart3_drv_pads[]		= अणु UART3_RX, UART3_TX,
+						    UART3_RTSB, UART3_CTSB पूर्ण;
 /* drv2 */
-static unsigned int i2c0_drv_pads[]		= { I2C0_SCLK, I2C0_SDATA };
-static unsigned int i2c1_drv_pads[]		= { I2C1_SCLK, I2C1_SDATA };
-static unsigned int i2c2_drv_pads[]		= { I2C2_SCLK, I2C2_SDATA };
-static unsigned int sensor0_drv_pads[]		= { SENSOR0_PCLK,
-						    SENSOR0_CKOUT };
+अटल अचिन्हित पूर्णांक i2c0_drv_pads[]		= अणु I2C0_SCLK, I2C0_SDATA पूर्ण;
+अटल अचिन्हित पूर्णांक i2c1_drv_pads[]		= अणु I2C1_SCLK, I2C1_SDATA पूर्ण;
+अटल अचिन्हित पूर्णांक i2c2_drv_pads[]		= अणु I2C2_SCLK, I2C2_SDATA पूर्ण;
+अटल अचिन्हित पूर्णांक sensor0_drv_pads[]		= अणु SENSOR0_PCLK,
+						    SENSOR0_CKOUT पूर्ण;
 /* SR group data */
 /* sr0 */
-static unsigned int sgpio3_sr_pads[]		= { SGPIO3 };
-static unsigned int sgpio2_sr_pads[]		= { SGPIO2 };
-static unsigned int sgpio1_sr_pads[]		= { SGPIO1 };
-static unsigned int sgpio0_sr_pads[]		= { SGPIO0 };
-static unsigned int rmii_tx_d0_d1_sr_pads[]	= { ETH_TXD0, ETH_TXD1 };
-static unsigned int rmii_txen_rxer_sr_pads[]	= { ETH_TXEN, ETH_RXER };
-static unsigned int rmii_crs_dv_sr_pads[]	= { ETH_CRS_DV };
-static unsigned int rmii_rx_d1_d0_sr_pads[]	= { ETH_RXD1, ETH_RXD0 };
-static unsigned int rmii_ref_clk_sr_pads[]	= { ETH_REF_CLK };
-static unsigned int rmii_mdc_mdio_sr_pads[]	= { ETH_MDC, ETH_MDIO };
-static unsigned int sirq_0_1_sr_pads[]		= { SIRQ0, SIRQ1 };
-static unsigned int sirq2_sr_pads[]		= { SIRQ2 };
-static unsigned int i2s_do_d1_sr_pads[]		= { I2S_D0, I2S_D1 };
-static unsigned int i2s_lr_m_clk0_sr_pads[]	= { I2S_LRCLK0, I2S_MCLK0 };
-static unsigned int i2s_bclk0_mclk1_sr_pads[]	= { I2S_BCLK0, I2S_BCLK1,
-						    I2S_LRCLK1, I2S_MCLK1 };
-static unsigned int pcm1_in_out_sr_pads[]	= { PCM1_IN, PCM1_CLK,
-						    PCM1_SYNC, PCM1_OUT };
+अटल अचिन्हित पूर्णांक sgpio3_sr_pads[]		= अणु SGPIO3 पूर्ण;
+अटल अचिन्हित पूर्णांक sgpio2_sr_pads[]		= अणु SGPIO2 पूर्ण;
+अटल अचिन्हित पूर्णांक sgpio1_sr_pads[]		= अणु SGPIO1 पूर्ण;
+अटल अचिन्हित पूर्णांक sgpio0_sr_pads[]		= अणु SGPIO0 पूर्ण;
+अटल अचिन्हित पूर्णांक rmii_tx_d0_d1_sr_pads[]	= अणु ETH_TXD0, ETH_TXD1 पूर्ण;
+अटल अचिन्हित पूर्णांक rmii_txen_rxer_sr_pads[]	= अणु ETH_TXEN, ETH_RXER पूर्ण;
+अटल अचिन्हित पूर्णांक rmii_crs_dv_sr_pads[]	= अणु ETH_CRS_DV पूर्ण;
+अटल अचिन्हित पूर्णांक rmii_rx_d1_d0_sr_pads[]	= अणु ETH_RXD1, ETH_RXD0 पूर्ण;
+अटल अचिन्हित पूर्णांक rmii_ref_clk_sr_pads[]	= अणु ETH_REF_CLK पूर्ण;
+अटल अचिन्हित पूर्णांक rmii_mdc_mdio_sr_pads[]	= अणु ETH_MDC, ETH_MDIO पूर्ण;
+अटल अचिन्हित पूर्णांक sirq_0_1_sr_pads[]		= अणु SIRQ0, SIRQ1 पूर्ण;
+अटल अचिन्हित पूर्णांक sirq2_sr_pads[]		= अणु SIRQ2 पूर्ण;
+अटल अचिन्हित पूर्णांक i2s_करो_d1_sr_pads[]		= अणु I2S_D0, I2S_D1 पूर्ण;
+अटल अचिन्हित पूर्णांक i2s_lr_m_clk0_sr_pads[]	= अणु I2S_LRCLK0, I2S_MCLK0 पूर्ण;
+अटल अचिन्हित पूर्णांक i2s_bclk0_mclk1_sr_pads[]	= अणु I2S_BCLK0, I2S_BCLK1,
+						    I2S_LRCLK1, I2S_MCLK1 पूर्ण;
+अटल अचिन्हित पूर्णांक pcm1_in_out_sr_pads[]	= अणु PCM1_IN, PCM1_CLK,
+						    PCM1_SYNC, PCM1_OUT पूर्ण;
 /* sr1 */
-static unsigned int sd1_d3_d0_sr_pads[]		= { SD1_D3, SD1_D2,
-						    SD1_D1, SD1_D0 };
-static unsigned int sd0_sd1_clk_cmd_sr_pads[]	= { SD0_CLK, SD0_CMD,
-						    SD1_CLK, SD1_CMD };
-static unsigned int spi0_sclk_mosi_sr_pads[]	= { SPI0_SCLK, SPI0_MOSI };
-static unsigned int spi0_ss_miso_sr_pads[]	= { SPI0_SS, SPI0_MISO };
-static unsigned int uart0_rx_tx_sr_pads[]	= { UART0_RX, UART0_TX };
-static unsigned int uart4_rx_tx_sr_pads[]	= { UART4_RX, UART4_TX };
-static unsigned int uart2_sr_pads[]		= { UART2_RX, UART2_TX,
-						    UART2_RTSB, UART2_CTSB };
-static unsigned int uart3_sr_pads[]		= { UART3_RX, UART3_TX,
-						    UART3_RTSB, UART3_CTSB };
+अटल अचिन्हित पूर्णांक sd1_d3_d0_sr_pads[]		= अणु SD1_D3, SD1_D2,
+						    SD1_D1, SD1_D0 पूर्ण;
+अटल अचिन्हित पूर्णांक sd0_sd1_clk_cmd_sr_pads[]	= अणु SD0_CLK, SD0_CMD,
+						    SD1_CLK, SD1_CMD पूर्ण;
+अटल अचिन्हित पूर्णांक spi0_sclk_mosi_sr_pads[]	= अणु SPI0_SCLK, SPI0_MOSI पूर्ण;
+अटल अचिन्हित पूर्णांक spi0_ss_miso_sr_pads[]	= अणु SPI0_SS, SPI0_MISO पूर्ण;
+अटल अचिन्हित पूर्णांक uart0_rx_tx_sr_pads[]	= अणु UART0_RX, UART0_TX पूर्ण;
+अटल अचिन्हित पूर्णांक uart4_rx_tx_sr_pads[]	= अणु UART4_RX, UART4_TX पूर्ण;
+अटल अचिन्हित पूर्णांक uart2_sr_pads[]		= अणु UART2_RX, UART2_TX,
+						    UART2_RTSB, UART2_CTSB पूर्ण;
+अटल अचिन्हित पूर्णांक uart3_sr_pads[]		= अणु UART3_RX, UART3_TX,
+						    UART3_RTSB, UART3_CTSB पूर्ण;
 /* sr2 */
-static unsigned int i2c0_sr_pads[]		= { I2C0_SCLK, I2C0_SDATA };
-static unsigned int i2c1_sr_pads[]		= { I2C1_SCLK, I2C1_SDATA };
-static unsigned int i2c2_sr_pads[]		= { I2C2_SCLK, I2C2_SDATA };
-static unsigned int sensor0_sr_pads[]		= { SENSOR0_PCLK,
-						    SENSOR0_CKOUT };
+अटल अचिन्हित पूर्णांक i2c0_sr_pads[]		= अणु I2C0_SCLK, I2C0_SDATA पूर्ण;
+अटल अचिन्हित पूर्णांक i2c1_sr_pads[]		= अणु I2C1_SCLK, I2C1_SDATA पूर्ण;
+अटल अचिन्हित पूर्णांक i2c2_sr_pads[]		= अणु I2C2_SCLK, I2C2_SDATA पूर्ण;
+अटल अचिन्हित पूर्णांक sensor0_sr_pads[]		= अणु SENSOR0_PCLK,
+						    SENSOR0_CKOUT पूर्ण;
 
 
 /* Pinctrl groups */
-static const struct owl_pingroup s900_groups[] = {
+अटल स्थिर काष्ठा owl_pingroup s900_groups[] = अणु
 	MUX_PG(lvds_oxx_uart4_mfp, 0, 22, 1),
 	MUX_PG(rmii_mdc_mfp, 0, 20, 2),
 	MUX_PG(rmii_mdio_mfp, 0, 20, 2),
@@ -997,7 +998,7 @@ static const struct owl_pingroup s900_groups[] = {
 	SR_PG(rmii_mdc_mdio_sr, 0, 6, 1),
 	SR_PG(sirq_0_1_sr, 0, 5, 1),
 	SR_PG(sirq2_sr, 0, 4, 1),
-	SR_PG(i2s_do_d1_sr, 0, 3, 1),
+	SR_PG(i2s_करो_d1_sr, 0, 3, 1),
 	SR_PG(i2s_lr_m_clk0_sr, 0, 2, 1),
 	SR_PG(i2s_bclk0_mclk1_sr, 0, 1, 1),
 	SR_PG(pcm1_in_out_sr, 0, 0, 1),
@@ -1013,9 +1014,9 @@ static const struct owl_pingroup s900_groups[] = {
 	SR_PG(i2c1_sr, 2, 30, 1),
 	SR_PG(i2c2_sr, 2, 29, 1),
 	SR_PG(sensor0_sr, 2, 25, 1)
-};
+पूर्ण;
 
-static const char * const eram_groups[] = {
+अटल स्थिर अक्षर * स्थिर eram_groups[] = अणु
 	"lvds_oxx_uart4_mfp",
 	"eram_a5_mfp",
 	"eram_a6_mfp",
@@ -1036,9 +1037,9 @@ static const char * const eram_groups[] = {
 	"sd0_cmd_mfp",
 	"sd0_clk_mfp",
 	"sd1_cmd_clk_mfp",
-};
+पूर्ण;
 
-static const char * const eth_rmii_groups[] = {
+अटल स्थिर अक्षर * स्थिर eth_rmii_groups[] = अणु
 	"rmii_mdc_mfp",
 	"rmii_mdio_mfp",
 	"rmii_txd0_mfp",
@@ -1050,46 +1051,46 @@ static const char * const eth_rmii_groups[] = {
 	"rmii_rxd0_mfp",
 	"rmii_ref_clk_mfp",
 	"eth_smi_dummy",
-};
+पूर्ण;
 
-static const char * const eth_smii_groups[] = {
+अटल स्थिर अक्षर * स्थिर eth_smii_groups[] = अणु
 	"rmii_txd0_mfp",
 	"rmii_txd1_mfp",
 	"rmii_crs_dv_mfp",
 	"eth_smi_dummy",
-};
+पूर्ण;
 
-static const char * const spi0_groups[] = {
+अटल स्थिर अक्षर * स्थिर spi0_groups[] = अणु
 	"spi0_sclk_mosi_mfp",
 	"spi0_ss_mfp",
 	"spi0_miso_mfp",
 	"spi0_sclk_mosi_mfp",
 	"spi0_ss_mfp",
 	"spi0_miso_mfp",
-};
+पूर्ण;
 
-static const char * const spi1_groups[] = {
+अटल स्थिर अक्षर * स्थिर spi1_groups[] = अणु
 	"pcm1_in_out_mfp",
 	"pcm1_clk_mfp",
 	"pcm1_sync_mfp",
 	"uart0_rx_mfp",
 	"uart0_tx_mfp",
 	"i2c0_mfp",
-};
+पूर्ण;
 
-static const char * const spi2_groups[] = {
+अटल स्थिर अक्षर * स्थिर spi2_groups[] = अणु
 	"rmii_txd0_mfp",
 	"rmii_txd1_mfp",
 	"rmii_crs_dv_mfp",
 	"rmii_ref_clk_mfp",
-};
+पूर्ण;
 
-static const char * const spi3_groups[] = {
+अटल स्थिर अक्षर * स्थिर spi3_groups[] = अणु
 	"rmii_txen_mfp",
 	"rmii_rxer_mfp",
-};
+पूर्ण;
 
-static const char * const sens0_groups[] = {
+अटल स्थिर अक्षर * स्थिर sens0_groups[] = अणु
 	"rmii_txd0_mfp",
 	"rmii_txd1_mfp",
 	"rmii_txen_mfp",
@@ -1105,21 +1106,21 @@ static const char * const sens0_groups[] = {
 	"csi0_dn0_dp3_mfp",
 	"csi1_dn0_cp_mfp",
 	"csi1_dn0_dp0_mfp",
-};
+पूर्ण;
 
-static const char * const uart0_groups[] = {
+अटल स्थिर अक्षर * स्थिर uart0_groups[] = अणु
 	"uart2_rtsb_mfp",
 	"uart2_ctsb_mfp",
 	"uart0_rx_mfp",
 	"uart0_tx_mfp",
-};
+पूर्ण;
 
-static const char * const uart1_groups[] = {
+अटल स्थिर अक्षर * स्थिर uart1_groups[] = अणु
 	"sd0_d2_d3_mfp",
 	"i2c0_mfp",
-};
+पूर्ण;
 
-static const char * const uart2_groups[] = {
+अटल स्थिर अक्षर * स्थिर uart2_groups[] = अणु
 	"rmii_mdc_mfp",
 	"rmii_mdio_mfp",
 	"rmii_txen_mfp",
@@ -1137,15 +1138,15 @@ static const char * const uart2_groups[] = {
 	"i2c0_mfp_pads",
 	"dsi_dp3_dn1_mfp",
 	"uart2_dummy"
-};
+पूर्ण;
 
-static const char * const uart3_groups[] = {
+अटल स्थिर अक्षर * स्थिर uart3_groups[] = अणु
 	"uart3_rtsb_mfp",
 	"uart3_ctsb_mfp",
 	"uart3_dummy"
-};
+पूर्ण;
 
-static const char * const uart4_groups[] = {
+अटल स्थिर अक्षर * स्थिर uart4_groups[] = अणु
 	"lvds_oxx_uart4_mfp",
 	"rmii_crs_dv_mfp",
 	"rmii_ref_clk_mfp",
@@ -1157,9 +1158,9 @@ static const char * const uart4_groups[] = {
 	"dsi_dp2_dn2_mfp",
 	"uart4_rx_tx_mfp_pads",
 	"uart4_dummy"
-};
+पूर्ण;
 
-static const char * const uart5_groups[] = {
+अटल स्थिर अक्षर * स्थिर uart5_groups[] = अणु
 	"rmii_rxd1_mfp",
 	"rmii_rxd0_mfp",
 	"eram_a9_mfp",
@@ -1168,21 +1169,21 @@ static const char * const uart5_groups[] = {
 	"uart3_ctsb_mfp",
 	"sd0_d0_mfp",
 	"sd0_d1_mfp",
-};
+पूर्ण;
 
-static const char * const uart6_groups[] = {
+अटल स्थिर अक्षर * स्थिर uart6_groups[] = अणु
 	"rmii_txd0_mfp",
 	"rmii_txd1_mfp",
-};
+पूर्ण;
 
-static const char * const i2s0_groups[] = {
+अटल स्थिर अक्षर * स्थिर i2s0_groups[] = अणु
 	"i2s_d0_mfp",
 	"i2s_lr_m_clk0_mfp",
 	"i2s_bclk0_mfp",
 	"i2s0_dummy",
-};
+पूर्ण;
 
-static const char * const i2s1_groups[] = {
+अटल स्थिर अक्षर * स्थिर i2s1_groups[] = अणु
 	"i2s_d1_mfp",
 	"i2s_bclk1_mclk1_mfp",
 	"spi0_ss_mfp",
@@ -1190,9 +1191,9 @@ static const char * const i2s1_groups[] = {
 	"uart0_rx_mfp",
 	"uart0_tx_mfp",
 	"i2s1_dummy",
-};
+पूर्ण;
 
-static const char * const pcm0_groups[] = {
+अटल स्थिर अक्षर * स्थिर pcm0_groups[] = अणु
 	"i2s_d0_mfp",
 	"i2s_d1_mfp",
 	"i2s_lr_m_clk0_mfp",
@@ -1201,9 +1202,9 @@ static const char * const pcm0_groups[] = {
 	"spi0_sclk_mosi_mfp",
 	"spi0_ss_mfp",
 	"spi0_miso_mfp",
-};
+पूर्ण;
 
-static const char * const pcm1_groups[] = {
+अटल स्थिर अक्षर * स्थिर pcm1_groups[] = अणु
 	"i2s_lr_m_clk0_mfp",
 	"pcm1_in_out_mfp",
 	"pcm1_clk_mfp",
@@ -1215,9 +1216,9 @@ static const char * const pcm1_groups[] = {
 	"uart0_tx_mfp",
 	"dsi_cp_dn0_mfp",
 	"pcm1_dummy",
-};
+पूर्ण;
 
-static const char * const jtag_groups[] = {
+अटल स्थिर अक्षर * स्थिर jtag_groups[] = अणु
 	"eram_a5_mfp",
 	"eram_a6_mfp",
 	"eram_a7_mfp",
@@ -1227,167 +1228,167 @@ static const char * const jtag_groups[] = {
 	"sd0_d2_d3_mfp",
 	"sd0_cmd_mfp",
 	"sd0_clk_mfp",
-};
+पूर्ण;
 
-static const char * const pwm0_groups[] = {
+अटल स्थिर अक्षर * स्थिर pwm0_groups[] = अणु
 	"sirq0_mfp",
 	"rmii_txd0_mfp",
 	"rmii_rxd1_mfp",
 	"eram_a5_mfp",
 	"nand1_ceb3_mfp",
-};
+पूर्ण;
 
-static const char * const pwm1_groups[] = {
+अटल स्थिर अक्षर * स्थिर pwm1_groups[] = अणु
 	"sirq1_mfp",
 	"rmii_txd1_mfp",
 	"rmii_rxd0_mfp",
 	"eram_a6_mfp",
 	"eram_a8_mfp",
 	"nand1_ceb0_mfp",
-};
+पूर्ण;
 
-static const char * const pwm2_groups[] = {
+अटल स्थिर अक्षर * स्थिर pwm2_groups[] = अणु
 	"rmii_mdc_mfp",
 	"rmii_txen_mfp",
 	"eram_a9_mfp",
 	"eram_a11_mfp",
-};
+पूर्ण;
 
-static const char * const pwm3_groups[] = {
+अटल स्थिर अक्षर * स्थिर pwm3_groups[] = अणु
 	"rmii_mdio_mfp",
 	"rmii_rxer_mfp",
 	"eram_a10_mfp",
-};
+पूर्ण;
 
-static const char * const pwm4_groups[] = {
+अटल स्थिर अक्षर * स्थिर pwm4_groups[] = अणु
 	"pcm1_clk_mfp",
 	"spi0_ss_mfp",
-};
+पूर्ण;
 
-static const char * const pwm5_groups[] = {
+अटल स्थिर अक्षर * स्थिर pwm5_groups[] = अणु
 	"pcm1_sync_mfp",
 	"spi0_miso_mfp",
-};
+पूर्ण;
 
-static const char * const sd0_groups[] = {
+अटल स्थिर अक्षर * स्थिर sd0_groups[] = अणु
 	"sd0_d0_mfp",
 	"sd0_d1_mfp",
 	"sd0_d2_d3_mfp",
 	"sd0_cmd_mfp",
 	"sd0_clk_mfp",
-};
+पूर्ण;
 
-static const char * const sd1_groups[] = {
+अटल स्थिर अक्षर * स्थिर sd1_groups[] = अणु
 	"sd1_d0_d3_mfp",
 	"sd1_cmd_clk_mfp",
 	"sd1_dummy",
-};
+पूर्ण;
 
-static const char * const sd2_groups[] = {
+अटल स्थिर अक्षर * स्थिर sd2_groups[] = अणु
 	"nand0_d0_ceb3_mfp",
-};
+पूर्ण;
 
-static const char * const sd3_groups[] = {
+अटल स्थिर अक्षर * स्थिर sd3_groups[] = अणु
 	"nand1_d0_ceb1_mfp",
-};
+पूर्ण;
 
-static const char * const i2c0_groups[] = {
+अटल स्थिर अक्षर * स्थिर i2c0_groups[] = अणु
 	"i2c0_mfp",
-};
+पूर्ण;
 
-static const char * const i2c1_groups[] = {
+अटल स्थिर अक्षर * स्थिर i2c1_groups[] = अणु
 	"i2c0_mfp",
 	"i2c1_dummy"
-};
+पूर्ण;
 
-static const char * const i2c2_groups[] = {
+अटल स्थिर अक्षर * स्थिर i2c2_groups[] = अणु
 	"i2c2_dummy"
-};
+पूर्ण;
 
-static const char * const i2c3_groups[] = {
+अटल स्थिर अक्षर * स्थिर i2c3_groups[] = अणु
 	"pcm1_in_out_mfp",
 	"spi0_sclk_mosi_mfp",
-};
+पूर्ण;
 
-static const char * const i2c4_groups[] = {
+अटल स्थिर अक्षर * स्थिर i2c4_groups[] = अणु
 	"uart4_rx_tx_mfp",
-};
+पूर्ण;
 
-static const char * const i2c5_groups[] = {
+अटल स्थिर अक्षर * स्थिर i2c5_groups[] = अणु
 	"uart0_rx_mfp",
 	"uart0_tx_mfp",
-};
+पूर्ण;
 
 
-static const char * const lvds_groups[] = {
+अटल स्थिर अक्षर * स्थिर lvds_groups[] = अणु
 	"lvds_oep_odn_mfp",
 	"lvds_ocp_obn_mfp",
 	"lvds_oap_oan_mfp",
 	"lvds_e_mfp",
-};
+पूर्ण;
 
-static const char * const usb20_groups[] = {
+अटल स्थिर अक्षर * स्थिर usb20_groups[] = अणु
 	"eram_a9_mfp",
-};
+पूर्ण;
 
-static const char * const usb30_groups[] = {
+अटल स्थिर अक्षर * स्थिर usb30_groups[] = अणु
 	"eram_a10_mfp",
-};
+पूर्ण;
 
-static const char * const gpu_groups[] = {
+अटल स्थिर अक्षर * स्थिर gpu_groups[] = अणु
 	"sd0_d0_mfp",
 	"sd0_d1_mfp",
 	"sd0_d2_d3_mfp",
 	"sd0_cmd_mfp",
 	"sd0_clk_mfp",
-};
+पूर्ण;
 
-static const char * const mipi_csi0_groups[] = {
+अटल स्थिर अक्षर * स्थिर mipi_csi0_groups[] = अणु
 	"csi0_dn0_dp3_mfp",
-};
+पूर्ण;
 
-static const char * const mipi_csi1_groups[] = {
+अटल स्थिर अक्षर * स्थिर mipi_csi1_groups[] = अणु
 	"csi1_dn0_cp_mfp",
-};
+पूर्ण;
 
-static const char * const mipi_dsi_groups[] = {
+अटल स्थिर अक्षर * स्थिर mipi_dsi_groups[] = अणु
 	"dsi_dp3_dn1_mfp",
 	"dsi_cp_dn0_mfp",
 	"dsi_dp2_dn2_mfp",
 	"mipi_dsi_dummy",
-};
+पूर्ण;
 
-static const char * const nand0_groups[] = {
+अटल स्थिर अक्षर * स्थिर nand0_groups[] = अणु
 	"nand0_d0_ceb3_mfp",
 	"nand0_dummy",
-};
+पूर्ण;
 
-static const char * const nand1_groups[] = {
+अटल स्थिर अक्षर * स्थिर nand1_groups[] = अणु
 	"nand1_d0_ceb1_mfp",
 	"nand1_ceb3_mfp",
 	"nand1_ceb0_mfp",
 	"nand1_dummy",
-};
+पूर्ण;
 
-static const char * const spdif_groups[] = {
+अटल स्थिर अक्षर * स्थिर spdअगर_groups[] = अणु
 	"uart0_tx_mfp",
-};
+पूर्ण;
 
-static const char * const sirq0_groups[] = {
+अटल स्थिर अक्षर * स्थिर sirq0_groups[] = अणु
 	"sirq0_mfp",
 	"sirq0_dummy",
-};
+पूर्ण;
 
-static const char * const sirq1_groups[] = {
+अटल स्थिर अक्षर * स्थिर sirq1_groups[] = अणु
 	"sirq1_mfp",
 	"sirq1_dummy",
-};
+पूर्ण;
 
-static const char * const sirq2_groups[] = {
+अटल स्थिर अक्षर * स्थिर sirq2_groups[] = अणु
 	"sirq2_dummy",
-};
+पूर्ण;
 
-static const struct owl_pinmux_func s900_functions[] = {
+अटल स्थिर काष्ठा owl_pinmux_func s900_functions[] = अणु
 	[S900_MUX_ERAM] = FUNCTION(eram),
 	[S900_MUX_ETH_RMII] = FUNCTION(eth_rmii),
 	[S900_MUX_ETH_SMII] = FUNCTION(eth_smii),
@@ -1431,132 +1432,132 @@ static const struct owl_pinmux_func s900_functions[] = {
 	[S900_MUX_MIPI_CSI0] = FUNCTION(mipi_csi0),
 	[S900_MUX_MIPI_CSI1] = FUNCTION(mipi_csi1),
 	[S900_MUX_MIPI_DSI] = FUNCTION(mipi_dsi),
-	[S900_MUX_NAND0] = FUNCTION(nand0),
-	[S900_MUX_NAND1] = FUNCTION(nand1),
-	[S900_MUX_SPDIF] = FUNCTION(spdif),
+	[S900_MUX_न_अंकD0] = FUNCTION(nand0),
+	[S900_MUX_न_अंकD1] = FUNCTION(nand1),
+	[S900_MUX_SPDIF] = FUNCTION(spdअगर),
 	[S900_MUX_SIRQ0] = FUNCTION(sirq0),
 	[S900_MUX_SIRQ1] = FUNCTION(sirq1),
 	[S900_MUX_SIRQ2] = FUNCTION(sirq2)
-};
+पूर्ण;
 
 /* PAD_PULLCTL0 */
-static PAD_PULLCTL_CONF(ETH_RXER, 0, 18, 2);
-static PAD_PULLCTL_CONF(SIRQ0, 0, 16, 2);
-static PAD_PULLCTL_CONF(SIRQ1, 0, 14, 2);
-static PAD_PULLCTL_CONF(SIRQ2, 0, 12, 2);
-static PAD_PULLCTL_CONF(I2C0_SDATA, 0, 10, 2);
-static PAD_PULLCTL_CONF(I2C0_SCLK, 0, 8, 2);
-static PAD_PULLCTL_CONF(ERAM_A5, 0, 6, 2);
-static PAD_PULLCTL_CONF(ERAM_A6, 0, 4, 2);
-static PAD_PULLCTL_CONF(ERAM_A7, 0, 2, 2);
-static PAD_PULLCTL_CONF(ERAM_A10, 0, 0, 2);
+अटल PAD_PULLCTL_CONF(ETH_RXER, 0, 18, 2);
+अटल PAD_PULLCTL_CONF(SIRQ0, 0, 16, 2);
+अटल PAD_PULLCTL_CONF(SIRQ1, 0, 14, 2);
+अटल PAD_PULLCTL_CONF(SIRQ2, 0, 12, 2);
+अटल PAD_PULLCTL_CONF(I2C0_SDATA, 0, 10, 2);
+अटल PAD_PULLCTL_CONF(I2C0_SCLK, 0, 8, 2);
+अटल PAD_PULLCTL_CONF(ERAM_A5, 0, 6, 2);
+अटल PAD_PULLCTL_CONF(ERAM_A6, 0, 4, 2);
+अटल PAD_PULLCTL_CONF(ERAM_A7, 0, 2, 2);
+अटल PAD_PULLCTL_CONF(ERAM_A10, 0, 0, 2);
 
 /* PAD_PULLCTL1 */
-static PAD_PULLCTL_CONF(PCM1_IN, 1, 30, 2);
-static PAD_PULLCTL_CONF(PCM1_OUT, 1, 28, 2);
-static PAD_PULLCTL_CONF(SD0_D0, 1, 26, 2);
-static PAD_PULLCTL_CONF(SD0_D1, 1, 24, 2);
-static PAD_PULLCTL_CONF(SD0_D2, 1, 22, 2);
-static PAD_PULLCTL_CONF(SD0_D3, 1, 20, 2);
-static PAD_PULLCTL_CONF(SD0_CMD, 1, 18, 2);
-static PAD_PULLCTL_CONF(SD0_CLK, 1, 16, 2);
-static PAD_PULLCTL_CONF(SD1_CMD, 1, 14, 2);
-static PAD_PULLCTL_CONF(SD1_D0, 1, 12, 2);
-static PAD_PULLCTL_CONF(SD1_D1, 1, 10, 2);
-static PAD_PULLCTL_CONF(SD1_D2, 1, 8, 2);
-static PAD_PULLCTL_CONF(SD1_D3, 1, 6, 2);
-static PAD_PULLCTL_CONF(UART0_RX, 1, 4, 2);
-static PAD_PULLCTL_CONF(UART0_TX, 1, 2, 2);
+अटल PAD_PULLCTL_CONF(PCM1_IN, 1, 30, 2);
+अटल PAD_PULLCTL_CONF(PCM1_OUT, 1, 28, 2);
+अटल PAD_PULLCTL_CONF(SD0_D0, 1, 26, 2);
+अटल PAD_PULLCTL_CONF(SD0_D1, 1, 24, 2);
+अटल PAD_PULLCTL_CONF(SD0_D2, 1, 22, 2);
+अटल PAD_PULLCTL_CONF(SD0_D3, 1, 20, 2);
+अटल PAD_PULLCTL_CONF(SD0_CMD, 1, 18, 2);
+अटल PAD_PULLCTL_CONF(SD0_CLK, 1, 16, 2);
+अटल PAD_PULLCTL_CONF(SD1_CMD, 1, 14, 2);
+अटल PAD_PULLCTL_CONF(SD1_D0, 1, 12, 2);
+अटल PAD_PULLCTL_CONF(SD1_D1, 1, 10, 2);
+अटल PAD_PULLCTL_CONF(SD1_D2, 1, 8, 2);
+अटल PAD_PULLCTL_CONF(SD1_D3, 1, 6, 2);
+अटल PAD_PULLCTL_CONF(UART0_RX, 1, 4, 2);
+अटल PAD_PULLCTL_CONF(UART0_TX, 1, 2, 2);
 
 /* PAD_PULLCTL2 */
-static PAD_PULLCTL_CONF(I2C2_SDATA, 2, 26, 2);
-static PAD_PULLCTL_CONF(I2C2_SCLK, 2, 24, 2);
-static PAD_PULLCTL_CONF(SPI0_SCLK, 2, 22, 2);
-static PAD_PULLCTL_CONF(SPI0_MOSI, 2, 20, 2);
-static PAD_PULLCTL_CONF(I2C1_SDATA, 2, 18, 2);
-static PAD_PULLCTL_CONF(I2C1_SCLK, 2, 16, 2);
-static PAD_PULLCTL_CONF(NAND0_D0, 2, 15, 1);
-static PAD_PULLCTL_CONF(NAND0_D1, 2, 15, 1);
-static PAD_PULLCTL_CONF(NAND0_D2, 2, 15, 1);
-static PAD_PULLCTL_CONF(NAND0_D3, 2, 15, 1);
-static PAD_PULLCTL_CONF(NAND0_D4, 2, 15, 1);
-static PAD_PULLCTL_CONF(NAND0_D5, 2, 15, 1);
-static PAD_PULLCTL_CONF(NAND0_D6, 2, 15, 1);
-static PAD_PULLCTL_CONF(NAND0_D7, 2, 15, 1);
-static PAD_PULLCTL_CONF(NAND0_DQSN, 2, 14, 1);
-static PAD_PULLCTL_CONF(NAND0_DQS, 2, 13, 1);
-static PAD_PULLCTL_CONF(NAND1_D0, 2, 12, 1);
-static PAD_PULLCTL_CONF(NAND1_D1, 2, 12, 1);
-static PAD_PULLCTL_CONF(NAND1_D2, 2, 12, 1);
-static PAD_PULLCTL_CONF(NAND1_D3, 2, 12, 1);
-static PAD_PULLCTL_CONF(NAND1_D4, 2, 12, 1);
-static PAD_PULLCTL_CONF(NAND1_D5, 2, 12, 1);
-static PAD_PULLCTL_CONF(NAND1_D6, 2, 12, 1);
-static PAD_PULLCTL_CONF(NAND1_D7, 2, 12, 1);
-static PAD_PULLCTL_CONF(NAND1_DQSN, 2, 11, 1);
-static PAD_PULLCTL_CONF(NAND1_DQS, 2, 10, 1);
-static PAD_PULLCTL_CONF(SGPIO2, 2, 8, 2);
-static PAD_PULLCTL_CONF(SGPIO3, 2, 6, 2);
-static PAD_PULLCTL_CONF(UART4_RX, 2, 4, 2);
-static PAD_PULLCTL_CONF(UART4_TX, 2, 2, 2);
+अटल PAD_PULLCTL_CONF(I2C2_SDATA, 2, 26, 2);
+अटल PAD_PULLCTL_CONF(I2C2_SCLK, 2, 24, 2);
+अटल PAD_PULLCTL_CONF(SPI0_SCLK, 2, 22, 2);
+अटल PAD_PULLCTL_CONF(SPI0_MOSI, 2, 20, 2);
+अटल PAD_PULLCTL_CONF(I2C1_SDATA, 2, 18, 2);
+अटल PAD_PULLCTL_CONF(I2C1_SCLK, 2, 16, 2);
+अटल PAD_PULLCTL_CONF(न_अंकD0_D0, 2, 15, 1);
+अटल PAD_PULLCTL_CONF(न_अंकD0_D1, 2, 15, 1);
+अटल PAD_PULLCTL_CONF(न_अंकD0_D2, 2, 15, 1);
+अटल PAD_PULLCTL_CONF(न_अंकD0_D3, 2, 15, 1);
+अटल PAD_PULLCTL_CONF(न_अंकD0_D4, 2, 15, 1);
+अटल PAD_PULLCTL_CONF(न_अंकD0_D5, 2, 15, 1);
+अटल PAD_PULLCTL_CONF(न_अंकD0_D6, 2, 15, 1);
+अटल PAD_PULLCTL_CONF(न_अंकD0_D7, 2, 15, 1);
+अटल PAD_PULLCTL_CONF(न_अंकD0_DQSN, 2, 14, 1);
+अटल PAD_PULLCTL_CONF(न_अंकD0_DQS, 2, 13, 1);
+अटल PAD_PULLCTL_CONF(न_अंकD1_D0, 2, 12, 1);
+अटल PAD_PULLCTL_CONF(न_अंकD1_D1, 2, 12, 1);
+अटल PAD_PULLCTL_CONF(न_अंकD1_D2, 2, 12, 1);
+अटल PAD_PULLCTL_CONF(न_अंकD1_D3, 2, 12, 1);
+अटल PAD_PULLCTL_CONF(न_अंकD1_D4, 2, 12, 1);
+अटल PAD_PULLCTL_CONF(न_अंकD1_D5, 2, 12, 1);
+अटल PAD_PULLCTL_CONF(न_अंकD1_D6, 2, 12, 1);
+अटल PAD_PULLCTL_CONF(न_अंकD1_D7, 2, 12, 1);
+अटल PAD_PULLCTL_CONF(न_अंकD1_DQSN, 2, 11, 1);
+अटल PAD_PULLCTL_CONF(न_अंकD1_DQS, 2, 10, 1);
+अटल PAD_PULLCTL_CONF(SGPIO2, 2, 8, 2);
+अटल PAD_PULLCTL_CONF(SGPIO3, 2, 6, 2);
+अटल PAD_PULLCTL_CONF(UART4_RX, 2, 4, 2);
+अटल PAD_PULLCTL_CONF(UART4_TX, 2, 2, 2);
 
 /* PAD_ST0 */
-static PAD_ST_CONF(I2C0_SDATA, 0, 30, 1);
-static PAD_ST_CONF(UART0_RX, 0, 29, 1);
-static PAD_ST_CONF(ETH_MDC, 0, 28, 1);
-static PAD_ST_CONF(I2S_MCLK1, 0, 23, 1);
-static PAD_ST_CONF(ETH_REF_CLK, 0, 22, 1);
-static PAD_ST_CONF(ETH_TXEN, 0, 21, 1);
-static PAD_ST_CONF(ETH_TXD0, 0, 20, 1);
-static PAD_ST_CONF(I2S_LRCLK1, 0, 19, 1);
-static PAD_ST_CONF(SGPIO2, 0, 18, 1);
-static PAD_ST_CONF(SGPIO3, 0, 17, 1);
-static PAD_ST_CONF(UART4_TX, 0, 16, 1);
-static PAD_ST_CONF(I2S_D1, 0, 15, 1);
-static PAD_ST_CONF(UART0_TX, 0, 14, 1);
-static PAD_ST_CONF(SPI0_SCLK, 0, 13, 1);
-static PAD_ST_CONF(SD0_CLK, 0, 12, 1);
-static PAD_ST_CONF(ERAM_A5, 0, 11, 1);
-static PAD_ST_CONF(I2C0_SCLK, 0, 7, 1);
-static PAD_ST_CONF(ERAM_A9, 0, 6, 1);
-static PAD_ST_CONF(LVDS_OEP, 0, 5, 1);
-static PAD_ST_CONF(LVDS_ODN, 0, 4, 1);
-static PAD_ST_CONF(LVDS_OAP, 0, 3, 1);
-static PAD_ST_CONF(I2S_BCLK1, 0, 2, 1);
+अटल PAD_ST_CONF(I2C0_SDATA, 0, 30, 1);
+अटल PAD_ST_CONF(UART0_RX, 0, 29, 1);
+अटल PAD_ST_CONF(ETH_MDC, 0, 28, 1);
+अटल PAD_ST_CONF(I2S_MCLK1, 0, 23, 1);
+अटल PAD_ST_CONF(ETH_REF_CLK, 0, 22, 1);
+अटल PAD_ST_CONF(ETH_TXEN, 0, 21, 1);
+अटल PAD_ST_CONF(ETH_TXD0, 0, 20, 1);
+अटल PAD_ST_CONF(I2S_LRCLK1, 0, 19, 1);
+अटल PAD_ST_CONF(SGPIO2, 0, 18, 1);
+अटल PAD_ST_CONF(SGPIO3, 0, 17, 1);
+अटल PAD_ST_CONF(UART4_TX, 0, 16, 1);
+अटल PAD_ST_CONF(I2S_D1, 0, 15, 1);
+अटल PAD_ST_CONF(UART0_TX, 0, 14, 1);
+अटल PAD_ST_CONF(SPI0_SCLK, 0, 13, 1);
+अटल PAD_ST_CONF(SD0_CLK, 0, 12, 1);
+अटल PAD_ST_CONF(ERAM_A5, 0, 11, 1);
+अटल PAD_ST_CONF(I2C0_SCLK, 0, 7, 1);
+अटल PAD_ST_CONF(ERAM_A9, 0, 6, 1);
+अटल PAD_ST_CONF(LVDS_OEP, 0, 5, 1);
+अटल PAD_ST_CONF(LVDS_ODN, 0, 4, 1);
+अटल PAD_ST_CONF(LVDS_OAP, 0, 3, 1);
+अटल PAD_ST_CONF(I2S_BCLK1, 0, 2, 1);
 
 /* PAD_ST1 */
-static PAD_ST_CONF(I2S_LRCLK0, 1, 29, 1);
-static PAD_ST_CONF(UART4_RX, 1, 28, 1);
-static PAD_ST_CONF(UART3_CTSB, 1, 27, 1);
-static PAD_ST_CONF(UART3_RTSB, 1, 26, 1);
-static PAD_ST_CONF(UART3_RX, 1, 25, 1);
-static PAD_ST_CONF(UART2_RTSB, 1, 24, 1);
-static PAD_ST_CONF(UART2_CTSB, 1, 23, 1);
-static PAD_ST_CONF(UART2_RX, 1, 22, 1);
-static PAD_ST_CONF(ETH_RXD0, 1, 21, 1);
-static PAD_ST_CONF(ETH_RXD1, 1, 20, 1);
-static PAD_ST_CONF(ETH_CRS_DV, 1, 19, 1);
-static PAD_ST_CONF(ETH_RXER, 1, 18, 1);
-static PAD_ST_CONF(ETH_TXD1, 1, 17, 1);
-static PAD_ST_CONF(LVDS_OCP, 1, 16, 1);
-static PAD_ST_CONF(LVDS_OBP, 1, 15, 1);
-static PAD_ST_CONF(LVDS_OBN, 1, 14, 1);
-static PAD_ST_CONF(PCM1_OUT, 1, 12, 1);
-static PAD_ST_CONF(PCM1_CLK, 1, 11, 1);
-static PAD_ST_CONF(PCM1_IN, 1, 10, 1);
-static PAD_ST_CONF(PCM1_SYNC, 1, 9, 1);
-static PAD_ST_CONF(I2C1_SCLK, 1, 8, 1);
-static PAD_ST_CONF(I2C1_SDATA, 1, 7, 1);
-static PAD_ST_CONF(I2C2_SCLK, 1, 6, 1);
-static PAD_ST_CONF(I2C2_SDATA, 1, 5, 1);
-static PAD_ST_CONF(SPI0_MOSI, 1, 4, 1);
-static PAD_ST_CONF(SPI0_MISO, 1, 3, 1);
-static PAD_ST_CONF(SPI0_SS, 1, 2, 1);
-static PAD_ST_CONF(I2S_BCLK0, 1, 1, 1);
-static PAD_ST_CONF(I2S_MCLK0, 1, 0, 1);
+अटल PAD_ST_CONF(I2S_LRCLK0, 1, 29, 1);
+अटल PAD_ST_CONF(UART4_RX, 1, 28, 1);
+अटल PAD_ST_CONF(UART3_CTSB, 1, 27, 1);
+अटल PAD_ST_CONF(UART3_RTSB, 1, 26, 1);
+अटल PAD_ST_CONF(UART3_RX, 1, 25, 1);
+अटल PAD_ST_CONF(UART2_RTSB, 1, 24, 1);
+अटल PAD_ST_CONF(UART2_CTSB, 1, 23, 1);
+अटल PAD_ST_CONF(UART2_RX, 1, 22, 1);
+अटल PAD_ST_CONF(ETH_RXD0, 1, 21, 1);
+अटल PAD_ST_CONF(ETH_RXD1, 1, 20, 1);
+अटल PAD_ST_CONF(ETH_CRS_DV, 1, 19, 1);
+अटल PAD_ST_CONF(ETH_RXER, 1, 18, 1);
+अटल PAD_ST_CONF(ETH_TXD1, 1, 17, 1);
+अटल PAD_ST_CONF(LVDS_OCP, 1, 16, 1);
+अटल PAD_ST_CONF(LVDS_OBP, 1, 15, 1);
+अटल PAD_ST_CONF(LVDS_OBN, 1, 14, 1);
+अटल PAD_ST_CONF(PCM1_OUT, 1, 12, 1);
+अटल PAD_ST_CONF(PCM1_CLK, 1, 11, 1);
+अटल PAD_ST_CONF(PCM1_IN, 1, 10, 1);
+अटल PAD_ST_CONF(PCM1_SYNC, 1, 9, 1);
+अटल PAD_ST_CONF(I2C1_SCLK, 1, 8, 1);
+अटल PAD_ST_CONF(I2C1_SDATA, 1, 7, 1);
+अटल PAD_ST_CONF(I2C2_SCLK, 1, 6, 1);
+अटल PAD_ST_CONF(I2C2_SDATA, 1, 5, 1);
+अटल PAD_ST_CONF(SPI0_MOSI, 1, 4, 1);
+अटल PAD_ST_CONF(SPI0_MISO, 1, 3, 1);
+अटल PAD_ST_CONF(SPI0_SS, 1, 2, 1);
+अटल PAD_ST_CONF(I2S_BCLK0, 1, 1, 1);
+अटल PAD_ST_CONF(I2S_MCLK0, 1, 0, 1);
 
 /* Pad info table */
-static const struct owl_padinfo s900_padinfo[NUM_PADS] = {
+अटल स्थिर काष्ठा owl_padinfo s900_padinfo[NUM_PADS] = अणु
 	[ETH_TXD0] = PAD_INFO_ST(ETH_TXD0),
 	[ETH_TXD1] = PAD_INFO_ST(ETH_TXD1),
 	[ETH_TXEN] = PAD_INFO_ST(ETH_TXEN),
@@ -1671,117 +1672,117 @@ static const struct owl_padinfo s900_padinfo[NUM_PADS] = {
 	[CSI1_CN] = PAD_INFO(CSI1_CN),
 	[CSI1_CP] = PAD_INFO(CSI1_CP),
 	[SENSOR0_CKOUT] = PAD_INFO(SENSOR0_CKOUT),
-	[NAND0_D0] = PAD_INFO_PULLCTL(NAND0_D0),
-	[NAND0_D1] = PAD_INFO_PULLCTL(NAND0_D1),
-	[NAND0_D2] = PAD_INFO_PULLCTL(NAND0_D2),
-	[NAND0_D3] = PAD_INFO_PULLCTL(NAND0_D3),
-	[NAND0_D4] = PAD_INFO_PULLCTL(NAND0_D4),
-	[NAND0_D5] = PAD_INFO_PULLCTL(NAND0_D5),
-	[NAND0_D6] = PAD_INFO_PULLCTL(NAND0_D6),
-	[NAND0_D7] = PAD_INFO_PULLCTL(NAND0_D7),
-	[NAND0_DQS] = PAD_INFO_PULLCTL(NAND0_DQS),
-	[NAND0_DQSN] = PAD_INFO_PULLCTL(NAND0_DQSN),
-	[NAND0_ALE] = PAD_INFO(NAND0_ALE),
-	[NAND0_CLE] = PAD_INFO(NAND0_CLE),
-	[NAND0_CEB0] = PAD_INFO(NAND0_CEB0),
-	[NAND0_CEB1] = PAD_INFO(NAND0_CEB1),
-	[NAND0_CEB2] = PAD_INFO(NAND0_CEB2),
-	[NAND0_CEB3] = PAD_INFO(NAND0_CEB3),
-	[NAND1_D0] = PAD_INFO_PULLCTL(NAND1_D0),
-	[NAND1_D1] = PAD_INFO_PULLCTL(NAND1_D1),
-	[NAND1_D2] = PAD_INFO_PULLCTL(NAND1_D2),
-	[NAND1_D3] = PAD_INFO_PULLCTL(NAND1_D3),
-	[NAND1_D4] = PAD_INFO_PULLCTL(NAND1_D4),
-	[NAND1_D5] = PAD_INFO_PULLCTL(NAND1_D5),
-	[NAND1_D6] = PAD_INFO_PULLCTL(NAND1_D6),
-	[NAND1_D7] = PAD_INFO_PULLCTL(NAND1_D7),
-	[NAND1_DQS] = PAD_INFO_PULLCTL(NAND1_DQS),
-	[NAND1_DQSN] = PAD_INFO_PULLCTL(NAND1_DQSN),
-	[NAND1_ALE] = PAD_INFO(NAND1_ALE),
-	[NAND1_CLE] = PAD_INFO(NAND1_CLE),
-	[NAND1_CEB0] = PAD_INFO(NAND1_CEB0),
-	[NAND1_CEB1] = PAD_INFO(NAND1_CEB1),
-	[NAND1_CEB2] = PAD_INFO(NAND1_CEB2),
-	[NAND1_CEB3] = PAD_INFO(NAND1_CEB3),
+	[न_अंकD0_D0] = PAD_INFO_PULLCTL(न_अंकD0_D0),
+	[न_अंकD0_D1] = PAD_INFO_PULLCTL(न_अंकD0_D1),
+	[न_अंकD0_D2] = PAD_INFO_PULLCTL(न_अंकD0_D2),
+	[न_अंकD0_D3] = PAD_INFO_PULLCTL(न_अंकD0_D3),
+	[न_अंकD0_D4] = PAD_INFO_PULLCTL(न_अंकD0_D4),
+	[न_अंकD0_D5] = PAD_INFO_PULLCTL(न_अंकD0_D5),
+	[न_अंकD0_D6] = PAD_INFO_PULLCTL(न_अंकD0_D6),
+	[न_अंकD0_D7] = PAD_INFO_PULLCTL(न_अंकD0_D7),
+	[न_अंकD0_DQS] = PAD_INFO_PULLCTL(न_अंकD0_DQS),
+	[न_अंकD0_DQSN] = PAD_INFO_PULLCTL(न_अंकD0_DQSN),
+	[न_अंकD0_ALE] = PAD_INFO(न_अंकD0_ALE),
+	[न_अंकD0_CLE] = PAD_INFO(न_अंकD0_CLE),
+	[न_अंकD0_CEB0] = PAD_INFO(न_अंकD0_CEB0),
+	[न_अंकD0_CEB1] = PAD_INFO(न_अंकD0_CEB1),
+	[न_अंकD0_CEB2] = PAD_INFO(न_अंकD0_CEB2),
+	[न_अंकD0_CEB3] = PAD_INFO(न_अंकD0_CEB3),
+	[न_अंकD1_D0] = PAD_INFO_PULLCTL(न_अंकD1_D0),
+	[न_अंकD1_D1] = PAD_INFO_PULLCTL(न_अंकD1_D1),
+	[न_अंकD1_D2] = PAD_INFO_PULLCTL(न_अंकD1_D2),
+	[न_अंकD1_D3] = PAD_INFO_PULLCTL(न_अंकD1_D3),
+	[न_अंकD1_D4] = PAD_INFO_PULLCTL(न_अंकD1_D4),
+	[न_अंकD1_D5] = PAD_INFO_PULLCTL(न_अंकD1_D5),
+	[न_अंकD1_D6] = PAD_INFO_PULLCTL(न_अंकD1_D6),
+	[न_अंकD1_D7] = PAD_INFO_PULLCTL(न_अंकD1_D7),
+	[न_अंकD1_DQS] = PAD_INFO_PULLCTL(न_अंकD1_DQS),
+	[न_अंकD1_DQSN] = PAD_INFO_PULLCTL(न_अंकD1_DQSN),
+	[न_अंकD1_ALE] = PAD_INFO(न_अंकD1_ALE),
+	[न_अंकD1_CLE] = PAD_INFO(न_अंकD1_CLE),
+	[न_अंकD1_CEB0] = PAD_INFO(न_अंकD1_CEB0),
+	[न_अंकD1_CEB1] = PAD_INFO(न_अंकD1_CEB1),
+	[न_अंकD1_CEB2] = PAD_INFO(न_अंकD1_CEB2),
+	[न_अंकD1_CEB3] = PAD_INFO(न_अंकD1_CEB3),
 	[SGPIO0] = PAD_INFO(SGPIO0),
 	[SGPIO1] = PAD_INFO(SGPIO1),
 	[SGPIO2] = PAD_INFO_PULLCTL_ST(SGPIO2),
 	[SGPIO3] = PAD_INFO_PULLCTL_ST(SGPIO3)
-};
+पूर्ण;
 
-static const struct owl_gpio_port s900_gpio_ports[] = {
+अटल स्थिर काष्ठा owl_gpio_port s900_gpio_ports[] = अणु
 	OWL_GPIO_PORT(A, 0x0000, 32, 0x0, 0x4, 0x8, 0x204, 0x208, 0x20C, 0x240, 0),
 	OWL_GPIO_PORT(B, 0x000C, 32, 0x0, 0x4, 0x8, 0x534, 0x204, 0x208, 0x23C, 0),
 	OWL_GPIO_PORT(C, 0x0018, 12, 0x0, 0x4, 0x8, 0x52C, 0x200, 0x204, 0x238, 0),
 	OWL_GPIO_PORT(D, 0x0024, 30, 0x0, 0x4, 0x8, 0x524, 0x1FC, 0x200, 0x234, 0),
 	OWL_GPIO_PORT(E, 0x0030, 32, 0x0, 0x4, 0x8, 0x51C, 0x1F8, 0x1FC, 0x230, 0),
 	OWL_GPIO_PORT(F, 0x00F0, 8, 0x0, 0x4, 0x8, 0x460, 0x140, 0x144, 0x178, 0)
-};
+पूर्ण;
 
-enum s900_pinconf_pull {
+क्रमागत s900_pinconf_pull अणु
 	OWL_PINCONF_PULL_HIZ,
 	OWL_PINCONF_PULL_DOWN,
 	OWL_PINCONF_PULL_UP,
 	OWL_PINCONF_PULL_HOLD,
-};
+पूर्ण;
 
-static int s900_pad_pinconf_arg2val(const struct owl_padinfo *info,
-				unsigned int param,
+अटल पूर्णांक s900_pad_pinconf_arg2val(स्थिर काष्ठा owl_padinfo *info,
+				अचिन्हित पूर्णांक param,
 				u32 *arg)
-{
-	switch (param) {
-	case PIN_CONFIG_BIAS_BUS_HOLD:
+अणु
+	चयन (param) अणु
+	हाल PIN_CONFIG_BIAS_BUS_HOLD:
 		*arg = OWL_PINCONF_PULL_HOLD;
-		break;
-	case PIN_CONFIG_BIAS_HIGH_IMPEDANCE:
+		अवरोध;
+	हाल PIN_CONFIG_BIAS_HIGH_IMPEDANCE:
 		*arg = OWL_PINCONF_PULL_HIZ;
-		break;
-	case PIN_CONFIG_BIAS_PULL_DOWN:
+		अवरोध;
+	हाल PIN_CONFIG_BIAS_PULL_DOWN:
 		*arg = OWL_PINCONF_PULL_DOWN;
-		break;
-	case PIN_CONFIG_BIAS_PULL_UP:
+		अवरोध;
+	हाल PIN_CONFIG_BIAS_PULL_UP:
 		*arg = OWL_PINCONF_PULL_UP;
-		break;
-	case PIN_CONFIG_INPUT_SCHMITT_ENABLE:
+		अवरोध;
+	हाल PIN_CONFIG_INPUT_SCHMITT_ENABLE:
 		*arg = (*arg >= 1 ? 1 : 0);
-		break;
-	default:
-		return -ENOTSUPP;
-	}
+		अवरोध;
+	शेष:
+		वापस -ENOTSUPP;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int s900_pad_pinconf_val2arg(const struct owl_padinfo *padinfo,
-				unsigned int param,
+अटल पूर्णांक s900_pad_pinconf_val2arg(स्थिर काष्ठा owl_padinfo *padinfo,
+				अचिन्हित पूर्णांक param,
 				u32 *arg)
-{
-	switch (param) {
-	case PIN_CONFIG_BIAS_BUS_HOLD:
+अणु
+	चयन (param) अणु
+	हाल PIN_CONFIG_BIAS_BUS_HOLD:
 		*arg = *arg == OWL_PINCONF_PULL_HOLD;
-		break;
-	case PIN_CONFIG_BIAS_HIGH_IMPEDANCE:
+		अवरोध;
+	हाल PIN_CONFIG_BIAS_HIGH_IMPEDANCE:
 		*arg = *arg == OWL_PINCONF_PULL_HIZ;
-		break;
-	case PIN_CONFIG_BIAS_PULL_DOWN:
+		अवरोध;
+	हाल PIN_CONFIG_BIAS_PULL_DOWN:
 		*arg = *arg == OWL_PINCONF_PULL_DOWN;
-		break;
-	case PIN_CONFIG_BIAS_PULL_UP:
+		अवरोध;
+	हाल PIN_CONFIG_BIAS_PULL_UP:
 		*arg = *arg == OWL_PINCONF_PULL_UP;
-		break;
-	case PIN_CONFIG_INPUT_SCHMITT_ENABLE:
+		अवरोध;
+	हाल PIN_CONFIG_INPUT_SCHMITT_ENABLE:
 		*arg = *arg == 1;
-		break;
-	default:
-		return -ENOTSUPP;
-	}
+		अवरोध;
+	शेष:
+		वापस -ENOTSUPP;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct owl_pinctrl_soc_data s900_pinctrl_data = {
+अटल काष्ठा owl_pinctrl_soc_data s900_pinctrl_data = अणु
 	.padinfo = s900_padinfo,
-	.pins = (const struct pinctrl_pin_desc *)s900_pads,
+	.pins = (स्थिर काष्ठा pinctrl_pin_desc *)s900_pads,
 	.npins = ARRAY_SIZE(s900_pads),
 	.functions = s900_functions,
 	.nfunctions = ARRAY_SIZE(s900_functions),
@@ -1792,37 +1793,37 @@ static struct owl_pinctrl_soc_data s900_pinctrl_data = {
 	.nports = ARRAY_SIZE(s900_gpio_ports),
 	.padctl_arg2val = s900_pad_pinconf_arg2val,
 	.padctl_val2arg = s900_pad_pinconf_val2arg,
-};
+पूर्ण;
 
-static int s900_pinctrl_probe(struct platform_device *pdev)
-{
-	return owl_pinctrl_probe(pdev, &s900_pinctrl_data);
-}
+अटल पूर्णांक s900_pinctrl_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	वापस owl_pinctrl_probe(pdev, &s900_pinctrl_data);
+पूर्ण
 
-static const struct of_device_id s900_pinctrl_of_match[] = {
-	{ .compatible = "actions,s900-pinctrl", },
-	{ }
-};
+अटल स्थिर काष्ठा of_device_id s900_pinctrl_of_match[] = अणु
+	अणु .compatible = "actions,s900-pinctrl", पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 
-static struct platform_driver s900_pinctrl_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver s900_pinctrl_driver = अणु
+	.driver = अणु
 		.name = "pinctrl-s900",
 		.of_match_table = of_match_ptr(s900_pinctrl_of_match),
-	},
+	पूर्ण,
 	.probe = s900_pinctrl_probe,
-};
+पूर्ण;
 
-static int __init s900_pinctrl_init(void)
-{
-	return platform_driver_register(&s900_pinctrl_driver);
-}
+अटल पूर्णांक __init s900_pinctrl_init(व्योम)
+अणु
+	वापस platक्रमm_driver_रेजिस्टर(&s900_pinctrl_driver);
+पूर्ण
 arch_initcall(s900_pinctrl_init);
 
-static void __exit s900_pinctrl_exit(void)
-{
-	platform_driver_unregister(&s900_pinctrl_driver);
-}
-module_exit(s900_pinctrl_exit);
+अटल व्योम __निकास s900_pinctrl_निकास(व्योम)
+अणु
+	platक्रमm_driver_unरेजिस्टर(&s900_pinctrl_driver);
+पूर्ण
+module_निकास(s900_pinctrl_निकास);
 
 MODULE_AUTHOR("Actions Semi Inc.");
 MODULE_AUTHOR("Manivannan Sadhasivam <manivannan.sadhasivam@linaro.org>");

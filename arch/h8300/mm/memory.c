@@ -1,8 +1,9 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  *  linux/arch/h8300/mm/memory.c
  *
- *  Copyright (C) 2002  Yoshinori Sato <ysato@users.sourceforge.jp>,
+ *  Copyright (C) 2002  Yoshinori Sato <ysato@users.sourceक्रमge.jp>,
  *
  *  Based on:
  *
@@ -15,39 +16,39 @@
  *
  *  linux/arch/m68k/mm/memory.c
  *
- *  Copyright (C) 1995  Hamish Macdonald
+ *  Copyright (C) 1995  Hamish Macकरोnald
  */
 
-#include <linux/mm.h>
-#include <linux/kernel.h>
-#include <linux/string.h>
-#include <linux/types.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/types.h>
 
-#include <asm/setup.h>
-#include <asm/segment.h>
-#include <asm/page.h>
-#include <asm/traps.h>
-#include <asm/io.h>
+#समावेश <यंत्र/setup.h>
+#समावेश <यंत्र/segment.h>
+#समावेश <यंत्र/page.h>
+#समावेश <यंत्र/traps.h>
+#समावेश <यंत्र/पन.स>
 
-void cache_clear(unsigned long paddr, int len)
-{
-}
+व्योम cache_clear(अचिन्हित दीर्घ paddr, पूर्णांक len)
+अणु
+पूर्ण
 
 
-void cache_push(unsigned long paddr, int len)
-{
-}
+व्योम cache_push(अचिन्हित दीर्घ paddr, पूर्णांक len)
+अणु
+पूर्ण
 
-void cache_push_v(unsigned long vaddr, int len)
-{
-}
+व्योम cache_push_v(अचिन्हित दीर्घ vaddr, पूर्णांक len)
+अणु
+पूर्ण
 
 /*
- * Map some physical address range into the kernel address space.
+ * Map some physical address range पूर्णांकo the kernel address space.
  */
 
-unsigned long kernel_map(unsigned long paddr, unsigned long size,
-			 int nocacheflag, unsigned long *memavailp)
-{
-	return paddr;
-}
+अचिन्हित दीर्घ kernel_map(अचिन्हित दीर्घ paddr, अचिन्हित दीर्घ size,
+			 पूर्णांक nocacheflag, अचिन्हित दीर्घ *memavailp)
+अणु
+	वापस paddr;
+पूर्ण

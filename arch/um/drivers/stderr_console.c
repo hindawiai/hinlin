@@ -1,63 +1,64 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <linux/kernel.h>
-#include <linux/init.h>
-#include <linux/console.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <linux/kernel.h>
+#समावेश <linux/init.h>
+#समावेश <linux/console.h>
 
-#include "chan_user.h"
+#समावेश "chan_user.h"
 
 /* ----------------------------------------------------------------------------- */
-/* trivial console driver -- simply dump everything to stderr                    */
+/* trivial console driver -- simply dump everything to मानक_त्रुटि                    */
 
 /*
- * Don't register by default -- as this registers very early in the
- * boot process it becomes the default console.
+ * Don't रेजिस्टर by शेष -- as this रेजिस्टरs very early in the
+ * boot process it becomes the शेष console.
  *
- * Initialized at init time.
+ * Initialized at init समय.
  */
-static int use_stderr_console = 0;
+अटल पूर्णांक use_मानक_त्रुटि_console = 0;
 
-static void stderr_console_write(struct console *console, const char *string,
-				 unsigned len)
-{
-	generic_write(2 /* stderr */, string, len, NULL);
-}
+अटल व्योम मानक_त्रुटि_console_ग_लिखो(काष्ठा console *console, स्थिर अक्षर *string,
+				 अचिन्हित len)
+अणु
+	generic_ग_लिखो(2 /* मानक_त्रुटि */, string, len, शून्य);
+पूर्ण
 
-static struct console stderr_console = {
+अटल काष्ठा console मानक_त्रुटि_console = अणु
 	.name		= "stderr",
-	.write		= stderr_console_write,
+	.ग_लिखो		= मानक_त्रुटि_console_ग_लिखो,
 	.flags		= CON_PRINTBUFFER,
-};
+पूर्ण;
 
-static int __init stderr_console_init(void)
-{
-	if (use_stderr_console)
-		register_console(&stderr_console);
-	return 0;
-}
-console_initcall(stderr_console_init);
+अटल पूर्णांक __init मानक_त्रुटि_console_init(व्योम)
+अणु
+	अगर (use_मानक_त्रुटि_console)
+		रेजिस्टर_console(&मानक_त्रुटि_console);
+	वापस 0;
+पूर्ण
+console_initcall(मानक_त्रुटि_console_init);
 
-static int stderr_setup(char *str)
-{
-	if (!str)
-		return 0;
-	use_stderr_console = simple_strtoul(str,&str,0);
-	return 1;
-}
-__setup("stderr=", stderr_setup);
+अटल पूर्णांक मानक_त्रुटि_setup(अक्षर *str)
+अणु
+	अगर (!str)
+		वापस 0;
+	use_मानक_त्रुटि_console = simple_म_से_अदीर्घ(str,&str,0);
+	वापस 1;
+पूर्ण
+__setup("stderr=", मानक_त्रुटि_setup);
 
-/* The previous behavior of not unregistering led to /dev/console being
- * impossible to open.  My FC5 filesystem started having init die, and the
- * system panicing because of this.  Unregistering causes the real
- * console to become the default console, and /dev/console can then be
- * opened.  Making this an initcall makes this happen late enough that
- * there is no added value in dumping everything to stderr, and the
+/* The previous behavior of not unरेजिस्टरing led to /dev/console being
+ * impossible to खोलो.  My FC5 fileप्रणाली started having init die, and the
+ * प्रणाली panicing because of this.  Unरेजिस्टरing causes the real
+ * console to become the शेष console, and /dev/console can then be
+ * खोलोed.  Making this an initcall makes this happen late enough that
+ * there is no added value in dumping everything to मानक_त्रुटि, and the
  * normal console is good enough to show you all available output.
  */
-static int __init unregister_stderr(void)
-{
-	unregister_console(&stderr_console);
+अटल पूर्णांक __init unरेजिस्टर_मानक_त्रुटि(व्योम)
+अणु
+	unरेजिस्टर_console(&मानक_त्रुटि_console);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-__initcall(unregister_stderr);
+__initcall(unरेजिस्टर_मानक_त्रुटि);

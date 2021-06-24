@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 //
 // originally in linux/arch/arm/plat-s3c24xx/pm.c
 //
@@ -8,226 +9,226 @@
 //
 // S3C Power Mangament - suspend/resume memory corruption check.
 
-#include <linux/kernel.h>
-#include <linux/suspend.h>
-#include <linux/init.h>
-#include <linux/crc32.h>
-#include <linux/ioport.h>
-#include <linux/slab.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/suspend.h>
+#समावेश <linux/init.h>
+#समावेश <linux/crc32.h>
+#समावेश <linux/ioport.h>
+#समावेश <linux/slab.h>
 
-#include <linux/soc/samsung/s3c-pm.h>
+#समावेश <linux/soc/samsung/s3c-pm.h>
 
-#if CONFIG_SAMSUNG_PM_CHECK_CHUNKSIZE < 1
-#error CONFIG_SAMSUNG_PM_CHECK_CHUNKSIZE must be a positive non-zero value
-#endif
+#अगर CONFIG_SAMSUNG_PM_CHECK_CHUNKSIZE < 1
+#त्रुटि CONFIG_SAMSUNG_PM_CHECK_CHUNKSIZE must be a positive non-zero value
+#पूर्ण_अगर
 
 /* suspend checking code...
  *
- * this next area does a set of crc checks over all the installed
- * memory, so the system can verify if the resume was ok.
+ * this next area करोes a set of crc checks over all the installed
+ * memory, so the प्रणाली can verअगरy अगर the resume was ok.
  *
- * CONFIG_SAMSUNG_PM_CHECK_CHUNKSIZE defines the block-size for the CRC,
+ * CONFIG_SAMSUNG_PM_CHECK_CHUNKSIZE defines the block-size क्रम the CRC,
  * increasing it will mean that the area corrupted will be less easy to spot,
  * and reducing the size will cause the CRC save area to grow
 */
 
-#define CHECK_CHUNKSIZE (CONFIG_SAMSUNG_PM_CHECK_CHUNKSIZE * 1024)
+#घोषणा CHECK_CHUNKSIZE (CONFIG_SAMSUNG_PM_CHECK_CHUNKSIZE * 1024)
 
-static u32 crc_size;	/* size needed for the crc block */
-static u32 *crcs;	/* allocated over suspend/resume */
+अटल u32 crc_size;	/* size needed क्रम the crc block */
+अटल u32 *crcs;	/* allocated over suspend/resume */
 
-typedef u32 *(run_fn_t)(struct resource *ptr, u32 *arg);
+प्रकार u32 *(run_fn_t)(काष्ठा resource *ptr, u32 *arg);
 
 /* s3c_pm_run_res
  *
- * go through the given resource list, and look for system ram
+ * go through the given resource list, and look क्रम प्रणाली ram
 */
 
-static void s3c_pm_run_res(struct resource *ptr, run_fn_t fn, u32 *arg)
-{
-	while (ptr != NULL) {
-		if (ptr->child != NULL)
+अटल व्योम s3c_pm_run_res(काष्ठा resource *ptr, run_fn_t fn, u32 *arg)
+अणु
+	जबतक (ptr != शून्य) अणु
+		अगर (ptr->child != शून्य)
 			s3c_pm_run_res(ptr->child, fn, arg);
 
-		if ((ptr->flags & IORESOURCE_SYSTEM_RAM)
-				== IORESOURCE_SYSTEM_RAM) {
+		अगर ((ptr->flags & IORESOURCE_SYSTEM_RAM)
+				== IORESOURCE_SYSTEM_RAM) अणु
 			S3C_PMDBG("Found system RAM at %08lx..%08lx\n",
-				  (unsigned long)ptr->start,
-				  (unsigned long)ptr->end);
+				  (अचिन्हित दीर्घ)ptr->start,
+				  (अचिन्हित दीर्घ)ptr->end);
 			arg = (fn)(ptr, arg);
-		}
+		पूर्ण
 
 		ptr = ptr->sibling;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void s3c_pm_run_sysram(run_fn_t fn, u32 *arg)
-{
+अटल व्योम s3c_pm_run_sysram(run_fn_t fn, u32 *arg)
+अणु
 	s3c_pm_run_res(&iomem_resource, fn, arg);
-}
+पूर्ण
 
-static u32 *s3c_pm_countram(struct resource *res, u32 *val)
-{
+अटल u32 *s3c_pm_countram(काष्ठा resource *res, u32 *val)
+अणु
 	u32 size = (u32)resource_size(res);
 
 	size += CHECK_CHUNKSIZE-1;
 	size /= CHECK_CHUNKSIZE;
 
 	S3C_PMDBG("Area %08lx..%08lx, %d blocks\n",
-		  (unsigned long)res->start, (unsigned long)res->end, size);
+		  (अचिन्हित दीर्घ)res->start, (अचिन्हित दीर्घ)res->end, size);
 
-	*val += size * sizeof(u32);
-	return val;
-}
+	*val += size * माप(u32);
+	वापस val;
+पूर्ण
 
 /* s3c_pm_prepare_check
  *
- * prepare the necessary information for creating the CRCs. This
- * must be done before the final save, as it will require memory
- * allocating, and thus touching bits of the kernel we do not
+ * prepare the necessary inक्रमmation क्रम creating the CRCs. This
+ * must be करोne beक्रमe the final save, as it will require memory
+ * allocating, and thus touching bits of the kernel we करो not
  * know about.
 */
 
-void s3c_pm_check_prepare(void)
-{
+व्योम s3c_pm_check_prepare(व्योम)
+अणु
 	crc_size = 0;
 
 	s3c_pm_run_sysram(s3c_pm_countram, &crc_size);
 
 	S3C_PMDBG("s3c_pm_prepare_check: %u checks needed\n", crc_size);
 
-	crcs = kmalloc(crc_size+4, GFP_KERNEL);
-	if (crcs == NULL)
-		printk(KERN_ERR "Cannot allocated CRC save area\n");
-}
+	crcs = kदो_स्मृति(crc_size+4, GFP_KERNEL);
+	अगर (crcs == शून्य)
+		prपूर्णांकk(KERN_ERR "Cannot allocated CRC save area\n");
+पूर्ण
 
-static u32 *s3c_pm_makecheck(struct resource *res, u32 *val)
-{
-	unsigned long addr, left;
+अटल u32 *s3c_pm_makecheck(काष्ठा resource *res, u32 *val)
+अणु
+	अचिन्हित दीर्घ addr, left;
 
-	for (addr = res->start; addr < res->end;
-	     addr += CHECK_CHUNKSIZE) {
+	क्रम (addr = res->start; addr < res->end;
+	     addr += CHECK_CHUNKSIZE) अणु
 		left = res->end - addr;
 
-		if (left > CHECK_CHUNKSIZE)
+		अगर (left > CHECK_CHUNKSIZE)
 			left = CHECK_CHUNKSIZE;
 
 		*val = crc32_le(~0, phys_to_virt(addr), left);
 		val++;
-	}
+	पूर्ण
 
-	return val;
-}
+	वापस val;
+पूर्ण
 
 /* s3c_pm_check_store
  *
- * compute the CRC values for the memory blocks before the final
+ * compute the CRC values क्रम the memory blocks beक्रमe the final
  * sleep.
 */
 
-void s3c_pm_check_store(void)
-{
-	if (crcs != NULL)
+व्योम s3c_pm_check_store(व्योम)
+अणु
+	अगर (crcs != शून्य)
 		s3c_pm_run_sysram(s3c_pm_makecheck, crcs);
-}
+पूर्ण
 
 /* in_region
  *
- * return TRUE if the area defined by ptr..ptr+size contains the
+ * वापस TRUE अगर the area defined by ptr..ptr+size contains the
  * what..what+whatsz
 */
 
-static inline int in_region(void *ptr, int size, void *what, size_t whatsz)
-{
-	if ((what+whatsz) < ptr)
-		return 0;
+अटल अंतरभूत पूर्णांक in_region(व्योम *ptr, पूर्णांक size, व्योम *what, माप_प्रकार whatsz)
+अणु
+	अगर ((what+whatsz) < ptr)
+		वापस 0;
 
-	if (what > (ptr+size))
-		return 0;
+	अगर (what > (ptr+size))
+		वापस 0;
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
 /**
  * s3c_pm_runcheck() - helper to check a resource on restore.
  * @res: The resource to check
- * @val: Pointer to list of CRC32 values to check.
+ * @val: Poपूर्णांकer to list of CRC32 values to check.
  *
  * Called from the s3c_pm_check_restore() via s3c_pm_run_sysram(), this
  * function runs the given memory resource checking it against the stored
  * CRC to ensure that memory is restored. The function tries to skip as
  * many of the areas used during the suspend process.
  */
-static u32 *s3c_pm_runcheck(struct resource *res, u32 *val)
-{
-	unsigned long addr;
-	unsigned long left;
-	void *stkpage;
-	void *ptr;
+अटल u32 *s3c_pm_runcheck(काष्ठा resource *res, u32 *val)
+अणु
+	अचिन्हित दीर्घ addr;
+	अचिन्हित दीर्घ left;
+	व्योम *stkpage;
+	व्योम *ptr;
 	u32 calc;
 
-	stkpage = (void *)((u32)&calc & ~PAGE_MASK);
+	stkpage = (व्योम *)((u32)&calc & ~PAGE_MASK);
 
-	for (addr = res->start; addr < res->end;
-	     addr += CHECK_CHUNKSIZE) {
+	क्रम (addr = res->start; addr < res->end;
+	     addr += CHECK_CHUNKSIZE) अणु
 		left = res->end - addr;
 
-		if (left > CHECK_CHUNKSIZE)
+		अगर (left > CHECK_CHUNKSIZE)
 			left = CHECK_CHUNKSIZE;
 
 		ptr = phys_to_virt(addr);
 
-		if (in_region(ptr, left, stkpage, 4096)) {
+		अगर (in_region(ptr, left, stkpage, 4096)) अणु
 			S3C_PMDBG("skipping %08lx, has stack in\n", addr);
-			goto skip_check;
-		}
+			जाओ skip_check;
+		पूर्ण
 
-		if (in_region(ptr, left, crcs, crc_size)) {
+		अगर (in_region(ptr, left, crcs, crc_size)) अणु
 			S3C_PMDBG("skipping %08lx, has crc block in\n", addr);
-			goto skip_check;
-		}
+			जाओ skip_check;
+		पूर्ण
 
 		/* calculate and check the checksum */
 
 		calc = crc32_le(~0, ptr, left);
-		if (calc != *val) {
-			printk(KERN_ERR "Restore CRC error at "
+		अगर (calc != *val) अणु
+			prपूर्णांकk(KERN_ERR "Restore CRC error at "
 			       "%08lx (%08x vs %08x)\n", addr, calc, *val);
 
 			S3C_PMDBG("Restore CRC error at %08lx (%08x vs %08x)\n",
 			    addr, calc, *val);
-		}
+		पूर्ण
 
 	skip_check:
 		val++;
-	}
+	पूर्ण
 
-	return val;
-}
+	वापस val;
+पूर्ण
 
 /**
  * s3c_pm_check_restore() - memory check called on resume
  *
- * check the CRCs after the restore event and free the memory used
+ * check the CRCs after the restore event and मुक्त the memory used
  * to hold them
 */
-void s3c_pm_check_restore(void)
-{
-	if (crcs != NULL)
+व्योम s3c_pm_check_restore(व्योम)
+अणु
+	अगर (crcs != शून्य)
 		s3c_pm_run_sysram(s3c_pm_runcheck, crcs);
-}
+पूर्ण
 
 /**
- * s3c_pm_check_cleanup() - free memory resources
+ * s3c_pm_check_cleanup() - मुक्त memory resources
  *
  * Free the resources that where allocated by the suspend
- * memory check code. We do this separately from the
+ * memory check code. We करो this separately from the
  * s3c_pm_check_restore() function as we cannot call any
  * functions that might sleep during that resume.
  */
-void s3c_pm_check_cleanup(void)
-{
-	kfree(crcs);
-	crcs = NULL;
-}
+व्योम s3c_pm_check_cleanup(व्योम)
+अणु
+	kमुक्त(crcs);
+	crcs = शून्य;
+पूर्ण
 

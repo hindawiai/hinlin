@@ -1,56 +1,57 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- * Marvell EBU SoC common clock handling
+ * Marvell EBU SoC common घड़ी handling
  *
  * Copyright (C) 2012 Marvell
  *
- * Gregory CLEMENT <gregory.clement@free-electrons.com>
+ * Gregory CLEMENT <gregory.clement@मुक्त-electrons.com>
  * Sebastian Hesselbarth <sebastian.hesselbarth@gmail.com>
  * Andrew Lunn <andrew@lunn.ch>
  *
  */
 
-#ifndef __CLK_MVEBU_COMMON_H_
-#define __CLK_MVEBU_COMMON_H_
+#अगर_अघोषित __CLK_MVEBU_COMMON_H_
+#घोषणा __CLK_MVEBU_COMMON_H_
 
-#include <linux/kernel.h>
+#समावेश <linux/kernel.h>
 
-extern spinlock_t ctrl_gating_lock;
+बाह्य spinlock_t ctrl_gating_lock;
 
-struct device_node;
+काष्ठा device_node;
 
-struct coreclk_ratio {
-	int id;
-	const char *name;
-};
+काष्ठा coreclk_ratio अणु
+	पूर्णांक id;
+	स्थिर अक्षर *name;
+पूर्ण;
 
-struct coreclk_soc_desc {
-	u32 (*get_tclk_freq)(void __iomem *sar);
-	u32 (*get_cpu_freq)(void __iomem *sar);
-	void (*get_clk_ratio)(void __iomem *sar, int id, int *mult, int *div);
-	u32 (*get_refclk_freq)(void __iomem *sar);
-	bool (*is_sscg_enabled)(void __iomem *sar);
-	u32 (*fix_sscg_deviation)(u32 system_clk);
-	const struct coreclk_ratio *ratios;
-	int num_ratios;
-};
+काष्ठा coreclk_soc_desc अणु
+	u32 (*get_tclk_freq)(व्योम __iomem *sar);
+	u32 (*get_cpu_freq)(व्योम __iomem *sar);
+	व्योम (*get_clk_ratio)(व्योम __iomem *sar, पूर्णांक id, पूर्णांक *mult, पूर्णांक *भाग);
+	u32 (*get_refclk_freq)(व्योम __iomem *sar);
+	bool (*is_sscg_enabled)(व्योम __iomem *sar);
+	u32 (*fix_sscg_deviation)(u32 प्रणाली_clk);
+	स्थिर काष्ठा coreclk_ratio *ratios;
+	पूर्णांक num_ratios;
+पूर्ण;
 
-struct clk_gating_soc_desc {
-	const char *name;
-	const char *parent;
-	int bit_idx;
-	unsigned long flags;
-};
+काष्ठा clk_gating_soc_desc अणु
+	स्थिर अक्षर *name;
+	स्थिर अक्षर *parent;
+	पूर्णांक bit_idx;
+	अचिन्हित दीर्घ flags;
+पूर्ण;
 
-void __init mvebu_coreclk_setup(struct device_node *np,
-				const struct coreclk_soc_desc *desc);
+व्योम __init mvebu_coreclk_setup(काष्ठा device_node *np,
+				स्थिर काष्ठा coreclk_soc_desc *desc);
 
-void __init mvebu_clk_gating_setup(struct device_node *np,
-				   const struct clk_gating_soc_desc *desc);
+व्योम __init mvebu_clk_gating_setup(काष्ठा device_node *np,
+				   स्थिर काष्ठा clk_gating_soc_desc *desc);
 
 /*
  * This function is shared among the Kirkwood, Armada 370, Armada XP
  * and Armada 375 SoC
  */
-u32 kirkwood_fix_sscg_deviation(u32 system_clk);
-#endif
+u32 kirkwood_fix_sscg_deviation(u32 प्रणाली_clk);
+#पूर्ण_अगर

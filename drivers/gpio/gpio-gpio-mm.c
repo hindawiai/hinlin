@@ -1,136 +1,137 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * GPIO driver for the Diamond Systems GPIO-MM
+ * GPIO driver क्रम the Diamond Systems GPIO-MM
  * Copyright (C) 2016 William Breathitt Gray
  *
  * This driver supports the following Diamond Systems devices: GPIO-MM and
  * GPIO-MM-12.
  */
-#include <linux/bitmap.h>
-#include <linux/bitops.h>
-#include <linux/device.h>
-#include <linux/errno.h>
-#include <linux/gpio/driver.h>
-#include <linux/io.h>
-#include <linux/ioport.h>
-#include <linux/isa.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/moduleparam.h>
-#include <linux/spinlock.h>
+#समावेश <linux/biपंचांगap.h>
+#समावेश <linux/bitops.h>
+#समावेश <linux/device.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/gpio/driver.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/ioport.h>
+#समावेश <linux/isa.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/moduleparam.h>
+#समावेश <linux/spinlock.h>
 
-#define GPIOMM_EXTENT 8
-#define MAX_NUM_GPIOMM max_num_isa_dev(GPIOMM_EXTENT)
+#घोषणा GPIOMM_EXTENT 8
+#घोषणा MAX_NUM_GPIOMM max_num_isa_dev(GPIOMM_EXTENT)
 
-static unsigned int base[MAX_NUM_GPIOMM];
-static unsigned int num_gpiomm;
-module_param_hw_array(base, uint, ioport, &num_gpiomm, 0);
+अटल अचिन्हित पूर्णांक base[MAX_NUM_GPIOMM];
+अटल अचिन्हित पूर्णांक num_gpiomm;
+module_param_hw_array(base, uपूर्णांक, ioport, &num_gpiomm, 0);
 MODULE_PARM_DESC(base, "Diamond Systems GPIO-MM base addresses");
 
 /**
- * struct gpiomm_gpio - GPIO device private data structure
+ * काष्ठा gpiomm_gpio - GPIO device निजी data काष्ठाure
  * @chip:	instance of the gpio_chip
  * @io_state:	bit I/O state (whether bit is set to input or output)
  * @out_state:	output bits state
- * @control:	Control registers state
+ * @control:	Control रेजिस्टरs state
  * @lock:	synchronization lock to prevent I/O race conditions
  * @base:	base port address of the GPIO device
  */
-struct gpiomm_gpio {
-	struct gpio_chip chip;
-	unsigned char io_state[6];
-	unsigned char out_state[6];
-	unsigned char control[2];
+काष्ठा gpiomm_gpio अणु
+	काष्ठा gpio_chip chip;
+	अचिन्हित अक्षर io_state[6];
+	अचिन्हित अक्षर out_state[6];
+	अचिन्हित अक्षर control[2];
 	spinlock_t lock;
-	unsigned int base;
-};
+	अचिन्हित पूर्णांक base;
+पूर्ण;
 
-static int gpiomm_gpio_get_direction(struct gpio_chip *chip,
-	unsigned int offset)
-{
-	struct gpiomm_gpio *const gpiommgpio = gpiochip_get_data(chip);
-	const unsigned int port = offset / 8;
-	const unsigned int mask = BIT(offset % 8);
+अटल पूर्णांक gpiomm_gpio_get_direction(काष्ठा gpio_chip *chip,
+	अचिन्हित पूर्णांक offset)
+अणु
+	काष्ठा gpiomm_gpio *स्थिर gpiommgpio = gpiochip_get_data(chip);
+	स्थिर अचिन्हित पूर्णांक port = offset / 8;
+	स्थिर अचिन्हित पूर्णांक mask = BIT(offset % 8);
 
-	if (gpiommgpio->io_state[port] & mask)
-		return GPIO_LINE_DIRECTION_IN;
+	अगर (gpiommgpio->io_state[port] & mask)
+		वापस GPIO_LINE_सूचीECTION_IN;
 
-	return GPIO_LINE_DIRECTION_OUT;
-}
+	वापस GPIO_LINE_सूचीECTION_OUT;
+पूर्ण
 
-static int gpiomm_gpio_direction_input(struct gpio_chip *chip,
-	unsigned int offset)
-{
-	struct gpiomm_gpio *const gpiommgpio = gpiochip_get_data(chip);
-	const unsigned int io_port = offset / 8;
-	const unsigned int control_port = io_port / 3;
-	const unsigned int control_addr = gpiommgpio->base + 3 + control_port*4;
-	unsigned long flags;
-	unsigned int control;
+अटल पूर्णांक gpiomm_gpio_direction_input(काष्ठा gpio_chip *chip,
+	अचिन्हित पूर्णांक offset)
+अणु
+	काष्ठा gpiomm_gpio *स्थिर gpiommgpio = gpiochip_get_data(chip);
+	स्थिर अचिन्हित पूर्णांक io_port = offset / 8;
+	स्थिर अचिन्हित पूर्णांक control_port = io_port / 3;
+	स्थिर अचिन्हित पूर्णांक control_addr = gpiommgpio->base + 3 + control_port*4;
+	अचिन्हित दीर्घ flags;
+	अचिन्हित पूर्णांक control;
 
 	spin_lock_irqsave(&gpiommgpio->lock, flags);
 
-	/* Check if configuring Port C */
-	if (io_port == 2 || io_port == 5) {
+	/* Check अगर configuring Port C */
+	अगर (io_port == 2 || io_port == 5) अणु
 		/* Port C can be configured by nibble */
-		if (offset % 8 > 3) {
+		अगर (offset % 8 > 3) अणु
 			gpiommgpio->io_state[io_port] |= 0xF0;
 			gpiommgpio->control[control_port] |= BIT(3);
-		} else {
+		पूर्ण अन्यथा अणु
 			gpiommgpio->io_state[io_port] |= 0x0F;
 			gpiommgpio->control[control_port] |= BIT(0);
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		gpiommgpio->io_state[io_port] |= 0xFF;
-		if (io_port == 0 || io_port == 3)
+		अगर (io_port == 0 || io_port == 3)
 			gpiommgpio->control[control_port] |= BIT(4);
-		else
+		अन्यथा
 			gpiommgpio->control[control_port] |= BIT(1);
-	}
+	पूर्ण
 
 	control = BIT(7) | gpiommgpio->control[control_port];
 	outb(control, control_addr);
 
 	spin_unlock_irqrestore(&gpiommgpio->lock, flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int gpiomm_gpio_direction_output(struct gpio_chip *chip,
-	unsigned int offset, int value)
-{
-	struct gpiomm_gpio *const gpiommgpio = gpiochip_get_data(chip);
-	const unsigned int io_port = offset / 8;
-	const unsigned int control_port = io_port / 3;
-	const unsigned int mask = BIT(offset % 8);
-	const unsigned int control_addr = gpiommgpio->base + 3 + control_port*4;
-	const unsigned int out_port = (io_port > 2) ? io_port + 1 : io_port;
-	unsigned long flags;
-	unsigned int control;
+अटल पूर्णांक gpiomm_gpio_direction_output(काष्ठा gpio_chip *chip,
+	अचिन्हित पूर्णांक offset, पूर्णांक value)
+अणु
+	काष्ठा gpiomm_gpio *स्थिर gpiommgpio = gpiochip_get_data(chip);
+	स्थिर अचिन्हित पूर्णांक io_port = offset / 8;
+	स्थिर अचिन्हित पूर्णांक control_port = io_port / 3;
+	स्थिर अचिन्हित पूर्णांक mask = BIT(offset % 8);
+	स्थिर अचिन्हित पूर्णांक control_addr = gpiommgpio->base + 3 + control_port*4;
+	स्थिर अचिन्हित पूर्णांक out_port = (io_port > 2) ? io_port + 1 : io_port;
+	अचिन्हित दीर्घ flags;
+	अचिन्हित पूर्णांक control;
 
 	spin_lock_irqsave(&gpiommgpio->lock, flags);
 
-	/* Check if configuring Port C */
-	if (io_port == 2 || io_port == 5) {
+	/* Check अगर configuring Port C */
+	अगर (io_port == 2 || io_port == 5) अणु
 		/* Port C can be configured by nibble */
-		if (offset % 8 > 3) {
+		अगर (offset % 8 > 3) अणु
 			gpiommgpio->io_state[io_port] &= 0x0F;
 			gpiommgpio->control[control_port] &= ~BIT(3);
-		} else {
+		पूर्ण अन्यथा अणु
 			gpiommgpio->io_state[io_port] &= 0xF0;
 			gpiommgpio->control[control_port] &= ~BIT(0);
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		gpiommgpio->io_state[io_port] &= 0x00;
-		if (io_port == 0 || io_port == 3)
+		अगर (io_port == 0 || io_port == 3)
 			gpiommgpio->control[control_port] &= ~BIT(4);
-		else
+		अन्यथा
 			gpiommgpio->control[control_port] &= ~BIT(1);
-	}
+	पूर्ण
 
-	if (value)
+	अगर (value)
 		gpiommgpio->out_state[io_port] |= mask;
-	else
+	अन्यथा
 		gpiommgpio->out_state[io_port] &= ~mask;
 
 	control = BIT(7) | gpiommgpio->control[control_port];
@@ -140,108 +141,108 @@ static int gpiomm_gpio_direction_output(struct gpio_chip *chip,
 
 	spin_unlock_irqrestore(&gpiommgpio->lock, flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int gpiomm_gpio_get(struct gpio_chip *chip, unsigned int offset)
-{
-	struct gpiomm_gpio *const gpiommgpio = gpiochip_get_data(chip);
-	const unsigned int port = offset / 8;
-	const unsigned int mask = BIT(offset % 8);
-	const unsigned int in_port = (port > 2) ? port + 1 : port;
-	unsigned long flags;
-	unsigned int port_state;
+अटल पूर्णांक gpiomm_gpio_get(काष्ठा gpio_chip *chip, अचिन्हित पूर्णांक offset)
+अणु
+	काष्ठा gpiomm_gpio *स्थिर gpiommgpio = gpiochip_get_data(chip);
+	स्थिर अचिन्हित पूर्णांक port = offset / 8;
+	स्थिर अचिन्हित पूर्णांक mask = BIT(offset % 8);
+	स्थिर अचिन्हित पूर्णांक in_port = (port > 2) ? port + 1 : port;
+	अचिन्हित दीर्घ flags;
+	अचिन्हित पूर्णांक port_state;
 
 	spin_lock_irqsave(&gpiommgpio->lock, flags);
 
-	/* ensure that GPIO is set for input */
-	if (!(gpiommgpio->io_state[port] & mask)) {
+	/* ensure that GPIO is set क्रम input */
+	अगर (!(gpiommgpio->io_state[port] & mask)) अणु
 		spin_unlock_irqrestore(&gpiommgpio->lock, flags);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	port_state = inb(gpiommgpio->base + in_port);
 
 	spin_unlock_irqrestore(&gpiommgpio->lock, flags);
 
-	return !!(port_state & mask);
-}
+	वापस !!(port_state & mask);
+पूर्ण
 
-static const size_t ports[] = { 0, 1, 2, 4, 5, 6 };
+अटल स्थिर माप_प्रकार ports[] = अणु 0, 1, 2, 4, 5, 6 पूर्ण;
 
-static int gpiomm_gpio_get_multiple(struct gpio_chip *chip, unsigned long *mask,
-	unsigned long *bits)
-{
-	struct gpiomm_gpio *const gpiommgpio = gpiochip_get_data(chip);
-	unsigned long offset;
-	unsigned long gpio_mask;
-	unsigned int port_addr;
-	unsigned long port_state;
+अटल पूर्णांक gpiomm_gpio_get_multiple(काष्ठा gpio_chip *chip, अचिन्हित दीर्घ *mask,
+	अचिन्हित दीर्घ *bits)
+अणु
+	काष्ठा gpiomm_gpio *स्थिर gpiommgpio = gpiochip_get_data(chip);
+	अचिन्हित दीर्घ offset;
+	अचिन्हित दीर्घ gpio_mask;
+	अचिन्हित पूर्णांक port_addr;
+	अचिन्हित दीर्घ port_state;
 
 	/* clear bits array to a clean slate */
-	bitmap_zero(bits, chip->ngpio);
+	biपंचांगap_zero(bits, chip->ngpio);
 
-	for_each_set_clump8(offset, gpio_mask, mask, ARRAY_SIZE(ports) * 8) {
+	क्रम_each_set_clump8(offset, gpio_mask, mask, ARRAY_SIZE(ports) * 8) अणु
 		port_addr = gpiommgpio->base + ports[offset / 8];
 		port_state = inb(port_addr) & gpio_mask;
 
-		bitmap_set_value8(bits, port_state, offset);
-	}
+		biपंचांगap_set_value8(bits, port_state, offset);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void gpiomm_gpio_set(struct gpio_chip *chip, unsigned int offset,
-	int value)
-{
-	struct gpiomm_gpio *const gpiommgpio = gpiochip_get_data(chip);
-	const unsigned int port = offset / 8;
-	const unsigned int mask = BIT(offset % 8);
-	const unsigned int out_port = (port > 2) ? port + 1 : port;
-	unsigned long flags;
+अटल व्योम gpiomm_gpio_set(काष्ठा gpio_chip *chip, अचिन्हित पूर्णांक offset,
+	पूर्णांक value)
+अणु
+	काष्ठा gpiomm_gpio *स्थिर gpiommgpio = gpiochip_get_data(chip);
+	स्थिर अचिन्हित पूर्णांक port = offset / 8;
+	स्थिर अचिन्हित पूर्णांक mask = BIT(offset % 8);
+	स्थिर अचिन्हित पूर्णांक out_port = (port > 2) ? port + 1 : port;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&gpiommgpio->lock, flags);
 
-	if (value)
+	अगर (value)
 		gpiommgpio->out_state[port] |= mask;
-	else
+	अन्यथा
 		gpiommgpio->out_state[port] &= ~mask;
 
 	outb(gpiommgpio->out_state[port], gpiommgpio->base + out_port);
 
 	spin_unlock_irqrestore(&gpiommgpio->lock, flags);
-}
+पूर्ण
 
-static void gpiomm_gpio_set_multiple(struct gpio_chip *chip,
-	unsigned long *mask, unsigned long *bits)
-{
-	struct gpiomm_gpio *const gpiommgpio = gpiochip_get_data(chip);
-	unsigned long offset;
-	unsigned long gpio_mask;
-	size_t index;
-	unsigned int port_addr;
-	unsigned long bitmask;
-	unsigned long flags;
+अटल व्योम gpiomm_gpio_set_multiple(काष्ठा gpio_chip *chip,
+	अचिन्हित दीर्घ *mask, अचिन्हित दीर्घ *bits)
+अणु
+	काष्ठा gpiomm_gpio *स्थिर gpiommgpio = gpiochip_get_data(chip);
+	अचिन्हित दीर्घ offset;
+	अचिन्हित दीर्घ gpio_mask;
+	माप_प्रकार index;
+	अचिन्हित पूर्णांक port_addr;
+	अचिन्हित दीर्घ biपंचांगask;
+	अचिन्हित दीर्घ flags;
 
-	for_each_set_clump8(offset, gpio_mask, mask, ARRAY_SIZE(ports) * 8) {
+	क्रम_each_set_clump8(offset, gpio_mask, mask, ARRAY_SIZE(ports) * 8) अणु
 		index = offset / 8;
 		port_addr = gpiommgpio->base + ports[index];
 
-		bitmask = bitmap_get_value8(bits, offset) & gpio_mask;
+		biपंचांगask = biपंचांगap_get_value8(bits, offset) & gpio_mask;
 
 		spin_lock_irqsave(&gpiommgpio->lock, flags);
 
-		/* update output state data and set device gpio register */
+		/* update output state data and set device gpio रेजिस्टर */
 		gpiommgpio->out_state[index] &= ~gpio_mask;
-		gpiommgpio->out_state[index] |= bitmask;
+		gpiommgpio->out_state[index] |= biपंचांगask;
 		outb(gpiommgpio->out_state[index], port_addr);
 
 		spin_unlock_irqrestore(&gpiommgpio->lock, flags);
-	}
-}
+	पूर्ण
+पूर्ण
 
-#define GPIOMM_NGPIO 48
-static const char *gpiomm_names[GPIOMM_NGPIO] = {
+#घोषणा GPIOMM_NGPIO 48
+अटल स्थिर अक्षर *gpiomm_names[GPIOMM_NGPIO] = अणु
 	"Port 1A0", "Port 1A1", "Port 1A2", "Port 1A3", "Port 1A4", "Port 1A5",
 	"Port 1A6", "Port 1A7", "Port 1B0", "Port 1B1", "Port 1B2", "Port 1B3",
 	"Port 1B4", "Port 1B5", "Port 1B6", "Port 1B7", "Port 1C0", "Port 1C1",
@@ -250,23 +251,23 @@ static const char *gpiomm_names[GPIOMM_NGPIO] = {
 	"Port 2A6", "Port 2A7", "Port 2B0", "Port 2B1", "Port 2B2", "Port 2B3",
 	"Port 2B4", "Port 2B5", "Port 2B6", "Port 2B7", "Port 2C0", "Port 2C1",
 	"Port 2C2", "Port 2C3", "Port 2C4", "Port 2C5", "Port 2C6", "Port 2C7",
-};
+पूर्ण;
 
-static int gpiomm_probe(struct device *dev, unsigned int id)
-{
-	struct gpiomm_gpio *gpiommgpio;
-	const char *const name = dev_name(dev);
-	int err;
+अटल पूर्णांक gpiomm_probe(काष्ठा device *dev, अचिन्हित पूर्णांक id)
+अणु
+	काष्ठा gpiomm_gpio *gpiommgpio;
+	स्थिर अक्षर *स्थिर name = dev_name(dev);
+	पूर्णांक err;
 
-	gpiommgpio = devm_kzalloc(dev, sizeof(*gpiommgpio), GFP_KERNEL);
-	if (!gpiommgpio)
-		return -ENOMEM;
+	gpiommgpio = devm_kzalloc(dev, माप(*gpiommgpio), GFP_KERNEL);
+	अगर (!gpiommgpio)
+		वापस -ENOMEM;
 
-	if (!devm_request_region(dev, base[id], GPIOMM_EXTENT, name)) {
+	अगर (!devm_request_region(dev, base[id], GPIOMM_EXTENT, name)) अणु
 		dev_err(dev, "Unable to lock port addresses (0x%X-0x%X)\n",
 			base[id], base[id] + GPIOMM_EXTENT);
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 
 	gpiommgpio->chip.label = name;
 	gpiommgpio->chip.parent = dev;
@@ -286,10 +287,10 @@ static int gpiomm_probe(struct device *dev, unsigned int id)
 	spin_lock_init(&gpiommgpio->lock);
 
 	err = devm_gpiochip_add_data(dev, &gpiommgpio->chip, gpiommgpio);
-	if (err) {
+	अगर (err) अणु
 		dev_err(dev, "GPIO registering failed (%d)\n", err);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
 	/* initialize all GPIO as output */
 	outb(0x80, base[id] + 3);
@@ -301,15 +302,15 @@ static int gpiomm_probe(struct device *dev, unsigned int id)
 	outb(0x00, base[id] + 5);
 	outb(0x00, base[id] + 6);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct isa_driver gpiomm_driver = {
+अटल काष्ठा isa_driver gpiomm_driver = अणु
 	.probe = gpiomm_probe,
-	.driver = {
+	.driver = अणु
 		.name = "gpio-mm"
-	},
-};
+	पूर्ण,
+पूर्ण;
 
 module_isa_driver(gpiomm_driver, num_gpiomm);
 

@@ -1,90 +1,91 @@
-/* SPDX-License-Identifier: MIT */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: MIT */
 /*
- * Copyright © 2020 Intel Corporation
+ * Copyright तऊ 2020 Intel Corporation
  */
 
-#ifndef __INTEL_GLOBAL_STATE_H__
-#define __INTEL_GLOBAL_STATE_H__
+#अगर_अघोषित __INTEL_GLOBAL_STATE_H__
+#घोषणा __INTEL_GLOBAL_STATE_H__
 
-#include <linux/kref.h>
-#include <linux/list.h>
+#समावेश <linux/kref.h>
+#समावेश <linux/list.h>
 
-struct drm_i915_private;
-struct intel_atomic_state;
-struct intel_global_obj;
-struct intel_global_state;
+काष्ठा drm_i915_निजी;
+काष्ठा पूर्णांकel_atomic_state;
+काष्ठा पूर्णांकel_global_obj;
+काष्ठा पूर्णांकel_global_state;
 
-struct intel_global_state_funcs {
-	struct intel_global_state *(*atomic_duplicate_state)(struct intel_global_obj *obj);
-	void (*atomic_destroy_state)(struct intel_global_obj *obj,
-				     struct intel_global_state *state);
-};
+काष्ठा पूर्णांकel_global_state_funcs अणु
+	काष्ठा पूर्णांकel_global_state *(*atomic_duplicate_state)(काष्ठा पूर्णांकel_global_obj *obj);
+	व्योम (*atomic_destroy_state)(काष्ठा पूर्णांकel_global_obj *obj,
+				     काष्ठा पूर्णांकel_global_state *state);
+पूर्ण;
 
-struct intel_global_obj {
-	struct list_head head;
-	struct intel_global_state *state;
-	const struct intel_global_state_funcs *funcs;
-};
+काष्ठा पूर्णांकel_global_obj अणु
+	काष्ठा list_head head;
+	काष्ठा पूर्णांकel_global_state *state;
+	स्थिर काष्ठा पूर्णांकel_global_state_funcs *funcs;
+पूर्ण;
 
-#define intel_for_each_global_obj(obj, dev_priv) \
-	list_for_each_entry(obj, &(dev_priv)->global_obj_list, head)
+#घोषणा पूर्णांकel_क्रम_each_global_obj(obj, dev_priv) \
+	list_क्रम_each_entry(obj, &(dev_priv)->global_obj_list, head)
 
-#define for_each_new_global_obj_in_state(__state, obj, new_obj_state, __i) \
-	for ((__i) = 0; \
+#घोषणा क्रम_each_new_global_obj_in_state(__state, obj, new_obj_state, __i) \
+	क्रम ((__i) = 0; \
 	     (__i) < (__state)->num_global_objs && \
 		     ((obj) = (__state)->global_objs[__i].ptr, \
 		      (new_obj_state) = (__state)->global_objs[__i].new_state, 1); \
 	     (__i)++) \
-		for_each_if(obj)
+		क्रम_each_अगर(obj)
 
-#define for_each_old_global_obj_in_state(__state, obj, new_obj_state, __i) \
-	for ((__i) = 0; \
+#घोषणा क्रम_each_old_global_obj_in_state(__state, obj, new_obj_state, __i) \
+	क्रम ((__i) = 0; \
 	     (__i) < (__state)->num_global_objs && \
 		     ((obj) = (__state)->global_objs[__i].ptr, \
 		      (new_obj_state) = (__state)->global_objs[__i].old_state, 1); \
 	     (__i)++) \
-		for_each_if(obj)
+		क्रम_each_अगर(obj)
 
-#define for_each_oldnew_global_obj_in_state(__state, obj, old_obj_state, new_obj_state, __i) \
-	for ((__i) = 0; \
+#घोषणा क्रम_each_oldnew_global_obj_in_state(__state, obj, old_obj_state, new_obj_state, __i) \
+	क्रम ((__i) = 0; \
 	     (__i) < (__state)->num_global_objs && \
 		     ((obj) = (__state)->global_objs[__i].ptr, \
 		      (old_obj_state) = (__state)->global_objs[__i].old_state, \
 		      (new_obj_state) = (__state)->global_objs[__i].new_state, 1); \
 	     (__i)++) \
-		for_each_if(obj)
+		क्रम_each_अगर(obj)
 
-struct intel_global_state {
-	struct intel_global_obj *obj;
-	struct intel_atomic_state *state;
-	struct kref ref;
+काष्ठा पूर्णांकel_global_state अणु
+	काष्ठा पूर्णांकel_global_obj *obj;
+	काष्ठा पूर्णांकel_atomic_state *state;
+	काष्ठा kref ref;
 	bool changed;
-};
+पूर्ण;
 
-struct __intel_global_objs_state {
-	struct intel_global_obj *ptr;
-	struct intel_global_state *state, *old_state, *new_state;
-};
+काष्ठा __पूर्णांकel_global_objs_state अणु
+	काष्ठा पूर्णांकel_global_obj *ptr;
+	काष्ठा पूर्णांकel_global_state *state, *old_state, *new_state;
+पूर्ण;
 
-void intel_atomic_global_obj_init(struct drm_i915_private *dev_priv,
-				  struct intel_global_obj *obj,
-				  struct intel_global_state *state,
-				  const struct intel_global_state_funcs *funcs);
-void intel_atomic_global_obj_cleanup(struct drm_i915_private *dev_priv);
+व्योम पूर्णांकel_atomic_global_obj_init(काष्ठा drm_i915_निजी *dev_priv,
+				  काष्ठा पूर्णांकel_global_obj *obj,
+				  काष्ठा पूर्णांकel_global_state *state,
+				  स्थिर काष्ठा पूर्णांकel_global_state_funcs *funcs);
+व्योम पूर्णांकel_atomic_global_obj_cleanup(काष्ठा drm_i915_निजी *dev_priv);
 
-struct intel_global_state *
-intel_atomic_get_global_obj_state(struct intel_atomic_state *state,
-				  struct intel_global_obj *obj);
-struct intel_global_state *
-intel_atomic_get_old_global_obj_state(struct intel_atomic_state *state,
-				      struct intel_global_obj *obj);
-struct intel_global_state *
-intel_atomic_get_new_global_obj_state(struct intel_atomic_state *state,
-				      struct intel_global_obj *obj);
+काष्ठा पूर्णांकel_global_state *
+पूर्णांकel_atomic_get_global_obj_state(काष्ठा पूर्णांकel_atomic_state *state,
+				  काष्ठा पूर्णांकel_global_obj *obj);
+काष्ठा पूर्णांकel_global_state *
+पूर्णांकel_atomic_get_old_global_obj_state(काष्ठा पूर्णांकel_atomic_state *state,
+				      काष्ठा पूर्णांकel_global_obj *obj);
+काष्ठा पूर्णांकel_global_state *
+पूर्णांकel_atomic_get_new_global_obj_state(काष्ठा पूर्णांकel_atomic_state *state,
+				      काष्ठा पूर्णांकel_global_obj *obj);
 
-void intel_atomic_swap_global_state(struct intel_atomic_state *state);
-void intel_atomic_clear_global_state(struct intel_atomic_state *state);
-int intel_atomic_lock_global_state(struct intel_global_state *obj_state);
-int intel_atomic_serialize_global_state(struct intel_global_state *obj_state);
+व्योम पूर्णांकel_atomic_swap_global_state(काष्ठा पूर्णांकel_atomic_state *state);
+व्योम पूर्णांकel_atomic_clear_global_state(काष्ठा पूर्णांकel_atomic_state *state);
+पूर्णांक पूर्णांकel_atomic_lock_global_state(काष्ठा पूर्णांकel_global_state *obj_state);
+पूर्णांक पूर्णांकel_atomic_serialize_global_state(काष्ठा पूर्णांकel_global_state *obj_state);
 
-#endif
+#पूर्ण_अगर

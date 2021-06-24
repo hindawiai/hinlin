@@ -1,174 +1,175 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (c) 2013
  * Phillip Lougher <phillip@squashfs.org.uk>
  */
 
-#include <linux/fs.h>
-#include <linux/vfs.h>
-#include <linux/kernel.h>
-#include <linux/slab.h>
-#include <linux/string.h>
-#include <linux/pagemap.h>
-#include <linux/mutex.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/vfs.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/pagemap.h>
+#समावेश <linux/mutex.h>
 
-#include "squashfs_fs.h"
-#include "squashfs_fs_sb.h"
-#include "squashfs_fs_i.h"
-#include "squashfs.h"
-#include "page_actor.h"
+#समावेश "squashfs_fs.h"
+#समावेश "squashfs_fs_sb.h"
+#समावेश "squashfs_fs_i.h"
+#समावेश "squashfs.h"
+#समावेश "page_actor.h"
 
-static int squashfs_read_cache(struct page *target_page, u64 block, int bsize,
-	int pages, struct page **page, int bytes);
+अटल पूर्णांक squashfs_पढ़ो_cache(काष्ठा page *target_page, u64 block, पूर्णांक bsize,
+	पूर्णांक pages, काष्ठा page **page, पूर्णांक bytes);
 
-/* Read separately compressed datablock directly into page cache */
-int squashfs_readpage_block(struct page *target_page, u64 block, int bsize,
-	int expected)
+/* Read separately compressed datablock directly पूर्णांकo page cache */
+पूर्णांक squashfs_पढ़ोpage_block(काष्ठा page *target_page, u64 block, पूर्णांक bsize,
+	पूर्णांक expected)
 
-{
-	struct inode *inode = target_page->mapping->host;
-	struct squashfs_sb_info *msblk = inode->i_sb->s_fs_info;
+अणु
+	काष्ठा inode *inode = target_page->mapping->host;
+	काष्ठा squashfs_sb_info *msblk = inode->i_sb->s_fs_info;
 
-	int file_end = (i_size_read(inode) - 1) >> PAGE_SHIFT;
-	int mask = (1 << (msblk->block_log - PAGE_SHIFT)) - 1;
-	int start_index = target_page->index & ~mask;
-	int end_index = start_index | mask;
-	int i, n, pages, missing_pages, bytes, res = -ENOMEM;
-	struct page **page;
-	struct squashfs_page_actor *actor;
-	void *pageaddr;
+	पूर्णांक file_end = (i_size_पढ़ो(inode) - 1) >> PAGE_SHIFT;
+	पूर्णांक mask = (1 << (msblk->block_log - PAGE_SHIFT)) - 1;
+	पूर्णांक start_index = target_page->index & ~mask;
+	पूर्णांक end_index = start_index | mask;
+	पूर्णांक i, n, pages, missing_pages, bytes, res = -ENOMEM;
+	काष्ठा page **page;
+	काष्ठा squashfs_page_actor *actor;
+	व्योम *pageaddr;
 
-	if (end_index > file_end)
+	अगर (end_index > file_end)
 		end_index = file_end;
 
 	pages = end_index - start_index + 1;
 
-	page = kmalloc_array(pages, sizeof(void *), GFP_KERNEL);
-	if (page == NULL)
-		return res;
+	page = kदो_स्मृति_array(pages, माप(व्योम *), GFP_KERNEL);
+	अगर (page == शून्य)
+		वापस res;
 
 	/*
 	 * Create a "page actor" which will kmap and kunmap the
 	 * page cache pages appropriately within the decompressor
 	 */
 	actor = squashfs_page_actor_init_special(page, pages, 0);
-	if (actor == NULL)
-		goto out;
+	अगर (actor == शून्य)
+		जाओ out;
 
 	/* Try to grab all the pages covered by the Squashfs block */
-	for (missing_pages = 0, i = 0, n = start_index; i < pages; i++, n++) {
+	क्रम (missing_pages = 0, i = 0, n = start_index; i < pages; i++, n++) अणु
 		page[i] = (n == target_page->index) ? target_page :
-			grab_cache_page_nowait(target_page->mapping, n);
+			grab_cache_page_noरुको(target_page->mapping, n);
 
-		if (page[i] == NULL) {
+		अगर (page[i] == शून्य) अणु
 			missing_pages++;
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		if (PageUptodate(page[i])) {
+		अगर (PageUptodate(page[i])) अणु
 			unlock_page(page[i]);
 			put_page(page[i]);
-			page[i] = NULL;
+			page[i] = शून्य;
 			missing_pages++;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (missing_pages) {
+	अगर (missing_pages) अणु
 		/*
 		 * Couldn't get one or more pages, this page has either
 		 * been VM reclaimed, but others are still in the page cache
-		 * and uptodate, or we're racing with another thread in
-		 * squashfs_readpage also trying to grab them.  Fall back to
-		 * using an intermediate buffer.
+		 * and uptodate, or we're racing with another thपढ़ो in
+		 * squashfs_पढ़ोpage also trying to grab them.  Fall back to
+		 * using an पूर्णांकermediate buffer.
 		 */
-		res = squashfs_read_cache(target_page, block, bsize, pages,
+		res = squashfs_पढ़ो_cache(target_page, block, bsize, pages,
 							page, expected);
-		if (res < 0)
-			goto mark_errored;
+		अगर (res < 0)
+			जाओ mark_errored;
 
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	/* Decompress directly into the page cache buffers */
-	res = squashfs_read_data(inode->i_sb, block, bsize, NULL, actor);
-	if (res < 0)
-		goto mark_errored;
+	/* Decompress directly पूर्णांकo the page cache buffers */
+	res = squashfs_पढ़ो_data(inode->i_sb, block, bsize, शून्य, actor);
+	अगर (res < 0)
+		जाओ mark_errored;
 
-	if (res != expected) {
+	अगर (res != expected) अणु
 		res = -EIO;
-		goto mark_errored;
-	}
+		जाओ mark_errored;
+	पूर्ण
 
 	/* Last page may have trailing bytes not filled */
 	bytes = res % PAGE_SIZE;
-	if (bytes) {
+	अगर (bytes) अणु
 		pageaddr = kmap_atomic(page[pages - 1]);
-		memset(pageaddr + bytes, 0, PAGE_SIZE - bytes);
+		स_रखो(pageaddr + bytes, 0, PAGE_SIZE - bytes);
 		kunmap_atomic(pageaddr);
-	}
+	पूर्ण
 
 	/* Mark pages as uptodate, unlock and release */
-	for (i = 0; i < pages; i++) {
+	क्रम (i = 0; i < pages; i++) अणु
 		flush_dcache_page(page[i]);
 		SetPageUptodate(page[i]);
 		unlock_page(page[i]);
-		if (page[i] != target_page)
+		अगर (page[i] != target_page)
 			put_page(page[i]);
-	}
+	पूर्ण
 
-	kfree(actor);
-	kfree(page);
+	kमुक्त(actor);
+	kमुक्त(page);
 
-	return 0;
+	वापस 0;
 
 mark_errored:
 	/* Decompression failed, mark pages as errored.  Target_page is
 	 * dealt with by the caller
 	 */
-	for (i = 0; i < pages; i++) {
-		if (page[i] == NULL || page[i] == target_page)
-			continue;
+	क्रम (i = 0; i < pages; i++) अणु
+		अगर (page[i] == शून्य || page[i] == target_page)
+			जारी;
 		flush_dcache_page(page[i]);
 		SetPageError(page[i]);
 		unlock_page(page[i]);
 		put_page(page[i]);
-	}
+	पूर्ण
 
 out:
-	kfree(actor);
-	kfree(page);
-	return res;
-}
+	kमुक्त(actor);
+	kमुक्त(page);
+	वापस res;
+पूर्ण
 
 
-static int squashfs_read_cache(struct page *target_page, u64 block, int bsize,
-	int pages, struct page **page, int bytes)
-{
-	struct inode *i = target_page->mapping->host;
-	struct squashfs_cache_entry *buffer = squashfs_get_datablock(i->i_sb,
+अटल पूर्णांक squashfs_पढ़ो_cache(काष्ठा page *target_page, u64 block, पूर्णांक bsize,
+	पूर्णांक pages, काष्ठा page **page, पूर्णांक bytes)
+अणु
+	काष्ठा inode *i = target_page->mapping->host;
+	काष्ठा squashfs_cache_entry *buffer = squashfs_get_datablock(i->i_sb,
 						 block, bsize);
-	int res = buffer->error, n, offset = 0;
+	पूर्णांक res = buffer->error, n, offset = 0;
 
-	if (res) {
+	अगर (res) अणु
 		ERROR("Unable to read page, block %llx, size %x\n", block,
 			bsize);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	for (n = 0; n < pages && bytes > 0; n++,
-			bytes -= PAGE_SIZE, offset += PAGE_SIZE) {
-		int avail = min_t(int, bytes, PAGE_SIZE);
+	क्रम (n = 0; n < pages && bytes > 0; n++,
+			bytes -= PAGE_SIZE, offset += PAGE_SIZE) अणु
+		पूर्णांक avail = min_t(पूर्णांक, bytes, PAGE_SIZE);
 
-		if (page[n] == NULL)
-			continue;
+		अगर (page[n] == शून्य)
+			जारी;
 
 		squashfs_fill_page(page[n], buffer, offset, avail);
 		unlock_page(page[n]);
-		if (page[n] != target_page)
+		अगर (page[n] != target_page)
 			put_page(page[n]);
-	}
+	पूर्ण
 
 out:
 	squashfs_cache_put(buffer);
-	return res;
-}
+	वापस res;
+पूर्ण

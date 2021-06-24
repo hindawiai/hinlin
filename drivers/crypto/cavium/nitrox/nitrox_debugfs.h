@@ -1,20 +1,21 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __NITROX_DEBUGFS_H
-#define __NITROX_DEBUGFS_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __NITROX_DEBUGFS_H
+#घोषणा __NITROX_DEBUGFS_H
 
-#include "nitrox_dev.h"
+#समावेश "nitrox_dev.h"
 
-#ifdef CONFIG_DEBUG_FS
-void nitrox_debugfs_init(struct nitrox_device *ndev);
-void nitrox_debugfs_exit(struct nitrox_device *ndev);
-#else
-static inline void nitrox_debugfs_init(struct nitrox_device *ndev)
-{
-}
+#अगर_घोषित CONFIG_DEBUG_FS
+व्योम nitrox_debugfs_init(काष्ठा nitrox_device *ndev);
+व्योम nitrox_debugfs_निकास(काष्ठा nitrox_device *ndev);
+#अन्यथा
+अटल अंतरभूत व्योम nitrox_debugfs_init(काष्ठा nitrox_device *ndev)
+अणु
+पूर्ण
 
-static inline void nitrox_debugfs_exit(struct nitrox_device *ndev)
-{
-}
-#endif /* !CONFIG_DEBUG_FS */
+अटल अंतरभूत व्योम nitrox_debugfs_निकास(काष्ठा nitrox_device *ndev)
+अणु
+पूर्ण
+#पूर्ण_अगर /* !CONFIG_DEBUG_FS */
 
-#endif /* __NITROX_DEBUGFS_H */
+#पूर्ण_अगर /* __NITROX_DEBUGFS_H */

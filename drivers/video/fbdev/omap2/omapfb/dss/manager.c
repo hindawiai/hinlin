@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * linux/drivers/video/omap2/dss/manager.c
  *
@@ -9,243 +10,243 @@
  * by Imre Deak.
  */
 
-#define DSS_SUBSYS_NAME "MANAGER"
+#घोषणा DSS_SUBSYS_NAME "MANAGER"
 
-#include <linux/kernel.h>
-#include <linux/slab.h>
-#include <linux/module.h>
-#include <linux/platform_device.h>
-#include <linux/jiffies.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/module.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/jअगरfies.h>
 
-#include <video/omapfb_dss.h>
+#समावेश <video/omapfb_dss.h>
 
-#include "dss.h"
-#include "dss_features.h"
+#समावेश "dss.h"
+#समावेश "dss_features.h"
 
-static int num_managers;
-static struct omap_overlay_manager *managers;
+अटल पूर्णांक num_managers;
+अटल काष्ठा omap_overlay_manager *managers;
 
-int dss_init_overlay_managers(void)
-{
-	int i;
+पूर्णांक dss_init_overlay_managers(व्योम)
+अणु
+	पूर्णांक i;
 
 	num_managers = dss_feat_get_num_mgrs();
 
-	managers = kcalloc(num_managers, sizeof(struct omap_overlay_manager),
+	managers = kसुस्मृति(num_managers, माप(काष्ठा omap_overlay_manager),
 			   GFP_KERNEL);
 
-	BUG_ON(managers == NULL);
+	BUG_ON(managers == शून्य);
 
-	for (i = 0; i < num_managers; ++i) {
-		struct omap_overlay_manager *mgr = &managers[i];
+	क्रम (i = 0; i < num_managers; ++i) अणु
+		काष्ठा omap_overlay_manager *mgr = &managers[i];
 
-		switch (i) {
-		case 0:
+		चयन (i) अणु
+		हाल 0:
 			mgr->name = "lcd";
 			mgr->id = OMAP_DSS_CHANNEL_LCD;
-			break;
-		case 1:
+			अवरोध;
+		हाल 1:
 			mgr->name = "tv";
 			mgr->id = OMAP_DSS_CHANNEL_DIGIT;
-			break;
-		case 2:
+			अवरोध;
+		हाल 2:
 			mgr->name = "lcd2";
 			mgr->id = OMAP_DSS_CHANNEL_LCD2;
-			break;
-		case 3:
+			अवरोध;
+		हाल 3:
 			mgr->name = "lcd3";
 			mgr->id = OMAP_DSS_CHANNEL_LCD3;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		mgr->supported_displays =
 			dss_feat_get_supported_displays(mgr->id);
-		mgr->supported_outputs =
-			dss_feat_get_supported_outputs(mgr->id);
+		mgr->supported_outमाला_दो =
+			dss_feat_get_supported_outमाला_दो(mgr->id);
 
 		INIT_LIST_HEAD(&mgr->overlays);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int dss_init_overlay_managers_sysfs(struct platform_device *pdev)
-{
-	int i, r;
+पूर्णांक dss_init_overlay_managers_sysfs(काष्ठा platक्रमm_device *pdev)
+अणु
+	पूर्णांक i, r;
 
-	for (i = 0; i < num_managers; ++i) {
-		struct omap_overlay_manager *mgr = &managers[i];
+	क्रम (i = 0; i < num_managers; ++i) अणु
+		काष्ठा omap_overlay_manager *mgr = &managers[i];
 
 		r = dss_manager_kobj_init(mgr, pdev);
-		if (r)
+		अगर (r)
 			DSSERR("failed to create sysfs file\n");
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void dss_uninit_overlay_managers(void)
-{
-	kfree(managers);
-	managers = NULL;
+व्योम dss_uninit_overlay_managers(व्योम)
+अणु
+	kमुक्त(managers);
+	managers = शून्य;
 	num_managers = 0;
-}
+पूर्ण
 
-void dss_uninit_overlay_managers_sysfs(struct platform_device *pdev)
-{
-	int i;
+व्योम dss_uninit_overlay_managers_sysfs(काष्ठा platक्रमm_device *pdev)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < num_managers; ++i) {
-		struct omap_overlay_manager *mgr = &managers[i];
+	क्रम (i = 0; i < num_managers; ++i) अणु
+		काष्ठा omap_overlay_manager *mgr = &managers[i];
 
 		dss_manager_kobj_uninit(mgr);
-	}
-}
+	पूर्ण
+पूर्ण
 
-int omap_dss_get_num_overlay_managers(void)
-{
-	return num_managers;
-}
+पूर्णांक omap_dss_get_num_overlay_managers(व्योम)
+अणु
+	वापस num_managers;
+पूर्ण
 EXPORT_SYMBOL(omap_dss_get_num_overlay_managers);
 
-struct omap_overlay_manager *omap_dss_get_overlay_manager(int num)
-{
-	if (num >= num_managers)
-		return NULL;
+काष्ठा omap_overlay_manager *omap_dss_get_overlay_manager(पूर्णांक num)
+अणु
+	अगर (num >= num_managers)
+		वापस शून्य;
 
-	return &managers[num];
-}
+	वापस &managers[num];
+पूर्ण
 EXPORT_SYMBOL(omap_dss_get_overlay_manager);
 
-int dss_mgr_simple_check(struct omap_overlay_manager *mgr,
-		const struct omap_overlay_manager_info *info)
-{
-	if (dss_has_feature(FEAT_ALPHA_FIXED_ZORDER)) {
+पूर्णांक dss_mgr_simple_check(काष्ठा omap_overlay_manager *mgr,
+		स्थिर काष्ठा omap_overlay_manager_info *info)
+अणु
+	अगर (dss_has_feature(FEAT_ALPHA_FIXED_ZORDER)) अणु
 		/*
 		 * OMAP3 supports only graphics source transparency color key
 		 * and alpha blending simultaneously. See TRM 15.4.2.4.2.2
 		 * Alpha Mode.
 		 */
-		if (info->partial_alpha_enabled && info->trans_enabled
-			&& info->trans_key_type != OMAP_DSS_COLOR_KEY_GFX_DST) {
+		अगर (info->partial_alpha_enabled && info->trans_enabled
+			&& info->trans_key_type != OMAP_DSS_COLOR_KEY_GFX_DST) अणु
 			DSSERR("check_manager: illegal transparency key\n");
-			return -EINVAL;
-		}
-	}
+			वापस -EINVAL;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int dss_mgr_check_zorder(struct omap_overlay_manager *mgr,
-		struct omap_overlay_info **overlay_infos)
-{
-	struct omap_overlay *ovl1, *ovl2;
-	struct omap_overlay_info *info1, *info2;
+अटल पूर्णांक dss_mgr_check_zorder(काष्ठा omap_overlay_manager *mgr,
+		काष्ठा omap_overlay_info **overlay_infos)
+अणु
+	काष्ठा omap_overlay *ovl1, *ovl2;
+	काष्ठा omap_overlay_info *info1, *info2;
 
-	list_for_each_entry(ovl1, &mgr->overlays, list) {
+	list_क्रम_each_entry(ovl1, &mgr->overlays, list) अणु
 		info1 = overlay_infos[ovl1->id];
 
-		if (info1 == NULL)
-			continue;
+		अगर (info1 == शून्य)
+			जारी;
 
-		list_for_each_entry(ovl2, &mgr->overlays, list) {
-			if (ovl1 == ovl2)
-				continue;
+		list_क्रम_each_entry(ovl2, &mgr->overlays, list) अणु
+			अगर (ovl1 == ovl2)
+				जारी;
 
 			info2 = overlay_infos[ovl2->id];
 
-			if (info2 == NULL)
-				continue;
+			अगर (info2 == शून्य)
+				जारी;
 
-			if (info1->zorder == info2->zorder) {
+			अगर (info1->zorder == info2->zorder) अणु
 				DSSERR("overlays %d and %d have the same "
 						"zorder %d\n",
 					ovl1->id, ovl2->id, info1->zorder);
-				return -EINVAL;
-			}
-		}
-	}
+				वापस -EINVAL;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int dss_mgr_check_timings(struct omap_overlay_manager *mgr,
-		const struct omap_video_timings *timings)
-{
-	if (!dispc_mgr_timings_ok(mgr->id, timings)) {
+पूर्णांक dss_mgr_check_timings(काष्ठा omap_overlay_manager *mgr,
+		स्थिर काष्ठा omap_video_timings *timings)
+अणु
+	अगर (!dispc_mgr_timings_ok(mgr->id, timings)) अणु
 		DSSERR("check_manager: invalid timings\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int dss_mgr_check_lcd_config(struct omap_overlay_manager *mgr,
-		const struct dss_lcd_mgr_config *config)
-{
-	struct dispc_clock_info cinfo = config->clock_info;
-	int dl = config->video_port_width;
+अटल पूर्णांक dss_mgr_check_lcd_config(काष्ठा omap_overlay_manager *mgr,
+		स्थिर काष्ठा dss_lcd_mgr_config *config)
+अणु
+	काष्ठा dispc_घड़ी_info cinfo = config->घड़ी_info;
+	पूर्णांक dl = config->video_port_width;
 	bool stallmode = config->stallmode;
-	bool fifohandcheck = config->fifohandcheck;
+	bool fअगरohandcheck = config->fअगरohandcheck;
 
-	if (cinfo.lck_div < 1 || cinfo.lck_div > 255)
-		return -EINVAL;
+	अगर (cinfo.lck_भाग < 1 || cinfo.lck_भाग > 255)
+		वापस -EINVAL;
 
-	if (cinfo.pck_div < 1 || cinfo.pck_div > 255)
-		return -EINVAL;
+	अगर (cinfo.pck_भाग < 1 || cinfo.pck_भाग > 255)
+		वापस -EINVAL;
 
-	if (dl != 12 && dl != 16 && dl != 18 && dl != 24)
-		return -EINVAL;
+	अगर (dl != 12 && dl != 16 && dl != 18 && dl != 24)
+		वापस -EINVAL;
 
-	/* fifohandcheck should be used only with stallmode */
-	if (!stallmode && fifohandcheck)
-		return -EINVAL;
+	/* fअगरohandcheck should be used only with stallmode */
+	अगर (!stallmode && fअगरohandcheck)
+		वापस -EINVAL;
 
 	/*
 	 * io pad mode can be only checked by using dssdev connected to the
-	 * manager. Ignore checking these for now, add checks when manager
-	 * is capable of holding information related to the connected interface
+	 * manager. Ignore checking these क्रम now, add checks when manager
+	 * is capable of holding inक्रमmation related to the connected पूर्णांकerface
 	 */
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int dss_mgr_check(struct omap_overlay_manager *mgr,
-		struct omap_overlay_manager_info *info,
-		const struct omap_video_timings *mgr_timings,
-		const struct dss_lcd_mgr_config *lcd_config,
-		struct omap_overlay_info **overlay_infos)
-{
-	struct omap_overlay *ovl;
-	int r;
+पूर्णांक dss_mgr_check(काष्ठा omap_overlay_manager *mgr,
+		काष्ठा omap_overlay_manager_info *info,
+		स्थिर काष्ठा omap_video_timings *mgr_timings,
+		स्थिर काष्ठा dss_lcd_mgr_config *lcd_config,
+		काष्ठा omap_overlay_info **overlay_infos)
+अणु
+	काष्ठा omap_overlay *ovl;
+	पूर्णांक r;
 
-	if (dss_has_feature(FEAT_ALPHA_FREE_ZORDER)) {
+	अगर (dss_has_feature(FEAT_ALPHA_FREE_ZORDER)) अणु
 		r = dss_mgr_check_zorder(mgr, overlay_infos);
-		if (r)
-			return r;
-	}
+		अगर (r)
+			वापस r;
+	पूर्ण
 
 	r = dss_mgr_check_timings(mgr, mgr_timings);
-	if (r)
-		return r;
+	अगर (r)
+		वापस r;
 
 	r = dss_mgr_check_lcd_config(mgr, lcd_config);
-	if (r)
-		return r;
+	अगर (r)
+		वापस r;
 
-	list_for_each_entry(ovl, &mgr->overlays, list) {
-		struct omap_overlay_info *oi;
-		int r;
+	list_क्रम_each_entry(ovl, &mgr->overlays, list) अणु
+		काष्ठा omap_overlay_info *oi;
+		पूर्णांक r;
 
 		oi = overlay_infos[ovl->id];
 
-		if (oi == NULL)
-			continue;
+		अगर (oi == शून्य)
+			जारी;
 
 		r = dss_ovl_check(ovl, oi, mgr_timings);
-		if (r)
-			return r;
-	}
+		अगर (r)
+			वापस r;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

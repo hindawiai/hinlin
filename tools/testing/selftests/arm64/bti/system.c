@@ -1,22 +1,23 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Copyright (C) 2019  Arm Limited
  * Original author: Dave Martin <Dave.Martin@arm.com>
  */
 
-#include "system.h"
+#समावेश "system.h"
 
-#include <asm/unistd.h>
+#समावेश <यंत्र/unistd.h>
 
-#include "compiler.h"
+#समावेश "compiler.h"
 
-void __noreturn exit(int n)
-{
-	syscall(__NR_exit, n);
+व्योम __noवापस निकास(पूर्णांक n)
+अणु
+	syscall(__NR_निकास, n);
 	__unreachable();
-}
+पूर्ण
 
-ssize_t write(int fd, const void *buf, size_t size)
-{
-	return syscall(__NR_write, fd, buf, size);
-}
+sमाप_प्रकार ग_लिखो(पूर्णांक fd, स्थिर व्योम *buf, माप_प्रकार size)
+अणु
+	वापस syscall(__NR_ग_लिखो, fd, buf, size);
+पूर्ण

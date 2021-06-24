@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  *  ALSA sequencer Memory Manager
  *  Copyright (c) 1998 by Frank van de Pol <fvdpol@coil.demon.nl>
@@ -6,45 +7,45 @@
  *                2000 by Takashi Iwai <tiwai@suse.de>
  */
 
-#include <linux/init.h>
-#include <linux/export.h>
-#include <linux/slab.h>
-#include <linux/sched/signal.h>
-#include <linux/mm.h>
-#include <sound/core.h>
+#समावेश <linux/init.h>
+#समावेश <linux/export.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/sched/संकेत.स>
+#समावेश <linux/mm.h>
+#समावेश <sound/core.h>
 
-#include <sound/seq_kernel.h>
-#include "seq_memory.h"
-#include "seq_queue.h"
-#include "seq_info.h"
-#include "seq_lock.h"
+#समावेश <sound/seq_kernel.h>
+#समावेश "seq_memory.h"
+#समावेश "seq_queue.h"
+#समावेश "seq_info.h"
+#समावेश "seq_lock.h"
 
-static inline int snd_seq_pool_available(struct snd_seq_pool *pool)
-{
-	return pool->total_elements - atomic_read(&pool->counter);
-}
+अटल अंतरभूत पूर्णांक snd_seq_pool_available(काष्ठा snd_seq_pool *pool)
+अणु
+	वापस pool->total_elements - atomic_पढ़ो(&pool->counter);
+पूर्ण
 
-static inline int snd_seq_output_ok(struct snd_seq_pool *pool)
-{
-	return snd_seq_pool_available(pool) >= pool->room;
-}
+अटल अंतरभूत पूर्णांक snd_seq_output_ok(काष्ठा snd_seq_pool *pool)
+अणु
+	वापस snd_seq_pool_available(pool) >= pool->room;
+पूर्ण
 
 /*
  * Variable length event:
  * The event like sysex uses variable length type.
- * The external data may be stored in three different formats.
+ * The बाह्यal data may be stored in three dअगरferent क्रमmats.
  * 1) kernel space
- *    This is the normal case.
+ *    This is the normal हाल.
  *      ext.data.len = length
- *      ext.data.ptr = buffer pointer
+ *      ext.data.ptr = buffer poपूर्णांकer
  * 2) user space
- *    When an event is generated via read(), the external data is
+ *    When an event is generated via पढ़ो(), the बाह्यal data is
  *    kept in user space until expanded.
  *      ext.data.len = length | SNDRV_SEQ_EXT_USRPTR
- *      ext.data.ptr = userspace pointer
+ *      ext.data.ptr = userspace poपूर्णांकer
  * 3) chained cells
- *    When the variable length event is enqueued (in prioq or fifo),
- *    the external data is decomposed to several cells.
+ *    When the variable length event is enqueued (in prioq or fअगरo),
+ *    the बाह्यal data is decomposed to several cells.
  *      ext.data.len = length | SNDRV_SEQ_EXT_CHAINED
  *      ext.data.ptr = the additiona cell head
  *         -> cell.next -> cell.next -> ..
@@ -52,58 +53,58 @@ static inline int snd_seq_output_ok(struct snd_seq_pool *pool)
 
 /*
  * exported:
- * call dump function to expand external data.
+ * call dump function to expand बाह्यal data.
  */
 
-static int get_var_len(const struct snd_seq_event *event)
-{
-	if ((event->flags & SNDRV_SEQ_EVENT_LENGTH_MASK) != SNDRV_SEQ_EVENT_LENGTH_VARIABLE)
-		return -EINVAL;
+अटल पूर्णांक get_var_len(स्थिर काष्ठा snd_seq_event *event)
+अणु
+	अगर ((event->flags & SNDRV_SEQ_EVENT_LENGTH_MASK) != SNDRV_SEQ_EVENT_LENGTH_VARIABLE)
+		वापस -EINVAL;
 
-	return event->data.ext.len & ~SNDRV_SEQ_EXT_MASK;
-}
+	वापस event->data.ext.len & ~SNDRV_SEQ_EXT_MASK;
+पूर्ण
 
-int snd_seq_dump_var_event(const struct snd_seq_event *event,
-			   snd_seq_dump_func_t func, void *private_data)
-{
-	int len, err;
-	struct snd_seq_event_cell *cell;
+पूर्णांक snd_seq_dump_var_event(स्थिर काष्ठा snd_seq_event *event,
+			   snd_seq_dump_func_t func, व्योम *निजी_data)
+अणु
+	पूर्णांक len, err;
+	काष्ठा snd_seq_event_cell *cell;
 
-	if ((len = get_var_len(event)) <= 0)
-		return len;
+	अगर ((len = get_var_len(event)) <= 0)
+		वापस len;
 
-	if (event->data.ext.len & SNDRV_SEQ_EXT_USRPTR) {
-		char buf[32];
-		char __user *curptr = (char __force __user *)event->data.ext.ptr;
-		while (len > 0) {
-			int size = sizeof(buf);
-			if (len < size)
+	अगर (event->data.ext.len & SNDRV_SEQ_EXT_USRPTR) अणु
+		अक्षर buf[32];
+		अक्षर __user *curptr = (अक्षर __क्रमce __user *)event->data.ext.ptr;
+		जबतक (len > 0) अणु
+			पूर्णांक size = माप(buf);
+			अगर (len < size)
 				size = len;
-			if (copy_from_user(buf, curptr, size))
-				return -EFAULT;
-			err = func(private_data, buf, size);
-			if (err < 0)
-				return err;
+			अगर (copy_from_user(buf, curptr, size))
+				वापस -EFAULT;
+			err = func(निजी_data, buf, size);
+			अगर (err < 0)
+				वापस err;
 			curptr += size;
 			len -= size;
-		}
-		return 0;
-	}
-	if (!(event->data.ext.len & SNDRV_SEQ_EXT_CHAINED))
-		return func(private_data, event->data.ext.ptr, len);
+		पूर्ण
+		वापस 0;
+	पूर्ण
+	अगर (!(event->data.ext.len & SNDRV_SEQ_EXT_CHAINED))
+		वापस func(निजी_data, event->data.ext.ptr, len);
 
-	cell = (struct snd_seq_event_cell *)event->data.ext.ptr;
-	for (; len > 0 && cell; cell = cell->next) {
-		int size = sizeof(struct snd_seq_event);
-		if (len < size)
+	cell = (काष्ठा snd_seq_event_cell *)event->data.ext.ptr;
+	क्रम (; len > 0 && cell; cell = cell->next) अणु
+		पूर्णांक size = माप(काष्ठा snd_seq_event);
+		अगर (len < size)
 			size = len;
-		err = func(private_data, &cell->event, size);
-		if (err < 0)
-			return err;
+		err = func(निजी_data, &cell->event, size);
+		अगर (err < 0)
+			वापस err;
 		len -= size;
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(snd_seq_dump_var_event);
 
 
@@ -112,391 +113,391 @@ EXPORT_SYMBOL(snd_seq_dump_var_event);
  * expand the variable length event to linear buffer space.
  */
 
-static int seq_copy_in_kernel(char **bufptr, const void *src, int size)
-{
-	memcpy(*bufptr, src, size);
+अटल पूर्णांक seq_copy_in_kernel(अक्षर **bufptr, स्थिर व्योम *src, पूर्णांक size)
+अणु
+	स_नकल(*bufptr, src, size);
 	*bufptr += size;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int seq_copy_in_user(char __user **bufptr, const void *src, int size)
-{
-	if (copy_to_user(*bufptr, src, size))
-		return -EFAULT;
+अटल पूर्णांक seq_copy_in_user(अक्षर __user **bufptr, स्थिर व्योम *src, पूर्णांक size)
+अणु
+	अगर (copy_to_user(*bufptr, src, size))
+		वापस -EFAULT;
 	*bufptr += size;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int snd_seq_expand_var_event(const struct snd_seq_event *event, int count, char *buf,
-			     int in_kernel, int size_aligned)
-{
-	int len, newlen;
-	int err;
+पूर्णांक snd_seq_expand_var_event(स्थिर काष्ठा snd_seq_event *event, पूर्णांक count, अक्षर *buf,
+			     पूर्णांक in_kernel, पूर्णांक size_aligned)
+अणु
+	पूर्णांक len, newlen;
+	पूर्णांक err;
 
-	if ((len = get_var_len(event)) < 0)
-		return len;
+	अगर ((len = get_var_len(event)) < 0)
+		वापस len;
 	newlen = len;
-	if (size_aligned > 0)
+	अगर (size_aligned > 0)
 		newlen = roundup(len, size_aligned);
-	if (count < newlen)
-		return -EAGAIN;
+	अगर (count < newlen)
+		वापस -EAGAIN;
 
-	if (event->data.ext.len & SNDRV_SEQ_EXT_USRPTR) {
-		if (! in_kernel)
-			return -EINVAL;
-		if (copy_from_user(buf, (void __force __user *)event->data.ext.ptr, len))
-			return -EFAULT;
-		return newlen;
-	}
+	अगर (event->data.ext.len & SNDRV_SEQ_EXT_USRPTR) अणु
+		अगर (! in_kernel)
+			वापस -EINVAL;
+		अगर (copy_from_user(buf, (व्योम __क्रमce __user *)event->data.ext.ptr, len))
+			वापस -EFAULT;
+		वापस newlen;
+	पूर्ण
 	err = snd_seq_dump_var_event(event,
 				     in_kernel ? (snd_seq_dump_func_t)seq_copy_in_kernel :
 				     (snd_seq_dump_func_t)seq_copy_in_user,
 				     &buf);
-	return err < 0 ? err : newlen;
-}
+	वापस err < 0 ? err : newlen;
+पूर्ण
 EXPORT_SYMBOL(snd_seq_expand_var_event);
 
 /*
- * release this cell, free extended data if available
+ * release this cell, मुक्त extended data अगर available
  */
 
-static inline void free_cell(struct snd_seq_pool *pool,
-			     struct snd_seq_event_cell *cell)
-{
-	cell->next = pool->free;
-	pool->free = cell;
+अटल अंतरभूत व्योम मुक्त_cell(काष्ठा snd_seq_pool *pool,
+			     काष्ठा snd_seq_event_cell *cell)
+अणु
+	cell->next = pool->मुक्त;
+	pool->मुक्त = cell;
 	atomic_dec(&pool->counter);
-}
+पूर्ण
 
-void snd_seq_cell_free(struct snd_seq_event_cell * cell)
-{
-	unsigned long flags;
-	struct snd_seq_pool *pool;
+व्योम snd_seq_cell_मुक्त(काष्ठा snd_seq_event_cell * cell)
+अणु
+	अचिन्हित दीर्घ flags;
+	काष्ठा snd_seq_pool *pool;
 
-	if (snd_BUG_ON(!cell))
-		return;
+	अगर (snd_BUG_ON(!cell))
+		वापस;
 	pool = cell->pool;
-	if (snd_BUG_ON(!pool))
-		return;
+	अगर (snd_BUG_ON(!pool))
+		वापस;
 
 	spin_lock_irqsave(&pool->lock, flags);
-	free_cell(pool, cell);
-	if (snd_seq_ev_is_variable(&cell->event)) {
-		if (cell->event.data.ext.len & SNDRV_SEQ_EXT_CHAINED) {
-			struct snd_seq_event_cell *curp, *nextptr;
+	मुक्त_cell(pool, cell);
+	अगर (snd_seq_ev_is_variable(&cell->event)) अणु
+		अगर (cell->event.data.ext.len & SNDRV_SEQ_EXT_CHAINED) अणु
+			काष्ठा snd_seq_event_cell *curp, *nextptr;
 			curp = cell->event.data.ext.ptr;
-			for (; curp; curp = nextptr) {
+			क्रम (; curp; curp = nextptr) अणु
 				nextptr = curp->next;
-				curp->next = pool->free;
-				free_cell(pool, curp);
-			}
-		}
-	}
-	if (waitqueue_active(&pool->output_sleep)) {
+				curp->next = pool->मुक्त;
+				मुक्त_cell(pool, curp);
+			पूर्ण
+		पूर्ण
+	पूर्ण
+	अगर (रुकोqueue_active(&pool->output_sleep)) अणु
 		/* has enough space now? */
-		if (snd_seq_output_ok(pool))
+		अगर (snd_seq_output_ok(pool))
 			wake_up(&pool->output_sleep);
-	}
+	पूर्ण
 	spin_unlock_irqrestore(&pool->lock, flags);
-}
+पूर्ण
 
 
 /*
  * allocate an event cell.
  */
-static int snd_seq_cell_alloc(struct snd_seq_pool *pool,
-			      struct snd_seq_event_cell **cellp,
-			      int nonblock, struct file *file,
-			      struct mutex *mutexp)
-{
-	struct snd_seq_event_cell *cell;
-	unsigned long flags;
-	int err = -EAGAIN;
-	wait_queue_entry_t wait;
+अटल पूर्णांक snd_seq_cell_alloc(काष्ठा snd_seq_pool *pool,
+			      काष्ठा snd_seq_event_cell **cellp,
+			      पूर्णांक nonblock, काष्ठा file *file,
+			      काष्ठा mutex *mutexp)
+अणु
+	काष्ठा snd_seq_event_cell *cell;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक err = -EAGAIN;
+	रुको_queue_entry_t रुको;
 
-	if (pool == NULL)
-		return -EINVAL;
+	अगर (pool == शून्य)
+		वापस -EINVAL;
 
-	*cellp = NULL;
+	*cellp = शून्य;
 
-	init_waitqueue_entry(&wait, current);
+	init_रुकोqueue_entry(&रुको, current);
 	spin_lock_irqsave(&pool->lock, flags);
-	if (pool->ptr == NULL) {	/* not initialized */
+	अगर (pool->ptr == शून्य) अणु	/* not initialized */
 		pr_debug("ALSA: seq: pool is not initialized\n");
 		err = -EINVAL;
-		goto __error;
-	}
-	while (pool->free == NULL && ! nonblock && ! pool->closing) {
+		जाओ __error;
+	पूर्ण
+	जबतक (pool->मुक्त == शून्य && ! nonblock && ! pool->closing) अणु
 
 		set_current_state(TASK_INTERRUPTIBLE);
-		add_wait_queue(&pool->output_sleep, &wait);
+		add_रुको_queue(&pool->output_sleep, &रुको);
 		spin_unlock_irqrestore(&pool->lock, flags);
-		if (mutexp)
+		अगर (mutexp)
 			mutex_unlock(mutexp);
 		schedule();
-		if (mutexp)
+		अगर (mutexp)
 			mutex_lock(mutexp);
 		spin_lock_irqsave(&pool->lock, flags);
-		remove_wait_queue(&pool->output_sleep, &wait);
-		/* interrupted? */
-		if (signal_pending(current)) {
+		हटाओ_रुको_queue(&pool->output_sleep, &रुको);
+		/* पूर्णांकerrupted? */
+		अगर (संकेत_pending(current)) अणु
 			err = -ERESTARTSYS;
-			goto __error;
-		}
-	}
-	if (pool->closing) { /* closing.. */
+			जाओ __error;
+		पूर्ण
+	पूर्ण
+	अगर (pool->closing) अणु /* closing.. */
 		err = -ENOMEM;
-		goto __error;
-	}
+		जाओ __error;
+	पूर्ण
 
-	cell = pool->free;
-	if (cell) {
-		int used;
-		pool->free = cell->next;
+	cell = pool->मुक्त;
+	अगर (cell) अणु
+		पूर्णांक used;
+		pool->मुक्त = cell->next;
 		atomic_inc(&pool->counter);
-		used = atomic_read(&pool->counter);
-		if (pool->max_used < used)
+		used = atomic_पढ़ो(&pool->counter);
+		अगर (pool->max_used < used)
 			pool->max_used = used;
 		pool->event_alloc_success++;
-		/* clear cell pointers */
-		cell->next = NULL;
+		/* clear cell poपूर्णांकers */
+		cell->next = शून्य;
 		err = 0;
-	} else
+	पूर्ण अन्यथा
 		pool->event_alloc_failures++;
 	*cellp = cell;
 
 __error:
 	spin_unlock_irqrestore(&pool->lock, flags);
-	return err;
-}
+	वापस err;
+पूर्ण
 
 
 /*
  * duplicate the event to a cell.
- * if the event has external data, the data is decomposed to additional
+ * अगर the event has बाह्यal data, the data is decomposed to additional
  * cells.
  */
-int snd_seq_event_dup(struct snd_seq_pool *pool, struct snd_seq_event *event,
-		      struct snd_seq_event_cell **cellp, int nonblock,
-		      struct file *file, struct mutex *mutexp)
-{
-	int ncells, err;
-	unsigned int extlen;
-	struct snd_seq_event_cell *cell;
+पूर्णांक snd_seq_event_dup(काष्ठा snd_seq_pool *pool, काष्ठा snd_seq_event *event,
+		      काष्ठा snd_seq_event_cell **cellp, पूर्णांक nonblock,
+		      काष्ठा file *file, काष्ठा mutex *mutexp)
+अणु
+	पूर्णांक ncells, err;
+	अचिन्हित पूर्णांक extlen;
+	काष्ठा snd_seq_event_cell *cell;
 
-	*cellp = NULL;
+	*cellp = शून्य;
 
 	ncells = 0;
 	extlen = 0;
-	if (snd_seq_ev_is_variable(event)) {
+	अगर (snd_seq_ev_is_variable(event)) अणु
 		extlen = event->data.ext.len & ~SNDRV_SEQ_EXT_MASK;
-		ncells = DIV_ROUND_UP(extlen, sizeof(struct snd_seq_event));
-	}
-	if (ncells >= pool->total_elements)
-		return -ENOMEM;
+		ncells = DIV_ROUND_UP(extlen, माप(काष्ठा snd_seq_event));
+	पूर्ण
+	अगर (ncells >= pool->total_elements)
+		वापस -ENOMEM;
 
 	err = snd_seq_cell_alloc(pool, &cell, nonblock, file, mutexp);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
 	/* copy the event */
 	cell->event = *event;
 
 	/* decompose */
-	if (snd_seq_ev_is_variable(event)) {
-		int len = extlen;
-		int is_chained = event->data.ext.len & SNDRV_SEQ_EXT_CHAINED;
-		int is_usrptr = event->data.ext.len & SNDRV_SEQ_EXT_USRPTR;
-		struct snd_seq_event_cell *src, *tmp, *tail;
-		char *buf;
+	अगर (snd_seq_ev_is_variable(event)) अणु
+		पूर्णांक len = extlen;
+		पूर्णांक is_chained = event->data.ext.len & SNDRV_SEQ_EXT_CHAINED;
+		पूर्णांक is_usrptr = event->data.ext.len & SNDRV_SEQ_EXT_USRPTR;
+		काष्ठा snd_seq_event_cell *src, *पंचांगp, *tail;
+		अक्षर *buf;
 
 		cell->event.data.ext.len = extlen | SNDRV_SEQ_EXT_CHAINED;
-		cell->event.data.ext.ptr = NULL;
+		cell->event.data.ext.ptr = शून्य;
 
-		src = (struct snd_seq_event_cell *)event->data.ext.ptr;
-		buf = (char *)event->data.ext.ptr;
-		tail = NULL;
+		src = (काष्ठा snd_seq_event_cell *)event->data.ext.ptr;
+		buf = (अक्षर *)event->data.ext.ptr;
+		tail = शून्य;
 
-		while (ncells-- > 0) {
-			int size = sizeof(struct snd_seq_event);
-			if (len < size)
+		जबतक (ncells-- > 0) अणु
+			पूर्णांक size = माप(काष्ठा snd_seq_event);
+			अगर (len < size)
 				size = len;
-			err = snd_seq_cell_alloc(pool, &tmp, nonblock, file,
+			err = snd_seq_cell_alloc(pool, &पंचांगp, nonblock, file,
 						 mutexp);
-			if (err < 0)
-				goto __error;
-			if (cell->event.data.ext.ptr == NULL)
-				cell->event.data.ext.ptr = tmp;
-			if (tail)
-				tail->next = tmp;
-			tail = tmp;
+			अगर (err < 0)
+				जाओ __error;
+			अगर (cell->event.data.ext.ptr == शून्य)
+				cell->event.data.ext.ptr = पंचांगp;
+			अगर (tail)
+				tail->next = पंचांगp;
+			tail = पंचांगp;
 			/* copy chunk */
-			if (is_chained && src) {
-				tmp->event = src->event;
+			अगर (is_chained && src) अणु
+				पंचांगp->event = src->event;
 				src = src->next;
-			} else if (is_usrptr) {
-				if (copy_from_user(&tmp->event, (char __force __user *)buf, size)) {
+			पूर्ण अन्यथा अगर (is_usrptr) अणु
+				अगर (copy_from_user(&पंचांगp->event, (अक्षर __क्रमce __user *)buf, size)) अणु
 					err = -EFAULT;
-					goto __error;
-				}
-			} else {
-				memcpy(&tmp->event, buf, size);
-			}
+					जाओ __error;
+				पूर्ण
+			पूर्ण अन्यथा अणु
+				स_नकल(&पंचांगp->event, buf, size);
+			पूर्ण
 			buf += size;
 			len -= size;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	*cellp = cell;
-	return 0;
+	वापस 0;
 
 __error:
-	snd_seq_cell_free(cell);
-	return err;
-}
+	snd_seq_cell_मुक्त(cell);
+	वापस err;
+पूर्ण
   
 
-/* poll wait */
-int snd_seq_pool_poll_wait(struct snd_seq_pool *pool, struct file *file,
-			   poll_table *wait)
-{
-	poll_wait(file, &pool->output_sleep, wait);
-	return snd_seq_output_ok(pool);
-}
+/* poll रुको */
+पूर्णांक snd_seq_pool_poll_रुको(काष्ठा snd_seq_pool *pool, काष्ठा file *file,
+			   poll_table *रुको)
+अणु
+	poll_रुको(file, &pool->output_sleep, रुको);
+	वापस snd_seq_output_ok(pool);
+पूर्ण
 
 
-/* allocate room specified number of events */
-int snd_seq_pool_init(struct snd_seq_pool *pool)
-{
-	int cell;
-	struct snd_seq_event_cell *cellptr;
+/* allocate room specअगरied number of events */
+पूर्णांक snd_seq_pool_init(काष्ठा snd_seq_pool *pool)
+अणु
+	पूर्णांक cell;
+	काष्ठा snd_seq_event_cell *cellptr;
 
-	if (snd_BUG_ON(!pool))
-		return -EINVAL;
+	अगर (snd_BUG_ON(!pool))
+		वापस -EINVAL;
 
-	cellptr = kvmalloc_array(sizeof(struct snd_seq_event_cell), pool->size,
+	cellptr = kvदो_स्मृति_array(माप(काष्ठा snd_seq_event_cell), pool->size,
 				 GFP_KERNEL);
-	if (!cellptr)
-		return -ENOMEM;
+	अगर (!cellptr)
+		वापस -ENOMEM;
 
-	/* add new cells to the free cell list */
+	/* add new cells to the मुक्त cell list */
 	spin_lock_irq(&pool->lock);
-	if (pool->ptr) {
+	अगर (pool->ptr) अणु
 		spin_unlock_irq(&pool->lock);
-		kvfree(cellptr);
-		return 0;
-	}
+		kvमुक्त(cellptr);
+		वापस 0;
+	पूर्ण
 
 	pool->ptr = cellptr;
-	pool->free = NULL;
+	pool->मुक्त = शून्य;
 
-	for (cell = 0; cell < pool->size; cell++) {
+	क्रम (cell = 0; cell < pool->size; cell++) अणु
 		cellptr = pool->ptr + cell;
 		cellptr->pool = pool;
-		cellptr->next = pool->free;
-		pool->free = cellptr;
-	}
+		cellptr->next = pool->मुक्त;
+		pool->मुक्त = cellptr;
+	पूर्ण
 	pool->room = (pool->size + 1) / 2;
 
 	/* init statistics */
 	pool->max_used = 0;
 	pool->total_elements = pool->size;
 	spin_unlock_irq(&pool->lock);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* refuse the further insertion to the pool */
-void snd_seq_pool_mark_closing(struct snd_seq_pool *pool)
-{
-	unsigned long flags;
+व्योम snd_seq_pool_mark_closing(काष्ठा snd_seq_pool *pool)
+अणु
+	अचिन्हित दीर्घ flags;
 
-	if (snd_BUG_ON(!pool))
-		return;
+	अगर (snd_BUG_ON(!pool))
+		वापस;
 	spin_lock_irqsave(&pool->lock, flags);
 	pool->closing = 1;
 	spin_unlock_irqrestore(&pool->lock, flags);
-}
+पूर्ण
 
-/* remove events */
-int snd_seq_pool_done(struct snd_seq_pool *pool)
-{
-	struct snd_seq_event_cell *ptr;
+/* हटाओ events */
+पूर्णांक snd_seq_pool_करोne(काष्ठा snd_seq_pool *pool)
+अणु
+	काष्ठा snd_seq_event_cell *ptr;
 
-	if (snd_BUG_ON(!pool))
-		return -EINVAL;
+	अगर (snd_BUG_ON(!pool))
+		वापस -EINVAL;
 
-	/* wait for closing all threads */
-	if (waitqueue_active(&pool->output_sleep))
+	/* रुको क्रम closing all thपढ़ोs */
+	अगर (रुकोqueue_active(&pool->output_sleep))
 		wake_up(&pool->output_sleep);
 
-	while (atomic_read(&pool->counter) > 0)
-		schedule_timeout_uninterruptible(1);
+	जबतक (atomic_पढ़ो(&pool->counter) > 0)
+		schedule_समयout_unपूर्णांकerruptible(1);
 	
 	/* release all resources */
 	spin_lock_irq(&pool->lock);
 	ptr = pool->ptr;
-	pool->ptr = NULL;
-	pool->free = NULL;
+	pool->ptr = शून्य;
+	pool->मुक्त = शून्य;
 	pool->total_elements = 0;
 	spin_unlock_irq(&pool->lock);
 
-	kvfree(ptr);
+	kvमुक्त(ptr);
 
 	spin_lock_irq(&pool->lock);
 	pool->closing = 0;
 	spin_unlock_irq(&pool->lock);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
 /* init new memory pool */
-struct snd_seq_pool *snd_seq_pool_new(int poolsize)
-{
-	struct snd_seq_pool *pool;
+काष्ठा snd_seq_pool *snd_seq_pool_new(पूर्णांक poolsize)
+अणु
+	काष्ठा snd_seq_pool *pool;
 
 	/* create pool block */
-	pool = kzalloc(sizeof(*pool), GFP_KERNEL);
-	if (!pool)
-		return NULL;
+	pool = kzalloc(माप(*pool), GFP_KERNEL);
+	अगर (!pool)
+		वापस शून्य;
 	spin_lock_init(&pool->lock);
-	pool->ptr = NULL;
-	pool->free = NULL;
+	pool->ptr = शून्य;
+	pool->मुक्त = शून्य;
 	pool->total_elements = 0;
 	atomic_set(&pool->counter, 0);
 	pool->closing = 0;
-	init_waitqueue_head(&pool->output_sleep);
+	init_रुकोqueue_head(&pool->output_sleep);
 	
 	pool->size = poolsize;
 
 	/* init statistics */
 	pool->max_used = 0;
-	return pool;
-}
+	वापस pool;
+पूर्ण
 
-/* remove memory pool */
-int snd_seq_pool_delete(struct snd_seq_pool **ppool)
-{
-	struct snd_seq_pool *pool = *ppool;
+/* हटाओ memory pool */
+पूर्णांक snd_seq_pool_delete(काष्ठा snd_seq_pool **ppool)
+अणु
+	काष्ठा snd_seq_pool *pool = *ppool;
 
-	*ppool = NULL;
-	if (pool == NULL)
-		return 0;
+	*ppool = शून्य;
+	अगर (pool == शून्य)
+		वापस 0;
 	snd_seq_pool_mark_closing(pool);
-	snd_seq_pool_done(pool);
-	kfree(pool);
-	return 0;
-}
+	snd_seq_pool_करोne(pool);
+	kमुक्त(pool);
+	वापस 0;
+पूर्ण
 
-/* exported to seq_clientmgr.c */
-void snd_seq_info_pool(struct snd_info_buffer *buffer,
-		       struct snd_seq_pool *pool, char *space)
-{
-	if (pool == NULL)
-		return;
-	snd_iprintf(buffer, "%sPool size          : %d\n", space, pool->total_elements);
-	snd_iprintf(buffer, "%sCells in use       : %d\n", space, atomic_read(&pool->counter));
-	snd_iprintf(buffer, "%sPeak cells in use  : %d\n", space, pool->max_used);
-	snd_iprintf(buffer, "%sAlloc success      : %d\n", space, pool->event_alloc_success);
-	snd_iprintf(buffer, "%sAlloc failures     : %d\n", space, pool->event_alloc_failures);
-}
+/* exported to seq_clienपंचांगgr.c */
+व्योम snd_seq_info_pool(काष्ठा snd_info_buffer *buffer,
+		       काष्ठा snd_seq_pool *pool, अक्षर *space)
+अणु
+	अगर (pool == शून्य)
+		वापस;
+	snd_iम_लिखो(buffer, "%sPool size          : %d\n", space, pool->total_elements);
+	snd_iम_लिखो(buffer, "%sCells in use       : %d\n", space, atomic_पढ़ो(&pool->counter));
+	snd_iम_लिखो(buffer, "%sPeak cells in use  : %d\n", space, pool->max_used);
+	snd_iम_लिखो(buffer, "%sAlloc success      : %d\n", space, pool->event_alloc_success);
+	snd_iम_लिखो(buffer, "%sAlloc failures     : %d\n", space, pool->event_alloc_failures);
+पूर्ण

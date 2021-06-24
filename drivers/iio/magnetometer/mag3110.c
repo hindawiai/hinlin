@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * mag3110.c - Support for Freescale MAG3110 magnetometer sensor
+ * mag3110.c - Support क्रम Freescale MAG3110 magnetometer sensor
  *
  * Copyright (c) 2013 Peter Meerwald <pmeerw@pmeerw.net>
  *
@@ -9,506 +10,506 @@
  * TODO: irq, user offset, oversampling, continuous mode
  */
 
-#include <linux/module.h>
-#include <linux/i2c.h>
-#include <linux/iio/iio.h>
-#include <linux/iio/sysfs.h>
-#include <linux/iio/trigger_consumer.h>
-#include <linux/iio/buffer.h>
-#include <linux/iio/triggered_buffer.h>
-#include <linux/delay.h>
-#include <linux/regulator/consumer.h>
+#समावेश <linux/module.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/iio/iपन.स>
+#समावेश <linux/iio/sysfs.h>
+#समावेश <linux/iio/trigger_consumer.h>
+#समावेश <linux/iio/buffer.h>
+#समावेश <linux/iio/triggered_buffer.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/regulator/consumer.h>
 
-#define MAG3110_STATUS 0x00
-#define MAG3110_OUT_X 0x01 /* MSB first */
-#define MAG3110_OUT_Y 0x03
-#define MAG3110_OUT_Z 0x05
-#define MAG3110_WHO_AM_I 0x07
-#define MAG3110_SYSMOD 0x08
-#define MAG3110_OFF_X 0x09 /* MSB first */
-#define MAG3110_OFF_Y 0x0b
-#define MAG3110_OFF_Z 0x0d
-#define MAG3110_DIE_TEMP 0x0f
-#define MAG3110_CTRL_REG1 0x10
-#define MAG3110_CTRL_REG2 0x11
+#घोषणा MAG3110_STATUS 0x00
+#घोषणा MAG3110_OUT_X 0x01 /* MSB first */
+#घोषणा MAG3110_OUT_Y 0x03
+#घोषणा MAG3110_OUT_Z 0x05
+#घोषणा MAG3110_WHO_AM_I 0x07
+#घोषणा MAG3110_SYSMOD 0x08
+#घोषणा MAG3110_OFF_X 0x09 /* MSB first */
+#घोषणा MAG3110_OFF_Y 0x0b
+#घोषणा MAG3110_OFF_Z 0x0d
+#घोषणा MAG3110_DIE_TEMP 0x0f
+#घोषणा MAG3110_CTRL_REG1 0x10
+#घोषणा MAG3110_CTRL_REG2 0x11
 
-#define MAG3110_STATUS_DRDY (BIT(2) | BIT(1) | BIT(0))
+#घोषणा MAG3110_STATUS_DRDY (BIT(2) | BIT(1) | BIT(0))
 
-#define MAG3110_CTRL_DR_MASK (BIT(7) | BIT(6) | BIT(5))
-#define MAG3110_CTRL_DR_SHIFT 5
-#define MAG3110_CTRL_DR_DEFAULT 0
+#घोषणा MAG3110_CTRL_DR_MASK (BIT(7) | BIT(6) | BIT(5))
+#घोषणा MAG3110_CTRL_DR_SHIFT 5
+#घोषणा MAG3110_CTRL_DR_DEFAULT 0
 
-#define MAG3110_SYSMOD_MODE_MASK GENMASK(1, 0)
+#घोषणा MAG3110_SYSMOD_MODE_MASK GENMASK(1, 0)
 
-#define MAG3110_CTRL_TM BIT(1) /* trigger single measurement */
-#define MAG3110_CTRL_AC BIT(0) /* continuous measurements */
+#घोषणा MAG3110_CTRL_TM BIT(1) /* trigger single measurement */
+#घोषणा MAG3110_CTRL_AC BIT(0) /* continuous measurements */
 
-#define MAG3110_CTRL_AUTO_MRST_EN BIT(7) /* magnetic auto-reset */
-#define MAG3110_CTRL_RAW BIT(5) /* measurements not user-offset corrected */
+#घोषणा MAG3110_CTRL_AUTO_MRST_EN BIT(7) /* magnetic स्वतः-reset */
+#घोषणा MAG3110_CTRL_RAW BIT(5) /* measurements not user-offset corrected */
 
-#define MAG3110_DEVICE_ID 0xc4
+#घोषणा MAG3110_DEVICE_ID 0xc4
 
 /* Each client has this additional data */
-struct mag3110_data {
-	struct i2c_client *client;
-	struct mutex lock;
+काष्ठा mag3110_data अणु
+	काष्ठा i2c_client *client;
+	काष्ठा mutex lock;
 	u8 ctrl_reg1;
-	int sleep_val;
-	struct regulator *vdd_reg;
-	struct regulator *vddio_reg;
-	/* Ensure natural alignment of timestamp */
-	struct {
+	पूर्णांक sleep_val;
+	काष्ठा regulator *vdd_reg;
+	काष्ठा regulator *vddio_reg;
+	/* Ensure natural alignment of बारtamp */
+	काष्ठा अणु
 		__be16 channels[3];
 		u8 temperature;
 		s64 ts __aligned(8);
-	} scan;
-};
+	पूर्ण scan;
+पूर्ण;
 
-static int mag3110_request(struct mag3110_data *data)
-{
-	int ret, tries = 150;
+अटल पूर्णांक mag3110_request(काष्ठा mag3110_data *data)
+अणु
+	पूर्णांक ret, tries = 150;
 
-	if ((data->ctrl_reg1 & MAG3110_CTRL_AC) == 0) {
+	अगर ((data->ctrl_reg1 & MAG3110_CTRL_AC) == 0) अणु
 		/* trigger measurement */
-		ret = i2c_smbus_write_byte_data(data->client, MAG3110_CTRL_REG1,
+		ret = i2c_smbus_ग_लिखो_byte_data(data->client, MAG3110_CTRL_REG1,
 			data->ctrl_reg1 | MAG3110_CTRL_TM);
-		if (ret < 0)
-			return ret;
-	}
+		अगर (ret < 0)
+			वापस ret;
+	पूर्ण
 
-	while (tries-- > 0) {
-		ret = i2c_smbus_read_byte_data(data->client, MAG3110_STATUS);
-		if (ret < 0)
-			return ret;
-		/* wait for data ready */
-		if ((ret & MAG3110_STATUS_DRDY) == MAG3110_STATUS_DRDY)
-			break;
+	जबतक (tries-- > 0) अणु
+		ret = i2c_smbus_पढ़ो_byte_data(data->client, MAG3110_STATUS);
+		अगर (ret < 0)
+			वापस ret;
+		/* रुको क्रम data पढ़ोy */
+		अगर ((ret & MAG3110_STATUS_DRDY) == MAG3110_STATUS_DRDY)
+			अवरोध;
 
-		if (data->sleep_val <= 20)
+		अगर (data->sleep_val <= 20)
 			usleep_range(data->sleep_val * 250, data->sleep_val * 500);
-		else
+		अन्यथा
 			msleep(20);
-	}
+	पूर्ण
 
-	if (tries < 0) {
+	अगर (tries < 0) अणु
 		dev_err(&data->client->dev, "data not ready\n");
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mag3110_read(struct mag3110_data *data, __be16 buf[3])
-{
-	int ret;
+अटल पूर्णांक mag3110_पढ़ो(काष्ठा mag3110_data *data, __be16 buf[3])
+अणु
+	पूर्णांक ret;
 
 	mutex_lock(&data->lock);
 	ret = mag3110_request(data);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		mutex_unlock(&data->lock);
-		return ret;
-	}
-	ret = i2c_smbus_read_i2c_block_data(data->client,
-		MAG3110_OUT_X, 3 * sizeof(__be16), (u8 *) buf);
+		वापस ret;
+	पूर्ण
+	ret = i2c_smbus_पढ़ो_i2c_block_data(data->client,
+		MAG3110_OUT_X, 3 * माप(__be16), (u8 *) buf);
 	mutex_unlock(&data->lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static ssize_t mag3110_show_int_plus_micros(char *buf,
-	const int (*vals)[2], int n)
-{
-	size_t len = 0;
+अटल sमाप_प्रकार mag3110_show_पूर्णांक_plus_micros(अक्षर *buf,
+	स्थिर पूर्णांक (*vals)[2], पूर्णांक n)
+अणु
+	माप_प्रकार len = 0;
 
-	while (n-- > 0)
-		len += scnprintf(buf + len, PAGE_SIZE - len,
+	जबतक (n-- > 0)
+		len += scnम_लिखो(buf + len, PAGE_SIZE - len,
 			"%d.%06d ", vals[n][0], vals[n][1]);
 
 	/* replace trailing space by newline */
 	buf[len - 1] = '\n';
 
-	return len;
-}
+	वापस len;
+पूर्ण
 
-static int mag3110_get_int_plus_micros_index(const int (*vals)[2], int n,
-					int val, int val2)
-{
-	while (n-- > 0)
-		if (val == vals[n][0] && val2 == vals[n][1])
-			return n;
+अटल पूर्णांक mag3110_get_पूर्णांक_plus_micros_index(स्थिर पूर्णांक (*vals)[2], पूर्णांक n,
+					पूर्णांक val, पूर्णांक val2)
+अणु
+	जबतक (n-- > 0)
+		अगर (val == vals[n][0] && val2 == vals[n][1])
+			वापस n;
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static const int mag3110_samp_freq[8][2] = {
-	{80, 0}, {40, 0}, {20, 0}, {10, 0}, {5, 0}, {2, 500000},
-	{1, 250000}, {0, 625000}
-};
+अटल स्थिर पूर्णांक mag3110_samp_freq[8][2] = अणु
+	अणु80, 0पूर्ण, अणु40, 0पूर्ण, अणु20, 0पूर्ण, अणु10, 0पूर्ण, अणु5, 0पूर्ण, अणु2, 500000पूर्ण,
+	अणु1, 250000पूर्ण, अणु0, 625000पूर्ण
+पूर्ण;
 
-static ssize_t mag3110_show_samp_freq_avail(struct device *dev,
-				struct device_attribute *attr, char *buf)
-{
-	return mag3110_show_int_plus_micros(buf, mag3110_samp_freq, 8);
-}
+अटल sमाप_प्रकार mag3110_show_samp_freq_avail(काष्ठा device *dev,
+				काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	वापस mag3110_show_पूर्णांक_plus_micros(buf, mag3110_samp_freq, 8);
+पूर्ण
 
-static IIO_DEV_ATTR_SAMP_FREQ_AVAIL(mag3110_show_samp_freq_avail);
+अटल IIO_DEV_ATTR_SAMP_FREQ_AVAIL(mag3110_show_samp_freq_avail);
 
-static int mag3110_get_samp_freq_index(struct mag3110_data *data,
-	int val, int val2)
-{
-	return mag3110_get_int_plus_micros_index(mag3110_samp_freq, 8, val,
+अटल पूर्णांक mag3110_get_samp_freq_index(काष्ठा mag3110_data *data,
+	पूर्णांक val, पूर्णांक val2)
+अणु
+	वापस mag3110_get_पूर्णांक_plus_micros_index(mag3110_samp_freq, 8, val,
 		val2);
-}
+पूर्ण
 
-static int mag3110_calculate_sleep(struct mag3110_data *data)
-{
-	int ret, i = data->ctrl_reg1 >> MAG3110_CTRL_DR_SHIFT;
+अटल पूर्णांक mag3110_calculate_sleep(काष्ठा mag3110_data *data)
+अणु
+	पूर्णांक ret, i = data->ctrl_reg1 >> MAG3110_CTRL_DR_SHIFT;
 
-	if (mag3110_samp_freq[i][0] > 0)
+	अगर (mag3110_samp_freq[i][0] > 0)
 		ret = 1000 / mag3110_samp_freq[i][0];
-	else
+	अन्यथा
 		ret = 1000;
 
-	return ret == 0 ? 1 : ret;
-}
+	वापस ret == 0 ? 1 : ret;
+पूर्ण
 
-static int mag3110_standby(struct mag3110_data *data)
-{
-	return i2c_smbus_write_byte_data(data->client, MAG3110_CTRL_REG1,
+अटल पूर्णांक mag3110_standby(काष्ठा mag3110_data *data)
+अणु
+	वापस i2c_smbus_ग_लिखो_byte_data(data->client, MAG3110_CTRL_REG1,
 		data->ctrl_reg1 & ~MAG3110_CTRL_AC);
-}
+पूर्ण
 
-static int mag3110_wait_standby(struct mag3110_data *data)
-{
-	int ret, tries = 30;
+अटल पूर्णांक mag3110_रुको_standby(काष्ठा mag3110_data *data)
+अणु
+	पूर्णांक ret, tries = 30;
 
 	/*
-	 * Takes up to 1/ODR to come out of active mode into stby
+	 * Takes up to 1/ODR to come out of active mode पूर्णांकo stby
 	 * Longest expected period is 12.5seconds.
-	 * We'll sleep for 500ms between checks
+	 * We'll sleep क्रम 500ms between checks
 	 */
-	while (tries-- > 0) {
-		ret = i2c_smbus_read_byte_data(data->client, MAG3110_SYSMOD);
-		if (ret < 0) {
+	जबतक (tries-- > 0) अणु
+		ret = i2c_smbus_पढ़ो_byte_data(data->client, MAG3110_SYSMOD);
+		अगर (ret < 0) अणु
 			dev_err(&data->client->dev, "i2c error\n");
-			return ret;
-		}
-		/* wait for standby */
-		if ((ret & MAG3110_SYSMOD_MODE_MASK) == 0)
-			break;
+			वापस ret;
+		पूर्ण
+		/* रुको क्रम standby */
+		अगर ((ret & MAG3110_SYSMOD_MODE_MASK) == 0)
+			अवरोध;
 
-		msleep_interruptible(500);
-	}
+		msleep_पूर्णांकerruptible(500);
+	पूर्ण
 
-	if (tries < 0) {
+	अगर (tries < 0) अणु
 		dev_err(&data->client->dev, "device not entering standby mode\n");
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mag3110_active(struct mag3110_data *data)
-{
-	return i2c_smbus_write_byte_data(data->client, MAG3110_CTRL_REG1,
+अटल पूर्णांक mag3110_active(काष्ठा mag3110_data *data)
+अणु
+	वापस i2c_smbus_ग_लिखो_byte_data(data->client, MAG3110_CTRL_REG1,
 					 data->ctrl_reg1);
-}
+पूर्ण
 
-/* returns >0 if active, 0 if in standby and <0 on error */
-static int mag3110_is_active(struct mag3110_data *data)
-{
-	int reg;
+/* वापसs >0 अगर active, 0 अगर in standby and <0 on error */
+अटल पूर्णांक mag3110_is_active(काष्ठा mag3110_data *data)
+अणु
+	पूर्णांक reg;
 
-	reg = i2c_smbus_read_byte_data(data->client, MAG3110_CTRL_REG1);
-	if (reg < 0)
-		return reg;
+	reg = i2c_smbus_पढ़ो_byte_data(data->client, MAG3110_CTRL_REG1);
+	अगर (reg < 0)
+		वापस reg;
 
-	return reg & MAG3110_CTRL_AC;
-}
+	वापस reg & MAG3110_CTRL_AC;
+पूर्ण
 
-static int mag3110_change_config(struct mag3110_data *data, u8 reg, u8 val)
-{
-	int ret;
-	int is_active;
+अटल पूर्णांक mag3110_change_config(काष्ठा mag3110_data *data, u8 reg, u8 val)
+अणु
+	पूर्णांक ret;
+	पूर्णांक is_active;
 
 	mutex_lock(&data->lock);
 
 	is_active = mag3110_is_active(data);
-	if (is_active < 0) {
+	अगर (is_active < 0) अणु
 		ret = is_active;
-		goto fail;
-	}
+		जाओ fail;
+	पूर्ण
 
 	/* config can only be changed when in standby */
-	if (is_active > 0) {
+	अगर (is_active > 0) अणु
 		ret = mag3110_standby(data);
-		if (ret < 0)
-			goto fail;
-	}
+		अगर (ret < 0)
+			जाओ fail;
+	पूर्ण
 
 	/*
-	 * After coming out of active we must wait for the part
+	 * After coming out of active we must रुको क्रम the part
 	 * to transition to STBY. This can take up to 1 /ODR to occur
 	 */
-	ret = mag3110_wait_standby(data);
-	if (ret < 0)
-		goto fail;
+	ret = mag3110_रुको_standby(data);
+	अगर (ret < 0)
+		जाओ fail;
 
-	ret = i2c_smbus_write_byte_data(data->client, reg, val);
-	if (ret < 0)
-		goto fail;
+	ret = i2c_smbus_ग_लिखो_byte_data(data->client, reg, val);
+	अगर (ret < 0)
+		जाओ fail;
 
-	if (is_active > 0) {
+	अगर (is_active > 0) अणु
 		ret = mag3110_active(data);
-		if (ret < 0)
-			goto fail;
-	}
+		अगर (ret < 0)
+			जाओ fail;
+	पूर्ण
 
 	ret = 0;
 fail:
 	mutex_unlock(&data->lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int mag3110_read_raw(struct iio_dev *indio_dev,
-			    struct iio_chan_spec const *chan,
-			    int *val, int *val2, long mask)
-{
-	struct mag3110_data *data = iio_priv(indio_dev);
+अटल पूर्णांक mag3110_पढ़ो_raw(काष्ठा iio_dev *indio_dev,
+			    काष्ठा iio_chan_spec स्थिर *chan,
+			    पूर्णांक *val, पूर्णांक *val2, दीर्घ mask)
+अणु
+	काष्ठा mag3110_data *data = iio_priv(indio_dev);
 	__be16 buffer[3];
-	int i, ret;
+	पूर्णांक i, ret;
 
-	switch (mask) {
-	case IIO_CHAN_INFO_RAW:
+	चयन (mask) अणु
+	हाल IIO_CHAN_INFO_RAW:
 		ret = iio_device_claim_direct_mode(indio_dev);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 
-		switch (chan->type) {
-		case IIO_MAGN: /* in 0.1 uT / LSB */
-			ret = mag3110_read(data, buffer);
-			if (ret < 0)
-				goto release;
+		चयन (chan->type) अणु
+		हाल IIO_MAGN: /* in 0.1 uT / LSB */
+			ret = mag3110_पढ़ो(data, buffer);
+			अगर (ret < 0)
+				जाओ release;
 			*val = sign_extend32(
 				be16_to_cpu(buffer[chan->scan_index]), 15);
 			ret = IIO_VAL_INT;
-			break;
-		case IIO_TEMP: /* in 1 C / LSB */
+			अवरोध;
+		हाल IIO_TEMP: /* in 1 C / LSB */
 			mutex_lock(&data->lock);
 			ret = mag3110_request(data);
-			if (ret < 0) {
+			अगर (ret < 0) अणु
 				mutex_unlock(&data->lock);
-				goto release;
-			}
-			ret = i2c_smbus_read_byte_data(data->client,
+				जाओ release;
+			पूर्ण
+			ret = i2c_smbus_पढ़ो_byte_data(data->client,
 				MAG3110_DIE_TEMP);
 			mutex_unlock(&data->lock);
-			if (ret < 0)
-				goto release;
+			अगर (ret < 0)
+				जाओ release;
 			*val = sign_extend32(ret, 7);
 			ret = IIO_VAL_INT;
-			break;
-		default:
+			अवरोध;
+		शेष:
 			ret = -EINVAL;
-		}
+		पूर्ण
 release:
 		iio_device_release_direct_mode(indio_dev);
-		return ret;
+		वापस ret;
 
-	case IIO_CHAN_INFO_SCALE:
-		switch (chan->type) {
-		case IIO_MAGN:
+	हाल IIO_CHAN_INFO_SCALE:
+		चयन (chan->type) अणु
+		हाल IIO_MAGN:
 			*val = 0;
 			*val2 = 1000;
-			return IIO_VAL_INT_PLUS_MICRO;
-		case IIO_TEMP:
+			वापस IIO_VAL_INT_PLUS_MICRO;
+		हाल IIO_TEMP:
 			*val = 1000;
-			return IIO_VAL_INT;
-		default:
-			return -EINVAL;
-		}
-	case IIO_CHAN_INFO_SAMP_FREQ:
+			वापस IIO_VAL_INT;
+		शेष:
+			वापस -EINVAL;
+		पूर्ण
+	हाल IIO_CHAN_INFO_SAMP_FREQ:
 		i = data->ctrl_reg1 >> MAG3110_CTRL_DR_SHIFT;
 		*val = mag3110_samp_freq[i][0];
 		*val2 = mag3110_samp_freq[i][1];
-		return IIO_VAL_INT_PLUS_MICRO;
-	case IIO_CHAN_INFO_CALIBBIAS:
-		ret = i2c_smbus_read_word_swapped(data->client,
+		वापस IIO_VAL_INT_PLUS_MICRO;
+	हाल IIO_CHAN_INFO_CALIBBIAS:
+		ret = i2c_smbus_पढ़ो_word_swapped(data->client,
 			MAG3110_OFF_X +	2 * chan->scan_index);
-		if (ret < 0)
-			return ret;
+		अगर (ret < 0)
+			वापस ret;
 		*val = sign_extend32(ret >> 1, 14);
-		return IIO_VAL_INT;
-	}
-	return -EINVAL;
-}
+		वापस IIO_VAL_INT;
+	पूर्ण
+	वापस -EINVAL;
+पूर्ण
 
-static int mag3110_write_raw(struct iio_dev *indio_dev,
-			     struct iio_chan_spec const *chan,
-			     int val, int val2, long mask)
-{
-	struct mag3110_data *data = iio_priv(indio_dev);
-	int rate, ret;
+अटल पूर्णांक mag3110_ग_लिखो_raw(काष्ठा iio_dev *indio_dev,
+			     काष्ठा iio_chan_spec स्थिर *chan,
+			     पूर्णांक val, पूर्णांक val2, दीर्घ mask)
+अणु
+	काष्ठा mag3110_data *data = iio_priv(indio_dev);
+	पूर्णांक rate, ret;
 
 	ret = iio_device_claim_direct_mode(indio_dev);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	switch (mask) {
-	case IIO_CHAN_INFO_SAMP_FREQ:
+	चयन (mask) अणु
+	हाल IIO_CHAN_INFO_SAMP_FREQ:
 		rate = mag3110_get_samp_freq_index(data, val, val2);
-		if (rate < 0) {
+		अगर (rate < 0) अणु
 			ret = -EINVAL;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		data->ctrl_reg1 &= 0xff & ~MAG3110_CTRL_DR_MASK
 					& ~MAG3110_CTRL_AC;
 		data->ctrl_reg1 |= rate << MAG3110_CTRL_DR_SHIFT;
 		data->sleep_val = mag3110_calculate_sleep(data);
-		if (data->sleep_val < 40)
+		अगर (data->sleep_val < 40)
 			data->ctrl_reg1 |= MAG3110_CTRL_AC;
 
 		ret = mag3110_change_config(data, MAG3110_CTRL_REG1,
 					    data->ctrl_reg1);
-		break;
-	case IIO_CHAN_INFO_CALIBBIAS:
-		if (val < -10000 || val > 10000) {
+		अवरोध;
+	हाल IIO_CHAN_INFO_CALIBBIAS:
+		अगर (val < -10000 || val > 10000) अणु
 			ret = -EINVAL;
-			break;
-		}
-		ret = i2c_smbus_write_word_swapped(data->client,
+			अवरोध;
+		पूर्ण
+		ret = i2c_smbus_ग_लिखो_word_swapped(data->client,
 			MAG3110_OFF_X + 2 * chan->scan_index, val << 1);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		ret = -EINVAL;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 	iio_device_release_direct_mode(indio_dev);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static irqreturn_t mag3110_trigger_handler(int irq, void *p)
-{
-	struct iio_poll_func *pf = p;
-	struct iio_dev *indio_dev = pf->indio_dev;
-	struct mag3110_data *data = iio_priv(indio_dev);
-	int ret;
+अटल irqवापस_t mag3110_trigger_handler(पूर्णांक irq, व्योम *p)
+अणु
+	काष्ठा iio_poll_func *pf = p;
+	काष्ठा iio_dev *indio_dev = pf->indio_dev;
+	काष्ठा mag3110_data *data = iio_priv(indio_dev);
+	पूर्णांक ret;
 
-	ret = mag3110_read(data, data->scan.channels);
-	if (ret < 0)
-		goto done;
+	ret = mag3110_पढ़ो(data, data->scan.channels);
+	अगर (ret < 0)
+		जाओ करोne;
 
-	if (test_bit(3, indio_dev->active_scan_mask)) {
-		ret = i2c_smbus_read_byte_data(data->client,
+	अगर (test_bit(3, indio_dev->active_scan_mask)) अणु
+		ret = i2c_smbus_पढ़ो_byte_data(data->client,
 			MAG3110_DIE_TEMP);
-		if (ret < 0)
-			goto done;
+		अगर (ret < 0)
+			जाओ करोne;
 		data->scan.temperature = ret;
-	}
+	पूर्ण
 
-	iio_push_to_buffers_with_timestamp(indio_dev, &data->scan,
-		iio_get_time_ns(indio_dev));
+	iio_push_to_buffers_with_बारtamp(indio_dev, &data->scan,
+		iio_get_समय_ns(indio_dev));
 
-done:
-	iio_trigger_notify_done(indio_dev->trig);
-	return IRQ_HANDLED;
-}
+करोne:
+	iio_trigger_notअगरy_करोne(indio_dev->trig);
+	वापस IRQ_HANDLED;
+पूर्ण
 
-#define MAG3110_CHANNEL(axis, idx) { \
+#घोषणा MAG3110_CHANNEL(axis, idx) अणु \
 	.type = IIO_MAGN, \
-	.modified = 1, \
+	.modअगरied = 1, \
 	.channel2 = IIO_MOD_##axis, \
 	.info_mask_separate = BIT(IIO_CHAN_INFO_RAW) | \
 		BIT(IIO_CHAN_INFO_CALIBBIAS), \
 	.info_mask_shared_by_type = BIT(IIO_CHAN_INFO_SAMP_FREQ) | \
 		BIT(IIO_CHAN_INFO_SCALE), \
 	.scan_index = idx, \
-	.scan_type = { \
+	.scan_type = अणु \
 		.sign = 's', \
 		.realbits = 16, \
 		.storagebits = 16, \
 		.endianness = IIO_BE, \
-	}, \
-}
+	पूर्ण, \
+पूर्ण
 
-static const struct iio_chan_spec mag3110_channels[] = {
+अटल स्थिर काष्ठा iio_chan_spec mag3110_channels[] = अणु
 	MAG3110_CHANNEL(X, 0),
 	MAG3110_CHANNEL(Y, 1),
 	MAG3110_CHANNEL(Z, 2),
-	{
+	अणु
 		.type = IIO_TEMP,
 		.info_mask_separate = BIT(IIO_CHAN_INFO_RAW) |
 			BIT(IIO_CHAN_INFO_SCALE),
 		.scan_index = 3,
-		.scan_type = {
+		.scan_type = अणु
 			.sign = 's',
 			.realbits = 8,
 			.storagebits = 8,
-			},
-	},
+			पूर्ण,
+	पूर्ण,
 	IIO_CHAN_SOFT_TIMESTAMP(4),
-};
+पूर्ण;
 
-static struct attribute *mag3110_attributes[] = {
+अटल काष्ठा attribute *mag3110_attributes[] = अणु
 	&iio_dev_attr_sampling_frequency_available.dev_attr.attr,
-	NULL
-};
+	शून्य
+पूर्ण;
 
-static const struct attribute_group mag3110_group = {
+अटल स्थिर काष्ठा attribute_group mag3110_group = अणु
 	.attrs = mag3110_attributes,
-};
+पूर्ण;
 
-static const struct iio_info mag3110_info = {
+अटल स्थिर काष्ठा iio_info mag3110_info = अणु
 	.attrs = &mag3110_group,
-	.read_raw = &mag3110_read_raw,
-	.write_raw = &mag3110_write_raw,
-};
+	.पढ़ो_raw = &mag3110_पढ़ो_raw,
+	.ग_लिखो_raw = &mag3110_ग_लिखो_raw,
+पूर्ण;
 
-static const unsigned long mag3110_scan_masks[] = {0x7, 0xf, 0};
+अटल स्थिर अचिन्हित दीर्घ mag3110_scan_masks[] = अणु0x7, 0xf, 0पूर्ण;
 
-static int mag3110_probe(struct i2c_client *client,
-			 const struct i2c_device_id *id)
-{
-	struct mag3110_data *data;
-	struct iio_dev *indio_dev;
-	int ret;
+अटल पूर्णांक mag3110_probe(काष्ठा i2c_client *client,
+			 स्थिर काष्ठा i2c_device_id *id)
+अणु
+	काष्ठा mag3110_data *data;
+	काष्ठा iio_dev *indio_dev;
+	पूर्णांक ret;
 
-	indio_dev = devm_iio_device_alloc(&client->dev, sizeof(*data));
-	if (!indio_dev)
-		return -ENOMEM;
+	indio_dev = devm_iio_device_alloc(&client->dev, माप(*data));
+	अगर (!indio_dev)
+		वापस -ENOMEM;
 
 	data = iio_priv(indio_dev);
 
 	data->vdd_reg = devm_regulator_get(&client->dev, "vdd");
-	if (IS_ERR(data->vdd_reg))
-		return dev_err_probe(&client->dev, PTR_ERR(data->vdd_reg),
+	अगर (IS_ERR(data->vdd_reg))
+		वापस dev_err_probe(&client->dev, PTR_ERR(data->vdd_reg),
 				     "failed to get VDD regulator!\n");
 
 	data->vddio_reg = devm_regulator_get(&client->dev, "vddio");
-	if (IS_ERR(data->vddio_reg))
-		return dev_err_probe(&client->dev, PTR_ERR(data->vddio_reg),
+	अगर (IS_ERR(data->vddio_reg))
+		वापस dev_err_probe(&client->dev, PTR_ERR(data->vddio_reg),
 				     "failed to get VDDIO regulator!\n");
 
 	ret = regulator_enable(data->vdd_reg);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&client->dev, "failed to enable VDD regulator!\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	ret = regulator_enable(data->vddio_reg);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&client->dev, "failed to enable VDDIO regulator!\n");
-		goto disable_regulator_vdd;
-	}
+		जाओ disable_regulator_vdd;
+	पूर्ण
 
-	ret = i2c_smbus_read_byte_data(client, MAG3110_WHO_AM_I);
-	if (ret < 0)
-		goto disable_regulators;
-	if (ret != MAG3110_DEVICE_ID) {
+	ret = i2c_smbus_पढ़ो_byte_data(client, MAG3110_WHO_AM_I);
+	अगर (ret < 0)
+		जाओ disable_regulators;
+	अगर (ret != MAG3110_DEVICE_ID) अणु
 		ret = -ENODEV;
-		goto disable_regulators;
-	}
+		जाओ disable_regulators;
+	पूर्ण
 
 	data->client = client;
 	mutex_init(&data->lock);
@@ -516,34 +517,34 @@ static int mag3110_probe(struct i2c_client *client,
 	i2c_set_clientdata(client, indio_dev);
 	indio_dev->info = &mag3110_info;
 	indio_dev->name = id->name;
-	indio_dev->modes = INDIO_DIRECT_MODE;
+	indio_dev->modes = INDIO_सूचीECT_MODE;
 	indio_dev->channels = mag3110_channels;
 	indio_dev->num_channels = ARRAY_SIZE(mag3110_channels);
 	indio_dev->available_scan_masks = mag3110_scan_masks;
 
 	data->ctrl_reg1 = MAG3110_CTRL_DR_DEFAULT << MAG3110_CTRL_DR_SHIFT;
 	data->sleep_val = mag3110_calculate_sleep(data);
-	if (data->sleep_val < 40)
+	अगर (data->sleep_val < 40)
 		data->ctrl_reg1 |= MAG3110_CTRL_AC;
 
 	ret = mag3110_change_config(data, MAG3110_CTRL_REG1, data->ctrl_reg1);
-	if (ret < 0)
-		goto disable_regulators;
+	अगर (ret < 0)
+		जाओ disable_regulators;
 
-	ret = i2c_smbus_write_byte_data(client, MAG3110_CTRL_REG2,
+	ret = i2c_smbus_ग_लिखो_byte_data(client, MAG3110_CTRL_REG2,
 		MAG3110_CTRL_AUTO_MRST_EN);
-	if (ret < 0)
-		goto standby_on_error;
+	अगर (ret < 0)
+		जाओ standby_on_error;
 
-	ret = iio_triggered_buffer_setup(indio_dev, NULL,
-		mag3110_trigger_handler, NULL);
-	if (ret < 0)
-		goto standby_on_error;
+	ret = iio_triggered_buffer_setup(indio_dev, शून्य,
+		mag3110_trigger_handler, शून्य);
+	अगर (ret < 0)
+		जाओ standby_on_error;
 
-	ret = iio_device_register(indio_dev);
-	if (ret < 0)
-		goto buffer_cleanup;
-	return 0;
+	ret = iio_device_रेजिस्टर(indio_dev);
+	अगर (ret < 0)
+		जाओ buffer_cleanup;
+	वापस 0;
 
 buffer_cleanup:
 	iio_triggered_buffer_cleanup(indio_dev);
@@ -554,101 +555,101 @@ disable_regulators:
 disable_regulator_vdd:
 	regulator_disable(data->vdd_reg);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int mag3110_remove(struct i2c_client *client)
-{
-	struct iio_dev *indio_dev = i2c_get_clientdata(client);
-	struct mag3110_data *data = iio_priv(indio_dev);
+अटल पूर्णांक mag3110_हटाओ(काष्ठा i2c_client *client)
+अणु
+	काष्ठा iio_dev *indio_dev = i2c_get_clientdata(client);
+	काष्ठा mag3110_data *data = iio_priv(indio_dev);
 
-	iio_device_unregister(indio_dev);
+	iio_device_unरेजिस्टर(indio_dev);
 	iio_triggered_buffer_cleanup(indio_dev);
 	mag3110_standby(iio_priv(indio_dev));
 	regulator_disable(data->vddio_reg);
 	regulator_disable(data->vdd_reg);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_PM_SLEEP
-static int mag3110_suspend(struct device *dev)
-{
-	struct mag3110_data *data = iio_priv(i2c_get_clientdata(
+#अगर_घोषित CONFIG_PM_SLEEP
+अटल पूर्णांक mag3110_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा mag3110_data *data = iio_priv(i2c_get_clientdata(
 		to_i2c_client(dev)));
-	int ret;
+	पूर्णांक ret;
 
 	ret = mag3110_standby(iio_priv(i2c_get_clientdata(
 		to_i2c_client(dev))));
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ret = regulator_disable(data->vddio_reg);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev, "failed to disable VDDIO regulator\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	ret = regulator_disable(data->vdd_reg);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev, "failed to disable VDD regulator\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mag3110_resume(struct device *dev)
-{
-	struct mag3110_data *data = iio_priv(i2c_get_clientdata(
+अटल पूर्णांक mag3110_resume(काष्ठा device *dev)
+अणु
+	काष्ठा mag3110_data *data = iio_priv(i2c_get_clientdata(
 		to_i2c_client(dev)));
-	int ret;
+	पूर्णांक ret;
 
 	ret = regulator_enable(data->vdd_reg);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev, "failed to enable VDD regulator\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	ret = regulator_enable(data->vddio_reg);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev, "failed to enable VDDIO regulator\n");
 		regulator_disable(data->vdd_reg);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return i2c_smbus_write_byte_data(data->client, MAG3110_CTRL_REG1,
+	वापस i2c_smbus_ग_लिखो_byte_data(data->client, MAG3110_CTRL_REG1,
 		data->ctrl_reg1);
-}
+पूर्ण
 
-static SIMPLE_DEV_PM_OPS(mag3110_pm_ops, mag3110_suspend, mag3110_resume);
-#define MAG3110_PM_OPS (&mag3110_pm_ops)
-#else
-#define MAG3110_PM_OPS NULL
-#endif
+अटल SIMPLE_DEV_PM_OPS(mag3110_pm_ops, mag3110_suspend, mag3110_resume);
+#घोषणा MAG3110_PM_OPS (&mag3110_pm_ops)
+#अन्यथा
+#घोषणा MAG3110_PM_OPS शून्य
+#पूर्ण_अगर
 
-static const struct i2c_device_id mag3110_id[] = {
-	{ "mag3110", 0 },
-	{ }
-};
+अटल स्थिर काष्ठा i2c_device_id mag3110_id[] = अणु
+	अणु "mag3110", 0 पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(i2c, mag3110_id);
 
-static const struct of_device_id mag3110_of_match[] = {
-	{ .compatible = "fsl,mag3110" },
-	{ }
-};
+अटल स्थिर काष्ठा of_device_id mag3110_of_match[] = अणु
+	अणु .compatible = "fsl,mag3110" पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, mag3110_of_match);
 
-static struct i2c_driver mag3110_driver = {
-	.driver = {
+अटल काष्ठा i2c_driver mag3110_driver = अणु
+	.driver = अणु
 		.name	= "mag3110",
 		.of_match_table = mag3110_of_match,
 		.pm	= MAG3110_PM_OPS,
-	},
+	पूर्ण,
 	.probe = mag3110_probe,
-	.remove = mag3110_remove,
+	.हटाओ = mag3110_हटाओ,
 	.id_table = mag3110_id,
-};
+पूर्ण;
 module_i2c_driver(mag3110_driver);
 
 MODULE_AUTHOR("Peter Meerwald <pmeerw@pmeerw.net>");

@@ -1,30 +1,31 @@
-// SPDX-License-Identifier: GPL-2.0 OR Linux-OpenIB
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0 OR Linux-OpenIB
 /* Copyright (c) 2019 Mellanox Technologies */
 
-#include <linux/pci.h>
-#include "mlx5_core.h"
-#include "pci_vsc.h"
+#समावेश <linux/pci.h>
+#समावेश "mlx5_core.h"
+#समावेश "pci_vsc.h"
 
-#define MLX5_EXTRACT_C(source, offset, size)	\
+#घोषणा MLX5_EXTRACT_C(source, offset, size)	\
 	((((u32)(source)) >> (offset)) & MLX5_ONES32(size))
-#define MLX5_EXTRACT(src, start, len)		\
+#घोषणा MLX5_EXTRACT(src, start, len)		\
 	(((len) == 32) ? (src) : MLX5_EXTRACT_C(src, start, len))
-#define MLX5_ONES32(size)			\
+#घोषणा MLX5_ONES32(size)			\
 	((size) ? (0xffffffff >> (32 - (size))) : 0)
-#define MLX5_MASK32(offset, size)		\
+#घोषणा MLX5_MASK32(offset, size)		\
 	(MLX5_ONES32(size) << (offset))
-#define MLX5_MERGE_C(rsrc1, rsrc2, start, len)  \
+#घोषणा MLX5_MERGE_C(rsrc1, rsrc2, start, len)  \
 	((((rsrc2) << (start)) & (MLX5_MASK32((start), (len)))) | \
 	((rsrc1) & (~MLX5_MASK32((start), (len)))))
-#define MLX5_MERGE(rsrc1, rsrc2, start, len)	\
+#घोषणा MLX5_MERGE(rsrc1, rsrc2, start, len)	\
 	(((len) == 32) ? (rsrc2) : MLX5_MERGE_C(rsrc1, rsrc2, start, len))
-#define vsc_read(dev, offset, val) \
-	pci_read_config_dword((dev)->pdev, (dev)->vsc_addr + (offset), (val))
-#define vsc_write(dev, offset, val) \
-	pci_write_config_dword((dev)->pdev, (dev)->vsc_addr + (offset), (val))
-#define VSC_MAX_RETRIES 2048
+#घोषणा vsc_पढ़ो(dev, offset, val) \
+	pci_पढ़ो_config_dword((dev)->pdev, (dev)->vsc_addr + (offset), (val))
+#घोषणा vsc_ग_लिखो(dev, offset, val) \
+	pci_ग_लिखो_config_dword((dev)->pdev, (dev)->vsc_addr + (offset), (val))
+#घोषणा VSC_MAX_RETRIES 2048
 
-enum {
+क्रमागत अणु
 	VSC_CTRL_OFFSET = 0x4,
 	VSC_COUNTER_OFFSET = 0x8,
 	VSC_SEMAPHORE_OFFSET = 0xc,
@@ -48,269 +49,269 @@ enum {
 
 	VSC_STATUS_BIT_OFFS = 29,
 	VSC_STATUS_BIT_LEN = 3,
-};
+पूर्ण;
 
-void mlx5_pci_vsc_init(struct mlx5_core_dev *dev)
-{
-	if (!mlx5_core_is_pf(dev))
-		return;
+व्योम mlx5_pci_vsc_init(काष्ठा mlx5_core_dev *dev)
+अणु
+	अगर (!mlx5_core_is_pf(dev))
+		वापस;
 
 	dev->vsc_addr = pci_find_capability(dev->pdev,
 					    PCI_CAP_ID_VNDR);
-	if (!dev->vsc_addr)
+	अगर (!dev->vsc_addr)
 		mlx5_core_warn(dev, "Failed to get valid vendor specific ID\n");
-}
+पूर्ण
 
-int mlx5_vsc_gw_lock(struct mlx5_core_dev *dev)
-{
+पूर्णांक mlx5_vsc_gw_lock(काष्ठा mlx5_core_dev *dev)
+अणु
 	u32 counter = 0;
-	int retries = 0;
+	पूर्णांक retries = 0;
 	u32 lock_val;
-	int ret;
+	पूर्णांक ret;
 
 	pci_cfg_access_lock(dev->pdev);
-	do {
-		if (retries > VSC_MAX_RETRIES) {
+	करो अणु
+		अगर (retries > VSC_MAX_RETRIES) अणु
 			ret = -EBUSY;
-			goto pci_unlock;
-		}
+			जाओ pci_unlock;
+		पूर्ण
 
-		/* Check if semaphore is already locked */
-		ret = vsc_read(dev, VSC_SEMAPHORE_OFFSET, &lock_val);
-		if (ret)
-			goto pci_unlock;
+		/* Check अगर semaphore is alपढ़ोy locked */
+		ret = vsc_पढ़ो(dev, VSC_SEMAPHORE_OFFSET, &lock_val);
+		अगर (ret)
+			जाओ pci_unlock;
 
-		if (lock_val) {
+		अगर (lock_val) अणु
 			retries++;
 			usleep_range(1000, 2000);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		/* Read and write counter value, if written value is
+		/* Read and ग_लिखो counter value, अगर written value is
 		 * the same, semaphore was acquired successfully.
 		 */
-		ret = vsc_read(dev, VSC_COUNTER_OFFSET, &counter);
-		if (ret)
-			goto pci_unlock;
+		ret = vsc_पढ़ो(dev, VSC_COUNTER_OFFSET, &counter);
+		अगर (ret)
+			जाओ pci_unlock;
 
-		ret = vsc_write(dev, VSC_SEMAPHORE_OFFSET, counter);
-		if (ret)
-			goto pci_unlock;
+		ret = vsc_ग_लिखो(dev, VSC_SEMAPHORE_OFFSET, counter);
+		अगर (ret)
+			जाओ pci_unlock;
 
-		ret = vsc_read(dev, VSC_SEMAPHORE_OFFSET, &lock_val);
-		if (ret)
-			goto pci_unlock;
+		ret = vsc_पढ़ो(dev, VSC_SEMAPHORE_OFFSET, &lock_val);
+		अगर (ret)
+			जाओ pci_unlock;
 
 		retries++;
-	} while (counter != lock_val);
+	पूर्ण जबतक (counter != lock_val);
 
-	return 0;
+	वापस 0;
 
 pci_unlock:
 	pci_cfg_access_unlock(dev->pdev);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int mlx5_vsc_gw_unlock(struct mlx5_core_dev *dev)
-{
-	int ret;
+पूर्णांक mlx5_vsc_gw_unlock(काष्ठा mlx5_core_dev *dev)
+अणु
+	पूर्णांक ret;
 
-	ret = vsc_write(dev, VSC_SEMAPHORE_OFFSET, MLX5_VSC_UNLOCK);
+	ret = vsc_ग_लिखो(dev, VSC_SEMAPHORE_OFFSET, MLX5_VSC_UNLOCK);
 	pci_cfg_access_unlock(dev->pdev);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int mlx5_vsc_gw_set_space(struct mlx5_core_dev *dev, u16 space,
+पूर्णांक mlx5_vsc_gw_set_space(काष्ठा mlx5_core_dev *dev, u16 space,
 			  u32 *ret_space_size)
-{
-	int ret;
+अणु
+	पूर्णांक ret;
 	u32 val = 0;
 
-	if (!mlx5_vsc_accessible(dev))
-		return -EINVAL;
+	अगर (!mlx5_vsc_accessible(dev))
+		वापस -EINVAL;
 
-	if (ret_space_size)
+	अगर (ret_space_size)
 		*ret_space_size = 0;
 
 	/* Get a unique val */
-	ret = vsc_read(dev, VSC_CTRL_OFFSET, &val);
-	if (ret)
-		goto out;
+	ret = vsc_पढ़ो(dev, VSC_CTRL_OFFSET, &val);
+	अगर (ret)
+		जाओ out;
 
-	/* Try to modify the lock */
+	/* Try to modअगरy the lock */
 	val = MLX5_MERGE(val, space, VSC_SPACE_BIT_OFFS, VSC_SPACE_BIT_LEN);
-	ret = vsc_write(dev, VSC_CTRL_OFFSET, val);
-	if (ret)
-		goto out;
+	ret = vsc_ग_लिखो(dev, VSC_CTRL_OFFSET, val);
+	अगर (ret)
+		जाओ out;
 
-	/* Verify lock was modified */
-	ret = vsc_read(dev, VSC_CTRL_OFFSET, &val);
-	if (ret)
-		goto out;
+	/* Verअगरy lock was modअगरied */
+	ret = vsc_पढ़ो(dev, VSC_CTRL_OFFSET, &val);
+	अगर (ret)
+		जाओ out;
 
-	if (MLX5_EXTRACT(val, VSC_STATUS_BIT_OFFS, VSC_STATUS_BIT_LEN) == 0)
-		return -EINVAL;
+	अगर (MLX5_EXTRACT(val, VSC_STATUS_BIT_OFFS, VSC_STATUS_BIT_LEN) == 0)
+		वापस -EINVAL;
 
-	/* Get space max address if indicated by size valid bit */
-	if (ret_space_size &&
-	    MLX5_EXTRACT(val, VSC_SIZE_VLD_BIT_OFFS, VSC_SIZE_VLD_BIT_LEN)) {
-		ret = vsc_read(dev, VSC_ADDR_OFFSET, &val);
-		if (ret) {
+	/* Get space max address अगर indicated by size valid bit */
+	अगर (ret_space_size &&
+	    MLX5_EXTRACT(val, VSC_SIZE_VLD_BIT_OFFS, VSC_SIZE_VLD_BIT_LEN)) अणु
+		ret = vsc_पढ़ो(dev, VSC_ADDR_OFFSET, &val);
+		अगर (ret) अणु
 			mlx5_core_warn(dev, "Failed to get max space size\n");
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 		*ret_space_size = MLX5_EXTRACT(val, VSC_ADDR_BIT_OFFS,
 					       VSC_ADDR_BIT_LEN);
-	}
-	return 0;
+	पूर्ण
+	वापस 0;
 
 out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int mlx5_vsc_wait_on_flag(struct mlx5_core_dev *dev, u8 expected_val)
-{
-	int retries = 0;
+अटल पूर्णांक mlx5_vsc_रुको_on_flag(काष्ठा mlx5_core_dev *dev, u8 expected_val)
+अणु
+	पूर्णांक retries = 0;
 	u32 flag;
-	int ret;
+	पूर्णांक ret;
 
-	do {
-		if (retries > VSC_MAX_RETRIES)
-			return -EBUSY;
+	करो अणु
+		अगर (retries > VSC_MAX_RETRIES)
+			वापस -EBUSY;
 
-		ret = vsc_read(dev, VSC_ADDR_OFFSET, &flag);
-		if (ret)
-			return ret;
+		ret = vsc_पढ़ो(dev, VSC_ADDR_OFFSET, &flag);
+		अगर (ret)
+			वापस ret;
 		flag = MLX5_EXTRACT(flag, VSC_FLAG_BIT_OFFS, VSC_FLAG_BIT_LEN);
 		retries++;
 
-		if ((retries & 0xf) == 0)
+		अगर ((retries & 0xf) == 0)
 			usleep_range(1000, 2000);
 
-	} while (flag != expected_val);
+	पूर्ण जबतक (flag != expected_val);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mlx5_vsc_gw_write(struct mlx5_core_dev *dev, unsigned int address,
+अटल पूर्णांक mlx5_vsc_gw_ग_लिखो(काष्ठा mlx5_core_dev *dev, अचिन्हित पूर्णांक address,
 			     u32 data)
-{
-	int ret;
+अणु
+	पूर्णांक ret;
 
-	if (MLX5_EXTRACT(address, VSC_SYND_BIT_OFFS,
+	अगर (MLX5_EXTRACT(address, VSC_SYND_BIT_OFFS,
 			 VSC_FLAG_BIT_LEN + VSC_SYND_BIT_LEN))
-		return -EINVAL;
+		वापस -EINVAL;
 
 	/* Set flag to 0x1 */
 	address = MLX5_MERGE(address, 1, VSC_FLAG_BIT_OFFS, 1);
-	ret = vsc_write(dev, VSC_DATA_OFFSET, data);
-	if (ret)
-		goto out;
+	ret = vsc_ग_लिखो(dev, VSC_DATA_OFFSET, data);
+	अगर (ret)
+		जाओ out;
 
-	ret = vsc_write(dev, VSC_ADDR_OFFSET, address);
-	if (ret)
-		goto out;
+	ret = vsc_ग_लिखो(dev, VSC_ADDR_OFFSET, address);
+	अगर (ret)
+		जाओ out;
 
-	/* Wait for the flag to be cleared */
-	ret = mlx5_vsc_wait_on_flag(dev, 0);
+	/* Wait क्रम the flag to be cleared */
+	ret = mlx5_vsc_रुको_on_flag(dev, 0);
 
 out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int mlx5_vsc_gw_read(struct mlx5_core_dev *dev, unsigned int address,
+अटल पूर्णांक mlx5_vsc_gw_पढ़ो(काष्ठा mlx5_core_dev *dev, अचिन्हित पूर्णांक address,
 			    u32 *data)
-{
-	int ret;
+अणु
+	पूर्णांक ret;
 
-	if (MLX5_EXTRACT(address, VSC_SYND_BIT_OFFS,
+	अगर (MLX5_EXTRACT(address, VSC_SYND_BIT_OFFS,
 			 VSC_FLAG_BIT_LEN + VSC_SYND_BIT_LEN))
-		return -EINVAL;
+		वापस -EINVAL;
 
-	ret = vsc_write(dev, VSC_ADDR_OFFSET, address);
-	if (ret)
-		goto out;
+	ret = vsc_ग_लिखो(dev, VSC_ADDR_OFFSET, address);
+	अगर (ret)
+		जाओ out;
 
-	ret = mlx5_vsc_wait_on_flag(dev, 1);
-	if (ret)
-		goto out;
+	ret = mlx5_vsc_रुको_on_flag(dev, 1);
+	अगर (ret)
+		जाओ out;
 
-	ret = vsc_read(dev, VSC_DATA_OFFSET, data);
+	ret = vsc_पढ़ो(dev, VSC_DATA_OFFSET, data);
 out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int mlx5_vsc_gw_read_fast(struct mlx5_core_dev *dev,
-				 unsigned int read_addr,
-				 unsigned int *next_read_addr,
+अटल पूर्णांक mlx5_vsc_gw_पढ़ो_fast(काष्ठा mlx5_core_dev *dev,
+				 अचिन्हित पूर्णांक पढ़ो_addr,
+				 अचिन्हित पूर्णांक *next_पढ़ो_addr,
 				 u32 *data)
-{
-	int ret;
+अणु
+	पूर्णांक ret;
 
-	ret = mlx5_vsc_gw_read(dev, read_addr, data);
-	if (ret)
-		goto out;
+	ret = mlx5_vsc_gw_पढ़ो(dev, पढ़ो_addr, data);
+	अगर (ret)
+		जाओ out;
 
-	ret = vsc_read(dev, VSC_ADDR_OFFSET, next_read_addr);
-	if (ret)
-		goto out;
+	ret = vsc_पढ़ो(dev, VSC_ADDR_OFFSET, next_पढ़ो_addr);
+	अगर (ret)
+		जाओ out;
 
-	*next_read_addr = MLX5_EXTRACT(*next_read_addr, VSC_ADDR_BIT_OFFS,
+	*next_पढ़ो_addr = MLX5_EXTRACT(*next_पढ़ो_addr, VSC_ADDR_BIT_OFFS,
 				       VSC_ADDR_BIT_LEN);
 
-	if (*next_read_addr <= read_addr)
+	अगर (*next_पढ़ो_addr <= पढ़ो_addr)
 		ret = -EINVAL;
 out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int mlx5_vsc_gw_read_block_fast(struct mlx5_core_dev *dev, u32 *data,
-				int length)
-{
-	unsigned int next_read_addr = 0;
-	unsigned int read_addr = 0;
+पूर्णांक mlx5_vsc_gw_पढ़ो_block_fast(काष्ठा mlx5_core_dev *dev, u32 *data,
+				पूर्णांक length)
+अणु
+	अचिन्हित पूर्णांक next_पढ़ो_addr = 0;
+	अचिन्हित पूर्णांक पढ़ो_addr = 0;
 
-	while (read_addr < length) {
-		if (mlx5_vsc_gw_read_fast(dev, read_addr, &next_read_addr,
-					  &data[(read_addr >> 2)]))
-			return read_addr;
+	जबतक (पढ़ो_addr < length) अणु
+		अगर (mlx5_vsc_gw_पढ़ो_fast(dev, पढ़ो_addr, &next_पढ़ो_addr,
+					  &data[(पढ़ो_addr >> 2)]))
+			वापस पढ़ो_addr;
 
-		read_addr = next_read_addr;
-	}
-	return length;
-}
+		पढ़ो_addr = next_पढ़ो_addr;
+	पूर्ण
+	वापस length;
+पूर्ण
 
-int mlx5_vsc_sem_set_space(struct mlx5_core_dev *dev, u16 space,
-			   enum mlx5_vsc_state state)
-{
+पूर्णांक mlx5_vsc_sem_set_space(काष्ठा mlx5_core_dev *dev, u16 space,
+			   क्रमागत mlx5_vsc_state state)
+अणु
 	u32 data, id = 0;
-	int ret;
+	पूर्णांक ret;
 
-	ret = mlx5_vsc_gw_set_space(dev, MLX5_SEMAPHORE_SPACE_DOMAIN, NULL);
-	if (ret) {
+	ret = mlx5_vsc_gw_set_space(dev, MLX5_SEMAPHORE_SPACE_DOMAIN, शून्य);
+	अगर (ret) अणु
 		mlx5_core_warn(dev, "Failed to set gw space %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	if (state == MLX5_VSC_LOCK) {
+	अगर (state == MLX5_VSC_LOCK) अणु
 		/* Get a unique ID based on the counter */
-		ret = vsc_read(dev, VSC_COUNTER_OFFSET, &id);
-		if (ret)
-			return ret;
-	}
+		ret = vsc_पढ़ो(dev, VSC_COUNTER_OFFSET, &id);
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	/* Try to modify lock */
-	ret = mlx5_vsc_gw_write(dev, space, id);
-	if (ret)
-		return ret;
+	/* Try to modअगरy lock */
+	ret = mlx5_vsc_gw_ग_लिखो(dev, space, id);
+	अगर (ret)
+		वापस ret;
 
-	/* Verify lock was modified */
-	ret = mlx5_vsc_gw_read(dev, space, &data);
-	if (ret)
-		return -EINVAL;
+	/* Verअगरy lock was modअगरied */
+	ret = mlx5_vsc_gw_पढ़ो(dev, space, &data);
+	अगर (ret)
+		वापस -EINVAL;
 
-	if (data != id)
-		return -EBUSY;
+	अगर (data != id)
+		वापस -EBUSY;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

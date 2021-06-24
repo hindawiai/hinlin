@@ -1,33 +1,34 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * Hook into 'openat' syscall entry tracepoint
+ * Hook पूर्णांकo 'openat' syscall entry tracepoपूर्णांक
  *
  * Test it with:
  *
- * perf trace -e tools/perf/examples/bpf/sys_enter_openat.c cat /etc/passwd > /dev/null
+ * perf trace -e tools/perf/examples/bpf/sys_enter_खोलोat.c cat /etc/passwd > /dev/null
  *
- * It'll catch some openat syscalls related to the dynamic linked and
- * the last one should be the one for '/etc/passwd'.
+ * It'll catch some खोलोat syscalls related to the dynamic linked and
+ * the last one should be the one क्रम '/etc/passwd'.
  *
- * The syscall_enter_openat_args can be used to get the syscall fields
- * and use them for filtering calls, i.e. use in expressions for
- * the return value.
+ * The syscall_enter_खोलोat_args can be used to get the syscall fields
+ * and use them क्रम filtering calls, i.e. use in expressions क्रम
+ * the वापस value.
  */
 
-#include <bpf/bpf.h>
+#समावेश <bpf/bpf.h>
 
-struct syscall_enter_openat_args {
-	unsigned long long unused;
-	long		   syscall_nr;
-	long		   dfd;
-	char		   *filename_ptr;
-	long		   flags;
-	long		   mode;
-};
+काष्ठा syscall_enter_खोलोat_args अणु
+	अचिन्हित दीर्घ दीर्घ unused;
+	दीर्घ		   syscall_nr;
+	दीर्घ		   dfd;
+	अक्षर		   *filename_ptr;
+	दीर्घ		   flags;
+	दीर्घ		   mode;
+पूर्ण;
 
-int syscall_enter(openat)(struct syscall_enter_openat_args *args)
-{
-	return 1;
-}
+पूर्णांक syscall_enter(खोलोat)(काष्ठा syscall_enter_खोलोat_args *args)
+अणु
+	वापस 1;
+पूर्ण
 
 license(GPL);

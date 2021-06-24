@@ -1,8 +1,9 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * drivers/uio/uio_pdrv_genirq.c
  *
- * Userspace I/O platform driver with generic IRQ handling code.
+ * Userspace I/O platक्रमm driver with generic IRQ handling code.
  *
  * Copyright (C) 2008 Magnus Damm
  *
@@ -11,198 +12,198 @@
  * All rights reserved.
  */
 
-#include <linux/platform_device.h>
-#include <linux/uio_driver.h>
-#include <linux/spinlock.h>
-#include <linux/bitops.h>
-#include <linux/module.h>
-#include <linux/interrupt.h>
-#include <linux/stringify.h>
-#include <linux/pm_runtime.h>
-#include <linux/slab.h>
-#include <linux/irq.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/uio_driver.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/bitops.h>
+#समावेश <linux/module.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/stringअगरy.h>
+#समावेश <linux/pm_runसमय.स>
+#समावेश <linux/slab.h>
+#समावेश <linux/irq.h>
 
-#include <linux/of.h>
-#include <linux/of_platform.h>
-#include <linux/of_address.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_platक्रमm.h>
+#समावेश <linux/of_address.h>
 
-#define DRIVER_NAME "uio_pdrv_genirq"
+#घोषणा DRIVER_NAME "uio_pdrv_genirq"
 
-struct uio_pdrv_genirq_platdata {
-	struct uio_info *uioinfo;
+काष्ठा uio_pdrv_genirq_platdata अणु
+	काष्ठा uio_info *uioinfo;
 	spinlock_t lock;
-	unsigned long flags;
-	struct platform_device *pdev;
-};
+	अचिन्हित दीर्घ flags;
+	काष्ठा platक्रमm_device *pdev;
+पूर्ण;
 
 /* Bits in uio_pdrv_genirq_platdata.flags */
-enum {
+क्रमागत अणु
 	UIO_IRQ_DISABLED = 0,
-};
+पूर्ण;
 
-static int uio_pdrv_genirq_open(struct uio_info *info, struct inode *inode)
-{
-	struct uio_pdrv_genirq_platdata *priv = info->priv;
+अटल पूर्णांक uio_pdrv_genirq_खोलो(काष्ठा uio_info *info, काष्ठा inode *inode)
+अणु
+	काष्ठा uio_pdrv_genirq_platdata *priv = info->priv;
 
-	/* Wait until the Runtime PM code has woken up the device */
-	pm_runtime_get_sync(&priv->pdev->dev);
-	return 0;
-}
+	/* Wait until the Runसमय PM code has woken up the device */
+	pm_runसमय_get_sync(&priv->pdev->dev);
+	वापस 0;
+पूर्ण
 
-static int uio_pdrv_genirq_release(struct uio_info *info, struct inode *inode)
-{
-	struct uio_pdrv_genirq_platdata *priv = info->priv;
+अटल पूर्णांक uio_pdrv_genirq_release(काष्ठा uio_info *info, काष्ठा inode *inode)
+अणु
+	काष्ठा uio_pdrv_genirq_platdata *priv = info->priv;
 
-	/* Tell the Runtime PM code that the device has become idle */
-	pm_runtime_put_sync(&priv->pdev->dev);
-	return 0;
-}
+	/* Tell the Runसमय PM code that the device has become idle */
+	pm_runसमय_put_sync(&priv->pdev->dev);
+	वापस 0;
+पूर्ण
 
-static irqreturn_t uio_pdrv_genirq_handler(int irq, struct uio_info *dev_info)
-{
-	struct uio_pdrv_genirq_platdata *priv = dev_info->priv;
+अटल irqवापस_t uio_pdrv_genirq_handler(पूर्णांक irq, काष्ठा uio_info *dev_info)
+अणु
+	काष्ठा uio_pdrv_genirq_platdata *priv = dev_info->priv;
 
-	/* Just disable the interrupt in the interrupt controller, and
+	/* Just disable the पूर्णांकerrupt in the पूर्णांकerrupt controller, and
 	 * remember the state so we can allow user space to enable it later.
 	 */
 
 	spin_lock(&priv->lock);
-	if (!__test_and_set_bit(UIO_IRQ_DISABLED, &priv->flags))
+	अगर (!__test_and_set_bit(UIO_IRQ_DISABLED, &priv->flags))
 		disable_irq_nosync(irq);
 	spin_unlock(&priv->lock);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static int uio_pdrv_genirq_irqcontrol(struct uio_info *dev_info, s32 irq_on)
-{
-	struct uio_pdrv_genirq_platdata *priv = dev_info->priv;
-	unsigned long flags;
+अटल पूर्णांक uio_pdrv_genirq_irqcontrol(काष्ठा uio_info *dev_info, s32 irq_on)
+अणु
+	काष्ठा uio_pdrv_genirq_platdata *priv = dev_info->priv;
+	अचिन्हित दीर्घ flags;
 
-	/* Allow user space to enable and disable the interrupt
-	 * in the interrupt controller, but keep track of the
+	/* Allow user space to enable and disable the पूर्णांकerrupt
+	 * in the पूर्णांकerrupt controller, but keep track of the
 	 * state to prevent per-irq depth damage.
 	 *
 	 * Serialize this operation to support multiple tasks and concurrency
-	 * with irq handler on SMP systems.
+	 * with irq handler on SMP प्रणालीs.
 	 */
 
 	spin_lock_irqsave(&priv->lock, flags);
-	if (irq_on) {
-		if (__test_and_clear_bit(UIO_IRQ_DISABLED, &priv->flags))
+	अगर (irq_on) अणु
+		अगर (__test_and_clear_bit(UIO_IRQ_DISABLED, &priv->flags))
 			enable_irq(dev_info->irq);
-	} else {
-		if (!__test_and_set_bit(UIO_IRQ_DISABLED, &priv->flags))
+	पूर्ण अन्यथा अणु
+		अगर (!__test_and_set_bit(UIO_IRQ_DISABLED, &priv->flags))
 			disable_irq_nosync(dev_info->irq);
-	}
+	पूर्ण
 	spin_unlock_irqrestore(&priv->lock, flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void uio_pdrv_genirq_cleanup(void *data)
-{
-	struct device *dev = data;
+अटल व्योम uio_pdrv_genirq_cleanup(व्योम *data)
+अणु
+	काष्ठा device *dev = data;
 
-	pm_runtime_disable(dev);
-}
+	pm_runसमय_disable(dev);
+पूर्ण
 
-static int uio_pdrv_genirq_probe(struct platform_device *pdev)
-{
-	struct uio_info *uioinfo = dev_get_platdata(&pdev->dev);
-	struct device_node *node = pdev->dev.of_node;
-	struct uio_pdrv_genirq_platdata *priv;
-	struct uio_mem *uiomem;
-	int ret = -EINVAL;
-	int i;
+अटल पूर्णांक uio_pdrv_genirq_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा uio_info *uioinfo = dev_get_platdata(&pdev->dev);
+	काष्ठा device_node *node = pdev->dev.of_node;
+	काष्ठा uio_pdrv_genirq_platdata *priv;
+	काष्ठा uio_mem *uiomem;
+	पूर्णांक ret = -EINVAL;
+	पूर्णांक i;
 
-	if (node) {
-		const char *name;
+	अगर (node) अणु
+		स्थिर अक्षर *name;
 
-		/* alloc uioinfo for one device */
-		uioinfo = devm_kzalloc(&pdev->dev, sizeof(*uioinfo),
+		/* alloc uioinfo क्रम one device */
+		uioinfo = devm_kzalloc(&pdev->dev, माप(*uioinfo),
 				       GFP_KERNEL);
-		if (!uioinfo) {
+		अगर (!uioinfo) अणु
 			dev_err(&pdev->dev, "unable to kmalloc\n");
-			return -ENOMEM;
-		}
+			वापस -ENOMEM;
+		पूर्ण
 
-		if (!of_property_read_string(node, "linux,uio-name", &name))
+		अगर (!of_property_पढ़ो_string(node, "linux,uio-name", &name))
 			uioinfo->name = devm_kstrdup(&pdev->dev, name, GFP_KERNEL);
-		else
-			uioinfo->name = devm_kasprintf(&pdev->dev, GFP_KERNEL,
+		अन्यथा
+			uioinfo->name = devm_kaप्र_लिखो(&pdev->dev, GFP_KERNEL,
 						       "%pOFn", node);
 
 		uioinfo->version = "devicetree";
 		/* Multiple IRQs are not supported */
-	}
+	पूर्ण
 
-	if (!uioinfo || !uioinfo->name || !uioinfo->version) {
+	अगर (!uioinfo || !uioinfo->name || !uioinfo->version) अणु
 		dev_err(&pdev->dev, "missing platform_data\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	if (uioinfo->handler || uioinfo->irqcontrol ||
-	    uioinfo->irq_flags & IRQF_SHARED) {
+	अगर (uioinfo->handler || uioinfo->irqcontrol ||
+	    uioinfo->irq_flags & IRQF_SHARED) अणु
 		dev_err(&pdev->dev, "interrupt configuration error\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	priv = devm_kzalloc(&pdev->dev, sizeof(*priv), GFP_KERNEL);
-	if (!priv) {
+	priv = devm_kzalloc(&pdev->dev, माप(*priv), GFP_KERNEL);
+	अगर (!priv) अणु
 		dev_err(&pdev->dev, "unable to kmalloc\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	priv->uioinfo = uioinfo;
 	spin_lock_init(&priv->lock);
-	priv->flags = 0; /* interrupt is enabled to begin with */
+	priv->flags = 0; /* पूर्णांकerrupt is enabled to begin with */
 	priv->pdev = pdev;
 
-	if (!uioinfo->irq) {
-		ret = platform_get_irq_optional(pdev, 0);
+	अगर (!uioinfo->irq) अणु
+		ret = platक्रमm_get_irq_optional(pdev, 0);
 		uioinfo->irq = ret;
-		if (ret == -ENXIO)
+		अगर (ret == -ENXIO)
 			uioinfo->irq = UIO_IRQ_NONE;
-		else if (ret == -EPROBE_DEFER)
-			return ret;
-		else if (ret < 0) {
+		अन्यथा अगर (ret == -EPROBE_DEFER)
+			वापस ret;
+		अन्यथा अगर (ret < 0) अणु
 			dev_err(&pdev->dev, "failed to get IRQ\n");
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
-	if (uioinfo->irq) {
-		struct irq_data *irq_data = irq_get_irq_data(uioinfo->irq);
+	अगर (uioinfo->irq) अणु
+		काष्ठा irq_data *irq_data = irq_get_irq_data(uioinfo->irq);
 
 		/*
-		 * If a level interrupt, dont do lazy disable. Otherwise the
+		 * If a level पूर्णांकerrupt, करोnt करो lazy disable. Otherwise the
 		 * irq will fire again since clearing of the actual cause, on
-		 * device level, is done in userspace
+		 * device level, is करोne in userspace
 		 * irqd_is_level_type() isn't used since isn't valid until
 		 * irq is configured.
 		 */
-		if (irq_data &&
-		    irqd_get_trigger_type(irq_data) & IRQ_TYPE_LEVEL_MASK) {
+		अगर (irq_data &&
+		    irqd_get_trigger_type(irq_data) & IRQ_TYPE_LEVEL_MASK) अणु
 			dev_dbg(&pdev->dev, "disable lazy unmask\n");
 			irq_set_status_flags(uioinfo->irq, IRQ_DISABLE_UNLAZY);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	uiomem = &uioinfo->mem[0];
 
-	for (i = 0; i < pdev->num_resources; ++i) {
-		struct resource *r = &pdev->resource[i];
+	क्रम (i = 0; i < pdev->num_resources; ++i) अणु
+		काष्ठा resource *r = &pdev->resource[i];
 
-		if (r->flags != IORESOURCE_MEM)
-			continue;
+		अगर (r->flags != IORESOURCE_MEM)
+			जारी;
 
-		if (uiomem >= &uioinfo->mem[MAX_UIO_MAPS]) {
+		अगर (uiomem >= &uioinfo->mem[MAX_UIO_MAPS]) अणु
 			dev_warn(&pdev->dev, "device has more than "
-					__stringify(MAX_UIO_MAPS)
+					__stringअगरy(MAX_UIO_MAPS)
 					" I/O memory resources.\n");
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		uiomem->memtype = UIO_MEM_PHYS;
 		uiomem->addr = r->start & PAGE_MASK;
@@ -211,89 +212,89 @@ static int uio_pdrv_genirq_probe(struct platform_device *pdev)
 				+ PAGE_SIZE - 1) & PAGE_MASK;
 		uiomem->name = r->name;
 		++uiomem;
-	}
+	पूर्ण
 
-	while (uiomem < &uioinfo->mem[MAX_UIO_MAPS]) {
+	जबतक (uiomem < &uioinfo->mem[MAX_UIO_MAPS]) अणु
 		uiomem->size = 0;
 		++uiomem;
-	}
+	पूर्ण
 
-	/* This driver requires no hardware specific kernel code to handle
-	 * interrupts. Instead, the interrupt handler simply disables the
-	 * interrupt in the interrupt controller. User space is responsible
-	 * for performing hardware specific acknowledge and re-enabling of
-	 * the interrupt in the interrupt controller.
+	/* This driver requires no hardware specअगरic kernel code to handle
+	 * पूर्णांकerrupts. Instead, the पूर्णांकerrupt handler simply disables the
+	 * पूर्णांकerrupt in the पूर्णांकerrupt controller. User space is responsible
+	 * क्रम perक्रमming hardware specअगरic acknowledge and re-enabling of
+	 * the पूर्णांकerrupt in the पूर्णांकerrupt controller.
 	 *
 	 * Interrupt sharing is not supported.
 	 */
 
 	uioinfo->handler = uio_pdrv_genirq_handler;
 	uioinfo->irqcontrol = uio_pdrv_genirq_irqcontrol;
-	uioinfo->open = uio_pdrv_genirq_open;
+	uioinfo->खोलो = uio_pdrv_genirq_खोलो;
 	uioinfo->release = uio_pdrv_genirq_release;
 	uioinfo->priv = priv;
 
-	/* Enable Runtime PM for this device:
+	/* Enable Runसमय PM क्रम this device:
 	 * The device starts in suspended state to allow the hardware to be
-	 * turned off by default. The Runtime PM bus code should power on the
-	 * hardware and enable clocks at open().
+	 * turned off by शेष. The Runसमय PM bus code should घातer on the
+	 * hardware and enable घड़ीs at खोलो().
 	 */
-	pm_runtime_enable(&pdev->dev);
+	pm_runसमय_enable(&pdev->dev);
 
 	ret = devm_add_action_or_reset(&pdev->dev, uio_pdrv_genirq_cleanup,
 				       &pdev->dev);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	ret = devm_uio_register_device(&pdev->dev, priv->uioinfo);
-	if (ret)
+	ret = devm_uio_रेजिस्टर_device(&pdev->dev, priv->uioinfo);
+	अगर (ret)
 		dev_err(&pdev->dev, "unable to register uio device\n");
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int uio_pdrv_genirq_runtime_nop(struct device *dev)
-{
-	/* Runtime PM callback shared between ->runtime_suspend()
-	 * and ->runtime_resume(). Simply returns success.
+अटल पूर्णांक uio_pdrv_genirq_runसमय_nop(काष्ठा device *dev)
+अणु
+	/* Runसमय PM callback shared between ->runसमय_suspend()
+	 * and ->runसमय_resume(). Simply वापसs success.
 	 *
-	 * In this driver pm_runtime_get_sync() and pm_runtime_put_sync()
-	 * are used at open() and release() time. This allows the
-	 * Runtime PM code to turn off power to the device while the
-	 * device is unused, ie before open() and after release().
+	 * In this driver pm_runसमय_get_sync() and pm_runसमय_put_sync()
+	 * are used at खोलो() and release() समय. This allows the
+	 * Runसमय PM code to turn off घातer to the device जबतक the
+	 * device is unused, ie beक्रमe खोलो() and after release().
 	 *
-	 * This Runtime PM callback does not need to save or restore
-	 * any registers since user space is responsbile for hardware
-	 * register reinitialization after open().
+	 * This Runसमय PM callback करोes not need to save or restore
+	 * any रेजिस्टरs since user space is responsbile क्रम hardware
+	 * रेजिस्टर reinitialization after खोलो().
 	 */
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct dev_pm_ops uio_pdrv_genirq_dev_pm_ops = {
-	.runtime_suspend = uio_pdrv_genirq_runtime_nop,
-	.runtime_resume = uio_pdrv_genirq_runtime_nop,
-};
+अटल स्थिर काष्ठा dev_pm_ops uio_pdrv_genirq_dev_pm_ops = अणु
+	.runसमय_suspend = uio_pdrv_genirq_runसमय_nop,
+	.runसमय_resume = uio_pdrv_genirq_runसमय_nop,
+पूर्ण;
 
-#ifdef CONFIG_OF
-static struct of_device_id uio_of_genirq_match[] = {
-	{ /* This is filled with module_parm */ },
-	{ /* Sentinel */ },
-};
+#अगर_घोषित CONFIG_OF
+अटल काष्ठा of_device_id uio_of_genirq_match[] = अणु
+	अणु /* This is filled with module_parm */ पूर्ण,
+	अणु /* Sentinel */ पूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, uio_of_genirq_match);
 module_param_string(of_id, uio_of_genirq_match[0].compatible, 128, 0);
 MODULE_PARM_DESC(of_id, "Openfirmware id of the device to be handled by uio");
-#endif
+#पूर्ण_अगर
 
-static struct platform_driver uio_pdrv_genirq = {
+अटल काष्ठा platक्रमm_driver uio_pdrv_genirq = अणु
 	.probe = uio_pdrv_genirq_probe,
-	.driver = {
+	.driver = अणु
 		.name = DRIVER_NAME,
 		.pm = &uio_pdrv_genirq_dev_pm_ops,
 		.of_match_table = of_match_ptr(uio_of_genirq_match),
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-module_platform_driver(uio_pdrv_genirq);
+module_platक्रमm_driver(uio_pdrv_genirq);
 
 MODULE_AUTHOR("Magnus Damm");
 MODULE_DESCRIPTION("Userspace I/O platform driver with generic IRQ handling");

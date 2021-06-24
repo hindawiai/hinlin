@@ -1,230 +1,231 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Copyright (C) 2013  Davidlohr Bueso <davidlohr@hp.com>
  *
  * futex-hash: Stress the hell out of the Linux kernel futex uaddr hashing.
  *
- * This program is particularly useful for measuring the kernel's futex hash
- * table/function implementation. In order for it to make sense, use with as
- * many threads and futexes as possible.
+ * This program is particularly useful क्रम measuring the kernel's futex hash
+ * table/function implementation. In order क्रम it to make sense, use with as
+ * many thपढ़ोs and futexes as possible.
  */
 
 /* For the CLR_() macros */
-#include <string.h>
-#include <pthread.h>
+#समावेश <माला.स>
+#समावेश <pthपढ़ो.h>
 
-#include <errno.h>
-#include <signal.h>
-#include <stdlib.h>
-#include <linux/compiler.h>
-#include <linux/kernel.h>
-#include <linux/zalloc.h>
-#include <sys/time.h>
-#include <perf/cpumap.h>
+#समावेश <त्रुटिसं.स>
+#समावेश <संकेत.स>
+#समावेश <मानककोष.स>
+#समावेश <linux/compiler.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/zभाग.स>
+#समावेश <sys/समय.स>
+#समावेश <perf/cpumap.h>
 
-#include "../util/stat.h"
-#include <subcmd/parse-options.h>
-#include "bench.h"
-#include "futex.h"
+#समावेश "../util/stat.h"
+#समावेश <subcmd/parse-options.h>
+#समावेश "bench.h"
+#समावेश "futex.h"
 
-#include <err.h>
+#समावेश <err.h>
 
-static unsigned int nthreads = 0;
-static unsigned int nsecs    = 10;
-/* amount of futexes per thread */
-static unsigned int nfutexes = 1024;
-static bool fshared = false, done = false, silent = false;
-static int futex_flag = 0;
+अटल अचिन्हित पूर्णांक nthपढ़ोs = 0;
+अटल अचिन्हित पूर्णांक nsecs    = 10;
+/* amount of futexes per thपढ़ो */
+अटल अचिन्हित पूर्णांक nfutexes = 1024;
+अटल bool fshared = false, करोne = false, silent = false;
+अटल पूर्णांक futex_flag = 0;
 
-struct timeval bench__start, bench__end, bench__runtime;
-static pthread_mutex_t thread_lock;
-static unsigned int threads_starting;
-static struct stats throughput_stats;
-static pthread_cond_t thread_parent, thread_worker;
+काष्ठा समयval bench__start, bench__end, bench__runसमय;
+अटल pthपढ़ो_mutex_t thपढ़ो_lock;
+अटल अचिन्हित पूर्णांक thपढ़ोs_starting;
+अटल काष्ठा stats throughput_stats;
+अटल pthपढ़ो_cond_t thपढ़ो_parent, thपढ़ो_worker;
 
-struct worker {
-	int tid;
-	u_int32_t *futex;
-	pthread_t thread;
-	unsigned long ops;
-};
+काष्ठा worker अणु
+	पूर्णांक tid;
+	u_पूर्णांक32_t *futex;
+	pthपढ़ो_t thपढ़ो;
+	अचिन्हित दीर्घ ops;
+पूर्ण;
 
-static const struct option options[] = {
-	OPT_UINTEGER('t', "threads", &nthreads, "Specify amount of threads"),
+अटल स्थिर काष्ठा option options[] = अणु
+	OPT_UINTEGER('t', "threads", &nthपढ़ोs, "Specify amount of threads"),
 	OPT_UINTEGER('r', "runtime", &nsecs,    "Specify runtime (in seconds)"),
 	OPT_UINTEGER('f', "futexes", &nfutexes, "Specify amount of futexes per threads"),
 	OPT_BOOLEAN( 's', "silent",  &silent,   "Silent mode: do not display data/details"),
 	OPT_BOOLEAN( 'S', "shared",  &fshared,  "Use shared futexes instead of private ones"),
 	OPT_END()
-};
+पूर्ण;
 
-static const char * const bench_futex_hash_usage[] = {
+अटल स्थिर अक्षर * स्थिर bench_futex_hash_usage[] = अणु
 	"perf bench futex hash <options>",
-	NULL
-};
+	शून्य
+पूर्ण;
 
-static void *workerfn(void *arg)
-{
-	int ret;
-	struct worker *w = (struct worker *) arg;
-	unsigned int i;
-	unsigned long ops = w->ops; /* avoid cacheline bouncing */
+अटल व्योम *workerfn(व्योम *arg)
+अणु
+	पूर्णांक ret;
+	काष्ठा worker *w = (काष्ठा worker *) arg;
+	अचिन्हित पूर्णांक i;
+	अचिन्हित दीर्घ ops = w->ops; /* aव्योम cacheline bouncing */
 
-	pthread_mutex_lock(&thread_lock);
-	threads_starting--;
-	if (!threads_starting)
-		pthread_cond_signal(&thread_parent);
-	pthread_cond_wait(&thread_worker, &thread_lock);
-	pthread_mutex_unlock(&thread_lock);
+	pthपढ़ो_mutex_lock(&thपढ़ो_lock);
+	thपढ़ोs_starting--;
+	अगर (!thपढ़ोs_starting)
+		pthपढ़ो_cond_संकेत(&thपढ़ो_parent);
+	pthपढ़ो_cond_रुको(&thपढ़ो_worker, &thपढ़ो_lock);
+	pthपढ़ो_mutex_unlock(&thपढ़ो_lock);
 
-	do {
-		for (i = 0; i < nfutexes; i++, ops++) {
+	करो अणु
+		क्रम (i = 0; i < nfutexes; i++, ops++) अणु
 			/*
 			 * We want the futex calls to fail in order to stress
 			 * the hashing of uaddr and not measure other steps,
-			 * such as internal waitqueue handling, thus enlarging
-			 * the critical region protected by hb->lock.
+			 * such as पूर्णांकernal रुकोqueue handling, thus enlarging
+			 * the critical region रक्षित by hb->lock.
 			 */
-			ret = futex_wait(&w->futex[i], 1234, NULL, futex_flag);
-			if (!silent &&
-			    (!ret || errno != EAGAIN || errno != EWOULDBLOCK))
+			ret = futex_रुको(&w->futex[i], 1234, शून्य, futex_flag);
+			अगर (!silent &&
+			    (!ret || त्रुटि_सं != EAGAIN || त्रुटि_सं != EWOULDBLOCK))
 				warn("Non-expected futex return call");
-		}
-	}  while (!done);
+		पूर्ण
+	पूर्ण  जबतक (!करोne);
 
 	w->ops = ops;
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static void toggle_done(int sig __maybe_unused,
+अटल व्योम toggle_करोne(पूर्णांक sig __maybe_unused,
 			siginfo_t *info __maybe_unused,
-			void *uc __maybe_unused)
-{
-	/* inform all threads that we're done for the day */
-	done = true;
-	gettimeofday(&bench__end, NULL);
-	timersub(&bench__end, &bench__start, &bench__runtime);
-}
+			व्योम *uc __maybe_unused)
+अणु
+	/* inक्रमm all thपढ़ोs that we're करोne क्रम the day */
+	करोne = true;
+	समय_लोofday(&bench__end, शून्य);
+	समयrsub(&bench__end, &bench__start, &bench__runसमय);
+पूर्ण
 
-static void print_summary(void)
-{
-	unsigned long avg = avg_stats(&throughput_stats);
-	double stddev = stddev_stats(&throughput_stats);
+अटल व्योम prपूर्णांक_summary(व्योम)
+अणु
+	अचिन्हित दीर्घ avg = avg_stats(&throughput_stats);
+	द्विगुन stddev = stddev_stats(&throughput_stats);
 
-	printf("%sAveraged %ld operations/sec (+- %.2f%%), total secs = %d\n",
+	म_लिखो("%sAveraged %ld operations/sec (+- %.2f%%), total secs = %d\n",
 	       !silent ? "\n" : "", avg, rel_stddev_stats(stddev, avg),
-	       (int)bench__runtime.tv_sec);
-}
+	       (पूर्णांक)bench__runसमय.tv_sec);
+पूर्ण
 
-int bench_futex_hash(int argc, const char **argv)
-{
-	int ret = 0;
+पूर्णांक bench_futex_hash(पूर्णांक argc, स्थिर अक्षर **argv)
+अणु
+	पूर्णांक ret = 0;
 	cpu_set_t cpuset;
-	struct sigaction act;
-	unsigned int i;
-	pthread_attr_t thread_attr;
-	struct worker *worker = NULL;
-	struct perf_cpu_map *cpu;
+	काष्ठा sigaction act;
+	अचिन्हित पूर्णांक i;
+	pthपढ़ो_attr_t thपढ़ो_attr;
+	काष्ठा worker *worker = शून्य;
+	काष्ठा perf_cpu_map *cpu;
 
 	argc = parse_options(argc, argv, options, bench_futex_hash_usage, 0);
-	if (argc) {
+	अगर (argc) अणु
 		usage_with_options(bench_futex_hash_usage, options);
-		exit(EXIT_FAILURE);
-	}
+		निकास(निकास_त्रुटि);
+	पूर्ण
 
-	cpu = perf_cpu_map__new(NULL);
-	if (!cpu)
-		goto errmem;
+	cpu = perf_cpu_map__new(शून्य);
+	अगर (!cpu)
+		जाओ errmem;
 
-	memset(&act, 0, sizeof(act));
+	स_रखो(&act, 0, माप(act));
 	sigfillset(&act.sa_mask);
-	act.sa_sigaction = toggle_done;
-	sigaction(SIGINT, &act, NULL);
+	act.sa_sigaction = toggle_करोne;
+	sigaction(संक_विघ्न, &act, शून्य);
 
-	if (!nthreads) /* default to the number of CPUs */
-		nthreads = cpu->nr;
+	अगर (!nthपढ़ोs) /* शेष to the number of CPUs */
+		nthपढ़ोs = cpu->nr;
 
-	worker = calloc(nthreads, sizeof(*worker));
-	if (!worker)
-		goto errmem;
+	worker = सुस्मृति(nthपढ़ोs, माप(*worker));
+	अगर (!worker)
+		जाओ errmem;
 
-	if (!fshared)
+	अगर (!fshared)
 		futex_flag = FUTEX_PRIVATE_FLAG;
 
-	printf("Run summary [PID %d]: %d threads, each operating on %d [%s] futexes for %d secs.\n\n",
-	       getpid(), nthreads, nfutexes, fshared ? "shared":"private", nsecs);
+	म_लिखो("Run summary [PID %d]: %d threads, each operating on %d [%s] futexes for %d secs.\n\n",
+	       getpid(), nthपढ़ोs, nfutexes, fshared ? "shared":"private", nsecs);
 
 	init_stats(&throughput_stats);
-	pthread_mutex_init(&thread_lock, NULL);
-	pthread_cond_init(&thread_parent, NULL);
-	pthread_cond_init(&thread_worker, NULL);
+	pthपढ़ो_mutex_init(&thपढ़ो_lock, शून्य);
+	pthपढ़ो_cond_init(&thपढ़ो_parent, शून्य);
+	pthपढ़ो_cond_init(&thपढ़ो_worker, शून्य);
 
-	threads_starting = nthreads;
-	pthread_attr_init(&thread_attr);
-	gettimeofday(&bench__start, NULL);
-	for (i = 0; i < nthreads; i++) {
+	thपढ़ोs_starting = nthपढ़ोs;
+	pthपढ़ो_attr_init(&thपढ़ो_attr);
+	समय_लोofday(&bench__start, शून्य);
+	क्रम (i = 0; i < nthपढ़ोs; i++) अणु
 		worker[i].tid = i;
-		worker[i].futex = calloc(nfutexes, sizeof(*worker[i].futex));
-		if (!worker[i].futex)
-			goto errmem;
+		worker[i].futex = सुस्मृति(nfutexes, माप(*worker[i].futex));
+		अगर (!worker[i].futex)
+			जाओ errmem;
 
 		CPU_ZERO(&cpuset);
 		CPU_SET(cpu->map[i % cpu->nr], &cpuset);
 
-		ret = pthread_attr_setaffinity_np(&thread_attr, sizeof(cpu_set_t), &cpuset);
-		if (ret)
-			err(EXIT_FAILURE, "pthread_attr_setaffinity_np");
+		ret = pthपढ़ो_attr_setaffinity_np(&thपढ़ो_attr, माप(cpu_set_t), &cpuset);
+		अगर (ret)
+			err(निकास_त्रुटि, "pthread_attr_setaffinity_np");
 
-		ret = pthread_create(&worker[i].thread, &thread_attr, workerfn,
-				     (void *)(struct worker *) &worker[i]);
-		if (ret)
-			err(EXIT_FAILURE, "pthread_create");
+		ret = pthपढ़ो_create(&worker[i].thपढ़ो, &thपढ़ो_attr, workerfn,
+				     (व्योम *)(काष्ठा worker *) &worker[i]);
+		अगर (ret)
+			err(निकास_त्रुटि, "pthread_create");
 
-	}
-	pthread_attr_destroy(&thread_attr);
+	पूर्ण
+	pthपढ़ो_attr_destroy(&thपढ़ो_attr);
 
-	pthread_mutex_lock(&thread_lock);
-	while (threads_starting)
-		pthread_cond_wait(&thread_parent, &thread_lock);
-	pthread_cond_broadcast(&thread_worker);
-	pthread_mutex_unlock(&thread_lock);
+	pthपढ़ो_mutex_lock(&thपढ़ो_lock);
+	जबतक (thपढ़ोs_starting)
+		pthपढ़ो_cond_रुको(&thपढ़ो_parent, &thपढ़ो_lock);
+	pthपढ़ो_cond_broadcast(&thपढ़ो_worker);
+	pthपढ़ो_mutex_unlock(&thपढ़ो_lock);
 
 	sleep(nsecs);
-	toggle_done(0, NULL, NULL);
+	toggle_करोne(0, शून्य, शून्य);
 
-	for (i = 0; i < nthreads; i++) {
-		ret = pthread_join(worker[i].thread, NULL);
-		if (ret)
-			err(EXIT_FAILURE, "pthread_join");
-	}
+	क्रम (i = 0; i < nthपढ़ोs; i++) अणु
+		ret = pthपढ़ो_join(worker[i].thपढ़ो, शून्य);
+		अगर (ret)
+			err(निकास_त्रुटि, "pthread_join");
+	पूर्ण
 
 	/* cleanup & report results */
-	pthread_cond_destroy(&thread_parent);
-	pthread_cond_destroy(&thread_worker);
-	pthread_mutex_destroy(&thread_lock);
+	pthपढ़ो_cond_destroy(&thपढ़ो_parent);
+	pthपढ़ो_cond_destroy(&thपढ़ो_worker);
+	pthपढ़ो_mutex_destroy(&thपढ़ो_lock);
 
-	for (i = 0; i < nthreads; i++) {
-		unsigned long t = bench__runtime.tv_sec > 0 ?
-			worker[i].ops / bench__runtime.tv_sec : 0;
+	क्रम (i = 0; i < nthपढ़ोs; i++) अणु
+		अचिन्हित दीर्घ t = bench__runसमय.tv_sec > 0 ?
+			worker[i].ops / bench__runसमय.tv_sec : 0;
 		update_stats(&throughput_stats, t);
-		if (!silent) {
-			if (nfutexes == 1)
-				printf("[thread %2d] futex: %p [ %ld ops/sec ]\n",
+		अगर (!silent) अणु
+			अगर (nfutexes == 1)
+				म_लिखो("[thread %2d] futex: %p [ %ld ops/sec ]\n",
 				       worker[i].tid, &worker[i].futex[0], t);
-			else
-				printf("[thread %2d] futexes: %p ... %p [ %ld ops/sec ]\n",
+			अन्यथा
+				म_लिखो("[thread %2d] futexes: %p ... %p [ %ld ops/sec ]\n",
 				       worker[i].tid, &worker[i].futex[0],
 				       &worker[i].futex[nfutexes-1], t);
-		}
+		पूर्ण
 
-		zfree(&worker[i].futex);
-	}
+		zमुक्त(&worker[i].futex);
+	पूर्ण
 
-	print_summary();
+	prपूर्णांक_summary();
 
-	free(worker);
-	free(cpu);
-	return ret;
+	मुक्त(worker);
+	मुक्त(cpu);
+	वापस ret;
 errmem:
-	err(EXIT_FAILURE, "calloc");
-}
+	err(निकास_त्रुटि, "calloc");
+पूर्ण

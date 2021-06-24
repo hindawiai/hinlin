@@ -1,224 +1,225 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  *  Copyright (C) 1991, 1992, 1993, 1994  Linus Torvalds
  */
 
-#include <linux/types.h>
-#include <linux/kernel.h>
-#include <linux/termios.h>
-#include <linux/tty.h>
-#include <linux/export.h>
-#include "tty.h"
+#समावेश <linux/types.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/termios.h>
+#समावेश <linux/tty.h>
+#समावेश <linux/export.h>
+#समावेश "tty.h"
 
 
 /*
- * Routine which returns the baud rate of the tty
+ * Routine which वापसs the baud rate of the tty
  *
  * Note that the baud_table needs to be kept in sync with the
- * include/asm/termbits.h file.
+ * include/यंत्र/termbits.h file.
  */
-static const speed_t baud_table[] = {
+अटल स्थिर speed_t baud_table[] = अणु
 	0, 50, 75, 110, 134, 150, 200, 300, 600, 1200, 1800, 2400,
 	4800, 9600, 19200, 38400, 57600, 115200, 230400, 460800,
-#ifdef __sparc__
+#अगर_घोषित __sparc__
 	76800, 153600, 307200, 614400, 921600, 500000, 576000,
 	1000000, 1152000, 1500000, 2000000
-#else
+#अन्यथा
 	500000, 576000, 921600, 1000000, 1152000, 1500000, 2000000,
 	2500000, 3000000, 3500000, 4000000
-#endif
-};
+#पूर्ण_अगर
+पूर्ण;
 
-static const tcflag_t baud_bits[] = {
+अटल स्थिर tcflag_t baud_bits[] = अणु
 	B0, B50, B75, B110, B134, B150, B200, B300, B600, B1200, B1800, B2400,
 	B4800, B9600, B19200, B38400, B57600, B115200, B230400, B460800,
-#ifdef __sparc__
+#अगर_घोषित __sparc__
 	B76800, B153600, B307200, B614400, B921600, B500000, B576000,
 	B1000000, B1152000, B1500000, B2000000
-#else
+#अन्यथा
 	B500000, B576000, B921600, B1000000, B1152000, B1500000, B2000000,
 	B2500000, B3000000, B3500000, B4000000
-#endif
-};
+#पूर्ण_अगर
+पूर्ण;
 
-static int n_baud_table = ARRAY_SIZE(baud_table);
+अटल पूर्णांक n_baud_table = ARRAY_SIZE(baud_table);
 
 /**
  *	tty_termios_baud_rate
- *	@termios: termios structure
+ *	@termios: termios काष्ठाure
  *
- *	Convert termios baud rate data into a speed. This should be called
- *	with the termios lock held if this termios is a terminal termios
- *	structure. May change the termios data. Device drivers can call this
+ *	Convert termios baud rate data पूर्णांकo a speed. This should be called
+ *	with the termios lock held अगर this termios is a terminal termios
+ *	काष्ठाure. May change the termios data. Device drivers can call this
  *	function but should use ->c_[io]speed directly as they are updated.
  *
  *	Locking: none
  */
 
-speed_t tty_termios_baud_rate(struct ktermios *termios)
-{
-	unsigned int cbaud;
+speed_t tty_termios_baud_rate(काष्ठा ktermios *termios)
+अणु
+	अचिन्हित पूर्णांक cbaud;
 
 	cbaud = termios->c_cflag & CBAUD;
 
-#ifdef BOTHER
-	/* Magic token for arbitrary speed via c_ispeed/c_ospeed */
-	if (cbaud == BOTHER)
-		return termios->c_ospeed;
-#endif
-	if (cbaud & CBAUDEX) {
+#अगर_घोषित BOTHER
+	/* Magic token क्रम arbitrary speed via c_ispeed/c_ospeed */
+	अगर (cbaud == BOTHER)
+		वापस termios->c_ospeed;
+#पूर्ण_अगर
+	अगर (cbaud & CBAUDEX) अणु
 		cbaud &= ~CBAUDEX;
 
-		if (cbaud < 1 || cbaud + 15 > n_baud_table)
+		अगर (cbaud < 1 || cbaud + 15 > n_baud_table)
 			termios->c_cflag &= ~CBAUDEX;
-		else
+		अन्यथा
 			cbaud += 15;
-	}
-	return cbaud >= n_baud_table ? 0 : baud_table[cbaud];
-}
+	पूर्ण
+	वापस cbaud >= n_baud_table ? 0 : baud_table[cbaud];
+पूर्ण
 EXPORT_SYMBOL(tty_termios_baud_rate);
 
 /**
  *	tty_termios_input_baud_rate
- *	@termios: termios structure
+ *	@termios: termios काष्ठाure
  *
- *	Convert termios baud rate data into a speed. This should be called
- *	with the termios lock held if this termios is a terminal termios
- *	structure. May change the termios data. Device drivers can call this
+ *	Convert termios baud rate data पूर्णांकo a speed. This should be called
+ *	with the termios lock held अगर this termios is a terminal termios
+ *	काष्ठाure. May change the termios data. Device drivers can call this
  *	function but should use ->c_[io]speed directly as they are updated.
  *
  *	Locking: none
  */
 
-speed_t tty_termios_input_baud_rate(struct ktermios *termios)
-{
-#ifdef IBSHIFT
-	unsigned int cbaud = (termios->c_cflag >> IBSHIFT) & CBAUD;
+speed_t tty_termios_input_baud_rate(काष्ठा ktermios *termios)
+अणु
+#अगर_घोषित IBSHIFT
+	अचिन्हित पूर्णांक cbaud = (termios->c_cflag >> IBSHIFT) & CBAUD;
 
-	if (cbaud == B0)
-		return tty_termios_baud_rate(termios);
-#ifdef BOTHER
-	/* Magic token for arbitrary speed via c_ispeed*/
-	if (cbaud == BOTHER)
-		return termios->c_ispeed;
-#endif
-	if (cbaud & CBAUDEX) {
+	अगर (cbaud == B0)
+		वापस tty_termios_baud_rate(termios);
+#अगर_घोषित BOTHER
+	/* Magic token क्रम arbitrary speed via c_ispeed*/
+	अगर (cbaud == BOTHER)
+		वापस termios->c_ispeed;
+#पूर्ण_अगर
+	अगर (cbaud & CBAUDEX) अणु
 		cbaud &= ~CBAUDEX;
 
-		if (cbaud < 1 || cbaud + 15 > n_baud_table)
+		अगर (cbaud < 1 || cbaud + 15 > n_baud_table)
 			termios->c_cflag &= ~(CBAUDEX << IBSHIFT);
-		else
+		अन्यथा
 			cbaud += 15;
-	}
-	return cbaud >= n_baud_table ? 0 : baud_table[cbaud];
-#else	/* IBSHIFT */
-	return tty_termios_baud_rate(termios);
-#endif	/* IBSHIFT */
-}
+	पूर्ण
+	वापस cbaud >= n_baud_table ? 0 : baud_table[cbaud];
+#अन्यथा	/* IBSHIFT */
+	वापस tty_termios_baud_rate(termios);
+#पूर्ण_अगर	/* IBSHIFT */
+पूर्ण
 EXPORT_SYMBOL(tty_termios_input_baud_rate);
 
 /**
  *	tty_termios_encode_baud_rate
- *	@termios: ktermios structure holding user requested state
+ *	@termios: ktermios काष्ठाure holding user requested state
  *	@ibaud: input speed
  *	@obaud: output speed
  *
- *	Encode the speeds set into the passed termios structure. This is
- *	used as a library helper for drivers so that they can report back
- *	the actual speed selected when it differs from the speed requested
+ *	Encode the speeds set पूर्णांकo the passed termios काष्ठाure. This is
+ *	used as a library helper क्रम drivers so that they can report back
+ *	the actual speed selected when it dअगरfers from the speed requested
  *
  *	For maximal back compatibility with legacy SYS5/POSIX *nix behaviour
- *	we need to carefully set the bits when the user does not get the
+ *	we need to carefully set the bits when the user करोes not get the
  *	desired speed. We allow small margins and preserve as much of possible
- *	of the input intent to keep compatibility.
+ *	of the input पूर्णांकent to keep compatibility.
  *
- *	Locking: Caller should hold termios lock. This is already held
+ *	Locking: Caller should hold termios lock. This is alपढ़ोy held
  *	when calling this function from the driver termios handler.
  *
- *	The ifdefs deal with platforms whose owners have yet to update them
- *	and will all go away once this is done.
+ *	The अगरdefs deal with platक्रमms whose owners have yet to update them
+ *	and will all go away once this is करोne.
  */
 
-void tty_termios_encode_baud_rate(struct ktermios *termios,
+व्योम tty_termios_encode_baud_rate(काष्ठा ktermios *termios,
 				  speed_t ibaud, speed_t obaud)
-{
-	int i = 0;
-	int ifound = -1, ofound = -1;
-	int iclose = ibaud/50, oclose = obaud/50;
-	int ibinput = 0;
+अणु
+	पूर्णांक i = 0;
+	पूर्णांक अगरound = -1, ofound = -1;
+	पूर्णांक iबंद = ibaud/50, oबंद = obaud/50;
+	पूर्णांक ibinput = 0;
 
-	if (obaud == 0)			/* CD dropped 		  */
+	अगर (obaud == 0)			/* CD dropped 		  */
 		ibaud = 0;		/* Clear ibaud to be sure */
 
 	termios->c_ispeed = ibaud;
 	termios->c_ospeed = obaud;
 
-#ifdef IBSHIFT
-	if ((termios->c_cflag >> IBSHIFT) & CBAUD)
-		ibinput = 1;	/* An input speed was specified */
-#endif
-#ifdef BOTHER
-	/* If the user asked for a precise weird speed give a precise weird
-	   answer. If they asked for a Bfoo speed they may have problems
+#अगर_घोषित IBSHIFT
+	अगर ((termios->c_cflag >> IBSHIFT) & CBAUD)
+		ibinput = 1;	/* An input speed was specअगरied */
+#पूर्ण_अगर
+#अगर_घोषित BOTHER
+	/* If the user asked क्रम a precise weird speed give a precise weird
+	   answer. If they asked क्रम a Bfoo speed they may have problems
 	   digesting non-exact replies so fuzz a bit */
 
-	if ((termios->c_cflag & CBAUD) == BOTHER) {
-		oclose = 0;
-		if (!ibinput)
-			iclose = 0;
-	}
-	if (((termios->c_cflag >> IBSHIFT) & CBAUD) == BOTHER)
-		iclose = 0;
-#endif
+	अगर ((termios->c_cflag & CBAUD) == BOTHER) अणु
+		oबंद = 0;
+		अगर (!ibinput)
+			iबंद = 0;
+	पूर्ण
+	अगर (((termios->c_cflag >> IBSHIFT) & CBAUD) == BOTHER)
+		iबंद = 0;
+#पूर्ण_अगर
 	termios->c_cflag &= ~CBAUD;
-#ifdef IBSHIFT
+#अगर_घोषित IBSHIFT
 	termios->c_cflag &= ~(CBAUD << IBSHIFT);
-#endif
+#पूर्ण_अगर
 
 	/*
-	 *	Our goal is to find a close match to the standard baud rate
-	 *	returned. Walk the baud rate table and if we get a very close
+	 *	Our goal is to find a बंद match to the standard baud rate
+	 *	वापसed. Walk the baud rate table and अगर we get a very बंद
 	 *	match then report back the speed as a POSIX Bxxxx value by
 	 *	preference
 	 */
 
-	do {
-		if (obaud - oclose <= baud_table[i] &&
-		    obaud + oclose >= baud_table[i]) {
+	करो अणु
+		अगर (obaud - oबंद <= baud_table[i] &&
+		    obaud + oबंद >= baud_table[i]) अणु
 			termios->c_cflag |= baud_bits[i];
 			ofound = i;
-		}
-		if (ibaud - iclose <= baud_table[i] &&
-		    ibaud + iclose >= baud_table[i]) {
-			/* For the case input == output don't set IBAUD bits
-			   if the user didn't do so */
-			if (ofound == i && !ibinput)
-				ifound  = i;
-#ifdef IBSHIFT
-			else {
-				ifound = i;
+		पूर्ण
+		अगर (ibaud - iबंद <= baud_table[i] &&
+		    ibaud + iबंद >= baud_table[i]) अणु
+			/* For the हाल input == output करोn't set IBAUD bits
+			   अगर the user didn't करो so */
+			अगर (ofound == i && !ibinput)
+				अगरound  = i;
+#अगर_घोषित IBSHIFT
+			अन्यथा अणु
+				अगरound = i;
 				termios->c_cflag |= (baud_bits[i] << IBSHIFT);
-			}
-#endif
-		}
-	} while (++i < n_baud_table);
+			पूर्ण
+#पूर्ण_अगर
+		पूर्ण
+	पूर्ण जबतक (++i < n_baud_table);
 
 	/*
-	 *	If we found no match then use BOTHER if provided or warn
-	 *	the user their platform maintainer needs to wake up if not.
+	 *	If we found no match then use BOTHER अगर provided or warn
+	 *	the user their platक्रमm मुख्यtainer needs to wake up अगर not.
 	 */
-#ifdef BOTHER
-	if (ofound == -1)
+#अगर_घोषित BOTHER
+	अगर (ofound == -1)
 		termios->c_cflag |= BOTHER;
-	/* Set exact input bits only if the input and output differ or the
-	   user already did */
-	if (ifound == -1 && (ibaud != obaud || ibinput))
+	/* Set exact input bits only अगर the input and output dअगरfer or the
+	   user alपढ़ोy did */
+	अगर (अगरound == -1 && (ibaud != obaud || ibinput))
 		termios->c_cflag |= (BOTHER << IBSHIFT);
-#else
-	if (ifound == -1 || ofound == -1)
+#अन्यथा
+	अगर (अगरound == -1 || ofound == -1)
 		pr_warn_once("tty: Unable to return correct speed data as your architecture needs updating.\n");
-#endif
-}
+#पूर्ण_अगर
+पूर्ण
 EXPORT_SYMBOL_GPL(tty_termios_encode_baud_rate);
 
 /**
@@ -227,13 +228,13 @@ EXPORT_SYMBOL_GPL(tty_termios_encode_baud_rate);
  *	@ibaud: input baud rate
  *	@obaud: output baud rate
  *
- *	Update the current termios data for the tty with the new speed
- *	settings. The caller must hold the termios_rwsem for the tty in
+ *	Update the current termios data क्रम the tty with the new speed
+ *	settings. The caller must hold the termios_rwsem क्रम the tty in
  *	question.
  */
 
-void tty_encode_baud_rate(struct tty_struct *tty, speed_t ibaud, speed_t obaud)
-{
+व्योम tty_encode_baud_rate(काष्ठा tty_काष्ठा *tty, speed_t ibaud, speed_t obaud)
+अणु
 	tty_termios_encode_baud_rate(&tty->termios, ibaud, obaud);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(tty_encode_baud_rate);

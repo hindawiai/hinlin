@@ -1,21 +1,22 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
- * ChromeOS Embedded Controller core interface.
+ * ChromeOS Embedded Controller core पूर्णांकerface.
  *
  * Copyright (C) 2020 Google LLC
  */
 
-#ifndef __CROS_EC_H
-#define __CROS_EC_H
+#अगर_अघोषित __CROS_EC_H
+#घोषणा __CROS_EC_H
 
-#include <linux/interrupt.h>
+#समावेश <linux/पूर्णांकerrupt.h>
 
-int cros_ec_register(struct cros_ec_device *ec_dev);
-int cros_ec_unregister(struct cros_ec_device *ec_dev);
+पूर्णांक cros_ec_रेजिस्टर(काष्ठा cros_ec_device *ec_dev);
+पूर्णांक cros_ec_unरेजिस्टर(काष्ठा cros_ec_device *ec_dev);
 
-int cros_ec_suspend(struct cros_ec_device *ec_dev);
-int cros_ec_resume(struct cros_ec_device *ec_dev);
+पूर्णांक cros_ec_suspend(काष्ठा cros_ec_device *ec_dev);
+पूर्णांक cros_ec_resume(काष्ठा cros_ec_device *ec_dev);
 
-irqreturn_t cros_ec_irq_thread(int irq, void *data);
+irqवापस_t cros_ec_irq_thपढ़ो(पूर्णांक irq, व्योम *data);
 
-#endif /* __CROS_EC_H */
+#पूर्ण_अगर /* __CROS_EC_H */

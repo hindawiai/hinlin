@@ -1,19 +1,20 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
  * Copyright (C) 2011 - 2012  Intel Corporation. All rights reserved.
  */
 
-#ifndef __LOCAL_MICROREAD_H_
-#define __LOCAL_MICROREAD_H_
+#अगर_अघोषित __LOCAL_MICROREAD_H_
+#घोषणा __LOCAL_MICROREAD_H_
 
-#include <net/nfc/hci.h>
+#समावेश <net/nfc/hci.h>
 
-#define DRIVER_DESC "NFC driver for microread"
+#घोषणा DRIVER_DESC "NFC driver for microread"
 
-int microread_probe(void *phy_id, struct nfc_phy_ops *phy_ops, char *llc_name,
-		    int phy_headroom, int phy_tailroom, int phy_payload,
-		    struct nfc_hci_dev **hdev);
+पूर्णांक microपढ़ो_probe(व्योम *phy_id, काष्ठा nfc_phy_ops *phy_ops, अक्षर *llc_name,
+		    पूर्णांक phy_headroom, पूर्णांक phy_tailroom, पूर्णांक phy_payload,
+		    काष्ठा nfc_hci_dev **hdev);
 
-void microread_remove(struct nfc_hci_dev *hdev);
+व्योम microपढ़ो_हटाओ(काष्ठा nfc_hci_dev *hdev);
 
-#endif /* __LOCAL_MICROREAD_H_ */
+#पूर्ण_अगर /* __LOCAL_MICROREAD_H_ */

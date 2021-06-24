@@ -1,59 +1,60 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * ucall support. A ucall is a "hypercall to userspace".
  *
  * Copyright (C) 2019 Red Hat, Inc.
  */
-#include "kvm_util.h"
+#समावेश "kvm_util.h"
 
-void ucall_init(struct kvm_vm *vm, void *arg)
-{
-}
+व्योम ucall_init(काष्ठा kvm_vm *vm, व्योम *arg)
+अणु
+पूर्ण
 
-void ucall_uninit(struct kvm_vm *vm)
-{
-}
+व्योम ucall_uninit(काष्ठा kvm_vm *vm)
+अणु
+पूर्ण
 
-void ucall(uint64_t cmd, int nargs, ...)
-{
-	struct ucall uc = {
+व्योम ucall(uपूर्णांक64_t cmd, पूर्णांक nargs, ...)
+अणु
+	काष्ठा ucall uc = अणु
 		.cmd = cmd,
-	};
-	va_list va;
-	int i;
+	पूर्ण;
+	बहु_सूची va;
+	पूर्णांक i;
 
 	nargs = nargs <= UCALL_MAX_ARGS ? nargs : UCALL_MAX_ARGS;
 
-	va_start(va, nargs);
-	for (i = 0; i < nargs; ++i)
-		uc.args[i] = va_arg(va, uint64_t);
-	va_end(va);
+	बहु_शुरू(va, nargs);
+	क्रम (i = 0; i < nargs; ++i)
+		uc.args[i] = बहु_तर्क(va, uपूर्णांक64_t);
+	बहु_पूर्ण(va);
 
-	/* Exit via DIAGNOSE 0x501 (normally used for breakpoints) */
-	asm volatile ("diag 0,%0,0x501" : : "a"(&uc) : "memory");
-}
+	/* Exit via DIAGNOSE 0x501 (normally used क्रम अवरोधpoपूर्णांकs) */
+	यंत्र अस्थिर ("diag 0,%0,0x501" : : "a"(&uc) : "memory");
+पूर्ण
 
-uint64_t get_ucall(struct kvm_vm *vm, uint32_t vcpu_id, struct ucall *uc)
-{
-	struct kvm_run *run = vcpu_state(vm, vcpu_id);
-	struct ucall ucall = {};
+uपूर्णांक64_t get_ucall(काष्ठा kvm_vm *vm, uपूर्णांक32_t vcpu_id, काष्ठा ucall *uc)
+अणु
+	काष्ठा kvm_run *run = vcpu_state(vm, vcpu_id);
+	काष्ठा ucall ucall = अणुपूर्ण;
 
-	if (uc)
-		memset(uc, 0, sizeof(*uc));
+	अगर (uc)
+		स_रखो(uc, 0, माप(*uc));
 
-	if (run->exit_reason == KVM_EXIT_S390_SIEIC &&
+	अगर (run->निकास_reason == KVM_EXIT_S390_SIEIC &&
 	    run->s390_sieic.icptcode == 4 &&
 	    (run->s390_sieic.ipa >> 8) == 0x83 &&    /* 0x83 means DIAGNOSE */
-	    (run->s390_sieic.ipb >> 16) == 0x501) {
-		int reg = run->s390_sieic.ipa & 0xf;
+	    (run->s390_sieic.ipb >> 16) == 0x501) अणु
+		पूर्णांक reg = run->s390_sieic.ipa & 0xf;
 
-		memcpy(&ucall, addr_gva2hva(vm, run->s.regs.gprs[reg]),
-		       sizeof(ucall));
+		स_नकल(&ucall, addr_gva2hva(vm, run->s.regs.gprs[reg]),
+		       माप(ucall));
 
 		vcpu_run_complete_io(vm, vcpu_id);
-		if (uc)
-			memcpy(uc, &ucall, sizeof(ucall));
-	}
+		अगर (uc)
+			स_नकल(uc, &ucall, माप(ucall));
+	पूर्ण
 
-	return ucall.cmd;
-}
+	वापस ucall.cmd;
+पूर्ण

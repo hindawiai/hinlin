@@ -1,22 +1,23 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * Copyright (c) 2014, The Linux Foundation. All rights reserved.
  */
 
-#ifndef __QCOM_CLK_REGMAP_DIVIDER_H__
-#define __QCOM_CLK_REGMAP_DIVIDER_H__
+#अगर_अघोषित __QCOM_CLK_REGMAP_DIVIDER_H__
+#घोषणा __QCOM_CLK_REGMAP_DIVIDER_H__
 
-#include <linux/clk-provider.h>
-#include "clk-regmap.h"
+#समावेश <linux/clk-provider.h>
+#समावेश "clk-regmap.h"
 
-struct clk_regmap_div {
+काष्ठा clk_regmap_भाग अणु
 	u32			reg;
-	u32			shift;
+	u32			shअगरt;
 	u32			width;
-	struct clk_regmap	clkr;
-};
+	काष्ठा clk_regmap	clkr;
+पूर्ण;
 
-extern const struct clk_ops clk_regmap_div_ops;
-extern const struct clk_ops clk_regmap_div_ro_ops;
+बाह्य स्थिर काष्ठा clk_ops clk_regmap_भाग_ops;
+बाह्य स्थिर काष्ठा clk_ops clk_regmap_भाग_ro_ops;
 
-#endif
+#पूर्ण_अगर

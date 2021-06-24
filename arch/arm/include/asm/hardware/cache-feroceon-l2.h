@@ -1,5 +1,6 @@
+<शैली गुरु>
 /*
- * arch/arm/include/asm/hardware/cache-feroceon-l2.h
+ * arch/arm/include/यंत्र/hardware/cache-feroceon-l2.h
  *
  * Copyright (C) 2008 Marvell Semiconductor
  *
@@ -8,6 +9,6 @@
  * warranty of any kind, whether express or implied.
  */
 
-extern void __init feroceon_l2_init(int l2_wt_override);
-extern int __init feroceon_of_init(void);
+बाह्य व्योम __init feroceon_l2_init(पूर्णांक l2_wt_override);
+बाह्य पूर्णांक __init feroceon_of_init(व्योम);
 

@@ -1,8 +1,9 @@
-/* SPDX-License-Identifier: (LGPL-2.1 OR BSD-2-Clause) */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: (LGPL-2.1 OR BSD-2-Clause) */
 /* Copyright (C) 2020 Facebook, Inc. */
-#include <stdbool.h>
-#include <bpf/bpf.h>
-#include <bpf/libbpf.h>
+#समावेश <stdbool.h>
+#समावेश <bpf/bpf.h>
+#समावेश <bpf/libbpf.h>
 
-int parse_num_list(const char *s, bool **set, int *set_len);
-__u32 link_info_prog_id(const struct bpf_link *link, struct bpf_link_info *info);
+पूर्णांक parse_num_list(स्थिर अक्षर *s, bool **set, पूर्णांक *set_len);
+__u32 link_info_prog_id(स्थिर काष्ठा bpf_link *link, काष्ठा bpf_link_info *info);

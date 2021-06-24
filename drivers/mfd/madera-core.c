@@ -1,106 +1,107 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * Core MFD support for Cirrus Logic Madera codecs
+ * Core MFD support क्रम Cirrus Logic Madera codecs
  *
  * Copyright (C) 2015-2018 Cirrus Logic
  */
 
-#include <linux/device.h>
-#include <linux/delay.h>
-#include <linux/err.h>
-#include <linux/gpio.h>
-#include <linux/mfd/core.h>
-#include <linux/module.h>
-#include <linux/mutex.h>
-#include <linux/notifier.h>
-#include <linux/of.h>
-#include <linux/of_gpio.h>
-#include <linux/platform_device.h>
-#include <linux/pm_runtime.h>
-#include <linux/regmap.h>
-#include <linux/regulator/consumer.h>
-#include <linux/regulator/machine.h>
-#include <linux/regulator/of_regulator.h>
+#समावेश <linux/device.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/err.h>
+#समावेश <linux/gpपन.स>
+#समावेश <linux/mfd/core.h>
+#समावेश <linux/module.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/notअगरier.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_gpपन.स>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/pm_runसमय.स>
+#समावेश <linux/regmap.h>
+#समावेश <linux/regulator/consumer.h>
+#समावेश <linux/regulator/machine.h>
+#समावेश <linux/regulator/of_regulator.h>
 
-#include <linux/mfd/madera/core.h>
-#include <linux/mfd/madera/registers.h>
+#समावेश <linux/mfd/madera/core.h>
+#समावेश <linux/mfd/madera/रेजिस्टरs.h>
 
-#include "madera.h"
+#समावेश "madera.h"
 
-#define CS47L15_SILICON_ID	0x6370
-#define CS47L35_SILICON_ID	0x6360
-#define CS47L85_SILICON_ID	0x6338
-#define CS47L90_SILICON_ID	0x6364
-#define CS47L92_SILICON_ID	0x6371
+#घोषणा CS47L15_SILICON_ID	0x6370
+#घोषणा CS47L35_SILICON_ID	0x6360
+#घोषणा CS47L85_SILICON_ID	0x6338
+#घोषणा CS47L90_SILICON_ID	0x6364
+#घोषणा CS47L92_SILICON_ID	0x6371
 
-#define MADERA_32KZ_MCLK2	1
+#घोषणा MADERA_32KZ_MCLK2	1
 
-#define MADERA_RESET_MIN_US	2000
-#define MADERA_RESET_MAX_US	3000
+#घोषणा MADERA_RESET_MIN_US	2000
+#घोषणा MADERA_RESET_MAX_US	3000
 
-#define ERRATA_DCVDD_MIN_US	10000
-#define ERRATA_DCVDD_MAX_US	15000
+#घोषणा ERRATA_DCVDD_MIN_US	10000
+#घोषणा ERRATA_DCVDD_MAX_US	15000
 
-static const char * const madera_core_supplies[] = {
+अटल स्थिर अक्षर * स्थिर madera_core_supplies[] = अणु
 	"AVDD",
 	"DBVDD1",
-};
+पूर्ण;
 
-static const struct mfd_cell madera_ldo1_devs[] = {
-	{
+अटल स्थिर काष्ठा mfd_cell madera_lकरो1_devs[] = अणु
+	अणु
 		.name = "madera-ldo1",
 		.level = MFD_DEP_LEVEL_HIGH,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static const char * const cs47l15_supplies[] = {
+अटल स्थिर अक्षर * स्थिर cs47l15_supplies[] = अणु
 	"MICVDD",
 	"CPVDD1",
 	"SPKVDD",
-};
+पूर्ण;
 
-static const struct mfd_cell cs47l15_devs[] = {
-	{ .name = "madera-pinctrl", },
-	{ .name = "madera-irq", },
-	{ .name = "madera-gpio", },
-	{
+अटल स्थिर काष्ठा mfd_cell cs47l15_devs[] = अणु
+	अणु .name = "madera-pinctrl", पूर्ण,
+	अणु .name = "madera-irq", पूर्ण,
+	अणु .name = "madera-gpio", पूर्ण,
+	अणु
 		.name = "madera-extcon",
 		.parent_supplies = cs47l15_supplies,
 		.num_parent_supplies = 1, /* We only need MICVDD */
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "cs47l15-codec",
 		.parent_supplies = cs47l15_supplies,
 		.num_parent_supplies = ARRAY_SIZE(cs47l15_supplies),
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static const char * const cs47l35_supplies[] = {
+अटल स्थिर अक्षर * स्थिर cs47l35_supplies[] = अणु
 	"MICVDD",
 	"DBVDD2",
 	"CPVDD1",
 	"CPVDD2",
 	"SPKVDD",
-};
+पूर्ण;
 
-static const struct mfd_cell cs47l35_devs[] = {
-	{ .name = "madera-pinctrl", },
-	{ .name = "madera-irq", },
-	{ .name = "madera-micsupp", },
-	{ .name = "madera-gpio", },
-	{
+अटल स्थिर काष्ठा mfd_cell cs47l35_devs[] = अणु
+	अणु .name = "madera-pinctrl", पूर्ण,
+	अणु .name = "madera-irq", पूर्ण,
+	अणु .name = "madera-micsupp", पूर्ण,
+	अणु .name = "madera-gpio", पूर्ण,
+	अणु
 		.name = "madera-extcon",
 		.parent_supplies = cs47l35_supplies,
 		.num_parent_supplies = 1, /* We only need MICVDD */
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "cs47l35-codec",
 		.parent_supplies = cs47l35_supplies,
 		.num_parent_supplies = ARRAY_SIZE(cs47l35_supplies),
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static const char * const cs47l85_supplies[] = {
+अटल स्थिर अक्षर * स्थिर cs47l85_supplies[] = अणु
 	"MICVDD",
 	"DBVDD2",
 	"DBVDD3",
@@ -109,249 +110,249 @@ static const char * const cs47l85_supplies[] = {
 	"CPVDD2",
 	"SPKVDDL",
 	"SPKVDDR",
-};
+पूर्ण;
 
-static const struct mfd_cell cs47l85_devs[] = {
-	{ .name = "madera-pinctrl", },
-	{ .name = "madera-irq", },
-	{ .name = "madera-micsupp", },
-	{ .name = "madera-gpio", },
-	{
+अटल स्थिर काष्ठा mfd_cell cs47l85_devs[] = अणु
+	अणु .name = "madera-pinctrl", पूर्ण,
+	अणु .name = "madera-irq", पूर्ण,
+	अणु .name = "madera-micsupp", पूर्ण,
+	अणु .name = "madera-gpio", पूर्ण,
+	अणु
 		.name = "madera-extcon",
 		.parent_supplies = cs47l85_supplies,
 		.num_parent_supplies = 1, /* We only need MICVDD */
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "cs47l85-codec",
 		.parent_supplies = cs47l85_supplies,
 		.num_parent_supplies = ARRAY_SIZE(cs47l85_supplies),
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static const char * const cs47l90_supplies[] = {
+अटल स्थिर अक्षर * स्थिर cs47l90_supplies[] = अणु
 	"MICVDD",
 	"DBVDD2",
 	"DBVDD3",
 	"DBVDD4",
 	"CPVDD1",
 	"CPVDD2",
-};
+पूर्ण;
 
-static const struct mfd_cell cs47l90_devs[] = {
-	{ .name = "madera-pinctrl", },
-	{ .name = "madera-irq", },
-	{ .name = "madera-micsupp", },
-	{ .name = "madera-gpio", },
-	{
+अटल स्थिर काष्ठा mfd_cell cs47l90_devs[] = अणु
+	अणु .name = "madera-pinctrl", पूर्ण,
+	अणु .name = "madera-irq", पूर्ण,
+	अणु .name = "madera-micsupp", पूर्ण,
+	अणु .name = "madera-gpio", पूर्ण,
+	अणु
 		.name = "madera-extcon",
 		.parent_supplies = cs47l90_supplies,
 		.num_parent_supplies = 1, /* We only need MICVDD */
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "cs47l90-codec",
 		.parent_supplies = cs47l90_supplies,
 		.num_parent_supplies = ARRAY_SIZE(cs47l90_supplies),
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static const char * const cs47l92_supplies[] = {
+अटल स्थिर अक्षर * स्थिर cs47l92_supplies[] = अणु
 	"MICVDD",
 	"CPVDD1",
 	"CPVDD2",
-};
+पूर्ण;
 
-static const struct mfd_cell cs47l92_devs[] = {
-	{ .name = "madera-pinctrl", },
-	{ .name = "madera-irq", },
-	{ .name = "madera-micsupp", },
-	{ .name = "madera-gpio", },
-	{
+अटल स्थिर काष्ठा mfd_cell cs47l92_devs[] = अणु
+	अणु .name = "madera-pinctrl", पूर्ण,
+	अणु .name = "madera-irq", पूर्ण,
+	अणु .name = "madera-micsupp", पूर्ण,
+	अणु .name = "madera-gpio", पूर्ण,
+	अणु
 		.name = "madera-extcon",
 		.parent_supplies = cs47l92_supplies,
 		.num_parent_supplies = 1, /* We only need MICVDD */
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "cs47l92-codec",
 		.parent_supplies = cs47l92_supplies,
 		.num_parent_supplies = ARRAY_SIZE(cs47l92_supplies),
-	},
-};
+	पूर्ण,
+पूर्ण;
 
 /* Used by madera-i2c and madera-spi drivers */
-const char *madera_name_from_type(enum madera_type type)
-{
-	switch (type) {
-	case CS47L15:
-		return "CS47L15";
-	case CS47L35:
-		return "CS47L35";
-	case CS47L85:
-		return "CS47L85";
-	case CS47L90:
-		return "CS47L90";
-	case CS47L91:
-		return "CS47L91";
-	case CS42L92:
-		return "CS42L92";
-	case CS47L92:
-		return "CS47L92";
-	case CS47L93:
-		return "CS47L93";
-	case WM1840:
-		return "WM1840";
-	default:
-		return "Unknown";
-	}
-}
+स्थिर अक्षर *madera_name_from_type(क्रमागत madera_type type)
+अणु
+	चयन (type) अणु
+	हाल CS47L15:
+		वापस "CS47L15";
+	हाल CS47L35:
+		वापस "CS47L35";
+	हाल CS47L85:
+		वापस "CS47L85";
+	हाल CS47L90:
+		वापस "CS47L90";
+	हाल CS47L91:
+		वापस "CS47L91";
+	हाल CS42L92:
+		वापस "CS42L92";
+	हाल CS47L92:
+		वापस "CS47L92";
+	हाल CS47L93:
+		वापस "CS47L93";
+	हाल WM1840:
+		वापस "WM1840";
+	शेष:
+		वापस "Unknown";
+	पूर्ण
+पूर्ण
 EXPORT_SYMBOL_GPL(madera_name_from_type);
 
-#define MADERA_BOOT_POLL_INTERVAL_USEC		5000
-#define MADERA_BOOT_POLL_TIMEOUT_USEC		25000
+#घोषणा MADERA_BOOT_POLL_INTERVAL_USEC		5000
+#घोषणा MADERA_BOOT_POLL_TIMEOUT_USEC		25000
 
-static int madera_wait_for_boot_noack(struct madera *madera)
-{
-	ktime_t timeout;
-	unsigned int val = 0;
-	int ret = 0;
+अटल पूर्णांक madera_रुको_क्रम_boot_noack(काष्ठा madera *madera)
+अणु
+	kसमय_प्रकार समयout;
+	अचिन्हित पूर्णांक val = 0;
+	पूर्णांक ret = 0;
 
 	/*
-	 * We can't use an interrupt as we need to runtime resume to do so,
-	 * so we poll the status bit. This won't race with the interrupt
-	 * handler because it will be blocked on runtime resume.
-	 * The chip could NAK a read request while it is booting so ignore
-	 * errors from regmap_read.
+	 * We can't use an पूर्णांकerrupt as we need to runसमय resume to करो so,
+	 * so we poll the status bit. This won't race with the पूर्णांकerrupt
+	 * handler because it will be blocked on runसमय resume.
+	 * The chip could NAK a पढ़ो request जबतक it is booting so ignore
+	 * errors from regmap_पढ़ो.
 	 */
-	timeout = ktime_add_us(ktime_get(), MADERA_BOOT_POLL_TIMEOUT_USEC);
-	regmap_read(madera->regmap, MADERA_IRQ1_RAW_STATUS_1, &val);
-	while (!(val & MADERA_BOOT_DONE_STS1) &&
-	       !ktime_after(ktime_get(), timeout)) {
+	समयout = kसमय_add_us(kसमय_get(), MADERA_BOOT_POLL_TIMEOUT_USEC);
+	regmap_पढ़ो(madera->regmap, MADERA_IRQ1_RAW_STATUS_1, &val);
+	जबतक (!(val & MADERA_BOOT_DONE_STS1) &&
+	       !kसमय_after(kसमय_get(), समयout)) अणु
 		usleep_range(MADERA_BOOT_POLL_INTERVAL_USEC / 2,
 			     MADERA_BOOT_POLL_INTERVAL_USEC);
-		regmap_read(madera->regmap, MADERA_IRQ1_RAW_STATUS_1, &val);
-	}
+		regmap_पढ़ो(madera->regmap, MADERA_IRQ1_RAW_STATUS_1, &val);
+	पूर्ण
 
-	if (!(val & MADERA_BOOT_DONE_STS1)) {
+	अगर (!(val & MADERA_BOOT_DONE_STS1)) अणु
 		dev_err(madera->dev, "Polling BOOT_DONE_STS timed out\n");
 		ret = -ETIMEDOUT;
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int madera_wait_for_boot(struct madera *madera)
-{
-	int ret = madera_wait_for_boot_noack(madera);
+अटल पूर्णांक madera_रुको_क्रम_boot(काष्ठा madera *madera)
+अणु
+	पूर्णांक ret = madera_रुको_क्रम_boot_noack(madera);
 
 	/*
-	 * BOOT_DONE defaults to unmasked on boot so we must ack it.
-	 * Do this even after a timeout to avoid interrupt storms.
+	 * BOOT_DONE शेषs to unmasked on boot so we must ack it.
+	 * Do this even after a समयout to aव्योम पूर्णांकerrupt storms.
 	 */
-	regmap_write(madera->regmap, MADERA_IRQ1_STATUS_1,
+	regmap_ग_लिखो(madera->regmap, MADERA_IRQ1_STATUS_1,
 		     MADERA_BOOT_DONE_EINT1);
 
-	pm_runtime_mark_last_busy(madera->dev);
+	pm_runसमय_mark_last_busy(madera->dev);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int madera_soft_reset(struct madera *madera)
-{
-	int ret;
+अटल पूर्णांक madera_soft_reset(काष्ठा madera *madera)
+अणु
+	पूर्णांक ret;
 
-	ret = regmap_write(madera->regmap, MADERA_SOFTWARE_RESET, 0);
-	if (ret != 0) {
+	ret = regmap_ग_लिखो(madera->regmap, MADERA_SOFTWARE_RESET, 0);
+	अगर (ret != 0) अणु
 		dev_err(madera->dev, "Failed to soft reset device: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	/* Allow time for internal clocks to startup after reset */
+	/* Allow समय क्रम पूर्णांकernal घड़ीs to startup after reset */
 	usleep_range(MADERA_RESET_MIN_US, MADERA_RESET_MAX_US);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void madera_enable_hard_reset(struct madera *madera)
-{
+अटल व्योम madera_enable_hard_reset(काष्ठा madera *madera)
+अणु
 	/*
 	 * There are many existing out-of-tree users of these codecs that we
-	 * can't break so preserve the expected behaviour of setting the line
-	 * low to assert reset.
+	 * can't अवरोध so preserve the expected behaviour of setting the line
+	 * low to निश्चित reset.
 	 */
 	gpiod_set_raw_value_cansleep(madera->pdata.reset, 0);
-}
+पूर्ण
 
-static void madera_disable_hard_reset(struct madera *madera)
-{
+अटल व्योम madera_disable_hard_reset(काष्ठा madera *madera)
+अणु
 	gpiod_set_raw_value_cansleep(madera->pdata.reset, 1);
 
 	usleep_range(MADERA_RESET_MIN_US, MADERA_RESET_MAX_US);
-}
+पूर्ण
 
-static int __maybe_unused madera_runtime_resume(struct device *dev)
-{
-	struct madera *madera = dev_get_drvdata(dev);
-	int ret;
+अटल पूर्णांक __maybe_unused madera_runसमय_resume(काष्ठा device *dev)
+अणु
+	काष्ठा madera *madera = dev_get_drvdata(dev);
+	पूर्णांक ret;
 
 	dev_dbg(dev, "Leaving sleep mode\n");
 
-	if (!madera->reset_errata)
+	अगर (!madera->reset_errata)
 		madera_enable_hard_reset(madera);
 
 	ret = regulator_enable(madera->dcvdd);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev, "Failed to enable DCVDD: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	regcache_cache_only(madera->regmap, false);
 	regcache_cache_only(madera->regmap_32bit, false);
 
-	if (madera->reset_errata)
+	अगर (madera->reset_errata)
 		usleep_range(ERRATA_DCVDD_MIN_US, ERRATA_DCVDD_MAX_US);
-	else
+	अन्यथा
 		madera_disable_hard_reset(madera);
 
-	if (!madera->pdata.reset || madera->reset_errata) {
-		ret = madera_wait_for_boot(madera);
-		if (ret)
-			goto err;
+	अगर (!madera->pdata.reset || madera->reset_errata) अणु
+		ret = madera_रुको_क्रम_boot(madera);
+		अगर (ret)
+			जाओ err;
 
 		ret = madera_soft_reset(madera);
-		if (ret) {
+		अगर (ret) अणु
 			dev_err(dev, "Failed to reset: %d\n", ret);
-			goto err;
-		}
-	}
+			जाओ err;
+		पूर्ण
+	पूर्ण
 
-	ret = madera_wait_for_boot(madera);
-	if (ret)
-		goto err;
+	ret = madera_रुको_क्रम_boot(madera);
+	अगर (ret)
+		जाओ err;
 
 	ret = regcache_sync(madera->regmap);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev, "Failed to restore 16-bit register cache\n");
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
 	ret = regcache_sync(madera->regmap_32bit);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev, "Failed to restore 32-bit register cache\n");
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 err:
 	regcache_cache_only(madera->regmap_32bit, true);
 	regcache_cache_only(madera->regmap, true);
 	regulator_disable(madera->dcvdd);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int __maybe_unused madera_runtime_suspend(struct device *dev)
-{
-	struct madera *madera = dev_get_drvdata(dev);
+अटल पूर्णांक __maybe_unused madera_runसमय_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा madera *madera = dev_get_drvdata(dev);
 
 	dev_dbg(madera->dev, "Entering sleep mode\n");
 
@@ -362,119 +363,119 @@ static int __maybe_unused madera_runtime_suspend(struct device *dev)
 
 	regulator_disable(madera->dcvdd);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-const struct dev_pm_ops madera_pm_ops = {
-	SET_RUNTIME_PM_OPS(madera_runtime_suspend,
-			   madera_runtime_resume,
-			   NULL)
-};
+स्थिर काष्ठा dev_pm_ops madera_pm_ops = अणु
+	SET_RUNTIME_PM_OPS(madera_runसमय_suspend,
+			   madera_runसमय_resume,
+			   शून्य)
+पूर्ण;
 EXPORT_SYMBOL_GPL(madera_pm_ops);
 
-const struct of_device_id madera_of_match[] = {
-	{ .compatible = "cirrus,cs47l15", .data = (void *)CS47L15 },
-	{ .compatible = "cirrus,cs47l35", .data = (void *)CS47L35 },
-	{ .compatible = "cirrus,cs47l85", .data = (void *)CS47L85 },
-	{ .compatible = "cirrus,cs47l90", .data = (void *)CS47L90 },
-	{ .compatible = "cirrus,cs47l91", .data = (void *)CS47L91 },
-	{ .compatible = "cirrus,cs42l92", .data = (void *)CS42L92 },
-	{ .compatible = "cirrus,cs47l92", .data = (void *)CS47L92 },
-	{ .compatible = "cirrus,cs47l93", .data = (void *)CS47L93 },
-	{ .compatible = "cirrus,wm1840", .data = (void *)WM1840 },
-	{}
-};
+स्थिर काष्ठा of_device_id madera_of_match[] = अणु
+	अणु .compatible = "cirrus,cs47l15", .data = (व्योम *)CS47L15 पूर्ण,
+	अणु .compatible = "cirrus,cs47l35", .data = (व्योम *)CS47L35 पूर्ण,
+	अणु .compatible = "cirrus,cs47l85", .data = (व्योम *)CS47L85 पूर्ण,
+	अणु .compatible = "cirrus,cs47l90", .data = (व्योम *)CS47L90 पूर्ण,
+	अणु .compatible = "cirrus,cs47l91", .data = (व्योम *)CS47L91 पूर्ण,
+	अणु .compatible = "cirrus,cs42l92", .data = (व्योम *)CS42L92 पूर्ण,
+	अणु .compatible = "cirrus,cs47l92", .data = (व्योम *)CS47L92 पूर्ण,
+	अणु .compatible = "cirrus,cs47l93", .data = (व्योम *)CS47L93 पूर्ण,
+	अणु .compatible = "cirrus,wm1840", .data = (व्योम *)WM1840 पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, madera_of_match);
 EXPORT_SYMBOL_GPL(madera_of_match);
 
-static int madera_get_reset_gpio(struct madera *madera)
-{
-	struct gpio_desc *reset;
+अटल पूर्णांक madera_get_reset_gpio(काष्ठा madera *madera)
+अणु
+	काष्ठा gpio_desc *reset;
 
-	if (madera->pdata.reset)
-		return 0;
+	अगर (madera->pdata.reset)
+		वापस 0;
 
 	reset = devm_gpiod_get_optional(madera->dev, "reset", GPIOD_OUT_LOW);
-	if (IS_ERR(reset))
-		return dev_err_probe(madera->dev, PTR_ERR(reset),
+	अगर (IS_ERR(reset))
+		वापस dev_err_probe(madera->dev, PTR_ERR(reset),
 				"Failed to request /RESET");
 
 	/*
-	 * A hard reset is needed for full reset of the chip. We allow running
-	 * without hard reset only because it can be useful for early
+	 * A hard reset is needed क्रम full reset of the chip. We allow running
+	 * without hard reset only because it can be useful क्रम early
 	 * prototyping and some debugging, but we need to warn it's not ideal.
 	 */
-	if (!reset)
+	अगर (!reset)
 		dev_warn(madera->dev,
 			 "Running without reset GPIO is not recommended\n");
 
 	madera->pdata.reset = reset;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void madera_set_micbias_info(struct madera *madera)
-{
+अटल व्योम madera_set_micbias_info(काष्ठा madera *madera)
+अणु
 	/*
-	 * num_childbias is an array because future codecs can have different
-	 * childbiases for each micbias. Unspecified values default to 0.
+	 * num_childbias is an array because future codecs can have dअगरferent
+	 * childbiases क्रम each micbias. Unspecअगरied values शेष to 0.
 	 */
-	switch (madera->type) {
-	case CS47L15:
+	चयन (madera->type) अणु
+	हाल CS47L15:
 		madera->num_micbias = 1;
 		madera->num_childbias[0] = 3;
-		return;
-	case CS47L35:
+		वापस;
+	हाल CS47L35:
 		madera->num_micbias = 2;
 		madera->num_childbias[0] = 2;
 		madera->num_childbias[1] = 2;
-		return;
-	case CS47L85:
-	case WM1840:
+		वापस;
+	हाल CS47L85:
+	हाल WM1840:
 		madera->num_micbias = 4;
 		/* no child biases */
-		return;
-	case CS47L90:
-	case CS47L91:
+		वापस;
+	हाल CS47L90:
+	हाल CS47L91:
 		madera->num_micbias = 2;
 		madera->num_childbias[0] = 4;
 		madera->num_childbias[1] = 4;
-		return;
-	case CS42L92:
-	case CS47L92:
-	case CS47L93:
+		वापस;
+	हाल CS42L92:
+	हाल CS47L92:
+	हाल CS47L93:
 		madera->num_micbias = 2;
 		madera->num_childbias[0] = 4;
 		madera->num_childbias[1] = 2;
-		return;
-	default:
-		return;
-	}
-}
+		वापस;
+	शेष:
+		वापस;
+	पूर्ण
+पूर्ण
 
-int madera_dev_init(struct madera *madera)
-{
-	struct device *dev = madera->dev;
-	unsigned int hwid;
-	int (*patch_fn)(struct madera *) = NULL;
-	const struct mfd_cell *mfd_devs;
-	int n_devs = 0;
-	int i, ret;
+पूर्णांक madera_dev_init(काष्ठा madera *madera)
+अणु
+	काष्ठा device *dev = madera->dev;
+	अचिन्हित पूर्णांक hwid;
+	पूर्णांक (*patch_fn)(काष्ठा madera *) = शून्य;
+	स्थिर काष्ठा mfd_cell *mfd_devs;
+	पूर्णांक n_devs = 0;
+	पूर्णांक i, ret;
 
 	dev_set_drvdata(madera->dev, madera);
-	BLOCKING_INIT_NOTIFIER_HEAD(&madera->notifier);
+	BLOCKING_INIT_NOTIFIER_HEAD(&madera->notअगरier);
 	mutex_init(&madera->dapm_ptr_lock);
 
 	madera_set_micbias_info(madera);
 
 	/*
 	 * We need writable hw config info that all children can share.
-	 * Simplest to take one shared copy of pdata struct.
+	 * Simplest to take one shared copy of pdata काष्ठा.
 	 */
-	if (dev_get_platdata(madera->dev)) {
-		memcpy(&madera->pdata, dev_get_platdata(madera->dev),
-		       sizeof(madera->pdata));
-	}
+	अगर (dev_get_platdata(madera->dev)) अणु
+		स_नकल(&madera->pdata, dev_get_platdata(madera->dev),
+		       माप(madera->pdata));
+	पूर्ण
 
 	madera->mclk[MADERA_MCLK1].id = "mclk1";
 	madera->mclk[MADERA_MCLK2].id = "mclk2";
@@ -482,273 +483,273 @@ int madera_dev_init(struct madera *madera)
 
 	ret = devm_clk_bulk_get_optional(madera->dev, ARRAY_SIZE(madera->mclk),
 					 madera->mclk);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(madera->dev, "Failed to get clocks: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	/* Not using devm_clk_get to prevent breakage of existing DTs */
-	if (!madera->mclk[MADERA_MCLK2].clk)
+	/* Not using devm_clk_get to prevent अवरोधage of existing DTs */
+	अगर (!madera->mclk[MADERA_MCLK2].clk)
 		dev_warn(madera->dev, "Missing MCLK2, requires 32kHz clock\n");
 
 	ret = madera_get_reset_gpio(madera);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	regcache_cache_only(madera->regmap, true);
 	regcache_cache_only(madera->regmap_32bit, true);
 
-	for (i = 0; i < ARRAY_SIZE(madera_core_supplies); i++)
+	क्रम (i = 0; i < ARRAY_SIZE(madera_core_supplies); i++)
 		madera->core_supplies[i].supply = madera_core_supplies[i];
 
 	madera->num_core_supplies = ARRAY_SIZE(madera_core_supplies);
 
 	/*
-	 * On some codecs DCVDD could be supplied by the internal LDO1.
-	 * For those we must add the LDO1 driver before requesting DCVDD
-	 * No devm_ because we need to control shutdown order of children.
+	 * On some codecs DCVDD could be supplied by the पूर्णांकernal LDO1.
+	 * For those we must add the LDO1 driver beक्रमe requesting DCVDD
+	 * No devm_ because we need to control shutकरोwn order of children.
 	 */
-	switch (madera->type) {
-	case CS47L15:
+	चयन (madera->type) अणु
+	हाल CS47L15:
 		madera->reset_errata = true;
-		break;
-	case CS47L35:
-	case CS47L90:
-	case CS47L91:
-	case CS42L92:
-	case CS47L92:
-	case CS47L93:
-		break;
-	case CS47L85:
-	case WM1840:
+		अवरोध;
+	हाल CS47L35:
+	हाल CS47L90:
+	हाल CS47L91:
+	हाल CS42L92:
+	हाल CS47L92:
+	हाल CS47L93:
+		अवरोध;
+	हाल CS47L85:
+	हाल WM1840:
 		ret = mfd_add_devices(madera->dev, PLATFORM_DEVID_NONE,
-				      madera_ldo1_devs,
-				      ARRAY_SIZE(madera_ldo1_devs),
-				      NULL, 0, NULL);
-		if (ret) {
+				      madera_lकरो1_devs,
+				      ARRAY_SIZE(madera_lकरो1_devs),
+				      शून्य, 0, शून्य);
+		अगर (ret) अणु
 			dev_err(dev, "Failed to add LDO1 child: %d\n", ret);
-			return ret;
-		}
-		break;
-	default:
-		/* No point continuing if the type is unknown */
+			वापस ret;
+		पूर्ण
+		अवरोध;
+	शेष:
+		/* No poपूर्णांक continuing अगर the type is unknown */
 		dev_err(madera->dev, "Unknown device type %d\n", madera->type);
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
 	ret = devm_regulator_bulk_get(dev, madera->num_core_supplies,
 				      madera->core_supplies);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev, "Failed to request core supplies: %d\n", ret);
-		goto err_devs;
-	}
+		जाओ err_devs;
+	पूर्ण
 
 	/*
 	 * Don't use devres here. If the regulator is one of our children it
-	 * will already have been removed before devres cleanup on this mfd
-	 * driver tries to call put() on it. We need control of shutdown order.
+	 * will alपढ़ोy have been हटाओd beक्रमe devres cleanup on this mfd
+	 * driver tries to call put() on it. We need control of shutकरोwn order.
 	 */
 	madera->dcvdd = regulator_get(madera->dev, "DCVDD");
-	if (IS_ERR(madera->dcvdd)) {
+	अगर (IS_ERR(madera->dcvdd)) अणु
 		ret = PTR_ERR(madera->dcvdd);
 		dev_err(dev, "Failed to request DCVDD: %d\n", ret);
-		goto err_devs;
-	}
+		जाओ err_devs;
+	पूर्ण
 
 	ret = regulator_bulk_enable(madera->num_core_supplies,
 				    madera->core_supplies);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev, "Failed to enable core supplies: %d\n", ret);
-		goto err_dcvdd;
-	}
+		जाओ err_dcvdd;
+	पूर्ण
 
-	if (madera->reset_errata)
+	अगर (madera->reset_errata)
 		madera_disable_hard_reset(madera);
 
 	ret = regulator_enable(madera->dcvdd);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev, "Failed to enable DCVDD: %d\n", ret);
-		goto err_enable;
-	}
+		जाओ err_enable;
+	पूर्ण
 
-	if (madera->reset_errata)
+	अगर (madera->reset_errata)
 		usleep_range(ERRATA_DCVDD_MIN_US, ERRATA_DCVDD_MAX_US);
-	else
+	अन्यथा
 		madera_disable_hard_reset(madera);
 
 	regcache_cache_only(madera->regmap, false);
 	regcache_cache_only(madera->regmap_32bit, false);
 
-	ret = madera_wait_for_boot_noack(madera);
-	if (ret) {
+	ret = madera_रुको_क्रम_boot_noack(madera);
+	अगर (ret) अणु
 		dev_err(madera->dev, "Device failed initial boot: %d\n", ret);
-		goto err_reset;
-	}
+		जाओ err_reset;
+	पूर्ण
 
 	/*
-	 * Now we can power up and verify that this is a chip we know about
-	 * before we start doing any writes to its registers.
+	 * Now we can घातer up and verअगरy that this is a chip we know about
+	 * beक्रमe we start करोing any ग_लिखोs to its रेजिस्टरs.
 	 */
-	ret = regmap_read(madera->regmap, MADERA_SOFTWARE_RESET, &hwid);
-	if (ret) {
+	ret = regmap_पढ़ो(madera->regmap, MADERA_SOFTWARE_RESET, &hwid);
+	अगर (ret) अणु
 		dev_err(dev, "Failed to read ID register: %d\n", ret);
-		goto err_reset;
-	}
+		जाओ err_reset;
+	पूर्ण
 
-	switch (hwid) {
-	case CS47L15_SILICON_ID:
-		if (IS_ENABLED(CONFIG_MFD_CS47L15)) {
-			switch (madera->type) {
-			case CS47L15:
+	चयन (hwid) अणु
+	हाल CS47L15_SILICON_ID:
+		अगर (IS_ENABLED(CONFIG_MFD_CS47L15)) अणु
+			चयन (madera->type) अणु
+			हाल CS47L15:
 				patch_fn = &cs47l15_patch;
 				mfd_devs = cs47l15_devs;
 				n_devs = ARRAY_SIZE(cs47l15_devs);
-				break;
-			default:
-				break;
-			}
-		}
-		break;
-	case CS47L35_SILICON_ID:
-		if (IS_ENABLED(CONFIG_MFD_CS47L35)) {
-			switch (madera->type) {
-			case CS47L35:
+				अवरोध;
+			शेष:
+				अवरोध;
+			पूर्ण
+		पूर्ण
+		अवरोध;
+	हाल CS47L35_SILICON_ID:
+		अगर (IS_ENABLED(CONFIG_MFD_CS47L35)) अणु
+			चयन (madera->type) अणु
+			हाल CS47L35:
 				patch_fn = cs47l35_patch;
 				mfd_devs = cs47l35_devs;
 				n_devs = ARRAY_SIZE(cs47l35_devs);
-				break;
-			default:
-				break;
-			}
-		}
-		break;
-	case CS47L85_SILICON_ID:
-		if (IS_ENABLED(CONFIG_MFD_CS47L85)) {
-			switch (madera->type) {
-			case CS47L85:
-			case WM1840:
+				अवरोध;
+			शेष:
+				अवरोध;
+			पूर्ण
+		पूर्ण
+		अवरोध;
+	हाल CS47L85_SILICON_ID:
+		अगर (IS_ENABLED(CONFIG_MFD_CS47L85)) अणु
+			चयन (madera->type) अणु
+			हाल CS47L85:
+			हाल WM1840:
 				patch_fn = cs47l85_patch;
 				mfd_devs = cs47l85_devs;
 				n_devs = ARRAY_SIZE(cs47l85_devs);
-				break;
-			default:
-				break;
-			}
-		}
-		break;
-	case CS47L90_SILICON_ID:
-		if (IS_ENABLED(CONFIG_MFD_CS47L90)) {
-			switch (madera->type) {
-			case CS47L90:
-			case CS47L91:
+				अवरोध;
+			शेष:
+				अवरोध;
+			पूर्ण
+		पूर्ण
+		अवरोध;
+	हाल CS47L90_SILICON_ID:
+		अगर (IS_ENABLED(CONFIG_MFD_CS47L90)) अणु
+			चयन (madera->type) अणु
+			हाल CS47L90:
+			हाल CS47L91:
 				patch_fn = cs47l90_patch;
 				mfd_devs = cs47l90_devs;
 				n_devs = ARRAY_SIZE(cs47l90_devs);
-				break;
-			default:
-				break;
-			}
-		}
-		break;
-	case CS47L92_SILICON_ID:
-		if (IS_ENABLED(CONFIG_MFD_CS47L92)) {
-			switch (madera->type) {
-			case CS42L92:
-			case CS47L92:
-			case CS47L93:
+				अवरोध;
+			शेष:
+				अवरोध;
+			पूर्ण
+		पूर्ण
+		अवरोध;
+	हाल CS47L92_SILICON_ID:
+		अगर (IS_ENABLED(CONFIG_MFD_CS47L92)) अणु
+			चयन (madera->type) अणु
+			हाल CS42L92:
+			हाल CS47L92:
+			हाल CS47L93:
 				patch_fn = cs47l92_patch;
 				mfd_devs = cs47l92_devs;
 				n_devs = ARRAY_SIZE(cs47l92_devs);
-				break;
-			default:
-				break;
-			}
-		}
-		break;
-	default:
+				अवरोध;
+			शेष:
+				अवरोध;
+			पूर्ण
+		पूर्ण
+		अवरोध;
+	शेष:
 		dev_err(madera->dev, "Unknown device ID: %x\n", hwid);
 		ret = -EINVAL;
-		goto err_reset;
-	}
+		जाओ err_reset;
+	पूर्ण
 
-	if (!n_devs) {
+	अगर (!n_devs) अणु
 		dev_err(madera->dev, "Device ID 0x%x not a %s\n", hwid,
 			madera->type_name);
 		ret = -ENODEV;
-		goto err_reset;
-	}
+		जाओ err_reset;
+	पूर्ण
 
 	/*
-	 * It looks like a device we support. If we don't have a hard reset
+	 * It looks like a device we support. If we करोn't have a hard reset
 	 * we can now attempt a soft reset.
 	 */
-	if (!madera->pdata.reset || madera->reset_errata) {
+	अगर (!madera->pdata.reset || madera->reset_errata) अणु
 		ret = madera_soft_reset(madera);
-		if (ret)
-			goto err_reset;
-	}
+		अगर (ret)
+			जाओ err_reset;
+	पूर्ण
 
-	ret = madera_wait_for_boot(madera);
-	if (ret) {
+	ret = madera_रुको_क्रम_boot(madera);
+	अगर (ret) अणु
 		dev_err(madera->dev, "Failed to clear boot done: %d\n", ret);
-		goto err_reset;
-	}
+		जाओ err_reset;
+	पूर्ण
 
-	ret = regmap_read(madera->regmap, MADERA_HARDWARE_REVISION,
+	ret = regmap_पढ़ो(madera->regmap, MADERA_HARDWARE_REVISION,
 			  &madera->rev);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev, "Failed to read revision register: %d\n", ret);
-		goto err_reset;
-	}
+		जाओ err_reset;
+	पूर्ण
 	madera->rev &= MADERA_HW_REVISION_MASK;
 
 	dev_info(dev, "%s silicon revision %d\n", madera->type_name,
 		 madera->rev);
 
 	/* Apply hardware patch */
-	if (patch_fn) {
+	अगर (patch_fn) अणु
 		ret = patch_fn(madera);
-		if (ret) {
+		अगर (ret) अणु
 			dev_err(madera->dev, "Failed to apply patch %d\n", ret);
-			goto err_reset;
-		}
-	}
+			जाओ err_reset;
+		पूर्ण
+	पूर्ण
 
-	/* Init 32k clock sourced from MCLK2 */
+	/* Init 32k घड़ी sourced from MCLK2 */
 	ret = clk_prepare_enable(madera->mclk[MADERA_MCLK2].clk);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(madera->dev, "Failed to enable 32k clock: %d\n", ret);
-		goto err_reset;
-	}
+		जाओ err_reset;
+	पूर्ण
 
 	ret = regmap_update_bits(madera->regmap,
 			MADERA_CLOCK_32K_1,
 			MADERA_CLK_32K_ENA_MASK | MADERA_CLK_32K_SRC_MASK,
 			MADERA_CLK_32K_ENA | MADERA_32KZ_MCLK2);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(madera->dev, "Failed to init 32k clock: %d\n", ret);
-		goto err_clock;
-	}
+		जाओ err_घड़ी;
+	पूर्ण
 
-	pm_runtime_set_active(madera->dev);
-	pm_runtime_enable(madera->dev);
-	pm_runtime_set_autosuspend_delay(madera->dev, 100);
-	pm_runtime_use_autosuspend(madera->dev);
+	pm_runसमय_set_active(madera->dev);
+	pm_runसमय_enable(madera->dev);
+	pm_runसमय_set_स्वतःsuspend_delay(madera->dev, 100);
+	pm_runसमय_use_स्वतःsuspend(madera->dev);
 
-	/* No devm_ because we need to control shutdown order of children */
+	/* No devm_ because we need to control shutकरोwn order of children */
 	ret = mfd_add_devices(madera->dev, PLATFORM_DEVID_NONE,
 			      mfd_devs, n_devs,
-			      NULL, 0, NULL);
-	if (ret) {
+			      शून्य, 0, शून्य);
+	अगर (ret) अणु
 		dev_err(madera->dev, "Failed to add subdevices: %d\n", ret);
-		goto err_pm_runtime;
-	}
+		जाओ err_pm_runसमय;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
-err_pm_runtime:
-	pm_runtime_disable(madera->dev);
-err_clock:
+err_pm_runसमय:
+	pm_runसमय_disable(madera->dev);
+err_घड़ी:
 	clk_disable_unprepare(madera->mclk[MADERA_MCLK2].clk);
 err_reset:
 	madera_enable_hard_reset(madera);
@@ -759,30 +760,30 @@ err_enable:
 err_dcvdd:
 	regulator_put(madera->dcvdd);
 err_devs:
-	mfd_remove_devices(dev);
+	mfd_हटाओ_devices(dev);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(madera_dev_init);
 
-int madera_dev_exit(struct madera *madera)
-{
-	/* Prevent any IRQs being serviced while we clean up */
+पूर्णांक madera_dev_निकास(काष्ठा madera *madera)
+अणु
+	/* Prevent any IRQs being serviced जबतक we clean up */
 	disable_irq(madera->irq);
 
-	pm_runtime_get_sync(madera->dev);
+	pm_runसमय_get_sync(madera->dev);
 
-	mfd_remove_devices(madera->dev);
+	mfd_हटाओ_devices(madera->dev);
 
-	pm_runtime_disable(madera->dev);
+	pm_runसमय_disable(madera->dev);
 
 	regulator_disable(madera->dcvdd);
 	regulator_put(madera->dcvdd);
 
-	mfd_remove_devices_late(madera->dev);
+	mfd_हटाओ_devices_late(madera->dev);
 
-	pm_runtime_set_suspended(madera->dev);
-	pm_runtime_put_noidle(madera->dev);
+	pm_runसमय_set_suspended(madera->dev);
+	pm_runसमय_put_noidle(madera->dev);
 
 	clk_disable_unprepare(madera->mclk[MADERA_MCLK2].clk);
 
@@ -790,9 +791,9 @@ int madera_dev_exit(struct madera *madera)
 
 	regulator_bulk_disable(madera->num_core_supplies,
 			       madera->core_supplies);
-	return 0;
-}
-EXPORT_SYMBOL_GPL(madera_dev_exit);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL_GPL(madera_dev_निकास);
 
 MODULE_DESCRIPTION("Madera core MFD driver");
 MODULE_AUTHOR("Richard Fitzgerald <rf@opensource.cirrus.com>");

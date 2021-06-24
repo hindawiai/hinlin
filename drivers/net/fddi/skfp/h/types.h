@@ -1,35 +1,36 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /******************************************************************************
  *
  *	(C)Copyright 1998,1999 SysKonnect,
- *	a business unit of Schneider & Koch & Co. Datensysteme GmbH.
+ *	a business unit of Schneider & Koch & Co. Datenप्रणालीe GmbH.
  *
- *	The information in this file is provided "AS IS" without warranty.
+ *	The inक्रमmation in this file is provided "AS IS" without warranty.
  *
  ******************************************************************************/
 
-#include	<linux/types.h>
+#समावेश	<linux/types.h>
 /*
 	----------------------
-	Basic SMT system types
+	Basic SMT प्रणाली types
 	----------------------
 */
-#ifndef _TYPES_
-#define	_TYPES_
+#अगर_अघोषित _TYPES_
+#घोषणा	_TYPES_
 
-#define _packed
-#ifndef far
-#define far
-#endif
-#ifndef _far
-#define _far
-#endif
+#घोषणा _packed
+#अगर_अघोषित far
+#घोषणा far
+#पूर्ण_अगर
+#अगर_अघोषित _far
+#घोषणा _far
+#पूर्ण_अगर
 
-#define inp(p)  ioread8(p)
-#define inpw(p)	ioread16(p)
-#define inpd(p) ioread32(p)
-#define outp(p,c)  iowrite8(c,p)
-#define outpw(p,s) iowrite16(s,p)
-#define outpd(p,l) iowrite32(l,p)
+#घोषणा inp(p)  ioपढ़ो8(p)
+#घोषणा inpw(p)	ioपढ़ो16(p)
+#घोषणा inpd(p) ioपढ़ो32(p)
+#घोषणा outp(p,c)  ioग_लिखो8(c,p)
+#घोषणा outpw(p,s) ioग_लिखो16(s,p)
+#घोषणा outpd(p,l) ioग_लिखो32(l,p)
 
-#endif	/* _TYPES_ */
+#पूर्ण_अगर	/* _TYPES_ */

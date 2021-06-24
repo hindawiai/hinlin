@@ -1,211 +1,212 @@
-/* SPDX-License-Identifier: BSD-3-Clause OR GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: BSD-3-Clause OR GPL-2.0 */
 /* Copyright (c) 2019 Mellanox Technologies. All rights reserved */
 
-#ifndef _MLXSW_SPECTRUM_PTP_H
-#define _MLXSW_SPECTRUM_PTP_H
+#अगर_अघोषित _MLXSW_SPECTRUM_PTP_H
+#घोषणा _MLXSW_SPECTRUM_PTP_H
 
-#include <linux/device.h>
-#include <linux/rhashtable.h>
+#समावेश <linux/device.h>
+#समावेश <linux/rhashtable.h>
 
-struct mlxsw_sp;
-struct mlxsw_sp_port;
-struct mlxsw_sp_ptp_clock;
+काष्ठा mlxsw_sp;
+काष्ठा mlxsw_sp_port;
+काष्ठा mlxsw_sp_ptp_घड़ी;
 
-static inline int mlxsw_sp_ptp_get_ts_info_noptp(struct ethtool_ts_info *info)
-{
-	info->so_timestamping = SOF_TIMESTAMPING_RX_SOFTWARE |
+अटल अंतरभूत पूर्णांक mlxsw_sp_ptp_get_ts_info_noptp(काष्ठा ethtool_ts_info *info)
+अणु
+	info->so_बारtamping = SOF_TIMESTAMPING_RX_SOFTWARE |
 				SOF_TIMESTAMPING_SOFTWARE;
 	info->phc_index = -1;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#if IS_REACHABLE(CONFIG_PTP_1588_CLOCK)
+#अगर IS_REACHABLE(CONFIG_PTP_1588_CLOCK)
 
-struct mlxsw_sp_ptp_clock *
-mlxsw_sp1_ptp_clock_init(struct mlxsw_sp *mlxsw_sp, struct device *dev);
+काष्ठा mlxsw_sp_ptp_घड़ी *
+mlxsw_sp1_ptp_घड़ी_init(काष्ठा mlxsw_sp *mlxsw_sp, काष्ठा device *dev);
 
-void mlxsw_sp1_ptp_clock_fini(struct mlxsw_sp_ptp_clock *clock);
+व्योम mlxsw_sp1_ptp_घड़ी_fini(काष्ठा mlxsw_sp_ptp_घड़ी *घड़ी);
 
-struct mlxsw_sp_ptp_state *mlxsw_sp1_ptp_init(struct mlxsw_sp *mlxsw_sp);
+काष्ठा mlxsw_sp_ptp_state *mlxsw_sp1_ptp_init(काष्ठा mlxsw_sp *mlxsw_sp);
 
-void mlxsw_sp1_ptp_fini(struct mlxsw_sp_ptp_state *ptp_state);
+व्योम mlxsw_sp1_ptp_fini(काष्ठा mlxsw_sp_ptp_state *ptp_state);
 
-void mlxsw_sp1_ptp_receive(struct mlxsw_sp *mlxsw_sp, struct sk_buff *skb,
+व्योम mlxsw_sp1_ptp_receive(काष्ठा mlxsw_sp *mlxsw_sp, काष्ठा sk_buff *skb,
 			   u8 local_port);
 
-void mlxsw_sp1_ptp_transmitted(struct mlxsw_sp *mlxsw_sp,
-			       struct sk_buff *skb, u8 local_port);
+व्योम mlxsw_sp1_ptp_transmitted(काष्ठा mlxsw_sp *mlxsw_sp,
+			       काष्ठा sk_buff *skb, u8 local_port);
 
-void mlxsw_sp1_ptp_got_timestamp(struct mlxsw_sp *mlxsw_sp, bool ingress,
+व्योम mlxsw_sp1_ptp_got_बारtamp(काष्ठा mlxsw_sp *mlxsw_sp, bool ingress,
 				 u8 local_port, u8 message_type,
-				 u8 domain_number, u16 sequence_id,
-				 u64 timestamp);
+				 u8 करोमुख्य_number, u16 sequence_id,
+				 u64 बारtamp);
 
-int mlxsw_sp1_ptp_hwtstamp_get(struct mlxsw_sp_port *mlxsw_sp_port,
-			       struct hwtstamp_config *config);
+पूर्णांक mlxsw_sp1_ptp_hwtstamp_get(काष्ठा mlxsw_sp_port *mlxsw_sp_port,
+			       काष्ठा hwtstamp_config *config);
 
-int mlxsw_sp1_ptp_hwtstamp_set(struct mlxsw_sp_port *mlxsw_sp_port,
-			       struct hwtstamp_config *config);
+पूर्णांक mlxsw_sp1_ptp_hwtstamp_set(काष्ठा mlxsw_sp_port *mlxsw_sp_port,
+			       काष्ठा hwtstamp_config *config);
 
-void mlxsw_sp1_ptp_shaper_work(struct work_struct *work);
+व्योम mlxsw_sp1_ptp_shaper_work(काष्ठा work_काष्ठा *work);
 
-int mlxsw_sp1_ptp_get_ts_info(struct mlxsw_sp *mlxsw_sp,
-			      struct ethtool_ts_info *info);
+पूर्णांक mlxsw_sp1_ptp_get_ts_info(काष्ठा mlxsw_sp *mlxsw_sp,
+			      काष्ठा ethtool_ts_info *info);
 
-int mlxsw_sp1_get_stats_count(void);
-void mlxsw_sp1_get_stats_strings(u8 **p);
-void mlxsw_sp1_get_stats(struct mlxsw_sp_port *mlxsw_sp_port,
-			 u64 *data, int data_index);
+पूर्णांक mlxsw_sp1_get_stats_count(व्योम);
+व्योम mlxsw_sp1_get_stats_strings(u8 **p);
+व्योम mlxsw_sp1_get_stats(काष्ठा mlxsw_sp_port *mlxsw_sp_port,
+			 u64 *data, पूर्णांक data_index);
 
-#else
+#अन्यथा
 
-static inline struct mlxsw_sp_ptp_clock *
-mlxsw_sp1_ptp_clock_init(struct mlxsw_sp *mlxsw_sp, struct device *dev)
-{
-	return NULL;
-}
+अटल अंतरभूत काष्ठा mlxsw_sp_ptp_घड़ी *
+mlxsw_sp1_ptp_घड़ी_init(काष्ठा mlxsw_sp *mlxsw_sp, काष्ठा device *dev)
+अणु
+	वापस शून्य;
+पूर्ण
 
-static inline void mlxsw_sp1_ptp_clock_fini(struct mlxsw_sp_ptp_clock *clock)
-{
-}
+अटल अंतरभूत व्योम mlxsw_sp1_ptp_घड़ी_fini(काष्ठा mlxsw_sp_ptp_घड़ी *घड़ी)
+अणु
+पूर्ण
 
-static inline struct mlxsw_sp_ptp_state *
-mlxsw_sp1_ptp_init(struct mlxsw_sp *mlxsw_sp)
-{
-	return NULL;
-}
+अटल अंतरभूत काष्ठा mlxsw_sp_ptp_state *
+mlxsw_sp1_ptp_init(काष्ठा mlxsw_sp *mlxsw_sp)
+अणु
+	वापस शून्य;
+पूर्ण
 
-static inline void mlxsw_sp1_ptp_fini(struct mlxsw_sp_ptp_state *ptp_state)
-{
-}
+अटल अंतरभूत व्योम mlxsw_sp1_ptp_fini(काष्ठा mlxsw_sp_ptp_state *ptp_state)
+अणु
+पूर्ण
 
-static inline void mlxsw_sp1_ptp_receive(struct mlxsw_sp *mlxsw_sp,
-					 struct sk_buff *skb, u8 local_port)
-{
+अटल अंतरभूत व्योम mlxsw_sp1_ptp_receive(काष्ठा mlxsw_sp *mlxsw_sp,
+					 काष्ठा sk_buff *skb, u8 local_port)
+अणु
 	mlxsw_sp_rx_listener_no_mark_func(skb, local_port, mlxsw_sp);
-}
+पूर्ण
 
-static inline void mlxsw_sp1_ptp_transmitted(struct mlxsw_sp *mlxsw_sp,
-					     struct sk_buff *skb, u8 local_port)
-{
-	dev_kfree_skb_any(skb);
-}
+अटल अंतरभूत व्योम mlxsw_sp1_ptp_transmitted(काष्ठा mlxsw_sp *mlxsw_sp,
+					     काष्ठा sk_buff *skb, u8 local_port)
+अणु
+	dev_kमुक्त_skb_any(skb);
+पूर्ण
 
-static inline void
-mlxsw_sp1_ptp_got_timestamp(struct mlxsw_sp *mlxsw_sp, bool ingress,
+अटल अंतरभूत व्योम
+mlxsw_sp1_ptp_got_बारtamp(काष्ठा mlxsw_sp *mlxsw_sp, bool ingress,
 			    u8 local_port, u8 message_type,
-			    u8 domain_number,
-			    u16 sequence_id, u64 timestamp)
-{
-}
+			    u8 करोमुख्य_number,
+			    u16 sequence_id, u64 बारtamp)
+अणु
+पूर्ण
 
-static inline int
-mlxsw_sp1_ptp_hwtstamp_get(struct mlxsw_sp_port *mlxsw_sp_port,
-			   struct hwtstamp_config *config)
-{
-	return -EOPNOTSUPP;
-}
+अटल अंतरभूत पूर्णांक
+mlxsw_sp1_ptp_hwtstamp_get(काष्ठा mlxsw_sp_port *mlxsw_sp_port,
+			   काष्ठा hwtstamp_config *config)
+अणु
+	वापस -EOPNOTSUPP;
+पूर्ण
 
-static inline int
-mlxsw_sp1_ptp_hwtstamp_set(struct mlxsw_sp_port *mlxsw_sp_port,
-			   struct hwtstamp_config *config)
-{
-	return -EOPNOTSUPP;
-}
+अटल अंतरभूत पूर्णांक
+mlxsw_sp1_ptp_hwtstamp_set(काष्ठा mlxsw_sp_port *mlxsw_sp_port,
+			   काष्ठा hwtstamp_config *config)
+अणु
+	वापस -EOPNOTSUPP;
+पूर्ण
 
-static inline void mlxsw_sp1_ptp_shaper_work(struct work_struct *work)
-{
-}
+अटल अंतरभूत व्योम mlxsw_sp1_ptp_shaper_work(काष्ठा work_काष्ठा *work)
+अणु
+पूर्ण
 
-static inline int mlxsw_sp1_ptp_get_ts_info(struct mlxsw_sp *mlxsw_sp,
-					    struct ethtool_ts_info *info)
-{
-	return mlxsw_sp_ptp_get_ts_info_noptp(info);
-}
+अटल अंतरभूत पूर्णांक mlxsw_sp1_ptp_get_ts_info(काष्ठा mlxsw_sp *mlxsw_sp,
+					    काष्ठा ethtool_ts_info *info)
+अणु
+	वापस mlxsw_sp_ptp_get_ts_info_noptp(info);
+पूर्ण
 
-static inline int mlxsw_sp1_get_stats_count(void)
-{
-	return 0;
-}
+अटल अंतरभूत पूर्णांक mlxsw_sp1_get_stats_count(व्योम)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline void mlxsw_sp1_get_stats_strings(u8 **p)
-{
-}
+अटल अंतरभूत व्योम mlxsw_sp1_get_stats_strings(u8 **p)
+अणु
+पूर्ण
 
-static inline void mlxsw_sp1_get_stats(struct mlxsw_sp_port *mlxsw_sp_port,
-				       u64 *data, int data_index)
-{
-}
-#endif
+अटल अंतरभूत व्योम mlxsw_sp1_get_stats(काष्ठा mlxsw_sp_port *mlxsw_sp_port,
+				       u64 *data, पूर्णांक data_index)
+अणु
+पूर्ण
+#पूर्ण_अगर
 
-static inline struct mlxsw_sp_ptp_clock *
-mlxsw_sp2_ptp_clock_init(struct mlxsw_sp *mlxsw_sp, struct device *dev)
-{
-	return NULL;
-}
+अटल अंतरभूत काष्ठा mlxsw_sp_ptp_घड़ी *
+mlxsw_sp2_ptp_घड़ी_init(काष्ठा mlxsw_sp *mlxsw_sp, काष्ठा device *dev)
+अणु
+	वापस शून्य;
+पूर्ण
 
-static inline void mlxsw_sp2_ptp_clock_fini(struct mlxsw_sp_ptp_clock *clock)
-{
-}
+अटल अंतरभूत व्योम mlxsw_sp2_ptp_घड़ी_fini(काष्ठा mlxsw_sp_ptp_घड़ी *घड़ी)
+अणु
+पूर्ण
 
-static inline struct mlxsw_sp_ptp_state *
-mlxsw_sp2_ptp_init(struct mlxsw_sp *mlxsw_sp)
-{
-	return NULL;
-}
+अटल अंतरभूत काष्ठा mlxsw_sp_ptp_state *
+mlxsw_sp2_ptp_init(काष्ठा mlxsw_sp *mlxsw_sp)
+अणु
+	वापस शून्य;
+पूर्ण
 
-static inline void mlxsw_sp2_ptp_fini(struct mlxsw_sp_ptp_state *ptp_state)
-{
-}
+अटल अंतरभूत व्योम mlxsw_sp2_ptp_fini(काष्ठा mlxsw_sp_ptp_state *ptp_state)
+अणु
+पूर्ण
 
-static inline void mlxsw_sp2_ptp_receive(struct mlxsw_sp *mlxsw_sp,
-					 struct sk_buff *skb, u8 local_port)
-{
+अटल अंतरभूत व्योम mlxsw_sp2_ptp_receive(काष्ठा mlxsw_sp *mlxsw_sp,
+					 काष्ठा sk_buff *skb, u8 local_port)
+अणु
 	mlxsw_sp_rx_listener_no_mark_func(skb, local_port, mlxsw_sp);
-}
+पूर्ण
 
-static inline void mlxsw_sp2_ptp_transmitted(struct mlxsw_sp *mlxsw_sp,
-					     struct sk_buff *skb, u8 local_port)
-{
-	dev_kfree_skb_any(skb);
-}
+अटल अंतरभूत व्योम mlxsw_sp2_ptp_transmitted(काष्ठा mlxsw_sp *mlxsw_sp,
+					     काष्ठा sk_buff *skb, u8 local_port)
+अणु
+	dev_kमुक्त_skb_any(skb);
+पूर्ण
 
-static inline int
-mlxsw_sp2_ptp_hwtstamp_get(struct mlxsw_sp_port *mlxsw_sp_port,
-			   struct hwtstamp_config *config)
-{
-	return -EOPNOTSUPP;
-}
+अटल अंतरभूत पूर्णांक
+mlxsw_sp2_ptp_hwtstamp_get(काष्ठा mlxsw_sp_port *mlxsw_sp_port,
+			   काष्ठा hwtstamp_config *config)
+अणु
+	वापस -EOPNOTSUPP;
+पूर्ण
 
-static inline int
-mlxsw_sp2_ptp_hwtstamp_set(struct mlxsw_sp_port *mlxsw_sp_port,
-			   struct hwtstamp_config *config)
-{
-	return -EOPNOTSUPP;
-}
+अटल अंतरभूत पूर्णांक
+mlxsw_sp2_ptp_hwtstamp_set(काष्ठा mlxsw_sp_port *mlxsw_sp_port,
+			   काष्ठा hwtstamp_config *config)
+अणु
+	वापस -EOPNOTSUPP;
+पूर्ण
 
-static inline void mlxsw_sp2_ptp_shaper_work(struct work_struct *work)
-{
-}
+अटल अंतरभूत व्योम mlxsw_sp2_ptp_shaper_work(काष्ठा work_काष्ठा *work)
+अणु
+पूर्ण
 
-static inline int mlxsw_sp2_ptp_get_ts_info(struct mlxsw_sp *mlxsw_sp,
-					    struct ethtool_ts_info *info)
-{
-	return mlxsw_sp_ptp_get_ts_info_noptp(info);
-}
+अटल अंतरभूत पूर्णांक mlxsw_sp2_ptp_get_ts_info(काष्ठा mlxsw_sp *mlxsw_sp,
+					    काष्ठा ethtool_ts_info *info)
+अणु
+	वापस mlxsw_sp_ptp_get_ts_info_noptp(info);
+पूर्ण
 
-static inline int mlxsw_sp2_get_stats_count(void)
-{
-	return 0;
-}
+अटल अंतरभूत पूर्णांक mlxsw_sp2_get_stats_count(व्योम)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline void mlxsw_sp2_get_stats_strings(u8 **p)
-{
-}
+अटल अंतरभूत व्योम mlxsw_sp2_get_stats_strings(u8 **p)
+अणु
+पूर्ण
 
-static inline void mlxsw_sp2_get_stats(struct mlxsw_sp_port *mlxsw_sp_port,
-				       u64 *data, int data_index)
-{
-}
+अटल अंतरभूत व्योम mlxsw_sp2_get_stats(काष्ठा mlxsw_sp_port *mlxsw_sp_port,
+				       u64 *data, पूर्णांक data_index)
+अणु
+पूर्ण
 
-#endif
+#पूर्ण_अगर

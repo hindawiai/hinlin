@@ -1,11 +1,12 @@
+<शैली गुरु>
 /* Copyright 2020 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -22,27 +23,27 @@
  *
  */
 
-#ifndef __DC_MPCC_DCN30_H__
-#define __DC_MPCC_DCN30_H__
+#अगर_अघोषित __DC_MPCC_DCN30_H__
+#घोषणा __DC_MPCC_DCN30_H__
 
-#include "dcn20/dcn20_mpc.h"
+#समावेश "dcn20/dcn20_mpc.h"
 
-#define MAX_RMU 3
+#घोषणा MAX_RMU 3
 
-#define TO_DCN30_MPC(mpc_base) \
-	container_of(mpc_base, struct dcn30_mpc, base)
+#घोषणा TO_DCN30_MPC(mpc_base) \
+	container_of(mpc_base, काष्ठा dcn30_mpc, base)
 
-#ifdef SRII_MPC_RMU
-#undef SRII_MPC_RMU
+#अगर_घोषित SRII_MPC_RMU
+#अघोषित SRII_MPC_RMU
 
-#define SRII_MPC_RMU(reg_name, block, id)\
+#घोषणा SRII_MPC_RMU(reg_name, block, id)\
 	.RMU##_##reg_name[id] = BASE(mm ## block ## id ## _ ## reg_name ## _BASE_IDX) + \
 					mm ## block ## id ## _ ## reg_name
 
-#endif
+#पूर्ण_अगर
 
 
-#define MPC_REG_LIST_DCN3_0(inst)\
+#घोषणा MPC_REG_LIST_DCN3_0(inst)\
 	MPC_COMMON_REG_LIST_DCN1_0(inst),\
 	SRII(MPCC_TOP_GAIN, MPCC, inst),\
 	SRII(MPCC_BOT_GAIN_INSIDE, MPCC, inst),\
@@ -104,7 +105,7 @@
 	SRII(MPCC_OGAM_MODE, MPCC_OGAM, inst)
 */
 
-#define MPC_OUT_MUX_REG_LIST_DCN3_0(inst) \
+#घोषणा MPC_OUT_MUX_REG_LIST_DCN3_0(inst) \
 	MPC_OUT_MUX_COMMON_REG_LIST_DCN1_0(inst),\
 	SRII(CSC_MODE, MPC_OUT, inst),\
 	SRII(CSC_C11_C12_A, MPC_OUT, inst),\
@@ -116,11 +117,11 @@
 	SRII(DENORM_CLAMP_B_CB, MPC_OUT, inst), \
 	SR(MPC_OUT_CSC_COEF_FORMAT)
 
-#define MPC_RMU_GLOBAL_REG_LIST_DCN3AG \
+#घोषणा MPC_RMU_GLOBAL_REG_LIST_DCN3AG \
 	SR(MPC_RMU_CONTROL),\
 	SR(MPC_RMU_MEM_PWR_CTRL)
 
-#define MPC_RMU_REG_LIST_DCN3AG(inst) \
+#घोषणा MPC_RMU_REG_LIST_DCN3AG(inst) \
 	SRII(SHAPER_CONTROL, MPC_RMU, inst),\
 	SRII(SHAPER_OFFSET_R, MPC_RMU, inst),\
 	SRII(SHAPER_OFFSET_G, MPC_RMU, inst),\
@@ -187,107 +188,107 @@
 	SRII_MPC_RMU(3DLUT_OUT_OFFSET_B, MPC_RMU, inst)
 
 
-#define MPC_DWB_MUX_REG_LIST_DCN3_0(inst) \
+#घोषणा MPC_DWB_MUX_REG_LIST_DCN3_0(inst) \
 	SRII_DWB(DWB_MUX, MUX, MPC_DWB, inst)
 
-#define MPC_REG_VARIABLE_LIST_DCN3_0 \
+#घोषणा MPC_REG_VARIABLE_LIST_DCN3_0 \
 	MPC_REG_VARIABLE_LIST_DCN2_0 \
-	uint32_t DWB_MUX[MAX_DWB]; \
-	uint32_t MPCC_GAMUT_REMAP_COEF_FORMAT[MAX_MPCC]; \
-	uint32_t MPCC_GAMUT_REMAP_MODE[MAX_MPCC]; \
-	uint32_t MPC_GAMUT_REMAP_C11_C12_A[MAX_MPCC]; \
-	uint32_t MPC_GAMUT_REMAP_C33_C34_A[MAX_MPCC]; \
-	uint32_t MPC_GAMUT_REMAP_C11_C12_B[MAX_MPCC]; \
-	uint32_t MPC_GAMUT_REMAP_C33_C34_B[MAX_MPCC]; \
-	uint32_t MPC_RMU_CONTROL; \
-	uint32_t MPC_RMU_MEM_PWR_CTRL; \
-	uint32_t SHAPER_CONTROL[MAX_RMU]; \
-	uint32_t SHAPER_OFFSET_R[MAX_RMU]; \
-	uint32_t SHAPER_OFFSET_G[MAX_RMU]; \
-	uint32_t SHAPER_OFFSET_B[MAX_RMU]; \
-	uint32_t SHAPER_SCALE_R[MAX_RMU]; \
-	uint32_t SHAPER_SCALE_G_B[MAX_RMU]; \
-	uint32_t SHAPER_LUT_INDEX[MAX_RMU]; \
-	uint32_t SHAPER_LUT_DATA[MAX_RMU]; \
-	uint32_t SHAPER_LUT_WRITE_EN_MASK[MAX_RMU]; \
-	uint32_t SHAPER_RAMA_START_CNTL_B[MAX_RMU]; \
-	uint32_t SHAPER_RAMA_START_CNTL_G[MAX_RMU]; \
-	uint32_t SHAPER_RAMA_START_CNTL_R[MAX_RMU]; \
-	uint32_t SHAPER_RAMA_END_CNTL_B[MAX_RMU]; \
-	uint32_t SHAPER_RAMA_END_CNTL_G[MAX_RMU]; \
-	uint32_t SHAPER_RAMA_END_CNTL_R[MAX_RMU]; \
-	uint32_t SHAPER_RAMA_REGION_0_1[MAX_RMU]; \
-	uint32_t SHAPER_RAMA_REGION_2_3[MAX_RMU]; \
-	uint32_t SHAPER_RAMA_REGION_4_5[MAX_RMU]; \
-	uint32_t SHAPER_RAMA_REGION_6_7[MAX_RMU]; \
-	uint32_t SHAPER_RAMA_REGION_8_9[MAX_RMU]; \
-	uint32_t SHAPER_RAMA_REGION_10_11[MAX_RMU]; \
-	uint32_t SHAPER_RAMA_REGION_12_13[MAX_RMU]; \
-	uint32_t SHAPER_RAMA_REGION_14_15[MAX_RMU]; \
-	uint32_t SHAPER_RAMA_REGION_16_17[MAX_RMU]; \
-	uint32_t SHAPER_RAMA_REGION_18_19[MAX_RMU]; \
-	uint32_t SHAPER_RAMA_REGION_20_21[MAX_RMU]; \
-	uint32_t SHAPER_RAMA_REGION_22_23[MAX_RMU]; \
-	uint32_t SHAPER_RAMA_REGION_24_25[MAX_RMU]; \
-	uint32_t SHAPER_RAMA_REGION_26_27[MAX_RMU]; \
-	uint32_t SHAPER_RAMA_REGION_28_29[MAX_RMU]; \
-	uint32_t SHAPER_RAMA_REGION_30_31[MAX_RMU]; \
-	uint32_t SHAPER_RAMA_REGION_32_33[MAX_RMU]; \
-	uint32_t MPCC_OGAM_RAMA_START_SLOPE_CNTL_B[MAX_MPCC]; \
-	uint32_t MPCC_OGAM_RAMA_START_SLOPE_CNTL_G[MAX_MPCC]; \
-	uint32_t MPCC_OGAM_RAMA_START_SLOPE_CNTL_R[MAX_MPCC]; \
-	uint32_t MPCC_OGAM_RAMA_OFFSET_B[MAX_MPCC]; \
-	uint32_t MPCC_OGAM_RAMA_OFFSET_G[MAX_MPCC]; \
-	uint32_t MPCC_OGAM_RAMA_OFFSET_R[MAX_MPCC]; \
-	uint32_t MPCC_OGAM_RAMA_START_BASE_CNTL_B[MAX_MPCC]; \
-	uint32_t MPCC_OGAM_RAMA_START_BASE_CNTL_G[MAX_MPCC]; \
-	uint32_t MPCC_OGAM_RAMA_START_BASE_CNTL_R[MAX_MPCC];\
-	uint32_t SHAPER_RAMB_START_CNTL_B[MAX_RMU]; \
-	uint32_t SHAPER_RAMB_START_CNTL_G[MAX_RMU]; \
-	uint32_t SHAPER_RAMB_START_CNTL_R[MAX_RMU]; \
-	uint32_t SHAPER_RAMB_END_CNTL_B[MAX_RMU]; \
-	uint32_t SHAPER_RAMB_END_CNTL_G[MAX_RMU]; \
-	uint32_t SHAPER_RAMB_END_CNTL_R[MAX_RMU]; \
-	uint32_t SHAPER_RAMB_REGION_0_1[MAX_RMU]; \
-	uint32_t SHAPER_RAMB_REGION_2_3[MAX_RMU]; \
-	uint32_t SHAPER_RAMB_REGION_4_5[MAX_RMU]; \
-	uint32_t SHAPER_RAMB_REGION_6_7[MAX_RMU]; \
-	uint32_t SHAPER_RAMB_REGION_8_9[MAX_RMU]; \
-	uint32_t SHAPER_RAMB_REGION_10_11[MAX_RMU]; \
-	uint32_t SHAPER_RAMB_REGION_12_13[MAX_RMU]; \
-	uint32_t SHAPER_RAMB_REGION_14_15[MAX_RMU]; \
-	uint32_t SHAPER_RAMB_REGION_16_17[MAX_RMU]; \
-	uint32_t SHAPER_RAMB_REGION_18_19[MAX_RMU]; \
-	uint32_t SHAPER_RAMB_REGION_20_21[MAX_RMU]; \
-	uint32_t SHAPER_RAMB_REGION_22_23[MAX_RMU]; \
-	uint32_t SHAPER_RAMB_REGION_24_25[MAX_RMU]; \
-	uint32_t SHAPER_RAMB_REGION_26_27[MAX_RMU]; \
-	uint32_t SHAPER_RAMB_REGION_28_29[MAX_RMU]; \
-	uint32_t SHAPER_RAMB_REGION_30_31[MAX_RMU]; \
-	uint32_t SHAPER_RAMB_REGION_32_33[MAX_RMU]; \
-	uint32_t RMU_3DLUT_MODE[MAX_RMU]; \
-	uint32_t RMU_3DLUT_INDEX[MAX_RMU]; \
-	uint32_t RMU_3DLUT_DATA[MAX_RMU]; \
-	uint32_t RMU_3DLUT_DATA_30BIT[MAX_RMU]; \
-	uint32_t RMU_3DLUT_READ_WRITE_CONTROL[MAX_RMU]; \
-	uint32_t RMU_3DLUT_OUT_NORM_FACTOR[MAX_RMU]; \
-	uint32_t RMU_3DLUT_OUT_OFFSET_R[MAX_RMU]; \
-	uint32_t RMU_3DLUT_OUT_OFFSET_G[MAX_RMU]; \
-	uint32_t RMU_3DLUT_OUT_OFFSET_B[MAX_RMU]; \
-	uint32_t MPCC_OGAM_RAMB_START_SLOPE_CNTL_B[MAX_MPCC]; \
-	uint32_t MPCC_OGAM_RAMB_START_SLOPE_CNTL_G[MAX_MPCC]; \
-	uint32_t MPCC_OGAM_RAMB_START_SLOPE_CNTL_R[MAX_MPCC]; \
-	uint32_t MPCC_OGAM_CONTROL[MAX_MPCC]; \
-	uint32_t MPCC_OGAM_LUT_CONTROL[MAX_MPCC]; \
-	uint32_t MPCC_OGAM_RAMB_OFFSET_B[MAX_MPCC]; \
-	uint32_t MPCC_OGAM_RAMB_OFFSET_G[MAX_MPCC]; \
-	uint32_t MPCC_OGAM_RAMB_OFFSET_R[MAX_MPCC]; \
-	uint32_t MPCC_OGAM_RAMB_START_BASE_CNTL_B[MAX_MPCC]; \
-	uint32_t MPCC_OGAM_RAMB_START_BASE_CNTL_G[MAX_MPCC]; \
-	uint32_t MPCC_OGAM_RAMB_START_BASE_CNTL_R[MAX_MPCC]; \
-	uint32_t MPC_OUT_CSC_COEF_FORMAT
+	uपूर्णांक32_t DWB_MUX[MAX_DWB]; \
+	uपूर्णांक32_t MPCC_GAMUT_REMAP_COEF_FORMAT[MAX_MPCC]; \
+	uपूर्णांक32_t MPCC_GAMUT_REMAP_MODE[MAX_MPCC]; \
+	uपूर्णांक32_t MPC_GAMUT_REMAP_C11_C12_A[MAX_MPCC]; \
+	uपूर्णांक32_t MPC_GAMUT_REMAP_C33_C34_A[MAX_MPCC]; \
+	uपूर्णांक32_t MPC_GAMUT_REMAP_C11_C12_B[MAX_MPCC]; \
+	uपूर्णांक32_t MPC_GAMUT_REMAP_C33_C34_B[MAX_MPCC]; \
+	uपूर्णांक32_t MPC_RMU_CONTROL; \
+	uपूर्णांक32_t MPC_RMU_MEM_PWR_CTRL; \
+	uपूर्णांक32_t SHAPER_CONTROL[MAX_RMU]; \
+	uपूर्णांक32_t SHAPER_OFFSET_R[MAX_RMU]; \
+	uपूर्णांक32_t SHAPER_OFFSET_G[MAX_RMU]; \
+	uपूर्णांक32_t SHAPER_OFFSET_B[MAX_RMU]; \
+	uपूर्णांक32_t SHAPER_SCALE_R[MAX_RMU]; \
+	uपूर्णांक32_t SHAPER_SCALE_G_B[MAX_RMU]; \
+	uपूर्णांक32_t SHAPER_LUT_INDEX[MAX_RMU]; \
+	uपूर्णांक32_t SHAPER_LUT_DATA[MAX_RMU]; \
+	uपूर्णांक32_t SHAPER_LUT_WRITE_EN_MASK[MAX_RMU]; \
+	uपूर्णांक32_t SHAPER_RAMA_START_CNTL_B[MAX_RMU]; \
+	uपूर्णांक32_t SHAPER_RAMA_START_CNTL_G[MAX_RMU]; \
+	uपूर्णांक32_t SHAPER_RAMA_START_CNTL_R[MAX_RMU]; \
+	uपूर्णांक32_t SHAPER_RAMA_END_CNTL_B[MAX_RMU]; \
+	uपूर्णांक32_t SHAPER_RAMA_END_CNTL_G[MAX_RMU]; \
+	uपूर्णांक32_t SHAPER_RAMA_END_CNTL_R[MAX_RMU]; \
+	uपूर्णांक32_t SHAPER_RAMA_REGION_0_1[MAX_RMU]; \
+	uपूर्णांक32_t SHAPER_RAMA_REGION_2_3[MAX_RMU]; \
+	uपूर्णांक32_t SHAPER_RAMA_REGION_4_5[MAX_RMU]; \
+	uपूर्णांक32_t SHAPER_RAMA_REGION_6_7[MAX_RMU]; \
+	uपूर्णांक32_t SHAPER_RAMA_REGION_8_9[MAX_RMU]; \
+	uपूर्णांक32_t SHAPER_RAMA_REGION_10_11[MAX_RMU]; \
+	uपूर्णांक32_t SHAPER_RAMA_REGION_12_13[MAX_RMU]; \
+	uपूर्णांक32_t SHAPER_RAMA_REGION_14_15[MAX_RMU]; \
+	uपूर्णांक32_t SHAPER_RAMA_REGION_16_17[MAX_RMU]; \
+	uपूर्णांक32_t SHAPER_RAMA_REGION_18_19[MAX_RMU]; \
+	uपूर्णांक32_t SHAPER_RAMA_REGION_20_21[MAX_RMU]; \
+	uपूर्णांक32_t SHAPER_RAMA_REGION_22_23[MAX_RMU]; \
+	uपूर्णांक32_t SHAPER_RAMA_REGION_24_25[MAX_RMU]; \
+	uपूर्णांक32_t SHAPER_RAMA_REGION_26_27[MAX_RMU]; \
+	uपूर्णांक32_t SHAPER_RAMA_REGION_28_29[MAX_RMU]; \
+	uपूर्णांक32_t SHAPER_RAMA_REGION_30_31[MAX_RMU]; \
+	uपूर्णांक32_t SHAPER_RAMA_REGION_32_33[MAX_RMU]; \
+	uपूर्णांक32_t MPCC_OGAM_RAMA_START_SLOPE_CNTL_B[MAX_MPCC]; \
+	uपूर्णांक32_t MPCC_OGAM_RAMA_START_SLOPE_CNTL_G[MAX_MPCC]; \
+	uपूर्णांक32_t MPCC_OGAM_RAMA_START_SLOPE_CNTL_R[MAX_MPCC]; \
+	uपूर्णांक32_t MPCC_OGAM_RAMA_OFFSET_B[MAX_MPCC]; \
+	uपूर्णांक32_t MPCC_OGAM_RAMA_OFFSET_G[MAX_MPCC]; \
+	uपूर्णांक32_t MPCC_OGAM_RAMA_OFFSET_R[MAX_MPCC]; \
+	uपूर्णांक32_t MPCC_OGAM_RAMA_START_BASE_CNTL_B[MAX_MPCC]; \
+	uपूर्णांक32_t MPCC_OGAM_RAMA_START_BASE_CNTL_G[MAX_MPCC]; \
+	uपूर्णांक32_t MPCC_OGAM_RAMA_START_BASE_CNTL_R[MAX_MPCC];\
+	uपूर्णांक32_t SHAPER_RAMB_START_CNTL_B[MAX_RMU]; \
+	uपूर्णांक32_t SHAPER_RAMB_START_CNTL_G[MAX_RMU]; \
+	uपूर्णांक32_t SHAPER_RAMB_START_CNTL_R[MAX_RMU]; \
+	uपूर्णांक32_t SHAPER_RAMB_END_CNTL_B[MAX_RMU]; \
+	uपूर्णांक32_t SHAPER_RAMB_END_CNTL_G[MAX_RMU]; \
+	uपूर्णांक32_t SHAPER_RAMB_END_CNTL_R[MAX_RMU]; \
+	uपूर्णांक32_t SHAPER_RAMB_REGION_0_1[MAX_RMU]; \
+	uपूर्णांक32_t SHAPER_RAMB_REGION_2_3[MAX_RMU]; \
+	uपूर्णांक32_t SHAPER_RAMB_REGION_4_5[MAX_RMU]; \
+	uपूर्णांक32_t SHAPER_RAMB_REGION_6_7[MAX_RMU]; \
+	uपूर्णांक32_t SHAPER_RAMB_REGION_8_9[MAX_RMU]; \
+	uपूर्णांक32_t SHAPER_RAMB_REGION_10_11[MAX_RMU]; \
+	uपूर्णांक32_t SHAPER_RAMB_REGION_12_13[MAX_RMU]; \
+	uपूर्णांक32_t SHAPER_RAMB_REGION_14_15[MAX_RMU]; \
+	uपूर्णांक32_t SHAPER_RAMB_REGION_16_17[MAX_RMU]; \
+	uपूर्णांक32_t SHAPER_RAMB_REGION_18_19[MAX_RMU]; \
+	uपूर्णांक32_t SHAPER_RAMB_REGION_20_21[MAX_RMU]; \
+	uपूर्णांक32_t SHAPER_RAMB_REGION_22_23[MAX_RMU]; \
+	uपूर्णांक32_t SHAPER_RAMB_REGION_24_25[MAX_RMU]; \
+	uपूर्णांक32_t SHAPER_RAMB_REGION_26_27[MAX_RMU]; \
+	uपूर्णांक32_t SHAPER_RAMB_REGION_28_29[MAX_RMU]; \
+	uपूर्णांक32_t SHAPER_RAMB_REGION_30_31[MAX_RMU]; \
+	uपूर्णांक32_t SHAPER_RAMB_REGION_32_33[MAX_RMU]; \
+	uपूर्णांक32_t RMU_3DLUT_MODE[MAX_RMU]; \
+	uपूर्णांक32_t RMU_3DLUT_INDEX[MAX_RMU]; \
+	uपूर्णांक32_t RMU_3DLUT_DATA[MAX_RMU]; \
+	uपूर्णांक32_t RMU_3DLUT_DATA_30BIT[MAX_RMU]; \
+	uपूर्णांक32_t RMU_3DLUT_READ_WRITE_CONTROL[MAX_RMU]; \
+	uपूर्णांक32_t RMU_3DLUT_OUT_NORM_FACTOR[MAX_RMU]; \
+	uपूर्णांक32_t RMU_3DLUT_OUT_OFFSET_R[MAX_RMU]; \
+	uपूर्णांक32_t RMU_3DLUT_OUT_OFFSET_G[MAX_RMU]; \
+	uपूर्णांक32_t RMU_3DLUT_OUT_OFFSET_B[MAX_RMU]; \
+	uपूर्णांक32_t MPCC_OGAM_RAMB_START_SLOPE_CNTL_B[MAX_MPCC]; \
+	uपूर्णांक32_t MPCC_OGAM_RAMB_START_SLOPE_CNTL_G[MAX_MPCC]; \
+	uपूर्णांक32_t MPCC_OGAM_RAMB_START_SLOPE_CNTL_R[MAX_MPCC]; \
+	uपूर्णांक32_t MPCC_OGAM_CONTROL[MAX_MPCC]; \
+	uपूर्णांक32_t MPCC_OGAM_LUT_CONTROL[MAX_MPCC]; \
+	uपूर्णांक32_t MPCC_OGAM_RAMB_OFFSET_B[MAX_MPCC]; \
+	uपूर्णांक32_t MPCC_OGAM_RAMB_OFFSET_G[MAX_MPCC]; \
+	uपूर्णांक32_t MPCC_OGAM_RAMB_OFFSET_R[MAX_MPCC]; \
+	uपूर्णांक32_t MPCC_OGAM_RAMB_START_BASE_CNTL_B[MAX_MPCC]; \
+	uपूर्णांक32_t MPCC_OGAM_RAMB_START_BASE_CNTL_G[MAX_MPCC]; \
+	uपूर्णांक32_t MPCC_OGAM_RAMB_START_BASE_CNTL_R[MAX_MPCC]; \
+	uपूर्णांक32_t MPC_OUT_CSC_COEF_FORMAT
 
-#define MPC_COMMON_MASK_SH_LIST_DCN3_0(mask_sh) \
+#घोषणा MPC_COMMON_MASK_SH_LIST_DCN3_0(mask_sh) \
 	MPC_COMMON_MASK_SH_LIST_DCN1_0(mask_sh),\
 	SF(MPCC0_MPCC_CONTROL, MPCC_BG_BPC, mask_sh),\
 	SF(MPCC0_MPCC_CONTROL, MPCC_BOT_GAIN_MODE, mask_sh),\
@@ -394,7 +395,7 @@
 	SF(CUR_VUPDATE_LOCK_SET0, CUR_VUPDATE_LOCK_SET, mask_sh)
 
 
-#define MPC_COMMON_MASK_SH_LIST_DCN30(mask_sh) \
+#घोषणा MPC_COMMON_MASK_SH_LIST_DCN30(mask_sh) \
 	MPC_COMMON_MASK_SH_LIST_DCN1_0(mask_sh),\
 	SF(MPCC0_MPCC_CONTROL, MPCC_BG_BPC, mask_sh),\
 	SF(MPCC0_MPCC_CONTROL, MPCC_BOT_GAIN_MODE, mask_sh),\
@@ -505,7 +506,7 @@
 	SF(CUR_VUPDATE_LOCK_SET0, CUR_VUPDATE_LOCK_SET, mask_sh)
 
 
-#define MPC_REG_FIELD_LIST_DCN3_0(type) \
+#घोषणा MPC_REG_FIELD_LIST_DCN3_0(type) \
 	MPC_REG_FIELD_LIST_DCN2_0(type) \
 	type MPC_DWB0_MUX;\
 	type MPC_DWB0_MUX_STATUS;\
@@ -586,89 +587,89 @@
 	type MPC_RMU_SHAPER_MODE_CURRENT
 
 
-struct dcn30_mpc_registers {
+काष्ठा dcn30_mpc_रेजिस्टरs अणु
 	MPC_REG_VARIABLE_LIST_DCN3_0;
-};
+पूर्ण;
 
-struct dcn30_mpc_shift {
-	MPC_REG_FIELD_LIST_DCN3_0(uint8_t);
-};
+काष्ठा dcn30_mpc_shअगरt अणु
+	MPC_REG_FIELD_LIST_DCN3_0(uपूर्णांक8_t);
+पूर्ण;
 
-struct dcn30_mpc_mask {
-	MPC_REG_FIELD_LIST_DCN3_0(uint32_t);
-};
+काष्ठा dcn30_mpc_mask अणु
+	MPC_REG_FIELD_LIST_DCN3_0(uपूर्णांक32_t);
+पूर्ण;
 
-struct dcn30_mpc {
-	struct mpc base;
+काष्ठा dcn30_mpc अणु
+	काष्ठा mpc base;
 
-	int mpcc_in_use_mask;
-	int num_mpcc;
-	const struct dcn30_mpc_registers *mpc_regs;
-	const struct dcn30_mpc_shift *mpc_shift;
-	const struct dcn30_mpc_mask *mpc_mask;
-	int num_rmu;
-};
+	पूर्णांक mpcc_in_use_mask;
+	पूर्णांक num_mpcc;
+	स्थिर काष्ठा dcn30_mpc_रेजिस्टरs *mpc_regs;
+	स्थिर काष्ठा dcn30_mpc_shअगरt *mpc_shअगरt;
+	स्थिर काष्ठा dcn30_mpc_mask *mpc_mask;
+	पूर्णांक num_rmu;
+पूर्ण;
 
-void dcn30_mpc_construct(struct dcn30_mpc *mpc30,
-	struct dc_context *ctx,
-	const struct dcn30_mpc_registers *mpc_regs,
-	const struct dcn30_mpc_shift *mpc_shift,
-	const struct dcn30_mpc_mask *mpc_mask,
-	int num_mpcc,
-	int num_rmu);
+व्योम dcn30_mpc_स्थिरruct(काष्ठा dcn30_mpc *mpc30,
+	काष्ठा dc_context *ctx,
+	स्थिर काष्ठा dcn30_mpc_रेजिस्टरs *mpc_regs,
+	स्थिर काष्ठा dcn30_mpc_shअगरt *mpc_shअगरt,
+	स्थिर काष्ठा dcn30_mpc_mask *mpc_mask,
+	पूर्णांक num_mpcc,
+	पूर्णांक num_rmu);
 
 bool mpc3_program_shaper(
-		struct mpc *mpc,
-		const struct pwl_params *params,
-		uint32_t rmu_idx);
+		काष्ठा mpc *mpc,
+		स्थिर काष्ठा pwl_params *params,
+		uपूर्णांक32_t rmu_idx);
 
 bool mpc3_program_3dlut(
-		struct mpc *mpc,
-		const struct tetrahedral_params *params,
-		int rmu_idx);
+		काष्ठा mpc *mpc,
+		स्थिर काष्ठा tetrahedral_params *params,
+		पूर्णांक rmu_idx);
 
-uint32_t mpcc3_acquire_rmu(struct mpc *mpc,
-		int mpcc_id, int rmu_idx);
+uपूर्णांक32_t mpcc3_acquire_rmu(काष्ठा mpc *mpc,
+		पूर्णांक mpcc_id, पूर्णांक rmu_idx);
 
-void mpc3_set_denorm(
-	struct mpc *mpc,
-	int opp_id,
-	enum dc_color_depth output_depth);
+व्योम mpc3_set_denorm(
+	काष्ठा mpc *mpc,
+	पूर्णांक opp_id,
+	क्रमागत dc_color_depth output_depth);
 
-void mpc3_set_denorm_clamp(
-	struct mpc *mpc,
-	int opp_id,
-	struct mpc_denorm_clamp denorm_clamp);
+व्योम mpc3_set_denorm_clamp(
+	काष्ठा mpc *mpc,
+	पूर्णांक opp_id,
+	काष्ठा mpc_denorm_clamp denorm_clamp);
 
-void mpc3_set_output_csc(
-	struct mpc *mpc,
-	int opp_id,
-	const uint16_t *regval,
-	enum mpc_output_csc_mode ocsc_mode);
+व्योम mpc3_set_output_csc(
+	काष्ठा mpc *mpc,
+	पूर्णांक opp_id,
+	स्थिर uपूर्णांक16_t *regval,
+	क्रमागत mpc_output_csc_mode ocsc_mode);
 
-void mpc3_set_ocsc_default(
-	struct mpc *mpc,
-	int opp_id,
-	enum dc_color_space color_space,
-	enum mpc_output_csc_mode ocsc_mode);
+व्योम mpc3_set_ocsc_शेष(
+	काष्ठा mpc *mpc,
+	पूर्णांक opp_id,
+	क्रमागत dc_color_space color_space,
+	क्रमागत mpc_output_csc_mode ocsc_mode);
 
-void mpc3_set_output_gamma(
-	struct mpc *mpc,
-	int mpcc_id,
-	const struct pwl_params *params);
+व्योम mpc3_set_output_gamma(
+	काष्ठा mpc *mpc,
+	पूर्णांक mpcc_id,
+	स्थिर काष्ठा pwl_params *params);
 
-uint32_t mpc3_get_rmu_mux_status(
-	struct mpc *mpc,
-	int rmu_idx);
+uपूर्णांक32_t mpc3_get_rmu_mux_status(
+	काष्ठा mpc *mpc,
+	पूर्णांक rmu_idx);
 
-void mpc3_set_gamut_remap(
-	struct mpc *mpc,
-	int mpcc_id,
-	const struct mpc_grph_gamut_adjustment *adjust);
+व्योम mpc3_set_gamut_remap(
+	काष्ठा mpc *mpc,
+	पूर्णांक mpcc_id,
+	स्थिर काष्ठा mpc_grph_gamut_adjusपंचांगent *adjust);
 
-void mpc3_set_rmu_mux(
-	struct mpc *mpc,
-	int rmu_idx,
-	int value);
+व्योम mpc3_set_rmu_mux(
+	काष्ठा mpc *mpc,
+	पूर्णांक rmu_idx,
+	पूर्णांक value);
 
-#endif
+#पूर्ण_अगर

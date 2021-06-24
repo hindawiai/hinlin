@@ -1,179 +1,180 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Copyright (c) 2015, Primary Data, Inc. All rights reserved.
  *
  * Tao Peng <bergwolf@primarydata.com>
  */
-#include <linux/dcache.h>
-#include <linux/exportfs.h>
-#include <linux/nfs.h>
-#include <linux/nfs_fs.h>
+#समावेश <linux/dcache.h>
+#समावेश <linux/exportfs.h>
+#समावेश <linux/nfs.h>
+#समावेश <linux/nfs_fs.h>
 
-#include "internal.h"
-#include "nfstrace.h"
+#समावेश "internal.h"
+#समावेश "nfstrace.h"
 
-#define NFSDBG_FACILITY		NFSDBG_VFS
+#घोषणा NFSDBG_FACILITY		NFSDBG_VFS
 
-enum {
-	FILEID_HIGH_OFF = 0,	/* inode fileid high */
-	FILEID_LOW_OFF,		/* inode fileid low */
-	FILE_I_TYPE_OFF,	/* inode type */
+क्रमागत अणु
+	खाताID_HIGH_OFF = 0,	/* inode fileid high */
+	खाताID_LOW_OFF,		/* inode fileid low */
+	खाता_I_TYPE_OFF,	/* inode type */
 	EMBED_FH_OFF		/* embeded server fh */
-};
+पूर्ण;
 
 
-static struct nfs_fh *nfs_exp_embedfh(__u32 *p)
-{
-	return (struct nfs_fh *)(p + EMBED_FH_OFF);
-}
+अटल काष्ठा nfs_fh *nfs_exp_embedfh(__u32 *p)
+अणु
+	वापस (काष्ठा nfs_fh *)(p + EMBED_FH_OFF);
+पूर्ण
 
 /*
  * Let's break subtree checking for now... otherwise we'll have to embed parent fh
  * but there might not be enough space.
  */
-static int
-nfs_encode_fh(struct inode *inode, __u32 *p, int *max_len, struct inode *parent)
-{
-	struct nfs_fh *server_fh = NFS_FH(inode);
-	struct nfs_fh *clnt_fh = nfs_exp_embedfh(p);
-	size_t fh_size = offsetof(struct nfs_fh, data) + server_fh->size;
-	int len = EMBED_FH_OFF + XDR_QUADLEN(fh_size);
+अटल पूर्णांक
+nfs_encode_fh(काष्ठा inode *inode, __u32 *p, पूर्णांक *max_len, काष्ठा inode *parent)
+अणु
+	काष्ठा nfs_fh *server_fh = NFS_FH(inode);
+	काष्ठा nfs_fh *clnt_fh = nfs_exp_embedfh(p);
+	माप_प्रकार fh_size = दुरत्व(काष्ठा nfs_fh, data) + server_fh->size;
+	पूर्णांक len = EMBED_FH_OFF + XDR_QUADLEN(fh_size);
 
-	dprintk("%s: max fh len %d inode %p parent %p",
+	dprपूर्णांकk("%s: max fh len %d inode %p parent %p",
 		__func__, *max_len, inode, parent);
 
-	if (*max_len < len || IS_AUTOMOUNT(inode)) {
-		dprintk("%s: fh len %d too small, required %d\n",
+	अगर (*max_len < len || IS_AUTOMOUNT(inode)) अणु
+		dprपूर्णांकk("%s: fh len %d too small, required %d\n",
 			__func__, *max_len, len);
 		*max_len = len;
-		return FILEID_INVALID;
-	}
+		वापस खाताID_INVALID;
+	पूर्ण
 
-	p[FILEID_HIGH_OFF] = NFS_FILEID(inode) >> 32;
-	p[FILEID_LOW_OFF] = NFS_FILEID(inode);
-	p[FILE_I_TYPE_OFF] = inode->i_mode & S_IFMT;
+	p[खाताID_HIGH_OFF] = NFS_खाताID(inode) >> 32;
+	p[खाताID_LOW_OFF] = NFS_खाताID(inode);
+	p[खाता_I_TYPE_OFF] = inode->i_mode & S_IFMT;
 	p[len - 1] = 0; /* Padding */
 	nfs_copy_fh(clnt_fh, server_fh);
 	*max_len = len;
-	dprintk("%s: result fh fileid %llu mode %u size %d\n",
-		__func__, NFS_FILEID(inode), inode->i_mode, *max_len);
-	return *max_len;
-}
+	dprपूर्णांकk("%s: result fh fileid %llu mode %u size %d\n",
+		__func__, NFS_खाताID(inode), inode->i_mode, *max_len);
+	वापस *max_len;
+पूर्ण
 
-static struct dentry *
-nfs_fh_to_dentry(struct super_block *sb, struct fid *fid,
-		 int fh_len, int fh_type)
-{
-	struct nfs4_label *label = NULL;
-	struct nfs_fattr *fattr = NULL;
-	struct nfs_fh *server_fh = nfs_exp_embedfh(fid->raw);
-	size_t fh_size = offsetof(struct nfs_fh, data) + server_fh->size;
-	const struct nfs_rpc_ops *rpc_ops;
-	struct dentry *dentry;
-	struct inode *inode;
-	int len = EMBED_FH_OFF + XDR_QUADLEN(fh_size);
+अटल काष्ठा dentry *
+nfs_fh_to_dentry(काष्ठा super_block *sb, काष्ठा fid *fid,
+		 पूर्णांक fh_len, पूर्णांक fh_type)
+अणु
+	काष्ठा nfs4_label *label = शून्य;
+	काष्ठा nfs_fattr *fattr = शून्य;
+	काष्ठा nfs_fh *server_fh = nfs_exp_embedfh(fid->raw);
+	माप_प्रकार fh_size = दुरत्व(काष्ठा nfs_fh, data) + server_fh->size;
+	स्थिर काष्ठा nfs_rpc_ops *rpc_ops;
+	काष्ठा dentry *dentry;
+	काष्ठा inode *inode;
+	पूर्णांक len = EMBED_FH_OFF + XDR_QUADLEN(fh_size);
 	u32 *p = fid->raw;
-	int ret;
+	पूर्णांक ret;
 
-	/* NULL translates to ESTALE */
-	if (fh_len < len || fh_type != len)
-		return NULL;
+	/* शून्य translates to ESTALE */
+	अगर (fh_len < len || fh_type != len)
+		वापस शून्य;
 
 	fattr = nfs_alloc_fattr();
-	if (fattr == NULL) {
+	अगर (fattr == शून्य) अणु
 		dentry = ERR_PTR(-ENOMEM);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	fattr->fileid = ((u64)p[FILEID_HIGH_OFF] << 32) + p[FILEID_LOW_OFF];
-	fattr->mode = p[FILE_I_TYPE_OFF];
-	fattr->valid |= NFS_ATTR_FATTR_FILEID | NFS_ATTR_FATTR_TYPE;
+	fattr->fileid = ((u64)p[खाताID_HIGH_OFF] << 32) + p[खाताID_LOW_OFF];
+	fattr->mode = p[खाता_I_TYPE_OFF];
+	fattr->valid |= NFS_ATTR_FATTR_खाताID | NFS_ATTR_FATTR_TYPE;
 
-	dprintk("%s: fileid %llu mode %d\n", __func__, fattr->fileid, fattr->mode);
+	dprपूर्णांकk("%s: fileid %llu mode %d\n", __func__, fattr->fileid, fattr->mode);
 
 	inode = nfs_ilookup(sb, fattr, server_fh);
-	if (inode)
-		goto out_found;
+	अगर (inode)
+		जाओ out_found;
 
 	label = nfs4_label_alloc(NFS_SB(sb), GFP_KERNEL);
-	if (IS_ERR(label)) {
+	अगर (IS_ERR(label)) अणु
 		dentry = ERR_CAST(label);
-		goto out_free_fattr;
-	}
+		जाओ out_मुक्त_fattr;
+	पूर्ण
 
 	rpc_ops = NFS_SB(sb)->nfs_client->rpc_ops;
-	ret = rpc_ops->getattr(NFS_SB(sb), server_fh, fattr, label, NULL);
-	if (ret) {
-		dprintk("%s: getattr failed %d\n", __func__, ret);
+	ret = rpc_ops->getattr(NFS_SB(sb), server_fh, fattr, label, शून्य);
+	अगर (ret) अणु
+		dprपूर्णांकk("%s: getattr failed %d\n", __func__, ret);
 		trace_nfs_fh_to_dentry(sb, server_fh, fattr->fileid, ret);
 		dentry = ERR_PTR(ret);
-		goto out_free_label;
-	}
+		जाओ out_मुक्त_label;
+	पूर्ण
 
 	inode = nfs_fhget(sb, server_fh, fattr, label);
 
 out_found:
 	dentry = d_obtain_alias(inode);
 
-out_free_label:
-	nfs4_label_free(label);
-out_free_fattr:
-	nfs_free_fattr(fattr);
+out_मुक्त_label:
+	nfs4_label_मुक्त(label);
+out_मुक्त_fattr:
+	nfs_मुक्त_fattr(fattr);
 out:
-	return dentry;
-}
+	वापस dentry;
+पूर्ण
 
-static struct dentry *
-nfs_get_parent(struct dentry *dentry)
-{
-	int ret;
-	struct inode *inode = d_inode(dentry), *pinode;
-	struct super_block *sb = inode->i_sb;
-	struct nfs_server *server = NFS_SB(sb);
-	struct nfs_fattr *fattr = NULL;
-	struct nfs4_label *label = NULL;
-	struct dentry *parent;
-	struct nfs_rpc_ops const *ops = server->nfs_client->rpc_ops;
-	struct nfs_fh fh;
+अटल काष्ठा dentry *
+nfs_get_parent(काष्ठा dentry *dentry)
+अणु
+	पूर्णांक ret;
+	काष्ठा inode *inode = d_inode(dentry), *pinode;
+	काष्ठा super_block *sb = inode->i_sb;
+	काष्ठा nfs_server *server = NFS_SB(sb);
+	काष्ठा nfs_fattr *fattr = शून्य;
+	काष्ठा nfs4_label *label = शून्य;
+	काष्ठा dentry *parent;
+	काष्ठा nfs_rpc_ops स्थिर *ops = server->nfs_client->rpc_ops;
+	काष्ठा nfs_fh fh;
 
-	if (!ops->lookupp)
-		return ERR_PTR(-EACCES);
+	अगर (!ops->lookupp)
+		वापस ERR_PTR(-EACCES);
 
 	fattr = nfs_alloc_fattr();
-	if (fattr == NULL) {
+	अगर (fattr == शून्य) अणु
 		parent = ERR_PTR(-ENOMEM);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	label = nfs4_label_alloc(server, GFP_KERNEL);
-	if (IS_ERR(label)) {
+	अगर (IS_ERR(label)) अणु
 		parent = ERR_CAST(label);
-		goto out_free_fattr;
-	}
+		जाओ out_मुक्त_fattr;
+	पूर्ण
 
 	ret = ops->lookupp(inode, &fh, fattr, label);
-	if (ret) {
+	अगर (ret) अणु
 		parent = ERR_PTR(ret);
-		goto out_free_label;
-	}
+		जाओ out_मुक्त_label;
+	पूर्ण
 
 	pinode = nfs_fhget(sb, &fh, fattr, label);
 	parent = d_obtain_alias(pinode);
-out_free_label:
-	nfs4_label_free(label);
-out_free_fattr:
-	nfs_free_fattr(fattr);
+out_मुक्त_label:
+	nfs4_label_मुक्त(label);
+out_मुक्त_fattr:
+	nfs_मुक्त_fattr(fattr);
 out:
-	return parent;
-}
+	वापस parent;
+पूर्ण
 
-static u64 nfs_fetch_iversion(struct inode *inode)
-{
+अटल u64 nfs_fetch_iversion(काष्ठा inode *inode)
+अणु
 	nfs_revalidate_inode(inode, NFS_INO_INVALID_CHANGE);
-	return inode_peek_iversion_raw(inode);
-}
+	वापस inode_peek_iversion_raw(inode);
+पूर्ण
 
-const struct export_operations nfs_export_ops = {
+स्थिर काष्ठा export_operations nfs_export_ops = अणु
 	.encode_fh = nfs_encode_fh,
 	.fh_to_dentry = nfs_fh_to_dentry,
 	.get_parent = nfs_get_parent,
@@ -181,4 +182,4 @@ const struct export_operations nfs_export_ops = {
 	.flags = EXPORT_OP_NOWCC|EXPORT_OP_NOSUBTREECHK|
 		EXPORT_OP_CLOSE_BEFORE_UNLINK|EXPORT_OP_REMOTE_FS|
 		EXPORT_OP_NOATOMIC_ATTR,
-};
+पूर्ण;

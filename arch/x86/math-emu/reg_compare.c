@@ -1,8 +1,9 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*---------------------------------------------------------------------------+
  |  reg_compare.c                                                            |
  |                                                                           |
- | Compare two floating point registers                                      |
+ | Compare two भग्नing poपूर्णांक रेजिस्टरs                                      |
  |                                                                           |
  | Copyright (C) 1992,1993,1994,1997                                         |
  |                  W. Metzenthen, 22 Parker St, Ormond, Vic 3163, Australia |
@@ -15,465 +16,465 @@
  | compare() is the core FPU_REG comparison function                         |
  +---------------------------------------------------------------------------*/
 
-#include "fpu_system.h"
-#include "exception.h"
-#include "fpu_emu.h"
-#include "control_w.h"
-#include "status_w.h"
+#समावेश "fpu_system.h"
+#समावेश "exception.h"
+#समावेश "fpu_emu.h"
+#समावेश "control_w.h"
+#समावेश "status_w.h"
 
-static int compare(FPU_REG const *b, int tagb)
-{
-	int diff, exp0, expb;
-	u_char st0_tag;
+अटल पूर्णांक compare(FPU_REG स्थिर *b, पूर्णांक tagb)
+अणु
+	पूर्णांक dअगरf, exp0, expb;
+	u_अक्षर st0_tag;
 	FPU_REG *st0_ptr;
 	FPU_REG x, y;
-	u_char st0_sign, signb = getsign(b);
+	u_अक्षर st0_sign, signb = माला_लोign(b);
 
 	st0_ptr = &st(0);
 	st0_tag = FPU_gettag0();
-	st0_sign = getsign(st0_ptr);
+	st0_sign = माला_लोign(st0_ptr);
 
-	if (tagb == TAG_Special)
+	अगर (tagb == TAG_Special)
 		tagb = FPU_Special(b);
-	if (st0_tag == TAG_Special)
+	अगर (st0_tag == TAG_Special)
 		st0_tag = FPU_Special(st0_ptr);
 
-	if (((st0_tag != TAG_Valid) && (st0_tag != TW_Denormal))
-	    || ((tagb != TAG_Valid) && (tagb != TW_Denormal))) {
-		if (st0_tag == TAG_Zero) {
-			if (tagb == TAG_Zero)
-				return COMP_A_eq_B;
-			if (tagb == TAG_Valid)
-				return ((signb ==
+	अगर (((st0_tag != TAG_Valid) && (st0_tag != TW_Denormal))
+	    || ((tagb != TAG_Valid) && (tagb != TW_Denormal))) अणु
+		अगर (st0_tag == TAG_Zero) अणु
+			अगर (tagb == TAG_Zero)
+				वापस COMP_A_eq_B;
+			अगर (tagb == TAG_Valid)
+				वापस ((signb ==
 					 SIGN_POS) ? COMP_A_lt_B : COMP_A_gt_B);
-			if (tagb == TW_Denormal)
-				return ((signb ==
+			अगर (tagb == TW_Denormal)
+				वापस ((signb ==
 					 SIGN_POS) ? COMP_A_lt_B : COMP_A_gt_B)
 				    | COMP_Denormal;
-		} else if (tagb == TAG_Zero) {
-			if (st0_tag == TAG_Valid)
-				return ((st0_sign ==
+		पूर्ण अन्यथा अगर (tagb == TAG_Zero) अणु
+			अगर (st0_tag == TAG_Valid)
+				वापस ((st0_sign ==
 					 SIGN_POS) ? COMP_A_gt_B : COMP_A_lt_B);
-			if (st0_tag == TW_Denormal)
-				return ((st0_sign ==
+			अगर (st0_tag == TW_Denormal)
+				वापस ((st0_sign ==
 					 SIGN_POS) ? COMP_A_gt_B : COMP_A_lt_B)
 				    | COMP_Denormal;
-		}
+		पूर्ण
 
-		if (st0_tag == TW_Infinity) {
-			if ((tagb == TAG_Valid) || (tagb == TAG_Zero))
-				return ((st0_sign ==
+		अगर (st0_tag == TW_Infinity) अणु
+			अगर ((tagb == TAG_Valid) || (tagb == TAG_Zero))
+				वापस ((st0_sign ==
 					 SIGN_POS) ? COMP_A_gt_B : COMP_A_lt_B);
-			else if (tagb == TW_Denormal)
-				return ((st0_sign ==
+			अन्यथा अगर (tagb == TW_Denormal)
+				वापस ((st0_sign ==
 					 SIGN_POS) ? COMP_A_gt_B : COMP_A_lt_B)
 				    | COMP_Denormal;
-			else if (tagb == TW_Infinity) {
+			अन्यथा अगर (tagb == TW_Infinity) अणु
 				/* The 80486 book says that infinities can be equal! */
-				return (st0_sign == signb) ? COMP_A_eq_B :
+				वापस (st0_sign == signb) ? COMP_A_eq_B :
 				    ((st0_sign ==
 				      SIGN_POS) ? COMP_A_gt_B : COMP_A_lt_B);
-			}
+			पूर्ण
 			/* Fall through to the NaN code */
-		} else if (tagb == TW_Infinity) {
-			if ((st0_tag == TAG_Valid) || (st0_tag == TAG_Zero))
-				return ((signb ==
+		पूर्ण अन्यथा अगर (tagb == TW_Infinity) अणु
+			अगर ((st0_tag == TAG_Valid) || (st0_tag == TAG_Zero))
+				वापस ((signb ==
 					 SIGN_POS) ? COMP_A_lt_B : COMP_A_gt_B);
-			if (st0_tag == TW_Denormal)
-				return ((signb ==
+			अगर (st0_tag == TW_Denormal)
+				वापस ((signb ==
 					 SIGN_POS) ? COMP_A_lt_B : COMP_A_gt_B)
 				    | COMP_Denormal;
 			/* Fall through to the NaN code */
-		}
+		पूर्ण
 
 		/* The only possibility now should be that one of the arguments
 		   is a NaN */
-		if ((st0_tag == TW_NaN) || (tagb == TW_NaN)) {
-			int signalling = 0, unsupported = 0;
-			if (st0_tag == TW_NaN) {
-				signalling =
+		अगर ((st0_tag == TW_NaN) || (tagb == TW_NaN)) अणु
+			पूर्णांक संकेतling = 0, unsupported = 0;
+			अगर (st0_tag == TW_NaN) अणु
+				संकेतling =
 				    (st0_ptr->sigh & 0xc0000000) == 0x80000000;
 				unsupported = !((exponent(st0_ptr) == EXP_OVER)
 						&& (st0_ptr->
 						    sigh & 0x80000000));
-			}
-			if (tagb == TW_NaN) {
-				signalling |=
+			पूर्ण
+			अगर (tagb == TW_NaN) अणु
+				संकेतling |=
 				    (b->sigh & 0xc0000000) == 0x80000000;
 				unsupported |= !((exponent(b) == EXP_OVER)
 						 && (b->sigh & 0x80000000));
-			}
-			if (signalling || unsupported)
-				return COMP_No_Comp | COMP_SNaN | COMP_NaN;
-			else
-				/* Neither is a signaling NaN */
-				return COMP_No_Comp | COMP_NaN;
-		}
+			पूर्ण
+			अगर (संकेतling || unsupported)
+				वापस COMP_No_Comp | COMP_SNaN | COMP_NaN;
+			अन्यथा
+				/* Neither is a संकेतing NaN */
+				वापस COMP_No_Comp | COMP_NaN;
+		पूर्ण
 
 		EXCEPTION(EX_Invalid);
-	}
+	पूर्ण
 
-	if (st0_sign != signb) {
-		return ((st0_sign == SIGN_POS) ? COMP_A_gt_B : COMP_A_lt_B)
+	अगर (st0_sign != signb) अणु
+		वापस ((st0_sign == SIGN_POS) ? COMP_A_gt_B : COMP_A_lt_B)
 		    | (((st0_tag == TW_Denormal) || (tagb == TW_Denormal)) ?
 		       COMP_Denormal : 0);
-	}
+	पूर्ण
 
-	if ((st0_tag == TW_Denormal) || (tagb == TW_Denormal)) {
+	अगर ((st0_tag == TW_Denormal) || (tagb == TW_Denormal)) अणु
 		FPU_to_exp16(st0_ptr, &x);
 		FPU_to_exp16(b, &y);
 		st0_ptr = &x;
 		b = &y;
 		exp0 = exponent16(st0_ptr);
 		expb = exponent16(b);
-	} else {
+	पूर्ण अन्यथा अणु
 		exp0 = exponent(st0_ptr);
 		expb = exponent(b);
-	}
+	पूर्ण
 
-#ifdef PARANOID
-	if (!(st0_ptr->sigh & 0x80000000))
+#अगर_घोषित PARANOID
+	अगर (!(st0_ptr->sigh & 0x80000000))
 		EXCEPTION(EX_Invalid);
-	if (!(b->sigh & 0x80000000))
+	अगर (!(b->sigh & 0x80000000))
 		EXCEPTION(EX_Invalid);
-#endif /* PARANOID */
+#पूर्ण_अगर /* PARANOID */
 
-	diff = exp0 - expb;
-	if (diff == 0) {
-		diff = st0_ptr->sigh - b->sigh;	/* Works only if ms bits are
+	dअगरf = exp0 - expb;
+	अगर (dअगरf == 0) अणु
+		dअगरf = st0_ptr->sigh - b->sigh;	/* Works only अगर ms bits are
 						   identical */
-		if (diff == 0) {
-			diff = st0_ptr->sigl > b->sigl;
-			if (diff == 0)
-				diff = -(st0_ptr->sigl < b->sigl);
-		}
-	}
+		अगर (dअगरf == 0) अणु
+			dअगरf = st0_ptr->sigl > b->sigl;
+			अगर (dअगरf == 0)
+				dअगरf = -(st0_ptr->sigl < b->sigl);
+		पूर्ण
+	पूर्ण
 
-	if (diff > 0) {
-		return ((st0_sign == SIGN_POS) ? COMP_A_gt_B : COMP_A_lt_B)
+	अगर (dअगरf > 0) अणु
+		वापस ((st0_sign == SIGN_POS) ? COMP_A_gt_B : COMP_A_lt_B)
 		    | (((st0_tag == TW_Denormal) || (tagb == TW_Denormal)) ?
 		       COMP_Denormal : 0);
-	}
-	if (diff < 0) {
-		return ((st0_sign == SIGN_POS) ? COMP_A_lt_B : COMP_A_gt_B)
+	पूर्ण
+	अगर (dअगरf < 0) अणु
+		वापस ((st0_sign == SIGN_POS) ? COMP_A_lt_B : COMP_A_gt_B)
 		    | (((st0_tag == TW_Denormal) || (tagb == TW_Denormal)) ?
 		       COMP_Denormal : 0);
-	}
+	पूर्ण
 
-	return COMP_A_eq_B
+	वापस COMP_A_eq_B
 	    | (((st0_tag == TW_Denormal) || (tagb == TW_Denormal)) ?
 	       COMP_Denormal : 0);
 
-}
+पूर्ण
 
 /* This function requires that st(0) is not empty */
-int FPU_compare_st_data(FPU_REG const *loaded_data, u_char loaded_tag)
-{
-	int f, c;
+पूर्णांक FPU_compare_st_data(FPU_REG स्थिर *loaded_data, u_अक्षर loaded_tag)
+अणु
+	पूर्णांक f, c;
 
 	c = compare(loaded_data, loaded_tag);
 
-	if (c & COMP_NaN) {
+	अगर (c & COMP_NaN) अणु
 		EXCEPTION(EX_Invalid);
 		f = SW_C3 | SW_C2 | SW_C0;
-	} else
-		switch (c & 7) {
-		case COMP_A_lt_B:
+	पूर्ण अन्यथा
+		चयन (c & 7) अणु
+		हाल COMP_A_lt_B:
 			f = SW_C0;
-			break;
-		case COMP_A_eq_B:
+			अवरोध;
+		हाल COMP_A_eq_B:
 			f = SW_C3;
-			break;
-		case COMP_A_gt_B:
+			अवरोध;
+		हाल COMP_A_gt_B:
 			f = 0;
-			break;
-		case COMP_No_Comp:
+			अवरोध;
+		हाल COMP_No_Comp:
 			f = SW_C3 | SW_C2 | SW_C0;
-			break;
-		default:
-#ifdef PARANOID
+			अवरोध;
+		शेष:
+#अगर_घोषित PARANOID
 			EXCEPTION(EX_INTERNAL | 0x121);
-#endif /* PARANOID */
+#पूर्ण_अगर /* PARANOID */
 			f = SW_C3 | SW_C2 | SW_C0;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 	setcc(f);
-	if (c & COMP_Denormal) {
-		return denormal_operand() < 0;
-	}
-	return 0;
-}
+	अगर (c & COMP_Denormal) अणु
+		वापस denormal_opeअक्रम() < 0;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int compare_st_st(int nr)
-{
-	int f, c;
+अटल पूर्णांक compare_st_st(पूर्णांक nr)
+अणु
+	पूर्णांक f, c;
 	FPU_REG *st_ptr;
 
-	if (!NOT_EMPTY(0) || !NOT_EMPTY(nr)) {
+	अगर (!NOT_EMPTY(0) || !NOT_EMPTY(nr)) अणु
 		setcc(SW_C3 | SW_C2 | SW_C0);
 		/* Stack fault */
 		EXCEPTION(EX_StackUnder);
-		return !(control_word & CW_Invalid);
-	}
+		वापस !(control_word & CW_Invalid);
+	पूर्ण
 
 	st_ptr = &st(nr);
 	c = compare(st_ptr, FPU_gettagi(nr));
-	if (c & COMP_NaN) {
+	अगर (c & COMP_NaN) अणु
 		setcc(SW_C3 | SW_C2 | SW_C0);
 		EXCEPTION(EX_Invalid);
-		return !(control_word & CW_Invalid);
-	} else
-		switch (c & 7) {
-		case COMP_A_lt_B:
+		वापस !(control_word & CW_Invalid);
+	पूर्ण अन्यथा
+		चयन (c & 7) अणु
+		हाल COMP_A_lt_B:
 			f = SW_C0;
-			break;
-		case COMP_A_eq_B:
+			अवरोध;
+		हाल COMP_A_eq_B:
 			f = SW_C3;
-			break;
-		case COMP_A_gt_B:
+			अवरोध;
+		हाल COMP_A_gt_B:
 			f = 0;
-			break;
-		case COMP_No_Comp:
+			अवरोध;
+		हाल COMP_No_Comp:
 			f = SW_C3 | SW_C2 | SW_C0;
-			break;
-		default:
-#ifdef PARANOID
+			अवरोध;
+		शेष:
+#अगर_घोषित PARANOID
 			EXCEPTION(EX_INTERNAL | 0x122);
-#endif /* PARANOID */
+#पूर्ण_अगर /* PARANOID */
 			f = SW_C3 | SW_C2 | SW_C0;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 	setcc(f);
-	if (c & COMP_Denormal) {
-		return denormal_operand() < 0;
-	}
-	return 0;
-}
+	अगर (c & COMP_Denormal) अणु
+		वापस denormal_opeअक्रम() < 0;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int compare_i_st_st(int nr)
-{
-	int f, c;
+अटल पूर्णांक compare_i_st_st(पूर्णांक nr)
+अणु
+	पूर्णांक f, c;
 	FPU_REG *st_ptr;
 
-	if (!NOT_EMPTY(0) || !NOT_EMPTY(nr)) {
+	अगर (!NOT_EMPTY(0) || !NOT_EMPTY(nr)) अणु
 		FPU_EFLAGS |= (X86_EFLAGS_ZF | X86_EFLAGS_PF | X86_EFLAGS_CF);
 		/* Stack fault */
 		EXCEPTION(EX_StackUnder);
-		return !(control_word & CW_Invalid);
-	}
+		वापस !(control_word & CW_Invalid);
+	पूर्ण
 
 	partial_status &= ~SW_C0;
 	st_ptr = &st(nr);
 	c = compare(st_ptr, FPU_gettagi(nr));
-	if (c & COMP_NaN) {
+	अगर (c & COMP_NaN) अणु
 		FPU_EFLAGS |= (X86_EFLAGS_ZF | X86_EFLAGS_PF | X86_EFLAGS_CF);
 		EXCEPTION(EX_Invalid);
-		return !(control_word & CW_Invalid);
-	}
+		वापस !(control_word & CW_Invalid);
+	पूर्ण
 
-	switch (c & 7) {
-	case COMP_A_lt_B:
+	चयन (c & 7) अणु
+	हाल COMP_A_lt_B:
 		f = X86_EFLAGS_CF;
-		break;
-	case COMP_A_eq_B:
+		अवरोध;
+	हाल COMP_A_eq_B:
 		f = X86_EFLAGS_ZF;
-		break;
-	case COMP_A_gt_B:
+		अवरोध;
+	हाल COMP_A_gt_B:
 		f = 0;
-		break;
-	case COMP_No_Comp:
+		अवरोध;
+	हाल COMP_No_Comp:
 		f = X86_EFLAGS_ZF | X86_EFLAGS_PF | X86_EFLAGS_CF;
-		break;
-	default:
-#ifdef PARANOID
+		अवरोध;
+	शेष:
+#अगर_घोषित PARANOID
 		EXCEPTION(EX_INTERNAL | 0x122);
-#endif /* PARANOID */
+#पूर्ण_अगर /* PARANOID */
 		f = 0;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 	FPU_EFLAGS = (FPU_EFLAGS & ~(X86_EFLAGS_ZF | X86_EFLAGS_PF | X86_EFLAGS_CF)) | f;
-	if (c & COMP_Denormal) {
-		return denormal_operand() < 0;
-	}
-	return 0;
-}
+	अगर (c & COMP_Denormal) अणु
+		वापस denormal_opeअक्रम() < 0;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int compare_u_st_st(int nr)
-{
-	int f = 0, c;
+अटल पूर्णांक compare_u_st_st(पूर्णांक nr)
+अणु
+	पूर्णांक f = 0, c;
 	FPU_REG *st_ptr;
 
-	if (!NOT_EMPTY(0) || !NOT_EMPTY(nr)) {
+	अगर (!NOT_EMPTY(0) || !NOT_EMPTY(nr)) अणु
 		setcc(SW_C3 | SW_C2 | SW_C0);
 		/* Stack fault */
 		EXCEPTION(EX_StackUnder);
-		return !(control_word & CW_Invalid);
-	}
+		वापस !(control_word & CW_Invalid);
+	पूर्ण
 
 	st_ptr = &st(nr);
 	c = compare(st_ptr, FPU_gettagi(nr));
-	if (c & COMP_NaN) {
+	अगर (c & COMP_NaN) अणु
 		setcc(SW_C3 | SW_C2 | SW_C0);
-		if (c & COMP_SNaN) {	/* This is the only difference between
+		अगर (c & COMP_SNaN) अणु	/* This is the only dअगरference between
 					   un-ordered and ordinary comparisons */
 			EXCEPTION(EX_Invalid);
-			return !(control_word & CW_Invalid);
-		}
-		return 0;
-	} else
-		switch (c & 7) {
-		case COMP_A_lt_B:
+			वापस !(control_word & CW_Invalid);
+		पूर्ण
+		वापस 0;
+	पूर्ण अन्यथा
+		चयन (c & 7) अणु
+		हाल COMP_A_lt_B:
 			f = SW_C0;
-			break;
-		case COMP_A_eq_B:
+			अवरोध;
+		हाल COMP_A_eq_B:
 			f = SW_C3;
-			break;
-		case COMP_A_gt_B:
+			अवरोध;
+		हाल COMP_A_gt_B:
 			f = 0;
-			break;
-		case COMP_No_Comp:
+			अवरोध;
+		हाल COMP_No_Comp:
 			f = SW_C3 | SW_C2 | SW_C0;
-			break;
-#ifdef PARANOID
-		default:
+			अवरोध;
+#अगर_घोषित PARANOID
+		शेष:
 			EXCEPTION(EX_INTERNAL | 0x123);
 			f = SW_C3 | SW_C2 | SW_C0;
-			break;
-#endif /* PARANOID */
-		}
+			अवरोध;
+#पूर्ण_अगर /* PARANOID */
+		पूर्ण
 	setcc(f);
-	if (c & COMP_Denormal) {
-		return denormal_operand() < 0;
-	}
-	return 0;
-}
+	अगर (c & COMP_Denormal) अणु
+		वापस denormal_opeअक्रम() < 0;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int compare_ui_st_st(int nr)
-{
-	int f = 0, c;
+अटल पूर्णांक compare_ui_st_st(पूर्णांक nr)
+अणु
+	पूर्णांक f = 0, c;
 	FPU_REG *st_ptr;
 
-	if (!NOT_EMPTY(0) || !NOT_EMPTY(nr)) {
+	अगर (!NOT_EMPTY(0) || !NOT_EMPTY(nr)) अणु
 		FPU_EFLAGS |= (X86_EFLAGS_ZF | X86_EFLAGS_PF | X86_EFLAGS_CF);
 		/* Stack fault */
 		EXCEPTION(EX_StackUnder);
-		return !(control_word & CW_Invalid);
-	}
+		वापस !(control_word & CW_Invalid);
+	पूर्ण
 
 	partial_status &= ~SW_C0;
 	st_ptr = &st(nr);
 	c = compare(st_ptr, FPU_gettagi(nr));
-	if (c & COMP_NaN) {
+	अगर (c & COMP_NaN) अणु
 		FPU_EFLAGS |= (X86_EFLAGS_ZF | X86_EFLAGS_PF | X86_EFLAGS_CF);
-		if (c & COMP_SNaN) {	/* This is the only difference between
+		अगर (c & COMP_SNaN) अणु	/* This is the only dअगरference between
 					   un-ordered and ordinary comparisons */
 			EXCEPTION(EX_Invalid);
-			return !(control_word & CW_Invalid);
-		}
-		return 0;
-	}
+			वापस !(control_word & CW_Invalid);
+		पूर्ण
+		वापस 0;
+	पूर्ण
 
-	switch (c & 7) {
-	case COMP_A_lt_B:
+	चयन (c & 7) अणु
+	हाल COMP_A_lt_B:
 		f = X86_EFLAGS_CF;
-		break;
-	case COMP_A_eq_B:
+		अवरोध;
+	हाल COMP_A_eq_B:
 		f = X86_EFLAGS_ZF;
-		break;
-	case COMP_A_gt_B:
+		अवरोध;
+	हाल COMP_A_gt_B:
 		f = 0;
-		break;
-	case COMP_No_Comp:
+		अवरोध;
+	हाल COMP_No_Comp:
 		f = X86_EFLAGS_ZF | X86_EFLAGS_PF | X86_EFLAGS_CF;
-		break;
-#ifdef PARANOID
-	default:
+		अवरोध;
+#अगर_घोषित PARANOID
+	शेष:
 		EXCEPTION(EX_INTERNAL | 0x123);
 		f = 0;
-		break;
-#endif /* PARANOID */
-	}
+		अवरोध;
+#पूर्ण_अगर /* PARANOID */
+	पूर्ण
 	FPU_EFLAGS = (FPU_EFLAGS & ~(X86_EFLAGS_ZF | X86_EFLAGS_PF | X86_EFLAGS_CF)) | f;
-	if (c & COMP_Denormal) {
-		return denormal_operand() < 0;
-	}
-	return 0;
-}
+	अगर (c & COMP_Denormal) अणु
+		वापस denormal_opeअक्रम() < 0;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /*---------------------------------------------------------------------------*/
 
-void fcom_st(void)
-{
+व्योम fcom_st(व्योम)
+अणु
 	/* fcom st(i) */
 	compare_st_st(FPU_rm);
-}
+पूर्ण
 
-void fcompst(void)
-{
+व्योम fcompst(व्योम)
+अणु
 	/* fcomp st(i) */
-	if (!compare_st_st(FPU_rm))
+	अगर (!compare_st_st(FPU_rm))
 		FPU_pop();
-}
+पूर्ण
 
-void fcompp(void)
-{
+व्योम fcompp(व्योम)
+अणु
 	/* fcompp */
-	if (FPU_rm != 1) {
+	अगर (FPU_rm != 1) अणु
 		FPU_illegal();
-		return;
-	}
-	if (!compare_st_st(1))
+		वापस;
+	पूर्ण
+	अगर (!compare_st_st(1))
 		poppop();
-}
+पूर्ण
 
-void fucom_(void)
-{
+व्योम fucom_(व्योम)
+अणु
 	/* fucom st(i) */
 	compare_u_st_st(FPU_rm);
 
-}
+पूर्ण
 
-void fucomp(void)
-{
+व्योम fucomp(व्योम)
+अणु
 	/* fucomp st(i) */
-	if (!compare_u_st_st(FPU_rm))
+	अगर (!compare_u_st_st(FPU_rm))
 		FPU_pop();
-}
+पूर्ण
 
-void fucompp(void)
-{
+व्योम fucompp(व्योम)
+अणु
 	/* fucompp */
-	if (FPU_rm == 1) {
-		if (!compare_u_st_st(1))
+	अगर (FPU_rm == 1) अणु
+		अगर (!compare_u_st_st(1))
 			poppop();
-	} else
+	पूर्ण अन्यथा
 		FPU_illegal();
-}
+पूर्ण
 
 /* P6+ compare-to-EFLAGS ops */
 
-void fcomi_(void)
-{
+व्योम fcomi_(व्योम)
+अणु
 	/* fcomi st(i) */
 	compare_i_st_st(FPU_rm);
-}
+पूर्ण
 
-void fcomip(void)
-{
+व्योम fcomip(व्योम)
+अणु
 	/* fcomip st(i) */
-	if (!compare_i_st_st(FPU_rm))
+	अगर (!compare_i_st_st(FPU_rm))
 		FPU_pop();
-}
+पूर्ण
 
-void fucomi_(void)
-{
+व्योम fucomi_(व्योम)
+अणु
 	/* fucomi st(i) */
 	compare_ui_st_st(FPU_rm);
-}
+पूर्ण
 
-void fucomip(void)
-{
+व्योम fucomip(व्योम)
+अणु
 	/* fucomip st(i) */
-	if (!compare_ui_st_st(FPU_rm))
+	अगर (!compare_ui_st_st(FPU_rm))
 		FPU_pop();
-}
+पूर्ण

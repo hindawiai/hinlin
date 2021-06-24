@@ -1,224 +1,225 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * test-all.c: Try to build all the main testcases at once.
+ * test-all.c: Try to build all the मुख्य testहालs at once.
  *
- * A well-configured system will have all the prereqs installed, so we can speed
- * up auto-detection on such systems.
+ * A well-configured प्रणाली will have all the prereqs installed, so we can speed
+ * up स्वतः-detection on such प्रणालीs.
  */
 
 /*
  * Quirk: Python and Perl headers cannot be in arbitrary places, so keep
- * these 3 testcases at the top:
+ * these 3 testहालs at the top:
  */
-#define main main_test_libpython
+#घोषणा मुख्य मुख्य_test_libpython
 # include "test-libpython.c"
-#undef main
+#अघोषित मुख्य
 
-#define main main_test_libpython_version
+#घोषणा मुख्य मुख्य_test_libpython_version
 # include "test-libpython-version.c"
-#undef main
+#अघोषित मुख्य
 
-#define main main_test_libperl
+#घोषणा मुख्य मुख्य_test_libperl
 # include "test-libperl.c"
-#undef main
+#अघोषित मुख्य
 
-#define main main_test_hello
+#घोषणा मुख्य मुख्य_test_hello
 # include "test-hello.c"
-#undef main
+#अघोषित मुख्य
 
-#define main main_test_libelf
+#घोषणा मुख्य मुख्य_test_libelf
 # include "test-libelf.c"
-#undef main
+#अघोषित मुख्य
 
-#define main main_test_get_current_dir_name
+#घोषणा मुख्य मुख्य_test_get_current_dir_name
 # include "test-get_current_dir_name.c"
-#undef main
+#अघोषित मुख्य
 
-#define main main_test_gettid
+#घोषणा मुख्य मुख्य_test_gettid
 # include "test-gettid.c"
-#undef main
+#अघोषित मुख्य
 
-#define main main_test_glibc
+#घोषणा मुख्य मुख्य_test_glibc
 # include "test-glibc.c"
-#undef main
+#अघोषित मुख्य
 
-#define main main_test_dwarf
+#घोषणा मुख्य मुख्य_test_dwarf
 # include "test-dwarf.c"
-#undef main
+#अघोषित मुख्य
 
-#define main main_test_dwarf_getlocations
+#घोषणा मुख्य मुख्य_test_dwarf_getlocations
 # include "test-dwarf_getlocations.c"
-#undef main
+#अघोषित मुख्य
 
-#define main main_test_eventfd
+#घोषणा मुख्य मुख्य_test_eventfd
 # include "test-eventfd.c"
-#undef main
+#अघोषित मुख्य
 
-#define main main_test_libelf_getphdrnum
+#घोषणा मुख्य मुख्य_test_libelf_getphdrnum
 # include "test-libelf-getphdrnum.c"
-#undef main
+#अघोषित मुख्य
 
-#define main main_test_libelf_gelf_getnote
+#घोषणा मुख्य मुख्य_test_libelf_gelf_getnote
 # include "test-libelf-gelf_getnote.c"
-#undef main
+#अघोषित मुख्य
 
-#define main main_test_libelf_getshdrstrndx
+#घोषणा मुख्य मुख्य_test_libelf_माला_लोhdrstrndx
 # include "test-libelf-getshdrstrndx.c"
-#undef main
+#अघोषित मुख्य
 
-#define main main_test_libunwind
+#घोषणा मुख्य मुख्य_test_libunwind
 # include "test-libunwind.c"
-#undef main
+#अघोषित मुख्य
 
-#define main main_test_libslang
+#घोषणा मुख्य मुख्य_test_libslang
 # include "test-libslang.c"
-#undef main
+#अघोषित मुख्य
 
-#define main main_test_libbfd
+#घोषणा मुख्य मुख्य_test_libbfd
 # include "test-libbfd.c"
-#undef main
+#अघोषित मुख्य
 
-#define main main_test_libbfd_buildid
+#घोषणा मुख्य मुख्य_test_libbfd_buildid
 # include "test-libbfd-buildid.c"
-#undef main
+#अघोषित मुख्य
 
-#define main main_test_backtrace
+#घोषणा मुख्य मुख्य_test_backtrace
 # include "test-backtrace.c"
-#undef main
+#अघोषित मुख्य
 
-#define main main_test_libnuma
+#घोषणा मुख्य मुख्य_test_libnuma
 # include "test-libnuma.c"
-#undef main
+#अघोषित मुख्य
 
-#define main main_test_numa_num_possible_cpus
+#घोषणा मुख्य मुख्य_test_numa_num_possible_cpus
 # include "test-numa_num_possible_cpus.c"
-#undef main
+#अघोषित मुख्य
 
-#define main main_test_timerfd
+#घोषणा मुख्य मुख्य_test_समयrfd
 # include "test-timerfd.c"
-#undef main
+#अघोषित मुख्य
 
-#define main main_test_stackprotector_all
+#घोषणा मुख्य मुख्य_test_stackprotector_all
 # include "test-stackprotector-all.c"
-#undef main
+#अघोषित मुख्य
 
-#define main main_test_libdw_dwarf_unwind
+#घोषणा मुख्य मुख्य_test_libdw_dwarf_unwind
 # include "test-libdw-dwarf-unwind.c"
-#undef main
+#अघोषित मुख्य
 
-#define main main_test_sync_compare_and_swap
+#घोषणा मुख्य मुख्य_test_sync_compare_and_swap
 # include "test-sync-compare-and-swap.c"
-#undef main
+#अघोषित मुख्य
 
-#define main main_test_zlib
+#घोषणा मुख्य मुख्य_test_zlib
 # include "test-zlib.c"
-#undef main
+#अघोषित मुख्य
 
-#define main main_test_pthread_attr_setaffinity_np
+#घोषणा मुख्य मुख्य_test_pthपढ़ो_attr_setaffinity_np
 # include "test-pthread-attr-setaffinity-np.c"
-#undef main
+#अघोषित मुख्य
 
-#define main main_test_pthread_barrier
+#घोषणा मुख्य मुख्य_test_pthपढ़ो_barrier
 # include "test-pthread-barrier.c"
-#undef main
+#अघोषित मुख्य
 
-#define main main_test_sched_getcpu
+#घोषणा मुख्य मुख्य_test_sched_अ_लोpu
 # include "test-sched_getcpu.c"
-#undef main
+#अघोषित मुख्य
 
-# if 0
+# अगर 0
 /*
- * Disable libbabeltrace check for test-all, because the requested
+ * Disable libbabeltrace check क्रम test-all, because the requested
  * library version is not released yet in most distributions. Will
  * reenable later.
  */
 
-#define main main_test_libbabeltrace
+#घोषणा मुख्य मुख्य_test_libbabeltrace
 # include "test-libbabeltrace.c"
-#undef main
-#endif
+#अघोषित मुख्य
+#पूर्ण_अगर
 
-#define main main_test_lzma
+#घोषणा मुख्य मुख्य_test_lzma
 # include "test-lzma.c"
-#undef main
+#अघोषित मुख्य
 
-#define main main_test_get_cpuid
+#घोषणा मुख्य मुख्य_test_get_cpuid
 # include "test-get_cpuid.c"
-#undef main
+#अघोषित मुख्य
 
-#define main main_test_bpf
+#घोषणा मुख्य मुख्य_test_bpf
 # include "test-bpf.c"
-#undef main
+#अघोषित मुख्य
 
-#define main main_test_libcrypto
+#घोषणा मुख्य मुख्य_test_libcrypto
 # include "test-libcrypto.c"
-#undef main
+#अघोषित मुख्य
 
-#define main main_test_sdt
+#घोषणा मुख्य मुख्य_test_sdt
 # include "test-sdt.c"
-#undef main
+#अघोषित मुख्य
 
-#define main main_test_setns
+#घोषणा मुख्य मुख्य_test_setns
 # include "test-setns.c"
-#undef main
+#अघोषित मुख्य
 
-#define main main_test_libaio
+#घोषणा मुख्य मुख्य_test_libaio
 # include "test-libaio.c"
-#undef main
+#अघोषित मुख्य
 
-#define main main_test_reallocarray
+#घोषणा मुख्य मुख्य_test_पुनः_स्मृतिarray
 # include "test-reallocarray.c"
-#undef main
+#अघोषित मुख्य
 
-#define main main_test_disassembler_four_args
+#घोषणा मुख्य मुख्य_test_disassembler_four_args
 # include "test-disassembler-four-args.c"
-#undef main
+#अघोषित मुख्य
 
-#define main main_test_libzstd
+#घोषणा मुख्य मुख्य_test_libzstd
 # include "test-libzstd.c"
-#undef main
+#अघोषित मुख्य
 
-int main(int argc, char *argv[])
-{
-	main_test_libpython();
-	main_test_libpython_version();
-	main_test_libperl();
-	main_test_hello();
-	main_test_libelf();
-	main_test_get_current_dir_name();
-	main_test_gettid();
-	main_test_glibc();
-	main_test_dwarf();
-	main_test_dwarf_getlocations();
-	main_test_eventfd();
-	main_test_libelf_getphdrnum();
-	main_test_libelf_gelf_getnote();
-	main_test_libelf_getshdrstrndx();
-	main_test_libunwind();
-	main_test_libslang();
-	main_test_libbfd();
-	main_test_libbfd_buildid();
-	main_test_backtrace();
-	main_test_libnuma();
-	main_test_numa_num_possible_cpus();
-	main_test_timerfd();
-	main_test_stackprotector_all();
-	main_test_libdw_dwarf_unwind();
-	main_test_sync_compare_and_swap(argc, argv);
-	main_test_zlib();
-	main_test_pthread_attr_setaffinity_np();
-	main_test_pthread_barrier();
-	main_test_lzma();
-	main_test_get_cpuid();
-	main_test_bpf();
-	main_test_libcrypto();
-	main_test_sched_getcpu();
-	main_test_sdt();
-	main_test_setns();
-	main_test_libaio();
-	main_test_reallocarray();
-	main_test_disassembler_four_args();
-	main_test_libzstd();
+पूर्णांक मुख्य(पूर्णांक argc, अक्षर *argv[])
+अणु
+	मुख्य_test_libpython();
+	मुख्य_test_libpython_version();
+	मुख्य_test_libperl();
+	मुख्य_test_hello();
+	मुख्य_test_libelf();
+	मुख्य_test_get_current_dir_name();
+	मुख्य_test_gettid();
+	मुख्य_test_glibc();
+	मुख्य_test_dwarf();
+	मुख्य_test_dwarf_getlocations();
+	मुख्य_test_eventfd();
+	मुख्य_test_libelf_getphdrnum();
+	मुख्य_test_libelf_gelf_getnote();
+	मुख्य_test_libelf_माला_लोhdrstrndx();
+	मुख्य_test_libunwind();
+	मुख्य_test_libslang();
+	मुख्य_test_libbfd();
+	मुख्य_test_libbfd_buildid();
+	मुख्य_test_backtrace();
+	मुख्य_test_libnuma();
+	मुख्य_test_numa_num_possible_cpus();
+	मुख्य_test_समयrfd();
+	मुख्य_test_stackprotector_all();
+	मुख्य_test_libdw_dwarf_unwind();
+	मुख्य_test_sync_compare_and_swap(argc, argv);
+	मुख्य_test_zlib();
+	मुख्य_test_pthपढ़ो_attr_setaffinity_np();
+	मुख्य_test_pthपढ़ो_barrier();
+	मुख्य_test_lzma();
+	मुख्य_test_get_cpuid();
+	मुख्य_test_bpf();
+	मुख्य_test_libcrypto();
+	मुख्य_test_sched_अ_लोpu();
+	मुख्य_test_sdt();
+	मुख्य_test_setns();
+	मुख्य_test_libaio();
+	मुख्य_test_पुनः_स्मृतिarray();
+	मुख्य_test_disassembler_four_args();
+	मुख्य_test_libzstd();
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

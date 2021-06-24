@@ -1,35 +1,36 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Hisilicon Reset Controller Driver
  *
  * Copyright (c) 2015-2016 HiSilicon Technologies Co., Ltd.
  */
 
-#include <linux/io.h>
-#include <linux/of_address.h>
-#include <linux/platform_device.h>
-#include <linux/reset-controller.h>
-#include <linux/slab.h>
-#include <linux/spinlock.h>
-#include "reset.h"
+#समावेश <linux/पन.स>
+#समावेश <linux/of_address.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/reset-controller.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/spinlock.h>
+#समावेश "reset.h"
 
-#define	HISI_RESET_BIT_MASK	0x1f
-#define	HISI_RESET_OFFSET_SHIFT	8
-#define	HISI_RESET_OFFSET_MASK	0xffff00
+#घोषणा	HISI_RESET_BIT_MASK	0x1f
+#घोषणा	HISI_RESET_OFFSET_SHIFT	8
+#घोषणा	HISI_RESET_OFFSET_MASK	0xffff00
 
-struct hisi_reset_controller {
+काष्ठा hisi_reset_controller अणु
 	spinlock_t	lock;
-	void __iomem	*membase;
-	struct reset_controller_dev	rcdev;
-};
+	व्योम __iomem	*membase;
+	काष्ठा reset_controller_dev	rcdev;
+पूर्ण;
 
 
-#define to_hisi_reset_controller(rcdev)  \
-	container_of(rcdev, struct hisi_reset_controller, rcdev)
+#घोषणा to_hisi_reset_controller(rcdev)  \
+	container_of(rcdev, काष्ठा hisi_reset_controller, rcdev)
 
-static int hisi_reset_of_xlate(struct reset_controller_dev *rcdev,
-			const struct of_phandle_args *reset_spec)
-{
+अटल पूर्णांक hisi_reset_of_xlate(काष्ठा reset_controller_dev *rcdev,
+			स्थिर काष्ठा of_phandle_args *reset_spec)
+अणु
 	u32 offset;
 	u8 bit;
 
@@ -37,14 +38,14 @@ static int hisi_reset_of_xlate(struct reset_controller_dev *rcdev,
 		& HISI_RESET_OFFSET_MASK;
 	bit = reset_spec->args[1] & HISI_RESET_BIT_MASK;
 
-	return (offset | bit);
-}
+	वापस (offset | bit);
+पूर्ण
 
-static int hisi_reset_assert(struct reset_controller_dev *rcdev,
-			      unsigned long id)
-{
-	struct hisi_reset_controller *rstc = to_hisi_reset_controller(rcdev);
-	unsigned long flags;
+अटल पूर्णांक hisi_reset_निश्चित(काष्ठा reset_controller_dev *rcdev,
+			      अचिन्हित दीर्घ id)
+अणु
+	काष्ठा hisi_reset_controller *rstc = to_hisi_reset_controller(rcdev);
+	अचिन्हित दीर्घ flags;
 	u32 offset, reg;
 	u8 bit;
 
@@ -53,19 +54,19 @@ static int hisi_reset_assert(struct reset_controller_dev *rcdev,
 
 	spin_lock_irqsave(&rstc->lock, flags);
 
-	reg = readl(rstc->membase + offset);
-	writel(reg | BIT(bit), rstc->membase + offset);
+	reg = पढ़ोl(rstc->membase + offset);
+	ग_लिखोl(reg | BIT(bit), rstc->membase + offset);
 
 	spin_unlock_irqrestore(&rstc->lock, flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int hisi_reset_deassert(struct reset_controller_dev *rcdev,
-				unsigned long id)
-{
-	struct hisi_reset_controller *rstc = to_hisi_reset_controller(rcdev);
-	unsigned long flags;
+अटल पूर्णांक hisi_reset_deनिश्चित(काष्ठा reset_controller_dev *rcdev,
+				अचिन्हित दीर्घ id)
+अणु
+	काष्ठा hisi_reset_controller *rstc = to_hisi_reset_controller(rcdev);
+	अचिन्हित दीर्घ flags;
 	u32 offset, reg;
 	u8 bit;
 
@@ -74,30 +75,30 @@ static int hisi_reset_deassert(struct reset_controller_dev *rcdev,
 
 	spin_lock_irqsave(&rstc->lock, flags);
 
-	reg = readl(rstc->membase + offset);
-	writel(reg & ~BIT(bit), rstc->membase + offset);
+	reg = पढ़ोl(rstc->membase + offset);
+	ग_लिखोl(reg & ~BIT(bit), rstc->membase + offset);
 
 	spin_unlock_irqrestore(&rstc->lock, flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct reset_control_ops hisi_reset_ops = {
-	.assert		= hisi_reset_assert,
-	.deassert	= hisi_reset_deassert,
-};
+अटल स्थिर काष्ठा reset_control_ops hisi_reset_ops = अणु
+	.निश्चित		= hisi_reset_निश्चित,
+	.deनिश्चित	= hisi_reset_deनिश्चित,
+पूर्ण;
 
-struct hisi_reset_controller *hisi_reset_init(struct platform_device *pdev)
-{
-	struct hisi_reset_controller *rstc;
+काष्ठा hisi_reset_controller *hisi_reset_init(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा hisi_reset_controller *rstc;
 
-	rstc = devm_kmalloc(&pdev->dev, sizeof(*rstc), GFP_KERNEL);
-	if (!rstc)
-		return NULL;
+	rstc = devm_kदो_स्मृति(&pdev->dev, माप(*rstc), GFP_KERNEL);
+	अगर (!rstc)
+		वापस शून्य;
 
-	rstc->membase = devm_platform_ioremap_resource(pdev, 0);
-	if (IS_ERR(rstc->membase))
-		return NULL;
+	rstc->membase = devm_platक्रमm_ioremap_resource(pdev, 0);
+	अगर (IS_ERR(rstc->membase))
+		वापस शून्य;
 
 	spin_lock_init(&rstc->lock);
 	rstc->rcdev.owner = THIS_MODULE;
@@ -105,14 +106,14 @@ struct hisi_reset_controller *hisi_reset_init(struct platform_device *pdev)
 	rstc->rcdev.of_node = pdev->dev.of_node;
 	rstc->rcdev.of_reset_n_cells = 2;
 	rstc->rcdev.of_xlate = hisi_reset_of_xlate;
-	reset_controller_register(&rstc->rcdev);
+	reset_controller_रेजिस्टर(&rstc->rcdev);
 
-	return rstc;
-}
+	वापस rstc;
+पूर्ण
 EXPORT_SYMBOL_GPL(hisi_reset_init);
 
-void hisi_reset_exit(struct hisi_reset_controller *rstc)
-{
-	reset_controller_unregister(&rstc->rcdev);
-}
-EXPORT_SYMBOL_GPL(hisi_reset_exit);
+व्योम hisi_reset_निकास(काष्ठा hisi_reset_controller *rstc)
+अणु
+	reset_controller_unरेजिस्टर(&rstc->rcdev);
+पूर्ण
+EXPORT_SYMBOL_GPL(hisi_reset_निकास);

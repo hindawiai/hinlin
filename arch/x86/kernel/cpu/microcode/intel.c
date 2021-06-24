@@ -1,223 +1,224 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * Intel CPU Microcode Update Driver for Linux
+ * Intel CPU Microcode Update Driver क्रम Linux
  *
  * Copyright (C) 2000-2006 Tigran Aivazian <aivazian.tigran@gmail.com>
- *		 2006 Shaohua Li <shaohua.li@intel.com>
+ *		 2006 Shaohua Li <shaohua.li@पूर्णांकel.com>
  *
- * Intel CPU microcode early update for Linux
+ * Intel CPU microcode early update क्रम Linux
  *
- * Copyright (C) 2012 Fenghua Yu <fenghua.yu@intel.com>
+ * Copyright (C) 2012 Fenghua Yu <fenghua.yu@पूर्णांकel.com>
  *		      H Peter Anvin" <hpa@zytor.com>
  */
 
 /*
- * This needs to be before all headers so that pr_debug in printk.h doesn't turn
- * printk calls into no_printk().
+ * This needs to be beक्रमe all headers so that pr_debug in prपूर्णांकk.h करोesn't turn
+ * prपूर्णांकk calls पूर्णांकo no_prपूर्णांकk().
  *
- *#define DEBUG
+ *#घोषणा DEBUG
  */
-#define pr_fmt(fmt) "microcode: " fmt
+#घोषणा pr_fmt(fmt) "microcode: " fmt
 
-#include <linux/earlycpio.h>
-#include <linux/firmware.h>
-#include <linux/uaccess.h>
-#include <linux/vmalloc.h>
-#include <linux/initrd.h>
-#include <linux/kernel.h>
-#include <linux/slab.h>
-#include <linux/cpu.h>
-#include <linux/uio.h>
-#include <linux/mm.h>
+#समावेश <linux/earlycpपन.स>
+#समावेश <linux/firmware.h>
+#समावेश <linux/uaccess.h>
+#समावेश <linux/vदो_स्मृति.h>
+#समावेश <linux/initrd.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/cpu.h>
+#समावेश <linux/uपन.स>
+#समावेश <linux/mm.h>
 
-#include <asm/microcode_intel.h>
-#include <asm/intel-family.h>
-#include <asm/processor.h>
-#include <asm/tlbflush.h>
-#include <asm/setup.h>
-#include <asm/msr.h>
+#समावेश <यंत्र/microcode_पूर्णांकel.h>
+#समावेश <यंत्र/पूर्णांकel-family.h>
+#समावेश <यंत्र/processor.h>
+#समावेश <यंत्र/tlbflush.h>
+#समावेश <यंत्र/setup.h>
+#समावेश <यंत्र/msr.h>
 
-static const char ucode_path[] = "kernel/x86/microcode/GenuineIntel.bin";
+अटल स्थिर अक्षर ucode_path[] = "kernel/x86/microcode/GenuineIntel.bin";
 
 /* Current microcode patch used in early patching on the APs. */
-static struct microcode_intel *intel_ucode_patch;
+अटल काष्ठा microcode_पूर्णांकel *पूर्णांकel_ucode_patch;
 
 /* last level cache size per core */
-static int llc_size_per_core;
+अटल पूर्णांक llc_size_per_core;
 
-static inline bool cpu_signatures_match(unsigned int s1, unsigned int p1,
-					unsigned int s2, unsigned int p2)
-{
-	if (s1 != s2)
-		return false;
+अटल अंतरभूत bool cpu_signatures_match(अचिन्हित पूर्णांक s1, अचिन्हित पूर्णांक p1,
+					अचिन्हित पूर्णांक s2, अचिन्हित पूर्णांक p2)
+अणु
+	अगर (s1 != s2)
+		वापस false;
 
 	/* Processor flags are either both 0 ... */
-	if (!p1 && !p2)
-		return true;
+	अगर (!p1 && !p2)
+		वापस true;
 
-	/* ... or they intersect. */
-	return p1 & p2;
-}
+	/* ... or they पूर्णांकersect. */
+	वापस p1 & p2;
+पूर्ण
 
 /*
- * Returns 1 if update has been found, 0 otherwise.
+ * Returns 1 अगर update has been found, 0 otherwise.
  */
-static int find_matching_signature(void *mc, unsigned int csig, int cpf)
-{
-	struct microcode_header_intel *mc_hdr = mc;
-	struct extended_sigtable *ext_hdr;
-	struct extended_signature *ext_sig;
-	int i;
+अटल पूर्णांक find_matching_signature(व्योम *mc, अचिन्हित पूर्णांक csig, पूर्णांक cpf)
+अणु
+	काष्ठा microcode_header_पूर्णांकel *mc_hdr = mc;
+	काष्ठा extended_sigtable *ext_hdr;
+	काष्ठा extended_signature *ext_sig;
+	पूर्णांक i;
 
-	if (cpu_signatures_match(csig, cpf, mc_hdr->sig, mc_hdr->pf))
-		return 1;
+	अगर (cpu_signatures_match(csig, cpf, mc_hdr->sig, mc_hdr->pf))
+		वापस 1;
 
-	/* Look for ext. headers: */
-	if (get_totalsize(mc_hdr) <= get_datasize(mc_hdr) + MC_HEADER_SIZE)
-		return 0;
+	/* Look क्रम ext. headers: */
+	अगर (get_totalsize(mc_hdr) <= get_datasize(mc_hdr) + MC_HEADER_SIZE)
+		वापस 0;
 
 	ext_hdr = mc + get_datasize(mc_hdr) + MC_HEADER_SIZE;
-	ext_sig = (void *)ext_hdr + EXT_HEADER_SIZE;
+	ext_sig = (व्योम *)ext_hdr + EXT_HEADER_SIZE;
 
-	for (i = 0; i < ext_hdr->count; i++) {
-		if (cpu_signatures_match(csig, cpf, ext_sig->sig, ext_sig->pf))
-			return 1;
+	क्रम (i = 0; i < ext_hdr->count; i++) अणु
+		अगर (cpu_signatures_match(csig, cpf, ext_sig->sig, ext_sig->pf))
+			वापस 1;
 		ext_sig++;
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /*
- * Returns 1 if update has been found, 0 otherwise.
+ * Returns 1 अगर update has been found, 0 otherwise.
  */
-static int has_newer_microcode(void *mc, unsigned int csig, int cpf, int new_rev)
-{
-	struct microcode_header_intel *mc_hdr = mc;
+अटल पूर्णांक has_newer_microcode(व्योम *mc, अचिन्हित पूर्णांक csig, पूर्णांक cpf, पूर्णांक new_rev)
+अणु
+	काष्ठा microcode_header_पूर्णांकel *mc_hdr = mc;
 
-	if (mc_hdr->rev <= new_rev)
-		return 0;
+	अगर (mc_hdr->rev <= new_rev)
+		वापस 0;
 
-	return find_matching_signature(mc, csig, cpf);
-}
+	वापस find_matching_signature(mc, csig, cpf);
+पूर्ण
 
-static struct ucode_patch *memdup_patch(void *data, unsigned int size)
-{
-	struct ucode_patch *p;
+अटल काष्ठा ucode_patch *memdup_patch(व्योम *data, अचिन्हित पूर्णांक size)
+अणु
+	काष्ठा ucode_patch *p;
 
-	p = kzalloc(sizeof(struct ucode_patch), GFP_KERNEL);
-	if (!p)
-		return NULL;
+	p = kzalloc(माप(काष्ठा ucode_patch), GFP_KERNEL);
+	अगर (!p)
+		वापस शून्य;
 
 	p->data = kmemdup(data, size, GFP_KERNEL);
-	if (!p->data) {
-		kfree(p);
-		return NULL;
-	}
+	अगर (!p->data) अणु
+		kमुक्त(p);
+		वापस शून्य;
+	पूर्ण
 
-	return p;
-}
+	वापस p;
+पूर्ण
 
-static void save_microcode_patch(struct ucode_cpu_info *uci, void *data, unsigned int size)
-{
-	struct microcode_header_intel *mc_hdr, *mc_saved_hdr;
-	struct ucode_patch *iter, *tmp, *p = NULL;
+अटल व्योम save_microcode_patch(काष्ठा ucode_cpu_info *uci, व्योम *data, अचिन्हित पूर्णांक size)
+अणु
+	काष्ठा microcode_header_पूर्णांकel *mc_hdr, *mc_saved_hdr;
+	काष्ठा ucode_patch *iter, *पंचांगp, *p = शून्य;
 	bool prev_found = false;
-	unsigned int sig, pf;
+	अचिन्हित पूर्णांक sig, pf;
 
-	mc_hdr = (struct microcode_header_intel *)data;
+	mc_hdr = (काष्ठा microcode_header_पूर्णांकel *)data;
 
-	list_for_each_entry_safe(iter, tmp, &microcode_cache, plist) {
-		mc_saved_hdr = (struct microcode_header_intel *)iter->data;
+	list_क्रम_each_entry_safe(iter, पंचांगp, &microcode_cache, plist) अणु
+		mc_saved_hdr = (काष्ठा microcode_header_पूर्णांकel *)iter->data;
 		sig	     = mc_saved_hdr->sig;
 		pf	     = mc_saved_hdr->pf;
 
-		if (find_matching_signature(data, sig, pf)) {
+		अगर (find_matching_signature(data, sig, pf)) अणु
 			prev_found = true;
 
-			if (mc_hdr->rev <= mc_saved_hdr->rev)
-				continue;
+			अगर (mc_hdr->rev <= mc_saved_hdr->rev)
+				जारी;
 
 			p = memdup_patch(data, size);
-			if (!p)
+			अगर (!p)
 				pr_err("Error allocating buffer %p\n", data);
-			else {
+			अन्यथा अणु
 				list_replace(&iter->plist, &p->plist);
-				kfree(iter->data);
-				kfree(iter);
-			}
-		}
-	}
+				kमुक्त(iter->data);
+				kमुक्त(iter);
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
 	/*
 	 * There weren't any previous patches found in the list cache; save the
 	 * newly found.
 	 */
-	if (!prev_found) {
+	अगर (!prev_found) अणु
 		p = memdup_patch(data, size);
-		if (!p)
+		अगर (!p)
 			pr_err("Error allocating buffer for %p\n", data);
-		else
+		अन्यथा
 			list_add_tail(&p->plist, &microcode_cache);
-	}
+	पूर्ण
 
-	if (!p)
-		return;
+	अगर (!p)
+		वापस;
 
-	if (!find_matching_signature(p->data, uci->cpu_sig.sig, uci->cpu_sig.pf))
-		return;
+	अगर (!find_matching_signature(p->data, uci->cpu_sig.sig, uci->cpu_sig.pf))
+		वापस;
 
 	/*
-	 * Save for early loading. On 32-bit, that needs to be a physical
-	 * address as the APs are running from physical addresses, before
+	 * Save क्रम early loading. On 32-bit, that needs to be a physical
+	 * address as the APs are running from physical addresses, beक्रमe
 	 * paging has been enabled.
 	 */
-	if (IS_ENABLED(CONFIG_X86_32))
-		intel_ucode_patch = (struct microcode_intel *)__pa_nodebug(p->data);
-	else
-		intel_ucode_patch = p->data;
-}
+	अगर (IS_ENABLED(CONFIG_X86_32))
+		पूर्णांकel_ucode_patch = (काष्ठा microcode_पूर्णांकel *)__pa_nodebug(p->data);
+	अन्यथा
+		पूर्णांकel_ucode_patch = p->data;
+पूर्ण
 
-static int microcode_sanity_check(void *mc, int print_err)
-{
-	unsigned long total_size, data_size, ext_table_size;
-	struct microcode_header_intel *mc_header = mc;
-	struct extended_sigtable *ext_header = NULL;
+अटल पूर्णांक microcode_sanity_check(व्योम *mc, पूर्णांक prपूर्णांक_err)
+अणु
+	अचिन्हित दीर्घ total_size, data_size, ext_table_size;
+	काष्ठा microcode_header_पूर्णांकel *mc_header = mc;
+	काष्ठा extended_sigtable *ext_header = शून्य;
 	u32 sum, orig_sum, ext_sigcount = 0, i;
-	struct extended_signature *ext_sig;
+	काष्ठा extended_signature *ext_sig;
 
 	total_size = get_totalsize(mc_header);
 	data_size = get_datasize(mc_header);
 
-	if (data_size + MC_HEADER_SIZE > total_size) {
-		if (print_err)
+	अगर (data_size + MC_HEADER_SIZE > total_size) अणु
+		अगर (prपूर्णांक_err)
 			pr_err("Error: bad microcode data file size.\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (mc_header->ldrver != 1 || mc_header->hdrver != 1) {
-		if (print_err)
+	अगर (mc_header->ldrver != 1 || mc_header->hdrver != 1) अणु
+		अगर (prपूर्णांक_err)
 			pr_err("Error: invalid/unknown microcode update format.\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	ext_table_size = total_size - (MC_HEADER_SIZE + data_size);
-	if (ext_table_size) {
+	अगर (ext_table_size) अणु
 		u32 ext_table_sum = 0;
 		u32 *ext_tablep;
 
-		if ((ext_table_size < EXT_HEADER_SIZE)
-		 || ((ext_table_size - EXT_HEADER_SIZE) % EXT_SIGNATURE_SIZE)) {
-			if (print_err)
+		अगर ((ext_table_size < EXT_HEADER_SIZE)
+		 || ((ext_table_size - EXT_HEADER_SIZE) % EXT_SIGNATURE_SIZE)) अणु
+			अगर (prपूर्णांक_err)
 				pr_err("Error: truncated extended signature table.\n");
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
 		ext_header = mc + MC_HEADER_SIZE + data_size;
-		if (ext_table_size != exttable_size(ext_header)) {
-			if (print_err)
+		अगर (ext_table_size != exttable_size(ext_header)) अणु
+			अगर (prपूर्णांक_err)
 				pr_err("Error: extended signature table size mismatch.\n");
-			return -EFAULT;
-		}
+			वापस -EFAULT;
+		पूर्ण
 
 		ext_sigcount = ext_header->count;
 
@@ -227,16 +228,16 @@ static int microcode_sanity_check(void *mc, int print_err)
 		 */
 		ext_tablep = (u32 *)ext_header;
 
-		i = ext_table_size / sizeof(u32);
-		while (i--)
+		i = ext_table_size / माप(u32);
+		जबतक (i--)
 			ext_table_sum += ext_tablep[i];
 
-		if (ext_table_sum) {
-			if (print_err)
+		अगर (ext_table_sum) अणु
+			अगर (prपूर्णांक_err)
 				pr_warn("Bad extended signature table checksum, aborting.\n");
-			return -EINVAL;
-		}
-	}
+			वापस -EINVAL;
+		पूर्ण
+	पूर्ण
 
 	/*
 	 * Calculate the checksum of update data and header. The checksum of
@@ -244,112 +245,112 @@ static int microcode_sanity_check(void *mc, int print_err)
 	 * must be 0.
 	 */
 	orig_sum = 0;
-	i = (MC_HEADER_SIZE + data_size) / sizeof(u32);
-	while (i--)
+	i = (MC_HEADER_SIZE + data_size) / माप(u32);
+	जबतक (i--)
 		orig_sum += ((u32 *)mc)[i];
 
-	if (orig_sum) {
-		if (print_err)
+	अगर (orig_sum) अणु
+		अगर (prपूर्णांक_err)
 			pr_err("Bad microcode data checksum, aborting.\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (!ext_table_size)
-		return 0;
+	अगर (!ext_table_size)
+		वापस 0;
 
 	/*
 	 * Check extended signature checksum: 0 => valid.
 	 */
-	for (i = 0; i < ext_sigcount; i++) {
-		ext_sig = (void *)ext_header + EXT_HEADER_SIZE +
+	क्रम (i = 0; i < ext_sigcount; i++) अणु
+		ext_sig = (व्योम *)ext_header + EXT_HEADER_SIZE +
 			  EXT_SIGNATURE_SIZE * i;
 
 		sum = (mc_header->sig + mc_header->pf + mc_header->cksum) -
 		      (ext_sig->sig + ext_sig->pf + ext_sig->cksum);
-		if (sum) {
-			if (print_err)
+		अगर (sum) अणु
+			अगर (prपूर्णांक_err)
 				pr_err("Bad extended signature checksum, aborting.\n");
-			return -EINVAL;
-		}
-	}
-	return 0;
-}
+			वापस -EINVAL;
+		पूर्ण
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /*
  * Get microcode matching with BSP's model. Only CPUs with the same model as
- * BSP can stay in the platform.
+ * BSP can stay in the platक्रमm.
  */
-static struct microcode_intel *
-scan_microcode(void *data, size_t size, struct ucode_cpu_info *uci, bool save)
-{
-	struct microcode_header_intel *mc_header;
-	struct microcode_intel *patch = NULL;
-	unsigned int mc_size;
+अटल काष्ठा microcode_पूर्णांकel *
+scan_microcode(व्योम *data, माप_प्रकार size, काष्ठा ucode_cpu_info *uci, bool save)
+अणु
+	काष्ठा microcode_header_पूर्णांकel *mc_header;
+	काष्ठा microcode_पूर्णांकel *patch = शून्य;
+	अचिन्हित पूर्णांक mc_size;
 
-	while (size) {
-		if (size < sizeof(struct microcode_header_intel))
-			break;
+	जबतक (size) अणु
+		अगर (size < माप(काष्ठा microcode_header_पूर्णांकel))
+			अवरोध;
 
-		mc_header = (struct microcode_header_intel *)data;
+		mc_header = (काष्ठा microcode_header_पूर्णांकel *)data;
 
 		mc_size = get_totalsize(mc_header);
-		if (!mc_size ||
+		अगर (!mc_size ||
 		    mc_size > size ||
 		    microcode_sanity_check(data, 0) < 0)
-			break;
+			अवरोध;
 
 		size -= mc_size;
 
-		if (!find_matching_signature(data, uci->cpu_sig.sig,
-					     uci->cpu_sig.pf)) {
+		अगर (!find_matching_signature(data, uci->cpu_sig.sig,
+					     uci->cpu_sig.pf)) अणु
 			data += mc_size;
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		if (save) {
+		अगर (save) अणु
 			save_microcode_patch(uci, data, mc_size);
-			goto next;
-		}
+			जाओ next;
+		पूर्ण
 
 
-		if (!patch) {
-			if (!has_newer_microcode(data,
+		अगर (!patch) अणु
+			अगर (!has_newer_microcode(data,
 						 uci->cpu_sig.sig,
 						 uci->cpu_sig.pf,
 						 uci->cpu_sig.rev))
-				goto next;
+				जाओ next;
 
-		} else {
-			struct microcode_header_intel *phdr = &patch->hdr;
+		पूर्ण अन्यथा अणु
+			काष्ठा microcode_header_पूर्णांकel *phdr = &patch->hdr;
 
-			if (!has_newer_microcode(data,
+			अगर (!has_newer_microcode(data,
 						 phdr->sig,
 						 phdr->pf,
 						 phdr->rev))
-				goto next;
-		}
+				जाओ next;
+		पूर्ण
 
 		/* We have a newer patch, save it. */
 		patch = data;
 
 next:
 		data += mc_size;
-	}
+	पूर्ण
 
-	if (size)
-		return NULL;
+	अगर (size)
+		वापस शून्य;
 
-	return patch;
-}
+	वापस patch;
+पूर्ण
 
-static int collect_cpu_info_early(struct ucode_cpu_info *uci)
-{
-	unsigned int val[2];
-	unsigned int family, model;
-	struct cpu_signature csig = { 0 };
-	unsigned int eax, ebx, ecx, edx;
+अटल पूर्णांक collect_cpu_info_early(काष्ठा ucode_cpu_info *uci)
+अणु
+	अचिन्हित पूर्णांक val[2];
+	अचिन्हित पूर्णांक family, model;
+	काष्ठा cpu_signature csig = अणु 0 पूर्ण;
+	अचिन्हित पूर्णांक eax, ebx, ecx, edx;
 
-	memset(uci, 0, sizeof(*uci));
+	स_रखो(uci, 0, माप(*uci));
 
 	eax = 0x00000001;
 	ecx = 0;
@@ -359,32 +360,32 @@ static int collect_cpu_info_early(struct ucode_cpu_info *uci)
 	family = x86_family(eax);
 	model  = x86_model(eax);
 
-	if ((model >= 5) || (family > 6)) {
+	अगर ((model >= 5) || (family > 6)) अणु
 		/* get processor flags from MSR 0x17 */
 		native_rdmsr(MSR_IA32_PLATFORM_ID, val[0], val[1]);
 		csig.pf = 1 << ((val[1] >> 18) & 7);
-	}
+	पूर्ण
 
-	csig.rev = intel_get_microcode_revision();
+	csig.rev = पूर्णांकel_get_microcode_revision();
 
 	uci->cpu_sig = csig;
 	uci->valid = 1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void show_saved_mc(void)
-{
-#ifdef DEBUG
-	int i = 0, j;
-	unsigned int sig, pf, rev, total_size, data_size, date;
-	struct ucode_cpu_info uci;
-	struct ucode_patch *p;
+अटल व्योम show_saved_mc(व्योम)
+अणु
+#अगर_घोषित DEBUG
+	पूर्णांक i = 0, j;
+	अचिन्हित पूर्णांक sig, pf, rev, total_size, data_size, date;
+	काष्ठा ucode_cpu_info uci;
+	काष्ठा ucode_patch *p;
 
-	if (list_empty(&microcode_cache)) {
+	अगर (list_empty(&microcode_cache)) अणु
 		pr_debug("no microcode data saved.\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	collect_cpu_info_early(&uci);
 
@@ -393,13 +394,13 @@ static void show_saved_mc(void)
 	rev	= uci.cpu_sig.rev;
 	pr_debug("CPU: sig=0x%x, pf=0x%x, rev=0x%x\n", sig, pf, rev);
 
-	list_for_each_entry(p, &microcode_cache, plist) {
-		struct microcode_header_intel *mc_saved_header;
-		struct extended_sigtable *ext_header;
-		struct extended_signature *ext_sig;
-		int ext_sigcount;
+	list_क्रम_each_entry(p, &microcode_cache, plist) अणु
+		काष्ठा microcode_header_पूर्णांकel *mc_saved_header;
+		काष्ठा extended_sigtable *ext_header;
+		काष्ठा extended_signature *ext_sig;
+		पूर्णांक ext_sigcount;
 
-		mc_saved_header = (struct microcode_header_intel *)p->data;
+		mc_saved_header = (काष्ठा microcode_header_पूर्णांकel *)p->data;
 
 		sig	= mc_saved_header->sig;
 		pf	= mc_saved_header->pf;
@@ -415,15 +416,15 @@ static void show_saved_mc(void)
 			 date >> 24,
 			 (date >> 16) & 0xff);
 
-		/* Look for ext. headers: */
-		if (total_size <= data_size + MC_HEADER_SIZE)
-			continue;
+		/* Look क्रम ext. headers: */
+		अगर (total_size <= data_size + MC_HEADER_SIZE)
+			जारी;
 
-		ext_header = (void *)mc_saved_header + data_size + MC_HEADER_SIZE;
+		ext_header = (व्योम *)mc_saved_header + data_size + MC_HEADER_SIZE;
 		ext_sigcount = ext_header->count;
-		ext_sig = (void *)ext_header + EXT_HEADER_SIZE;
+		ext_sig = (व्योम *)ext_header + EXT_HEADER_SIZE;
 
-		for (j = 0; j < ext_sigcount; j++) {
+		क्रम (j = 0; j < ext_sigcount; j++) अणु
 			sig = ext_sig->sig;
 			pf = ext_sig->pf;
 
@@ -431,19 +432,19 @@ static void show_saved_mc(void)
 				 j, sig, pf);
 
 			ext_sig++;
-		}
-	}
-#endif
-}
+		पूर्ण
+	पूर्ण
+#पूर्ण_अगर
+पूर्ण
 
 /*
  * Save this microcode patch. It will be loaded early when a CPU is
  * hot-added or resumes.
  */
-static void save_mc_for_early(struct ucode_cpu_info *uci, u8 *mc, unsigned int size)
-{
+अटल व्योम save_mc_क्रम_early(काष्ठा ucode_cpu_info *uci, u8 *mc, अचिन्हित पूर्णांक size)
+अणु
 	/* Synchronization during CPU hotplug. */
-	static DEFINE_MUTEX(x86_cpu_microcode_mutex);
+	अटल DEFINE_MUTEX(x86_cpu_microcode_mutex);
 
 	mutex_lock(&x86_cpu_microcode_mutex);
 
@@ -451,151 +452,151 @@ static void save_mc_for_early(struct ucode_cpu_info *uci, u8 *mc, unsigned int s
 	show_saved_mc();
 
 	mutex_unlock(&x86_cpu_microcode_mutex);
-}
+पूर्ण
 
-static bool load_builtin_intel_microcode(struct cpio_data *cp)
-{
-	unsigned int eax = 1, ebx, ecx = 0, edx;
-	char name[30];
+अटल bool load_builtin_पूर्णांकel_microcode(काष्ठा cpio_data *cp)
+अणु
+	अचिन्हित पूर्णांक eax = 1, ebx, ecx = 0, edx;
+	अक्षर name[30];
 
-	if (IS_ENABLED(CONFIG_X86_32))
-		return false;
+	अगर (IS_ENABLED(CONFIG_X86_32))
+		वापस false;
 
 	native_cpuid(&eax, &ebx, &ecx, &edx);
 
-	sprintf(name, "intel-ucode/%02x-%02x-%02x",
+	प्र_लिखो(name, "intel-ucode/%02x-%02x-%02x",
 		      x86_family(eax), x86_model(eax), x86_stepping(eax));
 
-	return get_builtin_firmware(cp, name);
-}
+	वापस get_builtin_firmware(cp, name);
+पूर्ण
 
 /*
- * Print ucode update info.
+ * Prपूर्णांक ucode update info.
  */
-static void
-print_ucode_info(struct ucode_cpu_info *uci, unsigned int date)
-{
+अटल व्योम
+prपूर्णांक_ucode_info(काष्ठा ucode_cpu_info *uci, अचिन्हित पूर्णांक date)
+अणु
 	pr_info_once("microcode updated early to revision 0x%x, date = %04x-%02x-%02x\n",
 		     uci->cpu_sig.rev,
 		     date & 0xffff,
 		     date >> 24,
 		     (date >> 16) & 0xff);
-}
+पूर्ण
 
-#ifdef CONFIG_X86_32
+#अगर_घोषित CONFIG_X86_32
 
-static int delay_ucode_info;
-static int current_mc_date;
+अटल पूर्णांक delay_ucode_info;
+अटल पूर्णांक current_mc_date;
 
 /*
- * Print early updated ucode info after printk works. This is delayed info dump.
+ * Prपूर्णांक early updated ucode info after prपूर्णांकk works. This is delayed info dump.
  */
-void show_ucode_info_early(void)
-{
-	struct ucode_cpu_info uci;
+व्योम show_ucode_info_early(व्योम)
+अणु
+	काष्ठा ucode_cpu_info uci;
 
-	if (delay_ucode_info) {
+	अगर (delay_ucode_info) अणु
 		collect_cpu_info_early(&uci);
-		print_ucode_info(&uci, current_mc_date);
+		prपूर्णांक_ucode_info(&uci, current_mc_date);
 		delay_ucode_info = 0;
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
- * At this point, we can not call printk() yet. Delay printing microcode info in
- * show_ucode_info_early() until printk() works.
+ * At this poपूर्णांक, we can not call prपूर्णांकk() yet. Delay prपूर्णांकing microcode info in
+ * show_ucode_info_early() until prपूर्णांकk() works.
  */
-static void print_ucode(struct ucode_cpu_info *uci)
-{
-	struct microcode_intel *mc;
-	int *delay_ucode_info_p;
-	int *current_mc_date_p;
+अटल व्योम prपूर्णांक_ucode(काष्ठा ucode_cpu_info *uci)
+अणु
+	काष्ठा microcode_पूर्णांकel *mc;
+	पूर्णांक *delay_ucode_info_p;
+	पूर्णांक *current_mc_date_p;
 
 	mc = uci->mc;
-	if (!mc)
-		return;
+	अगर (!mc)
+		वापस;
 
-	delay_ucode_info_p = (int *)__pa_nodebug(&delay_ucode_info);
-	current_mc_date_p = (int *)__pa_nodebug(&current_mc_date);
+	delay_ucode_info_p = (पूर्णांक *)__pa_nodebug(&delay_ucode_info);
+	current_mc_date_p = (पूर्णांक *)__pa_nodebug(&current_mc_date);
 
 	*delay_ucode_info_p = 1;
 	*current_mc_date_p = mc->hdr.date;
-}
-#else
+पूर्ण
+#अन्यथा
 
-static inline void print_ucode(struct ucode_cpu_info *uci)
-{
-	struct microcode_intel *mc;
+अटल अंतरभूत व्योम prपूर्णांक_ucode(काष्ठा ucode_cpu_info *uci)
+अणु
+	काष्ठा microcode_पूर्णांकel *mc;
 
 	mc = uci->mc;
-	if (!mc)
-		return;
+	अगर (!mc)
+		वापस;
 
-	print_ucode_info(uci, mc->hdr.date);
-}
-#endif
+	prपूर्णांक_ucode_info(uci, mc->hdr.date);
+पूर्ण
+#पूर्ण_अगर
 
-static int apply_microcode_early(struct ucode_cpu_info *uci, bool early)
-{
-	struct microcode_intel *mc;
+अटल पूर्णांक apply_microcode_early(काष्ठा ucode_cpu_info *uci, bool early)
+अणु
+	काष्ठा microcode_पूर्णांकel *mc;
 	u32 rev;
 
 	mc = uci->mc;
-	if (!mc)
-		return 0;
+	अगर (!mc)
+		वापस 0;
 
 	/*
-	 * Save us the MSR write below - which is a particular expensive
-	 * operation - when the other hyperthread has updated the microcode
-	 * already.
+	 * Save us the MSR ग_लिखो below - which is a particular expensive
+	 * operation - when the other hyperthपढ़ो has updated the microcode
+	 * alपढ़ोy.
 	 */
-	rev = intel_get_microcode_revision();
-	if (rev >= mc->hdr.rev) {
+	rev = पूर्णांकel_get_microcode_revision();
+	अगर (rev >= mc->hdr.rev) अणु
 		uci->cpu_sig.rev = rev;
-		return UCODE_OK;
-	}
+		वापस UCODE_OK;
+	पूर्ण
 
 	/*
-	 * Writeback and invalidate caches before updating microcode to avoid
-	 * internal issues depending on what the microcode is updating.
+	 * Writeback and invalidate caches beक्रमe updating microcode to aव्योम
+	 * पूर्णांकernal issues depending on what the microcode is updating.
 	 */
 	native_wbinvd();
 
-	/* write microcode via MSR 0x79 */
-	native_wrmsrl(MSR_IA32_UCODE_WRITE, (unsigned long)mc->bits);
+	/* ग_लिखो microcode via MSR 0x79 */
+	native_wrmsrl(MSR_IA32_UCODE_WRITE, (अचिन्हित दीर्घ)mc->bits);
 
-	rev = intel_get_microcode_revision();
-	if (rev != mc->hdr.rev)
-		return -1;
+	rev = पूर्णांकel_get_microcode_revision();
+	अगर (rev != mc->hdr.rev)
+		वापस -1;
 
 	uci->cpu_sig.rev = rev;
 
-	if (early)
-		print_ucode(uci);
-	else
-		print_ucode_info(uci, mc->hdr.date);
+	अगर (early)
+		prपूर्णांक_ucode(uci);
+	अन्यथा
+		prपूर्णांक_ucode_info(uci, mc->hdr.date);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int __init save_microcode_in_initrd_intel(void)
-{
-	struct ucode_cpu_info uci;
-	struct cpio_data cp;
+पूर्णांक __init save_microcode_in_initrd_पूर्णांकel(व्योम)
+अणु
+	काष्ठा ucode_cpu_info uci;
+	काष्ठा cpio_data cp;
 
 	/*
 	 * initrd is going away, clear patch ptr. We will scan the microcode one
-	 * last time before jettisoning and save a patch, if found. Then we will
-	 * update that pointer too, with a stable patch address to use when
+	 * last समय beक्रमe jettisoning and save a patch, अगर found. Then we will
+	 * update that poपूर्णांकer too, with a stable patch address to use when
 	 * resuming the cores.
 	 */
-	intel_ucode_patch = NULL;
+	पूर्णांकel_ucode_patch = शून्य;
 
-	if (!load_builtin_intel_microcode(&cp))
+	अगर (!load_builtin_पूर्णांकel_microcode(&cp))
 		cp = find_microcode_in_initrd(ucode_path, false);
 
-	if (!(cp.data && cp.size))
-		return 0;
+	अगर (!(cp.data && cp.size))
+		वापस 0;
 
 	collect_cpu_info_early(&uci);
 
@@ -603,205 +604,205 @@ int __init save_microcode_in_initrd_intel(void)
 
 	show_saved_mc();
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * @res_patch, output: a pointer to the patch we found.
+ * @res_patch, output: a poपूर्णांकer to the patch we found.
  */
-static struct microcode_intel *__load_ucode_intel(struct ucode_cpu_info *uci)
-{
-	static const char *path;
-	struct cpio_data cp;
+अटल काष्ठा microcode_पूर्णांकel *__load_ucode_पूर्णांकel(काष्ठा ucode_cpu_info *uci)
+अणु
+	अटल स्थिर अक्षर *path;
+	काष्ठा cpio_data cp;
 	bool use_pa;
 
-	if (IS_ENABLED(CONFIG_X86_32)) {
-		path	  = (const char *)__pa_nodebug(ucode_path);
+	अगर (IS_ENABLED(CONFIG_X86_32)) अणु
+		path	  = (स्थिर अक्षर *)__pa_nodebug(ucode_path);
 		use_pa	  = true;
-	} else {
+	पूर्ण अन्यथा अणु
 		path	  = ucode_path;
 		use_pa	  = false;
-	}
+	पूर्ण
 
 	/* try built-in microcode first */
-	if (!load_builtin_intel_microcode(&cp))
+	अगर (!load_builtin_पूर्णांकel_microcode(&cp))
 		cp = find_microcode_in_initrd(path, use_pa);
 
-	if (!(cp.data && cp.size))
-		return NULL;
+	अगर (!(cp.data && cp.size))
+		वापस शून्य;
 
 	collect_cpu_info_early(uci);
 
-	return scan_microcode(cp.data, cp.size, uci, false);
-}
+	वापस scan_microcode(cp.data, cp.size, uci, false);
+पूर्ण
 
-void __init load_ucode_intel_bsp(void)
-{
-	struct microcode_intel *patch;
-	struct ucode_cpu_info uci;
+व्योम __init load_ucode_पूर्णांकel_bsp(व्योम)
+अणु
+	काष्ठा microcode_पूर्णांकel *patch;
+	काष्ठा ucode_cpu_info uci;
 
-	patch = __load_ucode_intel(&uci);
-	if (!patch)
-		return;
+	patch = __load_ucode_पूर्णांकel(&uci);
+	अगर (!patch)
+		वापस;
 
 	uci.mc = patch;
 
 	apply_microcode_early(&uci, true);
-}
+पूर्ण
 
-void load_ucode_intel_ap(void)
-{
-	struct microcode_intel *patch, **iup;
-	struct ucode_cpu_info uci;
+व्योम load_ucode_पूर्णांकel_ap(व्योम)
+अणु
+	काष्ठा microcode_पूर्णांकel *patch, **iup;
+	काष्ठा ucode_cpu_info uci;
 
-	if (IS_ENABLED(CONFIG_X86_32))
-		iup = (struct microcode_intel **) __pa_nodebug(&intel_ucode_patch);
-	else
-		iup = &intel_ucode_patch;
+	अगर (IS_ENABLED(CONFIG_X86_32))
+		iup = (काष्ठा microcode_पूर्णांकel **) __pa_nodebug(&पूर्णांकel_ucode_patch);
+	अन्यथा
+		iup = &पूर्णांकel_ucode_patch;
 
 reget:
-	if (!*iup) {
-		patch = __load_ucode_intel(&uci);
-		if (!patch)
-			return;
+	अगर (!*iup) अणु
+		patch = __load_ucode_पूर्णांकel(&uci);
+		अगर (!patch)
+			वापस;
 
 		*iup = patch;
-	}
+	पूर्ण
 
 	uci.mc = *iup;
 
-	if (apply_microcode_early(&uci, true)) {
-		/* Mixed-silicon system? Try to refetch the proper patch: */
-		*iup = NULL;
+	अगर (apply_microcode_early(&uci, true)) अणु
+		/* Mixed-silicon प्रणाली? Try to refetch the proper patch: */
+		*iup = शून्य;
 
-		goto reget;
-	}
-}
+		जाओ reget;
+	पूर्ण
+पूर्ण
 
-static struct microcode_intel *find_patch(struct ucode_cpu_info *uci)
-{
-	struct microcode_header_intel *phdr;
-	struct ucode_patch *iter, *tmp;
+अटल काष्ठा microcode_पूर्णांकel *find_patch(काष्ठा ucode_cpu_info *uci)
+अणु
+	काष्ठा microcode_header_पूर्णांकel *phdr;
+	काष्ठा ucode_patch *iter, *पंचांगp;
 
-	list_for_each_entry_safe(iter, tmp, &microcode_cache, plist) {
+	list_क्रम_each_entry_safe(iter, पंचांगp, &microcode_cache, plist) अणु
 
-		phdr = (struct microcode_header_intel *)iter->data;
+		phdr = (काष्ठा microcode_header_पूर्णांकel *)iter->data;
 
-		if (phdr->rev <= uci->cpu_sig.rev)
-			continue;
+		अगर (phdr->rev <= uci->cpu_sig.rev)
+			जारी;
 
-		if (!find_matching_signature(phdr,
+		अगर (!find_matching_signature(phdr,
 					     uci->cpu_sig.sig,
 					     uci->cpu_sig.pf))
-			continue;
+			जारी;
 
-		return iter->data;
-	}
-	return NULL;
-}
+		वापस iter->data;
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
-void reload_ucode_intel(void)
-{
-	struct microcode_intel *p;
-	struct ucode_cpu_info uci;
+व्योम reload_ucode_पूर्णांकel(व्योम)
+अणु
+	काष्ठा microcode_पूर्णांकel *p;
+	काष्ठा ucode_cpu_info uci;
 
 	collect_cpu_info_early(&uci);
 
 	p = find_patch(&uci);
-	if (!p)
-		return;
+	अगर (!p)
+		वापस;
 
 	uci.mc = p;
 
 	apply_microcode_early(&uci, false);
-}
+पूर्ण
 
-static int collect_cpu_info(int cpu_num, struct cpu_signature *csig)
-{
-	static struct cpu_signature prev;
-	struct cpuinfo_x86 *c = &cpu_data(cpu_num);
-	unsigned int val[2];
+अटल पूर्णांक collect_cpu_info(पूर्णांक cpu_num, काष्ठा cpu_signature *csig)
+अणु
+	अटल काष्ठा cpu_signature prev;
+	काष्ठा cpuinfo_x86 *c = &cpu_data(cpu_num);
+	अचिन्हित पूर्णांक val[2];
 
-	memset(csig, 0, sizeof(*csig));
+	स_रखो(csig, 0, माप(*csig));
 
 	csig->sig = cpuid_eax(0x00000001);
 
-	if ((c->x86_model >= 5) || (c->x86 > 6)) {
+	अगर ((c->x86_model >= 5) || (c->x86 > 6)) अणु
 		/* get processor flags from MSR 0x17 */
 		rdmsr(MSR_IA32_PLATFORM_ID, val[0], val[1]);
 		csig->pf = 1 << ((val[1] >> 18) & 7);
-	}
+	पूर्ण
 
 	csig->rev = c->microcode;
 
 	/* No extra locking on prev, races are harmless. */
-	if (csig->sig != prev.sig || csig->pf != prev.pf || csig->rev != prev.rev) {
+	अगर (csig->sig != prev.sig || csig->pf != prev.pf || csig->rev != prev.rev) अणु
 		pr_info("sig=0x%x, pf=0x%x, revision=0x%x\n",
 			csig->sig, csig->pf, csig->rev);
 		prev = *csig;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static enum ucode_state apply_microcode_intel(int cpu)
-{
-	struct ucode_cpu_info *uci = ucode_cpu_info + cpu;
-	struct cpuinfo_x86 *c = &cpu_data(cpu);
+अटल क्रमागत ucode_state apply_microcode_पूर्णांकel(पूर्णांक cpu)
+अणु
+	काष्ठा ucode_cpu_info *uci = ucode_cpu_info + cpu;
+	काष्ठा cpuinfo_x86 *c = &cpu_data(cpu);
 	bool bsp = c->cpu_index == boot_cpu_data.cpu_index;
-	struct microcode_intel *mc;
-	enum ucode_state ret;
-	static int prev_rev;
+	काष्ठा microcode_पूर्णांकel *mc;
+	क्रमागत ucode_state ret;
+	अटल पूर्णांक prev_rev;
 	u32 rev;
 
 	/* We should bind the task to the CPU */
-	if (WARN_ON(raw_smp_processor_id() != cpu))
-		return UCODE_ERROR;
+	अगर (WARN_ON(raw_smp_processor_id() != cpu))
+		वापस UCODE_ERROR;
 
-	/* Look for a newer patch in our cache: */
+	/* Look क्रम a newer patch in our cache: */
 	mc = find_patch(uci);
-	if (!mc) {
+	अगर (!mc) अणु
 		mc = uci->mc;
-		if (!mc)
-			return UCODE_NFOUND;
-	}
+		अगर (!mc)
+			वापस UCODE_NFOUND;
+	पूर्ण
 
 	/*
-	 * Save us the MSR write below - which is a particular expensive
-	 * operation - when the other hyperthread has updated the microcode
-	 * already.
+	 * Save us the MSR ग_लिखो below - which is a particular expensive
+	 * operation - when the other hyperthपढ़ो has updated the microcode
+	 * alपढ़ोy.
 	 */
-	rev = intel_get_microcode_revision();
-	if (rev >= mc->hdr.rev) {
+	rev = पूर्णांकel_get_microcode_revision();
+	अगर (rev >= mc->hdr.rev) अणु
 		ret = UCODE_OK;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	/*
-	 * Writeback and invalidate caches before updating microcode to avoid
-	 * internal issues depending on what the microcode is updating.
+	 * Writeback and invalidate caches beक्रमe updating microcode to aव्योम
+	 * पूर्णांकernal issues depending on what the microcode is updating.
 	 */
 	native_wbinvd();
 
-	/* write microcode via MSR 0x79 */
-	wrmsrl(MSR_IA32_UCODE_WRITE, (unsigned long)mc->bits);
+	/* ग_लिखो microcode via MSR 0x79 */
+	wrmsrl(MSR_IA32_UCODE_WRITE, (अचिन्हित दीर्घ)mc->bits);
 
-	rev = intel_get_microcode_revision();
+	rev = पूर्णांकel_get_microcode_revision();
 
-	if (rev != mc->hdr.rev) {
+	अगर (rev != mc->hdr.rev) अणु
 		pr_err("CPU%d update to revision 0x%x failed\n",
 		       cpu, mc->hdr.rev);
-		return UCODE_ERROR;
-	}
+		वापस UCODE_ERROR;
+	पूर्ण
 
-	if (bsp && rev != prev_rev) {
+	अगर (bsp && rev != prev_rev) अणु
 		pr_info("updated to revision 0x%x, date = %04x-%02x-%02x\n",
 			rev,
 			mc->hdr.date & 0xffff,
 			mc->hdr.date >> 24,
 			(mc->hdr.date >> 16) & 0xff);
 		prev_rev = rev;
-	}
+	पूर्ण
 
 	ret = UCODE_UPDATED;
 
@@ -810,193 +811,193 @@ out:
 	c->microcode	 = rev;
 
 	/* Update boot_cpu_data's revision too, if we're on the BSP: */
-	if (bsp)
+	अगर (bsp)
 		boot_cpu_data.microcode = rev;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static enum ucode_state generic_load_microcode(int cpu, struct iov_iter *iter)
-{
-	struct ucode_cpu_info *uci = ucode_cpu_info + cpu;
-	unsigned int curr_mc_size = 0, new_mc_size = 0;
-	enum ucode_state ret = UCODE_OK;
-	int new_rev = uci->cpu_sig.rev;
-	u8 *new_mc = NULL, *mc = NULL;
-	unsigned int csig, cpf;
+अटल क्रमागत ucode_state generic_load_microcode(पूर्णांक cpu, काष्ठा iov_iter *iter)
+अणु
+	काष्ठा ucode_cpu_info *uci = ucode_cpu_info + cpu;
+	अचिन्हित पूर्णांक curr_mc_size = 0, new_mc_size = 0;
+	क्रमागत ucode_state ret = UCODE_OK;
+	पूर्णांक new_rev = uci->cpu_sig.rev;
+	u8 *new_mc = शून्य, *mc = शून्य;
+	अचिन्हित पूर्णांक csig, cpf;
 
-	while (iov_iter_count(iter)) {
-		struct microcode_header_intel mc_header;
-		unsigned int mc_size, data_size;
+	जबतक (iov_iter_count(iter)) अणु
+		काष्ठा microcode_header_पूर्णांकel mc_header;
+		अचिन्हित पूर्णांक mc_size, data_size;
 		u8 *data;
 
-		if (!copy_from_iter_full(&mc_header, sizeof(mc_header), iter)) {
+		अगर (!copy_from_iter_full(&mc_header, माप(mc_header), iter)) अणु
 			pr_err("error! Truncated or inaccessible header in microcode data file\n");
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		mc_size = get_totalsize(&mc_header);
-		if (mc_size < sizeof(mc_header)) {
+		अगर (mc_size < माप(mc_header)) अणु
 			pr_err("error! Bad data in microcode data file (totalsize too small)\n");
-			break;
-		}
-		data_size = mc_size - sizeof(mc_header);
-		if (data_size > iov_iter_count(iter)) {
+			अवरोध;
+		पूर्ण
+		data_size = mc_size - माप(mc_header);
+		अगर (data_size > iov_iter_count(iter)) अणु
 			pr_err("error! Bad data in microcode data file (truncated file?)\n");
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		/* For performance reasons, reuse mc area when possible */
-		if (!mc || mc_size > curr_mc_size) {
-			vfree(mc);
-			mc = vmalloc(mc_size);
-			if (!mc)
-				break;
+		/* For perक्रमmance reasons, reuse mc area when possible */
+		अगर (!mc || mc_size > curr_mc_size) अणु
+			vमुक्त(mc);
+			mc = vदो_स्मृति(mc_size);
+			अगर (!mc)
+				अवरोध;
 			curr_mc_size = mc_size;
-		}
+		पूर्ण
 
-		memcpy(mc, &mc_header, sizeof(mc_header));
-		data = mc + sizeof(mc_header);
-		if (!copy_from_iter_full(data, data_size, iter) ||
-		    microcode_sanity_check(mc, 1) < 0) {
-			break;
-		}
+		स_नकल(mc, &mc_header, माप(mc_header));
+		data = mc + माप(mc_header);
+		अगर (!copy_from_iter_full(data, data_size, iter) ||
+		    microcode_sanity_check(mc, 1) < 0) अणु
+			अवरोध;
+		पूर्ण
 
 		csig = uci->cpu_sig.sig;
 		cpf = uci->cpu_sig.pf;
-		if (has_newer_microcode(mc, csig, cpf, new_rev)) {
-			vfree(new_mc);
+		अगर (has_newer_microcode(mc, csig, cpf, new_rev)) अणु
+			vमुक्त(new_mc);
 			new_rev = mc_header.rev;
 			new_mc  = mc;
 			new_mc_size = mc_size;
-			mc = NULL;	/* trigger new vmalloc */
+			mc = शून्य;	/* trigger new vदो_स्मृति */
 			ret = UCODE_NEW;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	vfree(mc);
+	vमुक्त(mc);
 
-	if (iov_iter_count(iter)) {
-		vfree(new_mc);
-		return UCODE_ERROR;
-	}
+	अगर (iov_iter_count(iter)) अणु
+		vमुक्त(new_mc);
+		वापस UCODE_ERROR;
+	पूर्ण
 
-	if (!new_mc)
-		return UCODE_NFOUND;
+	अगर (!new_mc)
+		वापस UCODE_NFOUND;
 
-	vfree(uci->mc);
-	uci->mc = (struct microcode_intel *)new_mc;
+	vमुक्त(uci->mc);
+	uci->mc = (काष्ठा microcode_पूर्णांकel *)new_mc;
 
 	/*
-	 * If early loading microcode is supported, save this mc into
+	 * If early loading microcode is supported, save this mc पूर्णांकo
 	 * permanent memory. So it will be loaded early when a CPU is hot added
 	 * or resumes.
 	 */
-	save_mc_for_early(uci, new_mc, new_mc_size);
+	save_mc_क्रम_early(uci, new_mc, new_mc_size);
 
 	pr_debug("CPU%d found a matching microcode update with version 0x%x (current=0x%x)\n",
 		 cpu, new_rev, uci->cpu_sig.rev);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static bool is_blacklisted(unsigned int cpu)
-{
-	struct cpuinfo_x86 *c = &cpu_data(cpu);
+अटल bool is_blacklisted(अचिन्हित पूर्णांक cpu)
+अणु
+	काष्ठा cpuinfo_x86 *c = &cpu_data(cpu);
 
 	/*
 	 * Late loading on model 79 with microcode revision less than 0x0b000021
-	 * and LLC size per core bigger than 2.5MB may result in a system hang.
-	 * This behavior is documented in item BDF90, #334165 (Intel Xeon
+	 * and LLC size per core bigger than 2.5MB may result in a प्रणाली hang.
+	 * This behavior is करोcumented in item BDF90, #334165 (Intel Xeon
 	 * Processor E7-8800/4800 v4 Product Family).
 	 */
-	if (c->x86 == 6 &&
+	अगर (c->x86 == 6 &&
 	    c->x86_model == INTEL_FAM6_BROADWELL_X &&
 	    c->x86_stepping == 0x01 &&
 	    llc_size_per_core > 2621440 &&
-	    c->microcode < 0x0b000021) {
+	    c->microcode < 0x0b000021) अणु
 		pr_err_once("Erratum BDF90: late loading with revision < 0x0b000021 (0x%x) disabled.\n", c->microcode);
 		pr_err_once("Please consider either early loading through initrd/built-in or a potential BIOS update.\n");
-		return true;
-	}
+		वापस true;
+	पूर्ण
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static enum ucode_state request_microcode_fw(int cpu, struct device *device,
+अटल क्रमागत ucode_state request_microcode_fw(पूर्णांक cpu, काष्ठा device *device,
 					     bool refresh_fw)
-{
-	struct cpuinfo_x86 *c = &cpu_data(cpu);
-	const struct firmware *firmware;
-	struct iov_iter iter;
-	enum ucode_state ret;
-	struct kvec kvec;
-	char name[30];
+अणु
+	काष्ठा cpuinfo_x86 *c = &cpu_data(cpu);
+	स्थिर काष्ठा firmware *firmware;
+	काष्ठा iov_iter iter;
+	क्रमागत ucode_state ret;
+	काष्ठा kvec kvec;
+	अक्षर name[30];
 
-	if (is_blacklisted(cpu))
-		return UCODE_NFOUND;
+	अगर (is_blacklisted(cpu))
+		वापस UCODE_NFOUND;
 
-	sprintf(name, "intel-ucode/%02x-%02x-%02x",
+	प्र_लिखो(name, "intel-ucode/%02x-%02x-%02x",
 		c->x86, c->x86_model, c->x86_stepping);
 
-	if (request_firmware_direct(&firmware, name, device)) {
+	अगर (request_firmware_direct(&firmware, name, device)) अणु
 		pr_debug("data file %s load failed\n", name);
-		return UCODE_NFOUND;
-	}
+		वापस UCODE_NFOUND;
+	पूर्ण
 
-	kvec.iov_base = (void *)firmware->data;
+	kvec.iov_base = (व्योम *)firmware->data;
 	kvec.iov_len = firmware->size;
 	iov_iter_kvec(&iter, WRITE, &kvec, 1, firmware->size);
 	ret = generic_load_microcode(cpu, &iter);
 
 	release_firmware(firmware);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static enum ucode_state
-request_microcode_user(int cpu, const void __user *buf, size_t size)
-{
-	struct iov_iter iter;
-	struct iovec iov;
+अटल क्रमागत ucode_state
+request_microcode_user(पूर्णांक cpu, स्थिर व्योम __user *buf, माप_प्रकार size)
+अणु
+	काष्ठा iov_iter iter;
+	काष्ठा iovec iov;
 
-	if (is_blacklisted(cpu))
-		return UCODE_NFOUND;
+	अगर (is_blacklisted(cpu))
+		वापस UCODE_NFOUND;
 
-	iov.iov_base = (void __user *)buf;
+	iov.iov_base = (व्योम __user *)buf;
 	iov.iov_len = size;
 	iov_iter_init(&iter, WRITE, &iov, 1, size);
 
-	return generic_load_microcode(cpu, &iter);
-}
+	वापस generic_load_microcode(cpu, &iter);
+पूर्ण
 
-static struct microcode_ops microcode_intel_ops = {
+अटल काष्ठा microcode_ops microcode_पूर्णांकel_ops = अणु
 	.request_microcode_user		  = request_microcode_user,
 	.request_microcode_fw             = request_microcode_fw,
 	.collect_cpu_info                 = collect_cpu_info,
-	.apply_microcode                  = apply_microcode_intel,
-};
+	.apply_microcode                  = apply_microcode_पूर्णांकel,
+पूर्ण;
 
-static int __init calc_llc_size_per_core(struct cpuinfo_x86 *c)
-{
+अटल पूर्णांक __init calc_llc_size_per_core(काष्ठा cpuinfo_x86 *c)
+अणु
 	u64 llc_size = c->x86_cache_size * 1024ULL;
 
-	do_div(llc_size, c->x86_max_cores);
+	करो_भाग(llc_size, c->x86_max_cores);
 
-	return (int)llc_size;
-}
+	वापस (पूर्णांक)llc_size;
+पूर्ण
 
-struct microcode_ops * __init init_intel_microcode(void)
-{
-	struct cpuinfo_x86 *c = &boot_cpu_data;
+काष्ठा microcode_ops * __init init_पूर्णांकel_microcode(व्योम)
+अणु
+	काष्ठा cpuinfo_x86 *c = &boot_cpu_data;
 
-	if (c->x86_vendor != X86_VENDOR_INTEL || c->x86 < 6 ||
-	    cpu_has(c, X86_FEATURE_IA64)) {
+	अगर (c->x86_venकरोr != X86_VENDOR_INTEL || c->x86 < 6 ||
+	    cpu_has(c, X86_FEATURE_IA64)) अणु
 		pr_err("Intel CPU family 0x%x not supported\n", c->x86);
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
 	llc_size_per_core = calc_llc_size_per_core(c);
 
-	return &microcode_intel_ops;
-}
+	वापस &microcode_पूर्णांकel_ops;
+पूर्ण

@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
  *	Copyright (C) 2002 Motorola GSG-China
  *
@@ -7,7 +8,7 @@
  *
  * Desc.:
  *	Implementation of I2C Adapter/Algorithm Driver
- *	for I2C Bus integrated in Freescale i.MX/MXC processors
+ *	क्रम I2C Bus पूर्णांकegrated in Freescale i.MX/MXC processors
  *
  *	Derived from Motorola GSG China I2C example driver
  *
@@ -21,406 +22,406 @@
  *
  */
 
-#include <linux/acpi.h>
-#include <linux/clk.h>
-#include <linux/completion.h>
-#include <linux/delay.h>
-#include <linux/dma-mapping.h>
-#include <linux/dmaengine.h>
-#include <linux/dmapool.h>
-#include <linux/err.h>
-#include <linux/errno.h>
-#include <linux/gpio/consumer.h>
-#include <linux/i2c.h>
-#include <linux/init.h>
-#include <linux/interrupt.h>
-#include <linux/io.h>
-#include <linux/iopoll.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/of.h>
-#include <linux/of_device.h>
-#include <linux/of_dma.h>
-#include <linux/pinctrl/consumer.h>
-#include <linux/platform_data/i2c-imx.h>
-#include <linux/platform_device.h>
-#include <linux/pm_runtime.h>
-#include <linux/sched.h>
-#include <linux/slab.h>
+#समावेश <linux/acpi.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/completion.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/dma-mapping.h>
+#समावेश <linux/dmaengine.h>
+#समावेश <linux/dmapool.h>
+#समावेश <linux/err.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/gpio/consumer.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/init.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/iopoll.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/of_dma.h>
+#समावेश <linux/pinctrl/consumer.h>
+#समावेश <linux/platक्रमm_data/i2c-imx.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/pm_runसमय.स>
+#समावेश <linux/sched.h>
+#समावेश <linux/slab.h>
 
 /* This will be the driver name the kernel reports */
-#define DRIVER_NAME "imx-i2c"
+#घोषणा DRIVER_NAME "imx-i2c"
 
 /*
- * Enable DMA if transfer byte size is bigger than this threshold.
+ * Enable DMA अगर transfer byte size is bigger than this threshold.
  * As the hardware request, it must bigger than 4 bytes.\
  * I have set '16' here, maybe it's not the best but I think it's
  * the appropriate.
  */
-#define DMA_THRESHOLD	16
-#define DMA_TIMEOUT	1000
+#घोषणा DMA_THRESHOLD	16
+#घोषणा DMA_TIMEOUT	1000
 
-/* IMX I2C registers:
- * the I2C register offset is different between SoCs,
- * to provid support for all these chips, split the
- * register offset into a fixed base address and a
- * variable shift value, then the full register offset
+/* IMX I2C रेजिस्टरs:
+ * the I2C रेजिस्टर offset is dअगरferent between SoCs,
+ * to provid support क्रम all these chips, split the
+ * रेजिस्टर offset पूर्णांकo a fixed base address and a
+ * variable shअगरt value, then the full रेजिस्टर offset
  * will be calculated by
- * reg_off = ( reg_base_addr << reg_shift)
+ * reg_off = ( reg_base_addr << reg_shअगरt)
  */
-#define IMX_I2C_IADR	0x00	/* i2c slave address */
-#define IMX_I2C_IFDR	0x01	/* i2c frequency divider */
-#define IMX_I2C_I2CR	0x02	/* i2c control */
-#define IMX_I2C_I2SR	0x03	/* i2c status */
-#define IMX_I2C_I2DR	0x04	/* i2c transfer data */
+#घोषणा IMX_I2C_IADR	0x00	/* i2c slave address */
+#घोषणा IMX_I2C_IFDR	0x01	/* i2c frequency भागider */
+#घोषणा IMX_I2C_I2CR	0x02	/* i2c control */
+#घोषणा IMX_I2C_I2SR	0x03	/* i2c status */
+#घोषणा IMX_I2C_I2DR	0x04	/* i2c transfer data */
 
 /*
- * All of the layerscape series SoCs support IBIC register.
+ * All of the layerscape series SoCs support IBIC रेजिस्टर.
  */
-#define IMX_I2C_IBIC	0x05    /* i2c bus interrupt config */
+#घोषणा IMX_I2C_IBIC	0x05    /* i2c bus पूर्णांकerrupt config */
 
-#define IMX_I2C_REGSHIFT	2
-#define VF610_I2C_REGSHIFT	0
+#घोषणा IMX_I2C_REGSHIFT	2
+#घोषणा VF610_I2C_REGSHIFT	0
 
-/* Bits of IMX I2C registers */
-#define I2SR_RXAK	0x01
-#define I2SR_IIF	0x02
-#define I2SR_SRW	0x04
-#define I2SR_IAL	0x10
-#define I2SR_IBB	0x20
-#define I2SR_IAAS	0x40
-#define I2SR_ICF	0x80
-#define I2CR_DMAEN	0x02
-#define I2CR_RSTA	0x04
-#define I2CR_TXAK	0x08
-#define I2CR_MTX	0x10
-#define I2CR_MSTA	0x20
-#define I2CR_IIEN	0x40
-#define I2CR_IEN	0x80
-#define IBIC_BIIE	0x80 /* Bus idle interrupt enable */
+/* Bits of IMX I2C रेजिस्टरs */
+#घोषणा I2SR_RXAK	0x01
+#घोषणा I2SR_IIF	0x02
+#घोषणा I2SR_SRW	0x04
+#घोषणा I2SR_IAL	0x10
+#घोषणा I2SR_IBB	0x20
+#घोषणा I2SR_IAAS	0x40
+#घोषणा I2SR_ICF	0x80
+#घोषणा I2CR_DMAEN	0x02
+#घोषणा I2CR_RSTA	0x04
+#घोषणा I2CR_TXAK	0x08
+#घोषणा I2CR_MTX	0x10
+#घोषणा I2CR_MSTA	0x20
+#घोषणा I2CR_IIEN	0x40
+#घोषणा I2CR_IEN	0x80
+#घोषणा IBIC_BIIE	0x80 /* Bus idle पूर्णांकerrupt enable */
 
-/* register bits different operating codes definition:
- * 1) I2SR: Interrupt flags clear operation differ between SoCs:
- * - write zero to clear(w0c) INT flag on i.MX,
- * - but write one to clear(w1c) INT flag on Vybrid.
- * 2) I2CR: I2C module enable operation also differ between SoCs:
+/* रेजिस्टर bits dअगरferent operating codes definition:
+ * 1) I2SR: Interrupt flags clear operation dअगरfer between SoCs:
+ * - ग_लिखो zero to clear(w0c) INT flag on i.MX,
+ * - but ग_लिखो one to clear(w1c) INT flag on Vybrid.
+ * 2) I2CR: I2C module enable operation also dअगरfer between SoCs:
  * - set I2CR_IEN bit enable the module on i.MX,
  * - but clear I2CR_IEN bit enable the module on Vybrid.
  */
-#define I2SR_CLR_OPCODE_W0C	0x0
-#define I2SR_CLR_OPCODE_W1C	(I2SR_IAL | I2SR_IIF)
-#define I2CR_IEN_OPCODE_0	0x0
-#define I2CR_IEN_OPCODE_1	I2CR_IEN
+#घोषणा I2SR_CLR_OPCODE_W0C	0x0
+#घोषणा I2SR_CLR_OPCODE_W1C	(I2SR_IAL | I2SR_IIF)
+#घोषणा I2CR_IEN_OPCODE_0	0x0
+#घोषणा I2CR_IEN_OPCODE_1	I2CR_IEN
 
-#define I2C_PM_TIMEOUT		10 /* ms */
+#घोषणा I2C_PM_TIMEOUT		10 /* ms */
 
 /*
- * sorted list of clock divider, register value pairs
+ * sorted list of घड़ी भागider, रेजिस्टर value pairs
  * taken from table 26-5, p.26-9, Freescale i.MX
  * Integrated Portable System Processor Reference Manual
  * Document Number: MC9328MXLRM, Rev. 5.1, 06/2007
  *
- * Duplicated divider values removed from list
+ * Duplicated भागider values हटाओd from list
  */
-struct imx_i2c_clk_pair {
-	u16	div;
+काष्ठा imx_i2c_clk_pair अणु
+	u16	भाग;
 	u16	val;
-};
+पूर्ण;
 
-static struct imx_i2c_clk_pair imx_i2c_clk_div[] = {
-	{ 22,	0x20 }, { 24,	0x21 }, { 26,	0x22 }, { 28,	0x23 },
-	{ 30,	0x00 },	{ 32,	0x24 }, { 36,	0x25 }, { 40,	0x26 },
-	{ 42,	0x03 }, { 44,	0x27 },	{ 48,	0x28 }, { 52,	0x05 },
-	{ 56,	0x29 }, { 60,	0x06 }, { 64,	0x2A },	{ 72,	0x2B },
-	{ 80,	0x2C }, { 88,	0x09 }, { 96,	0x2D }, { 104,	0x0A },
-	{ 112,	0x2E }, { 128,	0x2F }, { 144,	0x0C }, { 160,	0x30 },
-	{ 192,	0x31 },	{ 224,	0x32 }, { 240,	0x0F }, { 256,	0x33 },
-	{ 288,	0x10 }, { 320,	0x34 },	{ 384,	0x35 }, { 448,	0x36 },
-	{ 480,	0x13 }, { 512,	0x37 }, { 576,	0x14 },	{ 640,	0x38 },
-	{ 768,	0x39 }, { 896,	0x3A }, { 960,	0x17 }, { 1024,	0x3B },
-	{ 1152,	0x18 }, { 1280,	0x3C }, { 1536,	0x3D }, { 1792,	0x3E },
-	{ 1920,	0x1B },	{ 2048,	0x3F }, { 2304,	0x1C }, { 2560,	0x1D },
-	{ 3072,	0x1E }, { 3840,	0x1F }
-};
+अटल काष्ठा imx_i2c_clk_pair imx_i2c_clk_भाग[] = अणु
+	अणु 22,	0x20 पूर्ण, अणु 24,	0x21 पूर्ण, अणु 26,	0x22 पूर्ण, अणु 28,	0x23 पूर्ण,
+	अणु 30,	0x00 पूर्ण,	अणु 32,	0x24 पूर्ण, अणु 36,	0x25 पूर्ण, अणु 40,	0x26 पूर्ण,
+	अणु 42,	0x03 पूर्ण, अणु 44,	0x27 पूर्ण,	अणु 48,	0x28 पूर्ण, अणु 52,	0x05 पूर्ण,
+	अणु 56,	0x29 पूर्ण, अणु 60,	0x06 पूर्ण, अणु 64,	0x2A पूर्ण,	अणु 72,	0x2B पूर्ण,
+	अणु 80,	0x2C पूर्ण, अणु 88,	0x09 पूर्ण, अणु 96,	0x2D पूर्ण, अणु 104,	0x0A पूर्ण,
+	अणु 112,	0x2E पूर्ण, अणु 128,	0x2F पूर्ण, अणु 144,	0x0C पूर्ण, अणु 160,	0x30 पूर्ण,
+	अणु 192,	0x31 पूर्ण,	अणु 224,	0x32 पूर्ण, अणु 240,	0x0F पूर्ण, अणु 256,	0x33 पूर्ण,
+	अणु 288,	0x10 पूर्ण, अणु 320,	0x34 पूर्ण,	अणु 384,	0x35 पूर्ण, अणु 448,	0x36 पूर्ण,
+	अणु 480,	0x13 पूर्ण, अणु 512,	0x37 पूर्ण, अणु 576,	0x14 पूर्ण,	अणु 640,	0x38 पूर्ण,
+	अणु 768,	0x39 पूर्ण, अणु 896,	0x3A पूर्ण, अणु 960,	0x17 पूर्ण, अणु 1024,	0x3B पूर्ण,
+	अणु 1152,	0x18 पूर्ण, अणु 1280,	0x3C पूर्ण, अणु 1536,	0x3D पूर्ण, अणु 1792,	0x3E पूर्ण,
+	अणु 1920,	0x1B पूर्ण,	अणु 2048,	0x3F पूर्ण, अणु 2304,	0x1C पूर्ण, अणु 2560,	0x1D पूर्ण,
+	अणु 3072,	0x1E पूर्ण, अणु 3840,	0x1F पूर्ण
+पूर्ण;
 
-/* Vybrid VF610 clock divider, register value pairs */
-static struct imx_i2c_clk_pair vf610_i2c_clk_div[] = {
-	{ 20,   0x00 }, { 22,   0x01 }, { 24,   0x02 }, { 26,   0x03 },
-	{ 28,   0x04 }, { 30,   0x05 }, { 32,   0x09 }, { 34,   0x06 },
-	{ 36,   0x0A }, { 40,   0x07 }, { 44,   0x0C }, { 48,   0x0D },
-	{ 52,   0x43 }, { 56,   0x0E }, { 60,   0x45 }, { 64,   0x12 },
-	{ 68,   0x0F }, { 72,   0x13 }, { 80,   0x14 }, { 88,   0x15 },
-	{ 96,   0x19 }, { 104,  0x16 }, { 112,  0x1A }, { 128,  0x17 },
-	{ 136,  0x4F }, { 144,  0x1C }, { 160,  0x1D }, { 176,  0x55 },
-	{ 192,  0x1E }, { 208,  0x56 }, { 224,  0x22 }, { 228,  0x24 },
-	{ 240,  0x1F }, { 256,  0x23 }, { 288,  0x5C }, { 320,  0x25 },
-	{ 384,  0x26 }, { 448,  0x2A }, { 480,  0x27 }, { 512,  0x2B },
-	{ 576,  0x2C }, { 640,  0x2D }, { 768,  0x31 }, { 896,  0x32 },
-	{ 960,  0x2F }, { 1024, 0x33 }, { 1152, 0x34 }, { 1280, 0x35 },
-	{ 1536, 0x36 }, { 1792, 0x3A }, { 1920, 0x37 }, { 2048, 0x3B },
-	{ 2304, 0x3C }, { 2560, 0x3D }, { 3072, 0x3E }, { 3584, 0x7A },
-	{ 3840, 0x3F }, { 4096, 0x7B }, { 5120, 0x7D }, { 6144, 0x7E },
-};
+/* Vybrid VF610 घड़ी भागider, रेजिस्टर value pairs */
+अटल काष्ठा imx_i2c_clk_pair vf610_i2c_clk_भाग[] = अणु
+	अणु 20,   0x00 पूर्ण, अणु 22,   0x01 पूर्ण, अणु 24,   0x02 पूर्ण, अणु 26,   0x03 पूर्ण,
+	अणु 28,   0x04 पूर्ण, अणु 30,   0x05 पूर्ण, अणु 32,   0x09 पूर्ण, अणु 34,   0x06 पूर्ण,
+	अणु 36,   0x0A पूर्ण, अणु 40,   0x07 पूर्ण, अणु 44,   0x0C पूर्ण, अणु 48,   0x0D पूर्ण,
+	अणु 52,   0x43 पूर्ण, अणु 56,   0x0E पूर्ण, अणु 60,   0x45 पूर्ण, अणु 64,   0x12 पूर्ण,
+	अणु 68,   0x0F पूर्ण, अणु 72,   0x13 पूर्ण, अणु 80,   0x14 पूर्ण, अणु 88,   0x15 पूर्ण,
+	अणु 96,   0x19 पूर्ण, अणु 104,  0x16 पूर्ण, अणु 112,  0x1A पूर्ण, अणु 128,  0x17 पूर्ण,
+	अणु 136,  0x4F पूर्ण, अणु 144,  0x1C पूर्ण, अणु 160,  0x1D पूर्ण, अणु 176,  0x55 पूर्ण,
+	अणु 192,  0x1E पूर्ण, अणु 208,  0x56 पूर्ण, अणु 224,  0x22 पूर्ण, अणु 228,  0x24 पूर्ण,
+	अणु 240,  0x1F पूर्ण, अणु 256,  0x23 पूर्ण, अणु 288,  0x5C पूर्ण, अणु 320,  0x25 पूर्ण,
+	अणु 384,  0x26 पूर्ण, अणु 448,  0x2A पूर्ण, अणु 480,  0x27 पूर्ण, अणु 512,  0x2B पूर्ण,
+	अणु 576,  0x2C पूर्ण, अणु 640,  0x2D पूर्ण, अणु 768,  0x31 पूर्ण, अणु 896,  0x32 पूर्ण,
+	अणु 960,  0x2F पूर्ण, अणु 1024, 0x33 पूर्ण, अणु 1152, 0x34 पूर्ण, अणु 1280, 0x35 पूर्ण,
+	अणु 1536, 0x36 पूर्ण, अणु 1792, 0x3A पूर्ण, अणु 1920, 0x37 पूर्ण, अणु 2048, 0x3B पूर्ण,
+	अणु 2304, 0x3C पूर्ण, अणु 2560, 0x3D पूर्ण, अणु 3072, 0x3E पूर्ण, अणु 3584, 0x7A पूर्ण,
+	अणु 3840, 0x3F पूर्ण, अणु 4096, 0x7B पूर्ण, अणु 5120, 0x7D पूर्ण, अणु 6144, 0x7E पूर्ण,
+पूर्ण;
 
-enum imx_i2c_type {
+क्रमागत imx_i2c_type अणु
 	IMX1_I2C,
 	IMX21_I2C,
 	VF610_I2C,
-};
+पूर्ण;
 
-struct imx_i2c_hwdata {
-	enum imx_i2c_type	devtype;
-	unsigned		regshift;
-	struct imx_i2c_clk_pair	*clk_div;
-	unsigned		ndivs;
-	unsigned		i2sr_clr_opcode;
-	unsigned		i2cr_ien_opcode;
-};
+काष्ठा imx_i2c_hwdata अणु
+	क्रमागत imx_i2c_type	devtype;
+	अचिन्हित		regshअगरt;
+	काष्ठा imx_i2c_clk_pair	*clk_भाग;
+	अचिन्हित		nभागs;
+	अचिन्हित		i2sr_clr_opcode;
+	अचिन्हित		i2cr_ien_opcode;
+पूर्ण;
 
-struct imx_i2c_dma {
-	struct dma_chan		*chan_tx;
-	struct dma_chan		*chan_rx;
-	struct dma_chan		*chan_using;
-	struct completion	cmd_complete;
+काष्ठा imx_i2c_dma अणु
+	काष्ठा dma_chan		*chan_tx;
+	काष्ठा dma_chan		*chan_rx;
+	काष्ठा dma_chan		*chan_using;
+	काष्ठा completion	cmd_complete;
 	dma_addr_t		dma_buf;
-	unsigned int		dma_len;
-	enum dma_transfer_direction dma_transfer_dir;
-	enum dma_data_direction dma_data_dir;
-};
+	अचिन्हित पूर्णांक		dma_len;
+	क्रमागत dma_transfer_direction dma_transfer_dir;
+	क्रमागत dma_data_direction dma_data_dir;
+पूर्ण;
 
-struct imx_i2c_struct {
-	struct i2c_adapter	adapter;
-	struct clk		*clk;
-	struct notifier_block	clk_change_nb;
-	void __iomem		*base;
-	wait_queue_head_t	queue;
-	unsigned long		i2csr;
-	unsigned int		disable_delay;
-	int			stopped;
-	unsigned int		ifdr; /* IMX_I2C_IFDR */
-	unsigned int		cur_clk;
-	unsigned int		bitrate;
-	const struct imx_i2c_hwdata	*hwdata;
-	struct i2c_bus_recovery_info rinfo;
+काष्ठा imx_i2c_काष्ठा अणु
+	काष्ठा i2c_adapter	adapter;
+	काष्ठा clk		*clk;
+	काष्ठा notअगरier_block	clk_change_nb;
+	व्योम __iomem		*base;
+	रुको_queue_head_t	queue;
+	अचिन्हित दीर्घ		i2csr;
+	अचिन्हित पूर्णांक		disable_delay;
+	पूर्णांक			stopped;
+	अचिन्हित पूर्णांक		अगरdr; /* IMX_I2C_IFDR */
+	अचिन्हित पूर्णांक		cur_clk;
+	अचिन्हित पूर्णांक		bitrate;
+	स्थिर काष्ठा imx_i2c_hwdata	*hwdata;
+	काष्ठा i2c_bus_recovery_info rinfo;
 
-	struct pinctrl *pinctrl;
-	struct pinctrl_state *pinctrl_pins_default;
-	struct pinctrl_state *pinctrl_pins_gpio;
+	काष्ठा pinctrl *pinctrl;
+	काष्ठा pinctrl_state *pinctrl_pins_शेष;
+	काष्ठा pinctrl_state *pinctrl_pins_gpio;
 
-	struct imx_i2c_dma	*dma;
-	struct i2c_client	*slave;
-	enum i2c_slave_event last_slave_event;
-};
+	काष्ठा imx_i2c_dma	*dma;
+	काष्ठा i2c_client	*slave;
+	क्रमागत i2c_slave_event last_slave_event;
+पूर्ण;
 
-static const struct imx_i2c_hwdata imx1_i2c_hwdata = {
+अटल स्थिर काष्ठा imx_i2c_hwdata imx1_i2c_hwdata = अणु
 	.devtype		= IMX1_I2C,
-	.regshift		= IMX_I2C_REGSHIFT,
-	.clk_div		= imx_i2c_clk_div,
-	.ndivs			= ARRAY_SIZE(imx_i2c_clk_div),
+	.regshअगरt		= IMX_I2C_REGSHIFT,
+	.clk_भाग		= imx_i2c_clk_भाग,
+	.nभागs			= ARRAY_SIZE(imx_i2c_clk_भाग),
 	.i2sr_clr_opcode	= I2SR_CLR_OPCODE_W0C,
 	.i2cr_ien_opcode	= I2CR_IEN_OPCODE_1,
 
-};
+पूर्ण;
 
-static const struct imx_i2c_hwdata imx21_i2c_hwdata = {
+अटल स्थिर काष्ठा imx_i2c_hwdata imx21_i2c_hwdata = अणु
 	.devtype		= IMX21_I2C,
-	.regshift		= IMX_I2C_REGSHIFT,
-	.clk_div		= imx_i2c_clk_div,
-	.ndivs			= ARRAY_SIZE(imx_i2c_clk_div),
+	.regshअगरt		= IMX_I2C_REGSHIFT,
+	.clk_भाग		= imx_i2c_clk_भाग,
+	.nभागs			= ARRAY_SIZE(imx_i2c_clk_भाग),
 	.i2sr_clr_opcode	= I2SR_CLR_OPCODE_W0C,
 	.i2cr_ien_opcode	= I2CR_IEN_OPCODE_1,
 
-};
+पूर्ण;
 
-static struct imx_i2c_hwdata vf610_i2c_hwdata = {
+अटल काष्ठा imx_i2c_hwdata vf610_i2c_hwdata = अणु
 	.devtype		= VF610_I2C,
-	.regshift		= VF610_I2C_REGSHIFT,
-	.clk_div		= vf610_i2c_clk_div,
-	.ndivs			= ARRAY_SIZE(vf610_i2c_clk_div),
+	.regshअगरt		= VF610_I2C_REGSHIFT,
+	.clk_भाग		= vf610_i2c_clk_भाग,
+	.nभागs			= ARRAY_SIZE(vf610_i2c_clk_भाग),
 	.i2sr_clr_opcode	= I2SR_CLR_OPCODE_W1C,
 	.i2cr_ien_opcode	= I2CR_IEN_OPCODE_0,
 
-};
+पूर्ण;
 
-static const struct platform_device_id imx_i2c_devtype[] = {
-	{
+अटल स्थिर काष्ठा platक्रमm_device_id imx_i2c_devtype[] = अणु
+	अणु
 		.name = "imx1-i2c",
-		.driver_data = (kernel_ulong_t)&imx1_i2c_hwdata,
-	}, {
+		.driver_data = (kernel_uदीर्घ_t)&imx1_i2c_hwdata,
+	पूर्ण, अणु
 		.name = "imx21-i2c",
-		.driver_data = (kernel_ulong_t)&imx21_i2c_hwdata,
-	}, {
+		.driver_data = (kernel_uदीर्घ_t)&imx21_i2c_hwdata,
+	पूर्ण, अणु
 		/* sentinel */
-	}
-};
-MODULE_DEVICE_TABLE(platform, imx_i2c_devtype);
+	पूर्ण
+पूर्ण;
+MODULE_DEVICE_TABLE(platक्रमm, imx_i2c_devtype);
 
-static const struct of_device_id i2c_imx_dt_ids[] = {
-	{ .compatible = "fsl,imx1-i2c", .data = &imx1_i2c_hwdata, },
-	{ .compatible = "fsl,imx21-i2c", .data = &imx21_i2c_hwdata, },
-	{ .compatible = "fsl,vf610-i2c", .data = &vf610_i2c_hwdata, },
-	{ /* sentinel */ }
-};
+अटल स्थिर काष्ठा of_device_id i2c_imx_dt_ids[] = अणु
+	अणु .compatible = "fsl,imx1-i2c", .data = &imx1_i2c_hwdata, पूर्ण,
+	अणु .compatible = "fsl,imx21-i2c", .data = &imx21_i2c_hwdata, पूर्ण,
+	अणु .compatible = "fsl,vf610-i2c", .data = &vf610_i2c_hwdata, पूर्ण,
+	अणु /* sentinel */ पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, i2c_imx_dt_ids);
 
-static const struct acpi_device_id i2c_imx_acpi_ids[] = {
-	{"NXP0001", .driver_data = (kernel_ulong_t)&vf610_i2c_hwdata},
-	{ }
-};
+अटल स्थिर काष्ठा acpi_device_id i2c_imx_acpi_ids[] = अणु
+	अणु"NXP0001", .driver_data = (kernel_uदीर्घ_t)&vf610_i2c_hwdataपूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(acpi, i2c_imx_acpi_ids);
 
-static inline int is_imx1_i2c(struct imx_i2c_struct *i2c_imx)
-{
-	return i2c_imx->hwdata->devtype == IMX1_I2C;
-}
+अटल अंतरभूत पूर्णांक is_imx1_i2c(काष्ठा imx_i2c_काष्ठा *i2c_imx)
+अणु
+	वापस i2c_imx->hwdata->devtype == IMX1_I2C;
+पूर्ण
 
-static inline int is_vf610_i2c(struct imx_i2c_struct *i2c_imx)
-{
-	return i2c_imx->hwdata->devtype == VF610_I2C;
-}
+अटल अंतरभूत पूर्णांक is_vf610_i2c(काष्ठा imx_i2c_काष्ठा *i2c_imx)
+अणु
+	वापस i2c_imx->hwdata->devtype == VF610_I2C;
+पूर्ण
 
-static inline void imx_i2c_write_reg(unsigned int val,
-		struct imx_i2c_struct *i2c_imx, unsigned int reg)
-{
-	writeb(val, i2c_imx->base + (reg << i2c_imx->hwdata->regshift));
-}
+अटल अंतरभूत व्योम imx_i2c_ग_लिखो_reg(अचिन्हित पूर्णांक val,
+		काष्ठा imx_i2c_काष्ठा *i2c_imx, अचिन्हित पूर्णांक reg)
+अणु
+	ग_लिखोb(val, i2c_imx->base + (reg << i2c_imx->hwdata->regshअगरt));
+पूर्ण
 
-static inline unsigned char imx_i2c_read_reg(struct imx_i2c_struct *i2c_imx,
-		unsigned int reg)
-{
-	return readb(i2c_imx->base + (reg << i2c_imx->hwdata->regshift));
-}
+अटल अंतरभूत अचिन्हित अक्षर imx_i2c_पढ़ो_reg(काष्ठा imx_i2c_काष्ठा *i2c_imx,
+		अचिन्हित पूर्णांक reg)
+अणु
+	वापस पढ़ोb(i2c_imx->base + (reg << i2c_imx->hwdata->regshअगरt));
+पूर्ण
 
-static void i2c_imx_clear_irq(struct imx_i2c_struct *i2c_imx, unsigned int bits)
-{
-	unsigned int temp;
+अटल व्योम i2c_imx_clear_irq(काष्ठा imx_i2c_काष्ठा *i2c_imx, अचिन्हित पूर्णांक bits)
+अणु
+	अचिन्हित पूर्णांक temp;
 
 	/*
-	 * i2sr_clr_opcode is the value to clear all interrupts. Here we want to
-	 * clear only <bits>, so we write ~i2sr_clr_opcode with just <bits>
+	 * i2sr_clr_opcode is the value to clear all पूर्णांकerrupts. Here we want to
+	 * clear only <bits>, so we ग_लिखो ~i2sr_clr_opcode with just <bits>
 	 * toggled. This is required because i.MX needs W0C and Vybrid uses W1C.
 	 */
 	temp = ~i2c_imx->hwdata->i2sr_clr_opcode ^ bits;
-	imx_i2c_write_reg(temp, i2c_imx, IMX_I2C_I2SR);
-}
+	imx_i2c_ग_लिखो_reg(temp, i2c_imx, IMX_I2C_I2SR);
+पूर्ण
 
-/* Set up i2c controller register and i2c status register to default value. */
-static void i2c_imx_reset_regs(struct imx_i2c_struct *i2c_imx)
-{
-	imx_i2c_write_reg(i2c_imx->hwdata->i2cr_ien_opcode ^ I2CR_IEN,
+/* Set up i2c controller रेजिस्टर and i2c status रेजिस्टर to शेष value. */
+अटल व्योम i2c_imx_reset_regs(काष्ठा imx_i2c_काष्ठा *i2c_imx)
+अणु
+	imx_i2c_ग_लिखो_reg(i2c_imx->hwdata->i2cr_ien_opcode ^ I2CR_IEN,
 			  i2c_imx, IMX_I2C_I2CR);
 	i2c_imx_clear_irq(i2c_imx, I2SR_IIF | I2SR_IAL);
-}
+पूर्ण
 
-/* Functions for DMA support */
-static void i2c_imx_dma_request(struct imx_i2c_struct *i2c_imx,
+/* Functions क्रम DMA support */
+अटल व्योम i2c_imx_dma_request(काष्ठा imx_i2c_काष्ठा *i2c_imx,
 						dma_addr_t phy_addr)
-{
-	struct imx_i2c_dma *dma;
-	struct dma_slave_config dma_sconfig;
-	struct device *dev = &i2c_imx->adapter.dev;
-	int ret;
+अणु
+	काष्ठा imx_i2c_dma *dma;
+	काष्ठा dma_slave_config dma_sconfig;
+	काष्ठा device *dev = &i2c_imx->adapter.dev;
+	पूर्णांक ret;
 
-	dma = devm_kzalloc(dev, sizeof(*dma), GFP_KERNEL);
-	if (!dma)
-		return;
+	dma = devm_kzalloc(dev, माप(*dma), GFP_KERNEL);
+	अगर (!dma)
+		वापस;
 
 	dma->chan_tx = dma_request_chan(dev, "tx");
-	if (IS_ERR(dma->chan_tx)) {
+	अगर (IS_ERR(dma->chan_tx)) अणु
 		ret = PTR_ERR(dma->chan_tx);
-		if (ret != -ENODEV && ret != -EPROBE_DEFER)
+		अगर (ret != -ENODEV && ret != -EPROBE_DEFER)
 			dev_err(dev, "can't request DMA tx channel (%d)\n", ret);
-		goto fail_al;
-	}
+		जाओ fail_al;
+	पूर्ण
 
 	dma_sconfig.dst_addr = phy_addr +
-				(IMX_I2C_I2DR << i2c_imx->hwdata->regshift);
+				(IMX_I2C_I2DR << i2c_imx->hwdata->regshअगरt);
 	dma_sconfig.dst_addr_width = DMA_SLAVE_BUSWIDTH_1_BYTE;
 	dma_sconfig.dst_maxburst = 1;
 	dma_sconfig.direction = DMA_MEM_TO_DEV;
 	ret = dmaengine_slave_config(dma->chan_tx, &dma_sconfig);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(dev, "can't configure tx channel (%d)\n", ret);
-		goto fail_tx;
-	}
+		जाओ fail_tx;
+	पूर्ण
 
 	dma->chan_rx = dma_request_chan(dev, "rx");
-	if (IS_ERR(dma->chan_rx)) {
+	अगर (IS_ERR(dma->chan_rx)) अणु
 		ret = PTR_ERR(dma->chan_rx);
-		if (ret != -ENODEV && ret != -EPROBE_DEFER)
+		अगर (ret != -ENODEV && ret != -EPROBE_DEFER)
 			dev_err(dev, "can't request DMA rx channel (%d)\n", ret);
-		goto fail_tx;
-	}
+		जाओ fail_tx;
+	पूर्ण
 
 	dma_sconfig.src_addr = phy_addr +
-				(IMX_I2C_I2DR << i2c_imx->hwdata->regshift);
+				(IMX_I2C_I2DR << i2c_imx->hwdata->regshअगरt);
 	dma_sconfig.src_addr_width = DMA_SLAVE_BUSWIDTH_1_BYTE;
 	dma_sconfig.src_maxburst = 1;
 	dma_sconfig.direction = DMA_DEV_TO_MEM;
 	ret = dmaengine_slave_config(dma->chan_rx, &dma_sconfig);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(dev, "can't configure rx channel (%d)\n", ret);
-		goto fail_rx;
-	}
+		जाओ fail_rx;
+	पूर्ण
 
 	i2c_imx->dma = dma;
 	init_completion(&dma->cmd_complete);
 	dev_info(dev, "using %s (tx) and %s (rx) for DMA transfers\n",
 		dma_chan_name(dma->chan_tx), dma_chan_name(dma->chan_rx));
 
-	return;
+	वापस;
 
 fail_rx:
 	dma_release_channel(dma->chan_rx);
 fail_tx:
 	dma_release_channel(dma->chan_tx);
 fail_al:
-	devm_kfree(dev, dma);
-}
+	devm_kमुक्त(dev, dma);
+पूर्ण
 
-static void i2c_imx_dma_callback(void *arg)
-{
-	struct imx_i2c_struct *i2c_imx = (struct imx_i2c_struct *)arg;
-	struct imx_i2c_dma *dma = i2c_imx->dma;
+अटल व्योम i2c_imx_dma_callback(व्योम *arg)
+अणु
+	काष्ठा imx_i2c_काष्ठा *i2c_imx = (काष्ठा imx_i2c_काष्ठा *)arg;
+	काष्ठा imx_i2c_dma *dma = i2c_imx->dma;
 
 	dma_unmap_single(dma->chan_using->device->dev, dma->dma_buf,
 			dma->dma_len, dma->dma_data_dir);
 	complete(&dma->cmd_complete);
-}
+पूर्ण
 
-static int i2c_imx_dma_xfer(struct imx_i2c_struct *i2c_imx,
-					struct i2c_msg *msgs)
-{
-	struct imx_i2c_dma *dma = i2c_imx->dma;
-	struct dma_async_tx_descriptor *txdesc;
-	struct device *dev = &i2c_imx->adapter.dev;
-	struct device *chan_dev = dma->chan_using->device->dev;
+अटल पूर्णांक i2c_imx_dma_xfer(काष्ठा imx_i2c_काष्ठा *i2c_imx,
+					काष्ठा i2c_msg *msgs)
+अणु
+	काष्ठा imx_i2c_dma *dma = i2c_imx->dma;
+	काष्ठा dma_async_tx_descriptor *txdesc;
+	काष्ठा device *dev = &i2c_imx->adapter.dev;
+	काष्ठा device *chan_dev = dma->chan_using->device->dev;
 
 	dma->dma_buf = dma_map_single(chan_dev, msgs->buf,
 					dma->dma_len, dma->dma_data_dir);
-	if (dma_mapping_error(chan_dev, dma->dma_buf)) {
+	अगर (dma_mapping_error(chan_dev, dma->dma_buf)) अणु
 		dev_err(dev, "DMA mapping failed\n");
-		goto err_map;
-	}
+		जाओ err_map;
+	पूर्ण
 
 	txdesc = dmaengine_prep_slave_single(dma->chan_using, dma->dma_buf,
 					dma->dma_len, dma->dma_transfer_dir,
 					DMA_PREP_INTERRUPT | DMA_CTRL_ACK);
-	if (!txdesc) {
+	अगर (!txdesc) अणु
 		dev_err(dev, "Not able to get desc for DMA xfer\n");
-		goto err_desc;
-	}
+		जाओ err_desc;
+	पूर्ण
 
 	reinit_completion(&dma->cmd_complete);
 	txdesc->callback = i2c_imx_dma_callback;
 	txdesc->callback_param = i2c_imx;
-	if (dma_submit_error(dmaengine_submit(txdesc))) {
+	अगर (dma_submit_error(dmaengine_submit(txdesc))) अणु
 		dev_err(dev, "DMA submit failed\n");
-		goto err_submit;
-	}
+		जाओ err_submit;
+	पूर्ण
 
 	dma_async_issue_pending(dma->chan_using);
-	return 0;
+	वापस 0;
 
 err_submit:
 	dmaengine_terminate_all(dma->chan_using);
@@ -428,517 +429,517 @@ err_desc:
 	dma_unmap_single(chan_dev, dma->dma_buf,
 			dma->dma_len, dma->dma_data_dir);
 err_map:
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static void i2c_imx_dma_free(struct imx_i2c_struct *i2c_imx)
-{
-	struct imx_i2c_dma *dma = i2c_imx->dma;
+अटल व्योम i2c_imx_dma_मुक्त(काष्ठा imx_i2c_काष्ठा *i2c_imx)
+अणु
+	काष्ठा imx_i2c_dma *dma = i2c_imx->dma;
 
 	dma->dma_buf = 0;
 	dma->dma_len = 0;
 
 	dma_release_channel(dma->chan_tx);
-	dma->chan_tx = NULL;
+	dma->chan_tx = शून्य;
 
 	dma_release_channel(dma->chan_rx);
-	dma->chan_rx = NULL;
+	dma->chan_rx = शून्य;
 
-	dma->chan_using = NULL;
-}
+	dma->chan_using = शून्य;
+पूर्ण
 
-static int i2c_imx_bus_busy(struct imx_i2c_struct *i2c_imx, int for_busy, bool atomic)
-{
-	unsigned long orig_jiffies = jiffies;
-	unsigned int temp;
+अटल पूर्णांक i2c_imx_bus_busy(काष्ठा imx_i2c_काष्ठा *i2c_imx, पूर्णांक क्रम_busy, bool atomic)
+अणु
+	अचिन्हित दीर्घ orig_jअगरfies = jअगरfies;
+	अचिन्हित पूर्णांक temp;
 
 	dev_dbg(&i2c_imx->adapter.dev, "<%s>\n", __func__);
 
-	while (1) {
-		temp = imx_i2c_read_reg(i2c_imx, IMX_I2C_I2SR);
+	जबतक (1) अणु
+		temp = imx_i2c_पढ़ो_reg(i2c_imx, IMX_I2C_I2SR);
 
-		/* check for arbitration lost */
-		if (temp & I2SR_IAL) {
+		/* check क्रम arbitration lost */
+		अगर (temp & I2SR_IAL) अणु
 			i2c_imx_clear_irq(i2c_imx, I2SR_IAL);
-			return -EAGAIN;
-		}
+			वापस -EAGAIN;
+		पूर्ण
 
-		if (for_busy && (temp & I2SR_IBB)) {
+		अगर (क्रम_busy && (temp & I2SR_IBB)) अणु
 			i2c_imx->stopped = 0;
-			break;
-		}
-		if (!for_busy && !(temp & I2SR_IBB)) {
+			अवरोध;
+		पूर्ण
+		अगर (!क्रम_busy && !(temp & I2SR_IBB)) अणु
 			i2c_imx->stopped = 1;
-			break;
-		}
-		if (time_after(jiffies, orig_jiffies + msecs_to_jiffies(500))) {
+			अवरोध;
+		पूर्ण
+		अगर (समय_after(jअगरfies, orig_jअगरfies + msecs_to_jअगरfies(500))) अणु
 			dev_dbg(&i2c_imx->adapter.dev,
 				"<%s> I2C bus is busy\n", __func__);
-			return -ETIMEDOUT;
-		}
-		if (atomic)
+			वापस -ETIMEDOUT;
+		पूर्ण
+		अगर (atomic)
 			udelay(100);
-		else
+		अन्यथा
 			schedule();
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int i2c_imx_trx_complete(struct imx_i2c_struct *i2c_imx, bool atomic)
-{
-	if (atomic) {
-		void __iomem *addr = i2c_imx->base + (IMX_I2C_I2SR << i2c_imx->hwdata->regshift);
-		unsigned int regval;
+अटल पूर्णांक i2c_imx_trx_complete(काष्ठा imx_i2c_काष्ठा *i2c_imx, bool atomic)
+अणु
+	अगर (atomic) अणु
+		व्योम __iomem *addr = i2c_imx->base + (IMX_I2C_I2SR << i2c_imx->hwdata->regshअगरt);
+		अचिन्हित पूर्णांक regval;
 
 		/*
-		 * The formula for the poll timeout is documented in the RM
+		 * The क्रमmula क्रम the poll समयout is करोcumented in the RM
 		 * Rev.5 on page 1878:
 		 *     T_min = 10/F_scl
-		 * Set the value hard as it is done for the non-atomic use-case.
-		 * Use 10 kHz for the calculation since this is the minimum
+		 * Set the value hard as it is करोne क्रम the non-atomic use-हाल.
+		 * Use 10 kHz क्रम the calculation since this is the minimum
 		 * allowed SMBus frequency. Also add an offset of 100us since it
 		 * turned out that the I2SR_IIF bit isn't set correctly within
-		 * the minimum timeout in polling mode.
+		 * the minimum समयout in polling mode.
 		 */
-		readb_poll_timeout_atomic(addr, regval, regval & I2SR_IIF, 5, 1000 + 100);
+		पढ़ोb_poll_समयout_atomic(addr, regval, regval & I2SR_IIF, 5, 1000 + 100);
 		i2c_imx->i2csr = regval;
 		i2c_imx_clear_irq(i2c_imx, I2SR_IIF | I2SR_IAL);
-	} else {
-		wait_event_timeout(i2c_imx->queue, i2c_imx->i2csr & I2SR_IIF, HZ / 10);
-	}
+	पूर्ण अन्यथा अणु
+		रुको_event_समयout(i2c_imx->queue, i2c_imx->i2csr & I2SR_IIF, HZ / 10);
+	पूर्ण
 
-	if (unlikely(!(i2c_imx->i2csr & I2SR_IIF))) {
+	अगर (unlikely(!(i2c_imx->i2csr & I2SR_IIF))) अणु
 		dev_dbg(&i2c_imx->adapter.dev, "<%s> Timeout\n", __func__);
-		return -ETIMEDOUT;
-	}
+		वापस -ETIMEDOUT;
+	पूर्ण
 
-	/* check for arbitration lost */
-	if (i2c_imx->i2csr & I2SR_IAL) {
+	/* check क्रम arbitration lost */
+	अगर (i2c_imx->i2csr & I2SR_IAL) अणु
 		dev_dbg(&i2c_imx->adapter.dev, "<%s> Arbitration lost\n", __func__);
 		i2c_imx_clear_irq(i2c_imx, I2SR_IAL);
 
 		i2c_imx->i2csr = 0;
-		return -EAGAIN;
-	}
+		वापस -EAGAIN;
+	पूर्ण
 
 	dev_dbg(&i2c_imx->adapter.dev, "<%s> TRX complete\n", __func__);
 	i2c_imx->i2csr = 0;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int i2c_imx_acked(struct imx_i2c_struct *i2c_imx)
-{
-	if (imx_i2c_read_reg(i2c_imx, IMX_I2C_I2SR) & I2SR_RXAK) {
+अटल पूर्णांक i2c_imx_acked(काष्ठा imx_i2c_काष्ठा *i2c_imx)
+अणु
+	अगर (imx_i2c_पढ़ो_reg(i2c_imx, IMX_I2C_I2SR) & I2SR_RXAK) अणु
 		dev_dbg(&i2c_imx->adapter.dev, "<%s> No ACK\n", __func__);
-		return -ENXIO;  /* No ACK */
-	}
+		वापस -ENXIO;  /* No ACK */
+	पूर्ण
 
 	dev_dbg(&i2c_imx->adapter.dev, "<%s> ACK received\n", __func__);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void i2c_imx_set_clk(struct imx_i2c_struct *i2c_imx,
-			    unsigned int i2c_clk_rate)
-{
-	struct imx_i2c_clk_pair *i2c_clk_div = i2c_imx->hwdata->clk_div;
-	unsigned int div;
-	int i;
+अटल व्योम i2c_imx_set_clk(काष्ठा imx_i2c_काष्ठा *i2c_imx,
+			    अचिन्हित पूर्णांक i2c_clk_rate)
+अणु
+	काष्ठा imx_i2c_clk_pair *i2c_clk_भाग = i2c_imx->hwdata->clk_भाग;
+	अचिन्हित पूर्णांक भाग;
+	पूर्णांक i;
 
 	/* Divider value calculation */
-	if (i2c_imx->cur_clk == i2c_clk_rate)
-		return;
+	अगर (i2c_imx->cur_clk == i2c_clk_rate)
+		वापस;
 
 	i2c_imx->cur_clk = i2c_clk_rate;
 
-	div = DIV_ROUND_UP(i2c_clk_rate, i2c_imx->bitrate);
-	if (div < i2c_clk_div[0].div)
+	भाग = DIV_ROUND_UP(i2c_clk_rate, i2c_imx->bitrate);
+	अगर (भाग < i2c_clk_भाग[0].भाग)
 		i = 0;
-	else if (div > i2c_clk_div[i2c_imx->hwdata->ndivs - 1].div)
-		i = i2c_imx->hwdata->ndivs - 1;
-	else
-		for (i = 0; i2c_clk_div[i].div < div; i++)
+	अन्यथा अगर (भाग > i2c_clk_भाग[i2c_imx->hwdata->nभागs - 1].भाग)
+		i = i2c_imx->hwdata->nभागs - 1;
+	अन्यथा
+		क्रम (i = 0; i2c_clk_भाग[i].भाग < भाग; i++)
 			;
 
-	/* Store divider value */
-	i2c_imx->ifdr = i2c_clk_div[i].val;
+	/* Store भागider value */
+	i2c_imx->अगरdr = i2c_clk_भाग[i].val;
 
 	/*
 	 * There dummy delay is calculated.
-	 * It should be about one I2C clock period long.
+	 * It should be about one I2C घड़ी period दीर्घ.
 	 * This delay is used in I2C bus disable function
 	 * to fix chip hardware bug.
 	 */
-	i2c_imx->disable_delay = DIV_ROUND_UP(500000U * i2c_clk_div[i].div,
+	i2c_imx->disable_delay = DIV_ROUND_UP(500000U * i2c_clk_भाग[i].भाग,
 					      i2c_clk_rate / 2);
 
-#ifdef CONFIG_I2C_DEBUG_BUS
+#अगर_घोषित CONFIG_I2C_DEBUG_BUS
 	dev_dbg(&i2c_imx->adapter.dev, "I2C_CLK=%d, REQ DIV=%d\n",
-		i2c_clk_rate, div);
+		i2c_clk_rate, भाग);
 	dev_dbg(&i2c_imx->adapter.dev, "IFDR[IC]=0x%x, REAL DIV=%d\n",
-		i2c_clk_div[i].val, i2c_clk_div[i].div);
-#endif
-}
+		i2c_clk_भाग[i].val, i2c_clk_भाग[i].भाग);
+#पूर्ण_अगर
+पूर्ण
 
-static int i2c_imx_clk_notifier_call(struct notifier_block *nb,
-				     unsigned long action, void *data)
-{
-	struct clk_notifier_data *ndata = data;
-	struct imx_i2c_struct *i2c_imx = container_of(nb,
-						      struct imx_i2c_struct,
+अटल पूर्णांक i2c_imx_clk_notअगरier_call(काष्ठा notअगरier_block *nb,
+				     अचिन्हित दीर्घ action, व्योम *data)
+अणु
+	काष्ठा clk_notअगरier_data *ndata = data;
+	काष्ठा imx_i2c_काष्ठा *i2c_imx = container_of(nb,
+						      काष्ठा imx_i2c_काष्ठा,
 						      clk_change_nb);
 
-	if (action & POST_RATE_CHANGE)
+	अगर (action & POST_RATE_CHANGE)
 		i2c_imx_set_clk(i2c_imx, ndata->new_rate);
 
-	return NOTIFY_OK;
-}
+	वापस NOTIFY_OK;
+पूर्ण
 
-static int i2c_imx_start(struct imx_i2c_struct *i2c_imx, bool atomic)
-{
-	unsigned int temp = 0;
-	int result;
+अटल पूर्णांक i2c_imx_start(काष्ठा imx_i2c_काष्ठा *i2c_imx, bool atomic)
+अणु
+	अचिन्हित पूर्णांक temp = 0;
+	पूर्णांक result;
 
 	dev_dbg(&i2c_imx->adapter.dev, "<%s>\n", __func__);
 
-	imx_i2c_write_reg(i2c_imx->ifdr, i2c_imx, IMX_I2C_IFDR);
+	imx_i2c_ग_लिखो_reg(i2c_imx->अगरdr, i2c_imx, IMX_I2C_IFDR);
 	/* Enable I2C controller */
-	imx_i2c_write_reg(i2c_imx->hwdata->i2sr_clr_opcode, i2c_imx, IMX_I2C_I2SR);
-	imx_i2c_write_reg(i2c_imx->hwdata->i2cr_ien_opcode, i2c_imx, IMX_I2C_I2CR);
+	imx_i2c_ग_लिखो_reg(i2c_imx->hwdata->i2sr_clr_opcode, i2c_imx, IMX_I2C_I2SR);
+	imx_i2c_ग_लिखो_reg(i2c_imx->hwdata->i2cr_ien_opcode, i2c_imx, IMX_I2C_I2CR);
 
 	/* Wait controller to be stable */
-	if (atomic)
+	अगर (atomic)
 		udelay(50);
-	else
+	अन्यथा
 		usleep_range(50, 150);
 
 	/* Start I2C transaction */
-	temp = imx_i2c_read_reg(i2c_imx, IMX_I2C_I2CR);
+	temp = imx_i2c_पढ़ो_reg(i2c_imx, IMX_I2C_I2CR);
 	temp |= I2CR_MSTA;
-	imx_i2c_write_reg(temp, i2c_imx, IMX_I2C_I2CR);
+	imx_i2c_ग_लिखो_reg(temp, i2c_imx, IMX_I2C_I2CR);
 	result = i2c_imx_bus_busy(i2c_imx, 1, atomic);
-	if (result)
-		return result;
+	अगर (result)
+		वापस result;
 
 	temp |= I2CR_IIEN | I2CR_MTX | I2CR_TXAK;
-	if (atomic)
-		temp &= ~I2CR_IIEN; /* Disable interrupt */
+	अगर (atomic)
+		temp &= ~I2CR_IIEN; /* Disable पूर्णांकerrupt */
 
 	temp &= ~I2CR_DMAEN;
-	imx_i2c_write_reg(temp, i2c_imx, IMX_I2C_I2CR);
-	return result;
-}
+	imx_i2c_ग_लिखो_reg(temp, i2c_imx, IMX_I2C_I2CR);
+	वापस result;
+पूर्ण
 
-static void i2c_imx_stop(struct imx_i2c_struct *i2c_imx, bool atomic)
-{
-	unsigned int temp = 0;
+अटल व्योम i2c_imx_stop(काष्ठा imx_i2c_काष्ठा *i2c_imx, bool atomic)
+अणु
+	अचिन्हित पूर्णांक temp = 0;
 
-	if (!i2c_imx->stopped) {
+	अगर (!i2c_imx->stopped) अणु
 		/* Stop I2C transaction */
 		dev_dbg(&i2c_imx->adapter.dev, "<%s>\n", __func__);
-		temp = imx_i2c_read_reg(i2c_imx, IMX_I2C_I2CR);
-		if (!(temp & I2CR_MSTA))
+		temp = imx_i2c_पढ़ो_reg(i2c_imx, IMX_I2C_I2CR);
+		अगर (!(temp & I2CR_MSTA))
 			i2c_imx->stopped = 1;
 		temp &= ~(I2CR_MSTA | I2CR_MTX);
-		if (i2c_imx->dma)
+		अगर (i2c_imx->dma)
 			temp &= ~I2CR_DMAEN;
-		imx_i2c_write_reg(temp, i2c_imx, IMX_I2C_I2CR);
-	}
-	if (is_imx1_i2c(i2c_imx)) {
+		imx_i2c_ग_लिखो_reg(temp, i2c_imx, IMX_I2C_I2CR);
+	पूर्ण
+	अगर (is_imx1_i2c(i2c_imx)) अणु
 		/*
 		 * This delay caused by an i.MXL hardware bug.
-		 * If no (or too short) delay, no "STOP" bit will be generated.
+		 * If no (or too लघु) delay, no "STOP" bit will be generated.
 		 */
 		udelay(i2c_imx->disable_delay);
-	}
+	पूर्ण
 
-	if (!i2c_imx->stopped)
+	अगर (!i2c_imx->stopped)
 		i2c_imx_bus_busy(i2c_imx, 0, atomic);
 
 	/* Disable I2C controller */
 	temp = i2c_imx->hwdata->i2cr_ien_opcode ^ I2CR_IEN,
-	imx_i2c_write_reg(temp, i2c_imx, IMX_I2C_I2CR);
-}
+	imx_i2c_ग_लिखो_reg(temp, i2c_imx, IMX_I2C_I2CR);
+पूर्ण
 
 /*
- * Enable bus idle interrupts
- * Note: IBIC register will be cleared after disabled i2c module.
- * All of layerscape series SoCs support IBIC register.
+ * Enable bus idle पूर्णांकerrupts
+ * Note: IBIC रेजिस्टर will be cleared after disabled i2c module.
+ * All of layerscape series SoCs support IBIC रेजिस्टर.
  */
-static void i2c_imx_enable_bus_idle(struct imx_i2c_struct *i2c_imx)
-{
-	if (is_vf610_i2c(i2c_imx)) {
-		unsigned int temp;
+अटल व्योम i2c_imx_enable_bus_idle(काष्ठा imx_i2c_काष्ठा *i2c_imx)
+अणु
+	अगर (is_vf610_i2c(i2c_imx)) अणु
+		अचिन्हित पूर्णांक temp;
 
-		temp = imx_i2c_read_reg(i2c_imx, IMX_I2C_IBIC);
+		temp = imx_i2c_पढ़ो_reg(i2c_imx, IMX_I2C_IBIC);
 		temp |= IBIC_BIIE;
-		imx_i2c_write_reg(temp, i2c_imx, IMX_I2C_IBIC);
-	}
-}
+		imx_i2c_ग_लिखो_reg(temp, i2c_imx, IMX_I2C_IBIC);
+	पूर्ण
+पूर्ण
 
-static void i2c_imx_slave_event(struct imx_i2c_struct *i2c_imx,
-				enum i2c_slave_event event, u8 *val)
-{
+अटल व्योम i2c_imx_slave_event(काष्ठा imx_i2c_काष्ठा *i2c_imx,
+				क्रमागत i2c_slave_event event, u8 *val)
+अणु
 	i2c_slave_event(i2c_imx->slave, event, val);
 	i2c_imx->last_slave_event = event;
-}
+पूर्ण
 
-static void i2c_imx_slave_finish_op(struct imx_i2c_struct *i2c_imx)
-{
+अटल व्योम i2c_imx_slave_finish_op(काष्ठा imx_i2c_काष्ठा *i2c_imx)
+अणु
 	u8 val;
 
-	while (i2c_imx->last_slave_event != I2C_SLAVE_STOP) {
-		switch (i2c_imx->last_slave_event) {
-		case I2C_SLAVE_READ_REQUESTED:
+	जबतक (i2c_imx->last_slave_event != I2C_SLAVE_STOP) अणु
+		चयन (i2c_imx->last_slave_event) अणु
+		हाल I2C_SLAVE_READ_REQUESTED:
 			i2c_imx_slave_event(i2c_imx, I2C_SLAVE_READ_PROCESSED,
 					    &val);
-			break;
+			अवरोध;
 
-		case I2C_SLAVE_WRITE_REQUESTED:
-		case I2C_SLAVE_READ_PROCESSED:
-		case I2C_SLAVE_WRITE_RECEIVED:
+		हाल I2C_SLAVE_WRITE_REQUESTED:
+		हाल I2C_SLAVE_READ_PROCESSED:
+		हाल I2C_SLAVE_WRITE_RECEIVED:
 			i2c_imx_slave_event(i2c_imx, I2C_SLAVE_STOP, &val);
-			break;
+			अवरोध;
 
-		case I2C_SLAVE_STOP:
-			break;
-		}
-	}
-}
+		हाल I2C_SLAVE_STOP:
+			अवरोध;
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static irqreturn_t i2c_imx_slave_isr(struct imx_i2c_struct *i2c_imx,
-				     unsigned int status, unsigned int ctl)
-{
+अटल irqवापस_t i2c_imx_slave_isr(काष्ठा imx_i2c_काष्ठा *i2c_imx,
+				     अचिन्हित पूर्णांक status, अचिन्हित पूर्णांक ctl)
+अणु
 	u8 value;
 
-	if (status & I2SR_IAL) { /* Arbitration lost */
+	अगर (status & I2SR_IAL) अणु /* Arbitration lost */
 		i2c_imx_clear_irq(i2c_imx, I2SR_IAL);
-		if (!(status & I2SR_IAAS))
-			return IRQ_HANDLED;
-	}
+		अगर (!(status & I2SR_IAAS))
+			वापस IRQ_HANDLED;
+	पूर्ण
 
-	if (status & I2SR_IAAS) { /* Addressed as a slave */
+	अगर (status & I2SR_IAAS) अणु /* Addressed as a slave */
 		i2c_imx_slave_finish_op(i2c_imx);
-		if (status & I2SR_SRW) { /* Master wants to read from us*/
+		अगर (status & I2SR_SRW) अणु /* Master wants to पढ़ो from us*/
 			dev_dbg(&i2c_imx->adapter.dev, "read requested");
 			i2c_imx_slave_event(i2c_imx,
 					    I2C_SLAVE_READ_REQUESTED, &value);
 
 			/* Slave transmit */
 			ctl |= I2CR_MTX;
-			imx_i2c_write_reg(ctl, i2c_imx, IMX_I2C_I2CR);
+			imx_i2c_ग_लिखो_reg(ctl, i2c_imx, IMX_I2C_I2CR);
 
 			/* Send data */
-			imx_i2c_write_reg(value, i2c_imx, IMX_I2C_I2DR);
-		} else { /* Master wants to write to us */
+			imx_i2c_ग_लिखो_reg(value, i2c_imx, IMX_I2C_I2DR);
+		पूर्ण अन्यथा अणु /* Master wants to ग_लिखो to us */
 			dev_dbg(&i2c_imx->adapter.dev, "write requested");
 			i2c_imx_slave_event(i2c_imx,
 					    I2C_SLAVE_WRITE_REQUESTED, &value);
 
 			/* Slave receive */
 			ctl &= ~I2CR_MTX;
-			imx_i2c_write_reg(ctl, i2c_imx, IMX_I2C_I2CR);
-			/* Dummy read */
-			imx_i2c_read_reg(i2c_imx, IMX_I2C_I2DR);
-		}
-	} else if (!(ctl & I2CR_MTX)) { /* Receive mode */
-		if (status & I2SR_IBB) { /* No STOP signal detected */
-			value = imx_i2c_read_reg(i2c_imx, IMX_I2C_I2DR);
+			imx_i2c_ग_लिखो_reg(ctl, i2c_imx, IMX_I2C_I2CR);
+			/* Dummy पढ़ो */
+			imx_i2c_पढ़ो_reg(i2c_imx, IMX_I2C_I2DR);
+		पूर्ण
+	पूर्ण अन्यथा अगर (!(ctl & I2CR_MTX)) अणु /* Receive mode */
+		अगर (status & I2SR_IBB) अणु /* No STOP संकेत detected */
+			value = imx_i2c_पढ़ो_reg(i2c_imx, IMX_I2C_I2DR);
 			i2c_imx_slave_event(i2c_imx,
 					    I2C_SLAVE_WRITE_RECEIVED, &value);
-		} else { /* STOP signal is detected */
+		पूर्ण अन्यथा अणु /* STOP संकेत is detected */
 			dev_dbg(&i2c_imx->adapter.dev,
 				"STOP signal detected");
 			i2c_imx_slave_event(i2c_imx,
 					    I2C_SLAVE_STOP, &value);
-		}
-	} else if (!(status & I2SR_RXAK)) { /* Transmit mode received ACK */
+		पूर्ण
+	पूर्ण अन्यथा अगर (!(status & I2SR_RXAK)) अणु /* Transmit mode received ACK */
 		ctl |= I2CR_MTX;
-		imx_i2c_write_reg(ctl, i2c_imx, IMX_I2C_I2CR);
+		imx_i2c_ग_लिखो_reg(ctl, i2c_imx, IMX_I2C_I2CR);
 
 		i2c_imx_slave_event(i2c_imx,
 				    I2C_SLAVE_READ_PROCESSED, &value);
 
-		imx_i2c_write_reg(value, i2c_imx, IMX_I2C_I2DR);
-	} else { /* Transmit mode received NAK */
+		imx_i2c_ग_लिखो_reg(value, i2c_imx, IMX_I2C_I2DR);
+	पूर्ण अन्यथा अणु /* Transmit mode received NAK */
 		ctl &= ~I2CR_MTX;
-		imx_i2c_write_reg(ctl, i2c_imx, IMX_I2C_I2CR);
-		imx_i2c_read_reg(i2c_imx, IMX_I2C_I2DR);
-	}
+		imx_i2c_ग_लिखो_reg(ctl, i2c_imx, IMX_I2C_I2CR);
+		imx_i2c_पढ़ो_reg(i2c_imx, IMX_I2C_I2DR);
+	पूर्ण
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static void i2c_imx_slave_init(struct imx_i2c_struct *i2c_imx)
-{
-	int temp;
+अटल व्योम i2c_imx_slave_init(काष्ठा imx_i2c_काष्ठा *i2c_imx)
+अणु
+	पूर्णांक temp;
 
 	/* Set slave addr. */
-	imx_i2c_write_reg((i2c_imx->slave->addr << 1), i2c_imx, IMX_I2C_IADR);
+	imx_i2c_ग_लिखो_reg((i2c_imx->slave->addr << 1), i2c_imx, IMX_I2C_IADR);
 
 	i2c_imx_reset_regs(i2c_imx);
 
 	/* Enable module */
 	temp = i2c_imx->hwdata->i2cr_ien_opcode;
-	imx_i2c_write_reg(temp, i2c_imx, IMX_I2C_I2CR);
+	imx_i2c_ग_लिखो_reg(temp, i2c_imx, IMX_I2C_I2CR);
 
-	/* Enable interrupt from i2c module */
+	/* Enable पूर्णांकerrupt from i2c module */
 	temp |= I2CR_IIEN;
-	imx_i2c_write_reg(temp, i2c_imx, IMX_I2C_I2CR);
+	imx_i2c_ग_लिखो_reg(temp, i2c_imx, IMX_I2C_I2CR);
 
 	i2c_imx_enable_bus_idle(i2c_imx);
-}
+पूर्ण
 
-static int i2c_imx_reg_slave(struct i2c_client *client)
-{
-	struct imx_i2c_struct *i2c_imx = i2c_get_adapdata(client->adapter);
-	int ret;
+अटल पूर्णांक i2c_imx_reg_slave(काष्ठा i2c_client *client)
+अणु
+	काष्ठा imx_i2c_काष्ठा *i2c_imx = i2c_get_adapdata(client->adapter);
+	पूर्णांक ret;
 
-	if (i2c_imx->slave)
-		return -EBUSY;
+	अगर (i2c_imx->slave)
+		वापस -EBUSY;
 
 	i2c_imx->slave = client;
 	i2c_imx->last_slave_event = I2C_SLAVE_STOP;
 
 	/* Resume */
-	ret = pm_runtime_resume_and_get(i2c_imx->adapter.dev.parent);
-	if (ret < 0) {
+	ret = pm_runसमय_resume_and_get(i2c_imx->adapter.dev.parent);
+	अगर (ret < 0) अणु
 		dev_err(&i2c_imx->adapter.dev, "failed to resume i2c controller");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	i2c_imx_slave_init(i2c_imx);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int i2c_imx_unreg_slave(struct i2c_client *client)
-{
-	struct imx_i2c_struct *i2c_imx = i2c_get_adapdata(client->adapter);
-	int ret;
+अटल पूर्णांक i2c_imx_unreg_slave(काष्ठा i2c_client *client)
+अणु
+	काष्ठा imx_i2c_काष्ठा *i2c_imx = i2c_get_adapdata(client->adapter);
+	पूर्णांक ret;
 
-	if (!i2c_imx->slave)
-		return -EINVAL;
+	अगर (!i2c_imx->slave)
+		वापस -EINVAL;
 
 	/* Reset slave address. */
-	imx_i2c_write_reg(0, i2c_imx, IMX_I2C_IADR);
+	imx_i2c_ग_लिखो_reg(0, i2c_imx, IMX_I2C_IADR);
 
 	i2c_imx_reset_regs(i2c_imx);
 
-	i2c_imx->slave = NULL;
+	i2c_imx->slave = शून्य;
 
 	/* Suspend */
-	ret = pm_runtime_put_sync(i2c_imx->adapter.dev.parent);
-	if (ret < 0)
+	ret = pm_runसमय_put_sync(i2c_imx->adapter.dev.parent);
+	अगर (ret < 0)
 		dev_err(&i2c_imx->adapter.dev, "failed to suspend i2c controller");
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static irqreturn_t i2c_imx_master_isr(struct imx_i2c_struct *i2c_imx, unsigned int status)
-{
-	/* save status register */
+अटल irqवापस_t i2c_imx_master_isr(काष्ठा imx_i2c_काष्ठा *i2c_imx, अचिन्हित पूर्णांक status)
+अणु
+	/* save status रेजिस्टर */
 	i2c_imx->i2csr = status;
 	wake_up(&i2c_imx->queue);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static irqreturn_t i2c_imx_isr(int irq, void *dev_id)
-{
-	struct imx_i2c_struct *i2c_imx = dev_id;
-	unsigned int ctl, status;
+अटल irqवापस_t i2c_imx_isr(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा imx_i2c_काष्ठा *i2c_imx = dev_id;
+	अचिन्हित पूर्णांक ctl, status;
 
-	status = imx_i2c_read_reg(i2c_imx, IMX_I2C_I2SR);
-	ctl = imx_i2c_read_reg(i2c_imx, IMX_I2C_I2CR);
+	status = imx_i2c_पढ़ो_reg(i2c_imx, IMX_I2C_I2SR);
+	ctl = imx_i2c_पढ़ो_reg(i2c_imx, IMX_I2C_I2CR);
 
-	if (status & I2SR_IIF) {
+	अगर (status & I2SR_IIF) अणु
 		i2c_imx_clear_irq(i2c_imx, I2SR_IIF);
-		if (i2c_imx->slave) {
-			if (!(ctl & I2CR_MSTA)) {
-				return i2c_imx_slave_isr(i2c_imx, status, ctl);
-			} else if (i2c_imx->last_slave_event !=
-				   I2C_SLAVE_STOP) {
+		अगर (i2c_imx->slave) अणु
+			अगर (!(ctl & I2CR_MSTA)) अणु
+				वापस i2c_imx_slave_isr(i2c_imx, status, ctl);
+			पूर्ण अन्यथा अगर (i2c_imx->last_slave_event !=
+				   I2C_SLAVE_STOP) अणु
 				i2c_imx_slave_finish_op(i2c_imx);
-			}
-		}
-		return i2c_imx_master_isr(i2c_imx, status);
-	}
+			पूर्ण
+		पूर्ण
+		वापस i2c_imx_master_isr(i2c_imx, status);
+	पूर्ण
 
-	return IRQ_NONE;
-}
+	वापस IRQ_NONE;
+पूर्ण
 
-static int i2c_imx_dma_write(struct imx_i2c_struct *i2c_imx,
-					struct i2c_msg *msgs)
-{
-	int result;
-	unsigned long time_left;
-	unsigned int temp = 0;
-	unsigned long orig_jiffies = jiffies;
-	struct imx_i2c_dma *dma = i2c_imx->dma;
-	struct device *dev = &i2c_imx->adapter.dev;
+अटल पूर्णांक i2c_imx_dma_ग_लिखो(काष्ठा imx_i2c_काष्ठा *i2c_imx,
+					काष्ठा i2c_msg *msgs)
+अणु
+	पूर्णांक result;
+	अचिन्हित दीर्घ समय_left;
+	अचिन्हित पूर्णांक temp = 0;
+	अचिन्हित दीर्घ orig_jअगरfies = jअगरfies;
+	काष्ठा imx_i2c_dma *dma = i2c_imx->dma;
+	काष्ठा device *dev = &i2c_imx->adapter.dev;
 
 	dma->chan_using = dma->chan_tx;
 	dma->dma_transfer_dir = DMA_MEM_TO_DEV;
 	dma->dma_data_dir = DMA_TO_DEVICE;
 	dma->dma_len = msgs->len - 1;
 	result = i2c_imx_dma_xfer(i2c_imx, msgs);
-	if (result)
-		return result;
+	अगर (result)
+		वापस result;
 
-	temp = imx_i2c_read_reg(i2c_imx, IMX_I2C_I2CR);
+	temp = imx_i2c_पढ़ो_reg(i2c_imx, IMX_I2C_I2CR);
 	temp |= I2CR_DMAEN;
-	imx_i2c_write_reg(temp, i2c_imx, IMX_I2C_I2CR);
+	imx_i2c_ग_लिखो_reg(temp, i2c_imx, IMX_I2C_I2CR);
 
 	/*
 	 * Write slave address.
 	 * The first byte must be transmitted by the CPU.
 	 */
-	imx_i2c_write_reg(i2c_8bit_addr_from_msg(msgs), i2c_imx, IMX_I2C_I2DR);
-	time_left = wait_for_completion_timeout(
+	imx_i2c_ग_लिखो_reg(i2c_8bit_addr_from_msg(msgs), i2c_imx, IMX_I2C_I2DR);
+	समय_left = रुको_क्रम_completion_समयout(
 				&i2c_imx->dma->cmd_complete,
-				msecs_to_jiffies(DMA_TIMEOUT));
-	if (time_left == 0) {
+				msecs_to_jअगरfies(DMA_TIMEOUT));
+	अगर (समय_left == 0) अणु
 		dmaengine_terminate_all(dma->chan_using);
-		return -ETIMEDOUT;
-	}
+		वापस -ETIMEDOUT;
+	पूर्ण
 
-	/* Waiting for transfer complete. */
-	while (1) {
-		temp = imx_i2c_read_reg(i2c_imx, IMX_I2C_I2SR);
-		if (temp & I2SR_ICF)
-			break;
-		if (time_after(jiffies, orig_jiffies +
-				msecs_to_jiffies(DMA_TIMEOUT))) {
+	/* Waiting क्रम transfer complete. */
+	जबतक (1) अणु
+		temp = imx_i2c_पढ़ो_reg(i2c_imx, IMX_I2C_I2SR);
+		अगर (temp & I2SR_ICF)
+			अवरोध;
+		अगर (समय_after(jअगरfies, orig_jअगरfies +
+				msecs_to_jअगरfies(DMA_TIMEOUT))) अणु
 			dev_dbg(dev, "<%s> Timeout\n", __func__);
-			return -ETIMEDOUT;
-		}
+			वापस -ETIMEDOUT;
+		पूर्ण
 		schedule();
-	}
+	पूर्ण
 
-	temp = imx_i2c_read_reg(i2c_imx, IMX_I2C_I2CR);
+	temp = imx_i2c_पढ़ो_reg(i2c_imx, IMX_I2C_I2CR);
 	temp &= ~I2CR_DMAEN;
-	imx_i2c_write_reg(temp, i2c_imx, IMX_I2C_I2CR);
+	imx_i2c_ग_लिखो_reg(temp, i2c_imx, IMX_I2C_I2CR);
 
 	/* The last data byte must be transferred by the CPU. */
-	imx_i2c_write_reg(msgs->buf[msgs->len-1],
+	imx_i2c_ग_लिखो_reg(msgs->buf[msgs->len-1],
 				i2c_imx, IMX_I2C_I2DR);
 	result = i2c_imx_trx_complete(i2c_imx, false);
-	if (result)
-		return result;
+	अगर (result)
+		वापस result;
 
-	return i2c_imx_acked(i2c_imx);
-}
+	वापस i2c_imx_acked(i2c_imx);
+पूर्ण
 
-static int i2c_imx_dma_read(struct imx_i2c_struct *i2c_imx,
-			struct i2c_msg *msgs, bool is_lastmsg)
-{
-	int result;
-	unsigned long time_left;
-	unsigned int temp;
-	unsigned long orig_jiffies = jiffies;
-	struct imx_i2c_dma *dma = i2c_imx->dma;
-	struct device *dev = &i2c_imx->adapter.dev;
+अटल पूर्णांक i2c_imx_dma_पढ़ो(काष्ठा imx_i2c_काष्ठा *i2c_imx,
+			काष्ठा i2c_msg *msgs, bool is_lasपंचांगsg)
+अणु
+	पूर्णांक result;
+	अचिन्हित दीर्घ समय_left;
+	अचिन्हित पूर्णांक temp;
+	अचिन्हित दीर्घ orig_jअगरfies = jअगरfies;
+	काष्ठा imx_i2c_dma *dma = i2c_imx->dma;
+	काष्ठा device *dev = &i2c_imx->adapter.dev;
 
 
 	dma->chan_using = dma->chan_rx;
@@ -947,271 +948,271 @@ static int i2c_imx_dma_read(struct imx_i2c_struct *i2c_imx,
 	/* The last two data bytes must be transferred by the CPU. */
 	dma->dma_len = msgs->len - 2;
 	result = i2c_imx_dma_xfer(i2c_imx, msgs);
-	if (result)
-		return result;
+	अगर (result)
+		वापस result;
 
-	time_left = wait_for_completion_timeout(
+	समय_left = रुको_क्रम_completion_समयout(
 				&i2c_imx->dma->cmd_complete,
-				msecs_to_jiffies(DMA_TIMEOUT));
-	if (time_left == 0) {
+				msecs_to_jअगरfies(DMA_TIMEOUT));
+	अगर (समय_left == 0) अणु
 		dmaengine_terminate_all(dma->chan_using);
-		return -ETIMEDOUT;
-	}
+		वापस -ETIMEDOUT;
+	पूर्ण
 
-	/* waiting for transfer complete. */
-	while (1) {
-		temp = imx_i2c_read_reg(i2c_imx, IMX_I2C_I2SR);
-		if (temp & I2SR_ICF)
-			break;
-		if (time_after(jiffies, orig_jiffies +
-				msecs_to_jiffies(DMA_TIMEOUT))) {
+	/* रुकोing क्रम transfer complete. */
+	जबतक (1) अणु
+		temp = imx_i2c_पढ़ो_reg(i2c_imx, IMX_I2C_I2SR);
+		अगर (temp & I2SR_ICF)
+			अवरोध;
+		अगर (समय_after(jअगरfies, orig_jअगरfies +
+				msecs_to_jअगरfies(DMA_TIMEOUT))) अणु
 			dev_dbg(dev, "<%s> Timeout\n", __func__);
-			return -ETIMEDOUT;
-		}
+			वापस -ETIMEDOUT;
+		पूर्ण
 		schedule();
-	}
+	पूर्ण
 
-	temp = imx_i2c_read_reg(i2c_imx, IMX_I2C_I2CR);
+	temp = imx_i2c_पढ़ो_reg(i2c_imx, IMX_I2C_I2CR);
 	temp &= ~I2CR_DMAEN;
-	imx_i2c_write_reg(temp, i2c_imx, IMX_I2C_I2CR);
+	imx_i2c_ग_लिखो_reg(temp, i2c_imx, IMX_I2C_I2CR);
 
-	/* read n-1 byte data */
-	temp = imx_i2c_read_reg(i2c_imx, IMX_I2C_I2CR);
+	/* पढ़ो n-1 byte data */
+	temp = imx_i2c_पढ़ो_reg(i2c_imx, IMX_I2C_I2CR);
 	temp |= I2CR_TXAK;
-	imx_i2c_write_reg(temp, i2c_imx, IMX_I2C_I2CR);
+	imx_i2c_ग_लिखो_reg(temp, i2c_imx, IMX_I2C_I2CR);
 
-	msgs->buf[msgs->len-2] = imx_i2c_read_reg(i2c_imx, IMX_I2C_I2DR);
-	/* read n byte data */
+	msgs->buf[msgs->len-2] = imx_i2c_पढ़ो_reg(i2c_imx, IMX_I2C_I2DR);
+	/* पढ़ो n byte data */
 	result = i2c_imx_trx_complete(i2c_imx, false);
-	if (result)
-		return result;
+	अगर (result)
+		वापस result;
 
-	if (is_lastmsg) {
+	अगर (is_lasपंचांगsg) अणु
 		/*
-		 * It must generate STOP before read I2DR to prevent
-		 * controller from generating another clock cycle
+		 * It must generate STOP beक्रमe पढ़ो I2DR to prevent
+		 * controller from generating another घड़ी cycle
 		 */
 		dev_dbg(dev, "<%s> clear MSTA\n", __func__);
-		temp = imx_i2c_read_reg(i2c_imx, IMX_I2C_I2CR);
-		if (!(temp & I2CR_MSTA))
+		temp = imx_i2c_पढ़ो_reg(i2c_imx, IMX_I2C_I2CR);
+		अगर (!(temp & I2CR_MSTA))
 			i2c_imx->stopped = 1;
 		temp &= ~(I2CR_MSTA | I2CR_MTX);
-		imx_i2c_write_reg(temp, i2c_imx, IMX_I2C_I2CR);
-		if (!i2c_imx->stopped)
+		imx_i2c_ग_लिखो_reg(temp, i2c_imx, IMX_I2C_I2CR);
+		अगर (!i2c_imx->stopped)
 			i2c_imx_bus_busy(i2c_imx, 0, false);
-	} else {
+	पूर्ण अन्यथा अणु
 		/*
 		 * For i2c master receiver repeat restart operation like:
-		 * read -> repeat MSTA -> read/write
-		 * The controller must set MTX before read the last byte in
-		 * the first read operation, otherwise the first read cost
-		 * one extra clock cycle.
+		 * पढ़ो -> repeat MSTA -> पढ़ो/ग_लिखो
+		 * The controller must set MTX beक्रमe पढ़ो the last byte in
+		 * the first पढ़ो operation, otherwise the first पढ़ो cost
+		 * one extra घड़ी cycle.
 		 */
-		temp = imx_i2c_read_reg(i2c_imx, IMX_I2C_I2CR);
+		temp = imx_i2c_पढ़ो_reg(i2c_imx, IMX_I2C_I2CR);
 		temp |= I2CR_MTX;
-		imx_i2c_write_reg(temp, i2c_imx, IMX_I2C_I2CR);
-	}
-	msgs->buf[msgs->len-1] = imx_i2c_read_reg(i2c_imx, IMX_I2C_I2DR);
+		imx_i2c_ग_लिखो_reg(temp, i2c_imx, IMX_I2C_I2CR);
+	पूर्ण
+	msgs->buf[msgs->len-1] = imx_i2c_पढ़ो_reg(i2c_imx, IMX_I2C_I2DR);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int i2c_imx_write(struct imx_i2c_struct *i2c_imx, struct i2c_msg *msgs,
+अटल पूर्णांक i2c_imx_ग_लिखो(काष्ठा imx_i2c_काष्ठा *i2c_imx, काष्ठा i2c_msg *msgs,
 			 bool atomic)
-{
-	int i, result;
+अणु
+	पूर्णांक i, result;
 
 	dev_dbg(&i2c_imx->adapter.dev, "<%s> write slave address: addr=0x%x\n",
 		__func__, i2c_8bit_addr_from_msg(msgs));
 
-	/* write slave address */
-	imx_i2c_write_reg(i2c_8bit_addr_from_msg(msgs), i2c_imx, IMX_I2C_I2DR);
+	/* ग_लिखो slave address */
+	imx_i2c_ग_लिखो_reg(i2c_8bit_addr_from_msg(msgs), i2c_imx, IMX_I2C_I2DR);
 	result = i2c_imx_trx_complete(i2c_imx, atomic);
-	if (result)
-		return result;
+	अगर (result)
+		वापस result;
 	result = i2c_imx_acked(i2c_imx);
-	if (result)
-		return result;
+	अगर (result)
+		वापस result;
 	dev_dbg(&i2c_imx->adapter.dev, "<%s> write data\n", __func__);
 
-	/* write data */
-	for (i = 0; i < msgs->len; i++) {
+	/* ग_लिखो data */
+	क्रम (i = 0; i < msgs->len; i++) अणु
 		dev_dbg(&i2c_imx->adapter.dev,
 			"<%s> write byte: B%d=0x%X\n",
 			__func__, i, msgs->buf[i]);
-		imx_i2c_write_reg(msgs->buf[i], i2c_imx, IMX_I2C_I2DR);
+		imx_i2c_ग_लिखो_reg(msgs->buf[i], i2c_imx, IMX_I2C_I2DR);
 		result = i2c_imx_trx_complete(i2c_imx, atomic);
-		if (result)
-			return result;
+		अगर (result)
+			वापस result;
 		result = i2c_imx_acked(i2c_imx);
-		if (result)
-			return result;
-	}
-	return 0;
-}
+		अगर (result)
+			वापस result;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int i2c_imx_read(struct imx_i2c_struct *i2c_imx, struct i2c_msg *msgs,
-			bool is_lastmsg, bool atomic)
-{
-	int i, result;
-	unsigned int temp;
-	int block_data = msgs->flags & I2C_M_RECV_LEN;
-	int use_dma = i2c_imx->dma && msgs->len >= DMA_THRESHOLD && !block_data;
+अटल पूर्णांक i2c_imx_पढ़ो(काष्ठा imx_i2c_काष्ठा *i2c_imx, काष्ठा i2c_msg *msgs,
+			bool is_lasपंचांगsg, bool atomic)
+अणु
+	पूर्णांक i, result;
+	अचिन्हित पूर्णांक temp;
+	पूर्णांक block_data = msgs->flags & I2C_M_RECV_LEN;
+	पूर्णांक use_dma = i2c_imx->dma && msgs->len >= DMA_THRESHOLD && !block_data;
 
 	dev_dbg(&i2c_imx->adapter.dev,
 		"<%s> write slave address: addr=0x%x\n",
 		__func__, i2c_8bit_addr_from_msg(msgs));
 
-	/* write slave address */
-	imx_i2c_write_reg(i2c_8bit_addr_from_msg(msgs), i2c_imx, IMX_I2C_I2DR);
+	/* ग_लिखो slave address */
+	imx_i2c_ग_लिखो_reg(i2c_8bit_addr_from_msg(msgs), i2c_imx, IMX_I2C_I2DR);
 	result = i2c_imx_trx_complete(i2c_imx, atomic);
-	if (result)
-		return result;
+	अगर (result)
+		वापस result;
 	result = i2c_imx_acked(i2c_imx);
-	if (result)
-		return result;
+	अगर (result)
+		वापस result;
 
 	dev_dbg(&i2c_imx->adapter.dev, "<%s> setup bus\n", __func__);
 
-	/* setup bus to read data */
-	temp = imx_i2c_read_reg(i2c_imx, IMX_I2C_I2CR);
+	/* setup bus to पढ़ो data */
+	temp = imx_i2c_पढ़ो_reg(i2c_imx, IMX_I2C_I2CR);
 	temp &= ~I2CR_MTX;
 
 	/*
-	 * Reset the I2CR_TXAK flag initially for SMBus block read since the
+	 * Reset the I2CR_TXAK flag initially क्रम SMBus block पढ़ो since the
 	 * length is unknown
 	 */
-	if ((msgs->len - 1) || block_data)
+	अगर ((msgs->len - 1) || block_data)
 		temp &= ~I2CR_TXAK;
-	if (use_dma)
+	अगर (use_dma)
 		temp |= I2CR_DMAEN;
-	imx_i2c_write_reg(temp, i2c_imx, IMX_I2C_I2CR);
-	imx_i2c_read_reg(i2c_imx, IMX_I2C_I2DR); /* dummy read */
+	imx_i2c_ग_लिखो_reg(temp, i2c_imx, IMX_I2C_I2CR);
+	imx_i2c_पढ़ो_reg(i2c_imx, IMX_I2C_I2DR); /* dummy पढ़ो */
 
 	dev_dbg(&i2c_imx->adapter.dev, "<%s> read data\n", __func__);
 
-	if (use_dma)
-		return i2c_imx_dma_read(i2c_imx, msgs, is_lastmsg);
+	अगर (use_dma)
+		वापस i2c_imx_dma_पढ़ो(i2c_imx, msgs, is_lasपंचांगsg);
 
-	/* read data */
-	for (i = 0; i < msgs->len; i++) {
+	/* पढ़ो data */
+	क्रम (i = 0; i < msgs->len; i++) अणु
 		u8 len = 0;
 
 		result = i2c_imx_trx_complete(i2c_imx, atomic);
-		if (result)
-			return result;
+		अगर (result)
+			वापस result;
 		/*
-		 * First byte is the length of remaining packet
-		 * in the SMBus block data read. Add it to
+		 * First byte is the length of reमुख्यing packet
+		 * in the SMBus block data पढ़ो. Add it to
 		 * msgs->len.
 		 */
-		if ((!i) && block_data) {
-			len = imx_i2c_read_reg(i2c_imx, IMX_I2C_I2DR);
-			if ((len == 0) || (len > I2C_SMBUS_BLOCK_MAX))
-				return -EPROTO;
+		अगर ((!i) && block_data) अणु
+			len = imx_i2c_पढ़ो_reg(i2c_imx, IMX_I2C_I2DR);
+			अगर ((len == 0) || (len > I2C_SMBUS_BLOCK_MAX))
+				वापस -EPROTO;
 			dev_dbg(&i2c_imx->adapter.dev,
 				"<%s> read length: 0x%X\n",
 				__func__, len);
 			msgs->len += len;
-		}
-		if (i == (msgs->len - 1)) {
-			if (is_lastmsg) {
+		पूर्ण
+		अगर (i == (msgs->len - 1)) अणु
+			अगर (is_lasपंचांगsg) अणु
 				/*
-				 * It must generate STOP before read I2DR to prevent
-				 * controller from generating another clock cycle
+				 * It must generate STOP beक्रमe पढ़ो I2DR to prevent
+				 * controller from generating another घड़ी cycle
 				 */
 				dev_dbg(&i2c_imx->adapter.dev,
 					"<%s> clear MSTA\n", __func__);
-				temp = imx_i2c_read_reg(i2c_imx, IMX_I2C_I2CR);
-				if (!(temp & I2CR_MSTA))
+				temp = imx_i2c_पढ़ो_reg(i2c_imx, IMX_I2C_I2CR);
+				अगर (!(temp & I2CR_MSTA))
 					i2c_imx->stopped =  1;
 				temp &= ~(I2CR_MSTA | I2CR_MTX);
-				imx_i2c_write_reg(temp, i2c_imx, IMX_I2C_I2CR);
-				if (!i2c_imx->stopped)
+				imx_i2c_ग_लिखो_reg(temp, i2c_imx, IMX_I2C_I2CR);
+				अगर (!i2c_imx->stopped)
 					i2c_imx_bus_busy(i2c_imx, 0, atomic);
-			} else {
+			पूर्ण अन्यथा अणु
 				/*
 				 * For i2c master receiver repeat restart operation like:
-				 * read -> repeat MSTA -> read/write
-				 * The controller must set MTX before read the last byte in
-				 * the first read operation, otherwise the first read cost
-				 * one extra clock cycle.
+				 * पढ़ो -> repeat MSTA -> पढ़ो/ग_लिखो
+				 * The controller must set MTX beक्रमe पढ़ो the last byte in
+				 * the first पढ़ो operation, otherwise the first पढ़ो cost
+				 * one extra घड़ी cycle.
 				 */
-				temp = imx_i2c_read_reg(i2c_imx, IMX_I2C_I2CR);
+				temp = imx_i2c_पढ़ो_reg(i2c_imx, IMX_I2C_I2CR);
 				temp |= I2CR_MTX;
-				imx_i2c_write_reg(temp, i2c_imx, IMX_I2C_I2CR);
-			}
-		} else if (i == (msgs->len - 2)) {
+				imx_i2c_ग_लिखो_reg(temp, i2c_imx, IMX_I2C_I2CR);
+			पूर्ण
+		पूर्ण अन्यथा अगर (i == (msgs->len - 2)) अणु
 			dev_dbg(&i2c_imx->adapter.dev,
 				"<%s> set TXAK\n", __func__);
-			temp = imx_i2c_read_reg(i2c_imx, IMX_I2C_I2CR);
+			temp = imx_i2c_पढ़ो_reg(i2c_imx, IMX_I2C_I2CR);
 			temp |= I2CR_TXAK;
-			imx_i2c_write_reg(temp, i2c_imx, IMX_I2C_I2CR);
-		}
-		if ((!i) && block_data)
+			imx_i2c_ग_लिखो_reg(temp, i2c_imx, IMX_I2C_I2CR);
+		पूर्ण
+		अगर ((!i) && block_data)
 			msgs->buf[0] = len;
-		else
-			msgs->buf[i] = imx_i2c_read_reg(i2c_imx, IMX_I2C_I2DR);
+		अन्यथा
+			msgs->buf[i] = imx_i2c_पढ़ो_reg(i2c_imx, IMX_I2C_I2DR);
 		dev_dbg(&i2c_imx->adapter.dev,
 			"<%s> read byte: B%d=0x%X\n",
 			__func__, i, msgs->buf[i]);
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int i2c_imx_xfer_common(struct i2c_adapter *adapter,
-			       struct i2c_msg *msgs, int num, bool atomic)
-{
-	unsigned int i, temp;
-	int result;
-	bool is_lastmsg = false;
-	struct imx_i2c_struct *i2c_imx = i2c_get_adapdata(adapter);
+अटल पूर्णांक i2c_imx_xfer_common(काष्ठा i2c_adapter *adapter,
+			       काष्ठा i2c_msg *msgs, पूर्णांक num, bool atomic)
+अणु
+	अचिन्हित पूर्णांक i, temp;
+	पूर्णांक result;
+	bool is_lasपंचांगsg = false;
+	काष्ठा imx_i2c_काष्ठा *i2c_imx = i2c_get_adapdata(adapter);
 
 	dev_dbg(&i2c_imx->adapter.dev, "<%s>\n", __func__);
 
 	/* Start I2C transfer */
 	result = i2c_imx_start(i2c_imx, atomic);
-	if (result) {
+	अगर (result) अणु
 		/*
 		 * Bus recovery uses gpiod_get_value_cansleep() which is not
 		 * allowed within atomic context.
 		 */
-		if (!atomic && i2c_imx->adapter.bus_recovery_info) {
+		अगर (!atomic && i2c_imx->adapter.bus_recovery_info) अणु
 			i2c_recover_bus(&i2c_imx->adapter);
 			result = i2c_imx_start(i2c_imx, atomic);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (result)
-		goto fail0;
+	अगर (result)
+		जाओ fail0;
 
-	/* read/write data */
-	for (i = 0; i < num; i++) {
-		if (i == num - 1)
-			is_lastmsg = true;
+	/* पढ़ो/ग_लिखो data */
+	क्रम (i = 0; i < num; i++) अणु
+		अगर (i == num - 1)
+			is_lasपंचांगsg = true;
 
-		if (i) {
+		अगर (i) अणु
 			dev_dbg(&i2c_imx->adapter.dev,
 				"<%s> repeated start\n", __func__);
-			temp = imx_i2c_read_reg(i2c_imx, IMX_I2C_I2CR);
+			temp = imx_i2c_पढ़ो_reg(i2c_imx, IMX_I2C_I2CR);
 			temp |= I2CR_RSTA;
-			imx_i2c_write_reg(temp, i2c_imx, IMX_I2C_I2CR);
+			imx_i2c_ग_लिखो_reg(temp, i2c_imx, IMX_I2C_I2CR);
 			result = i2c_imx_bus_busy(i2c_imx, 1, atomic);
-			if (result)
-				goto fail0;
-		}
+			अगर (result)
+				जाओ fail0;
+		पूर्ण
 		dev_dbg(&i2c_imx->adapter.dev,
 			"<%s> transfer message: %d\n", __func__, i);
-		/* write/read data */
-#ifdef CONFIG_I2C_DEBUG_BUS
-		temp = imx_i2c_read_reg(i2c_imx, IMX_I2C_I2CR);
+		/* ग_लिखो/पढ़ो data */
+#अगर_घोषित CONFIG_I2C_DEBUG_BUS
+		temp = imx_i2c_पढ़ो_reg(i2c_imx, IMX_I2C_I2CR);
 		dev_dbg(&i2c_imx->adapter.dev,
 			"<%s> CONTROL: IEN=%d, IIEN=%d, MSTA=%d, MTX=%d, TXAK=%d, RSTA=%d\n",
 			__func__,
 			(temp & I2CR_IEN ? 1 : 0), (temp & I2CR_IIEN ? 1 : 0),
 			(temp & I2CR_MSTA ? 1 : 0), (temp & I2CR_MTX ? 1 : 0),
 			(temp & I2CR_TXAK ? 1 : 0), (temp & I2CR_RSTA ? 1 : 0));
-		temp = imx_i2c_read_reg(i2c_imx, IMX_I2C_I2SR);
+		temp = imx_i2c_पढ़ो_reg(i2c_imx, IMX_I2C_I2SR);
 		dev_dbg(&i2c_imx->adapter.dev,
 			"<%s> STATUS: ICF=%d, IAAS=%d, IBB=%d, IAL=%d, SRW=%d, IIF=%d, RXAK=%d\n",
 			__func__,
@@ -1219,19 +1220,19 @@ static int i2c_imx_xfer_common(struct i2c_adapter *adapter,
 			(temp & I2SR_IBB ? 1 : 0), (temp & I2SR_IAL ? 1 : 0),
 			(temp & I2SR_SRW ? 1 : 0), (temp & I2SR_IIF ? 1 : 0),
 			(temp & I2SR_RXAK ? 1 : 0));
-#endif
-		if (msgs[i].flags & I2C_M_RD) {
-			result = i2c_imx_read(i2c_imx, &msgs[i], is_lastmsg, atomic);
-		} else {
-			if (!atomic &&
+#पूर्ण_अगर
+		अगर (msgs[i].flags & I2C_M_RD) अणु
+			result = i2c_imx_पढ़ो(i2c_imx, &msgs[i], is_lasपंचांगsg, atomic);
+		पूर्ण अन्यथा अणु
+			अगर (!atomic &&
 			    i2c_imx->dma && msgs[i].len >= DMA_THRESHOLD)
-				result = i2c_imx_dma_write(i2c_imx, &msgs[i]);
-			else
-				result = i2c_imx_write(i2c_imx, &msgs[i], atomic);
-		}
-		if (result)
-			goto fail0;
-	}
+				result = i2c_imx_dma_ग_लिखो(i2c_imx, &msgs[i]);
+			अन्यथा
+				result = i2c_imx_ग_लिखो(i2c_imx, &msgs[i], atomic);
+		पूर्ण
+		अगर (result)
+			जाओ fail0;
+	पूर्ण
 
 fail0:
 	/* Stop I2C transfer */
@@ -1240,101 +1241,101 @@ fail0:
 	dev_dbg(&i2c_imx->adapter.dev, "<%s> exit with: %s: %d\n", __func__,
 		(result < 0) ? "error" : "success msg",
 			(result < 0) ? result : num);
-	/* After data is transferred, switch to slave mode(as a receiver) */
-	if (i2c_imx->slave)
+	/* After data is transferred, चयन to slave mode(as a receiver) */
+	अगर (i2c_imx->slave)
 		i2c_imx_slave_init(i2c_imx);
 
-	return (result < 0) ? result : num;
-}
+	वापस (result < 0) ? result : num;
+पूर्ण
 
-static int i2c_imx_xfer(struct i2c_adapter *adapter,
-			struct i2c_msg *msgs, int num)
-{
-	struct imx_i2c_struct *i2c_imx = i2c_get_adapdata(adapter);
-	int result;
+अटल पूर्णांक i2c_imx_xfer(काष्ठा i2c_adapter *adapter,
+			काष्ठा i2c_msg *msgs, पूर्णांक num)
+अणु
+	काष्ठा imx_i2c_काष्ठा *i2c_imx = i2c_get_adapdata(adapter);
+	पूर्णांक result;
 
-	result = pm_runtime_resume_and_get(i2c_imx->adapter.dev.parent);
-	if (result < 0)
-		return result;
+	result = pm_runसमय_resume_and_get(i2c_imx->adapter.dev.parent);
+	अगर (result < 0)
+		वापस result;
 
 	result = i2c_imx_xfer_common(adapter, msgs, num, false);
 
-	pm_runtime_mark_last_busy(i2c_imx->adapter.dev.parent);
-	pm_runtime_put_autosuspend(i2c_imx->adapter.dev.parent);
+	pm_runसमय_mark_last_busy(i2c_imx->adapter.dev.parent);
+	pm_runसमय_put_स्वतःsuspend(i2c_imx->adapter.dev.parent);
 
-	return result;
-}
+	वापस result;
+पूर्ण
 
-static int i2c_imx_xfer_atomic(struct i2c_adapter *adapter,
-			       struct i2c_msg *msgs, int num)
-{
-	struct imx_i2c_struct *i2c_imx = i2c_get_adapdata(adapter);
-	int result;
+अटल पूर्णांक i2c_imx_xfer_atomic(काष्ठा i2c_adapter *adapter,
+			       काष्ठा i2c_msg *msgs, पूर्णांक num)
+अणु
+	काष्ठा imx_i2c_काष्ठा *i2c_imx = i2c_get_adapdata(adapter);
+	पूर्णांक result;
 
 	result = clk_enable(i2c_imx->clk);
-	if (result)
-		return result;
+	अगर (result)
+		वापस result;
 
 	result = i2c_imx_xfer_common(adapter, msgs, num, true);
 
 	clk_disable(i2c_imx->clk);
 
-	return result;
-}
+	वापस result;
+पूर्ण
 
-static void i2c_imx_prepare_recovery(struct i2c_adapter *adap)
-{
-	struct imx_i2c_struct *i2c_imx;
+अटल व्योम i2c_imx_prepare_recovery(काष्ठा i2c_adapter *adap)
+अणु
+	काष्ठा imx_i2c_काष्ठा *i2c_imx;
 
-	i2c_imx = container_of(adap, struct imx_i2c_struct, adapter);
+	i2c_imx = container_of(adap, काष्ठा imx_i2c_काष्ठा, adapter);
 
 	pinctrl_select_state(i2c_imx->pinctrl, i2c_imx->pinctrl_pins_gpio);
-}
+पूर्ण
 
-static void i2c_imx_unprepare_recovery(struct i2c_adapter *adap)
-{
-	struct imx_i2c_struct *i2c_imx;
+अटल व्योम i2c_imx_unprepare_recovery(काष्ठा i2c_adapter *adap)
+अणु
+	काष्ठा imx_i2c_काष्ठा *i2c_imx;
 
-	i2c_imx = container_of(adap, struct imx_i2c_struct, adapter);
+	i2c_imx = container_of(adap, काष्ठा imx_i2c_काष्ठा, adapter);
 
-	pinctrl_select_state(i2c_imx->pinctrl, i2c_imx->pinctrl_pins_default);
-}
+	pinctrl_select_state(i2c_imx->pinctrl, i2c_imx->pinctrl_pins_शेष);
+पूर्ण
 
 /*
- * We switch SCL and SDA to their GPIO function and do some bitbanging
- * for bus recovery. These alternative pinmux settings can be
+ * We चयन SCL and SDA to their GPIO function and करो some bitbanging
+ * क्रम bus recovery. These alternative pinmux settings can be
  * described in the device tree by a separate pinctrl state "gpio". If
  * this is missing this is not a big problem, the only implication is
- * that we can't do bus recovery.
+ * that we can't करो bus recovery.
  */
-static int i2c_imx_init_recovery_info(struct imx_i2c_struct *i2c_imx,
-		struct platform_device *pdev)
-{
-	struct i2c_bus_recovery_info *rinfo = &i2c_imx->rinfo;
+अटल पूर्णांक i2c_imx_init_recovery_info(काष्ठा imx_i2c_काष्ठा *i2c_imx,
+		काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा i2c_bus_recovery_info *rinfo = &i2c_imx->rinfo;
 
 	i2c_imx->pinctrl = devm_pinctrl_get(&pdev->dev);
-	if (!i2c_imx->pinctrl || IS_ERR(i2c_imx->pinctrl)) {
+	अगर (!i2c_imx->pinctrl || IS_ERR(i2c_imx->pinctrl)) अणु
 		dev_info(&pdev->dev, "can't get pinctrl, bus recovery not supported\n");
-		return PTR_ERR(i2c_imx->pinctrl);
-	}
+		वापस PTR_ERR(i2c_imx->pinctrl);
+	पूर्ण
 
-	i2c_imx->pinctrl_pins_default = pinctrl_lookup_state(i2c_imx->pinctrl,
+	i2c_imx->pinctrl_pins_शेष = pinctrl_lookup_state(i2c_imx->pinctrl,
 			PINCTRL_STATE_DEFAULT);
 	i2c_imx->pinctrl_pins_gpio = pinctrl_lookup_state(i2c_imx->pinctrl,
 			"gpio");
 	rinfo->sda_gpiod = devm_gpiod_get(&pdev->dev, "sda", GPIOD_IN);
 	rinfo->scl_gpiod = devm_gpiod_get(&pdev->dev, "scl", GPIOD_OUT_HIGH_OPEN_DRAIN);
 
-	if (PTR_ERR(rinfo->sda_gpiod) == -EPROBE_DEFER ||
-	    PTR_ERR(rinfo->scl_gpiod) == -EPROBE_DEFER) {
-		return -EPROBE_DEFER;
-	} else if (IS_ERR(rinfo->sda_gpiod) ||
+	अगर (PTR_ERR(rinfo->sda_gpiod) == -EPROBE_DEFER ||
+	    PTR_ERR(rinfo->scl_gpiod) == -EPROBE_DEFER) अणु
+		वापस -EPROBE_DEFER;
+	पूर्ण अन्यथा अगर (IS_ERR(rinfo->sda_gpiod) ||
 		   IS_ERR(rinfo->scl_gpiod) ||
-		   IS_ERR(i2c_imx->pinctrl_pins_default) ||
-		   IS_ERR(i2c_imx->pinctrl_pins_gpio)) {
+		   IS_ERR(i2c_imx->pinctrl_pins_शेष) ||
+		   IS_ERR(i2c_imx->pinctrl_pins_gpio)) अणु
 		dev_dbg(&pdev->dev, "recovery information incomplete\n");
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	dev_dbg(&pdev->dev, "using scl%s for recovery\n",
 		rinfo->sda_gpiod ? ",sda" : "");
@@ -1344,58 +1345,58 @@ static int i2c_imx_init_recovery_info(struct imx_i2c_struct *i2c_imx,
 	rinfo->recover_bus = i2c_generic_scl_recovery;
 	i2c_imx->adapter.bus_recovery_info = rinfo;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static u32 i2c_imx_func(struct i2c_adapter *adapter)
-{
-	return I2C_FUNC_I2C | I2C_FUNC_SMBUS_EMUL
+अटल u32 i2c_imx_func(काष्ठा i2c_adapter *adapter)
+अणु
+	वापस I2C_FUNC_I2C | I2C_FUNC_SMBUS_EMUL
 		| I2C_FUNC_SMBUS_READ_BLOCK_DATA;
-}
+पूर्ण
 
-static const struct i2c_algorithm i2c_imx_algo = {
+अटल स्थिर काष्ठा i2c_algorithm i2c_imx_algo = अणु
 	.master_xfer = i2c_imx_xfer,
 	.master_xfer_atomic = i2c_imx_xfer_atomic,
 	.functionality = i2c_imx_func,
 	.reg_slave	= i2c_imx_reg_slave,
 	.unreg_slave	= i2c_imx_unreg_slave,
-};
+पूर्ण;
 
-static int i2c_imx_probe(struct platform_device *pdev)
-{
-	struct imx_i2c_struct *i2c_imx;
-	struct resource *res;
-	struct imxi2c_platform_data *pdata = dev_get_platdata(&pdev->dev);
-	void __iomem *base;
-	int irq, ret;
+अटल पूर्णांक i2c_imx_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा imx_i2c_काष्ठा *i2c_imx;
+	काष्ठा resource *res;
+	काष्ठा imxi2c_platक्रमm_data *pdata = dev_get_platdata(&pdev->dev);
+	व्योम __iomem *base;
+	पूर्णांक irq, ret;
 	dma_addr_t phy_addr;
-	const struct imx_i2c_hwdata *match;
+	स्थिर काष्ठा imx_i2c_hwdata *match;
 
 	dev_dbg(&pdev->dev, "<%s>\n", __func__);
 
-	irq = platform_get_irq(pdev, 0);
-	if (irq < 0)
-		return irq;
+	irq = platक्रमm_get_irq(pdev, 0);
+	अगर (irq < 0)
+		वापस irq;
 
-	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
 	base = devm_ioremap_resource(&pdev->dev, res);
-	if (IS_ERR(base))
-		return PTR_ERR(base);
+	अगर (IS_ERR(base))
+		वापस PTR_ERR(base);
 
 	phy_addr = (dma_addr_t)res->start;
-	i2c_imx = devm_kzalloc(&pdev->dev, sizeof(*i2c_imx), GFP_KERNEL);
-	if (!i2c_imx)
-		return -ENOMEM;
+	i2c_imx = devm_kzalloc(&pdev->dev, माप(*i2c_imx), GFP_KERNEL);
+	अगर (!i2c_imx)
+		वापस -ENOMEM;
 
 	match = device_get_match_data(&pdev->dev);
-	if (match)
+	अगर (match)
 		i2c_imx->hwdata = match;
-	else
-		i2c_imx->hwdata = (struct imx_i2c_hwdata *)
-				platform_get_device_id(pdev)->driver_data;
+	अन्यथा
+		i2c_imx->hwdata = (काष्ठा imx_i2c_hwdata *)
+				platक्रमm_get_device_id(pdev)->driver_data;
 
-	/* Setup i2c_imx driver structure */
-	strlcpy(i2c_imx->adapter.name, pdev->name, sizeof(i2c_imx->adapter.name));
+	/* Setup i2c_imx driver काष्ठाure */
+	strlcpy(i2c_imx->adapter.name, pdev->name, माप(i2c_imx->adapter.name));
 	i2c_imx->adapter.owner		= THIS_MODULE;
 	i2c_imx->adapter.algo		= &i2c_imx_algo;
 	i2c_imx->adapter.dev.parent	= &pdev->dev;
@@ -1404,69 +1405,69 @@ static int i2c_imx_probe(struct platform_device *pdev)
 	i2c_imx->base			= base;
 	ACPI_COMPANION_SET(&i2c_imx->adapter.dev, ACPI_COMPANION(&pdev->dev));
 
-	/* Get I2C clock */
-	i2c_imx->clk = devm_clk_get(&pdev->dev, NULL);
-	if (IS_ERR(i2c_imx->clk))
-		return dev_err_probe(&pdev->dev, PTR_ERR(i2c_imx->clk),
+	/* Get I2C घड़ी */
+	i2c_imx->clk = devm_clk_get(&pdev->dev, शून्य);
+	अगर (IS_ERR(i2c_imx->clk))
+		वापस dev_err_probe(&pdev->dev, PTR_ERR(i2c_imx->clk),
 				     "can't get I2C clock\n");
 
 	ret = clk_prepare_enable(i2c_imx->clk);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&pdev->dev, "can't enable I2C clock, ret=%d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	/* Init queue */
-	init_waitqueue_head(&i2c_imx->queue);
+	init_रुकोqueue_head(&i2c_imx->queue);
 
 	/* Set up adapter data */
 	i2c_set_adapdata(&i2c_imx->adapter, i2c_imx);
 
-	/* Set up platform driver data */
-	platform_set_drvdata(pdev, i2c_imx);
+	/* Set up platक्रमm driver data */
+	platक्रमm_set_drvdata(pdev, i2c_imx);
 
-	pm_runtime_set_autosuspend_delay(&pdev->dev, I2C_PM_TIMEOUT);
-	pm_runtime_use_autosuspend(&pdev->dev);
-	pm_runtime_set_active(&pdev->dev);
-	pm_runtime_enable(&pdev->dev);
+	pm_runसमय_set_स्वतःsuspend_delay(&pdev->dev, I2C_PM_TIMEOUT);
+	pm_runसमय_use_स्वतःsuspend(&pdev->dev);
+	pm_runसमय_set_active(&pdev->dev);
+	pm_runसमय_enable(&pdev->dev);
 
-	ret = pm_runtime_get_sync(&pdev->dev);
-	if (ret < 0)
-		goto rpm_disable;
+	ret = pm_runसमय_get_sync(&pdev->dev);
+	अगर (ret < 0)
+		जाओ rpm_disable;
 
 	/* Request IRQ */
-	ret = request_threaded_irq(irq, i2c_imx_isr, NULL, IRQF_SHARED,
+	ret = request_thपढ़ोed_irq(irq, i2c_imx_isr, शून्य, IRQF_SHARED,
 				   pdev->name, i2c_imx);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&pdev->dev, "can't claim irq %d\n", irq);
-		goto rpm_disable;
-	}
+		जाओ rpm_disable;
+	पूर्ण
 
-	/* Set up clock divider */
+	/* Set up घड़ी भागider */
 	i2c_imx->bitrate = I2C_MAX_STANDARD_MODE_FREQ;
-	ret = of_property_read_u32(pdev->dev.of_node,
+	ret = of_property_पढ़ो_u32(pdev->dev.of_node,
 				   "clock-frequency", &i2c_imx->bitrate);
-	if (ret < 0 && pdata && pdata->bitrate)
+	अगर (ret < 0 && pdata && pdata->bitrate)
 		i2c_imx->bitrate = pdata->bitrate;
-	i2c_imx->clk_change_nb.notifier_call = i2c_imx_clk_notifier_call;
-	clk_notifier_register(i2c_imx->clk, &i2c_imx->clk_change_nb);
+	i2c_imx->clk_change_nb.notअगरier_call = i2c_imx_clk_notअगरier_call;
+	clk_notअगरier_रेजिस्टर(i2c_imx->clk, &i2c_imx->clk_change_nb);
 	i2c_imx_set_clk(i2c_imx, clk_get_rate(i2c_imx->clk));
 
 	i2c_imx_reset_regs(i2c_imx);
 
 	/* Init optional bus recovery function */
 	ret = i2c_imx_init_recovery_info(i2c_imx, pdev);
-	/* Give it another chance if pinctrl used is not ready yet */
-	if (ret == -EPROBE_DEFER)
-		goto clk_notifier_unregister;
+	/* Give it another chance अगर pinctrl used is not पढ़ोy yet */
+	अगर (ret == -EPROBE_DEFER)
+		जाओ clk_notअगरier_unरेजिस्टर;
 
 	/* Add I2C adapter */
 	ret = i2c_add_numbered_adapter(&i2c_imx->adapter);
-	if (ret < 0)
-		goto clk_notifier_unregister;
+	अगर (ret < 0)
+		जाओ clk_notअगरier_unरेजिस्टर;
 
-	pm_runtime_mark_last_busy(&pdev->dev);
-	pm_runtime_put_autosuspend(&pdev->dev);
+	pm_runसमय_mark_last_busy(&pdev->dev);
+	pm_runसमय_put_स्वतःsuspend(&pdev->dev);
 
 	dev_dbg(&i2c_imx->adapter.dev, "claimed irq %d\n", irq);
 	dev_dbg(&i2c_imx->adapter.dev, "device resources: %pR\n", res);
@@ -1474,106 +1475,106 @@ static int i2c_imx_probe(struct platform_device *pdev)
 		i2c_imx->adapter.name);
 	dev_info(&i2c_imx->adapter.dev, "IMX I2C adapter registered\n");
 
-	/* Init DMA config if supported */
+	/* Init DMA config अगर supported */
 	i2c_imx_dma_request(i2c_imx, phy_addr);
 
-	return 0;   /* Return OK */
+	वापस 0;   /* Return OK */
 
-clk_notifier_unregister:
-	clk_notifier_unregister(i2c_imx->clk, &i2c_imx->clk_change_nb);
-	free_irq(irq, i2c_imx);
+clk_notअगरier_unरेजिस्टर:
+	clk_notअगरier_unरेजिस्टर(i2c_imx->clk, &i2c_imx->clk_change_nb);
+	मुक्त_irq(irq, i2c_imx);
 rpm_disable:
-	pm_runtime_put_noidle(&pdev->dev);
-	pm_runtime_disable(&pdev->dev);
-	pm_runtime_set_suspended(&pdev->dev);
-	pm_runtime_dont_use_autosuspend(&pdev->dev);
+	pm_runसमय_put_noidle(&pdev->dev);
+	pm_runसमय_disable(&pdev->dev);
+	pm_runसमय_set_suspended(&pdev->dev);
+	pm_runसमय_करोnt_use_स्वतःsuspend(&pdev->dev);
 	clk_disable_unprepare(i2c_imx->clk);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int i2c_imx_remove(struct platform_device *pdev)
-{
-	struct imx_i2c_struct *i2c_imx = platform_get_drvdata(pdev);
-	int irq, ret;
+अटल पूर्णांक i2c_imx_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा imx_i2c_काष्ठा *i2c_imx = platक्रमm_get_drvdata(pdev);
+	पूर्णांक irq, ret;
 
-	ret = pm_runtime_resume_and_get(&pdev->dev);
-	if (ret < 0)
-		return ret;
+	ret = pm_runसमय_resume_and_get(&pdev->dev);
+	अगर (ret < 0)
+		वापस ret;
 
-	/* remove adapter */
+	/* हटाओ adapter */
 	dev_dbg(&i2c_imx->adapter.dev, "adapter removed\n");
 	i2c_del_adapter(&i2c_imx->adapter);
 
-	if (i2c_imx->dma)
-		i2c_imx_dma_free(i2c_imx);
+	अगर (i2c_imx->dma)
+		i2c_imx_dma_मुक्त(i2c_imx);
 
-	/* setup chip registers to defaults */
-	imx_i2c_write_reg(0, i2c_imx, IMX_I2C_IADR);
-	imx_i2c_write_reg(0, i2c_imx, IMX_I2C_IFDR);
-	imx_i2c_write_reg(0, i2c_imx, IMX_I2C_I2CR);
-	imx_i2c_write_reg(0, i2c_imx, IMX_I2C_I2SR);
+	/* setup chip रेजिस्टरs to शेषs */
+	imx_i2c_ग_लिखो_reg(0, i2c_imx, IMX_I2C_IADR);
+	imx_i2c_ग_लिखो_reg(0, i2c_imx, IMX_I2C_IFDR);
+	imx_i2c_ग_लिखो_reg(0, i2c_imx, IMX_I2C_I2CR);
+	imx_i2c_ग_लिखो_reg(0, i2c_imx, IMX_I2C_I2SR);
 
-	clk_notifier_unregister(i2c_imx->clk, &i2c_imx->clk_change_nb);
-	irq = platform_get_irq(pdev, 0);
-	if (irq >= 0)
-		free_irq(irq, i2c_imx);
+	clk_notअगरier_unरेजिस्टर(i2c_imx->clk, &i2c_imx->clk_change_nb);
+	irq = platक्रमm_get_irq(pdev, 0);
+	अगर (irq >= 0)
+		मुक्त_irq(irq, i2c_imx);
 	clk_disable_unprepare(i2c_imx->clk);
 
-	pm_runtime_put_noidle(&pdev->dev);
-	pm_runtime_disable(&pdev->dev);
+	pm_runसमय_put_noidle(&pdev->dev);
+	pm_runसमय_disable(&pdev->dev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __maybe_unused i2c_imx_runtime_suspend(struct device *dev)
-{
-	struct imx_i2c_struct *i2c_imx = dev_get_drvdata(dev);
+अटल पूर्णांक __maybe_unused i2c_imx_runसमय_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा imx_i2c_काष्ठा *i2c_imx = dev_get_drvdata(dev);
 
 	clk_disable(i2c_imx->clk);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __maybe_unused i2c_imx_runtime_resume(struct device *dev)
-{
-	struct imx_i2c_struct *i2c_imx = dev_get_drvdata(dev);
-	int ret;
+अटल पूर्णांक __maybe_unused i2c_imx_runसमय_resume(काष्ठा device *dev)
+अणु
+	काष्ठा imx_i2c_काष्ठा *i2c_imx = dev_get_drvdata(dev);
+	पूर्णांक ret;
 
 	ret = clk_enable(i2c_imx->clk);
-	if (ret)
+	अगर (ret)
 		dev_err(dev, "can't enable I2C clock, ret=%d\n", ret);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const struct dev_pm_ops i2c_imx_pm_ops = {
-	SET_RUNTIME_PM_OPS(i2c_imx_runtime_suspend,
-			   i2c_imx_runtime_resume, NULL)
-};
+अटल स्थिर काष्ठा dev_pm_ops i2c_imx_pm_ops = अणु
+	SET_RUNTIME_PM_OPS(i2c_imx_runसमय_suspend,
+			   i2c_imx_runसमय_resume, शून्य)
+पूर्ण;
 
-static struct platform_driver i2c_imx_driver = {
+अटल काष्ठा platक्रमm_driver i2c_imx_driver = अणु
 	.probe = i2c_imx_probe,
-	.remove = i2c_imx_remove,
-	.driver = {
+	.हटाओ = i2c_imx_हटाओ,
+	.driver = अणु
 		.name = DRIVER_NAME,
 		.pm = &i2c_imx_pm_ops,
 		.of_match_table = i2c_imx_dt_ids,
 		.acpi_match_table = i2c_imx_acpi_ids,
-	},
+	पूर्ण,
 	.id_table = imx_i2c_devtype,
-};
+पूर्ण;
 
-static int __init i2c_adap_imx_init(void)
-{
-	return platform_driver_register(&i2c_imx_driver);
-}
+अटल पूर्णांक __init i2c_adap_imx_init(व्योम)
+अणु
+	वापस platक्रमm_driver_रेजिस्टर(&i2c_imx_driver);
+पूर्ण
 subsys_initcall(i2c_adap_imx_init);
 
-static void __exit i2c_adap_imx_exit(void)
-{
-	platform_driver_unregister(&i2c_imx_driver);
-}
-module_exit(i2c_adap_imx_exit);
+अटल व्योम __निकास i2c_adap_imx_निकास(व्योम)
+अणु
+	platक्रमm_driver_unरेजिस्टर(&i2c_imx_driver);
+पूर्ण
+module_निकास(i2c_adap_imx_निकास);
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Darius Augulis");

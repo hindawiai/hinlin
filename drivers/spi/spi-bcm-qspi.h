@@ -1,104 +1,105 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * Copyright 2016 Broadcom
  */
 
-#ifndef __SPI_BCM_QSPI_H__
-#define __SPI_BCM_QSPI_H__
+#अगर_अघोषित __SPI_BCM_QSPI_H__
+#घोषणा __SPI_BCM_QSPI_H__
 
-#include <linux/types.h>
-#include <linux/io.h>
+#समावेश <linux/types.h>
+#समावेश <linux/पन.स>
 
-/* BSPI interrupt masks */
-#define INTR_BSPI_LR_OVERREAD_MASK		BIT(4)
-#define INTR_BSPI_LR_SESSION_DONE_MASK		BIT(3)
-#define INTR_BSPI_LR_IMPATIENT_MASK		BIT(2)
-#define INTR_BSPI_LR_SESSION_ABORTED_MASK	BIT(1)
-#define INTR_BSPI_LR_FULLNESS_REACHED_MASK	BIT(0)
+/* BSPI पूर्णांकerrupt masks */
+#घोषणा INTR_BSPI_LR_OVERREAD_MASK		BIT(4)
+#घोषणा INTR_BSPI_LR_SESSION_DONE_MASK		BIT(3)
+#घोषणा INTR_BSPI_LR_IMPATIENT_MASK		BIT(2)
+#घोषणा INTR_BSPI_LR_SESSION_ABORTED_MASK	BIT(1)
+#घोषणा INTR_BSPI_LR_FULLNESS_REACHED_MASK	BIT(0)
 
-#define BSPI_LR_INTERRUPTS_DATA		       \
+#घोषणा BSPI_LR_INTERRUPTS_DATA		       \
 	(INTR_BSPI_LR_SESSION_DONE_MASK |	       \
 	 INTR_BSPI_LR_FULLNESS_REACHED_MASK)
 
-#define BSPI_LR_INTERRUPTS_ERROR               \
+#घोषणा BSPI_LR_INTERRUPTS_ERROR               \
 	(INTR_BSPI_LR_OVERREAD_MASK |	       \
 	 INTR_BSPI_LR_IMPATIENT_MASK |	       \
 	 INTR_BSPI_LR_SESSION_ABORTED_MASK)
 
-#define BSPI_LR_INTERRUPTS_ALL                 \
+#घोषणा BSPI_LR_INTERRUPTS_ALL                 \
 	(BSPI_LR_INTERRUPTS_ERROR |	       \
 	 BSPI_LR_INTERRUPTS_DATA)
 
 /* MSPI Interrupt masks */
-#define INTR_MSPI_HALTED_MASK			BIT(6)
-#define INTR_MSPI_DONE_MASK			BIT(5)
+#घोषणा INTR_MSPI_HALTED_MASK			BIT(6)
+#घोषणा INTR_MSPI_DONE_MASK			BIT(5)
 
-#define MSPI_INTERRUPTS_ALL		       \
+#घोषणा MSPI_INTERRUPTS_ALL		       \
 	(INTR_MSPI_DONE_MASK |		       \
 	 INTR_MSPI_HALTED_MASK)
 
-#define QSPI_INTERRUPTS_ALL                    \
+#घोषणा QSPI_INTERRUPTS_ALL                    \
 	(MSPI_INTERRUPTS_ALL |		       \
 	 BSPI_LR_INTERRUPTS_ALL)
 
-struct platform_device;
-struct dev_pm_ops;
+काष्ठा platक्रमm_device;
+काष्ठा dev_pm_ops;
 
-enum {
+क्रमागत अणु
 	MSPI_DONE = 0x1,
 	BSPI_DONE = 0x2,
 	BSPI_ERR = 0x4,
 	MSPI_BSPI_DONE = 0x7
-};
+पूर्ण;
 
-struct bcm_qspi_soc_intc {
-	void (*bcm_qspi_int_ack)(struct bcm_qspi_soc_intc *soc_intc, int type);
-	void (*bcm_qspi_int_set)(struct bcm_qspi_soc_intc *soc_intc, int type,
+काष्ठा bcm_qspi_soc_पूर्णांकc अणु
+	व्योम (*bcm_qspi_पूर्णांक_ack)(काष्ठा bcm_qspi_soc_पूर्णांकc *soc_पूर्णांकc, पूर्णांक type);
+	व्योम (*bcm_qspi_पूर्णांक_set)(काष्ठा bcm_qspi_soc_पूर्णांकc *soc_पूर्णांकc, पूर्णांक type,
 				 bool en);
-	u32 (*bcm_qspi_get_int_status)(struct bcm_qspi_soc_intc *soc_intc);
-};
+	u32 (*bcm_qspi_get_पूर्णांक_status)(काष्ठा bcm_qspi_soc_पूर्णांकc *soc_पूर्णांकc);
+पूर्ण;
 
-/* Read controller register*/
-static inline u32 bcm_qspi_readl(bool be, void __iomem *addr)
-{
-	if (be)
-		return ioread32be(addr);
-	else
-		return readl_relaxed(addr);
-}
+/* Read controller रेजिस्टर*/
+अटल अंतरभूत u32 bcm_qspi_पढ़ोl(bool be, व्योम __iomem *addr)
+अणु
+	अगर (be)
+		वापस ioपढ़ो32be(addr);
+	अन्यथा
+		वापस पढ़ोl_relaxed(addr);
+पूर्ण
 
-/* Write controller register*/
-static inline void bcm_qspi_writel(bool be,
-				   unsigned int data, void __iomem *addr)
-{
-	if (be)
-		iowrite32be(data, addr);
-	else
-		writel_relaxed(data, addr);
-}
+/* Write controller रेजिस्टर*/
+अटल अंतरभूत व्योम bcm_qspi_ग_लिखोl(bool be,
+				   अचिन्हित पूर्णांक data, व्योम __iomem *addr)
+अणु
+	अगर (be)
+		ioग_लिखो32be(data, addr);
+	अन्यथा
+		ग_लिखोl_relaxed(data, addr);
+पूर्ण
 
-static inline u32 get_qspi_mask(int type)
-{
-	switch (type) {
-	case MSPI_DONE:
-		return INTR_MSPI_DONE_MASK;
-	case BSPI_DONE:
-		return BSPI_LR_INTERRUPTS_ALL;
-	case MSPI_BSPI_DONE:
-		return QSPI_INTERRUPTS_ALL;
-	case BSPI_ERR:
-		return BSPI_LR_INTERRUPTS_ERROR;
-	}
+अटल अंतरभूत u32 get_qspi_mask(पूर्णांक type)
+अणु
+	चयन (type) अणु
+	हाल MSPI_DONE:
+		वापस INTR_MSPI_DONE_MASK;
+	हाल BSPI_DONE:
+		वापस BSPI_LR_INTERRUPTS_ALL;
+	हाल MSPI_BSPI_DONE:
+		वापस QSPI_INTERRUPTS_ALL;
+	हाल BSPI_ERR:
+		वापस BSPI_LR_INTERRUPTS_ERROR;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* The common driver functions to be called by the SoC platform driver */
-int bcm_qspi_probe(struct platform_device *pdev,
-		   struct bcm_qspi_soc_intc *soc_intc);
-int bcm_qspi_remove(struct platform_device *pdev);
+/* The common driver functions to be called by the SoC platक्रमm driver */
+पूर्णांक bcm_qspi_probe(काष्ठा platक्रमm_device *pdev,
+		   काष्ठा bcm_qspi_soc_पूर्णांकc *soc_पूर्णांकc);
+पूर्णांक bcm_qspi_हटाओ(काष्ठा platक्रमm_device *pdev);
 
-/* pm_ops used by the SoC platform driver called on PM suspend/resume */
-extern const struct dev_pm_ops bcm_qspi_pm_ops;
+/* pm_ops used by the SoC platक्रमm driver called on PM suspend/resume */
+बाह्य स्थिर काष्ठा dev_pm_ops bcm_qspi_pm_ops;
 
-#endif /* __SPI_BCM_QSPI_H__ */
+#पूर्ण_अगर /* __SPI_BCM_QSPI_H__ */

@@ -1,306 +1,307 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <linux/mount.h>
-#include <linux/pseudo_fs.h>
-#include <linux/file.h>
-#include <linux/fs.h>
-#include <linux/proc_fs.h>
-#include <linux/proc_ns.h>
-#include <linux/magic.h>
-#include <linux/ktime.h>
-#include <linux/seq_file.h>
-#include <linux/user_namespace.h>
-#include <linux/nsfs.h>
-#include <linux/uaccess.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <linux/mount.h>
+#समावेश <linux/pseuकरो_fs.h>
+#समावेश <linux/file.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/proc_fs.h>
+#समावेश <linux/proc_ns.h>
+#समावेश <linux/magic.h>
+#समावेश <linux/kसमय.स>
+#समावेश <linux/seq_file.h>
+#समावेश <linux/user_namespace.h>
+#समावेश <linux/nsfs.h>
+#समावेश <linux/uaccess.h>
 
-#include "internal.h"
+#समावेश "internal.h"
 
-static struct vfsmount *nsfs_mnt;
+अटल काष्ठा vfsmount *nsfs_mnt;
 
-static long ns_ioctl(struct file *filp, unsigned int ioctl,
-			unsigned long arg);
-static const struct file_operations ns_file_operations = {
+अटल दीर्घ ns_ioctl(काष्ठा file *filp, अचिन्हित पूर्णांक ioctl,
+			अचिन्हित दीर्घ arg);
+अटल स्थिर काष्ठा file_operations ns_file_operations = अणु
 	.llseek		= no_llseek,
 	.unlocked_ioctl = ns_ioctl,
-};
+पूर्ण;
 
-static char *ns_dname(struct dentry *dentry, char *buffer, int buflen)
-{
-	struct inode *inode = d_inode(dentry);
-	const struct proc_ns_operations *ns_ops = dentry->d_fsdata;
+अटल अक्षर *ns_dname(काष्ठा dentry *dentry, अक्षर *buffer, पूर्णांक buflen)
+अणु
+	काष्ठा inode *inode = d_inode(dentry);
+	स्थिर काष्ठा proc_ns_operations *ns_ops = dentry->d_fsdata;
 
-	return dynamic_dname(dentry, buffer, buflen, "%s:[%lu]",
+	वापस dynamic_dname(dentry, buffer, buflen, "%s:[%lu]",
 		ns_ops->name, inode->i_ino);
-}
+पूर्ण
 
-static void ns_prune_dentry(struct dentry *dentry)
-{
-	struct inode *inode = d_inode(dentry);
-	if (inode) {
-		struct ns_common *ns = inode->i_private;
-		atomic_long_set(&ns->stashed, 0);
-	}
-}
+अटल व्योम ns_prune_dentry(काष्ठा dentry *dentry)
+अणु
+	काष्ठा inode *inode = d_inode(dentry);
+	अगर (inode) अणु
+		काष्ठा ns_common *ns = inode->i_निजी;
+		atomic_दीर्घ_set(&ns->stashed, 0);
+	पूर्ण
+पूर्ण
 
-const struct dentry_operations ns_dentry_operations =
-{
+स्थिर काष्ठा dentry_operations ns_dentry_operations =
+अणु
 	.d_prune	= ns_prune_dentry,
 	.d_delete	= always_delete_dentry,
 	.d_dname	= ns_dname,
-};
+पूर्ण;
 
-static void nsfs_evict(struct inode *inode)
-{
-	struct ns_common *ns = inode->i_private;
+अटल व्योम nsfs_evict(काष्ठा inode *inode)
+अणु
+	काष्ठा ns_common *ns = inode->i_निजी;
 	clear_inode(inode);
 	ns->ops->put(ns);
-}
+पूर्ण
 
-static int __ns_get_path(struct path *path, struct ns_common *ns)
-{
-	struct vfsmount *mnt = nsfs_mnt;
-	struct dentry *dentry;
-	struct inode *inode;
-	unsigned long d;
+अटल पूर्णांक __ns_get_path(काष्ठा path *path, काष्ठा ns_common *ns)
+अणु
+	काष्ठा vfsmount *mnt = nsfs_mnt;
+	काष्ठा dentry *dentry;
+	काष्ठा inode *inode;
+	अचिन्हित दीर्घ d;
 
-	rcu_read_lock();
-	d = atomic_long_read(&ns->stashed);
-	if (!d)
-		goto slow;
-	dentry = (struct dentry *)d;
-	if (!lockref_get_not_dead(&dentry->d_lockref))
-		goto slow;
-	rcu_read_unlock();
+	rcu_पढ़ो_lock();
+	d = atomic_दीर्घ_पढ़ो(&ns->stashed);
+	अगर (!d)
+		जाओ slow;
+	dentry = (काष्ठा dentry *)d;
+	अगर (!lockref_get_not_dead(&dentry->d_lockref))
+		जाओ slow;
+	rcu_पढ़ो_unlock();
 	ns->ops->put(ns);
 got_it:
 	path->mnt = mntget(mnt);
 	path->dentry = dentry;
-	return 0;
+	वापस 0;
 slow:
-	rcu_read_unlock();
-	inode = new_inode_pseudo(mnt->mnt_sb);
-	if (!inode) {
+	rcu_पढ़ो_unlock();
+	inode = new_inode_pseuकरो(mnt->mnt_sb);
+	अगर (!inode) अणु
 		ns->ops->put(ns);
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 	inode->i_ino = ns->inum;
-	inode->i_mtime = inode->i_atime = inode->i_ctime = current_time(inode);
+	inode->i_mसमय = inode->i_aसमय = inode->i_स_समय = current_समय(inode);
 	inode->i_flags |= S_IMMUTABLE;
 	inode->i_mode = S_IFREG | S_IRUGO;
 	inode->i_fop = &ns_file_operations;
-	inode->i_private = ns;
+	inode->i_निजी = ns;
 
 	dentry = d_alloc_anon(mnt->mnt_sb);
-	if (!dentry) {
+	अगर (!dentry) अणु
 		iput(inode);
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 	d_instantiate(dentry, inode);
-	dentry->d_fsdata = (void *)ns->ops;
-	d = atomic_long_cmpxchg(&ns->stashed, 0, (unsigned long)dentry);
-	if (d) {
-		d_delete(dentry);	/* make sure ->d_prune() does nothing */
+	dentry->d_fsdata = (व्योम *)ns->ops;
+	d = atomic_दीर्घ_cmpxchg(&ns->stashed, 0, (अचिन्हित दीर्घ)dentry);
+	अगर (d) अणु
+		d_delete(dentry);	/* make sure ->d_prune() करोes nothing */
 		dput(dentry);
 		cpu_relax();
-		return -EAGAIN;
-	}
-	goto got_it;
-}
+		वापस -EAGAIN;
+	पूर्ण
+	जाओ got_it;
+पूर्ण
 
-int ns_get_path_cb(struct path *path, ns_get_path_helper_t *ns_get_cb,
-		     void *private_data)
-{
-	int ret;
+पूर्णांक ns_get_path_cb(काष्ठा path *path, ns_get_path_helper_t *ns_get_cb,
+		     व्योम *निजी_data)
+अणु
+	पूर्णांक ret;
 
-	do {
-		struct ns_common *ns = ns_get_cb(private_data);
-		if (!ns)
-			return -ENOENT;
+	करो अणु
+		काष्ठा ns_common *ns = ns_get_cb(निजी_data);
+		अगर (!ns)
+			वापस -ENOENT;
 		ret = __ns_get_path(path, ns);
-	} while (ret == -EAGAIN);
+	पूर्ण जबतक (ret == -EAGAIN);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-struct ns_get_path_task_args {
-	const struct proc_ns_operations *ns_ops;
-	struct task_struct *task;
-};
+काष्ठा ns_get_path_task_args अणु
+	स्थिर काष्ठा proc_ns_operations *ns_ops;
+	काष्ठा task_काष्ठा *task;
+पूर्ण;
 
-static struct ns_common *ns_get_path_task(void *private_data)
-{
-	struct ns_get_path_task_args *args = private_data;
+अटल काष्ठा ns_common *ns_get_path_task(व्योम *निजी_data)
+अणु
+	काष्ठा ns_get_path_task_args *args = निजी_data;
 
-	return args->ns_ops->get(args->task);
-}
+	वापस args->ns_ops->get(args->task);
+पूर्ण
 
-int ns_get_path(struct path *path, struct task_struct *task,
-		  const struct proc_ns_operations *ns_ops)
-{
-	struct ns_get_path_task_args args = {
+पूर्णांक ns_get_path(काष्ठा path *path, काष्ठा task_काष्ठा *task,
+		  स्थिर काष्ठा proc_ns_operations *ns_ops)
+अणु
+	काष्ठा ns_get_path_task_args args = अणु
 		.ns_ops	= ns_ops,
 		.task	= task,
-	};
+	पूर्ण;
 
-	return ns_get_path_cb(path, ns_get_path_task, &args);
-}
+	वापस ns_get_path_cb(path, ns_get_path_task, &args);
+पूर्ण
 
-int open_related_ns(struct ns_common *ns,
-		   struct ns_common *(*get_ns)(struct ns_common *ns))
-{
-	struct path path = {};
-	struct file *f;
-	int err;
-	int fd;
+पूर्णांक खोलो_related_ns(काष्ठा ns_common *ns,
+		   काष्ठा ns_common *(*get_ns)(काष्ठा ns_common *ns))
+अणु
+	काष्ठा path path = अणुपूर्ण;
+	काष्ठा file *f;
+	पूर्णांक err;
+	पूर्णांक fd;
 
 	fd = get_unused_fd_flags(O_CLOEXEC);
-	if (fd < 0)
-		return fd;
+	अगर (fd < 0)
+		वापस fd;
 
-	do {
-		struct ns_common *relative;
+	करो अणु
+		काष्ठा ns_common *relative;
 
 		relative = get_ns(ns);
-		if (IS_ERR(relative)) {
+		अगर (IS_ERR(relative)) अणु
 			put_unused_fd(fd);
-			return PTR_ERR(relative);
-		}
+			वापस PTR_ERR(relative);
+		पूर्ण
 
 		err = __ns_get_path(&path, relative);
-	} while (err == -EAGAIN);
+	पूर्ण जबतक (err == -EAGAIN);
 
-	if (err) {
+	अगर (err) अणु
 		put_unused_fd(fd);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	f = dentry_open(&path, O_RDONLY, current_cred());
+	f = dentry_खोलो(&path, O_RDONLY, current_cred());
 	path_put(&path);
-	if (IS_ERR(f)) {
+	अगर (IS_ERR(f)) अणु
 		put_unused_fd(fd);
 		fd = PTR_ERR(f);
-	} else
+	पूर्ण अन्यथा
 		fd_install(fd, f);
 
-	return fd;
-}
-EXPORT_SYMBOL_GPL(open_related_ns);
+	वापस fd;
+पूर्ण
+EXPORT_SYMBOL_GPL(खोलो_related_ns);
 
-static long ns_ioctl(struct file *filp, unsigned int ioctl,
-			unsigned long arg)
-{
-	struct user_namespace *user_ns;
-	struct ns_common *ns = get_proc_ns(file_inode(filp));
+अटल दीर्घ ns_ioctl(काष्ठा file *filp, अचिन्हित पूर्णांक ioctl,
+			अचिन्हित दीर्घ arg)
+अणु
+	काष्ठा user_namespace *user_ns;
+	काष्ठा ns_common *ns = get_proc_ns(file_inode(filp));
 	uid_t __user *argp;
 	uid_t uid;
 
-	switch (ioctl) {
-	case NS_GET_USERNS:
-		return open_related_ns(ns, ns_get_owner);
-	case NS_GET_PARENT:
-		if (!ns->ops->get_parent)
-			return -EINVAL;
-		return open_related_ns(ns, ns->ops->get_parent);
-	case NS_GET_NSTYPE:
-		return ns->ops->type;
-	case NS_GET_OWNER_UID:
-		if (ns->ops->type != CLONE_NEWUSER)
-			return -EINVAL;
-		user_ns = container_of(ns, struct user_namespace, ns);
+	चयन (ioctl) अणु
+	हाल NS_GET_USERNS:
+		वापस खोलो_related_ns(ns, ns_get_owner);
+	हाल NS_GET_PARENT:
+		अगर (!ns->ops->get_parent)
+			वापस -EINVAL;
+		वापस खोलो_related_ns(ns, ns->ops->get_parent);
+	हाल NS_GET_NSTYPE:
+		वापस ns->ops->type;
+	हाल NS_GET_OWNER_UID:
+		अगर (ns->ops->type != CLONE_NEWUSER)
+			वापस -EINVAL;
+		user_ns = container_of(ns, काष्ठा user_namespace, ns);
 		argp = (uid_t __user *) arg;
 		uid = from_kuid_munged(current_user_ns(), user_ns->owner);
-		return put_user(uid, argp);
-	default:
-		return -ENOTTY;
-	}
-}
+		वापस put_user(uid, argp);
+	शेष:
+		वापस -ENOTTY;
+	पूर्ण
+पूर्ण
 
-int ns_get_name(char *buf, size_t size, struct task_struct *task,
-			const struct proc_ns_operations *ns_ops)
-{
-	struct ns_common *ns;
-	int res = -ENOENT;
-	const char *name;
+पूर्णांक ns_get_name(अक्षर *buf, माप_प्रकार size, काष्ठा task_काष्ठा *task,
+			स्थिर काष्ठा proc_ns_operations *ns_ops)
+अणु
+	काष्ठा ns_common *ns;
+	पूर्णांक res = -ENOENT;
+	स्थिर अक्षर *name;
 	ns = ns_ops->get(task);
-	if (ns) {
+	अगर (ns) अणु
 		name = ns_ops->real_ns_name ? : ns_ops->name;
-		res = snprintf(buf, size, "%s:[%u]", name, ns->inum);
+		res = snम_लिखो(buf, size, "%s:[%u]", name, ns->inum);
 		ns_ops->put(ns);
-	}
-	return res;
-}
+	पूर्ण
+	वापस res;
+पूर्ण
 
-bool proc_ns_file(const struct file *file)
-{
-	return file->f_op == &ns_file_operations;
-}
+bool proc_ns_file(स्थिर काष्ठा file *file)
+अणु
+	वापस file->f_op == &ns_file_operations;
+पूर्ण
 
-struct file *proc_ns_fget(int fd)
-{
-	struct file *file;
+काष्ठा file *proc_ns_fget(पूर्णांक fd)
+अणु
+	काष्ठा file *file;
 
 	file = fget(fd);
-	if (!file)
-		return ERR_PTR(-EBADF);
+	अगर (!file)
+		वापस ERR_PTR(-EBADF);
 
-	if (file->f_op != &ns_file_operations)
-		goto out_invalid;
+	अगर (file->f_op != &ns_file_operations)
+		जाओ out_invalid;
 
-	return file;
+	वापस file;
 
 out_invalid:
 	fput(file);
-	return ERR_PTR(-EINVAL);
-}
+	वापस ERR_PTR(-EINVAL);
+पूर्ण
 
 /**
- * ns_match() - Returns true if current namespace matches dev/ino provided.
+ * ns_match() - Returns true अगर current namespace matches dev/ino provided.
  * @ns_common: current ns
  * @dev: dev_t from nsfs that will be matched against current nsfs
  * @ino: ino_t from nsfs that will be matched against current nsfs
  *
- * Return: true if dev and ino matches the current nsfs.
+ * Return: true अगर dev and ino matches the current nsfs.
  */
-bool ns_match(const struct ns_common *ns, dev_t dev, ino_t ino)
-{
-	return (ns->inum == ino) && (nsfs_mnt->mnt_sb->s_dev == dev);
-}
+bool ns_match(स्थिर काष्ठा ns_common *ns, dev_t dev, ino_t ino)
+अणु
+	वापस (ns->inum == ino) && (nsfs_mnt->mnt_sb->s_dev == dev);
+पूर्ण
 
 
-static int nsfs_show_path(struct seq_file *seq, struct dentry *dentry)
-{
-	struct inode *inode = d_inode(dentry);
-	const struct proc_ns_operations *ns_ops = dentry->d_fsdata;
+अटल पूर्णांक nsfs_show_path(काष्ठा seq_file *seq, काष्ठा dentry *dentry)
+अणु
+	काष्ठा inode *inode = d_inode(dentry);
+	स्थिर काष्ठा proc_ns_operations *ns_ops = dentry->d_fsdata;
 
-	seq_printf(seq, "%s:[%lu]", ns_ops->name, inode->i_ino);
-	return 0;
-}
+	seq_म_लिखो(seq, "%s:[%lu]", ns_ops->name, inode->i_ino);
+	वापस 0;
+पूर्ण
 
-static const struct super_operations nsfs_ops = {
+अटल स्थिर काष्ठा super_operations nsfs_ops = अणु
 	.statfs = simple_statfs,
 	.evict_inode = nsfs_evict,
 	.show_path = nsfs_show_path,
-};
+पूर्ण;
 
-static int nsfs_init_fs_context(struct fs_context *fc)
-{
-	struct pseudo_fs_context *ctx = init_pseudo(fc, NSFS_MAGIC);
-	if (!ctx)
-		return -ENOMEM;
+अटल पूर्णांक nsfs_init_fs_context(काष्ठा fs_context *fc)
+अणु
+	काष्ठा pseuकरो_fs_context *ctx = init_pseuकरो(fc, NSFS_MAGIC);
+	अगर (!ctx)
+		वापस -ENOMEM;
 	ctx->ops = &nsfs_ops;
-	ctx->dops = &ns_dentry_operations;
-	return 0;
-}
+	ctx->करोps = &ns_dentry_operations;
+	वापस 0;
+पूर्ण
 
-static struct file_system_type nsfs = {
+अटल काष्ठा file_प्रणाली_type nsfs = अणु
 	.name = "nsfs",
 	.init_fs_context = nsfs_init_fs_context,
-	.kill_sb = kill_anon_super,
-};
+	.समाप्त_sb = समाप्त_anon_super,
+पूर्ण;
 
-void __init nsfs_init(void)
-{
+व्योम __init nsfs_init(व्योम)
+अणु
 	nsfs_mnt = kern_mount(&nsfs);
-	if (IS_ERR(nsfs_mnt))
+	अगर (IS_ERR(nsfs_mnt))
 		panic("can't set nsfs up\n");
 	nsfs_mnt->mnt_sb->s_flags &= ~SB_NOUSER;
-}
+पूर्ण

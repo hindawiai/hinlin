@@ -1,23 +1,24 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  *  Copyright (C) 2005 Russell King.
- *  Data taken from include/asm-i386/serial.h
+ *  Data taken from include/यंत्र-i386/serial.h
  */
-#include <linux/module.h>
-#include <linux/init.h>
-#include <linux/serial_8250.h>
+#समावेश <linux/module.h>
+#समावेश <linux/init.h>
+#समावेश <linux/serial_8250.h>
 
-#define HUB6(card, port)						\
-	{								\
+#घोषणा HUB6(card, port)						\
+	अणु								\
 		.iobase		= 0x302,				\
 		.irq		= 3,					\
 		.uartclk	= 1843200,				\
 		.iotype		= UPIO_HUB6,				\
 		.flags		= UPF_BOOT_AUTOCONF,			\
 		.hub6		= (card) << 6 | (port) << 3 | 1,	\
-	}
+	पूर्ण
 
-static struct plat_serial8250_port hub6_data[] = {
+अटल काष्ठा plat_serial8250_port hub6_data[] = अणु
 	HUB6(0, 0),
 	HUB6(0, 1),
 	HUB6(0, 2),
@@ -30,21 +31,21 @@ static struct plat_serial8250_port hub6_data[] = {
 	HUB6(1, 3),
 	HUB6(1, 4),
 	HUB6(1, 5),
-	{ },
-};
+	अणु पूर्ण,
+पूर्ण;
 
-static struct platform_device hub6_device = {
+अटल काष्ठा platक्रमm_device hub6_device = अणु
 	.name			= "serial8250",
 	.id			= PLAT8250_DEV_HUB6,
-	.dev			= {
-		.platform_data	= hub6_data,
-	},
-};
+	.dev			= अणु
+		.platक्रमm_data	= hub6_data,
+	पूर्ण,
+पूर्ण;
 
-static int __init hub6_init(void)
-{
-	return platform_device_register(&hub6_device);
-}
+अटल पूर्णांक __init hub6_init(व्योम)
+अणु
+	वापस platक्रमm_device_रेजिस्टर(&hub6_device);
+पूर्ण
 
 module_init(hub6_init);
 

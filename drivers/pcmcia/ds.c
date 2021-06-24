@@ -1,33 +1,34 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * ds.c -- 16-bit PCMCIA core support
  *
  * The initial developer of the original code is David A. Hinds
- * <dahinds@users.sourceforge.net>.  Portions created by David A. Hinds
+ * <dahinds@users.sourceक्रमge.net>.  Portions created by David A. Hinds
  * are Copyright (C) 1999 David A. Hinds.  All Rights Reserved.
  *
  * (C) 1999		David A. Hinds
- * (C) 2003 - 2010	Dominik Brodowski
+ * (C) 2003 - 2010	Dominik Broकरोwski
  */
 
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/init.h>
-#include <linux/errno.h>
-#include <linux/list.h>
-#include <linux/delay.h>
-#include <linux/workqueue.h>
-#include <linux/crc32.h>
-#include <linux/firmware.h>
-#include <linux/kref.h>
-#include <linux/dma-mapping.h>
-#include <linux/slab.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/init.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/list.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/workqueue.h>
+#समावेश <linux/crc32.h>
+#समावेश <linux/firmware.h>
+#समावेश <linux/kref.h>
+#समावेश <linux/dma-mapping.h>
+#समावेश <linux/slab.h>
 
-#include <pcmcia/cistpl.h>
-#include <pcmcia/ds.h>
-#include <pcmcia/ss.h>
+#समावेश <pcmcia/cistpl.h>
+#समावेश <pcmcia/ds.h>
+#समावेश <pcmcia/ss.h>
 
-#include "cs_internal.h"
+#समावेश "cs_internal.h"
 
 /*====================================================================*/
 
@@ -40,77 +41,77 @@ MODULE_LICENSE("GPL");
 
 /*====================================================================*/
 
-static void pcmcia_check_driver(struct pcmcia_driver *p_drv)
-{
-	const struct pcmcia_device_id *did = p_drv->id_table;
-	unsigned int i;
+अटल व्योम pcmcia_check_driver(काष्ठा pcmcia_driver *p_drv)
+अणु
+	स्थिर काष्ठा pcmcia_device_id *did = p_drv->id_table;
+	अचिन्हित पूर्णांक i;
 	u32 hash;
 
-	if (!p_drv->probe || !p_drv->remove)
-		printk(KERN_DEBUG "pcmcia: %s lacks a requisite callback "
+	अगर (!p_drv->probe || !p_drv->हटाओ)
+		prपूर्णांकk(KERN_DEBUG "pcmcia: %s lacks a requisite callback "
 		       "function\n", p_drv->name);
 
-	while (did && did->match_flags) {
-		for (i = 0; i < 4; i++) {
-			if (!did->prod_id[i])
-				continue;
+	जबतक (did && did->match_flags) अणु
+		क्रम (i = 0; i < 4; i++) अणु
+			अगर (!did->prod_id[i])
+				जारी;
 
-			hash = crc32(0, did->prod_id[i], strlen(did->prod_id[i]));
-			if (hash == did->prod_id_hash[i])
-				continue;
+			hash = crc32(0, did->prod_id[i], म_माप(did->prod_id[i]));
+			अगर (hash == did->prod_id_hash[i])
+				जारी;
 
-			printk(KERN_DEBUG "pcmcia: %s: invalid hash for "
+			prपूर्णांकk(KERN_DEBUG "pcmcia: %s: invalid hash for "
 			       "product string \"%s\": is 0x%x, should "
 			       "be 0x%x\n", p_drv->name, did->prod_id[i],
 			       did->prod_id_hash[i], hash);
-			printk(KERN_DEBUG "pcmcia: see "
+			prपूर्णांकk(KERN_DEBUG "pcmcia: see "
 				"Documentation/pcmcia/devicetable.rst for "
 				"details\n");
-		}
+		पूर्ण
 		did++;
-	}
+	पूर्ण
 
-	return;
-}
+	वापस;
+पूर्ण
 
 
 /*======================================================================*/
 
 
-struct pcmcia_dynid {
-	struct list_head		node;
-	struct pcmcia_device_id		id;
-};
+काष्ठा pcmcia_dynid अणु
+	काष्ठा list_head		node;
+	काष्ठा pcmcia_device_id		id;
+पूर्ण;
 
 /**
  * new_id_store() - add a new PCMCIA device ID to this driver and re-probe devices
  * @driver: target device driver
- * @buf: buffer for scanning device ID data
+ * @buf: buffer क्रम scanning device ID data
  * @count: input size
  *
  * Adds a new dynamic PCMCIA device ID to this driver,
- * and causes the driver to probe for all devices again.
+ * and causes the driver to probe क्रम all devices again.
  */
-static ssize_t
-new_id_store(struct device_driver *driver, const char *buf, size_t count)
-{
-	struct pcmcia_dynid *dynid;
-	struct pcmcia_driver *pdrv = to_pcmcia_drv(driver);
+अटल sमाप_प्रकार
+new_id_store(काष्ठा device_driver *driver, स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	काष्ठा pcmcia_dynid *dynid;
+	काष्ठा pcmcia_driver *pdrv = to_pcmcia_drv(driver);
 	__u16 match_flags, manf_id, card_id;
 	__u8 func_id, function, device_no;
-	__u32 prod_id_hash[4] = {0, 0, 0, 0};
-	int fields = 0;
-	int retval = 0;
+	__u32 prod_id_hash[4] = अणु0, 0, 0, 0पूर्ण;
+	पूर्णांक fields = 0;
+	पूर्णांक retval = 0;
 
-	fields = sscanf(buf, "%hx %hx %hx %hhx %hhx %hhx %x %x %x %x",
+	fields = माला_पूछो(buf, "%hx %hx %hx %hhx %hhx %hhx %x %x %x %x",
 			&match_flags, &manf_id, &card_id, &func_id, &function, &device_no,
 			&prod_id_hash[0], &prod_id_hash[1], &prod_id_hash[2], &prod_id_hash[3]);
-	if (fields < 6)
-		return -EINVAL;
+	अगर (fields < 6)
+		वापस -EINVAL;
 
-	dynid = kzalloc(sizeof(struct pcmcia_dynid), GFP_KERNEL);
-	if (!dynid)
-		return -ENOMEM;
+	dynid = kzalloc(माप(काष्ठा pcmcia_dynid), GFP_KERNEL);
+	अगर (!dynid)
+		वापस -ENOMEM;
 
 	dynid->id.match_flags = match_flags;
 	dynid->id.manf_id = manf_id;
@@ -118,7 +119,7 @@ new_id_store(struct device_driver *driver, const char *buf, size_t count)
 	dynid->id.func_id = func_id;
 	dynid->id.function = function;
 	dynid->id.device_no = device_no;
-	memcpy(dynid->id.prod_id_hash, prod_id_hash, sizeof(__u32) * 4);
+	स_नकल(dynid->id.prod_id_hash, prod_id_hash, माप(__u32) * 4);
 
 	mutex_lock(&pdrv->dynids.lock);
 	list_add_tail(&dynid->node, &pdrv->dynids.list);
@@ -126,52 +127,52 @@ new_id_store(struct device_driver *driver, const char *buf, size_t count)
 
 	retval = driver_attach(&pdrv->drv);
 
-	if (retval)
-		return retval;
-	return count;
-}
-static DRIVER_ATTR_WO(new_id);
+	अगर (retval)
+		वापस retval;
+	वापस count;
+पूर्ण
+अटल DRIVER_ATTR_WO(new_id);
 
-static void
-pcmcia_free_dynids(struct pcmcia_driver *drv)
-{
-	struct pcmcia_dynid *dynid, *n;
+अटल व्योम
+pcmcia_मुक्त_dynids(काष्ठा pcmcia_driver *drv)
+अणु
+	काष्ठा pcmcia_dynid *dynid, *n;
 
 	mutex_lock(&drv->dynids.lock);
-	list_for_each_entry_safe(dynid, n, &drv->dynids.list, node) {
+	list_क्रम_each_entry_safe(dynid, n, &drv->dynids.list, node) अणु
 		list_del(&dynid->node);
-		kfree(dynid);
-	}
+		kमुक्त(dynid);
+	पूर्ण
 	mutex_unlock(&drv->dynids.lock);
-}
+पूर्ण
 
-static int
-pcmcia_create_newid_file(struct pcmcia_driver *drv)
-{
-	int error = 0;
-	if (drv->probe != NULL)
+अटल पूर्णांक
+pcmcia_create_newid_file(काष्ठा pcmcia_driver *drv)
+अणु
+	पूर्णांक error = 0;
+	अगर (drv->probe != शून्य)
 		error = driver_create_file(&drv->drv, &driver_attr_new_id);
-	return error;
-}
+	वापस error;
+पूर्ण
 
-static void
-pcmcia_remove_newid_file(struct pcmcia_driver *drv)
-{
-	driver_remove_file(&drv->drv, &driver_attr_new_id);
-}
+अटल व्योम
+pcmcia_हटाओ_newid_file(काष्ठा pcmcia_driver *drv)
+अणु
+	driver_हटाओ_file(&drv->drv, &driver_attr_new_id);
+पूर्ण
 
 /**
- * pcmcia_register_driver - register a PCMCIA driver with the bus core
- * @driver: the &driver being registered
+ * pcmcia_रेजिस्टर_driver - रेजिस्टर a PCMCIA driver with the bus core
+ * @driver: the &driver being रेजिस्टरed
  *
  * Registers a PCMCIA driver with the PCMCIA bus core.
  */
-int pcmcia_register_driver(struct pcmcia_driver *driver)
-{
-	int error;
+पूर्णांक pcmcia_रेजिस्टर_driver(काष्ठा pcmcia_driver *driver)
+अणु
+	पूर्णांक error;
 
-	if (!driver)
-		return -EINVAL;
+	अगर (!driver)
+		वापस -EINVAL;
 
 	pcmcia_check_driver(driver);
 
@@ -184,81 +185,81 @@ int pcmcia_register_driver(struct pcmcia_driver *driver)
 
 	pr_debug("registering driver %s\n", driver->name);
 
-	error = driver_register(&driver->drv);
-	if (error < 0)
-		return error;
+	error = driver_रेजिस्टर(&driver->drv);
+	अगर (error < 0)
+		वापस error;
 
 	error = pcmcia_create_newid_file(driver);
-	if (error)
-		driver_unregister(&driver->drv);
+	अगर (error)
+		driver_unरेजिस्टर(&driver->drv);
 
-	return error;
-}
-EXPORT_SYMBOL(pcmcia_register_driver);
+	वापस error;
+पूर्ण
+EXPORT_SYMBOL(pcmcia_रेजिस्टर_driver);
 
 /**
- * pcmcia_unregister_driver - unregister a PCMCIA driver with the bus core
- * @driver: the &driver being unregistered
+ * pcmcia_unरेजिस्टर_driver - unरेजिस्टर a PCMCIA driver with the bus core
+ * @driver: the &driver being unरेजिस्टरed
  */
-void pcmcia_unregister_driver(struct pcmcia_driver *driver)
-{
+व्योम pcmcia_unरेजिस्टर_driver(काष्ठा pcmcia_driver *driver)
+अणु
 	pr_debug("unregistering driver %s\n", driver->name);
-	pcmcia_remove_newid_file(driver);
-	driver_unregister(&driver->drv);
-	pcmcia_free_dynids(driver);
-}
-EXPORT_SYMBOL(pcmcia_unregister_driver);
+	pcmcia_हटाओ_newid_file(driver);
+	driver_unरेजिस्टर(&driver->drv);
+	pcmcia_मुक्त_dynids(driver);
+पूर्ण
+EXPORT_SYMBOL(pcmcia_unरेजिस्टर_driver);
 
 
 /* pcmcia_device handling */
 
-static struct pcmcia_device *pcmcia_get_dev(struct pcmcia_device *p_dev)
-{
-	struct device *tmp_dev;
-	tmp_dev = get_device(&p_dev->dev);
-	if (!tmp_dev)
-		return NULL;
-	return to_pcmcia_dev(tmp_dev);
-}
+अटल काष्ठा pcmcia_device *pcmcia_get_dev(काष्ठा pcmcia_device *p_dev)
+अणु
+	काष्ठा device *पंचांगp_dev;
+	पंचांगp_dev = get_device(&p_dev->dev);
+	अगर (!पंचांगp_dev)
+		वापस शून्य;
+	वापस to_pcmcia_dev(पंचांगp_dev);
+पूर्ण
 
-static void pcmcia_put_dev(struct pcmcia_device *p_dev)
-{
-	if (p_dev)
+अटल व्योम pcmcia_put_dev(काष्ठा pcmcia_device *p_dev)
+अणु
+	अगर (p_dev)
 		put_device(&p_dev->dev);
-}
+पूर्ण
 
-static void pcmcia_release_function(struct kref *ref)
-{
-	struct config_t *c = container_of(ref, struct config_t, ref);
+अटल व्योम pcmcia_release_function(काष्ठा kref *ref)
+अणु
+	काष्ठा config_t *c = container_of(ref, काष्ठा config_t, ref);
 	pr_debug("releasing config_t\n");
-	kfree(c);
-}
+	kमुक्त(c);
+पूर्ण
 
-static void pcmcia_release_dev(struct device *dev)
-{
-	struct pcmcia_device *p_dev = to_pcmcia_dev(dev);
-	int i;
+अटल व्योम pcmcia_release_dev(काष्ठा device *dev)
+अणु
+	काष्ठा pcmcia_device *p_dev = to_pcmcia_dev(dev);
+	पूर्णांक i;
 	dev_dbg(dev, "releasing device\n");
 	pcmcia_put_socket(p_dev->socket);
-	for (i = 0; i < 4; i++)
-		kfree(p_dev->prod_id[i]);
-	kfree(p_dev->devname);
+	क्रम (i = 0; i < 4; i++)
+		kमुक्त(p_dev->prod_id[i]);
+	kमुक्त(p_dev->devname);
 	kref_put(&p_dev->function_config->ref, pcmcia_release_function);
-	kfree(p_dev);
-}
+	kमुक्त(p_dev);
+पूर्ण
 
 
-static int pcmcia_device_probe(struct device *dev)
-{
-	struct pcmcia_device *p_dev;
-	struct pcmcia_driver *p_drv;
-	struct pcmcia_socket *s;
+अटल पूर्णांक pcmcia_device_probe(काष्ठा device *dev)
+अणु
+	काष्ठा pcmcia_device *p_dev;
+	काष्ठा pcmcia_driver *p_drv;
+	काष्ठा pcmcia_socket *s;
 	cistpl_config_t cis_config;
-	int ret = 0;
+	पूर्णांक ret = 0;
 
 	dev = get_device(dev);
-	if (!dev)
-		return -ENODEV;
+	अगर (!dev)
+		वापस -ENODEV;
 
 	p_dev = to_pcmcia_dev(dev);
 	p_drv = to_pcmcia_drv(dev->driver);
@@ -266,33 +267,33 @@ static int pcmcia_device_probe(struct device *dev)
 
 	dev_dbg(dev, "trying to bind to %s\n", p_drv->name);
 
-	if ((!p_drv->probe) || (!p_dev->function_config) ||
-	    (!try_module_get(p_drv->owner))) {
+	अगर ((!p_drv->probe) || (!p_dev->function_config) ||
+	    (!try_module_get(p_drv->owner))) अणु
 		ret = -EINVAL;
-		goto put_dev;
-	}
+		जाओ put_dev;
+	पूर्ण
 
-	/* set up some more device information */
-	ret = pccard_read_tuple(p_dev->socket, p_dev->func, CISTPL_CONFIG,
+	/* set up some more device inक्रमmation */
+	ret = pccard_पढ़ो_tuple(p_dev->socket, p_dev->func, CISTPL_CONFIG,
 				&cis_config);
-	if (!ret) {
+	अगर (!ret) अणु
 		p_dev->config_base = cis_config.base;
 		p_dev->config_regs = cis_config.rmask[0];
 		dev_dbg(dev, "base %x, regs %x", p_dev->config_base,
 			p_dev->config_regs);
-	} else {
+	पूर्ण अन्यथा अणु
 		dev_info(dev,
 			 "pcmcia: could not parse base and rmask0 of CIS\n");
 		p_dev->config_base = 0;
 		p_dev->config_regs = 0;
-	}
+	पूर्ण
 
 	ret = p_drv->probe(p_dev);
-	if (ret) {
+	अगर (ret) अणु
 		dev_dbg(dev, "binding to %s failed with %d\n",
 			   p_drv->name, ret);
-		goto put_module;
-	}
+		जाओ put_module;
+	पूर्ण
 	dev_dbg(dev, "%s bound: Vpp %d.%d, idx %x, IRQ %d", p_drv->name,
 		p_dev->vpp/10, p_dev->vpp%10, p_dev->config_index, p_dev->irq);
 	dev_dbg(dev, "resources: ioport %pR %pR iomem %pR %pR %pR",
@@ -300,61 +301,61 @@ static int pcmcia_device_probe(struct device *dev)
 		p_dev->resource[3], p_dev->resource[4]);
 
 	mutex_lock(&s->ops_mutex);
-	if ((s->pcmcia_pfc) &&
+	अगर ((s->pcmcia_pfc) &&
 	    (p_dev->socket->device_count == 1) && (p_dev->device_no == 0))
 		pcmcia_parse_uevents(s, PCMCIA_UEVENT_REQUERY);
 	mutex_unlock(&s->ops_mutex);
 
 put_module:
-	if (ret)
+	अगर (ret)
 		module_put(p_drv->owner);
 put_dev:
-	if (ret)
+	अगर (ret)
 		put_device(dev);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 
 /*
  * Removes a PCMCIA card from the device tree and socket list.
  */
-static void pcmcia_card_remove(struct pcmcia_socket *s, struct pcmcia_device *leftover)
-{
-	struct pcmcia_device	*p_dev;
-	struct pcmcia_device	*tmp;
+अटल व्योम pcmcia_card_हटाओ(काष्ठा pcmcia_socket *s, काष्ठा pcmcia_device *leftover)
+अणु
+	काष्ठा pcmcia_device	*p_dev;
+	काष्ठा pcmcia_device	*पंचांगp;
 
 	dev_dbg(leftover ? &leftover->dev : &s->dev,
 		   "pcmcia_card_remove(%d) %s\n", s->sock,
 		   leftover ? leftover->devname : "");
 
 	mutex_lock(&s->ops_mutex);
-	if (!leftover)
+	अगर (!leftover)
 		s->device_count = 0;
-	else
+	अन्यथा
 		s->device_count = 1;
 	mutex_unlock(&s->ops_mutex);
 
-	/* unregister all pcmcia_devices registered with this socket, except leftover */
-	list_for_each_entry_safe(p_dev, tmp, &s->devices_list, socket_device_list) {
-		if (p_dev == leftover)
-			continue;
+	/* unरेजिस्टर all pcmcia_devices रेजिस्टरed with this socket, except leftover */
+	list_क्रम_each_entry_safe(p_dev, पंचांगp, &s->devices_list, socket_device_list) अणु
+		अगर (p_dev == leftover)
+			जारी;
 
 		mutex_lock(&s->ops_mutex);
 		list_del(&p_dev->socket_device_list);
 		mutex_unlock(&s->ops_mutex);
 
 		dev_dbg(&p_dev->dev, "unregistering device\n");
-		device_unregister(&p_dev->dev);
-	}
+		device_unरेजिस्टर(&p_dev->dev);
+	पूर्ण
 
-	return;
-}
+	वापस;
+पूर्ण
 
-static int pcmcia_device_remove(struct device *dev)
-{
-	struct pcmcia_device *p_dev;
-	struct pcmcia_driver *p_drv;
-	int i;
+अटल पूर्णांक pcmcia_device_हटाओ(काष्ठा device *dev)
+अणु
+	काष्ठा pcmcia_device *p_dev;
+	काष्ठा pcmcia_driver *p_drv;
+	पूर्णांक i;
 
 	p_dev = to_pcmcia_dev(dev);
 	p_drv = to_pcmcia_drv(dev->driver);
@@ -362,26 +363,26 @@ static int pcmcia_device_remove(struct device *dev)
 	dev_dbg(dev, "removing device\n");
 
 	/* If we're removing the primary module driving a
-	 * pseudo multi-function card, we need to unbind
+	 * pseuकरो multi-function card, we need to unbind
 	 * all devices
 	 */
-	if ((p_dev->socket->pcmcia_pfc) &&
+	अगर ((p_dev->socket->pcmcia_pfc) &&
 	    (p_dev->socket->device_count > 0) &&
 	    (p_dev->device_no == 0))
-		pcmcia_card_remove(p_dev->socket, p_dev);
+		pcmcia_card_हटाओ(p_dev->socket, p_dev);
 
 	/* detach the "instance" */
-	if (p_drv->remove)
-		p_drv->remove(p_dev);
+	अगर (p_drv->हटाओ)
+		p_drv->हटाओ(p_dev);
 
-	/* check for proper unloading */
-	if (p_dev->_irq || p_dev->_io || p_dev->_locked)
+	/* check क्रम proper unloading */
+	अगर (p_dev->_irq || p_dev->_io || p_dev->_locked)
 		dev_info(dev,
 			 "pcmcia: driver %s did not release config properly\n",
 			 p_drv->name);
 
-	for (i = 0; i < MAX_WIN; i++)
-		if (p_dev->_win & CLIENT_WIN_REQ(i))
+	क्रम (i = 0; i < MAX_WIN; i++)
+		अगर (p_dev->_win & CLIENT_WIN_REQ(i))
 			dev_info(dev,
 				 "pcmcia: driver %s did not release window properly\n",
 				 p_drv->name);
@@ -390,53 +391,53 @@ static int pcmcia_device_remove(struct device *dev)
 	pcmcia_put_dev(p_dev);
 	module_put(p_drv->owner);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
 /*
- * pcmcia_device_query -- determine information about a pcmcia device
+ * pcmcia_device_query -- determine inक्रमmation about a pcmcia device
  */
-static int pcmcia_device_query(struct pcmcia_device *p_dev)
-{
+अटल पूर्णांक pcmcia_device_query(काष्ठा pcmcia_device *p_dev)
+अणु
 	cistpl_manfid_t manf_id;
 	cistpl_funcid_t func_id;
 	cistpl_vers_1_t	*vers1;
-	unsigned int i;
+	अचिन्हित पूर्णांक i;
 
-	vers1 = kmalloc(sizeof(*vers1), GFP_KERNEL);
-	if (!vers1)
-		return -ENOMEM;
+	vers1 = kदो_स्मृति(माप(*vers1), GFP_KERNEL);
+	अगर (!vers1)
+		वापस -ENOMEM;
 
-	if (!pccard_read_tuple(p_dev->socket, BIND_FN_ALL,
-			       CISTPL_MANFID, &manf_id)) {
+	अगर (!pccard_पढ़ो_tuple(p_dev->socket, BIND_FN_ALL,
+			       CISTPL_MANFID, &manf_id)) अणु
 		mutex_lock(&p_dev->socket->ops_mutex);
 		p_dev->manf_id = manf_id.manf;
 		p_dev->card_id = manf_id.card;
 		p_dev->has_manf_id = 1;
 		p_dev->has_card_id = 1;
 		mutex_unlock(&p_dev->socket->ops_mutex);
-	}
+	पूर्ण
 
-	if (!pccard_read_tuple(p_dev->socket, p_dev->func,
-			       CISTPL_FUNCID, &func_id)) {
+	अगर (!pccard_पढ़ो_tuple(p_dev->socket, p_dev->func,
+			       CISTPL_FUNCID, &func_id)) अणु
 		mutex_lock(&p_dev->socket->ops_mutex);
 		p_dev->func_id = func_id.func;
 		p_dev->has_func_id = 1;
 		mutex_unlock(&p_dev->socket->ops_mutex);
-	} else {
+	पूर्ण अन्यथा अणु
 		/* rule of thumb: cards with no FUNCID, but with
-		 * common memory device geometry information, are
+		 * common memory device geometry inक्रमmation, are
 		 * probably memory cards (from pcmcia-cs) */
 		cistpl_device_geo_t *devgeo;
 
-		devgeo = kmalloc(sizeof(*devgeo), GFP_KERNEL);
-		if (!devgeo) {
-			kfree(vers1);
-			return -ENOMEM;
-		}
-		if (!pccard_read_tuple(p_dev->socket, p_dev->func,
-				      CISTPL_DEVICE_GEO, devgeo)) {
+		devgeo = kदो_स्मृति(माप(*devgeo), GFP_KERNEL);
+		अगर (!devgeo) अणु
+			kमुक्त(vers1);
+			वापस -ENOMEM;
+		पूर्ण
+		अगर (!pccard_पढ़ो_tuple(p_dev->socket, p_dev->func,
+				      CISTPL_DEVICE_GEO, devgeo)) अणु
 			dev_dbg(&p_dev->dev,
 				   "mem device geometry probably means "
 				   "FUNCID_MEMORY\n");
@@ -444,67 +445,67 @@ static int pcmcia_device_query(struct pcmcia_device *p_dev)
 			p_dev->func_id = CISTPL_FUNCID_MEMORY;
 			p_dev->has_func_id = 1;
 			mutex_unlock(&p_dev->socket->ops_mutex);
-		}
-		kfree(devgeo);
-	}
+		पूर्ण
+		kमुक्त(devgeo);
+	पूर्ण
 
-	if (!pccard_read_tuple(p_dev->socket, BIND_FN_ALL, CISTPL_VERS_1,
-			       vers1)) {
+	अगर (!pccard_पढ़ो_tuple(p_dev->socket, BIND_FN_ALL, CISTPL_VERS_1,
+			       vers1)) अणु
 		mutex_lock(&p_dev->socket->ops_mutex);
-		for (i = 0; i < min_t(unsigned int, 4, vers1->ns); i++) {
-			char *tmp;
-			unsigned int length;
-			char *new;
+		क्रम (i = 0; i < min_t(अचिन्हित पूर्णांक, 4, vers1->ns); i++) अणु
+			अक्षर *पंचांगp;
+			अचिन्हित पूर्णांक length;
+			अक्षर *new;
 
-			tmp = vers1->str + vers1->ofs[i];
+			पंचांगp = vers1->str + vers1->ofs[i];
 
-			length = strlen(tmp) + 1;
-			if ((length < 2) || (length > 255))
-				continue;
+			length = म_माप(पंचांगp) + 1;
+			अगर ((length < 2) || (length > 255))
+				जारी;
 
-			new = kstrdup(tmp, GFP_KERNEL);
-			if (!new)
-				continue;
+			new = kstrdup(पंचांगp, GFP_KERNEL);
+			अगर (!new)
+				जारी;
 
-			tmp = p_dev->prod_id[i];
+			पंचांगp = p_dev->prod_id[i];
 			p_dev->prod_id[i] = new;
-			kfree(tmp);
-		}
+			kमुक्त(पंचांगp);
+		पूर्ण
 		mutex_unlock(&p_dev->socket->ops_mutex);
-	}
+	पूर्ण
 
-	kfree(vers1);
-	return 0;
-}
+	kमुक्त(vers1);
+	वापस 0;
+पूर्ण
 
 
-static struct pcmcia_device *pcmcia_device_add(struct pcmcia_socket *s,
-					       unsigned int function)
-{
-	struct pcmcia_device *p_dev, *tmp_dev;
-	int i;
+अटल काष्ठा pcmcia_device *pcmcia_device_add(काष्ठा pcmcia_socket *s,
+					       अचिन्हित पूर्णांक function)
+अणु
+	काष्ठा pcmcia_device *p_dev, *पंचांगp_dev;
+	पूर्णांक i;
 
 	s = pcmcia_get_socket(s);
-	if (!s)
-		return NULL;
+	अगर (!s)
+		वापस शून्य;
 
 	pr_debug("adding device to %d, function %d\n", s->sock, function);
 
-	p_dev = kzalloc(sizeof(struct pcmcia_device), GFP_KERNEL);
-	if (!p_dev)
-		goto err_put;
+	p_dev = kzalloc(माप(काष्ठा pcmcia_device), GFP_KERNEL);
+	अगर (!p_dev)
+		जाओ err_put;
 
 	mutex_lock(&s->ops_mutex);
 	p_dev->device_no = (s->device_count++);
 	mutex_unlock(&s->ops_mutex);
 
 	/* max of 2 PFC devices */
-	if ((p_dev->device_no >= 2) && (function == 0))
-		goto err_free;
+	अगर ((p_dev->device_no >= 2) && (function == 0))
+		जाओ err_मुक्त;
 
 	/* max of 4 devices overall */
-	if (p_dev->device_no >= 4)
-		goto err_free;
+	अगर (p_dev->device_no >= 4)
+		जाओ err_मुक्त;
 
 	p_dev->socket = s;
 	p_dev->func   = function;
@@ -512,60 +513,60 @@ static struct pcmcia_device *pcmcia_device_add(struct pcmcia_socket *s,
 	p_dev->dev.bus = &pcmcia_bus_type;
 	p_dev->dev.parent = s->dev.parent;
 	p_dev->dev.release = pcmcia_release_dev;
-	/* by default don't allow DMA */
+	/* by शेष करोn't allow DMA */
 	p_dev->dma_mask = 0;
 	p_dev->dev.dma_mask = &p_dev->dma_mask;
 	dev_set_name(&p_dev->dev, "%d.%d", p_dev->socket->sock, p_dev->device_no);
-	if (!dev_name(&p_dev->dev))
-		goto err_free;
-	p_dev->devname = kasprintf(GFP_KERNEL, "pcmcia%s", dev_name(&p_dev->dev));
-	if (!p_dev->devname)
-		goto err_free;
+	अगर (!dev_name(&p_dev->dev))
+		जाओ err_मुक्त;
+	p_dev->devname = kaप्र_लिखो(GFP_KERNEL, "pcmcia%s", dev_name(&p_dev->dev));
+	अगर (!p_dev->devname)
+		जाओ err_मुक्त;
 	dev_dbg(&p_dev->dev, "devname is %s\n", p_dev->devname);
 
 	mutex_lock(&s->ops_mutex);
 
 	/*
-	 * p_dev->function_config must be the same for all card functions.
+	 * p_dev->function_config must be the same क्रम all card functions.
 	 * Note that this is serialized by ops_mutex, so that only one
-	 * such struct will be created.
+	 * such काष्ठा will be created.
 	 */
-	list_for_each_entry(tmp_dev, &s->devices_list, socket_device_list)
-		if (p_dev->func == tmp_dev->func) {
-			p_dev->function_config = tmp_dev->function_config;
-			p_dev->irq = tmp_dev->irq;
+	list_क्रम_each_entry(पंचांगp_dev, &s->devices_list, socket_device_list)
+		अगर (p_dev->func == पंचांगp_dev->func) अणु
+			p_dev->function_config = पंचांगp_dev->function_config;
+			p_dev->irq = पंचांगp_dev->irq;
 			kref_get(&p_dev->function_config->ref);
-		}
+		पूर्ण
 
 	/* Add to the list in pcmcia_bus_socket */
 	list_add(&p_dev->socket_device_list, &s->devices_list);
 
-	if (pcmcia_setup_irq(p_dev))
+	अगर (pcmcia_setup_irq(p_dev))
 		dev_warn(&p_dev->dev,
 			"IRQ setup failed -- device might not work\n");
 
-	if (!p_dev->function_config) {
+	अगर (!p_dev->function_config) अणु
 		config_t *c;
 		dev_dbg(&p_dev->dev, "creating config_t\n");
-		c = kzalloc(sizeof(struct config_t), GFP_KERNEL);
-		if (!c) {
+		c = kzalloc(माप(काष्ठा config_t), GFP_KERNEL);
+		अगर (!c) अणु
 			mutex_unlock(&s->ops_mutex);
-			goto err_unreg;
-		}
+			जाओ err_unreg;
+		पूर्ण
 		p_dev->function_config = c;
 		kref_init(&c->ref);
-		for (i = 0; i < MAX_IO_WIN; i++) {
+		क्रम (i = 0; i < MAX_IO_WIN; i++) अणु
 			c->io[i].name = p_dev->devname;
 			c->io[i].flags = IORESOURCE_IO;
-		}
-		for (i = 0; i < MAX_WIN; i++) {
+		पूर्ण
+		क्रम (i = 0; i < MAX_WIN; i++) अणु
 			c->mem[i].name = p_dev->devname;
 			c->mem[i].flags = IORESOURCE_MEM;
-		}
-	}
-	for (i = 0; i < MAX_IO_WIN; i++)
+		पूर्ण
+	पूर्ण
+	क्रम (i = 0; i < MAX_IO_WIN; i++)
 		p_dev->resource[i] = &p_dev->function_config->io[i];
-	for (; i < (MAX_IO_WIN + MAX_WIN); i++)
+	क्रम (; i < (MAX_IO_WIN + MAX_WIN); i++)
 		p_dev->resource[i] = &p_dev->function_config->mem[i-MAX_IO_WIN];
 
 	mutex_unlock(&s->ops_mutex);
@@ -575,293 +576,293 @@ static struct pcmcia_device *pcmcia_device_add(struct pcmcia_socket *s,
 
 	pcmcia_device_query(p_dev);
 
-	if (device_register(&p_dev->dev))
-		goto err_unreg;
+	अगर (device_रेजिस्टर(&p_dev->dev))
+		जाओ err_unreg;
 
-	return p_dev;
+	वापस p_dev;
 
  err_unreg:
 	mutex_lock(&s->ops_mutex);
 	list_del(&p_dev->socket_device_list);
 	mutex_unlock(&s->ops_mutex);
 
- err_free:
+ err_मुक्त:
 	mutex_lock(&s->ops_mutex);
 	s->device_count--;
 	mutex_unlock(&s->ops_mutex);
 
-	for (i = 0; i < 4; i++)
-		kfree(p_dev->prod_id[i]);
-	kfree(p_dev->devname);
-	kfree(p_dev);
+	क्रम (i = 0; i < 4; i++)
+		kमुक्त(p_dev->prod_id[i]);
+	kमुक्त(p_dev->devname);
+	kमुक्त(p_dev);
  err_put:
 	pcmcia_put_socket(s);
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
 
-static int pcmcia_card_add(struct pcmcia_socket *s)
-{
-	cistpl_longlink_mfc_t mfc;
-	unsigned int no_funcs, i, no_chains;
-	int ret = -EAGAIN;
+अटल पूर्णांक pcmcia_card_add(काष्ठा pcmcia_socket *s)
+अणु
+	cistpl_दीर्घlink_mfc_t mfc;
+	अचिन्हित पूर्णांक no_funcs, i, no_chains;
+	पूर्णांक ret = -EAGAIN;
 
 	mutex_lock(&s->ops_mutex);
-	if (!(s->resource_setup_done)) {
+	अगर (!(s->resource_setup_करोne)) अणु
 		dev_dbg(&s->dev,
 			   "no resources available, delaying card_add\n");
 		mutex_unlock(&s->ops_mutex);
-		return -EAGAIN; /* try again, but later... */
-	}
+		वापस -EAGAIN; /* try again, but later... */
+	पूर्ण
 
-	if (pcmcia_validate_mem(s)) {
+	अगर (pcmcia_validate_mem(s)) अणु
 		dev_dbg(&s->dev, "validating mem resources failed, "
 		       "delaying card_add\n");
 		mutex_unlock(&s->ops_mutex);
-		return -EAGAIN; /* try again, but later... */
-	}
+		वापस -EAGAIN; /* try again, but later... */
+	पूर्ण
 	mutex_unlock(&s->ops_mutex);
 
 	ret = pccard_validate_cis(s, &no_chains);
-	if (ret || !no_chains) {
-#if defined(CONFIG_MTD_PCMCIA_ANONYMOUS)
-		/* Set up as an anonymous card. If we don't have anonymous
+	अगर (ret || !no_chains) अणु
+#अगर defined(CONFIG_MTD_PCMCIA_ANONYMOUS)
+		/* Set up as an anonymous card. If we करोn't have anonymous
 		   memory support then just error the card as there is no
-		   point trying to second guess.
+		   poपूर्णांक trying to second guess.
 
 		   Note: some cards have just a device entry, it may be
 		   worth extending support to cover these in future */
-		if (ret == -EIO) {
+		अगर (ret == -EIO) अणु
 			dev_info(&s->dev, "no CIS, assuming an anonymous memory card.\n");
 			pcmcia_replace_cis(s, "\xFF", 1);
 			no_chains = 1;
 			ret = 0;
-		} else
-#endif
-		{
+		पूर्ण अन्यथा
+#पूर्ण_अगर
+		अणु
 			dev_dbg(&s->dev, "invalid CIS or invalid resources\n");
-			return -ENODEV;
-		}
-	}
+			वापस -ENODEV;
+		पूर्ण
+	पूर्ण
 
-	if (!pccard_read_tuple(s, BIND_FN_ALL, CISTPL_LONGLINK_MFC, &mfc))
+	अगर (!pccard_पढ़ो_tuple(s, BIND_FN_ALL, CISTPL_LONGLINK_MFC, &mfc))
 		no_funcs = mfc.nfn;
-	else
+	अन्यथा
 		no_funcs = 1;
 	s->functions = no_funcs;
 
-	for (i = 0; i < no_funcs; i++)
+	क्रम (i = 0; i < no_funcs; i++)
 		pcmcia_device_add(s, i);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 
-static int pcmcia_requery_callback(struct device *dev, void *_data)
-{
-	struct pcmcia_device *p_dev = to_pcmcia_dev(dev);
-	if (!p_dev->dev.driver) {
+अटल पूर्णांक pcmcia_requery_callback(काष्ठा device *dev, व्योम *_data)
+अणु
+	काष्ठा pcmcia_device *p_dev = to_pcmcia_dev(dev);
+	अगर (!p_dev->dev.driver) अणु
 		dev_dbg(dev, "update device information\n");
 		pcmcia_device_query(p_dev);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
-static void pcmcia_requery(struct pcmcia_socket *s)
-{
-	int has_pfc;
+अटल व्योम pcmcia_requery(काष्ठा pcmcia_socket *s)
+अणु
+	पूर्णांक has_pfc;
 
-	if (!(s->state & SOCKET_PRESENT))
-		return;
+	अगर (!(s->state & SOCKET_PRESENT))
+		वापस;
 
-	if (s->functions == 0) {
+	अगर (s->functions == 0) अणु
 		pcmcia_card_add(s);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	/* some device information might have changed because of a CIS
-	 * update or because we can finally read it correctly... so
-	 * determine it again, overwriting old values if necessary. */
-	bus_for_each_dev(&pcmcia_bus_type, NULL, NULL, pcmcia_requery_callback);
+	/* some device inक्रमmation might have changed because of a CIS
+	 * update or because we can finally पढ़ो it correctly... so
+	 * determine it again, overwriting old values अगर necessary. */
+	bus_क्रम_each_dev(&pcmcia_bus_type, शून्य, शून्य, pcmcia_requery_callback);
 
-	/* if the CIS changed, we need to check whether the number of
+	/* अगर the CIS changed, we need to check whether the number of
 	 * functions changed. */
-	if (s->fake_cis) {
-		int old_funcs, new_funcs;
-		cistpl_longlink_mfc_t mfc;
+	अगर (s->fake_cis) अणु
+		पूर्णांक old_funcs, new_funcs;
+		cistpl_दीर्घlink_mfc_t mfc;
 
-		/* does this cis override add or remove functions? */
+		/* करोes this cis override add or हटाओ functions? */
 		old_funcs = s->functions;
 
-		if (!pccard_read_tuple(s, BIND_FN_ALL, CISTPL_LONGLINK_MFC,
+		अगर (!pccard_पढ़ो_tuple(s, BIND_FN_ALL, CISTPL_LONGLINK_MFC,
 					&mfc))
 			new_funcs = mfc.nfn;
-		else
+		अन्यथा
 			new_funcs = 1;
-		if (old_funcs != new_funcs) {
+		अगर (old_funcs != new_funcs) अणु
 			/* we need to re-start */
-			pcmcia_card_remove(s, NULL);
+			pcmcia_card_हटाओ(s, शून्य);
 			s->functions = 0;
 			pcmcia_card_add(s);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	/* If the PCMCIA device consists of two pseudo devices,
-	 * call pcmcia_device_add() -- which will fail if both
-	 * devices are already registered. */
+	/* If the PCMCIA device consists of two pseuकरो devices,
+	 * call pcmcia_device_add() -- which will fail अगर both
+	 * devices are alपढ़ोy रेजिस्टरed. */
 	mutex_lock(&s->ops_mutex);
 	has_pfc = s->pcmcia_pfc;
 	mutex_unlock(&s->ops_mutex);
-	if (has_pfc)
+	अगर (has_pfc)
 		pcmcia_device_add(s, 0);
 
 	/* we re-scan all devices, not just the ones connected to this
-	 * socket. This does not matter, though. */
-	if (bus_rescan_devices(&pcmcia_bus_type))
+	 * socket. This करोes not matter, though. */
+	अगर (bus_rescan_devices(&pcmcia_bus_type))
 		dev_warn(&s->dev, "rescanning the bus failed\n");
-}
+पूर्ण
 
 
-#ifdef CONFIG_PCMCIA_LOAD_CIS
+#अगर_घोषित CONFIG_PCMCIA_LOAD_CIS
 
 /**
- * pcmcia_load_firmware - load CIS from userspace if device-provided is broken
+ * pcmcia_load_firmware - load CIS from userspace अगर device-provided is broken
  * @dev: the pcmcia device which needs a CIS override
  * @filename: requested filename in /lib/firmware/
  *
- * This uses the in-kernel firmware loading mechanism to use a "fake CIS" if
+ * This uses the in-kernel firmware loading mechanism to use a "fake CIS" अगर
  * the one provided by the card is broken. The firmware files reside in
  * /lib/firmware/ in userspace.
  */
-static int pcmcia_load_firmware(struct pcmcia_device *dev, char *filename)
-{
-	struct pcmcia_socket *s = dev->socket;
-	const struct firmware *fw;
-	int ret = -ENOMEM;
-	cistpl_longlink_mfc_t mfc;
-	int old_funcs, new_funcs = 1;
+अटल पूर्णांक pcmcia_load_firmware(काष्ठा pcmcia_device *dev, अक्षर *filename)
+अणु
+	काष्ठा pcmcia_socket *s = dev->socket;
+	स्थिर काष्ठा firmware *fw;
+	पूर्णांक ret = -ENOMEM;
+	cistpl_दीर्घlink_mfc_t mfc;
+	पूर्णांक old_funcs, new_funcs = 1;
 
-	if (!filename)
-		return -EINVAL;
+	अगर (!filename)
+		वापस -EINVAL;
 
 	dev_dbg(&dev->dev, "trying to load CIS file %s\n", filename);
 
-	if (request_firmware(&fw, filename, &dev->dev) == 0) {
-		if (fw->size >= CISTPL_MAX_CIS_SIZE) {
+	अगर (request_firmware(&fw, filename, &dev->dev) == 0) अणु
+		अगर (fw->size >= CISTPL_MAX_CIS_SIZE) अणु
 			ret = -EINVAL;
 			dev_err(&dev->dev, "pcmcia: CIS override is too big\n");
-			goto release;
-		}
+			जाओ release;
+		पूर्ण
 
-		if (!pcmcia_replace_cis(s, fw->data, fw->size))
+		अगर (!pcmcia_replace_cis(s, fw->data, fw->size))
 			ret = 0;
-		else {
+		अन्यथा अणु
 			dev_err(&dev->dev, "pcmcia: CIS override failed\n");
-			goto release;
-		}
+			जाओ release;
+		पूर्ण
 
-		/* we need to re-start if the number of functions changed */
+		/* we need to re-start अगर the number of functions changed */
 		old_funcs = s->functions;
-		if (!pccard_read_tuple(s, BIND_FN_ALL, CISTPL_LONGLINK_MFC,
+		अगर (!pccard_पढ़ो_tuple(s, BIND_FN_ALL, CISTPL_LONGLINK_MFC,
 					&mfc))
 			new_funcs = mfc.nfn;
 
-		if (old_funcs != new_funcs)
+		अगर (old_funcs != new_funcs)
 			ret = -EBUSY;
 
-		/* update information */
+		/* update inक्रमmation */
 		pcmcia_device_query(dev);
 
 		/* requery (as number of functions might have changed) */
 		pcmcia_parse_uevents(s, PCMCIA_UEVENT_REQUERY);
-	}
+	पूर्ण
  release:
 	release_firmware(fw);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-#else /* !CONFIG_PCMCIA_LOAD_CIS */
+#अन्यथा /* !CONFIG_PCMCIA_LOAD_CIS */
 
-static inline int pcmcia_load_firmware(struct pcmcia_device *dev,
-				       char *filename)
-{
-	return -ENODEV;
-}
+अटल अंतरभूत पूर्णांक pcmcia_load_firmware(काष्ठा pcmcia_device *dev,
+				       अक्षर *filename)
+अणु
+	वापस -ENODEV;
+पूर्ण
 
-#endif
+#पूर्ण_अगर
 
 
-static inline int pcmcia_devmatch(struct pcmcia_device *dev,
-				  const struct pcmcia_device_id *did)
-{
-	if (did->match_flags & PCMCIA_DEV_ID_MATCH_MANF_ID) {
-		if ((!dev->has_manf_id) || (dev->manf_id != did->manf_id))
-			return 0;
-	}
+अटल अंतरभूत पूर्णांक pcmcia_devmatch(काष्ठा pcmcia_device *dev,
+				  स्थिर काष्ठा pcmcia_device_id *did)
+अणु
+	अगर (did->match_flags & PCMCIA_DEV_ID_MATCH_MANF_ID) अणु
+		अगर ((!dev->has_manf_id) || (dev->manf_id != did->manf_id))
+			वापस 0;
+	पूर्ण
 
-	if (did->match_flags & PCMCIA_DEV_ID_MATCH_CARD_ID) {
-		if ((!dev->has_card_id) || (dev->card_id != did->card_id))
-			return 0;
-	}
+	अगर (did->match_flags & PCMCIA_DEV_ID_MATCH_CARD_ID) अणु
+		अगर ((!dev->has_card_id) || (dev->card_id != did->card_id))
+			वापस 0;
+	पूर्ण
 
-	if (did->match_flags & PCMCIA_DEV_ID_MATCH_FUNCTION) {
-		if (dev->func != did->function)
-			return 0;
-	}
+	अगर (did->match_flags & PCMCIA_DEV_ID_MATCH_FUNCTION) अणु
+		अगर (dev->func != did->function)
+			वापस 0;
+	पूर्ण
 
-	if (did->match_flags & PCMCIA_DEV_ID_MATCH_PROD_ID1) {
-		if (!dev->prod_id[0])
-			return 0;
-		if (strcmp(did->prod_id[0], dev->prod_id[0]))
-			return 0;
-	}
+	अगर (did->match_flags & PCMCIA_DEV_ID_MATCH_PROD_ID1) अणु
+		अगर (!dev->prod_id[0])
+			वापस 0;
+		अगर (म_भेद(did->prod_id[0], dev->prod_id[0]))
+			वापस 0;
+	पूर्ण
 
-	if (did->match_flags & PCMCIA_DEV_ID_MATCH_PROD_ID2) {
-		if (!dev->prod_id[1])
-			return 0;
-		if (strcmp(did->prod_id[1], dev->prod_id[1]))
-			return 0;
-	}
+	अगर (did->match_flags & PCMCIA_DEV_ID_MATCH_PROD_ID2) अणु
+		अगर (!dev->prod_id[1])
+			वापस 0;
+		अगर (म_भेद(did->prod_id[1], dev->prod_id[1]))
+			वापस 0;
+	पूर्ण
 
-	if (did->match_flags & PCMCIA_DEV_ID_MATCH_PROD_ID3) {
-		if (!dev->prod_id[2])
-			return 0;
-		if (strcmp(did->prod_id[2], dev->prod_id[2]))
-			return 0;
-	}
+	अगर (did->match_flags & PCMCIA_DEV_ID_MATCH_PROD_ID3) अणु
+		अगर (!dev->prod_id[2])
+			वापस 0;
+		अगर (म_भेद(did->prod_id[2], dev->prod_id[2]))
+			वापस 0;
+	पूर्ण
 
-	if (did->match_flags & PCMCIA_DEV_ID_MATCH_PROD_ID4) {
-		if (!dev->prod_id[3])
-			return 0;
-		if (strcmp(did->prod_id[3], dev->prod_id[3]))
-			return 0;
-	}
+	अगर (did->match_flags & PCMCIA_DEV_ID_MATCH_PROD_ID4) अणु
+		अगर (!dev->prod_id[3])
+			वापस 0;
+		अगर (म_भेद(did->prod_id[3], dev->prod_id[3]))
+			वापस 0;
+	पूर्ण
 
-	if (did->match_flags & PCMCIA_DEV_ID_MATCH_DEVICE_NO) {
+	अगर (did->match_flags & PCMCIA_DEV_ID_MATCH_DEVICE_NO) अणु
 		dev_dbg(&dev->dev, "this is a pseudo-multi-function device\n");
 		mutex_lock(&dev->socket->ops_mutex);
 		dev->socket->pcmcia_pfc = 1;
 		mutex_unlock(&dev->socket->ops_mutex);
-		if (dev->device_no != did->device_no)
-			return 0;
-	}
+		अगर (dev->device_no != did->device_no)
+			वापस 0;
+	पूर्ण
 
-	if (did->match_flags & PCMCIA_DEV_ID_MATCH_FUNC_ID) {
-		int ret;
+	अगर (did->match_flags & PCMCIA_DEV_ID_MATCH_FUNC_ID) अणु
+		पूर्णांक ret;
 
-		if ((!dev->has_func_id) || (dev->func_id != did->func_id))
-			return 0;
+		अगर ((!dev->has_func_id) || (dev->func_id != did->func_id))
+			वापस 0;
 
-		/* if this is a pseudo-multi-function device,
+		/* अगर this is a pseuकरो-multi-function device,
 		 * we need explicit matches */
-		if (dev->socket->pcmcia_pfc)
-			return 0;
-		if (dev->device_no)
-			return 0;
+		अगर (dev->socket->pcmcia_pfc)
+			वापस 0;
+		अगर (dev->device_no)
+			वापस 0;
 
 		/* also, FUNC_ID matching needs to be activated by userspace
 		 * after it has re-checked that there is no possible module
@@ -871,89 +872,89 @@ static inline int pcmcia_devmatch(struct pcmcia_device *dev,
 		ret = dev->allow_func_id_match;
 		mutex_unlock(&dev->socket->ops_mutex);
 
-		if (!ret) {
+		अगर (!ret) अणु
 			dev_dbg(&dev->dev,
 				"skipping FUNC_ID match until userspace ACK\n");
-			return 0;
-		}
-	}
+			वापस 0;
+		पूर्ण
+	पूर्ण
 
-	if (did->match_flags & PCMCIA_DEV_ID_MATCH_FAKE_CIS) {
+	अगर (did->match_flags & PCMCIA_DEV_ID_MATCH_FAKE_CIS) अणु
 		dev_dbg(&dev->dev, "device needs a fake CIS\n");
-		if (!dev->socket->fake_cis)
-			if (pcmcia_load_firmware(dev, did->cisfile))
-				return 0;
-	}
+		अगर (!dev->socket->fake_cis)
+			अगर (pcmcia_load_firmware(dev, did->cisfile))
+				वापस 0;
+	पूर्ण
 
-	if (did->match_flags & PCMCIA_DEV_ID_MATCH_ANONYMOUS) {
-		int i;
-		for (i = 0; i < 4; i++)
-			if (dev->prod_id[i])
-				return 0;
-		if (dev->has_manf_id || dev->has_card_id || dev->has_func_id)
-			return 0;
-	}
+	अगर (did->match_flags & PCMCIA_DEV_ID_MATCH_ANONYMOUS) अणु
+		पूर्णांक i;
+		क्रम (i = 0; i < 4; i++)
+			अगर (dev->prod_id[i])
+				वापस 0;
+		अगर (dev->has_manf_id || dev->has_card_id || dev->has_func_id)
+			वापस 0;
+	पूर्ण
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
 
-static int pcmcia_bus_match(struct device *dev, struct device_driver *drv)
-{
-	struct pcmcia_device *p_dev = to_pcmcia_dev(dev);
-	struct pcmcia_driver *p_drv = to_pcmcia_drv(drv);
-	const struct pcmcia_device_id *did = p_drv->id_table;
-	struct pcmcia_dynid *dynid;
+अटल पूर्णांक pcmcia_bus_match(काष्ठा device *dev, काष्ठा device_driver *drv)
+अणु
+	काष्ठा pcmcia_device *p_dev = to_pcmcia_dev(dev);
+	काष्ठा pcmcia_driver *p_drv = to_pcmcia_drv(drv);
+	स्थिर काष्ठा pcmcia_device_id *did = p_drv->id_table;
+	काष्ठा pcmcia_dynid *dynid;
 
 	/* match dynamic devices first */
 	mutex_lock(&p_drv->dynids.lock);
-	list_for_each_entry(dynid, &p_drv->dynids.list, node) {
+	list_क्रम_each_entry(dynid, &p_drv->dynids.list, node) अणु
 		dev_dbg(dev, "trying to match to %s\n", drv->name);
-		if (pcmcia_devmatch(p_dev, &dynid->id)) {
+		अगर (pcmcia_devmatch(p_dev, &dynid->id)) अणु
 			dev_dbg(dev, "matched to %s\n", drv->name);
 			mutex_unlock(&p_drv->dynids.lock);
-			return 1;
-		}
-	}
+			वापस 1;
+		पूर्ण
+	पूर्ण
 	mutex_unlock(&p_drv->dynids.lock);
 
-	while (did && did->match_flags) {
+	जबतक (did && did->match_flags) अणु
 		dev_dbg(dev, "trying to match to %s\n", drv->name);
-		if (pcmcia_devmatch(p_dev, did)) {
+		अगर (pcmcia_devmatch(p_dev, did)) अणु
 			dev_dbg(dev, "matched to %s\n", drv->name);
-			return 1;
-		}
+			वापस 1;
+		पूर्ण
 		did++;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int pcmcia_bus_uevent(struct device *dev, struct kobj_uevent_env *env)
-{
-	struct pcmcia_device *p_dev;
-	int i;
-	u32 hash[4] = { 0, 0, 0, 0};
+अटल पूर्णांक pcmcia_bus_uevent(काष्ठा device *dev, काष्ठा kobj_uevent_env *env)
+अणु
+	काष्ठा pcmcia_device *p_dev;
+	पूर्णांक i;
+	u32 hash[4] = अणु 0, 0, 0, 0पूर्ण;
 
-	if (!dev)
-		return -ENODEV;
+	अगर (!dev)
+		वापस -ENODEV;
 
 	p_dev = to_pcmcia_dev(dev);
 
 	/* calculate hashes */
-	for (i = 0; i < 4; i++) {
-		if (!p_dev->prod_id[i])
-			continue;
-		hash[i] = crc32(0, p_dev->prod_id[i], strlen(p_dev->prod_id[i]));
-	}
+	क्रम (i = 0; i < 4; i++) अणु
+		अगर (!p_dev->prod_id[i])
+			जारी;
+		hash[i] = crc32(0, p_dev->prod_id[i], म_माप(p_dev->prod_id[i]));
+	पूर्ण
 
-	if (add_uevent_var(env, "SOCKET_NO=%u", p_dev->socket->sock))
-		return -ENOMEM;
+	अगर (add_uevent_var(env, "SOCKET_NO=%u", p_dev->socket->sock))
+		वापस -ENOMEM;
 
-	if (add_uevent_var(env, "DEVICE_NO=%02X", p_dev->device_no))
-		return -ENOMEM;
+	अगर (add_uevent_var(env, "DEVICE_NO=%02X", p_dev->device_no))
+		वापस -ENOMEM;
 
-	if (add_uevent_var(env, "MODALIAS=pcmcia:m%04Xc%04Xf%02Xfn%02Xpfn%02X"
+	अगर (add_uevent_var(env, "MODALIAS=pcmcia:m%04Xc%04Xf%02Xfn%02Xpfn%02X"
 			   "pa%08Xpb%08Xpc%08Xpd%08X",
 			   p_dev->has_manf_id ? p_dev->manf_id : 0,
 			   p_dev->has_card_id ? p_dev->card_id : 0,
@@ -964,53 +965,53 @@ static int pcmcia_bus_uevent(struct device *dev, struct kobj_uevent_env *env)
 			   hash[1],
 			   hash[2],
 			   hash[3]))
-		return -ENOMEM;
+		वापस -ENOMEM;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/************************ runtime PM support ***************************/
+/************************ runसमय PM support ***************************/
 
-static int pcmcia_dev_suspend(struct device *dev);
-static int pcmcia_dev_resume(struct device *dev);
+अटल पूर्णांक pcmcia_dev_suspend(काष्ठा device *dev);
+अटल पूर्णांक pcmcia_dev_resume(काष्ठा device *dev);
 
-static int runtime_suspend(struct device *dev)
-{
-	int rc;
+अटल पूर्णांक runसमय_suspend(काष्ठा device *dev)
+अणु
+	पूर्णांक rc;
 
 	device_lock(dev);
 	rc = pcmcia_dev_suspend(dev);
 	device_unlock(dev);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int runtime_resume(struct device *dev)
-{
-	int rc;
+अटल पूर्णांक runसमय_resume(काष्ठा device *dev)
+अणु
+	पूर्णांक rc;
 
 	device_lock(dev);
 	rc = pcmcia_dev_resume(dev);
 	device_unlock(dev);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
 /************************ per-device sysfs output ***************************/
 
-#define pcmcia_device_attr(field, test, format)				\
-static ssize_t field##_show (struct device *dev, struct device_attribute *attr, char *buf)		\
-{									\
-	struct pcmcia_device *p_dev = to_pcmcia_dev(dev);		\
-	return p_dev->test ? sprintf(buf, format, p_dev->field) : -ENODEV; \
-}									\
-static DEVICE_ATTR_RO(field);
+#घोषणा pcmcia_device_attr(field, test, क्रमmat)				\
+अटल sमाप_प्रकार field##_show (काष्ठा device *dev, काष्ठा device_attribute *attr, अक्षर *buf)		\
+अणु									\
+	काष्ठा pcmcia_device *p_dev = to_pcmcia_dev(dev);		\
+	वापस p_dev->test ? प्र_लिखो(buf, क्रमmat, p_dev->field) : -ENODEV; \
+पूर्ण									\
+अटल DEVICE_ATTR_RO(field);
 
-#define pcmcia_device_stringattr(name, field)					\
-static ssize_t name##_show (struct device *dev, struct device_attribute *attr, char *buf)		\
-{									\
-	struct pcmcia_device *p_dev = to_pcmcia_dev(dev);		\
-	return p_dev->field ? sprintf(buf, "%s\n", p_dev->field) : -ENODEV; \
-}									\
-static DEVICE_ATTR_RO(name);
+#घोषणा pcmcia_device_stringattr(name, field)					\
+अटल sमाप_प्रकार name##_show (काष्ठा device *dev, काष्ठा device_attribute *attr, अक्षर *buf)		\
+अणु									\
+	काष्ठा pcmcia_device *p_dev = to_pcmcia_dev(dev);		\
+	वापस p_dev->field ? प्र_लिखो(buf, "%s\n", p_dev->field) : -ENODEV; \
+पूर्ण									\
+अटल DEVICE_ATTR_RO(name);
 
 pcmcia_device_attr(func_id, has_func_id, "0x%02x\n");
 pcmcia_device_attr(manf_id, has_manf_id, "0x%04x\n");
@@ -1020,97 +1021,97 @@ pcmcia_device_stringattr(prod_id2, prod_id[1]);
 pcmcia_device_stringattr(prod_id3, prod_id[2]);
 pcmcia_device_stringattr(prod_id4, prod_id[3]);
 
-static ssize_t function_show(struct device *dev, struct device_attribute *attr,
-			     char *buf)
-{
-	struct pcmcia_device *p_dev = to_pcmcia_dev(dev);
-	return p_dev->socket ? sprintf(buf, "0x%02x\n", p_dev->func) : -ENODEV;
-}
-static DEVICE_ATTR_RO(function);
+अटल sमाप_प्रकार function_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
+			     अक्षर *buf)
+अणु
+	काष्ठा pcmcia_device *p_dev = to_pcmcia_dev(dev);
+	वापस p_dev->socket ? प्र_लिखो(buf, "0x%02x\n", p_dev->func) : -ENODEV;
+पूर्ण
+अटल DEVICE_ATTR_RO(function);
 
-static ssize_t resources_show(struct device *dev,
-			      struct device_attribute *attr, char *buf)
-{
-	struct pcmcia_device *p_dev = to_pcmcia_dev(dev);
-	char *str = buf;
-	int i;
+अटल sमाप_प्रकार resources_show(काष्ठा device *dev,
+			      काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा pcmcia_device *p_dev = to_pcmcia_dev(dev);
+	अक्षर *str = buf;
+	पूर्णांक i;
 
-	for (i = 0; i < PCMCIA_NUM_RESOURCES; i++)
-		str += sprintf(str, "%pr\n", p_dev->resource[i]);
+	क्रम (i = 0; i < PCMCIA_NUM_RESOURCES; i++)
+		str += प्र_लिखो(str, "%pr\n", p_dev->resource[i]);
 
-	return str - buf;
-}
-static DEVICE_ATTR_RO(resources);
+	वापस str - buf;
+पूर्ण
+अटल DEVICE_ATTR_RO(resources);
 
-static ssize_t pm_state_show(struct device *dev, struct device_attribute *attr, char *buf)
-{
-	struct pcmcia_device *p_dev = to_pcmcia_dev(dev);
+अटल sमाप_प्रकार pm_state_show(काष्ठा device *dev, काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा pcmcia_device *p_dev = to_pcmcia_dev(dev);
 
-	if (p_dev->suspended)
-		return sprintf(buf, "off\n");
-	else
-		return sprintf(buf, "on\n");
-}
+	अगर (p_dev->suspended)
+		वापस प्र_लिखो(buf, "off\n");
+	अन्यथा
+		वापस प्र_लिखो(buf, "on\n");
+पूर्ण
 
-static ssize_t pm_state_store(struct device *dev, struct device_attribute *attr,
-			      const char *buf, size_t count)
-{
-	struct pcmcia_device *p_dev = to_pcmcia_dev(dev);
-	int ret = 0;
+अटल sमाप_प्रकार pm_state_store(काष्ठा device *dev, काष्ठा device_attribute *attr,
+			      स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	काष्ठा pcmcia_device *p_dev = to_pcmcia_dev(dev);
+	पूर्णांक ret = 0;
 
-	if (!count)
-		return -EINVAL;
+	अगर (!count)
+		वापस -EINVAL;
 
-	if ((!p_dev->suspended) && !strncmp(buf, "off", 3))
-		ret = runtime_suspend(dev);
-	else if (p_dev->suspended && !strncmp(buf, "on", 2))
-		ret = runtime_resume(dev);
+	अगर ((!p_dev->suspended) && !म_भेदन(buf, "off", 3))
+		ret = runसमय_suspend(dev);
+	अन्यथा अगर (p_dev->suspended && !म_भेदन(buf, "on", 2))
+		ret = runसमय_resume(dev);
 
-	return ret ? ret : count;
-}
-static DEVICE_ATTR_RW(pm_state);
+	वापस ret ? ret : count;
+पूर्ण
+अटल DEVICE_ATTR_RW(pm_state);
 
-static ssize_t modalias_show(struct device *dev, struct device_attribute *attr, char *buf)
-{
-	struct pcmcia_device *p_dev = to_pcmcia_dev(dev);
-	int i;
-	u32 hash[4] = { 0, 0, 0, 0};
+अटल sमाप_प्रकार modalias_show(काष्ठा device *dev, काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा pcmcia_device *p_dev = to_pcmcia_dev(dev);
+	पूर्णांक i;
+	u32 hash[4] = अणु 0, 0, 0, 0पूर्ण;
 
 	/* calculate hashes */
-	for (i = 0; i < 4; i++) {
-		if (!p_dev->prod_id[i])
-			continue;
+	क्रम (i = 0; i < 4; i++) अणु
+		अगर (!p_dev->prod_id[i])
+			जारी;
 		hash[i] = crc32(0, p_dev->prod_id[i],
-				strlen(p_dev->prod_id[i]));
-	}
-	return sprintf(buf, "pcmcia:m%04Xc%04Xf%02Xfn%02Xpfn%02X"
+				म_माप(p_dev->prod_id[i]));
+	पूर्ण
+	वापस प्र_लिखो(buf, "pcmcia:m%04Xc%04Xf%02Xfn%02Xpfn%02X"
 				"pa%08Xpb%08Xpc%08Xpd%08X\n",
 				p_dev->has_manf_id ? p_dev->manf_id : 0,
 				p_dev->has_card_id ? p_dev->card_id : 0,
 				p_dev->has_func_id ? p_dev->func_id : 0,
 				p_dev->func, p_dev->device_no,
 				hash[0], hash[1], hash[2], hash[3]);
-}
-static DEVICE_ATTR_RO(modalias);
+पूर्ण
+अटल DEVICE_ATTR_RO(modalias);
 
-static ssize_t allow_func_id_match_store(struct device *dev,
-		struct device_attribute *attr, const char *buf, size_t count)
-{
-	struct pcmcia_device *p_dev = to_pcmcia_dev(dev);
+अटल sमाप_प्रकार allow_func_id_match_store(काष्ठा device *dev,
+		काष्ठा device_attribute *attr, स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	काष्ठा pcmcia_device *p_dev = to_pcmcia_dev(dev);
 
-	if (!count)
-		return -EINVAL;
+	अगर (!count)
+		वापस -EINVAL;
 
 	mutex_lock(&p_dev->socket->ops_mutex);
 	p_dev->allow_func_id_match = 1;
 	mutex_unlock(&p_dev->socket->ops_mutex);
 	pcmcia_parse_uevents(p_dev->socket, PCMCIA_UEVENT_REQUERY);
 
-	return count;
-}
-static DEVICE_ATTR_WO(allow_func_id_match);
+	वापस count;
+पूर्ण
+अटल DEVICE_ATTR_WO(allow_func_id_match);
 
-static struct attribute *pcmcia_dev_attrs[] = {
+अटल काष्ठा attribute *pcmcia_dev_attrs[] = अणु
 	&dev_attr_resources.attr,
 	&dev_attr_pm_state.attr,
 	&dev_attr_function.attr,
@@ -1123,151 +1124,151 @@ static struct attribute *pcmcia_dev_attrs[] = {
 	&dev_attr_prod_id4.attr,
 	&dev_attr_modalias.attr,
 	&dev_attr_allow_func_id_match.attr,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 ATTRIBUTE_GROUPS(pcmcia_dev);
 
-/* PM support, also needed for reset */
+/* PM support, also needed क्रम reset */
 
-static int pcmcia_dev_suspend(struct device *dev)
-{
-	struct pcmcia_device *p_dev = to_pcmcia_dev(dev);
-	struct pcmcia_driver *p_drv = NULL;
-	int ret = 0;
+अटल पूर्णांक pcmcia_dev_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा pcmcia_device *p_dev = to_pcmcia_dev(dev);
+	काष्ठा pcmcia_driver *p_drv = शून्य;
+	पूर्णांक ret = 0;
 
 	mutex_lock(&p_dev->socket->ops_mutex);
-	if (p_dev->suspended) {
+	अगर (p_dev->suspended) अणु
 		mutex_unlock(&p_dev->socket->ops_mutex);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 	p_dev->suspended = 1;
 	mutex_unlock(&p_dev->socket->ops_mutex);
 
 	dev_dbg(dev, "suspending\n");
 
-	if (dev->driver)
+	अगर (dev->driver)
 		p_drv = to_pcmcia_drv(dev->driver);
 
-	if (!p_drv)
-		goto out;
+	अगर (!p_drv)
+		जाओ out;
 
-	if (p_drv->suspend) {
+	अगर (p_drv->suspend) अणु
 		ret = p_drv->suspend(p_dev);
-		if (ret) {
+		अगर (ret) अणु
 			dev_err(dev,
 				"pcmcia: device %s (driver %s) did not want to go to sleep (%d)\n",
 				p_dev->devname, p_drv->name, ret);
 			mutex_lock(&p_dev->socket->ops_mutex);
 			p_dev->suspended = 0;
 			mutex_unlock(&p_dev->socket->ops_mutex);
-			goto out;
-		}
-	}
+			जाओ out;
+		पूर्ण
+	पूर्ण
 
-	if (p_dev->device_no == p_dev->func) {
+	अगर (p_dev->device_no == p_dev->func) अणु
 		dev_dbg(dev, "releasing configuration\n");
 		pcmcia_release_configuration(p_dev);
-	}
+	पूर्ण
 
  out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 
-static int pcmcia_dev_resume(struct device *dev)
-{
-	struct pcmcia_device *p_dev = to_pcmcia_dev(dev);
-	struct pcmcia_driver *p_drv = NULL;
-	int ret = 0;
+अटल पूर्णांक pcmcia_dev_resume(काष्ठा device *dev)
+अणु
+	काष्ठा pcmcia_device *p_dev = to_pcmcia_dev(dev);
+	काष्ठा pcmcia_driver *p_drv = शून्य;
+	पूर्णांक ret = 0;
 
 	mutex_lock(&p_dev->socket->ops_mutex);
-	if (!p_dev->suspended) {
+	अगर (!p_dev->suspended) अणु
 		mutex_unlock(&p_dev->socket->ops_mutex);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 	p_dev->suspended = 0;
 	mutex_unlock(&p_dev->socket->ops_mutex);
 
 	dev_dbg(dev, "resuming\n");
 
-	if (dev->driver)
+	अगर (dev->driver)
 		p_drv = to_pcmcia_drv(dev->driver);
 
-	if (!p_drv)
-		goto out;
+	अगर (!p_drv)
+		जाओ out;
 
-	if (p_dev->device_no == p_dev->func) {
+	अगर (p_dev->device_no == p_dev->func) अणु
 		dev_dbg(dev, "requesting configuration\n");
 		ret = pcmcia_enable_device(p_dev);
-		if (ret)
-			goto out;
-	}
+		अगर (ret)
+			जाओ out;
+	पूर्ण
 
-	if (p_drv->resume)
+	अगर (p_drv->resume)
 		ret = p_drv->resume(p_dev);
 
  out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 
-static int pcmcia_bus_suspend_callback(struct device *dev, void *_data)
-{
-	struct pcmcia_socket *skt = _data;
-	struct pcmcia_device *p_dev = to_pcmcia_dev(dev);
+अटल पूर्णांक pcmcia_bus_suspend_callback(काष्ठा device *dev, व्योम *_data)
+अणु
+	काष्ठा pcmcia_socket *skt = _data;
+	काष्ठा pcmcia_device *p_dev = to_pcmcia_dev(dev);
 
-	if (p_dev->socket != skt || p_dev->suspended)
-		return 0;
+	अगर (p_dev->socket != skt || p_dev->suspended)
+		वापस 0;
 
-	return runtime_suspend(dev);
-}
+	वापस runसमय_suspend(dev);
+पूर्ण
 
-static int pcmcia_bus_resume_callback(struct device *dev, void *_data)
-{
-	struct pcmcia_socket *skt = _data;
-	struct pcmcia_device *p_dev = to_pcmcia_dev(dev);
+अटल पूर्णांक pcmcia_bus_resume_callback(काष्ठा device *dev, व्योम *_data)
+अणु
+	काष्ठा pcmcia_socket *skt = _data;
+	काष्ठा pcmcia_device *p_dev = to_pcmcia_dev(dev);
 
-	if (p_dev->socket != skt || !p_dev->suspended)
-		return 0;
+	अगर (p_dev->socket != skt || !p_dev->suspended)
+		वापस 0;
 
-	runtime_resume(dev);
+	runसमय_resume(dev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int pcmcia_bus_resume(struct pcmcia_socket *skt)
-{
+अटल पूर्णांक pcmcia_bus_resume(काष्ठा pcmcia_socket *skt)
+अणु
 	dev_dbg(&skt->dev, "resuming socket %d\n", skt->sock);
-	bus_for_each_dev(&pcmcia_bus_type, NULL, skt, pcmcia_bus_resume_callback);
-	return 0;
-}
+	bus_क्रम_each_dev(&pcmcia_bus_type, शून्य, skt, pcmcia_bus_resume_callback);
+	वापस 0;
+पूर्ण
 
-static int pcmcia_bus_suspend(struct pcmcia_socket *skt)
-{
+अटल पूर्णांक pcmcia_bus_suspend(काष्ठा pcmcia_socket *skt)
+अणु
 	dev_dbg(&skt->dev, "suspending socket %d\n", skt->sock);
-	if (bus_for_each_dev(&pcmcia_bus_type, NULL, skt,
-			     pcmcia_bus_suspend_callback)) {
+	अगर (bus_क्रम_each_dev(&pcmcia_bus_type, शून्य, skt,
+			     pcmcia_bus_suspend_callback)) अणु
 		pcmcia_bus_resume(skt);
-		return -EIO;
-	}
-	return 0;
-}
+		वापस -EIO;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int pcmcia_bus_remove(struct pcmcia_socket *skt)
-{
+अटल पूर्णांक pcmcia_bus_हटाओ(काष्ठा pcmcia_socket *skt)
+अणु
 	atomic_set(&skt->present, 0);
-	pcmcia_card_remove(skt, NULL);
+	pcmcia_card_हटाओ(skt, शून्य);
 
 	mutex_lock(&skt->ops_mutex);
 	destroy_cis_cache(skt);
 	pcmcia_cleanup_irq(skt);
 	mutex_unlock(&skt->ops_mutex);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int pcmcia_bus_add(struct pcmcia_socket *skt)
-{
+अटल पूर्णांक pcmcia_bus_add(काष्ठा pcmcia_socket *skt)
+अणु
 	atomic_set(&skt->present, 1);
 
 	mutex_lock(&skt->ops_mutex);
@@ -1277,178 +1278,178 @@ static int pcmcia_bus_add(struct pcmcia_socket *skt)
 
 	pcmcia_card_add(skt);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int pcmcia_bus_early_resume(struct pcmcia_socket *skt)
-{
-	if (!verify_cis_cache(skt))
-		return 0;
+अटल पूर्णांक pcmcia_bus_early_resume(काष्ठा pcmcia_socket *skt)
+अणु
+	अगर (!verअगरy_cis_cache(skt))
+		वापस 0;
 
 	dev_dbg(&skt->dev, "cis mismatch - different card\n");
 
-	/* first, remove the card */
-	pcmcia_bus_remove(skt);
+	/* first, हटाओ the card */
+	pcmcia_bus_हटाओ(skt);
 
 	mutex_lock(&skt->ops_mutex);
 	destroy_cis_cache(skt);
-	kfree(skt->fake_cis);
-	skt->fake_cis = NULL;
+	kमुक्त(skt->fake_cis);
+	skt->fake_cis = शून्य;
 	skt->functions = 0;
 	mutex_unlock(&skt->ops_mutex);
 
 	/* now, add the new card */
 	pcmcia_bus_add(skt);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
 /*
  * NOTE: This is racy. There's no guarantee the card will still be
- * physically present, even if the call to this function returns
- * non-NULL. Furthermore, the device driver most likely is unbound
- * almost immediately, so the timeframe where pcmcia_dev_present
- * returns NULL is probably really really small.
+ * physically present, even अगर the call to this function वापसs
+ * non-शून्य. Furthermore, the device driver most likely is unbound
+ * almost immediately, so the समयframe where pcmcia_dev_present
+ * वापसs शून्य is probably really really small.
  */
-struct pcmcia_device *pcmcia_dev_present(struct pcmcia_device *_p_dev)
-{
-	struct pcmcia_device *p_dev;
-	struct pcmcia_device *ret = NULL;
+काष्ठा pcmcia_device *pcmcia_dev_present(काष्ठा pcmcia_device *_p_dev)
+अणु
+	काष्ठा pcmcia_device *p_dev;
+	काष्ठा pcmcia_device *ret = शून्य;
 
 	p_dev = pcmcia_get_dev(_p_dev);
-	if (!p_dev)
-		return NULL;
+	अगर (!p_dev)
+		वापस शून्य;
 
-	if (atomic_read(&p_dev->socket->present) != 0)
+	अगर (atomic_पढ़ो(&p_dev->socket->present) != 0)
 		ret = p_dev;
 
 	pcmcia_put_dev(p_dev);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL(pcmcia_dev_present);
 
 
-static struct pcmcia_callback pcmcia_bus_callback = {
+अटल काष्ठा pcmcia_callback pcmcia_bus_callback = अणु
 	.owner = THIS_MODULE,
 	.add = pcmcia_bus_add,
-	.remove = pcmcia_bus_remove,
+	.हटाओ = pcmcia_bus_हटाओ,
 	.requery = pcmcia_requery,
 	.validate = pccard_validate_cis,
 	.suspend = pcmcia_bus_suspend,
 	.early_resume = pcmcia_bus_early_resume,
 	.resume = pcmcia_bus_resume,
-};
+पूर्ण;
 
-static int pcmcia_bus_add_socket(struct device *dev,
-					   struct class_interface *class_intf)
-{
-	struct pcmcia_socket *socket = dev_get_drvdata(dev);
-	int ret;
+अटल पूर्णांक pcmcia_bus_add_socket(काष्ठा device *dev,
+					   काष्ठा class_पूर्णांकerface *class_पूर्णांकf)
+अणु
+	काष्ठा pcmcia_socket *socket = dev_get_drvdata(dev);
+	पूर्णांक ret;
 
 	socket = pcmcia_get_socket(socket);
-	if (!socket) {
+	अगर (!socket) अणु
 		dev_err(dev, "PCMCIA obtaining reference to socket failed\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
 	ret = sysfs_create_bin_file(&dev->kobj, &pccard_cis_attr);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev, "PCMCIA registration failed\n");
 		pcmcia_put_socket(socket);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	INIT_LIST_HEAD(&socket->devices_list);
 	socket->pcmcia_pfc = 0;
 	socket->device_count = 0;
 	atomic_set(&socket->present, 0);
 
-	ret = pccard_register_pcmcia(socket, &pcmcia_bus_callback);
-	if (ret) {
+	ret = pccard_रेजिस्टर_pcmcia(socket, &pcmcia_bus_callback);
+	अगर (ret) अणु
 		dev_err(dev, "PCMCIA registration failed\n");
 		pcmcia_put_socket(socket);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void pcmcia_bus_remove_socket(struct device *dev,
-				     struct class_interface *class_intf)
-{
-	struct pcmcia_socket *socket = dev_get_drvdata(dev);
+अटल व्योम pcmcia_bus_हटाओ_socket(काष्ठा device *dev,
+				     काष्ठा class_पूर्णांकerface *class_पूर्णांकf)
+अणु
+	काष्ठा pcmcia_socket *socket = dev_get_drvdata(dev);
 
-	if (!socket)
-		return;
+	अगर (!socket)
+		वापस;
 
-	pccard_register_pcmcia(socket, NULL);
+	pccard_रेजिस्टर_pcmcia(socket, शून्य);
 
-	/* unregister any unbound devices */
+	/* unरेजिस्टर any unbound devices */
 	mutex_lock(&socket->skt_mutex);
-	pcmcia_card_remove(socket, NULL);
+	pcmcia_card_हटाओ(socket, शून्य);
 	release_cis_mem(socket);
 	mutex_unlock(&socket->skt_mutex);
 
-	sysfs_remove_bin_file(&dev->kobj, &pccard_cis_attr);
+	sysfs_हटाओ_bin_file(&dev->kobj, &pccard_cis_attr);
 
 	pcmcia_put_socket(socket);
 
-	return;
-}
+	वापस;
+पूर्ण
 
 
-/* the pcmcia_bus_interface is used to handle pcmcia socket devices */
-static struct class_interface pcmcia_bus_interface __refdata = {
+/* the pcmcia_bus_पूर्णांकerface is used to handle pcmcia socket devices */
+अटल काष्ठा class_पूर्णांकerface pcmcia_bus_पूर्णांकerface __refdata = अणु
 	.class = &pcmcia_socket_class,
 	.add_dev = &pcmcia_bus_add_socket,
-	.remove_dev = &pcmcia_bus_remove_socket,
-};
+	.हटाओ_dev = &pcmcia_bus_हटाओ_socket,
+पूर्ण;
 
-static const struct dev_pm_ops pcmcia_bus_pm_ops = {
+अटल स्थिर काष्ठा dev_pm_ops pcmcia_bus_pm_ops = अणु
 	SET_SYSTEM_SLEEP_PM_OPS(pcmcia_dev_suspend, pcmcia_dev_resume)
-};
+पूर्ण;
 
-struct bus_type pcmcia_bus_type = {
+काष्ठा bus_type pcmcia_bus_type = अणु
 	.name = "pcmcia",
 	.uevent = pcmcia_bus_uevent,
 	.match = pcmcia_bus_match,
 	.dev_groups = pcmcia_dev_groups,
 	.probe = pcmcia_device_probe,
-	.remove = pcmcia_device_remove,
+	.हटाओ = pcmcia_device_हटाओ,
 	.pm = &pcmcia_bus_pm_ops,
-};
+पूर्ण;
 
 
-static int __init init_pcmcia_bus(void)
-{
-	int ret;
+अटल पूर्णांक __init init_pcmcia_bus(व्योम)
+अणु
+	पूर्णांक ret;
 
-	ret = bus_register(&pcmcia_bus_type);
-	if (ret < 0) {
-		printk(KERN_WARNING "pcmcia: bus_register error: %d\n", ret);
-		return ret;
-	}
-	ret = class_interface_register(&pcmcia_bus_interface);
-	if (ret < 0) {
-		printk(KERN_WARNING
+	ret = bus_रेजिस्टर(&pcmcia_bus_type);
+	अगर (ret < 0) अणु
+		prपूर्णांकk(KERN_WARNING "pcmcia: bus_register error: %d\n", ret);
+		वापस ret;
+	पूर्ण
+	ret = class_पूर्णांकerface_रेजिस्टर(&pcmcia_bus_पूर्णांकerface);
+	अगर (ret < 0) अणु
+		prपूर्णांकk(KERN_WARNING
 			"pcmcia: class_interface_register error: %d\n", ret);
-		bus_unregister(&pcmcia_bus_type);
-		return ret;
-	}
+		bus_unरेजिस्टर(&pcmcia_bus_type);
+		वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 fs_initcall(init_pcmcia_bus); /* one level after subsys_initcall so that
-			       * pcmcia_socket_class is already registered */
+			       * pcmcia_socket_class is alपढ़ोy रेजिस्टरed */
 
 
-static void __exit exit_pcmcia_bus(void)
-{
-	class_interface_unregister(&pcmcia_bus_interface);
+अटल व्योम __निकास निकास_pcmcia_bus(व्योम)
+अणु
+	class_पूर्णांकerface_unरेजिस्टर(&pcmcia_bus_पूर्णांकerface);
 
-	bus_unregister(&pcmcia_bus_type);
-}
-module_exit(exit_pcmcia_bus);
+	bus_unरेजिस्टर(&pcmcia_bus_type);
+पूर्ण
+module_निकास(निकास_pcmcia_bus);
 
 
 MODULE_ALIAS("ds");

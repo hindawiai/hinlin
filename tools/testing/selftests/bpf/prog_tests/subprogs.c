@@ -1,25 +1,26 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /* Copyright (c) 2020 Facebook */
-#include <test_progs.h>
-#include <time.h>
-#include "test_subprogs.skel.h"
-#include "test_subprogs_unused.skel.h"
+#समावेश <test_progs.h>
+#समावेश <समय.स>
+#समावेश "test_subprogs.skel.h"
+#समावेश "test_subprogs_unused.skel.h"
 
-static int duration;
+अटल पूर्णांक duration;
 
-void test_subprogs(void)
-{
-	struct test_subprogs *skel;
-	struct test_subprogs_unused *skel2;
-	int err;
+व्योम test_subprogs(व्योम)
+अणु
+	काष्ठा test_subprogs *skel;
+	काष्ठा test_subprogs_unused *skel2;
+	पूर्णांक err;
 
-	skel = test_subprogs__open_and_load();
-	if (CHECK(!skel, "skel_open", "failed to open skeleton\n"))
-		return;
+	skel = test_subprogs__खोलो_and_load();
+	अगर (CHECK(!skel, "skel_open", "failed to open skeleton\n"))
+		वापस;
 
 	err = test_subprogs__attach(skel);
-	if (CHECK(err, "skel_attach", "failed to attach skeleton: %d\n", err))
-		goto cleanup;
+	अगर (CHECK(err, "skel_attach", "failed to attach skeleton: %d\n", err))
+		जाओ cleanup;
 
 	usleep(1);
 
@@ -28,10 +29,10 @@ void test_subprogs(void)
 	CHECK(skel->bss->res3 != 19, "res3", "got %d, exp %d\n", skel->bss->res3, 19);
 	CHECK(skel->bss->res4 != 36, "res4", "got %d, exp %d\n", skel->bss->res4, 36);
 
-	skel2 = test_subprogs_unused__open_and_load();
+	skel2 = test_subprogs_unused__खोलो_and_load();
 	ASSERT_OK_PTR(skel2, "unused_progs_skel");
 	test_subprogs_unused__destroy(skel2);
 
 cleanup:
 	test_subprogs__destroy(skel);
-}
+पूर्ण

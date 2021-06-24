@@ -1,11 +1,12 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * Copyright (C) 2014 NVIDIA Corporation
  */
 
-#ifndef __SOC_TEGRA_COMMON_H__
-#define __SOC_TEGRA_COMMON_H__
+#अगर_अघोषित __SOC_TEGRA_COMMON_H__
+#घोषणा __SOC_TEGRA_COMMON_H__
 
-bool soc_is_tegra(void);
+bool soc_is_tegra(व्योम);
 
-#endif /* __SOC_TEGRA_COMMON_H__ */
+#पूर्ण_अगर /* __SOC_TEGRA_COMMON_H__ */

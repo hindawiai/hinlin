@@ -1,53 +1,54 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * VMware VMCI Driver
  *
  * Copyright (C) 2012 VMware, Inc. All rights reserved.
  */
 
-#ifndef _VMCI_DRIVER_H_
-#define _VMCI_DRIVER_H_
+#अगर_अघोषित _VMCI_DRIVER_H_
+#घोषणा _VMCI_DRIVER_H_
 
-#include <linux/vmw_vmci_defs.h>
-#include <linux/wait.h>
+#समावेश <linux/vmw_vmci_defs.h>
+#समावेश <linux/रुको.h>
 
-#include "vmci_queue_pair.h"
-#include "vmci_context.h"
+#समावेश "vmci_queue_pair.h"
+#समावेश "vmci_context.h"
 
-enum vmci_obj_type {
+क्रमागत vmci_obj_type अणु
 	VMCIOBJ_VMX_VM = 10,
 	VMCIOBJ_CONTEXT,
 	VMCIOBJ_SOCKET,
 	VMCIOBJ_NOT_SET,
-};
+पूर्ण;
 
-/* For storing VMCI structures in file handles. */
-struct vmci_obj {
-	void *ptr;
-	enum vmci_obj_type type;
-};
+/* For storing VMCI काष्ठाures in file handles. */
+काष्ठा vmci_obj अणु
+	व्योम *ptr;
+	क्रमागत vmci_obj_type type;
+पूर्ण;
 
 /*
  * Needed by other components of this module.  It's okay to have one global
  * instance of this because there can only ever be one VMCI device.  Our
- * virtual hardware enforces this.
+ * भव hardware enक्रमces this.
  */
-extern struct pci_dev *vmci_pdev;
+बाह्य काष्ठा pci_dev *vmci_pdev;
 
-u32 vmci_get_context_id(void);
-int vmci_send_datagram(struct vmci_datagram *dg);
-void vmci_call_vsock_callback(bool is_host);
+u32 vmci_get_context_id(व्योम);
+पूर्णांक vmci_send_datagram(काष्ठा vmci_datagram *dg);
+व्योम vmci_call_vsock_callback(bool is_host);
 
-int vmci_host_init(void);
-void vmci_host_exit(void);
-bool vmci_host_code_active(void);
-int vmci_host_users(void);
+पूर्णांक vmci_host_init(व्योम);
+व्योम vmci_host_निकास(व्योम);
+bool vmci_host_code_active(व्योम);
+पूर्णांक vmci_host_users(व्योम);
 
-int vmci_guest_init(void);
-void vmci_guest_exit(void);
-bool vmci_guest_code_active(void);
-u32 vmci_get_vm_context_id(void);
+पूर्णांक vmci_guest_init(व्योम);
+व्योम vmci_guest_निकास(व्योम);
+bool vmci_guest_code_active(व्योम);
+u32 vmci_get_vm_context_id(व्योम);
 
-bool vmci_use_ppn64(void);
+bool vmci_use_ppn64(व्योम);
 
-#endif /* _VMCI_DRIVER_H_ */
+#पूर्ण_अगर /* _VMCI_DRIVER_H_ */

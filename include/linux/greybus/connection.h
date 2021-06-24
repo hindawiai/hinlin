@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * Greybus connections
  *
@@ -6,126 +7,126 @@
  * Copyright 2014 Linaro Ltd.
  */
 
-#ifndef __CONNECTION_H
-#define __CONNECTION_H
+#अगर_अघोषित __CONNECTION_H
+#घोषणा __CONNECTION_H
 
-#include <linux/bits.h>
-#include <linux/list.h>
-#include <linux/kfifo.h>
-#include <linux/kref.h>
-#include <linux/workqueue.h>
+#समावेश <linux/bits.h>
+#समावेश <linux/list.h>
+#समावेश <linux/kfअगरo.h>
+#समावेश <linux/kref.h>
+#समावेश <linux/workqueue.h>
 
-#define GB_CONNECTION_FLAG_CSD		BIT(0)
-#define GB_CONNECTION_FLAG_NO_FLOWCTRL	BIT(1)
-#define GB_CONNECTION_FLAG_OFFLOADED	BIT(2)
-#define GB_CONNECTION_FLAG_CDSI1	BIT(3)
-#define GB_CONNECTION_FLAG_CONTROL	BIT(4)
-#define GB_CONNECTION_FLAG_HIGH_PRIO	BIT(5)
+#घोषणा GB_CONNECTION_FLAG_CSD		BIT(0)
+#घोषणा GB_CONNECTION_FLAG_NO_FLOWCTRL	BIT(1)
+#घोषणा GB_CONNECTION_FLAG_OFFLOADED	BIT(2)
+#घोषणा GB_CONNECTION_FLAG_CDSI1	BIT(3)
+#घोषणा GB_CONNECTION_FLAG_CONTROL	BIT(4)
+#घोषणा GB_CONNECTION_FLAG_HIGH_PRIO	BIT(5)
 
-#define GB_CONNECTION_FLAG_CORE_MASK	GB_CONNECTION_FLAG_CONTROL
+#घोषणा GB_CONNECTION_FLAG_CORE_MASK	GB_CONNECTION_FLAG_CONTROL
 
-enum gb_connection_state {
+क्रमागत gb_connection_state अणु
 	GB_CONNECTION_STATE_DISABLED		= 0,
 	GB_CONNECTION_STATE_ENABLED_TX		= 1,
 	GB_CONNECTION_STATE_ENABLED		= 2,
 	GB_CONNECTION_STATE_DISCONNECTING	= 3,
-};
+पूर्ण;
 
-struct gb_operation;
+काष्ठा gb_operation;
 
-typedef int (*gb_request_handler_t)(struct gb_operation *);
+प्रकार पूर्णांक (*gb_request_handler_t)(काष्ठा gb_operation *);
 
-struct gb_connection {
-	struct gb_host_device		*hd;
-	struct gb_interface		*intf;
-	struct gb_bundle		*bundle;
-	struct kref			kref;
+काष्ठा gb_connection अणु
+	काष्ठा gb_host_device		*hd;
+	काष्ठा gb_पूर्णांकerface		*पूर्णांकf;
+	काष्ठा gb_bundle		*bundle;
+	काष्ठा kref			kref;
 	u16				hd_cport_id;
-	u16				intf_cport_id;
+	u16				पूर्णांकf_cport_id;
 
-	struct list_head		hd_links;
-	struct list_head		bundle_links;
+	काष्ठा list_head		hd_links;
+	काष्ठा list_head		bundle_links;
 
 	gb_request_handler_t		handler;
-	unsigned long			flags;
+	अचिन्हित दीर्घ			flags;
 
-	struct mutex			mutex;
+	काष्ठा mutex			mutex;
 	spinlock_t			lock;
-	enum gb_connection_state	state;
-	struct list_head		operations;
+	क्रमागत gb_connection_state	state;
+	काष्ठा list_head		operations;
 
-	char				name[16];
-	struct workqueue_struct		*wq;
+	अक्षर				name[16];
+	काष्ठा workqueue_काष्ठा		*wq;
 
 	atomic_t			op_cycle;
 
-	void				*private;
+	व्योम				*निजी;
 
-	bool				mode_switch;
-};
+	bool				mode_चयन;
+पूर्ण;
 
-struct gb_connection *gb_connection_create_static(struct gb_host_device *hd,
+काष्ठा gb_connection *gb_connection_create_अटल(काष्ठा gb_host_device *hd,
 				u16 hd_cport_id, gb_request_handler_t handler);
-struct gb_connection *gb_connection_create_control(struct gb_interface *intf);
-struct gb_connection *gb_connection_create(struct gb_bundle *bundle,
+काष्ठा gb_connection *gb_connection_create_control(काष्ठा gb_पूर्णांकerface *पूर्णांकf);
+काष्ठा gb_connection *gb_connection_create(काष्ठा gb_bundle *bundle,
 				u16 cport_id, gb_request_handler_t handler);
-struct gb_connection *gb_connection_create_flags(struct gb_bundle *bundle,
+काष्ठा gb_connection *gb_connection_create_flags(काष्ठा gb_bundle *bundle,
 				u16 cport_id, gb_request_handler_t handler,
-				unsigned long flags);
-struct gb_connection *gb_connection_create_offloaded(struct gb_bundle *bundle,
-				u16 cport_id, unsigned long flags);
-void gb_connection_destroy(struct gb_connection *connection);
+				अचिन्हित दीर्घ flags);
+काष्ठा gb_connection *gb_connection_create_offloaded(काष्ठा gb_bundle *bundle,
+				u16 cport_id, अचिन्हित दीर्घ flags);
+व्योम gb_connection_destroy(काष्ठा gb_connection *connection);
 
-static inline bool gb_connection_is_static(struct gb_connection *connection)
-{
-	return !connection->intf;
-}
+अटल अंतरभूत bool gb_connection_is_अटल(काष्ठा gb_connection *connection)
+अणु
+	वापस !connection->पूर्णांकf;
+पूर्ण
 
-int gb_connection_enable(struct gb_connection *connection);
-int gb_connection_enable_tx(struct gb_connection *connection);
-void gb_connection_disable_rx(struct gb_connection *connection);
-void gb_connection_disable(struct gb_connection *connection);
-void gb_connection_disable_forced(struct gb_connection *connection);
+पूर्णांक gb_connection_enable(काष्ठा gb_connection *connection);
+पूर्णांक gb_connection_enable_tx(काष्ठा gb_connection *connection);
+व्योम gb_connection_disable_rx(काष्ठा gb_connection *connection);
+व्योम gb_connection_disable(काष्ठा gb_connection *connection);
+व्योम gb_connection_disable_क्रमced(काष्ठा gb_connection *connection);
 
-void gb_connection_mode_switch_prepare(struct gb_connection *connection);
-void gb_connection_mode_switch_complete(struct gb_connection *connection);
+व्योम gb_connection_mode_चयन_prepare(काष्ठा gb_connection *connection);
+व्योम gb_connection_mode_चयन_complete(काष्ठा gb_connection *connection);
 
-void greybus_data_rcvd(struct gb_host_device *hd, u16 cport_id,
-		       u8 *data, size_t length);
+व्योम greybus_data_rcvd(काष्ठा gb_host_device *hd, u16 cport_id,
+		       u8 *data, माप_प्रकार length);
 
-void gb_connection_latency_tag_enable(struct gb_connection *connection);
-void gb_connection_latency_tag_disable(struct gb_connection *connection);
+व्योम gb_connection_latency_tag_enable(काष्ठा gb_connection *connection);
+व्योम gb_connection_latency_tag_disable(काष्ठा gb_connection *connection);
 
-static inline bool gb_connection_e2efc_enabled(struct gb_connection *connection)
-{
-	return !(connection->flags & GB_CONNECTION_FLAG_CSD);
-}
+अटल अंतरभूत bool gb_connection_e2efc_enabled(काष्ठा gb_connection *connection)
+अणु
+	वापस !(connection->flags & GB_CONNECTION_FLAG_CSD);
+पूर्ण
 
-static inline bool
-gb_connection_flow_control_disabled(struct gb_connection *connection)
-{
-	return connection->flags & GB_CONNECTION_FLAG_NO_FLOWCTRL;
-}
+अटल अंतरभूत bool
+gb_connection_flow_control_disabled(काष्ठा gb_connection *connection)
+अणु
+	वापस connection->flags & GB_CONNECTION_FLAG_NO_FLOWCTRL;
+पूर्ण
 
-static inline bool gb_connection_is_offloaded(struct gb_connection *connection)
-{
-	return connection->flags & GB_CONNECTION_FLAG_OFFLOADED;
-}
+अटल अंतरभूत bool gb_connection_is_offloaded(काष्ठा gb_connection *connection)
+अणु
+	वापस connection->flags & GB_CONNECTION_FLAG_OFFLOADED;
+पूर्ण
 
-static inline bool gb_connection_is_control(struct gb_connection *connection)
-{
-	return connection->flags & GB_CONNECTION_FLAG_CONTROL;
-}
+अटल अंतरभूत bool gb_connection_is_control(काष्ठा gb_connection *connection)
+अणु
+	वापस connection->flags & GB_CONNECTION_FLAG_CONTROL;
+पूर्ण
 
-static inline void *gb_connection_get_data(struct gb_connection *connection)
-{
-	return connection->private;
-}
+अटल अंतरभूत व्योम *gb_connection_get_data(काष्ठा gb_connection *connection)
+अणु
+	वापस connection->निजी;
+पूर्ण
 
-static inline void gb_connection_set_data(struct gb_connection *connection,
-					  void *data)
-{
-	connection->private = data;
-}
+अटल अंतरभूत व्योम gb_connection_set_data(काष्ठा gb_connection *connection,
+					  व्योम *data)
+अणु
+	connection->निजी = data;
+पूर्ण
 
-#endif /* __CONNECTION_H */
+#पूर्ण_अगर /* __CONNECTION_H */

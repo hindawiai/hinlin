@@ -1,15 +1,16 @@
-// SPDX-License-Identifier: LGPL-2.1
+<शैली गुरु>
+// SPDX-License-Identअगरier: LGPL-2.1
 
-#include <stdlib.h>
-#include <linux/zalloc.h>
+#समावेश <मानककोष.स>
+#समावेश <linux/zभाग.स>
 
-void *zalloc(size_t size)
-{
-	return calloc(1, size);
-}
+व्योम *zalloc(माप_प्रकार size)
+अणु
+	वापस सुस्मृति(1, size);
+पूर्ण
 
-void __zfree(void **ptr)
-{
-	free(*ptr);
-	*ptr = NULL;
-}
+व्योम __zमुक्त(व्योम **ptr)
+अणु
+	मुक्त(*ptr);
+	*ptr = शून्य;
+पूर्ण

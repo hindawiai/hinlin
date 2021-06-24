@@ -1,26 +1,27 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <linux/skbuff.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <linux/skbuff.h>
 
-#include "protocol.h"
+#समावेश "protocol.h"
 
-/* Syncookies do not work for JOIN requests.
+/* Syncookies करो not work क्रम JOIN requests.
  *
  * Unlike MP_CAPABLE, where the ACK cookie contains the needed MPTCP
- * options to reconstruct the initial syn state, MP_JOIN does not contain
+ * options to reस्थिरruct the initial syn state, MP_JOIN करोes not contain
  * the token to obtain the mptcp socket nor the server-generated nonce
  * that was used in the cookie SYN/ACK response.
  *
- * Keep a small best effort state table to store the syn/synack data,
+ * Keep a small best efक्रमt state table to store the syn/synack data,
  * indexed by skb hash.
  *
- * A MP_JOIN SYN packet handled by syn cookies is only stored if the 32bit
+ * A MP_JOIN SYN packet handled by syn cookies is only stored अगर the 32bit
  * token matches a known mptcp connection that can still accept more subflows.
  *
- * There is no timeout handling -- state is only re-constructed
+ * There is no समयout handling -- state is only re-स्थिरructed
  * when the TCP ACK passed the cookie validation check.
  */
 
-struct join_entry {
+काष्ठा join_entry अणु
 	u32 token;
 	u32 remote_nonce;
 	u32 local_nonce;
@@ -28,23 +29,23 @@ struct join_entry {
 	u8 local_id;
 	u8 backup;
 	u8 valid;
-};
+पूर्ण;
 
-#define COOKIE_JOIN_SLOTS	1024
+#घोषणा COOKIE_JOIN_SLOTS	1024
 
-static struct join_entry join_entries[COOKIE_JOIN_SLOTS] __cacheline_aligned_in_smp;
-static spinlock_t join_entry_locks[COOKIE_JOIN_SLOTS] __cacheline_aligned_in_smp;
+अटल काष्ठा join_entry join_entries[COOKIE_JOIN_SLOTS] __cacheline_aligned_in_smp;
+अटल spinlock_t join_entry_locks[COOKIE_JOIN_SLOTS] __cacheline_aligned_in_smp;
 
-static u32 mptcp_join_entry_hash(struct sk_buff *skb, struct net *net)
-{
+अटल u32 mptcp_join_entry_hash(काष्ठा sk_buff *skb, काष्ठा net *net)
+अणु
 	u32 i = skb_get_hash(skb) ^ net_hash_mix(net);
 
-	return i % ARRAY_SIZE(join_entries);
-}
+	वापस i % ARRAY_SIZE(join_entries);
+पूर्ण
 
-static void mptcp_join_store_state(struct join_entry *entry,
-				   const struct mptcp_subflow_request_sock *subflow_req)
-{
+अटल व्योम mptcp_join_store_state(काष्ठा join_entry *entry,
+				   स्थिर काष्ठा mptcp_subflow_request_sock *subflow_req)
+अणु
 	entry->token = subflow_req->token;
 	entry->remote_nonce = subflow_req->remote_nonce;
 	entry->local_nonce = subflow_req->local_nonce;
@@ -52,59 +53,59 @@ static void mptcp_join_store_state(struct join_entry *entry,
 	entry->join_id = subflow_req->remote_id;
 	entry->local_id = subflow_req->local_id;
 	entry->valid = 1;
-}
+पूर्ण
 
-void subflow_init_req_cookie_join_save(const struct mptcp_subflow_request_sock *subflow_req,
-				       struct sk_buff *skb)
-{
-	struct net *net = read_pnet(&subflow_req->sk.req.ireq_net);
+व्योम subflow_init_req_cookie_join_save(स्थिर काष्ठा mptcp_subflow_request_sock *subflow_req,
+				       काष्ठा sk_buff *skb)
+अणु
+	काष्ठा net *net = पढ़ो_pnet(&subflow_req->sk.req.ireq_net);
 	u32 i = mptcp_join_entry_hash(skb, net);
 
-	/* No use in waiting if other cpu is already using this slot --
-	 * would overwrite the data that got stored.
+	/* No use in रुकोing अगर other cpu is alपढ़ोy using this slot --
+	 * would overग_लिखो the data that got stored.
 	 */
 	spin_lock_bh(&join_entry_locks[i]);
 	mptcp_join_store_state(&join_entries[i], subflow_req);
 	spin_unlock_bh(&join_entry_locks[i]);
-}
+पूर्ण
 
-/* Called for a cookie-ack with MP_JOIN option present.
+/* Called क्रम a cookie-ack with MP_JOIN option present.
  * Look up the saved state based on skb hash & check token matches msk
  * in same netns.
  *
  * Caller will check msk can still accept another subflow.  The hmac
  * present in the cookie ACK mptcp option space will be checked later.
  */
-bool mptcp_token_join_cookie_init_state(struct mptcp_subflow_request_sock *subflow_req,
-					struct sk_buff *skb)
-{
-	struct net *net = read_pnet(&subflow_req->sk.req.ireq_net);
+bool mptcp_token_join_cookie_init_state(काष्ठा mptcp_subflow_request_sock *subflow_req,
+					काष्ठा sk_buff *skb)
+अणु
+	काष्ठा net *net = पढ़ो_pnet(&subflow_req->sk.req.ireq_net);
 	u32 i = mptcp_join_entry_hash(skb, net);
-	struct mptcp_sock *msk;
-	struct join_entry *e;
+	काष्ठा mptcp_sock *msk;
+	काष्ठा join_entry *e;
 
 	e = &join_entries[i];
 
 	spin_lock_bh(&join_entry_locks[i]);
 
-	if (e->valid == 0) {
+	अगर (e->valid == 0) अणु
 		spin_unlock_bh(&join_entry_locks[i]);
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
 	e->valid = 0;
 
 	msk = mptcp_token_get_sock(e->token);
-	if (!msk) {
+	अगर (!msk) अणु
 		spin_unlock_bh(&join_entry_locks[i]);
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
-	/* If this fails, the token got re-used in the mean time by another
-	 * mptcp socket in a different netns, i.e. entry is outdated.
+	/* If this fails, the token got re-used in the mean समय by another
+	 * mptcp socket in a dअगरferent netns, i.e. entry is outdated.
 	 */
-	if (!net_eq(sock_net((struct sock *)msk), net))
-		goto err_put;
+	अगर (!net_eq(sock_net((काष्ठा sock *)msk), net))
+		जाओ err_put;
 
 	subflow_req->remote_nonce = e->remote_nonce;
 	subflow_req->local_nonce = e->local_nonce;
@@ -113,18 +114,18 @@ bool mptcp_token_join_cookie_init_state(struct mptcp_subflow_request_sock *subfl
 	subflow_req->token = e->token;
 	subflow_req->msk = msk;
 	spin_unlock_bh(&join_entry_locks[i]);
-	return true;
+	वापस true;
 
 err_put:
 	spin_unlock_bh(&join_entry_locks[i]);
-	sock_put((struct sock *)msk);
-	return false;
-}
+	sock_put((काष्ठा sock *)msk);
+	वापस false;
+पूर्ण
 
-void __init mptcp_join_cookie_init(void)
-{
-	int i;
+व्योम __init mptcp_join_cookie_init(व्योम)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < COOKIE_JOIN_SLOTS; i++)
+	क्रम (i = 0; i < COOKIE_JOIN_SLOTS; i++)
 		spin_lock_init(&join_entry_locks[i]);
-}
+पूर्ण

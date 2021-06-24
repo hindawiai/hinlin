@@ -1,60 +1,61 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * skl-sst-cldma.c - Code Loader DMA handler
  *
  * Copyright (C) 2015, Intel Corporation.
- * Author: Subhransu S. Prusty <subhransu.s.prusty@intel.com>
+ * Author: Subhransu S. Prusty <subhransu.s.prusty@पूर्णांकel.com>
  * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-#include <linux/device.h>
-#include <linux/io.h>
-#include <linux/mm.h>
-#include <linux/delay.h>
-#include "../common/sst-dsp.h"
-#include "../common/sst-dsp-priv.h"
+#समावेश <linux/device.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/mm.h>
+#समावेश <linux/delay.h>
+#समावेश "../common/sst-dsp.h"
+#समावेश "../common/sst-dsp-priv.h"
 
-static void skl_cldma_int_enable(struct sst_dsp *ctx)
-{
+अटल व्योम skl_cldma_पूर्णांक_enable(काष्ठा sst_dsp *ctx)
+अणु
 	sst_dsp_shim_update_bits_unlocked(ctx, SKL_ADSP_REG_ADSPIC,
 				SKL_ADSPIC_CL_DMA, SKL_ADSPIC_CL_DMA);
-}
+पूर्ण
 
-void skl_cldma_int_disable(struct sst_dsp *ctx)
-{
+व्योम skl_cldma_पूर्णांक_disable(काष्ठा sst_dsp *ctx)
+अणु
 	sst_dsp_shim_update_bits_unlocked(ctx,
 			SKL_ADSP_REG_ADSPIC, SKL_ADSPIC_CL_DMA, 0);
-}
+पूर्ण
 
-static void skl_cldma_stream_run(struct sst_dsp  *ctx, bool enable)
-{
-	unsigned char val;
-	int timeout;
+अटल व्योम skl_cldma_stream_run(काष्ठा sst_dsp  *ctx, bool enable)
+अणु
+	अचिन्हित अक्षर val;
+	पूर्णांक समयout;
 
 	sst_dsp_shim_update_bits_unlocked(ctx,
 			SKL_ADSP_REG_CL_SD_CTL,
 			CL_SD_CTL_RUN_MASK, CL_SD_CTL_RUN(enable));
 
 	udelay(3);
-	timeout = 300;
-	do {
-		/* waiting for hardware to report that the stream Run bit set */
-		val = sst_dsp_shim_read(ctx, SKL_ADSP_REG_CL_SD_CTL) &
+	समयout = 300;
+	करो अणु
+		/* रुकोing क्रम hardware to report that the stream Run bit set */
+		val = sst_dsp_shim_पढ़ो(ctx, SKL_ADSP_REG_CL_SD_CTL) &
 			CL_SD_CTL_RUN_MASK;
-		if (enable && val)
-			break;
-		else if (!enable && !val)
-			break;
+		अगर (enable && val)
+			अवरोध;
+		अन्यथा अगर (!enable && !val)
+			अवरोध;
 		udelay(3);
-	} while (--timeout);
+	पूर्ण जबतक (--समयout);
 
-	if (timeout == 0)
+	अगर (समयout == 0)
 		dev_err(ctx->dev, "Failed to set Run bit=%d enable=%d\n", val, enable);
-}
+पूर्ण
 
-static void skl_cldma_stream_clear(struct sst_dsp  *ctx)
-{
-	/* make sure Run bit is cleared before setting stream register */
+अटल व्योम skl_cldma_stream_clear(काष्ठा sst_dsp  *ctx)
+अणु
+	/* make sure Run bit is cleared beक्रमe setting stream रेजिस्टर */
 	skl_cldma_stream_run(ctx, 0);
 
 	sst_dsp_shim_update_bits(ctx, SKL_ADSP_REG_CL_SD_CTL,
@@ -66,22 +67,22 @@ static void skl_cldma_stream_clear(struct sst_dsp  *ctx)
 	sst_dsp_shim_update_bits(ctx, SKL_ADSP_REG_CL_SD_CTL,
 				CL_SD_CTL_STRM_MASK, CL_SD_CTL_STRM(0));
 
-	sst_dsp_shim_write(ctx, SKL_ADSP_REG_CL_SD_BDLPL, CL_SD_BDLPLBA(0));
-	sst_dsp_shim_write(ctx, SKL_ADSP_REG_CL_SD_BDLPU, 0);
+	sst_dsp_shim_ग_लिखो(ctx, SKL_ADSP_REG_CL_SD_BDLPL, CL_SD_BDLPLBA(0));
+	sst_dsp_shim_ग_लिखो(ctx, SKL_ADSP_REG_CL_SD_BDLPU, 0);
 
-	sst_dsp_shim_write(ctx, SKL_ADSP_REG_CL_SD_CBL, 0);
-	sst_dsp_shim_write(ctx, SKL_ADSP_REG_CL_SD_LVI, 0);
-}
+	sst_dsp_shim_ग_लिखो(ctx, SKL_ADSP_REG_CL_SD_CBL, 0);
+	sst_dsp_shim_ग_लिखो(ctx, SKL_ADSP_REG_CL_SD_LVI, 0);
+पूर्ण
 
 /* Code loader helper APIs */
-static void skl_cldma_setup_bdle(struct sst_dsp *ctx,
-		struct snd_dma_buffer *dmab_data,
-		__le32 **bdlp, int size, int with_ioc)
-{
+अटल व्योम skl_cldma_setup_bdle(काष्ठा sst_dsp *ctx,
+		काष्ठा snd_dma_buffer *dmab_data,
+		__le32 **bdlp, पूर्णांक size, पूर्णांक with_ioc)
+अणु
 	__le32 *bdl = *bdlp;
 
 	ctx->cl_dev.frags = 0;
-	while (size > 0) {
+	जबतक (size > 0) अणु
 		phys_addr_t addr = virt_to_phys(dmab_data->area +
 				(ctx->cl_dev.frags * ctx->cl_dev.bufsize));
 
@@ -95,27 +96,27 @@ static void skl_cldma_setup_bdle(struct sst_dsp *ctx,
 
 		bdl += 4;
 		ctx->cl_dev.frags++;
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
  * Setup controller
- * Configure the registers to update the dma buffer address and
- * enable interrupts.
- * Note: Using the channel 1 for transfer
+ * Configure the रेजिस्टरs to update the dma buffer address and
+ * enable पूर्णांकerrupts.
+ * Note: Using the channel 1 क्रम transfer
  */
-static void skl_cldma_setup_controller(struct sst_dsp  *ctx,
-		struct snd_dma_buffer *dmab_bdl, unsigned int max_size,
+अटल व्योम skl_cldma_setup_controller(काष्ठा sst_dsp  *ctx,
+		काष्ठा snd_dma_buffer *dmab_bdl, अचिन्हित पूर्णांक max_size,
 		u32 count)
-{
+अणु
 	skl_cldma_stream_clear(ctx);
-	sst_dsp_shim_write(ctx, SKL_ADSP_REG_CL_SD_BDLPL,
+	sst_dsp_shim_ग_लिखो(ctx, SKL_ADSP_REG_CL_SD_BDLPL,
 			CL_SD_BDLPLBA(dmab_bdl->addr));
-	sst_dsp_shim_write(ctx, SKL_ADSP_REG_CL_SD_BDLPU,
+	sst_dsp_shim_ग_लिखो(ctx, SKL_ADSP_REG_CL_SD_BDLPU,
 			CL_SD_BDLPUBA(dmab_bdl->addr));
 
-	sst_dsp_shim_write(ctx, SKL_ADSP_REG_CL_SD_CBL, max_size);
-	sst_dsp_shim_write(ctx, SKL_ADSP_REG_CL_SD_LVI, count - 1);
+	sst_dsp_shim_ग_लिखो(ctx, SKL_ADSP_REG_CL_SD_CBL, max_size);
+	sst_dsp_shim_ग_लिखो(ctx, SKL_ADSP_REG_CL_SD_LVI, count - 1);
 	sst_dsp_shim_update_bits(ctx, SKL_ADSP_REG_CL_SD_CTL,
 			CL_SD_CTL_IOCE_MASK, CL_SD_CTL_IOCE(1));
 	sst_dsp_shim_update_bits(ctx, SKL_ADSP_REG_CL_SD_CTL,
@@ -124,205 +125,205 @@ static void skl_cldma_setup_controller(struct sst_dsp  *ctx,
 			CL_SD_CTL_DEIE_MASK, CL_SD_CTL_DEIE(1));
 	sst_dsp_shim_update_bits(ctx, SKL_ADSP_REG_CL_SD_CTL,
 			CL_SD_CTL_STRM_MASK, CL_SD_CTL_STRM(FW_CL_STREAM_NUMBER));
-}
+पूर्ण
 
-static void skl_cldma_setup_spb(struct sst_dsp  *ctx,
-		unsigned int size, bool enable)
-{
-	if (enable)
+अटल व्योम skl_cldma_setup_spb(काष्ठा sst_dsp  *ctx,
+		अचिन्हित पूर्णांक size, bool enable)
+अणु
+	अगर (enable)
 		sst_dsp_shim_update_bits_unlocked(ctx,
 				SKL_ADSP_REG_CL_SPBFIFO_SPBFCCTL,
 				CL_SPBFIFO_SPBFCCTL_SPIBE_MASK,
 				CL_SPBFIFO_SPBFCCTL_SPIBE(1));
 
-	sst_dsp_shim_write_unlocked(ctx, SKL_ADSP_REG_CL_SPBFIFO_SPIB, size);
-}
+	sst_dsp_shim_ग_लिखो_unlocked(ctx, SKL_ADSP_REG_CL_SPBFIFO_SPIB, size);
+पूर्ण
 
-static void skl_cldma_cleanup_spb(struct sst_dsp  *ctx)
-{
+अटल व्योम skl_cldma_cleanup_spb(काष्ठा sst_dsp  *ctx)
+अणु
 	sst_dsp_shim_update_bits_unlocked(ctx,
 			SKL_ADSP_REG_CL_SPBFIFO_SPBFCCTL,
 			CL_SPBFIFO_SPBFCCTL_SPIBE_MASK,
 			CL_SPBFIFO_SPBFCCTL_SPIBE(0));
 
-	sst_dsp_shim_write_unlocked(ctx, SKL_ADSP_REG_CL_SPBFIFO_SPIB, 0);
-}
+	sst_dsp_shim_ग_लिखो_unlocked(ctx, SKL_ADSP_REG_CL_SPBFIFO_SPIB, 0);
+पूर्ण
 
-static void skl_cldma_cleanup(struct sst_dsp  *ctx)
-{
+अटल व्योम skl_cldma_cleanup(काष्ठा sst_dsp  *ctx)
+अणु
 	skl_cldma_cleanup_spb(ctx);
 	skl_cldma_stream_clear(ctx);
 
-	ctx->dsp_ops.free_dma_buf(ctx->dev, &ctx->cl_dev.dmab_data);
-	ctx->dsp_ops.free_dma_buf(ctx->dev, &ctx->cl_dev.dmab_bdl);
-}
+	ctx->dsp_ops.मुक्त_dma_buf(ctx->dev, &ctx->cl_dev.dmab_data);
+	ctx->dsp_ops.मुक्त_dma_buf(ctx->dev, &ctx->cl_dev.dmab_bdl);
+पूर्ण
 
-int skl_cldma_wait_interruptible(struct sst_dsp *ctx)
-{
-	int ret = 0;
+पूर्णांक skl_cldma_रुको_पूर्णांकerruptible(काष्ठा sst_dsp *ctx)
+अणु
+	पूर्णांक ret = 0;
 
-	if (!wait_event_timeout(ctx->cl_dev.wait_queue,
-				ctx->cl_dev.wait_condition,
-				msecs_to_jiffies(SKL_WAIT_TIMEOUT))) {
+	अगर (!रुको_event_समयout(ctx->cl_dev.रुको_queue,
+				ctx->cl_dev.रुको_condition,
+				msecs_to_jअगरfies(SKL_WAIT_TIMEOUT))) अणु
 		dev_err(ctx->dev, "%s: Wait timeout\n", __func__);
 		ret = -EIO;
-		goto cleanup;
-	}
+		जाओ cleanup;
+	पूर्ण
 
 	dev_dbg(ctx->dev, "%s: Event wake\n", __func__);
-	if (ctx->cl_dev.wake_status != SKL_CL_DMA_BUF_COMPLETE) {
+	अगर (ctx->cl_dev.wake_status != SKL_CL_DMA_BUF_COMPLETE) अणु
 		dev_err(ctx->dev, "%s: DMA Error\n", __func__);
 		ret = -EIO;
-	}
+	पूर्ण
 
 cleanup:
 	ctx->cl_dev.wake_status = SKL_CL_DMA_STATUS_NONE;
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void skl_cldma_stop(struct sst_dsp *ctx)
-{
+अटल व्योम skl_cldma_stop(काष्ठा sst_dsp *ctx)
+अणु
 	skl_cldma_stream_run(ctx, false);
-}
+पूर्ण
 
-static void skl_cldma_fill_buffer(struct sst_dsp *ctx, unsigned int size,
-		const void *curr_pos, bool intr_enable, bool trigger)
-{
-	dev_dbg(ctx->dev, "Size: %x, intr_enable: %d\n", size, intr_enable);
+अटल व्योम skl_cldma_fill_buffer(काष्ठा sst_dsp *ctx, अचिन्हित पूर्णांक size,
+		स्थिर व्योम *curr_pos, bool पूर्णांकr_enable, bool trigger)
+अणु
+	dev_dbg(ctx->dev, "Size: %x, intr_enable: %d\n", size, पूर्णांकr_enable);
 	dev_dbg(ctx->dev, "buf_pos_index:%d, trigger:%d\n",
 			ctx->cl_dev.dma_buffer_offset, trigger);
 	dev_dbg(ctx->dev, "spib position: %d\n", ctx->cl_dev.curr_spib_pos);
 
 	/*
-	 * Check if the size exceeds buffer boundary. If it exceeds
+	 * Check अगर the size exceeds buffer boundary. If it exceeds
 	 * max_buffer size, then copy till buffer size and then copy
-	 * remaining buffer from the start of ring buffer.
+	 * reमुख्यing buffer from the start of ring buffer.
 	 */
-	if (ctx->cl_dev.dma_buffer_offset + size > ctx->cl_dev.bufsize) {
-		unsigned int size_b = ctx->cl_dev.bufsize -
+	अगर (ctx->cl_dev.dma_buffer_offset + size > ctx->cl_dev.bufsize) अणु
+		अचिन्हित पूर्णांक size_b = ctx->cl_dev.bufsize -
 					ctx->cl_dev.dma_buffer_offset;
-		memcpy(ctx->cl_dev.dmab_data.area + ctx->cl_dev.dma_buffer_offset,
+		स_नकल(ctx->cl_dev.dmab_data.area + ctx->cl_dev.dma_buffer_offset,
 			curr_pos, size_b);
 		size -= size_b;
 		curr_pos += size_b;
 		ctx->cl_dev.dma_buffer_offset = 0;
-	}
+	पूर्ण
 
-	memcpy(ctx->cl_dev.dmab_data.area + ctx->cl_dev.dma_buffer_offset,
+	स_नकल(ctx->cl_dev.dmab_data.area + ctx->cl_dev.dma_buffer_offset,
 			curr_pos, size);
 
-	if (ctx->cl_dev.curr_spib_pos == ctx->cl_dev.bufsize)
+	अगर (ctx->cl_dev.curr_spib_pos == ctx->cl_dev.bufsize)
 		ctx->cl_dev.dma_buffer_offset = 0;
-	else
+	अन्यथा
 		ctx->cl_dev.dma_buffer_offset = ctx->cl_dev.curr_spib_pos;
 
-	ctx->cl_dev.wait_condition = false;
+	ctx->cl_dev.रुको_condition = false;
 
-	if (intr_enable)
-		skl_cldma_int_enable(ctx);
+	अगर (पूर्णांकr_enable)
+		skl_cldma_पूर्णांक_enable(ctx);
 
 	ctx->cl_dev.ops.cl_setup_spb(ctx, ctx->cl_dev.curr_spib_pos, trigger);
-	if (trigger)
+	अगर (trigger)
 		ctx->cl_dev.ops.cl_trigger(ctx, true);
-}
+पूर्ण
 
 /*
- * The CL dma doesn't have any way to update the transfer status until a BDL
+ * The CL dma करोesn't have any way to update the transfer status until a BDL
  * buffer is fully transferred
  *
- * So Copying is divided in two parts.
- * 1. Interrupt on buffer done where the size to be transferred is more than
+ * So Copying is भागided in two parts.
+ * 1. Interrupt on buffer करोne where the size to be transferred is more than
  *    ring buffer size.
- * 2. Polling on fw register to identify if data left to transferred doesn't
+ * 2. Polling on fw रेजिस्टर to identअगरy अगर data left to transferred करोesn't
  *    fill the ring buffer. Caller takes care of polling the required status
- *    register to identify the transfer status.
- * 3. if wait flag is set, waits for DBL interrupt to copy the next chunk till
+ *    रेजिस्टर to identअगरy the transfer status.
+ * 3. अगर रुको flag is set, रुकोs क्रम DBL पूर्णांकerrupt to copy the next chunk till
  *    bytes_left is 0.
- *    if wait flag is not set, doesn't wait for BDL interrupt. after ccopying
- *    the first chunk return the no of bytes_left to be copied.
+ *    अगर रुको flag is not set, करोesn't रुको क्रम BDL पूर्णांकerrupt. after ccopying
+ *    the first chunk वापस the no of bytes_left to be copied.
  */
-static int
-skl_cldma_copy_to_buf(struct sst_dsp *ctx, const void *bin,
-			u32 total_size, bool wait)
-{
-	int ret;
+अटल पूर्णांक
+skl_cldma_copy_to_buf(काष्ठा sst_dsp *ctx, स्थिर व्योम *bin,
+			u32 total_size, bool रुको)
+अणु
+	पूर्णांक ret;
 	bool start = true;
-	unsigned int excess_bytes;
+	अचिन्हित पूर्णांक excess_bytes;
 	u32 size;
-	unsigned int bytes_left = total_size;
-	const void *curr_pos = bin;
+	अचिन्हित पूर्णांक bytes_left = total_size;
+	स्थिर व्योम *curr_pos = bin;
 
-	if (total_size <= 0)
-		return -EINVAL;
+	अगर (total_size <= 0)
+		वापस -EINVAL;
 
 	dev_dbg(ctx->dev, "%s: Total binary size: %u\n", __func__, bytes_left);
 
-	while (bytes_left) {
-		if (bytes_left > ctx->cl_dev.bufsize) {
+	जबतक (bytes_left) अणु
+		अगर (bytes_left > ctx->cl_dev.bufsize) अणु
 
 			/*
-			 * dma transfers only till the write pointer as
+			 * dma transfers only till the ग_लिखो poपूर्णांकer as
 			 * updated in spib
 			 */
-			if (ctx->cl_dev.curr_spib_pos == 0)
+			अगर (ctx->cl_dev.curr_spib_pos == 0)
 				ctx->cl_dev.curr_spib_pos = ctx->cl_dev.bufsize;
 
 			size = ctx->cl_dev.bufsize;
 			skl_cldma_fill_buffer(ctx, size, curr_pos, true, start);
 
-			if (wait) {
+			अगर (रुको) अणु
 				start = false;
-				ret = skl_cldma_wait_interruptible(ctx);
-				if (ret < 0) {
+				ret = skl_cldma_रुको_पूर्णांकerruptible(ctx);
+				अगर (ret < 0) अणु
 					skl_cldma_stop(ctx);
-					return ret;
-				}
-			}
-		} else {
-			skl_cldma_int_disable(ctx);
+					वापस ret;
+				पूर्ण
+			पूर्ण
+		पूर्ण अन्यथा अणु
+			skl_cldma_पूर्णांक_disable(ctx);
 
-			if ((ctx->cl_dev.curr_spib_pos + bytes_left)
-							<= ctx->cl_dev.bufsize) {
+			अगर ((ctx->cl_dev.curr_spib_pos + bytes_left)
+							<= ctx->cl_dev.bufsize) अणु
 				ctx->cl_dev.curr_spib_pos += bytes_left;
-			} else {
+			पूर्ण अन्यथा अणु
 				excess_bytes = bytes_left -
 					(ctx->cl_dev.bufsize -
 					ctx->cl_dev.curr_spib_pos);
 				ctx->cl_dev.curr_spib_pos = excess_bytes;
-			}
+			पूर्ण
 
 			size = bytes_left;
 			skl_cldma_fill_buffer(ctx, size,
 					curr_pos, false, start);
-		}
+		पूर्ण
 		bytes_left -= size;
 		curr_pos = curr_pos + size;
-		if (!wait)
-			return bytes_left;
-	}
+		अगर (!रुको)
+			वापस bytes_left;
+	पूर्ण
 
-	return bytes_left;
-}
+	वापस bytes_left;
+पूर्ण
 
-void skl_cldma_process_intr(struct sst_dsp *ctx)
-{
-	u8 cl_dma_intr_status;
+व्योम skl_cldma_process_पूर्णांकr(काष्ठा sst_dsp *ctx)
+अणु
+	u8 cl_dma_पूर्णांकr_status;
 
-	cl_dma_intr_status =
-		sst_dsp_shim_read_unlocked(ctx, SKL_ADSP_REG_CL_SD_STS);
+	cl_dma_पूर्णांकr_status =
+		sst_dsp_shim_पढ़ो_unlocked(ctx, SKL_ADSP_REG_CL_SD_STS);
 
-	if (!(cl_dma_intr_status & SKL_CL_DMA_SD_INT_COMPLETE))
+	अगर (!(cl_dma_पूर्णांकr_status & SKL_CL_DMA_SD_INT_COMPLETE))
 		ctx->cl_dev.wake_status = SKL_CL_DMA_ERR;
-	else
+	अन्यथा
 		ctx->cl_dev.wake_status = SKL_CL_DMA_BUF_COMPLETE;
 
-	ctx->cl_dev.wait_condition = true;
-	wake_up(&ctx->cl_dev.wait_queue);
-}
+	ctx->cl_dev.रुको_condition = true;
+	wake_up(&ctx->cl_dev.रुको_queue);
+पूर्ण
 
-int skl_cldma_prepare(struct sst_dsp *ctx)
-{
-	int ret;
+पूर्णांक skl_cldma_prepare(काष्ठा sst_dsp *ctx)
+अणु
+	पूर्णांक ret;
 	__le32 *bdl;
 
 	ctx->cl_dev.bufsize = SKL_MAX_BUFFER_SIZE;
@@ -340,18 +341,18 @@ int skl_cldma_prepare(struct sst_dsp *ctx)
 	/* Allocate buffer*/
 	ret = ctx->dsp_ops.alloc_dma_buf(ctx->dev,
 			&ctx->cl_dev.dmab_data, ctx->cl_dev.bufsize);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(ctx->dev, "Alloc buffer for base fw failed: %x\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 	/* Setup Code loader BDL */
 	ret = ctx->dsp_ops.alloc_dma_buf(ctx->dev,
 			&ctx->cl_dev.dmab_bdl, PAGE_SIZE);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(ctx->dev, "Alloc buffer for blde failed: %x\n", ret);
-		ctx->dsp_ops.free_dma_buf(ctx->dev, &ctx->cl_dev.dmab_data);
-		return ret;
-	}
+		ctx->dsp_ops.मुक्त_dma_buf(ctx->dev, &ctx->cl_dev.dmab_data);
+		वापस ret;
+	पूर्ण
 	bdl = (__le32 *)ctx->cl_dev.dmab_bdl.area;
 
 	/* Allocate BDLs */
@@ -362,7 +363,7 @@ int skl_cldma_prepare(struct sst_dsp *ctx)
 
 	ctx->cl_dev.curr_spib_pos = 0;
 	ctx->cl_dev.dma_buffer_offset = 0;
-	init_waitqueue_head(&ctx->cl_dev.wait_queue);
+	init_रुकोqueue_head(&ctx->cl_dev.रुको_queue);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण

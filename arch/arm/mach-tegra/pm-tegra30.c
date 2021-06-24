@@ -1,24 +1,25 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (c) 2013, NVIDIA Corporation. All rights reserved.
  */
 
-#include <linux/kernel.h>
+#समावेश <linux/kernel.h>
 
-#include "pm.h"
+#समावेश "pm.h"
 
-#ifdef CONFIG_PM_SLEEP
-extern u32 tegra30_iram_start, tegra30_iram_end;
-extern void tegra30_sleep_core_finish(unsigned long);
+#अगर_घोषित CONFIG_PM_SLEEP
+बाह्य u32 tegra30_iram_start, tegra30_iram_end;
+बाह्य व्योम tegra30_sleep_core_finish(अचिन्हित दीर्घ);
 
-void tegra30_lp1_iram_hook(void)
-{
+व्योम tegra30_lp1_iram_hook(व्योम)
+अणु
 	tegra_lp1_iram.start_addr = &tegra30_iram_start;
 	tegra_lp1_iram.end_addr = &tegra30_iram_end;
-}
+पूर्ण
 
-void tegra30_sleep_core_init(void)
-{
+व्योम tegra30_sleep_core_init(व्योम)
+अणु
 	tegra_sleep_core_finish = tegra30_sleep_core_finish;
-}
-#endif
+पूर्ण
+#पूर्ण_अगर

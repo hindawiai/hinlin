@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Greybus Firmware Management Protocol Driver.
  *
@@ -6,371 +7,371 @@
  * Copyright 2016 Linaro Ltd.
  */
 
-#include <linux/cdev.h>
-#include <linux/completion.h>
-#include <linux/firmware.h>
-#include <linux/fs.h>
-#include <linux/idr.h>
-#include <linux/ioctl.h>
-#include <linux/uaccess.h>
-#include <linux/greybus.h>
+#समावेश <linux/cdev.h>
+#समावेश <linux/completion.h>
+#समावेश <linux/firmware.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/idr.h>
+#समावेश <linux/ioctl.h>
+#समावेश <linux/uaccess.h>
+#समावेश <linux/greybus.h>
 
-#include "firmware.h"
-#include "greybus_firmware.h"
+#समावेश "firmware.h"
+#समावेश "greybus_firmware.h"
 
-#define FW_MGMT_TIMEOUT_MS		1000
+#घोषणा FW_MGMT_TIMEOUT_MS		1000
 
-struct fw_mgmt {
-	struct device		*parent;
-	struct gb_connection	*connection;
-	struct kref		kref;
-	struct list_head	node;
+काष्ठा fw_mgmt अणु
+	काष्ठा device		*parent;
+	काष्ठा gb_connection	*connection;
+	काष्ठा kref		kref;
+	काष्ठा list_head	node;
 
-	/* Common id-map for interface and backend firmware requests */
-	struct ida		id_map;
-	struct mutex		mutex;
-	struct completion	completion;
-	struct cdev		cdev;
-	struct device		*class_device;
+	/* Common id-map क्रम पूर्णांकerface and backend firmware requests */
+	काष्ठा ida		id_map;
+	काष्ठा mutex		mutex;
+	काष्ठा completion	completion;
+	काष्ठा cdev		cdev;
+	काष्ठा device		*class_device;
 	dev_t			dev_num;
-	unsigned int		timeout_jiffies;
+	अचिन्हित पूर्णांक		समयout_jअगरfies;
 	bool			disabled; /* connection getting disabled */
 
-	/* Interface Firmware specific fields */
-	bool			mode_switch_started;
-	bool			intf_fw_loaded;
-	u8			intf_fw_request_id;
-	u8			intf_fw_status;
-	u16			intf_fw_major;
-	u16			intf_fw_minor;
+	/* Interface Firmware specअगरic fields */
+	bool			mode_चयन_started;
+	bool			पूर्णांकf_fw_loaded;
+	u8			पूर्णांकf_fw_request_id;
+	u8			पूर्णांकf_fw_status;
+	u16			पूर्णांकf_fw_major;
+	u16			पूर्णांकf_fw_minor;
 
-	/* Backend Firmware specific fields */
+	/* Backend Firmware specअगरic fields */
 	u8			backend_fw_request_id;
 	u8			backend_fw_status;
-};
+पूर्ण;
 
 /*
  * Number of minor devices this driver supports.
  * There will be exactly one required per Interface.
  */
-#define NUM_MINORS		U8_MAX
+#घोषणा NUM_MINORS		U8_MAX
 
-static struct class *fw_mgmt_class;
-static dev_t fw_mgmt_dev_num;
-static DEFINE_IDA(fw_mgmt_minors_map);
-static LIST_HEAD(fw_mgmt_list);
-static DEFINE_MUTEX(list_mutex);
+अटल काष्ठा class *fw_mgmt_class;
+अटल dev_t fw_mgmt_dev_num;
+अटल DEFINE_IDA(fw_mgmt_minors_map);
+अटल LIST_HEAD(fw_mgmt_list);
+अटल DEFINE_MUTEX(list_mutex);
 
-static void fw_mgmt_kref_release(struct kref *kref)
-{
-	struct fw_mgmt *fw_mgmt = container_of(kref, struct fw_mgmt, kref);
+अटल व्योम fw_mgmt_kref_release(काष्ठा kref *kref)
+अणु
+	काष्ठा fw_mgmt *fw_mgmt = container_of(kref, काष्ठा fw_mgmt, kref);
 
 	ida_destroy(&fw_mgmt->id_map);
-	kfree(fw_mgmt);
-}
+	kमुक्त(fw_mgmt);
+पूर्ण
 
 /*
- * All users of fw_mgmt take a reference (from within list_mutex lock), before
- * they get a pointer to play with. And the structure will be freed only after
+ * All users of fw_mgmt take a reference (from within list_mutex lock), beक्रमe
+ * they get a poपूर्णांकer to play with. And the काष्ठाure will be मुक्तd only after
  * the last user has put the reference to it.
  */
-static void put_fw_mgmt(struct fw_mgmt *fw_mgmt)
-{
+अटल व्योम put_fw_mgmt(काष्ठा fw_mgmt *fw_mgmt)
+अणु
 	kref_put(&fw_mgmt->kref, fw_mgmt_kref_release);
-}
+पूर्ण
 
-/* Caller must call put_fw_mgmt() after using struct fw_mgmt */
-static struct fw_mgmt *get_fw_mgmt(struct cdev *cdev)
-{
-	struct fw_mgmt *fw_mgmt;
+/* Caller must call put_fw_mgmt() after using काष्ठा fw_mgmt */
+अटल काष्ठा fw_mgmt *get_fw_mgmt(काष्ठा cdev *cdev)
+अणु
+	काष्ठा fw_mgmt *fw_mgmt;
 
 	mutex_lock(&list_mutex);
 
-	list_for_each_entry(fw_mgmt, &fw_mgmt_list, node) {
-		if (&fw_mgmt->cdev == cdev) {
+	list_क्रम_each_entry(fw_mgmt, &fw_mgmt_list, node) अणु
+		अगर (&fw_mgmt->cdev == cdev) अणु
 			kref_get(&fw_mgmt->kref);
-			goto unlock;
-		}
-	}
+			जाओ unlock;
+		पूर्ण
+	पूर्ण
 
-	fw_mgmt = NULL;
+	fw_mgmt = शून्य;
 
 unlock:
 	mutex_unlock(&list_mutex);
 
-	return fw_mgmt;
-}
+	वापस fw_mgmt;
+पूर्ण
 
-static int fw_mgmt_interface_fw_version_operation(struct fw_mgmt *fw_mgmt,
-		struct fw_mgmt_ioc_get_intf_version *fw_info)
-{
-	struct gb_connection *connection = fw_mgmt->connection;
-	struct gb_fw_mgmt_interface_fw_version_response response;
-	int ret;
+अटल पूर्णांक fw_mgmt_पूर्णांकerface_fw_version_operation(काष्ठा fw_mgmt *fw_mgmt,
+		काष्ठा fw_mgmt_ioc_get_पूर्णांकf_version *fw_info)
+अणु
+	काष्ठा gb_connection *connection = fw_mgmt->connection;
+	काष्ठा gb_fw_mgmt_पूर्णांकerface_fw_version_response response;
+	पूर्णांक ret;
 
 	ret = gb_operation_sync(connection,
-				GB_FW_MGMT_TYPE_INTERFACE_FW_VERSION, NULL, 0,
-				&response, sizeof(response));
-	if (ret) {
+				GB_FW_MGMT_TYPE_INTERFACE_FW_VERSION, शून्य, 0,
+				&response, माप(response));
+	अगर (ret) अणु
 		dev_err(fw_mgmt->parent,
 			"failed to get interface firmware version (%d)\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	fw_info->major = le16_to_cpu(response.major);
 	fw_info->minor = le16_to_cpu(response.minor);
 
-	strncpy(fw_info->firmware_tag, response.firmware_tag,
+	म_नकलन(fw_info->firmware_tag, response.firmware_tag,
 		GB_FIRMWARE_TAG_MAX_SIZE);
 
 	/*
-	 * The firmware-tag should be NULL terminated, otherwise throw error but
-	 * don't fail.
+	 * The firmware-tag should be शून्य terminated, otherwise throw error but
+	 * करोn't fail.
 	 */
-	if (fw_info->firmware_tag[GB_FIRMWARE_TAG_MAX_SIZE - 1] != '\0') {
+	अगर (fw_info->firmware_tag[GB_FIRMWARE_TAG_MAX_SIZE - 1] != '\0') अणु
 		dev_err(fw_mgmt->parent,
 			"fw-version: firmware-tag is not NULL terminated\n");
 		fw_info->firmware_tag[GB_FIRMWARE_TAG_MAX_SIZE - 1] = '\0';
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int fw_mgmt_load_and_validate_operation(struct fw_mgmt *fw_mgmt,
-					       u8 load_method, const char *tag)
-{
-	struct gb_fw_mgmt_load_and_validate_fw_request request;
-	int ret;
+अटल पूर्णांक fw_mgmt_load_and_validate_operation(काष्ठा fw_mgmt *fw_mgmt,
+					       u8 load_method, स्थिर अक्षर *tag)
+अणु
+	काष्ठा gb_fw_mgmt_load_and_validate_fw_request request;
+	पूर्णांक ret;
 
-	if (load_method != GB_FW_LOAD_METHOD_UNIPRO &&
-	    load_method != GB_FW_LOAD_METHOD_INTERNAL) {
+	अगर (load_method != GB_FW_LOAD_METHOD_UNIPRO &&
+	    load_method != GB_FW_LOAD_METHOD_INTERNAL) अणु
 		dev_err(fw_mgmt->parent,
 			"invalid load-method (%d)\n", load_method);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	request.load_method = load_method;
-	strncpy(request.firmware_tag, tag, GB_FIRMWARE_TAG_MAX_SIZE);
+	म_नकलन(request.firmware_tag, tag, GB_FIRMWARE_TAG_MAX_SIZE);
 
 	/*
-	 * The firmware-tag should be NULL terminated, otherwise throw error and
+	 * The firmware-tag should be शून्य terminated, otherwise throw error and
 	 * fail.
 	 */
-	if (request.firmware_tag[GB_FIRMWARE_TAG_MAX_SIZE - 1] != '\0') {
+	अगर (request.firmware_tag[GB_FIRMWARE_TAG_MAX_SIZE - 1] != '\0') अणु
 		dev_err(fw_mgmt->parent, "load-and-validate: firmware-tag is not NULL terminated\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	/* Allocate ids from 1 to 255 (u8-max), 0 is an invalid id */
 	ret = ida_simple_get(&fw_mgmt->id_map, 1, 256, GFP_KERNEL);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(fw_mgmt->parent, "failed to allocate request id (%d)\n",
 			ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	fw_mgmt->intf_fw_request_id = ret;
-	fw_mgmt->intf_fw_loaded = false;
+	fw_mgmt->पूर्णांकf_fw_request_id = ret;
+	fw_mgmt->पूर्णांकf_fw_loaded = false;
 	request.request_id = ret;
 
 	ret = gb_operation_sync(fw_mgmt->connection,
 				GB_FW_MGMT_TYPE_LOAD_AND_VALIDATE_FW, &request,
-				sizeof(request), NULL, 0);
-	if (ret) {
-		ida_simple_remove(&fw_mgmt->id_map,
-				  fw_mgmt->intf_fw_request_id);
-		fw_mgmt->intf_fw_request_id = 0;
+				माप(request), शून्य, 0);
+	अगर (ret) अणु
+		ida_simple_हटाओ(&fw_mgmt->id_map,
+				  fw_mgmt->पूर्णांकf_fw_request_id);
+		fw_mgmt->पूर्णांकf_fw_request_id = 0;
 		dev_err(fw_mgmt->parent,
 			"load and validate firmware request failed (%d)\n",
 			ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int fw_mgmt_interface_fw_loaded_operation(struct gb_operation *op)
-{
-	struct gb_connection *connection = op->connection;
-	struct fw_mgmt *fw_mgmt = gb_connection_get_data(connection);
-	struct gb_fw_mgmt_loaded_fw_request *request;
+अटल पूर्णांक fw_mgmt_पूर्णांकerface_fw_loaded_operation(काष्ठा gb_operation *op)
+अणु
+	काष्ठा gb_connection *connection = op->connection;
+	काष्ठा fw_mgmt *fw_mgmt = gb_connection_get_data(connection);
+	काष्ठा gb_fw_mgmt_loaded_fw_request *request;
 
 	/* No pending load and validate request ? */
-	if (!fw_mgmt->intf_fw_request_id) {
+	अगर (!fw_mgmt->पूर्णांकf_fw_request_id) अणु
 		dev_err(fw_mgmt->parent,
 			"unexpected firmware loaded request received\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	if (op->request->payload_size != sizeof(*request)) {
+	अगर (op->request->payload_size != माप(*request)) अणु
 		dev_err(fw_mgmt->parent, "illegal size of firmware loaded request (%zu != %zu)\n",
-			op->request->payload_size, sizeof(*request));
-		return -EINVAL;
-	}
+			op->request->payload_size, माप(*request));
+		वापस -EINVAL;
+	पूर्ण
 
 	request = op->request->payload;
 
 	/* Invalid request-id ? */
-	if (request->request_id != fw_mgmt->intf_fw_request_id) {
+	अगर (request->request_id != fw_mgmt->पूर्णांकf_fw_request_id) अणु
 		dev_err(fw_mgmt->parent, "invalid request id for firmware loaded request (%02u != %02u)\n",
-			fw_mgmt->intf_fw_request_id, request->request_id);
-		return -ENODEV;
-	}
+			fw_mgmt->पूर्णांकf_fw_request_id, request->request_id);
+		वापस -ENODEV;
+	पूर्ण
 
-	ida_simple_remove(&fw_mgmt->id_map, fw_mgmt->intf_fw_request_id);
-	fw_mgmt->intf_fw_request_id = 0;
-	fw_mgmt->intf_fw_status = request->status;
-	fw_mgmt->intf_fw_major = le16_to_cpu(request->major);
-	fw_mgmt->intf_fw_minor = le16_to_cpu(request->minor);
+	ida_simple_हटाओ(&fw_mgmt->id_map, fw_mgmt->पूर्णांकf_fw_request_id);
+	fw_mgmt->पूर्णांकf_fw_request_id = 0;
+	fw_mgmt->पूर्णांकf_fw_status = request->status;
+	fw_mgmt->पूर्णांकf_fw_major = le16_to_cpu(request->major);
+	fw_mgmt->पूर्णांकf_fw_minor = le16_to_cpu(request->minor);
 
-	if (fw_mgmt->intf_fw_status == GB_FW_LOAD_STATUS_FAILED)
+	अगर (fw_mgmt->पूर्णांकf_fw_status == GB_FW_LOAD_STATUS_FAILED)
 		dev_err(fw_mgmt->parent,
 			"failed to load interface firmware, status:%02x\n",
-			fw_mgmt->intf_fw_status);
-	else if (fw_mgmt->intf_fw_status == GB_FW_LOAD_STATUS_VALIDATION_FAILED)
+			fw_mgmt->पूर्णांकf_fw_status);
+	अन्यथा अगर (fw_mgmt->पूर्णांकf_fw_status == GB_FW_LOAD_STATUS_VALIDATION_FAILED)
 		dev_err(fw_mgmt->parent,
 			"failed to validate interface firmware, status:%02x\n",
-			fw_mgmt->intf_fw_status);
-	else
-		fw_mgmt->intf_fw_loaded = true;
+			fw_mgmt->पूर्णांकf_fw_status);
+	अन्यथा
+		fw_mgmt->पूर्णांकf_fw_loaded = true;
 
 	complete(&fw_mgmt->completion);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int fw_mgmt_backend_fw_version_operation(struct fw_mgmt *fw_mgmt,
-		struct fw_mgmt_ioc_get_backend_version *fw_info)
-{
-	struct gb_connection *connection = fw_mgmt->connection;
-	struct gb_fw_mgmt_backend_fw_version_request request;
-	struct gb_fw_mgmt_backend_fw_version_response response;
-	int ret;
+अटल पूर्णांक fw_mgmt_backend_fw_version_operation(काष्ठा fw_mgmt *fw_mgmt,
+		काष्ठा fw_mgmt_ioc_get_backend_version *fw_info)
+अणु
+	काष्ठा gb_connection *connection = fw_mgmt->connection;
+	काष्ठा gb_fw_mgmt_backend_fw_version_request request;
+	काष्ठा gb_fw_mgmt_backend_fw_version_response response;
+	पूर्णांक ret;
 
-	strncpy(request.firmware_tag, fw_info->firmware_tag,
+	म_नकलन(request.firmware_tag, fw_info->firmware_tag,
 		GB_FIRMWARE_TAG_MAX_SIZE);
 
 	/*
-	 * The firmware-tag should be NULL terminated, otherwise throw error and
+	 * The firmware-tag should be शून्य terminated, otherwise throw error and
 	 * fail.
 	 */
-	if (request.firmware_tag[GB_FIRMWARE_TAG_MAX_SIZE - 1] != '\0') {
+	अगर (request.firmware_tag[GB_FIRMWARE_TAG_MAX_SIZE - 1] != '\0') अणु
 		dev_err(fw_mgmt->parent, "backend-version: firmware-tag is not NULL terminated\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	ret = gb_operation_sync(connection,
 				GB_FW_MGMT_TYPE_BACKEND_FW_VERSION, &request,
-				sizeof(request), &response, sizeof(response));
-	if (ret) {
+				माप(request), &response, माप(response));
+	अगर (ret) अणु
 		dev_err(fw_mgmt->parent, "failed to get version of %s backend firmware (%d)\n",
 			fw_info->firmware_tag, ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	fw_info->status = response.status;
 
-	/* Reset version as that should be non-zero only for success case */
+	/* Reset version as that should be non-zero only क्रम success हाल */
 	fw_info->major = 0;
 	fw_info->minor = 0;
 
-	switch (fw_info->status) {
-	case GB_FW_BACKEND_VERSION_STATUS_SUCCESS:
+	चयन (fw_info->status) अणु
+	हाल GB_FW_BACKEND_VERSION_STATUS_SUCCESS:
 		fw_info->major = le16_to_cpu(response.major);
 		fw_info->minor = le16_to_cpu(response.minor);
-		break;
-	case GB_FW_BACKEND_VERSION_STATUS_NOT_AVAILABLE:
-	case GB_FW_BACKEND_VERSION_STATUS_RETRY:
-		break;
-	case GB_FW_BACKEND_VERSION_STATUS_NOT_SUPPORTED:
+		अवरोध;
+	हाल GB_FW_BACKEND_VERSION_STATUS_NOT_AVAILABLE:
+	हाल GB_FW_BACKEND_VERSION_STATUS_RETRY:
+		अवरोध;
+	हाल GB_FW_BACKEND_VERSION_STATUS_NOT_SUPPORTED:
 		dev_err(fw_mgmt->parent,
 			"Firmware with tag %s is not supported by Interface\n",
 			fw_info->firmware_tag);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		dev_err(fw_mgmt->parent, "Invalid status received: %u\n",
 			fw_info->status);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int fw_mgmt_backend_fw_update_operation(struct fw_mgmt *fw_mgmt,
-					       char *tag)
-{
-	struct gb_fw_mgmt_backend_fw_update_request request;
-	int ret;
+अटल पूर्णांक fw_mgmt_backend_fw_update_operation(काष्ठा fw_mgmt *fw_mgmt,
+					       अक्षर *tag)
+अणु
+	काष्ठा gb_fw_mgmt_backend_fw_update_request request;
+	पूर्णांक ret;
 
-	strncpy(request.firmware_tag, tag, GB_FIRMWARE_TAG_MAX_SIZE);
+	म_नकलन(request.firmware_tag, tag, GB_FIRMWARE_TAG_MAX_SIZE);
 
 	/*
-	 * The firmware-tag should be NULL terminated, otherwise throw error and
+	 * The firmware-tag should be शून्य terminated, otherwise throw error and
 	 * fail.
 	 */
-	if (request.firmware_tag[GB_FIRMWARE_TAG_MAX_SIZE - 1] != '\0') {
+	अगर (request.firmware_tag[GB_FIRMWARE_TAG_MAX_SIZE - 1] != '\0') अणु
 		dev_err(fw_mgmt->parent, "backend-update: firmware-tag is not NULL terminated\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	/* Allocate ids from 1 to 255 (u8-max), 0 is an invalid id */
 	ret = ida_simple_get(&fw_mgmt->id_map, 1, 256, GFP_KERNEL);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(fw_mgmt->parent, "failed to allocate request id (%d)\n",
 			ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	fw_mgmt->backend_fw_request_id = ret;
 	request.request_id = ret;
 
 	ret = gb_operation_sync(fw_mgmt->connection,
 				GB_FW_MGMT_TYPE_BACKEND_FW_UPDATE, &request,
-				sizeof(request), NULL, 0);
-	if (ret) {
-		ida_simple_remove(&fw_mgmt->id_map,
+				माप(request), शून्य, 0);
+	अगर (ret) अणु
+		ida_simple_हटाओ(&fw_mgmt->id_map,
 				  fw_mgmt->backend_fw_request_id);
 		fw_mgmt->backend_fw_request_id = 0;
 		dev_err(fw_mgmt->parent,
 			"backend %s firmware update request failed (%d)\n", tag,
 			ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int fw_mgmt_backend_fw_updated_operation(struct gb_operation *op)
-{
-	struct gb_connection *connection = op->connection;
-	struct fw_mgmt *fw_mgmt = gb_connection_get_data(connection);
-	struct gb_fw_mgmt_backend_fw_updated_request *request;
+अटल पूर्णांक fw_mgmt_backend_fw_updated_operation(काष्ठा gb_operation *op)
+अणु
+	काष्ठा gb_connection *connection = op->connection;
+	काष्ठा fw_mgmt *fw_mgmt = gb_connection_get_data(connection);
+	काष्ठा gb_fw_mgmt_backend_fw_updated_request *request;
 
 	/* No pending load and validate request ? */
-	if (!fw_mgmt->backend_fw_request_id) {
+	अगर (!fw_mgmt->backend_fw_request_id) अणु
 		dev_err(fw_mgmt->parent, "unexpected backend firmware updated request received\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	if (op->request->payload_size != sizeof(*request)) {
+	अगर (op->request->payload_size != माप(*request)) अणु
 		dev_err(fw_mgmt->parent, "illegal size of backend firmware updated request (%zu != %zu)\n",
-			op->request->payload_size, sizeof(*request));
-		return -EINVAL;
-	}
+			op->request->payload_size, माप(*request));
+		वापस -EINVAL;
+	पूर्ण
 
 	request = op->request->payload;
 
 	/* Invalid request-id ? */
-	if (request->request_id != fw_mgmt->backend_fw_request_id) {
+	अगर (request->request_id != fw_mgmt->backend_fw_request_id) अणु
 		dev_err(fw_mgmt->parent, "invalid request id for backend firmware updated request (%02u != %02u)\n",
 			fw_mgmt->backend_fw_request_id, request->request_id);
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	ida_simple_remove(&fw_mgmt->id_map, fw_mgmt->backend_fw_request_id);
+	ida_simple_हटाओ(&fw_mgmt->id_map, fw_mgmt->backend_fw_request_id);
 	fw_mgmt->backend_fw_request_id = 0;
 	fw_mgmt->backend_fw_status = request->status;
 
-	if ((fw_mgmt->backend_fw_status != GB_FW_BACKEND_FW_STATUS_SUCCESS) &&
+	अगर ((fw_mgmt->backend_fw_status != GB_FW_BACKEND_FW_STATUS_SUCCESS) &&
 	    (fw_mgmt->backend_fw_status != GB_FW_BACKEND_FW_STATUS_RETRY))
 		dev_err(fw_mgmt->parent,
 			"failed to load backend firmware: %02x\n",
@@ -378,226 +379,226 @@ static int fw_mgmt_backend_fw_updated_operation(struct gb_operation *op)
 
 	complete(&fw_mgmt->completion);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* Char device fops */
 
-static int fw_mgmt_open(struct inode *inode, struct file *file)
-{
-	struct fw_mgmt *fw_mgmt = get_fw_mgmt(inode->i_cdev);
+अटल पूर्णांक fw_mgmt_खोलो(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	काष्ठा fw_mgmt *fw_mgmt = get_fw_mgmt(inode->i_cdev);
 
-	/* fw_mgmt structure can't get freed until file descriptor is closed */
-	if (fw_mgmt) {
-		file->private_data = fw_mgmt;
-		return 0;
-	}
+	/* fw_mgmt काष्ठाure can't get मुक्तd until file descriptor is बंदd */
+	अगर (fw_mgmt) अणु
+		file->निजी_data = fw_mgmt;
+		वापस 0;
+	पूर्ण
 
-	return -ENODEV;
-}
+	वापस -ENODEV;
+पूर्ण
 
-static int fw_mgmt_release(struct inode *inode, struct file *file)
-{
-	struct fw_mgmt *fw_mgmt = file->private_data;
+अटल पूर्णांक fw_mgmt_release(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	काष्ठा fw_mgmt *fw_mgmt = file->निजी_data;
 
 	put_fw_mgmt(fw_mgmt);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int fw_mgmt_ioctl(struct fw_mgmt *fw_mgmt, unsigned int cmd,
-			 void __user *buf)
-{
-	struct fw_mgmt_ioc_get_intf_version intf_fw_info;
-	struct fw_mgmt_ioc_get_backend_version backend_fw_info;
-	struct fw_mgmt_ioc_intf_load_and_validate intf_load;
-	struct fw_mgmt_ioc_backend_fw_update backend_update;
-	unsigned int timeout;
-	int ret;
+अटल पूर्णांक fw_mgmt_ioctl(काष्ठा fw_mgmt *fw_mgmt, अचिन्हित पूर्णांक cmd,
+			 व्योम __user *buf)
+अणु
+	काष्ठा fw_mgmt_ioc_get_पूर्णांकf_version पूर्णांकf_fw_info;
+	काष्ठा fw_mgmt_ioc_get_backend_version backend_fw_info;
+	काष्ठा fw_mgmt_ioc_पूर्णांकf_load_and_validate पूर्णांकf_load;
+	काष्ठा fw_mgmt_ioc_backend_fw_update backend_update;
+	अचिन्हित पूर्णांक समयout;
+	पूर्णांक ret;
 
-	/* Reject any operations after mode-switch has started */
-	if (fw_mgmt->mode_switch_started)
-		return -EBUSY;
+	/* Reject any operations after mode-चयन has started */
+	अगर (fw_mgmt->mode_चयन_started)
+		वापस -EBUSY;
 
-	switch (cmd) {
-	case FW_MGMT_IOC_GET_INTF_FW:
-		ret = fw_mgmt_interface_fw_version_operation(fw_mgmt,
-							     &intf_fw_info);
-		if (ret)
-			return ret;
+	चयन (cmd) अणु
+	हाल FW_MGMT_IOC_GET_INTF_FW:
+		ret = fw_mgmt_पूर्णांकerface_fw_version_operation(fw_mgmt,
+							     &पूर्णांकf_fw_info);
+		अगर (ret)
+			वापस ret;
 
-		if (copy_to_user(buf, &intf_fw_info, sizeof(intf_fw_info)))
-			return -EFAULT;
+		अगर (copy_to_user(buf, &पूर्णांकf_fw_info, माप(पूर्णांकf_fw_info)))
+			वापस -EFAULT;
 
-		return 0;
-	case FW_MGMT_IOC_GET_BACKEND_FW:
-		if (copy_from_user(&backend_fw_info, buf,
-				   sizeof(backend_fw_info)))
-			return -EFAULT;
+		वापस 0;
+	हाल FW_MGMT_IOC_GET_BACKEND_FW:
+		अगर (copy_from_user(&backend_fw_info, buf,
+				   माप(backend_fw_info)))
+			वापस -EFAULT;
 
 		ret = fw_mgmt_backend_fw_version_operation(fw_mgmt,
 							   &backend_fw_info);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 
-		if (copy_to_user(buf, &backend_fw_info,
-				 sizeof(backend_fw_info)))
-			return -EFAULT;
+		अगर (copy_to_user(buf, &backend_fw_info,
+				 माप(backend_fw_info)))
+			वापस -EFAULT;
 
-		return 0;
-	case FW_MGMT_IOC_INTF_LOAD_AND_VALIDATE:
-		if (copy_from_user(&intf_load, buf, sizeof(intf_load)))
-			return -EFAULT;
+		वापस 0;
+	हाल FW_MGMT_IOC_INTF_LOAD_AND_VALIDATE:
+		अगर (copy_from_user(&पूर्णांकf_load, buf, माप(पूर्णांकf_load)))
+			वापस -EFAULT;
 
 		ret = fw_mgmt_load_and_validate_operation(fw_mgmt,
-				intf_load.load_method, intf_load.firmware_tag);
-		if (ret)
-			return ret;
+				पूर्णांकf_load.load_method, पूर्णांकf_load.firmware_tag);
+		अगर (ret)
+			वापस ret;
 
-		if (!wait_for_completion_timeout(&fw_mgmt->completion,
-						 fw_mgmt->timeout_jiffies)) {
+		अगर (!रुको_क्रम_completion_समयout(&fw_mgmt->completion,
+						 fw_mgmt->समयout_jअगरfies)) अणु
 			dev_err(fw_mgmt->parent, "timed out waiting for firmware load and validation to finish\n");
-			return -ETIMEDOUT;
-		}
+			वापस -ETIMEDOUT;
+		पूर्ण
 
-		intf_load.status = fw_mgmt->intf_fw_status;
-		intf_load.major = fw_mgmt->intf_fw_major;
-		intf_load.minor = fw_mgmt->intf_fw_minor;
+		पूर्णांकf_load.status = fw_mgmt->पूर्णांकf_fw_status;
+		पूर्णांकf_load.major = fw_mgmt->पूर्णांकf_fw_major;
+		पूर्णांकf_load.minor = fw_mgmt->पूर्णांकf_fw_minor;
 
-		if (copy_to_user(buf, &intf_load, sizeof(intf_load)))
-			return -EFAULT;
+		अगर (copy_to_user(buf, &पूर्णांकf_load, माप(पूर्णांकf_load)))
+			वापस -EFAULT;
 
-		return 0;
-	case FW_MGMT_IOC_INTF_BACKEND_FW_UPDATE:
-		if (copy_from_user(&backend_update, buf,
-				   sizeof(backend_update)))
-			return -EFAULT;
+		वापस 0;
+	हाल FW_MGMT_IOC_INTF_BACKEND_FW_UPDATE:
+		अगर (copy_from_user(&backend_update, buf,
+				   माप(backend_update)))
+			वापस -EFAULT;
 
 		ret = fw_mgmt_backend_fw_update_operation(fw_mgmt,
 				backend_update.firmware_tag);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 
-		if (!wait_for_completion_timeout(&fw_mgmt->completion,
-						 fw_mgmt->timeout_jiffies)) {
+		अगर (!रुको_क्रम_completion_समयout(&fw_mgmt->completion,
+						 fw_mgmt->समयout_jअगरfies)) अणु
 			dev_err(fw_mgmt->parent, "timed out waiting for backend firmware update to finish\n");
-			return -ETIMEDOUT;
-		}
+			वापस -ETIMEDOUT;
+		पूर्ण
 
 		backend_update.status = fw_mgmt->backend_fw_status;
 
-		if (copy_to_user(buf, &backend_update, sizeof(backend_update)))
-			return -EFAULT;
+		अगर (copy_to_user(buf, &backend_update, माप(backend_update)))
+			वापस -EFAULT;
 
-		return 0;
-	case FW_MGMT_IOC_SET_TIMEOUT_MS:
-		if (get_user(timeout, (unsigned int __user *)buf))
-			return -EFAULT;
+		वापस 0;
+	हाल FW_MGMT_IOC_SET_TIMEOUT_MS:
+		अगर (get_user(समयout, (अचिन्हित पूर्णांक __user *)buf))
+			वापस -EFAULT;
 
-		if (!timeout) {
+		अगर (!समयout) अणु
 			dev_err(fw_mgmt->parent, "timeout can't be zero\n");
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
-		fw_mgmt->timeout_jiffies = msecs_to_jiffies(timeout);
+		fw_mgmt->समयout_jअगरfies = msecs_to_jअगरfies(समयout);
 
-		return 0;
-	case FW_MGMT_IOC_MODE_SWITCH:
-		if (!fw_mgmt->intf_fw_loaded) {
+		वापस 0;
+	हाल FW_MGMT_IOC_MODE_SWITCH:
+		अगर (!fw_mgmt->पूर्णांकf_fw_loaded) अणु
 			dev_err(fw_mgmt->parent,
 				"Firmware not loaded for mode-switch\n");
-			return -EPERM;
-		}
+			वापस -EPERM;
+		पूर्ण
 
 		/*
 		 * Disallow new ioctls as the fw-core bundle driver is going to
-		 * get disconnected soon and the character device will get
-		 * removed.
+		 * get disconnected soon and the अक्षरacter device will get
+		 * हटाओd.
 		 */
-		fw_mgmt->mode_switch_started = true;
+		fw_mgmt->mode_चयन_started = true;
 
-		ret = gb_interface_request_mode_switch(fw_mgmt->connection->intf);
-		if (ret) {
+		ret = gb_पूर्णांकerface_request_mode_चयन(fw_mgmt->connection->पूर्णांकf);
+		अगर (ret) अणु
 			dev_err(fw_mgmt->parent, "Mode-switch failed: %d\n",
 				ret);
-			fw_mgmt->mode_switch_started = false;
-			return ret;
-		}
+			fw_mgmt->mode_चयन_started = false;
+			वापस ret;
+		पूर्ण
 
-		return 0;
-	default:
-		return -ENOTTY;
-	}
-}
+		वापस 0;
+	शेष:
+		वापस -ENOTTY;
+	पूर्ण
+पूर्ण
 
-static long fw_mgmt_ioctl_unlocked(struct file *file, unsigned int cmd,
-				   unsigned long arg)
-{
-	struct fw_mgmt *fw_mgmt = file->private_data;
-	struct gb_bundle *bundle = fw_mgmt->connection->bundle;
-	int ret = -ENODEV;
+अटल दीर्घ fw_mgmt_ioctl_unlocked(काष्ठा file *file, अचिन्हित पूर्णांक cmd,
+				   अचिन्हित दीर्घ arg)
+अणु
+	काष्ठा fw_mgmt *fw_mgmt = file->निजी_data;
+	काष्ठा gb_bundle *bundle = fw_mgmt->connection->bundle;
+	पूर्णांक ret = -ENODEV;
 
 	/*
 	 * Serialize ioctls.
 	 *
-	 * We don't want the user to do few operations in parallel. For example,
-	 * updating Interface firmware in parallel for the same Interface. There
-	 * is no need to do things in parallel for speed and we can avoid having
-	 * complicated code for now.
+	 * We करोn't want the user to करो few operations in parallel. For example,
+	 * updating Interface firmware in parallel क्रम the same Interface. There
+	 * is no need to करो things in parallel क्रम speed and we can aव्योम having
+	 * complicated code क्रम now.
 	 *
-	 * This is also used to protect ->disabled, which is used to check if
-	 * the connection is getting disconnected, so that we don't start any
+	 * This is also used to protect ->disabled, which is used to check अगर
+	 * the connection is getting disconnected, so that we करोn't start any
 	 * new operations.
 	 */
 	mutex_lock(&fw_mgmt->mutex);
-	if (!fw_mgmt->disabled) {
-		ret = gb_pm_runtime_get_sync(bundle);
-		if (!ret) {
-			ret = fw_mgmt_ioctl(fw_mgmt, cmd, (void __user *)arg);
-			gb_pm_runtime_put_autosuspend(bundle);
-		}
-	}
+	अगर (!fw_mgmt->disabled) अणु
+		ret = gb_pm_runसमय_get_sync(bundle);
+		अगर (!ret) अणु
+			ret = fw_mgmt_ioctl(fw_mgmt, cmd, (व्योम __user *)arg);
+			gb_pm_runसमय_put_स्वतःsuspend(bundle);
+		पूर्ण
+	पूर्ण
 	mutex_unlock(&fw_mgmt->mutex);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const struct file_operations fw_mgmt_fops = {
+अटल स्थिर काष्ठा file_operations fw_mgmt_fops = अणु
 	.owner		= THIS_MODULE,
-	.open		= fw_mgmt_open,
+	.खोलो		= fw_mgmt_खोलो,
 	.release	= fw_mgmt_release,
 	.unlocked_ioctl	= fw_mgmt_ioctl_unlocked,
-};
+पूर्ण;
 
-int gb_fw_mgmt_request_handler(struct gb_operation *op)
-{
+पूर्णांक gb_fw_mgmt_request_handler(काष्ठा gb_operation *op)
+अणु
 	u8 type = op->type;
 
-	switch (type) {
-	case GB_FW_MGMT_TYPE_LOADED_FW:
-		return fw_mgmt_interface_fw_loaded_operation(op);
-	case GB_FW_MGMT_TYPE_BACKEND_FW_UPDATED:
-		return fw_mgmt_backend_fw_updated_operation(op);
-	default:
+	चयन (type) अणु
+	हाल GB_FW_MGMT_TYPE_LOADED_FW:
+		वापस fw_mgmt_पूर्णांकerface_fw_loaded_operation(op);
+	हाल GB_FW_MGMT_TYPE_BACKEND_FW_UPDATED:
+		वापस fw_mgmt_backend_fw_updated_operation(op);
+	शेष:
 		dev_err(&op->connection->bundle->dev,
 			"unsupported request: %u\n", type);
-		return -EINVAL;
-	}
-}
+		वापस -EINVAL;
+	पूर्ण
+पूर्ण
 
-int gb_fw_mgmt_connection_init(struct gb_connection *connection)
-{
-	struct fw_mgmt *fw_mgmt;
-	int ret, minor;
+पूर्णांक gb_fw_mgmt_connection_init(काष्ठा gb_connection *connection)
+अणु
+	काष्ठा fw_mgmt *fw_mgmt;
+	पूर्णांक ret, minor;
 
-	if (!connection)
-		return 0;
+	अगर (!connection)
+		वापस 0;
 
-	fw_mgmt = kzalloc(sizeof(*fw_mgmt), GFP_KERNEL);
-	if (!fw_mgmt)
-		return -ENOMEM;
+	fw_mgmt = kzalloc(माप(*fw_mgmt), GFP_KERNEL);
+	अगर (!fw_mgmt)
+		वापस -ENOMEM;
 
 	fw_mgmt->parent = &connection->bundle->dev;
-	fw_mgmt->timeout_jiffies = msecs_to_jiffies(FW_MGMT_TIMEOUT_MS);
+	fw_mgmt->समयout_jअगरfies = msecs_to_jअगरfies(FW_MGMT_TIMEOUT_MS);
 	fw_mgmt->connection = connection;
 
 	gb_connection_set_data(connection, fw_mgmt);
@@ -611,38 +612,38 @@ int gb_fw_mgmt_connection_init(struct gb_connection *connection)
 	mutex_unlock(&list_mutex);
 
 	ret = gb_connection_enable(connection);
-	if (ret)
-		goto err_list_del;
+	अगर (ret)
+		जाओ err_list_del;
 
 	minor = ida_simple_get(&fw_mgmt_minors_map, 0, NUM_MINORS, GFP_KERNEL);
-	if (minor < 0) {
+	अगर (minor < 0) अणु
 		ret = minor;
-		goto err_connection_disable;
-	}
+		जाओ err_connection_disable;
+	पूर्ण
 
-	/* Add a char device to allow userspace to interact with fw-mgmt */
+	/* Add a अक्षर device to allow userspace to पूर्णांकeract with fw-mgmt */
 	fw_mgmt->dev_num = MKDEV(MAJOR(fw_mgmt_dev_num), minor);
 	cdev_init(&fw_mgmt->cdev, &fw_mgmt_fops);
 
 	ret = cdev_add(&fw_mgmt->cdev, fw_mgmt->dev_num, 1);
-	if (ret)
-		goto err_remove_ida;
+	अगर (ret)
+		जाओ err_हटाओ_ida;
 
-	/* Add a soft link to the previously added char-dev within the bundle */
+	/* Add a soft link to the previously added अक्षर-dev within the bundle */
 	fw_mgmt->class_device = device_create(fw_mgmt_class, fw_mgmt->parent,
-					      fw_mgmt->dev_num, NULL,
+					      fw_mgmt->dev_num, शून्य,
 					      "gb-fw-mgmt-%d", minor);
-	if (IS_ERR(fw_mgmt->class_device)) {
+	अगर (IS_ERR(fw_mgmt->class_device)) अणु
 		ret = PTR_ERR(fw_mgmt->class_device);
-		goto err_del_cdev;
-	}
+		जाओ err_del_cdev;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 err_del_cdev:
 	cdev_del(&fw_mgmt->cdev);
-err_remove_ida:
-	ida_simple_remove(&fw_mgmt_minors_map, minor);
+err_हटाओ_ida:
+	ida_simple_हटाओ(&fw_mgmt_minors_map, minor);
 err_connection_disable:
 	gb_connection_disable(connection);
 err_list_del:
@@ -652,24 +653,24 @@ err_list_del:
 
 	put_fw_mgmt(fw_mgmt);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-void gb_fw_mgmt_connection_exit(struct gb_connection *connection)
-{
-	struct fw_mgmt *fw_mgmt;
+व्योम gb_fw_mgmt_connection_निकास(काष्ठा gb_connection *connection)
+अणु
+	काष्ठा fw_mgmt *fw_mgmt;
 
-	if (!connection)
-		return;
+	अगर (!connection)
+		वापस;
 
 	fw_mgmt = gb_connection_get_data(connection);
 
 	device_destroy(fw_mgmt_class, fw_mgmt->dev_num);
 	cdev_del(&fw_mgmt->cdev);
-	ida_simple_remove(&fw_mgmt_minors_map, MINOR(fw_mgmt->dev_num));
+	ida_simple_हटाओ(&fw_mgmt_minors_map, MINOR(fw_mgmt->dev_num));
 
 	/*
-	 * Disallow any new ioctl operations on the char device and wait for
+	 * Disallow any new ioctl operations on the अक्षर device and रुको क्रम
 	 * existing ones to finish.
 	 */
 	mutex_lock(&fw_mgmt->mutex);
@@ -679,42 +680,42 @@ void gb_fw_mgmt_connection_exit(struct gb_connection *connection)
 	/* All pending greybus operations should have finished by now */
 	gb_connection_disable(fw_mgmt->connection);
 
-	/* Disallow new users to get access to the fw_mgmt structure */
+	/* Disallow new users to get access to the fw_mgmt काष्ठाure */
 	mutex_lock(&list_mutex);
 	list_del(&fw_mgmt->node);
 	mutex_unlock(&list_mutex);
 
 	/*
 	 * All current users of fw_mgmt would have taken a reference to it by
-	 * now, we can drop our reference and wait the last user will get
-	 * fw_mgmt freed.
+	 * now, we can drop our reference and रुको the last user will get
+	 * fw_mgmt मुक्तd.
 	 */
 	put_fw_mgmt(fw_mgmt);
-}
+पूर्ण
 
-int fw_mgmt_init(void)
-{
-	int ret;
+पूर्णांक fw_mgmt_init(व्योम)
+अणु
+	पूर्णांक ret;
 
 	fw_mgmt_class = class_create(THIS_MODULE, "gb_fw_mgmt");
-	if (IS_ERR(fw_mgmt_class))
-		return PTR_ERR(fw_mgmt_class);
+	अगर (IS_ERR(fw_mgmt_class))
+		वापस PTR_ERR(fw_mgmt_class);
 
 	ret = alloc_chrdev_region(&fw_mgmt_dev_num, 0, NUM_MINORS,
 				  "gb_fw_mgmt");
-	if (ret)
-		goto err_remove_class;
+	अगर (ret)
+		जाओ err_हटाओ_class;
 
-	return 0;
+	वापस 0;
 
-err_remove_class:
+err_हटाओ_class:
 	class_destroy(fw_mgmt_class);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-void fw_mgmt_exit(void)
-{
-	unregister_chrdev_region(fw_mgmt_dev_num, NUM_MINORS);
+व्योम fw_mgmt_निकास(व्योम)
+अणु
+	unरेजिस्टर_chrdev_region(fw_mgmt_dev_num, NUM_MINORS);
 	class_destroy(fw_mgmt_class);
 	ida_destroy(&fw_mgmt_minors_map);
-}
+पूर्ण

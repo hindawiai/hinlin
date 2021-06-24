@@ -1,65 +1,66 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 
-#include "netlink.h"
-#include "common.h"
+#समावेश "netlink.h"
+#समावेश "common.h"
 
-struct rings_req_info {
-	struct ethnl_req_info		base;
-};
+काष्ठा rings_req_info अणु
+	काष्ठा ethnl_req_info		base;
+पूर्ण;
 
-struct rings_reply_data {
-	struct ethnl_reply_data		base;
-	struct ethtool_ringparam	ringparam;
-};
+काष्ठा rings_reply_data अणु
+	काष्ठा ethnl_reply_data		base;
+	काष्ठा ethtool_ringparam	ringparam;
+पूर्ण;
 
-#define RINGS_REPDATA(__reply_base) \
-	container_of(__reply_base, struct rings_reply_data, base)
+#घोषणा RINGS_REPDATA(__reply_base) \
+	container_of(__reply_base, काष्ठा rings_reply_data, base)
 
-const struct nla_policy ethnl_rings_get_policy[] = {
+स्थिर काष्ठा nla_policy ethnl_rings_get_policy[] = अणु
 	[ETHTOOL_A_RINGS_HEADER]		=
 		NLA_POLICY_NESTED(ethnl_header_policy),
-};
+पूर्ण;
 
-static int rings_prepare_data(const struct ethnl_req_info *req_base,
-			      struct ethnl_reply_data *reply_base,
-			      struct genl_info *info)
-{
-	struct rings_reply_data *data = RINGS_REPDATA(reply_base);
-	struct net_device *dev = reply_base->dev;
-	int ret;
+अटल पूर्णांक rings_prepare_data(स्थिर काष्ठा ethnl_req_info *req_base,
+			      काष्ठा ethnl_reply_data *reply_base,
+			      काष्ठा genl_info *info)
+अणु
+	काष्ठा rings_reply_data *data = RINGS_REPDATA(reply_base);
+	काष्ठा net_device *dev = reply_base->dev;
+	पूर्णांक ret;
 
-	if (!dev->ethtool_ops->get_ringparam)
-		return -EOPNOTSUPP;
+	अगर (!dev->ethtool_ops->get_ringparam)
+		वापस -EOPNOTSUPP;
 	ret = ethnl_ops_begin(dev);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 	dev->ethtool_ops->get_ringparam(dev, &data->ringparam);
 	ethnl_ops_complete(dev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int rings_reply_size(const struct ethnl_req_info *req_base,
-			    const struct ethnl_reply_data *reply_base)
-{
-	return nla_total_size(sizeof(u32)) +	/* _RINGS_RX_MAX */
-	       nla_total_size(sizeof(u32)) +	/* _RINGS_RX_MINI_MAX */
-	       nla_total_size(sizeof(u32)) +	/* _RINGS_RX_JUMBO_MAX */
-	       nla_total_size(sizeof(u32)) +	/* _RINGS_TX_MAX */
-	       nla_total_size(sizeof(u32)) +	/* _RINGS_RX */
-	       nla_total_size(sizeof(u32)) +	/* _RINGS_RX_MINI */
-	       nla_total_size(sizeof(u32)) +	/* _RINGS_RX_JUMBO */
-	       nla_total_size(sizeof(u32));	/* _RINGS_TX */
-}
+अटल पूर्णांक rings_reply_size(स्थिर काष्ठा ethnl_req_info *req_base,
+			    स्थिर काष्ठा ethnl_reply_data *reply_base)
+अणु
+	वापस nla_total_size(माप(u32)) +	/* _RINGS_RX_MAX */
+	       nla_total_size(माप(u32)) +	/* _RINGS_RX_MINI_MAX */
+	       nla_total_size(माप(u32)) +	/* _RINGS_RX_JUMBO_MAX */
+	       nla_total_size(माप(u32)) +	/* _RINGS_TX_MAX */
+	       nla_total_size(माप(u32)) +	/* _RINGS_RX */
+	       nla_total_size(माप(u32)) +	/* _RINGS_RX_MINI */
+	       nla_total_size(माप(u32)) +	/* _RINGS_RX_JUMBO */
+	       nla_total_size(माप(u32));	/* _RINGS_TX */
+पूर्ण
 
-static int rings_fill_reply(struct sk_buff *skb,
-			    const struct ethnl_req_info *req_base,
-			    const struct ethnl_reply_data *reply_base)
-{
-	const struct rings_reply_data *data = RINGS_REPDATA(reply_base);
-	const struct ethtool_ringparam *ringparam = &data->ringparam;
+अटल पूर्णांक rings_fill_reply(काष्ठा sk_buff *skb,
+			    स्थिर काष्ठा ethnl_req_info *req_base,
+			    स्थिर काष्ठा ethnl_reply_data *reply_base)
+अणु
+	स्थिर काष्ठा rings_reply_data *data = RINGS_REPDATA(reply_base);
+	स्थिर काष्ठा ethtool_ringparam *ringparam = &data->ringparam;
 
-	if ((ringparam->rx_max_pending &&
+	अगर ((ringparam->rx_max_pending &&
 	     (nla_put_u32(skb, ETHTOOL_A_RINGS_RX_MAX,
 			  ringparam->rx_max_pending) ||
 	      nla_put_u32(skb, ETHTOOL_A_RINGS_RX,
@@ -79,61 +80,61 @@ static int rings_fill_reply(struct sk_buff *skb,
 			  ringparam->tx_max_pending) ||
 	      nla_put_u32(skb, ETHTOOL_A_RINGS_TX,
 			  ringparam->tx_pending))))
-		return -EMSGSIZE;
+		वापस -EMSGSIZE;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-const struct ethnl_request_ops ethnl_rings_request_ops = {
+स्थिर काष्ठा ethnl_request_ops ethnl_rings_request_ops = अणु
 	.request_cmd		= ETHTOOL_MSG_RINGS_GET,
 	.reply_cmd		= ETHTOOL_MSG_RINGS_GET_REPLY,
 	.hdr_attr		= ETHTOOL_A_RINGS_HEADER,
-	.req_info_size		= sizeof(struct rings_req_info),
-	.reply_data_size	= sizeof(struct rings_reply_data),
+	.req_info_size		= माप(काष्ठा rings_req_info),
+	.reply_data_size	= माप(काष्ठा rings_reply_data),
 
 	.prepare_data		= rings_prepare_data,
 	.reply_size		= rings_reply_size,
 	.fill_reply		= rings_fill_reply,
-};
+पूर्ण;
 
 /* RINGS_SET */
 
-const struct nla_policy ethnl_rings_set_policy[] = {
+स्थिर काष्ठा nla_policy ethnl_rings_set_policy[] = अणु
 	[ETHTOOL_A_RINGS_HEADER]		=
 		NLA_POLICY_NESTED(ethnl_header_policy),
-	[ETHTOOL_A_RINGS_RX]			= { .type = NLA_U32 },
-	[ETHTOOL_A_RINGS_RX_MINI]		= { .type = NLA_U32 },
-	[ETHTOOL_A_RINGS_RX_JUMBO]		= { .type = NLA_U32 },
-	[ETHTOOL_A_RINGS_TX]			= { .type = NLA_U32 },
-};
+	[ETHTOOL_A_RINGS_RX]			= अणु .type = NLA_U32 पूर्ण,
+	[ETHTOOL_A_RINGS_RX_MINI]		= अणु .type = NLA_U32 पूर्ण,
+	[ETHTOOL_A_RINGS_RX_JUMBO]		= अणु .type = NLA_U32 पूर्ण,
+	[ETHTOOL_A_RINGS_TX]			= अणु .type = NLA_U32 पूर्ण,
+पूर्ण;
 
-int ethnl_set_rings(struct sk_buff *skb, struct genl_info *info)
-{
-	struct ethtool_ringparam ringparam = {};
-	struct ethnl_req_info req_info = {};
-	struct nlattr **tb = info->attrs;
-	const struct nlattr *err_attr;
-	const struct ethtool_ops *ops;
-	struct net_device *dev;
+पूर्णांक ethnl_set_rings(काष्ठा sk_buff *skb, काष्ठा genl_info *info)
+अणु
+	काष्ठा ethtool_ringparam ringparam = अणुपूर्ण;
+	काष्ठा ethnl_req_info req_info = अणुपूर्ण;
+	काष्ठा nlattr **tb = info->attrs;
+	स्थिर काष्ठा nlattr *err_attr;
+	स्थिर काष्ठा ethtool_ops *ops;
+	काष्ठा net_device *dev;
 	bool mod = false;
-	int ret;
+	पूर्णांक ret;
 
 	ret = ethnl_parse_header_dev_get(&req_info,
 					 tb[ETHTOOL_A_RINGS_HEADER],
 					 genl_info_net(info), info->extack,
 					 true);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 	dev = req_info.dev;
 	ops = dev->ethtool_ops;
 	ret = -EOPNOTSUPP;
-	if (!ops->get_ringparam || !ops->set_ringparam)
-		goto out_dev;
+	अगर (!ops->get_ringparam || !ops->set_ringparam)
+		जाओ out_dev;
 
 	rtnl_lock();
 	ret = ethnl_ops_begin(dev);
-	if (ret < 0)
-		goto out_rtnl;
+	अगर (ret < 0)
+		जाओ out_rtnl;
 	ops->get_ringparam(dev, &ringparam);
 
 	ethnl_update_u32(&ringparam.rx_pending, tb[ETHTOOL_A_RINGS_RX], &mod);
@@ -143,31 +144,31 @@ int ethnl_set_rings(struct sk_buff *skb, struct genl_info *info)
 			 tb[ETHTOOL_A_RINGS_RX_JUMBO], &mod);
 	ethnl_update_u32(&ringparam.tx_pending, tb[ETHTOOL_A_RINGS_TX], &mod);
 	ret = 0;
-	if (!mod)
-		goto out_ops;
+	अगर (!mod)
+		जाओ out_ops;
 
 	/* ensure new ring parameters are within limits */
-	if (ringparam.rx_pending > ringparam.rx_max_pending)
+	अगर (ringparam.rx_pending > ringparam.rx_max_pending)
 		err_attr = tb[ETHTOOL_A_RINGS_RX];
-	else if (ringparam.rx_mini_pending > ringparam.rx_mini_max_pending)
+	अन्यथा अगर (ringparam.rx_mini_pending > ringparam.rx_mini_max_pending)
 		err_attr = tb[ETHTOOL_A_RINGS_RX_MINI];
-	else if (ringparam.rx_jumbo_pending > ringparam.rx_jumbo_max_pending)
+	अन्यथा अगर (ringparam.rx_jumbo_pending > ringparam.rx_jumbo_max_pending)
 		err_attr = tb[ETHTOOL_A_RINGS_RX_JUMBO];
-	else if (ringparam.tx_pending > ringparam.tx_max_pending)
+	अन्यथा अगर (ringparam.tx_pending > ringparam.tx_max_pending)
 		err_attr = tb[ETHTOOL_A_RINGS_TX];
-	else
-		err_attr = NULL;
-	if (err_attr) {
+	अन्यथा
+		err_attr = शून्य;
+	अगर (err_attr) अणु
 		ret = -EINVAL;
 		NL_SET_ERR_MSG_ATTR(info->extack, err_attr,
 				    "requested ring size exceeds maximum");
-		goto out_ops;
-	}
+		जाओ out_ops;
+	पूर्ण
 
 	ret = dev->ethtool_ops->set_ringparam(dev, &ringparam);
-	if (ret < 0)
-		goto out_ops;
-	ethtool_notify(dev, ETHTOOL_MSG_RINGS_NTF, NULL);
+	अगर (ret < 0)
+		जाओ out_ops;
+	ethtool_notअगरy(dev, ETHTOOL_MSG_RINGS_NTF, शून्य);
 
 out_ops:
 	ethnl_ops_complete(dev);
@@ -175,5 +176,5 @@ out_rtnl:
 	rtnl_unlock();
 out_dev:
 	dev_put(dev);
-	return ret;
-}
+	वापस ret;
+पूर्ण

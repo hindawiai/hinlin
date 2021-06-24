@@ -1,53 +1,54 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * Pinctrl for Cirrus Logic CS47L90
+ * Pinctrl क्रम Cirrus Logic CS47L90
  *
  * Copyright (C) 2016-2017 Cirrus Logic
  */
 
-#include <linux/err.h>
-#include <linux/mfd/madera/core.h>
+#समावेश <linux/err.h>
+#समावेश <linux/mfd/madera/core.h>
 
-#include "pinctrl-madera.h"
+#समावेश "pinctrl-madera.h"
 
 /*
  * The alt func groups are the most commonly used functions we place these at
- * the lower function indexes for convenience, and the less commonly used gpio
+ * the lower function indexes क्रम convenience, and the less commonly used gpio
  * functions at higher indexes.
  *
  * To stay consistent with the datasheet the function names are the same as
- * the group names for that function's pins
+ * the group names क्रम that function's pins
  *
  * Note - all 1 less than in datasheet because these are zero-indexed
  */
-static const unsigned int cs47l90_mif1_pins[] = { 8, 9 };
-static const unsigned int cs47l90_mif2_pins[] = { 10, 11 };
-static const unsigned int cs47l90_mif3_pins[] = { 12, 13 };
-static const unsigned int cs47l90_aif1_pins[] = { 14, 15, 16, 17 };
-static const unsigned int cs47l90_aif2_pins[] = { 18, 19, 20, 21 };
-static const unsigned int cs47l90_aif3_pins[] = { 22, 23, 24, 25 };
-static const unsigned int cs47l90_aif4_pins[] = { 26, 27, 28, 29 };
-static const unsigned int cs47l90_dmic4_pins[] = { 30, 31 };
-static const unsigned int cs47l90_dmic5_pins[] = { 32, 33 };
-static const unsigned int cs47l90_dmic3_pins[] = { 34, 35 };
-static const unsigned int cs47l90_spk1_pins[] = { 36, 37 };
+अटल स्थिर अचिन्हित पूर्णांक cs47l90_mअगर1_pins[] = अणु 8, 9 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक cs47l90_mअगर2_pins[] = अणु 10, 11 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक cs47l90_mअगर3_pins[] = अणु 12, 13 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक cs47l90_aअगर1_pins[] = अणु 14, 15, 16, 17 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक cs47l90_aअगर2_pins[] = अणु 18, 19, 20, 21 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक cs47l90_aअगर3_pins[] = अणु 22, 23, 24, 25 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक cs47l90_aअगर4_pins[] = अणु 26, 27, 28, 29 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक cs47l90_dmic4_pins[] = अणु 30, 31 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक cs47l90_dmic5_pins[] = अणु 32, 33 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक cs47l90_dmic3_pins[] = अणु 34, 35 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक cs47l90_spk1_pins[] = अणु 36, 37 पूर्ण;
 
-static const struct madera_pin_groups cs47l90_pin_groups[] = {
-	{ "aif1", cs47l90_aif1_pins, ARRAY_SIZE(cs47l90_aif1_pins) },
-	{ "aif2", cs47l90_aif2_pins, ARRAY_SIZE(cs47l90_aif2_pins) },
-	{ "aif3", cs47l90_aif3_pins, ARRAY_SIZE(cs47l90_aif3_pins) },
-	{ "aif4", cs47l90_aif4_pins, ARRAY_SIZE(cs47l90_aif4_pins) },
-	{ "mif1", cs47l90_mif1_pins, ARRAY_SIZE(cs47l90_mif1_pins) },
-	{ "mif2", cs47l90_mif2_pins, ARRAY_SIZE(cs47l90_mif2_pins) },
-	{ "mif3", cs47l90_mif3_pins, ARRAY_SIZE(cs47l90_mif3_pins) },
-	{ "dmic3", cs47l90_dmic3_pins, ARRAY_SIZE(cs47l90_dmic3_pins) },
-	{ "dmic4", cs47l90_dmic4_pins, ARRAY_SIZE(cs47l90_dmic4_pins) },
-	{ "dmic5", cs47l90_dmic5_pins, ARRAY_SIZE(cs47l90_dmic5_pins) },
-	{ "pdmspk1", cs47l90_spk1_pins, ARRAY_SIZE(cs47l90_spk1_pins) },
-};
+अटल स्थिर काष्ठा madera_pin_groups cs47l90_pin_groups[] = अणु
+	अणु "aif1", cs47l90_aअगर1_pins, ARRAY_SIZE(cs47l90_aअगर1_pins) पूर्ण,
+	अणु "aif2", cs47l90_aअगर2_pins, ARRAY_SIZE(cs47l90_aअगर2_pins) पूर्ण,
+	अणु "aif3", cs47l90_aअगर3_pins, ARRAY_SIZE(cs47l90_aअगर3_pins) पूर्ण,
+	अणु "aif4", cs47l90_aअगर4_pins, ARRAY_SIZE(cs47l90_aअगर4_pins) पूर्ण,
+	अणु "mif1", cs47l90_mअगर1_pins, ARRAY_SIZE(cs47l90_mअगर1_pins) पूर्ण,
+	अणु "mif2", cs47l90_mअगर2_pins, ARRAY_SIZE(cs47l90_mअगर2_pins) पूर्ण,
+	अणु "mif3", cs47l90_mअगर3_pins, ARRAY_SIZE(cs47l90_mअगर3_pins) पूर्ण,
+	अणु "dmic3", cs47l90_dmic3_pins, ARRAY_SIZE(cs47l90_dmic3_pins) पूर्ण,
+	अणु "dmic4", cs47l90_dmic4_pins, ARRAY_SIZE(cs47l90_dmic4_pins) पूर्ण,
+	अणु "dmic5", cs47l90_dmic5_pins, ARRAY_SIZE(cs47l90_dmic5_pins) पूर्ण,
+	अणु "pdmspk1", cs47l90_spk1_pins, ARRAY_SIZE(cs47l90_spk1_pins) पूर्ण,
+पूर्ण;
 
-const struct madera_pin_chip cs47l90_pin_chip = {
+स्थिर काष्ठा madera_pin_chip cs47l90_pin_chip = अणु
 	.n_pins = CS47L90_NUM_GPIOS,
 	.pin_groups = cs47l90_pin_groups,
 	.n_pin_groups = ARRAY_SIZE(cs47l90_pin_groups),
-};
+पूर्ण;

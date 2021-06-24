@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Handle async block request by crypto hardware engine.
  *
@@ -7,190 +8,190 @@
  * Author: Baolin Wang <baolin.wang@linaro.org>
  */
 
-#include <linux/err.h>
-#include <linux/delay.h>
-#include <linux/device.h>
-#include <crypto/engine.h>
-#include <uapi/linux/sched/types.h>
-#include "internal.h"
+#समावेश <linux/err.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/device.h>
+#समावेश <crypto/engine.h>
+#समावेश <uapi/linux/sched/types.h>
+#समावेश "internal.h"
 
-#define CRYPTO_ENGINE_MAX_QLEN 10
+#घोषणा CRYPTO_ENGINE_MAX_QLEN 10
 
 /**
- * crypto_finalize_request - finalize one request if the request is done
+ * crypto_finalize_request - finalize one request अगर the request is करोne
  * @engine: the hardware engine
  * @req: the request need to be finalized
  * @err: error number
  */
-static void crypto_finalize_request(struct crypto_engine *engine,
-				    struct crypto_async_request *req, int err)
-{
-	unsigned long flags;
+अटल व्योम crypto_finalize_request(काष्ठा crypto_engine *engine,
+				    काष्ठा crypto_async_request *req, पूर्णांक err)
+अणु
+	अचिन्हित दीर्घ flags;
 	bool finalize_req = false;
-	int ret;
-	struct crypto_engine_ctx *enginectx;
+	पूर्णांक ret;
+	काष्ठा crypto_engine_ctx *enginectx;
 
 	/*
 	 * If hardware cannot enqueue more requests
 	 * and retry mechanism is not supported
 	 * make sure we are completing the current request
 	 */
-	if (!engine->retry_support) {
+	अगर (!engine->retry_support) अणु
 		spin_lock_irqsave(&engine->queue_lock, flags);
-		if (engine->cur_req == req) {
+		अगर (engine->cur_req == req) अणु
 			finalize_req = true;
-			engine->cur_req = NULL;
-		}
+			engine->cur_req = शून्य;
+		पूर्ण
 		spin_unlock_irqrestore(&engine->queue_lock, flags);
-	}
+	पूर्ण
 
-	if (finalize_req || engine->retry_support) {
+	अगर (finalize_req || engine->retry_support) अणु
 		enginectx = crypto_tfm_ctx(req->tfm);
-		if (enginectx->op.prepare_request &&
-		    enginectx->op.unprepare_request) {
+		अगर (enginectx->op.prepare_request &&
+		    enginectx->op.unprepare_request) अणु
 			ret = enginectx->op.unprepare_request(engine, req);
-			if (ret)
+			अगर (ret)
 				dev_err(engine->dev, "failed to unprepare request\n");
-		}
-	}
+		पूर्ण
+	पूर्ण
 	req->complete(req, err);
 
-	kthread_queue_work(engine->kworker, &engine->pump_requests);
-}
+	kthपढ़ो_queue_work(engine->kworker, &engine->pump_requests);
+पूर्ण
 
 /**
  * crypto_pump_requests - dequeue one request from engine queue to process
  * @engine: the hardware engine
- * @in_kthread: true if we are in the context of the request pump thread
+ * @in_kthपढ़ो: true अगर we are in the context of the request pump thपढ़ो
  *
- * This function checks if there is any request in the engine queue that
- * needs processing and if so call out to the driver to initialize hardware
+ * This function checks अगर there is any request in the engine queue that
+ * needs processing and अगर so call out to the driver to initialize hardware
  * and handle each request.
  */
-static void crypto_pump_requests(struct crypto_engine *engine,
-				 bool in_kthread)
-{
-	struct crypto_async_request *async_req, *backlog;
-	unsigned long flags;
+अटल व्योम crypto_pump_requests(काष्ठा crypto_engine *engine,
+				 bool in_kthपढ़ो)
+अणु
+	काष्ठा crypto_async_request *async_req, *backlog;
+	अचिन्हित दीर्घ flags;
 	bool was_busy = false;
-	int ret;
-	struct crypto_engine_ctx *enginectx;
+	पूर्णांक ret;
+	काष्ठा crypto_engine_ctx *enginectx;
 
 	spin_lock_irqsave(&engine->queue_lock, flags);
 
-	/* Make sure we are not already running a request */
-	if (!engine->retry_support && engine->cur_req)
-		goto out;
+	/* Make sure we are not alपढ़ोy running a request */
+	अगर (!engine->retry_support && engine->cur_req)
+		जाओ out;
 
 	/* If another context is idling then defer */
-	if (engine->idling) {
-		kthread_queue_work(engine->kworker, &engine->pump_requests);
-		goto out;
-	}
+	अगर (engine->idling) अणु
+		kthपढ़ो_queue_work(engine->kworker, &engine->pump_requests);
+		जाओ out;
+	पूर्ण
 
-	/* Check if the engine queue is idle */
-	if (!crypto_queue_len(&engine->queue) || !engine->running) {
-		if (!engine->busy)
-			goto out;
+	/* Check अगर the engine queue is idle */
+	अगर (!crypto_queue_len(&engine->queue) || !engine->running) अणु
+		अगर (!engine->busy)
+			जाओ out;
 
-		/* Only do teardown in the thread */
-		if (!in_kthread) {
-			kthread_queue_work(engine->kworker,
+		/* Only करो tearकरोwn in the thपढ़ो */
+		अगर (!in_kthपढ़ो) अणु
+			kthपढ़ो_queue_work(engine->kworker,
 					   &engine->pump_requests);
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
 		engine->busy = false;
 		engine->idling = true;
 		spin_unlock_irqrestore(&engine->queue_lock, flags);
 
-		if (engine->unprepare_crypt_hardware &&
+		अगर (engine->unprepare_crypt_hardware &&
 		    engine->unprepare_crypt_hardware(engine))
 			dev_err(engine->dev, "failed to unprepare crypt hardware\n");
 
 		spin_lock_irqsave(&engine->queue_lock, flags);
 		engine->idling = false;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 start_request:
 	/* Get the fist request from the engine queue to handle */
 	backlog = crypto_get_backlog(&engine->queue);
 	async_req = crypto_dequeue_request(&engine->queue);
-	if (!async_req)
-		goto out;
+	अगर (!async_req)
+		जाओ out;
 
 	/*
-	 * If hardware doesn't support the retry mechanism,
+	 * If hardware करोesn't support the retry mechanism,
 	 * keep track of the request we are processing now.
 	 * We'll need it on completion (crypto_finalize_request).
 	 */
-	if (!engine->retry_support)
+	अगर (!engine->retry_support)
 		engine->cur_req = async_req;
 
-	if (backlog)
+	अगर (backlog)
 		backlog->complete(backlog, -EINPROGRESS);
 
-	if (engine->busy)
+	अगर (engine->busy)
 		was_busy = true;
-	else
+	अन्यथा
 		engine->busy = true;
 
 	spin_unlock_irqrestore(&engine->queue_lock, flags);
 
 	/* Until here we get the request need to be encrypted successfully */
-	if (!was_busy && engine->prepare_crypt_hardware) {
+	अगर (!was_busy && engine->prepare_crypt_hardware) अणु
 		ret = engine->prepare_crypt_hardware(engine);
-		if (ret) {
+		अगर (ret) अणु
 			dev_err(engine->dev, "failed to prepare crypt hardware\n");
-			goto req_err_2;
-		}
-	}
+			जाओ req_err_2;
+		पूर्ण
+	पूर्ण
 
 	enginectx = crypto_tfm_ctx(async_req->tfm);
 
-	if (enginectx->op.prepare_request) {
+	अगर (enginectx->op.prepare_request) अणु
 		ret = enginectx->op.prepare_request(engine, async_req);
-		if (ret) {
+		अगर (ret) अणु
 			dev_err(engine->dev, "failed to prepare request: %d\n",
 				ret);
-			goto req_err_2;
-		}
-	}
-	if (!enginectx->op.do_one_request) {
+			जाओ req_err_2;
+		पूर्ण
+	पूर्ण
+	अगर (!enginectx->op.करो_one_request) अणु
 		dev_err(engine->dev, "failed to do request\n");
 		ret = -EINVAL;
-		goto req_err_1;
-	}
+		जाओ req_err_1;
+	पूर्ण
 
-	ret = enginectx->op.do_one_request(engine, async_req);
+	ret = enginectx->op.करो_one_request(engine, async_req);
 
 	/* Request unsuccessfully executed by hardware */
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		/*
 		 * If hardware queue is full (-ENOSPC), requeue request
 		 * regardless of backlog flag.
 		 * Otherwise, unprepare and complete the request.
 		 */
-		if (!engine->retry_support ||
-		    (ret != -ENOSPC)) {
+		अगर (!engine->retry_support ||
+		    (ret != -ENOSPC)) अणु
 			dev_err(engine->dev,
 				"Failed to do one request from queue: %d\n",
 				ret);
-			goto req_err_1;
-		}
+			जाओ req_err_1;
+		पूर्ण
 		/*
 		 * If retry mechanism is supported,
 		 * unprepare current request and
-		 * enqueue it back into crypto-engine queue.
+		 * enqueue it back पूर्णांकo crypto-engine queue.
 		 */
-		if (enginectx->op.unprepare_request) {
+		अगर (enginectx->op.unprepare_request) अणु
 			ret = enginectx->op.unprepare_request(engine,
 							      async_req);
-			if (ret)
+			अगर (ret)
 				dev_err(engine->dev,
 					"failed to unprepare request\n");
-		}
+		पूर्ण
 		spin_lock_irqsave(&engine->queue_lock, flags);
 		/*
 		 * If hardware was unable to execute request, enqueue it
@@ -199,298 +200,298 @@ start_request:
 		 */
 		crypto_enqueue_request_head(&engine->queue, async_req);
 
-		kthread_queue_work(engine->kworker, &engine->pump_requests);
-		goto out;
-	}
+		kthपढ़ो_queue_work(engine->kworker, &engine->pump_requests);
+		जाओ out;
+	पूर्ण
 
-	goto retry;
+	जाओ retry;
 
 req_err_1:
-	if (enginectx->op.unprepare_request) {
+	अगर (enginectx->op.unprepare_request) अणु
 		ret = enginectx->op.unprepare_request(engine, async_req);
-		if (ret)
+		अगर (ret)
 			dev_err(engine->dev, "failed to unprepare request\n");
-	}
+	पूर्ण
 
 req_err_2:
 	async_req->complete(async_req, ret);
 
 retry:
 	/* If retry mechanism is supported, send new requests to engine */
-	if (engine->retry_support) {
+	अगर (engine->retry_support) अणु
 		spin_lock_irqsave(&engine->queue_lock, flags);
-		goto start_request;
-	}
-	return;
+		जाओ start_request;
+	पूर्ण
+	वापस;
 
 out:
 	spin_unlock_irqrestore(&engine->queue_lock, flags);
 
 	/*
-	 * Batch requests is possible only if
+	 * Batch requests is possible only अगर
 	 * hardware can enqueue multiple requests
 	 */
-	if (engine->do_batch_requests) {
-		ret = engine->do_batch_requests(engine);
-		if (ret)
+	अगर (engine->करो_batch_requests) अणु
+		ret = engine->करो_batch_requests(engine);
+		अगर (ret)
 			dev_err(engine->dev, "failed to do batch requests: %d\n",
 				ret);
-	}
+	पूर्ण
 
-	return;
-}
+	वापस;
+पूर्ण
 
-static void crypto_pump_work(struct kthread_work *work)
-{
-	struct crypto_engine *engine =
-		container_of(work, struct crypto_engine, pump_requests);
+अटल व्योम crypto_pump_work(काष्ठा kthपढ़ो_work *work)
+अणु
+	काष्ठा crypto_engine *engine =
+		container_of(work, काष्ठा crypto_engine, pump_requests);
 
 	crypto_pump_requests(engine, true);
-}
+पूर्ण
 
 /**
- * crypto_transfer_request - transfer the new request into the engine queue
+ * crypto_transfer_request - transfer the new request पूर्णांकo the engine queue
  * @engine: the hardware engine
- * @req: the request need to be listed into the engine queue
+ * @req: the request need to be listed पूर्णांकo the engine queue
  */
-static int crypto_transfer_request(struct crypto_engine *engine,
-				   struct crypto_async_request *req,
+अटल पूर्णांक crypto_transfer_request(काष्ठा crypto_engine *engine,
+				   काष्ठा crypto_async_request *req,
 				   bool need_pump)
-{
-	unsigned long flags;
-	int ret;
+अणु
+	अचिन्हित दीर्घ flags;
+	पूर्णांक ret;
 
 	spin_lock_irqsave(&engine->queue_lock, flags);
 
-	if (!engine->running) {
+	अगर (!engine->running) अणु
 		spin_unlock_irqrestore(&engine->queue_lock, flags);
-		return -ESHUTDOWN;
-	}
+		वापस -ESHUTDOWN;
+	पूर्ण
 
 	ret = crypto_enqueue_request(&engine->queue, req);
 
-	if (!engine->busy && need_pump)
-		kthread_queue_work(engine->kworker, &engine->pump_requests);
+	अगर (!engine->busy && need_pump)
+		kthपढ़ो_queue_work(engine->kworker, &engine->pump_requests);
 
 	spin_unlock_irqrestore(&engine->queue_lock, flags);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
  * crypto_transfer_request_to_engine - transfer one request to list
- * into the engine queue
+ * पूर्णांकo the engine queue
  * @engine: the hardware engine
- * @req: the request need to be listed into the engine queue
+ * @req: the request need to be listed पूर्णांकo the engine queue
  */
-static int crypto_transfer_request_to_engine(struct crypto_engine *engine,
-					     struct crypto_async_request *req)
-{
-	return crypto_transfer_request(engine, req, true);
-}
+अटल पूर्णांक crypto_transfer_request_to_engine(काष्ठा crypto_engine *engine,
+					     काष्ठा crypto_async_request *req)
+अणु
+	वापस crypto_transfer_request(engine, req, true);
+पूर्ण
 
 /**
  * crypto_transfer_aead_request_to_engine - transfer one aead_request
- * to list into the engine queue
+ * to list पूर्णांकo the engine queue
  * @engine: the hardware engine
- * @req: the request need to be listed into the engine queue
+ * @req: the request need to be listed पूर्णांकo the engine queue
  */
-int crypto_transfer_aead_request_to_engine(struct crypto_engine *engine,
-					   struct aead_request *req)
-{
-	return crypto_transfer_request_to_engine(engine, &req->base);
-}
+पूर्णांक crypto_transfer_aead_request_to_engine(काष्ठा crypto_engine *engine,
+					   काष्ठा aead_request *req)
+अणु
+	वापस crypto_transfer_request_to_engine(engine, &req->base);
+पूर्ण
 EXPORT_SYMBOL_GPL(crypto_transfer_aead_request_to_engine);
 
 /**
  * crypto_transfer_akcipher_request_to_engine - transfer one akcipher_request
- * to list into the engine queue
+ * to list पूर्णांकo the engine queue
  * @engine: the hardware engine
- * @req: the request need to be listed into the engine queue
+ * @req: the request need to be listed पूर्णांकo the engine queue
  */
-int crypto_transfer_akcipher_request_to_engine(struct crypto_engine *engine,
-					       struct akcipher_request *req)
-{
-	return crypto_transfer_request_to_engine(engine, &req->base);
-}
+पूर्णांक crypto_transfer_akcipher_request_to_engine(काष्ठा crypto_engine *engine,
+					       काष्ठा akcipher_request *req)
+अणु
+	वापस crypto_transfer_request_to_engine(engine, &req->base);
+पूर्ण
 EXPORT_SYMBOL_GPL(crypto_transfer_akcipher_request_to_engine);
 
 /**
  * crypto_transfer_hash_request_to_engine - transfer one ahash_request
- * to list into the engine queue
+ * to list पूर्णांकo the engine queue
  * @engine: the hardware engine
- * @req: the request need to be listed into the engine queue
+ * @req: the request need to be listed पूर्णांकo the engine queue
  */
-int crypto_transfer_hash_request_to_engine(struct crypto_engine *engine,
-					   struct ahash_request *req)
-{
-	return crypto_transfer_request_to_engine(engine, &req->base);
-}
+पूर्णांक crypto_transfer_hash_request_to_engine(काष्ठा crypto_engine *engine,
+					   काष्ठा ahash_request *req)
+अणु
+	वापस crypto_transfer_request_to_engine(engine, &req->base);
+पूर्ण
 EXPORT_SYMBOL_GPL(crypto_transfer_hash_request_to_engine);
 
 /**
  * crypto_transfer_skcipher_request_to_engine - transfer one skcipher_request
- * to list into the engine queue
+ * to list पूर्णांकo the engine queue
  * @engine: the hardware engine
- * @req: the request need to be listed into the engine queue
+ * @req: the request need to be listed पूर्णांकo the engine queue
  */
-int crypto_transfer_skcipher_request_to_engine(struct crypto_engine *engine,
-					       struct skcipher_request *req)
-{
-	return crypto_transfer_request_to_engine(engine, &req->base);
-}
+पूर्णांक crypto_transfer_skcipher_request_to_engine(काष्ठा crypto_engine *engine,
+					       काष्ठा skcipher_request *req)
+अणु
+	वापस crypto_transfer_request_to_engine(engine, &req->base);
+पूर्ण
 EXPORT_SYMBOL_GPL(crypto_transfer_skcipher_request_to_engine);
 
 /**
- * crypto_finalize_aead_request - finalize one aead_request if
- * the request is done
+ * crypto_finalize_aead_request - finalize one aead_request अगर
+ * the request is करोne
  * @engine: the hardware engine
  * @req: the request need to be finalized
  * @err: error number
  */
-void crypto_finalize_aead_request(struct crypto_engine *engine,
-				  struct aead_request *req, int err)
-{
-	return crypto_finalize_request(engine, &req->base, err);
-}
+व्योम crypto_finalize_aead_request(काष्ठा crypto_engine *engine,
+				  काष्ठा aead_request *req, पूर्णांक err)
+अणु
+	वापस crypto_finalize_request(engine, &req->base, err);
+पूर्ण
 EXPORT_SYMBOL_GPL(crypto_finalize_aead_request);
 
 /**
- * crypto_finalize_akcipher_request - finalize one akcipher_request if
- * the request is done
+ * crypto_finalize_akcipher_request - finalize one akcipher_request अगर
+ * the request is करोne
  * @engine: the hardware engine
  * @req: the request need to be finalized
  * @err: error number
  */
-void crypto_finalize_akcipher_request(struct crypto_engine *engine,
-				      struct akcipher_request *req, int err)
-{
-	return crypto_finalize_request(engine, &req->base, err);
-}
+व्योम crypto_finalize_akcipher_request(काष्ठा crypto_engine *engine,
+				      काष्ठा akcipher_request *req, पूर्णांक err)
+अणु
+	वापस crypto_finalize_request(engine, &req->base, err);
+पूर्ण
 EXPORT_SYMBOL_GPL(crypto_finalize_akcipher_request);
 
 /**
- * crypto_finalize_hash_request - finalize one ahash_request if
- * the request is done
+ * crypto_finalize_hash_request - finalize one ahash_request अगर
+ * the request is करोne
  * @engine: the hardware engine
  * @req: the request need to be finalized
  * @err: error number
  */
-void crypto_finalize_hash_request(struct crypto_engine *engine,
-				  struct ahash_request *req, int err)
-{
-	return crypto_finalize_request(engine, &req->base, err);
-}
+व्योम crypto_finalize_hash_request(काष्ठा crypto_engine *engine,
+				  काष्ठा ahash_request *req, पूर्णांक err)
+अणु
+	वापस crypto_finalize_request(engine, &req->base, err);
+पूर्ण
 EXPORT_SYMBOL_GPL(crypto_finalize_hash_request);
 
 /**
- * crypto_finalize_skcipher_request - finalize one skcipher_request if
- * the request is done
+ * crypto_finalize_skcipher_request - finalize one skcipher_request अगर
+ * the request is करोne
  * @engine: the hardware engine
  * @req: the request need to be finalized
  * @err: error number
  */
-void crypto_finalize_skcipher_request(struct crypto_engine *engine,
-				      struct skcipher_request *req, int err)
-{
-	return crypto_finalize_request(engine, &req->base, err);
-}
+व्योम crypto_finalize_skcipher_request(काष्ठा crypto_engine *engine,
+				      काष्ठा skcipher_request *req, पूर्णांक err)
+अणु
+	वापस crypto_finalize_request(engine, &req->base, err);
+पूर्ण
 EXPORT_SYMBOL_GPL(crypto_finalize_skcipher_request);
 
 /**
  * crypto_engine_start - start the hardware engine
  * @engine: the hardware engine need to be started
  *
- * Return 0 on success, else on fail.
+ * Return 0 on success, अन्यथा on fail.
  */
-int crypto_engine_start(struct crypto_engine *engine)
-{
-	unsigned long flags;
+पूर्णांक crypto_engine_start(काष्ठा crypto_engine *engine)
+अणु
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&engine->queue_lock, flags);
 
-	if (engine->running || engine->busy) {
+	अगर (engine->running || engine->busy) अणु
 		spin_unlock_irqrestore(&engine->queue_lock, flags);
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 
 	engine->running = true;
 	spin_unlock_irqrestore(&engine->queue_lock, flags);
 
-	kthread_queue_work(engine->kworker, &engine->pump_requests);
+	kthपढ़ो_queue_work(engine->kworker, &engine->pump_requests);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(crypto_engine_start);
 
 /**
  * crypto_engine_stop - stop the hardware engine
  * @engine: the hardware engine need to be stopped
  *
- * Return 0 on success, else on fail.
+ * Return 0 on success, अन्यथा on fail.
  */
-int crypto_engine_stop(struct crypto_engine *engine)
-{
-	unsigned long flags;
-	unsigned int limit = 500;
-	int ret = 0;
+पूर्णांक crypto_engine_stop(काष्ठा crypto_engine *engine)
+अणु
+	अचिन्हित दीर्घ flags;
+	अचिन्हित पूर्णांक limit = 500;
+	पूर्णांक ret = 0;
 
 	spin_lock_irqsave(&engine->queue_lock, flags);
 
 	/*
 	 * If the engine queue is not empty or the engine is on busy state,
-	 * we need to wait for a while to pump the requests of engine queue.
+	 * we need to रुको क्रम a जबतक to pump the requests of engine queue.
 	 */
-	while ((crypto_queue_len(&engine->queue) || engine->busy) && limit--) {
+	जबतक ((crypto_queue_len(&engine->queue) || engine->busy) && limit--) अणु
 		spin_unlock_irqrestore(&engine->queue_lock, flags);
 		msleep(20);
 		spin_lock_irqsave(&engine->queue_lock, flags);
-	}
+	पूर्ण
 
-	if (crypto_queue_len(&engine->queue) || engine->busy)
+	अगर (crypto_queue_len(&engine->queue) || engine->busy)
 		ret = -EBUSY;
-	else
+	अन्यथा
 		engine->running = false;
 
 	spin_unlock_irqrestore(&engine->queue_lock, flags);
 
-	if (ret)
+	अगर (ret)
 		dev_warn(engine->dev, "could not stop engine\n");
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(crypto_engine_stop);
 
 /**
- * crypto_engine_alloc_init_and_set - allocate crypto hardware engine structure
+ * crypto_engine_alloc_init_and_set - allocate crypto hardware engine काष्ठाure
  * and initialize it by setting the maximum number of entries in the software
  * crypto-engine queue.
  * @dev: the device attached with one hardware engine
- * @retry_support: whether hardware has support for retry mechanism
- * @cbk_do_batch: pointer to a callback function to be invoked when executing
+ * @retry_support: whether hardware has support क्रम retry mechanism
+ * @cbk_करो_batch: poपूर्णांकer to a callback function to be invoked when executing
  *                a batch of requests.
- *                This has the form:
- *                callback(struct crypto_engine *engine)
+ *                This has the क्रमm:
+ *                callback(काष्ठा crypto_engine *engine)
  *                where:
- *                @engine: the crypto engine structure.
- * @rt: whether this queue is set to run as a realtime task
+ *                @engine: the crypto engine काष्ठाure.
+ * @rt: whether this queue is set to run as a realसमय task
  * @qlen: maximum size of the crypto-engine queue
  *
  * This must be called from context that can sleep.
- * Return: the crypto engine structure on success, else NULL.
+ * Return: the crypto engine काष्ठाure on success, अन्यथा शून्य.
  */
-struct crypto_engine *crypto_engine_alloc_init_and_set(struct device *dev,
+काष्ठा crypto_engine *crypto_engine_alloc_init_and_set(काष्ठा device *dev,
 						       bool retry_support,
-						       int (*cbk_do_batch)(struct crypto_engine *engine),
-						       bool rt, int qlen)
-{
-	struct crypto_engine *engine;
+						       पूर्णांक (*cbk_करो_batch)(काष्ठा crypto_engine *engine),
+						       bool rt, पूर्णांक qlen)
+अणु
+	काष्ठा crypto_engine *engine;
 
-	if (!dev)
-		return NULL;
+	अगर (!dev)
+		वापस शून्य;
 
-	engine = devm_kzalloc(dev, sizeof(*engine), GFP_KERNEL);
-	if (!engine)
-		return NULL;
+	engine = devm_kzalloc(dev, माप(*engine), GFP_KERNEL);
+	अगर (!engine)
+		वापस शून्य;
 
 	engine->dev = dev;
 	engine->rt = rt;
@@ -500,68 +501,68 @@ struct crypto_engine *crypto_engine_alloc_init_and_set(struct device *dev,
 	engine->retry_support = retry_support;
 	engine->priv_data = dev;
 	/*
-	 * Batch requests is possible only if
-	 * hardware has support for retry mechanism.
+	 * Batch requests is possible only अगर
+	 * hardware has support क्रम retry mechanism.
 	 */
-	engine->do_batch_requests = retry_support ? cbk_do_batch : NULL;
+	engine->करो_batch_requests = retry_support ? cbk_करो_batch : शून्य;
 
-	snprintf(engine->name, sizeof(engine->name),
+	snम_लिखो(engine->name, माप(engine->name),
 		 "%s-engine", dev_name(dev));
 
 	crypto_init_queue(&engine->queue, qlen);
 	spin_lock_init(&engine->queue_lock);
 
-	engine->kworker = kthread_create_worker(0, "%s", engine->name);
-	if (IS_ERR(engine->kworker)) {
+	engine->kworker = kthपढ़ो_create_worker(0, "%s", engine->name);
+	अगर (IS_ERR(engine->kworker)) अणु
 		dev_err(dev, "failed to create crypto request pump task\n");
-		return NULL;
-	}
-	kthread_init_work(&engine->pump_requests, crypto_pump_work);
+		वापस शून्य;
+	पूर्ण
+	kthपढ़ो_init_work(&engine->pump_requests, crypto_pump_work);
 
-	if (engine->rt) {
+	अगर (engine->rt) अणु
 		dev_info(dev, "will run requests pump with realtime priority\n");
-		sched_set_fifo(engine->kworker->task);
-	}
+		sched_set_fअगरo(engine->kworker->task);
+	पूर्ण
 
-	return engine;
-}
+	वापस engine;
+पूर्ण
 EXPORT_SYMBOL_GPL(crypto_engine_alloc_init_and_set);
 
 /**
- * crypto_engine_alloc_init - allocate crypto hardware engine structure and
+ * crypto_engine_alloc_init - allocate crypto hardware engine काष्ठाure and
  * initialize it.
  * @dev: the device attached with one hardware engine
- * @rt: whether this queue is set to run as a realtime task
+ * @rt: whether this queue is set to run as a realसमय task
  *
  * This must be called from context that can sleep.
- * Return: the crypto engine structure on success, else NULL.
+ * Return: the crypto engine काष्ठाure on success, अन्यथा शून्य.
  */
-struct crypto_engine *crypto_engine_alloc_init(struct device *dev, bool rt)
-{
-	return crypto_engine_alloc_init_and_set(dev, false, NULL, rt,
+काष्ठा crypto_engine *crypto_engine_alloc_init(काष्ठा device *dev, bool rt)
+अणु
+	वापस crypto_engine_alloc_init_and_set(dev, false, शून्य, rt,
 						CRYPTO_ENGINE_MAX_QLEN);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(crypto_engine_alloc_init);
 
 /**
- * crypto_engine_exit - free the resources of hardware engine when exit
- * @engine: the hardware engine need to be freed
+ * crypto_engine_निकास - मुक्त the resources of hardware engine when निकास
+ * @engine: the hardware engine need to be मुक्तd
  *
- * Return 0 for success.
+ * Return 0 क्रम success.
  */
-int crypto_engine_exit(struct crypto_engine *engine)
-{
-	int ret;
+पूर्णांक crypto_engine_निकास(काष्ठा crypto_engine *engine)
+अणु
+	पूर्णांक ret;
 
 	ret = crypto_engine_stop(engine);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	kthread_destroy_worker(engine->kworker);
+	kthपढ़ो_destroy_worker(engine->kworker);
 
-	return 0;
-}
-EXPORT_SYMBOL_GPL(crypto_engine_exit);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL_GPL(crypto_engine_निकास);
 
 MODULE_LICENSE("GPL");
 MODULE_DESCRIPTION("Crypto hardware engine framework");

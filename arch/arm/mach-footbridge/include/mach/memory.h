@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  *  arch/arm/mach-footbridge/include/mach/memory.h
  *
@@ -9,53 +10,53 @@
  *   31-Dec-1997 RMK	Fixed definitions to reduce warnings.
  *   17-May-1998 DAG	Added __virt_to_bus and __bus_to_virt functions.
  *   21-Nov-1998 RMK	Changed __virt_to_bus and __bus_to_virt to macros.
- *   21-Mar-1999 RMK	Added PAGE_OFFSET for co285 architecture.
+ *   21-Mar-1999 RMK	Added PAGE_OFFSET क्रम co285 architecture.
  *			Renamed to memory.h
  *			Moved PAGE_OFFSET and TASK_SIZE here
  */
-#ifndef __ASM_ARCH_MEMORY_H
-#define __ASM_ARCH_MEMORY_H
+#अगर_अघोषित __ASM_ARCH_MEMORY_H
+#घोषणा __ASM_ARCH_MEMORY_H
 
 
-#if defined(CONFIG_FOOTBRIDGE_ADDIN)
+#अगर defined(CONFIG_FOOTBRIDGE_ADDIN)
 /*
  * If we may be using add-in footbridge mode, then we must
  * use the out-of-line translation that makes use of the
  * PCI BAR
  */
-#ifndef __ASSEMBLY__
-extern unsigned long __virt_to_bus(unsigned long);
-extern unsigned long __bus_to_virt(unsigned long);
-extern unsigned long __pfn_to_bus(unsigned long);
-extern unsigned long __bus_to_pfn(unsigned long);
-#endif
-#define __virt_to_bus	__virt_to_bus
-#define __bus_to_virt	__bus_to_virt
+#अगर_अघोषित __ASSEMBLY__
+बाह्य अचिन्हित दीर्घ __virt_to_bus(अचिन्हित दीर्घ);
+बाह्य अचिन्हित दीर्घ __bus_to_virt(अचिन्हित दीर्घ);
+बाह्य अचिन्हित दीर्घ __pfn_to_bus(अचिन्हित दीर्घ);
+बाह्य अचिन्हित दीर्घ __bus_to_pfn(अचिन्हित दीर्घ);
+#पूर्ण_अगर
+#घोषणा __virt_to_bus	__virt_to_bus
+#घोषणा __bus_to_virt	__bus_to_virt
 
-#elif defined(CONFIG_FOOTBRIDGE_HOST)
+#या_अगर defined(CONFIG_FOOTBRIDGE_HOST)
 
 /*
- * The footbridge is programmed to expose the system RAM at 0xe0000000.
+ * The footbridge is programmed to expose the प्रणाली RAM at 0xe0000000.
  * The requirement is that the RAM isn't placed at bus address 0, which
  * would clash with VGA cards.
  */
-#define BUS_OFFSET		0xe0000000
-#define __virt_to_bus(x)	((x) + (BUS_OFFSET - PAGE_OFFSET))
-#define __bus_to_virt(x)	((x) - (BUS_OFFSET - PAGE_OFFSET))
-#define __pfn_to_bus(x)		(__pfn_to_phys(x) + (BUS_OFFSET - PHYS_OFFSET))
-#define __bus_to_pfn(x)		__phys_to_pfn((x) - (BUS_OFFSET - PHYS_OFFSET))
+#घोषणा BUS_OFFSET		0xe0000000
+#घोषणा __virt_to_bus(x)	((x) + (BUS_OFFSET - PAGE_OFFSET))
+#घोषणा __bus_to_virt(x)	((x) - (BUS_OFFSET - PAGE_OFFSET))
+#घोषणा __pfn_to_bus(x)		(__pfn_to_phys(x) + (BUS_OFFSET - PHYS_OFFSET))
+#घोषणा __bus_to_pfn(x)		__phys_to_pfn((x) - (BUS_OFFSET - PHYS_OFFSET))
 
-#else
+#अन्यथा
 
-#error "Undefined footbridge mode"
+#त्रुटि "Undefined footbridge mode"
 
-#endif
+#पूर्ण_अगर
 
 /*
  * Cache flushing area.
  */
-#define FLUSH_BASE		0xf9000000
+#घोषणा FLUSH_BASE		0xf9000000
 
-#define FLUSH_BASE_PHYS		0x50000000
+#घोषणा FLUSH_BASE_PHYS		0x50000000
 
-#endif
+#पूर्ण_अगर

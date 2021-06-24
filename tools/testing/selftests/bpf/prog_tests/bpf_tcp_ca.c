@@ -1,280 +1,281 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /* Copyright (c) 2019 Facebook */
 
-#include <linux/err.h>
-#include <netinet/tcp.h>
-#include <test_progs.h>
-#include "bpf_dctcp.skel.h"
-#include "bpf_cubic.skel.h"
-#include "bpf_tcp_nogpl.skel.h"
+#समावेश <linux/err.h>
+#समावेश <netinet/tcp.h>
+#समावेश <test_progs.h>
+#समावेश "bpf_dctcp.skel.h"
+#समावेश "bpf_cubic.skel.h"
+#समावेश "bpf_tcp_nogpl.skel.h"
 
-#define min(a, b) ((a) < (b) ? (a) : (b))
+#घोषणा min(a, b) ((a) < (b) ? (a) : (b))
 
-static const unsigned int total_bytes = 10 * 1024 * 1024;
-static const struct timeval timeo_sec = { .tv_sec = 10 };
-static const size_t timeo_optlen = sizeof(timeo_sec);
-static int expected_stg = 0xeB9F;
-static int stop, duration;
+अटल स्थिर अचिन्हित पूर्णांक total_bytes = 10 * 1024 * 1024;
+अटल स्थिर काष्ठा समयval समयo_sec = अणु .tv_sec = 10 पूर्ण;
+अटल स्थिर माप_प्रकार समयo_optlen = माप(समयo_sec);
+अटल पूर्णांक expected_stg = 0xeB9F;
+अटल पूर्णांक stop, duration;
 
-static int settimeo(int fd)
-{
-	int err;
+अटल पूर्णांक समय_रखोo(पूर्णांक fd)
+अणु
+	पूर्णांक err;
 
-	err = setsockopt(fd, SOL_SOCKET, SO_RCVTIMEO, &timeo_sec,
-			 timeo_optlen);
-	if (CHECK(err == -1, "setsockopt(fd, SO_RCVTIMEO)", "errno:%d\n",
-		  errno))
-		return -1;
+	err = setsockopt(fd, SOL_SOCKET, SO_RCVTIMEO, &समयo_sec,
+			 समयo_optlen);
+	अगर (CHECK(err == -1, "setsockopt(fd, SO_RCVTIMEO)", "errno:%d\n",
+		  त्रुटि_सं))
+		वापस -1;
 
-	err = setsockopt(fd, SOL_SOCKET, SO_SNDTIMEO, &timeo_sec,
-			 timeo_optlen);
-	if (CHECK(err == -1, "setsockopt(fd, SO_SNDTIMEO)", "errno:%d\n",
-		  errno))
-		return -1;
+	err = setsockopt(fd, SOL_SOCKET, SO_SNDTIMEO, &समयo_sec,
+			 समयo_optlen);
+	अगर (CHECK(err == -1, "setsockopt(fd, SO_SNDTIMEO)", "errno:%d\n",
+		  त्रुटि_सं))
+		वापस -1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int settcpca(int fd, const char *tcp_ca)
-{
-	int err;
+अटल पूर्णांक settcpca(पूर्णांक fd, स्थिर अक्षर *tcp_ca)
+अणु
+	पूर्णांक err;
 
-	err = setsockopt(fd, IPPROTO_TCP, TCP_CONGESTION, tcp_ca, strlen(tcp_ca));
-	if (CHECK(err == -1, "setsockopt(fd, TCP_CONGESTION)", "errno:%d\n",
-		  errno))
-		return -1;
+	err = setsockopt(fd, IPPROTO_TCP, TCP_CONGESTION, tcp_ca, म_माप(tcp_ca));
+	अगर (CHECK(err == -1, "setsockopt(fd, TCP_CONGESTION)", "errno:%d\n",
+		  त्रुटि_सं))
+		वापस -1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void *server(void *arg)
-{
-	int lfd = (int)(long)arg, err = 0, fd;
-	ssize_t nr_sent = 0, bytes = 0;
-	char batch[1500];
+अटल व्योम *server(व्योम *arg)
+अणु
+	पूर्णांक lfd = (पूर्णांक)(दीर्घ)arg, err = 0, fd;
+	sमाप_प्रकार nr_sent = 0, bytes = 0;
+	अक्षर batch[1500];
 
-	fd = accept(lfd, NULL, NULL);
-	while (fd == -1) {
-		if (errno == EINTR)
-			continue;
-		err = -errno;
-		goto done;
-	}
+	fd = accept(lfd, शून्य, शून्य);
+	जबतक (fd == -1) अणु
+		अगर (त्रुटि_सं == EINTR)
+			जारी;
+		err = -त्रुटि_सं;
+		जाओ करोne;
+	पूर्ण
 
-	if (settimeo(fd)) {
-		err = -errno;
-		goto done;
-	}
+	अगर (समय_रखोo(fd)) अणु
+		err = -त्रुटि_सं;
+		जाओ करोne;
+	पूर्ण
 
-	while (bytes < total_bytes && !READ_ONCE(stop)) {
+	जबतक (bytes < total_bytes && !READ_ONCE(stop)) अणु
 		nr_sent = send(fd, &batch,
-			       min(total_bytes - bytes, sizeof(batch)), 0);
-		if (nr_sent == -1 && errno == EINTR)
-			continue;
-		if (nr_sent == -1) {
-			err = -errno;
-			break;
-		}
+			       min(total_bytes - bytes, माप(batch)), 0);
+		अगर (nr_sent == -1 && त्रुटि_सं == EINTR)
+			जारी;
+		अगर (nr_sent == -1) अणु
+			err = -त्रुटि_सं;
+			अवरोध;
+		पूर्ण
 		bytes += nr_sent;
-	}
+	पूर्ण
 
 	CHECK(bytes != total_bytes, "send", "%zd != %u nr_sent:%zd errno:%d\n",
-	      bytes, total_bytes, nr_sent, errno);
+	      bytes, total_bytes, nr_sent, त्रुटि_सं);
 
-done:
-	if (fd != -1)
-		close(fd);
-	if (err) {
+करोne:
+	अगर (fd != -1)
+		बंद(fd);
+	अगर (err) अणु
 		WRITE_ONCE(stop, 1);
-		return ERR_PTR(err);
-	}
-	return NULL;
-}
+		वापस ERR_PTR(err);
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
-static void do_test(const char *tcp_ca, const struct bpf_map *sk_stg_map)
-{
-	struct sockaddr_in6 sa6 = {};
-	ssize_t nr_recv = 0, bytes = 0;
-	int lfd = -1, fd = -1;
-	pthread_t srv_thread;
-	socklen_t addrlen = sizeof(sa6);
-	void *thread_ret;
-	char batch[1500];
-	int err;
+अटल व्योम करो_test(स्थिर अक्षर *tcp_ca, स्थिर काष्ठा bpf_map *sk_stg_map)
+अणु
+	काष्ठा sockaddr_in6 sa6 = अणुपूर्ण;
+	sमाप_प्रकार nr_recv = 0, bytes = 0;
+	पूर्णांक lfd = -1, fd = -1;
+	pthपढ़ो_t srv_thपढ़ो;
+	socklen_t addrlen = माप(sa6);
+	व्योम *thपढ़ो_ret;
+	अक्षर batch[1500];
+	पूर्णांक err;
 
 	WRITE_ONCE(stop, 0);
 
 	lfd = socket(AF_INET6, SOCK_STREAM, 0);
-	if (CHECK(lfd == -1, "socket", "errno:%d\n", errno))
-		return;
+	अगर (CHECK(lfd == -1, "socket", "errno:%d\n", त्रुटि_सं))
+		वापस;
 	fd = socket(AF_INET6, SOCK_STREAM, 0);
-	if (CHECK(fd == -1, "socket", "errno:%d\n", errno)) {
-		close(lfd);
-		return;
-	}
+	अगर (CHECK(fd == -1, "socket", "errno:%d\n", त्रुटि_सं)) अणु
+		बंद(lfd);
+		वापस;
+	पूर्ण
 
-	if (settcpca(lfd, tcp_ca) || settcpca(fd, tcp_ca) ||
-	    settimeo(lfd) || settimeo(fd))
-		goto done;
+	अगर (settcpca(lfd, tcp_ca) || settcpca(fd, tcp_ca) ||
+	    समय_रखोo(lfd) || समय_रखोo(fd))
+		जाओ करोne;
 
-	/* bind, listen and start server thread to accept */
+	/* bind, listen and start server thपढ़ो to accept */
 	sa6.sin6_family = AF_INET6;
 	sa6.sin6_addr = in6addr_loopback;
-	err = bind(lfd, (struct sockaddr *)&sa6, addrlen);
-	if (CHECK(err == -1, "bind", "errno:%d\n", errno))
-		goto done;
-	err = getsockname(lfd, (struct sockaddr *)&sa6, &addrlen);
-	if (CHECK(err == -1, "getsockname", "errno:%d\n", errno))
-		goto done;
+	err = bind(lfd, (काष्ठा sockaddr *)&sa6, addrlen);
+	अगर (CHECK(err == -1, "bind", "errno:%d\n", त्रुटि_सं))
+		जाओ करोne;
+	err = माला_लोockname(lfd, (काष्ठा sockaddr *)&sa6, &addrlen);
+	अगर (CHECK(err == -1, "getsockname", "errno:%d\n", त्रुटि_सं))
+		जाओ करोne;
 	err = listen(lfd, 1);
-	if (CHECK(err == -1, "listen", "errno:%d\n", errno))
-		goto done;
+	अगर (CHECK(err == -1, "listen", "errno:%d\n", त्रुटि_सं))
+		जाओ करोne;
 
-	if (sk_stg_map) {
+	अगर (sk_stg_map) अणु
 		err = bpf_map_update_elem(bpf_map__fd(sk_stg_map), &fd,
 					  &expected_stg, BPF_NOEXIST);
-		if (CHECK(err, "bpf_map_update_elem(sk_stg_map)",
-			  "err:%d errno:%d\n", err, errno))
-			goto done;
-	}
+		अगर (CHECK(err, "bpf_map_update_elem(sk_stg_map)",
+			  "err:%d errno:%d\n", err, त्रुटि_सं))
+			जाओ करोne;
+	पूर्ण
 
 	/* connect to server */
-	err = connect(fd, (struct sockaddr *)&sa6, addrlen);
-	if (CHECK(err == -1, "connect", "errno:%d\n", errno))
-		goto done;
+	err = connect(fd, (काष्ठा sockaddr *)&sa6, addrlen);
+	अगर (CHECK(err == -1, "connect", "errno:%d\n", त्रुटि_सं))
+		जाओ करोne;
 
-	if (sk_stg_map) {
-		int tmp_stg;
+	अगर (sk_stg_map) अणु
+		पूर्णांक पंचांगp_stg;
 
 		err = bpf_map_lookup_elem(bpf_map__fd(sk_stg_map), &fd,
-					  &tmp_stg);
-		if (CHECK(!err || errno != ENOENT,
+					  &पंचांगp_stg);
+		अगर (CHECK(!err || त्रुटि_सं != ENOENT,
 			  "bpf_map_lookup_elem(sk_stg_map)",
-			  "err:%d errno:%d\n", err, errno))
-			goto done;
-	}
+			  "err:%d errno:%d\n", err, त्रुटि_सं))
+			जाओ करोne;
+	पूर्ण
 
-	err = pthread_create(&srv_thread, NULL, server, (void *)(long)lfd);
-	if (CHECK(err != 0, "pthread_create", "err:%d errno:%d\n", err, errno))
-		goto done;
+	err = pthपढ़ो_create(&srv_thपढ़ो, शून्य, server, (व्योम *)(दीर्घ)lfd);
+	अगर (CHECK(err != 0, "pthread_create", "err:%d errno:%d\n", err, त्रुटि_सं))
+		जाओ करोne;
 
 	/* recv total_bytes */
-	while (bytes < total_bytes && !READ_ONCE(stop)) {
+	जबतक (bytes < total_bytes && !READ_ONCE(stop)) अणु
 		nr_recv = recv(fd, &batch,
-			       min(total_bytes - bytes, sizeof(batch)), 0);
-		if (nr_recv == -1 && errno == EINTR)
-			continue;
-		if (nr_recv == -1)
-			break;
+			       min(total_bytes - bytes, माप(batch)), 0);
+		अगर (nr_recv == -1 && त्रुटि_सं == EINTR)
+			जारी;
+		अगर (nr_recv == -1)
+			अवरोध;
 		bytes += nr_recv;
-	}
+	पूर्ण
 
 	CHECK(bytes != total_bytes, "recv", "%zd != %u nr_recv:%zd errno:%d\n",
-	      bytes, total_bytes, nr_recv, errno);
+	      bytes, total_bytes, nr_recv, त्रुटि_सं);
 
 	WRITE_ONCE(stop, 1);
-	pthread_join(srv_thread, &thread_ret);
-	CHECK(IS_ERR(thread_ret), "pthread_join", "thread_ret:%ld",
-	      PTR_ERR(thread_ret));
-done:
-	close(lfd);
-	close(fd);
-}
+	pthपढ़ो_join(srv_thपढ़ो, &thपढ़ो_ret);
+	CHECK(IS_ERR(thपढ़ो_ret), "pthread_join", "thread_ret:%ld",
+	      PTR_ERR(thपढ़ो_ret));
+करोne:
+	बंद(lfd);
+	बंद(fd);
+पूर्ण
 
-static void test_cubic(void)
-{
-	struct bpf_cubic *cubic_skel;
-	struct bpf_link *link;
+अटल व्योम test_cubic(व्योम)
+अणु
+	काष्ठा bpf_cubic *cubic_skel;
+	काष्ठा bpf_link *link;
 
-	cubic_skel = bpf_cubic__open_and_load();
-	if (CHECK(!cubic_skel, "bpf_cubic__open_and_load", "failed\n"))
-		return;
+	cubic_skel = bpf_cubic__खोलो_and_load();
+	अगर (CHECK(!cubic_skel, "bpf_cubic__open_and_load", "failed\n"))
+		वापस;
 
-	link = bpf_map__attach_struct_ops(cubic_skel->maps.cubic);
-	if (CHECK(IS_ERR(link), "bpf_map__attach_struct_ops", "err:%ld\n",
-		  PTR_ERR(link))) {
+	link = bpf_map__attach_काष्ठा_ops(cubic_skel->maps.cubic);
+	अगर (CHECK(IS_ERR(link), "bpf_map__attach_struct_ops", "err:%ld\n",
+		  PTR_ERR(link))) अणु
 		bpf_cubic__destroy(cubic_skel);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	do_test("bpf_cubic", NULL);
+	करो_test("bpf_cubic", शून्य);
 
 	bpf_link__destroy(link);
 	bpf_cubic__destroy(cubic_skel);
-}
+पूर्ण
 
-static void test_dctcp(void)
-{
-	struct bpf_dctcp *dctcp_skel;
-	struct bpf_link *link;
+अटल व्योम test_dctcp(व्योम)
+अणु
+	काष्ठा bpf_dctcp *dctcp_skel;
+	काष्ठा bpf_link *link;
 
-	dctcp_skel = bpf_dctcp__open_and_load();
-	if (CHECK(!dctcp_skel, "bpf_dctcp__open_and_load", "failed\n"))
-		return;
+	dctcp_skel = bpf_dctcp__खोलो_and_load();
+	अगर (CHECK(!dctcp_skel, "bpf_dctcp__open_and_load", "failed\n"))
+		वापस;
 
-	link = bpf_map__attach_struct_ops(dctcp_skel->maps.dctcp);
-	if (CHECK(IS_ERR(link), "bpf_map__attach_struct_ops", "err:%ld\n",
-		  PTR_ERR(link))) {
+	link = bpf_map__attach_काष्ठा_ops(dctcp_skel->maps.dctcp);
+	अगर (CHECK(IS_ERR(link), "bpf_map__attach_struct_ops", "err:%ld\n",
+		  PTR_ERR(link))) अणु
 		bpf_dctcp__destroy(dctcp_skel);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	do_test("bpf_dctcp", dctcp_skel->maps.sk_stg_map);
+	करो_test("bpf_dctcp", dctcp_skel->maps.sk_stg_map);
 	CHECK(dctcp_skel->bss->stg_result != expected_stg,
 	      "Unexpected stg_result", "stg_result (%x) != expected_stg (%x)\n",
 	      dctcp_skel->bss->stg_result, expected_stg);
 
 	bpf_link__destroy(link);
 	bpf_dctcp__destroy(dctcp_skel);
-}
+पूर्ण
 
-static char *err_str;
-static bool found;
+अटल अक्षर *err_str;
+अटल bool found;
 
-static int libbpf_debug_print(enum libbpf_print_level level,
-			      const char *format, va_list args)
-{
-	char *log_buf;
+अटल पूर्णांक libbpf_debug_prपूर्णांक(क्रमागत libbpf_prपूर्णांक_level level,
+			      स्थिर अक्षर *क्रमmat, बहु_सूची args)
+अणु
+	अक्षर *log_buf;
 
-	if (level != LIBBPF_WARN ||
-	    strcmp(format, "libbpf: \n%s\n")) {
-		vprintf(format, args);
-		return 0;
-	}
+	अगर (level != LIBBPF_WARN ||
+	    म_भेद(क्रमmat, "libbpf: \n%s\n")) अणु
+		भ_लिखो(क्रमmat, args);
+		वापस 0;
+	पूर्ण
 
-	log_buf = va_arg(args, char *);
-	if (!log_buf)
-		goto out;
-	if (err_str && strstr(log_buf, err_str) != NULL)
+	log_buf = बहु_तर्क(args, अक्षर *);
+	अगर (!log_buf)
+		जाओ out;
+	अगर (err_str && म_माला(log_buf, err_str) != शून्य)
 		found = true;
 out:
-	printf(format, log_buf);
-	return 0;
-}
+	म_लिखो(क्रमmat, log_buf);
+	वापस 0;
+पूर्ण
 
-static void test_invalid_license(void)
-{
-	libbpf_print_fn_t old_print_fn;
-	struct bpf_tcp_nogpl *skel;
+अटल व्योम test_invalid_license(व्योम)
+अणु
+	libbpf_prपूर्णांक_fn_t old_prपूर्णांक_fn;
+	काष्ठा bpf_tcp_nogpl *skel;
 
 	err_str = "struct ops programs must have a GPL compatible license";
 	found = false;
-	old_print_fn = libbpf_set_print(libbpf_debug_print);
+	old_prपूर्णांक_fn = libbpf_set_prपूर्णांक(libbpf_debug_prपूर्णांक);
 
-	skel = bpf_tcp_nogpl__open_and_load();
-	ASSERT_NULL(skel, "bpf_tcp_nogpl");
+	skel = bpf_tcp_nogpl__खोलो_and_load();
+	ASSERT_शून्य(skel, "bpf_tcp_nogpl");
 	ASSERT_EQ(found, true, "expected_err_msg");
 
 	bpf_tcp_nogpl__destroy(skel);
-	libbpf_set_print(old_print_fn);
-}
+	libbpf_set_prपूर्णांक(old_prपूर्णांक_fn);
+पूर्ण
 
-void test_bpf_tcp_ca(void)
-{
-	if (test__start_subtest("dctcp"))
+व्योम test_bpf_tcp_ca(व्योम)
+अणु
+	अगर (test__start_subtest("dctcp"))
 		test_dctcp();
-	if (test__start_subtest("cubic"))
+	अगर (test__start_subtest("cubic"))
 		test_cubic();
-	if (test__start_subtest("invalid_license"))
+	अगर (test__start_subtest("invalid_license"))
 		test_invalid_license();
-}
+पूर्ण

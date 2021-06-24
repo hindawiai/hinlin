@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * builtin-probe.c
  *
@@ -6,544 +7,544 @@
  *
  * Written by Masami Hiramatsu <mhiramat@redhat.com>
  */
-#include <sys/utsname.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <errno.h>
-#include <stdio.h>
-#include <unistd.h>
-#include <stdlib.h>
-#include <string.h>
+#समावेश <sys/utsname.h>
+#समावेश <sys/types.h>
+#समावेश <sys/स्थिति.स>
+#समावेश <fcntl.h>
+#समावेश <त्रुटिसं.स>
+#समावेश <मानकपन.स>
+#समावेश <unistd.h>
+#समावेश <मानककोष.स>
+#समावेश <माला.स>
 
-#include "builtin.h"
-#include "namespaces.h"
-#include "util/build-id.h"
-#include "util/strlist.h"
-#include "util/strfilter.h"
-#include "util/symbol_conf.h"
-#include "util/debug.h"
-#include <subcmd/parse-options.h>
-#include "util/probe-finder.h"
-#include "util/probe-event.h"
-#include "util/probe-file.h"
-#include <linux/string.h>
-#include <linux/zalloc.h>
+#समावेश "builtin.h"
+#समावेश "namespaces.h"
+#समावेश "util/build-id.h"
+#समावेश "util/strlist.h"
+#समावेश "util/strfilter.h"
+#समावेश "util/symbol_conf.h"
+#समावेश "util/debug.h"
+#समावेश <subcmd/parse-options.h>
+#समावेश "util/probe-finder.h"
+#समावेश "util/probe-event.h"
+#समावेश "util/probe-file.h"
+#समावेश <linux/माला.स>
+#समावेश <linux/zभाग.स>
 
-#define DEFAULT_VAR_FILTER "!__k???tab_* & !__crc_*"
-#define DEFAULT_FUNC_FILTER "!_*"
-#define DEFAULT_LIST_FILTER "*"
+#घोषणा DEFAULT_VAR_FILTER "!__k???tab_* & !__crc_*"
+#घोषणा DEFAULT_FUNC_FILTER "!_*"
+#घोषणा DEFAULT_LIST_FILTER "*"
 
-/* Session management structure */
-static struct {
-	int command;	/* Command short_name */
+/* Session management काष्ठाure */
+अटल काष्ठा अणु
+	पूर्णांक command;	/* Command लघु_name */
 	bool list_events;
 	bool uprobes;
 	bool quiet;
 	bool target_used;
-	int nevents;
-	struct perf_probe_event events[MAX_PROBES];
-	struct line_range line_range;
-	char *target;
-	struct strfilter *filter;
-	struct nsinfo *nsi;
-} params;
+	पूर्णांक nevents;
+	काष्ठा perf_probe_event events[MAX_PROBES];
+	काष्ठा line_range line_range;
+	अक्षर *target;
+	काष्ठा strfilter *filter;
+	काष्ठा nsinfo *nsi;
+पूर्ण params;
 
 /* Parse an event definition. Note that any error must die. */
-static int parse_probe_event(const char *str)
-{
-	struct perf_probe_event *pev = &params.events[params.nevents];
-	int ret;
+अटल पूर्णांक parse_probe_event(स्थिर अक्षर *str)
+अणु
+	काष्ठा perf_probe_event *pev = &params.events[params.nevents];
+	पूर्णांक ret;
 
 	pr_debug("probe-definition(%d): %s\n", params.nevents, str);
-	if (++params.nevents == MAX_PROBES) {
+	अगर (++params.nevents == MAX_PROBES) अणु
 		pr_err("Too many probes (> %d) were specified.", MAX_PROBES);
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
 	pev->uprobes = params.uprobes;
-	if (params.target) {
+	अगर (params.target) अणु
 		pev->target = strdup(params.target);
-		if (!pev->target)
-			return -ENOMEM;
+		अगर (!pev->target)
+			वापस -ENOMEM;
 		params.target_used = true;
-	}
+	पूर्ण
 
 	pev->nsi = nsinfo__get(params.nsi);
 
-	/* Parse a perf-probe command into event */
+	/* Parse a perf-probe command पूर्णांकo event */
 	ret = parse_perf_probe_command(str, pev);
 	pr_debug("%d arguments\n", pev->nargs);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int params_add_filter(const char *str)
-{
-	const char *err = NULL;
-	int ret = 0;
+अटल पूर्णांक params_add_filter(स्थिर अक्षर *str)
+अणु
+	स्थिर अक्षर *err = शून्य;
+	पूर्णांक ret = 0;
 
 	pr_debug2("Add filter: %s\n", str);
-	if (!params.filter) {
+	अगर (!params.filter) अणु
 		params.filter = strfilter__new(str, &err);
-		if (!params.filter)
+		अगर (!params.filter)
 			ret = err ? -EINVAL : -ENOMEM;
-	} else
+	पूर्ण अन्यथा
 		ret = strfilter__or(params.filter, str, &err);
 
-	if (ret == -EINVAL) {
+	अगर (ret == -EINVAL) अणु
 		pr_err("Filter parse error at %td.\n", err - str + 1);
 		pr_err("Source: \"%s\"\n", str);
-		pr_err("         %*c\n", (int)(err - str + 1), '^');
-	}
+		pr_err("         %*c\n", (पूर्णांक)(err - str + 1), '^');
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int set_target(const char *ptr)
-{
-	int found = 0;
-	const char *buf;
+अटल पूर्णांक set_target(स्थिर अक्षर *ptr)
+अणु
+	पूर्णांक found = 0;
+	स्थिर अक्षर *buf;
 
 	/*
-	 * The first argument after options can be an absolute path
+	 * The first argument after options can be an असलolute path
 	 * to an executable / library or kernel module.
 	 *
 	 * TODO: Support relative path, and $PATH, $LD_LIBRARY_PATH,
-	 * short module name.
+	 * लघु module name.
 	 */
-	if (!params.target && ptr && *ptr == '/') {
+	अगर (!params.target && ptr && *ptr == '/') अणु
 		params.target = strdup(ptr);
-		if (!params.target)
-			return -ENOMEM;
+		अगर (!params.target)
+			वापस -ENOMEM;
 		params.target_used = false;
 
 		found = 1;
-		buf = ptr + (strlen(ptr) - 3);
+		buf = ptr + (म_माप(ptr) - 3);
 
-		if (strcmp(buf, ".ko"))
+		अगर (म_भेद(buf, ".ko"))
 			params.uprobes = true;
 
-	}
+	पूर्ण
 
-	return found;
-}
+	वापस found;
+पूर्ण
 
-static int parse_probe_event_argv(int argc, const char **argv)
-{
-	int i, len, ret, found_target;
-	char *buf;
+अटल पूर्णांक parse_probe_event_argv(पूर्णांक argc, स्थिर अक्षर **argv)
+अणु
+	पूर्णांक i, len, ret, found_target;
+	अक्षर *buf;
 
 	found_target = set_target(argv[0]);
-	if (found_target < 0)
-		return found_target;
+	अगर (found_target < 0)
+		वापस found_target;
 
-	if (found_target && argc == 1)
-		return 0;
+	अगर (found_target && argc == 1)
+		वापस 0;
 
 	/* Bind up rest arguments */
 	len = 0;
-	for (i = 0; i < argc; i++) {
-		if (i == 0 && found_target)
-			continue;
+	क्रम (i = 0; i < argc; i++) अणु
+		अगर (i == 0 && found_target)
+			जारी;
 
-		len += strlen(argv[i]) + 1;
-	}
+		len += म_माप(argv[i]) + 1;
+	पूर्ण
 	buf = zalloc(len + 1);
-	if (buf == NULL)
-		return -ENOMEM;
+	अगर (buf == शून्य)
+		वापस -ENOMEM;
 	len = 0;
-	for (i = 0; i < argc; i++) {
-		if (i == 0 && found_target)
-			continue;
+	क्रम (i = 0; i < argc; i++) अणु
+		अगर (i == 0 && found_target)
+			जारी;
 
-		len += sprintf(&buf[len], "%s ", argv[i]);
-	}
+		len += प्र_लिखो(&buf[len], "%s ", argv[i]);
+	पूर्ण
 	ret = parse_probe_event(buf);
-	free(buf);
-	return ret;
-}
+	मुक्त(buf);
+	वापस ret;
+पूर्ण
 
-static int opt_set_target(const struct option *opt, const char *str,
-			int unset __maybe_unused)
-{
-	int ret = -ENOENT;
-	char *tmp;
+अटल पूर्णांक opt_set_target(स्थिर काष्ठा option *opt, स्थिर अक्षर *str,
+			पूर्णांक unset __maybe_unused)
+अणु
+	पूर्णांक ret = -ENOENT;
+	अक्षर *पंचांगp;
 
-	if  (str) {
-		if (!strcmp(opt->long_name, "exec"))
+	अगर  (str) अणु
+		अगर (!म_भेद(opt->दीर्घ_name, "exec"))
 			params.uprobes = true;
-		else if (!strcmp(opt->long_name, "module"))
+		अन्यथा अगर (!म_भेद(opt->दीर्घ_name, "module"))
 			params.uprobes = false;
-		else
-			return ret;
+		अन्यथा
+			वापस ret;
 
-		/* Expand given path to absolute path, except for modulename */
-		if (params.uprobes || strchr(str, '/')) {
-			tmp = nsinfo__realpath(str, params.nsi);
-			if (!tmp) {
+		/* Expand given path to असलolute path, except क्रम modulename */
+		अगर (params.uprobes || म_अक्षर(str, '/')) अणु
+			पंचांगp = nsinfo__realpath(str, params.nsi);
+			अगर (!पंचांगp) अणु
 				pr_warning("Failed to get the absolute path of %s: %m\n", str);
-				return ret;
-			}
-		} else {
-			tmp = strdup(str);
-			if (!tmp)
-				return -ENOMEM;
-		}
-		free(params.target);
-		params.target = tmp;
+				वापस ret;
+			पूर्ण
+		पूर्ण अन्यथा अणु
+			पंचांगp = strdup(str);
+			अगर (!पंचांगp)
+				वापस -ENOMEM;
+		पूर्ण
+		मुक्त(params.target);
+		params.target = पंचांगp;
 		params.target_used = false;
 		ret = 0;
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int opt_set_target_ns(const struct option *opt __maybe_unused,
-			     const char *str, int unset __maybe_unused)
-{
-	int ret = -ENOENT;
+अटल पूर्णांक opt_set_target_ns(स्थिर काष्ठा option *opt __maybe_unused,
+			     स्थिर अक्षर *str, पूर्णांक unset __maybe_unused)
+अणु
+	पूर्णांक ret = -ENOENT;
 	pid_t ns_pid;
-	struct nsinfo *nsip;
+	काष्ठा nsinfo *nsip;
 
-	if (str) {
-		errno = 0;
-		ns_pid = (pid_t)strtol(str, NULL, 10);
-		if (errno != 0) {
-			ret = -errno;
+	अगर (str) अणु
+		त्रुटि_सं = 0;
+		ns_pid = (pid_t)म_से_दीर्घ(str, शून्य, 10);
+		अगर (त्रुटि_सं != 0) अणु
+			ret = -त्रुटि_सं;
 			pr_warning("Failed to parse %s as a pid: %s\n", str,
-				   strerror(errno));
-			return ret;
-		}
+				   म_त्रुटि(त्रुटि_सं));
+			वापस ret;
+		पूर्ण
 		nsip = nsinfo__new(ns_pid);
-		if (nsip && nsip->need_setns)
+		अगर (nsip && nsip->need_setns)
 			params.nsi = nsinfo__get(nsip);
 		nsinfo__put(nsip);
 
 		ret = 0;
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 
 /* Command option callbacks */
 
-#ifdef HAVE_DWARF_SUPPORT
-static int opt_show_lines(const struct option *opt,
-			  const char *str, int unset __maybe_unused)
-{
-	int ret = 0;
+#अगर_घोषित HAVE_DWARF_SUPPORT
+अटल पूर्णांक opt_show_lines(स्थिर काष्ठा option *opt,
+			  स्थिर अक्षर *str, पूर्णांक unset __maybe_unused)
+अणु
+	पूर्णांक ret = 0;
 
-	if (!str)
-		return 0;
+	अगर (!str)
+		वापस 0;
 
-	if (params.command == 'L') {
+	अगर (params.command == 'L') अणु
 		pr_warning("Warning: more than one --line options are"
 			   " detected. Only the first one is valid.\n");
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	params.command = opt->short_name;
+	params.command = opt->लघु_name;
 	ret = parse_line_range_desc(str, &params.line_range);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int opt_show_vars(const struct option *opt,
-			 const char *str, int unset __maybe_unused)
-{
-	struct perf_probe_event *pev = &params.events[params.nevents];
-	int ret;
+अटल पूर्णांक opt_show_vars(स्थिर काष्ठा option *opt,
+			 स्थिर अक्षर *str, पूर्णांक unset __maybe_unused)
+अणु
+	काष्ठा perf_probe_event *pev = &params.events[params.nevents];
+	पूर्णांक ret;
 
-	if (!str)
-		return 0;
+	अगर (!str)
+		वापस 0;
 
 	ret = parse_probe_event(str);
-	if (!ret && pev->nargs != 0) {
+	अगर (!ret && pev->nargs != 0) अणु
 		pr_err("  Error: '--vars' doesn't accept arguments.\n");
-		return -EINVAL;
-	}
-	params.command = opt->short_name;
+		वापस -EINVAL;
+	पूर्ण
+	params.command = opt->लघु_name;
 
-	return ret;
-}
-#else
-# define opt_show_lines NULL
-# define opt_show_vars NULL
-#endif
-static int opt_add_probe_event(const struct option *opt,
-			      const char *str, int unset __maybe_unused)
-{
-	if (str) {
-		params.command = opt->short_name;
-		return parse_probe_event(str);
-	}
+	वापस ret;
+पूर्ण
+#अन्यथा
+# define opt_show_lines शून्य
+# define opt_show_vars शून्य
+#पूर्ण_अगर
+अटल पूर्णांक opt_add_probe_event(स्थिर काष्ठा option *opt,
+			      स्थिर अक्षर *str, पूर्णांक unset __maybe_unused)
+अणु
+	अगर (str) अणु
+		params.command = opt->लघु_name;
+		वापस parse_probe_event(str);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int opt_set_filter_with_command(const struct option *opt,
-				       const char *str, int unset)
-{
-	if (!unset)
-		params.command = opt->short_name;
+अटल पूर्णांक opt_set_filter_with_command(स्थिर काष्ठा option *opt,
+				       स्थिर अक्षर *str, पूर्णांक unset)
+अणु
+	अगर (!unset)
+		params.command = opt->लघु_name;
 
-	if (str)
-		return params_add_filter(str);
+	अगर (str)
+		वापस params_add_filter(str);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int opt_set_filter(const struct option *opt __maybe_unused,
-			  const char *str, int unset __maybe_unused)
-{
-	if (str)
-		return params_add_filter(str);
+अटल पूर्णांक opt_set_filter(स्थिर काष्ठा option *opt __maybe_unused,
+			  स्थिर अक्षर *str, पूर्णांक unset __maybe_unused)
+अणु
+	अगर (str)
+		वापस params_add_filter(str);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int init_params(void)
-{
-	return line_range__init(&params.line_range);
-}
+अटल पूर्णांक init_params(व्योम)
+अणु
+	वापस line_range__init(&params.line_range);
+पूर्ण
 
-static void cleanup_params(void)
-{
-	int i;
+अटल व्योम cleanup_params(व्योम)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < params.nevents; i++)
+	क्रम (i = 0; i < params.nevents; i++)
 		clear_perf_probe_event(params.events + i);
 	line_range__clear(&params.line_range);
-	free(params.target);
+	मुक्त(params.target);
 	strfilter__delete(params.filter);
 	nsinfo__put(params.nsi);
-	memset(&params, 0, sizeof(params));
-}
+	स_रखो(&params, 0, माप(params));
+पूर्ण
 
-static void pr_err_with_code(const char *msg, int err)
-{
-	char sbuf[STRERR_BUFSIZE];
+अटल व्योम pr_err_with_code(स्थिर अक्षर *msg, पूर्णांक err)
+अणु
+	अक्षर sbuf[STRERR_बफ_मानE];
 
 	pr_err("%s", msg);
 	pr_debug(" Reason: %s (Code: %d)",
-		 str_error_r(-err, sbuf, sizeof(sbuf)), err);
+		 str_error_r(-err, sbuf, माप(sbuf)), err);
 	pr_err("\n");
-}
+पूर्ण
 
-static int perf_add_probe_events(struct perf_probe_event *pevs, int npevs)
-{
-	int ret;
-	int i, k;
-	const char *event = NULL, *group = NULL;
+अटल पूर्णांक perf_add_probe_events(काष्ठा perf_probe_event *pevs, पूर्णांक npevs)
+अणु
+	पूर्णांक ret;
+	पूर्णांक i, k;
+	स्थिर अक्षर *event = शून्य, *group = शून्य;
 
 	ret = init_probe_symbol_maps(pevs->uprobes);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	ret = convert_perf_probe_events(pevs, npevs);
-	if (ret < 0)
-		goto out_cleanup;
+	अगर (ret < 0)
+		जाओ out_cleanup;
 
-	if (params.command == 'D') {	/* it shows definition */
+	अगर (params.command == 'D') अणु	/* it shows definition */
 		ret = show_probe_trace_events(pevs, npevs);
-		goto out_cleanup;
-	}
+		जाओ out_cleanup;
+	पूर्ण
 
 	ret = apply_perf_probe_events(pevs, npevs);
-	if (ret < 0)
-		goto out_cleanup;
+	अगर (ret < 0)
+		जाओ out_cleanup;
 
-	for (i = k = 0; i < npevs; i++)
+	क्रम (i = k = 0; i < npevs; i++)
 		k += pevs[i].ntevs;
 
 	pr_info("Added new event%s\n", (k > 1) ? "s:" : ":");
-	for (i = 0; i < npevs; i++) {
-		struct perf_probe_event *pev = &pevs[i];
+	क्रम (i = 0; i < npevs; i++) अणु
+		काष्ठा perf_probe_event *pev = &pevs[i];
 
-		for (k = 0; k < pev->ntevs; k++) {
-			struct probe_trace_event *tev = &pev->tevs[k];
+		क्रम (k = 0; k < pev->ntevs; k++) अणु
+			काष्ठा probe_trace_event *tev = &pev->tevs[k];
 			/* Skipped events have no event name */
-			if (!tev->event)
-				continue;
+			अगर (!tev->event)
+				जारी;
 
-			/* We use tev's name for showing new events */
+			/* We use tev's name क्रम showing new events */
 			show_perf_probe_event(tev->group, tev->event, pev,
-					      tev->point.module, false);
+					      tev->poपूर्णांक.module, false);
 
 			/* Save the last valid name */
 			event = tev->event;
 			group = tev->group;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	/* Note that it is possible to skip all events because of blacklist */
-	if (event) {
+	अगर (event) अणु
 		/* Show how to use the event. */
 		pr_info("\nYou can now use it in all perf tools, such as:\n\n");
 		pr_info("\tperf record -e %s:%s -aR sleep 1\n\n", group, event);
-	}
+	पूर्ण
 
 out_cleanup:
 	cleanup_perf_probe_events(pevs, npevs);
-	exit_probe_symbol_maps();
-	return ret;
-}
+	निकास_probe_symbol_maps();
+	वापस ret;
+पूर्ण
 
-static int del_perf_probe_caches(struct strfilter *filter)
-{
-	struct probe_cache *cache;
-	struct strlist *bidlist;
-	struct str_node *nd;
-	int ret;
+अटल पूर्णांक del_perf_probe_caches(काष्ठा strfilter *filter)
+अणु
+	काष्ठा probe_cache *cache;
+	काष्ठा strlist *bidlist;
+	काष्ठा str_node *nd;
+	पूर्णांक ret;
 
 	bidlist = build_id_cache__list_all(false);
-	if (!bidlist) {
-		ret = -errno;
+	अगर (!bidlist) अणु
+		ret = -त्रुटि_सं;
 		pr_debug("Failed to get buildids: %d\n", ret);
-		return ret ?: -ENOMEM;
-	}
+		वापस ret ?: -ENOMEM;
+	पूर्ण
 
-	strlist__for_each_entry(nd, bidlist) {
-		cache = probe_cache__new(nd->s, NULL);
-		if (!cache)
-			continue;
-		if (probe_cache__filter_purge(cache, filter) < 0 ||
+	strlist__क्रम_each_entry(nd, bidlist) अणु
+		cache = probe_cache__new(nd->s, शून्य);
+		अगर (!cache)
+			जारी;
+		अगर (probe_cache__filter_purge(cache, filter) < 0 ||
 		    probe_cache__commit(cache) < 0)
 			pr_warning("Failed to remove entries for %s\n", nd->s);
 		probe_cache__delete(cache);
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int perf_del_probe_events(struct strfilter *filter)
-{
-	int ret, ret2, ufd = -1, kfd = -1;
-	char *str = strfilter__string(filter);
-	struct strlist *klist = NULL, *ulist = NULL;
-	struct str_node *ent;
+अटल पूर्णांक perf_del_probe_events(काष्ठा strfilter *filter)
+अणु
+	पूर्णांक ret, ret2, ufd = -1, kfd = -1;
+	अक्षर *str = strfilter__string(filter);
+	काष्ठा strlist *klist = शून्य, *ulist = शून्य;
+	काष्ठा str_node *ent;
 
-	if (!str)
-		return -EINVAL;
+	अगर (!str)
+		वापस -EINVAL;
 
 	pr_debug("Delete filter: \'%s\'\n", str);
 
-	if (probe_conf.cache)
-		return del_perf_probe_caches(filter);
+	अगर (probe_conf.cache)
+		वापस del_perf_probe_caches(filter);
 
 	/* Get current event names */
-	ret = probe_file__open_both(&kfd, &ufd, PF_FL_RW);
-	if (ret < 0)
-		goto out;
+	ret = probe_file__खोलो_both(&kfd, &ufd, PF_FL_RW);
+	अगर (ret < 0)
+		जाओ out;
 
-	klist = strlist__new(NULL, NULL);
-	ulist = strlist__new(NULL, NULL);
-	if (!klist || !ulist) {
+	klist = strlist__new(शून्य, शून्य);
+	ulist = strlist__new(शून्य, शून्य);
+	अगर (!klist || !ulist) अणु
 		ret = -ENOMEM;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	ret = probe_file__get_events(kfd, filter, klist);
-	if (ret == 0) {
-		strlist__for_each_entry(ent, klist)
+	अगर (ret == 0) अणु
+		strlist__क्रम_each_entry(ent, klist)
 			pr_info("Removed event: %s\n", ent->s);
 
 		ret = probe_file__del_strlist(kfd, klist);
-		if (ret < 0)
-			goto error;
-	} else if (ret == -ENOMEM)
-		goto error;
+		अगर (ret < 0)
+			जाओ error;
+	पूर्ण अन्यथा अगर (ret == -ENOMEM)
+		जाओ error;
 
 	ret2 = probe_file__get_events(ufd, filter, ulist);
-	if (ret2 == 0) {
-		strlist__for_each_entry(ent, ulist)
+	अगर (ret2 == 0) अणु
+		strlist__क्रम_each_entry(ent, ulist)
 			pr_info("Removed event: %s\n", ent->s);
 
 		ret2 = probe_file__del_strlist(ufd, ulist);
-		if (ret2 < 0)
-			goto error;
-	} else if (ret2 == -ENOMEM)
-		goto error;
+		अगर (ret2 < 0)
+			जाओ error;
+	पूर्ण अन्यथा अगर (ret2 == -ENOMEM)
+		जाओ error;
 
-	if (ret == -ENOENT && ret2 == -ENOENT)
+	अगर (ret == -ENOENT && ret2 == -ENOENT)
 		pr_warning("\"%s\" does not hit any event.\n", str);
-	else
+	अन्यथा
 		ret = 0;
 
 error:
-	if (kfd >= 0)
-		close(kfd);
-	if (ufd >= 0)
-		close(ufd);
+	अगर (kfd >= 0)
+		बंद(kfd);
+	अगर (ufd >= 0)
+		बंद(ufd);
 out:
 	strlist__delete(klist);
 	strlist__delete(ulist);
-	free(str);
+	मुक्त(str);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-#ifdef HAVE_DWARF_SUPPORT
-#define PROBEDEF_STR	\
+#अगर_घोषित HAVE_DWARF_SUPPORT
+#घोषणा PROBEDEF_STR	\
 	"[EVENT=]FUNC[@SRC][+OFF|%return|:RL|;PT]|SRC:AL|SRC;PT [[NAME=]ARG ...]"
-#else
-#define PROBEDEF_STR	"[EVENT=]FUNC[+OFF|%return] [[NAME=]ARG ...]"
-#endif
+#अन्यथा
+#घोषणा PROBEDEF_STR	"[EVENT=]FUNC[+OFF|%return] [[NAME=]ARG ...]"
+#पूर्ण_अगर
 
 
-static int
-__cmd_probe(int argc, const char **argv)
-{
-	const char * const probe_usage[] = {
+अटल पूर्णांक
+__cmd_probe(पूर्णांक argc, स्थिर अक्षर **argv)
+अणु
+	स्थिर अक्षर * स्थिर probe_usage[] = अणु
 		"perf probe [<options>] 'PROBEDEF' ['PROBEDEF' ...]",
 		"perf probe [<options>] --add 'PROBEDEF' [--add 'PROBEDEF' ...]",
 		"perf probe [<options>] --del '[GROUP:]EVENT' ...",
 		"perf probe --list [GROUP:]EVENT ...",
-#ifdef HAVE_DWARF_SUPPORT
+#अगर_घोषित HAVE_DWARF_SUPPORT
 		"perf probe [<options>] --line 'LINEDESC'",
 		"perf probe [<options>] --vars 'PROBEPOINT'",
-#endif
+#पूर्ण_अगर
 		"perf probe [<options>] --funcs",
-		NULL
-	};
-	struct option options[] = {
+		शून्य
+	पूर्ण;
+	काष्ठा option options[] = अणु
 	OPT_INCR('v', "verbose", &verbose,
 		    "be more verbose (show parsed arguments, etc)"),
 	OPT_BOOLEAN('q', "quiet", &params.quiet,
 		    "be quiet (do not show any messages)"),
-	OPT_CALLBACK_DEFAULT('l', "list", NULL, "[GROUP:]EVENT",
+	OPT_CALLBACK_DEFAULT('l', "list", शून्य, "[GROUP:]EVENT",
 			     "list up probe events",
 			     opt_set_filter_with_command, DEFAULT_LIST_FILTER),
-	OPT_CALLBACK('d', "del", NULL, "[GROUP:]EVENT", "delete a probe event.",
+	OPT_CALLBACK('d', "del", शून्य, "[GROUP:]EVENT", "delete a probe event.",
 		     opt_set_filter_with_command),
-	OPT_CALLBACK('a', "add", NULL, PROBEDEF_STR,
+	OPT_CALLBACK('a', "add", शून्य, PROBEDEF_STR,
 		"probe point definition, where\n"
 		"\t\tGROUP:\tGroup name (optional)\n"
 		"\t\tEVENT:\tEvent name\n"
 		"\t\tFUNC:\tFunction name\n"
 		"\t\tOFF:\tOffset from function entry (in byte)\n"
 		"\t\t%return:\tPut the probe at function return\n"
-#ifdef HAVE_DWARF_SUPPORT
+#अगर_घोषित HAVE_DWARF_SUPPORT
 		"\t\tSRC:\tSource code path\n"
 		"\t\tRL:\tRelative line number from function entry.\n"
 		"\t\tAL:\tAbsolute line number in file.\n"
 		"\t\tPT:\tLazy expression of line code.\n"
 		"\t\tARG:\tProbe argument (local variable name or\n"
 		"\t\t\tkprobe-tracer argument format.)\n",
-#else
+#अन्यथा
 		"\t\tARG:\tProbe argument (kprobe-tracer argument format.)\n",
-#endif
+#पूर्ण_अगर
 		opt_add_probe_event),
-	OPT_CALLBACK('D', "definition", NULL, PROBEDEF_STR,
+	OPT_CALLBACK('D', "definition", शून्य, PROBEDEF_STR,
 		"Show trace event definition of given traceevent for k/uprobe_events.",
 		opt_add_probe_event),
-	OPT_BOOLEAN('f', "force", &probe_conf.force_add, "forcibly add events"
+	OPT_BOOLEAN('f', "force", &probe_conf.क्रमce_add, "forcibly add events"
 		    " with existing name"),
-	OPT_CALLBACK('L', "line", NULL,
+	OPT_CALLBACK('L', "line", शून्य,
 		     "FUNC[:RLN[+NUM|-RLN2]]|SRC:ALN[+NUM|-ALN2]",
 		     "Show source code lines.", opt_show_lines),
-	OPT_CALLBACK('V', "vars", NULL,
+	OPT_CALLBACK('V', "vars", शून्य,
 		     "FUNC[@SRC][+OFF|%return|:RL|;PT]|SRC:AL|SRC;PT",
 		     "Show accessible variables on PROBEDEF", opt_show_vars),
 	OPT_BOOLEAN('\0', "externs", &probe_conf.show_ext_vars,
@@ -554,22 +555,22 @@ __cmd_probe(int argc, const char **argv)
 		   "file", "vmlinux pathname"),
 	OPT_STRING('s', "source", &symbol_conf.source_prefix,
 		   "directory", "path to kernel source"),
-	OPT_BOOLEAN('\0', "no-inlines", &probe_conf.no_inlines,
+	OPT_BOOLEAN('\0', "no-inlines", &probe_conf.no_अंतरभूतs,
 		"Don't search inlined functions"),
 	OPT__DRY_RUN(&probe_event_dry_run),
 	OPT_INTEGER('\0', "max-probes", &probe_conf.max_probes,
 		 "Set how many probe points can be found for a probe."),
-	OPT_CALLBACK_DEFAULT('F', "funcs", NULL, "[FILTER]",
+	OPT_CALLBACK_DEFAULT('F', "funcs", शून्य, "[FILTER]",
 			     "Show potential probe-able functions.",
 			     opt_set_filter_with_command, DEFAULT_FUNC_FILTER),
-	OPT_CALLBACK('\0', "filter", NULL,
+	OPT_CALLBACK('\0', "filter", शून्य,
 		     "[!]FILTER", "Set a filter (with --vars/funcs only)\n"
 		     "\t\t\t(default: \"" DEFAULT_VAR_FILTER "\" for --vars,\n"
 		     "\t\t\t \"" DEFAULT_FUNC_FILTER "\" for --funcs)",
 		     opt_set_filter),
-	OPT_CALLBACK('x', "exec", NULL, "executable|path",
+	OPT_CALLBACK('x', "exec", शून्य, "executable|path",
 			"target executable name or path", opt_set_target),
-	OPT_CALLBACK('m', "module", NULL, "modname|path",
+	OPT_CALLBACK('m', "module", शून्य, "modname|path",
 		"target module name (for online) or path (for offline)",
 		opt_set_target),
 	OPT_BOOLEAN(0, "demangle", &symbol_conf.demangle,
@@ -579,20 +580,20 @@ __cmd_probe(int argc, const char **argv)
 	OPT_BOOLEAN(0, "cache", &probe_conf.cache, "Manipulate probe cache"),
 	OPT_STRING(0, "symfs", &symbol_conf.symfs, "directory",
 		   "Look for files with symbols relative to this directory"),
-	OPT_CALLBACK(0, "target-ns", NULL, "pid",
+	OPT_CALLBACK(0, "target-ns", शून्य, "pid",
 		     "target pid for namespace contexts", opt_set_target_ns),
 	OPT_END()
-	};
-	int ret;
+	पूर्ण;
+	पूर्णांक ret;
 
 	set_option_flag(options, 'a', "add", PARSE_OPT_EXCLUSIVE);
 	set_option_flag(options, 'd', "del", PARSE_OPT_EXCLUSIVE);
 	set_option_flag(options, 'D', "definition", PARSE_OPT_EXCLUSIVE);
 	set_option_flag(options, 'l', "list", PARSE_OPT_EXCLUSIVE);
-#ifdef HAVE_DWARF_SUPPORT
+#अगर_घोषित HAVE_DWARF_SUPPORT
 	set_option_flag(options, 'L', "line", PARSE_OPT_EXCLUSIVE);
 	set_option_flag(options, 'V', "vars", PARSE_OPT_EXCLUSIVE);
-#else
+#अन्यथा
 # define set_nobuild(s, l, c) set_option_nobuild(options, s, l, "NO_DWARF=1", c)
 	set_nobuild('L', "line", false);
 	set_nobuild('V', "vars", false);
@@ -602,137 +603,137 @@ __cmd_probe(int argc, const char **argv)
 	set_nobuild('s', "source", true);
 	set_nobuild('\0', "no-inlines", true);
 # undef set_nobuild
-#endif
+#पूर्ण_अगर
 	set_option_flag(options, 'F', "funcs", PARSE_OPT_EXCLUSIVE);
 
 	argc = parse_options(argc, argv, options, probe_usage,
 			     PARSE_OPT_STOP_AT_NON_OPTION);
-	if (argc > 0) {
-		if (strcmp(argv[0], "-") == 0) {
+	अगर (argc > 0) अणु
+		अगर (म_भेद(argv[0], "-") == 0) अणु
 			usage_with_options_msg(probe_usage, options,
 				"'-' is not supported.\n");
-		}
-		if (params.command && params.command != 'a') {
+		पूर्ण
+		अगर (params.command && params.command != 'a') अणु
 			usage_with_options_msg(probe_usage, options,
 				"another command except --add is set.\n");
-		}
+		पूर्ण
 		ret = parse_probe_event_argv(argc, argv);
-		if (ret < 0) {
+		अगर (ret < 0) अणु
 			pr_err_with_code("  Error: Command Parse Error.", ret);
-			return ret;
-		}
+			वापस ret;
+		पूर्ण
 		params.command = 'a';
-	}
+	पूर्ण
 
-	if (params.quiet) {
-		if (verbose != 0) {
+	अगर (params.quiet) अणु
+		अगर (verbose != 0) अणु
 			pr_err("  Error: -v and -q are exclusive.\n");
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 		verbose = -1;
-	}
+	पूर्ण
 
-	if (probe_conf.max_probes == 0)
+	अगर (probe_conf.max_probes == 0)
 		probe_conf.max_probes = MAX_PROBES;
 
 	/*
-	 * Only consider the user's kernel image path if given.
+	 * Only consider the user's kernel image path अगर given.
 	 */
-	symbol_conf.try_vmlinux_path = (symbol_conf.vmlinux_name == NULL);
+	symbol_conf.try_vmlinux_path = (symbol_conf.vmlinux_name == शून्य);
 
 	/*
-	 * Except for --list, --del and --add, other command doesn't depend
-	 * nor change running kernel. So if user gives offline vmlinux,
+	 * Except क्रम --list, --del and --add, other command करोesn't depend
+	 * nor change running kernel. So अगर user gives offline vmlinux,
 	 * ignore its buildid.
 	 */
-	if (!strchr("lda", params.command) && symbol_conf.vmlinux_name)
+	अगर (!म_अक्षर("lda", params.command) && symbol_conf.vmlinux_name)
 		symbol_conf.ignore_vmlinux_buildid = true;
 
-	switch (params.command) {
-	case 'l':
-		if (params.uprobes) {
+	चयन (params.command) अणु
+	हाल 'l':
+		अगर (params.uprobes) अणु
 			pr_err("  Error: Don't use --list with --exec.\n");
 			parse_options_usage(probe_usage, options, "l", true);
-			parse_options_usage(NULL, options, "x", true);
-			return -EINVAL;
-		}
+			parse_options_usage(शून्य, options, "x", true);
+			वापस -EINVAL;
+		पूर्ण
 		ret = show_perf_probe_events(params.filter);
-		if (ret < 0)
+		अगर (ret < 0)
 			pr_err_with_code("  Error: Failed to show event list.", ret);
-		return ret;
-	case 'F':
+		वापस ret;
+	हाल 'F':
 		ret = show_available_funcs(params.target, params.nsi,
 					   params.filter, params.uprobes);
-		if (ret < 0)
+		अगर (ret < 0)
 			pr_err_with_code("  Error: Failed to show functions.", ret);
-		return ret;
-#ifdef HAVE_DWARF_SUPPORT
-	case 'L':
+		वापस ret;
+#अगर_घोषित HAVE_DWARF_SUPPORT
+	हाल 'L':
 		ret = show_line_range(&params.line_range, params.target,
 				      params.nsi, params.uprobes);
-		if (ret < 0)
+		अगर (ret < 0)
 			pr_err_with_code("  Error: Failed to show lines.", ret);
-		return ret;
-	case 'V':
-		if (!params.filter)
+		वापस ret;
+	हाल 'V':
+		अगर (!params.filter)
 			params.filter = strfilter__new(DEFAULT_VAR_FILTER,
-						       NULL);
+						       शून्य);
 
 		ret = show_available_vars(params.events, params.nevents,
 					  params.filter);
-		if (ret < 0)
+		अगर (ret < 0)
 			pr_err_with_code("  Error: Failed to show vars.", ret);
-		return ret;
-#endif
-	case 'd':
+		वापस ret;
+#पूर्ण_अगर
+	हाल 'd':
 		ret = perf_del_probe_events(params.filter);
-		if (ret < 0) {
+		अगर (ret < 0) अणु
 			pr_err_with_code("  Error: Failed to delete events.", ret);
-			return ret;
-		}
-		break;
-	case 'D':
-	case 'a':
+			वापस ret;
+		पूर्ण
+		अवरोध;
+	हाल 'D':
+	हाल 'a':
 
 		/* Ensure the last given target is used */
-		if (params.target && !params.target_used) {
+		अगर (params.target && !params.target_used) अणु
 			pr_err("  Error: -x/-m must follow the probe definitions.\n");
 			parse_options_usage(probe_usage, options, "m", true);
-			parse_options_usage(NULL, options, "x", true);
-			return -EINVAL;
-		}
+			parse_options_usage(शून्य, options, "x", true);
+			वापस -EINVAL;
+		पूर्ण
 
 		ret = perf_add_probe_events(params.events, params.nevents);
-		if (ret < 0) {
+		अगर (ret < 0) अणु
 
 			/*
 			 * When perf_add_probe_events() fails it calls
 			 * cleanup_perf_probe_events(pevs, npevs), i.e.
 			 * cleanup_perf_probe_events(params.events, params.nevents), which
 			 * will call clear_perf_probe_event(), so set nevents to zero
-			 * to avoid cleanup_params() to call clear_perf_probe_event() again
+			 * to aव्योम cleanup_params() to call clear_perf_probe_event() again
 			 * on the same pevs.
 			 */
 			params.nevents = 0;
 			pr_err_with_code("  Error: Failed to add events.", ret);
-			return ret;
-		}
-		break;
-	default:
+			वापस ret;
+		पूर्ण
+		अवरोध;
+	शेष:
 		usage_with_options(probe_usage, options);
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-int cmd_probe(int argc, const char **argv)
-{
-	int ret;
+पूर्णांक cmd_probe(पूर्णांक argc, स्थिर अक्षर **argv)
+अणु
+	पूर्णांक ret;
 
 	ret = init_params();
-	if (!ret) {
+	अगर (!ret) अणु
 		ret = __cmd_probe(argc, argv);
 		cleanup_params();
-	}
+	पूर्ण
 
-	return ret < 0 ? ret : 0;
-}
+	वापस ret < 0 ? ret : 0;
+पूर्ण

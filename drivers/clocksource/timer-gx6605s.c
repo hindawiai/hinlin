@@ -1,155 +1,156 @@
-// SPDX-License-Identifier: GPL-2.0
-// Copyright (C) 2018 Hangzhou C-SKY Microsystems co.,ltd.
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+// Copyright (C) 2018 Hangzhou C-SKY Microप्रणालीs co.,ltd.
 
-#include <linux/init.h>
-#include <linux/interrupt.h>
-#include <linux/sched_clock.h>
+#समावेश <linux/init.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/sched_घड़ी.h>
 
-#include "timer-of.h"
+#समावेश "timer-of.h"
 
-#define CLKSRC_OFFSET	0x40
+#घोषणा CLKSRC_OFFSET	0x40
 
-#define TIMER_STATUS	0x00
-#define TIMER_VALUE	0x04
-#define TIMER_CONTRL	0x10
-#define TIMER_CONFIG	0x20
-#define TIMER_DIV	0x24
-#define TIMER_INI	0x28
+#घोषणा TIMER_STATUS	0x00
+#घोषणा TIMER_VALUE	0x04
+#घोषणा TIMER_CONTRL	0x10
+#घोषणा TIMER_CONFIG	0x20
+#घोषणा TIMER_DIV	0x24
+#घोषणा TIMER_INI	0x28
 
-#define GX6605S_STATUS_CLR	BIT(0)
-#define GX6605S_CONTRL_RST	BIT(0)
-#define GX6605S_CONTRL_START	BIT(1)
-#define GX6605S_CONFIG_EN	BIT(0)
-#define GX6605S_CONFIG_IRQ_EN	BIT(1)
+#घोषणा GX6605S_STATUS_CLR	BIT(0)
+#घोषणा GX6605S_CONTRL_RST	BIT(0)
+#घोषणा GX6605S_CONTRL_START	BIT(1)
+#घोषणा GX6605S_CONFIG_EN	BIT(0)
+#घोषणा GX6605S_CONFIG_IRQ_EN	BIT(1)
 
-static irqreturn_t gx6605s_timer_interrupt(int irq, void *dev)
-{
-	struct clock_event_device *ce = dev;
-	void __iomem *base = timer_of_base(to_timer_of(ce));
+अटल irqवापस_t gx6605s_समयr_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev)
+अणु
+	काष्ठा घड़ी_event_device *ce = dev;
+	व्योम __iomem *base = समयr_of_base(to_समयr_of(ce));
 
-	writel_relaxed(GX6605S_STATUS_CLR, base + TIMER_STATUS);
-	writel_relaxed(0, base + TIMER_INI);
+	ग_लिखोl_relaxed(GX6605S_STATUS_CLR, base + TIMER_STATUS);
+	ग_लिखोl_relaxed(0, base + TIMER_INI);
 
 	ce->event_handler(ce);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static int gx6605s_timer_set_oneshot(struct clock_event_device *ce)
-{
-	void __iomem *base = timer_of_base(to_timer_of(ce));
+अटल पूर्णांक gx6605s_समयr_set_oneshot(काष्ठा घड़ी_event_device *ce)
+अणु
+	व्योम __iomem *base = समयr_of_base(to_समयr_of(ce));
 
 	/* reset and stop counter */
-	writel_relaxed(GX6605S_CONTRL_RST, base + TIMER_CONTRL);
+	ग_लिखोl_relaxed(GX6605S_CONTRL_RST, base + TIMER_CONTRL);
 
 	/* enable with irq and start */
-	writel_relaxed(GX6605S_CONFIG_EN | GX6605S_CONFIG_IRQ_EN,
+	ग_लिखोl_relaxed(GX6605S_CONFIG_EN | GX6605S_CONFIG_IRQ_EN,
 		       base + TIMER_CONFIG);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int gx6605s_timer_set_next_event(unsigned long delta,
-					struct clock_event_device *ce)
-{
-	void __iomem *base = timer_of_base(to_timer_of(ce));
+अटल पूर्णांक gx6605s_समयr_set_next_event(अचिन्हित दीर्घ delta,
+					काष्ठा घड़ी_event_device *ce)
+अणु
+	व्योम __iomem *base = समयr_of_base(to_समयr_of(ce));
 
-	/* use reset to pause timer */
-	writel_relaxed(GX6605S_CONTRL_RST, base + TIMER_CONTRL);
+	/* use reset to छोड़ो समयr */
+	ग_लिखोl_relaxed(GX6605S_CONTRL_RST, base + TIMER_CONTRL);
 
-	/* config next timeout value */
-	writel_relaxed(ULONG_MAX - delta, base + TIMER_INI);
-	writel_relaxed(GX6605S_CONTRL_START, base + TIMER_CONTRL);
+	/* config next समयout value */
+	ग_लिखोl_relaxed(अच_दीर्घ_उच्च - delta, base + TIMER_INI);
+	ग_लिखोl_relaxed(GX6605S_CONTRL_START, base + TIMER_CONTRL);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int gx6605s_timer_shutdown(struct clock_event_device *ce)
-{
-	void __iomem *base = timer_of_base(to_timer_of(ce));
+अटल पूर्णांक gx6605s_समयr_shutकरोwn(काष्ठा घड़ी_event_device *ce)
+अणु
+	व्योम __iomem *base = समयr_of_base(to_समयr_of(ce));
 
-	writel_relaxed(0, base + TIMER_CONTRL);
-	writel_relaxed(0, base + TIMER_CONFIG);
+	ग_लिखोl_relaxed(0, base + TIMER_CONTRL);
+	ग_लिखोl_relaxed(0, base + TIMER_CONFIG);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct timer_of to = {
+अटल काष्ठा समयr_of to = अणु
 	.flags = TIMER_OF_IRQ | TIMER_OF_BASE | TIMER_OF_CLOCK,
-	.clkevt = {
+	.clkevt = अणु
 		.rating			= 300,
 		.features		= CLOCK_EVT_FEAT_DYNIRQ |
 					  CLOCK_EVT_FEAT_ONESHOT,
-		.set_state_shutdown	= gx6605s_timer_shutdown,
-		.set_state_oneshot	= gx6605s_timer_set_oneshot,
-		.set_next_event		= gx6605s_timer_set_next_event,
+		.set_state_shutकरोwn	= gx6605s_समयr_shutकरोwn,
+		.set_state_oneshot	= gx6605s_समयr_set_oneshot,
+		.set_next_event		= gx6605s_समयr_set_next_event,
 		.cpumask		= cpu_possible_mask,
-	},
-	.of_irq = {
-		.handler		= gx6605s_timer_interrupt,
+	पूर्ण,
+	.of_irq = अणु
+		.handler		= gx6605s_समयr_पूर्णांकerrupt,
 		.flags			= IRQF_TIMER | IRQF_IRQPOLL,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static u64 notrace gx6605s_sched_clock_read(void)
-{
-	void __iomem *base;
+अटल u64 notrace gx6605s_sched_घड़ी_पढ़ो(व्योम)
+अणु
+	व्योम __iomem *base;
 
-	base = timer_of_base(&to) + CLKSRC_OFFSET;
+	base = समयr_of_base(&to) + CLKSRC_OFFSET;
 
-	return (u64)readl_relaxed(base + TIMER_VALUE);
-}
+	वापस (u64)पढ़ोl_relaxed(base + TIMER_VALUE);
+पूर्ण
 
-static void gx6605s_clkevt_init(void __iomem *base)
-{
-	writel_relaxed(0, base + TIMER_DIV);
-	writel_relaxed(0, base + TIMER_CONFIG);
+अटल व्योम gx6605s_clkevt_init(व्योम __iomem *base)
+अणु
+	ग_लिखोl_relaxed(0, base + TIMER_DIV);
+	ग_लिखोl_relaxed(0, base + TIMER_CONFIG);
 
-	clockevents_config_and_register(&to.clkevt, timer_of_rate(&to), 2,
-					ULONG_MAX);
-}
+	घड़ीevents_config_and_रेजिस्टर(&to.clkevt, समयr_of_rate(&to), 2,
+					अच_दीर्घ_उच्च);
+पूर्ण
 
-static int gx6605s_clksrc_init(void __iomem *base)
-{
-	writel_relaxed(0, base + TIMER_DIV);
-	writel_relaxed(0, base + TIMER_INI);
+अटल पूर्णांक gx6605s_clksrc_init(व्योम __iomem *base)
+अणु
+	ग_लिखोl_relaxed(0, base + TIMER_DIV);
+	ग_लिखोl_relaxed(0, base + TIMER_INI);
 
-	writel_relaxed(GX6605S_CONTRL_RST, base + TIMER_CONTRL);
+	ग_लिखोl_relaxed(GX6605S_CONTRL_RST, base + TIMER_CONTRL);
 
-	writel_relaxed(GX6605S_CONFIG_EN, base + TIMER_CONFIG);
+	ग_लिखोl_relaxed(GX6605S_CONFIG_EN, base + TIMER_CONFIG);
 
-	writel_relaxed(GX6605S_CONTRL_START, base + TIMER_CONTRL);
+	ग_लिखोl_relaxed(GX6605S_CONTRL_START, base + TIMER_CONTRL);
 
-	sched_clock_register(gx6605s_sched_clock_read, 32, timer_of_rate(&to));
+	sched_घड़ी_रेजिस्टर(gx6605s_sched_घड़ी_पढ़ो, 32, समयr_of_rate(&to));
 
-	return clocksource_mmio_init(base + TIMER_VALUE, "gx6605s",
-			timer_of_rate(&to), 200, 32, clocksource_mmio_readl_up);
-}
+	वापस घड़ीsource_mmio_init(base + TIMER_VALUE, "gx6605s",
+			समयr_of_rate(&to), 200, 32, घड़ीsource_mmio_पढ़ोl_up);
+पूर्ण
 
-static int __init gx6605s_timer_init(struct device_node *np)
-{
-	int ret;
+अटल पूर्णांक __init gx6605s_समयr_init(काष्ठा device_node *np)
+अणु
+	पूर्णांक ret;
 
 	/*
-	 * The timer driver is for nationalchip gx6605s SOC and there are two
-	 * same timer in gx6605s. We use one for clkevt and another for clksrc.
+	 * The समयr driver is क्रम nationalchip gx6605s SOC and there are two
+	 * same समयr in gx6605s. We use one क्रम clkevt and another क्रम clksrc.
 	 *
-	 * The timer is mmio map to access, so we need give mmio address in dts.
+	 * The समयr is mmio map to access, so we need give mmio address in dts.
 	 *
-	 * It provides a 32bit countup timer and interrupt will be caused by
+	 * It provides a 32bit countup समयr and पूर्णांकerrupt will be caused by
 	 * count-overflow.
-	 * So we need set-next-event by ULONG_MAX - delta in TIMER_INI reg.
+	 * So we need set-next-event by अच_दीर्घ_उच्च - delta in TIMER_INI reg.
 	 *
-	 * The counter at 0x0  offset is clock event.
-	 * The counter at 0x40 offset is clock source.
-	 * They are the same in hardware, just different used by driver.
+	 * The counter at 0x0  offset is घड़ी event.
+	 * The counter at 0x40 offset is घड़ी source.
+	 * They are the same in hardware, just dअगरferent used by driver.
 	 */
-	ret = timer_of_init(np, &to);
-	if (ret)
-		return ret;
+	ret = समयr_of_init(np, &to);
+	अगर (ret)
+		वापस ret;
 
-	gx6605s_clkevt_init(timer_of_base(&to));
+	gx6605s_clkevt_init(समयr_of_base(&to));
 
-	return gx6605s_clksrc_init(timer_of_base(&to) + CLKSRC_OFFSET);
-}
-TIMER_OF_DECLARE(csky_gx6605s_timer, "csky,gx6605s-timer", gx6605s_timer_init);
+	वापस gx6605s_clksrc_init(समयr_of_base(&to) + CLKSRC_OFFSET);
+पूर्ण
+TIMER_OF_DECLARE(csky_gx6605s_समयr, "csky,gx6605s-timer", gx6605s_समयr_init);

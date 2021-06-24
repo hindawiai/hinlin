@@ -1,128 +1,129 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * Based on arch/arm/kernel/signal.c
+ * Based on arch/arm/kernel/संकेत.c
  *
  * Copyright (C) 1995-2009 Russell King
  * Copyright (C) 2012 ARM Ltd.
- * Modified by Will Deacon <will.deacon@arm.com>
+ * Modअगरied by Will Deacon <will.deacon@arm.com>
  */
 
-#include <linux/compat.h>
-#include <linux/signal.h>
-#include <linux/syscalls.h>
-#include <linux/ratelimit.h>
+#समावेश <linux/compat.h>
+#समावेश <linux/संकेत.स>
+#समावेश <linux/syscalls.h>
+#समावेश <linux/ratelimit.h>
 
-#include <asm/esr.h>
-#include <asm/fpsimd.h>
-#include <asm/signal32.h>
-#include <asm/traps.h>
-#include <linux/uaccess.h>
-#include <asm/unistd.h>
-#include <asm/vdso.h>
+#समावेश <यंत्र/esr.h>
+#समावेश <यंत्र/fpsimd.h>
+#समावेश <यंत्र/संकेत32.h>
+#समावेश <यंत्र/traps.h>
+#समावेश <linux/uaccess.h>
+#समावेश <यंत्र/unistd.h>
+#समावेश <यंत्र/vdso.h>
 
-struct compat_vfp_sigframe {
-	compat_ulong_t	magic;
-	compat_ulong_t	size;
-	struct compat_user_vfp {
+काष्ठा compat_vfp_sigframe अणु
+	compat_uदीर्घ_t	magic;
+	compat_uदीर्घ_t	size;
+	काष्ठा compat_user_vfp अणु
 		compat_u64	fpregs[32];
-		compat_ulong_t	fpscr;
-	} ufp;
-	struct compat_user_vfp_exc {
-		compat_ulong_t	fpexc;
-		compat_ulong_t	fpinst;
-		compat_ulong_t	fpinst2;
-	} ufp_exc;
-} __attribute__((__aligned__(8)));
+		compat_uदीर्घ_t	fpscr;
+	पूर्ण ufp;
+	काष्ठा compat_user_vfp_exc अणु
+		compat_uदीर्घ_t	fpexc;
+		compat_uदीर्घ_t	fpinst;
+		compat_uदीर्घ_t	fpinst2;
+	पूर्ण ufp_exc;
+पूर्ण __attribute__((__aligned__(8)));
 
-#define VFP_MAGIC		0x56465001
-#define VFP_STORAGE_SIZE	sizeof(struct compat_vfp_sigframe)
+#घोषणा VFP_MAGIC		0x56465001
+#घोषणा VFP_STORAGE_SIZE	माप(काष्ठा compat_vfp_sigframe)
 
-#define FSR_WRITE_SHIFT		(11)
+#घोषणा FSR_WRITE_SHIFT		(11)
 
-struct compat_aux_sigframe {
-	struct compat_vfp_sigframe	vfp;
+काष्ठा compat_aux_sigframe अणु
+	काष्ठा compat_vfp_sigframe	vfp;
 
-	/* Something that isn't a valid magic number for any coprocessor.  */
-	unsigned long			end_magic;
-} __attribute__((__aligned__(8)));
+	/* Something that isn't a valid magic number क्रम any coprocessor.  */
+	अचिन्हित दीर्घ			end_magic;
+पूर्ण __attribute__((__aligned__(8)));
 
-#define _BLOCKABLE (~(sigmask(SIGKILL) | sigmask(SIGSTOP)))
+#घोषणा _BLOCKABLE (~(sigmask(SIGKILL) | sigmask(SIGSTOP)))
 
-static inline int put_sigset_t(compat_sigset_t __user *uset, sigset_t *set)
-{
+अटल अंतरभूत पूर्णांक put_sigset_t(compat_sigset_t __user *uset, sigset_t *set)
+अणु
 	compat_sigset_t	cset;
 
 	cset.sig[0] = set->sig[0] & 0xffffffffull;
 	cset.sig[1] = set->sig[0] >> 32;
 
-	return copy_to_user(uset, &cset, sizeof(*uset));
-}
+	वापस copy_to_user(uset, &cset, माप(*uset));
+पूर्ण
 
-static inline int get_sigset_t(sigset_t *set,
-			       const compat_sigset_t __user *uset)
-{
+अटल अंतरभूत पूर्णांक get_sigset_t(sigset_t *set,
+			       स्थिर compat_sigset_t __user *uset)
+अणु
 	compat_sigset_t s32;
 
-	if (copy_from_user(&s32, uset, sizeof(*uset)))
-		return -EFAULT;
+	अगर (copy_from_user(&s32, uset, माप(*uset)))
+		वापस -EFAULT;
 
-	set->sig[0] = s32.sig[0] | (((long)s32.sig[1]) << 32);
-	return 0;
-}
+	set->sig[0] = s32.sig[0] | (((दीर्घ)s32.sig[1]) << 32);
+	वापस 0;
+पूर्ण
 
 /*
  * VFP save/restore code.
  *
- * We have to be careful with endianness, since the fpsimd context-switch
- * code operates on 128-bit (Q) register values whereas the compat ABI
- * uses an array of 64-bit (D) registers. Consequently, we need to swap
- * the two halves of each Q register when running on a big-endian CPU.
+ * We have to be careful with endianness, since the fpsimd context-चयन
+ * code operates on 128-bit (Q) रेजिस्टर values whereas the compat ABI
+ * uses an array of 64-bit (D) रेजिस्टरs. Consequently, we need to swap
+ * the two halves of each Q रेजिस्टर when running on a big-endian CPU.
  */
-union __fpsimd_vreg {
-	__uint128_t	raw;
-	struct {
-#ifdef __AARCH64EB__
+जोड़ __fpsimd_vreg अणु
+	__uपूर्णांक128_t	raw;
+	काष्ठा अणु
+#अगर_घोषित __AARCH64EB__
 		u64	hi;
 		u64	lo;
-#else
+#अन्यथा
 		u64	lo;
 		u64	hi;
-#endif
-	};
-};
+#पूर्ण_अगर
+	पूर्ण;
+पूर्ण;
 
-static int compat_preserve_vfp_context(struct compat_vfp_sigframe __user *frame)
-{
-	struct user_fpsimd_state const *fpsimd =
-		&current->thread.uw.fpsimd_state;
-	compat_ulong_t magic = VFP_MAGIC;
-	compat_ulong_t size = VFP_STORAGE_SIZE;
-	compat_ulong_t fpscr, fpexc;
-	int i, err = 0;
+अटल पूर्णांक compat_preserve_vfp_context(काष्ठा compat_vfp_sigframe __user *frame)
+अणु
+	काष्ठा user_fpsimd_state स्थिर *fpsimd =
+		&current->thपढ़ो.uw.fpsimd_state;
+	compat_uदीर्घ_t magic = VFP_MAGIC;
+	compat_uदीर्घ_t size = VFP_STORAGE_SIZE;
+	compat_uदीर्घ_t fpscr, fpexc;
+	पूर्णांक i, err = 0;
 
 	/*
-	 * Save the hardware registers to the fpsimd_state structure.
+	 * Save the hardware रेजिस्टरs to the fpsimd_state काष्ठाure.
 	 * Note that this also saves V16-31, which aren't visible
 	 * in AArch32.
 	 */
-	fpsimd_signal_preserve_current_state();
+	fpsimd_संकेत_preserve_current_state();
 
-	/* Place structure header on the stack */
+	/* Place काष्ठाure header on the stack */
 	__put_user_error(magic, &frame->magic, err);
 	__put_user_error(size, &frame->size, err);
 
 	/*
-	 * Now copy the FP registers. Since the registers are packed,
+	 * Now copy the FP रेजिस्टरs. Since the रेजिस्टरs are packed,
 	 * we can copy the prefix we want (V0-V15) as it is.
 	 */
-	for (i = 0; i < ARRAY_SIZE(frame->ufp.fpregs); i += 2) {
-		union __fpsimd_vreg vreg = {
+	क्रम (i = 0; i < ARRAY_SIZE(frame->ufp.fpregs); i += 2) अणु
+		जोड़ __fpsimd_vreg vreg = अणु
 			.raw = fpsimd->vregs[i >> 1],
-		};
+		पूर्ण;
 
 		__put_user_error(vreg.lo, &frame->ufp.fpregs[i], err);
 		__put_user_error(vreg.hi, &frame->ufp.fpregs[i + 1], err);
-	}
+	पूर्ण
 
 	/* Create an AArch32 fpscr from the fpsr and the fpcr. */
 	fpscr = (fpsimd->fpsr & VFP_FPSCR_STAT_MASK) |
@@ -130,41 +131,41 @@ static int compat_preserve_vfp_context(struct compat_vfp_sigframe __user *frame)
 	__put_user_error(fpscr, &frame->ufp.fpscr, err);
 
 	/*
-	 * The exception register aren't available so we fake up a
-	 * basic FPEXC and zero everything else.
+	 * The exception रेजिस्टर aren't available so we fake up a
+	 * basic FPEXC and zero everything अन्यथा.
 	 */
 	fpexc = (1 << 30);
 	__put_user_error(fpexc, &frame->ufp_exc.fpexc, err);
 	__put_user_error(0, &frame->ufp_exc.fpinst, err);
 	__put_user_error(0, &frame->ufp_exc.fpinst2, err);
 
-	return err ? -EFAULT : 0;
-}
+	वापस err ? -EFAULT : 0;
+पूर्ण
 
-static int compat_restore_vfp_context(struct compat_vfp_sigframe __user *frame)
-{
-	struct user_fpsimd_state fpsimd;
-	compat_ulong_t magic = VFP_MAGIC;
-	compat_ulong_t size = VFP_STORAGE_SIZE;
-	compat_ulong_t fpscr;
-	int i, err = 0;
+अटल पूर्णांक compat_restore_vfp_context(काष्ठा compat_vfp_sigframe __user *frame)
+अणु
+	काष्ठा user_fpsimd_state fpsimd;
+	compat_uदीर्घ_t magic = VFP_MAGIC;
+	compat_uदीर्घ_t size = VFP_STORAGE_SIZE;
+	compat_uदीर्घ_t fpscr;
+	पूर्णांक i, err = 0;
 
 	__get_user_error(magic, &frame->magic, err);
 	__get_user_error(size, &frame->size, err);
 
-	if (err)
-		return -EFAULT;
-	if (magic != VFP_MAGIC || size != VFP_STORAGE_SIZE)
-		return -EINVAL;
+	अगर (err)
+		वापस -EFAULT;
+	अगर (magic != VFP_MAGIC || size != VFP_STORAGE_SIZE)
+		वापस -EINVAL;
 
-	/* Copy the FP registers into the start of the fpsimd_state. */
-	for (i = 0; i < ARRAY_SIZE(frame->ufp.fpregs); i += 2) {
-		union __fpsimd_vreg vreg;
+	/* Copy the FP रेजिस्टरs पूर्णांकo the start of the fpsimd_state. */
+	क्रम (i = 0; i < ARRAY_SIZE(frame->ufp.fpregs); i += 2) अणु
+		जोड़ __fpsimd_vreg vreg;
 
 		__get_user_error(vreg.lo, &frame->ufp.fpregs[i], err);
 		__get_user_error(vreg.hi, &frame->ufp.fpregs[i + 1], err);
 		fpsimd.vregs[i >> 1] = vreg.raw;
-	}
+	पूर्ण
 
 	/* Extract the fpsr and the fpcr from the fpscr */
 	__get_user_error(fpscr, &frame->ufp.fpscr, err);
@@ -172,28 +173,28 @@ static int compat_restore_vfp_context(struct compat_vfp_sigframe __user *frame)
 	fpsimd.fpcr = fpscr & VFP_FPSCR_CTRL_MASK;
 
 	/*
-	 * We don't need to touch the exception register, so
+	 * We करोn't need to touch the exception रेजिस्टर, so
 	 * reload the hardware state.
 	 */
-	if (!err)
+	अगर (!err)
 		fpsimd_update_current_state(&fpsimd);
 
-	return err ? -EFAULT : 0;
-}
+	वापस err ? -EFAULT : 0;
+पूर्ण
 
-static int compat_restore_sigframe(struct pt_regs *regs,
-				   struct compat_sigframe __user *sf)
-{
-	int err;
+अटल पूर्णांक compat_restore_sigframe(काष्ठा pt_regs *regs,
+				   काष्ठा compat_sigframe __user *sf)
+अणु
+	पूर्णांक err;
 	sigset_t set;
-	struct compat_aux_sigframe __user *aux;
-	unsigned long psr;
+	काष्ठा compat_aux_sigframe __user *aux;
+	अचिन्हित दीर्घ psr;
 
 	err = get_sigset_t(&set, &sf->uc.uc_sigmask);
-	if (err == 0) {
-		sigdelsetmask(&set, ~_BLOCKABLE);
+	अगर (err == 0) अणु
+		sigdअन्यथापंचांगask(&set, ~_BLOCKABLE);
 		set_current_blocked(&set);
-	}
+	पूर्ण
 
 	__get_user_error(regs->regs[0], &sf->uc.uc_mcontext.arm_r0, err);
 	__get_user_error(regs->regs[1], &sf->uc.uc_mcontext.arm_r1, err);
@@ -216,90 +217,90 @@ static int compat_restore_sigframe(struct pt_regs *regs,
 	regs->pstate = compat_psr_to_pstate(psr);
 
 	/*
-	 * Avoid compat_sys_sigreturn() restarting.
+	 * Aव्योम compat_sys_sigवापस() restarting.
 	 */
-	forget_syscall(regs);
+	क्रमget_syscall(regs);
 
 	err |= !valid_user_regs(&regs->user_regs, current);
 
-	aux = (struct compat_aux_sigframe __user *) sf->uc.uc_regspace;
-	if (err == 0 && system_supports_fpsimd())
+	aux = (काष्ठा compat_aux_sigframe __user *) sf->uc.uc_regspace;
+	अगर (err == 0 && प्रणाली_supports_fpsimd())
 		err |= compat_restore_vfp_context(&aux->vfp);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-COMPAT_SYSCALL_DEFINE0(sigreturn)
-{
-	struct pt_regs *regs = current_pt_regs();
-	struct compat_sigframe __user *frame;
+COMPAT_SYSCALL_DEFINE0(sigवापस)
+अणु
+	काष्ठा pt_regs *regs = current_pt_regs();
+	काष्ठा compat_sigframe __user *frame;
 
-	/* Always make any pending restarted system calls return -EINTR */
-	current->restart_block.fn = do_no_restart_syscall;
+	/* Always make any pending restarted प्रणाली calls वापस -EINTR */
+	current->restart_block.fn = करो_no_restart_syscall;
 
 	/*
-	 * Since we stacked the signal on a 64-bit boundary,
+	 * Since we stacked the संकेत on a 64-bit boundary,
 	 * then 'sp' should be word aligned here.  If it's
 	 * not, then the user is trying to mess with us.
 	 */
-	if (regs->compat_sp & 7)
-		goto badframe;
+	अगर (regs->compat_sp & 7)
+		जाओ badframe;
 
-	frame = (struct compat_sigframe __user *)regs->compat_sp;
+	frame = (काष्ठा compat_sigframe __user *)regs->compat_sp;
 
-	if (!access_ok(frame, sizeof (*frame)))
-		goto badframe;
+	अगर (!access_ok(frame, माप (*frame)))
+		जाओ badframe;
 
-	if (compat_restore_sigframe(regs, frame))
-		goto badframe;
+	अगर (compat_restore_sigframe(regs, frame))
+		जाओ badframe;
 
-	return regs->regs[0];
+	वापस regs->regs[0];
 
 badframe:
-	arm64_notify_segfault(regs->compat_sp);
-	return 0;
-}
+	arm64_notअगरy_segfault(regs->compat_sp);
+	वापस 0;
+पूर्ण
 
-COMPAT_SYSCALL_DEFINE0(rt_sigreturn)
-{
-	struct pt_regs *regs = current_pt_regs();
-	struct compat_rt_sigframe __user *frame;
+COMPAT_SYSCALL_DEFINE0(rt_sigवापस)
+अणु
+	काष्ठा pt_regs *regs = current_pt_regs();
+	काष्ठा compat_rt_sigframe __user *frame;
 
-	/* Always make any pending restarted system calls return -EINTR */
-	current->restart_block.fn = do_no_restart_syscall;
+	/* Always make any pending restarted प्रणाली calls वापस -EINTR */
+	current->restart_block.fn = करो_no_restart_syscall;
 
 	/*
-	 * Since we stacked the signal on a 64-bit boundary,
+	 * Since we stacked the संकेत on a 64-bit boundary,
 	 * then 'sp' should be word aligned here.  If it's
 	 * not, then the user is trying to mess with us.
 	 */
-	if (regs->compat_sp & 7)
-		goto badframe;
+	अगर (regs->compat_sp & 7)
+		जाओ badframe;
 
-	frame = (struct compat_rt_sigframe __user *)regs->compat_sp;
+	frame = (काष्ठा compat_rt_sigframe __user *)regs->compat_sp;
 
-	if (!access_ok(frame, sizeof (*frame)))
-		goto badframe;
+	अगर (!access_ok(frame, माप (*frame)))
+		जाओ badframe;
 
-	if (compat_restore_sigframe(regs, &frame->sig))
-		goto badframe;
+	अगर (compat_restore_sigframe(regs, &frame->sig))
+		जाओ badframe;
 
-	if (compat_restore_altstack(&frame->sig.uc.uc_stack))
-		goto badframe;
+	अगर (compat_restore_altstack(&frame->sig.uc.uc_stack))
+		जाओ badframe;
 
-	return regs->regs[0];
+	वापस regs->regs[0];
 
 badframe:
-	arm64_notify_segfault(regs->compat_sp);
-	return 0;
-}
+	arm64_notअगरy_segfault(regs->compat_sp);
+	वापस 0;
+पूर्ण
 
-static void __user *compat_get_sigframe(struct ksignal *ksig,
-					struct pt_regs *regs,
-					int framesize)
-{
-	compat_ulong_t sp = sigsp(regs->compat_sp, ksig);
-	void __user *frame;
+अटल व्योम __user *compat_get_sigframe(काष्ठा kसंकेत *ksig,
+					काष्ठा pt_regs *regs,
+					पूर्णांक framesize)
+अणु
+	compat_uदीर्घ_t sp = sigsp(regs->compat_sp, ksig);
+	व्योम __user *frame;
 
 	/*
 	 * ATPCS B01 mandates 8-byte alignment
@@ -307,63 +308,63 @@ static void __user *compat_get_sigframe(struct ksignal *ksig,
 	frame = compat_ptr((compat_uptr_t)((sp - framesize) & ~7));
 
 	/*
-	 * Check that we can actually write to the signal frame.
+	 * Check that we can actually ग_लिखो to the संकेत frame.
 	 */
-	if (!access_ok(frame, framesize))
-		frame = NULL;
+	अगर (!access_ok(frame, framesize))
+		frame = शून्य;
 
-	return frame;
-}
+	वापस frame;
+पूर्ण
 
-static void compat_setup_return(struct pt_regs *regs, struct k_sigaction *ka,
-				compat_ulong_t __user *rc, void __user *frame,
-				int usig)
-{
-	compat_ulong_t handler = ptr_to_compat(ka->sa.sa_handler);
-	compat_ulong_t retcode;
-	compat_ulong_t spsr = regs->pstate & ~(PSR_f | PSR_AA32_E_BIT);
-	int thumb;
+अटल व्योम compat_setup_वापस(काष्ठा pt_regs *regs, काष्ठा k_sigaction *ka,
+				compat_uदीर्घ_t __user *rc, व्योम __user *frame,
+				पूर्णांक usig)
+अणु
+	compat_uदीर्घ_t handler = ptr_to_compat(ka->sa.sa_handler);
+	compat_uदीर्घ_t retcode;
+	compat_uदीर्घ_t spsr = regs->pstate & ~(PSR_f | PSR_AA32_E_BIT);
+	पूर्णांक thumb;
 
-	/* Check if the handler is written for ARM or Thumb */
+	/* Check अगर the handler is written क्रम ARM or Thumb */
 	thumb = handler & 1;
 
-	if (thumb)
+	अगर (thumb)
 		spsr |= PSR_AA32_T_BIT;
-	else
+	अन्यथा
 		spsr &= ~PSR_AA32_T_BIT;
 
-	/* The IT state must be cleared for both ARM and Thumb-2 */
+	/* The IT state must be cleared क्रम both ARM and Thumb-2 */
 	spsr &= ~PSR_AA32_IT_MASK;
 
 	/* Restore the original endianness */
 	spsr |= PSR_AA32_ENDSTATE;
 
-	if (ka->sa.sa_flags & SA_RESTORER) {
+	अगर (ka->sa.sa_flags & SA_RESTORER) अणु
 		retcode = ptr_to_compat(ka->sa.sa_restorer);
-	} else {
-		/* Set up sigreturn pointer */
-		unsigned int idx = thumb << 1;
+	पूर्ण अन्यथा अणु
+		/* Set up sigवापस poपूर्णांकer */
+		अचिन्हित पूर्णांक idx = thumb << 1;
 
-		if (ka->sa.sa_flags & SA_SIGINFO)
+		अगर (ka->sa.sa_flags & SA_SIGINFO)
 			idx += 3;
 
-		retcode = (unsigned long)current->mm->context.sigpage +
+		retcode = (अचिन्हित दीर्घ)current->mm->context.sigpage +
 			  (idx << 2) + thumb;
-	}
+	पूर्ण
 
 	regs->regs[0]	= usig;
 	regs->compat_sp	= ptr_to_compat(frame);
 	regs->compat_lr	= retcode;
 	regs->pc	= handler;
 	regs->pstate	= spsr;
-}
+पूर्ण
 
-static int compat_setup_sigframe(struct compat_sigframe __user *sf,
-				 struct pt_regs *regs, sigset_t *set)
-{
-	struct compat_aux_sigframe __user *aux;
-	unsigned long psr = pstate_to_compat_psr(regs->pstate);
-	int err = 0;
+अटल पूर्णांक compat_setup_sigframe(काष्ठा compat_sigframe __user *sf,
+				 काष्ठा pt_regs *regs, sigset_t *set)
+अणु
+	काष्ठा compat_aux_sigframe __user *aux;
+	अचिन्हित दीर्घ psr = pstate_to_compat_psr(regs->pstate);
+	पूर्णांक err = 0;
 
 	__put_user_error(regs->regs[0], &sf->uc.uc_mcontext.arm_r0, err);
 	__put_user_error(regs->regs[1], &sf->uc.uc_mcontext.arm_r1, err);
@@ -383,37 +384,37 @@ static int compat_setup_sigframe(struct compat_sigframe __user *sf,
 	__put_user_error(regs->pc, &sf->uc.uc_mcontext.arm_pc, err);
 	__put_user_error(psr, &sf->uc.uc_mcontext.arm_cpsr, err);
 
-	__put_user_error((compat_ulong_t)0, &sf->uc.uc_mcontext.trap_no, err);
+	__put_user_error((compat_uदीर्घ_t)0, &sf->uc.uc_mcontext.trap_no, err);
 	/* set the compat FSR WnR */
-	__put_user_error(!!(current->thread.fault_code & ESR_ELx_WNR) <<
+	__put_user_error(!!(current->thपढ़ो.fault_code & ESR_ELx_WNR) <<
 			 FSR_WRITE_SHIFT, &sf->uc.uc_mcontext.error_code, err);
-	__put_user_error(current->thread.fault_address, &sf->uc.uc_mcontext.fault_address, err);
+	__put_user_error(current->thपढ़ो.fault_address, &sf->uc.uc_mcontext.fault_address, err);
 	__put_user_error(set->sig[0], &sf->uc.uc_mcontext.oldmask, err);
 
 	err |= put_sigset_t(&sf->uc.uc_sigmask, set);
 
-	aux = (struct compat_aux_sigframe __user *) sf->uc.uc_regspace;
+	aux = (काष्ठा compat_aux_sigframe __user *) sf->uc.uc_regspace;
 
-	if (err == 0 && system_supports_fpsimd())
+	अगर (err == 0 && प्रणाली_supports_fpsimd())
 		err |= compat_preserve_vfp_context(&aux->vfp);
 	__put_user_error(0, &aux->end_magic, err);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /*
- * 32-bit signal handling routines called from signal.c
+ * 32-bit संकेत handling routines called from संकेत.c
  */
-int compat_setup_rt_frame(int usig, struct ksignal *ksig,
-			  sigset_t *set, struct pt_regs *regs)
-{
-	struct compat_rt_sigframe __user *frame;
-	int err = 0;
+पूर्णांक compat_setup_rt_frame(पूर्णांक usig, काष्ठा kसंकेत *ksig,
+			  sigset_t *set, काष्ठा pt_regs *regs)
+अणु
+	काष्ठा compat_rt_sigframe __user *frame;
+	पूर्णांक err = 0;
 
-	frame = compat_get_sigframe(ksig, regs, sizeof(*frame));
+	frame = compat_get_sigframe(ksig, regs, माप(*frame));
 
-	if (!frame)
-		return 1;
+	अगर (!frame)
+		वापस 1;
 
 	err |= copy_siginfo_to_user32(&frame->info, &ksig->info);
 
@@ -424,36 +425,36 @@ int compat_setup_rt_frame(int usig, struct ksignal *ksig,
 
 	err |= compat_setup_sigframe(&frame->sig, regs, set);
 
-	if (err == 0) {
-		compat_setup_return(regs, &ksig->ka, frame->sig.retcode, frame, usig);
-		regs->regs[1] = (compat_ulong_t)(unsigned long)&frame->info;
-		regs->regs[2] = (compat_ulong_t)(unsigned long)&frame->sig.uc;
-	}
+	अगर (err == 0) अणु
+		compat_setup_वापस(regs, &ksig->ka, frame->sig.retcode, frame, usig);
+		regs->regs[1] = (compat_uदीर्घ_t)(अचिन्हित दीर्घ)&frame->info;
+		regs->regs[2] = (compat_uदीर्घ_t)(अचिन्हित दीर्घ)&frame->sig.uc;
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-int compat_setup_frame(int usig, struct ksignal *ksig, sigset_t *set,
-		       struct pt_regs *regs)
-{
-	struct compat_sigframe __user *frame;
-	int err = 0;
+पूर्णांक compat_setup_frame(पूर्णांक usig, काष्ठा kसंकेत *ksig, sigset_t *set,
+		       काष्ठा pt_regs *regs)
+अणु
+	काष्ठा compat_sigframe __user *frame;
+	पूर्णांक err = 0;
 
-	frame = compat_get_sigframe(ksig, regs, sizeof(*frame));
+	frame = compat_get_sigframe(ksig, regs, माप(*frame));
 
-	if (!frame)
-		return 1;
+	अगर (!frame)
+		वापस 1;
 
 	__put_user_error(0x5ac3c35a, &frame->uc.uc_flags, err);
 
 	err |= compat_setup_sigframe(frame, regs, set);
-	if (err == 0)
-		compat_setup_return(regs, &ksig->ka, frame->retcode, frame, usig);
+	अगर (err == 0)
+		compat_setup_वापस(regs, &ksig->ka, frame->retcode, frame, usig);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-void compat_setup_restart_syscall(struct pt_regs *regs)
-{
+व्योम compat_setup_restart_syscall(काष्ठा pt_regs *regs)
+अणु
        regs->regs[7] = __NR_compat_restart_syscall;
-}
+पूर्ण

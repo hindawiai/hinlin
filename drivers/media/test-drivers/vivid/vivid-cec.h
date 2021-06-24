@@ -1,20 +1,21 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * vivid-cec.h - A Virtual Video Test Driver, cec emulation
  *
  * Copyright 2016 Cisco Systems, Inc. and/or its affiliates. All rights reserved.
  */
 
-#ifdef CONFIG_VIDEO_VIVID_CEC
-struct cec_adapter *vivid_cec_alloc_adap(struct vivid_dev *dev,
-					 unsigned int idx,
+#अगर_घोषित CONFIG_VIDEO_VIVID_CEC
+काष्ठा cec_adapter *vivid_cec_alloc_adap(काष्ठा vivid_dev *dev,
+					 अचिन्हित पूर्णांक idx,
 					 bool is_source);
-void vivid_cec_bus_free_work(struct vivid_dev *dev);
+व्योम vivid_cec_bus_मुक्त_work(काष्ठा vivid_dev *dev);
 
-#else
+#अन्यथा
 
-static inline void vivid_cec_bus_free_work(struct vivid_dev *dev)
-{
-}
+अटल अंतरभूत व्योम vivid_cec_bus_मुक्त_work(काष्ठा vivid_dev *dev)
+अणु
+पूर्ण
 
-#endif
+#पूर्ण_अगर

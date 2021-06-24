@@ -1,93 +1,94 @@
-/* SPDX-License-Identifier: (GPL-2.0-only OR BSD-3-Clause) */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: (GPL-2.0-only OR BSD-3-Clause) */
 /* QLogic qed NIC Driver
  * Copyright (c) 2015-2017  QLogic Corporation
  * Copyright (c) 2019-2020 Marvell International Ltd.
  */
 
-#ifndef _QED_IF_H
-#define _QED_IF_H
+#अगर_अघोषित _QED_IF_H
+#घोषणा _QED_IF_H
 
-#include <linux/ethtool.h>
-#include <linux/types.h>
-#include <linux/interrupt.h>
-#include <linux/netdevice.h>
-#include <linux/pci.h>
-#include <linux/skbuff.h>
-#include <asm/byteorder.h>
-#include <linux/io.h>
-#include <linux/compiler.h>
-#include <linux/kernel.h>
-#include <linux/list.h>
-#include <linux/slab.h>
-#include <linux/qed/common_hsi.h>
-#include <linux/qed/qed_chain.h>
-#include <linux/io-64-nonatomic-lo-hi.h>
-#include <net/devlink.h>
+#समावेश <linux/ethtool.h>
+#समावेश <linux/types.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/skbuff.h>
+#समावेश <यंत्र/byteorder.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/compiler.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/list.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/qed/common_hsi.h>
+#समावेश <linux/qed/qed_chain.h>
+#समावेश <linux/io-64-nonatomic-lo-hi.h>
+#समावेश <net/devlink.h>
 
-enum dcbx_protocol_type {
+क्रमागत dcbx_protocol_type अणु
 	DCBX_PROTOCOL_ISCSI,
 	DCBX_PROTOCOL_FCOE,
 	DCBX_PROTOCOL_ROCE,
 	DCBX_PROTOCOL_ROCE_V2,
 	DCBX_PROTOCOL_ETH,
 	DCBX_MAX_PROTOCOL_TYPE
-};
+पूर्ण;
 
-#define QED_ROCE_PROTOCOL_INDEX (3)
+#घोषणा QED_ROCE_PROTOCOL_INDEX (3)
 
-#define QED_LLDP_CHASSIS_ID_STAT_LEN 4
-#define QED_LLDP_PORT_ID_STAT_LEN 4
-#define QED_DCBX_MAX_APP_PROTOCOL 32
-#define QED_MAX_PFC_PRIORITIES 8
-#define QED_DCBX_DSCP_SIZE 64
+#घोषणा QED_LLDP_CHASSIS_ID_STAT_LEN 4
+#घोषणा QED_LLDP_PORT_ID_STAT_LEN 4
+#घोषणा QED_DCBX_MAX_APP_PROTOCOL 32
+#घोषणा QED_MAX_PFC_PRIORITIES 8
+#घोषणा QED_DCBX_DSCP_SIZE 64
 
-struct qed_dcbx_lldp_remote {
+काष्ठा qed_dcbx_lldp_remote अणु
 	u32 peer_chassis_id[QED_LLDP_CHASSIS_ID_STAT_LEN];
 	u32 peer_port_id[QED_LLDP_PORT_ID_STAT_LEN];
 	bool enable_rx;
 	bool enable_tx;
-	u32 tx_interval;
+	u32 tx_पूर्णांकerval;
 	u32 max_credit;
-};
+पूर्ण;
 
-struct qed_dcbx_lldp_local {
+काष्ठा qed_dcbx_lldp_local अणु
 	u32 local_chassis_id[QED_LLDP_CHASSIS_ID_STAT_LEN];
 	u32 local_port_id[QED_LLDP_PORT_ID_STAT_LEN];
-};
+पूर्ण;
 
-struct qed_dcbx_app_prio {
+काष्ठा qed_dcbx_app_prio अणु
 	u8 roce;
 	u8 roce_v2;
 	u8 fcoe;
 	u8 iscsi;
 	u8 eth;
-};
+पूर्ण;
 
-struct qed_dbcx_pfc_params {
+काष्ठा qed_dbcx_pfc_params अणु
 	bool willing;
 	bool enabled;
 	u8 prio[QED_MAX_PFC_PRIORITIES];
 	u8 max_tc;
-};
+पूर्ण;
 
-enum qed_dcbx_sf_ieee_type {
+क्रमागत qed_dcbx_sf_ieee_type अणु
 	QED_DCBX_SF_IEEE_ETHTYPE,
 	QED_DCBX_SF_IEEE_TCP_PORT,
 	QED_DCBX_SF_IEEE_UDP_PORT,
 	QED_DCBX_SF_IEEE_TCP_UDP_PORT
-};
+पूर्ण;
 
-struct qed_app_entry {
+काष्ठा qed_app_entry अणु
 	bool ethtype;
-	enum qed_dcbx_sf_ieee_type sf_ieee;
+	क्रमागत qed_dcbx_sf_ieee_type sf_ieee;
 	bool enabled;
 	u8 prio;
 	u16 proto_id;
-	enum dcbx_protocol_type proto_type;
-};
+	क्रमागत dcbx_protocol_type proto_type;
+पूर्ण;
 
-struct qed_dcbx_params {
-	struct qed_app_entry app_entry[QED_DCBX_MAX_APP_PROTOCOL];
+काष्ठा qed_dcbx_params अणु
+	काष्ठा qed_app_entry app_entry[QED_DCBX_MAX_APP_PROTOCOL];
 	u16 num_app_entries;
 	bool app_willing;
 	bool app_valid;
@@ -99,67 +100,67 @@ struct qed_dcbx_params {
 	u8 ets_pri_tc_tbl[QED_MAX_PFC_PRIORITIES];
 	u8 ets_tc_bw_tbl[QED_MAX_PFC_PRIORITIES];
 	u8 ets_tc_tsa_tbl[QED_MAX_PFC_PRIORITIES];
-	struct qed_dbcx_pfc_params pfc;
+	काष्ठा qed_dbcx_pfc_params pfc;
 	u8 max_ets_tc;
-};
+पूर्ण;
 
-struct qed_dcbx_admin_params {
-	struct qed_dcbx_params params;
+काष्ठा qed_dcbx_admin_params अणु
+	काष्ठा qed_dcbx_params params;
 	bool valid;
-};
+पूर्ण;
 
-struct qed_dcbx_remote_params {
-	struct qed_dcbx_params params;
+काष्ठा qed_dcbx_remote_params अणु
+	काष्ठा qed_dcbx_params params;
 	bool valid;
-};
+पूर्ण;
 
-struct qed_dcbx_operational_params {
-	struct qed_dcbx_app_prio app_prio;
-	struct qed_dcbx_params params;
+काष्ठा qed_dcbx_operational_params अणु
+	काष्ठा qed_dcbx_app_prio app_prio;
+	काष्ठा qed_dcbx_params params;
 	bool valid;
 	bool enabled;
 	bool ieee;
 	bool cee;
 	bool local;
 	u32 err;
-};
+पूर्ण;
 
-struct qed_dcbx_get {
-	struct qed_dcbx_operational_params operational;
-	struct qed_dcbx_lldp_remote lldp_remote;
-	struct qed_dcbx_lldp_local lldp_local;
-	struct qed_dcbx_remote_params remote;
-	struct qed_dcbx_admin_params local;
-};
+काष्ठा qed_dcbx_get अणु
+	काष्ठा qed_dcbx_operational_params operational;
+	काष्ठा qed_dcbx_lldp_remote lldp_remote;
+	काष्ठा qed_dcbx_lldp_local lldp_local;
+	काष्ठा qed_dcbx_remote_params remote;
+	काष्ठा qed_dcbx_admin_params local;
+पूर्ण;
 
-enum qed_nvm_images {
+क्रमागत qed_nvm_images अणु
 	QED_NVM_IMAGE_ISCSI_CFG,
 	QED_NVM_IMAGE_FCOE_CFG,
 	QED_NVM_IMAGE_MDUMP,
 	QED_NVM_IMAGE_NVM_CFG1,
 	QED_NVM_IMAGE_DEFAULT_CFG,
 	QED_NVM_IMAGE_NVM_META,
-};
+पूर्ण;
 
-struct qed_link_eee_params {
-	u32 tx_lpi_timer;
-#define QED_EEE_1G_ADV		BIT(0)
-#define QED_EEE_10G_ADV		BIT(1)
+काष्ठा qed_link_eee_params अणु
+	u32 tx_lpi_समयr;
+#घोषणा QED_EEE_1G_ADV		BIT(0)
+#घोषणा QED_EEE_10G_ADV		BIT(1)
 
 	/* Capabilities are represented using QED_EEE_*_ADV values */
 	u8 adv_caps;
 	u8 lp_adv_caps;
 	bool enable;
 	bool tx_lpi_enable;
-};
+पूर्ण;
 
-enum qed_led_mode {
+क्रमागत qed_led_mode अणु
 	QED_LED_MODE_OFF,
 	QED_LED_MODE_ON,
 	QED_LED_MODE_RESTORE
-};
+पूर्ण;
 
-struct qed_mfw_tlv_eth {
+काष्ठा qed_mfw_tlv_eth अणु
 	u16 lso_maxoff_size;
 	bool lso_maxoff_size_set;
 	u16 lso_minseg_size;
@@ -181,10 +182,10 @@ struct qed_mfw_tlv_eth {
 	u16 rx_descr_qdepth;
 	bool rx_descr_qdepth_set;
 	u8 iov_offload;
-#define QED_MFW_TLV_IOV_OFFLOAD_NONE            (0)
-#define QED_MFW_TLV_IOV_OFFLOAD_MULTIQUEUE      (1)
-#define QED_MFW_TLV_IOV_OFFLOAD_VEB             (2)
-#define QED_MFW_TLV_IOV_OFFLOAD_VEPA            (3)
+#घोषणा QED_MFW_TLV_IOV_OFFLOAD_NONE            (0)
+#घोषणा QED_MFW_TLV_IOV_OFFLOAD_MULTIQUEUE      (1)
+#घोषणा QED_MFW_TLV_IOV_OFFLOAD_VEB             (2)
+#घोषणा QED_MFW_TLV_IOV_OFFLOAD_VEPA            (3)
 	bool iov_offload_set;
 	u8 txqs_empty;
 	bool txqs_empty_set;
@@ -194,10 +195,10 @@ struct qed_mfw_tlv_eth {
 	bool num_txqs_full_set;
 	u8 num_rxqs_full;
 	bool num_rxqs_full_set;
-};
+पूर्ण;
 
-#define QED_MFW_TLV_TIME_SIZE	14
-struct qed_mfw_tlv_time {
+#घोषणा QED_MFW_TLV_TIME_SIZE	14
+काष्ठा qed_mfw_tlv_समय अणु
 	bool b_set;
 	u8 month;
 	u8 day;
@@ -205,11 +206,11 @@ struct qed_mfw_tlv_time {
 	u8 min;
 	u16 msec;
 	u16 usec;
-};
+पूर्ण;
 
-struct qed_mfw_tlv_fcoe {
-	u8 scsi_timeout;
-	bool scsi_timeout_set;
+काष्ठा qed_mfw_tlv_fcoe अणु
+	u8 scsi_समयout;
+	bool scsi_समयout_set;
 	u32 rt_tov;
 	bool rt_tov_set;
 	u32 ra_tov;
@@ -224,27 +225,27 @@ struct qed_mfw_tlv_fcoe {
 	bool npiv_state_set;
 	u32 num_npiv_ids;
 	bool num_npiv_ids_set;
-	u8 switch_name[8];
-	bool switch_name_set;
-	u16 switch_portnum;
-	bool switch_portnum_set;
-	u8 switch_portid[3];
-	bool switch_portid_set;
-	u8 vendor_name[8];
-	bool vendor_name_set;
-	u8 switch_model[8];
-	bool switch_model_set;
-	u8 switch_fw_version[8];
-	bool switch_fw_version_set;
+	u8 चयन_name[8];
+	bool चयन_name_set;
+	u16 चयन_portnum;
+	bool चयन_portnum_set;
+	u8 चयन_portid[3];
+	bool चयन_portid_set;
+	u8 venकरोr_name[8];
+	bool venकरोr_name_set;
+	u8 चयन_model[8];
+	bool चयन_model_set;
+	u8 चयन_fw_version[8];
+	bool चयन_fw_version_set;
 	u8 qos_pri;
 	bool qos_pri_set;
 	u8 port_alias[3];
 	bool port_alias_set;
 	u8 port_state;
-#define QED_MFW_TLV_PORT_STATE_OFFLINE  (0)
-#define QED_MFW_TLV_PORT_STATE_LOOP             (1)
-#define QED_MFW_TLV_PORT_STATE_P2P              (2)
-#define QED_MFW_TLV_PORT_STATE_FABRIC           (3)
+#घोषणा QED_MFW_TLV_PORT_STATE_OFFLINE  (0)
+#घोषणा QED_MFW_TLV_PORT_STATE_LOOP             (1)
+#घोषणा QED_MFW_TLV_PORT_STATE_P2P              (2)
+#घोषणा QED_MFW_TLV_PORT_STATE_FABRIC           (3)
 	bool port_state_set;
 	u16 fip_tx_descr_size;
 	bool fip_tx_descr_size_set;
@@ -274,7 +275,7 @@ struct qed_mfw_tlv_fcoe {
 	bool crc_count_set;
 	u32 crc_err_src_fcid[5];
 	bool crc_err_src_fcid_set[5];
-	struct qed_mfw_tlv_time crc_err[5];
+	काष्ठा qed_mfw_tlv_समय crc_err[5];
 	u16 losync_err;
 	bool losync_err_set;
 	u16 losig_err;
@@ -287,13 +288,13 @@ struct qed_mfw_tlv_fcoe {
 	bool code_violation_err_set;
 	u32 flogi_param[4];
 	bool flogi_param_set[4];
-	struct qed_mfw_tlv_time flogi_tstamp;
+	काष्ठा qed_mfw_tlv_समय flogi_tstamp;
 	u32 flogi_acc_param[4];
 	bool flogi_acc_param_set[4];
-	struct qed_mfw_tlv_time flogi_acc_tstamp;
+	काष्ठा qed_mfw_tlv_समय flogi_acc_tstamp;
 	u32 flogi_rjt;
 	bool flogi_rjt_set;
-	struct qed_mfw_tlv_time flogi_rjt_tstamp;
+	काष्ठा qed_mfw_tlv_समय flogi_rjt_tstamp;
 	u32 fdiscs;
 	bool fdiscs_set;
 	u8 fdisc_acc;
@@ -308,10 +309,10 @@ struct qed_mfw_tlv_fcoe {
 	bool plogi_rjt_set;
 	u32 plogi_dst_fcid[5];
 	bool plogi_dst_fcid_set[5];
-	struct qed_mfw_tlv_time plogi_tstamp[5];
+	काष्ठा qed_mfw_tlv_समय plogi_tstamp[5];
 	u32 plogi_acc_src_fcid[5];
 	bool plogi_acc_src_fcid_set[5];
-	struct qed_mfw_tlv_time plogi_acc_tstamp[5];
+	काष्ठा qed_mfw_tlv_समय plogi_acc_tstamp[5];
 	u8 tx_plogos;
 	bool tx_plogos_set;
 	u8 plogo_acc;
@@ -320,7 +321,7 @@ struct qed_mfw_tlv_fcoe {
 	bool plogo_rjt_set;
 	u32 plogo_src_fcid[5];
 	bool plogo_src_fcid_set[5];
-	struct qed_mfw_tlv_time plogo_tstamp[5];
+	काष्ठा qed_mfw_tlv_समय plogo_tstamp[5];
 	u8 rx_logos;
 	bool rx_logos_set;
 	u8 tx_accs;
@@ -337,15 +338,15 @@ struct qed_mfw_tlv_fcoe {
 	bool rx_abts_rjt_set;
 	u32 abts_dst_fcid[5];
 	bool abts_dst_fcid_set[5];
-	struct qed_mfw_tlv_time abts_tstamp[5];
+	काष्ठा qed_mfw_tlv_समय abts_tstamp[5];
 	u8 rx_rscn;
 	bool rx_rscn_set;
 	u32 rx_rscn_nport[4];
 	bool rx_rscn_nport_set[4];
 	u8 tx_lun_rst;
 	bool tx_lun_rst_set;
-	u8 abort_task_sets;
-	bool abort_task_sets_set;
+	u8 पात_task_sets;
+	bool पात_task_sets_set;
 	u8 tx_tprlos;
 	bool tx_tprlos_set;
 	u8 tx_nos;
@@ -372,24 +373,24 @@ struct qed_mfw_tlv_fcoe {
 	bool scsi_cond_met_set;
 	u8 scsi_busy;
 	bool scsi_busy_set;
-	u8 scsi_inter;
-	bool scsi_inter_set;
-	u8 scsi_inter_cond_met;
-	bool scsi_inter_cond_met_set;
+	u8 scsi_पूर्णांकer;
+	bool scsi_पूर्णांकer_set;
+	u8 scsi_पूर्णांकer_cond_met;
+	bool scsi_पूर्णांकer_cond_met_set;
 	u8 scsi_rsv_conflicts;
 	bool scsi_rsv_conflicts_set;
 	u8 scsi_tsk_full;
 	bool scsi_tsk_full_set;
 	u8 scsi_aca_active;
 	bool scsi_aca_active_set;
-	u8 scsi_tsk_abort;
-	bool scsi_tsk_abort_set;
+	u8 scsi_tsk_पात;
+	bool scsi_tsk_पात_set;
 	u32 scsi_rx_chk[5];
 	bool scsi_rx_chk_set[5];
-	struct qed_mfw_tlv_time scsi_chk_tstamp[5];
-};
+	काष्ठा qed_mfw_tlv_समय scsi_chk_tstamp[5];
+पूर्ण;
 
-struct qed_mfw_tlv_iscsi {
+काष्ठा qed_mfw_tlv_iscsi अणु
 	u8 target_llmnr;
 	bool target_llmnr_set;
 	u8 header_digest;
@@ -397,9 +398,9 @@ struct qed_mfw_tlv_iscsi {
 	u8 data_digest;
 	bool data_digest_set;
 	u8 auth_method;
-#define QED_MFW_TLV_AUTH_METHOD_NONE            (1)
-#define QED_MFW_TLV_AUTH_METHOD_CHAP            (2)
-#define QED_MFW_TLV_AUTH_METHOD_MUTUAL_CHAP     (3)
+#घोषणा QED_MFW_TLV_AUTH_METHOD_NONE            (1)
+#घोषणा QED_MFW_TLV_AUTH_METHOD_CHAP            (2)
+#घोषणा QED_MFW_TLV_AUTH_METHOD_MUTUAL_CHAP     (3)
 	bool auth_method_set;
 	u16 boot_taget_portal;
 	bool boot_taget_portal_set;
@@ -423,59 +424,59 @@ struct qed_mfw_tlv_iscsi {
 	bool tx_frames_set;
 	u64 tx_bytes;
 	bool tx_bytes_set;
-};
+पूर्ण;
 
-enum qed_db_rec_width {
+क्रमागत qed_db_rec_width अणु
 	DB_REC_WIDTH_32B,
 	DB_REC_WIDTH_64B,
-};
+पूर्ण;
 
-enum qed_db_rec_space {
+क्रमागत qed_db_rec_space अणु
 	DB_REC_KERNEL,
 	DB_REC_USER,
-};
+पूर्ण;
 
-#define DIRECT_REG_WR(reg_addr, val) writel((u32)val, \
-					    (void __iomem *)(reg_addr))
+#घोषणा सूचीECT_REG_WR(reg_addr, val) ग_लिखोl((u32)val, \
+					    (व्योम __iomem *)(reg_addr))
 
-#define DIRECT_REG_RD(reg_addr) readl((void __iomem *)(reg_addr))
+#घोषणा सूचीECT_REG_RD(reg_addr) पढ़ोl((व्योम __iomem *)(reg_addr))
 
-#define DIRECT_REG_WR64(reg_addr, val) writeq((u64)val,	\
-					      (void __iomem *)(reg_addr))
+#घोषणा सूचीECT_REG_WR64(reg_addr, val) ग_लिखोq((u64)val,	\
+					      (व्योम __iomem *)(reg_addr))
 
-#define QED_COALESCE_MAX 0x1FF
-#define QED_DEFAULT_RX_USECS 12
-#define QED_DEFAULT_TX_USECS 48
+#घोषणा QED_COALESCE_MAX 0x1FF
+#घोषणा QED_DEFAULT_RX_USECS 12
+#घोषणा QED_DEFAULT_TX_USECS 48
 
-/* forward */
-struct qed_dev;
+/* क्रमward */
+काष्ठा qed_dev;
 
-struct qed_eth_pf_params {
+काष्ठा qed_eth_pf_params अणु
 	/* The following parameters are used during HW-init
 	 * and these parameters need to be passed as arguments
-	 * to update_pf_params routine invoked before slowpath start
+	 * to update_pf_params routine invoked beक्रमe slowpath start
 	 */
 	u16 num_cons;
 
 	/* per-VF number of CIDs */
 	u8 num_vf_cons;
-#define ETH_PF_PARAMS_VF_CONS_DEFAULT	(32)
+#घोषणा ETH_PF_PARAMS_VF_CONS_DEFAULT	(32)
 
 	/* To enable arfs, previous to HW-init a positive number needs to be
 	 * set [as filters require allocated searcher ILT memory].
 	 * This will set the maximal number of configured steering-filters.
 	 */
 	u32 num_arfs_filters;
-};
+पूर्ण;
 
-struct qed_fcoe_pf_params {
+काष्ठा qed_fcoe_pf_params अणु
 	/* The following parameters are used during protocol-init */
 	u64 glbl_q_params_addr;
 	u64 bdq_pbl_base_addr[2];
 
 	/* The following parameters are used during HW-init
 	 * and these parameters need to be passed as arguments
-	 * to update_pf_params routine invoked before slowpath start
+	 * to update_pf_params routine invoked beक्रमe slowpath start
 	 */
 	u16 num_cons;
 	u16 num_tasks;
@@ -498,26 +499,26 @@ struct qed_fcoe_pf_params {
 	u8 debug_mode;
 	u8 is_target;
 	u8 bdq_pbl_num_entries[2];
-};
+पूर्ण;
 
 /* Most of the parameters below are described in the FW iSCSI / TCP HSI */
-struct qed_iscsi_pf_params {
+काष्ठा qed_iscsi_pf_params अणु
 	u64 glbl_q_params_addr;
 	u64 bdq_pbl_base_addr[3];
 	u16 cq_num_entries;
 	u16 cmdq_num_entries;
-	u32 two_msl_timer;
-	u16 tx_sws_timer;
+	u32 two_msl_समयr;
+	u16 tx_sws_समयr;
 
 	/* The following parameters are used during HW-init
 	 * and these parameters need to be passed as arguments
-	 * to update_pf_params routine invoked before slowpath start
+	 * to update_pf_params routine invoked beक्रमe slowpath start
 	 */
 	u16 num_cons;
 	u16 num_tasks;
 
 	/* The following parameters are used during protocol-init */
-	u16 half_way_close_timeout;
+	u16 half_way_बंद_समयout;
 	u16 bdq_xoff_threshold[3];
 	u16 bdq_xon_threshold[3];
 	u16 cmdq_xoff_threshold;
@@ -540,11 +541,11 @@ struct qed_iscsi_pf_params {
 	u8 is_soc_en;
 	u8 soc_num_of_blocks_log;
 	u8 bdq_pbl_num_entries[3];
-};
+पूर्ण;
 
-struct qed_rdma_pf_params {
+काष्ठा qed_rdma_pf_params अणु
 	/* Supplied to QED during resource allocation (may affect the ILT and
-	 * the doorbell BAR).
+	 * the करोorbell BAR).
 	 */
 	u32 min_dpis;		/* number of requested DPIs */
 	u32 num_qps;		/* number of requested Queue Pairs */
@@ -554,36 +555,36 @@ struct qed_rdma_pf_params {
 
 	/* Will allocate rate limiters to be used with QPs */
 	u8 enable_dcqcn;
-};
+पूर्ण;
 
-struct qed_pf_params {
-	struct qed_eth_pf_params eth_pf_params;
-	struct qed_fcoe_pf_params fcoe_pf_params;
-	struct qed_iscsi_pf_params iscsi_pf_params;
-	struct qed_rdma_pf_params rdma_pf_params;
-};
+काष्ठा qed_pf_params अणु
+	काष्ठा qed_eth_pf_params eth_pf_params;
+	काष्ठा qed_fcoe_pf_params fcoe_pf_params;
+	काष्ठा qed_iscsi_pf_params iscsi_pf_params;
+	काष्ठा qed_rdma_pf_params rdma_pf_params;
+पूर्ण;
 
-enum qed_int_mode {
+क्रमागत qed_पूर्णांक_mode अणु
 	QED_INT_MODE_INTA,
 	QED_INT_MODE_MSIX,
 	QED_INT_MODE_MSI,
 	QED_INT_MODE_POLL,
-};
+पूर्ण;
 
-struct qed_sb_info {
-	struct status_block_e4 *sb_virt;
+काष्ठा qed_sb_info अणु
+	काष्ठा status_block_e4 *sb_virt;
 	dma_addr_t sb_phys;
 	u32 sb_ack; /* Last given ack */
 	u16 igu_sb_id;
-	void __iomem *igu_addr;
+	व्योम __iomem *igu_addr;
 	u8 flags;
-#define QED_SB_INFO_INIT	0x1
-#define QED_SB_INFO_SETUP	0x2
+#घोषणा QED_SB_INFO_INIT	0x1
+#घोषणा QED_SB_INFO_SETUP	0x2
 
-	struct qed_dev *cdev;
-};
+	काष्ठा qed_dev *cdev;
+पूर्ण;
 
-enum qed_hw_err_type {
+क्रमागत qed_hw_err_type अणु
 	QED_HW_ERR_FAN_FAIL,
 	QED_HW_ERR_MFW_RESP_FAIL,
 	QED_HW_ERR_HW_ATTN,
@@ -591,18 +592,18 @@ enum qed_hw_err_type {
 	QED_HW_ERR_RAMROD_FAIL,
 	QED_HW_ERR_FW_ASSERT,
 	QED_HW_ERR_LAST,
-};
+पूर्ण;
 
-enum qed_dev_type {
+क्रमागत qed_dev_type अणु
 	QED_DEV_TYPE_BB,
 	QED_DEV_TYPE_AH,
 	QED_DEV_TYPE_E5,
-};
+पूर्ण;
 
-struct qed_dev_info {
-	unsigned long	pci_mem_start;
-	unsigned long	pci_mem_end;
-	unsigned int	pci_irq;
+काष्ठा qed_dev_info अणु
+	अचिन्हित दीर्घ	pci_mem_start;
+	अचिन्हित दीर्घ	pci_mem_end;
+	अचिन्हित पूर्णांक	pci_irq;
 	u8		num_hwfns;
 
 	u8		hw_mac[ETH_ALEN];
@@ -615,19 +616,19 @@ struct qed_dev_info {
 
 	/* MFW version */
 	u32		mfw_rev;
-#define QED_MFW_VERSION_0_MASK		0x000000FF
-#define QED_MFW_VERSION_0_OFFSET	0
-#define QED_MFW_VERSION_1_MASK		0x0000FF00
-#define QED_MFW_VERSION_1_OFFSET	8
-#define QED_MFW_VERSION_2_MASK		0x00FF0000
-#define QED_MFW_VERSION_2_OFFSET	16
-#define QED_MFW_VERSION_3_MASK		0xFF000000
-#define QED_MFW_VERSION_3_OFFSET	24
+#घोषणा QED_MFW_VERSION_0_MASK		0x000000FF
+#घोषणा QED_MFW_VERSION_0_OFFSET	0
+#घोषणा QED_MFW_VERSION_1_MASK		0x0000FF00
+#घोषणा QED_MFW_VERSION_1_OFFSET	8
+#घोषणा QED_MFW_VERSION_2_MASK		0x00FF0000
+#घोषणा QED_MFW_VERSION_2_OFFSET	16
+#घोषणा QED_MFW_VERSION_3_MASK		0xFF000000
+#घोषणा QED_MFW_VERSION_3_OFFSET	24
 
 	u32		flash_size;
 	bool		b_arfs_capable;
-	bool		b_inter_pf_switch;
-	bool		tx_switching;
+	bool		b_पूर्णांकer_pf_चयन;
+	bool		tx_चयनing;
 	bool		rdma_supported;
 	u16		mtu;
 
@@ -636,81 +637,81 @@ struct qed_dev_info {
 
 	/* MBI version */
 	u32 mbi_version;
-#define QED_MBI_VERSION_0_MASK		0x000000FF
-#define QED_MBI_VERSION_0_OFFSET	0
-#define QED_MBI_VERSION_1_MASK		0x0000FF00
-#define QED_MBI_VERSION_1_OFFSET	8
-#define QED_MBI_VERSION_2_MASK		0x00FF0000
-#define QED_MBI_VERSION_2_OFFSET	16
+#घोषणा QED_MBI_VERSION_0_MASK		0x000000FF
+#घोषणा QED_MBI_VERSION_0_OFFSET	0
+#घोषणा QED_MBI_VERSION_1_MASK		0x0000FF00
+#घोषणा QED_MBI_VERSION_1_OFFSET	8
+#घोषणा QED_MBI_VERSION_2_MASK		0x00FF0000
+#घोषणा QED_MBI_VERSION_2_OFFSET	16
 
-	enum qed_dev_type dev_type;
+	क्रमागत qed_dev_type dev_type;
 
-	/* Output parameters for qede */
+	/* Output parameters क्रम qede */
 	bool		vxlan_enable;
 	bool		gre_enable;
 	bool		geneve_enable;
 
-	u8		abs_pf_id;
-};
+	u8		असल_pf_id;
+पूर्ण;
 
-enum qed_sb_type {
+क्रमागत qed_sb_type अणु
 	QED_SB_TYPE_L2_QUEUE,
 	QED_SB_TYPE_CNQ,
 	QED_SB_TYPE_STORAGE,
-};
+पूर्ण;
 
-enum qed_protocol {
+क्रमागत qed_protocol अणु
 	QED_PROTOCOL_ETH,
 	QED_PROTOCOL_ISCSI,
 	QED_PROTOCOL_FCOE,
-};
+पूर्ण;
 
-enum qed_fec_mode {
+क्रमागत qed_fec_mode अणु
 	QED_FEC_MODE_NONE			= BIT(0),
 	QED_FEC_MODE_FIRECODE			= BIT(1),
 	QED_FEC_MODE_RS				= BIT(2),
 	QED_FEC_MODE_AUTO			= BIT(3),
 	QED_FEC_MODE_UNSUPPORTED		= BIT(4),
-};
+पूर्ण;
 
-struct qed_link_params {
+काष्ठा qed_link_params अणु
 	bool					link_up;
 
 	u32					override_flags;
-#define QED_LINK_OVERRIDE_SPEED_AUTONEG		BIT(0)
-#define QED_LINK_OVERRIDE_SPEED_ADV_SPEEDS	BIT(1)
-#define QED_LINK_OVERRIDE_SPEED_FORCED_SPEED	BIT(2)
-#define QED_LINK_OVERRIDE_PAUSE_CONFIG		BIT(3)
-#define QED_LINK_OVERRIDE_LOOPBACK_MODE		BIT(4)
-#define QED_LINK_OVERRIDE_EEE_CONFIG		BIT(5)
-#define QED_LINK_OVERRIDE_FEC_CONFIG		BIT(6)
+#घोषणा QED_LINK_OVERRIDE_SPEED_AUTONEG		BIT(0)
+#घोषणा QED_LINK_OVERRIDE_SPEED_ADV_SPEEDS	BIT(1)
+#घोषणा QED_LINK_OVERRIDE_SPEED_FORCED_SPEED	BIT(2)
+#घोषणा QED_LINK_OVERRIDE_PAUSE_CONFIG		BIT(3)
+#घोषणा QED_LINK_OVERRIDE_LOOPBACK_MODE		BIT(4)
+#घोषणा QED_LINK_OVERRIDE_EEE_CONFIG		BIT(5)
+#घोषणा QED_LINK_OVERRIDE_FEC_CONFIG		BIT(6)
 
-	bool					autoneg;
+	bool					स्वतःneg;
 	__ETHTOOL_DECLARE_LINK_MODE_MASK(adv_speeds);
-	u32					forced_speed;
+	u32					क्रमced_speed;
 
-	u32					pause_config;
-#define QED_LINK_PAUSE_AUTONEG_ENABLE		BIT(0)
-#define QED_LINK_PAUSE_RX_ENABLE		BIT(1)
-#define QED_LINK_PAUSE_TX_ENABLE		BIT(2)
+	u32					छोड़ो_config;
+#घोषणा QED_LINK_PAUSE_AUTONEG_ENABLE		BIT(0)
+#घोषणा QED_LINK_PAUSE_RX_ENABLE		BIT(1)
+#घोषणा QED_LINK_PAUSE_TX_ENABLE		BIT(2)
 
 	u32					loopback_mode;
-#define QED_LINK_LOOPBACK_NONE			BIT(0)
-#define QED_LINK_LOOPBACK_INT_PHY		BIT(1)
-#define QED_LINK_LOOPBACK_EXT_PHY		BIT(2)
-#define QED_LINK_LOOPBACK_EXT			BIT(3)
-#define QED_LINK_LOOPBACK_MAC			BIT(4)
-#define QED_LINK_LOOPBACK_CNIG_AH_ONLY_0123	BIT(5)
-#define QED_LINK_LOOPBACK_CNIG_AH_ONLY_2301	BIT(6)
-#define QED_LINK_LOOPBACK_PCS_AH_ONLY		BIT(7)
-#define QED_LINK_LOOPBACK_REVERSE_MAC_AH_ONLY	BIT(8)
-#define QED_LINK_LOOPBACK_INT_PHY_FEA_AH_ONLY	BIT(9)
+#घोषणा QED_LINK_LOOPBACK_NONE			BIT(0)
+#घोषणा QED_LINK_LOOPBACK_INT_PHY		BIT(1)
+#घोषणा QED_LINK_LOOPBACK_EXT_PHY		BIT(2)
+#घोषणा QED_LINK_LOOPBACK_EXT			BIT(3)
+#घोषणा QED_LINK_LOOPBACK_MAC			BIT(4)
+#घोषणा QED_LINK_LOOPBACK_CNIG_AH_ONLY_0123	BIT(5)
+#घोषणा QED_LINK_LOOPBACK_CNIG_AH_ONLY_2301	BIT(6)
+#घोषणा QED_LINK_LOOPBACK_PCS_AH_ONLY		BIT(7)
+#घोषणा QED_LINK_LOOPBACK_REVERSE_MAC_AH_ONLY	BIT(8)
+#घोषणा QED_LINK_LOOPBACK_INT_PHY_FEA_AH_ONLY	BIT(9)
 
-	struct qed_link_eee_params		eee;
+	काष्ठा qed_link_eee_params		eee;
 	u32					fec;
-};
+पूर्ण;
 
-struct qed_link_output {
+काष्ठा qed_link_output अणु
 	bool					link_up;
 
 	__ETHTOOL_DECLARE_LINK_MODE_MASK(supported_caps);
@@ -720,229 +721,229 @@ struct qed_link_output {
 	u32					speed;	   /* In Mb/s */
 	u8					duplex;	   /* In DUPLEX defs */
 	u8					port;	   /* In PORT defs */
-	bool					autoneg;
-	u32					pause_config;
+	bool					स्वतःneg;
+	u32					छोड़ो_config;
 
 	/* EEE - capability & param */
 	bool					eee_supported;
 	bool					eee_active;
 	u8					sup_caps;
-	struct qed_link_eee_params		eee;
+	काष्ठा qed_link_eee_params		eee;
 
 	u32					sup_fec;
 	u32					active_fec;
-};
+पूर्ण;
 
-struct qed_probe_params {
-	enum qed_protocol protocol;
+काष्ठा qed_probe_params अणु
+	क्रमागत qed_protocol protocol;
 	u32 dp_module;
 	u8 dp_level;
 	bool is_vf;
 	bool recov_in_prog;
-};
+पूर्ण;
 
-#define QED_DRV_VER_STR_SIZE 12
-struct qed_slowpath_params {
-	u32	int_mode;
+#घोषणा QED_DRV_VER_STR_SIZE 12
+काष्ठा qed_slowpath_params अणु
+	u32	पूर्णांक_mode;
 	u8	drv_major;
 	u8	drv_minor;
 	u8	drv_rev;
 	u8	drv_eng;
 	u8	name[QED_DRV_VER_STR_SIZE];
-};
+पूर्ण;
 
-#define ILT_PAGE_SIZE_TCFC 0x8000 /* 32KB */
+#घोषणा ILT_PAGE_SIZE_TCFC 0x8000 /* 32KB */
 
-struct qed_int_info {
-	struct msix_entry	*msix;
+काष्ठा qed_पूर्णांक_info अणु
+	काष्ठा msix_entry	*msix;
 	u8			msix_cnt;
 
 	/* This should be updated by the protocol driver */
 	u8			used_cnt;
-};
+पूर्ण;
 
-struct qed_generic_tlvs {
-#define QED_TLV_IP_CSUM         BIT(0)
-#define QED_TLV_LSO             BIT(1)
+काष्ठा qed_generic_tlvs अणु
+#घोषणा QED_TLV_IP_CSUM         BIT(0)
+#घोषणा QED_TLV_LSO             BIT(1)
 	u16 feat_flags;
-#define QED_TLV_MAC_COUNT	3
+#घोषणा QED_TLV_MAC_COUNT	3
 	u8 mac[QED_TLV_MAC_COUNT][ETH_ALEN];
-};
+पूर्ण;
 
-#define QED_I2C_DEV_ADDR_A0 0xA0
-#define QED_I2C_DEV_ADDR_A2 0xA2
+#घोषणा QED_I2C_DEV_ADDR_A0 0xA0
+#घोषणा QED_I2C_DEV_ADDR_A2 0xA2
 
-#define QED_NVM_SIGNATURE 0x12435687
+#घोषणा QED_NVM_SIGNATURE 0x12435687
 
-enum qed_nvm_flash_cmd {
-	QED_NVM_FLASH_CMD_FILE_DATA = 0x2,
-	QED_NVM_FLASH_CMD_FILE_START = 0x3,
+क्रमागत qed_nvm_flash_cmd अणु
+	QED_NVM_FLASH_CMD_खाता_DATA = 0x2,
+	QED_NVM_FLASH_CMD_खाता_START = 0x3,
 	QED_NVM_FLASH_CMD_NVM_CHANGE = 0x4,
 	QED_NVM_FLASH_CMD_NVM_CFG_ID = 0x5,
 	QED_NVM_FLASH_CMD_NVM_MAX,
-};
+पूर्ण;
 
-struct qed_devlink {
-	struct qed_dev *cdev;
-	struct devlink_health_reporter *fw_reporter;
-};
+काष्ठा qed_devlink अणु
+	काष्ठा qed_dev *cdev;
+	काष्ठा devlink_health_reporter *fw_reporter;
+पूर्ण;
 
-struct qed_common_cb_ops {
-	void (*arfs_filter_op)(void *dev, void *fltr, u8 fw_rc);
-	void (*link_update)(void *dev, struct qed_link_output *link);
-	void (*schedule_recovery_handler)(void *dev);
-	void (*schedule_hw_err_handler)(void *dev,
-					enum qed_hw_err_type err_type);
-	void (*dcbx_aen)(void *dev, struct qed_dcbx_get *get, u32 mib_type);
-	void (*get_generic_tlv_data)(void *dev, struct qed_generic_tlvs *data);
-	void (*get_protocol_tlv_data)(void *dev, void *data);
-	void (*bw_update)(void *dev);
-};
+काष्ठा qed_common_cb_ops अणु
+	व्योम (*arfs_filter_op)(व्योम *dev, व्योम *fltr, u8 fw_rc);
+	व्योम (*link_update)(व्योम *dev, काष्ठा qed_link_output *link);
+	व्योम (*schedule_recovery_handler)(व्योम *dev);
+	व्योम (*schedule_hw_err_handler)(व्योम *dev,
+					क्रमागत qed_hw_err_type err_type);
+	व्योम (*dcbx_aen)(व्योम *dev, काष्ठा qed_dcbx_get *get, u32 mib_type);
+	व्योम (*get_generic_tlv_data)(व्योम *dev, काष्ठा qed_generic_tlvs *data);
+	व्योम (*get_protocol_tlv_data)(व्योम *dev, व्योम *data);
+	व्योम (*bw_update)(व्योम *dev);
+पूर्ण;
 
-struct qed_selftest_ops {
+काष्ठा qed_selftest_ops अणु
 /**
- * @brief selftest_interrupt - Perform interrupt test
+ * @brief selftest_पूर्णांकerrupt - Perक्रमm पूर्णांकerrupt test
  *
  * @param cdev
  *
- * @return 0 on success, error otherwise.
+ * @वापस 0 on success, error otherwise.
  */
-	int (*selftest_interrupt)(struct qed_dev *cdev);
+	पूर्णांक (*selftest_पूर्णांकerrupt)(काष्ठा qed_dev *cdev);
 
 /**
- * @brief selftest_memory - Perform memory test
+ * @brief selftest_memory - Perक्रमm memory test
  *
  * @param cdev
  *
- * @return 0 on success, error otherwise.
+ * @वापस 0 on success, error otherwise.
  */
-	int (*selftest_memory)(struct qed_dev *cdev);
+	पूर्णांक (*selftest_memory)(काष्ठा qed_dev *cdev);
 
 /**
- * @brief selftest_register - Perform register test
+ * @brief selftest_रेजिस्टर - Perक्रमm रेजिस्टर test
  *
  * @param cdev
  *
- * @return 0 on success, error otherwise.
+ * @वापस 0 on success, error otherwise.
  */
-	int (*selftest_register)(struct qed_dev *cdev);
+	पूर्णांक (*selftest_रेजिस्टर)(काष्ठा qed_dev *cdev);
 
 /**
- * @brief selftest_clock - Perform clock test
+ * @brief selftest_घड़ी - Perक्रमm घड़ी test
  *
  * @param cdev
  *
- * @return 0 on success, error otherwise.
+ * @वापस 0 on success, error otherwise.
  */
-	int (*selftest_clock)(struct qed_dev *cdev);
+	पूर्णांक (*selftest_घड़ी)(काष्ठा qed_dev *cdev);
 
 /**
- * @brief selftest_nvram - Perform nvram test
+ * @brief selftest_nvram - Perक्रमm nvram test
  *
  * @param cdev
  *
- * @return 0 on success, error otherwise.
+ * @वापस 0 on success, error otherwise.
  */
-	int (*selftest_nvram) (struct qed_dev *cdev);
-};
+	पूर्णांक (*selftest_nvram) (काष्ठा qed_dev *cdev);
+पूर्ण;
 
-struct qed_common_ops {
-	struct qed_selftest_ops *selftest;
+काष्ठा qed_common_ops अणु
+	काष्ठा qed_selftest_ops *selftest;
 
-	struct qed_dev*	(*probe)(struct pci_dev *dev,
-				 struct qed_probe_params *params);
+	काष्ठा qed_dev*	(*probe)(काष्ठा pci_dev *dev,
+				 काष्ठा qed_probe_params *params);
 
-	void (*remove)(struct qed_dev *cdev);
+	व्योम (*हटाओ)(काष्ठा qed_dev *cdev);
 
-	int (*set_power_state)(struct qed_dev *cdev, pci_power_t state);
+	पूर्णांक (*set_घातer_state)(काष्ठा qed_dev *cdev, pci_घातer_t state);
 
-	void (*set_name) (struct qed_dev *cdev, char name[]);
+	व्योम (*set_name) (काष्ठा qed_dev *cdev, अक्षर name[]);
 
-	/* Client drivers need to make this call before slowpath_start.
-	 * PF params required for the call before slowpath_start is
-	 * documented within the qed_pf_params structure definition.
+	/* Client drivers need to make this call beक्रमe slowpath_start.
+	 * PF params required क्रम the call beक्रमe slowpath_start is
+	 * करोcumented within the qed_pf_params काष्ठाure definition.
 	 */
-	void (*update_pf_params)(struct qed_dev *cdev,
-				 struct qed_pf_params *params);
+	व्योम (*update_pf_params)(काष्ठा qed_dev *cdev,
+				 काष्ठा qed_pf_params *params);
 
-	int (*slowpath_start)(struct qed_dev *cdev,
-			      struct qed_slowpath_params *params);
+	पूर्णांक (*slowpath_start)(काष्ठा qed_dev *cdev,
+			      काष्ठा qed_slowpath_params *params);
 
-	int (*slowpath_stop)(struct qed_dev *cdev);
+	पूर्णांक (*slowpath_stop)(काष्ठा qed_dev *cdev);
 
-	/* Requests to use `cnt' interrupts for fastpath.
-	 * upon success, returns number of interrupts allocated for fastpath.
+	/* Requests to use `cnt' पूर्णांकerrupts क्रम fastpath.
+	 * upon success, वापसs number of पूर्णांकerrupts allocated क्रम fastpath.
 	 */
-	int (*set_fp_int)(struct qed_dev *cdev, u16 cnt);
+	पूर्णांक (*set_fp_पूर्णांक)(काष्ठा qed_dev *cdev, u16 cnt);
 
-	/* Fills `info' with pointers required for utilizing interrupts */
-	int (*get_fp_int)(struct qed_dev *cdev, struct qed_int_info *info);
+	/* Fills `info' with poपूर्णांकers required क्रम utilizing पूर्णांकerrupts */
+	पूर्णांक (*get_fp_पूर्णांक)(काष्ठा qed_dev *cdev, काष्ठा qed_पूर्णांक_info *info);
 
-	u32 (*sb_init)(struct qed_dev *cdev,
-		       struct qed_sb_info *sb_info,
-		       void *sb_virt_addr,
+	u32 (*sb_init)(काष्ठा qed_dev *cdev,
+		       काष्ठा qed_sb_info *sb_info,
+		       व्योम *sb_virt_addr,
 		       dma_addr_t sb_phy_addr,
 		       u16 sb_id,
-		       enum qed_sb_type type);
+		       क्रमागत qed_sb_type type);
 
-	u32 (*sb_release)(struct qed_dev *cdev,
-			  struct qed_sb_info *sb_info,
+	u32 (*sb_release)(काष्ठा qed_dev *cdev,
+			  काष्ठा qed_sb_info *sb_info,
 			  u16 sb_id,
-			  enum qed_sb_type type);
+			  क्रमागत qed_sb_type type);
 
-	void (*simd_handler_config)(struct qed_dev *cdev,
-				    void *token,
-				    int index,
-				    void (*handler)(void *));
+	व्योम (*simd_handler_config)(काष्ठा qed_dev *cdev,
+				    व्योम *token,
+				    पूर्णांक index,
+				    व्योम (*handler)(व्योम *));
 
-	void (*simd_handler_clean)(struct qed_dev *cdev, int index);
+	व्योम (*simd_handler_clean)(काष्ठा qed_dev *cdev, पूर्णांक index);
 
-	int (*dbg_grc)(struct qed_dev *cdev, void *buffer, u32 *num_dumped_bytes);
+	पूर्णांक (*dbg_grc)(काष्ठा qed_dev *cdev, व्योम *buffer, u32 *num_dumped_bytes);
 
-	int (*dbg_grc_size)(struct qed_dev *cdev);
+	पूर्णांक (*dbg_grc_size)(काष्ठा qed_dev *cdev);
 
-	int (*dbg_all_data)(struct qed_dev *cdev, void *buffer);
+	पूर्णांक (*dbg_all_data)(काष्ठा qed_dev *cdev, व्योम *buffer);
 
-	int (*dbg_all_data_size)(struct qed_dev *cdev);
+	पूर्णांक (*dbg_all_data_size)(काष्ठा qed_dev *cdev);
 
-	int (*report_fatal_error)(struct devlink *devlink,
-				  enum qed_hw_err_type err_type);
+	पूर्णांक (*report_fatal_error)(काष्ठा devlink *devlink,
+				  क्रमागत qed_hw_err_type err_type);
 
 /**
  * @brief can_link_change - can the instance change the link or not
  *
  * @param cdev
  *
- * @return true if link-change is allowed, false otherwise.
+ * @वापस true अगर link-change is allowed, false otherwise.
  */
-	bool (*can_link_change)(struct qed_dev *cdev);
+	bool (*can_link_change)(काष्ठा qed_dev *cdev);
 
 /**
  * @brief set_link - set links according to params
  *
  * @param cdev
- * @param params - values used to override the default link configuration
+ * @param params - values used to override the शेष link configuration
  *
- * @return 0 on success, error otherwise.
+ * @वापस 0 on success, error otherwise.
  */
-	int		(*set_link)(struct qed_dev *cdev,
-				    struct qed_link_params *params);
+	पूर्णांक		(*set_link)(काष्ठा qed_dev *cdev,
+				    काष्ठा qed_link_params *params);
 
 /**
- * @brief get_link - returns the current link state.
+ * @brief get_link - वापसs the current link state.
  *
  * @param cdev
- * @param if_link - structure to be filled with current link configuration.
+ * @param अगर_link - काष्ठाure to be filled with current link configuration.
  */
-	void		(*get_link)(struct qed_dev *cdev,
-				    struct qed_link_output *if_link);
+	व्योम		(*get_link)(काष्ठा qed_dev *cdev,
+				    काष्ठा qed_link_output *अगर_link);
 
 /**
- * @brief - drains chip in case Tx completions fail to arrive due to pause.
+ * @brief - drains chip in हाल Tx completions fail to arrive due to छोड़ो.
  *
  * @param cdev
  */
-	int		(*drain)(struct qed_dev *cdev);
+	पूर्णांक		(*drain)(काष्ठा qed_dev *cdev);
 
 /**
  * @brief update_msglvl - update module debug level
@@ -951,16 +952,16 @@ struct qed_common_ops {
  * @param dp_module
  * @param dp_level
  */
-	void		(*update_msglvl)(struct qed_dev *cdev,
+	व्योम		(*update_msglvl)(काष्ठा qed_dev *cdev,
 					 u32 dp_module,
 					 u8 dp_level);
 
-	int		(*chain_alloc)(struct qed_dev *cdev,
-				       struct qed_chain *chain,
-				       struct qed_chain_init_params *params);
+	पूर्णांक		(*chain_alloc)(काष्ठा qed_dev *cdev,
+				       काष्ठा qed_chain *chain,
+				       काष्ठा qed_chain_init_params *params);
 
-	void		(*chain_free)(struct qed_dev *cdev,
-				      struct qed_chain *p_chain);
+	व्योम		(*chain_मुक्त)(काष्ठा qed_dev *cdev,
+				      काष्ठा qed_chain *p_chain);
 
 /**
  * @brief nvm_flash - Flash nvm data.
@@ -968,22 +969,22 @@ struct qed_common_ops {
  * @param cdev
  * @param name - file containing the data
  *
- * @return 0 on success, error otherwise.
+ * @वापस 0 on success, error otherwise.
  */
-	int (*nvm_flash)(struct qed_dev *cdev, const char *name);
+	पूर्णांक (*nvm_flash)(काष्ठा qed_dev *cdev, स्थिर अक्षर *name);
 
 /**
- * @brief nvm_get_image - reads an entire image from nvram
+ * @brief nvm_get_image - पढ़ोs an entire image from nvram
  *
  * @param cdev
  * @param type - type of the request nvram image
- * @param buf - preallocated buffer to fill with the image
+ * @param buf - pपुनः_स्मृतिated buffer to fill with the image
  * @param len - length of the allocated buffer
  *
- * @return 0 on success, error otherwise
+ * @वापस 0 on success, error otherwise
  */
-	int (*nvm_get_image)(struct qed_dev *cdev,
-			     enum qed_nvm_images type, u8 *buf, u16 len);
+	पूर्णांक (*nvm_get_image)(काष्ठा qed_dev *cdev,
+			     क्रमागत qed_nvm_images type, u8 *buf, u16 len);
 
 /**
  * @brief set_coalesce - Configure Rx coalesce value in usec
@@ -994,10 +995,10 @@ struct qed_common_ops {
  * @param qid - Queue index
  * @param sb_id - Status Block Id
  *
- * @return 0 on success, error otherwise.
+ * @वापस 0 on success, error otherwise.
  */
-	int (*set_coalesce)(struct qed_dev *cdev,
-			    u16 rx_coal, u16 tx_coal, void *handle);
+	पूर्णांक (*set_coalesce)(काष्ठा qed_dev *cdev,
+			    u16 rx_coal, u16 tx_coal, व्योम *handle);
 
 /**
  * @brief set_led - Configure LED mode
@@ -1005,232 +1006,232 @@ struct qed_common_ops {
  * @param cdev
  * @param mode - LED mode
  *
- * @return 0 on success, error otherwise.
+ * @वापस 0 on success, error otherwise.
  */
-	int (*set_led)(struct qed_dev *cdev,
-		       enum qed_led_mode mode);
+	पूर्णांक (*set_led)(काष्ठा qed_dev *cdev,
+		       क्रमागत qed_led_mode mode);
 
 /**
- * @brief attn_clr_enable - Prevent attentions from being reasserted
+ * @brief attn_clr_enable - Prevent attentions from being reनिश्चितed
  *
  * @param cdev
  * @param clr_enable
  */
-	void (*attn_clr_enable)(struct qed_dev *cdev, bool clr_enable);
+	व्योम (*attn_clr_enable)(काष्ठा qed_dev *cdev, bool clr_enable);
 
 /**
- * @brief db_recovery_add - add doorbell information to the doorbell
+ * @brief db_recovery_add - add करोorbell inक्रमmation to the करोorbell
  * recovery mechanism.
  *
  * @param cdev
- * @param db_addr - doorbell address
+ * @param db_addr - करोorbell address
  * @param db_data - address of where db_data is stored
- * @param db_is_32b - doorbell is 32b pr 64b
- * @param db_is_user - doorbell recovery addresses are user or kernel space
+ * @param db_is_32b - करोorbell is 32b pr 64b
+ * @param db_is_user - करोorbell recovery addresses are user or kernel space
  */
-	int (*db_recovery_add)(struct qed_dev *cdev,
-			       void __iomem *db_addr,
-			       void *db_data,
-			       enum qed_db_rec_width db_width,
-			       enum qed_db_rec_space db_space);
+	पूर्णांक (*db_recovery_add)(काष्ठा qed_dev *cdev,
+			       व्योम __iomem *db_addr,
+			       व्योम *db_data,
+			       क्रमागत qed_db_rec_width db_width,
+			       क्रमागत qed_db_rec_space db_space);
 
 /**
- * @brief db_recovery_del - remove doorbell information from the doorbell
+ * @brief db_recovery_del - हटाओ करोorbell inक्रमmation from the करोorbell
  * recovery mechanism. db_data serves as key (db_addr is not unique).
  *
  * @param cdev
- * @param db_addr - doorbell address
- * @param db_data - address where db_data is stored. Serves as key for the
+ * @param db_addr - करोorbell address
+ * @param db_data - address where db_data is stored. Serves as key क्रम the
  *		    entry to delete.
  */
-	int (*db_recovery_del)(struct qed_dev *cdev,
-			       void __iomem *db_addr, void *db_data);
+	पूर्णांक (*db_recovery_del)(काष्ठा qed_dev *cdev,
+			       व्योम __iomem *db_addr, व्योम *db_data);
 
 /**
  * @brief recovery_process - Trigger a recovery process
  *
  * @param cdev
  *
- * @return 0 on success, error otherwise.
+ * @वापस 0 on success, error otherwise.
  */
-	int (*recovery_process)(struct qed_dev *cdev);
+	पूर्णांक (*recovery_process)(काष्ठा qed_dev *cdev);
 
 /**
  * @brief recovery_prolog - Execute the prolog operations of a recovery process
  *
  * @param cdev
  *
- * @return 0 on success, error otherwise.
+ * @वापस 0 on success, error otherwise.
  */
-	int (*recovery_prolog)(struct qed_dev *cdev);
+	पूर्णांक (*recovery_prolog)(काष्ठा qed_dev *cdev);
 
 /**
- * @brief update_drv_state - API to inform the change in the driver state.
+ * @brief update_drv_state - API to inक्रमm the change in the driver state.
  *
  * @param cdev
  * @param active
  *
  */
-	int (*update_drv_state)(struct qed_dev *cdev, bool active);
+	पूर्णांक (*update_drv_state)(काष्ठा qed_dev *cdev, bool active);
 
 /**
- * @brief update_mac - API to inform the change in the mac address
+ * @brief update_mac - API to inक्रमm the change in the mac address
  *
  * @param cdev
  * @param mac
  *
  */
-	int (*update_mac)(struct qed_dev *cdev, u8 *mac);
+	पूर्णांक (*update_mac)(काष्ठा qed_dev *cdev, u8 *mac);
 
 /**
- * @brief update_mtu - API to inform the change in the mtu
+ * @brief update_mtu - API to inक्रमm the change in the mtu
  *
  * @param cdev
  * @param mtu
  *
  */
-	int (*update_mtu)(struct qed_dev *cdev, u16 mtu);
+	पूर्णांक (*update_mtu)(काष्ठा qed_dev *cdev, u16 mtu);
 
 /**
  * @brief update_wol - update of changes in the WoL configuration
  *
  * @param cdev
- * @param enabled - true iff WoL should be enabled.
+ * @param enabled - true अगरf WoL should be enabled.
  */
-	int (*update_wol) (struct qed_dev *cdev, bool enabled);
+	पूर्णांक (*update_wol) (काष्ठा qed_dev *cdev, bool enabled);
 
 /**
- * @brief read_module_eeprom
+ * @brief पढ़ो_module_eeprom
  *
  * @param cdev
  * @param buf - buffer
  * @param dev_addr - PHY device memory region
- * @param offset - offset into eeprom contents to be read
- * @param len - buffer length, i.e., max bytes to be read
+ * @param offset - offset पूर्णांकo eeprom contents to be पढ़ो
+ * @param len - buffer length, i.e., max bytes to be पढ़ो
  */
-	int (*read_module_eeprom)(struct qed_dev *cdev,
-				  char *buf, u8 dev_addr, u32 offset, u32 len);
+	पूर्णांक (*पढ़ो_module_eeprom)(काष्ठा qed_dev *cdev,
+				  अक्षर *buf, u8 dev_addr, u32 offset, u32 len);
 
 /**
  * @brief get_affin_hwfn_idx
  *
  * @param cdev
  */
-	u8 (*get_affin_hwfn_idx)(struct qed_dev *cdev);
+	u8 (*get_affin_hwfn_idx)(काष्ठा qed_dev *cdev);
 
 /**
- * @brief read_nvm_cfg - Read NVM config attribute value.
+ * @brief पढ़ो_nvm_cfg - Read NVM config attribute value.
  * @param cdev
  * @param buf - buffer
  * @param cmd - NVM CFG command id
  * @param entity_id - Entity id
  *
  */
-	int (*read_nvm_cfg)(struct qed_dev *cdev, u8 **buf, u32 cmd,
+	पूर्णांक (*पढ़ो_nvm_cfg)(काष्ठा qed_dev *cdev, u8 **buf, u32 cmd,
 			    u32 entity_id);
 /**
- * @brief read_nvm_cfg - Read NVM config attribute value.
+ * @brief पढ़ो_nvm_cfg - Read NVM config attribute value.
  * @param cdev
  * @param cmd - NVM CFG command id
  *
- * @return config id length, 0 on error.
+ * @वापस config id length, 0 on error.
  */
-	int (*read_nvm_cfg_len)(struct qed_dev *cdev, u32 cmd);
+	पूर्णांक (*पढ़ो_nvm_cfg_len)(काष्ठा qed_dev *cdev, u32 cmd);
 
 /**
- * @brief set_grc_config - Configure value for grc config id.
+ * @brief set_grc_config - Configure value क्रम grc config id.
  * @param cdev
  * @param cfg_id - grc config id
  * @param val - grc config value
  *
  */
-	int (*set_grc_config)(struct qed_dev *cdev, u32 cfg_id, u32 val);
+	पूर्णांक (*set_grc_config)(काष्ठा qed_dev *cdev, u32 cfg_id, u32 val);
 
-	struct devlink* (*devlink_register)(struct qed_dev *cdev);
+	काष्ठा devlink* (*devlink_रेजिस्टर)(काष्ठा qed_dev *cdev);
 
-	void (*devlink_unregister)(struct devlink *devlink);
-};
+	व्योम (*devlink_unरेजिस्टर)(काष्ठा devlink *devlink);
+पूर्ण;
 
-#define MASK_FIELD(_name, _value) \
+#घोषणा MASK_FIELD(_name, _value) \
 	((_value) &= (_name ## _MASK))
 
-#define FIELD_VALUE(_name, _value) \
+#घोषणा FIELD_VALUE(_name, _value) \
 	((_value & _name ## _MASK) << _name ## _SHIFT)
 
-#define SET_FIELD(value, name, flag)			       \
-	do {						       \
+#घोषणा SET_FIELD(value, name, flag)			       \
+	करो अणु						       \
 		(value) &= ~(name ## _MASK << name ## _SHIFT); \
 		(value) |= (((u64)flag) << (name ## _SHIFT));  \
-	} while (0)
+	पूर्ण जबतक (0)
 
-#define GET_FIELD(value, name) \
+#घोषणा GET_FIELD(value, name) \
 	(((value) >> (name ## _SHIFT)) & name ## _MASK)
 
-#define GET_MFW_FIELD(name, field) \
+#घोषणा GET_MFW_FIELD(name, field) \
 	(((name) & (field ## _MASK)) >> (field ## _OFFSET))
 
-#define SET_MFW_FIELD(name, field, value)				 \
-	do {								 \
+#घोषणा SET_MFW_FIELD(name, field, value)				 \
+	करो अणु								 \
 		(name) &= ~(field ## _MASK);				 \
 		(name) |= (((value) << (field ## _OFFSET)) & (field ## _MASK));\
-	} while (0)
+	पूर्ण जबतक (0)
 
-#define DB_ADDR_SHIFT(addr) ((addr) << DB_PWM_ADDR_OFFSET_SHIFT)
+#घोषणा DB_ADDR_SHIFT(addr) ((addr) << DB_PWM_ADDR_OFFSET_SHIFT)
 
-/* Debug print definitions */
-#define DP_ERR(cdev, fmt, ...)					\
-	do {							\
+/* Debug prपूर्णांक definitions */
+#घोषणा DP_ERR(cdev, fmt, ...)					\
+	करो अणु							\
 		pr_err("[%s:%d(%s)]" fmt,			\
 		       __func__, __LINE__,			\
 		       DP_NAME(cdev) ? DP_NAME(cdev) : "",	\
 		       ## __VA_ARGS__);				\
-	} while (0)
+	पूर्ण जबतक (0)
 
-#define DP_NOTICE(cdev, fmt, ...)				      \
-	do {							      \
-		if (unlikely((cdev)->dp_level <= QED_LEVEL_NOTICE)) { \
+#घोषणा DP_NOTICE(cdev, fmt, ...)				      \
+	करो अणु							      \
+		अगर (unlikely((cdev)->dp_level <= QED_LEVEL_NOTICE)) अणु \
 			pr_notice("[%s:%d(%s)]" fmt,		      \
 				  __func__, __LINE__,		      \
 				  DP_NAME(cdev) ? DP_NAME(cdev) : "", \
 				  ## __VA_ARGS__);		      \
 								      \
-		}						      \
-	} while (0)
+		पूर्ण						      \
+	पूर्ण जबतक (0)
 
-#define DP_INFO(cdev, fmt, ...)					      \
-	do {							      \
-		if (unlikely((cdev)->dp_level <= QED_LEVEL_INFO)) {   \
+#घोषणा DP_INFO(cdev, fmt, ...)					      \
+	करो अणु							      \
+		अगर (unlikely((cdev)->dp_level <= QED_LEVEL_INFO)) अणु   \
 			pr_notice("[%s:%d(%s)]" fmt,		      \
 				  __func__, __LINE__,		      \
 				  DP_NAME(cdev) ? DP_NAME(cdev) : "", \
 				  ## __VA_ARGS__);		      \
-		}						      \
-	} while (0)
+		पूर्ण						      \
+	पूर्ण जबतक (0)
 
-#define DP_VERBOSE(cdev, module, fmt, ...)				\
-	do {								\
-		if (unlikely(((cdev)->dp_level <= QED_LEVEL_VERBOSE) &&	\
-			     ((cdev)->dp_module & module))) {		\
+#घोषणा DP_VERBOSE(cdev, module, fmt, ...)				\
+	करो अणु								\
+		अगर (unlikely(((cdev)->dp_level <= QED_LEVEL_VERBOSE) &&	\
+			     ((cdev)->dp_module & module))) अणु		\
 			pr_notice("[%s:%d(%s)]" fmt,			\
 				  __func__, __LINE__,			\
 				  DP_NAME(cdev) ? DP_NAME(cdev) : "",	\
 				  ## __VA_ARGS__);			\
-		}							\
-	} while (0)
+		पूर्ण							\
+	पूर्ण जबतक (0)
 
-enum DP_LEVEL {
+क्रमागत DP_LEVEL अणु
 	QED_LEVEL_VERBOSE	= 0x0,
 	QED_LEVEL_INFO		= 0x1,
 	QED_LEVEL_NOTICE	= 0x2,
 	QED_LEVEL_ERR		= 0x3,
-};
+पूर्ण;
 
-#define QED_LOG_LEVEL_SHIFT     (30)
-#define QED_LOG_VERBOSE_MASK    (0x3fffffff)
-#define QED_LOG_INFO_MASK       (0x40000000)
-#define QED_LOG_NOTICE_MASK     (0x80000000)
+#घोषणा QED_LOG_LEVEL_SHIFT     (30)
+#घोषणा QED_LOG_VERBOSE_MASK    (0x3fffffff)
+#घोषणा QED_LOG_INFO_MASK       (0x40000000)
+#घोषणा QED_LOG_NOTICE_MASK     (0x80000000)
 
-enum DP_MODULE {
+क्रमागत DP_MODULE अणु
 	QED_MSG_SPQ	= 0x10000,
 	QED_MSG_STATS	= 0x20000,
 	QED_MSG_DCB	= 0x40000,
@@ -1243,15 +1244,15 @@ enum DP_MODULE {
 	QED_MSG_RDMA	= 0x4000000,
 	QED_MSG_DEBUG	= 0x8000000,
 	/* to be added...up to 0x8000000 */
-};
+पूर्ण;
 
-enum qed_mf_mode {
+क्रमागत qed_mf_mode अणु
 	QED_MF_DEFAULT,
 	QED_MF_OVLAN,
 	QED_MF_NPAR,
-};
+पूर्ण;
 
-struct qed_eth_stats_common {
+काष्ठा qed_eth_stats_common अणु
 	u64	no_buff_discards;
 	u64	packet_too_big_discard;
 	u64	ttl0_discard;
@@ -1273,7 +1274,7 @@ struct qed_eth_stats_common {
 	u64	tx_err_drop_pkts;
 	u64	tpa_coalesced_pkts;
 	u64	tpa_coalesced_events;
-	u64	tpa_aborts_num;
+	u64	tpa_पातs_num;
 	u64	tpa_not_coalesced_pkts;
 	u64	tpa_coalesced_bytes;
 
@@ -1286,7 +1287,7 @@ struct qed_eth_stats_common {
 	u64	rx_1024_to_1518_byte_packets;
 	u64	rx_crc_errors;
 	u64	rx_mac_crtl_frames;
-	u64	rx_pause_frames;
+	u64	rx_छोड़ो_frames;
 	u64	rx_pfc_frames;
 	u64	rx_align_errors;
 	u64	rx_carrier_errors;
@@ -1300,7 +1301,7 @@ struct qed_eth_stats_common {
 	u64	tx_256_to_511_byte_packets;
 	u64	tx_512_to_1023_byte_packets;
 	u64	tx_1024_to_1518_byte_packets;
-	u64	tx_pause_frames;
+	u64	tx_छोड़ो_frames;
 	u64	tx_pfc_frames;
 	u64	brb_truncates;
 	u64	brb_discards;
@@ -1315,9 +1316,9 @@ struct qed_eth_stats_common {
 	u64	tx_mac_bc_packets;
 	u64	tx_mac_ctrl_frames;
 	u64	link_change_count;
-};
+पूर्ण;
 
-struct qed_eth_stats_bb {
+काष्ठा qed_eth_stats_bb अणु
 	u64 rx_1519_to_1522_byte_packets;
 	u64 rx_1519_to_2047_byte_packets;
 	u64 rx_2048_to_4095_byte_packets;
@@ -1329,117 +1330,117 @@ struct qed_eth_stats_bb {
 	u64 tx_9217_to_16383_byte_packets;
 	u64 tx_lpi_entry_count;
 	u64 tx_total_collisions;
-};
+पूर्ण;
 
-struct qed_eth_stats_ah {
+काष्ठा qed_eth_stats_ah अणु
 	u64 rx_1519_to_max_byte_packets;
 	u64 tx_1519_to_max_byte_packets;
-};
+पूर्ण;
 
-struct qed_eth_stats {
-	struct qed_eth_stats_common common;
+काष्ठा qed_eth_stats अणु
+	काष्ठा qed_eth_stats_common common;
 
-	union {
-		struct qed_eth_stats_bb bb;
-		struct qed_eth_stats_ah ah;
-	};
-};
+	जोड़ अणु
+		काष्ठा qed_eth_stats_bb bb;
+		काष्ठा qed_eth_stats_ah ah;
+	पूर्ण;
+पूर्ण;
 
-#define QED_SB_IDX              0x0002
+#घोषणा QED_SB_IDX              0x0002
 
-#define RX_PI           0
-#define TX_PI(tc)       (RX_PI + 1 + tc)
+#घोषणा RX_PI           0
+#घोषणा TX_PI(tc)       (RX_PI + 1 + tc)
 
-struct qed_sb_cnt_info {
-	/* Original, current, and free SBs for PF */
-	int orig;
-	int cnt;
-	int free_cnt;
+काष्ठा qed_sb_cnt_info अणु
+	/* Original, current, and मुक्त SBs क्रम PF */
+	पूर्णांक orig;
+	पूर्णांक cnt;
+	पूर्णांक मुक्त_cnt;
 
-	/* Original, current and free SBS for child VFs */
-	int iov_orig;
-	int iov_cnt;
-	int free_cnt_iov;
-};
+	/* Original, current and मुक्त SBS क्रम child VFs */
+	पूर्णांक iov_orig;
+	पूर्णांक iov_cnt;
+	पूर्णांक मुक्त_cnt_iov;
+पूर्ण;
 
-static inline u16 qed_sb_update_sb_idx(struct qed_sb_info *sb_info)
-{
+अटल अंतरभूत u16 qed_sb_update_sb_idx(काष्ठा qed_sb_info *sb_info)
+अणु
 	u32 prod = 0;
 	u16 rc = 0;
 
 	prod = le32_to_cpu(sb_info->sb_virt->prod_index) &
 	       STATUS_BLOCK_E4_PROD_INDEX_MASK;
-	if (sb_info->sb_ack != prod) {
+	अगर (sb_info->sb_ack != prod) अणु
 		sb_info->sb_ack = prod;
 		rc |= QED_SB_IDX;
-	}
+	पूर्ण
 
 	/* Let SB update */
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
 /**
  *
- * @brief This function creates an update command for interrupts that is
+ * @brief This function creates an update command क्रम पूर्णांकerrupts that is
  *        written to the IGU.
  *
- * @param sb_info       - This is the structure allocated and
+ * @param sb_info       - This is the काष्ठाure allocated and
  *                 initialized per status block. Assumption is
  *                 that it was initialized using qed_sb_init
- * @param int_cmd       - Enable/Disable/Nop
+ * @param पूर्णांक_cmd       - Enable/Disable/Nop
  * @param upd_flg       - whether igu consumer should be
  *                 updated.
  *
- * @return inline void
+ * @वापस अंतरभूत व्योम
  */
-static inline void qed_sb_ack(struct qed_sb_info *sb_info,
-			      enum igu_int_cmd int_cmd,
+अटल अंतरभूत व्योम qed_sb_ack(काष्ठा qed_sb_info *sb_info,
+			      क्रमागत igu_पूर्णांक_cmd पूर्णांक_cmd,
 			      u8 upd_flg)
-{
+अणु
 	u32 igu_ack;
 
 	igu_ack = ((sb_info->sb_ack << IGU_PROD_CONS_UPDATE_SB_INDEX_SHIFT) |
 		   (upd_flg << IGU_PROD_CONS_UPDATE_UPDATE_FLAG_SHIFT) |
-		   (int_cmd << IGU_PROD_CONS_UPDATE_ENABLE_INT_SHIFT) |
+		   (पूर्णांक_cmd << IGU_PROD_CONS_UPDATE_ENABLE_INT_SHIFT) |
 		   (IGU_SEG_ACCESS_REG <<
 		    IGU_PROD_CONS_UPDATE_SEGMENT_ACCESS_SHIFT));
 
-	DIRECT_REG_WR(sb_info->igu_addr, igu_ack);
+	सूचीECT_REG_WR(sb_info->igu_addr, igu_ack);
 
-	/* Both segments (interrupts & acks) are written to same place address;
+	/* Both segments (पूर्णांकerrupts & acks) are written to same place address;
 	 * Need to guarantee all commands will be received (in-order) by HW.
 	 */
 	barrier();
-}
+पूर्ण
 
-static inline void __internal_ram_wr(void *p_hwfn,
-				     void __iomem *addr,
-				     int size,
+अटल अंतरभूत व्योम __पूर्णांकernal_ram_wr(व्योम *p_hwfn,
+				     व्योम __iomem *addr,
+				     पूर्णांक size,
 				     u32 *data)
 
-{
-	unsigned int i;
+अणु
+	अचिन्हित पूर्णांक i;
 
-	for (i = 0; i < size / sizeof(*data); i++)
-		DIRECT_REG_WR(&((u32 __iomem *)addr)[i], data[i]);
-}
+	क्रम (i = 0; i < size / माप(*data); i++)
+		सूचीECT_REG_WR(&((u32 __iomem *)addr)[i], data[i]);
+पूर्ण
 
-static inline void internal_ram_wr(void __iomem *addr,
-				   int size,
+अटल अंतरभूत व्योम पूर्णांकernal_ram_wr(व्योम __iomem *addr,
+				   पूर्णांक size,
 				   u32 *data)
-{
-	__internal_ram_wr(NULL, addr, size, data);
-}
+अणु
+	__पूर्णांकernal_ram_wr(शून्य, addr, size, data);
+पूर्ण
 
-enum qed_rss_caps {
+क्रमागत qed_rss_caps अणु
 	QED_RSS_IPV4		= 0x1,
 	QED_RSS_IPV6		= 0x2,
 	QED_RSS_IPV4_TCP	= 0x4,
 	QED_RSS_IPV6_TCP	= 0x8,
 	QED_RSS_IPV4_UDP	= 0x10,
 	QED_RSS_IPV6_UDP	= 0x20,
-};
+पूर्ण;
 
-#define QED_RSS_IND_TABLE_SIZE 128
-#define QED_RSS_KEY_SIZE 10 /* size in 32b chunks */
-#endif
+#घोषणा QED_RSS_IND_TABLE_SIZE 128
+#घोषणा QED_RSS_KEY_SIZE 10 /* size in 32b chunks */
+#पूर्ण_अगर

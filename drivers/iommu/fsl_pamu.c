@@ -1,105 +1,106 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  *
  * Copyright (C) 2013 Freescale Semiconductor, Inc.
  */
 
-#define pr_fmt(fmt)    "fsl-pamu: %s: " fmt, __func__
+#घोषणा pr_fmt(fmt)    "fsl-pamu: %s: " fmt, __func__
 
-#include "fsl_pamu.h"
+#समावेश "fsl_pamu.h"
 
-#include <linux/fsl/guts.h>
-#include <linux/interrupt.h>
-#include <linux/genalloc.h>
+#समावेश <linux/fsl/guts.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/genभाग.स>
 
-#include <asm/mpc85xx.h>
+#समावेश <यंत्र/mpc85xx.h>
 
-/* define indexes for each operation mapping scenario */
-#define OMI_QMAN        0x00
-#define OMI_FMAN        0x01
-#define OMI_QMAN_PRIV   0x02
-#define OMI_CAAM        0x03
+/* define indexes क्रम each operation mapping scenario */
+#घोषणा OMI_QMAN        0x00
+#घोषणा OMI_FMAN        0x01
+#घोषणा OMI_QMAN_PRIV   0x02
+#घोषणा OMI_CAAM        0x03
 
-#define make64(high, low) (((u64)(high) << 32) | (low))
+#घोषणा make64(high, low) (((u64)(high) << 32) | (low))
 
-struct pamu_isr_data {
-	void __iomem *pamu_reg_base;	/* Base address of PAMU regs */
-	unsigned int count;		/* The number of PAMUs */
-};
+काष्ठा pamu_isr_data अणु
+	व्योम __iomem *pamu_reg_base;	/* Base address of PAMU regs */
+	अचिन्हित पूर्णांक count;		/* The number of PAMUs */
+पूर्ण;
 
-static struct paace *ppaact;
-static struct paace *spaact;
+अटल काष्ठा paace *ppaact;
+अटल काष्ठा paace *spaact;
 
-static bool probed;			/* Has PAMU been probed? */
+अटल bool probed;			/* Has PAMU been probed? */
 
 /*
- * Table for matching compatible strings, for device tree
- * guts node, for QorIQ SOCs.
+ * Table क्रम matching compatible strings, क्रम device tree
+ * guts node, क्रम QorIQ SOCs.
  * "fsl,qoriq-device-config-2.0" corresponds to T4 & B4
  * SOCs. For the older SOCs "fsl,qoriq-device-config-1.0"
  * string would be used.
  */
-static const struct of_device_id guts_device_ids[] = {
-	{ .compatible = "fsl,qoriq-device-config-1.0", },
-	{ .compatible = "fsl,qoriq-device-config-2.0", },
-	{}
-};
+अटल स्थिर काष्ठा of_device_id guts_device_ids[] = अणु
+	अणु .compatible = "fsl,qoriq-device-config-1.0", पूर्ण,
+	अणु .compatible = "fsl,qoriq-device-config-2.0", पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
 /*
- * Table for matching compatible strings, for device tree
+ * Table क्रम matching compatible strings, क्रम device tree
  * L3 cache controller node.
  * "fsl,t4240-l3-cache-controller" corresponds to T4,
  * "fsl,b4860-l3-cache-controller" corresponds to B4 &
  * "fsl,p4080-l3-cache-controller" corresponds to other,
  * SOCs.
  */
-static const struct of_device_id l3_device_ids[] = {
-	{ .compatible = "fsl,t4240-l3-cache-controller", },
-	{ .compatible = "fsl,b4860-l3-cache-controller", },
-	{ .compatible = "fsl,p4080-l3-cache-controller", },
-	{}
-};
+अटल स्थिर काष्ठा of_device_id l3_device_ids[] = अणु
+	अणु .compatible = "fsl,t4240-l3-cache-controller", पूर्ण,
+	अणु .compatible = "fsl,b4860-l3-cache-controller", पूर्ण,
+	अणु .compatible = "fsl,p4080-l3-cache-controller", पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
-/* maximum subwindows permitted per liodn */
-static u32 max_subwindow_count;
+/* maximum subwinकरोws permitted per liodn */
+अटल u32 max_subwinकरोw_count;
 
 /**
  * pamu_get_ppaace() - Return the primary PACCE
- * @liodn: liodn PAACT index for desired PAACE
+ * @liodn: liodn PAACT index क्रम desired PAACE
  *
- * Returns the ppace pointer upon success else return
+ * Returns the ppace poपूर्णांकer upon success अन्यथा वापस
  * null.
  */
-static struct paace *pamu_get_ppaace(int liodn)
-{
-	if (!ppaact || liodn >= PAACE_NUMBER_ENTRIES) {
+अटल काष्ठा paace *pamu_get_ppaace(पूर्णांक liodn)
+अणु
+	अगर (!ppaact || liodn >= PAACE_NUMBER_ENTRIES) अणु
 		pr_debug("PPAACT doesn't exist\n");
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
-	return &ppaact[liodn];
-}
+	वापस &ppaact[liodn];
+पूर्ण
 
 /**
  * pamu_enable_liodn() - Set valid bit of PACCE
- * @liodn: liodn PAACT index for desired PAACE
+ * @liodn: liodn PAACT index क्रम desired PAACE
  *
- * Returns 0 upon success else error code < 0 returned
+ * Returns 0 upon success अन्यथा error code < 0 वापसed
  */
-int pamu_enable_liodn(int liodn)
-{
-	struct paace *ppaace;
+पूर्णांक pamu_enable_liodn(पूर्णांक liodn)
+अणु
+	काष्ठा paace *ppaace;
 
 	ppaace = pamu_get_ppaace(liodn);
-	if (!ppaace) {
+	अगर (!ppaace) अणु
 		pr_debug("Invalid primary paace entry\n");
-		return -ENOENT;
-	}
+		वापस -ENOENT;
+	पूर्ण
 
-	if (!get_bf(ppaace->addr_bitfields, PPAACE_AF_WSE)) {
+	अगर (!get_bf(ppaace->addr_bitfields, PPAACE_AF_WSE)) अणु
 		pr_debug("liodn %d not configured\n", liodn);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	/* Ensure that all other stores to the ppaace complete first */
 	mb();
@@ -107,112 +108,112 @@ int pamu_enable_liodn(int liodn)
 	set_bf(ppaace->addr_bitfields, PAACE_AF_V, PAACE_V_VALID);
 	mb();
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * pamu_disable_liodn() - Clears valid bit of PACCE
- * @liodn: liodn PAACT index for desired PAACE
+ * @liodn: liodn PAACT index क्रम desired PAACE
  *
- * Returns 0 upon success else error code < 0 returned
+ * Returns 0 upon success अन्यथा error code < 0 वापसed
  */
-int pamu_disable_liodn(int liodn)
-{
-	struct paace *ppaace;
+पूर्णांक pamu_disable_liodn(पूर्णांक liodn)
+अणु
+	काष्ठा paace *ppaace;
 
 	ppaace = pamu_get_ppaace(liodn);
-	if (!ppaace) {
+	अगर (!ppaace) अणु
 		pr_debug("Invalid primary paace entry\n");
-		return -ENOENT;
-	}
+		वापस -ENOENT;
+	पूर्ण
 
 	set_bf(ppaace->addr_bitfields, PAACE_AF_V, PAACE_V_INVALID);
 	mb();
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* Derive the window size encoding for a particular PAACE entry */
-static unsigned int map_addrspace_size_to_wse(phys_addr_t addrspace_size)
-{
-	/* Bug if not a power of 2 */
+/* Derive the winकरोw size encoding क्रम a particular PAACE entry */
+अटल अचिन्हित पूर्णांक map_addrspace_माप_प्रकारo_wse(phys_addr_t addrspace_size)
+अणु
+	/* Bug अगर not a घातer of 2 */
 	BUG_ON(addrspace_size & (addrspace_size - 1));
 
-	/* window size is 2^(WSE+1) bytes */
-	return fls64(addrspace_size) - 2;
-}
+	/* winकरोw size is 2^(WSE+1) bytes */
+	वापस fls64(addrspace_size) - 2;
+पूर्ण
 
 /*
- * Set the PAACE type as primary and set the coherency required domain
+ * Set the PAACE type as primary and set the coherency required करोमुख्य
  * attribute
  */
-static void pamu_init_ppaace(struct paace *ppaace)
-{
+अटल व्योम pamu_init_ppaace(काष्ठा paace *ppaace)
+अणु
 	set_bf(ppaace->addr_bitfields, PAACE_AF_PT, PAACE_PT_PRIMARY);
 
-	set_bf(ppaace->domain_attr.to_host.coherency_required, PAACE_DA_HOST_CR,
+	set_bf(ppaace->करोमुख्य_attr.to_host.coherency_required, PAACE_DA_HOST_CR,
 	       PAACE_M_COHERENCE_REQ);
-}
+पूर्ण
 
 /*
- * Function used for updating stash destination for the coressponding
+ * Function used क्रम updating stash destination क्रम the coressponding
  * LIODN.
  */
-int pamu_update_paace_stash(int liodn, u32 value)
-{
-	struct paace *paace;
+पूर्णांक pamu_update_paace_stash(पूर्णांक liodn, u32 value)
+अणु
+	काष्ठा paace *paace;
 
 	paace = pamu_get_ppaace(liodn);
-	if (!paace) {
+	अगर (!paace) अणु
 		pr_debug("Invalid liodn entry\n");
-		return -ENOENT;
-	}
+		वापस -ENOENT;
+	पूर्ण
 	set_bf(paace->impl_attr, PAACE_IA_CID, value);
 
 	mb();
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * pamu_config_paace() - Sets up PPAACE entry for specified liodn
+ * pamu_config_paace() - Sets up PPAACE entry क्रम specअगरied liodn
  *
  * @liodn: Logical IO device number
- * @omi: Operation mapping index -- if ~omi == 0 then omi not defined
- * @stashid: cache stash id for associated cpu -- if ~stashid == 0 then
+ * @omi: Operation mapping index -- अगर ~omi == 0 then omi not defined
+ * @stashid: cache stash id क्रम associated cpu -- अगर ~stashid == 0 then
  *	     stashid not defined
- * @prot: window permissions
+ * @prot: winकरोw permissions
  *
- * Returns 0 upon success else error code < 0 returned
+ * Returns 0 upon success अन्यथा error code < 0 वापसed
  */
-int pamu_config_ppaace(int liodn, u32 omi, u32 stashid, int prot)
-{
-	struct paace *ppaace;
+पूर्णांक pamu_config_ppaace(पूर्णांक liodn, u32 omi, u32 stashid, पूर्णांक prot)
+अणु
+	काष्ठा paace *ppaace;
 
 	ppaace = pamu_get_ppaace(liodn);
-	if (!ppaace)
-		return -ENOENT;
+	अगर (!ppaace)
+		वापस -ENOENT;
 
-	/* window size is 2^(WSE+1) bytes */
+	/* winकरोw size is 2^(WSE+1) bytes */
 	set_bf(ppaace->addr_bitfields, PPAACE_AF_WSE,
-	       map_addrspace_size_to_wse(1ULL << 36));
+	       map_addrspace_माप_प्रकारo_wse(1ULL << 36));
 
 	pamu_init_ppaace(ppaace);
 
 	ppaace->wbah = 0;
 	set_bf(ppaace->addr_bitfields, PPAACE_AF_WBAL, 0);
 
-	/* set up operation mapping if it's configured */
-	if (omi < OME_NUMBER_ENTRIES) {
+	/* set up operation mapping अगर it's configured */
+	अगर (omi < OME_NUMBER_ENTRIES) अणु
 		set_bf(ppaace->impl_attr, PAACE_IA_OTM, PAACE_OTM_INDEXED);
 		ppaace->op_encode.index_ot.omi = omi;
-	} else if (~omi != 0) {
+	पूर्ण अन्यथा अगर (~omi != 0) अणु
 		pr_debug("bad operation mapping index: %d\n", omi);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	/* configure stash id */
-	if (~stashid != 0)
+	अगर (~stashid != 0)
 		set_bf(ppaace->impl_attr, PAACE_IA_CID, stashid);
 
 	set_bf(ppaace->impl_attr, PAACE_IA_ATM, PAACE_ATM_WINDOW_XLATE);
@@ -223,146 +224,146 @@ int pamu_config_ppaace(int liodn, u32 omi, u32 stashid, int prot)
 	set_bf(ppaace->addr_bitfields, PPAACE_AF_MW, 0);
 	mb();
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * get_ome_index() - Returns the index in the operation mapping table
- *                   for device.
- * @*omi_index: pointer for storing the index value
+ *                   क्रम device.
+ * @*omi_index: poपूर्णांकer क्रम storing the index value
  *
  */
-void get_ome_index(u32 *omi_index, struct device *dev)
-{
-	if (of_device_is_compatible(dev->of_node, "fsl,qman-portal"))
+व्योम get_ome_index(u32 *omi_index, काष्ठा device *dev)
+अणु
+	अगर (of_device_is_compatible(dev->of_node, "fsl,qman-portal"))
 		*omi_index = OMI_QMAN;
-	if (of_device_is_compatible(dev->of_node, "fsl,qman"))
+	अगर (of_device_is_compatible(dev->of_node, "fsl,qman"))
 		*omi_index = OMI_QMAN_PRIV;
-}
+पूर्ण
 
 /**
  * get_stash_id - Returns stash destination id corresponding to a
  *                cache type and vcpu.
- * @stash_dest_hint: L1, L2 or L3
- * @vcpu: vpcu target for a particular cache type.
+ * @stash_dest_hपूर्णांक: L1, L2 or L3
+ * @vcpu: vpcu target क्रम a particular cache type.
  *
  * Returs stash on success or ~(u32)0 on failure.
  *
  */
-u32 get_stash_id(u32 stash_dest_hint, u32 vcpu)
-{
-	const u32 *prop;
-	struct device_node *node;
+u32 get_stash_id(u32 stash_dest_hपूर्णांक, u32 vcpu)
+अणु
+	स्थिर u32 *prop;
+	काष्ठा device_node *node;
 	u32 cache_level;
-	int len, found = 0;
-	int i;
+	पूर्णांक len, found = 0;
+	पूर्णांक i;
 
-	/* Fastpath, exit early if L3/CPC cache is target for stashing */
-	if (stash_dest_hint == PAMU_ATTR_CACHE_L3) {
-		node = of_find_matching_node(NULL, l3_device_ids);
-		if (node) {
-			prop = of_get_property(node, "cache-stash-id", NULL);
-			if (!prop) {
+	/* Fastpath, निकास early अगर L3/CPC cache is target क्रम stashing */
+	अगर (stash_dest_hपूर्णांक == PAMU_ATTR_CACHE_L3) अणु
+		node = of_find_matching_node(शून्य, l3_device_ids);
+		अगर (node) अणु
+			prop = of_get_property(node, "cache-stash-id", शून्य);
+			अगर (!prop) अणु
 				pr_debug("missing cache-stash-id at %pOF\n",
 					 node);
 				of_node_put(node);
-				return ~(u32)0;
-			}
+				वापस ~(u32)0;
+			पूर्ण
 			of_node_put(node);
-			return be32_to_cpup(prop);
-		}
-		return ~(u32)0;
-	}
+			वापस be32_to_cpup(prop);
+		पूर्ण
+		वापस ~(u32)0;
+	पूर्ण
 
-	for_each_of_cpu_node(node) {
+	क्रम_each_of_cpu_node(node) अणु
 		prop = of_get_property(node, "reg", &len);
-		for (i = 0; i < len / sizeof(u32); i++) {
-			if (be32_to_cpup(&prop[i]) == vcpu) {
+		क्रम (i = 0; i < len / माप(u32); i++) अणु
+			अगर (be32_to_cpup(&prop[i]) == vcpu) अणु
 				found = 1;
-				goto found_cpu_node;
-			}
-		}
-	}
+				जाओ found_cpu_node;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 found_cpu_node:
 
 	/* find the hwnode that represents the cache */
-	for (cache_level = PAMU_ATTR_CACHE_L1; (cache_level < PAMU_ATTR_CACHE_L3) && found; cache_level++) {
-		if (stash_dest_hint == cache_level) {
-			prop = of_get_property(node, "cache-stash-id", NULL);
-			if (!prop) {
+	क्रम (cache_level = PAMU_ATTR_CACHE_L1; (cache_level < PAMU_ATTR_CACHE_L3) && found; cache_level++) अणु
+		अगर (stash_dest_hपूर्णांक == cache_level) अणु
+			prop = of_get_property(node, "cache-stash-id", शून्य);
+			अगर (!prop) अणु
 				pr_debug("missing cache-stash-id at %pOF\n",
 					 node);
 				of_node_put(node);
-				return ~(u32)0;
-			}
+				वापस ~(u32)0;
+			पूर्ण
 			of_node_put(node);
-			return be32_to_cpup(prop);
-		}
+			वापस be32_to_cpup(prop);
+		पूर्ण
 
-		prop = of_get_property(node, "next-level-cache", NULL);
-		if (!prop) {
+		prop = of_get_property(node, "next-level-cache", शून्य);
+		अगर (!prop) अणु
 			pr_debug("can't find next-level-cache at %pOF\n", node);
 			of_node_put(node);
-			return ~(u32)0;  /* can't traverse any further */
-		}
+			वापस ~(u32)0;  /* can't traverse any further */
+		पूर्ण
 		of_node_put(node);
 
 		/* advance to next node in cache hierarchy */
 		node = of_find_node_by_phandle(*prop);
-		if (!node) {
+		अगर (!node) अणु
 			pr_debug("Invalid node for cache hierarchy\n");
-			return ~(u32)0;
-		}
-	}
+			वापस ~(u32)0;
+		पूर्ण
+	पूर्ण
 
 	pr_debug("stash dest not found for %d on vcpu %d\n",
-		 stash_dest_hint, vcpu);
-	return ~(u32)0;
-}
+		 stash_dest_hपूर्णांक, vcpu);
+	वापस ~(u32)0;
+पूर्ण
 
-/* Identify if the PAACT table entry belongs to QMAN, BMAN or QMAN Portal */
-#define QMAN_PAACE 1
-#define QMAN_PORTAL_PAACE 2
-#define BMAN_PAACE 3
+/* Identअगरy अगर the PAACT table entry beदीर्घs to QMAN, BMAN or QMAN Portal */
+#घोषणा QMAN_PAACE 1
+#घोषणा QMAN_PORTAL_PAACE 2
+#घोषणा BMAN_PAACE 3
 
 /**
- * Setup operation mapping and stash destinations for QMAN and QMAN portal.
- * Memory accesses to QMAN and BMAN private memory need not be coherent, so
- * clear the PAACE entry coherency attribute for them.
+ * Setup operation mapping and stash destinations क्रम QMAN and QMAN portal.
+ * Memory accesses to QMAN and BMAN निजी memory need not be coherent, so
+ * clear the PAACE entry coherency attribute क्रम them.
  */
-static void setup_qbman_paace(struct paace *ppaace, int  paace_type)
-{
-	switch (paace_type) {
-	case QMAN_PAACE:
+अटल व्योम setup_qbman_paace(काष्ठा paace *ppaace, पूर्णांक  paace_type)
+अणु
+	चयन (paace_type) अणु
+	हाल QMAN_PAACE:
 		set_bf(ppaace->impl_attr, PAACE_IA_OTM, PAACE_OTM_INDEXED);
 		ppaace->op_encode.index_ot.omi = OMI_QMAN_PRIV;
-		/* setup QMAN Private data stashing for the L3 cache */
+		/* setup QMAN Private data stashing क्रम the L3 cache */
 		set_bf(ppaace->impl_attr, PAACE_IA_CID, get_stash_id(PAMU_ATTR_CACHE_L3, 0));
-		set_bf(ppaace->domain_attr.to_host.coherency_required, PAACE_DA_HOST_CR,
+		set_bf(ppaace->करोमुख्य_attr.to_host.coherency_required, PAACE_DA_HOST_CR,
 		       0);
-		break;
-	case QMAN_PORTAL_PAACE:
+		अवरोध;
+	हाल QMAN_PORTAL_PAACE:
 		set_bf(ppaace->impl_attr, PAACE_IA_OTM, PAACE_OTM_INDEXED);
 		ppaace->op_encode.index_ot.omi = OMI_QMAN;
-		/* Set DQRR and Frame stashing for the L3 cache */
+		/* Set DQRR and Frame stashing क्रम the L3 cache */
 		set_bf(ppaace->impl_attr, PAACE_IA_CID, get_stash_id(PAMU_ATTR_CACHE_L3, 0));
-		break;
-	case BMAN_PAACE:
-		set_bf(ppaace->domain_attr.to_host.coherency_required, PAACE_DA_HOST_CR,
+		अवरोध;
+	हाल BMAN_PAACE:
+		set_bf(ppaace->करोमुख्य_attr.to_host.coherency_required, PAACE_DA_HOST_CR,
 		       0);
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
 /**
- * Setup the operation mapping table for various devices. This is a static
+ * Setup the operation mapping table क्रम various devices. This is a अटल
  * table where each table index corresponds to a particular device. PAMU uses
  * this table to translate device transaction to appropriate corenet
  * transaction.
  */
-static void setup_omt(struct ome *omt)
-{
-	struct ome *ome;
+अटल व्योम setup_omt(काष्ठा ome *omt)
+अणु
+	काष्ठा ome *ome;
 
 	/* Configure OMI_QMAN */
 	ome = &omt[OMI_QMAN];
@@ -372,15 +373,15 @@ static void setup_omt(struct ome *omt)
 	ome->moe[IOE_WRITE_IDX] = EOE_VALID | EOE_WRITE;
 	ome->moe[IOE_EWRITE0_IDX] = EOE_VALID | EOE_WWSAO;
 
-	ome->moe[IOE_DIRECT0_IDX] = EOE_VALID | EOE_LDEC;
-	ome->moe[IOE_DIRECT1_IDX] = EOE_VALID | EOE_LDECPE;
+	ome->moe[IOE_सूचीECT0_IDX] = EOE_VALID | EOE_LDEC;
+	ome->moe[IOE_सूचीECT1_IDX] = EOE_VALID | EOE_LDECPE;
 
 	/* Configure OMI_FMAN */
 	ome = &omt[OMI_FMAN];
 	ome->moe[IOE_READ_IDX]  = EOE_VALID | EOE_READI;
 	ome->moe[IOE_WRITE_IDX] = EOE_VALID | EOE_WRITE;
 
-	/* Configure OMI_QMAN private */
+	/* Configure OMI_QMAN निजी */
 	ome = &omt[OMI_QMAN_PRIV];
 	ome->moe[IOE_READ_IDX]  = EOE_VALID | EOE_READ;
 	ome->moe[IOE_WRITE_IDX] = EOE_VALID | EOE_WRITE;
@@ -391,34 +392,34 @@ static void setup_omt(struct ome *omt)
 	ome = &omt[OMI_CAAM];
 	ome->moe[IOE_READ_IDX]  = EOE_VALID | EOE_READI;
 	ome->moe[IOE_WRITE_IDX] = EOE_VALID | EOE_WRITE;
-}
+पूर्ण
 
 /*
  * Get the maximum number of PAACT table entries
- * and subwindows supported by PAMU
+ * and subwinकरोws supported by PAMU
  */
-static void get_pamu_cap_values(unsigned long pamu_reg_base)
-{
+अटल व्योम get_pamu_cap_values(अचिन्हित दीर्घ pamu_reg_base)
+अणु
 	u32 pc_val;
 
 	pc_val = in_be32((u32 *)(pamu_reg_base + PAMU_PC3));
-	/* Maximum number of subwindows per liodn */
-	max_subwindow_count = 1 << (1 + PAMU_PC3_MWCE(pc_val));
-}
+	/* Maximum number of subwinकरोws per liodn */
+	max_subwinकरोw_count = 1 << (1 + PAMU_PC3_MWCE(pc_val));
+पूर्ण
 
-/* Setup PAMU registers pointing to PAACT, SPAACT and OMT */
-static int setup_one_pamu(unsigned long pamu_reg_base, unsigned long pamu_reg_size,
+/* Setup PAMU रेजिस्टरs poपूर्णांकing to PAACT, SPAACT and OMT */
+अटल पूर्णांक setup_one_pamu(अचिन्हित दीर्घ pamu_reg_base, अचिन्हित दीर्घ pamu_reg_size,
 			  phys_addr_t ppaact_phys, phys_addr_t spaact_phys,
 			  phys_addr_t omt_phys)
-{
+अणु
 	u32 *pc;
-	struct pamu_mmap_regs *pamu_regs;
+	काष्ठा pamu_mmap_regs *pamu_regs;
 
 	pc = (u32 *) (pamu_reg_base + PAMU_PC);
-	pamu_regs = (struct pamu_mmap_regs *)
+	pamu_regs = (काष्ठा pamu_mmap_regs *)
 		(pamu_reg_base + PAMU_MMAP_REGS_BASE);
 
-	/* set up pointers to corenet control blocks */
+	/* set up poपूर्णांकers to corenet control blocks */
 
 	out_be32(&pamu_regs->ppbah, upper_32_bits(ppaact_phys));
 	out_be32(&pamu_regs->ppbal, lower_32_bits(ppaact_phys));
@@ -441,36 +442,36 @@ static int setup_one_pamu(unsigned long pamu_reg_base, unsigned long pamu_reg_si
 	/*
 	 * set PAMU enable bit,
 	 * allow ppaact & omt to be cached
-	 * & enable PAMU access violation interrupts.
+	 * & enable PAMU access violation पूर्णांकerrupts.
 	 */
 
 	out_be32((u32 *)(pamu_reg_base + PAMU_PICS),
 		 PAMU_ACCESS_VIOLATION_ENABLE);
 	out_be32(pc, PAMU_PC_PE | PAMU_PC_OCE | PAMU_PC_SPCC | PAMU_PC_PPCC);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* Enable all device LIODNS */
-static void setup_liodns(void)
-{
-	int i, len;
-	struct paace *ppaace;
-	struct device_node *node = NULL;
-	const u32 *prop;
+अटल व्योम setup_liodns(व्योम)
+अणु
+	पूर्णांक i, len;
+	काष्ठा paace *ppaace;
+	काष्ठा device_node *node = शून्य;
+	स्थिर u32 *prop;
 
-	for_each_node_with_property(node, "fsl,liodn") {
+	क्रम_each_node_with_property(node, "fsl,liodn") अणु
 		prop = of_get_property(node, "fsl,liodn", &len);
-		for (i = 0; i < len / sizeof(u32); i++) {
-			int liodn;
+		क्रम (i = 0; i < len / माप(u32); i++) अणु
+			पूर्णांक liodn;
 
 			liodn = be32_to_cpup(&prop[i]);
-			if (liodn >= PAACE_NUMBER_ENTRIES) {
+			अगर (liodn >= PAACE_NUMBER_ENTRIES) अणु
 				pr_debug("Invalid LIODN value %d\n", liodn);
-				continue;
-			}
+				जारी;
+			पूर्ण
 			ppaace = pamu_get_ppaace(liodn);
 			pamu_init_ppaace(ppaace);
-			/* window size is 2^(WSE+1) bytes */
+			/* winकरोw size is 2^(WSE+1) bytes */
 			set_bf(ppaace->addr_bitfields, PPAACE_AF_WSE, 35);
 			ppaace->wbah = 0;
 			set_bf(ppaace->addr_bitfields, PPAACE_AF_WBAL, 0);
@@ -478,33 +479,33 @@ static void setup_liodns(void)
 			       PAACE_ATM_NO_XLATE);
 			set_bf(ppaace->addr_bitfields, PAACE_AF_AP,
 			       PAACE_AP_PERMS_ALL);
-			if (of_device_is_compatible(node, "fsl,qman-portal"))
+			अगर (of_device_is_compatible(node, "fsl,qman-portal"))
 				setup_qbman_paace(ppaace, QMAN_PORTAL_PAACE);
-			if (of_device_is_compatible(node, "fsl,qman"))
+			अगर (of_device_is_compatible(node, "fsl,qman"))
 				setup_qbman_paace(ppaace, QMAN_PAACE);
-			if (of_device_is_compatible(node, "fsl,bman"))
+			अगर (of_device_is_compatible(node, "fsl,bman"))
 				setup_qbman_paace(ppaace, BMAN_PAACE);
 			mb();
 			pamu_enable_liodn(liodn);
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static irqreturn_t pamu_av_isr(int irq, void *arg)
-{
-	struct pamu_isr_data *data = arg;
+अटल irqवापस_t pamu_av_isr(पूर्णांक irq, व्योम *arg)
+अणु
+	काष्ठा pamu_isr_data *data = arg;
 	phys_addr_t phys;
-	unsigned int i, j, ret;
+	अचिन्हित पूर्णांक i, j, ret;
 
 	pr_emerg("access violation interrupt\n");
 
-	for (i = 0; i < data->count; i++) {
-		void __iomem *p = data->pamu_reg_base + i * PAMU_OFFSET;
+	क्रम (i = 0; i < data->count; i++) अणु
+		व्योम __iomem *p = data->pamu_reg_base + i * PAMU_OFFSET;
 		u32 pics = in_be32(p + PAMU_PICS);
 
-		if (pics & PAMU_ACCESS_VIOLATION_STAT) {
+		अगर (pics & PAMU_ACCESS_VIOLATION_STAT) अणु
 			u32 avs1 = in_be32(p + PAMU_AVS1);
-			struct paace *paace;
+			काष्ठा paace *paace;
 
 			pr_emerg("POES1=%08x\n", in_be32(p + PAMU_POES1));
 			pr_emerg("POES2=%08x\n", in_be32(p + PAMU_POES2));
@@ -521,171 +522,171 @@ static irqreturn_t pamu_av_isr(int irq, void *arg)
 			phys = make64(in_be32(p + PAMU_POEAH),
 				      in_be32(p + PAMU_POEAL));
 
-			/* Assume that POEA points to a PAACE */
-			if (phys) {
+			/* Assume that POEA poपूर्णांकs to a PAACE */
+			अगर (phys) अणु
 				u32 *paace = phys_to_virt(phys);
 
 				/* Only the first four words are relevant */
-				for (j = 0; j < 4; j++)
+				क्रम (j = 0; j < 4; j++)
 					pr_emerg("PAACE[%u]=%08x\n",
 						 j, in_be32(paace + j));
-			}
+			पूर्ण
 
 			/* clear access violation condition */
 			out_be32(p + PAMU_AVS1, avs1 & PAMU_AV_MASK);
 			paace = pamu_get_ppaace(avs1 >> PAMU_AVS1_LIODN_SHIFT);
 			BUG_ON(!paace);
-			/* check if we got a violation for a disabled LIODN */
-			if (!get_bf(paace->addr_bitfields, PAACE_AF_V)) {
+			/* check अगर we got a violation क्रम a disabled LIODN */
+			अगर (!get_bf(paace->addr_bitfields, PAACE_AF_V)) अणु
 				/*
 				 * As per hardware erratum A-003638, access
-				 * violation can be reported for a disabled
+				 * violation can be reported क्रम a disabled
 				 * LIODN. If we hit that condition, disable
 				 * access violation reporting.
 				 */
 				pics &= ~PAMU_ACCESS_VIOLATION_ENABLE;
-			} else {
+			पूर्ण अन्यथा अणु
 				/* Disable the LIODN */
 				ret = pamu_disable_liodn(avs1 >> PAMU_AVS1_LIODN_SHIFT);
 				BUG_ON(ret);
 				pr_emerg("Disabling liodn %x\n",
 					 avs1 >> PAMU_AVS1_LIODN_SHIFT);
-			}
+			पूर्ण
 			out_be32((p + PAMU_PICS), pics);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-#define LAWAR_EN		0x80000000
-#define LAWAR_TARGET_MASK	0x0FF00000
-#define LAWAR_TARGET_SHIFT	20
-#define LAWAR_SIZE_MASK		0x0000003F
-#define LAWAR_CSDID_MASK	0x000FF000
-#define LAWAR_CSDID_SHIFT	12
+#घोषणा LAWAR_EN		0x80000000
+#घोषणा LAWAR_TARGET_MASK	0x0FF00000
+#घोषणा LAWAR_TARGET_SHIFT	20
+#घोषणा LAWAR_SIZE_MASK		0x0000003F
+#घोषणा LAWAR_CSDID_MASK	0x000FF000
+#घोषणा LAWAR_CSDID_SHIFT	12
 
-#define LAW_SIZE_4K		0xb
+#घोषणा LAW_SIZE_4K		0xb
 
-struct ccsr_law {
+काष्ठा ccsr_law अणु
 	u32	lawbarh;	/* LAWn base address high */
 	u32	lawbarl;	/* LAWn base address low */
 	u32	lawar;		/* LAWn attributes */
 	u32	reserved;
-};
+पूर्ण;
 
 /*
- * Create a coherence subdomain for a given memory block.
+ * Create a coherence subकरोमुख्य क्रम a given memory block.
  */
-static int create_csd(phys_addr_t phys, size_t size, u32 csd_port_id)
-{
-	struct device_node *np;
-	const __be32 *iprop;
-	void __iomem *lac = NULL;	/* Local Access Control registers */
-	struct ccsr_law __iomem *law;
-	void __iomem *ccm = NULL;
+अटल पूर्णांक create_csd(phys_addr_t phys, माप_प्रकार size, u32 csd_port_id)
+अणु
+	काष्ठा device_node *np;
+	स्थिर __be32 *iprop;
+	व्योम __iomem *lac = शून्य;	/* Local Access Control रेजिस्टरs */
+	काष्ठा ccsr_law __iomem *law;
+	व्योम __iomem *ccm = शून्य;
 	u32 __iomem *csdids;
-	unsigned int i, num_laws, num_csds;
+	अचिन्हित पूर्णांक i, num_laws, num_csds;
 	u32 law_target = 0;
 	u32 csd_id = 0;
-	int ret = 0;
+	पूर्णांक ret = 0;
 
-	np = of_find_compatible_node(NULL, NULL, "fsl,corenet-law");
-	if (!np)
-		return -ENODEV;
+	np = of_find_compatible_node(शून्य, शून्य, "fsl,corenet-law");
+	अगर (!np)
+		वापस -ENODEV;
 
-	iprop = of_get_property(np, "fsl,num-laws", NULL);
-	if (!iprop) {
+	iprop = of_get_property(np, "fsl,num-laws", शून्य);
+	अगर (!iprop) अणु
 		ret = -ENODEV;
-		goto error;
-	}
+		जाओ error;
+	पूर्ण
 
 	num_laws = be32_to_cpup(iprop);
-	if (!num_laws) {
+	अगर (!num_laws) अणु
 		ret = -ENODEV;
-		goto error;
-	}
+		जाओ error;
+	पूर्ण
 
 	lac = of_iomap(np, 0);
-	if (!lac) {
+	अगर (!lac) अणु
 		ret = -ENODEV;
-		goto error;
-	}
+		जाओ error;
+	पूर्ण
 
-	/* LAW registers are at offset 0xC00 */
+	/* LAW रेजिस्टरs are at offset 0xC00 */
 	law = lac + 0xC00;
 
 	of_node_put(np);
 
-	np = of_find_compatible_node(NULL, NULL, "fsl,corenet-cf");
-	if (!np) {
+	np = of_find_compatible_node(शून्य, शून्य, "fsl,corenet-cf");
+	अगर (!np) अणु
 		ret = -ENODEV;
-		goto error;
-	}
+		जाओ error;
+	पूर्ण
 
-	iprop = of_get_property(np, "fsl,ccf-num-csdids", NULL);
-	if (!iprop) {
+	iprop = of_get_property(np, "fsl,ccf-num-csdids", शून्य);
+	अगर (!iprop) अणु
 		ret = -ENODEV;
-		goto error;
-	}
+		जाओ error;
+	पूर्ण
 
 	num_csds = be32_to_cpup(iprop);
-	if (!num_csds) {
+	अगर (!num_csds) अणु
 		ret = -ENODEV;
-		goto error;
-	}
+		जाओ error;
+	पूर्ण
 
 	ccm = of_iomap(np, 0);
-	if (!ccm) {
+	अगर (!ccm) अणु
 		ret = -ENOMEM;
-		goto error;
-	}
+		जाओ error;
+	पूर्ण
 
-	/* The undocumented CSDID registers are at offset 0x600 */
+	/* The unकरोcumented CSDID रेजिस्टरs are at offset 0x600 */
 	csdids = ccm + 0x600;
 
 	of_node_put(np);
-	np = NULL;
+	np = शून्य;
 
-	/* Find an unused coherence subdomain ID */
-	for (csd_id = 0; csd_id < num_csds; csd_id++) {
-		if (!csdids[csd_id])
-			break;
-	}
+	/* Find an unused coherence subकरोमुख्य ID */
+	क्रम (csd_id = 0; csd_id < num_csds; csd_id++) अणु
+		अगर (!csdids[csd_id])
+			अवरोध;
+	पूर्ण
 
-	/* Store the Port ID in the (undocumented) proper CIDMRxx register */
+	/* Store the Port ID in the (unकरोcumented) proper CIDMRxx रेजिस्टर */
 	csdids[csd_id] = csd_port_id;
 
 	/* Find the DDR LAW that maps to our buffer. */
-	for (i = 0; i < num_laws; i++) {
-		if (law[i].lawar & LAWAR_EN) {
+	क्रम (i = 0; i < num_laws; i++) अणु
+		अगर (law[i].lawar & LAWAR_EN) अणु
 			phys_addr_t law_start, law_end;
 
 			law_start = make64(law[i].lawbarh, law[i].lawbarl);
 			law_end = law_start +
 				(2ULL << (law[i].lawar & LAWAR_SIZE_MASK));
 
-			if (law_start <= phys && phys < law_end) {
+			अगर (law_start <= phys && phys < law_end) अणु
 				law_target = law[i].lawar & LAWAR_TARGET_MASK;
-				break;
-			}
-		}
-	}
+				अवरोध;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	if (i == 0 || i == num_laws) {
+	अगर (i == 0 || i == num_laws) अणु
 		/* This should never happen */
 		ret = -ENOENT;
-		goto error;
-	}
+		जाओ error;
+	पूर्ण
 
-	/* Find a free LAW entry */
-	while (law[--i].lawar & LAWAR_EN) {
-		if (i == 0) {
+	/* Find a मुक्त LAW entry */
+	जबतक (law[--i].lawar & LAWAR_EN) अणु
+		अगर (i == 0) अणु
 			/* No higher priority LAW slots available */
 			ret = -ENOENT;
-			goto error;
-		}
-	}
+			जाओ error;
+		पूर्ण
+	पूर्ण
 
 	law[i].lawbarh = upper_32_bits(phys);
 	law[i].lawbarl = lower_32_bits(phys);
@@ -695,127 +696,127 @@ static int create_csd(phys_addr_t phys, size_t size, u32 csd_port_id)
 	wmb();
 
 error:
-	if (ccm)
+	अगर (ccm)
 		iounmap(ccm);
 
-	if (lac)
+	अगर (lac)
 		iounmap(lac);
 
-	if (np)
+	अगर (np)
 		of_node_put(np);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
  * Table of SVRs and the corresponding PORT_ID values. Port ID corresponds to a
- * bit map of snoopers for a given range of memory mapped by a LAW.
+ * bit map of snoopers क्रम a given range of memory mapped by a LAW.
  *
  * All future CoreNet-enabled SOCs will have this erratum(A-004510) fixed, so this
  * table should never need to be updated.  SVRs are guaranteed to be unique, so
  * there is no worry that a future SOC will inadvertently have one of these
  * values.
  */
-static const struct {
+अटल स्थिर काष्ठा अणु
 	u32 svr;
 	u32 port_id;
-} port_id_map[] = {
-	{(SVR_P2040 << 8) | 0x10, 0xFF000000},	/* P2040 1.0 */
-	{(SVR_P2040 << 8) | 0x11, 0xFF000000},	/* P2040 1.1 */
-	{(SVR_P2041 << 8) | 0x10, 0xFF000000},	/* P2041 1.0 */
-	{(SVR_P2041 << 8) | 0x11, 0xFF000000},	/* P2041 1.1 */
-	{(SVR_P3041 << 8) | 0x10, 0xFF000000},	/* P3041 1.0 */
-	{(SVR_P3041 << 8) | 0x11, 0xFF000000},	/* P3041 1.1 */
-	{(SVR_P4040 << 8) | 0x20, 0xFFF80000},	/* P4040 2.0 */
-	{(SVR_P4080 << 8) | 0x20, 0xFFF80000},	/* P4080 2.0 */
-	{(SVR_P5010 << 8) | 0x10, 0xFC000000},	/* P5010 1.0 */
-	{(SVR_P5010 << 8) | 0x20, 0xFC000000},	/* P5010 2.0 */
-	{(SVR_P5020 << 8) | 0x10, 0xFC000000},	/* P5020 1.0 */
-	{(SVR_P5021 << 8) | 0x10, 0xFF800000},	/* P5021 1.0 */
-	{(SVR_P5040 << 8) | 0x10, 0xFF800000},	/* P5040 1.0 */
-};
+पूर्ण port_id_map[] = अणु
+	अणु(SVR_P2040 << 8) | 0x10, 0xFF000000पूर्ण,	/* P2040 1.0 */
+	अणु(SVR_P2040 << 8) | 0x11, 0xFF000000पूर्ण,	/* P2040 1.1 */
+	अणु(SVR_P2041 << 8) | 0x10, 0xFF000000पूर्ण,	/* P2041 1.0 */
+	अणु(SVR_P2041 << 8) | 0x11, 0xFF000000पूर्ण,	/* P2041 1.1 */
+	अणु(SVR_P3041 << 8) | 0x10, 0xFF000000पूर्ण,	/* P3041 1.0 */
+	अणु(SVR_P3041 << 8) | 0x11, 0xFF000000पूर्ण,	/* P3041 1.1 */
+	अणु(SVR_P4040 << 8) | 0x20, 0xFFF80000पूर्ण,	/* P4040 2.0 */
+	अणु(SVR_P4080 << 8) | 0x20, 0xFFF80000पूर्ण,	/* P4080 2.0 */
+	अणु(SVR_P5010 << 8) | 0x10, 0xFC000000पूर्ण,	/* P5010 1.0 */
+	अणु(SVR_P5010 << 8) | 0x20, 0xFC000000पूर्ण,	/* P5010 2.0 */
+	अणु(SVR_P5020 << 8) | 0x10, 0xFC000000पूर्ण,	/* P5020 1.0 */
+	अणु(SVR_P5021 << 8) | 0x10, 0xFF800000पूर्ण,	/* P5021 1.0 */
+	अणु(SVR_P5040 << 8) | 0x10, 0xFF800000पूर्ण,	/* P5040 1.0 */
+पूर्ण;
 
-#define SVR_SECURITY	0x80000	/* The Security (E) bit */
+#घोषणा SVR_SECURITY	0x80000	/* The Security (E) bit */
 
-static int fsl_pamu_probe(struct platform_device *pdev)
-{
-	struct device *dev = &pdev->dev;
-	void __iomem *pamu_regs = NULL;
-	struct ccsr_guts __iomem *guts_regs = NULL;
+अटल पूर्णांक fsl_pamu_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device *dev = &pdev->dev;
+	व्योम __iomem *pamu_regs = शून्य;
+	काष्ठा ccsr_guts __iomem *guts_regs = शून्य;
 	u32 pamubypenr, pamu_counter;
-	unsigned long pamu_reg_off;
-	unsigned long pamu_reg_base;
-	struct pamu_isr_data *data = NULL;
-	struct device_node *guts_node;
+	अचिन्हित दीर्घ pamu_reg_off;
+	अचिन्हित दीर्घ pamu_reg_base;
+	काष्ठा pamu_isr_data *data = शून्य;
+	काष्ठा device_node *guts_node;
 	u64 size;
-	struct page *p;
-	int ret = 0;
-	int irq;
+	काष्ठा page *p;
+	पूर्णांक ret = 0;
+	पूर्णांक irq;
 	phys_addr_t ppaact_phys;
 	phys_addr_t spaact_phys;
-	struct ome *omt;
+	काष्ठा ome *omt;
 	phys_addr_t omt_phys;
-	size_t mem_size = 0;
-	unsigned int order = 0;
+	माप_प्रकार mem_size = 0;
+	अचिन्हित पूर्णांक order = 0;
 	u32 csd_port_id = 0;
-	unsigned i;
+	अचिन्हित i;
 	/*
-	 * enumerate all PAMUs and allocate and setup PAMU tables
-	 * for each of them,
+	 * क्रमागतerate all PAMUs and allocate and setup PAMU tables
+	 * क्रम each of them,
 	 * NOTE : All PAMUs share the same LIODN tables.
 	 */
 
-	if (WARN_ON(probed))
-		return -EBUSY;
+	अगर (WARN_ON(probed))
+		वापस -EBUSY;
 
 	pamu_regs = of_iomap(dev->of_node, 0);
-	if (!pamu_regs) {
+	अगर (!pamu_regs) अणु
 		dev_err(dev, "ioremap of PAMU node failed\n");
-		return -ENOMEM;
-	}
-	of_get_address(dev->of_node, 0, &size, NULL);
+		वापस -ENOMEM;
+	पूर्ण
+	of_get_address(dev->of_node, 0, &size, शून्य);
 
 	irq = irq_of_parse_and_map(dev->of_node, 0);
-	if (irq == NO_IRQ) {
+	अगर (irq == NO_IRQ) अणु
 		dev_warn(dev, "no interrupts listed in PAMU node\n");
-		goto error;
-	}
+		जाओ error;
+	पूर्ण
 
-	data = kzalloc(sizeof(*data), GFP_KERNEL);
-	if (!data) {
+	data = kzalloc(माप(*data), GFP_KERNEL);
+	अगर (!data) अणु
 		ret = -ENOMEM;
-		goto error;
-	}
+		जाओ error;
+	पूर्ण
 	data->pamu_reg_base = pamu_regs;
 	data->count = size / PAMU_OFFSET;
 
 	/* The ISR needs access to the regs, so we won't iounmap them */
 	ret = request_irq(irq, pamu_av_isr, 0, "pamu", data);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(dev, "error %i installing ISR for irq %i\n", ret, irq);
-		goto error;
-	}
+		जाओ error;
+	पूर्ण
 
-	guts_node = of_find_matching_node(NULL, guts_device_ids);
-	if (!guts_node) {
+	guts_node = of_find_matching_node(शून्य, guts_device_ids);
+	अगर (!guts_node) अणु
 		dev_err(dev, "could not find GUTS node %pOF\n", dev->of_node);
 		ret = -ENODEV;
-		goto error;
-	}
+		जाओ error;
+	पूर्ण
 
 	guts_regs = of_iomap(guts_node, 0);
 	of_node_put(guts_node);
-	if (!guts_regs) {
+	अगर (!guts_regs) अणु
 		dev_err(dev, "ioremap of GUTS node failed\n");
 		ret = -ENODEV;
-		goto error;
-	}
+		जाओ error;
+	पूर्ण
 
-	/* read in the PAMU capability registers */
-	get_pamu_cap_values((unsigned long)pamu_regs);
+	/* पढ़ो in the PAMU capability रेजिस्टरs */
+	get_pamu_cap_values((अचिन्हित दीर्घ)pamu_regs);
 	/*
-	 * To simplify the allocation of a coherency domain, we allocate the
-	 * PAACT and the OMT in the same memory buffer.  Unfortunately, this
+	 * To simplअगरy the allocation of a coherency करोमुख्य, we allocate the
+	 * PAACT and the OMT in the same memory buffer.  Unक्रमtunately, this
 	 * wastes more memory compared to allocating the buffers separately.
 	 */
 	/* Determine how much memory we need */
@@ -825,64 +826,64 @@ static int fsl_pamu_probe(struct platform_device *pdev)
 	order = get_order(mem_size);
 
 	p = alloc_pages(GFP_KERNEL | __GFP_ZERO, order);
-	if (!p) {
+	अगर (!p) अणु
 		dev_err(dev, "unable to allocate PAACT/SPAACT/OMT block\n");
 		ret = -ENOMEM;
-		goto error;
-	}
+		जाओ error;
+	पूर्ण
 
 	ppaact = page_address(p);
 	ppaact_phys = page_to_phys(p);
 
 	/* Make sure the memory is naturally aligned */
-	if (ppaact_phys & ((PAGE_SIZE << order) - 1)) {
+	अगर (ppaact_phys & ((PAGE_SIZE << order) - 1)) अणु
 		dev_err(dev, "PAACT/OMT block is unaligned\n");
 		ret = -ENOMEM;
-		goto error;
-	}
+		जाओ error;
+	पूर्ण
 
-	spaact = (void *)ppaact + (PAGE_SIZE << get_order(PAACT_SIZE));
-	omt = (void *)spaact + (PAGE_SIZE << get_order(SPAACT_SIZE));
+	spaact = (व्योम *)ppaact + (PAGE_SIZE << get_order(PAACT_SIZE));
+	omt = (व्योम *)spaact + (PAGE_SIZE << get_order(SPAACT_SIZE));
 
 	dev_dbg(dev, "ppaact virt=%p phys=%pa\n", ppaact, &ppaact_phys);
 
-	/* Check to see if we need to implement the work-around on this SOC */
+	/* Check to see अगर we need to implement the work-around on this SOC */
 
-	/* Determine the Port ID for our coherence subdomain */
-	for (i = 0; i < ARRAY_SIZE(port_id_map); i++) {
-		if (port_id_map[i].svr == (mfspr(SPRN_SVR) & ~SVR_SECURITY)) {
+	/* Determine the Port ID क्रम our coherence subकरोमुख्य */
+	क्रम (i = 0; i < ARRAY_SIZE(port_id_map); i++) अणु
+		अगर (port_id_map[i].svr == (mfspr(SPRN_SVR) & ~SVR_SECURITY)) अणु
 			csd_port_id = port_id_map[i].port_id;
 			dev_dbg(dev, "found matching SVR %08x\n",
 				port_id_map[i].svr);
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	if (csd_port_id) {
+	अगर (csd_port_id) अणु
 		dev_dbg(dev, "creating coherency subdomain at address %pa, size %zu, port id 0x%08x",
 			&ppaact_phys, mem_size, csd_port_id);
 
 		ret = create_csd(ppaact_phys, mem_size, csd_port_id);
-		if (ret) {
+		अगर (ret) अणु
 			dev_err(dev, "could not create coherence subdomain\n");
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
 	spaact_phys = virt_to_phys(spaact);
 	omt_phys = virt_to_phys(omt);
 
 	pamubypenr = in_be32(&guts_regs->pamubypenr);
 
-	for (pamu_reg_off = 0, pamu_counter = 0x80000000; pamu_reg_off < size;
-	     pamu_reg_off += PAMU_OFFSET, pamu_counter >>= 1) {
+	क्रम (pamu_reg_off = 0, pamu_counter = 0x80000000; pamu_reg_off < size;
+	     pamu_reg_off += PAMU_OFFSET, pamu_counter >>= 1) अणु
 
-		pamu_reg_base = (unsigned long)pamu_regs + pamu_reg_off;
+		pamu_reg_base = (अचिन्हित दीर्घ)pamu_regs + pamu_reg_off;
 		setup_one_pamu(pamu_reg_base, pamu_reg_off, ppaact_phys,
 			       spaact_phys, omt_phys);
-		/* Disable PAMU bypass for this PAMU */
+		/* Disable PAMU bypass क्रम this PAMU */
 		pamubypenr &= ~pamu_counter;
-	}
+	पूर्ण
 
 	setup_omt(omt);
 
@@ -891,110 +892,110 @@ static int fsl_pamu_probe(struct platform_device *pdev)
 
 	iounmap(guts_regs);
 
-	/* Enable DMA for the LIODNs in the device tree */
+	/* Enable DMA क्रम the LIODNs in the device tree */
 
 	setup_liodns();
 
 	probed = true;
 
-	return 0;
+	वापस 0;
 
 error:
-	if (irq != NO_IRQ)
-		free_irq(irq, data);
+	अगर (irq != NO_IRQ)
+		मुक्त_irq(irq, data);
 
-	kfree_sensitive(data);
+	kमुक्त_sensitive(data);
 
-	if (pamu_regs)
+	अगर (pamu_regs)
 		iounmap(pamu_regs);
 
-	if (guts_regs)
+	अगर (guts_regs)
 		iounmap(guts_regs);
 
-	if (ppaact)
-		free_pages((unsigned long)ppaact, order);
+	अगर (ppaact)
+		मुक्त_pages((अचिन्हित दीर्घ)ppaact, order);
 
-	ppaact = NULL;
+	ppaact = शून्य;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static struct platform_driver fsl_of_pamu_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver fsl_of_pamu_driver = अणु
+	.driver = अणु
 		.name = "fsl-of-pamu",
-	},
+	पूर्ण,
 	.probe = fsl_pamu_probe,
-};
+पूर्ण;
 
-static __init int fsl_pamu_init(void)
-{
-	struct platform_device *pdev = NULL;
-	struct device_node *np;
-	int ret;
+अटल __init पूर्णांक fsl_pamu_init(व्योम)
+अणु
+	काष्ठा platक्रमm_device *pdev = शून्य;
+	काष्ठा device_node *np;
+	पूर्णांक ret;
 
 	/*
 	 * The normal OF process calls the probe function at some
-	 * indeterminate later time, after most drivers have loaded.  This is
-	 * too late for us, because PAMU clients (like the Qman driver)
+	 * indeterminate later समय, after most drivers have loaded.  This is
+	 * too late क्रम us, because PAMU clients (like the Qman driver)
 	 * depend on PAMU being initialized early.
 	 *
 	 * So instead, we "manually" call our probe function by creating the
-	 * platform devices ourselves.
+	 * platक्रमm devices ourselves.
 	 */
 
 	/*
 	 * We assume that there is only one PAMU node in the device tree.  A
 	 * single PAMU node represents all of the PAMU devices in the SOC
-	 * already.   Everything else already makes that assumption, and the
-	 * binding for the PAMU nodes doesn't allow for any parent-child
-	 * relationships anyway.  In other words, support for more than one
-	 * PAMU node would require significant changes to a lot of code.
+	 * alपढ़ोy.   Everything अन्यथा alपढ़ोy makes that assumption, and the
+	 * binding क्रम the PAMU nodes करोesn't allow क्रम any parent-child
+	 * relationships anyway.  In other words, support क्रम more than one
+	 * PAMU node would require signअगरicant changes to a lot of code.
 	 */
 
-	np = of_find_compatible_node(NULL, NULL, "fsl,pamu");
-	if (!np) {
+	np = of_find_compatible_node(शून्य, शून्य, "fsl,pamu");
+	अगर (!np) अणु
 		pr_err("could not find a PAMU node\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	ret = platform_driver_register(&fsl_of_pamu_driver);
-	if (ret) {
+	ret = platक्रमm_driver_रेजिस्टर(&fsl_of_pamu_driver);
+	अगर (ret) अणु
 		pr_err("could not register driver (err=%i)\n", ret);
-		goto error_driver_register;
-	}
+		जाओ error_driver_रेजिस्टर;
+	पूर्ण
 
-	pdev = platform_device_alloc("fsl-of-pamu", 0);
-	if (!pdev) {
+	pdev = platक्रमm_device_alloc("fsl-of-pamu", 0);
+	अगर (!pdev) अणु
 		pr_err("could not allocate device %pOF\n", np);
 		ret = -ENOMEM;
-		goto error_device_alloc;
-	}
+		जाओ error_device_alloc;
+	पूर्ण
 	pdev->dev.of_node = of_node_get(np);
 
-	ret = pamu_domain_init();
-	if (ret)
-		goto error_device_add;
+	ret = pamu_करोमुख्य_init();
+	अगर (ret)
+		जाओ error_device_add;
 
-	ret = platform_device_add(pdev);
-	if (ret) {
+	ret = platक्रमm_device_add(pdev);
+	अगर (ret) अणु
 		pr_err("could not add device %pOF (err=%i)\n", np, ret);
-		goto error_device_add;
-	}
+		जाओ error_device_add;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 error_device_add:
 	of_node_put(pdev->dev.of_node);
-	pdev->dev.of_node = NULL;
+	pdev->dev.of_node = शून्य;
 
-	platform_device_put(pdev);
+	platक्रमm_device_put(pdev);
 
 error_device_alloc:
-	platform_driver_unregister(&fsl_of_pamu_driver);
+	platक्रमm_driver_unरेजिस्टर(&fsl_of_pamu_driver);
 
-error_driver_register:
+error_driver_रेजिस्टर:
 	of_node_put(np);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 arch_initcall(fsl_pamu_init);

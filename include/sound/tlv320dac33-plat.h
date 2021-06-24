@@ -1,21 +1,22 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
- * Platform header for Texas Instruments TLV320DAC33 codec driver
+ * Platक्रमm header क्रम Texas Instruments TLV320DAC33 codec driver
  *
  * Author: Peter Ujfalusi <peter.ujfalusi@ti.com>
  *
  * Copyright:   (C) 2009 Nokia Corporation
  */
 
-#ifndef __TLV320DAC33_PLAT_H
-#define __TLV320DAC33_PLAT_H
+#अगर_अघोषित __TLV320DAC33_PLAT_H
+#घोषणा __TLV320DAC33_PLAT_H
 
-struct tlv320dac33_platform_data {
-	int power_gpio;
-	int mode1_latency; /* latency caused by the i2c writes in us */
-	int auto_fifo_config; /* FIFO config based on the period size */
-	int keep_bclk;	/* Keep the BCLK running in FIFO modes */
-	u8 burst_bclkdiv;
-};
+काष्ठा tlv320dac33_platक्रमm_data अणु
+	पूर्णांक घातer_gpio;
+	पूर्णांक mode1_latency; /* latency caused by the i2c ग_लिखोs in us */
+	पूर्णांक स्वतः_fअगरo_config; /* FIFO config based on the period size */
+	पूर्णांक keep_bclk;	/* Keep the BCLK running in FIFO modes */
+	u8 burst_bclkभाग;
+पूर्ण;
 
-#endif /* __TLV320DAC33_PLAT_H */
+#पूर्ण_अगर /* __TLV320DAC33_PLAT_H */

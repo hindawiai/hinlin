@@ -1,57 +1,58 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _TOOLS_ENDIAN_H
-#define _TOOLS_ENDIAN_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _TOOLS_ENDIAN_H
+#घोषणा _TOOLS_ENDIAN_H
 
-#include <byteswap.h>
+#समावेश <byteswap.h>
 
-#if __BYTE_ORDER == __LITTLE_ENDIAN
+#अगर __BYTE_ORDER == __LITTLE_ENDIAN
 
-#ifndef htole16
-#define htole16(x) (x)
-#endif
-#ifndef htole32
-#define htole32(x) (x)
-#endif
-#ifndef htole64
-#define htole64(x) (x)
-#endif
+#अगर_अघोषित htole16
+#घोषणा htole16(x) (x)
+#पूर्ण_अगर
+#अगर_अघोषित htole32
+#घोषणा htole32(x) (x)
+#पूर्ण_अगर
+#अगर_अघोषित htole64
+#घोषणा htole64(x) (x)
+#पूर्ण_अगर
 
-#ifndef le16toh
-#define le16toh(x) (x)
-#endif
+#अगर_अघोषित le16toh
+#घोषणा le16toh(x) (x)
+#पूर्ण_अगर
 
-#ifndef le32toh
-#define le32toh(x) (x)
-#endif
+#अगर_अघोषित le32toh
+#घोषणा le32toh(x) (x)
+#पूर्ण_अगर
 
-#ifndef le64toh
-#define le64toh(x) (x)
-#endif
+#अगर_अघोषित le64toh
+#घोषणा le64toh(x) (x)
+#पूर्ण_अगर
 
-#else /* __BYTE_ORDER */
+#अन्यथा /* __BYTE_ORDER */
 
-#ifndef htole16
-#define htole16(x) __bswap_16(x)
-#endif
-#ifndef htole32
-#define htole32(x) __bswap_32(x)
-#endif
-#ifndef htole64
-#define htole64(x) __bswap_64(x)
-#endif
+#अगर_अघोषित htole16
+#घोषणा htole16(x) __bswap_16(x)
+#पूर्ण_अगर
+#अगर_अघोषित htole32
+#घोषणा htole32(x) __bswap_32(x)
+#पूर्ण_अगर
+#अगर_अघोषित htole64
+#घोषणा htole64(x) __bswap_64(x)
+#पूर्ण_अगर
 
-#ifndef le16toh
-#define le16toh(x) __bswap_16(x)
-#endif
+#अगर_अघोषित le16toh
+#घोषणा le16toh(x) __bswap_16(x)
+#पूर्ण_अगर
 
-#ifndef le32toh
-#define le32toh(x) __bswap_32(x)
-#endif
+#अगर_अघोषित le32toh
+#घोषणा le32toh(x) __bswap_32(x)
+#पूर्ण_अगर
 
-#ifndef le64toh
-#define le64toh(x) __bswap_64(x)
-#endif
+#अगर_अघोषित le64toh
+#घोषणा le64toh(x) __bswap_64(x)
+#पूर्ण_अगर
 
-#endif
+#पूर्ण_अगर
 
-#endif /* _TOOLS_ENDIAN_H */
+#पूर्ण_अगर /* _TOOLS_ENDIAN_H */

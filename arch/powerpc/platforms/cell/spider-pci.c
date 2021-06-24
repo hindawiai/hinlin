@@ -1,171 +1,172 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * IO workarounds for PCI on Celleb/Cell platform
+ * IO workarounds क्रम PCI on Celleb/Cell platक्रमm
  *
  * (C) Copyright 2006-2007 TOSHIBA CORPORATION
  */
 
-#undef DEBUG
+#अघोषित DEBUG
 
-#include <linux/kernel.h>
-#include <linux/of_platform.h>
-#include <linux/slab.h>
-#include <linux/io.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/of_platक्रमm.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/पन.स>
 
-#include <asm/ppc-pci.h>
-#include <asm/pci-bridge.h>
-#include <asm/io-workarounds.h>
+#समावेश <यंत्र/ppc-pci.h>
+#समावेश <यंत्र/pci-bridge.h>
+#समावेश <यंत्र/io-workarounds.h>
 
-#define SPIDER_PCI_DISABLE_PREFETCH
+#घोषणा SPIDER_PCI_DISABLE_PREFETCH
 
-struct spiderpci_iowa_private {
-	void __iomem *regs;
-};
+काष्ठा spiderpci_iowa_निजी अणु
+	व्योम __iomem *regs;
+पूर्ण;
 
-static void spiderpci_io_flush(struct iowa_bus *bus)
-{
-	struct spiderpci_iowa_private *priv;
+अटल व्योम spiderpci_io_flush(काष्ठा iowa_bus *bus)
+अणु
+	काष्ठा spiderpci_iowa_निजी *priv;
 	u32 val;
 
-	priv = bus->private;
+	priv = bus->निजी;
 	val = in_be32(priv->regs + SPIDER_PCI_DUMMY_READ);
 	iosync();
-}
+पूर्ण
 
-#define SPIDER_PCI_MMIO_READ(name, ret)					\
-static ret spiderpci_##name(const PCI_IO_ADDR addr)			\
-{									\
-	ret val = __do_##name(addr);					\
+#घोषणा SPIDER_PCI_MMIO_READ(name, ret)					\
+अटल ret spiderpci_##name(स्थिर PCI_IO_ADDR addr)			\
+अणु									\
+	ret val = __करो_##name(addr);					\
 	spiderpci_io_flush(iowa_mem_find_bus(addr));			\
-	return val;							\
-}
+	वापस val;							\
+पूर्ण
 
-#define SPIDER_PCI_MMIO_READ_STR(name)					\
-static void spiderpci_##name(const PCI_IO_ADDR addr, void *buf, 	\
-			     unsigned long count)			\
-{									\
-	__do_##name(addr, buf, count);					\
+#घोषणा SPIDER_PCI_MMIO_READ_STR(name)					\
+अटल व्योम spiderpci_##name(स्थिर PCI_IO_ADDR addr, व्योम *buf, 	\
+			     अचिन्हित दीर्घ count)			\
+अणु									\
+	__करो_##name(addr, buf, count);					\
 	spiderpci_io_flush(iowa_mem_find_bus(addr));			\
-}
+पूर्ण
 
-SPIDER_PCI_MMIO_READ(readb, u8)
-SPIDER_PCI_MMIO_READ(readw, u16)
-SPIDER_PCI_MMIO_READ(readl, u32)
-SPIDER_PCI_MMIO_READ(readq, u64)
-SPIDER_PCI_MMIO_READ(readw_be, u16)
-SPIDER_PCI_MMIO_READ(readl_be, u32)
-SPIDER_PCI_MMIO_READ(readq_be, u64)
-SPIDER_PCI_MMIO_READ_STR(readsb)
-SPIDER_PCI_MMIO_READ_STR(readsw)
-SPIDER_PCI_MMIO_READ_STR(readsl)
+SPIDER_PCI_MMIO_READ(पढ़ोb, u8)
+SPIDER_PCI_MMIO_READ(पढ़ोw, u16)
+SPIDER_PCI_MMIO_READ(पढ़ोl, u32)
+SPIDER_PCI_MMIO_READ(पढ़ोq, u64)
+SPIDER_PCI_MMIO_READ(पढ़ोw_be, u16)
+SPIDER_PCI_MMIO_READ(पढ़ोl_be, u32)
+SPIDER_PCI_MMIO_READ(पढ़ोq_be, u64)
+SPIDER_PCI_MMIO_READ_STR(पढ़ोsb)
+SPIDER_PCI_MMIO_READ_STR(पढ़ोsw)
+SPIDER_PCI_MMIO_READ_STR(पढ़ोsl)
 
-static void spiderpci_memcpy_fromio(void *dest, const PCI_IO_ADDR src,
-				    unsigned long n)
-{
-	__do_memcpy_fromio(dest, src, n);
+अटल व्योम spiderpci_स_नकल_fromio(व्योम *dest, स्थिर PCI_IO_ADDR src,
+				    अचिन्हित दीर्घ n)
+अणु
+	__करो_स_नकल_fromio(dest, src, n);
 	spiderpci_io_flush(iowa_mem_find_bus(src));
-}
+पूर्ण
 
-static int __init spiderpci_pci_setup_chip(struct pci_controller *phb,
-					   void __iomem *regs)
-{
-	void *dummy_page_va;
+अटल पूर्णांक __init spiderpci_pci_setup_chip(काष्ठा pci_controller *phb,
+					   व्योम __iomem *regs)
+अणु
+	व्योम *dummy_page_va;
 	dma_addr_t dummy_page_da;
 
-#ifdef SPIDER_PCI_DISABLE_PREFETCH
+#अगर_घोषित SPIDER_PCI_DISABLE_PREFETCH
 	u32 val = in_be32(regs + SPIDER_PCI_VCI_CNTL_STAT);
 	pr_debug("SPIDER_IOWA:PVCI_Control_Status was 0x%08x\n", val);
 	out_be32(regs + SPIDER_PCI_VCI_CNTL_STAT, val | 0x8);
-#endif /* SPIDER_PCI_DISABLE_PREFETCH */
+#पूर्ण_अगर /* SPIDER_PCI_DISABLE_PREFETCH */
 
-	/* setup dummy read */
+	/* setup dummy पढ़ो */
 	/*
 	 * On CellBlade, we can't know that which XDR memory is used by
-	 * kmalloc() to allocate dummy_page_va.
-	 * In order to imporve the performance, the XDR which is used to
+	 * kदो_स्मृति() to allocate dummy_page_va.
+	 * In order to imporve the perक्रमmance, the XDR which is used to
 	 * allocate dummy_page_va is the nearest the spider-pci.
 	 * We have to select the CBE which is the nearest the spider-pci
-	 * to allocate memory from the best XDR, but I don't know that
-	 * how to do.
+	 * to allocate memory from the best XDR, but I करोn't know that
+	 * how to करो.
 	 *
-	 * Celleb does not have this problem, because it has only one XDR.
+	 * Celleb करोes not have this problem, because it has only one XDR.
 	 */
-	dummy_page_va = kmalloc(PAGE_SIZE, GFP_KERNEL);
-	if (!dummy_page_va) {
+	dummy_page_va = kदो_स्मृति(PAGE_SIZE, GFP_KERNEL);
+	अगर (!dummy_page_va) अणु
 		pr_err("SPIDERPCI-IOWA:Alloc dummy_page_va failed.\n");
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
 	dummy_page_da = dma_map_single(phb->parent, dummy_page_va,
 				       PAGE_SIZE, DMA_FROM_DEVICE);
-	if (dma_mapping_error(phb->parent, dummy_page_da)) {
+	अगर (dma_mapping_error(phb->parent, dummy_page_da)) अणु
 		pr_err("SPIDER-IOWA:Map dummy page filed.\n");
-		kfree(dummy_page_va);
-		return -1;
-	}
+		kमुक्त(dummy_page_va);
+		वापस -1;
+	पूर्ण
 
 	out_be32(regs + SPIDER_PCI_DUMMY_READ_BASE, dummy_page_da);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int __init spiderpci_iowa_init(struct iowa_bus *bus, void *data)
-{
-	void __iomem *regs = NULL;
-	struct spiderpci_iowa_private *priv;
-	struct device_node *np = bus->phb->dn;
-	struct resource r;
-	unsigned long offset = (unsigned long)data;
+पूर्णांक __init spiderpci_iowa_init(काष्ठा iowa_bus *bus, व्योम *data)
+अणु
+	व्योम __iomem *regs = शून्य;
+	काष्ठा spiderpci_iowa_निजी *priv;
+	काष्ठा device_node *np = bus->phb->dn;
+	काष्ठा resource r;
+	अचिन्हित दीर्घ offset = (अचिन्हित दीर्घ)data;
 
 	pr_debug("SPIDERPCI-IOWA:Bus initialize for spider(%pOF)\n",
 		 np);
 
-	priv = kzalloc(sizeof(*priv), GFP_KERNEL);
-	if (!priv) {
+	priv = kzalloc(माप(*priv), GFP_KERNEL);
+	अगर (!priv) अणु
 		pr_err("SPIDERPCI-IOWA:"
 		       "Can't allocate struct spiderpci_iowa_private");
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
-	if (of_address_to_resource(np, 0, &r)) {
+	अगर (of_address_to_resource(np, 0, &r)) अणु
 		pr_err("SPIDERPCI-IOWA:Can't get resource.\n");
-		goto error;
-	}
+		जाओ error;
+	पूर्ण
 
 	regs = ioremap(r.start + offset, SPIDER_PCI_REG_SIZE);
-	if (!regs) {
+	अगर (!regs) अणु
 		pr_err("SPIDERPCI-IOWA:ioremap failed.\n");
-		goto error;
-	}
+		जाओ error;
+	पूर्ण
 	priv->regs = regs;
-	bus->private = priv;
+	bus->निजी = priv;
 
-	if (spiderpci_pci_setup_chip(bus->phb, regs))
-		goto error;
+	अगर (spiderpci_pci_setup_chip(bus->phb, regs))
+		जाओ error;
 
-	return 0;
+	वापस 0;
 
 error:
-	kfree(priv);
-	bus->private = NULL;
+	kमुक्त(priv);
+	bus->निजी = शून्य;
 
-	if (regs)
+	अगर (regs)
 		iounmap(regs);
 
-	return -1;
-}
+	वापस -1;
+पूर्ण
 
-struct ppc_pci_io spiderpci_ops = {
-	.readb = spiderpci_readb,
-	.readw = spiderpci_readw,
-	.readl = spiderpci_readl,
-	.readq = spiderpci_readq,
-	.readw_be = spiderpci_readw_be,
-	.readl_be = spiderpci_readl_be,
-	.readq_be = spiderpci_readq_be,
-	.readsb = spiderpci_readsb,
-	.readsw = spiderpci_readsw,
-	.readsl = spiderpci_readsl,
-	.memcpy_fromio = spiderpci_memcpy_fromio,
-};
+काष्ठा ppc_pci_io spiderpci_ops = अणु
+	.पढ़ोb = spiderpci_पढ़ोb,
+	.पढ़ोw = spiderpci_पढ़ोw,
+	.पढ़ोl = spiderpci_पढ़ोl,
+	.पढ़ोq = spiderpci_पढ़ोq,
+	.पढ़ोw_be = spiderpci_पढ़ोw_be,
+	.पढ़ोl_be = spiderpci_पढ़ोl_be,
+	.पढ़ोq_be = spiderpci_पढ़ोq_be,
+	.पढ़ोsb = spiderpci_पढ़ोsb,
+	.पढ़ोsw = spiderpci_पढ़ोsw,
+	.पढ़ोsl = spiderpci_पढ़ोsl,
+	.स_नकल_fromio = spiderpci_स_नकल_fromio,
+पूर्ण;
 

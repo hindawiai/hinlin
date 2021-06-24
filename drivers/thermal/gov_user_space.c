@@ -1,47 +1,48 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- *  user_space.c - A simple user space Thermal events notifier
+ *  user_space.c - A simple user space Thermal events notअगरier
  *
  *  Copyright (C) 2012 Intel Corp
- *  Copyright (C) 2012 Durgadoss R <durgadoss.r@intel.com>
+ *  Copyright (C) 2012 Durgaकरोss R <durgaकरोss.r@पूर्णांकel.com>
  *
  *  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  *
  * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-#include <linux/slab.h>
-#include <linux/thermal.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/thermal.h>
 
-#include "thermal_core.h"
+#समावेश "thermal_core.h"
 
 /**
- * notify_user_space - Notifies user space about thermal events
+ * notअगरy_user_space - Notअगरies user space about thermal events
  * @tz: thermal_zone_device
- * @trip: trip point index
+ * @trip: trip poपूर्णांक index
  *
- * This function notifies the user space through UEvents.
+ * This function notअगरies the user space through UEvents.
  */
-static int notify_user_space(struct thermal_zone_device *tz, int trip)
-{
-	char *thermal_prop[5];
-	int i;
+अटल पूर्णांक notअगरy_user_space(काष्ठा thermal_zone_device *tz, पूर्णांक trip)
+अणु
+	अक्षर *thermal_prop[5];
+	पूर्णांक i;
 
 	mutex_lock(&tz->lock);
-	thermal_prop[0] = kasprintf(GFP_KERNEL, "NAME=%s", tz->type);
-	thermal_prop[1] = kasprintf(GFP_KERNEL, "TEMP=%d", tz->temperature);
-	thermal_prop[2] = kasprintf(GFP_KERNEL, "TRIP=%d", trip);
-	thermal_prop[3] = kasprintf(GFP_KERNEL, "EVENT=%d", tz->notify_event);
-	thermal_prop[4] = NULL;
+	thermal_prop[0] = kaप्र_लिखो(GFP_KERNEL, "NAME=%s", tz->type);
+	thermal_prop[1] = kaप्र_लिखो(GFP_KERNEL, "TEMP=%d", tz->temperature);
+	thermal_prop[2] = kaप्र_लिखो(GFP_KERNEL, "TRIP=%d", trip);
+	thermal_prop[3] = kaप्र_लिखो(GFP_KERNEL, "EVENT=%d", tz->notअगरy_event);
+	thermal_prop[4] = शून्य;
 	kobject_uevent_env(&tz->device.kobj, KOBJ_CHANGE, thermal_prop);
-	for (i = 0; i < 4; ++i)
-		kfree(thermal_prop[i]);
+	क्रम (i = 0; i < 4; ++i)
+		kमुक्त(thermal_prop[i]);
 	mutex_unlock(&tz->lock);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct thermal_governor thermal_gov_user_space = {
+अटल काष्ठा thermal_governor thermal_gov_user_space = अणु
 	.name		= "user_space",
-	.throttle	= notify_user_space,
-};
+	.throttle	= notअगरy_user_space,
+पूर्ण;
 THERMAL_GOVERNOR_DECLARE(thermal_gov_user_space);

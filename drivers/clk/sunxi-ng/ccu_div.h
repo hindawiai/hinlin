@@ -1,35 +1,36 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * Copyright (c) 2016 Maxime Ripard. All rights reserved.
  */
 
-#ifndef _CCU_DIV_H_
-#define _CCU_DIV_H_
+#अगर_अघोषित _CCU_DIV_H_
+#घोषणा _CCU_DIV_H_
 
-#include <linux/clk-provider.h>
+#समावेश <linux/clk-provider.h>
 
-#include "ccu_common.h"
-#include "ccu_mux.h"
+#समावेश "ccu_common.h"
+#समावेश "ccu_mux.h"
 
 /**
- * struct ccu_div_internal - Internal divider description
- * @shift: Bit offset of the divider in its register
- * @width: Width of the divider field in its register
- * @max: Maximum value allowed for that divider. This is the
+ * काष्ठा ccu_भाग_पूर्णांकernal - Internal भागider description
+ * @shअगरt: Bit offset of the भागider in its रेजिस्टर
+ * @width: Width of the भागider field in its रेजिस्टर
+ * @max: Maximum value allowed क्रम that भागider. This is the
  *       arithmetic value, not the maximum value to be set in the
- *       register.
- * @flags: clk_divider flags to apply on this divider
- * @table: Divider table pointer (if applicable)
+ *       रेजिस्टर.
+ * @flags: clk_भागider flags to apply on this भागider
+ * @table: Divider table poपूर्णांकer (अगर applicable)
  *
- * That structure represents a single divider, and is meant to be
- * embedded in other structures representing the various clock
+ * That काष्ठाure represents a single भागider, and is meant to be
+ * embedded in other काष्ठाures representing the various घड़ी
  * classes.
  *
- * It is basically a wrapper around the clk_divider functions
+ * It is basically a wrapper around the clk_भागider functions
  * arguments.
  */
-struct ccu_div_internal {
-	u8			shift;
+काष्ठा ccu_भाग_पूर्णांकernal अणु
+	u8			shअगरt;
 	u8			width;
 
 	u32			max;
@@ -37,142 +38,142 @@ struct ccu_div_internal {
 
 	u32			flags;
 
-	struct clk_div_table	*table;
-};
+	काष्ठा clk_भाग_प्रकारable	*table;
+पूर्ण;
 
-#define _SUNXI_CCU_DIV_TABLE_FLAGS(_shift, _width, _table, _flags)	\
-	{								\
-		.shift	= _shift,					\
+#घोषणा _SUNXI_CCU_DIV_TABLE_FLAGS(_shअगरt, _width, _table, _flags)	\
+	अणु								\
+		.shअगरt	= _shअगरt,					\
 		.width	= _width,					\
 		.flags	= _flags,					\
 		.table	= _table,					\
-	}
+	पूर्ण
 
-#define _SUNXI_CCU_DIV_TABLE(_shift, _width, _table)			\
-	_SUNXI_CCU_DIV_TABLE_FLAGS(_shift, _width, _table, 0)
+#घोषणा _SUNXI_CCU_DIV_TABLE(_shअगरt, _width, _table)			\
+	_SUNXI_CCU_DIV_TABLE_FLAGS(_shअगरt, _width, _table, 0)
 
-#define _SUNXI_CCU_DIV_OFFSET_MAX_FLAGS(_shift, _width, _off, _max, _flags) \
-	{								\
-		.shift	= _shift,					\
+#घोषणा _SUNXI_CCU_DIV_OFFSET_MAX_FLAGS(_shअगरt, _width, _off, _max, _flags) \
+	अणु								\
+		.shअगरt	= _shअगरt,					\
 		.width	= _width,					\
 		.flags	= _flags,					\
 		.max	= _max,						\
 		.offset	= _off,						\
-	}
+	पूर्ण
 
-#define _SUNXI_CCU_DIV_MAX_FLAGS(_shift, _width, _max, _flags)		\
-	_SUNXI_CCU_DIV_OFFSET_MAX_FLAGS(_shift, _width, 1, _max, _flags)
+#घोषणा _SUNXI_CCU_DIV_MAX_FLAGS(_shअगरt, _width, _max, _flags)		\
+	_SUNXI_CCU_DIV_OFFSET_MAX_FLAGS(_shअगरt, _width, 1, _max, _flags)
 
-#define _SUNXI_CCU_DIV_FLAGS(_shift, _width, _flags)			\
-	_SUNXI_CCU_DIV_MAX_FLAGS(_shift, _width, 0, _flags)
+#घोषणा _SUNXI_CCU_DIV_FLAGS(_shअगरt, _width, _flags)			\
+	_SUNXI_CCU_DIV_MAX_FLAGS(_shअगरt, _width, 0, _flags)
 
-#define _SUNXI_CCU_DIV_MAX(_shift, _width, _max)			\
-	_SUNXI_CCU_DIV_MAX_FLAGS(_shift, _width, _max, 0)
+#घोषणा _SUNXI_CCU_DIV_MAX(_shअगरt, _width, _max)			\
+	_SUNXI_CCU_DIV_MAX_FLAGS(_shअगरt, _width, _max, 0)
 
-#define _SUNXI_CCU_DIV_OFFSET(_shift, _width, _offset)			\
-	_SUNXI_CCU_DIV_OFFSET_MAX_FLAGS(_shift, _width, _offset, 0, 0)
+#घोषणा _SUNXI_CCU_DIV_OFFSET(_shअगरt, _width, _offset)			\
+	_SUNXI_CCU_DIV_OFFSET_MAX_FLAGS(_shअगरt, _width, _offset, 0, 0)
 
-#define _SUNXI_CCU_DIV(_shift, _width)					\
-	_SUNXI_CCU_DIV_FLAGS(_shift, _width, 0)
+#घोषणा _SUNXI_CCU_DIV(_shअगरt, _width)					\
+	_SUNXI_CCU_DIV_FLAGS(_shअगरt, _width, 0)
 
-struct ccu_div {
+काष्ठा ccu_भाग अणु
 	u32			enable;
 
-	struct ccu_div_internal	div;
-	struct ccu_mux_internal	mux;
-	struct ccu_common	common;
-	unsigned int		fixed_post_div;
-};
+	काष्ठा ccu_भाग_पूर्णांकernal	भाग;
+	काष्ठा ccu_mux_पूर्णांकernal	mux;
+	काष्ठा ccu_common	common;
+	अचिन्हित पूर्णांक		fixed_post_भाग;
+पूर्ण;
 
-#define SUNXI_CCU_DIV_TABLE_WITH_GATE(_struct, _name, _parent, _reg,	\
-				      _shift, _width,			\
+#घोषणा SUNXI_CCU_DIV_TABLE_WITH_GATE(_काष्ठा, _name, _parent, _reg,	\
+				      _shअगरt, _width,			\
 				      _table, _gate, _flags)		\
-	struct ccu_div _struct = {					\
-		.div		= _SUNXI_CCU_DIV_TABLE(_shift, _width,	\
+	काष्ठा ccu_भाग _काष्ठा = अणु					\
+		.भाग		= _SUNXI_CCU_DIV_TABLE(_shअगरt, _width,	\
 						       _table),		\
 		.enable		= _gate,				\
-		.common	= {						\
+		.common	= अणु						\
 			.reg		= _reg,				\
 			.hw.init	= CLK_HW_INIT(_name,		\
 						      _parent,		\
-						      &ccu_div_ops,	\
+						      &ccu_भाग_ops,	\
 						      _flags),		\
-		}							\
-	}
+		पूर्ण							\
+	पूर्ण
 
 
-#define SUNXI_CCU_DIV_TABLE(_struct, _name, _parent, _reg,		\
-			    _shift, _width,				\
+#घोषणा SUNXI_CCU_DIV_TABLE(_काष्ठा, _name, _parent, _reg,		\
+			    _shअगरt, _width,				\
 			    _table, _flags)				\
-	SUNXI_CCU_DIV_TABLE_WITH_GATE(_struct, _name, _parent, _reg,	\
-				      _shift, _width, _table, 0,	\
+	SUNXI_CCU_DIV_TABLE_WITH_GATE(_काष्ठा, _name, _parent, _reg,	\
+				      _shअगरt, _width, _table, 0,	\
 				      _flags)
 
-#define SUNXI_CCU_M_WITH_MUX_TABLE_GATE(_struct, _name,			\
+#घोषणा SUNXI_CCU_M_WITH_MUX_TABLE_GATE(_काष्ठा, _name,			\
 					_parents, _table,		\
 					_reg,				\
-					_mshift, _mwidth,		\
-					_muxshift, _muxwidth,		\
+					_mshअगरt, _mwidth,		\
+					_muxshअगरt, _muxwidth,		\
 					_gate, _flags)			\
-	struct ccu_div _struct = {					\
+	काष्ठा ccu_भाग _काष्ठा = अणु					\
 		.enable	= _gate,					\
-		.div	= _SUNXI_CCU_DIV(_mshift, _mwidth),		\
-		.mux	= _SUNXI_CCU_MUX_TABLE(_muxshift, _muxwidth, _table), \
-		.common	= {						\
+		.भाग	= _SUNXI_CCU_DIV(_mshअगरt, _mwidth),		\
+		.mux	= _SUNXI_CCU_MUX_TABLE(_muxshअगरt, _muxwidth, _table), \
+		.common	= अणु						\
 			.reg		= _reg,				\
 			.hw.init	= CLK_HW_INIT_PARENTS(_name,	\
 							      _parents, \
-							      &ccu_div_ops, \
+							      &ccu_भाग_ops, \
 							      _flags),	\
-		},							\
-	}
+		पूर्ण,							\
+	पूर्ण
 
-#define SUNXI_CCU_M_WITH_MUX_GATE(_struct, _name, _parents, _reg,	\
-				  _mshift, _mwidth, _muxshift, _muxwidth, \
+#घोषणा SUNXI_CCU_M_WITH_MUX_GATE(_काष्ठा, _name, _parents, _reg,	\
+				  _mshअगरt, _mwidth, _muxshअगरt, _muxwidth, \
 				  _gate, _flags)			\
-	SUNXI_CCU_M_WITH_MUX_TABLE_GATE(_struct, _name,			\
-					_parents, NULL,			\
-					_reg, _mshift, _mwidth,		\
-					_muxshift, _muxwidth,		\
+	SUNXI_CCU_M_WITH_MUX_TABLE_GATE(_काष्ठा, _name,			\
+					_parents, शून्य,			\
+					_reg, _mshअगरt, _mwidth,		\
+					_muxshअगरt, _muxwidth,		\
 					_gate, _flags)
 
-#define SUNXI_CCU_M_WITH_MUX(_struct, _name, _parents, _reg,		\
-			     _mshift, _mwidth, _muxshift, _muxwidth,	\
+#घोषणा SUNXI_CCU_M_WITH_MUX(_काष्ठा, _name, _parents, _reg,		\
+			     _mshअगरt, _mwidth, _muxshअगरt, _muxwidth,	\
 			     _flags)					\
-	SUNXI_CCU_M_WITH_MUX_TABLE_GATE(_struct, _name,			\
-					_parents, NULL,			\
-					_reg, _mshift, _mwidth,		\
-					_muxshift, _muxwidth,		\
+	SUNXI_CCU_M_WITH_MUX_TABLE_GATE(_काष्ठा, _name,			\
+					_parents, शून्य,			\
+					_reg, _mshअगरt, _mwidth,		\
+					_muxshअगरt, _muxwidth,		\
 					0, _flags)
 
 
-#define SUNXI_CCU_M_WITH_GATE(_struct, _name, _parent, _reg,		\
-			      _mshift, _mwidth,	_gate,			\
+#घोषणा SUNXI_CCU_M_WITH_GATE(_काष्ठा, _name, _parent, _reg,		\
+			      _mshअगरt, _mwidth,	_gate,			\
 			      _flags)					\
-	struct ccu_div _struct = {					\
+	काष्ठा ccu_भाग _काष्ठा = अणु					\
 		.enable	= _gate,					\
-		.div	= _SUNXI_CCU_DIV(_mshift, _mwidth),		\
-		.common	= {						\
+		.भाग	= _SUNXI_CCU_DIV(_mshअगरt, _mwidth),		\
+		.common	= अणु						\
 			.reg		= _reg,				\
 			.hw.init	= CLK_HW_INIT(_name,		\
 						      _parent,		\
-						      &ccu_div_ops,	\
+						      &ccu_भाग_ops,	\
 						      _flags),		\
-		},							\
-	}
+		पूर्ण,							\
+	पूर्ण
 
-#define SUNXI_CCU_M(_struct, _name, _parent, _reg, _mshift, _mwidth,	\
+#घोषणा SUNXI_CCU_M(_काष्ठा, _name, _parent, _reg, _mshअगरt, _mwidth,	\
 		    _flags)						\
-	SUNXI_CCU_M_WITH_GATE(_struct, _name, _parent, _reg,		\
-			      _mshift, _mwidth, 0, _flags)
+	SUNXI_CCU_M_WITH_GATE(_काष्ठा, _name, _parent, _reg,		\
+			      _mshअगरt, _mwidth, 0, _flags)
 
-static inline struct ccu_div *hw_to_ccu_div(struct clk_hw *hw)
-{
-	struct ccu_common *common = hw_to_ccu_common(hw);
+अटल अंतरभूत काष्ठा ccu_भाग *hw_to_ccu_भाग(काष्ठा clk_hw *hw)
+अणु
+	काष्ठा ccu_common *common = hw_to_ccu_common(hw);
 
-	return container_of(common, struct ccu_div, common);
-}
+	वापस container_of(common, काष्ठा ccu_भाग, common);
+पूर्ण
 
-extern const struct clk_ops ccu_div_ops;
+बाह्य स्थिर काष्ठा clk_ops ccu_भाग_ops;
 
-#endif /* _CCU_DIV_H_ */
+#पूर्ण_अगर /* _CCU_DIV_H_ */

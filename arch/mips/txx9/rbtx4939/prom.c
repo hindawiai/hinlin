@@ -1,29 +1,30 @@
+<शैली गुरु>
 /*
- * rbtx4939 specific prom routines
+ * rbtx4939 specअगरic prom routines
  *
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the main directory of this archive
- * for more details.
+ * License.  See the file "COPYING" in the मुख्य directory of this archive
+ * क्रम more details.
  */
 
-#include <linux/init.h>
-#include <linux/memblock.h>
-#include <asm/txx9/generic.h>
-#include <asm/txx9/rbtx4939.h>
+#समावेश <linux/init.h>
+#समावेश <linux/memblock.h>
+#समावेश <यंत्र/txx9/generic.h>
+#समावेश <यंत्र/txx9/rbtx4939.h>
 
-void __init rbtx4939_prom_init(void)
-{
-	unsigned long start, size;
+व्योम __init rbtx4939_prom_init(व्योम)
+अणु
+	अचिन्हित दीर्घ start, size;
 	u64 win;
-	int i;
+	पूर्णांक i;
 
-	for (i = 0; i < 4; i++) {
-		if (!((__u32)____raw_readq(&tx4939_ddrcptr->winen) & (1 << i)))
-			continue;
-		win = ____raw_readq(&tx4939_ddrcptr->win[i]);
-		start = (unsigned long)(win >> 48);
-		size = (((unsigned long)(win >> 32) & 0xffff) + 1) - start;
+	क्रम (i = 0; i < 4; i++) अणु
+		अगर (!((__u32)____raw_पढ़ोq(&tx4939_ddrcptr->winen) & (1 << i)))
+			जारी;
+		win = ____raw_पढ़ोq(&tx4939_ddrcptr->win[i]);
+		start = (अचिन्हित दीर्घ)(win >> 48);
+		size = (((अचिन्हित दीर्घ)(win >> 32) & 0xffff) + 1) - start;
 		memblock_add(start << 20, size << 20);
-	}
-	txx9_sio_putchar_init(TX4939_SIO_REG(0) & 0xfffffffffULL);
-}
+	पूर्ण
+	txx9_sio_अक्षर_दो_init(TX4939_SIO_REG(0) & 0xfffffffffULL);
+पूर्ण

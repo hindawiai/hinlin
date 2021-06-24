@@ -1,37 +1,38 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _LINUX_UNALIGNED_LE_MEMMOVE_H
-#define _LINUX_UNALIGNED_LE_MEMMOVE_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _LINUX_UNALIGNED_LE_MEMMOVE_H
+#घोषणा _LINUX_UNALIGNED_LE_MEMMOVE_H
 
-#include <linux/unaligned/memmove.h>
+#समावेश <linux/unaligned/स_हटाओ.h>
 
-static inline u16 get_unaligned_le16(const void *p)
-{
-	return __get_unaligned_memmove16((const u8 *)p);
-}
+अटल अंतरभूत u16 get_unaligned_le16(स्थिर व्योम *p)
+अणु
+	वापस __get_unaligned_स_हटाओ16((स्थिर u8 *)p);
+पूर्ण
 
-static inline u32 get_unaligned_le32(const void *p)
-{
-	return __get_unaligned_memmove32((const u8 *)p);
-}
+अटल अंतरभूत u32 get_unaligned_le32(स्थिर व्योम *p)
+अणु
+	वापस __get_unaligned_स_हटाओ32((स्थिर u8 *)p);
+पूर्ण
 
-static inline u64 get_unaligned_le64(const void *p)
-{
-	return __get_unaligned_memmove64((const u8 *)p);
-}
+अटल अंतरभूत u64 get_unaligned_le64(स्थिर व्योम *p)
+अणु
+	वापस __get_unaligned_स_हटाओ64((स्थिर u8 *)p);
+पूर्ण
 
-static inline void put_unaligned_le16(u16 val, void *p)
-{
-	__put_unaligned_memmove16(val, p);
-}
+अटल अंतरभूत व्योम put_unaligned_le16(u16 val, व्योम *p)
+अणु
+	__put_unaligned_स_हटाओ16(val, p);
+पूर्ण
 
-static inline void put_unaligned_le32(u32 val, void *p)
-{
-	__put_unaligned_memmove32(val, p);
-}
+अटल अंतरभूत व्योम put_unaligned_le32(u32 val, व्योम *p)
+अणु
+	__put_unaligned_स_हटाओ32(val, p);
+पूर्ण
 
-static inline void put_unaligned_le64(u64 val, void *p)
-{
-	__put_unaligned_memmove64(val, p);
-}
+अटल अंतरभूत व्योम put_unaligned_le64(u64 val, व्योम *p)
+अणु
+	__put_unaligned_स_हटाओ64(val, p);
+पूर्ण
 
-#endif /* _LINUX_UNALIGNED_LE_MEMMOVE_H */
+#पूर्ण_अगर /* _LINUX_UNALIGNED_LE_MEMMOVE_H */

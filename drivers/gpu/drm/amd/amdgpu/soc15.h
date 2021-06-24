@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2016 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -21,98 +22,98 @@
  *
  */
 
-#ifndef __SOC15_H__
-#define __SOC15_H__
+#अगर_अघोषित __SOC15_H__
+#घोषणा __SOC15_H__
 
-#include "nbio_v6_1.h"
-#include "nbio_v7_0.h"
-#include "nbio_v7_4.h"
+#समावेश "nbio_v6_1.h"
+#समावेश "nbio_v7_0.h"
+#समावेश "nbio_v7_4.h"
 
-#define SOC15_FLUSH_GPU_TLB_NUM_WREG		6
-#define SOC15_FLUSH_GPU_TLB_NUM_REG_WAIT	3
+#घोषणा SOC15_FLUSH_GPU_TLB_NUM_WREG		6
+#घोषणा SOC15_FLUSH_GPU_TLB_NUM_REG_WAIT	3
 
-extern const struct amd_ip_funcs soc15_common_ip_funcs;
+बाह्य स्थिर काष्ठा amd_ip_funcs soc15_common_ip_funcs;
 
-struct soc15_reg_golden {
+काष्ठा soc15_reg_golden अणु
 	u32	hwip;
 	u32	instance;
 	u32	segment;
 	u32	reg;
 	u32	and_mask;
 	u32	or_mask;
-};
+पूर्ण;
 
-struct soc15_reg_rlcg {
+काष्ठा soc15_reg_rlcg अणु
 	u32	hwip;
 	u32	instance;
 	u32	segment;
 	u32	reg;
-};
+पूर्ण;
 
-struct soc15_reg {
-	uint32_t hwip;
-	uint32_t inst;
-	uint32_t seg;
-	uint32_t reg_offset;
-};
+काष्ठा soc15_reg अणु
+	uपूर्णांक32_t hwip;
+	uपूर्णांक32_t inst;
+	uपूर्णांक32_t seg;
+	uपूर्णांक32_t reg_offset;
+पूर्ण;
 
-struct soc15_reg_entry {
-	uint32_t hwip;
-	uint32_t inst;
-	uint32_t seg;
-	uint32_t reg_offset;
-	uint32_t reg_value;
-	uint32_t se_num;
-	uint32_t instance;
-};
+काष्ठा soc15_reg_entry अणु
+	uपूर्णांक32_t hwip;
+	uपूर्णांक32_t inst;
+	uपूर्णांक32_t seg;
+	uपूर्णांक32_t reg_offset;
+	uपूर्णांक32_t reg_value;
+	uपूर्णांक32_t se_num;
+	uपूर्णांक32_t instance;
+पूर्ण;
 
-struct soc15_allowed_register_entry {
-	uint32_t hwip;
-	uint32_t inst;
-	uint32_t seg;
-	uint32_t reg_offset;
+काष्ठा soc15_allowed_रेजिस्टर_entry अणु
+	uपूर्णांक32_t hwip;
+	uपूर्णांक32_t inst;
+	uपूर्णांक32_t seg;
+	uपूर्णांक32_t reg_offset;
 	bool grbm_indexed;
-};
+पूर्ण;
 
-struct soc15_ras_field_entry {
-	const char *name;
-	uint32_t hwip;
-	uint32_t inst;
-	uint32_t seg;
-	uint32_t reg_offset;
-	uint32_t sec_count_mask;
-	uint32_t sec_count_shift;
-	uint32_t ded_count_mask;
-	uint32_t ded_count_shift;
-};
+काष्ठा soc15_ras_field_entry अणु
+	स्थिर अक्षर *name;
+	uपूर्णांक32_t hwip;
+	uपूर्णांक32_t inst;
+	uपूर्णांक32_t seg;
+	uपूर्णांक32_t reg_offset;
+	uपूर्णांक32_t sec_count_mask;
+	uपूर्णांक32_t sec_count_shअगरt;
+	uपूर्णांक32_t ded_count_mask;
+	uपूर्णांक32_t ded_count_shअगरt;
+पूर्ण;
 
-#define SOC15_REG_ENTRY(ip, inst, reg)	ip##_HWIP, inst, reg##_BASE_IDX, reg
+#घोषणा SOC15_REG_ENTRY(ip, inst, reg)	ip##_HWIP, inst, reg##_BASE_IDX, reg
 
-#define SOC15_REG_ENTRY_OFFSET(entry)	(adev->reg_offset[entry.hwip][entry.inst][entry.seg] + entry.reg_offset)
+#घोषणा SOC15_REG_ENTRY_OFFSET(entry)	(adev->reg_offset[entry.hwip][entry.inst][entry.seg] + entry.reg_offset)
 
-#define SOC15_REG_GOLDEN_VALUE(ip, inst, reg, and_mask, or_mask) \
-	{ ip##_HWIP, inst, reg##_BASE_IDX, reg, and_mask, or_mask }
+#घोषणा SOC15_REG_GOLDEN_VALUE(ip, inst, reg, and_mask, or_mask) \
+	अणु ip##_HWIP, inst, reg##_BASE_IDX, reg, and_mask, or_mask पूर्ण
 
-#define SOC15_REG_FIELD(reg, field) reg##__##field##_MASK, reg##__##field##__SHIFT
+#घोषणा SOC15_REG_FIELD(reg, field) reg##__##field##_MASK, reg##__##field##__SHIFT
 
-#define SOC15_REG_FIELD_VAL(val, mask, shift)	(((val) & mask) >> shift)
+#घोषणा SOC15_REG_FIELD_VAL(val, mask, shअगरt)	(((val) & mask) >> shअगरt)
 
-#define SOC15_RAS_REG_FIELD_VAL(val, entry, field) SOC15_REG_FIELD_VAL((val), (entry).field##_count_mask, (entry).field##_count_shift)
+#घोषणा SOC15_RAS_REG_FIELD_VAL(val, entry, field) SOC15_REG_FIELD_VAL((val), (entry).field##_count_mask, (entry).field##_count_shअगरt)
 
-void soc15_grbm_select(struct amdgpu_device *adev,
+व्योम soc15_grbm_select(काष्ठा amdgpu_device *adev,
 		    u32 me, u32 pipe, u32 queue, u32 vmid);
-void soc15_set_virt_ops(struct amdgpu_device *adev);
-int soc15_set_ip_blocks(struct amdgpu_device *adev);
+व्योम soc15_set_virt_ops(काष्ठा amdgpu_device *adev);
+पूर्णांक soc15_set_ip_blocks(काष्ठा amdgpu_device *adev);
 
-void soc15_program_register_sequence(struct amdgpu_device *adev,
-					     const struct soc15_reg_golden *registers,
-					     const u32 array_size);
+व्योम soc15_program_रेजिस्टर_sequence(काष्ठा amdgpu_device *adev,
+					     स्थिर काष्ठा soc15_reg_golden *रेजिस्टरs,
+					     स्थिर u32 array_size);
 
-int vega10_reg_base_init(struct amdgpu_device *adev);
-int vega20_reg_base_init(struct amdgpu_device *adev);
-int arct_reg_base_init(struct amdgpu_device *adev);
-int aldebaran_reg_base_init(struct amdgpu_device *adev);
+पूर्णांक vega10_reg_base_init(काष्ठा amdgpu_device *adev);
+पूर्णांक vega20_reg_base_init(काष्ठा amdgpu_device *adev);
+पूर्णांक arct_reg_base_init(काष्ठा amdgpu_device *adev);
+पूर्णांक aldebaran_reg_base_init(काष्ठा amdgpu_device *adev);
 
-void vega10_doorbell_index_init(struct amdgpu_device *adev);
-void vega20_doorbell_index_init(struct amdgpu_device *adev);
-#endif
+व्योम vega10_करोorbell_index_init(काष्ठा amdgpu_device *adev);
+व्योम vega20_करोorbell_index_init(काष्ठा amdgpu_device *adev);
+#पूर्ण_अगर

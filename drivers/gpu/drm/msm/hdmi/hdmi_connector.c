@@ -1,432 +1,433 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (C) 2013 Red Hat
  * Author: Rob Clark <robdclark@gmail.com>
  */
 
-#include <linux/delay.h>
-#include <linux/gpio/consumer.h>
-#include <linux/pinctrl/consumer.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/gpio/consumer.h>
+#समावेश <linux/pinctrl/consumer.h>
 
-#include "msm_kms.h"
-#include "hdmi.h"
+#समावेश "msm_kms.h"
+#समावेश "hdmi.h"
 
-struct hdmi_connector {
-	struct drm_connector base;
-	struct hdmi *hdmi;
-	struct work_struct hpd_work;
-};
-#define to_hdmi_connector(x) container_of(x, struct hdmi_connector, base)
+काष्ठा hdmi_connector अणु
+	काष्ठा drm_connector base;
+	काष्ठा hdmi *hdmi;
+	काष्ठा work_काष्ठा hpd_work;
+पूर्ण;
+#घोषणा to_hdmi_connector(x) container_of(x, काष्ठा hdmi_connector, base)
 
-static void msm_hdmi_phy_reset(struct hdmi *hdmi)
-{
-	unsigned int val;
+अटल व्योम msm_hdmi_phy_reset(काष्ठा hdmi *hdmi)
+अणु
+	अचिन्हित पूर्णांक val;
 
-	val = hdmi_read(hdmi, REG_HDMI_PHY_CTRL);
+	val = hdmi_पढ़ो(hdmi, REG_HDMI_PHY_CTRL);
 
-	if (val & HDMI_PHY_CTRL_SW_RESET_LOW) {
+	अगर (val & HDMI_PHY_CTRL_SW_RESET_LOW) अणु
 		/* pull low */
-		hdmi_write(hdmi, REG_HDMI_PHY_CTRL,
+		hdmi_ग_लिखो(hdmi, REG_HDMI_PHY_CTRL,
 				val & ~HDMI_PHY_CTRL_SW_RESET);
-	} else {
+	पूर्ण अन्यथा अणु
 		/* pull high */
-		hdmi_write(hdmi, REG_HDMI_PHY_CTRL,
+		hdmi_ग_लिखो(hdmi, REG_HDMI_PHY_CTRL,
 				val | HDMI_PHY_CTRL_SW_RESET);
-	}
+	पूर्ण
 
-	if (val & HDMI_PHY_CTRL_SW_RESET_PLL_LOW) {
+	अगर (val & HDMI_PHY_CTRL_SW_RESET_PLL_LOW) अणु
 		/* pull low */
-		hdmi_write(hdmi, REG_HDMI_PHY_CTRL,
+		hdmi_ग_लिखो(hdmi, REG_HDMI_PHY_CTRL,
 				val & ~HDMI_PHY_CTRL_SW_RESET_PLL);
-	} else {
+	पूर्ण अन्यथा अणु
 		/* pull high */
-		hdmi_write(hdmi, REG_HDMI_PHY_CTRL,
+		hdmi_ग_लिखो(hdmi, REG_HDMI_PHY_CTRL,
 				val | HDMI_PHY_CTRL_SW_RESET_PLL);
-	}
+	पूर्ण
 
 	msleep(100);
 
-	if (val & HDMI_PHY_CTRL_SW_RESET_LOW) {
+	अगर (val & HDMI_PHY_CTRL_SW_RESET_LOW) अणु
 		/* pull high */
-		hdmi_write(hdmi, REG_HDMI_PHY_CTRL,
+		hdmi_ग_लिखो(hdmi, REG_HDMI_PHY_CTRL,
 				val | HDMI_PHY_CTRL_SW_RESET);
-	} else {
+	पूर्ण अन्यथा अणु
 		/* pull low */
-		hdmi_write(hdmi, REG_HDMI_PHY_CTRL,
+		hdmi_ग_लिखो(hdmi, REG_HDMI_PHY_CTRL,
 				val & ~HDMI_PHY_CTRL_SW_RESET);
-	}
+	पूर्ण
 
-	if (val & HDMI_PHY_CTRL_SW_RESET_PLL_LOW) {
+	अगर (val & HDMI_PHY_CTRL_SW_RESET_PLL_LOW) अणु
 		/* pull high */
-		hdmi_write(hdmi, REG_HDMI_PHY_CTRL,
+		hdmi_ग_लिखो(hdmi, REG_HDMI_PHY_CTRL,
 				val | HDMI_PHY_CTRL_SW_RESET_PLL);
-	} else {
+	पूर्ण अन्यथा अणु
 		/* pull low */
-		hdmi_write(hdmi, REG_HDMI_PHY_CTRL,
+		hdmi_ग_लिखो(hdmi, REG_HDMI_PHY_CTRL,
 				val & ~HDMI_PHY_CTRL_SW_RESET_PLL);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int gpio_config(struct hdmi *hdmi, bool on)
-{
-	const struct hdmi_platform_config *config = hdmi->config;
-	int i;
+अटल पूर्णांक gpio_config(काष्ठा hdmi *hdmi, bool on)
+अणु
+	स्थिर काष्ठा hdmi_platक्रमm_config *config = hdmi->config;
+	पूर्णांक i;
 
-	if (on) {
-		for (i = 0; i < HDMI_MAX_NUM_GPIO; i++) {
-			struct hdmi_gpio_data gpio = config->gpios[i];
+	अगर (on) अणु
+		क्रम (i = 0; i < HDMI_MAX_NUM_GPIO; i++) अणु
+			काष्ठा hdmi_gpio_data gpio = config->gpios[i];
 
-			if (gpio.gpiod) {
-				if (gpio.output) {
+			अगर (gpio.gpiod) अणु
+				अगर (gpio.output) अणु
 					gpiod_direction_output(gpio.gpiod,
 							       gpio.value);
-				} else {
+				पूर्ण अन्यथा अणु
 					gpiod_direction_input(gpio.gpiod);
 					gpiod_set_value_cansleep(gpio.gpiod,
 								 gpio.value);
-				}
-			}
-		}
+				पूर्ण
+			पूर्ण
+		पूर्ण
 
 		DBG("gpio on");
-	} else {
-		for (i = 0; i < HDMI_MAX_NUM_GPIO; i++) {
-			struct hdmi_gpio_data gpio = config->gpios[i];
+	पूर्ण अन्यथा अणु
+		क्रम (i = 0; i < HDMI_MAX_NUM_GPIO; i++) अणु
+			काष्ठा hdmi_gpio_data gpio = config->gpios[i];
 
-			if (!gpio.gpiod)
-				continue;
+			अगर (!gpio.gpiod)
+				जारी;
 
-			if (gpio.output) {
-				int value = gpio.value ? 0 : 1;
+			अगर (gpio.output) अणु
+				पूर्णांक value = gpio.value ? 0 : 1;
 
 				gpiod_set_value_cansleep(gpio.gpiod, value);
-			}
-		}
+			पूर्ण
+		पूर्ण
 
 		DBG("gpio off");
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void enable_hpd_clocks(struct hdmi *hdmi, bool enable)
-{
-	const struct hdmi_platform_config *config = hdmi->config;
-	struct device *dev = &hdmi->pdev->dev;
-	int i, ret;
+अटल व्योम enable_hpd_घड़ीs(काष्ठा hdmi *hdmi, bool enable)
+अणु
+	स्थिर काष्ठा hdmi_platक्रमm_config *config = hdmi->config;
+	काष्ठा device *dev = &hdmi->pdev->dev;
+	पूर्णांक i, ret;
 
-	if (enable) {
-		for (i = 0; i < config->hpd_clk_cnt; i++) {
-			if (config->hpd_freq && config->hpd_freq[i]) {
+	अगर (enable) अणु
+		क्रम (i = 0; i < config->hpd_clk_cnt; i++) अणु
+			अगर (config->hpd_freq && config->hpd_freq[i]) अणु
 				ret = clk_set_rate(hdmi->hpd_clks[i],
 						   config->hpd_freq[i]);
-				if (ret)
+				अगर (ret)
 					dev_warn(dev,
 						 "failed to set clk %s (%d)\n",
 						 config->hpd_clk_names[i], ret);
-			}
+			पूर्ण
 
 			ret = clk_prepare_enable(hdmi->hpd_clks[i]);
-			if (ret) {
+			अगर (ret) अणु
 				DRM_DEV_ERROR(dev,
 					"failed to enable hpd clk: %s (%d)\n",
 					config->hpd_clk_names[i], ret);
-			}
-		}
-	} else {
-		for (i = config->hpd_clk_cnt - 1; i >= 0; i--)
+			पूर्ण
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		क्रम (i = config->hpd_clk_cnt - 1; i >= 0; i--)
 			clk_disable_unprepare(hdmi->hpd_clks[i]);
-	}
-}
+	पूर्ण
+पूर्ण
 
-int msm_hdmi_hpd_enable(struct drm_connector *connector)
-{
-	struct hdmi_connector *hdmi_connector = to_hdmi_connector(connector);
-	struct hdmi *hdmi = hdmi_connector->hdmi;
-	const struct hdmi_platform_config *config = hdmi->config;
-	struct device *dev = &hdmi->pdev->dev;
-	uint32_t hpd_ctrl;
-	int i, ret;
-	unsigned long flags;
+पूर्णांक msm_hdmi_hpd_enable(काष्ठा drm_connector *connector)
+अणु
+	काष्ठा hdmi_connector *hdmi_connector = to_hdmi_connector(connector);
+	काष्ठा hdmi *hdmi = hdmi_connector->hdmi;
+	स्थिर काष्ठा hdmi_platक्रमm_config *config = hdmi->config;
+	काष्ठा device *dev = &hdmi->pdev->dev;
+	uपूर्णांक32_t hpd_ctrl;
+	पूर्णांक i, ret;
+	अचिन्हित दीर्घ flags;
 
-	for (i = 0; i < config->hpd_reg_cnt; i++) {
+	क्रम (i = 0; i < config->hpd_reg_cnt; i++) अणु
 		ret = regulator_enable(hdmi->hpd_regs[i]);
-		if (ret) {
+		अगर (ret) अणु
 			DRM_DEV_ERROR(dev, "failed to enable hpd regulator: %s (%d)\n",
 					config->hpd_reg_names[i], ret);
-			goto fail;
-		}
-	}
+			जाओ fail;
+		पूर्ण
+	पूर्ण
 
-	ret = pinctrl_pm_select_default_state(dev);
-	if (ret) {
+	ret = pinctrl_pm_select_शेष_state(dev);
+	अगर (ret) अणु
 		DRM_DEV_ERROR(dev, "pinctrl state chg failed: %d\n", ret);
-		goto fail;
-	}
+		जाओ fail;
+	पूर्ण
 
 	ret = gpio_config(hdmi, true);
-	if (ret) {
+	अगर (ret) अणु
 		DRM_DEV_ERROR(dev, "failed to configure GPIOs: %d\n", ret);
-		goto fail;
-	}
+		जाओ fail;
+	पूर्ण
 
-	pm_runtime_get_sync(dev);
-	enable_hpd_clocks(hdmi, true);
+	pm_runसमय_get_sync(dev);
+	enable_hpd_घड़ीs(hdmi, true);
 
 	msm_hdmi_set_mode(hdmi, false);
 	msm_hdmi_phy_reset(hdmi);
 	msm_hdmi_set_mode(hdmi, true);
 
-	hdmi_write(hdmi, REG_HDMI_USEC_REFTIMER, 0x0001001b);
+	hdmi_ग_लिखो(hdmi, REG_HDMI_USEC_REFTIMER, 0x0001001b);
 
 	/* enable HPD events: */
-	hdmi_write(hdmi, REG_HDMI_HPD_INT_CTRL,
+	hdmi_ग_लिखो(hdmi, REG_HDMI_HPD_INT_CTRL,
 			HDMI_HPD_INT_CTRL_INT_CONNECT |
 			HDMI_HPD_INT_CTRL_INT_EN);
 
-	/* set timeout to 4.1ms (max) for hardware debounce */
+	/* set समयout to 4.1ms (max) क्रम hardware debounce */
 	spin_lock_irqsave(&hdmi->reg_lock, flags);
-	hpd_ctrl = hdmi_read(hdmi, REG_HDMI_HPD_CTRL);
+	hpd_ctrl = hdmi_पढ़ो(hdmi, REG_HDMI_HPD_CTRL);
 	hpd_ctrl |= HDMI_HPD_CTRL_TIMEOUT(0x1fff);
 
 	/* Toggle HPD circuit to trigger HPD sense */
-	hdmi_write(hdmi, REG_HDMI_HPD_CTRL,
+	hdmi_ग_लिखो(hdmi, REG_HDMI_HPD_CTRL,
 			~HDMI_HPD_CTRL_ENABLE & hpd_ctrl);
-	hdmi_write(hdmi, REG_HDMI_HPD_CTRL,
+	hdmi_ग_लिखो(hdmi, REG_HDMI_HPD_CTRL,
 			HDMI_HPD_CTRL_ENABLE | hpd_ctrl);
 	spin_unlock_irqrestore(&hdmi->reg_lock, flags);
 
-	return 0;
+	वापस 0;
 
 fail:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void hdp_disable(struct hdmi_connector *hdmi_connector)
-{
-	struct hdmi *hdmi = hdmi_connector->hdmi;
-	const struct hdmi_platform_config *config = hdmi->config;
-	struct device *dev = &hdmi->pdev->dev;
-	int i, ret = 0;
+अटल व्योम hdp_disable(काष्ठा hdmi_connector *hdmi_connector)
+अणु
+	काष्ठा hdmi *hdmi = hdmi_connector->hdmi;
+	स्थिर काष्ठा hdmi_platक्रमm_config *config = hdmi->config;
+	काष्ठा device *dev = &hdmi->pdev->dev;
+	पूर्णांक i, ret = 0;
 
-	/* Disable HPD interrupt */
-	hdmi_write(hdmi, REG_HDMI_HPD_INT_CTRL, 0);
+	/* Disable HPD पूर्णांकerrupt */
+	hdmi_ग_लिखो(hdmi, REG_HDMI_HPD_INT_CTRL, 0);
 
 	msm_hdmi_set_mode(hdmi, false);
 
-	enable_hpd_clocks(hdmi, false);
-	pm_runtime_put_autosuspend(dev);
+	enable_hpd_घड़ीs(hdmi, false);
+	pm_runसमय_put_स्वतःsuspend(dev);
 
 	ret = gpio_config(hdmi, false);
-	if (ret)
+	अगर (ret)
 		dev_warn(dev, "failed to unconfigure GPIOs: %d\n", ret);
 
 	ret = pinctrl_pm_select_sleep_state(dev);
-	if (ret)
+	अगर (ret)
 		dev_warn(dev, "pinctrl state chg failed: %d\n", ret);
 
-	for (i = 0; i < config->hpd_reg_cnt; i++) {
+	क्रम (i = 0; i < config->hpd_reg_cnt; i++) अणु
 		ret = regulator_disable(hdmi->hpd_regs[i]);
-		if (ret)
+		अगर (ret)
 			dev_warn(dev, "failed to disable hpd regulator: %s (%d)\n",
 					config->hpd_reg_names[i], ret);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void
-msm_hdmi_hotplug_work(struct work_struct *work)
-{
-	struct hdmi_connector *hdmi_connector =
-		container_of(work, struct hdmi_connector, hpd_work);
-	struct drm_connector *connector = &hdmi_connector->base;
+अटल व्योम
+msm_hdmi_hotplug_work(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा hdmi_connector *hdmi_connector =
+		container_of(work, काष्ठा hdmi_connector, hpd_work);
+	काष्ठा drm_connector *connector = &hdmi_connector->base;
 	drm_helper_hpd_irq_event(connector->dev);
-}
+पूर्ण
 
-void msm_hdmi_connector_irq(struct drm_connector *connector)
-{
-	struct hdmi_connector *hdmi_connector = to_hdmi_connector(connector);
-	struct hdmi *hdmi = hdmi_connector->hdmi;
-	uint32_t hpd_int_status, hpd_int_ctrl;
+व्योम msm_hdmi_connector_irq(काष्ठा drm_connector *connector)
+अणु
+	काष्ठा hdmi_connector *hdmi_connector = to_hdmi_connector(connector);
+	काष्ठा hdmi *hdmi = hdmi_connector->hdmi;
+	uपूर्णांक32_t hpd_पूर्णांक_status, hpd_पूर्णांक_ctrl;
 
 	/* Process HPD: */
-	hpd_int_status = hdmi_read(hdmi, REG_HDMI_HPD_INT_STATUS);
-	hpd_int_ctrl   = hdmi_read(hdmi, REG_HDMI_HPD_INT_CTRL);
+	hpd_पूर्णांक_status = hdmi_पढ़ो(hdmi, REG_HDMI_HPD_INT_STATUS);
+	hpd_पूर्णांक_ctrl   = hdmi_पढ़ो(hdmi, REG_HDMI_HPD_INT_CTRL);
 
-	if ((hpd_int_ctrl & HDMI_HPD_INT_CTRL_INT_EN) &&
-			(hpd_int_status & HDMI_HPD_INT_STATUS_INT)) {
-		bool detected = !!(hpd_int_status & HDMI_HPD_INT_STATUS_CABLE_DETECTED);
+	अगर ((hpd_पूर्णांक_ctrl & HDMI_HPD_INT_CTRL_INT_EN) &&
+			(hpd_पूर्णांक_status & HDMI_HPD_INT_STATUS_INT)) अणु
+		bool detected = !!(hpd_पूर्णांक_status & HDMI_HPD_INT_STATUS_CABLE_DETECTED);
 
 		/* ack & disable (temporarily) HPD events: */
-		hdmi_write(hdmi, REG_HDMI_HPD_INT_CTRL,
+		hdmi_ग_लिखो(hdmi, REG_HDMI_HPD_INT_CTRL,
 			HDMI_HPD_INT_CTRL_INT_ACK);
 
-		DBG("status=%04x, ctrl=%04x", hpd_int_status, hpd_int_ctrl);
+		DBG("status=%04x, ctrl=%04x", hpd_पूर्णांक_status, hpd_पूर्णांक_ctrl);
 
-		/* detect disconnect if we are connected or visa versa: */
-		hpd_int_ctrl = HDMI_HPD_INT_CTRL_INT_EN;
-		if (!detected)
-			hpd_int_ctrl |= HDMI_HPD_INT_CTRL_INT_CONNECT;
-		hdmi_write(hdmi, REG_HDMI_HPD_INT_CTRL, hpd_int_ctrl);
+		/* detect disconnect अगर we are connected or visa versa: */
+		hpd_पूर्णांक_ctrl = HDMI_HPD_INT_CTRL_INT_EN;
+		अगर (!detected)
+			hpd_पूर्णांक_ctrl |= HDMI_HPD_INT_CTRL_INT_CONNECT;
+		hdmi_ग_लिखो(hdmi, REG_HDMI_HPD_INT_CTRL, hpd_पूर्णांक_ctrl);
 
 		queue_work(hdmi->workq, &hdmi_connector->hpd_work);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static enum drm_connector_status detect_reg(struct hdmi *hdmi)
-{
-	uint32_t hpd_int_status;
+अटल क्रमागत drm_connector_status detect_reg(काष्ठा hdmi *hdmi)
+अणु
+	uपूर्णांक32_t hpd_पूर्णांक_status;
 
-	pm_runtime_get_sync(&hdmi->pdev->dev);
-	enable_hpd_clocks(hdmi, true);
+	pm_runसमय_get_sync(&hdmi->pdev->dev);
+	enable_hpd_घड़ीs(hdmi, true);
 
-	hpd_int_status = hdmi_read(hdmi, REG_HDMI_HPD_INT_STATUS);
+	hpd_पूर्णांक_status = hdmi_पढ़ो(hdmi, REG_HDMI_HPD_INT_STATUS);
 
-	enable_hpd_clocks(hdmi, false);
-	pm_runtime_put_autosuspend(&hdmi->pdev->dev);
+	enable_hpd_घड़ीs(hdmi, false);
+	pm_runसमय_put_स्वतःsuspend(&hdmi->pdev->dev);
 
-	return (hpd_int_status & HDMI_HPD_INT_STATUS_CABLE_DETECTED) ?
+	वापस (hpd_पूर्णांक_status & HDMI_HPD_INT_STATUS_CABLE_DETECTED) ?
 			connector_status_connected : connector_status_disconnected;
-}
+पूर्ण
 
-#define HPD_GPIO_INDEX	2
-static enum drm_connector_status detect_gpio(struct hdmi *hdmi)
-{
-	const struct hdmi_platform_config *config = hdmi->config;
-	struct hdmi_gpio_data hpd_gpio = config->gpios[HPD_GPIO_INDEX];
+#घोषणा HPD_GPIO_INDEX	2
+अटल क्रमागत drm_connector_status detect_gpio(काष्ठा hdmi *hdmi)
+अणु
+	स्थिर काष्ठा hdmi_platक्रमm_config *config = hdmi->config;
+	काष्ठा hdmi_gpio_data hpd_gpio = config->gpios[HPD_GPIO_INDEX];
 
-	return gpiod_get_value(hpd_gpio.gpiod) ?
+	वापस gpiod_get_value(hpd_gpio.gpiod) ?
 			connector_status_connected :
 			connector_status_disconnected;
-}
+पूर्ण
 
-static enum drm_connector_status hdmi_connector_detect(
-		struct drm_connector *connector, bool force)
-{
-	struct hdmi_connector *hdmi_connector = to_hdmi_connector(connector);
-	struct hdmi *hdmi = hdmi_connector->hdmi;
-	const struct hdmi_platform_config *config = hdmi->config;
-	struct hdmi_gpio_data hpd_gpio = config->gpios[HPD_GPIO_INDEX];
-	enum drm_connector_status stat_gpio, stat_reg;
-	int retry = 20;
+अटल क्रमागत drm_connector_status hdmi_connector_detect(
+		काष्ठा drm_connector *connector, bool क्रमce)
+अणु
+	काष्ठा hdmi_connector *hdmi_connector = to_hdmi_connector(connector);
+	काष्ठा hdmi *hdmi = hdmi_connector->hdmi;
+	स्थिर काष्ठा hdmi_platक्रमm_config *config = hdmi->config;
+	काष्ठा hdmi_gpio_data hpd_gpio = config->gpios[HPD_GPIO_INDEX];
+	क्रमागत drm_connector_status stat_gpio, stat_reg;
+	पूर्णांक retry = 20;
 
 	/*
-	 * some platforms may not have hpd gpio. Rely only on the status
-	 * provided by REG_HDMI_HPD_INT_STATUS in this case.
+	 * some platक्रमms may not have hpd gpio. Rely only on the status
+	 * provided by REG_HDMI_HPD_INT_STATUS in this हाल.
 	 */
-	if (!hpd_gpio.gpiod)
-		return detect_reg(hdmi);
+	अगर (!hpd_gpio.gpiod)
+		वापस detect_reg(hdmi);
 
-	do {
+	करो अणु
 		stat_gpio = detect_gpio(hdmi);
 		stat_reg  = detect_reg(hdmi);
 
-		if (stat_gpio == stat_reg)
-			break;
+		अगर (stat_gpio == stat_reg)
+			अवरोध;
 
 		mdelay(10);
-	} while (--retry);
+	पूर्ण जबतक (--retry);
 
-	/* the status we get from reading gpio seems to be more reliable,
-	 * so trust that one the most if we didn't manage to get hdmi and
+	/* the status we get from पढ़ोing gpio seems to be more reliable,
+	 * so trust that one the most अगर we didn't manage to get hdmi and
 	 * gpio status to agree:
 	 */
-	if (stat_gpio != stat_reg) {
+	अगर (stat_gpio != stat_reg) अणु
 		DBG("HDMI_HPD_INT_STATUS tells us: %d", stat_reg);
 		DBG("hpd gpio tells us: %d", stat_gpio);
-	}
+	पूर्ण
 
-	return stat_gpio;
-}
+	वापस stat_gpio;
+पूर्ण
 
-static void hdmi_connector_destroy(struct drm_connector *connector)
-{
-	struct hdmi_connector *hdmi_connector = to_hdmi_connector(connector);
+अटल व्योम hdmi_connector_destroy(काष्ठा drm_connector *connector)
+अणु
+	काष्ठा hdmi_connector *hdmi_connector = to_hdmi_connector(connector);
 
 	hdp_disable(hdmi_connector);
 
 	drm_connector_cleanup(connector);
 
-	kfree(hdmi_connector);
-}
+	kमुक्त(hdmi_connector);
+पूर्ण
 
-static int msm_hdmi_connector_get_modes(struct drm_connector *connector)
-{
-	struct hdmi_connector *hdmi_connector = to_hdmi_connector(connector);
-	struct hdmi *hdmi = hdmi_connector->hdmi;
-	struct edid *edid;
-	uint32_t hdmi_ctrl;
-	int ret = 0;
+अटल पूर्णांक msm_hdmi_connector_get_modes(काष्ठा drm_connector *connector)
+अणु
+	काष्ठा hdmi_connector *hdmi_connector = to_hdmi_connector(connector);
+	काष्ठा hdmi *hdmi = hdmi_connector->hdmi;
+	काष्ठा edid *edid;
+	uपूर्णांक32_t hdmi_ctrl;
+	पूर्णांक ret = 0;
 
-	hdmi_ctrl = hdmi_read(hdmi, REG_HDMI_CTRL);
-	hdmi_write(hdmi, REG_HDMI_CTRL, hdmi_ctrl | HDMI_CTRL_ENABLE);
+	hdmi_ctrl = hdmi_पढ़ो(hdmi, REG_HDMI_CTRL);
+	hdmi_ग_लिखो(hdmi, REG_HDMI_CTRL, hdmi_ctrl | HDMI_CTRL_ENABLE);
 
 	edid = drm_get_edid(connector, hdmi->i2c);
 
-	hdmi_write(hdmi, REG_HDMI_CTRL, hdmi_ctrl);
+	hdmi_ग_लिखो(hdmi, REG_HDMI_CTRL, hdmi_ctrl);
 
 	hdmi->hdmi_mode = drm_detect_hdmi_monitor(edid);
 	drm_connector_update_edid_property(connector, edid);
 
-	if (edid) {
+	अगर (edid) अणु
 		ret = drm_add_edid_modes(connector, edid);
-		kfree(edid);
-	}
+		kमुक्त(edid);
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int msm_hdmi_connector_mode_valid(struct drm_connector *connector,
-				 struct drm_display_mode *mode)
-{
-	struct hdmi_connector *hdmi_connector = to_hdmi_connector(connector);
-	struct hdmi *hdmi = hdmi_connector->hdmi;
-	const struct hdmi_platform_config *config = hdmi->config;
-	struct msm_drm_private *priv = connector->dev->dev_private;
-	struct msm_kms *kms = priv->kms;
-	long actual, requested;
+अटल पूर्णांक msm_hdmi_connector_mode_valid(काष्ठा drm_connector *connector,
+				 काष्ठा drm_display_mode *mode)
+अणु
+	काष्ठा hdmi_connector *hdmi_connector = to_hdmi_connector(connector);
+	काष्ठा hdmi *hdmi = hdmi_connector->hdmi;
+	स्थिर काष्ठा hdmi_platक्रमm_config *config = hdmi->config;
+	काष्ठा msm_drm_निजी *priv = connector->dev->dev_निजी;
+	काष्ठा msm_kms *kms = priv->kms;
+	दीर्घ actual, requested;
 
-	requested = 1000 * mode->clock;
+	requested = 1000 * mode->घड़ी;
 	actual = kms->funcs->round_pixclk(kms,
 			requested, hdmi_connector->hdmi->encoder);
 
-	/* for mdp5/apq8074, we manage our own pixel clk (as opposed to
-	 * mdp4/dtv stuff where pixel clk is assigned to mdp/encoder
+	/* क्रम mdp5/apq8074, we manage our own pixel clk (as opposed to
+	 * mdp4/dtv stuff where pixel clk is asचिन्हित to mdp/encoder
 	 * instead):
 	 */
-	if (config->pwr_clk_cnt > 0)
+	अगर (config->pwr_clk_cnt > 0)
 		actual = clk_round_rate(hdmi->pwr_clks[0], actual);
 
 	DBG("requested=%ld, actual=%ld", requested, actual);
 
-	if (actual != requested)
-		return MODE_CLOCK_RANGE;
+	अगर (actual != requested)
+		वापस MODE_CLOCK_RANGE;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct drm_connector_funcs hdmi_connector_funcs = {
+अटल स्थिर काष्ठा drm_connector_funcs hdmi_connector_funcs = अणु
 	.detect = hdmi_connector_detect,
 	.fill_modes = drm_helper_probe_single_connector_modes,
 	.destroy = hdmi_connector_destroy,
 	.reset = drm_atomic_helper_connector_reset,
 	.atomic_duplicate_state = drm_atomic_helper_connector_duplicate_state,
 	.atomic_destroy_state = drm_atomic_helper_connector_destroy_state,
-};
+पूर्ण;
 
-static const struct drm_connector_helper_funcs msm_hdmi_connector_helper_funcs = {
+अटल स्थिर काष्ठा drm_connector_helper_funcs msm_hdmi_connector_helper_funcs = अणु
 	.get_modes = msm_hdmi_connector_get_modes,
 	.mode_valid = msm_hdmi_connector_mode_valid,
-};
+पूर्ण;
 
 /* initialize connector */
-struct drm_connector *msm_hdmi_connector_init(struct hdmi *hdmi)
-{
-	struct drm_connector *connector = NULL;
-	struct hdmi_connector *hdmi_connector;
+काष्ठा drm_connector *msm_hdmi_connector_init(काष्ठा hdmi *hdmi)
+अणु
+	काष्ठा drm_connector *connector = शून्य;
+	काष्ठा hdmi_connector *hdmi_connector;
 
-	hdmi_connector = kzalloc(sizeof(*hdmi_connector), GFP_KERNEL);
-	if (!hdmi_connector)
-		return ERR_PTR(-ENOMEM);
+	hdmi_connector = kzalloc(माप(*hdmi_connector), GFP_KERNEL);
+	अगर (!hdmi_connector)
+		वापस ERR_PTR(-ENOMEM);
 
 	hdmi_connector->hdmi = hdmi;
 	INIT_WORK(&hdmi_connector->hpd_work, msm_hdmi_hotplug_work);
@@ -442,10 +443,10 @@ struct drm_connector *msm_hdmi_connector_init(struct hdmi *hdmi)
 	connector->polled = DRM_CONNECTOR_POLL_CONNECT |
 			DRM_CONNECTOR_POLL_DISCONNECT;
 
-	connector->interlace_allowed = 0;
-	connector->doublescan_allowed = 0;
+	connector->पूर्णांकerlace_allowed = 0;
+	connector->द्विगुनscan_allowed = 0;
 
 	drm_connector_attach_encoder(connector, hdmi->encoder);
 
-	return connector;
-}
+	वापस connector;
+पूर्ण

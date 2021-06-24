@@ -1,82 +1,83 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
- * Structures used by ASPEED clock drivers
+ * Structures used by ASPEED घड़ी drivers
  *
  * Copyright 2019 IBM Corp.
  */
 
-#include <linux/clk-provider.h>
-#include <linux/kernel.h>
-#include <linux/reset-controller.h>
-#include <linux/spinlock.h>
+#समावेश <linux/clk-provider.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/reset-controller.h>
+#समावेश <linux/spinlock.h>
 
-struct clk_div_table;
-struct regmap;
+काष्ठा clk_भाग_प्रकारable;
+काष्ठा regmap;
 
 /**
- * struct aspeed_gate_data - Aspeed gated clocks
- * @clock_idx: bit used to gate this clock in the clock register
- * @reset_idx: bit used to reset this IP in the reset register. -1 if no
- *             reset is required when enabling the clock
- * @name: the clock name
- * @parent_name: the name of the parent clock
- * @flags: standard clock framework flags
+ * काष्ठा aspeed_gate_data - Aspeed gated घड़ीs
+ * @घड़ी_idx: bit used to gate this घड़ी in the घड़ी रेजिस्टर
+ * @reset_idx: bit used to reset this IP in the reset रेजिस्टर. -1 अगर no
+ *             reset is required when enabling the घड़ी
+ * @name: the घड़ी name
+ * @parent_name: the name of the parent घड़ी
+ * @flags: standard घड़ी framework flags
  */
-struct aspeed_gate_data {
-	u8		clock_idx;
+काष्ठा aspeed_gate_data अणु
+	u8		घड़ी_idx;
 	s8		reset_idx;
-	const char	*name;
-	const char	*parent_name;
-	unsigned long	flags;
-};
+	स्थिर अक्षर	*name;
+	स्थिर अक्षर	*parent_name;
+	अचिन्हित दीर्घ	flags;
+पूर्ण;
 
 /**
- * struct aspeed_clk_gate - Aspeed specific clk_gate structure
- * @hw:		handle between common and hardware-specific interfaces
- * @reg:	register controlling gate
- * @clock_idx:	bit used to gate this clock in the clock register
- * @reset_idx:	bit used to reset this IP in the reset register. -1 if no
- *		reset is required when enabling the clock
- * @flags:	hardware-specific flags
- * @lock:	register lock
+ * काष्ठा aspeed_clk_gate - Aspeed specअगरic clk_gate काष्ठाure
+ * @hw:		handle between common and hardware-specअगरic पूर्णांकerfaces
+ * @reg:	रेजिस्टर controlling gate
+ * @घड़ी_idx:	bit used to gate this घड़ी in the घड़ी रेजिस्टर
+ * @reset_idx:	bit used to reset this IP in the reset रेजिस्टर. -1 अगर no
+ *		reset is required when enabling the घड़ी
+ * @flags:	hardware-specअगरic flags
+ * @lock:	रेजिस्टर lock
  *
- * Some of the clocks in the Aspeed SoC must be put in reset before enabling.
- * This modified version of clk_gate allows an optional reset bit to be
- * specified.
+ * Some of the घड़ीs in the Aspeed SoC must be put in reset beक्रमe enabling.
+ * This modअगरied version of clk_gate allows an optional reset bit to be
+ * specअगरied.
  */
-struct aspeed_clk_gate {
-	struct clk_hw	hw;
-	struct regmap	*map;
-	u8		clock_idx;
+काष्ठा aspeed_clk_gate अणु
+	काष्ठा clk_hw	hw;
+	काष्ठा regmap	*map;
+	u8		घड़ी_idx;
 	s8		reset_idx;
 	u8		flags;
 	spinlock_t	*lock;
-};
+पूर्ण;
 
-#define to_aspeed_clk_gate(_hw) container_of(_hw, struct aspeed_clk_gate, hw)
+#घोषणा to_aspeed_clk_gate(_hw) container_of(_hw, काष्ठा aspeed_clk_gate, hw)
 
 /**
- * struct aspeed_reset - Aspeed reset controller
- * @map: regmap to access the containing system controller
+ * काष्ठा aspeed_reset - Aspeed reset controller
+ * @map: regmap to access the containing प्रणाली controller
  * @rcdev: reset controller device
  */
-struct aspeed_reset {
-	struct regmap			*map;
-	struct reset_controller_dev	rcdev;
-};
+काष्ठा aspeed_reset अणु
+	काष्ठा regmap			*map;
+	काष्ठा reset_controller_dev	rcdev;
+पूर्ण;
 
-#define to_aspeed_reset(p) container_of((p), struct aspeed_reset, rcdev)
+#घोषणा to_aspeed_reset(p) container_of((p), काष्ठा aspeed_reset, rcdev)
 
 /**
- * struct aspeed_clk_soc_data - Aspeed SoC specific divisor information
- * @div_table: Common divider lookup table
- * @eclk_div_table: Divider lookup table for ECLK
- * @mac_div_table: Divider lookup table for MAC (Ethernet) clocks
+ * काष्ठा aspeed_clk_soc_data - Aspeed SoC specअगरic भागisor inक्रमmation
+ * @भाग_प्रकारable: Common भागider lookup table
+ * @eclk_भाग_प्रकारable: Divider lookup table क्रम ECLK
+ * @mac_भाग_प्रकारable: Divider lookup table क्रम MAC (Ethernet) घड़ीs
  * @calc_pll: Callback to maculate common PLL settings
  */
-struct aspeed_clk_soc_data {
-	const struct clk_div_table *div_table;
-	const struct clk_div_table *eclk_div_table;
-	const struct clk_div_table *mac_div_table;
-	struct clk_hw *(*calc_pll)(const char *name, u32 val);
-};
+काष्ठा aspeed_clk_soc_data अणु
+	स्थिर काष्ठा clk_भाग_प्रकारable *भाग_प्रकारable;
+	स्थिर काष्ठा clk_भाग_प्रकारable *eclk_भाग_प्रकारable;
+	स्थिर काष्ठा clk_भाग_प्रकारable *mac_भाग_प्रकारable;
+	काष्ठा clk_hw *(*calc_pll)(स्थिर अक्षर *name, u32 val);
+पूर्ण;

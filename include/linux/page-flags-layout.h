@@ -1,109 +1,110 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef PAGE_FLAGS_LAYOUT_H
-#define PAGE_FLAGS_LAYOUT_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित PAGE_FLAGS_LAYOUT_H
+#घोषणा PAGE_FLAGS_LAYOUT_H
 
-#include <linux/numa.h>
-#include <generated/bounds.h>
+#समावेश <linux/numa.h>
+#समावेश <generated/bounds.h>
 
 /*
- * When a memory allocation must conform to specific limitations (such
- * as being suitable for DMA) the caller will pass in hints to the
- * allocator in the gfp_mask, in the zone modifier bits.  These bits
+ * When a memory allocation must conक्रमm to specअगरic limitations (such
+ * as being suitable क्रम DMA) the caller will pass in hपूर्णांकs to the
+ * allocator in the gfp_mask, in the zone modअगरier bits.  These bits
  * are used to select a priority ordered list of memory zones which
  * match the requested limits. See gfp_zone() in include/linux/gfp.h
  */
-#if MAX_NR_ZONES < 2
-#define ZONES_SHIFT 0
-#elif MAX_NR_ZONES <= 2
-#define ZONES_SHIFT 1
-#elif MAX_NR_ZONES <= 4
-#define ZONES_SHIFT 2
-#elif MAX_NR_ZONES <= 8
-#define ZONES_SHIFT 3
-#else
-#error ZONES_SHIFT "Too many zones configured"
-#endif
+#अगर MAX_NR_ZONES < 2
+#घोषणा ZONES_SHIFT 0
+#या_अगर MAX_NR_ZONES <= 2
+#घोषणा ZONES_SHIFT 1
+#या_अगर MAX_NR_ZONES <= 4
+#घोषणा ZONES_SHIFT 2
+#या_अगर MAX_NR_ZONES <= 8
+#घोषणा ZONES_SHIFT 3
+#अन्यथा
+#त्रुटि ZONES_SHIFT "Too many zones configured"
+#पूर्ण_अगर
 
-#define ZONES_WIDTH		ZONES_SHIFT
+#घोषणा ZONES_WIDTH		ZONES_SHIFT
 
-#ifdef CONFIG_SPARSEMEM
-#include <asm/sparsemem.h>
-#define SECTIONS_SHIFT	(MAX_PHYSMEM_BITS - SECTION_SIZE_BITS)
-#else
-#define SECTIONS_SHIFT	0
-#endif
+#अगर_घोषित CONFIG_SPARSEMEM
+#समावेश <यंत्र/sparseस्मृति.स>
+#घोषणा SECTIONS_SHIFT	(MAX_PHYSMEM_BITS - SECTION_SIZE_BITS)
+#अन्यथा
+#घोषणा SECTIONS_SHIFT	0
+#पूर्ण_अगर
 
-#ifndef BUILD_VDSO32_64
+#अगर_अघोषित BUILD_VDSO32_64
 /*
  * page->flags layout:
  *
- * There are five possibilities for how page->flags get laid out.  The first
- * pair is for the normal case without sparsemem. The second pair is for
- * sparsemem when there is plenty of space for node and section information.
+ * There are five possibilities क्रम how page->flags get laid out.  The first
+ * pair is क्रम the normal हाल without sparsemem. The second pair is क्रम
+ * sparsemem when there is plenty of space क्रम node and section inक्रमmation.
  * The last is when there is insufficient space in page->flags and a separate
  * lookup is necessary.
  *
  * No sparsemem or sparsemem vmemmap: |       NODE     | ZONE |             ... | FLAGS |
- *      " plus space for last_cpupid: |       NODE     | ZONE | LAST_CPUPID ... | FLAGS |
- * classic sparse with space for node:| SECTION | NODE | ZONE |             ... | FLAGS |
- *      " plus space for last_cpupid: | SECTION | NODE | ZONE | LAST_CPUPID ... | FLAGS |
- * classic sparse no space for node:  | SECTION |     ZONE    | ... | FLAGS |
+ *      " plus space क्रम last_cpupid: |       NODE     | ZONE | LAST_CPUPID ... | FLAGS |
+ * classic sparse with space क्रम node:| SECTION | NODE | ZONE |             ... | FLAGS |
+ *      " plus space क्रम last_cpupid: | SECTION | NODE | ZONE | LAST_CPUPID ... | FLAGS |
+ * classic sparse no space क्रम node:  | SECTION |     ZONE    | ... | FLAGS |
  */
-#if defined(CONFIG_SPARSEMEM) && !defined(CONFIG_SPARSEMEM_VMEMMAP)
-#define SECTIONS_WIDTH		SECTIONS_SHIFT
-#else
-#define SECTIONS_WIDTH		0
-#endif
+#अगर defined(CONFIG_SPARSEMEM) && !defined(CONFIG_SPARSEMEM_VMEMMAP)
+#घोषणा SECTIONS_WIDTH		SECTIONS_SHIFT
+#अन्यथा
+#घोषणा SECTIONS_WIDTH		0
+#पूर्ण_अगर
 
-#if ZONES_WIDTH + SECTIONS_WIDTH + NODES_SHIFT <= BITS_PER_LONG - NR_PAGEFLAGS
-#define NODES_WIDTH		NODES_SHIFT
-#elif defined(CONFIG_SPARSEMEM_VMEMMAP)
-#error "Vmemmap: No space for nodes field in page flags"
-#else
-#define NODES_WIDTH		0
-#endif
+#अगर ZONES_WIDTH + SECTIONS_WIDTH + NODES_SHIFT <= BITS_PER_LONG - NR_PAGEFLAGS
+#घोषणा NODES_WIDTH		NODES_SHIFT
+#या_अगर defined(CONFIG_SPARSEMEM_VMEMMAP)
+#त्रुटि "Vmemmap: No space for nodes field in page flags"
+#अन्यथा
+#घोषणा NODES_WIDTH		0
+#पूर्ण_अगर
 
 /*
- * Note that this #define MUST have a value so that it can be tested with
+ * Note that this #घोषणा MUST have a value so that it can be tested with
  * the IS_ENABLED() macro.
  */
-#if NODES_SHIFT != 0 && NODES_WIDTH == 0
-#define NODE_NOT_IN_PAGE_FLAGS	1
-#endif
+#अगर NODES_SHIFT != 0 && NODES_WIDTH == 0
+#घोषणा NODE_NOT_IN_PAGE_FLAGS	1
+#पूर्ण_अगर
 
-#if defined(CONFIG_KASAN_SW_TAGS) || defined(CONFIG_KASAN_HW_TAGS)
-#define KASAN_TAG_WIDTH 8
-#else
-#define KASAN_TAG_WIDTH 0
-#endif
+#अगर defined(CONFIG_KASAN_SW_TAGS) || defined(CONFIG_KASAN_HW_TAGS)
+#घोषणा KASAN_TAG_WIDTH 8
+#अन्यथा
+#घोषणा KASAN_TAG_WIDTH 0
+#पूर्ण_अगर
 
-#ifdef CONFIG_NUMA_BALANCING
-#define LAST__PID_SHIFT 8
-#define LAST__PID_MASK  ((1 << LAST__PID_SHIFT)-1)
+#अगर_घोषित CONFIG_NUMA_BALANCING
+#घोषणा LAST__PID_SHIFT 8
+#घोषणा LAST__PID_MASK  ((1 << LAST__PID_SHIFT)-1)
 
-#define LAST__CPU_SHIFT NR_CPUS_BITS
-#define LAST__CPU_MASK  ((1 << LAST__CPU_SHIFT)-1)
+#घोषणा LAST__CPU_SHIFT NR_CPUS_BITS
+#घोषणा LAST__CPU_MASK  ((1 << LAST__CPU_SHIFT)-1)
 
-#define LAST_CPUPID_SHIFT (LAST__PID_SHIFT+LAST__CPU_SHIFT)
-#else
-#define LAST_CPUPID_SHIFT 0
-#endif
+#घोषणा LAST_CPUPID_SHIFT (LAST__PID_SHIFT+LAST__CPU_SHIFT)
+#अन्यथा
+#घोषणा LAST_CPUPID_SHIFT 0
+#पूर्ण_अगर
 
-#if ZONES_WIDTH + SECTIONS_WIDTH + NODES_WIDTH + KASAN_TAG_WIDTH + LAST_CPUPID_SHIFT \
+#अगर ZONES_WIDTH + SECTIONS_WIDTH + NODES_WIDTH + KASAN_TAG_WIDTH + LAST_CPUPID_SHIFT \
 	<= BITS_PER_LONG - NR_PAGEFLAGS
-#define LAST_CPUPID_WIDTH LAST_CPUPID_SHIFT
-#else
-#define LAST_CPUPID_WIDTH 0
-#endif
+#घोषणा LAST_CPUPID_WIDTH LAST_CPUPID_SHIFT
+#अन्यथा
+#घोषणा LAST_CPUPID_WIDTH 0
+#पूर्ण_अगर
 
-#if LAST_CPUPID_SHIFT != 0 && LAST_CPUPID_WIDTH == 0
-#define LAST_CPUPID_NOT_IN_PAGE_FLAGS
-#endif
+#अगर LAST_CPUPID_SHIFT != 0 && LAST_CPUPID_WIDTH == 0
+#घोषणा LAST_CPUPID_NOT_IN_PAGE_FLAGS
+#पूर्ण_अगर
 
-#if ZONES_WIDTH + SECTIONS_WIDTH + NODES_WIDTH + KASAN_TAG_WIDTH + LAST_CPUPID_WIDTH \
+#अगर ZONES_WIDTH + SECTIONS_WIDTH + NODES_WIDTH + KASAN_TAG_WIDTH + LAST_CPUPID_WIDTH \
 	> BITS_PER_LONG - NR_PAGEFLAGS
-#error "Not enough bits in page flags"
-#endif
+#त्रुटि "Not enough bits in page flags"
+#पूर्ण_अगर
 
-#endif
-#endif /* _LINUX_PAGE_FLAGS_LAYOUT */
+#पूर्ण_अगर
+#पूर्ण_अगर /* _LINUX_PAGE_FLAGS_LAYOUT */

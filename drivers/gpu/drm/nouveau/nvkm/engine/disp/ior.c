@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2017 Red Hat Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -21,52 +22,52 @@
  *
  * Authors: Ben Skeggs <bskeggs@redhat.com>
  */
-#include "ior.h"
+#समावेश "ior.h"
 
-static const char *
-nvkm_ior_name[] = {
+अटल स्थिर अक्षर *
+nvkm_ior_name[] = अणु
 	[DAC] = "DAC",
 	[SOR] = "SOR",
 	[PIOR] = "PIOR",
-};
+पूर्ण;
 
-struct nvkm_ior *
-nvkm_ior_find(struct nvkm_disp *disp, enum nvkm_ior_type type, int id)
-{
-	struct nvkm_ior *ior;
-	list_for_each_entry(ior, &disp->ior, head) {
-		if (ior->type == type && (id < 0 || ior->id == id))
-			return ior;
-	}
-	return NULL;
-}
+काष्ठा nvkm_ior *
+nvkm_ior_find(काष्ठा nvkm_disp *disp, क्रमागत nvkm_ior_type type, पूर्णांक id)
+अणु
+	काष्ठा nvkm_ior *ior;
+	list_क्रम_each_entry(ior, &disp->ior, head) अणु
+		अगर (ior->type == type && (id < 0 || ior->id == id))
+			वापस ior;
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
-void
-nvkm_ior_del(struct nvkm_ior **pior)
-{
-	struct nvkm_ior *ior = *pior;
-	if (ior) {
+व्योम
+nvkm_ior_del(काष्ठा nvkm_ior **pior)
+अणु
+	काष्ठा nvkm_ior *ior = *pior;
+	अगर (ior) अणु
 		IOR_DBG(ior, "dtor");
 		list_del(&ior->head);
-		kfree(*pior);
-		*pior = NULL;
-	}
-}
+		kमुक्त(*pior);
+		*pior = शून्य;
+	पूर्ण
+पूर्ण
 
-int
-nvkm_ior_new_(const struct nvkm_ior_func *func, struct nvkm_disp *disp,
-	      enum nvkm_ior_type type, int id)
-{
-	struct nvkm_ior *ior;
-	if (!(ior = kzalloc(sizeof(*ior), GFP_KERNEL)))
-		return -ENOMEM;
+पूर्णांक
+nvkm_ior_new_(स्थिर काष्ठा nvkm_ior_func *func, काष्ठा nvkm_disp *disp,
+	      क्रमागत nvkm_ior_type type, पूर्णांक id)
+अणु
+	काष्ठा nvkm_ior *ior;
+	अगर (!(ior = kzalloc(माप(*ior), GFP_KERNEL)))
+		वापस -ENOMEM;
 	ior->func = func;
 	ior->disp = disp;
 	ior->type = type;
 	ior->id = id;
-	snprintf(ior->name, sizeof(ior->name), "%s-%d",
+	snम_लिखो(ior->name, माप(ior->name), "%s-%d",
 		 nvkm_ior_name[ior->type], ior->id);
 	list_add_tail(&ior->head, &disp->ior);
 	IOR_DBG(ior, "ctor");
-	return 0;
-}
+	वापस 0;
+पूर्ण

@@ -1,415 +1,416 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
- * An RTC driver for the NVIDIA Tegra 200 series internal RTC.
+ * An RTC driver क्रम the NVIDIA Tegra 200 series पूर्णांकernal RTC.
  *
  * Copyright (c) 2010-2019, NVIDIA Corporation.
  */
 
-#include <linux/clk.h>
-#include <linux/delay.h>
-#include <linux/init.h>
-#include <linux/io.h>
-#include <linux/irq.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/mod_devicetable.h>
-#include <linux/platform_device.h>
-#include <linux/pm.h>
-#include <linux/rtc.h>
-#include <linux/slab.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/init.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/irq.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/mod_devicetable.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/pm.h>
+#समावेश <linux/rtc.h>
+#समावेश <linux/slab.h>
 
-/* Set to 1 = busy every eight 32 kHz clocks during copy of sec+msec to AHB. */
-#define TEGRA_RTC_REG_BUSY			0x004
-#define TEGRA_RTC_REG_SECONDS			0x008
-/* When msec is read, the seconds are buffered into shadow seconds. */
-#define TEGRA_RTC_REG_SHADOW_SECONDS		0x00c
-#define TEGRA_RTC_REG_MILLI_SECONDS		0x010
-#define TEGRA_RTC_REG_SECONDS_ALARM0		0x014
-#define TEGRA_RTC_REG_SECONDS_ALARM1		0x018
-#define TEGRA_RTC_REG_MILLI_SECONDS_ALARM0	0x01c
-#define TEGRA_RTC_REG_INTR_MASK			0x028
-/* write 1 bits to clear status bits */
-#define TEGRA_RTC_REG_INTR_STATUS		0x02c
+/* Set to 1 = busy every eight 32 kHz घड़ीs during copy of sec+msec to AHB. */
+#घोषणा TEGRA_RTC_REG_BUSY			0x004
+#घोषणा TEGRA_RTC_REG_SECONDS			0x008
+/* When msec is पढ़ो, the seconds are buffered पूर्णांकo shaकरोw seconds. */
+#घोषणा TEGRA_RTC_REG_SHADOW_SECONDS		0x00c
+#घोषणा TEGRA_RTC_REG_MILLI_SECONDS		0x010
+#घोषणा TEGRA_RTC_REG_SECONDS_ALARM0		0x014
+#घोषणा TEGRA_RTC_REG_SECONDS_ALARM1		0x018
+#घोषणा TEGRA_RTC_REG_MILLI_SECONDS_ALARM0	0x01c
+#घोषणा TEGRA_RTC_REG_INTR_MASK			0x028
+/* ग_लिखो 1 bits to clear status bits */
+#घोषणा TEGRA_RTC_REG_INTR_STATUS		0x02c
 
 /* bits in INTR_MASK */
-#define TEGRA_RTC_INTR_MASK_MSEC_CDN_ALARM	(1<<4)
-#define TEGRA_RTC_INTR_MASK_SEC_CDN_ALARM	(1<<3)
-#define TEGRA_RTC_INTR_MASK_MSEC_ALARM		(1<<2)
-#define TEGRA_RTC_INTR_MASK_SEC_ALARM1		(1<<1)
-#define TEGRA_RTC_INTR_MASK_SEC_ALARM0		(1<<0)
+#घोषणा TEGRA_RTC_INTR_MASK_MSEC_CDN_ALARM	(1<<4)
+#घोषणा TEGRA_RTC_INTR_MASK_SEC_CDN_ALARM	(1<<3)
+#घोषणा TEGRA_RTC_INTR_MASK_MSEC_ALARM		(1<<2)
+#घोषणा TEGRA_RTC_INTR_MASK_SEC_ALARM1		(1<<1)
+#घोषणा TEGRA_RTC_INTR_MASK_SEC_ALARM0		(1<<0)
 
 /* bits in INTR_STATUS */
-#define TEGRA_RTC_INTR_STATUS_MSEC_CDN_ALARM	(1<<4)
-#define TEGRA_RTC_INTR_STATUS_SEC_CDN_ALARM	(1<<3)
-#define TEGRA_RTC_INTR_STATUS_MSEC_ALARM	(1<<2)
-#define TEGRA_RTC_INTR_STATUS_SEC_ALARM1	(1<<1)
-#define TEGRA_RTC_INTR_STATUS_SEC_ALARM0	(1<<0)
+#घोषणा TEGRA_RTC_INTR_STATUS_MSEC_CDN_ALARM	(1<<4)
+#घोषणा TEGRA_RTC_INTR_STATUS_SEC_CDN_ALARM	(1<<3)
+#घोषणा TEGRA_RTC_INTR_STATUS_MSEC_ALARM	(1<<2)
+#घोषणा TEGRA_RTC_INTR_STATUS_SEC_ALARM1	(1<<1)
+#घोषणा TEGRA_RTC_INTR_STATUS_SEC_ALARM0	(1<<0)
 
-struct tegra_rtc_info {
-	struct platform_device *pdev;
-	struct rtc_device *rtc;
-	void __iomem *base; /* NULL if not initialized */
-	struct clk *clk;
-	int irq; /* alarm and periodic IRQ */
+काष्ठा tegra_rtc_info अणु
+	काष्ठा platक्रमm_device *pdev;
+	काष्ठा rtc_device *rtc;
+	व्योम __iomem *base; /* शून्य अगर not initialized */
+	काष्ठा clk *clk;
+	पूर्णांक irq; /* alarm and periodic IRQ */
 	spinlock_t lock;
-};
+पूर्ण;
 
 /*
  * RTC hardware is busy when it is updating its values over AHB once every
- * eight 32 kHz clocks (~250 us). Outside of these updates the CPU is free to
- * write. CPU is always free to read.
+ * eight 32 kHz घड़ीs (~250 us). Outside of these updates the CPU is मुक्त to
+ * ग_लिखो. CPU is always मुक्त to पढ़ो.
  */
-static inline u32 tegra_rtc_check_busy(struct tegra_rtc_info *info)
-{
-	return readl(info->base + TEGRA_RTC_REG_BUSY) & 1;
-}
+अटल अंतरभूत u32 tegra_rtc_check_busy(काष्ठा tegra_rtc_info *info)
+अणु
+	वापस पढ़ोl(info->base + TEGRA_RTC_REG_BUSY) & 1;
+पूर्ण
 
 /*
- * Wait for hardware to be ready for writing. This function tries to maximize
- * the amount of time before the next update. It does this by waiting for the
- * RTC to become busy with its periodic update, then returning once the RTC
+ * Wait क्रम hardware to be पढ़ोy क्रम writing. This function tries to maximize
+ * the amount of समय beक्रमe the next update. It करोes this by रुकोing क्रम the
+ * RTC to become busy with its periodic update, then वापसing once the RTC
  * first becomes not busy.
  *
  * This periodic update (where the seconds and milliseconds are copied to the
- * AHB side) occurs every eight 32 kHz clocks (~250 us). The behavior of this
- * function allows us to make some assumptions without introducing a race,
- * because 250 us is plenty of time to read/write a value.
+ * AHB side) occurs every eight 32 kHz घड़ीs (~250 us). The behavior of this
+ * function allows us to make some assumptions without पूर्णांकroducing a race,
+ * because 250 us is plenty of समय to पढ़ो/ग_लिखो a value.
  */
-static int tegra_rtc_wait_while_busy(struct device *dev)
-{
-	struct tegra_rtc_info *info = dev_get_drvdata(dev);
-	int retries = 500; /* ~490 us is the worst case, ~250 us is best */
+अटल पूर्णांक tegra_rtc_रुको_जबतक_busy(काष्ठा device *dev)
+अणु
+	काष्ठा tegra_rtc_info *info = dev_get_drvdata(dev);
+	पूर्णांक retries = 500; /* ~490 us is the worst हाल, ~250 us is best */
 
 	/*
-	 * First wait for the RTC to become busy. This is when it posts its
-	 * updated seconds+msec registers to AHB side.
+	 * First रुको क्रम the RTC to become busy. This is when it posts its
+	 * updated seconds+msec रेजिस्टरs to AHB side.
 	 */
-	while (tegra_rtc_check_busy(info)) {
-		if (!retries--)
-			goto retry_failed;
+	जबतक (tegra_rtc_check_busy(info)) अणु
+		अगर (!retries--)
+			जाओ retry_failed;
 
 		udelay(1);
-	}
+	पूर्ण
 
-	/* now we have about 250 us to manipulate registers */
-	return 0;
+	/* now we have about 250 us to manipulate रेजिस्टरs */
+	वापस 0;
 
 retry_failed:
 	dev_err(dev, "write failed: retry count exceeded\n");
-	return -ETIMEDOUT;
-}
+	वापस -ETIMEDOUT;
+पूर्ण
 
-static int tegra_rtc_read_time(struct device *dev, struct rtc_time *tm)
-{
-	struct tegra_rtc_info *info = dev_get_drvdata(dev);
-	unsigned long flags;
+अटल पूर्णांक tegra_rtc_पढ़ो_समय(काष्ठा device *dev, काष्ठा rtc_समय *पंचांग)
+अणु
+	काष्ठा tegra_rtc_info *info = dev_get_drvdata(dev);
+	अचिन्हित दीर्घ flags;
 	u32 sec;
 
 	/*
-	 * RTC hardware copies seconds to shadow seconds when a read of
-	 * milliseconds occurs. use a lock to keep other threads out.
+	 * RTC hardware copies seconds to shaकरोw seconds when a पढ़ो of
+	 * milliseconds occurs. use a lock to keep other thपढ़ोs out.
 	 */
 	spin_lock_irqsave(&info->lock, flags);
 
-	readl(info->base + TEGRA_RTC_REG_MILLI_SECONDS);
-	sec = readl(info->base + TEGRA_RTC_REG_SHADOW_SECONDS);
+	पढ़ोl(info->base + TEGRA_RTC_REG_MILLI_SECONDS);
+	sec = पढ़ोl(info->base + TEGRA_RTC_REG_SHADOW_SECONDS);
 
 	spin_unlock_irqrestore(&info->lock, flags);
 
-	rtc_time64_to_tm(sec, tm);
+	rtc_समय64_to_पंचांग(sec, पंचांग);
 
-	dev_vdbg(dev, "time read as %u, %ptR\n", sec, tm);
+	dev_vdbg(dev, "time read as %u, %ptR\n", sec, पंचांग);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int tegra_rtc_set_time(struct device *dev, struct rtc_time *tm)
-{
-	struct tegra_rtc_info *info = dev_get_drvdata(dev);
+अटल पूर्णांक tegra_rtc_set_समय(काष्ठा device *dev, काष्ठा rtc_समय *पंचांग)
+अणु
+	काष्ठा tegra_rtc_info *info = dev_get_drvdata(dev);
 	u32 sec;
-	int ret;
+	पूर्णांक ret;
 
-	/* convert tm to seconds */
-	sec = rtc_tm_to_time64(tm);
+	/* convert पंचांग to seconds */
+	sec = rtc_पंचांग_to_समय64(पंचांग);
 
-	dev_vdbg(dev, "time set to %u, %ptR\n", sec, tm);
+	dev_vdbg(dev, "time set to %u, %ptR\n", sec, पंचांग);
 
-	/* seconds only written if wait succeeded */
-	ret = tegra_rtc_wait_while_busy(dev);
-	if (!ret)
-		writel(sec, info->base + TEGRA_RTC_REG_SECONDS);
+	/* seconds only written अगर रुको succeeded */
+	ret = tegra_rtc_रुको_जबतक_busy(dev);
+	अगर (!ret)
+		ग_लिखोl(sec, info->base + TEGRA_RTC_REG_SECONDS);
 
 	dev_vdbg(dev, "time read back as %d\n",
-		 readl(info->base + TEGRA_RTC_REG_SECONDS));
+		 पढ़ोl(info->base + TEGRA_RTC_REG_SECONDS));
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int tegra_rtc_read_alarm(struct device *dev, struct rtc_wkalrm *alarm)
-{
-	struct tegra_rtc_info *info = dev_get_drvdata(dev);
+अटल पूर्णांक tegra_rtc_पढ़ो_alarm(काष्ठा device *dev, काष्ठा rtc_wkalrm *alarm)
+अणु
+	काष्ठा tegra_rtc_info *info = dev_get_drvdata(dev);
 	u32 sec, value;
 
-	sec = readl(info->base + TEGRA_RTC_REG_SECONDS_ALARM0);
+	sec = पढ़ोl(info->base + TEGRA_RTC_REG_SECONDS_ALARM0);
 
-	if (sec == 0) {
+	अगर (sec == 0) अणु
 		/* alarm is disabled */
 		alarm->enabled = 0;
-	} else {
+	पूर्ण अन्यथा अणु
 		/* alarm is enabled */
 		alarm->enabled = 1;
-		rtc_time64_to_tm(sec, &alarm->time);
-	}
+		rtc_समय64_to_पंचांग(sec, &alarm->समय);
+	पूर्ण
 
-	value = readl(info->base + TEGRA_RTC_REG_INTR_STATUS);
+	value = पढ़ोl(info->base + TEGRA_RTC_REG_INTR_STATUS);
 	alarm->pending = (value & TEGRA_RTC_INTR_STATUS_SEC_ALARM0) != 0;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int tegra_rtc_alarm_irq_enable(struct device *dev, unsigned int enabled)
-{
-	struct tegra_rtc_info *info = dev_get_drvdata(dev);
-	unsigned long flags;
+अटल पूर्णांक tegra_rtc_alarm_irq_enable(काष्ठा device *dev, अचिन्हित पूर्णांक enabled)
+अणु
+	काष्ठा tegra_rtc_info *info = dev_get_drvdata(dev);
+	अचिन्हित दीर्घ flags;
 	u32 status;
 
-	tegra_rtc_wait_while_busy(dev);
+	tegra_rtc_रुको_जबतक_busy(dev);
 	spin_lock_irqsave(&info->lock, flags);
 
-	/* read the original value, and OR in the flag */
-	status = readl(info->base + TEGRA_RTC_REG_INTR_MASK);
-	if (enabled)
+	/* पढ़ो the original value, and OR in the flag */
+	status = पढ़ोl(info->base + TEGRA_RTC_REG_INTR_MASK);
+	अगर (enabled)
 		status |= TEGRA_RTC_INTR_MASK_SEC_ALARM0; /* set it */
-	else
+	अन्यथा
 		status &= ~TEGRA_RTC_INTR_MASK_SEC_ALARM0; /* clear it */
 
-	writel(status, info->base + TEGRA_RTC_REG_INTR_MASK);
+	ग_लिखोl(status, info->base + TEGRA_RTC_REG_INTR_MASK);
 
 	spin_unlock_irqrestore(&info->lock, flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int tegra_rtc_set_alarm(struct device *dev, struct rtc_wkalrm *alarm)
-{
-	struct tegra_rtc_info *info = dev_get_drvdata(dev);
+अटल पूर्णांक tegra_rtc_set_alarm(काष्ठा device *dev, काष्ठा rtc_wkalrm *alarm)
+अणु
+	काष्ठा tegra_rtc_info *info = dev_get_drvdata(dev);
 	u32 sec;
 
-	if (alarm->enabled)
-		sec = rtc_tm_to_time64(&alarm->time);
-	else
+	अगर (alarm->enabled)
+		sec = rtc_पंचांग_to_समय64(&alarm->समय);
+	अन्यथा
 		sec = 0;
 
-	tegra_rtc_wait_while_busy(dev);
-	writel(sec, info->base + TEGRA_RTC_REG_SECONDS_ALARM0);
+	tegra_rtc_रुको_जबतक_busy(dev);
+	ग_लिखोl(sec, info->base + TEGRA_RTC_REG_SECONDS_ALARM0);
 	dev_vdbg(dev, "alarm read back as %d\n",
-		 readl(info->base + TEGRA_RTC_REG_SECONDS_ALARM0));
+		 पढ़ोl(info->base + TEGRA_RTC_REG_SECONDS_ALARM0));
 
-	/* if successfully written and alarm is enabled ... */
-	if (sec) {
+	/* अगर successfully written and alarm is enabled ... */
+	अगर (sec) अणु
 		tegra_rtc_alarm_irq_enable(dev, 1);
-		dev_vdbg(dev, "alarm set as %u, %ptR\n", sec, &alarm->time);
-	} else {
-		/* disable alarm if 0 or write error */
+		dev_vdbg(dev, "alarm set as %u, %ptR\n", sec, &alarm->समय);
+	पूर्ण अन्यथा अणु
+		/* disable alarm अगर 0 or ग_लिखो error */
 		dev_vdbg(dev, "alarm disabled\n");
 		tegra_rtc_alarm_irq_enable(dev, 0);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int tegra_rtc_proc(struct device *dev, struct seq_file *seq)
-{
-	if (!dev || !dev->driver)
-		return 0;
+अटल पूर्णांक tegra_rtc_proc(काष्ठा device *dev, काष्ठा seq_file *seq)
+अणु
+	अगर (!dev || !dev->driver)
+		वापस 0;
 
-	seq_printf(seq, "name\t\t: %s\n", dev_name(dev));
+	seq_म_लिखो(seq, "name\t\t: %s\n", dev_name(dev));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static irqreturn_t tegra_rtc_irq_handler(int irq, void *data)
-{
-	struct device *dev = data;
-	struct tegra_rtc_info *info = dev_get_drvdata(dev);
-	unsigned long events = 0;
+अटल irqवापस_t tegra_rtc_irq_handler(पूर्णांक irq, व्योम *data)
+अणु
+	काष्ठा device *dev = data;
+	काष्ठा tegra_rtc_info *info = dev_get_drvdata(dev);
+	अचिन्हित दीर्घ events = 0;
 	u32 status;
 
-	status = readl(info->base + TEGRA_RTC_REG_INTR_STATUS);
-	if (status) {
-		/* clear the interrupt masks and status on any IRQ */
-		tegra_rtc_wait_while_busy(dev);
+	status = पढ़ोl(info->base + TEGRA_RTC_REG_INTR_STATUS);
+	अगर (status) अणु
+		/* clear the पूर्णांकerrupt masks and status on any IRQ */
+		tegra_rtc_रुको_जबतक_busy(dev);
 
 		spin_lock(&info->lock);
-		writel(0, info->base + TEGRA_RTC_REG_INTR_MASK);
-		writel(status, info->base + TEGRA_RTC_REG_INTR_STATUS);
+		ग_लिखोl(0, info->base + TEGRA_RTC_REG_INTR_MASK);
+		ग_लिखोl(status, info->base + TEGRA_RTC_REG_INTR_STATUS);
 		spin_unlock(&info->lock);
-	}
+	पूर्ण
 
-	/* check if alarm */
-	if (status & TEGRA_RTC_INTR_STATUS_SEC_ALARM0)
+	/* check अगर alarm */
+	अगर (status & TEGRA_RTC_INTR_STATUS_SEC_ALARM0)
 		events |= RTC_IRQF | RTC_AF;
 
-	/* check if periodic */
-	if (status & TEGRA_RTC_INTR_STATUS_SEC_CDN_ALARM)
+	/* check अगर periodic */
+	अगर (status & TEGRA_RTC_INTR_STATUS_SEC_CDN_ALARM)
 		events |= RTC_IRQF | RTC_PF;
 
 	rtc_update_irq(info->rtc, 1, events);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static const struct rtc_class_ops tegra_rtc_ops = {
-	.read_time = tegra_rtc_read_time,
-	.set_time = tegra_rtc_set_time,
-	.read_alarm = tegra_rtc_read_alarm,
+अटल स्थिर काष्ठा rtc_class_ops tegra_rtc_ops = अणु
+	.पढ़ो_समय = tegra_rtc_पढ़ो_समय,
+	.set_समय = tegra_rtc_set_समय,
+	.पढ़ो_alarm = tegra_rtc_पढ़ो_alarm,
 	.set_alarm = tegra_rtc_set_alarm,
 	.proc = tegra_rtc_proc,
 	.alarm_irq_enable = tegra_rtc_alarm_irq_enable,
-};
+पूर्ण;
 
-static const struct of_device_id tegra_rtc_dt_match[] = {
-	{ .compatible = "nvidia,tegra20-rtc", },
-	{}
-};
+अटल स्थिर काष्ठा of_device_id tegra_rtc_dt_match[] = अणु
+	अणु .compatible = "nvidia,tegra20-rtc", पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, tegra_rtc_dt_match);
 
-static int tegra_rtc_probe(struct platform_device *pdev)
-{
-	struct tegra_rtc_info *info;
-	int ret;
+अटल पूर्णांक tegra_rtc_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा tegra_rtc_info *info;
+	पूर्णांक ret;
 
-	info = devm_kzalloc(&pdev->dev, sizeof(*info), GFP_KERNEL);
-	if (!info)
-		return -ENOMEM;
+	info = devm_kzalloc(&pdev->dev, माप(*info), GFP_KERNEL);
+	अगर (!info)
+		वापस -ENOMEM;
 
-	info->base = devm_platform_ioremap_resource(pdev, 0);
-	if (IS_ERR(info->base))
-		return PTR_ERR(info->base);
+	info->base = devm_platक्रमm_ioremap_resource(pdev, 0);
+	अगर (IS_ERR(info->base))
+		वापस PTR_ERR(info->base);
 
-	ret = platform_get_irq(pdev, 0);
-	if (ret <= 0)
-		return ret;
+	ret = platक्रमm_get_irq(pdev, 0);
+	अगर (ret <= 0)
+		वापस ret;
 
 	info->irq = ret;
 
 	info->rtc = devm_rtc_allocate_device(&pdev->dev);
-	if (IS_ERR(info->rtc))
-		return PTR_ERR(info->rtc);
+	अगर (IS_ERR(info->rtc))
+		वापस PTR_ERR(info->rtc);
 
 	info->rtc->ops = &tegra_rtc_ops;
 	info->rtc->range_max = U32_MAX;
 
-	info->clk = devm_clk_get(&pdev->dev, NULL);
-	if (IS_ERR(info->clk))
-		return PTR_ERR(info->clk);
+	info->clk = devm_clk_get(&pdev->dev, शून्य);
+	अगर (IS_ERR(info->clk))
+		वापस PTR_ERR(info->clk);
 
 	ret = clk_prepare_enable(info->clk);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	/* set context info */
 	info->pdev = pdev;
 	spin_lock_init(&info->lock);
 
-	platform_set_drvdata(pdev, info);
+	platक्रमm_set_drvdata(pdev, info);
 
 	/* clear out the hardware */
-	writel(0, info->base + TEGRA_RTC_REG_SECONDS_ALARM0);
-	writel(0xffffffff, info->base + TEGRA_RTC_REG_INTR_STATUS);
-	writel(0, info->base + TEGRA_RTC_REG_INTR_MASK);
+	ग_लिखोl(0, info->base + TEGRA_RTC_REG_SECONDS_ALARM0);
+	ग_लिखोl(0xffffffff, info->base + TEGRA_RTC_REG_INTR_STATUS);
+	ग_लिखोl(0, info->base + TEGRA_RTC_REG_INTR_MASK);
 
 	device_init_wakeup(&pdev->dev, 1);
 
 	ret = devm_request_irq(&pdev->dev, info->irq, tegra_rtc_irq_handler,
 			       IRQF_TRIGGER_HIGH, dev_name(&pdev->dev),
 			       &pdev->dev);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&pdev->dev, "failed to request interrupt: %d\n", ret);
-		goto disable_clk;
-	}
+		जाओ disable_clk;
+	पूर्ण
 
-	ret = devm_rtc_register_device(info->rtc);
-	if (ret)
-		goto disable_clk;
+	ret = devm_rtc_रेजिस्टर_device(info->rtc);
+	अगर (ret)
+		जाओ disable_clk;
 
 	dev_notice(&pdev->dev, "Tegra internal Real Time Clock\n");
 
-	return 0;
+	वापस 0;
 
 disable_clk:
 	clk_disable_unprepare(info->clk);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int tegra_rtc_remove(struct platform_device *pdev)
-{
-	struct tegra_rtc_info *info = platform_get_drvdata(pdev);
+अटल पूर्णांक tegra_rtc_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा tegra_rtc_info *info = platक्रमm_get_drvdata(pdev);
 
 	clk_disable_unprepare(info->clk);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_PM_SLEEP
-static int tegra_rtc_suspend(struct device *dev)
-{
-	struct tegra_rtc_info *info = dev_get_drvdata(dev);
+#अगर_घोषित CONFIG_PM_SLEEP
+अटल पूर्णांक tegra_rtc_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा tegra_rtc_info *info = dev_get_drvdata(dev);
 
-	tegra_rtc_wait_while_busy(dev);
+	tegra_rtc_रुको_जबतक_busy(dev);
 
 	/* only use ALARM0 as a wake source */
-	writel(0xffffffff, info->base + TEGRA_RTC_REG_INTR_STATUS);
-	writel(TEGRA_RTC_INTR_STATUS_SEC_ALARM0,
+	ग_लिखोl(0xffffffff, info->base + TEGRA_RTC_REG_INTR_STATUS);
+	ग_लिखोl(TEGRA_RTC_INTR_STATUS_SEC_ALARM0,
 	       info->base + TEGRA_RTC_REG_INTR_MASK);
 
 	dev_vdbg(dev, "alarm sec = %d\n",
-		 readl(info->base + TEGRA_RTC_REG_SECONDS_ALARM0));
+		 पढ़ोl(info->base + TEGRA_RTC_REG_SECONDS_ALARM0));
 
 	dev_vdbg(dev, "Suspend (device_may_wakeup=%d) IRQ:%d\n",
 		 device_may_wakeup(dev), info->irq);
 
 	/* leave the alarms on as a wake source */
-	if (device_may_wakeup(dev))
+	अगर (device_may_wakeup(dev))
 		enable_irq_wake(info->irq);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int tegra_rtc_resume(struct device *dev)
-{
-	struct tegra_rtc_info *info = dev_get_drvdata(dev);
+अटल पूर्णांक tegra_rtc_resume(काष्ठा device *dev)
+अणु
+	काष्ठा tegra_rtc_info *info = dev_get_drvdata(dev);
 
 	dev_vdbg(dev, "Resume (device_may_wakeup=%d)\n",
 		 device_may_wakeup(dev));
 
 	/* alarms were left on as a wake source, turn them off */
-	if (device_may_wakeup(dev))
+	अगर (device_may_wakeup(dev))
 		disable_irq_wake(info->irq);
 
-	return 0;
-}
-#endif
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
-static SIMPLE_DEV_PM_OPS(tegra_rtc_pm_ops, tegra_rtc_suspend, tegra_rtc_resume);
+अटल SIMPLE_DEV_PM_OPS(tegra_rtc_pm_ops, tegra_rtc_suspend, tegra_rtc_resume);
 
-static void tegra_rtc_shutdown(struct platform_device *pdev)
-{
+अटल व्योम tegra_rtc_shutकरोwn(काष्ठा platक्रमm_device *pdev)
+अणु
 	dev_vdbg(&pdev->dev, "disabling interrupts\n");
 	tegra_rtc_alarm_irq_enable(&pdev->dev, 0);
-}
+पूर्ण
 
-static struct platform_driver tegra_rtc_driver = {
+अटल काष्ठा platक्रमm_driver tegra_rtc_driver = अणु
 	.probe = tegra_rtc_probe,
-	.remove = tegra_rtc_remove,
-	.shutdown = tegra_rtc_shutdown,
-	.driver = {
+	.हटाओ = tegra_rtc_हटाओ,
+	.shutकरोwn = tegra_rtc_shutकरोwn,
+	.driver = अणु
 		.name = "tegra_rtc",
 		.of_match_table = tegra_rtc_dt_match,
 		.pm = &tegra_rtc_pm_ops,
-	},
-};
-module_platform_driver(tegra_rtc_driver);
+	पूर्ण,
+पूर्ण;
+module_platक्रमm_driver(tegra_rtc_driver);
 
 MODULE_AUTHOR("Jon Mayo <jmayo@nvidia.com>");
 MODULE_DESCRIPTION("driver for Tegra internal RTC");

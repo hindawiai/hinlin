@@ -1,25 +1,26 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * PCI Backend Xenbus Setup - handles setup with frontend and xend
  *
  *   Author: Ryan Wilson <hap9@epoch.ncsc.mil>
  */
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include <linux/moduleparam.h>
-#include <linux/init.h>
-#include <linux/list.h>
-#include <linux/vmalloc.h>
-#include <linux/workqueue.h>
-#include <xen/xenbus.h>
-#include <xen/events.h>
-#include <asm/xen/pci.h>
-#include "pciback.h"
+#समावेश <linux/moduleparam.h>
+#समावेश <linux/init.h>
+#समावेश <linux/list.h>
+#समावेश <linux/vदो_स्मृति.h>
+#समावेश <linux/workqueue.h>
+#समावेश <xen/xenbus.h>
+#समावेश <xen/events.h>
+#समावेश <यंत्र/xen/pci.h>
+#समावेश "pciback.h"
 
-#define INVALID_EVTCHN_IRQ  (-1)
+#घोषणा INVALID_EVTCHN_IRQ  (-1)
 
-static bool __read_mostly passthrough;
+अटल bool __पढ़ो_mostly passthrough;
 module_param(passthrough, bool, S_IRUGO);
 MODULE_PARM_DESC(passthrough,
 	"Option to specify how to export PCI topology to guest:\n"\
@@ -34,160 +35,160 @@ MODULE_PARM_DESC(passthrough,
 	"   for drivers which depend on finding their hardward in certain\n"\
 	"   bus/slot locations.");
 
-static struct xen_pcibk_device *alloc_pdev(struct xenbus_device *xdev)
-{
-	struct xen_pcibk_device *pdev;
+अटल काष्ठा xen_pcibk_device *alloc_pdev(काष्ठा xenbus_device *xdev)
+अणु
+	काष्ठा xen_pcibk_device *pdev;
 
-	pdev = kzalloc(sizeof(struct xen_pcibk_device), GFP_KERNEL);
-	if (pdev == NULL)
-		goto out;
+	pdev = kzalloc(माप(काष्ठा xen_pcibk_device), GFP_KERNEL);
+	अगर (pdev == शून्य)
+		जाओ out;
 	dev_dbg(&xdev->dev, "allocated pdev @ 0x%p\n", pdev);
 
 	pdev->xdev = xdev;
 
 	mutex_init(&pdev->dev_lock);
 
-	pdev->sh_info = NULL;
+	pdev->sh_info = शून्य;
 	pdev->evtchn_irq = INVALID_EVTCHN_IRQ;
 	pdev->be_watching = 0;
 
-	INIT_WORK(&pdev->op_work, xen_pcibk_do_op);
+	INIT_WORK(&pdev->op_work, xen_pcibk_करो_op);
 
-	if (xen_pcibk_init_devices(pdev)) {
-		kfree(pdev);
-		pdev = NULL;
-	}
+	अगर (xen_pcibk_init_devices(pdev)) अणु
+		kमुक्त(pdev);
+		pdev = शून्य;
+	पूर्ण
 
 	dev_set_drvdata(&xdev->dev, pdev);
 
 out:
-	return pdev;
-}
+	वापस pdev;
+पूर्ण
 
-static void xen_pcibk_disconnect(struct xen_pcibk_device *pdev)
-{
+अटल व्योम xen_pcibk_disconnect(काष्ठा xen_pcibk_device *pdev)
+अणु
 	mutex_lock(&pdev->dev_lock);
-	/* Ensure the guest can't trigger our handler before removing devices */
-	if (pdev->evtchn_irq != INVALID_EVTCHN_IRQ) {
+	/* Ensure the guest can't trigger our handler beक्रमe removing devices */
+	अगर (pdev->evtchn_irq != INVALID_EVTCHN_IRQ) अणु
 		unbind_from_irqhandler(pdev->evtchn_irq, pdev);
 		pdev->evtchn_irq = INVALID_EVTCHN_IRQ;
-	}
+	पूर्ण
 
-	/* If the driver domain started an op, make sure we complete it
-	 * before releasing the shared memory */
+	/* If the driver करोमुख्य started an op, make sure we complete it
+	 * beक्रमe releasing the shared memory */
 
 	flush_work(&pdev->op_work);
 
-	if (pdev->sh_info != NULL) {
-		xenbus_unmap_ring_vfree(pdev->xdev, pdev->sh_info);
-		pdev->sh_info = NULL;
-	}
+	अगर (pdev->sh_info != शून्य) अणु
+		xenbus_unmap_ring_vमुक्त(pdev->xdev, pdev->sh_info);
+		pdev->sh_info = शून्य;
+	पूर्ण
 	mutex_unlock(&pdev->dev_lock);
-}
+पूर्ण
 
-static void free_pdev(struct xen_pcibk_device *pdev)
-{
-	if (pdev->be_watching) {
-		unregister_xenbus_watch(&pdev->be_watch);
+अटल व्योम मुक्त_pdev(काष्ठा xen_pcibk_device *pdev)
+अणु
+	अगर (pdev->be_watching) अणु
+		unरेजिस्टर_xenbus_watch(&pdev->be_watch);
 		pdev->be_watching = 0;
-	}
+	पूर्ण
 
 	xen_pcibk_disconnect(pdev);
 
-	/* N.B. This calls pcistub_put_pci_dev which does the FLR on all
+	/* N.B. This calls pcistub_put_pci_dev which करोes the FLR on all
 	 * of the PCIe devices. */
 	xen_pcibk_release_devices(pdev);
 
-	dev_set_drvdata(&pdev->xdev->dev, NULL);
-	pdev->xdev = NULL;
+	dev_set_drvdata(&pdev->xdev->dev, शून्य);
+	pdev->xdev = शून्य;
 
-	kfree(pdev);
-}
+	kमुक्त(pdev);
+पूर्ण
 
-static int xen_pcibk_do_attach(struct xen_pcibk_device *pdev, int gnt_ref,
+अटल पूर्णांक xen_pcibk_करो_attach(काष्ठा xen_pcibk_device *pdev, पूर्णांक gnt_ref,
 			     evtchn_port_t remote_evtchn)
-{
-	int err = 0;
-	void *vaddr;
+अणु
+	पूर्णांक err = 0;
+	व्योम *vaddr;
 
 	dev_dbg(&pdev->xdev->dev,
 		"Attaching to frontend resources - gnt_ref=%d evtchn=%u\n",
 		gnt_ref, remote_evtchn);
 
 	err = xenbus_map_ring_valloc(pdev->xdev, &gnt_ref, 1, &vaddr);
-	if (err < 0) {
+	अगर (err < 0) अणु
 		xenbus_dev_fatal(pdev->xdev, err,
 				"Error mapping other domain page in ours.");
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	pdev->sh_info = vaddr;
 
-	err = bind_interdomain_evtchn_to_irqhandler_lateeoi(
+	err = bind_पूर्णांकerकरोमुख्य_evtchn_to_irqhandler_lateeoi(
 		pdev->xdev, remote_evtchn, xen_pcibk_handle_event,
 		0, DRV_NAME, pdev);
-	if (err < 0) {
+	अगर (err < 0) अणु
 		xenbus_dev_fatal(pdev->xdev, err,
 				 "Error binding event channel to IRQ");
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 	pdev->evtchn_irq = err;
 	err = 0;
 
 	dev_dbg(&pdev->xdev->dev, "Attached!\n");
 out:
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int xen_pcibk_attach(struct xen_pcibk_device *pdev)
-{
-	int err = 0;
-	int gnt_ref;
+अटल पूर्णांक xen_pcibk_attach(काष्ठा xen_pcibk_device *pdev)
+अणु
+	पूर्णांक err = 0;
+	पूर्णांक gnt_ref;
 	evtchn_port_t remote_evtchn;
-	char *magic = NULL;
+	अक्षर *magic = शून्य;
 
 
 	mutex_lock(&pdev->dev_lock);
-	/* Make sure we only do this setup once */
-	if (xenbus_read_driver_state(pdev->xdev->nodename) !=
+	/* Make sure we only करो this setup once */
+	अगर (xenbus_पढ़ो_driver_state(pdev->xdev->nodename) !=
 	    XenbusStateInitialised)
-		goto out;
+		जाओ out;
 
-	/* Wait for frontend to state that it has published the configuration */
-	if (xenbus_read_driver_state(pdev->xdev->otherend) !=
+	/* Wait क्रम frontend to state that it has published the configuration */
+	अगर (xenbus_पढ़ो_driver_state(pdev->xdev->otherend) !=
 	    XenbusStateInitialised)
-		goto out;
+		जाओ out;
 
 	dev_dbg(&pdev->xdev->dev, "Reading frontend config\n");
 
 	err = xenbus_gather(XBT_NIL, pdev->xdev->otherend,
 			    "pci-op-ref", "%u", &gnt_ref,
 			    "event-channel", "%u", &remote_evtchn,
-			    "magic", NULL, &magic, NULL);
-	if (err) {
-		/* If configuration didn't get read correctly, wait longer */
+			    "magic", शून्य, &magic, शून्य);
+	अगर (err) अणु
+		/* If configuration didn't get पढ़ो correctly, रुको दीर्घer */
 		xenbus_dev_fatal(pdev->xdev, err,
 				 "Error reading configuration from frontend");
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (magic == NULL || strcmp(magic, XEN_PCI_MAGIC) != 0) {
+	अगर (magic == शून्य || म_भेद(magic, XEN_PCI_MAGIC) != 0) अणु
 		xenbus_dev_fatal(pdev->xdev, -EFAULT,
 				 "version mismatch (%s/%s) with pcifront - "
 				 "halting " DRV_NAME,
 				 magic, XEN_PCI_MAGIC);
 		err = -EFAULT;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	err = xen_pcibk_do_attach(pdev, gnt_ref, remote_evtchn);
-	if (err)
-		goto out;
+	err = xen_pcibk_करो_attach(pdev, gnt_ref, remote_evtchn);
+	अगर (err)
+		जाओ out;
 
 	dev_dbg(&pdev->xdev->dev, "Connecting...\n");
 
-	err = xenbus_switch_state(pdev->xdev, XenbusStateConnected);
-	if (err)
+	err = xenbus_चयन_state(pdev->xdev, XenbusStateConnected);
+	अगर (err)
 		xenbus_dev_fatal(pdev->xdev, err,
 				 "Error switching to connected state!");
 
@@ -195,562 +196,562 @@ static int xen_pcibk_attach(struct xen_pcibk_device *pdev)
 out:
 	mutex_unlock(&pdev->dev_lock);
 
-	kfree(magic);
+	kमुक्त(magic);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int xen_pcibk_publish_pci_dev(struct xen_pcibk_device *pdev,
-				   unsigned int domain, unsigned int bus,
-				   unsigned int devfn, unsigned int devid)
-{
-	int err;
-	int len;
-	char str[64];
+अटल पूर्णांक xen_pcibk_publish_pci_dev(काष्ठा xen_pcibk_device *pdev,
+				   अचिन्हित पूर्णांक करोमुख्य, अचिन्हित पूर्णांक bus,
+				   अचिन्हित पूर्णांक devfn, अचिन्हित पूर्णांक devid)
+अणु
+	पूर्णांक err;
+	पूर्णांक len;
+	अक्षर str[64];
 
-	len = snprintf(str, sizeof(str), "vdev-%d", devid);
-	if (unlikely(len >= (sizeof(str) - 1))) {
+	len = snम_लिखो(str, माप(str), "vdev-%d", devid);
+	अगर (unlikely(len >= (माप(str) - 1))) अणु
 		err = -ENOMEM;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	/* Note: The PV protocol uses %02x, don't change it */
-	err = xenbus_printf(XBT_NIL, pdev->xdev->nodename, str,
-			    "%04x:%02x:%02x.%02x", domain, bus,
+	/* Note: The PV protocol uses %02x, करोn't change it */
+	err = xenbus_म_लिखो(XBT_NIL, pdev->xdev->nodename, str,
+			    "%04x:%02x:%02x.%02x", करोमुख्य, bus,
 			    PCI_SLOT(devfn), PCI_FUNC(devfn));
 
 out:
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int xen_pcibk_export_device(struct xen_pcibk_device *pdev,
-				 int domain, int bus, int slot, int func,
-				 int devid)
-{
-	struct pci_dev *dev;
-	int err = 0;
+अटल पूर्णांक xen_pcibk_export_device(काष्ठा xen_pcibk_device *pdev,
+				 पूर्णांक करोमुख्य, पूर्णांक bus, पूर्णांक slot, पूर्णांक func,
+				 पूर्णांक devid)
+अणु
+	काष्ठा pci_dev *dev;
+	पूर्णांक err = 0;
 
 	dev_dbg(&pdev->xdev->dev, "exporting dom %x bus %x slot %x func %x\n",
-		domain, bus, slot, func);
+		करोमुख्य, bus, slot, func);
 
-	dev = pcistub_get_pci_dev_by_slot(pdev, domain, bus, slot, func);
-	if (!dev) {
+	dev = pcistub_get_pci_dev_by_slot(pdev, करोमुख्य, bus, slot, func);
+	अगर (!dev) अणु
 		err = -EINVAL;
 		xenbus_dev_fatal(pdev->xdev, err,
 				 "Couldn't locate PCI device "
 				 "(%04x:%02x:%02x.%d)! "
 				 "perhaps already in-use?",
-				 domain, bus, slot, func);
-		goto out;
-	}
+				 करोमुख्य, bus, slot, func);
+		जाओ out;
+	पूर्ण
 
 	err = xen_pcibk_add_pci_dev(pdev, dev, devid,
 				    xen_pcibk_publish_pci_dev);
-	if (err)
-		goto out;
+	अगर (err)
+		जाओ out;
 
 	dev_info(&dev->dev, "registering for %d\n", pdev->xdev->otherend_id);
-	if (xen_register_device_domain_owner(dev,
-					     pdev->xdev->otherend_id) != 0) {
+	अगर (xen_रेजिस्टर_device_करोमुख्य_owner(dev,
+					     pdev->xdev->otherend_id) != 0) अणु
 		dev_err(&dev->dev, "Stealing ownership from dom%d.\n",
-			xen_find_device_domain_owner(dev));
-		xen_unregister_device_domain_owner(dev);
-		xen_register_device_domain_owner(dev, pdev->xdev->otherend_id);
-	}
+			xen_find_device_करोमुख्य_owner(dev));
+		xen_unरेजिस्टर_device_करोमुख्य_owner(dev);
+		xen_रेजिस्टर_device_करोमुख्य_owner(dev, pdev->xdev->otherend_id);
+	पूर्ण
 
 	/* TODO: It'd be nice to export a bridge and have all of its children
-	 * get exported with it. This may be best done in xend (which will
+	 * get exported with it. This may be best करोne in xend (which will
 	 * have to calculate resource usage anyway) but we probably want to
-	 * put something in here to ensure that if a bridge gets given to a
-	 * driver domain, that all devices under that bridge are not given
-	 * to other driver domains (as he who controls the bridge can disable
+	 * put something in here to ensure that अगर a bridge माला_लो given to a
+	 * driver करोमुख्य, that all devices under that bridge are not given
+	 * to other driver करोमुख्यs (as he who controls the bridge can disable
 	 * it and stop the other devices from working).
 	 */
 out:
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int xen_pcibk_remove_device(struct xen_pcibk_device *pdev,
-				 int domain, int bus, int slot, int func)
-{
-	int err = 0;
-	struct pci_dev *dev;
+अटल पूर्णांक xen_pcibk_हटाओ_device(काष्ठा xen_pcibk_device *pdev,
+				 पूर्णांक करोमुख्य, पूर्णांक bus, पूर्णांक slot, पूर्णांक func)
+अणु
+	पूर्णांक err = 0;
+	काष्ठा pci_dev *dev;
 
 	dev_dbg(&pdev->xdev->dev, "removing dom %x bus %x slot %x func %x\n",
-		domain, bus, slot, func);
+		करोमुख्य, bus, slot, func);
 
-	dev = xen_pcibk_get_pci_dev(pdev, domain, bus, PCI_DEVFN(slot, func));
-	if (!dev) {
+	dev = xen_pcibk_get_pci_dev(pdev, करोमुख्य, bus, PCI_DEVFN(slot, func));
+	अगर (!dev) अणु
 		err = -EINVAL;
 		dev_dbg(&pdev->xdev->dev, "Couldn't locate PCI device "
 			"(%04x:%02x:%02x.%d)! not owned by this domain\n",
-			domain, bus, slot, func);
-		goto out;
-	}
+			करोमुख्य, bus, slot, func);
+		जाओ out;
+	पूर्ण
 
 	dev_dbg(&dev->dev, "unregistering for %d\n", pdev->xdev->otherend_id);
-	xen_unregister_device_domain_owner(dev);
+	xen_unरेजिस्टर_device_करोमुख्य_owner(dev);
 
 	/* N.B. This ends up calling pcistub_put_pci_dev which ends up
-	 * doing the FLR. */
+	 * करोing the FLR. */
 	xen_pcibk_release_pci_dev(pdev, dev, true /* use the lock. */);
 
 out:
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int xen_pcibk_publish_pci_root(struct xen_pcibk_device *pdev,
-				    unsigned int domain, unsigned int bus)
-{
-	unsigned int d, b;
-	int i, root_num, len, err;
-	char str[64];
+अटल पूर्णांक xen_pcibk_publish_pci_root(काष्ठा xen_pcibk_device *pdev,
+				    अचिन्हित पूर्णांक करोमुख्य, अचिन्हित पूर्णांक bus)
+अणु
+	अचिन्हित पूर्णांक d, b;
+	पूर्णांक i, root_num, len, err;
+	अक्षर str[64];
 
 	dev_dbg(&pdev->xdev->dev, "Publishing pci roots\n");
 
-	err = xenbus_scanf(XBT_NIL, pdev->xdev->nodename,
+	err = xenbus_म_पूछो(XBT_NIL, pdev->xdev->nodename,
 			   "root_num", "%d", &root_num);
-	if (err == 0 || err == -ENOENT)
+	अगर (err == 0 || err == -ENOENT)
 		root_num = 0;
-	else if (err < 0)
-		goto out;
+	अन्यथा अगर (err < 0)
+		जाओ out;
 
-	/* Verify that we haven't already published this pci root */
-	for (i = 0; i < root_num; i++) {
-		len = snprintf(str, sizeof(str), "root-%d", i);
-		if (unlikely(len >= (sizeof(str) - 1))) {
+	/* Verअगरy that we haven't alपढ़ोy published this pci root */
+	क्रम (i = 0; i < root_num; i++) अणु
+		len = snम_लिखो(str, माप(str), "root-%d", i);
+		अगर (unlikely(len >= (माप(str) - 1))) अणु
 			err = -ENOMEM;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
-		err = xenbus_scanf(XBT_NIL, pdev->xdev->nodename,
+		err = xenbus_म_पूछो(XBT_NIL, pdev->xdev->nodename,
 				   str, "%x:%x", &d, &b);
-		if (err < 0)
-			goto out;
-		if (err != 2) {
+		अगर (err < 0)
+			जाओ out;
+		अगर (err != 2) अणु
 			err = -EINVAL;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
-		if (d == domain && b == bus) {
+		अगर (d == करोमुख्य && b == bus) अणु
 			err = 0;
-			goto out;
-		}
-	}
+			जाओ out;
+		पूर्ण
+	पूर्ण
 
-	len = snprintf(str, sizeof(str), "root-%d", root_num);
-	if (unlikely(len >= (sizeof(str) - 1))) {
+	len = snम_लिखो(str, माप(str), "root-%d", root_num);
+	अगर (unlikely(len >= (माप(str) - 1))) अणु
 		err = -ENOMEM;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	dev_dbg(&pdev->xdev->dev, "writing root %d at %04x:%02x\n",
-		root_num, domain, bus);
+		root_num, करोमुख्य, bus);
 
-	err = xenbus_printf(XBT_NIL, pdev->xdev->nodename, str,
-			    "%04x:%02x", domain, bus);
-	if (err)
-		goto out;
+	err = xenbus_म_लिखो(XBT_NIL, pdev->xdev->nodename, str,
+			    "%04x:%02x", करोमुख्य, bus);
+	अगर (err)
+		जाओ out;
 
-	err = xenbus_printf(XBT_NIL, pdev->xdev->nodename,
+	err = xenbus_म_लिखो(XBT_NIL, pdev->xdev->nodename,
 			    "root_num", "%d", (root_num + 1));
 
 out:
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int xen_pcibk_reconfigure(struct xen_pcibk_device *pdev,
-				 enum xenbus_state state)
-{
-	int err = 0;
-	int num_devs;
-	int domain, bus, slot, func;
-	unsigned int substate;
-	int i, len;
-	char state_str[64];
-	char dev_str[64];
+अटल पूर्णांक xen_pcibk_reconfigure(काष्ठा xen_pcibk_device *pdev,
+				 क्रमागत xenbus_state state)
+अणु
+	पूर्णांक err = 0;
+	पूर्णांक num_devs;
+	पूर्णांक करोमुख्य, bus, slot, func;
+	अचिन्हित पूर्णांक substate;
+	पूर्णांक i, len;
+	अक्षर state_str[64];
+	अक्षर dev_str[64];
 
 
 	dev_dbg(&pdev->xdev->dev, "Reconfiguring device ...\n");
 
 	mutex_lock(&pdev->dev_lock);
-	if (xenbus_read_driver_state(pdev->xdev->nodename) != state)
-		goto out;
+	अगर (xenbus_पढ़ो_driver_state(pdev->xdev->nodename) != state)
+		जाओ out;
 
-	err = xenbus_scanf(XBT_NIL, pdev->xdev->nodename, "num_devs", "%d",
+	err = xenbus_म_पूछो(XBT_NIL, pdev->xdev->nodename, "num_devs", "%d",
 			   &num_devs);
-	if (err != 1) {
-		if (err >= 0)
+	अगर (err != 1) अणु
+		अगर (err >= 0)
 			err = -EINVAL;
 		xenbus_dev_fatal(pdev->xdev, err,
 				 "Error reading number of devices");
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	for (i = 0; i < num_devs; i++) {
-		len = snprintf(state_str, sizeof(state_str), "state-%d", i);
-		if (unlikely(len >= (sizeof(state_str) - 1))) {
+	क्रम (i = 0; i < num_devs; i++) अणु
+		len = snम_लिखो(state_str, माप(state_str), "state-%d", i);
+		अगर (unlikely(len >= (माप(state_str) - 1))) अणु
 			err = -ENOMEM;
 			xenbus_dev_fatal(pdev->xdev, err,
 					 "String overflow while reading "
 					 "configuration");
-			goto out;
-		}
-		substate = xenbus_read_unsigned(pdev->xdev->nodename, state_str,
+			जाओ out;
+		पूर्ण
+		substate = xenbus_पढ़ो_अचिन्हित(pdev->xdev->nodename, state_str,
 						XenbusStateUnknown);
 
-		switch (substate) {
-		case XenbusStateInitialising:
+		चयन (substate) अणु
+		हाल XenbusStateInitialising:
 			dev_dbg(&pdev->xdev->dev, "Attaching dev-%d ...\n", i);
 
-			len = snprintf(dev_str, sizeof(dev_str), "dev-%d", i);
-			if (unlikely(len >= (sizeof(dev_str) - 1))) {
+			len = snम_लिखो(dev_str, माप(dev_str), "dev-%d", i);
+			अगर (unlikely(len >= (माप(dev_str) - 1))) अणु
 				err = -ENOMEM;
 				xenbus_dev_fatal(pdev->xdev, err,
 						 "String overflow while "
 						 "reading configuration");
-				goto out;
-			}
-			err = xenbus_scanf(XBT_NIL, pdev->xdev->nodename,
+				जाओ out;
+			पूर्ण
+			err = xenbus_म_पूछो(XBT_NIL, pdev->xdev->nodename,
 					   dev_str, "%x:%x:%x.%x",
-					   &domain, &bus, &slot, &func);
-			if (err < 0) {
+					   &करोमुख्य, &bus, &slot, &func);
+			अगर (err < 0) अणु
 				xenbus_dev_fatal(pdev->xdev, err,
 						 "Error reading device "
 						 "configuration");
-				goto out;
-			}
-			if (err != 4) {
+				जाओ out;
+			पूर्ण
+			अगर (err != 4) अणु
 				err = -EINVAL;
 				xenbus_dev_fatal(pdev->xdev, err,
 						 "Error parsing pci device "
 						 "configuration");
-				goto out;
-			}
+				जाओ out;
+			पूर्ण
 
-			err = xen_pcibk_export_device(pdev, domain, bus, slot,
+			err = xen_pcibk_export_device(pdev, करोमुख्य, bus, slot,
 						    func, i);
-			if (err)
-				goto out;
+			अगर (err)
+				जाओ out;
 
 			/* Publish pci roots. */
 			err = xen_pcibk_publish_pci_roots(pdev,
 						xen_pcibk_publish_pci_root);
-			if (err) {
+			अगर (err) अणु
 				xenbus_dev_fatal(pdev->xdev, err,
 						 "Error while publish PCI root"
 						 "buses for frontend");
-				goto out;
-			}
+				जाओ out;
+			पूर्ण
 
-			err = xenbus_printf(XBT_NIL, pdev->xdev->nodename,
+			err = xenbus_म_लिखो(XBT_NIL, pdev->xdev->nodename,
 					    state_str, "%d",
 					    XenbusStateInitialised);
-			if (err) {
+			अगर (err) अणु
 				xenbus_dev_fatal(pdev->xdev, err,
 						 "Error switching substate of "
 						 "dev-%d\n", i);
-				goto out;
-			}
-			break;
+				जाओ out;
+			पूर्ण
+			अवरोध;
 
-		case XenbusStateClosing:
+		हाल XenbusStateClosing:
 			dev_dbg(&pdev->xdev->dev, "Detaching dev-%d ...\n", i);
 
-			len = snprintf(dev_str, sizeof(dev_str), "vdev-%d", i);
-			if (unlikely(len >= (sizeof(dev_str) - 1))) {
+			len = snम_लिखो(dev_str, माप(dev_str), "vdev-%d", i);
+			अगर (unlikely(len >= (माप(dev_str) - 1))) अणु
 				err = -ENOMEM;
 				xenbus_dev_fatal(pdev->xdev, err,
 						 "String overflow while "
 						 "reading configuration");
-				goto out;
-			}
-			err = xenbus_scanf(XBT_NIL, pdev->xdev->nodename,
+				जाओ out;
+			पूर्ण
+			err = xenbus_म_पूछो(XBT_NIL, pdev->xdev->nodename,
 					   dev_str, "%x:%x:%x.%x",
-					   &domain, &bus, &slot, &func);
-			if (err < 0) {
+					   &करोमुख्य, &bus, &slot, &func);
+			अगर (err < 0) अणु
 				xenbus_dev_fatal(pdev->xdev, err,
 						 "Error reading device "
 						 "configuration");
-				goto out;
-			}
-			if (err != 4) {
+				जाओ out;
+			पूर्ण
+			अगर (err != 4) अणु
 				err = -EINVAL;
 				xenbus_dev_fatal(pdev->xdev, err,
 						 "Error parsing pci device "
 						 "configuration");
-				goto out;
-			}
+				जाओ out;
+			पूर्ण
 
-			err = xen_pcibk_remove_device(pdev, domain, bus, slot,
+			err = xen_pcibk_हटाओ_device(pdev, करोमुख्य, bus, slot,
 						    func);
-			if (err)
-				goto out;
+			अगर (err)
+				जाओ out;
 
-			/* TODO: If at some point we implement support for pci
-			 * root hot-remove on pcifront side, we'll need to
-			 * remove unnecessary xenstore nodes of pci roots here.
+			/* TODO: If at some poपूर्णांक we implement support क्रम pci
+			 * root hot-हटाओ on pcअगरront side, we'll need to
+			 * हटाओ unnecessary xenstore nodes of pci roots here.
 			 */
 
-			break;
+			अवरोध;
 
-		default:
-			break;
-		}
-	}
+		शेष:
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	if (state != XenbusStateReconfiguring)
+	अगर (state != XenbusStateReconfiguring)
 		/* Make sure we only reconfigure once. */
-		goto out;
+		जाओ out;
 
-	err = xenbus_switch_state(pdev->xdev, XenbusStateReconfigured);
-	if (err) {
+	err = xenbus_चयन_state(pdev->xdev, XenbusStateReconfigured);
+	अगर (err) अणु
 		xenbus_dev_fatal(pdev->xdev, err,
 				 "Error switching to reconfigured state!");
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 out:
 	mutex_unlock(&pdev->dev_lock);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void xen_pcibk_frontend_changed(struct xenbus_device *xdev,
-				     enum xenbus_state fe_state)
-{
-	struct xen_pcibk_device *pdev = dev_get_drvdata(&xdev->dev);
+अटल व्योम xen_pcibk_frontend_changed(काष्ठा xenbus_device *xdev,
+				     क्रमागत xenbus_state fe_state)
+अणु
+	काष्ठा xen_pcibk_device *pdev = dev_get_drvdata(&xdev->dev);
 
 	dev_dbg(&xdev->dev, "fe state changed %d\n", fe_state);
 
-	switch (fe_state) {
-	case XenbusStateInitialised:
+	चयन (fe_state) अणु
+	हाल XenbusStateInitialised:
 		xen_pcibk_attach(pdev);
-		break;
+		अवरोध;
 
-	case XenbusStateReconfiguring:
+	हाल XenbusStateReconfiguring:
 		xen_pcibk_reconfigure(pdev, XenbusStateReconfiguring);
-		break;
+		अवरोध;
 
-	case XenbusStateConnected:
-		/* pcifront switched its state from reconfiguring to connected.
-		 * Then switch to connected state.
+	हाल XenbusStateConnected:
+		/* pcअगरront चयनed its state from reconfiguring to connected.
+		 * Then चयन to connected state.
 		 */
-		xenbus_switch_state(xdev, XenbusStateConnected);
-		break;
+		xenbus_चयन_state(xdev, XenbusStateConnected);
+		अवरोध;
 
-	case XenbusStateClosing:
+	हाल XenbusStateClosing:
 		xen_pcibk_disconnect(pdev);
-		xenbus_switch_state(xdev, XenbusStateClosing);
-		break;
+		xenbus_चयन_state(xdev, XenbusStateClosing);
+		अवरोध;
 
-	case XenbusStateClosed:
+	हाल XenbusStateClosed:
 		xen_pcibk_disconnect(pdev);
-		xenbus_switch_state(xdev, XenbusStateClosed);
-		if (xenbus_dev_is_online(xdev))
-			break;
-		fallthrough;	/* if not online */
-	case XenbusStateUnknown:
+		xenbus_चयन_state(xdev, XenbusStateClosed);
+		अगर (xenbus_dev_is_online(xdev))
+			अवरोध;
+		fallthrough;	/* अगर not online */
+	हाल XenbusStateUnknown:
 		dev_dbg(&xdev->dev, "frontend is gone! unregister device\n");
-		device_unregister(&xdev->dev);
-		break;
+		device_unरेजिस्टर(&xdev->dev);
+		अवरोध;
 
-	default:
-		break;
-	}
-}
+	शेष:
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static int xen_pcibk_setup_backend(struct xen_pcibk_device *pdev)
-{
-	/* Get configuration from xend (if available now) */
-	int domain, bus, slot, func;
-	int err = 0;
-	int i, num_devs;
-	char dev_str[64];
-	char state_str[64];
+अटल पूर्णांक xen_pcibk_setup_backend(काष्ठा xen_pcibk_device *pdev)
+अणु
+	/* Get configuration from xend (अगर available now) */
+	पूर्णांक करोमुख्य, bus, slot, func;
+	पूर्णांक err = 0;
+	पूर्णांक i, num_devs;
+	अक्षर dev_str[64];
+	अक्षर state_str[64];
 
 	mutex_lock(&pdev->dev_lock);
 	/* It's possible we could get the call to setup twice, so make sure
-	 * we're not already connected.
+	 * we're not alपढ़ोy connected.
 	 */
-	if (xenbus_read_driver_state(pdev->xdev->nodename) !=
+	अगर (xenbus_पढ़ो_driver_state(pdev->xdev->nodename) !=
 	    XenbusStateInitWait)
-		goto out;
+		जाओ out;
 
 	dev_dbg(&pdev->xdev->dev, "getting be setup\n");
 
-	err = xenbus_scanf(XBT_NIL, pdev->xdev->nodename, "num_devs", "%d",
+	err = xenbus_म_पूछो(XBT_NIL, pdev->xdev->nodename, "num_devs", "%d",
 			   &num_devs);
-	if (err != 1) {
-		if (err >= 0)
+	अगर (err != 1) अणु
+		अगर (err >= 0)
 			err = -EINVAL;
 		xenbus_dev_fatal(pdev->xdev, err,
 				 "Error reading number of devices");
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	for (i = 0; i < num_devs; i++) {
-		int l = snprintf(dev_str, sizeof(dev_str), "dev-%d", i);
-		if (unlikely(l >= (sizeof(dev_str) - 1))) {
+	क्रम (i = 0; i < num_devs; i++) अणु
+		पूर्णांक l = snम_लिखो(dev_str, माप(dev_str), "dev-%d", i);
+		अगर (unlikely(l >= (माप(dev_str) - 1))) अणु
 			err = -ENOMEM;
 			xenbus_dev_fatal(pdev->xdev, err,
 					 "String overflow while reading "
 					 "configuration");
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
-		err = xenbus_scanf(XBT_NIL, pdev->xdev->nodename, dev_str,
-				   "%x:%x:%x.%x", &domain, &bus, &slot, &func);
-		if (err < 0) {
+		err = xenbus_म_पूछो(XBT_NIL, pdev->xdev->nodename, dev_str,
+				   "%x:%x:%x.%x", &करोमुख्य, &bus, &slot, &func);
+		अगर (err < 0) अणु
 			xenbus_dev_fatal(pdev->xdev, err,
 					 "Error reading device configuration");
-			goto out;
-		}
-		if (err != 4) {
+			जाओ out;
+		पूर्ण
+		अगर (err != 4) अणु
 			err = -EINVAL;
 			xenbus_dev_fatal(pdev->xdev, err,
 					 "Error parsing pci device "
 					 "configuration");
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
-		err = xen_pcibk_export_device(pdev, domain, bus, slot, func, i);
-		if (err)
-			goto out;
+		err = xen_pcibk_export_device(pdev, करोमुख्य, bus, slot, func, i);
+		अगर (err)
+			जाओ out;
 
 		/* Switch substate of this device. */
-		l = snprintf(state_str, sizeof(state_str), "state-%d", i);
-		if (unlikely(l >= (sizeof(state_str) - 1))) {
+		l = snम_लिखो(state_str, माप(state_str), "state-%d", i);
+		अगर (unlikely(l >= (माप(state_str) - 1))) अणु
 			err = -ENOMEM;
 			xenbus_dev_fatal(pdev->xdev, err,
 					 "String overflow while reading "
 					 "configuration");
-			goto out;
-		}
-		err = xenbus_printf(XBT_NIL, pdev->xdev->nodename, state_str,
+			जाओ out;
+		पूर्ण
+		err = xenbus_म_लिखो(XBT_NIL, pdev->xdev->nodename, state_str,
 				    "%d", XenbusStateInitialised);
-		if (err) {
+		अगर (err) अणु
 			xenbus_dev_fatal(pdev->xdev, err, "Error switching "
 					 "substate of dev-%d\n", i);
-			goto out;
-		}
-	}
+			जाओ out;
+		पूर्ण
+	पूर्ण
 
 	err = xen_pcibk_publish_pci_roots(pdev, xen_pcibk_publish_pci_root);
-	if (err) {
+	अगर (err) अणु
 		xenbus_dev_fatal(pdev->xdev, err,
 				 "Error while publish PCI root buses "
 				 "for frontend");
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	err = xenbus_switch_state(pdev->xdev, XenbusStateInitialised);
-	if (err)
+	err = xenbus_चयन_state(pdev->xdev, XenbusStateInitialised);
+	अगर (err)
 		xenbus_dev_fatal(pdev->xdev, err,
 				 "Error switching to initialised state!");
 
 out:
 	mutex_unlock(&pdev->dev_lock);
-	if (!err)
-		/* see if pcifront is already configured (if not, we'll wait) */
+	अगर (!err)
+		/* see अगर pcअगरront is alपढ़ोy configured (अगर not, we'll रुको) */
 		xen_pcibk_attach(pdev);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void xen_pcibk_be_watch(struct xenbus_watch *watch,
-			       const char *path, const char *token)
-{
-	struct xen_pcibk_device *pdev =
-	    container_of(watch, struct xen_pcibk_device, be_watch);
+अटल व्योम xen_pcibk_be_watch(काष्ठा xenbus_watch *watch,
+			       स्थिर अक्षर *path, स्थिर अक्षर *token)
+अणु
+	काष्ठा xen_pcibk_device *pdev =
+	    container_of(watch, काष्ठा xen_pcibk_device, be_watch);
 
-	switch (xenbus_read_driver_state(pdev->xdev->nodename)) {
-	case XenbusStateInitWait:
+	चयन (xenbus_पढ़ो_driver_state(pdev->xdev->nodename)) अणु
+	हाल XenbusStateInitWait:
 		xen_pcibk_setup_backend(pdev);
-		break;
+		अवरोध;
 
-	case XenbusStateInitialised:
+	हाल XenbusStateInitialised:
 		/*
 		 * We typically move to Initialised when the first device was
 		 * added. Hence subsequent devices getting added may need
 		 * reconfiguring.
 		 */
 		xen_pcibk_reconfigure(pdev, XenbusStateInitialised);
-		break;
+		अवरोध;
 
-	default:
-		break;
-	}
-}
+	शेष:
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static int xen_pcibk_xenbus_probe(struct xenbus_device *dev,
-				const struct xenbus_device_id *id)
-{
-	int err = 0;
-	struct xen_pcibk_device *pdev = alloc_pdev(dev);
+अटल पूर्णांक xen_pcibk_xenbus_probe(काष्ठा xenbus_device *dev,
+				स्थिर काष्ठा xenbus_device_id *id)
+अणु
+	पूर्णांक err = 0;
+	काष्ठा xen_pcibk_device *pdev = alloc_pdev(dev);
 
-	if (pdev == NULL) {
+	अगर (pdev == शून्य) अणु
 		err = -ENOMEM;
 		xenbus_dev_fatal(dev, err,
 				 "Error allocating xen_pcibk_device struct");
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	/* wait for xend to configure us */
-	err = xenbus_switch_state(dev, XenbusStateInitWait);
-	if (err)
-		goto out;
+	/* रुको क्रम xend to configure us */
+	err = xenbus_चयन_state(dev, XenbusStateInitWait);
+	अगर (err)
+		जाओ out;
 
-	/* watch the backend node for backend configuration information */
+	/* watch the backend node क्रम backend configuration inक्रमmation */
 	err = xenbus_watch_path(dev, dev->nodename, &pdev->be_watch,
-				NULL, xen_pcibk_be_watch);
-	if (err)
-		goto out;
+				शून्य, xen_pcibk_be_watch);
+	अगर (err)
+		जाओ out;
 
 	pdev->be_watching = 1;
 
-	/* We need to force a call to our callback here in case
-	 * xend already configured us!
+	/* We need to क्रमce a call to our callback here in हाल
+	 * xend alपढ़ोy configured us!
 	 */
-	xen_pcibk_be_watch(&pdev->be_watch, NULL, NULL);
+	xen_pcibk_be_watch(&pdev->be_watch, शून्य, शून्य);
 
 out:
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int xen_pcibk_xenbus_remove(struct xenbus_device *dev)
-{
-	struct xen_pcibk_device *pdev = dev_get_drvdata(&dev->dev);
+अटल पूर्णांक xen_pcibk_xenbus_हटाओ(काष्ठा xenbus_device *dev)
+अणु
+	काष्ठा xen_pcibk_device *pdev = dev_get_drvdata(&dev->dev);
 
-	if (pdev != NULL)
-		free_pdev(pdev);
+	अगर (pdev != शून्य)
+		मुक्त_pdev(pdev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct xenbus_device_id xen_pcibk_ids[] = {
-	{"pci"},
-	{""},
-};
+अटल स्थिर काष्ठा xenbus_device_id xen_pcibk_ids[] = अणु
+	अणु"pci"पूर्ण,
+	अणु""पूर्ण,
+पूर्ण;
 
-static struct xenbus_driver xen_pcibk_driver = {
+अटल काष्ठा xenbus_driver xen_pcibk_driver = अणु
 	.name                   = DRV_NAME,
 	.ids                    = xen_pcibk_ids,
 	.probe			= xen_pcibk_xenbus_probe,
-	.remove			= xen_pcibk_xenbus_remove,
+	.हटाओ			= xen_pcibk_xenbus_हटाओ,
 	.otherend_changed	= xen_pcibk_frontend_changed,
-};
+पूर्ण;
 
-const struct xen_pcibk_backend *__read_mostly xen_pcibk_backend;
+स्थिर काष्ठा xen_pcibk_backend *__पढ़ो_mostly xen_pcibk_backend;
 
-int __init xen_pcibk_xenbus_register(void)
-{
+पूर्णांक __init xen_pcibk_xenbus_रेजिस्टर(व्योम)
+अणु
 	xen_pcibk_backend = &xen_pcibk_vpci_backend;
-	if (passthrough)
+	अगर (passthrough)
 		xen_pcibk_backend = &xen_pcibk_passthrough_backend;
 	pr_info("backend is %s\n", xen_pcibk_backend->name);
-	return xenbus_register_backend(&xen_pcibk_driver);
-}
+	वापस xenbus_रेजिस्टर_backend(&xen_pcibk_driver);
+पूर्ण
 
-void __exit xen_pcibk_xenbus_unregister(void)
-{
-	xenbus_unregister_driver(&xen_pcibk_driver);
-}
+व्योम __निकास xen_pcibk_xenbus_unरेजिस्टर(व्योम)
+अणु
+	xenbus_unरेजिस्टर_driver(&xen_pcibk_driver);
+पूर्ण

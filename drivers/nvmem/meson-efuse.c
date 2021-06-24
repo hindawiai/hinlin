@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Amlogic Meson GX eFuse Driver
  *
@@ -6,114 +7,114 @@
  * Author: Carlo Caione <carlo@endlessm.com>
  */
 
-#include <linux/clk.h>
-#include <linux/module.h>
-#include <linux/nvmem-provider.h>
-#include <linux/of.h>
-#include <linux/platform_device.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/module.h>
+#समावेश <linux/nvmem-provider.h>
+#समावेश <linux/of.h>
+#समावेश <linux/platक्रमm_device.h>
 
-#include <linux/firmware/meson/meson_sm.h>
+#समावेश <linux/firmware/meson/meson_sm.h>
 
-static int meson_efuse_read(void *context, unsigned int offset,
-			    void *val, size_t bytes)
-{
-	struct meson_sm_firmware *fw = context;
+अटल पूर्णांक meson_efuse_पढ़ो(व्योम *context, अचिन्हित पूर्णांक offset,
+			    व्योम *val, माप_प्रकार bytes)
+अणु
+	काष्ठा meson_sm_firmware *fw = context;
 
-	return meson_sm_call_read(fw, (u8 *)val, bytes, SM_EFUSE_READ, offset,
+	वापस meson_sm_call_पढ़ो(fw, (u8 *)val, bytes, SM_EFUSE_READ, offset,
 				  bytes, 0, 0, 0);
-}
+पूर्ण
 
-static int meson_efuse_write(void *context, unsigned int offset,
-			     void *val, size_t bytes)
-{
-	struct meson_sm_firmware *fw = context;
+अटल पूर्णांक meson_efuse_ग_लिखो(व्योम *context, अचिन्हित पूर्णांक offset,
+			     व्योम *val, माप_प्रकार bytes)
+अणु
+	काष्ठा meson_sm_firmware *fw = context;
 
-	return meson_sm_call_write(fw, (u8 *)val, bytes, SM_EFUSE_WRITE, offset,
+	वापस meson_sm_call_ग_लिखो(fw, (u8 *)val, bytes, SM_EFUSE_WRITE, offset,
 				   bytes, 0, 0, 0);
-}
+पूर्ण
 
-static const struct of_device_id meson_efuse_match[] = {
-	{ .compatible = "amlogic,meson-gxbb-efuse", },
-	{ /* sentinel */ },
-};
+अटल स्थिर काष्ठा of_device_id meson_efuse_match[] = अणु
+	अणु .compatible = "amlogic,meson-gxbb-efuse", पूर्ण,
+	अणु /* sentinel */ पूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, meson_efuse_match);
 
-static int meson_efuse_probe(struct platform_device *pdev)
-{
-	struct device *dev = &pdev->dev;
-	struct meson_sm_firmware *fw;
-	struct device_node *sm_np;
-	struct nvmem_device *nvmem;
-	struct nvmem_config *econfig;
-	struct clk *clk;
-	unsigned int size;
-	int ret;
+अटल पूर्णांक meson_efuse_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा meson_sm_firmware *fw;
+	काष्ठा device_node *sm_np;
+	काष्ठा nvmem_device *nvmem;
+	काष्ठा nvmem_config *econfig;
+	काष्ठा clk *clk;
+	अचिन्हित पूर्णांक size;
+	पूर्णांक ret;
 
 	sm_np = of_parse_phandle(pdev->dev.of_node, "secure-monitor", 0);
-	if (!sm_np) {
+	अगर (!sm_np) अणु
 		dev_err(&pdev->dev, "no secure-monitor node\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
 	fw = meson_sm_get(sm_np);
 	of_node_put(sm_np);
-	if (!fw)
-		return -EPROBE_DEFER;
+	अगर (!fw)
+		वापस -EPROBE_DEFER;
 
-	clk = devm_clk_get(dev, NULL);
-	if (IS_ERR(clk)) {
+	clk = devm_clk_get(dev, शून्य);
+	अगर (IS_ERR(clk)) अणु
 		ret = PTR_ERR(clk);
-		if (ret != -EPROBE_DEFER)
+		अगर (ret != -EPROBE_DEFER)
 			dev_err(dev, "failed to get efuse gate");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	ret = clk_prepare_enable(clk);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev, "failed to enable gate");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	ret = devm_add_action_or_reset(dev,
-				       (void(*)(void *))clk_disable_unprepare,
+				       (व्योम(*)(व्योम *))clk_disable_unprepare,
 				       clk);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev, "failed to add disable callback");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	if (meson_sm_call(fw, SM_EFUSE_USER_MAX, &size, 0, 0, 0, 0, 0) < 0) {
+	अगर (meson_sm_call(fw, SM_EFUSE_USER_MAX, &size, 0, 0, 0, 0, 0) < 0) अणु
 		dev_err(dev, "failed to get max user");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	econfig = devm_kzalloc(dev, sizeof(*econfig), GFP_KERNEL);
-	if (!econfig)
-		return -ENOMEM;
+	econfig = devm_kzalloc(dev, माप(*econfig), GFP_KERNEL);
+	अगर (!econfig)
+		वापस -ENOMEM;
 
 	econfig->dev = dev;
 	econfig->name = dev_name(dev);
 	econfig->stride = 1;
 	econfig->word_size = 1;
-	econfig->reg_read = meson_efuse_read;
-	econfig->reg_write = meson_efuse_write;
+	econfig->reg_पढ़ो = meson_efuse_पढ़ो;
+	econfig->reg_ग_लिखो = meson_efuse_ग_लिखो;
 	econfig->size = size;
 	econfig->priv = fw;
 
-	nvmem = devm_nvmem_register(&pdev->dev, econfig);
+	nvmem = devm_nvmem_रेजिस्टर(&pdev->dev, econfig);
 
-	return PTR_ERR_OR_ZERO(nvmem);
-}
+	वापस PTR_ERR_OR_ZERO(nvmem);
+पूर्ण
 
-static struct platform_driver meson_efuse_driver = {
+अटल काष्ठा platक्रमm_driver meson_efuse_driver = अणु
 	.probe = meson_efuse_probe,
-	.driver = {
+	.driver = अणु
 		.name = "meson-efuse",
 		.of_match_table = meson_efuse_match,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-module_platform_driver(meson_efuse_driver);
+module_platक्रमm_driver(meson_efuse_driver);
 
 MODULE_AUTHOR("Carlo Caione <carlo@endlessm.com>");
 MODULE_DESCRIPTION("Amlogic Meson GX NVMEM driver");

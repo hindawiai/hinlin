@@ -1,61 +1,62 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (C) 2008 Advanced Micro Devices, Inc.
  *
  * Author: Joerg Roedel <joerg.roedel@amd.com>
  */
 
-#define pr_fmt(fmt)	"DMA-API: " fmt
+#घोषणा pr_fmt(fmt)	"DMA-API: " fmt
 
-#include <linux/sched/task_stack.h>
-#include <linux/scatterlist.h>
-#include <linux/dma-map-ops.h>
-#include <linux/sched/task.h>
-#include <linux/stacktrace.h>
-#include <linux/spinlock.h>
-#include <linux/vmalloc.h>
-#include <linux/debugfs.h>
-#include <linux/uaccess.h>
-#include <linux/export.h>
-#include <linux/device.h>
-#include <linux/types.h>
-#include <linux/sched.h>
-#include <linux/ctype.h>
-#include <linux/list.h>
-#include <linux/slab.h>
-#include <asm/sections.h>
-#include "debug.h"
+#समावेश <linux/sched/task_stack.h>
+#समावेश <linux/scatterlist.h>
+#समावेश <linux/dma-map-ops.h>
+#समावेश <linux/sched/task.h>
+#समावेश <linux/stacktrace.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/vदो_स्मृति.h>
+#समावेश <linux/debugfs.h>
+#समावेश <linux/uaccess.h>
+#समावेश <linux/export.h>
+#समावेश <linux/device.h>
+#समावेश <linux/types.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/प्रकार.स>
+#समावेश <linux/list.h>
+#समावेश <linux/slab.h>
+#समावेश <यंत्र/sections.h>
+#समावेश "debug.h"
 
-#define HASH_SIZE       16384ULL
-#define HASH_FN_SHIFT   13
-#define HASH_FN_MASK    (HASH_SIZE - 1)
+#घोषणा HASH_SIZE       16384ULL
+#घोषणा HASH_FN_SHIFT   13
+#घोषणा HASH_FN_MASK    (HASH_SIZE - 1)
 
-#define PREALLOC_DMA_DEBUG_ENTRIES (1 << 16)
+#घोषणा PREALLOC_DMA_DEBUG_ENTRIES (1 << 16)
 /* If the pool runs out, add this many new entries at once */
-#define DMA_DEBUG_DYNAMIC_ENTRIES (PAGE_SIZE / sizeof(struct dma_debug_entry))
+#घोषणा DMA_DEBUG_DYNAMIC_ENTRIES (PAGE_SIZE / माप(काष्ठा dma_debug_entry))
 
-enum {
+क्रमागत अणु
 	dma_debug_single,
 	dma_debug_sg,
 	dma_debug_coherent,
 	dma_debug_resource,
-};
+पूर्ण;
 
-enum map_err_types {
+क्रमागत map_err_types अणु
 	MAP_ERR_CHECK_NOT_APPLICABLE,
 	MAP_ERR_NOT_CHECKED,
 	MAP_ERR_CHECKED,
-};
+पूर्ण;
 
-#define DMA_DEBUG_STACKTRACE_ENTRIES 5
+#घोषणा DMA_DEBUG_STACKTRACE_ENTRIES 5
 
 /**
- * struct dma_debug_entry - track a dma_map* or dma_alloc_coherent mapping
- * @list: node on pre-allocated free_entries list
- * @dev: 'dev' argument to dma_map_{page|single|sg} or dma_alloc_coherent
+ * काष्ठा dma_debug_entry - track a dma_map* or dma_alloc_coherent mapping
+ * @list: node on pre-allocated मुक्त_entries list
+ * @dev: 'dev' argument to dma_map_अणुpage|single|sgपूर्ण or dma_alloc_coherent
  * @size: length of the mapping
  * @type: single, page, sg, coherent
- * @direction: enum dma_data_direction
+ * @direction: क्रमागत dma_data_direction
  * @sg_call_ents: 'nents' from dma_map_sg
  * @sg_mapped_ents: 'mapped_ents' from dma_map_sg
  * @pfn: page frame of the start address
@@ -63,250 +64,250 @@ enum map_err_types {
  * @map_err_type: track whether dma_mapping_error() was checked
  * @stacktrace: support backtraces when a violation is detected
  */
-struct dma_debug_entry {
-	struct list_head list;
-	struct device    *dev;
+काष्ठा dma_debug_entry अणु
+	काष्ठा list_head list;
+	काष्ठा device    *dev;
 	u64              dev_addr;
 	u64              size;
-	int              type;
-	int              direction;
-	int		 sg_call_ents;
-	int		 sg_mapped_ents;
-	unsigned long	 pfn;
-	size_t		 offset;
-	enum map_err_types  map_err_type;
-#ifdef CONFIG_STACKTRACE
-	unsigned int	stack_len;
-	unsigned long	stack_entries[DMA_DEBUG_STACKTRACE_ENTRIES];
-#endif
-} ____cacheline_aligned_in_smp;
+	पूर्णांक              type;
+	पूर्णांक              direction;
+	पूर्णांक		 sg_call_ents;
+	पूर्णांक		 sg_mapped_ents;
+	अचिन्हित दीर्घ	 pfn;
+	माप_प्रकार		 offset;
+	क्रमागत map_err_types  map_err_type;
+#अगर_घोषित CONFIG_STACKTRACE
+	अचिन्हित पूर्णांक	stack_len;
+	अचिन्हित दीर्घ	stack_entries[DMA_DEBUG_STACKTRACE_ENTRIES];
+#पूर्ण_अगर
+पूर्ण ____cacheline_aligned_in_smp;
 
-typedef bool (*match_fn)(struct dma_debug_entry *, struct dma_debug_entry *);
+प्रकार bool (*match_fn)(काष्ठा dma_debug_entry *, काष्ठा dma_debug_entry *);
 
-struct hash_bucket {
-	struct list_head list;
+काष्ठा hash_bucket अणु
+	काष्ठा list_head list;
 	spinlock_t lock;
-};
+पूर्ण;
 
 /* Hash list to save the allocated dma addresses */
-static struct hash_bucket dma_entry_hash[HASH_SIZE];
+अटल काष्ठा hash_bucket dma_entry_hash[HASH_SIZE];
 /* List of pre-allocated dma_debug_entry's */
-static LIST_HEAD(free_entries);
-/* Lock for the list above */
-static DEFINE_SPINLOCK(free_entries_lock);
+अटल LIST_HEAD(मुक्त_entries);
+/* Lock क्रम the list above */
+अटल DEFINE_SPINLOCK(मुक्त_entries_lock);
 
-/* Global disable flag - will be set in case of an error */
-static bool global_disable __read_mostly;
+/* Global disable flag - will be set in हाल of an error */
+अटल bool global_disable __पढ़ो_mostly;
 
 /* Early initialization disable flag, set at the end of dma_debug_init */
-static bool dma_debug_initialized __read_mostly;
+अटल bool dma_debug_initialized __पढ़ो_mostly;
 
-static inline bool dma_debug_disabled(void)
-{
-	return global_disable || !dma_debug_initialized;
-}
+अटल अंतरभूत bool dma_debug_disabled(व्योम)
+अणु
+	वापस global_disable || !dma_debug_initialized;
+पूर्ण
 
 /* Global error count */
-static u32 error_count;
+अटल u32 error_count;
 
 /* Global error show enable*/
-static u32 show_all_errors __read_mostly;
+अटल u32 show_all_errors __पढ़ो_mostly;
 /* Number of errors to show */
-static u32 show_num_errors = 1;
+अटल u32 show_num_errors = 1;
 
-static u32 num_free_entries;
-static u32 min_free_entries;
-static u32 nr_total_entries;
+अटल u32 num_मुक्त_entries;
+अटल u32 min_मुक्त_entries;
+अटल u32 nr_total_entries;
 
-/* number of preallocated entries requested by kernel cmdline */
-static u32 nr_prealloc_entries = PREALLOC_DMA_DEBUG_ENTRIES;
+/* number of pपुनः_स्मृतिated entries requested by kernel cmdline */
+अटल u32 nr_pपुनः_स्मृति_entries = PREALLOC_DMA_DEBUG_ENTRIES;
 
 /* per-driver filter related state */
 
-#define NAME_MAX_LEN	64
+#घोषणा NAME_MAX_LEN	64
 
-static char                  current_driver_name[NAME_MAX_LEN] __read_mostly;
-static struct device_driver *current_driver                    __read_mostly;
+अटल अक्षर                  current_driver_name[NAME_MAX_LEN] __पढ़ो_mostly;
+अटल काष्ठा device_driver *current_driver                    __पढ़ो_mostly;
 
-static DEFINE_RWLOCK(driver_name_lock);
+अटल DEFINE_RWLOCK(driver_name_lock);
 
-static const char *const maperr2str[] = {
+अटल स्थिर अक्षर *स्थिर maperr2str[] = अणु
 	[MAP_ERR_CHECK_NOT_APPLICABLE] = "dma map error check not applicable",
 	[MAP_ERR_NOT_CHECKED] = "dma map error not checked",
 	[MAP_ERR_CHECKED] = "dma map error checked",
-};
+पूर्ण;
 
-static const char *type2name[] = {
+अटल स्थिर अक्षर *type2name[] = अणु
 	[dma_debug_single] = "single",
 	[dma_debug_sg] = "scather-gather",
 	[dma_debug_coherent] = "coherent",
 	[dma_debug_resource] = "resource",
-};
+पूर्ण;
 
-static const char *dir2name[] = {
-	[DMA_BIDIRECTIONAL]	= "DMA_BIDIRECTIONAL",
+अटल स्थिर अक्षर *dir2name[] = अणु
+	[DMA_BIसूचीECTIONAL]	= "DMA_BIDIRECTIONAL",
 	[DMA_TO_DEVICE]		= "DMA_TO_DEVICE",
 	[DMA_FROM_DEVICE]	= "DMA_FROM_DEVICE",
 	[DMA_NONE]		= "DMA_NONE",
-};
+पूर्ण;
 
 /*
  * The access to some variables in this macro is racy. We can't use atomic_t
  * here because all these variables are exported to debugfs. Some of them even
- * writeable. This is also the reason why a lock won't help much. But anyway,
+ * ग_लिखोable. This is also the reason why a lock won't help much. But anyway,
  * the races are no big deal. Here is why:
  *
  *   error_count: the addition is racy, but the worst thing that can happen is
- *                that we don't count some errors
+ *                that we करोn't count some errors
  *   show_num_errors: the subtraction is racy. Also no big deal because in
- *                    worst case this will result in one warning more in the
- *                    system log than the user configured. This variable is
- *                    writeable via debugfs.
+ *                    worst हाल this will result in one warning more in the
+ *                    प्रणाली log than the user configured. This variable is
+ *                    ग_लिखोable via debugfs.
  */
-static inline void dump_entry_trace(struct dma_debug_entry *entry)
-{
-#ifdef CONFIG_STACKTRACE
-	if (entry) {
+अटल अंतरभूत व्योम dump_entry_trace(काष्ठा dma_debug_entry *entry)
+अणु
+#अगर_घोषित CONFIG_STACKTRACE
+	अगर (entry) अणु
 		pr_warn("Mapped at:\n");
-		stack_trace_print(entry->stack_entries, entry->stack_len, 0);
-	}
-#endif
-}
+		stack_trace_prपूर्णांक(entry->stack_entries, entry->stack_len, 0);
+	पूर्ण
+#पूर्ण_अगर
+पूर्ण
 
-static bool driver_filter(struct device *dev)
-{
-	struct device_driver *drv;
-	unsigned long flags;
+अटल bool driver_filter(काष्ठा device *dev)
+अणु
+	काष्ठा device_driver *drv;
+	अचिन्हित दीर्घ flags;
 	bool ret;
 
 	/* driver filter off */
-	if (likely(!current_driver_name[0]))
-		return true;
+	अगर (likely(!current_driver_name[0]))
+		वापस true;
 
 	/* driver filter on and initialized */
-	if (current_driver && dev && dev->driver == current_driver)
-		return true;
+	अगर (current_driver && dev && dev->driver == current_driver)
+		वापस true;
 
-	/* driver filter on, but we can't filter on a NULL device... */
-	if (!dev)
-		return false;
+	/* driver filter on, but we can't filter on a शून्य device... */
+	अगर (!dev)
+		वापस false;
 
-	if (current_driver || !current_driver_name[0])
-		return false;
+	अगर (current_driver || !current_driver_name[0])
+		वापस false;
 
 	/* driver filter on but not yet initialized */
 	drv = dev->driver;
-	if (!drv)
-		return false;
+	अगर (!drv)
+		वापस false;
 
 	/* lock to protect against change of current_driver_name */
-	read_lock_irqsave(&driver_name_lock, flags);
+	पढ़ो_lock_irqsave(&driver_name_lock, flags);
 
 	ret = false;
-	if (drv->name &&
-	    strncmp(current_driver_name, drv->name, NAME_MAX_LEN - 1) == 0) {
+	अगर (drv->name &&
+	    म_भेदन(current_driver_name, drv->name, NAME_MAX_LEN - 1) == 0) अणु
 		current_driver = drv;
 		ret = true;
-	}
+	पूर्ण
 
-	read_unlock_irqrestore(&driver_name_lock, flags);
+	पढ़ो_unlock_irqrestore(&driver_name_lock, flags);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-#define err_printk(dev, entry, format, arg...) do {			\
+#घोषणा err_prपूर्णांकk(dev, entry, क्रमmat, arg...) करो अणु			\
 		error_count += 1;					\
-		if (driver_filter(dev) &&				\
-		    (show_all_errors || show_num_errors > 0)) {		\
-			WARN(1, pr_fmt("%s %s: ") format,		\
+		अगर (driver_filter(dev) &&				\
+		    (show_all_errors || show_num_errors > 0)) अणु		\
+			WARN(1, pr_fmt("%s %s: ") क्रमmat,		\
 			     dev ? dev_driver_string(dev) : "NULL",	\
 			     dev ? dev_name(dev) : "NULL", ## arg);	\
 			dump_entry_trace(entry);			\
-		}							\
-		if (!show_all_errors && show_num_errors > 0)		\
+		पूर्ण							\
+		अगर (!show_all_errors && show_num_errors > 0)		\
 			show_num_errors -= 1;				\
-	} while (0);
+	पूर्ण जबतक (0);
 
 /*
  * Hash related functions
  *
- * Every DMA-API request is saved into a struct dma_debug_entry. To
- * have quick access to these structs they are stored into a hash.
+ * Every DMA-API request is saved पूर्णांकo a काष्ठा dma_debug_entry. To
+ * have quick access to these काष्ठाs they are stored पूर्णांकo a hash.
  */
-static int hash_fn(struct dma_debug_entry *entry)
-{
+अटल पूर्णांक hash_fn(काष्ठा dma_debug_entry *entry)
+अणु
 	/*
 	 * Hash function is based on the dma address.
-	 * We use bits 20-27 here as the index into the hash
+	 * We use bits 20-27 here as the index पूर्णांकo the hash
 	 */
-	return (entry->dev_addr >> HASH_FN_SHIFT) & HASH_FN_MASK;
-}
+	वापस (entry->dev_addr >> HASH_FN_SHIFT) & HASH_FN_MASK;
+पूर्ण
 
 /*
- * Request exclusive access to a hash bucket for a given dma_debug_entry.
+ * Request exclusive access to a hash bucket क्रम a given dma_debug_entry.
  */
-static struct hash_bucket *get_hash_bucket(struct dma_debug_entry *entry,
-					   unsigned long *flags)
+अटल काष्ठा hash_bucket *get_hash_bucket(काष्ठा dma_debug_entry *entry,
+					   अचिन्हित दीर्घ *flags)
 	__acquires(&dma_entry_hash[idx].lock)
-{
-	int idx = hash_fn(entry);
-	unsigned long __flags;
+अणु
+	पूर्णांक idx = hash_fn(entry);
+	अचिन्हित दीर्घ __flags;
 
 	spin_lock_irqsave(&dma_entry_hash[idx].lock, __flags);
 	*flags = __flags;
-	return &dma_entry_hash[idx];
-}
+	वापस &dma_entry_hash[idx];
+पूर्ण
 
 /*
  * Give up exclusive access to the hash bucket
  */
-static void put_hash_bucket(struct hash_bucket *bucket,
-			    unsigned long flags)
+अटल व्योम put_hash_bucket(काष्ठा hash_bucket *bucket,
+			    अचिन्हित दीर्घ flags)
 	__releases(&bucket->lock)
-{
+अणु
 	spin_unlock_irqrestore(&bucket->lock, flags);
-}
+पूर्ण
 
-static bool exact_match(struct dma_debug_entry *a, struct dma_debug_entry *b)
-{
-	return ((a->dev_addr == b->dev_addr) &&
+अटल bool exact_match(काष्ठा dma_debug_entry *a, काष्ठा dma_debug_entry *b)
+अणु
+	वापस ((a->dev_addr == b->dev_addr) &&
 		(a->dev == b->dev)) ? true : false;
-}
+पूर्ण
 
-static bool containing_match(struct dma_debug_entry *a,
-			     struct dma_debug_entry *b)
-{
-	if (a->dev != b->dev)
-		return false;
+अटल bool containing_match(काष्ठा dma_debug_entry *a,
+			     काष्ठा dma_debug_entry *b)
+अणु
+	अगर (a->dev != b->dev)
+		वापस false;
 
-	if ((b->dev_addr <= a->dev_addr) &&
+	अगर ((b->dev_addr <= a->dev_addr) &&
 	    ((b->dev_addr + b->size) >= (a->dev_addr + a->size)))
-		return true;
+		वापस true;
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
 /*
  * Search a given entry in the hash bucket list
  */
-static struct dma_debug_entry *__hash_bucket_find(struct hash_bucket *bucket,
-						  struct dma_debug_entry *ref,
+अटल काष्ठा dma_debug_entry *__hash_bucket_find(काष्ठा hash_bucket *bucket,
+						  काष्ठा dma_debug_entry *ref,
 						  match_fn match)
-{
-	struct dma_debug_entry *entry, *ret = NULL;
-	int matches = 0, match_lvl, last_lvl = -1;
+अणु
+	काष्ठा dma_debug_entry *entry, *ret = शून्य;
+	पूर्णांक matches = 0, match_lvl, last_lvl = -1;
 
-	list_for_each_entry(entry, &bucket->list, list) {
-		if (!match(ref, entry))
-			continue;
+	list_क्रम_each_entry(entry, &bucket->list, list) अणु
+		अगर (!match(ref, entry))
+			जारी;
 
 		/*
 		 * Some drivers map the same physical address multiple
-		 * times. Without a hardware IOMMU this results in the
-		 * same device addresses being put into the dma-debug
-		 * hash multiple times too. This can result in false
-		 * positives being reported. Therefore we implement a
-		 * best-fit algorithm here which returns the entry from
+		 * बार. Without a hardware IOMMU this results in the
+		 * same device addresses being put पूर्णांकo the dma-debug
+		 * hash multiple बार too. This can result in false
+		 * positives being reported. Thereक्रमe we implement a
+		 * best-fit algorithm here which वापसs the entry from
 		 * the hash which fits best to the reference value
 		 * instead of the first-fit.
 		 */
@@ -317,48 +318,48 @@ static struct dma_debug_entry *__hash_bucket_find(struct hash_bucket *bucket,
 		entry->direction    == ref->direction    ? ++match_lvl : 0;
 		entry->sg_call_ents == ref->sg_call_ents ? ++match_lvl : 0;
 
-		if (match_lvl == 4) {
-			/* perfect-fit - return the result */
-			return entry;
-		} else if (match_lvl > last_lvl) {
+		अगर (match_lvl == 4) अणु
+			/* perfect-fit - वापस the result */
+			वापस entry;
+		पूर्ण अन्यथा अगर (match_lvl > last_lvl) अणु
 			/*
 			 * We found an entry that fits better then the
 			 * previous one or it is the 1st match.
 			 */
 			last_lvl = match_lvl;
 			ret      = entry;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	/*
-	 * If we have multiple matches but no perfect-fit, just return
-	 * NULL.
+	 * If we have multiple matches but no perfect-fit, just वापस
+	 * शून्य.
 	 */
-	ret = (matches == 1) ? ret : NULL;
+	ret = (matches == 1) ? ret : शून्य;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static struct dma_debug_entry *bucket_find_exact(struct hash_bucket *bucket,
-						 struct dma_debug_entry *ref)
-{
-	return __hash_bucket_find(bucket, ref, exact_match);
-}
+अटल काष्ठा dma_debug_entry *bucket_find_exact(काष्ठा hash_bucket *bucket,
+						 काष्ठा dma_debug_entry *ref)
+अणु
+	वापस __hash_bucket_find(bucket, ref, exact_match);
+पूर्ण
 
-static struct dma_debug_entry *bucket_find_contain(struct hash_bucket **bucket,
-						   struct dma_debug_entry *ref,
-						   unsigned long *flags)
-{
+अटल काष्ठा dma_debug_entry *bucket_find_contain(काष्ठा hash_bucket **bucket,
+						   काष्ठा dma_debug_entry *ref,
+						   अचिन्हित दीर्घ *flags)
+अणु
 
-	unsigned int max_range = dma_get_max_seg_size(ref->dev);
-	struct dma_debug_entry *entry, index = *ref;
-	unsigned int range = 0;
+	अचिन्हित पूर्णांक max_range = dma_get_max_seg_size(ref->dev);
+	काष्ठा dma_debug_entry *entry, index = *ref;
+	अचिन्हित पूर्णांक range = 0;
 
-	while (range <= max_range) {
+	जबतक (range <= max_range) अणु
 		entry = __hash_bucket_find(*bucket, ref, containing_match);
 
-		if (entry)
-			return entry;
+		अगर (entry)
+			वापस entry;
 
 		/*
 		 * Nothing found, go back a hash bucket
@@ -367,52 +368,52 @@ static struct dma_debug_entry *bucket_find_contain(struct hash_bucket **bucket,
 		range          += (1 << HASH_FN_SHIFT);
 		index.dev_addr -= (1 << HASH_FN_SHIFT);
 		*bucket = get_hash_bucket(&index, flags);
-	}
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
 /*
  * Add an entry to a hash bucket
  */
-static void hash_bucket_add(struct hash_bucket *bucket,
-			    struct dma_debug_entry *entry)
-{
+अटल व्योम hash_bucket_add(काष्ठा hash_bucket *bucket,
+			    काष्ठा dma_debug_entry *entry)
+अणु
 	list_add_tail(&entry->list, &bucket->list);
-}
+पूर्ण
 
 /*
  * Remove entry from a hash bucket list
  */
-static void hash_bucket_del(struct dma_debug_entry *entry)
-{
+अटल व्योम hash_bucket_del(काष्ठा dma_debug_entry *entry)
+अणु
 	list_del(&entry->list);
-}
+पूर्ण
 
-static unsigned long long phys_addr(struct dma_debug_entry *entry)
-{
-	if (entry->type == dma_debug_resource)
-		return __pfn_to_phys(entry->pfn) + entry->offset;
+अटल अचिन्हित दीर्घ दीर्घ phys_addr(काष्ठा dma_debug_entry *entry)
+अणु
+	अगर (entry->type == dma_debug_resource)
+		वापस __pfn_to_phys(entry->pfn) + entry->offset;
 
-	return page_to_phys(pfn_to_page(entry->pfn)) + entry->offset;
-}
+	वापस page_to_phys(pfn_to_page(entry->pfn)) + entry->offset;
+पूर्ण
 
 /*
- * Dump mapping entries for debugging purposes
+ * Dump mapping entries क्रम debugging purposes
  */
-void debug_dma_dump_mappings(struct device *dev)
-{
-	int idx;
+व्योम debug_dma_dump_mappings(काष्ठा device *dev)
+अणु
+	पूर्णांक idx;
 
-	for (idx = 0; idx < HASH_SIZE; idx++) {
-		struct hash_bucket *bucket = &dma_entry_hash[idx];
-		struct dma_debug_entry *entry;
-		unsigned long flags;
+	क्रम (idx = 0; idx < HASH_SIZE; idx++) अणु
+		काष्ठा hash_bucket *bucket = &dma_entry_hash[idx];
+		काष्ठा dma_debug_entry *entry;
+		अचिन्हित दीर्घ flags;
 
 		spin_lock_irqsave(&bucket->lock, flags);
 
-		list_for_each_entry(entry, &bucket->list, list) {
-			if (!dev || dev == entry->dev) {
+		list_क्रम_each_entry(entry, &bucket->list, list) अणु
+			अगर (!dev || dev == entry->dev) अणु
 				dev_info(entry->dev,
 					 "%s idx %d P=%Lx N=%lx D=%Lx L=%Lx %s %s\n",
 					 type2name[entry->type], idx,
@@ -420,75 +421,75 @@ void debug_dma_dump_mappings(struct device *dev)
 					 entry->dev_addr, entry->size,
 					 dir2name[entry->direction],
 					 maperr2str[entry->map_err_type]);
-			}
-		}
+			पूर्ण
+		पूर्ण
 
 		spin_unlock_irqrestore(&bucket->lock, flags);
 		cond_resched();
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
- * For each mapping (initial cacheline in the case of
+ * For each mapping (initial cacheline in the हाल of
  * dma_alloc_coherent/dma_map_page, initial cacheline in each page of a
- * scatterlist, or the cacheline specified in dma_map_single) insert
- * into this tree using the cacheline as the key. At
- * dma_unmap_{single|sg|page} or dma_free_coherent delete the entry.  If
- * the entry already exists at insertion time add a tag as a reference
- * count for the overlapping mappings.  For now, the overlap tracking
- * just ensures that 'unmaps' balance 'maps' before marking the
+ * scatterlist, or the cacheline specअगरied in dma_map_single) insert
+ * पूर्णांकo this tree using the cacheline as the key. At
+ * dma_unmap_अणुsingle|sg|pageपूर्ण or dma_मुक्त_coherent delete the entry.  If
+ * the entry alपढ़ोy exists at insertion समय add a tag as a reference
+ * count क्रम the overlapping mappings.  For now, the overlap tracking
+ * just ensures that 'unmaps' balance 'maps' beक्रमe marking the
  * cacheline idle, but we should also be flagging overlaps as an API
  * violation.
  *
- * Memory usage is mostly constrained by the maximum number of available
- * dma-debug entries in that we need a free dma_debug_entry before
- * inserting into the tree.  In the case of dma_map_page and
+ * Memory usage is mostly स्थिरrained by the maximum number of available
+ * dma-debug entries in that we need a मुक्त dma_debug_entry beक्रमe
+ * inserting पूर्णांकo the tree.  In the हाल of dma_map_page and
  * dma_alloc_coherent there is only one dma_debug_entry and one
  * dma_active_cacheline entry to track per event.  dma_map_sg(), on the
  * other hand, consumes a single dma_debug_entry, but inserts 'nents'
- * entries into the tree.
+ * entries पूर्णांकo the tree.
  */
-static RADIX_TREE(dma_active_cacheline, GFP_NOWAIT);
-static DEFINE_SPINLOCK(radix_lock);
-#define ACTIVE_CACHELINE_MAX_OVERLAP ((1 << RADIX_TREE_MAX_TAGS) - 1)
-#define CACHELINE_PER_PAGE_SHIFT (PAGE_SHIFT - L1_CACHE_SHIFT)
-#define CACHELINES_PER_PAGE (1 << CACHELINE_PER_PAGE_SHIFT)
+अटल RADIX_TREE(dma_active_cacheline, GFP_NOWAIT);
+अटल DEFINE_SPINLOCK(radix_lock);
+#घोषणा ACTIVE_CACHELINE_MAX_OVERLAP ((1 << RADIX_TREE_MAX_TAGS) - 1)
+#घोषणा CACHELINE_PER_PAGE_SHIFT (PAGE_SHIFT - L1_CACHE_SHIFT)
+#घोषणा CACHELINES_PER_PAGE (1 << CACHELINE_PER_PAGE_SHIFT)
 
-static phys_addr_t to_cacheline_number(struct dma_debug_entry *entry)
-{
-	return (entry->pfn << CACHELINE_PER_PAGE_SHIFT) +
+अटल phys_addr_t to_cacheline_number(काष्ठा dma_debug_entry *entry)
+अणु
+	वापस (entry->pfn << CACHELINE_PER_PAGE_SHIFT) +
 		(entry->offset >> L1_CACHE_SHIFT);
-}
+पूर्ण
 
-static int active_cacheline_read_overlap(phys_addr_t cln)
-{
-	int overlap = 0, i;
+अटल पूर्णांक active_cacheline_पढ़ो_overlap(phys_addr_t cln)
+अणु
+	पूर्णांक overlap = 0, i;
 
-	for (i = RADIX_TREE_MAX_TAGS - 1; i >= 0; i--)
-		if (radix_tree_tag_get(&dma_active_cacheline, cln, i))
+	क्रम (i = RADIX_TREE_MAX_TAGS - 1; i >= 0; i--)
+		अगर (radix_tree_tag_get(&dma_active_cacheline, cln, i))
 			overlap |= 1 << i;
-	return overlap;
-}
+	वापस overlap;
+पूर्ण
 
-static int active_cacheline_set_overlap(phys_addr_t cln, int overlap)
-{
-	int i;
+अटल पूर्णांक active_cacheline_set_overlap(phys_addr_t cln, पूर्णांक overlap)
+अणु
+	पूर्णांक i;
 
-	if (overlap > ACTIVE_CACHELINE_MAX_OVERLAP || overlap < 0)
-		return overlap;
+	अगर (overlap > ACTIVE_CACHELINE_MAX_OVERLAP || overlap < 0)
+		वापस overlap;
 
-	for (i = RADIX_TREE_MAX_TAGS - 1; i >= 0; i--)
-		if (overlap & 1 << i)
+	क्रम (i = RADIX_TREE_MAX_TAGS - 1; i >= 0; i--)
+		अगर (overlap & 1 << i)
 			radix_tree_tag_set(&dma_active_cacheline, cln, i);
-		else
+		अन्यथा
 			radix_tree_tag_clear(&dma_active_cacheline, cln, i);
 
-	return overlap;
-}
+	वापस overlap;
+पूर्ण
 
-static void active_cacheline_inc_overlap(phys_addr_t cln)
-{
-	int overlap = active_cacheline_read_overlap(cln);
+अटल व्योम active_cacheline_inc_overlap(phys_addr_t cln)
+अणु
+	पूर्णांक overlap = active_cacheline_पढ़ो_overlap(cln);
 
 	overlap = active_cacheline_set_overlap(cln, ++overlap);
 
@@ -498,287 +499,287 @@ static void active_cacheline_inc_overlap(phys_addr_t cln)
 	WARN_ONCE(overlap > ACTIVE_CACHELINE_MAX_OVERLAP,
 		  pr_fmt("exceeded %d overlapping mappings of cacheline %pa\n"),
 		  ACTIVE_CACHELINE_MAX_OVERLAP, &cln);
-}
+पूर्ण
 
-static int active_cacheline_dec_overlap(phys_addr_t cln)
-{
-	int overlap = active_cacheline_read_overlap(cln);
+अटल पूर्णांक active_cacheline_dec_overlap(phys_addr_t cln)
+अणु
+	पूर्णांक overlap = active_cacheline_पढ़ो_overlap(cln);
 
-	return active_cacheline_set_overlap(cln, --overlap);
-}
+	वापस active_cacheline_set_overlap(cln, --overlap);
+पूर्ण
 
-static int active_cacheline_insert(struct dma_debug_entry *entry)
-{
+अटल पूर्णांक active_cacheline_insert(काष्ठा dma_debug_entry *entry)
+अणु
 	phys_addr_t cln = to_cacheline_number(entry);
-	unsigned long flags;
-	int rc;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक rc;
 
-	/* If the device is not writing memory then we don't have any
+	/* If the device is not writing memory then we करोn't have any
 	 * concerns about the cpu consuming stale data.  This mitigates
 	 * legitimate usages of overlapping mappings.
 	 */
-	if (entry->direction == DMA_TO_DEVICE)
-		return 0;
+	अगर (entry->direction == DMA_TO_DEVICE)
+		वापस 0;
 
 	spin_lock_irqsave(&radix_lock, flags);
 	rc = radix_tree_insert(&dma_active_cacheline, cln, entry);
-	if (rc == -EEXIST)
+	अगर (rc == -EEXIST)
 		active_cacheline_inc_overlap(cln);
 	spin_unlock_irqrestore(&radix_lock, flags);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static void active_cacheline_remove(struct dma_debug_entry *entry)
-{
+अटल व्योम active_cacheline_हटाओ(काष्ठा dma_debug_entry *entry)
+अणु
 	phys_addr_t cln = to_cacheline_number(entry);
-	unsigned long flags;
+	अचिन्हित दीर्घ flags;
 
-	/* ...mirror the insert case */
-	if (entry->direction == DMA_TO_DEVICE)
-		return;
+	/* ...mirror the insert हाल */
+	अगर (entry->direction == DMA_TO_DEVICE)
+		वापस;
 
 	spin_lock_irqsave(&radix_lock, flags);
 	/* since we are counting overlaps the final put of the
 	 * cacheline will occur when the overlap count is 0.
-	 * active_cacheline_dec_overlap() returns -1 in that case
+	 * active_cacheline_dec_overlap() वापसs -1 in that हाल
 	 */
-	if (active_cacheline_dec_overlap(cln) < 0)
+	अगर (active_cacheline_dec_overlap(cln) < 0)
 		radix_tree_delete(&dma_active_cacheline, cln);
 	spin_unlock_irqrestore(&radix_lock, flags);
-}
+पूर्ण
 
 /*
- * Wrapper function for adding an entry to the hash.
+ * Wrapper function क्रम adding an entry to the hash.
  * This function takes care of locking itself.
  */
-static void add_dma_entry(struct dma_debug_entry *entry)
-{
-	struct hash_bucket *bucket;
-	unsigned long flags;
-	int rc;
+अटल व्योम add_dma_entry(काष्ठा dma_debug_entry *entry)
+अणु
+	काष्ठा hash_bucket *bucket;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक rc;
 
 	bucket = get_hash_bucket(entry, &flags);
 	hash_bucket_add(bucket, entry);
 	put_hash_bucket(bucket, flags);
 
 	rc = active_cacheline_insert(entry);
-	if (rc == -ENOMEM) {
+	अगर (rc == -ENOMEM) अणु
 		pr_err("cacheline tracking ENOMEM, dma-debug disabled\n");
 		global_disable = true;
-	}
+	पूर्ण
 
 	/* TODO: report -EEXIST errors here as overlapping mappings are
 	 * not supported by the DMA API
 	 */
-}
+पूर्ण
 
-static int dma_debug_create_entries(gfp_t gfp)
-{
-	struct dma_debug_entry *entry;
-	int i;
+अटल पूर्णांक dma_debug_create_entries(gfp_t gfp)
+अणु
+	काष्ठा dma_debug_entry *entry;
+	पूर्णांक i;
 
-	entry = (void *)get_zeroed_page(gfp);
-	if (!entry)
-		return -ENOMEM;
+	entry = (व्योम *)get_zeroed_page(gfp);
+	अगर (!entry)
+		वापस -ENOMEM;
 
-	for (i = 0; i < DMA_DEBUG_DYNAMIC_ENTRIES; i++)
-		list_add_tail(&entry[i].list, &free_entries);
+	क्रम (i = 0; i < DMA_DEBUG_DYNAMIC_ENTRIES; i++)
+		list_add_tail(&entry[i].list, &मुक्त_entries);
 
-	num_free_entries += DMA_DEBUG_DYNAMIC_ENTRIES;
+	num_मुक्त_entries += DMA_DEBUG_DYNAMIC_ENTRIES;
 	nr_total_entries += DMA_DEBUG_DYNAMIC_ENTRIES;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct dma_debug_entry *__dma_entry_alloc(void)
-{
-	struct dma_debug_entry *entry;
+अटल काष्ठा dma_debug_entry *__dma_entry_alloc(व्योम)
+अणु
+	काष्ठा dma_debug_entry *entry;
 
-	entry = list_entry(free_entries.next, struct dma_debug_entry, list);
+	entry = list_entry(मुक्त_entries.next, काष्ठा dma_debug_entry, list);
 	list_del(&entry->list);
-	memset(entry, 0, sizeof(*entry));
+	स_रखो(entry, 0, माप(*entry));
 
-	num_free_entries -= 1;
-	if (num_free_entries < min_free_entries)
-		min_free_entries = num_free_entries;
+	num_मुक्त_entries -= 1;
+	अगर (num_मुक्त_entries < min_मुक्त_entries)
+		min_मुक्त_entries = num_मुक्त_entries;
 
-	return entry;
-}
+	वापस entry;
+पूर्ण
 
-static void __dma_entry_alloc_check_leak(void)
-{
-	u32 tmp = nr_total_entries % nr_prealloc_entries;
+अटल व्योम __dma_entry_alloc_check_leak(व्योम)
+अणु
+	u32 पंचांगp = nr_total_entries % nr_pपुनः_स्मृति_entries;
 
-	/* Shout each time we tick over some multiple of the initial pool */
-	if (tmp < DMA_DEBUG_DYNAMIC_ENTRIES) {
+	/* Shout each समय we tick over some multiple of the initial pool */
+	अगर (पंचांगp < DMA_DEBUG_DYNAMIC_ENTRIES) अणु
 		pr_info("dma_debug_entry pool grown to %u (%u00%%)\n",
 			nr_total_entries,
-			(nr_total_entries / nr_prealloc_entries));
-	}
-}
+			(nr_total_entries / nr_pपुनः_स्मृति_entries));
+	पूर्ण
+पूर्ण
 
-/* struct dma_entry allocator
+/* काष्ठा dma_entry allocator
  *
- * The next two functions implement the allocator for
- * struct dma_debug_entries.
+ * The next two functions implement the allocator क्रम
+ * काष्ठा dma_debug_entries.
  */
-static struct dma_debug_entry *dma_entry_alloc(void)
-{
-	struct dma_debug_entry *entry;
-	unsigned long flags;
+अटल काष्ठा dma_debug_entry *dma_entry_alloc(व्योम)
+अणु
+	काष्ठा dma_debug_entry *entry;
+	अचिन्हित दीर्घ flags;
 
-	spin_lock_irqsave(&free_entries_lock, flags);
-	if (num_free_entries == 0) {
-		if (dma_debug_create_entries(GFP_ATOMIC)) {
+	spin_lock_irqsave(&मुक्त_entries_lock, flags);
+	अगर (num_मुक्त_entries == 0) अणु
+		अगर (dma_debug_create_entries(GFP_ATOMIC)) अणु
 			global_disable = true;
-			spin_unlock_irqrestore(&free_entries_lock, flags);
+			spin_unlock_irqrestore(&मुक्त_entries_lock, flags);
 			pr_err("debugging out of memory - disabling\n");
-			return NULL;
-		}
+			वापस शून्य;
+		पूर्ण
 		__dma_entry_alloc_check_leak();
-	}
+	पूर्ण
 
 	entry = __dma_entry_alloc();
 
-	spin_unlock_irqrestore(&free_entries_lock, flags);
+	spin_unlock_irqrestore(&मुक्त_entries_lock, flags);
 
-#ifdef CONFIG_STACKTRACE
+#अगर_घोषित CONFIG_STACKTRACE
 	entry->stack_len = stack_trace_save(entry->stack_entries,
 					    ARRAY_SIZE(entry->stack_entries),
 					    1);
-#endif
-	return entry;
-}
+#पूर्ण_अगर
+	वापस entry;
+पूर्ण
 
-static void dma_entry_free(struct dma_debug_entry *entry)
-{
-	unsigned long flags;
+अटल व्योम dma_entry_मुक्त(काष्ठा dma_debug_entry *entry)
+अणु
+	अचिन्हित दीर्घ flags;
 
-	active_cacheline_remove(entry);
+	active_cacheline_हटाओ(entry);
 
 	/*
 	 * add to beginning of the list - this way the entries are
-	 * more likely cache hot when they are reallocated.
+	 * more likely cache hot when they are पुनः_स्मृतिated.
 	 */
-	spin_lock_irqsave(&free_entries_lock, flags);
-	list_add(&entry->list, &free_entries);
-	num_free_entries += 1;
-	spin_unlock_irqrestore(&free_entries_lock, flags);
-}
+	spin_lock_irqsave(&मुक्त_entries_lock, flags);
+	list_add(&entry->list, &मुक्त_entries);
+	num_मुक्त_entries += 1;
+	spin_unlock_irqrestore(&मुक्त_entries_lock, flags);
+पूर्ण
 
 /*
  * DMA-API debugging init code
  *
- * The init code does two things:
- *   1. Initialize core data structures
- *   2. Preallocate a given number of dma_debug_entry structs
+ * The init code करोes two things:
+ *   1. Initialize core data काष्ठाures
+ *   2. Pपुनः_स्मृतिate a given number of dma_debug_entry काष्ठाs
  */
 
-static ssize_t filter_read(struct file *file, char __user *user_buf,
-			   size_t count, loff_t *ppos)
-{
-	char buf[NAME_MAX_LEN + 1];
-	unsigned long flags;
-	int len;
+अटल sमाप_प्रकार filter_पढ़ो(काष्ठा file *file, अक्षर __user *user_buf,
+			   माप_प्रकार count, loff_t *ppos)
+अणु
+	अक्षर buf[NAME_MAX_LEN + 1];
+	अचिन्हित दीर्घ flags;
+	पूर्णांक len;
 
-	if (!current_driver_name[0])
-		return 0;
+	अगर (!current_driver_name[0])
+		वापस 0;
 
 	/*
 	 * We can't copy to userspace directly because current_driver_name can
-	 * only be read under the driver_name_lock with irqs disabled. So
+	 * only be पढ़ो under the driver_name_lock with irqs disabled. So
 	 * create a temporary copy first.
 	 */
-	read_lock_irqsave(&driver_name_lock, flags);
-	len = scnprintf(buf, NAME_MAX_LEN + 1, "%s\n", current_driver_name);
-	read_unlock_irqrestore(&driver_name_lock, flags);
+	पढ़ो_lock_irqsave(&driver_name_lock, flags);
+	len = scnम_लिखो(buf, NAME_MAX_LEN + 1, "%s\n", current_driver_name);
+	पढ़ो_unlock_irqrestore(&driver_name_lock, flags);
 
-	return simple_read_from_buffer(user_buf, count, ppos, buf, len);
-}
+	वापस simple_पढ़ो_from_buffer(user_buf, count, ppos, buf, len);
+पूर्ण
 
-static ssize_t filter_write(struct file *file, const char __user *userbuf,
-			    size_t count, loff_t *ppos)
-{
-	char buf[NAME_MAX_LEN];
-	unsigned long flags;
-	size_t len;
-	int i;
+अटल sमाप_प्रकार filter_ग_लिखो(काष्ठा file *file, स्थिर अक्षर __user *userbuf,
+			    माप_प्रकार count, loff_t *ppos)
+अणु
+	अक्षर buf[NAME_MAX_LEN];
+	अचिन्हित दीर्घ flags;
+	माप_प्रकार len;
+	पूर्णांक i;
 
 	/*
 	 * We can't copy from userspace directly. Access to
-	 * current_driver_name is protected with a write_lock with irqs
+	 * current_driver_name is रक्षित with a ग_लिखो_lock with irqs
 	 * disabled. Since copy_from_user can fault and may sleep we
 	 * need to copy to temporary buffer first
 	 */
-	len = min(count, (size_t)(NAME_MAX_LEN - 1));
-	if (copy_from_user(buf, userbuf, len))
-		return -EFAULT;
+	len = min(count, (माप_प्रकार)(NAME_MAX_LEN - 1));
+	अगर (copy_from_user(buf, userbuf, len))
+		वापस -EFAULT;
 
 	buf[len] = 0;
 
-	write_lock_irqsave(&driver_name_lock, flags);
+	ग_लिखो_lock_irqsave(&driver_name_lock, flags);
 
 	/*
 	 * Now handle the string we got from userspace very carefully.
 	 * The rules are:
 	 *         - only use the first token we got
 	 *         - token delimiter is everything looking like a space
-	 *           character (' ', '\n', '\t' ...)
+	 *           अक्षरacter (' ', '\n', '\t' ...)
 	 *
 	 */
-	if (!isalnum(buf[0])) {
+	अगर (!है_अक्षर_अंक(buf[0])) अणु
 		/*
-		 * If the first character userspace gave us is not
+		 * If the first अक्षरacter userspace gave us is not
 		 * alphanumerical then assume the filter should be
-		 * switched off.
+		 * चयनed off.
 		 */
-		if (current_driver_name[0])
+		अगर (current_driver_name[0])
 			pr_info("switching off dma-debug driver filter\n");
 		current_driver_name[0] = 0;
-		current_driver = NULL;
-		goto out_unlock;
-	}
+		current_driver = शून्य;
+		जाओ out_unlock;
+	पूर्ण
 
 	/*
-	 * Now parse out the first token and use it as the name for the
-	 * driver to filter for.
+	 * Now parse out the first token and use it as the name क्रम the
+	 * driver to filter क्रम.
 	 */
-	for (i = 0; i < NAME_MAX_LEN - 1; ++i) {
+	क्रम (i = 0; i < NAME_MAX_LEN - 1; ++i) अणु
 		current_driver_name[i] = buf[i];
-		if (isspace(buf[i]) || buf[i] == ' ' || buf[i] == 0)
-			break;
-	}
+		अगर (है_खाली(buf[i]) || buf[i] == ' ' || buf[i] == 0)
+			अवरोध;
+	पूर्ण
 	current_driver_name[i] = 0;
-	current_driver = NULL;
+	current_driver = शून्य;
 
 	pr_info("enable driver filter for driver [%s]\n",
 		current_driver_name);
 
 out_unlock:
-	write_unlock_irqrestore(&driver_name_lock, flags);
+	ग_लिखो_unlock_irqrestore(&driver_name_lock, flags);
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static const struct file_operations filter_fops = {
-	.read  = filter_read,
-	.write = filter_write,
-	.llseek = default_llseek,
-};
+अटल स्थिर काष्ठा file_operations filter_fops = अणु
+	.पढ़ो  = filter_पढ़ो,
+	.ग_लिखो = filter_ग_लिखो,
+	.llseek = शेष_llseek,
+पूर्ण;
 
-static int dump_show(struct seq_file *seq, void *v)
-{
-	int idx;
+अटल पूर्णांक dump_show(काष्ठा seq_file *seq, व्योम *v)
+अणु
+	पूर्णांक idx;
 
-	for (idx = 0; idx < HASH_SIZE; idx++) {
-		struct hash_bucket *bucket = &dma_entry_hash[idx];
-		struct dma_debug_entry *entry;
-		unsigned long flags;
+	क्रम (idx = 0; idx < HASH_SIZE; idx++) अणु
+		काष्ठा hash_bucket *bucket = &dma_entry_hash[idx];
+		काष्ठा dma_debug_entry *entry;
+		अचिन्हित दीर्घ flags;
 
 		spin_lock_irqsave(&bucket->lock, flags);
-		list_for_each_entry(entry, &bucket->list, list) {
-			seq_printf(seq,
+		list_क्रम_each_entry(entry, &bucket->list, list) अणु
+			seq_म_लिखो(seq,
 				   "%s %s %s idx %d P=%llx N=%lx D=%llx L=%llx %s %s\n",
 				   dev_name(entry->dev),
 				   dev_driver_string(entry->dev),
@@ -787,63 +788,63 @@ static int dump_show(struct seq_file *seq, void *v)
 				   entry->dev_addr, entry->size,
 				   dir2name[entry->direction],
 				   maperr2str[entry->map_err_type]);
-		}
+		पूर्ण
 		spin_unlock_irqrestore(&bucket->lock, flags);
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 DEFINE_SHOW_ATTRIBUTE(dump);
 
-static void dma_debug_fs_init(void)
-{
-	struct dentry *dentry = debugfs_create_dir("dma-api", NULL);
+अटल व्योम dma_debug_fs_init(व्योम)
+अणु
+	काष्ठा dentry *dentry = debugfs_create_dir("dma-api", शून्य);
 
 	debugfs_create_bool("disabled", 0444, dentry, &global_disable);
 	debugfs_create_u32("error_count", 0444, dentry, &error_count);
 	debugfs_create_u32("all_errors", 0644, dentry, &show_all_errors);
 	debugfs_create_u32("num_errors", 0644, dentry, &show_num_errors);
-	debugfs_create_u32("num_free_entries", 0444, dentry, &num_free_entries);
-	debugfs_create_u32("min_free_entries", 0444, dentry, &min_free_entries);
+	debugfs_create_u32("num_free_entries", 0444, dentry, &num_मुक्त_entries);
+	debugfs_create_u32("min_free_entries", 0444, dentry, &min_मुक्त_entries);
 	debugfs_create_u32("nr_total_entries", 0444, dentry, &nr_total_entries);
-	debugfs_create_file("driver_filter", 0644, dentry, NULL, &filter_fops);
-	debugfs_create_file("dump", 0444, dentry, NULL, &dump_fops);
-}
+	debugfs_create_file("driver_filter", 0644, dentry, शून्य, &filter_fops);
+	debugfs_create_file("dump", 0444, dentry, शून्य, &dump_fops);
+पूर्ण
 
-static int device_dma_allocations(struct device *dev, struct dma_debug_entry **out_entry)
-{
-	struct dma_debug_entry *entry;
-	unsigned long flags;
-	int count = 0, i;
+अटल पूर्णांक device_dma_allocations(काष्ठा device *dev, काष्ठा dma_debug_entry **out_entry)
+अणु
+	काष्ठा dma_debug_entry *entry;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक count = 0, i;
 
-	for (i = 0; i < HASH_SIZE; ++i) {
+	क्रम (i = 0; i < HASH_SIZE; ++i) अणु
 		spin_lock_irqsave(&dma_entry_hash[i].lock, flags);
-		list_for_each_entry(entry, &dma_entry_hash[i].list, list) {
-			if (entry->dev == dev) {
+		list_क्रम_each_entry(entry, &dma_entry_hash[i].list, list) अणु
+			अगर (entry->dev == dev) अणु
 				count += 1;
 				*out_entry = entry;
-			}
-		}
+			पूर्ण
+		पूर्ण
 		spin_unlock_irqrestore(&dma_entry_hash[i].lock, flags);
-	}
+	पूर्ण
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static int dma_debug_device_change(struct notifier_block *nb, unsigned long action, void *data)
-{
-	struct device *dev = data;
-	struct dma_debug_entry *entry;
-	int count;
+अटल पूर्णांक dma_debug_device_change(काष्ठा notअगरier_block *nb, अचिन्हित दीर्घ action, व्योम *data)
+अणु
+	काष्ठा device *dev = data;
+	काष्ठा dma_debug_entry *entry;
+	पूर्णांक count;
 
-	if (dma_debug_disabled())
-		return 0;
+	अगर (dma_debug_disabled())
+		वापस 0;
 
-	switch (action) {
-	case BUS_NOTIFY_UNBOUND_DRIVER:
+	चयन (action) अणु
+	हाल BUS_NOTIFY_UNBOUND_DRIVER:
 		count = device_dma_allocations(dev, &entry);
-		if (count == 0)
-			break;
-		err_printk(dev, entry, "device driver has pending "
+		अगर (count == 0)
+			अवरोध;
+		err_prपूर्णांकk(dev, entry, "device driver has pending "
 				"DMA allocations while released from device "
 				"[count=%d]\n"
 				"One of leaked entries details: "
@@ -851,142 +852,142 @@ static int dma_debug_device_change(struct notifier_block *nb, unsigned long acti
 				"[mapped with %s] [mapped as %s]\n",
 			count, entry->dev_addr, entry->size,
 			dir2name[entry->direction], type2name[entry->type]);
-		break;
-	default:
-		break;
-	}
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void dma_debug_add_bus(struct bus_type *bus)
-{
-	struct notifier_block *nb;
+व्योम dma_debug_add_bus(काष्ठा bus_type *bus)
+अणु
+	काष्ठा notअगरier_block *nb;
 
-	if (dma_debug_disabled())
-		return;
+	अगर (dma_debug_disabled())
+		वापस;
 
-	nb = kzalloc(sizeof(struct notifier_block), GFP_KERNEL);
-	if (nb == NULL) {
+	nb = kzalloc(माप(काष्ठा notअगरier_block), GFP_KERNEL);
+	अगर (nb == शून्य) अणु
 		pr_err("dma_debug_add_bus: out of memory\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	nb->notifier_call = dma_debug_device_change;
+	nb->notअगरier_call = dma_debug_device_change;
 
-	bus_register_notifier(bus, nb);
-}
+	bus_रेजिस्टर_notअगरier(bus, nb);
+पूर्ण
 
-static int dma_debug_init(void)
-{
-	int i, nr_pages;
+अटल पूर्णांक dma_debug_init(व्योम)
+अणु
+	पूर्णांक i, nr_pages;
 
 	/* Do not use dma_debug_initialized here, since we really want to be
 	 * called to set dma_debug_initialized
 	 */
-	if (global_disable)
-		return 0;
+	अगर (global_disable)
+		वापस 0;
 
-	for (i = 0; i < HASH_SIZE; ++i) {
+	क्रम (i = 0; i < HASH_SIZE; ++i) अणु
 		INIT_LIST_HEAD(&dma_entry_hash[i].list);
 		spin_lock_init(&dma_entry_hash[i].lock);
-	}
+	पूर्ण
 
 	dma_debug_fs_init();
 
-	nr_pages = DIV_ROUND_UP(nr_prealloc_entries, DMA_DEBUG_DYNAMIC_ENTRIES);
-	for (i = 0; i < nr_pages; ++i)
+	nr_pages = DIV_ROUND_UP(nr_pपुनः_स्मृति_entries, DMA_DEBUG_DYNAMIC_ENTRIES);
+	क्रम (i = 0; i < nr_pages; ++i)
 		dma_debug_create_entries(GFP_KERNEL);
-	if (num_free_entries >= nr_prealloc_entries) {
+	अगर (num_मुक्त_entries >= nr_pपुनः_स्मृति_entries) अणु
 		pr_info("preallocated %d debug entries\n", nr_total_entries);
-	} else if (num_free_entries > 0) {
+	पूर्ण अन्यथा अगर (num_मुक्त_entries > 0) अणु
 		pr_warn("%d debug entries requested but only %d allocated\n",
-			nr_prealloc_entries, nr_total_entries);
-	} else {
+			nr_pपुनः_स्मृति_entries, nr_total_entries);
+	पूर्ण अन्यथा अणु
 		pr_err("debugging out of memory error - disabled\n");
 		global_disable = true;
 
-		return 0;
-	}
-	min_free_entries = num_free_entries;
+		वापस 0;
+	पूर्ण
+	min_मुक्त_entries = num_मुक्त_entries;
 
 	dma_debug_initialized = true;
 
 	pr_info("debugging enabled by kernel config\n");
-	return 0;
-}
+	वापस 0;
+पूर्ण
 core_initcall(dma_debug_init);
 
-static __init int dma_debug_cmdline(char *str)
-{
-	if (!str)
-		return -EINVAL;
+अटल __init पूर्णांक dma_debug_cmdline(अक्षर *str)
+अणु
+	अगर (!str)
+		वापस -EINVAL;
 
-	if (strncmp(str, "off", 3) == 0) {
+	अगर (म_भेदन(str, "off", 3) == 0) अणु
 		pr_info("debugging disabled on kernel command line\n");
 		global_disable = true;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static __init int dma_debug_entries_cmdline(char *str)
-{
-	if (!str)
-		return -EINVAL;
-	if (!get_option(&str, &nr_prealloc_entries))
-		nr_prealloc_entries = PREALLOC_DMA_DEBUG_ENTRIES;
-	return 0;
-}
+अटल __init पूर्णांक dma_debug_entries_cmdline(अक्षर *str)
+अणु
+	अगर (!str)
+		वापस -EINVAL;
+	अगर (!get_option(&str, &nr_pपुनः_स्मृति_entries))
+		nr_pपुनः_स्मृति_entries = PREALLOC_DMA_DEBUG_ENTRIES;
+	वापस 0;
+पूर्ण
 
 __setup("dma_debug=", dma_debug_cmdline);
 __setup("dma_debug_entries=", dma_debug_entries_cmdline);
 
-static void check_unmap(struct dma_debug_entry *ref)
-{
-	struct dma_debug_entry *entry;
-	struct hash_bucket *bucket;
-	unsigned long flags;
+अटल व्योम check_unmap(काष्ठा dma_debug_entry *ref)
+अणु
+	काष्ठा dma_debug_entry *entry;
+	काष्ठा hash_bucket *bucket;
+	अचिन्हित दीर्घ flags;
 
 	bucket = get_hash_bucket(ref, &flags);
 	entry = bucket_find_exact(bucket, ref);
 
-	if (!entry) {
-		/* must drop lock before calling dma_mapping_error */
+	अगर (!entry) अणु
+		/* must drop lock beक्रमe calling dma_mapping_error */
 		put_hash_bucket(bucket, flags);
 
-		if (dma_mapping_error(ref->dev, ref->dev_addr)) {
-			err_printk(ref->dev, NULL,
+		अगर (dma_mapping_error(ref->dev, ref->dev_addr)) अणु
+			err_prपूर्णांकk(ref->dev, शून्य,
 				   "device driver tries to free an "
 				   "invalid DMA memory address\n");
-		} else {
-			err_printk(ref->dev, NULL,
+		पूर्ण अन्यथा अणु
+			err_prपूर्णांकk(ref->dev, शून्य,
 				   "device driver tries to free DMA "
 				   "memory it has not allocated [device "
 				   "address=0x%016llx] [size=%llu bytes]\n",
 				   ref->dev_addr, ref->size);
-		}
-		return;
-	}
+		पूर्ण
+		वापस;
+	पूर्ण
 
-	if (ref->size != entry->size) {
-		err_printk(ref->dev, entry, "device driver frees "
+	अगर (ref->size != entry->size) अणु
+		err_prपूर्णांकk(ref->dev, entry, "device driver frees "
 			   "DMA memory with different size "
 			   "[device address=0x%016llx] [map size=%llu bytes] "
 			   "[unmap size=%llu bytes]\n",
 			   ref->dev_addr, entry->size, ref->size);
-	}
+	पूर्ण
 
-	if (ref->type != entry->type) {
-		err_printk(ref->dev, entry, "device driver frees "
+	अगर (ref->type != entry->type) अणु
+		err_prपूर्णांकk(ref->dev, entry, "device driver frees "
 			   "DMA memory with wrong function "
 			   "[device address=0x%016llx] [size=%llu bytes] "
 			   "[mapped as %s] [unmapped as %s]\n",
 			   ref->dev_addr, ref->size,
 			   type2name[entry->type], type2name[ref->type]);
-	} else if ((entry->type == dma_debug_coherent) &&
-		   (phys_addr(ref) != phys_addr(entry))) {
-		err_printk(ref->dev, entry, "device driver frees "
+	पूर्ण अन्यथा अगर ((entry->type == dma_debug_coherent) &&
+		   (phys_addr(ref) != phys_addr(entry))) अणु
+		err_prपूर्णांकk(ref->dev, entry, "device driver frees "
 			   "DMA memory with different CPU address "
 			   "[device address=0x%016llx] [size=%llu bytes] "
 			   "[cpu alloc address=0x%016llx] "
@@ -994,226 +995,226 @@ static void check_unmap(struct dma_debug_entry *ref)
 			   ref->dev_addr, ref->size,
 			   phys_addr(entry),
 			   phys_addr(ref));
-	}
+	पूर्ण
 
-	if (ref->sg_call_ents && ref->type == dma_debug_sg &&
-	    ref->sg_call_ents != entry->sg_call_ents) {
-		err_printk(ref->dev, entry, "device driver frees "
+	अगर (ref->sg_call_ents && ref->type == dma_debug_sg &&
+	    ref->sg_call_ents != entry->sg_call_ents) अणु
+		err_prपूर्णांकk(ref->dev, entry, "device driver frees "
 			   "DMA sg list with different entry count "
 			   "[map count=%d] [unmap count=%d]\n",
 			   entry->sg_call_ents, ref->sg_call_ents);
-	}
+	पूर्ण
 
 	/*
 	 * This may be no bug in reality - but most implementations of the
-	 * DMA API don't handle this properly, so check for it here
+	 * DMA API करोn't handle this properly, so check क्रम it here
 	 */
-	if (ref->direction != entry->direction) {
-		err_printk(ref->dev, entry, "device driver frees "
+	अगर (ref->direction != entry->direction) अणु
+		err_prपूर्णांकk(ref->dev, entry, "device driver frees "
 			   "DMA memory with different direction "
 			   "[device address=0x%016llx] [size=%llu bytes] "
 			   "[mapped with %s] [unmapped with %s]\n",
 			   ref->dev_addr, ref->size,
 			   dir2name[entry->direction],
 			   dir2name[ref->direction]);
-	}
+	पूर्ण
 
 	/*
-	 * Drivers should use dma_mapping_error() to check the returned
+	 * Drivers should use dma_mapping_error() to check the वापसed
 	 * addresses of dma_map_single() and dma_map_page().
-	 * If not, print this warning message. See Documentation/core-api/dma-api.rst.
+	 * If not, prपूर्णांक this warning message. See Documentation/core-api/dma-api.rst.
 	 */
-	if (entry->map_err_type == MAP_ERR_NOT_CHECKED) {
-		err_printk(ref->dev, entry,
+	अगर (entry->map_err_type == MAP_ERR_NOT_CHECKED) अणु
+		err_prपूर्णांकk(ref->dev, entry,
 			   "device driver failed to check map error"
 			   "[device address=0x%016llx] [size=%llu bytes] "
 			   "[mapped as %s]",
 			   ref->dev_addr, ref->size,
 			   type2name[entry->type]);
-	}
+	पूर्ण
 
 	hash_bucket_del(entry);
-	dma_entry_free(entry);
+	dma_entry_मुक्त(entry);
 
 	put_hash_bucket(bucket, flags);
-}
+पूर्ण
 
-static void check_for_stack(struct device *dev,
-			    struct page *page, size_t offset)
-{
-	void *addr;
-	struct vm_struct *stack_vm_area = task_stack_vm_area(current);
+अटल व्योम check_क्रम_stack(काष्ठा device *dev,
+			    काष्ठा page *page, माप_प्रकार offset)
+अणु
+	व्योम *addr;
+	काष्ठा vm_काष्ठा *stack_vm_area = task_stack_vm_area(current);
 
-	if (!stack_vm_area) {
+	अगर (!stack_vm_area) अणु
 		/* Stack is direct-mapped. */
-		if (PageHighMem(page))
-			return;
+		अगर (PageHighMem(page))
+			वापस;
 		addr = page_address(page) + offset;
-		if (object_is_on_stack(addr))
-			err_printk(dev, NULL, "device driver maps memory from stack [addr=%p]\n", addr);
-	} else {
-		/* Stack is vmalloced. */
-		int i;
+		अगर (object_is_on_stack(addr))
+			err_prपूर्णांकk(dev, शून्य, "device driver maps memory from stack [addr=%p]\n", addr);
+	पूर्ण अन्यथा अणु
+		/* Stack is vदो_स्मृतिed. */
+		पूर्णांक i;
 
-		for (i = 0; i < stack_vm_area->nr_pages; i++) {
-			if (page != stack_vm_area->pages[i])
-				continue;
+		क्रम (i = 0; i < stack_vm_area->nr_pages; i++) अणु
+			अगर (page != stack_vm_area->pages[i])
+				जारी;
 
 			addr = (u8 *)current->stack + i * PAGE_SIZE + offset;
-			err_printk(dev, NULL, "device driver maps memory from stack [probable addr=%p]\n", addr);
-			break;
-		}
-	}
-}
+			err_prपूर्णांकk(dev, शून्य, "device driver maps memory from stack [probable addr=%p]\n", addr);
+			अवरोध;
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static inline bool overlap(void *addr, unsigned long len, void *start, void *end)
-{
-	unsigned long a1 = (unsigned long)addr;
-	unsigned long b1 = a1 + len;
-	unsigned long a2 = (unsigned long)start;
-	unsigned long b2 = (unsigned long)end;
+अटल अंतरभूत bool overlap(व्योम *addr, अचिन्हित दीर्घ len, व्योम *start, व्योम *end)
+अणु
+	अचिन्हित दीर्घ a1 = (अचिन्हित दीर्घ)addr;
+	अचिन्हित दीर्घ b1 = a1 + len;
+	अचिन्हित दीर्घ a2 = (अचिन्हित दीर्घ)start;
+	अचिन्हित दीर्घ b2 = (अचिन्हित दीर्घ)end;
 
-	return !(b1 <= a2 || a1 >= b2);
-}
+	वापस !(b1 <= a2 || a1 >= b2);
+पूर्ण
 
-static void check_for_illegal_area(struct device *dev, void *addr, unsigned long len)
-{
-	if (overlap(addr, len, _stext, _etext) ||
+अटल व्योम check_क्रम_illegal_area(काष्ठा device *dev, व्योम *addr, अचिन्हित दीर्घ len)
+अणु
+	अगर (overlap(addr, len, _stext, _etext) ||
 	    overlap(addr, len, __start_rodata, __end_rodata))
-		err_printk(dev, NULL, "device driver maps memory from kernel text or rodata [addr=%p] [len=%lu]\n", addr, len);
-}
+		err_prपूर्णांकk(dev, शून्य, "device driver maps memory from kernel text or rodata [addr=%p] [len=%lu]\n", addr, len);
+पूर्ण
 
-static void check_sync(struct device *dev,
-		       struct dma_debug_entry *ref,
+अटल व्योम check_sync(काष्ठा device *dev,
+		       काष्ठा dma_debug_entry *ref,
 		       bool to_cpu)
-{
-	struct dma_debug_entry *entry;
-	struct hash_bucket *bucket;
-	unsigned long flags;
+अणु
+	काष्ठा dma_debug_entry *entry;
+	काष्ठा hash_bucket *bucket;
+	अचिन्हित दीर्घ flags;
 
 	bucket = get_hash_bucket(ref, &flags);
 
 	entry = bucket_find_contain(&bucket, ref, &flags);
 
-	if (!entry) {
-		err_printk(dev, NULL, "device driver tries "
+	अगर (!entry) अणु
+		err_prपूर्णांकk(dev, शून्य, "device driver tries "
 				"to sync DMA memory it has not allocated "
 				"[device address=0x%016llx] [size=%llu bytes]\n",
-				(unsigned long long)ref->dev_addr, ref->size);
-		goto out;
-	}
+				(अचिन्हित दीर्घ दीर्घ)ref->dev_addr, ref->size);
+		जाओ out;
+	पूर्ण
 
-	if (ref->size > entry->size) {
-		err_printk(dev, entry, "device driver syncs"
+	अगर (ref->size > entry->size) अणु
+		err_prपूर्णांकk(dev, entry, "device driver syncs"
 				" DMA memory outside allocated range "
 				"[device address=0x%016llx] "
 				"[allocation size=%llu bytes] "
 				"[sync offset+size=%llu]\n",
 				entry->dev_addr, entry->size,
 				ref->size);
-	}
+	पूर्ण
 
-	if (entry->direction == DMA_BIDIRECTIONAL)
-		goto out;
+	अगर (entry->direction == DMA_BIसूचीECTIONAL)
+		जाओ out;
 
-	if (ref->direction != entry->direction) {
-		err_printk(dev, entry, "device driver syncs "
+	अगर (ref->direction != entry->direction) अणु
+		err_prपूर्णांकk(dev, entry, "device driver syncs "
 				"DMA memory with different direction "
 				"[device address=0x%016llx] [size=%llu bytes] "
 				"[mapped with %s] [synced with %s]\n",
-				(unsigned long long)ref->dev_addr, entry->size,
+				(अचिन्हित दीर्घ दीर्घ)ref->dev_addr, entry->size,
 				dir2name[entry->direction],
 				dir2name[ref->direction]);
-	}
+	पूर्ण
 
-	if (to_cpu && !(entry->direction == DMA_FROM_DEVICE) &&
+	अगर (to_cpu && !(entry->direction == DMA_FROM_DEVICE) &&
 		      !(ref->direction == DMA_TO_DEVICE))
-		err_printk(dev, entry, "device driver syncs "
+		err_prपूर्णांकk(dev, entry, "device driver syncs "
 				"device read-only DMA memory for cpu "
 				"[device address=0x%016llx] [size=%llu bytes] "
 				"[mapped with %s] [synced with %s]\n",
-				(unsigned long long)ref->dev_addr, entry->size,
+				(अचिन्हित दीर्घ दीर्घ)ref->dev_addr, entry->size,
 				dir2name[entry->direction],
 				dir2name[ref->direction]);
 
-	if (!to_cpu && !(entry->direction == DMA_TO_DEVICE) &&
+	अगर (!to_cpu && !(entry->direction == DMA_TO_DEVICE) &&
 		       !(ref->direction == DMA_FROM_DEVICE))
-		err_printk(dev, entry, "device driver syncs "
+		err_prपूर्णांकk(dev, entry, "device driver syncs "
 				"device write-only DMA memory to device "
 				"[device address=0x%016llx] [size=%llu bytes] "
 				"[mapped with %s] [synced with %s]\n",
-				(unsigned long long)ref->dev_addr, entry->size,
+				(अचिन्हित दीर्घ दीर्घ)ref->dev_addr, entry->size,
 				dir2name[entry->direction],
 				dir2name[ref->direction]);
 
-	if (ref->sg_call_ents && ref->type == dma_debug_sg &&
-	    ref->sg_call_ents != entry->sg_call_ents) {
-		err_printk(ref->dev, entry, "device driver syncs "
+	अगर (ref->sg_call_ents && ref->type == dma_debug_sg &&
+	    ref->sg_call_ents != entry->sg_call_ents) अणु
+		err_prपूर्णांकk(ref->dev, entry, "device driver syncs "
 			   "DMA sg list with different entry count "
 			   "[map count=%d] [sync count=%d]\n",
 			   entry->sg_call_ents, ref->sg_call_ents);
-	}
+	पूर्ण
 
 out:
 	put_hash_bucket(bucket, flags);
-}
+पूर्ण
 
-static void check_sg_segment(struct device *dev, struct scatterlist *sg)
-{
-#ifdef CONFIG_DMA_API_DEBUG_SG
-	unsigned int max_seg = dma_get_max_seg_size(dev);
+अटल व्योम check_sg_segment(काष्ठा device *dev, काष्ठा scatterlist *sg)
+अणु
+#अगर_घोषित CONFIG_DMA_API_DEBUG_SG
+	अचिन्हित पूर्णांक max_seg = dma_get_max_seg_size(dev);
 	u64 start, end, boundary = dma_get_seg_boundary(dev);
 
 	/*
-	 * Either the driver forgot to set dma_parms appropriately, or
-	 * whoever generated the list forgot to check them.
+	 * Either the driver क्रमgot to set dma_parms appropriately, or
+	 * whoever generated the list क्रमgot to check them.
 	 */
-	if (sg->length > max_seg)
-		err_printk(dev, NULL, "mapping sg segment longer than device claims to support [len=%u] [max=%u]\n",
+	अगर (sg->length > max_seg)
+		err_prपूर्णांकk(dev, शून्य, "mapping sg segment longer than device claims to support [len=%u] [max=%u]\n",
 			   sg->length, max_seg);
 	/*
-	 * In some cases this could potentially be the DMA API
+	 * In some हालs this could potentially be the DMA API
 	 * implementation's fault, but it would usually imply that
 	 * the scatterlist was built inappropriately to begin with.
 	 */
 	start = sg_dma_address(sg);
 	end = start + sg_dma_len(sg) - 1;
-	if ((start ^ end) & ~boundary)
-		err_printk(dev, NULL, "mapping sg segment across boundary [start=0x%016llx] [end=0x%016llx] [boundary=0x%016llx]\n",
+	अगर ((start ^ end) & ~boundary)
+		err_prपूर्णांकk(dev, शून्य, "mapping sg segment across boundary [start=0x%016llx] [end=0x%016llx] [boundary=0x%016llx]\n",
 			   start, end, boundary);
-#endif
-}
+#पूर्ण_अगर
+पूर्ण
 
-void debug_dma_map_single(struct device *dev, const void *addr,
-			    unsigned long len)
-{
-	if (unlikely(dma_debug_disabled()))
-		return;
+व्योम debug_dma_map_single(काष्ठा device *dev, स्थिर व्योम *addr,
+			    अचिन्हित दीर्घ len)
+अणु
+	अगर (unlikely(dma_debug_disabled()))
+		वापस;
 
-	if (!virt_addr_valid(addr))
-		err_printk(dev, NULL, "device driver maps memory from invalid area [addr=%p] [len=%lu]\n",
+	अगर (!virt_addr_valid(addr))
+		err_prपूर्णांकk(dev, शून्य, "device driver maps memory from invalid area [addr=%p] [len=%lu]\n",
 			   addr, len);
 
-	if (is_vmalloc_addr(addr))
-		err_printk(dev, NULL, "device driver maps memory from vmalloc area [addr=%p] [len=%lu]\n",
+	अगर (is_vदो_स्मृति_addr(addr))
+		err_prपूर्णांकk(dev, शून्य, "device driver maps memory from vmalloc area [addr=%p] [len=%lu]\n",
 			   addr, len);
-}
+पूर्ण
 EXPORT_SYMBOL(debug_dma_map_single);
 
-void debug_dma_map_page(struct device *dev, struct page *page, size_t offset,
-			size_t size, int direction, dma_addr_t dma_addr)
-{
-	struct dma_debug_entry *entry;
+व्योम debug_dma_map_page(काष्ठा device *dev, काष्ठा page *page, माप_प्रकार offset,
+			माप_प्रकार size, पूर्णांक direction, dma_addr_t dma_addr)
+अणु
+	काष्ठा dma_debug_entry *entry;
 
-	if (unlikely(dma_debug_disabled()))
-		return;
+	अगर (unlikely(dma_debug_disabled()))
+		वापस;
 
-	if (dma_mapping_error(dev, dma_addr))
-		return;
+	अगर (dma_mapping_error(dev, dma_addr))
+		वापस;
 
 	entry = dma_entry_alloc();
-	if (!entry)
-		return;
+	अगर (!entry)
+		वापस;
 
 	entry->dev       = dev;
 	entry->type      = dma_debug_single;
@@ -1224,85 +1225,85 @@ void debug_dma_map_page(struct device *dev, struct page *page, size_t offset,
 	entry->direction = direction;
 	entry->map_err_type = MAP_ERR_NOT_CHECKED;
 
-	check_for_stack(dev, page, offset);
+	check_क्रम_stack(dev, page, offset);
 
-	if (!PageHighMem(page)) {
-		void *addr = page_address(page) + offset;
+	अगर (!PageHighMem(page)) अणु
+		व्योम *addr = page_address(page) + offset;
 
-		check_for_illegal_area(dev, addr, size);
-	}
+		check_क्रम_illegal_area(dev, addr, size);
+	पूर्ण
 
 	add_dma_entry(entry);
-}
+पूर्ण
 
-void debug_dma_mapping_error(struct device *dev, dma_addr_t dma_addr)
-{
-	struct dma_debug_entry ref;
-	struct dma_debug_entry *entry;
-	struct hash_bucket *bucket;
-	unsigned long flags;
+व्योम debug_dma_mapping_error(काष्ठा device *dev, dma_addr_t dma_addr)
+अणु
+	काष्ठा dma_debug_entry ref;
+	काष्ठा dma_debug_entry *entry;
+	काष्ठा hash_bucket *bucket;
+	अचिन्हित दीर्घ flags;
 
-	if (unlikely(dma_debug_disabled()))
-		return;
+	अगर (unlikely(dma_debug_disabled()))
+		वापस;
 
 	ref.dev = dev;
 	ref.dev_addr = dma_addr;
 	bucket = get_hash_bucket(&ref, &flags);
 
-	list_for_each_entry(entry, &bucket->list, list) {
-		if (!exact_match(&ref, entry))
-			continue;
+	list_क्रम_each_entry(entry, &bucket->list, list) अणु
+		अगर (!exact_match(&ref, entry))
+			जारी;
 
 		/*
 		 * The same physical address can be mapped multiple
-		 * times. Without a hardware IOMMU this results in the
-		 * same device addresses being put into the dma-debug
-		 * hash multiple times too. This can result in false
-		 * positives being reported. Therefore we implement a
+		 * बार. Without a hardware IOMMU this results in the
+		 * same device addresses being put पूर्णांकo the dma-debug
+		 * hash multiple बार too. This can result in false
+		 * positives being reported. Thereक्रमe we implement a
 		 * best-fit algorithm here which updates the first entry
 		 * from the hash which fits the reference value and is
 		 * not currently listed as being checked.
 		 */
-		if (entry->map_err_type == MAP_ERR_NOT_CHECKED) {
+		अगर (entry->map_err_type == MAP_ERR_NOT_CHECKED) अणु
 			entry->map_err_type = MAP_ERR_CHECKED;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
 	put_hash_bucket(bucket, flags);
-}
+पूर्ण
 EXPORT_SYMBOL(debug_dma_mapping_error);
 
-void debug_dma_unmap_page(struct device *dev, dma_addr_t addr,
-			  size_t size, int direction)
-{
-	struct dma_debug_entry ref = {
+व्योम debug_dma_unmap_page(काष्ठा device *dev, dma_addr_t addr,
+			  माप_प्रकार size, पूर्णांक direction)
+अणु
+	काष्ठा dma_debug_entry ref = अणु
 		.type           = dma_debug_single,
 		.dev            = dev,
 		.dev_addr       = addr,
 		.size           = size,
 		.direction      = direction,
-	};
+	पूर्ण;
 
-	if (unlikely(dma_debug_disabled()))
-		return;
+	अगर (unlikely(dma_debug_disabled()))
+		वापस;
 	check_unmap(&ref);
-}
+पूर्ण
 
-void debug_dma_map_sg(struct device *dev, struct scatterlist *sg,
-		      int nents, int mapped_ents, int direction)
-{
-	struct dma_debug_entry *entry;
-	struct scatterlist *s;
-	int i;
+व्योम debug_dma_map_sg(काष्ठा device *dev, काष्ठा scatterlist *sg,
+		      पूर्णांक nents, पूर्णांक mapped_ents, पूर्णांक direction)
+अणु
+	काष्ठा dma_debug_entry *entry;
+	काष्ठा scatterlist *s;
+	पूर्णांक i;
 
-	if (unlikely(dma_debug_disabled()))
-		return;
+	अगर (unlikely(dma_debug_disabled()))
+		वापस;
 
-	for_each_sg(sg, s, mapped_ents, i) {
+	क्रम_each_sg(sg, s, mapped_ents, i) अणु
 		entry = dma_entry_alloc();
-		if (!entry)
-			return;
+		अगर (!entry)
+			वापस;
 
 		entry->type           = dma_debug_sg;
 		entry->dev            = dev;
@@ -1314,49 +1315,49 @@ void debug_dma_map_sg(struct device *dev, struct scatterlist *sg,
 		entry->sg_call_ents   = nents;
 		entry->sg_mapped_ents = mapped_ents;
 
-		check_for_stack(dev, sg_page(s), s->offset);
+		check_क्रम_stack(dev, sg_page(s), s->offset);
 
-		if (!PageHighMem(sg_page(s))) {
-			check_for_illegal_area(dev, sg_virt(s), sg_dma_len(s));
-		}
+		अगर (!PageHighMem(sg_page(s))) अणु
+			check_क्रम_illegal_area(dev, sg_virt(s), sg_dma_len(s));
+		पूर्ण
 
 		check_sg_segment(dev, s);
 
 		add_dma_entry(entry);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int get_nr_mapped_entries(struct device *dev,
-				 struct dma_debug_entry *ref)
-{
-	struct dma_debug_entry *entry;
-	struct hash_bucket *bucket;
-	unsigned long flags;
-	int mapped_ents;
+अटल पूर्णांक get_nr_mapped_entries(काष्ठा device *dev,
+				 काष्ठा dma_debug_entry *ref)
+अणु
+	काष्ठा dma_debug_entry *entry;
+	काष्ठा hash_bucket *bucket;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक mapped_ents;
 
 	bucket       = get_hash_bucket(ref, &flags);
 	entry        = bucket_find_exact(bucket, ref);
 	mapped_ents  = 0;
 
-	if (entry)
+	अगर (entry)
 		mapped_ents = entry->sg_mapped_ents;
 	put_hash_bucket(bucket, flags);
 
-	return mapped_ents;
-}
+	वापस mapped_ents;
+पूर्ण
 
-void debug_dma_unmap_sg(struct device *dev, struct scatterlist *sglist,
-			int nelems, int dir)
-{
-	struct scatterlist *s;
-	int mapped_ents = 0, i;
+व्योम debug_dma_unmap_sg(काष्ठा device *dev, काष्ठा scatterlist *sglist,
+			पूर्णांक nelems, पूर्णांक dir)
+अणु
+	काष्ठा scatterlist *s;
+	पूर्णांक mapped_ents = 0, i;
 
-	if (unlikely(dma_debug_disabled()))
-		return;
+	अगर (unlikely(dma_debug_disabled()))
+		वापस;
 
-	for_each_sg(sglist, s, nelems, i) {
+	क्रम_each_sg(sglist, s, nelems, i) अणु
 
-		struct dma_debug_entry ref = {
+		काष्ठा dma_debug_entry ref = अणु
 			.type           = dma_debug_sg,
 			.dev            = dev,
 			.pfn		= page_to_pfn(sg_page(s)),
@@ -1365,90 +1366,90 @@ void debug_dma_unmap_sg(struct device *dev, struct scatterlist *sglist,
 			.size           = sg_dma_len(s),
 			.direction      = dir,
 			.sg_call_ents   = nelems,
-		};
+		पूर्ण;
 
-		if (mapped_ents && i >= mapped_ents)
-			break;
+		अगर (mapped_ents && i >= mapped_ents)
+			अवरोध;
 
-		if (!i)
+		अगर (!i)
 			mapped_ents = get_nr_mapped_entries(dev, &ref);
 
 		check_unmap(&ref);
-	}
-}
+	पूर्ण
+पूर्ण
 
-void debug_dma_alloc_coherent(struct device *dev, size_t size,
-			      dma_addr_t dma_addr, void *virt)
-{
-	struct dma_debug_entry *entry;
+व्योम debug_dma_alloc_coherent(काष्ठा device *dev, माप_प्रकार size,
+			      dma_addr_t dma_addr, व्योम *virt)
+अणु
+	काष्ठा dma_debug_entry *entry;
 
-	if (unlikely(dma_debug_disabled()))
-		return;
+	अगर (unlikely(dma_debug_disabled()))
+		वापस;
 
-	if (unlikely(virt == NULL))
-		return;
+	अगर (unlikely(virt == शून्य))
+		वापस;
 
-	/* handle vmalloc and linear addresses */
-	if (!is_vmalloc_addr(virt) && !virt_addr_valid(virt))
-		return;
+	/* handle vदो_स्मृति and linear addresses */
+	अगर (!is_vदो_स्मृति_addr(virt) && !virt_addr_valid(virt))
+		वापस;
 
 	entry = dma_entry_alloc();
-	if (!entry)
-		return;
+	अगर (!entry)
+		वापस;
 
 	entry->type      = dma_debug_coherent;
 	entry->dev       = dev;
 	entry->offset	 = offset_in_page(virt);
 	entry->size      = size;
 	entry->dev_addr  = dma_addr;
-	entry->direction = DMA_BIDIRECTIONAL;
+	entry->direction = DMA_BIसूचीECTIONAL;
 
-	if (is_vmalloc_addr(virt))
-		entry->pfn = vmalloc_to_pfn(virt);
-	else
+	अगर (is_vदो_स्मृति_addr(virt))
+		entry->pfn = vदो_स्मृति_to_pfn(virt);
+	अन्यथा
 		entry->pfn = page_to_pfn(virt_to_page(virt));
 
 	add_dma_entry(entry);
-}
+पूर्ण
 
-void debug_dma_free_coherent(struct device *dev, size_t size,
-			 void *virt, dma_addr_t addr)
-{
-	struct dma_debug_entry ref = {
+व्योम debug_dma_मुक्त_coherent(काष्ठा device *dev, माप_प्रकार size,
+			 व्योम *virt, dma_addr_t addr)
+अणु
+	काष्ठा dma_debug_entry ref = अणु
 		.type           = dma_debug_coherent,
 		.dev            = dev,
 		.offset		= offset_in_page(virt),
 		.dev_addr       = addr,
 		.size           = size,
-		.direction      = DMA_BIDIRECTIONAL,
-	};
+		.direction      = DMA_BIसूचीECTIONAL,
+	पूर्ण;
 
-	/* handle vmalloc and linear addresses */
-	if (!is_vmalloc_addr(virt) && !virt_addr_valid(virt))
-		return;
+	/* handle vदो_स्मृति and linear addresses */
+	अगर (!is_vदो_स्मृति_addr(virt) && !virt_addr_valid(virt))
+		वापस;
 
-	if (is_vmalloc_addr(virt))
-		ref.pfn = vmalloc_to_pfn(virt);
-	else
+	अगर (is_vदो_स्मृति_addr(virt))
+		ref.pfn = vदो_स्मृति_to_pfn(virt);
+	अन्यथा
 		ref.pfn = page_to_pfn(virt_to_page(virt));
 
-	if (unlikely(dma_debug_disabled()))
-		return;
+	अगर (unlikely(dma_debug_disabled()))
+		वापस;
 
 	check_unmap(&ref);
-}
+पूर्ण
 
-void debug_dma_map_resource(struct device *dev, phys_addr_t addr, size_t size,
-			    int direction, dma_addr_t dma_addr)
-{
-	struct dma_debug_entry *entry;
+व्योम debug_dma_map_resource(काष्ठा device *dev, phys_addr_t addr, माप_प्रकार size,
+			    पूर्णांक direction, dma_addr_t dma_addr)
+अणु
+	काष्ठा dma_debug_entry *entry;
 
-	if (unlikely(dma_debug_disabled()))
-		return;
+	अगर (unlikely(dma_debug_disabled()))
+		वापस;
 
 	entry = dma_entry_alloc();
-	if (!entry)
-		return;
+	अगर (!entry)
+		वापस;
 
 	entry->type		= dma_debug_resource;
 	entry->dev		= dev;
@@ -1460,32 +1461,32 @@ void debug_dma_map_resource(struct device *dev, phys_addr_t addr, size_t size,
 	entry->map_err_type	= MAP_ERR_NOT_CHECKED;
 
 	add_dma_entry(entry);
-}
+पूर्ण
 
-void debug_dma_unmap_resource(struct device *dev, dma_addr_t dma_addr,
-			      size_t size, int direction)
-{
-	struct dma_debug_entry ref = {
+व्योम debug_dma_unmap_resource(काष्ठा device *dev, dma_addr_t dma_addr,
+			      माप_प्रकार size, पूर्णांक direction)
+अणु
+	काष्ठा dma_debug_entry ref = अणु
 		.type           = dma_debug_resource,
 		.dev            = dev,
 		.dev_addr       = dma_addr,
 		.size           = size,
 		.direction      = direction,
-	};
+	पूर्ण;
 
-	if (unlikely(dma_debug_disabled()))
-		return;
+	अगर (unlikely(dma_debug_disabled()))
+		वापस;
 
 	check_unmap(&ref);
-}
+पूर्ण
 
-void debug_dma_sync_single_for_cpu(struct device *dev, dma_addr_t dma_handle,
-				   size_t size, int direction)
-{
-	struct dma_debug_entry ref;
+व्योम debug_dma_sync_single_क्रम_cpu(काष्ठा device *dev, dma_addr_t dma_handle,
+				   माप_प्रकार size, पूर्णांक direction)
+अणु
+	काष्ठा dma_debug_entry ref;
 
-	if (unlikely(dma_debug_disabled()))
-		return;
+	अगर (unlikely(dma_debug_disabled()))
+		वापस;
 
 	ref.type         = dma_debug_single;
 	ref.dev          = dev;
@@ -1495,16 +1496,16 @@ void debug_dma_sync_single_for_cpu(struct device *dev, dma_addr_t dma_handle,
 	ref.sg_call_ents = 0;
 
 	check_sync(dev, &ref, true);
-}
+पूर्ण
 
-void debug_dma_sync_single_for_device(struct device *dev,
-				      dma_addr_t dma_handle, size_t size,
-				      int direction)
-{
-	struct dma_debug_entry ref;
+व्योम debug_dma_sync_single_क्रम_device(काष्ठा device *dev,
+				      dma_addr_t dma_handle, माप_प्रकार size,
+				      पूर्णांक direction)
+अणु
+	काष्ठा dma_debug_entry ref;
 
-	if (unlikely(dma_debug_disabled()))
-		return;
+	अगर (unlikely(dma_debug_disabled()))
+		वापस;
 
 	ref.type         = dma_debug_single;
 	ref.dev          = dev;
@@ -1514,20 +1515,20 @@ void debug_dma_sync_single_for_device(struct device *dev,
 	ref.sg_call_ents = 0;
 
 	check_sync(dev, &ref, false);
-}
+पूर्ण
 
-void debug_dma_sync_sg_for_cpu(struct device *dev, struct scatterlist *sg,
-			       int nelems, int direction)
-{
-	struct scatterlist *s;
-	int mapped_ents = 0, i;
+व्योम debug_dma_sync_sg_क्रम_cpu(काष्ठा device *dev, काष्ठा scatterlist *sg,
+			       पूर्णांक nelems, पूर्णांक direction)
+अणु
+	काष्ठा scatterlist *s;
+	पूर्णांक mapped_ents = 0, i;
 
-	if (unlikely(dma_debug_disabled()))
-		return;
+	अगर (unlikely(dma_debug_disabled()))
+		वापस;
 
-	for_each_sg(sg, s, nelems, i) {
+	क्रम_each_sg(sg, s, nelems, i) अणु
 
-		struct dma_debug_entry ref = {
+		काष्ठा dma_debug_entry ref = अणु
 			.type           = dma_debug_sg,
 			.dev            = dev,
 			.pfn		= page_to_pfn(sg_page(s)),
@@ -1536,30 +1537,30 @@ void debug_dma_sync_sg_for_cpu(struct device *dev, struct scatterlist *sg,
 			.size           = sg_dma_len(s),
 			.direction      = direction,
 			.sg_call_ents   = nelems,
-		};
+		पूर्ण;
 
-		if (!i)
+		अगर (!i)
 			mapped_ents = get_nr_mapped_entries(dev, &ref);
 
-		if (i >= mapped_ents)
-			break;
+		अगर (i >= mapped_ents)
+			अवरोध;
 
 		check_sync(dev, &ref, true);
-	}
-}
+	पूर्ण
+पूर्ण
 
-void debug_dma_sync_sg_for_device(struct device *dev, struct scatterlist *sg,
-				  int nelems, int direction)
-{
-	struct scatterlist *s;
-	int mapped_ents = 0, i;
+व्योम debug_dma_sync_sg_क्रम_device(काष्ठा device *dev, काष्ठा scatterlist *sg,
+				  पूर्णांक nelems, पूर्णांक direction)
+अणु
+	काष्ठा scatterlist *s;
+	पूर्णांक mapped_ents = 0, i;
 
-	if (unlikely(dma_debug_disabled()))
-		return;
+	अगर (unlikely(dma_debug_disabled()))
+		वापस;
 
-	for_each_sg(sg, s, nelems, i) {
+	क्रम_each_sg(sg, s, nelems, i) अणु
 
-		struct dma_debug_entry ref = {
+		काष्ठा dma_debug_entry ref = अणु
 			.type           = dma_debug_sg,
 			.dev            = dev,
 			.pfn		= page_to_pfn(sg_page(s)),
@@ -1568,32 +1569,32 @@ void debug_dma_sync_sg_for_device(struct device *dev, struct scatterlist *sg,
 			.size           = sg_dma_len(s),
 			.direction      = direction,
 			.sg_call_ents   = nelems,
-		};
-		if (!i)
+		पूर्ण;
+		अगर (!i)
 			mapped_ents = get_nr_mapped_entries(dev, &ref);
 
-		if (i >= mapped_ents)
-			break;
+		अगर (i >= mapped_ents)
+			अवरोध;
 
 		check_sync(dev, &ref, false);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int __init dma_debug_driver_setup(char *str)
-{
-	int i;
+अटल पूर्णांक __init dma_debug_driver_setup(अक्षर *str)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < NAME_MAX_LEN - 1; ++i, ++str) {
+	क्रम (i = 0; i < NAME_MAX_LEN - 1; ++i, ++str) अणु
 		current_driver_name[i] = *str;
-		if (*str == 0)
-			break;
-	}
+		अगर (*str == 0)
+			अवरोध;
+	पूर्ण
 
-	if (current_driver_name[0])
+	अगर (current_driver_name[0])
 		pr_info("enable driver filter for driver [%s]\n",
 			current_driver_name);
 
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 __setup("dma_debug_driver=", dma_debug_driver_setup);

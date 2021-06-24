@@ -1,94 +1,95 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
  * originally written by: Kirk Reiser <kirk@braille.uwo.ca>
- * this version considerably modified by David Borowski, david575@rogers.com
+ * this version considerably modअगरied by David Borowski, david575@rogers.com
  *
  * Copyright (C) 1998-99  Kirk Reiser.
  * Copyright (C) 2003 David Borowski.
  *
- * specificly written as a driver for the speakup screenreview
+ * specअगरicly written as a driver क्रम the speakup screenreview
  * package it's not a general device driver.
- * This driver is for the RC Systems DoubleTalk PC internal synthesizer.
+ * This driver is क्रम the RC Systems DoubleTalk PC पूर्णांकernal synthesizer.
  */
-#include <linux/jiffies.h>
-#include <linux/sched.h>
-#include <linux/timer.h>
-#include <linux/kthread.h>
+#समावेश <linux/jअगरfies.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/समयr.h>
+#समावेश <linux/kthपढ़ो.h>
 
-#include "spk_priv.h"
-#include "serialio.h"
-#include "speakup_dtlk.h" /* local header file for DoubleTalk values */
-#include "speakup.h"
+#समावेश "spk_priv.h"
+#समावेश "serialio.h"
+#समावेश "speakup_dtlk.h" /* local header file क्रम DoubleTalk values */
+#समावेश "speakup.h"
 
-#define DRV_VERSION "2.10"
-#define PROCSPEECH 0x00
+#घोषणा DRV_VERSION "2.10"
+#घोषणा PROCSPEECH 0x00
 
-static int synth_probe(struct spk_synth *synth);
-static void dtlk_release(struct spk_synth *synth);
-static const char *synth_immediate(struct spk_synth *synth, const char *buf);
-static void do_catch_up(struct spk_synth *synth);
-static void synth_flush(struct spk_synth *synth);
+अटल पूर्णांक synth_probe(काष्ठा spk_synth *synth);
+अटल व्योम dtlk_release(काष्ठा spk_synth *synth);
+अटल स्थिर अक्षर *synth_immediate(काष्ठा spk_synth *synth, स्थिर अक्षर *buf);
+अटल व्योम करो_catch_up(काष्ठा spk_synth *synth);
+अटल व्योम synth_flush(काष्ठा spk_synth *synth);
 
-static int synth_lpc;
-static int port_forced;
-static unsigned int synth_portlist[] = {
+अटल पूर्णांक synth_lpc;
+अटल पूर्णांक port_क्रमced;
+अटल अचिन्हित पूर्णांक synth_portlist[] = अणु
 		 0x25e, 0x29e, 0x2de, 0x31e, 0x35e, 0x39e, 0
-};
+पूर्ण;
 
-static u_char synth_status;
+अटल u_अक्षर synth_status;
 
-static struct var_t vars[] = {
-	{ CAPS_START, .u.s = {"\x01+35p" } },
-	{ CAPS_STOP, .u.s = {"\x01-35p" } },
-	{ RATE, .u.n = {"\x01%ds", 8, 0, 9, 0, 0, NULL } },
-	{ PITCH, .u.n = {"\x01%dp", 50, 0, 99, 0, 0, NULL } },
-	{ VOL, .u.n = {"\x01%dv", 5, 0, 9, 0, 0, NULL } },
-	{ TONE, .u.n = {"\x01%dx", 1, 0, 2, 0, 0, NULL } },
-	{ PUNCT, .u.n = {"\x01%db", 7, 0, 15, 0, 0, NULL } },
-	{ VOICE, .u.n = {"\x01%do", 0, 0, 7, 0, 0, NULL } },
-	{ FREQUENCY, .u.n = {"\x01%df", 5, 0, 9, 0, 0, NULL } },
-	{ DIRECT, .u.n = {NULL, 0, 0, 1, 0, 0, NULL } },
+अटल काष्ठा var_t vars[] = अणु
+	अणु CAPS_START, .u.s = अणु"\x01+35p" पूर्ण पूर्ण,
+	अणु CAPS_STOP, .u.s = अणु"\x01-35p" पूर्ण पूर्ण,
+	अणु RATE, .u.n = अणु"\x01%ds", 8, 0, 9, 0, 0, शून्य पूर्ण पूर्ण,
+	अणु PITCH, .u.n = अणु"\x01%dp", 50, 0, 99, 0, 0, शून्य पूर्ण पूर्ण,
+	अणु VOL, .u.n = अणु"\x01%dv", 5, 0, 9, 0, 0, शून्य पूर्ण पूर्ण,
+	अणु TONE, .u.n = अणु"\x01%dx", 1, 0, 2, 0, 0, शून्य पूर्ण पूर्ण,
+	अणु PUNCT, .u.n = अणु"\x01%db", 7, 0, 15, 0, 0, शून्य पूर्ण पूर्ण,
+	अणु VOICE, .u.n = अणु"\x01%do", 0, 0, 7, 0, 0, शून्य पूर्ण पूर्ण,
+	अणु FREQUENCY, .u.n = अणु"\x01%df", 5, 0, 9, 0, 0, शून्य पूर्ण पूर्ण,
+	अणु सूचीECT, .u.n = अणुशून्य, 0, 0, 1, 0, 0, शून्य पूर्ण पूर्ण,
 	V_LAST_VAR
-};
+पूर्ण;
 
 /*
  * These attributes will appear in /sys/accessibility/speakup/dtlk.
  */
-static struct kobj_attribute caps_start_attribute =
+अटल काष्ठा kobj_attribute caps_start_attribute =
 	__ATTR(caps_start, 0644, spk_var_show, spk_var_store);
-static struct kobj_attribute caps_stop_attribute =
+अटल काष्ठा kobj_attribute caps_stop_attribute =
 	__ATTR(caps_stop, 0644, spk_var_show, spk_var_store);
-static struct kobj_attribute freq_attribute =
+अटल काष्ठा kobj_attribute freq_attribute =
 	__ATTR(freq, 0644, spk_var_show, spk_var_store);
-static struct kobj_attribute pitch_attribute =
+अटल काष्ठा kobj_attribute pitch_attribute =
 	__ATTR(pitch, 0644, spk_var_show, spk_var_store);
-static struct kobj_attribute punct_attribute =
+अटल काष्ठा kobj_attribute punct_attribute =
 	__ATTR(punct, 0644, spk_var_show, spk_var_store);
-static struct kobj_attribute rate_attribute =
+अटल काष्ठा kobj_attribute rate_attribute =
 	__ATTR(rate, 0644, spk_var_show, spk_var_store);
-static struct kobj_attribute tone_attribute =
+अटल काष्ठा kobj_attribute tone_attribute =
 	__ATTR(tone, 0644, spk_var_show, spk_var_store);
-static struct kobj_attribute voice_attribute =
+अटल काष्ठा kobj_attribute voice_attribute =
 	__ATTR(voice, 0644, spk_var_show, spk_var_store);
-static struct kobj_attribute vol_attribute =
+अटल काष्ठा kobj_attribute vol_attribute =
 	__ATTR(vol, 0644, spk_var_show, spk_var_store);
 
-static struct kobj_attribute delay_time_attribute =
-	__ATTR(delay_time, 0644, spk_var_show, spk_var_store);
-static struct kobj_attribute direct_attribute =
+अटल काष्ठा kobj_attribute delay_समय_attribute =
+	__ATTR(delay_समय, 0644, spk_var_show, spk_var_store);
+अटल काष्ठा kobj_attribute direct_attribute =
 	__ATTR(direct, 0644, spk_var_show, spk_var_store);
-static struct kobj_attribute full_time_attribute =
-	__ATTR(full_time, 0644, spk_var_show, spk_var_store);
-static struct kobj_attribute jiffy_delta_attribute =
-	__ATTR(jiffy_delta, 0644, spk_var_show, spk_var_store);
-static struct kobj_attribute trigger_time_attribute =
-	__ATTR(trigger_time, 0644, spk_var_show, spk_var_store);
+अटल काष्ठा kobj_attribute full_समय_attribute =
+	__ATTR(full_समय, 0644, spk_var_show, spk_var_store);
+अटल काष्ठा kobj_attribute jअगरfy_delta_attribute =
+	__ATTR(jअगरfy_delta, 0644, spk_var_show, spk_var_store);
+अटल काष्ठा kobj_attribute trigger_समय_attribute =
+	__ATTR(trigger_समय, 0644, spk_var_show, spk_var_store);
 
 /*
  * Create a group of attributes so that we can create and destroy them all
  * at once.
  */
-static struct attribute *synth_attrs[] = {
+अटल काष्ठा attribute *synth_attrs[] = अणु
 	&caps_start_attribute.attr,
 	&caps_stop_attribute.attr,
 	&freq_attribute.attr,
@@ -98,24 +99,24 @@ static struct attribute *synth_attrs[] = {
 	&tone_attribute.attr,
 	&voice_attribute.attr,
 	&vol_attribute.attr,
-	&delay_time_attribute.attr,
+	&delay_समय_attribute.attr,
 	&direct_attribute.attr,
-	&full_time_attribute.attr,
-	&jiffy_delta_attribute.attr,
-	&trigger_time_attribute.attr,
-	NULL,	/* need to NULL terminate the list of attributes */
-};
+	&full_समय_attribute.attr,
+	&jअगरfy_delta_attribute.attr,
+	&trigger_समय_attribute.attr,
+	शून्य,	/* need to शून्य terminate the list of attributes */
+पूर्ण;
 
-static struct spk_synth synth_dtlk = {
+अटल काष्ठा spk_synth synth_dtlk = अणु
 	.name = "dtlk",
 	.version = DRV_VERSION,
-	.long_name = "DoubleTalk PC",
+	.दीर्घ_name = "DoubleTalk PC",
 	.init = "\x01@\x01\x31y",
 	.procspeech = PROCSPEECH,
 	.clear = SYNTH_CLEAR,
 	.delay = 500,
 	.trigger = 30,
-	.jiffies = 50,
+	.jअगरfies = 50,
 	.full = 1000,
 	.startup = SYNTH_START,
 	.checkval = SYNTH_CHECK,
@@ -124,181 +125,181 @@ static struct spk_synth synth_dtlk = {
 	.probe = synth_probe,
 	.release = dtlk_release,
 	.synth_immediate = synth_immediate,
-	.catch_up = do_catch_up,
+	.catch_up = करो_catch_up,
 	.flush = synth_flush,
 	.is_alive = spk_synth_is_alive_nop,
-	.synth_adjust = NULL,
-	.read_buff_add = NULL,
+	.synth_adjust = शून्य,
+	.पढ़ो_buff_add = शून्य,
 	.get_index = spk_synth_get_index,
-	.indexing = {
+	.indexing = अणु
 		.command = "\x01%di",
 		.lowindex = 1,
 		.highindex = 5,
 		.currindex = 1,
-	},
-	.attributes = {
+	पूर्ण,
+	.attributes = अणु
 		.attrs = synth_attrs,
 		.name = "dtlk",
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static inline bool synth_readable(void)
-{
+अटल अंतरभूत bool synth_पढ़ोable(व्योम)
+अणु
 	synth_status = inb_p(speakup_info.port_tts + UART_RX);
-	return (synth_status & TTS_READABLE) != 0;
-}
+	वापस (synth_status & TTS_READABLE) != 0;
+पूर्ण
 
-static inline bool synth_writable(void)
-{
+अटल अंतरभूत bool synth_writable(व्योम)
+अणु
 	synth_status = inb_p(speakup_info.port_tts + UART_RX);
-	return (synth_status & TTS_WRITABLE) != 0;
-}
+	वापस (synth_status & TTS_WRITABLE) != 0;
+पूर्ण
 
-static inline bool synth_full(void)
-{
+अटल अंतरभूत bool synth_full(व्योम)
+अणु
 	synth_status = inb_p(speakup_info.port_tts + UART_RX);
-	return (synth_status & TTS_ALMOST_FULL) != 0;
-}
+	वापस (synth_status & TTS_ALMOST_FULL) != 0;
+पूर्ण
 
-static void spk_out(const char ch)
-{
-	int timeout = SPK_XMITR_TIMEOUT;
+अटल व्योम spk_out(स्थिर अक्षर ch)
+अणु
+	पूर्णांक समयout = SPK_XMITR_TIMEOUT;
 
-	while (!synth_writable()) {
-		if (!--timeout)
-			break;
+	जबतक (!synth_writable()) अणु
+		अगर (!--समयout)
+			अवरोध;
 		udelay(1);
-	}
+	पूर्ण
 	outb_p(ch, speakup_info.port_tts);
-	timeout = SPK_XMITR_TIMEOUT;
-	while (synth_writable()) {
-		if (!--timeout)
-			break;
+	समयout = SPK_XMITR_TIMEOUT;
+	जबतक (synth_writable()) अणु
+		अगर (!--समयout)
+			अवरोध;
 		udelay(1);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void do_catch_up(struct spk_synth *synth)
-{
-	u_char ch;
-	unsigned long flags;
-	unsigned long jiff_max;
-	struct var_t *jiffy_delta;
-	struct var_t *delay_time;
-	int jiffy_delta_val;
-	int delay_time_val;
+अटल व्योम करो_catch_up(काष्ठा spk_synth *synth)
+अणु
+	u_अक्षर ch;
+	अचिन्हित दीर्घ flags;
+	अचिन्हित दीर्घ jअगरf_max;
+	काष्ठा var_t *jअगरfy_delta;
+	काष्ठा var_t *delay_समय;
+	पूर्णांक jअगरfy_delta_val;
+	पूर्णांक delay_समय_val;
 
-	jiffy_delta = spk_get_var(JIFFY);
-	delay_time = spk_get_var(DELAY);
+	jअगरfy_delta = spk_get_var(JIFFY);
+	delay_समय = spk_get_var(DELAY);
 	spin_lock_irqsave(&speakup_info.spinlock, flags);
-	jiffy_delta_val = jiffy_delta->u.n.value;
+	jअगरfy_delta_val = jअगरfy_delta->u.n.value;
 	spin_unlock_irqrestore(&speakup_info.spinlock, flags);
-	jiff_max = jiffies + jiffy_delta_val;
-	while (!kthread_should_stop()) {
+	jअगरf_max = jअगरfies + jअगरfy_delta_val;
+	जबतक (!kthपढ़ो_should_stop()) अणु
 		spin_lock_irqsave(&speakup_info.spinlock, flags);
-		if (speakup_info.flushing) {
+		अगर (speakup_info.flushing) अणु
 			speakup_info.flushing = 0;
 			spin_unlock_irqrestore(&speakup_info.spinlock, flags);
 			synth->flush(synth);
-			continue;
-		}
+			जारी;
+		पूर्ण
 		synth_buffer_skip_nonlatin1();
-		if (synth_buffer_empty()) {
+		अगर (synth_buffer_empty()) अणु
 			spin_unlock_irqrestore(&speakup_info.spinlock, flags);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		set_current_state(TASK_INTERRUPTIBLE);
-		delay_time_val = delay_time->u.n.value;
+		delay_समय_val = delay_समय->u.n.value;
 		spin_unlock_irqrestore(&speakup_info.spinlock, flags);
-		if (synth_full()) {
-			schedule_timeout(msecs_to_jiffies(delay_time_val));
-			continue;
-		}
+		अगर (synth_full()) अणु
+			schedule_समयout(msecs_to_jअगरfies(delay_समय_val));
+			जारी;
+		पूर्ण
 		set_current_state(TASK_RUNNING);
 		spin_lock_irqsave(&speakup_info.spinlock, flags);
-		ch = synth_buffer_getc();
+		ch = synth_buffer_अ_लो();
 		spin_unlock_irqrestore(&speakup_info.spinlock, flags);
-		if (ch == '\n')
+		अगर (ch == '\n')
 			ch = PROCSPEECH;
 		spk_out(ch);
-		if (time_after_eq(jiffies, jiff_max) && (ch == SPACE)) {
+		अगर (समय_after_eq(jअगरfies, jअगरf_max) && (ch == SPACE)) अणु
 			spk_out(PROCSPEECH);
 			spin_lock_irqsave(&speakup_info.spinlock, flags);
-			delay_time_val = delay_time->u.n.value;
-			jiffy_delta_val = jiffy_delta->u.n.value;
+			delay_समय_val = delay_समय->u.n.value;
+			jअगरfy_delta_val = jअगरfy_delta->u.n.value;
 			spin_unlock_irqrestore(&speakup_info.spinlock, flags);
-			schedule_timeout(msecs_to_jiffies(delay_time_val));
-			jiff_max = jiffies + jiffy_delta_val;
-		}
-	}
+			schedule_समयout(msecs_to_jअगरfies(delay_समय_val));
+			jअगरf_max = jअगरfies + jअगरfy_delta_val;
+		पूर्ण
+	पूर्ण
 	spk_out(PROCSPEECH);
-}
+पूर्ण
 
-static const char *synth_immediate(struct spk_synth *synth, const char *buf)
-{
-	u_char ch;
+अटल स्थिर अक्षर *synth_immediate(काष्ठा spk_synth *synth, स्थिर अक्षर *buf)
+अणु
+	u_अक्षर ch;
 
-	while ((ch = (u_char)*buf)) {
-		if (synth_full())
-			return buf;
-		if (ch == '\n')
+	जबतक ((ch = (u_अक्षर)*buf)) अणु
+		अगर (synth_full())
+			वापस buf;
+		अगर (ch == '\n')
 			ch = PROCSPEECH;
 		spk_out(ch);
 		buf++;
-	}
-	return NULL;
-}
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
-static void synth_flush(struct spk_synth *synth)
-{
+अटल व्योम synth_flush(काष्ठा spk_synth *synth)
+अणु
 	outb_p(SYNTH_CLEAR, speakup_info.port_tts);
-	while (synth_writable())
+	जबतक (synth_writable())
 		cpu_relax();
-}
+पूर्ण
 
-static char synth_read_tts(void)
-{
-	u_char ch;
+अटल अक्षर synth_पढ़ो_tts(व्योम)
+अणु
+	u_अक्षर ch;
 
-	while (!synth_readable())
+	जबतक (!synth_पढ़ोable())
 		cpu_relax();
 	ch = synth_status & 0x7f;
 	outb_p(ch, speakup_info.port_tts);
-	while (synth_readable())
+	जबतक (synth_पढ़ोable())
 		cpu_relax();
-	return (char)ch;
-}
+	वापस (अक्षर)ch;
+पूर्ण
 
-/* interrogate the DoubleTalk PC and return its settings */
-static struct synth_settings *synth_interrogate(struct spk_synth *synth)
-{
-	u_char *t;
-	static char buf[sizeof(struct synth_settings) + 1];
-	int total, i;
-	static struct synth_settings status;
+/* पूर्णांकerrogate the DoubleTalk PC and वापस its settings */
+अटल काष्ठा synth_settings *synth_पूर्णांकerrogate(काष्ठा spk_synth *synth)
+अणु
+	u_अक्षर *t;
+	अटल अक्षर buf[माप(काष्ठा synth_settings) + 1];
+	पूर्णांक total, i;
+	अटल काष्ठा synth_settings status;
 
 	synth_immediate(synth, "\x18\x01?");
-	for (total = 0, i = 0; i < 50; i++) {
-		buf[total] = synth_read_tts();
-		if (total > 2 && buf[total] == 0x7f)
-			break;
-		if (total < sizeof(struct synth_settings))
+	क्रम (total = 0, i = 0; i < 50; i++) अणु
+		buf[total] = synth_पढ़ो_tts();
+		अगर (total > 2 && buf[total] == 0x7f)
+			अवरोध;
+		अगर (total < माप(काष्ठा synth_settings))
 			total++;
-	}
+	पूर्ण
 	t = buf;
 	/* serial number is little endian */
 	status.serial_number = t[0] + t[1] * 256;
 	t += 2;
-	for (i = 0; *t != '\r'; t++) {
+	क्रम (i = 0; *t != '\r'; t++) अणु
 		status.rom_version[i] = *t;
-		if (i < sizeof(status.rom_version) - 1)
+		अगर (i < माप(status.rom_version) - 1)
 			i++;
-	}
+	पूर्ण
 	status.rom_version[i] = 0;
 	t++;
 	status.mode = *t++;
 	status.punc_level = *t++;
-	status.formant_freq = *t++;
+	status.क्रमmant_freq = *t++;
 	status.pitch = *t++;
 	status.speed = *t++;
 	status.volume = *t++;
@@ -306,76 +307,76 @@ static struct synth_settings *synth_interrogate(struct spk_synth *synth)
 	status.expression = *t++;
 	status.ext_dict_loaded = *t++;
 	status.ext_dict_status = *t++;
-	status.free_ram = *t++;
+	status.मुक्त_ram = *t++;
 	status.articulation = *t++;
 	status.reverb = *t++;
 	status.eob = *t++;
-	return &status;
-}
+	वापस &status;
+पूर्ण
 
-static int synth_probe(struct spk_synth *synth)
-{
-	unsigned int port_val = 0;
-	int i = 0;
-	struct synth_settings *sp;
+अटल पूर्णांक synth_probe(काष्ठा spk_synth *synth)
+अणु
+	अचिन्हित पूर्णांक port_val = 0;
+	पूर्णांक i = 0;
+	काष्ठा synth_settings *sp;
 
 	pr_info("Probing for DoubleTalk.\n");
-	if (port_forced) {
-		speakup_info.port_tts = port_forced;
+	अगर (port_क्रमced) अणु
+		speakup_info.port_tts = port_क्रमced;
 		pr_info("probe forced to %x by kernel command line\n",
 			speakup_info.port_tts);
-		if ((port_forced & 0xf) != 0xf)
+		अगर ((port_क्रमced & 0xf) != 0xf)
 			pr_info("warning: port base should probably end with f\n");
-		if (synth_request_region(speakup_info.port_tts - 1,
-					 SYNTH_IO_EXTENT)) {
+		अगर (synth_request_region(speakup_info.port_tts - 1,
+					 SYNTH_IO_EXTENT)) अणु
 			pr_warn("sorry, port already reserved\n");
-			return -EBUSY;
-		}
+			वापस -EBUSY;
+		पूर्ण
 		port_val = inw(speakup_info.port_tts - 1);
 		synth_lpc = speakup_info.port_tts - 1;
-	} else {
-		for (i = 0; synth_portlist[i]; i++) {
-			if (synth_request_region(synth_portlist[i],
+	पूर्ण अन्यथा अणु
+		क्रम (i = 0; synth_portlist[i]; i++) अणु
+			अगर (synth_request_region(synth_portlist[i],
 						 SYNTH_IO_EXTENT))
-				continue;
+				जारी;
 			port_val = inw(synth_portlist[i]) & 0xfbff;
-			if (port_val == 0x107f) {
+			अगर (port_val == 0x107f) अणु
 				synth_lpc = synth_portlist[i];
 				speakup_info.port_tts = synth_lpc + 1;
-				break;
-			}
+				अवरोध;
+			पूर्ण
 			synth_release_region(synth_portlist[i],
 					     SYNTH_IO_EXTENT);
-		}
-	}
+		पूर्ण
+	पूर्ण
 	port_val &= 0xfbff;
-	if (port_val != 0x107f) {
+	अगर (port_val != 0x107f) अणु
 		pr_info("DoubleTalk PC: not found\n");
-		if (synth_lpc)
+		अगर (synth_lpc)
 			synth_release_region(synth_lpc, SYNTH_IO_EXTENT);
-		return -ENODEV;
-	}
-	while (inw_p(synth_lpc) != 0x147f)
-		cpu_relax(); /* wait until it's ready */
-	sp = synth_interrogate(synth);
+		वापस -ENODEV;
+	पूर्ण
+	जबतक (inw_p(synth_lpc) != 0x147f)
+		cpu_relax(); /* रुको until it's पढ़ोy */
+	sp = synth_पूर्णांकerrogate(synth);
 	pr_info("%s: %03x-%03x, ROM ver %s, s/n %u, driver: %s\n",
-		synth->long_name, synth_lpc, synth_lpc + SYNTH_IO_EXTENT - 1,
+		synth->दीर्घ_name, synth_lpc, synth_lpc + SYNTH_IO_EXTENT - 1,
 		sp->rom_version, sp->serial_number, synth->version);
 	synth->alive = 1;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void dtlk_release(struct spk_synth *synth)
-{
-	spk_stop_serial_interrupt();
-	if (speakup_info.port_tts)
+अटल व्योम dtlk_release(काष्ठा spk_synth *synth)
+अणु
+	spk_stop_serial_पूर्णांकerrupt();
+	अगर (speakup_info.port_tts)
 		synth_release_region(speakup_info.port_tts - 1,
 				     SYNTH_IO_EXTENT);
 	speakup_info.port_tts = 0;
-}
+पूर्ण
 
-module_param_hw_named(port, port_forced, int, ioport, 0444);
-module_param_named(start, synth_dtlk.startup, short, 0444);
+module_param_hw_named(port, port_क्रमced, पूर्णांक, ioport, 0444);
+module_param_named(start, synth_dtlk.startup, लघु, 0444);
 
 MODULE_PARM_DESC(port, "Set the port for the synthesizer (override probing).");
 MODULE_PARM_DESC(start, "Start the synthesizer once it is loaded.");

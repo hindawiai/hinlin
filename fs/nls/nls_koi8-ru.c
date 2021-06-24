@@ -1,82 +1,83 @@
+<शैली गुरु>
 /*
  * linux/fs/nls/nls_koi8-ru.c
  *
- * Charset koi8-ru translation based on charset koi8-u.
- * The Unicode to charset table has only exact mappings.
+ * Charset koi8-ru translation based on अक्षरset koi8-u.
+ * The Unicode to अक्षरset table has only exact mappings.
  */
 
-#include <linux/module.h>
-#include <linux/kernel.h>
-#include <linux/string.h>
-#include <linux/nls.h>
-#include <linux/errno.h>
+#समावेश <linux/module.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/nls.h>
+#समावेश <linux/त्रुटिसं.स>
 
-static struct nls_table *p_nls;
+अटल काष्ठा nls_table *p_nls;
 
-static int uni2char(const wchar_t uni,
-		    unsigned char *out, int boundlen)
-{
-	if (boundlen <= 0)
-		return -ENAMETOOLONG;
+अटल पूर्णांक uni2अक्षर(स्थिर ब_अक्षर_प्रकार uni,
+		    अचिन्हित अक्षर *out, पूर्णांक boundlen)
+अणु
+	अगर (boundlen <= 0)
+		वापस -ENAMETOOLONG;
 
-	if ((uni & 0xffaf) == 0x040e || (uni & 0xffce) == 0x254c) {
-		/* koi8-ru and koi8-u differ only on two characters */
-		if (uni == 0x040e)
+	अगर ((uni & 0xffaf) == 0x040e || (uni & 0xffce) == 0x254c) अणु
+		/* koi8-ru and koi8-u dअगरfer only on two अक्षरacters */
+		अगर (uni == 0x040e)
 			out[0] = 0xbe;
-		else if (uni == 0x045e)
+		अन्यथा अगर (uni == 0x045e)
 			out[0] = 0xae;
-		else if (uni == 0x255d || uni == 0x256c)
-			return 0;
-		else
-			return p_nls->uni2char(uni, out, boundlen);
-		return 1;
-	}
-	else
+		अन्यथा अगर (uni == 0x255d || uni == 0x256c)
+			वापस 0;
+		अन्यथा
+			वापस p_nls->uni2अक्षर(uni, out, boundlen);
+		वापस 1;
+	पूर्ण
+	अन्यथा
 		/* fast path */
-		return p_nls->uni2char(uni, out, boundlen);
-}
+		वापस p_nls->uni2अक्षर(uni, out, boundlen);
+पूर्ण
 
-static int char2uni(const unsigned char *rawstring, int boundlen,
-		    wchar_t *uni)
-{
-	int n;
+अटल पूर्णांक अक्षर2uni(स्थिर अचिन्हित अक्षर *rawstring, पूर्णांक boundlen,
+		    ब_अक्षर_प्रकार *uni)
+अणु
+	पूर्णांक n;
 
-	if ((*rawstring & 0xef) != 0xae) {
-		/* koi8-ru and koi8-u differ only on two characters */
+	अगर ((*rawstring & 0xef) != 0xae) अणु
+		/* koi8-ru and koi8-u dअगरfer only on two अक्षरacters */
 		*uni = (*rawstring & 0x10) ? 0x040e : 0x045e;
-		return 1;
-	}
+		वापस 1;
+	पूर्ण
 
-	n = p_nls->char2uni(rawstring, boundlen, uni);
-	return n;
-}
+	n = p_nls->अक्षर2uni(rawstring, boundlen, uni);
+	वापस n;
+पूर्ण
 
-static struct nls_table table = {
-	.charset	= "koi8-ru",
-	.uni2char	= uni2char,
-	.char2uni	= char2uni,
-};
+अटल काष्ठा nls_table table = अणु
+	.अक्षरset	= "koi8-ru",
+	.uni2अक्षर	= uni2अक्षर,
+	.अक्षर2uni	= अक्षर2uni,
+पूर्ण;
 
-static int __init init_nls_koi8_ru(void)
-{
+अटल पूर्णांक __init init_nls_koi8_ru(व्योम)
+अणु
 	p_nls = load_nls("koi8-u");
 
-	if (p_nls) {
-		table.charset2upper = p_nls->charset2upper;
-		table.charset2lower = p_nls->charset2lower;
-		return register_nls(&table);
-	}
+	अगर (p_nls) अणु
+		table.अक्षरset2upper = p_nls->अक्षरset2upper;
+		table.अक्षरset2lower = p_nls->अक्षरset2lower;
+		वापस रेजिस्टर_nls(&table);
+	पूर्ण
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static void __exit exit_nls_koi8_ru(void)
-{
-	unregister_nls(&table);
+अटल व्योम __निकास निकास_nls_koi8_ru(व्योम)
+अणु
+	unरेजिस्टर_nls(&table);
 	unload_nls(p_nls);
-}
+पूर्ण
 
 module_init(init_nls_koi8_ru)
-module_exit(exit_nls_koi8_ru)
+module_निकास(निकास_nls_koi8_ru)
 
 MODULE_LICENSE("Dual BSD/GPL");

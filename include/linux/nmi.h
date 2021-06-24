@@ -1,215 +1,216 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  *  linux/include/linux/nmi.h
  */
-#ifndef LINUX_NMI_H
-#define LINUX_NMI_H
+#अगर_अघोषित LINUX_NMI_H
+#घोषणा LINUX_NMI_H
 
-#include <linux/sched.h>
-#include <asm/irq.h>
-#if defined(CONFIG_HAVE_NMI_WATCHDOG)
-#include <asm/nmi.h>
-#endif
+#समावेश <linux/sched.h>
+#समावेश <यंत्र/irq.h>
+#अगर defined(CONFIG_HAVE_NMI_WATCHDOG)
+#समावेश <यंत्र/nmi.h>
+#पूर्ण_अगर
 
-#ifdef CONFIG_LOCKUP_DETECTOR
-void lockup_detector_init(void);
-void lockup_detector_soft_poweroff(void);
-void lockup_detector_cleanup(void);
-bool is_hardlockup(void);
+#अगर_घोषित CONFIG_LOCKUP_DETECTOR
+व्योम lockup_detector_init(व्योम);
+व्योम lockup_detector_soft_घातeroff(व्योम);
+व्योम lockup_detector_cleanup(व्योम);
+bool is_hardlockup(व्योम);
 
-extern int watchdog_user_enabled;
-extern int nmi_watchdog_user_enabled;
-extern int soft_watchdog_user_enabled;
-extern int watchdog_thresh;
-extern unsigned long watchdog_enabled;
+बाह्य पूर्णांक watchकरोg_user_enabled;
+बाह्य पूर्णांक nmi_watchकरोg_user_enabled;
+बाह्य पूर्णांक soft_watchकरोg_user_enabled;
+बाह्य पूर्णांक watchकरोg_thresh;
+बाह्य अचिन्हित दीर्घ watchकरोg_enabled;
 
-extern struct cpumask watchdog_cpumask;
-extern unsigned long *watchdog_cpumask_bits;
-#ifdef CONFIG_SMP
-extern int sysctl_softlockup_all_cpu_backtrace;
-extern int sysctl_hardlockup_all_cpu_backtrace;
-#else
-#define sysctl_softlockup_all_cpu_backtrace 0
-#define sysctl_hardlockup_all_cpu_backtrace 0
-#endif /* !CONFIG_SMP */
+बाह्य काष्ठा cpumask watchकरोg_cpumask;
+बाह्य अचिन्हित दीर्घ *watchकरोg_cpumask_bits;
+#अगर_घोषित CONFIG_SMP
+बाह्य पूर्णांक sysctl_softlockup_all_cpu_backtrace;
+बाह्य पूर्णांक sysctl_hardlockup_all_cpu_backtrace;
+#अन्यथा
+#घोषणा sysctl_softlockup_all_cpu_backtrace 0
+#घोषणा sysctl_hardlockup_all_cpu_backtrace 0
+#पूर्ण_अगर /* !CONFIG_SMP */
 
-#else /* CONFIG_LOCKUP_DETECTOR */
-static inline void lockup_detector_init(void) { }
-static inline void lockup_detector_soft_poweroff(void) { }
-static inline void lockup_detector_cleanup(void) { }
-#endif /* !CONFIG_LOCKUP_DETECTOR */
+#अन्यथा /* CONFIG_LOCKUP_DETECTOR */
+अटल अंतरभूत व्योम lockup_detector_init(व्योम) अणु पूर्ण
+अटल अंतरभूत व्योम lockup_detector_soft_घातeroff(व्योम) अणु पूर्ण
+अटल अंतरभूत व्योम lockup_detector_cleanup(व्योम) अणु पूर्ण
+#पूर्ण_अगर /* !CONFIG_LOCKUP_DETECTOR */
 
-#ifdef CONFIG_SOFTLOCKUP_DETECTOR
-extern void touch_softlockup_watchdog_sched(void);
-extern void touch_softlockup_watchdog(void);
-extern void touch_softlockup_watchdog_sync(void);
-extern void touch_all_softlockup_watchdogs(void);
-extern unsigned int  softlockup_panic;
+#अगर_घोषित CONFIG_SOFTLOCKUP_DETECTOR
+बाह्य व्योम touch_softlockup_watchकरोg_sched(व्योम);
+बाह्य व्योम touch_softlockup_watchकरोg(व्योम);
+बाह्य व्योम touch_softlockup_watchकरोg_sync(व्योम);
+बाह्य व्योम touch_all_softlockup_watchकरोgs(व्योम);
+बाह्य अचिन्हित पूर्णांक  softlockup_panic;
 
-extern int lockup_detector_online_cpu(unsigned int cpu);
-extern int lockup_detector_offline_cpu(unsigned int cpu);
-#else /* CONFIG_SOFTLOCKUP_DETECTOR */
-static inline void touch_softlockup_watchdog_sched(void) { }
-static inline void touch_softlockup_watchdog(void) { }
-static inline void touch_softlockup_watchdog_sync(void) { }
-static inline void touch_all_softlockup_watchdogs(void) { }
+बाह्य पूर्णांक lockup_detector_online_cpu(अचिन्हित पूर्णांक cpu);
+बाह्य पूर्णांक lockup_detector_offline_cpu(अचिन्हित पूर्णांक cpu);
+#अन्यथा /* CONFIG_SOFTLOCKUP_DETECTOR */
+अटल अंतरभूत व्योम touch_softlockup_watchकरोg_sched(व्योम) अणु पूर्ण
+अटल अंतरभूत व्योम touch_softlockup_watchकरोg(व्योम) अणु पूर्ण
+अटल अंतरभूत व्योम touch_softlockup_watchकरोg_sync(व्योम) अणु पूर्ण
+अटल अंतरभूत व्योम touch_all_softlockup_watchकरोgs(व्योम) अणु पूर्ण
 
-#define lockup_detector_online_cpu	NULL
-#define lockup_detector_offline_cpu	NULL
-#endif /* CONFIG_SOFTLOCKUP_DETECTOR */
+#घोषणा lockup_detector_online_cpu	शून्य
+#घोषणा lockup_detector_offline_cpu	शून्य
+#पूर्ण_अगर /* CONFIG_SOFTLOCKUP_DETECTOR */
 
-#ifdef CONFIG_DETECT_HUNG_TASK
-void reset_hung_task_detector(void);
-#else
-static inline void reset_hung_task_detector(void) { }
-#endif
+#अगर_घोषित CONFIG_DETECT_HUNG_TASK
+व्योम reset_hung_task_detector(व्योम);
+#अन्यथा
+अटल अंतरभूत व्योम reset_hung_task_detector(व्योम) अणु पूर्ण
+#पूर्ण_अगर
 
 /*
  * The run state of the lockup detectors is controlled by the content of the
  * 'watchdog_enabled' variable. Each lockup detector has its dedicated bit -
- * bit 0 for the hard lockup detector and bit 1 for the soft lockup detector.
+ * bit 0 क्रम the hard lockup detector and bit 1 क्रम the soft lockup detector.
  *
  * 'watchdog_user_enabled', 'nmi_watchdog_user_enabled' and
  * 'soft_watchdog_user_enabled' are variables that are only used as an
- * 'interface' between the parameters in /proc/sys/kernel and the internal
+ * 'interface' between the parameters in /proc/sys/kernel and the पूर्णांकernal
  * state bits in 'watchdog_enabled'. The 'watchdog_thresh' variable is
- * handled differently because its value is not boolean, and the lockup
+ * handled dअगरferently because its value is not boolean, and the lockup
  * detectors are 'suspended' while 'watchdog_thresh' is equal zero.
  */
-#define NMI_WATCHDOG_ENABLED_BIT   0
-#define SOFT_WATCHDOG_ENABLED_BIT  1
-#define NMI_WATCHDOG_ENABLED      (1 << NMI_WATCHDOG_ENABLED_BIT)
-#define SOFT_WATCHDOG_ENABLED     (1 << SOFT_WATCHDOG_ENABLED_BIT)
+#घोषणा NMI_WATCHDOG_ENABLED_BIT   0
+#घोषणा SOFT_WATCHDOG_ENABLED_BIT  1
+#घोषणा NMI_WATCHDOG_ENABLED      (1 << NMI_WATCHDOG_ENABLED_BIT)
+#घोषणा SOFT_WATCHDOG_ENABLED     (1 << SOFT_WATCHDOG_ENABLED_BIT)
 
-#if defined(CONFIG_HARDLOCKUP_DETECTOR)
-extern void hardlockup_detector_disable(void);
-extern unsigned int hardlockup_panic;
-#else
-static inline void hardlockup_detector_disable(void) {}
-#endif
+#अगर defined(CONFIG_HARDLOCKUP_DETECTOR)
+बाह्य व्योम hardlockup_detector_disable(व्योम);
+बाह्य अचिन्हित पूर्णांक hardlockup_panic;
+#अन्यथा
+अटल अंतरभूत व्योम hardlockup_detector_disable(व्योम) अणुपूर्ण
+#पूर्ण_अगर
 
-#if defined(CONFIG_HAVE_NMI_WATCHDOG) || defined(CONFIG_HARDLOCKUP_DETECTOR)
+#अगर defined(CONFIG_HAVE_NMI_WATCHDOG) || defined(CONFIG_HARDLOCKUP_DETECTOR)
 # define NMI_WATCHDOG_SYSCTL_PERM	0644
-#else
+#अन्यथा
 # define NMI_WATCHDOG_SYSCTL_PERM	0444
-#endif
+#पूर्ण_अगर
 
-#if defined(CONFIG_HARDLOCKUP_DETECTOR_PERF)
-extern void arch_touch_nmi_watchdog(void);
-extern void hardlockup_detector_perf_stop(void);
-extern void hardlockup_detector_perf_restart(void);
-extern void hardlockup_detector_perf_disable(void);
-extern void hardlockup_detector_perf_enable(void);
-extern void hardlockup_detector_perf_cleanup(void);
-extern int hardlockup_detector_perf_init(void);
-#else
-static inline void hardlockup_detector_perf_stop(void) { }
-static inline void hardlockup_detector_perf_restart(void) { }
-static inline void hardlockup_detector_perf_disable(void) { }
-static inline void hardlockup_detector_perf_enable(void) { }
-static inline void hardlockup_detector_perf_cleanup(void) { }
-# if !defined(CONFIG_HAVE_NMI_WATCHDOG)
-static inline int hardlockup_detector_perf_init(void) { return -ENODEV; }
-static inline void arch_touch_nmi_watchdog(void) {}
-# else
-static inline int hardlockup_detector_perf_init(void) { return 0; }
-# endif
-#endif
+#अगर defined(CONFIG_HARDLOCKUP_DETECTOR_PERF)
+बाह्य व्योम arch_touch_nmi_watchकरोg(व्योम);
+बाह्य व्योम hardlockup_detector_perf_stop(व्योम);
+बाह्य व्योम hardlockup_detector_perf_restart(व्योम);
+बाह्य व्योम hardlockup_detector_perf_disable(व्योम);
+बाह्य व्योम hardlockup_detector_perf_enable(व्योम);
+बाह्य व्योम hardlockup_detector_perf_cleanup(व्योम);
+बाह्य पूर्णांक hardlockup_detector_perf_init(व्योम);
+#अन्यथा
+अटल अंतरभूत व्योम hardlockup_detector_perf_stop(व्योम) अणु पूर्ण
+अटल अंतरभूत व्योम hardlockup_detector_perf_restart(व्योम) अणु पूर्ण
+अटल अंतरभूत व्योम hardlockup_detector_perf_disable(व्योम) अणु पूर्ण
+अटल अंतरभूत व्योम hardlockup_detector_perf_enable(व्योम) अणु पूर्ण
+अटल अंतरभूत व्योम hardlockup_detector_perf_cleanup(व्योम) अणु पूर्ण
+# अगर !defined(CONFIG_HAVE_NMI_WATCHDOG)
+अटल अंतरभूत पूर्णांक hardlockup_detector_perf_init(व्योम) अणु वापस -ENODEV; पूर्ण
+अटल अंतरभूत व्योम arch_touch_nmi_watchकरोg(व्योम) अणुपूर्ण
+# अन्यथा
+अटल अंतरभूत पूर्णांक hardlockup_detector_perf_init(व्योम) अणु वापस 0; पूर्ण
+# endअगर
+#पूर्ण_अगर
 
-void watchdog_nmi_stop(void);
-void watchdog_nmi_start(void);
-int watchdog_nmi_probe(void);
-int watchdog_nmi_enable(unsigned int cpu);
-void watchdog_nmi_disable(unsigned int cpu);
+व्योम watchकरोg_nmi_stop(व्योम);
+व्योम watchकरोg_nmi_start(व्योम);
+पूर्णांक watchकरोg_nmi_probe(व्योम);
+पूर्णांक watchकरोg_nmi_enable(अचिन्हित पूर्णांक cpu);
+व्योम watchकरोg_nmi_disable(अचिन्हित पूर्णांक cpu);
 
 /**
- * touch_nmi_watchdog - restart NMI watchdog timeout.
+ * touch_nmi_watchकरोg - restart NMI watchकरोg समयout.
  *
- * If the architecture supports the NMI watchdog, touch_nmi_watchdog()
- * may be used to reset the timeout - for code which intentionally
- * disables interrupts for a long time. This call is stateless.
+ * If the architecture supports the NMI watchकरोg, touch_nmi_watchकरोg()
+ * may be used to reset the समयout - क्रम code which पूर्णांकentionally
+ * disables पूर्णांकerrupts क्रम a दीर्घ समय. This call is stateless.
  */
-static inline void touch_nmi_watchdog(void)
-{
-	arch_touch_nmi_watchdog();
-	touch_softlockup_watchdog();
-}
+अटल अंतरभूत व्योम touch_nmi_watchकरोg(व्योम)
+अणु
+	arch_touch_nmi_watchकरोg();
+	touch_softlockup_watchकरोg();
+पूर्ण
 
 /*
  * Create trigger_all_cpu_backtrace() out of the arch-provided
  * base function. Return whether such support was available,
  * to allow calling code to fall back to some other mechanism:
  */
-#ifdef arch_trigger_cpumask_backtrace
-static inline bool trigger_all_cpu_backtrace(void)
-{
+#अगर_घोषित arch_trigger_cpumask_backtrace
+अटल अंतरभूत bool trigger_all_cpu_backtrace(व्योम)
+अणु
 	arch_trigger_cpumask_backtrace(cpu_online_mask, false);
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static inline bool trigger_allbutself_cpu_backtrace(void)
-{
+अटल अंतरभूत bool trigger_allbutself_cpu_backtrace(व्योम)
+अणु
 	arch_trigger_cpumask_backtrace(cpu_online_mask, true);
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static inline bool trigger_cpumask_backtrace(struct cpumask *mask)
-{
+अटल अंतरभूत bool trigger_cpumask_backtrace(काष्ठा cpumask *mask)
+अणु
 	arch_trigger_cpumask_backtrace(mask, false);
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static inline bool trigger_single_cpu_backtrace(int cpu)
-{
+अटल अंतरभूत bool trigger_single_cpu_backtrace(पूर्णांक cpu)
+अणु
 	arch_trigger_cpumask_backtrace(cpumask_of(cpu), false);
-	return true;
-}
+	वापस true;
+पूर्ण
 
 /* generic implementation */
-void nmi_trigger_cpumask_backtrace(const cpumask_t *mask,
+व्योम nmi_trigger_cpumask_backtrace(स्थिर cpumask_t *mask,
 				   bool exclude_self,
-				   void (*raise)(cpumask_t *mask));
-bool nmi_cpu_backtrace(struct pt_regs *regs);
+				   व्योम (*उठाओ)(cpumask_t *mask));
+bool nmi_cpu_backtrace(काष्ठा pt_regs *regs);
 
-#else
-static inline bool trigger_all_cpu_backtrace(void)
-{
-	return false;
-}
-static inline bool trigger_allbutself_cpu_backtrace(void)
-{
-	return false;
-}
-static inline bool trigger_cpumask_backtrace(struct cpumask *mask)
-{
-	return false;
-}
-static inline bool trigger_single_cpu_backtrace(int cpu)
-{
-	return false;
-}
-#endif
+#अन्यथा
+अटल अंतरभूत bool trigger_all_cpu_backtrace(व्योम)
+अणु
+	वापस false;
+पूर्ण
+अटल अंतरभूत bool trigger_allbutself_cpu_backtrace(व्योम)
+अणु
+	वापस false;
+पूर्ण
+अटल अंतरभूत bool trigger_cpumask_backtrace(काष्ठा cpumask *mask)
+अणु
+	वापस false;
+पूर्ण
+अटल अंतरभूत bool trigger_single_cpu_backtrace(पूर्णांक cpu)
+अणु
+	वापस false;
+पूर्ण
+#पूर्ण_अगर
 
-#ifdef CONFIG_HARDLOCKUP_DETECTOR_PERF
-u64 hw_nmi_get_sample_period(int watchdog_thresh);
-#endif
+#अगर_घोषित CONFIG_HARDLOCKUP_DETECTOR_PERF
+u64 hw_nmi_get_sample_period(पूर्णांक watchकरोg_thresh);
+#पूर्ण_अगर
 
-#if defined(CONFIG_HARDLOCKUP_CHECK_TIMESTAMP) && \
+#अगर defined(CONFIG_HARDLOCKUP_CHECK_TIMESTAMP) && \
     defined(CONFIG_HARDLOCKUP_DETECTOR)
-void watchdog_update_hrtimer_threshold(u64 period);
-#else
-static inline void watchdog_update_hrtimer_threshold(u64 period) { }
-#endif
+व्योम watchकरोg_update_hrसमयr_threshold(u64 period);
+#अन्यथा
+अटल अंतरभूत व्योम watchकरोg_update_hrसमयr_threshold(u64 period) अणु पूर्ण
+#पूर्ण_अगर
 
-struct ctl_table;
-int proc_watchdog(struct ctl_table *, int, void *, size_t *, loff_t *);
-int proc_nmi_watchdog(struct ctl_table *, int , void *, size_t *, loff_t *);
-int proc_soft_watchdog(struct ctl_table *, int , void *, size_t *, loff_t *);
-int proc_watchdog_thresh(struct ctl_table *, int , void *, size_t *, loff_t *);
-int proc_watchdog_cpumask(struct ctl_table *, int, void *, size_t *, loff_t *);
+काष्ठा ctl_table;
+पूर्णांक proc_watchकरोg(काष्ठा ctl_table *, पूर्णांक, व्योम *, माप_प्रकार *, loff_t *);
+पूर्णांक proc_nmi_watchकरोg(काष्ठा ctl_table *, पूर्णांक , व्योम *, माप_प्रकार *, loff_t *);
+पूर्णांक proc_soft_watchकरोg(काष्ठा ctl_table *, पूर्णांक , व्योम *, माप_प्रकार *, loff_t *);
+पूर्णांक proc_watchकरोg_thresh(काष्ठा ctl_table *, पूर्णांक , व्योम *, माप_प्रकार *, loff_t *);
+पूर्णांक proc_watchकरोg_cpumask(काष्ठा ctl_table *, पूर्णांक, व्योम *, माप_प्रकार *, loff_t *);
 
-#ifdef CONFIG_HAVE_ACPI_APEI_NMI
-#include <asm/nmi.h>
-#endif
+#अगर_घोषित CONFIG_HAVE_ACPI_APEI_NMI
+#समावेश <यंत्र/nmi.h>
+#पूर्ण_अगर
 
-#endif
+#पूर्ण_अगर

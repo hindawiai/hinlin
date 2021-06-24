@@ -1,8 +1,9 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * newport_con.c: Abscon for newport hardware
+ * newport_con.c: Abscon क्रम newport hardware
  * 
- * (C) 1998 Thomas Bogendoerfer (tsbogend@alpha.franken.de)
+ * (C) 1998 Thomas Bogenकरोerfer (tsbogend@alpha.franken.de)
  * (C) 1999 Ulf Carlsson (ulfc@thepuffingruop.com)
  * 
  * This driver is based on sgicons.c and cons_newport.
@@ -10,48 +11,48 @@
  * Copyright (C) 1996 David S. Miller (davem@davemloft.net)
  * Copyright (C) 1997 Miguel de Icaza (miguel@nuclecu.unam.mx)
  */
-#include <linux/init.h>
-#include <linux/kernel.h>
-#include <linux/errno.h>
-#include <linux/kd.h>
-#include <linux/selection.h>
-#include <linux/console.h>
-#include <linux/vt_kern.h>
-#include <linux/mm.h>
-#include <linux/module.h>
-#include <linux/slab.h>
+#समावेश <linux/init.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/kd.h>
+#समावेश <linux/selection.h>
+#समावेश <linux/console.h>
+#समावेश <linux/vt_kern.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/module.h>
+#समावेश <linux/slab.h>
 
-#include <asm/io.h>
-#include <linux/uaccess.h>
-#include <asm/page.h>
-#include <asm/gio_device.h>
+#समावेश <यंत्र/पन.स>
+#समावेश <linux/uaccess.h>
+#समावेश <यंत्र/page.h>
+#समावेश <यंत्र/gio_device.h>
 
-#include <video/newport.h>
+#समावेश <video/newport.h>
 
-#include <linux/linux_logo.h>
-#include <linux/font.h>
+#समावेश <linux/linux_logo.h>
+#समावेश <linux/font.h>
 
-#define NEWPORT_LEN	0x10000
+#घोषणा NEWPORT_LEN	0x10000
 
-#define FONT_DATA ((unsigned char *)font_vga_8x16.data)
+#घोषणा FONT_DATA ((अचिन्हित अक्षर *)font_vga_8x16.data)
 
-static unsigned char *font_data[MAX_NR_CONSOLES];
+अटल अचिन्हित अक्षर *font_data[MAX_NR_CONSOLES];
 
-static struct newport_regs *npregs;
-static unsigned long newport_addr;
+अटल काष्ठा newport_regs *npregs;
+अटल अचिन्हित दीर्घ newport_addr;
 
-static int logo_active;
-static int topscan;
-static int xcurs_correction = 29;
-static int newport_xsize;
-static int newport_ysize;
-static int newport_has_init;
+अटल पूर्णांक logo_active;
+अटल पूर्णांक topscan;
+अटल पूर्णांक xcurs_correction = 29;
+अटल पूर्णांक newport_xsize;
+अटल पूर्णांक newport_ysize;
+अटल पूर्णांक newport_has_init;
 
-static int newport_set_def_font(int unit, struct console_font *op);
+अटल पूर्णांक newport_set_def_font(पूर्णांक unit, काष्ठा console_font *op);
 
-#define BMASK(c) (c << 24)
+#घोषणा BMASK(c) (c << 24)
 
-#define RENDER(regs, cp) do { \
+#घोषणा RENDER(regs, cp) करो अणु \
 (regs)->go.zpattern = BMASK((cp)[0x0]); (regs)->go.zpattern = BMASK((cp)[0x1]); \
 (regs)->go.zpattern = BMASK((cp)[0x2]); (regs)->go.zpattern = BMASK((cp)[0x3]); \
 (regs)->go.zpattern = BMASK((cp)[0x4]); (regs)->go.zpattern = BMASK((cp)[0x5]); \
@@ -60,15 +61,15 @@ static int newport_set_def_font(int unit, struct console_font *op);
 (regs)->go.zpattern = BMASK((cp)[0xa]); (regs)->go.zpattern = BMASK((cp)[0xb]); \
 (regs)->go.zpattern = BMASK((cp)[0xc]); (regs)->go.zpattern = BMASK((cp)[0xd]); \
 (regs)->go.zpattern = BMASK((cp)[0xe]); (regs)->go.zpattern = BMASK((cp)[0xf]); \
-} while(0)
+पूर्ण जबतक(0)
 
-#define TESTVAL 0xdeadbeef
-#define XSTI_TO_FXSTART(val) (((val) & 0xffff) << 11)
+#घोषणा TESTVAL 0xdeadbeef
+#घोषणा XSTI_TO_FXSTART(val) (((val) & 0xffff) << 11)
 
-static inline void newport_render_background(int xstart, int ystart,
-					     int xend, int yend, int ci)
-{
-	newport_wait(npregs);
+अटल अंतरभूत व्योम newport_render_background(पूर्णांक xstart, पूर्णांक ystart,
+					     पूर्णांक xend, पूर्णांक yend, पूर्णांक ci)
+अणु
+	newport_रुको(npregs);
 	npregs->set.wrmask = 0xffffffff;
 	npregs->set.drawmode0 = (NPORT_DMODE0_DRAW | NPORT_DMODE0_BLOCK |
 				 NPORT_DMODE0_DOSETUP | NPORT_DMODE0_STOPX
@@ -78,65 +79,65 @@ static inline void newport_render_background(int xstart, int ystart,
 	    (xstart << 16) | ((ystart + topscan) & 0x3ff);
 	npregs->go.xyendi =
 	    ((xend + 7) << 16) | ((yend + topscan + 15) & 0x3ff);
-}
+पूर्ण
 
-static inline void newport_init_cmap(void)
-{
-	unsigned short i;
+अटल अंतरभूत व्योम newport_init_cmap(व्योम)
+अणु
+	अचिन्हित लघु i;
 
-	for (i = 0; i < 16; i++) {
-		newport_bfwait(npregs);
+	क्रम (i = 0; i < 16; i++) अणु
+		newport_bfरुको(npregs);
 		newport_cmap_setaddr(npregs, color_table[i]);
 		newport_cmap_setrgb(npregs,
-				    default_red[i],
-				    default_grn[i], default_blu[i]);
-	}
-}
+				    शेष_red[i],
+				    शेष_grn[i], शेष_blu[i]);
+	पूर्ण
+पूर्ण
 
-static const struct linux_logo *newport_show_logo(void)
-{
-#ifdef CONFIG_LOGO_SGI_CLUT224
-	const struct linux_logo *logo = fb_find_logo(8);
-	const unsigned char *clut;
-	const unsigned char *data;
-	unsigned long i;
+अटल स्थिर काष्ठा linux_logo *newport_show_logo(व्योम)
+अणु
+#अगर_घोषित CONFIG_LOGO_SGI_CLUT224
+	स्थिर काष्ठा linux_logo *logo = fb_find_logo(8);
+	स्थिर अचिन्हित अक्षर *clut;
+	स्थिर अचिन्हित अक्षर *data;
+	अचिन्हित दीर्घ i;
 
-	if (!logo)
-		return NULL;
+	अगर (!logo)
+		वापस शून्य;
 	clut = logo->clut;
 	data = logo->data;
 
-	for (i = 0; i < logo->clutsize; i++) {
-		newport_bfwait(npregs);
+	क्रम (i = 0; i < logo->clutsize; i++) अणु
+		newport_bfरुको(npregs);
 		newport_cmap_setaddr(npregs, i + 0x20);
 		newport_cmap_setrgb(npregs, clut[0], clut[1], clut[2]);
 		clut += 3;
-	}
+	पूर्ण
 
-	newport_wait(npregs);
+	newport_रुको(npregs);
 	npregs->set.drawmode0 = (NPORT_DMODE0_DRAW | NPORT_DMODE0_BLOCK |
 				 NPORT_DMODE0_CHOST);
 
 	npregs->set.xystarti = ((newport_xsize - logo->width) << 16) | (0);
 	npregs->set.xyendi = ((newport_xsize - 1) << 16);
-	newport_wait(npregs);
+	newport_रुको(npregs);
 
-	for (i = 0; i < logo->width*logo->height; i++)
+	क्रम (i = 0; i < logo->width*logo->height; i++)
 		npregs->go.hostrw0 = *data++ << 24;
 
-	return logo;
-#else
-	return NULL;
-#endif /* CONFIG_LOGO_SGI_CLUT224 */
-}
+	वापस logo;
+#अन्यथा
+	वापस शून्य;
+#पूर्ण_अगर /* CONFIG_LOGO_SGI_CLUT224 */
+पूर्ण
 
-static inline void newport_clear_screen(int xstart, int ystart, int xend,
-					int yend, int ci)
-{
-	if (logo_active)
-		return;
+अटल अंतरभूत व्योम newport_clear_screen(पूर्णांक xstart, पूर्णांक ystart, पूर्णांक xend,
+					पूर्णांक yend, पूर्णांक ci)
+अणु
+	अगर (logo_active)
+		वापस;
 
-	newport_wait(npregs);
+	newport_रुको(npregs);
 	npregs->set.wrmask = 0xffffffff;
 	npregs->set.drawmode0 = (NPORT_DMODE0_DRAW | NPORT_DMODE0_BLOCK |
 				 NPORT_DMODE0_DOSETUP | NPORT_DMODE0_STOPX
@@ -144,21 +145,21 @@ static inline void newport_clear_screen(int xstart, int ystart, int xend,
 	npregs->set.colori = ci;
 	npregs->set.xystarti = (xstart << 16) | ystart;
 	npregs->go.xyendi = (xend << 16) | yend;
-}
+पूर्ण
 
-static inline void newport_clear_lines(int ystart, int yend, int ci)
-{
+अटल अंतरभूत व्योम newport_clear_lines(पूर्णांक ystart, पूर्णांक yend, पूर्णांक ci)
+अणु
 	ystart = ((ystart << 4) + topscan) & 0x3ff;
 	yend = ((yend << 4) + topscan + 15) & 0x3ff;
 	newport_clear_screen(0, ystart, 1280 + 63, yend, ci);
-}
+पूर्ण
 
-static void newport_reset(void)
-{
-	unsigned short treg;
-	int i;
+अटल व्योम newport_reset(व्योम)
+अणु
+	अचिन्हित लघु treg;
+	पूर्णांक i;
 
-	newport_wait(npregs);
+	newport_रुको(npregs);
 	treg = newport_vc2_get(npregs, VC2_IREG_CONTROL);
 	newport_vc2_set(npregs, VC2_IREG_CONTROL,
 			(treg | VC2_CTRL_EVIDEO));
@@ -167,13 +168,13 @@ static void newport_reset(void)
 	newport_vc2_set(npregs, VC2_IREG_RADDR, treg);
 	npregs->set.dcbmode = (NPORT_DMODE_AVC2 | VC2_REGADDR_RAM |
 			       NPORT_DMODE_W2 | VC2_PROTOCOL);
-	for (i = 0; i < 128; i++) {
-		newport_bfwait(npregs);
-		if (i == 92 || i == 94)
-			npregs->set.dcbdata0.byshort.s1 = 0xff00;
-		else
-			npregs->set.dcbdata0.byshort.s1 = 0x0000;
-	}
+	क्रम (i = 0; i < 128; i++) अणु
+		newport_bfरुको(npregs);
+		अगर (i == 92 || i == 94)
+			npregs->set.dcbdata0.byलघु.s1 = 0xff00;
+		अन्यथा
+			npregs->set.dcbdata0.byलघु.s1 = 0x0000;
+	पूर्ण
 
 	newport_init_cmap();
 
@@ -191,77 +192,77 @@ static void newport_reset(void)
 
 	/* Clear the screen. */
 	newport_clear_screen(0, 0, 1280 + 63, 1024, 0);
-}
+पूर्ण
 
 /*
- * calculate the actual screen size by reading
+ * calculate the actual screen size by पढ़ोing
  * the video timing out of the VC2
  */
-static void newport_get_screensize(void)
-{
-	int i, cols;
-	unsigned short ventry, treg;
-	unsigned short linetable[128];	/* should be enough */
+अटल व्योम newport_get_screensize(व्योम)
+अणु
+	पूर्णांक i, cols;
+	अचिन्हित लघु ventry, treg;
+	अचिन्हित लघु linetable[128];	/* should be enough */
 
 	ventry = newport_vc2_get(npregs, VC2_IREG_VENTRY);
 	newport_vc2_set(npregs, VC2_IREG_RADDR, ventry);
 	npregs->set.dcbmode = (NPORT_DMODE_AVC2 | VC2_REGADDR_RAM |
 			       NPORT_DMODE_W2 | VC2_PROTOCOL);
-	for (i = 0; i < 128; i++) {
-		newport_bfwait(npregs);
-		linetable[i] = npregs->set.dcbdata0.byshort.s1;
-	}
+	क्रम (i = 0; i < 128; i++) अणु
+		newport_bfरुको(npregs);
+		linetable[i] = npregs->set.dcbdata0.byलघु.s1;
+	पूर्ण
 
 	newport_xsize = newport_ysize = 0;
-	for (i = 0; i < ARRAY_SIZE(linetable) - 1 && linetable[i + 1]; i += 2) {
+	क्रम (i = 0; i < ARRAY_SIZE(linetable) - 1 && linetable[i + 1]; i += 2) अणु
 		cols = 0;
 		newport_vc2_set(npregs, VC2_IREG_RADDR, linetable[i]);
 		npregs->set.dcbmode = (NPORT_DMODE_AVC2 | VC2_REGADDR_RAM |
 				       NPORT_DMODE_W2 | VC2_PROTOCOL);
-		do {
-			newport_bfwait(npregs);
-			treg = npregs->set.dcbdata0.byshort.s1;
-			if ((treg & 1) == 0)
+		करो अणु
+			newport_bfरुको(npregs);
+			treg = npregs->set.dcbdata0.byलघु.s1;
+			अगर ((treg & 1) == 0)
 				cols += (treg >> 7) & 0xfe;
-			if ((treg & 0x80) == 0) {
-				newport_bfwait(npregs);
-				treg = npregs->set.dcbdata0.byshort.s1;
-			}
-		} while ((treg & 0x8000) == 0);
-		if (cols) {
-			if (cols > newport_xsize)
+			अगर ((treg & 0x80) == 0) अणु
+				newport_bfरुको(npregs);
+				treg = npregs->set.dcbdata0.byलघु.s1;
+			पूर्ण
+		पूर्ण जबतक ((treg & 0x8000) == 0);
+		अगर (cols) अणु
+			अगर (cols > newport_xsize)
 				newport_xsize = cols;
 			newport_ysize += linetable[i + 1];
-		}
-	}
-	printk("NG1: Screensize %dx%d\n", newport_xsize, newport_ysize);
-}
+		पूर्ण
+	पूर्ण
+	prपूर्णांकk("NG1: Screensize %dx%d\n", newport_xsize, newport_ysize);
+पूर्ण
 
-static void newport_get_revisions(void)
-{
-	unsigned int tmp;
-	unsigned int board_rev;
-	unsigned int rex3_rev;
-	unsigned int vc2_rev;
-	unsigned int cmap_rev;
-	unsigned int xmap9_rev;
-	unsigned int bt445_rev;
-	unsigned int bitplanes;
+अटल व्योम newport_get_revisions(व्योम)
+अणु
+	अचिन्हित पूर्णांक पंचांगp;
+	अचिन्हित पूर्णांक board_rev;
+	अचिन्हित पूर्णांक rex3_rev;
+	अचिन्हित पूर्णांक vc2_rev;
+	अचिन्हित पूर्णांक cmap_rev;
+	अचिन्हित पूर्णांक xmap9_rev;
+	अचिन्हित पूर्णांक bt445_rev;
+	अचिन्हित पूर्णांक bitplanes;
 
 	rex3_rev = npregs->cset.status & NPORT_STAT_VERS;
 
 	npregs->set.dcbmode = (DCB_CMAP0 | NCMAP_PROTOCOL |
 			       NCMAP_REGADDR_RREG | NPORT_DMODE_W1);
-	tmp = npregs->set.dcbdata0.bybytes.b3;
-	cmap_rev = tmp & 7;
-	board_rev = (tmp >> 4) & 7;
-	bitplanes = ((board_rev > 1) && (tmp & 0x80)) ? 8 : 24;
+	पंचांगp = npregs->set.dcbdata0.bybytes.b3;
+	cmap_rev = पंचांगp & 7;
+	board_rev = (पंचांगp >> 4) & 7;
+	bitplanes = ((board_rev > 1) && (पंचांगp & 0x80)) ? 8 : 24;
 
 	npregs->set.dcbmode = (DCB_CMAP1 | NCMAP_PROTOCOL |
 			       NCMAP_REGADDR_RREG | NPORT_DMODE_W1);
-	tmp = npregs->set.dcbdata0.bybytes.b3;
-	if ((tmp & 7) < cmap_rev)
-		cmap_rev = (tmp & 7);
+	पंचांगp = npregs->set.dcbdata0.bybytes.b3;
+	अगर ((पंचांगp & 7) < cmap_rev)
+		cmap_rev = (पंचांगp & 7);
 
 	vc2_rev = (newport_vc2_get(npregs, VC2_IREG_CONFIG) >> 5) & 7;
 
@@ -276,41 +277,41 @@ static void newport_get_revisions(void)
 			       BT445_CSR_REVISION | NPORT_DMODE_W1);
 	bt445_rev = (npregs->set.dcbdata0.bybytes.b3 >> 4) - 0x0a;
 
-#define L(a)     (char)('A'+(a))
-	printk
+#घोषणा L(a)     (अक्षर)('A'+(a))
+	prपूर्णांकk
 	    ("NG1: Revision %d, %d bitplanes, REX3 revision %c, VC2 revision %c, xmap9 revision %c, cmap revision %c, bt445 revision %c\n",
 	     board_rev, bitplanes, L(rex3_rev), L(vc2_rev), L(xmap9_rev),
 	     L(cmap_rev ? (cmap_rev + 1) : 0), L(bt445_rev));
-#undef L
+#अघोषित L
 
-	if (board_rev == 3)	/* I don't know all affected revisions */
+	अगर (board_rev == 3)	/* I करोn't know all affected revisions */
 		xcurs_correction = 21;
-}
+पूर्ण
 
-static void newport_exit(void)
-{
-	int i;
+अटल व्योम newport_निकास(व्योम)
+अणु
+	पूर्णांक i;
 
-	/* free memory used by user font */
-	for (i = 0; i < MAX_NR_CONSOLES; i++)
-		newport_set_def_font(i, NULL);
-}
+	/* मुक्त memory used by user font */
+	क्रम (i = 0; i < MAX_NR_CONSOLES; i++)
+		newport_set_def_font(i, शून्य);
+पूर्ण
 
-/* Can't be __init, do_take_over_console may call it later */
-static const char *newport_startup(void)
-{
-	int i;
+/* Can't be __init, करो_take_over_console may call it later */
+अटल स्थिर अक्षर *newport_startup(व्योम)
+अणु
+	पूर्णांक i;
 
 	npregs->cset.config = NPORT_CFG_GD0;
 
-	if (newport_wait(npregs))
-		goto out_unmap;
+	अगर (newport_रुको(npregs))
+		जाओ out_unmap;
 
 	npregs->set.xstarti = TESTVAL;
-	if (npregs->set._xstart.word != XSTI_TO_FXSTART(TESTVAL))
-		goto out_unmap;
+	अगर (npregs->set._xstart.word != XSTI_TO_FXSTART(TESTVAL))
+		जाओ out_unmap;
 
-	for (i = 0; i < MAX_NR_CONSOLES; i++)
+	क्रम (i = 0; i < MAX_NR_CONSOLES; i++)
 		font_data[i] = FONT_DATA;
 
 	newport_reset();
@@ -318,139 +319,139 @@ static const char *newport_startup(void)
 	newport_get_screensize();
 	newport_has_init = 1;
 
-	return "SGI Newport";
+	वापस "SGI Newport";
 
 out_unmap:
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static void newport_init(struct vc_data *vc, int init)
-{
-	int cols, rows;
+अटल व्योम newport_init(काष्ठा vc_data *vc, पूर्णांक init)
+अणु
+	पूर्णांक cols, rows;
 
 	cols = newport_xsize / 8;
 	rows = newport_ysize / 16;
-	vc->vc_can_do_color = 1;
-	if (init) {
+	vc->vc_can_करो_color = 1;
+	अगर (init) अणु
 		vc->vc_cols = cols;
 		vc->vc_rows = rows;
-	} else
+	पूर्ण अन्यथा
 		vc_resize(vc, cols, rows);
-}
+पूर्ण
 
-static void newport_deinit(struct vc_data *c)
-{
-	if (!con_is_bound(&newport_con) && newport_has_init) {
-		newport_exit();
+अटल व्योम newport_deinit(काष्ठा vc_data *c)
+अणु
+	अगर (!con_is_bound(&newport_con) && newport_has_init) अणु
+		newport_निकास();
 		newport_has_init = 0;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void newport_clear(struct vc_data *vc, int sy, int sx, int height,
-			  int width)
-{
-	int xend = ((sx + width) << 3) - 1;
-	int ystart = ((sy << 4) + topscan) & 0x3ff;
-	int yend = (((sy + height) << 4) + topscan - 1) & 0x3ff;
+अटल व्योम newport_clear(काष्ठा vc_data *vc, पूर्णांक sy, पूर्णांक sx, पूर्णांक height,
+			  पूर्णांक width)
+अणु
+	पूर्णांक xend = ((sx + width) << 3) - 1;
+	पूर्णांक ystart = ((sy << 4) + topscan) & 0x3ff;
+	पूर्णांक yend = (((sy + height) << 4) + topscan - 1) & 0x3ff;
 
-	if (logo_active)
-		return;
+	अगर (logo_active)
+		वापस;
 
-	if (ystart < yend) {
+	अगर (ystart < yend) अणु
 		newport_clear_screen(sx << 3, ystart, xend, yend,
 				     (vc->state.color & 0xf0) >> 4);
-	} else {
+	पूर्ण अन्यथा अणु
 		newport_clear_screen(sx << 3, ystart, xend, 1023,
 				     (vc->state.color & 0xf0) >> 4);
 		newport_clear_screen(sx << 3, 0, xend, yend,
 				     (vc->state.color & 0xf0) >> 4);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void newport_putc(struct vc_data *vc, int charattr, int ypos,
-			 int xpos)
-{
-	unsigned char *p;
+अटल व्योम newport_अ_दो(काष्ठा vc_data *vc, पूर्णांक अक्षरattr, पूर्णांक ypos,
+			 पूर्णांक xpos)
+अणु
+	अचिन्हित अक्षर *p;
 
-	p = &font_data[vc->vc_num][(charattr & 0xff) << 4];
-	charattr = (charattr >> 8) & 0xff;
+	p = &font_data[vc->vc_num][(अक्षरattr & 0xff) << 4];
+	अक्षरattr = (अक्षरattr >> 8) & 0xff;
 	xpos <<= 3;
 	ypos <<= 4;
 
 	newport_render_background(xpos, ypos, xpos, ypos,
-				  (charattr & 0xf0) >> 4);
+				  (अक्षरattr & 0xf0) >> 4);
 
 	/* Set the color and drawing mode. */
-	newport_wait(npregs);
-	npregs->set.colori = charattr & 0xf;
+	newport_रुको(npregs);
+	npregs->set.colori = अक्षरattr & 0xf;
 	npregs->set.drawmode0 = (NPORT_DMODE0_DRAW | NPORT_DMODE0_BLOCK |
 				 NPORT_DMODE0_STOPX | NPORT_DMODE0_ZPENAB |
 				 NPORT_DMODE0_L32);
 
-	/* Set coordinates for bitmap operation. */
+	/* Set coordinates क्रम biपंचांगap operation. */
 	npregs->set.xystarti = (xpos << 16) | ((ypos + topscan) & 0x3ff);
 	npregs->set.xyendi = ((xpos + 7) << 16);
-	newport_wait(npregs);
+	newport_रुको(npregs);
 
 	/* Go, baby, go... */
 	RENDER(npregs, p);
-}
+पूर्ण
 
-static void newport_putcs(struct vc_data *vc, const unsigned short *s,
-			  int count, int ypos, int xpos)
-{
-	int i;
-	int charattr;
-	unsigned char *p;
+अटल व्योम newport_अ_दोs(काष्ठा vc_data *vc, स्थिर अचिन्हित लघु *s,
+			  पूर्णांक count, पूर्णांक ypos, पूर्णांक xpos)
+अणु
+	पूर्णांक i;
+	पूर्णांक अक्षरattr;
+	अचिन्हित अक्षर *p;
 
-	charattr = (scr_readw(s) >> 8) & 0xff;
+	अक्षरattr = (scr_पढ़ोw(s) >> 8) & 0xff;
 
 	xpos <<= 3;
 	ypos <<= 4;
 
-	if (!logo_active)
+	अगर (!logo_active)
 		/* Clear the area behing the string */
 		newport_render_background(xpos, ypos,
 					  xpos + ((count - 1) << 3), ypos,
-					  (charattr & 0xf0) >> 4);
+					  (अक्षरattr & 0xf0) >> 4);
 
-	newport_wait(npregs);
+	newport_रुको(npregs);
 
 	/* Set the color and drawing mode. */
-	npregs->set.colori = charattr & 0xf;
+	npregs->set.colori = अक्षरattr & 0xf;
 	npregs->set.drawmode0 = (NPORT_DMODE0_DRAW | NPORT_DMODE0_BLOCK |
 				 NPORT_DMODE0_STOPX | NPORT_DMODE0_ZPENAB |
 				 NPORT_DMODE0_L32);
 
-	for (i = 0; i < count; i++, xpos += 8) {
-		p = &font_data[vc->vc_num][(scr_readw(s++) & 0xff) << 4];
+	क्रम (i = 0; i < count; i++, xpos += 8) अणु
+		p = &font_data[vc->vc_num][(scr_पढ़ोw(s++) & 0xff) << 4];
 
-		newport_wait(npregs);
+		newport_रुको(npregs);
 
-		/* Set coordinates for bitmap operation. */
+		/* Set coordinates क्रम biपंचांगap operation. */
 		npregs->set.xystarti =
 		    (xpos << 16) | ((ypos + topscan) & 0x3ff);
 		npregs->set.xyendi = ((xpos + 7) << 16);
 
 		/* Go, baby, go... */
 		RENDER(npregs, p);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void newport_cursor(struct vc_data *vc, int mode)
-{
-	unsigned short treg;
-	int xcurs, ycurs;
+अटल व्योम newport_cursor(काष्ठा vc_data *vc, पूर्णांक mode)
+अणु
+	अचिन्हित लघु treg;
+	पूर्णांक xcurs, ycurs;
 
-	switch (mode) {
-	case CM_ERASE:
+	चयन (mode) अणु
+	हाल CM_ERASE:
 		treg = newport_vc2_get(npregs, VC2_IREG_CONTROL);
 		newport_vc2_set(npregs, VC2_IREG_CONTROL,
 				(treg & ~(VC2_CTRL_ECDISP)));
-		break;
+		अवरोध;
 
-	case CM_MOVE:
-	case CM_DRAW:
+	हाल CM_MOVE:
+	हाल CM_DRAW:
 		treg = newport_vc2_get(npregs, VC2_IREG_CONTROL);
 		newport_vc2_set(npregs, VC2_IREG_CONTROL,
 				(treg | VC2_CTRL_ECDISP));
@@ -459,287 +460,287 @@ static void newport_cursor(struct vc_data *vc, int mode)
 		xcurs = ((xcurs % vc->vc_cols) << 3) + xcurs_correction;
 		newport_vc2_set(npregs, VC2_IREG_CURSX, xcurs);
 		newport_vc2_set(npregs, VC2_IREG_CURSY, ycurs);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int newport_switch(struct vc_data *vc)
-{
-	static int logo_drawn = 0;
+अटल पूर्णांक newport_चयन(काष्ठा vc_data *vc)
+अणु
+	अटल पूर्णांक logo_drawn = 0;
 
 	topscan = 0;
 	npregs->cset.topscan = 0x3ff;
 
-	if (!logo_drawn) {
-		if (newport_show_logo()) {
+	अगर (!logo_drawn) अणु
+		अगर (newport_show_logo()) अणु
 			logo_drawn = 1;
 			logo_active = 1;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-static int newport_blank(struct vc_data *c, int blank, int mode_switch)
-{
-	unsigned short treg;
+अटल पूर्णांक newport_blank(काष्ठा vc_data *c, पूर्णांक blank, पूर्णांक mode_चयन)
+अणु
+	अचिन्हित लघु treg;
 
-	if (blank == 0) {
+	अगर (blank == 0) अणु
 		/* unblank console */
 		treg = newport_vc2_get(npregs, VC2_IREG_CONTROL);
 		newport_vc2_set(npregs, VC2_IREG_CONTROL,
 				(treg | VC2_CTRL_EDISP));
-	} else {
+	पूर्ण अन्यथा अणु
 		/* blank console */
 		treg = newport_vc2_get(npregs, VC2_IREG_CONTROL);
 		newport_vc2_set(npregs, VC2_IREG_CONTROL,
 				(treg & ~(VC2_CTRL_EDISP)));
-	}
-	return 1;
-}
+	पूर्ण
+	वापस 1;
+पूर्ण
 
-static int newport_set_font(int unit, struct console_font *op)
-{
-	int w = op->width;
-	int h = op->height;
-	int size = h * op->charcount;
-	int i;
-	unsigned char *new_data, *data = op->data, *p;
+अटल पूर्णांक newport_set_font(पूर्णांक unit, काष्ठा console_font *op)
+अणु
+	पूर्णांक w = op->width;
+	पूर्णांक h = op->height;
+	पूर्णांक size = h * op->अक्षरcount;
+	पूर्णांक i;
+	अचिन्हित अक्षर *new_data, *data = op->data, *p;
 
 	/* ladis: when I grow up, there will be a day... and more sizes will
 	 * be supported ;-) */
-	if ((w != 8) || (h != 16)
-	    || (op->charcount != 256 && op->charcount != 512))
-		return -EINVAL;
+	अगर ((w != 8) || (h != 16)
+	    || (op->अक्षरcount != 256 && op->अक्षरcount != 512))
+		वापस -EINVAL;
 
-	if (!(new_data = kmalloc(FONT_EXTRA_WORDS * sizeof(int) + size,
-	     GFP_USER))) return -ENOMEM;
+	अगर (!(new_data = kदो_स्मृति(FONT_EXTRA_WORDS * माप(पूर्णांक) + size,
+	     GFP_USER))) वापस -ENOMEM;
 
-	new_data += FONT_EXTRA_WORDS * sizeof(int);
+	new_data += FONT_EXTRA_WORDS * माप(पूर्णांक);
 	FNTSIZE(new_data) = size;
-	FNTCHARCNT(new_data) = op->charcount;
+	FNTCHARCNT(new_data) = op->अक्षरcount;
 	REFCOUNT(new_data) = 0;	/* usage counter */
 	FNTSUM(new_data) = 0;
 
 	p = new_data;
-	for (i = 0; i < op->charcount; i++) {
-		memcpy(p, data, h);
+	क्रम (i = 0; i < op->अक्षरcount; i++) अणु
+		स_नकल(p, data, h);
 		data += 32;
 		p += h;
-	}
+	पूर्ण
 
-	/* check if font is already used by other console */
-	for (i = 0; i < MAX_NR_CONSOLES; i++) {
-		if (font_data[i] != FONT_DATA
+	/* check अगर font is alपढ़ोy used by other console */
+	क्रम (i = 0; i < MAX_NR_CONSOLES; i++) अणु
+		अगर (font_data[i] != FONT_DATA
 		    && FNTSIZE(font_data[i]) == size
-		    && !memcmp(font_data[i], new_data, size)) {
-			kfree(new_data - FONT_EXTRA_WORDS * sizeof(int));
+		    && !स_भेद(font_data[i], new_data, size)) अणु
+			kमुक्त(new_data - FONT_EXTRA_WORDS * माप(पूर्णांक));
 			/* current font is the same as the new one */
-			if (i == unit)
-				return 0;
+			अगर (i == unit)
+				वापस 0;
 			new_data = font_data[i];
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 	/* old font is user font */
-	if (font_data[unit] != FONT_DATA) {
-		if (--REFCOUNT(font_data[unit]) == 0)
-			kfree(font_data[unit] -
-			      FONT_EXTRA_WORDS * sizeof(int));
-	}
+	अगर (font_data[unit] != FONT_DATA) अणु
+		अगर (--REFCOUNT(font_data[unit]) == 0)
+			kमुक्त(font_data[unit] -
+			      FONT_EXTRA_WORDS * माप(पूर्णांक));
+	पूर्ण
 	REFCOUNT(new_data)++;
 	font_data[unit] = new_data;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int newport_set_def_font(int unit, struct console_font *op)
-{
-	if (font_data[unit] != FONT_DATA) {
-		if (--REFCOUNT(font_data[unit]) == 0)
-			kfree(font_data[unit] -
-			      FONT_EXTRA_WORDS * sizeof(int));
+अटल पूर्णांक newport_set_def_font(पूर्णांक unit, काष्ठा console_font *op)
+अणु
+	अगर (font_data[unit] != FONT_DATA) अणु
+		अगर (--REFCOUNT(font_data[unit]) == 0)
+			kमुक्त(font_data[unit] -
+			      FONT_EXTRA_WORDS * माप(पूर्णांक));
 		font_data[unit] = FONT_DATA;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int newport_font_default(struct vc_data *vc, struct console_font *op, char *name)
-{
-	return newport_set_def_font(vc->vc_num, op);
-}
+अटल पूर्णांक newport_font_शेष(काष्ठा vc_data *vc, काष्ठा console_font *op, अक्षर *name)
+अणु
+	वापस newport_set_def_font(vc->vc_num, op);
+पूर्ण
 
-static int newport_font_set(struct vc_data *vc, struct console_font *font, unsigned flags)
-{
-	return newport_set_font(vc->vc_num, font);
-}
+अटल पूर्णांक newport_font_set(काष्ठा vc_data *vc, काष्ठा console_font *font, अचिन्हित flags)
+अणु
+	वापस newport_set_font(vc->vc_num, font);
+पूर्ण
 
-static bool newport_scroll(struct vc_data *vc, unsigned int t, unsigned int b,
-		enum con_scroll dir, unsigned int lines)
-{
-	int count, x, y;
-	unsigned short *s, *d;
-	unsigned short chattr;
+अटल bool newport_scroll(काष्ठा vc_data *vc, अचिन्हित पूर्णांक t, अचिन्हित पूर्णांक b,
+		क्रमागत con_scroll dir, अचिन्हित पूर्णांक lines)
+अणु
+	पूर्णांक count, x, y;
+	अचिन्हित लघु *s, *d;
+	अचिन्हित लघु chattr;
 
-	logo_active = 0;	/* it's time to disable the logo now.. */
+	logo_active = 0;	/* it's समय to disable the logo now.. */
 
-	if (t == 0 && b == vc->vc_rows) {
-		if (dir == SM_UP) {
+	अगर (t == 0 && b == vc->vc_rows) अणु
+		अगर (dir == SM_UP) अणु
 			topscan = (topscan + (lines << 4)) & 0x3ff;
 			newport_clear_lines(vc->vc_rows - lines,
 					    vc->vc_rows - 1,
 					    (vc->state.color & 0xf0) >> 4);
-		} else {
+		पूर्ण अन्यथा अणु
 			topscan = (topscan + (-lines << 4)) & 0x3ff;
 			newport_clear_lines(0, lines - 1,
 					    (vc->state.color & 0xf0) >> 4);
-		}
+		पूर्ण
 		npregs->cset.topscan = (topscan - 1) & 0x3ff;
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
 	count = (b - t - lines) * vc->vc_cols;
-	if (dir == SM_UP) {
+	अगर (dir == SM_UP) अणु
 		x = 0;
 		y = t;
-		s = (unsigned short *) (vc->vc_origin +
+		s = (अचिन्हित लघु *) (vc->vc_origin +
 					vc->vc_size_row * (t + lines));
-		d = (unsigned short *) (vc->vc_origin +
+		d = (अचिन्हित लघु *) (vc->vc_origin +
 					vc->vc_size_row * t);
-		while (count--) {
-			chattr = scr_readw(s++);
-			if (chattr != scr_readw(d)) {
-				newport_putc(vc, chattr, y, x);
-				scr_writew(chattr, d);
-			}
+		जबतक (count--) अणु
+			chattr = scr_पढ़ोw(s++);
+			अगर (chattr != scr_पढ़ोw(d)) अणु
+				newport_अ_दो(vc, chattr, y, x);
+				scr_ग_लिखोw(chattr, d);
+			पूर्ण
 			d++;
-			if (++x == vc->vc_cols) {
+			अगर (++x == vc->vc_cols) अणु
 				x = 0;
 				y++;
-			}
-		}
-		d = (unsigned short *) (vc->vc_origin +
+			पूर्ण
+		पूर्ण
+		d = (अचिन्हित लघु *) (vc->vc_origin +
 					vc->vc_size_row * (b - lines));
 		x = 0;
 		y = b - lines;
-		for (count = 0; count < (lines * vc->vc_cols); count++) {
-			if (scr_readw(d) != vc->vc_video_erase_char) {
-				newport_putc(vc, vc->vc_video_erase_char,
+		क्रम (count = 0; count < (lines * vc->vc_cols); count++) अणु
+			अगर (scr_पढ़ोw(d) != vc->vc_video_erase_अक्षर) अणु
+				newport_अ_दो(vc, vc->vc_video_erase_अक्षर,
 					     y, x);
-				scr_writew(vc->vc_video_erase_char, d);
-			}
+				scr_ग_लिखोw(vc->vc_video_erase_अक्षर, d);
+			पूर्ण
 			d++;
-			if (++x == vc->vc_cols) {
+			अगर (++x == vc->vc_cols) अणु
 				x = 0;
 				y++;
-			}
-		}
-	} else {
+			पूर्ण
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		x = vc->vc_cols - 1;
 		y = b - 1;
-		s = (unsigned short *) (vc->vc_origin +
+		s = (अचिन्हित लघु *) (vc->vc_origin +
 					vc->vc_size_row * (b - lines) - 2);
-		d = (unsigned short *) (vc->vc_origin +
+		d = (अचिन्हित लघु *) (vc->vc_origin +
 					vc->vc_size_row * b - 2);
-		while (count--) {
-			chattr = scr_readw(s--);
-			if (chattr != scr_readw(d)) {
-				newport_putc(vc, chattr, y, x);
-				scr_writew(chattr, d);
-			}
+		जबतक (count--) अणु
+			chattr = scr_पढ़ोw(s--);
+			अगर (chattr != scr_पढ़ोw(d)) अणु
+				newport_अ_दो(vc, chattr, y, x);
+				scr_ग_लिखोw(chattr, d);
+			पूर्ण
 			d--;
-			if (x-- == 0) {
+			अगर (x-- == 0) अणु
 				x = vc->vc_cols - 1;
 				y--;
-			}
-		}
-		d = (unsigned short *) (vc->vc_origin +
+			पूर्ण
+		पूर्ण
+		d = (अचिन्हित लघु *) (vc->vc_origin +
 					vc->vc_size_row * t);
 		x = 0;
 		y = t;
-		for (count = 0; count < (lines * vc->vc_cols); count++) {
-			if (scr_readw(d) != vc->vc_video_erase_char) {
-				newport_putc(vc, vc->vc_video_erase_char,
+		क्रम (count = 0; count < (lines * vc->vc_cols); count++) अणु
+			अगर (scr_पढ़ोw(d) != vc->vc_video_erase_अक्षर) अणु
+				newport_अ_दो(vc, vc->vc_video_erase_अक्षर,
 					     y, x);
-				scr_writew(vc->vc_video_erase_char, d);
-			}
+				scr_ग_लिखोw(vc->vc_video_erase_अक्षर, d);
+			पूर्ण
 			d++;
-			if (++x == vc->vc_cols) {
+			अगर (++x == vc->vc_cols) अणु
 				x = 0;
 				y++;
-			}
-		}
-	}
-	return true;
-}
+			पूर्ण
+		पूर्ण
+	पूर्ण
+	वापस true;
+पूर्ण
 
-static void newport_save_screen(struct vc_data *vc) { }
+अटल व्योम newport_save_screen(काष्ठा vc_data *vc) अणु पूर्ण
 
-const struct consw newport_con = {
+स्थिर काष्ठा consw newport_con = अणु
 	.owner		  = THIS_MODULE,
 	.con_startup	  = newport_startup,
 	.con_init	  = newport_init,
 	.con_deinit	  = newport_deinit,
 	.con_clear	  = newport_clear,
-	.con_putc	  = newport_putc,
-	.con_putcs	  = newport_putcs,
+	.con_अ_दो	  = newport_अ_दो,
+	.con_अ_दोs	  = newport_अ_दोs,
 	.con_cursor	  = newport_cursor,
 	.con_scroll	  = newport_scroll,
-	.con_switch	  = newport_switch,
+	.con_चयन	  = newport_चयन,
 	.con_blank	  = newport_blank,
 	.con_font_set	  = newport_font_set,
-	.con_font_default = newport_font_default,
+	.con_font_शेष = newport_font_शेष,
 	.con_save_screen  = newport_save_screen
-};
+पूर्ण;
 
-static int newport_probe(struct gio_device *dev,
-			 const struct gio_device_id *id)
-{
-	int err;
+अटल पूर्णांक newport_probe(काष्ठा gio_device *dev,
+			 स्थिर काष्ठा gio_device_id *id)
+अणु
+	पूर्णांक err;
 
-	if (!dev->resource.start)
-		return -EINVAL;
+	अगर (!dev->resource.start)
+		वापस -EINVAL;
 
-	if (npregs)
-		return -EBUSY; /* we only support one Newport as console */
+	अगर (npregs)
+		वापस -EBUSY; /* we only support one Newport as console */
 
 	newport_addr = dev->resource.start + 0xF0000;
-	if (!request_mem_region(newport_addr, NEWPORT_LEN, "Newport"))
-		return -ENODEV;
+	अगर (!request_mem_region(newport_addr, NEWPORT_LEN, "Newport"))
+		वापस -ENODEV;
 
-	npregs = (struct newport_regs *)/* ioremap cannot fail */
-		ioremap(newport_addr, sizeof(struct newport_regs));
+	npregs = (काष्ठा newport_regs *)/* ioremap cannot fail */
+		ioremap(newport_addr, माप(काष्ठा newport_regs));
 	console_lock();
-	err = do_take_over_console(&newport_con, 0, MAX_NR_CONSOLES - 1, 1);
+	err = करो_take_over_console(&newport_con, 0, MAX_NR_CONSOLES - 1, 1);
 	console_unlock();
 
-	if (err) {
-		iounmap((void *)npregs);
+	अगर (err) अणु
+		iounmap((व्योम *)npregs);
 		release_mem_region(newport_addr, NEWPORT_LEN);
-	}
-	return err;
-}
+	पूर्ण
+	वापस err;
+पूर्ण
 
-static void newport_remove(struct gio_device *dev)
-{
+अटल व्योम newport_हटाओ(काष्ठा gio_device *dev)
+अणु
 	give_up_console(&newport_con);
-	iounmap((void *)npregs);
+	iounmap((व्योम *)npregs);
 	release_mem_region(newport_addr, NEWPORT_LEN);
-}
+पूर्ण
 
-static struct gio_device_id newport_ids[] = {
-	{ .id = 0x7e },
-	{ .id = 0xff }
-};
+अटल काष्ठा gio_device_id newport_ids[] = अणु
+	अणु .id = 0x7e पूर्ण,
+	अणु .id = 0xff पूर्ण
+पूर्ण;
 
 MODULE_ALIAS("gio:7e");
 
-static struct gio_driver newport_driver = {
+अटल काष्ठा gio_driver newport_driver = अणु
 	.name = "newport",
 	.id_table = newport_ids,
 	.probe = newport_probe,
-	.remove = newport_remove,
-};
-module_driver(newport_driver, gio_register_driver, gio_unregister_driver);
+	.हटाओ = newport_हटाओ,
+पूर्ण;
+module_driver(newport_driver, gio_रेजिस्टर_driver, gio_unरेजिस्टर_driver);
 
 MODULE_LICENSE("GPL");

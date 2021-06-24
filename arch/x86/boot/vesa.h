@@ -1,32 +1,33 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /* ----------------------------------------------------------------------- *
  *
  *   Copyright 1999-2007 H. Peter Anvin - All Rights Reserved
  *
  * ----------------------------------------------------------------------- */
 
-#ifndef BOOT_VESA_H
-#define BOOT_VESA_H
+#अगर_अघोषित BOOT_VESA_H
+#घोषणा BOOT_VESA_H
 
-typedef struct {
+प्रकार काष्ठा अणु
 	u16 off, seg;
-} far_ptr;
+पूर्ण far_ptr;
 
-/* VESA General Information table */
-struct vesa_general_info {
+/* VESA General Inक्रमmation table */
+काष्ठा vesa_general_info अणु
 	u32 signature;		/* 0 Magic number = "VESA" */
 	u16 version;		/* 4 */
-	far_ptr vendor_string;	/* 6 */
+	far_ptr venकरोr_string;	/* 6 */
 	u32 capabilities;	/* 10 */
 	far_ptr video_mode_ptr;	/* 14 */
 	u16 total_memory;	/* 18 */
 
 	u8 reserved[236];	/* 20 */
-} __attribute__ ((packed));
+पूर्ण __attribute__ ((packed));
 
-#define VESA_MAGIC ('V' + ('E' << 8) + ('S' << 16) + ('A' << 24))
+#घोषणा VESA_MAGIC ('V' + ('E' << 8) + ('S' << 16) + ('A' << 24))
 
-struct vesa_mode_info {
+काष्ठा vesa_mode_info अणु
 	u16 mode_attr;		/* 0 */
 	u8 win_attr[2];		/* 2 */
 	u16 win_grain;		/* 4 */
@@ -37,8 +38,8 @@ struct vesa_mode_info {
 
 	u16 h_res;		/* 18 */
 	u16 v_res;		/* 20 */
-	u8 char_width;		/* 22 */
-	u8 char_height;		/* 23 */
+	u8 अक्षर_width;		/* 22 */
+	u8 अक्षर_height;		/* 23 */
 	u8 memory_planes;	/* 24 */
 	u8 bpp;			/* 25 */
 	u8 banks;		/* 26 */
@@ -62,6 +63,6 @@ struct vesa_mode_info {
 	u16 offscreen_size;	/* 48 */
 
 	u8 reserved[206];	/* 50 */
-} __attribute__ ((packed));
+पूर्ण __attribute__ ((packed));
 
-#endif				/* LIB_SYS_VESA_H */
+#पूर्ण_अगर				/* LIB_SYS_VESA_H */

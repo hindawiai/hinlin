@@ -1,150 +1,151 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * parport-to-butterfly adapter
  *
  * Copyright (C) 2005 David Brownell
  */
-#include <linux/kernel.h>
-#include <linux/init.h>
-#include <linux/delay.h>
-#include <linux/module.h>
-#include <linux/device.h>
-#include <linux/parport.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/init.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/module.h>
+#समावेश <linux/device.h>
+#समावेश <linux/parport.h>
 
-#include <linux/sched.h>
-#include <linux/spi/spi.h>
-#include <linux/spi/spi_bitbang.h>
-#include <linux/spi/flash.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/spi/spi.h>
+#समावेश <linux/spi/spi_bitbang.h>
+#समावेश <linux/spi/flash.h>
 
-#include <linux/mtd/partitions.h>
+#समावेश <linux/mtd/partitions.h>
 
 /*
  * This uses SPI to talk with an "AVR Butterfly", which is a $US20 card
- * with a battery powered AVR microcontroller and lots of goodies.  You
- * can use GCC to develop firmware for this.
+ * with a battery घातered AVR microcontroller and lots of goodies.  You
+ * can use GCC to develop firmware क्रम this.
  *
- * See Documentation/spi/butterfly.rst for information about how to build
+ * See Documentation/spi/butterfly.rst क्रम inक्रमmation about how to build
  * and use this custom parallel port cable.
  */
 
 /* DATA output bits (pins 2..9 == D0..D7) */
-#define	butterfly_nreset (1 << 1)		/* pin 3 */
+#घोषणा	butterfly_nreset (1 << 1)		/* pin 3 */
 
-#define	spi_sck_bit	(1 << 0)		/* pin 2 */
-#define	spi_mosi_bit	(1 << 7)		/* pin 9 */
+#घोषणा	spi_sck_bit	(1 << 0)		/* pin 2 */
+#घोषणा	spi_mosi_bit	(1 << 7)		/* pin 9 */
 
-#define	vcc_bits	((1 << 6) | (1 << 5))	/* pins 7, 8 */
+#घोषणा	vcc_bits	((1 << 6) | (1 << 5))	/* pins 7, 8 */
 
 /* STATUS input bits */
-#define	spi_miso_bit	PARPORT_STATUS_BUSY	/* pin 11 */
+#घोषणा	spi_miso_bit	PARPORT_STATUS_BUSY	/* pin 11 */
 
 /* CONTROL output bits */
-#define	spi_cs_bit	PARPORT_CONTROL_SELECT	/* pin 17 */
+#घोषणा	spi_cs_bit	PARPORT_CONTROL_SELECT	/* pin 17 */
 
-static inline struct butterfly *spidev_to_pp(struct spi_device *spi)
-{
-	return spi->controller_data;
-}
+अटल अंतरभूत काष्ठा butterfly *spidev_to_pp(काष्ठा spi_device *spi)
+अणु
+	वापस spi->controller_data;
+पूर्ण
 
-struct butterfly {
-	/* REVISIT ... for now, this must be first */
-	struct spi_bitbang	bitbang;
+काष्ठा butterfly अणु
+	/* REVISIT ... क्रम now, this must be first */
+	काष्ठा spi_bitbang	bitbang;
 
-	struct parport		*port;
-	struct pardevice	*pd;
+	काष्ठा parport		*port;
+	काष्ठा pardevice	*pd;
 
 	u8			lastbyte;
 
-	struct spi_device	*dataflash;
-	struct spi_device	*butterfly;
-	struct spi_board_info	info[2];
+	काष्ठा spi_device	*dataflash;
+	काष्ठा spi_device	*butterfly;
+	काष्ठा spi_board_info	info[2];
 
-};
+पूर्ण;
 
 /*----------------------------------------------------------------------*/
 
-static inline void
-setsck(struct spi_device *spi, int is_on)
-{
-	struct butterfly	*pp = spidev_to_pp(spi);
+अटल अंतरभूत व्योम
+setsck(काष्ठा spi_device *spi, पूर्णांक is_on)
+अणु
+	काष्ठा butterfly	*pp = spidev_to_pp(spi);
 	u8			bit, byte = pp->lastbyte;
 
 	bit = spi_sck_bit;
 
-	if (is_on)
+	अगर (is_on)
 		byte |= bit;
-	else
+	अन्यथा
 		byte &= ~bit;
-	parport_write_data(pp->port, byte);
+	parport_ग_लिखो_data(pp->port, byte);
 	pp->lastbyte = byte;
-}
+पूर्ण
 
-static inline void
-setmosi(struct spi_device *spi, int is_on)
-{
-	struct butterfly	*pp = spidev_to_pp(spi);
+अटल अंतरभूत व्योम
+seपंचांगosi(काष्ठा spi_device *spi, पूर्णांक is_on)
+अणु
+	काष्ठा butterfly	*pp = spidev_to_pp(spi);
 	u8			bit, byte = pp->lastbyte;
 
 	bit = spi_mosi_bit;
 
-	if (is_on)
+	अगर (is_on)
 		byte |= bit;
-	else
+	अन्यथा
 		byte &= ~bit;
-	parport_write_data(pp->port, byte);
+	parport_ग_लिखो_data(pp->port, byte);
 	pp->lastbyte = byte;
-}
+पूर्ण
 
-static inline int getmiso(struct spi_device *spi)
-{
-	struct butterfly	*pp = spidev_to_pp(spi);
-	int			value;
+अटल अंतरभूत पूर्णांक geपंचांगiso(काष्ठा spi_device *spi)
+अणु
+	काष्ठा butterfly	*pp = spidev_to_pp(spi);
+	पूर्णांक			value;
 	u8			bit;
 
 	bit = spi_miso_bit;
 
 	/* only STATUS_BUSY is NOT negated */
-	value = !(parport_read_status(pp->port) & bit);
-	return (bit == PARPORT_STATUS_BUSY) ? value : !value;
-}
+	value = !(parport_पढ़ो_status(pp->port) & bit);
+	वापस (bit == PARPORT_STATUS_BUSY) ? value : !value;
+पूर्ण
 
-static void butterfly_chipselect(struct spi_device *spi, int value)
-{
-	struct butterfly	*pp = spidev_to_pp(spi);
+अटल व्योम butterfly_chipselect(काष्ठा spi_device *spi, पूर्णांक value)
+अणु
+	काष्ठा butterfly	*pp = spidev_to_pp(spi);
 
-	/* set default clock polarity */
-	if (value != BITBANG_CS_INACTIVE)
+	/* set शेष घड़ी polarity */
+	अगर (value != BITBANG_CS_INACTIVE)
 		setsck(spi, spi->mode & SPI_CPOL);
 
 	/* here, value == "activate or not";
 	 * most PARPORT_CONTROL_* bits are negated, so we must
 	 * morph it to value == "bit value to write in control register"
 	 */
-	if (spi_cs_bit == PARPORT_CONTROL_INIT)
+	अगर (spi_cs_bit == PARPORT_CONTROL_INIT)
 		value = !value;
 
 	parport_frob_control(pp->port, spi_cs_bit, value ? spi_cs_bit : 0);
-}
+पूर्ण
 
 /* we only needed to implement one mode here, and choose SPI_MODE_0 */
 
-#define spidelay(X)	do { } while (0)
-/* #define spidelay	ndelay */
+#घोषणा spidelay(X)	करो अणु पूर्ण जबतक (0)
+/* #घोषणा spidelay	ndelay */
 
-#include "spi-bitbang-txrx.h"
+#समावेश "spi-bitbang-txrx.h"
 
-static u32
-butterfly_txrx_word_mode0(struct spi_device *spi, unsigned nsecs, u32 word,
-			  u8 bits, unsigned flags)
-{
-	return bitbang_txrx_be_cpha0(spi, nsecs, 0, flags, word, bits);
-}
+अटल u32
+butterfly_txrx_word_mode0(काष्ठा spi_device *spi, अचिन्हित nsecs, u32 word,
+			  u8 bits, अचिन्हित flags)
+अणु
+	वापस bitbang_txrx_be_cpha0(spi, nsecs, 0, flags, word, bits);
+पूर्ण
 
 /*----------------------------------------------------------------------*/
 
-/* override default partitioning with cmdlinepart */
-static struct mtd_partition partitions[] = { {
-	/* JFFS2 wants partitions of 4*N blocks for this device,
+/* override शेष partitioning with cmdlinepart */
+अटल काष्ठा mtd_partition partitions[] = अणु अणु
+	/* JFFS2 wants partitions of 4*N blocks क्रम this device,
 	 * so sectors 0 and 1 can't be partitions by themselves.
 	 */
 
@@ -155,51 +156,51 @@ static struct mtd_partition partitions[] = { {
 	.offset		= 0,
 	.size		= (8 + 248) * 264,
 	/* .mask_flags	= MTD_WRITEABLE, */
-}, {
+पूर्ण, अणु
 	/* sector 2 = 256 pages * 264 bytes/page
 	 * sectors 3-5 = 512 pages * 264 bytes/page
 	 */
 	.name		= "filesystem",		/* 462 KB */
 	.offset		= MTDPART_OFS_APPEND,
 	.size		= MTDPART_SIZ_FULL,
-} };
+पूर्ण पूर्ण;
 
-static struct flash_platform_data flash = {
+अटल काष्ठा flash_platक्रमm_data flash = अणु
 	.name		= "butterflash",
 	.parts		= partitions,
 	.nr_parts	= ARRAY_SIZE(partitions),
-};
+पूर्ण;
 
-/* REVISIT remove this ugly global and its "only one" limitation */
-static struct butterfly *butterfly;
+/* REVISIT हटाओ this ugly global and its "only one" limitation */
+अटल काष्ठा butterfly *butterfly;
 
-static void butterfly_attach(struct parport *p)
-{
-	struct pardevice	*pd;
-	int			status;
-	struct butterfly	*pp;
-	struct spi_master	*master;
-	struct device		*dev = p->physport->dev;
-	struct pardev_cb	butterfly_cb;
+अटल व्योम butterfly_attach(काष्ठा parport *p)
+अणु
+	काष्ठा pardevice	*pd;
+	पूर्णांक			status;
+	काष्ठा butterfly	*pp;
+	काष्ठा spi_master	*master;
+	काष्ठा device		*dev = p->physport->dev;
+	काष्ठा pardev_cb	butterfly_cb;
 
-	if (butterfly || !dev)
-		return;
+	अगर (butterfly || !dev)
+		वापस;
 
 	/* REVISIT:  this just _assumes_ a butterfly is there ... no probe,
 	 * and no way to be selective about what it binds to.
 	 */
 
-	master = spi_alloc_master(dev, sizeof(*pp));
-	if (!master) {
+	master = spi_alloc_master(dev, माप(*pp));
+	अगर (!master) अणु
 		status = -ENOMEM;
-		goto done;
-	}
+		जाओ करोne;
+	पूर्ण
 	pp = spi_master_get_devdata(master);
 
 	/*
 	 * SPI and bitbang hookup
 	 *
-	 * use default setup(), cleanup(), and transfer() methods; and
+	 * use शेष setup(), cleanup(), and transfer() methods; and
 	 * only bother implementing mode 0.  Start it later.
 	 */
 	master->bus_num = 42;
@@ -213,110 +214,110 @@ static void butterfly_attach(struct parport *p)
 	 * parport hookup
 	 */
 	pp->port = p;
-	memset(&butterfly_cb, 0, sizeof(butterfly_cb));
-	butterfly_cb.private = pp;
-	pd = parport_register_dev_model(p, "spi_butterfly", &butterfly_cb, 0);
-	if (!pd) {
+	स_रखो(&butterfly_cb, 0, माप(butterfly_cb));
+	butterfly_cb.निजी = pp;
+	pd = parport_रेजिस्टर_dev_model(p, "spi_butterfly", &butterfly_cb, 0);
+	अगर (!pd) अणु
 		status = -ENOMEM;
-		goto clean0;
-	}
+		जाओ clean0;
+	पूर्ण
 	pp->pd = pd;
 
 	status = parport_claim(pd);
-	if (status < 0)
-		goto clean1;
+	अगर (status < 0)
+		जाओ clean1;
 
 	/*
-	 * Butterfly reset, powerup, run firmware
+	 * Butterfly reset, घातerup, run firmware
 	 */
 	pr_debug("%s: powerup/reset Butterfly\n", p->name);
 
-	/* nCS for dataflash (this bit is inverted on output) */
+	/* nCS क्रम dataflash (this bit is inverted on output) */
 	parport_frob_control(pp->port, spi_cs_bit, 0);
 
-	/* stabilize power with chip in reset (nRESET), and
+	/* stabilize घातer with chip in reset (nRESET), and
 	 * spi_sck_bit clear (CPOL=0)
 	 */
 	pp->lastbyte |= vcc_bits;
-	parport_write_data(pp->port, pp->lastbyte);
+	parport_ग_लिखो_data(pp->port, pp->lastbyte);
 	msleep(5);
 
-	/* take it out of reset; assume long reset delay */
+	/* take it out of reset; assume दीर्घ reset delay */
 	pp->lastbyte |= butterfly_nreset;
-	parport_write_data(pp->port, pp->lastbyte);
+	parport_ग_लिखो_data(pp->port, pp->lastbyte);
 	msleep(100);
 
 	/*
-	 * Start SPI ... for now, hide that we're two physical busses.
+	 * Start SPI ... क्रम now, hide that we're two physical busses.
 	 */
 	status = spi_bitbang_start(&pp->bitbang);
-	if (status < 0)
-		goto clean2;
+	अगर (status < 0)
+		जाओ clean2;
 
 	/* Bus 1 lets us talk to at45db041b (firmware disables AVR SPI), AVR
 	 * (firmware resets at45, acts as spi slave) or neither (we ignore
-	 * both, AVR uses AT45).  Here we expect firmware for the first option.
+	 * both, AVR uses AT45).  Here we expect firmware क्रम the first option.
 	 */
 
 	pp->info[0].max_speed_hz = 15 * 1000 * 1000;
-	strcpy(pp->info[0].modalias, "mtd_dataflash");
-	pp->info[0].platform_data = &flash;
+	म_नकल(pp->info[0].modalias, "mtd_dataflash");
+	pp->info[0].platक्रमm_data = &flash;
 	pp->info[0].chip_select = 1;
 	pp->info[0].controller_data = pp;
 	pp->dataflash = spi_new_device(pp->bitbang.master, &pp->info[0]);
-	if (pp->dataflash)
+	अगर (pp->dataflash)
 		pr_debug("%s: dataflash at %s\n", p->name,
 			 dev_name(&pp->dataflash->dev));
 
 	pr_info("%s: AVR Butterfly\n", p->name);
 	butterfly = pp;
-	return;
+	वापस;
 
 clean2:
 	/* turn off VCC */
-	parport_write_data(pp->port, 0);
+	parport_ग_लिखो_data(pp->port, 0);
 
 	parport_release(pp->pd);
 clean1:
-	parport_unregister_device(pd);
+	parport_unरेजिस्टर_device(pd);
 clean0:
 	spi_master_put(pp->bitbang.master);
-done:
+करोne:
 	pr_debug("%s: butterfly probe, fail %d\n", p->name, status);
-}
+पूर्ण
 
-static void butterfly_detach(struct parport *p)
-{
-	struct butterfly	*pp;
+अटल व्योम butterfly_detach(काष्ठा parport *p)
+अणु
+	काष्ठा butterfly	*pp;
 
 	/* FIXME this global is ugly ... but, how to quickly get from
 	 * the parport to the "struct butterfly" associated with it?
-	 * "old school" driver-internal device lists?
+	 * "old school" driver-पूर्णांकernal device lists?
 	 */
-	if (!butterfly || butterfly->port != p)
-		return;
+	अगर (!butterfly || butterfly->port != p)
+		वापस;
 	pp = butterfly;
-	butterfly = NULL;
+	butterfly = शून्य;
 
-	/* stop() unregisters child devices too */
+	/* stop() unरेजिस्टरs child devices too */
 	spi_bitbang_stop(&pp->bitbang);
 
 	/* turn off VCC */
-	parport_write_data(pp->port, 0);
+	parport_ग_लिखो_data(pp->port, 0);
 	msleep(10);
 
 	parport_release(pp->pd);
-	parport_unregister_device(pp->pd);
+	parport_unरेजिस्टर_device(pp->pd);
 
 	spi_master_put(pp->bitbang.master);
-}
+पूर्ण
 
-static struct parport_driver butterfly_driver = {
+अटल काष्ठा parport_driver butterfly_driver = अणु
 	.name =		"spi_butterfly",
 	.match_port =	butterfly_attach,
 	.detach =	butterfly_detach,
 	.devmodel = true,
-};
+पूर्ण;
 module_parport_driver(butterfly_driver);
 
 MODULE_DESCRIPTION("Parport Adapter driver for AVR Butterfly");

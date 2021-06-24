@@ -1,10 +1,11 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  *  linux/fs/ext2/dir.c
  *
  * Copyright (C) 1992, 1993, 1994, 1995
  * Remy Card (card@masi.ibp.fr)
- * Laboratoire MASI - Institut Blaise Pascal
+ * Laborम_से_पre MASI - Institut Blaise Pascal
  * Universite Pierre et Marie Curie (Paris VI)
  *
  *  from
@@ -15,403 +16,403 @@
  *
  *  ext2 directory handling functions
  *
- *  Big-endian to little-endian byte-swapping/bitmaps by
+ *  Big-endian to little-endian byte-swapping/biपंचांगaps by
  *        David S. Miller (davem@caip.rutgers.edu), 1995
  *
- * All code that works with directory layout had been switched to pagecache
+ * All code that works with directory layout had been चयनed to pagecache
  * and moved here. AV
  */
 
-#include "ext2.h"
-#include <linux/buffer_head.h>
-#include <linux/pagemap.h>
-#include <linux/swap.h>
-#include <linux/iversion.h>
+#समावेश "ext2.h"
+#समावेश <linux/buffer_head.h>
+#समावेश <linux/pagemap.h>
+#समावेश <linux/swap.h>
+#समावेश <linux/iversion.h>
 
-typedef struct ext2_dir_entry_2 ext2_dirent;
+प्रकार काष्ठा ext2_dir_entry_2 ext2_dirent;
 
 /*
- * Tests against MAX_REC_LEN etc were put in place for 64k block
- * sizes; if that is not possible on this arch, we can skip
+ * Tests against MAX_REC_LEN etc were put in place क्रम 64k block
+ * sizes; अगर that is not possible on this arch, we can skip
  * those tests and speed things up.
  */
-static inline unsigned ext2_rec_len_from_disk(__le16 dlen)
-{
-	unsigned len = le16_to_cpu(dlen);
+अटल अंतरभूत अचिन्हित ext2_rec_len_from_disk(__le16 dlen)
+अणु
+	अचिन्हित len = le16_to_cpu(dlen);
 
-#if (PAGE_SIZE >= 65536)
-	if (len == EXT2_MAX_REC_LEN)
-		return 1 << 16;
-#endif
-	return len;
-}
+#अगर (PAGE_SIZE >= 65536)
+	अगर (len == EXT2_MAX_REC_LEN)
+		वापस 1 << 16;
+#पूर्ण_अगर
+	वापस len;
+पूर्ण
 
-static inline __le16 ext2_rec_len_to_disk(unsigned len)
-{
-#if (PAGE_SIZE >= 65536)
-	if (len == (1 << 16))
-		return cpu_to_le16(EXT2_MAX_REC_LEN);
-	else
+अटल अंतरभूत __le16 ext2_rec_len_to_disk(अचिन्हित len)
+अणु
+#अगर (PAGE_SIZE >= 65536)
+	अगर (len == (1 << 16))
+		वापस cpu_to_le16(EXT2_MAX_REC_LEN);
+	अन्यथा
 		BUG_ON(len > (1 << 16));
-#endif
-	return cpu_to_le16(len);
-}
+#पूर्ण_अगर
+	वापस cpu_to_le16(len);
+पूर्ण
 
 /*
  * ext2 uses block-sized chunks. Arguably, sector-sized ones would be
  * more robust, but we have what we have
  */
-static inline unsigned ext2_chunk_size(struct inode *inode)
-{
-	return inode->i_sb->s_blocksize;
-}
+अटल अंतरभूत अचिन्हित ext2_chunk_size(काष्ठा inode *inode)
+अणु
+	वापस inode->i_sb->s_blocksize;
+पूर्ण
 
 /*
- * Return the offset into page `page_nr' of the last valid
+ * Return the offset पूर्णांकo page `page_nr' of the last valid
  * byte in that page, plus one.
  */
-static unsigned
-ext2_last_byte(struct inode *inode, unsigned long page_nr)
-{
-	unsigned last_byte = inode->i_size;
+अटल अचिन्हित
+ext2_last_byte(काष्ठा inode *inode, अचिन्हित दीर्घ page_nr)
+अणु
+	अचिन्हित last_byte = inode->i_size;
 
 	last_byte -= page_nr << PAGE_SHIFT;
-	if (last_byte > PAGE_SIZE)
+	अगर (last_byte > PAGE_SIZE)
 		last_byte = PAGE_SIZE;
-	return last_byte;
-}
+	वापस last_byte;
+पूर्ण
 
-static int ext2_commit_chunk(struct page *page, loff_t pos, unsigned len)
-{
-	struct address_space *mapping = page->mapping;
-	struct inode *dir = mapping->host;
-	int err = 0;
+अटल पूर्णांक ext2_commit_chunk(काष्ठा page *page, loff_t pos, अचिन्हित len)
+अणु
+	काष्ठा address_space *mapping = page->mapping;
+	काष्ठा inode *dir = mapping->host;
+	पूर्णांक err = 0;
 
 	inode_inc_iversion(dir);
-	block_write_end(NULL, mapping, pos, len, len, page, NULL);
+	block_ग_लिखो_end(शून्य, mapping, pos, len, len, page, शून्य);
 
-	if (pos+len > dir->i_size) {
-		i_size_write(dir, pos+len);
+	अगर (pos+len > dir->i_size) अणु
+		i_size_ग_लिखो(dir, pos+len);
 		mark_inode_dirty(dir);
-	}
+	पूर्ण
 
-	if (IS_DIRSYNC(dir)) {
-		err = write_one_page(page);
-		if (!err)
+	अगर (IS_सूचीSYNC(dir)) अणु
+		err = ग_लिखो_one_page(page);
+		अगर (!err)
 			err = sync_inode_metadata(dir, 1);
-	} else {
+	पूर्ण अन्यथा अणु
 		unlock_page(page);
-	}
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static bool ext2_check_page(struct page *page, int quiet)
-{
-	struct inode *dir = page->mapping->host;
-	struct super_block *sb = dir->i_sb;
-	unsigned chunk_size = ext2_chunk_size(dir);
-	char *kaddr = page_address(page);
+अटल bool ext2_check_page(काष्ठा page *page, पूर्णांक quiet)
+अणु
+	काष्ठा inode *dir = page->mapping->host;
+	काष्ठा super_block *sb = dir->i_sb;
+	अचिन्हित chunk_size = ext2_chunk_size(dir);
+	अक्षर *kaddr = page_address(page);
 	u32 max_inumber = le32_to_cpu(EXT2_SB(sb)->s_es->s_inodes_count);
-	unsigned offs, rec_len;
-	unsigned limit = PAGE_SIZE;
+	अचिन्हित offs, rec_len;
+	अचिन्हित limit = PAGE_SIZE;
 	ext2_dirent *p;
-	char *error;
+	अक्षर *error;
 
-	if ((dir->i_size >> PAGE_SHIFT) == page->index) {
+	अगर ((dir->i_size >> PAGE_SHIFT) == page->index) अणु
 		limit = dir->i_size & ~PAGE_MASK;
-		if (limit & (chunk_size - 1))
-			goto Ebadsize;
-		if (!limit)
-			goto out;
-	}
-	for (offs = 0; offs <= limit - EXT2_DIR_REC_LEN(1); offs += rec_len) {
+		अगर (limit & (chunk_size - 1))
+			जाओ Ebadsize;
+		अगर (!limit)
+			जाओ out;
+	पूर्ण
+	क्रम (offs = 0; offs <= limit - EXT2_सूची_REC_LEN(1); offs += rec_len) अणु
 		p = (ext2_dirent *)(kaddr + offs);
 		rec_len = ext2_rec_len_from_disk(p->rec_len);
 
-		if (unlikely(rec_len < EXT2_DIR_REC_LEN(1)))
-			goto Eshort;
-		if (unlikely(rec_len & 3))
-			goto Ealign;
-		if (unlikely(rec_len < EXT2_DIR_REC_LEN(p->name_len)))
-			goto Enamelen;
-		if (unlikely(((offs + rec_len - 1) ^ offs) & ~(chunk_size-1)))
-			goto Espan;
-		if (unlikely(le32_to_cpu(p->inode) > max_inumber))
-			goto Einumber;
-	}
-	if (offs != limit)
-		goto Eend;
+		अगर (unlikely(rec_len < EXT2_सूची_REC_LEN(1)))
+			जाओ Eलघु;
+		अगर (unlikely(rec_len & 3))
+			जाओ Ealign;
+		अगर (unlikely(rec_len < EXT2_सूची_REC_LEN(p->name_len)))
+			जाओ Enamelen;
+		अगर (unlikely(((offs + rec_len - 1) ^ offs) & ~(chunk_size-1)))
+			जाओ Espan;
+		अगर (unlikely(le32_to_cpu(p->inode) > max_inumber))
+			जाओ Einumber;
+	पूर्ण
+	अगर (offs != limit)
+		जाओ Eend;
 out:
 	SetPageChecked(page);
-	return true;
+	वापस true;
 
 	/* Too bad, we had an error */
 
 Ebadsize:
-	if (!quiet)
+	अगर (!quiet)
 		ext2_error(sb, __func__,
 			"size of directory #%lu is not a multiple "
 			"of chunk size", dir->i_ino);
-	goto fail;
-Eshort:
+	जाओ fail;
+Eलघु:
 	error = "rec_len is smaller than minimal";
-	goto bad_entry;
+	जाओ bad_entry;
 Ealign:
 	error = "unaligned directory entry";
-	goto bad_entry;
+	जाओ bad_entry;
 Enamelen:
 	error = "rec_len is too small for name_len";
-	goto bad_entry;
+	जाओ bad_entry;
 Espan:
 	error = "directory entry across blocks";
-	goto bad_entry;
+	जाओ bad_entry;
 Einumber:
 	error = "inode out of bounds";
 bad_entry:
-	if (!quiet)
+	अगर (!quiet)
 		ext2_error(sb, __func__, "bad entry in directory #%lu: : %s - "
 			"offset=%lu, inode=%lu, rec_len=%d, name_len=%d",
 			dir->i_ino, error, (page->index<<PAGE_SHIFT)+offs,
-			(unsigned long) le32_to_cpu(p->inode),
+			(अचिन्हित दीर्घ) le32_to_cpu(p->inode),
 			rec_len, p->name_len);
-	goto fail;
+	जाओ fail;
 Eend:
-	if (!quiet) {
+	अगर (!quiet) अणु
 		p = (ext2_dirent *)(kaddr + offs);
 		ext2_error(sb, "ext2_check_page",
 			"entry in directory #%lu spans the page boundary"
 			"offset=%lu, inode=%lu",
 			dir->i_ino, (page->index<<PAGE_SHIFT)+offs,
-			(unsigned long) le32_to_cpu(p->inode));
-	}
+			(अचिन्हित दीर्घ) le32_to_cpu(p->inode));
+	पूर्ण
 fail:
 	SetPageError(page);
-	return false;
-}
+	वापस false;
+पूर्ण
 
 /*
  * Calls to ext2_get_page()/ext2_put_page() must be nested according to the
- * rules documented in kmap_local_page()/kunmap_local().
+ * rules करोcumented in kmap_local_page()/kunmap_local().
  *
- * NOTE: ext2_find_entry() and ext2_dotdot() act as a call to ext2_get_page()
- * and should be treated as a call to ext2_get_page() for nesting purposes.
+ * NOTE: ext2_find_entry() and ext2_करोtकरोt() act as a call to ext2_get_page()
+ * and should be treated as a call to ext2_get_page() क्रम nesting purposes.
  */
-static struct page * ext2_get_page(struct inode *dir, unsigned long n,
-				   int quiet, void **page_addr)
-{
-	struct address_space *mapping = dir->i_mapping;
-	struct page *page = read_mapping_page(mapping, n, NULL);
-	if (!IS_ERR(page)) {
+अटल काष्ठा page * ext2_get_page(काष्ठा inode *dir, अचिन्हित दीर्घ n,
+				   पूर्णांक quiet, व्योम **page_addr)
+अणु
+	काष्ठा address_space *mapping = dir->i_mapping;
+	काष्ठा page *page = पढ़ो_mapping_page(mapping, n, शून्य);
+	अगर (!IS_ERR(page)) अणु
 		*page_addr = kmap_local_page(page);
-		if (unlikely(!PageChecked(page))) {
-			if (PageError(page) || !ext2_check_page(page, quiet))
-				goto fail;
-		}
-	}
-	return page;
+		अगर (unlikely(!PageChecked(page))) अणु
+			अगर (PageError(page) || !ext2_check_page(page, quiet))
+				जाओ fail;
+		पूर्ण
+	पूर्ण
+	वापस page;
 
 fail:
 	ext2_put_page(page, *page_addr);
-	return ERR_PTR(-EIO);
-}
+	वापस ERR_PTR(-EIO);
+पूर्ण
 
 /*
- * NOTE! unlike strncmp, ext2_match returns 1 for success, 0 for failure.
+ * NOTE! unlike म_भेदन, ext2_match वापसs 1 क्रम success, 0 क्रम failure.
  *
- * len <= EXT2_NAME_LEN and de != NULL are guaranteed by caller.
+ * len <= EXT2_NAME_LEN and de != शून्य are guaranteed by caller.
  */
-static inline int ext2_match (int len, const char * const name,
-					struct ext2_dir_entry_2 * de)
-{
-	if (len != de->name_len)
-		return 0;
-	if (!de->inode)
-		return 0;
-	return !memcmp(name, de->name, len);
-}
+अटल अंतरभूत पूर्णांक ext2_match (पूर्णांक len, स्थिर अक्षर * स्थिर name,
+					काष्ठा ext2_dir_entry_2 * de)
+अणु
+	अगर (len != de->name_len)
+		वापस 0;
+	अगर (!de->inode)
+		वापस 0;
+	वापस !स_भेद(name, de->name, len);
+पूर्ण
 
 /*
- * p is at least 6 bytes before the end of page
+ * p is at least 6 bytes beक्रमe the end of page
  */
-static inline ext2_dirent *ext2_next_entry(ext2_dirent *p)
-{
-	return (ext2_dirent *)((char *)p +
+अटल अंतरभूत ext2_dirent *ext2_next_entry(ext2_dirent *p)
+अणु
+	वापस (ext2_dirent *)((अक्षर *)p +
 			ext2_rec_len_from_disk(p->rec_len));
-}
+पूर्ण
 
-static inline unsigned 
-ext2_validate_entry(char *base, unsigned offset, unsigned mask)
-{
+अटल अंतरभूत अचिन्हित 
+ext2_validate_entry(अक्षर *base, अचिन्हित offset, अचिन्हित mask)
+अणु
 	ext2_dirent *de = (ext2_dirent*)(base + offset);
 	ext2_dirent *p = (ext2_dirent*)(base + (offset&mask));
-	while ((char*)p < (char*)de) {
-		if (p->rec_len == 0)
-			break;
+	जबतक ((अक्षर*)p < (अक्षर*)de) अणु
+		अगर (p->rec_len == 0)
+			अवरोध;
 		p = ext2_next_entry(p);
-	}
-	return (char *)p - base;
-}
+	पूर्ण
+	वापस (अक्षर *)p - base;
+पूर्ण
 
-static inline void ext2_set_de_type(ext2_dirent *de, struct inode *inode)
-{
-	if (EXT2_HAS_INCOMPAT_FEATURE(inode->i_sb, EXT2_FEATURE_INCOMPAT_FILETYPE))
+अटल अंतरभूत व्योम ext2_set_de_type(ext2_dirent *de, काष्ठा inode *inode)
+अणु
+	अगर (EXT2_HAS_INCOMPAT_FEATURE(inode->i_sb, EXT2_FEATURE_INCOMPAT_खाताTYPE))
 		de->file_type = fs_umode_to_ftype(inode->i_mode);
-	else
+	अन्यथा
 		de->file_type = 0;
-}
+पूर्ण
 
-static int
-ext2_readdir(struct file *file, struct dir_context *ctx)
-{
+अटल पूर्णांक
+ext2_सूची_पढ़ो(काष्ठा file *file, काष्ठा dir_context *ctx)
+अणु
 	loff_t pos = ctx->pos;
-	struct inode *inode = file_inode(file);
-	struct super_block *sb = inode->i_sb;
-	unsigned int offset = pos & ~PAGE_MASK;
-	unsigned long n = pos >> PAGE_SHIFT;
-	unsigned long npages = dir_pages(inode);
-	unsigned chunk_mask = ~(ext2_chunk_size(inode)-1);
+	काष्ठा inode *inode = file_inode(file);
+	काष्ठा super_block *sb = inode->i_sb;
+	अचिन्हित पूर्णांक offset = pos & ~PAGE_MASK;
+	अचिन्हित दीर्घ n = pos >> PAGE_SHIFT;
+	अचिन्हित दीर्घ npages = dir_pages(inode);
+	अचिन्हित chunk_mask = ~(ext2_chunk_size(inode)-1);
 	bool need_revalidate = !inode_eq_iversion(inode, file->f_version);
 	bool has_filetype;
 
-	if (pos > inode->i_size - EXT2_DIR_REC_LEN(1))
-		return 0;
+	अगर (pos > inode->i_size - EXT2_सूची_REC_LEN(1))
+		वापस 0;
 
 	has_filetype =
-		EXT2_HAS_INCOMPAT_FEATURE(sb, EXT2_FEATURE_INCOMPAT_FILETYPE);
+		EXT2_HAS_INCOMPAT_FEATURE(sb, EXT2_FEATURE_INCOMPAT_खाताTYPE);
 
-	for ( ; n < npages; n++, offset = 0) {
-		char *kaddr, *limit;
+	क्रम ( ; n < npages; n++, offset = 0) अणु
+		अक्षर *kaddr, *limit;
 		ext2_dirent *de;
-		struct page *page = ext2_get_page(inode, n, 0, (void **)&kaddr);
+		काष्ठा page *page = ext2_get_page(inode, n, 0, (व्योम **)&kaddr);
 
-		if (IS_ERR(page)) {
+		अगर (IS_ERR(page)) अणु
 			ext2_error(sb, __func__,
 				   "bad page in #%lu",
 				   inode->i_ino);
 			ctx->pos += PAGE_SIZE - offset;
-			return PTR_ERR(page);
-		}
-		if (unlikely(need_revalidate)) {
-			if (offset) {
+			वापस PTR_ERR(page);
+		पूर्ण
+		अगर (unlikely(need_revalidate)) अणु
+			अगर (offset) अणु
 				offset = ext2_validate_entry(kaddr, offset, chunk_mask);
 				ctx->pos = (n<<PAGE_SHIFT) + offset;
-			}
+			पूर्ण
 			file->f_version = inode_query_iversion(inode);
 			need_revalidate = false;
-		}
+		पूर्ण
 		de = (ext2_dirent *)(kaddr+offset);
-		limit = kaddr + ext2_last_byte(inode, n) - EXT2_DIR_REC_LEN(1);
-		for ( ;(char*)de <= limit; de = ext2_next_entry(de)) {
-			if (de->rec_len == 0) {
+		limit = kaddr + ext2_last_byte(inode, n) - EXT2_सूची_REC_LEN(1);
+		क्रम ( ;(अक्षर*)de <= limit; de = ext2_next_entry(de)) अणु
+			अगर (de->rec_len == 0) अणु
 				ext2_error(sb, __func__,
 					"zero-length directory entry");
 				ext2_put_page(page, kaddr);
-				return -EIO;
-			}
-			if (de->inode) {
-				unsigned char d_type = DT_UNKNOWN;
+				वापस -EIO;
+			पूर्ण
+			अगर (de->inode) अणु
+				अचिन्हित अक्षर d_type = DT_UNKNOWN;
 
-				if (has_filetype)
+				अगर (has_filetype)
 					d_type = fs_ftype_to_dtype(de->file_type);
 
-				if (!dir_emit(ctx, de->name, de->name_len,
+				अगर (!dir_emit(ctx, de->name, de->name_len,
 						le32_to_cpu(de->inode),
-						d_type)) {
+						d_type)) अणु
 					ext2_put_page(page, kaddr);
-					return 0;
-				}
-			}
+					वापस 0;
+				पूर्ण
+			पूर्ण
 			ctx->pos += ext2_rec_len_from_disk(de->rec_len);
-		}
+		पूर्ण
 		ext2_put_page(page, kaddr);
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /*
  *	ext2_find_entry()
  *
- * finds an entry in the specified directory with the wanted name. It
- * returns the page in which the entry was found (as a parameter - res_page),
- * and the entry itself. Page is returned mapped and unlocked.
+ * finds an entry in the specअगरied directory with the wanted name. It
+ * वापसs the page in which the entry was found (as a parameter - res_page),
+ * and the entry itself. Page is वापसed mapped and unlocked.
  * Entry is guaranteed to be valid.
  *
  * On Success ext2_put_page() should be called on *res_page.
  *
  * NOTE: Calls to ext2_get_page()/ext2_put_page() must be nested according to
- * the rules documented in kmap_local_page()/kunmap_local().
+ * the rules करोcumented in kmap_local_page()/kunmap_local().
  *
- * ext2_find_entry() and ext2_dotdot() act as a call to ext2_get_page() and
- * should be treated as a call to ext2_get_page() for nesting purposes.
+ * ext2_find_entry() and ext2_करोtकरोt() act as a call to ext2_get_page() and
+ * should be treated as a call to ext2_get_page() क्रम nesting purposes.
  */
-struct ext2_dir_entry_2 *ext2_find_entry (struct inode *dir,
-			const struct qstr *child, struct page **res_page,
-			void **res_page_addr)
-{
-	const char *name = child->name;
-	int namelen = child->len;
-	unsigned reclen = EXT2_DIR_REC_LEN(namelen);
-	unsigned long start, n;
-	unsigned long npages = dir_pages(dir);
-	struct page *page = NULL;
-	struct ext2_inode_info *ei = EXT2_I(dir);
+काष्ठा ext2_dir_entry_2 *ext2_find_entry (काष्ठा inode *dir,
+			स्थिर काष्ठा qstr *child, काष्ठा page **res_page,
+			व्योम **res_page_addr)
+अणु
+	स्थिर अक्षर *name = child->name;
+	पूर्णांक namelen = child->len;
+	अचिन्हित reclen = EXT2_सूची_REC_LEN(namelen);
+	अचिन्हित दीर्घ start, n;
+	अचिन्हित दीर्घ npages = dir_pages(dir);
+	काष्ठा page *page = शून्य;
+	काष्ठा ext2_inode_info *ei = EXT2_I(dir);
 	ext2_dirent * de;
-	void *page_addr;
+	व्योम *page_addr;
 
-	if (npages == 0)
-		goto out;
+	अगर (npages == 0)
+		जाओ out;
 
 	/* OFFSET_CACHE */
-	*res_page = NULL;
-	*res_page_addr = NULL;
+	*res_page = शून्य;
+	*res_page_addr = शून्य;
 
 	start = ei->i_dir_start_lookup;
-	if (start >= npages)
+	अगर (start >= npages)
 		start = 0;
 	n = start;
-	do {
-		char *kaddr;
+	करो अणु
+		अक्षर *kaddr;
 		page = ext2_get_page(dir, n, 0, &page_addr);
-		if (IS_ERR(page))
-			return ERR_CAST(page);
+		अगर (IS_ERR(page))
+			वापस ERR_CAST(page);
 
 		kaddr = page_addr;
 		de = (ext2_dirent *) kaddr;
 		kaddr += ext2_last_byte(dir, n) - reclen;
-		while ((char *) de <= kaddr) {
-			if (de->rec_len == 0) {
+		जबतक ((अक्षर *) de <= kaddr) अणु
+			अगर (de->rec_len == 0) अणु
 				ext2_error(dir->i_sb, __func__,
 					"zero-length directory entry");
 				ext2_put_page(page, page_addr);
-				goto out;
-			}
-			if (ext2_match(namelen, name, de))
-				goto found;
+				जाओ out;
+			पूर्ण
+			अगर (ext2_match(namelen, name, de))
+				जाओ found;
 			de = ext2_next_entry(de);
-		}
+		पूर्ण
 		ext2_put_page(page, page_addr);
 
-		if (++n >= npages)
+		अगर (++n >= npages)
 			n = 0;
 		/* next page is past the blocks we've got */
-		if (unlikely(n > (dir->i_blocks >> (PAGE_SHIFT - 9)))) {
+		अगर (unlikely(n > (dir->i_blocks >> (PAGE_SHIFT - 9)))) अणु
 			ext2_error(dir->i_sb, __func__,
 				"dir %lu size %lld exceeds block count %llu",
 				dir->i_ino, dir->i_size,
-				(unsigned long long)dir->i_blocks);
-			goto out;
-		}
-	} while (n != start);
+				(अचिन्हित दीर्घ दीर्घ)dir->i_blocks);
+			जाओ out;
+		पूर्ण
+	पूर्ण जबतक (n != start);
 out:
-	return ERR_PTR(-ENOENT);
+	वापस ERR_PTR(-ENOENT);
 
 found:
 	*res_page = page;
 	*res_page_addr = page_addr;
 	ei->i_dir_start_lookup = n;
-	return de;
-}
+	वापस de;
+पूर्ण
 
 /**
  * Return the '..' directory entry and the page in which the entry was found
@@ -420,54 +421,54 @@ found:
  * On Success ext2_put_page() should be called on *p.
  *
  * NOTE: Calls to ext2_get_page()/ext2_put_page() must be nested according to
- * the rules documented in kmap_local_page()/kunmap_local().
+ * the rules करोcumented in kmap_local_page()/kunmap_local().
  *
- * ext2_find_entry() and ext2_dotdot() act as a call to ext2_get_page() and
- * should be treated as a call to ext2_get_page() for nesting purposes.
+ * ext2_find_entry() and ext2_करोtकरोt() act as a call to ext2_get_page() and
+ * should be treated as a call to ext2_get_page() क्रम nesting purposes.
  */
-struct ext2_dir_entry_2 *ext2_dotdot(struct inode *dir, struct page **p,
-				     void **pa)
-{
-	void *page_addr;
-	struct page *page = ext2_get_page(dir, 0, 0, &page_addr);
-	ext2_dirent *de = NULL;
+काष्ठा ext2_dir_entry_2 *ext2_करोtकरोt(काष्ठा inode *dir, काष्ठा page **p,
+				     व्योम **pa)
+अणु
+	व्योम *page_addr;
+	काष्ठा page *page = ext2_get_page(dir, 0, 0, &page_addr);
+	ext2_dirent *de = शून्य;
 
-	if (!IS_ERR(page)) {
+	अगर (!IS_ERR(page)) अणु
 		de = ext2_next_entry((ext2_dirent *) page_addr);
 		*p = page;
 		*pa = page_addr;
-	}
-	return de;
-}
+	पूर्ण
+	वापस de;
+पूर्ण
 
-int ext2_inode_by_name(struct inode *dir, const struct qstr *child, ino_t *ino)
-{
-	struct ext2_dir_entry_2 *de;
-	struct page *page;
-	void *page_addr;
+पूर्णांक ext2_inode_by_name(काष्ठा inode *dir, स्थिर काष्ठा qstr *child, ino_t *ino)
+अणु
+	काष्ठा ext2_dir_entry_2 *de;
+	काष्ठा page *page;
+	व्योम *page_addr;
 	
 	de = ext2_find_entry(dir, child, &page, &page_addr);
-	if (IS_ERR(de))
-		return PTR_ERR(de);
+	अगर (IS_ERR(de))
+		वापस PTR_ERR(de);
 
 	*ino = le32_to_cpu(de->inode);
 	ext2_put_page(page, page_addr);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ext2_prepare_chunk(struct page *page, loff_t pos, unsigned len)
-{
-	return __block_write_begin(page, pos, len, ext2_get_block);
-}
+अटल पूर्णांक ext2_prepare_chunk(काष्ठा page *page, loff_t pos, अचिन्हित len)
+अणु
+	वापस __block_ग_लिखो_begin(page, pos, len, ext2_get_block);
+पूर्ण
 
-void ext2_set_link(struct inode *dir, struct ext2_dir_entry_2 *de,
-		   struct page *page, void *page_addr, struct inode *inode,
-		   int update_times)
-{
+व्योम ext2_set_link(काष्ठा inode *dir, काष्ठा ext2_dir_entry_2 *de,
+		   काष्ठा page *page, व्योम *page_addr, काष्ठा inode *inode,
+		   पूर्णांक update_बार)
+अणु
 	loff_t pos = page_offset(page) +
-			(char *) de - (char *) page_addr;
-	unsigned len = ext2_rec_len_from_disk(de->rec_len);
-	int err;
+			(अक्षर *) de - (अक्षर *) page_addr;
+	अचिन्हित len = ext2_rec_len_from_disk(de->rec_len);
+	पूर्णांक err;
 
 	lock_page(page);
 	err = ext2_prepare_chunk(page, pos, len);
@@ -475,257 +476,257 @@ void ext2_set_link(struct inode *dir, struct ext2_dir_entry_2 *de,
 	de->inode = cpu_to_le32(inode->i_ino);
 	ext2_set_de_type(de, inode);
 	err = ext2_commit_chunk(page, pos, len);
-	if (update_times)
-		dir->i_mtime = dir->i_ctime = current_time(dir);
+	अगर (update_बार)
+		dir->i_mसमय = dir->i_स_समय = current_समय(dir);
 	EXT2_I(dir)->i_flags &= ~EXT2_BTREE_FL;
 	mark_inode_dirty(dir);
-}
+पूर्ण
 
 /*
  *	Parent is locked.
  */
-int ext2_add_link (struct dentry *dentry, struct inode *inode)
-{
-	struct inode *dir = d_inode(dentry->d_parent);
-	const char *name = dentry->d_name.name;
-	int namelen = dentry->d_name.len;
-	unsigned chunk_size = ext2_chunk_size(dir);
-	unsigned reclen = EXT2_DIR_REC_LEN(namelen);
-	unsigned short rec_len, name_len;
-	struct page *page = NULL;
-	void *page_addr = NULL;
+पूर्णांक ext2_add_link (काष्ठा dentry *dentry, काष्ठा inode *inode)
+अणु
+	काष्ठा inode *dir = d_inode(dentry->d_parent);
+	स्थिर अक्षर *name = dentry->d_name.name;
+	पूर्णांक namelen = dentry->d_name.len;
+	अचिन्हित chunk_size = ext2_chunk_size(dir);
+	अचिन्हित reclen = EXT2_सूची_REC_LEN(namelen);
+	अचिन्हित लघु rec_len, name_len;
+	काष्ठा page *page = शून्य;
+	व्योम *page_addr = शून्य;
 	ext2_dirent * de;
-	unsigned long npages = dir_pages(dir);
-	unsigned long n;
+	अचिन्हित दीर्घ npages = dir_pages(dir);
+	अचिन्हित दीर्घ n;
 	loff_t pos;
-	int err;
+	पूर्णांक err;
 
 	/*
 	 * We take care of directory expansion in the same loop.
 	 * This code plays outside i_size, so it locks the page
 	 * to protect that region.
 	 */
-	for (n = 0; n <= npages; n++) {
-		char *kaddr;
-		char *dir_end;
+	क्रम (n = 0; n <= npages; n++) अणु
+		अक्षर *kaddr;
+		अक्षर *dir_end;
 
 		page = ext2_get_page(dir, n, 0, &page_addr);
 		err = PTR_ERR(page);
-		if (IS_ERR(page))
-			goto out;
+		अगर (IS_ERR(page))
+			जाओ out;
 		lock_page(page);
 		kaddr = page_addr;
 		dir_end = kaddr + ext2_last_byte(dir, n);
 		de = (ext2_dirent *)kaddr;
 		kaddr += PAGE_SIZE - reclen;
-		while ((char *)de <= kaddr) {
-			if ((char *)de == dir_end) {
+		जबतक ((अक्षर *)de <= kaddr) अणु
+			अगर ((अक्षर *)de == dir_end) अणु
 				/* We hit i_size */
 				name_len = 0;
 				rec_len = chunk_size;
 				de->rec_len = ext2_rec_len_to_disk(chunk_size);
 				de->inode = 0;
-				goto got_it;
-			}
-			if (de->rec_len == 0) {
+				जाओ got_it;
+			पूर्ण
+			अगर (de->rec_len == 0) अणु
 				ext2_error(dir->i_sb, __func__,
 					"zero-length directory entry");
 				err = -EIO;
-				goto out_unlock;
-			}
+				जाओ out_unlock;
+			पूर्ण
 			err = -EEXIST;
-			if (ext2_match (namelen, name, de))
-				goto out_unlock;
-			name_len = EXT2_DIR_REC_LEN(de->name_len);
+			अगर (ext2_match (namelen, name, de))
+				जाओ out_unlock;
+			name_len = EXT2_सूची_REC_LEN(de->name_len);
 			rec_len = ext2_rec_len_from_disk(de->rec_len);
-			if (!de->inode && rec_len >= reclen)
-				goto got_it;
-			if (rec_len >= name_len + reclen)
-				goto got_it;
-			de = (ext2_dirent *) ((char *) de + rec_len);
-		}
+			अगर (!de->inode && rec_len >= reclen)
+				जाओ got_it;
+			अगर (rec_len >= name_len + reclen)
+				जाओ got_it;
+			de = (ext2_dirent *) ((अक्षर *) de + rec_len);
+		पूर्ण
 		unlock_page(page);
 		ext2_put_page(page, page_addr);
-	}
+	पूर्ण
 	BUG();
-	return -EINVAL;
+	वापस -EINVAL;
 
 got_it:
 	pos = page_offset(page) +
-		(char *)de - (char *)page_addr;
+		(अक्षर *)de - (अक्षर *)page_addr;
 	err = ext2_prepare_chunk(page, pos, rec_len);
-	if (err)
-		goto out_unlock;
-	if (de->inode) {
-		ext2_dirent *de1 = (ext2_dirent *) ((char *) de + name_len);
+	अगर (err)
+		जाओ out_unlock;
+	अगर (de->inode) अणु
+		ext2_dirent *de1 = (ext2_dirent *) ((अक्षर *) de + name_len);
 		de1->rec_len = ext2_rec_len_to_disk(rec_len - name_len);
 		de->rec_len = ext2_rec_len_to_disk(name_len);
 		de = de1;
-	}
+	पूर्ण
 	de->name_len = namelen;
-	memcpy(de->name, name, namelen);
+	स_नकल(de->name, name, namelen);
 	de->inode = cpu_to_le32(inode->i_ino);
 	ext2_set_de_type (de, inode);
 	err = ext2_commit_chunk(page, pos, rec_len);
-	dir->i_mtime = dir->i_ctime = current_time(dir);
+	dir->i_mसमय = dir->i_स_समय = current_समय(dir);
 	EXT2_I(dir)->i_flags &= ~EXT2_BTREE_FL;
 	mark_inode_dirty(dir);
 	/* OFFSET_CACHE */
 out_put:
 	ext2_put_page(page, page_addr);
 out:
-	return err;
+	वापस err;
 out_unlock:
 	unlock_page(page);
-	goto out_put;
-}
+	जाओ out_put;
+पूर्ण
 
 /*
  * ext2_delete_entry deletes a directory entry by merging it with the
  * previous entry. Page is up-to-date.
  */
-int ext2_delete_entry (struct ext2_dir_entry_2 * dir, struct page * page )
-{
-	struct inode *inode = page->mapping->host;
-	char *kaddr = page_address(page);
-	unsigned from = ((char*)dir - kaddr) & ~(ext2_chunk_size(inode)-1);
-	unsigned to = ((char *)dir - kaddr) +
+पूर्णांक ext2_delete_entry (काष्ठा ext2_dir_entry_2 * dir, काष्ठा page * page )
+अणु
+	काष्ठा inode *inode = page->mapping->host;
+	अक्षर *kaddr = page_address(page);
+	अचिन्हित from = ((अक्षर*)dir - kaddr) & ~(ext2_chunk_size(inode)-1);
+	अचिन्हित to = ((अक्षर *)dir - kaddr) +
 				ext2_rec_len_from_disk(dir->rec_len);
 	loff_t pos;
-	ext2_dirent * pde = NULL;
+	ext2_dirent * pde = शून्य;
 	ext2_dirent * de = (ext2_dirent *) (kaddr + from);
-	int err;
+	पूर्णांक err;
 
-	while ((char*)de < (char*)dir) {
-		if (de->rec_len == 0) {
+	जबतक ((अक्षर*)de < (अक्षर*)dir) अणु
+		अगर (de->rec_len == 0) अणु
 			ext2_error(inode->i_sb, __func__,
 				"zero-length directory entry");
 			err = -EIO;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 		pde = de;
 		de = ext2_next_entry(de);
-	}
-	if (pde)
-		from = (char*)pde - (char*)page_address(page);
+	पूर्ण
+	अगर (pde)
+		from = (अक्षर*)pde - (अक्षर*)page_address(page);
 	pos = page_offset(page) + from;
 	lock_page(page);
 	err = ext2_prepare_chunk(page, pos, to - from);
 	BUG_ON(err);
-	if (pde)
+	अगर (pde)
 		pde->rec_len = ext2_rec_len_to_disk(to - from);
 	dir->inode = 0;
 	err = ext2_commit_chunk(page, pos, to - from);
-	inode->i_ctime = inode->i_mtime = current_time(inode);
+	inode->i_स_समय = inode->i_mसमय = current_समय(inode);
 	EXT2_I(inode)->i_flags &= ~EXT2_BTREE_FL;
 	mark_inode_dirty(inode);
 out:
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /*
  * Set the first fragment of directory.
  */
-int ext2_make_empty(struct inode *inode, struct inode *parent)
-{
-	struct page *page = grab_cache_page(inode->i_mapping, 0);
-	unsigned chunk_size = ext2_chunk_size(inode);
-	struct ext2_dir_entry_2 * de;
-	int err;
-	void *kaddr;
+पूर्णांक ext2_make_empty(काष्ठा inode *inode, काष्ठा inode *parent)
+अणु
+	काष्ठा page *page = grab_cache_page(inode->i_mapping, 0);
+	अचिन्हित chunk_size = ext2_chunk_size(inode);
+	काष्ठा ext2_dir_entry_2 * de;
+	पूर्णांक err;
+	व्योम *kaddr;
 
-	if (!page)
-		return -ENOMEM;
+	अगर (!page)
+		वापस -ENOMEM;
 
 	err = ext2_prepare_chunk(page, 0, chunk_size);
-	if (err) {
+	अगर (err) अणु
 		unlock_page(page);
-		goto fail;
-	}
+		जाओ fail;
+	पूर्ण
 	kaddr = kmap_atomic(page);
-	memset(kaddr, 0, chunk_size);
-	de = (struct ext2_dir_entry_2 *)kaddr;
+	स_रखो(kaddr, 0, chunk_size);
+	de = (काष्ठा ext2_dir_entry_2 *)kaddr;
 	de->name_len = 1;
-	de->rec_len = ext2_rec_len_to_disk(EXT2_DIR_REC_LEN(1));
-	memcpy (de->name, ".\0\0", 4);
+	de->rec_len = ext2_rec_len_to_disk(EXT2_सूची_REC_LEN(1));
+	स_नकल (de->name, ".\0\0", 4);
 	de->inode = cpu_to_le32(inode->i_ino);
 	ext2_set_de_type (de, inode);
 
-	de = (struct ext2_dir_entry_2 *)(kaddr + EXT2_DIR_REC_LEN(1));
+	de = (काष्ठा ext2_dir_entry_2 *)(kaddr + EXT2_सूची_REC_LEN(1));
 	de->name_len = 2;
-	de->rec_len = ext2_rec_len_to_disk(chunk_size - EXT2_DIR_REC_LEN(1));
+	de->rec_len = ext2_rec_len_to_disk(chunk_size - EXT2_सूची_REC_LEN(1));
 	de->inode = cpu_to_le32(parent->i_ino);
-	memcpy (de->name, "..\0", 4);
+	स_नकल (de->name, "..\0", 4);
 	ext2_set_de_type (de, inode);
 	kunmap_atomic(kaddr);
 	err = ext2_commit_chunk(page, 0, chunk_size);
 fail:
 	put_page(page);
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /*
- * routine to check that the specified directory is empty (for rmdir)
+ * routine to check that the specअगरied directory is empty (क्रम सूची_हटाओ)
  */
-int ext2_empty_dir (struct inode * inode)
-{
-	void *page_addr = NULL;
-	struct page *page = NULL;
-	unsigned long i, npages = dir_pages(inode);
-	int dir_has_error = 0;
+पूर्णांक ext2_empty_dir (काष्ठा inode * inode)
+अणु
+	व्योम *page_addr = शून्य;
+	काष्ठा page *page = शून्य;
+	अचिन्हित दीर्घ i, npages = dir_pages(inode);
+	पूर्णांक dir_has_error = 0;
 
-	for (i = 0; i < npages; i++) {
-		char *kaddr;
+	क्रम (i = 0; i < npages; i++) अणु
+		अक्षर *kaddr;
 		ext2_dirent * de;
 		page = ext2_get_page(inode, i, dir_has_error, &page_addr);
 
-		if (IS_ERR(page)) {
+		अगर (IS_ERR(page)) अणु
 			dir_has_error = 1;
-			continue;
-		}
+			जारी;
+		पूर्ण
 
 		kaddr = page_addr;
 		de = (ext2_dirent *)kaddr;
-		kaddr += ext2_last_byte(inode, i) - EXT2_DIR_REC_LEN(1);
+		kaddr += ext2_last_byte(inode, i) - EXT2_सूची_REC_LEN(1);
 
-		while ((char *)de <= kaddr) {
-			if (de->rec_len == 0) {
+		जबतक ((अक्षर *)de <= kaddr) अणु
+			अगर (de->rec_len == 0) अणु
 				ext2_error(inode->i_sb, __func__,
 					"zero-length directory entry");
-				printk("kaddr=%p, de=%p\n", kaddr, de);
-				goto not_empty;
-			}
-			if (de->inode != 0) {
-				/* check for . and .. */
-				if (de->name[0] != '.')
-					goto not_empty;
-				if (de->name_len > 2)
-					goto not_empty;
-				if (de->name_len < 2) {
-					if (de->inode !=
+				prपूर्णांकk("kaddr=%p, de=%p\n", kaddr, de);
+				जाओ not_empty;
+			पूर्ण
+			अगर (de->inode != 0) अणु
+				/* check क्रम . and .. */
+				अगर (de->name[0] != '.')
+					जाओ not_empty;
+				अगर (de->name_len > 2)
+					जाओ not_empty;
+				अगर (de->name_len < 2) अणु
+					अगर (de->inode !=
 					    cpu_to_le32(inode->i_ino))
-						goto not_empty;
-				} else if (de->name[1] != '.')
-					goto not_empty;
-			}
+						जाओ not_empty;
+				पूर्ण अन्यथा अगर (de->name[1] != '.')
+					जाओ not_empty;
+			पूर्ण
 			de = ext2_next_entry(de);
-		}
+		पूर्ण
 		ext2_put_page(page, page_addr);
-	}
-	return 1;
+	पूर्ण
+	वापस 1;
 
 not_empty:
 	ext2_put_page(page, page_addr);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-const struct file_operations ext2_dir_operations = {
+स्थिर काष्ठा file_operations ext2_dir_operations = अणु
 	.llseek		= generic_file_llseek,
-	.read		= generic_read_dir,
-	.iterate_shared	= ext2_readdir,
+	.पढ़ो		= generic_पढ़ो_dir,
+	.iterate_shared	= ext2_सूची_पढ़ो,
 	.unlocked_ioctl = ext2_ioctl,
-#ifdef CONFIG_COMPAT
+#अगर_घोषित CONFIG_COMPAT
 	.compat_ioctl	= ext2_compat_ioctl,
-#endif
+#पूर्ण_अगर
 	.fsync		= ext2_fsync,
-};
+पूर्ण;

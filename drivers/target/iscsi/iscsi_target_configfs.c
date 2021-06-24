@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*******************************************************************************
- * This file contains the configfs implementation for iSCSI Target mode
+ * This file contains the configfs implementation क्रम iSCSI Target mode
  * from the LIO-Target Project.
  *
  * (c) Copyright 2007-2013 Datera, Inc.
@@ -9,218 +10,218 @@
  *
  ****************************************************************************/
 
-#include <linux/configfs.h>
-#include <linux/ctype.h>
-#include <linux/export.h>
-#include <linux/inet.h>
-#include <linux/module.h>
-#include <net/ipv6.h>
-#include <target/target_core_base.h>
-#include <target/target_core_fabric.h>
-#include <target/iscsi/iscsi_transport.h>
-#include <target/iscsi/iscsi_target_core.h>
-#include "iscsi_target_parameters.h"
-#include "iscsi_target_device.h"
-#include "iscsi_target_erl0.h"
-#include "iscsi_target_nodeattrib.h"
-#include "iscsi_target_tpg.h"
-#include "iscsi_target_util.h"
-#include "iscsi_target.h"
-#include <target/iscsi/iscsi_target_stat.h>
+#समावेश <linux/configfs.h>
+#समावेश <linux/प्रकार.स>
+#समावेश <linux/export.h>
+#समावेश <linux/inet.h>
+#समावेश <linux/module.h>
+#समावेश <net/ipv6.h>
+#समावेश <target/target_core_base.h>
+#समावेश <target/target_core_fabric.h>
+#समावेश <target/iscsi/iscsi_transport.h>
+#समावेश <target/iscsi/iscsi_target_core.h>
+#समावेश "iscsi_target_parameters.h"
+#समावेश "iscsi_target_device.h"
+#समावेश "iscsi_target_erl0.h"
+#समावेश "iscsi_target_nodeattrib.h"
+#समावेश "iscsi_target_tpg.h"
+#समावेश "iscsi_target_util.h"
+#समावेश "iscsi_target.h"
+#समावेश <target/iscsi/iscsi_target_स्थिति.स>
 
 
-/* Start items for lio_target_portal_cit */
+/* Start items क्रम lio_target_portal_cit */
 
-static inline struct iscsi_tpg_np *to_iscsi_tpg_np(struct config_item *item)
-{
-	return container_of(to_tpg_np(item), struct iscsi_tpg_np, se_tpg_np);
-}
+अटल अंतरभूत काष्ठा iscsi_tpg_np *to_iscsi_tpg_np(काष्ठा config_item *item)
+अणु
+	वापस container_of(to_tpg_np(item), काष्ठा iscsi_tpg_np, se_tpg_np);
+पूर्ण
 
-static ssize_t lio_target_np_driver_show(struct config_item *item, char *page,
-					 enum iscsit_transport_type type)
-{
-	struct iscsi_tpg_np *tpg_np = to_iscsi_tpg_np(item);
-	struct iscsi_tpg_np *tpg_np_new;
-	ssize_t rb;
+अटल sमाप_प्रकार lio_target_np_driver_show(काष्ठा config_item *item, अक्षर *page,
+					 क्रमागत iscsit_transport_type type)
+अणु
+	काष्ठा iscsi_tpg_np *tpg_np = to_iscsi_tpg_np(item);
+	काष्ठा iscsi_tpg_np *tpg_np_new;
+	sमाप_प्रकार rb;
 
 	tpg_np_new = iscsit_tpg_locate_child_np(tpg_np, type);
-	if (tpg_np_new)
-		rb = sprintf(page, "1\n");
-	else
-		rb = sprintf(page, "0\n");
+	अगर (tpg_np_new)
+		rb = प्र_लिखो(page, "1\n");
+	अन्यथा
+		rb = प्र_लिखो(page, "0\n");
 
-	return rb;
-}
+	वापस rb;
+पूर्ण
 
-static ssize_t lio_target_np_driver_store(struct config_item *item,
-		const char *page, size_t count, enum iscsit_transport_type type,
-		const char *mod_name)
-{
-	struct iscsi_tpg_np *tpg_np = to_iscsi_tpg_np(item);
-	struct iscsi_np *np;
-	struct iscsi_portal_group *tpg;
-	struct iscsi_tpg_np *tpg_np_new = NULL;
+अटल sमाप_प्रकार lio_target_np_driver_store(काष्ठा config_item *item,
+		स्थिर अक्षर *page, माप_प्रकार count, क्रमागत iscsit_transport_type type,
+		स्थिर अक्षर *mod_name)
+अणु
+	काष्ठा iscsi_tpg_np *tpg_np = to_iscsi_tpg_np(item);
+	काष्ठा iscsi_np *np;
+	काष्ठा iscsi_portal_group *tpg;
+	काष्ठा iscsi_tpg_np *tpg_np_new = शून्य;
 	u32 op;
-	int rc;
+	पूर्णांक rc;
 
 	rc = kstrtou32(page, 0, &op);
-	if (rc)
-		return rc;
-	if ((op != 1) && (op != 0)) {
+	अगर (rc)
+		वापस rc;
+	अगर ((op != 1) && (op != 0)) अणु
 		pr_err("Illegal value for tpg_enable: %u\n", op);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 	np = tpg_np->tpg_np;
-	if (!np) {
+	अगर (!np) अणु
 		pr_err("Unable to locate struct iscsi_np from"
 				" struct iscsi_tpg_np\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	tpg = tpg_np->tpg;
-	if (iscsit_get_tpg(tpg) < 0)
-		return -EINVAL;
+	अगर (iscsit_get_tpg(tpg) < 0)
+		वापस -EINVAL;
 
-	if (op) {
-		if (strlen(mod_name)) {
+	अगर (op) अणु
+		अगर (म_माप(mod_name)) अणु
 			rc = request_module(mod_name);
-			if (rc != 0) {
+			अगर (rc != 0) अणु
 				pr_warn("Unable to request_module for %s\n",
 					mod_name);
 				rc = 0;
-			}
-		}
+			पूर्ण
+		पूर्ण
 
 		tpg_np_new = iscsit_tpg_add_network_portal(tpg,
 					&np->np_sockaddr, tpg_np, type);
-		if (IS_ERR(tpg_np_new)) {
+		अगर (IS_ERR(tpg_np_new)) अणु
 			rc = PTR_ERR(tpg_np_new);
-			goto out;
-		}
-	} else {
+			जाओ out;
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		tpg_np_new = iscsit_tpg_locate_child_np(tpg_np, type);
-		if (tpg_np_new) {
+		अगर (tpg_np_new) अणु
 			rc = iscsit_tpg_del_network_portal(tpg, tpg_np_new);
-			if (rc < 0)
-				goto out;
-		}
-	}
+			अगर (rc < 0)
+				जाओ out;
+		पूर्ण
+	पूर्ण
 
 	iscsit_put_tpg(tpg);
-	return count;
+	वापस count;
 out:
 	iscsit_put_tpg(tpg);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static ssize_t lio_target_np_iser_show(struct config_item *item, char *page)
-{
-	return lio_target_np_driver_show(item, page, ISCSI_INFINIBAND);
-}
+अटल sमाप_प्रकार lio_target_np_iser_show(काष्ठा config_item *item, अक्षर *page)
+अणु
+	वापस lio_target_np_driver_show(item, page, ISCSI_INFINIBAND);
+पूर्ण
 
-static ssize_t lio_target_np_iser_store(struct config_item *item,
-					const char *page, size_t count)
-{
-	return lio_target_np_driver_store(item, page, count,
+अटल sमाप_प्रकार lio_target_np_iser_store(काष्ठा config_item *item,
+					स्थिर अक्षर *page, माप_प्रकार count)
+अणु
+	वापस lio_target_np_driver_store(item, page, count,
 					  ISCSI_INFINIBAND, "ib_isert");
-}
+पूर्ण
 CONFIGFS_ATTR(lio_target_np_, iser);
 
-static ssize_t lio_target_np_cxgbit_show(struct config_item *item, char *page)
-{
-	return lio_target_np_driver_show(item, page, ISCSI_CXGBIT);
-}
+अटल sमाप_प्रकार lio_target_np_cxgbit_show(काष्ठा config_item *item, अक्षर *page)
+अणु
+	वापस lio_target_np_driver_show(item, page, ISCSI_CXGBIT);
+पूर्ण
 
-static ssize_t lio_target_np_cxgbit_store(struct config_item *item,
-					  const char *page, size_t count)
-{
-	return lio_target_np_driver_store(item, page, count,
+अटल sमाप_प्रकार lio_target_np_cxgbit_store(काष्ठा config_item *item,
+					  स्थिर अक्षर *page, माप_प्रकार count)
+अणु
+	वापस lio_target_np_driver_store(item, page, count,
 					  ISCSI_CXGBIT, "cxgbit");
-}
+पूर्ण
 CONFIGFS_ATTR(lio_target_np_, cxgbit);
 
-static struct configfs_attribute *lio_target_portal_attrs[] = {
+अटल काष्ठा configfs_attribute *lio_target_portal_attrs[] = अणु
 	&lio_target_np_attr_iser,
 	&lio_target_np_attr_cxgbit,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-/* Stop items for lio_target_portal_cit */
+/* Stop items क्रम lio_target_portal_cit */
 
-/* Start items for lio_target_np_cit */
+/* Start items क्रम lio_target_np_cit */
 
-#define MAX_PORTAL_LEN		256
+#घोषणा MAX_PORTAL_LEN		256
 
-static struct se_tpg_np *lio_target_call_addnptotpg(
-	struct se_portal_group *se_tpg,
-	struct config_group *group,
-	const char *name)
-{
-	struct iscsi_portal_group *tpg;
-	struct iscsi_tpg_np *tpg_np;
-	char *str, *str2, *ip_str, *port_str;
-	struct sockaddr_storage sockaddr = { };
-	int ret;
-	char buf[MAX_PORTAL_LEN + 1] = { };
+अटल काष्ठा se_tpg_np *lio_target_call_addnptotpg(
+	काष्ठा se_portal_group *se_tpg,
+	काष्ठा config_group *group,
+	स्थिर अक्षर *name)
+अणु
+	काष्ठा iscsi_portal_group *tpg;
+	काष्ठा iscsi_tpg_np *tpg_np;
+	अक्षर *str, *str2, *ip_str, *port_str;
+	काष्ठा sockaddr_storage sockaddr = अणु पूर्ण;
+	पूर्णांक ret;
+	अक्षर buf[MAX_PORTAL_LEN + 1] = अणु पूर्ण;
 
-	if (strlen(name) > MAX_PORTAL_LEN) {
+	अगर (म_माप(name) > MAX_PORTAL_LEN) अणु
 		pr_err("strlen(name): %d exceeds MAX_PORTAL_LEN: %d\n",
-			(int)strlen(name), MAX_PORTAL_LEN);
-		return ERR_PTR(-EOVERFLOW);
-	}
-	snprintf(buf, MAX_PORTAL_LEN + 1, "%s", name);
+			(पूर्णांक)म_माप(name), MAX_PORTAL_LEN);
+		वापस ERR_PTR(-EOVERFLOW);
+	पूर्ण
+	snम_लिखो(buf, MAX_PORTAL_LEN + 1, "%s", name);
 
-	str = strstr(buf, "[");
-	if (str) {
-		str2 = strstr(str, "]");
-		if (!str2) {
+	str = म_माला(buf, "[");
+	अगर (str) अणु
+		str2 = म_माला(str, "]");
+		अगर (!str2) अणु
 			pr_err("Unable to locate trailing \"]\""
 				" in IPv6 iSCSI network portal address\n");
-			return ERR_PTR(-EINVAL);
-		}
+			वापस ERR_PTR(-EINVAL);
+		पूर्ण
 
 		ip_str = str + 1; /* Skip over leading "[" */
 		*str2 = '\0'; /* Terminate the unbracketed IPv6 address */
 		str2++; /* Skip over the \0 */
 
-		port_str = strstr(str2, ":");
-		if (!port_str) {
+		port_str = म_माला(str2, ":");
+		अगर (!port_str) अणु
 			pr_err("Unable to locate \":port\""
 				" in IPv6 iSCSI network portal address\n");
-			return ERR_PTR(-EINVAL);
-		}
-		*port_str = '\0'; /* Terminate string for IP */
+			वापस ERR_PTR(-EINVAL);
+		पूर्ण
+		*port_str = '\0'; /* Terminate string क्रम IP */
 		port_str++; /* Skip over ":" */
-	} else {
+	पूर्ण अन्यथा अणु
 		ip_str = &buf[0];
-		port_str = strstr(ip_str, ":");
-		if (!port_str) {
+		port_str = म_माला(ip_str, ":");
+		अगर (!port_str) अणु
 			pr_err("Unable to locate \":port\""
 				" in IPv4 iSCSI network portal address\n");
-			return ERR_PTR(-EINVAL);
-		}
-		*port_str = '\0'; /* Terminate string for IP */
+			वापस ERR_PTR(-EINVAL);
+		पूर्ण
+		*port_str = '\0'; /* Terminate string क्रम IP */
 		port_str++; /* Skip over ":" */
-	}
+	पूर्ण
 
 	ret = inet_pton_with_scope(&init_net, AF_UNSPEC, ip_str,
 			port_str, &sockaddr);
-	if (ret) {
+	अगर (ret) अणु
 		pr_err("malformed ip/port passed: %s\n", name);
-		return ERR_PTR(ret);
-	}
+		वापस ERR_PTR(ret);
+	पूर्ण
 
-	tpg = container_of(se_tpg, struct iscsi_portal_group, tpg_se_tpg);
+	tpg = container_of(se_tpg, काष्ठा iscsi_portal_group, tpg_se_tpg);
 	ret = iscsit_get_tpg(tpg);
-	if (ret < 0)
-		return ERR_PTR(-EINVAL);
+	अगर (ret < 0)
+		वापस ERR_PTR(-EINVAL);
 
 	pr_debug("LIO_Target_ConfigFS: REGISTER -> %s TPGT: %hu"
 		" PORTAL: %s\n",
 		config_item_name(&se_tpg->se_tpg_wwn->wwn_group.cg_item),
 		tpg->tpgt, name);
 	/*
-	 * Assume ISCSI_TCP by default.  Other network portals for other
+	 * Assume ISCSI_TCP by शेष.  Other network portals क्रम other
 	 * iSCSI fabrics:
 	 *
 	 * Traditional iSCSI over SCTP (initial support)
@@ -232,31 +233,31 @@ static struct se_tpg_np *lio_target_call_addnptotpg(
 	 * sys/kernel/config/iscsi/$IQN/$TPG/np/$IP:$PORT/
 	 *
 	 */
-	tpg_np = iscsit_tpg_add_network_portal(tpg, &sockaddr, NULL,
+	tpg_np = iscsit_tpg_add_network_portal(tpg, &sockaddr, शून्य,
 				ISCSI_TCP);
-	if (IS_ERR(tpg_np)) {
+	अगर (IS_ERR(tpg_np)) अणु
 		iscsit_put_tpg(tpg);
-		return ERR_CAST(tpg_np);
-	}
+		वापस ERR_CAST(tpg_np);
+	पूर्ण
 	pr_debug("LIO_Target_ConfigFS: addnptotpg done!\n");
 
 	iscsit_put_tpg(tpg);
-	return &tpg_np->se_tpg_np;
-}
+	वापस &tpg_np->se_tpg_np;
+पूर्ण
 
-static void lio_target_call_delnpfromtpg(
-	struct se_tpg_np *se_tpg_np)
-{
-	struct iscsi_portal_group *tpg;
-	struct iscsi_tpg_np *tpg_np;
-	struct se_portal_group *se_tpg;
-	int ret;
+अटल व्योम lio_target_call_delnpfromtpg(
+	काष्ठा se_tpg_np *se_tpg_np)
+अणु
+	काष्ठा iscsi_portal_group *tpg;
+	काष्ठा iscsi_tpg_np *tpg_np;
+	काष्ठा se_portal_group *se_tpg;
+	पूर्णांक ret;
 
-	tpg_np = container_of(se_tpg_np, struct iscsi_tpg_np, se_tpg_np);
+	tpg_np = container_of(se_tpg_np, काष्ठा iscsi_tpg_np, se_tpg_np);
 	tpg = tpg_np->tpg;
 	ret = iscsit_get_tpg(tpg);
-	if (ret < 0)
-		return;
+	अगर (ret < 0)
+		वापस;
 
 	se_tpg = &tpg->tpg_se_tpg;
 	pr_debug("LIO_Target_ConfigFS: DEREGISTER -> %s TPGT: %hu"
@@ -264,129 +265,129 @@ static void lio_target_call_delnpfromtpg(
 		tpg->tpgt, &tpg_np->tpg_np->np_sockaddr);
 
 	ret = iscsit_tpg_del_network_portal(tpg, tpg_np);
-	if (ret < 0)
-		goto out;
+	अगर (ret < 0)
+		जाओ out;
 
 	pr_debug("LIO_Target_ConfigFS: delnpfromtpg done!\n");
 out:
 	iscsit_put_tpg(tpg);
-}
+पूर्ण
 
-/* End items for lio_target_np_cit */
+/* End items क्रम lio_target_np_cit */
 
-/* Start items for lio_target_nacl_attrib_cit */
+/* Start items क्रम lio_target_nacl_attrib_cit */
 
-#define ISCSI_NACL_ATTR(name)						\
-static ssize_t iscsi_nacl_attrib_##name##_show(struct config_item *item,\
-		char *page)						\
-{									\
-	struct se_node_acl *se_nacl = attrib_to_nacl(item);		\
-	struct iscsi_node_acl *nacl = container_of(se_nacl, struct iscsi_node_acl, \
+#घोषणा ISCSI_NACL_ATTR(name)						\
+अटल sमाप_प्रकार iscsi_nacl_attrib_##name##_show(काष्ठा config_item *item,\
+		अक्षर *page)						\
+अणु									\
+	काष्ठा se_node_acl *se_nacl = attrib_to_nacl(item);		\
+	काष्ठा iscsi_node_acl *nacl = container_of(se_nacl, काष्ठा iscsi_node_acl, \
 					se_node_acl);			\
 									\
-	return sprintf(page, "%u\n", nacl->node_attrib.name);		\
-}									\
+	वापस प्र_लिखो(page, "%u\n", nacl->node_attrib.name);		\
+पूर्ण									\
 									\
-static ssize_t iscsi_nacl_attrib_##name##_store(struct config_item *item,\
-		const char *page, size_t count)				\
-{									\
-	struct se_node_acl *se_nacl = attrib_to_nacl(item);		\
-	struct iscsi_node_acl *nacl = container_of(se_nacl, struct iscsi_node_acl, \
+अटल sमाप_प्रकार iscsi_nacl_attrib_##name##_store(काष्ठा config_item *item,\
+		स्थिर अक्षर *page, माप_प्रकार count)				\
+अणु									\
+	काष्ठा se_node_acl *se_nacl = attrib_to_nacl(item);		\
+	काष्ठा iscsi_node_acl *nacl = container_of(se_nacl, काष्ठा iscsi_node_acl, \
 					se_node_acl);			\
 	u32 val;							\
-	int ret;							\
+	पूर्णांक ret;							\
 									\
 	ret = kstrtou32(page, 0, &val);					\
-	if (ret)							\
-		return ret;						\
+	अगर (ret)							\
+		वापस ret;						\
 	ret = iscsit_na_##name(nacl, val);				\
-	if (ret < 0)							\
-		return ret;						\
+	अगर (ret < 0)							\
+		वापस ret;						\
 									\
-	return count;							\
-}									\
+	वापस count;							\
+पूर्ण									\
 									\
 CONFIGFS_ATTR(iscsi_nacl_attrib_, name)
 
-ISCSI_NACL_ATTR(dataout_timeout);
-ISCSI_NACL_ATTR(dataout_timeout_retries);
-ISCSI_NACL_ATTR(default_erl);
-ISCSI_NACL_ATTR(nopin_timeout);
-ISCSI_NACL_ATTR(nopin_response_timeout);
-ISCSI_NACL_ATTR(random_datain_pdu_offsets);
-ISCSI_NACL_ATTR(random_datain_seq_offsets);
-ISCSI_NACL_ATTR(random_r2t_offsets);
+ISCSI_NACL_ATTR(dataout_समयout);
+ISCSI_NACL_ATTR(dataout_समयout_retries);
+ISCSI_NACL_ATTR(शेष_erl);
+ISCSI_NACL_ATTR(nopin_समयout);
+ISCSI_NACL_ATTR(nopin_response_समयout);
+ISCSI_NACL_ATTR(अक्रमom_datain_pdu_offsets);
+ISCSI_NACL_ATTR(अक्रमom_datain_seq_offsets);
+ISCSI_NACL_ATTR(अक्रमom_r2t_offsets);
 
-static struct configfs_attribute *lio_target_nacl_attrib_attrs[] = {
-	&iscsi_nacl_attrib_attr_dataout_timeout,
-	&iscsi_nacl_attrib_attr_dataout_timeout_retries,
-	&iscsi_nacl_attrib_attr_default_erl,
-	&iscsi_nacl_attrib_attr_nopin_timeout,
-	&iscsi_nacl_attrib_attr_nopin_response_timeout,
-	&iscsi_nacl_attrib_attr_random_datain_pdu_offsets,
-	&iscsi_nacl_attrib_attr_random_datain_seq_offsets,
-	&iscsi_nacl_attrib_attr_random_r2t_offsets,
-	NULL,
-};
+अटल काष्ठा configfs_attribute *lio_target_nacl_attrib_attrs[] = अणु
+	&iscsi_nacl_attrib_attr_dataout_समयout,
+	&iscsi_nacl_attrib_attr_dataout_समयout_retries,
+	&iscsi_nacl_attrib_attr_शेष_erl,
+	&iscsi_nacl_attrib_attr_nopin_समयout,
+	&iscsi_nacl_attrib_attr_nopin_response_समयout,
+	&iscsi_nacl_attrib_attr_अक्रमom_datain_pdu_offsets,
+	&iscsi_nacl_attrib_attr_अक्रमom_datain_seq_offsets,
+	&iscsi_nacl_attrib_attr_अक्रमom_r2t_offsets,
+	शून्य,
+पूर्ण;
 
-/* End items for lio_target_nacl_attrib_cit */
+/* End items क्रम lio_target_nacl_attrib_cit */
 
-/* Start items for lio_target_nacl_auth_cit */
+/* Start items क्रम lio_target_nacl_auth_cit */
 
-#define __DEF_NACL_AUTH_STR(prefix, name, flags)			\
-static ssize_t __iscsi_##prefix##_##name##_show(			\
-	struct iscsi_node_acl *nacl,					\
-	char *page)							\
-{									\
-	struct iscsi_node_auth *auth = &nacl->node_auth;		\
+#घोषणा __DEF_NACL_AUTH_STR(prefix, name, flags)			\
+अटल sमाप_प्रकार __iscsi_##prefix##_##name##_show(			\
+	काष्ठा iscsi_node_acl *nacl,					\
+	अक्षर *page)							\
+अणु									\
+	काष्ठा iscsi_node_auth *auth = &nacl->node_auth;		\
 									\
-	if (!capable(CAP_SYS_ADMIN))					\
-		return -EPERM;						\
-	return snprintf(page, PAGE_SIZE, "%s\n", auth->name);		\
-}									\
+	अगर (!capable(CAP_SYS_ADMIN))					\
+		वापस -EPERM;						\
+	वापस snम_लिखो(page, PAGE_SIZE, "%s\n", auth->name);		\
+पूर्ण									\
 									\
-static ssize_t __iscsi_##prefix##_##name##_store(			\
-	struct iscsi_node_acl *nacl,					\
-	const char *page,						\
-	size_t count)							\
-{									\
-	struct iscsi_node_auth *auth = &nacl->node_auth;		\
+अटल sमाप_प्रकार __iscsi_##prefix##_##name##_store(			\
+	काष्ठा iscsi_node_acl *nacl,					\
+	स्थिर अक्षर *page,						\
+	माप_प्रकार count)							\
+अणु									\
+	काष्ठा iscsi_node_auth *auth = &nacl->node_auth;		\
 									\
-	if (!capable(CAP_SYS_ADMIN))					\
-		return -EPERM;						\
-	if (count >= sizeof(auth->name))				\
-		return -EINVAL;						\
-	snprintf(auth->name, sizeof(auth->name), "%s", page);		\
-	if (!strncmp("NULL", auth->name, 4))				\
+	अगर (!capable(CAP_SYS_ADMIN))					\
+		वापस -EPERM;						\
+	अगर (count >= माप(auth->name))				\
+		वापस -EINVAL;						\
+	snम_लिखो(auth->name, माप(auth->name), "%s", page);		\
+	अगर (!म_भेदन("NULL", auth->name, 4))				\
 		auth->naf_flags &= ~flags;				\
-	else								\
+	अन्यथा								\
 		auth->naf_flags |= flags;				\
 									\
-	if ((auth->naf_flags & NAF_USERID_IN_SET) &&			\
+	अगर ((auth->naf_flags & NAF_USERID_IN_SET) &&			\
 	    (auth->naf_flags & NAF_PASSWORD_IN_SET))			\
 		auth->authenticate_target = 1;				\
-	else								\
+	अन्यथा								\
 		auth->authenticate_target = 0;				\
 									\
-	return count;							\
-}
+	वापस count;							\
+पूर्ण
 
-#define DEF_NACL_AUTH_STR(name, flags)					\
+#घोषणा DEF_NACL_AUTH_STR(name, flags)					\
 	__DEF_NACL_AUTH_STR(nacl_auth, name, flags)			\
-static ssize_t iscsi_nacl_auth_##name##_show(struct config_item *item,	\
-		char *page)						\
-{									\
-	struct se_node_acl *nacl = auth_to_nacl(item);			\
-	return __iscsi_nacl_auth_##name##_show(container_of(nacl,	\
-			struct iscsi_node_acl, se_node_acl), page);	\
-}									\
-static ssize_t iscsi_nacl_auth_##name##_store(struct config_item *item,	\
-		const char *page, size_t count)				\
-{									\
-	struct se_node_acl *nacl = auth_to_nacl(item);			\
-	return __iscsi_nacl_auth_##name##_store(container_of(nacl,	\
-			struct iscsi_node_acl, se_node_acl), page, count); \
-}									\
+अटल sमाप_प्रकार iscsi_nacl_auth_##name##_show(काष्ठा config_item *item,	\
+		अक्षर *page)						\
+अणु									\
+	काष्ठा se_node_acl *nacl = auth_to_nacl(item);			\
+	वापस __iscsi_nacl_auth_##name##_show(container_of(nacl,	\
+			काष्ठा iscsi_node_acl, se_node_acl), page);	\
+पूर्ण									\
+अटल sमाप_प्रकार iscsi_nacl_auth_##name##_store(काष्ठा config_item *item,	\
+		स्थिर अक्षर *page, माप_प्रकार count)				\
+अणु									\
+	काष्ठा se_node_acl *nacl = auth_to_nacl(item);			\
+	वापस __iscsi_nacl_auth_##name##_store(container_of(nacl,	\
+			काष्ठा iscsi_node_acl, se_node_acl), page, count); \
+पूर्ण									\
 									\
 CONFIGFS_ATTR(iscsi_nacl_auth_, name)
 
@@ -398,69 +399,69 @@ DEF_NACL_AUTH_STR(password, NAF_PASSWORD_SET);
 DEF_NACL_AUTH_STR(userid_mutual, NAF_USERID_IN_SET);
 DEF_NACL_AUTH_STR(password_mutual, NAF_PASSWORD_IN_SET);
 
-#define __DEF_NACL_AUTH_INT(prefix, name)				\
-static ssize_t __iscsi_##prefix##_##name##_show(				\
-	struct iscsi_node_acl *nacl,					\
-	char *page)							\
-{									\
-	struct iscsi_node_auth *auth = &nacl->node_auth;		\
+#घोषणा __DEF_NACL_AUTH_INT(prefix, name)				\
+अटल sमाप_प्रकार __iscsi_##prefix##_##name##_show(				\
+	काष्ठा iscsi_node_acl *nacl,					\
+	अक्षर *page)							\
+अणु									\
+	काष्ठा iscsi_node_auth *auth = &nacl->node_auth;		\
 									\
-	if (!capable(CAP_SYS_ADMIN))					\
-		return -EPERM;						\
+	अगर (!capable(CAP_SYS_ADMIN))					\
+		वापस -EPERM;						\
 									\
-	return snprintf(page, PAGE_SIZE, "%d\n", auth->name);		\
-}
+	वापस snम_लिखो(page, PAGE_SIZE, "%d\n", auth->name);		\
+पूर्ण
 
-#define DEF_NACL_AUTH_INT(name)						\
+#घोषणा DEF_NACL_AUTH_INT(name)						\
 	__DEF_NACL_AUTH_INT(nacl_auth, name)				\
-static ssize_t iscsi_nacl_auth_##name##_show(struct config_item *item,	\
-		char *page)						\
-{									\
-	struct se_node_acl *nacl = auth_to_nacl(item);			\
-	return __iscsi_nacl_auth_##name##_show(container_of(nacl,	\
-			struct iscsi_node_acl, se_node_acl), page);	\
-}									\
+अटल sमाप_प्रकार iscsi_nacl_auth_##name##_show(काष्ठा config_item *item,	\
+		अक्षर *page)						\
+अणु									\
+	काष्ठा se_node_acl *nacl = auth_to_nacl(item);			\
+	वापस __iscsi_nacl_auth_##name##_show(container_of(nacl,	\
+			काष्ठा iscsi_node_acl, se_node_acl), page);	\
+पूर्ण									\
 									\
 CONFIGFS_ATTR_RO(iscsi_nacl_auth_, name)
 
 DEF_NACL_AUTH_INT(authenticate_target);
 
-static struct configfs_attribute *lio_target_nacl_auth_attrs[] = {
+अटल काष्ठा configfs_attribute *lio_target_nacl_auth_attrs[] = अणु
 	&iscsi_nacl_auth_attr_userid,
 	&iscsi_nacl_auth_attr_password,
 	&iscsi_nacl_auth_attr_authenticate_target,
 	&iscsi_nacl_auth_attr_userid_mutual,
 	&iscsi_nacl_auth_attr_password_mutual,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-/* End items for lio_target_nacl_auth_cit */
+/* End items क्रम lio_target_nacl_auth_cit */
 
-/* Start items for lio_target_nacl_param_cit */
+/* Start items क्रम lio_target_nacl_param_cit */
 
-#define ISCSI_NACL_PARAM(name)						\
-static ssize_t iscsi_nacl_param_##name##_show(struct config_item *item,	\
-		char *page)						\
-{									\
-	struct se_node_acl *se_nacl = param_to_nacl(item);		\
-	struct iscsi_session *sess;					\
-	struct se_session *se_sess;					\
-	ssize_t rb;							\
+#घोषणा ISCSI_NACL_PARAM(name)						\
+अटल sमाप_प्रकार iscsi_nacl_param_##name##_show(काष्ठा config_item *item,	\
+		अक्षर *page)						\
+अणु									\
+	काष्ठा se_node_acl *se_nacl = param_to_nacl(item);		\
+	काष्ठा iscsi_session *sess;					\
+	काष्ठा se_session *se_sess;					\
+	sमाप_प्रकार rb;							\
 									\
 	spin_lock_bh(&se_nacl->nacl_sess_lock);				\
 	se_sess = se_nacl->nacl_sess;					\
-	if (!se_sess) {							\
-		rb = snprintf(page, PAGE_SIZE,				\
+	अगर (!se_sess) अणु							\
+		rb = snम_लिखो(page, PAGE_SIZE,				\
 			"No Active iSCSI Session\n");			\
-	} else {							\
+	पूर्ण अन्यथा अणु							\
 		sess = se_sess->fabric_sess_ptr;			\
-		rb = snprintf(page, PAGE_SIZE, "%u\n",			\
+		rb = snम_लिखो(page, PAGE_SIZE, "%u\n",			\
 			(u32)sess->sess_ops->name);			\
-	}								\
+	पूर्ण								\
 	spin_unlock_bh(&se_nacl->nacl_sess_lock);			\
 									\
-	return rb;							\
-}									\
+	वापस rb;							\
+पूर्ण									\
 									\
 CONFIGFS_ATTR_RO(iscsi_nacl_param_, name)
 
@@ -476,7 +477,7 @@ ISCSI_NACL_PARAM(DataPDUInOrder);
 ISCSI_NACL_PARAM(DataSequenceInOrder);
 ISCSI_NACL_PARAM(ErrorRecoveryLevel);
 
-static struct configfs_attribute *lio_target_nacl_param_attrs[] = {
+अटल काष्ठा configfs_attribute *lio_target_nacl_param_attrs[] = अणु
 	&iscsi_nacl_param_attr_MaxConnections,
 	&iscsi_nacl_param_attr_InitialR2T,
 	&iscsi_nacl_param_attr_ImmediateData,
@@ -488,174 +489,174 @@ static struct configfs_attribute *lio_target_nacl_param_attrs[] = {
 	&iscsi_nacl_param_attr_DataPDUInOrder,
 	&iscsi_nacl_param_attr_DataSequenceInOrder,
 	&iscsi_nacl_param_attr_ErrorRecoveryLevel,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-/* End items for lio_target_nacl_param_cit */
+/* End items क्रम lio_target_nacl_param_cit */
 
-/* Start items for lio_target_acl_cit */
+/* Start items क्रम lio_target_acl_cit */
 
-static ssize_t lio_target_nacl_info_show(struct config_item *item, char *page)
-{
-	struct se_node_acl *se_nacl = acl_to_nacl(item);
-	struct iscsi_session *sess;
-	struct iscsi_conn *conn;
-	struct se_session *se_sess;
-	ssize_t rb = 0;
+अटल sमाप_प्रकार lio_target_nacl_info_show(काष्ठा config_item *item, अक्षर *page)
+अणु
+	काष्ठा se_node_acl *se_nacl = acl_to_nacl(item);
+	काष्ठा iscsi_session *sess;
+	काष्ठा iscsi_conn *conn;
+	काष्ठा se_session *se_sess;
+	sमाप_प्रकार rb = 0;
 	u32 max_cmd_sn;
 
 	spin_lock_bh(&se_nacl->nacl_sess_lock);
 	se_sess = se_nacl->nacl_sess;
-	if (!se_sess) {
-		rb += sprintf(page+rb, "No active iSCSI Session for Initiator"
+	अगर (!se_sess) अणु
+		rb += प्र_लिखो(page+rb, "No active iSCSI Session for Initiator"
 			" Endpoint: %s\n", se_nacl->initiatorname);
-	} else {
+	पूर्ण अन्यथा अणु
 		sess = se_sess->fabric_sess_ptr;
 
-		rb += sprintf(page+rb, "InitiatorName: %s\n",
+		rb += प्र_लिखो(page+rb, "InitiatorName: %s\n",
 			sess->sess_ops->InitiatorName);
-		rb += sprintf(page+rb, "InitiatorAlias: %s\n",
+		rb += प्र_लिखो(page+rb, "InitiatorAlias: %s\n",
 			sess->sess_ops->InitiatorAlias);
 
-		rb += sprintf(page+rb,
+		rb += प्र_लिखो(page+rb,
 			      "LIO Session ID: %u   ISID: 0x%6ph  TSIH: %hu  ",
 			      sess->sid, sess->isid, sess->tsih);
-		rb += sprintf(page+rb, "SessionType: %s\n",
+		rb += प्र_लिखो(page+rb, "SessionType: %s\n",
 				(sess->sess_ops->SessionType) ?
 				"Discovery" : "Normal");
-		rb += sprintf(page+rb, "Session State: ");
-		switch (sess->session_state) {
-		case TARG_SESS_STATE_FREE:
-			rb += sprintf(page+rb, "TARG_SESS_FREE\n");
-			break;
-		case TARG_SESS_STATE_ACTIVE:
-			rb += sprintf(page+rb, "TARG_SESS_STATE_ACTIVE\n");
-			break;
-		case TARG_SESS_STATE_LOGGED_IN:
-			rb += sprintf(page+rb, "TARG_SESS_STATE_LOGGED_IN\n");
-			break;
-		case TARG_SESS_STATE_FAILED:
-			rb += sprintf(page+rb, "TARG_SESS_STATE_FAILED\n");
-			break;
-		case TARG_SESS_STATE_IN_CONTINUE:
-			rb += sprintf(page+rb, "TARG_SESS_STATE_IN_CONTINUE\n");
-			break;
-		default:
-			rb += sprintf(page+rb, "ERROR: Unknown Session"
+		rb += प्र_लिखो(page+rb, "Session State: ");
+		चयन (sess->session_state) अणु
+		हाल TARG_SESS_STATE_FREE:
+			rb += प्र_लिखो(page+rb, "TARG_SESS_FREE\n");
+			अवरोध;
+		हाल TARG_SESS_STATE_ACTIVE:
+			rb += प्र_लिखो(page+rb, "TARG_SESS_STATE_ACTIVE\n");
+			अवरोध;
+		हाल TARG_SESS_STATE_LOGGED_IN:
+			rb += प्र_लिखो(page+rb, "TARG_SESS_STATE_LOGGED_IN\n");
+			अवरोध;
+		हाल TARG_SESS_STATE_FAILED:
+			rb += प्र_लिखो(page+rb, "TARG_SESS_STATE_FAILED\n");
+			अवरोध;
+		हाल TARG_SESS_STATE_IN_CONTINUE:
+			rb += प्र_लिखो(page+rb, "TARG_SESS_STATE_IN_CONTINUE\n");
+			अवरोध;
+		शेष:
+			rb += प्र_लिखो(page+rb, "ERROR: Unknown Session"
 					" State!\n");
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		rb += sprintf(page+rb, "---------------------[iSCSI Session"
+		rb += प्र_लिखो(page+rb, "---------------------[iSCSI Session"
 				" Values]-----------------------\n");
-		rb += sprintf(page+rb, "  CmdSN/WR  :  CmdSN/WC  :  ExpCmdSN"
+		rb += प्र_लिखो(page+rb, "  CmdSN/WR  :  CmdSN/WC  :  ExpCmdSN"
 				"  :  MaxCmdSN  :     ITT    :     TTT\n");
-		max_cmd_sn = (u32) atomic_read(&sess->max_cmd_sn);
-		rb += sprintf(page+rb, " 0x%08x   0x%08x   0x%08x   0x%08x"
+		max_cmd_sn = (u32) atomic_पढ़ो(&sess->max_cmd_sn);
+		rb += प्र_लिखो(page+rb, " 0x%08x   0x%08x   0x%08x   0x%08x"
 				"   0x%08x   0x%08x\n",
-			sess->cmdsn_window,
+			sess->cmdsn_winकरोw,
 			(max_cmd_sn - sess->exp_cmd_sn) + 1,
 			sess->exp_cmd_sn, max_cmd_sn,
 			sess->init_task_tag, sess->targ_xfer_tag);
-		rb += sprintf(page+rb, "----------------------[iSCSI"
+		rb += प्र_लिखो(page+rb, "----------------------[iSCSI"
 				" Connections]-------------------------\n");
 
 		spin_lock(&sess->conn_lock);
-		list_for_each_entry(conn, &sess->sess_conn_list, conn_list) {
-			rb += sprintf(page+rb, "CID: %hu  Connection"
+		list_क्रम_each_entry(conn, &sess->sess_conn_list, conn_list) अणु
+			rb += प्र_लिखो(page+rb, "CID: %hu  Connection"
 					" State: ", conn->cid);
-			switch (conn->conn_state) {
-			case TARG_CONN_STATE_FREE:
-				rb += sprintf(page+rb,
+			चयन (conn->conn_state) अणु
+			हाल TARG_CONN_STATE_FREE:
+				rb += प्र_लिखो(page+rb,
 					"TARG_CONN_STATE_FREE\n");
-				break;
-			case TARG_CONN_STATE_XPT_UP:
-				rb += sprintf(page+rb,
+				अवरोध;
+			हाल TARG_CONN_STATE_XPT_UP:
+				rb += प्र_लिखो(page+rb,
 					"TARG_CONN_STATE_XPT_UP\n");
-				break;
-			case TARG_CONN_STATE_IN_LOGIN:
-				rb += sprintf(page+rb,
+				अवरोध;
+			हाल TARG_CONN_STATE_IN_LOGIN:
+				rb += प्र_लिखो(page+rb,
 					"TARG_CONN_STATE_IN_LOGIN\n");
-				break;
-			case TARG_CONN_STATE_LOGGED_IN:
-				rb += sprintf(page+rb,
+				अवरोध;
+			हाल TARG_CONN_STATE_LOGGED_IN:
+				rb += प्र_लिखो(page+rb,
 					"TARG_CONN_STATE_LOGGED_IN\n");
-				break;
-			case TARG_CONN_STATE_IN_LOGOUT:
-				rb += sprintf(page+rb,
+				अवरोध;
+			हाल TARG_CONN_STATE_IN_LOGOUT:
+				rb += प्र_लिखो(page+rb,
 					"TARG_CONN_STATE_IN_LOGOUT\n");
-				break;
-			case TARG_CONN_STATE_LOGOUT_REQUESTED:
-				rb += sprintf(page+rb,
+				अवरोध;
+			हाल TARG_CONN_STATE_LOGOUT_REQUESTED:
+				rb += प्र_लिखो(page+rb,
 					"TARG_CONN_STATE_LOGOUT_REQUESTED\n");
-				break;
-			case TARG_CONN_STATE_CLEANUP_WAIT:
-				rb += sprintf(page+rb,
+				अवरोध;
+			हाल TARG_CONN_STATE_CLEANUP_WAIT:
+				rb += प्र_लिखो(page+rb,
 					"TARG_CONN_STATE_CLEANUP_WAIT\n");
-				break;
-			default:
-				rb += sprintf(page+rb,
+				अवरोध;
+			शेष:
+				rb += प्र_लिखो(page+rb,
 					"ERROR: Unknown Connection State!\n");
-				break;
-			}
+				अवरोध;
+			पूर्ण
 
-			rb += sprintf(page+rb, "   Address %pISc %s", &conn->login_sockaddr,
+			rb += प्र_लिखो(page+rb, "   Address %pISc %s", &conn->login_sockaddr,
 				(conn->network_transport == ISCSI_TCP) ?
 				"TCP" : "SCTP");
-			rb += sprintf(page+rb, "  StatSN: 0x%08x\n",
+			rb += प्र_लिखो(page+rb, "  StatSN: 0x%08x\n",
 				conn->stat_sn);
-		}
+		पूर्ण
 		spin_unlock(&sess->conn_lock);
-	}
+	पूर्ण
 	spin_unlock_bh(&se_nacl->nacl_sess_lock);
 
-	return rb;
-}
+	वापस rb;
+पूर्ण
 
-static ssize_t lio_target_nacl_cmdsn_depth_show(struct config_item *item,
-		char *page)
-{
-	return sprintf(page, "%u\n", acl_to_nacl(item)->queue_depth);
-}
+अटल sमाप_प्रकार lio_target_nacl_cmdsn_depth_show(काष्ठा config_item *item,
+		अक्षर *page)
+अणु
+	वापस प्र_लिखो(page, "%u\n", acl_to_nacl(item)->queue_depth);
+पूर्ण
 
-static ssize_t lio_target_nacl_cmdsn_depth_store(struct config_item *item,
-		const char *page, size_t count)
-{
-	struct se_node_acl *se_nacl = acl_to_nacl(item);
-	struct se_portal_group *se_tpg = se_nacl->se_tpg;
-	struct iscsi_portal_group *tpg = container_of(se_tpg,
-			struct iscsi_portal_group, tpg_se_tpg);
-	struct config_item *acl_ci, *tpg_ci, *wwn_ci;
+अटल sमाप_प्रकार lio_target_nacl_cmdsn_depth_store(काष्ठा config_item *item,
+		स्थिर अक्षर *page, माप_प्रकार count)
+अणु
+	काष्ठा se_node_acl *se_nacl = acl_to_nacl(item);
+	काष्ठा se_portal_group *se_tpg = se_nacl->se_tpg;
+	काष्ठा iscsi_portal_group *tpg = container_of(se_tpg,
+			काष्ठा iscsi_portal_group, tpg_se_tpg);
+	काष्ठा config_item *acl_ci, *tpg_ci, *wwn_ci;
 	u32 cmdsn_depth = 0;
-	int ret;
+	पूर्णांक ret;
 
 	ret = kstrtou32(page, 0, &cmdsn_depth);
-	if (ret)
-		return ret;
-	if (cmdsn_depth > TA_DEFAULT_CMDSN_DEPTH_MAX) {
+	अगर (ret)
+		वापस ret;
+	अगर (cmdsn_depth > TA_DEFAULT_CMDSN_DEPTH_MAX) अणु
 		pr_err("Passed cmdsn_depth: %u exceeds"
 			" TA_DEFAULT_CMDSN_DEPTH_MAX: %u\n", cmdsn_depth,
 			TA_DEFAULT_CMDSN_DEPTH_MAX);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 	acl_ci = &se_nacl->acl_group.cg_item;
-	if (!acl_ci) {
+	अगर (!acl_ci) अणु
 		pr_err("Unable to locatel acl_ci\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 	tpg_ci = &acl_ci->ci_parent->ci_group->cg_item;
-	if (!tpg_ci) {
+	अगर (!tpg_ci) अणु
 		pr_err("Unable to locate tpg_ci\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 	wwn_ci = &tpg_ci->ci_group->cg_item;
-	if (!wwn_ci) {
+	अगर (!wwn_ci) अणु
 		pr_err("Unable to locate config_item wwn_ci\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (iscsit_get_tpg(tpg) < 0)
-		return -EINVAL;
+	अगर (iscsit_get_tpg(tpg) < 0)
+		वापस -EINVAL;
 
 	ret = core_tpg_set_initiator_node_queue_depth(se_nacl, cmdsn_depth);
 
@@ -665,189 +666,189 @@ static ssize_t lio_target_nacl_cmdsn_depth_store(struct config_item *item,
 		config_item_name(acl_ci));
 
 	iscsit_put_tpg(tpg);
-	return (!ret) ? count : (ssize_t)ret;
-}
+	वापस (!ret) ? count : (sमाप_प्रकार)ret;
+पूर्ण
 
-static ssize_t lio_target_nacl_tag_show(struct config_item *item, char *page)
-{
-	return snprintf(page, PAGE_SIZE, "%s", acl_to_nacl(item)->acl_tag);
-}
+अटल sमाप_प्रकार lio_target_nacl_tag_show(काष्ठा config_item *item, अक्षर *page)
+अणु
+	वापस snम_लिखो(page, PAGE_SIZE, "%s", acl_to_nacl(item)->acl_tag);
+पूर्ण
 
-static ssize_t lio_target_nacl_tag_store(struct config_item *item,
-		const char *page, size_t count)
-{
-	struct se_node_acl *se_nacl = acl_to_nacl(item);
-	int ret;
+अटल sमाप_प्रकार lio_target_nacl_tag_store(काष्ठा config_item *item,
+		स्थिर अक्षर *page, माप_प्रकार count)
+अणु
+	काष्ठा se_node_acl *se_nacl = acl_to_nacl(item);
+	पूर्णांक ret;
 
 	ret = core_tpg_set_initiator_node_tag(se_nacl->se_tpg, se_nacl, page);
 
-	if (ret < 0)
-		return ret;
-	return count;
-}
+	अगर (ret < 0)
+		वापस ret;
+	वापस count;
+पूर्ण
 
 CONFIGFS_ATTR_RO(lio_target_nacl_, info);
 CONFIGFS_ATTR(lio_target_nacl_, cmdsn_depth);
 CONFIGFS_ATTR(lio_target_nacl_, tag);
 
-static struct configfs_attribute *lio_target_initiator_attrs[] = {
+अटल काष्ठा configfs_attribute *lio_target_initiator_attrs[] = अणु
 	&lio_target_nacl_attr_info,
 	&lio_target_nacl_attr_cmdsn_depth,
 	&lio_target_nacl_attr_tag,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-static int lio_target_init_nodeacl(struct se_node_acl *se_nacl,
-		const char *name)
-{
-	struct iscsi_node_acl *acl =
-		container_of(se_nacl, struct iscsi_node_acl, se_node_acl);
+अटल पूर्णांक lio_target_init_nodeacl(काष्ठा se_node_acl *se_nacl,
+		स्थिर अक्षर *name)
+अणु
+	काष्ठा iscsi_node_acl *acl =
+		container_of(se_nacl, काष्ठा iscsi_node_acl, se_node_acl);
 
 	config_group_init_type_name(&acl->node_stat_grps.iscsi_sess_stats_group,
 			"iscsi_sess_stats", &iscsi_stat_sess_cit);
-	configfs_add_default_group(&acl->node_stat_grps.iscsi_sess_stats_group,
+	configfs_add_शेष_group(&acl->node_stat_grps.iscsi_sess_stats_group,
 			&se_nacl->acl_fabric_stat_group);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* End items for lio_target_acl_cit */
+/* End items क्रम lio_target_acl_cit */
 
-/* Start items for lio_target_tpg_attrib_cit */
+/* Start items क्रम lio_target_tpg_attrib_cit */
 
-#define DEF_TPG_ATTRIB(name)						\
+#घोषणा DEF_TPG_ATTRIB(name)						\
 									\
-static ssize_t iscsi_tpg_attrib_##name##_show(struct config_item *item,	\
-		char *page)						\
-{									\
-	struct se_portal_group *se_tpg = attrib_to_tpg(item);		\
-	struct iscsi_portal_group *tpg = container_of(se_tpg,		\
-			struct iscsi_portal_group, tpg_se_tpg);	\
-	ssize_t rb;							\
+अटल sमाप_प्रकार iscsi_tpg_attrib_##name##_show(काष्ठा config_item *item,	\
+		अक्षर *page)						\
+अणु									\
+	काष्ठा se_portal_group *se_tpg = attrib_to_tpg(item);		\
+	काष्ठा iscsi_portal_group *tpg = container_of(se_tpg,		\
+			काष्ठा iscsi_portal_group, tpg_se_tpg);	\
+	sमाप_प्रकार rb;							\
 									\
-	if (iscsit_get_tpg(tpg) < 0)					\
-		return -EINVAL;						\
+	अगर (iscsit_get_tpg(tpg) < 0)					\
+		वापस -EINVAL;						\
 									\
-	rb = sprintf(page, "%u\n", tpg->tpg_attrib.name);		\
+	rb = प्र_लिखो(page, "%u\n", tpg->tpg_attrib.name);		\
 	iscsit_put_tpg(tpg);						\
-	return rb;							\
-}									\
+	वापस rb;							\
+पूर्ण									\
 									\
-static ssize_t iscsi_tpg_attrib_##name##_store(struct config_item *item,\
-		const char *page, size_t count)				\
-{									\
-	struct se_portal_group *se_tpg = attrib_to_tpg(item);		\
-	struct iscsi_portal_group *tpg = container_of(se_tpg,		\
-			struct iscsi_portal_group, tpg_se_tpg);	\
+अटल sमाप_प्रकार iscsi_tpg_attrib_##name##_store(काष्ठा config_item *item,\
+		स्थिर अक्षर *page, माप_प्रकार count)				\
+अणु									\
+	काष्ठा se_portal_group *se_tpg = attrib_to_tpg(item);		\
+	काष्ठा iscsi_portal_group *tpg = container_of(se_tpg,		\
+			काष्ठा iscsi_portal_group, tpg_se_tpg);	\
 	u32 val;							\
-	int ret;							\
+	पूर्णांक ret;							\
 									\
-	if (iscsit_get_tpg(tpg) < 0)					\
-		return -EINVAL;						\
+	अगर (iscsit_get_tpg(tpg) < 0)					\
+		वापस -EINVAL;						\
 									\
 	ret = kstrtou32(page, 0, &val);					\
-	if (ret)							\
-		goto out;						\
+	अगर (ret)							\
+		जाओ out;						\
 	ret = iscsit_ta_##name(tpg, val);				\
-	if (ret < 0)							\
-		goto out;						\
+	अगर (ret < 0)							\
+		जाओ out;						\
 									\
 	iscsit_put_tpg(tpg);						\
-	return count;							\
+	वापस count;							\
 out:									\
 	iscsit_put_tpg(tpg);						\
-	return ret;							\
-}									\
+	वापस ret;							\
+पूर्ण									\
 CONFIGFS_ATTR(iscsi_tpg_attrib_, name)
 
 DEF_TPG_ATTRIB(authentication);
-DEF_TPG_ATTRIB(login_timeout);
-DEF_TPG_ATTRIB(netif_timeout);
+DEF_TPG_ATTRIB(login_समयout);
+DEF_TPG_ATTRIB(netअगर_समयout);
 DEF_TPG_ATTRIB(generate_node_acls);
-DEF_TPG_ATTRIB(default_cmdsn_depth);
+DEF_TPG_ATTRIB(शेष_cmdsn_depth);
 DEF_TPG_ATTRIB(cache_dynamic_acls);
-DEF_TPG_ATTRIB(demo_mode_write_protect);
-DEF_TPG_ATTRIB(prod_mode_write_protect);
+DEF_TPG_ATTRIB(demo_mode_ग_लिखो_protect);
+DEF_TPG_ATTRIB(prod_mode_ग_लिखो_protect);
 DEF_TPG_ATTRIB(demo_mode_discovery);
-DEF_TPG_ATTRIB(default_erl);
+DEF_TPG_ATTRIB(शेष_erl);
 DEF_TPG_ATTRIB(t10_pi);
 DEF_TPG_ATTRIB(fabric_prot_type);
-DEF_TPG_ATTRIB(tpg_enabled_sendtargets);
+DEF_TPG_ATTRIB(tpg_enabled_sendtarमाला_लो);
 DEF_TPG_ATTRIB(login_keys_workaround);
 
-static struct configfs_attribute *lio_target_tpg_attrib_attrs[] = {
+अटल काष्ठा configfs_attribute *lio_target_tpg_attrib_attrs[] = अणु
 	&iscsi_tpg_attrib_attr_authentication,
-	&iscsi_tpg_attrib_attr_login_timeout,
-	&iscsi_tpg_attrib_attr_netif_timeout,
+	&iscsi_tpg_attrib_attr_login_समयout,
+	&iscsi_tpg_attrib_attr_netअगर_समयout,
 	&iscsi_tpg_attrib_attr_generate_node_acls,
-	&iscsi_tpg_attrib_attr_default_cmdsn_depth,
+	&iscsi_tpg_attrib_attr_शेष_cmdsn_depth,
 	&iscsi_tpg_attrib_attr_cache_dynamic_acls,
-	&iscsi_tpg_attrib_attr_demo_mode_write_protect,
-	&iscsi_tpg_attrib_attr_prod_mode_write_protect,
+	&iscsi_tpg_attrib_attr_demo_mode_ग_लिखो_protect,
+	&iscsi_tpg_attrib_attr_prod_mode_ग_लिखो_protect,
 	&iscsi_tpg_attrib_attr_demo_mode_discovery,
-	&iscsi_tpg_attrib_attr_default_erl,
+	&iscsi_tpg_attrib_attr_शेष_erl,
 	&iscsi_tpg_attrib_attr_t10_pi,
 	&iscsi_tpg_attrib_attr_fabric_prot_type,
-	&iscsi_tpg_attrib_attr_tpg_enabled_sendtargets,
+	&iscsi_tpg_attrib_attr_tpg_enabled_sendtarमाला_लो,
 	&iscsi_tpg_attrib_attr_login_keys_workaround,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-/* End items for lio_target_tpg_attrib_cit */
+/* End items क्रम lio_target_tpg_attrib_cit */
 
-/* Start items for lio_target_tpg_auth_cit */
+/* Start items क्रम lio_target_tpg_auth_cit */
 
-#define __DEF_TPG_AUTH_STR(prefix, name, flags)					\
-static ssize_t __iscsi_##prefix##_##name##_show(struct se_portal_group *se_tpg,	\
-		char *page)							\
-{										\
-	struct iscsi_portal_group *tpg = container_of(se_tpg,			\
-				struct iscsi_portal_group, tpg_se_tpg);		\
-	struct iscsi_node_auth *auth = &tpg->tpg_demo_auth;			\
+#घोषणा __DEF_TPG_AUTH_STR(prefix, name, flags)					\
+अटल sमाप_प्रकार __iscsi_##prefix##_##name##_show(काष्ठा se_portal_group *se_tpg,	\
+		अक्षर *page)							\
+अणु										\
+	काष्ठा iscsi_portal_group *tpg = container_of(se_tpg,			\
+				काष्ठा iscsi_portal_group, tpg_se_tpg);		\
+	काष्ठा iscsi_node_auth *auth = &tpg->tpg_demo_auth;			\
 										\
-	if (!capable(CAP_SYS_ADMIN))						\
-		return -EPERM;							\
+	अगर (!capable(CAP_SYS_ADMIN))						\
+		वापस -EPERM;							\
 										\
-	return snprintf(page, PAGE_SIZE, "%s\n", auth->name);			\
-}										\
+	वापस snम_लिखो(page, PAGE_SIZE, "%s\n", auth->name);			\
+पूर्ण										\
 										\
-static ssize_t __iscsi_##prefix##_##name##_store(struct se_portal_group *se_tpg,\
-		const char *page, size_t count)					\
-{										\
-	struct iscsi_portal_group *tpg = container_of(se_tpg,			\
-				struct iscsi_portal_group, tpg_se_tpg);		\
-	struct iscsi_node_auth *auth = &tpg->tpg_demo_auth;			\
+अटल sमाप_प्रकार __iscsi_##prefix##_##name##_store(काष्ठा se_portal_group *se_tpg,\
+		स्थिर अक्षर *page, माप_प्रकार count)					\
+अणु										\
+	काष्ठा iscsi_portal_group *tpg = container_of(se_tpg,			\
+				काष्ठा iscsi_portal_group, tpg_se_tpg);		\
+	काष्ठा iscsi_node_auth *auth = &tpg->tpg_demo_auth;			\
 										\
-	if (!capable(CAP_SYS_ADMIN))						\
-		return -EPERM;							\
+	अगर (!capable(CAP_SYS_ADMIN))						\
+		वापस -EPERM;							\
 										\
-	snprintf(auth->name, sizeof(auth->name), "%s", page);			\
-	if (!(strncmp("NULL", auth->name, 4)))					\
+	snम_लिखो(auth->name, माप(auth->name), "%s", page);			\
+	अगर (!(म_भेदन("NULL", auth->name, 4)))					\
 		auth->naf_flags &= ~flags;					\
-	else									\
+	अन्यथा									\
 		auth->naf_flags |= flags;					\
 										\
-	if ((auth->naf_flags & NAF_USERID_IN_SET) &&				\
+	अगर ((auth->naf_flags & NAF_USERID_IN_SET) &&				\
 	    (auth->naf_flags & NAF_PASSWORD_IN_SET))				\
 		auth->authenticate_target = 1;					\
-	else									\
+	अन्यथा									\
 		auth->authenticate_target = 0;					\
 										\
-	return count;								\
-}
+	वापस count;								\
+पूर्ण
 
-#define DEF_TPG_AUTH_STR(name, flags)						\
+#घोषणा DEF_TPG_AUTH_STR(name, flags)						\
 	__DEF_TPG_AUTH_STR(tpg_auth, name, flags)				\
-static ssize_t iscsi_tpg_auth_##name##_show(struct config_item *item,		\
-		char *page)							\
-{										\
-	return __iscsi_tpg_auth_##name##_show(auth_to_tpg(item), page);		\
-}										\
+अटल sमाप_प्रकार iscsi_tpg_auth_##name##_show(काष्ठा config_item *item,		\
+		अक्षर *page)							\
+अणु										\
+	वापस __iscsi_tpg_auth_##name##_show(auth_to_tpg(item), page);		\
+पूर्ण										\
 										\
-static ssize_t iscsi_tpg_auth_##name##_store(struct config_item *item,		\
-		const char *page, size_t count)					\
-{										\
-	return __iscsi_tpg_auth_##name##_store(auth_to_tpg(item), page, count);	\
-}										\
+अटल sमाप_प्रकार iscsi_tpg_auth_##name##_store(काष्ठा config_item *item,		\
+		स्थिर अक्षर *page, माप_प्रकार count)					\
+अणु										\
+	वापस __iscsi_tpg_auth_##name##_store(auth_to_tpg(item), page, count);	\
+पूर्ण										\
 										\
 CONFIGFS_ATTR(iscsi_tpg_auth_, name);
 
@@ -857,101 +858,101 @@ DEF_TPG_AUTH_STR(password, NAF_PASSWORD_SET);
 DEF_TPG_AUTH_STR(userid_mutual, NAF_USERID_IN_SET);
 DEF_TPG_AUTH_STR(password_mutual, NAF_PASSWORD_IN_SET);
 
-#define __DEF_TPG_AUTH_INT(prefix, name)					\
-static ssize_t __iscsi_##prefix##_##name##_show(struct se_portal_group *se_tpg,	\
-		char *page)								\
-{										\
-	struct iscsi_portal_group *tpg = container_of(se_tpg,			\
-				struct iscsi_portal_group, tpg_se_tpg);		\
-	struct iscsi_node_auth *auth = &tpg->tpg_demo_auth;			\
+#घोषणा __DEF_TPG_AUTH_INT(prefix, name)					\
+अटल sमाप_प्रकार __iscsi_##prefix##_##name##_show(काष्ठा se_portal_group *se_tpg,	\
+		अक्षर *page)								\
+अणु										\
+	काष्ठा iscsi_portal_group *tpg = container_of(se_tpg,			\
+				काष्ठा iscsi_portal_group, tpg_se_tpg);		\
+	काष्ठा iscsi_node_auth *auth = &tpg->tpg_demo_auth;			\
 										\
-	if (!capable(CAP_SYS_ADMIN))						\
-		return -EPERM;							\
+	अगर (!capable(CAP_SYS_ADMIN))						\
+		वापस -EPERM;							\
 										\
-	return snprintf(page, PAGE_SIZE, "%d\n", auth->name);			\
-}
+	वापस snम_लिखो(page, PAGE_SIZE, "%d\n", auth->name);			\
+पूर्ण
 
-#define DEF_TPG_AUTH_INT(name)							\
+#घोषणा DEF_TPG_AUTH_INT(name)							\
 	__DEF_TPG_AUTH_INT(tpg_auth, name)					\
-static ssize_t iscsi_tpg_auth_##name##_show(struct config_item *item,		\
-		char *page) \
-{										\
-	return __iscsi_tpg_auth_##name##_show(auth_to_tpg(item), page);		\
-}										\
+अटल sमाप_प्रकार iscsi_tpg_auth_##name##_show(काष्ठा config_item *item,		\
+		अक्षर *page) \
+अणु										\
+	वापस __iscsi_tpg_auth_##name##_show(auth_to_tpg(item), page);		\
+पूर्ण										\
 CONFIGFS_ATTR_RO(iscsi_tpg_auth_, name);
 
 DEF_TPG_AUTH_INT(authenticate_target);
 
-static struct configfs_attribute *lio_target_tpg_auth_attrs[] = {
+अटल काष्ठा configfs_attribute *lio_target_tpg_auth_attrs[] = अणु
 	&iscsi_tpg_auth_attr_userid,
 	&iscsi_tpg_auth_attr_password,
 	&iscsi_tpg_auth_attr_authenticate_target,
 	&iscsi_tpg_auth_attr_userid_mutual,
 	&iscsi_tpg_auth_attr_password_mutual,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-/* End items for lio_target_tpg_auth_cit */
+/* End items क्रम lio_target_tpg_auth_cit */
 
-/* Start items for lio_target_tpg_param_cit */
+/* Start items क्रम lio_target_tpg_param_cit */
 
-#define DEF_TPG_PARAM(name)						\
-static ssize_t iscsi_tpg_param_##name##_show(struct config_item *item,	\
-		char *page)						\
-{									\
-	struct se_portal_group *se_tpg = param_to_tpg(item);		\
-	struct iscsi_portal_group *tpg = container_of(se_tpg,		\
-			struct iscsi_portal_group, tpg_se_tpg);		\
-	struct iscsi_param *param;					\
-	ssize_t rb;							\
+#घोषणा DEF_TPG_PARAM(name)						\
+अटल sमाप_प्रकार iscsi_tpg_param_##name##_show(काष्ठा config_item *item,	\
+		अक्षर *page)						\
+अणु									\
+	काष्ठा se_portal_group *se_tpg = param_to_tpg(item);		\
+	काष्ठा iscsi_portal_group *tpg = container_of(se_tpg,		\
+			काष्ठा iscsi_portal_group, tpg_se_tpg);		\
+	काष्ठा iscsi_param *param;					\
+	sमाप_प्रकार rb;							\
 									\
-	if (iscsit_get_tpg(tpg) < 0)					\
-		return -EINVAL;						\
+	अगर (iscsit_get_tpg(tpg) < 0)					\
+		वापस -EINVAL;						\
 									\
-	param = iscsi_find_param_from_key(__stringify(name),		\
+	param = iscsi_find_param_from_key(__stringअगरy(name),		\
 				tpg->param_list);			\
-	if (!param) {							\
+	अगर (!param) अणु							\
 		iscsit_put_tpg(tpg);					\
-		return -EINVAL;						\
-	}								\
-	rb = snprintf(page, PAGE_SIZE, "%s\n", param->value);		\
+		वापस -EINVAL;						\
+	पूर्ण								\
+	rb = snम_लिखो(page, PAGE_SIZE, "%s\n", param->value);		\
 									\
 	iscsit_put_tpg(tpg);						\
-	return rb;							\
-}									\
-static ssize_t iscsi_tpg_param_##name##_store(struct config_item *item, \
-		const char *page, size_t count)				\
-{									\
-	struct se_portal_group *se_tpg = param_to_tpg(item);		\
-	struct iscsi_portal_group *tpg = container_of(se_tpg,		\
-			struct iscsi_portal_group, tpg_se_tpg);		\
-	char *buf;							\
-	int ret, len;							\
+	वापस rb;							\
+पूर्ण									\
+अटल sमाप_प्रकार iscsi_tpg_param_##name##_store(काष्ठा config_item *item, \
+		स्थिर अक्षर *page, माप_प्रकार count)				\
+अणु									\
+	काष्ठा se_portal_group *se_tpg = param_to_tpg(item);		\
+	काष्ठा iscsi_portal_group *tpg = container_of(se_tpg,		\
+			काष्ठा iscsi_portal_group, tpg_se_tpg);		\
+	अक्षर *buf;							\
+	पूर्णांक ret, len;							\
 									\
 	buf = kzalloc(PAGE_SIZE, GFP_KERNEL);				\
-	if (!buf)							\
-		return -ENOMEM;						\
-	len = snprintf(buf, PAGE_SIZE, "%s=%s", __stringify(name), page);	\
-	if (isspace(buf[len-1]))					\
+	अगर (!buf)							\
+		वापस -ENOMEM;						\
+	len = snम_लिखो(buf, PAGE_SIZE, "%s=%s", __stringअगरy(name), page);	\
+	अगर (है_खाली(buf[len-1]))					\
 		buf[len-1] = '\0'; /* Kill newline */			\
 									\
-	if (iscsit_get_tpg(tpg) < 0) {					\
-		kfree(buf);						\
-		return -EINVAL;						\
-	}								\
+	अगर (iscsit_get_tpg(tpg) < 0) अणु					\
+		kमुक्त(buf);						\
+		वापस -EINVAL;						\
+	पूर्ण								\
 									\
 	ret = iscsi_change_param_value(buf, tpg->param_list, 1);	\
-	if (ret < 0)							\
-		goto out;						\
+	अगर (ret < 0)							\
+		जाओ out;						\
 									\
-	kfree(buf);							\
+	kमुक्त(buf);							\
 	iscsit_put_tpg(tpg);						\
-	return count;							\
+	वापस count;							\
 out:									\
-	kfree(buf);							\
+	kमुक्त(buf);							\
 	iscsit_put_tpg(tpg);						\
-	return -EINVAL;							\
-}									\
+	वापस -EINVAL;							\
+पूर्ण									\
 CONFIGFS_ATTR(iscsi_tpg_param_, name)
 
 DEF_TPG_PARAM(AuthMethod);
@@ -976,7 +977,7 @@ DEF_TPG_PARAM(OFMarker);
 DEF_TPG_PARAM(IFMarkInt);
 DEF_TPG_PARAM(OFMarkInt);
 
-static struct configfs_attribute *lio_target_tpg_param_attrs[] = {
+अटल काष्ठा configfs_attribute *lio_target_tpg_param_attrs[] = अणु
 	&iscsi_tpg_param_attr_AuthMethod,
 	&iscsi_tpg_param_attr_HeaderDigest,
 	&iscsi_tpg_param_attr_DataDigest,
@@ -998,243 +999,243 @@ static struct configfs_attribute *lio_target_tpg_param_attrs[] = {
 	&iscsi_tpg_param_attr_OFMarker,
 	&iscsi_tpg_param_attr_IFMarkInt,
 	&iscsi_tpg_param_attr_OFMarkInt,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-/* End items for lio_target_tpg_param_cit */
+/* End items क्रम lio_target_tpg_param_cit */
 
-/* Start items for lio_target_tpg_cit */
+/* Start items क्रम lio_target_tpg_cit */
 
-static ssize_t lio_target_tpg_enable_show(struct config_item *item, char *page)
-{
-	struct se_portal_group *se_tpg = to_tpg(item);
-	struct iscsi_portal_group *tpg = container_of(se_tpg,
-			struct iscsi_portal_group, tpg_se_tpg);
-	ssize_t len;
+अटल sमाप_प्रकार lio_target_tpg_enable_show(काष्ठा config_item *item, अक्षर *page)
+अणु
+	काष्ठा se_portal_group *se_tpg = to_tpg(item);
+	काष्ठा iscsi_portal_group *tpg = container_of(se_tpg,
+			काष्ठा iscsi_portal_group, tpg_se_tpg);
+	sमाप_प्रकार len;
 
 	spin_lock(&tpg->tpg_state_lock);
-	len = sprintf(page, "%d\n",
+	len = प्र_लिखो(page, "%d\n",
 			(tpg->tpg_state == TPG_STATE_ACTIVE) ? 1 : 0);
 	spin_unlock(&tpg->tpg_state_lock);
 
-	return len;
-}
+	वापस len;
+पूर्ण
 
-static ssize_t lio_target_tpg_enable_store(struct config_item *item,
-		const char *page, size_t count)
-{
-	struct se_portal_group *se_tpg = to_tpg(item);
-	struct iscsi_portal_group *tpg = container_of(se_tpg,
-			struct iscsi_portal_group, tpg_se_tpg);
+अटल sमाप_प्रकार lio_target_tpg_enable_store(काष्ठा config_item *item,
+		स्थिर अक्षर *page, माप_प्रकार count)
+अणु
+	काष्ठा se_portal_group *se_tpg = to_tpg(item);
+	काष्ठा iscsi_portal_group *tpg = container_of(se_tpg,
+			काष्ठा iscsi_portal_group, tpg_se_tpg);
 	u32 op;
-	int ret;
+	पूर्णांक ret;
 
 	ret = kstrtou32(page, 0, &op);
-	if (ret)
-		return ret;
-	if ((op != 1) && (op != 0)) {
+	अगर (ret)
+		वापस ret;
+	अगर ((op != 1) && (op != 0)) अणु
 		pr_err("Illegal value for tpg_enable: %u\n", op);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	ret = iscsit_get_tpg(tpg);
-	if (ret < 0)
-		return -EINVAL;
+	अगर (ret < 0)
+		वापस -EINVAL;
 
-	if (op) {
+	अगर (op) अणु
 		ret = iscsit_tpg_enable_portal_group(tpg);
-		if (ret < 0)
-			goto out;
-	} else {
+		अगर (ret < 0)
+			जाओ out;
+	पूर्ण अन्यथा अणु
 		/*
-		 * iscsit_tpg_disable_portal_group() assumes force=1
+		 * iscsit_tpg_disable_portal_group() assumes क्रमce=1
 		 */
 		ret = iscsit_tpg_disable_portal_group(tpg, 1);
-		if (ret < 0)
-			goto out;
-	}
+		अगर (ret < 0)
+			जाओ out;
+	पूर्ण
 
 	iscsit_put_tpg(tpg);
-	return count;
+	वापस count;
 out:
 	iscsit_put_tpg(tpg);
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
 
-static ssize_t lio_target_tpg_dynamic_sessions_show(struct config_item *item,
-		char *page)
-{
-	return target_show_dynamic_sessions(to_tpg(item), page);
-}
+अटल sमाप_प्रकार lio_target_tpg_dynamic_sessions_show(काष्ठा config_item *item,
+		अक्षर *page)
+अणु
+	वापस target_show_dynamic_sessions(to_tpg(item), page);
+पूर्ण
 
 CONFIGFS_ATTR(lio_target_tpg_, enable);
 CONFIGFS_ATTR_RO(lio_target_tpg_, dynamic_sessions);
 
-static struct configfs_attribute *lio_target_tpg_attrs[] = {
+अटल काष्ठा configfs_attribute *lio_target_tpg_attrs[] = अणु
 	&lio_target_tpg_attr_enable,
 	&lio_target_tpg_attr_dynamic_sessions,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-/* End items for lio_target_tpg_cit */
+/* End items क्रम lio_target_tpg_cit */
 
-/* Start items for lio_target_tiqn_cit */
+/* Start items क्रम lio_target_tiqn_cit */
 
-static struct se_portal_group *lio_target_tiqn_addtpg(struct se_wwn *wwn,
-						      const char *name)
-{
-	struct iscsi_portal_group *tpg;
-	struct iscsi_tiqn *tiqn;
-	char *tpgt_str;
-	int ret;
+अटल काष्ठा se_portal_group *lio_target_tiqn_addtpg(काष्ठा se_wwn *wwn,
+						      स्थिर अक्षर *name)
+अणु
+	काष्ठा iscsi_portal_group *tpg;
+	काष्ठा iscsi_tiqn *tiqn;
+	अक्षर *tpgt_str;
+	पूर्णांक ret;
 	u16 tpgt;
 
-	tiqn = container_of(wwn, struct iscsi_tiqn, tiqn_wwn);
+	tiqn = container_of(wwn, काष्ठा iscsi_tiqn, tiqn_wwn);
 	/*
 	 * Only tpgt_# directory groups can be created below
 	 * target/iscsi/iqn.superturodiskarry/
 	 */
-	tpgt_str = strstr(name, "tpgt_");
-	if (!tpgt_str) {
+	tpgt_str = म_माला(name, "tpgt_");
+	अगर (!tpgt_str) अणु
 		pr_err("Unable to locate \"tpgt_#\" directory"
 				" group\n");
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 	tpgt_str += 5; /* Skip ahead of "tpgt_" */
 	ret = kstrtou16(tpgt_str, 0, &tpgt);
-	if (ret)
-		return NULL;
+	अगर (ret)
+		वापस शून्य;
 
 	tpg = iscsit_alloc_portal_group(tiqn, tpgt);
-	if (!tpg)
-		return NULL;
+	अगर (!tpg)
+		वापस शून्य;
 
-	ret = core_tpg_register(wwn, &tpg->tpg_se_tpg, SCSI_PROTOCOL_ISCSI);
-	if (ret < 0)
-		goto free_out;
+	ret = core_tpg_रेजिस्टर(wwn, &tpg->tpg_se_tpg, SCSI_PROTOCOL_ISCSI);
+	अगर (ret < 0)
+		जाओ मुक्त_out;
 
 	ret = iscsit_tpg_add_portal_group(tiqn, tpg);
-	if (ret != 0)
-		goto out;
+	अगर (ret != 0)
+		जाओ out;
 
 	pr_debug("LIO_Target_ConfigFS: REGISTER -> %s\n", tiqn->tiqn);
 	pr_debug("LIO_Target_ConfigFS: REGISTER -> Allocated TPG: %s\n",
 			name);
-	return &tpg->tpg_se_tpg;
+	वापस &tpg->tpg_se_tpg;
 out:
-	core_tpg_deregister(&tpg->tpg_se_tpg);
-free_out:
-	kfree(tpg);
-	return NULL;
-}
+	core_tpg_deरेजिस्टर(&tpg->tpg_se_tpg);
+मुक्त_out:
+	kमुक्त(tpg);
+	वापस शून्य;
+पूर्ण
 
-static void lio_target_tiqn_deltpg(struct se_portal_group *se_tpg)
-{
-	struct iscsi_portal_group *tpg;
-	struct iscsi_tiqn *tiqn;
+अटल व्योम lio_target_tiqn_deltpg(काष्ठा se_portal_group *se_tpg)
+अणु
+	काष्ठा iscsi_portal_group *tpg;
+	काष्ठा iscsi_tiqn *tiqn;
 
-	tpg = container_of(se_tpg, struct iscsi_portal_group, tpg_se_tpg);
+	tpg = container_of(se_tpg, काष्ठा iscsi_portal_group, tpg_se_tpg);
 	tiqn = tpg->tpg_tiqn;
 	/*
-	 * iscsit_tpg_del_portal_group() assumes force=1
+	 * iscsit_tpg_del_portal_group() assumes क्रमce=1
 	 */
 	pr_debug("LIO_Target_ConfigFS: DEREGISTER -> Releasing TPG\n");
 	iscsit_tpg_del_portal_group(tiqn, tpg, 1);
-}
+पूर्ण
 
-/* End items for lio_target_tiqn_cit */
+/* End items क्रम lio_target_tiqn_cit */
 
-/* Start LIO-Target TIQN struct contig_item lio_target_cit */
+/* Start LIO-Target TIQN काष्ठा contig_item lio_target_cit */
 
-static ssize_t lio_target_wwn_lio_version_show(struct config_item *item,
-		char *page)
-{
-	return sprintf(page, "Datera Inc. iSCSI Target "ISCSIT_VERSION"\n");
-}
+अटल sमाप_प्रकार lio_target_wwn_lio_version_show(काष्ठा config_item *item,
+		अक्षर *page)
+अणु
+	वापस प्र_लिखो(page, "Datera Inc. iSCSI Target "ISCSIT_VERSION"\n");
+पूर्ण
 
 CONFIGFS_ATTR_RO(lio_target_wwn_, lio_version);
 
-static struct configfs_attribute *lio_target_wwn_attrs[] = {
+अटल काष्ठा configfs_attribute *lio_target_wwn_attrs[] = अणु
 	&lio_target_wwn_attr_lio_version,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-static struct se_wwn *lio_target_call_coreaddtiqn(
-	struct target_fabric_configfs *tf,
-	struct config_group *group,
-	const char *name)
-{
-	struct iscsi_tiqn *tiqn;
+अटल काष्ठा se_wwn *lio_target_call_coपढ़ोdtiqn(
+	काष्ठा target_fabric_configfs *tf,
+	काष्ठा config_group *group,
+	स्थिर अक्षर *name)
+अणु
+	काष्ठा iscsi_tiqn *tiqn;
 
-	tiqn = iscsit_add_tiqn((unsigned char *)name);
-	if (IS_ERR(tiqn))
-		return ERR_CAST(tiqn);
+	tiqn = iscsit_add_tiqn((अचिन्हित अक्षर *)name);
+	अगर (IS_ERR(tiqn))
+		वापस ERR_CAST(tiqn);
 
 	pr_debug("LIO_Target_ConfigFS: REGISTER -> %s\n", tiqn->tiqn);
 	pr_debug("LIO_Target_ConfigFS: REGISTER -> Allocated Node:"
 			" %s\n", name);
-	return &tiqn->tiqn_wwn;
-}
+	वापस &tiqn->tiqn_wwn;
+पूर्ण
 
-static void lio_target_add_wwn_groups(struct se_wwn *wwn)
-{
-	struct iscsi_tiqn *tiqn = container_of(wwn, struct iscsi_tiqn, tiqn_wwn);
+अटल व्योम lio_target_add_wwn_groups(काष्ठा se_wwn *wwn)
+अणु
+	काष्ठा iscsi_tiqn *tiqn = container_of(wwn, काष्ठा iscsi_tiqn, tiqn_wwn);
 
 	config_group_init_type_name(&tiqn->tiqn_stat_grps.iscsi_instance_group,
 			"iscsi_instance", &iscsi_stat_instance_cit);
-	configfs_add_default_group(&tiqn->tiqn_stat_grps.iscsi_instance_group,
+	configfs_add_शेष_group(&tiqn->tiqn_stat_grps.iscsi_instance_group,
 			&tiqn->tiqn_wwn.fabric_stat_group);
 
 	config_group_init_type_name(&tiqn->tiqn_stat_grps.iscsi_sess_err_group,
 			"iscsi_sess_err", &iscsi_stat_sess_err_cit);
-	configfs_add_default_group(&tiqn->tiqn_stat_grps.iscsi_sess_err_group,
+	configfs_add_शेष_group(&tiqn->tiqn_stat_grps.iscsi_sess_err_group,
 			&tiqn->tiqn_wwn.fabric_stat_group);
 
 	config_group_init_type_name(&tiqn->tiqn_stat_grps.iscsi_tgt_attr_group,
 			"iscsi_tgt_attr", &iscsi_stat_tgt_attr_cit);
-	configfs_add_default_group(&tiqn->tiqn_stat_grps.iscsi_tgt_attr_group,
+	configfs_add_शेष_group(&tiqn->tiqn_stat_grps.iscsi_tgt_attr_group,
 			&tiqn->tiqn_wwn.fabric_stat_group);
 
 	config_group_init_type_name(&tiqn->tiqn_stat_grps.iscsi_login_stats_group,
 			"iscsi_login_stats", &iscsi_stat_login_cit);
-	configfs_add_default_group(&tiqn->tiqn_stat_grps.iscsi_login_stats_group,
+	configfs_add_शेष_group(&tiqn->tiqn_stat_grps.iscsi_login_stats_group,
 			&tiqn->tiqn_wwn.fabric_stat_group);
 
 	config_group_init_type_name(&tiqn->tiqn_stat_grps.iscsi_logout_stats_group,
 			"iscsi_logout_stats", &iscsi_stat_logout_cit);
-	configfs_add_default_group(&tiqn->tiqn_stat_grps.iscsi_logout_stats_group,
+	configfs_add_शेष_group(&tiqn->tiqn_stat_grps.iscsi_logout_stats_group,
 			&tiqn->tiqn_wwn.fabric_stat_group);
-}
+पूर्ण
 
-static void lio_target_call_coredeltiqn(
-	struct se_wwn *wwn)
-{
-	struct iscsi_tiqn *tiqn = container_of(wwn, struct iscsi_tiqn, tiqn_wwn);
+अटल व्योम lio_target_call_coredeltiqn(
+	काष्ठा se_wwn *wwn)
+अणु
+	काष्ठा iscsi_tiqn *tiqn = container_of(wwn, काष्ठा iscsi_tiqn, tiqn_wwn);
 
 	pr_debug("LIO_Target_ConfigFS: DEREGISTER -> %s\n",
 			tiqn->tiqn);
 	iscsit_del_tiqn(tiqn);
-}
+पूर्ण
 
-/* End LIO-Target TIQN struct contig_lio_target_cit */
+/* End LIO-Target TIQN काष्ठा contig_lio_target_cit */
 
 /* Start lio_target_discovery_auth_cit */
 
-#define DEF_DISC_AUTH_STR(name, flags)					\
+#घोषणा DEF_DISC_AUTH_STR(name, flags)					\
 	__DEF_NACL_AUTH_STR(disc, name, flags)				\
-static ssize_t iscsi_disc_##name##_show(struct config_item *item, char *page) \
-{									\
-	return __iscsi_disc_##name##_show(&iscsit_global->discovery_acl,\
+अटल sमाप_प्रकार iscsi_disc_##name##_show(काष्ठा config_item *item, अक्षर *page) \
+अणु									\
+	वापस __iscsi_disc_##name##_show(&iscsit_global->discovery_acl,\
 		page);							\
-}									\
-static ssize_t iscsi_disc_##name##_store(struct config_item *item,	\
-		const char *page, size_t count)				\
-{									\
-	return __iscsi_disc_##name##_store(&iscsit_global->discovery_acl,	\
+पूर्ण									\
+अटल sमाप_प्रकार iscsi_disc_##name##_store(काष्ठा config_item *item,	\
+		स्थिर अक्षर *page, माप_प्रकार count)				\
+अणु									\
+	वापस __iscsi_disc_##name##_store(&iscsit_global->discovery_acl,	\
 		page, count);						\
 									\
-}									\
+पूर्ण									\
 CONFIGFS_ATTR(iscsi_disc_, name)
 
 DEF_DISC_AUTH_STR(userid, NAF_USERID_SET);
@@ -1242,317 +1243,317 @@ DEF_DISC_AUTH_STR(password, NAF_PASSWORD_SET);
 DEF_DISC_AUTH_STR(userid_mutual, NAF_USERID_IN_SET);
 DEF_DISC_AUTH_STR(password_mutual, NAF_PASSWORD_IN_SET);
 
-#define DEF_DISC_AUTH_INT(name)						\
+#घोषणा DEF_DISC_AUTH_INT(name)						\
 	__DEF_NACL_AUTH_INT(disc, name)					\
-static ssize_t iscsi_disc_##name##_show(struct config_item *item, char *page) \
-{									\
-	return __iscsi_disc_##name##_show(&iscsit_global->discovery_acl, \
+अटल sमाप_प्रकार iscsi_disc_##name##_show(काष्ठा config_item *item, अक्षर *page) \
+अणु									\
+	वापस __iscsi_disc_##name##_show(&iscsit_global->discovery_acl, \
 			page);						\
-}									\
+पूर्ण									\
 CONFIGFS_ATTR_RO(iscsi_disc_, name)
 
 DEF_DISC_AUTH_INT(authenticate_target);
 
 
-static ssize_t iscsi_disc_enforce_discovery_auth_show(struct config_item *item,
-		char *page)
-{
-	struct iscsi_node_auth *discovery_auth = &iscsit_global->discovery_acl.node_auth;
+अटल sमाप_प्रकार iscsi_disc_enक्रमce_discovery_auth_show(काष्ठा config_item *item,
+		अक्षर *page)
+अणु
+	काष्ठा iscsi_node_auth *discovery_auth = &iscsit_global->discovery_acl.node_auth;
 
-	return sprintf(page, "%d\n", discovery_auth->enforce_discovery_auth);
-}
+	वापस प्र_लिखो(page, "%d\n", discovery_auth->enक्रमce_discovery_auth);
+पूर्ण
 
-static ssize_t iscsi_disc_enforce_discovery_auth_store(struct config_item *item,
-		const char *page, size_t count)
-{
-	struct iscsi_param *param;
-	struct iscsi_portal_group *discovery_tpg = iscsit_global->discovery_tpg;
+अटल sमाप_प्रकार iscsi_disc_enक्रमce_discovery_auth_store(काष्ठा config_item *item,
+		स्थिर अक्षर *page, माप_प्रकार count)
+अणु
+	काष्ठा iscsi_param *param;
+	काष्ठा iscsi_portal_group *discovery_tpg = iscsit_global->discovery_tpg;
 	u32 op;
-	int err;
+	पूर्णांक err;
 
 	err = kstrtou32(page, 0, &op);
-	if (err)
-		return -EINVAL;
-	if ((op != 1) && (op != 0)) {
+	अगर (err)
+		वापस -EINVAL;
+	अगर ((op != 1) && (op != 0)) अणु
 		pr_err("Illegal value for enforce_discovery_auth:"
 				" %u\n", op);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (!discovery_tpg) {
+	अगर (!discovery_tpg) अणु
 		pr_err("iscsit_global->discovery_tpg is NULL\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	param = iscsi_find_param_from_key(AUTHMETHOD,
 				discovery_tpg->param_list);
-	if (!param)
-		return -EINVAL;
+	अगर (!param)
+		वापस -EINVAL;
 
-	if (op) {
+	अगर (op) अणु
 		/*
 		 * Reset the AuthMethod key to CHAP.
 		 */
-		if (iscsi_update_param_value(param, CHAP) < 0)
-			return -EINVAL;
+		अगर (iscsi_update_param_value(param, CHAP) < 0)
+			वापस -EINVAL;
 
 		discovery_tpg->tpg_attrib.authentication = 1;
-		iscsit_global->discovery_acl.node_auth.enforce_discovery_auth = 1;
+		iscsit_global->discovery_acl.node_auth.enक्रमce_discovery_auth = 1;
 		pr_debug("LIO-CORE[0] Successfully enabled"
 			" authentication enforcement for iSCSI"
 			" Discovery TPG\n");
-	} else {
+	पूर्ण अन्यथा अणु
 		/*
 		 * Reset the AuthMethod key to CHAP,None
 		 */
-		if (iscsi_update_param_value(param, "CHAP,None") < 0)
-			return -EINVAL;
+		अगर (iscsi_update_param_value(param, "CHAP,None") < 0)
+			वापस -EINVAL;
 
 		discovery_tpg->tpg_attrib.authentication = 0;
-		iscsit_global->discovery_acl.node_auth.enforce_discovery_auth = 0;
+		iscsit_global->discovery_acl.node_auth.enक्रमce_discovery_auth = 0;
 		pr_debug("LIO-CORE[0] Successfully disabled"
 			" authentication enforcement for iSCSI"
 			" Discovery TPG\n");
-	}
+	पूर्ण
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-CONFIGFS_ATTR(iscsi_disc_, enforce_discovery_auth);
+CONFIGFS_ATTR(iscsi_disc_, enक्रमce_discovery_auth);
 
-static struct configfs_attribute *lio_target_discovery_auth_attrs[] = {
+अटल काष्ठा configfs_attribute *lio_target_discovery_auth_attrs[] = अणु
 	&iscsi_disc_attr_userid,
 	&iscsi_disc_attr_password,
 	&iscsi_disc_attr_authenticate_target,
 	&iscsi_disc_attr_userid_mutual,
 	&iscsi_disc_attr_password_mutual,
-	&iscsi_disc_attr_enforce_discovery_auth,
-	NULL,
-};
+	&iscsi_disc_attr_enक्रमce_discovery_auth,
+	शून्य,
+पूर्ण;
 
 /* End lio_target_discovery_auth_cit */
 
-/* Start functions for target_core_fabric_ops */
+/* Start functions क्रम target_core_fabric_ops */
 
-static int iscsi_get_cmd_state(struct se_cmd *se_cmd)
-{
-	struct iscsi_cmd *cmd = container_of(se_cmd, struct iscsi_cmd, se_cmd);
+अटल पूर्णांक iscsi_get_cmd_state(काष्ठा se_cmd *se_cmd)
+अणु
+	काष्ठा iscsi_cmd *cmd = container_of(se_cmd, काष्ठा iscsi_cmd, se_cmd);
 
-	return cmd->i_state;
-}
+	वापस cmd->i_state;
+पूर्ण
 
-static u32 lio_sess_get_index(struct se_session *se_sess)
-{
-	struct iscsi_session *sess = se_sess->fabric_sess_ptr;
+अटल u32 lio_sess_get_index(काष्ठा se_session *se_sess)
+अणु
+	काष्ठा iscsi_session *sess = se_sess->fabric_sess_ptr;
 
-	return sess->session_index;
-}
+	वापस sess->session_index;
+पूर्ण
 
-static u32 lio_sess_get_initiator_sid(
-	struct se_session *se_sess,
-	unsigned char *buf,
+अटल u32 lio_sess_get_initiator_sid(
+	काष्ठा se_session *se_sess,
+	अचिन्हित अक्षर *buf,
 	u32 size)
-{
-	struct iscsi_session *sess = se_sess->fabric_sess_ptr;
+अणु
+	काष्ठा iscsi_session *sess = se_sess->fabric_sess_ptr;
 	/*
-	 * iSCSI Initiator Session Identifier from RFC-3720.
+	 * iSCSI Initiator Session Identअगरier from RFC-3720.
 	 */
-	return snprintf(buf, size, "%6phN", sess->isid);
-}
+	वापस snम_लिखो(buf, size, "%6phN", sess->isid);
+पूर्ण
 
-static int lio_queue_data_in(struct se_cmd *se_cmd)
-{
-	struct iscsi_cmd *cmd = container_of(se_cmd, struct iscsi_cmd, se_cmd);
-	struct iscsi_conn *conn = cmd->conn;
+अटल पूर्णांक lio_queue_data_in(काष्ठा se_cmd *se_cmd)
+अणु
+	काष्ठा iscsi_cmd *cmd = container_of(se_cmd, काष्ठा iscsi_cmd, se_cmd);
+	काष्ठा iscsi_conn *conn = cmd->conn;
 
 	cmd->i_state = ISTATE_SEND_DATAIN;
-	return conn->conn_transport->iscsit_queue_data_in(conn, cmd);
-}
+	वापस conn->conn_transport->iscsit_queue_data_in(conn, cmd);
+पूर्ण
 
-static int lio_write_pending(struct se_cmd *se_cmd)
-{
-	struct iscsi_cmd *cmd = container_of(se_cmd, struct iscsi_cmd, se_cmd);
-	struct iscsi_conn *conn = cmd->conn;
+अटल पूर्णांक lio_ग_लिखो_pending(काष्ठा se_cmd *se_cmd)
+अणु
+	काष्ठा iscsi_cmd *cmd = container_of(se_cmd, काष्ठा iscsi_cmd, se_cmd);
+	काष्ठा iscsi_conn *conn = cmd->conn;
 
-	if (!cmd->immediate_data && !cmd->unsolicited_data)
-		return conn->conn_transport->iscsit_get_dataout(conn, cmd, false);
+	अगर (!cmd->immediate_data && !cmd->unsolicited_data)
+		वापस conn->conn_transport->iscsit_get_dataout(conn, cmd, false);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int lio_queue_status(struct se_cmd *se_cmd)
-{
-	struct iscsi_cmd *cmd = container_of(se_cmd, struct iscsi_cmd, se_cmd);
-	struct iscsi_conn *conn = cmd->conn;
+अटल पूर्णांक lio_queue_status(काष्ठा se_cmd *se_cmd)
+अणु
+	काष्ठा iscsi_cmd *cmd = container_of(se_cmd, काष्ठा iscsi_cmd, se_cmd);
+	काष्ठा iscsi_conn *conn = cmd->conn;
 
 	cmd->i_state = ISTATE_SEND_STATUS;
 
-	if (cmd->se_cmd.scsi_status || cmd->sense_reason) {
-		return iscsit_add_cmd_to_response_queue(cmd, conn, cmd->i_state);
-	}
-	return conn->conn_transport->iscsit_queue_status(conn, cmd);
-}
+	अगर (cmd->se_cmd.scsi_status || cmd->sense_reason) अणु
+		वापस iscsit_add_cmd_to_response_queue(cmd, conn, cmd->i_state);
+	पूर्ण
+	वापस conn->conn_transport->iscsit_queue_status(conn, cmd);
+पूर्ण
 
-static void lio_queue_tm_rsp(struct se_cmd *se_cmd)
-{
-	struct iscsi_cmd *cmd = container_of(se_cmd, struct iscsi_cmd, se_cmd);
+अटल व्योम lio_queue_पंचांग_rsp(काष्ठा se_cmd *se_cmd)
+अणु
+	काष्ठा iscsi_cmd *cmd = container_of(se_cmd, काष्ठा iscsi_cmd, se_cmd);
 
 	cmd->i_state = ISTATE_SEND_TASKMGTRSP;
 	iscsit_add_cmd_to_response_queue(cmd, cmd->conn, cmd->i_state);
-}
+पूर्ण
 
-static void lio_aborted_task(struct se_cmd *se_cmd)
-{
-	struct iscsi_cmd *cmd = container_of(se_cmd, struct iscsi_cmd, se_cmd);
+अटल व्योम lio_पातed_task(काष्ठा se_cmd *se_cmd)
+अणु
+	काष्ठा iscsi_cmd *cmd = container_of(se_cmd, काष्ठा iscsi_cmd, se_cmd);
 
-	cmd->conn->conn_transport->iscsit_aborted_task(cmd->conn, cmd);
-}
+	cmd->conn->conn_transport->iscsit_पातed_task(cmd->conn, cmd);
+पूर्ण
 
-static inline struct iscsi_portal_group *iscsi_tpg(struct se_portal_group *se_tpg)
-{
-	return container_of(se_tpg, struct iscsi_portal_group, tpg_se_tpg);
-}
+अटल अंतरभूत काष्ठा iscsi_portal_group *iscsi_tpg(काष्ठा se_portal_group *se_tpg)
+अणु
+	वापस container_of(se_tpg, काष्ठा iscsi_portal_group, tpg_se_tpg);
+पूर्ण
 
-static char *lio_tpg_get_endpoint_wwn(struct se_portal_group *se_tpg)
-{
-	return iscsi_tpg(se_tpg)->tpg_tiqn->tiqn;
-}
+अटल अक्षर *lio_tpg_get_endpoपूर्णांक_wwn(काष्ठा se_portal_group *se_tpg)
+अणु
+	वापस iscsi_tpg(se_tpg)->tpg_tiqn->tiqn;
+पूर्ण
 
-static u16 lio_tpg_get_tag(struct se_portal_group *se_tpg)
-{
-	return iscsi_tpg(se_tpg)->tpgt;
-}
+अटल u16 lio_tpg_get_tag(काष्ठा se_portal_group *se_tpg)
+अणु
+	वापस iscsi_tpg(se_tpg)->tpgt;
+पूर्ण
 
-static u32 lio_tpg_get_default_depth(struct se_portal_group *se_tpg)
-{
-	return iscsi_tpg(se_tpg)->tpg_attrib.default_cmdsn_depth;
-}
+अटल u32 lio_tpg_get_शेष_depth(काष्ठा se_portal_group *se_tpg)
+अणु
+	वापस iscsi_tpg(se_tpg)->tpg_attrib.शेष_cmdsn_depth;
+पूर्ण
 
-static int lio_tpg_check_demo_mode(struct se_portal_group *se_tpg)
-{
-	return iscsi_tpg(se_tpg)->tpg_attrib.generate_node_acls;
-}
+अटल पूर्णांक lio_tpg_check_demo_mode(काष्ठा se_portal_group *se_tpg)
+अणु
+	वापस iscsi_tpg(se_tpg)->tpg_attrib.generate_node_acls;
+पूर्ण
 
-static int lio_tpg_check_demo_mode_cache(struct se_portal_group *se_tpg)
-{
-	return iscsi_tpg(se_tpg)->tpg_attrib.cache_dynamic_acls;
-}
+अटल पूर्णांक lio_tpg_check_demo_mode_cache(काष्ठा se_portal_group *se_tpg)
+अणु
+	वापस iscsi_tpg(se_tpg)->tpg_attrib.cache_dynamic_acls;
+पूर्ण
 
-static int lio_tpg_check_demo_mode_write_protect(
-	struct se_portal_group *se_tpg)
-{
-	return iscsi_tpg(se_tpg)->tpg_attrib.demo_mode_write_protect;
-}
+अटल पूर्णांक lio_tpg_check_demo_mode_ग_लिखो_protect(
+	काष्ठा se_portal_group *se_tpg)
+अणु
+	वापस iscsi_tpg(se_tpg)->tpg_attrib.demo_mode_ग_लिखो_protect;
+पूर्ण
 
-static int lio_tpg_check_prod_mode_write_protect(
-	struct se_portal_group *se_tpg)
-{
-	return iscsi_tpg(se_tpg)->tpg_attrib.prod_mode_write_protect;
-}
+अटल पूर्णांक lio_tpg_check_prod_mode_ग_लिखो_protect(
+	काष्ठा se_portal_group *se_tpg)
+अणु
+	वापस iscsi_tpg(se_tpg)->tpg_attrib.prod_mode_ग_लिखो_protect;
+पूर्ण
 
-static int lio_tpg_check_prot_fabric_only(
-	struct se_portal_group *se_tpg)
-{
+अटल पूर्णांक lio_tpg_check_prot_fabric_only(
+	काष्ठा se_portal_group *se_tpg)
+अणु
 	/*
-	 * Only report fabric_prot_type if t10_pi has also been enabled
-	 * for incoming ib_isert sessions.
+	 * Only report fabric_prot_type अगर t10_pi has also been enabled
+	 * क्रम incoming ib_isert sessions.
 	 */
-	if (!iscsi_tpg(se_tpg)->tpg_attrib.t10_pi)
-		return 0;
-	return iscsi_tpg(se_tpg)->tpg_attrib.fabric_prot_type;
-}
+	अगर (!iscsi_tpg(se_tpg)->tpg_attrib.t10_pi)
+		वापस 0;
+	वापस iscsi_tpg(se_tpg)->tpg_attrib.fabric_prot_type;
+पूर्ण
 
 /*
  * This function calls iscsit_inc_session_usage_count() on the
- * struct iscsi_session in question.
+ * काष्ठा iscsi_session in question.
  */
-static void lio_tpg_close_session(struct se_session *se_sess)
-{
-	struct iscsi_session *sess = se_sess->fabric_sess_ptr;
-	struct se_portal_group *se_tpg = &sess->tpg->tpg_se_tpg;
+अटल व्योम lio_tpg_बंद_session(काष्ठा se_session *se_sess)
+अणु
+	काष्ठा iscsi_session *sess = se_sess->fabric_sess_ptr;
+	काष्ठा se_portal_group *se_tpg = &sess->tpg->tpg_se_tpg;
 
 	spin_lock_bh(&se_tpg->session_lock);
 	spin_lock(&sess->conn_lock);
-	if (atomic_read(&sess->session_fall_back_to_erl0) ||
-	    atomic_read(&sess->session_logout) ||
-	    atomic_read(&sess->session_close) ||
-	    (sess->time2retain_timer_flags & ISCSI_TF_EXPIRED)) {
+	अगर (atomic_पढ़ो(&sess->session_fall_back_to_erl0) ||
+	    atomic_पढ़ो(&sess->session_logout) ||
+	    atomic_पढ़ो(&sess->session_बंद) ||
+	    (sess->समय2retain_समयr_flags & ISCSI_TF_EXPIRED)) अणु
 		spin_unlock(&sess->conn_lock);
 		spin_unlock_bh(&se_tpg->session_lock);
-		return;
-	}
+		वापस;
+	पूर्ण
 	iscsit_inc_session_usage_count(sess);
 	atomic_set(&sess->session_reinstatement, 1);
 	atomic_set(&sess->session_fall_back_to_erl0, 1);
-	atomic_set(&sess->session_close, 1);
+	atomic_set(&sess->session_बंद, 1);
 	spin_unlock(&sess->conn_lock);
 
-	iscsit_stop_time2retain_timer(sess);
+	iscsit_stop_समय2retain_समयr(sess);
 	spin_unlock_bh(&se_tpg->session_lock);
 
 	iscsit_stop_session(sess, 1, 1);
 	iscsit_dec_session_usage_count(sess);
-}
+पूर्ण
 
-static u32 lio_tpg_get_inst_index(struct se_portal_group *se_tpg)
-{
-	return iscsi_tpg(se_tpg)->tpg_tiqn->tiqn_index;
-}
+अटल u32 lio_tpg_get_inst_index(काष्ठा se_portal_group *se_tpg)
+अणु
+	वापस iscsi_tpg(se_tpg)->tpg_tiqn->tiqn_index;
+पूर्ण
 
-static void lio_set_default_node_attributes(struct se_node_acl *se_acl)
-{
-	struct iscsi_node_acl *acl = container_of(se_acl, struct iscsi_node_acl,
+अटल व्योम lio_set_शेष_node_attributes(काष्ठा se_node_acl *se_acl)
+अणु
+	काष्ठा iscsi_node_acl *acl = container_of(se_acl, काष्ठा iscsi_node_acl,
 				se_node_acl);
-	struct se_portal_group *se_tpg = se_acl->se_tpg;
-	struct iscsi_portal_group *tpg = container_of(se_tpg,
-				struct iscsi_portal_group, tpg_se_tpg);
+	काष्ठा se_portal_group *se_tpg = se_acl->se_tpg;
+	काष्ठा iscsi_portal_group *tpg = container_of(se_tpg,
+				काष्ठा iscsi_portal_group, tpg_se_tpg);
 
 	acl->node_attrib.nacl = acl;
-	iscsit_set_default_node_attribues(acl, tpg);
-}
+	iscsit_set_शेष_node_attribues(acl, tpg);
+पूर्ण
 
-static int lio_check_stop_free(struct se_cmd *se_cmd)
-{
-	return target_put_sess_cmd(se_cmd);
-}
+अटल पूर्णांक lio_check_stop_मुक्त(काष्ठा se_cmd *se_cmd)
+अणु
+	वापस target_put_sess_cmd(se_cmd);
+पूर्ण
 
-static void lio_release_cmd(struct se_cmd *se_cmd)
-{
-	struct iscsi_cmd *cmd = container_of(se_cmd, struct iscsi_cmd, se_cmd);
+अटल व्योम lio_release_cmd(काष्ठा se_cmd *se_cmd)
+अणु
+	काष्ठा iscsi_cmd *cmd = container_of(se_cmd, काष्ठा iscsi_cmd, se_cmd);
 
 	pr_debug("Entering lio_release_cmd for se_cmd: %p\n", se_cmd);
 	iscsit_release_cmd(cmd);
-}
+पूर्ण
 
-const struct target_core_fabric_ops iscsi_ops = {
+स्थिर काष्ठा target_core_fabric_ops iscsi_ops = अणु
 	.module				= THIS_MODULE,
 	.fabric_alias			= "iscsi",
 	.fabric_name			= "iSCSI",
-	.node_acl_size			= sizeof(struct iscsi_node_acl),
-	.tpg_get_wwn			= lio_tpg_get_endpoint_wwn,
+	.node_acl_size			= माप(काष्ठा iscsi_node_acl),
+	.tpg_get_wwn			= lio_tpg_get_endpoपूर्णांक_wwn,
 	.tpg_get_tag			= lio_tpg_get_tag,
-	.tpg_get_default_depth		= lio_tpg_get_default_depth,
+	.tpg_get_शेष_depth		= lio_tpg_get_शेष_depth,
 	.tpg_check_demo_mode		= lio_tpg_check_demo_mode,
 	.tpg_check_demo_mode_cache	= lio_tpg_check_demo_mode_cache,
-	.tpg_check_demo_mode_write_protect =
-			lio_tpg_check_demo_mode_write_protect,
-	.tpg_check_prod_mode_write_protect =
-			lio_tpg_check_prod_mode_write_protect,
+	.tpg_check_demo_mode_ग_लिखो_protect =
+			lio_tpg_check_demo_mode_ग_लिखो_protect,
+	.tpg_check_prod_mode_ग_लिखो_protect =
+			lio_tpg_check_prod_mode_ग_लिखो_protect,
 	.tpg_check_prot_fabric_only	= &lio_tpg_check_prot_fabric_only,
 	.tpg_get_inst_index		= lio_tpg_get_inst_index,
-	.check_stop_free		= lio_check_stop_free,
+	.check_stop_मुक्त		= lio_check_stop_मुक्त,
 	.release_cmd			= lio_release_cmd,
-	.close_session			= lio_tpg_close_session,
+	.बंद_session			= lio_tpg_बंद_session,
 	.sess_get_index			= lio_sess_get_index,
 	.sess_get_initiator_sid		= lio_sess_get_initiator_sid,
-	.write_pending			= lio_write_pending,
-	.set_default_node_attributes	= lio_set_default_node_attributes,
+	.ग_लिखो_pending			= lio_ग_लिखो_pending,
+	.set_शेष_node_attributes	= lio_set_शेष_node_attributes,
 	.get_cmd_state			= iscsi_get_cmd_state,
 	.queue_data_in			= lio_queue_data_in,
 	.queue_status			= lio_queue_status,
-	.queue_tm_rsp			= lio_queue_tm_rsp,
-	.aborted_task			= lio_aborted_task,
-	.fabric_make_wwn		= lio_target_call_coreaddtiqn,
+	.queue_पंचांग_rsp			= lio_queue_पंचांग_rsp,
+	.पातed_task			= lio_पातed_task,
+	.fabric_make_wwn		= lio_target_call_coपढ़ोdtiqn,
 	.fabric_drop_wwn		= lio_target_call_coredeltiqn,
 	.add_wwn_groups			= lio_target_add_wwn_groups,
 	.fabric_make_tpg		= lio_target_tiqn_addtpg,
@@ -1573,5 +1574,5 @@ const struct target_core_fabric_ops iscsi_ops = {
 	.tfc_tpg_nacl_auth_attrs	= lio_target_nacl_auth_attrs,
 	.tfc_tpg_nacl_param_attrs	= lio_target_nacl_param_attrs,
 
-	.write_pending_must_be_called	= true,
-};
+	.ग_लिखो_pending_must_be_called	= true,
+पूर्ण;

@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2012-15 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -23,28 +24,28 @@
  *
  */
 
-#ifndef __DAL_HW_TRANSLATE_H__
-#define __DAL_HW_TRANSLATE_H__
+#अगर_अघोषित __DAL_HW_TRANSLATE_H__
+#घोषणा __DAL_HW_TRANSLATE_H__
 
-struct hw_translate_funcs {
+काष्ठा hw_translate_funcs अणु
 	bool (*offset_to_id)(
-		uint32_t offset,
-		uint32_t mask,
-		enum gpio_id *id,
-		uint32_t *en);
+		uपूर्णांक32_t offset,
+		uपूर्णांक32_t mask,
+		क्रमागत gpio_id *id,
+		uपूर्णांक32_t *en);
 	bool (*id_to_offset)(
-		enum gpio_id id,
-		uint32_t en,
-		struct gpio_pin_info *info);
-};
+		क्रमागत gpio_id id,
+		uपूर्णांक32_t en,
+		काष्ठा gpio_pin_info *info);
+पूर्ण;
 
-struct hw_translate {
-	const struct hw_translate_funcs *funcs;
-};
+काष्ठा hw_translate अणु
+	स्थिर काष्ठा hw_translate_funcs *funcs;
+पूर्ण;
 
 bool dal_hw_translate_init(
-	struct hw_translate *translate,
-	enum dce_version dce_version,
-	enum dce_environment dce_environment);
+	काष्ठा hw_translate *translate,
+	क्रमागत dce_version dce_version,
+	क्रमागत dce_environment dce_environment);
 
-#endif
+#पूर्ण_अगर

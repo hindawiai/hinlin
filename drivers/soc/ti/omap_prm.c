@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * OMAP2+ PRM driver
  *
@@ -6,695 +7,695 @@
  *	Tero Kristo <t-kristo@ti.com>
  */
 
-#include <linux/kernel.h>
-#include <linux/clk.h>
-#include <linux/device.h>
-#include <linux/io.h>
-#include <linux/iopoll.h>
-#include <linux/module.h>
-#include <linux/of.h>
-#include <linux/of_device.h>
-#include <linux/platform_device.h>
-#include <linux/pm_clock.h>
-#include <linux/pm_domain.h>
-#include <linux/reset-controller.h>
-#include <linux/delay.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/device.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/iopoll.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/pm_घड़ी.h>
+#समावेश <linux/pm_करोमुख्य.h>
+#समावेश <linux/reset-controller.h>
+#समावेश <linux/delay.h>
 
-#include <linux/platform_data/ti-prm.h>
+#समावेश <linux/platक्रमm_data/ti-prm.h>
 
-enum omap_prm_domain_mode {
+क्रमागत omap_prm_करोमुख्य_mode अणु
 	OMAP_PRMD_OFF,
 	OMAP_PRMD_RETENTION,
 	OMAP_PRMD_ON_INACTIVE,
 	OMAP_PRMD_ON_ACTIVE,
-};
+पूर्ण;
 
-struct omap_prm_domain_map {
-	unsigned int usable_modes;	/* Mask of hardware supported modes */
-	unsigned long statechange:1;	/* Optional low-power state change */
-	unsigned long logicretstate:1;	/* Optional logic off mode */
-};
+काष्ठा omap_prm_करोमुख्य_map अणु
+	अचिन्हित पूर्णांक usable_modes;	/* Mask of hardware supported modes */
+	अचिन्हित दीर्घ statechange:1;	/* Optional low-घातer state change */
+	अचिन्हित दीर्घ logicretstate:1;	/* Optional logic off mode */
+पूर्ण;
 
-struct omap_prm_domain {
-	struct device *dev;
-	struct omap_prm *prm;
-	struct generic_pm_domain pd;
+काष्ठा omap_prm_करोमुख्य अणु
+	काष्ठा device *dev;
+	काष्ठा omap_prm *prm;
+	काष्ठा generic_pm_करोमुख्य pd;
 	u16 pwrstctrl;
 	u16 pwrstst;
-	const struct omap_prm_domain_map *cap;
+	स्थिर काष्ठा omap_prm_करोमुख्य_map *cap;
 	u32 pwrstctrl_saved;
-	unsigned int uses_pm_clk:1;
-};
+	अचिन्हित पूर्णांक uses_pm_clk:1;
+पूर्ण;
 
-struct omap_rst_map {
+काष्ठा omap_rst_map अणु
 	s8 rst;
 	s8 st;
-};
+पूर्ण;
 
-struct omap_prm_data {
+काष्ठा omap_prm_data अणु
 	u32 base;
-	const char *name;
-	const char *clkdm_name;
+	स्थिर अक्षर *name;
+	स्थिर अक्षर *clkdm_name;
 	u16 pwrstctrl;
 	u16 pwrstst;
-	const struct omap_prm_domain_map *dmap;
+	स्थिर काष्ठा omap_prm_करोमुख्य_map *dmap;
 	u16 rstctrl;
 	u16 rstst;
-	const struct omap_rst_map *rstmap;
+	स्थिर काष्ठा omap_rst_map *rsपंचांगap;
 	u8 flags;
-};
+पूर्ण;
 
-struct omap_prm {
-	const struct omap_prm_data *data;
-	void __iomem *base;
-	struct omap_prm_domain *prmd;
-};
+काष्ठा omap_prm अणु
+	स्थिर काष्ठा omap_prm_data *data;
+	व्योम __iomem *base;
+	काष्ठा omap_prm_करोमुख्य *prmd;
+पूर्ण;
 
-struct omap_reset_data {
-	struct reset_controller_dev rcdev;
-	struct omap_prm *prm;
+काष्ठा omap_reset_data अणु
+	काष्ठा reset_controller_dev rcdev;
+	काष्ठा omap_prm *prm;
 	u32 mask;
 	spinlock_t lock;
-	struct clockdomain *clkdm;
-	struct device *dev;
-};
+	काष्ठा घड़ीकरोमुख्य *clkdm;
+	काष्ठा device *dev;
+पूर्ण;
 
-#define genpd_to_prm_domain(gpd) container_of(gpd, struct omap_prm_domain, pd)
-#define to_omap_reset_data(p) container_of((p), struct omap_reset_data, rcdev)
+#घोषणा genpd_to_prm_करोमुख्य(gpd) container_of(gpd, काष्ठा omap_prm_करोमुख्य, pd)
+#घोषणा to_omap_reset_data(p) container_of((p), काष्ठा omap_reset_data, rcdev)
 
-#define OMAP_MAX_RESETS		8
-#define OMAP_RESET_MAX_WAIT	10000
+#घोषणा OMAP_MAX_RESETS		8
+#घोषणा OMAP_RESET_MAX_WAIT	10000
 
-#define OMAP_PRM_HAS_RSTCTRL	BIT(0)
-#define OMAP_PRM_HAS_RSTST	BIT(1)
-#define OMAP_PRM_HAS_NO_CLKDM	BIT(2)
-#define OMAP_PRM_RET_WHEN_IDLE	BIT(3)
+#घोषणा OMAP_PRM_HAS_RSTCTRL	BIT(0)
+#घोषणा OMAP_PRM_HAS_RSTST	BIT(1)
+#घोषणा OMAP_PRM_HAS_NO_CLKDM	BIT(2)
+#घोषणा OMAP_PRM_RET_WHEN_IDLE	BIT(3)
 
-#define OMAP_PRM_HAS_RESETS	(OMAP_PRM_HAS_RSTCTRL | OMAP_PRM_HAS_RSTST)
+#घोषणा OMAP_PRM_HAS_RESETS	(OMAP_PRM_HAS_RSTCTRL | OMAP_PRM_HAS_RSTST)
 
-#define PRM_STATE_MAX_WAIT	10000
-#define PRM_LOGICRETSTATE	BIT(2)
-#define PRM_LOWPOWERSTATECHANGE	BIT(4)
-#define PRM_POWERSTATE_MASK	OMAP_PRMD_ON_ACTIVE
+#घोषणा PRM_STATE_MAX_WAIT	10000
+#घोषणा PRM_LOGICRETSTATE	BIT(2)
+#घोषणा PRM_LOWPOWERSTATECHANGE	BIT(4)
+#घोषणा PRM_POWERSTATE_MASK	OMAP_PRMD_ON_ACTIVE
 
-#define PRM_ST_INTRANSITION	BIT(20)
+#घोषणा PRM_ST_INTRANSITION	BIT(20)
 
-static const struct omap_prm_domain_map omap_prm_all = {
+अटल स्थिर काष्ठा omap_prm_करोमुख्य_map omap_prm_all = अणु
 	.usable_modes = BIT(OMAP_PRMD_ON_ACTIVE) | BIT(OMAP_PRMD_ON_INACTIVE) |
 			BIT(OMAP_PRMD_RETENTION) | BIT(OMAP_PRMD_OFF),
 	.statechange = 1,
 	.logicretstate = 1,
-};
+पूर्ण;
 
-static const struct omap_prm_domain_map omap_prm_noinact = {
+अटल स्थिर काष्ठा omap_prm_करोमुख्य_map omap_prm_noinact = अणु
 	.usable_modes = BIT(OMAP_PRMD_ON_ACTIVE) | BIT(OMAP_PRMD_RETENTION) |
 			BIT(OMAP_PRMD_OFF),
 	.statechange = 1,
 	.logicretstate = 1,
-};
+पूर्ण;
 
-static const struct omap_prm_domain_map omap_prm_nooff = {
+अटल स्थिर काष्ठा omap_prm_करोमुख्य_map omap_prm_nooff = अणु
 	.usable_modes = BIT(OMAP_PRMD_ON_ACTIVE) | BIT(OMAP_PRMD_ON_INACTIVE) |
 			BIT(OMAP_PRMD_RETENTION),
 	.statechange = 1,
 	.logicretstate = 1,
-};
+पूर्ण;
 
-static const struct omap_prm_domain_map omap_prm_onoff_noauto = {
+अटल स्थिर काष्ठा omap_prm_करोमुख्य_map omap_prm_onoff_noस्वतः = अणु
 	.usable_modes = BIT(OMAP_PRMD_ON_ACTIVE) | BIT(OMAP_PRMD_OFF),
 	.statechange = 1,
-};
+पूर्ण;
 
-static const struct omap_prm_domain_map omap_prm_alwon = {
+अटल स्थिर काष्ठा omap_prm_करोमुख्य_map omap_prm_alwon = अणु
 	.usable_modes = BIT(OMAP_PRMD_ON_ACTIVE),
-};
+पूर्ण;
 
-static const struct omap_prm_domain_map omap_prm_reton = {
+अटल स्थिर काष्ठा omap_prm_करोमुख्य_map omap_prm_reton = अणु
 	.usable_modes = BIT(OMAP_PRMD_ON_ACTIVE) | BIT(OMAP_PRMD_RETENTION),
 	.statechange = 1,
 	.logicretstate = 1,
-};
+पूर्ण;
 
-static const struct omap_rst_map rst_map_0[] = {
-	{ .rst = 0, .st = 0 },
-	{ .rst = -1 },
-};
+अटल स्थिर काष्ठा omap_rst_map rst_map_0[] = अणु
+	अणु .rst = 0, .st = 0 पूर्ण,
+	अणु .rst = -1 पूर्ण,
+पूर्ण;
 
-static const struct omap_rst_map rst_map_01[] = {
-	{ .rst = 0, .st = 0 },
-	{ .rst = 1, .st = 1 },
-	{ .rst = -1 },
-};
+अटल स्थिर काष्ठा omap_rst_map rst_map_01[] = अणु
+	अणु .rst = 0, .st = 0 पूर्ण,
+	अणु .rst = 1, .st = 1 पूर्ण,
+	अणु .rst = -1 पूर्ण,
+पूर्ण;
 
-static const struct omap_rst_map rst_map_012[] = {
-	{ .rst = 0, .st = 0 },
-	{ .rst = 1, .st = 1 },
-	{ .rst = 2, .st = 2 },
-	{ .rst = -1 },
-};
+अटल स्थिर काष्ठा omap_rst_map rst_map_012[] = अणु
+	अणु .rst = 0, .st = 0 पूर्ण,
+	अणु .rst = 1, .st = 1 पूर्ण,
+	अणु .rst = 2, .st = 2 पूर्ण,
+	अणु .rst = -1 पूर्ण,
+पूर्ण;
 
-static const struct omap_prm_data omap4_prm_data[] = {
-	{
+अटल स्थिर काष्ठा omap_prm_data omap4_prm_data[] = अणु
+	अणु
 		.name = "mpu", .base = 0x4a306300,
 		.pwrstctrl = 0x0, .pwrstst = 0x4, .dmap = &omap_prm_reton,
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "tesla", .base = 0x4a306400,
 		.pwrstctrl = 0x0, .pwrstst = 0x4, .dmap = &omap_prm_noinact,
-		.rstctrl = 0x10, .rstst = 0x14, .rstmap = rst_map_01
-	},
-	{
+		.rstctrl = 0x10, .rstst = 0x14, .rsपंचांगap = rst_map_01
+	पूर्ण,
+	अणु
 		.name = "abe", .base = 0x4a306500,
 		.pwrstctrl = 0, .pwrstst = 0x4, .dmap = &omap_prm_all,
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "always_on_core", .base = 0x4a306600,
 		.pwrstctrl = 0x0, .pwrstst = 0x4, .dmap = &omap_prm_alwon,
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "core", .base = 0x4a306700,
 		.pwrstctrl = 0x0, .pwrstst = 0x4, .dmap = &omap_prm_reton,
 		.rstctrl = 0x210, .rstst = 0x214, .clkdm_name = "ducati",
-		.rstmap = rst_map_012,
+		.rsपंचांगap = rst_map_012,
 		.flags = OMAP_PRM_RET_WHEN_IDLE,
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "ivahd", .base = 0x4a306f00,
 		.pwrstctrl = 0x0, .pwrstst = 0x4, .dmap = &omap_prm_noinact,
-		.rstctrl = 0x10, .rstst = 0x14, .rstmap = rst_map_012
-	},
-	{
+		.rstctrl = 0x10, .rstst = 0x14, .rsपंचांगap = rst_map_012
+	पूर्ण,
+	अणु
 		.name = "cam", .base = 0x4a307000,
-		.pwrstctrl = 0x0, .pwrstst = 0x4, .dmap = &omap_prm_onoff_noauto,
-	},
-	{
+		.pwrstctrl = 0x0, .pwrstst = 0x4, .dmap = &omap_prm_onoff_noस्वतः,
+	पूर्ण,
+	अणु
 		.name = "dss", .base = 0x4a307100,
 		.pwrstctrl = 0x0, .pwrstst = 0x4, .dmap = &omap_prm_noinact
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "gfx", .base = 0x4a307200,
-		.pwrstctrl = 0x0, .pwrstst = 0x4, .dmap = &omap_prm_onoff_noauto
-	},
-	{
+		.pwrstctrl = 0x0, .pwrstst = 0x4, .dmap = &omap_prm_onoff_noस्वतः
+	पूर्ण,
+	अणु
 		.name = "l3init", .base = 0x4a307300,
 		.pwrstctrl = 0x0, .pwrstst = 0x4, .dmap = &omap_prm_reton
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "l4per", .base = 0x4a307400,
 		.pwrstctrl = 0x0, .pwrstst = 0x4, .dmap = &omap_prm_reton,
 		.flags = OMAP_PRM_RET_WHEN_IDLE,
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "cefuse", .base = 0x4a307600,
-		.pwrstctrl = 0x0, .pwrstst = 0x4, .dmap = &omap_prm_onoff_noauto
-	},
-	{
+		.pwrstctrl = 0x0, .pwrstst = 0x4, .dmap = &omap_prm_onoff_noस्वतः
+	पूर्ण,
+	अणु
 		.name = "wkup", .base = 0x4a307700,
 		.pwrstctrl = 0x0, .pwrstst = 0x4, .dmap = &omap_prm_alwon
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "emu", .base = 0x4a307900,
-		.pwrstctrl = 0x0, .pwrstst = 0x4, .dmap = &omap_prm_onoff_noauto
-	},
-	{
+		.pwrstctrl = 0x0, .pwrstst = 0x4, .dmap = &omap_prm_onoff_noस्वतः
+	पूर्ण,
+	अणु
 		.name = "device", .base = 0x4a307b00,
-		.rstctrl = 0x0, .rstst = 0x4, .rstmap = rst_map_01,
+		.rstctrl = 0x0, .rstst = 0x4, .rsपंचांगap = rst_map_01,
 		.flags = OMAP_PRM_HAS_RSTCTRL | OMAP_PRM_HAS_NO_CLKDM
-	},
-	{ },
-};
+	पूर्ण,
+	अणु पूर्ण,
+पूर्ण;
 
-static const struct omap_prm_data omap5_prm_data[] = {
-	{
+अटल स्थिर काष्ठा omap_prm_data omap5_prm_data[] = अणु
+	अणु
 		.name = "mpu", .base = 0x4ae06300,
 		.pwrstctrl = 0x0, .pwrstst = 0x4, .dmap = &omap_prm_reton,
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "dsp", .base = 0x4ae06400,
 		.pwrstctrl = 0x0, .pwrstst = 0x4, .dmap = &omap_prm_noinact,
-		.rstctrl = 0x10, .rstst = 0x14, .rstmap = rst_map_01
-	},
-	{
+		.rstctrl = 0x10, .rstst = 0x14, .rsपंचांगap = rst_map_01
+	पूर्ण,
+	अणु
 		.name = "abe", .base = 0x4ae06500,
 		.pwrstctrl = 0, .pwrstst = 0x4, .dmap = &omap_prm_nooff,
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "coreaon", .base = 0x4ae06600,
 		.pwrstctrl = 0x0, .pwrstst = 0x4, .dmap = &omap_prm_alwon
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "core", .base = 0x4ae06700,
 		.pwrstctrl = 0x0, .pwrstst = 0x4, .dmap = &omap_prm_reton,
 		.rstctrl = 0x210, .rstst = 0x214, .clkdm_name = "ipu",
-		.rstmap = rst_map_012
-	},
-	{
+		.rsपंचांगap = rst_map_012
+	पूर्ण,
+	अणु
 		.name = "iva", .base = 0x4ae07200,
 		.pwrstctrl = 0x0, .pwrstst = 0x4, .dmap = &omap_prm_noinact,
-		.rstctrl = 0x10, .rstst = 0x14, .rstmap = rst_map_012
-	},
-	{
+		.rstctrl = 0x10, .rstst = 0x14, .rsपंचांगap = rst_map_012
+	पूर्ण,
+	अणु
 		.name = "cam", .base = 0x4ae07300,
-		.pwrstctrl = 0x0, .pwrstst = 0x4, .dmap = &omap_prm_onoff_noauto
-	},
-	{
+		.pwrstctrl = 0x0, .pwrstst = 0x4, .dmap = &omap_prm_onoff_noस्वतः
+	पूर्ण,
+	अणु
 		.name = "dss", .base = 0x4ae07400,
 		.pwrstctrl = 0x0, .pwrstst = 0x4, .dmap = &omap_prm_noinact
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "gpu", .base = 0x4ae07500,
-		.pwrstctrl = 0x0, .pwrstst = 0x4, .dmap = &omap_prm_onoff_noauto
-	},
-	{
+		.pwrstctrl = 0x0, .pwrstst = 0x4, .dmap = &omap_prm_onoff_noस्वतः
+	पूर्ण,
+	अणु
 		.name = "l3init", .base = 0x4ae07600,
 		.pwrstctrl = 0x0, .pwrstst = 0x4, .dmap = &omap_prm_reton
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "custefuse", .base = 0x4ae07700,
-		.pwrstctrl = 0x0, .pwrstst = 0x4, .dmap = &omap_prm_onoff_noauto
-	},
-	{
+		.pwrstctrl = 0x0, .pwrstst = 0x4, .dmap = &omap_prm_onoff_noस्वतः
+	पूर्ण,
+	अणु
 		.name = "wkupaon", .base = 0x4ae07800,
 		.pwrstctrl = 0x0, .pwrstst = 0x4, .dmap = &omap_prm_alwon
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "emu", .base = 0x4ae07a00,
-		.pwrstctrl = 0x0, .pwrstst = 0x4, .dmap = &omap_prm_onoff_noauto
-	},
-	{
+		.pwrstctrl = 0x0, .pwrstst = 0x4, .dmap = &omap_prm_onoff_noस्वतः
+	पूर्ण,
+	अणु
 		.name = "device", .base = 0x4ae07c00,
-		.rstctrl = 0x0, .rstst = 0x4, .rstmap = rst_map_01,
+		.rstctrl = 0x0, .rstst = 0x4, .rsपंचांगap = rst_map_01,
 		.flags = OMAP_PRM_HAS_RSTCTRL | OMAP_PRM_HAS_NO_CLKDM
-	},
-	{ },
-};
+	पूर्ण,
+	अणु पूर्ण,
+पूर्ण;
 
-static const struct omap_prm_data dra7_prm_data[] = {
-	{
+अटल स्थिर काष्ठा omap_prm_data dra7_prm_data[] = अणु
+	अणु
 		.name = "mpu", .base = 0x4ae06300,
 		.pwrstctrl = 0x0, .pwrstst = 0x4, .dmap = &omap_prm_reton,
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "dsp1", .base = 0x4ae06400,
-		.pwrstctrl = 0x0, .pwrstst = 0x4, .dmap = &omap_prm_onoff_noauto,
-		.rstctrl = 0x10, .rstst = 0x14, .rstmap = rst_map_01,
-	},
-	{
+		.pwrstctrl = 0x0, .pwrstst = 0x4, .dmap = &omap_prm_onoff_noस्वतः,
+		.rstctrl = 0x10, .rstst = 0x14, .rsपंचांगap = rst_map_01,
+	पूर्ण,
+	अणु
 		.name = "ipu", .base = 0x4ae06500,
-		.pwrstctrl = 0x0, .pwrstst = 0x4, .dmap = &omap_prm_onoff_noauto,
-		.rstctrl = 0x10, .rstst = 0x14, .rstmap = rst_map_012,
+		.pwrstctrl = 0x0, .pwrstst = 0x4, .dmap = &omap_prm_onoff_noस्वतः,
+		.rstctrl = 0x10, .rstst = 0x14, .rsपंचांगap = rst_map_012,
 		.clkdm_name = "ipu1"
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "coreaon", .base = 0x4ae06628,
 		.pwrstctrl = 0x0, .pwrstst = 0x4, .dmap = &omap_prm_alwon,
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "core", .base = 0x4ae06700,
 		.pwrstctrl = 0x0, .pwrstst = 0x4, .dmap = &omap_prm_alwon,
-		.rstctrl = 0x210, .rstst = 0x214, .rstmap = rst_map_012,
+		.rstctrl = 0x210, .rstst = 0x214, .rsपंचांगap = rst_map_012,
 		.clkdm_name = "ipu2"
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "iva", .base = 0x4ae06f00,
-		.pwrstctrl = 0x0, .pwrstst = 0x4, .dmap = &omap_prm_onoff_noauto,
-		.rstctrl = 0x10, .rstst = 0x14, .rstmap = rst_map_012,
-	},
-	{
+		.pwrstctrl = 0x0, .pwrstst = 0x4, .dmap = &omap_prm_onoff_noस्वतः,
+		.rstctrl = 0x10, .rstst = 0x14, .rsपंचांगap = rst_map_012,
+	पूर्ण,
+	अणु
 		.name = "cam", .base = 0x4ae07000,
-		.pwrstctrl = 0x0, .pwrstst = 0x4, .dmap = &omap_prm_onoff_noauto,
-	},
-	{
+		.pwrstctrl = 0x0, .pwrstst = 0x4, .dmap = &omap_prm_onoff_noस्वतः,
+	पूर्ण,
+	अणु
 		.name = "dss", .base = 0x4ae07100,
-		.pwrstctrl = 0x0, .pwrstst = 0x4, .dmap = &omap_prm_onoff_noauto,
-	},
-	{
+		.pwrstctrl = 0x0, .pwrstst = 0x4, .dmap = &omap_prm_onoff_noस्वतः,
+	पूर्ण,
+	अणु
 		.name = "gpu", .base = 0x4ae07200,
-		.pwrstctrl = 0x0, .pwrstst = 0x4, .dmap = &omap_prm_onoff_noauto,
-	},
-	{
+		.pwrstctrl = 0x0, .pwrstst = 0x4, .dmap = &omap_prm_onoff_noस्वतः,
+	पूर्ण,
+	अणु
 		.name = "l3init", .base = 0x4ae07300,
 		.pwrstctrl = 0x0, .pwrstst = 0x4, .dmap = &omap_prm_alwon,
-		.rstctrl = 0x10, .rstst = 0x14, .rstmap = rst_map_01,
+		.rstctrl = 0x10, .rstst = 0x14, .rsपंचांगap = rst_map_01,
 		.clkdm_name = "pcie"
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "l4per", .base = 0x4ae07400,
 		.pwrstctrl = 0x0, .pwrstst = 0x4, .dmap = &omap_prm_alwon,
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "custefuse", .base = 0x4ae07600,
-		.pwrstctrl = 0x0, .pwrstst = 0x4, .dmap = &omap_prm_onoff_noauto,
-	},
-	{
+		.pwrstctrl = 0x0, .pwrstst = 0x4, .dmap = &omap_prm_onoff_noस्वतः,
+	पूर्ण,
+	अणु
 		.name = "wkupaon", .base = 0x4ae07724,
 		.pwrstctrl = 0x0, .pwrstst = 0x4, .dmap = &omap_prm_alwon,
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "emu", .base = 0x4ae07900,
-		.pwrstctrl = 0x0, .pwrstst = 0x4, .dmap = &omap_prm_onoff_noauto,
-	},
-	{
+		.pwrstctrl = 0x0, .pwrstst = 0x4, .dmap = &omap_prm_onoff_noस्वतः,
+	पूर्ण,
+	अणु
 		.name = "dsp2", .base = 0x4ae07b00,
-		.pwrstctrl = 0x0, .pwrstst = 0x4, .dmap = &omap_prm_onoff_noauto,
-		.rstctrl = 0x10, .rstst = 0x14, .rstmap = rst_map_01
-	},
-	{
+		.pwrstctrl = 0x0, .pwrstst = 0x4, .dmap = &omap_prm_onoff_noस्वतः,
+		.rstctrl = 0x10, .rstst = 0x14, .rsपंचांगap = rst_map_01
+	पूर्ण,
+	अणु
 		.name = "eve1", .base = 0x4ae07b40,
-		.pwrstctrl = 0x0, .pwrstst = 0x4, .dmap = &omap_prm_onoff_noauto,
-		.rstctrl = 0x10, .rstst = 0x14, .rstmap = rst_map_01
-	},
-	{
+		.pwrstctrl = 0x0, .pwrstst = 0x4, .dmap = &omap_prm_onoff_noस्वतः,
+		.rstctrl = 0x10, .rstst = 0x14, .rsपंचांगap = rst_map_01
+	पूर्ण,
+	अणु
 		.name = "eve2", .base = 0x4ae07b80,
-		.pwrstctrl = 0x0, .pwrstst = 0x4, .dmap = &omap_prm_onoff_noauto,
-		.rstctrl = 0x10, .rstst = 0x14, .rstmap = rst_map_01
-	},
-	{
+		.pwrstctrl = 0x0, .pwrstst = 0x4, .dmap = &omap_prm_onoff_noस्वतः,
+		.rstctrl = 0x10, .rstst = 0x14, .rsपंचांगap = rst_map_01
+	पूर्ण,
+	अणु
 		.name = "eve3", .base = 0x4ae07bc0,
-		.pwrstctrl = 0x0, .pwrstst = 0x4, .dmap = &omap_prm_onoff_noauto,
-		.rstctrl = 0x10, .rstst = 0x14, .rstmap = rst_map_01
-	},
-	{
+		.pwrstctrl = 0x0, .pwrstst = 0x4, .dmap = &omap_prm_onoff_noस्वतः,
+		.rstctrl = 0x10, .rstst = 0x14, .rsपंचांगap = rst_map_01
+	पूर्ण,
+	अणु
 		.name = "eve4", .base = 0x4ae07c00,
-		.pwrstctrl = 0x0, .pwrstst = 0x4, .dmap = &omap_prm_onoff_noauto,
-		.rstctrl = 0x10, .rstst = 0x14, .rstmap = rst_map_01
-	},
-	{
+		.pwrstctrl = 0x0, .pwrstst = 0x4, .dmap = &omap_prm_onoff_noस्वतः,
+		.rstctrl = 0x10, .rstst = 0x14, .rsपंचांगap = rst_map_01
+	पूर्ण,
+	अणु
 		.name = "rtc", .base = 0x4ae07c60,
 		.pwrstctrl = 0x0, .pwrstst = 0x4, .dmap = &omap_prm_alwon,
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "vpe", .base = 0x4ae07c80,
-		.pwrstctrl = 0x0, .pwrstst = 0x4, .dmap = &omap_prm_onoff_noauto,
-	},
-	{ },
-};
+		.pwrstctrl = 0x0, .pwrstst = 0x4, .dmap = &omap_prm_onoff_noस्वतः,
+	पूर्ण,
+	अणु पूर्ण,
+पूर्ण;
 
-static const struct omap_rst_map am3_per_rst_map[] = {
-	{ .rst = 1 },
-	{ .rst = -1 },
-};
+अटल स्थिर काष्ठा omap_rst_map am3_per_rst_map[] = अणु
+	अणु .rst = 1 पूर्ण,
+	अणु .rst = -1 पूर्ण,
+पूर्ण;
 
-static const struct omap_rst_map am3_wkup_rst_map[] = {
-	{ .rst = 3, .st = 5 },
-	{ .rst = -1 },
-};
+अटल स्थिर काष्ठा omap_rst_map am3_wkup_rst_map[] = अणु
+	अणु .rst = 3, .st = 5 पूर्ण,
+	अणु .rst = -1 पूर्ण,
+पूर्ण;
 
-static const struct omap_prm_data am3_prm_data[] = {
-	{
+अटल स्थिर काष्ठा omap_prm_data am3_prm_data[] = अणु
+	अणु
 		.name = "per", .base = 0x44e00c00,
 		.pwrstctrl = 0xc, .pwrstst = 0x8, .dmap = &omap_prm_noinact,
-		.rstctrl = 0x0, .rstmap = am3_per_rst_map,
+		.rstctrl = 0x0, .rsपंचांगap = am3_per_rst_map,
 		.flags = OMAP_PRM_HAS_RSTCTRL, .clkdm_name = "pruss_ocp"
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "wkup", .base = 0x44e00d00,
 		.pwrstctrl = 0x4, .pwrstst = 0x4, .dmap = &omap_prm_alwon,
-		.rstctrl = 0x0, .rstst = 0xc, .rstmap = am3_wkup_rst_map,
+		.rstctrl = 0x0, .rstst = 0xc, .rsपंचांगap = am3_wkup_rst_map,
 		.flags = OMAP_PRM_HAS_RSTCTRL | OMAP_PRM_HAS_NO_CLKDM
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "mpu", .base = 0x44e00e00,
 		.pwrstctrl = 0x0, .pwrstst = 0x4, .dmap = &omap_prm_noinact,
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "device", .base = 0x44e00f00,
-		.rstctrl = 0x0, .rstst = 0x8, .rstmap = rst_map_01,
+		.rstctrl = 0x0, .rstst = 0x8, .rsपंचांगap = rst_map_01,
 		.flags = OMAP_PRM_HAS_RSTCTRL | OMAP_PRM_HAS_NO_CLKDM
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "rtc", .base = 0x44e01000,
 		.pwrstctrl = 0x0, .pwrstst = 0x4, .dmap = &omap_prm_alwon,
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "gfx", .base = 0x44e01100,
 		.pwrstctrl = 0, .pwrstst = 0x10, .dmap = &omap_prm_noinact,
-		.rstctrl = 0x4, .rstst = 0x14, .rstmap = rst_map_0, .clkdm_name = "gfx_l3",
-	},
-	{
+		.rstctrl = 0x4, .rstst = 0x14, .rsपंचांगap = rst_map_0, .clkdm_name = "gfx_l3",
+	पूर्ण,
+	अणु
 		.name = "cefuse", .base = 0x44e01200,
-		.pwrstctrl = 0x0, .pwrstst = 0x4, .dmap = &omap_prm_onoff_noauto,
-	},
-	{ },
-};
+		.pwrstctrl = 0x0, .pwrstst = 0x4, .dmap = &omap_prm_onoff_noस्वतः,
+	पूर्ण,
+	अणु पूर्ण,
+पूर्ण;
 
-static const struct omap_rst_map am4_per_rst_map[] = {
-	{ .rst = 1, .st = 0 },
-	{ .rst = -1 },
-};
+अटल स्थिर काष्ठा omap_rst_map am4_per_rst_map[] = अणु
+	अणु .rst = 1, .st = 0 पूर्ण,
+	अणु .rst = -1 पूर्ण,
+पूर्ण;
 
-static const struct omap_rst_map am4_device_rst_map[] = {
-	{ .rst = 0, .st = 1 },
-	{ .rst = 1, .st = 0 },
-	{ .rst = -1 },
-};
+अटल स्थिर काष्ठा omap_rst_map am4_device_rst_map[] = अणु
+	अणु .rst = 0, .st = 1 पूर्ण,
+	अणु .rst = 1, .st = 0 पूर्ण,
+	अणु .rst = -1 पूर्ण,
+पूर्ण;
 
-static const struct omap_prm_data am4_prm_data[] = {
-	{
+अटल स्थिर काष्ठा omap_prm_data am4_prm_data[] = अणु
+	अणु
 		.name = "mpu", .base = 0x44df0300,
 		.pwrstctrl = 0x0, .pwrstst = 0x4, .dmap = &omap_prm_noinact,
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "gfx", .base = 0x44df0400,
-		.pwrstctrl = 0, .pwrstst = 0x4, .dmap = &omap_prm_onoff_noauto,
-		.rstctrl = 0x10, .rstst = 0x14, .rstmap = rst_map_0, .clkdm_name = "gfx_l3",
-	},
-	{
+		.pwrstctrl = 0, .pwrstst = 0x4, .dmap = &omap_prm_onoff_noस्वतः,
+		.rstctrl = 0x10, .rstst = 0x14, .rsपंचांगap = rst_map_0, .clkdm_name = "gfx_l3",
+	पूर्ण,
+	अणु
 		.name = "rtc", .base = 0x44df0500,
 		.pwrstctrl = 0x0, .pwrstst = 0x4, .dmap = &omap_prm_alwon,
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "tamper", .base = 0x44df0600,
 		.pwrstctrl = 0x0, .pwrstst = 0x4, .dmap = &omap_prm_alwon,
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "cefuse", .base = 0x44df0700,
-		.pwrstctrl = 0x0, .pwrstst = 0x4, .dmap = &omap_prm_onoff_noauto,
-	},
-	{
+		.pwrstctrl = 0x0, .pwrstst = 0x4, .dmap = &omap_prm_onoff_noस्वतः,
+	पूर्ण,
+	अणु
 		.name = "per", .base = 0x44df0800,
 		.pwrstctrl = 0x0, .pwrstst = 0x4, .dmap = &omap_prm_noinact,
-		.rstctrl = 0x10, .rstst = 0x14, .rstmap = am4_per_rst_map,
+		.rstctrl = 0x10, .rstst = 0x14, .rsपंचांगap = am4_per_rst_map,
 		.clkdm_name = "pruss_ocp"
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "wkup", .base = 0x44df2000,
 		.pwrstctrl = 0x0, .pwrstst = 0x4, .dmap = &omap_prm_alwon,
-		.rstctrl = 0x10, .rstst = 0x14, .rstmap = am3_wkup_rst_map,
+		.rstctrl = 0x10, .rstst = 0x14, .rsपंचांगap = am3_wkup_rst_map,
 		.flags = OMAP_PRM_HAS_NO_CLKDM
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "device", .base = 0x44df4000,
-		.rstctrl = 0x0, .rstst = 0x4, .rstmap = am4_device_rst_map,
+		.rstctrl = 0x0, .rstst = 0x4, .rsपंचांगap = am4_device_rst_map,
 		.flags = OMAP_PRM_HAS_RSTCTRL | OMAP_PRM_HAS_NO_CLKDM
-	},
-	{ },
-};
+	पूर्ण,
+	अणु पूर्ण,
+पूर्ण;
 
-static const struct of_device_id omap_prm_id_table[] = {
-	{ .compatible = "ti,omap4-prm-inst", .data = omap4_prm_data },
-	{ .compatible = "ti,omap5-prm-inst", .data = omap5_prm_data },
-	{ .compatible = "ti,dra7-prm-inst", .data = dra7_prm_data },
-	{ .compatible = "ti,am3-prm-inst", .data = am3_prm_data },
-	{ .compatible = "ti,am4-prm-inst", .data = am4_prm_data },
-	{ },
-};
+अटल स्थिर काष्ठा of_device_id omap_prm_id_table[] = अणु
+	अणु .compatible = "ti,omap4-prm-inst", .data = omap4_prm_data पूर्ण,
+	अणु .compatible = "ti,omap5-prm-inst", .data = omap5_prm_data पूर्ण,
+	अणु .compatible = "ti,dra7-prm-inst", .data = dra7_prm_data पूर्ण,
+	अणु .compatible = "ti,am3-prm-inst", .data = am3_prm_data पूर्ण,
+	अणु .compatible = "ti,am4-prm-inst", .data = am4_prm_data पूर्ण,
+	अणु पूर्ण,
+पूर्ण;
 
-#ifdef DEBUG
-static void omap_prm_domain_show_state(struct omap_prm_domain *prmd,
-				       const char *desc)
-{
+#अगर_घोषित DEBUG
+अटल व्योम omap_prm_करोमुख्य_show_state(काष्ठा omap_prm_करोमुख्य *prmd,
+				       स्थिर अक्षर *desc)
+अणु
 	dev_dbg(prmd->dev, "%s %s: %08x/%08x\n",
 		prmd->pd.name, desc,
-		readl_relaxed(prmd->prm->base + prmd->pwrstctrl),
-		readl_relaxed(prmd->prm->base + prmd->pwrstst));
-}
-#else
-static inline void omap_prm_domain_show_state(struct omap_prm_domain *prmd,
-					      const char *desc)
-{
-}
-#endif
+		पढ़ोl_relaxed(prmd->prm->base + prmd->pwrstctrl),
+		पढ़ोl_relaxed(prmd->prm->base + prmd->pwrstst));
+पूर्ण
+#अन्यथा
+अटल अंतरभूत व्योम omap_prm_करोमुख्य_show_state(काष्ठा omap_prm_करोमुख्य *prmd,
+					      स्थिर अक्षर *desc)
+अणु
+पूर्ण
+#पूर्ण_अगर
 
-static int omap_prm_domain_power_on(struct generic_pm_domain *domain)
-{
-	struct omap_prm_domain *prmd;
-	int ret;
+अटल पूर्णांक omap_prm_करोमुख्य_घातer_on(काष्ठा generic_pm_करोमुख्य *करोमुख्य)
+अणु
+	काष्ठा omap_prm_करोमुख्य *prmd;
+	पूर्णांक ret;
 	u32 v, mode;
 
-	prmd = genpd_to_prm_domain(domain);
-	if (!prmd->cap)
-		return 0;
+	prmd = genpd_to_prm_करोमुख्य(करोमुख्य);
+	अगर (!prmd->cap)
+		वापस 0;
 
-	omap_prm_domain_show_state(prmd, "on: previous state");
+	omap_prm_करोमुख्य_show_state(prmd, "on: previous state");
 
-	if (prmd->pwrstctrl_saved)
+	अगर (prmd->pwrstctrl_saved)
 		v = prmd->pwrstctrl_saved;
-	else
-		v = readl_relaxed(prmd->prm->base + prmd->pwrstctrl);
+	अन्यथा
+		v = पढ़ोl_relaxed(prmd->prm->base + prmd->pwrstctrl);
 
-	if (prmd->prm->data->flags & OMAP_PRM_RET_WHEN_IDLE)
+	अगर (prmd->prm->data->flags & OMAP_PRM_RET_WHEN_IDLE)
 		mode = OMAP_PRMD_RETENTION;
-	else
+	अन्यथा
 		mode = OMAP_PRMD_ON_ACTIVE;
 
-	writel_relaxed((v & ~PRM_POWERSTATE_MASK) | mode,
+	ग_लिखोl_relaxed((v & ~PRM_POWERSTATE_MASK) | mode,
 		       prmd->prm->base + prmd->pwrstctrl);
 
-	/* wait for the transition bit to get cleared */
-	ret = readl_relaxed_poll_timeout(prmd->prm->base + prmd->pwrstst,
+	/* रुको क्रम the transition bit to get cleared */
+	ret = पढ़ोl_relaxed_poll_समयout(prmd->prm->base + prmd->pwrstst,
 					 v, !(v & PRM_ST_INTRANSITION), 1,
 					 PRM_STATE_MAX_WAIT);
-	if (ret)
+	अगर (ret)
 		dev_err(prmd->dev, "%s: %s timed out\n",
 			prmd->pd.name, __func__);
 
-	omap_prm_domain_show_state(prmd, "on: new state");
+	omap_prm_करोमुख्य_show_state(prmd, "on: new state");
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-/* No need to check for holes in the mask for the lowest mode */
-static int omap_prm_domain_find_lowest(struct omap_prm_domain *prmd)
-{
-	return __ffs(prmd->cap->usable_modes);
-}
+/* No need to check क्रम holes in the mask क्रम the lowest mode */
+अटल पूर्णांक omap_prm_करोमुख्य_find_lowest(काष्ठा omap_prm_करोमुख्य *prmd)
+अणु
+	वापस __ffs(prmd->cap->usable_modes);
+पूर्ण
 
-static int omap_prm_domain_power_off(struct generic_pm_domain *domain)
-{
-	struct omap_prm_domain *prmd;
-	int ret;
+अटल पूर्णांक omap_prm_करोमुख्य_घातer_off(काष्ठा generic_pm_करोमुख्य *करोमुख्य)
+अणु
+	काष्ठा omap_prm_करोमुख्य *prmd;
+	पूर्णांक ret;
 	u32 v;
 
-	prmd = genpd_to_prm_domain(domain);
-	if (!prmd->cap)
-		return 0;
+	prmd = genpd_to_prm_करोमुख्य(करोमुख्य);
+	अगर (!prmd->cap)
+		वापस 0;
 
-	omap_prm_domain_show_state(prmd, "off: previous state");
+	omap_prm_करोमुख्य_show_state(prmd, "off: previous state");
 
-	v = readl_relaxed(prmd->prm->base + prmd->pwrstctrl);
+	v = पढ़ोl_relaxed(prmd->prm->base + prmd->pwrstctrl);
 	prmd->pwrstctrl_saved = v;
 
 	v &= ~PRM_POWERSTATE_MASK;
-	v |= omap_prm_domain_find_lowest(prmd);
+	v |= omap_prm_करोमुख्य_find_lowest(prmd);
 
-	if (prmd->cap->statechange)
+	अगर (prmd->cap->statechange)
 		v |= PRM_LOWPOWERSTATECHANGE;
-	if (prmd->cap->logicretstate)
+	अगर (prmd->cap->logicretstate)
 		v &= ~PRM_LOGICRETSTATE;
-	else
+	अन्यथा
 		v |= PRM_LOGICRETSTATE;
 
-	writel_relaxed(v, prmd->prm->base + prmd->pwrstctrl);
+	ग_लिखोl_relaxed(v, prmd->prm->base + prmd->pwrstctrl);
 
-	/* wait for the transition bit to get cleared */
-	ret = readl_relaxed_poll_timeout(prmd->prm->base + prmd->pwrstst,
+	/* रुको क्रम the transition bit to get cleared */
+	ret = पढ़ोl_relaxed_poll_समयout(prmd->prm->base + prmd->pwrstst,
 					 v, !(v & PRM_ST_INTRANSITION), 1,
 					 PRM_STATE_MAX_WAIT);
-	if (ret)
+	अगर (ret)
 		dev_warn(prmd->dev, "%s: %s timed out\n",
 			 __func__, prmd->pd.name);
 
-	omap_prm_domain_show_state(prmd, "off: new state");
+	omap_prm_करोमुख्य_show_state(prmd, "off: new state");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * Note that ti-sysc already manages the module clocks separately so
- * no need to manage those. Interconnect instances need clocks managed
- * for simple-pm-bus.
+ * Note that ti-sysc alपढ़ोy manages the module घड़ीs separately so
+ * no need to manage those. Interconnect instances need घड़ीs managed
+ * क्रम simple-pm-bus.
  */
-static int omap_prm_domain_attach_clock(struct device *dev,
-					struct omap_prm_domain *prmd)
-{
-	struct device_node *np = dev->of_node;
-	int error;
+अटल पूर्णांक omap_prm_करोमुख्य_attach_घड़ी(काष्ठा device *dev,
+					काष्ठा omap_prm_करोमुख्य *prmd)
+अणु
+	काष्ठा device_node *np = dev->of_node;
+	पूर्णांक error;
 
-	if (!of_device_is_compatible(np, "simple-pm-bus"))
-		return 0;
+	अगर (!of_device_is_compatible(np, "simple-pm-bus"))
+		वापस 0;
 
-	if (!of_property_read_bool(np, "clocks"))
-		return 0;
+	अगर (!of_property_पढ़ो_bool(np, "clocks"))
+		वापस 0;
 
 	error = pm_clk_create(dev);
-	if (error)
-		return error;
+	अगर (error)
+		वापस error;
 
 	error = of_pm_clk_add_clks(dev);
-	if (error < 0) {
+	अगर (error < 0) अणु
 		pm_clk_destroy(dev);
-		return error;
-	}
+		वापस error;
+	पूर्ण
 
 	prmd->uses_pm_clk = 1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int omap_prm_domain_attach_dev(struct generic_pm_domain *domain,
-				      struct device *dev)
-{
-	struct generic_pm_domain_data *genpd_data;
-	struct of_phandle_args pd_args;
-	struct omap_prm_domain *prmd;
-	struct device_node *np;
-	int ret;
+अटल पूर्णांक omap_prm_करोमुख्य_attach_dev(काष्ठा generic_pm_करोमुख्य *करोमुख्य,
+				      काष्ठा device *dev)
+अणु
+	काष्ठा generic_pm_करोमुख्य_data *genpd_data;
+	काष्ठा of_phandle_args pd_args;
+	काष्ठा omap_prm_करोमुख्य *prmd;
+	काष्ठा device_node *np;
+	पूर्णांक ret;
 
-	prmd = genpd_to_prm_domain(domain);
+	prmd = genpd_to_prm_करोमुख्य(करोमुख्य);
 	np = dev->of_node;
 
 	ret = of_parse_phandle_with_args(np, "power-domains",
 					 "#power-domain-cells", 0, &pd_args);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	if (pd_args.args_count != 0)
+	अगर (pd_args.args_count != 0)
 		dev_warn(dev, "%s: unusupported #power-domain-cells: %i\n",
 			 prmd->pd.name, pd_args.args_count);
 
 	genpd_data = dev_gpd_data(dev);
-	genpd_data->data = NULL;
+	genpd_data->data = शून्य;
 
-	ret = omap_prm_domain_attach_clock(dev, prmd);
-	if (ret)
-		return ret;
+	ret = omap_prm_करोमुख्य_attach_घड़ी(dev, prmd);
+	अगर (ret)
+		वापस ret;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void omap_prm_domain_detach_dev(struct generic_pm_domain *domain,
-				       struct device *dev)
-{
-	struct generic_pm_domain_data *genpd_data;
-	struct omap_prm_domain *prmd;
+अटल व्योम omap_prm_करोमुख्य_detach_dev(काष्ठा generic_pm_करोमुख्य *करोमुख्य,
+				       काष्ठा device *dev)
+अणु
+	काष्ठा generic_pm_करोमुख्य_data *genpd_data;
+	काष्ठा omap_prm_करोमुख्य *prmd;
 
-	prmd = genpd_to_prm_domain(domain);
-	if (prmd->uses_pm_clk)
+	prmd = genpd_to_prm_करोमुख्य(करोमुख्य);
+	अगर (prmd->uses_pm_clk)
 		pm_clk_destroy(dev);
 	genpd_data = dev_gpd_data(dev);
-	genpd_data->data = NULL;
-}
+	genpd_data->data = शून्य;
+पूर्ण
 
-static int omap_prm_domain_init(struct device *dev, struct omap_prm *prm)
-{
-	struct omap_prm_domain *prmd;
-	struct device_node *np = dev->of_node;
-	const struct omap_prm_data *data;
-	const char *name;
-	int error;
+अटल पूर्णांक omap_prm_करोमुख्य_init(काष्ठा device *dev, काष्ठा omap_prm *prm)
+अणु
+	काष्ठा omap_prm_करोमुख्य *prmd;
+	काष्ठा device_node *np = dev->of_node;
+	स्थिर काष्ठा omap_prm_data *data;
+	स्थिर अक्षर *name;
+	पूर्णांक error;
 
-	if (!of_find_property(dev->of_node, "#power-domain-cells", NULL))
-		return 0;
+	अगर (!of_find_property(dev->of_node, "#power-domain-cells", शून्य))
+		वापस 0;
 
 	of_node_put(dev->of_node);
 
-	prmd = devm_kzalloc(dev, sizeof(*prmd), GFP_KERNEL);
-	if (!prmd)
-		return -ENOMEM;
+	prmd = devm_kzalloc(dev, माप(*prmd), GFP_KERNEL);
+	अगर (!prmd)
+		वापस -ENOMEM;
 
 	data = prm->data;
-	name = devm_kasprintf(dev, GFP_KERNEL, "prm_%s",
+	name = devm_kaप्र_लिखो(dev, GFP_KERNEL, "prm_%s",
 			      data->name);
 
 	prmd->dev = dev;
@@ -704,196 +705,196 @@ static int omap_prm_domain_init(struct device *dev, struct omap_prm *prm)
 	prmd->pwrstst = prmd->prm->data->pwrstst;
 
 	prmd->pd.name = name;
-	prmd->pd.power_on = omap_prm_domain_power_on;
-	prmd->pd.power_off = omap_prm_domain_power_off;
-	prmd->pd.attach_dev = omap_prm_domain_attach_dev;
-	prmd->pd.detach_dev = omap_prm_domain_detach_dev;
+	prmd->pd.घातer_on = omap_prm_करोमुख्य_घातer_on;
+	prmd->pd.घातer_off = omap_prm_करोमुख्य_घातer_off;
+	prmd->pd.attach_dev = omap_prm_करोमुख्य_attach_dev;
+	prmd->pd.detach_dev = omap_prm_करोमुख्य_detach_dev;
 	prmd->pd.flags = GENPD_FLAG_PM_CLK;
 
-	pm_genpd_init(&prmd->pd, NULL, true);
+	pm_genpd_init(&prmd->pd, शून्य, true);
 	error = of_genpd_add_provider_simple(np, &prmd->pd);
-	if (error)
-		pm_genpd_remove(&prmd->pd);
-	else
+	अगर (error)
+		pm_genpd_हटाओ(&prmd->pd);
+	अन्यथा
 		prm->prmd = prmd;
 
-	return error;
-}
+	वापस error;
+पूर्ण
 
-static bool _is_valid_reset(struct omap_reset_data *reset, unsigned long id)
-{
-	if (reset->mask & BIT(id))
-		return true;
+अटल bool _is_valid_reset(काष्ठा omap_reset_data *reset, अचिन्हित दीर्घ id)
+अणु
+	अगर (reset->mask & BIT(id))
+		वापस true;
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static int omap_reset_get_st_bit(struct omap_reset_data *reset,
-				 unsigned long id)
-{
-	const struct omap_rst_map *map = reset->prm->data->rstmap;
+अटल पूर्णांक omap_reset_get_st_bit(काष्ठा omap_reset_data *reset,
+				 अचिन्हित दीर्घ id)
+अणु
+	स्थिर काष्ठा omap_rst_map *map = reset->prm->data->rsपंचांगap;
 
-	while (map->rst >= 0) {
-		if (map->rst == id)
-			return map->st;
+	जबतक (map->rst >= 0) अणु
+		अगर (map->rst == id)
+			वापस map->st;
 
 		map++;
-	}
+	पूर्ण
 
-	return id;
-}
+	वापस id;
+पूर्ण
 
-static int omap_reset_status(struct reset_controller_dev *rcdev,
-			     unsigned long id)
-{
-	struct omap_reset_data *reset = to_omap_reset_data(rcdev);
+अटल पूर्णांक omap_reset_status(काष्ठा reset_controller_dev *rcdev,
+			     अचिन्हित दीर्घ id)
+अणु
+	काष्ठा omap_reset_data *reset = to_omap_reset_data(rcdev);
 	u32 v;
-	int st_bit = omap_reset_get_st_bit(reset, id);
+	पूर्णांक st_bit = omap_reset_get_st_bit(reset, id);
 	bool has_rstst = reset->prm->data->rstst ||
 		(reset->prm->data->flags & OMAP_PRM_HAS_RSTST);
 
-	/* Check if we have rstst */
-	if (!has_rstst)
-		return -ENOTSUPP;
+	/* Check अगर we have rstst */
+	अगर (!has_rstst)
+		वापस -ENOTSUPP;
 
-	/* Check if hw reset line is asserted */
-	v = readl_relaxed(reset->prm->base + reset->prm->data->rstctrl);
-	if (v & BIT(id))
-		return 1;
+	/* Check अगर hw reset line is निश्चितed */
+	v = पढ़ोl_relaxed(reset->prm->base + reset->prm->data->rstctrl);
+	अगर (v & BIT(id))
+		वापस 1;
 
 	/*
 	 * Check reset status, high value means reset sequence has been
-	 * completed successfully so we can return 0 here (reset deasserted)
+	 * completed successfully so we can वापस 0 here (reset deनिश्चितed)
 	 */
-	v = readl_relaxed(reset->prm->base + reset->prm->data->rstst);
+	v = पढ़ोl_relaxed(reset->prm->base + reset->prm->data->rstst);
 	v >>= st_bit;
 	v &= 1;
 
-	return !v;
-}
+	वापस !v;
+पूर्ण
 
-static int omap_reset_assert(struct reset_controller_dev *rcdev,
-			     unsigned long id)
-{
-	struct omap_reset_data *reset = to_omap_reset_data(rcdev);
+अटल पूर्णांक omap_reset_निश्चित(काष्ठा reset_controller_dev *rcdev,
+			     अचिन्हित दीर्घ id)
+अणु
+	काष्ठा omap_reset_data *reset = to_omap_reset_data(rcdev);
 	u32 v;
-	unsigned long flags;
+	अचिन्हित दीर्घ flags;
 
-	/* assert the reset control line */
+	/* निश्चित the reset control line */
 	spin_lock_irqsave(&reset->lock, flags);
-	v = readl_relaxed(reset->prm->base + reset->prm->data->rstctrl);
+	v = पढ़ोl_relaxed(reset->prm->base + reset->prm->data->rstctrl);
 	v |= 1 << id;
-	writel_relaxed(v, reset->prm->base + reset->prm->data->rstctrl);
+	ग_लिखोl_relaxed(v, reset->prm->base + reset->prm->data->rstctrl);
 	spin_unlock_irqrestore(&reset->lock, flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int omap_reset_deassert(struct reset_controller_dev *rcdev,
-			       unsigned long id)
-{
-	struct omap_reset_data *reset = to_omap_reset_data(rcdev);
+अटल पूर्णांक omap_reset_deनिश्चित(काष्ठा reset_controller_dev *rcdev,
+			       अचिन्हित दीर्घ id)
+अणु
+	काष्ठा omap_reset_data *reset = to_omap_reset_data(rcdev);
 	u32 v;
-	int st_bit;
+	पूर्णांक st_bit;
 	bool has_rstst;
-	unsigned long flags;
-	struct ti_prm_platform_data *pdata = dev_get_platdata(reset->dev);
-	int ret = 0;
+	अचिन्हित दीर्घ flags;
+	काष्ठा ti_prm_platक्रमm_data *pdata = dev_get_platdata(reset->dev);
+	पूर्णांक ret = 0;
 
-	/* Nothing to do if the reset is already deasserted */
-	if (!omap_reset_status(rcdev, id))
-		return 0;
+	/* Nothing to करो अगर the reset is alपढ़ोy deनिश्चितed */
+	अगर (!omap_reset_status(rcdev, id))
+		वापस 0;
 
 	has_rstst = reset->prm->data->rstst ||
 		(reset->prm->data->flags & OMAP_PRM_HAS_RSTST);
 
-	if (has_rstst) {
+	अगर (has_rstst) अणु
 		st_bit = omap_reset_get_st_bit(reset, id);
 
 		/* Clear the reset status by writing 1 to the status bit */
 		v = 1 << st_bit;
-		writel_relaxed(v, reset->prm->base + reset->prm->data->rstst);
-	}
+		ग_लिखोl_relaxed(v, reset->prm->base + reset->prm->data->rstst);
+	पूर्ण
 
-	if (reset->clkdm)
+	अगर (reset->clkdm)
 		pdata->clkdm_deny_idle(reset->clkdm);
 
-	/* de-assert the reset control line */
+	/* de-निश्चित the reset control line */
 	spin_lock_irqsave(&reset->lock, flags);
-	v = readl_relaxed(reset->prm->base + reset->prm->data->rstctrl);
+	v = पढ़ोl_relaxed(reset->prm->base + reset->prm->data->rstctrl);
 	v &= ~(1 << id);
-	writel_relaxed(v, reset->prm->base + reset->prm->data->rstctrl);
+	ग_लिखोl_relaxed(v, reset->prm->base + reset->prm->data->rstctrl);
 	spin_unlock_irqrestore(&reset->lock, flags);
 
-	if (!has_rstst)
-		goto exit;
+	अगर (!has_rstst)
+		जाओ निकास;
 
-	/* wait for the status to be set */
-	ret = readl_relaxed_poll_timeout_atomic(reset->prm->base +
+	/* रुको क्रम the status to be set */
+	ret = पढ़ोl_relaxed_poll_समयout_atomic(reset->prm->base +
 						 reset->prm->data->rstst,
 						 v, v & BIT(st_bit), 1,
 						 OMAP_RESET_MAX_WAIT);
-	if (ret)
+	अगर (ret)
 		pr_err("%s: timedout waiting for %s:%lu\n", __func__,
 		       reset->prm->data->name, id);
 
-exit:
-	if (reset->clkdm) {
-		/* At least dra7 iva needs a delay before clkdm idle */
-		if (has_rstst)
+निकास:
+	अगर (reset->clkdm) अणु
+		/* At least dra7 iva needs a delay beक्रमe clkdm idle */
+		अगर (has_rstst)
 			udelay(1);
 		pdata->clkdm_allow_idle(reset->clkdm);
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const struct reset_control_ops omap_reset_ops = {
-	.assert		= omap_reset_assert,
-	.deassert	= omap_reset_deassert,
+अटल स्थिर काष्ठा reset_control_ops omap_reset_ops = अणु
+	.निश्चित		= omap_reset_निश्चित,
+	.deनिश्चित	= omap_reset_deनिश्चित,
 	.status		= omap_reset_status,
-};
+पूर्ण;
 
-static int omap_prm_reset_xlate(struct reset_controller_dev *rcdev,
-				const struct of_phandle_args *reset_spec)
-{
-	struct omap_reset_data *reset = to_omap_reset_data(rcdev);
+अटल पूर्णांक omap_prm_reset_xlate(काष्ठा reset_controller_dev *rcdev,
+				स्थिर काष्ठा of_phandle_args *reset_spec)
+अणु
+	काष्ठा omap_reset_data *reset = to_omap_reset_data(rcdev);
 
-	if (!_is_valid_reset(reset, reset_spec->args[0]))
-		return -EINVAL;
+	अगर (!_is_valid_reset(reset, reset_spec->args[0]))
+		वापस -EINVAL;
 
-	return reset_spec->args[0];
-}
+	वापस reset_spec->args[0];
+पूर्ण
 
-static int omap_prm_reset_init(struct platform_device *pdev,
-			       struct omap_prm *prm)
-{
-	struct omap_reset_data *reset;
-	const struct omap_rst_map *map;
-	struct ti_prm_platform_data *pdata = dev_get_platdata(&pdev->dev);
-	char buf[32];
+अटल पूर्णांक omap_prm_reset_init(काष्ठा platक्रमm_device *pdev,
+			       काष्ठा omap_prm *prm)
+अणु
+	काष्ठा omap_reset_data *reset;
+	स्थिर काष्ठा omap_rst_map *map;
+	काष्ठा ti_prm_platक्रमm_data *pdata = dev_get_platdata(&pdev->dev);
+	अक्षर buf[32];
 	u32 v;
 
 	/*
-	 * Check if we have controllable resets. If either rstctrl is non-zero
-	 * or OMAP_PRM_HAS_RSTCTRL flag is set, we have reset control register
-	 * for the domain.
+	 * Check अगर we have controllable resets. If either rstctrl is non-zero
+	 * or OMAP_PRM_HAS_RSTCTRL flag is set, we have reset control रेजिस्टर
+	 * क्रम the करोमुख्य.
 	 */
-	if (!prm->data->rstctrl && !(prm->data->flags & OMAP_PRM_HAS_RSTCTRL))
-		return 0;
+	अगर (!prm->data->rstctrl && !(prm->data->flags & OMAP_PRM_HAS_RSTCTRL))
+		वापस 0;
 
-	/* Check if we have the pdata callbacks in place */
-	if (!pdata || !pdata->clkdm_lookup || !pdata->clkdm_deny_idle ||
+	/* Check अगर we have the pdata callbacks in place */
+	अगर (!pdata || !pdata->clkdm_lookup || !pdata->clkdm_deny_idle ||
 	    !pdata->clkdm_allow_idle)
-		return -EINVAL;
+		वापस -EINVAL;
 
-	map = prm->data->rstmap;
-	if (!map)
-		return -EINVAL;
+	map = prm->data->rsपंचांगap;
+	अगर (!map)
+		वापस -EINVAL;
 
-	reset = devm_kzalloc(&pdev->dev, sizeof(*reset), GFP_KERNEL);
-	if (!reset)
-		return -ENOMEM;
+	reset = devm_kzalloc(&pdev->dev, माप(*reset), GFP_KERNEL);
+	अगर (!reset)
+		वापस -ENOMEM;
 
 	reset->rcdev.owner = THIS_MODULE;
 	reset->rcdev.ops = &omap_reset_ops;
@@ -906,89 +907,89 @@ static int omap_prm_reset_init(struct platform_device *pdev,
 
 	reset->prm = prm;
 
-	sprintf(buf, "%s_clkdm", prm->data->clkdm_name ? prm->data->clkdm_name :
+	प्र_लिखो(buf, "%s_clkdm", prm->data->clkdm_name ? prm->data->clkdm_name :
 		prm->data->name);
 
-	if (!(prm->data->flags & OMAP_PRM_HAS_NO_CLKDM)) {
+	अगर (!(prm->data->flags & OMAP_PRM_HAS_NO_CLKDM)) अणु
 		reset->clkdm = pdata->clkdm_lookup(buf);
-		if (!reset->clkdm)
-			return -EINVAL;
-	}
+		अगर (!reset->clkdm)
+			वापस -EINVAL;
+	पूर्ण
 
-	while (map->rst >= 0) {
+	जबतक (map->rst >= 0) अणु
 		reset->mask |= BIT(map->rst);
 		map++;
-	}
+	पूर्ण
 
-	/* Quirk handling to assert rst_map_012 bits on reset and avoid errors */
-	if (prm->data->rstmap == rst_map_012) {
-		v = readl_relaxed(reset->prm->base + reset->prm->data->rstctrl);
-		if ((v & reset->mask) != reset->mask) {
+	/* Quirk handling to निश्चित rst_map_012 bits on reset and aव्योम errors */
+	अगर (prm->data->rsपंचांगap == rst_map_012) अणु
+		v = पढ़ोl_relaxed(reset->prm->base + reset->prm->data->rstctrl);
+		अगर ((v & reset->mask) != reset->mask) अणु
 			dev_dbg(&pdev->dev, "Asserting all resets: %08x\n", v);
-			writel_relaxed(reset->mask, reset->prm->base +
+			ग_लिखोl_relaxed(reset->mask, reset->prm->base +
 				       reset->prm->data->rstctrl);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return devm_reset_controller_register(&pdev->dev, &reset->rcdev);
-}
+	वापस devm_reset_controller_रेजिस्टर(&pdev->dev, &reset->rcdev);
+पूर्ण
 
-static int omap_prm_probe(struct platform_device *pdev)
-{
-	struct resource *res;
-	const struct omap_prm_data *data;
-	struct omap_prm *prm;
-	const struct of_device_id *match;
-	int ret;
+अटल पूर्णांक omap_prm_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा resource *res;
+	स्थिर काष्ठा omap_prm_data *data;
+	काष्ठा omap_prm *prm;
+	स्थिर काष्ठा of_device_id *match;
+	पूर्णांक ret;
 
-	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
-	if (!res)
-		return -ENODEV;
+	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
+	अगर (!res)
+		वापस -ENODEV;
 
 	match = of_match_device(omap_prm_id_table, &pdev->dev);
-	if (!match)
-		return -ENOTSUPP;
+	अगर (!match)
+		वापस -ENOTSUPP;
 
-	prm = devm_kzalloc(&pdev->dev, sizeof(*prm), GFP_KERNEL);
-	if (!prm)
-		return -ENOMEM;
+	prm = devm_kzalloc(&pdev->dev, माप(*prm), GFP_KERNEL);
+	अगर (!prm)
+		वापस -ENOMEM;
 
 	data = match->data;
 
-	while (data->base != res->start) {
-		if (!data->base)
-			return -EINVAL;
+	जबतक (data->base != res->start) अणु
+		अगर (!data->base)
+			वापस -EINVAL;
 		data++;
-	}
+	पूर्ण
 
 	prm->data = data;
 
 	prm->base = devm_ioremap_resource(&pdev->dev, res);
-	if (IS_ERR(prm->base))
-		return PTR_ERR(prm->base);
+	अगर (IS_ERR(prm->base))
+		वापस PTR_ERR(prm->base);
 
-	ret = omap_prm_domain_init(&pdev->dev, prm);
-	if (ret)
-		return ret;
+	ret = omap_prm_करोमुख्य_init(&pdev->dev, prm);
+	अगर (ret)
+		वापस ret;
 
 	ret = omap_prm_reset_init(pdev, prm);
-	if (ret)
-		goto err_domain;
+	अगर (ret)
+		जाओ err_करोमुख्य;
 
-	return 0;
+	वापस 0;
 
-err_domain:
+err_करोमुख्य:
 	of_genpd_del_provider(pdev->dev.of_node);
-	pm_genpd_remove(&prm->prmd->pd);
+	pm_genpd_हटाओ(&prm->prmd->pd);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static struct platform_driver omap_prm_driver = {
+अटल काष्ठा platक्रमm_driver omap_prm_driver = अणु
 	.probe = omap_prm_probe,
-	.driver = {
+	.driver = अणु
 		.name		= KBUILD_MODNAME,
 		.of_match_table	= omap_prm_id_table,
-	},
-};
-builtin_platform_driver(omap_prm_driver);
+	पूर्ण,
+पूर्ण;
+builtin_platक्रमm_driver(omap_prm_driver);

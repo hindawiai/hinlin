@@ -1,19 +1,20 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * LTC2952 (PowerPath) driver
  *
  * Copyright (C) 2014, Xsens Technologies BV <info@xsens.com>
- * Maintainer: René Moll <linux@r-moll.nl>
+ * Maपूर्णांकainer: Renथऊ Moll <linux@r-moll.nl>
  *
  * ----------------------------------------
  * - Description
  * ----------------------------------------
  *
- * This driver is to be used with an external PowerPath Controller (LTC2952).
- * Its function is to determine when a external shut down is triggered
- * and react by properly shutting down the system.
+ * This driver is to be used with an बाह्यal PowerPath Controller (LTC2952).
+ * Its function is to determine when a बाह्यal shut करोwn is triggered
+ * and react by properly shutting करोwn the प्रणाली.
  *
- * This driver expects a device tree with a ltc2952 entry for pin mapping.
+ * This driver expects a device tree with a ltc2952 entry क्रम pin mapping.
  *
  * ----------------------------------------
  * - GPIO
@@ -21,301 +22,301 @@
  *
  * The following GPIOs are used:
  * - trigger (input)
- *     A level change indicates the shut-down trigger. If it's state reverts
- *     within the time-out defined by trigger_delay, the shut down is not
- *     executed. If no pin is assigned to this input, the driver will start the
- *     watchdog toggle immediately. The chip will only power off the system if
- *     it is requested to do so through the kill line.
+ *     A level change indicates the shut-करोwn trigger. If it's state reverts
+ *     within the समय-out defined by trigger_delay, the shut करोwn is not
+ *     executed. If no pin is asचिन्हित to this input, the driver will start the
+ *     watchकरोg toggle immediately. The chip will only घातer off the प्रणाली अगर
+ *     it is requested to करो so through the समाप्त line.
  *
- * - watchdog (output)
- *     Once a shut down is triggered, the driver will toggle this signal,
- *     with an internal (wde_interval) to stall the hardware shut down.
+ * - watchकरोg (output)
+ *     Once a shut करोwn is triggered, the driver will toggle this संकेत,
+ *     with an पूर्णांकernal (wde_पूर्णांकerval) to stall the hardware shut करोwn.
  *
- * - kill (output)
- *     The last action during shut down is triggering this signalling, such
- *     that the PowerPath Control will power down the hardware.
+ * - समाप्त (output)
+ *     The last action during shut करोwn is triggering this संकेतling, such
+ *     that the PowerPath Control will घातer करोwn the hardware.
  *
  * ----------------------------------------
  * - Interrupts
  * ----------------------------------------
  *
- * The driver requires a non-shared, edge-triggered interrupt on the trigger
+ * The driver requires a non-shared, edge-triggered पूर्णांकerrupt on the trigger
  * GPIO.
  */
 
-#include <linux/kernel.h>
-#include <linux/init.h>
-#include <linux/interrupt.h>
-#include <linux/device.h>
-#include <linux/platform_device.h>
-#include <linux/ktime.h>
-#include <linux/slab.h>
-#include <linux/kmod.h>
-#include <linux/module.h>
-#include <linux/mod_devicetable.h>
-#include <linux/gpio/consumer.h>
-#include <linux/reboot.h>
-#include <linux/property.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/init.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/device.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/kसमय.स>
+#समावेश <linux/slab.h>
+#समावेश <linux/kmod.h>
+#समावेश <linux/module.h>
+#समावेश <linux/mod_devicetable.h>
+#समावेश <linux/gpio/consumer.h>
+#समावेश <linux/reboot.h>
+#समावेश <linux/property.h>
 
-struct ltc2952_poweroff {
-	struct hrtimer timer_trigger;
-	struct hrtimer timer_wde;
+काष्ठा ltc2952_घातeroff अणु
+	काष्ठा hrसमयr समयr_trigger;
+	काष्ठा hrसमयr समयr_wde;
 
-	ktime_t trigger_delay;
-	ktime_t wde_interval;
+	kसमय_प्रकार trigger_delay;
+	kसमय_प्रकार wde_पूर्णांकerval;
 
-	struct device *dev;
+	काष्ठा device *dev;
 
-	struct gpio_desc *gpio_trigger;
-	struct gpio_desc *gpio_watchdog;
-	struct gpio_desc *gpio_kill;
+	काष्ठा gpio_desc *gpio_trigger;
+	काष्ठा gpio_desc *gpio_watchकरोg;
+	काष्ठा gpio_desc *gpio_समाप्त;
 
 	bool kernel_panic;
-	struct notifier_block panic_notifier;
-};
+	काष्ठा notअगरier_block panic_notअगरier;
+पूर्ण;
 
-#define to_ltc2952(p, m) container_of(p, struct ltc2952_poweroff, m)
+#घोषणा to_ltc2952(p, m) container_of(p, काष्ठा ltc2952_घातeroff, m)
 
 /*
- * This global variable is only needed for pm_power_off. We should
- * remove it entirely once we don't need the global state anymore.
+ * This global variable is only needed क्रम pm_घातer_off. We should
+ * हटाओ it entirely once we करोn't need the global state anymore.
  */
-static struct ltc2952_poweroff *ltc2952_data;
+अटल काष्ठा ltc2952_घातeroff *ltc2952_data;
 
 /**
- * ltc2952_poweroff_timer_wde - Timer callback
- * Toggles the watchdog reset signal each wde_interval
+ * ltc2952_घातeroff_समयr_wde - Timer callback
+ * Toggles the watchकरोg reset संकेत each wde_पूर्णांकerval
  *
- * @timer: corresponding timer
+ * @समयr: corresponding समयr
  *
- * Returns HRTIMER_RESTART for an infinite loop which will only stop when the
- * machine actually shuts down
+ * Returns HRTIMER_RESTART क्रम an infinite loop which will only stop when the
+ * machine actually shuts करोwn
  */
-static enum hrtimer_restart ltc2952_poweroff_timer_wde(struct hrtimer *timer)
-{
-	ktime_t now;
-	int state;
-	struct ltc2952_poweroff *data = to_ltc2952(timer, timer_wde);
+अटल क्रमागत hrसमयr_restart ltc2952_घातeroff_समयr_wde(काष्ठा hrसमयr *समयr)
+अणु
+	kसमय_प्रकार now;
+	पूर्णांक state;
+	काष्ठा ltc2952_घातeroff *data = to_ltc2952(समयr, समयr_wde);
 
-	if (data->kernel_panic)
-		return HRTIMER_NORESTART;
+	अगर (data->kernel_panic)
+		वापस HRTIMER_NORESTART;
 
-	state = gpiod_get_value(data->gpio_watchdog);
-	gpiod_set_value(data->gpio_watchdog, !state);
+	state = gpiod_get_value(data->gpio_watchकरोg);
+	gpiod_set_value(data->gpio_watchकरोg, !state);
 
-	now = hrtimer_cb_get_time(timer);
-	hrtimer_forward(timer, now, data->wde_interval);
+	now = hrसमयr_cb_get_समय(समयr);
+	hrसमयr_क्रमward(समयr, now, data->wde_पूर्णांकerval);
 
-	return HRTIMER_RESTART;
-}
+	वापस HRTIMER_RESTART;
+पूर्ण
 
-static void ltc2952_poweroff_start_wde(struct ltc2952_poweroff *data)
-{
-	hrtimer_start(&data->timer_wde, data->wde_interval, HRTIMER_MODE_REL);
-}
+अटल व्योम ltc2952_घातeroff_start_wde(काष्ठा ltc2952_घातeroff *data)
+अणु
+	hrसमयr_start(&data->समयr_wde, data->wde_पूर्णांकerval, HRTIMER_MODE_REL);
+पूर्ण
 
-static enum hrtimer_restart
-ltc2952_poweroff_timer_trigger(struct hrtimer *timer)
-{
-	struct ltc2952_poweroff *data = to_ltc2952(timer, timer_trigger);
+अटल क्रमागत hrसमयr_restart
+ltc2952_घातeroff_समयr_trigger(काष्ठा hrसमयr *समयr)
+अणु
+	काष्ठा ltc2952_घातeroff *data = to_ltc2952(समयr, समयr_trigger);
 
-	ltc2952_poweroff_start_wde(data);
+	ltc2952_घातeroff_start_wde(data);
 	dev_info(data->dev, "executing shutdown\n");
-	orderly_poweroff(true);
+	orderly_घातeroff(true);
 
-	return HRTIMER_NORESTART;
-}
+	वापस HRTIMER_NORESTART;
+पूर्ण
 
 /**
- * ltc2952_poweroff_handler - Interrupt handler
- * Triggered each time the trigger signal changes state and (de)activates a
- * time-out (timer_trigger). Once the time-out is actually reached the shut
- * down is executed.
+ * ltc2952_घातeroff_handler - Interrupt handler
+ * Triggered each समय the trigger संकेत changes state and (de)activates a
+ * समय-out (समयr_trigger). Once the समय-out is actually reached the shut
+ * करोwn is executed.
  *
  * @irq: IRQ number
- * @dev_id: pointer to the main data structure
+ * @dev_id: poपूर्णांकer to the मुख्य data काष्ठाure
  */
-static irqreturn_t ltc2952_poweroff_handler(int irq, void *dev_id)
-{
-	struct ltc2952_poweroff *data = dev_id;
+अटल irqवापस_t ltc2952_घातeroff_handler(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा ltc2952_घातeroff *data = dev_id;
 
-	if (data->kernel_panic || hrtimer_active(&data->timer_wde)) {
-		/* shutdown is already triggered, nothing to do any more */
-		return IRQ_HANDLED;
-	}
+	अगर (data->kernel_panic || hrसमयr_active(&data->समयr_wde)) अणु
+		/* shutकरोwn is alपढ़ोy triggered, nothing to करो any more */
+		वापस IRQ_HANDLED;
+	पूर्ण
 
-	if (gpiod_get_value(data->gpio_trigger)) {
-		hrtimer_start(&data->timer_trigger, data->trigger_delay,
+	अगर (gpiod_get_value(data->gpio_trigger)) अणु
+		hrसमयr_start(&data->समयr_trigger, data->trigger_delay,
 			      HRTIMER_MODE_REL);
-	} else {
-		hrtimer_cancel(&data->timer_trigger);
-	}
-	return IRQ_HANDLED;
-}
+	पूर्ण अन्यथा अणु
+		hrसमयr_cancel(&data->समयr_trigger);
+	पूर्ण
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static void ltc2952_poweroff_kill(void)
-{
-	gpiod_set_value(ltc2952_data->gpio_kill, 1);
-}
+अटल व्योम ltc2952_घातeroff_समाप्त(व्योम)
+अणु
+	gpiod_set_value(ltc2952_data->gpio_समाप्त, 1);
+पूर्ण
 
-static void ltc2952_poweroff_default(struct ltc2952_poweroff *data)
-{
-	data->wde_interval = 300L * 1E6L;
-	data->trigger_delay = ktime_set(2, 500L*1E6L);
+अटल व्योम ltc2952_घातeroff_शेष(काष्ठा ltc2952_घातeroff *data)
+अणु
+	data->wde_पूर्णांकerval = 300L * 1E6L;
+	data->trigger_delay = kसमय_set(2, 500L*1E6L);
 
-	hrtimer_init(&data->timer_trigger, CLOCK_MONOTONIC, HRTIMER_MODE_REL);
-	data->timer_trigger.function = ltc2952_poweroff_timer_trigger;
+	hrसमयr_init(&data->समयr_trigger, CLOCK_MONOTONIC, HRTIMER_MODE_REL);
+	data->समयr_trigger.function = ltc2952_घातeroff_समयr_trigger;
 
-	hrtimer_init(&data->timer_wde, CLOCK_MONOTONIC, HRTIMER_MODE_REL);
-	data->timer_wde.function = ltc2952_poweroff_timer_wde;
-}
+	hrसमयr_init(&data->समयr_wde, CLOCK_MONOTONIC, HRTIMER_MODE_REL);
+	data->समयr_wde.function = ltc2952_घातeroff_समयr_wde;
+पूर्ण
 
-static int ltc2952_poweroff_init(struct platform_device *pdev)
-{
-	int ret;
+अटल पूर्णांक ltc2952_घातeroff_init(काष्ठा platक्रमm_device *pdev)
+अणु
+	पूर्णांक ret;
 	u32 trigger_delay_ms;
-	struct ltc2952_poweroff *data = platform_get_drvdata(pdev);
+	काष्ठा ltc2952_घातeroff *data = platक्रमm_get_drvdata(pdev);
 
-	ltc2952_poweroff_default(data);
+	ltc2952_घातeroff_शेष(data);
 
-	if (!device_property_read_u32(&pdev->dev, "trigger-delay-ms",
-				      &trigger_delay_ms)) {
-		data->trigger_delay = ktime_set(trigger_delay_ms / MSEC_PER_SEC,
+	अगर (!device_property_पढ़ो_u32(&pdev->dev, "trigger-delay-ms",
+				      &trigger_delay_ms)) अणु
+		data->trigger_delay = kसमय_set(trigger_delay_ms / MSEC_PER_SEC,
 			(trigger_delay_ms % MSEC_PER_SEC) * NSEC_PER_MSEC);
-	}
+	पूर्ण
 
-	data->gpio_watchdog = devm_gpiod_get(&pdev->dev, "watchdog",
+	data->gpio_watchकरोg = devm_gpiod_get(&pdev->dev, "watchdog",
 					     GPIOD_OUT_LOW);
-	if (IS_ERR(data->gpio_watchdog)) {
-		ret = PTR_ERR(data->gpio_watchdog);
+	अगर (IS_ERR(data->gpio_watchकरोg)) अणु
+		ret = PTR_ERR(data->gpio_watchकरोg);
 		dev_err(&pdev->dev, "unable to claim gpio \"watchdog\"\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	data->gpio_kill = devm_gpiod_get(&pdev->dev, "kill", GPIOD_OUT_LOW);
-	if (IS_ERR(data->gpio_kill)) {
-		ret = PTR_ERR(data->gpio_kill);
+	data->gpio_समाप्त = devm_gpiod_get(&pdev->dev, "kill", GPIOD_OUT_LOW);
+	अगर (IS_ERR(data->gpio_समाप्त)) अणु
+		ret = PTR_ERR(data->gpio_समाप्त);
 		dev_err(&pdev->dev, "unable to claim gpio \"kill\"\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	data->gpio_trigger = devm_gpiod_get_optional(&pdev->dev, "trigger",
 						     GPIOD_IN);
-	if (IS_ERR(data->gpio_trigger)) {
+	अगर (IS_ERR(data->gpio_trigger)) अणु
 		/*
 		 * It's not a problem if the trigger gpio isn't available, but
-		 * it is worth a warning if its use was defined in the device
+		 * it is worth a warning अगर its use was defined in the device
 		 * tree.
 		 */
 		dev_err(&pdev->dev, "unable to claim gpio \"trigger\"\n");
-		data->gpio_trigger = NULL;
-	}
+		data->gpio_trigger = शून्य;
+	पूर्ण
 
-	if (devm_request_irq(&pdev->dev, gpiod_to_irq(data->gpio_trigger),
-			     ltc2952_poweroff_handler,
+	अगर (devm_request_irq(&pdev->dev, gpiod_to_irq(data->gpio_trigger),
+			     ltc2952_घातeroff_handler,
 			     (IRQF_TRIGGER_FALLING | IRQF_TRIGGER_RISING),
 			     "ltc2952-poweroff",
-			     data)) {
+			     data)) अणु
 		/*
 		 * Some things may have happened:
 		 * - No trigger input was defined
 		 * - Claiming the GPIO failed
 		 * - We could not map to an IRQ
-		 * - We couldn't register an interrupt handler
+		 * - We couldn't रेजिस्टर an पूर्णांकerrupt handler
 		 *
 		 * None of these really are problems, but all of them
-		 * disqualify the push button from controlling the power.
+		 * disqualअगरy the push button from controlling the घातer.
 		 *
-		 * It is therefore important to note that if the ltc2952
-		 * detects a button press for long enough, it will still start
-		 * its own powerdown window and cut the power on us if we don't
-		 * start the watchdog trigger.
+		 * It is thereक्रमe important to note that अगर the ltc2952
+		 * detects a button press क्रम दीर्घ enough, it will still start
+		 * its own घातerकरोwn winकरोw and cut the घातer on us अगर we करोn't
+		 * start the watchकरोg trigger.
 		 */
-		if (data->gpio_trigger) {
+		अगर (data->gpio_trigger) अणु
 			dev_warn(&pdev->dev,
 				 "unable to configure the trigger interrupt\n");
 			devm_gpiod_put(&pdev->dev, data->gpio_trigger);
-			data->gpio_trigger = NULL;
-		}
+			data->gpio_trigger = शून्य;
+		पूर्ण
 		dev_info(&pdev->dev,
 			 "power down trigger input will not be used\n");
-		ltc2952_poweroff_start_wde(data);
-	}
+		ltc2952_घातeroff_start_wde(data);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ltc2952_poweroff_notify_panic(struct notifier_block *nb,
-					 unsigned long code, void *unused)
-{
-	struct ltc2952_poweroff *data = to_ltc2952(nb, panic_notifier);
+अटल पूर्णांक ltc2952_घातeroff_notअगरy_panic(काष्ठा notअगरier_block *nb,
+					 अचिन्हित दीर्घ code, व्योम *unused)
+अणु
+	काष्ठा ltc2952_घातeroff *data = to_ltc2952(nb, panic_notअगरier);
 
 	data->kernel_panic = true;
-	return NOTIFY_DONE;
-}
+	वापस NOTIFY_DONE;
+पूर्ण
 
-static int ltc2952_poweroff_probe(struct platform_device *pdev)
-{
-	int ret;
-	struct ltc2952_poweroff *data;
+अटल पूर्णांक ltc2952_घातeroff_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	पूर्णांक ret;
+	काष्ठा ltc2952_घातeroff *data;
 
-	if (pm_power_off) {
+	अगर (pm_घातer_off) अणु
 		dev_err(&pdev->dev, "pm_power_off already registered");
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 
-	data = devm_kzalloc(&pdev->dev, sizeof(*data), GFP_KERNEL);
-	if (!data)
-		return -ENOMEM;
+	data = devm_kzalloc(&pdev->dev, माप(*data), GFP_KERNEL);
+	अगर (!data)
+		वापस -ENOMEM;
 
 	data->dev = &pdev->dev;
-	platform_set_drvdata(pdev, data);
+	platक्रमm_set_drvdata(pdev, data);
 
-	ret = ltc2952_poweroff_init(pdev);
-	if (ret)
-		return ret;
+	ret = ltc2952_घातeroff_init(pdev);
+	अगर (ret)
+		वापस ret;
 
-	/* TODO: remove ltc2952_data */
+	/* TODO: हटाओ ltc2952_data */
 	ltc2952_data = data;
-	pm_power_off = ltc2952_poweroff_kill;
+	pm_घातer_off = ltc2952_घातeroff_समाप्त;
 
-	data->panic_notifier.notifier_call = ltc2952_poweroff_notify_panic;
-	atomic_notifier_chain_register(&panic_notifier_list,
-				       &data->panic_notifier);
+	data->panic_notअगरier.notअगरier_call = ltc2952_घातeroff_notअगरy_panic;
+	atomic_notअगरier_chain_रेजिस्टर(&panic_notअगरier_list,
+				       &data->panic_notअगरier);
 	dev_info(&pdev->dev, "probe successful\n");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ltc2952_poweroff_remove(struct platform_device *pdev)
-{
-	struct ltc2952_poweroff *data = platform_get_drvdata(pdev);
+अटल पूर्णांक ltc2952_घातeroff_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा ltc2952_घातeroff *data = platक्रमm_get_drvdata(pdev);
 
-	pm_power_off = NULL;
-	hrtimer_cancel(&data->timer_trigger);
-	hrtimer_cancel(&data->timer_wde);
-	atomic_notifier_chain_unregister(&panic_notifier_list,
-					 &data->panic_notifier);
-	return 0;
-}
+	pm_घातer_off = शून्य;
+	hrसमयr_cancel(&data->समयr_trigger);
+	hrसमयr_cancel(&data->समयr_wde);
+	atomic_notअगरier_chain_unरेजिस्टर(&panic_notअगरier_list,
+					 &data->panic_notअगरier);
+	वापस 0;
+पूर्ण
 
-static const struct of_device_id of_ltc2952_poweroff_match[] = {
-	{ .compatible = "lltc,ltc2952"},
-	{},
-};
-MODULE_DEVICE_TABLE(of, of_ltc2952_poweroff_match);
+अटल स्थिर काष्ठा of_device_id of_ltc2952_घातeroff_match[] = अणु
+	अणु .compatible = "lltc,ltc2952"पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
+MODULE_DEVICE_TABLE(of, of_ltc2952_घातeroff_match);
 
-static struct platform_driver ltc2952_poweroff_driver = {
-	.probe = ltc2952_poweroff_probe,
-	.remove = ltc2952_poweroff_remove,
-	.driver = {
+अटल काष्ठा platक्रमm_driver ltc2952_घातeroff_driver = अणु
+	.probe = ltc2952_घातeroff_probe,
+	.हटाओ = ltc2952_घातeroff_हटाओ,
+	.driver = अणु
 		.name = "ltc2952-poweroff",
-		.of_match_table = of_ltc2952_poweroff_match,
-	},
-};
+		.of_match_table = of_ltc2952_घातeroff_match,
+	पूर्ण,
+पूर्ण;
 
-module_platform_driver(ltc2952_poweroff_driver);
+module_platक्रमm_driver(ltc2952_घातeroff_driver);
 
-MODULE_AUTHOR("René Moll <rene.moll@xsens.com>");
+MODULE_AUTHOR("Renथऊ Moll <rene.moll@xsens.com>");
 MODULE_DESCRIPTION("LTC PowerPath power-off driver");
 MODULE_LICENSE("GPL v2");

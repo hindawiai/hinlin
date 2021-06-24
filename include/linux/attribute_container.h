@@ -1,78 +1,79 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
- * attribute_container.h - a generic container for all classes
+ * attribute_container.h - a generic container क्रम all classes
  *
  * Copyright (c) 2005 - James Bottomley <James.Bottomley@steeleye.com>
  */
 
-#ifndef _ATTRIBUTE_CONTAINER_H_
-#define _ATTRIBUTE_CONTAINER_H_
+#अगर_अघोषित _ATTRIBUTE_CONTAINER_H_
+#घोषणा _ATTRIBUTE_CONTAINER_H_
 
-#include <linux/list.h>
-#include <linux/klist.h>
+#समावेश <linux/list.h>
+#समावेश <linux/klist.h>
 
-struct device;
+काष्ठा device;
 
-struct attribute_container {
-	struct list_head	node;
-	struct klist		containers;
-	struct class		*class;
-	const struct attribute_group *grp;
-	struct device_attribute **attrs;
-	int (*match)(struct attribute_container *, struct device *);
-#define	ATTRIBUTE_CONTAINER_NO_CLASSDEVS	0x01
-	unsigned long		flags;
-};
+काष्ठा attribute_container अणु
+	काष्ठा list_head	node;
+	काष्ठा klist		containers;
+	काष्ठा class		*class;
+	स्थिर काष्ठा attribute_group *grp;
+	काष्ठा device_attribute **attrs;
+	पूर्णांक (*match)(काष्ठा attribute_container *, काष्ठा device *);
+#घोषणा	ATTRIBUTE_CONTAINER_NO_CLASSDEVS	0x01
+	अचिन्हित दीर्घ		flags;
+पूर्ण;
 
-static inline int
-attribute_container_no_classdevs(struct attribute_container *atc)
-{
-	return atc->flags & ATTRIBUTE_CONTAINER_NO_CLASSDEVS;
-}
+अटल अंतरभूत पूर्णांक
+attribute_container_no_classdevs(काष्ठा attribute_container *atc)
+अणु
+	वापस atc->flags & ATTRIBUTE_CONTAINER_NO_CLASSDEVS;
+पूर्ण
 
-static inline void
-attribute_container_set_no_classdevs(struct attribute_container *atc)
-{
+अटल अंतरभूत व्योम
+attribute_container_set_no_classdevs(काष्ठा attribute_container *atc)
+अणु
 	atc->flags |= ATTRIBUTE_CONTAINER_NO_CLASSDEVS;
-}
+पूर्ण
 
-int attribute_container_register(struct attribute_container *cont);
-int __must_check attribute_container_unregister(struct attribute_container *cont);
-void attribute_container_create_device(struct device *dev,
-				       int (*fn)(struct attribute_container *,
-						 struct device *,
-						 struct device *));
-void attribute_container_add_device(struct device *dev,
-				    int (*fn)(struct attribute_container *,
-					      struct device *,
-					      struct device *));
-void attribute_container_remove_device(struct device *dev,
-				       void (*fn)(struct attribute_container *,
-						  struct device *,
-						  struct device *));
-void attribute_container_device_trigger(struct device *dev, 
-					int (*fn)(struct attribute_container *,
-						  struct device *,
-						  struct device *));
-int attribute_container_device_trigger_safe(struct device *dev,
-					    int (*fn)(struct attribute_container *,
-						      struct device *,
-						      struct device *),
-					    int (*undo)(struct attribute_container *,
-							struct device *,
-							struct device *));
-void attribute_container_trigger(struct device *dev, 
-				 int (*fn)(struct attribute_container *,
-					   struct device *));
-int attribute_container_add_attrs(struct device *classdev);
-int attribute_container_add_class_device(struct device *classdev);
-int attribute_container_add_class_device_adapter(struct attribute_container *cont,
-						 struct device *dev,
-						 struct device *classdev);
-void attribute_container_remove_attrs(struct device *classdev);
-void attribute_container_class_device_del(struct device *classdev);
-struct attribute_container *attribute_container_classdev_to_container(struct device *);
-struct device *attribute_container_find_class_device(struct attribute_container *, struct device *);
-struct device_attribute **attribute_container_classdev_to_attrs(const struct device *classdev);
+पूर्णांक attribute_container_रेजिस्टर(काष्ठा attribute_container *cont);
+पूर्णांक __must_check attribute_container_unरेजिस्टर(काष्ठा attribute_container *cont);
+व्योम attribute_container_create_device(काष्ठा device *dev,
+				       पूर्णांक (*fn)(काष्ठा attribute_container *,
+						 काष्ठा device *,
+						 काष्ठा device *));
+व्योम attribute_container_add_device(काष्ठा device *dev,
+				    पूर्णांक (*fn)(काष्ठा attribute_container *,
+					      काष्ठा device *,
+					      काष्ठा device *));
+व्योम attribute_container_हटाओ_device(काष्ठा device *dev,
+				       व्योम (*fn)(काष्ठा attribute_container *,
+						  काष्ठा device *,
+						  काष्ठा device *));
+व्योम attribute_container_device_trigger(काष्ठा device *dev, 
+					पूर्णांक (*fn)(काष्ठा attribute_container *,
+						  काष्ठा device *,
+						  काष्ठा device *));
+पूर्णांक attribute_container_device_trigger_safe(काष्ठा device *dev,
+					    पूर्णांक (*fn)(काष्ठा attribute_container *,
+						      काष्ठा device *,
+						      काष्ठा device *),
+					    पूर्णांक (*unकरो)(काष्ठा attribute_container *,
+							काष्ठा device *,
+							काष्ठा device *));
+व्योम attribute_container_trigger(काष्ठा device *dev, 
+				 पूर्णांक (*fn)(काष्ठा attribute_container *,
+					   काष्ठा device *));
+पूर्णांक attribute_container_add_attrs(काष्ठा device *classdev);
+पूर्णांक attribute_container_add_class_device(काष्ठा device *classdev);
+पूर्णांक attribute_container_add_class_device_adapter(काष्ठा attribute_container *cont,
+						 काष्ठा device *dev,
+						 काष्ठा device *classdev);
+व्योम attribute_container_हटाओ_attrs(काष्ठा device *classdev);
+व्योम attribute_container_class_device_del(काष्ठा device *classdev);
+काष्ठा attribute_container *attribute_container_classdev_to_container(काष्ठा device *);
+काष्ठा device *attribute_container_find_class_device(काष्ठा attribute_container *, काष्ठा device *);
+काष्ठा device_attribute **attribute_container_classdev_to_attrs(स्थिर काष्ठा device *classdev);
 
-#endif
+#पूर्ण_अगर

@@ -1,33 +1,34 @@
-// SPDX-License-Identifier: GPL-2.0 OR Linux-OpenIB
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0 OR Linux-OpenIB
 /*
  * Copyright (c) 2019 Mellanox Technologies. All rights reserved.
  */
-#include <rdma/ib_verbs.h>
-#include <rdma/rdma_counter.h>
+#समावेश <rdma/ib_verbs.h>
+#समावेश <rdma/rdma_counter.h>
 
-#include "core_priv.h"
-#include "restrack.h"
+#समावेश "core_priv.h"
+#समावेश "restrack.h"
 
-#define ALL_AUTO_MODE_MASKS (RDMA_COUNTER_MASK_QP_TYPE | RDMA_COUNTER_MASK_PID)
+#घोषणा ALL_AUTO_MODE_MASKS (RDMA_COUNTER_MASK_QP_TYPE | RDMA_COUNTER_MASK_PID)
 
-static int __counter_set_mode(struct rdma_port_counter *port_counter,
-			      enum rdma_nl_counter_mode new_mode,
-			      enum rdma_nl_counter_mask new_mask)
-{
-	if (new_mode == RDMA_COUNTER_MODE_AUTO) {
-		if (new_mask & (~ALL_AUTO_MODE_MASKS))
-			return -EINVAL;
-		if (port_counter->num_counters)
-			return -EBUSY;
-	}
+अटल पूर्णांक __counter_set_mode(काष्ठा rdma_port_counter *port_counter,
+			      क्रमागत rdma_nl_counter_mode new_mode,
+			      क्रमागत rdma_nl_counter_mask new_mask)
+अणु
+	अगर (new_mode == RDMA_COUNTER_MODE_AUTO) अणु
+		अगर (new_mask & (~ALL_AUTO_MODE_MASKS))
+			वापस -EINVAL;
+		अगर (port_counter->num_counters)
+			वापस -EBUSY;
+	पूर्ण
 
 	port_counter->mode.mode = new_mode;
 	port_counter->mode.mask = new_mask;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * rdma_counter_set_auto_mode() - Turn on/off per-port auto mode
+ * rdma_counter_set_स्वतः_mode() - Turn on/off per-port स्वतः mode
  *
  * @dev: Device to operate
  * @port: Port to use
@@ -36,118 +37,118 @@ static int __counter_set_mode(struct rdma_port_counter *port_counter,
  *
  * Return 0 on success. If counter mode wasn't changed then it is considered
  * as success as well.
- * Return -EBUSY when changing to auto mode while there are bounded counters.
+ * Return -EBUSY when changing to स्वतः mode जबतक there are bounded counters.
  *
  */
-int rdma_counter_set_auto_mode(struct ib_device *dev, u32 port,
-			       enum rdma_nl_counter_mask mask,
-			       struct netlink_ext_ack *extack)
-{
-	struct rdma_port_counter *port_counter;
-	enum rdma_nl_counter_mode mode;
-	int ret;
+पूर्णांक rdma_counter_set_स्वतः_mode(काष्ठा ib_device *dev, u32 port,
+			       क्रमागत rdma_nl_counter_mask mask,
+			       काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा rdma_port_counter *port_counter;
+	क्रमागत rdma_nl_counter_mode mode;
+	पूर्णांक ret;
 
 	port_counter = &dev->port_data[port].port_counter;
-	if (!port_counter->hstats)
-		return -EOPNOTSUPP;
+	अगर (!port_counter->hstats)
+		वापस -EOPNOTSUPP;
 
 	mutex_lock(&port_counter->lock);
-	if (mask)
+	अगर (mask)
 		mode = RDMA_COUNTER_MODE_AUTO;
-	else
+	अन्यथा
 		mode = (port_counter->num_counters) ? RDMA_COUNTER_MODE_MANUAL :
 						      RDMA_COUNTER_MODE_NONE;
 
-	if (port_counter->mode.mode == mode &&
-	    port_counter->mode.mask == mask) {
+	अगर (port_counter->mode.mode == mode &&
+	    port_counter->mode.mask == mask) अणु
 		ret = 0;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	ret = __counter_set_mode(port_counter, mode, mask);
 
 out:
 	mutex_unlock(&port_counter->lock);
-	if (ret == -EBUSY)
+	अगर (ret == -EBUSY)
 		NL_SET_ERR_MSG(
 			extack,
 			"Modifying auto mode is not allowed when there is a bound QP");
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void auto_mode_init_counter(struct rdma_counter *counter,
-				   const struct ib_qp *qp,
-				   enum rdma_nl_counter_mask new_mask)
-{
-	struct auto_mode_param *param = &counter->mode.param;
+अटल व्योम स्वतः_mode_init_counter(काष्ठा rdma_counter *counter,
+				   स्थिर काष्ठा ib_qp *qp,
+				   क्रमागत rdma_nl_counter_mask new_mask)
+अणु
+	काष्ठा स्वतः_mode_param *param = &counter->mode.param;
 
 	counter->mode.mode = RDMA_COUNTER_MODE_AUTO;
 	counter->mode.mask = new_mask;
 
-	if (new_mask & RDMA_COUNTER_MASK_QP_TYPE)
+	अगर (new_mask & RDMA_COUNTER_MASK_QP_TYPE)
 		param->qp_type = qp->qp_type;
-}
+पूर्ण
 
-static int __rdma_counter_bind_qp(struct rdma_counter *counter,
-				  struct ib_qp *qp)
-{
-	int ret;
+अटल पूर्णांक __rdma_counter_bind_qp(काष्ठा rdma_counter *counter,
+				  काष्ठा ib_qp *qp)
+अणु
+	पूर्णांक ret;
 
-	if (qp->counter)
-		return -EINVAL;
+	अगर (qp->counter)
+		वापस -EINVAL;
 
-	if (!qp->device->ops.counter_bind_qp)
-		return -EOPNOTSUPP;
+	अगर (!qp->device->ops.counter_bind_qp)
+		वापस -EOPNOTSUPP;
 
 	mutex_lock(&counter->lock);
 	ret = qp->device->ops.counter_bind_qp(counter, qp);
 	mutex_unlock(&counter->lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static struct rdma_counter *alloc_and_bind(struct ib_device *dev, u32 port,
-					   struct ib_qp *qp,
-					   enum rdma_nl_counter_mode mode)
-{
-	struct rdma_port_counter *port_counter;
-	struct rdma_counter *counter;
-	int ret;
+अटल काष्ठा rdma_counter *alloc_and_bind(काष्ठा ib_device *dev, u32 port,
+					   काष्ठा ib_qp *qp,
+					   क्रमागत rdma_nl_counter_mode mode)
+अणु
+	काष्ठा rdma_port_counter *port_counter;
+	काष्ठा rdma_counter *counter;
+	पूर्णांक ret;
 
-	if (!dev->ops.counter_dealloc || !dev->ops.counter_alloc_stats)
-		return NULL;
+	अगर (!dev->ops.counter_dealloc || !dev->ops.counter_alloc_stats)
+		वापस शून्य;
 
-	counter = kzalloc(sizeof(*counter), GFP_KERNEL);
-	if (!counter)
-		return NULL;
+	counter = kzalloc(माप(*counter), GFP_KERNEL);
+	अगर (!counter)
+		वापस शून्य;
 
 	counter->device    = dev;
 	counter->port      = port;
 
 	rdma_restrack_new(&counter->res, RDMA_RESTRACK_COUNTER);
 	counter->stats = dev->ops.counter_alloc_stats(counter);
-	if (!counter->stats)
-		goto err_stats;
+	अगर (!counter->stats)
+		जाओ err_stats;
 
 	port_counter = &dev->port_data[port].port_counter;
 	mutex_lock(&port_counter->lock);
-	switch (mode) {
-	case RDMA_COUNTER_MODE_MANUAL:
+	चयन (mode) अणु
+	हाल RDMA_COUNTER_MODE_MANUAL:
 		ret = __counter_set_mode(port_counter, RDMA_COUNTER_MODE_MANUAL,
 					 0);
-		if (ret) {
+		अगर (ret) अणु
 			mutex_unlock(&port_counter->lock);
-			goto err_mode;
-		}
-		break;
-	case RDMA_COUNTER_MODE_AUTO:
-		auto_mode_init_counter(counter, qp, port_counter->mode.mask);
-		break;
-	default:
+			जाओ err_mode;
+		पूर्ण
+		अवरोध;
+	हाल RDMA_COUNTER_MODE_AUTO:
+		स्वतः_mode_init_counter(counter, qp, port_counter->mode.mask);
+		अवरोध;
+	शेष:
 		ret = -EOPNOTSUPP;
 		mutex_unlock(&port_counter->lock);
-		goto err_mode;
-	}
+		जाओ err_mode;
+	पूर्ण
 
 	port_counter->num_counters++;
 	mutex_unlock(&port_counter->lock);
@@ -157,481 +158,481 @@ static struct rdma_counter *alloc_and_bind(struct ib_device *dev, u32 port,
 	mutex_init(&counter->lock);
 
 	ret = __rdma_counter_bind_qp(counter, qp);
-	if (ret)
-		goto err_mode;
+	अगर (ret)
+		जाओ err_mode;
 
 	rdma_restrack_parent_name(&counter->res, &qp->res);
 	rdma_restrack_add(&counter->res);
-	return counter;
+	वापस counter;
 
 err_mode:
-	kfree(counter->stats);
+	kमुक्त(counter->stats);
 err_stats:
 	rdma_restrack_put(&counter->res);
-	kfree(counter);
-	return NULL;
-}
+	kमुक्त(counter);
+	वापस शून्य;
+पूर्ण
 
-static void rdma_counter_free(struct rdma_counter *counter)
-{
-	struct rdma_port_counter *port_counter;
+अटल व्योम rdma_counter_मुक्त(काष्ठा rdma_counter *counter)
+अणु
+	काष्ठा rdma_port_counter *port_counter;
 
 	port_counter = &counter->device->port_data[counter->port].port_counter;
 	mutex_lock(&port_counter->lock);
 	port_counter->num_counters--;
-	if (!port_counter->num_counters &&
+	अगर (!port_counter->num_counters &&
 	    (port_counter->mode.mode == RDMA_COUNTER_MODE_MANUAL))
 		__counter_set_mode(port_counter, RDMA_COUNTER_MODE_NONE, 0);
 
 	mutex_unlock(&port_counter->lock);
 
 	rdma_restrack_del(&counter->res);
-	kfree(counter->stats);
-	kfree(counter);
-}
+	kमुक्त(counter->stats);
+	kमुक्त(counter);
+पूर्ण
 
-static bool auto_mode_match(struct ib_qp *qp, struct rdma_counter *counter,
-			    enum rdma_nl_counter_mask auto_mask)
-{
-	struct auto_mode_param *param = &counter->mode.param;
+अटल bool स्वतः_mode_match(काष्ठा ib_qp *qp, काष्ठा rdma_counter *counter,
+			    क्रमागत rdma_nl_counter_mask स्वतः_mask)
+अणु
+	काष्ठा स्वतः_mode_param *param = &counter->mode.param;
 	bool match = true;
 
-	if (auto_mask & RDMA_COUNTER_MASK_QP_TYPE)
+	अगर (स्वतः_mask & RDMA_COUNTER_MASK_QP_TYPE)
 		match &= (param->qp_type == qp->qp_type);
 
-	if (auto_mask & RDMA_COUNTER_MASK_PID)
+	अगर (स्वतः_mask & RDMA_COUNTER_MASK_PID)
 		match &= (task_pid_nr(counter->res.task) ==
 			  task_pid_nr(qp->res.task));
 
-	return match;
-}
+	वापस match;
+पूर्ण
 
-static int __rdma_counter_unbind_qp(struct ib_qp *qp)
-{
-	struct rdma_counter *counter = qp->counter;
-	int ret;
+अटल पूर्णांक __rdma_counter_unbind_qp(काष्ठा ib_qp *qp)
+अणु
+	काष्ठा rdma_counter *counter = qp->counter;
+	पूर्णांक ret;
 
-	if (!qp->device->ops.counter_unbind_qp)
-		return -EOPNOTSUPP;
+	अगर (!qp->device->ops.counter_unbind_qp)
+		वापस -EOPNOTSUPP;
 
 	mutex_lock(&counter->lock);
 	ret = qp->device->ops.counter_unbind_qp(qp);
 	mutex_unlock(&counter->lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void counter_history_stat_update(struct rdma_counter *counter)
-{
-	struct ib_device *dev = counter->device;
-	struct rdma_port_counter *port_counter;
-	int i;
+अटल व्योम counter_history_stat_update(काष्ठा rdma_counter *counter)
+अणु
+	काष्ठा ib_device *dev = counter->device;
+	काष्ठा rdma_port_counter *port_counter;
+	पूर्णांक i;
 
 	port_counter = &dev->port_data[counter->port].port_counter;
-	if (!port_counter->hstats)
-		return;
+	अगर (!port_counter->hstats)
+		वापस;
 
 	rdma_counter_query_stats(counter);
 
-	for (i = 0; i < counter->stats->num_counters; i++)
+	क्रम (i = 0; i < counter->stats->num_counters; i++)
 		port_counter->hstats->value[i] += counter->stats->value[i];
-}
+पूर्ण
 
 /*
- * rdma_get_counter_auto_mode - Find the counter that @qp should be bound
- *     with in auto mode
+ * rdma_get_counter_स्वतः_mode - Find the counter that @qp should be bound
+ *     with in स्वतः mode
  *
- * Return: The counter (with ref-count increased) if found
+ * Return: The counter (with ref-count increased) अगर found
  */
-static struct rdma_counter *rdma_get_counter_auto_mode(struct ib_qp *qp,
+अटल काष्ठा rdma_counter *rdma_get_counter_स्वतः_mode(काष्ठा ib_qp *qp,
 						       u32 port)
-{
-	struct rdma_port_counter *port_counter;
-	struct rdma_counter *counter = NULL;
-	struct ib_device *dev = qp->device;
-	struct rdma_restrack_entry *res;
-	struct rdma_restrack_root *rt;
-	unsigned long id = 0;
+अणु
+	काष्ठा rdma_port_counter *port_counter;
+	काष्ठा rdma_counter *counter = शून्य;
+	काष्ठा ib_device *dev = qp->device;
+	काष्ठा rdma_restrack_entry *res;
+	काष्ठा rdma_restrack_root *rt;
+	अचिन्हित दीर्घ id = 0;
 
 	port_counter = &dev->port_data[port].port_counter;
 	rt = &dev->res[RDMA_RESTRACK_COUNTER];
 	xa_lock(&rt->xa);
-	xa_for_each(&rt->xa, id, res) {
-		counter = container_of(res, struct rdma_counter, res);
-		if ((counter->device != qp->device) || (counter->port != port))
-			goto next;
+	xa_क्रम_each(&rt->xa, id, res) अणु
+		counter = container_of(res, काष्ठा rdma_counter, res);
+		अगर ((counter->device != qp->device) || (counter->port != port))
+			जाओ next;
 
-		if (auto_mode_match(qp, counter, port_counter->mode.mask))
-			break;
+		अगर (स्वतः_mode_match(qp, counter, port_counter->mode.mask))
+			अवरोध;
 next:
-		counter = NULL;
-	}
+		counter = शून्य;
+	पूर्ण
 
-	if (counter && !kref_get_unless_zero(&counter->kref))
-		counter = NULL;
+	अगर (counter && !kref_get_unless_zero(&counter->kref))
+		counter = शून्य;
 
 	xa_unlock(&rt->xa);
-	return counter;
-}
+	वापस counter;
+पूर्ण
 
-static void counter_release(struct kref *kref)
-{
-	struct rdma_counter *counter;
+अटल व्योम counter_release(काष्ठा kref *kref)
+अणु
+	काष्ठा rdma_counter *counter;
 
-	counter = container_of(kref, struct rdma_counter, kref);
+	counter = container_of(kref, काष्ठा rdma_counter, kref);
 	counter_history_stat_update(counter);
 	counter->device->ops.counter_dealloc(counter);
-	rdma_counter_free(counter);
-}
+	rdma_counter_मुक्त(counter);
+पूर्ण
 
 /*
- * rdma_counter_bind_qp_auto - Check and bind the QP to a counter base on
- *   the auto-mode rule
+ * rdma_counter_bind_qp_स्वतः - Check and bind the QP to a counter base on
+ *   the स्वतः-mode rule
  */
-int rdma_counter_bind_qp_auto(struct ib_qp *qp, u32 port)
-{
-	struct rdma_port_counter *port_counter;
-	struct ib_device *dev = qp->device;
-	struct rdma_counter *counter;
-	int ret;
+पूर्णांक rdma_counter_bind_qp_स्वतः(काष्ठा ib_qp *qp, u32 port)
+अणु
+	काष्ठा rdma_port_counter *port_counter;
+	काष्ठा ib_device *dev = qp->device;
+	काष्ठा rdma_counter *counter;
+	पूर्णांक ret;
 
-	if (!rdma_restrack_is_tracked(&qp->res) || rdma_is_kernel_res(&qp->res))
-		return 0;
+	अगर (!rdma_restrack_is_tracked(&qp->res) || rdma_is_kernel_res(&qp->res))
+		वापस 0;
 
-	if (!rdma_is_port_valid(dev, port))
-		return -EINVAL;
+	अगर (!rdma_is_port_valid(dev, port))
+		वापस -EINVAL;
 
 	port_counter = &dev->port_data[port].port_counter;
-	if (port_counter->mode.mode != RDMA_COUNTER_MODE_AUTO)
-		return 0;
+	अगर (port_counter->mode.mode != RDMA_COUNTER_MODE_AUTO)
+		वापस 0;
 
-	counter = rdma_get_counter_auto_mode(qp, port);
-	if (counter) {
+	counter = rdma_get_counter_स्वतः_mode(qp, port);
+	अगर (counter) अणु
 		ret = __rdma_counter_bind_qp(counter, qp);
-		if (ret) {
+		अगर (ret) अणु
 			kref_put(&counter->kref, counter_release);
-			return ret;
-		}
-	} else {
+			वापस ret;
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		counter = alloc_and_bind(dev, port, qp, RDMA_COUNTER_MODE_AUTO);
-		if (!counter)
-			return -ENOMEM;
-	}
+		अगर (!counter)
+			वापस -ENOMEM;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * rdma_counter_unbind_qp - Unbind a qp from a counter
- * @force:
+ * @क्रमce:
  *   true - Decrease the counter ref-count anyway (e.g., qp destroy)
  */
-int rdma_counter_unbind_qp(struct ib_qp *qp, bool force)
-{
-	struct rdma_counter *counter = qp->counter;
-	int ret;
+पूर्णांक rdma_counter_unbind_qp(काष्ठा ib_qp *qp, bool क्रमce)
+अणु
+	काष्ठा rdma_counter *counter = qp->counter;
+	पूर्णांक ret;
 
-	if (!counter)
-		return -EINVAL;
+	अगर (!counter)
+		वापस -EINVAL;
 
 	ret = __rdma_counter_unbind_qp(qp);
-	if (ret && !force)
-		return ret;
+	अगर (ret && !क्रमce)
+		वापस ret;
 
 	kref_put(&counter->kref, counter_release);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int rdma_counter_query_stats(struct rdma_counter *counter)
-{
-	struct ib_device *dev = counter->device;
-	int ret;
+पूर्णांक rdma_counter_query_stats(काष्ठा rdma_counter *counter)
+अणु
+	काष्ठा ib_device *dev = counter->device;
+	पूर्णांक ret;
 
-	if (!dev->ops.counter_update_stats)
-		return -EINVAL;
+	अगर (!dev->ops.counter_update_stats)
+		वापस -EINVAL;
 
 	mutex_lock(&counter->lock);
 	ret = dev->ops.counter_update_stats(counter);
 	mutex_unlock(&counter->lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static u64 get_running_counters_hwstat_sum(struct ib_device *dev,
+अटल u64 get_running_counters_hwstat_sum(काष्ठा ib_device *dev,
 					   u32 port, u32 index)
-{
-	struct rdma_restrack_entry *res;
-	struct rdma_restrack_root *rt;
-	struct rdma_counter *counter;
-	unsigned long id = 0;
+अणु
+	काष्ठा rdma_restrack_entry *res;
+	काष्ठा rdma_restrack_root *rt;
+	काष्ठा rdma_counter *counter;
+	अचिन्हित दीर्घ id = 0;
 	u64 sum = 0;
 
 	rt = &dev->res[RDMA_RESTRACK_COUNTER];
 	xa_lock(&rt->xa);
-	xa_for_each(&rt->xa, id, res) {
-		if (!rdma_restrack_get(res))
-			continue;
+	xa_क्रम_each(&rt->xa, id, res) अणु
+		अगर (!rdma_restrack_get(res))
+			जारी;
 
 		xa_unlock(&rt->xa);
 
-		counter = container_of(res, struct rdma_counter, res);
-		if ((counter->device != dev) || (counter->port != port) ||
+		counter = container_of(res, काष्ठा rdma_counter, res);
+		अगर ((counter->device != dev) || (counter->port != port) ||
 		    rdma_counter_query_stats(counter))
-			goto next;
+			जाओ next;
 
 		sum += counter->stats->value[index];
 
 next:
 		xa_lock(&rt->xa);
 		rdma_restrack_put(res);
-	}
+	पूर्ण
 
 	xa_unlock(&rt->xa);
-	return sum;
-}
+	वापस sum;
+पूर्ण
 
 /*
  * rdma_counter_get_hwstat_value() - Get the sum value of all counters on a
- *   specific port, including the running ones and history data
+ *   specअगरic port, including the running ones and history data
  */
-u64 rdma_counter_get_hwstat_value(struct ib_device *dev, u32 port, u32 index)
-{
-	struct rdma_port_counter *port_counter;
+u64 rdma_counter_get_hwstat_value(काष्ठा ib_device *dev, u32 port, u32 index)
+अणु
+	काष्ठा rdma_port_counter *port_counter;
 	u64 sum;
 
 	port_counter = &dev->port_data[port].port_counter;
-	if (!port_counter->hstats)
-		return 0;
+	अगर (!port_counter->hstats)
+		वापस 0;
 
 	sum = get_running_counters_hwstat_sum(dev, port, index);
 	sum += port_counter->hstats->value[index];
 
-	return sum;
-}
+	वापस sum;
+पूर्ण
 
-static struct ib_qp *rdma_counter_get_qp(struct ib_device *dev, u32 qp_num)
-{
-	struct rdma_restrack_entry *res = NULL;
-	struct ib_qp *qp = NULL;
+अटल काष्ठा ib_qp *rdma_counter_get_qp(काष्ठा ib_device *dev, u32 qp_num)
+अणु
+	काष्ठा rdma_restrack_entry *res = शून्य;
+	काष्ठा ib_qp *qp = शून्य;
 
 	res = rdma_restrack_get_byid(dev, RDMA_RESTRACK_QP, qp_num);
-	if (IS_ERR(res))
-		return NULL;
+	अगर (IS_ERR(res))
+		वापस शून्य;
 
-	qp = container_of(res, struct ib_qp, res);
-	if (qp->qp_type == IB_QPT_RAW_PACKET && !capable(CAP_NET_RAW))
-		goto err;
+	qp = container_of(res, काष्ठा ib_qp, res);
+	अगर (qp->qp_type == IB_QPT_RAW_PACKET && !capable(CAP_NET_RAW))
+		जाओ err;
 
-	return qp;
+	वापस qp;
 
 err:
 	rdma_restrack_put(res);
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static struct rdma_counter *rdma_get_counter_by_id(struct ib_device *dev,
+अटल काष्ठा rdma_counter *rdma_get_counter_by_id(काष्ठा ib_device *dev,
 						   u32 counter_id)
-{
-	struct rdma_restrack_entry *res;
-	struct rdma_counter *counter;
+अणु
+	काष्ठा rdma_restrack_entry *res;
+	काष्ठा rdma_counter *counter;
 
 	res = rdma_restrack_get_byid(dev, RDMA_RESTRACK_COUNTER, counter_id);
-	if (IS_ERR(res))
-		return NULL;
+	अगर (IS_ERR(res))
+		वापस शून्य;
 
-	counter = container_of(res, struct rdma_counter, res);
+	counter = container_of(res, काष्ठा rdma_counter, res);
 	kref_get(&counter->kref);
 	rdma_restrack_put(res);
 
-	return counter;
-}
+	वापस counter;
+पूर्ण
 
 /*
  * rdma_counter_bind_qpn() - Bind QP @qp_num to counter @counter_id
  */
-int rdma_counter_bind_qpn(struct ib_device *dev, u32 port,
+पूर्णांक rdma_counter_bind_qpn(काष्ठा ib_device *dev, u32 port,
 			  u32 qp_num, u32 counter_id)
-{
-	struct rdma_port_counter *port_counter;
-	struct rdma_counter *counter;
-	struct ib_qp *qp;
-	int ret;
+अणु
+	काष्ठा rdma_port_counter *port_counter;
+	काष्ठा rdma_counter *counter;
+	काष्ठा ib_qp *qp;
+	पूर्णांक ret;
 
 	port_counter = &dev->port_data[port].port_counter;
-	if (port_counter->mode.mode == RDMA_COUNTER_MODE_AUTO)
-		return -EINVAL;
+	अगर (port_counter->mode.mode == RDMA_COUNTER_MODE_AUTO)
+		वापस -EINVAL;
 
 	qp = rdma_counter_get_qp(dev, qp_num);
-	if (!qp)
-		return -ENOENT;
+	अगर (!qp)
+		वापस -ENOENT;
 
 	counter = rdma_get_counter_by_id(dev, counter_id);
-	if (!counter) {
+	अगर (!counter) अणु
 		ret = -ENOENT;
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
-	if (rdma_is_kernel_res(&counter->res) != rdma_is_kernel_res(&qp->res)) {
+	अगर (rdma_is_kernel_res(&counter->res) != rdma_is_kernel_res(&qp->res)) अणु
 		ret = -EINVAL;
-		goto err_task;
-	}
+		जाओ err_task;
+	पूर्ण
 
-	if ((counter->device != qp->device) || (counter->port != qp->port)) {
+	अगर ((counter->device != qp->device) || (counter->port != qp->port)) अणु
 		ret = -EINVAL;
-		goto err_task;
-	}
+		जाओ err_task;
+	पूर्ण
 
 	ret = __rdma_counter_bind_qp(counter, qp);
-	if (ret)
-		goto err_task;
+	अगर (ret)
+		जाओ err_task;
 
 	rdma_restrack_put(&qp->res);
-	return 0;
+	वापस 0;
 
 err_task:
 	kref_put(&counter->kref, counter_release);
 err:
 	rdma_restrack_put(&qp->res);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
  * rdma_counter_bind_qpn_alloc() - Alloc a counter and bind QP @qp_num to it
- *   The id of new counter is returned in @counter_id
+ *   The id of new counter is वापसed in @counter_id
  */
-int rdma_counter_bind_qpn_alloc(struct ib_device *dev, u32 port,
+पूर्णांक rdma_counter_bind_qpn_alloc(काष्ठा ib_device *dev, u32 port,
 				u32 qp_num, u32 *counter_id)
-{
-	struct rdma_port_counter *port_counter;
-	struct rdma_counter *counter;
-	struct ib_qp *qp;
-	int ret;
+अणु
+	काष्ठा rdma_port_counter *port_counter;
+	काष्ठा rdma_counter *counter;
+	काष्ठा ib_qp *qp;
+	पूर्णांक ret;
 
-	if (!rdma_is_port_valid(dev, port))
-		return -EINVAL;
+	अगर (!rdma_is_port_valid(dev, port))
+		वापस -EINVAL;
 
 	port_counter = &dev->port_data[port].port_counter;
-	if (!port_counter->hstats)
-		return -EOPNOTSUPP;
+	अगर (!port_counter->hstats)
+		वापस -EOPNOTSUPP;
 
-	if (port_counter->mode.mode == RDMA_COUNTER_MODE_AUTO)
-		return -EINVAL;
+	अगर (port_counter->mode.mode == RDMA_COUNTER_MODE_AUTO)
+		वापस -EINVAL;
 
 	qp = rdma_counter_get_qp(dev, qp_num);
-	if (!qp)
-		return -ENOENT;
+	अगर (!qp)
+		वापस -ENOENT;
 
-	if (rdma_is_port_valid(dev, qp->port) && (qp->port != port)) {
+	अगर (rdma_is_port_valid(dev, qp->port) && (qp->port != port)) अणु
 		ret = -EINVAL;
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
 	counter = alloc_and_bind(dev, port, qp, RDMA_COUNTER_MODE_MANUAL);
-	if (!counter) {
+	अगर (!counter) अणु
 		ret = -ENOMEM;
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
-	if (counter_id)
+	अगर (counter_id)
 		*counter_id = counter->id;
 
 	rdma_restrack_put(&qp->res);
-	return 0;
+	वापस 0;
 
 err:
 	rdma_restrack_put(&qp->res);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
  * rdma_counter_unbind_qpn() - Unbind QP @qp_num from a counter
  */
-int rdma_counter_unbind_qpn(struct ib_device *dev, u32 port,
+पूर्णांक rdma_counter_unbind_qpn(काष्ठा ib_device *dev, u32 port,
 			    u32 qp_num, u32 counter_id)
-{
-	struct rdma_port_counter *port_counter;
-	struct ib_qp *qp;
-	int ret;
+अणु
+	काष्ठा rdma_port_counter *port_counter;
+	काष्ठा ib_qp *qp;
+	पूर्णांक ret;
 
-	if (!rdma_is_port_valid(dev, port))
-		return -EINVAL;
+	अगर (!rdma_is_port_valid(dev, port))
+		वापस -EINVAL;
 
 	qp = rdma_counter_get_qp(dev, qp_num);
-	if (!qp)
-		return -ENOENT;
+	अगर (!qp)
+		वापस -ENOENT;
 
-	if (rdma_is_port_valid(dev, qp->port) && (qp->port != port)) {
+	अगर (rdma_is_port_valid(dev, qp->port) && (qp->port != port)) अणु
 		ret = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	port_counter = &dev->port_data[port].port_counter;
-	if (!qp->counter || qp->counter->id != counter_id ||
-	    port_counter->mode.mode != RDMA_COUNTER_MODE_MANUAL) {
+	अगर (!qp->counter || qp->counter->id != counter_id ||
+	    port_counter->mode.mode != RDMA_COUNTER_MODE_MANUAL) अणु
 		ret = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	ret = rdma_counter_unbind_qp(qp, false);
 
 out:
 	rdma_restrack_put(&qp->res);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int rdma_counter_get_mode(struct ib_device *dev, u32 port,
-			  enum rdma_nl_counter_mode *mode,
-			  enum rdma_nl_counter_mask *mask)
-{
-	struct rdma_port_counter *port_counter;
+पूर्णांक rdma_counter_get_mode(काष्ठा ib_device *dev, u32 port,
+			  क्रमागत rdma_nl_counter_mode *mode,
+			  क्रमागत rdma_nl_counter_mask *mask)
+अणु
+	काष्ठा rdma_port_counter *port_counter;
 
 	port_counter = &dev->port_data[port].port_counter;
 	*mode = port_counter->mode.mode;
 	*mask = port_counter->mode.mask;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void rdma_counter_init(struct ib_device *dev)
-{
-	struct rdma_port_counter *port_counter;
+व्योम rdma_counter_init(काष्ठा ib_device *dev)
+अणु
+	काष्ठा rdma_port_counter *port_counter;
 	u32 port, i;
 
-	if (!dev->port_data)
-		return;
+	अगर (!dev->port_data)
+		वापस;
 
-	rdma_for_each_port(dev, port) {
+	rdma_क्रम_each_port(dev, port) अणु
 		port_counter = &dev->port_data[port].port_counter;
 		port_counter->mode.mode = RDMA_COUNTER_MODE_NONE;
 		mutex_init(&port_counter->lock);
 
-		if (!dev->ops.alloc_hw_stats)
-			continue;
+		अगर (!dev->ops.alloc_hw_stats)
+			जारी;
 
 		port_counter->hstats = dev->ops.alloc_hw_stats(dev, port);
-		if (!port_counter->hstats)
-			goto fail;
-	}
+		अगर (!port_counter->hstats)
+			जाओ fail;
+	पूर्ण
 
-	return;
+	वापस;
 
 fail:
-	for (i = port; i >= rdma_start_port(dev); i--) {
+	क्रम (i = port; i >= rdma_start_port(dev); i--) अणु
 		port_counter = &dev->port_data[port].port_counter;
-		kfree(port_counter->hstats);
-		port_counter->hstats = NULL;
+		kमुक्त(port_counter->hstats);
+		port_counter->hstats = शून्य;
 		mutex_destroy(&port_counter->lock);
-	}
-}
+	पूर्ण
+पूर्ण
 
-void rdma_counter_release(struct ib_device *dev)
-{
-	struct rdma_port_counter *port_counter;
+व्योम rdma_counter_release(काष्ठा ib_device *dev)
+अणु
+	काष्ठा rdma_port_counter *port_counter;
 	u32 port;
 
-	rdma_for_each_port(dev, port) {
+	rdma_क्रम_each_port(dev, port) अणु
 		port_counter = &dev->port_data[port].port_counter;
-		kfree(port_counter->hstats);
+		kमुक्त(port_counter->hstats);
 		mutex_destroy(&port_counter->lock);
-	}
-}
+	पूर्ण
+पूर्ण

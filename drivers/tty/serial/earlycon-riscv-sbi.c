@@ -1,31 +1,32 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * RISC-V SBI based earlycon
  *
  * Copyright (C) 2018 Anup Patel <anup@brainfault.org>
  */
-#include <linux/kernel.h>
-#include <linux/console.h>
-#include <linux/init.h>
-#include <linux/serial_core.h>
-#include <asm/sbi.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/console.h>
+#समावेश <linux/init.h>
+#समावेश <linux/serial_core.h>
+#समावेश <यंत्र/sbi.h>
 
-static void sbi_putc(struct uart_port *port, int c)
-{
-	sbi_console_putchar(c);
-}
+अटल व्योम sbi_अ_दो(काष्ठा uart_port *port, पूर्णांक c)
+अणु
+	sbi_console_अक्षर_दो(c);
+पूर्ण
 
-static void sbi_console_write(struct console *con,
-			      const char *s, unsigned n)
-{
-	struct earlycon_device *dev = con->data;
-	uart_console_write(&dev->port, s, n, sbi_putc);
-}
+अटल व्योम sbi_console_ग_लिखो(काष्ठा console *con,
+			      स्थिर अक्षर *s, अचिन्हित n)
+अणु
+	काष्ठा earlycon_device *dev = con->data;
+	uart_console_ग_लिखो(&dev->port, s, n, sbi_अ_दो);
+पूर्ण
 
-static int __init early_sbi_setup(struct earlycon_device *device,
-				  const char *opt)
-{
-	device->con->write = sbi_console_write;
-	return 0;
-}
+अटल पूर्णांक __init early_sbi_setup(काष्ठा earlycon_device *device,
+				  स्थिर अक्षर *opt)
+अणु
+	device->con->ग_लिखो = sbi_console_ग_लिखो;
+	वापस 0;
+पूर्ण
 EARLYCON_DECLARE(sbi, early_sbi_setup);

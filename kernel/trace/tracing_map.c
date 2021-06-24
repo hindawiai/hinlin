@@ -1,28 +1,29 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * tracing_map - lock-free map for tracing
+ * tracing_map - lock-मुक्त map क्रम tracing
  *
- * Copyright (C) 2015 Tom Zanussi <tom.zanussi@linux.intel.com>
+ * Copyright (C) 2015 Tom Zanussi <tom.zanussi@linux.पूर्णांकel.com>
  *
- * tracing_map implementation inspired by lock-free map algorithms
- * originated by Dr. Cliff Click:
+ * tracing_map implementation inspired by lock-मुक्त map algorithms
+ * originated by Dr. Clअगरf Click:
  *
- * http://www.azulsystems.com/blog/cliff/2007-03-26-non-blocking-hashtable
- * http://www.azulsystems.com/events/javaone_2007/2007_LockFreeHash.pdf
+ * http://www.azulप्रणालीs.com/blog/clअगरf/2007-03-26-non-blocking-hashtable
+ * http://www.azulप्रणालीs.com/events/javaone_2007/2007_LockFreeHash.pdf
  */
 
-#include <linux/vmalloc.h>
-#include <linux/jhash.h>
-#include <linux/slab.h>
-#include <linux/sort.h>
+#समावेश <linux/vदो_स्मृति.h>
+#समावेश <linux/jhash.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/sort.h>
 
-#include "tracing_map.h"
-#include "trace.h"
+#समावेश "tracing_map.h"
+#समावेश "trace.h"
 
 /*
- * NOTE: For a detailed description of the data structures used by
+ * NOTE: For a detailed description of the data काष्ठाures used by
  * these functions (such as tracing_map_elt) please see the overview
- * of tracing_map data structures at the beginning of tracing_map.h.
+ * of tracing_map data काष्ठाures at the beginning of tracing_map.h.
  */
 
 /**
@@ -31,31 +32,31 @@
  * @i: The index of the given sum associated with the tracing_map_elt
  * @n: The value to add to the sum
  *
- * Add n to sum i associated with the specified tracing_map_elt
- * instance.  The index i is the index returned by the call to
+ * Add n to sum i associated with the specअगरied tracing_map_elt
+ * instance.  The index i is the index वापसed by the call to
  * tracing_map_add_sum_field() when the tracing map was set up.
  */
-void tracing_map_update_sum(struct tracing_map_elt *elt, unsigned int i, u64 n)
-{
+व्योम tracing_map_update_sum(काष्ठा tracing_map_elt *elt, अचिन्हित पूर्णांक i, u64 n)
+अणु
 	atomic64_add(n, &elt->fields[i].sum);
-}
+पूर्ण
 
 /**
- * tracing_map_read_sum - Return the value of a tracing_map_elt's sum field
+ * tracing_map_पढ़ो_sum - Return the value of a tracing_map_elt's sum field
  * @elt: The tracing_map_elt
  * @i: The index of the given sum associated with the tracing_map_elt
  *
- * Retrieve the value of the sum i associated with the specified
- * tracing_map_elt instance.  The index i is the index returned by the
+ * Retrieve the value of the sum i associated with the specअगरied
+ * tracing_map_elt instance.  The index i is the index वापसed by the
  * call to tracing_map_add_sum_field() when the tracing map was set
  * up.
  *
- * Return: The sum associated with field i for elt.
+ * Return: The sum associated with field i क्रम elt.
  */
-u64 tracing_map_read_sum(struct tracing_map_elt *elt, unsigned int i)
-{
-	return (u64)atomic64_read(&elt->fields[i].sum);
-}
+u64 tracing_map_पढ़ो_sum(काष्ठा tracing_map_elt *elt, अचिन्हित पूर्णांक i)
+अणु
+	वापस (u64)atomic64_पढ़ो(&elt->fields[i].sum);
+पूर्ण
 
 /**
  * tracing_map_set_var - Assign a tracing_map_elt's variable field
@@ -63,96 +64,96 @@ u64 tracing_map_read_sum(struct tracing_map_elt *elt, unsigned int i)
  * @i: The index of the given variable associated with the tracing_map_elt
  * @n: The value to assign
  *
- * Assign n to variable i associated with the specified tracing_map_elt
- * instance.  The index i is the index returned by the call to
+ * Assign n to variable i associated with the specअगरied tracing_map_elt
+ * instance.  The index i is the index वापसed by the call to
  * tracing_map_add_var() when the tracing map was set up.
  */
-void tracing_map_set_var(struct tracing_map_elt *elt, unsigned int i, u64 n)
-{
+व्योम tracing_map_set_var(काष्ठा tracing_map_elt *elt, अचिन्हित पूर्णांक i, u64 n)
+अणु
 	atomic64_set(&elt->vars[i], n);
 	elt->var_set[i] = true;
-}
+पूर्ण
 
 /**
  * tracing_map_var_set - Return whether or not a variable has been set
  * @elt: The tracing_map_elt
  * @i: The index of the given variable associated with the tracing_map_elt
  *
- * Return true if the variable has been set, false otherwise.  The
- * index i is the index returned by the call to tracing_map_add_var()
+ * Return true अगर the variable has been set, false otherwise.  The
+ * index i is the index वापसed by the call to tracing_map_add_var()
  * when the tracing map was set up.
  */
-bool tracing_map_var_set(struct tracing_map_elt *elt, unsigned int i)
-{
-	return elt->var_set[i];
-}
+bool tracing_map_var_set(काष्ठा tracing_map_elt *elt, अचिन्हित पूर्णांक i)
+अणु
+	वापस elt->var_set[i];
+पूर्ण
 
 /**
- * tracing_map_read_var - Return the value of a tracing_map_elt's variable field
+ * tracing_map_पढ़ो_var - Return the value of a tracing_map_elt's variable field
  * @elt: The tracing_map_elt
  * @i: The index of the given variable associated with the tracing_map_elt
  *
- * Retrieve the value of the variable i associated with the specified
- * tracing_map_elt instance.  The index i is the index returned by the
+ * Retrieve the value of the variable i associated with the specअगरied
+ * tracing_map_elt instance.  The index i is the index वापसed by the
  * call to tracing_map_add_var() when the tracing map was set
  * up.
  *
- * Return: The variable value associated with field i for elt.
+ * Return: The variable value associated with field i क्रम elt.
  */
-u64 tracing_map_read_var(struct tracing_map_elt *elt, unsigned int i)
-{
-	return (u64)atomic64_read(&elt->vars[i]);
-}
+u64 tracing_map_पढ़ो_var(काष्ठा tracing_map_elt *elt, अचिन्हित पूर्णांक i)
+अणु
+	वापस (u64)atomic64_पढ़ो(&elt->vars[i]);
+पूर्ण
 
 /**
- * tracing_map_read_var_once - Return and reset a tracing_map_elt's variable field
+ * tracing_map_पढ़ो_var_once - Return and reset a tracing_map_elt's variable field
  * @elt: The tracing_map_elt
  * @i: The index of the given variable associated with the tracing_map_elt
  *
- * Retrieve the value of the variable i associated with the specified
+ * Retrieve the value of the variable i associated with the specअगरied
  * tracing_map_elt instance, and reset the variable to the 'not set'
- * state.  The index i is the index returned by the call to
+ * state.  The index i is the index वापसed by the call to
  * tracing_map_add_var() when the tracing map was set up.  The reset
- * essentially makes the variable a read-once variable if it's only
+ * essentially makes the variable a पढ़ो-once variable अगर it's only
  * accessed using this function.
  *
- * Return: The variable value associated with field i for elt.
+ * Return: The variable value associated with field i क्रम elt.
  */
-u64 tracing_map_read_var_once(struct tracing_map_elt *elt, unsigned int i)
-{
+u64 tracing_map_पढ़ो_var_once(काष्ठा tracing_map_elt *elt, अचिन्हित पूर्णांक i)
+अणु
 	elt->var_set[i] = false;
-	return (u64)atomic64_read(&elt->vars[i]);
-}
+	वापस (u64)atomic64_पढ़ो(&elt->vars[i]);
+पूर्ण
 
-int tracing_map_cmp_string(void *val_a, void *val_b)
-{
-	char *a = val_a;
-	char *b = val_b;
+पूर्णांक tracing_map_cmp_string(व्योम *val_a, व्योम *val_b)
+अणु
+	अक्षर *a = val_a;
+	अक्षर *b = val_b;
 
-	return strcmp(a, b);
-}
+	वापस म_भेद(a, b);
+पूर्ण
 
-int tracing_map_cmp_none(void *val_a, void *val_b)
-{
-	return 0;
-}
+पूर्णांक tracing_map_cmp_none(व्योम *val_a, व्योम *val_b)
+अणु
+	वापस 0;
+पूर्ण
 
-static int tracing_map_cmp_atomic64(void *val_a, void *val_b)
-{
-	u64 a = atomic64_read((atomic64_t *)val_a);
-	u64 b = atomic64_read((atomic64_t *)val_b);
+अटल पूर्णांक tracing_map_cmp_atomic64(व्योम *val_a, व्योम *val_b)
+अणु
+	u64 a = atomic64_पढ़ो((atomic64_t *)val_a);
+	u64 b = atomic64_पढ़ो((atomic64_t *)val_b);
 
-	return (a > b) ? 1 : ((a < b) ? -1 : 0);
-}
+	वापस (a > b) ? 1 : ((a < b) ? -1 : 0);
+पूर्ण
 
-#define DEFINE_TRACING_MAP_CMP_FN(type)					\
-static int tracing_map_cmp_##type(void *val_a, void *val_b)		\
-{									\
+#घोषणा DEFINE_TRACING_MAP_CMP_FN(type)					\
+अटल पूर्णांक tracing_map_cmp_##type(व्योम *val_a, व्योम *val_b)		\
+अणु									\
 	type a = (type)(*(u64 *)val_a);					\
 	type b = (type)(*(u64 *)val_b);					\
 									\
-	return (a > b) ? 1 : ((a < b) ? -1 : 0);			\
-}
+	वापस (a > b) ? 1 : ((a < b) ? -1 : 0);			\
+पूर्ण
 
 DEFINE_TRACING_MAP_CMP_FN(s64);
 DEFINE_TRACING_MAP_CMP_FN(u64);
@@ -163,92 +164,92 @@ DEFINE_TRACING_MAP_CMP_FN(u16);
 DEFINE_TRACING_MAP_CMP_FN(s8);
 DEFINE_TRACING_MAP_CMP_FN(u8);
 
-tracing_map_cmp_fn_t tracing_map_cmp_num(int field_size,
-					 int field_is_signed)
-{
+tracing_map_cmp_fn_t tracing_map_cmp_num(पूर्णांक field_size,
+					 पूर्णांक field_is_चिन्हित)
+अणु
 	tracing_map_cmp_fn_t fn = tracing_map_cmp_none;
 
-	switch (field_size) {
-	case 8:
-		if (field_is_signed)
+	चयन (field_size) अणु
+	हाल 8:
+		अगर (field_is_चिन्हित)
 			fn = tracing_map_cmp_s64;
-		else
+		अन्यथा
 			fn = tracing_map_cmp_u64;
-		break;
-	case 4:
-		if (field_is_signed)
+		अवरोध;
+	हाल 4:
+		अगर (field_is_चिन्हित)
 			fn = tracing_map_cmp_s32;
-		else
+		अन्यथा
 			fn = tracing_map_cmp_u32;
-		break;
-	case 2:
-		if (field_is_signed)
+		अवरोध;
+	हाल 2:
+		अगर (field_is_चिन्हित)
 			fn = tracing_map_cmp_s16;
-		else
+		अन्यथा
 			fn = tracing_map_cmp_u16;
-		break;
-	case 1:
-		if (field_is_signed)
+		अवरोध;
+	हाल 1:
+		अगर (field_is_चिन्हित)
 			fn = tracing_map_cmp_s8;
-		else
+		अन्यथा
 			fn = tracing_map_cmp_u8;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return fn;
-}
+	वापस fn;
+पूर्ण
 
-static int tracing_map_add_field(struct tracing_map *map,
+अटल पूर्णांक tracing_map_add_field(काष्ठा tracing_map *map,
 				 tracing_map_cmp_fn_t cmp_fn)
-{
-	int ret = -EINVAL;
+अणु
+	पूर्णांक ret = -EINVAL;
 
-	if (map->n_fields < TRACING_MAP_FIELDS_MAX) {
+	अगर (map->n_fields < TRACING_MAP_FIELDS_MAX) अणु
 		ret = map->n_fields;
 		map->fields[map->n_fields++].cmp_fn = cmp_fn;
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
  * tracing_map_add_sum_field - Add a field describing a tracing_map sum
  * @map: The tracing_map
  *
- * Add a sum field to the key and return the index identifying it in
+ * Add a sum field to the key and वापस the index identअगरying it in
  * the map and associated tracing_map_elts.  This is the index used
- * for instance to update a sum for a particular tracing_map_elt using
- * tracing_map_update_sum() or reading it via tracing_map_read_sum().
+ * क्रम instance to update a sum क्रम a particular tracing_map_elt using
+ * tracing_map_update_sum() or पढ़ोing it via tracing_map_पढ़ो_sum().
  *
- * Return: The index identifying the field in the map and associated
+ * Return: The index identअगरying the field in the map and associated
  * tracing_map_elts, or -EINVAL on error.
  */
-int tracing_map_add_sum_field(struct tracing_map *map)
-{
-	return tracing_map_add_field(map, tracing_map_cmp_atomic64);
-}
+पूर्णांक tracing_map_add_sum_field(काष्ठा tracing_map *map)
+अणु
+	वापस tracing_map_add_field(map, tracing_map_cmp_atomic64);
+पूर्ण
 
 /**
  * tracing_map_add_var - Add a field describing a tracing_map var
  * @map: The tracing_map
  *
- * Add a var to the map and return the index identifying it in the map
- * and associated tracing_map_elts.  This is the index used for
- * instance to update a var for a particular tracing_map_elt using
- * tracing_map_update_var() or reading it via tracing_map_read_var().
+ * Add a var to the map and वापस the index identअगरying it in the map
+ * and associated tracing_map_elts.  This is the index used क्रम
+ * instance to update a var क्रम a particular tracing_map_elt using
+ * tracing_map_update_var() or पढ़ोing it via tracing_map_पढ़ो_var().
  *
- * Return: The index identifying the var in the map and associated
+ * Return: The index identअगरying the var in the map and associated
  * tracing_map_elts, or -EINVAL on error.
  */
-int tracing_map_add_var(struct tracing_map *map)
-{
-	int ret = -EINVAL;
+पूर्णांक tracing_map_add_var(काष्ठा tracing_map *map)
+अणु
+	पूर्णांक ret = -EINVAL;
 
-	if (map->n_vars < TRACING_MAP_VARS_MAX)
+	अगर (map->n_vars < TRACING_MAP_VARS_MAX)
 		ret = map->n_vars++;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
  * tracing_map_add_key_field - Add a field describing a tracing_map key
@@ -256,289 +257,289 @@ int tracing_map_add_var(struct tracing_map *map)
  * @offset: The offset within the key
  * @cmp_fn: The comparison function that will be used to sort on the key
  *
- * Let the map know there is a key and that if it's used as a sort key
+ * Let the map know there is a key and that अगर it's used as a sort key
  * to use cmp_fn.
  *
- * A key can be a subset of a compound key; for that purpose, the
+ * A key can be a subset of a compound key; क्रम that purpose, the
  * offset param is used to describe where within the compound key
  * the key referenced by this key field resides.
  *
- * Return: The index identifying the field in the map and associated
+ * Return: The index identअगरying the field in the map and associated
  * tracing_map_elts, or -EINVAL on error.
  */
-int tracing_map_add_key_field(struct tracing_map *map,
-			      unsigned int offset,
+पूर्णांक tracing_map_add_key_field(काष्ठा tracing_map *map,
+			      अचिन्हित पूर्णांक offset,
 			      tracing_map_cmp_fn_t cmp_fn)
 
-{
-	int idx = tracing_map_add_field(map, cmp_fn);
+अणु
+	पूर्णांक idx = tracing_map_add_field(map, cmp_fn);
 
-	if (idx < 0)
-		return idx;
+	अगर (idx < 0)
+		वापस idx;
 
 	map->fields[idx].offset = offset;
 
 	map->key_idx[map->n_keys++] = idx;
 
-	return idx;
-}
+	वापस idx;
+पूर्ण
 
-static void tracing_map_array_clear(struct tracing_map_array *a)
-{
-	unsigned int i;
+अटल व्योम tracing_map_array_clear(काष्ठा tracing_map_array *a)
+अणु
+	अचिन्हित पूर्णांक i;
 
-	if (!a->pages)
-		return;
+	अगर (!a->pages)
+		वापस;
 
-	for (i = 0; i < a->n_pages; i++)
-		memset(a->pages[i], 0, PAGE_SIZE);
-}
+	क्रम (i = 0; i < a->n_pages; i++)
+		स_रखो(a->pages[i], 0, PAGE_SIZE);
+पूर्ण
 
-static void tracing_map_array_free(struct tracing_map_array *a)
-{
-	unsigned int i;
+अटल व्योम tracing_map_array_मुक्त(काष्ठा tracing_map_array *a)
+अणु
+	अचिन्हित पूर्णांक i;
 
-	if (!a)
-		return;
+	अगर (!a)
+		वापस;
 
-	if (!a->pages)
-		goto free;
+	अगर (!a->pages)
+		जाओ मुक्त;
 
-	for (i = 0; i < a->n_pages; i++) {
-		if (!a->pages[i])
-			break;
-		free_page((unsigned long)a->pages[i]);
-	}
+	क्रम (i = 0; i < a->n_pages; i++) अणु
+		अगर (!a->pages[i])
+			अवरोध;
+		मुक्त_page((अचिन्हित दीर्घ)a->pages[i]);
+	पूर्ण
 
-	kfree(a->pages);
+	kमुक्त(a->pages);
 
- free:
-	kfree(a);
-}
+ मुक्त:
+	kमुक्त(a);
+पूर्ण
 
-static struct tracing_map_array *tracing_map_array_alloc(unsigned int n_elts,
-						  unsigned int entry_size)
-{
-	struct tracing_map_array *a;
-	unsigned int i;
+अटल काष्ठा tracing_map_array *tracing_map_array_alloc(अचिन्हित पूर्णांक n_elts,
+						  अचिन्हित पूर्णांक entry_size)
+अणु
+	काष्ठा tracing_map_array *a;
+	अचिन्हित पूर्णांक i;
 
-	a = kzalloc(sizeof(*a), GFP_KERNEL);
-	if (!a)
-		return NULL;
+	a = kzalloc(माप(*a), GFP_KERNEL);
+	अगर (!a)
+		वापस शून्य;
 
-	a->entry_size_shift = fls(roundup_pow_of_two(entry_size) - 1);
-	a->entries_per_page = PAGE_SIZE / (1 << a->entry_size_shift);
+	a->entry_size_shअगरt = fls(roundup_घात_of_two(entry_size) - 1);
+	a->entries_per_page = PAGE_SIZE / (1 << a->entry_size_shअगरt);
 	a->n_pages = n_elts / a->entries_per_page;
-	if (!a->n_pages)
+	अगर (!a->n_pages)
 		a->n_pages = 1;
-	a->entry_shift = fls(a->entries_per_page) - 1;
-	a->entry_mask = (1 << a->entry_shift) - 1;
+	a->entry_shअगरt = fls(a->entries_per_page) - 1;
+	a->entry_mask = (1 << a->entry_shअगरt) - 1;
 
-	a->pages = kcalloc(a->n_pages, sizeof(void *), GFP_KERNEL);
-	if (!a->pages)
-		goto free;
+	a->pages = kसुस्मृति(a->n_pages, माप(व्योम *), GFP_KERNEL);
+	अगर (!a->pages)
+		जाओ मुक्त;
 
-	for (i = 0; i < a->n_pages; i++) {
-		a->pages[i] = (void *)get_zeroed_page(GFP_KERNEL);
-		if (!a->pages[i])
-			goto free;
-	}
+	क्रम (i = 0; i < a->n_pages; i++) अणु
+		a->pages[i] = (व्योम *)get_zeroed_page(GFP_KERNEL);
+		अगर (!a->pages[i])
+			जाओ मुक्त;
+	पूर्ण
  out:
-	return a;
- free:
-	tracing_map_array_free(a);
-	a = NULL;
+	वापस a;
+ मुक्त:
+	tracing_map_array_मुक्त(a);
+	a = शून्य;
 
-	goto out;
-}
+	जाओ out;
+पूर्ण
 
-static void tracing_map_elt_clear(struct tracing_map_elt *elt)
-{
-	unsigned i;
+अटल व्योम tracing_map_elt_clear(काष्ठा tracing_map_elt *elt)
+अणु
+	अचिन्हित i;
 
-	for (i = 0; i < elt->map->n_fields; i++)
-		if (elt->fields[i].cmp_fn == tracing_map_cmp_atomic64)
+	क्रम (i = 0; i < elt->map->n_fields; i++)
+		अगर (elt->fields[i].cmp_fn == tracing_map_cmp_atomic64)
 			atomic64_set(&elt->fields[i].sum, 0);
 
-	for (i = 0; i < elt->map->n_vars; i++) {
+	क्रम (i = 0; i < elt->map->n_vars; i++) अणु
 		atomic64_set(&elt->vars[i], 0);
 		elt->var_set[i] = false;
-	}
+	पूर्ण
 
-	if (elt->map->ops && elt->map->ops->elt_clear)
+	अगर (elt->map->ops && elt->map->ops->elt_clear)
 		elt->map->ops->elt_clear(elt);
-}
+पूर्ण
 
-static void tracing_map_elt_init_fields(struct tracing_map_elt *elt)
-{
-	unsigned int i;
+अटल व्योम tracing_map_elt_init_fields(काष्ठा tracing_map_elt *elt)
+अणु
+	अचिन्हित पूर्णांक i;
 
 	tracing_map_elt_clear(elt);
 
-	for (i = 0; i < elt->map->n_fields; i++) {
+	क्रम (i = 0; i < elt->map->n_fields; i++) अणु
 		elt->fields[i].cmp_fn = elt->map->fields[i].cmp_fn;
 
-		if (elt->fields[i].cmp_fn != tracing_map_cmp_atomic64)
+		अगर (elt->fields[i].cmp_fn != tracing_map_cmp_atomic64)
 			elt->fields[i].offset = elt->map->fields[i].offset;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void tracing_map_elt_free(struct tracing_map_elt *elt)
-{
-	if (!elt)
-		return;
+अटल व्योम tracing_map_elt_मुक्त(काष्ठा tracing_map_elt *elt)
+अणु
+	अगर (!elt)
+		वापस;
 
-	if (elt->map->ops && elt->map->ops->elt_free)
-		elt->map->ops->elt_free(elt);
-	kfree(elt->fields);
-	kfree(elt->vars);
-	kfree(elt->var_set);
-	kfree(elt->key);
-	kfree(elt);
-}
+	अगर (elt->map->ops && elt->map->ops->elt_मुक्त)
+		elt->map->ops->elt_मुक्त(elt);
+	kमुक्त(elt->fields);
+	kमुक्त(elt->vars);
+	kमुक्त(elt->var_set);
+	kमुक्त(elt->key);
+	kमुक्त(elt);
+पूर्ण
 
-static struct tracing_map_elt *tracing_map_elt_alloc(struct tracing_map *map)
-{
-	struct tracing_map_elt *elt;
-	int err = 0;
+अटल काष्ठा tracing_map_elt *tracing_map_elt_alloc(काष्ठा tracing_map *map)
+अणु
+	काष्ठा tracing_map_elt *elt;
+	पूर्णांक err = 0;
 
-	elt = kzalloc(sizeof(*elt), GFP_KERNEL);
-	if (!elt)
-		return ERR_PTR(-ENOMEM);
+	elt = kzalloc(माप(*elt), GFP_KERNEL);
+	अगर (!elt)
+		वापस ERR_PTR(-ENOMEM);
 
 	elt->map = map;
 
 	elt->key = kzalloc(map->key_size, GFP_KERNEL);
-	if (!elt->key) {
+	अगर (!elt->key) अणु
 		err = -ENOMEM;
-		goto free;
-	}
+		जाओ मुक्त;
+	पूर्ण
 
-	elt->fields = kcalloc(map->n_fields, sizeof(*elt->fields), GFP_KERNEL);
-	if (!elt->fields) {
+	elt->fields = kसुस्मृति(map->n_fields, माप(*elt->fields), GFP_KERNEL);
+	अगर (!elt->fields) अणु
 		err = -ENOMEM;
-		goto free;
-	}
+		जाओ मुक्त;
+	पूर्ण
 
-	elt->vars = kcalloc(map->n_vars, sizeof(*elt->vars), GFP_KERNEL);
-	if (!elt->vars) {
+	elt->vars = kसुस्मृति(map->n_vars, माप(*elt->vars), GFP_KERNEL);
+	अगर (!elt->vars) अणु
 		err = -ENOMEM;
-		goto free;
-	}
+		जाओ मुक्त;
+	पूर्ण
 
-	elt->var_set = kcalloc(map->n_vars, sizeof(*elt->var_set), GFP_KERNEL);
-	if (!elt->var_set) {
+	elt->var_set = kसुस्मृति(map->n_vars, माप(*elt->var_set), GFP_KERNEL);
+	अगर (!elt->var_set) अणु
 		err = -ENOMEM;
-		goto free;
-	}
+		जाओ मुक्त;
+	पूर्ण
 
 	tracing_map_elt_init_fields(elt);
 
-	if (map->ops && map->ops->elt_alloc) {
+	अगर (map->ops && map->ops->elt_alloc) अणु
 		err = map->ops->elt_alloc(elt);
-		if (err)
-			goto free;
-	}
-	return elt;
- free:
-	tracing_map_elt_free(elt);
+		अगर (err)
+			जाओ मुक्त;
+	पूर्ण
+	वापस elt;
+ मुक्त:
+	tracing_map_elt_मुक्त(elt);
 
-	return ERR_PTR(err);
-}
+	वापस ERR_PTR(err);
+पूर्ण
 
-static struct tracing_map_elt *get_free_elt(struct tracing_map *map)
-{
-	struct tracing_map_elt *elt = NULL;
-	int idx;
+अटल काष्ठा tracing_map_elt *get_मुक्त_elt(काष्ठा tracing_map *map)
+अणु
+	काष्ठा tracing_map_elt *elt = शून्य;
+	पूर्णांक idx;
 
-	idx = atomic_inc_return(&map->next_elt);
-	if (idx < map->max_elts) {
+	idx = atomic_inc_वापस(&map->next_elt);
+	अगर (idx < map->max_elts) अणु
 		elt = *(TRACING_MAP_ELT(map->elts, idx));
-		if (map->ops && map->ops->elt_init)
+		अगर (map->ops && map->ops->elt_init)
 			map->ops->elt_init(elt);
-	}
+	पूर्ण
 
-	return elt;
-}
+	वापस elt;
+पूर्ण
 
-static void tracing_map_free_elts(struct tracing_map *map)
-{
-	unsigned int i;
+अटल व्योम tracing_map_मुक्त_elts(काष्ठा tracing_map *map)
+अणु
+	अचिन्हित पूर्णांक i;
 
-	if (!map->elts)
-		return;
+	अगर (!map->elts)
+		वापस;
 
-	for (i = 0; i < map->max_elts; i++) {
-		tracing_map_elt_free(*(TRACING_MAP_ELT(map->elts, i)));
-		*(TRACING_MAP_ELT(map->elts, i)) = NULL;
-	}
+	क्रम (i = 0; i < map->max_elts; i++) अणु
+		tracing_map_elt_मुक्त(*(TRACING_MAP_ELT(map->elts, i)));
+		*(TRACING_MAP_ELT(map->elts, i)) = शून्य;
+	पूर्ण
 
-	tracing_map_array_free(map->elts);
-	map->elts = NULL;
-}
+	tracing_map_array_मुक्त(map->elts);
+	map->elts = शून्य;
+पूर्ण
 
-static int tracing_map_alloc_elts(struct tracing_map *map)
-{
-	unsigned int i;
+अटल पूर्णांक tracing_map_alloc_elts(काष्ठा tracing_map *map)
+अणु
+	अचिन्हित पूर्णांक i;
 
 	map->elts = tracing_map_array_alloc(map->max_elts,
-					    sizeof(struct tracing_map_elt *));
-	if (!map->elts)
-		return -ENOMEM;
+					    माप(काष्ठा tracing_map_elt *));
+	अगर (!map->elts)
+		वापस -ENOMEM;
 
-	for (i = 0; i < map->max_elts; i++) {
+	क्रम (i = 0; i < map->max_elts; i++) अणु
 		*(TRACING_MAP_ELT(map->elts, i)) = tracing_map_elt_alloc(map);
-		if (IS_ERR(*(TRACING_MAP_ELT(map->elts, i)))) {
-			*(TRACING_MAP_ELT(map->elts, i)) = NULL;
-			tracing_map_free_elts(map);
+		अगर (IS_ERR(*(TRACING_MAP_ELT(map->elts, i)))) अणु
+			*(TRACING_MAP_ELT(map->elts, i)) = शून्य;
+			tracing_map_मुक्त_elts(map);
 
-			return -ENOMEM;
-		}
-	}
+			वापस -ENOMEM;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static inline bool keys_match(void *key, void *test_key, unsigned key_size)
-{
+अटल अंतरभूत bool keys_match(व्योम *key, व्योम *test_key, अचिन्हित key_size)
+अणु
 	bool match = true;
 
-	if (memcmp(key, test_key, key_size))
+	अगर (स_भेद(key, test_key, key_size))
 		match = false;
 
-	return match;
-}
+	वापस match;
+पूर्ण
 
-static inline struct tracing_map_elt *
-__tracing_map_insert(struct tracing_map *map, void *key, bool lookup_only)
-{
+अटल अंतरभूत काष्ठा tracing_map_elt *
+__tracing_map_insert(काष्ठा tracing_map *map, व्योम *key, bool lookup_only)
+अणु
 	u32 idx, key_hash, test_key;
-	int dup_try = 0;
-	struct tracing_map_entry *entry;
-	struct tracing_map_elt *val;
+	पूर्णांक dup_try = 0;
+	काष्ठा tracing_map_entry *entry;
+	काष्ठा tracing_map_elt *val;
 
 	key_hash = jhash(key, map->key_size, 0);
-	if (key_hash == 0)
+	अगर (key_hash == 0)
 		key_hash = 1;
 	idx = key_hash >> (32 - (map->map_bits + 1));
 
-	while (1) {
+	जबतक (1) अणु
 		idx &= (map->map_size - 1);
 		entry = TRACING_MAP_ENTRY(map->map, idx);
 		test_key = entry->key;
 
-		if (test_key && test_key == key_hash) {
+		अगर (test_key && test_key == key_hash) अणु
 			val = READ_ONCE(entry->val);
-			if (val &&
-			    keys_match(key, val->key, map->key_size)) {
-				if (!lookup_only)
+			अगर (val &&
+			    keys_match(key, val->key, map->key_size)) अणु
+				अगर (!lookup_only)
 					atomic64_inc(&map->hits);
-				return val;
-			} else if (unlikely(!val)) {
+				वापस val;
+			पूर्ण अन्यथा अगर (unlikely(!val)) अणु
 				/*
-				 * The key is present. But, val (pointer to elt
-				 * struct) is still NULL. which means some other
-				 * thread is in the process of inserting an
+				 * The key is present. But, val (poपूर्णांकer to elt
+				 * काष्ठा) is still शून्य. which means some other
+				 * thपढ़ो is in the process of inserting an
 				 * element.
 				 *
 				 * On top of that, it's key_hash is same as the
@@ -548,148 +549,148 @@ __tracing_map_insert(struct tracing_map *map, void *key, bool lookup_only)
 				 */
 
 				dup_try++;
-				if (dup_try > map->map_size) {
+				अगर (dup_try > map->map_size) अणु
 					atomic64_inc(&map->drops);
-					break;
-				}
-				continue;
-			}
-		}
+					अवरोध;
+				पूर्ण
+				जारी;
+			पूर्ण
+		पूर्ण
 
-		if (!test_key) {
-			if (lookup_only)
-				break;
+		अगर (!test_key) अणु
+			अगर (lookup_only)
+				अवरोध;
 
-			if (!cmpxchg(&entry->key, 0, key_hash)) {
-				struct tracing_map_elt *elt;
+			अगर (!cmpxchg(&entry->key, 0, key_hash)) अणु
+				काष्ठा tracing_map_elt *elt;
 
-				elt = get_free_elt(map);
-				if (!elt) {
+				elt = get_मुक्त_elt(map);
+				अगर (!elt) अणु
 					atomic64_inc(&map->drops);
 					entry->key = 0;
-					break;
-				}
+					अवरोध;
+				पूर्ण
 
-				memcpy(elt->key, key, map->key_size);
+				स_नकल(elt->key, key, map->key_size);
 				entry->val = elt;
 				atomic64_inc(&map->hits);
 
-				return entry->val;
-			} else {
+				वापस entry->val;
+			पूर्ण अन्यथा अणु
 				/*
 				 * cmpxchg() failed. Loop around once
 				 * more to check what key was inserted.
 				 */
 				dup_try++;
-				continue;
-			}
-		}
+				जारी;
+			पूर्ण
+		पूर्ण
 
 		idx++;
-	}
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
 /**
  * tracing_map_insert - Insert key and/or retrieve val from a tracing_map
- * @map: The tracing_map to insert into
+ * @map: The tracing_map to insert पूर्णांकo
  * @key: The key to insert
  *
- * Inserts a key into a tracing_map and creates and returns a new
- * tracing_map_elt for it, or if the key has already been inserted by
- * a previous call, returns the tracing_map_elt already associated
+ * Inserts a key पूर्णांकo a tracing_map and creates and वापसs a new
+ * tracing_map_elt क्रम it, or अगर the key has alपढ़ोy been inserted by
+ * a previous call, वापसs the tracing_map_elt alपढ़ोy associated
  * with it.  When the map was created, the number of elements to be
- * allocated for the map was specified (internally maintained as
- * 'max_elts' in struct tracing_map), and that number of
+ * allocated क्रम the map was specअगरied (पूर्णांकernally मुख्यtained as
+ * 'max_elts' in काष्ठा tracing_map), and that number of
  * tracing_map_elts was created by tracing_map_init().  This is the
  * pre-allocated pool of tracing_map_elts that tracing_map_insert()
  * will allocate from when adding new keys.  Once that pool is
- * exhausted, tracing_map_insert() is useless and will return NULL to
- * signal that state.  There are two user-visible tracing_map
+ * exhausted, tracing_map_insert() is useless and will वापस शून्य to
+ * संकेत that state.  There are two user-visible tracing_map
  * variables, 'hits' and 'drops', which are updated by this function.
- * Every time an element is either successfully inserted or retrieved,
- * the 'hits' value is incremented.  Every time an element insertion
+ * Every समय an element is either successfully inserted or retrieved,
+ * the 'hits' value is incremented.  Every समय an element insertion
  * fails, the 'drops' value is incremented.
  *
- * This is a lock-free tracing map insertion function implementing a
- * modified form of Cliff Click's basic insertion algorithm.  It
- * requires the table size be a power of two.  To prevent any
- * possibility of an infinite loop we always make the internal table
- * size double the size of the requested table size (max_elts * 2).
+ * This is a lock-मुक्त tracing map insertion function implementing a
+ * modअगरied क्रमm of Clअगरf Click's basic insertion algorithm.  It
+ * requires the table size be a घातer of two.  To prevent any
+ * possibility of an infinite loop we always make the पूर्णांकernal table
+ * size द्विगुन the size of the requested table size (max_elts * 2).
  * Likewise, we never reuse a slot or resize or delete elements - when
  * we've reached max_elts entries, we simply return NULL once we've
- * run out of entries.  Readers can at any point in time traverse the
+ * run out of entries.  Readers can at any poपूर्णांक in समय traverse the
  * tracing map and safely access the key/val pairs.
  *
- * Return: the tracing_map_elt pointer val associated with the key.
+ * Return: the tracing_map_elt poपूर्णांकer val associated with the key.
  * If this was a newly inserted key, the val will be a newly allocated
- * and associated tracing_map_elt pointer val.  If the key wasn't
- * found and the pool of tracing_map_elts has been exhausted, NULL is
- * returned and no further insertions will succeed.
+ * and associated tracing_map_elt poपूर्णांकer val.  If the key wasn't
+ * found and the pool of tracing_map_elts has been exhausted, शून्य is
+ * वापसed and no further insertions will succeed.
  */
-struct tracing_map_elt *tracing_map_insert(struct tracing_map *map, void *key)
-{
-	return __tracing_map_insert(map, key, false);
-}
+काष्ठा tracing_map_elt *tracing_map_insert(काष्ठा tracing_map *map, व्योम *key)
+अणु
+	वापस __tracing_map_insert(map, key, false);
+पूर्ण
 
 /**
  * tracing_map_lookup - Retrieve val from a tracing_map
- * @map: The tracing_map to perform the lookup on
+ * @map: The tracing_map to perक्रमm the lookup on
  * @key: The key to look up
  *
- * Looks up key in tracing_map and if found returns the matching
- * tracing_map_elt.  This is a lock-free lookup; see
- * tracing_map_insert() for details on tracing_map and how it works.
- * Every time an element is retrieved, the 'hits' value is
+ * Looks up key in tracing_map and अगर found वापसs the matching
+ * tracing_map_elt.  This is a lock-मुक्त lookup; see
+ * tracing_map_insert() क्रम details on tracing_map and how it works.
+ * Every समय an element is retrieved, the 'hits' value is
  * incremented.  There is one user-visible tracing_map variable,
- * 'hits', which is updated by this function.  Every time an element
+ * 'hits', which is updated by this function.  Every समय an element
  * is successfully retrieved, the 'hits' value is incremented.  The
  * 'drops' value is never updated by this function.
  *
- * Return: the tracing_map_elt pointer val associated with the key.
- * If the key wasn't found, NULL is returned.
+ * Return: the tracing_map_elt poपूर्णांकer val associated with the key.
+ * If the key wasn't found, शून्य is वापसed.
  */
-struct tracing_map_elt *tracing_map_lookup(struct tracing_map *map, void *key)
-{
-	return __tracing_map_insert(map, key, true);
-}
+काष्ठा tracing_map_elt *tracing_map_lookup(काष्ठा tracing_map *map, व्योम *key)
+अणु
+	वापस __tracing_map_insert(map, key, true);
+पूर्ण
 
 /**
  * tracing_map_destroy - Destroy a tracing_map
  * @map: The tracing_map to destroy
  *
- * Frees a tracing_map along with its associated array of
+ * Frees a tracing_map aदीर्घ with its associated array of
  * tracing_map_elts.
  *
- * Callers should make sure there are no readers or writers actively
- * reading or inserting into the map before calling this.
+ * Callers should make sure there are no पढ़ोers or ग_लिखोrs actively
+ * पढ़ोing or inserting पूर्णांकo the map beक्रमe calling this.
  */
-void tracing_map_destroy(struct tracing_map *map)
-{
-	if (!map)
-		return;
+व्योम tracing_map_destroy(काष्ठा tracing_map *map)
+अणु
+	अगर (!map)
+		वापस;
 
-	tracing_map_free_elts(map);
+	tracing_map_मुक्त_elts(map);
 
-	tracing_map_array_free(map->map);
-	kfree(map);
-}
+	tracing_map_array_मुक्त(map->map);
+	kमुक्त(map);
+पूर्ण
 
 /**
  * tracing_map_clear - Clear a tracing_map
  * @map: The tracing_map to clear
  *
  * Resets the tracing map to a cleared or initial state.  The
- * tracing_map_elts are all cleared, and the array of struct
+ * tracing_map_elts are all cleared, and the array of काष्ठा
  * tracing_map_entry is reset to an initialized state.
  *
- * Callers should make sure there are no writers actively inserting
- * into the map before calling this.
+ * Callers should make sure there are no ग_लिखोrs actively inserting
+ * पूर्णांकo the map beक्रमe calling this.
  */
-void tracing_map_clear(struct tracing_map *map)
-{
-	unsigned int i;
+व्योम tracing_map_clear(काष्ठा tracing_map *map)
+अणु
+	अचिन्हित पूर्णांक i;
 
 	atomic_set(&map->next_elt, -1);
 	atomic64_set(&map->hits, 0);
@@ -697,81 +698,81 @@ void tracing_map_clear(struct tracing_map *map)
 
 	tracing_map_array_clear(map->map);
 
-	for (i = 0; i < map->max_elts; i++)
+	क्रम (i = 0; i < map->max_elts; i++)
 		tracing_map_elt_clear(*(TRACING_MAP_ELT(map->elts, i)));
-}
+पूर्ण
 
-static void set_sort_key(struct tracing_map *map,
-			 struct tracing_map_sort_key *sort_key)
-{
+अटल व्योम set_sort_key(काष्ठा tracing_map *map,
+			 काष्ठा tracing_map_sort_key *sort_key)
+अणु
 	map->sort_key = *sort_key;
-}
+पूर्ण
 
 /**
- * tracing_map_create - Create a lock-free map and element pool
+ * tracing_map_create - Create a lock-मुक्त map and element pool
  * @map_bits: The size of the map (2 ** map_bits)
- * @key_size: The size of the key for the map in bytes
+ * @key_size: The size of the key क्रम the map in bytes
  * @ops: Optional client-defined tracing_map_ops instance
- * @private_data: Client data associated with the map
+ * @निजी_data: Client data associated with the map
  *
  * Creates and sets up a map to contain 2 ** map_bits number of
- * elements (internally maintained as 'max_elts' in struct
- * tracing_map).  Before using, map fields should be added to the map
+ * elements (पूर्णांकernally मुख्यtained as 'max_elts' in काष्ठा
+ * tracing_map).  Beक्रमe using, map fields should be added to the map
  * with tracing_map_add_sum_field() and tracing_map_add_key_field().
  * tracing_map_init() should then be called to allocate the array of
- * tracing_map_elts, in order to avoid allocating anything in the map
- * insertion path.  The user-specified map size reflects the maximum
+ * tracing_map_elts, in order to aव्योम allocating anything in the map
+ * insertion path.  The user-specअगरied map size reflects the maximum
  * number of elements that can be contained in the table requested by
- * the user - internally we double that in order to keep the table
+ * the user - पूर्णांकernally we द्विगुन that in order to keep the table
  * sparse and keep collisions manageable.
  *
- * A tracing_map is a special-purpose map designed to aggregate or
- * 'sum' one or more values associated with a specific object of type
+ * A tracing_map is a special-purpose map deचिन्हित to aggregate or
+ * 'sum' one or more values associated with a specअगरic object of type
  * tracing_map_elt, which is attached by the map to a given key.
  *
  * tracing_map_create() sets up the map itself, and provides
- * operations for inserting tracing_map_elts, but doesn't allocate the
- * tracing_map_elts themselves, or provide a means for describing the
+ * operations क्रम inserting tracing_map_elts, but करोesn't allocate the
+ * tracing_map_elts themselves, or provide a means क्रम describing the
  * keys or sums associated with the tracing_map_elts.  All
- * tracing_map_elts for a given map have the same set of sums and
+ * tracing_map_elts क्रम a given map have the same set of sums and
  * keys, which are defined by the client using the functions
  * tracing_map_add_key_field() and tracing_map_add_sum_field().  Once
- * the fields are defined, the pool of elements allocated for the map
+ * the fields are defined, the pool of elements allocated क्रम the map
  * can be created, which occurs when the client code calls
  * tracing_map_init().
  *
- * When tracing_map_init() returns, tracing_map_elt elements can be
- * inserted into the map using tracing_map_insert().  When called,
- * tracing_map_insert() grabs a free tracing_map_elt from the pool, or
- * finds an existing match in the map and in either case returns it.
+ * When tracing_map_init() वापसs, tracing_map_elt elements can be
+ * inserted पूर्णांकo the map using tracing_map_insert().  When called,
+ * tracing_map_insert() grअसल a मुक्त tracing_map_elt from the pool, or
+ * finds an existing match in the map and in either हाल वापसs it.
  * The client can then use tracing_map_update_sum() and
- * tracing_map_read_sum() to update or read a given sum field for the
+ * tracing_map_पढ़ो_sum() to update or पढ़ो a given sum field क्रम the
  * tracing_map_elt.
  *
- * The client can at any point retrieve and traverse the current set
+ * The client can at any poपूर्णांक retrieve and traverse the current set
  * of inserted tracing_map_elts in a tracing_map, via
- * tracing_map_sort_entries().  Sorting can be done on any field,
+ * tracing_map_sort_entries().  Sorting can be करोne on any field,
  * including keys.
  *
- * See tracing_map.h for a description of tracing_map_ops.
+ * See tracing_map.h क्रम a description of tracing_map_ops.
  *
- * Return: the tracing_map pointer if successful, ERR_PTR if not.
+ * Return: the tracing_map poपूर्णांकer अगर successful, ERR_PTR अगर not.
  */
-struct tracing_map *tracing_map_create(unsigned int map_bits,
-				       unsigned int key_size,
-				       const struct tracing_map_ops *ops,
-				       void *private_data)
-{
-	struct tracing_map *map;
-	unsigned int i;
+काष्ठा tracing_map *tracing_map_create(अचिन्हित पूर्णांक map_bits,
+				       अचिन्हित पूर्णांक key_size,
+				       स्थिर काष्ठा tracing_map_ops *ops,
+				       व्योम *निजी_data)
+अणु
+	काष्ठा tracing_map *map;
+	अचिन्हित पूर्णांक i;
 
-	if (map_bits < TRACING_MAP_BITS_MIN ||
+	अगर (map_bits < TRACING_MAP_BITS_MIN ||
 	    map_bits > TRACING_MAP_BITS_MAX)
-		return ERR_PTR(-EINVAL);
+		वापस ERR_PTR(-EINVAL);
 
-	map = kzalloc(sizeof(*map), GFP_KERNEL);
-	if (!map)
-		return ERR_PTR(-ENOMEM);
+	map = kzalloc(माप(*map), GFP_KERNEL);
+	अगर (!map)
+		वापस ERR_PTR(-ENOMEM);
 
 	map->map_bits = map_bits;
 	map->max_elts = (1 << map_bits);
@@ -780,80 +781,80 @@ struct tracing_map *tracing_map_create(unsigned int map_bits,
 	map->map_size = (1 << (map_bits + 1));
 	map->ops = ops;
 
-	map->private_data = private_data;
+	map->निजी_data = निजी_data;
 
 	map->map = tracing_map_array_alloc(map->map_size,
-					   sizeof(struct tracing_map_entry));
-	if (!map->map)
-		goto free;
+					   माप(काष्ठा tracing_map_entry));
+	अगर (!map->map)
+		जाओ मुक्त;
 
 	map->key_size = key_size;
-	for (i = 0; i < TRACING_MAP_KEYS_MAX; i++)
+	क्रम (i = 0; i < TRACING_MAP_KEYS_MAX; i++)
 		map->key_idx[i] = -1;
  out:
-	return map;
- free:
+	वापस map;
+ मुक्त:
 	tracing_map_destroy(map);
 	map = ERR_PTR(-ENOMEM);
 
-	goto out;
-}
+	जाओ out;
+पूर्ण
 
 /**
  * tracing_map_init - Allocate and clear a map's tracing_map_elts
  * @map: The tracing_map to initialize
  *
  * Allocates a clears a pool of tracing_map_elts equal to the
- * user-specified size of 2 ** map_bits (internally maintained as
- * 'max_elts' in struct tracing_map).  Before using, the map fields
+ * user-specअगरied size of 2 ** map_bits (पूर्णांकernally मुख्यtained as
+ * 'max_elts' in काष्ठा tracing_map).  Beक्रमe using, the map fields
  * should be added to the map with tracing_map_add_sum_field() and
  * tracing_map_add_key_field().  tracing_map_init() should then be
- * called to allocate the array of tracing_map_elts, in order to avoid
- * allocating anything in the map insertion path.  The user-specified
+ * called to allocate the array of tracing_map_elts, in order to aव्योम
+ * allocating anything in the map insertion path.  The user-specअगरied
  * map size reflects the max number of elements requested by the user
- * - internally we double that in order to keep the table sparse and
+ * - पूर्णांकernally we द्विगुन that in order to keep the table sparse and
  * keep collisions manageable.
  *
- * See tracing_map.h for a description of tracing_map_ops.
+ * See tracing_map.h क्रम a description of tracing_map_ops.
  *
- * Return: the tracing_map pointer if successful, ERR_PTR if not.
+ * Return: the tracing_map poपूर्णांकer अगर successful, ERR_PTR अगर not.
  */
-int tracing_map_init(struct tracing_map *map)
-{
-	int err;
+पूर्णांक tracing_map_init(काष्ठा tracing_map *map)
+अणु
+	पूर्णांक err;
 
-	if (map->n_fields < 2)
-		return -EINVAL; /* need at least 1 key and 1 val */
+	अगर (map->n_fields < 2)
+		वापस -EINVAL; /* need at least 1 key and 1 val */
 
 	err = tracing_map_alloc_elts(map);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	tracing_map_clear(map);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int cmp_entries_dup(const struct tracing_map_sort_entry **a,
-			   const struct tracing_map_sort_entry **b)
-{
-	int ret = 0;
+अटल पूर्णांक cmp_entries_dup(स्थिर काष्ठा tracing_map_sort_entry **a,
+			   स्थिर काष्ठा tracing_map_sort_entry **b)
+अणु
+	पूर्णांक ret = 0;
 
-	if (memcmp((*a)->key, (*b)->key, (*a)->elt->map->key_size))
+	अगर (स_भेद((*a)->key, (*b)->key, (*a)->elt->map->key_size))
 		ret = 1;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int cmp_entries_sum(const struct tracing_map_sort_entry **a,
-			   const struct tracing_map_sort_entry **b)
-{
-	const struct tracing_map_elt *elt_a, *elt_b;
-	struct tracing_map_sort_key *sort_key;
-	struct tracing_map_field *field;
+अटल पूर्णांक cmp_entries_sum(स्थिर काष्ठा tracing_map_sort_entry **a,
+			   स्थिर काष्ठा tracing_map_sort_entry **b)
+अणु
+	स्थिर काष्ठा tracing_map_elt *elt_a, *elt_b;
+	काष्ठा tracing_map_sort_key *sort_key;
+	काष्ठा tracing_map_field *field;
 	tracing_map_cmp_fn_t cmp_fn;
-	void *val_a, *val_b;
-	int ret = 0;
+	व्योम *val_a, *val_b;
+	पूर्णांक ret = 0;
 
 	elt_a = (*a)->elt;
 	elt_b = (*b)->elt;
@@ -867,21 +868,21 @@ static int cmp_entries_sum(const struct tracing_map_sort_entry **a,
 	val_b = &elt_b->fields[sort_key->field_idx].sum;
 
 	ret = cmp_fn(val_a, val_b);
-	if (sort_key->descending)
+	अगर (sort_key->descending)
 		ret = -ret;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int cmp_entries_key(const struct tracing_map_sort_entry **a,
-			   const struct tracing_map_sort_entry **b)
-{
-	const struct tracing_map_elt *elt_a, *elt_b;
-	struct tracing_map_sort_key *sort_key;
-	struct tracing_map_field *field;
+अटल पूर्णांक cmp_entries_key(स्थिर काष्ठा tracing_map_sort_entry **a,
+			   स्थिर काष्ठा tracing_map_sort_entry **b)
+अणु
+	स्थिर काष्ठा tracing_map_elt *elt_a, *elt_b;
+	काष्ठा tracing_map_sort_key *sort_key;
+	काष्ठा tracing_map_field *field;
 	tracing_map_cmp_fn_t cmp_fn;
-	void *val_a, *val_b;
-	int ret = 0;
+	व्योम *val_a, *val_b;
+	पूर्णांक ret = 0;
 
 	elt_a = (*a)->elt;
 	elt_b = (*b)->elt;
@@ -896,230 +897,230 @@ static int cmp_entries_key(const struct tracing_map_sort_entry **a,
 	val_b = elt_b->key + field->offset;
 
 	ret = cmp_fn(val_a, val_b);
-	if (sort_key->descending)
+	अगर (sort_key->descending)
 		ret = -ret;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void destroy_sort_entry(struct tracing_map_sort_entry *entry)
-{
-	if (!entry)
-		return;
+अटल व्योम destroy_sort_entry(काष्ठा tracing_map_sort_entry *entry)
+अणु
+	अगर (!entry)
+		वापस;
 
-	if (entry->elt_copied)
-		tracing_map_elt_free(entry->elt);
+	अगर (entry->elt_copied)
+		tracing_map_elt_मुक्त(entry->elt);
 
-	kfree(entry);
-}
+	kमुक्त(entry);
+पूर्ण
 
 /**
  * tracing_map_destroy_sort_entries - Destroy an array of sort entries
  * @entries: The entries to destroy
  * @n_entries: The number of entries in the array
  *
- * Destroy the elements returned by a tracing_map_sort_entries() call.
+ * Destroy the elements वापसed by a tracing_map_sort_entries() call.
  */
-void tracing_map_destroy_sort_entries(struct tracing_map_sort_entry **entries,
-				      unsigned int n_entries)
-{
-	unsigned int i;
+व्योम tracing_map_destroy_sort_entries(काष्ठा tracing_map_sort_entry **entries,
+				      अचिन्हित पूर्णांक n_entries)
+अणु
+	अचिन्हित पूर्णांक i;
 
-	for (i = 0; i < n_entries; i++)
+	क्रम (i = 0; i < n_entries; i++)
 		destroy_sort_entry(entries[i]);
 
-	vfree(entries);
-}
+	vमुक्त(entries);
+पूर्ण
 
-static struct tracing_map_sort_entry *
-create_sort_entry(void *key, struct tracing_map_elt *elt)
-{
-	struct tracing_map_sort_entry *sort_entry;
+अटल काष्ठा tracing_map_sort_entry *
+create_sort_entry(व्योम *key, काष्ठा tracing_map_elt *elt)
+अणु
+	काष्ठा tracing_map_sort_entry *sort_entry;
 
-	sort_entry = kzalloc(sizeof(*sort_entry), GFP_KERNEL);
-	if (!sort_entry)
-		return NULL;
+	sort_entry = kzalloc(माप(*sort_entry), GFP_KERNEL);
+	अगर (!sort_entry)
+		वापस शून्य;
 
 	sort_entry->key = key;
 	sort_entry->elt = elt;
 
-	return sort_entry;
-}
+	वापस sort_entry;
+पूर्ण
 
-static void detect_dups(struct tracing_map_sort_entry **sort_entries,
-		      int n_entries, unsigned int key_size)
-{
-	unsigned int dups = 0, total_dups = 0;
-	int i;
-	void *key;
+अटल व्योम detect_dups(काष्ठा tracing_map_sort_entry **sort_entries,
+		      पूर्णांक n_entries, अचिन्हित पूर्णांक key_size)
+अणु
+	अचिन्हित पूर्णांक dups = 0, total_dups = 0;
+	पूर्णांक i;
+	व्योम *key;
 
-	if (n_entries < 2)
-		return;
+	अगर (n_entries < 2)
+		वापस;
 
-	sort(sort_entries, n_entries, sizeof(struct tracing_map_sort_entry *),
-	     (int (*)(const void *, const void *))cmp_entries_dup, NULL);
+	sort(sort_entries, n_entries, माप(काष्ठा tracing_map_sort_entry *),
+	     (पूर्णांक (*)(स्थिर व्योम *, स्थिर व्योम *))cmp_entries_dup, शून्य);
 
 	key = sort_entries[0]->key;
-	for (i = 1; i < n_entries; i++) {
-		if (!memcmp(sort_entries[i]->key, key, key_size)) {
+	क्रम (i = 1; i < n_entries; i++) अणु
+		अगर (!स_भेद(sort_entries[i]->key, key, key_size)) अणु
 			dups++; total_dups++;
-			continue;
-		}
+			जारी;
+		पूर्ण
 		key = sort_entries[i]->key;
 		dups = 0;
-	}
+	पूर्ण
 
 	WARN_ONCE(total_dups > 0,
 		  "Duplicates detected: %d\n", total_dups);
-}
+पूर्ण
 
-static bool is_key(struct tracing_map *map, unsigned int field_idx)
-{
-	unsigned int i;
+अटल bool is_key(काष्ठा tracing_map *map, अचिन्हित पूर्णांक field_idx)
+अणु
+	अचिन्हित पूर्णांक i;
 
-	for (i = 0; i < map->n_keys; i++)
-		if (map->key_idx[i] == field_idx)
-			return true;
-	return false;
-}
+	क्रम (i = 0; i < map->n_keys; i++)
+		अगर (map->key_idx[i] == field_idx)
+			वापस true;
+	वापस false;
+पूर्ण
 
-static void sort_secondary(struct tracing_map *map,
-			   const struct tracing_map_sort_entry **entries,
-			   unsigned int n_entries,
-			   struct tracing_map_sort_key *primary_key,
-			   struct tracing_map_sort_key *secondary_key)
-{
-	int (*primary_fn)(const struct tracing_map_sort_entry **,
-			  const struct tracing_map_sort_entry **);
-	int (*secondary_fn)(const struct tracing_map_sort_entry **,
-			    const struct tracing_map_sort_entry **);
-	unsigned i, start = 0, n_sub = 1;
+अटल व्योम sort_secondary(काष्ठा tracing_map *map,
+			   स्थिर काष्ठा tracing_map_sort_entry **entries,
+			   अचिन्हित पूर्णांक n_entries,
+			   काष्ठा tracing_map_sort_key *primary_key,
+			   काष्ठा tracing_map_sort_key *secondary_key)
+अणु
+	पूर्णांक (*primary_fn)(स्थिर काष्ठा tracing_map_sort_entry **,
+			  स्थिर काष्ठा tracing_map_sort_entry **);
+	पूर्णांक (*secondary_fn)(स्थिर काष्ठा tracing_map_sort_entry **,
+			    स्थिर काष्ठा tracing_map_sort_entry **);
+	अचिन्हित i, start = 0, n_sub = 1;
 
-	if (is_key(map, primary_key->field_idx))
+	अगर (is_key(map, primary_key->field_idx))
 		primary_fn = cmp_entries_key;
-	else
+	अन्यथा
 		primary_fn = cmp_entries_sum;
 
-	if (is_key(map, secondary_key->field_idx))
+	अगर (is_key(map, secondary_key->field_idx))
 		secondary_fn = cmp_entries_key;
-	else
+	अन्यथा
 		secondary_fn = cmp_entries_sum;
 
-	for (i = 0; i < n_entries - 1; i++) {
-		const struct tracing_map_sort_entry **a = &entries[i];
-		const struct tracing_map_sort_entry **b = &entries[i + 1];
+	क्रम (i = 0; i < n_entries - 1; i++) अणु
+		स्थिर काष्ठा tracing_map_sort_entry **a = &entries[i];
+		स्थिर काष्ठा tracing_map_sort_entry **b = &entries[i + 1];
 
-		if (primary_fn(a, b) == 0) {
+		अगर (primary_fn(a, b) == 0) अणु
 			n_sub++;
-			if (i < n_entries - 2)
-				continue;
-		}
+			अगर (i < n_entries - 2)
+				जारी;
+		पूर्ण
 
-		if (n_sub < 2) {
+		अगर (n_sub < 2) अणु
 			start = i + 1;
 			n_sub = 1;
-			continue;
-		}
+			जारी;
+		पूर्ण
 
 		set_sort_key(map, secondary_key);
 		sort(&entries[start], n_sub,
-		     sizeof(struct tracing_map_sort_entry *),
-		     (int (*)(const void *, const void *))secondary_fn, NULL);
+		     माप(काष्ठा tracing_map_sort_entry *),
+		     (पूर्णांक (*)(स्थिर व्योम *, स्थिर व्योम *))secondary_fn, शून्य);
 		set_sort_key(map, primary_key);
 
 		start = i + 1;
 		n_sub = 1;
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
  * tracing_map_sort_entries - Sort the current set of tracing_map_elts in a map
  * @map: The tracing_map
- * @sort_key: The sort key to use for sorting
- * @sort_entries: outval: pointer to allocated and sorted array of entries
+ * @sort_key: The sort key to use क्रम sorting
+ * @sort_entries: outval: poपूर्णांकer to allocated and sorted array of entries
  *
  * tracing_map_sort_entries() sorts the current set of entries in the
- * map and returns the list of tracing_map_sort_entries containing
+ * map and वापसs the list of tracing_map_sort_entries containing
  * them to the client in the sort_entries param.  The client can
- * access the struct tracing_map_elt element of interest directly as
- * the 'elt' field of a returned struct tracing_map_sort_entry object.
+ * access the काष्ठा tracing_map_elt element of पूर्णांकerest directly as
+ * the 'elt' field of a वापसed काष्ठा tracing_map_sort_entry object.
  *
  * The sort_key has only two fields: idx and descending.  'idx' refers
  * to the index of the field added via tracing_map_add_sum_field() or
  * tracing_map_add_key_field() when the tracing_map was initialized.
- * 'descending' is a flag that if set reverses the sort order, which
- * by default is ascending.
+ * 'descending' is a flag that अगर set reverses the sort order, which
+ * by शेष is ascending.
  *
- * The client should not hold on to the returned array but should use
- * it and call tracing_map_destroy_sort_entries() when done.
+ * The client should not hold on to the वापसed array but should use
+ * it and call tracing_map_destroy_sort_entries() when करोne.
  *
- * Return: the number of sort_entries in the struct tracing_map_sort_entry
+ * Return: the number of sort_entries in the काष्ठा tracing_map_sort_entry
  * array, negative on error
  */
-int tracing_map_sort_entries(struct tracing_map *map,
-			     struct tracing_map_sort_key *sort_keys,
-			     unsigned int n_sort_keys,
-			     struct tracing_map_sort_entry ***sort_entries)
-{
-	int (*cmp_entries_fn)(const struct tracing_map_sort_entry **,
-			      const struct tracing_map_sort_entry **);
-	struct tracing_map_sort_entry *sort_entry, **entries;
-	int i, n_entries, ret;
+पूर्णांक tracing_map_sort_entries(काष्ठा tracing_map *map,
+			     काष्ठा tracing_map_sort_key *sort_keys,
+			     अचिन्हित पूर्णांक n_sort_keys,
+			     काष्ठा tracing_map_sort_entry ***sort_entries)
+अणु
+	पूर्णांक (*cmp_entries_fn)(स्थिर काष्ठा tracing_map_sort_entry **,
+			      स्थिर काष्ठा tracing_map_sort_entry **);
+	काष्ठा tracing_map_sort_entry *sort_entry, **entries;
+	पूर्णांक i, n_entries, ret;
 
-	entries = vmalloc(array_size(sizeof(sort_entry), map->max_elts));
-	if (!entries)
-		return -ENOMEM;
+	entries = vदो_स्मृति(array_size(माप(sort_entry), map->max_elts));
+	अगर (!entries)
+		वापस -ENOMEM;
 
-	for (i = 0, n_entries = 0; i < map->map_size; i++) {
-		struct tracing_map_entry *entry;
+	क्रम (i = 0, n_entries = 0; i < map->map_size; i++) अणु
+		काष्ठा tracing_map_entry *entry;
 
 		entry = TRACING_MAP_ENTRY(map->map, i);
 
-		if (!entry->key || !entry->val)
-			continue;
+		अगर (!entry->key || !entry->val)
+			जारी;
 
 		entries[n_entries] = create_sort_entry(entry->val->key,
 						       entry->val);
-		if (!entries[n_entries++]) {
+		अगर (!entries[n_entries++]) अणु
 			ret = -ENOMEM;
-			goto free;
-		}
-	}
+			जाओ मुक्त;
+		पूर्ण
+	पूर्ण
 
-	if (n_entries == 0) {
+	अगर (n_entries == 0) अणु
 		ret = 0;
-		goto free;
-	}
+		जाओ मुक्त;
+	पूर्ण
 
-	if (n_entries == 1) {
+	अगर (n_entries == 1) अणु
 		*sort_entries = entries;
-		return 1;
-	}
+		वापस 1;
+	पूर्ण
 
 	detect_dups(entries, n_entries, map->key_size);
 
-	if (is_key(map, sort_keys[0].field_idx))
+	अगर (is_key(map, sort_keys[0].field_idx))
 		cmp_entries_fn = cmp_entries_key;
-	else
+	अन्यथा
 		cmp_entries_fn = cmp_entries_sum;
 
 	set_sort_key(map, &sort_keys[0]);
 
-	sort(entries, n_entries, sizeof(struct tracing_map_sort_entry *),
-	     (int (*)(const void *, const void *))cmp_entries_fn, NULL);
+	sort(entries, n_entries, माप(काष्ठा tracing_map_sort_entry *),
+	     (पूर्णांक (*)(स्थिर व्योम *, स्थिर व्योम *))cmp_entries_fn, शून्य);
 
-	if (n_sort_keys > 1)
+	अगर (n_sort_keys > 1)
 		sort_secondary(map,
-			       (const struct tracing_map_sort_entry **)entries,
+			       (स्थिर काष्ठा tracing_map_sort_entry **)entries,
 			       n_entries,
 			       &sort_keys[0],
 			       &sort_keys[1]);
 
 	*sort_entries = entries;
 
-	return n_entries;
- free:
+	वापस n_entries;
+ मुक्त:
 	tracing_map_destroy_sort_entries(entries, n_entries);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण

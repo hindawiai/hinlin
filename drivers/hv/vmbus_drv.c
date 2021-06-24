@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (c) 2009, Microsoft Corporation.
  *
@@ -7,661 +8,661 @@
  *   Hank Janssen  <hjanssen@microsoft.com>
  *   K. Y. Srinivasan <kys@microsoft.com>
  */
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include <linux/init.h>
-#include <linux/module.h>
-#include <linux/device.h>
-#include <linux/interrupt.h>
-#include <linux/sysctl.h>
-#include <linux/slab.h>
-#include <linux/acpi.h>
-#include <linux/completion.h>
-#include <linux/hyperv.h>
-#include <linux/kernel_stat.h>
-#include <linux/clockchips.h>
-#include <linux/cpu.h>
-#include <linux/sched/task_stack.h>
+#समावेश <linux/init.h>
+#समावेश <linux/module.h>
+#समावेश <linux/device.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/sysctl.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/acpi.h>
+#समावेश <linux/completion.h>
+#समावेश <linux/hyperv.h>
+#समावेश <linux/kernel_स्थिति.स>
+#समावेश <linux/घड़ीchips.h>
+#समावेश <linux/cpu.h>
+#समावेश <linux/sched/task_stack.h>
 
-#include <linux/delay.h>
-#include <linux/notifier.h>
-#include <linux/ptrace.h>
-#include <linux/screen_info.h>
-#include <linux/kdebug.h>
-#include <linux/efi.h>
-#include <linux/random.h>
-#include <linux/kernel.h>
-#include <linux/syscore_ops.h>
-#include <clocksource/hyperv_timer.h>
-#include "hyperv_vmbus.h"
+#समावेश <linux/delay.h>
+#समावेश <linux/notअगरier.h>
+#समावेश <linux/ptrace.h>
+#समावेश <linux/screen_info.h>
+#समावेश <linux/kdebug.h>
+#समावेश <linux/efi.h>
+#समावेश <linux/अक्रमom.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/syscore_ops.h>
+#समावेश <घड़ीsource/hyperv_समयr.h>
+#समावेश "hyperv_vmbus.h"
 
-struct vmbus_dynid {
-	struct list_head node;
-	struct hv_vmbus_device_id id;
-};
+काष्ठा vmbus_dynid अणु
+	काष्ठा list_head node;
+	काष्ठा hv_vmbus_device_id id;
+पूर्ण;
 
-static struct acpi_device  *hv_acpi_dev;
+अटल काष्ठा acpi_device  *hv_acpi_dev;
 
-static struct completion probe_event;
+अटल काष्ठा completion probe_event;
 
-static int hyperv_cpuhp_online;
+अटल पूर्णांक hyperv_cpuhp_online;
 
-static void *hv_panic_page;
+अटल व्योम *hv_panic_page;
 
-static long __percpu *vmbus_evt;
+अटल दीर्घ __percpu *vmbus_evt;
 
 /* Values parsed from ACPI DSDT */
-int vmbus_irq;
-int vmbus_interrupt;
+पूर्णांक vmbus_irq;
+पूर्णांक vmbus_पूर्णांकerrupt;
 
 /*
  * Boolean to control whether to report panic messages over Hyper-V.
  *
  * It can be set via /proc/sys/kernel/hyperv_record_panic_msg
  */
-static int sysctl_record_panic_msg = 1;
+अटल पूर्णांक sysctl_record_panic_msg = 1;
 
-static int hyperv_report_reg(void)
-{
-	return !sysctl_record_panic_msg || !hv_panic_page;
-}
+अटल पूर्णांक hyperv_report_reg(व्योम)
+अणु
+	वापस !sysctl_record_panic_msg || !hv_panic_page;
+पूर्ण
 
-static int hyperv_panic_event(struct notifier_block *nb, unsigned long val,
-			      void *args)
-{
-	struct pt_regs *regs;
+अटल पूर्णांक hyperv_panic_event(काष्ठा notअगरier_block *nb, अचिन्हित दीर्घ val,
+			      व्योम *args)
+अणु
+	काष्ठा pt_regs *regs;
 
 	vmbus_initiate_unload(true);
 
 	/*
-	 * Hyper-V should be notified only once about a panic.  If we will be
-	 * doing hyperv_report_panic_msg() later with kmsg data, don't do
-	 * the notification here.
+	 * Hyper-V should be notअगरied only once about a panic.  If we will be
+	 * करोing hyperv_report_panic_msg() later with kmsg data, करोn't करो
+	 * the notअगरication here.
 	 */
-	if (ms_hyperv.misc_features & HV_FEATURE_GUEST_CRASH_MSR_AVAILABLE
-	    && hyperv_report_reg()) {
+	अगर (ms_hyperv.misc_features & HV_FEATURE_GUEST_CRASH_MSR_AVAILABLE
+	    && hyperv_report_reg()) अणु
 		regs = current_pt_regs();
 		hyperv_report_panic(regs, val, false);
-	}
-	return NOTIFY_DONE;
-}
+	पूर्ण
+	वापस NOTIFY_DONE;
+पूर्ण
 
-static int hyperv_die_event(struct notifier_block *nb, unsigned long val,
-			    void *args)
-{
-	struct die_args *die = args;
-	struct pt_regs *regs = die->regs;
+अटल पूर्णांक hyperv_die_event(काष्ठा notअगरier_block *nb, अचिन्हित दीर्घ val,
+			    व्योम *args)
+अणु
+	काष्ठा die_args *die = args;
+	काष्ठा pt_regs *regs = die->regs;
 
-	/* Don't notify Hyper-V if the die event is other than oops */
-	if (val != DIE_OOPS)
-		return NOTIFY_DONE;
+	/* Don't notअगरy Hyper-V अगर the die event is other than oops */
+	अगर (val != DIE_OOPS)
+		वापस NOTIFY_DONE;
 
 	/*
-	 * Hyper-V should be notified only once about a panic.  If we will be
-	 * doing hyperv_report_panic_msg() later with kmsg data, don't do
-	 * the notification here.
+	 * Hyper-V should be notअगरied only once about a panic.  If we will be
+	 * करोing hyperv_report_panic_msg() later with kmsg data, करोn't करो
+	 * the notअगरication here.
 	 */
-	if (hyperv_report_reg())
+	अगर (hyperv_report_reg())
 		hyperv_report_panic(regs, val, true);
-	return NOTIFY_DONE;
-}
+	वापस NOTIFY_DONE;
+पूर्ण
 
-static struct notifier_block hyperv_die_block = {
-	.notifier_call = hyperv_die_event,
-};
-static struct notifier_block hyperv_panic_block = {
-	.notifier_call = hyperv_panic_event,
-};
+अटल काष्ठा notअगरier_block hyperv_die_block = अणु
+	.notअगरier_call = hyperv_die_event,
+पूर्ण;
+अटल काष्ठा notअगरier_block hyperv_panic_block = अणु
+	.notअगरier_call = hyperv_panic_event,
+पूर्ण;
 
-static const char *fb_mmio_name = "fb_range";
-static struct resource *fb_mmio;
-static struct resource *hyperv_mmio;
-static DEFINE_MUTEX(hyperv_mmio_lock);
+अटल स्थिर अक्षर *fb_mmio_name = "fb_range";
+अटल काष्ठा resource *fb_mmio;
+अटल काष्ठा resource *hyperv_mmio;
+अटल DEFINE_MUTEX(hyperv_mmio_lock);
 
-static int vmbus_exists(void)
-{
-	if (hv_acpi_dev == NULL)
-		return -ENODEV;
+अटल पूर्णांक vmbus_exists(व्योम)
+अणु
+	अगर (hv_acpi_dev == शून्य)
+		वापस -ENODEV;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static u8 channel_monitor_group(const struct vmbus_channel *channel)
-{
-	return (u8)channel->offermsg.monitorid / 32;
-}
+अटल u8 channel_monitor_group(स्थिर काष्ठा vmbus_channel *channel)
+अणु
+	वापस (u8)channel->offermsg.monitorid / 32;
+पूर्ण
 
-static u8 channel_monitor_offset(const struct vmbus_channel *channel)
-{
-	return (u8)channel->offermsg.monitorid % 32;
-}
+अटल u8 channel_monitor_offset(स्थिर काष्ठा vmbus_channel *channel)
+अणु
+	वापस (u8)channel->offermsg.monitorid % 32;
+पूर्ण
 
-static u32 channel_pending(const struct vmbus_channel *channel,
-			   const struct hv_monitor_page *monitor_page)
-{
+अटल u32 channel_pending(स्थिर काष्ठा vmbus_channel *channel,
+			   स्थिर काष्ठा hv_monitor_page *monitor_page)
+अणु
 	u8 monitor_group = channel_monitor_group(channel);
 
-	return monitor_page->trigger_group[monitor_group].pending;
-}
+	वापस monitor_page->trigger_group[monitor_group].pending;
+पूर्ण
 
-static u32 channel_latency(const struct vmbus_channel *channel,
-			   const struct hv_monitor_page *monitor_page)
-{
-	u8 monitor_group = channel_monitor_group(channel);
-	u8 monitor_offset = channel_monitor_offset(channel);
-
-	return monitor_page->latency[monitor_group][monitor_offset];
-}
-
-static u32 channel_conn_id(struct vmbus_channel *channel,
-			   struct hv_monitor_page *monitor_page)
-{
+अटल u32 channel_latency(स्थिर काष्ठा vmbus_channel *channel,
+			   स्थिर काष्ठा hv_monitor_page *monitor_page)
+अणु
 	u8 monitor_group = channel_monitor_group(channel);
 	u8 monitor_offset = channel_monitor_offset(channel);
 
-	return monitor_page->parameter[monitor_group][monitor_offset].connectionid.u.id;
-}
+	वापस monitor_page->latency[monitor_group][monitor_offset];
+पूर्ण
 
-static ssize_t id_show(struct device *dev, struct device_attribute *dev_attr,
-		       char *buf)
-{
-	struct hv_device *hv_dev = device_to_hv_device(dev);
+अटल u32 channel_conn_id(काष्ठा vmbus_channel *channel,
+			   काष्ठा hv_monitor_page *monitor_page)
+अणु
+	u8 monitor_group = channel_monitor_group(channel);
+	u8 monitor_offset = channel_monitor_offset(channel);
 
-	if (!hv_dev->channel)
-		return -ENODEV;
-	return sprintf(buf, "%d\n", hv_dev->channel->offermsg.child_relid);
-}
-static DEVICE_ATTR_RO(id);
+	वापस monitor_page->parameter[monitor_group][monitor_offset].connectionid.u.id;
+पूर्ण
 
-static ssize_t state_show(struct device *dev, struct device_attribute *dev_attr,
-			  char *buf)
-{
-	struct hv_device *hv_dev = device_to_hv_device(dev);
+अटल sमाप_प्रकार id_show(काष्ठा device *dev, काष्ठा device_attribute *dev_attr,
+		       अक्षर *buf)
+अणु
+	काष्ठा hv_device *hv_dev = device_to_hv_device(dev);
 
-	if (!hv_dev->channel)
-		return -ENODEV;
-	return sprintf(buf, "%d\n", hv_dev->channel->state);
-}
-static DEVICE_ATTR_RO(state);
+	अगर (!hv_dev->channel)
+		वापस -ENODEV;
+	वापस प्र_लिखो(buf, "%d\n", hv_dev->channel->offermsg.child_relid);
+पूर्ण
+अटल DEVICE_ATTR_RO(id);
 
-static ssize_t monitor_id_show(struct device *dev,
-			       struct device_attribute *dev_attr, char *buf)
-{
-	struct hv_device *hv_dev = device_to_hv_device(dev);
+अटल sमाप_प्रकार state_show(काष्ठा device *dev, काष्ठा device_attribute *dev_attr,
+			  अक्षर *buf)
+अणु
+	काष्ठा hv_device *hv_dev = device_to_hv_device(dev);
 
-	if (!hv_dev->channel)
-		return -ENODEV;
-	return sprintf(buf, "%d\n", hv_dev->channel->offermsg.monitorid);
-}
-static DEVICE_ATTR_RO(monitor_id);
+	अगर (!hv_dev->channel)
+		वापस -ENODEV;
+	वापस प्र_लिखो(buf, "%d\n", hv_dev->channel->state);
+पूर्ण
+अटल DEVICE_ATTR_RO(state);
 
-static ssize_t class_id_show(struct device *dev,
-			       struct device_attribute *dev_attr, char *buf)
-{
-	struct hv_device *hv_dev = device_to_hv_device(dev);
+अटल sमाप_प्रकार monitor_id_show(काष्ठा device *dev,
+			       काष्ठा device_attribute *dev_attr, अक्षर *buf)
+अणु
+	काष्ठा hv_device *hv_dev = device_to_hv_device(dev);
 
-	if (!hv_dev->channel)
-		return -ENODEV;
-	return sprintf(buf, "{%pUl}\n",
-		       &hv_dev->channel->offermsg.offer.if_type);
-}
-static DEVICE_ATTR_RO(class_id);
+	अगर (!hv_dev->channel)
+		वापस -ENODEV;
+	वापस प्र_लिखो(buf, "%d\n", hv_dev->channel->offermsg.monitorid);
+पूर्ण
+अटल DEVICE_ATTR_RO(monitor_id);
 
-static ssize_t device_id_show(struct device *dev,
-			      struct device_attribute *dev_attr, char *buf)
-{
-	struct hv_device *hv_dev = device_to_hv_device(dev);
+अटल sमाप_प्रकार class_id_show(काष्ठा device *dev,
+			       काष्ठा device_attribute *dev_attr, अक्षर *buf)
+अणु
+	काष्ठा hv_device *hv_dev = device_to_hv_device(dev);
 
-	if (!hv_dev->channel)
-		return -ENODEV;
-	return sprintf(buf, "{%pUl}\n",
-		       &hv_dev->channel->offermsg.offer.if_instance);
-}
-static DEVICE_ATTR_RO(device_id);
+	अगर (!hv_dev->channel)
+		वापस -ENODEV;
+	वापस प्र_लिखो(buf, "{%pUl}\n",
+		       &hv_dev->channel->offermsg.offer.अगर_type);
+पूर्ण
+अटल DEVICE_ATTR_RO(class_id);
 
-static ssize_t modalias_show(struct device *dev,
-			     struct device_attribute *dev_attr, char *buf)
-{
-	struct hv_device *hv_dev = device_to_hv_device(dev);
+अटल sमाप_प्रकार device_id_show(काष्ठा device *dev,
+			      काष्ठा device_attribute *dev_attr, अक्षर *buf)
+अणु
+	काष्ठा hv_device *hv_dev = device_to_hv_device(dev);
 
-	return sprintf(buf, "vmbus:%*phN\n", UUID_SIZE, &hv_dev->dev_type);
-}
-static DEVICE_ATTR_RO(modalias);
+	अगर (!hv_dev->channel)
+		वापस -ENODEV;
+	वापस प्र_लिखो(buf, "{%pUl}\n",
+		       &hv_dev->channel->offermsg.offer.अगर_instance);
+पूर्ण
+अटल DEVICE_ATTR_RO(device_id);
 
-#ifdef CONFIG_NUMA
-static ssize_t numa_node_show(struct device *dev,
-			      struct device_attribute *attr, char *buf)
-{
-	struct hv_device *hv_dev = device_to_hv_device(dev);
+अटल sमाप_प्रकार modalias_show(काष्ठा device *dev,
+			     काष्ठा device_attribute *dev_attr, अक्षर *buf)
+अणु
+	काष्ठा hv_device *hv_dev = device_to_hv_device(dev);
 
-	if (!hv_dev->channel)
-		return -ENODEV;
+	वापस प्र_लिखो(buf, "vmbus:%*phN\n", UUID_SIZE, &hv_dev->dev_type);
+पूर्ण
+अटल DEVICE_ATTR_RO(modalias);
 
-	return sprintf(buf, "%d\n", cpu_to_node(hv_dev->channel->target_cpu));
-}
-static DEVICE_ATTR_RO(numa_node);
-#endif
+#अगर_घोषित CONFIG_NUMA
+अटल sमाप_प्रकार numa_node_show(काष्ठा device *dev,
+			      काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा hv_device *hv_dev = device_to_hv_device(dev);
 
-static ssize_t server_monitor_pending_show(struct device *dev,
-					   struct device_attribute *dev_attr,
-					   char *buf)
-{
-	struct hv_device *hv_dev = device_to_hv_device(dev);
+	अगर (!hv_dev->channel)
+		वापस -ENODEV;
 
-	if (!hv_dev->channel)
-		return -ENODEV;
-	return sprintf(buf, "%d\n",
+	वापस प्र_लिखो(buf, "%d\n", cpu_to_node(hv_dev->channel->target_cpu));
+पूर्ण
+अटल DEVICE_ATTR_RO(numa_node);
+#पूर्ण_अगर
+
+अटल sमाप_प्रकार server_monitor_pending_show(काष्ठा device *dev,
+					   काष्ठा device_attribute *dev_attr,
+					   अक्षर *buf)
+अणु
+	काष्ठा hv_device *hv_dev = device_to_hv_device(dev);
+
+	अगर (!hv_dev->channel)
+		वापस -ENODEV;
+	वापस प्र_लिखो(buf, "%d\n",
 		       channel_pending(hv_dev->channel,
 				       vmbus_connection.monitor_pages[0]));
-}
-static DEVICE_ATTR_RO(server_monitor_pending);
+पूर्ण
+अटल DEVICE_ATTR_RO(server_monitor_pending);
 
-static ssize_t client_monitor_pending_show(struct device *dev,
-					   struct device_attribute *dev_attr,
-					   char *buf)
-{
-	struct hv_device *hv_dev = device_to_hv_device(dev);
+अटल sमाप_प्रकार client_monitor_pending_show(काष्ठा device *dev,
+					   काष्ठा device_attribute *dev_attr,
+					   अक्षर *buf)
+अणु
+	काष्ठा hv_device *hv_dev = device_to_hv_device(dev);
 
-	if (!hv_dev->channel)
-		return -ENODEV;
-	return sprintf(buf, "%d\n",
+	अगर (!hv_dev->channel)
+		वापस -ENODEV;
+	वापस प्र_लिखो(buf, "%d\n",
 		       channel_pending(hv_dev->channel,
 				       vmbus_connection.monitor_pages[1]));
-}
-static DEVICE_ATTR_RO(client_monitor_pending);
+पूर्ण
+अटल DEVICE_ATTR_RO(client_monitor_pending);
 
-static ssize_t server_monitor_latency_show(struct device *dev,
-					   struct device_attribute *dev_attr,
-					   char *buf)
-{
-	struct hv_device *hv_dev = device_to_hv_device(dev);
+अटल sमाप_प्रकार server_monitor_latency_show(काष्ठा device *dev,
+					   काष्ठा device_attribute *dev_attr,
+					   अक्षर *buf)
+अणु
+	काष्ठा hv_device *hv_dev = device_to_hv_device(dev);
 
-	if (!hv_dev->channel)
-		return -ENODEV;
-	return sprintf(buf, "%d\n",
+	अगर (!hv_dev->channel)
+		वापस -ENODEV;
+	वापस प्र_लिखो(buf, "%d\n",
 		       channel_latency(hv_dev->channel,
 				       vmbus_connection.monitor_pages[0]));
-}
-static DEVICE_ATTR_RO(server_monitor_latency);
+पूर्ण
+अटल DEVICE_ATTR_RO(server_monitor_latency);
 
-static ssize_t client_monitor_latency_show(struct device *dev,
-					   struct device_attribute *dev_attr,
-					   char *buf)
-{
-	struct hv_device *hv_dev = device_to_hv_device(dev);
+अटल sमाप_प्रकार client_monitor_latency_show(काष्ठा device *dev,
+					   काष्ठा device_attribute *dev_attr,
+					   अक्षर *buf)
+अणु
+	काष्ठा hv_device *hv_dev = device_to_hv_device(dev);
 
-	if (!hv_dev->channel)
-		return -ENODEV;
-	return sprintf(buf, "%d\n",
+	अगर (!hv_dev->channel)
+		वापस -ENODEV;
+	वापस प्र_लिखो(buf, "%d\n",
 		       channel_latency(hv_dev->channel,
 				       vmbus_connection.monitor_pages[1]));
-}
-static DEVICE_ATTR_RO(client_monitor_latency);
+पूर्ण
+अटल DEVICE_ATTR_RO(client_monitor_latency);
 
-static ssize_t server_monitor_conn_id_show(struct device *dev,
-					   struct device_attribute *dev_attr,
-					   char *buf)
-{
-	struct hv_device *hv_dev = device_to_hv_device(dev);
+अटल sमाप_प्रकार server_monitor_conn_id_show(काष्ठा device *dev,
+					   काष्ठा device_attribute *dev_attr,
+					   अक्षर *buf)
+अणु
+	काष्ठा hv_device *hv_dev = device_to_hv_device(dev);
 
-	if (!hv_dev->channel)
-		return -ENODEV;
-	return sprintf(buf, "%d\n",
+	अगर (!hv_dev->channel)
+		वापस -ENODEV;
+	वापस प्र_लिखो(buf, "%d\n",
 		       channel_conn_id(hv_dev->channel,
 				       vmbus_connection.monitor_pages[0]));
-}
-static DEVICE_ATTR_RO(server_monitor_conn_id);
+पूर्ण
+अटल DEVICE_ATTR_RO(server_monitor_conn_id);
 
-static ssize_t client_monitor_conn_id_show(struct device *dev,
-					   struct device_attribute *dev_attr,
-					   char *buf)
-{
-	struct hv_device *hv_dev = device_to_hv_device(dev);
+अटल sमाप_प्रकार client_monitor_conn_id_show(काष्ठा device *dev,
+					   काष्ठा device_attribute *dev_attr,
+					   अक्षर *buf)
+अणु
+	काष्ठा hv_device *hv_dev = device_to_hv_device(dev);
 
-	if (!hv_dev->channel)
-		return -ENODEV;
-	return sprintf(buf, "%d\n",
+	अगर (!hv_dev->channel)
+		वापस -ENODEV;
+	वापस प्र_लिखो(buf, "%d\n",
 		       channel_conn_id(hv_dev->channel,
 				       vmbus_connection.monitor_pages[1]));
-}
-static DEVICE_ATTR_RO(client_monitor_conn_id);
+पूर्ण
+अटल DEVICE_ATTR_RO(client_monitor_conn_id);
 
-static ssize_t out_intr_mask_show(struct device *dev,
-				  struct device_attribute *dev_attr, char *buf)
-{
-	struct hv_device *hv_dev = device_to_hv_device(dev);
-	struct hv_ring_buffer_debug_info outbound;
-	int ret;
+अटल sमाप_प्रकार out_पूर्णांकr_mask_show(काष्ठा device *dev,
+				  काष्ठा device_attribute *dev_attr, अक्षर *buf)
+अणु
+	काष्ठा hv_device *hv_dev = device_to_hv_device(dev);
+	काष्ठा hv_ring_buffer_debug_info outbound;
+	पूर्णांक ret;
 
-	if (!hv_dev->channel)
-		return -ENODEV;
-
-	ret = hv_ringbuffer_get_debuginfo(&hv_dev->channel->outbound,
-					  &outbound);
-	if (ret < 0)
-		return ret;
-
-	return sprintf(buf, "%d\n", outbound.current_interrupt_mask);
-}
-static DEVICE_ATTR_RO(out_intr_mask);
-
-static ssize_t out_read_index_show(struct device *dev,
-				   struct device_attribute *dev_attr, char *buf)
-{
-	struct hv_device *hv_dev = device_to_hv_device(dev);
-	struct hv_ring_buffer_debug_info outbound;
-	int ret;
-
-	if (!hv_dev->channel)
-		return -ENODEV;
+	अगर (!hv_dev->channel)
+		वापस -ENODEV;
 
 	ret = hv_ringbuffer_get_debuginfo(&hv_dev->channel->outbound,
 					  &outbound);
-	if (ret < 0)
-		return ret;
-	return sprintf(buf, "%d\n", outbound.current_read_index);
-}
-static DEVICE_ATTR_RO(out_read_index);
+	अगर (ret < 0)
+		वापस ret;
 
-static ssize_t out_write_index_show(struct device *dev,
-				    struct device_attribute *dev_attr,
-				    char *buf)
-{
-	struct hv_device *hv_dev = device_to_hv_device(dev);
-	struct hv_ring_buffer_debug_info outbound;
-	int ret;
+	वापस प्र_लिखो(buf, "%d\n", outbound.current_पूर्णांकerrupt_mask);
+पूर्ण
+अटल DEVICE_ATTR_RO(out_पूर्णांकr_mask);
 
-	if (!hv_dev->channel)
-		return -ENODEV;
+अटल sमाप_प्रकार out_पढ़ो_index_show(काष्ठा device *dev,
+				   काष्ठा device_attribute *dev_attr, अक्षर *buf)
+अणु
+	काष्ठा hv_device *hv_dev = device_to_hv_device(dev);
+	काष्ठा hv_ring_buffer_debug_info outbound;
+	पूर्णांक ret;
 
-	ret = hv_ringbuffer_get_debuginfo(&hv_dev->channel->outbound,
-					  &outbound);
-	if (ret < 0)
-		return ret;
-	return sprintf(buf, "%d\n", outbound.current_write_index);
-}
-static DEVICE_ATTR_RO(out_write_index);
-
-static ssize_t out_read_bytes_avail_show(struct device *dev,
-					 struct device_attribute *dev_attr,
-					 char *buf)
-{
-	struct hv_device *hv_dev = device_to_hv_device(dev);
-	struct hv_ring_buffer_debug_info outbound;
-	int ret;
-
-	if (!hv_dev->channel)
-		return -ENODEV;
+	अगर (!hv_dev->channel)
+		वापस -ENODEV;
 
 	ret = hv_ringbuffer_get_debuginfo(&hv_dev->channel->outbound,
 					  &outbound);
-	if (ret < 0)
-		return ret;
-	return sprintf(buf, "%d\n", outbound.bytes_avail_toread);
-}
-static DEVICE_ATTR_RO(out_read_bytes_avail);
+	अगर (ret < 0)
+		वापस ret;
+	वापस प्र_लिखो(buf, "%d\n", outbound.current_पढ़ो_index);
+पूर्ण
+अटल DEVICE_ATTR_RO(out_पढ़ो_index);
 
-static ssize_t out_write_bytes_avail_show(struct device *dev,
-					  struct device_attribute *dev_attr,
-					  char *buf)
-{
-	struct hv_device *hv_dev = device_to_hv_device(dev);
-	struct hv_ring_buffer_debug_info outbound;
-	int ret;
+अटल sमाप_प्रकार out_ग_लिखो_index_show(काष्ठा device *dev,
+				    काष्ठा device_attribute *dev_attr,
+				    अक्षर *buf)
+अणु
+	काष्ठा hv_device *hv_dev = device_to_hv_device(dev);
+	काष्ठा hv_ring_buffer_debug_info outbound;
+	पूर्णांक ret;
 
-	if (!hv_dev->channel)
-		return -ENODEV;
+	अगर (!hv_dev->channel)
+		वापस -ENODEV;
 
 	ret = hv_ringbuffer_get_debuginfo(&hv_dev->channel->outbound,
 					  &outbound);
-	if (ret < 0)
-		return ret;
-	return sprintf(buf, "%d\n", outbound.bytes_avail_towrite);
-}
-static DEVICE_ATTR_RO(out_write_bytes_avail);
+	अगर (ret < 0)
+		वापस ret;
+	वापस प्र_लिखो(buf, "%d\n", outbound.current_ग_लिखो_index);
+पूर्ण
+अटल DEVICE_ATTR_RO(out_ग_लिखो_index);
 
-static ssize_t in_intr_mask_show(struct device *dev,
-				 struct device_attribute *dev_attr, char *buf)
-{
-	struct hv_device *hv_dev = device_to_hv_device(dev);
-	struct hv_ring_buffer_debug_info inbound;
-	int ret;
+अटल sमाप_प्रकार out_पढ़ो_bytes_avail_show(काष्ठा device *dev,
+					 काष्ठा device_attribute *dev_attr,
+					 अक्षर *buf)
+अणु
+	काष्ठा hv_device *hv_dev = device_to_hv_device(dev);
+	काष्ठा hv_ring_buffer_debug_info outbound;
+	पूर्णांक ret;
 
-	if (!hv_dev->channel)
-		return -ENODEV;
+	अगर (!hv_dev->channel)
+		वापस -ENODEV;
 
-	ret = hv_ringbuffer_get_debuginfo(&hv_dev->channel->inbound, &inbound);
-	if (ret < 0)
-		return ret;
+	ret = hv_ringbuffer_get_debuginfo(&hv_dev->channel->outbound,
+					  &outbound);
+	अगर (ret < 0)
+		वापस ret;
+	वापस प्र_लिखो(buf, "%d\n", outbound.bytes_avail_toपढ़ो);
+पूर्ण
+अटल DEVICE_ATTR_RO(out_पढ़ो_bytes_avail);
 
-	return sprintf(buf, "%d\n", inbound.current_interrupt_mask);
-}
-static DEVICE_ATTR_RO(in_intr_mask);
+अटल sमाप_प्रकार out_ग_लिखो_bytes_avail_show(काष्ठा device *dev,
+					  काष्ठा device_attribute *dev_attr,
+					  अक्षर *buf)
+अणु
+	काष्ठा hv_device *hv_dev = device_to_hv_device(dev);
+	काष्ठा hv_ring_buffer_debug_info outbound;
+	पूर्णांक ret;
 
-static ssize_t in_read_index_show(struct device *dev,
-				  struct device_attribute *dev_attr, char *buf)
-{
-	struct hv_device *hv_dev = device_to_hv_device(dev);
-	struct hv_ring_buffer_debug_info inbound;
-	int ret;
+	अगर (!hv_dev->channel)
+		वापस -ENODEV;
 
-	if (!hv_dev->channel)
-		return -ENODEV;
+	ret = hv_ringbuffer_get_debuginfo(&hv_dev->channel->outbound,
+					  &outbound);
+	अगर (ret < 0)
+		वापस ret;
+	वापस प्र_लिखो(buf, "%d\n", outbound.bytes_avail_toग_लिखो);
+पूर्ण
+अटल DEVICE_ATTR_RO(out_ग_लिखो_bytes_avail);
 
-	ret = hv_ringbuffer_get_debuginfo(&hv_dev->channel->inbound, &inbound);
-	if (ret < 0)
-		return ret;
+अटल sमाप_प्रकार in_पूर्णांकr_mask_show(काष्ठा device *dev,
+				 काष्ठा device_attribute *dev_attr, अक्षर *buf)
+अणु
+	काष्ठा hv_device *hv_dev = device_to_hv_device(dev);
+	काष्ठा hv_ring_buffer_debug_info inbound;
+	पूर्णांक ret;
 
-	return sprintf(buf, "%d\n", inbound.current_read_index);
-}
-static DEVICE_ATTR_RO(in_read_index);
-
-static ssize_t in_write_index_show(struct device *dev,
-				   struct device_attribute *dev_attr, char *buf)
-{
-	struct hv_device *hv_dev = device_to_hv_device(dev);
-	struct hv_ring_buffer_debug_info inbound;
-	int ret;
-
-	if (!hv_dev->channel)
-		return -ENODEV;
-
-	ret = hv_ringbuffer_get_debuginfo(&hv_dev->channel->inbound, &inbound);
-	if (ret < 0)
-		return ret;
-
-	return sprintf(buf, "%d\n", inbound.current_write_index);
-}
-static DEVICE_ATTR_RO(in_write_index);
-
-static ssize_t in_read_bytes_avail_show(struct device *dev,
-					struct device_attribute *dev_attr,
-					char *buf)
-{
-	struct hv_device *hv_dev = device_to_hv_device(dev);
-	struct hv_ring_buffer_debug_info inbound;
-	int ret;
-
-	if (!hv_dev->channel)
-		return -ENODEV;
+	अगर (!hv_dev->channel)
+		वापस -ENODEV;
 
 	ret = hv_ringbuffer_get_debuginfo(&hv_dev->channel->inbound, &inbound);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	return sprintf(buf, "%d\n", inbound.bytes_avail_toread);
-}
-static DEVICE_ATTR_RO(in_read_bytes_avail);
+	वापस प्र_लिखो(buf, "%d\n", inbound.current_पूर्णांकerrupt_mask);
+पूर्ण
+अटल DEVICE_ATTR_RO(in_पूर्णांकr_mask);
 
-static ssize_t in_write_bytes_avail_show(struct device *dev,
-					 struct device_attribute *dev_attr,
-					 char *buf)
-{
-	struct hv_device *hv_dev = device_to_hv_device(dev);
-	struct hv_ring_buffer_debug_info inbound;
-	int ret;
+अटल sमाप_प्रकार in_पढ़ो_index_show(काष्ठा device *dev,
+				  काष्ठा device_attribute *dev_attr, अक्षर *buf)
+अणु
+	काष्ठा hv_device *hv_dev = device_to_hv_device(dev);
+	काष्ठा hv_ring_buffer_debug_info inbound;
+	पूर्णांक ret;
 
-	if (!hv_dev->channel)
-		return -ENODEV;
+	अगर (!hv_dev->channel)
+		वापस -ENODEV;
 
 	ret = hv_ringbuffer_get_debuginfo(&hv_dev->channel->inbound, &inbound);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	return sprintf(buf, "%d\n", inbound.bytes_avail_towrite);
-}
-static DEVICE_ATTR_RO(in_write_bytes_avail);
+	वापस प्र_लिखो(buf, "%d\n", inbound.current_पढ़ो_index);
+पूर्ण
+अटल DEVICE_ATTR_RO(in_पढ़ो_index);
 
-static ssize_t channel_vp_mapping_show(struct device *dev,
-				       struct device_attribute *dev_attr,
-				       char *buf)
-{
-	struct hv_device *hv_dev = device_to_hv_device(dev);
-	struct vmbus_channel *channel = hv_dev->channel, *cur_sc;
-	int buf_size = PAGE_SIZE, n_written, tot_written;
-	struct list_head *cur;
+अटल sमाप_प्रकार in_ग_लिखो_index_show(काष्ठा device *dev,
+				   काष्ठा device_attribute *dev_attr, अक्षर *buf)
+अणु
+	काष्ठा hv_device *hv_dev = device_to_hv_device(dev);
+	काष्ठा hv_ring_buffer_debug_info inbound;
+	पूर्णांक ret;
 
-	if (!channel)
-		return -ENODEV;
+	अगर (!hv_dev->channel)
+		वापस -ENODEV;
+
+	ret = hv_ringbuffer_get_debuginfo(&hv_dev->channel->inbound, &inbound);
+	अगर (ret < 0)
+		वापस ret;
+
+	वापस प्र_लिखो(buf, "%d\n", inbound.current_ग_लिखो_index);
+पूर्ण
+अटल DEVICE_ATTR_RO(in_ग_लिखो_index);
+
+अटल sमाप_प्रकार in_पढ़ो_bytes_avail_show(काष्ठा device *dev,
+					काष्ठा device_attribute *dev_attr,
+					अक्षर *buf)
+अणु
+	काष्ठा hv_device *hv_dev = device_to_hv_device(dev);
+	काष्ठा hv_ring_buffer_debug_info inbound;
+	पूर्णांक ret;
+
+	अगर (!hv_dev->channel)
+		वापस -ENODEV;
+
+	ret = hv_ringbuffer_get_debuginfo(&hv_dev->channel->inbound, &inbound);
+	अगर (ret < 0)
+		वापस ret;
+
+	वापस प्र_लिखो(buf, "%d\n", inbound.bytes_avail_toपढ़ो);
+पूर्ण
+अटल DEVICE_ATTR_RO(in_पढ़ो_bytes_avail);
+
+अटल sमाप_प्रकार in_ग_लिखो_bytes_avail_show(काष्ठा device *dev,
+					 काष्ठा device_attribute *dev_attr,
+					 अक्षर *buf)
+अणु
+	काष्ठा hv_device *hv_dev = device_to_hv_device(dev);
+	काष्ठा hv_ring_buffer_debug_info inbound;
+	पूर्णांक ret;
+
+	अगर (!hv_dev->channel)
+		वापस -ENODEV;
+
+	ret = hv_ringbuffer_get_debuginfo(&hv_dev->channel->inbound, &inbound);
+	अगर (ret < 0)
+		वापस ret;
+
+	वापस प्र_लिखो(buf, "%d\n", inbound.bytes_avail_toग_लिखो);
+पूर्ण
+अटल DEVICE_ATTR_RO(in_ग_लिखो_bytes_avail);
+
+अटल sमाप_प्रकार channel_vp_mapping_show(काष्ठा device *dev,
+				       काष्ठा device_attribute *dev_attr,
+				       अक्षर *buf)
+अणु
+	काष्ठा hv_device *hv_dev = device_to_hv_device(dev);
+	काष्ठा vmbus_channel *channel = hv_dev->channel, *cur_sc;
+	पूर्णांक buf_size = PAGE_SIZE, n_written, tot_written;
+	काष्ठा list_head *cur;
+
+	अगर (!channel)
+		वापस -ENODEV;
 
 	mutex_lock(&vmbus_connection.channel_mutex);
 
-	tot_written = snprintf(buf, buf_size, "%u:%u\n",
+	tot_written = snम_लिखो(buf, buf_size, "%u:%u\n",
 		channel->offermsg.child_relid, channel->target_cpu);
 
-	list_for_each(cur, &channel->sc_list) {
-		if (tot_written >= buf_size - 1)
-			break;
+	list_क्रम_each(cur, &channel->sc_list) अणु
+		अगर (tot_written >= buf_size - 1)
+			अवरोध;
 
-		cur_sc = list_entry(cur, struct vmbus_channel, sc_list);
-		n_written = scnprintf(buf + tot_written,
+		cur_sc = list_entry(cur, काष्ठा vmbus_channel, sc_list);
+		n_written = scnम_लिखो(buf + tot_written,
 				     buf_size - tot_written,
 				     "%u:%u\n",
 				     cur_sc->offermsg.child_relid,
 				     cur_sc->target_cpu);
 		tot_written += n_written;
-	}
+	पूर्ण
 
 	mutex_unlock(&vmbus_connection.channel_mutex);
 
-	return tot_written;
-}
-static DEVICE_ATTR_RO(channel_vp_mapping);
+	वापस tot_written;
+पूर्ण
+अटल DEVICE_ATTR_RO(channel_vp_mapping);
 
-static ssize_t vendor_show(struct device *dev,
-			   struct device_attribute *dev_attr,
-			   char *buf)
-{
-	struct hv_device *hv_dev = device_to_hv_device(dev);
+अटल sमाप_प्रकार venकरोr_show(काष्ठा device *dev,
+			   काष्ठा device_attribute *dev_attr,
+			   अक्षर *buf)
+अणु
+	काष्ठा hv_device *hv_dev = device_to_hv_device(dev);
 
-	return sprintf(buf, "0x%x\n", hv_dev->vendor_id);
-}
-static DEVICE_ATTR_RO(vendor);
+	वापस प्र_लिखो(buf, "0x%x\n", hv_dev->venकरोr_id);
+पूर्ण
+अटल DEVICE_ATTR_RO(venकरोr);
 
-static ssize_t device_show(struct device *dev,
-			   struct device_attribute *dev_attr,
-			   char *buf)
-{
-	struct hv_device *hv_dev = device_to_hv_device(dev);
+अटल sमाप_प्रकार device_show(काष्ठा device *dev,
+			   काष्ठा device_attribute *dev_attr,
+			   अक्षर *buf)
+अणु
+	काष्ठा hv_device *hv_dev = device_to_hv_device(dev);
 
-	return sprintf(buf, "0x%x\n", hv_dev->device_id);
-}
-static DEVICE_ATTR_RO(device);
+	वापस प्र_लिखो(buf, "0x%x\n", hv_dev->device_id);
+पूर्ण
+अटल DEVICE_ATTR_RO(device);
 
-static ssize_t driver_override_store(struct device *dev,
-				     struct device_attribute *attr,
-				     const char *buf, size_t count)
-{
-	struct hv_device *hv_dev = device_to_hv_device(dev);
-	char *driver_override, *old, *cp;
+अटल sमाप_प्रकार driver_override_store(काष्ठा device *dev,
+				     काष्ठा device_attribute *attr,
+				     स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	काष्ठा hv_device *hv_dev = device_to_hv_device(dev);
+	अक्षर *driver_override, *old, *cp;
 
-	/* We need to keep extra room for a newline */
-	if (count >= (PAGE_SIZE - 1))
-		return -EINVAL;
+	/* We need to keep extra room क्रम a newline */
+	अगर (count >= (PAGE_SIZE - 1))
+		वापस -EINVAL;
 
 	driver_override = kstrndup(buf, count, GFP_KERNEL);
-	if (!driver_override)
-		return -ENOMEM;
+	अगर (!driver_override)
+		वापस -ENOMEM;
 
-	cp = strchr(driver_override, '\n');
-	if (cp)
+	cp = म_अक्षर(driver_override, '\n');
+	अगर (cp)
 		*cp = '\0';
 
 	device_lock(dev);
 	old = hv_dev->driver_override;
-	if (strlen(driver_override)) {
+	अगर (म_माप(driver_override)) अणु
 		hv_dev->driver_override = driver_override;
-	} else {
-		kfree(driver_override);
-		hv_dev->driver_override = NULL;
-	}
+	पूर्ण अन्यथा अणु
+		kमुक्त(driver_override);
+		hv_dev->driver_override = शून्य;
+	पूर्ण
 	device_unlock(dev);
 
-	kfree(old);
+	kमुक्त(old);
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static ssize_t driver_override_show(struct device *dev,
-				    struct device_attribute *attr, char *buf)
-{
-	struct hv_device *hv_dev = device_to_hv_device(dev);
-	ssize_t len;
+अटल sमाप_प्रकार driver_override_show(काष्ठा device *dev,
+				    काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा hv_device *hv_dev = device_to_hv_device(dev);
+	sमाप_प्रकार len;
 
 	device_lock(dev);
-	len = snprintf(buf, PAGE_SIZE, "%s\n", hv_dev->driver_override);
+	len = snम_लिखो(buf, PAGE_SIZE, "%s\n", hv_dev->driver_override);
 	device_unlock(dev);
 
-	return len;
-}
-static DEVICE_ATTR_RW(driver_override);
+	वापस len;
+पूर्ण
+अटल DEVICE_ATTR_RW(driver_override);
 
 /* Set up per device attributes in /sys/bus/vmbus/devices/<bus device> */
-static struct attribute *vmbus_dev_attrs[] = {
+अटल काष्ठा attribute *vmbus_dev_attrs[] = अणु
 	&dev_attr_id.attr,
 	&dev_attr_state.attr,
 	&dev_attr_monitor_id.attr,
 	&dev_attr_class_id.attr,
 	&dev_attr_device_id.attr,
 	&dev_attr_modalias.attr,
-#ifdef CONFIG_NUMA
+#अगर_घोषित CONFIG_NUMA
 	&dev_attr_numa_node.attr,
-#endif
+#पूर्ण_अगर
 	&dev_attr_server_monitor_pending.attr,
 	&dev_attr_client_monitor_pending.attr,
 	&dev_attr_server_monitor_latency.attr,
 	&dev_attr_client_monitor_latency.attr,
 	&dev_attr_server_monitor_conn_id.attr,
 	&dev_attr_client_monitor_conn_id.attr,
-	&dev_attr_out_intr_mask.attr,
-	&dev_attr_out_read_index.attr,
-	&dev_attr_out_write_index.attr,
-	&dev_attr_out_read_bytes_avail.attr,
-	&dev_attr_out_write_bytes_avail.attr,
-	&dev_attr_in_intr_mask.attr,
-	&dev_attr_in_read_index.attr,
-	&dev_attr_in_write_index.attr,
-	&dev_attr_in_read_bytes_avail.attr,
-	&dev_attr_in_write_bytes_avail.attr,
+	&dev_attr_out_पूर्णांकr_mask.attr,
+	&dev_attr_out_पढ़ो_index.attr,
+	&dev_attr_out_ग_लिखो_index.attr,
+	&dev_attr_out_पढ़ो_bytes_avail.attr,
+	&dev_attr_out_ग_लिखो_bytes_avail.attr,
+	&dev_attr_in_पूर्णांकr_mask.attr,
+	&dev_attr_in_पढ़ो_index.attr,
+	&dev_attr_in_ग_लिखो_index.attr,
+	&dev_attr_in_पढ़ो_bytes_avail.attr,
+	&dev_attr_in_ग_लिखो_bytes_avail.attr,
 	&dev_attr_channel_vp_mapping.attr,
-	&dev_attr_vendor.attr,
+	&dev_attr_venकरोr.attr,
 	&dev_attr_device.attr,
 	&dev_attr_driver_override.attr,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
 /*
- * Device-level attribute_group callback function. Returns the permission for
- * each attribute, and returns 0 if an attribute is not visible.
+ * Device-level attribute_group callback function. Returns the permission क्रम
+ * each attribute, and वापसs 0 अगर an attribute is not visible.
  */
-static umode_t vmbus_dev_attr_is_visible(struct kobject *kobj,
-					 struct attribute *attr, int idx)
-{
-	struct device *dev = kobj_to_dev(kobj);
-	const struct hv_device *hv_dev = device_to_hv_device(dev);
+अटल umode_t vmbus_dev_attr_is_visible(काष्ठा kobject *kobj,
+					 काष्ठा attribute *attr, पूर्णांक idx)
+अणु
+	काष्ठा device *dev = kobj_to_dev(kobj);
+	स्थिर काष्ठा hv_device *hv_dev = device_to_hv_device(dev);
 
-	/* Hide the monitor attributes if the monitor mechanism is not used. */
-	if (!hv_dev->channel->offermsg.monitor_allocated &&
+	/* Hide the monitor attributes अगर the monitor mechanism is not used. */
+	अगर (!hv_dev->channel->offermsg.monitor_allocated &&
 	    (attr == &dev_attr_monitor_id.attr ||
 	     attr == &dev_attr_server_monitor_pending.attr ||
 	     attr == &dev_attr_client_monitor_pending.attr ||
@@ -669,120 +670,120 @@ static umode_t vmbus_dev_attr_is_visible(struct kobject *kobj,
 	     attr == &dev_attr_client_monitor_latency.attr ||
 	     attr == &dev_attr_server_monitor_conn_id.attr ||
 	     attr == &dev_attr_client_monitor_conn_id.attr))
-		return 0;
+		वापस 0;
 
-	return attr->mode;
-}
+	वापस attr->mode;
+पूर्ण
 
-static const struct attribute_group vmbus_dev_group = {
+अटल स्थिर काष्ठा attribute_group vmbus_dev_group = अणु
 	.attrs = vmbus_dev_attrs,
 	.is_visible = vmbus_dev_attr_is_visible
-};
+पूर्ण;
 __ATTRIBUTE_GROUPS(vmbus_dev);
 
-/* Set up the attribute for /sys/bus/vmbus/hibernation */
-static ssize_t hibernation_show(struct bus_type *bus, char *buf)
-{
-	return sprintf(buf, "%d\n", !!hv_is_hibernation_supported());
-}
+/* Set up the attribute क्रम /sys/bus/vmbus/hibernation */
+अटल sमाप_प्रकार hibernation_show(काष्ठा bus_type *bus, अक्षर *buf)
+अणु
+	वापस प्र_लिखो(buf, "%d\n", !!hv_is_hibernation_supported());
+पूर्ण
 
-static BUS_ATTR_RO(hibernation);
+अटल BUS_ATTR_RO(hibernation);
 
-static struct attribute *vmbus_bus_attrs[] = {
+अटल काष्ठा attribute *vmbus_bus_attrs[] = अणु
 	&bus_attr_hibernation.attr,
-	NULL,
-};
-static const struct attribute_group vmbus_bus_group = {
+	शून्य,
+पूर्ण;
+अटल स्थिर काष्ठा attribute_group vmbus_bus_group = अणु
 	.attrs = vmbus_bus_attrs,
-};
+पूर्ण;
 __ATTRIBUTE_GROUPS(vmbus_bus);
 
 /*
- * vmbus_uevent - add uevent for our device
+ * vmbus_uevent - add uevent क्रम our device
  *
- * This routine is invoked when a device is added or removed on the vmbus to
+ * This routine is invoked when a device is added or हटाओd on the vmbus to
  * generate a uevent to udev in the userspace. The udev will then look at its
  * rule and the uevent generated here to load the appropriate driver
  *
- * The alias string will be of the form vmbus:guid where guid is the string
+ * The alias string will be of the क्रमm vmbus:guid where guid is the string
  * representation of the device guid (each byte of the guid will be
- * represented with two hex characters.
+ * represented with two hex अक्षरacters.
  */
-static int vmbus_uevent(struct device *device, struct kobj_uevent_env *env)
-{
-	struct hv_device *dev = device_to_hv_device(device);
-	const char *format = "MODALIAS=vmbus:%*phN";
+अटल पूर्णांक vmbus_uevent(काष्ठा device *device, काष्ठा kobj_uevent_env *env)
+अणु
+	काष्ठा hv_device *dev = device_to_hv_device(device);
+	स्थिर अक्षर *क्रमmat = "MODALIAS=vmbus:%*phN";
 
-	return add_uevent_var(env, format, UUID_SIZE, &dev->dev_type);
-}
+	वापस add_uevent_var(env, क्रमmat, UUID_SIZE, &dev->dev_type);
+पूर्ण
 
-static const struct hv_vmbus_device_id *
-hv_vmbus_dev_match(const struct hv_vmbus_device_id *id, const guid_t *guid)
-{
-	if (id == NULL)
-		return NULL; /* empty device table */
+अटल स्थिर काष्ठा hv_vmbus_device_id *
+hv_vmbus_dev_match(स्थिर काष्ठा hv_vmbus_device_id *id, स्थिर guid_t *guid)
+अणु
+	अगर (id == शून्य)
+		वापस शून्य; /* empty device table */
 
-	for (; !guid_is_null(&id->guid); id++)
-		if (guid_equal(&id->guid, guid))
-			return id;
+	क्रम (; !guid_is_null(&id->guid); id++)
+		अगर (guid_equal(&id->guid, guid))
+			वापस id;
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static const struct hv_vmbus_device_id *
-hv_vmbus_dynid_match(struct hv_driver *drv, const guid_t *guid)
-{
-	const struct hv_vmbus_device_id *id = NULL;
-	struct vmbus_dynid *dynid;
+अटल स्थिर काष्ठा hv_vmbus_device_id *
+hv_vmbus_dynid_match(काष्ठा hv_driver *drv, स्थिर guid_t *guid)
+अणु
+	स्थिर काष्ठा hv_vmbus_device_id *id = शून्य;
+	काष्ठा vmbus_dynid *dynid;
 
 	spin_lock(&drv->dynids.lock);
-	list_for_each_entry(dynid, &drv->dynids.list, node) {
-		if (guid_equal(&dynid->id.guid, guid)) {
+	list_क्रम_each_entry(dynid, &drv->dynids.list, node) अणु
+		अगर (guid_equal(&dynid->id.guid, guid)) अणु
 			id = &dynid->id;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 	spin_unlock(&drv->dynids.lock);
 
-	return id;
-}
+	वापस id;
+पूर्ण
 
-static const struct hv_vmbus_device_id vmbus_device_null;
+अटल स्थिर काष्ठा hv_vmbus_device_id vmbus_device_null;
 
 /*
- * Return a matching hv_vmbus_device_id pointer.
- * If there is no match, return NULL.
+ * Return a matching hv_vmbus_device_id poपूर्णांकer.
+ * If there is no match, वापस शून्य.
  */
-static const struct hv_vmbus_device_id *hv_vmbus_get_id(struct hv_driver *drv,
-							struct hv_device *dev)
-{
-	const guid_t *guid = &dev->dev_type;
-	const struct hv_vmbus_device_id *id;
+अटल स्थिर काष्ठा hv_vmbus_device_id *hv_vmbus_get_id(काष्ठा hv_driver *drv,
+							काष्ठा hv_device *dev)
+अणु
+	स्थिर guid_t *guid = &dev->dev_type;
+	स्थिर काष्ठा hv_vmbus_device_id *id;
 
 	/* When driver_override is set, only bind to the matching driver */
-	if (dev->driver_override && strcmp(dev->driver_override, drv->name))
-		return NULL;
+	अगर (dev->driver_override && म_भेद(dev->driver_override, drv->name))
+		वापस शून्य;
 
-	/* Look at the dynamic ids first, before the static ones */
+	/* Look at the dynamic ids first, beक्रमe the अटल ones */
 	id = hv_vmbus_dynid_match(drv, guid);
-	if (!id)
+	अगर (!id)
 		id = hv_vmbus_dev_match(drv->id_table, guid);
 
 	/* driver_override will always match, send a dummy id */
-	if (!id && dev->driver_override)
+	अगर (!id && dev->driver_override)
 		id = &vmbus_device_null;
 
-	return id;
-}
+	वापस id;
+पूर्ण
 
 /* vmbus_add_dynid - add a new device ID to this driver and re-probe devices */
-static int vmbus_add_dynid(struct hv_driver *drv, guid_t *guid)
-{
-	struct vmbus_dynid *dynid;
+अटल पूर्णांक vmbus_add_dynid(काष्ठा hv_driver *drv, guid_t *guid)
+अणु
+	काष्ठा vmbus_dynid *dynid;
 
-	dynid = kzalloc(sizeof(*dynid), GFP_KERNEL);
-	if (!dynid)
-		return -ENOMEM;
+	dynid = kzalloc(माप(*dynid), GFP_KERNEL);
+	अगर (!dynid)
+		वापस -ENOMEM;
 
 	dynid->id.guid = *guid;
 
@@ -790,296 +791,296 @@ static int vmbus_add_dynid(struct hv_driver *drv, guid_t *guid)
 	list_add_tail(&dynid->node, &drv->dynids.list);
 	spin_unlock(&drv->dynids.lock);
 
-	return driver_attach(&drv->driver);
-}
+	वापस driver_attach(&drv->driver);
+पूर्ण
 
-static void vmbus_free_dynids(struct hv_driver *drv)
-{
-	struct vmbus_dynid *dynid, *n;
+अटल व्योम vmbus_मुक्त_dynids(काष्ठा hv_driver *drv)
+अणु
+	काष्ठा vmbus_dynid *dynid, *n;
 
 	spin_lock(&drv->dynids.lock);
-	list_for_each_entry_safe(dynid, n, &drv->dynids.list, node) {
+	list_क्रम_each_entry_safe(dynid, n, &drv->dynids.list, node) अणु
 		list_del(&dynid->node);
-		kfree(dynid);
-	}
+		kमुक्त(dynid);
+	पूर्ण
 	spin_unlock(&drv->dynids.lock);
-}
+पूर्ण
 
 /*
  * store_new_id - sysfs frontend to vmbus_add_dynid()
  *
  * Allow GUIDs to be added to an existing driver via sysfs.
  */
-static ssize_t new_id_store(struct device_driver *driver, const char *buf,
-			    size_t count)
-{
-	struct hv_driver *drv = drv_to_hv_drv(driver);
+अटल sमाप_प्रकार new_id_store(काष्ठा device_driver *driver, स्थिर अक्षर *buf,
+			    माप_प्रकार count)
+अणु
+	काष्ठा hv_driver *drv = drv_to_hv_drv(driver);
 	guid_t guid;
-	ssize_t retval;
+	sमाप_प्रकार retval;
 
 	retval = guid_parse(buf, &guid);
-	if (retval)
-		return retval;
+	अगर (retval)
+		वापस retval;
 
-	if (hv_vmbus_dynid_match(drv, &guid))
-		return -EEXIST;
+	अगर (hv_vmbus_dynid_match(drv, &guid))
+		वापस -EEXIST;
 
 	retval = vmbus_add_dynid(drv, &guid);
-	if (retval)
-		return retval;
-	return count;
-}
-static DRIVER_ATTR_WO(new_id);
+	अगर (retval)
+		वापस retval;
+	वापस count;
+पूर्ण
+अटल DRIVER_ATTR_WO(new_id);
 
 /*
- * store_remove_id - remove a PCI device ID from this driver
+ * store_हटाओ_id - हटाओ a PCI device ID from this driver
  *
  * Removes a dynamic pci device ID to this driver.
  */
-static ssize_t remove_id_store(struct device_driver *driver, const char *buf,
-			       size_t count)
-{
-	struct hv_driver *drv = drv_to_hv_drv(driver);
-	struct vmbus_dynid *dynid, *n;
+अटल sमाप_प्रकार हटाओ_id_store(काष्ठा device_driver *driver, स्थिर अक्षर *buf,
+			       माप_प्रकार count)
+अणु
+	काष्ठा hv_driver *drv = drv_to_hv_drv(driver);
+	काष्ठा vmbus_dynid *dynid, *n;
 	guid_t guid;
-	ssize_t retval;
+	sमाप_प्रकार retval;
 
 	retval = guid_parse(buf, &guid);
-	if (retval)
-		return retval;
+	अगर (retval)
+		वापस retval;
 
 	retval = -ENODEV;
 	spin_lock(&drv->dynids.lock);
-	list_for_each_entry_safe(dynid, n, &drv->dynids.list, node) {
-		struct hv_vmbus_device_id *id = &dynid->id;
+	list_क्रम_each_entry_safe(dynid, n, &drv->dynids.list, node) अणु
+		काष्ठा hv_vmbus_device_id *id = &dynid->id;
 
-		if (guid_equal(&id->guid, &guid)) {
+		अगर (guid_equal(&id->guid, &guid)) अणु
 			list_del(&dynid->node);
-			kfree(dynid);
+			kमुक्त(dynid);
 			retval = count;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 	spin_unlock(&drv->dynids.lock);
 
-	return retval;
-}
-static DRIVER_ATTR_WO(remove_id);
+	वापस retval;
+पूर्ण
+अटल DRIVER_ATTR_WO(हटाओ_id);
 
-static struct attribute *vmbus_drv_attrs[] = {
+अटल काष्ठा attribute *vmbus_drv_attrs[] = अणु
 	&driver_attr_new_id.attr,
-	&driver_attr_remove_id.attr,
-	NULL,
-};
+	&driver_attr_हटाओ_id.attr,
+	शून्य,
+पूर्ण;
 ATTRIBUTE_GROUPS(vmbus_drv);
 
 
 /*
- * vmbus_match - Attempt to match the specified device to the specified driver
+ * vmbus_match - Attempt to match the specअगरied device to the specअगरied driver
  */
-static int vmbus_match(struct device *device, struct device_driver *driver)
-{
-	struct hv_driver *drv = drv_to_hv_drv(driver);
-	struct hv_device *hv_dev = device_to_hv_device(device);
+अटल पूर्णांक vmbus_match(काष्ठा device *device, काष्ठा device_driver *driver)
+अणु
+	काष्ठा hv_driver *drv = drv_to_hv_drv(driver);
+	काष्ठा hv_device *hv_dev = device_to_hv_device(device);
 
 	/* The hv_sock driver handles all hv_sock offers. */
-	if (is_hvsock_channel(hv_dev->channel))
-		return drv->hvsock;
+	अगर (is_hvsock_channel(hv_dev->channel))
+		वापस drv->hvsock;
 
-	if (hv_vmbus_get_id(drv, hv_dev))
-		return 1;
+	अगर (hv_vmbus_get_id(drv, hv_dev))
+		वापस 1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * vmbus_probe - Add the new vmbus's child device
  */
-static int vmbus_probe(struct device *child_device)
-{
-	int ret = 0;
-	struct hv_driver *drv =
+अटल पूर्णांक vmbus_probe(काष्ठा device *child_device)
+अणु
+	पूर्णांक ret = 0;
+	काष्ठा hv_driver *drv =
 			drv_to_hv_drv(child_device->driver);
-	struct hv_device *dev = device_to_hv_device(child_device);
-	const struct hv_vmbus_device_id *dev_id;
+	काष्ठा hv_device *dev = device_to_hv_device(child_device);
+	स्थिर काष्ठा hv_vmbus_device_id *dev_id;
 
 	dev_id = hv_vmbus_get_id(drv, dev);
-	if (drv->probe) {
+	अगर (drv->probe) अणु
 		ret = drv->probe(dev, dev_id);
-		if (ret != 0)
+		अगर (ret != 0)
 			pr_err("probe failed for device %s (%d)\n",
 			       dev_name(child_device), ret);
 
-	} else {
+	पूर्ण अन्यथा अणु
 		pr_err("probe not set for driver %s\n",
 		       dev_name(child_device));
 		ret = -ENODEV;
-	}
-	return ret;
-}
+	पूर्ण
+	वापस ret;
+पूर्ण
 
 /*
- * vmbus_remove - Remove a vmbus device
+ * vmbus_हटाओ - Remove a vmbus device
  */
-static int vmbus_remove(struct device *child_device)
-{
-	struct hv_driver *drv;
-	struct hv_device *dev = device_to_hv_device(child_device);
+अटल पूर्णांक vmbus_हटाओ(काष्ठा device *child_device)
+अणु
+	काष्ठा hv_driver *drv;
+	काष्ठा hv_device *dev = device_to_hv_device(child_device);
 
-	if (child_device->driver) {
+	अगर (child_device->driver) अणु
 		drv = drv_to_hv_drv(child_device->driver);
-		if (drv->remove)
-			drv->remove(dev);
-	}
+		अगर (drv->हटाओ)
+			drv->हटाओ(dev);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
 /*
- * vmbus_shutdown - Shutdown a vmbus device
+ * vmbus_shutकरोwn - Shutकरोwn a vmbus device
  */
-static void vmbus_shutdown(struct device *child_device)
-{
-	struct hv_driver *drv;
-	struct hv_device *dev = device_to_hv_device(child_device);
+अटल व्योम vmbus_shutकरोwn(काष्ठा device *child_device)
+अणु
+	काष्ठा hv_driver *drv;
+	काष्ठा hv_device *dev = device_to_hv_device(child_device);
 
 
 	/* The device may not be attached yet */
-	if (!child_device->driver)
-		return;
+	अगर (!child_device->driver)
+		वापस;
 
 	drv = drv_to_hv_drv(child_device->driver);
 
-	if (drv->shutdown)
-		drv->shutdown(dev);
-}
+	अगर (drv->shutकरोwn)
+		drv->shutकरोwn(dev);
+पूर्ण
 
-#ifdef CONFIG_PM_SLEEP
+#अगर_घोषित CONFIG_PM_SLEEP
 /*
  * vmbus_suspend - Suspend a vmbus device
  */
-static int vmbus_suspend(struct device *child_device)
-{
-	struct hv_driver *drv;
-	struct hv_device *dev = device_to_hv_device(child_device);
+अटल पूर्णांक vmbus_suspend(काष्ठा device *child_device)
+अणु
+	काष्ठा hv_driver *drv;
+	काष्ठा hv_device *dev = device_to_hv_device(child_device);
 
 	/* The device may not be attached yet */
-	if (!child_device->driver)
-		return 0;
+	अगर (!child_device->driver)
+		वापस 0;
 
 	drv = drv_to_hv_drv(child_device->driver);
-	if (!drv->suspend)
-		return -EOPNOTSUPP;
+	अगर (!drv->suspend)
+		वापस -EOPNOTSUPP;
 
-	return drv->suspend(dev);
-}
+	वापस drv->suspend(dev);
+पूर्ण
 
 /*
  * vmbus_resume - Resume a vmbus device
  */
-static int vmbus_resume(struct device *child_device)
-{
-	struct hv_driver *drv;
-	struct hv_device *dev = device_to_hv_device(child_device);
+अटल पूर्णांक vmbus_resume(काष्ठा device *child_device)
+अणु
+	काष्ठा hv_driver *drv;
+	काष्ठा hv_device *dev = device_to_hv_device(child_device);
 
 	/* The device may not be attached yet */
-	if (!child_device->driver)
-		return 0;
+	अगर (!child_device->driver)
+		वापस 0;
 
 	drv = drv_to_hv_drv(child_device->driver);
-	if (!drv->resume)
-		return -EOPNOTSUPP;
+	अगर (!drv->resume)
+		वापस -EOPNOTSUPP;
 
-	return drv->resume(dev);
-}
-#else
-#define vmbus_suspend NULL
-#define vmbus_resume NULL
-#endif /* CONFIG_PM_SLEEP */
+	वापस drv->resume(dev);
+पूर्ण
+#अन्यथा
+#घोषणा vmbus_suspend शून्य
+#घोषणा vmbus_resume शून्य
+#पूर्ण_अगर /* CONFIG_PM_SLEEP */
 
 /*
  * vmbus_device_release - Final callback release of the vmbus child device
  */
-static void vmbus_device_release(struct device *device)
-{
-	struct hv_device *hv_dev = device_to_hv_device(device);
-	struct vmbus_channel *channel = hv_dev->channel;
+अटल व्योम vmbus_device_release(काष्ठा device *device)
+अणु
+	काष्ठा hv_device *hv_dev = device_to_hv_device(device);
+	काष्ठा vmbus_channel *channel = hv_dev->channel;
 
 	hv_debug_rm_dev_dir(hv_dev);
 
 	mutex_lock(&vmbus_connection.channel_mutex);
 	hv_process_channel_removal(channel);
 	mutex_unlock(&vmbus_connection.channel_mutex);
-	kfree(hv_dev);
-}
+	kमुक्त(hv_dev);
+पूर्ण
 
 /*
- * Note: we must use the "noirq" ops: see the comment before vmbus_bus_pm.
+ * Note: we must use the "noirq" ops: see the comment beक्रमe vmbus_bus_pm.
  *
- * suspend_noirq/resume_noirq are set to NULL to support Suspend-to-Idle: we
+ * suspend_noirq/resume_noirq are set to शून्य to support Suspend-to-Idle: we
  * shouldn't suspend the vmbus devices upon Suspend-to-Idle, otherwise there
  * is no way to wake up a Generation-2 VM.
  *
- * The other 4 ops are for hibernation.
+ * The other 4 ops are क्रम hibernation.
  */
 
-static const struct dev_pm_ops vmbus_pm = {
-	.suspend_noirq	= NULL,
-	.resume_noirq	= NULL,
-	.freeze_noirq	= vmbus_suspend,
+अटल स्थिर काष्ठा dev_pm_ops vmbus_pm = अणु
+	.suspend_noirq	= शून्य,
+	.resume_noirq	= शून्य,
+	.मुक्तze_noirq	= vmbus_suspend,
 	.thaw_noirq	= vmbus_resume,
-	.poweroff_noirq	= vmbus_suspend,
+	.घातeroff_noirq	= vmbus_suspend,
 	.restore_noirq	= vmbus_resume,
-};
+पूर्ण;
 
 /* The one and only one */
-static struct bus_type  hv_bus = {
+अटल काष्ठा bus_type  hv_bus = अणु
 	.name =		"vmbus",
 	.match =		vmbus_match,
-	.shutdown =		vmbus_shutdown,
-	.remove =		vmbus_remove,
+	.shutकरोwn =		vmbus_shutकरोwn,
+	.हटाओ =		vmbus_हटाओ,
 	.probe =		vmbus_probe,
 	.uevent =		vmbus_uevent,
 	.dev_groups =		vmbus_dev_groups,
 	.drv_groups =		vmbus_drv_groups,
 	.bus_groups =		vmbus_bus_groups,
 	.pm =			&vmbus_pm,
-};
+पूर्ण;
 
-struct onmessage_work_context {
-	struct work_struct work;
-	struct {
-		struct hv_message_header header;
+काष्ठा onmessage_work_context अणु
+	काष्ठा work_काष्ठा work;
+	काष्ठा अणु
+		काष्ठा hv_message_header header;
 		u8 payload[];
-	} msg;
-};
+	पूर्ण msg;
+पूर्ण;
 
-static void vmbus_onmessage_work(struct work_struct *work)
-{
-	struct onmessage_work_context *ctx;
+अटल व्योम vmbus_onmessage_work(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा onmessage_work_context *ctx;
 
-	/* Do not process messages if we're in DISCONNECTED state */
-	if (vmbus_connection.conn_state == DISCONNECTED)
-		return;
+	/* Do not process messages अगर we're in DISCONNECTED state */
+	अगर (vmbus_connection.conn_state == DISCONNECTED)
+		वापस;
 
-	ctx = container_of(work, struct onmessage_work_context,
+	ctx = container_of(work, काष्ठा onmessage_work_context,
 			   work);
-	vmbus_onmessage((struct vmbus_channel_message_header *)
+	vmbus_onmessage((काष्ठा vmbus_channel_message_header *)
 			&ctx->msg.payload);
-	kfree(ctx);
-}
+	kमुक्त(ctx);
+पूर्ण
 
-void vmbus_on_msg_dpc(unsigned long data)
-{
-	struct hv_per_cpu_context *hv_cpu = (void *)data;
-	void *page_addr = hv_cpu->synic_message_page;
-	struct hv_message msg_copy, *msg = (struct hv_message *)page_addr +
+व्योम vmbus_on_msg_dpc(अचिन्हित दीर्घ data)
+अणु
+	काष्ठा hv_per_cpu_context *hv_cpu = (व्योम *)data;
+	व्योम *page_addr = hv_cpu->synic_message_page;
+	काष्ठा hv_message msg_copy, *msg = (काष्ठा hv_message *)page_addr +
 				  VMBUS_MESSAGE_SINT;
-	struct vmbus_channel_message_header *hdr;
-	enum vmbus_channel_message_type msgtype;
-	const struct vmbus_channel_message_table_entry *entry;
-	struct onmessage_work_context *ctx;
+	काष्ठा vmbus_channel_message_header *hdr;
+	क्रमागत vmbus_channel_message_type msgtype;
+	स्थिर काष्ठा vmbus_channel_message_table_entry *entry;
+	काष्ठा onmessage_work_context *ctx;
 	__u8 payload_size;
 	u32 message_type;
 
@@ -1088,89 +1089,89 @@ void vmbus_on_msg_dpc(unsigned long data)
 	 * it is being used in 'struct vmbus_channel_message_header' definition
 	 * which is supposed to match hypervisor ABI.
 	 */
-	BUILD_BUG_ON(sizeof(enum vmbus_channel_message_type) != sizeof(u32));
+	BUILD_BUG_ON(माप(क्रमागत vmbus_channel_message_type) != माप(u32));
 
 	/*
 	 * Since the message is in memory shared with the host, an erroneous or
-	 * malicious Hyper-V could modify the message while vmbus_on_msg_dpc()
-	 * or individual message handlers are executing; to prevent this, copy
-	 * the message into private memory.
+	 * malicious Hyper-V could modअगरy the message जबतक vmbus_on_msg_dpc()
+	 * or inभागidual message handlers are executing; to prevent this, copy
+	 * the message पूर्णांकo निजी memory.
 	 */
-	memcpy(&msg_copy, msg, sizeof(struct hv_message));
+	स_नकल(&msg_copy, msg, माप(काष्ठा hv_message));
 
 	message_type = msg_copy.header.message_type;
-	if (message_type == HVMSG_NONE)
+	अगर (message_type == HVMSG_NONE)
 		/* no msg */
-		return;
+		वापस;
 
-	hdr = (struct vmbus_channel_message_header *)msg_copy.u.payload;
+	hdr = (काष्ठा vmbus_channel_message_header *)msg_copy.u.payload;
 	msgtype = hdr->msgtype;
 
 	trace_vmbus_on_msg_dpc(hdr);
 
-	if (msgtype >= CHANNELMSG_COUNT) {
+	अगर (msgtype >= CHANNELMSG_COUNT) अणु
 		WARN_ONCE(1, "unknown msgtype=%d\n", msgtype);
-		goto msg_handled;
-	}
+		जाओ msg_handled;
+	पूर्ण
 
 	payload_size = msg_copy.header.payload_size;
-	if (payload_size > HV_MESSAGE_PAYLOAD_BYTE_COUNT) {
+	अगर (payload_size > HV_MESSAGE_PAYLOAD_BYTE_COUNT) अणु
 		WARN_ONCE(1, "payload size is too large (%d)\n", payload_size);
-		goto msg_handled;
-	}
+		जाओ msg_handled;
+	पूर्ण
 
 	entry = &channel_message_table[msgtype];
 
-	if (!entry->message_handler)
-		goto msg_handled;
+	अगर (!entry->message_handler)
+		जाओ msg_handled;
 
-	if (payload_size < entry->min_payload_len) {
+	अगर (payload_size < entry->min_payload_len) अणु
 		WARN_ONCE(1, "message too short: msgtype=%d len=%d\n", msgtype, payload_size);
-		goto msg_handled;
-	}
+		जाओ msg_handled;
+	पूर्ण
 
-	if (entry->handler_type	== VMHT_BLOCKING) {
-		ctx = kmalloc(sizeof(*ctx) + payload_size, GFP_ATOMIC);
-		if (ctx == NULL)
-			return;
+	अगर (entry->handler_type	== VMHT_BLOCKING) अणु
+		ctx = kदो_स्मृति(माप(*ctx) + payload_size, GFP_ATOMIC);
+		अगर (ctx == शून्य)
+			वापस;
 
 		INIT_WORK(&ctx->work, vmbus_onmessage_work);
-		memcpy(&ctx->msg, &msg_copy, sizeof(msg->header) + payload_size);
+		स_नकल(&ctx->msg, &msg_copy, माप(msg->header) + payload_size);
 
 		/*
-		 * The host can generate a rescind message while we
+		 * The host can generate a rescind message जबतक we
 		 * may still be handling the original offer. We deal with
 		 * this condition by relying on the synchronization provided
 		 * by offer_in_progress and by channel_mutex.  See also the
-		 * inline comments in vmbus_onoffer_rescind().
+		 * अंतरभूत comments in vmbus_onoffer_rescind().
 		 */
-		switch (msgtype) {
-		case CHANNELMSG_RESCIND_CHANNELOFFER:
+		चयन (msgtype) अणु
+		हाल CHANNELMSG_RESCIND_CHANNELOFFER:
 			/*
 			 * If we are handling the rescind message;
 			 * schedule the work on the global work queue.
 			 *
 			 * The OFFER message and the RESCIND message should
 			 * not be handled by the same serialized work queue,
-			 * because the OFFER handler may call vmbus_open(),
-			 * which tries to open the channel by sending an
-			 * OPEN_CHANNEL message to the host and waits for
-			 * the host's response; however, if the host has
-			 * rescinded the channel before it receives the
+			 * because the OFFER handler may call vmbus_खोलो(),
+			 * which tries to खोलो the channel by sending an
+			 * OPEN_CHANNEL message to the host and रुकोs क्रम
+			 * the host's response; however, अगर the host has
+			 * rescinded the channel beक्रमe it receives the
 			 * OPEN_CHANNEL message, the host just silently
 			 * ignores the OPEN_CHANNEL message; as a result,
-			 * the guest's OFFER handler hangs for ever, if we
+			 * the guest's OFFER handler hangs क्रम ever, अगर we
 			 * handle the RESCIND message in the same serialized
 			 * work queue: the RESCIND handler can not start to
-			 * run before the OFFER handler finishes.
+			 * run beक्रमe the OFFER handler finishes.
 			 */
 			schedule_work(&ctx->work);
-			break;
+			अवरोध;
 
-		case CHANNELMSG_OFFERCHANNEL:
+		हाल CHANNELMSG_OFFERCHANNEL:
 			/*
 			 * The host sends the offer message of a given channel
-			 * before sending the rescind message of the same
+			 * beक्रमe sending the rescind message of the same
 			 * channel.  These messages are sent to the guest's
 			 * connect CPU; the guest then starts processing them
 			 * in the tasklet handler on this CPU:
@@ -1188,30 +1189,30 @@ void vmbus_on_msg_dpc(unsigned long data)
 			 * queue_work() and schedule_work() primitives, which
 			 * guarantee that the atomic increment will be visible
 			 * to the CPUs which will execute the offer & rescind
-			 * works by the time these works will start execution.
+			 * works by the समय these works will start execution.
 			 */
 			atomic_inc(&vmbus_connection.offer_in_progress);
 			fallthrough;
 
-		default:
+		शेष:
 			queue_work(vmbus_connection.work_queue, &ctx->work);
-		}
-	} else
+		पूर्ण
+	पूर्ण अन्यथा
 		entry->message_handler(hdr);
 
 msg_handled:
-	vmbus_signal_eom(msg, message_type);
-}
+	vmbus_संकेत_eom(msg, message_type);
+पूर्ण
 
-#ifdef CONFIG_PM_SLEEP
+#अगर_घोषित CONFIG_PM_SLEEP
 /*
- * Fake RESCIND_CHANNEL messages to clean up hv_sock channels by force for
+ * Fake RESCIND_CHANNEL messages to clean up hv_sock channels by क्रमce क्रम
  * hibernation, because hv_sock connections can not persist across hibernation.
  */
-static void vmbus_force_channel_rescinded(struct vmbus_channel *channel)
-{
-	struct onmessage_work_context *ctx;
-	struct vmbus_channel_rescind_offer *rescind;
+अटल व्योम vmbus_क्रमce_channel_rescinded(काष्ठा vmbus_channel *channel)
+अणु
+	काष्ठा onmessage_work_context *ctx;
+	काष्ठा vmbus_channel_rescind_offer *rescind;
 
 	WARN_ON(!is_hvsock_channel(channel));
 
@@ -1219,408 +1220,408 @@ static void vmbus_force_channel_rescinded(struct vmbus_channel *channel)
 	 * Allocation size is small and the allocation should really not fail,
 	 * otherwise the state of the hv_sock connections ends up in limbo.
 	 */
-	ctx = kzalloc(sizeof(*ctx) + sizeof(*rescind),
+	ctx = kzalloc(माप(*ctx) + माप(*rescind),
 		      GFP_KERNEL | __GFP_NOFAIL);
 
 	/*
 	 * So far, these are not really used by Linux. Just set them to the
-	 * reasonable values conforming to the definitions of the fields.
+	 * reasonable values conक्रमming to the definitions of the fields.
 	 */
 	ctx->msg.header.message_type = 1;
-	ctx->msg.header.payload_size = sizeof(*rescind);
+	ctx->msg.header.payload_size = माप(*rescind);
 
 	/* These values are actually used by Linux. */
-	rescind = (struct vmbus_channel_rescind_offer *)ctx->msg.payload;
+	rescind = (काष्ठा vmbus_channel_rescind_offer *)ctx->msg.payload;
 	rescind->header.msgtype = CHANNELMSG_RESCIND_CHANNELOFFER;
 	rescind->child_relid = channel->offermsg.child_relid;
 
 	INIT_WORK(&ctx->work, vmbus_onmessage_work);
 
 	queue_work(vmbus_connection.work_queue, &ctx->work);
-}
-#endif /* CONFIG_PM_SLEEP */
+पूर्ण
+#पूर्ण_अगर /* CONFIG_PM_SLEEP */
 
 /*
  * Schedule all channels with events pending
  */
-static void vmbus_chan_sched(struct hv_per_cpu_context *hv_cpu)
-{
-	unsigned long *recv_int_page;
+अटल व्योम vmbus_chan_sched(काष्ठा hv_per_cpu_context *hv_cpu)
+अणु
+	अचिन्हित दीर्घ *recv_पूर्णांक_page;
 	u32 maxbits, relid;
 
-	if (vmbus_proto_version < VERSION_WIN8) {
+	अगर (vmbus_proto_version < VERSION_WIN8) अणु
 		maxbits = MAX_NUM_CHANNELS_SUPPORTED;
-		recv_int_page = vmbus_connection.recv_int_page;
-	} else {
+		recv_पूर्णांक_page = vmbus_connection.recv_पूर्णांक_page;
+	पूर्ण अन्यथा अणु
 		/*
 		 * When the host is win8 and beyond, the event page
 		 * can be directly checked to get the id of the channel
-		 * that has the interrupt pending.
+		 * that has the पूर्णांकerrupt pending.
 		 */
-		void *page_addr = hv_cpu->synic_event_page;
-		union hv_synic_event_flags *event
-			= (union hv_synic_event_flags *)page_addr +
+		व्योम *page_addr = hv_cpu->synic_event_page;
+		जोड़ hv_synic_event_flags *event
+			= (जोड़ hv_synic_event_flags *)page_addr +
 						 VMBUS_MESSAGE_SINT;
 
 		maxbits = HV_EVENT_FLAGS_COUNT;
-		recv_int_page = event->flags;
-	}
+		recv_पूर्णांक_page = event->flags;
+	पूर्ण
 
-	if (unlikely(!recv_int_page))
-		return;
+	अगर (unlikely(!recv_पूर्णांक_page))
+		वापस;
 
-	for_each_set_bit(relid, recv_int_page, maxbits) {
-		void (*callback_fn)(void *context);
-		struct vmbus_channel *channel;
+	क्रम_each_set_bit(relid, recv_पूर्णांक_page, maxbits) अणु
+		व्योम (*callback_fn)(व्योम *context);
+		काष्ठा vmbus_channel *channel;
 
-		if (!sync_test_and_clear_bit(relid, recv_int_page))
-			continue;
+		अगर (!sync_test_and_clear_bit(relid, recv_पूर्णांक_page))
+			जारी;
 
-		/* Special case - vmbus channel protocol msg */
-		if (relid == 0)
-			continue;
+		/* Special हाल - vmbus channel protocol msg */
+		अगर (relid == 0)
+			जारी;
 
 		/*
-		 * Pairs with the kfree_rcu() in vmbus_chan_release().
-		 * Guarantees that the channel data structure doesn't
-		 * get freed while the channel pointer below is being
+		 * Pairs with the kमुक्त_rcu() in vmbus_chan_release().
+		 * Guarantees that the channel data काष्ठाure करोesn't
+		 * get मुक्तd जबतक the channel poपूर्णांकer below is being
 		 * dereferenced.
 		 */
-		rcu_read_lock();
+		rcu_पढ़ो_lock();
 
 		/* Find channel based on relid */
 		channel = relid2channel(relid);
-		if (channel == NULL)
-			goto sched_unlock_rcu;
+		अगर (channel == शून्य)
+			जाओ sched_unlock_rcu;
 
-		if (channel->rescind)
-			goto sched_unlock_rcu;
+		अगर (channel->rescind)
+			जाओ sched_unlock_rcu;
 
 		/*
-		 * Make sure that the ring buffer data structure doesn't get
-		 * freed while we dereference the ring buffer pointer.  Test
-		 * for the channel's onchannel_callback being NULL within a
-		 * sched_lock critical section.  See also the inline comments
+		 * Make sure that the ring buffer data काष्ठाure करोesn't get
+		 * मुक्तd जबतक we dereference the ring buffer poपूर्णांकer.  Test
+		 * क्रम the channel's onchannel_callback being शून्य within a
+		 * sched_lock critical section.  See also the अंतरभूत comments
 		 * in vmbus_reset_channel_cb().
 		 */
 		spin_lock(&channel->sched_lock);
 
 		callback_fn = channel->onchannel_callback;
-		if (unlikely(callback_fn == NULL))
-			goto sched_unlock;
+		अगर (unlikely(callback_fn == शून्य))
+			जाओ sched_unlock;
 
 		trace_vmbus_chan_sched(channel);
 
-		++channel->interrupts;
+		++channel->पूर्णांकerrupts;
 
-		switch (channel->callback_mode) {
-		case HV_CALL_ISR:
+		चयन (channel->callback_mode) अणु
+		हाल HV_CALL_ISR:
 			(*callback_fn)(channel->channel_callback_context);
-			break;
+			अवरोध;
 
-		case HV_CALL_BATCHED:
-			hv_begin_read(&channel->inbound);
+		हाल HV_CALL_BATCHED:
+			hv_begin_पढ़ो(&channel->inbound);
 			fallthrough;
-		case HV_CALL_DIRECT:
+		हाल HV_CALL_सूचीECT:
 			tasklet_schedule(&channel->callback_event);
-		}
+		पूर्ण
 
 sched_unlock:
 		spin_unlock(&channel->sched_lock);
 sched_unlock_rcu:
-		rcu_read_unlock();
-	}
-}
+		rcu_पढ़ो_unlock();
+	पूर्ण
+पूर्ण
 
-static void vmbus_isr(void)
-{
-	struct hv_per_cpu_context *hv_cpu
+अटल व्योम vmbus_isr(व्योम)
+अणु
+	काष्ठा hv_per_cpu_context *hv_cpu
 		= this_cpu_ptr(hv_context.cpu_context);
-	void *page_addr = hv_cpu->synic_event_page;
-	struct hv_message *msg;
-	union hv_synic_event_flags *event;
+	व्योम *page_addr = hv_cpu->synic_event_page;
+	काष्ठा hv_message *msg;
+	जोड़ hv_synic_event_flags *event;
 	bool handled = false;
 
-	if (unlikely(page_addr == NULL))
-		return;
+	अगर (unlikely(page_addr == शून्य))
+		वापस;
 
-	event = (union hv_synic_event_flags *)page_addr +
+	event = (जोड़ hv_synic_event_flags *)page_addr +
 					 VMBUS_MESSAGE_SINT;
 	/*
-	 * Check for events before checking for messages. This is the order
-	 * in which events and messages are checked in Windows guests on
-	 * Hyper-V, and the Windows team suggested we do the same.
+	 * Check क्रम events beक्रमe checking क्रम messages. This is the order
+	 * in which events and messages are checked in Winकरोws guests on
+	 * Hyper-V, and the Winकरोws team suggested we करो the same.
 	 */
 
-	if ((vmbus_proto_version == VERSION_WS2008) ||
-		(vmbus_proto_version == VERSION_WIN7)) {
+	अगर ((vmbus_proto_version == VERSION_WS2008) ||
+		(vmbus_proto_version == VERSION_WIN7)) अणु
 
 		/* Since we are a child, we only need to check bit 0 */
-		if (sync_test_and_clear_bit(0, event->flags))
+		अगर (sync_test_and_clear_bit(0, event->flags))
 			handled = true;
-	} else {
+	पूर्ण अन्यथा अणु
 		/*
-		 * Our host is win8 or above. The signaling mechanism
+		 * Our host is win8 or above. The संकेतing mechanism
 		 * has changed and we can directly look at the event page.
-		 * If bit n is set then we have an interrup on the channel
+		 * If bit n is set then we have an पूर्णांकerrup on the channel
 		 * whose id is n.
 		 */
 		handled = true;
-	}
+	पूर्ण
 
-	if (handled)
+	अगर (handled)
 		vmbus_chan_sched(hv_cpu);
 
 	page_addr = hv_cpu->synic_message_page;
-	msg = (struct hv_message *)page_addr + VMBUS_MESSAGE_SINT;
+	msg = (काष्ठा hv_message *)page_addr + VMBUS_MESSAGE_SINT;
 
-	/* Check if there are actual msgs to be processed */
-	if (msg->header.message_type != HVMSG_NONE) {
-		if (msg->header.message_type == HVMSG_TIMER_EXPIRED) {
-			hv_stimer0_isr();
-			vmbus_signal_eom(msg, HVMSG_TIMER_EXPIRED);
-		} else
+	/* Check अगर there are actual msgs to be processed */
+	अगर (msg->header.message_type != HVMSG_NONE) अणु
+		अगर (msg->header.message_type == HVMSG_TIMER_EXPIRED) अणु
+			hv_sसमयr0_isr();
+			vmbus_संकेत_eom(msg, HVMSG_TIMER_EXPIRED);
+		पूर्ण अन्यथा
 			tasklet_schedule(&hv_cpu->msg_dpc);
-	}
+	पूर्ण
 
-	add_interrupt_randomness(vmbus_interrupt, 0);
-}
+	add_पूर्णांकerrupt_अक्रमomness(vmbus_पूर्णांकerrupt, 0);
+पूर्ण
 
-static irqreturn_t vmbus_percpu_isr(int irq, void *dev_id)
-{
+अटल irqवापस_t vmbus_percpu_isr(पूर्णांक irq, व्योम *dev_id)
+अणु
 	vmbus_isr();
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
 /*
  * Callback from kmsg_dump. Grab as much as possible from the end of the kmsg
- * buffer and call into Hyper-V to transfer the data.
+ * buffer and call पूर्णांकo Hyper-V to transfer the data.
  */
-static void hv_kmsg_dump(struct kmsg_dumper *dumper,
-			 enum kmsg_dump_reason reason)
-{
-	struct kmsg_dump_iter iter;
-	size_t bytes_written;
+अटल व्योम hv_kmsg_dump(काष्ठा kmsg_dumper *dumper,
+			 क्रमागत kmsg_dump_reason reason)
+अणु
+	काष्ठा kmsg_dump_iter iter;
+	माप_प्रकार bytes_written;
 
-	/* We are only interested in panics. */
-	if ((reason != KMSG_DUMP_PANIC) || (!sysctl_record_panic_msg))
-		return;
+	/* We are only पूर्णांकerested in panics. */
+	अगर ((reason != KMSG_DUMP_PANIC) || (!sysctl_record_panic_msg))
+		वापस;
 
 	/*
 	 * Write dump contents to the page. No need to synchronize; panic should
-	 * be single-threaded.
+	 * be single-thपढ़ोed.
 	 */
-	kmsg_dump_rewind(&iter);
+	kmsg_dump_शुरुआत(&iter);
 	kmsg_dump_get_buffer(&iter, false, hv_panic_page, HV_HYP_PAGE_SIZE,
 			     &bytes_written);
-	if (!bytes_written)
-		return;
+	अगर (!bytes_written)
+		वापस;
 	/*
 	 * P3 to contain the physical address of the panic page & P4 to
 	 * contain the size of the panic data in that page. Rest of the
-	 * registers are no-op when the NOTIFY_MSG flag is set.
+	 * रेजिस्टरs are no-op when the NOTIFY_MSG flag is set.
 	 */
-	hv_set_register(HV_REGISTER_CRASH_P0, 0);
-	hv_set_register(HV_REGISTER_CRASH_P1, 0);
-	hv_set_register(HV_REGISTER_CRASH_P2, 0);
-	hv_set_register(HV_REGISTER_CRASH_P3, virt_to_phys(hv_panic_page));
-	hv_set_register(HV_REGISTER_CRASH_P4, bytes_written);
+	hv_set_रेजिस्टर(HV_REGISTER_CRASH_P0, 0);
+	hv_set_रेजिस्टर(HV_REGISTER_CRASH_P1, 0);
+	hv_set_रेजिस्टर(HV_REGISTER_CRASH_P2, 0);
+	hv_set_रेजिस्टर(HV_REGISTER_CRASH_P3, virt_to_phys(hv_panic_page));
+	hv_set_रेजिस्टर(HV_REGISTER_CRASH_P4, bytes_written);
 
 	/*
-	 * Let Hyper-V know there is crash data available along with
+	 * Let Hyper-V know there is crash data available aदीर्घ with
 	 * the panic message.
 	 */
-	hv_set_register(HV_REGISTER_CRASH_CTL,
+	hv_set_रेजिस्टर(HV_REGISTER_CRASH_CTL,
 	       (HV_CRASH_CTL_CRASH_NOTIFY | HV_CRASH_CTL_CRASH_NOTIFY_MSG));
-}
+पूर्ण
 
-static struct kmsg_dumper hv_kmsg_dumper = {
+अटल काष्ठा kmsg_dumper hv_kmsg_dumper = अणु
 	.dump = hv_kmsg_dump,
-};
+पूर्ण;
 
-static void hv_kmsg_dump_register(void)
-{
-	int ret;
+अटल व्योम hv_kmsg_dump_रेजिस्टर(व्योम)
+अणु
+	पूर्णांक ret;
 
 	hv_panic_page = hv_alloc_hyperv_zeroed_page();
-	if (!hv_panic_page) {
+	अगर (!hv_panic_page) अणु
 		pr_err("Hyper-V: panic message page memory allocation failed\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	ret = kmsg_dump_register(&hv_kmsg_dumper);
-	if (ret) {
+	ret = kmsg_dump_रेजिस्टर(&hv_kmsg_dumper);
+	अगर (ret) अणु
 		pr_err("Hyper-V: kmsg dump register error 0x%x\n", ret);
-		hv_free_hyperv_page((unsigned long)hv_panic_page);
-		hv_panic_page = NULL;
-	}
-}
+		hv_मुक्त_hyperv_page((अचिन्हित दीर्घ)hv_panic_page);
+		hv_panic_page = शून्य;
+	पूर्ण
+पूर्ण
 
-static struct ctl_table_header *hv_ctl_table_hdr;
+अटल काष्ठा ctl_table_header *hv_ctl_table_hdr;
 
 /*
  * sysctl option to allow the user to control whether kmsg data should be
  * reported to Hyper-V on panic.
  */
-static struct ctl_table hv_ctl_table[] = {
-	{
+अटल काष्ठा ctl_table hv_ctl_table[] = अणु
+	अणु
 		.procname       = "hyperv_record_panic_msg",
 		.data           = &sysctl_record_panic_msg,
-		.maxlen         = sizeof(int),
+		.maxlen         = माप(पूर्णांक),
 		.mode           = 0644,
-		.proc_handler   = proc_dointvec_minmax,
+		.proc_handler   = proc_करोपूर्णांकvec_minmax,
 		.extra1		= SYSCTL_ZERO,
 		.extra2		= SYSCTL_ONE
-	},
-	{}
-};
+	पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
-static struct ctl_table hv_root_table[] = {
-	{
+अटल काष्ठा ctl_table hv_root_table[] = अणु
+	अणु
 		.procname	= "kernel",
 		.mode		= 0555,
 		.child		= hv_ctl_table
-	},
-	{}
-};
+	पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
 /*
  * vmbus_bus_init -Main vmbus driver initialization routine.
  *
  * Here, we
  *	- initialize the vmbus driver context
- *	- invoke the vmbus hv main init routine
+ *	- invoke the vmbus hv मुख्य init routine
  *	- retrieve the channel offers
  */
-static int vmbus_bus_init(void)
-{
-	int ret;
+अटल पूर्णांक vmbus_bus_init(व्योम)
+अणु
+	पूर्णांक ret;
 
 	ret = hv_init();
-	if (ret != 0) {
+	अगर (ret != 0) अणु
 		pr_err("Unable to initialize the hypervisor - 0x%x\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	ret = bus_register(&hv_bus);
-	if (ret)
-		return ret;
+	ret = bus_रेजिस्टर(&hv_bus);
+	अगर (ret)
+		वापस ret;
 
 	/*
-	 * VMbus interrupts are best modeled as per-cpu interrupts. If
-	 * on an architecture with support for per-cpu IRQs (e.g. ARM64),
+	 * VMbus पूर्णांकerrupts are best modeled as per-cpu पूर्णांकerrupts. If
+	 * on an architecture with support क्रम per-cpu IRQs (e.g. ARM64),
 	 * allocate a per-cpu IRQ using standard Linux kernel functionality.
 	 * If not on such an architecture (e.g., x86/x64), then rely on
-	 * code in the arch-specific portion of the code tree to connect
-	 * the VMbus interrupt handler.
+	 * code in the arch-specअगरic portion of the code tree to connect
+	 * the VMbus पूर्णांकerrupt handler.
 	 */
 
-	if (vmbus_irq == -1) {
+	अगर (vmbus_irq == -1) अणु
 		hv_setup_vmbus_handler(vmbus_isr);
-	} else {
-		vmbus_evt = alloc_percpu(long);
+	पूर्ण अन्यथा अणु
+		vmbus_evt = alloc_percpu(दीर्घ);
 		ret = request_percpu_irq(vmbus_irq, vmbus_percpu_isr,
 				"Hyper-V VMbus", vmbus_evt);
-		if (ret) {
+		अगर (ret) अणु
 			pr_err("Can't request Hyper-V VMbus IRQ %d, Err %d",
 					vmbus_irq, ret);
-			free_percpu(vmbus_evt);
-			goto err_setup;
-		}
-	}
+			मुक्त_percpu(vmbus_evt);
+			जाओ err_setup;
+		पूर्ण
+	पूर्ण
 
 	ret = hv_synic_alloc();
-	if (ret)
-		goto err_alloc;
+	अगर (ret)
+		जाओ err_alloc;
 
 	/*
-	 * Initialize the per-cpu interrupt state and stimer state.
+	 * Initialize the per-cpu पूर्णांकerrupt state and sसमयr state.
 	 * Then connect to the host.
 	 */
 	ret = cpuhp_setup_state(CPUHP_AP_ONLINE_DYN, "hyperv/vmbus:online",
 				hv_synic_init, hv_synic_cleanup);
-	if (ret < 0)
-		goto err_cpuhp;
+	अगर (ret < 0)
+		जाओ err_cpuhp;
 	hyperv_cpuhp_online = ret;
 
 	ret = vmbus_connect();
-	if (ret)
-		goto err_connect;
+	अगर (ret)
+		जाओ err_connect;
 
 	/*
-	 * Only register if the crash MSRs are available
+	 * Only रेजिस्टर अगर the crash MSRs are available
 	 */
-	if (ms_hyperv.misc_features & HV_FEATURE_GUEST_CRASH_MSR_AVAILABLE) {
+	अगर (ms_hyperv.misc_features & HV_FEATURE_GUEST_CRASH_MSR_AVAILABLE) अणु
 		u64 hyperv_crash_ctl;
 		/*
-		 * Sysctl registration is not fatal, since by default
+		 * Sysctl registration is not fatal, since by शेष
 		 * reporting is enabled.
 		 */
-		hv_ctl_table_hdr = register_sysctl_table(hv_root_table);
-		if (!hv_ctl_table_hdr)
+		hv_ctl_table_hdr = रेजिस्टर_sysctl_table(hv_root_table);
+		अगर (!hv_ctl_table_hdr)
 			pr_err("Hyper-V: sysctl table register error");
 
 		/*
-		 * Register for panic kmsg callback only if the right
+		 * Register क्रम panic kmsg callback only अगर the right
 		 * capability is supported by the hypervisor.
 		 */
-		hyperv_crash_ctl = hv_get_register(HV_REGISTER_CRASH_CTL);
-		if (hyperv_crash_ctl & HV_CRASH_CTL_CRASH_NOTIFY_MSG)
-			hv_kmsg_dump_register();
+		hyperv_crash_ctl = hv_get_रेजिस्टर(HV_REGISTER_CRASH_CTL);
+		अगर (hyperv_crash_ctl & HV_CRASH_CTL_CRASH_NOTIFY_MSG)
+			hv_kmsg_dump_रेजिस्टर();
 
-		register_die_notifier(&hyperv_die_block);
-	}
+		रेजिस्टर_die_notअगरier(&hyperv_die_block);
+	पूर्ण
 
 	/*
-	 * Always register the panic notifier because we need to unload
+	 * Always रेजिस्टर the panic notअगरier because we need to unload
 	 * the VMbus channel connection to prevent any VMbus
 	 * activity after the VM panics.
 	 */
-	atomic_notifier_chain_register(&panic_notifier_list,
+	atomic_notअगरier_chain_रेजिस्टर(&panic_notअगरier_list,
 			       &hyperv_panic_block);
 
 	vmbus_request_offers();
 
-	return 0;
+	वापस 0;
 
 err_connect:
-	cpuhp_remove_state(hyperv_cpuhp_online);
+	cpuhp_हटाओ_state(hyperv_cpuhp_online);
 err_cpuhp:
-	hv_synic_free();
+	hv_synic_मुक्त();
 err_alloc:
-	if (vmbus_irq == -1) {
-		hv_remove_vmbus_handler();
-	} else {
-		free_percpu_irq(vmbus_irq, vmbus_evt);
-		free_percpu(vmbus_evt);
-	}
+	अगर (vmbus_irq == -1) अणु
+		hv_हटाओ_vmbus_handler();
+	पूर्ण अन्यथा अणु
+		मुक्त_percpu_irq(vmbus_irq, vmbus_evt);
+		मुक्त_percpu(vmbus_evt);
+	पूर्ण
 err_setup:
-	bus_unregister(&hv_bus);
-	unregister_sysctl_table(hv_ctl_table_hdr);
-	hv_ctl_table_hdr = NULL;
-	return ret;
-}
+	bus_unरेजिस्टर(&hv_bus);
+	unरेजिस्टर_sysctl_table(hv_ctl_table_hdr);
+	hv_ctl_table_hdr = शून्य;
+	वापस ret;
+पूर्ण
 
 /**
- * __vmbus_child_driver_register() - Register a vmbus's driver
- * @hv_driver: Pointer to driver structure you want to register
+ * __vmbus_child_driver_रेजिस्टर() - Register a vmbus's driver
+ * @hv_driver: Poपूर्णांकer to driver काष्ठाure you want to रेजिस्टर
  * @owner: owner module of the drv
  * @mod_name: module name string
  *
  * Registers the given driver with Linux through the 'driver_register()' call
- * and sets up the hyper-v vmbus handling for this driver.
- * It will return the state of the 'driver_register()' call.
+ * and sets up the hyper-v vmbus handling क्रम this driver.
+ * It will वापस the state of the 'driver_register()' call.
  *
  */
-int __vmbus_driver_register(struct hv_driver *hv_driver, struct module *owner, const char *mod_name)
-{
-	int ret;
+पूर्णांक __vmbus_driver_रेजिस्टर(काष्ठा hv_driver *hv_driver, काष्ठा module *owner, स्थिर अक्षर *mod_name)
+अणु
+	पूर्णांक ret;
 
 	pr_info("registering driver %s\n", hv_driver->name);
 
 	ret = vmbus_exists();
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	hv_driver->driver.name = hv_driver->name;
 	hv_driver->driver.owner = owner;
@@ -1630,193 +1631,193 @@ int __vmbus_driver_register(struct hv_driver *hv_driver, struct module *owner, c
 	spin_lock_init(&hv_driver->dynids.lock);
 	INIT_LIST_HEAD(&hv_driver->dynids.list);
 
-	ret = driver_register(&hv_driver->driver);
+	ret = driver_रेजिस्टर(&hv_driver->driver);
 
-	return ret;
-}
-EXPORT_SYMBOL_GPL(__vmbus_driver_register);
+	वापस ret;
+पूर्ण
+EXPORT_SYMBOL_GPL(__vmbus_driver_रेजिस्टर);
 
 /**
- * vmbus_driver_unregister() - Unregister a vmbus's driver
- * @hv_driver: Pointer to driver structure you want to
- *             un-register
+ * vmbus_driver_unरेजिस्टर() - Unरेजिस्टर a vmbus's driver
+ * @hv_driver: Poपूर्णांकer to driver काष्ठाure you want to
+ *             un-रेजिस्टर
  *
- * Un-register the given driver that was previous registered with a call to
- * vmbus_driver_register()
+ * Un-रेजिस्टर the given driver that was previous रेजिस्टरed with a call to
+ * vmbus_driver_रेजिस्टर()
  */
-void vmbus_driver_unregister(struct hv_driver *hv_driver)
-{
+व्योम vmbus_driver_unरेजिस्टर(काष्ठा hv_driver *hv_driver)
+अणु
 	pr_info("unregistering driver %s\n", hv_driver->name);
 
-	if (!vmbus_exists()) {
-		driver_unregister(&hv_driver->driver);
-		vmbus_free_dynids(hv_driver);
-	}
-}
-EXPORT_SYMBOL_GPL(vmbus_driver_unregister);
+	अगर (!vmbus_exists()) अणु
+		driver_unरेजिस्टर(&hv_driver->driver);
+		vmbus_मुक्त_dynids(hv_driver);
+	पूर्ण
+पूर्ण
+EXPORT_SYMBOL_GPL(vmbus_driver_unरेजिस्टर);
 
 
 /*
  * Called when last reference to channel is gone.
  */
-static void vmbus_chan_release(struct kobject *kobj)
-{
-	struct vmbus_channel *channel
-		= container_of(kobj, struct vmbus_channel, kobj);
+अटल व्योम vmbus_chan_release(काष्ठा kobject *kobj)
+अणु
+	काष्ठा vmbus_channel *channel
+		= container_of(kobj, काष्ठा vmbus_channel, kobj);
 
-	kfree_rcu(channel, rcu);
-}
+	kमुक्त_rcu(channel, rcu);
+पूर्ण
 
-struct vmbus_chan_attribute {
-	struct attribute attr;
-	ssize_t (*show)(struct vmbus_channel *chan, char *buf);
-	ssize_t (*store)(struct vmbus_channel *chan,
-			 const char *buf, size_t count);
-};
-#define VMBUS_CHAN_ATTR(_name, _mode, _show, _store) \
-	struct vmbus_chan_attribute chan_attr_##_name \
+काष्ठा vmbus_chan_attribute अणु
+	काष्ठा attribute attr;
+	sमाप_प्रकार (*show)(काष्ठा vmbus_channel *chan, अक्षर *buf);
+	sमाप_प्रकार (*store)(काष्ठा vmbus_channel *chan,
+			 स्थिर अक्षर *buf, माप_प्रकार count);
+पूर्ण;
+#घोषणा VMBUS_CHAN_ATTR(_name, _mode, _show, _store) \
+	काष्ठा vmbus_chan_attribute chan_attr_##_name \
 		= __ATTR(_name, _mode, _show, _store)
-#define VMBUS_CHAN_ATTR_RW(_name) \
-	struct vmbus_chan_attribute chan_attr_##_name = __ATTR_RW(_name)
-#define VMBUS_CHAN_ATTR_RO(_name) \
-	struct vmbus_chan_attribute chan_attr_##_name = __ATTR_RO(_name)
-#define VMBUS_CHAN_ATTR_WO(_name) \
-	struct vmbus_chan_attribute chan_attr_##_name = __ATTR_WO(_name)
+#घोषणा VMBUS_CHAN_ATTR_RW(_name) \
+	काष्ठा vmbus_chan_attribute chan_attr_##_name = __ATTR_RW(_name)
+#घोषणा VMBUS_CHAN_ATTR_RO(_name) \
+	काष्ठा vmbus_chan_attribute chan_attr_##_name = __ATTR_RO(_name)
+#घोषणा VMBUS_CHAN_ATTR_WO(_name) \
+	काष्ठा vmbus_chan_attribute chan_attr_##_name = __ATTR_WO(_name)
 
-static ssize_t vmbus_chan_attr_show(struct kobject *kobj,
-				    struct attribute *attr, char *buf)
-{
-	const struct vmbus_chan_attribute *attribute
-		= container_of(attr, struct vmbus_chan_attribute, attr);
-	struct vmbus_channel *chan
-		= container_of(kobj, struct vmbus_channel, kobj);
+अटल sमाप_प्रकार vmbus_chan_attr_show(काष्ठा kobject *kobj,
+				    काष्ठा attribute *attr, अक्षर *buf)
+अणु
+	स्थिर काष्ठा vmbus_chan_attribute *attribute
+		= container_of(attr, काष्ठा vmbus_chan_attribute, attr);
+	काष्ठा vmbus_channel *chan
+		= container_of(kobj, काष्ठा vmbus_channel, kobj);
 
-	if (!attribute->show)
-		return -EIO;
+	अगर (!attribute->show)
+		वापस -EIO;
 
-	return attribute->show(chan, buf);
-}
+	वापस attribute->show(chan, buf);
+पूर्ण
 
-static ssize_t vmbus_chan_attr_store(struct kobject *kobj,
-				     struct attribute *attr, const char *buf,
-				     size_t count)
-{
-	const struct vmbus_chan_attribute *attribute
-		= container_of(attr, struct vmbus_chan_attribute, attr);
-	struct vmbus_channel *chan
-		= container_of(kobj, struct vmbus_channel, kobj);
+अटल sमाप_प्रकार vmbus_chan_attr_store(काष्ठा kobject *kobj,
+				     काष्ठा attribute *attr, स्थिर अक्षर *buf,
+				     माप_प्रकार count)
+अणु
+	स्थिर काष्ठा vmbus_chan_attribute *attribute
+		= container_of(attr, काष्ठा vmbus_chan_attribute, attr);
+	काष्ठा vmbus_channel *chan
+		= container_of(kobj, काष्ठा vmbus_channel, kobj);
 
-	if (!attribute->store)
-		return -EIO;
+	अगर (!attribute->store)
+		वापस -EIO;
 
-	return attribute->store(chan, buf, count);
-}
+	वापस attribute->store(chan, buf, count);
+पूर्ण
 
-static const struct sysfs_ops vmbus_chan_sysfs_ops = {
+अटल स्थिर काष्ठा sysfs_ops vmbus_chan_sysfs_ops = अणु
 	.show = vmbus_chan_attr_show,
 	.store = vmbus_chan_attr_store,
-};
+पूर्ण;
 
-static ssize_t out_mask_show(struct vmbus_channel *channel, char *buf)
-{
-	struct hv_ring_buffer_info *rbi = &channel->outbound;
-	ssize_t ret;
-
-	mutex_lock(&rbi->ring_buffer_mutex);
-	if (!rbi->ring_buffer) {
-		mutex_unlock(&rbi->ring_buffer_mutex);
-		return -EINVAL;
-	}
-
-	ret = sprintf(buf, "%u\n", rbi->ring_buffer->interrupt_mask);
-	mutex_unlock(&rbi->ring_buffer_mutex);
-	return ret;
-}
-static VMBUS_CHAN_ATTR_RO(out_mask);
-
-static ssize_t in_mask_show(struct vmbus_channel *channel, char *buf)
-{
-	struct hv_ring_buffer_info *rbi = &channel->inbound;
-	ssize_t ret;
+अटल sमाप_प्रकार out_mask_show(काष्ठा vmbus_channel *channel, अक्षर *buf)
+अणु
+	काष्ठा hv_ring_buffer_info *rbi = &channel->outbound;
+	sमाप_प्रकार ret;
 
 	mutex_lock(&rbi->ring_buffer_mutex);
-	if (!rbi->ring_buffer) {
+	अगर (!rbi->ring_buffer) अणु
 		mutex_unlock(&rbi->ring_buffer_mutex);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	ret = sprintf(buf, "%u\n", rbi->ring_buffer->interrupt_mask);
+	ret = प्र_लिखो(buf, "%u\n", rbi->ring_buffer->पूर्णांकerrupt_mask);
 	mutex_unlock(&rbi->ring_buffer_mutex);
-	return ret;
-}
-static VMBUS_CHAN_ATTR_RO(in_mask);
+	वापस ret;
+पूर्ण
+अटल VMBUS_CHAN_ATTR_RO(out_mask);
 
-static ssize_t read_avail_show(struct vmbus_channel *channel, char *buf)
-{
-	struct hv_ring_buffer_info *rbi = &channel->inbound;
-	ssize_t ret;
+अटल sमाप_प्रकार in_mask_show(काष्ठा vmbus_channel *channel, अक्षर *buf)
+अणु
+	काष्ठा hv_ring_buffer_info *rbi = &channel->inbound;
+	sमाप_प्रकार ret;
 
 	mutex_lock(&rbi->ring_buffer_mutex);
-	if (!rbi->ring_buffer) {
+	अगर (!rbi->ring_buffer) अणु
 		mutex_unlock(&rbi->ring_buffer_mutex);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	ret = sprintf(buf, "%u\n", hv_get_bytes_to_read(rbi));
+	ret = प्र_लिखो(buf, "%u\n", rbi->ring_buffer->पूर्णांकerrupt_mask);
 	mutex_unlock(&rbi->ring_buffer_mutex);
-	return ret;
-}
-static VMBUS_CHAN_ATTR_RO(read_avail);
+	वापस ret;
+पूर्ण
+अटल VMBUS_CHAN_ATTR_RO(in_mask);
 
-static ssize_t write_avail_show(struct vmbus_channel *channel, char *buf)
-{
-	struct hv_ring_buffer_info *rbi = &channel->outbound;
-	ssize_t ret;
+अटल sमाप_प्रकार पढ़ो_avail_show(काष्ठा vmbus_channel *channel, अक्षर *buf)
+अणु
+	काष्ठा hv_ring_buffer_info *rbi = &channel->inbound;
+	sमाप_प्रकार ret;
 
 	mutex_lock(&rbi->ring_buffer_mutex);
-	if (!rbi->ring_buffer) {
+	अगर (!rbi->ring_buffer) अणु
 		mutex_unlock(&rbi->ring_buffer_mutex);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	ret = sprintf(buf, "%u\n", hv_get_bytes_to_write(rbi));
+	ret = प्र_लिखो(buf, "%u\n", hv_get_bytes_to_पढ़ो(rbi));
 	mutex_unlock(&rbi->ring_buffer_mutex);
-	return ret;
-}
-static VMBUS_CHAN_ATTR_RO(write_avail);
+	वापस ret;
+पूर्ण
+अटल VMBUS_CHAN_ATTR_RO(पढ़ो_avail);
 
-static ssize_t target_cpu_show(struct vmbus_channel *channel, char *buf)
-{
-	return sprintf(buf, "%u\n", channel->target_cpu);
-}
-static ssize_t target_cpu_store(struct vmbus_channel *channel,
-				const char *buf, size_t count)
-{
+अटल sमाप_प्रकार ग_लिखो_avail_show(काष्ठा vmbus_channel *channel, अक्षर *buf)
+अणु
+	काष्ठा hv_ring_buffer_info *rbi = &channel->outbound;
+	sमाप_प्रकार ret;
+
+	mutex_lock(&rbi->ring_buffer_mutex);
+	अगर (!rbi->ring_buffer) अणु
+		mutex_unlock(&rbi->ring_buffer_mutex);
+		वापस -EINVAL;
+	पूर्ण
+
+	ret = प्र_लिखो(buf, "%u\n", hv_get_bytes_to_ग_लिखो(rbi));
+	mutex_unlock(&rbi->ring_buffer_mutex);
+	वापस ret;
+पूर्ण
+अटल VMBUS_CHAN_ATTR_RO(ग_लिखो_avail);
+
+अटल sमाप_प्रकार target_cpu_show(काष्ठा vmbus_channel *channel, अक्षर *buf)
+अणु
+	वापस प्र_लिखो(buf, "%u\n", channel->target_cpu);
+पूर्ण
+अटल sमाप_प्रकार target_cpu_store(काष्ठा vmbus_channel *channel,
+				स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
 	u32 target_cpu, origin_cpu;
-	ssize_t ret = count;
+	sमाप_प्रकार ret = count;
 
-	if (vmbus_proto_version < VERSION_WIN10_V4_1)
-		return -EIO;
+	अगर (vmbus_proto_version < VERSION_WIN10_V4_1)
+		वापस -EIO;
 
-	if (sscanf(buf, "%uu", &target_cpu) != 1)
-		return -EIO;
+	अगर (माला_पूछो(buf, "%uu", &target_cpu) != 1)
+		वापस -EIO;
 
-	/* Validate target_cpu for the cpumask_test_cpu() operation below. */
-	if (target_cpu >= nr_cpumask_bits)
-		return -EINVAL;
+	/* Validate target_cpu क्रम the cpumask_test_cpu() operation below. */
+	अगर (target_cpu >= nr_cpumask_bits)
+		वापस -EINVAL;
 
-	/* No CPUs should come up or down during this. */
-	cpus_read_lock();
+	/* No CPUs should come up or करोwn during this. */
+	cpus_पढ़ो_lock();
 
-	if (!cpu_online(target_cpu)) {
-		cpus_read_unlock();
-		return -EINVAL;
-	}
+	अगर (!cpu_online(target_cpu)) अणु
+		cpus_पढ़ो_unlock();
+		वापस -EINVAL;
+	पूर्ण
 
 	/*
 	 * Synchronizes target_cpu_store() and channel closure:
 	 *
-	 * { Initially: state = CHANNEL_OPENED }
+	 * अणु Initially: state = CHANNEL_OPENED पूर्ण
 	 *
 	 * CPU1				CPU2
 	 *
@@ -1838,258 +1839,258 @@ static ssize_t target_cpu_store(struct vmbus_channel *channel,
 	mutex_lock(&vmbus_connection.channel_mutex);
 
 	/*
-	 * Hyper-V will ignore MODIFYCHANNEL messages for "non-open" channels;
-	 * avoid sending the message and fail here for such channels.
+	 * Hyper-V will ignore MODIFYCHANNEL messages क्रम "non-open" channels;
+	 * aव्योम sending the message and fail here क्रम such channels.
 	 */
-	if (channel->state != CHANNEL_OPENED_STATE) {
+	अगर (channel->state != CHANNEL_OPENED_STATE) अणु
 		ret = -EIO;
-		goto cpu_store_unlock;
-	}
+		जाओ cpu_store_unlock;
+	पूर्ण
 
 	origin_cpu = channel->target_cpu;
-	if (target_cpu == origin_cpu)
-		goto cpu_store_unlock;
+	अगर (target_cpu == origin_cpu)
+		जाओ cpu_store_unlock;
 
-	if (vmbus_send_modifychannel(channel,
-				     hv_cpu_number_to_vp_number(target_cpu))) {
+	अगर (vmbus_send_modअगरychannel(channel,
+				     hv_cpu_number_to_vp_number(target_cpu))) अणु
 		ret = -EIO;
-		goto cpu_store_unlock;
-	}
+		जाओ cpu_store_unlock;
+	पूर्ण
 
 	/*
-	 * For version before VERSION_WIN10_V5_3, the following warning holds:
+	 * For version beक्रमe VERSION_WIN10_V5_3, the following warning holds:
 	 *
-	 * Warning.  At this point, there is *no* guarantee that the host will
-	 * have successfully processed the vmbus_send_modifychannel() request.
-	 * See the header comment of vmbus_send_modifychannel() for more info.
+	 * Warning.  At this poपूर्णांक, there is *no* guarantee that the host will
+	 * have successfully processed the vmbus_send_modअगरychannel() request.
+	 * See the header comment of vmbus_send_modअगरychannel() क्रम more info.
 	 *
-	 * Lags in the processing of the above vmbus_send_modifychannel() can
-	 * result in missed interrupts if the "old" target CPU is taken offline
-	 * before Hyper-V starts sending interrupts to the "new" target CPU.
+	 * Lags in the processing of the above vmbus_send_modअगरychannel() can
+	 * result in missed पूर्णांकerrupts अगर the "old" target CPU is taken offline
+	 * beक्रमe Hyper-V starts sending पूर्णांकerrupts to the "new" target CPU.
 	 * But apart from this offlining scenario, the code tolerates such
-	 * lags.  It will function correctly even if a channel interrupt comes
-	 * in on a CPU that is different from the channel target_cpu value.
+	 * lags.  It will function correctly even अगर a channel पूर्णांकerrupt comes
+	 * in on a CPU that is dअगरferent from the channel target_cpu value.
 	 */
 
 	channel->target_cpu = target_cpu;
 
 	/* See init_vp_index(). */
-	if (hv_is_perf_channel(channel))
+	अगर (hv_is_perf_channel(channel))
 		hv_update_alloced_cpus(origin_cpu, target_cpu);
 
-	/* Currently set only for storvsc channels. */
-	if (channel->change_target_cpu_callback) {
+	/* Currently set only क्रम storvsc channels. */
+	अगर (channel->change_target_cpu_callback) अणु
 		(*channel->change_target_cpu_callback)(channel,
 				origin_cpu, target_cpu);
-	}
+	पूर्ण
 
 cpu_store_unlock:
 	mutex_unlock(&vmbus_connection.channel_mutex);
-	cpus_read_unlock();
-	return ret;
-}
-static VMBUS_CHAN_ATTR(cpu, 0644, target_cpu_show, target_cpu_store);
+	cpus_पढ़ो_unlock();
+	वापस ret;
+पूर्ण
+अटल VMBUS_CHAN_ATTR(cpu, 0644, target_cpu_show, target_cpu_store);
 
-static ssize_t channel_pending_show(struct vmbus_channel *channel,
-				    char *buf)
-{
-	return sprintf(buf, "%d\n",
+अटल sमाप_प्रकार channel_pending_show(काष्ठा vmbus_channel *channel,
+				    अक्षर *buf)
+अणु
+	वापस प्र_लिखो(buf, "%d\n",
 		       channel_pending(channel,
 				       vmbus_connection.monitor_pages[1]));
-}
-static VMBUS_CHAN_ATTR(pending, 0444, channel_pending_show, NULL);
+पूर्ण
+अटल VMBUS_CHAN_ATTR(pending, 0444, channel_pending_show, शून्य);
 
-static ssize_t channel_latency_show(struct vmbus_channel *channel,
-				    char *buf)
-{
-	return sprintf(buf, "%d\n",
+अटल sमाप_प्रकार channel_latency_show(काष्ठा vmbus_channel *channel,
+				    अक्षर *buf)
+अणु
+	वापस प्र_लिखो(buf, "%d\n",
 		       channel_latency(channel,
 				       vmbus_connection.monitor_pages[1]));
-}
-static VMBUS_CHAN_ATTR(latency, 0444, channel_latency_show, NULL);
+पूर्ण
+अटल VMBUS_CHAN_ATTR(latency, 0444, channel_latency_show, शून्य);
 
-static ssize_t channel_interrupts_show(struct vmbus_channel *channel, char *buf)
-{
-	return sprintf(buf, "%llu\n", channel->interrupts);
-}
-static VMBUS_CHAN_ATTR(interrupts, 0444, channel_interrupts_show, NULL);
+अटल sमाप_प्रकार channel_पूर्णांकerrupts_show(काष्ठा vmbus_channel *channel, अक्षर *buf)
+अणु
+	वापस प्र_लिखो(buf, "%llu\n", channel->पूर्णांकerrupts);
+पूर्ण
+अटल VMBUS_CHAN_ATTR(पूर्णांकerrupts, 0444, channel_पूर्णांकerrupts_show, शून्य);
 
-static ssize_t channel_events_show(struct vmbus_channel *channel, char *buf)
-{
-	return sprintf(buf, "%llu\n", channel->sig_events);
-}
-static VMBUS_CHAN_ATTR(events, 0444, channel_events_show, NULL);
+अटल sमाप_प्रकार channel_events_show(काष्ठा vmbus_channel *channel, अक्षर *buf)
+अणु
+	वापस प्र_लिखो(buf, "%llu\n", channel->sig_events);
+पूर्ण
+अटल VMBUS_CHAN_ATTR(events, 0444, channel_events_show, शून्य);
 
-static ssize_t channel_intr_in_full_show(struct vmbus_channel *channel,
-					 char *buf)
-{
-	return sprintf(buf, "%llu\n",
-		       (unsigned long long)channel->intr_in_full);
-}
-static VMBUS_CHAN_ATTR(intr_in_full, 0444, channel_intr_in_full_show, NULL);
+अटल sमाप_प्रकार channel_पूर्णांकr_in_full_show(काष्ठा vmbus_channel *channel,
+					 अक्षर *buf)
+अणु
+	वापस प्र_लिखो(buf, "%llu\n",
+		       (अचिन्हित दीर्घ दीर्घ)channel->पूर्णांकr_in_full);
+पूर्ण
+अटल VMBUS_CHAN_ATTR(पूर्णांकr_in_full, 0444, channel_पूर्णांकr_in_full_show, शून्य);
 
-static ssize_t channel_intr_out_empty_show(struct vmbus_channel *channel,
-					   char *buf)
-{
-	return sprintf(buf, "%llu\n",
-		       (unsigned long long)channel->intr_out_empty);
-}
-static VMBUS_CHAN_ATTR(intr_out_empty, 0444, channel_intr_out_empty_show, NULL);
+अटल sमाप_प्रकार channel_पूर्णांकr_out_empty_show(काष्ठा vmbus_channel *channel,
+					   अक्षर *buf)
+अणु
+	वापस प्र_लिखो(buf, "%llu\n",
+		       (अचिन्हित दीर्घ दीर्घ)channel->पूर्णांकr_out_empty);
+पूर्ण
+अटल VMBUS_CHAN_ATTR(पूर्णांकr_out_empty, 0444, channel_पूर्णांकr_out_empty_show, शून्य);
 
-static ssize_t channel_out_full_first_show(struct vmbus_channel *channel,
-					   char *buf)
-{
-	return sprintf(buf, "%llu\n",
-		       (unsigned long long)channel->out_full_first);
-}
-static VMBUS_CHAN_ATTR(out_full_first, 0444, channel_out_full_first_show, NULL);
+अटल sमाप_प्रकार channel_out_full_first_show(काष्ठा vmbus_channel *channel,
+					   अक्षर *buf)
+अणु
+	वापस प्र_लिखो(buf, "%llu\n",
+		       (अचिन्हित दीर्घ दीर्घ)channel->out_full_first);
+पूर्ण
+अटल VMBUS_CHAN_ATTR(out_full_first, 0444, channel_out_full_first_show, शून्य);
 
-static ssize_t channel_out_full_total_show(struct vmbus_channel *channel,
-					   char *buf)
-{
-	return sprintf(buf, "%llu\n",
-		       (unsigned long long)channel->out_full_total);
-}
-static VMBUS_CHAN_ATTR(out_full_total, 0444, channel_out_full_total_show, NULL);
+अटल sमाप_प्रकार channel_out_full_total_show(काष्ठा vmbus_channel *channel,
+					   अक्षर *buf)
+अणु
+	वापस प्र_लिखो(buf, "%llu\n",
+		       (अचिन्हित दीर्घ दीर्घ)channel->out_full_total);
+पूर्ण
+अटल VMBUS_CHAN_ATTR(out_full_total, 0444, channel_out_full_total_show, शून्य);
 
-static ssize_t subchannel_monitor_id_show(struct vmbus_channel *channel,
-					  char *buf)
-{
-	return sprintf(buf, "%u\n", channel->offermsg.monitorid);
-}
-static VMBUS_CHAN_ATTR(monitor_id, 0444, subchannel_monitor_id_show, NULL);
+अटल sमाप_प्रकार subchannel_monitor_id_show(काष्ठा vmbus_channel *channel,
+					  अक्षर *buf)
+अणु
+	वापस प्र_लिखो(buf, "%u\n", channel->offermsg.monitorid);
+पूर्ण
+अटल VMBUS_CHAN_ATTR(monitor_id, 0444, subchannel_monitor_id_show, शून्य);
 
-static ssize_t subchannel_id_show(struct vmbus_channel *channel,
-				  char *buf)
-{
-	return sprintf(buf, "%u\n",
+अटल sमाप_प्रकार subchannel_id_show(काष्ठा vmbus_channel *channel,
+				  अक्षर *buf)
+अणु
+	वापस प्र_लिखो(buf, "%u\n",
 		       channel->offermsg.offer.sub_channel_index);
-}
-static VMBUS_CHAN_ATTR_RO(subchannel_id);
+पूर्ण
+अटल VMBUS_CHAN_ATTR_RO(subchannel_id);
 
-static struct attribute *vmbus_chan_attrs[] = {
+अटल काष्ठा attribute *vmbus_chan_attrs[] = अणु
 	&chan_attr_out_mask.attr,
 	&chan_attr_in_mask.attr,
-	&chan_attr_read_avail.attr,
-	&chan_attr_write_avail.attr,
+	&chan_attr_पढ़ो_avail.attr,
+	&chan_attr_ग_लिखो_avail.attr,
 	&chan_attr_cpu.attr,
 	&chan_attr_pending.attr,
 	&chan_attr_latency.attr,
-	&chan_attr_interrupts.attr,
+	&chan_attr_पूर्णांकerrupts.attr,
 	&chan_attr_events.attr,
-	&chan_attr_intr_in_full.attr,
-	&chan_attr_intr_out_empty.attr,
+	&chan_attr_पूर्णांकr_in_full.attr,
+	&chan_attr_पूर्णांकr_out_empty.attr,
 	&chan_attr_out_full_first.attr,
 	&chan_attr_out_full_total.attr,
 	&chan_attr_monitor_id.attr,
 	&chan_attr_subchannel_id.attr,
-	NULL
-};
+	शून्य
+पूर्ण;
 
 /*
- * Channel-level attribute_group callback function. Returns the permission for
- * each attribute, and returns 0 if an attribute is not visible.
+ * Channel-level attribute_group callback function. Returns the permission क्रम
+ * each attribute, and वापसs 0 अगर an attribute is not visible.
  */
-static umode_t vmbus_chan_attr_is_visible(struct kobject *kobj,
-					  struct attribute *attr, int idx)
-{
-	const struct vmbus_channel *channel =
-		container_of(kobj, struct vmbus_channel, kobj);
+अटल umode_t vmbus_chan_attr_is_visible(काष्ठा kobject *kobj,
+					  काष्ठा attribute *attr, पूर्णांक idx)
+अणु
+	स्थिर काष्ठा vmbus_channel *channel =
+		container_of(kobj, काष्ठा vmbus_channel, kobj);
 
-	/* Hide the monitor attributes if the monitor mechanism is not used. */
-	if (!channel->offermsg.monitor_allocated &&
+	/* Hide the monitor attributes अगर the monitor mechanism is not used. */
+	अगर (!channel->offermsg.monitor_allocated &&
 	    (attr == &chan_attr_pending.attr ||
 	     attr == &chan_attr_latency.attr ||
 	     attr == &chan_attr_monitor_id.attr))
-		return 0;
+		वापस 0;
 
-	return attr->mode;
-}
+	वापस attr->mode;
+पूर्ण
 
-static struct attribute_group vmbus_chan_group = {
+अटल काष्ठा attribute_group vmbus_chan_group = अणु
 	.attrs = vmbus_chan_attrs,
 	.is_visible = vmbus_chan_attr_is_visible
-};
+पूर्ण;
 
-static struct kobj_type vmbus_chan_ktype = {
+अटल काष्ठा kobj_type vmbus_chan_ktype = अणु
 	.sysfs_ops = &vmbus_chan_sysfs_ops,
 	.release = vmbus_chan_release,
-};
+पूर्ण;
 
 /*
  * vmbus_add_channel_kobj - setup a sub-directory under device/channels
  */
-int vmbus_add_channel_kobj(struct hv_device *dev, struct vmbus_channel *channel)
-{
-	const struct device *device = &dev->device;
-	struct kobject *kobj = &channel->kobj;
+पूर्णांक vmbus_add_channel_kobj(काष्ठा hv_device *dev, काष्ठा vmbus_channel *channel)
+अणु
+	स्थिर काष्ठा device *device = &dev->device;
+	काष्ठा kobject *kobj = &channel->kobj;
 	u32 relid = channel->offermsg.child_relid;
-	int ret;
+	पूर्णांक ret;
 
 	kobj->kset = dev->channels_kset;
-	ret = kobject_init_and_add(kobj, &vmbus_chan_ktype, NULL,
+	ret = kobject_init_and_add(kobj, &vmbus_chan_ktype, शून्य,
 				   "%u", relid);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ret = sysfs_create_group(kobj, &vmbus_chan_group);
 
-	if (ret) {
+	अगर (ret) अणु
 		/*
 		 * The calling functions' error handling paths will cleanup the
 		 * empty channel directory.
 		 */
 		dev_err(device, "Unable to set up channel sysfs files\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	kobject_uevent(kobj, KOBJ_ADD);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * vmbus_remove_channel_attr_group - remove the channel's attribute group
+ * vmbus_हटाओ_channel_attr_group - हटाओ the channel's attribute group
  */
-void vmbus_remove_channel_attr_group(struct vmbus_channel *channel)
-{
-	sysfs_remove_group(&channel->kobj, &vmbus_chan_group);
-}
+व्योम vmbus_हटाओ_channel_attr_group(काष्ठा vmbus_channel *channel)
+अणु
+	sysfs_हटाओ_group(&channel->kobj, &vmbus_chan_group);
+पूर्ण
 
 /*
- * vmbus_device_create - Creates and registers a new child device
+ * vmbus_device_create - Creates and रेजिस्टरs a new child device
  * on the vmbus.
  */
-struct hv_device *vmbus_device_create(const guid_t *type,
-				      const guid_t *instance,
-				      struct vmbus_channel *channel)
-{
-	struct hv_device *child_device_obj;
+काष्ठा hv_device *vmbus_device_create(स्थिर guid_t *type,
+				      स्थिर guid_t *instance,
+				      काष्ठा vmbus_channel *channel)
+अणु
+	काष्ठा hv_device *child_device_obj;
 
-	child_device_obj = kzalloc(sizeof(struct hv_device), GFP_KERNEL);
-	if (!child_device_obj) {
+	child_device_obj = kzalloc(माप(काष्ठा hv_device), GFP_KERNEL);
+	अगर (!child_device_obj) अणु
 		pr_err("Unable to allocate device object for child device\n");
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
 	child_device_obj->channel = channel;
 	guid_copy(&child_device_obj->dev_type, type);
 	guid_copy(&child_device_obj->dev_instance, instance);
-	child_device_obj->vendor_id = 0x1414; /* MSFT vendor ID */
+	child_device_obj->venकरोr_id = 0x1414; /* MSFT venकरोr ID */
 
-	return child_device_obj;
-}
+	वापस child_device_obj;
+पूर्ण
 
 /*
- * vmbus_device_register - Register the child device
+ * vmbus_device_रेजिस्टर - Register the child device
  */
-int vmbus_device_register(struct hv_device *child_device_obj)
-{
-	struct kobject *kobj = &child_device_obj->device.kobj;
-	int ret;
+पूर्णांक vmbus_device_रेजिस्टर(काष्ठा hv_device *child_device_obj)
+अणु
+	काष्ठा kobject *kobj = &child_device_obj->device.kobj;
+	पूर्णांक ret;
 
 	dev_set_name(&child_device_obj->device, "%pUl",
-		     &child_device_obj->channel->offermsg.offer.if_instance);
+		     &child_device_obj->channel->offermsg.offer.अगर_instance);
 
 	child_device_obj->device.bus = &hv_bus;
 	child_device_obj->device.parent = &hv_acpi_dev->dev;
@@ -2099,122 +2100,122 @@ int vmbus_device_register(struct hv_device *child_device_obj)
 	 * Register with the LDM. This will kick off the driver/device
 	 * binding...which will eventually call vmbus_match() and vmbus_probe()
 	 */
-	ret = device_register(&child_device_obj->device);
-	if (ret) {
+	ret = device_रेजिस्टर(&child_device_obj->device);
+	अगर (ret) अणु
 		pr_err("Unable to register child device\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	child_device_obj->channels_kset = kset_create_and_add("channels",
-							      NULL, kobj);
-	if (!child_device_obj->channels_kset) {
+							      शून्य, kobj);
+	अगर (!child_device_obj->channels_kset) अणु
 		ret = -ENOMEM;
-		goto err_dev_unregister;
-	}
+		जाओ err_dev_unरेजिस्टर;
+	पूर्ण
 
 	ret = vmbus_add_channel_kobj(child_device_obj,
 				     child_device_obj->channel);
-	if (ret) {
+	अगर (ret) अणु
 		pr_err("Unable to register primary channeln");
-		goto err_kset_unregister;
-	}
+		जाओ err_kset_unरेजिस्टर;
+	पूर्ण
 	hv_debug_add_dev_dir(child_device_obj);
 
-	return 0;
+	वापस 0;
 
-err_kset_unregister:
-	kset_unregister(child_device_obj->channels_kset);
+err_kset_unरेजिस्टर:
+	kset_unरेजिस्टर(child_device_obj->channels_kset);
 
-err_dev_unregister:
-	device_unregister(&child_device_obj->device);
-	return ret;
-}
+err_dev_unरेजिस्टर:
+	device_unरेजिस्टर(&child_device_obj->device);
+	वापस ret;
+पूर्ण
 
 /*
- * vmbus_device_unregister - Remove the specified child device
+ * vmbus_device_unरेजिस्टर - Remove the specअगरied child device
  * from the vmbus.
  */
-void vmbus_device_unregister(struct hv_device *device_obj)
-{
+व्योम vmbus_device_unरेजिस्टर(काष्ठा hv_device *device_obj)
+अणु
 	pr_debug("child device %s unregistered\n",
 		dev_name(&device_obj->device));
 
-	kset_unregister(device_obj->channels_kset);
+	kset_unरेजिस्टर(device_obj->channels_kset);
 
 	/*
-	 * Kick off the process of unregistering the device.
-	 * This will call vmbus_remove() and eventually vmbus_device_release()
+	 * Kick off the process of unरेजिस्टरing the device.
+	 * This will call vmbus_हटाओ() and eventually vmbus_device_release()
 	 */
-	device_unregister(&device_obj->device);
-}
+	device_unरेजिस्टर(&device_obj->device);
+पूर्ण
 
 
 /*
- * VMBUS is an acpi enumerated device. Get the information we
+ * VMBUS is an acpi क्रमागतerated device. Get the inक्रमmation we
  * need from DSDT.
  */
-#define VTPM_BASE_ADDRESS 0xfed40000
-static acpi_status vmbus_walk_resources(struct acpi_resource *res, void *ctx)
-{
-	resource_size_t start = 0;
-	resource_size_t end = 0;
-	struct resource *new_res;
-	struct resource **old_res = &hyperv_mmio;
-	struct resource **prev_res = NULL;
-	struct resource r;
+#घोषणा VTPM_BASE_ADDRESS 0xfed40000
+अटल acpi_status vmbus_walk_resources(काष्ठा acpi_resource *res, व्योम *ctx)
+अणु
+	resource_माप_प्रकार start = 0;
+	resource_माप_प्रकार end = 0;
+	काष्ठा resource *new_res;
+	काष्ठा resource **old_res = &hyperv_mmio;
+	काष्ठा resource **prev_res = शून्य;
+	काष्ठा resource r;
 
-	switch (res->type) {
+	चयन (res->type) अणु
 
 	/*
-	 * "Address" descriptors are for bus windows. Ignore
-	 * "memory" descriptors, which are for registers on
+	 * "Address" descriptors are क्रम bus winकरोws. Ignore
+	 * "memory" descriptors, which are क्रम रेजिस्टरs on
 	 * devices.
 	 */
-	case ACPI_RESOURCE_TYPE_ADDRESS32:
+	हाल ACPI_RESOURCE_TYPE_ADDRESS32:
 		start = res->data.address32.address.minimum;
 		end = res->data.address32.address.maximum;
-		break;
+		अवरोध;
 
-	case ACPI_RESOURCE_TYPE_ADDRESS64:
+	हाल ACPI_RESOURCE_TYPE_ADDRESS64:
 		start = res->data.address64.address.minimum;
 		end = res->data.address64.address.maximum;
-		break;
+		अवरोध;
 
 	/*
-	 * The IRQ information is needed only on ARM64, which Hyper-V
-	 * sets up in the extended format. IRQ information is present
-	 * on x86/x64 in the non-extended format but it is not used by
-	 * Linux. So don't bother checking for the non-extended format.
+	 * The IRQ inक्रमmation is needed only on ARM64, which Hyper-V
+	 * sets up in the extended क्रमmat. IRQ inक्रमmation is present
+	 * on x86/x64 in the non-extended क्रमmat but it is not used by
+	 * Linux. So करोn't bother checking क्रम the non-extended क्रमmat.
 	 */
-	case ACPI_RESOURCE_TYPE_EXTENDED_IRQ:
-		if (!acpi_dev_resource_interrupt(res, 0, &r)) {
+	हाल ACPI_RESOURCE_TYPE_EXTENDED_IRQ:
+		अगर (!acpi_dev_resource_पूर्णांकerrupt(res, 0, &r)) अणु
 			pr_err("Unable to parse Hyper-V ACPI interrupt\n");
-			return AE_ERROR;
-		}
-		/* ARM64 INTID for VMbus */
-		vmbus_interrupt = res->data.extended_irq.interrupts[0];
+			वापस AE_ERROR;
+		पूर्ण
+		/* ARM64 INTID क्रम VMbus */
+		vmbus_पूर्णांकerrupt = res->data.extended_irq.पूर्णांकerrupts[0];
 		/* Linux IRQ number */
 		vmbus_irq = r.start;
-		return AE_OK;
+		वापस AE_OK;
 
-	default:
+	शेष:
 		/* Unused resource type */
-		return AE_OK;
+		वापस AE_OK;
 
-	}
+	पूर्ण
 	/*
 	 * Ignore ranges that are below 1MB, as they're not
 	 * necessary or useful here.
 	 */
-	if (end < 0x100000)
-		return AE_OK;
+	अगर (end < 0x100000)
+		वापस AE_OK;
 
-	new_res = kzalloc(sizeof(*new_res), GFP_ATOMIC);
-	if (!new_res)
-		return AE_NO_MEMORY;
+	new_res = kzalloc(माप(*new_res), GFP_ATOMIC);
+	अगर (!new_res)
+		वापस AE_NO_MEMORY;
 
-	/* If this range overlaps the virtual TPM, truncate it. */
-	if (end > VTPM_BASE_ADDRESS && start < VTPM_BASE_ADDRESS)
+	/* If this range overlaps the भव TPM, truncate it. */
+	अगर (end > VTPM_BASE_ADDRESS && start < VTPM_BASE_ADDRESS)
 		end = VTPM_BASE_ADDRESS;
 
 	new_res->name = "hyperv mmio";
@@ -2225,90 +2226,90 @@ static acpi_status vmbus_walk_resources(struct acpi_resource *res, void *ctx)
 	/*
 	 * If two ranges are adjacent, merge them.
 	 */
-	do {
-		if (!*old_res) {
+	करो अणु
+		अगर (!*old_res) अणु
 			*old_res = new_res;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		if (((*old_res)->end + 1) == new_res->start) {
+		अगर (((*old_res)->end + 1) == new_res->start) अणु
 			(*old_res)->end = new_res->end;
-			kfree(new_res);
-			break;
-		}
+			kमुक्त(new_res);
+			अवरोध;
+		पूर्ण
 
-		if ((*old_res)->start == new_res->end + 1) {
+		अगर ((*old_res)->start == new_res->end + 1) अणु
 			(*old_res)->start = new_res->start;
-			kfree(new_res);
-			break;
-		}
+			kमुक्त(new_res);
+			अवरोध;
+		पूर्ण
 
-		if ((*old_res)->start > new_res->end) {
+		अगर ((*old_res)->start > new_res->end) अणु
 			new_res->sibling = *old_res;
-			if (prev_res)
+			अगर (prev_res)
 				(*prev_res)->sibling = new_res;
 			*old_res = new_res;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		prev_res = old_res;
 		old_res = &(*old_res)->sibling;
 
-	} while (1);
+	पूर्ण जबतक (1);
 
-	return AE_OK;
-}
+	वापस AE_OK;
+पूर्ण
 
-static int vmbus_acpi_remove(struct acpi_device *device)
-{
-	struct resource *cur_res;
-	struct resource *next_res;
+अटल पूर्णांक vmbus_acpi_हटाओ(काष्ठा acpi_device *device)
+अणु
+	काष्ठा resource *cur_res;
+	काष्ठा resource *next_res;
 
-	if (hyperv_mmio) {
-		if (fb_mmio) {
+	अगर (hyperv_mmio) अणु
+		अगर (fb_mmio) अणु
 			__release_region(hyperv_mmio, fb_mmio->start,
 					 resource_size(fb_mmio));
-			fb_mmio = NULL;
-		}
+			fb_mmio = शून्य;
+		पूर्ण
 
-		for (cur_res = hyperv_mmio; cur_res; cur_res = next_res) {
+		क्रम (cur_res = hyperv_mmio; cur_res; cur_res = next_res) अणु
 			next_res = cur_res->sibling;
-			kfree(cur_res);
-		}
-	}
+			kमुक्त(cur_res);
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void vmbus_reserve_fb(void)
-{
-	int size;
+अटल व्योम vmbus_reserve_fb(व्योम)
+अणु
+	पूर्णांक size;
 	/*
-	 * Make a claim for the frame buffer in the resource tree under the
+	 * Make a claim क्रम the frame buffer in the resource tree under the
 	 * first node, which will be the one below 4GB.  The length seems to
 	 * be underreported, particularly in a Generation 1 VM.  So start out
 	 * reserving a larger area and make it smaller until it succeeds.
 	 */
 
-	if (screen_info.lfb_base) {
-		if (efi_enabled(EFI_BOOT))
+	अगर (screen_info.lfb_base) अणु
+		अगर (efi_enabled(EFI_BOOT))
 			size = max_t(__u32, screen_info.lfb_size, 0x800000);
-		else
+		अन्यथा
 			size = max_t(__u32, screen_info.lfb_size, 0x4000000);
 
-		for (; !fb_mmio && (size >= 0x100000); size >>= 1) {
+		क्रम (; !fb_mmio && (size >= 0x100000); size >>= 1) अणु
 			fb_mmio = __request_region(hyperv_mmio,
 						   screen_info.lfb_base, size,
 						   fb_mmio_name, 0);
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
 /**
  * vmbus_allocate_mmio() - Pick a memory-mapped I/O range.
- * @new:		If successful, supplied a pointer to the
+ * @new:		If successful, supplied a poपूर्णांकer to the
  *			allocated MMIO space.
- * @device_obj:		Identifies the caller
+ * @device_obj:		Identअगरies the caller
  * @min:		Minimum guest physical address of the
  *			allocation
  * @max:		Maximum guest physical address
@@ -2320,22 +2321,22 @@ static void vmbus_reserve_fb(void)
  * This function walks the resources granted to VMBus by the
  * _CRS object in the ACPI namespace underneath the parent
  * "bridge" whether that's a root PCI bus in the Generation 1
- * case or a Module Device in the Generation 2 case.  It then
+ * हाल or a Module Device in the Generation 2 हाल.  It then
  * attempts to allocate from the global MMIO pool in a way that
- * matches the constraints supplied in these parameters and by
+ * matches the स्थिरraपूर्णांकs supplied in these parameters and by
  * that _CRS.
  *
- * Return: 0 on success, -errno on failure
+ * Return: 0 on success, -त्रुटि_सं on failure
  */
-int vmbus_allocate_mmio(struct resource **new, struct hv_device *device_obj,
-			resource_size_t min, resource_size_t max,
-			resource_size_t size, resource_size_t align,
+पूर्णांक vmbus_allocate_mmio(काष्ठा resource **new, काष्ठा hv_device *device_obj,
+			resource_माप_प्रकार min, resource_माप_प्रकार max,
+			resource_माप_प्रकार size, resource_माप_प्रकार align,
 			bool fb_overlap_ok)
-{
-	struct resource *iter, *shadow;
-	resource_size_t range_min, range_max, start;
-	const char *dev_n = dev_name(&device_obj->device);
-	int retval;
+अणु
+	काष्ठा resource *iter, *shaकरोw;
+	resource_माप_प्रकार range_min, range_max, start;
+	स्थिर अक्षर *dev_n = dev_name(&device_obj->device);
+	पूर्णांक retval;
 
 	retval = -ENXIO;
 	mutex_lock(&hyperv_mmio_lock);
@@ -2343,135 +2344,135 @@ int vmbus_allocate_mmio(struct resource **new, struct hv_device *device_obj,
 	/*
 	 * If overlaps with frame buffers are allowed, then first attempt to
 	 * make the allocation from within the reserved region.  Because it
-	 * is already reserved, no shadow allocation is necessary.
+	 * is alपढ़ोy reserved, no shaकरोw allocation is necessary.
 	 */
-	if (fb_overlap_ok && fb_mmio && !(min > fb_mmio->end) &&
-	    !(max < fb_mmio->start)) {
+	अगर (fb_overlap_ok && fb_mmio && !(min > fb_mmio->end) &&
+	    !(max < fb_mmio->start)) अणु
 
 		range_min = fb_mmio->start;
 		range_max = fb_mmio->end;
 		start = (range_min + align - 1) & ~(align - 1);
-		for (; start + size - 1 <= range_max; start += align) {
+		क्रम (; start + size - 1 <= range_max; start += align) अणु
 			*new = request_mem_region_exclusive(start, size, dev_n);
-			if (*new) {
+			अगर (*new) अणु
 				retval = 0;
-				goto exit;
-			}
-		}
-	}
+				जाओ निकास;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	for (iter = hyperv_mmio; iter; iter = iter->sibling) {
-		if ((iter->start >= max) || (iter->end <= min))
-			continue;
+	क्रम (iter = hyperv_mmio; iter; iter = iter->sibling) अणु
+		अगर ((iter->start >= max) || (iter->end <= min))
+			जारी;
 
 		range_min = iter->start;
 		range_max = iter->end;
 		start = (range_min + align - 1) & ~(align - 1);
-		for (; start + size - 1 <= range_max; start += align) {
-			shadow = __request_region(iter, start, size, NULL,
+		क्रम (; start + size - 1 <= range_max; start += align) अणु
+			shaकरोw = __request_region(iter, start, size, शून्य,
 						  IORESOURCE_BUSY);
-			if (!shadow)
-				continue;
+			अगर (!shaकरोw)
+				जारी;
 
 			*new = request_mem_region_exclusive(start, size, dev_n);
-			if (*new) {
-				shadow->name = (char *)*new;
+			अगर (*new) अणु
+				shaकरोw->name = (अक्षर *)*new;
 				retval = 0;
-				goto exit;
-			}
+				जाओ निकास;
+			पूर्ण
 
 			__release_region(iter, start, size);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-exit:
+निकास:
 	mutex_unlock(&hyperv_mmio_lock);
-	return retval;
-}
+	वापस retval;
+पूर्ण
 EXPORT_SYMBOL_GPL(vmbus_allocate_mmio);
 
 /**
- * vmbus_free_mmio() - Free a memory-mapped I/O range.
+ * vmbus_मुक्त_mmio() - Free a memory-mapped I/O range.
  * @start:		Base address of region to release.
  * @size:		Size of the range to be allocated
  *
  * This function releases anything requested by
  * vmbus_mmio_allocate().
  */
-void vmbus_free_mmio(resource_size_t start, resource_size_t size)
-{
-	struct resource *iter;
+व्योम vmbus_मुक्त_mmio(resource_माप_प्रकार start, resource_माप_प्रकार size)
+अणु
+	काष्ठा resource *iter;
 
 	mutex_lock(&hyperv_mmio_lock);
-	for (iter = hyperv_mmio; iter; iter = iter->sibling) {
-		if ((iter->start >= start + size) || (iter->end <= start))
-			continue;
+	क्रम (iter = hyperv_mmio; iter; iter = iter->sibling) अणु
+		अगर ((iter->start >= start + size) || (iter->end <= start))
+			जारी;
 
 		__release_region(iter, start, size);
-	}
+	पूर्ण
 	release_mem_region(start, size);
 	mutex_unlock(&hyperv_mmio_lock);
 
-}
-EXPORT_SYMBOL_GPL(vmbus_free_mmio);
+पूर्ण
+EXPORT_SYMBOL_GPL(vmbus_मुक्त_mmio);
 
-static int vmbus_acpi_add(struct acpi_device *device)
-{
+अटल पूर्णांक vmbus_acpi_add(काष्ठा acpi_device *device)
+अणु
 	acpi_status result;
-	int ret_val = -ENODEV;
-	struct acpi_device *ancestor;
+	पूर्णांक ret_val = -ENODEV;
+	काष्ठा acpi_device *ancestor;
 
 	hv_acpi_dev = device;
 
 	result = acpi_walk_resources(device->handle, METHOD_NAME__CRS,
-					vmbus_walk_resources, NULL);
+					vmbus_walk_resources, शून्य);
 
-	if (ACPI_FAILURE(result))
-		goto acpi_walk_err;
+	अगर (ACPI_FAILURE(result))
+		जाओ acpi_walk_err;
 	/*
 	 * Some ancestor of the vmbus acpi device (Gen1 or Gen2
 	 * firmware) is the VMOD that has the mmio ranges. Get that.
 	 */
-	for (ancestor = device->parent; ancestor; ancestor = ancestor->parent) {
+	क्रम (ancestor = device->parent; ancestor; ancestor = ancestor->parent) अणु
 		result = acpi_walk_resources(ancestor->handle, METHOD_NAME__CRS,
-					     vmbus_walk_resources, NULL);
+					     vmbus_walk_resources, शून्य);
 
-		if (ACPI_FAILURE(result))
-			continue;
-		if (hyperv_mmio) {
+		अगर (ACPI_FAILURE(result))
+			जारी;
+		अगर (hyperv_mmio) अणु
 			vmbus_reserve_fb();
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 	ret_val = 0;
 
 acpi_walk_err:
 	complete(&probe_event);
-	if (ret_val)
-		vmbus_acpi_remove(device);
-	return ret_val;
-}
+	अगर (ret_val)
+		vmbus_acpi_हटाओ(device);
+	वापस ret_val;
+पूर्ण
 
-#ifdef CONFIG_PM_SLEEP
-static int vmbus_bus_suspend(struct device *dev)
-{
-	struct vmbus_channel *channel, *sc;
+#अगर_घोषित CONFIG_PM_SLEEP
+अटल पूर्णांक vmbus_bus_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा vmbus_channel *channel, *sc;
 
-	while (atomic_read(&vmbus_connection.offer_in_progress) != 0) {
+	जबतक (atomic_पढ़ो(&vmbus_connection.offer_in_progress) != 0) अणु
 		/*
-		 * We wait here until the completion of any channel
+		 * We रुको here until the completion of any channel
 		 * offers that are currently in progress.
 		 */
 		usleep_range(1000, 2000);
-	}
+	पूर्ण
 
 	mutex_lock(&vmbus_connection.channel_mutex);
-	list_for_each_entry(channel, &vmbus_connection.chn_list, listentry) {
-		if (!is_hvsock_channel(channel))
-			continue;
+	list_क्रम_each_entry(channel, &vmbus_connection.chn_list, listentry) अणु
+		अगर (!is_hvsock_channel(channel))
+			जारी;
 
-		vmbus_force_channel_rescinded(channel);
-	}
+		vmbus_क्रमce_channel_rescinded(channel);
+	पूर्ण
 	mutex_unlock(&vmbus_connection.channel_mutex);
 
 	/*
@@ -2481,317 +2482,317 @@ static int vmbus_bus_suspend(struct device *dev)
 	 * in the resume path. hv_sock channels should also be destroyed, but
 	 * a hv_sock channel of an established hv_sock connection can not be
 	 * really destroyed since it may still be referenced by the userspace
-	 * application, so we just force the hv_sock channel to be rescinded
-	 * by vmbus_force_channel_rescinded(), and the userspace application
+	 * application, so we just क्रमce the hv_sock channel to be rescinded
+	 * by vmbus_क्रमce_channel_rescinded(), and the userspace application
 	 * will thoroughly destroy the channel after hibernation.
 	 *
-	 * Note: the counter nr_chan_close_on_suspend may never go above 0 if
+	 * Note: the counter nr_chan_बंद_on_suspend may never go above 0 अगर
 	 * the VM has no sub-channel and hv_sock channel, e.g. a 1-vCPU VM.
 	 */
-	if (atomic_read(&vmbus_connection.nr_chan_close_on_suspend) > 0)
-		wait_for_completion(&vmbus_connection.ready_for_suspend_event);
+	अगर (atomic_पढ़ो(&vmbus_connection.nr_chan_बंद_on_suspend) > 0)
+		रुको_क्रम_completion(&vmbus_connection.पढ़ोy_क्रम_suspend_event);
 
-	if (atomic_read(&vmbus_connection.nr_chan_fixup_on_resume) != 0) {
+	अगर (atomic_पढ़ो(&vmbus_connection.nr_chan_fixup_on_resume) != 0) अणु
 		pr_err("Can not suspend due to a previous failed resuming\n");
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 
 	mutex_lock(&vmbus_connection.channel_mutex);
 
-	list_for_each_entry(channel, &vmbus_connection.chn_list, listentry) {
+	list_क्रम_each_entry(channel, &vmbus_connection.chn_list, listentry) अणु
 		/*
 		 * Remove the channel from the array of channels and invalidate
 		 * the channel's relid.  Upon resume, vmbus_onoffer() will fix
-		 * up the relid (and other fields, if necessary) and add the
+		 * up the relid (and other fields, अगर necessary) and add the
 		 * channel back to the array.
 		 */
 		vmbus_channel_unmap_relid(channel);
 		channel->offermsg.child_relid = INVALID_RELID;
 
-		if (is_hvsock_channel(channel)) {
-			if (!channel->rescind) {
+		अगर (is_hvsock_channel(channel)) अणु
+			अगर (!channel->rescind) अणु
 				pr_err("hv_sock channel not rescinded!\n");
 				WARN_ON_ONCE(1);
-			}
-			continue;
-		}
+			पूर्ण
+			जारी;
+		पूर्ण
 
-		list_for_each_entry(sc, &channel->sc_list, sc_list) {
+		list_क्रम_each_entry(sc, &channel->sc_list, sc_list) अणु
 			pr_err("Sub-channel not deleted!\n");
 			WARN_ON_ONCE(1);
-		}
+		पूर्ण
 
 		atomic_inc(&vmbus_connection.nr_chan_fixup_on_resume);
-	}
+	पूर्ण
 
 	mutex_unlock(&vmbus_connection.channel_mutex);
 
 	vmbus_initiate_unload(false);
 
-	/* Reset the event for the next resume. */
-	reinit_completion(&vmbus_connection.ready_for_resume_event);
+	/* Reset the event क्रम the next resume. */
+	reinit_completion(&vmbus_connection.पढ़ोy_क्रम_resume_event);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int vmbus_bus_resume(struct device *dev)
-{
-	struct vmbus_channel_msginfo *msginfo;
-	size_t msgsize;
-	int ret;
+अटल पूर्णांक vmbus_bus_resume(काष्ठा device *dev)
+अणु
+	काष्ठा vmbus_channel_msginfo *msginfo;
+	माप_प्रकार msgsize;
+	पूर्णांक ret;
 
 	/*
-	 * We only use the 'vmbus_proto_version', which was in use before
+	 * We only use the 'vmbus_proto_version', which was in use beक्रमe
 	 * hibernation, to re-negotiate with the host.
 	 */
-	if (!vmbus_proto_version) {
+	अगर (!vmbus_proto_version) अणु
 		pr_err("Invalid proto version = 0x%x\n", vmbus_proto_version);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	msgsize = sizeof(*msginfo) +
-		  sizeof(struct vmbus_channel_initiate_contact);
+	msgsize = माप(*msginfo) +
+		  माप(काष्ठा vmbus_channel_initiate_contact);
 
 	msginfo = kzalloc(msgsize, GFP_KERNEL);
 
-	if (msginfo == NULL)
-		return -ENOMEM;
+	अगर (msginfo == शून्य)
+		वापस -ENOMEM;
 
 	ret = vmbus_negotiate_version(msginfo, vmbus_proto_version);
 
-	kfree(msginfo);
+	kमुक्त(msginfo);
 
-	if (ret != 0)
-		return ret;
+	अगर (ret != 0)
+		वापस ret;
 
-	WARN_ON(atomic_read(&vmbus_connection.nr_chan_fixup_on_resume) == 0);
+	WARN_ON(atomic_पढ़ो(&vmbus_connection.nr_chan_fixup_on_resume) == 0);
 
 	vmbus_request_offers();
 
-	if (wait_for_completion_timeout(
-		&vmbus_connection.ready_for_resume_event, 10 * HZ) == 0)
+	अगर (रुको_क्रम_completion_समयout(
+		&vmbus_connection.पढ़ोy_क्रम_resume_event, 10 * HZ) == 0)
 		pr_err("Some vmbus device is missing after suspending?\n");
 
-	/* Reset the event for the next suspend. */
-	reinit_completion(&vmbus_connection.ready_for_suspend_event);
+	/* Reset the event क्रम the next suspend. */
+	reinit_completion(&vmbus_connection.पढ़ोy_क्रम_suspend_event);
 
-	return 0;
-}
-#else
-#define vmbus_bus_suspend NULL
-#define vmbus_bus_resume NULL
-#endif /* CONFIG_PM_SLEEP */
+	वापस 0;
+पूर्ण
+#अन्यथा
+#घोषणा vmbus_bus_suspend शून्य
+#घोषणा vmbus_bus_resume शून्य
+#पूर्ण_अगर /* CONFIG_PM_SLEEP */
 
-static const struct acpi_device_id vmbus_acpi_device_ids[] = {
-	{"VMBUS", 0},
-	{"VMBus", 0},
-	{"", 0},
-};
+अटल स्थिर काष्ठा acpi_device_id vmbus_acpi_device_ids[] = अणु
+	अणु"VMBUS", 0पूर्ण,
+	अणु"VMBus", 0पूर्ण,
+	अणु"", 0पूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(acpi, vmbus_acpi_device_ids);
 
 /*
  * Note: we must use the "no_irq" ops, otherwise hibernation can not work with
  * PCI device assignment, because "pci_dev_pm_ops" uses the "noirq" ops: in
- * the resume path, the pci "noirq" restore op runs before "non-noirq" op (see
+ * the resume path, the pci "noirq" restore op runs beक्रमe "non-noirq" op (see
  * resume_target_kernel() -> dpm_resume_start(), and hibernation_restore() ->
  * dpm_resume_end()). This means vmbus_bus_resume() and the pci-hyperv's
  * resume callback must also run via the "noirq" ops.
  *
- * Set suspend_noirq/resume_noirq to NULL for Suspend-to-Idle: see the comment
- * earlier in this file before vmbus_pm.
+ * Set suspend_noirq/resume_noirq to शून्य क्रम Suspend-to-Idle: see the comment
+ * earlier in this file beक्रमe vmbus_pm.
  */
 
-static const struct dev_pm_ops vmbus_bus_pm = {
-	.suspend_noirq	= NULL,
-	.resume_noirq	= NULL,
-	.freeze_noirq	= vmbus_bus_suspend,
+अटल स्थिर काष्ठा dev_pm_ops vmbus_bus_pm = अणु
+	.suspend_noirq	= शून्य,
+	.resume_noirq	= शून्य,
+	.मुक्तze_noirq	= vmbus_bus_suspend,
 	.thaw_noirq	= vmbus_bus_resume,
-	.poweroff_noirq	= vmbus_bus_suspend,
+	.घातeroff_noirq	= vmbus_bus_suspend,
 	.restore_noirq	= vmbus_bus_resume
-};
+पूर्ण;
 
-static struct acpi_driver vmbus_acpi_driver = {
+अटल काष्ठा acpi_driver vmbus_acpi_driver = अणु
 	.name = "vmbus",
 	.ids = vmbus_acpi_device_ids,
-	.ops = {
+	.ops = अणु
 		.add = vmbus_acpi_add,
-		.remove = vmbus_acpi_remove,
-	},
+		.हटाओ = vmbus_acpi_हटाओ,
+	पूर्ण,
 	.drv.pm = &vmbus_bus_pm,
-};
+पूर्ण;
 
-static void hv_kexec_handler(void)
-{
-	hv_stimer_global_cleanup();
+अटल व्योम hv_kexec_handler(व्योम)
+अणु
+	hv_sसमयr_global_cleanup();
 	vmbus_initiate_unload(false);
-	/* Make sure conn_state is set as hv_synic_cleanup checks for it */
+	/* Make sure conn_state is set as hv_synic_cleanup checks क्रम it */
 	mb();
-	cpuhp_remove_state(hyperv_cpuhp_online);
-};
+	cpuhp_हटाओ_state(hyperv_cpuhp_online);
+पूर्ण;
 
-static void hv_crash_handler(struct pt_regs *regs)
-{
-	int cpu;
+अटल व्योम hv_crash_handler(काष्ठा pt_regs *regs)
+अणु
+	पूर्णांक cpu;
 
 	vmbus_initiate_unload(true);
 	/*
-	 * In crash handler we can't schedule synic cleanup for all CPUs,
-	 * doing the cleanup for current CPU only. This should be sufficient
-	 * for kdump.
+	 * In crash handler we can't schedule synic cleanup क्रम all CPUs,
+	 * करोing the cleanup क्रम current CPU only. This should be sufficient
+	 * क्रम kdump.
 	 */
 	cpu = smp_processor_id();
-	hv_stimer_cleanup(cpu);
+	hv_sसमयr_cleanup(cpu);
 	hv_synic_disable_regs(cpu);
-};
+पूर्ण;
 
-static int hv_synic_suspend(void)
-{
+अटल पूर्णांक hv_synic_suspend(व्योम)
+अणु
 	/*
 	 * When we reach here, all the non-boot CPUs have been offlined.
-	 * If we're in a legacy configuration where stimer Direct Mode is
-	 * not enabled, the stimers on the non-boot CPUs have been unbound
-	 * in hv_synic_cleanup() -> hv_stimer_legacy_cleanup() ->
-	 * hv_stimer_cleanup() -> clockevents_unbind_device().
+	 * If we're in a legacy configuration where sसमयr Direct Mode is
+	 * not enabled, the sसमयrs on the non-boot CPUs have been unbound
+	 * in hv_synic_cleanup() -> hv_sसमयr_legacy_cleanup() ->
+	 * hv_sसमयr_cleanup() -> घड़ीevents_unbind_device().
 	 *
-	 * hv_synic_suspend() only runs on CPU0 with interrupts disabled.
-	 * Here we do not call hv_stimer_legacy_cleanup() on CPU0 because:
-	 * 1) it's unnecessary as interrupts remain disabled between
+	 * hv_synic_suspend() only runs on CPU0 with पूर्णांकerrupts disabled.
+	 * Here we करो not call hv_sसमयr_legacy_cleanup() on CPU0 because:
+	 * 1) it's unnecessary as पूर्णांकerrupts reमुख्य disabled between
 	 * syscore_suspend() and syscore_resume(): see create_image() and
 	 * resume_target_kernel()
-	 * 2) the stimer on CPU0 is automatically disabled later by
-	 * syscore_suspend() -> timekeeping_suspend() -> tick_suspend() -> ...
-	 * -> clockevents_shutdown() -> ... -> hv_ce_shutdown()
-	 * 3) a warning would be triggered if we call
-	 * clockevents_unbind_device(), which may sleep, in an
-	 * interrupts-disabled context.
+	 * 2) the sसमयr on CPU0 is स्वतःmatically disabled later by
+	 * syscore_suspend() -> समयkeeping_suspend() -> tick_suspend() -> ...
+	 * -> घड़ीevents_shutकरोwn() -> ... -> hv_ce_shutकरोwn()
+	 * 3) a warning would be triggered अगर we call
+	 * घड़ीevents_unbind_device(), which may sleep, in an
+	 * पूर्णांकerrupts-disabled context.
 	 */
 
 	hv_synic_disable_regs(0);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void hv_synic_resume(void)
-{
+अटल व्योम hv_synic_resume(व्योम)
+अणु
 	hv_synic_enable_regs(0);
 
 	/*
-	 * Note: we don't need to call hv_stimer_init(0), because the timer
-	 * on CPU0 is not unbound in hv_synic_suspend(), and the timer is
-	 * automatically re-enabled in timekeeping_resume().
+	 * Note: we करोn't need to call hv_sसमयr_init(0), because the समयr
+	 * on CPU0 is not unbound in hv_synic_suspend(), and the समयr is
+	 * स्वतःmatically re-enabled in समयkeeping_resume().
 	 */
-}
+पूर्ण
 
 /* The callbacks run only on CPU0, with irqs_disabled. */
-static struct syscore_ops hv_synic_syscore_ops = {
+अटल काष्ठा syscore_ops hv_synic_syscore_ops = अणु
 	.suspend = hv_synic_suspend,
 	.resume = hv_synic_resume,
-};
+पूर्ण;
 
-static int __init hv_acpi_init(void)
-{
-	int ret, t;
+अटल पूर्णांक __init hv_acpi_init(व्योम)
+अणु
+	पूर्णांक ret, t;
 
-	if (!hv_is_hyperv_initialized())
-		return -ENODEV;
+	अगर (!hv_is_hyperv_initialized())
+		वापस -ENODEV;
 
-	if (hv_root_partition)
-		return 0;
+	अगर (hv_root_partition)
+		वापस 0;
 
 	init_completion(&probe_event);
 
 	/*
 	 * Get ACPI resources first.
 	 */
-	ret = acpi_bus_register_driver(&vmbus_acpi_driver);
+	ret = acpi_bus_रेजिस्टर_driver(&vmbus_acpi_driver);
 
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	t = wait_for_completion_timeout(&probe_event, 5*HZ);
-	if (t == 0) {
+	t = रुको_क्रम_completion_समयout(&probe_event, 5*HZ);
+	अगर (t == 0) अणु
 		ret = -ETIMEDOUT;
-		goto cleanup;
-	}
+		जाओ cleanup;
+	पूर्ण
 
 	/*
 	 * If we're on an architecture with a hardcoded hypervisor
-	 * vector (i.e. x86/x64), override the VMbus interrupt found
+	 * vector (i.e. x86/x64), override the VMbus पूर्णांकerrupt found
 	 * in the ACPI tables. Ensure vmbus_irq is not set since the
-	 * normal Linux IRQ mechanism is not used in this case.
+	 * normal Linux IRQ mechanism is not used in this हाल.
 	 */
-#ifdef HYPERVISOR_CALLBACK_VECTOR
-	vmbus_interrupt = HYPERVISOR_CALLBACK_VECTOR;
+#अगर_घोषित HYPERVISOR_CALLBACK_VECTOR
+	vmbus_पूर्णांकerrupt = HYPERVISOR_CALLBACK_VECTOR;
 	vmbus_irq = -1;
-#endif
+#पूर्ण_अगर
 
 	hv_debug_init();
 
 	ret = vmbus_bus_init();
-	if (ret)
-		goto cleanup;
+	अगर (ret)
+		जाओ cleanup;
 
 	hv_setup_kexec_handler(hv_kexec_handler);
 	hv_setup_crash_handler(hv_crash_handler);
 
-	register_syscore_ops(&hv_synic_syscore_ops);
+	रेजिस्टर_syscore_ops(&hv_synic_syscore_ops);
 
-	return 0;
+	वापस 0;
 
 cleanup:
-	acpi_bus_unregister_driver(&vmbus_acpi_driver);
-	hv_acpi_dev = NULL;
-	return ret;
-}
+	acpi_bus_unरेजिस्टर_driver(&vmbus_acpi_driver);
+	hv_acpi_dev = शून्य;
+	वापस ret;
+पूर्ण
 
-static void __exit vmbus_exit(void)
-{
-	int cpu;
+अटल व्योम __निकास vmbus_निकास(व्योम)
+अणु
+	पूर्णांक cpu;
 
-	unregister_syscore_ops(&hv_synic_syscore_ops);
+	unरेजिस्टर_syscore_ops(&hv_synic_syscore_ops);
 
-	hv_remove_kexec_handler();
-	hv_remove_crash_handler();
+	hv_हटाओ_kexec_handler();
+	hv_हटाओ_crash_handler();
 	vmbus_connection.conn_state = DISCONNECTED;
-	hv_stimer_global_cleanup();
+	hv_sसमयr_global_cleanup();
 	vmbus_disconnect();
-	if (vmbus_irq == -1) {
-		hv_remove_vmbus_handler();
-	} else {
-		free_percpu_irq(vmbus_irq, vmbus_evt);
-		free_percpu(vmbus_evt);
-	}
-	for_each_online_cpu(cpu) {
-		struct hv_per_cpu_context *hv_cpu
+	अगर (vmbus_irq == -1) अणु
+		hv_हटाओ_vmbus_handler();
+	पूर्ण अन्यथा अणु
+		मुक्त_percpu_irq(vmbus_irq, vmbus_evt);
+		मुक्त_percpu(vmbus_evt);
+	पूर्ण
+	क्रम_each_online_cpu(cpu) अणु
+		काष्ठा hv_per_cpu_context *hv_cpu
 			= per_cpu_ptr(hv_context.cpu_context, cpu);
 
-		tasklet_kill(&hv_cpu->msg_dpc);
-	}
+		tasklet_समाप्त(&hv_cpu->msg_dpc);
+	पूर्ण
 	hv_debug_rm_all_dir();
 
-	vmbus_free_channels();
-	kfree(vmbus_connection.channels);
+	vmbus_मुक्त_channels();
+	kमुक्त(vmbus_connection.channels);
 
-	if (ms_hyperv.misc_features & HV_FEATURE_GUEST_CRASH_MSR_AVAILABLE) {
-		kmsg_dump_unregister(&hv_kmsg_dumper);
-		unregister_die_notifier(&hyperv_die_block);
-		atomic_notifier_chain_unregister(&panic_notifier_list,
+	अगर (ms_hyperv.misc_features & HV_FEATURE_GUEST_CRASH_MSR_AVAILABLE) अणु
+		kmsg_dump_unरेजिस्टर(&hv_kmsg_dumper);
+		unरेजिस्टर_die_notअगरier(&hyperv_die_block);
+		atomic_notअगरier_chain_unरेजिस्टर(&panic_notअगरier_list,
 						 &hyperv_panic_block);
-	}
+	पूर्ण
 
-	free_page((unsigned long)hv_panic_page);
-	unregister_sysctl_table(hv_ctl_table_hdr);
-	hv_ctl_table_hdr = NULL;
-	bus_unregister(&hv_bus);
+	मुक्त_page((अचिन्हित दीर्घ)hv_panic_page);
+	unरेजिस्टर_sysctl_table(hv_ctl_table_hdr);
+	hv_ctl_table_hdr = शून्य;
+	bus_unरेजिस्टर(&hv_bus);
 
-	cpuhp_remove_state(hyperv_cpuhp_online);
-	hv_synic_free();
-	acpi_bus_unregister_driver(&vmbus_acpi_driver);
-}
+	cpuhp_हटाओ_state(hyperv_cpuhp_online);
+	hv_synic_मुक्त();
+	acpi_bus_unरेजिस्टर_driver(&vmbus_acpi_driver);
+पूर्ण
 
 
 MODULE_LICENSE("GPL");
 MODULE_DESCRIPTION("Microsoft Hyper-V VMBus Driver");
 
 subsys_initcall(hv_acpi_init);
-module_exit(vmbus_exit);
+module_निकास(vmbus_निकास);

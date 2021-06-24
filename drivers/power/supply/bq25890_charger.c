@@ -1,45 +1,46 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * TI BQ25890 charger driver
+ * TI BQ25890 अक्षरger driver
  *
  * Copyright (C) 2015 Intel Corporation
  */
 
-#include <linux/module.h>
-#include <linux/i2c.h>
-#include <linux/power_supply.h>
-#include <linux/regmap.h>
-#include <linux/types.h>
-#include <linux/gpio/consumer.h>
-#include <linux/interrupt.h>
-#include <linux/delay.h>
-#include <linux/usb/phy.h>
+#समावेश <linux/module.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/घातer_supply.h>
+#समावेश <linux/regmap.h>
+#समावेश <linux/types.h>
+#समावेश <linux/gpio/consumer.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/usb/phy.h>
 
-#include <linux/acpi.h>
-#include <linux/of.h>
+#समावेश <linux/acpi.h>
+#समावेश <linux/of.h>
 
-#define BQ25890_MANUFACTURER		"Texas Instruments"
-#define BQ25890_IRQ_PIN			"bq25890_irq"
+#घोषणा BQ25890_MANUFACTURER		"Texas Instruments"
+#घोषणा BQ25890_IRQ_PIN			"bq25890_irq"
 
-#define BQ25890_ID			3
-#define BQ25895_ID			7
-#define BQ25896_ID			0
+#घोषणा BQ25890_ID			3
+#घोषणा BQ25895_ID			7
+#घोषणा BQ25896_ID			0
 
-enum bq25890_chip_version {
+क्रमागत bq25890_chip_version अणु
 	BQ25890,
 	BQ25892,
 	BQ25895,
 	BQ25896,
-};
+पूर्ण;
 
-static const char *const bq25890_chip_name[] = {
+अटल स्थिर अक्षर *स्थिर bq25890_chip_name[] = अणु
 	"BQ25890",
 	"BQ25892",
 	"BQ25895",
 	"BQ25896",
-};
+पूर्ण;
 
-enum bq25890_fields {
+क्रमागत bq25890_fields अणु
 	F_EN_HIZ, F_EN_ILIM, F_IILIM,				     /* Reg00 */
 	F_BHOT, F_BCOLD, F_VINDPM_OFS,				     /* Reg01 */
 	F_CONV_START, F_CONV_RATE, F_BOOSTF, F_ICO_EN,
@@ -66,18 +67,18 @@ enum bq25890_fields {
 	F_VBUS_GD, F_VBUSV,					     /* Reg11 */
 	F_ICHGR,						     /* Reg12 */
 	F_VDPM_STAT, F_IDPM_STAT, F_IDPM_LIM,			     /* Reg13 */
-	F_REG_RST, F_ICO_OPTIMIZED, F_PN, F_TS_PROFILE, F_DEV_REV,   /* Reg14 */
+	F_REG_RST, F_ICO_OPTIMIZED, F_PN, F_TS_PROखाता, F_DEV_REV,   /* Reg14 */
 
 	F_MAX_FIELDS
-};
+पूर्ण;
 
-/* initial field values, converted to register values */
-struct bq25890_init_data {
-	u8 ichg;	/* charge current		*/
+/* initial field values, converted to रेजिस्टर values */
+काष्ठा bq25890_init_data अणु
+	u8 ichg;	/* अक्षरge current		*/
 	u8 vreg;	/* regulation voltage		*/
 	u8 iterm;	/* termination current		*/
-	u8 iprechg;	/* precharge current		*/
-	u8 sysvmin;	/* minimum system voltage limit */
+	u8 iprechg;	/* preअक्षरge current		*/
+	u8 sysvmin;	/* minimum प्रणाली voltage limit */
 	u8 boostv;	/* boost regulation voltage	*/
 	u8 boosti;	/* boost current limit		*/
 	u8 boostf;	/* boost frequency		*/
@@ -85,71 +86,71 @@ struct bq25890_init_data {
 	u8 treg;	/* thermal regulation threshold */
 	u8 rbatcomp;	/* IBAT sense resistor value    */
 	u8 vclamp;	/* IBAT compensation voltage limit */
-};
+पूर्ण;
 
-struct bq25890_state {
+काष्ठा bq25890_state अणु
 	u8 online;
 	u8 chrg_status;
 	u8 chrg_fault;
 	u8 vsys_status;
 	u8 boost_fault;
 	u8 bat_fault;
-};
+पूर्ण;
 
-struct bq25890_device {
-	struct i2c_client *client;
-	struct device *dev;
-	struct power_supply *charger;
+काष्ठा bq25890_device अणु
+	काष्ठा i2c_client *client;
+	काष्ठा device *dev;
+	काष्ठा घातer_supply *अक्षरger;
 
-	struct usb_phy *usb_phy;
-	struct notifier_block usb_nb;
-	struct work_struct usb_work;
-	unsigned long usb_event;
+	काष्ठा usb_phy *usb_phy;
+	काष्ठा notअगरier_block usb_nb;
+	काष्ठा work_काष्ठा usb_work;
+	अचिन्हित दीर्घ usb_event;
 
-	struct regmap *rmap;
-	struct regmap_field *rmap_fields[F_MAX_FIELDS];
+	काष्ठा regmap *rmap;
+	काष्ठा regmap_field *rmap_fields[F_MAX_FIELDS];
 
-	enum bq25890_chip_version chip_version;
-	struct bq25890_init_data init_data;
-	struct bq25890_state state;
+	क्रमागत bq25890_chip_version chip_version;
+	काष्ठा bq25890_init_data init_data;
+	काष्ठा bq25890_state state;
 
-	struct mutex lock; /* protect state data */
-};
+	काष्ठा mutex lock; /* protect state data */
+पूर्ण;
 
-static const struct regmap_range bq25890_readonly_reg_ranges[] = {
+अटल स्थिर काष्ठा regmap_range bq25890_पढ़ोonly_reg_ranges[] = अणु
 	regmap_reg_range(0x0b, 0x0c),
 	regmap_reg_range(0x0e, 0x13),
-};
+पूर्ण;
 
-static const struct regmap_access_table bq25890_writeable_regs = {
-	.no_ranges = bq25890_readonly_reg_ranges,
-	.n_no_ranges = ARRAY_SIZE(bq25890_readonly_reg_ranges),
-};
+अटल स्थिर काष्ठा regmap_access_table bq25890_ग_लिखोable_regs = अणु
+	.no_ranges = bq25890_पढ़ोonly_reg_ranges,
+	.n_no_ranges = ARRAY_SIZE(bq25890_पढ़ोonly_reg_ranges),
+पूर्ण;
 
-static const struct regmap_range bq25890_volatile_reg_ranges[] = {
+अटल स्थिर काष्ठा regmap_range bq25890_अस्थिर_reg_ranges[] = अणु
 	regmap_reg_range(0x00, 0x00),
 	regmap_reg_range(0x02, 0x02),
 	regmap_reg_range(0x09, 0x09),
 	regmap_reg_range(0x0b, 0x14),
-};
+पूर्ण;
 
-static const struct regmap_access_table bq25890_volatile_regs = {
-	.yes_ranges = bq25890_volatile_reg_ranges,
-	.n_yes_ranges = ARRAY_SIZE(bq25890_volatile_reg_ranges),
-};
+अटल स्थिर काष्ठा regmap_access_table bq25890_अस्थिर_regs = अणु
+	.yes_ranges = bq25890_अस्थिर_reg_ranges,
+	.n_yes_ranges = ARRAY_SIZE(bq25890_अस्थिर_reg_ranges),
+पूर्ण;
 
-static const struct regmap_config bq25890_regmap_config = {
+अटल स्थिर काष्ठा regmap_config bq25890_regmap_config = अणु
 	.reg_bits = 8,
 	.val_bits = 8,
 
-	.max_register = 0x14,
+	.max_रेजिस्टर = 0x14,
 	.cache_type = REGCACHE_RBTREE,
 
-	.wr_table = &bq25890_writeable_regs,
-	.volatile_table = &bq25890_volatile_regs,
-};
+	.wr_table = &bq25890_ग_लिखोable_regs,
+	.अस्थिर_table = &bq25890_अस्थिर_regs,
+पूर्ण;
 
-static const struct reg_field bq25890_reg_fields[] = {
+अटल स्थिर काष्ठा reg_field bq25890_reg_fields[] = अणु
 	/* REG00 */
 	[F_EN_HIZ]		= REG_FIELD(0x00, 7, 7),
 	[F_EN_ILIM]		= REG_FIELD(0x00, 6, 6),
@@ -243,16 +244,16 @@ static const struct reg_field bq25890_reg_fields[] = {
 	[F_REG_RST]		= REG_FIELD(0x14, 7, 7),
 	[F_ICO_OPTIMIZED]	= REG_FIELD(0x14, 6, 6),
 	[F_PN]			= REG_FIELD(0x14, 3, 5),
-	[F_TS_PROFILE]		= REG_FIELD(0x14, 2, 2),
+	[F_TS_PROखाता]		= REG_FIELD(0x14, 2, 2),
 	[F_DEV_REV]		= REG_FIELD(0x14, 0, 1)
-};
+पूर्ण;
 
 /*
  * Most of the val -> idx conversions can be computed, given the minimum,
  * maximum and the step between values. For the rest of conversions, we use
  * lookup tables.
  */
-enum bq25890_table_ids {
+क्रमागत bq25890_table_ids अणु
 	/* range tables */
 	TBL_ICHG,
 	TBL_ITERM,
@@ -266,439 +267,439 @@ enum bq25890_table_ids {
 	/* lookup tables */
 	TBL_TREG,
 	TBL_BOOSTI,
-};
+पूर्ण;
 
 /* Thermal Regulation Threshold lookup table, in degrees Celsius */
-static const u32 bq25890_treg_tbl[] = { 60, 80, 100, 120 };
+अटल स्थिर u32 bq25890_treg_tbl[] = अणु 60, 80, 100, 120 पूर्ण;
 
-#define BQ25890_TREG_TBL_SIZE		ARRAY_SIZE(bq25890_treg_tbl)
+#घोषणा BQ25890_TREG_TBL_SIZE		ARRAY_SIZE(bq25890_treg_tbl)
 
 /* Boost mode current limit lookup table, in uA */
-static const u32 bq25890_boosti_tbl[] = {
+अटल स्थिर u32 bq25890_boosti_tbl[] = अणु
 	500000, 700000, 1100000, 1300000, 1600000, 1800000, 2100000, 2400000
-};
+पूर्ण;
 
-#define BQ25890_BOOSTI_TBL_SIZE		ARRAY_SIZE(bq25890_boosti_tbl)
+#घोषणा BQ25890_BOOSTI_TBL_SIZE		ARRAY_SIZE(bq25890_boosti_tbl)
 
-struct bq25890_range {
+काष्ठा bq25890_range अणु
 	u32 min;
 	u32 max;
 	u32 step;
-};
+पूर्ण;
 
-struct bq25890_lookup {
-	const u32 *tbl;
+काष्ठा bq25890_lookup अणु
+	स्थिर u32 *tbl;
 	u32 size;
-};
+पूर्ण;
 
-static const union {
-	struct bq25890_range  rt;
-	struct bq25890_lookup lt;
-} bq25890_tables[] = {
+अटल स्थिर जोड़ अणु
+	काष्ठा bq25890_range  rt;
+	काष्ठा bq25890_lookup lt;
+पूर्ण bq25890_tables[] = अणु
 	/* range tables */
 	/* TODO: BQ25896 has max ICHG 3008 mA */
-	[TBL_ICHG] =	{ .rt = {0,	  5056000, 64000} },	 /* uA */
-	[TBL_ITERM] =	{ .rt = {64000,   1024000, 64000} },	 /* uA */
-	[TBL_IILIM] =   { .rt = {100000,  3250000, 50000} },	 /* uA */
-	[TBL_VREG] =	{ .rt = {3840000, 4608000, 16000} },	 /* uV */
-	[TBL_BOOSTV] =	{ .rt = {4550000, 5510000, 64000} },	 /* uV */
-	[TBL_SYSVMIN] = { .rt = {3000000, 3700000, 100000} },	 /* uV */
-	[TBL_VBATCOMP] ={ .rt = {0,        224000, 32000} },	 /* uV */
-	[TBL_RBATCOMP] ={ .rt = {0,        140000, 20000} },	 /* uOhm */
+	[TBL_ICHG] =	अणु .rt = अणु0,	  5056000, 64000पूर्ण पूर्ण,	 /* uA */
+	[TBL_ITERM] =	अणु .rt = अणु64000,   1024000, 64000पूर्ण पूर्ण,	 /* uA */
+	[TBL_IILIM] =   अणु .rt = अणु100000,  3250000, 50000पूर्ण पूर्ण,	 /* uA */
+	[TBL_VREG] =	अणु .rt = अणु3840000, 4608000, 16000पूर्ण पूर्ण,	 /* uV */
+	[TBL_BOOSTV] =	अणु .rt = अणु4550000, 5510000, 64000पूर्ण पूर्ण,	 /* uV */
+	[TBL_SYSVMIN] = अणु .rt = अणु3000000, 3700000, 100000पूर्ण पूर्ण,	 /* uV */
+	[TBL_VBATCOMP] =अणु .rt = अणु0,        224000, 32000पूर्ण पूर्ण,	 /* uV */
+	[TBL_RBATCOMP] =अणु .rt = अणु0,        140000, 20000पूर्ण पूर्ण,	 /* uOhm */
 
 	/* lookup tables */
-	[TBL_TREG] =	{ .lt = {bq25890_treg_tbl, BQ25890_TREG_TBL_SIZE} },
-	[TBL_BOOSTI] =	{ .lt = {bq25890_boosti_tbl, BQ25890_BOOSTI_TBL_SIZE} }
-};
+	[TBL_TREG] =	अणु .lt = अणुbq25890_treg_tbl, BQ25890_TREG_TBL_SIZEपूर्ण पूर्ण,
+	[TBL_BOOSTI] =	अणु .lt = अणुbq25890_boosti_tbl, BQ25890_BOOSTI_TBL_SIZEपूर्ण पूर्ण
+पूर्ण;
 
-static int bq25890_field_read(struct bq25890_device *bq,
-			      enum bq25890_fields field_id)
-{
-	int ret;
-	int val;
+अटल पूर्णांक bq25890_field_पढ़ो(काष्ठा bq25890_device *bq,
+			      क्रमागत bq25890_fields field_id)
+अणु
+	पूर्णांक ret;
+	पूर्णांक val;
 
-	ret = regmap_field_read(bq->rmap_fields[field_id], &val);
-	if (ret < 0)
-		return ret;
+	ret = regmap_field_पढ़ो(bq->rmap_fields[field_id], &val);
+	अगर (ret < 0)
+		वापस ret;
 
-	return val;
-}
+	वापस val;
+पूर्ण
 
-static int bq25890_field_write(struct bq25890_device *bq,
-			       enum bq25890_fields field_id, u8 val)
-{
-	return regmap_field_write(bq->rmap_fields[field_id], val);
-}
+अटल पूर्णांक bq25890_field_ग_लिखो(काष्ठा bq25890_device *bq,
+			       क्रमागत bq25890_fields field_id, u8 val)
+अणु
+	वापस regmap_field_ग_लिखो(bq->rmap_fields[field_id], val);
+पूर्ण
 
-static u8 bq25890_find_idx(u32 value, enum bq25890_table_ids id)
-{
+अटल u8 bq25890_find_idx(u32 value, क्रमागत bq25890_table_ids id)
+अणु
 	u8 idx;
 
-	if (id >= TBL_TREG) {
-		const u32 *tbl = bq25890_tables[id].lt.tbl;
+	अगर (id >= TBL_TREG) अणु
+		स्थिर u32 *tbl = bq25890_tables[id].lt.tbl;
 		u32 tbl_size = bq25890_tables[id].lt.size;
 
-		for (idx = 1; idx < tbl_size && tbl[idx] <= value; idx++)
+		क्रम (idx = 1; idx < tbl_size && tbl[idx] <= value; idx++)
 			;
-	} else {
-		const struct bq25890_range *rtbl = &bq25890_tables[id].rt;
+	पूर्ण अन्यथा अणु
+		स्थिर काष्ठा bq25890_range *rtbl = &bq25890_tables[id].rt;
 		u8 rtbl_size;
 
 		rtbl_size = (rtbl->max - rtbl->min) / rtbl->step + 1;
 
-		for (idx = 1;
+		क्रम (idx = 1;
 		     idx < rtbl_size && (idx * rtbl->step + rtbl->min <= value);
 		     idx++)
 			;
-	}
+	पूर्ण
 
-	return idx - 1;
-}
+	वापस idx - 1;
+पूर्ण
 
-static u32 bq25890_find_val(u8 idx, enum bq25890_table_ids id)
-{
-	const struct bq25890_range *rtbl;
+अटल u32 bq25890_find_val(u8 idx, क्रमागत bq25890_table_ids id)
+अणु
+	स्थिर काष्ठा bq25890_range *rtbl;
 
 	/* lookup table? */
-	if (id >= TBL_TREG)
-		return bq25890_tables[id].lt.tbl[idx];
+	अगर (id >= TBL_TREG)
+		वापस bq25890_tables[id].lt.tbl[idx];
 
 	/* range table */
 	rtbl = &bq25890_tables[id].rt;
 
-	return (rtbl->min + idx * rtbl->step);
-}
+	वापस (rtbl->min + idx * rtbl->step);
+पूर्ण
 
-enum bq25890_status {
+क्रमागत bq25890_status अणु
 	STATUS_NOT_CHARGING,
 	STATUS_PRE_CHARGING,
 	STATUS_FAST_CHARGING,
 	STATUS_TERMINATION_DONE,
-};
+पूर्ण;
 
-enum bq25890_chrg_fault {
+क्रमागत bq25890_chrg_fault अणु
 	CHRG_FAULT_NORMAL,
 	CHRG_FAULT_INPUT,
 	CHRG_FAULT_THERMAL_SHUTDOWN,
 	CHRG_FAULT_TIMER_EXPIRED,
-};
+पूर्ण;
 
-static bool bq25890_is_adc_property(enum power_supply_property psp)
-{
-	switch (psp) {
-	case POWER_SUPPLY_PROP_VOLTAGE_NOW:
-	case POWER_SUPPLY_PROP_CURRENT_NOW:
-		return true;
+अटल bool bq25890_is_adc_property(क्रमागत घातer_supply_property psp)
+अणु
+	चयन (psp) अणु
+	हाल POWER_SUPPLY_PROP_VOLTAGE_NOW:
+	हाल POWER_SUPPLY_PROP_CURRENT_NOW:
+		वापस true;
 
-	default:
-		return false;
-	}
-}
+	शेष:
+		वापस false;
+	पूर्ण
+पूर्ण
 
-static irqreturn_t __bq25890_handle_irq(struct bq25890_device *bq);
+अटल irqवापस_t __bq25890_handle_irq(काष्ठा bq25890_device *bq);
 
-static int bq25890_power_supply_get_property(struct power_supply *psy,
-					     enum power_supply_property psp,
-					     union power_supply_propval *val)
-{
-	struct bq25890_device *bq = power_supply_get_drvdata(psy);
-	struct bq25890_state state;
-	bool do_adc_conv;
-	int ret;
+अटल पूर्णांक bq25890_घातer_supply_get_property(काष्ठा घातer_supply *psy,
+					     क्रमागत घातer_supply_property psp,
+					     जोड़ घातer_supply_propval *val)
+अणु
+	काष्ठा bq25890_device *bq = घातer_supply_get_drvdata(psy);
+	काष्ठा bq25890_state state;
+	bool करो_adc_conv;
+	पूर्णांक ret;
 
 	mutex_lock(&bq->lock);
-	/* update state in case we lost an interrupt */
+	/* update state in हाल we lost an पूर्णांकerrupt */
 	__bq25890_handle_irq(bq);
 	state = bq->state;
-	do_adc_conv = !state.online && bq25890_is_adc_property(psp);
-	if (do_adc_conv)
-		bq25890_field_write(bq, F_CONV_START, 1);
+	करो_adc_conv = !state.online && bq25890_is_adc_property(psp);
+	अगर (करो_adc_conv)
+		bq25890_field_ग_लिखो(bq, F_CONV_START, 1);
 	mutex_unlock(&bq->lock);
 
-	if (do_adc_conv)
-		regmap_field_read_poll_timeout(bq->rmap_fields[F_CONV_START],
+	अगर (करो_adc_conv)
+		regmap_field_पढ़ो_poll_समयout(bq->rmap_fields[F_CONV_START],
 			ret, !ret, 25000, 1000000);
 
-	switch (psp) {
-	case POWER_SUPPLY_PROP_STATUS:
-		if (!state.online)
-			val->intval = POWER_SUPPLY_STATUS_DISCHARGING;
-		else if (state.chrg_status == STATUS_NOT_CHARGING)
-			val->intval = POWER_SUPPLY_STATUS_NOT_CHARGING;
-		else if (state.chrg_status == STATUS_PRE_CHARGING ||
+	चयन (psp) अणु
+	हाल POWER_SUPPLY_PROP_STATUS:
+		अगर (!state.online)
+			val->पूर्णांकval = POWER_SUPPLY_STATUS_DISCHARGING;
+		अन्यथा अगर (state.chrg_status == STATUS_NOT_CHARGING)
+			val->पूर्णांकval = POWER_SUPPLY_STATUS_NOT_CHARGING;
+		अन्यथा अगर (state.chrg_status == STATUS_PRE_CHARGING ||
 			 state.chrg_status == STATUS_FAST_CHARGING)
-			val->intval = POWER_SUPPLY_STATUS_CHARGING;
-		else if (state.chrg_status == STATUS_TERMINATION_DONE)
-			val->intval = POWER_SUPPLY_STATUS_FULL;
-		else
-			val->intval = POWER_SUPPLY_STATUS_UNKNOWN;
+			val->पूर्णांकval = POWER_SUPPLY_STATUS_CHARGING;
+		अन्यथा अगर (state.chrg_status == STATUS_TERMINATION_DONE)
+			val->पूर्णांकval = POWER_SUPPLY_STATUS_FULL;
+		अन्यथा
+			val->पूर्णांकval = POWER_SUPPLY_STATUS_UNKNOWN;
 
-		break;
+		अवरोध;
 
-	case POWER_SUPPLY_PROP_CHARGE_TYPE:
-		if (!state.online || state.chrg_status == STATUS_NOT_CHARGING ||
+	हाल POWER_SUPPLY_PROP_CHARGE_TYPE:
+		अगर (!state.online || state.chrg_status == STATUS_NOT_CHARGING ||
 		    state.chrg_status == STATUS_TERMINATION_DONE)
-			val->intval = POWER_SUPPLY_CHARGE_TYPE_NONE;
-		else if (state.chrg_status == STATUS_PRE_CHARGING)
-			val->intval = POWER_SUPPLY_CHARGE_TYPE_STANDARD;
-		else if (state.chrg_status == STATUS_FAST_CHARGING)
-			val->intval = POWER_SUPPLY_CHARGE_TYPE_FAST;
-		else /* unreachable */
-			val->intval = POWER_SUPPLY_CHARGE_TYPE_UNKNOWN;
-		break;
+			val->पूर्णांकval = POWER_SUPPLY_CHARGE_TYPE_NONE;
+		अन्यथा अगर (state.chrg_status == STATUS_PRE_CHARGING)
+			val->पूर्णांकval = POWER_SUPPLY_CHARGE_TYPE_STANDARD;
+		अन्यथा अगर (state.chrg_status == STATUS_FAST_CHARGING)
+			val->पूर्णांकval = POWER_SUPPLY_CHARGE_TYPE_FAST;
+		अन्यथा /* unreachable */
+			val->पूर्णांकval = POWER_SUPPLY_CHARGE_TYPE_UNKNOWN;
+		अवरोध;
 
-	case POWER_SUPPLY_PROP_MANUFACTURER:
+	हाल POWER_SUPPLY_PROP_MANUFACTURER:
 		val->strval = BQ25890_MANUFACTURER;
-		break;
+		अवरोध;
 
-	case POWER_SUPPLY_PROP_MODEL_NAME:
+	हाल POWER_SUPPLY_PROP_MODEL_NAME:
 		val->strval = bq25890_chip_name[bq->chip_version];
-		break;
+		अवरोध;
 
-	case POWER_SUPPLY_PROP_ONLINE:
-		val->intval = state.online;
-		break;
+	हाल POWER_SUPPLY_PROP_ONLINE:
+		val->पूर्णांकval = state.online;
+		अवरोध;
 
-	case POWER_SUPPLY_PROP_HEALTH:
-		if (!state.chrg_fault && !state.bat_fault && !state.boost_fault)
-			val->intval = POWER_SUPPLY_HEALTH_GOOD;
-		else if (state.bat_fault)
-			val->intval = POWER_SUPPLY_HEALTH_OVERVOLTAGE;
-		else if (state.chrg_fault == CHRG_FAULT_TIMER_EXPIRED)
-			val->intval = POWER_SUPPLY_HEALTH_SAFETY_TIMER_EXPIRE;
-		else if (state.chrg_fault == CHRG_FAULT_THERMAL_SHUTDOWN)
-			val->intval = POWER_SUPPLY_HEALTH_OVERHEAT;
-		else
-			val->intval = POWER_SUPPLY_HEALTH_UNSPEC_FAILURE;
-		break;
+	हाल POWER_SUPPLY_PROP_HEALTH:
+		अगर (!state.chrg_fault && !state.bat_fault && !state.boost_fault)
+			val->पूर्णांकval = POWER_SUPPLY_HEALTH_GOOD;
+		अन्यथा अगर (state.bat_fault)
+			val->पूर्णांकval = POWER_SUPPLY_HEALTH_OVERVOLTAGE;
+		अन्यथा अगर (state.chrg_fault == CHRG_FAULT_TIMER_EXPIRED)
+			val->पूर्णांकval = POWER_SUPPLY_HEALTH_SAFETY_TIMER_EXPIRE;
+		अन्यथा अगर (state.chrg_fault == CHRG_FAULT_THERMAL_SHUTDOWN)
+			val->पूर्णांकval = POWER_SUPPLY_HEALTH_OVERHEAT;
+		अन्यथा
+			val->पूर्णांकval = POWER_SUPPLY_HEALTH_UNSPEC_FAILURE;
+		अवरोध;
 
-	case POWER_SUPPLY_PROP_CONSTANT_CHARGE_CURRENT_MAX:
-		val->intval = bq25890_find_val(bq->init_data.ichg, TBL_ICHG);
-		break;
+	हाल POWER_SUPPLY_PROP_CONSTANT_CHARGE_CURRENT_MAX:
+		val->पूर्णांकval = bq25890_find_val(bq->init_data.ichg, TBL_ICHG);
+		अवरोध;
 
-	case POWER_SUPPLY_PROP_CONSTANT_CHARGE_VOLTAGE:
-		if (!state.online) {
-			val->intval = 0;
-			break;
-		}
+	हाल POWER_SUPPLY_PROP_CONSTANT_CHARGE_VOLTAGE:
+		अगर (!state.online) अणु
+			val->पूर्णांकval = 0;
+			अवरोध;
+		पूर्ण
 
-		ret = bq25890_field_read(bq, F_BATV); /* read measured value */
-		if (ret < 0)
-			return ret;
-
-		/* converted_val = 2.304V + ADC_val * 20mV (table 10.3.15) */
-		val->intval = 2304000 + ret * 20000;
-		break;
-
-	case POWER_SUPPLY_PROP_CONSTANT_CHARGE_VOLTAGE_MAX:
-		val->intval = bq25890_find_val(bq->init_data.vreg, TBL_VREG);
-		break;
-
-	case POWER_SUPPLY_PROP_PRECHARGE_CURRENT:
-		val->intval = bq25890_find_val(bq->init_data.iprechg, TBL_ITERM);
-		break;
-
-	case POWER_SUPPLY_PROP_CHARGE_TERM_CURRENT:
-		val->intval = bq25890_find_val(bq->init_data.iterm, TBL_ITERM);
-		break;
-
-	case POWER_SUPPLY_PROP_INPUT_CURRENT_LIMIT:
-		ret = bq25890_field_read(bq, F_IILIM);
-		if (ret < 0)
-			return ret;
-
-		val->intval = bq25890_find_val(ret, TBL_IILIM);
-		break;
-
-	case POWER_SUPPLY_PROP_VOLTAGE_NOW:
-		ret = bq25890_field_read(bq, F_SYSV); /* read measured value */
-		if (ret < 0)
-			return ret;
+		ret = bq25890_field_पढ़ो(bq, F_BATV); /* पढ़ो measured value */
+		अगर (ret < 0)
+			वापस ret;
 
 		/* converted_val = 2.304V + ADC_val * 20mV (table 10.3.15) */
-		val->intval = 2304000 + ret * 20000;
-		break;
+		val->पूर्णांकval = 2304000 + ret * 20000;
+		अवरोध;
 
-	case POWER_SUPPLY_PROP_CURRENT_NOW:
-		ret = bq25890_field_read(bq, F_ICHGR); /* read measured value */
-		if (ret < 0)
-			return ret;
+	हाल POWER_SUPPLY_PROP_CONSTANT_CHARGE_VOLTAGE_MAX:
+		val->पूर्णांकval = bq25890_find_val(bq->init_data.vreg, TBL_VREG);
+		अवरोध;
+
+	हाल POWER_SUPPLY_PROP_PRECHARGE_CURRENT:
+		val->पूर्णांकval = bq25890_find_val(bq->init_data.iprechg, TBL_ITERM);
+		अवरोध;
+
+	हाल POWER_SUPPLY_PROP_CHARGE_TERM_CURRENT:
+		val->पूर्णांकval = bq25890_find_val(bq->init_data.iterm, TBL_ITERM);
+		अवरोध;
+
+	हाल POWER_SUPPLY_PROP_INPUT_CURRENT_LIMIT:
+		ret = bq25890_field_पढ़ो(bq, F_IILIM);
+		अगर (ret < 0)
+			वापस ret;
+
+		val->पूर्णांकval = bq25890_find_val(ret, TBL_IILIM);
+		अवरोध;
+
+	हाल POWER_SUPPLY_PROP_VOLTAGE_NOW:
+		ret = bq25890_field_पढ़ो(bq, F_SYSV); /* पढ़ो measured value */
+		अगर (ret < 0)
+			वापस ret;
+
+		/* converted_val = 2.304V + ADC_val * 20mV (table 10.3.15) */
+		val->पूर्णांकval = 2304000 + ret * 20000;
+		अवरोध;
+
+	हाल POWER_SUPPLY_PROP_CURRENT_NOW:
+		ret = bq25890_field_पढ़ो(bq, F_ICHGR); /* पढ़ो measured value */
+		अगर (ret < 0)
+			वापस ret;
 
 		/* converted_val = ADC_val * 50mA (table 10.3.19) */
-		val->intval = ret * -50000;
-		break;
+		val->पूर्णांकval = ret * -50000;
+		अवरोध;
 
-	default:
-		return -EINVAL;
-	}
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int bq25890_get_chip_state(struct bq25890_device *bq,
-				  struct bq25890_state *state)
-{
-	int i, ret;
+अटल पूर्णांक bq25890_get_chip_state(काष्ठा bq25890_device *bq,
+				  काष्ठा bq25890_state *state)
+अणु
+	पूर्णांक i, ret;
 
-	struct {
-		enum bq25890_fields id;
+	काष्ठा अणु
+		क्रमागत bq25890_fields id;
 		u8 *data;
-	} state_fields[] = {
-		{F_CHG_STAT,	&state->chrg_status},
-		{F_PG_STAT,	&state->online},
-		{F_VSYS_STAT,	&state->vsys_status},
-		{F_BOOST_FAULT, &state->boost_fault},
-		{F_BAT_FAULT,	&state->bat_fault},
-		{F_CHG_FAULT,	&state->chrg_fault}
-	};
+	पूर्ण state_fields[] = अणु
+		अणुF_CHG_STAT,	&state->chrg_statusपूर्ण,
+		अणुF_PG_STAT,	&state->onlineपूर्ण,
+		अणुF_VSYS_STAT,	&state->vsys_statusपूर्ण,
+		अणुF_BOOST_FAULT, &state->boost_faultपूर्ण,
+		अणुF_BAT_FAULT,	&state->bat_faultपूर्ण,
+		अणुF_CHG_FAULT,	&state->chrg_faultपूर्ण
+	पूर्ण;
 
-	for (i = 0; i < ARRAY_SIZE(state_fields); i++) {
-		ret = bq25890_field_read(bq, state_fields[i].id);
-		if (ret < 0)
-			return ret;
+	क्रम (i = 0; i < ARRAY_SIZE(state_fields); i++) अणु
+		ret = bq25890_field_पढ़ो(bq, state_fields[i].id);
+		अगर (ret < 0)
+			वापस ret;
 
 		*state_fields[i].data = ret;
-	}
+	पूर्ण
 
 	dev_dbg(bq->dev, "S:CHG/PG/VSYS=%d/%d/%d, F:CHG/BOOST/BAT=%d/%d/%d\n",
 		state->chrg_status, state->online, state->vsys_status,
 		state->chrg_fault, state->boost_fault, state->bat_fault);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static irqreturn_t __bq25890_handle_irq(struct bq25890_device *bq)
-{
-	struct bq25890_state new_state;
-	int ret;
+अटल irqवापस_t __bq25890_handle_irq(काष्ठा bq25890_device *bq)
+अणु
+	काष्ठा bq25890_state new_state;
+	पूर्णांक ret;
 
 	ret = bq25890_get_chip_state(bq, &new_state);
-	if (ret < 0)
-		return IRQ_NONE;
+	अगर (ret < 0)
+		वापस IRQ_NONE;
 
-	if (!memcmp(&bq->state, &new_state, sizeof(new_state)))
-		return IRQ_NONE;
+	अगर (!स_भेद(&bq->state, &new_state, माप(new_state)))
+		वापस IRQ_NONE;
 
-	if (!new_state.online && bq->state.online) {	    /* power removed */
+	अगर (!new_state.online && bq->state.online) अणु	    /* घातer हटाओd */
 		/* disable ADC */
-		ret = bq25890_field_write(bq, F_CONV_START, 0);
-		if (ret < 0)
-			goto error;
-	} else if (new_state.online && !bq->state.online) { /* power inserted */
-		/* enable ADC, to have control of charge current/voltage */
-		ret = bq25890_field_write(bq, F_CONV_START, 1);
-		if (ret < 0)
-			goto error;
-	}
+		ret = bq25890_field_ग_लिखो(bq, F_CONV_START, 0);
+		अगर (ret < 0)
+			जाओ error;
+	पूर्ण अन्यथा अगर (new_state.online && !bq->state.online) अणु /* घातer inserted */
+		/* enable ADC, to have control of अक्षरge current/voltage */
+		ret = bq25890_field_ग_लिखो(bq, F_CONV_START, 1);
+		अगर (ret < 0)
+			जाओ error;
+	पूर्ण
 
 	bq->state = new_state;
-	power_supply_changed(bq->charger);
+	घातer_supply_changed(bq->अक्षरger);
 
-	return IRQ_HANDLED;
+	वापस IRQ_HANDLED;
 error:
 	dev_err(bq->dev, "Error communicating with the chip: %pe\n",
 		ERR_PTR(ret));
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static irqreturn_t bq25890_irq_handler_thread(int irq, void *private)
-{
-	struct bq25890_device *bq = private;
-	irqreturn_t ret;
+अटल irqवापस_t bq25890_irq_handler_thपढ़ो(पूर्णांक irq, व्योम *निजी)
+अणु
+	काष्ठा bq25890_device *bq = निजी;
+	irqवापस_t ret;
 
 	mutex_lock(&bq->lock);
 	ret = __bq25890_handle_irq(bq);
 	mutex_unlock(&bq->lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int bq25890_chip_reset(struct bq25890_device *bq)
-{
-	int ret;
-	int rst_check_counter = 10;
+अटल पूर्णांक bq25890_chip_reset(काष्ठा bq25890_device *bq)
+अणु
+	पूर्णांक ret;
+	पूर्णांक rst_check_counter = 10;
 
-	ret = bq25890_field_write(bq, F_REG_RST, 1);
-	if (ret < 0)
-		return ret;
+	ret = bq25890_field_ग_लिखो(bq, F_REG_RST, 1);
+	अगर (ret < 0)
+		वापस ret;
 
-	do {
-		ret = bq25890_field_read(bq, F_REG_RST);
-		if (ret < 0)
-			return ret;
+	करो अणु
+		ret = bq25890_field_पढ़ो(bq, F_REG_RST);
+		अगर (ret < 0)
+			वापस ret;
 
 		usleep_range(5, 10);
-	} while (ret == 1 && --rst_check_counter);
+	पूर्ण जबतक (ret == 1 && --rst_check_counter);
 
-	if (!rst_check_counter)
-		return -ETIMEDOUT;
+	अगर (!rst_check_counter)
+		वापस -ETIMEDOUT;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int bq25890_hw_init(struct bq25890_device *bq)
-{
-	int ret;
-	int i;
+अटल पूर्णांक bq25890_hw_init(काष्ठा bq25890_device *bq)
+अणु
+	पूर्णांक ret;
+	पूर्णांक i;
 
-	const struct {
-		enum bq25890_fields id;
+	स्थिर काष्ठा अणु
+		क्रमागत bq25890_fields id;
 		u32 value;
-	} init_data[] = {
-		{F_ICHG,	 bq->init_data.ichg},
-		{F_VREG,	 bq->init_data.vreg},
-		{F_ITERM,	 bq->init_data.iterm},
-		{F_IPRECHG,	 bq->init_data.iprechg},
-		{F_SYSVMIN,	 bq->init_data.sysvmin},
-		{F_BOOSTV,	 bq->init_data.boostv},
-		{F_BOOSTI,	 bq->init_data.boosti},
-		{F_BOOSTF,	 bq->init_data.boostf},
-		{F_EN_ILIM,	 bq->init_data.ilim_en},
-		{F_TREG,	 bq->init_data.treg},
-		{F_BATCMP,	 bq->init_data.rbatcomp},
-		{F_VCLAMP,	 bq->init_data.vclamp},
-	};
+	पूर्ण init_data[] = अणु
+		अणुF_ICHG,	 bq->init_data.ichgपूर्ण,
+		अणुF_VREG,	 bq->init_data.vregपूर्ण,
+		अणुF_ITERM,	 bq->init_data.itermपूर्ण,
+		अणुF_IPRECHG,	 bq->init_data.iprechgपूर्ण,
+		अणुF_SYSVMIN,	 bq->init_data.sysvminपूर्ण,
+		अणुF_BOOSTV,	 bq->init_data.boostvपूर्ण,
+		अणुF_BOOSTI,	 bq->init_data.boostiपूर्ण,
+		अणुF_BOOSTF,	 bq->init_data.boostfपूर्ण,
+		अणुF_EN_ILIM,	 bq->init_data.ilim_enपूर्ण,
+		अणुF_TREG,	 bq->init_data.tregपूर्ण,
+		अणुF_BATCMP,	 bq->init_data.rbatcompपूर्ण,
+		अणुF_VCLAMP,	 bq->init_data.vclampपूर्ण,
+	पूर्ण;
 
 	ret = bq25890_chip_reset(bq);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_dbg(bq->dev, "Reset failed %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	/* disable watchdog */
-	ret = bq25890_field_write(bq, F_WD, 0);
-	if (ret < 0) {
+	/* disable watchकरोg */
+	ret = bq25890_field_ग_लिखो(bq, F_WD, 0);
+	अगर (ret < 0) अणु
 		dev_dbg(bq->dev, "Disabling watchdog failed %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	/* initialize currents/voltages and other parameters */
-	for (i = 0; i < ARRAY_SIZE(init_data); i++) {
-		ret = bq25890_field_write(bq, init_data[i].id,
+	क्रम (i = 0; i < ARRAY_SIZE(init_data); i++) अणु
+		ret = bq25890_field_ग_लिखो(bq, init_data[i].id,
 					  init_data[i].value);
-		if (ret < 0) {
+		अगर (ret < 0) अणु
 			dev_dbg(bq->dev, "Writing init data failed %d\n", ret);
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
-	/* Configure ADC for continuous conversions when charging */
-	ret = bq25890_field_write(bq, F_CONV_RATE, !!bq->state.online);
-	if (ret < 0) {
+	/* Configure ADC क्रम continuous conversions when अक्षरging */
+	ret = bq25890_field_ग_लिखो(bq, F_CONV_RATE, !!bq->state.online);
+	अगर (ret < 0) अणु
 		dev_dbg(bq->dev, "Config ADC failed %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	ret = bq25890_get_chip_state(bq, &bq->state);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_dbg(bq->dev, "Get state failed %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const enum power_supply_property bq25890_power_supply_props[] = {
+अटल स्थिर क्रमागत घातer_supply_property bq25890_घातer_supply_props[] = अणु
 	POWER_SUPPLY_PROP_MANUFACTURER,
 	POWER_SUPPLY_PROP_MODEL_NAME,
 	POWER_SUPPLY_PROP_STATUS,
@@ -713,215 +714,215 @@ static const enum power_supply_property bq25890_power_supply_props[] = {
 	POWER_SUPPLY_PROP_INPUT_CURRENT_LIMIT,
 	POWER_SUPPLY_PROP_VOLTAGE_NOW,
 	POWER_SUPPLY_PROP_CURRENT_NOW,
-};
+पूर्ण;
 
-static char *bq25890_charger_supplied_to[] = {
+अटल अक्षर *bq25890_अक्षरger_supplied_to[] = अणु
 	"main-battery",
-};
+पूर्ण;
 
-static const struct power_supply_desc bq25890_power_supply_desc = {
+अटल स्थिर काष्ठा घातer_supply_desc bq25890_घातer_supply_desc = अणु
 	.name = "bq25890-charger",
 	.type = POWER_SUPPLY_TYPE_USB,
-	.properties = bq25890_power_supply_props,
-	.num_properties = ARRAY_SIZE(bq25890_power_supply_props),
-	.get_property = bq25890_power_supply_get_property,
-};
+	.properties = bq25890_घातer_supply_props,
+	.num_properties = ARRAY_SIZE(bq25890_घातer_supply_props),
+	.get_property = bq25890_घातer_supply_get_property,
+पूर्ण;
 
-static int bq25890_power_supply_init(struct bq25890_device *bq)
-{
-	struct power_supply_config psy_cfg = { .drv_data = bq, };
+अटल पूर्णांक bq25890_घातer_supply_init(काष्ठा bq25890_device *bq)
+अणु
+	काष्ठा घातer_supply_config psy_cfg = अणु .drv_data = bq, पूर्ण;
 
-	psy_cfg.supplied_to = bq25890_charger_supplied_to;
-	psy_cfg.num_supplicants = ARRAY_SIZE(bq25890_charger_supplied_to);
+	psy_cfg.supplied_to = bq25890_अक्षरger_supplied_to;
+	psy_cfg.num_supplicants = ARRAY_SIZE(bq25890_अक्षरger_supplied_to);
 
-	bq->charger = power_supply_register(bq->dev, &bq25890_power_supply_desc,
+	bq->अक्षरger = घातer_supply_रेजिस्टर(bq->dev, &bq25890_घातer_supply_desc,
 					    &psy_cfg);
 
-	return PTR_ERR_OR_ZERO(bq->charger);
-}
+	वापस PTR_ERR_OR_ZERO(bq->अक्षरger);
+पूर्ण
 
-static void bq25890_usb_work(struct work_struct *data)
-{
-	int ret;
-	struct bq25890_device *bq =
-			container_of(data, struct bq25890_device, usb_work);
+अटल व्योम bq25890_usb_work(काष्ठा work_काष्ठा *data)
+अणु
+	पूर्णांक ret;
+	काष्ठा bq25890_device *bq =
+			container_of(data, काष्ठा bq25890_device, usb_work);
 
-	switch (bq->usb_event) {
-	case USB_EVENT_ID:
+	चयन (bq->usb_event) अणु
+	हाल USB_EVENT_ID:
 		/* Enable boost mode */
-		ret = bq25890_field_write(bq, F_OTG_CFG, 1);
-		if (ret < 0)
-			goto error;
-		break;
+		ret = bq25890_field_ग_लिखो(bq, F_OTG_CFG, 1);
+		अगर (ret < 0)
+			जाओ error;
+		अवरोध;
 
-	case USB_EVENT_NONE:
+	हाल USB_EVENT_NONE:
 		/* Disable boost mode */
-		ret = bq25890_field_write(bq, F_OTG_CFG, 0);
-		if (ret < 0)
-			goto error;
+		ret = bq25890_field_ग_लिखो(bq, F_OTG_CFG, 0);
+		अगर (ret < 0)
+			जाओ error;
 
-		power_supply_changed(bq->charger);
-		break;
-	}
+		घातer_supply_changed(bq->अक्षरger);
+		अवरोध;
+	पूर्ण
 
-	return;
+	वापस;
 
 error:
 	dev_err(bq->dev, "Error switching to boost/charger mode.\n");
-}
+पूर्ण
 
-static int bq25890_usb_notifier(struct notifier_block *nb, unsigned long val,
-				void *priv)
-{
-	struct bq25890_device *bq =
-			container_of(nb, struct bq25890_device, usb_nb);
+अटल पूर्णांक bq25890_usb_notअगरier(काष्ठा notअगरier_block *nb, अचिन्हित दीर्घ val,
+				व्योम *priv)
+अणु
+	काष्ठा bq25890_device *bq =
+			container_of(nb, काष्ठा bq25890_device, usb_nb);
 
 	bq->usb_event = val;
-	queue_work(system_power_efficient_wq, &bq->usb_work);
+	queue_work(प्रणाली_घातer_efficient_wq, &bq->usb_work);
 
-	return NOTIFY_OK;
-}
+	वापस NOTIFY_OK;
+पूर्ण
 
-static int bq25890_get_chip_version(struct bq25890_device *bq)
-{
-	int id, rev;
+अटल पूर्णांक bq25890_get_chip_version(काष्ठा bq25890_device *bq)
+अणु
+	पूर्णांक id, rev;
 
-	id = bq25890_field_read(bq, F_PN);
-	if (id < 0) {
+	id = bq25890_field_पढ़ो(bq, F_PN);
+	अगर (id < 0) अणु
 		dev_err(bq->dev, "Cannot read chip ID.\n");
-		return id;
-	}
+		वापस id;
+	पूर्ण
 
-	rev = bq25890_field_read(bq, F_DEV_REV);
-	if (rev < 0) {
+	rev = bq25890_field_पढ़ो(bq, F_DEV_REV);
+	अगर (rev < 0) अणु
 		dev_err(bq->dev, "Cannot read chip revision.\n");
-		return rev;
-	}
+		वापस rev;
+	पूर्ण
 
-	switch (id) {
-	case BQ25890_ID:
+	चयन (id) अणु
+	हाल BQ25890_ID:
 		bq->chip_version = BQ25890;
-		break;
+		अवरोध;
 
 	/* BQ25892 and BQ25896 share same ID 0 */
-	case BQ25896_ID:
-		switch (rev) {
-		case 2:
+	हाल BQ25896_ID:
+		चयन (rev) अणु
+		हाल 2:
 			bq->chip_version = BQ25896;
-			break;
-		case 1:
+			अवरोध;
+		हाल 1:
 			bq->chip_version = BQ25892;
-			break;
-		default:
+			अवरोध;
+		शेष:
 			dev_err(bq->dev,
 				"Unknown device revision %d, assume BQ25892\n",
 				rev);
 			bq->chip_version = BQ25892;
-		}
-		break;
+		पूर्ण
+		अवरोध;
 
-	case BQ25895_ID:
+	हाल BQ25895_ID:
 		bq->chip_version = BQ25895;
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		dev_err(bq->dev, "Unknown chip ID %d\n", id);
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int bq25890_irq_probe(struct bq25890_device *bq)
-{
-	struct gpio_desc *irq;
+अटल पूर्णांक bq25890_irq_probe(काष्ठा bq25890_device *bq)
+अणु
+	काष्ठा gpio_desc *irq;
 
 	irq = devm_gpiod_get(bq->dev, BQ25890_IRQ_PIN, GPIOD_IN);
-	if (IS_ERR(irq)) {
+	अगर (IS_ERR(irq)) अणु
 		dev_err(bq->dev, "Could not probe irq pin.\n");
-		return PTR_ERR(irq);
-	}
+		वापस PTR_ERR(irq);
+	पूर्ण
 
-	return gpiod_to_irq(irq);
-}
+	वापस gpiod_to_irq(irq);
+पूर्ण
 
-static int bq25890_fw_read_u32_props(struct bq25890_device *bq)
-{
-	int ret;
+अटल पूर्णांक bq25890_fw_पढ़ो_u32_props(काष्ठा bq25890_device *bq)
+अणु
+	पूर्णांक ret;
 	u32 property;
-	int i;
-	struct bq25890_init_data *init = &bq->init_data;
-	struct {
-		char *name;
+	पूर्णांक i;
+	काष्ठा bq25890_init_data *init = &bq->init_data;
+	काष्ठा अणु
+		अक्षर *name;
 		bool optional;
-		enum bq25890_table_ids tbl_id;
+		क्रमागत bq25890_table_ids tbl_id;
 		u8 *conv_data; /* holds converted value from given property */
-	} props[] = {
+	पूर्ण props[] = अणु
 		/* required properties */
-		{"ti,charge-current", false, TBL_ICHG, &init->ichg},
-		{"ti,battery-regulation-voltage", false, TBL_VREG, &init->vreg},
-		{"ti,termination-current", false, TBL_ITERM, &init->iterm},
-		{"ti,precharge-current", false, TBL_ITERM, &init->iprechg},
-		{"ti,minimum-sys-voltage", false, TBL_SYSVMIN, &init->sysvmin},
-		{"ti,boost-voltage", false, TBL_BOOSTV, &init->boostv},
-		{"ti,boost-max-current", false, TBL_BOOSTI, &init->boosti},
+		अणु"ti,charge-current", false, TBL_ICHG, &init->ichgपूर्ण,
+		अणु"ti,battery-regulation-voltage", false, TBL_VREG, &init->vregपूर्ण,
+		अणु"ti,termination-current", false, TBL_ITERM, &init->itermपूर्ण,
+		अणु"ti,precharge-current", false, TBL_ITERM, &init->iprechgपूर्ण,
+		अणु"ti,minimum-sys-voltage", false, TBL_SYSVMIN, &init->sysvminपूर्ण,
+		अणु"ti,boost-voltage", false, TBL_BOOSTV, &init->boostvपूर्ण,
+		अणु"ti,boost-max-current", false, TBL_BOOSTI, &init->boostiपूर्ण,
 
 		/* optional properties */
-		{"ti,thermal-regulation-threshold", true, TBL_TREG, &init->treg},
-		{"ti,ibatcomp-micro-ohms", true, TBL_RBATCOMP, &init->rbatcomp},
-		{"ti,ibatcomp-clamp-microvolt", true, TBL_VBATCOMP, &init->vclamp},
-	};
+		अणु"ti,thermal-regulation-threshold", true, TBL_TREG, &init->tregपूर्ण,
+		अणु"ti,ibatcomp-micro-ohms", true, TBL_RBATCOMP, &init->rbatcompपूर्ण,
+		अणु"ti,ibatcomp-clamp-microvolt", true, TBL_VBATCOMP, &init->vclampपूर्ण,
+	पूर्ण;
 
-	/* initialize data for optional properties */
+	/* initialize data क्रम optional properties */
 	init->treg = 3; /* 120 degrees Celsius */
 	init->rbatcomp = init->vclamp = 0; /* IBAT compensation disabled */
 
-	for (i = 0; i < ARRAY_SIZE(props); i++) {
-		ret = device_property_read_u32(bq->dev, props[i].name,
+	क्रम (i = 0; i < ARRAY_SIZE(props); i++) अणु
+		ret = device_property_पढ़ो_u32(bq->dev, props[i].name,
 					       &property);
-		if (ret < 0) {
-			if (props[i].optional)
-				continue;
+		अगर (ret < 0) अणु
+			अगर (props[i].optional)
+				जारी;
 
 			dev_err(bq->dev, "Unable to read property %d %s\n", ret,
 				props[i].name);
 
-			return ret;
-		}
+			वापस ret;
+		पूर्ण
 
 		*props[i].conv_data = bq25890_find_idx(property,
 						       props[i].tbl_id);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int bq25890_fw_probe(struct bq25890_device *bq)
-{
-	int ret;
-	struct bq25890_init_data *init = &bq->init_data;
+अटल पूर्णांक bq25890_fw_probe(काष्ठा bq25890_device *bq)
+अणु
+	पूर्णांक ret;
+	काष्ठा bq25890_init_data *init = &bq->init_data;
 
-	ret = bq25890_fw_read_u32_props(bq);
-	if (ret < 0)
-		return ret;
+	ret = bq25890_fw_पढ़ो_u32_props(bq);
+	अगर (ret < 0)
+		वापस ret;
 
-	init->ilim_en = device_property_read_bool(bq->dev, "ti,use-ilim-pin");
-	init->boostf = device_property_read_bool(bq->dev, "ti,boost-low-freq");
+	init->ilim_en = device_property_पढ़ो_bool(bq->dev, "ti,use-ilim-pin");
+	init->boostf = device_property_पढ़ो_bool(bq->dev, "ti,boost-low-freq");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int bq25890_probe(struct i2c_client *client,
-			 const struct i2c_device_id *id)
-{
-	struct device *dev = &client->dev;
-	struct bq25890_device *bq;
-	int ret;
-	int i;
+अटल पूर्णांक bq25890_probe(काष्ठा i2c_client *client,
+			 स्थिर काष्ठा i2c_device_id *id)
+अणु
+	काष्ठा device *dev = &client->dev;
+	काष्ठा bq25890_device *bq;
+	पूर्णांक ret;
+	पूर्णांक i;
 
-	bq = devm_kzalloc(dev, sizeof(*bq), GFP_KERNEL);
-	if (!bq)
-		return -ENOMEM;
+	bq = devm_kzalloc(dev, माप(*bq), GFP_KERNEL);
+	अगर (!bq)
+		वापस -ENOMEM;
 
 	bq->client = client;
 	bq->dev = dev;
@@ -929,180 +930,180 @@ static int bq25890_probe(struct i2c_client *client,
 	mutex_init(&bq->lock);
 
 	bq->rmap = devm_regmap_init_i2c(client, &bq25890_regmap_config);
-	if (IS_ERR(bq->rmap)) {
+	अगर (IS_ERR(bq->rmap)) अणु
 		dev_err(dev, "failed to allocate register map\n");
-		return PTR_ERR(bq->rmap);
-	}
+		वापस PTR_ERR(bq->rmap);
+	पूर्ण
 
-	for (i = 0; i < ARRAY_SIZE(bq25890_reg_fields); i++) {
-		const struct reg_field *reg_fields = bq25890_reg_fields;
+	क्रम (i = 0; i < ARRAY_SIZE(bq25890_reg_fields); i++) अणु
+		स्थिर काष्ठा reg_field *reg_fields = bq25890_reg_fields;
 
 		bq->rmap_fields[i] = devm_regmap_field_alloc(dev, bq->rmap,
 							     reg_fields[i]);
-		if (IS_ERR(bq->rmap_fields[i])) {
+		अगर (IS_ERR(bq->rmap_fields[i])) अणु
 			dev_err(dev, "cannot allocate regmap field\n");
-			return PTR_ERR(bq->rmap_fields[i]);
-		}
-	}
+			वापस PTR_ERR(bq->rmap_fields[i]);
+		पूर्ण
+	पूर्ण
 
 	i2c_set_clientdata(client, bq);
 
 	ret = bq25890_get_chip_version(bq);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev, "Cannot read chip ID or unknown chip.\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	if (!dev->platform_data) {
+	अगर (!dev->platक्रमm_data) अणु
 		ret = bq25890_fw_probe(bq);
-		if (ret < 0) {
+		अगर (ret < 0) अणु
 			dev_err(dev, "Cannot read device properties.\n");
-			return ret;
-		}
-	} else {
-		return -ENODEV;
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		वापस -ENODEV;
+	पूर्ण
 
 	ret = bq25890_hw_init(bq);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(dev, "Cannot initialize the chip.\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	if (client->irq <= 0)
+	अगर (client->irq <= 0)
 		client->irq = bq25890_irq_probe(bq);
 
-	if (client->irq < 0) {
+	अगर (client->irq < 0) अणु
 		dev_err(dev, "No irq resource found.\n");
-		return client->irq;
-	}
+		वापस client->irq;
+	पूर्ण
 
 	/* OTG reporting */
 	bq->usb_phy = devm_usb_get_phy(dev, USB_PHY_TYPE_USB2);
-	if (!IS_ERR_OR_NULL(bq->usb_phy)) {
+	अगर (!IS_ERR_OR_शून्य(bq->usb_phy)) अणु
 		INIT_WORK(&bq->usb_work, bq25890_usb_work);
-		bq->usb_nb.notifier_call = bq25890_usb_notifier;
-		usb_register_notifier(bq->usb_phy, &bq->usb_nb);
-	}
+		bq->usb_nb.notअगरier_call = bq25890_usb_notअगरier;
+		usb_रेजिस्टर_notअगरier(bq->usb_phy, &bq->usb_nb);
+	पूर्ण
 
-	ret = devm_request_threaded_irq(dev, client->irq, NULL,
-					bq25890_irq_handler_thread,
+	ret = devm_request_thपढ़ोed_irq(dev, client->irq, शून्य,
+					bq25890_irq_handler_thपढ़ो,
 					IRQF_TRIGGER_FALLING | IRQF_ONESHOT,
 					BQ25890_IRQ_PIN, bq);
-	if (ret)
-		goto irq_fail;
+	अगर (ret)
+		जाओ irq_fail;
 
-	ret = bq25890_power_supply_init(bq);
-	if (ret < 0) {
+	ret = bq25890_घातer_supply_init(bq);
+	अगर (ret < 0) अणु
 		dev_err(dev, "Failed to register power supply\n");
-		goto irq_fail;
-	}
+		जाओ irq_fail;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 irq_fail:
-	if (!IS_ERR_OR_NULL(bq->usb_phy))
-		usb_unregister_notifier(bq->usb_phy, &bq->usb_nb);
+	अगर (!IS_ERR_OR_शून्य(bq->usb_phy))
+		usb_unरेजिस्टर_notअगरier(bq->usb_phy, &bq->usb_nb);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int bq25890_remove(struct i2c_client *client)
-{
-	struct bq25890_device *bq = i2c_get_clientdata(client);
+अटल पूर्णांक bq25890_हटाओ(काष्ठा i2c_client *client)
+अणु
+	काष्ठा bq25890_device *bq = i2c_get_clientdata(client);
 
-	power_supply_unregister(bq->charger);
+	घातer_supply_unरेजिस्टर(bq->अक्षरger);
 
-	if (!IS_ERR_OR_NULL(bq->usb_phy))
-		usb_unregister_notifier(bq->usb_phy, &bq->usb_nb);
+	अगर (!IS_ERR_OR_शून्य(bq->usb_phy))
+		usb_unरेजिस्टर_notअगरier(bq->usb_phy, &bq->usb_nb);
 
-	/* reset all registers to default values */
+	/* reset all रेजिस्टरs to शेष values */
 	bq25890_chip_reset(bq);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_PM_SLEEP
-static int bq25890_suspend(struct device *dev)
-{
-	struct bq25890_device *bq = dev_get_drvdata(dev);
+#अगर_घोषित CONFIG_PM_SLEEP
+अटल पूर्णांक bq25890_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा bq25890_device *bq = dev_get_drvdata(dev);
 
 	/*
-	 * If charger is removed, while in suspend, make sure ADC is diabled
-	 * since it consumes slightly more power.
+	 * If अक्षरger is हटाओd, जबतक in suspend, make sure ADC is diabled
+	 * since it consumes slightly more घातer.
 	 */
-	return bq25890_field_write(bq, F_CONV_RATE, 0);
-}
+	वापस bq25890_field_ग_लिखो(bq, F_CONV_RATE, 0);
+पूर्ण
 
-static int bq25890_resume(struct device *dev)
-{
-	int ret;
-	struct bq25890_device *bq = dev_get_drvdata(dev);
+अटल पूर्णांक bq25890_resume(काष्ठा device *dev)
+अणु
+	पूर्णांक ret;
+	काष्ठा bq25890_device *bq = dev_get_drvdata(dev);
 
 	mutex_lock(&bq->lock);
 
 	ret = bq25890_get_chip_state(bq, &bq->state);
-	if (ret < 0)
-		goto unlock;
+	अगर (ret < 0)
+		जाओ unlock;
 
-	/* Re-enable ADC only if charger is plugged in. */
-	if (bq->state.online) {
-		ret = bq25890_field_write(bq, F_CONV_RATE, 1);
-		if (ret < 0)
-			goto unlock;
-	}
+	/* Re-enable ADC only अगर अक्षरger is plugged in. */
+	अगर (bq->state.online) अणु
+		ret = bq25890_field_ग_लिखो(bq, F_CONV_RATE, 1);
+		अगर (ret < 0)
+			जाओ unlock;
+	पूर्ण
 
-	/* signal userspace, maybe state changed while suspended */
-	power_supply_changed(bq->charger);
+	/* संकेत userspace, maybe state changed जबतक suspended */
+	घातer_supply_changed(bq->अक्षरger);
 
 unlock:
 	mutex_unlock(&bq->lock);
 
-	return ret;
-}
-#endif
+	वापस ret;
+पूर्ण
+#पूर्ण_अगर
 
-static const struct dev_pm_ops bq25890_pm = {
+अटल स्थिर काष्ठा dev_pm_ops bq25890_pm = अणु
 	SET_SYSTEM_SLEEP_PM_OPS(bq25890_suspend, bq25890_resume)
-};
+पूर्ण;
 
-static const struct i2c_device_id bq25890_i2c_ids[] = {
-	{ "bq25890", 0 },
-	{ "bq25892", 0 },
-	{ "bq25895", 0 },
-	{ "bq25896", 0 },
-	{},
-};
+अटल स्थिर काष्ठा i2c_device_id bq25890_i2c_ids[] = अणु
+	अणु "bq25890", 0 पूर्ण,
+	अणु "bq25892", 0 पूर्ण,
+	अणु "bq25895", 0 पूर्ण,
+	अणु "bq25896", 0 पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(i2c, bq25890_i2c_ids);
 
-static const struct of_device_id bq25890_of_match[] = {
-	{ .compatible = "ti,bq25890", },
-	{ .compatible = "ti,bq25892", },
-	{ .compatible = "ti,bq25895", },
-	{ .compatible = "ti,bq25896", },
-	{ },
-};
+अटल स्थिर काष्ठा of_device_id bq25890_of_match[] = अणु
+	अणु .compatible = "ti,bq25890", पूर्ण,
+	अणु .compatible = "ti,bq25892", पूर्ण,
+	अणु .compatible = "ti,bq25895", पूर्ण,
+	अणु .compatible = "ti,bq25896", पूर्ण,
+	अणु पूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, bq25890_of_match);
 
-#ifdef CONFIG_ACPI
-static const struct acpi_device_id bq25890_acpi_match[] = {
-	{"BQ258900", 0},
-	{},
-};
+#अगर_घोषित CONFIG_ACPI
+अटल स्थिर काष्ठा acpi_device_id bq25890_acpi_match[] = अणु
+	अणु"BQ258900", 0पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(acpi, bq25890_acpi_match);
-#endif
+#पूर्ण_अगर
 
-static struct i2c_driver bq25890_driver = {
-	.driver = {
+अटल काष्ठा i2c_driver bq25890_driver = अणु
+	.driver = अणु
 		.name = "bq25890-charger",
 		.of_match_table = of_match_ptr(bq25890_of_match),
 		.acpi_match_table = ACPI_PTR(bq25890_acpi_match),
 		.pm = &bq25890_pm,
-	},
+	पूर्ण,
 	.probe = bq25890_probe,
-	.remove = bq25890_remove,
+	.हटाओ = bq25890_हटाओ,
 	.id_table = bq25890_i2c_ids,
-};
+पूर्ण;
 module_i2c_driver(bq25890_driver);
 
 MODULE_AUTHOR("Laurentiu Palcu <laurentiu.palcu@intel.com>");

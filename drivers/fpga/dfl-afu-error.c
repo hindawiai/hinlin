@@ -1,58 +1,59 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * Driver for FPGA Accelerated Function Unit (AFU) Error Reporting
+ * Driver क्रम FPGA Accelerated Function Unit (AFU) Error Reporting
  *
  * Copyright 2019 Intel Corporation, Inc.
  *
  * Authors:
- *   Wu Hao <hao.wu@linux.intel.com>
- *   Xiao Guangrong <guangrong.xiao@linux.intel.com>
- *   Joseph Grecco <joe.grecco@intel.com>
- *   Enno Luebbers <enno.luebbers@intel.com>
- *   Tim Whisonant <tim.whisonant@intel.com>
- *   Ananda Ravuri <ananda.ravuri@intel.com>
- *   Mitchel Henry <henry.mitchel@intel.com>
+ *   Wu Hao <hao.wu@linux.पूर्णांकel.com>
+ *   Xiao Guangrong <guangrong.xiao@linux.पूर्णांकel.com>
+ *   Joseph Grecco <joe.grecco@पूर्णांकel.com>
+ *   Enno Luebbers <enno.luebbers@पूर्णांकel.com>
+ *   Tim Whisonant <tim.whisonant@पूर्णांकel.com>
+ *   Ananda Ravuri <ananda.ravuri@पूर्णांकel.com>
+ *   Mitchel Henry <henry.mitchel@पूर्णांकel.com>
  */
 
-#include <linux/fpga-dfl.h>
-#include <linux/uaccess.h>
+#समावेश <linux/fpga-dfl.h>
+#समावेश <linux/uaccess.h>
 
-#include "dfl-afu.h"
+#समावेश "dfl-afu.h"
 
-#define PORT_ERROR_MASK		0x8
-#define PORT_ERROR		0x10
-#define PORT_FIRST_ERROR	0x18
-#define PORT_MALFORMED_REQ0	0x20
-#define PORT_MALFORMED_REQ1	0x28
+#घोषणा PORT_ERROR_MASK		0x8
+#घोषणा PORT_ERROR		0x10
+#घोषणा PORT_FIRST_ERROR	0x18
+#घोषणा PORT_MALFORMED_REQ0	0x20
+#घोषणा PORT_MALFORMED_REQ1	0x28
 
-#define ERROR_MASK		GENMASK_ULL(63, 0)
+#घोषणा ERROR_MASK		GENMASK_ULL(63, 0)
 
-/* mask or unmask port errors by the error mask register. */
-static void __afu_port_err_mask(struct device *dev, bool mask)
-{
-	void __iomem *base;
+/* mask or unmask port errors by the error mask रेजिस्टर. */
+अटल व्योम __afu_port_err_mask(काष्ठा device *dev, bool mask)
+अणु
+	व्योम __iomem *base;
 
 	base = dfl_get_feature_ioaddr_by_id(dev, PORT_FEATURE_ID_ERROR);
 
-	writeq(mask ? ERROR_MASK : 0, base + PORT_ERROR_MASK);
-}
+	ग_लिखोq(mask ? ERROR_MASK : 0, base + PORT_ERROR_MASK);
+पूर्ण
 
-static void afu_port_err_mask(struct device *dev, bool mask)
-{
-	struct dfl_feature_platform_data *pdata = dev_get_platdata(dev);
+अटल व्योम afu_port_err_mask(काष्ठा device *dev, bool mask)
+अणु
+	काष्ठा dfl_feature_platक्रमm_data *pdata = dev_get_platdata(dev);
 
 	mutex_lock(&pdata->lock);
 	__afu_port_err_mask(dev, mask);
 	mutex_unlock(&pdata->lock);
-}
+पूर्ण
 
 /* clear port errors. */
-static int afu_port_err_clear(struct device *dev, u64 err)
-{
-	struct dfl_feature_platform_data *pdata = dev_get_platdata(dev);
-	struct platform_device *pdev = to_platform_device(dev);
-	void __iomem *base_err, *base_hdr;
-	int enable_ret = 0, ret = -EBUSY;
+अटल पूर्णांक afu_port_err_clear(काष्ठा device *dev, u64 err)
+अणु
+	काष्ठा dfl_feature_platक्रमm_data *pdata = dev_get_platdata(dev);
+	काष्ठा platक्रमm_device *pdev = to_platक्रमm_device(dev);
+	व्योम __iomem *base_err, *base_hdr;
+	पूर्णांक enable_ret = 0, ret = -EBUSY;
 	u64 v;
 
 	base_err = dfl_get_feature_ioaddr_by_id(dev, PORT_FEATURE_ID_ERROR);
@@ -63,7 +64,7 @@ static int afu_port_err_clear(struct device *dev, u64 err)
 	/*
 	 * clear Port Errors
 	 *
-	 * - Check for AP6 State
+	 * - Check क्रम AP6 State
 	 * - Halt Port by keeping Port in reset
 	 * - Set PORT Error mask to all 1 to mask errors
 	 * - Clear all errors
@@ -72,34 +73,34 @@ static int afu_port_err_clear(struct device *dev, u64 err)
 	 * - Enable Port by pulling the port out of reset
 	 */
 
-	/* if device is still in AP6 power state, can not clear any error. */
-	v = readq(base_hdr + PORT_HDR_STS);
-	if (FIELD_GET(PORT_STS_PWR_STATE, v) == PORT_STS_PWR_STATE_AP6) {
+	/* अगर device is still in AP6 घातer state, can not clear any error. */
+	v = पढ़ोq(base_hdr + PORT_HDR_STS);
+	अगर (FIELD_GET(PORT_STS_PWR_STATE, v) == PORT_STS_PWR_STATE_AP6) अणु
 		dev_err(dev, "Could not clear errors, device in AP6 state.\n");
-		goto done;
-	}
+		जाओ करोne;
+	पूर्ण
 
 	/* Halt Port by keeping Port in reset */
 	ret = __afu_port_disable(pdev);
-	if (ret)
-		goto done;
+	अगर (ret)
+		जाओ करोne;
 
 	/* Mask all errors */
 	__afu_port_err_mask(dev, true);
 
-	/* Clear errors if err input matches with current port errors.*/
-	v = readq(base_err + PORT_ERROR);
+	/* Clear errors अगर err input matches with current port errors.*/
+	v = पढ़ोq(base_err + PORT_ERROR);
 
-	if (v == err) {
-		writeq(v, base_err + PORT_ERROR);
+	अगर (v == err) अणु
+		ग_लिखोq(v, base_err + PORT_ERROR);
 
-		v = readq(base_err + PORT_FIRST_ERROR);
-		writeq(v, base_err + PORT_FIRST_ERROR);
-	} else {
+		v = पढ़ोq(base_err + PORT_FIRST_ERROR);
+		ग_लिखोq(v, base_err + PORT_FIRST_ERROR);
+	पूर्ण अन्यथा अणु
 		dev_warn(dev, "%s: received 0x%llx, expected 0x%llx\n",
 			 __func__, v, err);
 		ret = -EINVAL;
-	}
+	पूर्ण
 
 	/* Clear mask */
 	__afu_port_err_mask(dev, false);
@@ -107,143 +108,143 @@ static int afu_port_err_clear(struct device *dev, u64 err)
 	/* Enable the Port by clearing the reset */
 	enable_ret = __afu_port_enable(pdev);
 
-done:
+करोne:
 	mutex_unlock(&pdata->lock);
-	return enable_ret ? enable_ret : ret;
-}
+	वापस enable_ret ? enable_ret : ret;
+पूर्ण
 
-static ssize_t errors_show(struct device *dev, struct device_attribute *attr,
-			   char *buf)
-{
-	struct dfl_feature_platform_data *pdata = dev_get_platdata(dev);
-	void __iomem *base;
+अटल sमाप_प्रकार errors_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
+			   अक्षर *buf)
+अणु
+	काष्ठा dfl_feature_platक्रमm_data *pdata = dev_get_platdata(dev);
+	व्योम __iomem *base;
 	u64 error;
 
 	base = dfl_get_feature_ioaddr_by_id(dev, PORT_FEATURE_ID_ERROR);
 
 	mutex_lock(&pdata->lock);
-	error = readq(base + PORT_ERROR);
+	error = पढ़ोq(base + PORT_ERROR);
 	mutex_unlock(&pdata->lock);
 
-	return sprintf(buf, "0x%llx\n", (unsigned long long)error);
-}
+	वापस प्र_लिखो(buf, "0x%llx\n", (अचिन्हित दीर्घ दीर्घ)error);
+पूर्ण
 
-static ssize_t errors_store(struct device *dev, struct device_attribute *attr,
-			    const char *buff, size_t count)
-{
+अटल sमाप_प्रकार errors_store(काष्ठा device *dev, काष्ठा device_attribute *attr,
+			    स्थिर अक्षर *buff, माप_प्रकार count)
+अणु
 	u64 value;
-	int ret;
+	पूर्णांक ret;
 
-	if (kstrtou64(buff, 0, &value))
-		return -EINVAL;
+	अगर (kstrtou64(buff, 0, &value))
+		वापस -EINVAL;
 
 	ret = afu_port_err_clear(dev, value);
 
-	return ret ? ret : count;
-}
-static DEVICE_ATTR_RW(errors);
+	वापस ret ? ret : count;
+पूर्ण
+अटल DEVICE_ATTR_RW(errors);
 
-static ssize_t first_error_show(struct device *dev,
-				struct device_attribute *attr, char *buf)
-{
-	struct dfl_feature_platform_data *pdata = dev_get_platdata(dev);
-	void __iomem *base;
+अटल sमाप_प्रकार first_error_show(काष्ठा device *dev,
+				काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा dfl_feature_platक्रमm_data *pdata = dev_get_platdata(dev);
+	व्योम __iomem *base;
 	u64 error;
 
 	base = dfl_get_feature_ioaddr_by_id(dev, PORT_FEATURE_ID_ERROR);
 
 	mutex_lock(&pdata->lock);
-	error = readq(base + PORT_FIRST_ERROR);
+	error = पढ़ोq(base + PORT_FIRST_ERROR);
 	mutex_unlock(&pdata->lock);
 
-	return sprintf(buf, "0x%llx\n", (unsigned long long)error);
-}
-static DEVICE_ATTR_RO(first_error);
+	वापस प्र_लिखो(buf, "0x%llx\n", (अचिन्हित दीर्घ दीर्घ)error);
+पूर्ण
+अटल DEVICE_ATTR_RO(first_error);
 
-static ssize_t first_malformed_req_show(struct device *dev,
-					struct device_attribute *attr,
-					char *buf)
-{
-	struct dfl_feature_platform_data *pdata = dev_get_platdata(dev);
-	void __iomem *base;
+अटल sमाप_प्रकार first_malक्रमmed_req_show(काष्ठा device *dev,
+					काष्ठा device_attribute *attr,
+					अक्षर *buf)
+अणु
+	काष्ठा dfl_feature_platक्रमm_data *pdata = dev_get_platdata(dev);
+	व्योम __iomem *base;
 	u64 req0, req1;
 
 	base = dfl_get_feature_ioaddr_by_id(dev, PORT_FEATURE_ID_ERROR);
 
 	mutex_lock(&pdata->lock);
-	req0 = readq(base + PORT_MALFORMED_REQ0);
-	req1 = readq(base + PORT_MALFORMED_REQ1);
+	req0 = पढ़ोq(base + PORT_MALFORMED_REQ0);
+	req1 = पढ़ोq(base + PORT_MALFORMED_REQ1);
 	mutex_unlock(&pdata->lock);
 
-	return sprintf(buf, "0x%016llx%016llx\n",
-		       (unsigned long long)req1, (unsigned long long)req0);
-}
-static DEVICE_ATTR_RO(first_malformed_req);
+	वापस प्र_लिखो(buf, "0x%016llx%016llx\n",
+		       (अचिन्हित दीर्घ दीर्घ)req1, (अचिन्हित दीर्घ दीर्घ)req0);
+पूर्ण
+अटल DEVICE_ATTR_RO(first_malक्रमmed_req);
 
-static struct attribute *port_err_attrs[] = {
+अटल काष्ठा attribute *port_err_attrs[] = अणु
 	&dev_attr_errors.attr,
 	&dev_attr_first_error.attr,
-	&dev_attr_first_malformed_req.attr,
-	NULL,
-};
+	&dev_attr_first_malक्रमmed_req.attr,
+	शून्य,
+पूर्ण;
 
-static umode_t port_err_attrs_visible(struct kobject *kobj,
-				      struct attribute *attr, int n)
-{
-	struct device *dev = kobj_to_dev(kobj);
+अटल umode_t port_err_attrs_visible(काष्ठा kobject *kobj,
+				      काष्ठा attribute *attr, पूर्णांक n)
+अणु
+	काष्ठा device *dev = kobj_to_dev(kobj);
 
 	/*
-	 * sysfs entries are visible only if related private feature is
-	 * enumerated.
+	 * sysfs entries are visible only अगर related निजी feature is
+	 * क्रमागतerated.
 	 */
-	if (!dfl_get_feature_by_id(dev, PORT_FEATURE_ID_ERROR))
-		return 0;
+	अगर (!dfl_get_feature_by_id(dev, PORT_FEATURE_ID_ERROR))
+		वापस 0;
 
-	return attr->mode;
-}
+	वापस attr->mode;
+पूर्ण
 
-const struct attribute_group port_err_group = {
+स्थिर काष्ठा attribute_group port_err_group = अणु
 	.name       = "errors",
 	.attrs      = port_err_attrs,
 	.is_visible = port_err_attrs_visible,
-};
+पूर्ण;
 
-static int port_err_init(struct platform_device *pdev,
-			 struct dfl_feature *feature)
-{
+अटल पूर्णांक port_err_init(काष्ठा platक्रमm_device *pdev,
+			 काष्ठा dfl_feature *feature)
+अणु
 	afu_port_err_mask(&pdev->dev, false);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void port_err_uinit(struct platform_device *pdev,
-			   struct dfl_feature *feature)
-{
+अटल व्योम port_err_uinit(काष्ठा platक्रमm_device *pdev,
+			   काष्ठा dfl_feature *feature)
+अणु
 	afu_port_err_mask(&pdev->dev, true);
-}
+पूर्ण
 
-static long
-port_err_ioctl(struct platform_device *pdev, struct dfl_feature *feature,
-	       unsigned int cmd, unsigned long arg)
-{
-	switch (cmd) {
-	case DFL_FPGA_PORT_ERR_GET_IRQ_NUM:
-		return dfl_feature_ioctl_get_num_irqs(pdev, feature, arg);
-	case DFL_FPGA_PORT_ERR_SET_IRQ:
-		return dfl_feature_ioctl_set_irq(pdev, feature, arg);
-	default:
+अटल दीर्घ
+port_err_ioctl(काष्ठा platक्रमm_device *pdev, काष्ठा dfl_feature *feature,
+	       अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
+अणु
+	चयन (cmd) अणु
+	हाल DFL_FPGA_PORT_ERR_GET_IRQ_NUM:
+		वापस dfl_feature_ioctl_get_num_irqs(pdev, feature, arg);
+	हाल DFL_FPGA_PORT_ERR_SET_IRQ:
+		वापस dfl_feature_ioctl_set_irq(pdev, feature, arg);
+	शेष:
 		dev_dbg(&pdev->dev, "%x cmd not handled", cmd);
-		return -ENODEV;
-	}
-}
+		वापस -ENODEV;
+	पूर्ण
+पूर्ण
 
-const struct dfl_feature_id port_err_id_table[] = {
-	{.id = PORT_FEATURE_ID_ERROR,},
-	{0,}
-};
+स्थिर काष्ठा dfl_feature_id port_err_id_table[] = अणु
+	अणु.id = PORT_FEATURE_ID_ERROR,पूर्ण,
+	अणु0,पूर्ण
+पूर्ण;
 
-const struct dfl_feature_ops port_err_ops = {
+स्थिर काष्ठा dfl_feature_ops port_err_ops = अणु
 	.init = port_err_init,
 	.uinit = port_err_uinit,
 	.ioctl = port_err_ioctl,
-};
+पूर्ण;

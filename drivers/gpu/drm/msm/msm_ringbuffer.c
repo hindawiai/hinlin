@@ -1,27 +1,28 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (C) 2013 Red Hat
  * Author: Rob Clark <robdclark@gmail.com>
  */
 
-#include "msm_ringbuffer.h"
-#include "msm_gpu.h"
+#समावेश "msm_ringbuffer.h"
+#समावेश "msm_gpu.h"
 
-struct msm_ringbuffer *msm_ringbuffer_new(struct msm_gpu *gpu, int id,
-		void *memptrs, uint64_t memptrs_iova)
-{
-	struct msm_ringbuffer *ring;
-	char name[32];
-	int ret;
+काष्ठा msm_ringbuffer *msm_ringbuffer_new(काष्ठा msm_gpu *gpu, पूर्णांक id,
+		व्योम *memptrs, uपूर्णांक64_t memptrs_iova)
+अणु
+	काष्ठा msm_ringbuffer *ring;
+	अक्षर name[32];
+	पूर्णांक ret;
 
-	/* We assume everwhere that MSM_GPU_RINGBUFFER_SZ is a power of 2 */
-	BUILD_BUG_ON(!is_power_of_2(MSM_GPU_RINGBUFFER_SZ));
+	/* We assume everwhere that MSM_GPU_RINGBUFFER_SZ is a घातer of 2 */
+	BUILD_BUG_ON(!is_घातer_of_2(MSM_GPU_RINGBUFFER_SZ));
 
-	ring = kzalloc(sizeof(*ring), GFP_KERNEL);
-	if (!ring) {
+	ring = kzalloc(माप(*ring), GFP_KERNEL);
+	अगर (!ring) अणु
 		ret = -ENOMEM;
-		goto fail;
-	}
+		जाओ fail;
+	पूर्ण
 
 	ring->gpu = gpu;
 	ring->id = id;
@@ -30,11 +31,11 @@ struct msm_ringbuffer *msm_ringbuffer_new(struct msm_gpu *gpu, int id,
 		check_apriv(gpu, MSM_BO_WC | MSM_BO_GPU_READONLY),
 		gpu->aspace, &ring->bo, &ring->iova);
 
-	if (IS_ERR(ring->start)) {
+	अगर (IS_ERR(ring->start)) अणु
 		ret = PTR_ERR(ring->start);
 		ring->start = 0;
-		goto fail;
-	}
+		जाओ fail;
+	पूर्ण
 
 	msm_gem_object_set_name(ring->bo, "ring%d", id);
 
@@ -49,25 +50,25 @@ struct msm_ringbuffer *msm_ringbuffer_new(struct msm_gpu *gpu, int id,
 	spin_lock_init(&ring->submit_lock);
 	spin_lock_init(&ring->preempt_lock);
 
-	snprintf(name, sizeof(name), "gpu-ring-%d", ring->id);
+	snम_लिखो(name, माप(name), "gpu-ring-%d", ring->id);
 
 	ring->fctx = msm_fence_context_alloc(gpu->dev, name);
 
-	return ring;
+	वापस ring;
 
 fail:
 	msm_ringbuffer_destroy(ring);
-	return ERR_PTR(ret);
-}
+	वापस ERR_PTR(ret);
+पूर्ण
 
-void msm_ringbuffer_destroy(struct msm_ringbuffer *ring)
-{
-	if (IS_ERR_OR_NULL(ring))
-		return;
+व्योम msm_ringbuffer_destroy(काष्ठा msm_ringbuffer *ring)
+अणु
+	अगर (IS_ERR_OR_शून्य(ring))
+		वापस;
 
-	msm_fence_context_free(ring->fctx);
+	msm_fence_context_मुक्त(ring->fctx);
 
 	msm_gem_kernel_put(ring->bo, ring->gpu->aspace, false);
 
-	kfree(ring);
-}
+	kमुक्त(ring);
+पूर्ण

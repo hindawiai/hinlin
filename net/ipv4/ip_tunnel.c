@@ -1,261 +1,262 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (c) 2013 Nicira, Inc.
  */
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include <linux/capability.h>
-#include <linux/module.h>
-#include <linux/types.h>
-#include <linux/kernel.h>
-#include <linux/slab.h>
-#include <linux/uaccess.h>
-#include <linux/skbuff.h>
-#include <linux/netdevice.h>
-#include <linux/in.h>
-#include <linux/tcp.h>
-#include <linux/udp.h>
-#include <linux/if_arp.h>
-#include <linux/init.h>
-#include <linux/in6.h>
-#include <linux/inetdevice.h>
-#include <linux/igmp.h>
-#include <linux/netfilter_ipv4.h>
-#include <linux/etherdevice.h>
-#include <linux/if_ether.h>
-#include <linux/if_vlan.h>
-#include <linux/rculist.h>
-#include <linux/err.h>
+#समावेश <linux/capability.h>
+#समावेश <linux/module.h>
+#समावेश <linux/types.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/uaccess.h>
+#समावेश <linux/skbuff.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/in.h>
+#समावेश <linux/tcp.h>
+#समावेश <linux/udp.h>
+#समावेश <linux/अगर_arp.h>
+#समावेश <linux/init.h>
+#समावेश <linux/in6.h>
+#समावेश <linux/inetdevice.h>
+#समावेश <linux/igmp.h>
+#समावेश <linux/netfilter_ipv4.h>
+#समावेश <linux/etherdevice.h>
+#समावेश <linux/अगर_ether.h>
+#समावेश <linux/अगर_vlan.h>
+#समावेश <linux/rculist.h>
+#समावेश <linux/err.h>
 
-#include <net/sock.h>
-#include <net/ip.h>
-#include <net/icmp.h>
-#include <net/protocol.h>
-#include <net/ip_tunnels.h>
-#include <net/arp.h>
-#include <net/checksum.h>
-#include <net/dsfield.h>
-#include <net/inet_ecn.h>
-#include <net/xfrm.h>
-#include <net/net_namespace.h>
-#include <net/netns/generic.h>
-#include <net/rtnetlink.h>
-#include <net/udp.h>
-#include <net/dst_metadata.h>
+#समावेश <net/sock.h>
+#समावेश <net/ip.h>
+#समावेश <net/icmp.h>
+#समावेश <net/protocol.h>
+#समावेश <net/ip_tunnels.h>
+#समावेश <net/arp.h>
+#समावेश <net/checksum.h>
+#समावेश <net/dsfield.h>
+#समावेश <net/inet_ecn.h>
+#समावेश <net/xfrm.h>
+#समावेश <net/net_namespace.h>
+#समावेश <net/netns/generic.h>
+#समावेश <net/rtnetlink.h>
+#समावेश <net/udp.h>
+#समावेश <net/dst_metadata.h>
 
-#if IS_ENABLED(CONFIG_IPV6)
-#include <net/ipv6.h>
-#include <net/ip6_fib.h>
-#include <net/ip6_route.h>
-#endif
+#अगर IS_ENABLED(CONFIG_IPV6)
+#समावेश <net/ipv6.h>
+#समावेश <net/ip6_fib.h>
+#समावेश <net/ip6_route.h>
+#पूर्ण_अगर
 
-static unsigned int ip_tunnel_hash(__be32 key, __be32 remote)
-{
-	return hash_32((__force u32)key ^ (__force u32)remote,
+अटल अचिन्हित पूर्णांक ip_tunnel_hash(__be32 key, __be32 remote)
+अणु
+	वापस hash_32((__क्रमce u32)key ^ (__क्रमce u32)remote,
 			 IP_TNL_HASH_BITS);
-}
+पूर्ण
 
-static bool ip_tunnel_key_match(const struct ip_tunnel_parm *p,
+अटल bool ip_tunnel_key_match(स्थिर काष्ठा ip_tunnel_parm *p,
 				__be16 flags, __be32 key)
-{
-	if (p->i_flags & TUNNEL_KEY) {
-		if (flags & TUNNEL_KEY)
-			return key == p->i_key;
-		else
+अणु
+	अगर (p->i_flags & TUNNEL_KEY) अणु
+		अगर (flags & TUNNEL_KEY)
+			वापस key == p->i_key;
+		अन्यथा
 			/* key expected, none present */
-			return false;
-	} else
-		return !(flags & TUNNEL_KEY);
-}
+			वापस false;
+	पूर्ण अन्यथा
+		वापस !(flags & TUNNEL_KEY);
+पूर्ण
 
 /* Fallback tunnel: no source, no destination, no key, no options
 
    Tunnel hash table:
-   We require exact key match i.e. if a key is present in packet
-   it will match only tunnel with the same key; if it is not present,
+   We require exact key match i.e. अगर a key is present in packet
+   it will match only tunnel with the same key; अगर it is not present,
    it will match only keyless tunnel.
 
-   All keysless packets, if not matched configured keyless tunnels
+   All keysless packets, अगर not matched configured keyless tunnels
    will match fallback tunnel.
-   Given src, dst and key, find appropriate for input tunnel.
+   Given src, dst and key, find appropriate क्रम input tunnel.
 */
-struct ip_tunnel *ip_tunnel_lookup(struct ip_tunnel_net *itn,
-				   int link, __be16 flags,
+काष्ठा ip_tunnel *ip_tunnel_lookup(काष्ठा ip_tunnel_net *itn,
+				   पूर्णांक link, __be16 flags,
 				   __be32 remote, __be32 local,
 				   __be32 key)
-{
-	struct ip_tunnel *t, *cand = NULL;
-	struct hlist_head *head;
-	struct net_device *ndev;
-	unsigned int hash;
+अणु
+	काष्ठा ip_tunnel *t, *cand = शून्य;
+	काष्ठा hlist_head *head;
+	काष्ठा net_device *ndev;
+	अचिन्हित पूर्णांक hash;
 
 	hash = ip_tunnel_hash(key, remote);
 	head = &itn->tunnels[hash];
 
-	hlist_for_each_entry_rcu(t, head, hash_node) {
-		if (local != t->parms.iph.saddr ||
+	hlist_क्रम_each_entry_rcu(t, head, hash_node) अणु
+		अगर (local != t->parms.iph.saddr ||
 		    remote != t->parms.iph.daddr ||
 		    !(t->dev->flags & IFF_UP))
-			continue;
+			जारी;
 
-		if (!ip_tunnel_key_match(&t->parms, flags, key))
-			continue;
+		अगर (!ip_tunnel_key_match(&t->parms, flags, key))
+			जारी;
 
-		if (t->parms.link == link)
-			return t;
-		else
+		अगर (t->parms.link == link)
+			वापस t;
+		अन्यथा
 			cand = t;
-	}
+	पूर्ण
 
-	hlist_for_each_entry_rcu(t, head, hash_node) {
-		if (remote != t->parms.iph.daddr ||
+	hlist_क्रम_each_entry_rcu(t, head, hash_node) अणु
+		अगर (remote != t->parms.iph.daddr ||
 		    t->parms.iph.saddr != 0 ||
 		    !(t->dev->flags & IFF_UP))
-			continue;
+			जारी;
 
-		if (!ip_tunnel_key_match(&t->parms, flags, key))
-			continue;
+		अगर (!ip_tunnel_key_match(&t->parms, flags, key))
+			जारी;
 
-		if (t->parms.link == link)
-			return t;
-		else if (!cand)
+		अगर (t->parms.link == link)
+			वापस t;
+		अन्यथा अगर (!cand)
 			cand = t;
-	}
+	पूर्ण
 
 	hash = ip_tunnel_hash(key, 0);
 	head = &itn->tunnels[hash];
 
-	hlist_for_each_entry_rcu(t, head, hash_node) {
-		if ((local != t->parms.iph.saddr || t->parms.iph.daddr != 0) &&
+	hlist_क्रम_each_entry_rcu(t, head, hash_node) अणु
+		अगर ((local != t->parms.iph.saddr || t->parms.iph.daddr != 0) &&
 		    (local != t->parms.iph.daddr || !ipv4_is_multicast(local)))
-			continue;
+			जारी;
 
-		if (!(t->dev->flags & IFF_UP))
-			continue;
+		अगर (!(t->dev->flags & IFF_UP))
+			जारी;
 
-		if (!ip_tunnel_key_match(&t->parms, flags, key))
-			continue;
+		अगर (!ip_tunnel_key_match(&t->parms, flags, key))
+			जारी;
 
-		if (t->parms.link == link)
-			return t;
-		else if (!cand)
+		अगर (t->parms.link == link)
+			वापस t;
+		अन्यथा अगर (!cand)
 			cand = t;
-	}
+	पूर्ण
 
-	hlist_for_each_entry_rcu(t, head, hash_node) {
-		if ((!(flags & TUNNEL_NO_KEY) && t->parms.i_key != key) ||
+	hlist_क्रम_each_entry_rcu(t, head, hash_node) अणु
+		अगर ((!(flags & TUNNEL_NO_KEY) && t->parms.i_key != key) ||
 		    t->parms.iph.saddr != 0 ||
 		    t->parms.iph.daddr != 0 ||
 		    !(t->dev->flags & IFF_UP))
-			continue;
+			जारी;
 
-		if (t->parms.link == link)
-			return t;
-		else if (!cand)
+		अगर (t->parms.link == link)
+			वापस t;
+		अन्यथा अगर (!cand)
 			cand = t;
-	}
+	पूर्ण
 
-	if (cand)
-		return cand;
+	अगर (cand)
+		वापस cand;
 
 	t = rcu_dereference(itn->collect_md_tun);
-	if (t && t->dev->flags & IFF_UP)
-		return t;
+	अगर (t && t->dev->flags & IFF_UP)
+		वापस t;
 
 	ndev = READ_ONCE(itn->fb_tunnel_dev);
-	if (ndev && ndev->flags & IFF_UP)
-		return netdev_priv(ndev);
+	अगर (ndev && ndev->flags & IFF_UP)
+		वापस netdev_priv(ndev);
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 EXPORT_SYMBOL_GPL(ip_tunnel_lookup);
 
-static struct hlist_head *ip_bucket(struct ip_tunnel_net *itn,
-				    struct ip_tunnel_parm *parms)
-{
-	unsigned int h;
+अटल काष्ठा hlist_head *ip_bucket(काष्ठा ip_tunnel_net *itn,
+				    काष्ठा ip_tunnel_parm *parms)
+अणु
+	अचिन्हित पूर्णांक h;
 	__be32 remote;
 	__be32 i_key = parms->i_key;
 
-	if (parms->iph.daddr && !ipv4_is_multicast(parms->iph.daddr))
+	अगर (parms->iph.daddr && !ipv4_is_multicast(parms->iph.daddr))
 		remote = parms->iph.daddr;
-	else
+	अन्यथा
 		remote = 0;
 
-	if (!(parms->i_flags & TUNNEL_KEY) && (parms->i_flags & VTI_ISVTI))
+	अगर (!(parms->i_flags & TUNNEL_KEY) && (parms->i_flags & VTI_ISVTI))
 		i_key = 0;
 
 	h = ip_tunnel_hash(i_key, remote);
-	return &itn->tunnels[h];
-}
+	वापस &itn->tunnels[h];
+पूर्ण
 
-static void ip_tunnel_add(struct ip_tunnel_net *itn, struct ip_tunnel *t)
-{
-	struct hlist_head *head = ip_bucket(itn, &t->parms);
+अटल व्योम ip_tunnel_add(काष्ठा ip_tunnel_net *itn, काष्ठा ip_tunnel *t)
+अणु
+	काष्ठा hlist_head *head = ip_bucket(itn, &t->parms);
 
-	if (t->collect_md)
-		rcu_assign_pointer(itn->collect_md_tun, t);
+	अगर (t->collect_md)
+		rcu_assign_poपूर्णांकer(itn->collect_md_tun, t);
 	hlist_add_head_rcu(&t->hash_node, head);
-}
+पूर्ण
 
-static void ip_tunnel_del(struct ip_tunnel_net *itn, struct ip_tunnel *t)
-{
-	if (t->collect_md)
-		rcu_assign_pointer(itn->collect_md_tun, NULL);
+अटल व्योम ip_tunnel_del(काष्ठा ip_tunnel_net *itn, काष्ठा ip_tunnel *t)
+अणु
+	अगर (t->collect_md)
+		rcu_assign_poपूर्णांकer(itn->collect_md_tun, शून्य);
 	hlist_del_init_rcu(&t->hash_node);
-}
+पूर्ण
 
-static struct ip_tunnel *ip_tunnel_find(struct ip_tunnel_net *itn,
-					struct ip_tunnel_parm *parms,
-					int type)
-{
+अटल काष्ठा ip_tunnel *ip_tunnel_find(काष्ठा ip_tunnel_net *itn,
+					काष्ठा ip_tunnel_parm *parms,
+					पूर्णांक type)
+अणु
 	__be32 remote = parms->iph.daddr;
 	__be32 local = parms->iph.saddr;
 	__be32 key = parms->i_key;
 	__be16 flags = parms->i_flags;
-	int link = parms->link;
-	struct ip_tunnel *t = NULL;
-	struct hlist_head *head = ip_bucket(itn, parms);
+	पूर्णांक link = parms->link;
+	काष्ठा ip_tunnel *t = शून्य;
+	काष्ठा hlist_head *head = ip_bucket(itn, parms);
 
-	hlist_for_each_entry_rcu(t, head, hash_node) {
-		if (local == t->parms.iph.saddr &&
+	hlist_क्रम_each_entry_rcu(t, head, hash_node) अणु
+		अगर (local == t->parms.iph.saddr &&
 		    remote == t->parms.iph.daddr &&
 		    link == t->parms.link &&
 		    type == t->dev->type &&
 		    ip_tunnel_key_match(&t->parms, flags, key))
-			break;
-	}
-	return t;
-}
+			अवरोध;
+	पूर्ण
+	वापस t;
+पूर्ण
 
-static struct net_device *__ip_tunnel_create(struct net *net,
-					     const struct rtnl_link_ops *ops,
-					     struct ip_tunnel_parm *parms)
-{
-	int err;
-	struct ip_tunnel *tunnel;
-	struct net_device *dev;
-	char name[IFNAMSIZ];
+अटल काष्ठा net_device *__ip_tunnel_create(काष्ठा net *net,
+					     स्थिर काष्ठा rtnl_link_ops *ops,
+					     काष्ठा ip_tunnel_parm *parms)
+अणु
+	पूर्णांक err;
+	काष्ठा ip_tunnel *tunnel;
+	काष्ठा net_device *dev;
+	अक्षर name[IFNAMSIZ];
 
 	err = -E2BIG;
-	if (parms->name[0]) {
-		if (!dev_valid_name(parms->name))
-			goto failed;
+	अगर (parms->name[0]) अणु
+		अगर (!dev_valid_name(parms->name))
+			जाओ failed;
 		strlcpy(name, parms->name, IFNAMSIZ);
-	} else {
-		if (strlen(ops->kind) > (IFNAMSIZ - 3))
-			goto failed;
-		strcpy(name, ops->kind);
-		strcat(name, "%d");
-	}
+	पूर्ण अन्यथा अणु
+		अगर (म_माप(ops->kind) > (IFNAMSIZ - 3))
+			जाओ failed;
+		म_नकल(name, ops->kind);
+		म_जोड़ो(name, "%d");
+	पूर्ण
 
 	ASSERT_RTNL();
 	dev = alloc_netdev(ops->priv_size, name, NET_NAME_UNKNOWN, ops->setup);
-	if (!dev) {
+	अगर (!dev) अणु
 		err = -ENOMEM;
-		goto failed;
-	}
+		जाओ failed;
+	पूर्ण
 	dev_net_set(dev, net);
 
 	dev->rtnl_link_ops = ops;
@@ -264,33 +265,33 @@ static struct net_device *__ip_tunnel_create(struct net *net,
 	tunnel->parms = *parms;
 	tunnel->net = net;
 
-	err = register_netdevice(dev);
-	if (err)
-		goto failed_free;
+	err = रेजिस्टर_netdevice(dev);
+	अगर (err)
+		जाओ failed_मुक्त;
 
-	return dev;
+	वापस dev;
 
-failed_free:
-	free_netdev(dev);
+failed_मुक्त:
+	मुक्त_netdev(dev);
 failed:
-	return ERR_PTR(err);
-}
+	वापस ERR_PTR(err);
+पूर्ण
 
-static int ip_tunnel_bind_dev(struct net_device *dev)
-{
-	struct net_device *tdev = NULL;
-	struct ip_tunnel *tunnel = netdev_priv(dev);
-	const struct iphdr *iph;
-	int hlen = LL_MAX_HEADER;
-	int mtu = ETH_DATA_LEN;
-	int t_hlen = tunnel->hlen + sizeof(struct iphdr);
+अटल पूर्णांक ip_tunnel_bind_dev(काष्ठा net_device *dev)
+अणु
+	काष्ठा net_device *tdev = शून्य;
+	काष्ठा ip_tunnel *tunnel = netdev_priv(dev);
+	स्थिर काष्ठा iphdr *iph;
+	पूर्णांक hlen = LL_MAX_HEADER;
+	पूर्णांक mtu = ETH_DATA_LEN;
+	पूर्णांक t_hlen = tunnel->hlen + माप(काष्ठा iphdr);
 
 	iph = &tunnel->parms.iph;
 
 	/* Guess output device to choose reasonable mtu and needed_headroom */
-	if (iph->daddr) {
-		struct flowi4 fl4;
-		struct rtable *rt;
+	अगर (iph->daddr) अणु
+		काष्ठा flowi4 fl4;
+		काष्ठा rtable *rt;
 
 		ip_tunnel_init_flow(&fl4, iph->protocol, iph->daddr,
 				    iph->saddr, tunnel->parms.o_key,
@@ -298,173 +299,173 @@ static int ip_tunnel_bind_dev(struct net_device *dev)
 				    tunnel->fwmark, 0);
 		rt = ip_route_output_key(tunnel->net, &fl4);
 
-		if (!IS_ERR(rt)) {
+		अगर (!IS_ERR(rt)) अणु
 			tdev = rt->dst.dev;
 			ip_rt_put(rt);
-		}
-		if (dev->type != ARPHRD_ETHER)
+		पूर्ण
+		अगर (dev->type != ARPHRD_ETHER)
 			dev->flags |= IFF_POINTOPOINT;
 
 		dst_cache_reset(&tunnel->dst_cache);
-	}
+	पूर्ण
 
-	if (!tdev && tunnel->parms.link)
+	अगर (!tdev && tunnel->parms.link)
 		tdev = __dev_get_by_index(tunnel->net, tunnel->parms.link);
 
-	if (tdev) {
+	अगर (tdev) अणु
 		hlen = tdev->hard_header_len + tdev->needed_headroom;
 		mtu = min(tdev->mtu, IP_MAX_MTU);
-	}
+	पूर्ण
 
 	dev->needed_headroom = t_hlen + hlen;
 	mtu -= t_hlen;
 
-	if (mtu < IPV4_MIN_MTU)
+	अगर (mtu < IPV4_MIN_MTU)
 		mtu = IPV4_MIN_MTU;
 
-	return mtu;
-}
+	वापस mtu;
+पूर्ण
 
-static struct ip_tunnel *ip_tunnel_create(struct net *net,
-					  struct ip_tunnel_net *itn,
-					  struct ip_tunnel_parm *parms)
-{
-	struct ip_tunnel *nt;
-	struct net_device *dev;
-	int t_hlen;
-	int mtu;
-	int err;
+अटल काष्ठा ip_tunnel *ip_tunnel_create(काष्ठा net *net,
+					  काष्ठा ip_tunnel_net *itn,
+					  काष्ठा ip_tunnel_parm *parms)
+अणु
+	काष्ठा ip_tunnel *nt;
+	काष्ठा net_device *dev;
+	पूर्णांक t_hlen;
+	पूर्णांक mtu;
+	पूर्णांक err;
 
 	dev = __ip_tunnel_create(net, itn->rtnl_link_ops, parms);
-	if (IS_ERR(dev))
-		return ERR_CAST(dev);
+	अगर (IS_ERR(dev))
+		वापस ERR_CAST(dev);
 
 	mtu = ip_tunnel_bind_dev(dev);
 	err = dev_set_mtu(dev, mtu);
-	if (err)
-		goto err_dev_set_mtu;
+	अगर (err)
+		जाओ err_dev_set_mtu;
 
 	nt = netdev_priv(dev);
-	t_hlen = nt->hlen + sizeof(struct iphdr);
+	t_hlen = nt->hlen + माप(काष्ठा iphdr);
 	dev->min_mtu = ETH_MIN_MTU;
 	dev->max_mtu = IP_MAX_MTU - t_hlen;
 	ip_tunnel_add(itn, nt);
-	return nt;
+	वापस nt;
 
 err_dev_set_mtu:
-	unregister_netdevice(dev);
-	return ERR_PTR(err);
-}
+	unरेजिस्टर_netdevice(dev);
+	वापस ERR_PTR(err);
+पूर्ण
 
-int ip_tunnel_rcv(struct ip_tunnel *tunnel, struct sk_buff *skb,
-		  const struct tnl_ptk_info *tpi, struct metadata_dst *tun_dst,
+पूर्णांक ip_tunnel_rcv(काष्ठा ip_tunnel *tunnel, काष्ठा sk_buff *skb,
+		  स्थिर काष्ठा tnl_ptk_info *tpi, काष्ठा metadata_dst *tun_dst,
 		  bool log_ecn_error)
-{
-	const struct iphdr *iph = ip_hdr(skb);
-	int err;
+अणु
+	स्थिर काष्ठा iphdr *iph = ip_hdr(skb);
+	पूर्णांक err;
 
-#ifdef CONFIG_NET_IPGRE_BROADCAST
-	if (ipv4_is_multicast(iph->daddr)) {
+#अगर_घोषित CONFIG_NET_IPGRE_BROADCAST
+	अगर (ipv4_is_multicast(iph->daddr)) अणु
 		tunnel->dev->stats.multicast++;
 		skb->pkt_type = PACKET_BROADCAST;
-	}
-#endif
+	पूर्ण
+#पूर्ण_अगर
 
-	if ((!(tpi->flags&TUNNEL_CSUM) &&  (tunnel->parms.i_flags&TUNNEL_CSUM)) ||
-	     ((tpi->flags&TUNNEL_CSUM) && !(tunnel->parms.i_flags&TUNNEL_CSUM))) {
+	अगर ((!(tpi->flags&TUNNEL_CSUM) &&  (tunnel->parms.i_flags&TUNNEL_CSUM)) ||
+	     ((tpi->flags&TUNNEL_CSUM) && !(tunnel->parms.i_flags&TUNNEL_CSUM))) अणु
 		tunnel->dev->stats.rx_crc_errors++;
 		tunnel->dev->stats.rx_errors++;
-		goto drop;
-	}
+		जाओ drop;
+	पूर्ण
 
-	if (tunnel->parms.i_flags&TUNNEL_SEQ) {
-		if (!(tpi->flags&TUNNEL_SEQ) ||
-		    (tunnel->i_seqno && (s32)(ntohl(tpi->seq) - tunnel->i_seqno) < 0)) {
-			tunnel->dev->stats.rx_fifo_errors++;
+	अगर (tunnel->parms.i_flags&TUNNEL_SEQ) अणु
+		अगर (!(tpi->flags&TUNNEL_SEQ) ||
+		    (tunnel->i_seqno && (s32)(ntohl(tpi->seq) - tunnel->i_seqno) < 0)) अणु
+			tunnel->dev->stats.rx_fअगरo_errors++;
 			tunnel->dev->stats.rx_errors++;
-			goto drop;
-		}
+			जाओ drop;
+		पूर्ण
 		tunnel->i_seqno = ntohl(tpi->seq) + 1;
-	}
+	पूर्ण
 
 	skb_reset_network_header(skb);
 
 	err = IP_ECN_decapsulate(iph, skb);
-	if (unlikely(err)) {
-		if (log_ecn_error)
+	अगर (unlikely(err)) अणु
+		अगर (log_ecn_error)
 			net_info_ratelimited("non-ECT from %pI4 with TOS=%#x\n",
 					&iph->saddr, iph->tos);
-		if (err > 1) {
+		अगर (err > 1) अणु
 			++tunnel->dev->stats.rx_frame_errors;
 			++tunnel->dev->stats.rx_errors;
-			goto drop;
-		}
-	}
+			जाओ drop;
+		पूर्ण
+	पूर्ण
 
 	dev_sw_netstats_rx_add(tunnel->dev, skb->len);
 	skb_scrub_packet(skb, !net_eq(tunnel->net, dev_net(tunnel->dev)));
 
-	if (tunnel->dev->type == ARPHRD_ETHER) {
+	अगर (tunnel->dev->type == ARPHRD_ETHER) अणु
 		skb->protocol = eth_type_trans(skb, tunnel->dev);
 		skb_postpull_rcsum(skb, eth_hdr(skb), ETH_HLEN);
-	} else {
+	पूर्ण अन्यथा अणु
 		skb->dev = tunnel->dev;
-	}
+	पूर्ण
 
-	if (tun_dst)
-		skb_dst_set(skb, (struct dst_entry *)tun_dst);
+	अगर (tun_dst)
+		skb_dst_set(skb, (काष्ठा dst_entry *)tun_dst);
 
 	gro_cells_receive(&tunnel->gro_cells, skb);
-	return 0;
+	वापस 0;
 
 drop:
-	if (tun_dst)
-		dst_release((struct dst_entry *)tun_dst);
-	kfree_skb(skb);
-	return 0;
-}
+	अगर (tun_dst)
+		dst_release((काष्ठा dst_entry *)tun_dst);
+	kमुक्त_skb(skb);
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(ip_tunnel_rcv);
 
-int ip_tunnel_encap_add_ops(const struct ip_tunnel_encap_ops *ops,
-			    unsigned int num)
-{
-	if (num >= MAX_IPTUN_ENCAP_OPS)
-		return -ERANGE;
+पूर्णांक ip_tunnel_encap_add_ops(स्थिर काष्ठा ip_tunnel_encap_ops *ops,
+			    अचिन्हित पूर्णांक num)
+अणु
+	अगर (num >= MAX_IPTUN_ENCAP_OPS)
+		वापस -दुस्फल;
 
-	return !cmpxchg((const struct ip_tunnel_encap_ops **)
+	वापस !cmpxchg((स्थिर काष्ठा ip_tunnel_encap_ops **)
 			&iptun_encaps[num],
-			NULL, ops) ? 0 : -1;
-}
+			शून्य, ops) ? 0 : -1;
+पूर्ण
 EXPORT_SYMBOL(ip_tunnel_encap_add_ops);
 
-int ip_tunnel_encap_del_ops(const struct ip_tunnel_encap_ops *ops,
-			    unsigned int num)
-{
-	int ret;
+पूर्णांक ip_tunnel_encap_del_ops(स्थिर काष्ठा ip_tunnel_encap_ops *ops,
+			    अचिन्हित पूर्णांक num)
+अणु
+	पूर्णांक ret;
 
-	if (num >= MAX_IPTUN_ENCAP_OPS)
-		return -ERANGE;
+	अगर (num >= MAX_IPTUN_ENCAP_OPS)
+		वापस -दुस्फल;
 
-	ret = (cmpxchg((const struct ip_tunnel_encap_ops **)
+	ret = (cmpxchg((स्थिर काष्ठा ip_tunnel_encap_ops **)
 		       &iptun_encaps[num],
-		       ops, NULL) == ops) ? 0 : -1;
+		       ops, शून्य) == ops) ? 0 : -1;
 
 	synchronize_net();
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL(ip_tunnel_encap_del_ops);
 
-int ip_tunnel_encap_setup(struct ip_tunnel *t,
-			  struct ip_tunnel_encap *ipencap)
-{
-	int hlen;
+पूर्णांक ip_tunnel_encap_setup(काष्ठा ip_tunnel *t,
+			  काष्ठा ip_tunnel_encap *ipencap)
+अणु
+	पूर्णांक hlen;
 
-	memset(&t->encap, 0, sizeof(t->encap));
+	स_रखो(&t->encap, 0, माप(t->encap));
 
 	hlen = ip_encap_hlen(ipencap);
-	if (hlen < 0)
-		return hlen;
+	अगर (hlen < 0)
+		वापस hlen;
 
 	t->encap.type = ipencap->type;
 	t->encap.sport = ipencap->sport;
@@ -474,586 +475,586 @@ int ip_tunnel_encap_setup(struct ip_tunnel *t,
 	t->encap_hlen = hlen;
 	t->hlen = t->encap_hlen + t->tun_hlen;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(ip_tunnel_encap_setup);
 
-static int tnl_update_pmtu(struct net_device *dev, struct sk_buff *skb,
-			    struct rtable *rt, __be16 df,
-			    const struct iphdr *inner_iph,
-			    int tunnel_hlen, __be32 dst, bool md)
-{
-	struct ip_tunnel *tunnel = netdev_priv(dev);
-	int pkt_size;
-	int mtu;
+अटल पूर्णांक tnl_update_pmtu(काष्ठा net_device *dev, काष्ठा sk_buff *skb,
+			    काष्ठा rtable *rt, __be16 df,
+			    स्थिर काष्ठा iphdr *inner_iph,
+			    पूर्णांक tunnel_hlen, __be32 dst, bool md)
+अणु
+	काष्ठा ip_tunnel *tunnel = netdev_priv(dev);
+	पूर्णांक pkt_size;
+	पूर्णांक mtu;
 
 	tunnel_hlen = md ? tunnel_hlen : tunnel->hlen;
 	pkt_size = skb->len - tunnel_hlen;
 
-	if (df)
-		mtu = dst_mtu(&rt->dst) - (sizeof(struct iphdr) + tunnel_hlen);
-	else
+	अगर (df)
+		mtu = dst_mtu(&rt->dst) - (माप(काष्ठा iphdr) + tunnel_hlen);
+	अन्यथा
 		mtu = skb_valid_dst(skb) ? dst_mtu(skb_dst(skb)) : dev->mtu;
 
-	if (skb_valid_dst(skb))
+	अगर (skb_valid_dst(skb))
 		skb_dst_update_pmtu_no_confirm(skb, mtu);
 
-	if (skb->protocol == htons(ETH_P_IP)) {
-		if (!skb_is_gso(skb) &&
+	अगर (skb->protocol == htons(ETH_P_IP)) अणु
+		अगर (!skb_is_gso(skb) &&
 		    (inner_iph->frag_off & htons(IP_DF)) &&
-		    mtu < pkt_size) {
-			icmp_ndo_send(skb, ICMP_DEST_UNREACH, ICMP_FRAG_NEEDED, htonl(mtu));
-			return -E2BIG;
-		}
-	}
-#if IS_ENABLED(CONFIG_IPV6)
-	else if (skb->protocol == htons(ETH_P_IPV6)) {
-		struct rt6_info *rt6;
+		    mtu < pkt_size) अणु
+			icmp_nकरो_send(skb, ICMP_DEST_UNREACH, ICMP_FRAG_NEEDED, htonl(mtu));
+			वापस -E2BIG;
+		पूर्ण
+	पूर्ण
+#अगर IS_ENABLED(CONFIG_IPV6)
+	अन्यथा अगर (skb->protocol == htons(ETH_P_IPV6)) अणु
+		काष्ठा rt6_info *rt6;
 		__be32 daddr;
 
-		rt6 = skb_valid_dst(skb) ? (struct rt6_info *)skb_dst(skb) :
-					   NULL;
+		rt6 = skb_valid_dst(skb) ? (काष्ठा rt6_info *)skb_dst(skb) :
+					   शून्य;
 		daddr = md ? dst : tunnel->parms.iph.daddr;
 
-		if (rt6 && mtu < dst_mtu(skb_dst(skb)) &&
-			   mtu >= IPV6_MIN_MTU) {
-			if ((daddr && !ipv4_is_multicast(daddr)) ||
-			    rt6->rt6i_dst.plen == 128) {
+		अगर (rt6 && mtu < dst_mtu(skb_dst(skb)) &&
+			   mtu >= IPV6_MIN_MTU) अणु
+			अगर ((daddr && !ipv4_is_multicast(daddr)) ||
+			    rt6->rt6i_dst.plen == 128) अणु
 				rt6->rt6i_flags |= RTF_MODIFIED;
 				dst_metric_set(skb_dst(skb), RTAX_MTU, mtu);
-			}
-		}
+			पूर्ण
+		पूर्ण
 
-		if (!skb_is_gso(skb) && mtu >= IPV6_MIN_MTU &&
-					mtu < pkt_size) {
-			icmpv6_ndo_send(skb, ICMPV6_PKT_TOOBIG, 0, mtu);
-			return -E2BIG;
-		}
-	}
-#endif
-	return 0;
-}
+		अगर (!skb_is_gso(skb) && mtu >= IPV6_MIN_MTU &&
+					mtu < pkt_size) अणु
+			icmpv6_nकरो_send(skb, ICMPV6_PKT_TOOBIG, 0, mtu);
+			वापस -E2BIG;
+		पूर्ण
+	पूर्ण
+#पूर्ण_अगर
+	वापस 0;
+पूर्ण
 
-void ip_md_tunnel_xmit(struct sk_buff *skb, struct net_device *dev,
-		       u8 proto, int tunnel_hlen)
-{
-	struct ip_tunnel *tunnel = netdev_priv(dev);
-	u32 headroom = sizeof(struct iphdr);
-	struct ip_tunnel_info *tun_info;
-	const struct ip_tunnel_key *key;
-	const struct iphdr *inner_iph;
-	struct rtable *rt = NULL;
-	struct flowi4 fl4;
+व्योम ip_md_tunnel_xmit(काष्ठा sk_buff *skb, काष्ठा net_device *dev,
+		       u8 proto, पूर्णांक tunnel_hlen)
+अणु
+	काष्ठा ip_tunnel *tunnel = netdev_priv(dev);
+	u32 headroom = माप(काष्ठा iphdr);
+	काष्ठा ip_tunnel_info *tun_info;
+	स्थिर काष्ठा ip_tunnel_key *key;
+	स्थिर काष्ठा iphdr *inner_iph;
+	काष्ठा rtable *rt = शून्य;
+	काष्ठा flowi4 fl4;
 	__be16 df = 0;
 	u8 tos, ttl;
 	bool use_cache;
 
 	tun_info = skb_tunnel_info(skb);
-	if (unlikely(!tun_info || !(tun_info->mode & IP_TUNNEL_INFO_TX) ||
+	अगर (unlikely(!tun_info || !(tun_info->mode & IP_TUNNEL_INFO_TX) ||
 		     ip_tunnel_info_af(tun_info) != AF_INET))
-		goto tx_error;
+		जाओ tx_error;
 	key = &tun_info->key;
-	memset(&(IPCB(skb)->opt), 0, sizeof(IPCB(skb)->opt));
-	inner_iph = (const struct iphdr *)skb_inner_network_header(skb);
+	स_रखो(&(IPCB(skb)->opt), 0, माप(IPCB(skb)->opt));
+	inner_iph = (स्थिर काष्ठा iphdr *)skb_inner_network_header(skb);
 	tos = key->tos;
-	if (tos == 1) {
-		if (skb->protocol == htons(ETH_P_IP))
+	अगर (tos == 1) अणु
+		अगर (skb->protocol == htons(ETH_P_IP))
 			tos = inner_iph->tos;
-		else if (skb->protocol == htons(ETH_P_IPV6))
-			tos = ipv6_get_dsfield((const struct ipv6hdr *)inner_iph);
-	}
+		अन्यथा अगर (skb->protocol == htons(ETH_P_IPV6))
+			tos = ipv6_get_dsfield((स्थिर काष्ठा ipv6hdr *)inner_iph);
+	पूर्ण
 	ip_tunnel_init_flow(&fl4, proto, key->u.ipv4.dst, key->u.ipv4.src,
 			    tunnel_id_to_key32(key->tun_id), RT_TOS(tos),
 			    0, skb->mark, skb_get_hash(skb));
-	if (tunnel->encap.type != TUNNEL_ENCAP_NONE)
-		goto tx_error;
+	अगर (tunnel->encap.type != TUNNEL_ENCAP_NONE)
+		जाओ tx_error;
 
 	use_cache = ip_tunnel_dst_cache_usable(skb, tun_info);
-	if (use_cache)
+	अगर (use_cache)
 		rt = dst_cache_get_ip4(&tun_info->dst_cache, &fl4.saddr);
-	if (!rt) {
+	अगर (!rt) अणु
 		rt = ip_route_output_key(tunnel->net, &fl4);
-		if (IS_ERR(rt)) {
+		अगर (IS_ERR(rt)) अणु
 			dev->stats.tx_carrier_errors++;
-			goto tx_error;
-		}
-		if (use_cache)
+			जाओ tx_error;
+		पूर्ण
+		अगर (use_cache)
 			dst_cache_set_ip4(&tun_info->dst_cache, &rt->dst,
 					  fl4.saddr);
-	}
-	if (rt->dst.dev == dev) {
+	पूर्ण
+	अगर (rt->dst.dev == dev) अणु
 		ip_rt_put(rt);
 		dev->stats.collisions++;
-		goto tx_error;
-	}
+		जाओ tx_error;
+	पूर्ण
 
-	if (key->tun_flags & TUNNEL_DONT_FRAGMENT)
+	अगर (key->tun_flags & TUNNEL_DONT_FRAGMENT)
 		df = htons(IP_DF);
-	if (tnl_update_pmtu(dev, skb, rt, df, inner_iph, tunnel_hlen,
-			    key->u.ipv4.dst, true)) {
+	अगर (tnl_update_pmtu(dev, skb, rt, df, inner_iph, tunnel_hlen,
+			    key->u.ipv4.dst, true)) अणु
 		ip_rt_put(rt);
-		goto tx_error;
-	}
+		जाओ tx_error;
+	पूर्ण
 
 	tos = ip_tunnel_ecn_encap(tos, inner_iph, skb);
 	ttl = key->ttl;
-	if (ttl == 0) {
-		if (skb->protocol == htons(ETH_P_IP))
+	अगर (ttl == 0) अणु
+		अगर (skb->protocol == htons(ETH_P_IP))
 			ttl = inner_iph->ttl;
-		else if (skb->protocol == htons(ETH_P_IPV6))
-			ttl = ((const struct ipv6hdr *)inner_iph)->hop_limit;
-		else
+		अन्यथा अगर (skb->protocol == htons(ETH_P_IPV6))
+			ttl = ((स्थिर काष्ठा ipv6hdr *)inner_iph)->hop_limit;
+		अन्यथा
 			ttl = ip4_dst_hoplimit(&rt->dst);
-	}
+	पूर्ण
 
 	headroom += LL_RESERVED_SPACE(rt->dst.dev) + rt->dst.header_len;
-	if (headroom > dev->needed_headroom)
+	अगर (headroom > dev->needed_headroom)
 		dev->needed_headroom = headroom;
 
-	if (skb_cow_head(skb, dev->needed_headroom)) {
+	अगर (skb_cow_head(skb, dev->needed_headroom)) अणु
 		ip_rt_put(rt);
-		goto tx_dropped;
-	}
-	iptunnel_xmit(NULL, rt, skb, fl4.saddr, fl4.daddr, proto, tos, ttl,
+		जाओ tx_dropped;
+	पूर्ण
+	iptunnel_xmit(शून्य, rt, skb, fl4.saddr, fl4.daddr, proto, tos, ttl,
 		      df, !net_eq(tunnel->net, dev_net(dev)));
-	return;
+	वापस;
 tx_error:
 	dev->stats.tx_errors++;
-	goto kfree;
+	जाओ kमुक्त;
 tx_dropped:
 	dev->stats.tx_dropped++;
-kfree:
-	kfree_skb(skb);
-}
+kमुक्त:
+	kमुक्त_skb(skb);
+पूर्ण
 EXPORT_SYMBOL_GPL(ip_md_tunnel_xmit);
 
-void ip_tunnel_xmit(struct sk_buff *skb, struct net_device *dev,
-		    const struct iphdr *tnl_params, u8 protocol)
-{
-	struct ip_tunnel *tunnel = netdev_priv(dev);
-	struct ip_tunnel_info *tun_info = NULL;
-	const struct iphdr *inner_iph;
-	unsigned int max_headroom;	/* The extra header space needed */
-	struct rtable *rt = NULL;		/* Route to the other host */
+व्योम ip_tunnel_xmit(काष्ठा sk_buff *skb, काष्ठा net_device *dev,
+		    स्थिर काष्ठा iphdr *tnl_params, u8 protocol)
+अणु
+	काष्ठा ip_tunnel *tunnel = netdev_priv(dev);
+	काष्ठा ip_tunnel_info *tun_info = शून्य;
+	स्थिर काष्ठा iphdr *inner_iph;
+	अचिन्हित पूर्णांक max_headroom;	/* The extra header space needed */
+	काष्ठा rtable *rt = शून्य;		/* Route to the other host */
 	bool use_cache = false;
-	struct flowi4 fl4;
+	काष्ठा flowi4 fl4;
 	bool md = false;
 	bool connected;
 	u8 tos, ttl;
 	__be32 dst;
 	__be16 df;
 
-	inner_iph = (const struct iphdr *)skb_inner_network_header(skb);
+	inner_iph = (स्थिर काष्ठा iphdr *)skb_inner_network_header(skb);
 	connected = (tunnel->parms.iph.daddr != 0);
 
-	memset(&(IPCB(skb)->opt), 0, sizeof(IPCB(skb)->opt));
+	स_रखो(&(IPCB(skb)->opt), 0, माप(IPCB(skb)->opt));
 
 	dst = tnl_params->daddr;
-	if (dst == 0) {
+	अगर (dst == 0) अणु
 		/* NBMA tunnel */
 
-		if (!skb_dst(skb)) {
-			dev->stats.tx_fifo_errors++;
-			goto tx_error;
-		}
+		अगर (!skb_dst(skb)) अणु
+			dev->stats.tx_fअगरo_errors++;
+			जाओ tx_error;
+		पूर्ण
 
 		tun_info = skb_tunnel_info(skb);
-		if (tun_info && (tun_info->mode & IP_TUNNEL_INFO_TX) &&
+		अगर (tun_info && (tun_info->mode & IP_TUNNEL_INFO_TX) &&
 		    ip_tunnel_info_af(tun_info) == AF_INET &&
-		    tun_info->key.u.ipv4.dst) {
+		    tun_info->key.u.ipv4.dst) अणु
 			dst = tun_info->key.u.ipv4.dst;
 			md = true;
 			connected = true;
-		}
-		else if (skb->protocol == htons(ETH_P_IP)) {
+		पूर्ण
+		अन्यथा अगर (skb->protocol == htons(ETH_P_IP)) अणु
 			rt = skb_rtable(skb);
 			dst = rt_nexthop(rt, inner_iph->daddr);
-		}
-#if IS_ENABLED(CONFIG_IPV6)
-		else if (skb->protocol == htons(ETH_P_IPV6)) {
-			const struct in6_addr *addr6;
-			struct neighbour *neigh;
-			bool do_tx_error_icmp;
-			int addr_type;
+		पूर्ण
+#अगर IS_ENABLED(CONFIG_IPV6)
+		अन्यथा अगर (skb->protocol == htons(ETH_P_IPV6)) अणु
+			स्थिर काष्ठा in6_addr *addr6;
+			काष्ठा neighbour *neigh;
+			bool करो_tx_error_icmp;
+			पूर्णांक addr_type;
 
 			neigh = dst_neigh_lookup(skb_dst(skb),
 						 &ipv6_hdr(skb)->daddr);
-			if (!neigh)
-				goto tx_error;
+			अगर (!neigh)
+				जाओ tx_error;
 
-			addr6 = (const struct in6_addr *)&neigh->primary_key;
+			addr6 = (स्थिर काष्ठा in6_addr *)&neigh->primary_key;
 			addr_type = ipv6_addr_type(addr6);
 
-			if (addr_type == IPV6_ADDR_ANY) {
+			अगर (addr_type == IPV6_ADDR_ANY) अणु
 				addr6 = &ipv6_hdr(skb)->daddr;
 				addr_type = ipv6_addr_type(addr6);
-			}
+			पूर्ण
 
-			if ((addr_type & IPV6_ADDR_COMPATv4) == 0)
-				do_tx_error_icmp = true;
-			else {
-				do_tx_error_icmp = false;
+			अगर ((addr_type & IPV6_ADDR_COMPATv4) == 0)
+				करो_tx_error_icmp = true;
+			अन्यथा अणु
+				करो_tx_error_icmp = false;
 				dst = addr6->s6_addr32[3];
-			}
+			पूर्ण
 			neigh_release(neigh);
-			if (do_tx_error_icmp)
-				goto tx_error_icmp;
-		}
-#endif
-		else
-			goto tx_error;
+			अगर (करो_tx_error_icmp)
+				जाओ tx_error_icmp;
+		पूर्ण
+#पूर्ण_अगर
+		अन्यथा
+			जाओ tx_error;
 
-		if (!md)
+		अगर (!md)
 			connected = false;
-	}
+	पूर्ण
 
 	tos = tnl_params->tos;
-	if (tos & 0x1) {
+	अगर (tos & 0x1) अणु
 		tos &= ~0x1;
-		if (skb->protocol == htons(ETH_P_IP)) {
+		अगर (skb->protocol == htons(ETH_P_IP)) अणु
 			tos = inner_iph->tos;
 			connected = false;
-		} else if (skb->protocol == htons(ETH_P_IPV6)) {
-			tos = ipv6_get_dsfield((const struct ipv6hdr *)inner_iph);
+		पूर्ण अन्यथा अगर (skb->protocol == htons(ETH_P_IPV6)) अणु
+			tos = ipv6_get_dsfield((स्थिर काष्ठा ipv6hdr *)inner_iph);
 			connected = false;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	ip_tunnel_init_flow(&fl4, protocol, dst, tnl_params->saddr,
 			    tunnel->parms.o_key, RT_TOS(tos), tunnel->parms.link,
 			    tunnel->fwmark, skb_get_hash(skb));
 
-	if (ip_tunnel_encap(skb, tunnel, &protocol, &fl4) < 0)
-		goto tx_error;
+	अगर (ip_tunnel_encap(skb, tunnel, &protocol, &fl4) < 0)
+		जाओ tx_error;
 
-	if (connected && md) {
+	अगर (connected && md) अणु
 		use_cache = ip_tunnel_dst_cache_usable(skb, tun_info);
-		if (use_cache)
+		अगर (use_cache)
 			rt = dst_cache_get_ip4(&tun_info->dst_cache,
 					       &fl4.saddr);
-	} else {
+	पूर्ण अन्यथा अणु
 		rt = connected ? dst_cache_get_ip4(&tunnel->dst_cache,
-						&fl4.saddr) : NULL;
-	}
+						&fl4.saddr) : शून्य;
+	पूर्ण
 
-	if (!rt) {
+	अगर (!rt) अणु
 		rt = ip_route_output_key(tunnel->net, &fl4);
 
-		if (IS_ERR(rt)) {
+		अगर (IS_ERR(rt)) अणु
 			dev->stats.tx_carrier_errors++;
-			goto tx_error;
-		}
-		if (use_cache)
+			जाओ tx_error;
+		पूर्ण
+		अगर (use_cache)
 			dst_cache_set_ip4(&tun_info->dst_cache, &rt->dst,
 					  fl4.saddr);
-		else if (!md && connected)
+		अन्यथा अगर (!md && connected)
 			dst_cache_set_ip4(&tunnel->dst_cache, &rt->dst,
 					  fl4.saddr);
-	}
+	पूर्ण
 
-	if (rt->dst.dev == dev) {
+	अगर (rt->dst.dev == dev) अणु
 		ip_rt_put(rt);
 		dev->stats.collisions++;
-		goto tx_error;
-	}
+		जाओ tx_error;
+	पूर्ण
 
 	df = tnl_params->frag_off;
-	if (skb->protocol == htons(ETH_P_IP) && !tunnel->ignore_df)
+	अगर (skb->protocol == htons(ETH_P_IP) && !tunnel->ignore_df)
 		df |= (inner_iph->frag_off & htons(IP_DF));
 
-	if (tnl_update_pmtu(dev, skb, rt, df, inner_iph, 0, 0, false)) {
+	अगर (tnl_update_pmtu(dev, skb, rt, df, inner_iph, 0, 0, false)) अणु
 		ip_rt_put(rt);
-		goto tx_error;
-	}
+		जाओ tx_error;
+	पूर्ण
 
-	if (tunnel->err_count > 0) {
-		if (time_before(jiffies,
-				tunnel->err_time + IPTUNNEL_ERR_TIMEO)) {
+	अगर (tunnel->err_count > 0) अणु
+		अगर (समय_beक्रमe(jअगरfies,
+				tunnel->err_समय + IPTUNNEL_ERR_TIMEO)) अणु
 			tunnel->err_count--;
 
 			dst_link_failure(skb);
-		} else
+		पूर्ण अन्यथा
 			tunnel->err_count = 0;
-	}
+	पूर्ण
 
 	tos = ip_tunnel_ecn_encap(tos, inner_iph, skb);
 	ttl = tnl_params->ttl;
-	if (ttl == 0) {
-		if (skb->protocol == htons(ETH_P_IP))
+	अगर (ttl == 0) अणु
+		अगर (skb->protocol == htons(ETH_P_IP))
 			ttl = inner_iph->ttl;
-#if IS_ENABLED(CONFIG_IPV6)
-		else if (skb->protocol == htons(ETH_P_IPV6))
-			ttl = ((const struct ipv6hdr *)inner_iph)->hop_limit;
-#endif
-		else
+#अगर IS_ENABLED(CONFIG_IPV6)
+		अन्यथा अगर (skb->protocol == htons(ETH_P_IPV6))
+			ttl = ((स्थिर काष्ठा ipv6hdr *)inner_iph)->hop_limit;
+#पूर्ण_अगर
+		अन्यथा
 			ttl = ip4_dst_hoplimit(&rt->dst);
-	}
+	पूर्ण
 
-	max_headroom = LL_RESERVED_SPACE(rt->dst.dev) + sizeof(struct iphdr)
+	max_headroom = LL_RESERVED_SPACE(rt->dst.dev) + माप(काष्ठा iphdr)
 			+ rt->dst.header_len + ip_encap_hlen(&tunnel->encap);
-	if (max_headroom > dev->needed_headroom)
+	अगर (max_headroom > dev->needed_headroom)
 		dev->needed_headroom = max_headroom;
 
-	if (skb_cow_head(skb, dev->needed_headroom)) {
+	अगर (skb_cow_head(skb, dev->needed_headroom)) अणु
 		ip_rt_put(rt);
 		dev->stats.tx_dropped++;
-		kfree_skb(skb);
-		return;
-	}
+		kमुक्त_skb(skb);
+		वापस;
+	पूर्ण
 
-	iptunnel_xmit(NULL, rt, skb, fl4.saddr, fl4.daddr, protocol, tos, ttl,
+	iptunnel_xmit(शून्य, rt, skb, fl4.saddr, fl4.daddr, protocol, tos, ttl,
 		      df, !net_eq(tunnel->net, dev_net(dev)));
-	return;
+	वापस;
 
-#if IS_ENABLED(CONFIG_IPV6)
+#अगर IS_ENABLED(CONFIG_IPV6)
 tx_error_icmp:
 	dst_link_failure(skb);
-#endif
+#पूर्ण_अगर
 tx_error:
 	dev->stats.tx_errors++;
-	kfree_skb(skb);
-}
+	kमुक्त_skb(skb);
+पूर्ण
 EXPORT_SYMBOL_GPL(ip_tunnel_xmit);
 
-static void ip_tunnel_update(struct ip_tunnel_net *itn,
-			     struct ip_tunnel *t,
-			     struct net_device *dev,
-			     struct ip_tunnel_parm *p,
+अटल व्योम ip_tunnel_update(काष्ठा ip_tunnel_net *itn,
+			     काष्ठा ip_tunnel *t,
+			     काष्ठा net_device *dev,
+			     काष्ठा ip_tunnel_parm *p,
 			     bool set_mtu,
 			     __u32 fwmark)
-{
+अणु
 	ip_tunnel_del(itn, t);
 	t->parms.iph.saddr = p->iph.saddr;
 	t->parms.iph.daddr = p->iph.daddr;
 	t->parms.i_key = p->i_key;
 	t->parms.o_key = p->o_key;
-	if (dev->type != ARPHRD_ETHER) {
-		memcpy(dev->dev_addr, &p->iph.saddr, 4);
-		memcpy(dev->broadcast, &p->iph.daddr, 4);
-	}
+	अगर (dev->type != ARPHRD_ETHER) अणु
+		स_नकल(dev->dev_addr, &p->iph.saddr, 4);
+		स_नकल(dev->broadcast, &p->iph.daddr, 4);
+	पूर्ण
 	ip_tunnel_add(itn, t);
 
 	t->parms.iph.ttl = p->iph.ttl;
 	t->parms.iph.tos = p->iph.tos;
 	t->parms.iph.frag_off = p->iph.frag_off;
 
-	if (t->parms.link != p->link || t->fwmark != fwmark) {
-		int mtu;
+	अगर (t->parms.link != p->link || t->fwmark != fwmark) अणु
+		पूर्णांक mtu;
 
 		t->parms.link = p->link;
 		t->fwmark = fwmark;
 		mtu = ip_tunnel_bind_dev(dev);
-		if (set_mtu)
+		अगर (set_mtu)
 			dev->mtu = mtu;
-	}
+	पूर्ण
 	dst_cache_reset(&t->dst_cache);
 	netdev_state_change(dev);
-}
+पूर्ण
 
-int ip_tunnel_ctl(struct net_device *dev, struct ip_tunnel_parm *p, int cmd)
-{
-	int err = 0;
-	struct ip_tunnel *t = netdev_priv(dev);
-	struct net *net = t->net;
-	struct ip_tunnel_net *itn = net_generic(net, t->ip_tnl_net_id);
+पूर्णांक ip_tunnel_ctl(काष्ठा net_device *dev, काष्ठा ip_tunnel_parm *p, पूर्णांक cmd)
+अणु
+	पूर्णांक err = 0;
+	काष्ठा ip_tunnel *t = netdev_priv(dev);
+	काष्ठा net *net = t->net;
+	काष्ठा ip_tunnel_net *itn = net_generic(net, t->ip_tnl_net_id);
 
-	switch (cmd) {
-	case SIOCGETTUNNEL:
-		if (dev == itn->fb_tunnel_dev) {
+	चयन (cmd) अणु
+	हाल SIOCGETTUNNEL:
+		अगर (dev == itn->fb_tunnel_dev) अणु
 			t = ip_tunnel_find(itn, p, itn->fb_tunnel_dev->type);
-			if (!t)
+			अगर (!t)
 				t = netdev_priv(dev);
-		}
-		memcpy(p, &t->parms, sizeof(*p));
-		break;
+		पूर्ण
+		स_नकल(p, &t->parms, माप(*p));
+		अवरोध;
 
-	case SIOCADDTUNNEL:
-	case SIOCCHGTUNNEL:
+	हाल SIOCADDTUNNEL:
+	हाल SIOCCHGTUNNEL:
 		err = -EPERM;
-		if (!ns_capable(net->user_ns, CAP_NET_ADMIN))
-			goto done;
-		if (p->iph.ttl)
+		अगर (!ns_capable(net->user_ns, CAP_NET_ADMIN))
+			जाओ करोne;
+		अगर (p->iph.ttl)
 			p->iph.frag_off |= htons(IP_DF);
-		if (!(p->i_flags & VTI_ISVTI)) {
-			if (!(p->i_flags & TUNNEL_KEY))
+		अगर (!(p->i_flags & VTI_ISVTI)) अणु
+			अगर (!(p->i_flags & TUNNEL_KEY))
 				p->i_key = 0;
-			if (!(p->o_flags & TUNNEL_KEY))
+			अगर (!(p->o_flags & TUNNEL_KEY))
 				p->o_key = 0;
-		}
+		पूर्ण
 
 		t = ip_tunnel_find(itn, p, itn->type);
 
-		if (cmd == SIOCADDTUNNEL) {
-			if (!t) {
+		अगर (cmd == SIOCADDTUNNEL) अणु
+			अगर (!t) अणु
 				t = ip_tunnel_create(net, itn, p);
 				err = PTR_ERR_OR_ZERO(t);
-				break;
-			}
+				अवरोध;
+			पूर्ण
 
 			err = -EEXIST;
-			break;
-		}
-		if (dev != itn->fb_tunnel_dev && cmd == SIOCCHGTUNNEL) {
-			if (t) {
-				if (t->dev != dev) {
+			अवरोध;
+		पूर्ण
+		अगर (dev != itn->fb_tunnel_dev && cmd == SIOCCHGTUNNEL) अणु
+			अगर (t) अणु
+				अगर (t->dev != dev) अणु
 					err = -EEXIST;
-					break;
-				}
-			} else {
-				unsigned int nflags = 0;
+					अवरोध;
+				पूर्ण
+			पूर्ण अन्यथा अणु
+				अचिन्हित पूर्णांक nflags = 0;
 
-				if (ipv4_is_multicast(p->iph.daddr))
+				अगर (ipv4_is_multicast(p->iph.daddr))
 					nflags = IFF_BROADCAST;
-				else if (p->iph.daddr)
+				अन्यथा अगर (p->iph.daddr)
 					nflags = IFF_POINTOPOINT;
 
-				if ((dev->flags^nflags)&(IFF_POINTOPOINT|IFF_BROADCAST)) {
+				अगर ((dev->flags^nflags)&(IFF_POINTOPOINT|IFF_BROADCAST)) अणु
 					err = -EINVAL;
-					break;
-				}
+					अवरोध;
+				पूर्ण
 
 				t = netdev_priv(dev);
-			}
-		}
+			पूर्ण
+		पूर्ण
 
-		if (t) {
+		अगर (t) अणु
 			err = 0;
 			ip_tunnel_update(itn, t, dev, p, true, 0);
-		} else {
+		पूर्ण अन्यथा अणु
 			err = -ENOENT;
-		}
-		break;
+		पूर्ण
+		अवरोध;
 
-	case SIOCDELTUNNEL:
+	हाल SIOCDELTUNNEL:
 		err = -EPERM;
-		if (!ns_capable(net->user_ns, CAP_NET_ADMIN))
-			goto done;
+		अगर (!ns_capable(net->user_ns, CAP_NET_ADMIN))
+			जाओ करोne;
 
-		if (dev == itn->fb_tunnel_dev) {
+		अगर (dev == itn->fb_tunnel_dev) अणु
 			err = -ENOENT;
 			t = ip_tunnel_find(itn, p, itn->fb_tunnel_dev->type);
-			if (!t)
-				goto done;
+			अगर (!t)
+				जाओ करोne;
 			err = -EPERM;
-			if (t == netdev_priv(itn->fb_tunnel_dev))
-				goto done;
+			अगर (t == netdev_priv(itn->fb_tunnel_dev))
+				जाओ करोne;
 			dev = t->dev;
-		}
-		unregister_netdevice(dev);
+		पूर्ण
+		unरेजिस्टर_netdevice(dev);
 		err = 0;
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		err = -EINVAL;
-	}
+	पूर्ण
 
-done:
-	return err;
-}
+करोne:
+	वापस err;
+पूर्ण
 EXPORT_SYMBOL_GPL(ip_tunnel_ctl);
 
-int ip_tunnel_ioctl(struct net_device *dev, struct ifreq *ifr, int cmd)
-{
-	struct ip_tunnel_parm p;
-	int err;
+पूर्णांक ip_tunnel_ioctl(काष्ठा net_device *dev, काष्ठा अगरreq *अगरr, पूर्णांक cmd)
+अणु
+	काष्ठा ip_tunnel_parm p;
+	पूर्णांक err;
 
-	if (copy_from_user(&p, ifr->ifr_ifru.ifru_data, sizeof(p)))
-		return -EFAULT;
-	err = dev->netdev_ops->ndo_tunnel_ctl(dev, &p, cmd);
-	if (!err && copy_to_user(ifr->ifr_ifru.ifru_data, &p, sizeof(p)))
-		return -EFAULT;
-	return err;
-}
+	अगर (copy_from_user(&p, अगरr->अगरr_अगरru.अगरru_data, माप(p)))
+		वापस -EFAULT;
+	err = dev->netdev_ops->nकरो_tunnel_ctl(dev, &p, cmd);
+	अगर (!err && copy_to_user(अगरr->अगरr_अगरru.अगरru_data, &p, माप(p)))
+		वापस -EFAULT;
+	वापस err;
+पूर्ण
 EXPORT_SYMBOL_GPL(ip_tunnel_ioctl);
 
-int __ip_tunnel_change_mtu(struct net_device *dev, int new_mtu, bool strict)
-{
-	struct ip_tunnel *tunnel = netdev_priv(dev);
-	int t_hlen = tunnel->hlen + sizeof(struct iphdr);
-	int max_mtu = IP_MAX_MTU - t_hlen;
+पूर्णांक __ip_tunnel_change_mtu(काष्ठा net_device *dev, पूर्णांक new_mtu, bool strict)
+अणु
+	काष्ठा ip_tunnel *tunnel = netdev_priv(dev);
+	पूर्णांक t_hlen = tunnel->hlen + माप(काष्ठा iphdr);
+	पूर्णांक max_mtu = IP_MAX_MTU - t_hlen;
 
-	if (new_mtu < ETH_MIN_MTU)
-		return -EINVAL;
+	अगर (new_mtu < ETH_MIN_MTU)
+		वापस -EINVAL;
 
-	if (new_mtu > max_mtu) {
-		if (strict)
-			return -EINVAL;
+	अगर (new_mtu > max_mtu) अणु
+		अगर (strict)
+			वापस -EINVAL;
 
 		new_mtu = max_mtu;
-	}
+	पूर्ण
 
 	dev->mtu = new_mtu;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(__ip_tunnel_change_mtu);
 
-int ip_tunnel_change_mtu(struct net_device *dev, int new_mtu)
-{
-	return __ip_tunnel_change_mtu(dev, new_mtu, true);
-}
+पूर्णांक ip_tunnel_change_mtu(काष्ठा net_device *dev, पूर्णांक new_mtu)
+अणु
+	वापस __ip_tunnel_change_mtu(dev, new_mtu, true);
+पूर्ण
 EXPORT_SYMBOL_GPL(ip_tunnel_change_mtu);
 
-static void ip_tunnel_dev_free(struct net_device *dev)
-{
-	struct ip_tunnel *tunnel = netdev_priv(dev);
+अटल व्योम ip_tunnel_dev_मुक्त(काष्ठा net_device *dev)
+अणु
+	काष्ठा ip_tunnel *tunnel = netdev_priv(dev);
 
 	gro_cells_destroy(&tunnel->gro_cells);
 	dst_cache_destroy(&tunnel->dst_cache);
-	free_percpu(dev->tstats);
-}
+	मुक्त_percpu(dev->tstats);
+पूर्ण
 
-void ip_tunnel_dellink(struct net_device *dev, struct list_head *head)
-{
-	struct ip_tunnel *tunnel = netdev_priv(dev);
-	struct ip_tunnel_net *itn;
+व्योम ip_tunnel_dellink(काष्ठा net_device *dev, काष्ठा list_head *head)
+अणु
+	काष्ठा ip_tunnel *tunnel = netdev_priv(dev);
+	काष्ठा ip_tunnel_net *itn;
 
 	itn = net_generic(tunnel->net, tunnel->ip_tnl_net_id);
 
-	if (itn->fb_tunnel_dev != dev) {
+	अगर (itn->fb_tunnel_dev != dev) अणु
 		ip_tunnel_del(itn, netdev_priv(dev));
-		unregister_netdevice_queue(dev, head);
-	}
-}
+		unरेजिस्टर_netdevice_queue(dev, head);
+	पूर्ण
+पूर्ण
 EXPORT_SYMBOL_GPL(ip_tunnel_dellink);
 
-struct net *ip_tunnel_get_link_net(const struct net_device *dev)
-{
-	struct ip_tunnel *tunnel = netdev_priv(dev);
+काष्ठा net *ip_tunnel_get_link_net(स्थिर काष्ठा net_device *dev)
+अणु
+	काष्ठा ip_tunnel *tunnel = netdev_priv(dev);
 
-	return tunnel->net;
-}
+	वापस tunnel->net;
+पूर्ण
 EXPORT_SYMBOL(ip_tunnel_get_link_net);
 
-int ip_tunnel_get_iflink(const struct net_device *dev)
-{
-	struct ip_tunnel *tunnel = netdev_priv(dev);
+पूर्णांक ip_tunnel_get_अगरlink(स्थिर काष्ठा net_device *dev)
+अणु
+	काष्ठा ip_tunnel *tunnel = netdev_priv(dev);
 
-	return tunnel->parms.link;
-}
-EXPORT_SYMBOL(ip_tunnel_get_iflink);
+	वापस tunnel->parms.link;
+पूर्ण
+EXPORT_SYMBOL(ip_tunnel_get_अगरlink);
 
-int ip_tunnel_init_net(struct net *net, unsigned int ip_tnl_net_id,
-				  struct rtnl_link_ops *ops, char *devname)
-{
-	struct ip_tunnel_net *itn = net_generic(net, ip_tnl_net_id);
-	struct ip_tunnel_parm parms;
-	unsigned int i;
+पूर्णांक ip_tunnel_init_net(काष्ठा net *net, अचिन्हित पूर्णांक ip_tnl_net_id,
+				  काष्ठा rtnl_link_ops *ops, अक्षर *devname)
+अणु
+	काष्ठा ip_tunnel_net *itn = net_generic(net, ip_tnl_net_id);
+	काष्ठा ip_tunnel_parm parms;
+	अचिन्हित पूर्णांक i;
 
 	itn->rtnl_link_ops = ops;
-	for (i = 0; i < IP_TNL_HASH_SIZE; i++)
+	क्रम (i = 0; i < IP_TNL_HASH_SIZE; i++)
 		INIT_HLIST_HEAD(&itn->tunnels[i]);
 
-	if (!ops || !net_has_fallback_tunnels(net)) {
-		struct ip_tunnel_net *it_init_net;
+	अगर (!ops || !net_has_fallback_tunnels(net)) अणु
+		काष्ठा ip_tunnel_net *it_init_net;
 
 		it_init_net = net_generic(&init_net, ip_tnl_net_id);
 		itn->type = it_init_net->type;
-		itn->fb_tunnel_dev = NULL;
-		return 0;
-	}
+		itn->fb_tunnel_dev = शून्य;
+		वापस 0;
+	पूर्ण
 
-	memset(&parms, 0, sizeof(parms));
-	if (devname)
+	स_रखो(&parms, 0, माप(parms));
+	अगर (devname)
 		strlcpy(parms.name, devname, IFNAMSIZ);
 
 	rtnl_lock();
@@ -1061,207 +1062,207 @@ int ip_tunnel_init_net(struct net *net, unsigned int ip_tnl_net_id,
 	/* FB netdevice is special: we have one, and only one per netns.
 	 * Allowing to move it to another netns is clearly unsafe.
 	 */
-	if (!IS_ERR(itn->fb_tunnel_dev)) {
+	अगर (!IS_ERR(itn->fb_tunnel_dev)) अणु
 		itn->fb_tunnel_dev->features |= NETIF_F_NETNS_LOCAL;
 		itn->fb_tunnel_dev->mtu = ip_tunnel_bind_dev(itn->fb_tunnel_dev);
 		ip_tunnel_add(itn, netdev_priv(itn->fb_tunnel_dev));
 		itn->type = itn->fb_tunnel_dev->type;
-	}
+	पूर्ण
 	rtnl_unlock();
 
-	return PTR_ERR_OR_ZERO(itn->fb_tunnel_dev);
-}
+	वापस PTR_ERR_OR_ZERO(itn->fb_tunnel_dev);
+पूर्ण
 EXPORT_SYMBOL_GPL(ip_tunnel_init_net);
 
-static void ip_tunnel_destroy(struct net *net, struct ip_tunnel_net *itn,
-			      struct list_head *head,
-			      struct rtnl_link_ops *ops)
-{
-	struct net_device *dev, *aux;
-	int h;
+अटल व्योम ip_tunnel_destroy(काष्ठा net *net, काष्ठा ip_tunnel_net *itn,
+			      काष्ठा list_head *head,
+			      काष्ठा rtnl_link_ops *ops)
+अणु
+	काष्ठा net_device *dev, *aux;
+	पूर्णांक h;
 
-	for_each_netdev_safe(net, dev, aux)
-		if (dev->rtnl_link_ops == ops)
-			unregister_netdevice_queue(dev, head);
+	क्रम_each_netdev_safe(net, dev, aux)
+		अगर (dev->rtnl_link_ops == ops)
+			unरेजिस्टर_netdevice_queue(dev, head);
 
-	for (h = 0; h < IP_TNL_HASH_SIZE; h++) {
-		struct ip_tunnel *t;
-		struct hlist_node *n;
-		struct hlist_head *thead = &itn->tunnels[h];
+	क्रम (h = 0; h < IP_TNL_HASH_SIZE; h++) अणु
+		काष्ठा ip_tunnel *t;
+		काष्ठा hlist_node *n;
+		काष्ठा hlist_head *thead = &itn->tunnels[h];
 
-		hlist_for_each_entry_safe(t, n, thead, hash_node)
-			/* If dev is in the same netns, it has already
+		hlist_क्रम_each_entry_safe(t, n, thead, hash_node)
+			/* If dev is in the same netns, it has alपढ़ोy
 			 * been added to the list by the previous loop.
 			 */
-			if (!net_eq(dev_net(t->dev), net))
-				unregister_netdevice_queue(t->dev, head);
-	}
-}
+			अगर (!net_eq(dev_net(t->dev), net))
+				unरेजिस्टर_netdevice_queue(t->dev, head);
+	पूर्ण
+पूर्ण
 
-void ip_tunnel_delete_nets(struct list_head *net_list, unsigned int id,
-			   struct rtnl_link_ops *ops)
-{
-	struct ip_tunnel_net *itn;
-	struct net *net;
+व्योम ip_tunnel_delete_nets(काष्ठा list_head *net_list, अचिन्हित पूर्णांक id,
+			   काष्ठा rtnl_link_ops *ops)
+अणु
+	काष्ठा ip_tunnel_net *itn;
+	काष्ठा net *net;
 	LIST_HEAD(list);
 
 	rtnl_lock();
-	list_for_each_entry(net, net_list, exit_list) {
+	list_क्रम_each_entry(net, net_list, निकास_list) अणु
 		itn = net_generic(net, id);
 		ip_tunnel_destroy(net, itn, &list, ops);
-	}
-	unregister_netdevice_many(&list);
+	पूर्ण
+	unरेजिस्टर_netdevice_many(&list);
 	rtnl_unlock();
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(ip_tunnel_delete_nets);
 
-int ip_tunnel_newlink(struct net_device *dev, struct nlattr *tb[],
-		      struct ip_tunnel_parm *p, __u32 fwmark)
-{
-	struct ip_tunnel *nt;
-	struct net *net = dev_net(dev);
-	struct ip_tunnel_net *itn;
-	int mtu;
-	int err;
+पूर्णांक ip_tunnel_newlink(काष्ठा net_device *dev, काष्ठा nlattr *tb[],
+		      काष्ठा ip_tunnel_parm *p, __u32 fwmark)
+अणु
+	काष्ठा ip_tunnel *nt;
+	काष्ठा net *net = dev_net(dev);
+	काष्ठा ip_tunnel_net *itn;
+	पूर्णांक mtu;
+	पूर्णांक err;
 
 	nt = netdev_priv(dev);
 	itn = net_generic(net, nt->ip_tnl_net_id);
 
-	if (nt->collect_md) {
-		if (rtnl_dereference(itn->collect_md_tun))
-			return -EEXIST;
-	} else {
-		if (ip_tunnel_find(itn, p, dev->type))
-			return -EEXIST;
-	}
+	अगर (nt->collect_md) अणु
+		अगर (rtnl_dereference(itn->collect_md_tun))
+			वापस -EEXIST;
+	पूर्ण अन्यथा अणु
+		अगर (ip_tunnel_find(itn, p, dev->type))
+			वापस -EEXIST;
+	पूर्ण
 
 	nt->net = net;
 	nt->parms = *p;
 	nt->fwmark = fwmark;
-	err = register_netdevice(dev);
-	if (err)
-		goto err_register_netdevice;
+	err = रेजिस्टर_netdevice(dev);
+	अगर (err)
+		जाओ err_रेजिस्टर_netdevice;
 
-	if (dev->type == ARPHRD_ETHER && !tb[IFLA_ADDRESS])
-		eth_hw_addr_random(dev);
+	अगर (dev->type == ARPHRD_ETHER && !tb[IFLA_ADDRESS])
+		eth_hw_addr_अक्रमom(dev);
 
 	mtu = ip_tunnel_bind_dev(dev);
-	if (tb[IFLA_MTU]) {
-		unsigned int max = IP_MAX_MTU - (nt->hlen + sizeof(struct iphdr));
+	अगर (tb[IFLA_MTU]) अणु
+		अचिन्हित पूर्णांक max = IP_MAX_MTU - (nt->hlen + माप(काष्ठा iphdr));
 
-		mtu = clamp(dev->mtu, (unsigned int)ETH_MIN_MTU, max);
-	}
+		mtu = clamp(dev->mtu, (अचिन्हित पूर्णांक)ETH_MIN_MTU, max);
+	पूर्ण
 
 	err = dev_set_mtu(dev, mtu);
-	if (err)
-		goto err_dev_set_mtu;
+	अगर (err)
+		जाओ err_dev_set_mtu;
 
 	ip_tunnel_add(itn, nt);
-	return 0;
+	वापस 0;
 
 err_dev_set_mtu:
-	unregister_netdevice(dev);
-err_register_netdevice:
-	return err;
-}
+	unरेजिस्टर_netdevice(dev);
+err_रेजिस्टर_netdevice:
+	वापस err;
+पूर्ण
 EXPORT_SYMBOL_GPL(ip_tunnel_newlink);
 
-int ip_tunnel_changelink(struct net_device *dev, struct nlattr *tb[],
-			 struct ip_tunnel_parm *p, __u32 fwmark)
-{
-	struct ip_tunnel *t;
-	struct ip_tunnel *tunnel = netdev_priv(dev);
-	struct net *net = tunnel->net;
-	struct ip_tunnel_net *itn = net_generic(net, tunnel->ip_tnl_net_id);
+पूर्णांक ip_tunnel_changelink(काष्ठा net_device *dev, काष्ठा nlattr *tb[],
+			 काष्ठा ip_tunnel_parm *p, __u32 fwmark)
+अणु
+	काष्ठा ip_tunnel *t;
+	काष्ठा ip_tunnel *tunnel = netdev_priv(dev);
+	काष्ठा net *net = tunnel->net;
+	काष्ठा ip_tunnel_net *itn = net_generic(net, tunnel->ip_tnl_net_id);
 
-	if (dev == itn->fb_tunnel_dev)
-		return -EINVAL;
+	अगर (dev == itn->fb_tunnel_dev)
+		वापस -EINVAL;
 
 	t = ip_tunnel_find(itn, p, dev->type);
 
-	if (t) {
-		if (t->dev != dev)
-			return -EEXIST;
-	} else {
+	अगर (t) अणु
+		अगर (t->dev != dev)
+			वापस -EEXIST;
+	पूर्ण अन्यथा अणु
 		t = tunnel;
 
-		if (dev->type != ARPHRD_ETHER) {
-			unsigned int nflags = 0;
+		अगर (dev->type != ARPHRD_ETHER) अणु
+			अचिन्हित पूर्णांक nflags = 0;
 
-			if (ipv4_is_multicast(p->iph.daddr))
+			अगर (ipv4_is_multicast(p->iph.daddr))
 				nflags = IFF_BROADCAST;
-			else if (p->iph.daddr)
+			अन्यथा अगर (p->iph.daddr)
 				nflags = IFF_POINTOPOINT;
 
-			if ((dev->flags ^ nflags) &
+			अगर ((dev->flags ^ nflags) &
 			    (IFF_POINTOPOINT | IFF_BROADCAST))
-				return -EINVAL;
-		}
-	}
+				वापस -EINVAL;
+		पूर्ण
+	पूर्ण
 
 	ip_tunnel_update(itn, t, dev, p, !tb[IFLA_MTU], fwmark);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(ip_tunnel_changelink);
 
-int ip_tunnel_init(struct net_device *dev)
-{
-	struct ip_tunnel *tunnel = netdev_priv(dev);
-	struct iphdr *iph = &tunnel->parms.iph;
-	int err;
+पूर्णांक ip_tunnel_init(काष्ठा net_device *dev)
+अणु
+	काष्ठा ip_tunnel *tunnel = netdev_priv(dev);
+	काष्ठा iphdr *iph = &tunnel->parms.iph;
+	पूर्णांक err;
 
-	dev->needs_free_netdev = true;
-	dev->priv_destructor = ip_tunnel_dev_free;
-	dev->tstats = netdev_alloc_pcpu_stats(struct pcpu_sw_netstats);
-	if (!dev->tstats)
-		return -ENOMEM;
+	dev->needs_मुक्त_netdev = true;
+	dev->priv_deकाष्ठाor = ip_tunnel_dev_मुक्त;
+	dev->tstats = netdev_alloc_pcpu_stats(काष्ठा pcpu_sw_netstats);
+	अगर (!dev->tstats)
+		वापस -ENOMEM;
 
 	err = dst_cache_init(&tunnel->dst_cache, GFP_KERNEL);
-	if (err) {
-		free_percpu(dev->tstats);
-		return err;
-	}
+	अगर (err) अणु
+		मुक्त_percpu(dev->tstats);
+		वापस err;
+	पूर्ण
 
 	err = gro_cells_init(&tunnel->gro_cells, dev);
-	if (err) {
+	अगर (err) अणु
 		dst_cache_destroy(&tunnel->dst_cache);
-		free_percpu(dev->tstats);
-		return err;
-	}
+		मुक्त_percpu(dev->tstats);
+		वापस err;
+	पूर्ण
 
 	tunnel->dev = dev;
 	tunnel->net = dev_net(dev);
-	strcpy(tunnel->parms.name, dev->name);
+	म_नकल(tunnel->parms.name, dev->name);
 	iph->version		= 4;
 	iph->ihl		= 5;
 
-	if (tunnel->collect_md)
-		netif_keep_dst(dev);
-	return 0;
-}
+	अगर (tunnel->collect_md)
+		netअगर_keep_dst(dev);
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(ip_tunnel_init);
 
-void ip_tunnel_uninit(struct net_device *dev)
-{
-	struct ip_tunnel *tunnel = netdev_priv(dev);
-	struct net *net = tunnel->net;
-	struct ip_tunnel_net *itn;
+व्योम ip_tunnel_uninit(काष्ठा net_device *dev)
+अणु
+	काष्ठा ip_tunnel *tunnel = netdev_priv(dev);
+	काष्ठा net *net = tunnel->net;
+	काष्ठा ip_tunnel_net *itn;
 
 	itn = net_generic(net, tunnel->ip_tnl_net_id);
 	ip_tunnel_del(itn, netdev_priv(dev));
-	if (itn->fb_tunnel_dev == dev)
-		WRITE_ONCE(itn->fb_tunnel_dev, NULL);
+	अगर (itn->fb_tunnel_dev == dev)
+		WRITE_ONCE(itn->fb_tunnel_dev, शून्य);
 
 	dst_cache_reset(&tunnel->dst_cache);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(ip_tunnel_uninit);
 
-/* Do least required initialization, rest of init is done in tunnel_init call */
-void ip_tunnel_setup(struct net_device *dev, unsigned int net_id)
-{
-	struct ip_tunnel *tunnel = netdev_priv(dev);
+/* Do least required initialization, rest of init is करोne in tunnel_init call */
+व्योम ip_tunnel_setup(काष्ठा net_device *dev, अचिन्हित पूर्णांक net_id)
+अणु
+	काष्ठा ip_tunnel *tunnel = netdev_priv(dev);
 	tunnel->ip_tnl_net_id = net_id;
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(ip_tunnel_setup);
 
 MODULE_LICENSE("GPL");

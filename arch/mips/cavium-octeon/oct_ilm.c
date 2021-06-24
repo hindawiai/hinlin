@@ -1,181 +1,182 @@
-// SPDX-License-Identifier: GPL-2.0-only
-#include <linux/fs.h>
-#include <linux/interrupt.h>
-#include <asm/octeon/octeon.h>
-#include <asm/octeon/cvmx-ciu-defs.h>
-#include <asm/octeon/cvmx.h>
-#include <linux/debugfs.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/seq_file.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
+#समावेश <linux/fs.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <यंत्र/octeon/octeon.h>
+#समावेश <यंत्र/octeon/cvmx-ciu-defs.h>
+#समावेश <यंत्र/octeon/cvmx.h>
+#समावेश <linux/debugfs.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/seq_file.h>
 
-#define TIMER_NUM 3
+#घोषणा TIMER_NUM 3
 
-static bool reset_stats;
+अटल bool reset_stats;
 
-struct latency_info {
-	u64 io_interval;
-	u64 cpu_interval;
-	u64 timer_start1;
-	u64 timer_start2;
+काष्ठा latency_info अणु
+	u64 io_पूर्णांकerval;
+	u64 cpu_पूर्णांकerval;
+	u64 समयr_start1;
+	u64 समयr_start2;
 	u64 max_latency;
 	u64 min_latency;
 	u64 latency_sum;
 	u64 average_latency;
-	u64 interrupt_cnt;
-};
+	u64 पूर्णांकerrupt_cnt;
+पूर्ण;
 
-static struct latency_info li;
-static struct dentry *dir;
+अटल काष्ठा latency_info li;
+अटल काष्ठा dentry *dir;
 
-static int show_latency(struct seq_file *m, void *v)
-{
+अटल पूर्णांक show_latency(काष्ठा seq_file *m, व्योम *v)
+अणु
 	u64 cpuclk, avg, max, min;
-	struct latency_info curr_li = li;
+	काष्ठा latency_info curr_li = li;
 
-	cpuclk = octeon_get_clock_rate();
+	cpuclk = octeon_get_घड़ी_rate();
 
 	max = (curr_li.max_latency * 1000000000) / cpuclk;
 	min = (curr_li.min_latency * 1000000000) / cpuclk;
-	avg = (curr_li.latency_sum * 1000000000) / (cpuclk * curr_li.interrupt_cnt);
+	avg = (curr_li.latency_sum * 1000000000) / (cpuclk * curr_li.पूर्णांकerrupt_cnt);
 
-	seq_printf(m, "cnt: %10lld, avg: %7lld ns, max: %7lld ns, min: %7lld ns\n",
-		   curr_li.interrupt_cnt, avg, max, min);
-	return 0;
-}
+	seq_म_लिखो(m, "cnt: %10lld, avg: %7lld ns, max: %7lld ns, min: %7lld ns\n",
+		   curr_li.पूर्णांकerrupt_cnt, avg, max, min);
+	वापस 0;
+पूर्ण
 
-static int oct_ilm_open(struct inode *inode, struct file *file)
-{
-	return single_open(file, show_latency, NULL);
-}
+अटल पूर्णांक oct_ilm_खोलो(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	वापस single_खोलो(file, show_latency, शून्य);
+पूर्ण
 
-static const struct file_operations oct_ilm_ops = {
-	.open = oct_ilm_open,
-	.read = seq_read,
+अटल स्थिर काष्ठा file_operations oct_ilm_ops = अणु
+	.खोलो = oct_ilm_खोलो,
+	.पढ़ो = seq_पढ़ो,
 	.llseek = seq_lseek,
 	.release = single_release,
-};
+पूर्ण;
 
-static int reset_statistics(void *data, u64 value)
-{
+अटल पूर्णांक reset_statistics(व्योम *data, u64 value)
+अणु
 	reset_stats = true;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-DEFINE_DEBUGFS_ATTRIBUTE(reset_statistics_ops, NULL, reset_statistics, "%llu\n");
+DEFINE_DEBUGFS_ATTRIBUTE(reset_statistics_ops, शून्य, reset_statistics, "%llu\n");
 
-static void init_debugfs(void)
-{
+अटल व्योम init_debugfs(व्योम)
+अणु
 	dir = debugfs_create_dir("oct_ilm", 0);
-	debugfs_create_file("statistics", 0222, dir, NULL, &oct_ilm_ops);
-	debugfs_create_file("reset", 0222, dir, NULL, &reset_statistics_ops);
-}
+	debugfs_create_file("statistics", 0222, dir, शून्य, &oct_ilm_ops);
+	debugfs_create_file("reset", 0222, dir, शून्य, &reset_statistics_ops);
+पूर्ण
 
-static void init_latency_info(struct latency_info *li, int startup)
-{
-	/* interval in milli seconds after which the interrupt will
+अटल व्योम init_latency_info(काष्ठा latency_info *li, पूर्णांक startup)
+अणु
+	/* पूर्णांकerval in milli seconds after which the पूर्णांकerrupt will
 	 * be triggered
 	 */
-	int interval = 1;
+	पूर्णांक पूर्णांकerval = 1;
 
-	if (startup) {
-		/* Calculating by the amounts io clock and cpu clock would
-		 *  increment in interval amount of ms
+	अगर (startup) अणु
+		/* Calculating by the amounts io घड़ी and cpu घड़ी would
+		 *  increment in पूर्णांकerval amount of ms
 		 */
-		li->io_interval = (octeon_get_io_clock_rate() * interval) / 1000;
-		li->cpu_interval = (octeon_get_clock_rate() * interval) / 1000;
-	}
-	li->timer_start1 = 0;
-	li->timer_start2 = 0;
+		li->io_पूर्णांकerval = (octeon_get_io_घड़ी_rate() * पूर्णांकerval) / 1000;
+		li->cpu_पूर्णांकerval = (octeon_get_घड़ी_rate() * पूर्णांकerval) / 1000;
+	पूर्ण
+	li->समयr_start1 = 0;
+	li->समयr_start2 = 0;
 	li->max_latency = 0;
 	li->min_latency = (u64)-1;
 	li->latency_sum = 0;
-	li->interrupt_cnt = 0;
-}
+	li->पूर्णांकerrupt_cnt = 0;
+पूर्ण
 
 
-static void start_timer(int timer, u64 interval)
-{
-	union cvmx_ciu_timx timx;
-	unsigned long flags;
+अटल व्योम start_समयr(पूर्णांक समयr, u64 पूर्णांकerval)
+अणु
+	जोड़ cvmx_ciu_timx timx;
+	अचिन्हित दीर्घ flags;
 
 	timx.u64 = 0;
 	timx.s.one_shot = 1;
-	timx.s.len = interval;
+	timx.s.len = पूर्णांकerval;
 	raw_local_irq_save(flags);
-	li.timer_start1 = read_c0_cvmcount();
-	cvmx_write_csr(CVMX_CIU_TIMX(timer), timx.u64);
-	/* Read it back to force wait until register is written. */
-	timx.u64 = cvmx_read_csr(CVMX_CIU_TIMX(timer));
-	li.timer_start2 = read_c0_cvmcount();
+	li.समयr_start1 = पढ़ो_c0_cvmcount();
+	cvmx_ग_लिखो_csr(CVMX_CIU_TIMX(समयr), timx.u64);
+	/* Read it back to क्रमce रुको until रेजिस्टर is written. */
+	timx.u64 = cvmx_पढ़ो_csr(CVMX_CIU_TIMX(समयr));
+	li.समयr_start2 = पढ़ो_c0_cvmcount();
 	raw_local_irq_restore(flags);
-}
+पूर्ण
 
 
-static irqreturn_t cvm_oct_ciu_timer_interrupt(int cpl, void *dev_id)
-{
+अटल irqवापस_t cvm_oct_ciu_समयr_पूर्णांकerrupt(पूर्णांक cpl, व्योम *dev_id)
+अणु
 	u64 last_latency;
-	u64 last_int_cnt;
+	u64 last_पूर्णांक_cnt;
 
-	if (reset_stats) {
+	अगर (reset_stats) अणु
 		init_latency_info(&li, 0);
 		reset_stats = false;
-	} else {
-		last_int_cnt = read_c0_cvmcount();
-		last_latency = last_int_cnt - (li.timer_start1 + li.cpu_interval);
-		li.interrupt_cnt++;
+	पूर्ण अन्यथा अणु
+		last_पूर्णांक_cnt = पढ़ो_c0_cvmcount();
+		last_latency = last_पूर्णांक_cnt - (li.समयr_start1 + li.cpu_पूर्णांकerval);
+		li.पूर्णांकerrupt_cnt++;
 		li.latency_sum += last_latency;
-		if (last_latency > li.max_latency)
+		अगर (last_latency > li.max_latency)
 			li.max_latency = last_latency;
-		if (last_latency < li.min_latency)
+		अगर (last_latency < li.min_latency)
 			li.min_latency = last_latency;
-	}
-	start_timer(TIMER_NUM, li.io_interval);
-	return IRQ_HANDLED;
-}
+	पूर्ण
+	start_समयr(TIMER_NUM, li.io_पूर्णांकerval);
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static void disable_timer(int timer)
-{
-	union cvmx_ciu_timx timx;
+अटल व्योम disable_समयr(पूर्णांक समयr)
+अणु
+	जोड़ cvmx_ciu_timx timx;
 
 	timx.s.one_shot = 0;
 	timx.s.len = 0;
-	cvmx_write_csr(CVMX_CIU_TIMX(timer), timx.u64);
-	/* Read it back to force immediate write of timer register*/
-	timx.u64 = cvmx_read_csr(CVMX_CIU_TIMX(timer));
-}
+	cvmx_ग_लिखो_csr(CVMX_CIU_TIMX(समयr), timx.u64);
+	/* Read it back to क्रमce immediate ग_लिखो of समयr रेजिस्टर*/
+	timx.u64 = cvmx_पढ़ो_csr(CVMX_CIU_TIMX(समयr));
+पूर्ण
 
-static __init int oct_ilm_module_init(void)
-{
-	int rc;
-	int irq = OCTEON_IRQ_TIMER0 + TIMER_NUM;
+अटल __init पूर्णांक oct_ilm_module_init(व्योम)
+अणु
+	पूर्णांक rc;
+	पूर्णांक irq = OCTEON_IRQ_TIMER0 + TIMER_NUM;
 
 	init_debugfs();
 
-	rc = request_irq(irq, cvm_oct_ciu_timer_interrupt, IRQF_NO_THREAD,
+	rc = request_irq(irq, cvm_oct_ciu_समयr_पूर्णांकerrupt, IRQF_NO_THREAD,
 			 "oct_ilm", 0);
-	if (rc) {
+	अगर (rc) अणु
 		WARN(1, "Could not acquire IRQ %d", irq);
-		goto err_irq;
-	}
+		जाओ err_irq;
+	पूर्ण
 
 	init_latency_info(&li, 1);
-	start_timer(TIMER_NUM, li.io_interval);
+	start_समयr(TIMER_NUM, li.io_पूर्णांकerval);
 
-	return 0;
+	वापस 0;
 err_irq:
-	debugfs_remove_recursive(dir);
-	return rc;
-}
+	debugfs_हटाओ_recursive(dir);
+	वापस rc;
+पूर्ण
 
-static __exit void oct_ilm_module_exit(void)
-{
-	disable_timer(TIMER_NUM);
-	debugfs_remove_recursive(dir);
-	free_irq(OCTEON_IRQ_TIMER0 + TIMER_NUM, 0);
-}
+अटल __निकास व्योम oct_ilm_module_निकास(व्योम)
+अणु
+	disable_समयr(TIMER_NUM);
+	debugfs_हटाओ_recursive(dir);
+	मुक्त_irq(OCTEON_IRQ_TIMER0 + TIMER_NUM, 0);
+पूर्ण
 
-module_exit(oct_ilm_module_exit);
+module_निकास(oct_ilm_module_निकास);
 module_init(oct_ilm_module_init);
 MODULE_AUTHOR("Venkat Subbiah, Cavium");
 MODULE_DESCRIPTION("Measures interrupt latency on Octeon chips.");

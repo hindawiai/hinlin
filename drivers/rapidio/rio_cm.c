@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * rio_cm - RapidIO Channelized Messaging Driver
  *
@@ -7,94 +8,94 @@
  * Copyright (c) 2015, RapidIO Trade Association
  */
 
-#include <linux/module.h>
-#include <linux/kernel.h>
-#include <linux/dma-mapping.h>
-#include <linux/delay.h>
-#include <linux/sched.h>
-#include <linux/rio.h>
-#include <linux/rio_drv.h>
-#include <linux/slab.h>
-#include <linux/idr.h>
-#include <linux/interrupt.h>
-#include <linux/cdev.h>
-#include <linux/fs.h>
-#include <linux/poll.h>
-#include <linux/reboot.h>
-#include <linux/bitops.h>
-#include <linux/printk.h>
-#include <linux/rio_cm_cdev.h>
+#समावेश <linux/module.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/dma-mapping.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/rपन.स>
+#समावेश <linux/rio_drv.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/idr.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/cdev.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/poll.h>
+#समावेश <linux/reboot.h>
+#समावेश <linux/bitops.h>
+#समावेश <linux/prपूर्णांकk.h>
+#समावेश <linux/rio_cm_cdev.h>
 
-#define DRV_NAME        "rio_cm"
-#define DRV_VERSION     "1.0.0"
-#define DRV_AUTHOR      "Alexandre Bounine <alexandre.bounine@idt.com>"
-#define DRV_DESC        "RapidIO Channelized Messaging Driver"
-#define DEV_NAME	"rio_cm"
+#घोषणा DRV_NAME        "rio_cm"
+#घोषणा DRV_VERSION     "1.0.0"
+#घोषणा DRV_AUTHOR      "Alexandre Bounine <alexandre.bounine@idt.com>"
+#घोषणा DRV_DESC        "RapidIO Channelized Messaging Driver"
+#घोषणा DEV_NAME	"rio_cm"
 
 /* Debug output filtering masks */
-enum {
+क्रमागत अणु
 	DBG_NONE	= 0,
 	DBG_INIT	= BIT(0), /* driver init */
-	DBG_EXIT	= BIT(1), /* driver exit */
-	DBG_MPORT	= BIT(2), /* mport add/remove */
-	DBG_RDEV	= BIT(3), /* RapidIO device add/remove */
+	DBG_EXIT	= BIT(1), /* driver निकास */
+	DBG_MPORT	= BIT(2), /* mport add/हटाओ */
+	DBG_RDEV	= BIT(3), /* RapidIO device add/हटाओ */
 	DBG_CHOP	= BIT(4), /* channel operations */
-	DBG_WAIT	= BIT(5), /* waiting for events */
+	DBG_WAIT	= BIT(5), /* रुकोing क्रम events */
 	DBG_TX		= BIT(6), /* message TX */
 	DBG_TX_EVENT	= BIT(7), /* message TX event */
 	DBG_RX_DATA	= BIT(8), /* inbound data messages */
 	DBG_RX_CMD	= BIT(9), /* inbound REQ/ACK/NACK messages */
 	DBG_ALL		= ~0,
-};
+पूर्ण;
 
-#ifdef DEBUG
-#define riocm_debug(level, fmt, arg...) \
-	do { \
-		if (DBG_##level & dbg_level) \
+#अगर_घोषित DEBUG
+#घोषणा riocm_debug(level, fmt, arg...) \
+	करो अणु \
+		अगर (DBG_##level & dbg_level) \
 			pr_debug(DRV_NAME ": %s " fmt "\n", \
 				__func__, ##arg); \
-	} while (0)
-#else
-#define riocm_debug(level, fmt, arg...) \
-		no_printk(KERN_DEBUG pr_fmt(DRV_NAME fmt "\n"), ##arg)
-#endif
+	पूर्ण जबतक (0)
+#अन्यथा
+#घोषणा riocm_debug(level, fmt, arg...) \
+		no_prपूर्णांकk(KERN_DEBUG pr_fmt(DRV_NAME fmt "\n"), ##arg)
+#पूर्ण_अगर
 
-#define riocm_warn(fmt, arg...) \
+#घोषणा riocm_warn(fmt, arg...) \
 	pr_warn(DRV_NAME ": %s WARNING " fmt "\n", __func__, ##arg)
 
-#define riocm_error(fmt, arg...) \
+#घोषणा riocm_error(fmt, arg...) \
 	pr_err(DRV_NAME ": %s ERROR " fmt "\n", __func__, ##arg)
 
 
-static int cmbox = 1;
-module_param(cmbox, int, S_IRUGO);
+अटल पूर्णांक cmbox = 1;
+module_param(cmbox, पूर्णांक, S_IRUGO);
 MODULE_PARM_DESC(cmbox, "RapidIO Mailbox number (default 1)");
 
-static int chstart = 256;
-module_param(chstart, int, S_IRUGO);
+अटल पूर्णांक chstart = 256;
+module_param(chstart, पूर्णांक, S_IRUGO);
 MODULE_PARM_DESC(chstart,
 		 "Start channel number for dynamic allocation (default 256)");
 
-#ifdef DEBUG
-static u32 dbg_level = DBG_NONE;
-module_param(dbg_level, uint, S_IWUSR | S_IRUGO);
+#अगर_घोषित DEBUG
+अटल u32 dbg_level = DBG_NONE;
+module_param(dbg_level, uपूर्णांक, S_IWUSR | S_IRUGO);
 MODULE_PARM_DESC(dbg_level, "Debugging output level (default 0 = none)");
-#endif
+#पूर्ण_अगर
 
 MODULE_AUTHOR(DRV_AUTHOR);
 MODULE_DESCRIPTION(DRV_DESC);
 MODULE_LICENSE("GPL");
 MODULE_VERSION(DRV_VERSION);
 
-#define RIOCM_TX_RING_SIZE	128
-#define RIOCM_RX_RING_SIZE	128
-#define RIOCM_CONNECT_TO	3 /* connect response TO (in sec) */
+#घोषणा RIOCM_TX_RING_SIZE	128
+#घोषणा RIOCM_RX_RING_SIZE	128
+#घोषणा RIOCM_CONNECT_TO	3 /* connect response TO (in sec) */
 
-#define RIOCM_MAX_CHNUM		0xffff /* Use full range of u16 field */
-#define RIOCM_CHNUM_AUTO	0
-#define RIOCM_MAX_EP_COUNT	0x10000 /* Max number of endpoints */
+#घोषणा RIOCM_MAX_CHNUM		0xffff /* Use full range of u16 field */
+#घोषणा RIOCM_CHNUM_AUTO	0
+#घोषणा RIOCM_MAX_EP_COUNT	0x10000 /* Max number of endpoपूर्णांकs */
 
-enum rio_cm_state {
+क्रमागत rio_cm_state अणु
 	RIO_CM_IDLE,
 	RIO_CM_CONNECT,
 	RIO_CM_CONNECTED,
@@ -102,302 +103,302 @@ enum rio_cm_state {
 	RIO_CM_CHAN_BOUND,
 	RIO_CM_LISTEN,
 	RIO_CM_DESTROYING,
-};
+पूर्ण;
 
-enum rio_cm_pkt_type {
+क्रमागत rio_cm_pkt_type अणु
 	RIO_CM_SYS	= 0xaa,
 	RIO_CM_CHAN	= 0x55,
-};
+पूर्ण;
 
-enum rio_cm_chop {
+क्रमागत rio_cm_chop अणु
 	CM_CONN_REQ,
 	CM_CONN_ACK,
 	CM_CONN_CLOSE,
 	CM_DATA_MSG,
-};
+पूर्ण;
 
-struct rio_ch_base_bhdr {
+काष्ठा rio_ch_base_bhdr अणु
 	u32 src_id;
 	u32 dst_id;
-#define RIO_HDR_LETTER_MASK 0xffff0000
-#define RIO_HDR_MBOX_MASK   0x0000ffff
+#घोषणा RIO_HDR_LETTER_MASK 0xffff0000
+#घोषणा RIO_HDR_MBOX_MASK   0x0000ffff
 	u8  src_mbox;
 	u8  dst_mbox;
 	u8  type;
-} __attribute__((__packed__));
+पूर्ण __attribute__((__packed__));
 
-struct rio_ch_chan_hdr {
-	struct rio_ch_base_bhdr bhdr;
+काष्ठा rio_ch_chan_hdr अणु
+	काष्ठा rio_ch_base_bhdr bhdr;
 	u8 ch_op;
 	u16 dst_ch;
 	u16 src_ch;
 	u16 msg_len;
 	u16 rsrvd;
-} __attribute__((__packed__));
+पूर्ण __attribute__((__packed__));
 
-struct tx_req {
-	struct list_head node;
-	struct rio_dev   *rdev;
-	void		 *buffer;
-	size_t		 len;
-};
+काष्ठा tx_req अणु
+	काष्ठा list_head node;
+	काष्ठा rio_dev   *rdev;
+	व्योम		 *buffer;
+	माप_प्रकार		 len;
+पूर्ण;
 
-struct cm_dev {
-	struct list_head	list;
-	struct rio_mport	*mport;
-	void			*rx_buf[RIOCM_RX_RING_SIZE];
-	int			rx_slots;
-	struct mutex		rx_lock;
+काष्ठा cm_dev अणु
+	काष्ठा list_head	list;
+	काष्ठा rio_mport	*mport;
+	व्योम			*rx_buf[RIOCM_RX_RING_SIZE];
+	पूर्णांक			rx_slots;
+	काष्ठा mutex		rx_lock;
 
-	void			*tx_buf[RIOCM_TX_RING_SIZE];
-	int			tx_slot;
-	int			tx_cnt;
-	int			tx_ack_slot;
-	struct list_head	tx_reqs;
+	व्योम			*tx_buf[RIOCM_TX_RING_SIZE];
+	पूर्णांक			tx_slot;
+	पूर्णांक			tx_cnt;
+	पूर्णांक			tx_ack_slot;
+	काष्ठा list_head	tx_reqs;
 	spinlock_t		tx_lock;
 
-	struct list_head	peers;
+	काष्ठा list_head	peers;
 	u32			npeers;
-	struct workqueue_struct *rx_wq;
-	struct work_struct	rx_work;
-};
+	काष्ठा workqueue_काष्ठा *rx_wq;
+	काष्ठा work_काष्ठा	rx_work;
+पूर्ण;
 
-struct chan_rx_ring {
-	void	*buf[RIOCM_RX_RING_SIZE];
-	int	head;
-	int	tail;
-	int	count;
+काष्ठा chan_rx_ring अणु
+	व्योम	*buf[RIOCM_RX_RING_SIZE];
+	पूर्णांक	head;
+	पूर्णांक	tail;
+	पूर्णांक	count;
 
 	/* Tracking RX buffers reported to upper level */
-	void	*inuse[RIOCM_RX_RING_SIZE];
-	int	inuse_cnt;
-};
+	व्योम	*inuse[RIOCM_RX_RING_SIZE];
+	पूर्णांक	inuse_cnt;
+पूर्ण;
 
-struct rio_channel {
+काष्ठा rio_channel अणु
 	u16			id;	/* local channel ID */
-	struct kref		ref;	/* channel refcount */
-	struct file		*filp;
-	struct cm_dev		*cmdev;	/* associated CM device object */
-	struct rio_dev		*rdev;	/* remote RapidIO device */
-	enum rio_cm_state	state;
-	int			error;
+	काष्ठा kref		ref;	/* channel refcount */
+	काष्ठा file		*filp;
+	काष्ठा cm_dev		*cmdev;	/* associated CM device object */
+	काष्ठा rio_dev		*rdev;	/* remote RapidIO device */
+	क्रमागत rio_cm_state	state;
+	पूर्णांक			error;
 	spinlock_t		lock;
-	void			*context;
+	व्योम			*context;
 	u32			loc_destid;	/* local destID */
 	u32			rem_destid;	/* remote destID */
 	u16			rem_channel;	/* remote channel ID */
-	struct list_head	accept_queue;
-	struct list_head	ch_node;
-	struct completion	comp;
-	struct completion	comp_close;
-	struct chan_rx_ring	rx_ring;
-};
+	काष्ठा list_head	accept_queue;
+	काष्ठा list_head	ch_node;
+	काष्ठा completion	comp;
+	काष्ठा completion	comp_बंद;
+	काष्ठा chan_rx_ring	rx_ring;
+पूर्ण;
 
-struct cm_peer {
-	struct list_head node;
-	struct rio_dev *rdev;
-};
+काष्ठा cm_peer अणु
+	काष्ठा list_head node;
+	काष्ठा rio_dev *rdev;
+पूर्ण;
 
-struct rio_cm_work {
-	struct work_struct work;
-	struct cm_dev *cm;
-	void *data;
-};
+काष्ठा rio_cm_work अणु
+	काष्ठा work_काष्ठा work;
+	काष्ठा cm_dev *cm;
+	व्योम *data;
+पूर्ण;
 
-struct conn_req {
-	struct list_head node;
+काष्ठा conn_req अणु
+	काष्ठा list_head node;
 	u32 destid;	/* requester destID */
 	u16 chan;	/* requester channel ID */
-	struct cm_dev *cmdev;
-};
+	काष्ठा cm_dev *cmdev;
+पूर्ण;
 
 /*
- * A channel_dev structure represents a CM_CDEV
+ * A channel_dev काष्ठाure represents a CM_CDEV
  * @cdev	Character device
  * @dev		Associated device object
  */
-struct channel_dev {
-	struct cdev	cdev;
-	struct device	*dev;
-};
+काष्ठा channel_dev अणु
+	काष्ठा cdev	cdev;
+	काष्ठा device	*dev;
+पूर्ण;
 
-static struct rio_channel *riocm_ch_alloc(u16 ch_num);
-static void riocm_ch_free(struct kref *ref);
-static int riocm_post_send(struct cm_dev *cm, struct rio_dev *rdev,
-			   void *buffer, size_t len);
-static int riocm_ch_close(struct rio_channel *ch);
+अटल काष्ठा rio_channel *riocm_ch_alloc(u16 ch_num);
+अटल व्योम riocm_ch_मुक्त(काष्ठा kref *ref);
+अटल पूर्णांक riocm_post_send(काष्ठा cm_dev *cm, काष्ठा rio_dev *rdev,
+			   व्योम *buffer, माप_प्रकार len);
+अटल पूर्णांक riocm_ch_बंद(काष्ठा rio_channel *ch);
 
-static DEFINE_SPINLOCK(idr_lock);
-static DEFINE_IDR(ch_idr);
+अटल DEFINE_SPINLOCK(idr_lock);
+अटल DEFINE_IDR(ch_idr);
 
-static LIST_HEAD(cm_dev_list);
-static DECLARE_RWSEM(rdev_sem);
+अटल LIST_HEAD(cm_dev_list);
+अटल DECLARE_RWSEM(rdev_sem);
 
-static struct class *dev_class;
-static unsigned int dev_major;
-static unsigned int dev_minor_base;
-static dev_t dev_number;
-static struct channel_dev riocm_cdev;
+अटल काष्ठा class *dev_class;
+अटल अचिन्हित पूर्णांक dev_major;
+अटल अचिन्हित पूर्णांक dev_minor_base;
+अटल dev_t dev_number;
+अटल काष्ठा channel_dev riocm_cdev;
 
-#define is_msg_capable(src_ops, dst_ops)			\
+#घोषणा is_msg_capable(src_ops, dst_ops)			\
 			((src_ops & RIO_SRC_OPS_DATA_MSG) &&	\
 			 (dst_ops & RIO_DST_OPS_DATA_MSG))
-#define dev_cm_capable(dev) \
+#घोषणा dev_cm_capable(dev) \
 	is_msg_capable(dev->src_ops, dev->dst_ops)
 
-static int riocm_cmp(struct rio_channel *ch, enum rio_cm_state cmp)
-{
-	int ret;
+अटल पूर्णांक riocm_cmp(काष्ठा rio_channel *ch, क्रमागत rio_cm_state cmp)
+अणु
+	पूर्णांक ret;
 
 	spin_lock_bh(&ch->lock);
 	ret = (ch->state == cmp);
 	spin_unlock_bh(&ch->lock);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int riocm_cmp_exch(struct rio_channel *ch,
-			   enum rio_cm_state cmp, enum rio_cm_state exch)
-{
-	int ret;
+अटल पूर्णांक riocm_cmp_exch(काष्ठा rio_channel *ch,
+			   क्रमागत rio_cm_state cmp, क्रमागत rio_cm_state exch)
+अणु
+	पूर्णांक ret;
 
 	spin_lock_bh(&ch->lock);
 	ret = (ch->state == cmp);
-	if (ret)
+	अगर (ret)
 		ch->state = exch;
 	spin_unlock_bh(&ch->lock);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static enum rio_cm_state riocm_exch(struct rio_channel *ch,
-				    enum rio_cm_state exch)
-{
-	enum rio_cm_state old;
+अटल क्रमागत rio_cm_state riocm_exch(काष्ठा rio_channel *ch,
+				    क्रमागत rio_cm_state exch)
+अणु
+	क्रमागत rio_cm_state old;
 
 	spin_lock_bh(&ch->lock);
 	old = ch->state;
 	ch->state = exch;
 	spin_unlock_bh(&ch->lock);
-	return old;
-}
+	वापस old;
+पूर्ण
 
-static struct rio_channel *riocm_get_channel(u16 nr)
-{
-	struct rio_channel *ch;
+अटल काष्ठा rio_channel *riocm_get_channel(u16 nr)
+अणु
+	काष्ठा rio_channel *ch;
 
 	spin_lock_bh(&idr_lock);
 	ch = idr_find(&ch_idr, nr);
-	if (ch)
+	अगर (ch)
 		kref_get(&ch->ref);
 	spin_unlock_bh(&idr_lock);
-	return ch;
-}
+	वापस ch;
+पूर्ण
 
-static void riocm_put_channel(struct rio_channel *ch)
-{
-	kref_put(&ch->ref, riocm_ch_free);
-}
+अटल व्योम riocm_put_channel(काष्ठा rio_channel *ch)
+अणु
+	kref_put(&ch->ref, riocm_ch_मुक्त);
+पूर्ण
 
-static void *riocm_rx_get_msg(struct cm_dev *cm)
-{
-	void *msg;
-	int i;
+अटल व्योम *riocm_rx_get_msg(काष्ठा cm_dev *cm)
+अणु
+	व्योम *msg;
+	पूर्णांक i;
 
 	msg = rio_get_inb_message(cm->mport, cmbox);
-	if (msg) {
-		for (i = 0; i < RIOCM_RX_RING_SIZE; i++) {
-			if (cm->rx_buf[i] == msg) {
-				cm->rx_buf[i] = NULL;
+	अगर (msg) अणु
+		क्रम (i = 0; i < RIOCM_RX_RING_SIZE; i++) अणु
+			अगर (cm->rx_buf[i] == msg) अणु
+				cm->rx_buf[i] = शून्य;
 				cm->rx_slots++;
-				break;
-			}
-		}
+				अवरोध;
+			पूर्ण
+		पूर्ण
 
-		if (i == RIOCM_RX_RING_SIZE)
+		अगर (i == RIOCM_RX_RING_SIZE)
 			riocm_warn("no record for buffer 0x%p", msg);
-	}
+	पूर्ण
 
-	return msg;
-}
+	वापस msg;
+पूर्ण
 
 /*
- * riocm_rx_fill - fills a ring of receive buffers for given cm device
+ * riocm_rx_fill - fills a ring of receive buffers क्रम given cm device
  * @cm: cm_dev object
  * @nent: max number of entries to fill
  *
  * Returns: none
  */
-static void riocm_rx_fill(struct cm_dev *cm, int nent)
-{
-	int i;
+अटल व्योम riocm_rx_fill(काष्ठा cm_dev *cm, पूर्णांक nent)
+अणु
+	पूर्णांक i;
 
-	if (cm->rx_slots == 0)
-		return;
+	अगर (cm->rx_slots == 0)
+		वापस;
 
-	for (i = 0; i < RIOCM_RX_RING_SIZE && cm->rx_slots && nent; i++) {
-		if (cm->rx_buf[i] == NULL) {
-			cm->rx_buf[i] = kmalloc(RIO_MAX_MSG_SIZE, GFP_KERNEL);
-			if (cm->rx_buf[i] == NULL)
-				break;
+	क्रम (i = 0; i < RIOCM_RX_RING_SIZE && cm->rx_slots && nent; i++) अणु
+		अगर (cm->rx_buf[i] == शून्य) अणु
+			cm->rx_buf[i] = kदो_स्मृति(RIO_MAX_MSG_SIZE, GFP_KERNEL);
+			अगर (cm->rx_buf[i] == शून्य)
+				अवरोध;
 			rio_add_inb_buffer(cm->mport, cmbox, cm->rx_buf[i]);
 			cm->rx_slots--;
 			nent--;
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
 /*
- * riocm_rx_free - frees all receive buffers associated with given cm device
+ * riocm_rx_मुक्त - मुक्तs all receive buffers associated with given cm device
  * @cm: cm_dev object
  *
  * Returns: none
  */
-static void riocm_rx_free(struct cm_dev *cm)
-{
-	int i;
+अटल व्योम riocm_rx_मुक्त(काष्ठा cm_dev *cm)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < RIOCM_RX_RING_SIZE; i++) {
-		if (cm->rx_buf[i] != NULL) {
-			kfree(cm->rx_buf[i]);
-			cm->rx_buf[i] = NULL;
-		}
-	}
-}
+	क्रम (i = 0; i < RIOCM_RX_RING_SIZE; i++) अणु
+		अगर (cm->rx_buf[i] != शून्य) अणु
+			kमुक्त(cm->rx_buf[i]);
+			cm->rx_buf[i] = शून्य;
+		पूर्ण
+	पूर्ण
+पूर्ण
 
 /*
  * riocm_req_handler - connection request handler
  * @cm: cm_dev object
- * @req_data: pointer to the request packet
+ * @req_data: poपूर्णांकer to the request packet
  *
- * Returns: 0 if success, or
- *          -EINVAL if channel is not in correct state,
- *          -ENODEV if cannot find a channel with specified ID,
- *          -ENOMEM if unable to allocate memory to store the request
+ * Returns: 0 अगर success, or
+ *          -EINVAL अगर channel is not in correct state,
+ *          -ENODEV अगर cannot find a channel with specअगरied ID,
+ *          -ENOMEM अगर unable to allocate memory to store the request
  */
-static int riocm_req_handler(struct cm_dev *cm, void *req_data)
-{
-	struct rio_channel *ch;
-	struct conn_req *req;
-	struct rio_ch_chan_hdr *hh = req_data;
+अटल पूर्णांक riocm_req_handler(काष्ठा cm_dev *cm, व्योम *req_data)
+अणु
+	काष्ठा rio_channel *ch;
+	काष्ठा conn_req *req;
+	काष्ठा rio_ch_chan_hdr *hh = req_data;
 	u16 chnum;
 
 	chnum = ntohs(hh->dst_ch);
 
 	ch = riocm_get_channel(chnum);
 
-	if (!ch)
-		return -ENODEV;
+	अगर (!ch)
+		वापस -ENODEV;
 
-	if (ch->state != RIO_CM_LISTEN) {
+	अगर (ch->state != RIO_CM_LISTEN) अणु
 		riocm_debug(RX_CMD, "channel %d is not in listen state", chnum);
 		riocm_put_channel(ch);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	req = kzalloc(sizeof(*req), GFP_KERNEL);
-	if (!req) {
+	req = kzalloc(माप(*req), GFP_KERNEL);
+	अगर (!req) अणु
 		riocm_put_channel(ch);
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	req->destid = ntohl(hh->bhdr.src_id);
 	req->chan = ntohs(hh->src_ch);
@@ -409,157 +410,157 @@ static int riocm_req_handler(struct cm_dev *cm, void *req_data)
 	complete(&ch->comp);
 	riocm_put_channel(ch);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * riocm_resp_handler - response to connection request handler
- * @resp_data: pointer to the response packet
+ * @resp_data: poपूर्णांकer to the response packet
  *
- * Returns: 0 if success, or
- *          -EINVAL if channel is not in correct state,
- *          -ENODEV if cannot find a channel with specified ID,
+ * Returns: 0 अगर success, or
+ *          -EINVAL अगर channel is not in correct state,
+ *          -ENODEV अगर cannot find a channel with specअगरied ID,
  */
-static int riocm_resp_handler(void *resp_data)
-{
-	struct rio_channel *ch;
-	struct rio_ch_chan_hdr *hh = resp_data;
+अटल पूर्णांक riocm_resp_handler(व्योम *resp_data)
+अणु
+	काष्ठा rio_channel *ch;
+	काष्ठा rio_ch_chan_hdr *hh = resp_data;
 	u16 chnum;
 
 	chnum = ntohs(hh->dst_ch);
 	ch = riocm_get_channel(chnum);
-	if (!ch)
-		return -ENODEV;
+	अगर (!ch)
+		वापस -ENODEV;
 
-	if (ch->state != RIO_CM_CONNECT) {
+	अगर (ch->state != RIO_CM_CONNECT) अणु
 		riocm_put_channel(ch);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	riocm_exch(ch, RIO_CM_CONNECTED);
 	ch->rem_channel = ntohs(hh->src_ch);
 	complete(&ch->comp);
 	riocm_put_channel(ch);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * riocm_close_handler - channel close request handler
- * @req_data: pointer to the request packet
+ * riocm_बंद_handler - channel बंद request handler
+ * @req_data: poपूर्णांकer to the request packet
  *
- * Returns: 0 if success, or
- *          -ENODEV if cannot find a channel with specified ID,
- *            + error codes returned by riocm_ch_close.
+ * Returns: 0 अगर success, or
+ *          -ENODEV अगर cannot find a channel with specअगरied ID,
+ *            + error codes वापसed by riocm_ch_बंद.
  */
-static int riocm_close_handler(void *data)
-{
-	struct rio_channel *ch;
-	struct rio_ch_chan_hdr *hh = data;
-	int ret;
+अटल पूर्णांक riocm_बंद_handler(व्योम *data)
+अणु
+	काष्ठा rio_channel *ch;
+	काष्ठा rio_ch_chan_hdr *hh = data;
+	पूर्णांक ret;
 
 	riocm_debug(RX_CMD, "for ch=%d", ntohs(hh->dst_ch));
 
 	spin_lock_bh(&idr_lock);
 	ch = idr_find(&ch_idr, ntohs(hh->dst_ch));
-	if (!ch) {
+	अगर (!ch) अणु
 		spin_unlock_bh(&idr_lock);
-		return -ENODEV;
-	}
-	idr_remove(&ch_idr, ch->id);
+		वापस -ENODEV;
+	पूर्ण
+	idr_हटाओ(&ch_idr, ch->id);
 	spin_unlock_bh(&idr_lock);
 
 	riocm_exch(ch, RIO_CM_DISCONNECT);
 
-	ret = riocm_ch_close(ch);
-	if (ret)
+	ret = riocm_ch_बंद(ch);
+	अगर (ret)
 		riocm_debug(RX_CMD, "riocm_ch_close() returned %d", ret);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * rio_cm_handler - function that services request (non-data) packets
  * @cm: cm_dev object
- * @data: pointer to the packet
+ * @data: poपूर्णांकer to the packet
  */
-static void rio_cm_handler(struct cm_dev *cm, void *data)
-{
-	struct rio_ch_chan_hdr *hdr;
+अटल व्योम rio_cm_handler(काष्ठा cm_dev *cm, व्योम *data)
+अणु
+	काष्ठा rio_ch_chan_hdr *hdr;
 
-	if (!rio_mport_is_running(cm->mport))
-		goto out;
+	अगर (!rio_mport_is_running(cm->mport))
+		जाओ out;
 
 	hdr = data;
 
 	riocm_debug(RX_CMD, "OP=%x for ch=%d from %d",
 		    hdr->ch_op, ntohs(hdr->dst_ch), ntohs(hdr->src_ch));
 
-	switch (hdr->ch_op) {
-	case CM_CONN_REQ:
+	चयन (hdr->ch_op) अणु
+	हाल CM_CONN_REQ:
 		riocm_req_handler(cm, data);
-		break;
-	case CM_CONN_ACK:
+		अवरोध;
+	हाल CM_CONN_ACK:
 		riocm_resp_handler(data);
-		break;
-	case CM_CONN_CLOSE:
-		riocm_close_handler(data);
-		break;
-	default:
+		अवरोध;
+	हाल CM_CONN_CLOSE:
+		riocm_बंद_handler(data);
+		अवरोध;
+	शेष:
 		riocm_error("Invalid packet header");
-		break;
-	}
+		अवरोध;
+	पूर्ण
 out:
-	kfree(data);
-}
+	kमुक्त(data);
+पूर्ण
 
 /*
  * rio_rx_data_handler - received data packet handler
  * @cm: cm_dev object
  * @buf: data packet
  *
- * Returns: 0 if success, or
- *          -ENODEV if cannot find a channel with specified ID,
- *          -EIO if channel is not in CONNECTED state,
- *          -ENOMEM if channel RX queue is full (packet discarded)
+ * Returns: 0 अगर success, or
+ *          -ENODEV अगर cannot find a channel with specअगरied ID,
+ *          -EIO अगर channel is not in CONNECTED state,
+ *          -ENOMEM अगर channel RX queue is full (packet discarded)
  */
-static int rio_rx_data_handler(struct cm_dev *cm, void *buf)
-{
-	struct rio_ch_chan_hdr *hdr;
-	struct rio_channel *ch;
+अटल पूर्णांक rio_rx_data_handler(काष्ठा cm_dev *cm, व्योम *buf)
+अणु
+	काष्ठा rio_ch_chan_hdr *hdr;
+	काष्ठा rio_channel *ch;
 
 	hdr = buf;
 
 	riocm_debug(RX_DATA, "for ch=%d", ntohs(hdr->dst_ch));
 
 	ch = riocm_get_channel(ntohs(hdr->dst_ch));
-	if (!ch) {
-		/* Discard data message for non-existing channel */
-		kfree(buf);
-		return -ENODEV;
-	}
+	अगर (!ch) अणु
+		/* Discard data message क्रम non-existing channel */
+		kमुक्त(buf);
+		वापस -ENODEV;
+	पूर्ण
 
-	/* Place pointer to the buffer into channel's RX queue */
+	/* Place poपूर्णांकer to the buffer पूर्णांकo channel's RX queue */
 	spin_lock(&ch->lock);
 
-	if (ch->state != RIO_CM_CONNECTED) {
-		/* Channel is not ready to receive data, discard a packet */
+	अगर (ch->state != RIO_CM_CONNECTED) अणु
+		/* Channel is not पढ़ोy to receive data, discard a packet */
 		riocm_debug(RX_DATA, "ch=%d is in wrong state=%d",
 			    ch->id, ch->state);
 		spin_unlock(&ch->lock);
-		kfree(buf);
+		kमुक्त(buf);
 		riocm_put_channel(ch);
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
-	if (ch->rx_ring.count == RIOCM_RX_RING_SIZE) {
+	अगर (ch->rx_ring.count == RIOCM_RX_RING_SIZE) अणु
 		/* If RX ring is full, discard a packet */
 		riocm_debug(RX_DATA, "ch=%d is full", ch->id);
 		spin_unlock(&ch->lock);
-		kfree(buf);
+		kमुक्त(buf);
 		riocm_put_channel(ch);
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	ch->rx_ring.buf[ch->rx_ring.head] = buf;
 	ch->rx_ring.head++;
@@ -571,57 +572,57 @@ static int rio_rx_data_handler(struct cm_dev *cm, void *buf)
 	spin_unlock(&ch->lock);
 	riocm_put_channel(ch);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * rio_ibmsg_handler - inbound message packet handler
  */
-static void rio_ibmsg_handler(struct work_struct *work)
-{
-	struct cm_dev *cm = container_of(work, struct cm_dev, rx_work);
-	void *data;
-	struct rio_ch_chan_hdr *hdr;
+अटल व्योम rio_ibmsg_handler(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा cm_dev *cm = container_of(work, काष्ठा cm_dev, rx_work);
+	व्योम *data;
+	काष्ठा rio_ch_chan_hdr *hdr;
 
-	if (!rio_mport_is_running(cm->mport))
-		return;
+	अगर (!rio_mport_is_running(cm->mport))
+		वापस;
 
-	while (1) {
+	जबतक (1) अणु
 		mutex_lock(&cm->rx_lock);
 		data = riocm_rx_get_msg(cm);
-		if (data)
+		अगर (data)
 			riocm_rx_fill(cm, 1);
 		mutex_unlock(&cm->rx_lock);
 
-		if (data == NULL)
-			break;
+		अगर (data == शून्य)
+			अवरोध;
 
 		hdr = data;
 
-		if (hdr->bhdr.type != RIO_CM_CHAN) {
+		अगर (hdr->bhdr.type != RIO_CM_CHAN) अणु
 			/* For now simply discard packets other than channel */
 			riocm_error("Unsupported TYPE code (0x%x). Msg dropped",
 				    hdr->bhdr.type);
-			kfree(data);
-			continue;
-		}
+			kमुक्त(data);
+			जारी;
+		पूर्ण
 
 		/* Process a channel message */
-		if (hdr->ch_op == CM_DATA_MSG)
+		अगर (hdr->ch_op == CM_DATA_MSG)
 			rio_rx_data_handler(cm, data);
-		else
+		अन्यथा
 			rio_cm_handler(cm, data);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void riocm_inb_msg_event(struct rio_mport *mport, void *dev_id,
-				int mbox, int slot)
-{
-	struct cm_dev *cm = dev_id;
+अटल व्योम riocm_inb_msg_event(काष्ठा rio_mport *mport, व्योम *dev_id,
+				पूर्णांक mbox, पूर्णांक slot)
+अणु
+	काष्ठा cm_dev *cm = dev_id;
 
-	if (rio_mport_is_running(cm->mport) && !work_pending(&cm->rx_work))
+	अगर (rio_mport_is_running(cm->mport) && !work_pending(&cm->rx_work))
 		queue_work(cm->rx_wq, &cm->rx_work);
-}
+पूर्ण
 
 /*
  * rio_txcq_handler - TX completion handler
@@ -629,14 +630,14 @@ static void riocm_inb_msg_event(struct rio_mport *mport, void *dev_id,
  * @slot: TX queue slot
  *
  * TX completion handler also ensures that pending request packets are placed
- * into transmit queue as soon as a free slot becomes available. This is done
- * to give higher priority to request packets during high intensity data flow.
+ * पूर्णांकo transmit queue as soon as a मुक्त slot becomes available. This is करोne
+ * to give higher priority to request packets during high पूर्णांकensity data flow.
  */
-static void rio_txcq_handler(struct cm_dev *cm, int slot)
-{
-	int ack_slot;
+अटल व्योम rio_txcq_handler(काष्ठा cm_dev *cm, पूर्णांक slot)
+अणु
+	पूर्णांक ack_slot;
 
-	/* ATTN: Add TX completion notification if/when direct buffer
+	/* ATTN: Add TX completion notअगरication अगर/when direct buffer
 	 * transfer is implemented. At this moment only correct tracking
 	 * of tx_count is important.
 	 */
@@ -646,19 +647,19 @@ static void rio_txcq_handler(struct cm_dev *cm, int slot)
 	spin_lock(&cm->tx_lock);
 	ack_slot = cm->tx_ack_slot;
 
-	if (ack_slot == slot)
+	अगर (ack_slot == slot)
 		riocm_debug(TX_EVENT, "slot == ack_slot");
 
-	while (cm->tx_cnt && ((ack_slot != slot) ||
-	       (cm->tx_cnt == RIOCM_TX_RING_SIZE))) {
+	जबतक (cm->tx_cnt && ((ack_slot != slot) ||
+	       (cm->tx_cnt == RIOCM_TX_RING_SIZE))) अणु
 
-		cm->tx_buf[ack_slot] = NULL;
+		cm->tx_buf[ack_slot] = शून्य;
 		++ack_slot;
 		ack_slot &= (RIOCM_TX_RING_SIZE - 1);
 		cm->tx_cnt--;
-	}
+	पूर्ण
 
-	if (cm->tx_cnt < 0 || cm->tx_cnt > RIOCM_TX_RING_SIZE)
+	अगर (cm->tx_cnt < 0 || cm->tx_cnt > RIOCM_TX_RING_SIZE)
 		riocm_error("tx_cnt %d out of sync", cm->tx_cnt);
 
 	WARN_ON((cm->tx_cnt < 0) || (cm->tx_cnt > RIOCM_TX_RING_SIZE));
@@ -666,49 +667,49 @@ static void rio_txcq_handler(struct cm_dev *cm, int slot)
 	cm->tx_ack_slot = ack_slot;
 
 	/*
-	 * If there are pending requests, insert them into transmit queue
+	 * If there are pending requests, insert them पूर्णांकo transmit queue
 	 */
-	if (!list_empty(&cm->tx_reqs) && (cm->tx_cnt < RIOCM_TX_RING_SIZE)) {
-		struct tx_req *req, *_req;
-		int rc;
+	अगर (!list_empty(&cm->tx_reqs) && (cm->tx_cnt < RIOCM_TX_RING_SIZE)) अणु
+		काष्ठा tx_req *req, *_req;
+		पूर्णांक rc;
 
-		list_for_each_entry_safe(req, _req, &cm->tx_reqs, node) {
+		list_क्रम_each_entry_safe(req, _req, &cm->tx_reqs, node) अणु
 			list_del(&req->node);
 			cm->tx_buf[cm->tx_slot] = req->buffer;
 			rc = rio_add_outb_message(cm->mport, req->rdev, cmbox,
 						  req->buffer, req->len);
-			kfree(req->buffer);
-			kfree(req);
+			kमुक्त(req->buffer);
+			kमुक्त(req);
 
 			++cm->tx_cnt;
 			++cm->tx_slot;
 			cm->tx_slot &= (RIOCM_TX_RING_SIZE - 1);
-			if (cm->tx_cnt == RIOCM_TX_RING_SIZE)
-				break;
-		}
-	}
+			अगर (cm->tx_cnt == RIOCM_TX_RING_SIZE)
+				अवरोध;
+		पूर्ण
+	पूर्ण
 
 	spin_unlock(&cm->tx_lock);
-}
+पूर्ण
 
-static void riocm_outb_msg_event(struct rio_mport *mport, void *dev_id,
-				 int mbox, int slot)
-{
-	struct cm_dev *cm = dev_id;
+अटल व्योम riocm_outb_msg_event(काष्ठा rio_mport *mport, व्योम *dev_id,
+				 पूर्णांक mbox, पूर्णांक slot)
+अणु
+	काष्ठा cm_dev *cm = dev_id;
 
-	if (cm && rio_mport_is_running(cm->mport))
+	अगर (cm && rio_mport_is_running(cm->mport))
 		rio_txcq_handler(cm, slot);
-}
+पूर्ण
 
-static int riocm_queue_req(struct cm_dev *cm, struct rio_dev *rdev,
-			   void *buffer, size_t len)
-{
-	unsigned long flags;
-	struct tx_req *treq;
+अटल पूर्णांक riocm_queue_req(काष्ठा cm_dev *cm, काष्ठा rio_dev *rdev,
+			   व्योम *buffer, माप_प्रकार len)
+अणु
+	अचिन्हित दीर्घ flags;
+	काष्ठा tx_req *treq;
 
-	treq = kzalloc(sizeof(*treq), GFP_KERNEL);
-	if (treq == NULL)
-		return -ENOMEM;
+	treq = kzalloc(माप(*treq), GFP_KERNEL);
+	अगर (treq == शून्य)
+		वापस -ENOMEM;
 
 	treq->rdev = rdev;
 	treq->buffer = buffer;
@@ -717,37 +718,37 @@ static int riocm_queue_req(struct cm_dev *cm, struct rio_dev *rdev,
 	spin_lock_irqsave(&cm->tx_lock, flags);
 	list_add_tail(&treq->node, &cm->tx_reqs);
 	spin_unlock_irqrestore(&cm->tx_lock, flags);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * riocm_post_send - helper function that places packet into msg TX queue
+ * riocm_post_send - helper function that places packet पूर्णांकo msg TX queue
  * @cm: cm_dev object
- * @rdev: target RapidIO device object (required by outbound msg interface)
- * @buffer: pointer to a packet buffer to send
+ * @rdev: target RapidIO device object (required by outbound msg पूर्णांकerface)
+ * @buffer: poपूर्णांकer to a packet buffer to send
  * @len: length of data to transfer
  * @req: request priority flag
  *
- * Returns: 0 if success, or error code otherwise.
+ * Returns: 0 अगर success, or error code otherwise.
  */
-static int riocm_post_send(struct cm_dev *cm, struct rio_dev *rdev,
-			   void *buffer, size_t len)
-{
-	int rc;
-	unsigned long flags;
+अटल पूर्णांक riocm_post_send(काष्ठा cm_dev *cm, काष्ठा rio_dev *rdev,
+			   व्योम *buffer, माप_प्रकार len)
+अणु
+	पूर्णांक rc;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&cm->tx_lock, flags);
 
-	if (cm->mport == NULL) {
+	अगर (cm->mport == शून्य) अणु
 		rc = -ENODEV;
-		goto err_out;
-	}
+		जाओ err_out;
+	पूर्ण
 
-	if (cm->tx_cnt == RIOCM_TX_RING_SIZE) {
+	अगर (cm->tx_cnt == RIOCM_TX_RING_SIZE) अणु
 		riocm_debug(TX, "Tx Queue is full");
 		rc = -EBUSY;
-		goto err_out;
-	}
+		जाओ err_out;
+	पूर्ण
 
 	cm->tx_buf[cm->tx_slot] = buffer;
 	rc = rio_add_outb_message(cm->mport, rdev, cmbox, buffer, len);
@@ -761,43 +762,43 @@ static int riocm_post_send(struct cm_dev *cm, struct rio_dev *rdev,
 
 err_out:
 	spin_unlock_irqrestore(&cm->tx_lock, flags);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
 /*
  * riocm_ch_send - sends a data packet to a remote device
  * @ch_id: local channel ID
- * @buf: pointer to a data buffer to send (including CM header)
+ * @buf: poपूर्णांकer to a data buffer to send (including CM header)
  * @len: length of data to transfer (including CM header)
  *
  * ATTN: ASSUMES THAT THE HEADER SPACE IS RESERVED PART OF THE DATA PACKET
  *
- * Returns: 0 if success, or
- *          -EINVAL if one or more input parameters is/are not valid,
- *          -ENODEV if cannot find a channel with specified ID,
- *          -EAGAIN if a channel is not in CONNECTED state,
- *	    + error codes returned by HW send routine.
+ * Returns: 0 अगर success, or
+ *          -EINVAL अगर one or more input parameters is/are not valid,
+ *          -ENODEV अगर cannot find a channel with specअगरied ID,
+ *          -EAGAIN अगर a channel is not in CONNECTED state,
+ *	    + error codes वापसed by HW send routine.
  */
-static int riocm_ch_send(u16 ch_id, void *buf, int len)
-{
-	struct rio_channel *ch;
-	struct rio_ch_chan_hdr *hdr;
-	int ret;
+अटल पूर्णांक riocm_ch_send(u16 ch_id, व्योम *buf, पूर्णांक len)
+अणु
+	काष्ठा rio_channel *ch;
+	काष्ठा rio_ch_chan_hdr *hdr;
+	पूर्णांक ret;
 
-	if (buf == NULL || ch_id == 0 || len == 0 || len > RIO_MAX_MSG_SIZE)
-		return -EINVAL;
+	अगर (buf == शून्य || ch_id == 0 || len == 0 || len > RIO_MAX_MSG_SIZE)
+		वापस -EINVAL;
 
 	ch = riocm_get_channel(ch_id);
-	if (!ch) {
+	अगर (!ch) अणु
 		riocm_error("%s(%d) ch_%d not found", current->comm,
 			    task_pid_nr(current), ch_id);
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	if (!riocm_cmp(ch, RIO_CM_CONNECTED)) {
+	अगर (!riocm_cmp(ch, RIO_CM_CONNECTED)) अणु
 		ret = -EAGAIN;
-		goto err_out;
-	}
+		जाओ err_out;
+	पूर्ण
 
 	/*
 	 * Fill buffer header section with corresponding channel data
@@ -815,116 +816,116 @@ static int riocm_ch_send(u16 ch_id, void *buf, int len)
 	hdr->msg_len = htons((u16)len);
 
 	/* ATTN: the function call below relies on the fact that underlying
-	 * HW-specific add_outb_message() routine copies TX data into its own
-	 * internal transfer buffer (true for all RIONET compatible mport
-	 * drivers). Must be reviewed if mport driver uses the buffer directly.
+	 * HW-specअगरic add_outb_message() routine copies TX data पूर्णांकo its own
+	 * पूर्णांकernal transfer buffer (true क्रम all RIONET compatible mport
+	 * drivers). Must be reviewed अगर mport driver uses the buffer directly.
 	 */
 
 	ret = riocm_post_send(ch->cmdev, ch->rdev, buf, len);
-	if (ret)
+	अगर (ret)
 		riocm_debug(TX, "ch %d send_err=%d", ch->id, ret);
 err_out:
 	riocm_put_channel(ch);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int riocm_ch_free_rxbuf(struct rio_channel *ch, void *buf)
-{
-	int i, ret = -EINVAL;
+अटल पूर्णांक riocm_ch_मुक्त_rxbuf(काष्ठा rio_channel *ch, व्योम *buf)
+अणु
+	पूर्णांक i, ret = -EINVAL;
 
 	spin_lock_bh(&ch->lock);
 
-	for (i = 0; i < RIOCM_RX_RING_SIZE; i++) {
-		if (ch->rx_ring.inuse[i] == buf) {
-			ch->rx_ring.inuse[i] = NULL;
+	क्रम (i = 0; i < RIOCM_RX_RING_SIZE; i++) अणु
+		अगर (ch->rx_ring.inuse[i] == buf) अणु
+			ch->rx_ring.inuse[i] = शून्य;
 			ch->rx_ring.inuse_cnt--;
 			ret = 0;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
 	spin_unlock_bh(&ch->lock);
 
-	if (!ret)
-		kfree(buf);
+	अगर (!ret)
+		kमुक्त(buf);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
- * riocm_ch_receive - fetch a data packet received for the specified channel
+ * riocm_ch_receive - fetch a data packet received क्रम the specअगरied channel
  * @ch: local channel ID
- * @buf: pointer to a packet buffer
- * @timeout: timeout to wait for incoming packet (in jiffies)
+ * @buf: poपूर्णांकer to a packet buffer
+ * @समयout: समयout to रुको क्रम incoming packet (in jअगरfies)
  *
- * Returns: 0 and valid buffer pointer if success, or NULL pointer and one of:
- *          -EAGAIN if a channel is not in CONNECTED state,
- *          -ENOMEM if in-use tracking queue is full,
- *          -ETIME if wait timeout expired,
- *	    -EINTR if wait was interrupted.
+ * Returns: 0 and valid buffer poपूर्णांकer अगर success, or शून्य poपूर्णांकer and one of:
+ *          -EAGAIN अगर a channel is not in CONNECTED state,
+ *          -ENOMEM अगर in-use tracking queue is full,
+ *          -ETIME अगर रुको समयout expired,
+ *	    -EINTR अगर रुको was पूर्णांकerrupted.
  */
-static int riocm_ch_receive(struct rio_channel *ch, void **buf, long timeout)
-{
-	void *rxmsg = NULL;
-	int i, ret = 0;
-	long wret;
+अटल पूर्णांक riocm_ch_receive(काष्ठा rio_channel *ch, व्योम **buf, दीर्घ समयout)
+अणु
+	व्योम *rxmsg = शून्य;
+	पूर्णांक i, ret = 0;
+	दीर्घ wret;
 
-	if (!riocm_cmp(ch, RIO_CM_CONNECTED)) {
+	अगर (!riocm_cmp(ch, RIO_CM_CONNECTED)) अणु
 		ret = -EAGAIN;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (ch->rx_ring.inuse_cnt == RIOCM_RX_RING_SIZE) {
-		/* If we do not have entries to track buffers given to upper
+	अगर (ch->rx_ring.inuse_cnt == RIOCM_RX_RING_SIZE) अणु
+		/* If we करो not have entries to track buffers given to upper
 		 * layer, reject request.
 		 */
 		ret = -ENOMEM;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	wret = wait_for_completion_interruptible_timeout(&ch->comp, timeout);
+	wret = रुको_क्रम_completion_पूर्णांकerruptible_समयout(&ch->comp, समयout);
 
 	riocm_debug(WAIT, "wait on %d returned %ld", ch->id, wret);
 
-	if (!wret)
+	अगर (!wret)
 		ret = -ETIME;
-	else if (wret == -ERESTARTSYS)
+	अन्यथा अगर (wret == -ERESTARTSYS)
 		ret = -EINTR;
-	else
+	अन्यथा
 		ret = riocm_cmp(ch, RIO_CM_CONNECTED) ? 0 : -ECONNRESET;
 
-	if (ret)
-		goto out;
+	अगर (ret)
+		जाओ out;
 
 	spin_lock_bh(&ch->lock);
 
 	rxmsg = ch->rx_ring.buf[ch->rx_ring.tail];
-	ch->rx_ring.buf[ch->rx_ring.tail] = NULL;
+	ch->rx_ring.buf[ch->rx_ring.tail] = शून्य;
 	ch->rx_ring.count--;
 	ch->rx_ring.tail++;
 	ch->rx_ring.tail %= RIOCM_RX_RING_SIZE;
 	ret = -ENOMEM;
 
-	for (i = 0; i < RIOCM_RX_RING_SIZE; i++) {
-		if (ch->rx_ring.inuse[i] == NULL) {
+	क्रम (i = 0; i < RIOCM_RX_RING_SIZE; i++) अणु
+		अगर (ch->rx_ring.inuse[i] == शून्य) अणु
 			ch->rx_ring.inuse[i] = rxmsg;
 			ch->rx_ring.inuse_cnt++;
 			ret = 0;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	if (ret) {
+	अगर (ret) अणु
 		/* We have no entry to store pending message: drop it */
-		kfree(rxmsg);
-		rxmsg = NULL;
-	}
+		kमुक्त(rxmsg);
+		rxmsg = शून्य;
+	पूर्ण
 
 	spin_unlock_bh(&ch->lock);
 out:
 	*buf = rxmsg;
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
  * riocm_ch_connect - sends a connect request to a remote device
@@ -933,32 +934,32 @@ out:
  * @peer: target RapidIO device
  * @rem_ch: remote channel ID
  *
- * Returns: 0 if success, or
- *          -EINVAL if the channel is not in IDLE state,
- *          -EAGAIN if no connection request available immediately,
- *          -ETIME if ACK response timeout expired,
- *          -EINTR if wait for response was interrupted.
+ * Returns: 0 अगर success, or
+ *          -EINVAL अगर the channel is not in IDLE state,
+ *          -EAGAIN अगर no connection request available immediately,
+ *          -ETIME अगर ACK response समयout expired,
+ *          -EINTR अगर रुको क्रम response was पूर्णांकerrupted.
  */
-static int riocm_ch_connect(u16 loc_ch, struct cm_dev *cm,
-			    struct cm_peer *peer, u16 rem_ch)
-{
-	struct rio_channel *ch = NULL;
-	struct rio_ch_chan_hdr *hdr;
-	int ret;
-	long wret;
+अटल पूर्णांक riocm_ch_connect(u16 loc_ch, काष्ठा cm_dev *cm,
+			    काष्ठा cm_peer *peer, u16 rem_ch)
+अणु
+	काष्ठा rio_channel *ch = शून्य;
+	काष्ठा rio_ch_chan_hdr *hdr;
+	पूर्णांक ret;
+	दीर्घ wret;
 
 	ch = riocm_get_channel(loc_ch);
-	if (!ch)
-		return -ENODEV;
+	अगर (!ch)
+		वापस -ENODEV;
 
-	if (!riocm_cmp_exch(ch, RIO_CM_IDLE, RIO_CM_CONNECT)) {
+	अगर (!riocm_cmp_exch(ch, RIO_CM_IDLE, RIO_CM_CONNECT)) अणु
 		ret = -EINVAL;
-		goto conn_done;
-	}
+		जाओ conn_करोne;
+	पूर्ण
 
 	ch->cmdev = cm;
 	ch->rdev = peer->rdev;
-	ch->context = NULL;
+	ch->context = शून्य;
 	ch->loc_destid = cm->mport->host_deviceid;
 	ch->rem_channel = rem_ch;
 
@@ -966,11 +967,11 @@ static int riocm_ch_connect(u16 loc_ch, struct cm_dev *cm,
 	 * Send connect request to the remote RapidIO device
 	 */
 
-	hdr = kzalloc(sizeof(*hdr), GFP_KERNEL);
-	if (hdr == NULL) {
+	hdr = kzalloc(माप(*hdr), GFP_KERNEL);
+	अगर (hdr == शून्य) अणु
 		ret = -ENOMEM;
-		goto conn_done;
-	}
+		जाओ conn_करोne;
+	पूर्ण
 
 	hdr->bhdr.src_id = htonl(ch->loc_destid);
 	hdr->bhdr.dst_id = htonl(peer->rdev->destid);
@@ -982,50 +983,50 @@ static int riocm_ch_connect(u16 loc_ch, struct cm_dev *cm,
 	hdr->src_ch = htons(loc_ch);
 
 	/* ATTN: the function call below relies on the fact that underlying
-	 * HW-specific add_outb_message() routine copies TX data into its
-	 * internal transfer buffer. Must be reviewed if mport driver uses
+	 * HW-specअगरic add_outb_message() routine copies TX data पूर्णांकo its
+	 * पूर्णांकernal transfer buffer. Must be reviewed अगर mport driver uses
 	 * this buffer directly.
 	 */
-	ret = riocm_post_send(cm, peer->rdev, hdr, sizeof(*hdr));
+	ret = riocm_post_send(cm, peer->rdev, hdr, माप(*hdr));
 
-	if (ret != -EBUSY) {
-		kfree(hdr);
-	} else {
-		ret = riocm_queue_req(cm, peer->rdev, hdr, sizeof(*hdr));
-		if (ret)
-			kfree(hdr);
-	}
+	अगर (ret != -EBUSY) अणु
+		kमुक्त(hdr);
+	पूर्ण अन्यथा अणु
+		ret = riocm_queue_req(cm, peer->rdev, hdr, माप(*hdr));
+		अगर (ret)
+			kमुक्त(hdr);
+	पूर्ण
 
-	if (ret) {
+	अगर (ret) अणु
 		riocm_cmp_exch(ch, RIO_CM_CONNECT, RIO_CM_IDLE);
-		goto conn_done;
-	}
+		जाओ conn_करोne;
+	पूर्ण
 
-	/* Wait for connect response from the remote device */
-	wret = wait_for_completion_interruptible_timeout(&ch->comp,
+	/* Wait क्रम connect response from the remote device */
+	wret = रुको_क्रम_completion_पूर्णांकerruptible_समयout(&ch->comp,
 							 RIOCM_CONNECT_TO * HZ);
 	riocm_debug(WAIT, "wait on %d returns %ld", ch->id, wret);
 
-	if (!wret)
+	अगर (!wret)
 		ret = -ETIME;
-	else if (wret == -ERESTARTSYS)
+	अन्यथा अगर (wret == -ERESTARTSYS)
 		ret = -EINTR;
-	else
+	अन्यथा
 		ret = riocm_cmp(ch, RIO_CM_CONNECTED) ? 0 : -1;
 
-conn_done:
+conn_करोne:
 	riocm_put_channel(ch);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int riocm_send_ack(struct rio_channel *ch)
-{
-	struct rio_ch_chan_hdr *hdr;
-	int ret;
+अटल पूर्णांक riocm_send_ack(काष्ठा rio_channel *ch)
+अणु
+	काष्ठा rio_ch_chan_hdr *hdr;
+	पूर्णांक ret;
 
-	hdr = kzalloc(sizeof(*hdr), GFP_KERNEL);
-	if (hdr == NULL)
-		return -ENOMEM;
+	hdr = kzalloc(माप(*hdr), GFP_KERNEL);
+	अगर (hdr == शून्य)
+		वापस -ENOMEM;
 
 	hdr->bhdr.src_id = htonl(ch->loc_destid);
 	hdr->bhdr.dst_id = htonl(ch->rem_destid);
@@ -1037,107 +1038,107 @@ static int riocm_send_ack(struct rio_channel *ch)
 	hdr->ch_op = CM_CONN_ACK;
 
 	/* ATTN: the function call below relies on the fact that underlying
-	 * add_outb_message() routine copies TX data into its internal transfer
-	 * buffer. Review if switching to direct buffer version.
+	 * add_outb_message() routine copies TX data पूर्णांकo its पूर्णांकernal transfer
+	 * buffer. Review अगर चयनing to direct buffer version.
 	 */
-	ret = riocm_post_send(ch->cmdev, ch->rdev, hdr, sizeof(*hdr));
+	ret = riocm_post_send(ch->cmdev, ch->rdev, hdr, माप(*hdr));
 
-	if (ret == -EBUSY && !riocm_queue_req(ch->cmdev,
-					      ch->rdev, hdr, sizeof(*hdr)))
-		return 0;
-	kfree(hdr);
+	अगर (ret == -EBUSY && !riocm_queue_req(ch->cmdev,
+					      ch->rdev, hdr, माप(*hdr)))
+		वापस 0;
+	kमुक्त(hdr);
 
-	if (ret)
+	अगर (ret)
 		riocm_error("send ACK to ch_%d on %s failed (ret=%d)",
 			    ch->id, rio_name(ch->rdev), ret);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
  * riocm_ch_accept - accept incoming connection request
  * @ch_id: channel ID
  * @new_ch_id: local mport device
- * @timeout: wait timeout (if 0 non-blocking call, do not wait if connection
+ * @समयout: रुको समयout (अगर 0 non-blocking call, करो not रुको अगर connection
  *           request is not available).
  *
- * Returns: pointer to new channel struct if success, or error-valued pointer:
- *          -ENODEV - cannot find specified channel or mport,
+ * Returns: poपूर्णांकer to new channel काष्ठा अगर success, or error-valued poपूर्णांकer:
+ *          -ENODEV - cannot find specअगरied channel or mport,
  *          -EINVAL - the channel is not in IDLE state,
- *          -EAGAIN - no connection request available immediately (timeout=0),
+ *          -EAGAIN - no connection request available immediately (समयout=0),
  *          -ENOMEM - unable to allocate new channel,
- *          -ETIME - wait timeout expired,
- *          -EINTR - wait was interrupted.
+ *          -ETIME - रुको समयout expired,
+ *          -EINTR - रुको was पूर्णांकerrupted.
  */
-static struct rio_channel *riocm_ch_accept(u16 ch_id, u16 *new_ch_id,
-					   long timeout)
-{
-	struct rio_channel *ch;
-	struct rio_channel *new_ch;
-	struct conn_req *req;
-	struct cm_peer *peer;
-	int found = 0;
-	int err = 0;
-	long wret;
+अटल काष्ठा rio_channel *riocm_ch_accept(u16 ch_id, u16 *new_ch_id,
+					   दीर्घ समयout)
+अणु
+	काष्ठा rio_channel *ch;
+	काष्ठा rio_channel *new_ch;
+	काष्ठा conn_req *req;
+	काष्ठा cm_peer *peer;
+	पूर्णांक found = 0;
+	पूर्णांक err = 0;
+	दीर्घ wret;
 
 	ch = riocm_get_channel(ch_id);
-	if (!ch)
-		return ERR_PTR(-EINVAL);
+	अगर (!ch)
+		वापस ERR_PTR(-EINVAL);
 
-	if (!riocm_cmp(ch, RIO_CM_LISTEN)) {
+	अगर (!riocm_cmp(ch, RIO_CM_LISTEN)) अणु
 		err = -EINVAL;
-		goto err_put;
-	}
+		जाओ err_put;
+	पूर्ण
 
-	/* Don't sleep if this is a non blocking call */
-	if (!timeout) {
-		if (!try_wait_for_completion(&ch->comp)) {
+	/* Don't sleep अगर this is a non blocking call */
+	अगर (!समयout) अणु
+		अगर (!try_रुको_क्रम_completion(&ch->comp)) अणु
 			err = -EAGAIN;
-			goto err_put;
-		}
-	} else {
+			जाओ err_put;
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		riocm_debug(WAIT, "on %d", ch->id);
 
-		wret = wait_for_completion_interruptible_timeout(&ch->comp,
-								 timeout);
-		if (!wret) {
+		wret = रुको_क्रम_completion_पूर्णांकerruptible_समयout(&ch->comp,
+								 समयout);
+		अगर (!wret) अणु
 			err = -ETIME;
-			goto err_put;
-		} else if (wret == -ERESTARTSYS) {
+			जाओ err_put;
+		पूर्ण अन्यथा अगर (wret == -ERESTARTSYS) अणु
 			err = -EINTR;
-			goto err_put;
-		}
-	}
+			जाओ err_put;
+		पूर्ण
+	पूर्ण
 
 	spin_lock_bh(&ch->lock);
 
-	if (ch->state != RIO_CM_LISTEN) {
+	अगर (ch->state != RIO_CM_LISTEN) अणु
 		err = -ECANCELED;
-	} else if (list_empty(&ch->accept_queue)) {
+	पूर्ण अन्यथा अगर (list_empty(&ch->accept_queue)) अणु
 		riocm_debug(WAIT, "on %d accept_queue is empty on completion",
 			    ch->id);
 		err = -EIO;
-	}
+	पूर्ण
 
 	spin_unlock_bh(&ch->lock);
 
-	if (err) {
+	अगर (err) अणु
 		riocm_debug(WAIT, "on %d returns %d", ch->id, err);
-		goto err_put;
-	}
+		जाओ err_put;
+	पूर्ण
 
-	/* Create new channel for this connection */
+	/* Create new channel क्रम this connection */
 	new_ch = riocm_ch_alloc(RIOCM_CHNUM_AUTO);
 
-	if (IS_ERR(new_ch)) {
+	अगर (IS_ERR(new_ch)) अणु
 		riocm_error("failed to get channel for new req (%ld)",
 			PTR_ERR(new_ch));
 		err = -ENOMEM;
-		goto err_put;
-	}
+		जाओ err_put;
+	पूर्ण
 
 	spin_lock_bh(&ch->lock);
 
-	req = list_first_entry(&ch->accept_queue, struct conn_req, node);
+	req = list_first_entry(&ch->accept_queue, काष्ठा conn_req, node);
 	list_del(&req->node);
 	new_ch->cmdev = ch->cmdev;
 	new_ch->loc_destid = ch->loc_destid;
@@ -1146,26 +1147,26 @@ static struct rio_channel *riocm_ch_accept(u16 ch_id, u16 *new_ch_id,
 
 	spin_unlock_bh(&ch->lock);
 	riocm_put_channel(ch);
-	ch = NULL;
-	kfree(req);
+	ch = शून्य;
+	kमुक्त(req);
 
-	down_read(&rdev_sem);
+	करोwn_पढ़ो(&rdev_sem);
 	/* Find requester's device object */
-	list_for_each_entry(peer, &new_ch->cmdev->peers, node) {
-		if (peer->rdev->destid == new_ch->rem_destid) {
+	list_क्रम_each_entry(peer, &new_ch->cmdev->peers, node) अणु
+		अगर (peer->rdev->destid == new_ch->rem_destid) अणु
 			riocm_debug(RX_CMD, "found matching device(%s)",
 				    rio_name(peer->rdev));
 			found = 1;
-			break;
-		}
-	}
-	up_read(&rdev_sem);
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	up_पढ़ो(&rdev_sem);
 
-	if (!found) {
+	अगर (!found) अणु
 		/* If peer device object not found, simply ignore the request */
 		err = -ENODEV;
-		goto err_put_new_ch;
-	}
+		जाओ err_put_new_ch;
+	पूर्ण
 
 	new_ch->rdev = peer->rdev;
 	new_ch->state = RIO_CM_CONNECTED;
@@ -1175,89 +1176,89 @@ static struct rio_channel *riocm_ch_accept(u16 ch_id, u16 *new_ch_id,
 	riocm_send_ack(new_ch);
 
 	*new_ch_id = new_ch->id;
-	return new_ch;
+	वापस new_ch;
 
 err_put_new_ch:
 	spin_lock_bh(&idr_lock);
-	idr_remove(&ch_idr, new_ch->id);
+	idr_हटाओ(&ch_idr, new_ch->id);
 	spin_unlock_bh(&idr_lock);
 	riocm_put_channel(new_ch);
 
 err_put:
-	if (ch)
+	अगर (ch)
 		riocm_put_channel(ch);
 	*new_ch_id = 0;
-	return ERR_PTR(err);
-}
+	वापस ERR_PTR(err);
+पूर्ण
 
 /*
- * riocm_ch_listen - puts a channel into LISTEN state
+ * riocm_ch_listen - माला_दो a channel पूर्णांकo LISTEN state
  * @ch_id: channel ID
  *
- * Returns: 0 if success, or
- *          -EINVAL if the specified channel does not exists or
+ * Returns: 0 अगर success, or
+ *          -EINVAL अगर the specअगरied channel करोes not exists or
  *                  is not in CHAN_BOUND state.
  */
-static int riocm_ch_listen(u16 ch_id)
-{
-	struct rio_channel *ch = NULL;
-	int ret = 0;
+अटल पूर्णांक riocm_ch_listen(u16 ch_id)
+अणु
+	काष्ठा rio_channel *ch = शून्य;
+	पूर्णांक ret = 0;
 
 	riocm_debug(CHOP, "(ch_%d)", ch_id);
 
 	ch = riocm_get_channel(ch_id);
-	if (!ch)
-		return -EINVAL;
-	if (!riocm_cmp_exch(ch, RIO_CM_CHAN_BOUND, RIO_CM_LISTEN))
+	अगर (!ch)
+		वापस -EINVAL;
+	अगर (!riocm_cmp_exch(ch, RIO_CM_CHAN_BOUND, RIO_CM_LISTEN))
 		ret = -EINVAL;
 	riocm_put_channel(ch);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
  * riocm_ch_bind - associate a channel object and an mport device
  * @ch_id: channel ID
  * @mport_id: local mport device ID
- * @context: pointer to the additional caller's context
+ * @context: poपूर्णांकer to the additional caller's context
  *
- * Returns: 0 if success, or
- *          -ENODEV if cannot find specified mport,
- *          -EINVAL if the specified channel does not exist or
+ * Returns: 0 अगर success, or
+ *          -ENODEV अगर cannot find specअगरied mport,
+ *          -EINVAL अगर the specअगरied channel करोes not exist or
  *                  is not in IDLE state.
  */
-static int riocm_ch_bind(u16 ch_id, u8 mport_id, void *context)
-{
-	struct rio_channel *ch = NULL;
-	struct cm_dev *cm;
-	int rc = -ENODEV;
+अटल पूर्णांक riocm_ch_bind(u16 ch_id, u8 mport_id, व्योम *context)
+अणु
+	काष्ठा rio_channel *ch = शून्य;
+	काष्ठा cm_dev *cm;
+	पूर्णांक rc = -ENODEV;
 
 	riocm_debug(CHOP, "ch_%d to mport_%d", ch_id, mport_id);
 
 	/* Find matching cm_dev object */
-	down_read(&rdev_sem);
-	list_for_each_entry(cm, &cm_dev_list, list) {
-		if ((cm->mport->id == mport_id) &&
-		     rio_mport_is_running(cm->mport)) {
+	करोwn_पढ़ो(&rdev_sem);
+	list_क्रम_each_entry(cm, &cm_dev_list, list) अणु
+		अगर ((cm->mport->id == mport_id) &&
+		     rio_mport_is_running(cm->mport)) अणु
 			rc = 0;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	if (rc)
-		goto exit;
+	अगर (rc)
+		जाओ निकास;
 
 	ch = riocm_get_channel(ch_id);
-	if (!ch) {
+	अगर (!ch) अणु
 		rc = -EINVAL;
-		goto exit;
-	}
+		जाओ निकास;
+	पूर्ण
 
 	spin_lock_bh(&ch->lock);
-	if (ch->state != RIO_CM_IDLE) {
+	अगर (ch->state != RIO_CM_IDLE) अणु
 		spin_unlock_bh(&ch->lock);
 		rc = -EINVAL;
-		goto err_put;
-	}
+		जाओ err_put;
+	पूर्ण
 
 	ch->cmdev = cm;
 	ch->loc_destid = cm->mport->host_deviceid;
@@ -1266,37 +1267,37 @@ static int riocm_ch_bind(u16 ch_id, u8 mport_id, void *context)
 	spin_unlock_bh(&ch->lock);
 err_put:
 	riocm_put_channel(ch);
-exit:
-	up_read(&rdev_sem);
-	return rc;
-}
+निकास:
+	up_पढ़ो(&rdev_sem);
+	वापस rc;
+पूर्ण
 
 /*
  * riocm_ch_alloc - channel object allocation helper routine
- * @ch_num: channel ID (1 ... RIOCM_MAX_CHNUM, 0 = automatic)
+ * @ch_num: channel ID (1 ... RIOCM_MAX_CHNUM, 0 = स्वतःmatic)
  *
- * Return value: pointer to newly created channel object,
- *               or error-valued pointer
+ * Return value: poपूर्णांकer to newly created channel object,
+ *               or error-valued poपूर्णांकer
  */
-static struct rio_channel *riocm_ch_alloc(u16 ch_num)
-{
-	int id;
-	int start, end;
-	struct rio_channel *ch;
+अटल काष्ठा rio_channel *riocm_ch_alloc(u16 ch_num)
+अणु
+	पूर्णांक id;
+	पूर्णांक start, end;
+	काष्ठा rio_channel *ch;
 
-	ch = kzalloc(sizeof(*ch), GFP_KERNEL);
-	if (!ch)
-		return ERR_PTR(-ENOMEM);
+	ch = kzalloc(माप(*ch), GFP_KERNEL);
+	अगर (!ch)
+		वापस ERR_PTR(-ENOMEM);
 
-	if (ch_num) {
-		/* If requested, try to obtain the specified channel ID */
+	अगर (ch_num) अणु
+		/* If requested, try to obtain the specअगरied channel ID */
 		start = ch_num;
 		end = ch_num + 1;
-	} else {
+	पूर्ण अन्यथा अणु
 		/* Obtain channel ID from the dynamic allocation range */
 		start = chstart;
 		end = RIOCM_MAX_CHNUM + 1;
-	}
+	पूर्ण
 
 	idr_preload(GFP_KERNEL);
 	spin_lock_bh(&idr_lock);
@@ -1304,10 +1305,10 @@ static struct rio_channel *riocm_ch_alloc(u16 ch_num)
 	spin_unlock_bh(&idr_lock);
 	idr_preload_end();
 
-	if (id < 0) {
-		kfree(ch);
-		return ERR_PTR(id == -ENOSPC ? -EBUSY : id);
-	}
+	अगर (id < 0) अणु
+		kमुक्त(ch);
+		वापस ERR_PTR(id == -ENOSPC ? -EBUSY : id);
+	पूर्ण
 
 	ch->id = (u16)id;
 	ch->state = RIO_CM_IDLE;
@@ -1315,91 +1316,91 @@ static struct rio_channel *riocm_ch_alloc(u16 ch_num)
 	INIT_LIST_HEAD(&ch->accept_queue);
 	INIT_LIST_HEAD(&ch->ch_node);
 	init_completion(&ch->comp);
-	init_completion(&ch->comp_close);
+	init_completion(&ch->comp_बंद);
 	kref_init(&ch->ref);
 	ch->rx_ring.head = 0;
 	ch->rx_ring.tail = 0;
 	ch->rx_ring.count = 0;
 	ch->rx_ring.inuse_cnt = 0;
 
-	return ch;
-}
+	वापस ch;
+पूर्ण
 
 /*
- * riocm_ch_create - creates a new channel object and allocates ID for it
- * @ch_num: channel ID (1 ... RIOCM_MAX_CHNUM, 0 = automatic)
+ * riocm_ch_create - creates a new channel object and allocates ID क्रम it
+ * @ch_num: channel ID (1 ... RIOCM_MAX_CHNUM, 0 = स्वतःmatic)
  *
  * Allocates and initializes a new channel object. If the parameter ch_num > 0
  * and is within the valid range, riocm_ch_create tries to allocate the
- * specified ID for the new channel. If ch_num = 0, channel ID will be assigned
- * automatically from the range (chstart ... RIOCM_MAX_CHNUM).
- * Module parameter 'chstart' defines start of an ID range available for dynamic
- * allocation. Range below 'chstart' is reserved for pre-defined ID numbers.
+ * specअगरied ID क्रम the new channel. If ch_num = 0, channel ID will be asचिन्हित
+ * स्वतःmatically from the range (chstart ... RIOCM_MAX_CHNUM).
+ * Module parameter 'chstart' defines start of an ID range available क्रम dynamic
+ * allocation. Range below 'chstart' is reserved क्रम pre-defined ID numbers.
  * Available channel numbers are limited by 16-bit size of channel numbers used
  * in the packet header.
  *
- * Return value: PTR to rio_channel structure if successful (with channel number
- *               updated via pointer) or error-valued pointer if error.
+ * Return value: PTR to rio_channel काष्ठाure अगर successful (with channel number
+ *               updated via poपूर्णांकer) or error-valued poपूर्णांकer अगर error.
  */
-static struct rio_channel *riocm_ch_create(u16 *ch_num)
-{
-	struct rio_channel *ch = NULL;
+अटल काष्ठा rio_channel *riocm_ch_create(u16 *ch_num)
+अणु
+	काष्ठा rio_channel *ch = शून्य;
 
 	ch = riocm_ch_alloc(*ch_num);
 
-	if (IS_ERR(ch))
+	अगर (IS_ERR(ch))
 		riocm_debug(CHOP, "Failed to allocate channel %d (err=%ld)",
 			    *ch_num, PTR_ERR(ch));
-	else
+	अन्यथा
 		*ch_num = ch->id;
 
-	return ch;
-}
+	वापस ch;
+पूर्ण
 
 /*
- * riocm_ch_free - channel object release routine
- * @ref: pointer to a channel's kref structure
+ * riocm_ch_मुक्त - channel object release routine
+ * @ref: poपूर्णांकer to a channel's kref काष्ठाure
  */
-static void riocm_ch_free(struct kref *ref)
-{
-	struct rio_channel *ch = container_of(ref, struct rio_channel, ref);
-	int i;
+अटल व्योम riocm_ch_मुक्त(काष्ठा kref *ref)
+अणु
+	काष्ठा rio_channel *ch = container_of(ref, काष्ठा rio_channel, ref);
+	पूर्णांक i;
 
 	riocm_debug(CHOP, "(ch_%d)", ch->id);
 
-	if (ch->rx_ring.inuse_cnt) {
-		for (i = 0;
-		     i < RIOCM_RX_RING_SIZE && ch->rx_ring.inuse_cnt; i++) {
-			if (ch->rx_ring.inuse[i] != NULL) {
-				kfree(ch->rx_ring.inuse[i]);
+	अगर (ch->rx_ring.inuse_cnt) अणु
+		क्रम (i = 0;
+		     i < RIOCM_RX_RING_SIZE && ch->rx_ring.inuse_cnt; i++) अणु
+			अगर (ch->rx_ring.inuse[i] != शून्य) अणु
+				kमुक्त(ch->rx_ring.inuse[i]);
 				ch->rx_ring.inuse_cnt--;
-			}
-		}
-	}
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	if (ch->rx_ring.count)
-		for (i = 0; i < RIOCM_RX_RING_SIZE && ch->rx_ring.count; i++) {
-			if (ch->rx_ring.buf[i] != NULL) {
-				kfree(ch->rx_ring.buf[i]);
+	अगर (ch->rx_ring.count)
+		क्रम (i = 0; i < RIOCM_RX_RING_SIZE && ch->rx_ring.count; i++) अणु
+			अगर (ch->rx_ring.buf[i] != शून्य) अणु
+				kमुक्त(ch->rx_ring.buf[i]);
 				ch->rx_ring.count--;
-			}
-		}
+			पूर्ण
+		पूर्ण
 
-	complete(&ch->comp_close);
-}
+	complete(&ch->comp_बंद);
+पूर्ण
 
-static int riocm_send_close(struct rio_channel *ch)
-{
-	struct rio_ch_chan_hdr *hdr;
-	int ret;
+अटल पूर्णांक riocm_send_बंद(काष्ठा rio_channel *ch)
+अणु
+	काष्ठा rio_ch_chan_hdr *hdr;
+	पूर्णांक ret;
 
 	/*
-	 * Send CH_CLOSE notification to the remote RapidIO device
+	 * Send CH_CLOSE notअगरication to the remote RapidIO device
 	 */
 
-	hdr = kzalloc(sizeof(*hdr), GFP_KERNEL);
-	if (hdr == NULL)
-		return -ENOMEM;
+	hdr = kzalloc(माप(*hdr), GFP_KERNEL);
+	अगर (hdr == शून्य)
+		वापस -ENOMEM;
 
 	hdr->bhdr.src_id = htonl(ch->loc_destid);
 	hdr->bhdr.dst_id = htonl(ch->rem_destid);
@@ -1411,736 +1412,736 @@ static int riocm_send_close(struct rio_channel *ch)
 	hdr->src_ch = htons(ch->id);
 
 	/* ATTN: the function call below relies on the fact that underlying
-	 * add_outb_message() routine copies TX data into its internal transfer
-	 * buffer. Needs to be reviewed if switched to direct buffer mode.
+	 * add_outb_message() routine copies TX data पूर्णांकo its पूर्णांकernal transfer
+	 * buffer. Needs to be reviewed अगर चयनed to direct buffer mode.
 	 */
-	ret = riocm_post_send(ch->cmdev, ch->rdev, hdr, sizeof(*hdr));
+	ret = riocm_post_send(ch->cmdev, ch->rdev, hdr, माप(*hdr));
 
-	if (ret == -EBUSY && !riocm_queue_req(ch->cmdev, ch->rdev,
-					      hdr, sizeof(*hdr)))
-		return 0;
-	kfree(hdr);
+	अगर (ret == -EBUSY && !riocm_queue_req(ch->cmdev, ch->rdev,
+					      hdr, माप(*hdr)))
+		वापस 0;
+	kमुक्त(hdr);
 
-	if (ret)
+	अगर (ret)
 		riocm_error("ch(%d) send CLOSE failed (ret=%d)", ch->id, ret);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
- * riocm_ch_close - closes a channel object with specified ID (by local request)
- * @ch: channel to be closed
+ * riocm_ch_बंद - बंदs a channel object with specअगरied ID (by local request)
+ * @ch: channel to be बंदd
  */
-static int riocm_ch_close(struct rio_channel *ch)
-{
-	unsigned long tmo = msecs_to_jiffies(3000);
-	enum rio_cm_state state;
-	long wret;
-	int ret = 0;
+अटल पूर्णांक riocm_ch_बंद(काष्ठा rio_channel *ch)
+अणु
+	अचिन्हित दीर्घ पंचांगo = msecs_to_jअगरfies(3000);
+	क्रमागत rio_cm_state state;
+	दीर्घ wret;
+	पूर्णांक ret = 0;
 
 	riocm_debug(CHOP, "ch_%d by %s(%d)",
 		    ch->id, current->comm, task_pid_nr(current));
 
 	state = riocm_exch(ch, RIO_CM_DESTROYING);
-	if (state == RIO_CM_CONNECTED)
-		riocm_send_close(ch);
+	अगर (state == RIO_CM_CONNECTED)
+		riocm_send_बंद(ch);
 
 	complete_all(&ch->comp);
 
 	riocm_put_channel(ch);
-	wret = wait_for_completion_interruptible_timeout(&ch->comp_close, tmo);
+	wret = रुको_क्रम_completion_पूर्णांकerruptible_समयout(&ch->comp_बंद, पंचांगo);
 
 	riocm_debug(WAIT, "wait on %d returns %ld", ch->id, wret);
 
-	if (wret == 0) {
-		/* Timeout on wait occurred */
+	अगर (wret == 0) अणु
+		/* Timeout on रुको occurred */
 		riocm_debug(CHOP, "%s(%d) timed out waiting for ch %d",
 		       current->comm, task_pid_nr(current), ch->id);
 		ret = -ETIMEDOUT;
-	} else if (wret == -ERESTARTSYS) {
-		/* Wait_for_completion was interrupted by a signal */
+	पूर्ण अन्यथा अगर (wret == -ERESTARTSYS) अणु
+		/* Wait_क्रम_completion was पूर्णांकerrupted by a संकेत */
 		riocm_debug(CHOP, "%s(%d) wait for ch %d was interrupted",
 			current->comm, task_pid_nr(current), ch->id);
 		ret = -EINTR;
-	}
+	पूर्ण
 
-	if (!ret) {
+	अगर (!ret) अणु
 		riocm_debug(CHOP, "ch_%d resources released", ch->id);
-		kfree(ch);
-	} else {
+		kमुक्त(ch);
+	पूर्ण अन्यथा अणु
 		riocm_debug(CHOP, "failed to release ch_%d resources", ch->id);
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
- * riocm_cdev_open() - Open character device
+ * riocm_cdev_खोलो() - Open अक्षरacter device
  */
-static int riocm_cdev_open(struct inode *inode, struct file *filp)
-{
+अटल पूर्णांक riocm_cdev_खोलो(काष्ठा inode *inode, काष्ठा file *filp)
+अणु
 	riocm_debug(INIT, "by %s(%d) filp=%p ",
 		    current->comm, task_pid_nr(current), filp);
 
-	if (list_empty(&cm_dev_list))
-		return -ENODEV;
+	अगर (list_empty(&cm_dev_list))
+		वापस -ENODEV;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * riocm_cdev_release() - Release character device
+ * riocm_cdev_release() - Release अक्षरacter device
  */
-static int riocm_cdev_release(struct inode *inode, struct file *filp)
-{
-	struct rio_channel *ch, *_c;
-	unsigned int i;
+अटल पूर्णांक riocm_cdev_release(काष्ठा inode *inode, काष्ठा file *filp)
+अणु
+	काष्ठा rio_channel *ch, *_c;
+	अचिन्हित पूर्णांक i;
 	LIST_HEAD(list);
 
 	riocm_debug(EXIT, "by %s(%d) filp=%p",
 		    current->comm, task_pid_nr(current), filp);
 
-	/* Check if there are channels associated with this file descriptor */
+	/* Check अगर there are channels associated with this file descriptor */
 	spin_lock_bh(&idr_lock);
-	idr_for_each_entry(&ch_idr, ch, i) {
-		if (ch && ch->filp == filp) {
+	idr_क्रम_each_entry(&ch_idr, ch, i) अणु
+		अगर (ch && ch->filp == filp) अणु
 			riocm_debug(EXIT, "ch_%d not released by %s(%d)",
 				    ch->id, current->comm,
 				    task_pid_nr(current));
-			idr_remove(&ch_idr, ch->id);
+			idr_हटाओ(&ch_idr, ch->id);
 			list_add(&ch->ch_node, &list);
-		}
-	}
+		पूर्ण
+	पूर्ण
 	spin_unlock_bh(&idr_lock);
 
-	if (!list_empty(&list)) {
-		list_for_each_entry_safe(ch, _c, &list, ch_node) {
+	अगर (!list_empty(&list)) अणु
+		list_क्रम_each_entry_safe(ch, _c, &list, ch_node) अणु
 			list_del(&ch->ch_node);
-			riocm_ch_close(ch);
-		}
-	}
+			riocm_ch_बंद(ch);
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * cm_ep_get_list_size() - Reports number of endpoints in the network
+ * cm_ep_get_list_size() - Reports number of endpoपूर्णांकs in the network
  */
-static int cm_ep_get_list_size(void __user *arg)
-{
+अटल पूर्णांक cm_ep_get_list_size(व्योम __user *arg)
+अणु
 	u32 __user *p = arg;
 	u32 mport_id;
 	u32 count = 0;
-	struct cm_dev *cm;
+	काष्ठा cm_dev *cm;
 
-	if (get_user(mport_id, p))
-		return -EFAULT;
-	if (mport_id >= RIO_MAX_MPORTS)
-		return -EINVAL;
+	अगर (get_user(mport_id, p))
+		वापस -EFAULT;
+	अगर (mport_id >= RIO_MAX_MPORTS)
+		वापस -EINVAL;
 
 	/* Find a matching cm_dev object */
-	down_read(&rdev_sem);
-	list_for_each_entry(cm, &cm_dev_list, list) {
-		if (cm->mport->id == mport_id) {
+	करोwn_पढ़ो(&rdev_sem);
+	list_क्रम_each_entry(cm, &cm_dev_list, list) अणु
+		अगर (cm->mport->id == mport_id) अणु
 			count = cm->npeers;
-			up_read(&rdev_sem);
-			if (copy_to_user(arg, &count, sizeof(u32)))
-				return -EFAULT;
-			return 0;
-		}
-	}
-	up_read(&rdev_sem);
+			up_पढ़ो(&rdev_sem);
+			अगर (copy_to_user(arg, &count, माप(u32)))
+				वापस -EFAULT;
+			वापस 0;
+		पूर्ण
+	पूर्ण
+	up_पढ़ो(&rdev_sem);
 
-	return -ENODEV;
-}
+	वापस -ENODEV;
+पूर्ण
 
 /*
- * cm_ep_get_list() - Returns list of attached endpoints
+ * cm_ep_get_list() - Returns list of attached endpoपूर्णांकs
  */
-static int cm_ep_get_list(void __user *arg)
-{
-	struct cm_dev *cm;
-	struct cm_peer *peer;
+अटल पूर्णांक cm_ep_get_list(व्योम __user *arg)
+अणु
+	काष्ठा cm_dev *cm;
+	काष्ठा cm_peer *peer;
 	u32 info[2];
-	void *buf;
+	व्योम *buf;
 	u32 nent;
 	u32 *entry_ptr;
 	u32 i = 0;
-	int ret = 0;
+	पूर्णांक ret = 0;
 
-	if (copy_from_user(&info, arg, sizeof(info)))
-		return -EFAULT;
+	अगर (copy_from_user(&info, arg, माप(info)))
+		वापस -EFAULT;
 
-	if (info[1] >= RIO_MAX_MPORTS || info[0] > RIOCM_MAX_EP_COUNT)
-		return -EINVAL;
+	अगर (info[1] >= RIO_MAX_MPORTS || info[0] > RIOCM_MAX_EP_COUNT)
+		वापस -EINVAL;
 
 	/* Find a matching cm_dev object */
-	down_read(&rdev_sem);
-	list_for_each_entry(cm, &cm_dev_list, list)
-		if (cm->mport->id == (u8)info[1])
-			goto found;
+	करोwn_पढ़ो(&rdev_sem);
+	list_क्रम_each_entry(cm, &cm_dev_list, list)
+		अगर (cm->mport->id == (u8)info[1])
+			जाओ found;
 
-	up_read(&rdev_sem);
-	return -ENODEV;
+	up_पढ़ो(&rdev_sem);
+	वापस -ENODEV;
 
 found:
 	nent = min(info[0], cm->npeers);
-	buf = kcalloc(nent + 2, sizeof(u32), GFP_KERNEL);
-	if (!buf) {
-		up_read(&rdev_sem);
-		return -ENOMEM;
-	}
+	buf = kसुस्मृति(nent + 2, माप(u32), GFP_KERNEL);
+	अगर (!buf) अणु
+		up_पढ़ो(&rdev_sem);
+		वापस -ENOMEM;
+	पूर्ण
 
-	entry_ptr = (u32 *)((uintptr_t)buf + 2*sizeof(u32));
+	entry_ptr = (u32 *)((uपूर्णांकptr_t)buf + 2*माप(u32));
 
-	list_for_each_entry(peer, &cm->peers, node) {
+	list_क्रम_each_entry(peer, &cm->peers, node) अणु
 		*entry_ptr = (u32)peer->rdev->destid;
 		entry_ptr++;
-		if (++i == nent)
-			break;
-	}
-	up_read(&rdev_sem);
+		अगर (++i == nent)
+			अवरोध;
+	पूर्ण
+	up_पढ़ो(&rdev_sem);
 
 	((u32 *)buf)[0] = i; /* report an updated number of entries */
 	((u32 *)buf)[1] = info[1]; /* put back an mport ID */
-	if (copy_to_user(arg, buf, sizeof(u32) * (info[0] + 2)))
+	अगर (copy_to_user(arg, buf, माप(u32) * (info[0] + 2)))
 		ret = -EFAULT;
 
-	kfree(buf);
-	return ret;
-}
+	kमुक्त(buf);
+	वापस ret;
+पूर्ण
 
 /*
  * cm_mport_get_list() - Returns list of available local mport devices
  */
-static int cm_mport_get_list(void __user *arg)
-{
-	int ret = 0;
+अटल पूर्णांक cm_mport_get_list(व्योम __user *arg)
+अणु
+	पूर्णांक ret = 0;
 	u32 entries;
-	void *buf;
-	struct cm_dev *cm;
+	व्योम *buf;
+	काष्ठा cm_dev *cm;
 	u32 *entry_ptr;
-	int count = 0;
+	पूर्णांक count = 0;
 
-	if (copy_from_user(&entries, arg, sizeof(entries)))
-		return -EFAULT;
-	if (entries == 0 || entries > RIO_MAX_MPORTS)
-		return -EINVAL;
-	buf = kcalloc(entries + 1, sizeof(u32), GFP_KERNEL);
-	if (!buf)
-		return -ENOMEM;
+	अगर (copy_from_user(&entries, arg, माप(entries)))
+		वापस -EFAULT;
+	अगर (entries == 0 || entries > RIO_MAX_MPORTS)
+		वापस -EINVAL;
+	buf = kसुस्मृति(entries + 1, माप(u32), GFP_KERNEL);
+	अगर (!buf)
+		वापस -ENOMEM;
 
-	/* Scan all registered cm_dev objects */
-	entry_ptr = (u32 *)((uintptr_t)buf + sizeof(u32));
-	down_read(&rdev_sem);
-	list_for_each_entry(cm, &cm_dev_list, list) {
-		if (count++ < entries) {
+	/* Scan all रेजिस्टरed cm_dev objects */
+	entry_ptr = (u32 *)((uपूर्णांकptr_t)buf + माप(u32));
+	करोwn_पढ़ो(&rdev_sem);
+	list_क्रम_each_entry(cm, &cm_dev_list, list) अणु
+		अगर (count++ < entries) अणु
 			*entry_ptr = (cm->mport->id << 16) |
 				      cm->mport->host_deviceid;
 			entry_ptr++;
-		}
-	}
-	up_read(&rdev_sem);
+		पूर्ण
+	पूर्ण
+	up_पढ़ो(&rdev_sem);
 
 	*((u32 *)buf) = count; /* report a real number of entries */
-	if (copy_to_user(arg, buf, sizeof(u32) * (count + 1)))
+	अगर (copy_to_user(arg, buf, माप(u32) * (count + 1)))
 		ret = -EFAULT;
 
-	kfree(buf);
-	return ret;
-}
+	kमुक्त(buf);
+	वापस ret;
+पूर्ण
 
 /*
  * cm_chan_create() - Create a message exchange channel
  */
-static int cm_chan_create(struct file *filp, void __user *arg)
-{
+अटल पूर्णांक cm_chan_create(काष्ठा file *filp, व्योम __user *arg)
+अणु
 	u16 __user *p = arg;
 	u16 ch_num;
-	struct rio_channel *ch;
+	काष्ठा rio_channel *ch;
 
-	if (get_user(ch_num, p))
-		return -EFAULT;
+	अगर (get_user(ch_num, p))
+		वापस -EFAULT;
 
 	riocm_debug(CHOP, "ch_%d requested by %s(%d)",
 		    ch_num, current->comm, task_pid_nr(current));
 	ch = riocm_ch_create(&ch_num);
-	if (IS_ERR(ch))
-		return PTR_ERR(ch);
+	अगर (IS_ERR(ch))
+		वापस PTR_ERR(ch);
 
 	ch->filp = filp;
 	riocm_debug(CHOP, "ch_%d created by %s(%d)",
 		    ch_num, current->comm, task_pid_nr(current));
-	return put_user(ch_num, p);
-}
+	वापस put_user(ch_num, p);
+पूर्ण
 
 /*
- * cm_chan_close() - Close channel
- * @filp:	Pointer to file object
- * @arg:	Channel to close
+ * cm_chan_बंद() - Close channel
+ * @filp:	Poपूर्णांकer to file object
+ * @arg:	Channel to बंद
  */
-static int cm_chan_close(struct file *filp, void __user *arg)
-{
+अटल पूर्णांक cm_chan_बंद(काष्ठा file *filp, व्योम __user *arg)
+अणु
 	u16 __user *p = arg;
 	u16 ch_num;
-	struct rio_channel *ch;
+	काष्ठा rio_channel *ch;
 
-	if (get_user(ch_num, p))
-		return -EFAULT;
+	अगर (get_user(ch_num, p))
+		वापस -EFAULT;
 
 	riocm_debug(CHOP, "ch_%d by %s(%d)",
 		    ch_num, current->comm, task_pid_nr(current));
 
 	spin_lock_bh(&idr_lock);
 	ch = idr_find(&ch_idr, ch_num);
-	if (!ch) {
+	अगर (!ch) अणु
 		spin_unlock_bh(&idr_lock);
-		return 0;
-	}
-	if (ch->filp != filp) {
+		वापस 0;
+	पूर्ण
+	अगर (ch->filp != filp) अणु
 		spin_unlock_bh(&idr_lock);
-		return -EINVAL;
-	}
-	idr_remove(&ch_idr, ch->id);
+		वापस -EINVAL;
+	पूर्ण
+	idr_हटाओ(&ch_idr, ch->id);
 	spin_unlock_bh(&idr_lock);
 
-	return riocm_ch_close(ch);
-}
+	वापस riocm_ch_बंद(ch);
+पूर्ण
 
 /*
  * cm_chan_bind() - Bind channel
  * @arg:	Channel number
  */
-static int cm_chan_bind(void __user *arg)
-{
-	struct rio_cm_channel chan;
+अटल पूर्णांक cm_chan_bind(व्योम __user *arg)
+अणु
+	काष्ठा rio_cm_channel chan;
 
-	if (copy_from_user(&chan, arg, sizeof(chan)))
-		return -EFAULT;
-	if (chan.mport_id >= RIO_MAX_MPORTS)
-		return -EINVAL;
+	अगर (copy_from_user(&chan, arg, माप(chan)))
+		वापस -EFAULT;
+	अगर (chan.mport_id >= RIO_MAX_MPORTS)
+		वापस -EINVAL;
 
-	return riocm_ch_bind(chan.id, chan.mport_id, NULL);
-}
+	वापस riocm_ch_bind(chan.id, chan.mport_id, शून्य);
+पूर्ण
 
 /*
  * cm_chan_listen() - Listen on channel
  * @arg:	Channel number
  */
-static int cm_chan_listen(void __user *arg)
-{
+अटल पूर्णांक cm_chan_listen(व्योम __user *arg)
+अणु
 	u16 __user *p = arg;
 	u16 ch_num;
 
-	if (get_user(ch_num, p))
-		return -EFAULT;
+	अगर (get_user(ch_num, p))
+		वापस -EFAULT;
 
-	return riocm_ch_listen(ch_num);
-}
+	वापस riocm_ch_listen(ch_num);
+पूर्ण
 
 /*
  * cm_chan_accept() - Accept incoming connection
- * @filp:	Pointer to file object
+ * @filp:	Poपूर्णांकer to file object
  * @arg:	Channel number
  */
-static int cm_chan_accept(struct file *filp, void __user *arg)
-{
-	struct rio_cm_accept param;
-	long accept_to;
-	struct rio_channel *ch;
+अटल पूर्णांक cm_chan_accept(काष्ठा file *filp, व्योम __user *arg)
+अणु
+	काष्ठा rio_cm_accept param;
+	दीर्घ accept_to;
+	काष्ठा rio_channel *ch;
 
-	if (copy_from_user(&param, arg, sizeof(param)))
-		return -EFAULT;
+	अगर (copy_from_user(&param, arg, माप(param)))
+		वापस -EFAULT;
 
 	riocm_debug(CHOP, "on ch_%d by %s(%d)",
 		    param.ch_num, current->comm, task_pid_nr(current));
 
-	accept_to = param.wait_to ?
-			msecs_to_jiffies(param.wait_to) : 0;
+	accept_to = param.रुको_to ?
+			msecs_to_jअगरfies(param.रुको_to) : 0;
 
 	ch = riocm_ch_accept(param.ch_num, &param.ch_num, accept_to);
-	if (IS_ERR(ch))
-		return PTR_ERR(ch);
+	अगर (IS_ERR(ch))
+		वापस PTR_ERR(ch);
 	ch->filp = filp;
 
 	riocm_debug(CHOP, "new ch_%d for %s(%d)",
 		    ch->id, current->comm, task_pid_nr(current));
 
-	if (copy_to_user(arg, &param, sizeof(param)))
-		return -EFAULT;
-	return 0;
-}
+	अगर (copy_to_user(arg, &param, माप(param)))
+		वापस -EFAULT;
+	वापस 0;
+पूर्ण
 
 /*
  * cm_chan_connect() - Connect on channel
- * @arg:	Channel information
+ * @arg:	Channel inक्रमmation
  */
-static int cm_chan_connect(void __user *arg)
-{
-	struct rio_cm_channel chan;
-	struct cm_dev *cm;
-	struct cm_peer *peer;
-	int ret = -ENODEV;
+अटल पूर्णांक cm_chan_connect(व्योम __user *arg)
+अणु
+	काष्ठा rio_cm_channel chan;
+	काष्ठा cm_dev *cm;
+	काष्ठा cm_peer *peer;
+	पूर्णांक ret = -ENODEV;
 
-	if (copy_from_user(&chan, arg, sizeof(chan)))
-		return -EFAULT;
-	if (chan.mport_id >= RIO_MAX_MPORTS)
-		return -EINVAL;
+	अगर (copy_from_user(&chan, arg, माप(chan)))
+		वापस -EFAULT;
+	अगर (chan.mport_id >= RIO_MAX_MPORTS)
+		वापस -EINVAL;
 
-	down_read(&rdev_sem);
+	करोwn_पढ़ो(&rdev_sem);
 
 	/* Find matching cm_dev object */
-	list_for_each_entry(cm, &cm_dev_list, list) {
-		if (cm->mport->id == chan.mport_id) {
+	list_क्रम_each_entry(cm, &cm_dev_list, list) अणु
+		अगर (cm->mport->id == chan.mport_id) अणु
 			ret = 0;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	if (ret)
-		goto err_out;
+	अगर (ret)
+		जाओ err_out;
 
-	if (chan.remote_destid >= RIO_ANY_DESTID(cm->mport->sys_size)) {
+	अगर (chan.remote_destid >= RIO_ANY_DESTID(cm->mport->sys_size)) अणु
 		ret = -EINVAL;
-		goto err_out;
-	}
+		जाओ err_out;
+	पूर्ण
 
-	/* Find corresponding RapidIO endpoint device object */
+	/* Find corresponding RapidIO endpoपूर्णांक device object */
 	ret = -ENODEV;
 
-	list_for_each_entry(peer, &cm->peers, node) {
-		if (peer->rdev->destid == chan.remote_destid) {
+	list_क्रम_each_entry(peer, &cm->peers, node) अणु
+		अगर (peer->rdev->destid == chan.remote_destid) अणु
 			ret = 0;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	if (ret)
-		goto err_out;
+	अगर (ret)
+		जाओ err_out;
 
-	up_read(&rdev_sem);
+	up_पढ़ो(&rdev_sem);
 
-	return riocm_ch_connect(chan.id, cm, peer, chan.remote_channel);
+	वापस riocm_ch_connect(chan.id, cm, peer, chan.remote_channel);
 err_out:
-	up_read(&rdev_sem);
-	return ret;
-}
+	up_पढ़ो(&rdev_sem);
+	वापस ret;
+पूर्ण
 
 /*
  * cm_chan_msg_send() - Send a message through channel
- * @arg:	Outbound message information
+ * @arg:	Outbound message inक्रमmation
  */
-static int cm_chan_msg_send(void __user *arg)
-{
-	struct rio_cm_msg msg;
-	void *buf;
-	int ret;
+अटल पूर्णांक cm_chan_msg_send(व्योम __user *arg)
+अणु
+	काष्ठा rio_cm_msg msg;
+	व्योम *buf;
+	पूर्णांक ret;
 
-	if (copy_from_user(&msg, arg, sizeof(msg)))
-		return -EFAULT;
-	if (msg.size > RIO_MAX_MSG_SIZE)
-		return -EINVAL;
+	अगर (copy_from_user(&msg, arg, माप(msg)))
+		वापस -EFAULT;
+	अगर (msg.size > RIO_MAX_MSG_SIZE)
+		वापस -EINVAL;
 
-	buf = memdup_user((void __user *)(uintptr_t)msg.msg, msg.size);
-	if (IS_ERR(buf))
-		return PTR_ERR(buf);
+	buf = memdup_user((व्योम __user *)(uपूर्णांकptr_t)msg.msg, msg.size);
+	अगर (IS_ERR(buf))
+		वापस PTR_ERR(buf);
 
 	ret = riocm_ch_send(msg.ch_num, buf, msg.size);
 
-	kfree(buf);
-	return ret;
-}
+	kमुक्त(buf);
+	वापस ret;
+पूर्ण
 
 /*
  * cm_chan_msg_rcv() - Receive a message through channel
- * @arg:	Inbound message information
+ * @arg:	Inbound message inक्रमmation
  */
-static int cm_chan_msg_rcv(void __user *arg)
-{
-	struct rio_cm_msg msg;
-	struct rio_channel *ch;
-	void *buf;
-	long rxto;
-	int ret = 0, msg_size;
+अटल पूर्णांक cm_chan_msg_rcv(व्योम __user *arg)
+अणु
+	काष्ठा rio_cm_msg msg;
+	काष्ठा rio_channel *ch;
+	व्योम *buf;
+	दीर्घ rxto;
+	पूर्णांक ret = 0, msg_size;
 
-	if (copy_from_user(&msg, arg, sizeof(msg)))
-		return -EFAULT;
+	अगर (copy_from_user(&msg, arg, माप(msg)))
+		वापस -EFAULT;
 
-	if (msg.ch_num == 0 || msg.size == 0)
-		return -EINVAL;
+	अगर (msg.ch_num == 0 || msg.size == 0)
+		वापस -EINVAL;
 
 	ch = riocm_get_channel(msg.ch_num);
-	if (!ch)
-		return -ENODEV;
+	अगर (!ch)
+		वापस -ENODEV;
 
-	rxto = msg.rxto ? msecs_to_jiffies(msg.rxto) : MAX_SCHEDULE_TIMEOUT;
+	rxto = msg.rxto ? msecs_to_jअगरfies(msg.rxto) : MAX_SCHEDULE_TIMEOUT;
 
 	ret = riocm_ch_receive(ch, &buf, rxto);
-	if (ret)
-		goto out;
+	अगर (ret)
+		जाओ out;
 
 	msg_size = min(msg.size, (u16)(RIO_MAX_MSG_SIZE));
 
-	if (copy_to_user((void __user *)(uintptr_t)msg.msg, buf, msg_size))
+	अगर (copy_to_user((व्योम __user *)(uपूर्णांकptr_t)msg.msg, buf, msg_size))
 		ret = -EFAULT;
 
-	riocm_ch_free_rxbuf(ch, buf);
+	riocm_ch_मुक्त_rxbuf(ch, buf);
 out:
 	riocm_put_channel(ch);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
  * riocm_cdev_ioctl() - IOCTL requests handler
  */
-static long
-riocm_cdev_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
-{
-	switch (cmd) {
-	case RIO_CM_EP_GET_LIST_SIZE:
-		return cm_ep_get_list_size((void __user *)arg);
-	case RIO_CM_EP_GET_LIST:
-		return cm_ep_get_list((void __user *)arg);
-	case RIO_CM_CHAN_CREATE:
-		return cm_chan_create(filp, (void __user *)arg);
-	case RIO_CM_CHAN_CLOSE:
-		return cm_chan_close(filp, (void __user *)arg);
-	case RIO_CM_CHAN_BIND:
-		return cm_chan_bind((void __user *)arg);
-	case RIO_CM_CHAN_LISTEN:
-		return cm_chan_listen((void __user *)arg);
-	case RIO_CM_CHAN_ACCEPT:
-		return cm_chan_accept(filp, (void __user *)arg);
-	case RIO_CM_CHAN_CONNECT:
-		return cm_chan_connect((void __user *)arg);
-	case RIO_CM_CHAN_SEND:
-		return cm_chan_msg_send((void __user *)arg);
-	case RIO_CM_CHAN_RECEIVE:
-		return cm_chan_msg_rcv((void __user *)arg);
-	case RIO_CM_MPORT_GET_LIST:
-		return cm_mport_get_list((void __user *)arg);
-	default:
-		break;
-	}
+अटल दीर्घ
+riocm_cdev_ioctl(काष्ठा file *filp, अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
+अणु
+	चयन (cmd) अणु
+	हाल RIO_CM_EP_GET_LIST_SIZE:
+		वापस cm_ep_get_list_size((व्योम __user *)arg);
+	हाल RIO_CM_EP_GET_LIST:
+		वापस cm_ep_get_list((व्योम __user *)arg);
+	हाल RIO_CM_CHAN_CREATE:
+		वापस cm_chan_create(filp, (व्योम __user *)arg);
+	हाल RIO_CM_CHAN_CLOSE:
+		वापस cm_chan_बंद(filp, (व्योम __user *)arg);
+	हाल RIO_CM_CHAN_BIND:
+		वापस cm_chan_bind((व्योम __user *)arg);
+	हाल RIO_CM_CHAN_LISTEN:
+		वापस cm_chan_listen((व्योम __user *)arg);
+	हाल RIO_CM_CHAN_ACCEPT:
+		वापस cm_chan_accept(filp, (व्योम __user *)arg);
+	हाल RIO_CM_CHAN_CONNECT:
+		वापस cm_chan_connect((व्योम __user *)arg);
+	हाल RIO_CM_CHAN_SEND:
+		वापस cm_chan_msg_send((व्योम __user *)arg);
+	हाल RIO_CM_CHAN_RECEIVE:
+		वापस cm_chan_msg_rcv((व्योम __user *)arg);
+	हाल RIO_CM_MPORT_GET_LIST:
+		वापस cm_mport_get_list((व्योम __user *)arg);
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static const struct file_operations riocm_cdev_fops = {
+अटल स्थिर काष्ठा file_operations riocm_cdev_fops = अणु
 	.owner		= THIS_MODULE,
-	.open		= riocm_cdev_open,
+	.खोलो		= riocm_cdev_खोलो,
 	.release	= riocm_cdev_release,
 	.unlocked_ioctl = riocm_cdev_ioctl,
-};
+पूर्ण;
 
 /*
- * riocm_add_dev - add new remote RapidIO device into channel management core
+ * riocm_add_dev - add new remote RapidIO device पूर्णांकo channel management core
  * @dev: device object associated with RapidIO device
- * @sif: subsystem interface
+ * @sअगर: subप्रणाली पूर्णांकerface
  *
- * Adds the specified RapidIO device (if applicable) into peers list of
+ * Adds the specअगरied RapidIO device (अगर applicable) पूर्णांकo peers list of
  * the corresponding channel management device (cm_dev).
  */
-static int riocm_add_dev(struct device *dev, struct subsys_interface *sif)
-{
-	struct cm_peer *peer;
-	struct rio_dev *rdev = to_rio_dev(dev);
-	struct cm_dev *cm;
+अटल पूर्णांक riocm_add_dev(काष्ठा device *dev, काष्ठा subsys_पूर्णांकerface *sअगर)
+अणु
+	काष्ठा cm_peer *peer;
+	काष्ठा rio_dev *rdev = to_rio_dev(dev);
+	काष्ठा cm_dev *cm;
 
-	/* Check if the remote device has capabilities required to support CM */
-	if (!dev_cm_capable(rdev))
-		return 0;
+	/* Check अगर the remote device has capabilities required to support CM */
+	अगर (!dev_cm_capable(rdev))
+		वापस 0;
 
 	riocm_debug(RDEV, "(%s)", rio_name(rdev));
 
-	peer = kmalloc(sizeof(*peer), GFP_KERNEL);
-	if (!peer)
-		return -ENOMEM;
+	peer = kदो_स्मृति(माप(*peer), GFP_KERNEL);
+	अगर (!peer)
+		वापस -ENOMEM;
 
 	/* Find a corresponding cm_dev object */
-	down_write(&rdev_sem);
-	list_for_each_entry(cm, &cm_dev_list, list) {
-		if (cm->mport == rdev->net->hport)
-			goto found;
-	}
+	करोwn_ग_लिखो(&rdev_sem);
+	list_क्रम_each_entry(cm, &cm_dev_list, list) अणु
+		अगर (cm->mport == rdev->net->hport)
+			जाओ found;
+	पूर्ण
 
-	up_write(&rdev_sem);
-	kfree(peer);
-	return -ENODEV;
+	up_ग_लिखो(&rdev_sem);
+	kमुक्त(peer);
+	वापस -ENODEV;
 
 found:
 	peer->rdev = rdev;
 	list_add_tail(&peer->node, &cm->peers);
 	cm->npeers++;
 
-	up_write(&rdev_sem);
-	return 0;
-}
+	up_ग_लिखो(&rdev_sem);
+	वापस 0;
+पूर्ण
 
 /*
- * riocm_remove_dev - remove remote RapidIO device from channel management core
+ * riocm_हटाओ_dev - हटाओ remote RapidIO device from channel management core
  * @dev: device object associated with RapidIO device
- * @sif: subsystem interface
+ * @sअगर: subप्रणाली पूर्णांकerface
  *
- * Removes the specified RapidIO device (if applicable) from peers list of
+ * Removes the specअगरied RapidIO device (अगर applicable) from peers list of
  * the corresponding channel management device (cm_dev).
  */
-static void riocm_remove_dev(struct device *dev, struct subsys_interface *sif)
-{
-	struct rio_dev *rdev = to_rio_dev(dev);
-	struct cm_dev *cm;
-	struct cm_peer *peer;
-	struct rio_channel *ch, *_c;
-	unsigned int i;
+अटल व्योम riocm_हटाओ_dev(काष्ठा device *dev, काष्ठा subsys_पूर्णांकerface *sअगर)
+अणु
+	काष्ठा rio_dev *rdev = to_rio_dev(dev);
+	काष्ठा cm_dev *cm;
+	काष्ठा cm_peer *peer;
+	काष्ठा rio_channel *ch, *_c;
+	अचिन्हित पूर्णांक i;
 	bool found = false;
 	LIST_HEAD(list);
 
-	/* Check if the remote device has capabilities required to support CM */
-	if (!dev_cm_capable(rdev))
-		return;
+	/* Check अगर the remote device has capabilities required to support CM */
+	अगर (!dev_cm_capable(rdev))
+		वापस;
 
 	riocm_debug(RDEV, "(%s)", rio_name(rdev));
 
 	/* Find matching cm_dev object */
-	down_write(&rdev_sem);
-	list_for_each_entry(cm, &cm_dev_list, list) {
-		if (cm->mport == rdev->net->hport) {
+	करोwn_ग_लिखो(&rdev_sem);
+	list_क्रम_each_entry(cm, &cm_dev_list, list) अणु
+		अगर (cm->mport == rdev->net->hport) अणु
 			found = true;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	if (!found) {
-		up_write(&rdev_sem);
-		return;
-	}
+	अगर (!found) अणु
+		up_ग_लिखो(&rdev_sem);
+		वापस;
+	पूर्ण
 
 	/* Remove remote device from the list of peers */
 	found = false;
-	list_for_each_entry(peer, &cm->peers, node) {
-		if (peer->rdev == rdev) {
+	list_क्रम_each_entry(peer, &cm->peers, node) अणु
+		अगर (peer->rdev == rdev) अणु
 			riocm_debug(RDEV, "removing peer %s", rio_name(rdev));
 			found = true;
 			list_del(&peer->node);
 			cm->npeers--;
-			kfree(peer);
-			break;
-		}
-	}
+			kमुक्त(peer);
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	up_write(&rdev_sem);
+	up_ग_लिखो(&rdev_sem);
 
-	if (!found)
-		return;
+	अगर (!found)
+		वापस;
 
 	/*
 	 * Release channels associated with this peer
 	 */
 
 	spin_lock_bh(&idr_lock);
-	idr_for_each_entry(&ch_idr, ch, i) {
-		if (ch && ch->rdev == rdev) {
-			if (atomic_read(&rdev->state) != RIO_DEVICE_SHUTDOWN)
+	idr_क्रम_each_entry(&ch_idr, ch, i) अणु
+		अगर (ch && ch->rdev == rdev) अणु
+			अगर (atomic_पढ़ो(&rdev->state) != RIO_DEVICE_SHUTDOWN)
 				riocm_exch(ch, RIO_CM_DISCONNECT);
-			idr_remove(&ch_idr, ch->id);
+			idr_हटाओ(&ch_idr, ch->id);
 			list_add(&ch->ch_node, &list);
-		}
-	}
+		पूर्ण
+	पूर्ण
 	spin_unlock_bh(&idr_lock);
 
-	if (!list_empty(&list)) {
-		list_for_each_entry_safe(ch, _c, &list, ch_node) {
+	अगर (!list_empty(&list)) अणु
+		list_क्रम_each_entry_safe(ch, _c, &list, ch_node) अणु
 			list_del(&ch->ch_node);
-			riocm_ch_close(ch);
-		}
-	}
-}
+			riocm_ch_बंद(ch);
+		पूर्ण
+	पूर्ण
+पूर्ण
 
 /*
- * riocm_cdev_add() - Create rio_cm char device
- * @devno: device number assigned to device (MAJ + MIN)
+ * riocm_cdev_add() - Create rio_cm अक्षर device
+ * @devno: device number asचिन्हित to device (MAJ + MIN)
  */
-static int riocm_cdev_add(dev_t devno)
-{
-	int ret;
+अटल पूर्णांक riocm_cdev_add(dev_t devno)
+अणु
+	पूर्णांक ret;
 
 	cdev_init(&riocm_cdev.cdev, &riocm_cdev_fops);
 	riocm_cdev.cdev.owner = THIS_MODULE;
 	ret = cdev_add(&riocm_cdev.cdev, devno, 1);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		riocm_error("Cannot register a device with error %d", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	riocm_cdev.dev = device_create(dev_class, NULL, devno, NULL, DEV_NAME);
-	if (IS_ERR(riocm_cdev.dev)) {
+	riocm_cdev.dev = device_create(dev_class, शून्य, devno, शून्य, DEV_NAME);
+	अगर (IS_ERR(riocm_cdev.dev)) अणु
 		cdev_del(&riocm_cdev.cdev);
-		return PTR_ERR(riocm_cdev.dev);
-	}
+		वापस PTR_ERR(riocm_cdev.dev);
+	पूर्ण
 
 	riocm_debug(MPORT, "Added %s cdev(%d:%d)",
 		    DEV_NAME, MAJOR(devno), MINOR(devno));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * riocm_add_mport - add new local mport device into channel management core
+ * riocm_add_mport - add new local mport device पूर्णांकo channel management core
  * @dev: device object associated with mport
- * @class_intf: class interface
+ * @class_पूर्णांकf: class पूर्णांकerface
  *
  * When a new mport device is added, CM immediately reserves inbound and
  * outbound RapidIO mailboxes that will be used.
  */
-static int riocm_add_mport(struct device *dev,
-			   struct class_interface *class_intf)
-{
-	int rc;
-	int i;
-	struct cm_dev *cm;
-	struct rio_mport *mport = to_rio_mport(dev);
+अटल पूर्णांक riocm_add_mport(काष्ठा device *dev,
+			   काष्ठा class_पूर्णांकerface *class_पूर्णांकf)
+अणु
+	पूर्णांक rc;
+	पूर्णांक i;
+	काष्ठा cm_dev *cm;
+	काष्ठा rio_mport *mport = to_rio_mport(dev);
 
 	riocm_debug(MPORT, "add mport %s", mport->name);
 
-	cm = kzalloc(sizeof(*cm), GFP_KERNEL);
-	if (!cm)
-		return -ENOMEM;
+	cm = kzalloc(माप(*cm), GFP_KERNEL);
+	अगर (!cm)
+		वापस -ENOMEM;
 
 	cm->mport = mport;
 
 	rc = rio_request_outb_mbox(mport, cm, cmbox,
 				   RIOCM_TX_RING_SIZE, riocm_outb_msg_event);
-	if (rc) {
+	अगर (rc) अणु
 		riocm_error("failed to allocate OBMBOX_%d on %s",
 			    cmbox, mport->name);
-		kfree(cm);
-		return -ENODEV;
-	}
+		kमुक्त(cm);
+		वापस -ENODEV;
+	पूर्ण
 
 	rc = rio_request_inb_mbox(mport, cm, cmbox,
 				  RIOCM_RX_RING_SIZE, riocm_inb_msg_event);
-	if (rc) {
+	अगर (rc) अणु
 		riocm_error("failed to allocate IBMBOX_%d on %s",
 			    cmbox, mport->name);
 		rio_release_outb_mbox(mport, cmbox);
-		kfree(cm);
-		return -ENODEV;
-	}
+		kमुक्त(cm);
+		वापस -ENODEV;
+	पूर्ण
 
 	cm->rx_wq = create_workqueue(DRV_NAME "/rxq");
-	if (!cm->rx_wq) {
+	अगर (!cm->rx_wq) अणु
 		rio_release_inb_mbox(mport, cmbox);
 		rio_release_outb_mbox(mport, cmbox);
-		kfree(cm);
-		return -ENOMEM;
-	}
+		kमुक्त(cm);
+		वापस -ENOMEM;
+	पूर्ण
 
 	/*
-	 * Allocate and register inbound messaging buffers to be ready
-	 * to receive channel and system management requests
+	 * Allocate and रेजिस्टर inbound messaging buffers to be पढ़ोy
+	 * to receive channel and प्रणाली management requests
 	 */
-	for (i = 0; i < RIOCM_RX_RING_SIZE; i++)
-		cm->rx_buf[i] = NULL;
+	क्रम (i = 0; i < RIOCM_RX_RING_SIZE; i++)
+		cm->rx_buf[i] = शून्य;
 
 	cm->rx_slots = RIOCM_RX_RING_SIZE;
 	mutex_init(&cm->rx_lock);
@@ -2156,221 +2157,221 @@ static int riocm_add_mport(struct device *dev,
 	cm->npeers = 0;
 	INIT_LIST_HEAD(&cm->tx_reqs);
 
-	down_write(&rdev_sem);
+	करोwn_ग_लिखो(&rdev_sem);
 	list_add_tail(&cm->list, &cm_dev_list);
-	up_write(&rdev_sem);
+	up_ग_लिखो(&rdev_sem);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * riocm_remove_mport - remove local mport device from channel management core
+ * riocm_हटाओ_mport - हटाओ local mport device from channel management core
  * @dev: device object associated with mport
- * @class_intf: class interface
+ * @class_पूर्णांकf: class पूर्णांकerface
  *
- * Removes a local mport device from the list of registered devices that provide
- * channel management services. Returns an error if the specified mport is not
- * registered with the CM core.
+ * Removes a local mport device from the list of रेजिस्टरed devices that provide
+ * channel management services. Returns an error अगर the specअगरied mport is not
+ * रेजिस्टरed with the CM core.
  */
-static void riocm_remove_mport(struct device *dev,
-			       struct class_interface *class_intf)
-{
-	struct rio_mport *mport = to_rio_mport(dev);
-	struct cm_dev *cm;
-	struct cm_peer *peer, *temp;
-	struct rio_channel *ch, *_c;
-	unsigned int i;
+अटल व्योम riocm_हटाओ_mport(काष्ठा device *dev,
+			       काष्ठा class_पूर्णांकerface *class_पूर्णांकf)
+अणु
+	काष्ठा rio_mport *mport = to_rio_mport(dev);
+	काष्ठा cm_dev *cm;
+	काष्ठा cm_peer *peer, *temp;
+	काष्ठा rio_channel *ch, *_c;
+	अचिन्हित पूर्णांक i;
 	bool found = false;
 	LIST_HEAD(list);
 
 	riocm_debug(MPORT, "%s", mport->name);
 
 	/* Find a matching cm_dev object */
-	down_write(&rdev_sem);
-	list_for_each_entry(cm, &cm_dev_list, list) {
-		if (cm->mport == mport) {
+	करोwn_ग_लिखो(&rdev_sem);
+	list_क्रम_each_entry(cm, &cm_dev_list, list) अणु
+		अगर (cm->mport == mport) अणु
 			list_del(&cm->list);
 			found = true;
-			break;
-		}
-	}
-	up_write(&rdev_sem);
-	if (!found)
-		return;
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	up_ग_लिखो(&rdev_sem);
+	अगर (!found)
+		वापस;
 
 	flush_workqueue(cm->rx_wq);
 	destroy_workqueue(cm->rx_wq);
 
 	/* Release channels bound to this mport */
 	spin_lock_bh(&idr_lock);
-	idr_for_each_entry(&ch_idr, ch, i) {
-		if (ch->cmdev == cm) {
+	idr_क्रम_each_entry(&ch_idr, ch, i) अणु
+		अगर (ch->cmdev == cm) अणु
 			riocm_debug(RDEV, "%s drop ch_%d",
 				    mport->name, ch->id);
-			idr_remove(&ch_idr, ch->id);
+			idr_हटाओ(&ch_idr, ch->id);
 			list_add(&ch->ch_node, &list);
-		}
-	}
+		पूर्ण
+	पूर्ण
 	spin_unlock_bh(&idr_lock);
 
-	if (!list_empty(&list)) {
-		list_for_each_entry_safe(ch, _c, &list, ch_node) {
+	अगर (!list_empty(&list)) अणु
+		list_क्रम_each_entry_safe(ch, _c, &list, ch_node) अणु
 			list_del(&ch->ch_node);
-			riocm_ch_close(ch);
-		}
-	}
+			riocm_ch_बंद(ch);
+		पूर्ण
+	पूर्ण
 
 	rio_release_inb_mbox(mport, cmbox);
 	rio_release_outb_mbox(mport, cmbox);
 
-	/* Remove and free peer entries */
-	if (!list_empty(&cm->peers))
+	/* Remove and मुक्त peer entries */
+	अगर (!list_empty(&cm->peers))
 		riocm_debug(RDEV, "ATTN: peer list not empty");
-	list_for_each_entry_safe(peer, temp, &cm->peers, node) {
+	list_क्रम_each_entry_safe(peer, temp, &cm->peers, node) अणु
 		riocm_debug(RDEV, "removing peer %s", rio_name(peer->rdev));
 		list_del(&peer->node);
-		kfree(peer);
-	}
+		kमुक्त(peer);
+	पूर्ण
 
-	riocm_rx_free(cm);
-	kfree(cm);
+	riocm_rx_मुक्त(cm);
+	kमुक्त(cm);
 	riocm_debug(MPORT, "%s done", mport->name);
-}
+पूर्ण
 
-static int rio_cm_shutdown(struct notifier_block *nb, unsigned long code,
-	void *unused)
-{
-	struct rio_channel *ch;
-	unsigned int i;
+अटल पूर्णांक rio_cm_shutकरोwn(काष्ठा notअगरier_block *nb, अचिन्हित दीर्घ code,
+	व्योम *unused)
+अणु
+	काष्ठा rio_channel *ch;
+	अचिन्हित पूर्णांक i;
 	LIST_HEAD(list);
 
 	riocm_debug(EXIT, ".");
 
 	/*
 	 * If there are any channels left in connected state send
-	 * close notification to the connection partner.
+	 * बंद notअगरication to the connection partner.
 	 * First build a list of channels that require a closing
-	 * notification because function riocm_send_close() should
-	 * be called outside of spinlock protected code.
+	 * notअगरication because function riocm_send_बंद() should
+	 * be called outside of spinlock रक्षित code.
 	 */
 	spin_lock_bh(&idr_lock);
-	idr_for_each_entry(&ch_idr, ch, i) {
-		if (ch->state == RIO_CM_CONNECTED) {
+	idr_क्रम_each_entry(&ch_idr, ch, i) अणु
+		अगर (ch->state == RIO_CM_CONNECTED) अणु
 			riocm_debug(EXIT, "close ch %d", ch->id);
-			idr_remove(&ch_idr, ch->id);
+			idr_हटाओ(&ch_idr, ch->id);
 			list_add(&ch->ch_node, &list);
-		}
-	}
+		पूर्ण
+	पूर्ण
 	spin_unlock_bh(&idr_lock);
 
-	list_for_each_entry(ch, &list, ch_node)
-		riocm_send_close(ch);
+	list_क्रम_each_entry(ch, &list, ch_node)
+		riocm_send_बंद(ch);
 
-	return NOTIFY_DONE;
-}
+	वापस NOTIFY_DONE;
+पूर्ण
 
 /*
- * riocm_interface handles addition/removal of remote RapidIO devices
+ * riocm_पूर्णांकerface handles addition/removal of remote RapidIO devices
  */
-static struct subsys_interface riocm_interface = {
+अटल काष्ठा subsys_पूर्णांकerface riocm_पूर्णांकerface = अणु
 	.name		= "rio_cm",
 	.subsys		= &rio_bus_type,
 	.add_dev	= riocm_add_dev,
-	.remove_dev	= riocm_remove_dev,
-};
+	.हटाओ_dev	= riocm_हटाओ_dev,
+पूर्ण;
 
 /*
- * rio_mport_interface handles addition/removal local mport devices
+ * rio_mport_पूर्णांकerface handles addition/removal local mport devices
  */
-static struct class_interface rio_mport_interface __refdata = {
+अटल काष्ठा class_पूर्णांकerface rio_mport_पूर्णांकerface __refdata = अणु
 	.class = &rio_mport_class,
 	.add_dev = riocm_add_mport,
-	.remove_dev = riocm_remove_mport,
-};
+	.हटाओ_dev = riocm_हटाओ_mport,
+पूर्ण;
 
-static struct notifier_block rio_cm_notifier = {
-	.notifier_call = rio_cm_shutdown,
-};
+अटल काष्ठा notअगरier_block rio_cm_notअगरier = अणु
+	.notअगरier_call = rio_cm_shutकरोwn,
+पूर्ण;
 
-static int __init riocm_init(void)
-{
-	int ret;
+अटल पूर्णांक __init riocm_init(व्योम)
+अणु
+	पूर्णांक ret;
 
 	/* Create device class needed by udev */
 	dev_class = class_create(THIS_MODULE, DRV_NAME);
-	if (IS_ERR(dev_class)) {
+	अगर (IS_ERR(dev_class)) अणु
 		riocm_error("Cannot create " DRV_NAME " class");
-		return PTR_ERR(dev_class);
-	}
+		वापस PTR_ERR(dev_class);
+	पूर्ण
 
 	ret = alloc_chrdev_region(&dev_number, 0, 1, DRV_NAME);
-	if (ret) {
+	अगर (ret) अणु
 		class_destroy(dev_class);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	dev_major = MAJOR(dev_number);
 	dev_minor_base = MINOR(dev_number);
 	riocm_debug(INIT, "Registered class with %d major", dev_major);
 
 	/*
-	 * Register as rapidio_port class interface to get notifications about
+	 * Register as rapidio_port class पूर्णांकerface to get notअगरications about
 	 * mport additions and removals.
 	 */
-	ret = class_interface_register(&rio_mport_interface);
-	if (ret) {
+	ret = class_पूर्णांकerface_रेजिस्टर(&rio_mport_पूर्णांकerface);
+	अगर (ret) अणु
 		riocm_error("class_interface_register error: %d", ret);
-		goto err_reg;
-	}
+		जाओ err_reg;
+	पूर्ण
 
 	/*
-	 * Register as RapidIO bus interface to get notifications about
+	 * Register as RapidIO bus पूर्णांकerface to get notअगरications about
 	 * addition/removal of remote RapidIO devices.
 	 */
-	ret = subsys_interface_register(&riocm_interface);
-	if (ret) {
+	ret = subsys_पूर्णांकerface_रेजिस्टर(&riocm_पूर्णांकerface);
+	अगर (ret) अणु
 		riocm_error("subsys_interface_register error: %d", ret);
-		goto err_cl;
-	}
+		जाओ err_cl;
+	पूर्ण
 
-	ret = register_reboot_notifier(&rio_cm_notifier);
-	if (ret) {
+	ret = रेजिस्टर_reboot_notअगरier(&rio_cm_notअगरier);
+	अगर (ret) अणु
 		riocm_error("failed to register reboot notifier (err=%d)", ret);
-		goto err_sif;
-	}
+		जाओ err_sअगर;
+	पूर्ण
 
 	ret = riocm_cdev_add(dev_number);
-	if (ret) {
-		unregister_reboot_notifier(&rio_cm_notifier);
+	अगर (ret) अणु
+		unरेजिस्टर_reboot_notअगरier(&rio_cm_notअगरier);
 		ret = -ENODEV;
-		goto err_sif;
-	}
+		जाओ err_sअगर;
+	पूर्ण
 
-	return 0;
-err_sif:
-	subsys_interface_unregister(&riocm_interface);
+	वापस 0;
+err_sअगर:
+	subsys_पूर्णांकerface_unरेजिस्टर(&riocm_पूर्णांकerface);
 err_cl:
-	class_interface_unregister(&rio_mport_interface);
+	class_पूर्णांकerface_unरेजिस्टर(&rio_mport_पूर्णांकerface);
 err_reg:
-	unregister_chrdev_region(dev_number, 1);
+	unरेजिस्टर_chrdev_region(dev_number, 1);
 	class_destroy(dev_class);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void __exit riocm_exit(void)
-{
+अटल व्योम __निकास riocm_निकास(व्योम)
+अणु
 	riocm_debug(EXIT, "enter");
-	unregister_reboot_notifier(&rio_cm_notifier);
-	subsys_interface_unregister(&riocm_interface);
-	class_interface_unregister(&rio_mport_interface);
+	unरेजिस्टर_reboot_notअगरier(&rio_cm_notअगरier);
+	subsys_पूर्णांकerface_unरेजिस्टर(&riocm_पूर्णांकerface);
+	class_पूर्णांकerface_unरेजिस्टर(&rio_mport_पूर्णांकerface);
 	idr_destroy(&ch_idr);
 
-	device_unregister(riocm_cdev.dev);
+	device_unरेजिस्टर(riocm_cdev.dev);
 	cdev_del(&(riocm_cdev.cdev));
 
 	class_destroy(dev_class);
-	unregister_chrdev_region(dev_number, 1);
-}
+	unरेजिस्टर_chrdev_region(dev_number, 1);
+पूर्ण
 
 late_initcall(riocm_init);
-module_exit(riocm_exit);
+module_निकास(riocm_निकास);

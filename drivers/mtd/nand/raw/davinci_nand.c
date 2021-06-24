@@ -1,272 +1,273 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * davinci_nand.c - NAND Flash Driver for DaVinci family chips
+ * davinci_nand.c - न_अंकD Flash Driver क्रम DaVinci family chips
  *
- * Copyright © 2006 Texas Instruments.
+ * Copyright तऊ 2006 Texas Instruments.
  *
- * Port to 2.6.23 Copyright © 2008 by:
+ * Port to 2.6.23 Copyright तऊ 2008 by:
  *   Sander Huijsen <Shuijsen@optelecom-nkf.com>
  *   Troy Kisky <troy.kisky@boundarydevices.com>
  *   Dirk Behme <Dirk.Behme@gmail.com>
  */
 
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/platform_device.h>
-#include <linux/err.h>
-#include <linux/iopoll.h>
-#include <linux/mtd/rawnand.h>
-#include <linux/mtd/partitions.h>
-#include <linux/slab.h>
-#include <linux/of_device.h>
-#include <linux/of.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/err.h>
+#समावेश <linux/iopoll.h>
+#समावेश <linux/mtd/rawnand.h>
+#समावेश <linux/mtd/partitions.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/of.h>
 
-#include <linux/platform_data/mtd-davinci.h>
-#include <linux/platform_data/mtd-davinci-aemif.h>
+#समावेश <linux/platक्रमm_data/mtd-davinci.h>
+#समावेश <linux/platक्रमm_data/mtd-davinci-aemअगर.h>
 
 /*
- * This is a device driver for the NAND flash controller found on the
+ * This is a device driver क्रम the न_अंकD flash controller found on the
  * various DaVinci family chips.  It handles up to four SoC chipselects,
  * and some flavors of secondary chipselect (e.g. based on A12) as used
  * with multichip packages.
  *
  * The 1-bit ECC hardware is supported, as well as the newer 4-bit ECC
  * available on chips like the DM355 and OMAP-L137 and needed with the
- * more error-prone MLC NAND chips.
+ * more error-prone MLC न_अंकD chips.
  *
- * This driver assumes EM_WAIT connects all the NAND devices' RDY/nBUSY
- * outputs in a "wire-AND" configuration, with no per-chip signals.
+ * This driver assumes EM_WAIT connects all the न_अंकD devices' RDY/nBUSY
+ * outमाला_दो in a "wire-AND" configuration, with no per-chip संकेतs.
  */
-struct davinci_nand_info {
-	struct nand_controller	controller;
-	struct nand_chip	chip;
+काष्ठा davinci_nand_info अणु
+	काष्ठा nand_controller	controller;
+	काष्ठा nand_chip	chip;
 
-	struct platform_device	*pdev;
+	काष्ठा platक्रमm_device	*pdev;
 
-	bool			is_readmode;
+	bool			is_पढ़ोmode;
 
-	void __iomem		*base;
-	void __iomem		*vaddr;
+	व्योम __iomem		*base;
+	व्योम __iomem		*vaddr;
 
-	void __iomem		*current_cs;
+	व्योम __iomem		*current_cs;
 
-	uint32_t		mask_chipsel;
-	uint32_t		mask_ale;
-	uint32_t		mask_cle;
+	uपूर्णांक32_t		mask_chipsel;
+	uपूर्णांक32_t		mask_ale;
+	uपूर्णांक32_t		mask_cle;
 
-	uint32_t		core_chipsel;
+	uपूर्णांक32_t		core_chipsel;
 
-	struct davinci_aemif_timing	*timing;
-};
+	काष्ठा davinci_aemअगर_timing	*timing;
+पूर्ण;
 
-static DEFINE_SPINLOCK(davinci_nand_lock);
-static bool ecc4_busy;
+अटल DEFINE_SPINLOCK(davinci_nand_lock);
+अटल bool ecc4_busy;
 
-static inline struct davinci_nand_info *to_davinci_nand(struct mtd_info *mtd)
-{
-	return container_of(mtd_to_nand(mtd), struct davinci_nand_info, chip);
-}
+अटल अंतरभूत काष्ठा davinci_nand_info *to_davinci_nand(काष्ठा mtd_info *mtd)
+अणु
+	वापस container_of(mtd_to_nand(mtd), काष्ठा davinci_nand_info, chip);
+पूर्ण
 
-static inline unsigned int davinci_nand_readl(struct davinci_nand_info *info,
-		int offset)
-{
-	return __raw_readl(info->base + offset);
-}
+अटल अंतरभूत अचिन्हित पूर्णांक davinci_nand_पढ़ोl(काष्ठा davinci_nand_info *info,
+		पूर्णांक offset)
+अणु
+	वापस __raw_पढ़ोl(info->base + offset);
+पूर्ण
 
-static inline void davinci_nand_writel(struct davinci_nand_info *info,
-		int offset, unsigned long value)
-{
-	__raw_writel(value, info->base + offset);
-}
+अटल अंतरभूत व्योम davinci_nand_ग_लिखोl(काष्ठा davinci_nand_info *info,
+		पूर्णांक offset, अचिन्हित दीर्घ value)
+अणु
+	__raw_ग_लिखोl(value, info->base + offset);
+पूर्ण
 
 /*----------------------------------------------------------------------*/
 
 /*
- * 1-bit hardware ECC ... context maintained for each core chipselect
+ * 1-bit hardware ECC ... context मुख्यtained क्रम each core chipselect
  */
 
-static inline uint32_t nand_davinci_readecc_1bit(struct mtd_info *mtd)
-{
-	struct davinci_nand_info *info = to_davinci_nand(mtd);
+अटल अंतरभूत uपूर्णांक32_t nand_davinci_पढ़ोecc_1bit(काष्ठा mtd_info *mtd)
+अणु
+	काष्ठा davinci_nand_info *info = to_davinci_nand(mtd);
 
-	return davinci_nand_readl(info, NANDF1ECC_OFFSET
+	वापस davinci_nand_पढ़ोl(info, न_अंकDF1ECC_OFFSET
 			+ 4 * info->core_chipsel);
-}
+पूर्ण
 
-static void nand_davinci_hwctl_1bit(struct nand_chip *chip, int mode)
-{
-	struct davinci_nand_info *info;
-	uint32_t nandcfr;
-	unsigned long flags;
+अटल व्योम nand_davinci_hwctl_1bit(काष्ठा nand_chip *chip, पूर्णांक mode)
+अणु
+	काष्ठा davinci_nand_info *info;
+	uपूर्णांक32_t nandcfr;
+	अचिन्हित दीर्घ flags;
 
 	info = to_davinci_nand(nand_to_mtd(chip));
 
 	/* Reset ECC hardware */
-	nand_davinci_readecc_1bit(nand_to_mtd(chip));
+	nand_davinci_पढ़ोecc_1bit(nand_to_mtd(chip));
 
 	spin_lock_irqsave(&davinci_nand_lock, flags);
 
 	/* Restart ECC hardware */
-	nandcfr = davinci_nand_readl(info, NANDFCR_OFFSET);
+	nandcfr = davinci_nand_पढ़ोl(info, न_अंकDFCR_OFFSET);
 	nandcfr |= BIT(8 + info->core_chipsel);
-	davinci_nand_writel(info, NANDFCR_OFFSET, nandcfr);
+	davinci_nand_ग_लिखोl(info, न_अंकDFCR_OFFSET, nandcfr);
 
 	spin_unlock_irqrestore(&davinci_nand_lock, flags);
-}
+पूर्ण
 
 /*
- * Read hardware ECC value and pack into three bytes
+ * Read hardware ECC value and pack पूर्णांकo three bytes
  */
-static int nand_davinci_calculate_1bit(struct nand_chip *chip,
-				       const u_char *dat, u_char *ecc_code)
-{
-	unsigned int ecc_val = nand_davinci_readecc_1bit(nand_to_mtd(chip));
-	unsigned int ecc24 = (ecc_val & 0x0fff) | ((ecc_val & 0x0fff0000) >> 4);
+अटल पूर्णांक nand_davinci_calculate_1bit(काष्ठा nand_chip *chip,
+				       स्थिर u_अक्षर *dat, u_अक्षर *ecc_code)
+अणु
+	अचिन्हित पूर्णांक ecc_val = nand_davinci_पढ़ोecc_1bit(nand_to_mtd(chip));
+	अचिन्हित पूर्णांक ecc24 = (ecc_val & 0x0fff) | ((ecc_val & 0x0fff0000) >> 4);
 
 	/* invert so that erased block ecc is correct */
 	ecc24 = ~ecc24;
-	ecc_code[0] = (u_char)(ecc24);
-	ecc_code[1] = (u_char)(ecc24 >> 8);
-	ecc_code[2] = (u_char)(ecc24 >> 16);
+	ecc_code[0] = (u_अक्षर)(ecc24);
+	ecc_code[1] = (u_अक्षर)(ecc24 >> 8);
+	ecc_code[2] = (u_अक्षर)(ecc24 >> 16);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int nand_davinci_correct_1bit(struct nand_chip *chip, u_char *dat,
-				     u_char *read_ecc, u_char *calc_ecc)
-{
-	uint32_t eccNand = read_ecc[0] | (read_ecc[1] << 8) |
-					  (read_ecc[2] << 16);
-	uint32_t eccCalc = calc_ecc[0] | (calc_ecc[1] << 8) |
+अटल पूर्णांक nand_davinci_correct_1bit(काष्ठा nand_chip *chip, u_अक्षर *dat,
+				     u_अक्षर *पढ़ो_ecc, u_अक्षर *calc_ecc)
+अणु
+	uपूर्णांक32_t eccNand = पढ़ो_ecc[0] | (पढ़ो_ecc[1] << 8) |
+					  (पढ़ो_ecc[2] << 16);
+	uपूर्णांक32_t eccCalc = calc_ecc[0] | (calc_ecc[1] << 8) |
 					  (calc_ecc[2] << 16);
-	uint32_t diff = eccCalc ^ eccNand;
+	uपूर्णांक32_t dअगरf = eccCalc ^ eccNand;
 
-	if (diff) {
-		if ((((diff >> 12) ^ diff) & 0xfff) == 0xfff) {
+	अगर (dअगरf) अणु
+		अगर ((((dअगरf >> 12) ^ dअगरf) & 0xfff) == 0xfff) अणु
 			/* Correctable error */
-			if ((diff >> (12 + 3)) < chip->ecc.size) {
-				dat[diff >> (12 + 3)] ^= BIT((diff >> 12) & 7);
-				return 1;
-			} else {
-				return -EBADMSG;
-			}
-		} else if (!(diff & (diff - 1))) {
+			अगर ((dअगरf >> (12 + 3)) < chip->ecc.size) अणु
+				dat[dअगरf >> (12 + 3)] ^= BIT((dअगरf >> 12) & 7);
+				वापस 1;
+			पूर्ण अन्यथा अणु
+				वापस -EBADMSG;
+			पूर्ण
+		पूर्ण अन्यथा अगर (!(dअगरf & (dअगरf - 1))) अणु
 			/* Single bit ECC error in the ECC itself,
 			 * nothing to fix */
-			return 1;
-		} else {
+			वापस 1;
+		पूर्ण अन्यथा अणु
 			/* Uncorrectable error */
-			return -EBADMSG;
-		}
+			वापस -EBADMSG;
+		पूर्ण
 
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /*----------------------------------------------------------------------*/
 
 /*
- * 4-bit hardware ECC ... context maintained over entire AEMIF
+ * 4-bit hardware ECC ... context मुख्यtained over entire AEMIF
  *
- * This is a syndrome engine, but we avoid NAND_ECC_PLACEMENT_INTERLEAVED
- * since that forces use of a problematic "infix OOB" layout.
+ * This is a syndrome engine, but we aव्योम न_अंकD_ECC_PLACEMENT_INTERLEAVED
+ * since that क्रमces use of a problematic "infix OOB" layout.
  * Among other things, it trashes manufacturer bad block markers.
- * Also, and specific to this hardware, it ECC-protects the "prepad"
- * in the OOB ... while having ECC protection for parts of OOB would
- * seem useful, the current MTD stack sometimes wants to update the
+ * Also, and specअगरic to this hardware, it ECC-protects the "prepad"
+ * in the OOB ... जबतक having ECC protection क्रम parts of OOB would
+ * seem useful, the current MTD stack someबार wants to update the
  * OOB without recomputing ECC.
  */
 
-static void nand_davinci_hwctl_4bit(struct nand_chip *chip, int mode)
-{
-	struct davinci_nand_info *info = to_davinci_nand(nand_to_mtd(chip));
-	unsigned long flags;
+अटल व्योम nand_davinci_hwctl_4bit(काष्ठा nand_chip *chip, पूर्णांक mode)
+अणु
+	काष्ठा davinci_nand_info *info = to_davinci_nand(nand_to_mtd(chip));
+	अचिन्हित दीर्घ flags;
 	u32 val;
 
 	/* Reset ECC hardware */
-	davinci_nand_readl(info, NAND_4BIT_ECC1_OFFSET);
+	davinci_nand_पढ़ोl(info, न_अंकD_4BIT_ECC1_OFFSET);
 
 	spin_lock_irqsave(&davinci_nand_lock, flags);
 
-	/* Start 4-bit ECC calculation for read/write */
-	val = davinci_nand_readl(info, NANDFCR_OFFSET);
+	/* Start 4-bit ECC calculation क्रम पढ़ो/ग_लिखो */
+	val = davinci_nand_पढ़ोl(info, न_अंकDFCR_OFFSET);
 	val &= ~(0x03 << 4);
 	val |= (info->core_chipsel << 4) | BIT(12);
-	davinci_nand_writel(info, NANDFCR_OFFSET, val);
+	davinci_nand_ग_लिखोl(info, न_अंकDFCR_OFFSET, val);
 
-	info->is_readmode = (mode == NAND_ECC_READ);
+	info->is_पढ़ोmode = (mode == न_अंकD_ECC_READ);
 
 	spin_unlock_irqrestore(&davinci_nand_lock, flags);
-}
+पूर्ण
 
-/* Read raw ECC code after writing to NAND. */
-static void
-nand_davinci_readecc_4bit(struct davinci_nand_info *info, u32 code[4])
-{
-	const u32 mask = 0x03ff03ff;
+/* Read raw ECC code after writing to न_अंकD. */
+अटल व्योम
+nand_davinci_पढ़ोecc_4bit(काष्ठा davinci_nand_info *info, u32 code[4])
+अणु
+	स्थिर u32 mask = 0x03ff03ff;
 
-	code[0] = davinci_nand_readl(info, NAND_4BIT_ECC1_OFFSET) & mask;
-	code[1] = davinci_nand_readl(info, NAND_4BIT_ECC2_OFFSET) & mask;
-	code[2] = davinci_nand_readl(info, NAND_4BIT_ECC3_OFFSET) & mask;
-	code[3] = davinci_nand_readl(info, NAND_4BIT_ECC4_OFFSET) & mask;
-}
+	code[0] = davinci_nand_पढ़ोl(info, न_अंकD_4BIT_ECC1_OFFSET) & mask;
+	code[1] = davinci_nand_पढ़ोl(info, न_अंकD_4BIT_ECC2_OFFSET) & mask;
+	code[2] = davinci_nand_पढ़ोl(info, न_अंकD_4BIT_ECC3_OFFSET) & mask;
+	code[3] = davinci_nand_पढ़ोl(info, न_अंकD_4BIT_ECC4_OFFSET) & mask;
+पूर्ण
 
-/* Terminate read ECC; or return ECC (as bytes) of data written to NAND. */
-static int nand_davinci_calculate_4bit(struct nand_chip *chip,
-				       const u_char *dat, u_char *ecc_code)
-{
-	struct davinci_nand_info *info = to_davinci_nand(nand_to_mtd(chip));
+/* Terminate पढ़ो ECC; or वापस ECC (as bytes) of data written to न_अंकD. */
+अटल पूर्णांक nand_davinci_calculate_4bit(काष्ठा nand_chip *chip,
+				       स्थिर u_अक्षर *dat, u_अक्षर *ecc_code)
+अणु
+	काष्ठा davinci_nand_info *info = to_davinci_nand(nand_to_mtd(chip));
 	u32 raw_ecc[4], *p;
-	unsigned i;
+	अचिन्हित i;
 
-	/* After a read, terminate ECC calculation by a dummy read
-	 * of some 4-bit ECC register.  ECC covers everything that
-	 * was read; correct() just uses the hardware state, so
+	/* After a पढ़ो, terminate ECC calculation by a dummy पढ़ो
+	 * of some 4-bit ECC रेजिस्टर.  ECC covers everything that
+	 * was पढ़ो; correct() just uses the hardware state, so
 	 * ecc_code is not needed.
 	 */
-	if (info->is_readmode) {
-		davinci_nand_readl(info, NAND_4BIT_ECC1_OFFSET);
-		return 0;
-	}
+	अगर (info->is_पढ़ोmode) अणु
+		davinci_nand_पढ़ोl(info, न_अंकD_4BIT_ECC1_OFFSET);
+		वापस 0;
+	पूर्ण
 
-	/* Pack eight raw 10-bit ecc values into ten bytes, making
+	/* Pack eight raw 10-bit ecc values पूर्णांकo ten bytes, making
 	 * two passes which each convert four values (in upper and
-	 * lower halves of two 32-bit words) into five bytes.  The
+	 * lower halves of two 32-bit words) पूर्णांकo five bytes.  The
 	 * ROM boot loader uses this same packing scheme.
 	 */
-	nand_davinci_readecc_4bit(info, raw_ecc);
-	for (i = 0, p = raw_ecc; i < 2; i++, p += 2) {
+	nand_davinci_पढ़ोecc_4bit(info, raw_ecc);
+	क्रम (i = 0, p = raw_ecc; i < 2; i++, p += 2) अणु
 		*ecc_code++ =   p[0]        & 0xff;
 		*ecc_code++ = ((p[0] >>  8) & 0x03) | ((p[0] >> 14) & 0xfc);
 		*ecc_code++ = ((p[0] >> 22) & 0x0f) | ((p[1] <<  4) & 0xf0);
 		*ecc_code++ = ((p[1] >>  4) & 0x3f) | ((p[1] >> 10) & 0xc0);
 		*ecc_code++ =  (p[1] >> 18) & 0xff;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* Correct up to 4 bits in data we just read, using state left in the
+/* Correct up to 4 bits in data we just पढ़ो, using state left in the
  * hardware plus the ecc_code computed when it was first written.
  */
-static int nand_davinci_correct_4bit(struct nand_chip *chip, u_char *data,
-				     u_char *ecc_code, u_char *null)
-{
-	int i;
-	struct davinci_nand_info *info = to_davinci_nand(nand_to_mtd(chip));
-	unsigned short ecc10[8];
-	unsigned short *ecc16;
+अटल पूर्णांक nand_davinci_correct_4bit(काष्ठा nand_chip *chip, u_अक्षर *data,
+				     u_अक्षर *ecc_code, u_अक्षर *null)
+अणु
+	पूर्णांक i;
+	काष्ठा davinci_nand_info *info = to_davinci_nand(nand_to_mtd(chip));
+	अचिन्हित लघु ecc10[8];
+	अचिन्हित लघु *ecc16;
 	u32 syndrome[4];
 	u32 ecc_state;
-	unsigned num_errors, corrected;
-	unsigned long timeo;
+	अचिन्हित num_errors, corrected;
+	अचिन्हित दीर्घ समयo;
 
-	/* Unpack ten bytes into eight 10 bit values.  We know we're
-	 * little-endian, and use type punning for less shifting/masking.
+	/* Unpack ten bytes पूर्णांकo eight 10 bit values.  We know we're
+	 * little-endian, and use type punning क्रम less shअगरting/masking.
 	 */
-	if (WARN_ON(0x01 & (uintptr_t)ecc_code))
-		return -EINVAL;
-	ecc16 = (unsigned short *)ecc_code;
+	अगर (WARN_ON(0x01 & (uपूर्णांकptr_t)ecc_code))
+		वापस -EINVAL;
+	ecc16 = (अचिन्हित लघु *)ecc_code;
 
 	ecc10[0] =  (ecc16[0] >>  0) & 0x3ff;
 	ecc10[1] = ((ecc16[0] >> 10) & 0x3f) | ((ecc16[1] << 6) & 0x3c0);
@@ -278,557 +279,557 @@ static int nand_davinci_correct_4bit(struct nand_chip *chip, u_char *data,
 	ecc10[7] =  (ecc16[4] >>  6) & 0x3ff;
 
 	/* Tell ECC controller about the expected ECC codes. */
-	for (i = 7; i >= 0; i--)
-		davinci_nand_writel(info, NAND_4BIT_ECC_LOAD_OFFSET, ecc10[i]);
+	क्रम (i = 7; i >= 0; i--)
+		davinci_nand_ग_लिखोl(info, न_अंकD_4BIT_ECC_LOAD_OFFSET, ecc10[i]);
 
-	/* Allow time for syndrome calculation ... then read it.
+	/* Allow समय क्रम syndrome calculation ... then पढ़ो it.
 	 * A syndrome of all zeroes 0 means no detected errors.
 	 */
-	davinci_nand_readl(info, NANDFSR_OFFSET);
-	nand_davinci_readecc_4bit(info, syndrome);
-	if (!(syndrome[0] | syndrome[1] | syndrome[2] | syndrome[3]))
-		return 0;
+	davinci_nand_पढ़ोl(info, न_अंकDFSR_OFFSET);
+	nand_davinci_पढ़ोecc_4bit(info, syndrome);
+	अगर (!(syndrome[0] | syndrome[1] | syndrome[2] | syndrome[3]))
+		वापस 0;
 
 	/*
-	 * Clear any previous address calculation by doing a dummy read of an
-	 * error address register.
+	 * Clear any previous address calculation by करोing a dummy पढ़ो of an
+	 * error address रेजिस्टर.
 	 */
-	davinci_nand_readl(info, NAND_ERR_ADD1_OFFSET);
+	davinci_nand_पढ़ोl(info, न_अंकD_ERR_ADD1_OFFSET);
 
-	/* Start address calculation, and wait for it to complete.
-	 * We _could_ start reading more data while this is working,
-	 * to speed up the overall page read.
+	/* Start address calculation, and रुको क्रम it to complete.
+	 * We _could_ start पढ़ोing more data जबतक this is working,
+	 * to speed up the overall page पढ़ो.
 	 */
-	davinci_nand_writel(info, NANDFCR_OFFSET,
-			davinci_nand_readl(info, NANDFCR_OFFSET) | BIT(13));
+	davinci_nand_ग_लिखोl(info, न_अंकDFCR_OFFSET,
+			davinci_nand_पढ़ोl(info, न_अंकDFCR_OFFSET) | BIT(13));
 
 	/*
-	 * ECC_STATE field reads 0x3 (Error correction complete) immediately
-	 * after setting the 4BITECC_ADD_CALC_START bit. So if you immediately
-	 * begin trying to poll for the state, you may fall right out of your
+	 * ECC_STATE field पढ़ोs 0x3 (Error correction complete) immediately
+	 * after setting the 4BITECC_ADD_CALC_START bit. So अगर you immediately
+	 * begin trying to poll क्रम the state, you may fall right out of your
 	 * loop without any of the correction calculations having taken place.
 	 * The recommendation from the hardware team is to initially delay as
-	 * long as ECC_STATE reads less than 4. After that, ECC HW has entered
+	 * दीर्घ as ECC_STATE पढ़ोs less than 4. After that, ECC HW has entered
 	 * correction state.
 	 */
-	timeo = jiffies + usecs_to_jiffies(100);
-	do {
-		ecc_state = (davinci_nand_readl(info,
-				NANDFSR_OFFSET) >> 8) & 0x0f;
+	समयo = jअगरfies + usecs_to_jअगरfies(100);
+	करो अणु
+		ecc_state = (davinci_nand_पढ़ोl(info,
+				न_अंकDFSR_OFFSET) >> 8) & 0x0f;
 		cpu_relax();
-	} while ((ecc_state < 4) && time_before(jiffies, timeo));
+	पूर्ण जबतक ((ecc_state < 4) && समय_beक्रमe(jअगरfies, समयo));
 
-	for (;;) {
-		u32	fsr = davinci_nand_readl(info, NANDFSR_OFFSET);
+	क्रम (;;) अणु
+		u32	fsr = davinci_nand_पढ़ोl(info, न_अंकDFSR_OFFSET);
 
-		switch ((fsr >> 8) & 0x0f) {
-		case 0:		/* no error, should not happen */
-			davinci_nand_readl(info, NAND_ERR_ERRVAL1_OFFSET);
-			return 0;
-		case 1:		/* five or more errors detected */
-			davinci_nand_readl(info, NAND_ERR_ERRVAL1_OFFSET);
-			return -EBADMSG;
-		case 2:		/* error addresses computed */
-		case 3:
+		चयन ((fsr >> 8) & 0x0f) अणु
+		हाल 0:		/* no error, should not happen */
+			davinci_nand_पढ़ोl(info, न_अंकD_ERR_ERRVAL1_OFFSET);
+			वापस 0;
+		हाल 1:		/* five or more errors detected */
+			davinci_nand_पढ़ोl(info, न_अंकD_ERR_ERRVAL1_OFFSET);
+			वापस -EBADMSG;
+		हाल 2:		/* error addresses computed */
+		हाल 3:
 			num_errors = 1 + ((fsr >> 16) & 0x03);
-			goto correct;
-		default:	/* still working on it */
+			जाओ correct;
+		शेष:	/* still working on it */
 			cpu_relax();
-			continue;
-		}
-	}
+			जारी;
+		पूर्ण
+	पूर्ण
 
 correct:
 	/* correct each error */
-	for (i = 0, corrected = 0; i < num_errors; i++) {
-		int error_address, error_value;
+	क्रम (i = 0, corrected = 0; i < num_errors; i++) अणु
+		पूर्णांक error_address, error_value;
 
-		if (i > 1) {
-			error_address = davinci_nand_readl(info,
-						NAND_ERR_ADD2_OFFSET);
-			error_value = davinci_nand_readl(info,
-						NAND_ERR_ERRVAL2_OFFSET);
-		} else {
-			error_address = davinci_nand_readl(info,
-						NAND_ERR_ADD1_OFFSET);
-			error_value = davinci_nand_readl(info,
-						NAND_ERR_ERRVAL1_OFFSET);
-		}
+		अगर (i > 1) अणु
+			error_address = davinci_nand_पढ़ोl(info,
+						न_अंकD_ERR_ADD2_OFFSET);
+			error_value = davinci_nand_पढ़ोl(info,
+						न_अंकD_ERR_ERRVAL2_OFFSET);
+		पूर्ण अन्यथा अणु
+			error_address = davinci_nand_पढ़ोl(info,
+						न_अंकD_ERR_ADD1_OFFSET);
+			error_value = davinci_nand_पढ़ोl(info,
+						न_अंकD_ERR_ERRVAL1_OFFSET);
+		पूर्ण
 
-		if (i & 1) {
+		अगर (i & 1) अणु
 			error_address >>= 16;
 			error_value >>= 16;
-		}
+		पूर्ण
 		error_address &= 0x3ff;
 		error_address = (512 + 7) - error_address;
 
-		if (error_address < 512) {
+		अगर (error_address < 512) अणु
 			data[error_address] ^= error_value;
 			corrected++;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return corrected;
-}
+	वापस corrected;
+पूर्ण
 
 /**
- * nand_read_page_hwecc_oob_first - hw ecc, read oob first
- * @chip: nand chip info structure
- * @buf: buffer to store read data
- * @oob_required: caller requires OOB data read to chip->oob_poi
- * @page: page number to read
+ * nand_पढ़ो_page_hwecc_oob_first - hw ecc, पढ़ो oob first
+ * @chip: nand chip info काष्ठाure
+ * @buf: buffer to store पढ़ो data
+ * @oob_required: caller requires OOB data पढ़ो to chip->oob_poi
+ * @page: page number to पढ़ो
  *
- * Hardware ECC for large page chips, require OOB to be read first. For this
- * ECC mode, the write_page method is re-used from ECC_HW. These methods
- * read/write ECC from the OOB area, unlike the ECC_HW_SYNDROME support with
- * multiple ECC steps, follows the "infix ECC" scheme and reads/writes ECC from
- * the data area, by overwriting the NAND manufacturer bad block markings.
+ * Hardware ECC क्रम large page chips, require OOB to be पढ़ो first. For this
+ * ECC mode, the ग_लिखो_page method is re-used from ECC_HW. These methods
+ * पढ़ो/ग_लिखो ECC from the OOB area, unlike the ECC_HW_SYNDROME support with
+ * multiple ECC steps, follows the "infix ECC" scheme and पढ़ोs/ग_लिखोs ECC from
+ * the data area, by overwriting the न_अंकD manufacturer bad block markings.
  */
-static int nand_davinci_read_page_hwecc_oob_first(struct nand_chip *chip,
-						  uint8_t *buf,
-						  int oob_required, int page)
-{
-	struct mtd_info *mtd = nand_to_mtd(chip);
-	int i, eccsize = chip->ecc.size, ret;
-	int eccbytes = chip->ecc.bytes;
-	int eccsteps = chip->ecc.steps;
-	uint8_t *p = buf;
-	uint8_t *ecc_code = chip->ecc.code_buf;
-	uint8_t *ecc_calc = chip->ecc.calc_buf;
-	unsigned int max_bitflips = 0;
+अटल पूर्णांक nand_davinci_पढ़ो_page_hwecc_oob_first(काष्ठा nand_chip *chip,
+						  uपूर्णांक8_t *buf,
+						  पूर्णांक oob_required, पूर्णांक page)
+अणु
+	काष्ठा mtd_info *mtd = nand_to_mtd(chip);
+	पूर्णांक i, eccsize = chip->ecc.size, ret;
+	पूर्णांक eccbytes = chip->ecc.bytes;
+	पूर्णांक eccsteps = chip->ecc.steps;
+	uपूर्णांक8_t *p = buf;
+	uपूर्णांक8_t *ecc_code = chip->ecc.code_buf;
+	uपूर्णांक8_t *ecc_calc = chip->ecc.calc_buf;
+	अचिन्हित पूर्णांक max_bitflips = 0;
 
 	/* Read the OOB area first */
-	ret = nand_read_oob_op(chip, page, 0, chip->oob_poi, mtd->oobsize);
-	if (ret)
-		return ret;
+	ret = nand_पढ़ो_oob_op(chip, page, 0, chip->oob_poi, mtd->oobsize);
+	अगर (ret)
+		वापस ret;
 
-	ret = nand_read_page_op(chip, page, 0, NULL, 0);
-	if (ret)
-		return ret;
+	ret = nand_पढ़ो_page_op(chip, page, 0, शून्य, 0);
+	अगर (ret)
+		वापस ret;
 
 	ret = mtd_ooblayout_get_eccbytes(mtd, ecc_code, chip->oob_poi, 0,
 					 chip->ecc.total);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	for (i = 0; eccsteps; eccsteps--, i += eccbytes, p += eccsize) {
-		int stat;
+	क्रम (i = 0; eccsteps; eccsteps--, i += eccbytes, p += eccsize) अणु
+		पूर्णांक stat;
 
-		chip->ecc.hwctl(chip, NAND_ECC_READ);
+		chip->ecc.hwctl(chip, न_अंकD_ECC_READ);
 
-		ret = nand_read_data_op(chip, p, eccsize, false, false);
-		if (ret)
-			return ret;
+		ret = nand_पढ़ो_data_op(chip, p, eccsize, false, false);
+		अगर (ret)
+			वापस ret;
 
 		chip->ecc.calculate(chip, p, &ecc_calc[i]);
 
-		stat = chip->ecc.correct(chip, p, &ecc_code[i], NULL);
-		if (stat == -EBADMSG &&
-		    (chip->ecc.options & NAND_ECC_GENERIC_ERASED_CHECK)) {
-			/* check for empty pages with bitflips */
+		stat = chip->ecc.correct(chip, p, &ecc_code[i], शून्य);
+		अगर (stat == -EBADMSG &&
+		    (chip->ecc.options & न_अंकD_ECC_GENERIC_ERASED_CHECK)) अणु
+			/* check क्रम empty pages with bitflips */
 			stat = nand_check_erased_ecc_chunk(p, eccsize,
 							   &ecc_code[i],
-							   eccbytes, NULL, 0,
+							   eccbytes, शून्य, 0,
 							   chip->ecc.strength);
-		}
+		पूर्ण
 
-		if (stat < 0) {
+		अगर (stat < 0) अणु
 			mtd->ecc_stats.failed++;
-		} else {
+		पूर्ण अन्यथा अणु
 			mtd->ecc_stats.corrected += stat;
-			max_bitflips = max_t(unsigned int, max_bitflips, stat);
-		}
-	}
-	return max_bitflips;
-}
+			max_bitflips = max_t(अचिन्हित पूर्णांक, max_bitflips, stat);
+		पूर्ण
+	पूर्ण
+	वापस max_bitflips;
+पूर्ण
 
 /*----------------------------------------------------------------------*/
 
-/* An ECC layout for using 4-bit ECC with small-page flash, storing
+/* An ECC layout क्रम using 4-bit ECC with small-page flash, storing
  * ten ECC bytes plus the manufacturer's bad block marker byte, and
- * and not overlapping the default BBT markers.
+ * and not overlapping the शेष BBT markers.
  */
-static int hwecc4_ooblayout_small_ecc(struct mtd_info *mtd, int section,
-				      struct mtd_oob_region *oobregion)
-{
-	if (section > 2)
-		return -ERANGE;
+अटल पूर्णांक hwecc4_ooblayout_small_ecc(काष्ठा mtd_info *mtd, पूर्णांक section,
+				      काष्ठा mtd_oob_region *oobregion)
+अणु
+	अगर (section > 2)
+		वापस -दुस्फल;
 
-	if (!section) {
+	अगर (!section) अणु
 		oobregion->offset = 0;
 		oobregion->length = 5;
-	} else if (section == 1) {
+	पूर्ण अन्यथा अगर (section == 1) अणु
 		oobregion->offset = 6;
 		oobregion->length = 2;
-	} else {
+	पूर्ण अन्यथा अणु
 		oobregion->offset = 13;
 		oobregion->length = 3;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int hwecc4_ooblayout_small_free(struct mtd_info *mtd, int section,
-				       struct mtd_oob_region *oobregion)
-{
-	if (section > 1)
-		return -ERANGE;
+अटल पूर्णांक hwecc4_ooblayout_small_मुक्त(काष्ठा mtd_info *mtd, पूर्णांक section,
+				       काष्ठा mtd_oob_region *oobregion)
+अणु
+	अगर (section > 1)
+		वापस -दुस्फल;
 
-	if (!section) {
+	अगर (!section) अणु
 		oobregion->offset = 8;
 		oobregion->length = 5;
-	} else {
+	पूर्ण अन्यथा अणु
 		oobregion->offset = 16;
 		oobregion->length = mtd->oobsize - 16;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct mtd_ooblayout_ops hwecc4_small_ooblayout_ops = {
+अटल स्थिर काष्ठा mtd_ooblayout_ops hwecc4_small_ooblayout_ops = अणु
 	.ecc = hwecc4_ooblayout_small_ecc,
-	.free = hwecc4_ooblayout_small_free,
-};
+	.मुक्त = hwecc4_ooblayout_small_मुक्त,
+पूर्ण;
 
-#if defined(CONFIG_OF)
-static const struct of_device_id davinci_nand_of_match[] = {
-	{.compatible = "ti,davinci-nand", },
-	{.compatible = "ti,keystone-nand", },
-	{},
-};
+#अगर defined(CONFIG_OF)
+अटल स्थिर काष्ठा of_device_id davinci_nand_of_match[] = अणु
+	अणु.compatible = "ti,davinci-nand", पूर्ण,
+	अणु.compatible = "ti,keystone-nand", पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, davinci_nand_of_match);
 
-static struct davinci_nand_pdata
-	*nand_davinci_get_pdata(struct platform_device *pdev)
-{
-	if (!dev_get_platdata(&pdev->dev) && pdev->dev.of_node) {
-		struct davinci_nand_pdata *pdata;
-		const char *mode;
+अटल काष्ठा davinci_nand_pdata
+	*nand_davinci_get_pdata(काष्ठा platक्रमm_device *pdev)
+अणु
+	अगर (!dev_get_platdata(&pdev->dev) && pdev->dev.of_node) अणु
+		काष्ठा davinci_nand_pdata *pdata;
+		स्थिर अक्षर *mode;
 		u32 prop;
 
 		pdata =  devm_kzalloc(&pdev->dev,
-				sizeof(struct davinci_nand_pdata),
+				माप(काष्ठा davinci_nand_pdata),
 				GFP_KERNEL);
-		pdev->dev.platform_data = pdata;
-		if (!pdata)
-			return ERR_PTR(-ENOMEM);
-		if (!of_property_read_u32(pdev->dev.of_node,
+		pdev->dev.platक्रमm_data = pdata;
+		अगर (!pdata)
+			वापस ERR_PTR(-ENOMEM);
+		अगर (!of_property_पढ़ो_u32(pdev->dev.of_node,
 			"ti,davinci-chipselect", &prop))
 			pdata->core_chipsel = prop;
-		else
-			return ERR_PTR(-EINVAL);
+		अन्यथा
+			वापस ERR_PTR(-EINVAL);
 
-		if (!of_property_read_u32(pdev->dev.of_node,
+		अगर (!of_property_पढ़ो_u32(pdev->dev.of_node,
 			"ti,davinci-mask-ale", &prop))
 			pdata->mask_ale = prop;
-		if (!of_property_read_u32(pdev->dev.of_node,
+		अगर (!of_property_पढ़ो_u32(pdev->dev.of_node,
 			"ti,davinci-mask-cle", &prop))
 			pdata->mask_cle = prop;
-		if (!of_property_read_u32(pdev->dev.of_node,
+		अगर (!of_property_पढ़ो_u32(pdev->dev.of_node,
 			"ti,davinci-mask-chipsel", &prop))
 			pdata->mask_chipsel = prop;
-		if (!of_property_read_string(pdev->dev.of_node,
-			"ti,davinci-ecc-mode", &mode)) {
-			if (!strncmp("none", mode, 4))
-				pdata->engine_type = NAND_ECC_ENGINE_TYPE_NONE;
-			if (!strncmp("soft", mode, 4))
-				pdata->engine_type = NAND_ECC_ENGINE_TYPE_SOFT;
-			if (!strncmp("hw", mode, 2))
-				pdata->engine_type = NAND_ECC_ENGINE_TYPE_ON_HOST;
-		}
-		if (!of_property_read_u32(pdev->dev.of_node,
+		अगर (!of_property_पढ़ो_string(pdev->dev.of_node,
+			"ti,davinci-ecc-mode", &mode)) अणु
+			अगर (!म_भेदन("none", mode, 4))
+				pdata->engine_type = न_अंकD_ECC_ENGINE_TYPE_NONE;
+			अगर (!म_भेदन("soft", mode, 4))
+				pdata->engine_type = न_अंकD_ECC_ENGINE_TYPE_SOFT;
+			अगर (!म_भेदन("hw", mode, 2))
+				pdata->engine_type = न_अंकD_ECC_ENGINE_TYPE_ON_HOST;
+		पूर्ण
+		अगर (!of_property_पढ़ो_u32(pdev->dev.of_node,
 			"ti,davinci-ecc-bits", &prop))
 			pdata->ecc_bits = prop;
 
-		if (!of_property_read_u32(pdev->dev.of_node,
+		अगर (!of_property_पढ़ो_u32(pdev->dev.of_node,
 			"ti,davinci-nand-buswidth", &prop) && prop == 16)
-			pdata->options |= NAND_BUSWIDTH_16;
+			pdata->options |= न_अंकD_BUSWIDTH_16;
 
-		if (of_property_read_bool(pdev->dev.of_node,
+		अगर (of_property_पढ़ो_bool(pdev->dev.of_node,
 			"ti,davinci-nand-use-bbt"))
-			pdata->bbt_options = NAND_BBT_USE_FLASH;
+			pdata->bbt_options = न_अंकD_BBT_USE_FLASH;
 
 		/*
 		 * Since kernel v4.8, this driver has been fixed to enable
-		 * use of 4-bit hardware ECC with subpages and verified on
+		 * use of 4-bit hardware ECC with subpages and verअगरied on
 		 * TI's keystone EVMs (K2L, K2HK and K2E).
-		 * However, in the interest of not breaking systems using
-		 * existing UBI partitions, sub-page writes are not being
-		 * (re)enabled. If you want to use subpage writes on Keystone
-		 * platforms (i.e. do not have any existing UBI partitions),
+		 * However, in the पूर्णांकerest of not अवरोधing प्रणालीs using
+		 * existing UBI partitions, sub-page ग_लिखोs are not being
+		 * (re)enabled. If you want to use subpage ग_लिखोs on Keystone
+		 * platक्रमms (i.e. करो not have any existing UBI partitions),
 		 * then use "ti,davinci-nand" as the compatible in your
 		 * device-tree file.
 		 */
-		if (of_device_is_compatible(pdev->dev.of_node,
-					    "ti,keystone-nand")) {
-			pdata->options |= NAND_NO_SUBPAGE_WRITE;
-		}
-	}
+		अगर (of_device_is_compatible(pdev->dev.of_node,
+					    "ti,keystone-nand")) अणु
+			pdata->options |= न_अंकD_NO_SUBPAGE_WRITE;
+		पूर्ण
+	पूर्ण
 
-	return dev_get_platdata(&pdev->dev);
-}
-#else
-static struct davinci_nand_pdata
-	*nand_davinci_get_pdata(struct platform_device *pdev)
-{
-	return dev_get_platdata(&pdev->dev);
-}
-#endif
+	वापस dev_get_platdata(&pdev->dev);
+पूर्ण
+#अन्यथा
+अटल काष्ठा davinci_nand_pdata
+	*nand_davinci_get_pdata(काष्ठा platक्रमm_device *pdev)
+अणु
+	वापस dev_get_platdata(&pdev->dev);
+पूर्ण
+#पूर्ण_अगर
 
-static int davinci_nand_attach_chip(struct nand_chip *chip)
-{
-	struct mtd_info *mtd = nand_to_mtd(chip);
-	struct davinci_nand_info *info = to_davinci_nand(mtd);
-	struct davinci_nand_pdata *pdata = nand_davinci_get_pdata(info->pdev);
-	int ret = 0;
+अटल पूर्णांक davinci_nand_attach_chip(काष्ठा nand_chip *chip)
+अणु
+	काष्ठा mtd_info *mtd = nand_to_mtd(chip);
+	काष्ठा davinci_nand_info *info = to_davinci_nand(mtd);
+	काष्ठा davinci_nand_pdata *pdata = nand_davinci_get_pdata(info->pdev);
+	पूर्णांक ret = 0;
 
-	if (IS_ERR(pdata))
-		return PTR_ERR(pdata);
+	अगर (IS_ERR(pdata))
+		वापस PTR_ERR(pdata);
 
-	/* Use board-specific ECC config */
+	/* Use board-specअगरic ECC config */
 	chip->ecc.engine_type = pdata->engine_type;
 	chip->ecc.placement = pdata->ecc_placement;
 
-	switch (chip->ecc.engine_type) {
-	case NAND_ECC_ENGINE_TYPE_NONE:
+	चयन (chip->ecc.engine_type) अणु
+	हाल न_अंकD_ECC_ENGINE_TYPE_NONE:
 		pdata->ecc_bits = 0;
-		break;
-	case NAND_ECC_ENGINE_TYPE_SOFT:
+		अवरोध;
+	हाल न_अंकD_ECC_ENGINE_TYPE_SOFT:
 		pdata->ecc_bits = 0;
 		/*
 		 * This driver expects Hamming based ECC when engine_type is set
-		 * to NAND_ECC_ENGINE_TYPE_SOFT. Force ecc.algo to
-		 * NAND_ECC_ALGO_HAMMING to avoid adding an extra ->ecc_algo
+		 * to न_अंकD_ECC_ENGINE_TYPE_SOFT. Force ecc.algo to
+		 * न_अंकD_ECC_ALGO_HAMMING to aव्योम adding an extra ->ecc_algo
 		 * field to davinci_nand_pdata.
 		 */
-		chip->ecc.algo = NAND_ECC_ALGO_HAMMING;
-		break;
-	case NAND_ECC_ENGINE_TYPE_ON_HOST:
-		if (pdata->ecc_bits == 4) {
-			int chunks = mtd->writesize / 512;
+		chip->ecc.algo = न_अंकD_ECC_ALGO_HAMMING;
+		अवरोध;
+	हाल न_अंकD_ECC_ENGINE_TYPE_ON_HOST:
+		अगर (pdata->ecc_bits == 4) अणु
+			पूर्णांक chunks = mtd->ग_लिखोsize / 512;
 
-			if (!chunks || mtd->oobsize < 16) {
+			अगर (!chunks || mtd->oobsize < 16) अणु
 				dev_dbg(&info->pdev->dev, "too small\n");
-				return -EINVAL;
-			}
+				वापस -EINVAL;
+			पूर्ण
 
 			/*
 			 * No sanity checks:  CPUs must support this,
-			 * and the chips may not use NAND_BUSWIDTH_16.
+			 * and the chips may not use न_अंकD_BUSWIDTH_16.
 			 */
 
 			/* No sharing 4-bit hardware between chipselects yet */
 			spin_lock_irq(&davinci_nand_lock);
-			if (ecc4_busy)
+			अगर (ecc4_busy)
 				ret = -EBUSY;
-			else
+			अन्यथा
 				ecc4_busy = true;
 			spin_unlock_irq(&davinci_nand_lock);
 
-			if (ret == -EBUSY)
-				return ret;
+			अगर (ret == -EBUSY)
+				वापस ret;
 
 			chip->ecc.calculate = nand_davinci_calculate_4bit;
 			chip->ecc.correct = nand_davinci_correct_4bit;
 			chip->ecc.hwctl = nand_davinci_hwctl_4bit;
 			chip->ecc.bytes = 10;
-			chip->ecc.options = NAND_ECC_GENERIC_ERASED_CHECK;
-			chip->ecc.algo = NAND_ECC_ALGO_BCH;
+			chip->ecc.options = न_अंकD_ECC_GENERIC_ERASED_CHECK;
+			chip->ecc.algo = न_अंकD_ECC_ALGO_BCH;
 
 			/*
-			 * Update ECC layout if needed ... for 1-bit HW ECC, the
-			 * default is OK, but it allocates 6 bytes when only 3
-			 * are needed (for each 512 bytes). For 4-bit HW ECC,
-			 * the default is not usable: 10 bytes needed, not 6.
+			 * Update ECC layout अगर needed ... क्रम 1-bit HW ECC, the
+			 * शेष is OK, but it allocates 6 bytes when only 3
+			 * are needed (क्रम each 512 bytes). For 4-bit HW ECC,
+			 * the शेष is not usable: 10 bytes needed, not 6.
 			 *
 			 * For small page chips, preserve the manufacturer's
 			 * badblock marking data ... and make sure a flash BBT
-			 * table marker fits in the free bytes.
+			 * table marker fits in the मुक्त bytes.
 			 */
-			if (chunks == 1) {
+			अगर (chunks == 1) अणु
 				mtd_set_ooblayout(mtd,
 						  &hwecc4_small_ooblayout_ops);
-			} else if (chunks == 4 || chunks == 8) {
+			पूर्ण अन्यथा अगर (chunks == 4 || chunks == 8) अणु
 				mtd_set_ooblayout(mtd,
 						  nand_get_large_page_ooblayout());
-				chip->ecc.read_page = nand_davinci_read_page_hwecc_oob_first;
-			} else {
-				return -EIO;
-			}
-		} else {
+				chip->ecc.पढ़ो_page = nand_davinci_पढ़ो_page_hwecc_oob_first;
+			पूर्ण अन्यथा अणु
+				वापस -EIO;
+			पूर्ण
+		पूर्ण अन्यथा अणु
 			/* 1bit ecc hamming */
 			chip->ecc.calculate = nand_davinci_calculate_1bit;
 			chip->ecc.correct = nand_davinci_correct_1bit;
 			chip->ecc.hwctl = nand_davinci_hwctl_1bit;
 			chip->ecc.bytes = 3;
-			chip->ecc.algo = NAND_ECC_ALGO_HAMMING;
-		}
+			chip->ecc.algo = न_अंकD_ECC_ALGO_HAMMING;
+		पूर्ण
 		chip->ecc.size = 512;
 		chip->ecc.strength = pdata->ecc_bits;
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void nand_davinci_data_in(struct davinci_nand_info *info, void *buf,
-				 unsigned int len, bool force_8bit)
-{
-	u32 alignment = ((uintptr_t)buf | len) & 3;
+अटल व्योम nand_davinci_data_in(काष्ठा davinci_nand_info *info, व्योम *buf,
+				 अचिन्हित पूर्णांक len, bool क्रमce_8bit)
+अणु
+	u32 alignment = ((uपूर्णांकptr_t)buf | len) & 3;
 
-	if (force_8bit || (alignment & 1))
-		ioread8_rep(info->current_cs, buf, len);
-	else if (alignment & 3)
-		ioread16_rep(info->current_cs, buf, len >> 1);
-	else
-		ioread32_rep(info->current_cs, buf, len >> 2);
-}
+	अगर (क्रमce_8bit || (alignment & 1))
+		ioपढ़ो8_rep(info->current_cs, buf, len);
+	अन्यथा अगर (alignment & 3)
+		ioपढ़ो16_rep(info->current_cs, buf, len >> 1);
+	अन्यथा
+		ioपढ़ो32_rep(info->current_cs, buf, len >> 2);
+पूर्ण
 
-static void nand_davinci_data_out(struct davinci_nand_info *info,
-				  const void *buf, unsigned int len,
-				  bool force_8bit)
-{
-	u32 alignment = ((uintptr_t)buf | len) & 3;
+अटल व्योम nand_davinci_data_out(काष्ठा davinci_nand_info *info,
+				  स्थिर व्योम *buf, अचिन्हित पूर्णांक len,
+				  bool क्रमce_8bit)
+अणु
+	u32 alignment = ((uपूर्णांकptr_t)buf | len) & 3;
 
-	if (force_8bit || (alignment & 1))
-		iowrite8_rep(info->current_cs, buf, len);
-	else if (alignment & 3)
-		iowrite16_rep(info->current_cs, buf, len >> 1);
-	else
-		iowrite32_rep(info->current_cs, buf, len >> 2);
-}
+	अगर (क्रमce_8bit || (alignment & 1))
+		ioग_लिखो8_rep(info->current_cs, buf, len);
+	अन्यथा अगर (alignment & 3)
+		ioग_लिखो16_rep(info->current_cs, buf, len >> 1);
+	अन्यथा
+		ioग_लिखो32_rep(info->current_cs, buf, len >> 2);
+पूर्ण
 
-static int davinci_nand_exec_instr(struct davinci_nand_info *info,
-				   const struct nand_op_instr *instr)
-{
-	unsigned int i, timeout_us;
+अटल पूर्णांक davinci_nand_exec_instr(काष्ठा davinci_nand_info *info,
+				   स्थिर काष्ठा nand_op_instr *instr)
+अणु
+	अचिन्हित पूर्णांक i, समयout_us;
 	u32 status;
-	int ret;
+	पूर्णांक ret;
 
-	switch (instr->type) {
-	case NAND_OP_CMD_INSTR:
-		iowrite8(instr->ctx.cmd.opcode,
+	चयन (instr->type) अणु
+	हाल न_अंकD_OP_CMD_INSTR:
+		ioग_लिखो8(instr->ctx.cmd.opcode,
 			 info->current_cs + info->mask_cle);
-		break;
+		अवरोध;
 
-	case NAND_OP_ADDR_INSTR:
-		for (i = 0; i < instr->ctx.addr.naddrs; i++) {
-			iowrite8(instr->ctx.addr.addrs[i],
+	हाल न_अंकD_OP_ADDR_INSTR:
+		क्रम (i = 0; i < instr->ctx.addr.naddrs; i++) अणु
+			ioग_लिखो8(instr->ctx.addr.addrs[i],
 				 info->current_cs + info->mask_ale);
-		}
-		break;
+		पूर्ण
+		अवरोध;
 
-	case NAND_OP_DATA_IN_INSTR:
+	हाल न_अंकD_OP_DATA_IN_INSTR:
 		nand_davinci_data_in(info, instr->ctx.data.buf.in,
 				     instr->ctx.data.len,
-				     instr->ctx.data.force_8bit);
-		break;
+				     instr->ctx.data.क्रमce_8bit);
+		अवरोध;
 
-	case NAND_OP_DATA_OUT_INSTR:
+	हाल न_अंकD_OP_DATA_OUT_INSTR:
 		nand_davinci_data_out(info, instr->ctx.data.buf.out,
 				      instr->ctx.data.len,
-				      instr->ctx.data.force_8bit);
-		break;
+				      instr->ctx.data.क्रमce_8bit);
+		अवरोध;
 
-	case NAND_OP_WAITRDY_INSTR:
-		timeout_us = instr->ctx.waitrdy.timeout_ms * 1000;
-		ret = readl_relaxed_poll_timeout(info->base + NANDFSR_OFFSET,
+	हाल न_अंकD_OP_WAITRDY_INSTR:
+		समयout_us = instr->ctx.रुकोrdy.समयout_ms * 1000;
+		ret = पढ़ोl_relaxed_poll_समयout(info->base + न_अंकDFSR_OFFSET,
 						 status, status & BIT(0), 100,
-						 timeout_us);
-		if (ret)
-			return ret;
+						 समयout_us);
+		अगर (ret)
+			वापस ret;
 
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	if (instr->delay_ns)
+	अगर (instr->delay_ns)
 		ndelay(instr->delay_ns);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int davinci_nand_exec_op(struct nand_chip *chip,
-				const struct nand_operation *op,
+अटल पूर्णांक davinci_nand_exec_op(काष्ठा nand_chip *chip,
+				स्थिर काष्ठा nand_operation *op,
 				bool check_only)
-{
-	struct davinci_nand_info *info = to_davinci_nand(nand_to_mtd(chip));
-	unsigned int i;
+अणु
+	काष्ठा davinci_nand_info *info = to_davinci_nand(nand_to_mtd(chip));
+	अचिन्हित पूर्णांक i;
 
-	if (check_only)
-		return 0;
+	अगर (check_only)
+		वापस 0;
 
 	info->current_cs = info->vaddr + (op->cs * info->mask_chipsel);
 
-	for (i = 0; i < op->ninstrs; i++) {
-		int ret;
+	क्रम (i = 0; i < op->ninstrs; i++) अणु
+		पूर्णांक ret;
 
 		ret = davinci_nand_exec_instr(info, &op->instrs[i]);
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct nand_controller_ops davinci_nand_controller_ops = {
+अटल स्थिर काष्ठा nand_controller_ops davinci_nand_controller_ops = अणु
 	.attach_chip = davinci_nand_attach_chip,
 	.exec_op = davinci_nand_exec_op,
-};
+पूर्ण;
 
-static int nand_davinci_probe(struct platform_device *pdev)
-{
-	struct davinci_nand_pdata	*pdata;
-	struct davinci_nand_info	*info;
-	struct resource			*res1;
-	struct resource			*res2;
-	void __iomem			*vaddr;
-	void __iomem			*base;
-	int				ret;
-	uint32_t			val;
-	struct mtd_info			*mtd;
+अटल पूर्णांक nand_davinci_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा davinci_nand_pdata	*pdata;
+	काष्ठा davinci_nand_info	*info;
+	काष्ठा resource			*res1;
+	काष्ठा resource			*res2;
+	व्योम __iomem			*vaddr;
+	व्योम __iomem			*base;
+	पूर्णांक				ret;
+	uपूर्णांक32_t			val;
+	काष्ठा mtd_info			*mtd;
 
 	pdata = nand_davinci_get_pdata(pdev);
-	if (IS_ERR(pdata))
-		return PTR_ERR(pdata);
+	अगर (IS_ERR(pdata))
+		वापस PTR_ERR(pdata);
 
-	/* insist on board-specific configuration */
-	if (!pdata)
-		return -ENODEV;
+	/* insist on board-specअगरic configuration */
+	अगर (!pdata)
+		वापस -ENODEV;
 
-	/* which external chipselect will we be managing? */
-	if (pdata->core_chipsel < 0 || pdata->core_chipsel > 3)
-		return -ENODEV;
+	/* which बाह्यal chipselect will we be managing? */
+	अगर (pdata->core_chipsel < 0 || pdata->core_chipsel > 3)
+		वापस -ENODEV;
 
-	info = devm_kzalloc(&pdev->dev, sizeof(*info), GFP_KERNEL);
-	if (!info)
-		return -ENOMEM;
+	info = devm_kzalloc(&pdev->dev, माप(*info), GFP_KERNEL);
+	अगर (!info)
+		वापस -ENOMEM;
 
-	platform_set_drvdata(pdev, info);
+	platक्रमm_set_drvdata(pdev, info);
 
-	res1 = platform_get_resource(pdev, IORESOURCE_MEM, 0);
-	res2 = platform_get_resource(pdev, IORESOURCE_MEM, 1);
-	if (!res1 || !res2) {
+	res1 = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
+	res2 = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 1);
+	अगर (!res1 || !res2) अणु
 		dev_err(&pdev->dev, "resource missing\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	vaddr = devm_ioremap_resource(&pdev->dev, res1);
-	if (IS_ERR(vaddr))
-		return PTR_ERR(vaddr);
+	अगर (IS_ERR(vaddr))
+		वापस PTR_ERR(vaddr);
 
 	/*
-	 * This registers range is used to setup NAND settings. In case with
-	 * TI AEMIF driver, the same memory address range is requested already
+	 * This रेजिस्टरs range is used to setup न_अंकD settings. In हाल with
+	 * TI AEMIF driver, the same memory address range is requested alपढ़ोy
 	 * by AEMIF, so we cannot request it twice, just ioremap.
-	 * The AEMIF and NAND drivers not use the same registers in this range.
+	 * The AEMIF and न_अंकD drivers not use the same रेजिस्टरs in this range.
 	 */
 	base = devm_ioremap(&pdev->dev, res2->start, resource_size(res2));
-	if (!base) {
+	अगर (!base) अणु
 		dev_err(&pdev->dev, "ioremap failed for resource %pR\n", res2);
-		return -EADDRNOTAVAIL;
-	}
+		वापस -EADDRNOTAVAIL;
+	पूर्ण
 
 	info->pdev		= pdev;
 	info->base		= base;
@@ -838,7 +839,7 @@ static int nand_davinci_probe(struct platform_device *pdev)
 	mtd->dev.parent		= &pdev->dev;
 	nand_set_flash_node(&info->chip, pdev->dev.of_node);
 
-	/* options such as NAND_BBT_USE_FLASH */
+	/* options such as न_अंकD_BBT_USE_FLASH */
 	info->chip.bbt_options	= pdata->bbt_options;
 	/* options such as 16-bit widths */
 	info->chip.options	= pdata->options;
@@ -850,16 +851,16 @@ static int nand_davinci_probe(struct platform_device *pdev)
 	info->core_chipsel	= pdata->core_chipsel;
 	info->mask_chipsel	= pdata->mask_chipsel;
 
-	/* use nandboot-capable ALE/CLE masks by default */
+	/* use nandboot-capable ALE/CLE masks by शेष */
 	info->mask_ale		= pdata->mask_ale ? : MASK_ALE;
 	info->mask_cle		= pdata->mask_cle ? : MASK_CLE;
 
 	spin_lock_irq(&davinci_nand_lock);
 
-	/* put CSxNAND into NAND mode */
-	val = davinci_nand_readl(info, NANDFCR_OFFSET);
+	/* put CSxन_अंकD पूर्णांकo न_अंकD mode */
+	val = davinci_nand_पढ़ोl(info, न_अंकDFCR_OFFSET);
 	val |= BIT(info->core_chipsel);
-	davinci_nand_writel(info, NANDFCR_OFFSET, val);
+	davinci_nand_ग_लिखोl(info, न_अंकDFCR_OFFSET, val);
 
 	spin_unlock_irq(&davinci_nand_lock);
 
@@ -868,59 +869,59 @@ static int nand_davinci_probe(struct platform_device *pdev)
 	info->controller.ops = &davinci_nand_controller_ops;
 	info->chip.controller = &info->controller;
 	ret = nand_scan(&info->chip, pdata->mask_chipsel ? 2 : 1);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_dbg(&pdev->dev, "no NAND chip(s) found\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	if (pdata->parts)
-		ret = mtd_device_register(mtd, pdata->parts, pdata->nr_parts);
-	else
-		ret = mtd_device_register(mtd, NULL, 0);
-	if (ret < 0)
-		goto err_cleanup_nand;
+	अगर (pdata->parts)
+		ret = mtd_device_रेजिस्टर(mtd, pdata->parts, pdata->nr_parts);
+	अन्यथा
+		ret = mtd_device_रेजिस्टर(mtd, शून्य, 0);
+	अगर (ret < 0)
+		जाओ err_cleanup_nand;
 
-	val = davinci_nand_readl(info, NRCSR_OFFSET);
+	val = davinci_nand_पढ़ोl(info, NRCSR_OFFSET);
 	dev_info(&pdev->dev, "controller rev. %d.%d\n",
 	       (val >> 8) & 0xff, val & 0xff);
 
-	return 0;
+	वापस 0;
 
 err_cleanup_nand:
 	nand_cleanup(&info->chip);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int nand_davinci_remove(struct platform_device *pdev)
-{
-	struct davinci_nand_info *info = platform_get_drvdata(pdev);
-	struct nand_chip *chip = &info->chip;
-	int ret;
+अटल पूर्णांक nand_davinci_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा davinci_nand_info *info = platक्रमm_get_drvdata(pdev);
+	काष्ठा nand_chip *chip = &info->chip;
+	पूर्णांक ret;
 
 	spin_lock_irq(&davinci_nand_lock);
-	if (chip->ecc.placement == NAND_ECC_PLACEMENT_INTERLEAVED)
+	अगर (chip->ecc.placement == न_अंकD_ECC_PLACEMENT_INTERLEAVED)
 		ecc4_busy = false;
 	spin_unlock_irq(&davinci_nand_lock);
 
-	ret = mtd_device_unregister(nand_to_mtd(chip));
+	ret = mtd_device_unरेजिस्टर(nand_to_mtd(chip));
 	WARN_ON(ret);
 	nand_cleanup(chip);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct platform_driver nand_davinci_driver = {
+अटल काष्ठा platक्रमm_driver nand_davinci_driver = अणु
 	.probe		= nand_davinci_probe,
-	.remove		= nand_davinci_remove,
-	.driver		= {
+	.हटाओ		= nand_davinci_हटाओ,
+	.driver		= अणु
 		.name	= "davinci_nand",
 		.of_match_table = of_match_ptr(davinci_nand_of_match),
-	},
-};
+	पूर्ण,
+पूर्ण;
 MODULE_ALIAS("platform:davinci_nand");
 
-module_platform_driver(nand_davinci_driver);
+module_platक्रमm_driver(nand_davinci_driver);
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Texas Instruments");

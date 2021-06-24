@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /* Hisilicon Hibmc SoC drm driver
  *
  * Based on the bochs drm driver.
@@ -9,91 +10,91 @@
  *      Tian Tao <tiantao6@hisilicon.com>
  */
 
-#include <linux/delay.h>
-#include <linux/pci.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/pci.h>
 
-#include <drm/drm_atomic_helper.h>
-#include <drm/drm_probe_helper.h>
+#समावेश <drm/drm_atomic_helper.h>
+#समावेश <drm/drm_probe_helper.h>
 
-#include "hibmc_drm_drv.h"
+#समावेश "hibmc_drm_drv.h"
 
-#define GPIO_DATA		0x0802A0
-#define GPIO_DATA_DIRECTION	0x0802A4
+#घोषणा GPIO_DATA		0x0802A0
+#घोषणा GPIO_DATA_सूचीECTION	0x0802A4
 
-#define I2C_SCL_MASK		BIT(0)
-#define I2C_SDA_MASK		BIT(1)
+#घोषणा I2C_SCL_MASK		BIT(0)
+#घोषणा I2C_SDA_MASK		BIT(1)
 
-static void hibmc_set_i2c_signal(void *data, u32 mask, int value)
-{
-	struct hibmc_connector *hibmc_connector = data;
-	struct hibmc_drm_private *priv = to_hibmc_drm_private(hibmc_connector->base.dev);
-	u32 tmp_dir = readl(priv->mmio + GPIO_DATA_DIRECTION);
+अटल व्योम hibmc_set_i2c_संकेत(व्योम *data, u32 mask, पूर्णांक value)
+अणु
+	काष्ठा hibmc_connector *hibmc_connector = data;
+	काष्ठा hibmc_drm_निजी *priv = to_hibmc_drm_निजी(hibmc_connector->base.dev);
+	u32 पंचांगp_dir = पढ़ोl(priv->mmio + GPIO_DATA_सूचीECTION);
 
-	if (value) {
-		tmp_dir &= ~mask;
-		writel(tmp_dir, priv->mmio + GPIO_DATA_DIRECTION);
-	} else {
-		u32 tmp_data = readl(priv->mmio + GPIO_DATA);
+	अगर (value) अणु
+		पंचांगp_dir &= ~mask;
+		ग_लिखोl(पंचांगp_dir, priv->mmio + GPIO_DATA_सूचीECTION);
+	पूर्ण अन्यथा अणु
+		u32 पंचांगp_data = पढ़ोl(priv->mmio + GPIO_DATA);
 
-		tmp_data &= ~mask;
-		writel(tmp_data, priv->mmio + GPIO_DATA);
+		पंचांगp_data &= ~mask;
+		ग_लिखोl(पंचांगp_data, priv->mmio + GPIO_DATA);
 
-		tmp_dir |= mask;
-		writel(tmp_dir, priv->mmio + GPIO_DATA_DIRECTION);
-	}
-}
+		पंचांगp_dir |= mask;
+		ग_लिखोl(पंचांगp_dir, priv->mmio + GPIO_DATA_सूचीECTION);
+	पूर्ण
+पूर्ण
 
-static int hibmc_get_i2c_signal(void *data, u32 mask)
-{
-	struct hibmc_connector *hibmc_connector = data;
-	struct hibmc_drm_private *priv = to_hibmc_drm_private(hibmc_connector->base.dev);
-	u32 tmp_dir = readl(priv->mmio + GPIO_DATA_DIRECTION);
+अटल पूर्णांक hibmc_get_i2c_संकेत(व्योम *data, u32 mask)
+अणु
+	काष्ठा hibmc_connector *hibmc_connector = data;
+	काष्ठा hibmc_drm_निजी *priv = to_hibmc_drm_निजी(hibmc_connector->base.dev);
+	u32 पंचांगp_dir = पढ़ोl(priv->mmio + GPIO_DATA_सूचीECTION);
 
-	if ((tmp_dir & mask) != mask) {
-		tmp_dir &= ~mask;
-		writel(tmp_dir, priv->mmio + GPIO_DATA_DIRECTION);
-	}
+	अगर ((पंचांगp_dir & mask) != mask) अणु
+		पंचांगp_dir &= ~mask;
+		ग_लिखोl(पंचांगp_dir, priv->mmio + GPIO_DATA_सूचीECTION);
+	पूर्ण
 
-	return (readl(priv->mmio + GPIO_DATA) & mask) ? 1 : 0;
-}
+	वापस (पढ़ोl(priv->mmio + GPIO_DATA) & mask) ? 1 : 0;
+पूर्ण
 
-static void hibmc_ddc_setsda(void *data, int state)
-{
-	hibmc_set_i2c_signal(data, I2C_SDA_MASK, state);
-}
+अटल व्योम hibmc_ddc_setsda(व्योम *data, पूर्णांक state)
+अणु
+	hibmc_set_i2c_संकेत(data, I2C_SDA_MASK, state);
+पूर्ण
 
-static void hibmc_ddc_setscl(void *data, int state)
-{
-	hibmc_set_i2c_signal(data, I2C_SCL_MASK, state);
-}
+अटल व्योम hibmc_ddc_setscl(व्योम *data, पूर्णांक state)
+अणु
+	hibmc_set_i2c_संकेत(data, I2C_SCL_MASK, state);
+पूर्ण
 
-static int hibmc_ddc_getsda(void *data)
-{
-	return hibmc_get_i2c_signal(data, I2C_SDA_MASK);
-}
+अटल पूर्णांक hibmc_ddc_माला_लोda(व्योम *data)
+अणु
+	वापस hibmc_get_i2c_संकेत(data, I2C_SDA_MASK);
+पूर्ण
 
-static int hibmc_ddc_getscl(void *data)
-{
-	return hibmc_get_i2c_signal(data, I2C_SCL_MASK);
-}
+अटल पूर्णांक hibmc_ddc_माला_लोcl(व्योम *data)
+अणु
+	वापस hibmc_get_i2c_संकेत(data, I2C_SCL_MASK);
+पूर्ण
 
-int hibmc_ddc_create(struct drm_device *drm_dev,
-		     struct hibmc_connector *connector)
-{
+पूर्णांक hibmc_ddc_create(काष्ठा drm_device *drm_dev,
+		     काष्ठा hibmc_connector *connector)
+अणु
 	connector->adapter.owner = THIS_MODULE;
 	connector->adapter.class = I2C_CLASS_DDC;
-	snprintf(connector->adapter.name, I2C_NAME_SIZE, "HIS i2c bit bus");
+	snम_लिखो(connector->adapter.name, I2C_NAME_SIZE, "HIS i2c bit bus");
 	connector->adapter.dev.parent = drm_dev->dev;
 	i2c_set_adapdata(&connector->adapter, connector);
 	connector->adapter.algo_data = &connector->bit_data;
 
 	connector->bit_data.udelay = 20;
-	connector->bit_data.timeout = usecs_to_jiffies(2000);
+	connector->bit_data.समयout = usecs_to_jअगरfies(2000);
 	connector->bit_data.data = connector;
 	connector->bit_data.setsda = hibmc_ddc_setsda;
 	connector->bit_data.setscl = hibmc_ddc_setscl;
-	connector->bit_data.getsda = hibmc_ddc_getsda;
-	connector->bit_data.getscl = hibmc_ddc_getscl;
+	connector->bit_data.माला_लोda = hibmc_ddc_माला_लोda;
+	connector->bit_data.माला_लोcl = hibmc_ddc_माला_लोcl;
 
-	return i2c_bit_add_bus(&connector->adapter);
-}
+	वापस i2c_bit_add_bus(&connector->adapter);
+पूर्ण

@@ -1,60 +1,61 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 // Copyright (C) 2005-2017 Andes Technology Corporation
 
-#include <linux/cpu.h>
-#include <linux/memblock.h>
-#include <linux/seq_file.h>
-#include <linux/console.h>
-#include <linux/screen_info.h>
-#include <linux/delay.h>
-#include <linux/dma-mapping.h>
-#include <linux/of_fdt.h>
-#include <linux/of_platform.h>
-#include <asm/setup.h>
-#include <asm/sections.h>
-#include <asm/proc-fns.h>
-#include <asm/cache_info.h>
-#include <asm/elf.h>
-#include <asm/fpu.h>
-#include <nds32_intrinsic.h>
+#समावेश <linux/cpu.h>
+#समावेश <linux/memblock.h>
+#समावेश <linux/seq_file.h>
+#समावेश <linux/console.h>
+#समावेश <linux/screen_info.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/dma-mapping.h>
+#समावेश <linux/of_fdt.h>
+#समावेश <linux/of_platक्रमm.h>
+#समावेश <यंत्र/setup.h>
+#समावेश <यंत्र/sections.h>
+#समावेश <यंत्र/proc-fns.h>
+#समावेश <यंत्र/cache_info.h>
+#समावेश <यंत्र/elf.h>
+#समावेश <यंत्र/fpu.h>
+#समावेश <nds32_पूर्णांकrinsic.h>
 
-#define HWCAP_MFUSR_PC		0x000001
-#define HWCAP_EXT		0x000002
-#define HWCAP_EXT2		0x000004
-#define HWCAP_FPU		0x000008
-#define HWCAP_AUDIO		0x000010
-#define HWCAP_BASE16		0x000020
-#define HWCAP_STRING		0x000040
-#define HWCAP_REDUCED_REGS	0x000080
-#define HWCAP_VIDEO		0x000100
-#define HWCAP_ENCRYPT		0x000200
-#define HWCAP_EDM		0x000400
-#define HWCAP_LMDMA		0x000800
-#define HWCAP_PFM		0x001000
-#define HWCAP_HSMP		0x002000
-#define HWCAP_TRACE		0x004000
-#define HWCAP_DIV		0x008000
-#define HWCAP_MAC		0x010000
-#define HWCAP_L2C		0x020000
-#define HWCAP_FPU_DP		0x040000
-#define HWCAP_V2		0x080000
-#define HWCAP_DX_REGS		0x100000
-#define HWCAP_HWPRE		0x200000
+#घोषणा HWCAP_MFUSR_PC		0x000001
+#घोषणा HWCAP_EXT		0x000002
+#घोषणा HWCAP_EXT2		0x000004
+#घोषणा HWCAP_FPU		0x000008
+#घोषणा HWCAP_AUDIO		0x000010
+#घोषणा HWCAP_BASE16		0x000020
+#घोषणा HWCAP_STRING		0x000040
+#घोषणा HWCAP_REDUCED_REGS	0x000080
+#घोषणा HWCAP_VIDEO		0x000100
+#घोषणा HWCAP_ENCRYPT		0x000200
+#घोषणा HWCAP_EDM		0x000400
+#घोषणा HWCAP_LMDMA		0x000800
+#घोषणा HWCAP_PFM		0x001000
+#घोषणा HWCAP_HSMP		0x002000
+#घोषणा HWCAP_TRACE		0x004000
+#घोषणा HWCAP_DIV		0x008000
+#घोषणा HWCAP_MAC		0x010000
+#घोषणा HWCAP_L2C		0x020000
+#घोषणा HWCAP_FPU_DP		0x040000
+#घोषणा HWCAP_V2		0x080000
+#घोषणा HWCAP_DX_REGS		0x100000
+#घोषणा HWCAP_HWPRE		0x200000
 
-unsigned long cpu_id, cpu_rev, cpu_cfgid;
+अचिन्हित दीर्घ cpu_id, cpu_rev, cpu_cfgid;
 bool has_fpu = false;
-char cpu_series;
-char *endianness = NULL;
+अक्षर cpu_series;
+अक्षर *endianness = शून्य;
 
-unsigned int __atags_pointer __initdata;
-unsigned int elf_hwcap;
+अचिन्हित पूर्णांक __atags_poपूर्णांकer __initdata;
+अचिन्हित पूर्णांक elf_hwcap;
 EXPORT_SYMBOL(elf_hwcap);
 
 /*
- * The following string table, must sync with HWCAP_xx bitmask,
+ * The following string table, must sync with HWCAP_xx biपंचांगask,
  * which is defined above
  */
-static const char *hwcap_str[] = {
+अटल स्थिर अक्षर *hwcap_str[] = अणु
 	"mfusr_pc",
 	"perf1",
 	"perf2",
@@ -77,27 +78,27 @@ static const char *hwcap_str[] = {
 	"v2",
 	"dx_regs",
 	"hw_pre",
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-#ifdef CONFIG_CPU_DCACHE_WRITETHROUGH
-#define WRITE_METHOD "write through"
-#else
-#define WRITE_METHOD "write back"
-#endif
+#अगर_घोषित CONFIG_CPU_DCACHE_WRITETHROUGH
+#घोषणा WRITE_METHOD "write through"
+#अन्यथा
+#घोषणा WRITE_METHOD "write back"
+#पूर्ण_अगर
 
-struct cache_info L1_cache_info[2];
-static void __init dump_cpu_info(int cpu)
-{
-	int i, p = 0;
-	char str[sizeof(hwcap_str) + 16];
+काष्ठा cache_info L1_cache_info[2];
+अटल व्योम __init dump_cpu_info(पूर्णांक cpu)
+अणु
+	पूर्णांक i, p = 0;
+	अक्षर str[माप(hwcap_str) + 16];
 
-	for (i = 0; hwcap_str[i]; i++) {
-		if (elf_hwcap & (1 << i)) {
-			sprintf(str + p, "%s ", hwcap_str[i]);
-			p += strlen(hwcap_str[i]) + 1;
-		}
-	}
+	क्रम (i = 0; hwcap_str[i]; i++) अणु
+		अगर (elf_hwcap & (1 << i)) अणु
+			प्र_लिखो(str + p, "%s ", hwcap_str[i]);
+			p += म_माप(hwcap_str[i]) + 1;
+		पूर्ण
+	पूर्ण
 
 	pr_info("CPU%d Features: %s\n", cpu, str);
 
@@ -120,13 +121,13 @@ static void __init dump_cpu_info(int cpu)
 		L1_cache_info[DCACHE].sets, L1_cache_info[DCACHE].ways,
 		L1_cache_info[DCACHE].line_size);
 	pr_info("L1 D-Cache is %s\n", WRITE_METHOD);
-	if (L1_cache_info[DCACHE].size != L1_CACHE_BYTES)
+	अगर (L1_cache_info[DCACHE].size != L1_CACHE_BYTES)
 		pr_crit
 		    ("The cache line size(%d) of this processor is not the same as L1_CACHE_BYTES(%d).\n",
 		     L1_cache_info[DCACHE].size, L1_CACHE_BYTES);
-#ifdef CONFIG_CPU_CACHE_ALIASING
-	{
-		int aliasing_num;
+#अगर_घोषित CONFIG_CPU_CACHE_ALIASING
+	अणु
+		पूर्णांक aliasing_num;
 		aliasing_num =
 		    L1_cache_info[ICACHE].size * 1024 / PAGE_SIZE /
 		    L1_cache_info[ICACHE].ways;
@@ -139,18 +140,18 @@ static void __init dump_cpu_info(int cpu)
 		L1_cache_info[DCACHE].aliasing_num = aliasing_num;
 		L1_cache_info[DCACHE].aliasing_mask =
 		    (aliasing_num - 1) << PAGE_SHIFT;
-	}
-#endif
-#ifdef CONFIG_FPU
+	पूर्ण
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_FPU
 	/* Disable fpu and enable when it is used. */
-	if (has_fpu)
+	अगर (has_fpu)
 		disable_fpu();
-#endif
-}
+#पूर्ण_अगर
+पूर्ण
 
-static void __init setup_cpuinfo(void)
-{
-	unsigned long tmp = 0, cpu_name;
+अटल व्योम __init setup_cpuinfo(व्योम)
+अणु
+	अचिन्हित दीर्घ पंचांगp = 0, cpu_name;
 
 	cpu_dcache_inval_all();
 	cpu_icache_inval_all();
@@ -168,138 +169,138 @@ static void __init setup_cpuinfo(void)
 
 	elf_hwcap |= HWCAP_MFUSR_PC;
 
-	if (((__nds32__mfsr(NDS32_SR_MSC_CFG) & MSC_CFG_mskBASEV) >> MSC_CFG_offBASEV) == 0) {
-		if (__nds32__mfsr(NDS32_SR_MSC_CFG) & MSC_CFG_mskDIV)
+	अगर (((__nds32__mfsr(NDS32_SR_MSC_CFG) & MSC_CFG_mskBASEV) >> MSC_CFG_offBASEV) == 0) अणु
+		अगर (__nds32__mfsr(NDS32_SR_MSC_CFG) & MSC_CFG_mskDIV)
 			elf_hwcap |= HWCAP_DIV;
 
-		if ((__nds32__mfsr(NDS32_SR_MSC_CFG) & MSC_CFG_mskMAC)
+		अगर ((__nds32__mfsr(NDS32_SR_MSC_CFG) & MSC_CFG_mskMAC)
 		    || (cpu_id == 12 && cpu_rev < 4))
 			elf_hwcap |= HWCAP_MAC;
-	} else {
+	पूर्ण अन्यथा अणु
 		elf_hwcap |= HWCAP_V2;
 		elf_hwcap |= HWCAP_DIV;
 		elf_hwcap |= HWCAP_MAC;
-	}
+	पूर्ण
 
-	if (cpu_cfgid & 0x0001)
+	अगर (cpu_cfgid & 0x0001)
 		elf_hwcap |= HWCAP_EXT;
 
-	if (cpu_cfgid & 0x0002)
+	अगर (cpu_cfgid & 0x0002)
 		elf_hwcap |= HWCAP_BASE16;
 
-	if (cpu_cfgid & 0x0004)
+	अगर (cpu_cfgid & 0x0004)
 		elf_hwcap |= HWCAP_EXT2;
 
-	if (cpu_cfgid & 0x0008) {
+	अगर (cpu_cfgid & 0x0008) अणु
 		elf_hwcap |= HWCAP_FPU;
 		has_fpu = true;
-	}
-	if (cpu_cfgid & 0x0010)
+	पूर्ण
+	अगर (cpu_cfgid & 0x0010)
 		elf_hwcap |= HWCAP_STRING;
 
-	if (__nds32__mfsr(NDS32_SR_MMU_CFG) & MMU_CFG_mskDE)
+	अगर (__nds32__mfsr(NDS32_SR_MMU_CFG) & MMU_CFG_mskDE)
 		endianness = "MSB";
-	else
+	अन्यथा
 		endianness = "LSB";
 
-	if (__nds32__mfsr(NDS32_SR_MSC_CFG) & MSC_CFG_mskEDM)
+	अगर (__nds32__mfsr(NDS32_SR_MSC_CFG) & MSC_CFG_mskEDM)
 		elf_hwcap |= HWCAP_EDM;
 
-	if (__nds32__mfsr(NDS32_SR_MSC_CFG) & MSC_CFG_mskLMDMA)
+	अगर (__nds32__mfsr(NDS32_SR_MSC_CFG) & MSC_CFG_mskLMDMA)
 		elf_hwcap |= HWCAP_LMDMA;
 
-	if (__nds32__mfsr(NDS32_SR_MSC_CFG) & MSC_CFG_mskPFM)
+	अगर (__nds32__mfsr(NDS32_SR_MSC_CFG) & MSC_CFG_mskPFM)
 		elf_hwcap |= HWCAP_PFM;
 
-	if (__nds32__mfsr(NDS32_SR_MSC_CFG) & MSC_CFG_mskHSMP)
+	अगर (__nds32__mfsr(NDS32_SR_MSC_CFG) & MSC_CFG_mskHSMP)
 		elf_hwcap |= HWCAP_HSMP;
 
-	if (__nds32__mfsr(NDS32_SR_MSC_CFG) & MSC_CFG_mskTRACE)
+	अगर (__nds32__mfsr(NDS32_SR_MSC_CFG) & MSC_CFG_mskTRACE)
 		elf_hwcap |= HWCAP_TRACE;
 
-	if (__nds32__mfsr(NDS32_SR_MSC_CFG) & MSC_CFG_mskAUDIO)
+	अगर (__nds32__mfsr(NDS32_SR_MSC_CFG) & MSC_CFG_mskAUDIO)
 		elf_hwcap |= HWCAP_AUDIO;
 
-	if (__nds32__mfsr(NDS32_SR_MSC_CFG) & MSC_CFG_mskL2C)
+	अगर (__nds32__mfsr(NDS32_SR_MSC_CFG) & MSC_CFG_mskL2C)
 		elf_hwcap |= HWCAP_L2C;
 
-#ifdef CONFIG_HW_PRE
-	if (__nds32__mfsr(NDS32_SR_MISC_CTL) & MISC_CTL_makHWPRE_EN)
+#अगर_घोषित CONFIG_HW_PRE
+	अगर (__nds32__mfsr(NDS32_SR_MISC_CTL) & MISC_CTL_makHWPRE_EN)
 		elf_hwcap |= HWCAP_HWPRE;
-#endif
+#पूर्ण_अगर
 
-	tmp = __nds32__mfsr(NDS32_SR_CACHE_CTL);
-	if (!IS_ENABLED(CONFIG_CPU_DCACHE_DISABLE))
-		tmp |= CACHE_CTL_mskDC_EN;
+	पंचांगp = __nds32__mfsr(NDS32_SR_CACHE_CTL);
+	अगर (!IS_ENABLED(CONFIG_CPU_DCACHE_DISABLE))
+		पंचांगp |= CACHE_CTL_mskDC_EN;
 
-	if (!IS_ENABLED(CONFIG_CPU_ICACHE_DISABLE))
-		tmp |= CACHE_CTL_mskIC_EN;
-	__nds32__mtsr_isb(tmp, NDS32_SR_CACHE_CTL);
+	अगर (!IS_ENABLED(CONFIG_CPU_ICACHE_DISABLE))
+		पंचांगp |= CACHE_CTL_mskIC_EN;
+	__nds32__mtsr_isb(पंचांगp, NDS32_SR_CACHE_CTL);
 
 	dump_cpu_info(smp_processor_id());
-}
+पूर्ण
 
-static void __init setup_memory(void)
-{
-	unsigned long ram_start_pfn;
-	unsigned long free_ram_start_pfn;
+अटल व्योम __init setup_memory(व्योम)
+अणु
+	अचिन्हित दीर्घ ram_start_pfn;
+	अचिन्हित दीर्घ मुक्त_ram_start_pfn;
 	phys_addr_t memory_start, memory_end;
-	struct memblock_region *region;
+	काष्ठा memblock_region *region;
 
 	memory_end = memory_start = 0;
 
-	/* Find main memory where is the kernel */
+	/* Find मुख्य memory where is the kernel */
 	memory_start = memblock_start_of_DRAM();
 	memory_end = memblock_end_of_DRAM();
 
-	if (!memory_end) {
+	अगर (!memory_end) अणु
 		panic("No memory!");
-	}
+	पूर्ण
 
 	ram_start_pfn = PFN_UP(memblock_start_of_DRAM());
-	/* free_ram_start_pfn is first page after kernel */
-	free_ram_start_pfn = PFN_UP(__pa(&_end));
+	/* मुक्त_ram_start_pfn is first page after kernel */
+	मुक्त_ram_start_pfn = PFN_UP(__pa(&_end));
 	max_pfn = PFN_DOWN(memblock_end_of_DRAM());
 	/* it could update max_pfn */
-	if (max_pfn - ram_start_pfn <= MAXMEM_PFN)
+	अगर (max_pfn - ram_start_pfn <= MAXMEM_PFN)
 		max_low_pfn = max_pfn;
-	else {
+	अन्यथा अणु
 		max_low_pfn = MAXMEM_PFN + ram_start_pfn;
-		if (!IS_ENABLED(CONFIG_HIGHMEM))
+		अगर (!IS_ENABLED(CONFIG_HIGHMEM))
 			max_pfn = MAXMEM_PFN + ram_start_pfn;
-	}
+	पूर्ण
 	/* high_memory is related with VMALLOC */
-	high_memory = (void *)__va(max_low_pfn * PAGE_SIZE);
-	min_low_pfn = free_ram_start_pfn;
+	high_memory = (व्योम *)__va(max_low_pfn * PAGE_SIZE);
+	min_low_pfn = मुक्त_ram_start_pfn;
 
 	/*
-	 * initialize the boot-time allocator (with low memory only).
+	 * initialize the boot-समय allocator (with low memory only).
 	 *
 	 * This makes the memory from the end of the kernel to the end of
 	 * RAM usable.
 	 */
 	memblock_set_bottom_up(true);
-	memblock_reserve(PFN_PHYS(ram_start_pfn), PFN_PHYS(free_ram_start_pfn - ram_start_pfn));
+	memblock_reserve(PFN_PHYS(ram_start_pfn), PFN_PHYS(मुक्त_ram_start_pfn - ram_start_pfn));
 
 	early_init_fdt_reserve_self();
 	early_init_fdt_scan_reserved_mem();
 
 	memblock_dump_all();
-}
+पूर्ण
 
-void __init setup_arch(char **cmdline_p)
-{
-	early_init_devtree(__atags_pointer ? \
-		phys_to_virt(__atags_pointer) : __dtb_start);
+व्योम __init setup_arch(अक्षर **cmdline_p)
+अणु
+	early_init_devtree(__atags_poपूर्णांकer ? \
+		phys_to_virt(__atags_poपूर्णांकer) : __dtb_start);
 
 	setup_cpuinfo();
 
-	init_mm.start_code = (unsigned long)&_stext;
-	init_mm.end_code = (unsigned long)&_etext;
-	init_mm.end_data = (unsigned long)&_edata;
-	init_mm.brk = (unsigned long)&_end;
+	init_mm.start_code = (अचिन्हित दीर्घ)&_stext;
+	init_mm.end_code = (अचिन्हित दीर्घ)&_etext;
+	init_mm.end_data = (अचिन्हित दीर्घ)&_edata;
+	init_mm.brk = (अचिन्हित दीर्घ)&_end;
 
-	/* setup bootmem allocator */
+	/* setup booपंचांगem allocator */
 	setup_memory();
 
 	/* paging_init() sets up the MMU and marks all pages as reserved */
@@ -315,59 +316,59 @@ void __init setup_arch(char **cmdline_p)
 
 	*cmdline_p = boot_command_line;
 	early_trap_init();
-}
+पूर्ण
 
-static int c_show(struct seq_file *m, void *v)
-{
-	int i;
+अटल पूर्णांक c_show(काष्ठा seq_file *m, व्योम *v)
+अणु
+	पूर्णांक i;
 
-	seq_printf(m, "Processor\t: %c%ld (id %lu, rev %lu, cfg %lu)\n",
+	seq_म_लिखो(m, "Processor\t: %c%ld (id %lu, rev %lu, cfg %lu)\n",
 		   cpu_series, cpu_id, cpu_id, cpu_rev, cpu_cfgid);
 
-	seq_printf(m, "L1I\t\t: %luKB/%luS/%luW/%luB\n",
+	seq_म_लिखो(m, "L1I\t\t: %luKB/%luS/%luW/%luB\n",
 		   CACHE_SET(ICACHE) * CACHE_WAY(ICACHE) *
 		   CACHE_LINE_SIZE(ICACHE) / 1024, CACHE_SET(ICACHE),
 		   CACHE_WAY(ICACHE), CACHE_LINE_SIZE(ICACHE));
 
-	seq_printf(m, "L1D\t\t: %luKB/%luS/%luW/%luB\n",
+	seq_म_लिखो(m, "L1D\t\t: %luKB/%luS/%luW/%luB\n",
 		   CACHE_SET(DCACHE) * CACHE_WAY(DCACHE) *
 		   CACHE_LINE_SIZE(DCACHE) / 1024, CACHE_SET(DCACHE),
 		   CACHE_WAY(DCACHE), CACHE_LINE_SIZE(DCACHE));
 
-	seq_printf(m, "BogoMIPS\t: %lu.%02lu\n",
-		   loops_per_jiffy / (500000 / HZ),
-		   (loops_per_jiffy / (5000 / HZ)) % 100);
+	seq_म_लिखो(m, "BogoMIPS\t: %lu.%02lu\n",
+		   loops_per_jअगरfy / (500000 / HZ),
+		   (loops_per_jअगरfy / (5000 / HZ)) % 100);
 
 	/* dump out the processor features */
-	seq_puts(m, "Features\t: ");
+	seq_माला_दो(m, "Features\t: ");
 
-	for (i = 0; hwcap_str[i]; i++)
-		if (elf_hwcap & (1 << i))
-			seq_printf(m, "%s ", hwcap_str[i]);
+	क्रम (i = 0; hwcap_str[i]; i++)
+		अगर (elf_hwcap & (1 << i))
+			seq_म_लिखो(m, "%s ", hwcap_str[i]);
 
-	seq_puts(m, "\n\n");
+	seq_माला_दो(m, "\n\n");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void *c_start(struct seq_file *m, loff_t * pos)
-{
-	return *pos < 1 ? (void *)1 : NULL;
-}
+अटल व्योम *c_start(काष्ठा seq_file *m, loff_t * pos)
+अणु
+	वापस *pos < 1 ? (व्योम *)1 : शून्य;
+पूर्ण
 
-static void *c_next(struct seq_file *m, void *v, loff_t * pos)
-{
+अटल व्योम *c_next(काष्ठा seq_file *m, व्योम *v, loff_t * pos)
+अणु
 	++*pos;
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static void c_stop(struct seq_file *m, void *v)
-{
-}
+अटल व्योम c_stop(काष्ठा seq_file *m, व्योम *v)
+अणु
+पूर्ण
 
-struct seq_operations cpuinfo_op = {
+काष्ठा seq_operations cpuinfo_op = अणु
 	.start = c_start,
 	.next = c_next,
 	.stop = c_stop,
 	.show = c_show
-};
+पूर्ण;

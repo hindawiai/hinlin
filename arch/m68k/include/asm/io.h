@@ -1,13 +1,14 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _M68K_IO_H
-#define _M68K_IO_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _M68K_IO_H
+#घोषणा _M68K_IO_H
 
-#if defined(__uClinux__) || defined(CONFIG_COLDFIRE)
-#include <asm/io_no.h>
-#else
-#include <asm/io_mm.h>
-#endif
+#अगर defined(__uClinux__) || defined(CONFIG_COLDFIRE)
+#समावेश <यंत्र/io_no.h>
+#अन्यथा
+#समावेश <यंत्र/io_mm.h>
+#पूर्ण_अगर
 
-#include <asm-generic/io.h>
+#समावेश <यंत्र-generic/पन.स>
 
-#endif /* _M68K_IO_H */
+#पूर्ण_अगर /* _M68K_IO_H */

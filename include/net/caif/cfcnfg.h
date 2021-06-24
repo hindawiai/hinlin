@@ -1,90 +1,91 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * Copyright (C) ST-Ericsson AB 2010
  * Author:	Sjur Brendeland
  */
 
-#ifndef CFCNFG_H_
-#define CFCNFG_H_
-#include <linux/spinlock.h>
-#include <linux/netdevice.h>
-#include <net/caif/caif_layer.h>
-#include <net/caif/cfctrl.h>
+#अगर_अघोषित CFCNFG_H_
+#घोषणा CFCNFG_H_
+#समावेश <linux/spinlock.h>
+#समावेश <linux/netdevice.h>
+#समावेश <net/caअगर/caअगर_layer.h>
+#समावेश <net/caअगर/cfctrl.h>
 
-struct cfcnfg;
+काष्ठा cfcnfg;
 
 /**
- * enum cfcnfg_phy_preference - Physical preference HW Abstraction
+ * क्रमागत cfcnfg_phy_preference - Physical preference HW Abstraction
  *
- * @CFPHYPREF_UNSPECIFIED:	Default physical interface
+ * @CFPHYPREF_UNSPECIFIED:	Default physical पूर्णांकerface
  *
- * @CFPHYPREF_LOW_LAT:		Default physical interface for low-latency
+ * @CFPHYPREF_LOW_LAT:		Default physical पूर्णांकerface क्रम low-latency
  *				traffic
- * @CFPHYPREF_HIGH_BW:		Default physical interface for high-bandwidth
+ * @CFPHYPREF_HIGH_BW:		Default physical पूर्णांकerface क्रम high-bandwidth
  *				traffic
- * @CFPHYPREF_LOOP:		TEST only Loopback interface simulating modem
+ * @CFPHYPREF_LOOP:		TEST only Loopback पूर्णांकerface simulating modem
  *				responses.
  *
  */
-enum cfcnfg_phy_preference {
+क्रमागत cfcnfg_phy_preference अणु
 	CFPHYPREF_UNSPECIFIED,
 	CFPHYPREF_LOW_LAT,
 	CFPHYPREF_HIGH_BW,
 	CFPHYPREF_LOOP
-};
+पूर्ण;
 
 /**
  * cfcnfg_create() - Get the CAIF configuration object given network.
- * @net:	Network for the CAIF configuration object.
+ * @net:	Network क्रम the CAIF configuration object.
  */
-struct cfcnfg *get_cfcnfg(struct net *net);
+काष्ठा cfcnfg *get_cfcnfg(काष्ठा net *net);
 
 /**
  * cfcnfg_create() - Create the CAIF configuration object.
  */
-struct cfcnfg *cfcnfg_create(void);
+काष्ठा cfcnfg *cfcnfg_create(व्योम);
 
 /**
- * cfcnfg_remove() -  Remove the CFCNFG object
+ * cfcnfg_हटाओ() -  Remove the CFCNFG object
  * @cfg: config object
  */
-void cfcnfg_remove(struct cfcnfg *cfg);
+व्योम cfcnfg_हटाओ(काष्ठा cfcnfg *cfg);
 
 /**
  * cfcnfg_add_phy_layer() - Adds a physical layer to the CAIF stack.
- * @cnfg:	Pointer to a CAIF configuration object, created by
+ * @cnfg:	Poपूर्णांकer to a CAIF configuration object, created by
  *		cfcnfg_create().
- * @dev:	Pointer to link layer device
- * @phy_layer:	Specify the physical layer. The transmit function
- *		MUST be set in the structure.
+ * @dev:	Poपूर्णांकer to link layer device
+ * @phy_layer:	Specअगरy the physical layer. The transmit function
+ *		MUST be set in the काष्ठाure.
  * @pref:	The phy (link layer) preference.
- * @link_support: Protocol implementation for link layer specific protocol.
- * @fcs:	Specify if checksum is used in CAIF Framing Layer.
- * @head_room:	Head space needed by link specific protocol.
+ * @link_support: Protocol implementation क्रम link layer specअगरic protocol.
+ * @fcs:	Specअगरy अगर checksum is used in CAIF Framing Layer.
+ * @head_room:	Head space needed by link specअगरic protocol.
  */
-int
-cfcnfg_add_phy_layer(struct cfcnfg *cnfg,
-		     struct net_device *dev, struct cflayer *phy_layer,
-		     enum cfcnfg_phy_preference pref,
-		     struct cflayer *link_support,
-		     bool fcs, int head_room);
+पूर्णांक
+cfcnfg_add_phy_layer(काष्ठा cfcnfg *cnfg,
+		     काष्ठा net_device *dev, काष्ठा cflayer *phy_layer,
+		     क्रमागत cfcnfg_phy_preference pref,
+		     काष्ठा cflayer *link_support,
+		     bool fcs, पूर्णांक head_room);
 
 /**
  * cfcnfg_del_phy_layer - Deletes an phy layer from the CAIF stack.
  *
- * @cnfg:	Pointer to a CAIF configuration object, created by
+ * @cnfg:	Poपूर्णांकer to a CAIF configuration object, created by
  *		cfcnfg_create().
- * @phy_layer:	Adaptation layer to be removed.
+ * @phy_layer:	Adaptation layer to be हटाओd.
  */
-int cfcnfg_del_phy_layer(struct cfcnfg *cnfg, struct cflayer *phy_layer);
+पूर्णांक cfcnfg_del_phy_layer(काष्ठा cfcnfg *cnfg, काष्ठा cflayer *phy_layer);
 
 /**
- * cfcnfg_set_phy_state() - Set the state of the physical interface device.
+ * cfcnfg_set_phy_state() - Set the state of the physical पूर्णांकerface device.
  * @cnfg:	Configuration object
  * @phy_layer:	Physical Layer representation
  * @up:	State of device
  */
-int cfcnfg_set_phy_state(struct cfcnfg *cnfg, struct cflayer *phy_layer,
+पूर्णांक cfcnfg_set_phy_state(काष्ठा cfcnfg *cnfg, काष्ठा cflayer *phy_layer,
 				bool up);
 
-#endif				/* CFCNFG_H_ */
+#पूर्ण_अगर				/* CFCNFG_H_ */

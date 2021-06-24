@@ -1,117 +1,118 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /* Copyright (c) 2020 Jesper Dangaard Brouer */
 
-#include <linux/bpf.h>
-#include <bpf/bpf_helpers.h>
-#include <linux/if_ether.h>
+#समावेश <linux/bpf.h>
+#समावेश <bpf/bpf_helpers.h>
+#समावेश <linux/अगर_ether.h>
 
-#include <stddef.h>
-#include <stdint.h>
+#समावेश <मानकघोष.स>
+#समावेश <मानक_निवेशt.h>
 
-char _license[] SEC("license") = "GPL";
+अक्षर _license[] SEC("license") = "GPL";
 
 /* Userspace will update with MTU it can see on device */
-static volatile const int GLOBAL_USER_MTU;
-static volatile const __u32 GLOBAL_USER_IFINDEX;
+अटल अस्थिर स्थिर पूर्णांक GLOBAL_USER_MTU;
+अटल अस्थिर स्थिर __u32 GLOBAL_USER_IFINDEX;
 
 /* BPF-prog will update these with MTU values it can see */
 __u32 global_bpf_mtu_xdp = 0;
 __u32 global_bpf_mtu_tc  = 0;
 
 SEC("xdp")
-int xdp_use_helper_basic(struct xdp_md *ctx)
-{
+पूर्णांक xdp_use_helper_basic(काष्ठा xdp_md *ctx)
+अणु
 	__u32 mtu_len = 0;
 
-	if (bpf_check_mtu(ctx, 0, &mtu_len, 0, 0))
-		return XDP_ABORTED;
+	अगर (bpf_check_mtu(ctx, 0, &mtu_len, 0, 0))
+		वापस XDP_ABORTED;
 
-	return XDP_PASS;
-}
+	वापस XDP_PASS;
+पूर्ण
 
 SEC("xdp")
-int xdp_use_helper(struct xdp_md *ctx)
-{
-	int retval = XDP_PASS; /* Expected retval on successful test */
+पूर्णांक xdp_use_helper(काष्ठा xdp_md *ctx)
+अणु
+	पूर्णांक retval = XDP_PASS; /* Expected retval on successful test */
 	__u32 mtu_len = 0;
-	__u32 ifindex = 0;
-	int delta = 0;
+	__u32 अगरindex = 0;
+	पूर्णांक delta = 0;
 
-	/* When ifindex is zero, save net_device lookup and use ctx netdev */
-	if (GLOBAL_USER_IFINDEX > 0)
-		ifindex = GLOBAL_USER_IFINDEX;
+	/* When अगरindex is zero, save net_device lookup and use ctx netdev */
+	अगर (GLOBAL_USER_IFINDEX > 0)
+		अगरindex = GLOBAL_USER_IFINDEX;
 
-	if (bpf_check_mtu(ctx, ifindex, &mtu_len, delta, 0)) {
+	अगर (bpf_check_mtu(ctx, अगरindex, &mtu_len, delta, 0)) अणु
 		/* mtu_len is also valid when check fail */
 		retval = XDP_ABORTED;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (mtu_len != GLOBAL_USER_MTU)
+	अगर (mtu_len != GLOBAL_USER_MTU)
 		retval = XDP_DROP;
 
 out:
 	global_bpf_mtu_xdp = mtu_len;
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
 SEC("xdp")
-int xdp_exceed_mtu(struct xdp_md *ctx)
-{
-	void *data_end = (void *)(long)ctx->data_end;
-	void *data = (void *)(long)ctx->data;
-	__u32 ifindex = GLOBAL_USER_IFINDEX;
+पूर्णांक xdp_exceed_mtu(काष्ठा xdp_md *ctx)
+अणु
+	व्योम *data_end = (व्योम *)(दीर्घ)ctx->data_end;
+	व्योम *data = (व्योम *)(दीर्घ)ctx->data;
+	__u32 अगरindex = GLOBAL_USER_IFINDEX;
 	__u32 data_len = data_end - data;
-	int retval = XDP_ABORTED; /* Fail */
+	पूर्णांक retval = XDP_ABORTED; /* Fail */
 	__u32 mtu_len = 0;
-	int delta;
-	int err;
+	पूर्णांक delta;
+	पूर्णांक err;
 
 	/* Exceed MTU with 1 via delta adjust */
 	delta = GLOBAL_USER_MTU - (data_len - ETH_HLEN) + 1;
 
-	err = bpf_check_mtu(ctx, ifindex, &mtu_len, delta, 0);
-	if (err) {
+	err = bpf_check_mtu(ctx, अगरindex, &mtu_len, delta, 0);
+	अगर (err) अणु
 		retval = XDP_PASS; /* Success in exceeding MTU check */
-		if (err != BPF_MTU_CHK_RET_FRAG_NEEDED)
+		अगर (err != BPF_MTU_CHK_RET_FRAG_NEEDED)
 			retval = XDP_DROP;
-	}
+	पूर्ण
 
 	global_bpf_mtu_xdp = mtu_len;
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
 SEC("xdp")
-int xdp_minus_delta(struct xdp_md *ctx)
-{
-	int retval = XDP_PASS; /* Expected retval on successful test */
-	void *data_end = (void *)(long)ctx->data_end;
-	void *data = (void *)(long)ctx->data;
-	__u32 ifindex = GLOBAL_USER_IFINDEX;
+पूर्णांक xdp_minus_delta(काष्ठा xdp_md *ctx)
+अणु
+	पूर्णांक retval = XDP_PASS; /* Expected retval on successful test */
+	व्योम *data_end = (व्योम *)(दीर्घ)ctx->data_end;
+	व्योम *data = (व्योम *)(दीर्घ)ctx->data;
+	__u32 अगरindex = GLOBAL_USER_IFINDEX;
 	__u32 data_len = data_end - data;
 	__u32 mtu_len = 0;
-	int delta;
+	पूर्णांक delta;
 
-	/* Borderline test case: Minus delta exceeding packet length allowed */
+	/* Borderline test हाल: Minus delta exceeding packet length allowed */
 	delta = -((data_len - ETH_HLEN) + 1);
 
 	/* Minus length (adjusted via delta) still pass MTU check, other helpers
-	 * are responsible for catching this, when doing actual size adjust
+	 * are responsible क्रम catching this, when करोing actual size adjust
 	 */
-	if (bpf_check_mtu(ctx, ifindex, &mtu_len, delta, 0))
+	अगर (bpf_check_mtu(ctx, अगरindex, &mtu_len, delta, 0))
 		retval = XDP_ABORTED;
 
 	global_bpf_mtu_xdp = mtu_len;
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
 SEC("xdp")
-int xdp_input_len(struct xdp_md *ctx)
-{
-	int retval = XDP_PASS; /* Expected retval on successful test */
-	void *data_end = (void *)(long)ctx->data_end;
-	void *data = (void *)(long)ctx->data;
-	__u32 ifindex = GLOBAL_USER_IFINDEX;
+पूर्णांक xdp_input_len(काष्ठा xdp_md *ctx)
+अणु
+	पूर्णांक retval = XDP_PASS; /* Expected retval on successful test */
+	व्योम *data_end = (व्योम *)(दीर्घ)ctx->data_end;
+	व्योम *data = (व्योम *)(दीर्घ)ctx->data;
+	__u32 अगरindex = GLOBAL_USER_IFINDEX;
 	__u32 data_len = data_end - data;
 
 	/* API allow user give length to check as input via mtu_len param,
@@ -122,19 +123,19 @@ int xdp_input_len(struct xdp_md *ctx)
 	 */
 	__u32 mtu_len = data_len - ETH_HLEN;
 
-	if (bpf_check_mtu(ctx, ifindex, &mtu_len, 0, 0))
+	अगर (bpf_check_mtu(ctx, अगरindex, &mtu_len, 0, 0))
 		retval = XDP_ABORTED;
 
 	global_bpf_mtu_xdp = mtu_len;
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
 SEC("xdp")
-int xdp_input_len_exceed(struct xdp_md *ctx)
-{
-	int retval = XDP_ABORTED; /* Fail */
-	__u32 ifindex = GLOBAL_USER_IFINDEX;
-	int err;
+पूर्णांक xdp_input_len_exceed(काष्ठा xdp_md *ctx)
+अणु
+	पूर्णांक retval = XDP_ABORTED; /* Fail */
+	__u32 अगरindex = GLOBAL_USER_IFINDEX;
+	पूर्णांक err;
 
 	/* API allow user give length to check as input via mtu_len param,
 	 * resulting MTU value is still output in mtu_len param after call.
@@ -145,111 +146,111 @@ int xdp_input_len_exceed(struct xdp_md *ctx)
 
 	mtu_len += 1; /* Exceed with 1 */
 
-	err = bpf_check_mtu(ctx, ifindex, &mtu_len, 0, 0);
-	if (err == BPF_MTU_CHK_RET_FRAG_NEEDED)
+	err = bpf_check_mtu(ctx, अगरindex, &mtu_len, 0, 0);
+	अगर (err == BPF_MTU_CHK_RET_FRAG_NEEDED)
 		retval = XDP_PASS ; /* Success in exceeding MTU check */
 
 	global_bpf_mtu_xdp = mtu_len;
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
 SEC("classifier")
-int tc_use_helper(struct __sk_buff *ctx)
-{
-	int retval = BPF_OK; /* Expected retval on successful test */
+पूर्णांक tc_use_helper(काष्ठा __sk_buff *ctx)
+अणु
+	पूर्णांक retval = BPF_OK; /* Expected retval on successful test */
 	__u32 mtu_len = 0;
-	int delta = 0;
+	पूर्णांक delta = 0;
 
-	if (bpf_check_mtu(ctx, 0, &mtu_len, delta, 0)) {
+	अगर (bpf_check_mtu(ctx, 0, &mtu_len, delta, 0)) अणु
 		retval = BPF_DROP;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (mtu_len != GLOBAL_USER_MTU)
-		retval = BPF_REDIRECT;
+	अगर (mtu_len != GLOBAL_USER_MTU)
+		retval = BPF_REसूचीECT;
 out:
 	global_bpf_mtu_tc = mtu_len;
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
 SEC("classifier")
-int tc_exceed_mtu(struct __sk_buff *ctx)
-{
-	__u32 ifindex = GLOBAL_USER_IFINDEX;
-	int retval = BPF_DROP; /* Fail */
+पूर्णांक tc_exceed_mtu(काष्ठा __sk_buff *ctx)
+अणु
+	__u32 अगरindex = GLOBAL_USER_IFINDEX;
+	पूर्णांक retval = BPF_DROP; /* Fail */
 	__u32 skb_len = ctx->len;
 	__u32 mtu_len = 0;
-	int delta;
-	int err;
+	पूर्णांक delta;
+	पूर्णांक err;
 
 	/* Exceed MTU with 1 via delta adjust */
 	delta = GLOBAL_USER_MTU - (skb_len - ETH_HLEN) + 1;
 
-	err = bpf_check_mtu(ctx, ifindex, &mtu_len, delta, 0);
-	if (err) {
+	err = bpf_check_mtu(ctx, अगरindex, &mtu_len, delta, 0);
+	अगर (err) अणु
 		retval = BPF_OK; /* Success in exceeding MTU check */
-		if (err != BPF_MTU_CHK_RET_FRAG_NEEDED)
+		अगर (err != BPF_MTU_CHK_RET_FRAG_NEEDED)
 			retval = BPF_DROP;
-	}
+	पूर्ण
 
 	global_bpf_mtu_tc = mtu_len;
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
 SEC("classifier")
-int tc_exceed_mtu_da(struct __sk_buff *ctx)
-{
+पूर्णांक tc_exceed_mtu_da(काष्ठा __sk_buff *ctx)
+अणु
 	/* SKB Direct-Access variant */
-	void *data_end = (void *)(long)ctx->data_end;
-	void *data = (void *)(long)ctx->data;
-	__u32 ifindex = GLOBAL_USER_IFINDEX;
+	व्योम *data_end = (व्योम *)(दीर्घ)ctx->data_end;
+	व्योम *data = (व्योम *)(दीर्घ)ctx->data;
+	__u32 अगरindex = GLOBAL_USER_IFINDEX;
 	__u32 data_len = data_end - data;
-	int retval = BPF_DROP; /* Fail */
+	पूर्णांक retval = BPF_DROP; /* Fail */
 	__u32 mtu_len = 0;
-	int delta;
-	int err;
+	पूर्णांक delta;
+	पूर्णांक err;
 
 	/* Exceed MTU with 1 via delta adjust */
 	delta = GLOBAL_USER_MTU - (data_len - ETH_HLEN) + 1;
 
-	err = bpf_check_mtu(ctx, ifindex, &mtu_len, delta, 0);
-	if (err) {
+	err = bpf_check_mtu(ctx, अगरindex, &mtu_len, delta, 0);
+	अगर (err) अणु
 		retval = BPF_OK; /* Success in exceeding MTU check */
-		if (err != BPF_MTU_CHK_RET_FRAG_NEEDED)
+		अगर (err != BPF_MTU_CHK_RET_FRAG_NEEDED)
 			retval = BPF_DROP;
-	}
+	पूर्ण
 
 	global_bpf_mtu_tc = mtu_len;
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
 SEC("classifier")
-int tc_minus_delta(struct __sk_buff *ctx)
-{
-	int retval = BPF_OK; /* Expected retval on successful test */
-	__u32 ifindex = GLOBAL_USER_IFINDEX;
+पूर्णांक tc_minus_delta(काष्ठा __sk_buff *ctx)
+अणु
+	पूर्णांक retval = BPF_OK; /* Expected retval on successful test */
+	__u32 अगरindex = GLOBAL_USER_IFINDEX;
 	__u32 skb_len = ctx->len;
 	__u32 mtu_len = 0;
-	int delta;
+	पूर्णांक delta;
 
-	/* Borderline test case: Minus delta exceeding packet length allowed */
+	/* Borderline test हाल: Minus delta exceeding packet length allowed */
 	delta = -((skb_len - ETH_HLEN) + 1);
 
 	/* Minus length (adjusted via delta) still pass MTU check, other helpers
-	 * are responsible for catching this, when doing actual size adjust
+	 * are responsible क्रम catching this, when करोing actual size adjust
 	 */
-	if (bpf_check_mtu(ctx, ifindex, &mtu_len, delta, 0))
+	अगर (bpf_check_mtu(ctx, अगरindex, &mtu_len, delta, 0))
 		retval = BPF_DROP;
 
 	global_bpf_mtu_xdp = mtu_len;
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
 SEC("classifier")
-int tc_input_len(struct __sk_buff *ctx)
-{
-	int retval = BPF_OK; /* Expected retval on successful test */
-	__u32 ifindex = GLOBAL_USER_IFINDEX;
+पूर्णांक tc_input_len(काष्ठा __sk_buff *ctx)
+अणु
+	पूर्णांक retval = BPF_OK; /* Expected retval on successful test */
+	__u32 अगरindex = GLOBAL_USER_IFINDEX;
 
 	/* API allow user give length to check as input via mtu_len param,
 	 * resulting MTU value is still output in mtu_len param after call.
@@ -258,19 +259,19 @@ int tc_input_len(struct __sk_buff *ctx)
 	 */
 	__u32 mtu_len = GLOBAL_USER_MTU;
 
-	if (bpf_check_mtu(ctx, ifindex, &mtu_len, 0, 0))
+	अगर (bpf_check_mtu(ctx, अगरindex, &mtu_len, 0, 0))
 		retval = BPF_DROP;
 
 	global_bpf_mtu_xdp = mtu_len;
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
 SEC("classifier")
-int tc_input_len_exceed(struct __sk_buff *ctx)
-{
-	int retval = BPF_DROP; /* Fail */
-	__u32 ifindex = GLOBAL_USER_IFINDEX;
-	int err;
+पूर्णांक tc_input_len_exceed(काष्ठा __sk_buff *ctx)
+अणु
+	पूर्णांक retval = BPF_DROP; /* Fail */
+	__u32 अगरindex = GLOBAL_USER_IFINDEX;
+	पूर्णांक err;
 
 	/* API allow user give length to check as input via mtu_len param,
 	 * resulting MTU value is still output in mtu_len param after call.
@@ -281,10 +282,10 @@ int tc_input_len_exceed(struct __sk_buff *ctx)
 
 	mtu_len += 1; /* Exceed with 1 */
 
-	err = bpf_check_mtu(ctx, ifindex, &mtu_len, 0, 0);
-	if (err == BPF_MTU_CHK_RET_FRAG_NEEDED)
+	err = bpf_check_mtu(ctx, अगरindex, &mtu_len, 0, 0);
+	अगर (err == BPF_MTU_CHK_RET_FRAG_NEEDED)
 		retval = BPF_OK; /* Success in exceeding MTU check */
 
 	global_bpf_mtu_xdp = mtu_len;
-	return retval;
-}
+	वापस retval;
+पूर्ण

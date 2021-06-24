@@ -1,68 +1,69 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <linux/perf_event.h>
-#include <linux/perf_regs.h>
-#include <linux/kernel.h>
-#include <linux/errno.h>
-#include <linux/bug.h>
-#include <asm/ptrace.h>
-#include <asm/fpu/api.h>
-#include <asm/fpu/types.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <linux/perf_event.h>
+#समावेश <linux/perf_regs.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/bug.h>
+#समावेश <यंत्र/ptrace.h>
+#समावेश <यंत्र/fpu/api.h>
+#समावेश <यंत्र/fpu/types.h>
 
-u64 perf_reg_value(struct pt_regs *regs, int idx)
-{
+u64 perf_reg_value(काष्ठा pt_regs *regs, पूर्णांक idx)
+अणु
 	freg_t fp;
 
-	if (idx >= PERF_REG_S390_R0 && idx <= PERF_REG_S390_R15)
-		return regs->gprs[idx];
+	अगर (idx >= PERF_REG_S390_R0 && idx <= PERF_REG_S390_R15)
+		वापस regs->gprs[idx];
 
-	if (idx >= PERF_REG_S390_FP0 && idx <= PERF_REG_S390_FP15) {
-		if (!user_mode(regs))
-			return 0;
+	अगर (idx >= PERF_REG_S390_FP0 && idx <= PERF_REG_S390_FP15) अणु
+		अगर (!user_mode(regs))
+			वापस 0;
 
 		idx -= PERF_REG_S390_FP0;
-		fp = MACHINE_HAS_VX ? *(freg_t *)(current->thread.fpu.vxrs + idx)
-				    : current->thread.fpu.fprs[idx];
-		return fp.ui;
-	}
+		fp = MACHINE_HAS_VX ? *(freg_t *)(current->thपढ़ो.fpu.vxrs + idx)
+				    : current->thपढ़ो.fpu.fprs[idx];
+		वापस fp.ui;
+	पूर्ण
 
-	if (idx == PERF_REG_S390_MASK)
-		return regs->psw.mask;
-	if (idx == PERF_REG_S390_PC)
-		return regs->psw.addr;
+	अगर (idx == PERF_REG_S390_MASK)
+		वापस regs->psw.mask;
+	अगर (idx == PERF_REG_S390_PC)
+		वापस regs->psw.addr;
 
 	WARN_ON_ONCE((u32)idx >= PERF_REG_S390_MAX);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#define REG_RESERVED (~((1UL << PERF_REG_S390_MAX) - 1))
+#घोषणा REG_RESERVED (~((1UL << PERF_REG_S390_MAX) - 1))
 
-int perf_reg_validate(u64 mask)
-{
-	if (!mask || mask & REG_RESERVED)
-		return -EINVAL;
+पूर्णांक perf_reg_validate(u64 mask)
+अणु
+	अगर (!mask || mask & REG_RESERVED)
+		वापस -EINVAL;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-u64 perf_reg_abi(struct task_struct *task)
-{
-	if (test_tsk_thread_flag(task, TIF_31BIT))
-		return PERF_SAMPLE_REGS_ABI_32;
+u64 perf_reg_abi(काष्ठा task_काष्ठा *task)
+अणु
+	अगर (test_tsk_thपढ़ो_flag(task, TIF_31BIT))
+		वापस PERF_SAMPLE_REGS_ABI_32;
 
-	return PERF_SAMPLE_REGS_ABI_64;
-}
+	वापस PERF_SAMPLE_REGS_ABI_64;
+पूर्ण
 
-void perf_get_regs_user(struct perf_regs *regs_user,
-			struct pt_regs *regs)
-{
+व्योम perf_get_regs_user(काष्ठा perf_regs *regs_user,
+			काष्ठा pt_regs *regs)
+अणु
 	/*
-	 * Use the regs from the first interruption and let
-	 * perf_sample_regs_intr() handle interrupts (regs == get_irq_regs()).
+	 * Use the regs from the first पूर्णांकerruption and let
+	 * perf_sample_regs_पूर्णांकr() handle पूर्णांकerrupts (regs == get_irq_regs()).
 	 *
-	 * Also save FPU registers for user-space tasks only.
+	 * Also save FPU रेजिस्टरs क्रम user-space tasks only.
 	 */
 	regs_user->regs = task_pt_regs(current);
-	if (user_mode(regs_user->regs))
+	अगर (user_mode(regs_user->regs))
 		save_fpu_regs();
 	regs_user->abi = perf_reg_abi(current);
-}
+पूर्ण

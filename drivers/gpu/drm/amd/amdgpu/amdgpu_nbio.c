@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright (C) 2019  Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
@@ -19,65 +20,65 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include "amdgpu.h"
-#include "amdgpu_ras.h"
+#समावेश "amdgpu.h"
+#समावेश "amdgpu_ras.h"
 
-int amdgpu_nbio_ras_late_init(struct amdgpu_device *adev)
-{
-	int r;
-	struct ras_ih_if ih_info = {
-		.cb = NULL,
-	};
-	struct ras_fs_if fs_info = {
+पूर्णांक amdgpu_nbio_ras_late_init(काष्ठा amdgpu_device *adev)
+अणु
+	पूर्णांक r;
+	काष्ठा ras_ih_अगर ih_info = अणु
+		.cb = शून्य,
+	पूर्ण;
+	काष्ठा ras_fs_अगर fs_info = अणु
 		.sysfs_name = "pcie_bif_err_count",
-	};
+	पूर्ण;
 
-	if (!adev->nbio.ras_if) {
-		adev->nbio.ras_if = kmalloc(sizeof(struct ras_common_if), GFP_KERNEL);
-		if (!adev->nbio.ras_if)
-			return -ENOMEM;
-		adev->nbio.ras_if->block = AMDGPU_RAS_BLOCK__PCIE_BIF;
-		adev->nbio.ras_if->type = AMDGPU_RAS_ERROR__MULTI_UNCORRECTABLE;
-		adev->nbio.ras_if->sub_block_index = 0;
-		strcpy(adev->nbio.ras_if->name, "pcie_bif");
-	}
-	ih_info.head = fs_info.head = *adev->nbio.ras_if;
-	r = amdgpu_ras_late_init(adev, adev->nbio.ras_if,
+	अगर (!adev->nbio.ras_अगर) अणु
+		adev->nbio.ras_अगर = kदो_स्मृति(माप(काष्ठा ras_common_अगर), GFP_KERNEL);
+		अगर (!adev->nbio.ras_अगर)
+			वापस -ENOMEM;
+		adev->nbio.ras_अगर->block = AMDGPU_RAS_BLOCK__PCIE_BIF;
+		adev->nbio.ras_अगर->type = AMDGPU_RAS_ERROR__MULTI_UNCORRECTABLE;
+		adev->nbio.ras_अगर->sub_block_index = 0;
+		म_नकल(adev->nbio.ras_अगर->name, "pcie_bif");
+	पूर्ण
+	ih_info.head = fs_info.head = *adev->nbio.ras_अगर;
+	r = amdgpu_ras_late_init(adev, adev->nbio.ras_अगर,
 				 &fs_info, &ih_info);
-	if (r)
-		goto free;
+	अगर (r)
+		जाओ मुक्त;
 
-	if (amdgpu_ras_is_supported(adev, adev->nbio.ras_if->block)) {
+	अगर (amdgpu_ras_is_supported(adev, adev->nbio.ras_अगर->block)) अणु
 		r = amdgpu_irq_get(adev, &adev->nbio.ras_controller_irq, 0);
-		if (r)
-			goto late_fini;
+		अगर (r)
+			जाओ late_fini;
 		r = amdgpu_irq_get(adev, &adev->nbio.ras_err_event_athub_irq, 0);
-		if (r)
-			goto late_fini;
-	} else {
+		अगर (r)
+			जाओ late_fini;
+	पूर्ण अन्यथा अणु
 		r = 0;
-		goto free;
-	}
+		जाओ मुक्त;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 late_fini:
-	amdgpu_ras_late_fini(adev, adev->nbio.ras_if, &ih_info);
-free:
-	kfree(adev->nbio.ras_if);
-	adev->nbio.ras_if = NULL;
-	return r;
-}
+	amdgpu_ras_late_fini(adev, adev->nbio.ras_अगर, &ih_info);
+मुक्त:
+	kमुक्त(adev->nbio.ras_अगर);
+	adev->nbio.ras_अगर = शून्य;
+	वापस r;
+पूर्ण
 
-void amdgpu_nbio_ras_fini(struct amdgpu_device *adev)
-{
-	if (amdgpu_ras_is_supported(adev, AMDGPU_RAS_BLOCK__PCIE_BIF) &&
-			adev->nbio.ras_if) {
-		struct ras_common_if *ras_if = adev->nbio.ras_if;
-		struct ras_ih_if ih_info = {
-			.cb = NULL,
-		};
+व्योम amdgpu_nbio_ras_fini(काष्ठा amdgpu_device *adev)
+अणु
+	अगर (amdgpu_ras_is_supported(adev, AMDGPU_RAS_BLOCK__PCIE_BIF) &&
+			adev->nbio.ras_अगर) अणु
+		काष्ठा ras_common_अगर *ras_अगर = adev->nbio.ras_अगर;
+		काष्ठा ras_ih_अगर ih_info = अणु
+			.cb = शून्य,
+		पूर्ण;
 
-		amdgpu_ras_late_fini(adev, ras_if, &ih_info);
-		kfree(ras_if);
-	}
-}
+		amdgpu_ras_late_fini(adev, ras_अगर, &ih_info);
+		kमुक्त(ras_अगर);
+	पूर्ण
+पूर्ण

@@ -1,14 +1,15 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
- * Flash support for OMAP1
+ * Flash support क्रम OMAP1
  */
 
-#ifndef __OMAP_FLASH_H
-#define __OMAP_FLASH_H
+#अगर_अघोषित __OMAP_FLASH_H
+#घोषणा __OMAP_FLASH_H
 
-#include <linux/mtd/map.h>
+#समावेश <linux/mtd/map.h>
 
-struct platform_device;
-extern void omap1_set_vpp(struct platform_device *pdev, int enable);
+काष्ठा platक्रमm_device;
+बाह्य व्योम omap1_set_vpp(काष्ठा platक्रमm_device *pdev, पूर्णांक enable);
 
-#endif
+#पूर्ण_अगर

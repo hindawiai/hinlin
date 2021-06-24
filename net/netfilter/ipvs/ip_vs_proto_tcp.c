@@ -1,211 +1,212 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * ip_vs_proto_tcp.c:	TCP load balancing support for IPVS
+ * ip_vs_proto_tcp.c:	TCP load balancing support क्रम IPVS
  *
- * Authors:     Wensong Zhang <wensong@linuxvirtualserver.org>
+ * Authors:     Wensong Zhang <wensong@linuxभवserver.org>
  *              Julian Anastasov <ja@ssi.bg>
  *
  * Changes:     Hans Schillstrom <hans.schillstrom@ericsson.com>
  *
  *              Network name space (netns) aware.
- *              Global data moved to netns i.e struct netns_ipvs
- *              tcp_timeouts table has copy per netns in a hash table per
+ *              Global data moved to netns i.e काष्ठा netns_ipvs
+ *              tcp_समयouts table has copy per netns in a hash table per
  *              protocol ip_vs_proto_data and is handled by netns
  */
 
-#define KMSG_COMPONENT "IPVS"
-#define pr_fmt(fmt) KMSG_COMPONENT ": " fmt
+#घोषणा KMSG_COMPONENT "IPVS"
+#घोषणा pr_fmt(fmt) KMSG_COMPONENT ": " fmt
 
-#include <linux/kernel.h>
-#include <linux/ip.h>
-#include <linux/tcp.h>                  /* for tcphdr */
-#include <net/ip.h>
-#include <net/tcp.h>                    /* for csum_tcpudp_magic */
-#include <net/ip6_checksum.h>
-#include <linux/netfilter.h>
-#include <linux/netfilter_ipv4.h>
-#include <linux/indirect_call_wrapper.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/ip.h>
+#समावेश <linux/tcp.h>                  /* क्रम tcphdr */
+#समावेश <net/ip.h>
+#समावेश <net/tcp.h>                    /* क्रम csum_tcpudp_magic */
+#समावेश <net/ip6_checksum.h>
+#समावेश <linux/netfilter.h>
+#समावेश <linux/netfilter_ipv4.h>
+#समावेश <linux/indirect_call_wrapper.h>
 
-#include <net/ip_vs.h>
+#समावेश <net/ip_vs.h>
 
-static int
-tcp_csum_check(int af, struct sk_buff *skb, struct ip_vs_protocol *pp);
+अटल पूर्णांक
+tcp_csum_check(पूर्णांक af, काष्ठा sk_buff *skb, काष्ठा ip_vs_protocol *pp);
 
-static int
-tcp_conn_schedule(struct netns_ipvs *ipvs, int af, struct sk_buff *skb,
-		  struct ip_vs_proto_data *pd,
-		  int *verdict, struct ip_vs_conn **cpp,
-		  struct ip_vs_iphdr *iph)
-{
-	struct ip_vs_service *svc;
-	struct tcphdr _tcph, *th;
-	__be16 _ports[2], *ports = NULL;
+अटल पूर्णांक
+tcp_conn_schedule(काष्ठा netns_ipvs *ipvs, पूर्णांक af, काष्ठा sk_buff *skb,
+		  काष्ठा ip_vs_proto_data *pd,
+		  पूर्णांक *verdict, काष्ठा ip_vs_conn **cpp,
+		  काष्ठा ip_vs_iphdr *iph)
+अणु
+	काष्ठा ip_vs_service *svc;
+	काष्ठा tcphdr _tcph, *th;
+	__be16 _ports[2], *ports = शून्य;
 
 	/* In the event of icmp, we're only guaranteed to have the first 8
 	 * bytes of the transport header, so we only check the rest of the
-	 * TCP packet for non-ICMP packets
+	 * TCP packet क्रम non-ICMP packets
 	 */
-	if (likely(!ip_vs_iph_icmp(iph))) {
-		th = skb_header_pointer(skb, iph->len, sizeof(_tcph), &_tcph);
-		if (th) {
-			if (th->rst || !(sysctl_sloppy_tcp(ipvs) || th->syn))
-				return 1;
+	अगर (likely(!ip_vs_iph_icmp(iph))) अणु
+		th = skb_header_poपूर्णांकer(skb, iph->len, माप(_tcph), &_tcph);
+		अगर (th) अणु
+			अगर (th->rst || !(sysctl_sloppy_tcp(ipvs) || th->syn))
+				वापस 1;
 			ports = &th->source;
-		}
-	} else {
-		ports = skb_header_pointer(
-			skb, iph->len, sizeof(_ports), &_ports);
-	}
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		ports = skb_header_poपूर्णांकer(
+			skb, iph->len, माप(_ports), &_ports);
+	पूर्ण
 
-	if (!ports) {
+	अगर (!ports) अणु
 		*verdict = NF_DROP;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	/* No !th->ack check to allow scheduling on SYN+ACK for Active FTP */
+	/* No !th->ack check to allow scheduling on SYN+ACK क्रम Active FTP */
 
-	if (likely(!ip_vs_iph_inverse(iph)))
+	अगर (likely(!ip_vs_iph_inverse(iph)))
 		svc = ip_vs_service_find(ipvs, af, skb->mark, iph->protocol,
 					 &iph->daddr, ports[1]);
-	else
+	अन्यथा
 		svc = ip_vs_service_find(ipvs, af, skb->mark, iph->protocol,
 					 &iph->saddr, ports[0]);
 
-	if (svc) {
-		int ignored;
+	अगर (svc) अणु
+		पूर्णांक ignored;
 
-		if (ip_vs_todrop(ipvs)) {
+		अगर (ip_vs_todrop(ipvs)) अणु
 			/*
 			 * It seems that we are very loaded.
 			 * We have to drop this packet :(
 			 */
 			*verdict = NF_DROP;
-			return 0;
-		}
+			वापस 0;
+		पूर्ण
 
 		/*
-		 * Let the virtual server select a real server for the
+		 * Let the भव server select a real server क्रम the
 		 * incoming connection, and create a connection entry.
 		 */
 		*cpp = ip_vs_schedule(svc, skb, pd, &ignored, iph);
-		if (!*cpp && ignored <= 0) {
-			if (!ignored)
+		अगर (!*cpp && ignored <= 0) अणु
+			अगर (!ignored)
 				*verdict = ip_vs_leave(svc, skb, pd, iph);
-			else
+			अन्यथा
 				*verdict = NF_DROP;
-			return 0;
-		}
-	}
+			वापस 0;
+		पूर्ण
+	पूर्ण
 	/* NF_ACCEPT */
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
 
-static inline void
-tcp_fast_csum_update(int af, struct tcphdr *tcph,
-		     const union nf_inet_addr *oldip,
-		     const union nf_inet_addr *newip,
+अटल अंतरभूत व्योम
+tcp_fast_csum_update(पूर्णांक af, काष्ठा tcphdr *tcph,
+		     स्थिर जोड़ nf_inet_addr *oldip,
+		     स्थिर जोड़ nf_inet_addr *newip,
 		     __be16 oldport, __be16 newport)
-{
-#ifdef CONFIG_IP_VS_IPV6
-	if (af == AF_INET6)
+अणु
+#अगर_घोषित CONFIG_IP_VS_IPV6
+	अगर (af == AF_INET6)
 		tcph->check =
-			csum_fold(ip_vs_check_diff16(oldip->ip6, newip->ip6,
-					 ip_vs_check_diff2(oldport, newport,
+			csum_fold(ip_vs_check_dअगरf16(oldip->ip6, newip->ip6,
+					 ip_vs_check_dअगरf2(oldport, newport,
 						~csum_unfold(tcph->check))));
-	else
-#endif
+	अन्यथा
+#पूर्ण_अगर
 	tcph->check =
-		csum_fold(ip_vs_check_diff4(oldip->ip, newip->ip,
-				 ip_vs_check_diff2(oldport, newport,
+		csum_fold(ip_vs_check_dअगरf4(oldip->ip, newip->ip,
+				 ip_vs_check_dअगरf2(oldport, newport,
 						~csum_unfold(tcph->check))));
-}
+पूर्ण
 
 
-static inline void
-tcp_partial_csum_update(int af, struct tcphdr *tcph,
-		     const union nf_inet_addr *oldip,
-		     const union nf_inet_addr *newip,
+अटल अंतरभूत व्योम
+tcp_partial_csum_update(पूर्णांक af, काष्ठा tcphdr *tcph,
+		     स्थिर जोड़ nf_inet_addr *oldip,
+		     स्थिर जोड़ nf_inet_addr *newip,
 		     __be16 oldlen, __be16 newlen)
-{
-#ifdef CONFIG_IP_VS_IPV6
-	if (af == AF_INET6)
+अणु
+#अगर_घोषित CONFIG_IP_VS_IPV6
+	अगर (af == AF_INET6)
 		tcph->check =
-			~csum_fold(ip_vs_check_diff16(oldip->ip6, newip->ip6,
-					 ip_vs_check_diff2(oldlen, newlen,
+			~csum_fold(ip_vs_check_dअगरf16(oldip->ip6, newip->ip6,
+					 ip_vs_check_dअगरf2(oldlen, newlen,
 						csum_unfold(tcph->check))));
-	else
-#endif
+	अन्यथा
+#पूर्ण_अगर
 	tcph->check =
-		~csum_fold(ip_vs_check_diff4(oldip->ip, newip->ip,
-				ip_vs_check_diff2(oldlen, newlen,
+		~csum_fold(ip_vs_check_dअगरf4(oldip->ip, newip->ip,
+				ip_vs_check_dअगरf2(oldlen, newlen,
 						csum_unfold(tcph->check))));
-}
+पूर्ण
 
 
-INDIRECT_CALLABLE_SCOPE int
-tcp_snat_handler(struct sk_buff *skb, struct ip_vs_protocol *pp,
-		 struct ip_vs_conn *cp, struct ip_vs_iphdr *iph)
-{
-	struct tcphdr *tcph;
-	unsigned int tcphoff = iph->len;
+INसूचीECT_CALLABLE_SCOPE पूर्णांक
+tcp_snat_handler(काष्ठा sk_buff *skb, काष्ठा ip_vs_protocol *pp,
+		 काष्ठा ip_vs_conn *cp, काष्ठा ip_vs_iphdr *iph)
+अणु
+	काष्ठा tcphdr *tcph;
+	अचिन्हित पूर्णांक tcphoff = iph->len;
 	bool payload_csum = false;
-	int oldlen;
+	पूर्णांक oldlen;
 
-#ifdef CONFIG_IP_VS_IPV6
-	if (cp->af == AF_INET6 && iph->fragoffs)
-		return 1;
-#endif
+#अगर_घोषित CONFIG_IP_VS_IPV6
+	अगर (cp->af == AF_INET6 && iph->fragoffs)
+		वापस 1;
+#पूर्ण_अगर
 	oldlen = skb->len - tcphoff;
 
 	/* csum_check requires unshared skb */
-	if (skb_ensure_writable(skb, tcphoff + sizeof(*tcph)))
-		return 0;
+	अगर (skb_ensure_writable(skb, tcphoff + माप(*tcph)))
+		वापस 0;
 
-	if (unlikely(cp->app != NULL)) {
-		int ret;
+	अगर (unlikely(cp->app != शून्य)) अणु
+		पूर्णांक ret;
 
-		/* Some checks before mangling */
-		if (!tcp_csum_check(cp->af, skb, pp))
-			return 0;
+		/* Some checks beक्रमe mangling */
+		अगर (!tcp_csum_check(cp->af, skb, pp))
+			वापस 0;
 
-		/* Call application helper if needed */
-		if (!(ret = ip_vs_app_pkt_out(cp, skb, iph)))
-			return 0;
+		/* Call application helper अगर needed */
+		अगर (!(ret = ip_vs_app_pkt_out(cp, skb, iph)))
+			वापस 0;
 		/* ret=2: csum update is needed after payload mangling */
-		if (ret == 1)
+		अगर (ret == 1)
 			oldlen = skb->len - tcphoff;
-		else
+		अन्यथा
 			payload_csum = true;
-	}
+	पूर्ण
 
-	tcph = (void *)skb_network_header(skb) + tcphoff;
+	tcph = (व्योम *)skb_network_header(skb) + tcphoff;
 	tcph->source = cp->vport;
 
 	/* Adjust TCP checksums */
-	if (skb->ip_summed == CHECKSUM_PARTIAL) {
+	अगर (skb->ip_summed == CHECKSUM_PARTIAL) अणु
 		tcp_partial_csum_update(cp->af, tcph, &cp->daddr, &cp->vaddr,
 					htons(oldlen),
 					htons(skb->len - tcphoff));
-	} else if (!payload_csum) {
-		/* Only port and addr are changed, do fast csum update */
+	पूर्ण अन्यथा अगर (!payload_csum) अणु
+		/* Only port and addr are changed, करो fast csum update */
 		tcp_fast_csum_update(cp->af, tcph, &cp->daddr, &cp->vaddr,
 				     cp->dport, cp->vport);
-		if (skb->ip_summed == CHECKSUM_COMPLETE)
+		अगर (skb->ip_summed == CHECKSUM_COMPLETE)
 			skb->ip_summed = cp->app ?
 					 CHECKSUM_UNNECESSARY : CHECKSUM_NONE;
-	} else {
+	पूर्ण अन्यथा अणु
 		/* full checksum calculation */
 		tcph->check = 0;
 		skb->csum = skb_checksum(skb, tcphoff, skb->len - tcphoff, 0);
-#ifdef CONFIG_IP_VS_IPV6
-		if (cp->af == AF_INET6)
+#अगर_घोषित CONFIG_IP_VS_IPV6
+		अगर (cp->af == AF_INET6)
 			tcph->check = csum_ipv6_magic(&cp->vaddr.in6,
 						      &cp->caddr.in6,
 						      skb->len - tcphoff,
 						      cp->protocol, skb->csum);
-		else
-#endif
+		अन्यथा
+#पूर्ण_अगर
 			tcph->check = csum_tcpudp_magic(cp->vaddr.ip,
 							cp->caddr.ip,
 							skb->len - tcphoff,
@@ -215,154 +216,154 @@ tcp_snat_handler(struct sk_buff *skb, struct ip_vs_protocol *pp,
 
 		IP_VS_DBG(11, "O-pkt: %s O-csum=%d (+%zd)\n",
 			  pp->name, tcph->check,
-			  (char*)&(tcph->check) - (char*)tcph);
-	}
-	return 1;
-}
+			  (अक्षर*)&(tcph->check) - (अक्षर*)tcph);
+	पूर्ण
+	वापस 1;
+पूर्ण
 
 
-static int
-tcp_dnat_handler(struct sk_buff *skb, struct ip_vs_protocol *pp,
-		 struct ip_vs_conn *cp, struct ip_vs_iphdr *iph)
-{
-	struct tcphdr *tcph;
-	unsigned int tcphoff = iph->len;
+अटल पूर्णांक
+tcp_dnat_handler(काष्ठा sk_buff *skb, काष्ठा ip_vs_protocol *pp,
+		 काष्ठा ip_vs_conn *cp, काष्ठा ip_vs_iphdr *iph)
+अणु
+	काष्ठा tcphdr *tcph;
+	अचिन्हित पूर्णांक tcphoff = iph->len;
 	bool payload_csum = false;
-	int oldlen;
+	पूर्णांक oldlen;
 
-#ifdef CONFIG_IP_VS_IPV6
-	if (cp->af == AF_INET6 && iph->fragoffs)
-		return 1;
-#endif
+#अगर_घोषित CONFIG_IP_VS_IPV6
+	अगर (cp->af == AF_INET6 && iph->fragoffs)
+		वापस 1;
+#पूर्ण_अगर
 	oldlen = skb->len - tcphoff;
 
 	/* csum_check requires unshared skb */
-	if (skb_ensure_writable(skb, tcphoff + sizeof(*tcph)))
-		return 0;
+	अगर (skb_ensure_writable(skb, tcphoff + माप(*tcph)))
+		वापस 0;
 
-	if (unlikely(cp->app != NULL)) {
-		int ret;
+	अगर (unlikely(cp->app != शून्य)) अणु
+		पूर्णांक ret;
 
-		/* Some checks before mangling */
-		if (!tcp_csum_check(cp->af, skb, pp))
-			return 0;
+		/* Some checks beक्रमe mangling */
+		अगर (!tcp_csum_check(cp->af, skb, pp))
+			वापस 0;
 
 		/*
 		 *	Attempt ip_vs_app call.
 		 *	It will fix ip_vs_conn and iph ack_seq stuff
 		 */
-		if (!(ret = ip_vs_app_pkt_in(cp, skb, iph)))
-			return 0;
+		अगर (!(ret = ip_vs_app_pkt_in(cp, skb, iph)))
+			वापस 0;
 		/* ret=2: csum update is needed after payload mangling */
-		if (ret == 1)
+		अगर (ret == 1)
 			oldlen = skb->len - tcphoff;
-		else
+		अन्यथा
 			payload_csum = true;
-	}
+	पूर्ण
 
-	tcph = (void *)skb_network_header(skb) + tcphoff;
+	tcph = (व्योम *)skb_network_header(skb) + tcphoff;
 	tcph->dest = cp->dport;
 
 	/*
 	 *	Adjust TCP checksums
 	 */
-	if (skb->ip_summed == CHECKSUM_PARTIAL) {
+	अगर (skb->ip_summed == CHECKSUM_PARTIAL) अणु
 		tcp_partial_csum_update(cp->af, tcph, &cp->vaddr, &cp->daddr,
 					htons(oldlen),
 					htons(skb->len - tcphoff));
-	} else if (!payload_csum) {
-		/* Only port and addr are changed, do fast csum update */
+	पूर्ण अन्यथा अगर (!payload_csum) अणु
+		/* Only port and addr are changed, करो fast csum update */
 		tcp_fast_csum_update(cp->af, tcph, &cp->vaddr, &cp->daddr,
 				     cp->vport, cp->dport);
-		if (skb->ip_summed == CHECKSUM_COMPLETE)
+		अगर (skb->ip_summed == CHECKSUM_COMPLETE)
 			skb->ip_summed = cp->app ?
 					 CHECKSUM_UNNECESSARY : CHECKSUM_NONE;
-	} else {
+	पूर्ण अन्यथा अणु
 		/* full checksum calculation */
 		tcph->check = 0;
 		skb->csum = skb_checksum(skb, tcphoff, skb->len - tcphoff, 0);
-#ifdef CONFIG_IP_VS_IPV6
-		if (cp->af == AF_INET6)
+#अगर_घोषित CONFIG_IP_VS_IPV6
+		अगर (cp->af == AF_INET6)
 			tcph->check = csum_ipv6_magic(&cp->caddr.in6,
 						      &cp->daddr.in6,
 						      skb->len - tcphoff,
 						      cp->protocol, skb->csum);
-		else
-#endif
+		अन्यथा
+#पूर्ण_अगर
 			tcph->check = csum_tcpudp_magic(cp->caddr.ip,
 							cp->daddr.ip,
 							skb->len - tcphoff,
 							cp->protocol,
 							skb->csum);
 		skb->ip_summed = CHECKSUM_UNNECESSARY;
-	}
-	return 1;
-}
+	पूर्ण
+	वापस 1;
+पूर्ण
 
 
-static int
-tcp_csum_check(int af, struct sk_buff *skb, struct ip_vs_protocol *pp)
-{
-	unsigned int tcphoff;
+अटल पूर्णांक
+tcp_csum_check(पूर्णांक af, काष्ठा sk_buff *skb, काष्ठा ip_vs_protocol *pp)
+अणु
+	अचिन्हित पूर्णांक tcphoff;
 
-#ifdef CONFIG_IP_VS_IPV6
-	if (af == AF_INET6)
-		tcphoff = sizeof(struct ipv6hdr);
-	else
-#endif
+#अगर_घोषित CONFIG_IP_VS_IPV6
+	अगर (af == AF_INET6)
+		tcphoff = माप(काष्ठा ipv6hdr);
+	अन्यथा
+#पूर्ण_अगर
 		tcphoff = ip_hdrlen(skb);
 
-	switch (skb->ip_summed) {
-	case CHECKSUM_NONE:
+	चयन (skb->ip_summed) अणु
+	हाल CHECKSUM_NONE:
 		skb->csum = skb_checksum(skb, tcphoff, skb->len - tcphoff, 0);
 		fallthrough;
-	case CHECKSUM_COMPLETE:
-#ifdef CONFIG_IP_VS_IPV6
-		if (af == AF_INET6) {
-			if (csum_ipv6_magic(&ipv6_hdr(skb)->saddr,
+	हाल CHECKSUM_COMPLETE:
+#अगर_घोषित CONFIG_IP_VS_IPV6
+		अगर (af == AF_INET6) अणु
+			अगर (csum_ipv6_magic(&ipv6_hdr(skb)->saddr,
 					    &ipv6_hdr(skb)->daddr,
 					    skb->len - tcphoff,
 					    ipv6_hdr(skb)->nexthdr,
-					    skb->csum)) {
+					    skb->csum)) अणु
 				IP_VS_DBG_RL_PKT(0, af, pp, skb, 0,
 						 "Failed checksum for");
-				return 0;
-			}
-		} else
-#endif
-			if (csum_tcpudp_magic(ip_hdr(skb)->saddr,
+				वापस 0;
+			पूर्ण
+		पूर्ण अन्यथा
+#पूर्ण_अगर
+			अगर (csum_tcpudp_magic(ip_hdr(skb)->saddr,
 					      ip_hdr(skb)->daddr,
 					      skb->len - tcphoff,
 					      ip_hdr(skb)->protocol,
-					      skb->csum)) {
+					      skb->csum)) अणु
 				IP_VS_DBG_RL_PKT(0, af, pp, skb, 0,
 						 "Failed checksum for");
-				return 0;
-			}
-		break;
-	default:
+				वापस 0;
+			पूर्ण
+		अवरोध;
+	शेष:
 		/* No need to checksum. */
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
 
-#define TCP_DIR_INPUT		0
-#define TCP_DIR_OUTPUT		4
-#define TCP_DIR_INPUT_ONLY	8
+#घोषणा TCP_सूची_INPUT		0
+#घोषणा TCP_सूची_OUTPUT		4
+#घोषणा TCP_सूची_INPUT_ONLY	8
 
-static const int tcp_state_off[IP_VS_DIR_LAST] = {
-	[IP_VS_DIR_INPUT]		=	TCP_DIR_INPUT,
-	[IP_VS_DIR_OUTPUT]		=	TCP_DIR_OUTPUT,
-	[IP_VS_DIR_INPUT_ONLY]		=	TCP_DIR_INPUT_ONLY,
-};
+अटल स्थिर पूर्णांक tcp_state_off[IP_VS_सूची_LAST] = अणु
+	[IP_VS_सूची_INPUT]		=	TCP_सूची_INPUT,
+	[IP_VS_सूची_OUTPUT]		=	TCP_सूची_OUTPUT,
+	[IP_VS_सूची_INPUT_ONLY]		=	TCP_सूची_INPUT_ONLY,
+पूर्ण;
 
 /*
  *	Timeout table[state]
  */
-static const int tcp_timeouts[IP_VS_TCP_S_LAST+1] = {
+अटल स्थिर पूर्णांक tcp_समयouts[IP_VS_TCP_S_LAST+1] = अणु
 	[IP_VS_TCP_S_NONE]		=	2*HZ,
 	[IP_VS_TCP_S_ESTABLISHED]	=	15*60*HZ,
 	[IP_VS_TCP_S_SYN_SENT]		=	2*60*HZ,
@@ -375,9 +376,9 @@ static const int tcp_timeouts[IP_VS_TCP_S_LAST+1] = {
 	[IP_VS_TCP_S_LISTEN]		=	2*60*HZ,
 	[IP_VS_TCP_S_SYNACK]		=	120*HZ,
 	[IP_VS_TCP_S_LAST]		=	2*HZ,
-};
+पूर्ण;
 
-static const char *const tcp_state_name_table[IP_VS_TCP_S_LAST+1] = {
+अटल स्थिर अक्षर *स्थिर tcp_state_name_table[IP_VS_TCP_S_LAST+1] = अणु
 	[IP_VS_TCP_S_NONE]		=	"NONE",
 	[IP_VS_TCP_S_ESTABLISHED]	=	"ESTABLISHED",
 	[IP_VS_TCP_S_SYN_SENT]		=	"SYN_SENT",
@@ -390,9 +391,9 @@ static const char *const tcp_state_name_table[IP_VS_TCP_S_LAST+1] = {
 	[IP_VS_TCP_S_LISTEN]		=	"LISTEN",
 	[IP_VS_TCP_S_SYNACK]		=	"SYNACK",
 	[IP_VS_TCP_S_LAST]		=	"BUG!",
-};
+पूर्ण;
 
-static const bool tcp_state_active_table[IP_VS_TCP_S_LAST] = {
+अटल स्थिर bool tcp_state_active_table[IP_VS_TCP_S_LAST] = अणु
 	[IP_VS_TCP_S_NONE]		=	false,
 	[IP_VS_TCP_S_ESTABLISHED]	=	true,
 	[IP_VS_TCP_S_SYN_SENT]		=	true,
@@ -404,145 +405,145 @@ static const bool tcp_state_active_table[IP_VS_TCP_S_LAST] = {
 	[IP_VS_TCP_S_LAST_ACK]		=	false,
 	[IP_VS_TCP_S_LISTEN]		=	false,
 	[IP_VS_TCP_S_SYNACK]		=	true,
-};
+पूर्ण;
 
-#define sNO IP_VS_TCP_S_NONE
-#define sES IP_VS_TCP_S_ESTABLISHED
-#define sSS IP_VS_TCP_S_SYN_SENT
-#define sSR IP_VS_TCP_S_SYN_RECV
-#define sFW IP_VS_TCP_S_FIN_WAIT
-#define sTW IP_VS_TCP_S_TIME_WAIT
-#define sCL IP_VS_TCP_S_CLOSE
-#define sCW IP_VS_TCP_S_CLOSE_WAIT
-#define sLA IP_VS_TCP_S_LAST_ACK
-#define sLI IP_VS_TCP_S_LISTEN
-#define sSA IP_VS_TCP_S_SYNACK
+#घोषणा sNO IP_VS_TCP_S_NONE
+#घोषणा sES IP_VS_TCP_S_ESTABLISHED
+#घोषणा sSS IP_VS_TCP_S_SYN_SENT
+#घोषणा sSR IP_VS_TCP_S_SYN_RECV
+#घोषणा sFW IP_VS_TCP_S_FIN_WAIT
+#घोषणा sTW IP_VS_TCP_S_TIME_WAIT
+#घोषणा sCL IP_VS_TCP_S_CLOSE
+#घोषणा sCW IP_VS_TCP_S_CLOSE_WAIT
+#घोषणा sLA IP_VS_TCP_S_LAST_ACK
+#घोषणा sLI IP_VS_TCP_S_LISTEN
+#घोषणा sSA IP_VS_TCP_S_SYNACK
 
-struct tcp_states_t {
-	int next_state[IP_VS_TCP_S_LAST];
-};
+काष्ठा tcp_states_t अणु
+	पूर्णांक next_state[IP_VS_TCP_S_LAST];
+पूर्ण;
 
-static const char * tcp_state_name(int state)
-{
-	if (state >= IP_VS_TCP_S_LAST)
-		return "ERR!";
-	return tcp_state_name_table[state] ? tcp_state_name_table[state] : "?";
-}
+अटल स्थिर अक्षर * tcp_state_name(पूर्णांक state)
+अणु
+	अगर (state >= IP_VS_TCP_S_LAST)
+		वापस "ERR!";
+	वापस tcp_state_name_table[state] ? tcp_state_name_table[state] : "?";
+पूर्ण
 
-static bool tcp_state_active(int state)
-{
-	if (state >= IP_VS_TCP_S_LAST)
-		return false;
-	return tcp_state_active_table[state];
-}
+अटल bool tcp_state_active(पूर्णांक state)
+अणु
+	अगर (state >= IP_VS_TCP_S_LAST)
+		वापस false;
+	वापस tcp_state_active_table[state];
+पूर्ण
 
-static struct tcp_states_t tcp_states[] = {
+अटल काष्ठा tcp_states_t tcp_states[] = अणु
 /*	INPUT */
 /*        sNO, sES, sSS, sSR, sFW, sTW, sCL, sCW, sLA, sLI, sSA	*/
-/*syn*/ {{sSR, sES, sES, sSR, sSR, sSR, sSR, sSR, sSR, sSR, sSR }},
-/*fin*/ {{sCL, sCW, sSS, sTW, sTW, sTW, sCL, sCW, sLA, sLI, sTW }},
-/*ack*/ {{sES, sES, sSS, sES, sFW, sTW, sCL, sCW, sCL, sLI, sES }},
-/*rst*/ {{sCL, sCL, sCL, sSR, sCL, sCL, sCL, sCL, sLA, sLI, sSR }},
+/*syn*/ अणुअणुsSR, sES, sES, sSR, sSR, sSR, sSR, sSR, sSR, sSR, sSR पूर्णपूर्ण,
+/*fin*/ अणुअणुsCL, sCW, sSS, sTW, sTW, sTW, sCL, sCW, sLA, sLI, sTW पूर्णपूर्ण,
+/*ack*/ अणुअणुsES, sES, sSS, sES, sFW, sTW, sCL, sCW, sCL, sLI, sES पूर्णपूर्ण,
+/*rst*/ अणुअणुsCL, sCL, sCL, sSR, sCL, sCL, sCL, sCL, sLA, sLI, sSR पूर्णपूर्ण,
 
 /*	OUTPUT */
 /*        sNO, sES, sSS, sSR, sFW, sTW, sCL, sCW, sLA, sLI, sSA	*/
-/*syn*/ {{sSS, sES, sSS, sSR, sSS, sSS, sSS, sSS, sSS, sLI, sSR }},
-/*fin*/ {{sTW, sFW, sSS, sTW, sFW, sTW, sCL, sTW, sLA, sLI, sTW }},
-/*ack*/ {{sES, sES, sSS, sES, sFW, sTW, sCL, sCW, sLA, sES, sES }},
-/*rst*/ {{sCL, sCL, sSS, sCL, sCL, sTW, sCL, sCL, sCL, sCL, sCL }},
+/*syn*/ अणुअणुsSS, sES, sSS, sSR, sSS, sSS, sSS, sSS, sSS, sLI, sSR पूर्णपूर्ण,
+/*fin*/ अणुअणुsTW, sFW, sSS, sTW, sFW, sTW, sCL, sTW, sLA, sLI, sTW पूर्णपूर्ण,
+/*ack*/ अणुअणुsES, sES, sSS, sES, sFW, sTW, sCL, sCW, sLA, sES, sES पूर्णपूर्ण,
+/*rst*/ अणुअणुsCL, sCL, sSS, sCL, sCL, sTW, sCL, sCL, sCL, sCL, sCL पूर्णपूर्ण,
 
 /*	INPUT-ONLY */
 /*        sNO, sES, sSS, sSR, sFW, sTW, sCL, sCW, sLA, sLI, sSA	*/
-/*syn*/ {{sSR, sES, sES, sSR, sSR, sSR, sSR, sSR, sSR, sSR, sSR }},
-/*fin*/ {{sCL, sFW, sSS, sTW, sFW, sTW, sCL, sCW, sLA, sLI, sTW }},
-/*ack*/ {{sES, sES, sSS, sES, sFW, sTW, sCL, sCW, sCL, sLI, sES }},
-/*rst*/ {{sCL, sCL, sCL, sSR, sCL, sCL, sCL, sCL, sLA, sLI, sCL }},
-};
+/*syn*/ अणुअणुsSR, sES, sES, sSR, sSR, sSR, sSR, sSR, sSR, sSR, sSR पूर्णपूर्ण,
+/*fin*/ अणुअणुsCL, sFW, sSS, sTW, sFW, sTW, sCL, sCW, sLA, sLI, sTW पूर्णपूर्ण,
+/*ack*/ अणुअणुsES, sES, sSS, sES, sFW, sTW, sCL, sCW, sCL, sLI, sES पूर्णपूर्ण,
+/*rst*/ अणुअणुsCL, sCL, sCL, sSR, sCL, sCL, sCL, sCL, sLA, sLI, sCL पूर्णपूर्ण,
+पूर्ण;
 
-static struct tcp_states_t tcp_states_dos[] = {
+अटल काष्ठा tcp_states_t tcp_states_करोs[] = अणु
 /*	INPUT */
 /*        sNO, sES, sSS, sSR, sFW, sTW, sCL, sCW, sLA, sLI, sSA	*/
-/*syn*/ {{sSR, sES, sES, sSR, sSR, sSR, sSR, sSR, sSR, sSR, sSA }},
-/*fin*/ {{sCL, sCW, sSS, sTW, sTW, sTW, sCL, sCW, sLA, sLI, sSA }},
-/*ack*/ {{sES, sES, sSS, sSR, sFW, sTW, sCL, sCW, sCL, sLI, sSA }},
-/*rst*/ {{sCL, sCL, sCL, sSR, sCL, sCL, sCL, sCL, sLA, sLI, sCL }},
+/*syn*/ अणुअणुsSR, sES, sES, sSR, sSR, sSR, sSR, sSR, sSR, sSR, sSA पूर्णपूर्ण,
+/*fin*/ अणुअणुsCL, sCW, sSS, sTW, sTW, sTW, sCL, sCW, sLA, sLI, sSA पूर्णपूर्ण,
+/*ack*/ अणुअणुsES, sES, sSS, sSR, sFW, sTW, sCL, sCW, sCL, sLI, sSA पूर्णपूर्ण,
+/*rst*/ अणुअणुsCL, sCL, sCL, sSR, sCL, sCL, sCL, sCL, sLA, sLI, sCL पूर्णपूर्ण,
 
 /*	OUTPUT */
 /*        sNO, sES, sSS, sSR, sFW, sTW, sCL, sCW, sLA, sLI, sSA	*/
-/*syn*/ {{sSS, sES, sSS, sSA, sSS, sSS, sSS, sSS, sSS, sLI, sSA }},
-/*fin*/ {{sTW, sFW, sSS, sTW, sFW, sTW, sCL, sTW, sLA, sLI, sTW }},
-/*ack*/ {{sES, sES, sSS, sES, sFW, sTW, sCL, sCW, sLA, sES, sES }},
-/*rst*/ {{sCL, sCL, sSS, sCL, sCL, sTW, sCL, sCL, sCL, sCL, sCL }},
+/*syn*/ अणुअणुsSS, sES, sSS, sSA, sSS, sSS, sSS, sSS, sSS, sLI, sSA पूर्णपूर्ण,
+/*fin*/ अणुअणुsTW, sFW, sSS, sTW, sFW, sTW, sCL, sTW, sLA, sLI, sTW पूर्णपूर्ण,
+/*ack*/ अणुअणुsES, sES, sSS, sES, sFW, sTW, sCL, sCW, sLA, sES, sES पूर्णपूर्ण,
+/*rst*/ अणुअणुsCL, sCL, sSS, sCL, sCL, sTW, sCL, sCL, sCL, sCL, sCL पूर्णपूर्ण,
 
 /*	INPUT-ONLY */
 /*        sNO, sES, sSS, sSR, sFW, sTW, sCL, sCW, sLA, sLI, sSA	*/
-/*syn*/ {{sSA, sES, sES, sSR, sSA, sSA, sSA, sSA, sSA, sSA, sSA }},
-/*fin*/ {{sCL, sFW, sSS, sTW, sFW, sTW, sCL, sCW, sLA, sLI, sTW }},
-/*ack*/ {{sES, sES, sSS, sES, sFW, sTW, sCL, sCW, sCL, sLI, sES }},
-/*rst*/ {{sCL, sCL, sCL, sSR, sCL, sCL, sCL, sCL, sLA, sLI, sCL }},
-};
+/*syn*/ अणुअणुsSA, sES, sES, sSR, sSA, sSA, sSA, sSA, sSA, sSA, sSA पूर्णपूर्ण,
+/*fin*/ अणुअणुsCL, sFW, sSS, sTW, sFW, sTW, sCL, sCW, sLA, sLI, sTW पूर्णपूर्ण,
+/*ack*/ अणुअणुsES, sES, sSS, sES, sFW, sTW, sCL, sCW, sCL, sLI, sES पूर्णपूर्ण,
+/*rst*/ अणुअणुsCL, sCL, sCL, sSR, sCL, sCL, sCL, sCL, sLA, sLI, sCL पूर्णपूर्ण,
+पूर्ण;
 
-static void tcp_timeout_change(struct ip_vs_proto_data *pd, int flags)
-{
-	int on = (flags & 1);		/* secure_tcp */
+अटल व्योम tcp_समयout_change(काष्ठा ip_vs_proto_data *pd, पूर्णांक flags)
+अणु
+	पूर्णांक on = (flags & 1);		/* secure_tcp */
 
 	/*
 	** FIXME: change secure_tcp to independent sysctl var
 	** or make it per-service or per-app because it is valid
-	** for most if not for all of the applications. Something
-	** like "capabilities" (flags) for each object.
+	** क्रम most अगर not क्रम all of the applications. Something
+	** like "capabilities" (flags) क्रम each object.
 	*/
-	pd->tcp_state_table = (on ? tcp_states_dos : tcp_states);
-}
+	pd->tcp_state_table = (on ? tcp_states_करोs : tcp_states);
+पूर्ण
 
-static inline int tcp_state_idx(struct tcphdr *th)
-{
-	if (th->rst)
-		return 3;
-	if (th->syn)
-		return 0;
-	if (th->fin)
-		return 1;
-	if (th->ack)
-		return 2;
-	return -1;
-}
+अटल अंतरभूत पूर्णांक tcp_state_idx(काष्ठा tcphdr *th)
+अणु
+	अगर (th->rst)
+		वापस 3;
+	अगर (th->syn)
+		वापस 0;
+	अगर (th->fin)
+		वापस 1;
+	अगर (th->ack)
+		वापस 2;
+	वापस -1;
+पूर्ण
 
-static inline void
-set_tcp_state(struct ip_vs_proto_data *pd, struct ip_vs_conn *cp,
-	      int direction, struct tcphdr *th)
-{
-	int state_idx;
-	int new_state = IP_VS_TCP_S_CLOSE;
-	int state_off = tcp_state_off[direction];
+अटल अंतरभूत व्योम
+set_tcp_state(काष्ठा ip_vs_proto_data *pd, काष्ठा ip_vs_conn *cp,
+	      पूर्णांक direction, काष्ठा tcphdr *th)
+अणु
+	पूर्णांक state_idx;
+	पूर्णांक new_state = IP_VS_TCP_S_CLOSE;
+	पूर्णांक state_off = tcp_state_off[direction];
 
 	/*
-	 *    Update state offset to INPUT_ONLY if necessary
-	 *    or delete NO_OUTPUT flag if output packet detected
+	 *    Update state offset to INPUT_ONLY अगर necessary
+	 *    or delete NO_OUTPUT flag अगर output packet detected
 	 */
-	if (cp->flags & IP_VS_CONN_F_NOOUTPUT) {
-		if (state_off == TCP_DIR_OUTPUT)
+	अगर (cp->flags & IP_VS_CONN_F_NOOUTPUT) अणु
+		अगर (state_off == TCP_सूची_OUTPUT)
 			cp->flags &= ~IP_VS_CONN_F_NOOUTPUT;
-		else
-			state_off = TCP_DIR_INPUT_ONLY;
-	}
+		अन्यथा
+			state_off = TCP_सूची_INPUT_ONLY;
+	पूर्ण
 
-	if ((state_idx = tcp_state_idx(th)) < 0) {
+	अगर ((state_idx = tcp_state_idx(th)) < 0) अणु
 		IP_VS_DBG(8, "tcp_state_idx=%d!!!\n", state_idx);
-		goto tcp_state_out;
-	}
+		जाओ tcp_state_out;
+	पूर्ण
 
 	new_state =
 		pd->tcp_state_table[state_off+state_idx].next_state[cp->state];
 
   tcp_state_out:
-	if (new_state != cp->state) {
-		struct ip_vs_dest *dest = cp->dest;
+	अगर (new_state != cp->state) अणु
+		काष्ठा ip_vs_dest *dest = cp->dest;
 
 		IP_VS_DBG_BUF(8, "%s %s [%c%c%c%c] c:%s:%d v:%s:%d "
 			      "d:%s:%d state: %s->%s conn->refcnt:%d\n",
 			      pd->pp->name,
-			      ((state_off == TCP_DIR_OUTPUT) ?
+			      ((state_off == TCP_सूची_OUTPUT) ?
 			       "output " : "input "),
 			      th->syn ? 'S' : '.',
 			      th->fin ? 'F' : '.',
@@ -556,116 +557,116 @@ set_tcp_state(struct ip_vs_proto_data *pd, struct ip_vs_conn *cp,
 			      ntohs(cp->dport),
 			      tcp_state_name(cp->state),
 			      tcp_state_name(new_state),
-			      refcount_read(&cp->refcnt));
+			      refcount_पढ़ो(&cp->refcnt));
 
-		if (dest) {
-			if (!(cp->flags & IP_VS_CONN_F_INACTIVE) &&
-			    !tcp_state_active(new_state)) {
+		अगर (dest) अणु
+			अगर (!(cp->flags & IP_VS_CONN_F_INACTIVE) &&
+			    !tcp_state_active(new_state)) अणु
 				atomic_dec(&dest->activeconns);
 				atomic_inc(&dest->inactconns);
 				cp->flags |= IP_VS_CONN_F_INACTIVE;
-			} else if ((cp->flags & IP_VS_CONN_F_INACTIVE) &&
-				   tcp_state_active(new_state)) {
+			पूर्ण अन्यथा अगर ((cp->flags & IP_VS_CONN_F_INACTIVE) &&
+				   tcp_state_active(new_state)) अणु
 				atomic_inc(&dest->activeconns);
 				atomic_dec(&dest->inactconns);
 				cp->flags &= ~IP_VS_CONN_F_INACTIVE;
-			}
-		}
-		if (new_state == IP_VS_TCP_S_ESTABLISHED)
+			पूर्ण
+		पूर्ण
+		अगर (new_state == IP_VS_TCP_S_ESTABLISHED)
 			ip_vs_control_assure_ct(cp);
-	}
+	पूर्ण
 
-	if (likely(pd))
-		cp->timeout = pd->timeout_table[cp->state = new_state];
-	else	/* What to do ? */
-		cp->timeout = tcp_timeouts[cp->state = new_state];
-}
+	अगर (likely(pd))
+		cp->समयout = pd->समयout_table[cp->state = new_state];
+	अन्यथा	/* What to करो ? */
+		cp->समयout = tcp_समयouts[cp->state = new_state];
+पूर्ण
 
 /*
  *	Handle state transitions
  */
-static void
-tcp_state_transition(struct ip_vs_conn *cp, int direction,
-		     const struct sk_buff *skb,
-		     struct ip_vs_proto_data *pd)
-{
-	struct tcphdr _tcph, *th;
+अटल व्योम
+tcp_state_transition(काष्ठा ip_vs_conn *cp, पूर्णांक direction,
+		     स्थिर काष्ठा sk_buff *skb,
+		     काष्ठा ip_vs_proto_data *pd)
+अणु
+	काष्ठा tcphdr _tcph, *th;
 
-#ifdef CONFIG_IP_VS_IPV6
-	int ihl = cp->af == AF_INET ? ip_hdrlen(skb) : sizeof(struct ipv6hdr);
-#else
-	int ihl = ip_hdrlen(skb);
-#endif
+#अगर_घोषित CONFIG_IP_VS_IPV6
+	पूर्णांक ihl = cp->af == AF_INET ? ip_hdrlen(skb) : माप(काष्ठा ipv6hdr);
+#अन्यथा
+	पूर्णांक ihl = ip_hdrlen(skb);
+#पूर्ण_अगर
 
-	th = skb_header_pointer(skb, ihl, sizeof(_tcph), &_tcph);
-	if (th == NULL)
-		return;
+	th = skb_header_poपूर्णांकer(skb, ihl, माप(_tcph), &_tcph);
+	अगर (th == शून्य)
+		वापस;
 
 	spin_lock_bh(&cp->lock);
 	set_tcp_state(pd, cp, direction, th);
 	spin_unlock_bh(&cp->lock);
-}
+पूर्ण
 
-static inline __u16 tcp_app_hashkey(__be16 port)
-{
-	return (((__force u16)port >> TCP_APP_TAB_BITS) ^ (__force u16)port)
+अटल अंतरभूत __u16 tcp_app_hashkey(__be16 port)
+अणु
+	वापस (((__क्रमce u16)port >> TCP_APP_TAB_BITS) ^ (__क्रमce u16)port)
 		& TCP_APP_TAB_MASK;
-}
+पूर्ण
 
 
-static int tcp_register_app(struct netns_ipvs *ipvs, struct ip_vs_app *inc)
-{
-	struct ip_vs_app *i;
+अटल पूर्णांक tcp_रेजिस्टर_app(काष्ठा netns_ipvs *ipvs, काष्ठा ip_vs_app *inc)
+अणु
+	काष्ठा ip_vs_app *i;
 	__u16 hash;
 	__be16 port = inc->port;
-	int ret = 0;
-	struct ip_vs_proto_data *pd = ip_vs_proto_data_get(ipvs, IPPROTO_TCP);
+	पूर्णांक ret = 0;
+	काष्ठा ip_vs_proto_data *pd = ip_vs_proto_data_get(ipvs, IPPROTO_TCP);
 
 	hash = tcp_app_hashkey(port);
 
-	list_for_each_entry(i, &ipvs->tcp_apps[hash], p_list) {
-		if (i->port == port) {
+	list_क्रम_each_entry(i, &ipvs->tcp_apps[hash], p_list) अणु
+		अगर (i->port == port) अणु
 			ret = -EEXIST;
-			goto out;
-		}
-	}
+			जाओ out;
+		पूर्ण
+	पूर्ण
 	list_add_rcu(&inc->p_list, &ipvs->tcp_apps[hash]);
 	atomic_inc(&pd->appcnt);
 
   out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 
-static void
-tcp_unregister_app(struct netns_ipvs *ipvs, struct ip_vs_app *inc)
-{
-	struct ip_vs_proto_data *pd = ip_vs_proto_data_get(ipvs, IPPROTO_TCP);
+अटल व्योम
+tcp_unरेजिस्टर_app(काष्ठा netns_ipvs *ipvs, काष्ठा ip_vs_app *inc)
+अणु
+	काष्ठा ip_vs_proto_data *pd = ip_vs_proto_data_get(ipvs, IPPROTO_TCP);
 
 	atomic_dec(&pd->appcnt);
 	list_del_rcu(&inc->p_list);
-}
+पूर्ण
 
 
-static int
-tcp_app_conn_bind(struct ip_vs_conn *cp)
-{
-	struct netns_ipvs *ipvs = cp->ipvs;
-	int hash;
-	struct ip_vs_app *inc;
-	int result = 0;
+अटल पूर्णांक
+tcp_app_conn_bind(काष्ठा ip_vs_conn *cp)
+अणु
+	काष्ठा netns_ipvs *ipvs = cp->ipvs;
+	पूर्णांक hash;
+	काष्ठा ip_vs_app *inc;
+	पूर्णांक result = 0;
 
-	/* Default binding: bind app only for NAT */
-	if (IP_VS_FWD_METHOD(cp) != IP_VS_CONN_F_MASQ)
-		return 0;
+	/* Default binding: bind app only क्रम NAT */
+	अगर (IP_VS_FWD_METHOD(cp) != IP_VS_CONN_F_MASQ)
+		वापस 0;
 
 	/* Lookup application incarnations and bind the right one */
 	hash = tcp_app_hashkey(cp->vport);
 
-	list_for_each_entry_rcu(inc, &ipvs->tcp_apps[hash], p_list) {
-		if (inc->port == cp->vport) {
-			if (unlikely(!ip_vs_app_inc_get(inc)))
-				break;
+	list_क्रम_each_entry_rcu(inc, &ipvs->tcp_apps[hash], p_list) अणु
+		अगर (inc->port == cp->vport) अणु
+			अगर (unlikely(!ip_vs_app_inc_get(inc)))
+				अवरोध;
 
 			IP_VS_DBG_BUF(9, "%s(): Binding conn %s:%u->"
 				      "%s:%u to app %s on port %u\n",
@@ -677,62 +678,62 @@ tcp_app_conn_bind(struct ip_vs_conn *cp)
 				      inc->name, ntohs(inc->port));
 
 			cp->app = inc;
-			if (inc->init_conn)
+			अगर (inc->init_conn)
 				result = inc->init_conn(inc, cp);
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	return result;
-}
+	वापस result;
+पूर्ण
 
 
 /*
- *	Set LISTEN timeout. (ip_vs_conn_put will setup timer)
+ *	Set LISTEN समयout. (ip_vs_conn_put will setup समयr)
  */
-void ip_vs_tcp_conn_listen(struct ip_vs_conn *cp)
-{
-	struct ip_vs_proto_data *pd = ip_vs_proto_data_get(cp->ipvs, IPPROTO_TCP);
+व्योम ip_vs_tcp_conn_listen(काष्ठा ip_vs_conn *cp)
+अणु
+	काष्ठा ip_vs_proto_data *pd = ip_vs_proto_data_get(cp->ipvs, IPPROTO_TCP);
 
 	spin_lock_bh(&cp->lock);
 	cp->state = IP_VS_TCP_S_LISTEN;
-	cp->timeout = (pd ? pd->timeout_table[IP_VS_TCP_S_LISTEN]
-			   : tcp_timeouts[IP_VS_TCP_S_LISTEN]);
+	cp->समयout = (pd ? pd->समयout_table[IP_VS_TCP_S_LISTEN]
+			   : tcp_समयouts[IP_VS_TCP_S_LISTEN]);
 	spin_unlock_bh(&cp->lock);
-}
+पूर्ण
 
 /* ---------------------------------------------
- *   timeouts is netns related now.
+ *   समयouts is netns related now.
  * ---------------------------------------------
  */
-static int __ip_vs_tcp_init(struct netns_ipvs *ipvs, struct ip_vs_proto_data *pd)
-{
+अटल पूर्णांक __ip_vs_tcp_init(काष्ठा netns_ipvs *ipvs, काष्ठा ip_vs_proto_data *pd)
+अणु
 	ip_vs_init_hash_table(ipvs->tcp_apps, TCP_APP_TAB_SIZE);
-	pd->timeout_table = ip_vs_create_timeout_table((int *)tcp_timeouts,
-							sizeof(tcp_timeouts));
-	if (!pd->timeout_table)
-		return -ENOMEM;
+	pd->समयout_table = ip_vs_create_समयout_table((पूर्णांक *)tcp_समयouts,
+							माप(tcp_समयouts));
+	अगर (!pd->समयout_table)
+		वापस -ENOMEM;
 	pd->tcp_state_table = tcp_states;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void __ip_vs_tcp_exit(struct netns_ipvs *ipvs, struct ip_vs_proto_data *pd)
-{
-	kfree(pd->timeout_table);
-}
+अटल व्योम __ip_vs_tcp_निकास(काष्ठा netns_ipvs *ipvs, काष्ठा ip_vs_proto_data *pd)
+अणु
+	kमुक्त(pd->समयout_table);
+पूर्ण
 
 
-struct ip_vs_protocol ip_vs_protocol_tcp = {
+काष्ठा ip_vs_protocol ip_vs_protocol_tcp = अणु
 	.name =			"TCP",
 	.protocol =		IPPROTO_TCP,
 	.num_states =		IP_VS_TCP_S_LAST,
-	.dont_defrag =		0,
-	.init =			NULL,
-	.exit =			NULL,
+	.करोnt_defrag =		0,
+	.init =			शून्य,
+	.निकास =			शून्य,
 	.init_netns =		__ip_vs_tcp_init,
-	.exit_netns =		__ip_vs_tcp_exit,
-	.register_app =		tcp_register_app,
-	.unregister_app =	tcp_unregister_app,
+	.निकास_netns =		__ip_vs_tcp_निकास,
+	.रेजिस्टर_app =		tcp_रेजिस्टर_app,
+	.unरेजिस्टर_app =	tcp_unरेजिस्टर_app,
 	.conn_schedule =	tcp_conn_schedule,
 	.conn_in_get =		ip_vs_conn_in_get_proto,
 	.conn_out_get =		ip_vs_conn_out_get_proto,
@@ -742,5 +743,5 @@ struct ip_vs_protocol ip_vs_protocol_tcp = {
 	.state_transition =	tcp_state_transition,
 	.app_conn_bind =	tcp_app_conn_bind,
 	.debug_packet =		ip_vs_tcpudp_debug_packet,
-	.timeout_change =	tcp_timeout_change,
-};
+	.समयout_change =	tcp_समयout_change,
+पूर्ण;

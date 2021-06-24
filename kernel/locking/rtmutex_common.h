@@ -1,164 +1,165 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * RT Mutexes: blocking mutual exclusion locks with PI support
  *
  * started by Ingo Molnar and Thomas Gleixner:
  *
  *  Copyright (C) 2004-2006 Red Hat, Inc., Ingo Molnar <mingo@redhat.com>
- *  Copyright (C) 2006, Timesys Corp., Thomas Gleixner <tglx@timesys.com>
+ *  Copyright (C) 2006, Timesys Corp., Thomas Gleixner <tglx@बारys.com>
  *
- * This file contains the private data structure and API definitions.
+ * This file contains the निजी data काष्ठाure and API definitions.
  */
 
-#ifndef __KERNEL_RTMUTEX_COMMON_H
-#define __KERNEL_RTMUTEX_COMMON_H
+#अगर_अघोषित __KERNEL_RTMUTEX_COMMON_H
+#घोषणा __KERNEL_RTMUTEX_COMMON_H
 
-#include <linux/debug_locks.h>
-#include <linux/rtmutex.h>
-#include <linux/sched/wake_q.h>
+#समावेश <linux/debug_locks.h>
+#समावेश <linux/rपंचांगutex.h>
+#समावेश <linux/sched/wake_q.h>
 
 /*
- * This is the control structure for tasks blocked on a rt_mutex,
+ * This is the control काष्ठाure क्रम tasks blocked on a rt_mutex,
  * which is allocated on the kernel stack on of the blocked task.
  *
- * @tree_entry:		pi node to enqueue into the mutex waiters tree
- * @pi_tree_entry:	pi node to enqueue into the mutex owner waiters tree
+ * @tree_entry:		pi node to enqueue पूर्णांकo the mutex रुकोers tree
+ * @pi_tree_entry:	pi node to enqueue पूर्णांकo the mutex owner रुकोers tree
  * @task:		task reference to the blocked task
- * @lock:		Pointer to the rt_mutex on which the waiter blocks
- * @prio:		Priority of the waiter
- * @deadline:		Deadline of the waiter if applicable
+ * @lock:		Poपूर्णांकer to the rt_mutex on which the रुकोer blocks
+ * @prio:		Priority of the रुकोer
+ * @deadline:		Deadline of the रुकोer अगर applicable
  */
-struct rt_mutex_waiter {
-	struct rb_node		tree_entry;
-	struct rb_node		pi_tree_entry;
-	struct task_struct	*task;
-	struct rt_mutex		*lock;
-	int			prio;
+काष्ठा rt_mutex_रुकोer अणु
+	काष्ठा rb_node		tree_entry;
+	काष्ठा rb_node		pi_tree_entry;
+	काष्ठा task_काष्ठा	*task;
+	काष्ठा rt_mutex		*lock;
+	पूर्णांक			prio;
 	u64			deadline;
-};
+पूर्ण;
 
 /*
  * Must be guarded because this header is included from rcu/tree_plugin.h
  * unconditionally.
  */
-#ifdef CONFIG_RT_MUTEXES
-static inline int rt_mutex_has_waiters(struct rt_mutex *lock)
-{
-	return !RB_EMPTY_ROOT(&lock->waiters.rb_root);
-}
+#अगर_घोषित CONFIG_RT_MUTEXES
+अटल अंतरभूत पूर्णांक rt_mutex_has_रुकोers(काष्ठा rt_mutex *lock)
+अणु
+	वापस !RB_EMPTY_ROOT(&lock->रुकोers.rb_root);
+पूर्ण
 
-static inline struct rt_mutex_waiter *rt_mutex_top_waiter(struct rt_mutex *lock)
-{
-	struct rb_node *leftmost = rb_first_cached(&lock->waiters);
-	struct rt_mutex_waiter *w = NULL;
+अटल अंतरभूत काष्ठा rt_mutex_रुकोer *rt_mutex_top_रुकोer(काष्ठा rt_mutex *lock)
+अणु
+	काष्ठा rb_node *lefपंचांगost = rb_first_cached(&lock->रुकोers);
+	काष्ठा rt_mutex_रुकोer *w = शून्य;
 
-	if (leftmost) {
-		w = rb_entry(leftmost, struct rt_mutex_waiter, tree_entry);
+	अगर (lefपंचांगost) अणु
+		w = rb_entry(lefपंचांगost, काष्ठा rt_mutex_रुकोer, tree_entry);
 		BUG_ON(w->lock != lock);
-	}
-	return w;
-}
+	पूर्ण
+	वापस w;
+पूर्ण
 
-static inline int task_has_pi_waiters(struct task_struct *p)
-{
-	return !RB_EMPTY_ROOT(&p->pi_waiters.rb_root);
-}
+अटल अंतरभूत पूर्णांक task_has_pi_रुकोers(काष्ठा task_काष्ठा *p)
+अणु
+	वापस !RB_EMPTY_ROOT(&p->pi_रुकोers.rb_root);
+पूर्ण
 
-static inline struct rt_mutex_waiter *task_top_pi_waiter(struct task_struct *p)
-{
-	return rb_entry(p->pi_waiters.rb_leftmost, struct rt_mutex_waiter,
+अटल अंतरभूत काष्ठा rt_mutex_रुकोer *task_top_pi_रुकोer(काष्ठा task_काष्ठा *p)
+अणु
+	वापस rb_entry(p->pi_रुकोers.rb_lefपंचांगost, काष्ठा rt_mutex_रुकोer,
 			pi_tree_entry);
-}
+पूर्ण
 
-#define RT_MUTEX_HAS_WAITERS	1UL
+#घोषणा RT_MUTEX_HAS_WAITERS	1UL
 
-static inline struct task_struct *rt_mutex_owner(struct rt_mutex *lock)
-{
-	unsigned long owner = (unsigned long) READ_ONCE(lock->owner);
+अटल अंतरभूत काष्ठा task_काष्ठा *rt_mutex_owner(काष्ठा rt_mutex *lock)
+अणु
+	अचिन्हित दीर्घ owner = (अचिन्हित दीर्घ) READ_ONCE(lock->owner);
 
-	return (struct task_struct *) (owner & ~RT_MUTEX_HAS_WAITERS);
-}
-#else /* CONFIG_RT_MUTEXES */
+	वापस (काष्ठा task_काष्ठा *) (owner & ~RT_MUTEX_HAS_WAITERS);
+पूर्ण
+#अन्यथा /* CONFIG_RT_MUTEXES */
 /* Used in rcu/tree_plugin.h */
-static inline struct task_struct *rt_mutex_owner(struct rt_mutex *lock)
-{
-	return NULL;
-}
-#endif  /* !CONFIG_RT_MUTEXES */
+अटल अंतरभूत काष्ठा task_काष्ठा *rt_mutex_owner(काष्ठा rt_mutex *lock)
+अणु
+	वापस शून्य;
+पूर्ण
+#पूर्ण_अगर  /* !CONFIG_RT_MUTEXES */
 
 /*
- * Constants for rt mutex functions which have a selectable deadlock
+ * Constants क्रम rt mutex functions which have a selectable deadlock
  * detection.
  *
  * RT_MUTEX_MIN_CHAINWALK:	Stops the lock chain walk when there are
- *				no further PI adjustments to be made.
+ *				no further PI adjusपंचांगents to be made.
  *
  * RT_MUTEX_FULL_CHAINWALK:	Invoke deadlock detection with a full
  *				walk of the lock chain.
  */
-enum rtmutex_chainwalk {
+क्रमागत rपंचांगutex_chainwalk अणु
 	RT_MUTEX_MIN_CHAINWALK,
 	RT_MUTEX_FULL_CHAINWALK,
-};
+पूर्ण;
 
-static inline void __rt_mutex_basic_init(struct rt_mutex *lock)
-{
-	lock->owner = NULL;
-	raw_spin_lock_init(&lock->wait_lock);
-	lock->waiters = RB_ROOT_CACHED;
-}
+अटल अंतरभूत व्योम __rt_mutex_basic_init(काष्ठा rt_mutex *lock)
+अणु
+	lock->owner = शून्य;
+	raw_spin_lock_init(&lock->रुको_lock);
+	lock->रुकोers = RB_ROOT_CACHED;
+पूर्ण
 
 /*
  * PI-futex support (proxy locking functions, etc.):
  */
-extern void rt_mutex_init_proxy_locked(struct rt_mutex *lock,
-				       struct task_struct *proxy_owner);
-extern void rt_mutex_proxy_unlock(struct rt_mutex *lock);
-extern void rt_mutex_init_waiter(struct rt_mutex_waiter *waiter);
-extern int __rt_mutex_start_proxy_lock(struct rt_mutex *lock,
-				     struct rt_mutex_waiter *waiter,
-				     struct task_struct *task);
-extern int rt_mutex_start_proxy_lock(struct rt_mutex *lock,
-				     struct rt_mutex_waiter *waiter,
-				     struct task_struct *task);
-extern int rt_mutex_wait_proxy_lock(struct rt_mutex *lock,
-			       struct hrtimer_sleeper *to,
-			       struct rt_mutex_waiter *waiter);
-extern bool rt_mutex_cleanup_proxy_lock(struct rt_mutex *lock,
-				 struct rt_mutex_waiter *waiter);
+बाह्य व्योम rt_mutex_init_proxy_locked(काष्ठा rt_mutex *lock,
+				       काष्ठा task_काष्ठा *proxy_owner);
+बाह्य व्योम rt_mutex_proxy_unlock(काष्ठा rt_mutex *lock);
+बाह्य व्योम rt_mutex_init_रुकोer(काष्ठा rt_mutex_रुकोer *रुकोer);
+बाह्य पूर्णांक __rt_mutex_start_proxy_lock(काष्ठा rt_mutex *lock,
+				     काष्ठा rt_mutex_रुकोer *रुकोer,
+				     काष्ठा task_काष्ठा *task);
+बाह्य पूर्णांक rt_mutex_start_proxy_lock(काष्ठा rt_mutex *lock,
+				     काष्ठा rt_mutex_रुकोer *रुकोer,
+				     काष्ठा task_काष्ठा *task);
+बाह्य पूर्णांक rt_mutex_रुको_proxy_lock(काष्ठा rt_mutex *lock,
+			       काष्ठा hrसमयr_sleeper *to,
+			       काष्ठा rt_mutex_रुकोer *रुकोer);
+बाह्य bool rt_mutex_cleanup_proxy_lock(काष्ठा rt_mutex *lock,
+				 काष्ठा rt_mutex_रुकोer *रुकोer);
 
-extern int rt_mutex_futex_trylock(struct rt_mutex *l);
-extern int __rt_mutex_futex_trylock(struct rt_mutex *l);
+बाह्य पूर्णांक rt_mutex_futex_trylock(काष्ठा rt_mutex *l);
+बाह्य पूर्णांक __rt_mutex_futex_trylock(काष्ठा rt_mutex *l);
 
-extern void rt_mutex_futex_unlock(struct rt_mutex *lock);
-extern bool __rt_mutex_futex_unlock(struct rt_mutex *lock,
-				 struct wake_q_head *wqh);
+बाह्य व्योम rt_mutex_futex_unlock(काष्ठा rt_mutex *lock);
+बाह्य bool __rt_mutex_futex_unlock(काष्ठा rt_mutex *lock,
+				 काष्ठा wake_q_head *wqh);
 
-extern void rt_mutex_postunlock(struct wake_q_head *wake_q);
+बाह्य व्योम rt_mutex_postunlock(काष्ठा wake_q_head *wake_q);
 
 /* Debug functions */
-static inline void debug_rt_mutex_unlock(struct rt_mutex *lock)
-{
-	if (IS_ENABLED(CONFIG_DEBUG_RT_MUTEXES))
+अटल अंतरभूत व्योम debug_rt_mutex_unlock(काष्ठा rt_mutex *lock)
+अणु
+	अगर (IS_ENABLED(CONFIG_DEBUG_RT_MUTEXES))
 		DEBUG_LOCKS_WARN_ON(rt_mutex_owner(lock) != current);
-}
+पूर्ण
 
-static inline void debug_rt_mutex_proxy_unlock(struct rt_mutex *lock)
-{
-	if (IS_ENABLED(CONFIG_DEBUG_RT_MUTEXES))
+अटल अंतरभूत व्योम debug_rt_mutex_proxy_unlock(काष्ठा rt_mutex *lock)
+अणु
+	अगर (IS_ENABLED(CONFIG_DEBUG_RT_MUTEXES))
 		DEBUG_LOCKS_WARN_ON(!rt_mutex_owner(lock));
-}
+पूर्ण
 
-static inline void debug_rt_mutex_init_waiter(struct rt_mutex_waiter *waiter)
-{
-	if (IS_ENABLED(CONFIG_DEBUG_RT_MUTEXES))
-		memset(waiter, 0x11, sizeof(*waiter));
-}
+अटल अंतरभूत व्योम debug_rt_mutex_init_रुकोer(काष्ठा rt_mutex_रुकोer *रुकोer)
+अणु
+	अगर (IS_ENABLED(CONFIG_DEBUG_RT_MUTEXES))
+		स_रखो(रुकोer, 0x11, माप(*रुकोer));
+पूर्ण
 
-static inline void debug_rt_mutex_free_waiter(struct rt_mutex_waiter *waiter)
-{
-	if (IS_ENABLED(CONFIG_DEBUG_RT_MUTEXES))
-		memset(waiter, 0x22, sizeof(*waiter));
-}
+अटल अंतरभूत व्योम debug_rt_mutex_मुक्त_रुकोer(काष्ठा rt_mutex_रुकोer *रुकोer)
+अणु
+	अगर (IS_ENABLED(CONFIG_DEBUG_RT_MUTEXES))
+		स_रखो(रुकोer, 0x22, माप(*रुकोer));
+पूर्ण
 
-#endif
+#पूर्ण_अगर

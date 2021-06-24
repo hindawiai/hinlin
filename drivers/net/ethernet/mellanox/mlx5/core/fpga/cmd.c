@@ -1,23 +1,24 @@
+<शैली गुरु>
 /*
  * Copyright (c) 2017, Mellanox Technologies. All rights reserved.
  *
  * This software is available to you under a choice of one of two
  * licenses.  You may choose to be licensed under the terms of the GNU
  * General Public License (GPL) Version 2, available from the file
- * COPYING in the main directory of this source tree, or the
+ * COPYING in the मुख्य directory of this source tree, or the
  * OpenIB.org BSD license below:
  *
- *     Redistribution and use in source and binary forms, with or
- *     without modification, are permitted provided that the following
+ *     Redistribution and use in source and binary क्रमms, with or
+ *     without modअगरication, are permitted provided that the following
  *     conditions are met:
  *
  *      - Redistributions of source code must retain the above
  *        copyright notice, this list of conditions and the following
  *        disclaimer.
  *
- *      - Redistributions in binary form must reproduce the above
+ *      - Redistributions in binary क्रमm must reproduce the above
  *        copyright notice, this list of conditions and the following
- *        disclaimer in the documentation and/or other materials
+ *        disclaimer in the करोcumentation and/or other materials
  *        provided with the distribution.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
@@ -30,186 +31,186 @@
  * SOFTWARE.
  */
 
-#include <linux/etherdevice.h>
-#include <linux/mlx5/driver.h>
-#include <linux/mlx5/device.h>
+#समावेश <linux/etherdevice.h>
+#समावेश <linux/mlx5/driver.h>
+#समावेश <linux/mlx5/device.h>
 
-#include "mlx5_core.h"
-#include "fpga/cmd.h"
+#समावेश "mlx5_core.h"
+#समावेश "fpga/cmd.h"
 
-#define MLX5_FPGA_ACCESS_REG_SZ (MLX5_ST_SZ_DW(fpga_access_reg) + \
+#घोषणा MLX5_FPGA_ACCESS_REG_SZ (MLX5_ST_SZ_DW(fpga_access_reg) + \
 				 MLX5_FPGA_ACCESS_REG_SIZE_MAX)
 
-int mlx5_fpga_access_reg(struct mlx5_core_dev *dev, u8 size, u64 addr,
-			 void *buf, bool write)
-{
-	u32 in[MLX5_FPGA_ACCESS_REG_SZ] = {0};
+पूर्णांक mlx5_fpga_access_reg(काष्ठा mlx5_core_dev *dev, u8 size, u64 addr,
+			 व्योम *buf, bool ग_लिखो)
+अणु
+	u32 in[MLX5_FPGA_ACCESS_REG_SZ] = अणु0पूर्ण;
 	u32 out[MLX5_FPGA_ACCESS_REG_SZ];
-	int err;
+	पूर्णांक err;
 
-	if (size & 3)
-		return -EINVAL;
-	if (addr & 3)
-		return -EINVAL;
-	if (size > MLX5_FPGA_ACCESS_REG_SIZE_MAX)
-		return -EINVAL;
+	अगर (size & 3)
+		वापस -EINVAL;
+	अगर (addr & 3)
+		वापस -EINVAL;
+	अगर (size > MLX5_FPGA_ACCESS_REG_SIZE_MAX)
+		वापस -EINVAL;
 
 	MLX5_SET(fpga_access_reg, in, size, size);
 	MLX5_SET64(fpga_access_reg, in, address, addr);
-	if (write)
-		memcpy(MLX5_ADDR_OF(fpga_access_reg, in, data), buf, size);
+	अगर (ग_लिखो)
+		स_नकल(MLX5_ADDR_OF(fpga_access_reg, in, data), buf, size);
 
-	err = mlx5_core_access_reg(dev, in, sizeof(in), out, sizeof(out),
-				   MLX5_REG_FPGA_ACCESS_REG, 0, write);
-	if (err)
-		return err;
+	err = mlx5_core_access_reg(dev, in, माप(in), out, माप(out),
+				   MLX5_REG_FPGA_ACCESS_REG, 0, ग_लिखो);
+	अगर (err)
+		वापस err;
 
-	if (!write)
-		memcpy(buf, MLX5_ADDR_OF(fpga_access_reg, out, data), size);
+	अगर (!ग_लिखो)
+		स_नकल(buf, MLX5_ADDR_OF(fpga_access_reg, out, data), size);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int mlx5_fpga_caps(struct mlx5_core_dev *dev)
-{
-	u32 in[MLX5_ST_SZ_DW(fpga_cap)] = {0};
+पूर्णांक mlx5_fpga_caps(काष्ठा mlx5_core_dev *dev)
+अणु
+	u32 in[MLX5_ST_SZ_DW(fpga_cap)] = अणु0पूर्ण;
 
-	return mlx5_core_access_reg(dev, in, sizeof(in), dev->caps.fpga,
+	वापस mlx5_core_access_reg(dev, in, माप(in), dev->caps.fpga,
 				    MLX5_ST_SZ_BYTES(fpga_cap),
 				    MLX5_REG_FPGA_CAP, 0, 0);
-}
+पूर्ण
 
-int mlx5_fpga_ctrl_op(struct mlx5_core_dev *dev, u8 op)
-{
-	u32 in[MLX5_ST_SZ_DW(fpga_ctrl)] = {0};
+पूर्णांक mlx5_fpga_ctrl_op(काष्ठा mlx5_core_dev *dev, u8 op)
+अणु
+	u32 in[MLX5_ST_SZ_DW(fpga_ctrl)] = अणु0पूर्ण;
 	u32 out[MLX5_ST_SZ_DW(fpga_ctrl)];
 
 	MLX5_SET(fpga_ctrl, in, operation, op);
 
-	return mlx5_core_access_reg(dev, in, sizeof(in), out, sizeof(out),
+	वापस mlx5_core_access_reg(dev, in, माप(in), out, माप(out),
 				    MLX5_REG_FPGA_CTRL, 0, true);
-}
+पूर्ण
 
-int mlx5_fpga_sbu_caps(struct mlx5_core_dev *dev, void *caps, int size)
-{
-	unsigned int cap_size = MLX5_CAP_FPGA(dev, sandbox_extended_caps_len);
+पूर्णांक mlx5_fpga_sbu_caps(काष्ठा mlx5_core_dev *dev, व्योम *caps, पूर्णांक size)
+अणु
+	अचिन्हित पूर्णांक cap_size = MLX5_CAP_FPGA(dev, sandbox_extended_caps_len);
 	u64 addr = MLX5_CAP64_FPGA(dev, sandbox_extended_caps_addr);
-	unsigned int read;
-	int ret = 0;
+	अचिन्हित पूर्णांक पढ़ो;
+	पूर्णांक ret = 0;
 
-	if (cap_size > size) {
+	अगर (cap_size > size) अणु
 		mlx5_core_warn(dev, "Not enough buffer %u for FPGA SBU caps %u",
 			       size, cap_size);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	while (cap_size > 0) {
-		read = min_t(unsigned int, cap_size,
+	जबतक (cap_size > 0) अणु
+		पढ़ो = min_t(अचिन्हित पूर्णांक, cap_size,
 			     MLX5_FPGA_ACCESS_REG_SIZE_MAX);
 
-		ret = mlx5_fpga_access_reg(dev, read, addr, caps, false);
-		if (ret) {
+		ret = mlx5_fpga_access_reg(dev, पढ़ो, addr, caps, false);
+		अगर (ret) अणु
 			mlx5_core_warn(dev, "Error reading FPGA SBU caps %u bytes at address 0x%llx: %d",
-				       read, addr, ret);
-			return ret;
-		}
+				       पढ़ो, addr, ret);
+			वापस ret;
+		पूर्ण
 
-		cap_size -= read;
-		addr += read;
-		caps += read;
-	}
+		cap_size -= पढ़ो;
+		addr += पढ़ो;
+		caps += पढ़ो;
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int mlx5_fpga_query(struct mlx5_core_dev *dev, struct mlx5_fpga_query *query)
-{
-	u32 in[MLX5_ST_SZ_DW(fpga_ctrl)] = {0};
+पूर्णांक mlx5_fpga_query(काष्ठा mlx5_core_dev *dev, काष्ठा mlx5_fpga_query *query)
+अणु
+	u32 in[MLX5_ST_SZ_DW(fpga_ctrl)] = अणु0पूर्ण;
 	u32 out[MLX5_ST_SZ_DW(fpga_ctrl)];
-	int err;
+	पूर्णांक err;
 
-	err = mlx5_core_access_reg(dev, in, sizeof(in), out, sizeof(out),
+	err = mlx5_core_access_reg(dev, in, माप(in), out, माप(out),
 				   MLX5_REG_FPGA_CTRL, 0, false);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	query->status = MLX5_GET(fpga_ctrl, out, status);
 	query->admin_image = MLX5_GET(fpga_ctrl, out, flash_select_admin);
 	query->oper_image = MLX5_GET(fpga_ctrl, out, flash_select_oper);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int mlx5_fpga_create_qp(struct mlx5_core_dev *dev, void *fpga_qpc,
+पूर्णांक mlx5_fpga_create_qp(काष्ठा mlx5_core_dev *dev, व्योम *fpga_qpc,
 			u32 *fpga_qpn)
-{
-	u32 out[MLX5_ST_SZ_DW(fpga_create_qp_out)] = {};
-	u32 in[MLX5_ST_SZ_DW(fpga_create_qp_in)] = {};
-	int ret;
+अणु
+	u32 out[MLX5_ST_SZ_DW(fpga_create_qp_out)] = अणुपूर्ण;
+	u32 in[MLX5_ST_SZ_DW(fpga_create_qp_in)] = अणुपूर्ण;
+	पूर्णांक ret;
 
 	MLX5_SET(fpga_create_qp_in, in, opcode, MLX5_CMD_OP_FPGA_CREATE_QP);
-	memcpy(MLX5_ADDR_OF(fpga_create_qp_in, in, fpga_qpc), fpga_qpc,
+	स_नकल(MLX5_ADDR_OF(fpga_create_qp_in, in, fpga_qpc), fpga_qpc,
 	       MLX5_FLD_SZ_BYTES(fpga_create_qp_in, fpga_qpc));
 
 	ret = mlx5_cmd_exec_inout(dev, fpga_create_qp, in, out);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	memcpy(fpga_qpc, MLX5_ADDR_OF(fpga_create_qp_out, out, fpga_qpc),
+	स_नकल(fpga_qpc, MLX5_ADDR_OF(fpga_create_qp_out, out, fpga_qpc),
 	       MLX5_FLD_SZ_BYTES(fpga_create_qp_out, fpga_qpc));
 	*fpga_qpn = MLX5_GET(fpga_create_qp_out, out, fpga_qpn);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int mlx5_fpga_modify_qp(struct mlx5_core_dev *dev, u32 fpga_qpn,
-			enum mlx5_fpga_qpc_field_select fields,
-			void *fpga_qpc)
-{
-	u32 in[MLX5_ST_SZ_DW(fpga_modify_qp_in)] = {};
+पूर्णांक mlx5_fpga_modअगरy_qp(काष्ठा mlx5_core_dev *dev, u32 fpga_qpn,
+			क्रमागत mlx5_fpga_qpc_field_select fields,
+			व्योम *fpga_qpc)
+अणु
+	u32 in[MLX5_ST_SZ_DW(fpga_modअगरy_qp_in)] = अणुपूर्ण;
 
-	MLX5_SET(fpga_modify_qp_in, in, opcode, MLX5_CMD_OP_FPGA_MODIFY_QP);
-	MLX5_SET(fpga_modify_qp_in, in, field_select, fields);
-	MLX5_SET(fpga_modify_qp_in, in, fpga_qpn, fpga_qpn);
-	memcpy(MLX5_ADDR_OF(fpga_modify_qp_in, in, fpga_qpc), fpga_qpc,
-	       MLX5_FLD_SZ_BYTES(fpga_modify_qp_in, fpga_qpc));
+	MLX5_SET(fpga_modअगरy_qp_in, in, opcode, MLX5_CMD_OP_FPGA_MODIFY_QP);
+	MLX5_SET(fpga_modअगरy_qp_in, in, field_select, fields);
+	MLX5_SET(fpga_modअगरy_qp_in, in, fpga_qpn, fpga_qpn);
+	स_नकल(MLX5_ADDR_OF(fpga_modअगरy_qp_in, in, fpga_qpc), fpga_qpc,
+	       MLX5_FLD_SZ_BYTES(fpga_modअगरy_qp_in, fpga_qpc));
 
-	return mlx5_cmd_exec_in(dev, fpga_modify_qp, in);
-}
+	वापस mlx5_cmd_exec_in(dev, fpga_modअगरy_qp, in);
+पूर्ण
 
-int mlx5_fpga_query_qp(struct mlx5_core_dev *dev,
-		       u32 fpga_qpn, void *fpga_qpc)
-{
-	u32 out[MLX5_ST_SZ_DW(fpga_query_qp_out)] = {};
-	u32 in[MLX5_ST_SZ_DW(fpga_query_qp_in)] = {};
-	int ret;
+पूर्णांक mlx5_fpga_query_qp(काष्ठा mlx5_core_dev *dev,
+		       u32 fpga_qpn, व्योम *fpga_qpc)
+अणु
+	u32 out[MLX5_ST_SZ_DW(fpga_query_qp_out)] = अणुपूर्ण;
+	u32 in[MLX5_ST_SZ_DW(fpga_query_qp_in)] = अणुपूर्ण;
+	पूर्णांक ret;
 
 	MLX5_SET(fpga_query_qp_in, in, opcode, MLX5_CMD_OP_FPGA_QUERY_QP);
 	MLX5_SET(fpga_query_qp_in, in, fpga_qpn, fpga_qpn);
 
 	ret = mlx5_cmd_exec_inout(dev, fpga_query_qp, in, out);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	memcpy(fpga_qpc, MLX5_ADDR_OF(fpga_query_qp_out, out, fpga_qpc),
+	स_नकल(fpga_qpc, MLX5_ADDR_OF(fpga_query_qp_out, out, fpga_qpc),
 	       MLX5_FLD_SZ_BYTES(fpga_query_qp_out, fpga_qpc));
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int mlx5_fpga_destroy_qp(struct mlx5_core_dev *dev, u32 fpga_qpn)
-{
-	u32 in[MLX5_ST_SZ_DW(fpga_destroy_qp_in)] = {};
+पूर्णांक mlx5_fpga_destroy_qp(काष्ठा mlx5_core_dev *dev, u32 fpga_qpn)
+अणु
+	u32 in[MLX5_ST_SZ_DW(fpga_destroy_qp_in)] = अणुपूर्ण;
 
 	MLX5_SET(fpga_destroy_qp_in, in, opcode, MLX5_CMD_OP_FPGA_DESTROY_QP);
 	MLX5_SET(fpga_destroy_qp_in, in, fpga_qpn, fpga_qpn);
 
-	return mlx5_cmd_exec_in(dev, fpga_destroy_qp, in);
-}
+	वापस mlx5_cmd_exec_in(dev, fpga_destroy_qp, in);
+पूर्ण
 
-int mlx5_fpga_query_qp_counters(struct mlx5_core_dev *dev, u32 fpga_qpn,
-				bool clear, struct mlx5_fpga_qp_counters *data)
-{
-	u32 out[MLX5_ST_SZ_DW(fpga_query_qp_counters_out)] = {};
-	u32 in[MLX5_ST_SZ_DW(fpga_query_qp_counters_in)] = {};
-	int ret;
+पूर्णांक mlx5_fpga_query_qp_counters(काष्ठा mlx5_core_dev *dev, u32 fpga_qpn,
+				bool clear, काष्ठा mlx5_fpga_qp_counters *data)
+अणु
+	u32 out[MLX5_ST_SZ_DW(fpga_query_qp_counters_out)] = अणुपूर्ण;
+	u32 in[MLX5_ST_SZ_DW(fpga_query_qp_counters_in)] = अणुपूर्ण;
+	पूर्णांक ret;
 
 	MLX5_SET(fpga_query_qp_counters_in, in, opcode,
 		 MLX5_CMD_OP_FPGA_QUERY_QP_COUNTERS);
@@ -217,8 +218,8 @@ int mlx5_fpga_query_qp_counters(struct mlx5_core_dev *dev, u32 fpga_qpn,
 	MLX5_SET(fpga_query_qp_counters_in, in, fpga_qpn, fpga_qpn);
 
 	ret = mlx5_cmd_exec_inout(dev, fpga_query_qp_counters, in, out);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	data->rx_ack_packets = MLX5_GET64(fpga_query_qp_counters_out, out,
 					  rx_ack_packets);
@@ -231,5 +232,5 @@ int mlx5_fpga_query_qp_counters(struct mlx5_core_dev *dev, u32 fpga_qpn,
 	data->rx_total_drop = MLX5_GET64(fpga_query_qp_counters_out, out,
 					 rx_total_drop);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण

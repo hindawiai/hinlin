@@ -1,121 +1,122 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __LINUX_UACCESS_H__
-#define __LINUX_UACCESS_H__
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __LINUX_UACCESS_H__
+#घोषणा __LINUX_UACCESS_H__
 
-#include <linux/fault-inject-usercopy.h>
-#include <linux/instrumented.h>
-#include <linux/minmax.h>
-#include <linux/sched.h>
-#include <linux/thread_info.h>
+#समावेश <linux/fault-inject-usercopy.h>
+#समावेश <linux/instrumented.h>
+#समावेश <linux/minmax.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/thपढ़ो_info.h>
 
-#include <asm/uaccess.h>
+#समावेश <यंत्र/uaccess.h>
 
-#ifdef CONFIG_SET_FS
+#अगर_घोषित CONFIG_SET_FS
 /*
- * Force the uaccess routines to be wired up for actual userspace access,
- * overriding any possible set_fs(KERNEL_DS) still lingering around.  Undone
- * using force_uaccess_end below.
+ * Force the uaccess routines to be wired up क्रम actual userspace access,
+ * overriding any possible set_fs(KERNEL_DS) still lingering around.  Unकरोne
+ * using क्रमce_uaccess_end below.
  */
-static inline mm_segment_t force_uaccess_begin(void)
-{
+अटल अंतरभूत mm_segment_t क्रमce_uaccess_begin(व्योम)
+अणु
 	mm_segment_t fs = get_fs();
 
 	set_fs(USER_DS);
-	return fs;
-}
+	वापस fs;
+पूर्ण
 
-static inline void force_uaccess_end(mm_segment_t oldfs)
-{
+अटल अंतरभूत व्योम क्रमce_uaccess_end(mm_segment_t oldfs)
+अणु
 	set_fs(oldfs);
-}
-#else /* CONFIG_SET_FS */
-typedef struct {
+पूर्ण
+#अन्यथा /* CONFIG_SET_FS */
+प्रकार काष्ठा अणु
 	/* empty dummy */
-} mm_segment_t;
+पूर्ण mm_segment_t;
 
-#ifndef TASK_SIZE_MAX
-#define TASK_SIZE_MAX			TASK_SIZE
-#endif
+#अगर_अघोषित TASK_SIZE_MAX
+#घोषणा TASK_SIZE_MAX			TASK_SIZE
+#पूर्ण_अगर
 
-#define uaccess_kernel()		(false)
-#define user_addr_max()			(TASK_SIZE_MAX)
+#घोषणा uaccess_kernel()		(false)
+#घोषणा user_addr_max()			(TASK_SIZE_MAX)
 
-static inline mm_segment_t force_uaccess_begin(void)
-{
-	return (mm_segment_t) { };
-}
+अटल अंतरभूत mm_segment_t क्रमce_uaccess_begin(व्योम)
+अणु
+	वापस (mm_segment_t) अणु पूर्ण;
+पूर्ण
 
-static inline void force_uaccess_end(mm_segment_t oldfs)
-{
-}
-#endif /* CONFIG_SET_FS */
+अटल अंतरभूत व्योम क्रमce_uaccess_end(mm_segment_t oldfs)
+अणु
+पूर्ण
+#पूर्ण_अगर /* CONFIG_SET_FS */
 
 /*
- * Architectures should provide two primitives (raw_copy_{to,from}_user())
- * and get rid of their private instances of copy_{to,from}_user() and
- * __copy_{to,from}_user{,_inatomic}().
+ * Architectures should provide two primitives (raw_copy_अणुto,fromपूर्ण_user())
+ * and get rid of their निजी instances of copy_अणुto,fromपूर्ण_user() and
+ * __copy_अणुto,fromपूर्ण_userअणु,_inatomicपूर्ण().
  *
- * raw_copy_{to,from}_user(to, from, size) should copy up to size bytes and
- * return the amount left to copy.  They should assume that access_ok() has
- * already been checked (and succeeded); they should *not* zero-pad anything.
- * No KASAN or object size checks either - those belong here.
+ * raw_copy_अणुto,fromपूर्ण_user(to, from, size) should copy up to size bytes and
+ * वापस the amount left to copy.  They should assume that access_ok() has
+ * alपढ़ोy been checked (and succeeded); they should *not* zero-pad anything.
+ * No KASAN or object size checks either - those beदीर्घ here.
  *
  * Both of these functions should attempt to copy size bytes starting at from
- * into the area starting at to.  They must not fetch or store anything
+ * पूर्णांकo the area starting at to.  They must not fetch or store anything
  * outside of those areas.  Return value must be between 0 (everything
  * copied successfully) and size (nothing copied).
  *
- * If raw_copy_{to,from}_user(to, from, size) returns N, size - N bytes starting
+ * If raw_copy_अणुto,fromपूर्ण_user(to, from, size) वापसs N, size - N bytes starting
  * at to must become equal to the bytes fetched from the corresponding area
- * starting at from.  All data past to + size - N must be left unmodified.
+ * starting at from.  All data past to + size - N must be left unmodअगरied.
  *
- * If copying succeeds, the return value must be 0.  If some data cannot be
+ * If copying succeeds, the वापस value must be 0.  If some data cannot be
  * fetched, it is permitted to copy less than had been fetched; the only
- * hard requirement is that not storing anything at all (i.e. returning size)
- * should happen only when nothing could be copied.  In other words, you don't
+ * hard requirement is that not storing anything at all (i.e. वापसing size)
+ * should happen only when nothing could be copied.  In other words, you करोn't
  * have to squeeze as much as possible - it is allowed, but not necessary.
  *
- * For raw_copy_from_user() to always points to kernel memory and no faults
+ * For raw_copy_from_user() to always poपूर्णांकs to kernel memory and no faults
  * on store should happen.  Interpretation of from is affected by set_fs().
  * For raw_copy_to_user() it's the other way round.
  *
- * Both can be inlined - it's up to architectures whether it wants to bother
+ * Both can be अंतरभूतd - it's up to architectures whether it wants to bother
  * with that.  They should not be used directly; they are used to implement
- * the 6 functions (copy_{to,from}_user(), __copy_{to,from}_user_inatomic())
- * that are used instead.  Out of those, __... ones are inlined.  Plain
- * copy_{to,from}_user() might or might not be inlined.  If you want them
- * inlined, have asm/uaccess.h define INLINE_COPY_{TO,FROM}_USER.
+ * the 6 functions (copy_अणुto,fromपूर्ण_user(), __copy_अणुto,fromपूर्ण_user_inatomic())
+ * that are used instead.  Out of those, __... ones are अंतरभूतd.  Plain
+ * copy_अणुto,fromपूर्ण_user() might or might not be अंतरभूतd.  If you want them
+ * अंतरभूतd, have यंत्र/uaccess.h define INLINE_COPY_अणुTO,FROMपूर्ण_USER.
  *
- * NOTE: only copy_from_user() zero-pads the destination in case of short copy.
+ * NOTE: only copy_from_user() zero-pads the destination in हाल of लघु copy.
  * Neither __copy_from_user() nor __copy_from_user_inatomic() zero anything
- * at all; their callers absolutely must check the return value.
+ * at all; their callers असलolutely must check the वापस value.
  *
  * Biarch ones should also provide raw_copy_in_user() - similar to the above,
- * but both source and destination are __user pointers (affected by set_fs()
+ * but both source and destination are __user poपूर्णांकers (affected by set_fs()
  * as usual) and both source and destination can trigger faults.
  */
 
-static __always_inline __must_check unsigned long
-__copy_from_user_inatomic(void *to, const void __user *from, unsigned long n)
-{
+अटल __always_अंतरभूत __must_check अचिन्हित दीर्घ
+__copy_from_user_inatomic(व्योम *to, स्थिर व्योम __user *from, अचिन्हित दीर्घ n)
+अणु
 	instrument_copy_from_user(to, from, n);
 	check_object_size(to, n, false);
-	return raw_copy_from_user(to, from, n);
-}
+	वापस raw_copy_from_user(to, from, n);
+पूर्ण
 
-static __always_inline __must_check unsigned long
-__copy_from_user(void *to, const void __user *from, unsigned long n)
-{
+अटल __always_अंतरभूत __must_check अचिन्हित दीर्घ
+__copy_from_user(व्योम *to, स्थिर व्योम __user *from, अचिन्हित दीर्घ n)
+अणु
 	might_fault();
-	if (should_fail_usercopy())
-		return n;
+	अगर (should_fail_usercopy())
+		वापस n;
 	instrument_copy_from_user(to, from, n);
 	check_object_size(to, n, false);
-	return raw_copy_from_user(to, from, n);
-}
+	वापस raw_copy_from_user(to, from, n);
+पूर्ण
 
 /**
- * __copy_to_user_inatomic: - Copy a block of data into user space, with less checking.
+ * __copy_to_user_inatomic: - Copy a block of data पूर्णांकo user space, with less checking.
  * @to:   Destination address, in user space.
  * @from: Source address, in kernel space.
  * @n:    Number of bytes to copy.
@@ -123,116 +124,116 @@ __copy_from_user(void *to, const void __user *from, unsigned long n)
  * Context: User context only.
  *
  * Copy data from kernel space to user space.  Caller must check
- * the specified block with access_ok() before calling this function.
+ * the specअगरied block with access_ok() beक्रमe calling this function.
  * The caller should also make sure he pins the user space address
- * so that we don't result in page fault and sleep.
+ * so that we करोn't result in page fault and sleep.
  */
-static __always_inline __must_check unsigned long
-__copy_to_user_inatomic(void __user *to, const void *from, unsigned long n)
-{
-	if (should_fail_usercopy())
-		return n;
+अटल __always_अंतरभूत __must_check अचिन्हित दीर्घ
+__copy_to_user_inatomic(व्योम __user *to, स्थिर व्योम *from, अचिन्हित दीर्घ n)
+अणु
+	अगर (should_fail_usercopy())
+		वापस n;
 	instrument_copy_to_user(to, from, n);
 	check_object_size(from, n, true);
-	return raw_copy_to_user(to, from, n);
-}
+	वापस raw_copy_to_user(to, from, n);
+पूर्ण
 
-static __always_inline __must_check unsigned long
-__copy_to_user(void __user *to, const void *from, unsigned long n)
-{
+अटल __always_अंतरभूत __must_check अचिन्हित दीर्घ
+__copy_to_user(व्योम __user *to, स्थिर व्योम *from, अचिन्हित दीर्घ n)
+अणु
 	might_fault();
-	if (should_fail_usercopy())
-		return n;
+	अगर (should_fail_usercopy())
+		वापस n;
 	instrument_copy_to_user(to, from, n);
 	check_object_size(from, n, true);
-	return raw_copy_to_user(to, from, n);
-}
+	वापस raw_copy_to_user(to, from, n);
+पूर्ण
 
-#ifdef INLINE_COPY_FROM_USER
-static inline __must_check unsigned long
-_copy_from_user(void *to, const void __user *from, unsigned long n)
-{
-	unsigned long res = n;
+#अगर_घोषित INLINE_COPY_FROM_USER
+अटल अंतरभूत __must_check अचिन्हित दीर्घ
+_copy_from_user(व्योम *to, स्थिर व्योम __user *from, अचिन्हित दीर्घ n)
+अणु
+	अचिन्हित दीर्घ res = n;
 	might_fault();
-	if (!should_fail_usercopy() && likely(access_ok(from, n))) {
+	अगर (!should_fail_usercopy() && likely(access_ok(from, n))) अणु
 		instrument_copy_from_user(to, from, n);
 		res = raw_copy_from_user(to, from, n);
-	}
-	if (unlikely(res))
-		memset(to + (n - res), 0, res);
-	return res;
-}
-#else
-extern __must_check unsigned long
-_copy_from_user(void *, const void __user *, unsigned long);
-#endif
+	पूर्ण
+	अगर (unlikely(res))
+		स_रखो(to + (n - res), 0, res);
+	वापस res;
+पूर्ण
+#अन्यथा
+बाह्य __must_check अचिन्हित दीर्घ
+_copy_from_user(व्योम *, स्थिर व्योम __user *, अचिन्हित दीर्घ);
+#पूर्ण_अगर
 
-#ifdef INLINE_COPY_TO_USER
-static inline __must_check unsigned long
-_copy_to_user(void __user *to, const void *from, unsigned long n)
-{
+#अगर_घोषित INLINE_COPY_TO_USER
+अटल अंतरभूत __must_check अचिन्हित दीर्घ
+_copy_to_user(व्योम __user *to, स्थिर व्योम *from, अचिन्हित दीर्घ n)
+अणु
 	might_fault();
-	if (should_fail_usercopy())
-		return n;
-	if (access_ok(to, n)) {
+	अगर (should_fail_usercopy())
+		वापस n;
+	अगर (access_ok(to, n)) अणु
 		instrument_copy_to_user(to, from, n);
 		n = raw_copy_to_user(to, from, n);
-	}
-	return n;
-}
-#else
-extern __must_check unsigned long
-_copy_to_user(void __user *, const void *, unsigned long);
-#endif
+	पूर्ण
+	वापस n;
+पूर्ण
+#अन्यथा
+बाह्य __must_check अचिन्हित दीर्घ
+_copy_to_user(व्योम __user *, स्थिर व्योम *, अचिन्हित दीर्घ);
+#पूर्ण_अगर
 
-static __always_inline unsigned long __must_check
-copy_from_user(void *to, const void __user *from, unsigned long n)
-{
-	if (likely(check_copy_size(to, n, false)))
+अटल __always_अंतरभूत अचिन्हित दीर्घ __must_check
+copy_from_user(व्योम *to, स्थिर व्योम __user *from, अचिन्हित दीर्घ n)
+अणु
+	अगर (likely(check_copy_size(to, n, false)))
 		n = _copy_from_user(to, from, n);
-	return n;
-}
+	वापस n;
+पूर्ण
 
-static __always_inline unsigned long __must_check
-copy_to_user(void __user *to, const void *from, unsigned long n)
-{
-	if (likely(check_copy_size(from, n, true)))
+अटल __always_अंतरभूत अचिन्हित दीर्घ __must_check
+copy_to_user(व्योम __user *to, स्थिर व्योम *from, अचिन्हित दीर्घ n)
+अणु
+	अगर (likely(check_copy_size(from, n, true)))
 		n = _copy_to_user(to, from, n);
-	return n;
-}
-#ifdef CONFIG_COMPAT
-static __always_inline unsigned long __must_check
-copy_in_user(void __user *to, const void __user *from, unsigned long n)
-{
+	वापस n;
+पूर्ण
+#अगर_घोषित CONFIG_COMPAT
+अटल __always_अंतरभूत अचिन्हित दीर्घ __must_check
+copy_in_user(व्योम __user *to, स्थिर व्योम __user *from, अचिन्हित दीर्घ n)
+अणु
 	might_fault();
-	if (access_ok(to, n) && access_ok(from, n))
+	अगर (access_ok(to, n) && access_ok(from, n))
 		n = raw_copy_in_user(to, from, n);
-	return n;
-}
-#endif
+	वापस n;
+पूर्ण
+#पूर्ण_अगर
 
-#ifndef copy_mc_to_kernel
+#अगर_अघोषित copy_mc_to_kernel
 /*
  * Without arch opt-in this generic copy_mc_to_kernel() will not handle
- * #MC (or arch equivalent) during source read.
+ * #MC (or arch equivalent) during source पढ़ो.
  */
-static inline unsigned long __must_check
-copy_mc_to_kernel(void *dst, const void *src, size_t cnt)
-{
-	memcpy(dst, src, cnt);
-	return 0;
-}
-#endif
+अटल अंतरभूत अचिन्हित दीर्घ __must_check
+copy_mc_to_kernel(व्योम *dst, स्थिर व्योम *src, माप_प्रकार cnt)
+अणु
+	स_नकल(dst, src, cnt);
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
-static __always_inline void pagefault_disabled_inc(void)
-{
+अटल __always_अंतरभूत व्योम pagefault_disabled_inc(व्योम)
+अणु
 	current->pagefault_disabled++;
-}
+पूर्ण
 
-static __always_inline void pagefault_disabled_dec(void)
-{
+अटल __always_अंतरभूत व्योम pagefault_disabled_dec(व्योम)
+अणु
 	current->pagefault_disabled--;
-}
+पूर्ण
 
 /*
  * These routines enable/disable the pagefault handler. If disabled, it will
@@ -241,33 +242,33 @@ static __always_inline void pagefault_disabled_dec(void)
  * User access methods will not sleep when called from a pagefault_disabled()
  * environment.
  */
-static inline void pagefault_disable(void)
-{
+अटल अंतरभूत व्योम pagefault_disable(व्योम)
+अणु
 	pagefault_disabled_inc();
 	/*
-	 * make sure to have issued the store before a pagefault
+	 * make sure to have issued the store beक्रमe a pagefault
 	 * can hit.
 	 */
 	barrier();
-}
+पूर्ण
 
-static inline void pagefault_enable(void)
-{
+अटल अंतरभूत व्योम pagefault_enable(व्योम)
+अणु
 	/*
-	 * make sure to issue those last loads/stores before enabling
+	 * make sure to issue those last loads/stores beक्रमe enabling
 	 * the pagefault handler again.
 	 */
 	barrier();
 	pagefault_disabled_dec();
-}
+पूर्ण
 
 /*
  * Is the pagefault handler disabled? If so, user access methods will not sleep.
  */
-static inline bool pagefault_disabled(void)
-{
-	return current->pagefault_disabled != 0;
-}
+अटल अंतरभूत bool pagefault_disabled(व्योम)
+अणु
+	वापस current->pagefault_disabled != 0;
+पूर्ण
 
 /*
  * The pagefault handler is in general disabled by pagefault_disable() or
@@ -277,145 +278,145 @@ static inline bool pagefault_disabled(void)
  * stick to pagefault_disabled().
  * Please NEVER use preempt_disable() to disable the fault handler. With
  * !CONFIG_PREEMPT_COUNT, this is like a NOP. So the handler won't be disabled.
- * in_atomic() will report different values based on !CONFIG_PREEMPT_COUNT.
+ * in_atomic() will report dअगरferent values based on !CONFIG_PREEMPT_COUNT.
  */
-#define faulthandler_disabled() (pagefault_disabled() || in_atomic())
+#घोषणा faulthandler_disabled() (pagefault_disabled() || in_atomic())
 
-#ifndef ARCH_HAS_NOCACHE_UACCESS
+#अगर_अघोषित ARCH_HAS_NOCACHE_UACCESS
 
-static inline __must_check unsigned long
-__copy_from_user_inatomic_nocache(void *to, const void __user *from,
-				  unsigned long n)
-{
-	return __copy_from_user_inatomic(to, from, n);
-}
+अटल अंतरभूत __must_check अचिन्हित दीर्घ
+__copy_from_user_inatomic_nocache(व्योम *to, स्थिर व्योम __user *from,
+				  अचिन्हित दीर्घ n)
+अणु
+	वापस __copy_from_user_inatomic(to, from, n);
+पूर्ण
 
-#endif		/* ARCH_HAS_NOCACHE_UACCESS */
+#पूर्ण_अगर		/* ARCH_HAS_NOCACHE_UACCESS */
 
-extern __must_check int check_zeroed_user(const void __user *from, size_t size);
+बाह्य __must_check पूर्णांक check_zeroed_user(स्थिर व्योम __user *from, माप_प्रकार size);
 
 /**
- * copy_struct_from_user: copy a struct from userspace
+ * copy_काष्ठा_from_user: copy a काष्ठा from userspace
  * @dst:   Destination address, in kernel space. This buffer must be @ksize
- *         bytes long.
- * @ksize: Size of @dst struct.
+ *         bytes दीर्घ.
+ * @ksize: Size of @dst काष्ठा.
  * @src:   Source address, in userspace.
- * @usize: (Alleged) size of @src struct.
+ * @usize: (Alleged) size of @src काष्ठा.
  *
- * Copies a struct from userspace to kernel space, in a way that guarantees
- * backwards-compatibility for struct syscall arguments (as long as future
- * struct extensions are made such that all new fields are *appended* to the
- * old struct, and zeroed-out new fields have the same meaning as the old
- * struct).
+ * Copies a काष्ठा from userspace to kernel space, in a way that guarantees
+ * backwards-compatibility क्रम काष्ठा syscall arguments (as दीर्घ as future
+ * काष्ठा extensions are made such that all new fields are *appended* to the
+ * old काष्ठा, and zeroed-out new fields have the same meaning as the old
+ * काष्ठा).
  *
- * @ksize is just sizeof(*dst), and @usize should've been passed by userspace.
+ * @ksize is just माप(*dst), and @usize should've been passed by userspace.
  * The recommended usage is something like the following:
  *
- *   SYSCALL_DEFINE2(foobar, const struct foo __user *, uarg, size_t, usize)
- *   {
- *      int err;
- *      struct foo karg = {};
+ *   SYSCALL_DEFINE2(foobar, स्थिर काष्ठा foo __user *, uarg, माप_प्रकार, usize)
+ *   अणु
+ *      पूर्णांक err;
+ *      काष्ठा foo karg = अणुपूर्ण;
  *
- *      if (usize > PAGE_SIZE)
- *        return -E2BIG;
- *      if (usize < FOO_SIZE_VER0)
- *        return -EINVAL;
+ *      अगर (usize > PAGE_SIZE)
+ *        वापस -E2BIG;
+ *      अगर (usize < FOO_SIZE_VER0)
+ *        वापस -EINVAL;
  *
- *      err = copy_struct_from_user(&karg, sizeof(karg), uarg, usize);
- *      if (err)
- *        return err;
+ *      err = copy_काष्ठा_from_user(&karg, माप(karg), uarg, usize);
+ *      अगर (err)
+ *        वापस err;
  *
  *      // ...
- *   }
+ *   पूर्ण
  *
- * There are three cases to consider:
+ * There are three हालs to consider:
  *  * If @usize == @ksize, then it's copied verbatim.
- *  * If @usize < @ksize, then the userspace has passed an old struct to a
+ *  * If @usize < @ksize, then the userspace has passed an old काष्ठा to a
  *    newer kernel. The rest of the trailing bytes in @dst (@ksize - @usize)
  *    are to be zero-filled.
- *  * If @usize > @ksize, then the userspace has passed a new struct to an
+ *  * If @usize > @ksize, then the userspace has passed a new काष्ठा to an
  *    older kernel. The trailing bytes unknown to the kernel (@usize - @ksize)
- *    are checked to ensure they are zeroed, otherwise -E2BIG is returned.
+ *    are checked to ensure they are zeroed, otherwise -E2BIG is वापसed.
  *
- * Returns (in all cases, some data may have been copied):
+ * Returns (in all हालs, some data may have been copied):
  *  * -E2BIG:  (@usize > @ksize) and there are non-zero trailing bytes in @src.
  *  * -EFAULT: access to userspace failed.
  */
-static __always_inline __must_check int
-copy_struct_from_user(void *dst, size_t ksize, const void __user *src,
-		      size_t usize)
-{
-	size_t size = min(ksize, usize);
-	size_t rest = max(ksize, usize) - size;
+अटल __always_अंतरभूत __must_check पूर्णांक
+copy_काष्ठा_from_user(व्योम *dst, माप_प्रकार ksize, स्थिर व्योम __user *src,
+		      माप_प्रकार usize)
+अणु
+	माप_प्रकार size = min(ksize, usize);
+	माप_प्रकार rest = max(ksize, usize) - size;
 
 	/* Deal with trailing bytes. */
-	if (usize < ksize) {
-		memset(dst + size, 0, rest);
-	} else if (usize > ksize) {
-		int ret = check_zeroed_user(src + size, rest);
-		if (ret <= 0)
-			return ret ?: -E2BIG;
-	}
-	/* Copy the interoperable parts of the struct. */
-	if (copy_from_user(dst, src, size))
-		return -EFAULT;
-	return 0;
-}
+	अगर (usize < ksize) अणु
+		स_रखो(dst + size, 0, rest);
+	पूर्ण अन्यथा अगर (usize > ksize) अणु
+		पूर्णांक ret = check_zeroed_user(src + size, rest);
+		अगर (ret <= 0)
+			वापस ret ?: -E2BIG;
+	पूर्ण
+	/* Copy the पूर्णांकeroperable parts of the काष्ठा. */
+	अगर (copy_from_user(dst, src, size))
+		वापस -EFAULT;
+	वापस 0;
+पूर्ण
 
-bool copy_from_kernel_nofault_allowed(const void *unsafe_src, size_t size);
+bool copy_from_kernel_nofault_allowed(स्थिर व्योम *unsafe_src, माप_प्रकार size);
 
-long copy_from_kernel_nofault(void *dst, const void *src, size_t size);
-long notrace copy_to_kernel_nofault(void *dst, const void *src, size_t size);
+दीर्घ copy_from_kernel_nofault(व्योम *dst, स्थिर व्योम *src, माप_प्रकार size);
+दीर्घ notrace copy_to_kernel_nofault(व्योम *dst, स्थिर व्योम *src, माप_प्रकार size);
 
-long copy_from_user_nofault(void *dst, const void __user *src, size_t size);
-long notrace copy_to_user_nofault(void __user *dst, const void *src,
-		size_t size);
+दीर्घ copy_from_user_nofault(व्योम *dst, स्थिर व्योम __user *src, माप_प्रकार size);
+दीर्घ notrace copy_to_user_nofault(व्योम __user *dst, स्थिर व्योम *src,
+		माप_प्रकार size);
 
-long strncpy_from_kernel_nofault(char *dst, const void *unsafe_addr,
-		long count);
+दीर्घ म_नकलन_from_kernel_nofault(अक्षर *dst, स्थिर व्योम *unsafe_addr,
+		दीर्घ count);
 
-long strncpy_from_user_nofault(char *dst, const void __user *unsafe_addr,
-		long count);
-long strnlen_user_nofault(const void __user *unsafe_addr, long count);
+दीर्घ म_नकलन_from_user_nofault(अक्षर *dst, स्थिर व्योम __user *unsafe_addr,
+		दीर्घ count);
+दीर्घ strnlen_user_nofault(स्थिर व्योम __user *unsafe_addr, दीर्घ count);
 
 /**
- * get_kernel_nofault(): safely attempt to read from a location
- * @val: read into this variable
- * @ptr: address to read from
+ * get_kernel_nofault(): safely attempt to पढ़ो from a location
+ * @val: पढ़ो पूर्णांकo this variable
+ * @ptr: address to पढ़ो from
  *
  * Returns 0 on success, or -EFAULT.
  */
-#define get_kernel_nofault(val, ptr) ({				\
-	const typeof(val) *__gk_ptr = (ptr);			\
-	copy_from_kernel_nofault(&(val), __gk_ptr, sizeof(val));\
-})
+#घोषणा get_kernel_nofault(val, ptr) (अणु				\
+	स्थिर typeof(val) *__gk_ptr = (ptr);			\
+	copy_from_kernel_nofault(&(val), __gk_ptr, माप(val));\
+पूर्ण)
 
-#ifndef user_access_begin
-#define user_access_begin(ptr,len) access_ok(ptr, len)
-#define user_access_end() do { } while (0)
-#define unsafe_op_wrap(op, err) do { if (unlikely(op)) goto err; } while (0)
-#define unsafe_get_user(x,p,e) unsafe_op_wrap(__get_user(x,p),e)
-#define unsafe_put_user(x,p,e) unsafe_op_wrap(__put_user(x,p),e)
-#define unsafe_copy_to_user(d,s,l,e) unsafe_op_wrap(__copy_to_user(d,s,l),e)
-#define unsafe_copy_from_user(d,s,l,e) unsafe_op_wrap(__copy_from_user(d,s,l),e)
-static inline unsigned long user_access_save(void) { return 0UL; }
-static inline void user_access_restore(unsigned long flags) { }
-#endif
-#ifndef user_write_access_begin
-#define user_write_access_begin user_access_begin
-#define user_write_access_end user_access_end
-#endif
-#ifndef user_read_access_begin
-#define user_read_access_begin user_access_begin
-#define user_read_access_end user_access_end
-#endif
+#अगर_अघोषित user_access_begin
+#घोषणा user_access_begin(ptr,len) access_ok(ptr, len)
+#घोषणा user_access_end() करो अणु पूर्ण जबतक (0)
+#घोषणा unsafe_op_wrap(op, err) करो अणु अगर (unlikely(op)) जाओ err; पूर्ण जबतक (0)
+#घोषणा unsafe_get_user(x,p,e) unsafe_op_wrap(__get_user(x,p),e)
+#घोषणा unsafe_put_user(x,p,e) unsafe_op_wrap(__put_user(x,p),e)
+#घोषणा unsafe_copy_to_user(d,s,l,e) unsafe_op_wrap(__copy_to_user(d,s,l),e)
+#घोषणा unsafe_copy_from_user(d,s,l,e) unsafe_op_wrap(__copy_from_user(d,s,l),e)
+अटल अंतरभूत अचिन्हित दीर्घ user_access_save(व्योम) अणु वापस 0UL; पूर्ण
+अटल अंतरभूत व्योम user_access_restore(अचिन्हित दीर्घ flags) अणु पूर्ण
+#पूर्ण_अगर
+#अगर_अघोषित user_ग_लिखो_access_begin
+#घोषणा user_ग_लिखो_access_begin user_access_begin
+#घोषणा user_ग_लिखो_access_end user_access_end
+#पूर्ण_अगर
+#अगर_अघोषित user_पढ़ो_access_begin
+#घोषणा user_पढ़ो_access_begin user_access_begin
+#घोषणा user_पढ़ो_access_end user_access_end
+#पूर्ण_अगर
 
-#ifdef CONFIG_HARDENED_USERCOPY
-void usercopy_warn(const char *name, const char *detail, bool to_user,
-		   unsigned long offset, unsigned long len);
-void __noreturn usercopy_abort(const char *name, const char *detail,
-			       bool to_user, unsigned long offset,
-			       unsigned long len);
-#endif
+#अगर_घोषित CONFIG_HARDENED_USERCOPY
+व्योम usercopy_warn(स्थिर अक्षर *name, स्थिर अक्षर *detail, bool to_user,
+		   अचिन्हित दीर्घ offset, अचिन्हित दीर्घ len);
+व्योम __noवापस usercopy_पात(स्थिर अक्षर *name, स्थिर अक्षर *detail,
+			       bool to_user, अचिन्हित दीर्घ offset,
+			       अचिन्हित दीर्घ len);
+#पूर्ण_अगर
 
-#endif		/* __LINUX_UACCESS_H__ */
+#पूर्ण_अगर		/* __LINUX_UACCESS_H__ */

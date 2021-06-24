@@ -1,10 +1,11 @@
+<शैली गुरु>
 /*
- * Initio A100 device driver for Linux.
+ * Initio A100 device driver क्रम Linux.
  *
  * Copyright (c) 1994-1998 Initio Corporation
  * All rights reserved.
  *
- * This program is free software; you can redistribute it and/or modify
+ * This program is मुक्त software; you can redistribute it and/or modअगरy
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2, or (at your option)
  * any later version.
@@ -12,17 +13,17 @@
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU General Public License क्रम more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; see the file COPYING.  If not, write to
+ * aदीर्घ with this program; see the file COPYING.  If not, ग_लिखो to
  * the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
  * ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE FOR
- * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * ANY सूचीECT, INसूचीECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
  * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
  * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
  * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
@@ -32,250 +33,250 @@
  *
  * Revision History:
  * 06/18/98 HL, Initial production Version 1.02
- * 12/19/98 bv, Use spinlocks for 2.1.95 and up
- * 06/25/02 Doug Ledford <dledford@redhat.com>
+ * 12/19/98 bv, Use spinlocks क्रम 2.1.95 and up
+ * 06/25/02 Doug Ledक्रमd <dledक्रमd@redhat.com>
  *	 - This and the i60uscsi.h file are almost identical,
- *	   merged them into a single header used by both .c files.
+ *	   merged them पूर्णांकo a single header used by both .c files.
  * 14/06/07 Alan Cox <alan@redhat.com>
- *	 - Grand cleanup and Linuxisation
+ *	 - Gअक्रम cleanup and Linuxisation
  */
 
-#define inia100_REVID "Initio INI-A100U2W SCSI device driver; Revision: 1.02d"
+#घोषणा inia100_REVID "Initio INI-A100U2W SCSI device driver; Revision: 1.02d"
 
-#if 1
-#define ORC_MAXQUEUE		245
-#define ORC_MAXTAGS		64
-#else
-#define ORC_MAXQUEUE		25
-#define ORC_MAXTAGS		8
-#endif
+#अगर 1
+#घोषणा ORC_MAXQUEUE		245
+#घोषणा ORC_MAXTAGS		64
+#अन्यथा
+#घोषणा ORC_MAXQUEUE		25
+#घोषणा ORC_MAXTAGS		8
+#पूर्ण_अगर
 
-#define TOTAL_SG_ENTRY		32
-#define MAX_TARGETS		16
-#define IMAX_CDB			15
-#define SENSE_SIZE		14
+#घोषणा TOTAL_SG_ENTRY		32
+#घोषणा MAX_TARGETS		16
+#घोषणा IMAX_CDB			15
+#घोषणा SENSE_SIZE		14
 
 /************************************************************************/
 /*              Scatter-Gather Element Structure                        */
 /************************************************************************/
-struct orc_sgent {
-	u32 base;		/* Data Pointer */
+काष्ठा orc_sgent अणु
+	u32 base;		/* Data Poपूर्णांकer */
 	u32 length;		/* Data Length */
-};
+पूर्ण;
 
 /* SCSI related definition                                              */
-#define DISC_NOT_ALLOW          0x80	/* Disconnect is not allowed    */
-#define DISC_ALLOW              0xC0	/* Disconnect is allowed        */
+#घोषणा DISC_NOT_ALLOW          0x80	/* Disconnect is not allowed    */
+#घोषणा DISC_ALLOW              0xC0	/* Disconnect is allowed        */
 
 
-#define ORC_OFFSET_SCB			16
-#define ORC_MAX_SCBS		    250
-#define MAX_CHANNELS       2
-#define MAX_ESCB_ELE				64
-#define TCF_DRV_255_63     0x0400
+#घोषणा ORC_OFFSET_SCB			16
+#घोषणा ORC_MAX_SCBS		    250
+#घोषणा MAX_CHANNELS       2
+#घोषणा MAX_ESCB_ELE				64
+#घोषणा TCF_DRV_255_63     0x0400
 
 /********************************************************/
 /*      Orchid Host Command Set                         */
 /********************************************************/
-#define ORC_CMD_NOP		0x00	/* Host command - NOP             */
-#define ORC_CMD_VERSION		0x01	/* Host command - Get F/W version */
-#define ORC_CMD_ECHO		0x02	/* Host command - ECHO            */
-#define ORC_CMD_SET_NVM		0x03	/* Host command - Set NVRAM       */
-#define ORC_CMD_GET_NVM		0x04	/* Host command - Get NVRAM       */
-#define ORC_CMD_GET_BUS_STATUS	0x05	/* Host command - Get SCSI bus status */
-#define ORC_CMD_ABORT_SCB	0x06	/* Host command - Abort SCB       */
-#define ORC_CMD_ISSUE_SCB	0x07	/* Host command - Issue SCB       */
+#घोषणा ORC_CMD_NOP		0x00	/* Host command - NOP             */
+#घोषणा ORC_CMD_VERSION		0x01	/* Host command - Get F/W version */
+#घोषणा ORC_CMD_ECHO		0x02	/* Host command - ECHO            */
+#घोषणा ORC_CMD_SET_NVM		0x03	/* Host command - Set NVRAM       */
+#घोषणा ORC_CMD_GET_NVM		0x04	/* Host command - Get NVRAM       */
+#घोषणा ORC_CMD_GET_BUS_STATUS	0x05	/* Host command - Get SCSI bus status */
+#घोषणा ORC_CMD_ABORT_SCB	0x06	/* Host command - Abort SCB       */
+#घोषणा ORC_CMD_ISSUE_SCB	0x07	/* Host command - Issue SCB       */
 
 /********************************************************/
 /*              Orchid Register Set                     */
 /********************************************************/
-#define ORC_GINTS	0xA0	/* Global Interrupt Status        */
-#define QINT		0x04	/* Reply Queue Interrupt  */
-#define ORC_GIMSK	0xA1	/* Global Interrupt MASK  */
-#define MQINT		0x04	/* Mask Reply Queue Interrupt     */
-#define	ORC_GCFG	0xA2	/* Global Configure               */
-#define EEPRG		0x01	/* Enable EEPROM programming */
-#define	ORC_GSTAT	0xA3	/* Global status          */
-#define WIDEBUS		0x10	/* Wide SCSI Devices connected    */
-#define ORC_HDATA	0xA4	/* Host Data                      */
-#define ORC_HCTRL	0xA5	/* Host Control                   */
-#define SCSIRST		0x80	/* SCSI bus reset         */
-#define HDO			0x40	/* Host data out          */
-#define HOSTSTOP		0x02	/* Host stop RISC engine  */
-#define DEVRST		0x01	/* Device reset                   */
-#define ORC_HSTUS	0xA6	/* Host Status                    */
-#define HDI			0x02	/* Host data in                   */
-#define RREADY		0x01	/* RISC engine is ready to receive */
-#define	ORC_NVRAM	0xA7	/* Nvram port address             */
-#define SE2CS		0x008
-#define SE2CLK		0x004
-#define SE2DO		0x002
-#define SE2DI		0x001
-#define ORC_PQUEUE	0xA8	/* Posting queue FIFO             */
-#define ORC_PQCNT	0xA9	/* Posting queue FIFO Cnt */
-#define ORC_RQUEUE	0xAA	/* Reply queue FIFO               */
-#define ORC_RQUEUECNT	0xAB	/* Reply queue FIFO Cnt           */
-#define	ORC_FWBASEADR	0xAC	/* Firmware base address  */
+#घोषणा ORC_GINTS	0xA0	/* Global Interrupt Status        */
+#घोषणा QINT		0x04	/* Reply Queue Interrupt  */
+#घोषणा ORC_GIMSK	0xA1	/* Global Interrupt MASK  */
+#घोषणा MQINT		0x04	/* Mask Reply Queue Interrupt     */
+#घोषणा	ORC_GCFG	0xA2	/* Global Configure               */
+#घोषणा EEPRG		0x01	/* Enable EEPROM programming */
+#घोषणा	ORC_GSTAT	0xA3	/* Global status          */
+#घोषणा WIDEBUS		0x10	/* Wide SCSI Devices connected    */
+#घोषणा ORC_HDATA	0xA4	/* Host Data                      */
+#घोषणा ORC_HCTRL	0xA5	/* Host Control                   */
+#घोषणा SCSIRST		0x80	/* SCSI bus reset         */
+#घोषणा HDO			0x40	/* Host data out          */
+#घोषणा HOSTSTOP		0x02	/* Host stop RISC engine  */
+#घोषणा DEVRST		0x01	/* Device reset                   */
+#घोषणा ORC_HSTUS	0xA6	/* Host Status                    */
+#घोषणा HDI			0x02	/* Host data in                   */
+#घोषणा RREADY		0x01	/* RISC engine is पढ़ोy to receive */
+#घोषणा	ORC_NVRAM	0xA7	/* Nvram port address             */
+#घोषणा SE2CS		0x008
+#घोषणा SE2CLK		0x004
+#घोषणा SE2DO		0x002
+#घोषणा SE2DI		0x001
+#घोषणा ORC_PQUEUE	0xA8	/* Posting queue FIFO             */
+#घोषणा ORC_PQCNT	0xA9	/* Posting queue FIFO Cnt */
+#घोषणा ORC_RQUEUE	0xAA	/* Reply queue FIFO               */
+#घोषणा ORC_RQUEUECNT	0xAB	/* Reply queue FIFO Cnt           */
+#घोषणा	ORC_FWBASEADR	0xAC	/* Firmware base address  */
 
-#define	ORC_EBIOSADR0 0xB0	/* External Bios address */
-#define	ORC_EBIOSADR1 0xB1	/* External Bios address */
-#define	ORC_EBIOSADR2 0xB2	/* External Bios address */
-#define	ORC_EBIOSDATA 0xB3	/* External Bios address */
+#घोषणा	ORC_EBIOSADR0 0xB0	/* External Bios address */
+#घोषणा	ORC_EBIOSADR1 0xB1	/* External Bios address */
+#घोषणा	ORC_EBIOSADR2 0xB2	/* External Bios address */
+#घोषणा	ORC_EBIOSDATA 0xB3	/* External Bios address */
 
-#define	ORC_SCBSIZE	0xB7	/* SCB size register              */
-#define	ORC_SCBBASE0	0xB8	/* SCB base address 0             */
-#define	ORC_SCBBASE1	0xBC	/* SCB base address 1             */
+#घोषणा	ORC_SCBSIZE	0xB7	/* SCB size रेजिस्टर              */
+#घोषणा	ORC_SCBBASE0	0xB8	/* SCB base address 0             */
+#घोषणा	ORC_SCBBASE1	0xBC	/* SCB base address 1             */
 
-#define	ORC_RISCCTL	0xE0	/* RISC Control                   */
-#define PRGMRST		0x002
-#define DOWNLOAD		0x001
-#define	ORC_PRGMCTR0	0xE2	/* RISC program counter           */
-#define	ORC_PRGMCTR1	0xE3	/* RISC program counter           */
-#define	ORC_RISCRAM	0xEC	/* RISC RAM data port 4 bytes     */
+#घोषणा	ORC_RISCCTL	0xE0	/* RISC Control                   */
+#घोषणा PRGMRST		0x002
+#घोषणा DOWNLOAD		0x001
+#घोषणा	ORC_PRGMCTR0	0xE2	/* RISC program counter           */
+#घोषणा	ORC_PRGMCTR1	0xE3	/* RISC program counter           */
+#घोषणा	ORC_RISCRAM	0xEC	/* RISC RAM data port 4 bytes     */
 
-struct orc_extended_scb {	/* Extended SCB                 */
-	struct orc_sgent sglist[TOTAL_SG_ENTRY];	/*0 Start of SG list              */
-	struct scsi_cmnd *srb;	/*50 SRB Pointer */
-};
+काष्ठा orc_extended_scb अणु	/* Extended SCB                 */
+	काष्ठा orc_sgent sglist[TOTAL_SG_ENTRY];	/*0 Start of SG list              */
+	काष्ठा scsi_cmnd *srb;	/*50 SRB Poपूर्णांकer */
+पूर्ण;
 
 /***********************************************************************
 		SCSI Control Block
 
-		0x40 bytes long, the last 8 are user bytes
+		0x40 bytes दीर्घ, the last 8 are user bytes
 ************************************************************************/
-struct orc_scb {	/* Scsi_Ctrl_Blk                */
+काष्ठा orc_scb अणु	/* Scsi_Ctrl_Blk                */
 	u8 opcode;	/*00 SCB command code&residual  */
 	u8 flags;	/*01 SCB Flags                  */
 	u8 target;	/*02 Target Id                  */
 	u8 lun;		/*03 Lun                        */
-	u32 reserved0;	/*04 Reserved for ORCHID must 0 */
+	u32 reserved0;	/*04 Reserved क्रम ORCHID must 0 */
 	u32 xferlen;	/*08 Data Transfer Length       */
-	u32 reserved1;	/*0C Reserved for ORCHID must 0 */
+	u32 reserved1;	/*0C Reserved क्रम ORCHID must 0 */
 	u32 sg_len;		/*10 SG list # * 8              */
 	u32 sg_addr;	/*14 SG List Buf physical Addr  */
 	u32 sg_addrhigh;	/*18 SG Buffer high physical Addr */
 	u8 hastat;	/*1C Host Status                */
 	u8 tastat;	/*1D Target Status              */
 	u8 status;	/*1E SCB status                 */
-	u8 link;		/*1F Link pointer, default 0xFF */
+	u8 link;		/*1F Link poपूर्णांकer, शेष 0xFF */
 	u8 sense_len;	/*20 Sense Allocation Length    */
 	u8 cdb_len;	/*21 CDB Length                 */
-	u8 ident;	/*22 Identify                   */
+	u8 ident;	/*22 Identअगरy                   */
 	u8 tag_msg;	/*23 Tag Message                */
 	u8 cdb[IMAX_CDB];	/*24 SCSI CDBs                  */
-	u8 scbidx;	/*3C Index for this ORCSCB      */
+	u8 scbidx;	/*3C Index क्रम this ORCSCB      */
 	u32 sense_addr;	/*34 Sense Buffer physical Addr */
 
-	struct orc_extended_scb *escb; /*38 Extended SCB Pointer       */
-        /* 64bit pointer or 32bit pointer + reserved ? */
-#ifndef CONFIG_64BIT
-	u8 reserved2[4];	/*3E Reserved for Driver use    */
-#endif
-};
+	काष्ठा orc_extended_scb *escb; /*38 Extended SCB Poपूर्णांकer       */
+        /* 64bit poपूर्णांकer or 32bit poपूर्णांकer + reserved ? */
+#अगर_अघोषित CONFIG_64BIT
+	u8 reserved2[4];	/*3E Reserved क्रम Driver use    */
+#पूर्ण_अगर
+पूर्ण;
 
 /* Opcodes of ORCSCB_Opcode */
-#define ORC_EXECSCSI	0x00	/* SCSI initiator command with residual */
-#define ORC_BUSDEVRST	0x01	/* SCSI Bus Device Reset  */
+#घोषणा ORC_EXECSCSI	0x00	/* SCSI initiator command with residual */
+#घोषणा ORC_BUSDEVRST	0x01	/* SCSI Bus Device Reset  */
 
 /* Status of ORCSCB_Status */
-#define ORCSCB_COMPLETE	0x00	/* SCB request completed  */
-#define ORCSCB_POST	0x01	/* SCB is posted by the HOST      */
+#घोषणा ORCSCB_COMPLETE	0x00	/* SCB request completed  */
+#घोषणा ORCSCB_POST	0x01	/* SCB is posted by the HOST      */
 
-/* Bit Definition for ORCSCB_Flags */
-#define SCF_DISINT	0x01	/* Disable HOST interrupt */
-#define SCF_DIR		0x18	/* Direction bits         */
-#define SCF_NO_DCHK	0x00	/* Direction determined by SCSI   */
-#define SCF_DIN		0x08	/* From Target to Initiator       */
-#define SCF_DOUT	0x10	/* From Initiator to Target       */
-#define SCF_NO_XF	0x18	/* No data transfer               */
-#define SCF_POLL   0x40
+/* Bit Definition क्रम ORCSCB_Flags */
+#घोषणा SCF_DISINT	0x01	/* Disable HOST पूर्णांकerrupt */
+#घोषणा SCF_सूची		0x18	/* Direction bits         */
+#घोषणा SCF_NO_DCHK	0x00	/* Direction determined by SCSI   */
+#घोषणा SCF_DIN		0x08	/* From Target to Initiator       */
+#घोषणा SCF_DOUT	0x10	/* From Initiator to Target       */
+#घोषणा SCF_NO_XF	0x18	/* No data transfer               */
+#घोषणा SCF_POLL   0x40
 
-/* Error Codes for ORCSCB_HaStat */
-#define HOST_SEL_TOUT	0x11
-#define HOST_DO_DU	0x12
-#define HOST_BUS_FREE	0x13
-#define HOST_BAD_PHAS	0x14
-#define HOST_INV_CMD	0x16
-#define HOST_SCSI_RST	0x1B
-#define HOST_DEV_RST	0x1C
+/* Error Codes क्रम ORCSCB_HaStat */
+#घोषणा HOST_SEL_TOUT	0x11
+#घोषणा HOST_DO_DU	0x12
+#घोषणा HOST_BUS_FREE	0x13
+#घोषणा HOST_BAD_PHAS	0x14
+#घोषणा HOST_INV_CMD	0x16
+#घोषणा HOST_SCSI_RST	0x1B
+#घोषणा HOST_DEV_RST	0x1C
 
 
-/* Error Codes for ORCSCB_TaStat */
-#define TARGET_CHK_COND	0x02
-#define TARGET_BUSY	0x08
-#define TARGET_TAG_FULL	0x28
+/* Error Codes क्रम ORCSCB_TaStat */
+#घोषणा TARGET_CHK_COND	0x02
+#घोषणा TARGET_BUSY	0x08
+#घोषणा TARGET_TAG_FULL	0x28
 
 
 /***********************************************************************
 		Target Device Control Structure
 **********************************************************************/
 
-struct orc_target {
+काष्ठा orc_target अणु
 	u8 TCS_DrvDASD;	/* 6 */
 	u8 TCS_DrvSCSI;	/* 7 */
 	u8 TCS_DrvHead;	/* 8 */
 	u16 TCS_DrvFlags;	/* 4 */
 	u8 TCS_DrvSector;	/* 7 */
-};
+पूर्ण;
 
-/* Bit Definition for TCF_DrvFlags */
-#define	TCS_DF_NODASD_SUPT	0x20	/* Suppress OS/2 DASD Mgr support */
-#define	TCS_DF_NOSCSI_SUPT	0x40	/* Suppress OS/2 SCSI Mgr support */
+/* Bit Definition क्रम TCF_DrvFlags */
+#घोषणा	TCS_DF_NODASD_SUPT	0x20	/* Suppress OS/2 DASD Mgr support */
+#घोषणा	TCS_DF_NOSCSI_SUPT	0x40	/* Suppress OS/2 SCSI Mgr support */
 
 
 /***********************************************************************
               Host Adapter Control Structure
 ************************************************************************/
-struct orc_host {
-	unsigned long base;	/* Base address */
+काष्ठा orc_host अणु
+	अचिन्हित दीर्घ base;	/* Base address */
 	u8 index;		/* Index (Channel)*/
 	u8 scsi_id;		/* H/A SCSI ID */
 	u8 BIOScfg;		/*BIOS configuration */
 	u8 flags;
-	u8 max_targets;		/* SCSI0MAXTags */
-	struct orc_scb *scb_virt;	/* Virtual Pointer to SCB array */
+	u8 max_tarमाला_लो;		/* SCSI0MAXTags */
+	काष्ठा orc_scb *scb_virt;	/* Virtual Poपूर्णांकer to SCB array */
 	dma_addr_t scb_phys;	/* Scb Physical address */
-	struct orc_extended_scb *escb_virt; /* Virtual pointer to ESCB Scatter list */
+	काष्ठा orc_extended_scb *escb_virt; /* Virtual poपूर्णांकer to ESCB Scatter list */
 	dma_addr_t escb_phys;	/* scatter list Physical address */
 	u8 target_flag[16];	/* target configuration, TCF_EN_TAG */
 	u8 max_tags[16];	/* ORC_MAX_SCBS */
 	u32 allocation_map[MAX_CHANNELS][8];	/* Max STB is 256, So 256/32 */
 	spinlock_t allocation_lock;
-	struct pci_dev *pdev;
-};
+	काष्ठा pci_dev *pdev;
+पूर्ण;
 
-/* Bit Definition for HCS_Flags */
+/* Bit Definition क्रम HCS_Flags */
 
-#define HCF_SCSI_RESET	0x01	/* SCSI BUS RESET         */
-#define HCF_PARITY    	0x02	/* parity card                    */
-#define HCF_LVDS     	0x10	/* parity card                    */
+#घोषणा HCF_SCSI_RESET	0x01	/* SCSI BUS RESET         */
+#घोषणा HCF_PARITY    	0x02	/* parity card                    */
+#घोषणा HCF_LVDS     	0x10	/* parity card                    */
 
-/* Bit Definition for TargetFlag */
+/* Bit Definition क्रम TargetFlag */
 
-#define TCF_EN_255	    0x08
-#define TCF_EN_TAG	    0x10
-#define TCF_BUSY	      0x20
-#define TCF_DISCONNECT	0x40
-#define TCF_SPIN_UP	  0x80
+#घोषणा TCF_EN_255	    0x08
+#घोषणा TCF_EN_TAG	    0x10
+#घोषणा TCF_BUSY	      0x20
+#घोषणा TCF_DISCONNECT	0x40
+#घोषणा TCF_SPIN_UP	  0x80
 
-/* Bit Definition for HCS_AFlags */
-#define	HCS_AF_IGNORE		0x01	/* Adapter ignore         */
-#define	HCS_AF_DISABLE_RESET	0x10	/* Adapter disable reset  */
-#define	HCS_AF_DISABLE_ADPT	0x80	/* Adapter disable                */
+/* Bit Definition क्रम HCS_AFlags */
+#घोषणा	HCS_AF_IGNORE		0x01	/* Adapter ignore         */
+#घोषणा	HCS_AF_DISABLE_RESET	0x10	/* Adapter disable reset  */
+#घोषणा	HCS_AF_DISABLE_ADPT	0x80	/* Adapter disable                */
 
-struct orc_nvram {
+काष्ठा orc_nvram अणु
 /*----------header ---------------*/
-        u8 SubVendorID0;     /* 00 - Sub Vendor ID           */
-        u8 SubVendorID1;     /* 00 - Sub Vendor ID           */
+        u8 SubVenकरोrID0;     /* 00 - Sub Venकरोr ID           */
+        u8 SubVenकरोrID1;     /* 00 - Sub Venकरोr ID           */
         u8 SubSysID0;        /* 02 - Sub System ID           */
         u8 SubSysID1;        /* 02 - Sub System ID           */
         u8 SubClass;         /* 04 - Sub Class               */
-        u8 VendorID0;        /* 05 - Vendor ID               */
-        u8 VendorID1;        /* 05 - Vendor ID               */
+        u8 VenकरोrID0;        /* 05 - Venकरोr ID               */
+        u8 VenकरोrID1;        /* 05 - Venकरोr ID               */
         u8 DeviceID0;        /* 07 - Device ID               */
         u8 DeviceID1;        /* 07 - Device ID               */
         u8 Reserved0[2];     /* 09 - Reserved                */
-        u8 revision;         /* 0B - revision of data structure */
+        u8 revision;         /* 0B - revision of data काष्ठाure */
         /* ----Host Adapter Structure ---- */
         u8 NumOfCh;          /* 0C - Number of SCSI channel  */
         u8 BIOSConfig1;      /* 0D - BIOS configuration 1    */
@@ -286,8 +287,8 @@ struct orc_nvram {
         u8 scsi_id;          /* 10 - Channel 0 SCSI ID       */
         u8 SCSI0Config;      /* 11 - Channel 0 SCSI configuration */
         u8 SCSI0MaxTags;     /* 12 - Channel 0 Maximum tags  */
-        u8 SCSI0ResetTime;   /* 13 - Channel 0 Reset recovering time */
-        u8 ReservedforChannel0[2];   /* 14 - Reserved                */
+        u8 SCSI0ResetTime;   /* 13 - Channel 0 Reset recovering समय */
+        u8 Reservedक्रमChannel0[2];   /* 14 - Reserved                */
 
         /* ----SCSI target Structure ----  */
         /* from "CTRL-I SCSI device SetUp menu "                        */
@@ -311,8 +312,8 @@ struct orc_nvram {
         u8 SCSI1Id;          /* 26 - Channel 1 SCSI ID       */
         u8 SCSI1Config;      /* 27 - Channel 1 SCSI configuration */
         u8 SCSI1MaxTags;     /* 28 - Channel 1 Maximum tags  */
-        u8 SCSI1ResetTime;   /* 29 - Channel 1 Reset recovering time */
-        u8 ReservedforChannel1[2];   /* 2A - Reserved                */
+        u8 SCSI1ResetTime;   /* 29 - Channel 1 Reset recovering समय */
+        u8 Reservedक्रमChannel1[2];   /* 2A - Reserved                */
 
         /* ----SCSI target Structure ----  */
         /* from "CTRL-I SCSI device SetUp menu "                                          */
@@ -335,37 +336,37 @@ struct orc_nvram {
         u8 reserved[3];      /* 3C - Reserved                */
         /* ---------- CheckSum ----------       */
         u8 CheckSum;         /* 3F - Checksum of NVRam       */
-};
+पूर्ण;
 
-/* Bios Configuration for nvram->BIOSConfig1                            */
-#define NBC_BIOSENABLE  0x01    /* BIOS enable                    */
-#define NBC_CDROM       0x02    /* Support bootable CDROM */
-#define NBC_REMOVABLE   0x04    /* Support removable drive        */
+/* Bios Configuration क्रम nvram->BIOSConfig1                            */
+#घोषणा NBC_BIOSENABLE  0x01    /* BIOS enable                    */
+#घोषणा NBC_CDROM       0x02    /* Support bootable CDROM */
+#घोषणा NBC_REMOVABLE   0x04    /* Support removable drive        */
 
-/* Bios Configuration for nvram->BIOSConfig2                            */
-#define NBB_TARGET_MASK 0x0F    /* Boot SCSI target ID number     */
-#define NBB_CHANL_MASK  0xF0    /* Boot SCSI channel number       */
+/* Bios Configuration क्रम nvram->BIOSConfig2                            */
+#घोषणा NBB_TARGET_MASK 0x0F    /* Boot SCSI target ID number     */
+#घोषणा NBB_CHANL_MASK  0xF0    /* Boot SCSI channel number       */
 
-/* Bit definition for nvram->SCSIConfig                                 */
-#define NCC_BUSRESET    0x01    /* Reset SCSI bus at power up     */
-#define NCC_PARITYCHK   0x02    /* SCSI parity enable             */
-#define NCC_LVDS        0x10    /* Enable LVDS                    */
-#define NCC_ACTTERM1    0x20    /* Enable active terminator 1     */
-#define NCC_ACTTERM2    0x40    /* Enable active terminator 2     */
-#define NCC_AUTOTERM    0x80    /* Enable auto termination        */
+/* Bit definition क्रम nvram->SCSIConfig                                 */
+#घोषणा NCC_BUSRESET    0x01    /* Reset SCSI bus at घातer up     */
+#घोषणा NCC_PARITYCHK   0x02    /* SCSI parity enable             */
+#घोषणा NCC_LVDS        0x10    /* Enable LVDS                    */
+#घोषणा NCC_ACTTERM1    0x20    /* Enable active terminator 1     */
+#घोषणा NCC_ACTTERM2    0x40    /* Enable active terminator 2     */
+#घोषणा NCC_AUTOTERM    0x80    /* Enable स्वतः termination        */
 
-/* Bit definition for nvram->TargetxConfig                              */
-#define NTC_PERIOD      0x07    /* Maximum Sync. Speed            */
-#define NTC_1GIGA       0x08    /* 255 head / 63 sectors (64/32) */
-#define NTC_NO_SYNC     0x10    /* NO SYNC. NEGO          */
-#define NTC_NO_WIDESYNC 0x20    /* NO WIDE SYNC. NEGO             */
-#define NTC_DISC_ENABLE 0x40    /* Enable SCSI disconnect */
-#define NTC_SPINUP      0x80    /* Start disk drive               */
+/* Bit definition क्रम nvram->TargetxConfig                              */
+#घोषणा NTC_PERIOD      0x07    /* Maximum Sync. Speed            */
+#घोषणा NTC_1GIGA       0x08    /* 255 head / 63 sectors (64/32) */
+#घोषणा NTC_NO_SYNC     0x10    /* NO SYNC. NEGO          */
+#घोषणा NTC_NO_WIDESYNC 0x20    /* NO WIDE SYNC. NEGO             */
+#घोषणा NTC_DISC_ENABLE 0x40    /* Enable SCSI disconnect */
+#घोषणा NTC_SPINUP      0x80    /* Start disk drive               */
 
 /* Default NVRam values                                                 */
-#define NBC_DEFAULT     (NBC_ENABLE)
-#define NCC_DEFAULT     (NCC_BUSRESET | NCC_AUTOTERM | NCC_PARITYCHK)
-#define NCC_MAX_TAGS    0x20    /* Maximum tags per target        */
-#define NCC_RESET_TIME  0x0A    /* SCSI RESET recovering time     */
-#define NTC_DEFAULT     (NTC_1GIGA | NTC_NO_WIDESYNC | NTC_DISC_ENABLE)
+#घोषणा NBC_DEFAULT     (NBC_ENABLE)
+#घोषणा NCC_DEFAULT     (NCC_BUSRESET | NCC_AUTOTERM | NCC_PARITYCHK)
+#घोषणा NCC_MAX_TAGS    0x20    /* Maximum tags per target        */
+#घोषणा NCC_RESET_TIME  0x0A    /* SCSI RESET recovering समय     */
+#घोषणा NTC_DEFAULT     (NTC_1GIGA | NTC_NO_WIDESYNC | NTC_DISC_ENABLE)
 

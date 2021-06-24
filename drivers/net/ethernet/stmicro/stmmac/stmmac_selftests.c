@@ -1,181 +1,182 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Copyright (c) 2019 Synopsys, Inc. and/or its affiliates.
- * stmmac Selftests Support
+ * sपंचांगmac Selftests Support
  *
  * Author: Jose Abreu <joabreu@synopsys.com>
  */
 
-#include <linux/bitrev.h>
-#include <linux/completion.h>
-#include <linux/crc32.h>
-#include <linux/ethtool.h>
-#include <linux/ip.h>
-#include <linux/phy.h>
-#include <linux/udp.h>
-#include <net/pkt_cls.h>
-#include <net/pkt_sched.h>
-#include <net/tcp.h>
-#include <net/udp.h>
-#include <net/tc_act/tc_gact.h>
-#include "stmmac.h"
+#समावेश <linux/bitrev.h>
+#समावेश <linux/completion.h>
+#समावेश <linux/crc32.h>
+#समावेश <linux/ethtool.h>
+#समावेश <linux/ip.h>
+#समावेश <linux/phy.h>
+#समावेश <linux/udp.h>
+#समावेश <net/pkt_cls.h>
+#समावेश <net/pkt_sched.h>
+#समावेश <net/tcp.h>
+#समावेश <net/udp.h>
+#समावेश <net/tc_act/tc_gact.h>
+#समावेश "stmmac.h"
 
-struct stmmachdr {
+काष्ठा sपंचांगmachdr अणु
 	__be32 version;
 	__be64 magic;
 	u8 id;
-} __packed;
+पूर्ण __packed;
 
-#define STMMAC_TEST_PKT_SIZE (sizeof(struct ethhdr) + sizeof(struct iphdr) + \
-			      sizeof(struct stmmachdr))
-#define STMMAC_TEST_PKT_MAGIC	0xdeadcafecafedeadULL
-#define STMMAC_LB_TIMEOUT	msecs_to_jiffies(200)
+#घोषणा STMMAC_TEST_PKT_SIZE (माप(काष्ठा ethhdr) + माप(काष्ठा iphdr) + \
+			      माप(काष्ठा sपंचांगmachdr))
+#घोषणा STMMAC_TEST_PKT_MAGIC	0xdeadcafecafedeadULL
+#घोषणा STMMAC_LB_TIMEOUT	msecs_to_jअगरfies(200)
 
-struct stmmac_packet_attrs {
-	int vlan;
-	int vlan_id_in;
-	int vlan_id_out;
-	unsigned char *src;
-	unsigned char *dst;
+काष्ठा sपंचांगmac_packet_attrs अणु
+	पूर्णांक vlan;
+	पूर्णांक vlan_id_in;
+	पूर्णांक vlan_id_out;
+	अचिन्हित अक्षर *src;
+	अचिन्हित अक्षर *dst;
 	u32 ip_src;
 	u32 ip_dst;
-	int tcp;
-	int sport;
-	int dport;
+	पूर्णांक tcp;
+	पूर्णांक sport;
+	पूर्णांक dport;
 	u32 exp_hash;
-	int dont_wait;
-	int timeout;
-	int size;
-	int max_size;
-	int remove_sa;
+	पूर्णांक करोnt_रुको;
+	पूर्णांक समयout;
+	पूर्णांक size;
+	पूर्णांक max_size;
+	पूर्णांक हटाओ_sa;
 	u8 id;
-	int sarc;
+	पूर्णांक sarc;
 	u16 queue_mapping;
-	u64 timestamp;
-};
+	u64 बारtamp;
+पूर्ण;
 
-static u8 stmmac_test_next_id;
+अटल u8 sपंचांगmac_test_next_id;
 
-static struct sk_buff *stmmac_test_get_udp_skb(struct stmmac_priv *priv,
-					       struct stmmac_packet_attrs *attr)
-{
-	struct sk_buff *skb = NULL;
-	struct udphdr *uhdr = NULL;
-	struct tcphdr *thdr = NULL;
-	struct stmmachdr *shdr;
-	struct ethhdr *ehdr;
-	struct iphdr *ihdr;
-	int iplen, size;
+अटल काष्ठा sk_buff *sपंचांगmac_test_get_udp_skb(काष्ठा sपंचांगmac_priv *priv,
+					       काष्ठा sपंचांगmac_packet_attrs *attr)
+अणु
+	काष्ठा sk_buff *skb = शून्य;
+	काष्ठा udphdr *uhdr = शून्य;
+	काष्ठा tcphdr *thdr = शून्य;
+	काष्ठा sपंचांगmachdr *shdr;
+	काष्ठा ethhdr *ehdr;
+	काष्ठा iphdr *ihdr;
+	पूर्णांक iplen, size;
 
 	size = attr->size + STMMAC_TEST_PKT_SIZE;
-	if (attr->vlan) {
+	अगर (attr->vlan) अणु
 		size += 4;
-		if (attr->vlan > 1)
+		अगर (attr->vlan > 1)
 			size += 4;
-	}
+	पूर्ण
 
-	if (attr->tcp)
-		size += sizeof(struct tcphdr);
-	else
-		size += sizeof(struct udphdr);
+	अगर (attr->tcp)
+		size += माप(काष्ठा tcphdr);
+	अन्यथा
+		size += माप(काष्ठा udphdr);
 
-	if (attr->max_size && (attr->max_size > size))
+	अगर (attr->max_size && (attr->max_size > size))
 		size = attr->max_size;
 
 	skb = netdev_alloc_skb(priv->dev, size);
-	if (!skb)
-		return NULL;
+	अगर (!skb)
+		वापस शून्य;
 
 	prefetchw(skb->data);
 
-	if (attr->vlan > 1)
+	अगर (attr->vlan > 1)
 		ehdr = skb_push(skb, ETH_HLEN + 8);
-	else if (attr->vlan)
+	अन्यथा अगर (attr->vlan)
 		ehdr = skb_push(skb, ETH_HLEN + 4);
-	else if (attr->remove_sa)
+	अन्यथा अगर (attr->हटाओ_sa)
 		ehdr = skb_push(skb, ETH_HLEN - 6);
-	else
+	अन्यथा
 		ehdr = skb_push(skb, ETH_HLEN);
 	skb_reset_mac_header(skb);
 
 	skb_set_network_header(skb, skb->len);
-	ihdr = skb_put(skb, sizeof(*ihdr));
+	ihdr = skb_put(skb, माप(*ihdr));
 
 	skb_set_transport_header(skb, skb->len);
-	if (attr->tcp)
-		thdr = skb_put(skb, sizeof(*thdr));
-	else
-		uhdr = skb_put(skb, sizeof(*uhdr));
+	अगर (attr->tcp)
+		thdr = skb_put(skb, माप(*thdr));
+	अन्यथा
+		uhdr = skb_put(skb, माप(*uhdr));
 
-	if (!attr->remove_sa)
+	अगर (!attr->हटाओ_sa)
 		eth_zero_addr(ehdr->h_source);
 	eth_zero_addr(ehdr->h_dest);
-	if (attr->src && !attr->remove_sa)
+	अगर (attr->src && !attr->हटाओ_sa)
 		ether_addr_copy(ehdr->h_source, attr->src);
-	if (attr->dst)
+	अगर (attr->dst)
 		ether_addr_copy(ehdr->h_dest, attr->dst);
 
-	if (!attr->remove_sa) {
+	अगर (!attr->हटाओ_sa) अणु
 		ehdr->h_proto = htons(ETH_P_IP);
-	} else {
+	पूर्ण अन्यथा अणु
 		__be16 *ptr = (__be16 *)ehdr;
 
 		/* HACK */
 		ptr[3] = htons(ETH_P_IP);
-	}
+	पूर्ण
 
-	if (attr->vlan) {
+	अगर (attr->vlan) अणु
 		__be16 *tag, *proto;
 
-		if (!attr->remove_sa) {
-			tag = (void *)ehdr + ETH_HLEN;
-			proto = (void *)ehdr + (2 * ETH_ALEN);
-		} else {
-			tag = (void *)ehdr + ETH_HLEN - 6;
-			proto = (void *)ehdr + ETH_ALEN;
-		}
+		अगर (!attr->हटाओ_sa) अणु
+			tag = (व्योम *)ehdr + ETH_HLEN;
+			proto = (व्योम *)ehdr + (2 * ETH_ALEN);
+		पूर्ण अन्यथा अणु
+			tag = (व्योम *)ehdr + ETH_HLEN - 6;
+			proto = (व्योम *)ehdr + ETH_ALEN;
+		पूर्ण
 
 		proto[0] = htons(ETH_P_8021Q);
 		tag[0] = htons(attr->vlan_id_out);
 		tag[1] = htons(ETH_P_IP);
-		if (attr->vlan > 1) {
+		अगर (attr->vlan > 1) अणु
 			proto[0] = htons(ETH_P_8021AD);
 			tag[1] = htons(ETH_P_8021Q);
 			tag[2] = htons(attr->vlan_id_in);
 			tag[3] = htons(ETH_P_IP);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (attr->tcp) {
+	अगर (attr->tcp) अणु
 		thdr->source = htons(attr->sport);
 		thdr->dest = htons(attr->dport);
-		thdr->doff = sizeof(struct tcphdr) / 4;
+		thdr->करोff = माप(काष्ठा tcphdr) / 4;
 		thdr->check = 0;
-	} else {
+	पूर्ण अन्यथा अणु
 		uhdr->source = htons(attr->sport);
 		uhdr->dest = htons(attr->dport);
-		uhdr->len = htons(sizeof(*shdr) + sizeof(*uhdr) + attr->size);
-		if (attr->max_size)
+		uhdr->len = htons(माप(*shdr) + माप(*uhdr) + attr->size);
+		अगर (attr->max_size)
 			uhdr->len = htons(attr->max_size -
-					  (sizeof(*ihdr) + sizeof(*ehdr)));
+					  (माप(*ihdr) + माप(*ehdr)));
 		uhdr->check = 0;
-	}
+	पूर्ण
 
 	ihdr->ihl = 5;
 	ihdr->ttl = 32;
 	ihdr->version = 4;
-	if (attr->tcp)
+	अगर (attr->tcp)
 		ihdr->protocol = IPPROTO_TCP;
-	else
+	अन्यथा
 		ihdr->protocol = IPPROTO_UDP;
-	iplen = sizeof(*ihdr) + sizeof(*shdr) + attr->size;
-	if (attr->tcp)
-		iplen += sizeof(*thdr);
-	else
-		iplen += sizeof(*uhdr);
+	iplen = माप(*ihdr) + माप(*shdr) + attr->size;
+	अगर (attr->tcp)
+		iplen += माप(*thdr);
+	अन्यथा
+		iplen += माप(*uhdr);
 
-	if (attr->max_size)
-		iplen = attr->max_size - sizeof(*ehdr);
+	अगर (attr->max_size)
+		iplen = attr->max_size - माप(*ehdr);
 
 	ihdr->tot_len = htons(iplen);
 	ihdr->frag_off = 0;
@@ -185,936 +186,936 @@ static struct sk_buff *stmmac_test_get_udp_skb(struct stmmac_priv *priv,
 	ihdr->id = 0;
 	ip_send_check(ihdr);
 
-	shdr = skb_put(skb, sizeof(*shdr));
+	shdr = skb_put(skb, माप(*shdr));
 	shdr->version = 0;
 	shdr->magic = cpu_to_be64(STMMAC_TEST_PKT_MAGIC);
-	attr->id = stmmac_test_next_id;
-	shdr->id = stmmac_test_next_id++;
+	attr->id = sपंचांगmac_test_next_id;
+	shdr->id = sपंचांगmac_test_next_id++;
 
-	if (attr->size)
+	अगर (attr->size)
 		skb_put(skb, attr->size);
-	if (attr->max_size && (attr->max_size > skb->len))
+	अगर (attr->max_size && (attr->max_size > skb->len))
 		skb_put(skb, attr->max_size - skb->len);
 
 	skb->csum = 0;
 	skb->ip_summed = CHECKSUM_PARTIAL;
-	if (attr->tcp) {
+	अगर (attr->tcp) अणु
 		thdr->check = ~tcp_v4_check(skb->len, ihdr->saddr, ihdr->daddr, 0);
 		skb->csum_start = skb_transport_header(skb) - skb->head;
-		skb->csum_offset = offsetof(struct tcphdr, check);
-	} else {
+		skb->csum_offset = दुरत्व(काष्ठा tcphdr, check);
+	पूर्ण अन्यथा अणु
 		udp4_hwcsum(skb, ihdr->saddr, ihdr->daddr);
-	}
+	पूर्ण
 
 	skb->protocol = htons(ETH_P_IP);
 	skb->pkt_type = PACKET_HOST;
 	skb->dev = priv->dev;
 
-	if (attr->timestamp)
-		skb->tstamp = ns_to_ktime(attr->timestamp);
+	अगर (attr->बारtamp)
+		skb->tstamp = ns_to_kसमय(attr->बारtamp);
 
-	return skb;
-}
+	वापस skb;
+पूर्ण
 
-static struct sk_buff *stmmac_test_get_arp_skb(struct stmmac_priv *priv,
-					       struct stmmac_packet_attrs *attr)
-{
+अटल काष्ठा sk_buff *sपंचांगmac_test_get_arp_skb(काष्ठा sपंचांगmac_priv *priv,
+					       काष्ठा sपंचांगmac_packet_attrs *attr)
+अणु
 	__be32 ip_src = htonl(attr->ip_src);
 	__be32 ip_dst = htonl(attr->ip_dst);
-	struct sk_buff *skb = NULL;
+	काष्ठा sk_buff *skb = शून्य;
 
 	skb = arp_create(ARPOP_REQUEST, ETH_P_ARP, ip_dst, priv->dev, ip_src,
-			 NULL, attr->src, attr->dst);
-	if (!skb)
-		return NULL;
+			 शून्य, attr->src, attr->dst);
+	अगर (!skb)
+		वापस शून्य;
 
 	skb->pkt_type = PACKET_HOST;
 	skb->dev = priv->dev;
 
-	return skb;
-}
+	वापस skb;
+पूर्ण
 
-struct stmmac_test_priv {
-	struct stmmac_packet_attrs *packet;
-	struct packet_type pt;
-	struct completion comp;
-	int double_vlan;
-	int vlan_id;
-	int ok;
-};
+काष्ठा sपंचांगmac_test_priv अणु
+	काष्ठा sपंचांगmac_packet_attrs *packet;
+	काष्ठा packet_type pt;
+	काष्ठा completion comp;
+	पूर्णांक द्विगुन_vlan;
+	पूर्णांक vlan_id;
+	पूर्णांक ok;
+पूर्ण;
 
-static int stmmac_test_loopback_validate(struct sk_buff *skb,
-					 struct net_device *ndev,
-					 struct packet_type *pt,
-					 struct net_device *orig_ndev)
-{
-	struct stmmac_test_priv *tpriv = pt->af_packet_priv;
-	unsigned char *src = tpriv->packet->src;
-	unsigned char *dst = tpriv->packet->dst;
-	struct stmmachdr *shdr;
-	struct ethhdr *ehdr;
-	struct udphdr *uhdr;
-	struct tcphdr *thdr;
-	struct iphdr *ihdr;
+अटल पूर्णांक sपंचांगmac_test_loopback_validate(काष्ठा sk_buff *skb,
+					 काष्ठा net_device *ndev,
+					 काष्ठा packet_type *pt,
+					 काष्ठा net_device *orig_ndev)
+अणु
+	काष्ठा sपंचांगmac_test_priv *tpriv = pt->af_packet_priv;
+	अचिन्हित अक्षर *src = tpriv->packet->src;
+	अचिन्हित अक्षर *dst = tpriv->packet->dst;
+	काष्ठा sपंचांगmachdr *shdr;
+	काष्ठा ethhdr *ehdr;
+	काष्ठा udphdr *uhdr;
+	काष्ठा tcphdr *thdr;
+	काष्ठा iphdr *ihdr;
 
 	skb = skb_unshare(skb, GFP_ATOMIC);
-	if (!skb)
-		goto out;
+	अगर (!skb)
+		जाओ out;
 
-	if (skb_linearize(skb))
-		goto out;
-	if (skb_headlen(skb) < (STMMAC_TEST_PKT_SIZE - ETH_HLEN))
-		goto out;
+	अगर (skb_linearize(skb))
+		जाओ out;
+	अगर (skb_headlen(skb) < (STMMAC_TEST_PKT_SIZE - ETH_HLEN))
+		जाओ out;
 
-	ehdr = (struct ethhdr *)skb_mac_header(skb);
-	if (dst) {
-		if (!ether_addr_equal_unaligned(ehdr->h_dest, dst))
-			goto out;
-	}
-	if (tpriv->packet->sarc) {
-		if (!ether_addr_equal_unaligned(ehdr->h_source, ehdr->h_dest))
-			goto out;
-	} else if (src) {
-		if (!ether_addr_equal_unaligned(ehdr->h_source, src))
-			goto out;
-	}
+	ehdr = (काष्ठा ethhdr *)skb_mac_header(skb);
+	अगर (dst) अणु
+		अगर (!ether_addr_equal_unaligned(ehdr->h_dest, dst))
+			जाओ out;
+	पूर्ण
+	अगर (tpriv->packet->sarc) अणु
+		अगर (!ether_addr_equal_unaligned(ehdr->h_source, ehdr->h_dest))
+			जाओ out;
+	पूर्ण अन्यथा अगर (src) अणु
+		अगर (!ether_addr_equal_unaligned(ehdr->h_source, src))
+			जाओ out;
+	पूर्ण
 
 	ihdr = ip_hdr(skb);
-	if (tpriv->double_vlan)
-		ihdr = (struct iphdr *)(skb_network_header(skb) + 4);
+	अगर (tpriv->द्विगुन_vlan)
+		ihdr = (काष्ठा iphdr *)(skb_network_header(skb) + 4);
 
-	if (tpriv->packet->tcp) {
-		if (ihdr->protocol != IPPROTO_TCP)
-			goto out;
+	अगर (tpriv->packet->tcp) अणु
+		अगर (ihdr->protocol != IPPROTO_TCP)
+			जाओ out;
 
-		thdr = (struct tcphdr *)((u8 *)ihdr + 4 * ihdr->ihl);
-		if (thdr->dest != htons(tpriv->packet->dport))
-			goto out;
+		thdr = (काष्ठा tcphdr *)((u8 *)ihdr + 4 * ihdr->ihl);
+		अगर (thdr->dest != htons(tpriv->packet->dport))
+			जाओ out;
 
-		shdr = (struct stmmachdr *)((u8 *)thdr + sizeof(*thdr));
-	} else {
-		if (ihdr->protocol != IPPROTO_UDP)
-			goto out;
+		shdr = (काष्ठा sपंचांगmachdr *)((u8 *)thdr + माप(*thdr));
+	पूर्ण अन्यथा अणु
+		अगर (ihdr->protocol != IPPROTO_UDP)
+			जाओ out;
 
-		uhdr = (struct udphdr *)((u8 *)ihdr + 4 * ihdr->ihl);
-		if (uhdr->dest != htons(tpriv->packet->dport))
-			goto out;
+		uhdr = (काष्ठा udphdr *)((u8 *)ihdr + 4 * ihdr->ihl);
+		अगर (uhdr->dest != htons(tpriv->packet->dport))
+			जाओ out;
 
-		shdr = (struct stmmachdr *)((u8 *)uhdr + sizeof(*uhdr));
-	}
+		shdr = (काष्ठा sपंचांगmachdr *)((u8 *)uhdr + माप(*uhdr));
+	पूर्ण
 
-	if (shdr->magic != cpu_to_be64(STMMAC_TEST_PKT_MAGIC))
-		goto out;
-	if (tpriv->packet->exp_hash && !skb->hash)
-		goto out;
-	if (tpriv->packet->id != shdr->id)
-		goto out;
+	अगर (shdr->magic != cpu_to_be64(STMMAC_TEST_PKT_MAGIC))
+		जाओ out;
+	अगर (tpriv->packet->exp_hash && !skb->hash)
+		जाओ out;
+	अगर (tpriv->packet->id != shdr->id)
+		जाओ out;
 
 	tpriv->ok = true;
 	complete(&tpriv->comp);
 out:
-	kfree_skb(skb);
-	return 0;
-}
+	kमुक्त_skb(skb);
+	वापस 0;
+पूर्ण
 
-static int __stmmac_test_loopback(struct stmmac_priv *priv,
-				  struct stmmac_packet_attrs *attr)
-{
-	struct stmmac_test_priv *tpriv;
-	struct sk_buff *skb = NULL;
-	int ret = 0;
+अटल पूर्णांक __sपंचांगmac_test_loopback(काष्ठा sपंचांगmac_priv *priv,
+				  काष्ठा sपंचांगmac_packet_attrs *attr)
+अणु
+	काष्ठा sपंचांगmac_test_priv *tpriv;
+	काष्ठा sk_buff *skb = शून्य;
+	पूर्णांक ret = 0;
 
-	tpriv = kzalloc(sizeof(*tpriv), GFP_KERNEL);
-	if (!tpriv)
-		return -ENOMEM;
+	tpriv = kzalloc(माप(*tpriv), GFP_KERNEL);
+	अगर (!tpriv)
+		वापस -ENOMEM;
 
 	tpriv->ok = false;
 	init_completion(&tpriv->comp);
 
 	tpriv->pt.type = htons(ETH_P_IP);
-	tpriv->pt.func = stmmac_test_loopback_validate;
+	tpriv->pt.func = sपंचांगmac_test_loopback_validate;
 	tpriv->pt.dev = priv->dev;
 	tpriv->pt.af_packet_priv = tpriv;
 	tpriv->packet = attr;
 
-	if (!attr->dont_wait)
+	अगर (!attr->करोnt_रुको)
 		dev_add_pack(&tpriv->pt);
 
-	skb = stmmac_test_get_udp_skb(priv, attr);
-	if (!skb) {
+	skb = sपंचांगmac_test_get_udp_skb(priv, attr);
+	अगर (!skb) अणु
 		ret = -ENOMEM;
-		goto cleanup;
-	}
+		जाओ cleanup;
+	पूर्ण
 
 	ret = dev_direct_xmit(skb, attr->queue_mapping);
-	if (ret)
-		goto cleanup;
+	अगर (ret)
+		जाओ cleanup;
 
-	if (attr->dont_wait)
-		goto cleanup;
+	अगर (attr->करोnt_रुको)
+		जाओ cleanup;
 
-	if (!attr->timeout)
-		attr->timeout = STMMAC_LB_TIMEOUT;
+	अगर (!attr->समयout)
+		attr->समयout = STMMAC_LB_TIMEOUT;
 
-	wait_for_completion_timeout(&tpriv->comp, attr->timeout);
+	रुको_क्रम_completion_समयout(&tpriv->comp, attr->समयout);
 	ret = tpriv->ok ? 0 : -ETIMEDOUT;
 
 cleanup:
-	if (!attr->dont_wait)
-		dev_remove_pack(&tpriv->pt);
-	kfree(tpriv);
-	return ret;
-}
+	अगर (!attr->करोnt_रुको)
+		dev_हटाओ_pack(&tpriv->pt);
+	kमुक्त(tpriv);
+	वापस ret;
+पूर्ण
 
-static int stmmac_test_mac_loopback(struct stmmac_priv *priv)
-{
-	struct stmmac_packet_attrs attr = { };
+अटल पूर्णांक sपंचांगmac_test_mac_loopback(काष्ठा sपंचांगmac_priv *priv)
+अणु
+	काष्ठा sपंचांगmac_packet_attrs attr = अणु पूर्ण;
 
 	attr.dst = priv->dev->dev_addr;
-	return __stmmac_test_loopback(priv, &attr);
-}
+	वापस __sपंचांगmac_test_loopback(priv, &attr);
+पूर्ण
 
-static int stmmac_test_phy_loopback(struct stmmac_priv *priv)
-{
-	struct stmmac_packet_attrs attr = { };
-	int ret;
+अटल पूर्णांक sपंचांगmac_test_phy_loopback(काष्ठा sपंचांगmac_priv *priv)
+अणु
+	काष्ठा sपंचांगmac_packet_attrs attr = अणु पूर्ण;
+	पूर्णांक ret;
 
-	if (!priv->dev->phydev)
-		return -EOPNOTSUPP;
+	अगर (!priv->dev->phydev)
+		वापस -EOPNOTSUPP;
 
 	ret = phy_loopback(priv->dev->phydev, true);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	attr.dst = priv->dev->dev_addr;
-	ret = __stmmac_test_loopback(priv, &attr);
+	ret = __sपंचांगmac_test_loopback(priv, &attr);
 
 	phy_loopback(priv->dev->phydev, false);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int stmmac_test_mmc(struct stmmac_priv *priv)
-{
-	struct stmmac_counters initial, final;
-	int ret;
+अटल पूर्णांक sपंचांगmac_test_mmc(काष्ठा sपंचांगmac_priv *priv)
+अणु
+	काष्ठा sपंचांगmac_counters initial, final;
+	पूर्णांक ret;
 
-	memset(&initial, 0, sizeof(initial));
-	memset(&final, 0, sizeof(final));
+	स_रखो(&initial, 0, माप(initial));
+	स_रखो(&final, 0, माप(final));
 
-	if (!priv->dma_cap.rmon)
-		return -EOPNOTSUPP;
+	अगर (!priv->dma_cap.rmon)
+		वापस -EOPNOTSUPP;
 
-	/* Save previous results into internal struct */
-	stmmac_mmc_read(priv, priv->mmcaddr, &priv->mmc);
+	/* Save previous results पूर्णांकo पूर्णांकernal काष्ठा */
+	sपंचांगmac_mmc_पढ़ो(priv, priv->mmcaddr, &priv->mmc);
 
-	ret = stmmac_test_mac_loopback(priv);
-	if (ret)
-		return ret;
+	ret = sपंचांगmac_test_mac_loopback(priv);
+	अगर (ret)
+		वापस ret;
 
 	/* These will be loopback results so no need to save them */
-	stmmac_mmc_read(priv, priv->mmcaddr, &final);
+	sपंचांगmac_mmc_पढ़ो(priv, priv->mmcaddr, &final);
 
 	/*
 	 * The number of MMC counters available depends on HW configuration
 	 * so we just use this one to validate the feature. I hope there is
 	 * not a version without this counter.
 	 */
-	if (final.mmc_tx_framecount_g <= initial.mmc_tx_framecount_g)
-		return -EINVAL;
+	अगर (final.mmc_tx_framecount_g <= initial.mmc_tx_framecount_g)
+		वापस -EINVAL;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int stmmac_test_eee(struct stmmac_priv *priv)
-{
-	struct stmmac_extra_stats *initial, *final;
-	int retries = 10;
-	int ret;
+अटल पूर्णांक sपंचांगmac_test_eee(काष्ठा sपंचांगmac_priv *priv)
+अणु
+	काष्ठा sपंचांगmac_extra_stats *initial, *final;
+	पूर्णांक retries = 10;
+	पूर्णांक ret;
 
-	if (!priv->dma_cap.eee || !priv->eee_active)
-		return -EOPNOTSUPP;
+	अगर (!priv->dma_cap.eee || !priv->eee_active)
+		वापस -EOPNOTSUPP;
 
-	initial = kzalloc(sizeof(*initial), GFP_KERNEL);
-	if (!initial)
-		return -ENOMEM;
+	initial = kzalloc(माप(*initial), GFP_KERNEL);
+	अगर (!initial)
+		वापस -ENOMEM;
 
-	final = kzalloc(sizeof(*final), GFP_KERNEL);
-	if (!final) {
+	final = kzalloc(माप(*final), GFP_KERNEL);
+	अगर (!final) अणु
 		ret = -ENOMEM;
-		goto out_free_initial;
-	}
+		जाओ out_मुक्त_initial;
+	पूर्ण
 
-	memcpy(initial, &priv->xstats, sizeof(*initial));
+	स_नकल(initial, &priv->xstats, माप(*initial));
 
-	ret = stmmac_test_mac_loopback(priv);
-	if (ret)
-		goto out_free_final;
+	ret = sपंचांगmac_test_mac_loopback(priv);
+	अगर (ret)
+		जाओ out_मुक्त_final;
 
 	/* We have no traffic in the line so, sooner or later it will go LPI */
-	while (--retries) {
-		memcpy(final, &priv->xstats, sizeof(*final));
+	जबतक (--retries) अणु
+		स_नकल(final, &priv->xstats, माप(*final));
 
-		if (final->irq_tx_path_in_lpi_mode_n >
+		अगर (final->irq_tx_path_in_lpi_mode_n >
 		    initial->irq_tx_path_in_lpi_mode_n)
-			break;
+			अवरोध;
 		msleep(100);
-	}
+	पूर्ण
 
-	if (!retries) {
+	अगर (!retries) अणु
 		ret = -ETIMEDOUT;
-		goto out_free_final;
-	}
+		जाओ out_मुक्त_final;
+	पूर्ण
 
-	if (final->irq_tx_path_in_lpi_mode_n <=
-	    initial->irq_tx_path_in_lpi_mode_n) {
+	अगर (final->irq_tx_path_in_lpi_mode_n <=
+	    initial->irq_tx_path_in_lpi_mode_n) अणु
 		ret = -EINVAL;
-		goto out_free_final;
-	}
+		जाओ out_मुक्त_final;
+	पूर्ण
 
-	if (final->irq_tx_path_exit_lpi_mode_n <=
-	    initial->irq_tx_path_exit_lpi_mode_n) {
+	अगर (final->irq_tx_path_निकास_lpi_mode_n <=
+	    initial->irq_tx_path_निकास_lpi_mode_n) अणु
 		ret = -EINVAL;
-		goto out_free_final;
-	}
+		जाओ out_मुक्त_final;
+	पूर्ण
 
-out_free_final:
-	kfree(final);
-out_free_initial:
-	kfree(initial);
-	return ret;
-}
+out_मुक्त_final:
+	kमुक्त(final);
+out_मुक्त_initial:
+	kमुक्त(initial);
+	वापस ret;
+पूर्ण
 
-static int stmmac_filter_check(struct stmmac_priv *priv)
-{
-	if (!(priv->dev->flags & IFF_PROMISC))
-		return 0;
+अटल पूर्णांक sपंचांगmac_filter_check(काष्ठा sपंचांगmac_priv *priv)
+अणु
+	अगर (!(priv->dev->flags & IFF_PROMISC))
+		वापस 0;
 
 	netdev_warn(priv->dev, "Test can't be run in promiscuous mode!\n");
-	return -EOPNOTSUPP;
-}
+	वापस -EOPNOTSUPP;
+पूर्ण
 
-static bool stmmac_hash_check(struct stmmac_priv *priv, unsigned char *addr)
-{
-	int mc_offset = 32 - priv->hw->mcast_bits_log2;
-	struct netdev_hw_addr *ha;
+अटल bool sपंचांगmac_hash_check(काष्ठा sपंचांगmac_priv *priv, अचिन्हित अक्षर *addr)
+अणु
+	पूर्णांक mc_offset = 32 - priv->hw->mcast_bits_log2;
+	काष्ठा netdev_hw_addr *ha;
 	u32 hash, hash_nr;
 
-	/* First compute the hash for desired addr */
+	/* First compute the hash क्रम desired addr */
 	hash = bitrev32(~crc32_le(~0, addr, 6)) >> mc_offset;
 	hash_nr = hash >> 5;
 	hash = 1 << (hash & 0x1f);
 
-	/* Now, check if it collides with any existing one */
-	netdev_for_each_mc_addr(ha, priv->dev) {
+	/* Now, check अगर it collides with any existing one */
+	netdev_क्रम_each_mc_addr(ha, priv->dev) अणु
 		u32 nr = bitrev32(~crc32_le(~0, ha->addr, ETH_ALEN)) >> mc_offset;
-		if (((nr >> 5) == hash_nr) && ((1 << (nr & 0x1f)) == hash))
-			return false;
-	}
+		अगर (((nr >> 5) == hash_nr) && ((1 << (nr & 0x1f)) == hash))
+			वापस false;
+	पूर्ण
 
 	/* No collisions, address is good to go */
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static bool stmmac_perfect_check(struct stmmac_priv *priv, unsigned char *addr)
-{
-	struct netdev_hw_addr *ha;
+अटल bool sपंचांगmac_perfect_check(काष्ठा sपंचांगmac_priv *priv, अचिन्हित अक्षर *addr)
+अणु
+	काष्ठा netdev_hw_addr *ha;
 
-	/* Check if it collides with any existing one */
-	netdev_for_each_uc_addr(ha, priv->dev) {
-		if (!memcmp(ha->addr, addr, ETH_ALEN))
-			return false;
-	}
+	/* Check अगर it collides with any existing one */
+	netdev_क्रम_each_uc_addr(ha, priv->dev) अणु
+		अगर (!स_भेद(ha->addr, addr, ETH_ALEN))
+			वापस false;
+	पूर्ण
 
 	/* No collisions, address is good to go */
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static int stmmac_test_hfilt(struct stmmac_priv *priv)
-{
-	unsigned char gd_addr[ETH_ALEN] = {0xf1, 0xee, 0xdd, 0xcc, 0xbb, 0xaa};
-	unsigned char bd_addr[ETH_ALEN] = {0xf1, 0xff, 0xff, 0xff, 0xff, 0xff};
-	struct stmmac_packet_attrs attr = { };
-	int ret, tries = 256;
+अटल पूर्णांक sपंचांगmac_test_hfilt(काष्ठा sपंचांगmac_priv *priv)
+अणु
+	अचिन्हित अक्षर gd_addr[ETH_ALEN] = अणु0xf1, 0xee, 0xdd, 0xcc, 0xbb, 0xaaपूर्ण;
+	अचिन्हित अक्षर bd_addr[ETH_ALEN] = अणु0xf1, 0xff, 0xff, 0xff, 0xff, 0xffपूर्ण;
+	काष्ठा sपंचांगmac_packet_attrs attr = अणु पूर्ण;
+	पूर्णांक ret, tries = 256;
 
-	ret = stmmac_filter_check(priv);
-	if (ret)
-		return ret;
+	ret = sपंचांगmac_filter_check(priv);
+	अगर (ret)
+		वापस ret;
 
-	if (netdev_mc_count(priv->dev) >= priv->hw->multicast_filter_bins)
-		return -EOPNOTSUPP;
+	अगर (netdev_mc_count(priv->dev) >= priv->hw->multicast_filter_bins)
+		वापस -EOPNOTSUPP;
 
-	while (--tries) {
-		/* We only need to check the bd_addr for collisions */
+	जबतक (--tries) अणु
+		/* We only need to check the bd_addr क्रम collisions */
 		bd_addr[ETH_ALEN - 1] = tries;
-		if (stmmac_hash_check(priv, bd_addr))
-			break;
-	}
+		अगर (sपंचांगmac_hash_check(priv, bd_addr))
+			अवरोध;
+	पूर्ण
 
-	if (!tries)
-		return -EOPNOTSUPP;
+	अगर (!tries)
+		वापस -EOPNOTSUPP;
 
 	ret = dev_mc_add(priv->dev, gd_addr);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	attr.dst = gd_addr;
 
 	/* Shall receive packet */
-	ret = __stmmac_test_loopback(priv, &attr);
-	if (ret)
-		goto cleanup;
+	ret = __sपंचांगmac_test_loopback(priv, &attr);
+	अगर (ret)
+		जाओ cleanup;
 
 	attr.dst = bd_addr;
 
 	/* Shall NOT receive packet */
-	ret = __stmmac_test_loopback(priv, &attr);
+	ret = __sपंचांगmac_test_loopback(priv, &attr);
 	ret = ret ? 0 : -EINVAL;
 
 cleanup:
 	dev_mc_del(priv->dev, gd_addr);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int stmmac_test_pfilt(struct stmmac_priv *priv)
-{
-	unsigned char gd_addr[ETH_ALEN] = {0xf0, 0x01, 0x44, 0x55, 0x66, 0x77};
-	unsigned char bd_addr[ETH_ALEN] = {0xf0, 0xff, 0xff, 0xff, 0xff, 0xff};
-	struct stmmac_packet_attrs attr = { };
-	int ret, tries = 256;
+अटल पूर्णांक sपंचांगmac_test_pfilt(काष्ठा sपंचांगmac_priv *priv)
+अणु
+	अचिन्हित अक्षर gd_addr[ETH_ALEN] = अणु0xf0, 0x01, 0x44, 0x55, 0x66, 0x77पूर्ण;
+	अचिन्हित अक्षर bd_addr[ETH_ALEN] = अणु0xf0, 0xff, 0xff, 0xff, 0xff, 0xffपूर्ण;
+	काष्ठा sपंचांगmac_packet_attrs attr = अणु पूर्ण;
+	पूर्णांक ret, tries = 256;
 
-	if (stmmac_filter_check(priv))
-		return -EOPNOTSUPP;
-	if (netdev_uc_count(priv->dev) >= priv->hw->unicast_filter_entries)
-		return -EOPNOTSUPP;
+	अगर (sपंचांगmac_filter_check(priv))
+		वापस -EOPNOTSUPP;
+	अगर (netdev_uc_count(priv->dev) >= priv->hw->unicast_filter_entries)
+		वापस -EOPNOTSUPP;
 
-	while (--tries) {
-		/* We only need to check the bd_addr for collisions */
+	जबतक (--tries) अणु
+		/* We only need to check the bd_addr क्रम collisions */
 		bd_addr[ETH_ALEN - 1] = tries;
-		if (stmmac_perfect_check(priv, bd_addr))
-			break;
-	}
+		अगर (sपंचांगmac_perfect_check(priv, bd_addr))
+			अवरोध;
+	पूर्ण
 
-	if (!tries)
-		return -EOPNOTSUPP;
+	अगर (!tries)
+		वापस -EOPNOTSUPP;
 
 	ret = dev_uc_add(priv->dev, gd_addr);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	attr.dst = gd_addr;
 
 	/* Shall receive packet */
-	ret = __stmmac_test_loopback(priv, &attr);
-	if (ret)
-		goto cleanup;
+	ret = __sपंचांगmac_test_loopback(priv, &attr);
+	अगर (ret)
+		जाओ cleanup;
 
 	attr.dst = bd_addr;
 
 	/* Shall NOT receive packet */
-	ret = __stmmac_test_loopback(priv, &attr);
+	ret = __sपंचांगmac_test_loopback(priv, &attr);
 	ret = ret ? 0 : -EINVAL;
 
 cleanup:
 	dev_uc_del(priv->dev, gd_addr);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int stmmac_test_mcfilt(struct stmmac_priv *priv)
-{
-	unsigned char uc_addr[ETH_ALEN] = {0xf0, 0xff, 0xff, 0xff, 0xff, 0xff};
-	unsigned char mc_addr[ETH_ALEN] = {0xf1, 0xff, 0xff, 0xff, 0xff, 0xff};
-	struct stmmac_packet_attrs attr = { };
-	int ret, tries = 256;
+अटल पूर्णांक sपंचांगmac_test_mcfilt(काष्ठा sपंचांगmac_priv *priv)
+अणु
+	अचिन्हित अक्षर uc_addr[ETH_ALEN] = अणु0xf0, 0xff, 0xff, 0xff, 0xff, 0xffपूर्ण;
+	अचिन्हित अक्षर mc_addr[ETH_ALEN] = अणु0xf1, 0xff, 0xff, 0xff, 0xff, 0xffपूर्ण;
+	काष्ठा sपंचांगmac_packet_attrs attr = अणु पूर्ण;
+	पूर्णांक ret, tries = 256;
 
-	if (stmmac_filter_check(priv))
-		return -EOPNOTSUPP;
-	if (netdev_uc_count(priv->dev) >= priv->hw->unicast_filter_entries)
-		return -EOPNOTSUPP;
-	if (netdev_mc_count(priv->dev) >= priv->hw->multicast_filter_bins)
-		return -EOPNOTSUPP;
+	अगर (sपंचांगmac_filter_check(priv))
+		वापस -EOPNOTSUPP;
+	अगर (netdev_uc_count(priv->dev) >= priv->hw->unicast_filter_entries)
+		वापस -EOPNOTSUPP;
+	अगर (netdev_mc_count(priv->dev) >= priv->hw->multicast_filter_bins)
+		वापस -EOPNOTSUPP;
 
-	while (--tries) {
-		/* We only need to check the mc_addr for collisions */
+	जबतक (--tries) अणु
+		/* We only need to check the mc_addr क्रम collisions */
 		mc_addr[ETH_ALEN - 1] = tries;
-		if (stmmac_hash_check(priv, mc_addr))
-			break;
-	}
+		अगर (sपंचांगmac_hash_check(priv, mc_addr))
+			अवरोध;
+	पूर्ण
 
-	if (!tries)
-		return -EOPNOTSUPP;
+	अगर (!tries)
+		वापस -EOPNOTSUPP;
 
 	ret = dev_uc_add(priv->dev, uc_addr);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	attr.dst = uc_addr;
 
 	/* Shall receive packet */
-	ret = __stmmac_test_loopback(priv, &attr);
-	if (ret)
-		goto cleanup;
+	ret = __sपंचांगmac_test_loopback(priv, &attr);
+	अगर (ret)
+		जाओ cleanup;
 
 	attr.dst = mc_addr;
 
 	/* Shall NOT receive packet */
-	ret = __stmmac_test_loopback(priv, &attr);
+	ret = __sपंचांगmac_test_loopback(priv, &attr);
 	ret = ret ? 0 : -EINVAL;
 
 cleanup:
 	dev_uc_del(priv->dev, uc_addr);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int stmmac_test_ucfilt(struct stmmac_priv *priv)
-{
-	unsigned char uc_addr[ETH_ALEN] = {0xf0, 0xff, 0xff, 0xff, 0xff, 0xff};
-	unsigned char mc_addr[ETH_ALEN] = {0xf1, 0xff, 0xff, 0xff, 0xff, 0xff};
-	struct stmmac_packet_attrs attr = { };
-	int ret, tries = 256;
+अटल पूर्णांक sपंचांगmac_test_ucfilt(काष्ठा sपंचांगmac_priv *priv)
+अणु
+	अचिन्हित अक्षर uc_addr[ETH_ALEN] = अणु0xf0, 0xff, 0xff, 0xff, 0xff, 0xffपूर्ण;
+	अचिन्हित अक्षर mc_addr[ETH_ALEN] = अणु0xf1, 0xff, 0xff, 0xff, 0xff, 0xffपूर्ण;
+	काष्ठा sपंचांगmac_packet_attrs attr = अणु पूर्ण;
+	पूर्णांक ret, tries = 256;
 
-	if (stmmac_filter_check(priv))
-		return -EOPNOTSUPP;
-	if (netdev_uc_count(priv->dev) >= priv->hw->unicast_filter_entries)
-		return -EOPNOTSUPP;
-	if (netdev_mc_count(priv->dev) >= priv->hw->multicast_filter_bins)
-		return -EOPNOTSUPP;
+	अगर (sपंचांगmac_filter_check(priv))
+		वापस -EOPNOTSUPP;
+	अगर (netdev_uc_count(priv->dev) >= priv->hw->unicast_filter_entries)
+		वापस -EOPNOTSUPP;
+	अगर (netdev_mc_count(priv->dev) >= priv->hw->multicast_filter_bins)
+		वापस -EOPNOTSUPP;
 
-	while (--tries) {
-		/* We only need to check the uc_addr for collisions */
+	जबतक (--tries) अणु
+		/* We only need to check the uc_addr क्रम collisions */
 		uc_addr[ETH_ALEN - 1] = tries;
-		if (stmmac_perfect_check(priv, uc_addr))
-			break;
-	}
+		अगर (sपंचांगmac_perfect_check(priv, uc_addr))
+			अवरोध;
+	पूर्ण
 
-	if (!tries)
-		return -EOPNOTSUPP;
+	अगर (!tries)
+		वापस -EOPNOTSUPP;
 
 	ret = dev_mc_add(priv->dev, mc_addr);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	attr.dst = mc_addr;
 
 	/* Shall receive packet */
-	ret = __stmmac_test_loopback(priv, &attr);
-	if (ret)
-		goto cleanup;
+	ret = __sपंचांगmac_test_loopback(priv, &attr);
+	अगर (ret)
+		जाओ cleanup;
 
 	attr.dst = uc_addr;
 
 	/* Shall NOT receive packet */
-	ret = __stmmac_test_loopback(priv, &attr);
+	ret = __sपंचांगmac_test_loopback(priv, &attr);
 	ret = ret ? 0 : -EINVAL;
 
 cleanup:
 	dev_mc_del(priv->dev, mc_addr);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int stmmac_test_flowctrl_validate(struct sk_buff *skb,
-					 struct net_device *ndev,
-					 struct packet_type *pt,
-					 struct net_device *orig_ndev)
-{
-	struct stmmac_test_priv *tpriv = pt->af_packet_priv;
-	struct ethhdr *ehdr;
+अटल पूर्णांक sपंचांगmac_test_flowctrl_validate(काष्ठा sk_buff *skb,
+					 काष्ठा net_device *ndev,
+					 काष्ठा packet_type *pt,
+					 काष्ठा net_device *orig_ndev)
+अणु
+	काष्ठा sपंचांगmac_test_priv *tpriv = pt->af_packet_priv;
+	काष्ठा ethhdr *ehdr;
 
-	ehdr = (struct ethhdr *)skb_mac_header(skb);
-	if (!ether_addr_equal_unaligned(ehdr->h_source, orig_ndev->dev_addr))
-		goto out;
-	if (ehdr->h_proto != htons(ETH_P_PAUSE))
-		goto out;
+	ehdr = (काष्ठा ethhdr *)skb_mac_header(skb);
+	अगर (!ether_addr_equal_unaligned(ehdr->h_source, orig_ndev->dev_addr))
+		जाओ out;
+	अगर (ehdr->h_proto != htons(ETH_P_PAUSE))
+		जाओ out;
 
 	tpriv->ok = true;
 	complete(&tpriv->comp);
 out:
-	kfree_skb(skb);
-	return 0;
-}
+	kमुक्त_skb(skb);
+	वापस 0;
+पूर्ण
 
-static int stmmac_test_flowctrl(struct stmmac_priv *priv)
-{
-	unsigned char paddr[ETH_ALEN] = {0x01, 0x80, 0xC2, 0x00, 0x00, 0x01};
-	struct phy_device *phydev = priv->dev->phydev;
+अटल पूर्णांक sपंचांगmac_test_flowctrl(काष्ठा sपंचांगmac_priv *priv)
+अणु
+	अचिन्हित अक्षर paddr[ETH_ALEN] = अणु0x01, 0x80, 0xC2, 0x00, 0x00, 0x01पूर्ण;
+	काष्ठा phy_device *phydev = priv->dev->phydev;
 	u32 rx_cnt = priv->plat->rx_queues_to_use;
-	struct stmmac_test_priv *tpriv;
-	unsigned int pkt_count;
-	int i, ret = 0;
+	काष्ठा sपंचांगmac_test_priv *tpriv;
+	अचिन्हित पूर्णांक pkt_count;
+	पूर्णांक i, ret = 0;
 
-	if (!phydev || (!phydev->pause && !phydev->asym_pause))
-		return -EOPNOTSUPP;
+	अगर (!phydev || (!phydev->छोड़ो && !phydev->asym_छोड़ो))
+		वापस -EOPNOTSUPP;
 
-	tpriv = kzalloc(sizeof(*tpriv), GFP_KERNEL);
-	if (!tpriv)
-		return -ENOMEM;
+	tpriv = kzalloc(माप(*tpriv), GFP_KERNEL);
+	अगर (!tpriv)
+		वापस -ENOMEM;
 
 	tpriv->ok = false;
 	init_completion(&tpriv->comp);
 	tpriv->pt.type = htons(ETH_P_PAUSE);
-	tpriv->pt.func = stmmac_test_flowctrl_validate;
+	tpriv->pt.func = sपंचांगmac_test_flowctrl_validate;
 	tpriv->pt.dev = priv->dev;
 	tpriv->pt.af_packet_priv = tpriv;
 	dev_add_pack(&tpriv->pt);
 
 	/* Compute minimum number of packets to make FIFO full */
-	pkt_count = priv->plat->rx_fifo_size;
-	if (!pkt_count)
-		pkt_count = priv->dma_cap.rx_fifo_size;
+	pkt_count = priv->plat->rx_fअगरo_size;
+	अगर (!pkt_count)
+		pkt_count = priv->dma_cap.rx_fअगरo_size;
 	pkt_count /= 1400;
 	pkt_count *= 2;
 
-	for (i = 0; i < rx_cnt; i++)
-		stmmac_stop_rx(priv, priv->ioaddr, i);
+	क्रम (i = 0; i < rx_cnt; i++)
+		sपंचांगmac_stop_rx(priv, priv->ioaddr, i);
 
 	ret = dev_set_promiscuity(priv->dev, 1);
-	if (ret)
-		goto cleanup;
+	अगर (ret)
+		जाओ cleanup;
 
 	ret = dev_mc_add(priv->dev, paddr);
-	if (ret)
-		goto cleanup;
+	अगर (ret)
+		जाओ cleanup;
 
-	for (i = 0; i < pkt_count; i++) {
-		struct stmmac_packet_attrs attr = { };
+	क्रम (i = 0; i < pkt_count; i++) अणु
+		काष्ठा sपंचांगmac_packet_attrs attr = अणु पूर्ण;
 
 		attr.dst = priv->dev->dev_addr;
-		attr.dont_wait = true;
+		attr.करोnt_रुको = true;
 		attr.size = 1400;
 
-		ret = __stmmac_test_loopback(priv, &attr);
-		if (ret)
-			goto cleanup;
-		if (tpriv->ok)
-			break;
-	}
+		ret = __sपंचांगmac_test_loopback(priv, &attr);
+		अगर (ret)
+			जाओ cleanup;
+		अगर (tpriv->ok)
+			अवरोध;
+	पूर्ण
 
-	/* Wait for some time in case RX Watchdog is enabled */
+	/* Wait क्रम some समय in हाल RX Watchकरोg is enabled */
 	msleep(200);
 
-	for (i = 0; i < rx_cnt; i++) {
-		struct stmmac_channel *ch = &priv->channel[i];
+	क्रम (i = 0; i < rx_cnt; i++) अणु
+		काष्ठा sपंचांगmac_channel *ch = &priv->channel[i];
 		u32 tail;
 
 		tail = priv->rx_queue[i].dma_rx_phy +
-			(priv->dma_rx_size * sizeof(struct dma_desc));
+			(priv->dma_rx_size * माप(काष्ठा dma_desc));
 
-		stmmac_set_rx_tail_ptr(priv, priv->ioaddr, tail, i);
-		stmmac_start_rx(priv, priv->ioaddr, i);
+		sपंचांगmac_set_rx_tail_ptr(priv, priv->ioaddr, tail, i);
+		sपंचांगmac_start_rx(priv, priv->ioaddr, i);
 
 		local_bh_disable();
 		napi_reschedule(&ch->rx_napi);
 		local_bh_enable();
-	}
+	पूर्ण
 
-	wait_for_completion_timeout(&tpriv->comp, STMMAC_LB_TIMEOUT);
+	रुको_क्रम_completion_समयout(&tpriv->comp, STMMAC_LB_TIMEOUT);
 	ret = tpriv->ok ? 0 : -ETIMEDOUT;
 
 cleanup:
 	dev_mc_del(priv->dev, paddr);
 	dev_set_promiscuity(priv->dev, -1);
-	dev_remove_pack(&tpriv->pt);
-	kfree(tpriv);
-	return ret;
-}
+	dev_हटाओ_pack(&tpriv->pt);
+	kमुक्त(tpriv);
+	वापस ret;
+पूर्ण
 
-static int stmmac_test_rss(struct stmmac_priv *priv)
-{
-	struct stmmac_packet_attrs attr = { };
+अटल पूर्णांक sपंचांगmac_test_rss(काष्ठा sपंचांगmac_priv *priv)
+अणु
+	काष्ठा sपंचांगmac_packet_attrs attr = अणु पूर्ण;
 
-	if (!priv->dma_cap.rssen || !priv->rss.enable)
-		return -EOPNOTSUPP;
+	अगर (!priv->dma_cap.rssen || !priv->rss.enable)
+		वापस -EOPNOTSUPP;
 
 	attr.dst = priv->dev->dev_addr;
 	attr.exp_hash = true;
 	attr.sport = 0x321;
 	attr.dport = 0x123;
 
-	return __stmmac_test_loopback(priv, &attr);
-}
+	वापस __sपंचांगmac_test_loopback(priv, &attr);
+पूर्ण
 
-static int stmmac_test_vlan_validate(struct sk_buff *skb,
-				     struct net_device *ndev,
-				     struct packet_type *pt,
-				     struct net_device *orig_ndev)
-{
-	struct stmmac_test_priv *tpriv = pt->af_packet_priv;
-	struct stmmachdr *shdr;
-	struct ethhdr *ehdr;
-	struct udphdr *uhdr;
-	struct iphdr *ihdr;
+अटल पूर्णांक sपंचांगmac_test_vlan_validate(काष्ठा sk_buff *skb,
+				     काष्ठा net_device *ndev,
+				     काष्ठा packet_type *pt,
+				     काष्ठा net_device *orig_ndev)
+अणु
+	काष्ठा sपंचांगmac_test_priv *tpriv = pt->af_packet_priv;
+	काष्ठा sपंचांगmachdr *shdr;
+	काष्ठा ethhdr *ehdr;
+	काष्ठा udphdr *uhdr;
+	काष्ठा iphdr *ihdr;
 	u16 proto;
 
-	proto = tpriv->double_vlan ? ETH_P_8021AD : ETH_P_8021Q;
+	proto = tpriv->द्विगुन_vlan ? ETH_P_8021AD : ETH_P_8021Q;
 
 	skb = skb_unshare(skb, GFP_ATOMIC);
-	if (!skb)
-		goto out;
+	अगर (!skb)
+		जाओ out;
 
-	if (skb_linearize(skb))
-		goto out;
-	if (skb_headlen(skb) < (STMMAC_TEST_PKT_SIZE - ETH_HLEN))
-		goto out;
-	if (tpriv->vlan_id) {
-		if (skb->vlan_proto != htons(proto))
-			goto out;
-		if (skb->vlan_tci != tpriv->vlan_id) {
+	अगर (skb_linearize(skb))
+		जाओ out;
+	अगर (skb_headlen(skb) < (STMMAC_TEST_PKT_SIZE - ETH_HLEN))
+		जाओ out;
+	अगर (tpriv->vlan_id) अणु
+		अगर (skb->vlan_proto != htons(proto))
+			जाओ out;
+		अगर (skb->vlan_tci != tpriv->vlan_id) अणु
 			/* Means filter did not work. */
 			tpriv->ok = false;
 			complete(&tpriv->comp);
-			goto out;
-		}
-	}
+			जाओ out;
+		पूर्ण
+	पूर्ण
 
-	ehdr = (struct ethhdr *)skb_mac_header(skb);
-	if (!ether_addr_equal_unaligned(ehdr->h_dest, tpriv->packet->dst))
-		goto out;
+	ehdr = (काष्ठा ethhdr *)skb_mac_header(skb);
+	अगर (!ether_addr_equal_unaligned(ehdr->h_dest, tpriv->packet->dst))
+		जाओ out;
 
 	ihdr = ip_hdr(skb);
-	if (tpriv->double_vlan)
-		ihdr = (struct iphdr *)(skb_network_header(skb) + 4);
-	if (ihdr->protocol != IPPROTO_UDP)
-		goto out;
+	अगर (tpriv->द्विगुन_vlan)
+		ihdr = (काष्ठा iphdr *)(skb_network_header(skb) + 4);
+	अगर (ihdr->protocol != IPPROTO_UDP)
+		जाओ out;
 
-	uhdr = (struct udphdr *)((u8 *)ihdr + 4 * ihdr->ihl);
-	if (uhdr->dest != htons(tpriv->packet->dport))
-		goto out;
+	uhdr = (काष्ठा udphdr *)((u8 *)ihdr + 4 * ihdr->ihl);
+	अगर (uhdr->dest != htons(tpriv->packet->dport))
+		जाओ out;
 
-	shdr = (struct stmmachdr *)((u8 *)uhdr + sizeof(*uhdr));
-	if (shdr->magic != cpu_to_be64(STMMAC_TEST_PKT_MAGIC))
-		goto out;
+	shdr = (काष्ठा sपंचांगmachdr *)((u8 *)uhdr + माप(*uhdr));
+	अगर (shdr->magic != cpu_to_be64(STMMAC_TEST_PKT_MAGIC))
+		जाओ out;
 
 	tpriv->ok = true;
 	complete(&tpriv->comp);
 
 out:
-	kfree_skb(skb);
-	return 0;
-}
+	kमुक्त_skb(skb);
+	वापस 0;
+पूर्ण
 
-static int __stmmac_test_vlanfilt(struct stmmac_priv *priv)
-{
-	struct stmmac_packet_attrs attr = { };
-	struct stmmac_test_priv *tpriv;
-	struct sk_buff *skb = NULL;
-	int ret = 0, i;
+अटल पूर्णांक __sपंचांगmac_test_vlanfilt(काष्ठा sपंचांगmac_priv *priv)
+अणु
+	काष्ठा sपंचांगmac_packet_attrs attr = अणु पूर्ण;
+	काष्ठा sपंचांगmac_test_priv *tpriv;
+	काष्ठा sk_buff *skb = शून्य;
+	पूर्णांक ret = 0, i;
 
-	tpriv = kzalloc(sizeof(*tpriv), GFP_KERNEL);
-	if (!tpriv)
-		return -ENOMEM;
+	tpriv = kzalloc(माप(*tpriv), GFP_KERNEL);
+	अगर (!tpriv)
+		वापस -ENOMEM;
 
 	tpriv->ok = false;
 	init_completion(&tpriv->comp);
 
 	tpriv->pt.type = htons(ETH_P_IP);
-	tpriv->pt.func = stmmac_test_vlan_validate;
+	tpriv->pt.func = sपंचांगmac_test_vlan_validate;
 	tpriv->pt.dev = priv->dev;
 	tpriv->pt.af_packet_priv = tpriv;
 	tpriv->packet = &attr;
 
 	/*
 	 * As we use HASH filtering, false positives may appear. This is a
-	 * specially chosen ID so that adjacent IDs (+4) have different
+	 * specially chosen ID so that adjacent IDs (+4) have dअगरferent
 	 * HASH values.
 	 */
 	tpriv->vlan_id = 0x123;
 	dev_add_pack(&tpriv->pt);
 
 	ret = vlan_vid_add(priv->dev, htons(ETH_P_8021Q), tpriv->vlan_id);
-	if (ret)
-		goto cleanup;
+	अगर (ret)
+		जाओ cleanup;
 
-	for (i = 0; i < 4; i++) {
+	क्रम (i = 0; i < 4; i++) अणु
 		attr.vlan = 1;
 		attr.vlan_id_out = tpriv->vlan_id + i;
 		attr.dst = priv->dev->dev_addr;
 		attr.sport = 9;
 		attr.dport = 9;
 
-		skb = stmmac_test_get_udp_skb(priv, &attr);
-		if (!skb) {
+		skb = sपंचांगmac_test_get_udp_skb(priv, &attr);
+		अगर (!skb) अणु
 			ret = -ENOMEM;
-			goto vlan_del;
-		}
+			जाओ vlan_del;
+		पूर्ण
 
 		ret = dev_direct_xmit(skb, 0);
-		if (ret)
-			goto vlan_del;
+		अगर (ret)
+			जाओ vlan_del;
 
-		wait_for_completion_timeout(&tpriv->comp, STMMAC_LB_TIMEOUT);
+		रुको_क्रम_completion_समयout(&tpriv->comp, STMMAC_LB_TIMEOUT);
 		ret = tpriv->ok ? 0 : -ETIMEDOUT;
-		if (ret && !i) {
-			goto vlan_del;
-		} else if (!ret && i) {
+		अगर (ret && !i) अणु
+			जाओ vlan_del;
+		पूर्ण अन्यथा अगर (!ret && i) अणु
 			ret = -EINVAL;
-			goto vlan_del;
-		} else {
+			जाओ vlan_del;
+		पूर्ण अन्यथा अणु
 			ret = 0;
-		}
+		पूर्ण
 
 		tpriv->ok = false;
-	}
+	पूर्ण
 
 vlan_del:
 	vlan_vid_del(priv->dev, htons(ETH_P_8021Q), tpriv->vlan_id);
 cleanup:
-	dev_remove_pack(&tpriv->pt);
-	kfree(tpriv);
-	return ret;
-}
+	dev_हटाओ_pack(&tpriv->pt);
+	kमुक्त(tpriv);
+	वापस ret;
+पूर्ण
 
-static int stmmac_test_vlanfilt(struct stmmac_priv *priv)
-{
-	if (!priv->dma_cap.vlhash)
-		return -EOPNOTSUPP;
+अटल पूर्णांक sपंचांगmac_test_vlanfilt(काष्ठा sपंचांगmac_priv *priv)
+अणु
+	अगर (!priv->dma_cap.vlhash)
+		वापस -EOPNOTSUPP;
 
-	return __stmmac_test_vlanfilt(priv);
-}
+	वापस __sपंचांगmac_test_vlanfilt(priv);
+पूर्ण
 
-static int stmmac_test_vlanfilt_perfect(struct stmmac_priv *priv)
-{
-	int ret, prev_cap = priv->dma_cap.vlhash;
+अटल पूर्णांक sपंचांगmac_test_vlanfilt_perfect(काष्ठा sपंचांगmac_priv *priv)
+अणु
+	पूर्णांक ret, prev_cap = priv->dma_cap.vlhash;
 
-	if (!(priv->dev->features & NETIF_F_HW_VLAN_CTAG_FILTER))
-		return -EOPNOTSUPP;
+	अगर (!(priv->dev->features & NETIF_F_HW_VLAN_CTAG_FILTER))
+		वापस -EOPNOTSUPP;
 
 	priv->dma_cap.vlhash = 0;
-	ret = __stmmac_test_vlanfilt(priv);
+	ret = __sपंचांगmac_test_vlanfilt(priv);
 	priv->dma_cap.vlhash = prev_cap;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int __stmmac_test_dvlanfilt(struct stmmac_priv *priv)
-{
-	struct stmmac_packet_attrs attr = { };
-	struct stmmac_test_priv *tpriv;
-	struct sk_buff *skb = NULL;
-	int ret = 0, i;
+अटल पूर्णांक __sपंचांगmac_test_dvlanfilt(काष्ठा sपंचांगmac_priv *priv)
+अणु
+	काष्ठा sपंचांगmac_packet_attrs attr = अणु पूर्ण;
+	काष्ठा sपंचांगmac_test_priv *tpriv;
+	काष्ठा sk_buff *skb = शून्य;
+	पूर्णांक ret = 0, i;
 
-	tpriv = kzalloc(sizeof(*tpriv), GFP_KERNEL);
-	if (!tpriv)
-		return -ENOMEM;
+	tpriv = kzalloc(माप(*tpriv), GFP_KERNEL);
+	अगर (!tpriv)
+		वापस -ENOMEM;
 
 	tpriv->ok = false;
-	tpriv->double_vlan = true;
+	tpriv->द्विगुन_vlan = true;
 	init_completion(&tpriv->comp);
 
 	tpriv->pt.type = htons(ETH_P_8021Q);
-	tpriv->pt.func = stmmac_test_vlan_validate;
+	tpriv->pt.func = sपंचांगmac_test_vlan_validate;
 	tpriv->pt.dev = priv->dev;
 	tpriv->pt.af_packet_priv = tpriv;
 	tpriv->packet = &attr;
 
 	/*
 	 * As we use HASH filtering, false positives may appear. This is a
-	 * specially chosen ID so that adjacent IDs (+4) have different
+	 * specially chosen ID so that adjacent IDs (+4) have dअगरferent
 	 * HASH values.
 	 */
 	tpriv->vlan_id = 0x123;
 	dev_add_pack(&tpriv->pt);
 
 	ret = vlan_vid_add(priv->dev, htons(ETH_P_8021AD), tpriv->vlan_id);
-	if (ret)
-		goto cleanup;
+	अगर (ret)
+		जाओ cleanup;
 
-	for (i = 0; i < 4; i++) {
+	क्रम (i = 0; i < 4; i++) अणु
 		attr.vlan = 2;
 		attr.vlan_id_out = tpriv->vlan_id + i;
 		attr.dst = priv->dev->dev_addr;
 		attr.sport = 9;
 		attr.dport = 9;
 
-		skb = stmmac_test_get_udp_skb(priv, &attr);
-		if (!skb) {
+		skb = sपंचांगmac_test_get_udp_skb(priv, &attr);
+		अगर (!skb) अणु
 			ret = -ENOMEM;
-			goto vlan_del;
-		}
+			जाओ vlan_del;
+		पूर्ण
 
 		ret = dev_direct_xmit(skb, 0);
-		if (ret)
-			goto vlan_del;
+		अगर (ret)
+			जाओ vlan_del;
 
-		wait_for_completion_timeout(&tpriv->comp, STMMAC_LB_TIMEOUT);
+		रुको_क्रम_completion_समयout(&tpriv->comp, STMMAC_LB_TIMEOUT);
 		ret = tpriv->ok ? 0 : -ETIMEDOUT;
-		if (ret && !i) {
-			goto vlan_del;
-		} else if (!ret && i) {
+		अगर (ret && !i) अणु
+			जाओ vlan_del;
+		पूर्ण अन्यथा अगर (!ret && i) अणु
 			ret = -EINVAL;
-			goto vlan_del;
-		} else {
+			जाओ vlan_del;
+		पूर्ण अन्यथा अणु
 			ret = 0;
-		}
+		पूर्ण
 
 		tpriv->ok = false;
-	}
+	पूर्ण
 
 vlan_del:
 	vlan_vid_del(priv->dev, htons(ETH_P_8021AD), tpriv->vlan_id);
 cleanup:
-	dev_remove_pack(&tpriv->pt);
-	kfree(tpriv);
-	return ret;
-}
+	dev_हटाओ_pack(&tpriv->pt);
+	kमुक्त(tpriv);
+	वापस ret;
+पूर्ण
 
-static int stmmac_test_dvlanfilt(struct stmmac_priv *priv)
-{
-	if (!priv->dma_cap.vlhash)
-		return -EOPNOTSUPP;
+अटल पूर्णांक sपंचांगmac_test_dvlanfilt(काष्ठा sपंचांगmac_priv *priv)
+अणु
+	अगर (!priv->dma_cap.vlhash)
+		वापस -EOPNOTSUPP;
 
-	return __stmmac_test_dvlanfilt(priv);
-}
+	वापस __sपंचांगmac_test_dvlanfilt(priv);
+पूर्ण
 
-static int stmmac_test_dvlanfilt_perfect(struct stmmac_priv *priv)
-{
-	int ret, prev_cap = priv->dma_cap.vlhash;
+अटल पूर्णांक sपंचांगmac_test_dvlanfilt_perfect(काष्ठा sपंचांगmac_priv *priv)
+अणु
+	पूर्णांक ret, prev_cap = priv->dma_cap.vlhash;
 
-	if (!(priv->dev->features & NETIF_F_HW_VLAN_STAG_FILTER))
-		return -EOPNOTSUPP;
+	अगर (!(priv->dev->features & NETIF_F_HW_VLAN_STAG_FILTER))
+		वापस -EOPNOTSUPP;
 
 	priv->dma_cap.vlhash = 0;
-	ret = __stmmac_test_dvlanfilt(priv);
+	ret = __sपंचांगmac_test_dvlanfilt(priv);
 	priv->dma_cap.vlhash = prev_cap;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-#ifdef CONFIG_NET_CLS_ACT
-static int stmmac_test_rxp(struct stmmac_priv *priv)
-{
-	unsigned char addr[ETH_ALEN] = {0xde, 0xad, 0xbe, 0xef, 0x00, 0x00};
-	struct tc_cls_u32_offload cls_u32 = { };
-	struct stmmac_packet_attrs attr = { };
-	struct tc_action **actions, *act;
-	struct tc_u32_sel *sel;
-	struct tcf_exts *exts;
-	int ret, i, nk = 1;
+#अगर_घोषित CONFIG_NET_CLS_ACT
+अटल पूर्णांक sपंचांगmac_test_rxp(काष्ठा sपंचांगmac_priv *priv)
+अणु
+	अचिन्हित अक्षर addr[ETH_ALEN] = अणु0xde, 0xad, 0xbe, 0xef, 0x00, 0x00पूर्ण;
+	काष्ठा tc_cls_u32_offload cls_u32 = अणु पूर्ण;
+	काष्ठा sपंचांगmac_packet_attrs attr = अणु पूर्ण;
+	काष्ठा tc_action **actions, *act;
+	काष्ठा tc_u32_sel *sel;
+	काष्ठा tcf_exts *exts;
+	पूर्णांक ret, i, nk = 1;
 
-	if (!tc_can_offload(priv->dev))
-		return -EOPNOTSUPP;
-	if (!priv->dma_cap.frpsel)
-		return -EOPNOTSUPP;
+	अगर (!tc_can_offload(priv->dev))
+		वापस -EOPNOTSUPP;
+	अगर (!priv->dma_cap.frpsel)
+		वापस -EOPNOTSUPP;
 
-	sel = kzalloc(struct_size(sel, keys, nk), GFP_KERNEL);
-	if (!sel)
-		return -ENOMEM;
+	sel = kzalloc(काष्ठा_size(sel, keys, nk), GFP_KERNEL);
+	अगर (!sel)
+		वापस -ENOMEM;
 
-	exts = kzalloc(sizeof(*exts), GFP_KERNEL);
-	if (!exts) {
+	exts = kzalloc(माप(*exts), GFP_KERNEL);
+	अगर (!exts) अणु
 		ret = -ENOMEM;
-		goto cleanup_sel;
-	}
+		जाओ cleanup_sel;
+	पूर्ण
 
-	actions = kzalloc(nk * sizeof(*actions), GFP_KERNEL);
-	if (!actions) {
+	actions = kzalloc(nk * माप(*actions), GFP_KERNEL);
+	अगर (!actions) अणु
 		ret = -ENOMEM;
-		goto cleanup_exts;
-	}
+		जाओ cleanup_exts;
+	पूर्ण
 
-	act = kzalloc(nk * sizeof(*act), GFP_KERNEL);
-	if (!act) {
+	act = kzalloc(nk * माप(*act), GFP_KERNEL);
+	अगर (!act) अणु
 		ret = -ENOMEM;
-		goto cleanup_actions;
-	}
+		जाओ cleanup_actions;
+	पूर्ण
 
 	cls_u32.command = TC_CLSU32_NEW_KNODE;
 	cls_u32.common.chain_index = 0;
@@ -1125,79 +1126,79 @@ static int stmmac_test_rxp(struct stmmac_priv *priv)
 
 	exts->nr_actions = nk;
 	exts->actions = actions;
-	for (i = 0; i < nk; i++) {
-		struct tcf_gact *gact = to_gact(&act[i]);
+	क्रम (i = 0; i < nk; i++) अणु
+		काष्ठा tcf_gact *gact = to_gact(&act[i]);
 
 		actions[i] = &act[i];
 		gact->tcf_action = TC_ACT_SHOT;
-	}
+	पूर्ण
 
 	sel->nkeys = nk;
-	sel->offshift = 0;
+	sel->offshअगरt = 0;
 	sel->keys[0].off = 6;
 	sel->keys[0].val = htonl(0xdeadbeef);
 	sel->keys[0].mask = ~0x0;
 
-	ret = stmmac_tc_setup_cls_u32(priv, priv, &cls_u32);
-	if (ret)
-		goto cleanup_act;
+	ret = sपंचांगmac_tc_setup_cls_u32(priv, priv, &cls_u32);
+	अगर (ret)
+		जाओ cleanup_act;
 
 	attr.dst = priv->dev->dev_addr;
 	attr.src = addr;
 
-	ret = __stmmac_test_loopback(priv, &attr);
+	ret = __sपंचांगmac_test_loopback(priv, &attr);
 	ret = ret ? 0 : -EINVAL; /* Shall NOT receive packet */
 
 	cls_u32.command = TC_CLSU32_DELETE_KNODE;
-	stmmac_tc_setup_cls_u32(priv, priv, &cls_u32);
+	sपंचांगmac_tc_setup_cls_u32(priv, priv, &cls_u32);
 
 cleanup_act:
-	kfree(act);
+	kमुक्त(act);
 cleanup_actions:
-	kfree(actions);
+	kमुक्त(actions);
 cleanup_exts:
-	kfree(exts);
+	kमुक्त(exts);
 cleanup_sel:
-	kfree(sel);
-	return ret;
-}
-#else
-static int stmmac_test_rxp(struct stmmac_priv *priv)
-{
-	return -EOPNOTSUPP;
-}
-#endif
+	kमुक्त(sel);
+	वापस ret;
+पूर्ण
+#अन्यथा
+अटल पूर्णांक sपंचांगmac_test_rxp(काष्ठा sपंचांगmac_priv *priv)
+अणु
+	वापस -EOPNOTSUPP;
+पूर्ण
+#पूर्ण_अगर
 
-static int stmmac_test_desc_sai(struct stmmac_priv *priv)
-{
-	unsigned char src[ETH_ALEN] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
-	struct stmmac_packet_attrs attr = { };
-	int ret;
+अटल पूर्णांक sपंचांगmac_test_desc_sai(काष्ठा sपंचांगmac_priv *priv)
+अणु
+	अचिन्हित अक्षर src[ETH_ALEN] = अणु0x00, 0x00, 0x00, 0x00, 0x00, 0x00पूर्ण;
+	काष्ठा sपंचांगmac_packet_attrs attr = अणु पूर्ण;
+	पूर्णांक ret;
 
-	if (!priv->dma_cap.vlins)
-		return -EOPNOTSUPP;
+	अगर (!priv->dma_cap.vlins)
+		वापस -EOPNOTSUPP;
 
-	attr.remove_sa = true;
+	attr.हटाओ_sa = true;
 	attr.sarc = true;
 	attr.src = src;
 	attr.dst = priv->dev->dev_addr;
 
 	priv->sarc_type = 0x1;
 
-	ret = __stmmac_test_loopback(priv, &attr);
+	ret = __sपंचांगmac_test_loopback(priv, &attr);
 
 	priv->sarc_type = 0x0;
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int stmmac_test_desc_sar(struct stmmac_priv *priv)
-{
-	unsigned char src[ETH_ALEN] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
-	struct stmmac_packet_attrs attr = { };
-	int ret;
+अटल पूर्णांक sपंचांगmac_test_desc_sar(काष्ठा sपंचांगmac_priv *priv)
+अणु
+	अचिन्हित अक्षर src[ETH_ALEN] = अणु0x00, 0x00, 0x00, 0x00, 0x00, 0x00पूर्ण;
+	काष्ठा sपंचांगmac_packet_attrs attr = अणु पूर्ण;
+	पूर्णांक ret;
 
-	if (!priv->dma_cap.vlins)
-		return -EOPNOTSUPP;
+	अगर (!priv->dma_cap.vlins)
+		वापस -EOPNOTSUPP;
 
 	attr.sarc = true;
 	attr.src = src;
@@ -1205,80 +1206,80 @@ static int stmmac_test_desc_sar(struct stmmac_priv *priv)
 
 	priv->sarc_type = 0x2;
 
-	ret = __stmmac_test_loopback(priv, &attr);
+	ret = __sपंचांगmac_test_loopback(priv, &attr);
 
 	priv->sarc_type = 0x0;
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int stmmac_test_reg_sai(struct stmmac_priv *priv)
-{
-	unsigned char src[ETH_ALEN] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
-	struct stmmac_packet_attrs attr = { };
-	int ret;
+अटल पूर्णांक sपंचांगmac_test_reg_sai(काष्ठा sपंचांगmac_priv *priv)
+अणु
+	अचिन्हित अक्षर src[ETH_ALEN] = अणु0x00, 0x00, 0x00, 0x00, 0x00, 0x00पूर्ण;
+	काष्ठा sपंचांगmac_packet_attrs attr = अणु पूर्ण;
+	पूर्णांक ret;
 
-	if (!priv->dma_cap.vlins)
-		return -EOPNOTSUPP;
+	अगर (!priv->dma_cap.vlins)
+		वापस -EOPNOTSUPP;
 
-	attr.remove_sa = true;
+	attr.हटाओ_sa = true;
 	attr.sarc = true;
 	attr.src = src;
 	attr.dst = priv->dev->dev_addr;
 
-	if (stmmac_sarc_configure(priv, priv->ioaddr, 0x2))
-		return -EOPNOTSUPP;
+	अगर (sपंचांगmac_sarc_configure(priv, priv->ioaddr, 0x2))
+		वापस -EOPNOTSUPP;
 
-	ret = __stmmac_test_loopback(priv, &attr);
+	ret = __sपंचांगmac_test_loopback(priv, &attr);
 
-	stmmac_sarc_configure(priv, priv->ioaddr, 0x0);
-	return ret;
-}
+	sपंचांगmac_sarc_configure(priv, priv->ioaddr, 0x0);
+	वापस ret;
+पूर्ण
 
-static int stmmac_test_reg_sar(struct stmmac_priv *priv)
-{
-	unsigned char src[ETH_ALEN] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
-	struct stmmac_packet_attrs attr = { };
-	int ret;
+अटल पूर्णांक sपंचांगmac_test_reg_sar(काष्ठा sपंचांगmac_priv *priv)
+अणु
+	अचिन्हित अक्षर src[ETH_ALEN] = अणु0x00, 0x00, 0x00, 0x00, 0x00, 0x00पूर्ण;
+	काष्ठा sपंचांगmac_packet_attrs attr = अणु पूर्ण;
+	पूर्णांक ret;
 
-	if (!priv->dma_cap.vlins)
-		return -EOPNOTSUPP;
+	अगर (!priv->dma_cap.vlins)
+		वापस -EOPNOTSUPP;
 
 	attr.sarc = true;
 	attr.src = src;
 	attr.dst = priv->dev->dev_addr;
 
-	if (stmmac_sarc_configure(priv, priv->ioaddr, 0x3))
-		return -EOPNOTSUPP;
+	अगर (sपंचांगmac_sarc_configure(priv, priv->ioaddr, 0x3))
+		वापस -EOPNOTSUPP;
 
-	ret = __stmmac_test_loopback(priv, &attr);
+	ret = __sपंचांगmac_test_loopback(priv, &attr);
 
-	stmmac_sarc_configure(priv, priv->ioaddr, 0x0);
-	return ret;
-}
+	sपंचांगmac_sarc_configure(priv, priv->ioaddr, 0x0);
+	वापस ret;
+पूर्ण
 
-static int stmmac_test_vlanoff_common(struct stmmac_priv *priv, bool svlan)
-{
-	struct stmmac_packet_attrs attr = { };
-	struct stmmac_test_priv *tpriv;
-	struct sk_buff *skb = NULL;
-	int ret = 0;
+अटल पूर्णांक sपंचांगmac_test_vlanoff_common(काष्ठा sपंचांगmac_priv *priv, bool svlan)
+अणु
+	काष्ठा sपंचांगmac_packet_attrs attr = अणु पूर्ण;
+	काष्ठा sपंचांगmac_test_priv *tpriv;
+	काष्ठा sk_buff *skb = शून्य;
+	पूर्णांक ret = 0;
 	u16 proto;
 
-	if (!priv->dma_cap.vlins)
-		return -EOPNOTSUPP;
+	अगर (!priv->dma_cap.vlins)
+		वापस -EOPNOTSUPP;
 
-	tpriv = kzalloc(sizeof(*tpriv), GFP_KERNEL);
-	if (!tpriv)
-		return -ENOMEM;
+	tpriv = kzalloc(माप(*tpriv), GFP_KERNEL);
+	अगर (!tpriv)
+		वापस -ENOMEM;
 
 	proto = svlan ? ETH_P_8021AD : ETH_P_8021Q;
 
 	tpriv->ok = false;
-	tpriv->double_vlan = svlan;
+	tpriv->द्विगुन_vlan = svlan;
 	init_completion(&tpriv->comp);
 
 	tpriv->pt.type = svlan ? htons(ETH_P_8021Q) : htons(ETH_P_IP);
-	tpriv->pt.func = stmmac_test_vlan_validate;
+	tpriv->pt.func = sपंचांगmac_test_vlan_validate;
 	tpriv->pt.dev = priv->dev;
 	tpriv->pt.af_packet_priv = tpriv;
 	tpriv->packet = &attr;
@@ -1286,98 +1287,98 @@ static int stmmac_test_vlanoff_common(struct stmmac_priv *priv, bool svlan)
 	dev_add_pack(&tpriv->pt);
 
 	ret = vlan_vid_add(priv->dev, htons(proto), tpriv->vlan_id);
-	if (ret)
-		goto cleanup;
+	अगर (ret)
+		जाओ cleanup;
 
 	attr.dst = priv->dev->dev_addr;
 
-	skb = stmmac_test_get_udp_skb(priv, &attr);
-	if (!skb) {
+	skb = sपंचांगmac_test_get_udp_skb(priv, &attr);
+	अगर (!skb) अणु
 		ret = -ENOMEM;
-		goto vlan_del;
-	}
+		जाओ vlan_del;
+	पूर्ण
 
 	__vlan_hwaccel_put_tag(skb, htons(proto), tpriv->vlan_id);
 	skb->protocol = htons(proto);
 
 	ret = dev_direct_xmit(skb, 0);
-	if (ret)
-		goto vlan_del;
+	अगर (ret)
+		जाओ vlan_del;
 
-	wait_for_completion_timeout(&tpriv->comp, STMMAC_LB_TIMEOUT);
+	रुको_क्रम_completion_समयout(&tpriv->comp, STMMAC_LB_TIMEOUT);
 	ret = tpriv->ok ? 0 : -ETIMEDOUT;
 
 vlan_del:
 	vlan_vid_del(priv->dev, htons(proto), tpriv->vlan_id);
 cleanup:
-	dev_remove_pack(&tpriv->pt);
-	kfree(tpriv);
-	return ret;
-}
+	dev_हटाओ_pack(&tpriv->pt);
+	kमुक्त(tpriv);
+	वापस ret;
+पूर्ण
 
-static int stmmac_test_vlanoff(struct stmmac_priv *priv)
-{
-	return stmmac_test_vlanoff_common(priv, false);
-}
+अटल पूर्णांक sपंचांगmac_test_vlanoff(काष्ठा sपंचांगmac_priv *priv)
+अणु
+	वापस sपंचांगmac_test_vlanoff_common(priv, false);
+पूर्ण
 
-static int stmmac_test_svlanoff(struct stmmac_priv *priv)
-{
-	if (!priv->dma_cap.dvlan)
-		return -EOPNOTSUPP;
-	return stmmac_test_vlanoff_common(priv, true);
-}
+अटल पूर्णांक sपंचांगmac_test_svlanoff(काष्ठा sपंचांगmac_priv *priv)
+अणु
+	अगर (!priv->dma_cap.dvlan)
+		वापस -EOPNOTSUPP;
+	वापस sपंचांगmac_test_vlanoff_common(priv, true);
+पूर्ण
 
-#ifdef CONFIG_NET_CLS_ACT
-static int __stmmac_test_l3filt(struct stmmac_priv *priv, u32 dst, u32 src,
+#अगर_घोषित CONFIG_NET_CLS_ACT
+अटल पूर्णांक __sपंचांगmac_test_l3filt(काष्ठा sपंचांगmac_priv *priv, u32 dst, u32 src,
 				u32 dst_mask, u32 src_mask)
-{
-	struct flow_dissector_key_ipv4_addrs key, mask;
-	unsigned long dummy_cookie = 0xdeadbeef;
-	struct stmmac_packet_attrs attr = { };
-	struct flow_dissector *dissector;
-	struct flow_cls_offload *cls;
-	int ret, old_enable = 0;
-	struct flow_rule *rule;
+अणु
+	काष्ठा flow_dissector_key_ipv4_addrs key, mask;
+	अचिन्हित दीर्घ dummy_cookie = 0xdeadbeef;
+	काष्ठा sपंचांगmac_packet_attrs attr = अणु पूर्ण;
+	काष्ठा flow_dissector *dissector;
+	काष्ठा flow_cls_offload *cls;
+	पूर्णांक ret, old_enable = 0;
+	काष्ठा flow_rule *rule;
 
-	if (!tc_can_offload(priv->dev))
-		return -EOPNOTSUPP;
-	if (!priv->dma_cap.l3l4fnum)
-		return -EOPNOTSUPP;
-	if (priv->rss.enable) {
+	अगर (!tc_can_offload(priv->dev))
+		वापस -EOPNOTSUPP;
+	अगर (!priv->dma_cap.l3l4fnum)
+		वापस -EOPNOTSUPP;
+	अगर (priv->rss.enable) अणु
 		old_enable = priv->rss.enable;
 		priv->rss.enable = false;
-		stmmac_rss_configure(priv, priv->hw, NULL,
+		sपंचांगmac_rss_configure(priv, priv->hw, शून्य,
 				     priv->plat->rx_queues_to_use);
-	}
+	पूर्ण
 
-	dissector = kzalloc(sizeof(*dissector), GFP_KERNEL);
-	if (!dissector) {
+	dissector = kzalloc(माप(*dissector), GFP_KERNEL);
+	अगर (!dissector) अणु
 		ret = -ENOMEM;
-		goto cleanup_rss;
-	}
+		जाओ cleanup_rss;
+	पूर्ण
 
 	dissector->used_keys |= (1 << FLOW_DISSECTOR_KEY_IPV4_ADDRS);
 	dissector->offset[FLOW_DISSECTOR_KEY_IPV4_ADDRS] = 0;
 
-	cls = kzalloc(sizeof(*cls), GFP_KERNEL);
-	if (!cls) {
+	cls = kzalloc(माप(*cls), GFP_KERNEL);
+	अगर (!cls) अणु
 		ret = -ENOMEM;
-		goto cleanup_dissector;
-	}
+		जाओ cleanup_dissector;
+	पूर्ण
 
 	cls->common.chain_index = 0;
 	cls->command = FLOW_CLS_REPLACE;
 	cls->cookie = dummy_cookie;
 
-	rule = kzalloc(struct_size(rule, action.entries, 1), GFP_KERNEL);
-	if (!rule) {
+	rule = kzalloc(काष्ठा_size(rule, action.entries, 1), GFP_KERNEL);
+	अगर (!rule) अणु
 		ret = -ENOMEM;
-		goto cleanup_cls;
-	}
+		जाओ cleanup_cls;
+	पूर्ण
 
 	rule->match.dissector = dissector;
-	rule->match.key = (void *)&key;
-	rule->match.mask = (void *)&mask;
+	rule->match.key = (व्योम *)&key;
+	rule->match.mask = (व्योम *)&mask;
 
 	key.src = htonl(src);
 	key.dst = htonl(dst);
@@ -1395,117 +1396,117 @@ static int __stmmac_test_l3filt(struct stmmac_priv *priv, u32 dst, u32 src,
 	attr.ip_src = src;
 
 	/* Shall receive packet */
-	ret = __stmmac_test_loopback(priv, &attr);
-	if (ret)
-		goto cleanup_rule;
+	ret = __sपंचांगmac_test_loopback(priv, &attr);
+	अगर (ret)
+		जाओ cleanup_rule;
 
-	ret = stmmac_tc_setup_cls(priv, priv, cls);
-	if (ret)
-		goto cleanup_rule;
+	ret = sपंचांगmac_tc_setup_cls(priv, priv, cls);
+	अगर (ret)
+		जाओ cleanup_rule;
 
 	/* Shall NOT receive packet */
-	ret = __stmmac_test_loopback(priv, &attr);
+	ret = __sपंचांगmac_test_loopback(priv, &attr);
 	ret = ret ? 0 : -EINVAL;
 
 	cls->command = FLOW_CLS_DESTROY;
-	stmmac_tc_setup_cls(priv, priv, cls);
+	sपंचांगmac_tc_setup_cls(priv, priv, cls);
 cleanup_rule:
-	kfree(rule);
+	kमुक्त(rule);
 cleanup_cls:
-	kfree(cls);
+	kमुक्त(cls);
 cleanup_dissector:
-	kfree(dissector);
+	kमुक्त(dissector);
 cleanup_rss:
-	if (old_enable) {
+	अगर (old_enable) अणु
 		priv->rss.enable = old_enable;
-		stmmac_rss_configure(priv, priv->hw, &priv->rss,
+		sपंचांगmac_rss_configure(priv, priv->hw, &priv->rss,
 				     priv->plat->rx_queues_to_use);
-	}
+	पूर्ण
 
-	return ret;
-}
-#else
-static int __stmmac_test_l3filt(struct stmmac_priv *priv, u32 dst, u32 src,
+	वापस ret;
+पूर्ण
+#अन्यथा
+अटल पूर्णांक __sपंचांगmac_test_l3filt(काष्ठा sपंचांगmac_priv *priv, u32 dst, u32 src,
 				u32 dst_mask, u32 src_mask)
-{
-	return -EOPNOTSUPP;
-}
-#endif
+अणु
+	वापस -EOPNOTSUPP;
+पूर्ण
+#पूर्ण_अगर
 
-static int stmmac_test_l3filt_da(struct stmmac_priv *priv)
-{
+अटल पूर्णांक sपंचांगmac_test_l3filt_da(काष्ठा sपंचांगmac_priv *priv)
+अणु
 	u32 addr = 0x10203040;
 
-	return __stmmac_test_l3filt(priv, addr, 0, ~0, 0);
-}
+	वापस __sपंचांगmac_test_l3filt(priv, addr, 0, ~0, 0);
+पूर्ण
 
-static int stmmac_test_l3filt_sa(struct stmmac_priv *priv)
-{
+अटल पूर्णांक sपंचांगmac_test_l3filt_sa(काष्ठा sपंचांगmac_priv *priv)
+अणु
 	u32 addr = 0x10203040;
 
-	return __stmmac_test_l3filt(priv, 0, addr, 0, ~0);
-}
+	वापस __sपंचांगmac_test_l3filt(priv, 0, addr, 0, ~0);
+पूर्ण
 
-#ifdef CONFIG_NET_CLS_ACT
-static int __stmmac_test_l4filt(struct stmmac_priv *priv, u32 dst, u32 src,
+#अगर_घोषित CONFIG_NET_CLS_ACT
+अटल पूर्णांक __sपंचांगmac_test_l4filt(काष्ठा sपंचांगmac_priv *priv, u32 dst, u32 src,
 				u32 dst_mask, u32 src_mask, bool udp)
-{
-	struct {
-		struct flow_dissector_key_basic bkey;
-		struct flow_dissector_key_ports key;
-	} __aligned(BITS_PER_LONG / 8) keys;
-	struct {
-		struct flow_dissector_key_basic bmask;
-		struct flow_dissector_key_ports mask;
-	} __aligned(BITS_PER_LONG / 8) masks;
-	unsigned long dummy_cookie = 0xdeadbeef;
-	struct stmmac_packet_attrs attr = { };
-	struct flow_dissector *dissector;
-	struct flow_cls_offload *cls;
-	int ret, old_enable = 0;
-	struct flow_rule *rule;
+अणु
+	काष्ठा अणु
+		काष्ठा flow_dissector_key_basic bkey;
+		काष्ठा flow_dissector_key_ports key;
+	पूर्ण __aligned(BITS_PER_LONG / 8) keys;
+	काष्ठा अणु
+		काष्ठा flow_dissector_key_basic bmask;
+		काष्ठा flow_dissector_key_ports mask;
+	पूर्ण __aligned(BITS_PER_LONG / 8) masks;
+	अचिन्हित दीर्घ dummy_cookie = 0xdeadbeef;
+	काष्ठा sपंचांगmac_packet_attrs attr = अणु पूर्ण;
+	काष्ठा flow_dissector *dissector;
+	काष्ठा flow_cls_offload *cls;
+	पूर्णांक ret, old_enable = 0;
+	काष्ठा flow_rule *rule;
 
-	if (!tc_can_offload(priv->dev))
-		return -EOPNOTSUPP;
-	if (!priv->dma_cap.l3l4fnum)
-		return -EOPNOTSUPP;
-	if (priv->rss.enable) {
+	अगर (!tc_can_offload(priv->dev))
+		वापस -EOPNOTSUPP;
+	अगर (!priv->dma_cap.l3l4fnum)
+		वापस -EOPNOTSUPP;
+	अगर (priv->rss.enable) अणु
 		old_enable = priv->rss.enable;
 		priv->rss.enable = false;
-		stmmac_rss_configure(priv, priv->hw, NULL,
+		sपंचांगmac_rss_configure(priv, priv->hw, शून्य,
 				     priv->plat->rx_queues_to_use);
-	}
+	पूर्ण
 
-	dissector = kzalloc(sizeof(*dissector), GFP_KERNEL);
-	if (!dissector) {
+	dissector = kzalloc(माप(*dissector), GFP_KERNEL);
+	अगर (!dissector) अणु
 		ret = -ENOMEM;
-		goto cleanup_rss;
-	}
+		जाओ cleanup_rss;
+	पूर्ण
 
 	dissector->used_keys |= (1 << FLOW_DISSECTOR_KEY_BASIC);
 	dissector->used_keys |= (1 << FLOW_DISSECTOR_KEY_PORTS);
 	dissector->offset[FLOW_DISSECTOR_KEY_BASIC] = 0;
-	dissector->offset[FLOW_DISSECTOR_KEY_PORTS] = offsetof(typeof(keys), key);
+	dissector->offset[FLOW_DISSECTOR_KEY_PORTS] = दुरत्व(typeof(keys), key);
 
-	cls = kzalloc(sizeof(*cls), GFP_KERNEL);
-	if (!cls) {
+	cls = kzalloc(माप(*cls), GFP_KERNEL);
+	अगर (!cls) अणु
 		ret = -ENOMEM;
-		goto cleanup_dissector;
-	}
+		जाओ cleanup_dissector;
+	पूर्ण
 
 	cls->common.chain_index = 0;
 	cls->command = FLOW_CLS_REPLACE;
 	cls->cookie = dummy_cookie;
 
-	rule = kzalloc(struct_size(rule, action.entries, 1), GFP_KERNEL);
-	if (!rule) {
+	rule = kzalloc(काष्ठा_size(rule, action.entries, 1), GFP_KERNEL);
+	अगर (!rule) अणु
 		ret = -ENOMEM;
-		goto cleanup_cls;
-	}
+		जाओ cleanup_cls;
+	पूर्ण
 
 	rule->match.dissector = dissector;
-	rule->match.key = (void *)&keys;
-	rule->match.mask = (void *)&masks;
+	rule->match.key = (व्योम *)&keys;
+	rule->match.mask = (व्योम *)&masks;
 
 	keys.bkey.ip_proto = udp ? IPPROTO_UDP : IPPROTO_TCP;
 	keys.key.src = htons(src);
@@ -1526,118 +1527,118 @@ static int __stmmac_test_l4filt(struct stmmac_priv *priv, u32 dst, u32 src,
 	attr.ip_dst = 0;
 
 	/* Shall receive packet */
-	ret = __stmmac_test_loopback(priv, &attr);
-	if (ret)
-		goto cleanup_rule;
+	ret = __sपंचांगmac_test_loopback(priv, &attr);
+	अगर (ret)
+		जाओ cleanup_rule;
 
-	ret = stmmac_tc_setup_cls(priv, priv, cls);
-	if (ret)
-		goto cleanup_rule;
+	ret = sपंचांगmac_tc_setup_cls(priv, priv, cls);
+	अगर (ret)
+		जाओ cleanup_rule;
 
 	/* Shall NOT receive packet */
-	ret = __stmmac_test_loopback(priv, &attr);
+	ret = __sपंचांगmac_test_loopback(priv, &attr);
 	ret = ret ? 0 : -EINVAL;
 
 	cls->command = FLOW_CLS_DESTROY;
-	stmmac_tc_setup_cls(priv, priv, cls);
+	sपंचांगmac_tc_setup_cls(priv, priv, cls);
 cleanup_rule:
-	kfree(rule);
+	kमुक्त(rule);
 cleanup_cls:
-	kfree(cls);
+	kमुक्त(cls);
 cleanup_dissector:
-	kfree(dissector);
+	kमुक्त(dissector);
 cleanup_rss:
-	if (old_enable) {
+	अगर (old_enable) अणु
 		priv->rss.enable = old_enable;
-		stmmac_rss_configure(priv, priv->hw, &priv->rss,
+		sपंचांगmac_rss_configure(priv, priv->hw, &priv->rss,
 				     priv->plat->rx_queues_to_use);
-	}
+	पूर्ण
 
-	return ret;
-}
-#else
-static int __stmmac_test_l4filt(struct stmmac_priv *priv, u32 dst, u32 src,
+	वापस ret;
+पूर्ण
+#अन्यथा
+अटल पूर्णांक __sपंचांगmac_test_l4filt(काष्ठा sपंचांगmac_priv *priv, u32 dst, u32 src,
 				u32 dst_mask, u32 src_mask, bool udp)
-{
-	return -EOPNOTSUPP;
-}
-#endif
+अणु
+	वापस -EOPNOTSUPP;
+पूर्ण
+#पूर्ण_अगर
 
-static int stmmac_test_l4filt_da_tcp(struct stmmac_priv *priv)
-{
+अटल पूर्णांक sपंचांगmac_test_l4filt_da_tcp(काष्ठा sपंचांगmac_priv *priv)
+अणु
 	u16 dummy_port = 0x123;
 
-	return __stmmac_test_l4filt(priv, dummy_port, 0, ~0, 0, false);
-}
+	वापस __sपंचांगmac_test_l4filt(priv, dummy_port, 0, ~0, 0, false);
+पूर्ण
 
-static int stmmac_test_l4filt_sa_tcp(struct stmmac_priv *priv)
-{
+अटल पूर्णांक sपंचांगmac_test_l4filt_sa_tcp(काष्ठा sपंचांगmac_priv *priv)
+अणु
 	u16 dummy_port = 0x123;
 
-	return __stmmac_test_l4filt(priv, 0, dummy_port, 0, ~0, false);
-}
+	वापस __sपंचांगmac_test_l4filt(priv, 0, dummy_port, 0, ~0, false);
+पूर्ण
 
-static int stmmac_test_l4filt_da_udp(struct stmmac_priv *priv)
-{
+अटल पूर्णांक sपंचांगmac_test_l4filt_da_udp(काष्ठा sपंचांगmac_priv *priv)
+अणु
 	u16 dummy_port = 0x123;
 
-	return __stmmac_test_l4filt(priv, dummy_port, 0, ~0, 0, true);
-}
+	वापस __sपंचांगmac_test_l4filt(priv, dummy_port, 0, ~0, 0, true);
+पूर्ण
 
-static int stmmac_test_l4filt_sa_udp(struct stmmac_priv *priv)
-{
+अटल पूर्णांक sपंचांगmac_test_l4filt_sa_udp(काष्ठा sपंचांगmac_priv *priv)
+अणु
 	u16 dummy_port = 0x123;
 
-	return __stmmac_test_l4filt(priv, 0, dummy_port, 0, ~0, true);
-}
+	वापस __sपंचांगmac_test_l4filt(priv, 0, dummy_port, 0, ~0, true);
+पूर्ण
 
-static int stmmac_test_arp_validate(struct sk_buff *skb,
-				    struct net_device *ndev,
-				    struct packet_type *pt,
-				    struct net_device *orig_ndev)
-{
-	struct stmmac_test_priv *tpriv = pt->af_packet_priv;
-	struct ethhdr *ehdr;
-	struct arphdr *ahdr;
+अटल पूर्णांक sपंचांगmac_test_arp_validate(काष्ठा sk_buff *skb,
+				    काष्ठा net_device *ndev,
+				    काष्ठा packet_type *pt,
+				    काष्ठा net_device *orig_ndev)
+अणु
+	काष्ठा sपंचांगmac_test_priv *tpriv = pt->af_packet_priv;
+	काष्ठा ethhdr *ehdr;
+	काष्ठा arphdr *ahdr;
 
-	ehdr = (struct ethhdr *)skb_mac_header(skb);
-	if (!ether_addr_equal_unaligned(ehdr->h_dest, tpriv->packet->src))
-		goto out;
+	ehdr = (काष्ठा ethhdr *)skb_mac_header(skb);
+	अगर (!ether_addr_equal_unaligned(ehdr->h_dest, tpriv->packet->src))
+		जाओ out;
 
 	ahdr = arp_hdr(skb);
-	if (ahdr->ar_op != htons(ARPOP_REPLY))
-		goto out;
+	अगर (ahdr->ar_op != htons(ARPOP_REPLY))
+		जाओ out;
 
 	tpriv->ok = true;
 	complete(&tpriv->comp);
 out:
-	kfree_skb(skb);
-	return 0;
-}
+	kमुक्त_skb(skb);
+	वापस 0;
+पूर्ण
 
-static int stmmac_test_arpoffload(struct stmmac_priv *priv)
-{
-	unsigned char src[ETH_ALEN] = {0x01, 0x02, 0x03, 0x04, 0x05, 0x06};
-	unsigned char dst[ETH_ALEN] = {0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
-	struct stmmac_packet_attrs attr = { };
-	struct stmmac_test_priv *tpriv;
-	struct sk_buff *skb = NULL;
+अटल पूर्णांक sपंचांगmac_test_arpoffload(काष्ठा sपंचांगmac_priv *priv)
+अणु
+	अचिन्हित अक्षर src[ETH_ALEN] = अणु0x01, 0x02, 0x03, 0x04, 0x05, 0x06पूर्ण;
+	अचिन्हित अक्षर dst[ETH_ALEN] = अणु0xff, 0xff, 0xff, 0xff, 0xff, 0xffपूर्ण;
+	काष्ठा sपंचांगmac_packet_attrs attr = अणु पूर्ण;
+	काष्ठा sपंचांगmac_test_priv *tpriv;
+	काष्ठा sk_buff *skb = शून्य;
 	u32 ip_addr = 0xdeadcafe;
 	u32 ip_src = 0xdeadbeef;
-	int ret;
+	पूर्णांक ret;
 
-	if (!priv->dma_cap.arpoffsel)
-		return -EOPNOTSUPP;
+	अगर (!priv->dma_cap.arpoffsel)
+		वापस -EOPNOTSUPP;
 
-	tpriv = kzalloc(sizeof(*tpriv), GFP_KERNEL);
-	if (!tpriv)
-		return -ENOMEM;
+	tpriv = kzalloc(माप(*tpriv), GFP_KERNEL);
+	अगर (!tpriv)
+		वापस -ENOMEM;
 
 	tpriv->ok = false;
 	init_completion(&tpriv->comp);
 
 	tpriv->pt.type = htons(ETH_P_ARP);
-	tpriv->pt.func = stmmac_test_arp_validate;
+	tpriv->pt.func = sपंचांगmac_test_arp_validate;
 	tpriv->pt.dev = priv->dev;
 	tpriv->pt.af_packet_priv = tpriv;
 	tpriv->packet = &attr;
@@ -1648,399 +1649,399 @@ static int stmmac_test_arpoffload(struct stmmac_priv *priv)
 	attr.dst = dst;
 	attr.ip_dst = ip_addr;
 
-	skb = stmmac_test_get_arp_skb(priv, &attr);
-	if (!skb) {
+	skb = sपंचांगmac_test_get_arp_skb(priv, &attr);
+	अगर (!skb) अणु
 		ret = -ENOMEM;
-		goto cleanup;
-	}
+		जाओ cleanup;
+	पूर्ण
 
-	ret = stmmac_set_arp_offload(priv, priv->hw, true, ip_addr);
-	if (ret)
-		goto cleanup;
+	ret = sपंचांगmac_set_arp_offload(priv, priv->hw, true, ip_addr);
+	अगर (ret)
+		जाओ cleanup;
 
 	ret = dev_set_promiscuity(priv->dev, 1);
-	if (ret)
-		goto cleanup;
+	अगर (ret)
+		जाओ cleanup;
 
 	ret = dev_direct_xmit(skb, 0);
-	if (ret)
-		goto cleanup_promisc;
+	अगर (ret)
+		जाओ cleanup_promisc;
 
-	wait_for_completion_timeout(&tpriv->comp, STMMAC_LB_TIMEOUT);
+	रुको_क्रम_completion_समयout(&tpriv->comp, STMMAC_LB_TIMEOUT);
 	ret = tpriv->ok ? 0 : -ETIMEDOUT;
 
 cleanup_promisc:
 	dev_set_promiscuity(priv->dev, -1);
 cleanup:
-	stmmac_set_arp_offload(priv, priv->hw, false, 0x0);
-	dev_remove_pack(&tpriv->pt);
-	kfree(tpriv);
-	return ret;
-}
+	sपंचांगmac_set_arp_offload(priv, priv->hw, false, 0x0);
+	dev_हटाओ_pack(&tpriv->pt);
+	kमुक्त(tpriv);
+	वापस ret;
+पूर्ण
 
-static int __stmmac_test_jumbo(struct stmmac_priv *priv, u16 queue)
-{
-	struct stmmac_packet_attrs attr = { };
-	int size = priv->dma_buf_sz;
+अटल पूर्णांक __sपंचांगmac_test_jumbo(काष्ठा sपंचांगmac_priv *priv, u16 queue)
+अणु
+	काष्ठा sपंचांगmac_packet_attrs attr = अणु पूर्ण;
+	पूर्णांक size = priv->dma_buf_sz;
 
 	attr.dst = priv->dev->dev_addr;
 	attr.max_size = size - ETH_FCS_LEN;
 	attr.queue_mapping = queue;
 
-	return __stmmac_test_loopback(priv, &attr);
-}
+	वापस __sपंचांगmac_test_loopback(priv, &attr);
+पूर्ण
 
-static int stmmac_test_jumbo(struct stmmac_priv *priv)
-{
-	return __stmmac_test_jumbo(priv, 0);
-}
+अटल पूर्णांक sपंचांगmac_test_jumbo(काष्ठा sपंचांगmac_priv *priv)
+अणु
+	वापस __sपंचांगmac_test_jumbo(priv, 0);
+पूर्ण
 
-static int stmmac_test_mjumbo(struct stmmac_priv *priv)
-{
+अटल पूर्णांक sपंचांगmac_test_mjumbo(काष्ठा sपंचांगmac_priv *priv)
+अणु
 	u32 chan, tx_cnt = priv->plat->tx_queues_to_use;
-	int ret;
+	पूर्णांक ret;
 
-	if (tx_cnt <= 1)
-		return -EOPNOTSUPP;
+	अगर (tx_cnt <= 1)
+		वापस -EOPNOTSUPP;
 
-	for (chan = 0; chan < tx_cnt; chan++) {
-		ret = __stmmac_test_jumbo(priv, chan);
-		if (ret)
-			return ret;
-	}
+	क्रम (chan = 0; chan < tx_cnt; chan++) अणु
+		ret = __sपंचांगmac_test_jumbo(priv, chan);
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int stmmac_test_sph(struct stmmac_priv *priv)
-{
-	unsigned long cnt_end, cnt_start = priv->xstats.rx_split_hdr_pkt_n;
-	struct stmmac_packet_attrs attr = { };
-	int ret;
+अटल पूर्णांक sपंचांगmac_test_sph(काष्ठा sपंचांगmac_priv *priv)
+अणु
+	अचिन्हित दीर्घ cnt_end, cnt_start = priv->xstats.rx_split_hdr_pkt_n;
+	काष्ठा sपंचांगmac_packet_attrs attr = अणु पूर्ण;
+	पूर्णांक ret;
 
-	if (!priv->sph)
-		return -EOPNOTSUPP;
+	अगर (!priv->sph)
+		वापस -EOPNOTSUPP;
 
-	/* Check for UDP first */
+	/* Check क्रम UDP first */
 	attr.dst = priv->dev->dev_addr;
 	attr.tcp = false;
 
-	ret = __stmmac_test_loopback(priv, &attr);
-	if (ret)
-		return ret;
+	ret = __sपंचांगmac_test_loopback(priv, &attr);
+	अगर (ret)
+		वापस ret;
 
 	cnt_end = priv->xstats.rx_split_hdr_pkt_n;
-	if (cnt_end <= cnt_start)
-		return -EINVAL;
+	अगर (cnt_end <= cnt_start)
+		वापस -EINVAL;
 
-	/* Check for TCP now */
+	/* Check क्रम TCP now */
 	cnt_start = cnt_end;
 
 	attr.dst = priv->dev->dev_addr;
 	attr.tcp = true;
 
-	ret = __stmmac_test_loopback(priv, &attr);
-	if (ret)
-		return ret;
+	ret = __sपंचांगmac_test_loopback(priv, &attr);
+	अगर (ret)
+		वापस ret;
 
 	cnt_end = priv->xstats.rx_split_hdr_pkt_n;
-	if (cnt_end <= cnt_start)
-		return -EINVAL;
+	अगर (cnt_end <= cnt_start)
+		वापस -EINVAL;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int stmmac_test_tbs(struct stmmac_priv *priv)
-{
-#define STMMAC_TBS_LT_OFFSET		(500 * 1000 * 1000) /* 500 ms*/
-	struct stmmac_packet_attrs attr = { };
-	struct tc_etf_qopt_offload qopt;
-	u64 start_time, curr_time = 0;
-	unsigned long flags;
-	int ret, i;
+अटल पूर्णांक sपंचांगmac_test_tbs(काष्ठा sपंचांगmac_priv *priv)
+अणु
+#घोषणा STMMAC_TBS_LT_OFFSET		(500 * 1000 * 1000) /* 500 ms*/
+	काष्ठा sपंचांगmac_packet_attrs attr = अणु पूर्ण;
+	काष्ठा tc_etf_qopt_offload qopt;
+	u64 start_समय, curr_समय = 0;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक ret, i;
 
-	if (!priv->hwts_tx_en)
-		return -EOPNOTSUPP;
+	अगर (!priv->hwts_tx_en)
+		वापस -EOPNOTSUPP;
 
-	/* Find first TBS enabled Queue, if any */
-	for (i = 0; i < priv->plat->tx_queues_to_use; i++)
-		if (priv->tx_queue[i].tbs & STMMAC_TBS_AVAIL)
-			break;
+	/* Find first TBS enabled Queue, अगर any */
+	क्रम (i = 0; i < priv->plat->tx_queues_to_use; i++)
+		अगर (priv->tx_queue[i].tbs & STMMAC_TBS_AVAIL)
+			अवरोध;
 
-	if (i >= priv->plat->tx_queues_to_use)
-		return -EOPNOTSUPP;
+	अगर (i >= priv->plat->tx_queues_to_use)
+		वापस -EOPNOTSUPP;
 
 	qopt.enable = true;
 	qopt.queue = i;
 
-	ret = stmmac_tc_setup_etf(priv, priv, &qopt);
-	if (ret)
-		return ret;
+	ret = sपंचांगmac_tc_setup_etf(priv, priv, &qopt);
+	अगर (ret)
+		वापस ret;
 
 	spin_lock_irqsave(&priv->ptp_lock, flags);
-	stmmac_get_systime(priv, priv->ptpaddr, &curr_time);
+	sपंचांगmac_get_sysसमय(priv, priv->ptpaddr, &curr_समय);
 	spin_unlock_irqrestore(&priv->ptp_lock, flags);
 
-	if (!curr_time) {
+	अगर (!curr_समय) अणु
 		ret = -EOPNOTSUPP;
-		goto fail_disable;
-	}
+		जाओ fail_disable;
+	पूर्ण
 
-	start_time = curr_time;
-	curr_time += STMMAC_TBS_LT_OFFSET;
+	start_समय = curr_समय;
+	curr_समय += STMMAC_TBS_LT_OFFSET;
 
 	attr.dst = priv->dev->dev_addr;
-	attr.timestamp = curr_time;
-	attr.timeout = nsecs_to_jiffies(2 * STMMAC_TBS_LT_OFFSET);
+	attr.बारtamp = curr_समय;
+	attr.समयout = nsecs_to_jअगरfies(2 * STMMAC_TBS_LT_OFFSET);
 	attr.queue_mapping = i;
 
-	ret = __stmmac_test_loopback(priv, &attr);
-	if (ret)
-		goto fail_disable;
+	ret = __sपंचांगmac_test_loopback(priv, &attr);
+	अगर (ret)
+		जाओ fail_disable;
 
-	/* Check if expected time has elapsed */
+	/* Check अगर expected समय has elapsed */
 	spin_lock_irqsave(&priv->ptp_lock, flags);
-	stmmac_get_systime(priv, priv->ptpaddr, &curr_time);
+	sपंचांगmac_get_sysसमय(priv, priv->ptpaddr, &curr_समय);
 	spin_unlock_irqrestore(&priv->ptp_lock, flags);
 
-	if ((curr_time - start_time) < STMMAC_TBS_LT_OFFSET)
+	अगर ((curr_समय - start_समय) < STMMAC_TBS_LT_OFFSET)
 		ret = -EINVAL;
 
 fail_disable:
 	qopt.enable = false;
-	stmmac_tc_setup_etf(priv, priv, &qopt);
-	return ret;
-}
+	sपंचांगmac_tc_setup_etf(priv, priv, &qopt);
+	वापस ret;
+पूर्ण
 
-#define STMMAC_LOOPBACK_NONE	0
-#define STMMAC_LOOPBACK_MAC	1
-#define STMMAC_LOOPBACK_PHY	2
+#घोषणा STMMAC_LOOPBACK_NONE	0
+#घोषणा STMMAC_LOOPBACK_MAC	1
+#घोषणा STMMAC_LOOPBACK_PHY	2
 
-static const struct stmmac_test {
-	char name[ETH_GSTRING_LEN];
-	int lb;
-	int (*fn)(struct stmmac_priv *priv);
-} stmmac_selftests[] = {
-	{
+अटल स्थिर काष्ठा sपंचांगmac_test अणु
+	अक्षर name[ETH_GSTRING_LEN];
+	पूर्णांक lb;
+	पूर्णांक (*fn)(काष्ठा sपंचांगmac_priv *priv);
+पूर्ण sपंचांगmac_selftests[] = अणु
+	अणु
 		.name = "MAC Loopback               ",
 		.lb = STMMAC_LOOPBACK_MAC,
-		.fn = stmmac_test_mac_loopback,
-	}, {
+		.fn = sपंचांगmac_test_mac_loopback,
+	पूर्ण, अणु
 		.name = "PHY Loopback               ",
 		.lb = STMMAC_LOOPBACK_NONE, /* Test will handle it */
-		.fn = stmmac_test_phy_loopback,
-	}, {
+		.fn = sपंचांगmac_test_phy_loopback,
+	पूर्ण, अणु
 		.name = "MMC Counters               ",
 		.lb = STMMAC_LOOPBACK_PHY,
-		.fn = stmmac_test_mmc,
-	}, {
+		.fn = sपंचांगmac_test_mmc,
+	पूर्ण, अणु
 		.name = "EEE                        ",
 		.lb = STMMAC_LOOPBACK_PHY,
-		.fn = stmmac_test_eee,
-	}, {
+		.fn = sपंचांगmac_test_eee,
+	पूर्ण, अणु
 		.name = "Hash Filter MC             ",
 		.lb = STMMAC_LOOPBACK_PHY,
-		.fn = stmmac_test_hfilt,
-	}, {
+		.fn = sपंचांगmac_test_hfilt,
+	पूर्ण, अणु
 		.name = "Perfect Filter UC          ",
 		.lb = STMMAC_LOOPBACK_PHY,
-		.fn = stmmac_test_pfilt,
-	}, {
+		.fn = sपंचांगmac_test_pfilt,
+	पूर्ण, अणु
 		.name = "MC Filter                  ",
 		.lb = STMMAC_LOOPBACK_PHY,
-		.fn = stmmac_test_mcfilt,
-	}, {
+		.fn = sपंचांगmac_test_mcfilt,
+	पूर्ण, अणु
 		.name = "UC Filter                  ",
 		.lb = STMMAC_LOOPBACK_PHY,
-		.fn = stmmac_test_ucfilt,
-	}, {
+		.fn = sपंचांगmac_test_ucfilt,
+	पूर्ण, अणु
 		.name = "Flow Control               ",
 		.lb = STMMAC_LOOPBACK_PHY,
-		.fn = stmmac_test_flowctrl,
-	}, {
+		.fn = sपंचांगmac_test_flowctrl,
+	पूर्ण, अणु
 		.name = "RSS                        ",
 		.lb = STMMAC_LOOPBACK_PHY,
-		.fn = stmmac_test_rss,
-	}, {
+		.fn = sपंचांगmac_test_rss,
+	पूर्ण, अणु
 		.name = "VLAN Filtering             ",
 		.lb = STMMAC_LOOPBACK_PHY,
-		.fn = stmmac_test_vlanfilt,
-	}, {
+		.fn = sपंचांगmac_test_vlanfilt,
+	पूर्ण, अणु
 		.name = "VLAN Filtering (perf)      ",
 		.lb = STMMAC_LOOPBACK_PHY,
-		.fn = stmmac_test_vlanfilt_perfect,
-	}, {
+		.fn = sपंचांगmac_test_vlanfilt_perfect,
+	पूर्ण, अणु
 		.name = "Double VLAN Filter         ",
 		.lb = STMMAC_LOOPBACK_PHY,
-		.fn = stmmac_test_dvlanfilt,
-	}, {
+		.fn = sपंचांगmac_test_dvlanfilt,
+	पूर्ण, अणु
 		.name = "Double VLAN Filter (perf)  ",
 		.lb = STMMAC_LOOPBACK_PHY,
-		.fn = stmmac_test_dvlanfilt_perfect,
-	}, {
+		.fn = sपंचांगmac_test_dvlanfilt_perfect,
+	पूर्ण, अणु
 		.name = "Flexible RX Parser         ",
 		.lb = STMMAC_LOOPBACK_PHY,
-		.fn = stmmac_test_rxp,
-	}, {
+		.fn = sपंचांगmac_test_rxp,
+	पूर्ण, अणु
 		.name = "SA Insertion (desc)        ",
 		.lb = STMMAC_LOOPBACK_PHY,
-		.fn = stmmac_test_desc_sai,
-	}, {
+		.fn = sपंचांगmac_test_desc_sai,
+	पूर्ण, अणु
 		.name = "SA Replacement (desc)      ",
 		.lb = STMMAC_LOOPBACK_PHY,
-		.fn = stmmac_test_desc_sar,
-	}, {
+		.fn = sपंचांगmac_test_desc_sar,
+	पूर्ण, अणु
 		.name = "SA Insertion (reg)         ",
 		.lb = STMMAC_LOOPBACK_PHY,
-		.fn = stmmac_test_reg_sai,
-	}, {
+		.fn = sपंचांगmac_test_reg_sai,
+	पूर्ण, अणु
 		.name = "SA Replacement (reg)       ",
 		.lb = STMMAC_LOOPBACK_PHY,
-		.fn = stmmac_test_reg_sar,
-	}, {
+		.fn = sपंचांगmac_test_reg_sar,
+	पूर्ण, अणु
 		.name = "VLAN TX Insertion          ",
 		.lb = STMMAC_LOOPBACK_PHY,
-		.fn = stmmac_test_vlanoff,
-	}, {
+		.fn = sपंचांगmac_test_vlanoff,
+	पूर्ण, अणु
 		.name = "SVLAN TX Insertion         ",
 		.lb = STMMAC_LOOPBACK_PHY,
-		.fn = stmmac_test_svlanoff,
-	}, {
+		.fn = sपंचांगmac_test_svlanoff,
+	पूर्ण, अणु
 		.name = "L3 DA Filtering            ",
 		.lb = STMMAC_LOOPBACK_PHY,
-		.fn = stmmac_test_l3filt_da,
-	}, {
+		.fn = sपंचांगmac_test_l3filt_da,
+	पूर्ण, अणु
 		.name = "L3 SA Filtering            ",
 		.lb = STMMAC_LOOPBACK_PHY,
-		.fn = stmmac_test_l3filt_sa,
-	}, {
+		.fn = sपंचांगmac_test_l3filt_sa,
+	पूर्ण, अणु
 		.name = "L4 DA TCP Filtering        ",
 		.lb = STMMAC_LOOPBACK_PHY,
-		.fn = stmmac_test_l4filt_da_tcp,
-	}, {
+		.fn = sपंचांगmac_test_l4filt_da_tcp,
+	पूर्ण, अणु
 		.name = "L4 SA TCP Filtering        ",
 		.lb = STMMAC_LOOPBACK_PHY,
-		.fn = stmmac_test_l4filt_sa_tcp,
-	}, {
+		.fn = sपंचांगmac_test_l4filt_sa_tcp,
+	पूर्ण, अणु
 		.name = "L4 DA UDP Filtering        ",
 		.lb = STMMAC_LOOPBACK_PHY,
-		.fn = stmmac_test_l4filt_da_udp,
-	}, {
+		.fn = sपंचांगmac_test_l4filt_da_udp,
+	पूर्ण, अणु
 		.name = "L4 SA UDP Filtering        ",
 		.lb = STMMAC_LOOPBACK_PHY,
-		.fn = stmmac_test_l4filt_sa_udp,
-	}, {
+		.fn = sपंचांगmac_test_l4filt_sa_udp,
+	पूर्ण, अणु
 		.name = "ARP Offload                ",
 		.lb = STMMAC_LOOPBACK_PHY,
-		.fn = stmmac_test_arpoffload,
-	}, {
+		.fn = sपंचांगmac_test_arpoffload,
+	पूर्ण, अणु
 		.name = "Jumbo Frame                ",
 		.lb = STMMAC_LOOPBACK_PHY,
-		.fn = stmmac_test_jumbo,
-	}, {
+		.fn = sपंचांगmac_test_jumbo,
+	पूर्ण, अणु
 		.name = "Multichannel Jumbo         ",
 		.lb = STMMAC_LOOPBACK_PHY,
-		.fn = stmmac_test_mjumbo,
-	}, {
+		.fn = sपंचांगmac_test_mjumbo,
+	पूर्ण, अणु
 		.name = "Split Header               ",
 		.lb = STMMAC_LOOPBACK_PHY,
-		.fn = stmmac_test_sph,
-	}, {
+		.fn = sपंचांगmac_test_sph,
+	पूर्ण, अणु
 		.name = "TBS (ETF Scheduler)        ",
 		.lb = STMMAC_LOOPBACK_PHY,
-		.fn = stmmac_test_tbs,
-	},
-};
+		.fn = sपंचांगmac_test_tbs,
+	पूर्ण,
+पूर्ण;
 
-void stmmac_selftest_run(struct net_device *dev,
-			 struct ethtool_test *etest, u64 *buf)
-{
-	struct stmmac_priv *priv = netdev_priv(dev);
-	int count = stmmac_selftest_get_count(priv);
-	int i, ret;
+व्योम sपंचांगmac_selftest_run(काष्ठा net_device *dev,
+			 काष्ठा ethtool_test *etest, u64 *buf)
+अणु
+	काष्ठा sपंचांगmac_priv *priv = netdev_priv(dev);
+	पूर्णांक count = sपंचांगmac_selftest_get_count(priv);
+	पूर्णांक i, ret;
 
-	memset(buf, 0, sizeof(*buf) * count);
-	stmmac_test_next_id = 0;
+	स_रखो(buf, 0, माप(*buf) * count);
+	sपंचांगmac_test_next_id = 0;
 
-	if (etest->flags != ETH_TEST_FL_OFFLINE) {
+	अगर (etest->flags != ETH_TEST_FL_OFFLINE) अणु
 		netdev_err(priv->dev, "Only offline tests are supported\n");
 		etest->flags |= ETH_TEST_FL_FAILED;
-		return;
-	} else if (!netif_carrier_ok(dev)) {
+		वापस;
+	पूर्ण अन्यथा अगर (!netअगर_carrier_ok(dev)) अणु
 		netdev_err(priv->dev, "You need valid Link to execute tests\n");
 		etest->flags |= ETH_TEST_FL_FAILED;
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	/* Wait for queues drain */
+	/* Wait क्रम queues drain */
 	msleep(200);
 
-	for (i = 0; i < count; i++) {
+	क्रम (i = 0; i < count; i++) अणु
 		ret = 0;
 
-		switch (stmmac_selftests[i].lb) {
-		case STMMAC_LOOPBACK_PHY:
+		चयन (sपंचांगmac_selftests[i].lb) अणु
+		हाल STMMAC_LOOPBACK_PHY:
 			ret = -EOPNOTSUPP;
-			if (dev->phydev)
+			अगर (dev->phydev)
 				ret = phy_loopback(dev->phydev, true);
-			if (!ret)
-				break;
+			अगर (!ret)
+				अवरोध;
 			fallthrough;
-		case STMMAC_LOOPBACK_MAC:
-			ret = stmmac_set_mac_loopback(priv, priv->ioaddr, true);
-			break;
-		case STMMAC_LOOPBACK_NONE:
-			break;
-		default:
+		हाल STMMAC_LOOPBACK_MAC:
+			ret = sपंचांगmac_set_mac_loopback(priv, priv->ioaddr, true);
+			अवरोध;
+		हाल STMMAC_LOOPBACK_NONE:
+			अवरोध;
+		शेष:
 			ret = -EOPNOTSUPP;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		/*
 		 * First tests will always be MAC / PHY loobpack. If any of
-		 * them is not supported we abort earlier.
+		 * them is not supported we पात earlier.
 		 */
-		if (ret) {
+		अगर (ret) अणु
 			netdev_err(priv->dev, "Loopback is not supported\n");
 			etest->flags |= ETH_TEST_FL_FAILED;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		ret = stmmac_selftests[i].fn(priv);
-		if (ret && (ret != -EOPNOTSUPP))
+		ret = sपंचांगmac_selftests[i].fn(priv);
+		अगर (ret && (ret != -EOPNOTSUPP))
 			etest->flags |= ETH_TEST_FL_FAILED;
 		buf[i] = ret;
 
-		switch (stmmac_selftests[i].lb) {
-		case STMMAC_LOOPBACK_PHY:
+		चयन (sपंचांगmac_selftests[i].lb) अणु
+		हाल STMMAC_LOOPBACK_PHY:
 			ret = -EOPNOTSUPP;
-			if (dev->phydev)
+			अगर (dev->phydev)
 				ret = phy_loopback(dev->phydev, false);
-			if (!ret)
-				break;
+			अगर (!ret)
+				अवरोध;
 			fallthrough;
-		case STMMAC_LOOPBACK_MAC:
-			stmmac_set_mac_loopback(priv, priv->ioaddr, false);
-			break;
-		default:
-			break;
-		}
-	}
-}
+		हाल STMMAC_LOOPBACK_MAC:
+			sपंचांगmac_set_mac_loopback(priv, priv->ioaddr, false);
+			अवरोध;
+		शेष:
+			अवरोध;
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-void stmmac_selftest_get_strings(struct stmmac_priv *priv, u8 *data)
-{
+व्योम sपंचांगmac_selftest_get_strings(काष्ठा sपंचांगmac_priv *priv, u8 *data)
+अणु
 	u8 *p = data;
-	int i;
+	पूर्णांक i;
 
-	for (i = 0; i < stmmac_selftest_get_count(priv); i++) {
-		snprintf(p, ETH_GSTRING_LEN, "%2d. %s", i + 1,
-			 stmmac_selftests[i].name);
+	क्रम (i = 0; i < sपंचांगmac_selftest_get_count(priv); i++) अणु
+		snम_लिखो(p, ETH_GSTRING_LEN, "%2d. %s", i + 1,
+			 sपंचांगmac_selftests[i].name);
 		p += ETH_GSTRING_LEN;
-	}
-}
+	पूर्ण
+पूर्ण
 
-int stmmac_selftest_get_count(struct stmmac_priv *priv)
-{
-	return ARRAY_SIZE(stmmac_selftests);
-}
+पूर्णांक sपंचांगmac_selftest_get_count(काष्ठा sपंचांगmac_priv *priv)
+अणु
+	वापस ARRAY_SIZE(sपंचांगmac_selftests);
+पूर्ण

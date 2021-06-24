@@ -1,46 +1,47 @@
-/* SPDX-License-Identifier: GPL-2.0 OR Linux-OpenIB */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 OR Linux-OpenIB */
 /* Copyright (c) 2018 Mellanox Technologies */
 
-#ifndef __LIB_MLX5_DEVCOM_H__
-#define __LIB_MLX5_DEVCOM_H__
+#अगर_अघोषित __LIB_MLX5_DEVCOM_H__
+#घोषणा __LIB_MLX5_DEVCOM_H__
 
-#include <linux/mlx5/driver.h>
+#समावेश <linux/mlx5/driver.h>
 
-enum mlx5_devcom_components {
+क्रमागत mlx5_devcom_components अणु
 	MLX5_DEVCOM_ESW_OFFLOADS,
 
 	MLX5_DEVCOM_NUM_COMPONENTS,
-};
+पूर्ण;
 
-typedef int (*mlx5_devcom_event_handler_t)(int event,
-					   void *my_data,
-					   void *event_data);
+प्रकार पूर्णांक (*mlx5_devcom_event_handler_t)(पूर्णांक event,
+					   व्योम *my_data,
+					   व्योम *event_data);
 
-struct mlx5_devcom *mlx5_devcom_register_device(struct mlx5_core_dev *dev);
-void mlx5_devcom_unregister_device(struct mlx5_devcom *devcom);
+काष्ठा mlx5_devcom *mlx5_devcom_रेजिस्टर_device(काष्ठा mlx5_core_dev *dev);
+व्योम mlx5_devcom_unरेजिस्टर_device(काष्ठा mlx5_devcom *devcom);
 
-void mlx5_devcom_register_component(struct mlx5_devcom *devcom,
-				    enum mlx5_devcom_components id,
+व्योम mlx5_devcom_रेजिस्टर_component(काष्ठा mlx5_devcom *devcom,
+				    क्रमागत mlx5_devcom_components id,
 				    mlx5_devcom_event_handler_t handler,
-				    void *data);
-void mlx5_devcom_unregister_component(struct mlx5_devcom *devcom,
-				      enum mlx5_devcom_components id);
+				    व्योम *data);
+व्योम mlx5_devcom_unरेजिस्टर_component(काष्ठा mlx5_devcom *devcom,
+				      क्रमागत mlx5_devcom_components id);
 
-int mlx5_devcom_send_event(struct mlx5_devcom *devcom,
-			   enum mlx5_devcom_components id,
-			   int event,
-			   void *event_data);
+पूर्णांक mlx5_devcom_send_event(काष्ठा mlx5_devcom *devcom,
+			   क्रमागत mlx5_devcom_components id,
+			   पूर्णांक event,
+			   व्योम *event_data);
 
-void mlx5_devcom_set_paired(struct mlx5_devcom *devcom,
-			    enum mlx5_devcom_components id,
+व्योम mlx5_devcom_set_paired(काष्ठा mlx5_devcom *devcom,
+			    क्रमागत mlx5_devcom_components id,
 			    bool paired);
-bool mlx5_devcom_is_paired(struct mlx5_devcom *devcom,
-			   enum mlx5_devcom_components id);
+bool mlx5_devcom_is_paired(काष्ठा mlx5_devcom *devcom,
+			   क्रमागत mlx5_devcom_components id);
 
-void *mlx5_devcom_get_peer_data(struct mlx5_devcom *devcom,
-				enum mlx5_devcom_components id);
-void mlx5_devcom_release_peer_data(struct mlx5_devcom *devcom,
-				   enum mlx5_devcom_components id);
+व्योम *mlx5_devcom_get_peer_data(काष्ठा mlx5_devcom *devcom,
+				क्रमागत mlx5_devcom_components id);
+व्योम mlx5_devcom_release_peer_data(काष्ठा mlx5_devcom *devcom,
+				   क्रमागत mlx5_devcom_components id);
 
-#endif
+#पूर्ण_अगर
 

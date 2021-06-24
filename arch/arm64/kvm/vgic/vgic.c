@@ -1,25 +1,26 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (C) 2015, 2016 ARM Ltd.
  */
 
-#include <linux/interrupt.h>
-#include <linux/irq.h>
-#include <linux/kvm.h>
-#include <linux/kvm_host.h>
-#include <linux/list_sort.h>
-#include <linux/nospec.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/irq.h>
+#समावेश <linux/kvm.h>
+#समावेश <linux/kvm_host.h>
+#समावेश <linux/list_sort.h>
+#समावेश <linux/nospec.h>
 
-#include <asm/kvm_hyp.h>
+#समावेश <यंत्र/kvm_hyp.h>
 
-#include "vgic.h"
+#समावेश "vgic.h"
 
-#define CREATE_TRACE_POINTS
-#include "trace.h"
+#घोषणा CREATE_TRACE_POINTS
+#समावेश "trace.h"
 
-struct vgic_global kvm_vgic_global_state __ro_after_init = {
-	.gicv3_cpuif = STATIC_KEY_FALSE_INIT,
-};
+काष्ठा vgic_global kvm_vgic_global_state __ro_after_init = अणु
+	.gicv3_cpuअगर = STATIC_KEY_FALSE_INIT,
+पूर्ण;
 
 /*
  * Locking order is always:
@@ -30,352 +31,352 @@ struct vgic_global kvm_vgic_global_state __ro_after_init = {
  *         kvm->lpi_list_lock		must be taken with IRQs disabled
  *           vgic_irq->irq_lock		must be taken with IRQs disabled
  *
- * As the ap_list_lock might be taken from the timer interrupt handler,
- * we have to disable IRQs before taking this lock and everything lower
+ * As the ap_list_lock might be taken from the समयr पूर्णांकerrupt handler,
+ * we have to disable IRQs beक्रमe taking this lock and everything lower
  * than it.
  *
  * If you need to take multiple locks, always take the upper lock first,
  * then the lower ones, e.g. first take the its_lock, then the irq_lock.
- * If you are already holding a lock and need to take a higher one, you
+ * If you are alपढ़ोy holding a lock and need to take a higher one, you
  * have to drop the lower ranking lock first and re-aquire it after having
  * taken the upper one.
  *
- * When taking more than one ap_list_lock at the same time, always take the
+ * When taking more than one ap_list_lock at the same समय, always take the
  * lowest numbered VCPU's ap_list_lock first, so:
  *   vcpuX->vcpu_id < vcpuY->vcpu_id:
  *     raw_spin_lock(vcpuX->arch.vgic_cpu.ap_list_lock);
  *     raw_spin_lock(vcpuY->arch.vgic_cpu.ap_list_lock);
  *
- * Since the VGIC must support injecting virtual interrupts from ISRs, we have
+ * Since the VGIC must support injecting भव पूर्णांकerrupts from ISRs, we have
  * to use the raw_spin_lock_irqsave/raw_spin_unlock_irqrestore versions of outer
- * spinlocks for any lock that may be taken while injecting an interrupt.
+ * spinlocks क्रम any lock that may be taken जबतक injecting an पूर्णांकerrupt.
  */
 
 /*
  * Iterate over the VM's list of mapped LPIs to find the one with a
- * matching interrupt ID and return a reference to the IRQ structure.
+ * matching पूर्णांकerrupt ID and वापस a reference to the IRQ काष्ठाure.
  */
-static struct vgic_irq *vgic_get_lpi(struct kvm *kvm, u32 intid)
-{
-	struct vgic_dist *dist = &kvm->arch.vgic;
-	struct vgic_irq *irq = NULL;
-	unsigned long flags;
+अटल काष्ठा vgic_irq *vgic_get_lpi(काष्ठा kvm *kvm, u32 पूर्णांकid)
+अणु
+	काष्ठा vgic_dist *dist = &kvm->arch.vgic;
+	काष्ठा vgic_irq *irq = शून्य;
+	अचिन्हित दीर्घ flags;
 
 	raw_spin_lock_irqsave(&dist->lpi_list_lock, flags);
 
-	list_for_each_entry(irq, &dist->lpi_list_head, lpi_list) {
-		if (irq->intid != intid)
-			continue;
+	list_क्रम_each_entry(irq, &dist->lpi_list_head, lpi_list) अणु
+		अगर (irq->पूर्णांकid != पूर्णांकid)
+			जारी;
 
 		/*
 		 * This increases the refcount, the caller is expected to
 		 * call vgic_put_irq() later once it's finished with the IRQ.
 		 */
 		vgic_get_irq_kref(irq);
-		goto out_unlock;
-	}
-	irq = NULL;
+		जाओ out_unlock;
+	पूर्ण
+	irq = शून्य;
 
 out_unlock:
 	raw_spin_unlock_irqrestore(&dist->lpi_list_lock, flags);
 
-	return irq;
-}
+	वापस irq;
+पूर्ण
 
 /*
- * This looks up the virtual interrupt ID to get the corresponding
- * struct vgic_irq. It also increases the refcount, so any caller is expected
+ * This looks up the भव पूर्णांकerrupt ID to get the corresponding
+ * काष्ठा vgic_irq. It also increases the refcount, so any caller is expected
  * to call vgic_put_irq() once it's finished with this IRQ.
  */
-struct vgic_irq *vgic_get_irq(struct kvm *kvm, struct kvm_vcpu *vcpu,
-			      u32 intid)
-{
+काष्ठा vgic_irq *vgic_get_irq(काष्ठा kvm *kvm, काष्ठा kvm_vcpu *vcpu,
+			      u32 पूर्णांकid)
+अणु
 	/* SGIs and PPIs */
-	if (intid <= VGIC_MAX_PRIVATE) {
-		intid = array_index_nospec(intid, VGIC_MAX_PRIVATE + 1);
-		return &vcpu->arch.vgic_cpu.private_irqs[intid];
-	}
+	अगर (पूर्णांकid <= VGIC_MAX_PRIVATE) अणु
+		पूर्णांकid = array_index_nospec(पूर्णांकid, VGIC_MAX_PRIVATE + 1);
+		वापस &vcpu->arch.vgic_cpu.निजी_irqs[पूर्णांकid];
+	पूर्ण
 
 	/* SPIs */
-	if (intid < (kvm->arch.vgic.nr_spis + VGIC_NR_PRIVATE_IRQS)) {
-		intid = array_index_nospec(intid, kvm->arch.vgic.nr_spis + VGIC_NR_PRIVATE_IRQS);
-		return &kvm->arch.vgic.spis[intid - VGIC_NR_PRIVATE_IRQS];
-	}
+	अगर (पूर्णांकid < (kvm->arch.vgic.nr_spis + VGIC_NR_PRIVATE_IRQS)) अणु
+		पूर्णांकid = array_index_nospec(पूर्णांकid, kvm->arch.vgic.nr_spis + VGIC_NR_PRIVATE_IRQS);
+		वापस &kvm->arch.vgic.spis[पूर्णांकid - VGIC_NR_PRIVATE_IRQS];
+	पूर्ण
 
 	/* LPIs */
-	if (intid >= VGIC_MIN_LPI)
-		return vgic_get_lpi(kvm, intid);
+	अगर (पूर्णांकid >= VGIC_MIN_LPI)
+		वापस vgic_get_lpi(kvm, पूर्णांकid);
 
 	WARN(1, "Looking up struct vgic_irq for reserved INTID");
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
 /*
- * We can't do anything in here, because we lack the kvm pointer to
- * lock and remove the item from the lpi_list. So we keep this function
- * empty and use the return value of kref_put() to trigger the freeing.
+ * We can't करो anything in here, because we lack the kvm poपूर्णांकer to
+ * lock and हटाओ the item from the lpi_list. So we keep this function
+ * empty and use the वापस value of kref_put() to trigger the मुक्तing.
  */
-static void vgic_irq_release(struct kref *ref)
-{
-}
+अटल व्योम vgic_irq_release(काष्ठा kref *ref)
+अणु
+पूर्ण
 
 /*
  * Drop the refcount on the LPI. Must be called with lpi_list_lock held.
  */
-void __vgic_put_lpi_locked(struct kvm *kvm, struct vgic_irq *irq)
-{
-	struct vgic_dist *dist = &kvm->arch.vgic;
+व्योम __vgic_put_lpi_locked(काष्ठा kvm *kvm, काष्ठा vgic_irq *irq)
+अणु
+	काष्ठा vgic_dist *dist = &kvm->arch.vgic;
 
-	if (!kref_put(&irq->refcount, vgic_irq_release))
-		return;
+	अगर (!kref_put(&irq->refcount, vgic_irq_release))
+		वापस;
 
 	list_del(&irq->lpi_list);
 	dist->lpi_list_count--;
 
-	kfree(irq);
-}
+	kमुक्त(irq);
+पूर्ण
 
-void vgic_put_irq(struct kvm *kvm, struct vgic_irq *irq)
-{
-	struct vgic_dist *dist = &kvm->arch.vgic;
-	unsigned long flags;
+व्योम vgic_put_irq(काष्ठा kvm *kvm, काष्ठा vgic_irq *irq)
+अणु
+	काष्ठा vgic_dist *dist = &kvm->arch.vgic;
+	अचिन्हित दीर्घ flags;
 
-	if (irq->intid < VGIC_MIN_LPI)
-		return;
+	अगर (irq->पूर्णांकid < VGIC_MIN_LPI)
+		वापस;
 
 	raw_spin_lock_irqsave(&dist->lpi_list_lock, flags);
 	__vgic_put_lpi_locked(kvm, irq);
 	raw_spin_unlock_irqrestore(&dist->lpi_list_lock, flags);
-}
+पूर्ण
 
-void vgic_flush_pending_lpis(struct kvm_vcpu *vcpu)
-{
-	struct vgic_cpu *vgic_cpu = &vcpu->arch.vgic_cpu;
-	struct vgic_irq *irq, *tmp;
-	unsigned long flags;
+व्योम vgic_flush_pending_lpis(काष्ठा kvm_vcpu *vcpu)
+अणु
+	काष्ठा vgic_cpu *vgic_cpu = &vcpu->arch.vgic_cpu;
+	काष्ठा vgic_irq *irq, *पंचांगp;
+	अचिन्हित दीर्घ flags;
 
 	raw_spin_lock_irqsave(&vgic_cpu->ap_list_lock, flags);
 
-	list_for_each_entry_safe(irq, tmp, &vgic_cpu->ap_list_head, ap_list) {
-		if (irq->intid >= VGIC_MIN_LPI) {
+	list_क्रम_each_entry_safe(irq, पंचांगp, &vgic_cpu->ap_list_head, ap_list) अणु
+		अगर (irq->पूर्णांकid >= VGIC_MIN_LPI) अणु
 			raw_spin_lock(&irq->irq_lock);
 			list_del(&irq->ap_list);
-			irq->vcpu = NULL;
+			irq->vcpu = शून्य;
 			raw_spin_unlock(&irq->irq_lock);
 			vgic_put_irq(vcpu->kvm, irq);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	raw_spin_unlock_irqrestore(&vgic_cpu->ap_list_lock, flags);
-}
+पूर्ण
 
-void vgic_irq_set_phys_pending(struct vgic_irq *irq, bool pending)
-{
+व्योम vgic_irq_set_phys_pending(काष्ठा vgic_irq *irq, bool pending)
+अणु
 	WARN_ON(irq_set_irqchip_state(irq->host_irq,
 				      IRQCHIP_STATE_PENDING,
 				      pending));
-}
+पूर्ण
 
-bool vgic_get_phys_line_level(struct vgic_irq *irq)
-{
+bool vgic_get_phys_line_level(काष्ठा vgic_irq *irq)
+अणु
 	bool line_level;
 
 	BUG_ON(!irq->hw);
 
-	if (irq->get_input_level)
-		return irq->get_input_level(irq->intid);
+	अगर (irq->get_input_level)
+		वापस irq->get_input_level(irq->पूर्णांकid);
 
 	WARN_ON(irq_get_irqchip_state(irq->host_irq,
 				      IRQCHIP_STATE_PENDING,
 				      &line_level));
-	return line_level;
-}
+	वापस line_level;
+पूर्ण
 
 /* Set/Clear the physical active state */
-void vgic_irq_set_phys_active(struct vgic_irq *irq, bool active)
-{
+व्योम vgic_irq_set_phys_active(काष्ठा vgic_irq *irq, bool active)
+अणु
 
 	BUG_ON(!irq->hw);
 	WARN_ON(irq_set_irqchip_state(irq->host_irq,
 				      IRQCHIP_STATE_ACTIVE,
 				      active));
-}
+पूर्ण
 
 /**
- * kvm_vgic_target_oracle - compute the target vcpu for an irq
+ * kvm_vgic_target_oracle - compute the target vcpu क्रम an irq
  *
- * @irq:	The irq to route. Must be already locked.
+ * @irq:	The irq to route. Must be alपढ़ोy locked.
  *
- * Based on the current state of the interrupt (enabled, pending,
+ * Based on the current state of the पूर्णांकerrupt (enabled, pending,
  * active, vcpu and target_vcpu), compute the next vcpu this should be
- * given to. Return NULL if this shouldn't be injected at all.
+ * given to. Return शून्य अगर this shouldn't be injected at all.
  *
  * Requires the IRQ lock to be held.
  */
-static struct kvm_vcpu *vgic_target_oracle(struct vgic_irq *irq)
-{
-	lockdep_assert_held(&irq->irq_lock);
+अटल काष्ठा kvm_vcpu *vgic_target_oracle(काष्ठा vgic_irq *irq)
+अणु
+	lockdep_निश्चित_held(&irq->irq_lock);
 
-	/* If the interrupt is active, it must stay on the current vcpu */
-	if (irq->active)
-		return irq->vcpu ? : irq->target_vcpu;
+	/* If the पूर्णांकerrupt is active, it must stay on the current vcpu */
+	अगर (irq->active)
+		वापस irq->vcpu ? : irq->target_vcpu;
 
 	/*
 	 * If the IRQ is not active but enabled and pending, we should direct
 	 * it to its configured target VCPU.
-	 * If the distributor is disabled, pending interrupts shouldn't be
-	 * forwarded.
+	 * If the distributor is disabled, pending पूर्णांकerrupts shouldn't be
+	 * क्रमwarded.
 	 */
-	if (irq->enabled && irq_is_pending(irq)) {
-		if (unlikely(irq->target_vcpu &&
+	अगर (irq->enabled && irq_is_pending(irq)) अणु
+		अगर (unlikely(irq->target_vcpu &&
 			     !irq->target_vcpu->kvm->arch.vgic.enabled))
-			return NULL;
+			वापस शून्य;
 
-		return irq->target_vcpu;
-	}
+		वापस irq->target_vcpu;
+	पूर्ण
 
 	/* If neither active nor pending and enabled, then this IRQ should not
 	 * be queued to any VCPU.
 	 */
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
 /*
  * The order of items in the ap_lists defines how we'll pack things in LRs as
  * well, the first items in the list being the first things populated in the
  * LRs.
  *
- * A hard rule is that active interrupts can never be pushed out of the LRs
- * (and therefore take priority) since we cannot reliably trap on deactivation
- * of IRQs and therefore they have to be present in the LRs.
+ * A hard rule is that active पूर्णांकerrupts can never be pushed out of the LRs
+ * (and thereक्रमe take priority) since we cannot reliably trap on deactivation
+ * of IRQs and thereक्रमe they have to be present in the LRs.
  *
  * Otherwise things should be sorted by the priority field and the GIC
  * hardware support will take care of preemption of priority groups etc.
  *
- * Return negative if "a" sorts before "b", 0 to preserve order, and positive
- * to sort "b" before "a".
+ * Return negative अगर "a" sorts beक्रमe "b", 0 to preserve order, and positive
+ * to sort "b" beक्रमe "a".
  */
-static int vgic_irq_cmp(void *priv, const struct list_head *a,
-			const struct list_head *b)
-{
-	struct vgic_irq *irqa = container_of(a, struct vgic_irq, ap_list);
-	struct vgic_irq *irqb = container_of(b, struct vgic_irq, ap_list);
+अटल पूर्णांक vgic_irq_cmp(व्योम *priv, स्थिर काष्ठा list_head *a,
+			स्थिर काष्ठा list_head *b)
+अणु
+	काष्ठा vgic_irq *irqa = container_of(a, काष्ठा vgic_irq, ap_list);
+	काष्ठा vgic_irq *irqb = container_of(b, काष्ठा vgic_irq, ap_list);
 	bool penda, pendb;
-	int ret;
+	पूर्णांक ret;
 
 	/*
 	 * list_sort may call this function with the same element when
-	 * the list is fairly long.
+	 * the list is fairly दीर्घ.
 	 */
-	if (unlikely(irqa == irqb))
-		return 0;
+	अगर (unlikely(irqa == irqb))
+		वापस 0;
 
 	raw_spin_lock(&irqa->irq_lock);
 	raw_spin_lock_nested(&irqb->irq_lock, SINGLE_DEPTH_NESTING);
 
-	if (irqa->active || irqb->active) {
-		ret = (int)irqb->active - (int)irqa->active;
-		goto out;
-	}
+	अगर (irqa->active || irqb->active) अणु
+		ret = (पूर्णांक)irqb->active - (पूर्णांक)irqa->active;
+		जाओ out;
+	पूर्ण
 
 	penda = irqa->enabled && irq_is_pending(irqa);
 	pendb = irqb->enabled && irq_is_pending(irqb);
 
-	if (!penda || !pendb) {
-		ret = (int)pendb - (int)penda;
-		goto out;
-	}
+	अगर (!penda || !pendb) अणु
+		ret = (पूर्णांक)pendb - (पूर्णांक)penda;
+		जाओ out;
+	पूर्ण
 
 	/* Both pending and enabled, sort by priority */
 	ret = irqa->priority - irqb->priority;
 out:
 	raw_spin_unlock(&irqb->irq_lock);
 	raw_spin_unlock(&irqa->irq_lock);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /* Must be called with the ap_list_lock held */
-static void vgic_sort_ap_list(struct kvm_vcpu *vcpu)
-{
-	struct vgic_cpu *vgic_cpu = &vcpu->arch.vgic_cpu;
+अटल व्योम vgic_sort_ap_list(काष्ठा kvm_vcpu *vcpu)
+अणु
+	काष्ठा vgic_cpu *vgic_cpu = &vcpu->arch.vgic_cpu;
 
-	lockdep_assert_held(&vgic_cpu->ap_list_lock);
+	lockdep_निश्चित_held(&vgic_cpu->ap_list_lock);
 
-	list_sort(NULL, &vgic_cpu->ap_list_head, vgic_irq_cmp);
-}
+	list_sort(शून्य, &vgic_cpu->ap_list_head, vgic_irq_cmp);
+पूर्ण
 
 /*
- * Only valid injection if changing level for level-triggered IRQs or for a
+ * Only valid injection अगर changing level क्रम level-triggered IRQs or क्रम a
  * rising edge, and in-kernel connected IRQ lines can only be controlled by
  * their owner.
  */
-static bool vgic_validate_injection(struct vgic_irq *irq, bool level, void *owner)
-{
-	if (irq->owner != owner)
-		return false;
+अटल bool vgic_validate_injection(काष्ठा vgic_irq *irq, bool level, व्योम *owner)
+अणु
+	अगर (irq->owner != owner)
+		वापस false;
 
-	switch (irq->config) {
-	case VGIC_CONFIG_LEVEL:
-		return irq->line_level != level;
-	case VGIC_CONFIG_EDGE:
-		return level;
-	}
+	चयन (irq->config) अणु
+	हाल VGIC_CONFIG_LEVEL:
+		वापस irq->line_level != level;
+	हाल VGIC_CONFIG_EDGE:
+		वापस level;
+	पूर्ण
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
 /*
  * Check whether an IRQ needs to (and can) be queued to a VCPU's ap list.
- * Do the queuing if necessary, taking the right locks in the right order.
+ * Do the queuing अगर necessary, taking the right locks in the right order.
  * Returns true when the IRQ was queued, false otherwise.
  *
- * Needs to be entered with the IRQ lock already held, but will return
+ * Needs to be entered with the IRQ lock alपढ़ोy held, but will वापस
  * with all locks dropped.
  */
-bool vgic_queue_irq_unlock(struct kvm *kvm, struct vgic_irq *irq,
-			   unsigned long flags)
-{
-	struct kvm_vcpu *vcpu;
+bool vgic_queue_irq_unlock(काष्ठा kvm *kvm, काष्ठा vgic_irq *irq,
+			   अचिन्हित दीर्घ flags)
+अणु
+	काष्ठा kvm_vcpu *vcpu;
 
-	lockdep_assert_held(&irq->irq_lock);
+	lockdep_निश्चित_held(&irq->irq_lock);
 
 retry:
 	vcpu = vgic_target_oracle(irq);
-	if (irq->vcpu || !vcpu) {
+	अगर (irq->vcpu || !vcpu) अणु
 		/*
-		 * If this IRQ is already on a VCPU's ap_list, then it
-		 * cannot be moved or modified and there is no more work for
-		 * us to do.
+		 * If this IRQ is alपढ़ोy on a VCPU's ap_list, then it
+		 * cannot be moved or modअगरied and there is no more work क्रम
+		 * us to करो.
 		 *
-		 * Otherwise, if the irq is not pending and enabled, it does
-		 * not need to be inserted into an ap_list and there is also
-		 * no more work for us to do.
+		 * Otherwise, अगर the irq is not pending and enabled, it करोes
+		 * not need to be inserted पूर्णांकo an ap_list and there is also
+		 * no more work क्रम us to करो.
 		 */
 		raw_spin_unlock_irqrestore(&irq->irq_lock, flags);
 
 		/*
 		 * We have to kick the VCPU here, because we could be
-		 * queueing an edge-triggered interrupt for which we
-		 * get no EOI maintenance interrupt. In that case,
-		 * while the IRQ is already on the VCPU's AP list, the
-		 * VCPU could have EOI'ed the original interrupt and
-		 * won't see this one until it exits for some other
+		 * queueing an edge-triggered पूर्णांकerrupt क्रम which we
+		 * get no EOI मुख्यtenance पूर्णांकerrupt. In that हाल,
+		 * जबतक the IRQ is alपढ़ोy on the VCPU's AP list, the
+		 * VCPU could have EOI'ed the original पूर्णांकerrupt and
+		 * won't see this one until it निकासs क्रम some other
 		 * reason.
 		 */
-		if (vcpu) {
+		अगर (vcpu) अणु
 			kvm_make_request(KVM_REQ_IRQ_PENDING, vcpu);
 			kvm_vcpu_kick(vcpu);
-		}
-		return false;
-	}
+		पूर्ण
+		वापस false;
+	पूर्ण
 
 	/*
 	 * We must unlock the irq lock to take the ap_list_lock where
-	 * we are going to insert this new pending interrupt.
+	 * we are going to insert this new pending पूर्णांकerrupt.
 	 */
 	raw_spin_unlock_irqrestore(&irq->irq_lock, flags);
 
-	/* someone can do stuff here, which we re-check below */
+	/* someone can करो stuff here, which we re-check below */
 
 	raw_spin_lock_irqsave(&vcpu->arch.vgic_cpu.ap_list_lock, flags);
 	raw_spin_lock(&irq->irq_lock);
@@ -383,23 +384,23 @@ retry:
 	/*
 	 * Did something change behind our backs?
 	 *
-	 * There are two cases:
+	 * There are two हालs:
 	 * 1) The irq lost its pending state or was disabled behind our
 	 *    backs and/or it was queued to another VCPU's ap_list.
 	 * 2) Someone changed the affinity on this irq behind our
 	 *    backs and we are now holding the wrong ap_list_lock.
 	 *
-	 * In both cases, drop the locks and retry.
+	 * In both हालs, drop the locks and retry.
 	 */
 
-	if (unlikely(irq->vcpu || vcpu != vgic_target_oracle(irq))) {
+	अगर (unlikely(irq->vcpu || vcpu != vgic_target_oracle(irq))) अणु
 		raw_spin_unlock(&irq->irq_lock);
 		raw_spin_unlock_irqrestore(&vcpu->arch.vgic_cpu.ap_list_lock,
 					   flags);
 
 		raw_spin_lock_irqsave(&irq->irq_lock, flags);
-		goto retry;
-	}
+		जाओ retry;
+	पूर्ण
 
 	/*
 	 * Grab a reference to the irq to reflect the fact that it is
@@ -415,109 +416,109 @@ retry:
 	kvm_make_request(KVM_REQ_IRQ_PENDING, vcpu);
 	kvm_vcpu_kick(vcpu);
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
 /**
  * kvm_vgic_inject_irq - Inject an IRQ from a device to the vgic
- * @kvm:     The VM structure pointer
- * @cpuid:   The CPU for PPIs
- * @intid:   The INTID to inject a new state to.
- * @level:   Edge-triggered:  true:  to trigger the interrupt
+ * @kvm:     The VM काष्ठाure poपूर्णांकer
+ * @cpuid:   The CPU क्रम PPIs
+ * @पूर्णांकid:   The INTID to inject a new state to.
+ * @level:   Edge-triggered:  true:  to trigger the पूर्णांकerrupt
  *			      false: to ignore the call
- *	     Level-sensitive  true:  raise the input signal
- *			      false: lower the input signal
- * @owner:   The opaque pointer to the owner of the IRQ being raised to verify
+ *	     Level-sensitive  true:  उठाओ the input संकेत
+ *			      false: lower the input संकेत
+ * @owner:   The opaque poपूर्णांकer to the owner of the IRQ being उठाओd to verअगरy
  *           that the caller is allowed to inject this IRQ.  Userspace
- *           injections will have owner == NULL.
+ *           injections will have owner == शून्य.
  *
- * The VGIC is not concerned with devices being active-LOW or active-HIGH for
- * level-sensitive interrupts.  You can think of the level parameter as 1
+ * The VGIC is not concerned with devices being active-LOW or active-HIGH क्रम
+ * level-sensitive पूर्णांकerrupts.  You can think of the level parameter as 1
  * being HIGH and 0 being LOW and all devices being active-HIGH.
  */
-int kvm_vgic_inject_irq(struct kvm *kvm, int cpuid, unsigned int intid,
-			bool level, void *owner)
-{
-	struct kvm_vcpu *vcpu;
-	struct vgic_irq *irq;
-	unsigned long flags;
-	int ret;
+पूर्णांक kvm_vgic_inject_irq(काष्ठा kvm *kvm, पूर्णांक cpuid, अचिन्हित पूर्णांक पूर्णांकid,
+			bool level, व्योम *owner)
+अणु
+	काष्ठा kvm_vcpu *vcpu;
+	काष्ठा vgic_irq *irq;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक ret;
 
-	trace_vgic_update_irq_pending(cpuid, intid, level);
+	trace_vgic_update_irq_pending(cpuid, पूर्णांकid, level);
 
 	ret = vgic_lazy_init(kvm);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	vcpu = kvm_get_vcpu(kvm, cpuid);
-	if (!vcpu && intid < VGIC_NR_PRIVATE_IRQS)
-		return -EINVAL;
+	अगर (!vcpu && पूर्णांकid < VGIC_NR_PRIVATE_IRQS)
+		वापस -EINVAL;
 
-	irq = vgic_get_irq(kvm, vcpu, intid);
-	if (!irq)
-		return -EINVAL;
+	irq = vgic_get_irq(kvm, vcpu, पूर्णांकid);
+	अगर (!irq)
+		वापस -EINVAL;
 
 	raw_spin_lock_irqsave(&irq->irq_lock, flags);
 
-	if (!vgic_validate_injection(irq, level, owner)) {
-		/* Nothing to see here, move along... */
+	अगर (!vgic_validate_injection(irq, level, owner)) अणु
+		/* Nothing to see here, move aदीर्घ... */
 		raw_spin_unlock_irqrestore(&irq->irq_lock, flags);
 		vgic_put_irq(kvm, irq);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	if (irq->config == VGIC_CONFIG_LEVEL)
+	अगर (irq->config == VGIC_CONFIG_LEVEL)
 		irq->line_level = level;
-	else
+	अन्यथा
 		irq->pending_latch = true;
 
 	vgic_queue_irq_unlock(kvm, irq, flags);
 	vgic_put_irq(kvm, irq);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* @irq->irq_lock must be held */
-static int kvm_vgic_map_irq(struct kvm_vcpu *vcpu, struct vgic_irq *irq,
-			    unsigned int host_irq,
-			    bool (*get_input_level)(int vindid))
-{
-	struct irq_desc *desc;
-	struct irq_data *data;
+अटल पूर्णांक kvm_vgic_map_irq(काष्ठा kvm_vcpu *vcpu, काष्ठा vgic_irq *irq,
+			    अचिन्हित पूर्णांक host_irq,
+			    bool (*get_input_level)(पूर्णांक vindid))
+अणु
+	काष्ठा irq_desc *desc;
+	काष्ठा irq_data *data;
 
 	/*
 	 * Find the physical IRQ number corresponding to @host_irq
 	 */
 	desc = irq_to_desc(host_irq);
-	if (!desc) {
+	अगर (!desc) अणु
 		kvm_err("%s: no interrupt descriptor\n", __func__);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 	data = irq_desc_get_irq_data(desc);
-	while (data->parent_data)
+	जबतक (data->parent_data)
 		data = data->parent_data;
 
 	irq->hw = true;
 	irq->host_irq = host_irq;
-	irq->hwintid = data->hwirq;
+	irq->hwपूर्णांकid = data->hwirq;
 	irq->get_input_level = get_input_level;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* @irq->irq_lock must be held */
-static inline void kvm_vgic_unmap_irq(struct vgic_irq *irq)
-{
+अटल अंतरभूत व्योम kvm_vgic_unmap_irq(काष्ठा vgic_irq *irq)
+अणु
 	irq->hw = false;
-	irq->hwintid = 0;
-	irq->get_input_level = NULL;
-}
+	irq->hwपूर्णांकid = 0;
+	irq->get_input_level = शून्य;
+पूर्ण
 
-int kvm_vgic_map_phys_irq(struct kvm_vcpu *vcpu, unsigned int host_irq,
-			  u32 vintid, bool (*get_input_level)(int vindid))
-{
-	struct vgic_irq *irq = vgic_get_irq(vcpu->kvm, vcpu, vintid);
-	unsigned long flags;
-	int ret;
+पूर्णांक kvm_vgic_map_phys_irq(काष्ठा kvm_vcpu *vcpu, अचिन्हित पूर्णांक host_irq,
+			  u32 vपूर्णांकid, bool (*get_input_level)(पूर्णांक vindid))
+अणु
+	काष्ठा vgic_irq *irq = vgic_get_irq(vcpu->kvm, vcpu, vपूर्णांकid);
+	अचिन्हित दीर्घ flags;
+	पूर्णांक ret;
 
 	BUG_ON(!irq);
 
@@ -526,25 +527,25 @@ int kvm_vgic_map_phys_irq(struct kvm_vcpu *vcpu, unsigned int host_irq,
 	raw_spin_unlock_irqrestore(&irq->irq_lock, flags);
 	vgic_put_irq(vcpu->kvm, irq);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
  * kvm_vgic_reset_mapped_irq - Reset a mapped IRQ
- * @vcpu: The VCPU pointer
- * @vintid: The INTID of the interrupt
+ * @vcpu: The VCPU poपूर्णांकer
+ * @vपूर्णांकid: The INTID of the पूर्णांकerrupt
  *
- * Reset the active and pending states of a mapped interrupt.  Kernel
- * subsystems injecting mapped interrupts should reset their interrupt lines
- * when we are doing a reset of the VM.
+ * Reset the active and pending states of a mapped पूर्णांकerrupt.  Kernel
+ * subप्रणालीs injecting mapped पूर्णांकerrupts should reset their पूर्णांकerrupt lines
+ * when we are करोing a reset of the VM.
  */
-void kvm_vgic_reset_mapped_irq(struct kvm_vcpu *vcpu, u32 vintid)
-{
-	struct vgic_irq *irq = vgic_get_irq(vcpu->kvm, vcpu, vintid);
-	unsigned long flags;
+व्योम kvm_vgic_reset_mapped_irq(काष्ठा kvm_vcpu *vcpu, u32 vपूर्णांकid)
+अणु
+	काष्ठा vgic_irq *irq = vgic_get_irq(vcpu->kvm, vcpu, vपूर्णांकid);
+	अचिन्हित दीर्घ flags;
 
-	if (!irq->hw)
-		goto out;
+	अगर (!irq->hw)
+		जाओ out;
 
 	raw_spin_lock_irqsave(&irq->irq_lock, flags);
 	irq->active = false;
@@ -553,17 +554,17 @@ void kvm_vgic_reset_mapped_irq(struct kvm_vcpu *vcpu, u32 vintid)
 	raw_spin_unlock_irqrestore(&irq->irq_lock, flags);
 out:
 	vgic_put_irq(vcpu->kvm, irq);
-}
+पूर्ण
 
-int kvm_vgic_unmap_phys_irq(struct kvm_vcpu *vcpu, unsigned int vintid)
-{
-	struct vgic_irq *irq;
-	unsigned long flags;
+पूर्णांक kvm_vgic_unmap_phys_irq(काष्ठा kvm_vcpu *vcpu, अचिन्हित पूर्णांक vपूर्णांकid)
+अणु
+	काष्ठा vgic_irq *irq;
+	अचिन्हित दीर्घ flags;
 
-	if (!vgic_initialized(vcpu->kvm))
-		return -EAGAIN;
+	अगर (!vgic_initialized(vcpu->kvm))
+		वापस -EAGAIN;
 
-	irq = vgic_get_irq(vcpu->kvm, vcpu, vintid);
+	irq = vgic_get_irq(vcpu->kvm, vcpu, vपूर्णांकid);
 	BUG_ON(!irq);
 
 	raw_spin_lock_irqsave(&irq->irq_lock, flags);
@@ -571,63 +572,63 @@ int kvm_vgic_unmap_phys_irq(struct kvm_vcpu *vcpu, unsigned int vintid)
 	raw_spin_unlock_irqrestore(&irq->irq_lock, flags);
 	vgic_put_irq(vcpu->kvm, irq);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * kvm_vgic_set_owner - Set the owner of an interrupt for a VM
+ * kvm_vgic_set_owner - Set the owner of an पूर्णांकerrupt क्रम a VM
  *
- * @vcpu:   Pointer to the VCPU (used for PPIs)
- * @intid:  The virtual INTID identifying the interrupt (PPI or SPI)
- * @owner:  Opaque pointer to the owner
+ * @vcpu:   Poपूर्णांकer to the VCPU (used क्रम PPIs)
+ * @पूर्णांकid:  The भव INTID identअगरying the पूर्णांकerrupt (PPI or SPI)
+ * @owner:  Opaque poपूर्णांकer to the owner
  *
- * Returns 0 if intid is not already used by another in-kernel device and the
- * owner is set, otherwise returns an error code.
+ * Returns 0 अगर पूर्णांकid is not alपढ़ोy used by another in-kernel device and the
+ * owner is set, otherwise वापसs an error code.
  */
-int kvm_vgic_set_owner(struct kvm_vcpu *vcpu, unsigned int intid, void *owner)
-{
-	struct vgic_irq *irq;
-	unsigned long flags;
-	int ret = 0;
+पूर्णांक kvm_vgic_set_owner(काष्ठा kvm_vcpu *vcpu, अचिन्हित पूर्णांक पूर्णांकid, व्योम *owner)
+अणु
+	काष्ठा vgic_irq *irq;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक ret = 0;
 
-	if (!vgic_initialized(vcpu->kvm))
-		return -EAGAIN;
+	अगर (!vgic_initialized(vcpu->kvm))
+		वापस -EAGAIN;
 
 	/* SGIs and LPIs cannot be wired up to any device */
-	if (!irq_is_ppi(intid) && !vgic_valid_spi(vcpu->kvm, intid))
-		return -EINVAL;
+	अगर (!irq_is_ppi(पूर्णांकid) && !vgic_valid_spi(vcpu->kvm, पूर्णांकid))
+		वापस -EINVAL;
 
-	irq = vgic_get_irq(vcpu->kvm, vcpu, intid);
+	irq = vgic_get_irq(vcpu->kvm, vcpu, पूर्णांकid);
 	raw_spin_lock_irqsave(&irq->irq_lock, flags);
-	if (irq->owner && irq->owner != owner)
+	अगर (irq->owner && irq->owner != owner)
 		ret = -EEXIST;
-	else
+	अन्यथा
 		irq->owner = owner;
 	raw_spin_unlock_irqrestore(&irq->irq_lock, flags);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * vgic_prune_ap_list - Remove non-relevant interrupts from the list
+ * vgic_prune_ap_list - Remove non-relevant पूर्णांकerrupts from the list
  *
- * @vcpu: The VCPU pointer
+ * @vcpu: The VCPU poपूर्णांकer
  *
- * Go over the list of "interesting" interrupts, and prune those that we
+ * Go over the list of "interesting" पूर्णांकerrupts, and prune those that we
  * won't have to consider in the near future.
  */
-static void vgic_prune_ap_list(struct kvm_vcpu *vcpu)
-{
-	struct vgic_cpu *vgic_cpu = &vcpu->arch.vgic_cpu;
-	struct vgic_irq *irq, *tmp;
+अटल व्योम vgic_prune_ap_list(काष्ठा kvm_vcpu *vcpu)
+अणु
+	काष्ठा vgic_cpu *vgic_cpu = &vcpu->arch.vgic_cpu;
+	काष्ठा vgic_irq *irq, *पंचांगp;
 
 	DEBUG_SPINLOCK_BUG_ON(!irqs_disabled());
 
 retry:
 	raw_spin_lock(&vgic_cpu->ap_list_lock);
 
-	list_for_each_entry_safe(irq, tmp, &vgic_cpu->ap_list_head, ap_list) {
-		struct kvm_vcpu *target_vcpu, *vcpuA, *vcpuB;
+	list_क्रम_each_entry_safe(irq, पंचांगp, &vgic_cpu->ap_list_head, ap_list) अणु
+		काष्ठा kvm_vcpu *target_vcpu, *vcpuA, *vcpuB;
 		bool target_vcpu_needs_kick = false;
 
 		raw_spin_lock(&irq->irq_lock);
@@ -636,33 +637,33 @@ retry:
 
 		target_vcpu = vgic_target_oracle(irq);
 
-		if (!target_vcpu) {
+		अगर (!target_vcpu) अणु
 			/*
-			 * We don't need to process this interrupt any
+			 * We करोn't need to process this पूर्णांकerrupt any
 			 * further, move it off the list.
 			 */
 			list_del(&irq->ap_list);
-			irq->vcpu = NULL;
+			irq->vcpu = शून्य;
 			raw_spin_unlock(&irq->irq_lock);
 
 			/*
 			 * This vgic_put_irq call matches the
 			 * vgic_get_irq_kref in vgic_queue_irq_unlock,
 			 * where we added the LPI to the ap_list. As
-			 * we remove the irq from the list, we drop
+			 * we हटाओ the irq from the list, we drop
 			 * also drop the refcount.
 			 */
 			vgic_put_irq(vcpu->kvm, irq);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		if (target_vcpu == vcpu) {
+		अगर (target_vcpu == vcpu) अणु
 			/* We're on the right CPU */
 			raw_spin_unlock(&irq->irq_lock);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		/* This interrupt looks like it has to be migrated. */
+		/* This पूर्णांकerrupt looks like it has to be migrated. */
 
 		raw_spin_unlock(&irq->irq_lock);
 		raw_spin_unlock(&vgic_cpu->ap_list_lock);
@@ -671,13 +672,13 @@ retry:
 		 * Ensure locking order by always locking the smallest
 		 * ID first.
 		 */
-		if (vcpu->vcpu_id < target_vcpu->vcpu_id) {
+		अगर (vcpu->vcpu_id < target_vcpu->vcpu_id) अणु
 			vcpuA = vcpu;
 			vcpuB = target_vcpu;
-		} else {
+		पूर्ण अन्यथा अणु
 			vcpuA = target_vcpu;
 			vcpuB = vcpu;
-		}
+		पूर्ण
 
 		raw_spin_lock(&vcpuA->arch.vgic_cpu.ap_list_lock);
 		raw_spin_lock_nested(&vcpuB->arch.vgic_cpu.ap_list_lock,
@@ -686,339 +687,339 @@ retry:
 
 		/*
 		 * If the affinity has been preserved, move the
-		 * interrupt around. Otherwise, it means things have
-		 * changed while the interrupt was unlocked, and we
+		 * पूर्णांकerrupt around. Otherwise, it means things have
+		 * changed जबतक the पूर्णांकerrupt was unlocked, and we
 		 * need to replay this.
 		 *
-		 * In all cases, we cannot trust the list not to have
+		 * In all हालs, we cannot trust the list not to have
 		 * changed, so we restart from the beginning.
 		 */
-		if (target_vcpu == vgic_target_oracle(irq)) {
-			struct vgic_cpu *new_cpu = &target_vcpu->arch.vgic_cpu;
+		अगर (target_vcpu == vgic_target_oracle(irq)) अणु
+			काष्ठा vgic_cpu *new_cpu = &target_vcpu->arch.vgic_cpu;
 
 			list_del(&irq->ap_list);
 			irq->vcpu = target_vcpu;
 			list_add_tail(&irq->ap_list, &new_cpu->ap_list_head);
 			target_vcpu_needs_kick = true;
-		}
+		पूर्ण
 
 		raw_spin_unlock(&irq->irq_lock);
 		raw_spin_unlock(&vcpuB->arch.vgic_cpu.ap_list_lock);
 		raw_spin_unlock(&vcpuA->arch.vgic_cpu.ap_list_lock);
 
-		if (target_vcpu_needs_kick) {
+		अगर (target_vcpu_needs_kick) अणु
 			kvm_make_request(KVM_REQ_IRQ_PENDING, target_vcpu);
 			kvm_vcpu_kick(target_vcpu);
-		}
+		पूर्ण
 
-		goto retry;
-	}
+		जाओ retry;
+	पूर्ण
 
 	raw_spin_unlock(&vgic_cpu->ap_list_lock);
-}
+पूर्ण
 
-static inline void vgic_fold_lr_state(struct kvm_vcpu *vcpu)
-{
-	if (kvm_vgic_global_state.type == VGIC_V2)
+अटल अंतरभूत व्योम vgic_fold_lr_state(काष्ठा kvm_vcpu *vcpu)
+अणु
+	अगर (kvm_vgic_global_state.type == VGIC_V2)
 		vgic_v2_fold_lr_state(vcpu);
-	else
+	अन्यथा
 		vgic_v3_fold_lr_state(vcpu);
-}
+पूर्ण
 
 /* Requires the irq_lock to be held. */
-static inline void vgic_populate_lr(struct kvm_vcpu *vcpu,
-				    struct vgic_irq *irq, int lr)
-{
-	lockdep_assert_held(&irq->irq_lock);
+अटल अंतरभूत व्योम vgic_populate_lr(काष्ठा kvm_vcpu *vcpu,
+				    काष्ठा vgic_irq *irq, पूर्णांक lr)
+अणु
+	lockdep_निश्चित_held(&irq->irq_lock);
 
-	if (kvm_vgic_global_state.type == VGIC_V2)
+	अगर (kvm_vgic_global_state.type == VGIC_V2)
 		vgic_v2_populate_lr(vcpu, irq, lr);
-	else
+	अन्यथा
 		vgic_v3_populate_lr(vcpu, irq, lr);
-}
+पूर्ण
 
-static inline void vgic_clear_lr(struct kvm_vcpu *vcpu, int lr)
-{
-	if (kvm_vgic_global_state.type == VGIC_V2)
+अटल अंतरभूत व्योम vgic_clear_lr(काष्ठा kvm_vcpu *vcpu, पूर्णांक lr)
+अणु
+	अगर (kvm_vgic_global_state.type == VGIC_V2)
 		vgic_v2_clear_lr(vcpu, lr);
-	else
+	अन्यथा
 		vgic_v3_clear_lr(vcpu, lr);
-}
+पूर्ण
 
-static inline void vgic_set_underflow(struct kvm_vcpu *vcpu)
-{
-	if (kvm_vgic_global_state.type == VGIC_V2)
+अटल अंतरभूत व्योम vgic_set_underflow(काष्ठा kvm_vcpu *vcpu)
+अणु
+	अगर (kvm_vgic_global_state.type == VGIC_V2)
 		vgic_v2_set_underflow(vcpu);
-	else
+	अन्यथा
 		vgic_v3_set_underflow(vcpu);
-}
+पूर्ण
 
 /* Requires the ap_list_lock to be held. */
-static int compute_ap_list_depth(struct kvm_vcpu *vcpu,
+अटल पूर्णांक compute_ap_list_depth(काष्ठा kvm_vcpu *vcpu,
 				 bool *multi_sgi)
-{
-	struct vgic_cpu *vgic_cpu = &vcpu->arch.vgic_cpu;
-	struct vgic_irq *irq;
-	int count = 0;
+अणु
+	काष्ठा vgic_cpu *vgic_cpu = &vcpu->arch.vgic_cpu;
+	काष्ठा vgic_irq *irq;
+	पूर्णांक count = 0;
 
 	*multi_sgi = false;
 
-	lockdep_assert_held(&vgic_cpu->ap_list_lock);
+	lockdep_निश्चित_held(&vgic_cpu->ap_list_lock);
 
-	list_for_each_entry(irq, &vgic_cpu->ap_list_head, ap_list) {
-		int w;
+	list_क्रम_each_entry(irq, &vgic_cpu->ap_list_head, ap_list) अणु
+		पूर्णांक w;
 
 		raw_spin_lock(&irq->irq_lock);
-		/* GICv2 SGIs can count for more than one... */
+		/* GICv2 SGIs can count क्रम more than one... */
 		w = vgic_irq_get_lr_count(irq);
 		raw_spin_unlock(&irq->irq_lock);
 
 		count += w;
 		*multi_sgi |= (w > 1);
-	}
-	return count;
-}
+	पूर्ण
+	वापस count;
+पूर्ण
 
 /* Requires the VCPU's ap_list_lock to be held. */
-static void vgic_flush_lr_state(struct kvm_vcpu *vcpu)
-{
-	struct vgic_cpu *vgic_cpu = &vcpu->arch.vgic_cpu;
-	struct vgic_irq *irq;
-	int count;
+अटल व्योम vgic_flush_lr_state(काष्ठा kvm_vcpu *vcpu)
+अणु
+	काष्ठा vgic_cpu *vgic_cpu = &vcpu->arch.vgic_cpu;
+	काष्ठा vgic_irq *irq;
+	पूर्णांक count;
 	bool multi_sgi;
 	u8 prio = 0xff;
-	int i = 0;
+	पूर्णांक i = 0;
 
-	lockdep_assert_held(&vgic_cpu->ap_list_lock);
+	lockdep_निश्चित_held(&vgic_cpu->ap_list_lock);
 
 	count = compute_ap_list_depth(vcpu, &multi_sgi);
-	if (count > kvm_vgic_global_state.nr_lr || multi_sgi)
+	अगर (count > kvm_vgic_global_state.nr_lr || multi_sgi)
 		vgic_sort_ap_list(vcpu);
 
 	count = 0;
 
-	list_for_each_entry(irq, &vgic_cpu->ap_list_head, ap_list) {
+	list_क्रम_each_entry(irq, &vgic_cpu->ap_list_head, ap_list) अणु
 		raw_spin_lock(&irq->irq_lock);
 
 		/*
 		 * If we have multi-SGIs in the pipeline, we need to
-		 * guarantee that they are all seen before any IRQ of
-		 * lower priority. In that case, we need to filter out
-		 * these interrupts by exiting early. This is easy as
-		 * the AP list has been sorted already.
+		 * guarantee that they are all seen beक्रमe any IRQ of
+		 * lower priority. In that हाल, we need to filter out
+		 * these पूर्णांकerrupts by निकासing early. This is easy as
+		 * the AP list has been sorted alपढ़ोy.
 		 */
-		if (multi_sgi && irq->priority > prio) {
+		अगर (multi_sgi && irq->priority > prio) अणु
 			_raw_spin_unlock(&irq->irq_lock);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		if (likely(vgic_target_oracle(irq) == vcpu)) {
+		अगर (likely(vgic_target_oracle(irq) == vcpu)) अणु
 			vgic_populate_lr(vcpu, irq, count++);
 
-			if (irq->source)
+			अगर (irq->source)
 				prio = irq->priority;
-		}
+		पूर्ण
 
 		raw_spin_unlock(&irq->irq_lock);
 
-		if (count == kvm_vgic_global_state.nr_lr) {
-			if (!list_is_last(&irq->ap_list,
+		अगर (count == kvm_vgic_global_state.nr_lr) अणु
+			अगर (!list_is_last(&irq->ap_list,
 					  &vgic_cpu->ap_list_head))
 				vgic_set_underflow(vcpu);
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	/* Nuke remaining LRs */
-	for (i = count ; i < kvm_vgic_global_state.nr_lr; i++)
+	/* Nuke reमुख्यing LRs */
+	क्रम (i = count ; i < kvm_vgic_global_state.nr_lr; i++)
 		vgic_clear_lr(vcpu, i);
 
-	if (!static_branch_unlikely(&kvm_vgic_global_state.gicv3_cpuif))
+	अगर (!अटल_branch_unlikely(&kvm_vgic_global_state.gicv3_cpuअगर))
 		vcpu->arch.vgic_cpu.vgic_v2.used_lrs = count;
-	else
+	अन्यथा
 		vcpu->arch.vgic_cpu.vgic_v3.used_lrs = count;
-}
+पूर्ण
 
-static inline bool can_access_vgic_from_kernel(void)
-{
+अटल अंतरभूत bool can_access_vgic_from_kernel(व्योम)
+अणु
 	/*
 	 * GICv2 can always be accessed from the kernel because it is
-	 * memory-mapped, and VHE systems can access GICv3 EL2 system
-	 * registers.
+	 * memory-mapped, and VHE प्रणालीs can access GICv3 EL2 प्रणाली
+	 * रेजिस्टरs.
 	 */
-	return !static_branch_unlikely(&kvm_vgic_global_state.gicv3_cpuif) || has_vhe();
-}
+	वापस !अटल_branch_unlikely(&kvm_vgic_global_state.gicv3_cpuअगर) || has_vhe();
+पूर्ण
 
-static inline void vgic_save_state(struct kvm_vcpu *vcpu)
-{
-	if (!static_branch_unlikely(&kvm_vgic_global_state.gicv3_cpuif))
+अटल अंतरभूत व्योम vgic_save_state(काष्ठा kvm_vcpu *vcpu)
+अणु
+	अगर (!अटल_branch_unlikely(&kvm_vgic_global_state.gicv3_cpuअगर))
 		vgic_v2_save_state(vcpu);
-	else
+	अन्यथा
 		__vgic_v3_save_state(&vcpu->arch.vgic_cpu.vgic_v3);
-}
+पूर्ण
 
-/* Sync back the hardware VGIC state into our emulation after a guest's run. */
-void kvm_vgic_sync_hwstate(struct kvm_vcpu *vcpu)
-{
-	int used_lrs;
+/* Sync back the hardware VGIC state पूर्णांकo our emulation after a guest's run. */
+व्योम kvm_vgic_sync_hwstate(काष्ठा kvm_vcpu *vcpu)
+अणु
+	पूर्णांक used_lrs;
 
 	/* An empty ap_list_head implies used_lrs == 0 */
-	if (list_empty(&vcpu->arch.vgic_cpu.ap_list_head))
-		return;
+	अगर (list_empty(&vcpu->arch.vgic_cpu.ap_list_head))
+		वापस;
 
-	if (can_access_vgic_from_kernel())
+	अगर (can_access_vgic_from_kernel())
 		vgic_save_state(vcpu);
 
-	if (!static_branch_unlikely(&kvm_vgic_global_state.gicv3_cpuif))
+	अगर (!अटल_branch_unlikely(&kvm_vgic_global_state.gicv3_cpuअगर))
 		used_lrs = vcpu->arch.vgic_cpu.vgic_v2.used_lrs;
-	else
+	अन्यथा
 		used_lrs = vcpu->arch.vgic_cpu.vgic_v3.used_lrs;
 
-	if (used_lrs)
+	अगर (used_lrs)
 		vgic_fold_lr_state(vcpu);
 	vgic_prune_ap_list(vcpu);
-}
+पूर्ण
 
-static inline void vgic_restore_state(struct kvm_vcpu *vcpu)
-{
-	if (!static_branch_unlikely(&kvm_vgic_global_state.gicv3_cpuif))
+अटल अंतरभूत व्योम vgic_restore_state(काष्ठा kvm_vcpu *vcpu)
+अणु
+	अगर (!अटल_branch_unlikely(&kvm_vgic_global_state.gicv3_cpuअगर))
 		vgic_v2_restore_state(vcpu);
-	else
+	अन्यथा
 		__vgic_v3_restore_state(&vcpu->arch.vgic_cpu.vgic_v3);
-}
+पूर्ण
 
-/* Flush our emulation state into the GIC hardware before entering the guest. */
-void kvm_vgic_flush_hwstate(struct kvm_vcpu *vcpu)
-{
+/* Flush our emulation state पूर्णांकo the GIC hardware beक्रमe entering the guest. */
+व्योम kvm_vgic_flush_hwstate(काष्ठा kvm_vcpu *vcpu)
+अणु
 	/*
-	 * If there are no virtual interrupts active or pending for this
-	 * VCPU, then there is no work to do and we can bail out without
+	 * If there are no भव पूर्णांकerrupts active or pending क्रम this
+	 * VCPU, then there is no work to करो and we can bail out without
 	 * taking any lock.  There is a potential race with someone injecting
-	 * interrupts to the VCPU, but it is a benign race as the VCPU will
-	 * either observe the new interrupt before or after doing this check,
-	 * and introducing additional synchronization mechanism doesn't change
+	 * पूर्णांकerrupts to the VCPU, but it is a benign race as the VCPU will
+	 * either observe the new पूर्णांकerrupt beक्रमe or after करोing this check,
+	 * and पूर्णांकroducing additional synchronization mechanism करोesn't change
 	 * this.
 	 *
-	 * Note that we still need to go through the whole thing if anything
+	 * Note that we still need to go through the whole thing अगर anything
 	 * can be directly injected (GICv4).
 	 */
-	if (list_empty(&vcpu->arch.vgic_cpu.ap_list_head) &&
+	अगर (list_empty(&vcpu->arch.vgic_cpu.ap_list_head) &&
 	    !vgic_supports_direct_msis(vcpu->kvm))
-		return;
+		वापस;
 
 	DEBUG_SPINLOCK_BUG_ON(!irqs_disabled());
 
-	if (!list_empty(&vcpu->arch.vgic_cpu.ap_list_head)) {
+	अगर (!list_empty(&vcpu->arch.vgic_cpu.ap_list_head)) अणु
 		raw_spin_lock(&vcpu->arch.vgic_cpu.ap_list_lock);
 		vgic_flush_lr_state(vcpu);
 		raw_spin_unlock(&vcpu->arch.vgic_cpu.ap_list_lock);
-	}
+	पूर्ण
 
-	if (can_access_vgic_from_kernel())
+	अगर (can_access_vgic_from_kernel())
 		vgic_restore_state(vcpu);
 
-	if (vgic_supports_direct_msis(vcpu->kvm))
+	अगर (vgic_supports_direct_msis(vcpu->kvm))
 		vgic_v4_commit(vcpu);
-}
+पूर्ण
 
-void kvm_vgic_load(struct kvm_vcpu *vcpu)
-{
-	if (unlikely(!vgic_initialized(vcpu->kvm)))
-		return;
+व्योम kvm_vgic_load(काष्ठा kvm_vcpu *vcpu)
+अणु
+	अगर (unlikely(!vgic_initialized(vcpu->kvm)))
+		वापस;
 
-	if (kvm_vgic_global_state.type == VGIC_V2)
+	अगर (kvm_vgic_global_state.type == VGIC_V2)
 		vgic_v2_load(vcpu);
-	else
+	अन्यथा
 		vgic_v3_load(vcpu);
-}
+पूर्ण
 
-void kvm_vgic_put(struct kvm_vcpu *vcpu)
-{
-	if (unlikely(!vgic_initialized(vcpu->kvm)))
-		return;
+व्योम kvm_vgic_put(काष्ठा kvm_vcpu *vcpu)
+अणु
+	अगर (unlikely(!vgic_initialized(vcpu->kvm)))
+		वापस;
 
-	if (kvm_vgic_global_state.type == VGIC_V2)
+	अगर (kvm_vgic_global_state.type == VGIC_V2)
 		vgic_v2_put(vcpu);
-	else
+	अन्यथा
 		vgic_v3_put(vcpu);
-}
+पूर्ण
 
-void kvm_vgic_vmcr_sync(struct kvm_vcpu *vcpu)
-{
-	if (unlikely(!irqchip_in_kernel(vcpu->kvm)))
-		return;
+व्योम kvm_vgic_vmcr_sync(काष्ठा kvm_vcpu *vcpu)
+अणु
+	अगर (unlikely(!irqchip_in_kernel(vcpu->kvm)))
+		वापस;
 
-	if (kvm_vgic_global_state.type == VGIC_V2)
+	अगर (kvm_vgic_global_state.type == VGIC_V2)
 		vgic_v2_vmcr_sync(vcpu);
-	else
+	अन्यथा
 		vgic_v3_vmcr_sync(vcpu);
-}
+पूर्ण
 
-int kvm_vgic_vcpu_pending_irq(struct kvm_vcpu *vcpu)
-{
-	struct vgic_cpu *vgic_cpu = &vcpu->arch.vgic_cpu;
-	struct vgic_irq *irq;
+पूर्णांक kvm_vgic_vcpu_pending_irq(काष्ठा kvm_vcpu *vcpu)
+अणु
+	काष्ठा vgic_cpu *vgic_cpu = &vcpu->arch.vgic_cpu;
+	काष्ठा vgic_irq *irq;
 	bool pending = false;
-	unsigned long flags;
-	struct vgic_vmcr vmcr;
+	अचिन्हित दीर्घ flags;
+	काष्ठा vgic_vmcr vmcr;
 
-	if (!vcpu->kvm->arch.vgic.enabled)
-		return false;
+	अगर (!vcpu->kvm->arch.vgic.enabled)
+		वापस false;
 
-	if (vcpu->arch.vgic_cpu.vgic_v3.its_vpe.pending_last)
-		return true;
+	अगर (vcpu->arch.vgic_cpu.vgic_v3.its_vpe.pending_last)
+		वापस true;
 
 	vgic_get_vmcr(vcpu, &vmcr);
 
 	raw_spin_lock_irqsave(&vgic_cpu->ap_list_lock, flags);
 
-	list_for_each_entry(irq, &vgic_cpu->ap_list_head, ap_list) {
+	list_क्रम_each_entry(irq, &vgic_cpu->ap_list_head, ap_list) अणु
 		raw_spin_lock(&irq->irq_lock);
 		pending = irq_is_pending(irq) && irq->enabled &&
 			  !irq->active &&
 			  irq->priority < vmcr.pmr;
 		raw_spin_unlock(&irq->irq_lock);
 
-		if (pending)
-			break;
-	}
+		अगर (pending)
+			अवरोध;
+	पूर्ण
 
 	raw_spin_unlock_irqrestore(&vgic_cpu->ap_list_lock, flags);
 
-	return pending;
-}
+	वापस pending;
+पूर्ण
 
-void vgic_kick_vcpus(struct kvm *kvm)
-{
-	struct kvm_vcpu *vcpu;
-	int c;
+व्योम vgic_kick_vcpus(काष्ठा kvm *kvm)
+अणु
+	काष्ठा kvm_vcpu *vcpu;
+	पूर्णांक c;
 
 	/*
-	 * We've injected an interrupt, time to find out who deserves
+	 * We've injected an पूर्णांकerrupt, समय to find out who deserves
 	 * a good kick...
 	 */
-	kvm_for_each_vcpu(c, vcpu, kvm) {
-		if (kvm_vgic_vcpu_pending_irq(vcpu)) {
+	kvm_क्रम_each_vcpu(c, vcpu, kvm) अणु
+		अगर (kvm_vgic_vcpu_pending_irq(vcpu)) अणु
 			kvm_make_request(KVM_REQ_IRQ_PENDING, vcpu);
 			kvm_vcpu_kick(vcpu);
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-bool kvm_vgic_map_is_active(struct kvm_vcpu *vcpu, unsigned int vintid)
-{
-	struct vgic_irq *irq;
+bool kvm_vgic_map_is_active(काष्ठा kvm_vcpu *vcpu, अचिन्हित पूर्णांक vपूर्णांकid)
+अणु
+	काष्ठा vgic_irq *irq;
 	bool map_is_active;
-	unsigned long flags;
+	अचिन्हित दीर्घ flags;
 
-	if (!vgic_initialized(vcpu->kvm))
-		return false;
+	अगर (!vgic_initialized(vcpu->kvm))
+		वापस false;
 
-	irq = vgic_get_irq(vcpu->kvm, vcpu, vintid);
+	irq = vgic_get_irq(vcpu->kvm, vcpu, vपूर्णांकid);
 	raw_spin_lock_irqsave(&irq->irq_lock, flags);
 	map_is_active = irq->hw && irq->active;
 	raw_spin_unlock_irqrestore(&irq->irq_lock, flags);
 	vgic_put_irq(vcpu->kvm, irq);
 
-	return map_is_active;
-}
+	वापस map_is_active;
+पूर्ण

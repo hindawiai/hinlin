@@ -1,10 +1,11 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 
-#ifndef __ABI_CSKY_ELF_H
-#define __ABI_CSKY_ELF_H
+#अगर_अघोषित __ABI_CSKY_ELF_H
+#घोषणा __ABI_CSKY_ELF_H
 
 /* The member sort in array pr_reg[x] is defined by GDB. */
-#define ELF_CORE_COPY_REGS(pr_reg, regs) do {	\
+#घोषणा ELF_CORE_COPY_REGS(pr_reg, regs) करो अणु	\
 	pr_reg[0] = regs->pc;			\
 	pr_reg[1] = regs->a1;			\
 	pr_reg[2] = regs->a0;			\
@@ -39,5 +40,5 @@
 	pr_reg[31] = regs->exregs[13];		\
 	pr_reg[32] = regs->exregs[14];		\
 	pr_reg[33] = regs->tls;			\
-} while (0);
-#endif /* __ABI_CSKY_ELF_H */
+पूर्ण जबतक (0);
+#पूर्ण_अगर /* __ABI_CSKY_ELF_H */

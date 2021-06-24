@@ -1,65 +1,66 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <linux/types.h>
-#include <linux/netdevice.h>
-#include <linux/interrupt.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <linux/types.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/पूर्णांकerrupt.h>
 
-#include "lmc_debug.h"
+#समावेश "lmc_debug.h"
 
 /*
- * Prints out len, max to 80 octets using printk, 20 per line
+ * Prपूर्णांकs out len, max to 80 octets using prपूर्णांकk, 20 per line
  */
-#ifdef DEBUG
-#ifdef LMC_PACKET_LOG
-void lmcConsoleLog(char *type, unsigned char *ucData, int iLen)
-{
-  int iNewLine = 1;
-  char str[80], *pstr;
+#अगर_घोषित DEBUG
+#अगर_घोषित LMC_PACKET_LOG
+व्योम lmcConsoleLog(अक्षर *type, अचिन्हित अक्षर *ucData, पूर्णांक iLen)
+अणु
+  पूर्णांक iNewLine = 1;
+  अक्षर str[80], *pstr;
   
-  sprintf(str, KERN_DEBUG "lmc: %s: ", type);
-  pstr = str+strlen(str);
+  प्र_लिखो(str, KERN_DEBUG "lmc: %s: ", type);
+  pstr = str+म_माप(str);
   
-  if(iLen > 240){
-      printk(KERN_DEBUG "lmc: Printing 240 chars... out of: %d\n", iLen);
+  अगर(iLen > 240)अणु
+      prपूर्णांकk(KERN_DEBUG "lmc: Printing 240 chars... out of: %d\n", iLen);
     iLen = 240;
-  }
-  else{
-      printk(KERN_DEBUG "lmc: Printing %d chars\n", iLen);
-  }
+  पूर्ण
+  अन्यथाअणु
+      prपूर्णांकk(KERN_DEBUG "lmc: Printing %d chars\n", iLen);
+  पूर्ण
 
-  while(iLen > 0) 
-    {
-      sprintf(pstr, "%02x ", *ucData);
+  जबतक(iLen > 0) 
+    अणु
+      प्र_लिखो(pstr, "%02x ", *ucData);
       pstr+=3;
       ucData++;
-      if( !(iNewLine % 20))
-	{
-	  sprintf(pstr, "\n");
-	  printk(str);
-	  sprintf(str, KERN_DEBUG "lmc: %s: ", type);
-	  pstr=str+strlen(str);
-	}
+      अगर( !(iNewLine % 20))
+	अणु
+	  प्र_लिखो(pstr, "\n");
+	  prपूर्णांकk(str);
+	  प्र_लिखो(str, KERN_DEBUG "lmc: %s: ", type);
+	  pstr=str+म_माप(str);
+	पूर्ण
       iNewLine++;
       iLen--;
-    }
-  sprintf(pstr, "\n");
-  printk(str);
-}
-#endif
-#endif
+    पूर्ण
+  प्र_लिखो(pstr, "\n");
+  prपूर्णांकk(str);
+पूर्ण
+#पूर्ण_अगर
+#पूर्ण_अगर
 
-#ifdef DEBUG
+#अगर_घोषित DEBUG
 u32 lmcEventLogIndex;
 u32 lmcEventLogBuf[LMC_EVENTLOGSIZE * LMC_EVENTLOGARGS];
 
-void lmcEventLog(u32 EventNum, u32 arg2, u32 arg3)
-{
+व्योम lmcEventLog(u32 EventNum, u32 arg2, u32 arg3)
+अणु
   lmcEventLogBuf[lmcEventLogIndex++] = EventNum;
   lmcEventLogBuf[lmcEventLogIndex++] = arg2;
   lmcEventLogBuf[lmcEventLogIndex++] = arg3;
-  lmcEventLogBuf[lmcEventLogIndex++] = jiffies;
+  lmcEventLogBuf[lmcEventLogIndex++] = jअगरfies;
 
   lmcEventLogIndex &= (LMC_EVENTLOGSIZE * LMC_EVENTLOGARGS) - 1;
-}
-#endif  /*  DEBUG  */
+पूर्ण
+#पूर्ण_अगर  /*  DEBUG  */
 
-/* --------------------------- end if_lmc_linux.c ------------------------ */
+/* --------------------------- end अगर_lmc_linux.c ------------------------ */

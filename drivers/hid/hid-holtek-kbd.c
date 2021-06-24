@@ -1,33 +1,34 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * HID driver for Holtek keyboard
+ * HID driver क्रम Holtek keyboard
  * Copyright (c) 2012 Tom Harwood
 */
 
 /*
  */
 
-#include <linux/device.h>
-#include <linux/hid.h>
-#include <linux/module.h>
-#include <linux/usb.h>
+#समावेश <linux/device.h>
+#समावेश <linux/hid.h>
+#समावेश <linux/module.h>
+#समावेश <linux/usb.h>
 
-#include "hid-ids.h"
-#include "usbhid/usbhid.h"
+#समावेश "hid-ids.h"
+#समावेश "usbhid/usbhid.h"
 
 /* Holtek based keyboards (USB ID 04d9:a055) have the following issues:
- * - The report descriptor specifies an excessively large number of consumer
+ * - The report descriptor specअगरies an excessively large number of consumer
  *   usages (2^15), which is more than HID_MAX_USAGES. This prevents proper
  *   parsing of the report descriptor.
  * - The report descriptor reports on caps/scroll/num lock key presses, but
- *   doesn't have an LED output usage block.
+ *   करोesn't have an LED output usage block.
  *
  * The replacement descriptor below fixes the number of consumer usages,
  * and provides an LED output usage block. LED output events are redirected
- * to the boot interface.
+ * to the boot पूर्णांकerface.
  */
 
-static __u8 holtek_kbd_rdesc_fixed[] = {
+अटल __u8 holtek_kbd_rdesc_fixed[] = अणु
 	/* Original report descriptor, with reduced number of consumer usages */
 	0x05, 0x01,         /*  Usage Page (Desktop),                         */
 	0x09, 0x80,         /*  Usage (Sys Control),                          */
@@ -85,7 +86,7 @@ static __u8 holtek_kbd_rdesc_fixed[] = {
 	0x81, 0x02,         /*      Input (Variable),                         */
 	0xC0,               /*  End Collection                                */
 
-	/* LED usage for the boot protocol interface */
+	/* LED usage क्रम the boot protocol पूर्णांकerface */
 	0x05, 0x01,         /*  Usage Page (Desktop),                         */
 	0x09, 0x06,         /*  Usage (Keyboard),                             */
 	0xA1, 0x01,         /*  Collection (Application),                     */
@@ -100,75 +101,75 @@ static __u8 holtek_kbd_rdesc_fixed[] = {
 	0x95, 0x05,         /*      Report Count (5),                         */
 	0x91, 0x01,         /*      Output (Constant),                        */
 	0xC0,               /*  End Collection                                */
-};
+पूर्ण;
 
-static __u8 *holtek_kbd_report_fixup(struct hid_device *hdev, __u8 *rdesc,
-		unsigned int *rsize)
-{
-	struct usb_interface *intf = to_usb_interface(hdev->dev.parent);
+अटल __u8 *holtek_kbd_report_fixup(काष्ठा hid_device *hdev, __u8 *rdesc,
+		अचिन्हित पूर्णांक *rsize)
+अणु
+	काष्ठा usb_पूर्णांकerface *पूर्णांकf = to_usb_पूर्णांकerface(hdev->dev.parent);
 
-	if (intf->cur_altsetting->desc.bInterfaceNumber == 1) {
+	अगर (पूर्णांकf->cur_altsetting->desc.bInterfaceNumber == 1) अणु
 		rdesc = holtek_kbd_rdesc_fixed;
-		*rsize = sizeof(holtek_kbd_rdesc_fixed);
-	}
-	return rdesc;
-}
+		*rsize = माप(holtek_kbd_rdesc_fixed);
+	पूर्ण
+	वापस rdesc;
+पूर्ण
 
-static int holtek_kbd_input_event(struct input_dev *dev, unsigned int type,
-		unsigned int code,
-		int value)
-{
-	struct hid_device *hid = input_get_drvdata(dev);
-	struct usb_device *usb_dev = hid_to_usb_dev(hid);
+अटल पूर्णांक holtek_kbd_input_event(काष्ठा input_dev *dev, अचिन्हित पूर्णांक type,
+		अचिन्हित पूर्णांक code,
+		पूर्णांक value)
+अणु
+	काष्ठा hid_device *hid = input_get_drvdata(dev);
+	काष्ठा usb_device *usb_dev = hid_to_usb_dev(hid);
 
-	/* Locate the boot interface, to receive the LED change events */
-	struct usb_interface *boot_interface = usb_ifnum_to_if(usb_dev, 0);
-	struct hid_device *boot_hid;
-	struct hid_input *boot_hid_input;
+	/* Locate the boot पूर्णांकerface, to receive the LED change events */
+	काष्ठा usb_पूर्णांकerface *boot_पूर्णांकerface = usb_अगरnum_to_अगर(usb_dev, 0);
+	काष्ठा hid_device *boot_hid;
+	काष्ठा hid_input *boot_hid_input;
 
-	if (unlikely(boot_interface == NULL))
-		return -ENODEV;
+	अगर (unlikely(boot_पूर्णांकerface == शून्य))
+		वापस -ENODEV;
 
-	boot_hid = usb_get_intfdata(boot_interface);
-	boot_hid_input = list_first_entry(&boot_hid->inputs,
-		struct hid_input, list);
+	boot_hid = usb_get_पूर्णांकfdata(boot_पूर्णांकerface);
+	boot_hid_input = list_first_entry(&boot_hid->inमाला_दो,
+		काष्ठा hid_input, list);
 
-	return boot_hid_input->input->event(boot_hid_input->input, type, code,
+	वापस boot_hid_input->input->event(boot_hid_input->input, type, code,
 			value);
-}
+पूर्ण
 
-static int holtek_kbd_probe(struct hid_device *hdev,
-		const struct hid_device_id *id)
-{
-	struct usb_interface *intf = to_usb_interface(hdev->dev.parent);
-	int ret = hid_parse(hdev);
+अटल पूर्णांक holtek_kbd_probe(काष्ठा hid_device *hdev,
+		स्थिर काष्ठा hid_device_id *id)
+अणु
+	काष्ठा usb_पूर्णांकerface *पूर्णांकf = to_usb_पूर्णांकerface(hdev->dev.parent);
+	पूर्णांक ret = hid_parse(hdev);
 
-	if (!ret)
+	अगर (!ret)
 		ret = hid_hw_start(hdev, HID_CONNECT_DEFAULT);
 
-	if (!ret && intf->cur_altsetting->desc.bInterfaceNumber == 1) {
-		struct hid_input *hidinput;
-		list_for_each_entry(hidinput, &hdev->inputs, list) {
+	अगर (!ret && पूर्णांकf->cur_altsetting->desc.bInterfaceNumber == 1) अणु
+		काष्ठा hid_input *hidinput;
+		list_क्रम_each_entry(hidinput, &hdev->inमाला_दो, list) अणु
 			hidinput->input->event = holtek_kbd_input_event;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const struct hid_device_id holtek_kbd_devices[] = {
-	{ HID_USB_DEVICE(USB_VENDOR_ID_HOLTEK_ALT,
-			USB_DEVICE_ID_HOLTEK_ALT_KEYBOARD) },
-	{ }
-};
+अटल स्थिर काष्ठा hid_device_id holtek_kbd_devices[] = अणु
+	अणु HID_USB_DEVICE(USB_VENDOR_ID_HOLTEK_ALT,
+			USB_DEVICE_ID_HOLTEK_ALT_KEYBOARD) पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(hid, holtek_kbd_devices);
 
-static struct hid_driver holtek_kbd_driver = {
+अटल काष्ठा hid_driver holtek_kbd_driver = अणु
 	.name = "holtek_kbd",
 	.id_table = holtek_kbd_devices,
 	.report_fixup = holtek_kbd_report_fixup,
 	.probe = holtek_kbd_probe
-};
+पूर्ण;
 module_hid_driver(holtek_kbd_driver);
 
 MODULE_LICENSE("GPL");

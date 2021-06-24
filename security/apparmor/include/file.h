@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * AppArmor security module
  *
@@ -8,230 +9,230 @@
  * Copyright 2009-2010 Canonical Ltd.
  */
 
-#ifndef __AA_FILE_H
-#define __AA_FILE_H
+#अगर_अघोषित __AA_खाता_H
+#घोषणा __AA_खाता_H
 
-#include <linux/spinlock.h>
+#समावेश <linux/spinlock.h>
 
-#include "domain.h"
-#include "match.h"
-#include "perms.h"
+#समावेश "domain.h"
+#समावेश "match.h"
+#समावेश "perms.h"
 
-struct aa_profile;
-struct path;
+काष्ठा aa_profile;
+काष्ठा path;
 
-#define mask_mode_t(X) (X & (MAY_EXEC | MAY_WRITE | MAY_READ | MAY_APPEND))
+#घोषणा mask_mode_t(X) (X & (MAY_EXEC | MAY_WRITE | MAY_READ | MAY_APPEND))
 
-#define AA_AUDIT_FILE_MASK	(MAY_READ | MAY_WRITE | MAY_EXEC | MAY_APPEND |\
+#घोषणा AA_AUDIT_खाता_MASK	(MAY_READ | MAY_WRITE | MAY_EXEC | MAY_APPEND |\
 				 AA_MAY_CREATE | AA_MAY_DELETE |	\
 				 AA_MAY_GETATTR | AA_MAY_SETATTR | \
 				 AA_MAY_CHMOD | AA_MAY_CHOWN | AA_MAY_LOCK | \
 				 AA_EXEC_MMAP | AA_MAY_LINK)
 
-static inline struct aa_file_ctx *file_ctx(struct file *file)
-{
-	return file->f_security + apparmor_blob_sizes.lbs_file;
-}
+अटल अंतरभूत काष्ठा aa_file_ctx *file_ctx(काष्ठा file *file)
+अणु
+	वापस file->f_security + apparmor_blob_sizes.lbs_file;
+पूर्ण
 
-/* struct aa_file_ctx - the AppArmor context the file was opened in
+/* काष्ठा aa_file_ctx - the AppArmor context the file was खोलोed in
  * @lock: lock to update the ctx
  * @label: label currently cached on the ctx
- * @perms: the permission the file was opened with
+ * @perms: the permission the file was खोलोed with
  */
-struct aa_file_ctx {
+काष्ठा aa_file_ctx अणु
 	spinlock_t lock;
-	struct aa_label __rcu *label;
+	काष्ठा aa_label __rcu *label;
 	u32 allow;
-};
+पूर्ण;
 
 /**
  * aa_alloc_file_ctx - allocate file_ctx
  * @label: initial label of task creating the file
- * @gfp: gfp flags for allocation
+ * @gfp: gfp flags क्रम allocation
  *
- * Returns: file_ctx or NULL on failure
+ * Returns: file_ctx or शून्य on failure
  */
-static inline struct aa_file_ctx *aa_alloc_file_ctx(struct aa_label *label,
+अटल अंतरभूत काष्ठा aa_file_ctx *aa_alloc_file_ctx(काष्ठा aa_label *label,
 						    gfp_t gfp)
-{
-	struct aa_file_ctx *ctx;
+अणु
+	काष्ठा aa_file_ctx *ctx;
 
-	ctx = kzalloc(sizeof(struct aa_file_ctx), gfp);
-	if (ctx) {
+	ctx = kzalloc(माप(काष्ठा aa_file_ctx), gfp);
+	अगर (ctx) अणु
 		spin_lock_init(&ctx->lock);
-		rcu_assign_pointer(ctx->label, aa_get_label(label));
-	}
-	return ctx;
-}
+		rcu_assign_poपूर्णांकer(ctx->label, aa_get_label(label));
+	पूर्ण
+	वापस ctx;
+पूर्ण
 
 /**
- * aa_free_file_ctx - free a file_ctx
- * @ctx: file_ctx to free  (MAYBE_NULL)
+ * aa_मुक्त_file_ctx - मुक्त a file_ctx
+ * @ctx: file_ctx to मुक्त  (MAYBE_शून्य)
  */
-static inline void aa_free_file_ctx(struct aa_file_ctx *ctx)
-{
-	if (ctx) {
-		aa_put_label(rcu_access_pointer(ctx->label));
-		kfree_sensitive(ctx);
-	}
-}
+अटल अंतरभूत व्योम aa_मुक्त_file_ctx(काष्ठा aa_file_ctx *ctx)
+अणु
+	अगर (ctx) अणु
+		aa_put_label(rcu_access_poपूर्णांकer(ctx->label));
+		kमुक्त_sensitive(ctx);
+	पूर्ण
+पूर्ण
 
-static inline struct aa_label *aa_get_file_label(struct aa_file_ctx *ctx)
-{
-	return aa_get_label_rcu(&ctx->label);
-}
+अटल अंतरभूत काष्ठा aa_label *aa_get_file_label(काष्ठा aa_file_ctx *ctx)
+अणु
+	वापस aa_get_label_rcu(&ctx->label);
+पूर्ण
 
 /*
- * The xindex is broken into 3 parts
- * - index - an index into either the exec name table or the variable table
+ * The xindex is broken पूर्णांकo 3 parts
+ * - index - an index पूर्णांकo either the exec name table or the variable table
  * - exec type - which determines how the executable name and index are used
- * - flags - which modify how the destination name is applied
+ * - flags - which modअगरy how the destination name is applied
  */
-#define AA_X_INDEX_MASK		0x03ff
+#घोषणा AA_X_INDEX_MASK		0x03ff
 
-#define AA_X_TYPE_MASK		0x0c00
-#define AA_X_TYPE_SHIFT		10
-#define AA_X_NONE		0x0000
-#define AA_X_NAME		0x0400	/* use executable name px */
-#define AA_X_TABLE		0x0800	/* use a specified name ->n# */
+#घोषणा AA_X_TYPE_MASK		0x0c00
+#घोषणा AA_X_TYPE_SHIFT		10
+#घोषणा AA_X_NONE		0x0000
+#घोषणा AA_X_NAME		0x0400	/* use executable name px */
+#घोषणा AA_X_TABLE		0x0800	/* use a specअगरied name ->n# */
 
-#define AA_X_UNSAFE		0x1000
-#define AA_X_CHILD		0x2000	/* make >AA_X_NONE apply to children */
-#define AA_X_INHERIT		0x4000
-#define AA_X_UNCONFINED		0x8000
+#घोषणा AA_X_UNSAFE		0x1000
+#घोषणा AA_X_CHILD		0x2000	/* make >AA_X_NONE apply to children */
+#घोषणा AA_X_INHERIT		0x4000
+#घोषणा AA_X_UNCONFINED		0x8000
 
 /* need to make conditional which ones are being set */
-struct path_cond {
+काष्ठा path_cond अणु
 	kuid_t uid;
 	umode_t mode;
-};
+पूर्ण;
 
-#define COMBINED_PERM_MASK(X) ((X).allow | (X).audit | (X).quiet | (X).kill)
+#घोषणा COMBINED_PERM_MASK(X) ((X).allow | (X).audit | (X).quiet | (X).समाप्त)
 
 /* FIXME: split perms from dfa and match this to description
  *        also add delegation info.
  */
-static inline u16 dfa_map_xindex(u16 mask)
-{
+अटल अंतरभूत u16 dfa_map_xindex(u16 mask)
+अणु
 	u16 old_index = (mask >> 10) & 0xf;
 	u16 index = 0;
 
-	if (mask & 0x100)
+	अगर (mask & 0x100)
 		index |= AA_X_UNSAFE;
-	if (mask & 0x200)
+	अगर (mask & 0x200)
 		index |= AA_X_INHERIT;
-	if (mask & 0x80)
+	अगर (mask & 0x80)
 		index |= AA_X_UNCONFINED;
 
-	if (old_index == 1) {
+	अगर (old_index == 1) अणु
 		index |= AA_X_UNCONFINED;
-	} else if (old_index == 2) {
+	पूर्ण अन्यथा अगर (old_index == 2) अणु
 		index |= AA_X_NAME;
-	} else if (old_index == 3) {
+	पूर्ण अन्यथा अगर (old_index == 3) अणु
 		index |= AA_X_NAME | AA_X_CHILD;
-	} else if (old_index) {
+	पूर्ण अन्यथा अगर (old_index) अणु
 		index |= AA_X_TABLE;
 		index |= old_index - 4;
-	}
+	पूर्ण
 
-	return index;
-}
+	वापस index;
+पूर्ण
 
 /*
- * map old dfa inline permissions to new format
+ * map old dfa अंतरभूत permissions to new क्रमmat
  */
-#define dfa_user_allow(dfa, state) (((ACCEPT_TABLE(dfa)[state]) & 0x7f) | \
+#घोषणा dfa_user_allow(dfa, state) (((ACCEPT_TABLE(dfa)[state]) & 0x7f) | \
 				    ((ACCEPT_TABLE(dfa)[state]) & 0x80000000))
-#define dfa_user_audit(dfa, state) ((ACCEPT_TABLE2(dfa)[state]) & 0x7f)
-#define dfa_user_quiet(dfa, state) (((ACCEPT_TABLE2(dfa)[state]) >> 7) & 0x7f)
-#define dfa_user_xindex(dfa, state) \
+#घोषणा dfa_user_audit(dfa, state) ((ACCEPT_TABLE2(dfa)[state]) & 0x7f)
+#घोषणा dfa_user_quiet(dfa, state) (((ACCEPT_TABLE2(dfa)[state]) >> 7) & 0x7f)
+#घोषणा dfa_user_xindex(dfa, state) \
 	(dfa_map_xindex(ACCEPT_TABLE(dfa)[state] & 0x3fff))
 
-#define dfa_other_allow(dfa, state) ((((ACCEPT_TABLE(dfa)[state]) >> 14) & \
+#घोषणा dfa_other_allow(dfa, state) ((((ACCEPT_TABLE(dfa)[state]) >> 14) & \
 				      0x7f) |				\
 				     ((ACCEPT_TABLE(dfa)[state]) & 0x80000000))
-#define dfa_other_audit(dfa, state) (((ACCEPT_TABLE2(dfa)[state]) >> 14) & 0x7f)
-#define dfa_other_quiet(dfa, state) \
+#घोषणा dfa_other_audit(dfa, state) (((ACCEPT_TABLE2(dfa)[state]) >> 14) & 0x7f)
+#घोषणा dfa_other_quiet(dfa, state) \
 	((((ACCEPT_TABLE2(dfa)[state]) >> 7) >> 14) & 0x7f)
-#define dfa_other_xindex(dfa, state) \
+#घोषणा dfa_other_xindex(dfa, state) \
 	dfa_map_xindex((ACCEPT_TABLE(dfa)[state] >> 14) & 0x3fff)
 
-int aa_audit_file(struct aa_profile *profile, struct aa_perms *perms,
-		  const char *op, u32 request, const char *name,
-		  const char *target, struct aa_label *tlabel, kuid_t ouid,
-		  const char *info, int error);
+पूर्णांक aa_audit_file(काष्ठा aa_profile *profile, काष्ठा aa_perms *perms,
+		  स्थिर अक्षर *op, u32 request, स्थिर अक्षर *name,
+		  स्थिर अक्षर *target, काष्ठा aa_label *tlabel, kuid_t ouid,
+		  स्थिर अक्षर *info, पूर्णांक error);
 
 /**
- * struct aa_file_rules - components used for file rule permissions
+ * काष्ठा aa_file_rules - components used क्रम file rule permissions
  * @dfa: dfa to match path names and conditionals against
  * @perms: permission table indexed by the matched state accept entry of @dfa
- * @trans: transition table for indexed by named x transitions
+ * @trans: transition table क्रम indexed by named x transitions
  *
  * File permission are determined by matching a path against @dfa and then
- * then using the value of the accept entry for the matching state as
- * an index into @perms.  If a named exec transition is required it is
+ * then using the value of the accept entry क्रम the matching state as
+ * an index पूर्णांकo @perms.  If a named exec transition is required it is
  * looked up in the transition table.
  */
-struct aa_file_rules {
-	unsigned int start;
-	struct aa_dfa *dfa;
-	/* struct perms perms; */
-	struct aa_domain trans;
+काष्ठा aa_file_rules अणु
+	अचिन्हित पूर्णांक start;
+	काष्ठा aa_dfa *dfa;
+	/* काष्ठा perms perms; */
+	काष्ठा aa_करोमुख्य trans;
 	/* TODO: add delegate table */
-};
+पूर्ण;
 
-struct aa_perms aa_compute_fperms(struct aa_dfa *dfa, unsigned int state,
-				    struct path_cond *cond);
-unsigned int aa_str_perms(struct aa_dfa *dfa, unsigned int start,
-			  const char *name, struct path_cond *cond,
-			  struct aa_perms *perms);
+काष्ठा aa_perms aa_compute_fperms(काष्ठा aa_dfa *dfa, अचिन्हित पूर्णांक state,
+				    काष्ठा path_cond *cond);
+अचिन्हित पूर्णांक aa_str_perms(काष्ठा aa_dfa *dfa, अचिन्हित पूर्णांक start,
+			  स्थिर अक्षर *name, काष्ठा path_cond *cond,
+			  काष्ठा aa_perms *perms);
 
-int __aa_path_perm(const char *op, struct aa_profile *profile,
-		   const char *name, u32 request, struct path_cond *cond,
-		   int flags, struct aa_perms *perms);
-int aa_path_perm(const char *op, struct aa_label *label,
-		 const struct path *path, int flags, u32 request,
-		 struct path_cond *cond);
+पूर्णांक __aa_path_perm(स्थिर अक्षर *op, काष्ठा aa_profile *profile,
+		   स्थिर अक्षर *name, u32 request, काष्ठा path_cond *cond,
+		   पूर्णांक flags, काष्ठा aa_perms *perms);
+पूर्णांक aa_path_perm(स्थिर अक्षर *op, काष्ठा aa_label *label,
+		 स्थिर काष्ठा path *path, पूर्णांक flags, u32 request,
+		 काष्ठा path_cond *cond);
 
-int aa_path_link(struct aa_label *label, struct dentry *old_dentry,
-		 const struct path *new_dir, struct dentry *new_dentry);
+पूर्णांक aa_path_link(काष्ठा aa_label *label, काष्ठा dentry *old_dentry,
+		 स्थिर काष्ठा path *new_dir, काष्ठा dentry *new_dentry);
 
-int aa_file_perm(const char *op, struct aa_label *label, struct file *file,
+पूर्णांक aa_file_perm(स्थिर अक्षर *op, काष्ठा aa_label *label, काष्ठा file *file,
 		 u32 request, bool in_atomic);
 
-void aa_inherit_files(const struct cred *cred, struct files_struct *files);
+व्योम aa_inherit_files(स्थिर काष्ठा cred *cred, काष्ठा files_काष्ठा *files);
 
-static inline void aa_free_file_rules(struct aa_file_rules *rules)
-{
+अटल अंतरभूत व्योम aa_मुक्त_file_rules(काष्ठा aa_file_rules *rules)
+अणु
 	aa_put_dfa(rules->dfa);
-	aa_free_domain_entries(&rules->trans);
-}
+	aa_मुक्त_करोमुख्य_entries(&rules->trans);
+पूर्ण
 
 /**
  * aa_map_file_perms - map file flags to AppArmor permissions
- * @file: open file to map flags to AppArmor permissions
+ * @file: खोलो file to map flags to AppArmor permissions
  *
- * Returns: apparmor permission set for the file
+ * Returns: apparmor permission set क्रम the file
  */
-static inline u32 aa_map_file_to_perms(struct file *file)
-{
-	int flags = file->f_flags;
+अटल अंतरभूत u32 aa_map_file_to_perms(काष्ठा file *file)
+अणु
+	पूर्णांक flags = file->f_flags;
 	u32 perms = 0;
 
-	if (file->f_mode & FMODE_WRITE)
+	अगर (file->f_mode & FMODE_WRITE)
 		perms |= MAY_WRITE;
-	if (file->f_mode & FMODE_READ)
+	अगर (file->f_mode & FMODE_READ)
 		perms |= MAY_READ;
 
-	if ((flags & O_APPEND) && (perms & MAY_WRITE))
+	अगर ((flags & O_APPEND) && (perms & MAY_WRITE))
 		perms = (perms & ~MAY_WRITE) | MAY_APPEND;
-	/* trunc implies write permission */
-	if (flags & O_TRUNC)
+	/* trunc implies ग_लिखो permission */
+	अगर (flags & O_TRUNC)
 		perms |= MAY_WRITE;
-	if (flags & O_CREAT)
+	अगर (flags & O_CREAT)
 		perms |= AA_MAY_CREATE;
 
-	return perms;
-}
+	वापस perms;
+पूर्ण
 
-#endif /* __AA_FILE_H */
+#पूर्ण_अगर /* __AA_खाता_H */

@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * Driver for EETI eGalax Multiple Touch Controller
+ * Driver क्रम EETI eGalax Multiple Touch Controller
  *
  * Copyright (C) 2011 Freescale Semiconductor, Inc.
  *
@@ -8,81 +9,81 @@
  */
 
 /* EETI eGalax serial touch screen controller is a I2C based multiple
- * touch screen controller, it supports 5 point multiple touch. */
+ * touch screen controller, it supports 5 poपूर्णांक multiple touch. */
 
 /* TODO:
-  - auto idle mode support
+  - स्वतः idle mode support
 */
 
-#include <linux/module.h>
-#include <linux/i2c.h>
-#include <linux/interrupt.h>
-#include <linux/input.h>
-#include <linux/irq.h>
-#include <linux/gpio.h>
-#include <linux/delay.h>
-#include <linux/slab.h>
-#include <linux/bitops.h>
-#include <linux/input/mt.h>
-#include <linux/of_gpio.h>
+#समावेश <linux/module.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/input.h>
+#समावेश <linux/irq.h>
+#समावेश <linux/gpपन.स>
+#समावेश <linux/delay.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/bitops.h>
+#समावेश <linux/input/mt.h>
+#समावेश <linux/of_gpपन.स>
 
 /*
  * Mouse Mode: some panel may configure the controller to mouse mode,
- * which can only report one point at a given time.
+ * which can only report one poपूर्णांक at a given समय.
  * This driver will ignore events in this mode.
  */
-#define REPORT_MODE_MOUSE		0x1
+#घोषणा REPORT_MODE_MOUSE		0x1
 /*
- * Vendor Mode: this mode is used to transfer some vendor specific
+ * Venकरोr Mode: this mode is used to transfer some venकरोr specअगरic
  * messages.
  * This driver will ignore events in this mode.
  */
-#define REPORT_MODE_VENDOR		0x3
+#घोषणा REPORT_MODE_VENDOR		0x3
 /* Multiple Touch Mode */
-#define REPORT_MODE_MTTOUCH		0x4
+#घोषणा REPORT_MODE_MTTOUCH		0x4
 
-#define MAX_SUPPORT_POINTS		5
+#घोषणा MAX_SUPPORT_POINTS		5
 
-#define EVENT_VALID_OFFSET	7
-#define EVENT_VALID_MASK	(0x1 << EVENT_VALID_OFFSET)
-#define EVENT_ID_OFFSET		2
-#define EVENT_ID_MASK		(0xf << EVENT_ID_OFFSET)
-#define EVENT_IN_RANGE		(0x1 << 1)
-#define EVENT_DOWN_UP		(0X1 << 0)
+#घोषणा EVENT_VALID_OFFSET	7
+#घोषणा EVENT_VALID_MASK	(0x1 << EVENT_VALID_OFFSET)
+#घोषणा EVENT_ID_OFFSET		2
+#घोषणा EVENT_ID_MASK		(0xf << EVENT_ID_OFFSET)
+#घोषणा EVENT_IN_RANGE		(0x1 << 1)
+#घोषणा EVENT_DOWN_UP		(0X1 << 0)
 
-#define MAX_I2C_DATA_LEN	10
+#घोषणा MAX_I2C_DATA_LEN	10
 
-#define EGALAX_MAX_X	32760
-#define EGALAX_MAX_Y	32760
-#define EGALAX_MAX_TRIES 100
+#घोषणा EGALAX_MAX_X	32760
+#घोषणा EGALAX_MAX_Y	32760
+#घोषणा EGALAX_MAX_TRIES 100
 
-struct egalax_ts {
-	struct i2c_client		*client;
-	struct input_dev		*input_dev;
-};
+काष्ठा egalax_ts अणु
+	काष्ठा i2c_client		*client;
+	काष्ठा input_dev		*input_dev;
+पूर्ण;
 
-static irqreturn_t egalax_ts_interrupt(int irq, void *dev_id)
-{
-	struct egalax_ts *ts = dev_id;
-	struct input_dev *input_dev = ts->input_dev;
-	struct i2c_client *client = ts->client;
+अटल irqवापस_t egalax_ts_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा egalax_ts *ts = dev_id;
+	काष्ठा input_dev *input_dev = ts->input_dev;
+	काष्ठा i2c_client *client = ts->client;
 	u8 buf[MAX_I2C_DATA_LEN];
-	int id, ret, x, y, z;
-	int tries = 0;
-	bool down, valid;
+	पूर्णांक id, ret, x, y, z;
+	पूर्णांक tries = 0;
+	bool करोwn, valid;
 	u8 state;
 
-	do {
+	करो अणु
 		ret = i2c_master_recv(client, buf, MAX_I2C_DATA_LEN);
-	} while (ret == -EAGAIN && tries++ < EGALAX_MAX_TRIES);
+	पूर्ण जबतक (ret == -EAGAIN && tries++ < EGALAX_MAX_TRIES);
 
-	if (ret < 0)
-		return IRQ_HANDLED;
+	अगर (ret < 0)
+		वापस IRQ_HANDLED;
 
-	if (buf[0] != REPORT_MODE_MTTOUCH) {
-		/* ignore mouse events and vendor events */
-		return IRQ_HANDLED;
-	}
+	अगर (buf[0] != REPORT_MODE_MTTOUCH) अणु
+		/* ignore mouse events and venकरोr events */
+		वापस IRQ_HANDLED;
+	पूर्ण
 
 	state = buf[1];
 	x = (buf[3] << 8) | buf[2];
@@ -91,110 +92,110 @@ static irqreturn_t egalax_ts_interrupt(int irq, void *dev_id)
 
 	valid = state & EVENT_VALID_MASK;
 	id = (state & EVENT_ID_MASK) >> EVENT_ID_OFFSET;
-	down = state & EVENT_DOWN_UP;
+	करोwn = state & EVENT_DOWN_UP;
 
-	if (!valid || id > MAX_SUPPORT_POINTS) {
+	अगर (!valid || id > MAX_SUPPORT_POINTS) अणु
 		dev_dbg(&client->dev, "point invalid\n");
-		return IRQ_HANDLED;
-	}
+		वापस IRQ_HANDLED;
+	पूर्ण
 
 	input_mt_slot(input_dev, id);
-	input_mt_report_slot_state(input_dev, MT_TOOL_FINGER, down);
+	input_mt_report_slot_state(input_dev, MT_TOOL_FINGER, करोwn);
 
 	dev_dbg(&client->dev, "%s id:%d x:%d y:%d z:%d",
-		down ? "down" : "up", id, x, y, z);
+		करोwn ? "down" : "up", id, x, y, z);
 
-	if (down) {
-		input_report_abs(input_dev, ABS_MT_POSITION_X, x);
-		input_report_abs(input_dev, ABS_MT_POSITION_Y, y);
-		input_report_abs(input_dev, ABS_MT_PRESSURE, z);
-	}
+	अगर (करोwn) अणु
+		input_report_असल(input_dev, ABS_MT_POSITION_X, x);
+		input_report_असल(input_dev, ABS_MT_POSITION_Y, y);
+		input_report_असल(input_dev, ABS_MT_PRESSURE, z);
+	पूर्ण
 
-	input_mt_report_pointer_emulation(input_dev, true);
+	input_mt_report_poपूर्णांकer_emulation(input_dev, true);
 	input_sync(input_dev);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-/* wake up controller by an falling edge of interrupt gpio.  */
-static int egalax_wake_up_device(struct i2c_client *client)
-{
-	struct device_node *np = client->dev.of_node;
-	int gpio;
-	int ret;
+/* wake up controller by an falling edge of पूर्णांकerrupt gpio.  */
+अटल पूर्णांक egalax_wake_up_device(काष्ठा i2c_client *client)
+अणु
+	काष्ठा device_node *np = client->dev.of_node;
+	पूर्णांक gpio;
+	पूर्णांक ret;
 
-	if (!np)
-		return -ENODEV;
+	अगर (!np)
+		वापस -ENODEV;
 
 	gpio = of_get_named_gpio(np, "wakeup-gpios", 0);
-	if (!gpio_is_valid(gpio))
-		return -ENODEV;
+	अगर (!gpio_is_valid(gpio))
+		वापस -ENODEV;
 
 	ret = gpio_request(gpio, "egalax_irq");
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(&client->dev,
 			"request gpio failed, cannot wake up controller: %d\n",
 			ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	/* wake up controller via an falling edge on IRQ gpio. */
 	gpio_direction_output(gpio, 0);
 	gpio_set_value(gpio, 1);
 
-	/* controller should be waken up, return irq.  */
+	/* controller should be waken up, वापस irq.  */
 	gpio_direction_input(gpio);
-	gpio_free(gpio);
+	gpio_मुक्त(gpio);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int egalax_firmware_version(struct i2c_client *client)
-{
-	static const u8 cmd[MAX_I2C_DATA_LEN] = { 0x03, 0x03, 0xa, 0x01, 0x41 };
-	int ret;
+अटल पूर्णांक egalax_firmware_version(काष्ठा i2c_client *client)
+अणु
+	अटल स्थिर u8 cmd[MAX_I2C_DATA_LEN] = अणु 0x03, 0x03, 0xa, 0x01, 0x41 पूर्ण;
+	पूर्णांक ret;
 
 	ret = i2c_master_send(client, cmd, MAX_I2C_DATA_LEN);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int egalax_ts_probe(struct i2c_client *client,
-			   const struct i2c_device_id *id)
-{
-	struct egalax_ts *ts;
-	struct input_dev *input_dev;
-	int error;
+अटल पूर्णांक egalax_ts_probe(काष्ठा i2c_client *client,
+			   स्थिर काष्ठा i2c_device_id *id)
+अणु
+	काष्ठा egalax_ts *ts;
+	काष्ठा input_dev *input_dev;
+	पूर्णांक error;
 
-	ts = devm_kzalloc(&client->dev, sizeof(struct egalax_ts), GFP_KERNEL);
-	if (!ts) {
+	ts = devm_kzalloc(&client->dev, माप(काष्ठा egalax_ts), GFP_KERNEL);
+	अगर (!ts) अणु
 		dev_err(&client->dev, "Failed to allocate memory\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	input_dev = devm_input_allocate_device(&client->dev);
-	if (!input_dev) {
+	अगर (!input_dev) अणु
 		dev_err(&client->dev, "Failed to allocate memory\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	ts->client = client;
 	ts->input_dev = input_dev;
 
 	/* controller may be in sleep, wake it up. */
 	error = egalax_wake_up_device(client);
-	if (error) {
+	अगर (error) अणु
 		dev_err(&client->dev, "Failed to wake up the controller\n");
-		return error;
-	}
+		वापस error;
+	पूर्ण
 
 	error = egalax_firmware_version(client);
-	if (error < 0) {
+	अगर (error < 0) अणु
 		dev_err(&client->dev, "Failed to read firmware version\n");
-		return error;
-	}
+		वापस error;
+	पूर्ण
 
 	input_dev->name = "EETI eGalax Touch Screen";
 	input_dev->id.bustype = BUS_I2C;
@@ -203,78 +204,78 @@ static int egalax_ts_probe(struct i2c_client *client,
 	__set_bit(EV_KEY, input_dev->evbit);
 	__set_bit(BTN_TOUCH, input_dev->keybit);
 
-	input_set_abs_params(input_dev, ABS_X, 0, EGALAX_MAX_X, 0, 0);
-	input_set_abs_params(input_dev, ABS_Y, 0, EGALAX_MAX_Y, 0, 0);
-	input_set_abs_params(input_dev,
+	input_set_असल_params(input_dev, ABS_X, 0, EGALAX_MAX_X, 0, 0);
+	input_set_असल_params(input_dev, ABS_Y, 0, EGALAX_MAX_Y, 0, 0);
+	input_set_असल_params(input_dev,
 			     ABS_MT_POSITION_X, 0, EGALAX_MAX_X, 0, 0);
-	input_set_abs_params(input_dev,
+	input_set_असल_params(input_dev,
 			     ABS_MT_POSITION_Y, 0, EGALAX_MAX_Y, 0, 0);
 	input_mt_init_slots(input_dev, MAX_SUPPORT_POINTS, 0);
 
-	error = devm_request_threaded_irq(&client->dev, client->irq, NULL,
-					  egalax_ts_interrupt,
+	error = devm_request_thपढ़ोed_irq(&client->dev, client->irq, शून्य,
+					  egalax_ts_पूर्णांकerrupt,
 					  IRQF_TRIGGER_LOW | IRQF_ONESHOT,
 					  "egalax_ts", ts);
-	if (error < 0) {
+	अगर (error < 0) अणु
 		dev_err(&client->dev, "Failed to register interrupt\n");
-		return error;
-	}
+		वापस error;
+	पूर्ण
 
-	error = input_register_device(ts->input_dev);
-	if (error)
-		return error;
+	error = input_रेजिस्टर_device(ts->input_dev);
+	अगर (error)
+		वापस error;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct i2c_device_id egalax_ts_id[] = {
-	{ "egalax_ts", 0 },
-	{ }
-};
+अटल स्थिर काष्ठा i2c_device_id egalax_ts_id[] = अणु
+	अणु "egalax_ts", 0 पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(i2c, egalax_ts_id);
 
-static int __maybe_unused egalax_ts_suspend(struct device *dev)
-{
-	static const u8 suspend_cmd[MAX_I2C_DATA_LEN] = {
+अटल पूर्णांक __maybe_unused egalax_ts_suspend(काष्ठा device *dev)
+अणु
+	अटल स्थिर u8 suspend_cmd[MAX_I2C_DATA_LEN] = अणु
 		0x3, 0x6, 0xa, 0x3, 0x36, 0x3f, 0x2, 0, 0, 0
-	};
-	struct i2c_client *client = to_i2c_client(dev);
-	int ret;
+	पूर्ण;
+	काष्ठा i2c_client *client = to_i2c_client(dev);
+	पूर्णांक ret;
 
-	if (device_may_wakeup(dev))
-		return enable_irq_wake(client->irq);
+	अगर (device_may_wakeup(dev))
+		वापस enable_irq_wake(client->irq);
 
 	ret = i2c_master_send(client, suspend_cmd, MAX_I2C_DATA_LEN);
-	return ret > 0 ? 0 : ret;
-}
+	वापस ret > 0 ? 0 : ret;
+पूर्ण
 
-static int __maybe_unused egalax_ts_resume(struct device *dev)
-{
-	struct i2c_client *client = to_i2c_client(dev);
+अटल पूर्णांक __maybe_unused egalax_ts_resume(काष्ठा device *dev)
+अणु
+	काष्ठा i2c_client *client = to_i2c_client(dev);
 
-	if (device_may_wakeup(dev))
-		return disable_irq_wake(client->irq);
+	अगर (device_may_wakeup(dev))
+		वापस disable_irq_wake(client->irq);
 
-	return egalax_wake_up_device(client);
-}
+	वापस egalax_wake_up_device(client);
+पूर्ण
 
-static SIMPLE_DEV_PM_OPS(egalax_ts_pm_ops, egalax_ts_suspend, egalax_ts_resume);
+अटल SIMPLE_DEV_PM_OPS(egalax_ts_pm_ops, egalax_ts_suspend, egalax_ts_resume);
 
-static const struct of_device_id egalax_ts_dt_ids[] = {
-	{ .compatible = "eeti,egalax_ts" },
-	{ /* sentinel */ }
-};
+अटल स्थिर काष्ठा of_device_id egalax_ts_dt_ids[] = अणु
+	अणु .compatible = "eeti,egalax_ts" पूर्ण,
+	अणु /* sentinel */ पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, egalax_ts_dt_ids);
 
-static struct i2c_driver egalax_ts_driver = {
-	.driver = {
+अटल काष्ठा i2c_driver egalax_ts_driver = अणु
+	.driver = अणु
 		.name	= "egalax_ts",
 		.pm	= &egalax_ts_pm_ops,
 		.of_match_table	= egalax_ts_dt_ids,
-	},
+	पूर्ण,
 	.id_table	= egalax_ts_id,
 	.probe		= egalax_ts_probe,
-};
+पूर्ण;
 
 module_i2c_driver(egalax_ts_driver);
 

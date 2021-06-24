@@ -1,28 +1,29 @@
-/* SPDX-License-Identifier: GPL-2.0+ WITH Linux-syscall-note */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0+ WITH Linux-syscall-note */
 /*
- *	NET3	PLIP tuning facilities for the new Niibe PLIP.
+ *	NET3	PLIP tuning facilities क्रम the new Niibe PLIP.
  *
- *	This program is free software; you can redistribute it and/or
- *	modify it under the terms of the GNU General Public License
+ *	This program is मुक्त software; you can redistribute it and/or
+ *	modअगरy it under the terms of the GNU General Public License
  *	as published by the Free Software Foundation; either version
  *	2 of the License, or (at your option) any later version.
  *
  */
  
-#ifndef _LINUX_IF_PLIP_H
-#define _LINUX_IF_PLIP_H
+#अगर_अघोषित _LINUX_IF_PLIP_H
+#घोषणा _LINUX_IF_PLIP_H
 
-#include <linux/sockios.h>
+#समावेश <linux/sockios.h>
 
-#define	SIOCDEVPLIP	SIOCDEVPRIVATE
+#घोषणा	SIOCDEVPLIP	SIOCDEVPRIVATE
 
-struct plipconf {
-	unsigned short pcmd;
-	unsigned long  nibble;
-	unsigned long  trigger;
-};
+काष्ठा plipconf अणु
+	अचिन्हित लघु pcmd;
+	अचिन्हित दीर्घ  nibble;
+	अचिन्हित दीर्घ  trigger;
+पूर्ण;
 
-#define PLIP_GET_TIMEOUT	0x1
-#define PLIP_SET_TIMEOUT	0x2
+#घोषणा PLIP_GET_TIMEOUT	0x1
+#घोषणा PLIP_SET_TIMEOUT	0x2
 
-#endif
+#पूर्ण_अगर

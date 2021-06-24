@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  *  linux/fs/hfsplus/inode.c
  *
@@ -9,676 +10,676 @@
  * Inode handling routines
  */
 
-#include <linux/blkdev.h>
-#include <linux/mm.h>
-#include <linux/fs.h>
-#include <linux/pagemap.h>
-#include <linux/mpage.h>
-#include <linux/sched.h>
-#include <linux/cred.h>
-#include <linux/uio.h>
-#include <linux/fileattr.h>
+#समावेश <linux/blkdev.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/pagemap.h>
+#समावेश <linux/mpage.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/cred.h>
+#समावेश <linux/uपन.स>
+#समावेश <linux/fileattr.h>
 
-#include "hfsplus_fs.h"
-#include "hfsplus_raw.h"
-#include "xattr.h"
+#समावेश "hfsplus_fs.h"
+#समावेश "hfsplus_raw.h"
+#समावेश "xattr.h"
 
-static int hfsplus_readpage(struct file *file, struct page *page)
-{
-	return block_read_full_page(page, hfsplus_get_block);
-}
+अटल पूर्णांक hfsplus_पढ़ोpage(काष्ठा file *file, काष्ठा page *page)
+अणु
+	वापस block_पढ़ो_full_page(page, hfsplus_get_block);
+पूर्ण
 
-static int hfsplus_writepage(struct page *page, struct writeback_control *wbc)
-{
-	return block_write_full_page(page, hfsplus_get_block, wbc);
-}
+अटल पूर्णांक hfsplus_ग_लिखोpage(काष्ठा page *page, काष्ठा ग_लिखोback_control *wbc)
+अणु
+	वापस block_ग_लिखो_full_page(page, hfsplus_get_block, wbc);
+पूर्ण
 
-static void hfsplus_write_failed(struct address_space *mapping, loff_t to)
-{
-	struct inode *inode = mapping->host;
+अटल व्योम hfsplus_ग_लिखो_failed(काष्ठा address_space *mapping, loff_t to)
+अणु
+	काष्ठा inode *inode = mapping->host;
 
-	if (to > inode->i_size) {
+	अगर (to > inode->i_size) अणु
 		truncate_pagecache(inode, inode->i_size);
 		hfsplus_file_truncate(inode);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int hfsplus_write_begin(struct file *file, struct address_space *mapping,
-			loff_t pos, unsigned len, unsigned flags,
-			struct page **pagep, void **fsdata)
-{
-	int ret;
+अटल पूर्णांक hfsplus_ग_लिखो_begin(काष्ठा file *file, काष्ठा address_space *mapping,
+			loff_t pos, अचिन्हित len, अचिन्हित flags,
+			काष्ठा page **pagep, व्योम **fsdata)
+अणु
+	पूर्णांक ret;
 
-	*pagep = NULL;
-	ret = cont_write_begin(file, mapping, pos, len, flags, pagep, fsdata,
+	*pagep = शून्य;
+	ret = cont_ग_लिखो_begin(file, mapping, pos, len, flags, pagep, fsdata,
 				hfsplus_get_block,
 				&HFSPLUS_I(mapping->host)->phys_size);
-	if (unlikely(ret))
-		hfsplus_write_failed(mapping, pos + len);
+	अगर (unlikely(ret))
+		hfsplus_ग_लिखो_failed(mapping, pos + len);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static sector_t hfsplus_bmap(struct address_space *mapping, sector_t block)
-{
-	return generic_block_bmap(mapping, block, hfsplus_get_block);
-}
+अटल sector_t hfsplus_bmap(काष्ठा address_space *mapping, sector_t block)
+अणु
+	वापस generic_block_bmap(mapping, block, hfsplus_get_block);
+पूर्ण
 
-static int hfsplus_releasepage(struct page *page, gfp_t mask)
-{
-	struct inode *inode = page->mapping->host;
-	struct super_block *sb = inode->i_sb;
-	struct hfs_btree *tree;
-	struct hfs_bnode *node;
+अटल पूर्णांक hfsplus_releasepage(काष्ठा page *page, gfp_t mask)
+अणु
+	काष्ठा inode *inode = page->mapping->host;
+	काष्ठा super_block *sb = inode->i_sb;
+	काष्ठा hfs_btree *tree;
+	काष्ठा hfs_bnode *node;
 	u32 nidx;
-	int i, res = 1;
+	पूर्णांक i, res = 1;
 
-	switch (inode->i_ino) {
-	case HFSPLUS_EXT_CNID:
+	चयन (inode->i_ino) अणु
+	हाल HFSPLUS_EXT_CNID:
 		tree = HFSPLUS_SB(sb)->ext_tree;
-		break;
-	case HFSPLUS_CAT_CNID:
+		अवरोध;
+	हाल HFSPLUS_CAT_CNID:
 		tree = HFSPLUS_SB(sb)->cat_tree;
-		break;
-	case HFSPLUS_ATTR_CNID:
+		अवरोध;
+	हाल HFSPLUS_ATTR_CNID:
 		tree = HFSPLUS_SB(sb)->attr_tree;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		BUG();
-		return 0;
-	}
-	if (!tree)
-		return 0;
-	if (tree->node_size >= PAGE_SIZE) {
+		वापस 0;
+	पूर्ण
+	अगर (!tree)
+		वापस 0;
+	अगर (tree->node_size >= PAGE_SIZE) अणु
 		nidx = page->index >>
-			(tree->node_size_shift - PAGE_SHIFT);
+			(tree->node_size_shअगरt - PAGE_SHIFT);
 		spin_lock(&tree->hash_lock);
 		node = hfs_bnode_findhash(tree, nidx);
-		if (!node)
+		अगर (!node)
 			;
-		else if (atomic_read(&node->refcnt))
+		अन्यथा अगर (atomic_पढ़ो(&node->refcnt))
 			res = 0;
-		if (res && node) {
+		अगर (res && node) अणु
 			hfs_bnode_unhash(node);
-			hfs_bnode_free(node);
-		}
+			hfs_bnode_मुक्त(node);
+		पूर्ण
 		spin_unlock(&tree->hash_lock);
-	} else {
+	पूर्ण अन्यथा अणु
 		nidx = page->index <<
-			(PAGE_SHIFT - tree->node_size_shift);
-		i = 1 << (PAGE_SHIFT - tree->node_size_shift);
+			(PAGE_SHIFT - tree->node_size_shअगरt);
+		i = 1 << (PAGE_SHIFT - tree->node_size_shअगरt);
 		spin_lock(&tree->hash_lock);
-		do {
+		करो अणु
 			node = hfs_bnode_findhash(tree, nidx++);
-			if (!node)
-				continue;
-			if (atomic_read(&node->refcnt)) {
+			अगर (!node)
+				जारी;
+			अगर (atomic_पढ़ो(&node->refcnt)) अणु
 				res = 0;
-				break;
-			}
+				अवरोध;
+			पूर्ण
 			hfs_bnode_unhash(node);
-			hfs_bnode_free(node);
-		} while (--i && nidx < tree->node_count);
+			hfs_bnode_मुक्त(node);
+		पूर्ण जबतक (--i && nidx < tree->node_count);
 		spin_unlock(&tree->hash_lock);
-	}
-	return res ? try_to_free_buffers(page) : 0;
-}
+	पूर्ण
+	वापस res ? try_to_मुक्त_buffers(page) : 0;
+पूर्ण
 
-static ssize_t hfsplus_direct_IO(struct kiocb *iocb, struct iov_iter *iter)
-{
-	struct file *file = iocb->ki_filp;
-	struct address_space *mapping = file->f_mapping;
-	struct inode *inode = mapping->host;
-	size_t count = iov_iter_count(iter);
-	ssize_t ret;
+अटल sमाप_प्रकार hfsplus_direct_IO(काष्ठा kiocb *iocb, काष्ठा iov_iter *iter)
+अणु
+	काष्ठा file *file = iocb->ki_filp;
+	काष्ठा address_space *mapping = file->f_mapping;
+	काष्ठा inode *inode = mapping->host;
+	माप_प्रकार count = iov_iter_count(iter);
+	sमाप_प्रकार ret;
 
 	ret = blockdev_direct_IO(iocb, inode, iter, hfsplus_get_block);
 
 	/*
-	 * In case of error extending write may have instantiated a few
+	 * In हाल of error extending ग_लिखो may have instantiated a few
 	 * blocks outside i_size. Trim these off again.
 	 */
-	if (unlikely(iov_iter_rw(iter) == WRITE && ret < 0)) {
-		loff_t isize = i_size_read(inode);
+	अगर (unlikely(iov_iter_rw(iter) == WRITE && ret < 0)) अणु
+		loff_t isize = i_size_पढ़ो(inode);
 		loff_t end = iocb->ki_pos + count;
 
-		if (end > isize)
-			hfsplus_write_failed(mapping, end);
-	}
+		अगर (end > isize)
+			hfsplus_ग_लिखो_failed(mapping, end);
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int hfsplus_writepages(struct address_space *mapping,
-			      struct writeback_control *wbc)
-{
-	return mpage_writepages(mapping, wbc, hfsplus_get_block);
-}
+अटल पूर्णांक hfsplus_ग_लिखोpages(काष्ठा address_space *mapping,
+			      काष्ठा ग_लिखोback_control *wbc)
+अणु
+	वापस mpage_ग_लिखोpages(mapping, wbc, hfsplus_get_block);
+पूर्ण
 
-const struct address_space_operations hfsplus_btree_aops = {
-	.readpage	= hfsplus_readpage,
-	.writepage	= hfsplus_writepage,
-	.write_begin	= hfsplus_write_begin,
-	.write_end	= generic_write_end,
+स्थिर काष्ठा address_space_operations hfsplus_btree_aops = अणु
+	.पढ़ोpage	= hfsplus_पढ़ोpage,
+	.ग_लिखोpage	= hfsplus_ग_लिखोpage,
+	.ग_लिखो_begin	= hfsplus_ग_लिखो_begin,
+	.ग_लिखो_end	= generic_ग_लिखो_end,
 	.bmap		= hfsplus_bmap,
 	.releasepage	= hfsplus_releasepage,
-};
+पूर्ण;
 
-const struct address_space_operations hfsplus_aops = {
-	.readpage	= hfsplus_readpage,
-	.writepage	= hfsplus_writepage,
-	.write_begin	= hfsplus_write_begin,
-	.write_end	= generic_write_end,
+स्थिर काष्ठा address_space_operations hfsplus_aops = अणु
+	.पढ़ोpage	= hfsplus_पढ़ोpage,
+	.ग_लिखोpage	= hfsplus_ग_लिखोpage,
+	.ग_लिखो_begin	= hfsplus_ग_लिखो_begin,
+	.ग_लिखो_end	= generic_ग_लिखो_end,
 	.bmap		= hfsplus_bmap,
 	.direct_IO	= hfsplus_direct_IO,
-	.writepages	= hfsplus_writepages,
-};
+	.ग_लिखोpages	= hfsplus_ग_लिखोpages,
+पूर्ण;
 
-const struct dentry_operations hfsplus_dentry_operations = {
+स्थिर काष्ठा dentry_operations hfsplus_dentry_operations = अणु
 	.d_hash       = hfsplus_hash_dentry,
 	.d_compare    = hfsplus_compare_dentry,
-};
+पूर्ण;
 
-static void hfsplus_get_perms(struct inode *inode,
-		struct hfsplus_perm *perms, int dir)
-{
-	struct hfsplus_sb_info *sbi = HFSPLUS_SB(inode->i_sb);
+अटल व्योम hfsplus_get_perms(काष्ठा inode *inode,
+		काष्ठा hfsplus_perm *perms, पूर्णांक dir)
+अणु
+	काष्ठा hfsplus_sb_info *sbi = HFSPLUS_SB(inode->i_sb);
 	u16 mode;
 
 	mode = be16_to_cpu(perms->mode);
 
-	i_uid_write(inode, be32_to_cpu(perms->owner));
-	if (!i_uid_read(inode) && !mode)
+	i_uid_ग_लिखो(inode, be32_to_cpu(perms->owner));
+	अगर (!i_uid_पढ़ो(inode) && !mode)
 		inode->i_uid = sbi->uid;
 
-	i_gid_write(inode, be32_to_cpu(perms->group));
-	if (!i_gid_read(inode) && !mode)
+	i_gid_ग_लिखो(inode, be32_to_cpu(perms->group));
+	अगर (!i_gid_पढ़ो(inode) && !mode)
 		inode->i_gid = sbi->gid;
 
-	if (dir) {
+	अगर (dir) अणु
 		mode = mode ? (mode & S_IALLUGO) : (S_IRWXUGO & ~(sbi->umask));
-		mode |= S_IFDIR;
-	} else if (!mode)
+		mode |= S_IFसूची;
+	पूर्ण अन्यथा अगर (!mode)
 		mode = S_IFREG | ((S_IRUGO|S_IWUGO) & ~(sbi->umask));
 	inode->i_mode = mode;
 
 	HFSPLUS_I(inode)->userflags = perms->userflags;
-	if (perms->rootflags & HFSPLUS_FLG_IMMUTABLE)
+	अगर (perms->rootflags & HFSPLUS_FLG_IMMUTABLE)
 		inode->i_flags |= S_IMMUTABLE;
-	else
+	अन्यथा
 		inode->i_flags &= ~S_IMMUTABLE;
-	if (perms->rootflags & HFSPLUS_FLG_APPEND)
+	अगर (perms->rootflags & HFSPLUS_FLG_APPEND)
 		inode->i_flags |= S_APPEND;
-	else
+	अन्यथा
 		inode->i_flags &= ~S_APPEND;
-}
+पूर्ण
 
-static int hfsplus_file_open(struct inode *inode, struct file *file)
-{
-	if (HFSPLUS_IS_RSRC(inode))
+अटल पूर्णांक hfsplus_file_खोलो(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	अगर (HFSPLUS_IS_RSRC(inode))
 		inode = HFSPLUS_I(inode)->rsrc_inode;
-	if (!(file->f_flags & O_LARGEFILE) && i_size_read(inode) > MAX_NON_LFS)
-		return -EOVERFLOW;
-	atomic_inc(&HFSPLUS_I(inode)->opencnt);
-	return 0;
-}
+	अगर (!(file->f_flags & O_LARGEखाता) && i_size_पढ़ो(inode) > MAX_NON_LFS)
+		वापस -EOVERFLOW;
+	atomic_inc(&HFSPLUS_I(inode)->खोलोcnt);
+	वापस 0;
+पूर्ण
 
-static int hfsplus_file_release(struct inode *inode, struct file *file)
-{
-	struct super_block *sb = inode->i_sb;
+अटल पूर्णांक hfsplus_file_release(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	काष्ठा super_block *sb = inode->i_sb;
 
-	if (HFSPLUS_IS_RSRC(inode))
+	अगर (HFSPLUS_IS_RSRC(inode))
 		inode = HFSPLUS_I(inode)->rsrc_inode;
-	if (atomic_dec_and_test(&HFSPLUS_I(inode)->opencnt)) {
+	अगर (atomic_dec_and_test(&HFSPLUS_I(inode)->खोलोcnt)) अणु
 		inode_lock(inode);
 		hfsplus_file_truncate(inode);
-		if (inode->i_flags & S_DEAD) {
+		अगर (inode->i_flags & S_DEAD) अणु
 			hfsplus_delete_cat(inode->i_ino,
-					   HFSPLUS_SB(sb)->hidden_dir, NULL);
+					   HFSPLUS_SB(sb)->hidden_dir, शून्य);
 			hfsplus_delete_inode(inode);
-		}
+		पूर्ण
 		inode_unlock(inode);
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int hfsplus_setattr(struct user_namespace *mnt_userns,
-			   struct dentry *dentry, struct iattr *attr)
-{
-	struct inode *inode = d_inode(dentry);
-	int error;
+अटल पूर्णांक hfsplus_setattr(काष्ठा user_namespace *mnt_userns,
+			   काष्ठा dentry *dentry, काष्ठा iattr *attr)
+अणु
+	काष्ठा inode *inode = d_inode(dentry);
+	पूर्णांक error;
 
 	error = setattr_prepare(&init_user_ns, dentry, attr);
-	if (error)
-		return error;
+	अगर (error)
+		वापस error;
 
-	if ((attr->ia_valid & ATTR_SIZE) &&
-	    attr->ia_size != i_size_read(inode)) {
-		inode_dio_wait(inode);
-		if (attr->ia_size > inode->i_size) {
+	अगर ((attr->ia_valid & ATTR_SIZE) &&
+	    attr->ia_size != i_size_पढ़ो(inode)) अणु
+		inode_dio_रुको(inode);
+		अगर (attr->ia_size > inode->i_size) अणु
 			error = generic_cont_expand_simple(inode,
 							   attr->ia_size);
-			if (error)
-				return error;
-		}
+			अगर (error)
+				वापस error;
+		पूर्ण
 		truncate_setsize(inode, attr->ia_size);
 		hfsplus_file_truncate(inode);
-		inode->i_mtime = inode->i_ctime = current_time(inode);
-	}
+		inode->i_mसमय = inode->i_स_समय = current_समय(inode);
+	पूर्ण
 
 	setattr_copy(&init_user_ns, inode, attr);
 	mark_inode_dirty(inode);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int hfsplus_getattr(struct user_namespace *mnt_userns, const struct path *path,
-		    struct kstat *stat, u32 request_mask,
-		    unsigned int query_flags)
-{
-	struct inode *inode = d_inode(path->dentry);
-	struct hfsplus_inode_info *hip = HFSPLUS_I(inode);
+पूर्णांक hfsplus_getattr(काष्ठा user_namespace *mnt_userns, स्थिर काष्ठा path *path,
+		    काष्ठा kstat *stat, u32 request_mask,
+		    अचिन्हित पूर्णांक query_flags)
+अणु
+	काष्ठा inode *inode = d_inode(path->dentry);
+	काष्ठा hfsplus_inode_info *hip = HFSPLUS_I(inode);
 
-	if (inode->i_flags & S_APPEND)
+	अगर (inode->i_flags & S_APPEND)
 		stat->attributes |= STATX_ATTR_APPEND;
-	if (inode->i_flags & S_IMMUTABLE)
+	अगर (inode->i_flags & S_IMMUTABLE)
 		stat->attributes |= STATX_ATTR_IMMUTABLE;
-	if (hip->userflags & HFSPLUS_FLG_NODUMP)
+	अगर (hip->userflags & HFSPLUS_FLG_NODUMP)
 		stat->attributes |= STATX_ATTR_NODUMP;
 
 	stat->attributes_mask |= STATX_ATTR_APPEND | STATX_ATTR_IMMUTABLE |
 				 STATX_ATTR_NODUMP;
 
 	generic_fillattr(&init_user_ns, inode, stat);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int hfsplus_file_fsync(struct file *file, loff_t start, loff_t end,
-		       int datasync)
-{
-	struct inode *inode = file->f_mapping->host;
-	struct hfsplus_inode_info *hip = HFSPLUS_I(inode);
-	struct hfsplus_sb_info *sbi = HFSPLUS_SB(inode->i_sb);
-	int error = 0, error2;
+पूर्णांक hfsplus_file_fsync(काष्ठा file *file, loff_t start, loff_t end,
+		       पूर्णांक datasync)
+अणु
+	काष्ठा inode *inode = file->f_mapping->host;
+	काष्ठा hfsplus_inode_info *hip = HFSPLUS_I(inode);
+	काष्ठा hfsplus_sb_info *sbi = HFSPLUS_SB(inode->i_sb);
+	पूर्णांक error = 0, error2;
 
-	error = file_write_and_wait_range(file, start, end);
-	if (error)
-		return error;
+	error = file_ग_लिखो_and_रुको_range(file, start, end);
+	अगर (error)
+		वापस error;
 	inode_lock(inode);
 
 	/*
-	 * Sync inode metadata into the catalog and extent trees.
+	 * Sync inode metadata पूर्णांकo the catalog and extent trees.
 	 */
 	sync_inode_metadata(inode, 1);
 
 	/*
-	 * And explicitly write out the btrees.
+	 * And explicitly ग_लिखो out the btrees.
 	 */
-	if (test_and_clear_bit(HFSPLUS_I_CAT_DIRTY, &hip->flags))
-		error = filemap_write_and_wait(sbi->cat_tree->inode->i_mapping);
+	अगर (test_and_clear_bit(HFSPLUS_I_CAT_सूचीTY, &hip->flags))
+		error = filemap_ग_लिखो_and_रुको(sbi->cat_tree->inode->i_mapping);
 
-	if (test_and_clear_bit(HFSPLUS_I_EXT_DIRTY, &hip->flags)) {
+	अगर (test_and_clear_bit(HFSPLUS_I_EXT_सूचीTY, &hip->flags)) अणु
 		error2 =
-			filemap_write_and_wait(sbi->ext_tree->inode->i_mapping);
-		if (!error)
+			filemap_ग_लिखो_and_रुको(sbi->ext_tree->inode->i_mapping);
+		अगर (!error)
 			error = error2;
-	}
+	पूर्ण
 
-	if (test_and_clear_bit(HFSPLUS_I_ATTR_DIRTY, &hip->flags)) {
-		if (sbi->attr_tree) {
+	अगर (test_and_clear_bit(HFSPLUS_I_ATTR_सूचीTY, &hip->flags)) अणु
+		अगर (sbi->attr_tree) अणु
 			error2 =
-				filemap_write_and_wait(
+				filemap_ग_लिखो_and_रुको(
 					    sbi->attr_tree->inode->i_mapping);
-			if (!error)
+			अगर (!error)
 				error = error2;
-		} else {
+		पूर्ण अन्यथा अणु
 			pr_err("sync non-existent attributes tree\n");
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (test_and_clear_bit(HFSPLUS_I_ALLOC_DIRTY, &hip->flags)) {
-		error2 = filemap_write_and_wait(sbi->alloc_file->i_mapping);
-		if (!error)
+	अगर (test_and_clear_bit(HFSPLUS_I_ALLOC_सूचीTY, &hip->flags)) अणु
+		error2 = filemap_ग_लिखो_and_रुको(sbi->alloc_file->i_mapping);
+		अगर (!error)
 			error = error2;
-	}
+	पूर्ण
 
-	if (!test_bit(HFSPLUS_SB_NOBARRIER, &sbi->flags))
+	अगर (!test_bit(HFSPLUS_SB_NOBARRIER, &sbi->flags))
 		blkdev_issue_flush(inode->i_sb->s_bdev);
 
 	inode_unlock(inode);
 
-	return error;
-}
+	वापस error;
+पूर्ण
 
-static const struct inode_operations hfsplus_file_inode_operations = {
+अटल स्थिर काष्ठा inode_operations hfsplus_file_inode_operations = अणु
 	.setattr	= hfsplus_setattr,
 	.getattr	= hfsplus_getattr,
 	.listxattr	= hfsplus_listxattr,
 	.fileattr_get	= hfsplus_fileattr_get,
 	.fileattr_set	= hfsplus_fileattr_set,
-};
+पूर्ण;
 
-static const struct file_operations hfsplus_file_operations = {
+अटल स्थिर काष्ठा file_operations hfsplus_file_operations = अणु
 	.llseek		= generic_file_llseek,
-	.read_iter	= generic_file_read_iter,
-	.write_iter	= generic_file_write_iter,
+	.पढ़ो_iter	= generic_file_पढ़ो_iter,
+	.ग_लिखो_iter	= generic_file_ग_लिखो_iter,
 	.mmap		= generic_file_mmap,
-	.splice_read	= generic_file_splice_read,
+	.splice_पढ़ो	= generic_file_splice_पढ़ो,
 	.fsync		= hfsplus_file_fsync,
-	.open		= hfsplus_file_open,
+	.खोलो		= hfsplus_file_खोलो,
 	.release	= hfsplus_file_release,
 	.unlocked_ioctl = hfsplus_ioctl,
-};
+पूर्ण;
 
-struct inode *hfsplus_new_inode(struct super_block *sb, struct inode *dir,
+काष्ठा inode *hfsplus_new_inode(काष्ठा super_block *sb, काष्ठा inode *dir,
 				umode_t mode)
-{
-	struct hfsplus_sb_info *sbi = HFSPLUS_SB(sb);
-	struct inode *inode = new_inode(sb);
-	struct hfsplus_inode_info *hip;
+अणु
+	काष्ठा hfsplus_sb_info *sbi = HFSPLUS_SB(sb);
+	काष्ठा inode *inode = new_inode(sb);
+	काष्ठा hfsplus_inode_info *hip;
 
-	if (!inode)
-		return NULL;
+	अगर (!inode)
+		वापस शून्य;
 
 	inode->i_ino = sbi->next_cnid++;
 	inode_init_owner(&init_user_ns, inode, dir, mode);
 	set_nlink(inode, 1);
-	inode->i_mtime = inode->i_atime = inode->i_ctime = current_time(inode);
+	inode->i_mसमय = inode->i_aसमय = inode->i_स_समय = current_समय(inode);
 
 	hip = HFSPLUS_I(inode);
-	INIT_LIST_HEAD(&hip->open_dir_list);
-	spin_lock_init(&hip->open_dir_lock);
+	INIT_LIST_HEAD(&hip->खोलो_dir_list);
+	spin_lock_init(&hip->खोलो_dir_lock);
 	mutex_init(&hip->extents_lock);
-	atomic_set(&hip->opencnt, 0);
+	atomic_set(&hip->खोलोcnt, 0);
 	hip->extent_state = 0;
 	hip->flags = 0;
 	hip->userflags = 0;
 	hip->subfolders = 0;
-	memset(hip->first_extents, 0, sizeof(hfsplus_extent_rec));
-	memset(hip->cached_extents, 0, sizeof(hfsplus_extent_rec));
+	स_रखो(hip->first_extents, 0, माप(hfsplus_extent_rec));
+	स_रखो(hip->cached_extents, 0, माप(hfsplus_extent_rec));
 	hip->alloc_blocks = 0;
 	hip->first_blocks = 0;
 	hip->cached_start = 0;
 	hip->cached_blocks = 0;
 	hip->phys_size = 0;
 	hip->fs_blocks = 0;
-	hip->rsrc_inode = NULL;
-	if (S_ISDIR(inode->i_mode)) {
+	hip->rsrc_inode = शून्य;
+	अगर (S_ISसूची(inode->i_mode)) अणु
 		inode->i_size = 2;
 		sbi->folder_count++;
 		inode->i_op = &hfsplus_dir_inode_operations;
 		inode->i_fop = &hfsplus_dir_operations;
-	} else if (S_ISREG(inode->i_mode)) {
+	पूर्ण अन्यथा अगर (S_ISREG(inode->i_mode)) अणु
 		sbi->file_count++;
 		inode->i_op = &hfsplus_file_inode_operations;
 		inode->i_fop = &hfsplus_file_operations;
 		inode->i_mapping->a_ops = &hfsplus_aops;
 		hip->clump_blocks = sbi->data_clump_blocks;
-	} else if (S_ISLNK(inode->i_mode)) {
+	पूर्ण अन्यथा अगर (S_ISLNK(inode->i_mode)) अणु
 		sbi->file_count++;
 		inode->i_op = &page_symlink_inode_operations;
 		inode_nohighmem(inode);
 		inode->i_mapping->a_ops = &hfsplus_aops;
 		hip->clump_blocks = 1;
-	} else
+	पूर्ण अन्यथा
 		sbi->file_count++;
 	insert_inode_hash(inode);
 	mark_inode_dirty(inode);
 	hfsplus_mark_mdb_dirty(sb);
 
-	return inode;
-}
+	वापस inode;
+पूर्ण
 
-void hfsplus_delete_inode(struct inode *inode)
-{
-	struct super_block *sb = inode->i_sb;
+व्योम hfsplus_delete_inode(काष्ठा inode *inode)
+अणु
+	काष्ठा super_block *sb = inode->i_sb;
 
-	if (S_ISDIR(inode->i_mode)) {
+	अगर (S_ISसूची(inode->i_mode)) अणु
 		HFSPLUS_SB(sb)->folder_count--;
 		hfsplus_mark_mdb_dirty(sb);
-		return;
-	}
+		वापस;
+	पूर्ण
 	HFSPLUS_SB(sb)->file_count--;
-	if (S_ISREG(inode->i_mode)) {
-		if (!inode->i_nlink) {
+	अगर (S_ISREG(inode->i_mode)) अणु
+		अगर (!inode->i_nlink) अणु
 			inode->i_size = 0;
 			hfsplus_file_truncate(inode);
-		}
-	} else if (S_ISLNK(inode->i_mode)) {
+		पूर्ण
+	पूर्ण अन्यथा अगर (S_ISLNK(inode->i_mode)) अणु
 		inode->i_size = 0;
 		hfsplus_file_truncate(inode);
-	}
+	पूर्ण
 	hfsplus_mark_mdb_dirty(sb);
-}
+पूर्ण
 
-void hfsplus_inode_read_fork(struct inode *inode, struct hfsplus_fork_raw *fork)
-{
-	struct super_block *sb = inode->i_sb;
-	struct hfsplus_sb_info *sbi = HFSPLUS_SB(sb);
-	struct hfsplus_inode_info *hip = HFSPLUS_I(inode);
+व्योम hfsplus_inode_पढ़ो_विभाजन(काष्ठा inode *inode, काष्ठा hfsplus_विभाजन_raw *विभाजन)
+अणु
+	काष्ठा super_block *sb = inode->i_sb;
+	काष्ठा hfsplus_sb_info *sbi = HFSPLUS_SB(sb);
+	काष्ठा hfsplus_inode_info *hip = HFSPLUS_I(inode);
 	u32 count;
-	int i;
+	पूर्णांक i;
 
-	memcpy(&hip->first_extents, &fork->extents, sizeof(hfsplus_extent_rec));
-	for (count = 0, i = 0; i < 8; i++)
-		count += be32_to_cpu(fork->extents[i].block_count);
+	स_नकल(&hip->first_extents, &विभाजन->extents, माप(hfsplus_extent_rec));
+	क्रम (count = 0, i = 0; i < 8; i++)
+		count += be32_to_cpu(विभाजन->extents[i].block_count);
 	hip->first_blocks = count;
-	memset(hip->cached_extents, 0, sizeof(hfsplus_extent_rec));
+	स_रखो(hip->cached_extents, 0, माप(hfsplus_extent_rec));
 	hip->cached_start = 0;
 	hip->cached_blocks = 0;
 
-	hip->alloc_blocks = be32_to_cpu(fork->total_blocks);
-	hip->phys_size = inode->i_size = be64_to_cpu(fork->total_size);
+	hip->alloc_blocks = be32_to_cpu(विभाजन->total_blocks);
+	hip->phys_size = inode->i_size = be64_to_cpu(विभाजन->total_size);
 	hip->fs_blocks =
 		(inode->i_size + sb->s_blocksize - 1) >> sb->s_blocksize_bits;
 	inode_set_bytes(inode, hip->fs_blocks << sb->s_blocksize_bits);
 	hip->clump_blocks =
-		be32_to_cpu(fork->clump_size) >> sbi->alloc_blksz_shift;
-	if (!hip->clump_blocks) {
+		be32_to_cpu(विभाजन->clump_size) >> sbi->alloc_blksz_shअगरt;
+	अगर (!hip->clump_blocks) अणु
 		hip->clump_blocks = HFSPLUS_IS_RSRC(inode) ?
 			sbi->rsrc_clump_blocks :
 			sbi->data_clump_blocks;
-	}
-}
+	पूर्ण
+पूर्ण
 
-void hfsplus_inode_write_fork(struct inode *inode,
-		struct hfsplus_fork_raw *fork)
-{
-	memcpy(&fork->extents, &HFSPLUS_I(inode)->first_extents,
-	       sizeof(hfsplus_extent_rec));
-	fork->total_size = cpu_to_be64(inode->i_size);
-	fork->total_blocks = cpu_to_be32(HFSPLUS_I(inode)->alloc_blocks);
-}
+व्योम hfsplus_inode_ग_लिखो_विभाजन(काष्ठा inode *inode,
+		काष्ठा hfsplus_विभाजन_raw *विभाजन)
+अणु
+	स_नकल(&विभाजन->extents, &HFSPLUS_I(inode)->first_extents,
+	       माप(hfsplus_extent_rec));
+	विभाजन->total_size = cpu_to_be64(inode->i_size);
+	विभाजन->total_blocks = cpu_to_be32(HFSPLUS_I(inode)->alloc_blocks);
+पूर्ण
 
-int hfsplus_cat_read_inode(struct inode *inode, struct hfs_find_data *fd)
-{
+पूर्णांक hfsplus_cat_पढ़ो_inode(काष्ठा inode *inode, काष्ठा hfs_find_data *fd)
+अणु
 	hfsplus_cat_entry entry;
-	int res = 0;
+	पूर्णांक res = 0;
 	u16 type;
 
-	type = hfs_bnode_read_u16(fd->bnode, fd->entryoffset);
+	type = hfs_bnode_पढ़ो_u16(fd->bnode, fd->entryoffset);
 
 	HFSPLUS_I(inode)->linkid = 0;
-	if (type == HFSPLUS_FOLDER) {
-		struct hfsplus_cat_folder *folder = &entry.folder;
+	अगर (type == HFSPLUS_FOLDER) अणु
+		काष्ठा hfsplus_cat_folder *folder = &entry.folder;
 
-		if (fd->entrylength < sizeof(struct hfsplus_cat_folder))
+		अगर (fd->entrylength < माप(काष्ठा hfsplus_cat_folder))
 			/* panic? */;
-		hfs_bnode_read(fd->bnode, &entry, fd->entryoffset,
-					sizeof(struct hfsplus_cat_folder));
+		hfs_bnode_पढ़ो(fd->bnode, &entry, fd->entryoffset,
+					माप(काष्ठा hfsplus_cat_folder));
 		hfsplus_get_perms(inode, &folder->permissions, 1);
 		set_nlink(inode, 1);
 		inode->i_size = 2 + be32_to_cpu(folder->valence);
-		inode->i_atime = hfsp_mt2ut(folder->access_date);
-		inode->i_mtime = hfsp_mt2ut(folder->content_mod_date);
-		inode->i_ctime = hfsp_mt2ut(folder->attribute_mod_date);
+		inode->i_aसमय = hfsp_mt2ut(folder->access_date);
+		inode->i_mसमय = hfsp_mt2ut(folder->content_mod_date);
+		inode->i_स_समय = hfsp_mt2ut(folder->attribute_mod_date);
 		HFSPLUS_I(inode)->create_date = folder->create_date;
 		HFSPLUS_I(inode)->fs_blocks = 0;
-		if (folder->flags & cpu_to_be16(HFSPLUS_HAS_FOLDER_COUNT)) {
+		अगर (folder->flags & cpu_to_be16(HFSPLUS_HAS_FOLDER_COUNT)) अणु
 			HFSPLUS_I(inode)->subfolders =
 				be32_to_cpu(folder->subfolders);
-		}
+		पूर्ण
 		inode->i_op = &hfsplus_dir_inode_operations;
 		inode->i_fop = &hfsplus_dir_operations;
-	} else if (type == HFSPLUS_FILE) {
-		struct hfsplus_cat_file *file = &entry.file;
+	पूर्ण अन्यथा अगर (type == HFSPLUS_खाता) अणु
+		काष्ठा hfsplus_cat_file *file = &entry.file;
 
-		if (fd->entrylength < sizeof(struct hfsplus_cat_file))
+		अगर (fd->entrylength < माप(काष्ठा hfsplus_cat_file))
 			/* panic? */;
-		hfs_bnode_read(fd->bnode, &entry, fd->entryoffset,
-					sizeof(struct hfsplus_cat_file));
+		hfs_bnode_पढ़ो(fd->bnode, &entry, fd->entryoffset,
+					माप(काष्ठा hfsplus_cat_file));
 
-		hfsplus_inode_read_fork(inode, HFSPLUS_IS_RSRC(inode) ?
-					&file->rsrc_fork : &file->data_fork);
+		hfsplus_inode_पढ़ो_विभाजन(inode, HFSPLUS_IS_RSRC(inode) ?
+					&file->rsrc_विभाजन : &file->data_विभाजन);
 		hfsplus_get_perms(inode, &file->permissions, 0);
 		set_nlink(inode, 1);
-		if (S_ISREG(inode->i_mode)) {
-			if (file->permissions.dev)
+		अगर (S_ISREG(inode->i_mode)) अणु
+			अगर (file->permissions.dev)
 				set_nlink(inode,
 					  be32_to_cpu(file->permissions.dev));
 			inode->i_op = &hfsplus_file_inode_operations;
 			inode->i_fop = &hfsplus_file_operations;
 			inode->i_mapping->a_ops = &hfsplus_aops;
-		} else if (S_ISLNK(inode->i_mode)) {
+		पूर्ण अन्यथा अगर (S_ISLNK(inode->i_mode)) अणु
 			inode->i_op = &page_symlink_inode_operations;
 			inode_nohighmem(inode);
 			inode->i_mapping->a_ops = &hfsplus_aops;
-		} else {
+		पूर्ण अन्यथा अणु
 			init_special_inode(inode, inode->i_mode,
 					   be32_to_cpu(file->permissions.dev));
-		}
-		inode->i_atime = hfsp_mt2ut(file->access_date);
-		inode->i_mtime = hfsp_mt2ut(file->content_mod_date);
-		inode->i_ctime = hfsp_mt2ut(file->attribute_mod_date);
+		पूर्ण
+		inode->i_aसमय = hfsp_mt2ut(file->access_date);
+		inode->i_mसमय = hfsp_mt2ut(file->content_mod_date);
+		inode->i_स_समय = hfsp_mt2ut(file->attribute_mod_date);
 		HFSPLUS_I(inode)->create_date = file->create_date;
-	} else {
+	पूर्ण अन्यथा अणु
 		pr_err("bad catalog entry used to create inode\n");
 		res = -EIO;
-	}
-	return res;
-}
+	पूर्ण
+	वापस res;
+पूर्ण
 
-int hfsplus_cat_write_inode(struct inode *inode)
-{
-	struct inode *main_inode = inode;
-	struct hfs_find_data fd;
+पूर्णांक hfsplus_cat_ग_लिखो_inode(काष्ठा inode *inode)
+अणु
+	काष्ठा inode *मुख्य_inode = inode;
+	काष्ठा hfs_find_data fd;
 	hfsplus_cat_entry entry;
 
-	if (HFSPLUS_IS_RSRC(inode))
-		main_inode = HFSPLUS_I(inode)->rsrc_inode;
+	अगर (HFSPLUS_IS_RSRC(inode))
+		मुख्य_inode = HFSPLUS_I(inode)->rsrc_inode;
 
-	if (!main_inode->i_nlink)
-		return 0;
+	अगर (!मुख्य_inode->i_nlink)
+		वापस 0;
 
-	if (hfs_find_init(HFSPLUS_SB(main_inode->i_sb)->cat_tree, &fd))
+	अगर (hfs_find_init(HFSPLUS_SB(मुख्य_inode->i_sb)->cat_tree, &fd))
 		/* panic? */
-		return -EIO;
+		वापस -EIO;
 
-	if (hfsplus_find_cat(main_inode->i_sb, main_inode->i_ino, &fd))
+	अगर (hfsplus_find_cat(मुख्य_inode->i_sb, मुख्य_inode->i_ino, &fd))
 		/* panic? */
-		goto out;
+		जाओ out;
 
-	if (S_ISDIR(main_inode->i_mode)) {
-		struct hfsplus_cat_folder *folder = &entry.folder;
+	अगर (S_ISसूची(मुख्य_inode->i_mode)) अणु
+		काष्ठा hfsplus_cat_folder *folder = &entry.folder;
 
-		if (fd.entrylength < sizeof(struct hfsplus_cat_folder))
+		अगर (fd.entrylength < माप(काष्ठा hfsplus_cat_folder))
 			/* panic? */;
-		hfs_bnode_read(fd.bnode, &entry, fd.entryoffset,
-					sizeof(struct hfsplus_cat_folder));
+		hfs_bnode_पढ़ो(fd.bnode, &entry, fd.entryoffset,
+					माप(काष्ठा hfsplus_cat_folder));
 		/* simple node checks? */
 		hfsplus_cat_set_perms(inode, &folder->permissions);
-		folder->access_date = hfsp_ut2mt(inode->i_atime);
-		folder->content_mod_date = hfsp_ut2mt(inode->i_mtime);
-		folder->attribute_mod_date = hfsp_ut2mt(inode->i_ctime);
+		folder->access_date = hfsp_ut2mt(inode->i_aसमय);
+		folder->content_mod_date = hfsp_ut2mt(inode->i_mसमय);
+		folder->attribute_mod_date = hfsp_ut2mt(inode->i_स_समय);
 		folder->valence = cpu_to_be32(inode->i_size - 2);
-		if (folder->flags & cpu_to_be16(HFSPLUS_HAS_FOLDER_COUNT)) {
+		अगर (folder->flags & cpu_to_be16(HFSPLUS_HAS_FOLDER_COUNT)) अणु
 			folder->subfolders =
 				cpu_to_be32(HFSPLUS_I(inode)->subfolders);
-		}
-		hfs_bnode_write(fd.bnode, &entry, fd.entryoffset,
-					 sizeof(struct hfsplus_cat_folder));
-	} else if (HFSPLUS_IS_RSRC(inode)) {
-		struct hfsplus_cat_file *file = &entry.file;
-		hfs_bnode_read(fd.bnode, &entry, fd.entryoffset,
-			       sizeof(struct hfsplus_cat_file));
-		hfsplus_inode_write_fork(inode, &file->rsrc_fork);
-		hfs_bnode_write(fd.bnode, &entry, fd.entryoffset,
-				sizeof(struct hfsplus_cat_file));
-	} else {
-		struct hfsplus_cat_file *file = &entry.file;
+		पूर्ण
+		hfs_bnode_ग_लिखो(fd.bnode, &entry, fd.entryoffset,
+					 माप(काष्ठा hfsplus_cat_folder));
+	पूर्ण अन्यथा अगर (HFSPLUS_IS_RSRC(inode)) अणु
+		काष्ठा hfsplus_cat_file *file = &entry.file;
+		hfs_bnode_पढ़ो(fd.bnode, &entry, fd.entryoffset,
+			       माप(काष्ठा hfsplus_cat_file));
+		hfsplus_inode_ग_लिखो_विभाजन(inode, &file->rsrc_विभाजन);
+		hfs_bnode_ग_लिखो(fd.bnode, &entry, fd.entryoffset,
+				माप(काष्ठा hfsplus_cat_file));
+	पूर्ण अन्यथा अणु
+		काष्ठा hfsplus_cat_file *file = &entry.file;
 
-		if (fd.entrylength < sizeof(struct hfsplus_cat_file))
+		अगर (fd.entrylength < माप(काष्ठा hfsplus_cat_file))
 			/* panic? */;
-		hfs_bnode_read(fd.bnode, &entry, fd.entryoffset,
-					sizeof(struct hfsplus_cat_file));
-		hfsplus_inode_write_fork(inode, &file->data_fork);
+		hfs_bnode_पढ़ो(fd.bnode, &entry, fd.entryoffset,
+					माप(काष्ठा hfsplus_cat_file));
+		hfsplus_inode_ग_लिखो_विभाजन(inode, &file->data_विभाजन);
 		hfsplus_cat_set_perms(inode, &file->permissions);
-		if (HFSPLUS_FLG_IMMUTABLE &
+		अगर (HFSPLUS_FLG_IMMUTABLE &
 				(file->permissions.rootflags |
 					file->permissions.userflags))
-			file->flags |= cpu_to_be16(HFSPLUS_FILE_LOCKED);
-		else
-			file->flags &= cpu_to_be16(~HFSPLUS_FILE_LOCKED);
-		file->access_date = hfsp_ut2mt(inode->i_atime);
-		file->content_mod_date = hfsp_ut2mt(inode->i_mtime);
-		file->attribute_mod_date = hfsp_ut2mt(inode->i_ctime);
-		hfs_bnode_write(fd.bnode, &entry, fd.entryoffset,
-					 sizeof(struct hfsplus_cat_file));
-	}
+			file->flags |= cpu_to_be16(HFSPLUS_खाता_LOCKED);
+		अन्यथा
+			file->flags &= cpu_to_be16(~HFSPLUS_खाता_LOCKED);
+		file->access_date = hfsp_ut2mt(inode->i_aसमय);
+		file->content_mod_date = hfsp_ut2mt(inode->i_mसमय);
+		file->attribute_mod_date = hfsp_ut2mt(inode->i_स_समय);
+		hfs_bnode_ग_लिखो(fd.bnode, &entry, fd.entryoffset,
+					 माप(काष्ठा hfsplus_cat_file));
+	पूर्ण
 
-	set_bit(HFSPLUS_I_CAT_DIRTY, &HFSPLUS_I(inode)->flags);
+	set_bit(HFSPLUS_I_CAT_सूचीTY, &HFSPLUS_I(inode)->flags);
 out:
-	hfs_find_exit(&fd);
-	return 0;
-}
+	hfs_find_निकास(&fd);
+	वापस 0;
+पूर्ण
 
-int hfsplus_fileattr_get(struct dentry *dentry, struct fileattr *fa)
-{
-	struct inode *inode = d_inode(dentry);
-	struct hfsplus_inode_info *hip = HFSPLUS_I(inode);
-	unsigned int flags = 0;
+पूर्णांक hfsplus_fileattr_get(काष्ठा dentry *dentry, काष्ठा fileattr *fa)
+अणु
+	काष्ठा inode *inode = d_inode(dentry);
+	काष्ठा hfsplus_inode_info *hip = HFSPLUS_I(inode);
+	अचिन्हित पूर्णांक flags = 0;
 
-	if (inode->i_flags & S_IMMUTABLE)
+	अगर (inode->i_flags & S_IMMUTABLE)
 		flags |= FS_IMMUTABLE_FL;
-	if (inode->i_flags & S_APPEND)
+	अगर (inode->i_flags & S_APPEND)
 		flags |= FS_APPEND_FL;
-	if (hip->userflags & HFSPLUS_FLG_NODUMP)
+	अगर (hip->userflags & HFSPLUS_FLG_NODUMP)
 		flags |= FS_NODUMP_FL;
 
 	fileattr_fill_flags(fa, flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int hfsplus_fileattr_set(struct user_namespace *mnt_userns,
-			 struct dentry *dentry, struct fileattr *fa)
-{
-	struct inode *inode = d_inode(dentry);
-	struct hfsplus_inode_info *hip = HFSPLUS_I(inode);
-	unsigned int new_fl = 0;
+पूर्णांक hfsplus_fileattr_set(काष्ठा user_namespace *mnt_userns,
+			 काष्ठा dentry *dentry, काष्ठा fileattr *fa)
+अणु
+	काष्ठा inode *inode = d_inode(dentry);
+	काष्ठा hfsplus_inode_info *hip = HFSPLUS_I(inode);
+	अचिन्हित पूर्णांक new_fl = 0;
 
-	if (fileattr_has_fsx(fa))
-		return -EOPNOTSUPP;
+	अगर (fileattr_has_fsx(fa))
+		वापस -EOPNOTSUPP;
 
-	/* don't silently ignore unsupported ext2 flags */
-	if (fa->flags & ~(FS_IMMUTABLE_FL|FS_APPEND_FL|FS_NODUMP_FL))
-		return -EOPNOTSUPP;
+	/* करोn't silently ignore unsupported ext2 flags */
+	अगर (fa->flags & ~(FS_IMMUTABLE_FL|FS_APPEND_FL|FS_NODUMP_FL))
+		वापस -EOPNOTSUPP;
 
-	if (fa->flags & FS_IMMUTABLE_FL)
+	अगर (fa->flags & FS_IMMUTABLE_FL)
 		new_fl |= S_IMMUTABLE;
 
-	if (fa->flags & FS_APPEND_FL)
+	अगर (fa->flags & FS_APPEND_FL)
 		new_fl |= S_APPEND;
 
 	inode_set_flags(inode, new_fl, S_IMMUTABLE | S_APPEND);
 
-	if (fa->flags & FS_NODUMP_FL)
+	अगर (fa->flags & FS_NODUMP_FL)
 		hip->userflags |= HFSPLUS_FLG_NODUMP;
-	else
+	अन्यथा
 		hip->userflags &= ~HFSPLUS_FLG_NODUMP;
 
-	inode->i_ctime = current_time(inode);
+	inode->i_स_समय = current_समय(inode);
 	mark_inode_dirty(inode);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

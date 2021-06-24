@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * linux/drivers/video/omap2/dss/core.c
  *
@@ -9,278 +10,278 @@
  * by Imre Deak.
  */
 
-#define DSS_SUBSYS_NAME "CORE"
+#घोषणा DSS_SUBSYS_NAME "CORE"
 
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/clk.h>
-#include <linux/err.h>
-#include <linux/platform_device.h>
-#include <linux/seq_file.h>
-#include <linux/debugfs.h>
-#include <linux/io.h>
-#include <linux/device.h>
-#include <linux/regulator/consumer.h>
-#include <linux/suspend.h>
-#include <linux/slab.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/err.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/seq_file.h>
+#समावेश <linux/debugfs.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/device.h>
+#समावेश <linux/regulator/consumer.h>
+#समावेश <linux/suspend.h>
+#समावेश <linux/slab.h>
 
-#include <video/omapfb_dss.h>
+#समावेश <video/omapfb_dss.h>
 
-#include "dss.h"
-#include "dss_features.h"
+#समावेश "dss.h"
+#समावेश "dss_features.h"
 
-static struct {
-	struct platform_device *pdev;
+अटल काष्ठा अणु
+	काष्ठा platक्रमm_device *pdev;
 
-	const char *default_display_name;
-} core;
+	स्थिर अक्षर *शेष_display_name;
+पूर्ण core;
 
-static char *def_disp_name;
-module_param_named(def_disp, def_disp_name, charp, 0);
+अटल अक्षर *def_disp_name;
+module_param_named(def_disp, def_disp_name, अक्षरp, 0);
 MODULE_PARM_DESC(def_disp, "default display name");
 
-const char *omapdss_get_default_display_name(void)
-{
-	return core.default_display_name;
-}
-EXPORT_SYMBOL(omapdss_get_default_display_name);
+स्थिर अक्षर *omapdss_get_शेष_display_name(व्योम)
+अणु
+	वापस core.शेष_display_name;
+पूर्ण
+EXPORT_SYMBOL(omapdss_get_शेष_display_name);
 
-enum omapdss_version omapdss_get_version(void)
-{
-	struct omap_dss_board_info *pdata = core.pdev->dev.platform_data;
-	return pdata->version;
-}
+क्रमागत omapdss_version omapdss_get_version(व्योम)
+अणु
+	काष्ठा omap_dss_board_info *pdata = core.pdev->dev.platक्रमm_data;
+	वापस pdata->version;
+पूर्ण
 EXPORT_SYMBOL(omapdss_get_version);
 
-struct platform_device *dss_get_core_pdev(void)
-{
-	return core.pdev;
-}
+काष्ठा platक्रमm_device *dss_get_core_pdev(व्योम)
+अणु
+	वापस core.pdev;
+पूर्ण
 
-int dss_dsi_enable_pads(int dsi_id, unsigned lane_mask)
-{
-	struct omap_dss_board_info *board_data = core.pdev->dev.platform_data;
+पूर्णांक dss_dsi_enable_pads(पूर्णांक dsi_id, अचिन्हित lane_mask)
+अणु
+	काष्ठा omap_dss_board_info *board_data = core.pdev->dev.platक्रमm_data;
 
-	if (!board_data->dsi_enable_pads)
-		return -ENOENT;
+	अगर (!board_data->dsi_enable_pads)
+		वापस -ENOENT;
 
-	return board_data->dsi_enable_pads(dsi_id, lane_mask);
-}
+	वापस board_data->dsi_enable_pads(dsi_id, lane_mask);
+पूर्ण
 
-void dss_dsi_disable_pads(int dsi_id, unsigned lane_mask)
-{
-	struct omap_dss_board_info *board_data = core.pdev->dev.platform_data;
+व्योम dss_dsi_disable_pads(पूर्णांक dsi_id, अचिन्हित lane_mask)
+अणु
+	काष्ठा omap_dss_board_info *board_data = core.pdev->dev.platक्रमm_data;
 
-	if (!board_data->dsi_disable_pads)
-		return;
+	अगर (!board_data->dsi_disable_pads)
+		वापस;
 
-	return board_data->dsi_disable_pads(dsi_id, lane_mask);
-}
+	वापस board_data->dsi_disable_pads(dsi_id, lane_mask);
+पूर्ण
 
-int dss_set_min_bus_tput(struct device *dev, unsigned long tput)
-{
-	struct omap_dss_board_info *pdata = core.pdev->dev.platform_data;
+पूर्णांक dss_set_min_bus_tput(काष्ठा device *dev, अचिन्हित दीर्घ tput)
+अणु
+	काष्ठा omap_dss_board_info *pdata = core.pdev->dev.platक्रमm_data;
 
-	if (pdata->set_min_bus_tput)
-		return pdata->set_min_bus_tput(dev, tput);
-	else
-		return 0;
-}
+	अगर (pdata->set_min_bus_tput)
+		वापस pdata->set_min_bus_tput(dev, tput);
+	अन्यथा
+		वापस 0;
+पूर्ण
 
-#if defined(CONFIG_FB_OMAP2_DSS_DEBUGFS)
-static int dss_show(struct seq_file *s, void *unused)
-{
-	void (*func)(struct seq_file *) = s->private;
+#अगर defined(CONFIG_FB_OMAP2_DSS_DEBUGFS)
+अटल पूर्णांक dss_show(काष्ठा seq_file *s, व्योम *unused)
+अणु
+	व्योम (*func)(काष्ठा seq_file *) = s->निजी;
 	func(s);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 DEFINE_SHOW_ATTRIBUTE(dss);
 
-static struct dentry *dss_debugfs_dir;
+अटल काष्ठा dentry *dss_debugfs_dir;
 
-static void dss_initialize_debugfs(void)
-{
-	dss_debugfs_dir = debugfs_create_dir("omapdss", NULL);
+अटल व्योम dss_initialize_debugfs(व्योम)
+अणु
+	dss_debugfs_dir = debugfs_create_dir("omapdss", शून्य);
 
 	debugfs_create_file("clk", S_IRUGO, dss_debugfs_dir,
-			&dss_debug_dump_clocks, &dss_fops);
-}
+			&dss_debug_dump_घड़ीs, &dss_fops);
+पूर्ण
 
-static void dss_uninitialize_debugfs(void)
-{
-	debugfs_remove_recursive(dss_debugfs_dir);
-}
+अटल व्योम dss_uninitialize_debugfs(व्योम)
+अणु
+	debugfs_हटाओ_recursive(dss_debugfs_dir);
+पूर्ण
 
-void dss_debugfs_create_file(const char *name, void (*write)(struct seq_file *))
-{
-	debugfs_create_file(name, S_IRUGO, dss_debugfs_dir, write, &dss_fops);
-}
-#else /* CONFIG_FB_OMAP2_DSS_DEBUGFS */
-static inline void dss_initialize_debugfs(void)
-{
-}
-static inline void dss_uninitialize_debugfs(void)
-{
-}
-void dss_debugfs_create_file(const char *name, void (*write)(struct seq_file *))
-{
-}
-#endif /* CONFIG_FB_OMAP2_DSS_DEBUGFS */
+व्योम dss_debugfs_create_file(स्थिर अक्षर *name, व्योम (*ग_लिखो)(काष्ठा seq_file *))
+अणु
+	debugfs_create_file(name, S_IRUGO, dss_debugfs_dir, ग_लिखो, &dss_fops);
+पूर्ण
+#अन्यथा /* CONFIG_FB_OMAP2_DSS_DEBUGFS */
+अटल अंतरभूत व्योम dss_initialize_debugfs(व्योम)
+अणु
+पूर्ण
+अटल अंतरभूत व्योम dss_uninitialize_debugfs(व्योम)
+अणु
+पूर्ण
+व्योम dss_debugfs_create_file(स्थिर अक्षर *name, व्योम (*ग_लिखो)(काष्ठा seq_file *))
+अणु
+पूर्ण
+#पूर्ण_अगर /* CONFIG_FB_OMAP2_DSS_DEBUGFS */
 
 /* PLATFORM DEVICE */
-static int omap_dss_pm_notif(struct notifier_block *b, unsigned long v, void *d)
-{
+अटल पूर्णांक omap_dss_pm_notअगर(काष्ठा notअगरier_block *b, अचिन्हित दीर्घ v, व्योम *d)
+अणु
 	DSSDBG("pm notif %lu\n", v);
 
-	switch (v) {
-	case PM_SUSPEND_PREPARE:
-	case PM_HIBERNATION_PREPARE:
-	case PM_RESTORE_PREPARE:
+	चयन (v) अणु
+	हाल PM_SUSPEND_PREPARE:
+	हाल PM_HIBERNATION_PREPARE:
+	हाल PM_RESTORE_PREPARE:
 		DSSDBG("suspending displays\n");
-		return dss_suspend_all_devices();
+		वापस dss_suspend_all_devices();
 
-	case PM_POST_SUSPEND:
-	case PM_POST_HIBERNATION:
-	case PM_POST_RESTORE:
+	हाल PM_POST_SUSPEND:
+	हाल PM_POST_HIBERNATION:
+	हाल PM_POST_RESTORE:
 		DSSDBG("resuming displays\n");
-		return dss_resume_all_devices();
+		वापस dss_resume_all_devices();
 
-	default:
-		return 0;
-	}
-}
+	शेष:
+		वापस 0;
+	पूर्ण
+पूर्ण
 
-static struct notifier_block omap_dss_pm_notif_block = {
-	.notifier_call = omap_dss_pm_notif,
-};
+अटल काष्ठा notअगरier_block omap_dss_pm_notअगर_block = अणु
+	.notअगरier_call = omap_dss_pm_notअगर,
+पूर्ण;
 
-static int __init omap_dss_probe(struct platform_device *pdev)
-{
+अटल पूर्णांक __init omap_dss_probe(काष्ठा platक्रमm_device *pdev)
+अणु
 	core.pdev = pdev;
 
 	dss_features_init(omapdss_get_version());
 
 	dss_initialize_debugfs();
 
-	if (def_disp_name)
-		core.default_display_name = def_disp_name;
+	अगर (def_disp_name)
+		core.शेष_display_name = def_disp_name;
 
-	register_pm_notifier(&omap_dss_pm_notif_block);
+	रेजिस्टर_pm_notअगरier(&omap_dss_pm_notअगर_block);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int omap_dss_remove(struct platform_device *pdev)
-{
-	unregister_pm_notifier(&omap_dss_pm_notif_block);
+अटल पूर्णांक omap_dss_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	unरेजिस्टर_pm_notअगरier(&omap_dss_pm_notअगर_block);
 
 	dss_uninitialize_debugfs();
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void omap_dss_shutdown(struct platform_device *pdev)
-{
+अटल व्योम omap_dss_shutकरोwn(काष्ठा platक्रमm_device *pdev)
+अणु
 	DSSDBG("shutdown\n");
 	dss_disable_all_devices();
-}
+पूर्ण
 
-static struct platform_driver omap_dss_driver = {
-	.remove         = omap_dss_remove,
-	.shutdown	= omap_dss_shutdown,
-	.driver         = {
+अटल काष्ठा platक्रमm_driver omap_dss_driver = अणु
+	.हटाओ         = omap_dss_हटाओ,
+	.shutकरोwn	= omap_dss_shutकरोwn,
+	.driver         = अणु
 		.name   = "omapdss",
-	},
-};
+	पूर्ण,
+पूर्ण;
 
 /* INIT */
-static int (*dss_output_drv_reg_funcs[])(void) __initdata = {
-	dss_init_platform_driver,
-	dispc_init_platform_driver,
-#ifdef CONFIG_FB_OMAP2_DSS_DSI
-	dsi_init_platform_driver,
-#endif
-#ifdef CONFIG_FB_OMAP2_DSS_DPI
-	dpi_init_platform_driver,
-#endif
-#ifdef CONFIG_FB_OMAP2_DSS_SDI
-	sdi_init_platform_driver,
-#endif
-#ifdef CONFIG_FB_OMAP2_DSS_VENC
-	venc_init_platform_driver,
-#endif
-#ifdef CONFIG_FB_OMAP4_DSS_HDMI
-	hdmi4_init_platform_driver,
-#endif
-#ifdef CONFIG_FB_OMAP5_DSS_HDMI
-	hdmi5_init_platform_driver,
-#endif
-};
+अटल पूर्णांक (*dss_output_drv_reg_funcs[])(व्योम) __initdata = अणु
+	dss_init_platक्रमm_driver,
+	dispc_init_platक्रमm_driver,
+#अगर_घोषित CONFIG_FB_OMAP2_DSS_DSI
+	dsi_init_platक्रमm_driver,
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_FB_OMAP2_DSS_DPI
+	dpi_init_platक्रमm_driver,
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_FB_OMAP2_DSS_SDI
+	sdi_init_platक्रमm_driver,
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_FB_OMAP2_DSS_VENC
+	venc_init_platक्रमm_driver,
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_FB_OMAP4_DSS_HDMI
+	hdmi4_init_platक्रमm_driver,
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_FB_OMAP5_DSS_HDMI
+	hdmi5_init_platक्रमm_driver,
+#पूर्ण_अगर
+पूर्ण;
 
-static void (*dss_output_drv_unreg_funcs[])(void) = {
-#ifdef CONFIG_FB_OMAP5_DSS_HDMI
-	hdmi5_uninit_platform_driver,
-#endif
-#ifdef CONFIG_FB_OMAP4_DSS_HDMI
-	hdmi4_uninit_platform_driver,
-#endif
-#ifdef CONFIG_FB_OMAP2_DSS_VENC
-	venc_uninit_platform_driver,
-#endif
-#ifdef CONFIG_FB_OMAP2_DSS_SDI
-	sdi_uninit_platform_driver,
-#endif
-#ifdef CONFIG_FB_OMAP2_DSS_DPI
-	dpi_uninit_platform_driver,
-#endif
-#ifdef CONFIG_FB_OMAP2_DSS_DSI
-	dsi_uninit_platform_driver,
-#endif
-	dispc_uninit_platform_driver,
-	dss_uninit_platform_driver,
-};
+अटल व्योम (*dss_output_drv_unreg_funcs[])(व्योम) = अणु
+#अगर_घोषित CONFIG_FB_OMAP5_DSS_HDMI
+	hdmi5_uninit_platक्रमm_driver,
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_FB_OMAP4_DSS_HDMI
+	hdmi4_uninit_platक्रमm_driver,
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_FB_OMAP2_DSS_VENC
+	venc_uninit_platक्रमm_driver,
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_FB_OMAP2_DSS_SDI
+	sdi_uninit_platक्रमm_driver,
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_FB_OMAP2_DSS_DPI
+	dpi_uninit_platक्रमm_driver,
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_FB_OMAP2_DSS_DSI
+	dsi_uninit_platक्रमm_driver,
+#पूर्ण_अगर
+	dispc_uninit_platक्रमm_driver,
+	dss_uninit_platक्रमm_driver,
+पूर्ण;
 
-static int __init omap_dss_init(void)
-{
-	int r;
-	int i;
+अटल पूर्णांक __init omap_dss_init(व्योम)
+अणु
+	पूर्णांक r;
+	पूर्णांक i;
 
-	r = platform_driver_probe(&omap_dss_driver, omap_dss_probe);
-	if (r)
-		return r;
+	r = platक्रमm_driver_probe(&omap_dss_driver, omap_dss_probe);
+	अगर (r)
+		वापस r;
 
-	for (i = 0; i < ARRAY_SIZE(dss_output_drv_reg_funcs); ++i) {
+	क्रम (i = 0; i < ARRAY_SIZE(dss_output_drv_reg_funcs); ++i) अणु
 		r = dss_output_drv_reg_funcs[i]();
-		if (r)
-			goto err_reg;
-	}
+		अगर (r)
+			जाओ err_reg;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 err_reg:
-	for (i = ARRAY_SIZE(dss_output_drv_reg_funcs) - i;
+	क्रम (i = ARRAY_SIZE(dss_output_drv_reg_funcs) - i;
 			i < ARRAY_SIZE(dss_output_drv_reg_funcs);
 			++i)
 		dss_output_drv_unreg_funcs[i]();
 
-	platform_driver_unregister(&omap_dss_driver);
+	platक्रमm_driver_unरेजिस्टर(&omap_dss_driver);
 
-	return r;
-}
+	वापस r;
+पूर्ण
 
-static void __exit omap_dss_exit(void)
-{
-	int i;
+अटल व्योम __निकास omap_dss_निकास(व्योम)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < ARRAY_SIZE(dss_output_drv_unreg_funcs); ++i)
+	क्रम (i = 0; i < ARRAY_SIZE(dss_output_drv_unreg_funcs); ++i)
 		dss_output_drv_unreg_funcs[i]();
 
-	platform_driver_unregister(&omap_dss_driver);
-}
+	platक्रमm_driver_unरेजिस्टर(&omap_dss_driver);
+पूर्ण
 
 module_init(omap_dss_init);
-module_exit(omap_dss_exit);
+module_निकास(omap_dss_निकास);
 
 MODULE_AUTHOR("Tomi Valkeinen <tomi.valkeinen@nokia.com>");
 MODULE_DESCRIPTION("OMAP2/3 Display Subsystem");

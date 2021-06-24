@@ -1,31 +1,32 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * oxfw.c - a part of driver for OXFW970/971 based devices
+ * oxfw.c - a part of driver क्रम OXFW970/971 based devices
  *
  * Copyright (c) Clemens Ladisch <clemens@ladisch.de>
  */
 
-#include "oxfw.h"
+#समावेश "oxfw.h"
 
-#define OXFORD_FIRMWARE_ID_ADDRESS	(CSR_REGISTER_BASE + 0x50000)
+#घोषणा OXFORD_FIRMWARE_ID_ADDRESS	(CSR_REGISTER_BASE + 0x50000)
 /* 0x970?vvvv or 0x971?vvvv, where vvvv = firmware version */
 
-#define OXFORD_HARDWARE_ID_ADDRESS	(CSR_REGISTER_BASE + 0x90020)
-#define OXFORD_HARDWARE_ID_OXFW970	0x39443841
-#define OXFORD_HARDWARE_ID_OXFW971	0x39373100
+#घोषणा OXFORD_HARDWARE_ID_ADDRESS	(CSR_REGISTER_BASE + 0x90020)
+#घोषणा OXFORD_HARDWARE_ID_OXFW970	0x39443841
+#घोषणा OXFORD_HARDWARE_ID_OXFW971	0x39373100
 
-#define VENDOR_LOUD		0x000ff2
-#define VENDOR_GRIFFIN		0x001292
-#define VENDOR_BEHRINGER	0x001564
-#define VENDOR_LACIE		0x00d04b
-#define VENDOR_TASCAM		0x00022e
-#define OUI_STANTON		0x001260
-#define OUI_APOGEE		0x0003db
+#घोषणा VENDOR_LOUD		0x000ff2
+#घोषणा VENDOR_GRIFFIN		0x001292
+#घोषणा VENDOR_BEHRINGER	0x001564
+#घोषणा VENDOR_LACIE		0x00d04b
+#घोषणा VENDOR_TASCAM		0x00022e
+#घोषणा OUI_STANTON		0x001260
+#घोषणा OUI_APOGEE		0x0003db
 
-#define MODEL_SATELLITE		0x00200f
+#घोषणा MODEL_SATELLITE		0x00200f
 
-#define SPECIFIER_1394TA	0x00a02d
-#define VERSION_AVC		0x010001
+#घोषणा SPECIFIER_1394TA	0x00a02d
+#घोषणा VERSION_AVC		0x010001
 
 MODULE_DESCRIPTION("Oxford Semiconductor FW970/971 driver");
 MODULE_AUTHOR("Clemens Ladisch <clemens@ladisch.de>");
@@ -33,393 +34,393 @@ MODULE_LICENSE("GPL v2");
 MODULE_ALIAS("snd-firewire-speakers");
 MODULE_ALIAS("snd-scs1x");
 
-struct compat_info {
-	const char *driver_name;
-	const char *vendor_name;
-	const char *model_name;
-};
+काष्ठा compat_info अणु
+	स्थिर अक्षर *driver_name;
+	स्थिर अक्षर *venकरोr_name;
+	स्थिर अक्षर *model_name;
+पूर्ण;
 
-static bool detect_loud_models(struct fw_unit *unit)
-{
-	const char *const models[] = {
+अटल bool detect_loud_models(काष्ठा fw_unit *unit)
+अणु
+	स्थिर अक्षर *स्थिर models[] = अणु
 		"Onyxi",
 		"Onyx-i",
 		"Onyx 1640i",
 		"d.Pro",
 		"Mackie Onyx Satellite",
 		"Tapco LINK.firewire 4x6",
-		"U.420"};
-	char model[32];
-	int err;
+		"U.420"पूर्ण;
+	अक्षर model[32];
+	पूर्णांक err;
 
 	err = fw_csr_string(unit->directory, CSR_MODEL,
-			    model, sizeof(model));
-	if (err < 0)
-		return false;
+			    model, माप(model));
+	अगर (err < 0)
+		वापस false;
 
-	return match_string(models, ARRAY_SIZE(models), model) >= 0;
-}
+	वापस match_string(models, ARRAY_SIZE(models), model) >= 0;
+पूर्ण
 
-static int name_card(struct snd_oxfw *oxfw)
-{
-	struct fw_device *fw_dev = fw_parent_device(oxfw->unit);
-	const struct compat_info *info;
-	char vendor[24];
-	char model[32];
-	const char *d, *v, *m;
+अटल पूर्णांक name_card(काष्ठा snd_oxfw *oxfw)
+अणु
+	काष्ठा fw_device *fw_dev = fw_parent_device(oxfw->unit);
+	स्थिर काष्ठा compat_info *info;
+	अक्षर venकरोr[24];
+	अक्षर model[32];
+	स्थिर अक्षर *d, *v, *m;
 	u32 firmware;
-	int err;
+	पूर्णांक err;
 
-	/* get vendor name from root directory */
+	/* get venकरोr name from root directory */
 	err = fw_csr_string(fw_dev->config_rom + 5, CSR_VENDOR,
-			    vendor, sizeof(vendor));
-	if (err < 0)
-		goto end;
+			    venकरोr, माप(venकरोr));
+	अगर (err < 0)
+		जाओ end;
 
 	/* get model name from unit directory */
 	err = fw_csr_string(oxfw->unit->directory, CSR_MODEL,
-			    model, sizeof(model));
-	if (err < 0)
-		goto end;
+			    model, माप(model));
+	अगर (err < 0)
+		जाओ end;
 
 	err = snd_fw_transaction(oxfw->unit, TCODE_READ_QUADLET_REQUEST,
 				 OXFORD_FIRMWARE_ID_ADDRESS, &firmware, 4, 0);
-	if (err < 0)
-		goto end;
+	अगर (err < 0)
+		जाओ end;
 	be32_to_cpus(&firmware);
 
 	/* to apply card definitions */
-	if (oxfw->entry->vendor_id == VENDOR_GRIFFIN ||
-	    oxfw->entry->vendor_id == VENDOR_LACIE) {
-		info = (const struct compat_info *)oxfw->entry->driver_data;
+	अगर (oxfw->entry->venकरोr_id == VENDOR_GRIFFIN ||
+	    oxfw->entry->venकरोr_id == VENDOR_LACIE) अणु
+		info = (स्थिर काष्ठा compat_info *)oxfw->entry->driver_data;
 		d = info->driver_name;
-		v = info->vendor_name;
+		v = info->venकरोr_name;
 		m = info->model_name;
-	} else {
+	पूर्ण अन्यथा अणु
 		d = "OXFW";
-		v = vendor;
+		v = venकरोr;
 		m = model;
-	}
+	पूर्ण
 
-	strcpy(oxfw->card->driver, d);
-	strcpy(oxfw->card->mixername, m);
-	strcpy(oxfw->card->shortname, m);
+	म_नकल(oxfw->card->driver, d);
+	म_नकल(oxfw->card->mixername, m);
+	म_नकल(oxfw->card->लघुname, m);
 
-	snprintf(oxfw->card->longname, sizeof(oxfw->card->longname),
+	snम_लिखो(oxfw->card->दीर्घname, माप(oxfw->card->दीर्घname),
 		 "%s %s (OXFW%x %04x), GUID %08x%08x at %s, S%d",
 		 v, m, firmware >> 20, firmware & 0xffff,
 		 fw_dev->config_rom[3], fw_dev->config_rom[4],
 		 dev_name(&oxfw->unit->device), 100 << fw_dev->max_speed);
 end:
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void oxfw_card_free(struct snd_card *card)
-{
-	struct snd_oxfw *oxfw = card->private_data;
+अटल व्योम oxfw_card_मुक्त(काष्ठा snd_card *card)
+अणु
+	काष्ठा snd_oxfw *oxfw = card->निजी_data;
 
-	if (oxfw->has_output || oxfw->has_input)
+	अगर (oxfw->has_output || oxfw->has_input)
 		snd_oxfw_stream_destroy_duplex(oxfw);
-}
+पूर्ण
 
-static int detect_quirks(struct snd_oxfw *oxfw)
-{
-	struct fw_device *fw_dev = fw_parent_device(oxfw->unit);
-	struct fw_csr_iterator it;
-	int key, val;
-	int vendor, model;
+अटल पूर्णांक detect_quirks(काष्ठा snd_oxfw *oxfw)
+अणु
+	काष्ठा fw_device *fw_dev = fw_parent_device(oxfw->unit);
+	काष्ठा fw_csr_iterator it;
+	पूर्णांक key, val;
+	पूर्णांक venकरोr, model;
 
 	/*
-	 * Add ALSA control elements for two models to keep compatibility to
+	 * Add ALSA control elements क्रम two models to keep compatibility to
 	 * old firewire-speaker module.
 	 */
-	if (oxfw->entry->vendor_id == VENDOR_GRIFFIN)
-		return snd_oxfw_add_spkr(oxfw, false);
-	if (oxfw->entry->vendor_id == VENDOR_LACIE)
-		return snd_oxfw_add_spkr(oxfw, true);
+	अगर (oxfw->entry->venकरोr_id == VENDOR_GRIFFIN)
+		वापस snd_oxfw_add_spkr(oxfw, false);
+	अगर (oxfw->entry->venकरोr_id == VENDOR_LACIE)
+		वापस snd_oxfw_add_spkr(oxfw, true);
 
 	/*
-	 * Stanton models supports asynchronous transactions for unique MIDI
+	 * Stanton models supports asynchronous transactions क्रम unique MIDI
 	 * messages.
 	 */
-	if (oxfw->entry->vendor_id == OUI_STANTON) {
+	अगर (oxfw->entry->venकरोr_id == OUI_STANTON) अणु
 		/* No physical MIDI ports. */
 		oxfw->midi_input_ports = 0;
 		oxfw->midi_output_ports = 0;
 
-		return snd_oxfw_scs1x_add(oxfw);
-	}
+		वापस snd_oxfw_scs1x_add(oxfw);
+	पूर्ण
 
 	/*
 	 * TASCAM FireOne has physical control and requires a pair of additional
 	 * MIDI ports.
 	 */
-	if (oxfw->entry->vendor_id == VENDOR_TASCAM) {
+	अगर (oxfw->entry->venकरोr_id == VENDOR_TASCAM) अणु
 		oxfw->midi_input_ports++;
 		oxfw->midi_output_ports++;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	/* Seek from Root Directory of Config ROM. */
-	vendor = model = 0;
+	venकरोr = model = 0;
 	fw_csr_iterator_init(&it, fw_dev->config_rom + 5);
-	while (fw_csr_iterator_next(&it, &key, &val)) {
-		if (key == CSR_VENDOR)
-			vendor = val;
-		else if (key == CSR_MODEL)
+	जबतक (fw_csr_iterator_next(&it, &key, &val)) अणु
+		अगर (key == CSR_VENDOR)
+			venकरोr = val;
+		अन्यथा अगर (key == CSR_MODEL)
 			model = val;
-	}
+	पूर्ण
 
 	/*
 	 * Mackie Onyx Satellite with base station has a quirk to report a wrong
-	 * value in 'dbs' field of CIP header against its format information.
+	 * value in 'dbs' field of CIP header against its क्रमmat inक्रमmation.
 	 */
-	if (vendor == VENDOR_LOUD && model == MODEL_SATELLITE)
+	अगर (venकरोr == VENDOR_LOUD && model == MODEL_SATELLITE)
 		oxfw->wrong_dbs = true;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void do_registration(struct work_struct *work)
-{
-	struct snd_oxfw *oxfw = container_of(work, struct snd_oxfw, dwork.work);
-	int err;
+अटल व्योम करो_registration(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा snd_oxfw *oxfw = container_of(work, काष्ठा snd_oxfw, dwork.work);
+	पूर्णांक err;
 
-	if (oxfw->registered)
-		return;
+	अगर (oxfw->रेजिस्टरed)
+		वापस;
 
-	err = snd_card_new(&oxfw->unit->device, -1, NULL, THIS_MODULE, 0,
+	err = snd_card_new(&oxfw->unit->device, -1, शून्य, THIS_MODULE, 0,
 			   &oxfw->card);
-	if (err < 0)
-		return;
-	oxfw->card->private_free = oxfw_card_free;
-	oxfw->card->private_data = oxfw;
+	अगर (err < 0)
+		वापस;
+	oxfw->card->निजी_मुक्त = oxfw_card_मुक्त;
+	oxfw->card->निजी_data = oxfw;
 
 	err = name_card(oxfw);
-	if (err < 0)
-		goto error;
+	अगर (err < 0)
+		जाओ error;
 
 	err = snd_oxfw_stream_discover(oxfw);
-	if (err < 0)
-		goto error;
+	अगर (err < 0)
+		जाओ error;
 
 	err = detect_quirks(oxfw);
-	if (err < 0)
-		goto error;
+	अगर (err < 0)
+		जाओ error;
 
-	if (oxfw->has_output || oxfw->has_input) {
+	अगर (oxfw->has_output || oxfw->has_input) अणु
 		err = snd_oxfw_stream_init_duplex(oxfw);
-		if (err < 0)
-			goto error;
+		अगर (err < 0)
+			जाओ error;
 
 		err = snd_oxfw_create_pcm(oxfw);
-		if (err < 0)
-			goto error;
+		अगर (err < 0)
+			जाओ error;
 
 		snd_oxfw_proc_init(oxfw);
 
 		err = snd_oxfw_create_midi(oxfw);
-		if (err < 0)
-			goto error;
+		अगर (err < 0)
+			जाओ error;
 
 		err = snd_oxfw_create_hwdep(oxfw);
-		if (err < 0)
-			goto error;
-	}
+		अगर (err < 0)
+			जाओ error;
+	पूर्ण
 
-	err = snd_card_register(oxfw->card);
-	if (err < 0)
-		goto error;
+	err = snd_card_रेजिस्टर(oxfw->card);
+	अगर (err < 0)
+		जाओ error;
 
-	oxfw->registered = true;
+	oxfw->रेजिस्टरed = true;
 
-	return;
+	वापस;
 error:
-	snd_card_free(oxfw->card);
+	snd_card_मुक्त(oxfw->card);
 	dev_info(&oxfw->unit->device,
 		 "Sound card registration failed: %d\n", err);
-}
+पूर्ण
 
-static int oxfw_probe(struct fw_unit *unit,
-		      const struct ieee1394_device_id *entry)
-{
-	struct snd_oxfw *oxfw;
+अटल पूर्णांक oxfw_probe(काष्ठा fw_unit *unit,
+		      स्थिर काष्ठा ieee1394_device_id *entry)
+अणु
+	काष्ठा snd_oxfw *oxfw;
 
-	if (entry->vendor_id == VENDOR_LOUD && !detect_loud_models(unit))
-		return -ENODEV;
+	अगर (entry->venकरोr_id == VENDOR_LOUD && !detect_loud_models(unit))
+		वापस -ENODEV;
 
 	/* Allocate this independent of sound card instance. */
-	oxfw = devm_kzalloc(&unit->device, sizeof(struct snd_oxfw), GFP_KERNEL);
-	if (!oxfw)
-		return -ENOMEM;
+	oxfw = devm_kzalloc(&unit->device, माप(काष्ठा snd_oxfw), GFP_KERNEL);
+	अगर (!oxfw)
+		वापस -ENOMEM;
 	oxfw->unit = fw_unit_get(unit);
 	dev_set_drvdata(&unit->device, oxfw);
 
 	oxfw->entry = entry;
 	mutex_init(&oxfw->mutex);
 	spin_lock_init(&oxfw->lock);
-	init_waitqueue_head(&oxfw->hwdep_wait);
+	init_रुकोqueue_head(&oxfw->hwdep_रुको);
 
-	/* Allocate and register this sound card later. */
-	INIT_DEFERRABLE_WORK(&oxfw->dwork, do_registration);
+	/* Allocate and रेजिस्टर this sound card later. */
+	INIT_DEFERRABLE_WORK(&oxfw->dwork, करो_registration);
 	snd_fw_schedule_registration(unit, &oxfw->dwork);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void oxfw_bus_reset(struct fw_unit *unit)
-{
-	struct snd_oxfw *oxfw = dev_get_drvdata(&unit->device);
+अटल व्योम oxfw_bus_reset(काष्ठा fw_unit *unit)
+अणु
+	काष्ठा snd_oxfw *oxfw = dev_get_drvdata(&unit->device);
 
-	if (!oxfw->registered)
+	अगर (!oxfw->रेजिस्टरed)
 		snd_fw_schedule_registration(unit, &oxfw->dwork);
 
 	fcp_bus_reset(oxfw->unit);
 
-	if (oxfw->registered) {
-		if (oxfw->has_output || oxfw->has_input) {
+	अगर (oxfw->रेजिस्टरed) अणु
+		अगर (oxfw->has_output || oxfw->has_input) अणु
 			mutex_lock(&oxfw->mutex);
 			snd_oxfw_stream_update_duplex(oxfw);
 			mutex_unlock(&oxfw->mutex);
-		}
+		पूर्ण
 
-		if (oxfw->entry->vendor_id == OUI_STANTON)
+		अगर (oxfw->entry->venकरोr_id == OUI_STANTON)
 			snd_oxfw_scs1x_update(oxfw);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void oxfw_remove(struct fw_unit *unit)
-{
-	struct snd_oxfw *oxfw = dev_get_drvdata(&unit->device);
+अटल व्योम oxfw_हटाओ(काष्ठा fw_unit *unit)
+अणु
+	काष्ठा snd_oxfw *oxfw = dev_get_drvdata(&unit->device);
 
 	/*
-	 * Confirm to stop the work for registration before the sound card is
+	 * Confirm to stop the work क्रम registration beक्रमe the sound card is
 	 * going to be released. The work is not scheduled again because bus
 	 * reset handler is not called anymore.
 	 */
 	cancel_delayed_work_sync(&oxfw->dwork);
 
-	if (oxfw->registered) {
-		// Block till all of ALSA character devices are released.
-		snd_card_free(oxfw->card);
-	}
+	अगर (oxfw->रेजिस्टरed) अणु
+		// Block till all of ALSA अक्षरacter devices are released.
+		snd_card_मुक्त(oxfw->card);
+	पूर्ण
 
 	mutex_destroy(&oxfw->mutex);
 	fw_unit_put(oxfw->unit);
-}
+पूर्ण
 
-static const struct compat_info griffin_firewave = {
+अटल स्थिर काष्ठा compat_info grअगरfin_firewave = अणु
 	.driver_name = "FireWave",
-	.vendor_name = "Griffin",
+	.venकरोr_name = "Griffin",
 	.model_name = "FireWave",
-};
+पूर्ण;
 
-static const struct compat_info lacie_speakers = {
+अटल स्थिर काष्ठा compat_info lacie_speakers = अणु
 	.driver_name = "FWSpeakers",
-	.vendor_name = "LaCie",
+	.venकरोr_name = "LaCie",
 	.model_name = "FireWire Speakers",
-};
+पूर्ण;
 
-static const struct ieee1394_device_id oxfw_id_table[] = {
-	{
+अटल स्थिर काष्ठा ieee1394_device_id oxfw_id_table[] = अणु
+	अणु
 		.match_flags  = IEEE1394_MATCH_VENDOR_ID |
 				IEEE1394_MATCH_MODEL_ID |
 				IEEE1394_MATCH_SPECIFIER_ID |
 				IEEE1394_MATCH_VERSION,
-		.vendor_id    = VENDOR_GRIFFIN,
+		.venकरोr_id    = VENDOR_GRIFFIN,
 		.model_id     = 0x00f970,
-		.specifier_id = SPECIFIER_1394TA,
+		.specअगरier_id = SPECIFIER_1394TA,
 		.version      = VERSION_AVC,
-		.driver_data  = (kernel_ulong_t)&griffin_firewave,
-	},
-	{
+		.driver_data  = (kernel_uदीर्घ_t)&grअगरfin_firewave,
+	पूर्ण,
+	अणु
 		.match_flags  = IEEE1394_MATCH_VENDOR_ID |
 				IEEE1394_MATCH_MODEL_ID |
 				IEEE1394_MATCH_SPECIFIER_ID |
 				IEEE1394_MATCH_VERSION,
-		.vendor_id    = VENDOR_LACIE,
+		.venकरोr_id    = VENDOR_LACIE,
 		.model_id     = 0x00f970,
-		.specifier_id = SPECIFIER_1394TA,
+		.specअगरier_id = SPECIFIER_1394TA,
 		.version      = VERSION_AVC,
-		.driver_data  = (kernel_ulong_t)&lacie_speakers,
-	},
+		.driver_data  = (kernel_uदीर्घ_t)&lacie_speakers,
+	पूर्ण,
 	/* Behringer,F-Control Audio 202 */
-	{
+	अणु
 		.match_flags	= IEEE1394_MATCH_VENDOR_ID |
 				  IEEE1394_MATCH_MODEL_ID,
-		.vendor_id	= VENDOR_BEHRINGER,
+		.venकरोr_id	= VENDOR_BEHRINGER,
 		.model_id	= 0x00fc22,
-	},
+	पूर्ण,
 	/*
 	 * Any Mackie(Loud) models (name string/model id):
-	 *  Onyx-i series (former models):	0x081216
+	 *  Onyx-i series (क्रमmer models):	0x081216
 	 *  Mackie Onyx Satellite:		0x00200f
 	 *  Tapco LINK.firewire 4x6:		0x000460
 	 *  d.4 pro:				Unknown
 	 *  U.420:				Unknown
 	 *  U.420d:				Unknown
 	 */
-	{
+	अणु
 		.match_flags	= IEEE1394_MATCH_VENDOR_ID |
 				  IEEE1394_MATCH_SPECIFIER_ID |
 				  IEEE1394_MATCH_VERSION,
-		.vendor_id	= VENDOR_LOUD,
-		.specifier_id	= SPECIFIER_1394TA,
+		.venकरोr_id	= VENDOR_LOUD,
+		.specअगरier_id	= SPECIFIER_1394TA,
 		.version	= VERSION_AVC,
-	},
+	पूर्ण,
 	/* TASCAM, FireOne */
-	{
+	अणु
 		.match_flags	= IEEE1394_MATCH_VENDOR_ID |
 				  IEEE1394_MATCH_MODEL_ID,
-		.vendor_id	= VENDOR_TASCAM,
+		.venकरोr_id	= VENDOR_TASCAM,
 		.model_id	= 0x800007,
-	},
+	पूर्ण,
 	/* Stanton, Stanton Controllers & Systems 1 Mixer (SCS.1m) */
-	{
+	अणु
 		.match_flags	= IEEE1394_MATCH_VENDOR_ID |
 				  IEEE1394_MATCH_MODEL_ID,
-		.vendor_id	= OUI_STANTON,
+		.venकरोr_id	= OUI_STANTON,
 		.model_id	= 0x001000,
-	},
+	पूर्ण,
 	/* Stanton, Stanton Controllers & Systems 1 Deck (SCS.1d) */
-	{
+	अणु
 		.match_flags	= IEEE1394_MATCH_VENDOR_ID |
 				  IEEE1394_MATCH_MODEL_ID,
-		.vendor_id	= OUI_STANTON,
+		.venकरोr_id	= OUI_STANTON,
 		.model_id	= 0x002000,
-	},
+	पूर्ण,
 	// APOGEE, duet FireWire
-	{
+	अणु
 		.match_flags	= IEEE1394_MATCH_VENDOR_ID |
 				  IEEE1394_MATCH_MODEL_ID,
-		.vendor_id	= OUI_APOGEE,
+		.venकरोr_id	= OUI_APOGEE,
 		.model_id	= 0x01dddd,
-	},
-	{ }
-};
+	पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(ieee1394, oxfw_id_table);
 
-static struct fw_driver oxfw_driver = {
-	.driver   = {
+अटल काष्ठा fw_driver oxfw_driver = अणु
+	.driver   = अणु
 		.owner	= THIS_MODULE,
 		.name	= KBUILD_MODNAME,
 		.bus	= &fw_bus_type,
-	},
+	पूर्ण,
 	.probe    = oxfw_probe,
 	.update   = oxfw_bus_reset,
-	.remove   = oxfw_remove,
+	.हटाओ   = oxfw_हटाओ,
 	.id_table = oxfw_id_table,
-};
+पूर्ण;
 
-static int __init snd_oxfw_init(void)
-{
-	return driver_register(&oxfw_driver.driver);
-}
+अटल पूर्णांक __init snd_oxfw_init(व्योम)
+अणु
+	वापस driver_रेजिस्टर(&oxfw_driver.driver);
+पूर्ण
 
-static void __exit snd_oxfw_exit(void)
-{
-	driver_unregister(&oxfw_driver.driver);
-}
+अटल व्योम __निकास snd_oxfw_निकास(व्योम)
+अणु
+	driver_unरेजिस्टर(&oxfw_driver.driver);
+पूर्ण
 
 module_init(snd_oxfw_init);
-module_exit(snd_oxfw_exit);
+module_निकास(snd_oxfw_निकास);

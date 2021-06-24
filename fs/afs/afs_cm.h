@@ -1,18 +1,19 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /* AFS Cache Manager definitions
  *
  * Copyright (C) 2007 Red Hat, Inc. All Rights Reserved.
  * Written by David Howells (dhowells@redhat.com)
  */
 
-#ifndef AFS_CM_H
-#define AFS_CM_H
+#अगर_अघोषित AFS_CM_H
+#घोषणा AFS_CM_H
 
-#define AFS_CM_PORT		7001	/* AFS file server port */
-#define CM_SERVICE		1	/* AFS File Service ID */
+#घोषणा AFS_CM_PORT		7001	/* AFS file server port */
+#घोषणा CM_SERVICE		1	/* AFS File Service ID */
 
-enum AFS_CM_Operations {
-	CBCallBack		= 204,	/* break callback promises */
+क्रमागत AFS_CM_Operations अणु
+	CBCallBack		= 204,	/* अवरोध callback promises */
 	CBInitCallBackState	= 205,	/* initialise callback state */
 	CBProbe			= 206,	/* probe client */
 	CBGetLock		= 207,	/* get contents of CM lock table */
@@ -22,8 +23,8 @@ enum AFS_CM_Operations {
 	CBInitCallBackState3	= 213,	/* initialise callback state, version 3 */
 	CBProbeUuid		= 214,	/* check the client hasn't rebooted */
 	CBTellMeAboutYourself	= 65538, /* get client capabilities */
-};
+पूर्ण;
 
-#define AFS_CAP_ERROR_TRANSLATION	0x1
+#घोषणा AFS_CAP_ERROR_TRANSLATION	0x1
 
-#endif /* AFS_FS_H */
+#पूर्ण_अगर /* AFS_FS_H */

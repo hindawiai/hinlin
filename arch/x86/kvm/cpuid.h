@@ -1,226 +1,227 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef ARCH_X86_KVM_CPUID_H
-#define ARCH_X86_KVM_CPUID_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित ARCH_X86_KVM_CPUID_H
+#घोषणा ARCH_X86_KVM_CPUID_H
 
-#include "x86.h"
-#include "reverse_cpuid.h"
-#include <asm/cpu.h>
-#include <asm/processor.h>
-#include <uapi/asm/kvm_para.h>
+#समावेश "x86.h"
+#समावेश "reverse_cpuid.h"
+#समावेश <यंत्र/cpu.h>
+#समावेश <यंत्र/processor.h>
+#समावेश <uapi/यंत्र/kvm_para.h>
 
-extern u32 kvm_cpu_caps[NR_KVM_CPU_CAPS] __read_mostly;
-void kvm_set_cpu_caps(void);
+बाह्य u32 kvm_cpu_caps[NR_KVM_CPU_CAPS] __पढ़ो_mostly;
+व्योम kvm_set_cpu_caps(व्योम);
 
-void kvm_update_cpuid_runtime(struct kvm_vcpu *vcpu);
-void kvm_update_pv_runtime(struct kvm_vcpu *vcpu);
-struct kvm_cpuid_entry2 *kvm_find_cpuid_entry(struct kvm_vcpu *vcpu,
+व्योम kvm_update_cpuid_runसमय(काष्ठा kvm_vcpu *vcpu);
+व्योम kvm_update_pv_runसमय(काष्ठा kvm_vcpu *vcpu);
+काष्ठा kvm_cpuid_entry2 *kvm_find_cpuid_entry(काष्ठा kvm_vcpu *vcpu,
 					      u32 function, u32 index);
-int kvm_dev_ioctl_get_cpuid(struct kvm_cpuid2 *cpuid,
-			    struct kvm_cpuid_entry2 __user *entries,
-			    unsigned int type);
-int kvm_vcpu_ioctl_set_cpuid(struct kvm_vcpu *vcpu,
-			     struct kvm_cpuid *cpuid,
-			     struct kvm_cpuid_entry __user *entries);
-int kvm_vcpu_ioctl_set_cpuid2(struct kvm_vcpu *vcpu,
-			      struct kvm_cpuid2 *cpuid,
-			      struct kvm_cpuid_entry2 __user *entries);
-int kvm_vcpu_ioctl_get_cpuid2(struct kvm_vcpu *vcpu,
-			      struct kvm_cpuid2 *cpuid,
-			      struct kvm_cpuid_entry2 __user *entries);
-bool kvm_cpuid(struct kvm_vcpu *vcpu, u32 *eax, u32 *ebx,
+पूर्णांक kvm_dev_ioctl_get_cpuid(काष्ठा kvm_cpuid2 *cpuid,
+			    काष्ठा kvm_cpuid_entry2 __user *entries,
+			    अचिन्हित पूर्णांक type);
+पूर्णांक kvm_vcpu_ioctl_set_cpuid(काष्ठा kvm_vcpu *vcpu,
+			     काष्ठा kvm_cpuid *cpuid,
+			     काष्ठा kvm_cpuid_entry __user *entries);
+पूर्णांक kvm_vcpu_ioctl_set_cpuid2(काष्ठा kvm_vcpu *vcpu,
+			      काष्ठा kvm_cpuid2 *cpuid,
+			      काष्ठा kvm_cpuid_entry2 __user *entries);
+पूर्णांक kvm_vcpu_ioctl_get_cpuid2(काष्ठा kvm_vcpu *vcpu,
+			      काष्ठा kvm_cpuid2 *cpuid,
+			      काष्ठा kvm_cpuid_entry2 __user *entries);
+bool kvm_cpuid(काष्ठा kvm_vcpu *vcpu, u32 *eax, u32 *ebx,
 	       u32 *ecx, u32 *edx, bool exact_only);
 
-int cpuid_query_maxphyaddr(struct kvm_vcpu *vcpu);
-u64 kvm_vcpu_reserved_gpa_bits_raw(struct kvm_vcpu *vcpu);
+पूर्णांक cpuid_query_maxphyaddr(काष्ठा kvm_vcpu *vcpu);
+u64 kvm_vcpu_reserved_gpa_bits_raw(काष्ठा kvm_vcpu *vcpu);
 
-static inline int cpuid_maxphyaddr(struct kvm_vcpu *vcpu)
-{
-	return vcpu->arch.maxphyaddr;
-}
+अटल अंतरभूत पूर्णांक cpuid_maxphyaddr(काष्ठा kvm_vcpu *vcpu)
+अणु
+	वापस vcpu->arch.maxphyaddr;
+पूर्ण
 
-static inline bool kvm_vcpu_is_legal_gpa(struct kvm_vcpu *vcpu, gpa_t gpa)
-{
-	return !(gpa & vcpu->arch.reserved_gpa_bits);
-}
+अटल अंतरभूत bool kvm_vcpu_is_legal_gpa(काष्ठा kvm_vcpu *vcpu, gpa_t gpa)
+अणु
+	वापस !(gpa & vcpu->arch.reserved_gpa_bits);
+पूर्ण
 
-static inline bool kvm_vcpu_is_illegal_gpa(struct kvm_vcpu *vcpu, gpa_t gpa)
-{
-	return !kvm_vcpu_is_legal_gpa(vcpu, gpa);
-}
+अटल अंतरभूत bool kvm_vcpu_is_illegal_gpa(काष्ठा kvm_vcpu *vcpu, gpa_t gpa)
+अणु
+	वापस !kvm_vcpu_is_legal_gpa(vcpu, gpa);
+पूर्ण
 
-static inline bool kvm_vcpu_is_legal_aligned_gpa(struct kvm_vcpu *vcpu,
+अटल अंतरभूत bool kvm_vcpu_is_legal_aligned_gpa(काष्ठा kvm_vcpu *vcpu,
 						 gpa_t gpa, gpa_t alignment)
-{
-	return IS_ALIGNED(gpa, alignment) && kvm_vcpu_is_legal_gpa(vcpu, gpa);
-}
+अणु
+	वापस IS_ALIGNED(gpa, alignment) && kvm_vcpu_is_legal_gpa(vcpu, gpa);
+पूर्ण
 
-static inline bool page_address_valid(struct kvm_vcpu *vcpu, gpa_t gpa)
-{
-	return kvm_vcpu_is_legal_aligned_gpa(vcpu, gpa, PAGE_SIZE);
-}
+अटल अंतरभूत bool page_address_valid(काष्ठा kvm_vcpu *vcpu, gpa_t gpa)
+अणु
+	वापस kvm_vcpu_is_legal_aligned_gpa(vcpu, gpa, PAGE_SIZE);
+पूर्ण
 
-static __always_inline void cpuid_entry_override(struct kvm_cpuid_entry2 *entry,
-						 unsigned int leaf)
-{
+अटल __always_अंतरभूत व्योम cpuid_entry_override(काष्ठा kvm_cpuid_entry2 *entry,
+						 अचिन्हित पूर्णांक leaf)
+अणु
 	u32 *reg = cpuid_entry_get_reg(entry, leaf * 32);
 
 	BUILD_BUG_ON(leaf >= ARRAY_SIZE(kvm_cpu_caps));
 	*reg = kvm_cpu_caps[leaf];
-}
+पूर्ण
 
-static __always_inline u32 *guest_cpuid_get_register(struct kvm_vcpu *vcpu,
-						     unsigned int x86_feature)
-{
-	const struct cpuid_reg cpuid = x86_feature_cpuid(x86_feature);
-	struct kvm_cpuid_entry2 *entry;
+अटल __always_अंतरभूत u32 *guest_cpuid_get_रेजिस्टर(काष्ठा kvm_vcpu *vcpu,
+						     अचिन्हित पूर्णांक x86_feature)
+अणु
+	स्थिर काष्ठा cpuid_reg cpuid = x86_feature_cpuid(x86_feature);
+	काष्ठा kvm_cpuid_entry2 *entry;
 
 	entry = kvm_find_cpuid_entry(vcpu, cpuid.function, cpuid.index);
-	if (!entry)
-		return NULL;
+	अगर (!entry)
+		वापस शून्य;
 
-	return __cpuid_entry_get_reg(entry, cpuid.reg);
-}
+	वापस __cpuid_entry_get_reg(entry, cpuid.reg);
+पूर्ण
 
-static __always_inline bool guest_cpuid_has(struct kvm_vcpu *vcpu,
-					    unsigned int x86_feature)
-{
+अटल __always_अंतरभूत bool guest_cpuid_has(काष्ठा kvm_vcpu *vcpu,
+					    अचिन्हित पूर्णांक x86_feature)
+अणु
 	u32 *reg;
 
-	reg = guest_cpuid_get_register(vcpu, x86_feature);
-	if (!reg)
-		return false;
+	reg = guest_cpuid_get_रेजिस्टर(vcpu, x86_feature);
+	अगर (!reg)
+		वापस false;
 
-	return *reg & __feature_bit(x86_feature);
-}
+	वापस *reg & __feature_bit(x86_feature);
+पूर्ण
 
-static __always_inline void guest_cpuid_clear(struct kvm_vcpu *vcpu,
-					      unsigned int x86_feature)
-{
+अटल __always_अंतरभूत व्योम guest_cpuid_clear(काष्ठा kvm_vcpu *vcpu,
+					      अचिन्हित पूर्णांक x86_feature)
+अणु
 	u32 *reg;
 
-	reg = guest_cpuid_get_register(vcpu, x86_feature);
-	if (reg)
+	reg = guest_cpuid_get_रेजिस्टर(vcpu, x86_feature);
+	अगर (reg)
 		*reg &= ~__feature_bit(x86_feature);
-}
+पूर्ण
 
-static inline bool guest_cpuid_is_amd_or_hygon(struct kvm_vcpu *vcpu)
-{
-	struct kvm_cpuid_entry2 *best;
-
-	best = kvm_find_cpuid_entry(vcpu, 0, 0);
-	return best &&
-	       (is_guest_vendor_amd(best->ebx, best->ecx, best->edx) ||
-		is_guest_vendor_hygon(best->ebx, best->ecx, best->edx));
-}
-
-static inline bool guest_cpuid_is_intel(struct kvm_vcpu *vcpu)
-{
-	struct kvm_cpuid_entry2 *best;
+अटल अंतरभूत bool guest_cpuid_is_amd_or_hygon(काष्ठा kvm_vcpu *vcpu)
+अणु
+	काष्ठा kvm_cpuid_entry2 *best;
 
 	best = kvm_find_cpuid_entry(vcpu, 0, 0);
-	return best && is_guest_vendor_intel(best->ebx, best->ecx, best->edx);
-}
+	वापस best &&
+	       (is_guest_venकरोr_amd(best->ebx, best->ecx, best->edx) ||
+		is_guest_venकरोr_hygon(best->ebx, best->ecx, best->edx));
+पूर्ण
 
-static inline int guest_cpuid_family(struct kvm_vcpu *vcpu)
-{
-	struct kvm_cpuid_entry2 *best;
+अटल अंतरभूत bool guest_cpuid_is_पूर्णांकel(काष्ठा kvm_vcpu *vcpu)
+अणु
+	काष्ठा kvm_cpuid_entry2 *best;
 
-	best = kvm_find_cpuid_entry(vcpu, 0x1, 0);
-	if (!best)
-		return -1;
+	best = kvm_find_cpuid_entry(vcpu, 0, 0);
+	वापस best && is_guest_venकरोr_पूर्णांकel(best->ebx, best->ecx, best->edx);
+पूर्ण
 
-	return x86_family(best->eax);
-}
-
-static inline int guest_cpuid_model(struct kvm_vcpu *vcpu)
-{
-	struct kvm_cpuid_entry2 *best;
-
-	best = kvm_find_cpuid_entry(vcpu, 0x1, 0);
-	if (!best)
-		return -1;
-
-	return x86_model(best->eax);
-}
-
-static inline int guest_cpuid_stepping(struct kvm_vcpu *vcpu)
-{
-	struct kvm_cpuid_entry2 *best;
+अटल अंतरभूत पूर्णांक guest_cpuid_family(काष्ठा kvm_vcpu *vcpu)
+अणु
+	काष्ठा kvm_cpuid_entry2 *best;
 
 	best = kvm_find_cpuid_entry(vcpu, 0x1, 0);
-	if (!best)
-		return -1;
+	अगर (!best)
+		वापस -1;
 
-	return x86_stepping(best->eax);
-}
+	वापस x86_family(best->eax);
+पूर्ण
 
-static inline bool guest_has_spec_ctrl_msr(struct kvm_vcpu *vcpu)
-{
-	return (guest_cpuid_has(vcpu, X86_FEATURE_SPEC_CTRL) ||
+अटल अंतरभूत पूर्णांक guest_cpuid_model(काष्ठा kvm_vcpu *vcpu)
+अणु
+	काष्ठा kvm_cpuid_entry2 *best;
+
+	best = kvm_find_cpuid_entry(vcpu, 0x1, 0);
+	अगर (!best)
+		वापस -1;
+
+	वापस x86_model(best->eax);
+पूर्ण
+
+अटल अंतरभूत पूर्णांक guest_cpuid_stepping(काष्ठा kvm_vcpu *vcpu)
+अणु
+	काष्ठा kvm_cpuid_entry2 *best;
+
+	best = kvm_find_cpuid_entry(vcpu, 0x1, 0);
+	अगर (!best)
+		वापस -1;
+
+	वापस x86_stepping(best->eax);
+पूर्ण
+
+अटल अंतरभूत bool guest_has_spec_ctrl_msr(काष्ठा kvm_vcpu *vcpu)
+अणु
+	वापस (guest_cpuid_has(vcpu, X86_FEATURE_SPEC_CTRL) ||
 		guest_cpuid_has(vcpu, X86_FEATURE_AMD_STIBP) ||
 		guest_cpuid_has(vcpu, X86_FEATURE_AMD_IBRS) ||
 		guest_cpuid_has(vcpu, X86_FEATURE_AMD_SSBD));
-}
+पूर्ण
 
-static inline bool guest_has_pred_cmd_msr(struct kvm_vcpu *vcpu)
-{
-	return (guest_cpuid_has(vcpu, X86_FEATURE_SPEC_CTRL) ||
+अटल अंतरभूत bool guest_has_pred_cmd_msr(काष्ठा kvm_vcpu *vcpu)
+अणु
+	वापस (guest_cpuid_has(vcpu, X86_FEATURE_SPEC_CTRL) ||
 		guest_cpuid_has(vcpu, X86_FEATURE_AMD_IBPB));
-}
+पूर्ण
 
-static inline bool supports_cpuid_fault(struct kvm_vcpu *vcpu)
-{
-	return vcpu->arch.msr_platform_info & MSR_PLATFORM_INFO_CPUID_FAULT;
-}
+अटल अंतरभूत bool supports_cpuid_fault(काष्ठा kvm_vcpu *vcpu)
+अणु
+	वापस vcpu->arch.msr_platक्रमm_info & MSR_PLATFORM_INFO_CPUID_FAULT;
+पूर्ण
 
-static inline bool cpuid_fault_enabled(struct kvm_vcpu *vcpu)
-{
-	return vcpu->arch.msr_misc_features_enables &
+अटल अंतरभूत bool cpuid_fault_enabled(काष्ठा kvm_vcpu *vcpu)
+अणु
+	वापस vcpu->arch.msr_misc_features_enables &
 		  MSR_MISC_FEATURES_ENABLES_CPUID_FAULT;
-}
+पूर्ण
 
-static __always_inline void kvm_cpu_cap_clear(unsigned int x86_feature)
-{
-	unsigned int x86_leaf = __feature_leaf(x86_feature);
+अटल __always_अंतरभूत व्योम kvm_cpu_cap_clear(अचिन्हित पूर्णांक x86_feature)
+अणु
+	अचिन्हित पूर्णांक x86_leaf = __feature_leaf(x86_feature);
 
 	reverse_cpuid_check(x86_leaf);
 	kvm_cpu_caps[x86_leaf] &= ~__feature_bit(x86_feature);
-}
+पूर्ण
 
-static __always_inline void kvm_cpu_cap_set(unsigned int x86_feature)
-{
-	unsigned int x86_leaf = __feature_leaf(x86_feature);
+अटल __always_अंतरभूत व्योम kvm_cpu_cap_set(अचिन्हित पूर्णांक x86_feature)
+अणु
+	अचिन्हित पूर्णांक x86_leaf = __feature_leaf(x86_feature);
 
 	reverse_cpuid_check(x86_leaf);
 	kvm_cpu_caps[x86_leaf] |= __feature_bit(x86_feature);
-}
+पूर्ण
 
-static __always_inline u32 kvm_cpu_cap_get(unsigned int x86_feature)
-{
-	unsigned int x86_leaf = __feature_leaf(x86_feature);
+अटल __always_अंतरभूत u32 kvm_cpu_cap_get(अचिन्हित पूर्णांक x86_feature)
+अणु
+	अचिन्हित पूर्णांक x86_leaf = __feature_leaf(x86_feature);
 
 	reverse_cpuid_check(x86_leaf);
-	return kvm_cpu_caps[x86_leaf] & __feature_bit(x86_feature);
-}
+	वापस kvm_cpu_caps[x86_leaf] & __feature_bit(x86_feature);
+पूर्ण
 
-static __always_inline bool kvm_cpu_cap_has(unsigned int x86_feature)
-{
-	return !!kvm_cpu_cap_get(x86_feature);
-}
+अटल __always_अंतरभूत bool kvm_cpu_cap_has(अचिन्हित पूर्णांक x86_feature)
+अणु
+	वापस !!kvm_cpu_cap_get(x86_feature);
+पूर्ण
 
-static __always_inline void kvm_cpu_cap_check_and_set(unsigned int x86_feature)
-{
-	if (boot_cpu_has(x86_feature))
+अटल __always_अंतरभूत व्योम kvm_cpu_cap_check_and_set(अचिन्हित पूर्णांक x86_feature)
+अणु
+	अगर (boot_cpu_has(x86_feature))
 		kvm_cpu_cap_set(x86_feature);
-}
+पूर्ण
 
-static __always_inline bool guest_pv_has(struct kvm_vcpu *vcpu,
-					 unsigned int kvm_feature)
-{
-	if (!vcpu->arch.pv_cpuid.enforce)
-		return true;
+अटल __always_अंतरभूत bool guest_pv_has(काष्ठा kvm_vcpu *vcpu,
+					 अचिन्हित पूर्णांक kvm_feature)
+अणु
+	अगर (!vcpu->arch.pv_cpuid.enक्रमce)
+		वापस true;
 
-	return vcpu->arch.pv_cpuid.features & (1u << kvm_feature);
-}
+	वापस vcpu->arch.pv_cpuid.features & (1u << kvm_feature);
+पूर्ण
 
-#endif
+#पूर्ण_अगर

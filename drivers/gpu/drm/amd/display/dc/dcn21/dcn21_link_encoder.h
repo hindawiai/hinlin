@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2012-15 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  *  and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -23,17 +24,17 @@
  *
  */
 
-#ifndef __DC_LINK_ENCODER__DCN21_H__
-#define __DC_LINK_ENCODER__DCN21_H__
+#अगर_अघोषित __DC_LINK_ENCODER__DCN21_H__
+#घोषणा __DC_LINK_ENCODER__DCN21_H__
 
-#include "dcn20/dcn20_link_encoder.h"
+#समावेश "dcn20/dcn20_link_encoder.h"
 
-struct dcn21_link_encoder {
-	struct dcn10_link_encoder enc10;
-	struct dpcssys_phy_seq_cfg phy_seq_cfg;
-};
+काष्ठा dcn21_link_encoder अणु
+	काष्ठा dcn10_link_encoder enc10;
+	काष्ठा dpcssys_phy_seq_cfg phy_seq_cfg;
+पूर्ण;
 
-#define DPCS_DCN21_MASK_SH_LIST(mask_sh)\
+#घोषणा DPCS_DCN21_MASK_SH_LIST(mask_sh)\
 	DPCS_DCN2_MASK_SH_LIST(mask_sh),\
 	LE_SF(RDPCSTX0_RDPCSTX_PHY_FUSE3, RDPCS_PHY_TX_VBOOST_LVL, mask_sh),\
 	LE_SF(RDPCSTX0_RDPCSTX_PHY_FUSE2, RDPCS_PHY_DP_MPLLB_CP_PROP_GS, mask_sh),\
@@ -67,12 +68,12 @@ struct dcn21_link_encoder {
 	LE_SF(DCIO_SOFT_RESET, UNIPHYD_SOFT_RESET, mask_sh),\
 	LE_SF(DCIO_SOFT_RESET, UNIPHYE_SOFT_RESET, mask_sh)
 
-#define DPCS_DCN21_REG_LIST(id) \
+#घोषणा DPCS_DCN21_REG_LIST(id) \
 	DPCS_DCN2_REG_LIST(id),\
 	SRI(RDPCSTX_PHY_CNTL15, RDPCSTX, id),\
 	SRI(RDPCSTX_DMCU_DPALT_DIS_BLOCK_REG, RDPCSTX, id)
 
-#define LINK_ENCODER_MASK_SH_LIST_DCN21(mask_sh)\
+#घोषणा LINK_ENCODER_MASK_SH_LIST_DCN21(mask_sh)\
 	LINK_ENCODER_MASK_SH_LIST_DCN20(mask_sh),\
 	LE_SF(UNIPHYA_CHANNEL_XBAR_CNTL, UNIPHY_CHANNEL0_XBAR_SOURCE, mask_sh),\
 	LE_SF(UNIPHYA_CHANNEL_XBAR_CNTL, UNIPHY_CHANNEL1_XBAR_SOURCE, mask_sh),\
@@ -82,19 +83,19 @@ struct dcn21_link_encoder {
 	SRI(RDPCSTX_PHY_FUSE3, RDPCSTX, id), \
 	SR(RDPCSTX0_RDPCSTX_SCRATCH)
 
-void dcn21_link_encoder_enable_dp_output(
-	struct link_encoder *enc,
-	const struct dc_link_settings *link_settings,
-	enum clock_source_id clock_source);
+व्योम dcn21_link_encoder_enable_dp_output(
+	काष्ठा link_encoder *enc,
+	स्थिर काष्ठा dc_link_settings *link_settings,
+	क्रमागत घड़ी_source_id घड़ी_source);
 
-void dcn21_link_encoder_construct(
-	struct dcn21_link_encoder *enc21,
-	const struct encoder_init_data *init_data,
-	const struct encoder_feature_support *enc_features,
-	const struct dcn10_link_enc_registers *link_regs,
-	const struct dcn10_link_enc_aux_registers *aux_regs,
-	const struct dcn10_link_enc_hpd_registers *hpd_regs,
-	const struct dcn10_link_enc_shift *link_shift,
-	const struct dcn10_link_enc_mask *link_mask);
+व्योम dcn21_link_encoder_स्थिरruct(
+	काष्ठा dcn21_link_encoder *enc21,
+	स्थिर काष्ठा encoder_init_data *init_data,
+	स्थिर काष्ठा encoder_feature_support *enc_features,
+	स्थिर काष्ठा dcn10_link_enc_रेजिस्टरs *link_regs,
+	स्थिर काष्ठा dcn10_link_enc_aux_रेजिस्टरs *aux_regs,
+	स्थिर काष्ठा dcn10_link_enc_hpd_रेजिस्टरs *hpd_regs,
+	स्थिर काष्ठा dcn10_link_enc_shअगरt *link_shअगरt,
+	स्थिर काष्ठा dcn10_link_enc_mask *link_mask);
 
-#endif
+#पूर्ण_अगर

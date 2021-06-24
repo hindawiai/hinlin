@@ -1,171 +1,172 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * latencytop.c: Latency display infrastructure
+ * latencytop.c: Latency display infraकाष्ठाure
  *
  * (C) Copyright 2008 Intel Corporation
- * Author: Arjan van de Ven <arjan@linux.intel.com>
+ * Author: Arjan van de Ven <arjan@linux.पूर्णांकel.com>
  */
 
 /*
- * CONFIG_LATENCYTOP enables a kernel latency tracking infrastructure that is
+ * CONFIG_LATENCYTOP enables a kernel latency tracking infraकाष्ठाure that is
  * used by the "latencytop" userspace tool. The latency that is tracked is not
- * the 'traditional' interrupt latency (which is primarily caused by something
- * else consuming CPU), but instead, it is the latency an application encounters
- * because the kernel sleeps on its behalf for various reasons.
+ * the 'traditional' पूर्णांकerrupt latency (which is primarily caused by something
+ * अन्यथा consuming CPU), but instead, it is the latency an application encounters
+ * because the kernel sleeps on its behalf क्रम various reasons.
  *
  * This code tracks 2 levels of statistics:
  * 1) System level latency
  * 2) Per process latency
  *
- * The latency is stored in fixed sized data structures in an accumulated form;
- * if the "same" latency cause is hit twice, this will be tracked as one entry
- * in the data structure. Both the count, total accumulated latency and maximum
- * latency are tracked in this data structure. When the fixed size structure is
+ * The latency is stored in fixed sized data काष्ठाures in an accumulated क्रमm;
+ * अगर the "same" latency cause is hit twice, this will be tracked as one entry
+ * in the data काष्ठाure. Both the count, total accumulated latency and maximum
+ * latency are tracked in this data काष्ठाure. When the fixed size काष्ठाure is
  * full, no new causes are tracked until the buffer is flushed by writing to
- * the /proc file; the userspace tool does this on a regular basis.
+ * the /proc file; the userspace tool करोes this on a regular basis.
  *
- * A latency cause is identified by a stringified backtrace at the point that
- * the scheduler gets invoked. The userland tool will use this string to
- * identify the cause of the latency in human readable form.
+ * A latency cause is identअगरied by a stringअगरied backtrace at the poपूर्णांक that
+ * the scheduler माला_लो invoked. The userland tool will use this string to
+ * identअगरy the cause of the latency in human पढ़ोable क्रमm.
  *
- * The information is exported via /proc/latency_stats and /proc/<pid>/latency.
+ * The inक्रमmation is exported via /proc/latency_stats and /proc/<pid>/latency.
  * These files look like this:
  *
  * Latency Top version : v0.1
- * 70 59433 4897 i915_irq_wait drm_ioctl vfs_ioctl do_vfs_ioctl sys_ioctl
+ * 70 59433 4897 i915_irq_रुको drm_ioctl vfs_ioctl करो_vfs_ioctl sys_ioctl
  * |    |    |    |
- * |    |    |    +----> the stringified backtrace
- * |    |    +---------> The maximum latency for this entry in microseconds
- * |    +--------------> The accumulated latency for this entry (microseconds)
- * +-------------------> The number of times this entry is hit
+ * |    |    |    +----> the stringअगरied backtrace
+ * |    |    +---------> The maximum latency क्रम this entry in microseconds
+ * |    +--------------> The accumulated latency क्रम this entry (microseconds)
+ * +-------------------> The number of बार this entry is hit
  *
- * (note: the average latency is the accumulated latency divided by the number
- * of times)
+ * (note: the average latency is the accumulated latency भागided by the number
+ * of बार)
  */
 
-#include <linux/kallsyms.h>
-#include <linux/seq_file.h>
-#include <linux/notifier.h>
-#include <linux/spinlock.h>
-#include <linux/proc_fs.h>
-#include <linux/latencytop.h>
-#include <linux/export.h>
-#include <linux/sched.h>
-#include <linux/sched/debug.h>
-#include <linux/sched/stat.h>
-#include <linux/list.h>
-#include <linux/stacktrace.h>
+#समावेश <linux/kallsyms.h>
+#समावेश <linux/seq_file.h>
+#समावेश <linux/notअगरier.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/proc_fs.h>
+#समावेश <linux/latencytop.h>
+#समावेश <linux/export.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/sched/debug.h>
+#समावेश <linux/sched/स्थिति.स>
+#समावेश <linux/list.h>
+#समावेश <linux/stacktrace.h>
 
-static DEFINE_RAW_SPINLOCK(latency_lock);
+अटल DEFINE_RAW_SPINLOCK(latency_lock);
 
-#define MAXLR 128
-static struct latency_record latency_record[MAXLR];
+#घोषणा MAXLR 128
+अटल काष्ठा latency_record latency_record[MAXLR];
 
-int latencytop_enabled;
+पूर्णांक latencytop_enabled;
 
-void clear_tsk_latency_tracing(struct task_struct *p)
-{
-	unsigned long flags;
+व्योम clear_tsk_latency_tracing(काष्ठा task_काष्ठा *p)
+अणु
+	अचिन्हित दीर्घ flags;
 
 	raw_spin_lock_irqsave(&latency_lock, flags);
-	memset(&p->latency_record, 0, sizeof(p->latency_record));
+	स_रखो(&p->latency_record, 0, माप(p->latency_record));
 	p->latency_record_count = 0;
 	raw_spin_unlock_irqrestore(&latency_lock, flags);
-}
+पूर्ण
 
-static void clear_global_latency_tracing(void)
-{
-	unsigned long flags;
+अटल व्योम clear_global_latency_tracing(व्योम)
+अणु
+	अचिन्हित दीर्घ flags;
 
 	raw_spin_lock_irqsave(&latency_lock, flags);
-	memset(&latency_record, 0, sizeof(latency_record));
+	स_रखो(&latency_record, 0, माप(latency_record));
 	raw_spin_unlock_irqrestore(&latency_lock, flags);
-}
+पूर्ण
 
-static void __sched
-account_global_scheduler_latency(struct task_struct *tsk,
-				 struct latency_record *lat)
-{
-	int firstnonnull = MAXLR + 1;
-	int i;
+अटल व्योम __sched
+account_global_scheduler_latency(काष्ठा task_काष्ठा *tsk,
+				 काष्ठा latency_record *lat)
+अणु
+	पूर्णांक firstnonnull = MAXLR + 1;
+	पूर्णांक i;
 
-	/* skip kernel threads for now */
-	if (!tsk->mm)
-		return;
+	/* skip kernel thपढ़ोs क्रम now */
+	अगर (!tsk->mm)
+		वापस;
 
-	for (i = 0; i < MAXLR; i++) {
-		int q, same = 1;
+	क्रम (i = 0; i < MAXLR; i++) अणु
+		पूर्णांक q, same = 1;
 
 		/* Nothing stored: */
-		if (!latency_record[i].backtrace[0]) {
-			if (firstnonnull > i)
+		अगर (!latency_record[i].backtrace[0]) अणु
+			अगर (firstnonnull > i)
 				firstnonnull = i;
-			continue;
-		}
-		for (q = 0; q < LT_BACKTRACEDEPTH; q++) {
-			unsigned long record = lat->backtrace[q];
+			जारी;
+		पूर्ण
+		क्रम (q = 0; q < LT_BACKTRACEDEPTH; q++) अणु
+			अचिन्हित दीर्घ record = lat->backtrace[q];
 
-			if (latency_record[i].backtrace[q] != record) {
+			अगर (latency_record[i].backtrace[q] != record) अणु
 				same = 0;
-				break;
-			}
+				अवरोध;
+			पूर्ण
 
 			/* 0 entry marks end of backtrace: */
-			if (!record)
-				break;
-		}
-		if (same) {
+			अगर (!record)
+				अवरोध;
+		पूर्ण
+		अगर (same) अणु
 			latency_record[i].count++;
-			latency_record[i].time += lat->time;
-			if (lat->time > latency_record[i].max)
-				latency_record[i].max = lat->time;
-			return;
-		}
-	}
+			latency_record[i].समय += lat->समय;
+			अगर (lat->समय > latency_record[i].max)
+				latency_record[i].max = lat->समय;
+			वापस;
+		पूर्ण
+	पूर्ण
 
 	i = firstnonnull;
-	if (i >= MAXLR - 1)
-		return;
+	अगर (i >= MAXLR - 1)
+		वापस;
 
 	/* Allocted a new one: */
-	memcpy(&latency_record[i], lat, sizeof(struct latency_record));
-}
+	स_नकल(&latency_record[i], lat, माप(काष्ठा latency_record));
+पूर्ण
 
 /**
  * __account_scheduler_latency - record an occurred latency
- * @tsk - the task struct of the task hitting the latency
+ * @tsk - the task काष्ठा of the task hitting the latency
  * @usecs - the duration of the latency in microseconds
- * @inter - 1 if the sleep was interruptible, 0 if uninterruptible
+ * @पूर्णांकer - 1 अगर the sleep was पूर्णांकerruptible, 0 अगर unपूर्णांकerruptible
  *
- * This function is the main entry point for recording latency entries
+ * This function is the मुख्य entry poपूर्णांक क्रम recording latency entries
  * as called by the scheduler.
  *
- * This function has a few special cases to deal with normal 'non-latency'
- * sleeps: specifically, interruptible sleep longer than 5 msec is skipped
- * since this usually is caused by waiting for events via select() and co.
+ * This function has a few special हालs to deal with normal 'non-latency'
+ * sleeps: specअगरically, पूर्णांकerruptible sleep दीर्घer than 5 msec is skipped
+ * since this usually is caused by रुकोing क्रम events via select() and co.
  *
- * Negative latencies (caused by time going backwards) are also explicitly
+ * Negative latencies (caused by समय going backwards) are also explicitly
  * skipped.
  */
-void __sched
-__account_scheduler_latency(struct task_struct *tsk, int usecs, int inter)
-{
-	unsigned long flags;
-	int i, q;
-	struct latency_record lat;
+व्योम __sched
+__account_scheduler_latency(काष्ठा task_काष्ठा *tsk, पूर्णांक usecs, पूर्णांक पूर्णांकer)
+अणु
+	अचिन्हित दीर्घ flags;
+	पूर्णांक i, q;
+	काष्ठा latency_record lat;
 
-	/* Long interruptible waits are generally user requested... */
-	if (inter && usecs > 5000)
-		return;
+	/* Long पूर्णांकerruptible रुकोs are generally user requested... */
+	अगर (पूर्णांकer && usecs > 5000)
+		वापस;
 
-	/* Negative sleeps are time going backwards */
-	/* Zero-time sleeps are non-interesting */
-	if (usecs <= 0)
-		return;
+	/* Negative sleeps are समय going backwards */
+	/* Zero-समय sleeps are non-पूर्णांकeresting */
+	अगर (usecs <= 0)
+		वापस;
 
-	memset(&lat, 0, sizeof(lat));
+	स_रखो(&lat, 0, माप(lat));
 	lat.count = 1;
-	lat.time = usecs;
+	lat.समय = usecs;
 	lat.max = usecs;
 
 	stack_trace_save_tsk(tsk, lat.backtrace, LT_BACKTRACEDEPTH, 0);
@@ -174,110 +175,110 @@ __account_scheduler_latency(struct task_struct *tsk, int usecs, int inter)
 
 	account_global_scheduler_latency(tsk, &lat);
 
-	for (i = 0; i < tsk->latency_record_count; i++) {
-		struct latency_record *mylat;
-		int same = 1;
+	क्रम (i = 0; i < tsk->latency_record_count; i++) अणु
+		काष्ठा latency_record *mylat;
+		पूर्णांक same = 1;
 
 		mylat = &tsk->latency_record[i];
-		for (q = 0; q < LT_BACKTRACEDEPTH; q++) {
-			unsigned long record = lat.backtrace[q];
+		क्रम (q = 0; q < LT_BACKTRACEDEPTH; q++) अणु
+			अचिन्हित दीर्घ record = lat.backtrace[q];
 
-			if (mylat->backtrace[q] != record) {
+			अगर (mylat->backtrace[q] != record) अणु
 				same = 0;
-				break;
-			}
+				अवरोध;
+			पूर्ण
 
 			/* 0 entry is end of backtrace */
-			if (!record)
-				break;
-		}
-		if (same) {
+			अगर (!record)
+				अवरोध;
+		पूर्ण
+		अगर (same) अणु
 			mylat->count++;
-			mylat->time += lat.time;
-			if (lat.time > mylat->max)
-				mylat->max = lat.time;
-			goto out_unlock;
-		}
-	}
+			mylat->समय += lat.समय;
+			अगर (lat.समय > mylat->max)
+				mylat->max = lat.समय;
+			जाओ out_unlock;
+		पूर्ण
+	पूर्ण
 
 	/*
-	 * short term hack; if we're > 32 we stop; future we recycle:
+	 * लघु term hack; अगर we're > 32 we stop; future we recycle:
 	 */
-	if (tsk->latency_record_count >= LT_SAVECOUNT)
-		goto out_unlock;
+	अगर (tsk->latency_record_count >= LT_SAVECOUNT)
+		जाओ out_unlock;
 
 	/* Allocated a new one: */
 	i = tsk->latency_record_count++;
-	memcpy(&tsk->latency_record[i], &lat, sizeof(struct latency_record));
+	स_नकल(&tsk->latency_record[i], &lat, माप(काष्ठा latency_record));
 
 out_unlock:
 	raw_spin_unlock_irqrestore(&latency_lock, flags);
-}
+पूर्ण
 
-static int lstats_show(struct seq_file *m, void *v)
-{
-	int i;
+अटल पूर्णांक lstats_show(काष्ठा seq_file *m, व्योम *v)
+अणु
+	पूर्णांक i;
 
-	seq_puts(m, "Latency Top version : v0.1\n");
+	seq_माला_दो(m, "Latency Top version : v0.1\n");
 
-	for (i = 0; i < MAXLR; i++) {
-		struct latency_record *lr = &latency_record[i];
+	क्रम (i = 0; i < MAXLR; i++) अणु
+		काष्ठा latency_record *lr = &latency_record[i];
 
-		if (lr->backtrace[0]) {
-			int q;
-			seq_printf(m, "%i %lu %lu",
-				   lr->count, lr->time, lr->max);
-			for (q = 0; q < LT_BACKTRACEDEPTH; q++) {
-				unsigned long bt = lr->backtrace[q];
+		अगर (lr->backtrace[0]) अणु
+			पूर्णांक q;
+			seq_म_लिखो(m, "%i %lu %lu",
+				   lr->count, lr->समय, lr->max);
+			क्रम (q = 0; q < LT_BACKTRACEDEPTH; q++) अणु
+				अचिन्हित दीर्घ bt = lr->backtrace[q];
 
-				if (!bt)
-					break;
+				अगर (!bt)
+					अवरोध;
 
-				seq_printf(m, " %ps", (void *)bt);
-			}
-			seq_puts(m, "\n");
-		}
-	}
-	return 0;
-}
+				seq_म_लिखो(m, " %ps", (व्योम *)bt);
+			पूर्ण
+			seq_माला_दो(m, "\n");
+		पूर्ण
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static ssize_t
-lstats_write(struct file *file, const char __user *buf, size_t count,
+अटल sमाप_प्रकार
+lstats_ग_लिखो(काष्ठा file *file, स्थिर अक्षर __user *buf, माप_प्रकार count,
 	     loff_t *offs)
-{
+अणु
 	clear_global_latency_tracing();
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static int lstats_open(struct inode *inode, struct file *filp)
-{
-	return single_open(filp, lstats_show, NULL);
-}
+अटल पूर्णांक lstats_खोलो(काष्ठा inode *inode, काष्ठा file *filp)
+अणु
+	वापस single_खोलो(filp, lstats_show, शून्य);
+पूर्ण
 
-static const struct proc_ops lstats_proc_ops = {
-	.proc_open	= lstats_open,
-	.proc_read	= seq_read,
-	.proc_write	= lstats_write,
+अटल स्थिर काष्ठा proc_ops lstats_proc_ops = अणु
+	.proc_खोलो	= lstats_खोलो,
+	.proc_पढ़ो	= seq_पढ़ो,
+	.proc_ग_लिखो	= lstats_ग_लिखो,
 	.proc_lseek	= seq_lseek,
 	.proc_release	= single_release,
-};
+पूर्ण;
 
-static int __init init_lstats_procfs(void)
-{
-	proc_create("latency_stats", 0644, NULL, &lstats_proc_ops);
-	return 0;
-}
+अटल पूर्णांक __init init_lstats_procfs(व्योम)
+अणु
+	proc_create("latency_stats", 0644, शून्य, &lstats_proc_ops);
+	वापस 0;
+पूर्ण
 
-int sysctl_latencytop(struct ctl_table *table, int write, void *buffer,
-		size_t *lenp, loff_t *ppos)
-{
-	int err;
+पूर्णांक sysctl_latencytop(काष्ठा ctl_table *table, पूर्णांक ग_लिखो, व्योम *buffer,
+		माप_प्रकार *lenp, loff_t *ppos)
+अणु
+	पूर्णांक err;
 
-	err = proc_dointvec(table, write, buffer, lenp, ppos);
-	if (latencytop_enabled)
-		force_schedstat_enabled();
+	err = proc_करोपूर्णांकvec(table, ग_लिखो, buffer, lenp, ppos);
+	अगर (latencytop_enabled)
+		क्रमce_schedstat_enabled();
 
-	return err;
-}
+	वापस err;
+पूर्ण
 device_initcall(init_lstats_procfs);

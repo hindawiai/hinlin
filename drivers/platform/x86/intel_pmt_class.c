@@ -1,169 +1,170 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * Intel Platform Monitory Technology Telemetry driver
+ * Intel Platक्रमm Monitory Technology Telemetry driver
  *
  * Copyright (c) 2020, Intel Corporation.
  * All Rights Reserved.
  *
- * Author: "Alexander Duyck" <alexander.h.duyck@linux.intel.com>
+ * Author: "Alexander Duyck" <alexander.h.duyck@linux.पूर्णांकel.com>
  */
 
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/mm.h>
-#include <linux/pci.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/pci.h>
 
-#include "intel_pmt_class.h"
+#समावेश "intel_pmt_class.h"
 
-#define PMT_XA_START		0
-#define PMT_XA_MAX		INT_MAX
-#define PMT_XA_LIMIT		XA_LIMIT(PMT_XA_START, PMT_XA_MAX)
+#घोषणा PMT_XA_START		0
+#घोषणा PMT_XA_MAX		पूर्णांक_उच्च
+#घोषणा PMT_XA_LIMIT		XA_LIMIT(PMT_XA_START, PMT_XA_MAX)
 
 /*
- * Early implementations of PMT on client platforms have some
- * differences from the server platforms (which use the Out Of Band
+ * Early implementations of PMT on client platक्रमms have some
+ * dअगरferences from the server platक्रमms (which use the Out Of Band
  * Management Services Module OOBMSM). This list tracks those
- * platforms as needed to handle those differences. Newer client
- * platforms are expected to be fully compatible with server.
+ * platक्रमms as needed to handle those dअगरferences. Newer client
+ * platक्रमms are expected to be fully compatible with server.
  */
-static const struct pci_device_id pmt_telem_early_client_pci_ids[] = {
-	{ PCI_VDEVICE(INTEL, 0x467d) }, /* ADL */
-	{ PCI_VDEVICE(INTEL, 0x490e) }, /* DG1 */
-	{ PCI_VDEVICE(INTEL, 0x9a0d) }, /* TGL */
-	{ }
-};
+अटल स्थिर काष्ठा pci_device_id pmt_telem_early_client_pci_ids[] = अणु
+	अणु PCI_VDEVICE(INTEL, 0x467d) पूर्ण, /* ADL */
+	अणु PCI_VDEVICE(INTEL, 0x490e) पूर्ण, /* DG1 */
+	अणु PCI_VDEVICE(INTEL, 0x9a0d) पूर्ण, /* TGL */
+	अणु पूर्ण
+पूर्ण;
 
-bool intel_pmt_is_early_client_hw(struct device *dev)
-{
-	struct pci_dev *parent = to_pci_dev(dev->parent);
+bool पूर्णांकel_pmt_is_early_client_hw(काष्ठा device *dev)
+अणु
+	काष्ठा pci_dev *parent = to_pci_dev(dev->parent);
 
-	return !!pci_match_id(pmt_telem_early_client_pci_ids, parent);
-}
-EXPORT_SYMBOL_GPL(intel_pmt_is_early_client_hw);
+	वापस !!pci_match_id(pmt_telem_early_client_pci_ids, parent);
+पूर्ण
+EXPORT_SYMBOL_GPL(पूर्णांकel_pmt_is_early_client_hw);
 
 /*
  * sysfs
  */
-static ssize_t
-intel_pmt_read(struct file *filp, struct kobject *kobj,
-	       struct bin_attribute *attr, char *buf, loff_t off,
-	       size_t count)
-{
-	struct intel_pmt_entry *entry = container_of(attr,
-						     struct intel_pmt_entry,
+अटल sमाप_प्रकार
+पूर्णांकel_pmt_पढ़ो(काष्ठा file *filp, काष्ठा kobject *kobj,
+	       काष्ठा bin_attribute *attr, अक्षर *buf, loff_t off,
+	       माप_प्रकार count)
+अणु
+	काष्ठा पूर्णांकel_pmt_entry *entry = container_of(attr,
+						     काष्ठा पूर्णांकel_pmt_entry,
 						     pmt_bin_attr);
 
-	if (off < 0)
-		return -EINVAL;
+	अगर (off < 0)
+		वापस -EINVAL;
 
-	if (off >= entry->size)
-		return 0;
+	अगर (off >= entry->size)
+		वापस 0;
 
-	if (count > entry->size - off)
+	अगर (count > entry->size - off)
 		count = entry->size - off;
 
-	memcpy_fromio(buf, entry->base + off, count);
+	स_नकल_fromio(buf, entry->base + off, count);
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static int
-intel_pmt_mmap(struct file *filp, struct kobject *kobj,
-		struct bin_attribute *attr, struct vm_area_struct *vma)
-{
-	struct intel_pmt_entry *entry = container_of(attr,
-						     struct intel_pmt_entry,
+अटल पूर्णांक
+पूर्णांकel_pmt_mmap(काष्ठा file *filp, काष्ठा kobject *kobj,
+		काष्ठा bin_attribute *attr, काष्ठा vm_area_काष्ठा *vma)
+अणु
+	काष्ठा पूर्णांकel_pmt_entry *entry = container_of(attr,
+						     काष्ठा पूर्णांकel_pmt_entry,
 						     pmt_bin_attr);
-	unsigned long vsize = vma->vm_end - vma->vm_start;
-	struct device *dev = kobj_to_dev(kobj);
-	unsigned long phys = entry->base_addr;
-	unsigned long pfn = PFN_DOWN(phys);
-	unsigned long psize;
+	अचिन्हित दीर्घ vsize = vma->vm_end - vma->vm_start;
+	काष्ठा device *dev = kobj_to_dev(kobj);
+	अचिन्हित दीर्घ phys = entry->base_addr;
+	अचिन्हित दीर्घ pfn = PFN_DOWN(phys);
+	अचिन्हित दीर्घ psize;
 
-	if (vma->vm_flags & (VM_WRITE | VM_MAYWRITE))
-		return -EROFS;
+	अगर (vma->vm_flags & (VM_WRITE | VM_MAYWRITE))
+		वापस -EROFS;
 
 	psize = (PFN_UP(entry->base_addr + entry->size) - pfn) * PAGE_SIZE;
-	if (vsize > psize) {
+	अगर (vsize > psize) अणु
 		dev_err(dev, "Requested mmap size is too large\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	vma->vm_page_prot = pgprot_noncached(vma->vm_page_prot);
-	if (io_remap_pfn_range(vma, vma->vm_start, pfn,
+	अगर (io_remap_pfn_range(vma, vma->vm_start, pfn,
 		vsize, vma->vm_page_prot))
-		return -EAGAIN;
+		वापस -EAGAIN;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static ssize_t
-guid_show(struct device *dev, struct device_attribute *attr, char *buf)
-{
-	struct intel_pmt_entry *entry = dev_get_drvdata(dev);
+अटल sमाप_प्रकार
+guid_show(काष्ठा device *dev, काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा पूर्णांकel_pmt_entry *entry = dev_get_drvdata(dev);
 
-	return sprintf(buf, "0x%x\n", entry->guid);
-}
-static DEVICE_ATTR_RO(guid);
+	वापस प्र_लिखो(buf, "0x%x\n", entry->guid);
+पूर्ण
+अटल DEVICE_ATTR_RO(guid);
 
-static ssize_t size_show(struct device *dev, struct device_attribute *attr,
-			 char *buf)
-{
-	struct intel_pmt_entry *entry = dev_get_drvdata(dev);
+अटल sमाप_प्रकार size_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
+			 अक्षर *buf)
+अणु
+	काष्ठा पूर्णांकel_pmt_entry *entry = dev_get_drvdata(dev);
 
-	return sprintf(buf, "%zu\n", entry->size);
-}
-static DEVICE_ATTR_RO(size);
+	वापस प्र_लिखो(buf, "%zu\n", entry->size);
+पूर्ण
+अटल DEVICE_ATTR_RO(size);
 
-static ssize_t
-offset_show(struct device *dev, struct device_attribute *attr, char *buf)
-{
-	struct intel_pmt_entry *entry = dev_get_drvdata(dev);
+अटल sमाप_प्रकार
+offset_show(काष्ठा device *dev, काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा पूर्णांकel_pmt_entry *entry = dev_get_drvdata(dev);
 
-	return sprintf(buf, "%lu\n", offset_in_page(entry->base_addr));
-}
-static DEVICE_ATTR_RO(offset);
+	वापस प्र_लिखो(buf, "%lu\n", offset_in_page(entry->base_addr));
+पूर्ण
+अटल DEVICE_ATTR_RO(offset);
 
-static struct attribute *intel_pmt_attrs[] = {
+अटल काष्ठा attribute *पूर्णांकel_pmt_attrs[] = अणु
 	&dev_attr_guid.attr,
 	&dev_attr_size.attr,
 	&dev_attr_offset.attr,
-	NULL
-};
-ATTRIBUTE_GROUPS(intel_pmt);
+	शून्य
+पूर्ण;
+ATTRIBUTE_GROUPS(पूर्णांकel_pmt);
 
-static struct class intel_pmt_class = {
+अटल काष्ठा class पूर्णांकel_pmt_class = अणु
 	.name = "intel_pmt",
 	.owner = THIS_MODULE,
-	.dev_groups = intel_pmt_groups,
-};
+	.dev_groups = पूर्णांकel_pmt_groups,
+पूर्ण;
 
-static int intel_pmt_populate_entry(struct intel_pmt_entry *entry,
-				    struct intel_pmt_header *header,
-				    struct device *dev,
-				    struct resource *disc_res)
-{
-	struct pci_dev *pci_dev = to_pci_dev(dev->parent);
+अटल पूर्णांक पूर्णांकel_pmt_populate_entry(काष्ठा पूर्णांकel_pmt_entry *entry,
+				    काष्ठा पूर्णांकel_pmt_header *header,
+				    काष्ठा device *dev,
+				    काष्ठा resource *disc_res)
+अणु
+	काष्ठा pci_dev *pci_dev = to_pci_dev(dev->parent);
 	u8 bir;
 
 	/*
 	 * The base offset should always be 8 byte aligned.
 	 *
 	 * For non-local access types the lower 3 bits of base offset
-	 * contains the index of the base address register where the
+	 * contains the index of the base address रेजिस्टर where the
 	 * telemetry can be found.
 	 */
 	bir = GET_BIR(header->base_offset);
 
-	/* Local access and BARID only for now */
-	switch (header->access_type) {
-	case ACCESS_LOCAL:
-		if (bir) {
+	/* Local access and BARID only क्रम now */
+	चयन (header->access_type) अणु
+	हाल ACCESS_LOCAL:
+		अगर (bir) अणु
 			dev_err(dev,
 				"Unsupported BAR index %d for access type %d\n",
 				bir, header->access_type);
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 		/*
 		 * For access_type LOCAL, the base address is as follows:
 		 * base address = end of discovery region + base offset
@@ -171,173 +172,173 @@ static int intel_pmt_populate_entry(struct intel_pmt_entry *entry,
 		entry->base_addr = disc_res->end + 1 + header->base_offset;
 
 		/*
-		 * Some hardware use a different calculation for the base address
-		 * when access_type == ACCESS_LOCAL. On the these systems
+		 * Some hardware use a dअगरferent calculation क्रम the base address
+		 * when access_type == ACCESS_LOCAL. On the these प्रणालीs
 		 * ACCCESS_LOCAL refers to an address in the same BAR as the
 		 * header but at a fixed offset. But as the header address was
-		 * supplied to the driver, we don't know which BAR it was in.
-		 * So search for the bar whose range includes the header address.
+		 * supplied to the driver, we करोn't know which BAR it was in.
+		 * So search क्रम the bar whose range includes the header address.
 		 */
-		if (intel_pmt_is_early_client_hw(dev)) {
-			int i;
+		अगर (पूर्णांकel_pmt_is_early_client_hw(dev)) अणु
+			पूर्णांक i;
 
 			entry->base_addr = 0;
-			for (i = 0; i < 6; i++)
-				if (disc_res->start >= pci_resource_start(pci_dev, i) &&
-				   (disc_res->start <= pci_resource_end(pci_dev, i))) {
+			क्रम (i = 0; i < 6; i++)
+				अगर (disc_res->start >= pci_resource_start(pci_dev, i) &&
+				   (disc_res->start <= pci_resource_end(pci_dev, i))) अणु
 					entry->base_addr = pci_resource_start(pci_dev, i) +
 							   header->base_offset;
-					break;
-				}
-			if (!entry->base_addr)
-				return -EINVAL;
-		}
+					अवरोध;
+				पूर्ण
+			अगर (!entry->base_addr)
+				वापस -EINVAL;
+		पूर्ण
 
-		break;
-	case ACCESS_BARID:
+		अवरोध;
+	हाल ACCESS_BARID:
 		/*
-		 * If another BAR was specified then the base offset
+		 * If another BAR was specअगरied then the base offset
 		 * represents the offset within that BAR. SO retrieve the
 		 * address from the parent PCI device and add offset.
 		 */
 		entry->base_addr = pci_resource_start(pci_dev, bir) +
 				   GET_ADDRESS(header->base_offset);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		dev_err(dev, "Unsupported access type %d\n",
 			header->access_type);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	entry->guid = header->guid;
 	entry->size = header->size;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int intel_pmt_dev_register(struct intel_pmt_entry *entry,
-				  struct intel_pmt_namespace *ns,
-				  struct device *parent)
-{
-	struct resource res = {0};
-	struct device *dev;
-	int ret;
+अटल पूर्णांक पूर्णांकel_pmt_dev_रेजिस्टर(काष्ठा पूर्णांकel_pmt_entry *entry,
+				  काष्ठा पूर्णांकel_pmt_namespace *ns,
+				  काष्ठा device *parent)
+अणु
+	काष्ठा resource res = अणु0पूर्ण;
+	काष्ठा device *dev;
+	पूर्णांक ret;
 
 	ret = xa_alloc(ns->xa, &entry->devid, entry, PMT_XA_LIMIT, GFP_KERNEL);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	dev = device_create(&intel_pmt_class, parent, MKDEV(0, 0), entry,
+	dev = device_create(&पूर्णांकel_pmt_class, parent, MKDEV(0, 0), entry,
 			    "%s%d", ns->name, entry->devid);
 
-	if (IS_ERR(dev)) {
+	अगर (IS_ERR(dev)) अणु
 		dev_err(parent, "Could not create %s%d device node\n",
 			ns->name, entry->devid);
 		ret = PTR_ERR(dev);
-		goto fail_dev_create;
-	}
+		जाओ fail_dev_create;
+	पूर्ण
 
 	entry->kobj = &dev->kobj;
 
-	if (ns->attr_grp) {
+	अगर (ns->attr_grp) अणु
 		ret = sysfs_create_group(entry->kobj, ns->attr_grp);
-		if (ret)
-			goto fail_sysfs;
-	}
+		अगर (ret)
+			जाओ fail_sysfs;
+	पूर्ण
 
-	/* if size is 0 assume no data buffer, so no file needed */
-	if (!entry->size)
-		return 0;
+	/* अगर size is 0 assume no data buffer, so no file needed */
+	अगर (!entry->size)
+		वापस 0;
 
 	res.start = entry->base_addr;
 	res.end = res.start + entry->size - 1;
 	res.flags = IORESOURCE_MEM;
 
 	entry->base = devm_ioremap_resource(dev, &res);
-	if (IS_ERR(entry->base)) {
+	अगर (IS_ERR(entry->base)) अणु
 		ret = PTR_ERR(entry->base);
-		goto fail_ioremap;
-	}
+		जाओ fail_ioremap;
+	पूर्ण
 
 	sysfs_bin_attr_init(&entry->pmt_bin_attr);
 	entry->pmt_bin_attr.attr.name = ns->name;
 	entry->pmt_bin_attr.attr.mode = 0440;
-	entry->pmt_bin_attr.mmap = intel_pmt_mmap;
-	entry->pmt_bin_attr.read = intel_pmt_read;
+	entry->pmt_bin_attr.mmap = पूर्णांकel_pmt_mmap;
+	entry->pmt_bin_attr.पढ़ो = पूर्णांकel_pmt_पढ़ो;
 	entry->pmt_bin_attr.size = entry->size;
 
 	ret = sysfs_create_bin_file(&dev->kobj, &entry->pmt_bin_attr);
-	if (!ret)
-		return 0;
+	अगर (!ret)
+		वापस 0;
 
 fail_ioremap:
-	if (ns->attr_grp)
-		sysfs_remove_group(entry->kobj, ns->attr_grp);
+	अगर (ns->attr_grp)
+		sysfs_हटाओ_group(entry->kobj, ns->attr_grp);
 fail_sysfs:
-	device_unregister(dev);
+	device_unरेजिस्टर(dev);
 fail_dev_create:
 	xa_erase(ns->xa, entry->devid);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int intel_pmt_dev_create(struct intel_pmt_entry *entry,
-			 struct intel_pmt_namespace *ns,
-			 struct platform_device *pdev, int idx)
-{
-	struct intel_pmt_header header;
-	struct resource	*disc_res;
-	int ret = -ENODEV;
+पूर्णांक पूर्णांकel_pmt_dev_create(काष्ठा पूर्णांकel_pmt_entry *entry,
+			 काष्ठा पूर्णांकel_pmt_namespace *ns,
+			 काष्ठा platक्रमm_device *pdev, पूर्णांक idx)
+अणु
+	काष्ठा पूर्णांकel_pmt_header header;
+	काष्ठा resource	*disc_res;
+	पूर्णांक ret = -ENODEV;
 
-	disc_res = platform_get_resource(pdev, IORESOURCE_MEM, idx);
-	if (!disc_res)
-		return ret;
+	disc_res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, idx);
+	अगर (!disc_res)
+		वापस ret;
 
-	entry->disc_table = devm_platform_ioremap_resource(pdev, idx);
-	if (IS_ERR(entry->disc_table))
-		return PTR_ERR(entry->disc_table);
+	entry->disc_table = devm_platक्रमm_ioremap_resource(pdev, idx);
+	अगर (IS_ERR(entry->disc_table))
+		वापस PTR_ERR(entry->disc_table);
 
 	ret = ns->pmt_header_decode(entry, &header, &pdev->dev);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	ret = intel_pmt_populate_entry(entry, &header, &pdev->dev, disc_res);
-	if (ret)
-		return ret;
+	ret = पूर्णांकel_pmt_populate_entry(entry, &header, &pdev->dev, disc_res);
+	अगर (ret)
+		वापस ret;
 
-	return intel_pmt_dev_register(entry, ns, &pdev->dev);
+	वापस पूर्णांकel_pmt_dev_रेजिस्टर(entry, ns, &pdev->dev);
 
-}
-EXPORT_SYMBOL_GPL(intel_pmt_dev_create);
+पूर्ण
+EXPORT_SYMBOL_GPL(पूर्णांकel_pmt_dev_create);
 
-void intel_pmt_dev_destroy(struct intel_pmt_entry *entry,
-			   struct intel_pmt_namespace *ns)
-{
-	struct device *dev = kobj_to_dev(entry->kobj);
+व्योम पूर्णांकel_pmt_dev_destroy(काष्ठा पूर्णांकel_pmt_entry *entry,
+			   काष्ठा पूर्णांकel_pmt_namespace *ns)
+अणु
+	काष्ठा device *dev = kobj_to_dev(entry->kobj);
 
-	if (entry->size)
-		sysfs_remove_bin_file(entry->kobj, &entry->pmt_bin_attr);
+	अगर (entry->size)
+		sysfs_हटाओ_bin_file(entry->kobj, &entry->pmt_bin_attr);
 
-	if (ns->attr_grp)
-		sysfs_remove_group(entry->kobj, ns->attr_grp);
+	अगर (ns->attr_grp)
+		sysfs_हटाओ_group(entry->kobj, ns->attr_grp);
 
-	device_unregister(dev);
+	device_unरेजिस्टर(dev);
 	xa_erase(ns->xa, entry->devid);
-}
-EXPORT_SYMBOL_GPL(intel_pmt_dev_destroy);
+पूर्ण
+EXPORT_SYMBOL_GPL(पूर्णांकel_pmt_dev_destroy);
 
-static int __init pmt_class_init(void)
-{
-	return class_register(&intel_pmt_class);
-}
+अटल पूर्णांक __init pmt_class_init(व्योम)
+अणु
+	वापस class_रेजिस्टर(&पूर्णांकel_pmt_class);
+पूर्ण
 
-static void __exit pmt_class_exit(void)
-{
-	class_unregister(&intel_pmt_class);
-}
+अटल व्योम __निकास pmt_class_निकास(व्योम)
+अणु
+	class_unरेजिस्टर(&पूर्णांकel_pmt_class);
+पूर्ण
 
 module_init(pmt_class_init);
-module_exit(pmt_class_exit);
+module_निकास(pmt_class_निकास);
 
 MODULE_AUTHOR("Alexander Duyck <alexander.h.duyck@linux.intel.com>");
 MODULE_DESCRIPTION("Intel PMT Class driver");

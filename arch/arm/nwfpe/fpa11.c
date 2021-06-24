@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
-    NetWinder Floating Point Emulator
+    NetWinder Floating Poपूर्णांक Emulator
     (c) Rebel.COM, 1998,1999
     (c) Philip Blundell, 2001
 
@@ -8,109 +9,109 @@
 
 */
 
-#include "fpa11.h"
-#include "fpopcode.h"
+#समावेश "fpa11.h"
+#समावेश "fpopcode.h"
 
-#include "fpmodule.h"
-#include "fpmodule.inl"
+#समावेश "fpmodule.h"
+#समावेश "fpmodule.inl"
 
-#include <linux/compiler.h>
-#include <linux/string.h>
+#समावेश <linux/compiler.h>
+#समावेश <linux/माला.स>
 
 /* Reset the FPA11 chip.  Called to initialize and reset the emulator. */
-static void resetFPA11(void)
-{
-	int i;
+अटल व्योम resetFPA11(व्योम)
+अणु
+	पूर्णांक i;
 	FPA11 *fpa11 = GET_FPA11();
 
-	/* initialize the register type array */
-	for (i = 0; i <= 7; i++) {
+	/* initialize the रेजिस्टर type array */
+	क्रम (i = 0; i <= 7; i++) अणु
 		fpa11->fType[i] = typeNone;
-	}
+	पूर्ण
 
-	/* FPSR: set system id to FP_EMULATOR, set AC, clear all other bits */
+	/* FPSR: set प्रणाली id to FP_EMULATOR, set AC, clear all other bits */
 	fpa11->fpsr = FP_EMULATOR | BIT_AC;
-}
+पूर्ण
 
-int8 SetRoundingMode(const unsigned int opcode)
-{
-	switch (opcode & MASK_ROUNDING_MODE) {
-	default:
-	case ROUND_TO_NEAREST:
-		return float_round_nearest_even;
+पूर्णांक8 SetRoundingMode(स्थिर अचिन्हित पूर्णांक opcode)
+अणु
+	चयन (opcode & MASK_ROUNDING_MODE) अणु
+	शेष:
+	हाल ROUND_TO_NEAREST:
+		वापस भग्न_round_nearest_even;
 
-	case ROUND_TO_PLUS_INFINITY:
-		return float_round_up;
+	हाल ROUND_TO_PLUS_अनन्त:
+		वापस भग्न_round_up;
 
-	case ROUND_TO_MINUS_INFINITY:
-		return float_round_down;
+	हाल ROUND_TO_MINUS_अनन्त:
+		वापस भग्न_round_करोwn;
 
-	case ROUND_TO_ZERO:
-		return float_round_to_zero;
-	}
-}
+	हाल ROUND_TO_ZERO:
+		वापस भग्न_round_to_zero;
+	पूर्ण
+पूर्ण
 
-int8 SetRoundingPrecision(const unsigned int opcode)
-{
-#ifdef CONFIG_FPE_NWFPE_XP
-	switch (opcode & MASK_ROUNDING_PRECISION) {
-	case ROUND_SINGLE:
-		return 32;
+पूर्णांक8 SetRoundingPrecision(स्थिर अचिन्हित पूर्णांक opcode)
+अणु
+#अगर_घोषित CONFIG_FPE_NWFPE_XP
+	चयन (opcode & MASK_ROUNDING_PRECISION) अणु
+	हाल ROUND_SINGLE:
+		वापस 32;
 
-	case ROUND_DOUBLE:
-		return 64;
+	हाल ROUND_DOUBLE:
+		वापस 64;
 
-	case ROUND_EXTENDED:
-		return 80;
+	हाल ROUND_EXTENDED:
+		वापस 80;
 
-	default:
-		return 80;
-	}
-#endif
-	return 80;
-}
+	शेष:
+		वापस 80;
+	पूर्ण
+#पूर्ण_अगर
+	वापस 80;
+पूर्ण
 
-void nwfpe_init_fpa(union fp_state *fp)
-{
+व्योम nwfpe_init_fpa(जोड़ fp_state *fp)
+अणु
 	FPA11 *fpa11 = (FPA11 *)fp;
-#ifdef NWFPE_DEBUG
-	printk("NWFPE: setting up state.\n");
-#endif
- 	memset(fpa11, 0, sizeof(FPA11));
+#अगर_घोषित NWFPE_DEBUG
+	prपूर्णांकk("NWFPE: setting up state.\n");
+#पूर्ण_अगर
+ 	स_रखो(fpa11, 0, माप(FPA11));
 	resetFPA11();
 	fpa11->initflag = 1;
-}
+पूर्ण
 
-/* Emulate the instruction in the opcode. */
-unsigned int EmulateAll(unsigned int opcode)
-{
-	unsigned int code;
+/* Emulate the inकाष्ठाion in the opcode. */
+अचिन्हित पूर्णांक EmulateAll(अचिन्हित पूर्णांक opcode)
+अणु
+	अचिन्हित पूर्णांक code;
 
-#ifdef NWFPE_DEBUG
-	printk("NWFPE: emulating opcode %08x\n", opcode);
-#endif
+#अगर_घोषित NWFPE_DEBUG
+	prपूर्णांकk("NWFPE: emulating opcode %08x\n", opcode);
+#पूर्ण_अगर
 	code = opcode & 0x00000f00;
-	if (code == 0x00000100 || code == 0x00000200) {
+	अगर (code == 0x00000100 || code == 0x00000200) अणु
 		/* For coprocessor 1 or 2 (FPA11) */
 		code = opcode & 0x0e000000;
-		if (code == 0x0e000000) {
-			if (opcode & 0x00000010) {
+		अगर (code == 0x0e000000) अणु
+			अगर (opcode & 0x00000010) अणु
 				/* Emulate conversion opcodes. */
-				/* Emulate register transfer opcodes. */
+				/* Emulate रेजिस्टर transfer opcodes. */
 				/* Emulate comparison opcodes. */
-				return EmulateCPRT(opcode);
-			} else {
+				वापस EmulateCPRT(opcode);
+			पूर्ण अन्यथा अणु
 				/* Emulate monadic arithmetic opcodes. */
 				/* Emulate dyadic arithmetic opcodes. */
-				return EmulateCPDO(opcode);
-			}
-		} else if (code == 0x0c000000) {
+				वापस EmulateCPDO(opcode);
+			पूर्ण
+		पूर्ण अन्यथा अगर (code == 0x0c000000) अणु
 			/* Emulate load/store opcodes. */
 			/* Emulate load/store multiple opcodes. */
-			return EmulateCPDT(opcode);
-		}
-	}
+			वापस EmulateCPDT(opcode);
+		पूर्ण
+	पूर्ण
 
-	/* Invalid instruction detected.  Return FALSE. */
-	return 0;
-}
+	/* Invalid inकाष्ठाion detected.  Return FALSE. */
+	वापस 0;
+पूर्ण

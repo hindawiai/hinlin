@@ -1,167 +1,168 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- *	VLAN netlink control interface
+ *	VLAN netlink control पूर्णांकerface
  *
  * 	Copyright (c) 2007 Patrick McHardy <kaber@trash.net>
  */
 
-#include <linux/kernel.h>
-#include <linux/netdevice.h>
-#include <linux/if_vlan.h>
-#include <linux/module.h>
-#include <net/net_namespace.h>
-#include <net/netlink.h>
-#include <net/rtnetlink.h>
-#include "vlan.h"
+#समावेश <linux/kernel.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/अगर_vlan.h>
+#समावेश <linux/module.h>
+#समावेश <net/net_namespace.h>
+#समावेश <net/netlink.h>
+#समावेश <net/rtnetlink.h>
+#समावेश "vlan.h"
 
 
-static const struct nla_policy vlan_policy[IFLA_VLAN_MAX + 1] = {
-	[IFLA_VLAN_ID]		= { .type = NLA_U16 },
-	[IFLA_VLAN_FLAGS]	= { .len = sizeof(struct ifla_vlan_flags) },
-	[IFLA_VLAN_EGRESS_QOS]	= { .type = NLA_NESTED },
-	[IFLA_VLAN_INGRESS_QOS] = { .type = NLA_NESTED },
-	[IFLA_VLAN_PROTOCOL]	= { .type = NLA_U16 },
-};
+अटल स्थिर काष्ठा nla_policy vlan_policy[IFLA_VLAN_MAX + 1] = अणु
+	[IFLA_VLAN_ID]		= अणु .type = NLA_U16 पूर्ण,
+	[IFLA_VLAN_FLAGS]	= अणु .len = माप(काष्ठा अगरla_vlan_flags) पूर्ण,
+	[IFLA_VLAN_EGRESS_QOS]	= अणु .type = NLA_NESTED पूर्ण,
+	[IFLA_VLAN_INGRESS_QOS] = अणु .type = NLA_NESTED पूर्ण,
+	[IFLA_VLAN_PROTOCOL]	= अणु .type = NLA_U16 पूर्ण,
+पूर्ण;
 
-static const struct nla_policy vlan_map_policy[IFLA_VLAN_QOS_MAX + 1] = {
-	[IFLA_VLAN_QOS_MAPPING] = { .len = sizeof(struct ifla_vlan_qos_mapping) },
-};
+अटल स्थिर काष्ठा nla_policy vlan_map_policy[IFLA_VLAN_QOS_MAX + 1] = अणु
+	[IFLA_VLAN_QOS_MAPPING] = अणु .len = माप(काष्ठा अगरla_vlan_qos_mapping) पूर्ण,
+पूर्ण;
 
 
-static inline int vlan_validate_qos_map(struct nlattr *attr)
-{
-	if (!attr)
-		return 0;
-	return nla_validate_nested_deprecated(attr, IFLA_VLAN_QOS_MAX,
-					      vlan_map_policy, NULL);
-}
+अटल अंतरभूत पूर्णांक vlan_validate_qos_map(काष्ठा nlattr *attr)
+अणु
+	अगर (!attr)
+		वापस 0;
+	वापस nla_validate_nested_deprecated(attr, IFLA_VLAN_QOS_MAX,
+					      vlan_map_policy, शून्य);
+पूर्ण
 
-static int vlan_validate(struct nlattr *tb[], struct nlattr *data[],
-			 struct netlink_ext_ack *extack)
-{
-	struct ifla_vlan_flags *flags;
+अटल पूर्णांक vlan_validate(काष्ठा nlattr *tb[], काष्ठा nlattr *data[],
+			 काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा अगरla_vlan_flags *flags;
 	u16 id;
-	int err;
+	पूर्णांक err;
 
-	if (tb[IFLA_ADDRESS]) {
-		if (nla_len(tb[IFLA_ADDRESS]) != ETH_ALEN) {
+	अगर (tb[IFLA_ADDRESS]) अणु
+		अगर (nla_len(tb[IFLA_ADDRESS]) != ETH_ALEN) अणु
 			NL_SET_ERR_MSG_MOD(extack, "Invalid link address");
-			return -EINVAL;
-		}
-		if (!is_valid_ether_addr(nla_data(tb[IFLA_ADDRESS]))) {
+			वापस -EINVAL;
+		पूर्ण
+		अगर (!is_valid_ether_addr(nla_data(tb[IFLA_ADDRESS]))) अणु
 			NL_SET_ERR_MSG_MOD(extack, "Invalid link address");
-			return -EADDRNOTAVAIL;
-		}
-	}
+			वापस -EADDRNOTAVAIL;
+		पूर्ण
+	पूर्ण
 
-	if (!data) {
+	अगर (!data) अणु
 		NL_SET_ERR_MSG_MOD(extack, "VLAN properties not specified");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (data[IFLA_VLAN_PROTOCOL]) {
-		switch (nla_get_be16(data[IFLA_VLAN_PROTOCOL])) {
-		case htons(ETH_P_8021Q):
-		case htons(ETH_P_8021AD):
-			break;
-		default:
+	अगर (data[IFLA_VLAN_PROTOCOL]) अणु
+		चयन (nla_get_be16(data[IFLA_VLAN_PROTOCOL])) अणु
+		हाल htons(ETH_P_8021Q):
+		हाल htons(ETH_P_8021AD):
+			अवरोध;
+		शेष:
 			NL_SET_ERR_MSG_MOD(extack, "Invalid VLAN protocol");
-			return -EPROTONOSUPPORT;
-		}
-	}
+			वापस -EPROTONOSUPPORT;
+		पूर्ण
+	पूर्ण
 
-	if (data[IFLA_VLAN_ID]) {
+	अगर (data[IFLA_VLAN_ID]) अणु
 		id = nla_get_u16(data[IFLA_VLAN_ID]);
-		if (id >= VLAN_VID_MASK) {
+		अगर (id >= VLAN_VID_MASK) अणु
 			NL_SET_ERR_MSG_MOD(extack, "Invalid VLAN id");
-			return -ERANGE;
-		}
-	}
-	if (data[IFLA_VLAN_FLAGS]) {
+			वापस -दुस्फल;
+		पूर्ण
+	पूर्ण
+	अगर (data[IFLA_VLAN_FLAGS]) अणु
 		flags = nla_data(data[IFLA_VLAN_FLAGS]);
-		if ((flags->flags & flags->mask) &
+		अगर ((flags->flags & flags->mask) &
 		    ~(VLAN_FLAG_REORDER_HDR | VLAN_FLAG_GVRP |
 		      VLAN_FLAG_LOOSE_BINDING | VLAN_FLAG_MVRP |
-		      VLAN_FLAG_BRIDGE_BINDING)) {
+		      VLAN_FLAG_BRIDGE_BINDING)) अणु
 			NL_SET_ERR_MSG_MOD(extack, "Invalid VLAN flags");
-			return -EINVAL;
-		}
-	}
+			वापस -EINVAL;
+		पूर्ण
+	पूर्ण
 
 	err = vlan_validate_qos_map(data[IFLA_VLAN_INGRESS_QOS]);
-	if (err < 0) {
+	अगर (err < 0) अणु
 		NL_SET_ERR_MSG_MOD(extack, "Invalid ingress QOS map");
-		return err;
-	}
+		वापस err;
+	पूर्ण
 	err = vlan_validate_qos_map(data[IFLA_VLAN_EGRESS_QOS]);
-	if (err < 0) {
+	अगर (err < 0) अणु
 		NL_SET_ERR_MSG_MOD(extack, "Invalid egress QOS map");
-		return err;
-	}
-	return 0;
-}
+		वापस err;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int vlan_changelink(struct net_device *dev, struct nlattr *tb[],
-			   struct nlattr *data[],
-			   struct netlink_ext_ack *extack)
-{
-	struct ifla_vlan_flags *flags;
-	struct ifla_vlan_qos_mapping *m;
-	struct nlattr *attr;
-	int rem, err;
+अटल पूर्णांक vlan_changelink(काष्ठा net_device *dev, काष्ठा nlattr *tb[],
+			   काष्ठा nlattr *data[],
+			   काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा अगरla_vlan_flags *flags;
+	काष्ठा अगरla_vlan_qos_mapping *m;
+	काष्ठा nlattr *attr;
+	पूर्णांक rem, err;
 
-	if (data[IFLA_VLAN_FLAGS]) {
+	अगर (data[IFLA_VLAN_FLAGS]) अणु
 		flags = nla_data(data[IFLA_VLAN_FLAGS]);
 		err = vlan_dev_change_flags(dev, flags->flags, flags->mask);
-		if (err)
-			return err;
-	}
-	if (data[IFLA_VLAN_INGRESS_QOS]) {
-		nla_for_each_nested(attr, data[IFLA_VLAN_INGRESS_QOS], rem) {
+		अगर (err)
+			वापस err;
+	पूर्ण
+	अगर (data[IFLA_VLAN_INGRESS_QOS]) अणु
+		nla_क्रम_each_nested(attr, data[IFLA_VLAN_INGRESS_QOS], rem) अणु
 			m = nla_data(attr);
 			vlan_dev_set_ingress_priority(dev, m->to, m->from);
-		}
-	}
-	if (data[IFLA_VLAN_EGRESS_QOS]) {
-		nla_for_each_nested(attr, data[IFLA_VLAN_EGRESS_QOS], rem) {
+		पूर्ण
+	पूर्ण
+	अगर (data[IFLA_VLAN_EGRESS_QOS]) अणु
+		nla_क्रम_each_nested(attr, data[IFLA_VLAN_EGRESS_QOS], rem) अणु
 			m = nla_data(attr);
 			err = vlan_dev_set_egress_priority(dev, m->from, m->to);
-			if (err)
-				return err;
-		}
-	}
-	return 0;
-}
+			अगर (err)
+				वापस err;
+		पूर्ण
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int vlan_newlink(struct net *src_net, struct net_device *dev,
-			struct nlattr *tb[], struct nlattr *data[],
-			struct netlink_ext_ack *extack)
-{
-	struct vlan_dev_priv *vlan = vlan_dev_priv(dev);
-	struct net_device *real_dev;
-	unsigned int max_mtu;
+अटल पूर्णांक vlan_newlink(काष्ठा net *src_net, काष्ठा net_device *dev,
+			काष्ठा nlattr *tb[], काष्ठा nlattr *data[],
+			काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा vlan_dev_priv *vlan = vlan_dev_priv(dev);
+	काष्ठा net_device *real_dev;
+	अचिन्हित पूर्णांक max_mtu;
 	__be16 proto;
-	int err;
+	पूर्णांक err;
 
-	if (!data[IFLA_VLAN_ID]) {
+	अगर (!data[IFLA_VLAN_ID]) अणु
 		NL_SET_ERR_MSG_MOD(extack, "VLAN id not specified");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (!tb[IFLA_LINK]) {
+	अगर (!tb[IFLA_LINK]) अणु
 		NL_SET_ERR_MSG_MOD(extack, "link not specified");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	real_dev = __dev_get_by_index(src_net, nla_get_u32(tb[IFLA_LINK]));
-	if (!real_dev) {
+	अगर (!real_dev) अणु
 		NL_SET_ERR_MSG_MOD(extack, "link does not exist");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	if (data[IFLA_VLAN_PROTOCOL])
+	अगर (data[IFLA_VLAN_PROTOCOL])
 		proto = nla_get_be16(data[IFLA_VLAN_PROTOCOL]);
-	else
+	अन्यथा
 		proto = htons(ETH_P_8021Q);
 
 	vlan->vlan_proto = proto;
@@ -172,136 +173,136 @@ static int vlan_newlink(struct net *src_net, struct net_device *dev,
 
 	err = vlan_check_real_dev(real_dev, vlan->vlan_proto, vlan->vlan_id,
 				  extack);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
-	max_mtu = netif_reduces_vlan_mtu(real_dev) ? real_dev->mtu - VLAN_HLEN :
+	max_mtu = netअगर_reduces_vlan_mtu(real_dev) ? real_dev->mtu - VLAN_HLEN :
 						     real_dev->mtu;
-	if (!tb[IFLA_MTU])
+	अगर (!tb[IFLA_MTU])
 		dev->mtu = max_mtu;
-	else if (dev->mtu > max_mtu)
-		return -EINVAL;
+	अन्यथा अगर (dev->mtu > max_mtu)
+		वापस -EINVAL;
 
 	err = vlan_changelink(dev, tb, data, extack);
-	if (!err)
-		err = register_vlan_dev(dev, extack);
-	if (err)
+	अगर (!err)
+		err = रेजिस्टर_vlan_dev(dev, extack);
+	अगर (err)
 		vlan_dev_uninit(dev);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static inline size_t vlan_qos_map_size(unsigned int n)
-{
-	if (n == 0)
-		return 0;
-	/* IFLA_VLAN_{EGRESS,INGRESS}_QOS + n * IFLA_VLAN_QOS_MAPPING */
-	return nla_total_size(sizeof(struct nlattr)) +
-	       nla_total_size(sizeof(struct ifla_vlan_qos_mapping)) * n;
-}
+अटल अंतरभूत माप_प्रकार vlan_qos_map_size(अचिन्हित पूर्णांक n)
+अणु
+	अगर (n == 0)
+		वापस 0;
+	/* IFLA_VLAN_अणुEGRESS,INGRESSपूर्ण_QOS + n * IFLA_VLAN_QOS_MAPPING */
+	वापस nla_total_size(माप(काष्ठा nlattr)) +
+	       nla_total_size(माप(काष्ठा अगरla_vlan_qos_mapping)) * n;
+पूर्ण
 
-static size_t vlan_get_size(const struct net_device *dev)
-{
-	struct vlan_dev_priv *vlan = vlan_dev_priv(dev);
+अटल माप_प्रकार vlan_get_size(स्थिर काष्ठा net_device *dev)
+अणु
+	काष्ठा vlan_dev_priv *vlan = vlan_dev_priv(dev);
 
-	return nla_total_size(2) +	/* IFLA_VLAN_PROTOCOL */
+	वापस nla_total_size(2) +	/* IFLA_VLAN_PROTOCOL */
 	       nla_total_size(2) +	/* IFLA_VLAN_ID */
-	       nla_total_size(sizeof(struct ifla_vlan_flags)) + /* IFLA_VLAN_FLAGS */
+	       nla_total_size(माप(काष्ठा अगरla_vlan_flags)) + /* IFLA_VLAN_FLAGS */
 	       vlan_qos_map_size(vlan->nr_ingress_mappings) +
 	       vlan_qos_map_size(vlan->nr_egress_mappings);
-}
+पूर्ण
 
-static int vlan_fill_info(struct sk_buff *skb, const struct net_device *dev)
-{
-	struct vlan_dev_priv *vlan = vlan_dev_priv(dev);
-	struct vlan_priority_tci_mapping *pm;
-	struct ifla_vlan_flags f;
-	struct ifla_vlan_qos_mapping m;
-	struct nlattr *nest;
-	unsigned int i;
+अटल पूर्णांक vlan_fill_info(काष्ठा sk_buff *skb, स्थिर काष्ठा net_device *dev)
+अणु
+	काष्ठा vlan_dev_priv *vlan = vlan_dev_priv(dev);
+	काष्ठा vlan_priority_tci_mapping *pm;
+	काष्ठा अगरla_vlan_flags f;
+	काष्ठा अगरla_vlan_qos_mapping m;
+	काष्ठा nlattr *nest;
+	अचिन्हित पूर्णांक i;
 
-	if (nla_put_be16(skb, IFLA_VLAN_PROTOCOL, vlan->vlan_proto) ||
+	अगर (nla_put_be16(skb, IFLA_VLAN_PROTOCOL, vlan->vlan_proto) ||
 	    nla_put_u16(skb, IFLA_VLAN_ID, vlan->vlan_id))
-		goto nla_put_failure;
-	if (vlan->flags) {
+		जाओ nla_put_failure;
+	अगर (vlan->flags) अणु
 		f.flags = vlan->flags;
 		f.mask  = ~0;
-		if (nla_put(skb, IFLA_VLAN_FLAGS, sizeof(f), &f))
-			goto nla_put_failure;
-	}
-	if (vlan->nr_ingress_mappings) {
+		अगर (nla_put(skb, IFLA_VLAN_FLAGS, माप(f), &f))
+			जाओ nla_put_failure;
+	पूर्ण
+	अगर (vlan->nr_ingress_mappings) अणु
 		nest = nla_nest_start_noflag(skb, IFLA_VLAN_INGRESS_QOS);
-		if (nest == NULL)
-			goto nla_put_failure;
+		अगर (nest == शून्य)
+			जाओ nla_put_failure;
 
-		for (i = 0; i < ARRAY_SIZE(vlan->ingress_priority_map); i++) {
-			if (!vlan->ingress_priority_map[i])
-				continue;
+		क्रम (i = 0; i < ARRAY_SIZE(vlan->ingress_priority_map); i++) अणु
+			अगर (!vlan->ingress_priority_map[i])
+				जारी;
 
 			m.from = i;
 			m.to   = vlan->ingress_priority_map[i];
-			if (nla_put(skb, IFLA_VLAN_QOS_MAPPING,
-				    sizeof(m), &m))
-				goto nla_put_failure;
-		}
+			अगर (nla_put(skb, IFLA_VLAN_QOS_MAPPING,
+				    माप(m), &m))
+				जाओ nla_put_failure;
+		पूर्ण
 		nla_nest_end(skb, nest);
-	}
+	पूर्ण
 
-	if (vlan->nr_egress_mappings) {
+	अगर (vlan->nr_egress_mappings) अणु
 		nest = nla_nest_start_noflag(skb, IFLA_VLAN_EGRESS_QOS);
-		if (nest == NULL)
-			goto nla_put_failure;
+		अगर (nest == शून्य)
+			जाओ nla_put_failure;
 
-		for (i = 0; i < ARRAY_SIZE(vlan->egress_priority_map); i++) {
-			for (pm = vlan->egress_priority_map[i]; pm;
-			     pm = pm->next) {
-				if (!pm->vlan_qos)
-					continue;
+		क्रम (i = 0; i < ARRAY_SIZE(vlan->egress_priority_map); i++) अणु
+			क्रम (pm = vlan->egress_priority_map[i]; pm;
+			     pm = pm->next) अणु
+				अगर (!pm->vlan_qos)
+					जारी;
 
 				m.from = pm->priority;
 				m.to   = (pm->vlan_qos >> 13) & 0x7;
-				if (nla_put(skb, IFLA_VLAN_QOS_MAPPING,
-					    sizeof(m), &m))
-					goto nla_put_failure;
-			}
-		}
+				अगर (nla_put(skb, IFLA_VLAN_QOS_MAPPING,
+					    माप(m), &m))
+					जाओ nla_put_failure;
+			पूर्ण
+		पूर्ण
 		nla_nest_end(skb, nest);
-	}
-	return 0;
+	पूर्ण
+	वापस 0;
 
 nla_put_failure:
-	return -EMSGSIZE;
-}
+	वापस -EMSGSIZE;
+पूर्ण
 
-static struct net *vlan_get_link_net(const struct net_device *dev)
-{
-	struct net_device *real_dev = vlan_dev_priv(dev)->real_dev;
+अटल काष्ठा net *vlan_get_link_net(स्थिर काष्ठा net_device *dev)
+अणु
+	काष्ठा net_device *real_dev = vlan_dev_priv(dev)->real_dev;
 
-	return dev_net(real_dev);
-}
+	वापस dev_net(real_dev);
+पूर्ण
 
-struct rtnl_link_ops vlan_link_ops __read_mostly = {
+काष्ठा rtnl_link_ops vlan_link_ops __पढ़ो_mostly = अणु
 	.kind		= "vlan",
 	.maxtype	= IFLA_VLAN_MAX,
 	.policy		= vlan_policy,
-	.priv_size	= sizeof(struct vlan_dev_priv),
+	.priv_size	= माप(काष्ठा vlan_dev_priv),
 	.setup		= vlan_setup,
 	.validate	= vlan_validate,
 	.newlink	= vlan_newlink,
 	.changelink	= vlan_changelink,
-	.dellink	= unregister_vlan_dev,
+	.dellink	= unरेजिस्टर_vlan_dev,
 	.get_size	= vlan_get_size,
 	.fill_info	= vlan_fill_info,
 	.get_link_net	= vlan_get_link_net,
-};
+पूर्ण;
 
-int __init vlan_netlink_init(void)
-{
-	return rtnl_link_register(&vlan_link_ops);
-}
+पूर्णांक __init vlan_netlink_init(व्योम)
+अणु
+	वापस rtnl_link_रेजिस्टर(&vlan_link_ops);
+पूर्ण
 
-void __exit vlan_netlink_fini(void)
-{
-	rtnl_link_unregister(&vlan_link_ops);
-}
+व्योम __निकास vlan_netlink_fini(व्योम)
+अणु
+	rtnl_link_unरेजिस्टर(&vlan_link_ops);
+पूर्ण
 
 MODULE_ALIAS_RTNL_LINK("vlan");

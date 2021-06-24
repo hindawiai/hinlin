@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
  * ocfs2_buffer_head.h
  *
@@ -7,52 +8,52 @@
  * Copyright (C) 2002, 2004 Oracle.  All rights reserved.
  */
 
-#ifndef OCFS2_BUFFER_HEAD_IO_H
-#define OCFS2_BUFFER_HEAD_IO_H
+#अगर_अघोषित OCFS2_BUFFER_HEAD_IO_H
+#घोषणा OCFS2_BUFFER_HEAD_IO_H
 
-#include <linux/buffer_head.h>
+#समावेश <linux/buffer_head.h>
 
-int ocfs2_write_block(struct ocfs2_super          *osb,
-		      struct buffer_head  *bh,
-		      struct ocfs2_caching_info   *ci);
-int ocfs2_read_blocks_sync(struct ocfs2_super *osb, u64 block,
-			   unsigned int nr, struct buffer_head *bhs[]);
+पूर्णांक ocfs2_ग_लिखो_block(काष्ठा ocfs2_super          *osb,
+		      काष्ठा buffer_head  *bh,
+		      काष्ठा ocfs2_caching_info   *ci);
+पूर्णांक ocfs2_पढ़ो_blocks_sync(काष्ठा ocfs2_super *osb, u64 block,
+			   अचिन्हित पूर्णांक nr, काष्ठा buffer_head *bhs[]);
 
 /*
- * If not NULL, validate() will be called on a buffer that is freshly
- * read from disk.  It will not be called if the buffer was in cache.
- * Note that if validate() is being used for this buffer, it needs to
- * be set even for a READAHEAD call, as it marks the buffer for later
+ * If not शून्य, validate() will be called on a buffer that is freshly
+ * पढ़ो from disk.  It will not be called अगर the buffer was in cache.
+ * Note that अगर validate() is being used क्रम this buffer, it needs to
+ * be set even क्रम a READAHEAD call, as it marks the buffer क्रम later
  * validation.
  */
-int ocfs2_read_blocks(struct ocfs2_caching_info *ci, u64 block, int nr,
-		      struct buffer_head *bhs[], int flags,
-		      int (*validate)(struct super_block *sb,
-				      struct buffer_head *bh));
+पूर्णांक ocfs2_पढ़ो_blocks(काष्ठा ocfs2_caching_info *ci, u64 block, पूर्णांक nr,
+		      काष्ठा buffer_head *bhs[], पूर्णांक flags,
+		      पूर्णांक (*validate)(काष्ठा super_block *sb,
+				      काष्ठा buffer_head *bh));
 
-int ocfs2_write_super_or_backup(struct ocfs2_super *osb,
-				struct buffer_head *bh);
+पूर्णांक ocfs2_ग_लिखो_super_or_backup(काष्ठा ocfs2_super *osb,
+				काष्ठा buffer_head *bh);
 
-#define OCFS2_BH_IGNORE_CACHE      1
-#define OCFS2_BH_READAHEAD         8
+#घोषणा OCFS2_BH_IGNORE_CACHE      1
+#घोषणा OCFS2_BH_READAHEAD         8
 
-static inline int ocfs2_read_block(struct ocfs2_caching_info *ci, u64 off,
-				   struct buffer_head **bh,
-				   int (*validate)(struct super_block *sb,
-						   struct buffer_head *bh))
-{
-	int status = 0;
+अटल अंतरभूत पूर्णांक ocfs2_पढ़ो_block(काष्ठा ocfs2_caching_info *ci, u64 off,
+				   काष्ठा buffer_head **bh,
+				   पूर्णांक (*validate)(काष्ठा super_block *sb,
+						   काष्ठा buffer_head *bh))
+अणु
+	पूर्णांक status = 0;
 
-	if (bh == NULL) {
-		printk("ocfs2: bh == NULL\n");
+	अगर (bh == शून्य) अणु
+		prपूर्णांकk("ocfs2: bh == NULL\n");
 		status = -EINVAL;
-		goto bail;
-	}
+		जाओ bail;
+	पूर्ण
 
-	status = ocfs2_read_blocks(ci, off, 1, bh, 0, validate);
+	status = ocfs2_पढ़ो_blocks(ci, off, 1, bh, 0, validate);
 
 bail:
-	return status;
-}
+	वापस status;
+पूर्ण
 
-#endif /* OCFS2_BUFFER_HEAD_IO_H */
+#पूर्ण_अगर /* OCFS2_BUFFER_HEAD_IO_H */

@@ -1,97 +1,98 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * linux/arch/m68k/mm/sun3mmu.c
  *
- * Implementations of mm routines specific to the sun3 MMU.
+ * Implementations of mm routines specअगरic to the sun3 MMU.
  *
  * Moved here 8/20/1999 Sam Creasey
  *
  */
 
-#include <linux/signal.h>
-#include <linux/sched.h>
-#include <linux/mm.h>
-#include <linux/swap.h>
-#include <linux/kernel.h>
-#include <linux/string.h>
-#include <linux/types.h>
-#include <linux/init.h>
-#include <linux/memblock.h>
+#समावेश <linux/संकेत.स>
+#समावेश <linux/sched.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/swap.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/types.h>
+#समावेश <linux/init.h>
+#समावेश <linux/memblock.h>
 
-#include <asm/setup.h>
-#include <linux/uaccess.h>
-#include <asm/page.h>
-#include <asm/machdep.h>
-#include <asm/io.h>
+#समावेश <यंत्र/setup.h>
+#समावेश <linux/uaccess.h>
+#समावेश <यंत्र/page.h>
+#समावेश <यंत्र/machdep.h>
+#समावेश <यंत्र/पन.स>
 
-extern void mmu_emu_init (unsigned long bootmem_end);
+बाह्य व्योम mmu_emu_init (अचिन्हित दीर्घ booपंचांगem_end);
 
-const char bad_pmd_string[] = "Bad pmd in pte_alloc: %08lx\n";
+स्थिर अक्षर bad_pmd_string[] = "Bad pmd in pte_alloc: %08lx\n";
 
-extern unsigned long num_pages;
+बाह्य अचिन्हित दीर्घ num_pages;
 
-/* For the sun3 we try to follow the i386 paging_init() more closely */
-/* start_mem and end_mem have PAGE_OFFSET added already */
-/* now sets up tables using sun3 PTEs rather than i386 as before. --m */
-void __init paging_init(void)
-{
+/* For the sun3 we try to follow the i386 paging_init() more बंदly */
+/* start_mem and end_mem have PAGE_OFFSET added alपढ़ोy */
+/* now sets up tables using sun3 PTEs rather than i386 as beक्रमe. --m */
+व्योम __init paging_init(व्योम)
+अणु
 	pgd_t * pg_dir;
 	pte_t * pg_table;
-	int i;
-	unsigned long address;
-	unsigned long next_pgtable;
-	unsigned long bootmem_end;
-	unsigned long max_zone_pfn[MAX_NR_ZONES] = { 0, };
-	unsigned long size;
+	पूर्णांक i;
+	अचिन्हित दीर्घ address;
+	अचिन्हित दीर्घ next_pgtable;
+	अचिन्हित दीर्घ booपंचांगem_end;
+	अचिन्हित दीर्घ max_zone_pfn[MAX_NR_ZONES] = अणु 0, पूर्ण;
+	अचिन्हित दीर्घ size;
 
 	empty_zero_page = memblock_alloc(PAGE_SIZE, PAGE_SIZE);
-	if (!empty_zero_page)
+	अगर (!empty_zero_page)
 		panic("%s: Failed to allocate %lu bytes align=0x%lx\n",
 		      __func__, PAGE_SIZE, PAGE_SIZE);
 
 	address = PAGE_OFFSET;
 	pg_dir = swapper_pg_dir;
-	memset (swapper_pg_dir, 0, sizeof (swapper_pg_dir));
-	memset (kernel_pg_dir,  0, sizeof (kernel_pg_dir));
+	स_रखो (swapper_pg_dir, 0, माप (swapper_pg_dir));
+	स_रखो (kernel_pg_dir,  0, माप (kernel_pg_dir));
 
-	size = num_pages * sizeof(pte_t);
+	size = num_pages * माप(pte_t);
 	size = (size + PAGE_SIZE) & ~(PAGE_SIZE-1);
 
-	next_pgtable = (unsigned long)memblock_alloc(size, PAGE_SIZE);
-	if (!next_pgtable)
+	next_pgtable = (अचिन्हित दीर्घ)memblock_alloc(size, PAGE_SIZE);
+	अगर (!next_pgtable)
 		panic("%s: Failed to allocate %lu bytes align=0x%lx\n",
 		      __func__, size, PAGE_SIZE);
-	bootmem_end = (next_pgtable + size + PAGE_SIZE) & PAGE_MASK;
+	booपंचांगem_end = (next_pgtable + size + PAGE_SIZE) & PAGE_MASK;
 
 	/* Map whole memory from PAGE_OFFSET (0x0E000000) */
-	pg_dir += PAGE_OFFSET >> PGDIR_SHIFT;
+	pg_dir += PAGE_OFFSET >> PGसूची_SHIFT;
 
-	while (address < (unsigned long)high_memory) {
+	जबतक (address < (अचिन्हित दीर्घ)high_memory) अणु
 		pg_table = (pte_t *) __pa (next_pgtable);
-		next_pgtable += PTRS_PER_PTE * sizeof (pte_t);
-		pgd_val(*pg_dir) = (unsigned long) pg_table;
+		next_pgtable += PTRS_PER_PTE * माप (pte_t);
+		pgd_val(*pg_dir) = (अचिन्हित दीर्घ) pg_table;
 		pg_dir++;
 
-		/* now change pg_table to kernel virtual addresses */
-		pg_table = (pte_t *) __va ((unsigned long) pg_table);
-		for (i=0; i<PTRS_PER_PTE; ++i, ++pg_table) {
+		/* now change pg_table to kernel भव addresses */
+		pg_table = (pte_t *) __va ((अचिन्हित दीर्घ) pg_table);
+		क्रम (i=0; i<PTRS_PER_PTE; ++i, ++pg_table) अणु
 			pte_t pte = pfn_pte(virt_to_pfn(address), PAGE_INIT);
-			if (address >= (unsigned long)high_memory)
+			अगर (address >= (अचिन्हित दीर्घ)high_memory)
 				pte_val (pte) = 0;
 			set_pte (pg_table, pte);
 			address += PAGE_SIZE;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	mmu_emu_init(bootmem_end);
+	mmu_emu_init(booपंचांगem_end);
 
-	current->mm = NULL;
+	current->mm = शून्य;
 
-	/* memory sizing is a hack stolen from motorola.c..  hope it works for us */
-	max_zone_pfn[ZONE_DMA] = ((unsigned long)high_memory) >> PAGE_SHIFT;
+	/* memory sizing is a hack stolen from motorola.c..  hope it works क्रम us */
+	max_zone_pfn[ZONE_DMA] = ((अचिन्हित दीर्घ)high_memory) >> PAGE_SHIFT;
 
 	/* I really wish I knew why the following change made things better...  -- Sam */
-	free_area_init(max_zone_pfn);
+	मुक्त_area_init(max_zone_pfn);
 
 
-}
+पूर्ण

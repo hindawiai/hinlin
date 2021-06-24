@@ -1,127 +1,128 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * Test that we can take signals with and without the VDSO mapped, which trigger
- * different paths in the signal handling code.
+ * Test that we can take संकेतs with and without the VDSO mapped, which trigger
+ * dअगरferent paths in the संकेत handling code.
  *
- * See handle_rt_signal64() and setup_trampoline() in signal_64.c
+ * See handle_rt_संकेत64() and setup_trampoline() in संकेत_64.c
  */
 
-#define _GNU_SOURCE
+#घोषणा _GNU_SOURCE
 
-#include <errno.h>
-#include <stdio.h>
-#include <signal.h>
-#include <stdlib.h>
-#include <string.h>
-#include <sys/mman.h>
-#include <sys/types.h>
-#include <unistd.h>
+#समावेश <त्रुटिसं.स>
+#समावेश <मानकपन.स>
+#समावेश <संकेत.स>
+#समावेश <मानककोष.स>
+#समावेश <माला.स>
+#समावेश <sys/mman.h>
+#समावेश <sys/types.h>
+#समावेश <unistd.h>
 
-// Ensure assert() is not compiled out
-#undef NDEBUG
-#include <assert.h>
+// Ensure निश्चित() is not compiled out
+#अघोषित न_संशोधन
+#समावेश <निश्चित.स>
 
-#include "utils.h"
+#समावेश "utils.h"
 
-static int search_proc_maps(char *needle, unsigned long *low, unsigned long *high)
-{
-	unsigned long start, end;
-	static char buf[4096];
-	char name[128];
-	FILE *f;
-	int rc = -1;
+अटल पूर्णांक search_proc_maps(अक्षर *needle, अचिन्हित दीर्घ *low, अचिन्हित दीर्घ *high)
+अणु
+	अचिन्हित दीर्घ start, end;
+	अटल अक्षर buf[4096];
+	अक्षर name[128];
+	खाता *f;
+	पूर्णांक rc = -1;
 
-	f = fopen("/proc/self/maps", "r");
-	if (!f) {
-		perror("fopen");
-		return -1;
-	}
+	f = ख_खोलो("/proc/self/maps", "r");
+	अगर (!f) अणु
+		लिखो_त्रुटि("fopen");
+		वापस -1;
+	पूर्ण
 
-	while (fgets(buf, sizeof(buf), f)) {
-		rc = sscanf(buf, "%lx-%lx %*c%*c%*c%*c %*x %*d:%*d %*d %127s\n",
+	जबतक (ख_माला_लो(buf, माप(buf), f)) अणु
+		rc = माला_पूछो(buf, "%lx-%lx %*c%*c%*c%*c %*x %*d:%*d %*d %127s\n",
 			    &start, &end, name);
-		if (rc == 2)
-			continue;
+		अगर (rc == 2)
+			जारी;
 
-		if (rc != 3) {
-			printf("sscanf errored\n");
+		अगर (rc != 3) अणु
+			म_लिखो("sscanf errored\n");
 			rc = -1;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		if (strstr(name, needle)) {
+		अगर (म_माला(name, needle)) अणु
 			*low = start;
 			*high = end - 1;
 			rc = 0;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	fclose(f);
+	ख_बंद(f);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static volatile sig_atomic_t took_signal = 0;
+अटल अस्थिर संक_पूर्ण_प्रकार took_संकेत = 0;
 
-static void sigusr1_handler(int sig)
-{
-	took_signal++;
-}
+अटल व्योम sigusr1_handler(पूर्णांक sig)
+अणु
+	took_संकेत++;
+पूर्ण
 
-int test_sigreturn_vdso(void)
-{
-	unsigned long low, high, size;
-	struct sigaction act;
-	char *p;
+पूर्णांक test_sigवापस_vdso(व्योम)
+अणु
+	अचिन्हित दीर्घ low, high, size;
+	काष्ठा sigaction act;
+	अक्षर *p;
 
 	act.sa_handler = sigusr1_handler;
 	act.sa_flags = 0;
 	sigemptyset(&act.sa_mask);
 
-	assert(sigaction(SIGUSR1, &act, NULL) == 0);
+	निश्चित(sigaction(SIGUSR1, &act, शून्य) == 0);
 
 	// Confirm the VDSO is mapped, and work out where it is
-	assert(search_proc_maps("[vdso]", &low, &high) == 0);
+	निश्चित(search_proc_maps("[vdso]", &low, &high) == 0);
 	size = high - low + 1;
-	printf("VDSO is at 0x%lx-0x%lx (%lu bytes)\n", low, high, size);
+	म_लिखो("VDSO is at 0x%lx-0x%lx (%lu bytes)\n", low, high, size);
 
-	kill(getpid(), SIGUSR1);
-	assert(took_signal == 1);
-	printf("Signal delivered OK with VDSO mapped\n");
+	समाप्त(getpid(), SIGUSR1);
+	निश्चित(took_संकेत == 1);
+	म_लिखो("Signal delivered OK with VDSO mapped\n");
 
-	// Remap the VDSO somewhere else
-	p = mmap(NULL, size, PROT_READ|PROT_WRITE, MAP_ANONYMOUS|MAP_PRIVATE, -1, 0);
-	assert(p != MAP_FAILED);
-	assert(mremap((void *)low, size, size, MREMAP_MAYMOVE|MREMAP_FIXED, p) != MAP_FAILED);
-	assert(search_proc_maps("[vdso]", &low, &high) == 0);
+	// Remap the VDSO somewhere अन्यथा
+	p = mmap(शून्य, size, PROT_READ|PROT_WRITE, MAP_ANONYMOUS|MAP_PRIVATE, -1, 0);
+	निश्चित(p != MAP_FAILED);
+	निश्चित(mremap((व्योम *)low, size, size, MREMAP_MAYMOVE|MREMAP_FIXED, p) != MAP_FAILED);
+	निश्चित(search_proc_maps("[vdso]", &low, &high) == 0);
 	size = high - low + 1;
-	printf("VDSO moved to 0x%lx-0x%lx (%lu bytes)\n", low, high, size);
+	म_लिखो("VDSO moved to 0x%lx-0x%lx (%lu bytes)\n", low, high, size);
 
-	kill(getpid(), SIGUSR1);
-	assert(took_signal == 2);
-	printf("Signal delivered OK with VDSO moved\n");
+	समाप्त(getpid(), SIGUSR1);
+	निश्चित(took_संकेत == 2);
+	म_लिखो("Signal delivered OK with VDSO moved\n");
 
-	assert(munmap((void *)low, size) == 0);
-	printf("Unmapped VDSO\n");
+	निश्चित(munmap((व्योम *)low, size) == 0);
+	म_लिखो("Unmapped VDSO\n");
 
 	// Confirm the VDSO is not mapped anymore
-	assert(search_proc_maps("[vdso]", &low, &high) != 0);
+	निश्चित(search_proc_maps("[vdso]", &low, &high) != 0);
 
 	// Make the stack executable
-	assert(search_proc_maps("[stack]", &low, &high) == 0);
+	निश्चित(search_proc_maps("[stack]", &low, &high) == 0);
 	size = high - low + 1;
-	mprotect((void *)low, size, PROT_READ|PROT_WRITE|PROT_EXEC);
-	printf("Remapped the stack executable\n");
+	mprotect((व्योम *)low, size, PROT_READ|PROT_WRITE|PROT_EXEC);
+	म_लिखो("Remapped the stack executable\n");
 
-	kill(getpid(), SIGUSR1);
-	assert(took_signal == 3);
-	printf("Signal delivered OK with VDSO unmapped\n");
+	समाप्त(getpid(), SIGUSR1);
+	निश्चित(took_संकेत == 3);
+	म_लिखो("Signal delivered OK with VDSO unmapped\n");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int main(void)
-{
-	return test_harness(test_sigreturn_vdso, "sigreturn_vdso");
-}
+पूर्णांक मुख्य(व्योम)
+अणु
+	वापस test_harness(test_sigवापस_vdso, "sigreturn_vdso");
+पूर्ण

@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  *  arch/arm/mach-sti/smp.h
  *
@@ -6,11 +7,11 @@
  *		http://www.st.com
  */
 
-#ifndef __MACH_STI_SMP_H
-#define __MACH_STI_SMP_H
+#अगर_अघोषित __MACH_STI_SMP_H
+#घोषणा __MACH_STI_SMP_H
 
-extern const struct smp_operations sti_smp_ops;
+बाह्य स्थिर काष्ठा smp_operations sti_smp_ops;
 
-void sti_secondary_startup(void);
+व्योम sti_secondary_startup(व्योम);
 
-#endif
+#पूर्ण_अगर

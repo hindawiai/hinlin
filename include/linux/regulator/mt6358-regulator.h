@@ -1,12 +1,13 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * Copyright (c) 2019 MediaTek Inc.
  */
 
-#ifndef __LINUX_REGULATOR_MT6358_H
-#define __LINUX_REGULATOR_MT6358_H
+#अगर_अघोषित __LINUX_REGULATOR_MT6358_H
+#घोषणा __LINUX_REGULATOR_MT6358_H
 
-enum {
+क्रमागत अणु
 	MT6358_ID_VDRAM1 = 0,
 	MT6358_ID_VCORE,
 	MT6358_ID_VPA,
@@ -49,8 +50,8 @@ enum {
 	MT6358_ID_VAUD28,
 	MT6358_ID_VSIM2,
 	MT6358_ID_RG_MAX,
-};
+पूर्ण;
 
-#define MT6358_MAX_REGULATOR	MT6358_ID_RG_MAX
+#घोषणा MT6358_MAX_REGULATOR	MT6358_ID_RG_MAX
 
-#endif /* __LINUX_REGULATOR_MT6358_H */
+#पूर्ण_अगर /* __LINUX_REGULATOR_MT6358_H */

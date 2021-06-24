@@ -1,69 +1,70 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
- *    Support for LGDT3306A - 8VSB/QAM-B
+ *    Support क्रम LGDT3306A - 8VSB/QAM-B
  *
  *    Copyright (C) 2013,2014 Fred Richter <frichter@hauppauge.com>
  *      based on lgdt3305.[ch] by Michael Krufky
  */
 
-#ifndef _LGDT3306A_H_
-#define _LGDT3306A_H_
+#अगर_अघोषित _LGDT3306A_H_
+#घोषणा _LGDT3306A_H_
 
-#include <linux/i2c.h>
-#include <media/dvb_frontend.h>
+#समावेश <linux/i2c.h>
+#समावेश <media/dvb_frontend.h>
 
 
-enum lgdt3306a_mpeg_mode {
+क्रमागत lgdt3306a_mpeg_mode अणु
 	LGDT3306A_MPEG_PARALLEL = 0,
 	LGDT3306A_MPEG_SERIAL = 1,
-};
+पूर्ण;
 
-enum lgdt3306a_tp_clock_edge {
+क्रमागत lgdt3306a_tp_घड़ी_edge अणु
 	LGDT3306A_TPCLK_RISING_EDGE = 0,
 	LGDT3306A_TPCLK_FALLING_EDGE = 1,
-};
+पूर्ण;
 
-enum lgdt3306a_tp_valid_polarity {
+क्रमागत lgdt3306a_tp_valid_polarity अणु
 	LGDT3306A_TP_VALID_LOW = 0,
 	LGDT3306A_TP_VALID_HIGH = 1,
-};
+पूर्ण;
 
-struct lgdt3306a_config {
+काष्ठा lgdt3306a_config अणु
 	u8 i2c_addr;
 
 	/* user defined IF frequency in KHz */
-	u16 qam_if_khz;
-	u16 vsb_if_khz;
+	u16 qam_अगर_khz;
+	u16 vsb_अगर_khz;
 
 	/* disable i2c repeater - 0:repeater enabled 1:repeater disabled */
-	unsigned int deny_i2c_rptr:1;
+	अचिन्हित पूर्णांक deny_i2c_rptr:1;
 
 	/* spectral inversion - 0:disabled 1:enabled */
-	unsigned int spectral_inversion:1;
+	अचिन्हित पूर्णांक spectral_inversion:1;
 
-	enum lgdt3306a_mpeg_mode mpeg_mode;
-	enum lgdt3306a_tp_clock_edge tpclk_edge;
-	enum lgdt3306a_tp_valid_polarity tpvalid_polarity;
+	क्रमागत lgdt3306a_mpeg_mode mpeg_mode;
+	क्रमागत lgdt3306a_tp_घड़ी_edge tpclk_edge;
+	क्रमागत lgdt3306a_tp_valid_polarity tpvalid_polarity;
 
-	/* demod clock freq in MHz; 24 or 25 supported */
-	int  xtalMHz;
+	/* demod घड़ी freq in MHz; 24 or 25 supported */
+	पूर्णांक  xtalMHz;
 
-	/* returned by driver if using i2c bus multiplexing */
-	struct dvb_frontend **fe;
-	struct i2c_adapter **i2c_adapter;
-};
+	/* वापसed by driver अगर using i2c bus multiplexing */
+	काष्ठा dvb_frontend **fe;
+	काष्ठा i2c_adapter **i2c_adapter;
+पूर्ण;
 
-#if IS_REACHABLE(CONFIG_DVB_LGDT3306A)
-struct dvb_frontend *lgdt3306a_attach(const struct lgdt3306a_config *config,
-				      struct i2c_adapter *i2c_adap);
-#else
-static inline
-struct dvb_frontend *lgdt3306a_attach(const struct lgdt3306a_config *config,
-				      struct i2c_adapter *i2c_adap)
-{
-	printk(KERN_WARNING "%s: driver disabled by Kconfig\n", __func__);
-	return NULL;
-}
-#endif /* CONFIG_DVB_LGDT3306A */
+#अगर IS_REACHABLE(CONFIG_DVB_LGDT3306A)
+काष्ठा dvb_frontend *lgdt3306a_attach(स्थिर काष्ठा lgdt3306a_config *config,
+				      काष्ठा i2c_adapter *i2c_adap);
+#अन्यथा
+अटल अंतरभूत
+काष्ठा dvb_frontend *lgdt3306a_attach(स्थिर काष्ठा lgdt3306a_config *config,
+				      काष्ठा i2c_adapter *i2c_adap)
+अणु
+	prपूर्णांकk(KERN_WARNING "%s: driver disabled by Kconfig\n", __func__);
+	वापस शून्य;
+पूर्ण
+#पूर्ण_अगर /* CONFIG_DVB_LGDT3306A */
 
-#endif /* _LGDT3306A_H_ */
+#पूर्ण_अगर /* _LGDT3306A_H_ */

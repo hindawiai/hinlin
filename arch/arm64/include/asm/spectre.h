@@ -1,97 +1,98 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
- * Interface for managing mitigations for Spectre vulnerabilities.
+ * Interface क्रम managing mitigations क्रम Spectre vulnerabilities.
  *
  * Copyright (C) 2020 Google LLC
  * Author: Will Deacon <will@kernel.org>
  */
 
-#ifndef __ASM_SPECTRE_H
-#define __ASM_SPECTRE_H
+#अगर_अघोषित __ASM_SPECTRE_H
+#घोषणा __ASM_SPECTRE_H
 
-#define BP_HARDEN_EL2_SLOTS 4
-#define __BP_HARDEN_HYP_VECS_SZ	((BP_HARDEN_EL2_SLOTS - 1) * SZ_2K)
+#घोषणा BP_HARDEN_EL2_SLOTS 4
+#घोषणा __BP_HARDEN_HYP_VECS_SZ	((BP_HARDEN_EL2_SLOTS - 1) * SZ_2K)
 
-#ifndef __ASSEMBLY__
+#अगर_अघोषित __ASSEMBLY__
 
-#include <linux/percpu.h>
+#समावेश <linux/percpu.h>
 
-#include <asm/cpufeature.h>
-#include <asm/virt.h>
+#समावेश <यंत्र/cpufeature.h>
+#समावेश <यंत्र/virt.h>
 
 /* Watch out, ordering is important here. */
-enum mitigation_state {
+क्रमागत mitigation_state अणु
 	SPECTRE_UNAFFECTED,
 	SPECTRE_MITIGATED,
 	SPECTRE_VULNERABLE,
-};
+पूर्ण;
 
-struct task_struct;
+काष्ठा task_काष्ठा;
 
 /*
- * Note: the order of this enum corresponds to __bp_harden_hyp_vecs and
+ * Note: the order of this क्रमागत corresponds to __bp_harden_hyp_vecs and
  * we rely on having the direct vectors first.
  */
-enum arm64_hyp_spectre_vector {
+क्रमागत arm64_hyp_spectre_vector अणु
 	/*
 	 * Take exceptions directly to __kvm_hyp_vector. This must be
-	 * 0 so that it used by default when mitigations are not needed.
+	 * 0 so that it used by शेष when mitigations are not needed.
 	 */
-	HYP_VECTOR_DIRECT,
+	HYP_VECTOR_सूचीECT,
 
 	/*
 	 * Bounce via a slot in the hypervisor text mapping of
 	 * __bp_harden_hyp_vecs, which contains an SMC call.
 	 */
-	HYP_VECTOR_SPECTRE_DIRECT,
+	HYP_VECTOR_SPECTRE_सूचीECT,
 
 	/*
 	 * Bounce via a slot in a special mapping of __bp_harden_hyp_vecs
 	 * next to the idmap page.
 	 */
-	HYP_VECTOR_INDIRECT,
+	HYP_VECTOR_INसूचीECT,
 
 	/*
 	 * Bounce via a slot in a special mapping of __bp_harden_hyp_vecs
 	 * next to the idmap page, which contains an SMC call.
 	 */
-	HYP_VECTOR_SPECTRE_INDIRECT,
-};
+	HYP_VECTOR_SPECTRE_INसूचीECT,
+पूर्ण;
 
-typedef void (*bp_hardening_cb_t)(void);
+प्रकार व्योम (*bp_hardening_cb_t)(व्योम);
 
-struct bp_hardening_data {
-	enum arm64_hyp_spectre_vector	slot;
+काष्ठा bp_hardening_data अणु
+	क्रमागत arm64_hyp_spectre_vector	slot;
 	bp_hardening_cb_t		fn;
-};
+पूर्ण;
 
-DECLARE_PER_CPU_READ_MOSTLY(struct bp_hardening_data, bp_hardening_data);
+DECLARE_PER_CPU_READ_MOSTLY(काष्ठा bp_hardening_data, bp_hardening_data);
 
-static inline void arm64_apply_bp_hardening(void)
-{
-	struct bp_hardening_data *d;
+अटल अंतरभूत व्योम arm64_apply_bp_hardening(व्योम)
+अणु
+	काष्ठा bp_hardening_data *d;
 
-	if (!cpus_have_const_cap(ARM64_SPECTRE_V2))
-		return;
+	अगर (!cpus_have_स्थिर_cap(ARM64_SPECTRE_V2))
+		वापस;
 
 	d = this_cpu_ptr(&bp_hardening_data);
-	if (d->fn)
+	अगर (d->fn)
 		d->fn();
-}
+पूर्ण
 
-enum mitigation_state arm64_get_spectre_v2_state(void);
-bool has_spectre_v2(const struct arm64_cpu_capabilities *cap, int scope);
-void spectre_v2_enable_mitigation(const struct arm64_cpu_capabilities *__unused);
+क्रमागत mitigation_state arm64_get_spectre_v2_state(व्योम);
+bool has_spectre_v2(स्थिर काष्ठा arm64_cpu_capabilities *cap, पूर्णांक scope);
+व्योम spectre_v2_enable_mitigation(स्थिर काष्ठा arm64_cpu_capabilities *__unused);
 
-bool has_spectre_v3a(const struct arm64_cpu_capabilities *cap, int scope);
-void spectre_v3a_enable_mitigation(const struct arm64_cpu_capabilities *__unused);
+bool has_spectre_v3a(स्थिर काष्ठा arm64_cpu_capabilities *cap, पूर्णांक scope);
+व्योम spectre_v3a_enable_mitigation(स्थिर काष्ठा arm64_cpu_capabilities *__unused);
 
-enum mitigation_state arm64_get_spectre_v4_state(void);
-bool has_spectre_v4(const struct arm64_cpu_capabilities *cap, int scope);
-void spectre_v4_enable_mitigation(const struct arm64_cpu_capabilities *__unused);
-void spectre_v4_enable_task_mitigation(struct task_struct *tsk);
+क्रमागत mitigation_state arm64_get_spectre_v4_state(व्योम);
+bool has_spectre_v4(स्थिर काष्ठा arm64_cpu_capabilities *cap, पूर्णांक scope);
+व्योम spectre_v4_enable_mitigation(स्थिर काष्ठा arm64_cpu_capabilities *__unused);
+व्योम spectre_v4_enable_task_mitigation(काष्ठा task_काष्ठा *tsk);
 
-enum mitigation_state arm64_get_meltdown_state(void);
+क्रमागत mitigation_state arm64_get_meltकरोwn_state(व्योम);
 
-#endif	/* __ASSEMBLY__ */
-#endif	/* __ASM_SPECTRE_H */
+#पूर्ण_अगर	/* __ASSEMBLY__ */
+#पूर्ण_अगर	/* __ASM_SPECTRE_H */

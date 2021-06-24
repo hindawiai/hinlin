@@ -1,396 +1,397 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 // Copyright (c) 2018, The Linux Foundation. All rights reserved.
 
-#include <linux/kernel.h>
-#include <linux/init.h>
-#include <linux/module.h>
-#include <linux/platform_device.h>
-#include <linux/err.h>
-#include <linux/io.h>
-#include <linux/of.h>
-#include <linux/of_device.h>
-#include <linux/clk.h>
-#include <linux/clk-provider.h>
-#include <linux/slab.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/init.h>
+#समावेश <linux/module.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/err.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/of.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/clk-provider.h>
+#समावेश <linux/slab.h>
 
-#include "clk-krait.h"
+#समावेश "clk-krait.h"
 
-static unsigned int sec_mux_map[] = {
+अटल अचिन्हित पूर्णांक sec_mux_map[] = अणु
 	2,
 	0,
-};
+पूर्ण;
 
-static unsigned int pri_mux_map[] = {
+अटल अचिन्हित पूर्णांक pri_mux_map[] = अणु
 	1,
 	2,
 	0,
-};
+पूर्ण;
 
 /*
- * Notifier function for switching the muxes to safe parent
- * while the hfpll is getting reprogrammed.
+ * Notअगरier function क्रम चयनing the muxes to safe parent
+ * जबतक the hfpll is getting reprogrammed.
  */
-static int krait_notifier_cb(struct notifier_block *nb,
-			     unsigned long event,
-			     void *data)
-{
-	int ret = 0;
-	struct krait_mux_clk *mux = container_of(nb, struct krait_mux_clk,
+अटल पूर्णांक krait_notअगरier_cb(काष्ठा notअगरier_block *nb,
+			     अचिन्हित दीर्घ event,
+			     व्योम *data)
+अणु
+	पूर्णांक ret = 0;
+	काष्ठा krait_mux_clk *mux = container_of(nb, काष्ठा krait_mux_clk,
 						 clk_nb);
 	/* Switch to safe parent */
-	if (event == PRE_RATE_CHANGE) {
+	अगर (event == PRE_RATE_CHANGE) अणु
 		mux->old_index = krait_mux_clk_ops.get_parent(&mux->hw);
 		ret = krait_mux_clk_ops.set_parent(&mux->hw, mux->safe_sel);
 		mux->reparent = false;
 	/*
-	 * By the time POST_RATE_CHANGE notifier is called,
-	 * clk framework itself would have changed the parent for the new rate.
+	 * By the समय POST_RATE_CHANGE notअगरier is called,
+	 * clk framework itself would have changed the parent क्रम the new rate.
 	 * Only otherwise, put back to the old parent.
 	 */
-	} else if (event == POST_RATE_CHANGE) {
-		if (!mux->reparent)
+	पूर्ण अन्यथा अगर (event == POST_RATE_CHANGE) अणु
+		अगर (!mux->reparent)
 			ret = krait_mux_clk_ops.set_parent(&mux->hw,
 							   mux->old_index);
-	}
+	पूर्ण
 
-	return notifier_from_errno(ret);
-}
+	वापस notअगरier_from_त्रुटि_सं(ret);
+पूर्ण
 
-static int krait_notifier_register(struct device *dev, struct clk *clk,
-				   struct krait_mux_clk *mux)
-{
-	int ret = 0;
+अटल पूर्णांक krait_notअगरier_रेजिस्टर(काष्ठा device *dev, काष्ठा clk *clk,
+				   काष्ठा krait_mux_clk *mux)
+अणु
+	पूर्णांक ret = 0;
 
-	mux->clk_nb.notifier_call = krait_notifier_cb;
-	ret = clk_notifier_register(clk, &mux->clk_nb);
-	if (ret)
+	mux->clk_nb.notअगरier_call = krait_notअगरier_cb;
+	ret = clk_notअगरier_रेजिस्टर(clk, &mux->clk_nb);
+	अगर (ret)
 		dev_err(dev, "failed to register clock notifier: %d\n", ret);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int
-krait_add_div(struct device *dev, int id, const char *s, unsigned int offset)
-{
-	struct krait_div2_clk *div;
-	struct clk_init_data init = {
+अटल पूर्णांक
+krait_add_भाग(काष्ठा device *dev, पूर्णांक id, स्थिर अक्षर *s, अचिन्हित पूर्णांक offset)
+अणु
+	काष्ठा krait_भाग2_clk *भाग;
+	काष्ठा clk_init_data init = अणु
 		.num_parents = 1,
-		.ops = &krait_div2_clk_ops,
+		.ops = &krait_भाग2_clk_ops,
 		.flags = CLK_SET_RATE_PARENT,
-	};
-	const char *p_names[1];
-	struct clk *clk;
+	पूर्ण;
+	स्थिर अक्षर *p_names[1];
+	काष्ठा clk *clk;
 
-	div = devm_kzalloc(dev, sizeof(*div), GFP_KERNEL);
-	if (!div)
-		return -ENOMEM;
+	भाग = devm_kzalloc(dev, माप(*भाग), GFP_KERNEL);
+	अगर (!भाग)
+		वापस -ENOMEM;
 
-	div->width = 2;
-	div->shift = 6;
-	div->lpl = id >= 0;
-	div->offset = offset;
-	div->hw.init = &init;
+	भाग->width = 2;
+	भाग->shअगरt = 6;
+	भाग->lpl = id >= 0;
+	भाग->offset = offset;
+	भाग->hw.init = &init;
 
-	init.name = kasprintf(GFP_KERNEL, "hfpll%s_div", s);
-	if (!init.name)
-		return -ENOMEM;
+	init.name = kaप्र_लिखो(GFP_KERNEL, "hfpll%s_div", s);
+	अगर (!init.name)
+		वापस -ENOMEM;
 
 	init.parent_names = p_names;
-	p_names[0] = kasprintf(GFP_KERNEL, "hfpll%s", s);
-	if (!p_names[0]) {
-		kfree(init.name);
-		return -ENOMEM;
-	}
+	p_names[0] = kaप्र_लिखो(GFP_KERNEL, "hfpll%s", s);
+	अगर (!p_names[0]) अणु
+		kमुक्त(init.name);
+		वापस -ENOMEM;
+	पूर्ण
 
-	clk = devm_clk_register(dev, &div->hw);
-	kfree(p_names[0]);
-	kfree(init.name);
+	clk = devm_clk_रेजिस्टर(dev, &भाग->hw);
+	kमुक्त(p_names[0]);
+	kमुक्त(init.name);
 
-	return PTR_ERR_OR_ZERO(clk);
-}
+	वापस PTR_ERR_OR_ZERO(clk);
+पूर्ण
 
-static int
-krait_add_sec_mux(struct device *dev, int id, const char *s,
-		  unsigned int offset, bool unique_aux)
-{
-	int ret;
-	struct krait_mux_clk *mux;
-	static const char *sec_mux_list[] = {
+अटल पूर्णांक
+krait_add_sec_mux(काष्ठा device *dev, पूर्णांक id, स्थिर अक्षर *s,
+		  अचिन्हित पूर्णांक offset, bool unique_aux)
+अणु
+	पूर्णांक ret;
+	काष्ठा krait_mux_clk *mux;
+	अटल स्थिर अक्षर *sec_mux_list[] = अणु
 		"acpu_aux",
 		"qsb",
-	};
-	struct clk_init_data init = {
+	पूर्ण;
+	काष्ठा clk_init_data init = अणु
 		.parent_names = sec_mux_list,
 		.num_parents = ARRAY_SIZE(sec_mux_list),
 		.ops = &krait_mux_clk_ops,
 		.flags = CLK_SET_RATE_PARENT,
-	};
-	struct clk *clk;
+	पूर्ण;
+	काष्ठा clk *clk;
 
-	mux = devm_kzalloc(dev, sizeof(*mux), GFP_KERNEL);
-	if (!mux)
-		return -ENOMEM;
+	mux = devm_kzalloc(dev, माप(*mux), GFP_KERNEL);
+	अगर (!mux)
+		वापस -ENOMEM;
 
 	mux->offset = offset;
 	mux->lpl = id >= 0;
 	mux->mask = 0x3;
-	mux->shift = 2;
+	mux->shअगरt = 2;
 	mux->parent_map = sec_mux_map;
 	mux->hw.init = &init;
 	mux->safe_sel = 0;
 
-	init.name = kasprintf(GFP_KERNEL, "krait%s_sec_mux", s);
-	if (!init.name)
-		return -ENOMEM;
+	init.name = kaप्र_लिखो(GFP_KERNEL, "krait%s_sec_mux", s);
+	अगर (!init.name)
+		वापस -ENOMEM;
 
-	if (unique_aux) {
-		sec_mux_list[0] = kasprintf(GFP_KERNEL, "acpu%s_aux", s);
-		if (!sec_mux_list[0]) {
+	अगर (unique_aux) अणु
+		sec_mux_list[0] = kaप्र_लिखो(GFP_KERNEL, "acpu%s_aux", s);
+		अगर (!sec_mux_list[0]) अणु
 			clk = ERR_PTR(-ENOMEM);
-			goto err_aux;
-		}
-	}
+			जाओ err_aux;
+		पूर्ण
+	पूर्ण
 
-	clk = devm_clk_register(dev, &mux->hw);
+	clk = devm_clk_रेजिस्टर(dev, &mux->hw);
 
-	ret = krait_notifier_register(dev, clk, mux);
-	if (ret)
-		goto unique_aux;
+	ret = krait_notअगरier_रेजिस्टर(dev, clk, mux);
+	अगर (ret)
+		जाओ unique_aux;
 
 unique_aux:
-	if (unique_aux)
-		kfree(sec_mux_list[0]);
+	अगर (unique_aux)
+		kमुक्त(sec_mux_list[0]);
 err_aux:
-	kfree(init.name);
-	return PTR_ERR_OR_ZERO(clk);
-}
+	kमुक्त(init.name);
+	वापस PTR_ERR_OR_ZERO(clk);
+पूर्ण
 
-static struct clk *
-krait_add_pri_mux(struct device *dev, int id, const char *s,
-		  unsigned int offset)
-{
-	int ret;
-	struct krait_mux_clk *mux;
-	const char *p_names[3];
-	struct clk_init_data init = {
+अटल काष्ठा clk *
+krait_add_pri_mux(काष्ठा device *dev, पूर्णांक id, स्थिर अक्षर *s,
+		  अचिन्हित पूर्णांक offset)
+अणु
+	पूर्णांक ret;
+	काष्ठा krait_mux_clk *mux;
+	स्थिर अक्षर *p_names[3];
+	काष्ठा clk_init_data init = अणु
 		.parent_names = p_names,
 		.num_parents = ARRAY_SIZE(p_names),
 		.ops = &krait_mux_clk_ops,
 		.flags = CLK_SET_RATE_PARENT,
-	};
-	struct clk *clk;
+	पूर्ण;
+	काष्ठा clk *clk;
 
-	mux = devm_kzalloc(dev, sizeof(*mux), GFP_KERNEL);
-	if (!mux)
-		return ERR_PTR(-ENOMEM);
+	mux = devm_kzalloc(dev, माप(*mux), GFP_KERNEL);
+	अगर (!mux)
+		वापस ERR_PTR(-ENOMEM);
 
 	mux->mask = 0x3;
-	mux->shift = 0;
+	mux->shअगरt = 0;
 	mux->offset = offset;
 	mux->lpl = id >= 0;
 	mux->parent_map = pri_mux_map;
 	mux->hw.init = &init;
 	mux->safe_sel = 2;
 
-	init.name = kasprintf(GFP_KERNEL, "krait%s_pri_mux", s);
-	if (!init.name)
-		return ERR_PTR(-ENOMEM);
+	init.name = kaप्र_लिखो(GFP_KERNEL, "krait%s_pri_mux", s);
+	अगर (!init.name)
+		वापस ERR_PTR(-ENOMEM);
 
-	p_names[0] = kasprintf(GFP_KERNEL, "hfpll%s", s);
-	if (!p_names[0]) {
+	p_names[0] = kaप्र_लिखो(GFP_KERNEL, "hfpll%s", s);
+	अगर (!p_names[0]) अणु
 		clk = ERR_PTR(-ENOMEM);
-		goto err_p0;
-	}
+		जाओ err_p0;
+	पूर्ण
 
-	p_names[1] = kasprintf(GFP_KERNEL, "hfpll%s_div", s);
-	if (!p_names[1]) {
+	p_names[1] = kaप्र_लिखो(GFP_KERNEL, "hfpll%s_div", s);
+	अगर (!p_names[1]) अणु
 		clk = ERR_PTR(-ENOMEM);
-		goto err_p1;
-	}
+		जाओ err_p1;
+	पूर्ण
 
-	p_names[2] = kasprintf(GFP_KERNEL, "krait%s_sec_mux", s);
-	if (!p_names[2]) {
+	p_names[2] = kaप्र_लिखो(GFP_KERNEL, "krait%s_sec_mux", s);
+	अगर (!p_names[2]) अणु
 		clk = ERR_PTR(-ENOMEM);
-		goto err_p2;
-	}
+		जाओ err_p2;
+	पूर्ण
 
-	clk = devm_clk_register(dev, &mux->hw);
+	clk = devm_clk_रेजिस्टर(dev, &mux->hw);
 
-	ret = krait_notifier_register(dev, clk, mux);
-	if (ret)
-		goto err_p3;
+	ret = krait_notअगरier_रेजिस्टर(dev, clk, mux);
+	अगर (ret)
+		जाओ err_p3;
 err_p3:
-	kfree(p_names[2]);
+	kमुक्त(p_names[2]);
 err_p2:
-	kfree(p_names[1]);
+	kमुक्त(p_names[1]);
 err_p1:
-	kfree(p_names[0]);
+	kमुक्त(p_names[0]);
 err_p0:
-	kfree(init.name);
-	return clk;
-}
+	kमुक्त(init.name);
+	वापस clk;
+पूर्ण
 
-/* id < 0 for L2, otherwise id == physical CPU number */
-static struct clk *krait_add_clks(struct device *dev, int id, bool unique_aux)
-{
-	int ret;
-	unsigned int offset;
-	void *p = NULL;
-	const char *s;
-	struct clk *clk;
+/* id < 0 क्रम L2, otherwise id == physical CPU number */
+अटल काष्ठा clk *krait_add_clks(काष्ठा device *dev, पूर्णांक id, bool unique_aux)
+अणु
+	पूर्णांक ret;
+	अचिन्हित पूर्णांक offset;
+	व्योम *p = शून्य;
+	स्थिर अक्षर *s;
+	काष्ठा clk *clk;
 
-	if (id >= 0) {
+	अगर (id >= 0) अणु
 		offset = 0x4501 + (0x1000 * id);
-		s = p = kasprintf(GFP_KERNEL, "%d", id);
-		if (!s)
-			return ERR_PTR(-ENOMEM);
-	} else {
+		s = p = kaप्र_लिखो(GFP_KERNEL, "%d", id);
+		अगर (!s)
+			वापस ERR_PTR(-ENOMEM);
+	पूर्ण अन्यथा अणु
 		offset = 0x500;
 		s = "_l2";
-	}
+	पूर्ण
 
-	ret = krait_add_div(dev, id, s, offset);
-	if (ret) {
+	ret = krait_add_भाग(dev, id, s, offset);
+	अगर (ret) अणु
 		clk = ERR_PTR(ret);
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
 	ret = krait_add_sec_mux(dev, id, s, offset, unique_aux);
-	if (ret) {
+	अगर (ret) अणु
 		clk = ERR_PTR(ret);
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
 	clk = krait_add_pri_mux(dev, id, s, offset);
 err:
-	kfree(p);
-	return clk;
-}
+	kमुक्त(p);
+	वापस clk;
+पूर्ण
 
-static struct clk *krait_of_get(struct of_phandle_args *clkspec, void *data)
-{
-	unsigned int idx = clkspec->args[0];
-	struct clk **clks = data;
+अटल काष्ठा clk *krait_of_get(काष्ठा of_phandle_args *clkspec, व्योम *data)
+अणु
+	अचिन्हित पूर्णांक idx = clkspec->args[0];
+	काष्ठा clk **clks = data;
 
-	if (idx >= 5) {
+	अगर (idx >= 5) अणु
 		pr_err("%s: invalid clock index %d\n", __func__, idx);
-		return ERR_PTR(-EINVAL);
-	}
+		वापस ERR_PTR(-EINVAL);
+	पूर्ण
 
-	return clks[idx] ? : ERR_PTR(-ENODEV);
-}
+	वापस clks[idx] ? : ERR_PTR(-ENODEV);
+पूर्ण
 
-static const struct of_device_id krait_cc_match_table[] = {
-	{ .compatible = "qcom,krait-cc-v1", (void *)1UL },
-	{ .compatible = "qcom,krait-cc-v2" },
-	{}
-};
+अटल स्थिर काष्ठा of_device_id krait_cc_match_table[] = अणु
+	अणु .compatible = "qcom,krait-cc-v1", (व्योम *)1UL पूर्ण,
+	अणु .compatible = "qcom,krait-cc-v2" पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, krait_cc_match_table);
 
-static int krait_cc_probe(struct platform_device *pdev)
-{
-	struct device *dev = &pdev->dev;
-	const struct of_device_id *id;
-	unsigned long cur_rate, aux_rate;
-	int cpu;
-	struct clk *clk;
-	struct clk **clks;
-	struct clk *l2_pri_mux_clk;
+अटल पूर्णांक krait_cc_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device *dev = &pdev->dev;
+	स्थिर काष्ठा of_device_id *id;
+	अचिन्हित दीर्घ cur_rate, aux_rate;
+	पूर्णांक cpu;
+	काष्ठा clk *clk;
+	काष्ठा clk **clks;
+	काष्ठा clk *l2_pri_mux_clk;
 
 	id = of_match_device(krait_cc_match_table, dev);
-	if (!id)
-		return -ENODEV;
+	अगर (!id)
+		वापस -ENODEV;
 
-	/* Rate is 1 because 0 causes problems for __clk_mux_determine_rate */
-	clk = clk_register_fixed_rate(dev, "qsb", NULL, 0, 1);
-	if (IS_ERR(clk))
-		return PTR_ERR(clk);
+	/* Rate is 1 because 0 causes problems क्रम __clk_mux_determine_rate */
+	clk = clk_रेजिस्टर_fixed_rate(dev, "qsb", शून्य, 0, 1);
+	अगर (IS_ERR(clk))
+		वापस PTR_ERR(clk);
 
-	if (!id->data) {
-		clk = clk_register_fixed_factor(dev, "acpu_aux",
+	अगर (!id->data) अणु
+		clk = clk_रेजिस्टर_fixed_factor(dev, "acpu_aux",
 						"gpll0_vote", 0, 1, 2);
-		if (IS_ERR(clk))
-			return PTR_ERR(clk);
-	}
+		अगर (IS_ERR(clk))
+			वापस PTR_ERR(clk);
+	पूर्ण
 
 	/* Krait configurations have at most 4 CPUs and one L2 */
-	clks = devm_kcalloc(dev, 5, sizeof(*clks), GFP_KERNEL);
-	if (!clks)
-		return -ENOMEM;
+	clks = devm_kसुस्मृति(dev, 5, माप(*clks), GFP_KERNEL);
+	अगर (!clks)
+		वापस -ENOMEM;
 
-	for_each_possible_cpu(cpu) {
+	क्रम_each_possible_cpu(cpu) अणु
 		clk = krait_add_clks(dev, cpu, id->data);
-		if (IS_ERR(clk))
-			return PTR_ERR(clk);
+		अगर (IS_ERR(clk))
+			वापस PTR_ERR(clk);
 		clks[cpu] = clk;
-	}
+	पूर्ण
 
 	l2_pri_mux_clk = krait_add_clks(dev, -1, id->data);
-	if (IS_ERR(l2_pri_mux_clk))
-		return PTR_ERR(l2_pri_mux_clk);
+	अगर (IS_ERR(l2_pri_mux_clk))
+		वापस PTR_ERR(l2_pri_mux_clk);
 	clks[4] = l2_pri_mux_clk;
 
 	/*
-	 * We don't want the CPU or L2 clocks to be turned off at late init
-	 * if CPUFREQ or HOTPLUG configs are disabled. So, bump up the
-	 * refcount of these clocks. Any cpufreq/hotplug manager can assume
-	 * that the clocks have already been prepared and enabled by the time
+	 * We करोn't want the CPU or L2 घड़ीs to be turned off at late init
+	 * अगर CPUFREQ or HOTPLUG configs are disabled. So, bump up the
+	 * refcount of these घड़ीs. Any cpufreq/hotplug manager can assume
+	 * that the घड़ीs have alपढ़ोy been prepared and enabled by the समय
 	 * they take over.
 	 */
-	for_each_online_cpu(cpu) {
+	क्रम_each_online_cpu(cpu) अणु
 		clk_prepare_enable(l2_pri_mux_clk);
 		WARN(clk_prepare_enable(clks[cpu]),
 		     "Unable to turn on CPU%d clock", cpu);
-	}
+	पूर्ण
 
 	/*
-	 * Force reinit of HFPLLs and muxes to overwrite any potential
+	 * Force reinit of HFPLLs and muxes to overग_लिखो any potential
 	 * incorrect configuration of HFPLLs and muxes by the bootloader.
 	 * While at it, also make sure the cores are running at known rates
-	 * and print the current rate.
+	 * and prपूर्णांक the current rate.
 	 *
-	 * The clocks are set to aux clock rate first to make sure the
+	 * The घड़ीs are set to aux घड़ी rate first to make sure the
 	 * secondary mux is not sourcing off of QSB. The rate is then set to
-	 * two different rates to force a HFPLL reinit under all
+	 * two dअगरferent rates to क्रमce a HFPLL reinit under all
 	 * circumstances.
 	 */
 	cur_rate = clk_get_rate(l2_pri_mux_clk);
 	aux_rate = 384000000;
-	if (cur_rate == 1) {
+	अगर (cur_rate == 1) अणु
 		pr_info("L2 @ QSB rate. Forcing new rate.\n");
 		cur_rate = aux_rate;
-	}
+	पूर्ण
 	clk_set_rate(l2_pri_mux_clk, aux_rate);
 	clk_set_rate(l2_pri_mux_clk, 2);
 	clk_set_rate(l2_pri_mux_clk, cur_rate);
 	pr_info("L2 @ %lu KHz\n", clk_get_rate(l2_pri_mux_clk) / 1000);
-	for_each_possible_cpu(cpu) {
+	क्रम_each_possible_cpu(cpu) अणु
 		clk = clks[cpu];
 		cur_rate = clk_get_rate(clk);
-		if (cur_rate == 1) {
+		अगर (cur_rate == 1) अणु
 			pr_info("CPU%d @ QSB rate. Forcing new rate.\n", cpu);
 			cur_rate = aux_rate;
-		}
+		पूर्ण
 
 		clk_set_rate(clk, aux_rate);
 		clk_set_rate(clk, 2);
 		clk_set_rate(clk, cur_rate);
 		pr_info("CPU%d @ %lu KHz\n", cpu, clk_get_rate(clk) / 1000);
-	}
+	पूर्ण
 
 	of_clk_add_provider(dev->of_node, krait_of_get, clks);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct platform_driver krait_cc_driver = {
+अटल काष्ठा platक्रमm_driver krait_cc_driver = अणु
 	.probe = krait_cc_probe,
-	.driver = {
+	.driver = अणु
 		.name = "krait-cc",
 		.of_match_table = krait_cc_match_table,
-	},
-};
-module_platform_driver(krait_cc_driver);
+	पूर्ण,
+पूर्ण;
+module_platक्रमm_driver(krait_cc_driver);
 
 MODULE_DESCRIPTION("Krait CPU Clock Driver");
 MODULE_LICENSE("GPL v2");

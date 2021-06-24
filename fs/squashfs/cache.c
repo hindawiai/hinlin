@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * Squashfs - a compressed read only filesystem for Linux
+ * Squashfs - a compressed पढ़ो only fileप्रणाली क्रम Linux
  *
  * Copyright (c) 2002, 2003, 2004, 2005, 2006, 2007, 2008
  * Phillip Lougher <phillip@squashfs.org.uk>
@@ -9,76 +10,76 @@
  */
 
 /*
- * Blocks in Squashfs are compressed.  To avoid repeatedly decompressing
+ * Blocks in Squashfs are compressed.  To aव्योम repeatedly decompressing
  * recently accessed data Squashfs uses two small metadata and fragment caches.
  *
- * This file implements a generic cache implementation used for both caches,
+ * This file implements a generic cache implementation used क्रम both caches,
  * plus functions layered ontop of the generic cache implementation to
  * access the metadata and fragment caches.
  *
- * To avoid out of memory and fragmentation issues with vmalloc the cache
- * uses sequences of kmalloced PAGE_SIZE buffers.
+ * To aव्योम out of memory and fragmentation issues with vदो_स्मृति the cache
+ * uses sequences of kदो_स्मृतिed PAGE_SIZE buffers.
  *
- * It should be noted that the cache is not used for file datablocks, these
+ * It should be noted that the cache is not used क्रम file datablocks, these
  * are decompressed and cached in the page-cache in the normal way.  The
  * cache is only used to temporarily cache fragment and metadata blocks
- * which have been read as as a result of a metadata (i.e. inode or
+ * which have been पढ़ो as as a result of a metadata (i.e. inode or
  * directory) or fragment access.  Because metadata and fragments are packed
- * together into blocks (to gain greater compression) the read of a particular
+ * together पूर्णांकo blocks (to gain greater compression) the पढ़ो of a particular
  * piece of metadata or fragment will retrieve other metadata/fragments which
- * have been packed with it, these because of locality-of-reference may be read
- * in the near future. Temporarily caching them ensures they are available for
- * near future access without requiring an additional read and decompress.
+ * have been packed with it, these because of locality-of-reference may be पढ़ो
+ * in the near future. Temporarily caching them ensures they are available क्रम
+ * near future access without requiring an additional पढ़ो and decompress.
  */
 
-#include <linux/fs.h>
-#include <linux/vfs.h>
-#include <linux/slab.h>
-#include <linux/vmalloc.h>
-#include <linux/sched.h>
-#include <linux/spinlock.h>
-#include <linux/wait.h>
-#include <linux/pagemap.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/vfs.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/vदो_स्मृति.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/रुको.h>
+#समावेश <linux/pagemap.h>
 
-#include "squashfs_fs.h"
-#include "squashfs_fs_sb.h"
-#include "squashfs.h"
-#include "page_actor.h"
+#समावेश "squashfs_fs.h"
+#समावेश "squashfs_fs_sb.h"
+#समावेश "squashfs.h"
+#समावेश "page_actor.h"
 
 /*
- * Look-up block in cache, and increment usage count.  If not in cache, read
+ * Look-up block in cache, and increment usage count.  If not in cache, पढ़ो
  * and decompress it from disk.
  */
-struct squashfs_cache_entry *squashfs_cache_get(struct super_block *sb,
-	struct squashfs_cache *cache, u64 block, int length)
-{
-	int i, n;
-	struct squashfs_cache_entry *entry;
+काष्ठा squashfs_cache_entry *squashfs_cache_get(काष्ठा super_block *sb,
+	काष्ठा squashfs_cache *cache, u64 block, पूर्णांक length)
+अणु
+	पूर्णांक i, n;
+	काष्ठा squashfs_cache_entry *entry;
 
 	spin_lock(&cache->lock);
 
-	while (1) {
-		for (i = cache->curr_blk, n = 0; n < cache->entries; n++) {
-			if (cache->entry[i].block == block) {
+	जबतक (1) अणु
+		क्रम (i = cache->curr_blk, n = 0; n < cache->entries; n++) अणु
+			अगर (cache->entry[i].block == block) अणु
 				cache->curr_blk = i;
-				break;
-			}
+				अवरोध;
+			पूर्ण
 			i = (i + 1) % cache->entries;
-		}
+		पूर्ण
 
-		if (n == cache->entries) {
+		अगर (n == cache->entries) अणु
 			/*
-			 * Block not in cache, if all cache entries are used
-			 * go to sleep waiting for one to become available.
+			 * Block not in cache, अगर all cache entries are used
+			 * go to sleep रुकोing क्रम one to become available.
 			 */
-			if (cache->unused == 0) {
-				cache->num_waiters++;
+			अगर (cache->unused == 0) अणु
+				cache->num_रुकोers++;
 				spin_unlock(&cache->lock);
-				wait_event(cache->wait_queue, cache->unused);
+				रुको_event(cache->रुको_queue, cache->unused);
 				spin_lock(&cache->lock);
-				cache->num_waiters--;
-				continue;
-			}
+				cache->num_रुकोers--;
+				जारी;
+			पूर्ण
 
 			/*
 			 * At least one unused cache entry.  A simple
@@ -86,11 +87,11 @@ struct squashfs_cache_entry *squashfs_cache_get(struct super_block *sb,
 			 * be evicted from the cache.
 			 */
 			i = cache->next_blk;
-			for (n = 0; n < cache->entries; n++) {
-				if (cache->entry[i].refcount == 0)
-					break;
+			क्रम (n = 0; n < cache->entries; n++) अणु
+				अगर (cache->entry[i].refcount == 0)
+					अवरोध;
 				i = (i + 1) % cache->entries;
-			}
+			पूर्ण
 
 			cache->next_blk = (i + 1) % cache->entries;
 			entry = &cache->entry[i];
@@ -103,16 +104,16 @@ struct squashfs_cache_entry *squashfs_cache_get(struct super_block *sb,
 			entry->block = block;
 			entry->refcount = 1;
 			entry->pending = 1;
-			entry->num_waiters = 0;
+			entry->num_रुकोers = 0;
 			entry->error = 0;
 			spin_unlock(&cache->lock);
 
-			entry->length = squashfs_read_data(sb, block, length,
+			entry->length = squashfs_पढ़ो_data(sb, block, length,
 				&entry->next_index, entry->actor);
 
 			spin_lock(&cache->lock);
 
-			if (entry->length < 0)
+			अगर (entry->length < 0)
 				entry->error = entry->length;
 
 			entry->pending = 0;
@@ -120,122 +121,122 @@ struct squashfs_cache_entry *squashfs_cache_get(struct super_block *sb,
 			/*
 			 * While filling this entry one or more other processes
 			 * have looked it up in the cache, and have slept
-			 * waiting for it to become available.
+			 * रुकोing क्रम it to become available.
 			 */
-			if (entry->num_waiters) {
+			अगर (entry->num_रुकोers) अणु
 				spin_unlock(&cache->lock);
-				wake_up_all(&entry->wait_queue);
-			} else
+				wake_up_all(&entry->रुको_queue);
+			पूर्ण अन्यथा
 				spin_unlock(&cache->lock);
 
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
 		/*
-		 * Block already in cache.  Increment refcount so it doesn't
-		 * get reused until we're finished with it, if it was
+		 * Block alपढ़ोy in cache.  Increment refcount so it करोesn't
+		 * get reused until we're finished with it, अगर it was
 		 * previously unused there's one less cache entry available
-		 * for reuse.
+		 * क्रम reuse.
 		 */
 		entry = &cache->entry[i];
-		if (entry->refcount == 0)
+		अगर (entry->refcount == 0)
 			cache->unused--;
 		entry->refcount++;
 
 		/*
 		 * If the entry is currently being filled in by another process
-		 * go to sleep waiting for it to become available.
+		 * go to sleep रुकोing क्रम it to become available.
 		 */
-		if (entry->pending) {
-			entry->num_waiters++;
+		अगर (entry->pending) अणु
+			entry->num_रुकोers++;
 			spin_unlock(&cache->lock);
-			wait_event(entry->wait_queue, !entry->pending);
-		} else
+			रुको_event(entry->रुको_queue, !entry->pending);
+		पूर्ण अन्यथा
 			spin_unlock(&cache->lock);
 
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 out:
 	TRACE("Got %s %d, start block %lld, refcount %d, error %d\n",
 		cache->name, i, entry->block, entry->refcount, entry->error);
 
-	if (entry->error)
+	अगर (entry->error)
 		ERROR("Unable to read %s cache entry [%llx]\n", cache->name,
 							block);
-	return entry;
-}
+	वापस entry;
+पूर्ण
 
 
 /*
  * Release cache entry, once usage count is zero it can be reused.
  */
-void squashfs_cache_put(struct squashfs_cache_entry *entry)
-{
-	struct squashfs_cache *cache = entry->cache;
+व्योम squashfs_cache_put(काष्ठा squashfs_cache_entry *entry)
+अणु
+	काष्ठा squashfs_cache *cache = entry->cache;
 
 	spin_lock(&cache->lock);
 	entry->refcount--;
-	if (entry->refcount == 0) {
+	अगर (entry->refcount == 0) अणु
 		cache->unused++;
 		/*
-		 * If there's any processes waiting for a block to become
+		 * If there's any processes रुकोing क्रम a block to become
 		 * available, wake one up.
 		 */
-		if (cache->num_waiters) {
+		अगर (cache->num_रुकोers) अणु
 			spin_unlock(&cache->lock);
-			wake_up(&cache->wait_queue);
-			return;
-		}
-	}
+			wake_up(&cache->रुको_queue);
+			वापस;
+		पूर्ण
+	पूर्ण
 	spin_unlock(&cache->lock);
-}
+पूर्ण
 
 /*
- * Delete cache reclaiming all kmalloced buffers.
+ * Delete cache reclaiming all kदो_स्मृतिed buffers.
  */
-void squashfs_cache_delete(struct squashfs_cache *cache)
-{
-	int i, j;
+व्योम squashfs_cache_delete(काष्ठा squashfs_cache *cache)
+अणु
+	पूर्णांक i, j;
 
-	if (cache == NULL)
-		return;
+	अगर (cache == शून्य)
+		वापस;
 
-	for (i = 0; i < cache->entries; i++) {
-		if (cache->entry[i].data) {
-			for (j = 0; j < cache->pages; j++)
-				kfree(cache->entry[i].data[j]);
-			kfree(cache->entry[i].data);
-		}
-		kfree(cache->entry[i].actor);
-	}
+	क्रम (i = 0; i < cache->entries; i++) अणु
+		अगर (cache->entry[i].data) अणु
+			क्रम (j = 0; j < cache->pages; j++)
+				kमुक्त(cache->entry[i].data[j]);
+			kमुक्त(cache->entry[i].data);
+		पूर्ण
+		kमुक्त(cache->entry[i].actor);
+	पूर्ण
 
-	kfree(cache->entry);
-	kfree(cache);
-}
+	kमुक्त(cache->entry);
+	kमुक्त(cache);
+पूर्ण
 
 
 /*
- * Initialise cache allocating the specified number of entries, each of
- * size block_size.  To avoid vmalloc fragmentation issues each entry
- * is allocated as a sequence of kmalloced PAGE_SIZE buffers.
+ * Initialise cache allocating the specअगरied number of entries, each of
+ * size block_size.  To aव्योम vदो_स्मृति fragmentation issues each entry
+ * is allocated as a sequence of kदो_स्मृतिed PAGE_SIZE buffers.
  */
-struct squashfs_cache *squashfs_cache_init(char *name, int entries,
-	int block_size)
-{
-	int i, j;
-	struct squashfs_cache *cache = kzalloc(sizeof(*cache), GFP_KERNEL);
+काष्ठा squashfs_cache *squashfs_cache_init(अक्षर *name, पूर्णांक entries,
+	पूर्णांक block_size)
+अणु
+	पूर्णांक i, j;
+	काष्ठा squashfs_cache *cache = kzalloc(माप(*cache), GFP_KERNEL);
 
-	if (cache == NULL) {
+	अगर (cache == शून्य) अणु
 		ERROR("Failed to allocate %s cache\n", name);
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
-	cache->entry = kcalloc(entries, sizeof(*(cache->entry)), GFP_KERNEL);
-	if (cache->entry == NULL) {
+	cache->entry = kसुस्मृति(entries, माप(*(cache->entry)), GFP_KERNEL);
+	अगर (cache->entry == शून्य) अणु
 		ERROR("Failed to allocate %s cache\n", name);
-		goto cleanup;
-	}
+		जाओ cleanup;
+	पूर्ण
 
 	cache->curr_blk = 0;
 	cache->next_blk = 0;
@@ -245,204 +246,204 @@ struct squashfs_cache *squashfs_cache_init(char *name, int entries,
 	cache->pages = block_size >> PAGE_SHIFT;
 	cache->pages = cache->pages ? cache->pages : 1;
 	cache->name = name;
-	cache->num_waiters = 0;
+	cache->num_रुकोers = 0;
 	spin_lock_init(&cache->lock);
-	init_waitqueue_head(&cache->wait_queue);
+	init_रुकोqueue_head(&cache->रुको_queue);
 
-	for (i = 0; i < entries; i++) {
-		struct squashfs_cache_entry *entry = &cache->entry[i];
+	क्रम (i = 0; i < entries; i++) अणु
+		काष्ठा squashfs_cache_entry *entry = &cache->entry[i];
 
-		init_waitqueue_head(&cache->entry[i].wait_queue);
+		init_रुकोqueue_head(&cache->entry[i].रुको_queue);
 		entry->cache = cache;
 		entry->block = SQUASHFS_INVALID_BLK;
-		entry->data = kcalloc(cache->pages, sizeof(void *), GFP_KERNEL);
-		if (entry->data == NULL) {
+		entry->data = kसुस्मृति(cache->pages, माप(व्योम *), GFP_KERNEL);
+		अगर (entry->data == शून्य) अणु
 			ERROR("Failed to allocate %s cache entry\n", name);
-			goto cleanup;
-		}
+			जाओ cleanup;
+		पूर्ण
 
-		for (j = 0; j < cache->pages; j++) {
-			entry->data[j] = kmalloc(PAGE_SIZE, GFP_KERNEL);
-			if (entry->data[j] == NULL) {
+		क्रम (j = 0; j < cache->pages; j++) अणु
+			entry->data[j] = kदो_स्मृति(PAGE_SIZE, GFP_KERNEL);
+			अगर (entry->data[j] == शून्य) अणु
 				ERROR("Failed to allocate %s buffer\n", name);
-				goto cleanup;
-			}
-		}
+				जाओ cleanup;
+			पूर्ण
+		पूर्ण
 
 		entry->actor = squashfs_page_actor_init(entry->data,
 						cache->pages, 0);
-		if (entry->actor == NULL) {
+		अगर (entry->actor == शून्य) अणु
 			ERROR("Failed to allocate %s cache entry\n", name);
-			goto cleanup;
-		}
-	}
+			जाओ cleanup;
+		पूर्ण
+	पूर्ण
 
-	return cache;
+	वापस cache;
 
 cleanup:
 	squashfs_cache_delete(cache);
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
 
 /*
  * Copy up to length bytes from cache entry to buffer starting at offset bytes
- * into the cache entry.  If there's not length bytes then copy the number of
- * bytes available.  In all cases return the number of bytes copied.
+ * पूर्णांकo the cache entry.  If there's not length bytes then copy the number of
+ * bytes available.  In all हालs वापस the number of bytes copied.
  */
-int squashfs_copy_data(void *buffer, struct squashfs_cache_entry *entry,
-		int offset, int length)
-{
-	int remaining = length;
+पूर्णांक squashfs_copy_data(व्योम *buffer, काष्ठा squashfs_cache_entry *entry,
+		पूर्णांक offset, पूर्णांक length)
+अणु
+	पूर्णांक reमुख्यing = length;
 
-	if (length == 0)
-		return 0;
-	else if (buffer == NULL)
-		return min(length, entry->length - offset);
+	अगर (length == 0)
+		वापस 0;
+	अन्यथा अगर (buffer == शून्य)
+		वापस min(length, entry->length - offset);
 
-	while (offset < entry->length) {
-		void *buff = entry->data[offset / PAGE_SIZE]
+	जबतक (offset < entry->length) अणु
+		व्योम *buff = entry->data[offset / PAGE_SIZE]
 				+ (offset % PAGE_SIZE);
-		int bytes = min_t(int, entry->length - offset,
+		पूर्णांक bytes = min_t(पूर्णांक, entry->length - offset,
 				PAGE_SIZE - (offset % PAGE_SIZE));
 
-		if (bytes >= remaining) {
-			memcpy(buffer, buff, remaining);
-			remaining = 0;
-			break;
-		}
+		अगर (bytes >= reमुख्यing) अणु
+			स_नकल(buffer, buff, reमुख्यing);
+			reमुख्यing = 0;
+			अवरोध;
+		पूर्ण
 
-		memcpy(buffer, buff, bytes);
+		स_नकल(buffer, buff, bytes);
 		buffer += bytes;
-		remaining -= bytes;
+		reमुख्यing -= bytes;
 		offset += bytes;
-	}
+	पूर्ण
 
-	return length - remaining;
-}
+	वापस length - reमुख्यing;
+पूर्ण
 
 
 /*
  * Read length bytes from metadata position <block, offset> (block is the
- * start of the compressed block on disk, and offset is the offset into
- * the block once decompressed).  Data is packed into consecutive blocks,
- * and length bytes may require reading more than one block.
+ * start of the compressed block on disk, and offset is the offset पूर्णांकo
+ * the block once decompressed).  Data is packed पूर्णांकo consecutive blocks,
+ * and length bytes may require पढ़ोing more than one block.
  */
-int squashfs_read_metadata(struct super_block *sb, void *buffer,
-		u64 *block, int *offset, int length)
-{
-	struct squashfs_sb_info *msblk = sb->s_fs_info;
-	int bytes, res = length;
-	struct squashfs_cache_entry *entry;
+पूर्णांक squashfs_पढ़ो_metadata(काष्ठा super_block *sb, व्योम *buffer,
+		u64 *block, पूर्णांक *offset, पूर्णांक length)
+अणु
+	काष्ठा squashfs_sb_info *msblk = sb->s_fs_info;
+	पूर्णांक bytes, res = length;
+	काष्ठा squashfs_cache_entry *entry;
 
 	TRACE("Entered squashfs_read_metadata [%llx:%x]\n", *block, *offset);
 
-	if (unlikely(length < 0))
-		return -EIO;
+	अगर (unlikely(length < 0))
+		वापस -EIO;
 
-	while (length) {
+	जबतक (length) अणु
 		entry = squashfs_cache_get(sb, msblk->block_cache, *block, 0);
-		if (entry->error) {
+		अगर (entry->error) अणु
 			res = entry->error;
-			goto error;
-		} else if (*offset >= entry->length) {
+			जाओ error;
+		पूर्ण अन्यथा अगर (*offset >= entry->length) अणु
 			res = -EIO;
-			goto error;
-		}
+			जाओ error;
+		पूर्ण
 
 		bytes = squashfs_copy_data(buffer, entry, *offset, length);
-		if (buffer)
+		अगर (buffer)
 			buffer += bytes;
 		length -= bytes;
 		*offset += bytes;
 
-		if (*offset == entry->length) {
+		अगर (*offset == entry->length) अणु
 			*block = entry->next_index;
 			*offset = 0;
-		}
+		पूर्ण
 
 		squashfs_cache_put(entry);
-	}
+	पूर्ण
 
-	return res;
+	वापस res;
 
 error:
 	squashfs_cache_put(entry);
-	return res;
-}
+	वापस res;
+पूर्ण
 
 
 /*
  * Look-up in the fragmment cache the fragment located at <start_block> in the
- * filesystem.  If necessary read and decompress it from disk.
+ * fileप्रणाली.  If necessary पढ़ो and decompress it from disk.
  */
-struct squashfs_cache_entry *squashfs_get_fragment(struct super_block *sb,
-				u64 start_block, int length)
-{
-	struct squashfs_sb_info *msblk = sb->s_fs_info;
+काष्ठा squashfs_cache_entry *squashfs_get_fragment(काष्ठा super_block *sb,
+				u64 start_block, पूर्णांक length)
+अणु
+	काष्ठा squashfs_sb_info *msblk = sb->s_fs_info;
 
-	return squashfs_cache_get(sb, msblk->fragment_cache, start_block,
+	वापस squashfs_cache_get(sb, msblk->fragment_cache, start_block,
 		length);
-}
+पूर्ण
 
 
 /*
  * Read and decompress the datablock located at <start_block> in the
- * filesystem.  The cache is used here to avoid duplicating locking and
- * read/decompress code.
+ * fileप्रणाली.  The cache is used here to aव्योम duplicating locking and
+ * पढ़ो/decompress code.
  */
-struct squashfs_cache_entry *squashfs_get_datablock(struct super_block *sb,
-				u64 start_block, int length)
-{
-	struct squashfs_sb_info *msblk = sb->s_fs_info;
+काष्ठा squashfs_cache_entry *squashfs_get_datablock(काष्ठा super_block *sb,
+				u64 start_block, पूर्णांक length)
+अणु
+	काष्ठा squashfs_sb_info *msblk = sb->s_fs_info;
 
-	return squashfs_cache_get(sb, msblk->read_page, start_block, length);
-}
+	वापस squashfs_cache_get(sb, msblk->पढ़ो_page, start_block, length);
+पूर्ण
 
 
 /*
- * Read a filesystem table (uncompressed sequence of bytes) from disk
+ * Read a fileप्रणाली table (uncompressed sequence of bytes) from disk
  */
-void *squashfs_read_table(struct super_block *sb, u64 block, int length)
-{
-	int pages = (length + PAGE_SIZE - 1) >> PAGE_SHIFT;
-	int i, res;
-	void *table, *buffer, **data;
-	struct squashfs_page_actor *actor;
+व्योम *squashfs_पढ़ो_table(काष्ठा super_block *sb, u64 block, पूर्णांक length)
+अणु
+	पूर्णांक pages = (length + PAGE_SIZE - 1) >> PAGE_SHIFT;
+	पूर्णांक i, res;
+	व्योम *table, *buffer, **data;
+	काष्ठा squashfs_page_actor *actor;
 
-	table = buffer = kmalloc(length, GFP_KERNEL);
-	if (table == NULL)
-		return ERR_PTR(-ENOMEM);
+	table = buffer = kदो_स्मृति(length, GFP_KERNEL);
+	अगर (table == शून्य)
+		वापस ERR_PTR(-ENOMEM);
 
-	data = kcalloc(pages, sizeof(void *), GFP_KERNEL);
-	if (data == NULL) {
+	data = kसुस्मृति(pages, माप(व्योम *), GFP_KERNEL);
+	अगर (data == शून्य) अणु
 		res = -ENOMEM;
-		goto failed;
-	}
+		जाओ failed;
+	पूर्ण
 
 	actor = squashfs_page_actor_init(data, pages, length);
-	if (actor == NULL) {
+	अगर (actor == शून्य) अणु
 		res = -ENOMEM;
-		goto failed2;
-	}
+		जाओ failed2;
+	पूर्ण
 
-	for (i = 0; i < pages; i++, buffer += PAGE_SIZE)
+	क्रम (i = 0; i < pages; i++, buffer += PAGE_SIZE)
 		data[i] = buffer;
 
-	res = squashfs_read_data(sb, block, length |
-		SQUASHFS_COMPRESSED_BIT_BLOCK, NULL, actor);
+	res = squashfs_पढ़ो_data(sb, block, length |
+		SQUASHFS_COMPRESSED_BIT_BLOCK, शून्य, actor);
 
-	kfree(data);
-	kfree(actor);
+	kमुक्त(data);
+	kमुक्त(actor);
 
-	if (res < 0)
-		goto failed;
+	अगर (res < 0)
+		जाओ failed;
 
-	return table;
+	वापस table;
 
 failed2:
-	kfree(data);
+	kमुक्त(data);
 failed:
-	kfree(table);
-	return ERR_PTR(res);
-}
+	kमुक्त(table);
+	वापस ERR_PTR(res);
+पूर्ण

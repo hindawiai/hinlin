@@ -1,85 +1,86 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- *  USB HID driver for Glorious PC Gaming Race
+ *  USB HID driver क्रम Glorious PC Gaming Race
  *  Glorious Model O, O- and D mice.
  *
- *  Copyright (c) 2020 Samuel Čavoj <sammko@sammserver.com>
+ *  Copyright (c) 2020 Samuel दavoj <sammko@sammserver.com>
  */
 
 /*
  */
 
-#include <linux/hid.h>
-#include <linux/module.h>
+#समावेश <linux/hid.h>
+#समावेश <linux/module.h>
 
-#include "hid-ids.h"
+#समावेश "hid-ids.h"
 
-MODULE_AUTHOR("Samuel Čavoj <sammko@sammserver.com>");
+MODULE_AUTHOR("Samuel दavoj <sammko@sammserver.com>");
 MODULE_DESCRIPTION("HID driver for Glorious PC Gaming Race mice");
 
 /*
- * Glorious Model O and O- specify the const flag in the consumer input
- * report descriptor, which leads to inputs being ignored. Fix this
+ * Glorious Model O and O- specअगरy the स्थिर flag in the consumer input
+ * report descriptor, which leads to inमाला_दो being ignored. Fix this
  * by patching the descriptor.
  */
-static __u8 *glorious_report_fixup(struct hid_device *hdev, __u8 *rdesc,
-		unsigned int *rsize)
-{
-	if (*rsize == 213 &&
+अटल __u8 *glorious_report_fixup(काष्ठा hid_device *hdev, __u8 *rdesc,
+		अचिन्हित पूर्णांक *rsize)
+अणु
+	अगर (*rsize == 213 &&
 		rdesc[84] == 129 && rdesc[112] == 129 && rdesc[140] == 129 &&
-		rdesc[85] == 3   && rdesc[113] == 3   && rdesc[141] == 3) {
+		rdesc[85] == 3   && rdesc[113] == 3   && rdesc[141] == 3) अणु
 		hid_info(hdev, "patching Glorious Model O consumer control report descriptor\n");
 		rdesc[85] = rdesc[113] = rdesc[141] = \
 			HID_MAIN_ITEM_VARIABLE | HID_MAIN_ITEM_RELATIVE;
-	}
-	return rdesc;
-}
+	पूर्ण
+	वापस rdesc;
+पूर्ण
 
-static void glorious_update_name(struct hid_device *hdev)
-{
-	const char *model = "Device";
+अटल व्योम glorious_update_name(काष्ठा hid_device *hdev)
+अणु
+	स्थिर अक्षर *model = "Device";
 
-	switch (hdev->product) {
-	case USB_DEVICE_ID_GLORIOUS_MODEL_O:
-		model = "Model O"; break;
-	case USB_DEVICE_ID_GLORIOUS_MODEL_D:
-		model = "Model D"; break;
-	}
+	चयन (hdev->product) अणु
+	हाल USB_DEVICE_ID_GLORIOUS_MODEL_O:
+		model = "Model O"; अवरोध;
+	हाल USB_DEVICE_ID_GLORIOUS_MODEL_D:
+		model = "Model D"; अवरोध;
+	पूर्ण
 
-	snprintf(hdev->name, sizeof(hdev->name), "%s %s", "Glorious", model);
-}
+	snम_लिखो(hdev->name, माप(hdev->name), "%s %s", "Glorious", model);
+पूर्ण
 
-static int glorious_probe(struct hid_device *hdev,
-		const struct hid_device_id *id)
-{
-	int ret;
+अटल पूर्णांक glorious_probe(काष्ठा hid_device *hdev,
+		स्थिर काष्ठा hid_device_id *id)
+अणु
+	पूर्णांक ret;
 
 	hdev->quirks |= HID_QUIRK_INPUT_PER_APP;
 
 	ret = hid_parse(hdev);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	glorious_update_name(hdev);
 
-	return hid_hw_start(hdev, HID_CONNECT_DEFAULT);
-}
+	वापस hid_hw_start(hdev, HID_CONNECT_DEFAULT);
+पूर्ण
 
-static const struct hid_device_id glorious_devices[] = {
-	{ HID_USB_DEVICE(USB_VENDOR_ID_GLORIOUS,
-		USB_DEVICE_ID_GLORIOUS_MODEL_O) },
-	{ HID_USB_DEVICE(USB_VENDOR_ID_GLORIOUS,
-		USB_DEVICE_ID_GLORIOUS_MODEL_D) },
-	{ }
-};
+अटल स्थिर काष्ठा hid_device_id glorious_devices[] = अणु
+	अणु HID_USB_DEVICE(USB_VENDOR_ID_GLORIOUS,
+		USB_DEVICE_ID_GLORIOUS_MODEL_O) पूर्ण,
+	अणु HID_USB_DEVICE(USB_VENDOR_ID_GLORIOUS,
+		USB_DEVICE_ID_GLORIOUS_MODEL_D) पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(hid, glorious_devices);
 
-static struct hid_driver glorious_driver = {
+अटल काष्ठा hid_driver glorious_driver = अणु
 	.name = "glorious",
 	.id_table = glorious_devices,
 	.probe = glorious_probe,
 	.report_fixup = glorious_report_fixup
-};
+पूर्ण;
 
 module_hid_driver(glorious_driver);
 

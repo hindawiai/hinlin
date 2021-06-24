@@ -1,16 +1,17 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * Copyright (C) 2005-2008 Red Hat, Inc.  All rights reserved.
  */
-#ifndef __DLM_PLOCK_DOT_H__
-#define __DLM_PLOCK_DOT_H__
+#अगर_अघोषित __DLM_PLOCK_DOT_H__
+#घोषणा __DLM_PLOCK_DOT_H__
 
-#include <uapi/linux/dlm_plock.h>
+#समावेश <uapi/linux/dlm_plock.h>
 
-int dlm_posix_lock(dlm_lockspace_t *lockspace, u64 number, struct file *file,
-		int cmd, struct file_lock *fl);
-int dlm_posix_unlock(dlm_lockspace_t *lockspace, u64 number, struct file *file,
-		struct file_lock *fl);
-int dlm_posix_get(dlm_lockspace_t *lockspace, u64 number, struct file *file,
-		struct file_lock *fl);
-#endif
+पूर्णांक dlm_posix_lock(dlm_lockspace_t *lockspace, u64 number, काष्ठा file *file,
+		पूर्णांक cmd, काष्ठा file_lock *fl);
+पूर्णांक dlm_posix_unlock(dlm_lockspace_t *lockspace, u64 number, काष्ठा file *file,
+		काष्ठा file_lock *fl);
+पूर्णांक dlm_posix_get(dlm_lockspace_t *lockspace, u64 number, काष्ठा file *file,
+		काष्ठा file_lock *fl);
+#पूर्ण_अगर

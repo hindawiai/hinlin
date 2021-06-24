@@ -1,15 +1,16 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Copyright (C) STMicroelectronics 2017
- * Author:  Alexandre Torgue <alexandre.torgue@st.com> for STMicroelectronics.
+ * Author:  Alexandre Torgue <alexandre.torgue@st.com> क्रम STMicroelectronics.
  */
-#include <linux/init.h>
-#include <linux/of.h>
-#include <linux/platform_device.h>
+#समावेश <linux/init.h>
+#समावेश <linux/of.h>
+#समावेश <linux/platक्रमm_device.h>
 
-#include "pinctrl-stm32.h"
+#समावेश "pinctrl-stm32.h"
 
-static const struct stm32_desc_pin stm32h743_pins[] = {
+अटल स्थिर काष्ठा sपंचांग32_desc_pin sपंचांग32h743_pins[] = अणु
 	STM32_PIN(
 		PINCTRL_PIN(0, "PA0"),
 		STM32_FUNCTION(0, "GPIOA0"),
@@ -1954,31 +1955,31 @@ static const struct stm32_desc_pin stm32h743_pins[] = {
 		STM32_FUNCTION(16, "EVENTOUT"),
 		STM32_FUNCTION(17, "ANALOG")
 	),
-};
+पूर्ण;
 
-static struct stm32_pinctrl_match_data stm32h743_match_data = {
-	.pins = stm32h743_pins,
-	.npins = ARRAY_SIZE(stm32h743_pins),
-};
+अटल काष्ठा sपंचांग32_pinctrl_match_data sपंचांग32h743_match_data = अणु
+	.pins = sपंचांग32h743_pins,
+	.npins = ARRAY_SIZE(sपंचांग32h743_pins),
+पूर्ण;
 
-static const struct of_device_id stm32h743_pctrl_match[] = {
-	{
+अटल स्थिर काष्ठा of_device_id sपंचांग32h743_pctrl_match[] = अणु
+	अणु
 		.compatible = "st,stm32h743-pinctrl",
-		.data = &stm32h743_match_data,
-	},
-	{ }
-};
+		.data = &sपंचांग32h743_match_data,
+	पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 
-static struct platform_driver stm32h743_pinctrl_driver = {
-	.probe = stm32_pctl_probe,
-	.driver = {
+अटल काष्ठा platक्रमm_driver sपंचांग32h743_pinctrl_driver = अणु
+	.probe = sपंचांग32_pctl_probe,
+	.driver = अणु
 		.name = "stm32h743-pinctrl",
-		.of_match_table = stm32h743_pctrl_match,
-	},
-};
+		.of_match_table = sपंचांग32h743_pctrl_match,
+	पूर्ण,
+पूर्ण;
 
-static int __init stm32h743_pinctrl_init(void)
-{
-	return platform_driver_register(&stm32h743_pinctrl_driver);
-}
-arch_initcall(stm32h743_pinctrl_init);
+अटल पूर्णांक __init sपंचांग32h743_pinctrl_init(व्योम)
+अणु
+	वापस platक्रमm_driver_रेजिस्टर(&sपंचांग32h743_pinctrl_driver);
+पूर्ण
+arch_initcall(sपंचांग32h743_pinctrl_init);

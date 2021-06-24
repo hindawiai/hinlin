@@ -1,1225 +1,1226 @@
+<शैली गुरु>
 /*
 ===============================================================================
 
-This C source file is part of the SoftFloat IEC/IEEE Floating-point
+This C source file is part of the SoftFloat IEC/IEEE Floating-poपूर्णांक
 Arithmetic Package, Release 2.
 
 Written by John R. Hauser.  This work was made possible in part by the
 International Computer Science Institute, located at Suite 600, 1947 Center
-Street, Berkeley, California 94704.  Funding was partially provided by the
+Street, Berkeley, Calअगरornia 94704.  Funding was partially provided by the
 National Science Foundation under grant MIP-9311980.  The original version
-of this code was written as part of a project to build a fixed-point vector
-processor in collaboration with the University of California at Berkeley,
-overseen by Profs. Nelson Morgan and John Wawrzynek.  More information
+of this code was written as part of a project to build a fixed-poपूर्णांक vector
+processor in collaboration with the University of Calअगरornia at Berkeley,
+overseen by Profs. Nelson Morgan and John Wawrzynek.  More inक्रमmation
 is available through the web page
 http://www.jhauser.us/arithmetic/SoftFloat-2b/SoftFloat-source.txt
 
-THIS SOFTWARE IS DISTRIBUTED AS IS, FOR FREE.  Although reasonable effort
-has been made to avoid it, THIS SOFTWARE MAY CONTAIN FAULTS THAT WILL AT
+THIS SOFTWARE IS DISTRIBUTED AS IS, FOR FREE.  Although reasonable efक्रमt
+has been made to aव्योम it, THIS SOFTWARE MAY CONTAIN FAULTS THAT WILL AT
 TIMES RESULT IN INCORRECT BEHAVIOR.  USE OF THIS SOFTWARE IS RESTRICTED TO
 PERSONS AND ORGANIZATIONS WHO CAN AND WILL TAKE FULL RESPONSIBILITY FOR ANY
 AND ALL LOSSES, COSTS, OR OTHER PROBLEMS ARISING FROM ITS USE.
 
-Derivative works are acceptable, even for commercial purposes, so long as
+Derivative works are acceptable, even क्रम commercial purposes, so दीर्घ as
 (1) they include prominent notice that the work is derivative, and (2) they
-include prominent notice akin to these three paragraphs for those parts of
+include prominent notice akin to these three paragraphs क्रम those parts of
 this code that are retained.
 
 ===============================================================================
 */
 
-#include <asm/div64.h>
+#समावेश <यंत्र/भाग64.h>
 
-#include "fpa11.h"
-//#include "milieu.h"
-//#include "softfloat.h"
+#समावेश "fpa11.h"
+//#समावेश "milieu.h"
+//#समावेश "softfloat.h"
 
 /*
 -------------------------------------------------------------------------------
 Primitive arithmetic functions, including multi-word arithmetic, and
-division and square root approximations.  (Can be specialized to target if
+भागision and square root approximations.  (Can be specialized to target अगर
 desired.)
 -------------------------------------------------------------------------------
 */
-#include "softfloat-macros"
+#समावेश "softfloat-macros"
 
 /*
 -------------------------------------------------------------------------------
-Functions and definitions to determine:  (1) whether tininess for underflow
-is detected before or after rounding by default, (2) what (if anything)
-happens when exceptions are raised, (3) how signaling NaNs are distinguished
-from quiet NaNs, (4) the default generated quiet NaNs, and (5) how NaNs
-are propagated from function inputs to output.  These details are target-
-specific.
+Functions and definitions to determine:  (1) whether tininess क्रम underflow
+is detected beक्रमe or after rounding by शेष, (2) what (अगर anything)
+happens when exceptions are उठाओd, (3) how संकेतing NaNs are distinguished
+from quiet NaNs, (4) the शेष generated quiet NaNs, and (5) how NaNs
+are propagated from function inमाला_दो to output.  These details are target-
+specअगरic.
 -------------------------------------------------------------------------------
 */
-#include "softfloat-specialize"
+#समावेश "softfloat-specialize"
 
 /*
 -------------------------------------------------------------------------------
-Takes a 64-bit fixed-point value `absZ' with binary point between bits 6
-and 7, and returns the properly rounded 32-bit integer corresponding to the
-input.  If `zSign' is nonzero, the input is negated before being converted
-to an integer.  Bit 63 of `absZ' must be zero.  Ordinarily, the fixed-point
-input is simply rounded to an integer, with the inexact exception raised if
-the input cannot be represented exactly as an integer.  If the fixed-point
-input is too large, however, the invalid exception is raised and the largest
-positive or negative integer is returned.
+Takes a 64-bit fixed-poपूर्णांक value `असलZ' with binary poपूर्णांक between bits 6
+and 7, and वापसs the properly rounded 32-bit पूर्णांकeger corresponding to the
+input.  If `zSign' is nonzero, the input is negated beक्रमe being converted
+to an पूर्णांकeger.  Bit 63 of `असलZ' must be zero.  Ordinarily, the fixed-poपूर्णांक
+input is simply rounded to an पूर्णांकeger, with the inexact exception उठाओd अगर
+the input cannot be represented exactly as an पूर्णांकeger.  If the fixed-poपूर्णांक
+input is too large, however, the invalid exception is उठाओd and the largest
+positive or negative पूर्णांकeger is वापसed.
 -------------------------------------------------------------------------------
 */
-static int32 roundAndPackInt32( struct roundingData *roundData, flag zSign, bits64 absZ )
-{
-    int8 roundingMode;
+अटल पूर्णांक32 roundAndPackInt32( काष्ठा roundingData *roundData, flag zSign, bits64 असलZ )
+अणु
+    पूर्णांक8 roundingMode;
     flag roundNearestEven;
-    int8 roundIncrement, roundBits;
-    int32 z;
+    पूर्णांक8 roundIncrement, roundBits;
+    पूर्णांक32 z;
 
     roundingMode = roundData->mode;
-    roundNearestEven = ( roundingMode == float_round_nearest_even );
+    roundNearestEven = ( roundingMode == भग्न_round_nearest_even );
     roundIncrement = 0x40;
-    if ( ! roundNearestEven ) {
-        if ( roundingMode == float_round_to_zero ) {
+    अगर ( ! roundNearestEven ) अणु
+        अगर ( roundingMode == भग्न_round_to_zero ) अणु
             roundIncrement = 0;
-        }
-        else {
+        पूर्ण
+        अन्यथा अणु
             roundIncrement = 0x7F;
-            if ( zSign ) {
-                if ( roundingMode == float_round_up ) roundIncrement = 0;
-            }
-            else {
-                if ( roundingMode == float_round_down ) roundIncrement = 0;
-            }
-        }
-    }
-    roundBits = absZ & 0x7F;
-    absZ = ( absZ + roundIncrement )>>7;
-    absZ &= ~ ( ( ( roundBits ^ 0x40 ) == 0 ) & roundNearestEven );
-    z = absZ;
-    if ( zSign ) z = - z;
-    if ( ( absZ>>32 ) || ( z && ( ( z < 0 ) ^ zSign ) ) ) {
-        roundData->exception |= float_flag_invalid;
-        return zSign ? 0x80000000 : 0x7FFFFFFF;
-    }
-    if ( roundBits ) roundData->exception |= float_flag_inexact;
-    return z;
+            अगर ( zSign ) अणु
+                अगर ( roundingMode == भग्न_round_up ) roundIncrement = 0;
+            पूर्ण
+            अन्यथा अणु
+                अगर ( roundingMode == भग्न_round_करोwn ) roundIncrement = 0;
+            पूर्ण
+        पूर्ण
+    पूर्ण
+    roundBits = असलZ & 0x7F;
+    असलZ = ( असलZ + roundIncrement )>>7;
+    असलZ &= ~ ( ( ( roundBits ^ 0x40 ) == 0 ) & roundNearestEven );
+    z = असलZ;
+    अगर ( zSign ) z = - z;
+    अगर ( ( असलZ>>32 ) || ( z && ( ( z < 0 ) ^ zSign ) ) ) अणु
+        roundData->exception |= भग्न_flag_invalid;
+        वापस zSign ? 0x80000000 : 0x7FFFFFFF;
+    पूर्ण
+    अगर ( roundBits ) roundData->exception |= भग्न_flag_inexact;
+    वापस z;
 
-}
+पूर्ण
 
 /*
 -------------------------------------------------------------------------------
-Returns the fraction bits of the single-precision floating-point value `a'.
+Returns the fraction bits of the single-precision भग्नing-poपूर्णांक value `a'.
 -------------------------------------------------------------------------------
 */
-INLINE bits32 extractFloat32Frac( float32 a )
-{
+INLINE bits32 extractFloat32Frac( भग्न32 a )
+अणु
 
-    return a & 0x007FFFFF;
+    वापस a & 0x007FFFFF;
 
-}
+पूर्ण
 
 /*
 -------------------------------------------------------------------------------
-Returns the exponent bits of the single-precision floating-point value `a'.
+Returns the exponent bits of the single-precision भग्नing-poपूर्णांक value `a'.
 -------------------------------------------------------------------------------
 */
-INLINE int16 extractFloat32Exp( float32 a )
-{
+INLINE पूर्णांक16 extractFloat32Exp( भग्न32 a )
+अणु
 
-    return ( a>>23 ) & 0xFF;
+    वापस ( a>>23 ) & 0xFF;
 
-}
+पूर्ण
 
 /*
 -------------------------------------------------------------------------------
-Returns the sign bit of the single-precision floating-point value `a'.
+Returns the sign bit of the single-precision भग्नing-poपूर्णांक value `a'.
 -------------------------------------------------------------------------------
 */
-#if 0	/* in softfloat.h */
-INLINE flag extractFloat32Sign( float32 a )
-{
+#अगर 0	/* in softभग्न.स */
+INLINE flag extractFloat32Sign( भग्न32 a )
+अणु
 
-    return a>>31;
+    वापस a>>31;
 
-}
-#endif
+पूर्ण
+#पूर्ण_अगर
 
 /*
 -------------------------------------------------------------------------------
-Normalizes the subnormal single-precision floating-point value represented
-by the denormalized significand `aSig'.  The normalized exponent and
-significand are stored at the locations pointed to by `zExpPtr' and
+Normalizes the subnormal single-precision भग्नing-poपूर्णांक value represented
+by the denormalized signअगरicand `aSig'.  The normalized exponent and
+signअगरicand are stored at the locations poपूर्णांकed to by `zExpPtr' and
 `zSigPtr', respectively.
 -------------------------------------------------------------------------------
 */
-static void
- normalizeFloat32Subnormal( bits32 aSig, int16 *zExpPtr, bits32 *zSigPtr )
-{
-    int8 shiftCount;
+अटल व्योम
+ normalizeFloat32Subnormal( bits32 aSig, पूर्णांक16 *zExpPtr, bits32 *zSigPtr )
+अणु
+    पूर्णांक8 shअगरtCount;
 
-    shiftCount = countLeadingZeros32( aSig ) - 8;
-    *zSigPtr = aSig<<shiftCount;
-    *zExpPtr = 1 - shiftCount;
+    shअगरtCount = countLeadingZeros32( aSig ) - 8;
+    *zSigPtr = aSig<<shअगरtCount;
+    *zExpPtr = 1 - shअगरtCount;
 
-}
+पूर्ण
 
 /*
 -------------------------------------------------------------------------------
-Packs the sign `zSign', exponent `zExp', and significand `zSig' into a
-single-precision floating-point value, returning the result.  After being
-shifted into the proper positions, the three fields are simply added
-together to form the result.  This means that any integer portion of `zSig'
-will be added into the exponent.  Since a properly normalized significand
-will have an integer portion equal to 1, the `zExp' input should be 1 less
+Packs the sign `zSign', exponent `zExp', and significand `zSig' पूर्णांकo a
+single-precision भग्नing-poपूर्णांक value, वापसing the result.  After being
+shअगरted पूर्णांकo the proper positions, the three fields are simply added
+together to क्रमm the result.  This means that any पूर्णांकeger portion of `zSig'
+will be added पूर्णांकo the exponent.  Since a properly normalized signअगरicand
+will have an पूर्णांकeger portion equal to 1, the `zExp' input should be 1 less
 than the desired result exponent whenever `zSig' is a complete, normalized
-significand.
+signअगरicand.
 -------------------------------------------------------------------------------
 */
-INLINE float32 packFloat32( flag zSign, int16 zExp, bits32 zSig )
-{
-#if 0
-   float32 f;
-   __asm__("@ packFloat32				\n\
-   	    mov %0, %1, asl #31				\n\
-   	    orr %0, %2, asl #23				\n\
+INLINE भग्न32 packFloat32( flag zSign, पूर्णांक16 zExp, bits32 zSig )
+अणु
+#अगर 0
+   भग्न32 f;
+   __यंत्र__("@ packFloat32				\न\
+   	    mov %0, %1, asl #31				\न\
+   	    orr %0, %2, asl #23				\न\
    	    orr %0, %3"
-   	    : /* no outputs */
+   	    : /* no outमाला_दो */
    	    : "g" (f), "g" (zSign), "g" (zExp), "g" (zSig)
    	    : "cc");
-   return f;
-#else
-    return ( ( (bits32) zSign )<<31 ) + ( ( (bits32) zExp )<<23 ) + zSig;
-#endif 
-}
+   वापस f;
+#अन्यथा
+    वापस ( ( (bits32) zSign )<<31 ) + ( ( (bits32) zExp )<<23 ) + zSig;
+#पूर्ण_अगर 
+पूर्ण
 
 /*
 -------------------------------------------------------------------------------
-Takes an abstract floating-point value having sign `zSign', exponent `zExp',
-and significand `zSig', and returns the proper single-precision floating-
-point value corresponding to the abstract input.  Ordinarily, the abstract
-value is simply rounded and packed into the single-precision format, with
-the inexact exception raised if the abstract input cannot be represented
-exactly.  If the abstract value is too large, however, the overflow and
-inexact exceptions are raised and an infinity or maximal finite value is
-returned.  If the abstract value is too small, the input value is rounded to
-a subnormal number, and the underflow and inexact exceptions are raised if
-the abstract input cannot be represented exactly as a subnormal single-
-precision floating-point number.
-    The input significand `zSig' has its binary point between bits 30
-and 29, which is 7 bits to the left of the usual location.  This shifted
-significand must be normalized or smaller.  If `zSig' is not normalized,
-`zExp' must be 0; in that case, the result returned is a subnormal number,
-and it must not require rounding.  In the usual case that `zSig' is
-normalized, `zExp' must be 1 less than the ``true'' floating-point exponent.
-The handling of underflow and overflow follows the IEC/IEEE Standard for
-Binary Floating-point Arithmetic.
+Takes an असलtract भग्नing-poपूर्णांक value having sign `zSign', exponent `zExp',
+and signअगरicand `zSig', and वापसs the proper single-precision भग्नing-
+poपूर्णांक value corresponding to the असलtract input.  Ordinarily, the असलtract
+value is simply rounded and packed पूर्णांकo the single-precision क्रमmat, with
+the inexact exception उठाओd अगर the असलtract input cannot be represented
+exactly.  If the असलtract value is too large, however, the overflow and
+inexact exceptions are उठाओd and an infinity or maximal finite value is
+वापसed.  If the असलtract value is too small, the input value is rounded to
+a subnormal number, and the underflow and inexact exceptions are उठाओd अगर
+the असलtract input cannot be represented exactly as a subnormal single-
+precision भग्नing-poपूर्णांक number.
+    The input signअगरicand `zSig' has its binary poपूर्णांक between bits 30
+and 29, which is 7 bits to the left of the usual location.  This shअगरted
+signअगरicand must be normalized or smaller.  If `zSig' is not normalized,
+`zExp' must be 0; in that हाल, the result वापसed is a subnormal number,
+and it must not require rounding.  In the usual हाल that `zSig' is
+normalized, `zExp' must be 1 less than the ``true'' भग्नing-poपूर्णांक exponent.
+The handling of underflow and overflow follows the IEC/IEEE Standard क्रम
+Binary Floating-poपूर्णांक Arithmetic.
 -------------------------------------------------------------------------------
 */
-static float32 roundAndPackFloat32( struct roundingData *roundData, flag zSign, int16 zExp, bits32 zSig )
-{
-    int8 roundingMode;
+अटल भग्न32 roundAndPackFloat32( काष्ठा roundingData *roundData, flag zSign, पूर्णांक16 zExp, bits32 zSig )
+अणु
+    पूर्णांक8 roundingMode;
     flag roundNearestEven;
-    int8 roundIncrement, roundBits;
+    पूर्णांक8 roundIncrement, roundBits;
     flag isTiny;
 
     roundingMode = roundData->mode;
-    roundNearestEven = ( roundingMode == float_round_nearest_even );
+    roundNearestEven = ( roundingMode == भग्न_round_nearest_even );
     roundIncrement = 0x40;
-    if ( ! roundNearestEven ) {
-        if ( roundingMode == float_round_to_zero ) {
+    अगर ( ! roundNearestEven ) अणु
+        अगर ( roundingMode == भग्न_round_to_zero ) अणु
             roundIncrement = 0;
-        }
-        else {
+        पूर्ण
+        अन्यथा अणु
             roundIncrement = 0x7F;
-            if ( zSign ) {
-                if ( roundingMode == float_round_up ) roundIncrement = 0;
-            }
-            else {
-                if ( roundingMode == float_round_down ) roundIncrement = 0;
-            }
-        }
-    }
+            अगर ( zSign ) अणु
+                अगर ( roundingMode == भग्न_round_up ) roundIncrement = 0;
+            पूर्ण
+            अन्यथा अणु
+                अगर ( roundingMode == भग्न_round_करोwn ) roundIncrement = 0;
+            पूर्ण
+        पूर्ण
+    पूर्ण
     roundBits = zSig & 0x7F;
-    if ( 0xFD <= (bits16) zExp ) {
-        if (    ( 0xFD < zExp )
+    अगर ( 0xFD <= (bits16) zExp ) अणु
+        अगर (    ( 0xFD < zExp )
              || (    ( zExp == 0xFD )
                   && ( (sbits32) ( zSig + roundIncrement ) < 0 ) )
-           ) {
-            roundData->exception |= float_flag_overflow | float_flag_inexact;
-            return packFloat32( zSign, 0xFF, 0 ) - ( roundIncrement == 0 );
-        }
-        if ( zExp < 0 ) {
+           ) अणु
+            roundData->exception |= भग्न_flag_overflow | भग्न_flag_inexact;
+            वापस packFloat32( zSign, 0xFF, 0 ) - ( roundIncrement == 0 );
+        पूर्ण
+        अगर ( zExp < 0 ) अणु
             isTiny =
-                   ( float_detect_tininess == float_tininess_before_rounding )
+                   ( भग्न_detect_tininess == भग्न_tininess_beक्रमe_rounding )
                 || ( zExp < -1 )
                 || ( zSig + roundIncrement < 0x80000000 );
-            shift32RightJamming( zSig, - zExp, &zSig );
+            shअगरt32RightJamming( zSig, - zExp, &zSig );
             zExp = 0;
             roundBits = zSig & 0x7F;
-            if ( isTiny && roundBits ) roundData->exception |= float_flag_underflow;
-        }
-    }
-    if ( roundBits ) roundData->exception |= float_flag_inexact;
+            अगर ( isTiny && roundBits ) roundData->exception |= भग्न_flag_underflow;
+        पूर्ण
+    पूर्ण
+    अगर ( roundBits ) roundData->exception |= भग्न_flag_inexact;
     zSig = ( zSig + roundIncrement )>>7;
     zSig &= ~ ( ( ( roundBits ^ 0x40 ) == 0 ) & roundNearestEven );
-    if ( zSig == 0 ) zExp = 0;
-    return packFloat32( zSign, zExp, zSig );
+    अगर ( zSig == 0 ) zExp = 0;
+    वापस packFloat32( zSign, zExp, zSig );
 
-}
+पूर्ण
 
 /*
 -------------------------------------------------------------------------------
-Takes an abstract floating-point value having sign `zSign', exponent `zExp',
-and significand `zSig', and returns the proper single-precision floating-
-point value corresponding to the abstract input.  This routine is just like
-`roundAndPackFloat32' except that `zSig' does not have to be normalized in
-any way.  In all cases, `zExp' must be 1 less than the ``true'' floating-
-point exponent.
+Takes an असलtract भग्नing-poपूर्णांक value having sign `zSign', exponent `zExp',
+and signअगरicand `zSig', and वापसs the proper single-precision भग्नing-
+poपूर्णांक value corresponding to the असलtract input.  This routine is just like
+`roundAndPackFloat32' except that `zSig' करोes not have to be normalized in
+any way.  In all हालs, `zExp' must be 1 less than the ``true'' भग्नing-
+poपूर्णांक exponent.
 -------------------------------------------------------------------------------
 */
-static float32
- normalizeRoundAndPackFloat32( struct roundingData *roundData, flag zSign, int16 zExp, bits32 zSig )
-{
-    int8 shiftCount;
+अटल भग्न32
+ normalizeRoundAndPackFloat32( काष्ठा roundingData *roundData, flag zSign, पूर्णांक16 zExp, bits32 zSig )
+अणु
+    पूर्णांक8 shअगरtCount;
 
-    shiftCount = countLeadingZeros32( zSig ) - 1;
-    return roundAndPackFloat32( roundData, zSign, zExp - shiftCount, zSig<<shiftCount );
+    shअगरtCount = countLeadingZeros32( zSig ) - 1;
+    वापस roundAndPackFloat32( roundData, zSign, zExp - shअगरtCount, zSig<<shअगरtCount );
 
-}
+पूर्ण
 
 /*
 -------------------------------------------------------------------------------
-Returns the fraction bits of the double-precision floating-point value `a'.
+Returns the fraction bits of the द्विगुन-precision भग्नing-poपूर्णांक value `a'.
 -------------------------------------------------------------------------------
 */
-INLINE bits64 extractFloat64Frac( float64 a )
-{
+INLINE bits64 extractFloat64Frac( भग्न64 a )
+अणु
 
-    return a & LIT64( 0x000FFFFFFFFFFFFF );
+    वापस a & LIT64( 0x000FFFFFFFFFFFFF );
 
-}
+पूर्ण
 
 /*
 -------------------------------------------------------------------------------
-Returns the exponent bits of the double-precision floating-point value `a'.
+Returns the exponent bits of the द्विगुन-precision भग्नing-poपूर्णांक value `a'.
 -------------------------------------------------------------------------------
 */
-INLINE int16 extractFloat64Exp( float64 a )
-{
+INLINE पूर्णांक16 extractFloat64Exp( भग्न64 a )
+अणु
 
-    return ( a>>52 ) & 0x7FF;
+    वापस ( a>>52 ) & 0x7FF;
 
-}
+पूर्ण
 
 /*
 -------------------------------------------------------------------------------
-Returns the sign bit of the double-precision floating-point value `a'.
+Returns the sign bit of the द्विगुन-precision भग्नing-poपूर्णांक value `a'.
 -------------------------------------------------------------------------------
 */
-#if 0	/* in softfloat.h */
-INLINE flag extractFloat64Sign( float64 a )
-{
+#अगर 0	/* in softभग्न.स */
+INLINE flag extractFloat64Sign( भग्न64 a )
+अणु
 
-    return a>>63;
+    वापस a>>63;
 
-}
-#endif
+पूर्ण
+#पूर्ण_अगर
 
 /*
 -------------------------------------------------------------------------------
-Normalizes the subnormal double-precision floating-point value represented
-by the denormalized significand `aSig'.  The normalized exponent and
-significand are stored at the locations pointed to by `zExpPtr' and
+Normalizes the subnormal द्विगुन-precision भग्नing-poपूर्णांक value represented
+by the denormalized signअगरicand `aSig'.  The normalized exponent and
+signअगरicand are stored at the locations poपूर्णांकed to by `zExpPtr' and
 `zSigPtr', respectively.
 -------------------------------------------------------------------------------
 */
-static void
- normalizeFloat64Subnormal( bits64 aSig, int16 *zExpPtr, bits64 *zSigPtr )
-{
-    int8 shiftCount;
+अटल व्योम
+ normalizeFloat64Subnormal( bits64 aSig, पूर्णांक16 *zExpPtr, bits64 *zSigPtr )
+अणु
+    पूर्णांक8 shअगरtCount;
 
-    shiftCount = countLeadingZeros64( aSig ) - 11;
-    *zSigPtr = aSig<<shiftCount;
-    *zExpPtr = 1 - shiftCount;
+    shअगरtCount = countLeadingZeros64( aSig ) - 11;
+    *zSigPtr = aSig<<shअगरtCount;
+    *zExpPtr = 1 - shअगरtCount;
 
-}
+पूर्ण
 
 /*
 -------------------------------------------------------------------------------
-Packs the sign `zSign', exponent `zExp', and significand `zSig' into a
-double-precision floating-point value, returning the result.  After being
-shifted into the proper positions, the three fields are simply added
-together to form the result.  This means that any integer portion of `zSig'
-will be added into the exponent.  Since a properly normalized significand
-will have an integer portion equal to 1, the `zExp' input should be 1 less
+Packs the sign `zSign', exponent `zExp', and significand `zSig' पूर्णांकo a
+द्विगुन-precision भग्नing-poपूर्णांक value, वापसing the result.  After being
+shअगरted पूर्णांकo the proper positions, the three fields are simply added
+together to क्रमm the result.  This means that any पूर्णांकeger portion of `zSig'
+will be added पूर्णांकo the exponent.  Since a properly normalized signअगरicand
+will have an पूर्णांकeger portion equal to 1, the `zExp' input should be 1 less
 than the desired result exponent whenever `zSig' is a complete, normalized
-significand.
+signअगरicand.
 -------------------------------------------------------------------------------
 */
-INLINE float64 packFloat64( flag zSign, int16 zExp, bits64 zSig )
-{
+INLINE भग्न64 packFloat64( flag zSign, पूर्णांक16 zExp, bits64 zSig )
+अणु
 
-    return ( ( (bits64) zSign )<<63 ) + ( ( (bits64) zExp )<<52 ) + zSig;
+    वापस ( ( (bits64) zSign )<<63 ) + ( ( (bits64) zExp )<<52 ) + zSig;
 
-}
+पूर्ण
 
 /*
 -------------------------------------------------------------------------------
-Takes an abstract floating-point value having sign `zSign', exponent `zExp',
-and significand `zSig', and returns the proper double-precision floating-
-point value corresponding to the abstract input.  Ordinarily, the abstract
-value is simply rounded and packed into the double-precision format, with
-the inexact exception raised if the abstract input cannot be represented
-exactly.  If the abstract value is too large, however, the overflow and
-inexact exceptions are raised and an infinity or maximal finite value is
-returned.  If the abstract value is too small, the input value is rounded to
-a subnormal number, and the underflow and inexact exceptions are raised if
-the abstract input cannot be represented exactly as a subnormal double-
-precision floating-point number.
-    The input significand `zSig' has its binary point between bits 62
-and 61, which is 10 bits to the left of the usual location.  This shifted
-significand must be normalized or smaller.  If `zSig' is not normalized,
-`zExp' must be 0; in that case, the result returned is a subnormal number,
-and it must not require rounding.  In the usual case that `zSig' is
-normalized, `zExp' must be 1 less than the ``true'' floating-point exponent.
-The handling of underflow and overflow follows the IEC/IEEE Standard for
-Binary Floating-point Arithmetic.
+Takes an असलtract भग्नing-poपूर्णांक value having sign `zSign', exponent `zExp',
+and signअगरicand `zSig', and वापसs the proper द्विगुन-precision भग्नing-
+poपूर्णांक value corresponding to the असलtract input.  Ordinarily, the असलtract
+value is simply rounded and packed पूर्णांकo the द्विगुन-precision क्रमmat, with
+the inexact exception उठाओd अगर the असलtract input cannot be represented
+exactly.  If the असलtract value is too large, however, the overflow and
+inexact exceptions are उठाओd and an infinity or maximal finite value is
+वापसed.  If the असलtract value is too small, the input value is rounded to
+a subnormal number, and the underflow and inexact exceptions are उठाओd अगर
+the असलtract input cannot be represented exactly as a subnormal द्विगुन-
+precision भग्नing-poपूर्णांक number.
+    The input signअगरicand `zSig' has its binary poपूर्णांक between bits 62
+and 61, which is 10 bits to the left of the usual location.  This shअगरted
+signअगरicand must be normalized or smaller.  If `zSig' is not normalized,
+`zExp' must be 0; in that हाल, the result वापसed is a subnormal number,
+and it must not require rounding.  In the usual हाल that `zSig' is
+normalized, `zExp' must be 1 less than the ``true'' भग्नing-poपूर्णांक exponent.
+The handling of underflow and overflow follows the IEC/IEEE Standard क्रम
+Binary Floating-poपूर्णांक Arithmetic.
 -------------------------------------------------------------------------------
 */
-static float64 roundAndPackFloat64( struct roundingData *roundData, flag zSign, int16 zExp, bits64 zSig )
-{
-    int8 roundingMode;
+अटल भग्न64 roundAndPackFloat64( काष्ठा roundingData *roundData, flag zSign, पूर्णांक16 zExp, bits64 zSig )
+अणु
+    पूर्णांक8 roundingMode;
     flag roundNearestEven;
-    int16 roundIncrement, roundBits;
+    पूर्णांक16 roundIncrement, roundBits;
     flag isTiny;
 
     roundingMode = roundData->mode;
-    roundNearestEven = ( roundingMode == float_round_nearest_even );
+    roundNearestEven = ( roundingMode == भग्न_round_nearest_even );
     roundIncrement = 0x200;
-    if ( ! roundNearestEven ) {
-        if ( roundingMode == float_round_to_zero ) {
+    अगर ( ! roundNearestEven ) अणु
+        अगर ( roundingMode == भग्न_round_to_zero ) अणु
             roundIncrement = 0;
-        }
-        else {
+        पूर्ण
+        अन्यथा अणु
             roundIncrement = 0x3FF;
-            if ( zSign ) {
-                if ( roundingMode == float_round_up ) roundIncrement = 0;
-            }
-            else {
-                if ( roundingMode == float_round_down ) roundIncrement = 0;
-            }
-        }
-    }
+            अगर ( zSign ) अणु
+                अगर ( roundingMode == भग्न_round_up ) roundIncrement = 0;
+            पूर्ण
+            अन्यथा अणु
+                अगर ( roundingMode == भग्न_round_करोwn ) roundIncrement = 0;
+            पूर्ण
+        पूर्ण
+    पूर्ण
     roundBits = zSig & 0x3FF;
-    if ( 0x7FD <= (bits16) zExp ) {
-        if (    ( 0x7FD < zExp )
+    अगर ( 0x7FD <= (bits16) zExp ) अणु
+        अगर (    ( 0x7FD < zExp )
              || (    ( zExp == 0x7FD )
                   && ( (sbits64) ( zSig + roundIncrement ) < 0 ) )
-           ) {
-            //register int lr = __builtin_return_address(0);
-            //printk("roundAndPackFloat64 called from 0x%08x\n",lr);
-            roundData->exception |= float_flag_overflow | float_flag_inexact;
-            return packFloat64( zSign, 0x7FF, 0 ) - ( roundIncrement == 0 );
-        }
-        if ( zExp < 0 ) {
+           ) अणु
+            //रेजिस्टर पूर्णांक lr = __builtin_वापस_address(0);
+            //prपूर्णांकk("roundAndPackFloat64 called from 0x%08x\n",lr);
+            roundData->exception |= भग्न_flag_overflow | भग्न_flag_inexact;
+            वापस packFloat64( zSign, 0x7FF, 0 ) - ( roundIncrement == 0 );
+        पूर्ण
+        अगर ( zExp < 0 ) अणु
             isTiny =
-                   ( float_detect_tininess == float_tininess_before_rounding )
+                   ( भग्न_detect_tininess == भग्न_tininess_beक्रमe_rounding )
                 || ( zExp < -1 )
                 || ( zSig + roundIncrement < LIT64( 0x8000000000000000 ) );
-            shift64RightJamming( zSig, - zExp, &zSig );
+            shअगरt64RightJamming( zSig, - zExp, &zSig );
             zExp = 0;
             roundBits = zSig & 0x3FF;
-            if ( isTiny && roundBits ) roundData->exception |= float_flag_underflow;
-        }
-    }
-    if ( roundBits ) roundData->exception |= float_flag_inexact;
+            अगर ( isTiny && roundBits ) roundData->exception |= भग्न_flag_underflow;
+        पूर्ण
+    पूर्ण
+    अगर ( roundBits ) roundData->exception |= भग्न_flag_inexact;
     zSig = ( zSig + roundIncrement )>>10;
     zSig &= ~ ( ( ( roundBits ^ 0x200 ) == 0 ) & roundNearestEven );
-    if ( zSig == 0 ) zExp = 0;
-    return packFloat64( zSign, zExp, zSig );
+    अगर ( zSig == 0 ) zExp = 0;
+    वापस packFloat64( zSign, zExp, zSig );
 
-}
+पूर्ण
 
 /*
 -------------------------------------------------------------------------------
-Takes an abstract floating-point value having sign `zSign', exponent `zExp',
-and significand `zSig', and returns the proper double-precision floating-
-point value corresponding to the abstract input.  This routine is just like
-`roundAndPackFloat64' except that `zSig' does not have to be normalized in
-any way.  In all cases, `zExp' must be 1 less than the ``true'' floating-
-point exponent.
+Takes an असलtract भग्नing-poपूर्णांक value having sign `zSign', exponent `zExp',
+and signअगरicand `zSig', and वापसs the proper द्विगुन-precision भग्नing-
+poपूर्णांक value corresponding to the असलtract input.  This routine is just like
+`roundAndPackFloat64' except that `zSig' करोes not have to be normalized in
+any way.  In all हालs, `zExp' must be 1 less than the ``true'' भग्नing-
+poपूर्णांक exponent.
 -------------------------------------------------------------------------------
 */
-static float64
- normalizeRoundAndPackFloat64( struct roundingData *roundData, flag zSign, int16 zExp, bits64 zSig )
-{
-    int8 shiftCount;
+अटल भग्न64
+ normalizeRoundAndPackFloat64( काष्ठा roundingData *roundData, flag zSign, पूर्णांक16 zExp, bits64 zSig )
+अणु
+    पूर्णांक8 shअगरtCount;
 
-    shiftCount = countLeadingZeros64( zSig ) - 1;
-    return roundAndPackFloat64( roundData, zSign, zExp - shiftCount, zSig<<shiftCount );
+    shअगरtCount = countLeadingZeros64( zSig ) - 1;
+    वापस roundAndPackFloat64( roundData, zSign, zExp - shअगरtCount, zSig<<shअगरtCount );
 
-}
+पूर्ण
 
-#ifdef FLOATX80
+#अगर_घोषित FLOATX80
 
 /*
 -------------------------------------------------------------------------------
-Returns the fraction bits of the extended double-precision floating-point
+Returns the fraction bits of the extended द्विगुन-precision भग्नing-poपूर्णांक
 value `a'.
 -------------------------------------------------------------------------------
 */
-INLINE bits64 extractFloatx80Frac( floatx80 a )
-{
+INLINE bits64 extractFloatx80Frac( भग्नx80 a )
+अणु
 
-    return a.low;
+    वापस a.low;
 
-}
+पूर्ण
 
 /*
 -------------------------------------------------------------------------------
-Returns the exponent bits of the extended double-precision floating-point
+Returns the exponent bits of the extended द्विगुन-precision भग्नing-poपूर्णांक
 value `a'.
 -------------------------------------------------------------------------------
 */
-INLINE int32 extractFloatx80Exp( floatx80 a )
-{
+INLINE पूर्णांक32 extractFloatx80Exp( भग्नx80 a )
+अणु
 
-    return a.high & 0x7FFF;
+    वापस a.high & 0x7FFF;
 
-}
+पूर्ण
 
 /*
 -------------------------------------------------------------------------------
-Returns the sign bit of the extended double-precision floating-point value
+Returns the sign bit of the extended द्विगुन-precision भग्नing-poपूर्णांक value
 `a'.
 -------------------------------------------------------------------------------
 */
-INLINE flag extractFloatx80Sign( floatx80 a )
-{
+INLINE flag extractFloatx80Sign( भग्नx80 a )
+अणु
 
-    return a.high>>15;
+    वापस a.high>>15;
 
-}
+पूर्ण
 
 /*
 -------------------------------------------------------------------------------
-Normalizes the subnormal extended double-precision floating-point value
-represented by the denormalized significand `aSig'.  The normalized exponent
-and significand are stored at the locations pointed to by `zExpPtr' and
+Normalizes the subnormal extended द्विगुन-precision भग्नing-poपूर्णांक value
+represented by the denormalized signअगरicand `aSig'.  The normalized exponent
+and signअगरicand are stored at the locations poपूर्णांकed to by `zExpPtr' and
 `zSigPtr', respectively.
 -------------------------------------------------------------------------------
 */
-static void
- normalizeFloatx80Subnormal( bits64 aSig, int32 *zExpPtr, bits64 *zSigPtr )
-{
-    int8 shiftCount;
+अटल व्योम
+ normalizeFloatx80Subnormal( bits64 aSig, पूर्णांक32 *zExpPtr, bits64 *zSigPtr )
+अणु
+    पूर्णांक8 shअगरtCount;
 
-    shiftCount = countLeadingZeros64( aSig );
-    *zSigPtr = aSig<<shiftCount;
-    *zExpPtr = 1 - shiftCount;
+    shअगरtCount = countLeadingZeros64( aSig );
+    *zSigPtr = aSig<<shअगरtCount;
+    *zExpPtr = 1 - shअगरtCount;
 
-}
+पूर्ण
 
 /*
 -------------------------------------------------------------------------------
-Packs the sign `zSign', exponent `zExp', and significand `zSig' into an
-extended double-precision floating-point value, returning the result.
+Packs the sign `zSign', exponent `zExp', and significand `zSig' पूर्णांकo an
+extended द्विगुन-precision भग्नing-poपूर्णांक value, वापसing the result.
 -------------------------------------------------------------------------------
 */
-INLINE floatx80 packFloatx80( flag zSign, int32 zExp, bits64 zSig )
-{
-    floatx80 z;
+INLINE भग्नx80 packFloatx80( flag zSign, पूर्णांक32 zExp, bits64 zSig )
+अणु
+    भग्नx80 z;
 
     z.low = zSig;
     z.high = ( ( (bits16) zSign )<<15 ) + zExp;
     z.__padding = 0;
-    return z;
+    वापस z;
 
-}
+पूर्ण
 
 /*
 -------------------------------------------------------------------------------
-Takes an abstract floating-point value having sign `zSign', exponent `zExp',
-and extended significand formed by the concatenation of `zSig0' and `zSig1',
-and returns the proper extended double-precision floating-point value
-corresponding to the abstract input.  Ordinarily, the abstract value is
-rounded and packed into the extended double-precision format, with the
-inexact exception raised if the abstract input cannot be represented
-exactly.  If the abstract value is too large, however, the overflow and
-inexact exceptions are raised and an infinity or maximal finite value is
-returned.  If the abstract value is too small, the input value is rounded to
-a subnormal number, and the underflow and inexact exceptions are raised if
-the abstract input cannot be represented exactly as a subnormal extended
-double-precision floating-point number.
+Takes an असलtract भग्नing-poपूर्णांक value having sign `zSign', exponent `zExp',
+and extended signअगरicand क्रमmed by the concatenation of `zSig0' and `zSig1',
+and वापसs the proper extended द्विगुन-precision भग्नing-poपूर्णांक value
+corresponding to the असलtract input.  Ordinarily, the असलtract value is
+rounded and packed पूर्णांकo the extended द्विगुन-precision क्रमmat, with the
+inexact exception उठाओd अगर the असलtract input cannot be represented
+exactly.  If the असलtract value is too large, however, the overflow and
+inexact exceptions are उठाओd and an infinity or maximal finite value is
+वापसed.  If the असलtract value is too small, the input value is rounded to
+a subnormal number, and the underflow and inexact exceptions are उठाओd अगर
+the असलtract input cannot be represented exactly as a subnormal extended
+द्विगुन-precision भग्नing-poपूर्णांक number.
     If `roundingPrecision' is 32 or 64, the result is rounded to the same
-number of bits as single or double precision, respectively.  Otherwise, the
-result is rounded to the full precision of the extended double-precision
-format.
-    The input significand must be normalized or smaller.  If the input
-significand is not normalized, `zExp' must be 0; in that case, the result
-returned is a subnormal number, and it must not require rounding.  The
-handling of underflow and overflow follows the IEC/IEEE Standard for Binary
-Floating-point Arithmetic.
+number of bits as single or द्विगुन precision, respectively.  Otherwise, the
+result is rounded to the full precision of the extended द्विगुन-precision
+क्रमmat.
+    The input signअगरicand must be normalized or smaller.  If the input
+signअगरicand is not normalized, `zExp' must be 0; in that हाल, the result
+वापसed is a subnormal number, and it must not require rounding.  The
+handling of underflow and overflow follows the IEC/IEEE Standard क्रम Binary
+Floating-poपूर्णांक Arithmetic.
 -------------------------------------------------------------------------------
 */
-static floatx80
+अटल भग्नx80
  roundAndPackFloatx80(
-     struct roundingData *roundData, flag zSign, int32 zExp, bits64 zSig0, bits64 zSig1
+     काष्ठा roundingData *roundData, flag zSign, पूर्णांक32 zExp, bits64 zSig0, bits64 zSig1
  )
-{
-    int8 roundingMode, roundingPrecision;
+अणु
+    पूर्णांक8 roundingMode, roundingPrecision;
     flag roundNearestEven, increment, isTiny;
-    int64 roundIncrement, roundMask, roundBits;
+    पूर्णांक64 roundIncrement, roundMask, roundBits;
 
     roundingMode = roundData->mode;
     roundingPrecision = roundData->precision;
-    roundNearestEven = ( roundingMode == float_round_nearest_even );
-    if ( roundingPrecision == 80 ) goto precision80;
-    if ( roundingPrecision == 64 ) {
+    roundNearestEven = ( roundingMode == भग्न_round_nearest_even );
+    अगर ( roundingPrecision == 80 ) जाओ precision80;
+    अगर ( roundingPrecision == 64 ) अणु
         roundIncrement = LIT64( 0x0000000000000400 );
         roundMask = LIT64( 0x00000000000007FF );
-    }
-    else if ( roundingPrecision == 32 ) {
+    पूर्ण
+    अन्यथा अगर ( roundingPrecision == 32 ) अणु
         roundIncrement = LIT64( 0x0000008000000000 );
         roundMask = LIT64( 0x000000FFFFFFFFFF );
-    }
-    else {
-        goto precision80;
-    }
+    पूर्ण
+    अन्यथा अणु
+        जाओ precision80;
+    पूर्ण
     zSig0 |= ( zSig1 != 0 );
-    if ( ! roundNearestEven ) {
-        if ( roundingMode == float_round_to_zero ) {
+    अगर ( ! roundNearestEven ) अणु
+        अगर ( roundingMode == भग्न_round_to_zero ) अणु
             roundIncrement = 0;
-        }
-        else {
+        पूर्ण
+        अन्यथा अणु
             roundIncrement = roundMask;
-            if ( zSign ) {
-                if ( roundingMode == float_round_up ) roundIncrement = 0;
-            }
-            else {
-                if ( roundingMode == float_round_down ) roundIncrement = 0;
-            }
-        }
-    }
+            अगर ( zSign ) अणु
+                अगर ( roundingMode == भग्न_round_up ) roundIncrement = 0;
+            पूर्ण
+            अन्यथा अणु
+                अगर ( roundingMode == भग्न_round_करोwn ) roundIncrement = 0;
+            पूर्ण
+        पूर्ण
+    पूर्ण
     roundBits = zSig0 & roundMask;
-    if ( 0x7FFD <= (bits32) ( zExp - 1 ) ) {
-        if (    ( 0x7FFE < zExp )
+    अगर ( 0x7FFD <= (bits32) ( zExp - 1 ) ) अणु
+        अगर (    ( 0x7FFE < zExp )
              || ( ( zExp == 0x7FFE ) && ( zSig0 + roundIncrement < zSig0 ) )
-           ) {
-            goto overflow;
-        }
-        if ( zExp <= 0 ) {
+           ) अणु
+            जाओ overflow;
+        पूर्ण
+        अगर ( zExp <= 0 ) अणु
             isTiny =
-                   ( float_detect_tininess == float_tininess_before_rounding )
+                   ( भग्न_detect_tininess == भग्न_tininess_beक्रमe_rounding )
                 || ( zExp < 0 )
                 || ( zSig0 <= zSig0 + roundIncrement );
-            shift64RightJamming( zSig0, 1 - zExp, &zSig0 );
+            shअगरt64RightJamming( zSig0, 1 - zExp, &zSig0 );
             zExp = 0;
             roundBits = zSig0 & roundMask;
-            if ( isTiny && roundBits ) roundData->exception |= float_flag_underflow;
-            if ( roundBits ) roundData->exception |= float_flag_inexact;
+            अगर ( isTiny && roundBits ) roundData->exception |= भग्न_flag_underflow;
+            अगर ( roundBits ) roundData->exception |= भग्न_flag_inexact;
             zSig0 += roundIncrement;
-            if ( (sbits64) zSig0 < 0 ) zExp = 1;
+            अगर ( (sbits64) zSig0 < 0 ) zExp = 1;
             roundIncrement = roundMask + 1;
-            if ( roundNearestEven && ( roundBits<<1 == roundIncrement ) ) {
+            अगर ( roundNearestEven && ( roundBits<<1 == roundIncrement ) ) अणु
                 roundMask |= roundIncrement;
-            }
+            पूर्ण
             zSig0 &= ~ roundMask;
-            return packFloatx80( zSign, zExp, zSig0 );
-        }
-    }
-    if ( roundBits ) roundData->exception |= float_flag_inexact;
+            वापस packFloatx80( zSign, zExp, zSig0 );
+        पूर्ण
+    पूर्ण
+    अगर ( roundBits ) roundData->exception |= भग्न_flag_inexact;
     zSig0 += roundIncrement;
-    if ( zSig0 < roundIncrement ) {
+    अगर ( zSig0 < roundIncrement ) अणु
         ++zExp;
         zSig0 = LIT64( 0x8000000000000000 );
-    }
+    पूर्ण
     roundIncrement = roundMask + 1;
-    if ( roundNearestEven && ( roundBits<<1 == roundIncrement ) ) {
+    अगर ( roundNearestEven && ( roundBits<<1 == roundIncrement ) ) अणु
         roundMask |= roundIncrement;
-    }
+    पूर्ण
     zSig0 &= ~ roundMask;
-    if ( zSig0 == 0 ) zExp = 0;
-    return packFloatx80( zSign, zExp, zSig0 );
+    अगर ( zSig0 == 0 ) zExp = 0;
+    वापस packFloatx80( zSign, zExp, zSig0 );
  precision80:
     increment = ( (sbits64) zSig1 < 0 );
-    if ( ! roundNearestEven ) {
-        if ( roundingMode == float_round_to_zero ) {
+    अगर ( ! roundNearestEven ) अणु
+        अगर ( roundingMode == भग्न_round_to_zero ) अणु
             increment = 0;
-        }
-        else {
-            if ( zSign ) {
-                increment = ( roundingMode == float_round_down ) && zSig1;
-            }
-            else {
-                increment = ( roundingMode == float_round_up ) && zSig1;
-            }
-        }
-    }
-    if ( 0x7FFD <= (bits32) ( zExp - 1 ) ) {
-        if (    ( 0x7FFE < zExp )
+        पूर्ण
+        अन्यथा अणु
+            अगर ( zSign ) अणु
+                increment = ( roundingMode == भग्न_round_करोwn ) && zSig1;
+            पूर्ण
+            अन्यथा अणु
+                increment = ( roundingMode == भग्न_round_up ) && zSig1;
+            पूर्ण
+        पूर्ण
+    पूर्ण
+    अगर ( 0x7FFD <= (bits32) ( zExp - 1 ) ) अणु
+        अगर (    ( 0x7FFE < zExp )
              || (    ( zExp == 0x7FFE )
                   && ( zSig0 == LIT64( 0xFFFFFFFFFFFFFFFF ) )
                   && increment
                 )
-           ) {
+           ) अणु
             roundMask = 0;
  overflow:
-            roundData->exception |= float_flag_overflow | float_flag_inexact;
-            if (    ( roundingMode == float_round_to_zero )
-                 || ( zSign && ( roundingMode == float_round_up ) )
-                 || ( ! zSign && ( roundingMode == float_round_down ) )
-               ) {
-                return packFloatx80( zSign, 0x7FFE, ~ roundMask );
-            }
-            return packFloatx80( zSign, 0x7FFF, LIT64( 0x8000000000000000 ) );
-        }
-        if ( zExp <= 0 ) {
+            roundData->exception |= भग्न_flag_overflow | भग्न_flag_inexact;
+            अगर (    ( roundingMode == भग्न_round_to_zero )
+                 || ( zSign && ( roundingMode == भग्न_round_up ) )
+                 || ( ! zSign && ( roundingMode == भग्न_round_करोwn ) )
+               ) अणु
+                वापस packFloatx80( zSign, 0x7FFE, ~ roundMask );
+            पूर्ण
+            वापस packFloatx80( zSign, 0x7FFF, LIT64( 0x8000000000000000 ) );
+        पूर्ण
+        अगर ( zExp <= 0 ) अणु
             isTiny =
-                   ( float_detect_tininess == float_tininess_before_rounding )
+                   ( भग्न_detect_tininess == भग्न_tininess_beक्रमe_rounding )
                 || ( zExp < 0 )
                 || ! increment
                 || ( zSig0 < LIT64( 0xFFFFFFFFFFFFFFFF ) );
-            shift64ExtraRightJamming( zSig0, zSig1, 1 - zExp, &zSig0, &zSig1 );
+            shअगरt64ExtraRightJamming( zSig0, zSig1, 1 - zExp, &zSig0, &zSig1 );
             zExp = 0;
-            if ( isTiny && zSig1 ) roundData->exception |= float_flag_underflow;
-            if ( zSig1 ) roundData->exception |= float_flag_inexact;
-            if ( roundNearestEven ) {
+            अगर ( isTiny && zSig1 ) roundData->exception |= भग्न_flag_underflow;
+            अगर ( zSig1 ) roundData->exception |= भग्न_flag_inexact;
+            अगर ( roundNearestEven ) अणु
                 increment = ( (sbits64) zSig1 < 0 );
-            }
-            else {
-                if ( zSign ) {
-                    increment = ( roundingMode == float_round_down ) && zSig1;
-                }
-                else {
-                    increment = ( roundingMode == float_round_up ) && zSig1;
-                }
-            }
-            if ( increment ) {
+            पूर्ण
+            अन्यथा अणु
+                अगर ( zSign ) अणु
+                    increment = ( roundingMode == भग्न_round_करोwn ) && zSig1;
+                पूर्ण
+                अन्यथा अणु
+                    increment = ( roundingMode == भग्न_round_up ) && zSig1;
+                पूर्ण
+            पूर्ण
+            अगर ( increment ) अणु
                 ++zSig0;
                 zSig0 &= ~ ( ( zSig1 + zSig1 == 0 ) & roundNearestEven );
-                if ( (sbits64) zSig0 < 0 ) zExp = 1;
-            }
-            return packFloatx80( zSign, zExp, zSig0 );
-        }
-    }
-    if ( zSig1 ) roundData->exception |= float_flag_inexact;
-    if ( increment ) {
+                अगर ( (sbits64) zSig0 < 0 ) zExp = 1;
+            पूर्ण
+            वापस packFloatx80( zSign, zExp, zSig0 );
+        पूर्ण
+    पूर्ण
+    अगर ( zSig1 ) roundData->exception |= भग्न_flag_inexact;
+    अगर ( increment ) अणु
         ++zSig0;
-        if ( zSig0 == 0 ) {
+        अगर ( zSig0 == 0 ) अणु
             ++zExp;
             zSig0 = LIT64( 0x8000000000000000 );
-        }
-        else {
+        पूर्ण
+        अन्यथा अणु
             zSig0 &= ~ ( ( zSig1 + zSig1 == 0 ) & roundNearestEven );
-        }
-    }
-    else {
-        if ( zSig0 == 0 ) zExp = 0;
-    }
+        पूर्ण
+    पूर्ण
+    अन्यथा अणु
+        अगर ( zSig0 == 0 ) zExp = 0;
+    पूर्ण
     
-    return packFloatx80( zSign, zExp, zSig0 );
-}
+    वापस packFloatx80( zSign, zExp, zSig0 );
+पूर्ण
 
 /*
 -------------------------------------------------------------------------------
-Takes an abstract floating-point value having sign `zSign', exponent
+Takes an असलtract भग्नing-poपूर्णांक value having sign `zSign', exponent
 `zExp', and significand formed by the concatenation of `zSig0' and `zSig1',
-and returns the proper extended double-precision floating-point value
-corresponding to the abstract input.  This routine is just like
-`roundAndPackFloatx80' except that the input significand does not have to be
+and वापसs the proper extended द्विगुन-precision भग्नing-poपूर्णांक value
+corresponding to the असलtract input.  This routine is just like
+`roundAndPackFloatx80' except that the input signअगरicand करोes not have to be
 normalized.
 -------------------------------------------------------------------------------
 */
-static floatx80
+अटल भग्नx80
  normalizeRoundAndPackFloatx80(
-     struct roundingData *roundData, flag zSign, int32 zExp, bits64 zSig0, bits64 zSig1
+     काष्ठा roundingData *roundData, flag zSign, पूर्णांक32 zExp, bits64 zSig0, bits64 zSig1
  )
-{
-    int8 shiftCount;
+अणु
+    पूर्णांक8 shअगरtCount;
 
-    if ( zSig0 == 0 ) {
+    अगर ( zSig0 == 0 ) अणु
         zSig0 = zSig1;
         zSig1 = 0;
         zExp -= 64;
-    }
-    shiftCount = countLeadingZeros64( zSig0 );
-    shortShift128Left( zSig0, zSig1, shiftCount, &zSig0, &zSig1 );
-    zExp -= shiftCount;
-    return
+    पूर्ण
+    shअगरtCount = countLeadingZeros64( zSig0 );
+    लघुShअगरt128Left( zSig0, zSig1, shअगरtCount, &zSig0, &zSig1 );
+    zExp -= shअगरtCount;
+    वापस
         roundAndPackFloatx80( roundData, zSign, zExp, zSig0, zSig1 );
 
-}
+पूर्ण
 
-#endif
+#पूर्ण_अगर
 
 /*
 -------------------------------------------------------------------------------
 Returns the result of converting the 32-bit two's complement integer `a' to
-the single-precision floating-point format.  The conversion is performed
-according to the IEC/IEEE Standard for Binary Floating-point Arithmetic.
+the single-precision भग्नing-poपूर्णांक क्रमmat.  The conversion is perक्रमmed
+according to the IEC/IEEE Standard क्रम Binary Floating-poपूर्णांक Arithmetic.
 -------------------------------------------------------------------------------
 */
-float32 int32_to_float32(struct roundingData *roundData, int32 a)
-{
+भग्न32 पूर्णांक32_to_भग्न32(काष्ठा roundingData *roundData, पूर्णांक32 a)
+अणु
     flag zSign;
 
-    if ( a == 0 ) return 0;
-    if ( a == 0x80000000 ) return packFloat32( 1, 0x9E, 0 );
+    अगर ( a == 0 ) वापस 0;
+    अगर ( a == 0x80000000 ) वापस packFloat32( 1, 0x9E, 0 );
     zSign = ( a < 0 );
-    return normalizeRoundAndPackFloat32( roundData, zSign, 0x9C, zSign ? - a : a );
+    वापस normalizeRoundAndPackFloat32( roundData, zSign, 0x9C, zSign ? - a : a );
 
-}
+पूर्ण
 
 /*
 -------------------------------------------------------------------------------
 Returns the result of converting the 32-bit two's complement integer `a' to
-the double-precision floating-point format.  The conversion is performed
-according to the IEC/IEEE Standard for Binary Floating-point Arithmetic.
+the द्विगुन-precision भग्नing-poपूर्णांक क्रमmat.  The conversion is perक्रमmed
+according to the IEC/IEEE Standard क्रम Binary Floating-poपूर्णांक Arithmetic.
 -------------------------------------------------------------------------------
 */
-float64 int32_to_float64( int32 a )
-{
+भग्न64 पूर्णांक32_to_भग्न64( पूर्णांक32 a )
+अणु
     flag aSign;
-    uint32 absA;
-    int8 shiftCount;
+    uपूर्णांक32 असलA;
+    पूर्णांक8 shअगरtCount;
     bits64 zSig;
 
-    if ( a == 0 ) return 0;
+    अगर ( a == 0 ) वापस 0;
     aSign = ( a < 0 );
-    absA = aSign ? - a : a;
-    shiftCount = countLeadingZeros32( absA ) + 21;
-    zSig = absA;
-    return packFloat64( aSign, 0x432 - shiftCount, zSig<<shiftCount );
+    असलA = aSign ? - a : a;
+    shअगरtCount = countLeadingZeros32( असलA ) + 21;
+    zSig = असलA;
+    वापस packFloat64( aSign, 0x432 - shअगरtCount, zSig<<shअगरtCount );
 
-}
+पूर्ण
 
-#ifdef FLOATX80
+#अगर_घोषित FLOATX80
 
 /*
 -------------------------------------------------------------------------------
 Returns the result of converting the 32-bit two's complement integer `a'
-to the extended double-precision floating-point format.  The conversion
-is performed according to the IEC/IEEE Standard for Binary Floating-point
+to the extended द्विगुन-precision भग्नing-poपूर्णांक क्रमmat.  The conversion
+is perक्रमmed according to the IEC/IEEE Standard क्रम Binary Floating-poपूर्णांक
 Arithmetic.
 -------------------------------------------------------------------------------
 */
-floatx80 int32_to_floatx80( int32 a )
-{
+भग्नx80 पूर्णांक32_to_भग्नx80( पूर्णांक32 a )
+अणु
     flag zSign;
-    uint32 absA;
-    int8 shiftCount;
+    uपूर्णांक32 असलA;
+    पूर्णांक8 shअगरtCount;
     bits64 zSig;
 
-    if ( a == 0 ) return packFloatx80( 0, 0, 0 );
+    अगर ( a == 0 ) वापस packFloatx80( 0, 0, 0 );
     zSign = ( a < 0 );
-    absA = zSign ? - a : a;
-    shiftCount = countLeadingZeros32( absA ) + 32;
-    zSig = absA;
-    return packFloatx80( zSign, 0x403E - shiftCount, zSig<<shiftCount );
+    असलA = zSign ? - a : a;
+    shअगरtCount = countLeadingZeros32( असलA ) + 32;
+    zSig = असलA;
+    वापस packFloatx80( zSign, 0x403E - shअगरtCount, zSig<<shअगरtCount );
 
-}
+पूर्ण
 
-#endif
+#पूर्ण_अगर
 
 /*
 -------------------------------------------------------------------------------
-Returns the result of converting the single-precision floating-point value
-`a' to the 32-bit two's complement integer format.  The conversion is
-performed according to the IEC/IEEE Standard for Binary Floating-point
+Returns the result of converting the single-precision भग्नing-poपूर्णांक value
+`a' to the 32-bit two's complement पूर्णांकeger क्रमmat.  The conversion is
+perक्रमmed according to the IEC/IEEE Standard क्रम Binary Floating-poपूर्णांक
 Arithmetic---which means in particular that the conversion is rounded
 according to the current rounding mode.  If `a' is a NaN, the largest
-positive integer is returned.  Otherwise, if the conversion overflows, the
-largest integer with the same sign as `a' is returned.
+positive पूर्णांकeger is वापसed.  Otherwise, अगर the conversion overflows, the
+largest पूर्णांकeger with the same sign as `a' is वापसed.
 -------------------------------------------------------------------------------
 */
-int32 float32_to_int32( struct roundingData *roundData, float32 a )
-{
+पूर्णांक32 भग्न32_to_पूर्णांक32( काष्ठा roundingData *roundData, भग्न32 a )
+अणु
     flag aSign;
-    int16 aExp, shiftCount;
+    पूर्णांक16 aExp, shअगरtCount;
     bits32 aSig;
     bits64 zSig;
 
     aSig = extractFloat32Frac( a );
     aExp = extractFloat32Exp( a );
     aSign = extractFloat32Sign( a );
-    if ( ( aExp == 0x7FF ) && aSig ) aSign = 0;
-    if ( aExp ) aSig |= 0x00800000;
-    shiftCount = 0xAF - aExp;
+    अगर ( ( aExp == 0x7FF ) && aSig ) aSign = 0;
+    अगर ( aExp ) aSig |= 0x00800000;
+    shअगरtCount = 0xAF - aExp;
     zSig = aSig;
     zSig <<= 32;
-    if ( 0 < shiftCount ) shift64RightJamming( zSig, shiftCount, &zSig );
-    return roundAndPackInt32( roundData, aSign, zSig );
+    अगर ( 0 < shअगरtCount ) shअगरt64RightJamming( zSig, shअगरtCount, &zSig );
+    वापस roundAndPackInt32( roundData, aSign, zSig );
 
-}
+पूर्ण
 
 /*
 -------------------------------------------------------------------------------
-Returns the result of converting the single-precision floating-point value
-`a' to the 32-bit two's complement integer format.  The conversion is
-performed according to the IEC/IEEE Standard for Binary Floating-point
+Returns the result of converting the single-precision भग्नing-poपूर्णांक value
+`a' to the 32-bit two's complement पूर्णांकeger क्रमmat.  The conversion is
+perक्रमmed according to the IEC/IEEE Standard क्रम Binary Floating-poपूर्णांक
 Arithmetic, except that the conversion is always rounded toward zero.  If
-`a' is a NaN, the largest positive integer is returned.  Otherwise, if the
-conversion overflows, the largest integer with the same sign as `a' is
-returned.
+`a' is a NaN, the largest positive पूर्णांकeger is वापसed.  Otherwise, अगर the
+conversion overflows, the largest पूर्णांकeger with the same sign as `a' is
+वापसed.
 -------------------------------------------------------------------------------
 */
-int32 float32_to_int32_round_to_zero( float32 a )
-{
+पूर्णांक32 भग्न32_to_पूर्णांक32_round_to_zero( भग्न32 a )
+अणु
     flag aSign;
-    int16 aExp, shiftCount;
+    पूर्णांक16 aExp, shअगरtCount;
     bits32 aSig;
-    int32 z;
+    पूर्णांक32 z;
 
     aSig = extractFloat32Frac( a );
     aExp = extractFloat32Exp( a );
     aSign = extractFloat32Sign( a );
-    shiftCount = aExp - 0x9E;
-    if ( 0 <= shiftCount ) {
-        if ( a == 0xCF000000 ) return 0x80000000;
-        float_raise( float_flag_invalid );
-        if ( ! aSign || ( ( aExp == 0xFF ) && aSig ) ) return 0x7FFFFFFF;
-        return 0x80000000;
-    }
-    else if ( aExp <= 0x7E ) {
-        if ( aExp | aSig ) float_raise( float_flag_inexact );
-        return 0;
-    }
+    shअगरtCount = aExp - 0x9E;
+    अगर ( 0 <= shअगरtCount ) अणु
+        अगर ( a == 0xCF000000 ) वापस 0x80000000;
+        भग्न_उठाओ( भग्न_flag_invalid );
+        अगर ( ! aSign || ( ( aExp == 0xFF ) && aSig ) ) वापस 0x7FFFFFFF;
+        वापस 0x80000000;
+    पूर्ण
+    अन्यथा अगर ( aExp <= 0x7E ) अणु
+        अगर ( aExp | aSig ) भग्न_उठाओ( भग्न_flag_inexact );
+        वापस 0;
+    पूर्ण
     aSig = ( aSig | 0x00800000 )<<8;
-    z = aSig>>( - shiftCount );
-    if ( (bits32) ( aSig<<( shiftCount & 31 ) ) ) {
-        float_raise( float_flag_inexact );
-    }
-    return aSign ? - z : z;
+    z = aSig>>( - shअगरtCount );
+    अगर ( (bits32) ( aSig<<( shअगरtCount & 31 ) ) ) अणु
+        भग्न_उठाओ( भग्न_flag_inexact );
+    पूर्ण
+    वापस aSign ? - z : z;
 
-}
+पूर्ण
 
 /*
 -------------------------------------------------------------------------------
-Returns the result of converting the single-precision floating-point value
-`a' to the double-precision floating-point format.  The conversion is
-performed according to the IEC/IEEE Standard for Binary Floating-point
+Returns the result of converting the single-precision भग्नing-poपूर्णांक value
+`a' to the द्विगुन-precision भग्नing-poपूर्णांक क्रमmat.  The conversion is
+perक्रमmed according to the IEC/IEEE Standard क्रम Binary Floating-poपूर्णांक
 Arithmetic.
 -------------------------------------------------------------------------------
 */
-float64 float32_to_float64( float32 a )
-{
+भग्न64 भग्न32_to_भग्न64( भग्न32 a )
+अणु
     flag aSign;
-    int16 aExp;
+    पूर्णांक16 aExp;
     bits32 aSig;
 
     aSig = extractFloat32Frac( a );
     aExp = extractFloat32Exp( a );
     aSign = extractFloat32Sign( a );
-    if ( aExp == 0xFF ) {
-        if ( aSig ) return commonNaNToFloat64( float32ToCommonNaN( a ) );
-        return packFloat64( aSign, 0x7FF, 0 );
-    }
-    if ( aExp == 0 ) {
-        if ( aSig == 0 ) return packFloat64( aSign, 0, 0 );
+    अगर ( aExp == 0xFF ) अणु
+        अगर ( aSig ) वापस commonNaNToFloat64( भग्न32ToCommonNaN( a ) );
+        वापस packFloat64( aSign, 0x7FF, 0 );
+    पूर्ण
+    अगर ( aExp == 0 ) अणु
+        अगर ( aSig == 0 ) वापस packFloat64( aSign, 0, 0 );
         normalizeFloat32Subnormal( aSig, &aExp, &aSig );
         --aExp;
-    }
-    return packFloat64( aSign, aExp + 0x380, ( (bits64) aSig )<<29 );
+    पूर्ण
+    वापस packFloat64( aSign, aExp + 0x380, ( (bits64) aSig )<<29 );
 
-}
+पूर्ण
 
-#ifdef FLOATX80
+#अगर_घोषित FLOATX80
 
 /*
 -------------------------------------------------------------------------------
-Returns the result of converting the single-precision floating-point value
-`a' to the extended double-precision floating-point format.  The conversion
-is performed according to the IEC/IEEE Standard for Binary Floating-point
+Returns the result of converting the single-precision भग्नing-poपूर्णांक value
+`a' to the extended द्विगुन-precision भग्नing-poपूर्णांक क्रमmat.  The conversion
+is perक्रमmed according to the IEC/IEEE Standard क्रम Binary Floating-poपूर्णांक
 Arithmetic.
 -------------------------------------------------------------------------------
 */
-floatx80 float32_to_floatx80( float32 a )
-{
+भग्नx80 भग्न32_to_भग्नx80( भग्न32 a )
+अणु
     flag aSign;
-    int16 aExp;
+    पूर्णांक16 aExp;
     bits32 aSig;
 
     aSig = extractFloat32Frac( a );
     aExp = extractFloat32Exp( a );
     aSign = extractFloat32Sign( a );
-    if ( aExp == 0xFF ) {
-        if ( aSig ) return commonNaNToFloatx80( float32ToCommonNaN( a ) );
-        return packFloatx80( aSign, 0x7FFF, LIT64( 0x8000000000000000 ) );
-    }
-    if ( aExp == 0 ) {
-        if ( aSig == 0 ) return packFloatx80( aSign, 0, 0 );
+    अगर ( aExp == 0xFF ) अणु
+        अगर ( aSig ) वापस commonNaNToFloatx80( भग्न32ToCommonNaN( a ) );
+        वापस packFloatx80( aSign, 0x7FFF, LIT64( 0x8000000000000000 ) );
+    पूर्ण
+    अगर ( aExp == 0 ) अणु
+        अगर ( aSig == 0 ) वापस packFloatx80( aSign, 0, 0 );
         normalizeFloat32Subnormal( aSig, &aExp, &aSig );
-    }
+    पूर्ण
     aSig |= 0x00800000;
-    return packFloatx80( aSign, aExp + 0x3F80, ( (bits64) aSig )<<40 );
+    वापस packFloatx80( aSign, aExp + 0x3F80, ( (bits64) aSig )<<40 );
 
-}
+पूर्ण
 
-#endif
+#पूर्ण_अगर
 
 /*
 -------------------------------------------------------------------------------
-Rounds the single-precision floating-point value `a' to an integer, and
-returns the result as a single-precision floating-point value.  The
-operation is performed according to the IEC/IEEE Standard for Binary
-Floating-point Arithmetic.
+Rounds the single-precision भग्नing-poपूर्णांक value `a' to an पूर्णांकeger, and
+वापसs the result as a single-precision भग्नing-poपूर्णांक value.  The
+operation is perक्रमmed according to the IEC/IEEE Standard क्रम Binary
+Floating-poपूर्णांक Arithmetic.
 -------------------------------------------------------------------------------
 */
-float32 float32_round_to_int( struct roundingData *roundData, float32 a )
-{
+भग्न32 भग्न32_round_to_पूर्णांक( काष्ठा roundingData *roundData, भग्न32 a )
+अणु
     flag aSign;
-    int16 aExp;
+    पूर्णांक16 aExp;
     bits32 lastBitMask, roundBitsMask;
-    int8 roundingMode;
-    float32 z;
+    पूर्णांक8 roundingMode;
+    भग्न32 z;
 
     aExp = extractFloat32Exp( a );
-    if ( 0x96 <= aExp ) {
-        if ( ( aExp == 0xFF ) && extractFloat32Frac( a ) ) {
-            return propagateFloat32NaN( a, a );
-        }
-        return a;
-    }
+    अगर ( 0x96 <= aExp ) अणु
+        अगर ( ( aExp == 0xFF ) && extractFloat32Frac( a ) ) अणु
+            वापस propagateFloat32NaN( a, a );
+        पूर्ण
+        वापस a;
+    पूर्ण
     roundingMode = roundData->mode;
-    if ( aExp <= 0x7E ) {
-        if ( (bits32) ( a<<1 ) == 0 ) return a;
-        roundData->exception |= float_flag_inexact;
+    अगर ( aExp <= 0x7E ) अणु
+        अगर ( (bits32) ( a<<1 ) == 0 ) वापस a;
+        roundData->exception |= भग्न_flag_inexact;
         aSign = extractFloat32Sign( a );
-        switch ( roundingMode ) {
-         case float_round_nearest_even:
-            if ( ( aExp == 0x7E ) && extractFloat32Frac( a ) ) {
-                return packFloat32( aSign, 0x7F, 0 );
-            }
-            break;
-         case float_round_down:
-            return aSign ? 0xBF800000 : 0;
-         case float_round_up:
-            return aSign ? 0x80000000 : 0x3F800000;
-        }
-        return packFloat32( aSign, 0, 0 );
-    }
+        चयन ( roundingMode ) अणु
+         हाल भग्न_round_nearest_even:
+            अगर ( ( aExp == 0x7E ) && extractFloat32Frac( a ) ) अणु
+                वापस packFloat32( aSign, 0x7F, 0 );
+            पूर्ण
+            अवरोध;
+         हाल भग्न_round_करोwn:
+            वापस aSign ? 0xBF800000 : 0;
+         हाल भग्न_round_up:
+            वापस aSign ? 0x80000000 : 0x3F800000;
+        पूर्ण
+        वापस packFloat32( aSign, 0, 0 );
+    पूर्ण
     lastBitMask = 1;
     lastBitMask <<= 0x96 - aExp;
     roundBitsMask = lastBitMask - 1;
     z = a;
-    if ( roundingMode == float_round_nearest_even ) {
+    अगर ( roundingMode == भग्न_round_nearest_even ) अणु
         z += lastBitMask>>1;
-        if ( ( z & roundBitsMask ) == 0 ) z &= ~ lastBitMask;
-    }
-    else if ( roundingMode != float_round_to_zero ) {
-        if ( extractFloat32Sign( z ) ^ ( roundingMode == float_round_up ) ) {
+        अगर ( ( z & roundBitsMask ) == 0 ) z &= ~ lastBitMask;
+    पूर्ण
+    अन्यथा अगर ( roundingMode != भग्न_round_to_zero ) अणु
+        अगर ( extractFloat32Sign( z ) ^ ( roundingMode == भग्न_round_up ) ) अणु
             z += roundBitsMask;
-        }
-    }
+        पूर्ण
+    पूर्ण
     z &= ~ roundBitsMask;
-    if ( z != a ) roundData->exception |= float_flag_inexact;
-    return z;
+    अगर ( z != a ) roundData->exception |= भग्न_flag_inexact;
+    वापस z;
 
-}
+पूर्ण
 
 /*
 -------------------------------------------------------------------------------
-Returns the result of adding the absolute values of the single-precision
-floating-point values `a' and `b'.  If `zSign' is true, the sum is negated
-before being returned.  `zSign' is ignored if the result is a NaN.  The
-addition is performed according to the IEC/IEEE Standard for Binary
-Floating-point Arithmetic.
+Returns the result of adding the असलolute values of the single-precision
+भग्नing-poपूर्णांक values `a' and `b'.  If `zSign' is true, the sum is negated
+beक्रमe being वापसed.  `zSign' is ignored अगर the result is a NaN.  The
+addition is perक्रमmed according to the IEC/IEEE Standard क्रम Binary
+Floating-poपूर्णांक Arithmetic.
 -------------------------------------------------------------------------------
 */
-static float32 addFloat32Sigs( struct roundingData *roundData, float32 a, float32 b, flag zSign )
-{
-    int16 aExp, bExp, zExp;
+अटल भग्न32 addFloat32Sigs( काष्ठा roundingData *roundData, भग्न32 a, भग्न32 b, flag zSign )
+अणु
+    पूर्णांक16 aExp, bExp, zExp;
     bits32 aSig, bSig, zSig;
-    int16 expDiff;
+    पूर्णांक16 expDअगरf;
 
     aSig = extractFloat32Frac( a );
     aExp = extractFloat32Exp( a );
     bSig = extractFloat32Frac( b );
     bExp = extractFloat32Exp( b );
-    expDiff = aExp - bExp;
+    expDअगरf = aExp - bExp;
     aSig <<= 6;
     bSig <<= 6;
-    if ( 0 < expDiff ) {
-        if ( aExp == 0xFF ) {
-            if ( aSig ) return propagateFloat32NaN( a, b );
-            return a;
-        }
-        if ( bExp == 0 ) {
-            --expDiff;
-        }
-        else {
+    अगर ( 0 < expDअगरf ) अणु
+        अगर ( aExp == 0xFF ) अणु
+            अगर ( aSig ) वापस propagateFloat32NaN( a, b );
+            वापस a;
+        पूर्ण
+        अगर ( bExp == 0 ) अणु
+            --expDअगरf;
+        पूर्ण
+        अन्यथा अणु
             bSig |= 0x20000000;
-        }
-        shift32RightJamming( bSig, expDiff, &bSig );
+        पूर्ण
+        shअगरt32RightJamming( bSig, expDअगरf, &bSig );
         zExp = aExp;
-    }
-    else if ( expDiff < 0 ) {
-        if ( bExp == 0xFF ) {
-            if ( bSig ) return propagateFloat32NaN( a, b );
-            return packFloat32( zSign, 0xFF, 0 );
-        }
-        if ( aExp == 0 ) {
-            ++expDiff;
-        }
-        else {
+    पूर्ण
+    अन्यथा अगर ( expDअगरf < 0 ) अणु
+        अगर ( bExp == 0xFF ) अणु
+            अगर ( bSig ) वापस propagateFloat32NaN( a, b );
+            वापस packFloat32( zSign, 0xFF, 0 );
+        पूर्ण
+        अगर ( aExp == 0 ) अणु
+            ++expDअगरf;
+        पूर्ण
+        अन्यथा अणु
             aSig |= 0x20000000;
-        }
-        shift32RightJamming( aSig, - expDiff, &aSig );
+        पूर्ण
+        shअगरt32RightJamming( aSig, - expDअगरf, &aSig );
         zExp = bExp;
-    }
-    else {
-        if ( aExp == 0xFF ) {
-            if ( aSig | bSig ) return propagateFloat32NaN( a, b );
-            return a;
-        }
-        if ( aExp == 0 ) return packFloat32( zSign, 0, ( aSig + bSig )>>6 );
+    पूर्ण
+    अन्यथा अणु
+        अगर ( aExp == 0xFF ) अणु
+            अगर ( aSig | bSig ) वापस propagateFloat32NaN( a, b );
+            वापस a;
+        पूर्ण
+        अगर ( aExp == 0 ) वापस packFloat32( zSign, 0, ( aSig + bSig )>>6 );
         zSig = 0x40000000 + aSig + bSig;
         zExp = aExp;
-        goto roundAndPack;
-    }
+        जाओ roundAndPack;
+    पूर्ण
     aSig |= 0x20000000;
     zSig = ( aSig + bSig )<<1;
     --zExp;
-    if ( (sbits32) zSig < 0 ) {
+    अगर ( (sbits32) zSig < 0 ) अणु
         zSig = aSig + bSig;
         ++zExp;
-    }
+    पूर्ण
  roundAndPack:
-    return roundAndPackFloat32( roundData, zSign, zExp, zSig );
+    वापस roundAndPackFloat32( roundData, zSign, zExp, zSig );
 
-}
+पूर्ण
 
 /*
 -------------------------------------------------------------------------------
-Returns the result of subtracting the absolute values of the single-
-precision floating-point values `a' and `b'.  If `zSign' is true, the
-difference is negated before being returned.  `zSign' is ignored if the
-result is a NaN.  The subtraction is performed according to the IEC/IEEE
-Standard for Binary Floating-point Arithmetic.
+Returns the result of subtracting the असलolute values of the single-
+precision भग्नing-poपूर्णांक values `a' and `b'.  If `zSign' is true, the
+dअगरference is negated beक्रमe being वापसed.  `zSign' is ignored अगर the
+result is a NaN.  The subtraction is perक्रमmed according to the IEC/IEEE
+Standard क्रम Binary Floating-poपूर्णांक Arithmetic.
 -------------------------------------------------------------------------------
 */
-static float32 subFloat32Sigs( struct roundingData *roundData, float32 a, float32 b, flag zSign )
-{
-    int16 aExp, bExp, zExp;
+अटल भग्न32 subFloat32Sigs( काष्ठा roundingData *roundData, भग्न32 a, भग्न32 b, flag zSign )
+अणु
+    पूर्णांक16 aExp, bExp, zExp;
     bits32 aSig, bSig, zSig;
-    int16 expDiff;
+    पूर्णांक16 expDअगरf;
 
     aSig = extractFloat32Frac( a );
     aExp = extractFloat32Exp( a );
     bSig = extractFloat32Frac( b );
     bExp = extractFloat32Exp( b );
-    expDiff = aExp - bExp;
+    expDअगरf = aExp - bExp;
     aSig <<= 7;
     bSig <<= 7;
-    if ( 0 < expDiff ) goto aExpBigger;
-    if ( expDiff < 0 ) goto bExpBigger;
-    if ( aExp == 0xFF ) {
-        if ( aSig | bSig ) return propagateFloat32NaN( a, b );
-        roundData->exception |= float_flag_invalid;
-        return float32_default_nan;
-    }
-    if ( aExp == 0 ) {
+    अगर ( 0 < expDअगरf ) जाओ aExpBigger;
+    अगर ( expDअगरf < 0 ) जाओ bExpBigger;
+    अगर ( aExp == 0xFF ) अणु
+        अगर ( aSig | bSig ) वापस propagateFloat32NaN( a, b );
+        roundData->exception |= भग्न_flag_invalid;
+        वापस भग्न32_शेष_nan;
+    पूर्ण
+    अगर ( aExp == 0 ) अणु
         aExp = 1;
         bExp = 1;
-    }
-    if ( bSig < aSig ) goto aBigger;
-    if ( aSig < bSig ) goto bBigger;
-    return packFloat32( roundData->mode == float_round_down, 0, 0 );
+    पूर्ण
+    अगर ( bSig < aSig ) जाओ aBigger;
+    अगर ( aSig < bSig ) जाओ bBigger;
+    वापस packFloat32( roundData->mode == भग्न_round_करोwn, 0, 0 );
  bExpBigger:
-    if ( bExp == 0xFF ) {
-        if ( bSig ) return propagateFloat32NaN( a, b );
-        return packFloat32( zSign ^ 1, 0xFF, 0 );
-    }
-    if ( aExp == 0 ) {
-        ++expDiff;
-    }
-    else {
+    अगर ( bExp == 0xFF ) अणु
+        अगर ( bSig ) वापस propagateFloat32NaN( a, b );
+        वापस packFloat32( zSign ^ 1, 0xFF, 0 );
+    पूर्ण
+    अगर ( aExp == 0 ) अणु
+        ++expDअगरf;
+    पूर्ण
+    अन्यथा अणु
         aSig |= 0x40000000;
-    }
-    shift32RightJamming( aSig, - expDiff, &aSig );
+    पूर्ण
+    shअगरt32RightJamming( aSig, - expDअगरf, &aSig );
     bSig |= 0x40000000;
  bBigger:
     zSig = bSig - aSig;
     zExp = bExp;
     zSign ^= 1;
-    goto normalizeRoundAndPack;
+    जाओ normalizeRoundAndPack;
  aExpBigger:
-    if ( aExp == 0xFF ) {
-        if ( aSig ) return propagateFloat32NaN( a, b );
-        return a;
-    }
-    if ( bExp == 0 ) {
-        --expDiff;
-    }
-    else {
+    अगर ( aExp == 0xFF ) अणु
+        अगर ( aSig ) वापस propagateFloat32NaN( a, b );
+        वापस a;
+    पूर्ण
+    अगर ( bExp == 0 ) अणु
+        --expDअगरf;
+    पूर्ण
+    अन्यथा अणु
         bSig |= 0x40000000;
-    }
-    shift32RightJamming( bSig, expDiff, &bSig );
+    पूर्ण
+    shअगरt32RightJamming( bSig, expDअगरf, &bSig );
     aSig |= 0x40000000;
  aBigger:
     zSig = aSig - bSig;
     zExp = aExp;
  normalizeRoundAndPack:
     --zExp;
-    return normalizeRoundAndPackFloat32( roundData, zSign, zExp, zSig );
+    वापस normalizeRoundAndPackFloat32( roundData, zSign, zExp, zSig );
 
-}
+पूर्ण
 
 /*
 -------------------------------------------------------------------------------
-Returns the result of adding the single-precision floating-point values `a'
-and `b'.  The operation is performed according to the IEC/IEEE Standard for
-Binary Floating-point Arithmetic.
+Returns the result of adding the single-precision भग्नing-poपूर्णांक values `a'
+and `b'.  The operation is perक्रमmed according to the IEC/IEEE Standard क्रम
+Binary Floating-poपूर्णांक Arithmetic.
 -------------------------------------------------------------------------------
 */
-float32 float32_add( struct roundingData *roundData, float32 a, float32 b )
-{
+भग्न32 भग्न32_add( काष्ठा roundingData *roundData, भग्न32 a, भग्न32 b )
+अणु
     flag aSign, bSign;
 
     aSign = extractFloat32Sign( a );
     bSign = extractFloat32Sign( b );
-    if ( aSign == bSign ) {
-        return addFloat32Sigs( roundData, a, b, aSign );
-    }
-    else {
-        return subFloat32Sigs( roundData, a, b, aSign );
-    }
+    अगर ( aSign == bSign ) अणु
+        वापस addFloat32Sigs( roundData, a, b, aSign );
+    पूर्ण
+    अन्यथा अणु
+        वापस subFloat32Sigs( roundData, a, b, aSign );
+    पूर्ण
 
-}
+पूर्ण
 
 /*
 -------------------------------------------------------------------------------
-Returns the result of subtracting the single-precision floating-point values
-`a' and `b'.  The operation is performed according to the IEC/IEEE Standard
-for Binary Floating-point Arithmetic.
+Returns the result of subtracting the single-precision भग्नing-poपूर्णांक values
+`a' and `b'.  The operation is perक्रमmed according to the IEC/IEEE Standard
+क्रम Binary Floating-poपूर्णांक Arithmetic.
 -------------------------------------------------------------------------------
 */
-float32 float32_sub( struct roundingData *roundData, float32 a, float32 b )
-{
+भग्न32 भग्न32_sub( काष्ठा roundingData *roundData, भग्न32 a, भग्न32 b )
+अणु
     flag aSign, bSign;
 
     aSign = extractFloat32Sign( a );
     bSign = extractFloat32Sign( b );
-    if ( aSign == bSign ) {
-        return subFloat32Sigs( roundData, a, b, aSign );
-    }
-    else {
-        return addFloat32Sigs( roundData, a, b, aSign );
-    }
+    अगर ( aSign == bSign ) अणु
+        वापस subFloat32Sigs( roundData, a, b, aSign );
+    पूर्ण
+    अन्यथा अणु
+        वापस addFloat32Sigs( roundData, a, b, aSign );
+    पूर्ण
 
-}
+पूर्ण
 
 /*
 -------------------------------------------------------------------------------
-Returns the result of multiplying the single-precision floating-point values
-`a' and `b'.  The operation is performed according to the IEC/IEEE Standard
-for Binary Floating-point Arithmetic.
+Returns the result of multiplying the single-precision भग्नing-poपूर्णांक values
+`a' and `b'.  The operation is perक्रमmed according to the IEC/IEEE Standard
+क्रम Binary Floating-poपूर्णांक Arithmetic.
 -------------------------------------------------------------------------------
 */
-float32 float32_mul( struct roundingData *roundData, float32 a, float32 b )
-{
+भग्न32 भग्न32_mul( काष्ठा roundingData *roundData, भग्न32 a, भग्न32 b )
+अणु
     flag aSign, bSign, zSign;
-    int16 aExp, bExp, zExp;
+    पूर्णांक16 aExp, bExp, zExp;
     bits32 aSig, bSig;
     bits64 zSig64;
     bits32 zSig;
@@ -1231,56 +1232,56 @@ float32 float32_mul( struct roundingData *roundData, float32 a, float32 b )
     bExp = extractFloat32Exp( b );
     bSign = extractFloat32Sign( b );
     zSign = aSign ^ bSign;
-    if ( aExp == 0xFF ) {
-        if ( aSig || ( ( bExp == 0xFF ) && bSig ) ) {
-            return propagateFloat32NaN( a, b );
-        }
-        if ( ( bExp | bSig ) == 0 ) {
-            roundData->exception |= float_flag_invalid;
-            return float32_default_nan;
-        }
-        return packFloat32( zSign, 0xFF, 0 );
-    }
-    if ( bExp == 0xFF ) {
-        if ( bSig ) return propagateFloat32NaN( a, b );
-        if ( ( aExp | aSig ) == 0 ) {
-            roundData->exception |= float_flag_invalid;
-            return float32_default_nan;
-        }
-        return packFloat32( zSign, 0xFF, 0 );
-    }
-    if ( aExp == 0 ) {
-        if ( aSig == 0 ) return packFloat32( zSign, 0, 0 );
+    अगर ( aExp == 0xFF ) अणु
+        अगर ( aSig || ( ( bExp == 0xFF ) && bSig ) ) अणु
+            वापस propagateFloat32NaN( a, b );
+        पूर्ण
+        अगर ( ( bExp | bSig ) == 0 ) अणु
+            roundData->exception |= भग्न_flag_invalid;
+            वापस भग्न32_शेष_nan;
+        पूर्ण
+        वापस packFloat32( zSign, 0xFF, 0 );
+    पूर्ण
+    अगर ( bExp == 0xFF ) अणु
+        अगर ( bSig ) वापस propagateFloat32NaN( a, b );
+        अगर ( ( aExp | aSig ) == 0 ) अणु
+            roundData->exception |= भग्न_flag_invalid;
+            वापस भग्न32_शेष_nan;
+        पूर्ण
+        वापस packFloat32( zSign, 0xFF, 0 );
+    पूर्ण
+    अगर ( aExp == 0 ) अणु
+        अगर ( aSig == 0 ) वापस packFloat32( zSign, 0, 0 );
         normalizeFloat32Subnormal( aSig, &aExp, &aSig );
-    }
-    if ( bExp == 0 ) {
-        if ( bSig == 0 ) return packFloat32( zSign, 0, 0 );
+    पूर्ण
+    अगर ( bExp == 0 ) अणु
+        अगर ( bSig == 0 ) वापस packFloat32( zSign, 0, 0 );
         normalizeFloat32Subnormal( bSig, &bExp, &bSig );
-    }
+    पूर्ण
     zExp = aExp + bExp - 0x7F;
     aSig = ( aSig | 0x00800000 )<<7;
     bSig = ( bSig | 0x00800000 )<<8;
-    shift64RightJamming( ( (bits64) aSig ) * bSig, 32, &zSig64 );
+    shअगरt64RightJamming( ( (bits64) aSig ) * bSig, 32, &zSig64 );
     zSig = zSig64;
-    if ( 0 <= (sbits32) ( zSig<<1 ) ) {
+    अगर ( 0 <= (sbits32) ( zSig<<1 ) ) अणु
         zSig <<= 1;
         --zExp;
-    }
-    return roundAndPackFloat32( roundData, zSign, zExp, zSig );
+    पूर्ण
+    वापस roundAndPackFloat32( roundData, zSign, zExp, zSig );
 
-}
+पूर्ण
 
 /*
 -------------------------------------------------------------------------------
-Returns the result of dividing the single-precision floating-point value `a'
-by the corresponding value `b'.  The operation is performed according to the
-IEC/IEEE Standard for Binary Floating-point Arithmetic.
+Returns the result of भागiding the single-precision भग्नing-poपूर्णांक value `a'
+by the corresponding value `b'.  The operation is perक्रमmed according to the
+IEC/IEEE Standard क्रम Binary Floating-poपूर्णांक Arithmetic.
 -------------------------------------------------------------------------------
 */
-float32 float32_div( struct roundingData *roundData, float32 a, float32 b )
-{
+भग्न32 भग्न32_भाग( काष्ठा roundingData *roundData, भग्न32 a, भग्न32 b )
+अणु
     flag aSign, bSign, zSign;
-    int16 aExp, bExp, zExp;
+    पूर्णांक16 aExp, bExp, zExp;
     bits32 aSig, bSig, zSig;
 
     aSig = extractFloat32Frac( a );
@@ -1290,64 +1291,64 @@ float32 float32_div( struct roundingData *roundData, float32 a, float32 b )
     bExp = extractFloat32Exp( b );
     bSign = extractFloat32Sign( b );
     zSign = aSign ^ bSign;
-    if ( aExp == 0xFF ) {
-        if ( aSig ) return propagateFloat32NaN( a, b );
-        if ( bExp == 0xFF ) {
-            if ( bSig ) return propagateFloat32NaN( a, b );
-            roundData->exception |= float_flag_invalid;
-            return float32_default_nan;
-        }
-        return packFloat32( zSign, 0xFF, 0 );
-    }
-    if ( bExp == 0xFF ) {
-        if ( bSig ) return propagateFloat32NaN( a, b );
-        return packFloat32( zSign, 0, 0 );
-    }
-    if ( bExp == 0 ) {
-        if ( bSig == 0 ) {
-            if ( ( aExp | aSig ) == 0 ) {
-                roundData->exception |= float_flag_invalid;
-                return float32_default_nan;
-            }
-            roundData->exception |= float_flag_divbyzero;
-            return packFloat32( zSign, 0xFF, 0 );
-        }
+    अगर ( aExp == 0xFF ) अणु
+        अगर ( aSig ) वापस propagateFloat32NaN( a, b );
+        अगर ( bExp == 0xFF ) अणु
+            अगर ( bSig ) वापस propagateFloat32NaN( a, b );
+            roundData->exception |= भग्न_flag_invalid;
+            वापस भग्न32_शेष_nan;
+        पूर्ण
+        वापस packFloat32( zSign, 0xFF, 0 );
+    पूर्ण
+    अगर ( bExp == 0xFF ) अणु
+        अगर ( bSig ) वापस propagateFloat32NaN( a, b );
+        वापस packFloat32( zSign, 0, 0 );
+    पूर्ण
+    अगर ( bExp == 0 ) अणु
+        अगर ( bSig == 0 ) अणु
+            अगर ( ( aExp | aSig ) == 0 ) अणु
+                roundData->exception |= भग्न_flag_invalid;
+                वापस भग्न32_शेष_nan;
+            पूर्ण
+            roundData->exception |= भग्न_flag_भागbyzero;
+            वापस packFloat32( zSign, 0xFF, 0 );
+        पूर्ण
         normalizeFloat32Subnormal( bSig, &bExp, &bSig );
-    }
-    if ( aExp == 0 ) {
-        if ( aSig == 0 ) return packFloat32( zSign, 0, 0 );
+    पूर्ण
+    अगर ( aExp == 0 ) अणु
+        अगर ( aSig == 0 ) वापस packFloat32( zSign, 0, 0 );
         normalizeFloat32Subnormal( aSig, &aExp, &aSig );
-    }
+    पूर्ण
     zExp = aExp - bExp + 0x7D;
     aSig = ( aSig | 0x00800000 )<<7;
     bSig = ( bSig | 0x00800000 )<<8;
-    if ( bSig <= ( aSig + aSig ) ) {
+    अगर ( bSig <= ( aSig + aSig ) ) अणु
         aSig >>= 1;
         ++zExp;
-    }
-    {
-        bits64 tmp = ( (bits64) aSig )<<32;
-        do_div( tmp, bSig );
-        zSig = tmp;
-    }
-    if ( ( zSig & 0x3F ) == 0 ) {
+    पूर्ण
+    अणु
+        bits64 पंचांगp = ( (bits64) aSig )<<32;
+        करो_भाग( पंचांगp, bSig );
+        zSig = पंचांगp;
+    पूर्ण
+    अगर ( ( zSig & 0x3F ) == 0 ) अणु
         zSig |= ( ( (bits64) bSig ) * zSig != ( (bits64) aSig )<<32 );
-    }
-    return roundAndPackFloat32( roundData, zSign, zExp, zSig );
+    पूर्ण
+    वापस roundAndPackFloat32( roundData, zSign, zExp, zSig );
 
-}
+पूर्ण
 
 /*
 -------------------------------------------------------------------------------
-Returns the remainder of the single-precision floating-point value `a'
-with respect to the corresponding value `b'.  The operation is performed
-according to the IEC/IEEE Standard for Binary Floating-point Arithmetic.
+Returns the reमुख्यder of the single-precision भग्नing-poपूर्णांक value `a'
+with respect to the corresponding value `b'.  The operation is perक्रमmed
+according to the IEC/IEEE Standard क्रम Binary Floating-poपूर्णांक Arithmetic.
 -------------------------------------------------------------------------------
 */
-float32 float32_rem( struct roundingData *roundData, float32 a, float32 b )
-{
+भग्न32 भग्न32_rem( काष्ठा roundingData *roundData, भग्न32 a, भग्न32 b )
+अणु
     flag aSign, bSign, zSign;
-    int16 aExp, bExp, expDiff;
+    पूर्णांक16 aExp, bExp, expDअगरf;
     bits32 aSig, bSig;
     bits32 q;
     bits64 aSig64, bSig64, q64;
@@ -1360,762 +1361,762 @@ float32 float32_rem( struct roundingData *roundData, float32 a, float32 b )
     bSig = extractFloat32Frac( b );
     bExp = extractFloat32Exp( b );
     bSign = extractFloat32Sign( b );
-    if ( aExp == 0xFF ) {
-        if ( aSig || ( ( bExp == 0xFF ) && bSig ) ) {
-            return propagateFloat32NaN( a, b );
-        }
-        roundData->exception |= float_flag_invalid;
-        return float32_default_nan;
-    }
-    if ( bExp == 0xFF ) {
-        if ( bSig ) return propagateFloat32NaN( a, b );
-        return a;
-    }
-    if ( bExp == 0 ) {
-        if ( bSig == 0 ) {
-            roundData->exception |= float_flag_invalid;
-            return float32_default_nan;
-        }
+    अगर ( aExp == 0xFF ) अणु
+        अगर ( aSig || ( ( bExp == 0xFF ) && bSig ) ) अणु
+            वापस propagateFloat32NaN( a, b );
+        पूर्ण
+        roundData->exception |= भग्न_flag_invalid;
+        वापस भग्न32_शेष_nan;
+    पूर्ण
+    अगर ( bExp == 0xFF ) अणु
+        अगर ( bSig ) वापस propagateFloat32NaN( a, b );
+        वापस a;
+    पूर्ण
+    अगर ( bExp == 0 ) अणु
+        अगर ( bSig == 0 ) अणु
+            roundData->exception |= भग्न_flag_invalid;
+            वापस भग्न32_शेष_nan;
+        पूर्ण
         normalizeFloat32Subnormal( bSig, &bExp, &bSig );
-    }
-    if ( aExp == 0 ) {
-        if ( aSig == 0 ) return a;
+    पूर्ण
+    अगर ( aExp == 0 ) अणु
+        अगर ( aSig == 0 ) वापस a;
         normalizeFloat32Subnormal( aSig, &aExp, &aSig );
-    }
-    expDiff = aExp - bExp;
+    पूर्ण
+    expDअगरf = aExp - bExp;
     aSig |= 0x00800000;
     bSig |= 0x00800000;
-    if ( expDiff < 32 ) {
+    अगर ( expDअगरf < 32 ) अणु
         aSig <<= 8;
         bSig <<= 8;
-        if ( expDiff < 0 ) {
-            if ( expDiff < -1 ) return a;
+        अगर ( expDअगरf < 0 ) अणु
+            अगर ( expDअगरf < -1 ) वापस a;
             aSig >>= 1;
-        }
+        पूर्ण
         q = ( bSig <= aSig );
-        if ( q ) aSig -= bSig;
-        if ( 0 < expDiff ) {
-            bits64 tmp = ( (bits64) aSig )<<32;
-            do_div( tmp, bSig );
-            q = tmp;
-            q >>= 32 - expDiff;
+        अगर ( q ) aSig -= bSig;
+        अगर ( 0 < expDअगरf ) अणु
+            bits64 पंचांगp = ( (bits64) aSig )<<32;
+            करो_भाग( पंचांगp, bSig );
+            q = पंचांगp;
+            q >>= 32 - expDअगरf;
             bSig >>= 2;
-            aSig = ( ( aSig>>1 )<<( expDiff - 1 ) ) - bSig * q;
-        }
-        else {
+            aSig = ( ( aSig>>1 )<<( expDअगरf - 1 ) ) - bSig * q;
+        पूर्ण
+        अन्यथा अणु
             aSig >>= 2;
             bSig >>= 2;
-        }
-    }
-    else {
-        if ( bSig <= aSig ) aSig -= bSig;
+        पूर्ण
+    पूर्ण
+    अन्यथा अणु
+        अगर ( bSig <= aSig ) aSig -= bSig;
         aSig64 = ( (bits64) aSig )<<40;
         bSig64 = ( (bits64) bSig )<<40;
-        expDiff -= 64;
-        while ( 0 < expDiff ) {
+        expDअगरf -= 64;
+        जबतक ( 0 < expDअगरf ) अणु
             q64 = estimateDiv128To64( aSig64, 0, bSig64 );
             q64 = ( 2 < q64 ) ? q64 - 2 : 0;
             aSig64 = - ( ( bSig * q64 )<<38 );
-            expDiff -= 62;
-        }
-        expDiff += 64;
+            expDअगरf -= 62;
+        पूर्ण
+        expDअगरf += 64;
         q64 = estimateDiv128To64( aSig64, 0, bSig64 );
         q64 = ( 2 < q64 ) ? q64 - 2 : 0;
-        q = q64>>( 64 - expDiff );
+        q = q64>>( 64 - expDअगरf );
         bSig <<= 6;
-        aSig = ( ( aSig64>>33 )<<( expDiff - 1 ) ) - bSig * q;
-    }
-    do {
+        aSig = ( ( aSig64>>33 )<<( expDअगरf - 1 ) ) - bSig * q;
+    पूर्ण
+    करो अणु
         alternateASig = aSig;
         ++q;
         aSig -= bSig;
-    } while ( 0 <= (sbits32) aSig );
+    पूर्ण जबतक ( 0 <= (sbits32) aSig );
     sigMean = aSig + alternateASig;
-    if ( ( sigMean < 0 ) || ( ( sigMean == 0 ) && ( q & 1 ) ) ) {
+    अगर ( ( sigMean < 0 ) || ( ( sigMean == 0 ) && ( q & 1 ) ) ) अणु
         aSig = alternateASig;
-    }
+    पूर्ण
     zSign = ( (sbits32) aSig < 0 );
-    if ( zSign ) aSig = - aSig;
-    return normalizeRoundAndPackFloat32( roundData, aSign ^ zSign, bExp, aSig );
+    अगर ( zSign ) aSig = - aSig;
+    वापस normalizeRoundAndPackFloat32( roundData, aSign ^ zSign, bExp, aSig );
 
-}
+पूर्ण
 
 /*
 -------------------------------------------------------------------------------
-Returns the square root of the single-precision floating-point value `a'.
-The operation is performed according to the IEC/IEEE Standard for Binary
-Floating-point Arithmetic.
+Returns the square root of the single-precision भग्नing-poपूर्णांक value `a'.
+The operation is perक्रमmed according to the IEC/IEEE Standard क्रम Binary
+Floating-poपूर्णांक Arithmetic.
 -------------------------------------------------------------------------------
 */
-float32 float32_sqrt( struct roundingData *roundData, float32 a )
-{
+भग्न32 भग्न32_वर्ग_मूल( काष्ठा roundingData *roundData, भग्न32 a )
+अणु
     flag aSign;
-    int16 aExp, zExp;
+    पूर्णांक16 aExp, zExp;
     bits32 aSig, zSig;
     bits64 rem, term;
 
     aSig = extractFloat32Frac( a );
     aExp = extractFloat32Exp( a );
     aSign = extractFloat32Sign( a );
-    if ( aExp == 0xFF ) {
-        if ( aSig ) return propagateFloat32NaN( a, 0 );
-        if ( ! aSign ) return a;
-        roundData->exception |= float_flag_invalid;
-        return float32_default_nan;
-    }
-    if ( aSign ) {
-        if ( ( aExp | aSig ) == 0 ) return a;
-        roundData->exception |= float_flag_invalid;
-        return float32_default_nan;
-    }
-    if ( aExp == 0 ) {
-        if ( aSig == 0 ) return 0;
+    अगर ( aExp == 0xFF ) अणु
+        अगर ( aSig ) वापस propagateFloat32NaN( a, 0 );
+        अगर ( ! aSign ) वापस a;
+        roundData->exception |= भग्न_flag_invalid;
+        वापस भग्न32_शेष_nan;
+    पूर्ण
+    अगर ( aSign ) अणु
+        अगर ( ( aExp | aSig ) == 0 ) वापस a;
+        roundData->exception |= भग्न_flag_invalid;
+        वापस भग्न32_शेष_nan;
+    पूर्ण
+    अगर ( aExp == 0 ) अणु
+        अगर ( aSig == 0 ) वापस 0;
         normalizeFloat32Subnormal( aSig, &aExp, &aSig );
-    }
+    पूर्ण
     zExp = ( ( aExp - 0x7F )>>1 ) + 0x7E;
     aSig = ( aSig | 0x00800000 )<<8;
     zSig = estimateSqrt32( aExp, aSig ) + 2;
-    if ( ( zSig & 0x7F ) <= 5 ) {
-        if ( zSig < 2 ) {
+    अगर ( ( zSig & 0x7F ) <= 5 ) अणु
+        अगर ( zSig < 2 ) अणु
             zSig = 0xFFFFFFFF;
-        }
-        else {
+        पूर्ण
+        अन्यथा अणु
             aSig >>= aExp & 1;
             term = ( (bits64) zSig ) * zSig;
             rem = ( ( (bits64) aSig )<<32 ) - term;
-            while ( (sbits64) rem < 0 ) {
+            जबतक ( (sbits64) rem < 0 ) अणु
                 --zSig;
                 rem += ( ( (bits64) zSig )<<1 ) | 1;
-            }
+            पूर्ण
             zSig |= ( rem != 0 );
-        }
-    }
-    shift32RightJamming( zSig, 1, &zSig );
-    return roundAndPackFloat32( roundData, 0, zExp, zSig );
+        पूर्ण
+    पूर्ण
+    shअगरt32RightJamming( zSig, 1, &zSig );
+    वापस roundAndPackFloat32( roundData, 0, zExp, zSig );
 
-}
+पूर्ण
 
 /*
 -------------------------------------------------------------------------------
-Returns 1 if the single-precision floating-point value `a' is equal to the
-corresponding value `b', and 0 otherwise.  The comparison is performed
-according to the IEC/IEEE Standard for Binary Floating-point Arithmetic.
+Returns 1 अगर the single-precision भग्नing-poपूर्णांक value `a' is equal to the
+corresponding value `b', and 0 otherwise.  The comparison is perक्रमmed
+according to the IEC/IEEE Standard क्रम Binary Floating-poपूर्णांक Arithmetic.
 -------------------------------------------------------------------------------
 */
-flag float32_eq( float32 a, float32 b )
-{
+flag भग्न32_eq( भग्न32 a, भग्न32 b )
+अणु
 
-    if (    ( ( extractFloat32Exp( a ) == 0xFF ) && extractFloat32Frac( a ) )
+    अगर (    ( ( extractFloat32Exp( a ) == 0xFF ) && extractFloat32Frac( a ) )
          || ( ( extractFloat32Exp( b ) == 0xFF ) && extractFloat32Frac( b ) )
-       ) {
-        if ( float32_is_signaling_nan( a ) || float32_is_signaling_nan( b ) ) {
-            float_raise( float_flag_invalid );
-        }
-        return 0;
-    }
-    return ( a == b ) || ( (bits32) ( ( a | b )<<1 ) == 0 );
+       ) अणु
+        अगर ( भग्न32_is_संकेतing_nan( a ) || भग्न32_is_संकेतing_nan( b ) ) अणु
+            भग्न_उठाओ( भग्न_flag_invalid );
+        पूर्ण
+        वापस 0;
+    पूर्ण
+    वापस ( a == b ) || ( (bits32) ( ( a | b )<<1 ) == 0 );
 
-}
+पूर्ण
 
 /*
 -------------------------------------------------------------------------------
-Returns 1 if the single-precision floating-point value `a' is less than or
+Returns 1 अगर the single-precision भग्नing-poपूर्णांक value `a' is less than or
 equal to the corresponding value `b', and 0 otherwise.  The comparison is
-performed according to the IEC/IEEE Standard for Binary Floating-point
+perक्रमmed according to the IEC/IEEE Standard क्रम Binary Floating-poपूर्णांक
 Arithmetic.
 -------------------------------------------------------------------------------
 */
-flag float32_le( float32 a, float32 b )
-{
+flag भग्न32_le( भग्न32 a, भग्न32 b )
+अणु
     flag aSign, bSign;
 
-    if (    ( ( extractFloat32Exp( a ) == 0xFF ) && extractFloat32Frac( a ) )
+    अगर (    ( ( extractFloat32Exp( a ) == 0xFF ) && extractFloat32Frac( a ) )
          || ( ( extractFloat32Exp( b ) == 0xFF ) && extractFloat32Frac( b ) )
-       ) {
-        float_raise( float_flag_invalid );
-        return 0;
-    }
+       ) अणु
+        भग्न_उठाओ( भग्न_flag_invalid );
+        वापस 0;
+    पूर्ण
     aSign = extractFloat32Sign( a );
     bSign = extractFloat32Sign( b );
-    if ( aSign != bSign ) return aSign || ( (bits32) ( ( a | b )<<1 ) == 0 );
-    return ( a == b ) || ( aSign ^ ( a < b ) );
+    अगर ( aSign != bSign ) वापस aSign || ( (bits32) ( ( a | b )<<1 ) == 0 );
+    वापस ( a == b ) || ( aSign ^ ( a < b ) );
 
-}
+पूर्ण
 
 /*
 -------------------------------------------------------------------------------
-Returns 1 if the single-precision floating-point value `a' is less than
-the corresponding value `b', and 0 otherwise.  The comparison is performed
-according to the IEC/IEEE Standard for Binary Floating-point Arithmetic.
+Returns 1 अगर the single-precision भग्नing-poपूर्णांक value `a' is less than
+the corresponding value `b', and 0 otherwise.  The comparison is perक्रमmed
+according to the IEC/IEEE Standard क्रम Binary Floating-poपूर्णांक Arithmetic.
 -------------------------------------------------------------------------------
 */
-flag float32_lt( float32 a, float32 b )
-{
+flag भग्न32_lt( भग्न32 a, भग्न32 b )
+अणु
     flag aSign, bSign;
 
-    if (    ( ( extractFloat32Exp( a ) == 0xFF ) && extractFloat32Frac( a ) )
+    अगर (    ( ( extractFloat32Exp( a ) == 0xFF ) && extractFloat32Frac( a ) )
          || ( ( extractFloat32Exp( b ) == 0xFF ) && extractFloat32Frac( b ) )
-       ) {
-        float_raise( float_flag_invalid );
-        return 0;
-    }
+       ) अणु
+        भग्न_उठाओ( भग्न_flag_invalid );
+        वापस 0;
+    पूर्ण
     aSign = extractFloat32Sign( a );
     bSign = extractFloat32Sign( b );
-    if ( aSign != bSign ) return aSign && ( (bits32) ( ( a | b )<<1 ) != 0 );
-    return ( a != b ) && ( aSign ^ ( a < b ) );
+    अगर ( aSign != bSign ) वापस aSign && ( (bits32) ( ( a | b )<<1 ) != 0 );
+    वापस ( a != b ) && ( aSign ^ ( a < b ) );
 
-}
+पूर्ण
 
 /*
 -------------------------------------------------------------------------------
-Returns 1 if the single-precision floating-point value `a' is equal to the
-corresponding value `b', and 0 otherwise.  The invalid exception is raised
-if either operand is a NaN.  Otherwise, the comparison is performed
-according to the IEC/IEEE Standard for Binary Floating-point Arithmetic.
+Returns 1 अगर the single-precision भग्नing-poपूर्णांक value `a' is equal to the
+corresponding value `b', and 0 otherwise.  The invalid exception is उठाओd
+अगर either opeअक्रम is a NaN.  Otherwise, the comparison is perक्रमmed
+according to the IEC/IEEE Standard क्रम Binary Floating-poपूर्णांक Arithmetic.
 -------------------------------------------------------------------------------
 */
-flag float32_eq_signaling( float32 a, float32 b )
-{
+flag भग्न32_eq_संकेतing( भग्न32 a, भग्न32 b )
+अणु
 
-    if (    ( ( extractFloat32Exp( a ) == 0xFF ) && extractFloat32Frac( a ) )
+    अगर (    ( ( extractFloat32Exp( a ) == 0xFF ) && extractFloat32Frac( a ) )
          || ( ( extractFloat32Exp( b ) == 0xFF ) && extractFloat32Frac( b ) )
-       ) {
-        float_raise( float_flag_invalid );
-        return 0;
-    }
-    return ( a == b ) || ( (bits32) ( ( a | b )<<1 ) == 0 );
+       ) अणु
+        भग्न_उठाओ( भग्न_flag_invalid );
+        वापस 0;
+    पूर्ण
+    वापस ( a == b ) || ( (bits32) ( ( a | b )<<1 ) == 0 );
 
-}
+पूर्ण
 
 /*
 -------------------------------------------------------------------------------
-Returns 1 if the single-precision floating-point value `a' is less than or
-equal to the corresponding value `b', and 0 otherwise.  Quiet NaNs do not
-cause an exception.  Otherwise, the comparison is performed according to the
-IEC/IEEE Standard for Binary Floating-point Arithmetic.
+Returns 1 अगर the single-precision भग्नing-poपूर्णांक value `a' is less than or
+equal to the corresponding value `b', and 0 otherwise.  Quiet NaNs करो not
+cause an exception.  Otherwise, the comparison is perक्रमmed according to the
+IEC/IEEE Standard क्रम Binary Floating-poपूर्णांक Arithmetic.
 -------------------------------------------------------------------------------
 */
-flag float32_le_quiet( float32 a, float32 b )
-{
+flag भग्न32_le_quiet( भग्न32 a, भग्न32 b )
+अणु
     flag aSign, bSign;
-    //int16 aExp, bExp;
+    //पूर्णांक16 aExp, bExp;
 
-    if (    ( ( extractFloat32Exp( a ) == 0xFF ) && extractFloat32Frac( a ) )
+    अगर (    ( ( extractFloat32Exp( a ) == 0xFF ) && extractFloat32Frac( a ) )
          || ( ( extractFloat32Exp( b ) == 0xFF ) && extractFloat32Frac( b ) )
-       ) {
-        /* Do nothing, even if NaN as we're quiet */
-        return 0;
-    }
+       ) अणु
+        /* Do nothing, even अगर NaN as we're quiet */
+        वापस 0;
+    पूर्ण
     aSign = extractFloat32Sign( a );
     bSign = extractFloat32Sign( b );
-    if ( aSign != bSign ) return aSign || ( (bits32) ( ( a | b )<<1 ) == 0 );
-    return ( a == b ) || ( aSign ^ ( a < b ) );
+    अगर ( aSign != bSign ) वापस aSign || ( (bits32) ( ( a | b )<<1 ) == 0 );
+    वापस ( a == b ) || ( aSign ^ ( a < b ) );
 
-}
+पूर्ण
 
 /*
 -------------------------------------------------------------------------------
-Returns 1 if the single-precision floating-point value `a' is less than
-the corresponding value `b', and 0 otherwise.  Quiet NaNs do not cause an
-exception.  Otherwise, the comparison is performed according to the IEC/IEEE
-Standard for Binary Floating-point Arithmetic.
+Returns 1 अगर the single-precision भग्नing-poपूर्णांक value `a' is less than
+the corresponding value `b', and 0 otherwise.  Quiet NaNs करो not cause an
+exception.  Otherwise, the comparison is perक्रमmed according to the IEC/IEEE
+Standard क्रम Binary Floating-poपूर्णांक Arithmetic.
 -------------------------------------------------------------------------------
 */
-flag float32_lt_quiet( float32 a, float32 b )
-{
+flag भग्न32_lt_quiet( भग्न32 a, भग्न32 b )
+अणु
     flag aSign, bSign;
 
-    if (    ( ( extractFloat32Exp( a ) == 0xFF ) && extractFloat32Frac( a ) )
+    अगर (    ( ( extractFloat32Exp( a ) == 0xFF ) && extractFloat32Frac( a ) )
          || ( ( extractFloat32Exp( b ) == 0xFF ) && extractFloat32Frac( b ) )
-       ) {
-        /* Do nothing, even if NaN as we're quiet */
-        return 0;
-    }
+       ) अणु
+        /* Do nothing, even अगर NaN as we're quiet */
+        वापस 0;
+    पूर्ण
     aSign = extractFloat32Sign( a );
     bSign = extractFloat32Sign( b );
-    if ( aSign != bSign ) return aSign && ( (bits32) ( ( a | b )<<1 ) != 0 );
-    return ( a != b ) && ( aSign ^ ( a < b ) );
+    अगर ( aSign != bSign ) वापस aSign && ( (bits32) ( ( a | b )<<1 ) != 0 );
+    वापस ( a != b ) && ( aSign ^ ( a < b ) );
 
-}
+पूर्ण
 
 /*
 -------------------------------------------------------------------------------
-Returns the result of converting the double-precision floating-point value
-`a' to the 32-bit two's complement integer format.  The conversion is
-performed according to the IEC/IEEE Standard for Binary Floating-point
+Returns the result of converting the द्विगुन-precision भग्नing-poपूर्णांक value
+`a' to the 32-bit two's complement पूर्णांकeger क्रमmat.  The conversion is
+perक्रमmed according to the IEC/IEEE Standard क्रम Binary Floating-poपूर्णांक
 Arithmetic---which means in particular that the conversion is rounded
 according to the current rounding mode.  If `a' is a NaN, the largest
-positive integer is returned.  Otherwise, if the conversion overflows, the
-largest integer with the same sign as `a' is returned.
+positive पूर्णांकeger is वापसed.  Otherwise, अगर the conversion overflows, the
+largest पूर्णांकeger with the same sign as `a' is वापसed.
 -------------------------------------------------------------------------------
 */
-int32 float64_to_int32( struct roundingData *roundData, float64 a )
-{
+पूर्णांक32 भग्न64_to_पूर्णांक32( काष्ठा roundingData *roundData, भग्न64 a )
+अणु
     flag aSign;
-    int16 aExp, shiftCount;
+    पूर्णांक16 aExp, shअगरtCount;
     bits64 aSig;
 
     aSig = extractFloat64Frac( a );
     aExp = extractFloat64Exp( a );
     aSign = extractFloat64Sign( a );
-    if ( ( aExp == 0x7FF ) && aSig ) aSign = 0;
-    if ( aExp ) aSig |= LIT64( 0x0010000000000000 );
-    shiftCount = 0x42C - aExp;
-    if ( 0 < shiftCount ) shift64RightJamming( aSig, shiftCount, &aSig );
-    return roundAndPackInt32( roundData, aSign, aSig );
+    अगर ( ( aExp == 0x7FF ) && aSig ) aSign = 0;
+    अगर ( aExp ) aSig |= LIT64( 0x0010000000000000 );
+    shअगरtCount = 0x42C - aExp;
+    अगर ( 0 < shअगरtCount ) shअगरt64RightJamming( aSig, shअगरtCount, &aSig );
+    वापस roundAndPackInt32( roundData, aSign, aSig );
 
-}
+पूर्ण
 
 /*
 -------------------------------------------------------------------------------
-Returns the result of converting the double-precision floating-point value
-`a' to the 32-bit two's complement integer format.  The conversion is
-performed according to the IEC/IEEE Standard for Binary Floating-point
+Returns the result of converting the द्विगुन-precision भग्नing-poपूर्णांक value
+`a' to the 32-bit two's complement पूर्णांकeger क्रमmat.  The conversion is
+perक्रमmed according to the IEC/IEEE Standard क्रम Binary Floating-poपूर्णांक
 Arithmetic, except that the conversion is always rounded toward zero.  If
-`a' is a NaN, the largest positive integer is returned.  Otherwise, if the
-conversion overflows, the largest integer with the same sign as `a' is
-returned.
+`a' is a NaN, the largest positive पूर्णांकeger is वापसed.  Otherwise, अगर the
+conversion overflows, the largest पूर्णांकeger with the same sign as `a' is
+वापसed.
 -------------------------------------------------------------------------------
 */
-int32 float64_to_int32_round_to_zero( float64 a )
-{
+पूर्णांक32 भग्न64_to_पूर्णांक32_round_to_zero( भग्न64 a )
+अणु
     flag aSign;
-    int16 aExp, shiftCount;
+    पूर्णांक16 aExp, shअगरtCount;
     bits64 aSig, savedASig;
-    int32 z;
+    पूर्णांक32 z;
 
     aSig = extractFloat64Frac( a );
     aExp = extractFloat64Exp( a );
     aSign = extractFloat64Sign( a );
-    shiftCount = 0x433 - aExp;
-    if ( shiftCount < 21 ) {
-        if ( ( aExp == 0x7FF ) && aSig ) aSign = 0;
-        goto invalid;
-    }
-    else if ( 52 < shiftCount ) {
-        if ( aExp || aSig ) float_raise( float_flag_inexact );
-        return 0;
-    }
+    shअगरtCount = 0x433 - aExp;
+    अगर ( shअगरtCount < 21 ) अणु
+        अगर ( ( aExp == 0x7FF ) && aSig ) aSign = 0;
+        जाओ invalid;
+    पूर्ण
+    अन्यथा अगर ( 52 < shअगरtCount ) अणु
+        अगर ( aExp || aSig ) भग्न_उठाओ( भग्न_flag_inexact );
+        वापस 0;
+    पूर्ण
     aSig |= LIT64( 0x0010000000000000 );
     savedASig = aSig;
-    aSig >>= shiftCount;
+    aSig >>= shअगरtCount;
     z = aSig;
-    if ( aSign ) z = - z;
-    if ( ( z < 0 ) ^ aSign ) {
+    अगर ( aSign ) z = - z;
+    अगर ( ( z < 0 ) ^ aSign ) अणु
  invalid:
-        float_raise( float_flag_invalid );
-        return aSign ? 0x80000000 : 0x7FFFFFFF;
-    }
-    if ( ( aSig<<shiftCount ) != savedASig ) {
-        float_raise( float_flag_inexact );
-    }
-    return z;
+        भग्न_उठाओ( भग्न_flag_invalid );
+        वापस aSign ? 0x80000000 : 0x7FFFFFFF;
+    पूर्ण
+    अगर ( ( aSig<<shअगरtCount ) != savedASig ) अणु
+        भग्न_उठाओ( भग्न_flag_inexact );
+    पूर्ण
+    वापस z;
 
-}
+पूर्ण
 
 /*
 -------------------------------------------------------------------------------
-Returns the result of converting the double-precision floating-point value
-`a' to the 32-bit two's complement unsigned integer format.  The conversion
-is performed according to the IEC/IEEE Standard for Binary Floating-point
+Returns the result of converting the द्विगुन-precision भग्नing-poपूर्णांक value
+`a' to the 32-bit two's complement अचिन्हित पूर्णांकeger क्रमmat.  The conversion
+is perक्रमmed according to the IEC/IEEE Standard क्रम Binary Floating-poपूर्णांक
 Arithmetic---which means in particular that the conversion is rounded
 according to the current rounding mode.  If `a' is a NaN, the largest
-positive integer is returned.  Otherwise, if the conversion overflows, the
-largest positive integer is returned.
+positive पूर्णांकeger is वापसed.  Otherwise, अगर the conversion overflows, the
+largest positive पूर्णांकeger is वापसed.
 -------------------------------------------------------------------------------
 */
-int32 float64_to_uint32( struct roundingData *roundData, float64 a )
-{
+पूर्णांक32 भग्न64_to_uपूर्णांक32( काष्ठा roundingData *roundData, भग्न64 a )
+अणु
     flag aSign;
-    int16 aExp, shiftCount;
+    पूर्णांक16 aExp, shअगरtCount;
     bits64 aSig;
 
     aSig = extractFloat64Frac( a );
     aExp = extractFloat64Exp( a );
     aSign = 0; //extractFloat64Sign( a );
-    //if ( ( aExp == 0x7FF ) && aSig ) aSign = 0;
-    if ( aExp ) aSig |= LIT64( 0x0010000000000000 );
-    shiftCount = 0x42C - aExp;
-    if ( 0 < shiftCount ) shift64RightJamming( aSig, shiftCount, &aSig );
-    return roundAndPackInt32( roundData, aSign, aSig );
-}
+    //अगर ( ( aExp == 0x7FF ) && aSig ) aSign = 0;
+    अगर ( aExp ) aSig |= LIT64( 0x0010000000000000 );
+    shअगरtCount = 0x42C - aExp;
+    अगर ( 0 < shअगरtCount ) shअगरt64RightJamming( aSig, shअगरtCount, &aSig );
+    वापस roundAndPackInt32( roundData, aSign, aSig );
+पूर्ण
 
 /*
 -------------------------------------------------------------------------------
-Returns the result of converting the double-precision floating-point value
-`a' to the 32-bit two's complement integer format.  The conversion is
-performed according to the IEC/IEEE Standard for Binary Floating-point
+Returns the result of converting the द्विगुन-precision भग्नing-poपूर्णांक value
+`a' to the 32-bit two's complement पूर्णांकeger क्रमmat.  The conversion is
+perक्रमmed according to the IEC/IEEE Standard क्रम Binary Floating-poपूर्णांक
 Arithmetic, except that the conversion is always rounded toward zero.  If
-`a' is a NaN, the largest positive integer is returned.  Otherwise, if the
-conversion overflows, the largest positive integer is returned.
+`a' is a NaN, the largest positive पूर्णांकeger is वापसed.  Otherwise, अगर the
+conversion overflows, the largest positive पूर्णांकeger is वापसed.
 -------------------------------------------------------------------------------
 */
-int32 float64_to_uint32_round_to_zero( float64 a )
-{
+पूर्णांक32 भग्न64_to_uपूर्णांक32_round_to_zero( भग्न64 a )
+अणु
     flag aSign;
-    int16 aExp, shiftCount;
+    पूर्णांक16 aExp, shअगरtCount;
     bits64 aSig, savedASig;
-    int32 z;
+    पूर्णांक32 z;
 
     aSig = extractFloat64Frac( a );
     aExp = extractFloat64Exp( a );
     aSign = extractFloat64Sign( a );
-    shiftCount = 0x433 - aExp;
-    if ( shiftCount < 21 ) {
-        if ( ( aExp == 0x7FF ) && aSig ) aSign = 0;
-        goto invalid;
-    }
-    else if ( 52 < shiftCount ) {
-        if ( aExp || aSig ) float_raise( float_flag_inexact );
-        return 0;
-    }
+    shअगरtCount = 0x433 - aExp;
+    अगर ( shअगरtCount < 21 ) अणु
+        अगर ( ( aExp == 0x7FF ) && aSig ) aSign = 0;
+        जाओ invalid;
+    पूर्ण
+    अन्यथा अगर ( 52 < shअगरtCount ) अणु
+        अगर ( aExp || aSig ) भग्न_उठाओ( भग्न_flag_inexact );
+        वापस 0;
+    पूर्ण
     aSig |= LIT64( 0x0010000000000000 );
     savedASig = aSig;
-    aSig >>= shiftCount;
+    aSig >>= shअगरtCount;
     z = aSig;
-    if ( aSign ) z = - z;
-    if ( ( z < 0 ) ^ aSign ) {
+    अगर ( aSign ) z = - z;
+    अगर ( ( z < 0 ) ^ aSign ) अणु
  invalid:
-        float_raise( float_flag_invalid );
-        return aSign ? 0x80000000 : 0x7FFFFFFF;
-    }
-    if ( ( aSig<<shiftCount ) != savedASig ) {
-        float_raise( float_flag_inexact );
-    }
-    return z;
-}
+        भग्न_उठाओ( भग्न_flag_invalid );
+        वापस aSign ? 0x80000000 : 0x7FFFFFFF;
+    पूर्ण
+    अगर ( ( aSig<<shअगरtCount ) != savedASig ) अणु
+        भग्न_उठाओ( भग्न_flag_inexact );
+    पूर्ण
+    वापस z;
+पूर्ण
 
 /*
 -------------------------------------------------------------------------------
-Returns the result of converting the double-precision floating-point value
-`a' to the single-precision floating-point format.  The conversion is
-performed according to the IEC/IEEE Standard for Binary Floating-point
+Returns the result of converting the द्विगुन-precision भग्नing-poपूर्णांक value
+`a' to the single-precision भग्नing-poपूर्णांक क्रमmat.  The conversion is
+perक्रमmed according to the IEC/IEEE Standard क्रम Binary Floating-poपूर्णांक
 Arithmetic.
 -------------------------------------------------------------------------------
 */
-float32 float64_to_float32( struct roundingData *roundData, float64 a )
-{
+भग्न32 भग्न64_to_भग्न32( काष्ठा roundingData *roundData, भग्न64 a )
+अणु
     flag aSign;
-    int16 aExp;
+    पूर्णांक16 aExp;
     bits64 aSig;
     bits32 zSig;
 
     aSig = extractFloat64Frac( a );
     aExp = extractFloat64Exp( a );
     aSign = extractFloat64Sign( a );
-    if ( aExp == 0x7FF ) {
-        if ( aSig ) return commonNaNToFloat32( float64ToCommonNaN( a ) );
-        return packFloat32( aSign, 0xFF, 0 );
-    }
-    shift64RightJamming( aSig, 22, &aSig );
+    अगर ( aExp == 0x7FF ) अणु
+        अगर ( aSig ) वापस commonNaNToFloat32( भग्न64ToCommonNaN( a ) );
+        वापस packFloat32( aSign, 0xFF, 0 );
+    पूर्ण
+    shअगरt64RightJamming( aSig, 22, &aSig );
     zSig = aSig;
-    if ( aExp || zSig ) {
+    अगर ( aExp || zSig ) अणु
         zSig |= 0x40000000;
         aExp -= 0x381;
-    }
-    return roundAndPackFloat32( roundData, aSign, aExp, zSig );
+    पूर्ण
+    वापस roundAndPackFloat32( roundData, aSign, aExp, zSig );
 
-}
+पूर्ण
 
-#ifdef FLOATX80
+#अगर_घोषित FLOATX80
 
 /*
 -------------------------------------------------------------------------------
-Returns the result of converting the double-precision floating-point value
-`a' to the extended double-precision floating-point format.  The conversion
-is performed according to the IEC/IEEE Standard for Binary Floating-point
+Returns the result of converting the द्विगुन-precision भग्नing-poपूर्णांक value
+`a' to the extended द्विगुन-precision भग्नing-poपूर्णांक क्रमmat.  The conversion
+is perक्रमmed according to the IEC/IEEE Standard क्रम Binary Floating-poपूर्णांक
 Arithmetic.
 -------------------------------------------------------------------------------
 */
-floatx80 float64_to_floatx80( float64 a )
-{
+भग्नx80 भग्न64_to_भग्नx80( भग्न64 a )
+अणु
     flag aSign;
-    int16 aExp;
+    पूर्णांक16 aExp;
     bits64 aSig;
 
     aSig = extractFloat64Frac( a );
     aExp = extractFloat64Exp( a );
     aSign = extractFloat64Sign( a );
-    if ( aExp == 0x7FF ) {
-        if ( aSig ) return commonNaNToFloatx80( float64ToCommonNaN( a ) );
-        return packFloatx80( aSign, 0x7FFF, LIT64( 0x8000000000000000 ) );
-    }
-    if ( aExp == 0 ) {
-        if ( aSig == 0 ) return packFloatx80( aSign, 0, 0 );
+    अगर ( aExp == 0x7FF ) अणु
+        अगर ( aSig ) वापस commonNaNToFloatx80( भग्न64ToCommonNaN( a ) );
+        वापस packFloatx80( aSign, 0x7FFF, LIT64( 0x8000000000000000 ) );
+    पूर्ण
+    अगर ( aExp == 0 ) अणु
+        अगर ( aSig == 0 ) वापस packFloatx80( aSign, 0, 0 );
         normalizeFloat64Subnormal( aSig, &aExp, &aSig );
-    }
-    return
+    पूर्ण
+    वापस
         packFloatx80(
             aSign, aExp + 0x3C00, ( aSig | LIT64( 0x0010000000000000 ) )<<11 );
 
-}
+पूर्ण
 
-#endif
+#पूर्ण_अगर
 
 /*
 -------------------------------------------------------------------------------
-Rounds the double-precision floating-point value `a' to an integer, and
-returns the result as a double-precision floating-point value.  The
-operation is performed according to the IEC/IEEE Standard for Binary
-Floating-point Arithmetic.
+Rounds the द्विगुन-precision भग्नing-poपूर्णांक value `a' to an पूर्णांकeger, and
+वापसs the result as a द्विगुन-precision भग्नing-poपूर्णांक value.  The
+operation is perक्रमmed according to the IEC/IEEE Standard क्रम Binary
+Floating-poपूर्णांक Arithmetic.
 -------------------------------------------------------------------------------
 */
-float64 float64_round_to_int( struct roundingData *roundData, float64 a )
-{
+भग्न64 भग्न64_round_to_पूर्णांक( काष्ठा roundingData *roundData, भग्न64 a )
+अणु
     flag aSign;
-    int16 aExp;
+    पूर्णांक16 aExp;
     bits64 lastBitMask, roundBitsMask;
-    int8 roundingMode;
-    float64 z;
+    पूर्णांक8 roundingMode;
+    भग्न64 z;
 
     aExp = extractFloat64Exp( a );
-    if ( 0x433 <= aExp ) {
-        if ( ( aExp == 0x7FF ) && extractFloat64Frac( a ) ) {
-            return propagateFloat64NaN( a, a );
-        }
-        return a;
-    }
-    if ( aExp <= 0x3FE ) {
-        if ( (bits64) ( a<<1 ) == 0 ) return a;
-        roundData->exception |= float_flag_inexact;
+    अगर ( 0x433 <= aExp ) अणु
+        अगर ( ( aExp == 0x7FF ) && extractFloat64Frac( a ) ) अणु
+            वापस propagateFloat64NaN( a, a );
+        पूर्ण
+        वापस a;
+    पूर्ण
+    अगर ( aExp <= 0x3FE ) अणु
+        अगर ( (bits64) ( a<<1 ) == 0 ) वापस a;
+        roundData->exception |= भग्न_flag_inexact;
         aSign = extractFloat64Sign( a );
-        switch ( roundData->mode ) {
-         case float_round_nearest_even:
-            if ( ( aExp == 0x3FE ) && extractFloat64Frac( a ) ) {
-                return packFloat64( aSign, 0x3FF, 0 );
-            }
-            break;
-         case float_round_down:
-            return aSign ? LIT64( 0xBFF0000000000000 ) : 0;
-         case float_round_up:
-            return
+        चयन ( roundData->mode ) अणु
+         हाल भग्न_round_nearest_even:
+            अगर ( ( aExp == 0x3FE ) && extractFloat64Frac( a ) ) अणु
+                वापस packFloat64( aSign, 0x3FF, 0 );
+            पूर्ण
+            अवरोध;
+         हाल भग्न_round_करोwn:
+            वापस aSign ? LIT64( 0xBFF0000000000000 ) : 0;
+         हाल भग्न_round_up:
+            वापस
             aSign ? LIT64( 0x8000000000000000 ) : LIT64( 0x3FF0000000000000 );
-        }
-        return packFloat64( aSign, 0, 0 );
-    }
+        पूर्ण
+        वापस packFloat64( aSign, 0, 0 );
+    पूर्ण
     lastBitMask = 1;
     lastBitMask <<= 0x433 - aExp;
     roundBitsMask = lastBitMask - 1;
     z = a;
     roundingMode = roundData->mode;
-    if ( roundingMode == float_round_nearest_even ) {
+    अगर ( roundingMode == भग्न_round_nearest_even ) अणु
         z += lastBitMask>>1;
-        if ( ( z & roundBitsMask ) == 0 ) z &= ~ lastBitMask;
-    }
-    else if ( roundingMode != float_round_to_zero ) {
-        if ( extractFloat64Sign( z ) ^ ( roundingMode == float_round_up ) ) {
+        अगर ( ( z & roundBitsMask ) == 0 ) z &= ~ lastBitMask;
+    पूर्ण
+    अन्यथा अगर ( roundingMode != भग्न_round_to_zero ) अणु
+        अगर ( extractFloat64Sign( z ) ^ ( roundingMode == भग्न_round_up ) ) अणु
             z += roundBitsMask;
-        }
-    }
+        पूर्ण
+    पूर्ण
     z &= ~ roundBitsMask;
-    if ( z != a ) roundData->exception |= float_flag_inexact;
-    return z;
+    अगर ( z != a ) roundData->exception |= भग्न_flag_inexact;
+    वापस z;
 
-}
+पूर्ण
 
 /*
 -------------------------------------------------------------------------------
-Returns the result of adding the absolute values of the double-precision
-floating-point values `a' and `b'.  If `zSign' is true, the sum is negated
-before being returned.  `zSign' is ignored if the result is a NaN.  The
-addition is performed according to the IEC/IEEE Standard for Binary
-Floating-point Arithmetic.
+Returns the result of adding the असलolute values of the द्विगुन-precision
+भग्नing-poपूर्णांक values `a' and `b'.  If `zSign' is true, the sum is negated
+beक्रमe being वापसed.  `zSign' is ignored अगर the result is a NaN.  The
+addition is perक्रमmed according to the IEC/IEEE Standard क्रम Binary
+Floating-poपूर्णांक Arithmetic.
 -------------------------------------------------------------------------------
 */
-static float64 addFloat64Sigs( struct roundingData *roundData, float64 a, float64 b, flag zSign )
-{
-    int16 aExp, bExp, zExp;
+अटल भग्न64 addFloat64Sigs( काष्ठा roundingData *roundData, भग्न64 a, भग्न64 b, flag zSign )
+अणु
+    पूर्णांक16 aExp, bExp, zExp;
     bits64 aSig, bSig, zSig;
-    int16 expDiff;
+    पूर्णांक16 expDअगरf;
 
     aSig = extractFloat64Frac( a );
     aExp = extractFloat64Exp( a );
     bSig = extractFloat64Frac( b );
     bExp = extractFloat64Exp( b );
-    expDiff = aExp - bExp;
+    expDअगरf = aExp - bExp;
     aSig <<= 9;
     bSig <<= 9;
-    if ( 0 < expDiff ) {
-        if ( aExp == 0x7FF ) {
-            if ( aSig ) return propagateFloat64NaN( a, b );
-            return a;
-        }
-        if ( bExp == 0 ) {
-            --expDiff;
-        }
-        else {
+    अगर ( 0 < expDअगरf ) अणु
+        अगर ( aExp == 0x7FF ) अणु
+            अगर ( aSig ) वापस propagateFloat64NaN( a, b );
+            वापस a;
+        पूर्ण
+        अगर ( bExp == 0 ) अणु
+            --expDअगरf;
+        पूर्ण
+        अन्यथा अणु
             bSig |= LIT64( 0x2000000000000000 );
-        }
-        shift64RightJamming( bSig, expDiff, &bSig );
+        पूर्ण
+        shअगरt64RightJamming( bSig, expDअगरf, &bSig );
         zExp = aExp;
-    }
-    else if ( expDiff < 0 ) {
-        if ( bExp == 0x7FF ) {
-            if ( bSig ) return propagateFloat64NaN( a, b );
-            return packFloat64( zSign, 0x7FF, 0 );
-        }
-        if ( aExp == 0 ) {
-            ++expDiff;
-        }
-        else {
+    पूर्ण
+    अन्यथा अगर ( expDअगरf < 0 ) अणु
+        अगर ( bExp == 0x7FF ) अणु
+            अगर ( bSig ) वापस propagateFloat64NaN( a, b );
+            वापस packFloat64( zSign, 0x7FF, 0 );
+        पूर्ण
+        अगर ( aExp == 0 ) अणु
+            ++expDअगरf;
+        पूर्ण
+        अन्यथा अणु
             aSig |= LIT64( 0x2000000000000000 );
-        }
-        shift64RightJamming( aSig, - expDiff, &aSig );
+        पूर्ण
+        shअगरt64RightJamming( aSig, - expDअगरf, &aSig );
         zExp = bExp;
-    }
-    else {
-        if ( aExp == 0x7FF ) {
-            if ( aSig | bSig ) return propagateFloat64NaN( a, b );
-            return a;
-        }
-        if ( aExp == 0 ) return packFloat64( zSign, 0, ( aSig + bSig )>>9 );
+    पूर्ण
+    अन्यथा अणु
+        अगर ( aExp == 0x7FF ) अणु
+            अगर ( aSig | bSig ) वापस propagateFloat64NaN( a, b );
+            वापस a;
+        पूर्ण
+        अगर ( aExp == 0 ) वापस packFloat64( zSign, 0, ( aSig + bSig )>>9 );
         zSig = LIT64( 0x4000000000000000 ) + aSig + bSig;
         zExp = aExp;
-        goto roundAndPack;
-    }
+        जाओ roundAndPack;
+    पूर्ण
     aSig |= LIT64( 0x2000000000000000 );
     zSig = ( aSig + bSig )<<1;
     --zExp;
-    if ( (sbits64) zSig < 0 ) {
+    अगर ( (sbits64) zSig < 0 ) अणु
         zSig = aSig + bSig;
         ++zExp;
-    }
+    पूर्ण
  roundAndPack:
-    return roundAndPackFloat64( roundData, zSign, zExp, zSig );
+    वापस roundAndPackFloat64( roundData, zSign, zExp, zSig );
 
-}
+पूर्ण
 
 /*
 -------------------------------------------------------------------------------
-Returns the result of subtracting the absolute values of the double-
-precision floating-point values `a' and `b'.  If `zSign' is true, the
-difference is negated before being returned.  `zSign' is ignored if the
-result is a NaN.  The subtraction is performed according to the IEC/IEEE
-Standard for Binary Floating-point Arithmetic.
+Returns the result of subtracting the असलolute values of the द्विगुन-
+precision भग्नing-poपूर्णांक values `a' and `b'.  If `zSign' is true, the
+dअगरference is negated beक्रमe being वापसed.  `zSign' is ignored अगर the
+result is a NaN.  The subtraction is perक्रमmed according to the IEC/IEEE
+Standard क्रम Binary Floating-poपूर्णांक Arithmetic.
 -------------------------------------------------------------------------------
 */
-static float64 subFloat64Sigs( struct roundingData *roundData, float64 a, float64 b, flag zSign )
-{
-    int16 aExp, bExp, zExp;
+अटल भग्न64 subFloat64Sigs( काष्ठा roundingData *roundData, भग्न64 a, भग्न64 b, flag zSign )
+अणु
+    पूर्णांक16 aExp, bExp, zExp;
     bits64 aSig, bSig, zSig;
-    int16 expDiff;
+    पूर्णांक16 expDअगरf;
 
     aSig = extractFloat64Frac( a );
     aExp = extractFloat64Exp( a );
     bSig = extractFloat64Frac( b );
     bExp = extractFloat64Exp( b );
-    expDiff = aExp - bExp;
+    expDअगरf = aExp - bExp;
     aSig <<= 10;
     bSig <<= 10;
-    if ( 0 < expDiff ) goto aExpBigger;
-    if ( expDiff < 0 ) goto bExpBigger;
-    if ( aExp == 0x7FF ) {
-        if ( aSig | bSig ) return propagateFloat64NaN( a, b );
-        roundData->exception |= float_flag_invalid;
-        return float64_default_nan;
-    }
-    if ( aExp == 0 ) {
+    अगर ( 0 < expDअगरf ) जाओ aExpBigger;
+    अगर ( expDअगरf < 0 ) जाओ bExpBigger;
+    अगर ( aExp == 0x7FF ) अणु
+        अगर ( aSig | bSig ) वापस propagateFloat64NaN( a, b );
+        roundData->exception |= भग्न_flag_invalid;
+        वापस भग्न64_शेष_nan;
+    पूर्ण
+    अगर ( aExp == 0 ) अणु
         aExp = 1;
         bExp = 1;
-    }
-    if ( bSig < aSig ) goto aBigger;
-    if ( aSig < bSig ) goto bBigger;
-    return packFloat64( roundData->mode == float_round_down, 0, 0 );
+    पूर्ण
+    अगर ( bSig < aSig ) जाओ aBigger;
+    अगर ( aSig < bSig ) जाओ bBigger;
+    वापस packFloat64( roundData->mode == भग्न_round_करोwn, 0, 0 );
  bExpBigger:
-    if ( bExp == 0x7FF ) {
-        if ( bSig ) return propagateFloat64NaN( a, b );
-        return packFloat64( zSign ^ 1, 0x7FF, 0 );
-    }
-    if ( aExp == 0 ) {
-        ++expDiff;
-    }
-    else {
+    अगर ( bExp == 0x7FF ) अणु
+        अगर ( bSig ) वापस propagateFloat64NaN( a, b );
+        वापस packFloat64( zSign ^ 1, 0x7FF, 0 );
+    पूर्ण
+    अगर ( aExp == 0 ) अणु
+        ++expDअगरf;
+    पूर्ण
+    अन्यथा अणु
         aSig |= LIT64( 0x4000000000000000 );
-    }
-    shift64RightJamming( aSig, - expDiff, &aSig );
+    पूर्ण
+    shअगरt64RightJamming( aSig, - expDअगरf, &aSig );
     bSig |= LIT64( 0x4000000000000000 );
  bBigger:
     zSig = bSig - aSig;
     zExp = bExp;
     zSign ^= 1;
-    goto normalizeRoundAndPack;
+    जाओ normalizeRoundAndPack;
  aExpBigger:
-    if ( aExp == 0x7FF ) {
-        if ( aSig ) return propagateFloat64NaN( a, b );
-        return a;
-    }
-    if ( bExp == 0 ) {
-        --expDiff;
-    }
-    else {
+    अगर ( aExp == 0x7FF ) अणु
+        अगर ( aSig ) वापस propagateFloat64NaN( a, b );
+        वापस a;
+    पूर्ण
+    अगर ( bExp == 0 ) अणु
+        --expDअगरf;
+    पूर्ण
+    अन्यथा अणु
         bSig |= LIT64( 0x4000000000000000 );
-    }
-    shift64RightJamming( bSig, expDiff, &bSig );
+    पूर्ण
+    shअगरt64RightJamming( bSig, expDअगरf, &bSig );
     aSig |= LIT64( 0x4000000000000000 );
  aBigger:
     zSig = aSig - bSig;
     zExp = aExp;
  normalizeRoundAndPack:
     --zExp;
-    return normalizeRoundAndPackFloat64( roundData, zSign, zExp, zSig );
+    वापस normalizeRoundAndPackFloat64( roundData, zSign, zExp, zSig );
 
-}
+पूर्ण
 
 /*
 -------------------------------------------------------------------------------
-Returns the result of adding the double-precision floating-point values `a'
-and `b'.  The operation is performed according to the IEC/IEEE Standard for
-Binary Floating-point Arithmetic.
+Returns the result of adding the द्विगुन-precision भग्नing-poपूर्णांक values `a'
+and `b'.  The operation is perक्रमmed according to the IEC/IEEE Standard क्रम
+Binary Floating-poपूर्णांक Arithmetic.
 -------------------------------------------------------------------------------
 */
-float64 float64_add( struct roundingData *roundData, float64 a, float64 b )
-{
+भग्न64 भग्न64_add( काष्ठा roundingData *roundData, भग्न64 a, भग्न64 b )
+अणु
     flag aSign, bSign;
 
     aSign = extractFloat64Sign( a );
     bSign = extractFloat64Sign( b );
-    if ( aSign == bSign ) {
-        return addFloat64Sigs( roundData, a, b, aSign );
-    }
-    else {
-        return subFloat64Sigs( roundData, a, b, aSign );
-    }
+    अगर ( aSign == bSign ) अणु
+        वापस addFloat64Sigs( roundData, a, b, aSign );
+    पूर्ण
+    अन्यथा अणु
+        वापस subFloat64Sigs( roundData, a, b, aSign );
+    पूर्ण
 
-}
+पूर्ण
 
 /*
 -------------------------------------------------------------------------------
-Returns the result of subtracting the double-precision floating-point values
-`a' and `b'.  The operation is performed according to the IEC/IEEE Standard
-for Binary Floating-point Arithmetic.
+Returns the result of subtracting the द्विगुन-precision भग्नing-poपूर्णांक values
+`a' and `b'.  The operation is perक्रमmed according to the IEC/IEEE Standard
+क्रम Binary Floating-poपूर्णांक Arithmetic.
 -------------------------------------------------------------------------------
 */
-float64 float64_sub( struct roundingData *roundData, float64 a, float64 b )
-{
+भग्न64 भग्न64_sub( काष्ठा roundingData *roundData, भग्न64 a, भग्न64 b )
+अणु
     flag aSign, bSign;
 
     aSign = extractFloat64Sign( a );
     bSign = extractFloat64Sign( b );
-    if ( aSign == bSign ) {
-        return subFloat64Sigs( roundData, a, b, aSign );
-    }
-    else {
-        return addFloat64Sigs( roundData, a, b, aSign );
-    }
+    अगर ( aSign == bSign ) अणु
+        वापस subFloat64Sigs( roundData, a, b, aSign );
+    पूर्ण
+    अन्यथा अणु
+        वापस addFloat64Sigs( roundData, a, b, aSign );
+    पूर्ण
 
-}
+पूर्ण
 
 /*
 -------------------------------------------------------------------------------
-Returns the result of multiplying the double-precision floating-point values
-`a' and `b'.  The operation is performed according to the IEC/IEEE Standard
-for Binary Floating-point Arithmetic.
+Returns the result of multiplying the द्विगुन-precision भग्नing-poपूर्णांक values
+`a' and `b'.  The operation is perक्रमmed according to the IEC/IEEE Standard
+क्रम Binary Floating-poपूर्णांक Arithmetic.
 -------------------------------------------------------------------------------
 */
-float64 float64_mul( struct roundingData *roundData, float64 a, float64 b )
-{
+भग्न64 भग्न64_mul( काष्ठा roundingData *roundData, भग्न64 a, भग्न64 b )
+अणु
     flag aSign, bSign, zSign;
-    int16 aExp, bExp, zExp;
+    पूर्णांक16 aExp, bExp, zExp;
     bits64 aSig, bSig, zSig0, zSig1;
 
     aSig = extractFloat64Frac( a );
@@ -2125,56 +2126,56 @@ float64 float64_mul( struct roundingData *roundData, float64 a, float64 b )
     bExp = extractFloat64Exp( b );
     bSign = extractFloat64Sign( b );
     zSign = aSign ^ bSign;
-    if ( aExp == 0x7FF ) {
-        if ( aSig || ( ( bExp == 0x7FF ) && bSig ) ) {
-            return propagateFloat64NaN( a, b );
-        }
-        if ( ( bExp | bSig ) == 0 ) {
-            roundData->exception |= float_flag_invalid;
-            return float64_default_nan;
-        }
-        return packFloat64( zSign, 0x7FF, 0 );
-    }
-    if ( bExp == 0x7FF ) {
-        if ( bSig ) return propagateFloat64NaN( a, b );
-        if ( ( aExp | aSig ) == 0 ) {
-            roundData->exception |= float_flag_invalid;
-            return float64_default_nan;
-        }
-        return packFloat64( zSign, 0x7FF, 0 );
-    }
-    if ( aExp == 0 ) {
-        if ( aSig == 0 ) return packFloat64( zSign, 0, 0 );
+    अगर ( aExp == 0x7FF ) अणु
+        अगर ( aSig || ( ( bExp == 0x7FF ) && bSig ) ) अणु
+            वापस propagateFloat64NaN( a, b );
+        पूर्ण
+        अगर ( ( bExp | bSig ) == 0 ) अणु
+            roundData->exception |= भग्न_flag_invalid;
+            वापस भग्न64_शेष_nan;
+        पूर्ण
+        वापस packFloat64( zSign, 0x7FF, 0 );
+    पूर्ण
+    अगर ( bExp == 0x7FF ) अणु
+        अगर ( bSig ) वापस propagateFloat64NaN( a, b );
+        अगर ( ( aExp | aSig ) == 0 ) अणु
+            roundData->exception |= भग्न_flag_invalid;
+            वापस भग्न64_शेष_nan;
+        पूर्ण
+        वापस packFloat64( zSign, 0x7FF, 0 );
+    पूर्ण
+    अगर ( aExp == 0 ) अणु
+        अगर ( aSig == 0 ) वापस packFloat64( zSign, 0, 0 );
         normalizeFloat64Subnormal( aSig, &aExp, &aSig );
-    }
-    if ( bExp == 0 ) {
-        if ( bSig == 0 ) return packFloat64( zSign, 0, 0 );
+    पूर्ण
+    अगर ( bExp == 0 ) अणु
+        अगर ( bSig == 0 ) वापस packFloat64( zSign, 0, 0 );
         normalizeFloat64Subnormal( bSig, &bExp, &bSig );
-    }
+    पूर्ण
     zExp = aExp + bExp - 0x3FF;
     aSig = ( aSig | LIT64( 0x0010000000000000 ) )<<10;
     bSig = ( bSig | LIT64( 0x0010000000000000 ) )<<11;
     mul64To128( aSig, bSig, &zSig0, &zSig1 );
     zSig0 |= ( zSig1 != 0 );
-    if ( 0 <= (sbits64) ( zSig0<<1 ) ) {
+    अगर ( 0 <= (sbits64) ( zSig0<<1 ) ) अणु
         zSig0 <<= 1;
         --zExp;
-    }
-    return roundAndPackFloat64( roundData, zSign, zExp, zSig0 );
+    पूर्ण
+    वापस roundAndPackFloat64( roundData, zSign, zExp, zSig0 );
 
-}
+पूर्ण
 
 /*
 -------------------------------------------------------------------------------
-Returns the result of dividing the double-precision floating-point value `a'
-by the corresponding value `b'.  The operation is performed according to
-the IEC/IEEE Standard for Binary Floating-point Arithmetic.
+Returns the result of भागiding the द्विगुन-precision भग्नing-poपूर्णांक value `a'
+by the corresponding value `b'.  The operation is perक्रमmed according to
+the IEC/IEEE Standard क्रम Binary Floating-poपूर्णांक Arithmetic.
 -------------------------------------------------------------------------------
 */
-float64 float64_div( struct roundingData *roundData, float64 a, float64 b )
-{
+भग्न64 भग्न64_भाग( काष्ठा roundingData *roundData, भग्न64 a, भग्न64 b )
+अणु
     flag aSign, bSign, zSign;
-    int16 aExp, bExp, zExp;
+    पूर्णांक16 aExp, bExp, zExp;
     bits64 aSig, bSig, zSig;
     bits64 rem0, rem1;
     bits64 term0, term1;
@@ -2186,66 +2187,66 @@ float64 float64_div( struct roundingData *roundData, float64 a, float64 b )
     bExp = extractFloat64Exp( b );
     bSign = extractFloat64Sign( b );
     zSign = aSign ^ bSign;
-    if ( aExp == 0x7FF ) {
-        if ( aSig ) return propagateFloat64NaN( a, b );
-        if ( bExp == 0x7FF ) {
-            if ( bSig ) return propagateFloat64NaN( a, b );
-            roundData->exception |= float_flag_invalid;
-            return float64_default_nan;
-        }
-        return packFloat64( zSign, 0x7FF, 0 );
-    }
-    if ( bExp == 0x7FF ) {
-        if ( bSig ) return propagateFloat64NaN( a, b );
-        return packFloat64( zSign, 0, 0 );
-    }
-    if ( bExp == 0 ) {
-        if ( bSig == 0 ) {
-            if ( ( aExp | aSig ) == 0 ) {
-                roundData->exception |= float_flag_invalid;
-                return float64_default_nan;
-            }
-            roundData->exception |= float_flag_divbyzero;
-            return packFloat64( zSign, 0x7FF, 0 );
-        }
+    अगर ( aExp == 0x7FF ) अणु
+        अगर ( aSig ) वापस propagateFloat64NaN( a, b );
+        अगर ( bExp == 0x7FF ) अणु
+            अगर ( bSig ) वापस propagateFloat64NaN( a, b );
+            roundData->exception |= भग्न_flag_invalid;
+            वापस भग्न64_शेष_nan;
+        पूर्ण
+        वापस packFloat64( zSign, 0x7FF, 0 );
+    पूर्ण
+    अगर ( bExp == 0x7FF ) अणु
+        अगर ( bSig ) वापस propagateFloat64NaN( a, b );
+        वापस packFloat64( zSign, 0, 0 );
+    पूर्ण
+    अगर ( bExp == 0 ) अणु
+        अगर ( bSig == 0 ) अणु
+            अगर ( ( aExp | aSig ) == 0 ) अणु
+                roundData->exception |= भग्न_flag_invalid;
+                वापस भग्न64_शेष_nan;
+            पूर्ण
+            roundData->exception |= भग्न_flag_भागbyzero;
+            वापस packFloat64( zSign, 0x7FF, 0 );
+        पूर्ण
         normalizeFloat64Subnormal( bSig, &bExp, &bSig );
-    }
-    if ( aExp == 0 ) {
-        if ( aSig == 0 ) return packFloat64( zSign, 0, 0 );
+    पूर्ण
+    अगर ( aExp == 0 ) अणु
+        अगर ( aSig == 0 ) वापस packFloat64( zSign, 0, 0 );
         normalizeFloat64Subnormal( aSig, &aExp, &aSig );
-    }
+    पूर्ण
     zExp = aExp - bExp + 0x3FD;
     aSig = ( aSig | LIT64( 0x0010000000000000 ) )<<10;
     bSig = ( bSig | LIT64( 0x0010000000000000 ) )<<11;
-    if ( bSig <= ( aSig + aSig ) ) {
+    अगर ( bSig <= ( aSig + aSig ) ) अणु
         aSig >>= 1;
         ++zExp;
-    }
+    पूर्ण
     zSig = estimateDiv128To64( aSig, 0, bSig );
-    if ( ( zSig & 0x1FF ) <= 2 ) {
+    अगर ( ( zSig & 0x1FF ) <= 2 ) अणु
         mul64To128( bSig, zSig, &term0, &term1 );
         sub128( aSig, 0, term0, term1, &rem0, &rem1 );
-        while ( (sbits64) rem0 < 0 ) {
+        जबतक ( (sbits64) rem0 < 0 ) अणु
             --zSig;
             add128( rem0, rem1, 0, bSig, &rem0, &rem1 );
-        }
+        पूर्ण
         zSig |= ( rem1 != 0 );
-    }
-    return roundAndPackFloat64( roundData, zSign, zExp, zSig );
+    पूर्ण
+    वापस roundAndPackFloat64( roundData, zSign, zExp, zSig );
 
-}
+पूर्ण
 
 /*
 -------------------------------------------------------------------------------
-Returns the remainder of the double-precision floating-point value `a'
-with respect to the corresponding value `b'.  The operation is performed
-according to the IEC/IEEE Standard for Binary Floating-point Arithmetic.
+Returns the reमुख्यder of the द्विगुन-precision भग्नing-poपूर्णांक value `a'
+with respect to the corresponding value `b'.  The operation is perक्रमmed
+according to the IEC/IEEE Standard क्रम Binary Floating-poपूर्णांक Arithmetic.
 -------------------------------------------------------------------------------
 */
-float64 float64_rem( struct roundingData *roundData, float64 a, float64 b )
-{
+भग्न64 भग्न64_rem( काष्ठा roundingData *roundData, भग्न64 a, भग्न64 b )
+अणु
     flag aSign, bSign, zSign;
-    int16 aExp, bExp, expDiff;
+    पूर्णांक16 aExp, bExp, expDअगरf;
     bits64 aSig, bSig;
     bits64 q, alternateASig;
     sbits64 sigMean;
@@ -2256,679 +2257,679 @@ float64 float64_rem( struct roundingData *roundData, float64 a, float64 b )
     bSig = extractFloat64Frac( b );
     bExp = extractFloat64Exp( b );
     bSign = extractFloat64Sign( b );
-    if ( aExp == 0x7FF ) {
-        if ( aSig || ( ( bExp == 0x7FF ) && bSig ) ) {
-            return propagateFloat64NaN( a, b );
-        }
-        roundData->exception |= float_flag_invalid;
-        return float64_default_nan;
-    }
-    if ( bExp == 0x7FF ) {
-        if ( bSig ) return propagateFloat64NaN( a, b );
-        return a;
-    }
-    if ( bExp == 0 ) {
-        if ( bSig == 0 ) {
-            roundData->exception |= float_flag_invalid;
-            return float64_default_nan;
-        }
+    अगर ( aExp == 0x7FF ) अणु
+        अगर ( aSig || ( ( bExp == 0x7FF ) && bSig ) ) अणु
+            वापस propagateFloat64NaN( a, b );
+        पूर्ण
+        roundData->exception |= भग्न_flag_invalid;
+        वापस भग्न64_शेष_nan;
+    पूर्ण
+    अगर ( bExp == 0x7FF ) अणु
+        अगर ( bSig ) वापस propagateFloat64NaN( a, b );
+        वापस a;
+    पूर्ण
+    अगर ( bExp == 0 ) अणु
+        अगर ( bSig == 0 ) अणु
+            roundData->exception |= भग्न_flag_invalid;
+            वापस भग्न64_शेष_nan;
+        पूर्ण
         normalizeFloat64Subnormal( bSig, &bExp, &bSig );
-    }
-    if ( aExp == 0 ) {
-        if ( aSig == 0 ) return a;
+    पूर्ण
+    अगर ( aExp == 0 ) अणु
+        अगर ( aSig == 0 ) वापस a;
         normalizeFloat64Subnormal( aSig, &aExp, &aSig );
-    }
-    expDiff = aExp - bExp;
+    पूर्ण
+    expDअगरf = aExp - bExp;
     aSig = ( aSig | LIT64( 0x0010000000000000 ) )<<11;
     bSig = ( bSig | LIT64( 0x0010000000000000 ) )<<11;
-    if ( expDiff < 0 ) {
-        if ( expDiff < -1 ) return a;
+    अगर ( expDअगरf < 0 ) अणु
+        अगर ( expDअगरf < -1 ) वापस a;
         aSig >>= 1;
-    }
+    पूर्ण
     q = ( bSig <= aSig );
-    if ( q ) aSig -= bSig;
-    expDiff -= 64;
-    while ( 0 < expDiff ) {
+    अगर ( q ) aSig -= bSig;
+    expDअगरf -= 64;
+    जबतक ( 0 < expDअगरf ) अणु
         q = estimateDiv128To64( aSig, 0, bSig );
         q = ( 2 < q ) ? q - 2 : 0;
         aSig = - ( ( bSig>>2 ) * q );
-        expDiff -= 62;
-    }
-    expDiff += 64;
-    if ( 0 < expDiff ) {
+        expDअगरf -= 62;
+    पूर्ण
+    expDअगरf += 64;
+    अगर ( 0 < expDअगरf ) अणु
         q = estimateDiv128To64( aSig, 0, bSig );
         q = ( 2 < q ) ? q - 2 : 0;
-        q >>= 64 - expDiff;
+        q >>= 64 - expDअगरf;
         bSig >>= 2;
-        aSig = ( ( aSig>>1 )<<( expDiff - 1 ) ) - bSig * q;
-    }
-    else {
+        aSig = ( ( aSig>>1 )<<( expDअगरf - 1 ) ) - bSig * q;
+    पूर्ण
+    अन्यथा अणु
         aSig >>= 2;
         bSig >>= 2;
-    }
-    do {
+    पूर्ण
+    करो अणु
         alternateASig = aSig;
         ++q;
         aSig -= bSig;
-    } while ( 0 <= (sbits64) aSig );
+    पूर्ण जबतक ( 0 <= (sbits64) aSig );
     sigMean = aSig + alternateASig;
-    if ( ( sigMean < 0 ) || ( ( sigMean == 0 ) && ( q & 1 ) ) ) {
+    अगर ( ( sigMean < 0 ) || ( ( sigMean == 0 ) && ( q & 1 ) ) ) अणु
         aSig = alternateASig;
-    }
+    पूर्ण
     zSign = ( (sbits64) aSig < 0 );
-    if ( zSign ) aSig = - aSig;
-    return normalizeRoundAndPackFloat64( roundData, aSign ^ zSign, bExp, aSig );
+    अगर ( zSign ) aSig = - aSig;
+    वापस normalizeRoundAndPackFloat64( roundData, aSign ^ zSign, bExp, aSig );
 
-}
+पूर्ण
 
 /*
 -------------------------------------------------------------------------------
-Returns the square root of the double-precision floating-point value `a'.
-The operation is performed according to the IEC/IEEE Standard for Binary
-Floating-point Arithmetic.
+Returns the square root of the द्विगुन-precision भग्नing-poपूर्णांक value `a'.
+The operation is perक्रमmed according to the IEC/IEEE Standard क्रम Binary
+Floating-poपूर्णांक Arithmetic.
 -------------------------------------------------------------------------------
 */
-float64 float64_sqrt( struct roundingData *roundData, float64 a )
-{
+भग्न64 भग्न64_वर्ग_मूल( काष्ठा roundingData *roundData, भग्न64 a )
+अणु
     flag aSign;
-    int16 aExp, zExp;
+    पूर्णांक16 aExp, zExp;
     bits64 aSig, zSig;
-    bits64 rem0, rem1, term0, term1; //, shiftedRem;
-    //float64 z;
+    bits64 rem0, rem1, term0, term1; //, shअगरtedRem;
+    //भग्न64 z;
 
     aSig = extractFloat64Frac( a );
     aExp = extractFloat64Exp( a );
     aSign = extractFloat64Sign( a );
-    if ( aExp == 0x7FF ) {
-        if ( aSig ) return propagateFloat64NaN( a, a );
-        if ( ! aSign ) return a;
-        roundData->exception |= float_flag_invalid;
-        return float64_default_nan;
-    }
-    if ( aSign ) {
-        if ( ( aExp | aSig ) == 0 ) return a;
-        roundData->exception |= float_flag_invalid;
-        return float64_default_nan;
-    }
-    if ( aExp == 0 ) {
-        if ( aSig == 0 ) return 0;
+    अगर ( aExp == 0x7FF ) अणु
+        अगर ( aSig ) वापस propagateFloat64NaN( a, a );
+        अगर ( ! aSign ) वापस a;
+        roundData->exception |= भग्न_flag_invalid;
+        वापस भग्न64_शेष_nan;
+    पूर्ण
+    अगर ( aSign ) अणु
+        अगर ( ( aExp | aSig ) == 0 ) वापस a;
+        roundData->exception |= भग्न_flag_invalid;
+        वापस भग्न64_शेष_nan;
+    पूर्ण
+    अगर ( aExp == 0 ) अणु
+        अगर ( aSig == 0 ) वापस 0;
         normalizeFloat64Subnormal( aSig, &aExp, &aSig );
-    }
+    पूर्ण
     zExp = ( ( aExp - 0x3FF )>>1 ) + 0x3FE;
     aSig |= LIT64( 0x0010000000000000 );
     zSig = estimateSqrt32( aExp, aSig>>21 );
     zSig <<= 31;
     aSig <<= 9 - ( aExp & 1 );
     zSig = estimateDiv128To64( aSig, 0, zSig ) + zSig + 2;
-    if ( ( zSig & 0x3FF ) <= 5 ) {
-        if ( zSig < 2 ) {
+    अगर ( ( zSig & 0x3FF ) <= 5 ) अणु
+        अगर ( zSig < 2 ) अणु
             zSig = LIT64( 0xFFFFFFFFFFFFFFFF );
-        }
-        else {
+        पूर्ण
+        अन्यथा अणु
             aSig <<= 2;
             mul64To128( zSig, zSig, &term0, &term1 );
             sub128( aSig, 0, term0, term1, &rem0, &rem1 );
-            while ( (sbits64) rem0 < 0 ) {
+            जबतक ( (sbits64) rem0 < 0 ) अणु
                 --zSig;
-                shortShift128Left( 0, zSig, 1, &term0, &term1 );
+                लघुShअगरt128Left( 0, zSig, 1, &term0, &term1 );
                 term1 |= 1;
                 add128( rem0, rem1, term0, term1, &rem0, &rem1 );
-            }
+            पूर्ण
             zSig |= ( ( rem0 | rem1 ) != 0 );
-        }
-    }
-    shift64RightJamming( zSig, 1, &zSig );
-    return roundAndPackFloat64( roundData, 0, zExp, zSig );
+        पूर्ण
+    पूर्ण
+    shअगरt64RightJamming( zSig, 1, &zSig );
+    वापस roundAndPackFloat64( roundData, 0, zExp, zSig );
 
-}
+पूर्ण
 
 /*
 -------------------------------------------------------------------------------
-Returns 1 if the double-precision floating-point value `a' is equal to the
-corresponding value `b', and 0 otherwise.  The comparison is performed
-according to the IEC/IEEE Standard for Binary Floating-point Arithmetic.
+Returns 1 अगर the द्विगुन-precision भग्नing-poपूर्णांक value `a' is equal to the
+corresponding value `b', and 0 otherwise.  The comparison is perक्रमmed
+according to the IEC/IEEE Standard क्रम Binary Floating-poपूर्णांक Arithmetic.
 -------------------------------------------------------------------------------
 */
-flag float64_eq( float64 a, float64 b )
-{
+flag भग्न64_eq( भग्न64 a, भग्न64 b )
+अणु
 
-    if (    ( ( extractFloat64Exp( a ) == 0x7FF ) && extractFloat64Frac( a ) )
+    अगर (    ( ( extractFloat64Exp( a ) == 0x7FF ) && extractFloat64Frac( a ) )
          || ( ( extractFloat64Exp( b ) == 0x7FF ) && extractFloat64Frac( b ) )
-       ) {
-        if ( float64_is_signaling_nan( a ) || float64_is_signaling_nan( b ) ) {
-            float_raise( float_flag_invalid );
-        }
-        return 0;
-    }
-    return ( a == b ) || ( (bits64) ( ( a | b )<<1 ) == 0 );
+       ) अणु
+        अगर ( भग्न64_is_संकेतing_nan( a ) || भग्न64_is_संकेतing_nan( b ) ) अणु
+            भग्न_उठाओ( भग्न_flag_invalid );
+        पूर्ण
+        वापस 0;
+    पूर्ण
+    वापस ( a == b ) || ( (bits64) ( ( a | b )<<1 ) == 0 );
 
-}
+पूर्ण
 
 /*
 -------------------------------------------------------------------------------
-Returns 1 if the double-precision floating-point value `a' is less than or
+Returns 1 अगर the द्विगुन-precision भग्नing-poपूर्णांक value `a' is less than or
 equal to the corresponding value `b', and 0 otherwise.  The comparison is
-performed according to the IEC/IEEE Standard for Binary Floating-point
+perक्रमmed according to the IEC/IEEE Standard क्रम Binary Floating-poपूर्णांक
 Arithmetic.
 -------------------------------------------------------------------------------
 */
-flag float64_le( float64 a, float64 b )
-{
+flag भग्न64_le( भग्न64 a, भग्न64 b )
+अणु
     flag aSign, bSign;
 
-    if (    ( ( extractFloat64Exp( a ) == 0x7FF ) && extractFloat64Frac( a ) )
+    अगर (    ( ( extractFloat64Exp( a ) == 0x7FF ) && extractFloat64Frac( a ) )
          || ( ( extractFloat64Exp( b ) == 0x7FF ) && extractFloat64Frac( b ) )
-       ) {
-        float_raise( float_flag_invalid );
-        return 0;
-    }
+       ) अणु
+        भग्न_उठाओ( भग्न_flag_invalid );
+        वापस 0;
+    पूर्ण
     aSign = extractFloat64Sign( a );
     bSign = extractFloat64Sign( b );
-    if ( aSign != bSign ) return aSign || ( (bits64) ( ( a | b )<<1 ) == 0 );
-    return ( a == b ) || ( aSign ^ ( a < b ) );
+    अगर ( aSign != bSign ) वापस aSign || ( (bits64) ( ( a | b )<<1 ) == 0 );
+    वापस ( a == b ) || ( aSign ^ ( a < b ) );
 
-}
+पूर्ण
 
 /*
 -------------------------------------------------------------------------------
-Returns 1 if the double-precision floating-point value `a' is less than
-the corresponding value `b', and 0 otherwise.  The comparison is performed
-according to the IEC/IEEE Standard for Binary Floating-point Arithmetic.
+Returns 1 अगर the द्विगुन-precision भग्नing-poपूर्णांक value `a' is less than
+the corresponding value `b', and 0 otherwise.  The comparison is perक्रमmed
+according to the IEC/IEEE Standard क्रम Binary Floating-poपूर्णांक Arithmetic.
 -------------------------------------------------------------------------------
 */
-flag float64_lt( float64 a, float64 b )
-{
+flag भग्न64_lt( भग्न64 a, भग्न64 b )
+अणु
     flag aSign, bSign;
 
-    if (    ( ( extractFloat64Exp( a ) == 0x7FF ) && extractFloat64Frac( a ) )
+    अगर (    ( ( extractFloat64Exp( a ) == 0x7FF ) && extractFloat64Frac( a ) )
          || ( ( extractFloat64Exp( b ) == 0x7FF ) && extractFloat64Frac( b ) )
-       ) {
-        float_raise( float_flag_invalid );
-        return 0;
-    }
+       ) अणु
+        भग्न_उठाओ( भग्न_flag_invalid );
+        वापस 0;
+    पूर्ण
     aSign = extractFloat64Sign( a );
     bSign = extractFloat64Sign( b );
-    if ( aSign != bSign ) return aSign && ( (bits64) ( ( a | b )<<1 ) != 0 );
-    return ( a != b ) && ( aSign ^ ( a < b ) );
+    अगर ( aSign != bSign ) वापस aSign && ( (bits64) ( ( a | b )<<1 ) != 0 );
+    वापस ( a != b ) && ( aSign ^ ( a < b ) );
 
-}
+पूर्ण
 
 /*
 -------------------------------------------------------------------------------
-Returns 1 if the double-precision floating-point value `a' is equal to the
-corresponding value `b', and 0 otherwise.  The invalid exception is raised
-if either operand is a NaN.  Otherwise, the comparison is performed
-according to the IEC/IEEE Standard for Binary Floating-point Arithmetic.
+Returns 1 अगर the द्विगुन-precision भग्नing-poपूर्णांक value `a' is equal to the
+corresponding value `b', and 0 otherwise.  The invalid exception is उठाओd
+अगर either opeअक्रम is a NaN.  Otherwise, the comparison is perक्रमmed
+according to the IEC/IEEE Standard क्रम Binary Floating-poपूर्णांक Arithmetic.
 -------------------------------------------------------------------------------
 */
-flag float64_eq_signaling( float64 a, float64 b )
-{
+flag भग्न64_eq_संकेतing( भग्न64 a, भग्न64 b )
+अणु
 
-    if (    ( ( extractFloat64Exp( a ) == 0x7FF ) && extractFloat64Frac( a ) )
+    अगर (    ( ( extractFloat64Exp( a ) == 0x7FF ) && extractFloat64Frac( a ) )
          || ( ( extractFloat64Exp( b ) == 0x7FF ) && extractFloat64Frac( b ) )
-       ) {
-        float_raise( float_flag_invalid );
-        return 0;
-    }
-    return ( a == b ) || ( (bits64) ( ( a | b )<<1 ) == 0 );
+       ) अणु
+        भग्न_उठाओ( भग्न_flag_invalid );
+        वापस 0;
+    पूर्ण
+    वापस ( a == b ) || ( (bits64) ( ( a | b )<<1 ) == 0 );
 
-}
+पूर्ण
 
 /*
 -------------------------------------------------------------------------------
-Returns 1 if the double-precision floating-point value `a' is less than or
-equal to the corresponding value `b', and 0 otherwise.  Quiet NaNs do not
-cause an exception.  Otherwise, the comparison is performed according to the
-IEC/IEEE Standard for Binary Floating-point Arithmetic.
+Returns 1 अगर the द्विगुन-precision भग्नing-poपूर्णांक value `a' is less than or
+equal to the corresponding value `b', and 0 otherwise.  Quiet NaNs करो not
+cause an exception.  Otherwise, the comparison is perक्रमmed according to the
+IEC/IEEE Standard क्रम Binary Floating-poपूर्णांक Arithmetic.
 -------------------------------------------------------------------------------
 */
-flag float64_le_quiet( float64 a, float64 b )
-{
+flag भग्न64_le_quiet( भग्न64 a, भग्न64 b )
+अणु
     flag aSign, bSign;
-    //int16 aExp, bExp;
+    //पूर्णांक16 aExp, bExp;
 
-    if (    ( ( extractFloat64Exp( a ) == 0x7FF ) && extractFloat64Frac( a ) )
+    अगर (    ( ( extractFloat64Exp( a ) == 0x7FF ) && extractFloat64Frac( a ) )
          || ( ( extractFloat64Exp( b ) == 0x7FF ) && extractFloat64Frac( b ) )
-       ) {
-        /* Do nothing, even if NaN as we're quiet */
-        return 0;
-    }
+       ) अणु
+        /* Do nothing, even अगर NaN as we're quiet */
+        वापस 0;
+    पूर्ण
     aSign = extractFloat64Sign( a );
     bSign = extractFloat64Sign( b );
-    if ( aSign != bSign ) return aSign || ( (bits64) ( ( a | b )<<1 ) == 0 );
-    return ( a == b ) || ( aSign ^ ( a < b ) );
+    अगर ( aSign != bSign ) वापस aSign || ( (bits64) ( ( a | b )<<1 ) == 0 );
+    वापस ( a == b ) || ( aSign ^ ( a < b ) );
 
-}
+पूर्ण
 
 /*
 -------------------------------------------------------------------------------
-Returns 1 if the double-precision floating-point value `a' is less than
-the corresponding value `b', and 0 otherwise.  Quiet NaNs do not cause an
-exception.  Otherwise, the comparison is performed according to the IEC/IEEE
-Standard for Binary Floating-point Arithmetic.
+Returns 1 अगर the द्विगुन-precision भग्नing-poपूर्णांक value `a' is less than
+the corresponding value `b', and 0 otherwise.  Quiet NaNs करो not cause an
+exception.  Otherwise, the comparison is perक्रमmed according to the IEC/IEEE
+Standard क्रम Binary Floating-poपूर्णांक Arithmetic.
 -------------------------------------------------------------------------------
 */
-flag float64_lt_quiet( float64 a, float64 b )
-{
+flag भग्न64_lt_quiet( भग्न64 a, भग्न64 b )
+अणु
     flag aSign, bSign;
 
-    if (    ( ( extractFloat64Exp( a ) == 0x7FF ) && extractFloat64Frac( a ) )
+    अगर (    ( ( extractFloat64Exp( a ) == 0x7FF ) && extractFloat64Frac( a ) )
          || ( ( extractFloat64Exp( b ) == 0x7FF ) && extractFloat64Frac( b ) )
-       ) {
-        /* Do nothing, even if NaN as we're quiet */
-        return 0;
-    }
+       ) अणु
+        /* Do nothing, even अगर NaN as we're quiet */
+        वापस 0;
+    पूर्ण
     aSign = extractFloat64Sign( a );
     bSign = extractFloat64Sign( b );
-    if ( aSign != bSign ) return aSign && ( (bits64) ( ( a | b )<<1 ) != 0 );
-    return ( a != b ) && ( aSign ^ ( a < b ) );
+    अगर ( aSign != bSign ) वापस aSign && ( (bits64) ( ( a | b )<<1 ) != 0 );
+    वापस ( a != b ) && ( aSign ^ ( a < b ) );
 
-}
+पूर्ण
 
-#ifdef FLOATX80
+#अगर_घोषित FLOATX80
 
 /*
 -------------------------------------------------------------------------------
-Returns the result of converting the extended double-precision floating-
-point value `a' to the 32-bit two's complement integer format.  The
-conversion is performed according to the IEC/IEEE Standard for Binary
-Floating-point Arithmetic---which means in particular that the conversion
+Returns the result of converting the extended द्विगुन-precision भग्नing-
+poपूर्णांक value `a' to the 32-bit two's complement पूर्णांकeger क्रमmat.  The
+conversion is perक्रमmed according to the IEC/IEEE Standard क्रम Binary
+Floating-poपूर्णांक Arithmetic---which means in particular that the conversion
 is rounded according to the current rounding mode.  If `a' is a NaN, the
-largest positive integer is returned.  Otherwise, if the conversion
-overflows, the largest integer with the same sign as `a' is returned.
+largest positive पूर्णांकeger is वापसed.  Otherwise, अगर the conversion
+overflows, the largest पूर्णांकeger with the same sign as `a' is वापसed.
 -------------------------------------------------------------------------------
 */
-int32 floatx80_to_int32( struct roundingData *roundData, floatx80 a )
-{
+पूर्णांक32 भग्नx80_to_पूर्णांक32( काष्ठा roundingData *roundData, भग्नx80 a )
+अणु
     flag aSign;
-    int32 aExp, shiftCount;
+    पूर्णांक32 aExp, shअगरtCount;
     bits64 aSig;
 
     aSig = extractFloatx80Frac( a );
     aExp = extractFloatx80Exp( a );
     aSign = extractFloatx80Sign( a );
-    if ( ( aExp == 0x7FFF ) && (bits64) ( aSig<<1 ) ) aSign = 0;
-    shiftCount = 0x4037 - aExp;
-    if ( shiftCount <= 0 ) shiftCount = 1;
-    shift64RightJamming( aSig, shiftCount, &aSig );
-    return roundAndPackInt32( roundData, aSign, aSig );
+    अगर ( ( aExp == 0x7FFF ) && (bits64) ( aSig<<1 ) ) aSign = 0;
+    shअगरtCount = 0x4037 - aExp;
+    अगर ( shअगरtCount <= 0 ) shअगरtCount = 1;
+    shअगरt64RightJamming( aSig, shअगरtCount, &aSig );
+    वापस roundAndPackInt32( roundData, aSign, aSig );
 
-}
+पूर्ण
 
 /*
 -------------------------------------------------------------------------------
-Returns the result of converting the extended double-precision floating-
-point value `a' to the 32-bit two's complement integer format.  The
-conversion is performed according to the IEC/IEEE Standard for Binary
-Floating-point Arithmetic, except that the conversion is always rounded
-toward zero.  If `a' is a NaN, the largest positive integer is returned.
-Otherwise, if the conversion overflows, the largest integer with the same
-sign as `a' is returned.
+Returns the result of converting the extended द्विगुन-precision भग्नing-
+poपूर्णांक value `a' to the 32-bit two's complement पूर्णांकeger क्रमmat.  The
+conversion is perक्रमmed according to the IEC/IEEE Standard क्रम Binary
+Floating-poपूर्णांक Arithmetic, except that the conversion is always rounded
+toward zero.  If `a' is a NaN, the largest positive पूर्णांकeger is वापसed.
+Otherwise, अगर the conversion overflows, the largest पूर्णांकeger with the same
+sign as `a' is वापसed.
 -------------------------------------------------------------------------------
 */
-int32 floatx80_to_int32_round_to_zero( floatx80 a )
-{
+पूर्णांक32 भग्नx80_to_पूर्णांक32_round_to_zero( भग्नx80 a )
+अणु
     flag aSign;
-    int32 aExp, shiftCount;
+    पूर्णांक32 aExp, shअगरtCount;
     bits64 aSig, savedASig;
-    int32 z;
+    पूर्णांक32 z;
 
     aSig = extractFloatx80Frac( a );
     aExp = extractFloatx80Exp( a );
     aSign = extractFloatx80Sign( a );
-    shiftCount = 0x403E - aExp;
-    if ( shiftCount < 32 ) {
-        if ( ( aExp == 0x7FFF ) && (bits64) ( aSig<<1 ) ) aSign = 0;
-        goto invalid;
-    }
-    else if ( 63 < shiftCount ) {
-        if ( aExp || aSig ) float_raise( float_flag_inexact );
-        return 0;
-    }
+    shअगरtCount = 0x403E - aExp;
+    अगर ( shअगरtCount < 32 ) अणु
+        अगर ( ( aExp == 0x7FFF ) && (bits64) ( aSig<<1 ) ) aSign = 0;
+        जाओ invalid;
+    पूर्ण
+    अन्यथा अगर ( 63 < shअगरtCount ) अणु
+        अगर ( aExp || aSig ) भग्न_उठाओ( भग्न_flag_inexact );
+        वापस 0;
+    पूर्ण
     savedASig = aSig;
-    aSig >>= shiftCount;
+    aSig >>= shअगरtCount;
     z = aSig;
-    if ( aSign ) z = - z;
-    if ( ( z < 0 ) ^ aSign ) {
+    अगर ( aSign ) z = - z;
+    अगर ( ( z < 0 ) ^ aSign ) अणु
  invalid:
-        float_raise( float_flag_invalid );
-        return aSign ? 0x80000000 : 0x7FFFFFFF;
-    }
-    if ( ( aSig<<shiftCount ) != savedASig ) {
-        float_raise( float_flag_inexact );
-    }
-    return z;
+        भग्न_उठाओ( भग्न_flag_invalid );
+        वापस aSign ? 0x80000000 : 0x7FFFFFFF;
+    पूर्ण
+    अगर ( ( aSig<<shअगरtCount ) != savedASig ) अणु
+        भग्न_उठाओ( भग्न_flag_inexact );
+    पूर्ण
+    वापस z;
 
-}
+पूर्ण
 
 /*
 -------------------------------------------------------------------------------
-Returns the result of converting the extended double-precision floating-
-point value `a' to the single-precision floating-point format.  The
-conversion is performed according to the IEC/IEEE Standard for Binary
-Floating-point Arithmetic.
+Returns the result of converting the extended द्विगुन-precision भग्नing-
+poपूर्णांक value `a' to the single-precision भग्नing-poपूर्णांक क्रमmat.  The
+conversion is perक्रमmed according to the IEC/IEEE Standard क्रम Binary
+Floating-poपूर्णांक Arithmetic.
 -------------------------------------------------------------------------------
 */
-float32 floatx80_to_float32( struct roundingData *roundData, floatx80 a )
-{
+भग्न32 भग्नx80_to_भग्न32( काष्ठा roundingData *roundData, भग्नx80 a )
+अणु
     flag aSign;
-    int32 aExp;
+    पूर्णांक32 aExp;
     bits64 aSig;
 
     aSig = extractFloatx80Frac( a );
     aExp = extractFloatx80Exp( a );
     aSign = extractFloatx80Sign( a );
-    if ( aExp == 0x7FFF ) {
-        if ( (bits64) ( aSig<<1 ) ) {
-            return commonNaNToFloat32( floatx80ToCommonNaN( a ) );
-        }
-        return packFloat32( aSign, 0xFF, 0 );
-    }
-    shift64RightJamming( aSig, 33, &aSig );
-    if ( aExp || aSig ) aExp -= 0x3F81;
-    return roundAndPackFloat32( roundData, aSign, aExp, aSig );
+    अगर ( aExp == 0x7FFF ) अणु
+        अगर ( (bits64) ( aSig<<1 ) ) अणु
+            वापस commonNaNToFloat32( भग्नx80ToCommonNaN( a ) );
+        पूर्ण
+        वापस packFloat32( aSign, 0xFF, 0 );
+    पूर्ण
+    shअगरt64RightJamming( aSig, 33, &aSig );
+    अगर ( aExp || aSig ) aExp -= 0x3F81;
+    वापस roundAndPackFloat32( roundData, aSign, aExp, aSig );
 
-}
+पूर्ण
 
 /*
 -------------------------------------------------------------------------------
-Returns the result of converting the extended double-precision floating-
-point value `a' to the double-precision floating-point format.  The
-conversion is performed according to the IEC/IEEE Standard for Binary
-Floating-point Arithmetic.
+Returns the result of converting the extended द्विगुन-precision भग्नing-
+poपूर्णांक value `a' to the द्विगुन-precision भग्नing-poपूर्णांक क्रमmat.  The
+conversion is perक्रमmed according to the IEC/IEEE Standard क्रम Binary
+Floating-poपूर्णांक Arithmetic.
 -------------------------------------------------------------------------------
 */
-float64 floatx80_to_float64( struct roundingData *roundData, floatx80 a )
-{
+भग्न64 भग्नx80_to_भग्न64( काष्ठा roundingData *roundData, भग्नx80 a )
+अणु
     flag aSign;
-    int32 aExp;
+    पूर्णांक32 aExp;
     bits64 aSig, zSig;
 
     aSig = extractFloatx80Frac( a );
     aExp = extractFloatx80Exp( a );
     aSign = extractFloatx80Sign( a );
-    if ( aExp == 0x7FFF ) {
-        if ( (bits64) ( aSig<<1 ) ) {
-            return commonNaNToFloat64( floatx80ToCommonNaN( a ) );
-        }
-        return packFloat64( aSign, 0x7FF, 0 );
-    }
-    shift64RightJamming( aSig, 1, &zSig );
-    if ( aExp || aSig ) aExp -= 0x3C01;
-    return roundAndPackFloat64( roundData, aSign, aExp, zSig );
+    अगर ( aExp == 0x7FFF ) अणु
+        अगर ( (bits64) ( aSig<<1 ) ) अणु
+            वापस commonNaNToFloat64( भग्नx80ToCommonNaN( a ) );
+        पूर्ण
+        वापस packFloat64( aSign, 0x7FF, 0 );
+    पूर्ण
+    shअगरt64RightJamming( aSig, 1, &zSig );
+    अगर ( aExp || aSig ) aExp -= 0x3C01;
+    वापस roundAndPackFloat64( roundData, aSign, aExp, zSig );
 
-}
+पूर्ण
 
 /*
 -------------------------------------------------------------------------------
-Rounds the extended double-precision floating-point value `a' to an integer,
-and returns the result as an extended quadruple-precision floating-point
-value.  The operation is performed according to the IEC/IEEE Standard for
-Binary Floating-point Arithmetic.
+Rounds the extended द्विगुन-precision भग्नing-poपूर्णांक value `a' to an पूर्णांकeger,
+and वापसs the result as an extended quadruple-precision भग्नing-poपूर्णांक
+value.  The operation is perक्रमmed according to the IEC/IEEE Standard क्रम
+Binary Floating-poपूर्णांक Arithmetic.
 -------------------------------------------------------------------------------
 */
-floatx80 floatx80_round_to_int( struct roundingData *roundData, floatx80 a )
-{
+भग्नx80 भग्नx80_round_to_पूर्णांक( काष्ठा roundingData *roundData, भग्नx80 a )
+अणु
     flag aSign;
-    int32 aExp;
+    पूर्णांक32 aExp;
     bits64 lastBitMask, roundBitsMask;
-    int8 roundingMode;
-    floatx80 z;
+    पूर्णांक8 roundingMode;
+    भग्नx80 z;
 
     aExp = extractFloatx80Exp( a );
-    if ( 0x403E <= aExp ) {
-        if ( ( aExp == 0x7FFF ) && (bits64) ( extractFloatx80Frac( a )<<1 ) ) {
-            return propagateFloatx80NaN( a, a );
-        }
-        return a;
-    }
-    if ( aExp <= 0x3FFE ) {
-        if (    ( aExp == 0 )
-             && ( (bits64) ( extractFloatx80Frac( a )<<1 ) == 0 ) ) {
-            return a;
-        }
-        roundData->exception |= float_flag_inexact;
+    अगर ( 0x403E <= aExp ) अणु
+        अगर ( ( aExp == 0x7FFF ) && (bits64) ( extractFloatx80Frac( a )<<1 ) ) अणु
+            वापस propagateFloatx80NaN( a, a );
+        पूर्ण
+        वापस a;
+    पूर्ण
+    अगर ( aExp <= 0x3FFE ) अणु
+        अगर (    ( aExp == 0 )
+             && ( (bits64) ( extractFloatx80Frac( a )<<1 ) == 0 ) ) अणु
+            वापस a;
+        पूर्ण
+        roundData->exception |= भग्न_flag_inexact;
         aSign = extractFloatx80Sign( a );
-        switch ( roundData->mode ) {
-         case float_round_nearest_even:
-            if ( ( aExp == 0x3FFE ) && (bits64) ( extractFloatx80Frac( a )<<1 )
-               ) {
-                return
+        चयन ( roundData->mode ) अणु
+         हाल भग्न_round_nearest_even:
+            अगर ( ( aExp == 0x3FFE ) && (bits64) ( extractFloatx80Frac( a )<<1 )
+               ) अणु
+                वापस
                     packFloatx80( aSign, 0x3FFF, LIT64( 0x8000000000000000 ) );
-            }
-            break;
-         case float_round_down:
-            return
+            पूर्ण
+            अवरोध;
+         हाल भग्न_round_करोwn:
+            वापस
                   aSign ?
                       packFloatx80( 1, 0x3FFF, LIT64( 0x8000000000000000 ) )
                 : packFloatx80( 0, 0, 0 );
-         case float_round_up:
-            return
+         हाल भग्न_round_up:
+            वापस
                   aSign ? packFloatx80( 1, 0, 0 )
                 : packFloatx80( 0, 0x3FFF, LIT64( 0x8000000000000000 ) );
-        }
-        return packFloatx80( aSign, 0, 0 );
-    }
+        पूर्ण
+        वापस packFloatx80( aSign, 0, 0 );
+    पूर्ण
     lastBitMask = 1;
     lastBitMask <<= 0x403E - aExp;
     roundBitsMask = lastBitMask - 1;
     z = a;
     roundingMode = roundData->mode;
-    if ( roundingMode == float_round_nearest_even ) {
+    अगर ( roundingMode == भग्न_round_nearest_even ) अणु
         z.low += lastBitMask>>1;
-        if ( ( z.low & roundBitsMask ) == 0 ) z.low &= ~ lastBitMask;
-    }
-    else if ( roundingMode != float_round_to_zero ) {
-        if ( extractFloatx80Sign( z ) ^ ( roundingMode == float_round_up ) ) {
+        अगर ( ( z.low & roundBitsMask ) == 0 ) z.low &= ~ lastBitMask;
+    पूर्ण
+    अन्यथा अगर ( roundingMode != भग्न_round_to_zero ) अणु
+        अगर ( extractFloatx80Sign( z ) ^ ( roundingMode == भग्न_round_up ) ) अणु
             z.low += roundBitsMask;
-        }
-    }
+        पूर्ण
+    पूर्ण
     z.low &= ~ roundBitsMask;
-    if ( z.low == 0 ) {
+    अगर ( z.low == 0 ) अणु
         ++z.high;
         z.low = LIT64( 0x8000000000000000 );
-    }
-    if ( z.low != a.low ) roundData->exception |= float_flag_inexact;
-    return z;
+    पूर्ण
+    अगर ( z.low != a.low ) roundData->exception |= भग्न_flag_inexact;
+    वापस z;
 
-}
+पूर्ण
 
 /*
 -------------------------------------------------------------------------------
-Returns the result of adding the absolute values of the extended double-
-precision floating-point values `a' and `b'.  If `zSign' is true, the sum is
-negated before being returned.  `zSign' is ignored if the result is a NaN.
-The addition is performed according to the IEC/IEEE Standard for Binary
-Floating-point Arithmetic.
+Returns the result of adding the असलolute values of the extended द्विगुन-
+precision भग्नing-poपूर्णांक values `a' and `b'.  If `zSign' is true, the sum is
+negated beक्रमe being वापसed.  `zSign' is ignored अगर the result is a NaN.
+The addition is perक्रमmed according to the IEC/IEEE Standard क्रम Binary
+Floating-poपूर्णांक Arithmetic.
 -------------------------------------------------------------------------------
 */
-static floatx80 addFloatx80Sigs( struct roundingData *roundData, floatx80 a, floatx80 b, flag zSign )
-{
-    int32 aExp, bExp, zExp;
+अटल भग्नx80 addFloatx80Sigs( काष्ठा roundingData *roundData, भग्नx80 a, भग्नx80 b, flag zSign )
+अणु
+    पूर्णांक32 aExp, bExp, zExp;
     bits64 aSig, bSig, zSig0, zSig1;
-    int32 expDiff;
+    पूर्णांक32 expDअगरf;
 
     aSig = extractFloatx80Frac( a );
     aExp = extractFloatx80Exp( a );
     bSig = extractFloatx80Frac( b );
     bExp = extractFloatx80Exp( b );
-    expDiff = aExp - bExp;
-    if ( 0 < expDiff ) {
-        if ( aExp == 0x7FFF ) {
-            if ( (bits64) ( aSig<<1 ) ) return propagateFloatx80NaN( a, b );
-            return a;
-        }
-        if ( bExp == 0 ) --expDiff;
-        shift64ExtraRightJamming( bSig, 0, expDiff, &bSig, &zSig1 );
+    expDअगरf = aExp - bExp;
+    अगर ( 0 < expDअगरf ) अणु
+        अगर ( aExp == 0x7FFF ) अणु
+            अगर ( (bits64) ( aSig<<1 ) ) वापस propagateFloatx80NaN( a, b );
+            वापस a;
+        पूर्ण
+        अगर ( bExp == 0 ) --expDअगरf;
+        shअगरt64ExtraRightJamming( bSig, 0, expDअगरf, &bSig, &zSig1 );
         zExp = aExp;
-    }
-    else if ( expDiff < 0 ) {
-        if ( bExp == 0x7FFF ) {
-            if ( (bits64) ( bSig<<1 ) ) return propagateFloatx80NaN( a, b );
-            return packFloatx80( zSign, 0x7FFF, LIT64( 0x8000000000000000 ) );
-        }
-        if ( aExp == 0 ) ++expDiff;
-        shift64ExtraRightJamming( aSig, 0, - expDiff, &aSig, &zSig1 );
+    पूर्ण
+    अन्यथा अगर ( expDअगरf < 0 ) अणु
+        अगर ( bExp == 0x7FFF ) अणु
+            अगर ( (bits64) ( bSig<<1 ) ) वापस propagateFloatx80NaN( a, b );
+            वापस packFloatx80( zSign, 0x7FFF, LIT64( 0x8000000000000000 ) );
+        पूर्ण
+        अगर ( aExp == 0 ) ++expDअगरf;
+        shअगरt64ExtraRightJamming( aSig, 0, - expDअगरf, &aSig, &zSig1 );
         zExp = bExp;
-    }
-    else {
-        if ( aExp == 0x7FFF ) {
-            if ( (bits64) ( ( aSig | bSig )<<1 ) ) {
-                return propagateFloatx80NaN( a, b );
-            }
-            return a;
-        }
+    पूर्ण
+    अन्यथा अणु
+        अगर ( aExp == 0x7FFF ) अणु
+            अगर ( (bits64) ( ( aSig | bSig )<<1 ) ) अणु
+                वापस propagateFloatx80NaN( a, b );
+            पूर्ण
+            वापस a;
+        पूर्ण
         zSig1 = 0;
         zSig0 = aSig + bSig;
-        if ( aExp == 0 ) {
+        अगर ( aExp == 0 ) अणु
             normalizeFloatx80Subnormal( zSig0, &zExp, &zSig0 );
-            goto roundAndPack;
-        }
+            जाओ roundAndPack;
+        पूर्ण
         zExp = aExp;
-        goto shiftRight1;
-    }
+        जाओ shअगरtRight1;
+    पूर्ण
     
     zSig0 = aSig + bSig;
 
-    if ( (sbits64) zSig0 < 0 ) goto roundAndPack; 
- shiftRight1:
-    shift64ExtraRightJamming( zSig0, zSig1, 1, &zSig0, &zSig1 );
+    अगर ( (sbits64) zSig0 < 0 ) जाओ roundAndPack; 
+ shअगरtRight1:
+    shअगरt64ExtraRightJamming( zSig0, zSig1, 1, &zSig0, &zSig1 );
     zSig0 |= LIT64( 0x8000000000000000 );
     ++zExp;
  roundAndPack:
-    return
+    वापस
         roundAndPackFloatx80(
             roundData, zSign, zExp, zSig0, zSig1 );
 
-}
+पूर्ण
 
 /*
 -------------------------------------------------------------------------------
-Returns the result of subtracting the absolute values of the extended
-double-precision floating-point values `a' and `b'.  If `zSign' is true,
-the difference is negated before being returned.  `zSign' is ignored if the
-result is a NaN.  The subtraction is performed according to the IEC/IEEE
-Standard for Binary Floating-point Arithmetic.
+Returns the result of subtracting the असलolute values of the extended
+द्विगुन-precision भग्नing-poपूर्णांक values `a' and `b'.  If `zSign' is true,
+the dअगरference is negated beक्रमe being वापसed.  `zSign' is ignored अगर the
+result is a NaN.  The subtraction is perक्रमmed according to the IEC/IEEE
+Standard क्रम Binary Floating-poपूर्णांक Arithmetic.
 -------------------------------------------------------------------------------
 */
-static floatx80 subFloatx80Sigs( struct roundingData *roundData, floatx80 a, floatx80 b, flag zSign )
-{
-    int32 aExp, bExp, zExp;
+अटल भग्नx80 subFloatx80Sigs( काष्ठा roundingData *roundData, भग्नx80 a, भग्नx80 b, flag zSign )
+अणु
+    पूर्णांक32 aExp, bExp, zExp;
     bits64 aSig, bSig, zSig0, zSig1;
-    int32 expDiff;
-    floatx80 z;
+    पूर्णांक32 expDअगरf;
+    भग्नx80 z;
 
     aSig = extractFloatx80Frac( a );
     aExp = extractFloatx80Exp( a );
     bSig = extractFloatx80Frac( b );
     bExp = extractFloatx80Exp( b );
-    expDiff = aExp - bExp;
-    if ( 0 < expDiff ) goto aExpBigger;
-    if ( expDiff < 0 ) goto bExpBigger;
-    if ( aExp == 0x7FFF ) {
-        if ( (bits64) ( ( aSig | bSig )<<1 ) ) {
-            return propagateFloatx80NaN( a, b );
-        }
-        roundData->exception |= float_flag_invalid;
-        z.low = floatx80_default_nan_low;
-        z.high = floatx80_default_nan_high;
+    expDअगरf = aExp - bExp;
+    अगर ( 0 < expDअगरf ) जाओ aExpBigger;
+    अगर ( expDअगरf < 0 ) जाओ bExpBigger;
+    अगर ( aExp == 0x7FFF ) अणु
+        अगर ( (bits64) ( ( aSig | bSig )<<1 ) ) अणु
+            वापस propagateFloatx80NaN( a, b );
+        पूर्ण
+        roundData->exception |= भग्न_flag_invalid;
+        z.low = भग्नx80_शेष_nan_low;
+        z.high = भग्नx80_शेष_nan_high;
         z.__padding = 0;
-        return z;
-    }
-    if ( aExp == 0 ) {
+        वापस z;
+    पूर्ण
+    अगर ( aExp == 0 ) अणु
         aExp = 1;
         bExp = 1;
-    }
+    पूर्ण
     zSig1 = 0;
-    if ( bSig < aSig ) goto aBigger;
-    if ( aSig < bSig ) goto bBigger;
-    return packFloatx80( roundData->mode == float_round_down, 0, 0 );
+    अगर ( bSig < aSig ) जाओ aBigger;
+    अगर ( aSig < bSig ) जाओ bBigger;
+    वापस packFloatx80( roundData->mode == भग्न_round_करोwn, 0, 0 );
  bExpBigger:
-    if ( bExp == 0x7FFF ) {
-        if ( (bits64) ( bSig<<1 ) ) return propagateFloatx80NaN( a, b );
-        return packFloatx80( zSign ^ 1, 0x7FFF, LIT64( 0x8000000000000000 ) );
-    }
-    if ( aExp == 0 ) ++expDiff;
-    shift128RightJamming( aSig, 0, - expDiff, &aSig, &zSig1 );
+    अगर ( bExp == 0x7FFF ) अणु
+        अगर ( (bits64) ( bSig<<1 ) ) वापस propagateFloatx80NaN( a, b );
+        वापस packFloatx80( zSign ^ 1, 0x7FFF, LIT64( 0x8000000000000000 ) );
+    पूर्ण
+    अगर ( aExp == 0 ) ++expDअगरf;
+    shअगरt128RightJamming( aSig, 0, - expDअगरf, &aSig, &zSig1 );
  bBigger:
     sub128( bSig, 0, aSig, zSig1, &zSig0, &zSig1 );
     zExp = bExp;
     zSign ^= 1;
-    goto normalizeRoundAndPack;
+    जाओ normalizeRoundAndPack;
  aExpBigger:
-    if ( aExp == 0x7FFF ) {
-        if ( (bits64) ( aSig<<1 ) ) return propagateFloatx80NaN( a, b );
-        return a;
-    }
-    if ( bExp == 0 ) --expDiff;
-    shift128RightJamming( bSig, 0, expDiff, &bSig, &zSig1 );
+    अगर ( aExp == 0x7FFF ) अणु
+        अगर ( (bits64) ( aSig<<1 ) ) वापस propagateFloatx80NaN( a, b );
+        वापस a;
+    पूर्ण
+    अगर ( bExp == 0 ) --expDअगरf;
+    shअगरt128RightJamming( bSig, 0, expDअगरf, &bSig, &zSig1 );
  aBigger:
     sub128( aSig, 0, bSig, zSig1, &zSig0, &zSig1 );
     zExp = aExp;
  normalizeRoundAndPack:
-    return
+    वापस
         normalizeRoundAndPackFloatx80(
             roundData, zSign, zExp, zSig0, zSig1 );
 
-}
+पूर्ण
 
 /*
 -------------------------------------------------------------------------------
-Returns the result of adding the extended double-precision floating-point
-values `a' and `b'.  The operation is performed according to the IEC/IEEE
-Standard for Binary Floating-point Arithmetic.
+Returns the result of adding the extended द्विगुन-precision भग्नing-poपूर्णांक
+values `a' and `b'.  The operation is perक्रमmed according to the IEC/IEEE
+Standard क्रम Binary Floating-poपूर्णांक Arithmetic.
 -------------------------------------------------------------------------------
 */
-floatx80 floatx80_add( struct roundingData *roundData, floatx80 a, floatx80 b )
-{
+भग्नx80 भग्नx80_add( काष्ठा roundingData *roundData, भग्नx80 a, भग्नx80 b )
+अणु
     flag aSign, bSign;
     
     aSign = extractFloatx80Sign( a );
     bSign = extractFloatx80Sign( b );
-    if ( aSign == bSign ) {
-        return addFloatx80Sigs( roundData, a, b, aSign );
-    }
-    else {
-        return subFloatx80Sigs( roundData, a, b, aSign );
-    }
+    अगर ( aSign == bSign ) अणु
+        वापस addFloatx80Sigs( roundData, a, b, aSign );
+    पूर्ण
+    अन्यथा अणु
+        वापस subFloatx80Sigs( roundData, a, b, aSign );
+    पूर्ण
     
-}
+पूर्ण
 
 /*
 -------------------------------------------------------------------------------
-Returns the result of subtracting the extended double-precision floating-
-point values `a' and `b'.  The operation is performed according to the
-IEC/IEEE Standard for Binary Floating-point Arithmetic.
+Returns the result of subtracting the extended द्विगुन-precision भग्नing-
+poपूर्णांक values `a' and `b'.  The operation is perक्रमmed according to the
+IEC/IEEE Standard क्रम Binary Floating-poपूर्णांक Arithmetic.
 -------------------------------------------------------------------------------
 */
-floatx80 floatx80_sub( struct roundingData *roundData, floatx80 a, floatx80 b )
-{
+भग्नx80 भग्नx80_sub( काष्ठा roundingData *roundData, भग्नx80 a, भग्नx80 b )
+अणु
     flag aSign, bSign;
 
     aSign = extractFloatx80Sign( a );
     bSign = extractFloatx80Sign( b );
-    if ( aSign == bSign ) {
-        return subFloatx80Sigs( roundData, a, b, aSign );
-    }
-    else {
-        return addFloatx80Sigs( roundData, a, b, aSign );
-    }
+    अगर ( aSign == bSign ) अणु
+        वापस subFloatx80Sigs( roundData, a, b, aSign );
+    पूर्ण
+    अन्यथा अणु
+        वापस addFloatx80Sigs( roundData, a, b, aSign );
+    पूर्ण
 
-}
+पूर्ण
 
 /*
 -------------------------------------------------------------------------------
-Returns the result of multiplying the extended double-precision floating-
-point values `a' and `b'.  The operation is performed according to the
-IEC/IEEE Standard for Binary Floating-point Arithmetic.
+Returns the result of multiplying the extended द्विगुन-precision भग्नing-
+poपूर्णांक values `a' and `b'.  The operation is perक्रमmed according to the
+IEC/IEEE Standard क्रम Binary Floating-poपूर्णांक Arithmetic.
 -------------------------------------------------------------------------------
 */
-floatx80 floatx80_mul( struct roundingData *roundData, floatx80 a, floatx80 b )
-{
+भग्नx80 भग्नx80_mul( काष्ठा roundingData *roundData, भग्नx80 a, भग्नx80 b )
+अणु
     flag aSign, bSign, zSign;
-    int32 aExp, bExp, zExp;
+    पूर्णांक32 aExp, bExp, zExp;
     bits64 aSig, bSig, zSig0, zSig1;
-    floatx80 z;
+    भग्नx80 z;
 
     aSig = extractFloatx80Frac( a );
     aExp = extractFloatx80Exp( a );
@@ -2937,60 +2938,60 @@ floatx80 floatx80_mul( struct roundingData *roundData, floatx80 a, floatx80 b )
     bExp = extractFloatx80Exp( b );
     bSign = extractFloatx80Sign( b );
     zSign = aSign ^ bSign;
-    if ( aExp == 0x7FFF ) {
-        if (    (bits64) ( aSig<<1 )
-             || ( ( bExp == 0x7FFF ) && (bits64) ( bSig<<1 ) ) ) {
-            return propagateFloatx80NaN( a, b );
-        }
-        if ( ( bExp | bSig ) == 0 ) goto invalid;
-        return packFloatx80( zSign, 0x7FFF, LIT64( 0x8000000000000000 ) );
-    }
-    if ( bExp == 0x7FFF ) {
-        if ( (bits64) ( bSig<<1 ) ) return propagateFloatx80NaN( a, b );
-        if ( ( aExp | aSig ) == 0 ) {
+    अगर ( aExp == 0x7FFF ) अणु
+        अगर (    (bits64) ( aSig<<1 )
+             || ( ( bExp == 0x7FFF ) && (bits64) ( bSig<<1 ) ) ) अणु
+            वापस propagateFloatx80NaN( a, b );
+        पूर्ण
+        अगर ( ( bExp | bSig ) == 0 ) जाओ invalid;
+        वापस packFloatx80( zSign, 0x7FFF, LIT64( 0x8000000000000000 ) );
+    पूर्ण
+    अगर ( bExp == 0x7FFF ) अणु
+        अगर ( (bits64) ( bSig<<1 ) ) वापस propagateFloatx80NaN( a, b );
+        अगर ( ( aExp | aSig ) == 0 ) अणु
  invalid:
-            roundData->exception |= float_flag_invalid;
-            z.low = floatx80_default_nan_low;
-            z.high = floatx80_default_nan_high;
+            roundData->exception |= भग्न_flag_invalid;
+            z.low = भग्नx80_शेष_nan_low;
+            z.high = भग्नx80_शेष_nan_high;
             z.__padding = 0;
-            return z;
-        }
-        return packFloatx80( zSign, 0x7FFF, LIT64( 0x8000000000000000 ) );
-    }
-    if ( aExp == 0 ) {
-        if ( aSig == 0 ) return packFloatx80( zSign, 0, 0 );
+            वापस z;
+        पूर्ण
+        वापस packFloatx80( zSign, 0x7FFF, LIT64( 0x8000000000000000 ) );
+    पूर्ण
+    अगर ( aExp == 0 ) अणु
+        अगर ( aSig == 0 ) वापस packFloatx80( zSign, 0, 0 );
         normalizeFloatx80Subnormal( aSig, &aExp, &aSig );
-    }
-    if ( bExp == 0 ) {
-        if ( bSig == 0 ) return packFloatx80( zSign, 0, 0 );
+    पूर्ण
+    अगर ( bExp == 0 ) अणु
+        अगर ( bSig == 0 ) वापस packFloatx80( zSign, 0, 0 );
         normalizeFloatx80Subnormal( bSig, &bExp, &bSig );
-    }
+    पूर्ण
     zExp = aExp + bExp - 0x3FFE;
     mul64To128( aSig, bSig, &zSig0, &zSig1 );
-    if ( 0 < (sbits64) zSig0 ) {
-        shortShift128Left( zSig0, zSig1, 1, &zSig0, &zSig1 );
+    अगर ( 0 < (sbits64) zSig0 ) अणु
+        लघुShअगरt128Left( zSig0, zSig1, 1, &zSig0, &zSig1 );
         --zExp;
-    }
-    return
+    पूर्ण
+    वापस
         roundAndPackFloatx80(
             roundData, zSign, zExp, zSig0, zSig1 );
 
-}
+पूर्ण
 
 /*
 -------------------------------------------------------------------------------
-Returns the result of dividing the extended double-precision floating-point
-value `a' by the corresponding value `b'.  The operation is performed
-according to the IEC/IEEE Standard for Binary Floating-point Arithmetic.
+Returns the result of भागiding the extended द्विगुन-precision भग्नing-poपूर्णांक
+value `a' by the corresponding value `b'.  The operation is perक्रमmed
+according to the IEC/IEEE Standard क्रम Binary Floating-poपूर्णांक Arithmetic.
 -------------------------------------------------------------------------------
 */
-floatx80 floatx80_div( struct roundingData *roundData, floatx80 a, floatx80 b )
-{
+भग्नx80 भग्नx80_भाग( काष्ठा roundingData *roundData, भग्नx80 a, भग्नx80 b )
+अणु
     flag aSign, bSign, zSign;
-    int32 aExp, bExp, zExp;
+    पूर्णांक32 aExp, bExp, zExp;
     bits64 aSig, bSig, zSig0, zSig1;
     bits64 rem0, rem1, rem2, term0, term1, term2;
-    floatx80 z;
+    भग्नx80 z;
 
     aSig = extractFloatx80Frac( a );
     aExp = extractFloatx80Exp( a );
@@ -2999,80 +3000,80 @@ floatx80 floatx80_div( struct roundingData *roundData, floatx80 a, floatx80 b )
     bExp = extractFloatx80Exp( b );
     bSign = extractFloatx80Sign( b );
     zSign = aSign ^ bSign;
-    if ( aExp == 0x7FFF ) {
-        if ( (bits64) ( aSig<<1 ) ) return propagateFloatx80NaN( a, b );
-        if ( bExp == 0x7FFF ) {
-            if ( (bits64) ( bSig<<1 ) ) return propagateFloatx80NaN( a, b );
-            goto invalid;
-        }
-        return packFloatx80( zSign, 0x7FFF, LIT64( 0x8000000000000000 ) );
-    }
-    if ( bExp == 0x7FFF ) {
-        if ( (bits64) ( bSig<<1 ) ) return propagateFloatx80NaN( a, b );
-        return packFloatx80( zSign, 0, 0 );
-    }
-    if ( bExp == 0 ) {
-        if ( bSig == 0 ) {
-            if ( ( aExp | aSig ) == 0 ) {
+    अगर ( aExp == 0x7FFF ) अणु
+        अगर ( (bits64) ( aSig<<1 ) ) वापस propagateFloatx80NaN( a, b );
+        अगर ( bExp == 0x7FFF ) अणु
+            अगर ( (bits64) ( bSig<<1 ) ) वापस propagateFloatx80NaN( a, b );
+            जाओ invalid;
+        पूर्ण
+        वापस packFloatx80( zSign, 0x7FFF, LIT64( 0x8000000000000000 ) );
+    पूर्ण
+    अगर ( bExp == 0x7FFF ) अणु
+        अगर ( (bits64) ( bSig<<1 ) ) वापस propagateFloatx80NaN( a, b );
+        वापस packFloatx80( zSign, 0, 0 );
+    पूर्ण
+    अगर ( bExp == 0 ) अणु
+        अगर ( bSig == 0 ) अणु
+            अगर ( ( aExp | aSig ) == 0 ) अणु
  invalid:
-                roundData->exception |= float_flag_invalid;
-                z.low = floatx80_default_nan_low;
-                z.high = floatx80_default_nan_high;
+                roundData->exception |= भग्न_flag_invalid;
+                z.low = भग्नx80_शेष_nan_low;
+                z.high = भग्नx80_शेष_nan_high;
                 z.__padding = 0;
-                return z;
-            }
-            roundData->exception |= float_flag_divbyzero;
-            return packFloatx80( zSign, 0x7FFF, LIT64( 0x8000000000000000 ) );
-        }
+                वापस z;
+            पूर्ण
+            roundData->exception |= भग्न_flag_भागbyzero;
+            वापस packFloatx80( zSign, 0x7FFF, LIT64( 0x8000000000000000 ) );
+        पूर्ण
         normalizeFloatx80Subnormal( bSig, &bExp, &bSig );
-    }
-    if ( aExp == 0 ) {
-        if ( aSig == 0 ) return packFloatx80( zSign, 0, 0 );
+    पूर्ण
+    अगर ( aExp == 0 ) अणु
+        अगर ( aSig == 0 ) वापस packFloatx80( zSign, 0, 0 );
         normalizeFloatx80Subnormal( aSig, &aExp, &aSig );
-    }
+    पूर्ण
     zExp = aExp - bExp + 0x3FFE;
     rem1 = 0;
-    if ( bSig <= aSig ) {
-        shift128Right( aSig, 0, 1, &aSig, &rem1 );
+    अगर ( bSig <= aSig ) अणु
+        shअगरt128Right( aSig, 0, 1, &aSig, &rem1 );
         ++zExp;
-    }
+    पूर्ण
     zSig0 = estimateDiv128To64( aSig, rem1, bSig );
     mul64To128( bSig, zSig0, &term0, &term1 );
     sub128( aSig, rem1, term0, term1, &rem0, &rem1 );
-    while ( (sbits64) rem0 < 0 ) {
+    जबतक ( (sbits64) rem0 < 0 ) अणु
         --zSig0;
         add128( rem0, rem1, 0, bSig, &rem0, &rem1 );
-    }
+    पूर्ण
     zSig1 = estimateDiv128To64( rem1, 0, bSig );
-    if ( (bits64) ( zSig1<<1 ) <= 8 ) {
+    अगर ( (bits64) ( zSig1<<1 ) <= 8 ) अणु
         mul64To128( bSig, zSig1, &term1, &term2 );
         sub128( rem1, 0, term1, term2, &rem1, &rem2 );
-        while ( (sbits64) rem1 < 0 ) {
+        जबतक ( (sbits64) rem1 < 0 ) अणु
             --zSig1;
             add128( rem1, rem2, 0, bSig, &rem1, &rem2 );
-        }
+        पूर्ण
         zSig1 |= ( ( rem1 | rem2 ) != 0 );
-    }
-    return
+    पूर्ण
+    वापस
         roundAndPackFloatx80(
             roundData, zSign, zExp, zSig0, zSig1 );
 
-}
+पूर्ण
 
 /*
 -------------------------------------------------------------------------------
-Returns the remainder of the extended double-precision floating-point value
-`a' with respect to the corresponding value `b'.  The operation is performed
-according to the IEC/IEEE Standard for Binary Floating-point Arithmetic.
+Returns the reमुख्यder of the extended द्विगुन-precision भग्नing-poपूर्णांक value
+`a' with respect to the corresponding value `b'.  The operation is perक्रमmed
+according to the IEC/IEEE Standard क्रम Binary Floating-poपूर्णांक Arithmetic.
 -------------------------------------------------------------------------------
 */
-floatx80 floatx80_rem( struct roundingData *roundData, floatx80 a, floatx80 b )
-{
+भग्नx80 भग्नx80_rem( काष्ठा roundingData *roundData, भग्नx80 a, भग्नx80 b )
+अणु
     flag aSign, bSign, zSign;
-    int32 aExp, bExp, expDiff;
+    पूर्णांक32 aExp, bExp, expDअगरf;
     bits64 aSig0, aSig1, bSig;
     bits64 q, term0, term1, alternateASig0, alternateASig1;
-    floatx80 z;
+    भग्नx80 z;
 
     aSig0 = extractFloatx80Frac( a );
     aExp = extractFloatx80Exp( a );
@@ -3080,356 +3081,356 @@ floatx80 floatx80_rem( struct roundingData *roundData, floatx80 a, floatx80 b )
     bSig = extractFloatx80Frac( b );
     bExp = extractFloatx80Exp( b );
     bSign = extractFloatx80Sign( b );
-    if ( aExp == 0x7FFF ) {
-        if (    (bits64) ( aSig0<<1 )
-             || ( ( bExp == 0x7FFF ) && (bits64) ( bSig<<1 ) ) ) {
-            return propagateFloatx80NaN( a, b );
-        }
-        goto invalid;
-    }
-    if ( bExp == 0x7FFF ) {
-        if ( (bits64) ( bSig<<1 ) ) return propagateFloatx80NaN( a, b );
-        return a;
-    }
-    if ( bExp == 0 ) {
-        if ( bSig == 0 ) {
+    अगर ( aExp == 0x7FFF ) अणु
+        अगर (    (bits64) ( aSig0<<1 )
+             || ( ( bExp == 0x7FFF ) && (bits64) ( bSig<<1 ) ) ) अणु
+            वापस propagateFloatx80NaN( a, b );
+        पूर्ण
+        जाओ invalid;
+    पूर्ण
+    अगर ( bExp == 0x7FFF ) अणु
+        अगर ( (bits64) ( bSig<<1 ) ) वापस propagateFloatx80NaN( a, b );
+        वापस a;
+    पूर्ण
+    अगर ( bExp == 0 ) अणु
+        अगर ( bSig == 0 ) अणु
  invalid:
-            roundData->exception |= float_flag_invalid;
-            z.low = floatx80_default_nan_low;
-            z.high = floatx80_default_nan_high;
+            roundData->exception |= भग्न_flag_invalid;
+            z.low = भग्नx80_शेष_nan_low;
+            z.high = भग्नx80_शेष_nan_high;
             z.__padding = 0;
-            return z;
-        }
+            वापस z;
+        पूर्ण
         normalizeFloatx80Subnormal( bSig, &bExp, &bSig );
-    }
-    if ( aExp == 0 ) {
-        if ( (bits64) ( aSig0<<1 ) == 0 ) return a;
+    पूर्ण
+    अगर ( aExp == 0 ) अणु
+        अगर ( (bits64) ( aSig0<<1 ) == 0 ) वापस a;
         normalizeFloatx80Subnormal( aSig0, &aExp, &aSig0 );
-    }
+    पूर्ण
     bSig |= LIT64( 0x8000000000000000 );
     zSign = aSign;
-    expDiff = aExp - bExp;
+    expDअगरf = aExp - bExp;
     aSig1 = 0;
-    if ( expDiff < 0 ) {
-        if ( expDiff < -1 ) return a;
-        shift128Right( aSig0, 0, 1, &aSig0, &aSig1 );
-        expDiff = 0;
-    }
+    अगर ( expDअगरf < 0 ) अणु
+        अगर ( expDअगरf < -1 ) वापस a;
+        shअगरt128Right( aSig0, 0, 1, &aSig0, &aSig1 );
+        expDअगरf = 0;
+    पूर्ण
     q = ( bSig <= aSig0 );
-    if ( q ) aSig0 -= bSig;
-    expDiff -= 64;
-    while ( 0 < expDiff ) {
+    अगर ( q ) aSig0 -= bSig;
+    expDअगरf -= 64;
+    जबतक ( 0 < expDअगरf ) अणु
         q = estimateDiv128To64( aSig0, aSig1, bSig );
         q = ( 2 < q ) ? q - 2 : 0;
         mul64To128( bSig, q, &term0, &term1 );
         sub128( aSig0, aSig1, term0, term1, &aSig0, &aSig1 );
-        shortShift128Left( aSig0, aSig1, 62, &aSig0, &aSig1 );
-        expDiff -= 62;
-    }
-    expDiff += 64;
-    if ( 0 < expDiff ) {
+        लघुShअगरt128Left( aSig0, aSig1, 62, &aSig0, &aSig1 );
+        expDअगरf -= 62;
+    पूर्ण
+    expDअगरf += 64;
+    अगर ( 0 < expDअगरf ) अणु
         q = estimateDiv128To64( aSig0, aSig1, bSig );
         q = ( 2 < q ) ? q - 2 : 0;
-        q >>= 64 - expDiff;
-        mul64To128( bSig, q<<( 64 - expDiff ), &term0, &term1 );
+        q >>= 64 - expDअगरf;
+        mul64To128( bSig, q<<( 64 - expDअगरf ), &term0, &term1 );
         sub128( aSig0, aSig1, term0, term1, &aSig0, &aSig1 );
-        shortShift128Left( 0, bSig, 64 - expDiff, &term0, &term1 );
-        while ( le128( term0, term1, aSig0, aSig1 ) ) {
+        लघुShअगरt128Left( 0, bSig, 64 - expDअगरf, &term0, &term1 );
+        जबतक ( le128( term0, term1, aSig0, aSig1 ) ) अणु
             ++q;
             sub128( aSig0, aSig1, term0, term1, &aSig0, &aSig1 );
-        }
-    }
-    else {
+        पूर्ण
+    पूर्ण
+    अन्यथा अणु
         term1 = 0;
         term0 = bSig;
-    }
+    पूर्ण
     sub128( term0, term1, aSig0, aSig1, &alternateASig0, &alternateASig1 );
-    if (    lt128( alternateASig0, alternateASig1, aSig0, aSig1 )
+    अगर (    lt128( alternateASig0, alternateASig1, aSig0, aSig1 )
          || (    eq128( alternateASig0, alternateASig1, aSig0, aSig1 )
               && ( q & 1 ) )
-       ) {
+       ) अणु
         aSig0 = alternateASig0;
         aSig1 = alternateASig1;
         zSign = ! zSign;
-    }
+    पूर्ण
 
-    return
+    वापस
         normalizeRoundAndPackFloatx80(
-            roundData, zSign, bExp + expDiff, aSig0, aSig1 );
+            roundData, zSign, bExp + expDअगरf, aSig0, aSig1 );
 
-}
+पूर्ण
 
 /*
 -------------------------------------------------------------------------------
-Returns the square root of the extended double-precision floating-point
-value `a'.  The operation is performed according to the IEC/IEEE Standard
-for Binary Floating-point Arithmetic.
+Returns the square root of the extended द्विगुन-precision भग्नing-poपूर्णांक
+value `a'.  The operation is perक्रमmed according to the IEC/IEEE Standard
+क्रम Binary Floating-poपूर्णांक Arithmetic.
 -------------------------------------------------------------------------------
 */
-floatx80 floatx80_sqrt( struct roundingData *roundData, floatx80 a )
-{
+भग्नx80 भग्नx80_वर्ग_मूल( काष्ठा roundingData *roundData, भग्नx80 a )
+अणु
     flag aSign;
-    int32 aExp, zExp;
+    पूर्णांक32 aExp, zExp;
     bits64 aSig0, aSig1, zSig0, zSig1;
     bits64 rem0, rem1, rem2, rem3, term0, term1, term2, term3;
-    bits64 shiftedRem0, shiftedRem1;
-    floatx80 z;
+    bits64 shअगरtedRem0, shअगरtedRem1;
+    भग्नx80 z;
 
     aSig0 = extractFloatx80Frac( a );
     aExp = extractFloatx80Exp( a );
     aSign = extractFloatx80Sign( a );
-    if ( aExp == 0x7FFF ) {
-        if ( (bits64) ( aSig0<<1 ) ) return propagateFloatx80NaN( a, a );
-        if ( ! aSign ) return a;
-        goto invalid;
-    }
-    if ( aSign ) {
-        if ( ( aExp | aSig0 ) == 0 ) return a;
+    अगर ( aExp == 0x7FFF ) अणु
+        अगर ( (bits64) ( aSig0<<1 ) ) वापस propagateFloatx80NaN( a, a );
+        अगर ( ! aSign ) वापस a;
+        जाओ invalid;
+    पूर्ण
+    अगर ( aSign ) अणु
+        अगर ( ( aExp | aSig0 ) == 0 ) वापस a;
  invalid:
-        roundData->exception |= float_flag_invalid;
-        z.low = floatx80_default_nan_low;
-        z.high = floatx80_default_nan_high;
+        roundData->exception |= भग्न_flag_invalid;
+        z.low = भग्नx80_शेष_nan_low;
+        z.high = भग्नx80_शेष_nan_high;
         z.__padding = 0;
-        return z;
-    }
-    if ( aExp == 0 ) {
-        if ( aSig0 == 0 ) return packFloatx80( 0, 0, 0 );
+        वापस z;
+    पूर्ण
+    अगर ( aExp == 0 ) अणु
+        अगर ( aSig0 == 0 ) वापस packFloatx80( 0, 0, 0 );
         normalizeFloatx80Subnormal( aSig0, &aExp, &aSig0 );
-    }
+    पूर्ण
     zExp = ( ( aExp - 0x3FFF )>>1 ) + 0x3FFF;
     zSig0 = estimateSqrt32( aExp, aSig0>>32 );
     zSig0 <<= 31;
     aSig1 = 0;
-    shift128Right( aSig0, 0, ( aExp & 1 ) + 2, &aSig0, &aSig1 );
+    shअगरt128Right( aSig0, 0, ( aExp & 1 ) + 2, &aSig0, &aSig1 );
     zSig0 = estimateDiv128To64( aSig0, aSig1, zSig0 ) + zSig0 + 4;
-    if ( 0 <= (sbits64) zSig0 ) zSig0 = LIT64( 0xFFFFFFFFFFFFFFFF );
-    shortShift128Left( aSig0, aSig1, 2, &aSig0, &aSig1 );
+    अगर ( 0 <= (sbits64) zSig0 ) zSig0 = LIT64( 0xFFFFFFFFFFFFFFFF );
+    लघुShअगरt128Left( aSig0, aSig1, 2, &aSig0, &aSig1 );
     mul64To128( zSig0, zSig0, &term0, &term1 );
     sub128( aSig0, aSig1, term0, term1, &rem0, &rem1 );
-    while ( (sbits64) rem0 < 0 ) {
+    जबतक ( (sbits64) rem0 < 0 ) अणु
         --zSig0;
-        shortShift128Left( 0, zSig0, 1, &term0, &term1 );
+        लघुShअगरt128Left( 0, zSig0, 1, &term0, &term1 );
         term1 |= 1;
         add128( rem0, rem1, term0, term1, &rem0, &rem1 );
-    }
-    shortShift128Left( rem0, rem1, 63, &shiftedRem0, &shiftedRem1 );
-    zSig1 = estimateDiv128To64( shiftedRem0, shiftedRem1, zSig0 );
-    if ( (bits64) ( zSig1<<1 ) <= 10 ) {
-        if ( zSig1 == 0 ) zSig1 = 1;
+    पूर्ण
+    लघुShअगरt128Left( rem0, rem1, 63, &shअगरtedRem0, &shअगरtedRem1 );
+    zSig1 = estimateDiv128To64( shअगरtedRem0, shअगरtedRem1, zSig0 );
+    अगर ( (bits64) ( zSig1<<1 ) <= 10 ) अणु
+        अगर ( zSig1 == 0 ) zSig1 = 1;
         mul64To128( zSig0, zSig1, &term1, &term2 );
-        shortShift128Left( term1, term2, 1, &term1, &term2 );
+        लघुShअगरt128Left( term1, term2, 1, &term1, &term2 );
         sub128( rem1, 0, term1, term2, &rem1, &rem2 );
         mul64To128( zSig1, zSig1, &term2, &term3 );
         sub192( rem1, rem2, 0, 0, term2, term3, &rem1, &rem2, &rem3 );
-        while ( (sbits64) rem1 < 0 ) {
+        जबतक ( (sbits64) rem1 < 0 ) अणु
             --zSig1;
-            shortShift192Left( 0, zSig0, zSig1, 1, &term1, &term2, &term3 );
+            लघुShअगरt192Left( 0, zSig0, zSig1, 1, &term1, &term2, &term3 );
             term3 |= 1;
             add192(
                 rem1, rem2, rem3, term1, term2, term3, &rem1, &rem2, &rem3 );
-        }
+        पूर्ण
         zSig1 |= ( ( rem1 | rem2 | rem3 ) != 0 );
-    }
-    return
+    पूर्ण
+    वापस
         roundAndPackFloatx80(
             roundData, 0, zExp, zSig0, zSig1 );
 
-}
+पूर्ण
 
 /*
 -------------------------------------------------------------------------------
-Returns 1 if the extended double-precision floating-point value `a' is
+Returns 1 अगर the extended द्विगुन-precision भग्नing-poपूर्णांक value `a' is
 equal to the corresponding value `b', and 0 otherwise.  The comparison is
-performed according to the IEC/IEEE Standard for Binary Floating-point
+perक्रमmed according to the IEC/IEEE Standard क्रम Binary Floating-poपूर्णांक
 Arithmetic.
 -------------------------------------------------------------------------------
 */
-flag floatx80_eq( floatx80 a, floatx80 b )
-{
+flag भग्नx80_eq( भग्नx80 a, भग्नx80 b )
+अणु
 
-    if (    (    ( extractFloatx80Exp( a ) == 0x7FFF )
+    अगर (    (    ( extractFloatx80Exp( a ) == 0x7FFF )
               && (bits64) ( extractFloatx80Frac( a )<<1 ) )
          || (    ( extractFloatx80Exp( b ) == 0x7FFF )
               && (bits64) ( extractFloatx80Frac( b )<<1 ) )
-       ) {
-        if (    floatx80_is_signaling_nan( a )
-             || floatx80_is_signaling_nan( b ) ) {
-            float_raise( float_flag_invalid );
-        }
-        return 0;
-    }
-    return
+       ) अणु
+        अगर (    भग्नx80_is_संकेतing_nan( a )
+             || भग्नx80_is_संकेतing_nan( b ) ) अणु
+            भग्न_उठाओ( भग्न_flag_invalid );
+        पूर्ण
+        वापस 0;
+    पूर्ण
+    वापस
            ( a.low == b.low )
         && (    ( a.high == b.high )
              || (    ( a.low == 0 )
                   && ( (bits16) ( ( a.high | b.high )<<1 ) == 0 ) )
            );
 
-}
+पूर्ण
 
 /*
 -------------------------------------------------------------------------------
-Returns 1 if the extended double-precision floating-point value `a' is
+Returns 1 अगर the extended द्विगुन-precision भग्नing-poपूर्णांक value `a' is
 less than or equal to the corresponding value `b', and 0 otherwise.  The
-comparison is performed according to the IEC/IEEE Standard for Binary
-Floating-point Arithmetic.
+comparison is perक्रमmed according to the IEC/IEEE Standard क्रम Binary
+Floating-poपूर्णांक Arithmetic.
 -------------------------------------------------------------------------------
 */
-flag floatx80_le( floatx80 a, floatx80 b )
-{
+flag भग्नx80_le( भग्नx80 a, भग्नx80 b )
+अणु
     flag aSign, bSign;
 
-    if (    (    ( extractFloatx80Exp( a ) == 0x7FFF )
+    अगर (    (    ( extractFloatx80Exp( a ) == 0x7FFF )
               && (bits64) ( extractFloatx80Frac( a )<<1 ) )
          || (    ( extractFloatx80Exp( b ) == 0x7FFF )
               && (bits64) ( extractFloatx80Frac( b )<<1 ) )
-       ) {
-        float_raise( float_flag_invalid );
-        return 0;
-    }
+       ) अणु
+        भग्न_उठाओ( भग्न_flag_invalid );
+        वापस 0;
+    पूर्ण
     aSign = extractFloatx80Sign( a );
     bSign = extractFloatx80Sign( b );
-    if ( aSign != bSign ) {
-        return
+    अगर ( aSign != bSign ) अणु
+        वापस
                aSign
             || (    ( ( (bits16) ( ( a.high | b.high )<<1 ) ) | a.low | b.low )
                  == 0 );
-    }
-    return
+    पूर्ण
+    वापस
           aSign ? le128( b.high, b.low, a.high, a.low )
         : le128( a.high, a.low, b.high, b.low );
 
-}
+पूर्ण
 
 /*
 -------------------------------------------------------------------------------
-Returns 1 if the extended double-precision floating-point value `a' is
+Returns 1 अगर the extended द्विगुन-precision भग्नing-poपूर्णांक value `a' is
 less than the corresponding value `b', and 0 otherwise.  The comparison
-is performed according to the IEC/IEEE Standard for Binary Floating-point
+is perक्रमmed according to the IEC/IEEE Standard क्रम Binary Floating-poपूर्णांक
 Arithmetic.
 -------------------------------------------------------------------------------
 */
-flag floatx80_lt( floatx80 a, floatx80 b )
-{
+flag भग्नx80_lt( भग्नx80 a, भग्नx80 b )
+अणु
     flag aSign, bSign;
 
-    if (    (    ( extractFloatx80Exp( a ) == 0x7FFF )
+    अगर (    (    ( extractFloatx80Exp( a ) == 0x7FFF )
               && (bits64) ( extractFloatx80Frac( a )<<1 ) )
          || (    ( extractFloatx80Exp( b ) == 0x7FFF )
               && (bits64) ( extractFloatx80Frac( b )<<1 ) )
-       ) {
-        float_raise( float_flag_invalid );
-        return 0;
-    }
+       ) अणु
+        भग्न_उठाओ( भग्न_flag_invalid );
+        वापस 0;
+    पूर्ण
     aSign = extractFloatx80Sign( a );
     bSign = extractFloatx80Sign( b );
-    if ( aSign != bSign ) {
-        return
+    अगर ( aSign != bSign ) अणु
+        वापस
                aSign
             && (    ( ( (bits16) ( ( a.high | b.high )<<1 ) ) | a.low | b.low )
                  != 0 );
-    }
-    return
+    पूर्ण
+    वापस
           aSign ? lt128( b.high, b.low, a.high, a.low )
         : lt128( a.high, a.low, b.high, b.low );
 
-}
+पूर्ण
 
 /*
 -------------------------------------------------------------------------------
-Returns 1 if the extended double-precision floating-point value `a' is equal
+Returns 1 अगर the extended द्विगुन-precision भग्नing-poपूर्णांक value `a' is equal
 to the corresponding value `b', and 0 otherwise.  The invalid exception is
-raised if either operand is a NaN.  Otherwise, the comparison is performed
-according to the IEC/IEEE Standard for Binary Floating-point Arithmetic.
+उठाओd अगर either opeअक्रम is a NaN.  Otherwise, the comparison is perक्रमmed
+according to the IEC/IEEE Standard क्रम Binary Floating-poपूर्णांक Arithmetic.
 -------------------------------------------------------------------------------
 */
-flag floatx80_eq_signaling( floatx80 a, floatx80 b )
-{
+flag भग्नx80_eq_संकेतing( भग्नx80 a, भग्नx80 b )
+अणु
 
-    if (    (    ( extractFloatx80Exp( a ) == 0x7FFF )
+    अगर (    (    ( extractFloatx80Exp( a ) == 0x7FFF )
               && (bits64) ( extractFloatx80Frac( a )<<1 ) )
          || (    ( extractFloatx80Exp( b ) == 0x7FFF )
               && (bits64) ( extractFloatx80Frac( b )<<1 ) )
-       ) {
-        float_raise( float_flag_invalid );
-        return 0;
-    }
-    return
+       ) अणु
+        भग्न_उठाओ( भग्न_flag_invalid );
+        वापस 0;
+    पूर्ण
+    वापस
            ( a.low == b.low )
         && (    ( a.high == b.high )
              || (    ( a.low == 0 )
                   && ( (bits16) ( ( a.high | b.high )<<1 ) == 0 ) )
            );
 
-}
+पूर्ण
 
 /*
 -------------------------------------------------------------------------------
-Returns 1 if the extended double-precision floating-point value `a' is less
+Returns 1 अगर the extended द्विगुन-precision भग्नing-poपूर्णांक value `a' is less
 than or equal to the corresponding value `b', and 0 otherwise.  Quiet NaNs
-do not cause an exception.  Otherwise, the comparison is performed according
-to the IEC/IEEE Standard for Binary Floating-point Arithmetic.
+करो not cause an exception.  Otherwise, the comparison is perक्रमmed according
+to the IEC/IEEE Standard क्रम Binary Floating-poपूर्णांक Arithmetic.
 -------------------------------------------------------------------------------
 */
-flag floatx80_le_quiet( floatx80 a, floatx80 b )
-{
+flag भग्नx80_le_quiet( भग्नx80 a, भग्नx80 b )
+अणु
     flag aSign, bSign;
 
-    if (    (    ( extractFloatx80Exp( a ) == 0x7FFF )
+    अगर (    (    ( extractFloatx80Exp( a ) == 0x7FFF )
               && (bits64) ( extractFloatx80Frac( a )<<1 ) )
          || (    ( extractFloatx80Exp( b ) == 0x7FFF )
               && (bits64) ( extractFloatx80Frac( b )<<1 ) )
-       ) {
-        /* Do nothing, even if NaN as we're quiet */
-        return 0;
-    }
+       ) अणु
+        /* Do nothing, even अगर NaN as we're quiet */
+        वापस 0;
+    पूर्ण
     aSign = extractFloatx80Sign( a );
     bSign = extractFloatx80Sign( b );
-    if ( aSign != bSign ) {
-        return
+    अगर ( aSign != bSign ) अणु
+        वापस
                aSign
             || (    ( ( (bits16) ( ( a.high | b.high )<<1 ) ) | a.low | b.low )
                  == 0 );
-    }
-    return
+    पूर्ण
+    वापस
           aSign ? le128( b.high, b.low, a.high, a.low )
         : le128( a.high, a.low, b.high, b.low );
 
-}
+पूर्ण
 
 /*
 -------------------------------------------------------------------------------
-Returns 1 if the extended double-precision floating-point value `a' is less
-than the corresponding value `b', and 0 otherwise.  Quiet NaNs do not cause
-an exception.  Otherwise, the comparison is performed according to the
-IEC/IEEE Standard for Binary Floating-point Arithmetic.
+Returns 1 अगर the extended द्विगुन-precision भग्नing-poपूर्णांक value `a' is less
+than the corresponding value `b', and 0 otherwise.  Quiet NaNs करो not cause
+an exception.  Otherwise, the comparison is perक्रमmed according to the
+IEC/IEEE Standard क्रम Binary Floating-poपूर्णांक Arithmetic.
 -------------------------------------------------------------------------------
 */
-flag floatx80_lt_quiet( floatx80 a, floatx80 b )
-{
+flag भग्नx80_lt_quiet( भग्नx80 a, भग्नx80 b )
+अणु
     flag aSign, bSign;
 
-    if (    (    ( extractFloatx80Exp( a ) == 0x7FFF )
+    अगर (    (    ( extractFloatx80Exp( a ) == 0x7FFF )
               && (bits64) ( extractFloatx80Frac( a )<<1 ) )
          || (    ( extractFloatx80Exp( b ) == 0x7FFF )
               && (bits64) ( extractFloatx80Frac( b )<<1 ) )
-       ) {
-        /* Do nothing, even if NaN as we're quiet */
-        return 0;
-    }
+       ) अणु
+        /* Do nothing, even अगर NaN as we're quiet */
+        वापस 0;
+    पूर्ण
     aSign = extractFloatx80Sign( a );
     bSign = extractFloatx80Sign( b );
-    if ( aSign != bSign ) {
-        return
+    अगर ( aSign != bSign ) अणु
+        वापस
                aSign
             && (    ( ( (bits16) ( ( a.high | b.high )<<1 ) ) | a.low | b.low )
                  != 0 );
-    }
-    return
+    पूर्ण
+    वापस
           aSign ? lt128( b.high, b.low, a.high, a.low )
         : lt128( a.high, a.low, b.high, b.low );
 
-}
+पूर्ण
 
-#endif
+#पूर्ण_अगर
 

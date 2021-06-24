@@ -1,247 +1,248 @@
-// SPDX-License-Identifier: BSD-3-Clause OR GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: BSD-3-Clause OR GPL-2.0
 /* Copyright (c) 2016-2018 Mellanox Technologies. All rights reserved */
 
-#include <linux/err.h>
-#include <linux/i2c.h>
-#include <linux/init.h>
-#include <linux/jiffies.h>
-#include <linux/kernel.h>
-#include <linux/mutex.h>
-#include <linux/module.h>
-#include <linux/mod_devicetable.h>
-#include <linux/slab.h>
+#समावेश <linux/err.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/init.h>
+#समावेश <linux/jअगरfies.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/module.h>
+#समावेश <linux/mod_devicetable.h>
+#समावेश <linux/slab.h>
 
-#include "cmd.h"
-#include "core.h"
-#include "i2c.h"
-#include "resources.h"
+#समावेश "cmd.h"
+#समावेश "core.h"
+#समावेश "i2c.h"
+#समावेश "resources.h"
 
-#define MLXSW_I2C_CIR2_BASE		0x72000
-#define MLXSW_I2C_CIR_STATUS_OFF	0x18
-#define MLXSW_I2C_CIR2_OFF_STATUS	(MLXSW_I2C_CIR2_BASE + \
+#घोषणा MLXSW_I2C_CIR2_BASE		0x72000
+#घोषणा MLXSW_I2C_CIR_STATUS_OFF	0x18
+#घोषणा MLXSW_I2C_CIR2_OFF_STATUS	(MLXSW_I2C_CIR2_BASE + \
 					 MLXSW_I2C_CIR_STATUS_OFF)
-#define MLXSW_I2C_OPMOD_SHIFT		12
-#define MLXSW_I2C_EVENT_BIT_SHIFT	22
-#define MLXSW_I2C_GO_BIT_SHIFT		23
-#define MLXSW_I2C_CIR_CTRL_STATUS_SHIFT	24
-#define MLXSW_I2C_EVENT_BIT		BIT(MLXSW_I2C_EVENT_BIT_SHIFT)
-#define MLXSW_I2C_GO_BIT		BIT(MLXSW_I2C_GO_BIT_SHIFT)
-#define MLXSW_I2C_GO_OPMODE		BIT(MLXSW_I2C_OPMOD_SHIFT)
-#define MLXSW_I2C_SET_IMM_CMD		(MLXSW_I2C_GO_OPMODE | \
+#घोषणा MLXSW_I2C_OPMOD_SHIFT		12
+#घोषणा MLXSW_I2C_EVENT_BIT_SHIFT	22
+#घोषणा MLXSW_I2C_GO_BIT_SHIFT		23
+#घोषणा MLXSW_I2C_CIR_CTRL_STATUS_SHIFT	24
+#घोषणा MLXSW_I2C_EVENT_BIT		BIT(MLXSW_I2C_EVENT_BIT_SHIFT)
+#घोषणा MLXSW_I2C_GO_BIT		BIT(MLXSW_I2C_GO_BIT_SHIFT)
+#घोषणा MLXSW_I2C_GO_OPMODE		BIT(MLXSW_I2C_OPMOD_SHIFT)
+#घोषणा MLXSW_I2C_SET_IMM_CMD		(MLXSW_I2C_GO_OPMODE | \
 					 MLXSW_CMD_OPCODE_QUERY_FW)
-#define MLXSW_I2C_PUSH_IMM_CMD		(MLXSW_I2C_GO_BIT | \
+#घोषणा MLXSW_I2C_PUSH_IMM_CMD		(MLXSW_I2C_GO_BIT | \
 					 MLXSW_I2C_SET_IMM_CMD)
-#define MLXSW_I2C_SET_CMD		(MLXSW_CMD_OPCODE_ACCESS_REG)
-#define MLXSW_I2C_PUSH_CMD		(MLXSW_I2C_GO_BIT | MLXSW_I2C_SET_CMD)
-#define MLXSW_I2C_TLV_HDR_SIZE		0x10
-#define MLXSW_I2C_ADDR_WIDTH		4
-#define MLXSW_I2C_PUSH_CMD_SIZE		(MLXSW_I2C_ADDR_WIDTH + 4)
-#define MLXSW_I2C_SET_EVENT_CMD		(MLXSW_I2C_EVENT_BIT)
-#define MLXSW_I2C_PUSH_EVENT_CMD	(MLXSW_I2C_GO_BIT | \
+#घोषणा MLXSW_I2C_SET_CMD		(MLXSW_CMD_OPCODE_ACCESS_REG)
+#घोषणा MLXSW_I2C_PUSH_CMD		(MLXSW_I2C_GO_BIT | MLXSW_I2C_SET_CMD)
+#घोषणा MLXSW_I2C_TLV_HDR_SIZE		0x10
+#घोषणा MLXSW_I2C_ADDR_WIDTH		4
+#घोषणा MLXSW_I2C_PUSH_CMD_SIZE		(MLXSW_I2C_ADDR_WIDTH + 4)
+#घोषणा MLXSW_I2C_SET_EVENT_CMD		(MLXSW_I2C_EVENT_BIT)
+#घोषणा MLXSW_I2C_PUSH_EVENT_CMD	(MLXSW_I2C_GO_BIT | \
 					 MLXSW_I2C_SET_EVENT_CMD)
-#define MLXSW_I2C_READ_SEMA_SIZE	4
-#define MLXSW_I2C_PREP_SIZE		(MLXSW_I2C_ADDR_WIDTH + 28)
-#define MLXSW_I2C_MBOX_SIZE		20
-#define MLXSW_I2C_MBOX_OUT_PARAM_OFF	12
-#define MLXSW_I2C_MBOX_OFFSET_BITS	20
-#define MLXSW_I2C_MBOX_SIZE_BITS	12
-#define MLXSW_I2C_ADDR_BUF_SIZE		4
-#define MLXSW_I2C_BLK_DEF		32
-#define MLXSW_I2C_RETRY			5
-#define MLXSW_I2C_TIMEOUT_MSECS		5000
-#define MLXSW_I2C_MAX_DATA_SIZE		256
+#घोषणा MLXSW_I2C_READ_SEMA_SIZE	4
+#घोषणा MLXSW_I2C_PREP_SIZE		(MLXSW_I2C_ADDR_WIDTH + 28)
+#घोषणा MLXSW_I2C_MBOX_SIZE		20
+#घोषणा MLXSW_I2C_MBOX_OUT_PARAM_OFF	12
+#घोषणा MLXSW_I2C_MBOX_OFFSET_BITS	20
+#घोषणा MLXSW_I2C_MBOX_SIZE_BITS	12
+#घोषणा MLXSW_I2C_ADDR_BUF_SIZE		4
+#घोषणा MLXSW_I2C_BLK_DEF		32
+#घोषणा MLXSW_I2C_RETRY			5
+#घोषणा MLXSW_I2C_TIMEOUT_MSECS		5000
+#घोषणा MLXSW_I2C_MAX_DATA_SIZE		256
 
 /**
- * struct mlxsw_i2c - device private data:
+ * काष्ठा mlxsw_i2c - device निजी data:
  * @cmd: command attributes;
  * @cmd.mb_size_in: input mailbox size;
- * @cmd.mb_off_in: input mailbox offset in register space;
+ * @cmd.mb_off_in: input mailbox offset in रेजिस्टर space;
  * @cmd.mb_size_out: output mailbox size;
- * @cmd.mb_off_out: output mailbox offset in register space;
+ * @cmd.mb_off_out: output mailbox offset in रेजिस्टर space;
  * @cmd.lock: command execution lock;
  * @dev: I2C device;
- * @core: switch core pointer;
+ * @core: चयन core poपूर्णांकer;
  * @bus_info: bus info block;
  * @block_size: maximum block size allowed to pass to under layer;
  */
-struct mlxsw_i2c {
-	struct {
+काष्ठा mlxsw_i2c अणु
+	काष्ठा अणु
 		u32 mb_size_in;
 		u32 mb_off_in;
 		u32 mb_size_out;
 		u32 mb_off_out;
-		struct mutex lock;
-	} cmd;
-	struct device *dev;
-	struct mlxsw_core *core;
-	struct mlxsw_bus_info bus_info;
+		काष्ठा mutex lock;
+	पूर्ण cmd;
+	काष्ठा device *dev;
+	काष्ठा mlxsw_core *core;
+	काष्ठा mlxsw_bus_info bus_info;
 	u16 block_size;
-};
+पूर्ण;
 
-#define MLXSW_I2C_READ_MSG(_client, _addr_buf, _buf, _len) {	\
-	{ .addr = (_client)->addr,				\
+#घोषणा MLXSW_I2C_READ_MSG(_client, _addr_buf, _buf, _len) अणु	\
+	अणु .addr = (_client)->addr,				\
 	  .buf = (_addr_buf),					\
 	  .len = MLXSW_I2C_ADDR_BUF_SIZE,			\
-	  .flags = 0 },						\
-	{ .addr = (_client)->addr,				\
+	  .flags = 0 पूर्ण,						\
+	अणु .addr = (_client)->addr,				\
 	  .buf = (_buf),					\
 	  .len = (_len),					\
-	  .flags = I2C_M_RD } }
+	  .flags = I2C_M_RD पूर्ण पूर्ण
 
-#define MLXSW_I2C_WRITE_MSG(_client, _buf, _len)		\
-	{ .addr = (_client)->addr,				\
+#घोषणा MLXSW_I2C_WRITE_MSG(_client, _buf, _len)		\
+	अणु .addr = (_client)->addr,				\
 	  .buf = (u8 *)(_buf),					\
 	  .len = (_len),					\
-	  .flags = 0 }
+	  .flags = 0 पूर्ण
 
 /* Routine converts in and out mail boxes offset and size. */
-static inline void
-mlxsw_i2c_convert_mbox(struct mlxsw_i2c *mlxsw_i2c, u8 *buf)
-{
-	u32 tmp;
+अटल अंतरभूत व्योम
+mlxsw_i2c_convert_mbox(काष्ठा mlxsw_i2c *mlxsw_i2c, u8 *buf)
+अणु
+	u32 पंचांगp;
 
-	/* Local in/out mailboxes: 20 bits for offset, 12 for size */
-	tmp = be32_to_cpup((__be32 *) buf);
-	mlxsw_i2c->cmd.mb_off_in = tmp &
+	/* Local in/out mailboxes: 20 bits क्रम offset, 12 क्रम size */
+	पंचांगp = be32_to_cpup((__be32 *) buf);
+	mlxsw_i2c->cmd.mb_off_in = पंचांगp &
 				   GENMASK(MLXSW_I2C_MBOX_OFFSET_BITS - 1, 0);
-	mlxsw_i2c->cmd.mb_size_in = (tmp & GENMASK(31,
+	mlxsw_i2c->cmd.mb_size_in = (पंचांगp & GENMASK(31,
 					MLXSW_I2C_MBOX_OFFSET_BITS)) >>
 					MLXSW_I2C_MBOX_OFFSET_BITS;
 
-	tmp = be32_to_cpup((__be32 *) (buf + MLXSW_I2C_ADDR_WIDTH));
-	mlxsw_i2c->cmd.mb_off_out = tmp &
+	पंचांगp = be32_to_cpup((__be32 *) (buf + MLXSW_I2C_ADDR_WIDTH));
+	mlxsw_i2c->cmd.mb_off_out = पंचांगp &
 				    GENMASK(MLXSW_I2C_MBOX_OFFSET_BITS - 1, 0);
-	mlxsw_i2c->cmd.mb_size_out = (tmp & GENMASK(31,
+	mlxsw_i2c->cmd.mb_size_out = (पंचांगp & GENMASK(31,
 					MLXSW_I2C_MBOX_OFFSET_BITS)) >>
 					MLXSW_I2C_MBOX_OFFSET_BITS;
-}
+पूर्ण
 
-/* Routine obtains register size from mail box buffer. */
-static inline int mlxsw_i2c_get_reg_size(u8 *in_mbox)
-{
-	u16  tmp = be16_to_cpup((__be16 *) (in_mbox + MLXSW_I2C_TLV_HDR_SIZE));
+/* Routine obtains रेजिस्टर size from mail box buffer. */
+अटल अंतरभूत पूर्णांक mlxsw_i2c_get_reg_size(u8 *in_mbox)
+अणु
+	u16  पंचांगp = be16_to_cpup((__be16 *) (in_mbox + MLXSW_I2C_TLV_HDR_SIZE));
 
-	return (tmp & 0x7ff) * 4 + MLXSW_I2C_TLV_HDR_SIZE;
-}
+	वापस (पंचांगp & 0x7ff) * 4 + MLXSW_I2C_TLV_HDR_SIZE;
+पूर्ण
 
-/* Routine sets I2C device internal offset in the transaction buffer. */
-static inline void mlxsw_i2c_set_slave_addr(u8 *buf, u32 off)
-{
+/* Routine sets I2C device पूर्णांकernal offset in the transaction buffer. */
+अटल अंतरभूत व्योम mlxsw_i2c_set_slave_addr(u8 *buf, u32 off)
+अणु
 	__be32 *val = (__be32 *) buf;
 
 	*val = htonl(off);
-}
+पूर्ण
 
-/* Routine waits until go bit is cleared. */
-static int mlxsw_i2c_wait_go_bit(struct i2c_client *client,
-				 struct mlxsw_i2c *mlxsw_i2c, u8 *p_status)
-{
+/* Routine रुकोs until go bit is cleared. */
+अटल पूर्णांक mlxsw_i2c_रुको_go_bit(काष्ठा i2c_client *client,
+				 काष्ठा mlxsw_i2c *mlxsw_i2c, u8 *p_status)
+अणु
 	u8 addr_buf[MLXSW_I2C_ADDR_BUF_SIZE];
 	u8 buf[MLXSW_I2C_READ_SEMA_SIZE];
-	int len = MLXSW_I2C_READ_SEMA_SIZE;
-	struct i2c_msg read_sema[] =
+	पूर्णांक len = MLXSW_I2C_READ_SEMA_SIZE;
+	काष्ठा i2c_msg पढ़ो_sema[] =
 		MLXSW_I2C_READ_MSG(client, addr_buf, buf, len);
-	bool wait_done = false;
-	unsigned long end;
-	int i = 0, err;
+	bool रुको_करोne = false;
+	अचिन्हित दीर्घ end;
+	पूर्णांक i = 0, err;
 
 	mlxsw_i2c_set_slave_addr(addr_buf, MLXSW_I2C_CIR2_OFF_STATUS);
 
-	end = jiffies + msecs_to_jiffies(MLXSW_I2C_TIMEOUT_MSECS);
-	do {
+	end = jअगरfies + msecs_to_jअगरfies(MLXSW_I2C_TIMEOUT_MSECS);
+	करो अणु
 		u32 ctrl;
 
-		err = i2c_transfer(client->adapter, read_sema,
-				   ARRAY_SIZE(read_sema));
+		err = i2c_transfer(client->adapter, पढ़ो_sema,
+				   ARRAY_SIZE(पढ़ो_sema));
 
 		ctrl = be32_to_cpu(*(__be32 *) buf);
-		if (err == ARRAY_SIZE(read_sema)) {
-			if (!(ctrl & MLXSW_I2C_GO_BIT)) {
-				wait_done = true;
+		अगर (err == ARRAY_SIZE(पढ़ो_sema)) अणु
+			अगर (!(ctrl & MLXSW_I2C_GO_BIT)) अणु
+				रुको_करोne = true;
 				*p_status = ctrl >>
 					    MLXSW_I2C_CIR_CTRL_STATUS_SHIFT;
-				break;
-			}
-		}
+				अवरोध;
+			पूर्ण
+		पूर्ण
 		cond_resched();
-	} while ((time_before(jiffies, end)) || (i++ < MLXSW_I2C_RETRY));
+	पूर्ण जबतक ((समय_beक्रमe(jअगरfies, end)) || (i++ < MLXSW_I2C_RETRY));
 
-	if (wait_done) {
-		if (*p_status)
+	अगर (रुको_करोne) अणु
+		अगर (*p_status)
 			err = -EIO;
-	} else {
-		return -ETIMEDOUT;
-	}
+	पूर्ण अन्यथा अणु
+		वापस -ETIMEDOUT;
+	पूर्ण
 
-	return err > 0 ? 0 : err;
-}
+	वापस err > 0 ? 0 : err;
+पूर्ण
 
 /* Routine posts a command to ASIC through mail box. */
-static int mlxsw_i2c_write_cmd(struct i2c_client *client,
-			       struct mlxsw_i2c *mlxsw_i2c,
-			       int immediate)
-{
-	__be32 push_cmd_buf[MLXSW_I2C_PUSH_CMD_SIZE / 4] = {
+अटल पूर्णांक mlxsw_i2c_ग_लिखो_cmd(काष्ठा i2c_client *client,
+			       काष्ठा mlxsw_i2c *mlxsw_i2c,
+			       पूर्णांक immediate)
+अणु
+	__be32 push_cmd_buf[MLXSW_I2C_PUSH_CMD_SIZE / 4] = अणु
 		0, cpu_to_be32(MLXSW_I2C_PUSH_IMM_CMD)
-	};
-	__be32 prep_cmd_buf[MLXSW_I2C_PREP_SIZE / 4] = {
+	पूर्ण;
+	__be32 prep_cmd_buf[MLXSW_I2C_PREP_SIZE / 4] = अणु
 		0, 0, 0, 0, 0, 0,
 		cpu_to_be32(client->adapter->nr & 0xffff),
 		cpu_to_be32(MLXSW_I2C_SET_IMM_CMD)
-	};
-	struct i2c_msg push_cmd =
+	पूर्ण;
+	काष्ठा i2c_msg push_cmd =
 		MLXSW_I2C_WRITE_MSG(client, push_cmd_buf,
 				    MLXSW_I2C_PUSH_CMD_SIZE);
-	struct i2c_msg prep_cmd =
+	काष्ठा i2c_msg prep_cmd =
 		MLXSW_I2C_WRITE_MSG(client, prep_cmd_buf, MLXSW_I2C_PREP_SIZE);
-	int err;
+	पूर्णांक err;
 
-	if (!immediate) {
+	अगर (!immediate) अणु
 		push_cmd_buf[1] = cpu_to_be32(MLXSW_I2C_PUSH_CMD);
 		prep_cmd_buf[7] = cpu_to_be32(MLXSW_I2C_SET_CMD);
-	}
+	पूर्ण
 	mlxsw_i2c_set_slave_addr((u8 *)prep_cmd_buf,
 				 MLXSW_I2C_CIR2_BASE);
 	mlxsw_i2c_set_slave_addr((u8 *)push_cmd_buf,
 				 MLXSW_I2C_CIR2_OFF_STATUS);
 
-	/* Prepare Command Interface Register for transaction */
+	/* Prepare Command Interface Register क्रम transaction */
 	err = i2c_transfer(client->adapter, &prep_cmd, 1);
-	if (err < 0)
-		return err;
-	else if (err != 1)
-		return -EIO;
+	अगर (err < 0)
+		वापस err;
+	अन्यथा अगर (err != 1)
+		वापस -EIO;
 
 	/* Write out Command Interface Register GO bit to push transaction */
 	err = i2c_transfer(client->adapter, &push_cmd, 1);
-	if (err < 0)
-		return err;
-	else if (err != 1)
-		return -EIO;
+	अगर (err < 0)
+		वापस err;
+	अन्यथा अगर (err != 1)
+		वापस -EIO;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* Routine posts initialization command to ASIC through mail box. */
-static int
-mlxsw_i2c_write_init_cmd(struct i2c_client *client,
-			 struct mlxsw_i2c *mlxsw_i2c, u16 opcode, u32 in_mod)
-{
-	__be32 push_cmd_buf[MLXSW_I2C_PUSH_CMD_SIZE / 4] = {
+अटल पूर्णांक
+mlxsw_i2c_ग_लिखो_init_cmd(काष्ठा i2c_client *client,
+			 काष्ठा mlxsw_i2c *mlxsw_i2c, u16 opcode, u32 in_mod)
+अणु
+	__be32 push_cmd_buf[MLXSW_I2C_PUSH_CMD_SIZE / 4] = अणु
 		0, cpu_to_be32(MLXSW_I2C_PUSH_EVENT_CMD)
-	};
-	__be32 prep_cmd_buf[MLXSW_I2C_PREP_SIZE / 4] = {
+	पूर्ण;
+	__be32 prep_cmd_buf[MLXSW_I2C_PREP_SIZE / 4] = अणु
 		0, 0, 0, 0, 0, 0,
 		cpu_to_be32(client->adapter->nr & 0xffff),
 		cpu_to_be32(MLXSW_I2C_SET_EVENT_CMD)
-	};
-	struct i2c_msg push_cmd =
+	पूर्ण;
+	काष्ठा i2c_msg push_cmd =
 		MLXSW_I2C_WRITE_MSG(client, push_cmd_buf,
 				    MLXSW_I2C_PUSH_CMD_SIZE);
-	struct i2c_msg prep_cmd =
+	काष्ठा i2c_msg prep_cmd =
 		MLXSW_I2C_WRITE_MSG(client, prep_cmd_buf, MLXSW_I2C_PREP_SIZE);
 	u8 status;
-	int err;
+	पूर्णांक err;
 
 	push_cmd_buf[1] = cpu_to_be32(MLXSW_I2C_PUSH_EVENT_CMD | opcode);
 	prep_cmd_buf[3] = cpu_to_be32(in_mod);
@@ -251,279 +252,279 @@ mlxsw_i2c_write_init_cmd(struct i2c_client *client,
 	mlxsw_i2c_set_slave_addr((u8 *)push_cmd_buf,
 				 MLXSW_I2C_CIR2_OFF_STATUS);
 
-	/* Prepare Command Interface Register for transaction */
+	/* Prepare Command Interface Register क्रम transaction */
 	err = i2c_transfer(client->adapter, &prep_cmd, 1);
-	if (err < 0)
-		return err;
-	else if (err != 1)
-		return -EIO;
+	अगर (err < 0)
+		वापस err;
+	अन्यथा अगर (err != 1)
+		वापस -EIO;
 
 	/* Write out Command Interface Register GO bit to push transaction */
 	err = i2c_transfer(client->adapter, &push_cmd, 1);
-	if (err < 0)
-		return err;
-	else if (err != 1)
-		return -EIO;
+	अगर (err < 0)
+		वापस err;
+	अन्यथा अगर (err != 1)
+		वापस -EIO;
 
 	/* Wait until go bit is cleared. */
-	err = mlxsw_i2c_wait_go_bit(client, mlxsw_i2c, &status);
-	if (err) {
+	err = mlxsw_i2c_रुको_go_bit(client, mlxsw_i2c, &status);
+	अगर (err) अणु
 		dev_err(&client->dev, "HW semaphore is not released");
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
 	/* Validate transaction completion status. */
-	if (status) {
+	अगर (status) अणु
 		dev_err(&client->dev, "Bad transaction completion status %x\n",
 			status);
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* Routine obtains mail box offsets from ASIC register space. */
-static int mlxsw_i2c_get_mbox(struct i2c_client *client,
-			      struct mlxsw_i2c *mlxsw_i2c)
-{
+/* Routine obtains mail box offsets from ASIC रेजिस्टर space. */
+अटल पूर्णांक mlxsw_i2c_get_mbox(काष्ठा i2c_client *client,
+			      काष्ठा mlxsw_i2c *mlxsw_i2c)
+अणु
 	u8 addr_buf[MLXSW_I2C_ADDR_BUF_SIZE];
 	u8 buf[MLXSW_I2C_MBOX_SIZE];
-	struct i2c_msg mbox_cmd[] =
+	काष्ठा i2c_msg mbox_cmd[] =
 		MLXSW_I2C_READ_MSG(client, addr_buf, buf, MLXSW_I2C_MBOX_SIZE);
-	int err;
+	पूर्णांक err;
 
 	/* Read mail boxes offsets. */
 	mlxsw_i2c_set_slave_addr(addr_buf, MLXSW_I2C_CIR2_BASE);
 	err = i2c_transfer(client->adapter, mbox_cmd, 2);
-	if (err != 2) {
+	अगर (err != 2) अणु
 		dev_err(&client->dev, "Could not obtain mail boxes\n");
-		if (!err)
-			return -EIO;
-		else
-			return err;
-	}
+		अगर (!err)
+			वापस -EIO;
+		अन्यथा
+			वापस err;
+	पूर्ण
 
 	/* Convert mail boxes. */
 	mlxsw_i2c_convert_mbox(mlxsw_i2c, &buf[MLXSW_I2C_MBOX_OUT_PARAM_OFF]);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-/* Routine sends I2C write transaction to ASIC device. */
-static int
-mlxsw_i2c_write(struct device *dev, size_t in_mbox_size, u8 *in_mbox, int num,
+/* Routine sends I2C ग_लिखो transaction to ASIC device. */
+अटल पूर्णांक
+mlxsw_i2c_ग_लिखो(काष्ठा device *dev, माप_प्रकार in_mbox_size, u8 *in_mbox, पूर्णांक num,
 		u8 *p_status)
-{
-	struct i2c_client *client = to_i2c_client(dev);
-	struct mlxsw_i2c *mlxsw_i2c = i2c_get_clientdata(client);
-	unsigned long timeout = msecs_to_jiffies(MLXSW_I2C_TIMEOUT_MSECS);
-	int off = mlxsw_i2c->cmd.mb_off_in, chunk_size, i, j;
-	unsigned long end;
+अणु
+	काष्ठा i2c_client *client = to_i2c_client(dev);
+	काष्ठा mlxsw_i2c *mlxsw_i2c = i2c_get_clientdata(client);
+	अचिन्हित दीर्घ समयout = msecs_to_jअगरfies(MLXSW_I2C_TIMEOUT_MSECS);
+	पूर्णांक off = mlxsw_i2c->cmd.mb_off_in, chunk_size, i, j;
+	अचिन्हित दीर्घ end;
 	u8 *tran_buf;
-	struct i2c_msg write_tran =
-		MLXSW_I2C_WRITE_MSG(client, NULL, MLXSW_I2C_PUSH_CMD_SIZE);
-	int err;
+	काष्ठा i2c_msg ग_लिखो_tran =
+		MLXSW_I2C_WRITE_MSG(client, शून्य, MLXSW_I2C_PUSH_CMD_SIZE);
+	पूर्णांक err;
 
-	tran_buf = kmalloc(mlxsw_i2c->block_size + MLXSW_I2C_ADDR_BUF_SIZE,
+	tran_buf = kदो_स्मृति(mlxsw_i2c->block_size + MLXSW_I2C_ADDR_BUF_SIZE,
 			   GFP_KERNEL);
-	if (!tran_buf)
-		return -ENOMEM;
+	अगर (!tran_buf)
+		वापस -ENOMEM;
 
-	write_tran.buf = tran_buf;
-	for (i = 0; i < num; i++) {
+	ग_लिखो_tran.buf = tran_buf;
+	क्रम (i = 0; i < num; i++) अणु
 		chunk_size = (in_mbox_size > mlxsw_i2c->block_size) ?
 			     mlxsw_i2c->block_size : in_mbox_size;
-		write_tran.len = MLXSW_I2C_ADDR_WIDTH + chunk_size;
+		ग_लिखो_tran.len = MLXSW_I2C_ADDR_WIDTH + chunk_size;
 		mlxsw_i2c_set_slave_addr(tran_buf, off);
-		memcpy(&tran_buf[MLXSW_I2C_ADDR_BUF_SIZE], in_mbox +
+		स_नकल(&tran_buf[MLXSW_I2C_ADDR_BUF_SIZE], in_mbox +
 		       mlxsw_i2c->block_size * i, chunk_size);
 
 		j = 0;
-		end = jiffies + timeout;
-		do {
-			err = i2c_transfer(client->adapter, &write_tran, 1);
-			if (err == 1)
-				break;
+		end = jअगरfies + समयout;
+		करो अणु
+			err = i2c_transfer(client->adapter, &ग_लिखो_tran, 1);
+			अगर (err == 1)
+				अवरोध;
 
 			cond_resched();
-		} while ((time_before(jiffies, end)) ||
+		पूर्ण जबतक ((समय_beक्रमe(jअगरfies, end)) ||
 			 (j++ < MLXSW_I2C_RETRY));
 
-		if (err != 1) {
-			if (!err) {
+		अगर (err != 1) अणु
+			अगर (!err) अणु
 				err = -EIO;
-				goto mlxsw_i2c_write_exit;
-			}
-		}
+				जाओ mlxsw_i2c_ग_लिखो_निकास;
+			पूर्ण
+		पूर्ण
 
 		off += chunk_size;
 		in_mbox_size -= chunk_size;
-	}
+	पूर्ण
 
-	/* Prepare and write out Command Interface Register for transaction. */
-	err = mlxsw_i2c_write_cmd(client, mlxsw_i2c, 0);
-	if (err) {
+	/* Prepare and ग_लिखो out Command Interface Register क्रम transaction. */
+	err = mlxsw_i2c_ग_लिखो_cmd(client, mlxsw_i2c, 0);
+	अगर (err) अणु
 		dev_err(&client->dev, "Could not start transaction");
 		err = -EIO;
-		goto mlxsw_i2c_write_exit;
-	}
+		जाओ mlxsw_i2c_ग_लिखो_निकास;
+	पूर्ण
 
 	/* Wait until go bit is cleared. */
-	err = mlxsw_i2c_wait_go_bit(client, mlxsw_i2c, p_status);
-	if (err) {
+	err = mlxsw_i2c_रुको_go_bit(client, mlxsw_i2c, p_status);
+	अगर (err) अणु
 		dev_err(&client->dev, "HW semaphore is not released");
-		goto mlxsw_i2c_write_exit;
-	}
+		जाओ mlxsw_i2c_ग_लिखो_निकास;
+	पूर्ण
 
 	/* Validate transaction completion status. */
-	if (*p_status) {
+	अगर (*p_status) अणु
 		dev_err(&client->dev, "Bad transaction completion status %x\n",
 			*p_status);
 		err = -EIO;
-	}
+	पूर्ण
 
-mlxsw_i2c_write_exit:
-	kfree(tran_buf);
-	return err;
-}
+mlxsw_i2c_ग_लिखो_निकास:
+	kमुक्त(tran_buf);
+	वापस err;
+पूर्ण
 
 /* Routine executes I2C command. */
-static int
-mlxsw_i2c_cmd(struct device *dev, u16 opcode, u32 in_mod, size_t in_mbox_size,
-	      u8 *in_mbox, size_t out_mbox_size, u8 *out_mbox, u8 *status)
-{
-	struct i2c_client *client = to_i2c_client(dev);
-	struct mlxsw_i2c *mlxsw_i2c = i2c_get_clientdata(client);
-	unsigned long timeout = msecs_to_jiffies(MLXSW_I2C_TIMEOUT_MSECS);
+अटल पूर्णांक
+mlxsw_i2c_cmd(काष्ठा device *dev, u16 opcode, u32 in_mod, माप_प्रकार in_mbox_size,
+	      u8 *in_mbox, माप_प्रकार out_mbox_size, u8 *out_mbox, u8 *status)
+अणु
+	काष्ठा i2c_client *client = to_i2c_client(dev);
+	काष्ठा mlxsw_i2c *mlxsw_i2c = i2c_get_clientdata(client);
+	अचिन्हित दीर्घ समयout = msecs_to_jअगरfies(MLXSW_I2C_TIMEOUT_MSECS);
 	u8 tran_buf[MLXSW_I2C_ADDR_BUF_SIZE];
-	int num, chunk_size, reg_size, i, j;
-	int off = mlxsw_i2c->cmd.mb_off_out;
-	unsigned long end;
-	struct i2c_msg read_tran[] =
-		MLXSW_I2C_READ_MSG(client, tran_buf, NULL, 0);
-	int err;
+	पूर्णांक num, chunk_size, reg_size, i, j;
+	पूर्णांक off = mlxsw_i2c->cmd.mb_off_out;
+	अचिन्हित दीर्घ end;
+	काष्ठा i2c_msg पढ़ो_tran[] =
+		MLXSW_I2C_READ_MSG(client, tran_buf, शून्य, 0);
+	पूर्णांक err;
 
-	WARN_ON(in_mbox_size % sizeof(u32) || out_mbox_size % sizeof(u32));
+	WARN_ON(in_mbox_size % माप(u32) || out_mbox_size % माप(u32));
 
-	if (in_mbox) {
+	अगर (in_mbox) अणु
 		reg_size = mlxsw_i2c_get_reg_size(in_mbox);
 		num = reg_size / mlxsw_i2c->block_size;
-		if (reg_size % mlxsw_i2c->block_size)
+		अगर (reg_size % mlxsw_i2c->block_size)
 			num++;
 
-		if (mutex_lock_interruptible(&mlxsw_i2c->cmd.lock) < 0) {
+		अगर (mutex_lock_पूर्णांकerruptible(&mlxsw_i2c->cmd.lock) < 0) अणु
 			dev_err(&client->dev, "Could not acquire lock");
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
-		err = mlxsw_i2c_write(dev, reg_size, in_mbox, num, status);
-		if (err)
-			goto cmd_fail;
+		err = mlxsw_i2c_ग_लिखो(dev, reg_size, in_mbox, num, status);
+		अगर (err)
+			जाओ cmd_fail;
 
-		/* No out mailbox is case of write transaction. */
-		if (!out_mbox) {
+		/* No out mailbox is हाल of ग_लिखो transaction. */
+		अगर (!out_mbox) अणु
 			mutex_unlock(&mlxsw_i2c->cmd.lock);
-			return 0;
-		}
-	} else {
-		/* No input mailbox is case of initialization query command. */
+			वापस 0;
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		/* No input mailbox is हाल of initialization query command. */
 		reg_size = MLXSW_I2C_MAX_DATA_SIZE;
 		num = reg_size / mlxsw_i2c->block_size;
 
-		if (mutex_lock_interruptible(&mlxsw_i2c->cmd.lock) < 0) {
+		अगर (mutex_lock_पूर्णांकerruptible(&mlxsw_i2c->cmd.lock) < 0) अणु
 			dev_err(&client->dev, "Could not acquire lock");
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
-		err = mlxsw_i2c_write_init_cmd(client, mlxsw_i2c, opcode,
+		err = mlxsw_i2c_ग_लिखो_init_cmd(client, mlxsw_i2c, opcode,
 					       in_mod);
-		if (err)
-			goto cmd_fail;
-	}
+		अगर (err)
+			जाओ cmd_fail;
+	पूर्ण
 
-	/* Send read transaction to get output mailbox content. */
-	read_tran[1].buf = out_mbox;
-	for (i = 0; i < num; i++) {
+	/* Send पढ़ो transaction to get output mailbox content. */
+	पढ़ो_tran[1].buf = out_mbox;
+	क्रम (i = 0; i < num; i++) अणु
 		chunk_size = (reg_size > mlxsw_i2c->block_size) ?
 			     mlxsw_i2c->block_size : reg_size;
-		read_tran[1].len = chunk_size;
+		पढ़ो_tran[1].len = chunk_size;
 		mlxsw_i2c_set_slave_addr(tran_buf, off);
 
 		j = 0;
-		end = jiffies + timeout;
-		do {
-			err = i2c_transfer(client->adapter, read_tran,
-					   ARRAY_SIZE(read_tran));
-			if (err == ARRAY_SIZE(read_tran))
-				break;
+		end = jअगरfies + समयout;
+		करो अणु
+			err = i2c_transfer(client->adapter, पढ़ो_tran,
+					   ARRAY_SIZE(पढ़ो_tran));
+			अगर (err == ARRAY_SIZE(पढ़ो_tran))
+				अवरोध;
 
 			cond_resched();
-		} while ((time_before(jiffies, end)) ||
+		पूर्ण जबतक ((समय_beक्रमe(jअगरfies, end)) ||
 			 (j++ < MLXSW_I2C_RETRY));
 
-		if (err != ARRAY_SIZE(read_tran)) {
-			if (!err)
+		अगर (err != ARRAY_SIZE(पढ़ो_tran)) अणु
+			अगर (!err)
 				err = -EIO;
 
-			goto cmd_fail;
-		}
+			जाओ cmd_fail;
+		पूर्ण
 
 		off += chunk_size;
 		reg_size -= chunk_size;
-		read_tran[1].buf += chunk_size;
-	}
+		पढ़ो_tran[1].buf += chunk_size;
+	पूर्ण
 
 	mutex_unlock(&mlxsw_i2c->cmd.lock);
 
-	return 0;
+	वापस 0;
 
 cmd_fail:
 	mutex_unlock(&mlxsw_i2c->cmd.lock);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int mlxsw_i2c_cmd_exec(void *bus_priv, u16 opcode, u8 opcode_mod,
+अटल पूर्णांक mlxsw_i2c_cmd_exec(व्योम *bus_priv, u16 opcode, u8 opcode_mod,
 			      u32 in_mod, bool out_mbox_direct,
-			      char *in_mbox, size_t in_mbox_size,
-			      char *out_mbox, size_t out_mbox_size,
+			      अक्षर *in_mbox, माप_प्रकार in_mbox_size,
+			      अक्षर *out_mbox, माप_प्रकार out_mbox_size,
 			      u8 *status)
-{
-	struct mlxsw_i2c *mlxsw_i2c = bus_priv;
+अणु
+	काष्ठा mlxsw_i2c *mlxsw_i2c = bus_priv;
 
-	return mlxsw_i2c_cmd(mlxsw_i2c->dev, opcode, in_mod, in_mbox_size,
+	वापस mlxsw_i2c_cmd(mlxsw_i2c->dev, opcode, in_mod, in_mbox_size,
 			     in_mbox, out_mbox_size, out_mbox, status);
-}
+पूर्ण
 
-static bool mlxsw_i2c_skb_transmit_busy(void *bus_priv,
-					const struct mlxsw_tx_info *tx_info)
-{
-	return false;
-}
+अटल bool mlxsw_i2c_skb_transmit_busy(व्योम *bus_priv,
+					स्थिर काष्ठा mlxsw_tx_info *tx_info)
+अणु
+	वापस false;
+पूर्ण
 
-static int mlxsw_i2c_skb_transmit(void *bus_priv, struct sk_buff *skb,
-				  const struct mlxsw_tx_info *tx_info)
-{
-	return 0;
-}
+अटल पूर्णांक mlxsw_i2c_skb_transmit(व्योम *bus_priv, काष्ठा sk_buff *skb,
+				  स्थिर काष्ठा mlxsw_tx_info *tx_info)
+अणु
+	वापस 0;
+पूर्ण
 
-static int
-mlxsw_i2c_init(void *bus_priv, struct mlxsw_core *mlxsw_core,
-	       const struct mlxsw_config_profile *profile,
-	       struct mlxsw_res *res)
-{
-	struct mlxsw_i2c *mlxsw_i2c = bus_priv;
-	char *mbox;
-	int err;
+अटल पूर्णांक
+mlxsw_i2c_init(व्योम *bus_priv, काष्ठा mlxsw_core *mlxsw_core,
+	       स्थिर काष्ठा mlxsw_config_profile *profile,
+	       काष्ठा mlxsw_res *res)
+अणु
+	काष्ठा mlxsw_i2c *mlxsw_i2c = bus_priv;
+	अक्षर *mbox;
+	पूर्णांक err;
 
 	mlxsw_i2c->core = mlxsw_core;
 
 	mbox = mlxsw_cmd_mbox_alloc();
-	if (!mbox)
-		return -ENOMEM;
+	अगर (!mbox)
+		वापस -ENOMEM;
 
 	err = mlxsw_cmd_query_fw(mlxsw_core, mbox);
-	if (err)
-		goto mbox_put;
+	अगर (err)
+		जाओ mbox_put;
 
 	mlxsw_i2c->bus_info.fw_rev.major =
 		mlxsw_cmd_mbox_query_fw_fw_rev_major_get(mbox);
@@ -535,97 +536,97 @@ mlxsw_i2c_init(void *bus_priv, struct mlxsw_core *mlxsw_core,
 	err = mlxsw_core_resources_query(mlxsw_core, mbox, res);
 
 mbox_put:
-	mlxsw_cmd_mbox_free(mbox);
-	return err;
-}
+	mlxsw_cmd_mbox_मुक्त(mbox);
+	वापस err;
+पूर्ण
 
-static void mlxsw_i2c_fini(void *bus_priv)
-{
-	struct mlxsw_i2c *mlxsw_i2c = bus_priv;
+अटल व्योम mlxsw_i2c_fini(व्योम *bus_priv)
+अणु
+	काष्ठा mlxsw_i2c *mlxsw_i2c = bus_priv;
 
-	mlxsw_i2c->core = NULL;
-}
+	mlxsw_i2c->core = शून्य;
+पूर्ण
 
-static const struct mlxsw_bus mlxsw_i2c_bus = {
+अटल स्थिर काष्ठा mlxsw_bus mlxsw_i2c_bus = अणु
 	.kind			= "i2c",
 	.init			= mlxsw_i2c_init,
 	.fini			= mlxsw_i2c_fini,
 	.skb_transmit_busy	= mlxsw_i2c_skb_transmit_busy,
 	.skb_transmit		= mlxsw_i2c_skb_transmit,
 	.cmd_exec		= mlxsw_i2c_cmd_exec,
-};
+पूर्ण;
 
-static int mlxsw_i2c_probe(struct i2c_client *client,
-			   const struct i2c_device_id *id)
-{
-	const struct i2c_adapter_quirks *quirks = client->adapter->quirks;
-	struct mlxsw_i2c *mlxsw_i2c;
+अटल पूर्णांक mlxsw_i2c_probe(काष्ठा i2c_client *client,
+			   स्थिर काष्ठा i2c_device_id *id)
+अणु
+	स्थिर काष्ठा i2c_adapter_quirks *quirks = client->adapter->quirks;
+	काष्ठा mlxsw_i2c *mlxsw_i2c;
 	u8 status;
-	int err;
+	पूर्णांक err;
 
-	mlxsw_i2c = devm_kzalloc(&client->dev, sizeof(*mlxsw_i2c), GFP_KERNEL);
-	if (!mlxsw_i2c)
-		return -ENOMEM;
+	mlxsw_i2c = devm_kzalloc(&client->dev, माप(*mlxsw_i2c), GFP_KERNEL);
+	अगर (!mlxsw_i2c)
+		वापस -ENOMEM;
 
-	if (quirks) {
-		if ((quirks->max_read_len &&
-		     quirks->max_read_len < MLXSW_I2C_BLK_DEF) ||
-		    (quirks->max_write_len &&
-		     quirks->max_write_len < MLXSW_I2C_BLK_DEF)) {
+	अगर (quirks) अणु
+		अगर ((quirks->max_पढ़ो_len &&
+		     quirks->max_पढ़ो_len < MLXSW_I2C_BLK_DEF) ||
+		    (quirks->max_ग_लिखो_len &&
+		     quirks->max_ग_लिखो_len < MLXSW_I2C_BLK_DEF)) अणु
 			dev_err(&client->dev, "Insufficient transaction buffer length\n");
-			return -EOPNOTSUPP;
-		}
+			वापस -EOPNOTSUPP;
+		पूर्ण
 
 		mlxsw_i2c->block_size = max_t(u16, MLXSW_I2C_BLK_DEF,
-					      min_t(u16, quirks->max_read_len,
-						    quirks->max_write_len));
-	} else {
+					      min_t(u16, quirks->max_पढ़ो_len,
+						    quirks->max_ग_लिखो_len));
+	पूर्ण अन्यथा अणु
 		mlxsw_i2c->block_size = MLXSW_I2C_BLK_DEF;
-	}
+	पूर्ण
 
 	i2c_set_clientdata(client, mlxsw_i2c);
 	mutex_init(&mlxsw_i2c->cmd.lock);
 
 	/* In order to use mailboxes through the i2c, special area is reserved
-	 * on the i2c address space that can be used for input and output
+	 * on the i2c address space that can be used क्रम input and output
 	 * mailboxes. Such mailboxes are called local mailboxes. When using a
-	 * local mailbox, software should specify 0 as the Input/Output
+	 * local mailbox, software should specअगरy 0 as the Input/Output
 	 * parameters. The location of the Local Mailbox addresses on the i2c
 	 * space can be retrieved through the QUERY_FW command.
-	 * For this purpose QUERY_FW is to be issued with opcode modifier equal
+	 * For this purpose QUERY_FW is to be issued with opcode modअगरier equal
 	 * 0x01. For such command the output parameter is an immediate value.
-	 * Here QUERY_FW command is invoked for ASIC probing and for getting
+	 * Here QUERY_FW command is invoked क्रम ASIC probing and क्रम getting
 	 * local mailboxes addresses from immedate output parameters.
 	 */
 
-	/* Prepare and write out Command Interface Register for transaction */
-	err = mlxsw_i2c_write_cmd(client, mlxsw_i2c, 1);
-	if (err) {
+	/* Prepare and ग_लिखो out Command Interface Register क्रम transaction */
+	err = mlxsw_i2c_ग_लिखो_cmd(client, mlxsw_i2c, 1);
+	अगर (err) अणु
 		dev_err(&client->dev, "Could not start transaction");
-		goto errout;
-	}
+		जाओ errout;
+	पूर्ण
 
 	/* Wait until go bit is cleared. */
-	err = mlxsw_i2c_wait_go_bit(client, mlxsw_i2c, &status);
-	if (err) {
+	err = mlxsw_i2c_रुको_go_bit(client, mlxsw_i2c, &status);
+	अगर (err) अणु
 		dev_err(&client->dev, "HW semaphore is not released");
-		goto errout;
-	}
+		जाओ errout;
+	पूर्ण
 
 	/* Validate transaction completion status. */
-	if (status) {
+	अगर (status) अणु
 		dev_err(&client->dev, "Bad transaction completion status %x\n",
 			status);
 		err = -EIO;
-		goto errout;
-	}
+		जाओ errout;
+	पूर्ण
 
 	/* Get mailbox offsets. */
 	err = mlxsw_i2c_get_mbox(client, mlxsw_i2c);
-	if (err < 0) {
+	अगर (err < 0) अणु
 		dev_err(&client->dev, "Fail to get mailboxes\n");
-		goto errout;
-	}
+		जाओ errout;
+	पूर्ण
 
 	dev_info(&client->dev, "%s mb size=%x off=0x%08x out mb size=%x off=0x%08x\n",
 		 id->name, mlxsw_i2c->cmd.mb_size_in,
@@ -639,45 +640,45 @@ static int mlxsw_i2c_probe(struct i2c_client *client,
 	mlxsw_i2c->bus_info.low_frequency = true;
 	mlxsw_i2c->dev = &client->dev;
 
-	err = mlxsw_core_bus_device_register(&mlxsw_i2c->bus_info,
+	err = mlxsw_core_bus_device_रेजिस्टर(&mlxsw_i2c->bus_info,
 					     &mlxsw_i2c_bus, mlxsw_i2c, false,
-					     NULL, NULL);
-	if (err) {
+					     शून्य, शून्य);
+	अगर (err) अणु
 		dev_err(&client->dev, "Fail to register core bus\n");
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 errout:
-	i2c_set_clientdata(client, NULL);
+	i2c_set_clientdata(client, शून्य);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int mlxsw_i2c_remove(struct i2c_client *client)
-{
-	struct mlxsw_i2c *mlxsw_i2c = i2c_get_clientdata(client);
+अटल पूर्णांक mlxsw_i2c_हटाओ(काष्ठा i2c_client *client)
+अणु
+	काष्ठा mlxsw_i2c *mlxsw_i2c = i2c_get_clientdata(client);
 
-	mlxsw_core_bus_device_unregister(mlxsw_i2c->core, false);
+	mlxsw_core_bus_device_unरेजिस्टर(mlxsw_i2c->core, false);
 	mutex_destroy(&mlxsw_i2c->cmd.lock);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int mlxsw_i2c_driver_register(struct i2c_driver *i2c_driver)
-{
+पूर्णांक mlxsw_i2c_driver_रेजिस्टर(काष्ठा i2c_driver *i2c_driver)
+अणु
 	i2c_driver->probe = mlxsw_i2c_probe;
-	i2c_driver->remove = mlxsw_i2c_remove;
-	return i2c_add_driver(i2c_driver);
-}
-EXPORT_SYMBOL(mlxsw_i2c_driver_register);
+	i2c_driver->हटाओ = mlxsw_i2c_हटाओ;
+	वापस i2c_add_driver(i2c_driver);
+पूर्ण
+EXPORT_SYMBOL(mlxsw_i2c_driver_रेजिस्टर);
 
-void mlxsw_i2c_driver_unregister(struct i2c_driver *i2c_driver)
-{
+व्योम mlxsw_i2c_driver_unरेजिस्टर(काष्ठा i2c_driver *i2c_driver)
+अणु
 	i2c_del_driver(i2c_driver);
-}
-EXPORT_SYMBOL(mlxsw_i2c_driver_unregister);
+पूर्ण
+EXPORT_SYMBOL(mlxsw_i2c_driver_unरेजिस्टर);
 
 MODULE_AUTHOR("Vadim Pasternak <vadimp@mellanox.com>");
 MODULE_DESCRIPTION("Mellanox switch I2C interface driver");

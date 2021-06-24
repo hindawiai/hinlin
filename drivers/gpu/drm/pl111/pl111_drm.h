@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  *
  * (C) COPYRIGHT 2012-2013 ARM Limited. All rights reserved.
@@ -10,153 +11,153 @@
  * Copyright (C) 2011 Texas Instruments
  */
 
-#ifndef _PL111_DRM_H_
-#define _PL111_DRM_H_
+#अगर_अघोषित _PL111_DRM_H_
+#घोषणा _PL111_DRM_H_
 
-#include <linux/clk-provider.h>
-#include <linux/interrupt.h>
+#समावेश <linux/clk-provider.h>
+#समावेश <linux/पूर्णांकerrupt.h>
 
-#include <drm/drm_bridge.h>
-#include <drm/drm_connector.h>
-#include <drm/drm_encoder.h>
-#include <drm/drm_gem.h>
-#include <drm/drm_panel.h>
-#include <drm/drm_simple_kms_helper.h>
+#समावेश <drm/drm_bridge.h>
+#समावेश <drm/drm_connector.h>
+#समावेश <drm/drm_encoder.h>
+#समावेश <drm/drm_gem.h>
+#समावेश <drm/drm_panel.h>
+#समावेश <drm/drm_simple_kms_helper.h>
 
 /*
  * CLCD Controller Internal Register addresses
  */
-#define CLCD_TIM0		0x00000000
-#define CLCD_TIM1		0x00000004
-#define CLCD_TIM2		0x00000008
-#define CLCD_TIM3		0x0000000c
-#define CLCD_UBAS		0x00000010
-#define CLCD_LBAS		0x00000014
+#घोषणा CLCD_TIM0		0x00000000
+#घोषणा CLCD_TIM1		0x00000004
+#घोषणा CLCD_TIM2		0x00000008
+#घोषणा CLCD_TIM3		0x0000000c
+#घोषणा CLCD_UBAS		0x00000010
+#घोषणा CLCD_LBAS		0x00000014
 
-#define CLCD_PL110_IENB		0x00000018
-#define CLCD_PL110_CNTL		0x0000001c
-#define CLCD_PL110_STAT		0x00000020
-#define CLCD_PL110_INTR		0x00000024
-#define CLCD_PL110_UCUR		0x00000028
-#define CLCD_PL110_LCUR		0x0000002C
+#घोषणा CLCD_PL110_IENB		0x00000018
+#घोषणा CLCD_PL110_CNTL		0x0000001c
+#घोषणा CLCD_PL110_STAT		0x00000020
+#घोषणा CLCD_PL110_INTR		0x00000024
+#घोषणा CLCD_PL110_UCUR		0x00000028
+#घोषणा CLCD_PL110_LCUR		0x0000002C
 
-#define CLCD_PL111_CNTL		0x00000018
-#define CLCD_PL111_IENB		0x0000001c
-#define CLCD_PL111_RIS		0x00000020
-#define CLCD_PL111_MIS		0x00000024
-#define CLCD_PL111_ICR		0x00000028
-#define CLCD_PL111_UCUR		0x0000002c
-#define CLCD_PL111_LCUR		0x00000030
+#घोषणा CLCD_PL111_CNTL		0x00000018
+#घोषणा CLCD_PL111_IENB		0x0000001c
+#घोषणा CLCD_PL111_RIS		0x00000020
+#घोषणा CLCD_PL111_MIS		0x00000024
+#घोषणा CLCD_PL111_ICR		0x00000028
+#घोषणा CLCD_PL111_UCUR		0x0000002c
+#घोषणा CLCD_PL111_LCUR		0x00000030
 
-#define CLCD_PALL		0x00000200
-#define CLCD_PALETTE		0x00000200
+#घोषणा CLCD_PALL		0x00000200
+#घोषणा CLCD_PALETTE		0x00000200
 
-#define TIM2_PCD_LO_MASK	GENMASK(4, 0)
-#define TIM2_PCD_LO_BITS	5
-#define TIM2_CLKSEL		(1 << 5)
-#define TIM2_ACB_MASK		GENMASK(10, 6)
-#define TIM2_IVS		(1 << 11)
-#define TIM2_IHS		(1 << 12)
-#define TIM2_IPC		(1 << 13)
-#define TIM2_IOE		(1 << 14)
-#define TIM2_BCD		(1 << 26)
-#define TIM2_PCD_HI_MASK	GENMASK(31, 27)
-#define TIM2_PCD_HI_BITS	5
-#define TIM2_PCD_HI_SHIFT	27
+#घोषणा TIM2_PCD_LO_MASK	GENMASK(4, 0)
+#घोषणा TIM2_PCD_LO_BITS	5
+#घोषणा TIM2_CLKSEL		(1 << 5)
+#घोषणा TIM2_ACB_MASK		GENMASK(10, 6)
+#घोषणा TIM2_IVS		(1 << 11)
+#घोषणा TIM2_IHS		(1 << 12)
+#घोषणा TIM2_IPC		(1 << 13)
+#घोषणा TIM2_IOE		(1 << 14)
+#घोषणा TIM2_BCD		(1 << 26)
+#घोषणा TIM2_PCD_HI_MASK	GENMASK(31, 27)
+#घोषणा TIM2_PCD_HI_BITS	5
+#घोषणा TIM2_PCD_HI_SHIFT	27
 
-#define CNTL_LCDEN		(1 << 0)
-#define CNTL_LCDBPP1		(0 << 1)
-#define CNTL_LCDBPP2		(1 << 1)
-#define CNTL_LCDBPP4		(2 << 1)
-#define CNTL_LCDBPP8		(3 << 1)
-#define CNTL_LCDBPP16		(4 << 1)
-#define CNTL_LCDBPP16_565	(6 << 1)
-#define CNTL_LCDBPP16_444	(7 << 1)
-#define CNTL_LCDBPP24		(5 << 1)
-#define CNTL_LCDBW		(1 << 4)
-#define CNTL_LCDTFT		(1 << 5)
-#define CNTL_LCDMONO8		(1 << 6)
-#define CNTL_LCDDUAL		(1 << 7)
-#define CNTL_BGR		(1 << 8)
-#define CNTL_BEBO		(1 << 9)
-#define CNTL_BEPO		(1 << 10)
-#define CNTL_LCDPWR		(1 << 11)
-#define CNTL_LCDVCOMP(x)	((x) << 12)
-#define CNTL_LDMAFIFOTIME	(1 << 15)
-#define CNTL_WATERMARK		(1 << 16)
+#घोषणा CNTL_LCDEN		(1 << 0)
+#घोषणा CNTL_LCDBPP1		(0 << 1)
+#घोषणा CNTL_LCDBPP2		(1 << 1)
+#घोषणा CNTL_LCDBPP4		(2 << 1)
+#घोषणा CNTL_LCDBPP8		(3 << 1)
+#घोषणा CNTL_LCDBPP16		(4 << 1)
+#घोषणा CNTL_LCDBPP16_565	(6 << 1)
+#घोषणा CNTL_LCDBPP16_444	(7 << 1)
+#घोषणा CNTL_LCDBPP24		(5 << 1)
+#घोषणा CNTL_LCDBW		(1 << 4)
+#घोषणा CNTL_LCDTFT		(1 << 5)
+#घोषणा CNTL_LCDMONO8		(1 << 6)
+#घोषणा CNTL_LCDDUAL		(1 << 7)
+#घोषणा CNTL_BGR		(1 << 8)
+#घोषणा CNTL_BEBO		(1 << 9)
+#घोषणा CNTL_BEPO		(1 << 10)
+#घोषणा CNTL_LCDPWR		(1 << 11)
+#घोषणा CNTL_LCDVCOMP(x)	((x) << 12)
+#घोषणा CNTL_LDMAFIFOTIME	(1 << 15)
+#घोषणा CNTL_WATERMARK		(1 << 16)
 
 /* ST Microelectronics variant bits */
-#define CNTL_ST_1XBPP_444	0x0
-#define CNTL_ST_1XBPP_5551	(1 << 17)
-#define CNTL_ST_1XBPP_565	(1 << 18)
-#define CNTL_ST_CDWID_12	0x0
-#define CNTL_ST_CDWID_16	(1 << 19)
-#define CNTL_ST_CDWID_18	(1 << 20)
-#define CNTL_ST_CDWID_24	((1 << 19) | (1 << 20))
-#define CNTL_ST_CEAEN		(1 << 21)
-#define CNTL_ST_LCDBPP24_PACKED	(6 << 1)
+#घोषणा CNTL_ST_1XBPP_444	0x0
+#घोषणा CNTL_ST_1XBPP_5551	(1 << 17)
+#घोषणा CNTL_ST_1XBPP_565	(1 << 18)
+#घोषणा CNTL_ST_CDWID_12	0x0
+#घोषणा CNTL_ST_CDWID_16	(1 << 19)
+#घोषणा CNTL_ST_CDWID_18	(1 << 20)
+#घोषणा CNTL_ST_CDWID_24	((1 << 19) | (1 << 20))
+#घोषणा CNTL_ST_CEAEN		(1 << 21)
+#घोषणा CNTL_ST_LCDBPP24_PACKED	(6 << 1)
 
-#define CLCD_IRQ_NEXTBASE_UPDATE BIT(2)
+#घोषणा CLCD_IRQ_NEXTBASE_UPDATE BIT(2)
 
-struct drm_minor;
+काष्ठा drm_minor;
 
 /**
- * struct pl111_variant_data - encodes IP differences
+ * काष्ठा pl111_variant_data - encodes IP dअगरferences
  * @name: the name of this variant
  * @is_pl110: this is the early PL110 variant
  * @is_lcdc: this is the ST Microelectronics Nomadik LCDC variant
- * @external_bgr: this is the Versatile Pl110 variant with external
+ * @बाह्यal_bgr: this is the Versatile Pl110 variant with बाह्यal
  *	BGR/RGB routing
- * @broken_clockdivider: the clock divider is broken and we need to
- *	use the supplied clock directly
+ * @broken_घड़ीभागider: the घड़ी भागider is broken and we need to
+ *	use the supplied घड़ी directly
  * @broken_vblank: the vblank IRQ is broken on this variant
- * @st_bitmux_control: this variant is using the ST Micro bitmux
- *	extensions to the control register
- * @formats: array of supported pixel formats on this variant
- * @nformats: the length of the array of supported pixel formats
- * @fb_bpp: desired bits per pixel on the default framebuffer
+ * @st_biपंचांगux_control: this variant is using the ST Micro biपंचांगux
+ *	extensions to the control रेजिस्टर
+ * @क्रमmats: array of supported pixel क्रमmats on this variant
+ * @nक्रमmats: the length of the array of supported pixel क्रमmats
+ * @fb_bpp: desired bits per pixel on the शेष framebuffer
  */
-struct pl111_variant_data {
-	const char *name;
+काष्ठा pl111_variant_data अणु
+	स्थिर अक्षर *name;
 	bool is_pl110;
 	bool is_lcdc;
-	bool external_bgr;
-	bool broken_clockdivider;
+	bool बाह्यal_bgr;
+	bool broken_घड़ीभागider;
 	bool broken_vblank;
-	bool st_bitmux_control;
-	const u32 *formats;
-	unsigned int nformats;
-	unsigned int fb_bpp;
-};
+	bool st_biपंचांगux_control;
+	स्थिर u32 *क्रमmats;
+	अचिन्हित पूर्णांक nक्रमmats;
+	अचिन्हित पूर्णांक fb_bpp;
+पूर्ण;
 
-struct pl111_drm_dev_private {
-	struct drm_device *drm;
+काष्ठा pl111_drm_dev_निजी अणु
+	काष्ठा drm_device *drm;
 
-	struct drm_connector *connector;
-	struct drm_panel *panel;
-	struct drm_bridge *bridge;
-	struct drm_simple_display_pipe pipe;
+	काष्ठा drm_connector *connector;
+	काष्ठा drm_panel *panel;
+	काष्ठा drm_bridge *bridge;
+	काष्ठा drm_simple_display_pipe pipe;
 
-	void *regs;
+	व्योम *regs;
 	u32 memory_bw;
 	u32 ienb;
 	u32 ctrl;
-	/* The pixel clock (a reference to our clock divider off of CLCDCLK). */
-	struct clk *clk;
-	/* pl111's internal clock divider. */
-	struct clk_hw clk_div;
-	/* Lock to sync access to CLCD_TIM2 between the common clock
-	 * subsystem and pl111_display_enable().
+	/* The pixel घड़ी (a reference to our घड़ी भागider off of CLCDCLK). */
+	काष्ठा clk *clk;
+	/* pl111's पूर्णांकernal घड़ी भागider. */
+	काष्ठा clk_hw clk_भाग;
+	/* Lock to sync access to CLCD_TIM2 between the common घड़ी
+	 * subप्रणाली and pl111_display_enable().
 	 */
 	spinlock_t tim2_lock;
-	const struct pl111_variant_data *variant;
-	void (*variant_display_enable) (struct drm_device *drm, u32 format);
-	void (*variant_display_disable) (struct drm_device *drm);
+	स्थिर काष्ठा pl111_variant_data *variant;
+	व्योम (*variant_display_enable) (काष्ठा drm_device *drm, u32 क्रमmat);
+	व्योम (*variant_display_disable) (काष्ठा drm_device *drm);
 	bool use_device_memory;
-};
+पूर्ण;
 
-int pl111_display_init(struct drm_device *dev);
-irqreturn_t pl111_irq(int irq, void *data);
-void pl111_debugfs_init(struct drm_minor *minor);
+पूर्णांक pl111_display_init(काष्ठा drm_device *dev);
+irqवापस_t pl111_irq(पूर्णांक irq, व्योम *data);
+व्योम pl111_debugfs_init(काष्ठा drm_minor *minor);
 
-#endif /* _PL111_DRM_H_ */
+#पूर्ण_अगर /* _PL111_DRM_H_ */

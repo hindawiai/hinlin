@@ -1,172 +1,173 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Copyright 2011 Freescale Semiconductor, Inc
  *
  * Freescale Integrated Flash Controller
  *
- * Author: Dipen Dudhat <Dipen.Dudhat@freescale.com>
+ * Author: Dipen Dudhat <Dipen.Dudhat@मुक्तscale.com>
  */
-#include <linux/module.h>
-#include <linux/kernel.h>
-#include <linux/compiler.h>
-#include <linux/sched.h>
-#include <linux/spinlock.h>
-#include <linux/types.h>
-#include <linux/slab.h>
-#include <linux/io.h>
-#include <linux/of.h>
-#include <linux/of_device.h>
-#include <linux/platform_device.h>
-#include <linux/fsl_ifc.h>
-#include <linux/irqdomain.h>
-#include <linux/of_address.h>
-#include <linux/of_irq.h>
+#समावेश <linux/module.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/compiler.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/types.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/of.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/fsl_अगरc.h>
+#समावेश <linux/irqकरोमुख्य.h>
+#समावेश <linux/of_address.h>
+#समावेश <linux/of_irq.h>
 
-struct fsl_ifc_ctrl *fsl_ifc_ctrl_dev;
-EXPORT_SYMBOL(fsl_ifc_ctrl_dev);
+काष्ठा fsl_अगरc_ctrl *fsl_अगरc_ctrl_dev;
+EXPORT_SYMBOL(fsl_अगरc_ctrl_dev);
 
 /*
- * convert_ifc_address - convert the base address
+ * convert_अगरc_address - convert the base address
  * @addr_base:	base address of the memory bank
  */
-unsigned int convert_ifc_address(phys_addr_t addr_base)
-{
-	return addr_base & CSPR_BA;
-}
-EXPORT_SYMBOL(convert_ifc_address);
+अचिन्हित पूर्णांक convert_अगरc_address(phys_addr_t addr_base)
+अणु
+	वापस addr_base & CSPR_BA;
+पूर्ण
+EXPORT_SYMBOL(convert_अगरc_address);
 
 /*
- * fsl_ifc_find - find IFC bank
+ * fsl_अगरc_find - find IFC bank
  * @addr_base:	base address of the memory bank
  *
  * This function walks IFC banks comparing "Base address" field of the CSPR
- * registers with the supplied addr_base argument. When bases match this
- * function returns bank number (starting with 0), otherwise it returns
- * appropriate errno value.
+ * रेजिस्टरs with the supplied addr_base argument. When bases match this
+ * function वापसs bank number (starting with 0), otherwise it वापसs
+ * appropriate त्रुटि_सं value.
  */
-int fsl_ifc_find(phys_addr_t addr_base)
-{
-	int i = 0;
+पूर्णांक fsl_अगरc_find(phys_addr_t addr_base)
+अणु
+	पूर्णांक i = 0;
 
-	if (!fsl_ifc_ctrl_dev || !fsl_ifc_ctrl_dev->gregs)
-		return -ENODEV;
+	अगर (!fsl_अगरc_ctrl_dev || !fsl_अगरc_ctrl_dev->gregs)
+		वापस -ENODEV;
 
-	for (i = 0; i < fsl_ifc_ctrl_dev->banks; i++) {
-		u32 cspr = ifc_in32(&fsl_ifc_ctrl_dev->gregs->cspr_cs[i].cspr);
+	क्रम (i = 0; i < fsl_अगरc_ctrl_dev->banks; i++) अणु
+		u32 cspr = अगरc_in32(&fsl_अगरc_ctrl_dev->gregs->cspr_cs[i].cspr);
 
-		if (cspr & CSPR_V && (cspr & CSPR_BA) ==
-				convert_ifc_address(addr_base))
-			return i;
-	}
+		अगर (cspr & CSPR_V && (cspr & CSPR_BA) ==
+				convert_अगरc_address(addr_base))
+			वापस i;
+	पूर्ण
 
-	return -ENOENT;
-}
-EXPORT_SYMBOL(fsl_ifc_find);
+	वापस -ENOENT;
+पूर्ण
+EXPORT_SYMBOL(fsl_अगरc_find);
 
-static int fsl_ifc_ctrl_init(struct fsl_ifc_ctrl *ctrl)
-{
-	struct fsl_ifc_global __iomem *ifc = ctrl->gregs;
+अटल पूर्णांक fsl_अगरc_ctrl_init(काष्ठा fsl_अगरc_ctrl *ctrl)
+अणु
+	काष्ठा fsl_अगरc_global __iomem *अगरc = ctrl->gregs;
 
 	/*
-	 * Clear all the common status and event registers
+	 * Clear all the common status and event रेजिस्टरs
 	 */
-	if (ifc_in32(&ifc->cm_evter_stat) & IFC_CM_EVTER_STAT_CSER)
-		ifc_out32(IFC_CM_EVTER_STAT_CSER, &ifc->cm_evter_stat);
+	अगर (अगरc_in32(&अगरc->cm_evter_stat) & IFC_CM_EVTER_STAT_CSER)
+		अगरc_out32(IFC_CM_EVTER_STAT_CSER, &अगरc->cm_evter_stat);
 
 	/* enable all error and events */
-	ifc_out32(IFC_CM_EVTER_EN_CSEREN, &ifc->cm_evter_en);
+	अगरc_out32(IFC_CM_EVTER_EN_CSEREN, &अगरc->cm_evter_en);
 
-	/* enable all error and event interrupts */
-	ifc_out32(IFC_CM_EVTER_INTR_EN_CSERIREN, &ifc->cm_evter_intr_en);
-	ifc_out32(0x0, &ifc->cm_erattr0);
-	ifc_out32(0x0, &ifc->cm_erattr1);
+	/* enable all error and event पूर्णांकerrupts */
+	अगरc_out32(IFC_CM_EVTER_INTR_EN_CSERIREN, &अगरc->cm_evter_पूर्णांकr_en);
+	अगरc_out32(0x0, &अगरc->cm_erattr0);
+	अगरc_out32(0x0, &अगरc->cm_erattr1);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int fsl_ifc_ctrl_remove(struct platform_device *dev)
-{
-	struct fsl_ifc_ctrl *ctrl = dev_get_drvdata(&dev->dev);
+अटल पूर्णांक fsl_अगरc_ctrl_हटाओ(काष्ठा platक्रमm_device *dev)
+अणु
+	काष्ठा fsl_अगरc_ctrl *ctrl = dev_get_drvdata(&dev->dev);
 
-	free_irq(ctrl->nand_irq, ctrl);
-	free_irq(ctrl->irq, ctrl);
+	मुक्त_irq(ctrl->nand_irq, ctrl);
+	मुक्त_irq(ctrl->irq, ctrl);
 
 	irq_dispose_mapping(ctrl->nand_irq);
 	irq_dispose_mapping(ctrl->irq);
 
 	iounmap(ctrl->gregs);
 
-	dev_set_drvdata(&dev->dev, NULL);
-	kfree(ctrl);
+	dev_set_drvdata(&dev->dev, शून्य);
+	kमुक्त(ctrl);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * NAND events are split between an operational interrupt which only
- * receives OPC, and an error interrupt that receives everything else,
- * including non-NAND errors.  Whichever interrupt gets to it first
- * records the status and wakes the wait queue.
+ * न_अंकD events are split between an operational पूर्णांकerrupt which only
+ * receives OPC, and an error पूर्णांकerrupt that receives everything अन्यथा,
+ * including non-न_अंकD errors.  Whichever पूर्णांकerrupt माला_लो to it first
+ * records the status and wakes the रुको queue.
  */
-static DEFINE_SPINLOCK(nand_irq_lock);
+अटल DEFINE_SPINLOCK(nand_irq_lock);
 
-static u32 check_nand_stat(struct fsl_ifc_ctrl *ctrl)
-{
-	struct fsl_ifc_runtime __iomem *ifc = ctrl->rregs;
-	unsigned long flags;
+अटल u32 check_nand_stat(काष्ठा fsl_अगरc_ctrl *ctrl)
+अणु
+	काष्ठा fsl_अगरc_runसमय __iomem *अगरc = ctrl->rregs;
+	अचिन्हित दीर्घ flags;
 	u32 stat;
 
 	spin_lock_irqsave(&nand_irq_lock, flags);
 
-	stat = ifc_in32(&ifc->ifc_nand.nand_evter_stat);
-	if (stat) {
-		ifc_out32(stat, &ifc->ifc_nand.nand_evter_stat);
+	stat = अगरc_in32(&अगरc->अगरc_nand.nand_evter_stat);
+	अगर (stat) अणु
+		अगरc_out32(stat, &अगरc->अगरc_nand.nand_evter_stat);
 		ctrl->nand_stat = stat;
-		wake_up(&ctrl->nand_wait);
-	}
+		wake_up(&ctrl->nand_रुको);
+	पूर्ण
 
 	spin_unlock_irqrestore(&nand_irq_lock, flags);
 
-	return stat;
-}
+	वापस stat;
+पूर्ण
 
-static irqreturn_t fsl_ifc_nand_irq(int irqno, void *data)
-{
-	struct fsl_ifc_ctrl *ctrl = data;
+अटल irqवापस_t fsl_अगरc_nand_irq(पूर्णांक irqno, व्योम *data)
+अणु
+	काष्ठा fsl_अगरc_ctrl *ctrl = data;
 
-	if (check_nand_stat(ctrl))
-		return IRQ_HANDLED;
+	अगर (check_nand_stat(ctrl))
+		वापस IRQ_HANDLED;
 
-	return IRQ_NONE;
-}
+	वापस IRQ_NONE;
+पूर्ण
 
 /*
- * NOTE: This interrupt is used to report ifc events of various kinds,
+ * NOTE: This पूर्णांकerrupt is used to report अगरc events of various kinds,
  * such as transaction errors on the chipselects.
  */
-static irqreturn_t fsl_ifc_ctrl_irq(int irqno, void *data)
-{
-	struct fsl_ifc_ctrl *ctrl = data;
-	struct fsl_ifc_global __iomem *ifc = ctrl->gregs;
+अटल irqवापस_t fsl_अगरc_ctrl_irq(पूर्णांक irqno, व्योम *data)
+अणु
+	काष्ठा fsl_अगरc_ctrl *ctrl = data;
+	काष्ठा fsl_अगरc_global __iomem *अगरc = ctrl->gregs;
 	u32 err_axiid, err_srcid, status, cs_err, err_addr;
-	irqreturn_t ret = IRQ_NONE;
+	irqवापस_t ret = IRQ_NONE;
 
-	/* read for chip select error */
-	cs_err = ifc_in32(&ifc->cm_evter_stat);
-	if (cs_err) {
+	/* पढ़ो क्रम chip select error */
+	cs_err = अगरc_in32(&अगरc->cm_evter_stat);
+	अगर (cs_err) अणु
 		dev_err(ctrl->dev, "transaction sent to IFC is not mapped to any memory bank 0x%08X\n",
 			cs_err);
 		/* clear the chip select error */
-		ifc_out32(IFC_CM_EVTER_STAT_CSER, &ifc->cm_evter_stat);
+		अगरc_out32(IFC_CM_EVTER_STAT_CSER, &अगरc->cm_evter_stat);
 
-		/* read error attribute registers print the error information */
-		status = ifc_in32(&ifc->cm_erattr0);
-		err_addr = ifc_in32(&ifc->cm_erattr1);
+		/* पढ़ो error attribute रेजिस्टरs prपूर्णांक the error inक्रमmation */
+		status = अगरc_in32(&अगरc->cm_erattr0);
+		err_addr = अगरc_in32(&अगरc->cm_erattr1);
 
-		if (status & IFC_CM_ERATTR0_ERTYP_READ)
+		अगर (status & IFC_CM_ERATTR0_ERTYP_READ)
 			dev_err(ctrl->dev, "Read transaction error CM_ERATTR0 0x%08X\n",
 				status);
-		else
+		अन्यथा
 			dev_err(ctrl->dev, "Write transaction error CM_ERATTR0 0x%08X\n",
 				status);
 
@@ -184,141 +185,141 @@ static irqreturn_t fsl_ifc_ctrl_irq(int irqno, void *data)
 			err_addr);
 
 		ret = IRQ_HANDLED;
-	}
+	पूर्ण
 
-	if (check_nand_stat(ctrl))
+	अगर (check_nand_stat(ctrl))
 		ret = IRQ_HANDLED;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
- * fsl_ifc_ctrl_probe
+ * fsl_अगरc_ctrl_probe
  *
  * called by device layer when it finds a device matching
  * one our driver can handled. This code allocates all of
- * the resources needed for the controller only.  The
- * resources for the NAND banks themselves are allocated
+ * the resources needed क्रम the controller only.  The
+ * resources क्रम the न_अंकD banks themselves are allocated
  * in the chip probe function.
  */
-static int fsl_ifc_ctrl_probe(struct platform_device *dev)
-{
-	int ret = 0;
-	int version, banks;
-	void __iomem *addr;
+अटल पूर्णांक fsl_अगरc_ctrl_probe(काष्ठा platक्रमm_device *dev)
+अणु
+	पूर्णांक ret = 0;
+	पूर्णांक version, banks;
+	व्योम __iomem *addr;
 
 	dev_info(&dev->dev, "Freescale Integrated Flash Controller\n");
 
-	fsl_ifc_ctrl_dev = kzalloc(sizeof(*fsl_ifc_ctrl_dev), GFP_KERNEL);
-	if (!fsl_ifc_ctrl_dev)
-		return -ENOMEM;
+	fsl_अगरc_ctrl_dev = kzalloc(माप(*fsl_अगरc_ctrl_dev), GFP_KERNEL);
+	अगर (!fsl_अगरc_ctrl_dev)
+		वापस -ENOMEM;
 
-	dev_set_drvdata(&dev->dev, fsl_ifc_ctrl_dev);
+	dev_set_drvdata(&dev->dev, fsl_अगरc_ctrl_dev);
 
 	/* IOMAP the entire IFC region */
-	fsl_ifc_ctrl_dev->gregs = of_iomap(dev->dev.of_node, 0);
-	if (!fsl_ifc_ctrl_dev->gregs) {
+	fsl_अगरc_ctrl_dev->gregs = of_iomap(dev->dev.of_node, 0);
+	अगर (!fsl_अगरc_ctrl_dev->gregs) अणु
 		dev_err(&dev->dev, "failed to get memory region\n");
 		ret = -ENODEV;
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
-	if (of_property_read_bool(dev->dev.of_node, "little-endian")) {
-		fsl_ifc_ctrl_dev->little_endian = true;
+	अगर (of_property_पढ़ो_bool(dev->dev.of_node, "little-endian")) अणु
+		fsl_अगरc_ctrl_dev->little_endian = true;
 		dev_dbg(&dev->dev, "IFC REGISTERS are LITTLE endian\n");
-	} else {
-		fsl_ifc_ctrl_dev->little_endian = false;
+	पूर्ण अन्यथा अणु
+		fsl_अगरc_ctrl_dev->little_endian = false;
 		dev_dbg(&dev->dev, "IFC REGISTERS are BIG endian\n");
-	}
+	पूर्ण
 
-	version = ifc_in32(&fsl_ifc_ctrl_dev->gregs->ifc_rev) &
+	version = अगरc_in32(&fsl_अगरc_ctrl_dev->gregs->अगरc_rev) &
 			FSL_IFC_VERSION_MASK;
 
 	banks = (version == FSL_IFC_VERSION_1_0_0) ? 4 : 8;
 	dev_info(&dev->dev, "IFC version %d.%d, %d banks\n",
 		version >> 24, (version >> 16) & 0xf, banks);
 
-	fsl_ifc_ctrl_dev->version = version;
-	fsl_ifc_ctrl_dev->banks = banks;
+	fsl_अगरc_ctrl_dev->version = version;
+	fsl_अगरc_ctrl_dev->banks = banks;
 
-	addr = fsl_ifc_ctrl_dev->gregs;
-	if (version >= FSL_IFC_VERSION_2_0_0)
+	addr = fsl_अगरc_ctrl_dev->gregs;
+	अगर (version >= FSL_IFC_VERSION_2_0_0)
 		addr += PGOFFSET_64K;
-	else
+	अन्यथा
 		addr += PGOFFSET_4K;
-	fsl_ifc_ctrl_dev->rregs = addr;
+	fsl_अगरc_ctrl_dev->rregs = addr;
 
 	/* get the Controller level irq */
-	fsl_ifc_ctrl_dev->irq = irq_of_parse_and_map(dev->dev.of_node, 0);
-	if (fsl_ifc_ctrl_dev->irq == 0) {
+	fsl_अगरc_ctrl_dev->irq = irq_of_parse_and_map(dev->dev.of_node, 0);
+	अगर (fsl_अगरc_ctrl_dev->irq == 0) अणु
 		dev_err(&dev->dev, "failed to get irq resource for IFC\n");
 		ret = -ENODEV;
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
 	/* get the nand machine irq */
-	fsl_ifc_ctrl_dev->nand_irq =
+	fsl_अगरc_ctrl_dev->nand_irq =
 			irq_of_parse_and_map(dev->dev.of_node, 1);
 
-	fsl_ifc_ctrl_dev->dev = &dev->dev;
+	fsl_अगरc_ctrl_dev->dev = &dev->dev;
 
-	ret = fsl_ifc_ctrl_init(fsl_ifc_ctrl_dev);
-	if (ret < 0)
-		goto err;
+	ret = fsl_अगरc_ctrl_init(fsl_अगरc_ctrl_dev);
+	अगर (ret < 0)
+		जाओ err;
 
-	init_waitqueue_head(&fsl_ifc_ctrl_dev->nand_wait);
+	init_रुकोqueue_head(&fsl_अगरc_ctrl_dev->nand_रुको);
 
-	ret = request_irq(fsl_ifc_ctrl_dev->irq, fsl_ifc_ctrl_irq, IRQF_SHARED,
-			  "fsl-ifc", fsl_ifc_ctrl_dev);
-	if (ret != 0) {
+	ret = request_irq(fsl_अगरc_ctrl_dev->irq, fsl_अगरc_ctrl_irq, IRQF_SHARED,
+			  "fsl-ifc", fsl_अगरc_ctrl_dev);
+	अगर (ret != 0) अणु
 		dev_err(&dev->dev, "failed to install irq (%d)\n",
-			fsl_ifc_ctrl_dev->irq);
-		goto err_irq;
-	}
+			fsl_अगरc_ctrl_dev->irq);
+		जाओ err_irq;
+	पूर्ण
 
-	if (fsl_ifc_ctrl_dev->nand_irq) {
-		ret = request_irq(fsl_ifc_ctrl_dev->nand_irq, fsl_ifc_nand_irq,
-				0, "fsl-ifc-nand", fsl_ifc_ctrl_dev);
-		if (ret != 0) {
+	अगर (fsl_अगरc_ctrl_dev->nand_irq) अणु
+		ret = request_irq(fsl_अगरc_ctrl_dev->nand_irq, fsl_अगरc_nand_irq,
+				0, "fsl-ifc-nand", fsl_अगरc_ctrl_dev);
+		अगर (ret != 0) अणु
 			dev_err(&dev->dev, "failed to install irq (%d)\n",
-				fsl_ifc_ctrl_dev->nand_irq);
-			goto err_nandirq;
-		}
-	}
+				fsl_अगरc_ctrl_dev->nand_irq);
+			जाओ err_nandirq;
+		पूर्ण
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 err_nandirq:
-	free_irq(fsl_ifc_ctrl_dev->nand_irq, fsl_ifc_ctrl_dev);
-	irq_dispose_mapping(fsl_ifc_ctrl_dev->nand_irq);
+	मुक्त_irq(fsl_अगरc_ctrl_dev->nand_irq, fsl_अगरc_ctrl_dev);
+	irq_dispose_mapping(fsl_अगरc_ctrl_dev->nand_irq);
 err_irq:
-	free_irq(fsl_ifc_ctrl_dev->irq, fsl_ifc_ctrl_dev);
-	irq_dispose_mapping(fsl_ifc_ctrl_dev->irq);
+	मुक्त_irq(fsl_अगरc_ctrl_dev->irq, fsl_अगरc_ctrl_dev);
+	irq_dispose_mapping(fsl_अगरc_ctrl_dev->irq);
 err:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const struct of_device_id fsl_ifc_match[] = {
-	{
+अटल स्थिर काष्ठा of_device_id fsl_अगरc_match[] = अणु
+	अणु
 		.compatible = "fsl,ifc",
-	},
-	{},
-};
+	पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 
-static struct platform_driver fsl_ifc_ctrl_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver fsl_अगरc_ctrl_driver = अणु
+	.driver = अणु
 		.name	= "fsl-ifc",
-		.of_match_table = fsl_ifc_match,
-	},
-	.probe       = fsl_ifc_ctrl_probe,
-	.remove      = fsl_ifc_ctrl_remove,
-};
+		.of_match_table = fsl_अगरc_match,
+	पूर्ण,
+	.probe       = fsl_अगरc_ctrl_probe,
+	.हटाओ      = fsl_अगरc_ctrl_हटाओ,
+पूर्ण;
 
-static int __init fsl_ifc_init(void)
-{
-	return platform_driver_register(&fsl_ifc_ctrl_driver);
-}
-subsys_initcall(fsl_ifc_init);
+अटल पूर्णांक __init fsl_अगरc_init(व्योम)
+अणु
+	वापस platक्रमm_driver_रेजिस्टर(&fsl_अगरc_ctrl_driver);
+पूर्ण
+subsys_initcall(fsl_अगरc_init);
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Freescale Semiconductor");

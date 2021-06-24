@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*  SuperH Ethernet device driver
  *
  *  Copyright (C) 2014 Renesas Electronics Corporation
@@ -8,53 +9,53 @@
  *  Copyright (C) 2014 Codethink Limited
  */
 
-#include <linux/module.h>
-#include <linux/kernel.h>
-#include <linux/spinlock.h>
-#include <linux/interrupt.h>
-#include <linux/dma-mapping.h>
-#include <linux/etherdevice.h>
-#include <linux/delay.h>
-#include <linux/platform_device.h>
-#include <linux/mdio-bitbang.h>
-#include <linux/netdevice.h>
-#include <linux/of.h>
-#include <linux/of_device.h>
-#include <linux/of_irq.h>
-#include <linux/of_net.h>
-#include <linux/phy.h>
-#include <linux/cache.h>
-#include <linux/io.h>
-#include <linux/pm_runtime.h>
-#include <linux/slab.h>
-#include <linux/ethtool.h>
-#include <linux/if_vlan.h>
-#include <linux/sh_eth.h>
-#include <linux/of_mdio.h>
+#समावेश <linux/module.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/dma-mapping.h>
+#समावेश <linux/etherdevice.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/mdio-bitbang.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/of_irq.h>
+#समावेश <linux/of_net.h>
+#समावेश <linux/phy.h>
+#समावेश <linux/cache.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/pm_runसमय.स>
+#समावेश <linux/slab.h>
+#समावेश <linux/ethtool.h>
+#समावेश <linux/अगर_vlan.h>
+#समावेश <linux/sh_eth.h>
+#समावेश <linux/of_mdपन.स>
 
-#include "sh_eth.h"
+#समावेश "sh_eth.h"
 
-#define SH_ETH_DEF_MSG_ENABLE \
+#घोषणा SH_ETH_DEF_MSG_ENABLE \
 		(NETIF_MSG_LINK	| \
 		NETIF_MSG_TIMER	| \
 		NETIF_MSG_RX_ERR| \
 		NETIF_MSG_TX_ERR)
 
-#define SH_ETH_OFFSET_INVALID	((u16)~0)
+#घोषणा SH_ETH_OFFSET_INVALID	((u16)~0)
 
-#define SH_ETH_OFFSET_DEFAULTS			\
+#घोषणा SH_ETH_OFFSET_DEFAULTS			\
 	[0 ... SH_ETH_MAX_REGISTER_OFFSET - 1] = SH_ETH_OFFSET_INVALID
 
-/* use some intentionally tricky logic here to initialize the whole struct to
+/* use some पूर्णांकentionally tricky logic here to initialize the whole काष्ठा to
  * 0xffff, but then override certain fields, requiring us to indicate that we
- * "know" that there are overrides in this structure, and we'll need to disable
+ * "know" that there are overrides in this काष्ठाure, and we'll need to disable
  * that warning from W=1 builds. GCC has supported this option since 4.2.X, but
- * the macros available to do this only define GCC 8.
+ * the macros available to करो this only define GCC 8.
  */
 __diag_push();
 __diag_ignore(GCC, 8, "-Woverride-init",
 	      "logic to initialize all and then override some is OK");
-static const u16 sh_eth_offset_gigabit[SH_ETH_MAX_REGISTER_OFFSET] = {
+अटल स्थिर u16 sh_eth_offset_gigabit[SH_ETH_MAX_REGISTER_OFFSET] = अणु
 	SH_ETH_OFFSET_DEFAULTS,
 
 	[EDSR]		= 0x0000,
@@ -76,7 +77,7 @@ static const u16 sh_eth_offset_gigabit[SH_ETH_MAX_REGISTER_OFFSET] = {
 	[TFTR]		= 0x0448,
 	[FDR]		= 0x0450,
 	[RMCR]		= 0x0458,
-	[RPADIR]	= 0x0460,
+	[RPAसूची]	= 0x0460,
 	[FCFTR]		= 0x0468,
 	[CSMR]		= 0x04E4,
 
@@ -149,9 +150,9 @@ static const u16 sh_eth_offset_gigabit[SH_ETH_MAX_REGISTER_OFFSET] = {
 	[RXALCR1]	= 0x00ac,
 	[FWNLCR1]	= 0x00b0,
 	[FWALCR1]	= 0x00b4,
-};
+पूर्ण;
 
-static const u16 sh_eth_offset_fast_rcar[SH_ETH_MAX_REGISTER_OFFSET] = {
+अटल स्थिर u16 sh_eth_offset_fast_rcar[SH_ETH_MAX_REGISTER_OFFSET] = अणु
 	SH_ETH_OFFSET_DEFAULTS,
 
 	[ECMR]		= 0x0300,
@@ -197,9 +198,9 @@ static const u16 sh_eth_offset_fast_rcar[SH_ETH_MAX_REGISTER_OFFSET] = {
 	[RMIIMODE]      = 0x026c,
 	[FCFTR]		= 0x0270,
 	[TRIMD]		= 0x027c,
-};
+पूर्ण;
 
-static const u16 sh_eth_offset_fast_sh4[SH_ETH_MAX_REGISTER_OFFSET] = {
+अटल स्थिर u16 sh_eth_offset_fast_sh4[SH_ETH_MAX_REGISTER_OFFSET] = अणु
 	SH_ETH_OFFSET_DEFAULTS,
 
 	[ECMR]		= 0x0100,
@@ -245,15 +246,15 @@ static const u16 sh_eth_offset_fast_sh4[SH_ETH_MAX_REGISTER_OFFSET] = {
 	[TFUCR]		= 0x0064,
 	[RFOCR]		= 0x0068,
 	[FCFTR]		= 0x0070,
-	[RPADIR]	= 0x0078,
+	[RPAसूची]	= 0x0078,
 	[TRIMD]		= 0x007c,
 	[RBWAR]		= 0x00c8,
 	[RDFAR]		= 0x00cc,
 	[TBRAR]		= 0x00d4,
 	[TDFAR]		= 0x00d8,
-};
+पूर्ण;
 
-static const u16 sh_eth_offset_fast_sh3_sh2[SH_ETH_MAX_REGISTER_OFFSET] = {
+अटल स्थिर u16 sh_eth_offset_fast_sh3_sh2[SH_ETH_MAX_REGISTER_OFFSET] = अणु
 	SH_ETH_OFFSET_DEFAULTS,
 
 	[EDMR]		= 0x0000,
@@ -270,7 +271,7 @@ static const u16 sh_eth_offset_fast_sh3_sh2[SH_ETH_MAX_REGISTER_OFFSET] = {
 	[RMCR]		= 0x002c,
 	[EDOCR]		= 0x0030,
 	[FCFTR]		= 0x0034,
-	[RPADIR]	= 0x0038,
+	[RPAसूची]	= 0x0038,
 	[TRIMD]		= 0x003c,
 	[RBWAR]		= 0x0040,
 	[RDFAR]		= 0x0044,
@@ -340,207 +341,207 @@ static const u16 sh_eth_offset_fast_sh3_sh2[SH_ETH_MAX_REGISTER_OFFSET] = {
 	[FWALCR1]	= 0x00b4,
 
 	[TSU_ADRH0]	= 0x0100,
-};
+पूर्ण;
 __diag_pop();
 
-static void sh_eth_rcv_snd_disable(struct net_device *ndev);
-static struct net_device_stats *sh_eth_get_stats(struct net_device *ndev);
+अटल व्योम sh_eth_rcv_snd_disable(काष्ठा net_device *ndev);
+अटल काष्ठा net_device_stats *sh_eth_get_stats(काष्ठा net_device *ndev);
 
-static void sh_eth_write(struct net_device *ndev, u32 data, int enum_index)
-{
-	struct sh_eth_private *mdp = netdev_priv(ndev);
-	u16 offset = mdp->reg_offset[enum_index];
+अटल व्योम sh_eth_ग_लिखो(काष्ठा net_device *ndev, u32 data, पूर्णांक क्रमागत_index)
+अणु
+	काष्ठा sh_eth_निजी *mdp = netdev_priv(ndev);
+	u16 offset = mdp->reg_offset[क्रमागत_index];
 
-	if (WARN_ON(offset == SH_ETH_OFFSET_INVALID))
-		return;
+	अगर (WARN_ON(offset == SH_ETH_OFFSET_INVALID))
+		वापस;
 
-	iowrite32(data, mdp->addr + offset);
-}
+	ioग_लिखो32(data, mdp->addr + offset);
+पूर्ण
 
-static u32 sh_eth_read(struct net_device *ndev, int enum_index)
-{
-	struct sh_eth_private *mdp = netdev_priv(ndev);
-	u16 offset = mdp->reg_offset[enum_index];
+अटल u32 sh_eth_पढ़ो(काष्ठा net_device *ndev, पूर्णांक क्रमागत_index)
+अणु
+	काष्ठा sh_eth_निजी *mdp = netdev_priv(ndev);
+	u16 offset = mdp->reg_offset[क्रमागत_index];
 
-	if (WARN_ON(offset == SH_ETH_OFFSET_INVALID))
-		return ~0U;
+	अगर (WARN_ON(offset == SH_ETH_OFFSET_INVALID))
+		वापस ~0U;
 
-	return ioread32(mdp->addr + offset);
-}
+	वापस ioपढ़ो32(mdp->addr + offset);
+पूर्ण
 
-static void sh_eth_modify(struct net_device *ndev, int enum_index, u32 clear,
+अटल व्योम sh_eth_modअगरy(काष्ठा net_device *ndev, पूर्णांक क्रमागत_index, u32 clear,
 			  u32 set)
-{
-	sh_eth_write(ndev, (sh_eth_read(ndev, enum_index) & ~clear) | set,
-		     enum_index);
-}
+अणु
+	sh_eth_ग_लिखो(ndev, (sh_eth_पढ़ो(ndev, क्रमागत_index) & ~clear) | set,
+		     क्रमागत_index);
+पूर्ण
 
-static u16 sh_eth_tsu_get_offset(struct sh_eth_private *mdp, int enum_index)
-{
-	return mdp->reg_offset[enum_index];
-}
+अटल u16 sh_eth_tsu_get_offset(काष्ठा sh_eth_निजी *mdp, पूर्णांक क्रमागत_index)
+अणु
+	वापस mdp->reg_offset[क्रमागत_index];
+पूर्ण
 
-static void sh_eth_tsu_write(struct sh_eth_private *mdp, u32 data,
-			     int enum_index)
-{
-	u16 offset = sh_eth_tsu_get_offset(mdp, enum_index);
+अटल व्योम sh_eth_tsu_ग_लिखो(काष्ठा sh_eth_निजी *mdp, u32 data,
+			     पूर्णांक क्रमागत_index)
+अणु
+	u16 offset = sh_eth_tsu_get_offset(mdp, क्रमागत_index);
 
-	if (WARN_ON(offset == SH_ETH_OFFSET_INVALID))
-		return;
+	अगर (WARN_ON(offset == SH_ETH_OFFSET_INVALID))
+		वापस;
 
-	iowrite32(data, mdp->tsu_addr + offset);
-}
+	ioग_लिखो32(data, mdp->tsu_addr + offset);
+पूर्ण
 
-static u32 sh_eth_tsu_read(struct sh_eth_private *mdp, int enum_index)
-{
-	u16 offset = sh_eth_tsu_get_offset(mdp, enum_index);
+अटल u32 sh_eth_tsu_पढ़ो(काष्ठा sh_eth_निजी *mdp, पूर्णांक क्रमागत_index)
+अणु
+	u16 offset = sh_eth_tsu_get_offset(mdp, क्रमागत_index);
 
-	if (WARN_ON(offset == SH_ETH_OFFSET_INVALID))
-		return ~0U;
+	अगर (WARN_ON(offset == SH_ETH_OFFSET_INVALID))
+		वापस ~0U;
 
-	return ioread32(mdp->tsu_addr + offset);
-}
+	वापस ioपढ़ो32(mdp->tsu_addr + offset);
+पूर्ण
 
-static void sh_eth_soft_swap(char *src, int len)
-{
-#ifdef __LITTLE_ENDIAN
+अटल व्योम sh_eth_soft_swap(अक्षर *src, पूर्णांक len)
+अणु
+#अगर_घोषित __LITTLE_ENDIAN
 	u32 *p = (u32 *)src;
-	u32 *maxp = p + DIV_ROUND_UP(len, sizeof(u32));
+	u32 *maxp = p + DIV_ROUND_UP(len, माप(u32));
 
-	for (; p < maxp; p++)
+	क्रम (; p < maxp; p++)
 		*p = swab32(*p);
-#endif
-}
+#पूर्ण_अगर
+पूर्ण
 
-static void sh_eth_select_mii(struct net_device *ndev)
-{
-	struct sh_eth_private *mdp = netdev_priv(ndev);
+अटल व्योम sh_eth_select_mii(काष्ठा net_device *ndev)
+अणु
+	काष्ठा sh_eth_निजी *mdp = netdev_priv(ndev);
 	u32 value;
 
-	switch (mdp->phy_interface) {
-	case PHY_INTERFACE_MODE_RGMII ... PHY_INTERFACE_MODE_RGMII_TXID:
+	चयन (mdp->phy_पूर्णांकerface) अणु
+	हाल PHY_INTERFACE_MODE_RGMII ... PHY_INTERFACE_MODE_RGMII_TXID:
 		value = 0x3;
-		break;
-	case PHY_INTERFACE_MODE_GMII:
+		अवरोध;
+	हाल PHY_INTERFACE_MODE_GMII:
 		value = 0x2;
-		break;
-	case PHY_INTERFACE_MODE_MII:
+		अवरोध;
+	हाल PHY_INTERFACE_MODE_MII:
 		value = 0x1;
-		break;
-	case PHY_INTERFACE_MODE_RMII:
+		अवरोध;
+	हाल PHY_INTERFACE_MODE_RMII:
 		value = 0x0;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		netdev_warn(ndev,
 			    "PHY interface mode was not setup. Set to MII.\n");
 		value = 0x1;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	sh_eth_write(ndev, value, RMII_MII);
-}
+	sh_eth_ग_लिखो(ndev, value, RMII_MII);
+पूर्ण
 
-static void sh_eth_set_duplex(struct net_device *ndev)
-{
-	struct sh_eth_private *mdp = netdev_priv(ndev);
+अटल व्योम sh_eth_set_duplex(काष्ठा net_device *ndev)
+अणु
+	काष्ठा sh_eth_निजी *mdp = netdev_priv(ndev);
 
-	sh_eth_modify(ndev, ECMR, ECMR_DM, mdp->duplex ? ECMR_DM : 0);
-}
+	sh_eth_modअगरy(ndev, ECMR, ECMR_DM, mdp->duplex ? ECMR_DM : 0);
+पूर्ण
 
-static void sh_eth_chip_reset(struct net_device *ndev)
-{
-	struct sh_eth_private *mdp = netdev_priv(ndev);
+अटल व्योम sh_eth_chip_reset(काष्ठा net_device *ndev)
+अणु
+	काष्ठा sh_eth_निजी *mdp = netdev_priv(ndev);
 
 	/* reset device */
-	sh_eth_tsu_write(mdp, ARSTR_ARST, ARSTR);
+	sh_eth_tsu_ग_लिखो(mdp, ARSTR_ARST, ARSTR);
 	mdelay(1);
-}
+पूर्ण
 
-static int sh_eth_soft_reset(struct net_device *ndev)
-{
-	sh_eth_modify(ndev, EDMR, EDMR_SRST_ETHER, EDMR_SRST_ETHER);
+अटल पूर्णांक sh_eth_soft_reset(काष्ठा net_device *ndev)
+अणु
+	sh_eth_modअगरy(ndev, EDMR, EDMR_SRST_ETHER, EDMR_SRST_ETHER);
 	mdelay(3);
-	sh_eth_modify(ndev, EDMR, EDMR_SRST_ETHER, 0);
+	sh_eth_modअगरy(ndev, EDMR, EDMR_SRST_ETHER, 0);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sh_eth_check_soft_reset(struct net_device *ndev)
-{
-	int cnt;
+अटल पूर्णांक sh_eth_check_soft_reset(काष्ठा net_device *ndev)
+अणु
+	पूर्णांक cnt;
 
-	for (cnt = 100; cnt > 0; cnt--) {
-		if (!(sh_eth_read(ndev, EDMR) & EDMR_SRST_GETHER))
-			return 0;
+	क्रम (cnt = 100; cnt > 0; cnt--) अणु
+		अगर (!(sh_eth_पढ़ो(ndev, EDMR) & EDMR_SRST_GETHER))
+			वापस 0;
 		mdelay(1);
-	}
+	पूर्ण
 
 	netdev_err(ndev, "Device reset failed\n");
-	return -ETIMEDOUT;
-}
+	वापस -ETIMEDOUT;
+पूर्ण
 
-static int sh_eth_soft_reset_gether(struct net_device *ndev)
-{
-	struct sh_eth_private *mdp = netdev_priv(ndev);
-	int ret;
+अटल पूर्णांक sh_eth_soft_reset_gether(काष्ठा net_device *ndev)
+अणु
+	काष्ठा sh_eth_निजी *mdp = netdev_priv(ndev);
+	पूर्णांक ret;
 
-	sh_eth_write(ndev, EDSR_ENALL, EDSR);
-	sh_eth_modify(ndev, EDMR, EDMR_SRST_GETHER, EDMR_SRST_GETHER);
+	sh_eth_ग_लिखो(ndev, EDSR_ENALL, EDSR);
+	sh_eth_modअगरy(ndev, EDMR, EDMR_SRST_GETHER, EDMR_SRST_GETHER);
 
 	ret = sh_eth_check_soft_reset(ndev);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	/* Table Init */
-	sh_eth_write(ndev, 0, TDLAR);
-	sh_eth_write(ndev, 0, TDFAR);
-	sh_eth_write(ndev, 0, TDFXR);
-	sh_eth_write(ndev, 0, TDFFR);
-	sh_eth_write(ndev, 0, RDLAR);
-	sh_eth_write(ndev, 0, RDFAR);
-	sh_eth_write(ndev, 0, RDFXR);
-	sh_eth_write(ndev, 0, RDFFR);
+	sh_eth_ग_लिखो(ndev, 0, TDLAR);
+	sh_eth_ग_लिखो(ndev, 0, TDFAR);
+	sh_eth_ग_लिखो(ndev, 0, TDFXR);
+	sh_eth_ग_लिखो(ndev, 0, TDFFR);
+	sh_eth_ग_लिखो(ndev, 0, RDLAR);
+	sh_eth_ग_लिखो(ndev, 0, RDFAR);
+	sh_eth_ग_लिखो(ndev, 0, RDFXR);
+	sh_eth_ग_लिखो(ndev, 0, RDFFR);
 
-	/* Reset HW CRC register */
-	if (mdp->cd->csmr)
-		sh_eth_write(ndev, 0, CSMR);
+	/* Reset HW CRC रेजिस्टर */
+	अगर (mdp->cd->csmr)
+		sh_eth_ग_लिखो(ndev, 0, CSMR);
 
 	/* Select MII mode */
-	if (mdp->cd->select_mii)
+	अगर (mdp->cd->select_mii)
 		sh_eth_select_mii(ndev);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void sh_eth_set_rate_gether(struct net_device *ndev)
-{
-	struct sh_eth_private *mdp = netdev_priv(ndev);
+अटल व्योम sh_eth_set_rate_gether(काष्ठा net_device *ndev)
+अणु
+	काष्ठा sh_eth_निजी *mdp = netdev_priv(ndev);
 
-	if (WARN_ON(!mdp->cd->gecmr))
-		return;
+	अगर (WARN_ON(!mdp->cd->gecmr))
+		वापस;
 
-	switch (mdp->speed) {
-	case 10: /* 10BASE */
-		sh_eth_write(ndev, GECMR_10, GECMR);
-		break;
-	case 100:/* 100BASE */
-		sh_eth_write(ndev, GECMR_100, GECMR);
-		break;
-	case 1000: /* 1000BASE */
-		sh_eth_write(ndev, GECMR_1000, GECMR);
-		break;
-	}
-}
+	चयन (mdp->speed) अणु
+	हाल 10: /* 10BASE */
+		sh_eth_ग_लिखो(ndev, GECMR_10, GECMR);
+		अवरोध;
+	हाल 100:/* 100BASE */
+		sh_eth_ग_लिखो(ndev, GECMR_100, GECMR);
+		अवरोध;
+	हाल 1000: /* 1000BASE */
+		sh_eth_ग_लिखो(ndev, GECMR_1000, GECMR);
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-#ifdef CONFIG_OF
+#अगर_घोषित CONFIG_OF
 /* R7S72100 */
-static struct sh_eth_cpu_data r7s72100_data = {
+अटल काष्ठा sh_eth_cpu_data r7s72100_data = अणु
 	.soft_reset	= sh_eth_soft_reset_gether,
 
 	.chip_reset	= sh_eth_chip_reset,
 	.set_duplex	= sh_eth_set_duplex,
 
-	.register_type	= SH_ETH_REG_GIGABIT,
+	.रेजिस्टर_type	= SH_ETH_REG_GIGABIT,
 
 	.edtrr_trns	= EDTRR_TRNS_GETHER,
 	.ecsr_value	= ECSR_ICD,
@@ -565,7 +566,7 @@ static struct sh_eth_cpu_data r7s72100_data = {
 	.no_psr		= 1,
 	.apr		= 1,
 	.mpr		= 1,
-	.tpauser	= 1,
+	.tछोड़ोr	= 1,
 	.hw_swap	= 1,
 	.rpadir		= 1,
 	.no_trimd	= 1,
@@ -575,24 +576,24 @@ static struct sh_eth_cpu_data r7s72100_data = {
 	.rx_csum	= 1,
 	.tsu		= 1,
 	.no_tx_cntrs	= 1,
-};
+पूर्ण;
 
-static void sh_eth_chip_reset_r8a7740(struct net_device *ndev)
-{
+अटल व्योम sh_eth_chip_reset_r8a7740(काष्ठा net_device *ndev)
+अणु
 	sh_eth_chip_reset(ndev);
 
 	sh_eth_select_mii(ndev);
-}
+पूर्ण
 
 /* R8A7740 */
-static struct sh_eth_cpu_data r8a7740_data = {
+अटल काष्ठा sh_eth_cpu_data r8a7740_data = अणु
 	.soft_reset	= sh_eth_soft_reset_gether,
 
 	.chip_reset	= sh_eth_chip_reset_r8a7740,
 	.set_duplex	= sh_eth_set_duplex,
 	.set_rate	= sh_eth_set_rate_gether,
 
-	.register_type	= SH_ETH_REG_GIGABIT,
+	.रेजिस्टर_type	= SH_ETH_REG_GIGABIT,
 
 	.edtrr_trns	= EDTRR_TRNS_GETHER,
 	.ecsr_value	= ECSR_ICD | ECSR_MPD,
@@ -614,7 +615,7 @@ static struct sh_eth_cpu_data r8a7740_data = {
 
 	.apr		= 1,
 	.mpr		= 1,
-	.tpauser	= 1,
+	.tछोड़ोr	= 1,
 	.gecmr		= 1,
 	.bculr		= 1,
 	.hw_swap	= 1,
@@ -628,31 +629,31 @@ static struct sh_eth_cpu_data r8a7740_data = {
 	.select_mii	= 1,
 	.magic		= 1,
 	.cexcr		= 1,
-};
+पूर्ण;
 
 /* There is CPU dependent code */
-static void sh_eth_set_rate_rcar(struct net_device *ndev)
-{
-	struct sh_eth_private *mdp = netdev_priv(ndev);
+अटल व्योम sh_eth_set_rate_rcar(काष्ठा net_device *ndev)
+अणु
+	काष्ठा sh_eth_निजी *mdp = netdev_priv(ndev);
 
-	switch (mdp->speed) {
-	case 10: /* 10BASE */
-		sh_eth_modify(ndev, ECMR, ECMR_ELB, 0);
-		break;
-	case 100:/* 100BASE */
-		sh_eth_modify(ndev, ECMR, ECMR_ELB, ECMR_ELB);
-		break;
-	}
-}
+	चयन (mdp->speed) अणु
+	हाल 10: /* 10BASE */
+		sh_eth_modअगरy(ndev, ECMR, ECMR_ELB, 0);
+		अवरोध;
+	हाल 100:/* 100BASE */
+		sh_eth_modअगरy(ndev, ECMR, ECMR_ELB, ECMR_ELB);
+		अवरोध;
+	पूर्ण
+पूर्ण
 
 /* R-Car Gen1 */
-static struct sh_eth_cpu_data rcar_gen1_data = {
+अटल काष्ठा sh_eth_cpu_data rcar_gen1_data = अणु
 	.soft_reset	= sh_eth_soft_reset,
 
 	.set_duplex	= sh_eth_set_duplex,
 	.set_rate	= sh_eth_set_rate_rcar,
 
-	.register_type	= SH_ETH_REG_FAST_RCAR,
+	.रेजिस्टर_type	= SH_ETH_REG_FAST_RCAR,
 
 	.edtrr_trns	= EDTRR_TRNS_ETHER,
 	.ecsr_value	= ECSR_PSRTO | ECSR_LCHNG | ECSR_ICD,
@@ -671,19 +672,19 @@ static struct sh_eth_cpu_data rcar_gen1_data = {
 
 	.apr		= 1,
 	.mpr		= 1,
-	.tpauser	= 1,
+	.tछोड़ोr	= 1,
 	.hw_swap	= 1,
 	.no_xdfar	= 1,
-};
+पूर्ण;
 
 /* R-Car Gen2 and RZ/G1 */
-static struct sh_eth_cpu_data rcar_gen2_data = {
+अटल काष्ठा sh_eth_cpu_data rcar_gen2_data = अणु
 	.soft_reset	= sh_eth_soft_reset,
 
 	.set_duplex	= sh_eth_set_duplex,
 	.set_rate	= sh_eth_set_rate_rcar,
 
-	.register_type	= SH_ETH_REG_FAST_RCAR,
+	.रेजिस्टर_type	= SH_ETH_REG_FAST_RCAR,
 
 	.edtrr_trns	= EDTRR_TRNS_ETHER,
 	.ecsr_value	= ECSR_PSRTO | ECSR_LCHNG | ECSR_ICD | ECSR_MPD,
@@ -705,21 +706,21 @@ static struct sh_eth_cpu_data rcar_gen2_data = {
 
 	.apr		= 1,
 	.mpr		= 1,
-	.tpauser	= 1,
+	.tछोड़ोr	= 1,
 	.hw_swap	= 1,
 	.no_xdfar	= 1,
 	.rmiimode	= 1,
 	.magic		= 1,
-};
+पूर्ण;
 
 /* R8A77980 */
-static struct sh_eth_cpu_data r8a77980_data = {
+अटल काष्ठा sh_eth_cpu_data r8a77980_data = अणु
 	.soft_reset	= sh_eth_soft_reset_gether,
 
 	.set_duplex	= sh_eth_set_duplex,
 	.set_rate	= sh_eth_set_rate_gether,
 
-	.register_type  = SH_ETH_REG_GIGABIT,
+	.रेजिस्टर_type  = SH_ETH_REG_GIGABIT,
 
 	.edtrr_trns	= EDTRR_TRNS_GETHER,
 	.ecsr_value	= ECSR_PSRTO | ECSR_LCHNG | ECSR_ICD | ECSR_MPD,
@@ -740,7 +741,7 @@ static struct sh_eth_cpu_data r8a77980_data = {
 
 	.apr		= 1,
 	.mpr		= 1,
-	.tpauser	= 1,
+	.tछोड़ोr	= 1,
 	.gecmr		= 1,
 	.bculr		= 1,
 	.hw_swap	= 1,
@@ -754,16 +755,16 @@ static struct sh_eth_cpu_data r8a77980_data = {
 	.select_mii	= 1,
 	.magic		= 1,
 	.cexcr		= 1,
-};
+पूर्ण;
 
 /* R7S9210 */
-static struct sh_eth_cpu_data r7s9210_data = {
+अटल काष्ठा sh_eth_cpu_data r7s9210_data = अणु
 	.soft_reset	= sh_eth_soft_reset,
 
 	.set_duplex	= sh_eth_set_duplex,
 	.set_rate	= sh_eth_set_rate_rcar,
 
-	.register_type	= SH_ETH_REG_FAST_SH4,
+	.रेजिस्टर_type	= SH_ETH_REG_FAST_SH4,
 
 	.edtrr_trns	= EDTRR_TRNS_ETHER,
 	.ecsr_value	= ECSR_ICD,
@@ -786,36 +787,36 @@ static struct sh_eth_cpu_data r7s9210_data = {
 
 	.apr		= 1,
 	.mpr		= 1,
-	.tpauser	= 1,
+	.tछोड़ोr	= 1,
 	.hw_swap	= 1,
 	.rpadir		= 1,
 	.no_ade		= 1,
 	.xdfar_rw	= 1,
-};
-#endif /* CONFIG_OF */
+पूर्ण;
+#पूर्ण_अगर /* CONFIG_OF */
 
-static void sh_eth_set_rate_sh7724(struct net_device *ndev)
-{
-	struct sh_eth_private *mdp = netdev_priv(ndev);
+अटल व्योम sh_eth_set_rate_sh7724(काष्ठा net_device *ndev)
+अणु
+	काष्ठा sh_eth_निजी *mdp = netdev_priv(ndev);
 
-	switch (mdp->speed) {
-	case 10: /* 10BASE */
-		sh_eth_modify(ndev, ECMR, ECMR_RTM, 0);
-		break;
-	case 100:/* 100BASE */
-		sh_eth_modify(ndev, ECMR, ECMR_RTM, ECMR_RTM);
-		break;
-	}
-}
+	चयन (mdp->speed) अणु
+	हाल 10: /* 10BASE */
+		sh_eth_modअगरy(ndev, ECMR, ECMR_RTM, 0);
+		अवरोध;
+	हाल 100:/* 100BASE */
+		sh_eth_modअगरy(ndev, ECMR, ECMR_RTM, ECMR_RTM);
+		अवरोध;
+	पूर्ण
+पूर्ण
 
 /* SH7724 */
-static struct sh_eth_cpu_data sh7724_data = {
+अटल काष्ठा sh_eth_cpu_data sh7724_data = अणु
 	.soft_reset	= sh_eth_soft_reset,
 
 	.set_duplex	= sh_eth_set_duplex,
 	.set_rate	= sh_eth_set_rate_sh7724,
 
-	.register_type	= SH_ETH_REG_FAST_SH4,
+	.रेजिस्टर_type	= SH_ETH_REG_FAST_SH4,
 
 	.edtrr_trns	= EDTRR_TRNS_ETHER,
 	.ecsr_value	= ECSR_PSRTO | ECSR_LCHNG | ECSR_ICD,
@@ -833,33 +834,33 @@ static struct sh_eth_cpu_data sh7724_data = {
 
 	.apr		= 1,
 	.mpr		= 1,
-	.tpauser	= 1,
+	.tछोड़ोr	= 1,
 	.hw_swap	= 1,
 	.rpadir		= 1,
-};
+पूर्ण;
 
-static void sh_eth_set_rate_sh7757(struct net_device *ndev)
-{
-	struct sh_eth_private *mdp = netdev_priv(ndev);
+अटल व्योम sh_eth_set_rate_sh7757(काष्ठा net_device *ndev)
+अणु
+	काष्ठा sh_eth_निजी *mdp = netdev_priv(ndev);
 
-	switch (mdp->speed) {
-	case 10: /* 10BASE */
-		sh_eth_write(ndev, 0, RTRATE);
-		break;
-	case 100:/* 100BASE */
-		sh_eth_write(ndev, 1, RTRATE);
-		break;
-	}
-}
+	चयन (mdp->speed) अणु
+	हाल 10: /* 10BASE */
+		sh_eth_ग_लिखो(ndev, 0, RTRATE);
+		अवरोध;
+	हाल 100:/* 100BASE */
+		sh_eth_ग_लिखो(ndev, 1, RTRATE);
+		अवरोध;
+	पूर्ण
+पूर्ण
 
 /* SH7757 */
-static struct sh_eth_cpu_data sh7757_data = {
+अटल काष्ठा sh_eth_cpu_data sh7757_data = अणु
 	.soft_reset	= sh_eth_soft_reset,
 
 	.set_duplex	= sh_eth_set_duplex,
 	.set_rate	= sh_eth_set_rate_sh7757,
 
-	.register_type	= SH_ETH_REG_FAST_SH4,
+	.रेजिस्टर_type	= SH_ETH_REG_FAST_SH4,
 
 	.edtrr_trns	= EDTRR_TRNS_ETHER,
 	.eesipr_value	= EESIPR_RFCOFIP | EESIPR_ECIIP |
@@ -878,66 +879,66 @@ static struct sh_eth_cpu_data sh7757_data = {
 	.irq_flags	= IRQF_SHARED,
 	.apr		= 1,
 	.mpr		= 1,
-	.tpauser	= 1,
+	.tछोड़ोr	= 1,
 	.hw_swap	= 1,
 	.no_ade		= 1,
 	.rpadir		= 1,
 	.rtrate		= 1,
 	.dual_port	= 1,
-};
+पूर्ण;
 
-#define SH_GIGA_ETH_BASE	0xfee00000UL
-#define GIGA_MALR(port)		(SH_GIGA_ETH_BASE + 0x800 * (port) + 0x05c8)
-#define GIGA_MAHR(port)		(SH_GIGA_ETH_BASE + 0x800 * (port) + 0x05c0)
-static void sh_eth_chip_reset_giga(struct net_device *ndev)
-{
+#घोषणा SH_GIGA_ETH_BASE	0xfee00000UL
+#घोषणा GIGA_MALR(port)		(SH_GIGA_ETH_BASE + 0x800 * (port) + 0x05c8)
+#घोषणा GIGA_MAHR(port)		(SH_GIGA_ETH_BASE + 0x800 * (port) + 0x05c0)
+अटल व्योम sh_eth_chip_reset_giga(काष्ठा net_device *ndev)
+अणु
 	u32 mahr[2], malr[2];
-	int i;
+	पूर्णांक i;
 
 	/* save MAHR and MALR */
-	for (i = 0; i < 2; i++) {
-		malr[i] = ioread32((void *)GIGA_MALR(i));
-		mahr[i] = ioread32((void *)GIGA_MAHR(i));
-	}
+	क्रम (i = 0; i < 2; i++) अणु
+		malr[i] = ioपढ़ो32((व्योम *)GIGA_MALR(i));
+		mahr[i] = ioपढ़ो32((व्योम *)GIGA_MAHR(i));
+	पूर्ण
 
 	sh_eth_chip_reset(ndev);
 
 	/* restore MAHR and MALR */
-	for (i = 0; i < 2; i++) {
-		iowrite32(malr[i], (void *)GIGA_MALR(i));
-		iowrite32(mahr[i], (void *)GIGA_MAHR(i));
-	}
-}
+	क्रम (i = 0; i < 2; i++) अणु
+		ioग_लिखो32(malr[i], (व्योम *)GIGA_MALR(i));
+		ioग_लिखो32(mahr[i], (व्योम *)GIGA_MAHR(i));
+	पूर्ण
+पूर्ण
 
-static void sh_eth_set_rate_giga(struct net_device *ndev)
-{
-	struct sh_eth_private *mdp = netdev_priv(ndev);
+अटल व्योम sh_eth_set_rate_giga(काष्ठा net_device *ndev)
+अणु
+	काष्ठा sh_eth_निजी *mdp = netdev_priv(ndev);
 
-	if (WARN_ON(!mdp->cd->gecmr))
-		return;
+	अगर (WARN_ON(!mdp->cd->gecmr))
+		वापस;
 
-	switch (mdp->speed) {
-	case 10: /* 10BASE */
-		sh_eth_write(ndev, 0x00000000, GECMR);
-		break;
-	case 100:/* 100BASE */
-		sh_eth_write(ndev, 0x00000010, GECMR);
-		break;
-	case 1000: /* 1000BASE */
-		sh_eth_write(ndev, 0x00000020, GECMR);
-		break;
-	}
-}
+	चयन (mdp->speed) अणु
+	हाल 10: /* 10BASE */
+		sh_eth_ग_लिखो(ndev, 0x00000000, GECMR);
+		अवरोध;
+	हाल 100:/* 100BASE */
+		sh_eth_ग_लिखो(ndev, 0x00000010, GECMR);
+		अवरोध;
+	हाल 1000: /* 1000BASE */
+		sh_eth_ग_लिखो(ndev, 0x00000020, GECMR);
+		अवरोध;
+	पूर्ण
+पूर्ण
 
 /* SH7757(GETHERC) */
-static struct sh_eth_cpu_data sh7757_data_giga = {
+अटल काष्ठा sh_eth_cpu_data sh7757_data_giga = अणु
 	.soft_reset	= sh_eth_soft_reset_gether,
 
 	.chip_reset	= sh_eth_chip_reset_giga,
 	.set_duplex	= sh_eth_set_duplex,
 	.set_rate	= sh_eth_set_rate_giga,
 
-	.register_type	= SH_ETH_REG_GIGABIT,
+	.रेजिस्टर_type	= SH_ETH_REG_GIGABIT,
 
 	.edtrr_trns	= EDTRR_TRNS_GETHER,
 	.ecsr_value	= ECSR_ICD | ECSR_MPD,
@@ -960,7 +961,7 @@ static struct sh_eth_cpu_data sh7757_data_giga = {
 	.irq_flags	= IRQF_SHARED,
 	.apr		= 1,
 	.mpr		= 1,
-	.tpauser	= 1,
+	.tछोड़ोr	= 1,
 	.gecmr		= 1,
 	.bculr		= 1,
 	.hw_swap	= 1,
@@ -971,17 +972,17 @@ static struct sh_eth_cpu_data sh7757_data_giga = {
 	.tsu		= 1,
 	.cexcr		= 1,
 	.dual_port	= 1,
-};
+पूर्ण;
 
 /* SH7734 */
-static struct sh_eth_cpu_data sh7734_data = {
+अटल काष्ठा sh_eth_cpu_data sh7734_data = अणु
 	.soft_reset	= sh_eth_soft_reset_gether,
 
 	.chip_reset	= sh_eth_chip_reset,
 	.set_duplex	= sh_eth_set_duplex,
 	.set_rate	= sh_eth_set_rate_gether,
 
-	.register_type	= SH_ETH_REG_GIGABIT,
+	.रेजिस्टर_type	= SH_ETH_REG_GIGABIT,
 
 	.edtrr_trns	= EDTRR_TRNS_GETHER,
 	.ecsr_value	= ECSR_ICD | ECSR_MPD,
@@ -1001,7 +1002,7 @@ static struct sh_eth_cpu_data sh7734_data = {
 
 	.apr		= 1,
 	.mpr		= 1,
-	.tpauser	= 1,
+	.tछोड़ोr	= 1,
 	.gecmr		= 1,
 	.bculr		= 1,
 	.hw_swap	= 1,
@@ -1014,17 +1015,17 @@ static struct sh_eth_cpu_data sh7734_data = {
 	.select_mii	= 1,
 	.magic		= 1,
 	.cexcr		= 1,
-};
+पूर्ण;
 
 /* SH7763 */
-static struct sh_eth_cpu_data sh7763_data = {
+अटल काष्ठा sh_eth_cpu_data sh7763_data = अणु
 	.soft_reset	= sh_eth_soft_reset_gether,
 
 	.chip_reset	= sh_eth_chip_reset,
 	.set_duplex	= sh_eth_set_duplex,
 	.set_rate	= sh_eth_set_rate_gether,
 
-	.register_type	= SH_ETH_REG_GIGABIT,
+	.रेजिस्टर_type	= SH_ETH_REG_GIGABIT,
 
 	.edtrr_trns	= EDTRR_TRNS_GETHER,
 	.ecsr_value	= ECSR_ICD | ECSR_MPD,
@@ -1043,7 +1044,7 @@ static struct sh_eth_cpu_data sh7763_data = {
 
 	.apr		= 1,
 	.mpr		= 1,
-	.tpauser	= 1,
+	.tछोड़ोr	= 1,
 	.gecmr		= 1,
 	.bculr		= 1,
 	.hw_swap	= 1,
@@ -1056,12 +1057,12 @@ static struct sh_eth_cpu_data sh7763_data = {
 	.cexcr		= 1,
 	.rx_csum	= 1,
 	.dual_port	= 1,
-};
+पूर्ण;
 
-static struct sh_eth_cpu_data sh7619_data = {
+अटल काष्ठा sh_eth_cpu_data sh7619_data = अणु
 	.soft_reset	= sh_eth_soft_reset,
 
-	.register_type	= SH_ETH_REG_FAST_SH3_SH2,
+	.रेजिस्टर_type	= SH_ETH_REG_FAST_SH3_SH2,
 
 	.edtrr_trns	= EDTRR_TRNS_ETHER,
 	.eesipr_value	= EESIPR_RFCOFIP | EESIPR_ECIIP |
@@ -1075,14 +1076,14 @@ static struct sh_eth_cpu_data sh7619_data = {
 
 	.apr		= 1,
 	.mpr		= 1,
-	.tpauser	= 1,
+	.tछोड़ोr	= 1,
 	.hw_swap	= 1,
-};
+पूर्ण;
 
-static struct sh_eth_cpu_data sh771x_data = {
+अटल काष्ठा sh_eth_cpu_data sh771x_data = अणु
 	.soft_reset	= sh_eth_soft_reset,
 
-	.register_type	= SH_ETH_REG_FAST_SH3_SH2,
+	.रेजिस्टर_type	= SH_ETH_REG_FAST_SH3_SH2,
 
 	.edtrr_trns	= EDTRR_TRNS_ETHER,
 	.eesipr_value	= EESIPR_RFCOFIP | EESIPR_ECIIP |
@@ -1098,65 +1099,65 @@ static struct sh_eth_cpu_data sh771x_data = {
 
 	.tsu		= 1,
 	.dual_port	= 1,
-};
+पूर्ण;
 
-static void sh_eth_set_default_cpu_data(struct sh_eth_cpu_data *cd)
-{
-	if (!cd->ecsr_value)
+अटल व्योम sh_eth_set_शेष_cpu_data(काष्ठा sh_eth_cpu_data *cd)
+अणु
+	अगर (!cd->ecsr_value)
 		cd->ecsr_value = DEFAULT_ECSR_INIT;
 
-	if (!cd->ecsipr_value)
+	अगर (!cd->ecsipr_value)
 		cd->ecsipr_value = DEFAULT_ECSIPR_INIT;
 
-	if (!cd->fcftr_value)
+	अगर (!cd->fcftr_value)
 		cd->fcftr_value = DEFAULT_FIFO_F_D_RFF |
 				  DEFAULT_FIFO_F_D_RFD;
 
-	if (!cd->fdr_value)
+	अगर (!cd->fdr_value)
 		cd->fdr_value = DEFAULT_FDR_INIT;
 
-	if (!cd->tx_check)
+	अगर (!cd->tx_check)
 		cd->tx_check = DEFAULT_TX_CHECK;
 
-	if (!cd->eesr_err_check)
+	अगर (!cd->eesr_err_check)
 		cd->eesr_err_check = DEFAULT_EESR_ERR_CHECK;
 
-	if (!cd->trscer_err_mask)
+	अगर (!cd->trscer_err_mask)
 		cd->trscer_err_mask = DEFAULT_TRSCER_ERR_MASK;
-}
+पूर्ण
 
-static void sh_eth_set_receive_align(struct sk_buff *skb)
-{
-	uintptr_t reserve = (uintptr_t)skb->data & (SH_ETH_RX_ALIGN - 1);
+अटल व्योम sh_eth_set_receive_align(काष्ठा sk_buff *skb)
+अणु
+	uपूर्णांकptr_t reserve = (uपूर्णांकptr_t)skb->data & (SH_ETH_RX_ALIGN - 1);
 
-	if (reserve)
+	अगर (reserve)
 		skb_reserve(skb, SH_ETH_RX_ALIGN - reserve);
-}
+पूर्ण
 
 /* Program the hardware MAC address from dev->dev_addr. */
-static void update_mac_address(struct net_device *ndev)
-{
-	sh_eth_write(ndev,
+अटल व्योम update_mac_address(काष्ठा net_device *ndev)
+अणु
+	sh_eth_ग_लिखो(ndev,
 		     (ndev->dev_addr[0] << 24) | (ndev->dev_addr[1] << 16) |
 		     (ndev->dev_addr[2] << 8) | (ndev->dev_addr[3]), MAHR);
-	sh_eth_write(ndev,
+	sh_eth_ग_लिखो(ndev,
 		     (ndev->dev_addr[4] << 8) | (ndev->dev_addr[5]), MALR);
-}
+पूर्ण
 
-/* Get MAC address from SuperH MAC address register
+/* Get MAC address from SuperH MAC address रेजिस्टर
  *
  * SuperH's Ethernet device doesn't have 'ROM' to MAC address.
  * This driver get MAC address that use by bootloader(U-boot or sh-ipl+g).
  * When you want use this device, you must set MAC address in bootloader.
  *
  */
-static void read_mac_address(struct net_device *ndev, unsigned char *mac)
-{
-	if (mac[0] || mac[1] || mac[2] || mac[3] || mac[4] || mac[5]) {
-		memcpy(ndev->dev_addr, mac, ETH_ALEN);
-	} else {
-		u32 mahr = sh_eth_read(ndev, MAHR);
-		u32 malr = sh_eth_read(ndev, MALR);
+अटल व्योम पढ़ो_mac_address(काष्ठा net_device *ndev, अचिन्हित अक्षर *mac)
+अणु
+	अगर (mac[0] || mac[1] || mac[2] || mac[3] || mac[4] || mac[5]) अणु
+		स_नकल(ndev->dev_addr, mac, ETH_ALEN);
+	पूर्ण अन्यथा अणु
+		u32 mahr = sh_eth_पढ़ो(ndev, MAHR);
+		u32 malr = sh_eth_पढ़ो(ndev, MALR);
 
 		ndev->dev_addr[0] = (mahr >> 24) & 0xFF;
 		ndev->dev_addr[1] = (mahr >> 16) & 0xFF;
@@ -1164,167 +1165,167 @@ static void read_mac_address(struct net_device *ndev, unsigned char *mac)
 		ndev->dev_addr[3] = (mahr >>  0) & 0xFF;
 		ndev->dev_addr[4] = (malr >>  8) & 0xFF;
 		ndev->dev_addr[5] = (malr >>  0) & 0xFF;
-	}
-}
+	पूर्ण
+पूर्ण
 
-struct bb_info {
-	void (*set_gate)(void *addr);
-	struct mdiobb_ctrl ctrl;
-	void *addr;
-};
+काष्ठा bb_info अणु
+	व्योम (*set_gate)(व्योम *addr);
+	काष्ठा mdiobb_ctrl ctrl;
+	व्योम *addr;
+पूर्ण;
 
-static void sh_mdio_ctrl(struct mdiobb_ctrl *ctrl, u32 mask, int set)
-{
-	struct bb_info *bitbang = container_of(ctrl, struct bb_info, ctrl);
+अटल व्योम sh_mdio_ctrl(काष्ठा mdiobb_ctrl *ctrl, u32 mask, पूर्णांक set)
+अणु
+	काष्ठा bb_info *bitbang = container_of(ctrl, काष्ठा bb_info, ctrl);
 	u32 pir;
 
-	if (bitbang->set_gate)
+	अगर (bitbang->set_gate)
 		bitbang->set_gate(bitbang->addr);
 
-	pir = ioread32(bitbang->addr);
-	if (set)
+	pir = ioपढ़ो32(bitbang->addr);
+	अगर (set)
 		pir |=  mask;
-	else
+	अन्यथा
 		pir &= ~mask;
-	iowrite32(pir, bitbang->addr);
-}
+	ioग_लिखो32(pir, bitbang->addr);
+पूर्ण
 
 /* Data I/O pin control */
-static void sh_mmd_ctrl(struct mdiobb_ctrl *ctrl, int bit)
-{
+अटल व्योम sh_mmd_ctrl(काष्ठा mdiobb_ctrl *ctrl, पूर्णांक bit)
+अणु
 	sh_mdio_ctrl(ctrl, PIR_MMD, bit);
-}
+पूर्ण
 
 /* Set bit data*/
-static void sh_set_mdio(struct mdiobb_ctrl *ctrl, int bit)
-{
+अटल व्योम sh_set_mdio(काष्ठा mdiobb_ctrl *ctrl, पूर्णांक bit)
+अणु
 	sh_mdio_ctrl(ctrl, PIR_MDO, bit);
-}
+पूर्ण
 
 /* Get bit data*/
-static int sh_get_mdio(struct mdiobb_ctrl *ctrl)
-{
-	struct bb_info *bitbang = container_of(ctrl, struct bb_info, ctrl);
+अटल पूर्णांक sh_get_mdio(काष्ठा mdiobb_ctrl *ctrl)
+अणु
+	काष्ठा bb_info *bitbang = container_of(ctrl, काष्ठा bb_info, ctrl);
 
-	if (bitbang->set_gate)
+	अगर (bitbang->set_gate)
 		bitbang->set_gate(bitbang->addr);
 
-	return (ioread32(bitbang->addr) & PIR_MDI) != 0;
-}
+	वापस (ioपढ़ो32(bitbang->addr) & PIR_MDI) != 0;
+पूर्ण
 
 /* MDC pin control */
-static void sh_mdc_ctrl(struct mdiobb_ctrl *ctrl, int bit)
-{
+अटल व्योम sh_mdc_ctrl(काष्ठा mdiobb_ctrl *ctrl, पूर्णांक bit)
+अणु
 	sh_mdio_ctrl(ctrl, PIR_MDC, bit);
-}
+पूर्ण
 
-/* mdio bus control struct */
-static const struct mdiobb_ops bb_ops = {
+/* mdio bus control काष्ठा */
+अटल स्थिर काष्ठा mdiobb_ops bb_ops = अणु
 	.owner = THIS_MODULE,
 	.set_mdc = sh_mdc_ctrl,
 	.set_mdio_dir = sh_mmd_ctrl,
 	.set_mdio_data = sh_set_mdio,
 	.get_mdio_data = sh_get_mdio,
-};
+पूर्ण;
 
-/* free Tx skb function */
-static int sh_eth_tx_free(struct net_device *ndev, bool sent_only)
-{
-	struct sh_eth_private *mdp = netdev_priv(ndev);
-	struct sh_eth_txdesc *txdesc;
-	int free_num = 0;
-	int entry;
+/* मुक्त Tx skb function */
+अटल पूर्णांक sh_eth_tx_मुक्त(काष्ठा net_device *ndev, bool sent_only)
+अणु
+	काष्ठा sh_eth_निजी *mdp = netdev_priv(ndev);
+	काष्ठा sh_eth_txdesc *txdesc;
+	पूर्णांक मुक्त_num = 0;
+	पूर्णांक entry;
 	bool sent;
 
-	for (; mdp->cur_tx - mdp->dirty_tx > 0; mdp->dirty_tx++) {
+	क्रम (; mdp->cur_tx - mdp->dirty_tx > 0; mdp->dirty_tx++) अणु
 		entry = mdp->dirty_tx % mdp->num_tx_ring;
 		txdesc = &mdp->tx_ring[entry];
 		sent = !(txdesc->status & cpu_to_le32(TD_TACT));
-		if (sent_only && !sent)
-			break;
-		/* TACT bit must be checked before all the following reads */
+		अगर (sent_only && !sent)
+			अवरोध;
+		/* TACT bit must be checked beक्रमe all the following पढ़ोs */
 		dma_rmb();
-		netif_info(mdp, tx_done, ndev,
+		netअगर_info(mdp, tx_करोne, ndev,
 			   "tx entry %d status 0x%08x\n",
 			   entry, le32_to_cpu(txdesc->status));
 		/* Free the original skb. */
-		if (mdp->tx_skbuff[entry]) {
+		अगर (mdp->tx_skbuff[entry]) अणु
 			dma_unmap_single(&mdp->pdev->dev,
 					 le32_to_cpu(txdesc->addr),
 					 le32_to_cpu(txdesc->len) >> 16,
 					 DMA_TO_DEVICE);
-			dev_kfree_skb_irq(mdp->tx_skbuff[entry]);
-			mdp->tx_skbuff[entry] = NULL;
-			free_num++;
-		}
+			dev_kमुक्त_skb_irq(mdp->tx_skbuff[entry]);
+			mdp->tx_skbuff[entry] = शून्य;
+			मुक्त_num++;
+		पूर्ण
 		txdesc->status = cpu_to_le32(TD_TFP);
-		if (entry >= mdp->num_tx_ring - 1)
+		अगर (entry >= mdp->num_tx_ring - 1)
 			txdesc->status |= cpu_to_le32(TD_TDLE);
 
-		if (sent) {
+		अगर (sent) अणु
 			ndev->stats.tx_packets++;
 			ndev->stats.tx_bytes += le32_to_cpu(txdesc->len) >> 16;
-		}
-	}
-	return free_num;
-}
+		पूर्ण
+	पूर्ण
+	वापस मुक्त_num;
+पूर्ण
 
-/* free skb and descriptor buffer */
-static void sh_eth_ring_free(struct net_device *ndev)
-{
-	struct sh_eth_private *mdp = netdev_priv(ndev);
-	int ringsize, i;
+/* मुक्त skb and descriptor buffer */
+अटल व्योम sh_eth_ring_मुक्त(काष्ठा net_device *ndev)
+अणु
+	काष्ठा sh_eth_निजी *mdp = netdev_priv(ndev);
+	पूर्णांक ringsize, i;
 
-	if (mdp->rx_ring) {
-		for (i = 0; i < mdp->num_rx_ring; i++) {
-			if (mdp->rx_skbuff[i]) {
-				struct sh_eth_rxdesc *rxdesc = &mdp->rx_ring[i];
+	अगर (mdp->rx_ring) अणु
+		क्रम (i = 0; i < mdp->num_rx_ring; i++) अणु
+			अगर (mdp->rx_skbuff[i]) अणु
+				काष्ठा sh_eth_rxdesc *rxdesc = &mdp->rx_ring[i];
 
 				dma_unmap_single(&mdp->pdev->dev,
 						 le32_to_cpu(rxdesc->addr),
 						 ALIGN(mdp->rx_buf_sz, 32),
 						 DMA_FROM_DEVICE);
-			}
-		}
-		ringsize = sizeof(struct sh_eth_rxdesc) * mdp->num_rx_ring;
-		dma_free_coherent(&mdp->pdev->dev, ringsize, mdp->rx_ring,
+			पूर्ण
+		पूर्ण
+		ringsize = माप(काष्ठा sh_eth_rxdesc) * mdp->num_rx_ring;
+		dma_मुक्त_coherent(&mdp->pdev->dev, ringsize, mdp->rx_ring,
 				  mdp->rx_desc_dma);
-		mdp->rx_ring = NULL;
-	}
+		mdp->rx_ring = शून्य;
+	पूर्ण
 
 	/* Free Rx skb ringbuffer */
-	if (mdp->rx_skbuff) {
-		for (i = 0; i < mdp->num_rx_ring; i++)
-			dev_kfree_skb(mdp->rx_skbuff[i]);
-	}
-	kfree(mdp->rx_skbuff);
-	mdp->rx_skbuff = NULL;
+	अगर (mdp->rx_skbuff) अणु
+		क्रम (i = 0; i < mdp->num_rx_ring; i++)
+			dev_kमुक्त_skb(mdp->rx_skbuff[i]);
+	पूर्ण
+	kमुक्त(mdp->rx_skbuff);
+	mdp->rx_skbuff = शून्य;
 
-	if (mdp->tx_ring) {
-		sh_eth_tx_free(ndev, false);
+	अगर (mdp->tx_ring) अणु
+		sh_eth_tx_मुक्त(ndev, false);
 
-		ringsize = sizeof(struct sh_eth_txdesc) * mdp->num_tx_ring;
-		dma_free_coherent(&mdp->pdev->dev, ringsize, mdp->tx_ring,
+		ringsize = माप(काष्ठा sh_eth_txdesc) * mdp->num_tx_ring;
+		dma_मुक्त_coherent(&mdp->pdev->dev, ringsize, mdp->tx_ring,
 				  mdp->tx_desc_dma);
-		mdp->tx_ring = NULL;
-	}
+		mdp->tx_ring = शून्य;
+	पूर्ण
 
 	/* Free Tx skb ringbuffer */
-	kfree(mdp->tx_skbuff);
-	mdp->tx_skbuff = NULL;
-}
+	kमुक्त(mdp->tx_skbuff);
+	mdp->tx_skbuff = शून्य;
+पूर्ण
 
-/* format skb and descriptor buffer */
-static void sh_eth_ring_format(struct net_device *ndev)
-{
-	struct sh_eth_private *mdp = netdev_priv(ndev);
-	int i;
-	struct sk_buff *skb;
-	struct sh_eth_rxdesc *rxdesc = NULL;
-	struct sh_eth_txdesc *txdesc = NULL;
-	int rx_ringsize = sizeof(*rxdesc) * mdp->num_rx_ring;
-	int tx_ringsize = sizeof(*txdesc) * mdp->num_tx_ring;
-	int skbuff_size = mdp->rx_buf_sz + SH_ETH_RX_ALIGN + 32 - 1;
+/* क्रमmat skb and descriptor buffer */
+अटल व्योम sh_eth_ring_क्रमmat(काष्ठा net_device *ndev)
+अणु
+	काष्ठा sh_eth_निजी *mdp = netdev_priv(ndev);
+	पूर्णांक i;
+	काष्ठा sk_buff *skb;
+	काष्ठा sh_eth_rxdesc *rxdesc = शून्य;
+	काष्ठा sh_eth_txdesc *txdesc = शून्य;
+	पूर्णांक rx_ringsize = माप(*rxdesc) * mdp->num_rx_ring;
+	पूर्णांक tx_ringsize = माप(*txdesc) * mdp->num_tx_ring;
+	पूर्णांक skbuff_size = mdp->rx_buf_sz + SH_ETH_RX_ALIGN + 32 - 1;
 	dma_addr_t dma_addr;
 	u32 buf_len;
 
@@ -1333,25 +1334,25 @@ static void sh_eth_ring_format(struct net_device *ndev)
 	mdp->dirty_rx = 0;
 	mdp->dirty_tx = 0;
 
-	memset(mdp->rx_ring, 0, rx_ringsize);
+	स_रखो(mdp->rx_ring, 0, rx_ringsize);
 
 	/* build Rx ring buffer */
-	for (i = 0; i < mdp->num_rx_ring; i++) {
+	क्रम (i = 0; i < mdp->num_rx_ring; i++) अणु
 		/* skb */
-		mdp->rx_skbuff[i] = NULL;
+		mdp->rx_skbuff[i] = शून्य;
 		skb = netdev_alloc_skb(ndev, skbuff_size);
-		if (skb == NULL)
-			break;
+		अगर (skb == शून्य)
+			अवरोध;
 		sh_eth_set_receive_align(skb);
 
 		/* The size of the buffer is a multiple of 32 bytes. */
 		buf_len = ALIGN(mdp->rx_buf_sz, 32);
 		dma_addr = dma_map_single(&mdp->pdev->dev, skb->data, buf_len,
 					  DMA_FROM_DEVICE);
-		if (dma_mapping_error(&mdp->pdev->dev, dma_addr)) {
-			kfree_skb(skb);
-			break;
-		}
+		अगर (dma_mapping_error(&mdp->pdev->dev, dma_addr)) अणु
+			kमुक्त_skb(skb);
+			अवरोध;
+		पूर्ण
 		mdp->rx_skbuff[i] = skb;
 
 		/* RX descriptor */
@@ -1361,237 +1362,237 @@ static void sh_eth_ring_format(struct net_device *ndev)
 		rxdesc->status = cpu_to_le32(RD_RACT | RD_RFP);
 
 		/* Rx descriptor address set */
-		if (i == 0) {
-			sh_eth_write(ndev, mdp->rx_desc_dma, RDLAR);
-			if (mdp->cd->xdfar_rw)
-				sh_eth_write(ndev, mdp->rx_desc_dma, RDFAR);
-		}
-	}
+		अगर (i == 0) अणु
+			sh_eth_ग_लिखो(ndev, mdp->rx_desc_dma, RDLAR);
+			अगर (mdp->cd->xdfar_rw)
+				sh_eth_ग_लिखो(ndev, mdp->rx_desc_dma, RDFAR);
+		पूर्ण
+	पूर्ण
 
 	mdp->dirty_rx = (u32) (i - mdp->num_rx_ring);
 
 	/* Mark the last entry as wrapping the ring. */
-	if (rxdesc)
+	अगर (rxdesc)
 		rxdesc->status |= cpu_to_le32(RD_RDLE);
 
-	memset(mdp->tx_ring, 0, tx_ringsize);
+	स_रखो(mdp->tx_ring, 0, tx_ringsize);
 
 	/* build Tx ring buffer */
-	for (i = 0; i < mdp->num_tx_ring; i++) {
-		mdp->tx_skbuff[i] = NULL;
+	क्रम (i = 0; i < mdp->num_tx_ring; i++) अणु
+		mdp->tx_skbuff[i] = शून्य;
 		txdesc = &mdp->tx_ring[i];
 		txdesc->status = cpu_to_le32(TD_TFP);
 		txdesc->len = cpu_to_le32(0);
-		if (i == 0) {
+		अगर (i == 0) अणु
 			/* Tx descriptor address set */
-			sh_eth_write(ndev, mdp->tx_desc_dma, TDLAR);
-			if (mdp->cd->xdfar_rw)
-				sh_eth_write(ndev, mdp->tx_desc_dma, TDFAR);
-		}
-	}
+			sh_eth_ग_लिखो(ndev, mdp->tx_desc_dma, TDLAR);
+			अगर (mdp->cd->xdfar_rw)
+				sh_eth_ग_लिखो(ndev, mdp->tx_desc_dma, TDFAR);
+		पूर्ण
+	पूर्ण
 
 	txdesc->status |= cpu_to_le32(TD_TDLE);
-}
+पूर्ण
 
 /* Get skb and descriptor buffer */
-static int sh_eth_ring_init(struct net_device *ndev)
-{
-	struct sh_eth_private *mdp = netdev_priv(ndev);
-	int rx_ringsize, tx_ringsize;
+अटल पूर्णांक sh_eth_ring_init(काष्ठा net_device *ndev)
+अणु
+	काष्ठा sh_eth_निजी *mdp = netdev_priv(ndev);
+	पूर्णांक rx_ringsize, tx_ringsize;
 
-	/* +26 gets the maximum ethernet encapsulation, +7 & ~7 because the
-	 * card needs room to do 8 byte alignment, +2 so we can reserve
-	 * the first 2 bytes, and +16 gets room for the status word from the
+	/* +26 माला_लो the maximum ethernet encapsulation, +7 & ~7 because the
+	 * card needs room to करो 8 byte alignment, +2 so we can reserve
+	 * the first 2 bytes, and +16 माला_लो room क्रम the status word from the
 	 * card.
 	 */
 	mdp->rx_buf_sz = (ndev->mtu <= 1492 ? PKT_BUF_SZ :
 			  (((ndev->mtu + 26 + 7) & ~7) + 2 + 16));
-	if (mdp->cd->rpadir)
+	अगर (mdp->cd->rpadir)
 		mdp->rx_buf_sz += NET_IP_ALIGN;
 
 	/* Allocate RX and TX skb rings */
-	mdp->rx_skbuff = kcalloc(mdp->num_rx_ring, sizeof(*mdp->rx_skbuff),
+	mdp->rx_skbuff = kसुस्मृति(mdp->num_rx_ring, माप(*mdp->rx_skbuff),
 				 GFP_KERNEL);
-	if (!mdp->rx_skbuff)
-		return -ENOMEM;
+	अगर (!mdp->rx_skbuff)
+		वापस -ENOMEM;
 
-	mdp->tx_skbuff = kcalloc(mdp->num_tx_ring, sizeof(*mdp->tx_skbuff),
+	mdp->tx_skbuff = kसुस्मृति(mdp->num_tx_ring, माप(*mdp->tx_skbuff),
 				 GFP_KERNEL);
-	if (!mdp->tx_skbuff)
-		goto ring_free;
+	अगर (!mdp->tx_skbuff)
+		जाओ ring_मुक्त;
 
 	/* Allocate all Rx descriptors. */
-	rx_ringsize = sizeof(struct sh_eth_rxdesc) * mdp->num_rx_ring;
+	rx_ringsize = माप(काष्ठा sh_eth_rxdesc) * mdp->num_rx_ring;
 	mdp->rx_ring = dma_alloc_coherent(&mdp->pdev->dev, rx_ringsize,
 					  &mdp->rx_desc_dma, GFP_KERNEL);
-	if (!mdp->rx_ring)
-		goto ring_free;
+	अगर (!mdp->rx_ring)
+		जाओ ring_मुक्त;
 
 	mdp->dirty_rx = 0;
 
 	/* Allocate all Tx descriptors. */
-	tx_ringsize = sizeof(struct sh_eth_txdesc) * mdp->num_tx_ring;
+	tx_ringsize = माप(काष्ठा sh_eth_txdesc) * mdp->num_tx_ring;
 	mdp->tx_ring = dma_alloc_coherent(&mdp->pdev->dev, tx_ringsize,
 					  &mdp->tx_desc_dma, GFP_KERNEL);
-	if (!mdp->tx_ring)
-		goto ring_free;
-	return 0;
+	अगर (!mdp->tx_ring)
+		जाओ ring_मुक्त;
+	वापस 0;
 
-ring_free:
+ring_मुक्त:
 	/* Free Rx and Tx skb ring buffer and DMA buffer */
-	sh_eth_ring_free(ndev);
+	sh_eth_ring_मुक्त(ndev);
 
-	return -ENOMEM;
-}
+	वापस -ENOMEM;
+पूर्ण
 
-static int sh_eth_dev_init(struct net_device *ndev)
-{
-	struct sh_eth_private *mdp = netdev_priv(ndev);
-	int ret;
+अटल पूर्णांक sh_eth_dev_init(काष्ठा net_device *ndev)
+अणु
+	काष्ठा sh_eth_निजी *mdp = netdev_priv(ndev);
+	पूर्णांक ret;
 
 	/* Soft Reset */
 	ret = mdp->cd->soft_reset(ndev);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	if (mdp->cd->rmiimode)
-		sh_eth_write(ndev, 0x1, RMIIMODE);
+	अगर (mdp->cd->rmiimode)
+		sh_eth_ग_लिखो(ndev, 0x1, RMIIMODE);
 
-	/* Descriptor format */
-	sh_eth_ring_format(ndev);
-	if (mdp->cd->rpadir)
-		sh_eth_write(ndev, NET_IP_ALIGN << 16, RPADIR);
+	/* Descriptor क्रमmat */
+	sh_eth_ring_क्रमmat(ndev);
+	अगर (mdp->cd->rpadir)
+		sh_eth_ग_लिखो(ndev, NET_IP_ALIGN << 16, RPAसूची);
 
-	/* all sh_eth int mask */
-	sh_eth_write(ndev, 0, EESIPR);
+	/* all sh_eth पूर्णांक mask */
+	sh_eth_ग_लिखो(ndev, 0, EESIPR);
 
-#if defined(__LITTLE_ENDIAN)
-	if (mdp->cd->hw_swap)
-		sh_eth_write(ndev, EDMR_EL, EDMR);
-	else
-#endif
-		sh_eth_write(ndev, 0, EDMR);
+#अगर defined(__LITTLE_ENDIAN)
+	अगर (mdp->cd->hw_swap)
+		sh_eth_ग_लिखो(ndev, EDMR_EL, EDMR);
+	अन्यथा
+#पूर्ण_अगर
+		sh_eth_ग_लिखो(ndev, 0, EDMR);
 
 	/* FIFO size set */
-	sh_eth_write(ndev, mdp->cd->fdr_value, FDR);
-	sh_eth_write(ndev, 0, TFTR);
+	sh_eth_ग_लिखो(ndev, mdp->cd->fdr_value, FDR);
+	sh_eth_ग_लिखो(ndev, 0, TFTR);
 
 	/* Frame recv control (enable multiple-packets per rx irq) */
-	sh_eth_write(ndev, RMCR_RNC, RMCR);
+	sh_eth_ग_लिखो(ndev, RMCR_RNC, RMCR);
 
-	sh_eth_write(ndev, mdp->cd->trscer_err_mask, TRSCER);
+	sh_eth_ग_लिखो(ndev, mdp->cd->trscer_err_mask, TRSCER);
 
 	/* DMA transfer burst mode */
-	if (mdp->cd->nbst)
-		sh_eth_modify(ndev, EDMR, EDMR_NBST, EDMR_NBST);
+	अगर (mdp->cd->nbst)
+		sh_eth_modअगरy(ndev, EDMR, EDMR_NBST, EDMR_NBST);
 
 	/* Burst cycle count upper-limit */
-	if (mdp->cd->bculr)
-		sh_eth_write(ndev, 0x800, BCULR);
+	अगर (mdp->cd->bculr)
+		sh_eth_ग_लिखो(ndev, 0x800, BCULR);
 
-	sh_eth_write(ndev, mdp->cd->fcftr_value, FCFTR);
+	sh_eth_ग_लिखो(ndev, mdp->cd->fcftr_value, FCFTR);
 
-	if (!mdp->cd->no_trimd)
-		sh_eth_write(ndev, 0, TRIMD);
+	अगर (!mdp->cd->no_trimd)
+		sh_eth_ग_लिखो(ndev, 0, TRIMD);
 
-	/* Recv frame limit set register */
-	sh_eth_write(ndev, ndev->mtu + ETH_HLEN + VLAN_HLEN + ETH_FCS_LEN,
+	/* Recv frame limit set रेजिस्टर */
+	sh_eth_ग_लिखो(ndev, ndev->mtu + ETH_HLEN + VLAN_HLEN + ETH_FCS_LEN,
 		     RFLR);
 
-	sh_eth_modify(ndev, EESR, 0, 0);
+	sh_eth_modअगरy(ndev, EESR, 0, 0);
 	mdp->irq_enabled = true;
-	sh_eth_write(ndev, mdp->cd->eesipr_value, EESIPR);
+	sh_eth_ग_लिखो(ndev, mdp->cd->eesipr_value, EESIPR);
 
 	/* EMAC Mode: PAUSE prohibition; Duplex; RX Checksum; TX; RX */
-	sh_eth_write(ndev, ECMR_ZPF | (mdp->duplex ? ECMR_DM : 0) |
+	sh_eth_ग_लिखो(ndev, ECMR_ZPF | (mdp->duplex ? ECMR_DM : 0) |
 		     (ndev->features & NETIF_F_RXCSUM ? ECMR_RCSC : 0) |
 		     ECMR_TE | ECMR_RE, ECMR);
 
-	if (mdp->cd->set_rate)
+	अगर (mdp->cd->set_rate)
 		mdp->cd->set_rate(ndev);
 
 	/* E-MAC Status Register clear */
-	sh_eth_write(ndev, mdp->cd->ecsr_value, ECSR);
+	sh_eth_ग_लिखो(ndev, mdp->cd->ecsr_value, ECSR);
 
-	/* E-MAC Interrupt Enable register */
-	sh_eth_write(ndev, mdp->cd->ecsipr_value, ECSIPR);
+	/* E-MAC Interrupt Enable रेजिस्टर */
+	sh_eth_ग_लिखो(ndev, mdp->cd->ecsipr_value, ECSIPR);
 
 	/* Set MAC address */
 	update_mac_address(ndev);
 
 	/* mask reset */
-	if (mdp->cd->apr)
-		sh_eth_write(ndev, 1, APR);
-	if (mdp->cd->mpr)
-		sh_eth_write(ndev, 1, MPR);
-	if (mdp->cd->tpauser)
-		sh_eth_write(ndev, TPAUSER_UNLIMITED, TPAUSER);
+	अगर (mdp->cd->apr)
+		sh_eth_ग_लिखो(ndev, 1, APR);
+	अगर (mdp->cd->mpr)
+		sh_eth_ग_लिखो(ndev, 1, MPR);
+	अगर (mdp->cd->tछोड़ोr)
+		sh_eth_ग_लिखो(ndev, TPAUSER_UNLIMITED, TPAUSER);
 
 	/* Setting the Rx mode will start the Rx process. */
-	sh_eth_write(ndev, EDRRR_R, EDRRR);
+	sh_eth_ग_लिखो(ndev, EDRRR_R, EDRRR);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void sh_eth_dev_exit(struct net_device *ndev)
-{
-	struct sh_eth_private *mdp = netdev_priv(ndev);
-	int i;
+अटल व्योम sh_eth_dev_निकास(काष्ठा net_device *ndev)
+अणु
+	काष्ठा sh_eth_निजी *mdp = netdev_priv(ndev);
+	पूर्णांक i;
 
 	/* Deactivate all TX descriptors, so DMA should stop at next
-	 * packet boundary if it's currently running
+	 * packet boundary अगर it's currently running
 	 */
-	for (i = 0; i < mdp->num_tx_ring; i++)
+	क्रम (i = 0; i < mdp->num_tx_ring; i++)
 		mdp->tx_ring[i].status &= ~cpu_to_le32(TD_TACT);
 
 	/* Disable TX FIFO egress to MAC */
 	sh_eth_rcv_snd_disable(ndev);
 
 	/* Stop RX DMA at next packet boundary */
-	sh_eth_write(ndev, 0, EDRRR);
+	sh_eth_ग_लिखो(ndev, 0, EDRRR);
 
 	/* Aside from TX DMA, we can't tell when the hardware is
 	 * really stopped, so we need to reset to make sure.
-	 * Before doing that, wait for long enough to *probably*
+	 * Beक्रमe करोing that, रुको क्रम दीर्घ enough to *probably*
 	 * finish transmitting the last packet and poll stats.
 	 */
-	msleep(2); /* max frame time at 10 Mbps < 1250 us */
+	msleep(2); /* max frame समय at 10 Mbps < 1250 us */
 	sh_eth_get_stats(ndev);
 	mdp->cd->soft_reset(ndev);
 
-	/* Set the RMII mode again if required */
-	if (mdp->cd->rmiimode)
-		sh_eth_write(ndev, 0x1, RMIIMODE);
+	/* Set the RMII mode again अगर required */
+	अगर (mdp->cd->rmiimode)
+		sh_eth_ग_लिखो(ndev, 0x1, RMIIMODE);
 
 	/* Set MAC address again */
 	update_mac_address(ndev);
-}
+पूर्ण
 
-static void sh_eth_rx_csum(struct sk_buff *skb)
-{
+अटल व्योम sh_eth_rx_csum(काष्ठा sk_buff *skb)
+अणु
 	u8 *hw_csum;
 
 	/* The hardware checksum is 2 bytes appended to packet data */
-	if (unlikely(skb->len < sizeof(__sum16)))
-		return;
-	hw_csum = skb_tail_pointer(skb) - sizeof(__sum16);
-	skb->csum = csum_unfold((__force __sum16)get_unaligned_le16(hw_csum));
+	अगर (unlikely(skb->len < माप(__sum16)))
+		वापस;
+	hw_csum = skb_tail_poपूर्णांकer(skb) - माप(__sum16);
+	skb->csum = csum_unfold((__क्रमce __sum16)get_unaligned_le16(hw_csum));
 	skb->ip_summed = CHECKSUM_COMPLETE;
-	skb_trim(skb, skb->len - sizeof(__sum16));
-}
+	skb_trim(skb, skb->len - माप(__sum16));
+पूर्ण
 
 /* Packet receive function */
-static int sh_eth_rx(struct net_device *ndev, u32 intr_status, int *quota)
-{
-	struct sh_eth_private *mdp = netdev_priv(ndev);
-	struct sh_eth_rxdesc *rxdesc;
+अटल पूर्णांक sh_eth_rx(काष्ठा net_device *ndev, u32 पूर्णांकr_status, पूर्णांक *quota)
+अणु
+	काष्ठा sh_eth_निजी *mdp = netdev_priv(ndev);
+	काष्ठा sh_eth_rxdesc *rxdesc;
 
-	int entry = mdp->cur_rx % mdp->num_rx_ring;
-	int boguscnt = (mdp->dirty_rx + mdp->num_rx_ring) - mdp->cur_rx;
-	int limit;
-	struct sk_buff *skb;
+	पूर्णांक entry = mdp->cur_rx % mdp->num_rx_ring;
+	पूर्णांक boguscnt = (mdp->dirty_rx + mdp->num_rx_ring) - mdp->cur_rx;
+	पूर्णांक limit;
+	काष्ठा sk_buff *skb;
 	u32 desc_status;
-	int skbuff_size = mdp->rx_buf_sz + SH_ETH_RX_ALIGN + 32 - 1;
+	पूर्णांक skbuff_size = mdp->rx_buf_sz + SH_ETH_RX_ALIGN + 32 - 1;
 	dma_addr_t dma_addr;
 	u16 pkt_len;
 	u32 buf_len;
@@ -1599,504 +1600,504 @@ static int sh_eth_rx(struct net_device *ndev, u32 intr_status, int *quota)
 	boguscnt = min(boguscnt, *quota);
 	limit = boguscnt;
 	rxdesc = &mdp->rx_ring[entry];
-	while (!(rxdesc->status & cpu_to_le32(RD_RACT))) {
-		/* RACT bit must be checked before all the following reads */
+	जबतक (!(rxdesc->status & cpu_to_le32(RD_RACT))) अणु
+		/* RACT bit must be checked beक्रमe all the following पढ़ोs */
 		dma_rmb();
 		desc_status = le32_to_cpu(rxdesc->status);
 		pkt_len = le32_to_cpu(rxdesc->len) & RD_RFL;
 
-		if (--boguscnt < 0)
-			break;
+		अगर (--boguscnt < 0)
+			अवरोध;
 
-		netif_info(mdp, rx_status, ndev,
+		netअगर_info(mdp, rx_status, ndev,
 			   "rx entry %d status 0x%08x len %d\n",
 			   entry, desc_status, pkt_len);
 
-		if (!(desc_status & RDFEND))
+		अगर (!(desc_status & RDFEND))
 			ndev->stats.rx_length_errors++;
 
-		/* In case of almost all GETHER/ETHERs, the Receive Frame State
+		/* In हाल of almost all GETHER/ETHERs, the Receive Frame State
 		 * (RFS) bits in the Receive Descriptor 0 are from bit 9 to
-		 * bit 0. However, in case of the R8A7740 and R7S72100
+		 * bit 0. However, in हाल of the R8A7740 and R7S72100
 		 * the RFS bits are from bit 25 to bit 16. So, the
-		 * driver needs right shifting by 16.
+		 * driver needs right shअगरting by 16.
 		 */
-		if (mdp->cd->csmr)
+		अगर (mdp->cd->csmr)
 			desc_status >>= 16;
 
 		skb = mdp->rx_skbuff[entry];
-		if (desc_status & (RD_RFS1 | RD_RFS2 | RD_RFS3 | RD_RFS4 |
-				   RD_RFS5 | RD_RFS6 | RD_RFS10)) {
+		अगर (desc_status & (RD_RFS1 | RD_RFS2 | RD_RFS3 | RD_RFS4 |
+				   RD_RFS5 | RD_RFS6 | RD_RFS10)) अणु
 			ndev->stats.rx_errors++;
-			if (desc_status & RD_RFS1)
+			अगर (desc_status & RD_RFS1)
 				ndev->stats.rx_crc_errors++;
-			if (desc_status & RD_RFS2)
+			अगर (desc_status & RD_RFS2)
 				ndev->stats.rx_frame_errors++;
-			if (desc_status & RD_RFS3)
+			अगर (desc_status & RD_RFS3)
 				ndev->stats.rx_length_errors++;
-			if (desc_status & RD_RFS4)
+			अगर (desc_status & RD_RFS4)
 				ndev->stats.rx_length_errors++;
-			if (desc_status & RD_RFS6)
+			अगर (desc_status & RD_RFS6)
 				ndev->stats.rx_missed_errors++;
-			if (desc_status & RD_RFS10)
+			अगर (desc_status & RD_RFS10)
 				ndev->stats.rx_over_errors++;
-		} else	if (skb) {
+		पूर्ण अन्यथा	अगर (skb) अणु
 			dma_addr = le32_to_cpu(rxdesc->addr);
-			if (!mdp->cd->hw_swap)
+			अगर (!mdp->cd->hw_swap)
 				sh_eth_soft_swap(
 					phys_to_virt(ALIGN(dma_addr, 4)),
 					pkt_len + 2);
-			mdp->rx_skbuff[entry] = NULL;
-			if (mdp->cd->rpadir)
+			mdp->rx_skbuff[entry] = शून्य;
+			अगर (mdp->cd->rpadir)
 				skb_reserve(skb, NET_IP_ALIGN);
 			dma_unmap_single(&mdp->pdev->dev, dma_addr,
 					 ALIGN(mdp->rx_buf_sz, 32),
 					 DMA_FROM_DEVICE);
 			skb_put(skb, pkt_len);
 			skb->protocol = eth_type_trans(skb, ndev);
-			if (ndev->features & NETIF_F_RXCSUM)
+			अगर (ndev->features & NETIF_F_RXCSUM)
 				sh_eth_rx_csum(skb);
-			netif_receive_skb(skb);
+			netअगर_receive_skb(skb);
 			ndev->stats.rx_packets++;
 			ndev->stats.rx_bytes += pkt_len;
-			if (desc_status & RD_RFS8)
+			अगर (desc_status & RD_RFS8)
 				ndev->stats.multicast++;
-		}
+		पूर्ण
 		entry = (++mdp->cur_rx) % mdp->num_rx_ring;
 		rxdesc = &mdp->rx_ring[entry];
-	}
+	पूर्ण
 
 	/* Refill the Rx ring buffers. */
-	for (; mdp->cur_rx - mdp->dirty_rx > 0; mdp->dirty_rx++) {
+	क्रम (; mdp->cur_rx - mdp->dirty_rx > 0; mdp->dirty_rx++) अणु
 		entry = mdp->dirty_rx % mdp->num_rx_ring;
 		rxdesc = &mdp->rx_ring[entry];
 		/* The size of the buffer is 32 byte boundary. */
 		buf_len = ALIGN(mdp->rx_buf_sz, 32);
 		rxdesc->len = cpu_to_le32(buf_len << 16);
 
-		if (mdp->rx_skbuff[entry] == NULL) {
+		अगर (mdp->rx_skbuff[entry] == शून्य) अणु
 			skb = netdev_alloc_skb(ndev, skbuff_size);
-			if (skb == NULL)
-				break;	/* Better luck next round. */
+			अगर (skb == शून्य)
+				अवरोध;	/* Better luck next round. */
 			sh_eth_set_receive_align(skb);
 			dma_addr = dma_map_single(&mdp->pdev->dev, skb->data,
 						  buf_len, DMA_FROM_DEVICE);
-			if (dma_mapping_error(&mdp->pdev->dev, dma_addr)) {
-				kfree_skb(skb);
-				break;
-			}
+			अगर (dma_mapping_error(&mdp->pdev->dev, dma_addr)) अणु
+				kमुक्त_skb(skb);
+				अवरोध;
+			पूर्ण
 			mdp->rx_skbuff[entry] = skb;
 
-			skb_checksum_none_assert(skb);
+			skb_checksum_none_निश्चित(skb);
 			rxdesc->addr = cpu_to_le32(dma_addr);
-		}
-		dma_wmb(); /* RACT bit must be set after all the above writes */
-		if (entry >= mdp->num_rx_ring - 1)
+		पूर्ण
+		dma_wmb(); /* RACT bit must be set after all the above ग_लिखोs */
+		अगर (entry >= mdp->num_rx_ring - 1)
 			rxdesc->status |=
 				cpu_to_le32(RD_RACT | RD_RFP | RD_RDLE);
-		else
+		अन्यथा
 			rxdesc->status |= cpu_to_le32(RD_RACT | RD_RFP);
-	}
+	पूर्ण
 
-	/* Restart Rx engine if stopped. */
-	/* If we don't need to check status, don't. -KDU */
-	if (!(sh_eth_read(ndev, EDRRR) & EDRRR_R)) {
-		/* fix the values for the next receiving if RDE is set */
-		if (intr_status & EESR_RDE && !mdp->cd->no_xdfar) {
-			u32 count = (sh_eth_read(ndev, RDFAR) -
-				     sh_eth_read(ndev, RDLAR)) >> 4;
+	/* Restart Rx engine अगर stopped. */
+	/* If we करोn't need to check status, don't. -KDU */
+	अगर (!(sh_eth_पढ़ो(ndev, EDRRR) & EDRRR_R)) अणु
+		/* fix the values क्रम the next receiving अगर RDE is set */
+		अगर (पूर्णांकr_status & EESR_RDE && !mdp->cd->no_xdfar) अणु
+			u32 count = (sh_eth_पढ़ो(ndev, RDFAR) -
+				     sh_eth_पढ़ो(ndev, RDLAR)) >> 4;
 
 			mdp->cur_rx = count;
 			mdp->dirty_rx = count;
-		}
-		sh_eth_write(ndev, EDRRR_R, EDRRR);
-	}
+		पूर्ण
+		sh_eth_ग_लिखो(ndev, EDRRR_R, EDRRR);
+	पूर्ण
 
 	*quota -= limit - boguscnt - 1;
 
-	return *quota <= 0;
-}
+	वापस *quota <= 0;
+पूर्ण
 
-static void sh_eth_rcv_snd_disable(struct net_device *ndev)
-{
+अटल व्योम sh_eth_rcv_snd_disable(काष्ठा net_device *ndev)
+अणु
 	/* disable tx and rx */
-	sh_eth_modify(ndev, ECMR, ECMR_RE | ECMR_TE, 0);
-}
+	sh_eth_modअगरy(ndev, ECMR, ECMR_RE | ECMR_TE, 0);
+पूर्ण
 
-static void sh_eth_rcv_snd_enable(struct net_device *ndev)
-{
+अटल व्योम sh_eth_rcv_snd_enable(काष्ठा net_device *ndev)
+अणु
 	/* enable tx and rx */
-	sh_eth_modify(ndev, ECMR, ECMR_RE | ECMR_TE, ECMR_RE | ECMR_TE);
-}
+	sh_eth_modअगरy(ndev, ECMR, ECMR_RE | ECMR_TE, ECMR_RE | ECMR_TE);
+पूर्ण
 
-/* E-MAC interrupt handler */
-static void sh_eth_emac_interrupt(struct net_device *ndev)
-{
-	struct sh_eth_private *mdp = netdev_priv(ndev);
+/* E-MAC पूर्णांकerrupt handler */
+अटल व्योम sh_eth_emac_पूर्णांकerrupt(काष्ठा net_device *ndev)
+अणु
+	काष्ठा sh_eth_निजी *mdp = netdev_priv(ndev);
 	u32 felic_stat;
 	u32 link_stat;
 
-	felic_stat = sh_eth_read(ndev, ECSR) & sh_eth_read(ndev, ECSIPR);
-	sh_eth_write(ndev, felic_stat, ECSR);	/* clear int */
-	if (felic_stat & ECSR_ICD)
+	felic_stat = sh_eth_पढ़ो(ndev, ECSR) & sh_eth_पढ़ो(ndev, ECSIPR);
+	sh_eth_ग_लिखो(ndev, felic_stat, ECSR);	/* clear पूर्णांक */
+	अगर (felic_stat & ECSR_ICD)
 		ndev->stats.tx_carrier_errors++;
-	if (felic_stat & ECSR_MPD)
+	अगर (felic_stat & ECSR_MPD)
 		pm_wakeup_event(&mdp->pdev->dev, 0);
-	if (felic_stat & ECSR_LCHNG) {
+	अगर (felic_stat & ECSR_LCHNG) अणु
 		/* Link Changed */
-		if (mdp->cd->no_psr || mdp->no_ether_link)
-			return;
-		link_stat = sh_eth_read(ndev, PSR);
-		if (mdp->ether_link_active_low)
+		अगर (mdp->cd->no_psr || mdp->no_ether_link)
+			वापस;
+		link_stat = sh_eth_पढ़ो(ndev, PSR);
+		अगर (mdp->ether_link_active_low)
 			link_stat = ~link_stat;
-		if (!(link_stat & PSR_LMON)) {
+		अगर (!(link_stat & PSR_LMON)) अणु
 			sh_eth_rcv_snd_disable(ndev);
-		} else {
+		पूर्ण अन्यथा अणु
 			/* Link Up */
-			sh_eth_modify(ndev, EESIPR, EESIPR_ECIIP, 0);
-			/* clear int */
-			sh_eth_modify(ndev, ECSR, 0, 0);
-			sh_eth_modify(ndev, EESIPR, EESIPR_ECIIP, EESIPR_ECIIP);
+			sh_eth_modअगरy(ndev, EESIPR, EESIPR_ECIIP, 0);
+			/* clear पूर्णांक */
+			sh_eth_modअगरy(ndev, ECSR, 0, 0);
+			sh_eth_modअगरy(ndev, EESIPR, EESIPR_ECIIP, EESIPR_ECIIP);
 			/* enable tx and rx */
 			sh_eth_rcv_snd_enable(ndev);
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
 /* error control function */
-static void sh_eth_error(struct net_device *ndev, u32 intr_status)
-{
-	struct sh_eth_private *mdp = netdev_priv(ndev);
+अटल व्योम sh_eth_error(काष्ठा net_device *ndev, u32 पूर्णांकr_status)
+अणु
+	काष्ठा sh_eth_निजी *mdp = netdev_priv(ndev);
 	u32 mask;
 
-	if (intr_status & EESR_TWB) {
-		/* Unused write back interrupt */
-		if (intr_status & EESR_TABT) {	/* Transmit Abort int */
-			ndev->stats.tx_aborted_errors++;
-			netif_err(mdp, tx_err, ndev, "Transmit Abort\n");
-		}
-	}
+	अगर (पूर्णांकr_status & EESR_TWB) अणु
+		/* Unused ग_लिखो back पूर्णांकerrupt */
+		अगर (पूर्णांकr_status & EESR_TABT) अणु	/* Transmit Abort पूर्णांक */
+			ndev->stats.tx_पातed_errors++;
+			netअगर_err(mdp, tx_err, ndev, "Transmit Abort\n");
+		पूर्ण
+	पूर्ण
 
-	if (intr_status & EESR_RABT) {
-		/* Receive Abort int */
-		if (intr_status & EESR_RFRMER) {
-			/* Receive Frame Overflow int */
+	अगर (पूर्णांकr_status & EESR_RABT) अणु
+		/* Receive Abort पूर्णांक */
+		अगर (पूर्णांकr_status & EESR_RFRMER) अणु
+			/* Receive Frame Overflow पूर्णांक */
 			ndev->stats.rx_frame_errors++;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (intr_status & EESR_TDE) {
-		/* Transmit Descriptor Empty int */
-		ndev->stats.tx_fifo_errors++;
-		netif_err(mdp, tx_err, ndev, "Transmit Descriptor Empty\n");
-	}
+	अगर (पूर्णांकr_status & EESR_TDE) अणु
+		/* Transmit Descriptor Empty पूर्णांक */
+		ndev->stats.tx_fअगरo_errors++;
+		netअगर_err(mdp, tx_err, ndev, "Transmit Descriptor Empty\n");
+	पूर्ण
 
-	if (intr_status & EESR_TFE) {
+	अगर (पूर्णांकr_status & EESR_TFE) अणु
 		/* FIFO under flow */
-		ndev->stats.tx_fifo_errors++;
-		netif_err(mdp, tx_err, ndev, "Transmit FIFO Under flow\n");
-	}
+		ndev->stats.tx_fअगरo_errors++;
+		netअगर_err(mdp, tx_err, ndev, "Transmit FIFO Under flow\n");
+	पूर्ण
 
-	if (intr_status & EESR_RDE) {
-		/* Receive Descriptor Empty int */
+	अगर (पूर्णांकr_status & EESR_RDE) अणु
+		/* Receive Descriptor Empty पूर्णांक */
 		ndev->stats.rx_over_errors++;
-	}
+	पूर्ण
 
-	if (intr_status & EESR_RFE) {
-		/* Receive FIFO Overflow int */
-		ndev->stats.rx_fifo_errors++;
-	}
+	अगर (पूर्णांकr_status & EESR_RFE) अणु
+		/* Receive FIFO Overflow पूर्णांक */
+		ndev->stats.rx_fअगरo_errors++;
+	पूर्ण
 
-	if (!mdp->cd->no_ade && (intr_status & EESR_ADE)) {
+	अगर (!mdp->cd->no_ade && (पूर्णांकr_status & EESR_ADE)) अणु
 		/* Address Error */
-		ndev->stats.tx_fifo_errors++;
-		netif_err(mdp, tx_err, ndev, "Address Error\n");
-	}
+		ndev->stats.tx_fअगरo_errors++;
+		netअगर_err(mdp, tx_err, ndev, "Address Error\n");
+	पूर्ण
 
 	mask = EESR_TWB | EESR_TABT | EESR_ADE | EESR_TDE | EESR_TFE;
-	if (mdp->cd->no_ade)
+	अगर (mdp->cd->no_ade)
 		mask &= ~EESR_ADE;
-	if (intr_status & mask) {
+	अगर (पूर्णांकr_status & mask) अणु
 		/* Tx error */
-		u32 edtrr = sh_eth_read(ndev, EDTRR);
+		u32 edtrr = sh_eth_पढ़ो(ndev, EDTRR);
 
 		/* dmesg */
 		netdev_err(ndev, "TX error. status=%8.8x cur_tx=%8.8x dirty_tx=%8.8x state=%8.8x EDTRR=%8.8x.\n",
-			   intr_status, mdp->cur_tx, mdp->dirty_tx,
+			   पूर्णांकr_status, mdp->cur_tx, mdp->dirty_tx,
 			   (u32)ndev->state, edtrr);
-		/* dirty buffer free */
-		sh_eth_tx_free(ndev, true);
+		/* dirty buffer मुक्त */
+		sh_eth_tx_मुक्त(ndev, true);
 
 		/* SH7712 BUG */
-		if (edtrr ^ mdp->cd->edtrr_trns) {
+		अगर (edtrr ^ mdp->cd->edtrr_trns) अणु
 			/* tx dma start */
-			sh_eth_write(ndev, mdp->cd->edtrr_trns, EDTRR);
-		}
+			sh_eth_ग_लिखो(ndev, mdp->cd->edtrr_trns, EDTRR);
+		पूर्ण
 		/* wakeup */
-		netif_wake_queue(ndev);
-	}
-}
+		netअगर_wake_queue(ndev);
+	पूर्ण
+पूर्ण
 
-static irqreturn_t sh_eth_interrupt(int irq, void *netdev)
-{
-	struct net_device *ndev = netdev;
-	struct sh_eth_private *mdp = netdev_priv(ndev);
-	struct sh_eth_cpu_data *cd = mdp->cd;
-	irqreturn_t ret = IRQ_NONE;
-	u32 intr_status, intr_enable;
+अटल irqवापस_t sh_eth_पूर्णांकerrupt(पूर्णांक irq, व्योम *netdev)
+अणु
+	काष्ठा net_device *ndev = netdev;
+	काष्ठा sh_eth_निजी *mdp = netdev_priv(ndev);
+	काष्ठा sh_eth_cpu_data *cd = mdp->cd;
+	irqवापस_t ret = IRQ_NONE;
+	u32 पूर्णांकr_status, पूर्णांकr_enable;
 
 	spin_lock(&mdp->lock);
 
-	/* Get interrupt status */
-	intr_status = sh_eth_read(ndev, EESR);
-	/* Mask it with the interrupt mask, forcing ECI interrupt  to be always
+	/* Get पूर्णांकerrupt status */
+	पूर्णांकr_status = sh_eth_पढ़ो(ndev, EESR);
+	/* Mask it with the पूर्णांकerrupt mask, क्रमcing ECI पूर्णांकerrupt  to be always
 	 * enabled since it's the one that  comes  thru regardless of the mask,
-	 * and  we need to fully handle it  in sh_eth_emac_interrupt() in order
-	 * to quench it as it doesn't get cleared by just writing 1 to the  ECI
+	 * and  we need to fully handle it  in sh_eth_emac_पूर्णांकerrupt() in order
+	 * to quench it as it करोesn't get cleared by just writing 1 to the  ECI
 	 * bit...
 	 */
-	intr_enable = sh_eth_read(ndev, EESIPR);
-	intr_status &= intr_enable | EESIPR_ECIIP;
-	if (intr_status & (EESR_RX_CHECK | cd->tx_check | EESR_ECI |
+	पूर्णांकr_enable = sh_eth_पढ़ो(ndev, EESIPR);
+	पूर्णांकr_status &= पूर्णांकr_enable | EESIPR_ECIIP;
+	अगर (पूर्णांकr_status & (EESR_RX_CHECK | cd->tx_check | EESR_ECI |
 			   cd->eesr_err_check))
 		ret = IRQ_HANDLED;
-	else
-		goto out;
+	अन्यथा
+		जाओ out;
 
-	if (unlikely(!mdp->irq_enabled)) {
-		sh_eth_write(ndev, 0, EESIPR);
-		goto out;
-	}
+	अगर (unlikely(!mdp->irq_enabled)) अणु
+		sh_eth_ग_लिखो(ndev, 0, EESIPR);
+		जाओ out;
+	पूर्ण
 
-	if (intr_status & EESR_RX_CHECK) {
-		if (napi_schedule_prep(&mdp->napi)) {
-			/* Mask Rx interrupts */
-			sh_eth_write(ndev, intr_enable & ~EESR_RX_CHECK,
+	अगर (पूर्णांकr_status & EESR_RX_CHECK) अणु
+		अगर (napi_schedule_prep(&mdp->napi)) अणु
+			/* Mask Rx पूर्णांकerrupts */
+			sh_eth_ग_लिखो(ndev, पूर्णांकr_enable & ~EESR_RX_CHECK,
 				     EESIPR);
 			__napi_schedule(&mdp->napi);
-		} else {
+		पूर्ण अन्यथा अणु
 			netdev_warn(ndev,
 				    "ignoring interrupt, status 0x%08x, mask 0x%08x.\n",
-				    intr_status, intr_enable);
-		}
-	}
+				    पूर्णांकr_status, पूर्णांकr_enable);
+		पूर्ण
+	पूर्ण
 
 	/* Tx Check */
-	if (intr_status & cd->tx_check) {
-		/* Clear Tx interrupts */
-		sh_eth_write(ndev, intr_status & cd->tx_check, EESR);
+	अगर (पूर्णांकr_status & cd->tx_check) अणु
+		/* Clear Tx पूर्णांकerrupts */
+		sh_eth_ग_लिखो(ndev, पूर्णांकr_status & cd->tx_check, EESR);
 
-		sh_eth_tx_free(ndev, true);
-		netif_wake_queue(ndev);
-	}
+		sh_eth_tx_मुक्त(ndev, true);
+		netअगर_wake_queue(ndev);
+	पूर्ण
 
-	/* E-MAC interrupt */
-	if (intr_status & EESR_ECI)
-		sh_eth_emac_interrupt(ndev);
+	/* E-MAC पूर्णांकerrupt */
+	अगर (पूर्णांकr_status & EESR_ECI)
+		sh_eth_emac_पूर्णांकerrupt(ndev);
 
-	if (intr_status & cd->eesr_err_check) {
-		/* Clear error interrupts */
-		sh_eth_write(ndev, intr_status & cd->eesr_err_check, EESR);
+	अगर (पूर्णांकr_status & cd->eesr_err_check) अणु
+		/* Clear error पूर्णांकerrupts */
+		sh_eth_ग_लिखो(ndev, पूर्णांकr_status & cd->eesr_err_check, EESR);
 
-		sh_eth_error(ndev, intr_status);
-	}
+		sh_eth_error(ndev, पूर्णांकr_status);
+	पूर्ण
 
 out:
 	spin_unlock(&mdp->lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int sh_eth_poll(struct napi_struct *napi, int budget)
-{
-	struct sh_eth_private *mdp = container_of(napi, struct sh_eth_private,
+अटल पूर्णांक sh_eth_poll(काष्ठा napi_काष्ठा *napi, पूर्णांक budget)
+अणु
+	काष्ठा sh_eth_निजी *mdp = container_of(napi, काष्ठा sh_eth_निजी,
 						  napi);
-	struct net_device *ndev = napi->dev;
-	int quota = budget;
-	u32 intr_status;
+	काष्ठा net_device *ndev = napi->dev;
+	पूर्णांक quota = budget;
+	u32 पूर्णांकr_status;
 
-	for (;;) {
-		intr_status = sh_eth_read(ndev, EESR);
-		if (!(intr_status & EESR_RX_CHECK))
-			break;
-		/* Clear Rx interrupts */
-		sh_eth_write(ndev, intr_status & EESR_RX_CHECK, EESR);
+	क्रम (;;) अणु
+		पूर्णांकr_status = sh_eth_पढ़ो(ndev, EESR);
+		अगर (!(पूर्णांकr_status & EESR_RX_CHECK))
+			अवरोध;
+		/* Clear Rx पूर्णांकerrupts */
+		sh_eth_ग_लिखो(ndev, पूर्णांकr_status & EESR_RX_CHECK, EESR);
 
-		if (sh_eth_rx(ndev, intr_status, &quota))
-			goto out;
-	}
+		अगर (sh_eth_rx(ndev, पूर्णांकr_status, &quota))
+			जाओ out;
+	पूर्ण
 
 	napi_complete(napi);
 
-	/* Reenable Rx interrupts */
-	if (mdp->irq_enabled)
-		sh_eth_write(ndev, mdp->cd->eesipr_value, EESIPR);
+	/* Reenable Rx पूर्णांकerrupts */
+	अगर (mdp->irq_enabled)
+		sh_eth_ग_लिखो(ndev, mdp->cd->eesipr_value, EESIPR);
 out:
-	return budget - quota;
-}
+	वापस budget - quota;
+पूर्ण
 
 /* PHY state control function */
-static void sh_eth_adjust_link(struct net_device *ndev)
-{
-	struct sh_eth_private *mdp = netdev_priv(ndev);
-	struct phy_device *phydev = ndev->phydev;
-	unsigned long flags;
-	int new_state = 0;
+अटल व्योम sh_eth_adjust_link(काष्ठा net_device *ndev)
+अणु
+	काष्ठा sh_eth_निजी *mdp = netdev_priv(ndev);
+	काष्ठा phy_device *phydev = ndev->phydev;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक new_state = 0;
 
 	spin_lock_irqsave(&mdp->lock, flags);
 
-	/* Disable TX and RX right over here, if E-MAC change is ignored */
-	if (mdp->cd->no_psr || mdp->no_ether_link)
+	/* Disable TX and RX right over here, अगर E-MAC change is ignored */
+	अगर (mdp->cd->no_psr || mdp->no_ether_link)
 		sh_eth_rcv_snd_disable(ndev);
 
-	if (phydev->link) {
-		if (phydev->duplex != mdp->duplex) {
+	अगर (phydev->link) अणु
+		अगर (phydev->duplex != mdp->duplex) अणु
 			new_state = 1;
 			mdp->duplex = phydev->duplex;
-			if (mdp->cd->set_duplex)
+			अगर (mdp->cd->set_duplex)
 				mdp->cd->set_duplex(ndev);
-		}
+		पूर्ण
 
-		if (phydev->speed != mdp->speed) {
+		अगर (phydev->speed != mdp->speed) अणु
 			new_state = 1;
 			mdp->speed = phydev->speed;
-			if (mdp->cd->set_rate)
+			अगर (mdp->cd->set_rate)
 				mdp->cd->set_rate(ndev);
-		}
-		if (!mdp->link) {
-			sh_eth_modify(ndev, ECMR, ECMR_TXF, 0);
+		पूर्ण
+		अगर (!mdp->link) अणु
+			sh_eth_modअगरy(ndev, ECMR, ECMR_TXF, 0);
 			new_state = 1;
 			mdp->link = phydev->link;
-		}
-	} else if (mdp->link) {
+		पूर्ण
+	पूर्ण अन्यथा अगर (mdp->link) अणु
 		new_state = 1;
 		mdp->link = 0;
 		mdp->speed = 0;
 		mdp->duplex = -1;
-	}
+	पूर्ण
 
-	/* Enable TX and RX right over here, if E-MAC change is ignored */
-	if ((mdp->cd->no_psr || mdp->no_ether_link) && phydev->link)
+	/* Enable TX and RX right over here, अगर E-MAC change is ignored */
+	अगर ((mdp->cd->no_psr || mdp->no_ether_link) && phydev->link)
 		sh_eth_rcv_snd_enable(ndev);
 
 	spin_unlock_irqrestore(&mdp->lock, flags);
 
-	if (new_state && netif_msg_link(mdp))
-		phy_print_status(phydev);
-}
+	अगर (new_state && netअगर_msg_link(mdp))
+		phy_prपूर्णांक_status(phydev);
+पूर्ण
 
 /* PHY init function */
-static int sh_eth_phy_init(struct net_device *ndev)
-{
-	struct device_node *np = ndev->dev.parent->of_node;
-	struct sh_eth_private *mdp = netdev_priv(ndev);
-	struct phy_device *phydev;
+अटल पूर्णांक sh_eth_phy_init(काष्ठा net_device *ndev)
+अणु
+	काष्ठा device_node *np = ndev->dev.parent->of_node;
+	काष्ठा sh_eth_निजी *mdp = netdev_priv(ndev);
+	काष्ठा phy_device *phydev;
 
 	mdp->link = 0;
 	mdp->speed = 0;
 	mdp->duplex = -1;
 
 	/* Try connect to PHY */
-	if (np) {
-		struct device_node *pn;
+	अगर (np) अणु
+		काष्ठा device_node *pn;
 
 		pn = of_parse_phandle(np, "phy-handle", 0);
 		phydev = of_phy_connect(ndev, pn,
 					sh_eth_adjust_link, 0,
-					mdp->phy_interface);
+					mdp->phy_पूर्णांकerface);
 
 		of_node_put(pn);
-		if (!phydev)
+		अगर (!phydev)
 			phydev = ERR_PTR(-ENOENT);
-	} else {
-		char phy_id[MII_BUS_ID_SIZE + 3];
+	पूर्ण अन्यथा अणु
+		अक्षर phy_id[MII_BUS_ID_SIZE + 3];
 
-		snprintf(phy_id, sizeof(phy_id), PHY_ID_FMT,
+		snम_लिखो(phy_id, माप(phy_id), PHY_ID_FMT,
 			 mdp->mii_bus->id, mdp->phy_id);
 
 		phydev = phy_connect(ndev, phy_id, sh_eth_adjust_link,
-				     mdp->phy_interface);
-	}
+				     mdp->phy_पूर्णांकerface);
+	पूर्ण
 
-	if (IS_ERR(phydev)) {
+	अगर (IS_ERR(phydev)) अणु
 		netdev_err(ndev, "failed to connect PHY\n");
-		return PTR_ERR(phydev);
-	}
+		वापस PTR_ERR(phydev);
+	पूर्ण
 
 	/* mask with MAC supported features */
-	if (mdp->cd->register_type != SH_ETH_REG_GIGABIT) {
-		int err = phy_set_max_speed(phydev, SPEED_100);
-		if (err) {
+	अगर (mdp->cd->रेजिस्टर_type != SH_ETH_REG_GIGABIT) अणु
+		पूर्णांक err = phy_set_max_speed(phydev, SPEED_100);
+		अगर (err) अणु
 			netdev_err(ndev, "failed to limit PHY to 100 Mbit/s\n");
 			phy_disconnect(phydev);
-			return err;
-		}
-	}
+			वापस err;
+		पूर्ण
+	पूर्ण
 
 	phy_attached_info(phydev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* PHY control start function */
-static int sh_eth_phy_start(struct net_device *ndev)
-{
-	int ret;
+अटल पूर्णांक sh_eth_phy_start(काष्ठा net_device *ndev)
+अणु
+	पूर्णांक ret;
 
 	ret = sh_eth_phy_init(ndev);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	phy_start(ndev->phydev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* If it is ever necessary to increase SH_ETH_REG_DUMP_MAX_REGS, the
- * version must be bumped as well.  Just adding registers up to that
- * limit is fine, as long as the existing register indices don't
+ * version must be bumped as well.  Just adding रेजिस्टरs up to that
+ * limit is fine, as दीर्घ as the existing रेजिस्टर indices करोn't
  * change.
  */
-#define SH_ETH_REG_DUMP_VERSION		1
-#define SH_ETH_REG_DUMP_MAX_REGS	256
+#घोषणा SH_ETH_REG_DUMP_VERSION		1
+#घोषणा SH_ETH_REG_DUMP_MAX_REGS	256
 
-static size_t __sh_eth_get_regs(struct net_device *ndev, u32 *buf)
-{
-	struct sh_eth_private *mdp = netdev_priv(ndev);
-	struct sh_eth_cpu_data *cd = mdp->cd;
+अटल माप_प्रकार __sh_eth_get_regs(काष्ठा net_device *ndev, u32 *buf)
+अणु
+	काष्ठा sh_eth_निजी *mdp = netdev_priv(ndev);
+	काष्ठा sh_eth_cpu_data *cd = mdp->cd;
 	u32 *valid_map;
-	size_t len;
+	माप_प्रकार len;
 
 	BUILD_BUG_ON(SH_ETH_MAX_REGISTER_OFFSET > SH_ETH_REG_DUMP_MAX_REGS);
 
-	/* Dump starts with a bitmap that tells ethtool which
-	 * registers are defined for this chip.
+	/* Dump starts with a biपंचांगap that tells ethtool which
+	 * रेजिस्टरs are defined क्रम this chip.
 	 */
 	len = DIV_ROUND_UP(SH_ETH_REG_DUMP_MAX_REGS, 32);
-	if (buf) {
+	अगर (buf) अणु
 		valid_map = buf;
 		buf += len;
-	} else {
-		valid_map = NULL;
-	}
+	पूर्ण अन्यथा अणु
+		valid_map = शून्य;
+	पूर्ण
 
-	/* Add a register to the dump, if it has a defined offset.
-	 * This automatically skips most undefined registers, but for
+	/* Add a रेजिस्टर to the dump, अगर it has a defined offset.
+	 * This स्वतःmatically skips most undefined रेजिस्टरs, but क्रम
 	 * some it is also necessary to check a capability flag in
-	 * struct sh_eth_cpu_data.
+	 * काष्ठा sh_eth_cpu_data.
 	 */
-#define mark_reg_valid(reg) valid_map[reg / 32] |= 1U << (reg % 32)
-#define add_reg_from(reg, read_expr) do {				\
-		if (mdp->reg_offset[reg] != SH_ETH_OFFSET_INVALID) {	\
-			if (buf) {					\
+#घोषणा mark_reg_valid(reg) valid_map[reg / 32] |= 1U << (reg % 32)
+#घोषणा add_reg_from(reg, पढ़ो_expr) करो अणु				\
+		अगर (mdp->reg_offset[reg] != SH_ETH_OFFSET_INVALID) अणु	\
+			अगर (buf) अणु					\
 				mark_reg_valid(reg);			\
-				*buf++ = read_expr;			\
-			}						\
+				*buf++ = पढ़ो_expr;			\
+			पूर्ण						\
 			++len;						\
-		}							\
-	} while (0)
-#define add_reg(reg) add_reg_from(reg, sh_eth_read(ndev, reg))
-#define add_tsu_reg(reg) add_reg_from(reg, sh_eth_tsu_read(mdp, reg))
+		पूर्ण							\
+	पूर्ण जबतक (0)
+#घोषणा add_reg(reg) add_reg_from(reg, sh_eth_पढ़ो(ndev, reg))
+#घोषणा add_tsu_reg(reg) add_reg_from(reg, sh_eth_tsu_पढ़ो(mdp, reg))
 
 	add_reg(EDSR);
 	add_reg(EDMR);
@@ -2105,12 +2106,12 @@ static size_t __sh_eth_get_regs(struct net_device *ndev, u32 *buf)
 	add_reg(EESR);
 	add_reg(EESIPR);
 	add_reg(TDLAR);
-	if (!cd->no_xdfar)
+	अगर (!cd->no_xdfar)
 		add_reg(TDFAR);
 	add_reg(TDFXR);
 	add_reg(TDFFR);
 	add_reg(RDLAR);
-	if (!cd->no_xdfar)
+	अगर (!cd->no_xdfar)
 		add_reg(RDFAR);
 	add_reg(RDFXR);
 	add_reg(RDFFR);
@@ -2121,62 +2122,62 @@ static size_t __sh_eth_get_regs(struct net_device *ndev, u32 *buf)
 	add_reg(RMCR);
 	add_reg(TFUCR);
 	add_reg(RFOCR);
-	if (cd->rmiimode)
+	अगर (cd->rmiimode)
 		add_reg(RMIIMODE);
 	add_reg(FCFTR);
-	if (cd->rpadir)
-		add_reg(RPADIR);
-	if (!cd->no_trimd)
+	अगर (cd->rpadir)
+		add_reg(RPAसूची);
+	अगर (!cd->no_trimd)
 		add_reg(TRIMD);
 	add_reg(ECMR);
 	add_reg(ECSR);
 	add_reg(ECSIPR);
 	add_reg(PIR);
-	if (!cd->no_psr)
+	अगर (!cd->no_psr)
 		add_reg(PSR);
 	add_reg(RDMLR);
 	add_reg(RFLR);
 	add_reg(IPGR);
-	if (cd->apr)
+	अगर (cd->apr)
 		add_reg(APR);
-	if (cd->mpr)
+	अगर (cd->mpr)
 		add_reg(MPR);
 	add_reg(RFCR);
 	add_reg(RFCF);
-	if (cd->tpauser)
+	अगर (cd->tछोड़ोr)
 		add_reg(TPAUSER);
 	add_reg(TPAUSECR);
-	if (cd->gecmr)
+	अगर (cd->gecmr)
 		add_reg(GECMR);
-	if (cd->bculr)
+	अगर (cd->bculr)
 		add_reg(BCULR);
 	add_reg(MAHR);
 	add_reg(MALR);
-	if (!cd->no_tx_cntrs) {
+	अगर (!cd->no_tx_cntrs) अणु
 		add_reg(TROCR);
 		add_reg(CDCR);
 		add_reg(LCCR);
 		add_reg(CNDCR);
-	}
+	पूर्ण
 	add_reg(CEFCR);
 	add_reg(FRECR);
 	add_reg(TSFRCR);
 	add_reg(TLFRCR);
-	if (cd->cexcr) {
+	अगर (cd->cexcr) अणु
 		add_reg(CERCR);
 		add_reg(CEECR);
-	}
+	पूर्ण
 	add_reg(MAFCR);
-	if (cd->rtrate)
+	अगर (cd->rtrate)
 		add_reg(RTRATE);
-	if (cd->csmr)
+	अगर (cd->csmr)
 		add_reg(CSMR);
-	if (cd->select_mii)
+	अगर (cd->select_mii)
 		add_reg(RMII_MII);
-	if (cd->tsu) {
+	अगर (cd->tsu) अणु
 		add_tsu_reg(ARSTR);
 		add_tsu_reg(TSU_CTRST);
-		if (cd->dual_port) {
+		अगर (cd->dual_port) अणु
 			add_tsu_reg(TSU_FWEN0);
 			add_tsu_reg(TSU_FWEN1);
 			add_tsu_reg(TSU_FCM);
@@ -2186,9 +2187,9 @@ static size_t __sh_eth_get_regs(struct net_device *ndev, u32 *buf)
 			add_tsu_reg(TSU_PRISL1);
 			add_tsu_reg(TSU_FWSL0);
 			add_tsu_reg(TSU_FWSL1);
-		}
+		पूर्ण
 		add_tsu_reg(TSU_FWSLC);
-		if (cd->dual_port) {
+		अगर (cd->dual_port) अणु
 			add_tsu_reg(TSU_QTAGM0);
 			add_tsu_reg(TSU_QTAGM1);
 			add_tsu_reg(TSU_FWSR);
@@ -2197,199 +2198,199 @@ static size_t __sh_eth_get_regs(struct net_device *ndev, u32 *buf)
 			add_tsu_reg(TSU_ADQT1);
 			add_tsu_reg(TSU_VTAG0);
 			add_tsu_reg(TSU_VTAG1);
-		}
+		पूर्ण
 		add_tsu_reg(TSU_ADSBSY);
 		add_tsu_reg(TSU_TEN);
 		add_tsu_reg(TSU_POST1);
 		add_tsu_reg(TSU_POST2);
 		add_tsu_reg(TSU_POST3);
 		add_tsu_reg(TSU_POST4);
-		/* This is the start of a table, not just a single register. */
-		if (buf) {
-			unsigned int i;
+		/* This is the start of a table, not just a single रेजिस्टर. */
+		अगर (buf) अणु
+			अचिन्हित पूर्णांक i;
 
 			mark_reg_valid(TSU_ADRH0);
-			for (i = 0; i < SH_ETH_TSU_CAM_ENTRIES * 2; i++)
-				*buf++ = ioread32(mdp->tsu_addr +
+			क्रम (i = 0; i < SH_ETH_TSU_CAM_ENTRIES * 2; i++)
+				*buf++ = ioपढ़ो32(mdp->tsu_addr +
 						  mdp->reg_offset[TSU_ADRH0] +
 						  i * 4);
-		}
+		पूर्ण
 		len += SH_ETH_TSU_CAM_ENTRIES * 2;
-	}
+	पूर्ण
 
-#undef mark_reg_valid
-#undef add_reg_from
-#undef add_reg
-#undef add_tsu_reg
+#अघोषित mark_reg_valid
+#अघोषित add_reg_from
+#अघोषित add_reg
+#अघोषित add_tsu_reg
 
-	return len * 4;
-}
+	वापस len * 4;
+पूर्ण
 
-static int sh_eth_get_regs_len(struct net_device *ndev)
-{
-	return __sh_eth_get_regs(ndev, NULL);
-}
+अटल पूर्णांक sh_eth_get_regs_len(काष्ठा net_device *ndev)
+अणु
+	वापस __sh_eth_get_regs(ndev, शून्य);
+पूर्ण
 
-static void sh_eth_get_regs(struct net_device *ndev, struct ethtool_regs *regs,
-			    void *buf)
-{
-	struct sh_eth_private *mdp = netdev_priv(ndev);
+अटल व्योम sh_eth_get_regs(काष्ठा net_device *ndev, काष्ठा ethtool_regs *regs,
+			    व्योम *buf)
+अणु
+	काष्ठा sh_eth_निजी *mdp = netdev_priv(ndev);
 
 	regs->version = SH_ETH_REG_DUMP_VERSION;
 
-	pm_runtime_get_sync(&mdp->pdev->dev);
+	pm_runसमय_get_sync(&mdp->pdev->dev);
 	__sh_eth_get_regs(ndev, buf);
-	pm_runtime_put_sync(&mdp->pdev->dev);
-}
+	pm_runसमय_put_sync(&mdp->pdev->dev);
+पूर्ण
 
-static u32 sh_eth_get_msglevel(struct net_device *ndev)
-{
-	struct sh_eth_private *mdp = netdev_priv(ndev);
-	return mdp->msg_enable;
-}
+अटल u32 sh_eth_get_msglevel(काष्ठा net_device *ndev)
+अणु
+	काष्ठा sh_eth_निजी *mdp = netdev_priv(ndev);
+	वापस mdp->msg_enable;
+पूर्ण
 
-static void sh_eth_set_msglevel(struct net_device *ndev, u32 value)
-{
-	struct sh_eth_private *mdp = netdev_priv(ndev);
+अटल व्योम sh_eth_set_msglevel(काष्ठा net_device *ndev, u32 value)
+अणु
+	काष्ठा sh_eth_निजी *mdp = netdev_priv(ndev);
 	mdp->msg_enable = value;
-}
+पूर्ण
 
-static const char sh_eth_gstrings_stats[][ETH_GSTRING_LEN] = {
+अटल स्थिर अक्षर sh_eth_gstrings_stats[][ETH_GSTRING_LEN] = अणु
 	"rx_current", "tx_current",
 	"rx_dirty", "tx_dirty",
-};
-#define SH_ETH_STATS_LEN  ARRAY_SIZE(sh_eth_gstrings_stats)
+पूर्ण;
+#घोषणा SH_ETH_STATS_LEN  ARRAY_SIZE(sh_eth_gstrings_stats)
 
-static int sh_eth_get_sset_count(struct net_device *netdev, int sset)
-{
-	switch (sset) {
-	case ETH_SS_STATS:
-		return SH_ETH_STATS_LEN;
-	default:
-		return -EOPNOTSUPP;
-	}
-}
+अटल पूर्णांक sh_eth_get_sset_count(काष्ठा net_device *netdev, पूर्णांक sset)
+अणु
+	चयन (sset) अणु
+	हाल ETH_SS_STATS:
+		वापस SH_ETH_STATS_LEN;
+	शेष:
+		वापस -EOPNOTSUPP;
+	पूर्ण
+पूर्ण
 
-static void sh_eth_get_ethtool_stats(struct net_device *ndev,
-				     struct ethtool_stats *stats, u64 *data)
-{
-	struct sh_eth_private *mdp = netdev_priv(ndev);
-	int i = 0;
+अटल व्योम sh_eth_get_ethtool_stats(काष्ठा net_device *ndev,
+				     काष्ठा ethtool_stats *stats, u64 *data)
+अणु
+	काष्ठा sh_eth_निजी *mdp = netdev_priv(ndev);
+	पूर्णांक i = 0;
 
-	/* device-specific stats */
+	/* device-specअगरic stats */
 	data[i++] = mdp->cur_rx;
 	data[i++] = mdp->cur_tx;
 	data[i++] = mdp->dirty_rx;
 	data[i++] = mdp->dirty_tx;
-}
+पूर्ण
 
-static void sh_eth_get_strings(struct net_device *ndev, u32 stringset, u8 *data)
-{
-	switch (stringset) {
-	case ETH_SS_STATS:
-		memcpy(data, sh_eth_gstrings_stats,
-		       sizeof(sh_eth_gstrings_stats));
-		break;
-	}
-}
+अटल व्योम sh_eth_get_strings(काष्ठा net_device *ndev, u32 stringset, u8 *data)
+अणु
+	चयन (stringset) अणु
+	हाल ETH_SS_STATS:
+		स_नकल(data, sh_eth_gstrings_stats,
+		       माप(sh_eth_gstrings_stats));
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static void sh_eth_get_ringparam(struct net_device *ndev,
-				 struct ethtool_ringparam *ring)
-{
-	struct sh_eth_private *mdp = netdev_priv(ndev);
+अटल व्योम sh_eth_get_ringparam(काष्ठा net_device *ndev,
+				 काष्ठा ethtool_ringparam *ring)
+अणु
+	काष्ठा sh_eth_निजी *mdp = netdev_priv(ndev);
 
 	ring->rx_max_pending = RX_RING_MAX;
 	ring->tx_max_pending = TX_RING_MAX;
 	ring->rx_pending = mdp->num_rx_ring;
 	ring->tx_pending = mdp->num_tx_ring;
-}
+पूर्ण
 
-static int sh_eth_set_ringparam(struct net_device *ndev,
-				struct ethtool_ringparam *ring)
-{
-	struct sh_eth_private *mdp = netdev_priv(ndev);
-	int ret;
+अटल पूर्णांक sh_eth_set_ringparam(काष्ठा net_device *ndev,
+				काष्ठा ethtool_ringparam *ring)
+अणु
+	काष्ठा sh_eth_निजी *mdp = netdev_priv(ndev);
+	पूर्णांक ret;
 
-	if (ring->tx_pending > TX_RING_MAX ||
+	अगर (ring->tx_pending > TX_RING_MAX ||
 	    ring->rx_pending > RX_RING_MAX ||
 	    ring->tx_pending < TX_RING_MIN ||
 	    ring->rx_pending < RX_RING_MIN)
-		return -EINVAL;
-	if (ring->rx_mini_pending || ring->rx_jumbo_pending)
-		return -EINVAL;
+		वापस -EINVAL;
+	अगर (ring->rx_mini_pending || ring->rx_jumbo_pending)
+		वापस -EINVAL;
 
-	if (netif_running(ndev)) {
-		netif_device_detach(ndev);
-		netif_tx_disable(ndev);
+	अगर (netअगर_running(ndev)) अणु
+		netअगर_device_detach(ndev);
+		netअगर_tx_disable(ndev);
 
-		/* Serialise with the interrupt handler and NAPI, then
-		 * disable interrupts.  We have to clear the
-		 * irq_enabled flag first to ensure that interrupts
+		/* Serialise with the पूर्णांकerrupt handler and NAPI, then
+		 * disable पूर्णांकerrupts.  We have to clear the
+		 * irq_enabled flag first to ensure that पूर्णांकerrupts
 		 * won't be re-enabled.
 		 */
 		mdp->irq_enabled = false;
 		synchronize_irq(ndev->irq);
 		napi_synchronize(&mdp->napi);
-		sh_eth_write(ndev, 0x0000, EESIPR);
+		sh_eth_ग_लिखो(ndev, 0x0000, EESIPR);
 
-		sh_eth_dev_exit(ndev);
+		sh_eth_dev_निकास(ndev);
 
 		/* Free all the skbuffs in the Rx queue and the DMA buffers. */
-		sh_eth_ring_free(ndev);
-	}
+		sh_eth_ring_मुक्त(ndev);
+	पूर्ण
 
 	/* Set new parameters */
 	mdp->num_rx_ring = ring->rx_pending;
 	mdp->num_tx_ring = ring->tx_pending;
 
-	if (netif_running(ndev)) {
+	अगर (netअगर_running(ndev)) अणु
 		ret = sh_eth_ring_init(ndev);
-		if (ret < 0) {
+		अगर (ret < 0) अणु
 			netdev_err(ndev, "%s: sh_eth_ring_init failed.\n",
 				   __func__);
-			return ret;
-		}
+			वापस ret;
+		पूर्ण
 		ret = sh_eth_dev_init(ndev);
-		if (ret < 0) {
+		अगर (ret < 0) अणु
 			netdev_err(ndev, "%s: sh_eth_dev_init failed.\n",
 				   __func__);
-			return ret;
-		}
+			वापस ret;
+		पूर्ण
 
-		netif_device_attach(ndev);
-	}
+		netअगर_device_attach(ndev);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void sh_eth_get_wol(struct net_device *ndev, struct ethtool_wolinfo *wol)
-{
-	struct sh_eth_private *mdp = netdev_priv(ndev);
+अटल व्योम sh_eth_get_wol(काष्ठा net_device *ndev, काष्ठा ethtool_wolinfo *wol)
+अणु
+	काष्ठा sh_eth_निजी *mdp = netdev_priv(ndev);
 
 	wol->supported = 0;
 	wol->wolopts = 0;
 
-	if (mdp->cd->magic) {
+	अगर (mdp->cd->magic) अणु
 		wol->supported = WAKE_MAGIC;
 		wol->wolopts = mdp->wol_enabled ? WAKE_MAGIC : 0;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int sh_eth_set_wol(struct net_device *ndev, struct ethtool_wolinfo *wol)
-{
-	struct sh_eth_private *mdp = netdev_priv(ndev);
+अटल पूर्णांक sh_eth_set_wol(काष्ठा net_device *ndev, काष्ठा ethtool_wolinfo *wol)
+अणु
+	काष्ठा sh_eth_निजी *mdp = netdev_priv(ndev);
 
-	if (!mdp->cd->magic || wol->wolopts & ~WAKE_MAGIC)
-		return -EOPNOTSUPP;
+	अगर (!mdp->cd->magic || wol->wolopts & ~WAKE_MAGIC)
+		वापस -EOPNOTSUPP;
 
 	mdp->wol_enabled = !!(wol->wolopts & WAKE_MAGIC);
 
 	device_set_wakeup_enable(&mdp->pdev->dev, mdp->wol_enabled);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct ethtool_ops sh_eth_ethtool_ops = {
+अटल स्थिर काष्ठा ethtool_ops sh_eth_ethtool_ops = अणु
 	.get_regs_len	= sh_eth_get_regs_len,
 	.get_regs	= sh_eth_get_regs,
 	.nway_reset	= phy_ethtool_nway_reset,
@@ -2405,677 +2406,677 @@ static const struct ethtool_ops sh_eth_ethtool_ops = {
 	.set_link_ksettings = phy_ethtool_set_link_ksettings,
 	.get_wol	= sh_eth_get_wol,
 	.set_wol	= sh_eth_set_wol,
-};
+पूर्ण;
 
-/* network device open function */
-static int sh_eth_open(struct net_device *ndev)
-{
-	struct sh_eth_private *mdp = netdev_priv(ndev);
-	int ret;
+/* network device खोलो function */
+अटल पूर्णांक sh_eth_खोलो(काष्ठा net_device *ndev)
+अणु
+	काष्ठा sh_eth_निजी *mdp = netdev_priv(ndev);
+	पूर्णांक ret;
 
-	pm_runtime_get_sync(&mdp->pdev->dev);
+	pm_runसमय_get_sync(&mdp->pdev->dev);
 
 	napi_enable(&mdp->napi);
 
-	ret = request_irq(ndev->irq, sh_eth_interrupt,
+	ret = request_irq(ndev->irq, sh_eth_पूर्णांकerrupt,
 			  mdp->cd->irq_flags, ndev->name, ndev);
-	if (ret) {
+	अगर (ret) अणु
 		netdev_err(ndev, "Can not assign IRQ number\n");
-		goto out_napi_off;
-	}
+		जाओ out_napi_off;
+	पूर्ण
 
 	/* Descriptor set */
 	ret = sh_eth_ring_init(ndev);
-	if (ret)
-		goto out_free_irq;
+	अगर (ret)
+		जाओ out_मुक्त_irq;
 
 	/* device init */
 	ret = sh_eth_dev_init(ndev);
-	if (ret)
-		goto out_free_irq;
+	अगर (ret)
+		जाओ out_मुक्त_irq;
 
 	/* PHY control start*/
 	ret = sh_eth_phy_start(ndev);
-	if (ret)
-		goto out_free_irq;
+	अगर (ret)
+		जाओ out_मुक्त_irq;
 
-	netif_start_queue(ndev);
+	netअगर_start_queue(ndev);
 
-	mdp->is_opened = 1;
+	mdp->is_खोलोed = 1;
 
-	return ret;
+	वापस ret;
 
-out_free_irq:
-	free_irq(ndev->irq, ndev);
+out_मुक्त_irq:
+	मुक्त_irq(ndev->irq, ndev);
 out_napi_off:
 	napi_disable(&mdp->napi);
-	pm_runtime_put_sync(&mdp->pdev->dev);
-	return ret;
-}
+	pm_runसमय_put_sync(&mdp->pdev->dev);
+	वापस ret;
+पूर्ण
 
 /* Timeout function */
-static void sh_eth_tx_timeout(struct net_device *ndev, unsigned int txqueue)
-{
-	struct sh_eth_private *mdp = netdev_priv(ndev);
-	struct sh_eth_rxdesc *rxdesc;
-	int i;
+अटल व्योम sh_eth_tx_समयout(काष्ठा net_device *ndev, अचिन्हित पूर्णांक txqueue)
+अणु
+	काष्ठा sh_eth_निजी *mdp = netdev_priv(ndev);
+	काष्ठा sh_eth_rxdesc *rxdesc;
+	पूर्णांक i;
 
-	netif_stop_queue(ndev);
+	netअगर_stop_queue(ndev);
 
-	netif_err(mdp, timer, ndev,
+	netअगर_err(mdp, समयr, ndev,
 		  "transmit timed out, status %8.8x, resetting...\n",
-		  sh_eth_read(ndev, EESR));
+		  sh_eth_पढ़ो(ndev, EESR));
 
 	/* tx_errors count up */
 	ndev->stats.tx_errors++;
 
 	/* Free all the skbuffs in the Rx queue. */
-	for (i = 0; i < mdp->num_rx_ring; i++) {
+	क्रम (i = 0; i < mdp->num_rx_ring; i++) अणु
 		rxdesc = &mdp->rx_ring[i];
 		rxdesc->status = cpu_to_le32(0);
 		rxdesc->addr = cpu_to_le32(0xBADF00D0);
-		dev_kfree_skb(mdp->rx_skbuff[i]);
-		mdp->rx_skbuff[i] = NULL;
-	}
-	for (i = 0; i < mdp->num_tx_ring; i++) {
-		dev_kfree_skb(mdp->tx_skbuff[i]);
-		mdp->tx_skbuff[i] = NULL;
-	}
+		dev_kमुक्त_skb(mdp->rx_skbuff[i]);
+		mdp->rx_skbuff[i] = शून्य;
+	पूर्ण
+	क्रम (i = 0; i < mdp->num_tx_ring; i++) अणु
+		dev_kमुक्त_skb(mdp->tx_skbuff[i]);
+		mdp->tx_skbuff[i] = शून्य;
+	पूर्ण
 
 	/* device init */
 	sh_eth_dev_init(ndev);
 
-	netif_start_queue(ndev);
-}
+	netअगर_start_queue(ndev);
+पूर्ण
 
 /* Packet transmit function */
-static netdev_tx_t sh_eth_start_xmit(struct sk_buff *skb,
-				     struct net_device *ndev)
-{
-	struct sh_eth_private *mdp = netdev_priv(ndev);
-	struct sh_eth_txdesc *txdesc;
+अटल netdev_tx_t sh_eth_start_xmit(काष्ठा sk_buff *skb,
+				     काष्ठा net_device *ndev)
+अणु
+	काष्ठा sh_eth_निजी *mdp = netdev_priv(ndev);
+	काष्ठा sh_eth_txdesc *txdesc;
 	dma_addr_t dma_addr;
 	u32 entry;
-	unsigned long flags;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&mdp->lock, flags);
-	if ((mdp->cur_tx - mdp->dirty_tx) >= (mdp->num_tx_ring - 4)) {
-		if (!sh_eth_tx_free(ndev, true)) {
-			netif_warn(mdp, tx_queued, ndev, "TxFD exhausted.\n");
-			netif_stop_queue(ndev);
+	अगर ((mdp->cur_tx - mdp->dirty_tx) >= (mdp->num_tx_ring - 4)) अणु
+		अगर (!sh_eth_tx_मुक्त(ndev, true)) अणु
+			netअगर_warn(mdp, tx_queued, ndev, "TxFD exhausted.\n");
+			netअगर_stop_queue(ndev);
 			spin_unlock_irqrestore(&mdp->lock, flags);
-			return NETDEV_TX_BUSY;
-		}
-	}
+			वापस NETDEV_TX_BUSY;
+		पूर्ण
+	पूर्ण
 	spin_unlock_irqrestore(&mdp->lock, flags);
 
-	if (skb_put_padto(skb, ETH_ZLEN))
-		return NETDEV_TX_OK;
+	अगर (skb_put_padto(skb, ETH_ZLEN))
+		वापस NETDEV_TX_OK;
 
 	entry = mdp->cur_tx % mdp->num_tx_ring;
 	mdp->tx_skbuff[entry] = skb;
 	txdesc = &mdp->tx_ring[entry];
 	/* soft swap. */
-	if (!mdp->cd->hw_swap)
+	अगर (!mdp->cd->hw_swap)
 		sh_eth_soft_swap(PTR_ALIGN(skb->data, 4), skb->len + 2);
 	dma_addr = dma_map_single(&mdp->pdev->dev, skb->data, skb->len,
 				  DMA_TO_DEVICE);
-	if (dma_mapping_error(&mdp->pdev->dev, dma_addr)) {
-		kfree_skb(skb);
-		return NETDEV_TX_OK;
-	}
+	अगर (dma_mapping_error(&mdp->pdev->dev, dma_addr)) अणु
+		kमुक्त_skb(skb);
+		वापस NETDEV_TX_OK;
+	पूर्ण
 	txdesc->addr = cpu_to_le32(dma_addr);
 	txdesc->len  = cpu_to_le32(skb->len << 16);
 
-	dma_wmb(); /* TACT bit must be set after all the above writes */
-	if (entry >= mdp->num_tx_ring - 1)
+	dma_wmb(); /* TACT bit must be set after all the above ग_लिखोs */
+	अगर (entry >= mdp->num_tx_ring - 1)
 		txdesc->status |= cpu_to_le32(TD_TACT | TD_TDLE);
-	else
+	अन्यथा
 		txdesc->status |= cpu_to_le32(TD_TACT);
 
 	mdp->cur_tx++;
 
-	if (!(sh_eth_read(ndev, EDTRR) & mdp->cd->edtrr_trns))
-		sh_eth_write(ndev, mdp->cd->edtrr_trns, EDTRR);
+	अगर (!(sh_eth_पढ़ो(ndev, EDTRR) & mdp->cd->edtrr_trns))
+		sh_eth_ग_लिखो(ndev, mdp->cd->edtrr_trns, EDTRR);
 
-	return NETDEV_TX_OK;
-}
+	वापस NETDEV_TX_OK;
+पूर्ण
 
-/* The statistics registers have write-clear behaviour, which means we
- * will lose any increment between the read and write.  We mitigate
- * this by only clearing when we read a non-zero value, so we will
+/* The statistics रेजिस्टरs have ग_लिखो-clear behaviour, which means we
+ * will lose any increment between the पढ़ो and ग_लिखो.  We mitigate
+ * this by only clearing when we पढ़ो a non-zero value, so we will
  * never falsely report a total of zero.
  */
-static void
-sh_eth_update_stat(struct net_device *ndev, unsigned long *stat, int reg)
-{
-	u32 delta = sh_eth_read(ndev, reg);
+अटल व्योम
+sh_eth_update_stat(काष्ठा net_device *ndev, अचिन्हित दीर्घ *stat, पूर्णांक reg)
+अणु
+	u32 delta = sh_eth_पढ़ो(ndev, reg);
 
-	if (delta) {
+	अगर (delta) अणु
 		*stat += delta;
-		sh_eth_write(ndev, 0, reg);
-	}
-}
+		sh_eth_ग_लिखो(ndev, 0, reg);
+	पूर्ण
+पूर्ण
 
-static struct net_device_stats *sh_eth_get_stats(struct net_device *ndev)
-{
-	struct sh_eth_private *mdp = netdev_priv(ndev);
+अटल काष्ठा net_device_stats *sh_eth_get_stats(काष्ठा net_device *ndev)
+अणु
+	काष्ठा sh_eth_निजी *mdp = netdev_priv(ndev);
 
-	if (mdp->cd->no_tx_cntrs)
-		return &ndev->stats;
+	अगर (mdp->cd->no_tx_cntrs)
+		वापस &ndev->stats;
 
-	if (!mdp->is_opened)
-		return &ndev->stats;
+	अगर (!mdp->is_खोलोed)
+		वापस &ndev->stats;
 
 	sh_eth_update_stat(ndev, &ndev->stats.tx_dropped, TROCR);
 	sh_eth_update_stat(ndev, &ndev->stats.collisions, CDCR);
 	sh_eth_update_stat(ndev, &ndev->stats.tx_carrier_errors, LCCR);
 
-	if (mdp->cd->cexcr) {
+	अगर (mdp->cd->cexcr) अणु
 		sh_eth_update_stat(ndev, &ndev->stats.tx_carrier_errors,
 				   CERCR);
 		sh_eth_update_stat(ndev, &ndev->stats.tx_carrier_errors,
 				   CEECR);
-	} else {
+	पूर्ण अन्यथा अणु
 		sh_eth_update_stat(ndev, &ndev->stats.tx_carrier_errors,
 				   CNDCR);
-	}
+	पूर्ण
 
-	return &ndev->stats;
-}
+	वापस &ndev->stats;
+पूर्ण
 
-/* device close function */
-static int sh_eth_close(struct net_device *ndev)
-{
-	struct sh_eth_private *mdp = netdev_priv(ndev);
+/* device बंद function */
+अटल पूर्णांक sh_eth_बंद(काष्ठा net_device *ndev)
+अणु
+	काष्ठा sh_eth_निजी *mdp = netdev_priv(ndev);
 
-	netif_stop_queue(ndev);
+	netअगर_stop_queue(ndev);
 
-	/* Serialise with the interrupt handler and NAPI, then disable
-	 * interrupts.  We have to clear the irq_enabled flag first to
-	 * ensure that interrupts won't be re-enabled.
+	/* Serialise with the पूर्णांकerrupt handler and NAPI, then disable
+	 * पूर्णांकerrupts.  We have to clear the irq_enabled flag first to
+	 * ensure that पूर्णांकerrupts won't be re-enabled.
 	 */
 	mdp->irq_enabled = false;
 	synchronize_irq(ndev->irq);
 	napi_disable(&mdp->napi);
-	sh_eth_write(ndev, 0x0000, EESIPR);
+	sh_eth_ग_लिखो(ndev, 0x0000, EESIPR);
 
-	sh_eth_dev_exit(ndev);
+	sh_eth_dev_निकास(ndev);
 
 	/* PHY Disconnect */
-	if (ndev->phydev) {
+	अगर (ndev->phydev) अणु
 		phy_stop(ndev->phydev);
 		phy_disconnect(ndev->phydev);
-	}
+	पूर्ण
 
-	free_irq(ndev->irq, ndev);
+	मुक्त_irq(ndev->irq, ndev);
 
 	/* Free all the skbuffs in the Rx queue and the DMA buffer. */
-	sh_eth_ring_free(ndev);
+	sh_eth_ring_मुक्त(ndev);
 
-	mdp->is_opened = 0;
+	mdp->is_खोलोed = 0;
 
-	pm_runtime_put(&mdp->pdev->dev);
+	pm_runसमय_put(&mdp->pdev->dev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sh_eth_change_mtu(struct net_device *ndev, int new_mtu)
-{
-	if (netif_running(ndev))
-		return -EBUSY;
+अटल पूर्णांक sh_eth_change_mtu(काष्ठा net_device *ndev, पूर्णांक new_mtu)
+अणु
+	अगर (netअगर_running(ndev))
+		वापस -EBUSY;
 
 	ndev->mtu = new_mtu;
 	netdev_update_features(ndev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* For TSU_POSTn. Please refer to the manual about this (strange) bitfields */
-static u32 sh_eth_tsu_get_post_mask(int entry)
-{
-	return 0x0f << (28 - ((entry % 8) * 4));
-}
+अटल u32 sh_eth_tsu_get_post_mask(पूर्णांक entry)
+अणु
+	वापस 0x0f << (28 - ((entry % 8) * 4));
+पूर्ण
 
-static u32 sh_eth_tsu_get_post_bit(struct sh_eth_private *mdp, int entry)
-{
-	return (0x08 >> (mdp->port << 1)) << (28 - ((entry % 8) * 4));
-}
+अटल u32 sh_eth_tsu_get_post_bit(काष्ठा sh_eth_निजी *mdp, पूर्णांक entry)
+अणु
+	वापस (0x08 >> (mdp->port << 1)) << (28 - ((entry % 8) * 4));
+पूर्ण
 
-static void sh_eth_tsu_enable_cam_entry_post(struct net_device *ndev,
-					     int entry)
-{
-	struct sh_eth_private *mdp = netdev_priv(ndev);
-	int reg = TSU_POST1 + entry / 8;
-	u32 tmp;
+अटल व्योम sh_eth_tsu_enable_cam_entry_post(काष्ठा net_device *ndev,
+					     पूर्णांक entry)
+अणु
+	काष्ठा sh_eth_निजी *mdp = netdev_priv(ndev);
+	पूर्णांक reg = TSU_POST1 + entry / 8;
+	u32 पंचांगp;
 
-	tmp = sh_eth_tsu_read(mdp, reg);
-	sh_eth_tsu_write(mdp, tmp | sh_eth_tsu_get_post_bit(mdp, entry), reg);
-}
+	पंचांगp = sh_eth_tsu_पढ़ो(mdp, reg);
+	sh_eth_tsu_ग_लिखो(mdp, पंचांगp | sh_eth_tsu_get_post_bit(mdp, entry), reg);
+पूर्ण
 
-static bool sh_eth_tsu_disable_cam_entry_post(struct net_device *ndev,
-					      int entry)
-{
-	struct sh_eth_private *mdp = netdev_priv(ndev);
-	int reg = TSU_POST1 + entry / 8;
-	u32 post_mask, ref_mask, tmp;
+अटल bool sh_eth_tsu_disable_cam_entry_post(काष्ठा net_device *ndev,
+					      पूर्णांक entry)
+अणु
+	काष्ठा sh_eth_निजी *mdp = netdev_priv(ndev);
+	पूर्णांक reg = TSU_POST1 + entry / 8;
+	u32 post_mask, ref_mask, पंचांगp;
 
 	post_mask = sh_eth_tsu_get_post_mask(entry);
 	ref_mask = sh_eth_tsu_get_post_bit(mdp, entry) & ~post_mask;
 
-	tmp = sh_eth_tsu_read(mdp, reg);
-	sh_eth_tsu_write(mdp, tmp & ~post_mask, reg);
+	पंचांगp = sh_eth_tsu_पढ़ो(mdp, reg);
+	sh_eth_tsu_ग_लिखो(mdp, पंचांगp & ~post_mask, reg);
 
-	/* If other port enables, the function returns "true" */
-	return tmp & ref_mask;
-}
+	/* If other port enables, the function वापसs "true" */
+	वापस पंचांगp & ref_mask;
+पूर्ण
 
-static int sh_eth_tsu_busy(struct net_device *ndev)
-{
-	int timeout = SH_ETH_TSU_TIMEOUT_MS * 100;
-	struct sh_eth_private *mdp = netdev_priv(ndev);
+अटल पूर्णांक sh_eth_tsu_busy(काष्ठा net_device *ndev)
+अणु
+	पूर्णांक समयout = SH_ETH_TSU_TIMEOUT_MS * 100;
+	काष्ठा sh_eth_निजी *mdp = netdev_priv(ndev);
 
-	while ((sh_eth_tsu_read(mdp, TSU_ADSBSY) & TSU_ADSBSY_0)) {
+	जबतक ((sh_eth_tsu_पढ़ो(mdp, TSU_ADSBSY) & TSU_ADSBSY_0)) अणु
 		udelay(10);
-		timeout--;
-		if (timeout <= 0) {
+		समयout--;
+		अगर (समयout <= 0) अणु
 			netdev_err(ndev, "%s: timeout\n", __func__);
-			return -ETIMEDOUT;
-		}
-	}
+			वापस -ETIMEDOUT;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sh_eth_tsu_write_entry(struct net_device *ndev, u16 offset,
-				  const u8 *addr)
-{
-	struct sh_eth_private *mdp = netdev_priv(ndev);
+अटल पूर्णांक sh_eth_tsu_ग_लिखो_entry(काष्ठा net_device *ndev, u16 offset,
+				  स्थिर u8 *addr)
+अणु
+	काष्ठा sh_eth_निजी *mdp = netdev_priv(ndev);
 	u32 val;
 
 	val = addr[0] << 24 | addr[1] << 16 | addr[2] << 8 | addr[3];
-	iowrite32(val, mdp->tsu_addr + offset);
-	if (sh_eth_tsu_busy(ndev) < 0)
-		return -EBUSY;
+	ioग_लिखो32(val, mdp->tsu_addr + offset);
+	अगर (sh_eth_tsu_busy(ndev) < 0)
+		वापस -EBUSY;
 
 	val = addr[4] << 8 | addr[5];
-	iowrite32(val, mdp->tsu_addr + offset + 4);
-	if (sh_eth_tsu_busy(ndev) < 0)
-		return -EBUSY;
+	ioग_लिखो32(val, mdp->tsu_addr + offset + 4);
+	अगर (sh_eth_tsu_busy(ndev) < 0)
+		वापस -EBUSY;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void sh_eth_tsu_read_entry(struct net_device *ndev, u16 offset, u8 *addr)
-{
-	struct sh_eth_private *mdp = netdev_priv(ndev);
+अटल व्योम sh_eth_tsu_पढ़ो_entry(काष्ठा net_device *ndev, u16 offset, u8 *addr)
+अणु
+	काष्ठा sh_eth_निजी *mdp = netdev_priv(ndev);
 	u32 val;
 
-	val = ioread32(mdp->tsu_addr + offset);
+	val = ioपढ़ो32(mdp->tsu_addr + offset);
 	addr[0] = (val >> 24) & 0xff;
 	addr[1] = (val >> 16) & 0xff;
 	addr[2] = (val >> 8) & 0xff;
 	addr[3] = val & 0xff;
-	val = ioread32(mdp->tsu_addr + offset + 4);
+	val = ioपढ़ो32(mdp->tsu_addr + offset + 4);
 	addr[4] = (val >> 8) & 0xff;
 	addr[5] = val & 0xff;
-}
+पूर्ण
 
 
-static int sh_eth_tsu_find_entry(struct net_device *ndev, const u8 *addr)
-{
-	struct sh_eth_private *mdp = netdev_priv(ndev);
+अटल पूर्णांक sh_eth_tsu_find_entry(काष्ठा net_device *ndev, स्थिर u8 *addr)
+अणु
+	काष्ठा sh_eth_निजी *mdp = netdev_priv(ndev);
 	u16 reg_offset = sh_eth_tsu_get_offset(mdp, TSU_ADRH0);
-	int i;
+	पूर्णांक i;
 	u8 c_addr[ETH_ALEN];
 
-	for (i = 0; i < SH_ETH_TSU_CAM_ENTRIES; i++, reg_offset += 8) {
-		sh_eth_tsu_read_entry(ndev, reg_offset, c_addr);
-		if (ether_addr_equal(addr, c_addr))
-			return i;
-	}
+	क्रम (i = 0; i < SH_ETH_TSU_CAM_ENTRIES; i++, reg_offset += 8) अणु
+		sh_eth_tsu_पढ़ो_entry(ndev, reg_offset, c_addr);
+		अगर (ether_addr_equal(addr, c_addr))
+			वापस i;
+	पूर्ण
 
-	return -ENOENT;
-}
+	वापस -ENOENT;
+पूर्ण
 
-static int sh_eth_tsu_find_empty(struct net_device *ndev)
-{
+अटल पूर्णांक sh_eth_tsu_find_empty(काष्ठा net_device *ndev)
+अणु
 	u8 blank[ETH_ALEN];
-	int entry;
+	पूर्णांक entry;
 
-	memset(blank, 0, sizeof(blank));
+	स_रखो(blank, 0, माप(blank));
 	entry = sh_eth_tsu_find_entry(ndev, blank);
-	return (entry < 0) ? -ENOMEM : entry;
-}
+	वापस (entry < 0) ? -ENOMEM : entry;
+पूर्ण
 
-static int sh_eth_tsu_disable_cam_entry_table(struct net_device *ndev,
-					      int entry)
-{
-	struct sh_eth_private *mdp = netdev_priv(ndev);
+अटल पूर्णांक sh_eth_tsu_disable_cam_entry_table(काष्ठा net_device *ndev,
+					      पूर्णांक entry)
+अणु
+	काष्ठा sh_eth_निजी *mdp = netdev_priv(ndev);
 	u16 reg_offset = sh_eth_tsu_get_offset(mdp, TSU_ADRH0);
-	int ret;
+	पूर्णांक ret;
 	u8 blank[ETH_ALEN];
 
-	sh_eth_tsu_write(mdp, sh_eth_tsu_read(mdp, TSU_TEN) &
+	sh_eth_tsu_ग_लिखो(mdp, sh_eth_tsu_पढ़ो(mdp, TSU_TEN) &
 			 ~(1 << (31 - entry)), TSU_TEN);
 
-	memset(blank, 0, sizeof(blank));
-	ret = sh_eth_tsu_write_entry(ndev, reg_offset + entry * 8, blank);
-	if (ret < 0)
-		return ret;
-	return 0;
-}
+	स_रखो(blank, 0, माप(blank));
+	ret = sh_eth_tsu_ग_लिखो_entry(ndev, reg_offset + entry * 8, blank);
+	अगर (ret < 0)
+		वापस ret;
+	वापस 0;
+पूर्ण
 
-static int sh_eth_tsu_add_entry(struct net_device *ndev, const u8 *addr)
-{
-	struct sh_eth_private *mdp = netdev_priv(ndev);
+अटल पूर्णांक sh_eth_tsu_add_entry(काष्ठा net_device *ndev, स्थिर u8 *addr)
+अणु
+	काष्ठा sh_eth_निजी *mdp = netdev_priv(ndev);
 	u16 reg_offset = sh_eth_tsu_get_offset(mdp, TSU_ADRH0);
-	int i, ret;
+	पूर्णांक i, ret;
 
-	if (!mdp->cd->tsu)
-		return 0;
+	अगर (!mdp->cd->tsu)
+		वापस 0;
 
 	i = sh_eth_tsu_find_entry(ndev, addr);
-	if (i < 0) {
+	अगर (i < 0) अणु
 		/* No entry found, create one */
 		i = sh_eth_tsu_find_empty(ndev);
-		if (i < 0)
-			return -ENOMEM;
-		ret = sh_eth_tsu_write_entry(ndev, reg_offset + i * 8, addr);
-		if (ret < 0)
-			return ret;
+		अगर (i < 0)
+			वापस -ENOMEM;
+		ret = sh_eth_tsu_ग_लिखो_entry(ndev, reg_offset + i * 8, addr);
+		अगर (ret < 0)
+			वापस ret;
 
 		/* Enable the entry */
-		sh_eth_tsu_write(mdp, sh_eth_tsu_read(mdp, TSU_TEN) |
+		sh_eth_tsu_ग_लिखो(mdp, sh_eth_tsu_पढ़ो(mdp, TSU_TEN) |
 				 (1 << (31 - i)), TSU_TEN);
-	}
+	पूर्ण
 
 	/* Entry found or created, enable POST */
 	sh_eth_tsu_enable_cam_entry_post(ndev, i);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sh_eth_tsu_del_entry(struct net_device *ndev, const u8 *addr)
-{
-	struct sh_eth_private *mdp = netdev_priv(ndev);
-	int i, ret;
+अटल पूर्णांक sh_eth_tsu_del_entry(काष्ठा net_device *ndev, स्थिर u8 *addr)
+अणु
+	काष्ठा sh_eth_निजी *mdp = netdev_priv(ndev);
+	पूर्णांक i, ret;
 
-	if (!mdp->cd->tsu)
-		return 0;
+	अगर (!mdp->cd->tsu)
+		वापस 0;
 
 	i = sh_eth_tsu_find_entry(ndev, addr);
-	if (i) {
+	अगर (i) अणु
 		/* Entry found */
-		if (sh_eth_tsu_disable_cam_entry_post(ndev, i))
-			goto done;
+		अगर (sh_eth_tsu_disable_cam_entry_post(ndev, i))
+			जाओ करोne;
 
-		/* Disable the entry if both ports was disabled */
+		/* Disable the entry अगर both ports was disabled */
 		ret = sh_eth_tsu_disable_cam_entry_table(ndev, i);
-		if (ret < 0)
-			return ret;
-	}
-done:
-	return 0;
-}
+		अगर (ret < 0)
+			वापस ret;
+	पूर्ण
+करोne:
+	वापस 0;
+पूर्ण
 
-static int sh_eth_tsu_purge_all(struct net_device *ndev)
-{
-	struct sh_eth_private *mdp = netdev_priv(ndev);
-	int i, ret;
+अटल पूर्णांक sh_eth_tsu_purge_all(काष्ठा net_device *ndev)
+अणु
+	काष्ठा sh_eth_निजी *mdp = netdev_priv(ndev);
+	पूर्णांक i, ret;
 
-	if (!mdp->cd->tsu)
-		return 0;
+	अगर (!mdp->cd->tsu)
+		वापस 0;
 
-	for (i = 0; i < SH_ETH_TSU_CAM_ENTRIES; i++) {
-		if (sh_eth_tsu_disable_cam_entry_post(ndev, i))
-			continue;
+	क्रम (i = 0; i < SH_ETH_TSU_CAM_ENTRIES; i++) अणु
+		अगर (sh_eth_tsu_disable_cam_entry_post(ndev, i))
+			जारी;
 
-		/* Disable the entry if both ports was disabled */
+		/* Disable the entry अगर both ports was disabled */
 		ret = sh_eth_tsu_disable_cam_entry_table(ndev, i);
-		if (ret < 0)
-			return ret;
-	}
+		अगर (ret < 0)
+			वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void sh_eth_tsu_purge_mcast(struct net_device *ndev)
-{
-	struct sh_eth_private *mdp = netdev_priv(ndev);
+अटल व्योम sh_eth_tsu_purge_mcast(काष्ठा net_device *ndev)
+अणु
+	काष्ठा sh_eth_निजी *mdp = netdev_priv(ndev);
 	u16 reg_offset = sh_eth_tsu_get_offset(mdp, TSU_ADRH0);
 	u8 addr[ETH_ALEN];
-	int i;
+	पूर्णांक i;
 
-	if (!mdp->cd->tsu)
-		return;
+	अगर (!mdp->cd->tsu)
+		वापस;
 
-	for (i = 0; i < SH_ETH_TSU_CAM_ENTRIES; i++, reg_offset += 8) {
-		sh_eth_tsu_read_entry(ndev, reg_offset, addr);
-		if (is_multicast_ether_addr(addr))
+	क्रम (i = 0; i < SH_ETH_TSU_CAM_ENTRIES; i++, reg_offset += 8) अणु
+		sh_eth_tsu_पढ़ो_entry(ndev, reg_offset, addr);
+		अगर (is_multicast_ether_addr(addr))
 			sh_eth_tsu_del_entry(ndev, addr);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /* Update promiscuous flag and multicast filter */
-static void sh_eth_set_rx_mode(struct net_device *ndev)
-{
-	struct sh_eth_private *mdp = netdev_priv(ndev);
+अटल व्योम sh_eth_set_rx_mode(काष्ठा net_device *ndev)
+अणु
+	काष्ठा sh_eth_निजी *mdp = netdev_priv(ndev);
 	u32 ecmr_bits;
-	int mcast_all = 0;
-	unsigned long flags;
+	पूर्णांक mcast_all = 0;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&mdp->lock, flags);
 	/* Initial condition is MCT = 1, PRM = 0.
 	 * Depending on ndev->flags, set PRM or clear MCT
 	 */
-	ecmr_bits = sh_eth_read(ndev, ECMR) & ~ECMR_PRM;
-	if (mdp->cd->tsu)
+	ecmr_bits = sh_eth_पढ़ो(ndev, ECMR) & ~ECMR_PRM;
+	अगर (mdp->cd->tsu)
 		ecmr_bits |= ECMR_MCT;
 
-	if (!(ndev->flags & IFF_MULTICAST)) {
+	अगर (!(ndev->flags & IFF_MULTICAST)) अणु
 		sh_eth_tsu_purge_mcast(ndev);
 		mcast_all = 1;
-	}
-	if (ndev->flags & IFF_ALLMULTI) {
+	पूर्ण
+	अगर (ndev->flags & IFF_ALLMULTI) अणु
 		sh_eth_tsu_purge_mcast(ndev);
 		ecmr_bits &= ~ECMR_MCT;
 		mcast_all = 1;
-	}
+	पूर्ण
 
-	if (ndev->flags & IFF_PROMISC) {
+	अगर (ndev->flags & IFF_PROMISC) अणु
 		sh_eth_tsu_purge_all(ndev);
 		ecmr_bits = (ecmr_bits & ~ECMR_MCT) | ECMR_PRM;
-	} else if (mdp->cd->tsu) {
-		struct netdev_hw_addr *ha;
-		netdev_for_each_mc_addr(ha, ndev) {
-			if (mcast_all && is_multicast_ether_addr(ha->addr))
-				continue;
+	पूर्ण अन्यथा अगर (mdp->cd->tsu) अणु
+		काष्ठा netdev_hw_addr *ha;
+		netdev_क्रम_each_mc_addr(ha, ndev) अणु
+			अगर (mcast_all && is_multicast_ether_addr(ha->addr))
+				जारी;
 
-			if (sh_eth_tsu_add_entry(ndev, ha->addr) < 0) {
-				if (!mcast_all) {
+			अगर (sh_eth_tsu_add_entry(ndev, ha->addr) < 0) अणु
+				अगर (!mcast_all) अणु
 					sh_eth_tsu_purge_mcast(ndev);
 					ecmr_bits &= ~ECMR_MCT;
 					mcast_all = 1;
-				}
-			}
-		}
-	}
+				पूर्ण
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
 	/* update the ethernet mode */
-	sh_eth_write(ndev, ecmr_bits, ECMR);
+	sh_eth_ग_लिखो(ndev, ecmr_bits, ECMR);
 
 	spin_unlock_irqrestore(&mdp->lock, flags);
-}
+पूर्ण
 
-static void sh_eth_set_rx_csum(struct net_device *ndev, bool enable)
-{
-	struct sh_eth_private *mdp = netdev_priv(ndev);
-	unsigned long flags;
+अटल व्योम sh_eth_set_rx_csum(काष्ठा net_device *ndev, bool enable)
+अणु
+	काष्ठा sh_eth_निजी *mdp = netdev_priv(ndev);
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&mdp->lock, flags);
 
 	/* Disable TX and RX */
 	sh_eth_rcv_snd_disable(ndev);
 
-	/* Modify RX Checksum setting */
-	sh_eth_modify(ndev, ECMR, ECMR_RCSC, enable ? ECMR_RCSC : 0);
+	/* Modअगरy RX Checksum setting */
+	sh_eth_modअगरy(ndev, ECMR, ECMR_RCSC, enable ? ECMR_RCSC : 0);
 
 	/* Enable TX and RX */
 	sh_eth_rcv_snd_enable(ndev);
 
 	spin_unlock_irqrestore(&mdp->lock, flags);
-}
+पूर्ण
 
-static int sh_eth_set_features(struct net_device *ndev,
+अटल पूर्णांक sh_eth_set_features(काष्ठा net_device *ndev,
 			       netdev_features_t features)
-{
+अणु
 	netdev_features_t changed = ndev->features ^ features;
-	struct sh_eth_private *mdp = netdev_priv(ndev);
+	काष्ठा sh_eth_निजी *mdp = netdev_priv(ndev);
 
-	if (changed & NETIF_F_RXCSUM && mdp->cd->rx_csum)
+	अगर (changed & NETIF_F_RXCSUM && mdp->cd->rx_csum)
 		sh_eth_set_rx_csum(ndev, features & NETIF_F_RXCSUM);
 
 	ndev->features = features;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sh_eth_get_vtag_index(struct sh_eth_private *mdp)
-{
-	if (!mdp->port)
-		return TSU_VTAG0;
-	else
-		return TSU_VTAG1;
-}
+अटल पूर्णांक sh_eth_get_vtag_index(काष्ठा sh_eth_निजी *mdp)
+अणु
+	अगर (!mdp->port)
+		वापस TSU_VTAG0;
+	अन्यथा
+		वापस TSU_VTAG1;
+पूर्ण
 
-static int sh_eth_vlan_rx_add_vid(struct net_device *ndev,
+अटल पूर्णांक sh_eth_vlan_rx_add_vid(काष्ठा net_device *ndev,
 				  __be16 proto, u16 vid)
-{
-	struct sh_eth_private *mdp = netdev_priv(ndev);
-	int vtag_reg_index = sh_eth_get_vtag_index(mdp);
+अणु
+	काष्ठा sh_eth_निजी *mdp = netdev_priv(ndev);
+	पूर्णांक vtag_reg_index = sh_eth_get_vtag_index(mdp);
 
-	if (unlikely(!mdp->cd->tsu))
-		return -EPERM;
+	अगर (unlikely(!mdp->cd->tsu))
+		वापस -EPERM;
 
-	/* No filtering if vid = 0 */
-	if (!vid)
-		return 0;
+	/* No filtering अगर vid = 0 */
+	अगर (!vid)
+		वापस 0;
 
 	mdp->vlan_num_ids++;
 
-	/* The controller has one VLAN tag HW filter. So, if the filter is
-	 * already enabled, the driver disables it and the filte
+	/* The controller has one VLAN tag HW filter. So, अगर the filter is
+	 * alपढ़ोy enabled, the driver disables it and the filte
 	 */
-	if (mdp->vlan_num_ids > 1) {
+	अगर (mdp->vlan_num_ids > 1) अणु
 		/* disable VLAN filter */
-		sh_eth_tsu_write(mdp, 0, vtag_reg_index);
-		return 0;
-	}
+		sh_eth_tsu_ग_लिखो(mdp, 0, vtag_reg_index);
+		वापस 0;
+	पूर्ण
 
-	sh_eth_tsu_write(mdp, TSU_VTAG_ENABLE | (vid & TSU_VTAG_VID_MASK),
+	sh_eth_tsu_ग_लिखो(mdp, TSU_VTAG_ENABLE | (vid & TSU_VTAG_VID_MASK),
 			 vtag_reg_index);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sh_eth_vlan_rx_kill_vid(struct net_device *ndev,
+अटल पूर्णांक sh_eth_vlan_rx_समाप्त_vid(काष्ठा net_device *ndev,
 				   __be16 proto, u16 vid)
-{
-	struct sh_eth_private *mdp = netdev_priv(ndev);
-	int vtag_reg_index = sh_eth_get_vtag_index(mdp);
+अणु
+	काष्ठा sh_eth_निजी *mdp = netdev_priv(ndev);
+	पूर्णांक vtag_reg_index = sh_eth_get_vtag_index(mdp);
 
-	if (unlikely(!mdp->cd->tsu))
-		return -EPERM;
+	अगर (unlikely(!mdp->cd->tsu))
+		वापस -EPERM;
 
-	/* No filtering if vid = 0 */
-	if (!vid)
-		return 0;
+	/* No filtering अगर vid = 0 */
+	अगर (!vid)
+		वापस 0;
 
 	mdp->vlan_num_ids--;
-	sh_eth_tsu_write(mdp, 0, vtag_reg_index);
+	sh_eth_tsu_ग_लिखो(mdp, 0, vtag_reg_index);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* SuperH's TSU register init function */
-static void sh_eth_tsu_init(struct sh_eth_private *mdp)
-{
-	if (!mdp->cd->dual_port) {
-		sh_eth_tsu_write(mdp, 0, TSU_TEN); /* Disable all CAM entry */
-		sh_eth_tsu_write(mdp, TSU_FWSLC_POSTENU | TSU_FWSLC_POSTENL,
-				 TSU_FWSLC);	/* Enable POST registers */
-		return;
-	}
+/* SuperH's TSU रेजिस्टर init function */
+अटल व्योम sh_eth_tsu_init(काष्ठा sh_eth_निजी *mdp)
+अणु
+	अगर (!mdp->cd->dual_port) अणु
+		sh_eth_tsu_ग_लिखो(mdp, 0, TSU_TEN); /* Disable all CAM entry */
+		sh_eth_tsu_ग_लिखो(mdp, TSU_FWSLC_POSTENU | TSU_FWSLC_POSTENL,
+				 TSU_FWSLC);	/* Enable POST रेजिस्टरs */
+		वापस;
+	पूर्ण
 
-	sh_eth_tsu_write(mdp, 0, TSU_FWEN0);	/* Disable forward(0->1) */
-	sh_eth_tsu_write(mdp, 0, TSU_FWEN1);	/* Disable forward(1->0) */
-	sh_eth_tsu_write(mdp, 0, TSU_FCM);	/* forward fifo 3k-3k */
-	sh_eth_tsu_write(mdp, 0xc, TSU_BSYSL0);
-	sh_eth_tsu_write(mdp, 0xc, TSU_BSYSL1);
-	sh_eth_tsu_write(mdp, 0, TSU_PRISL0);
-	sh_eth_tsu_write(mdp, 0, TSU_PRISL1);
-	sh_eth_tsu_write(mdp, 0, TSU_FWSL0);
-	sh_eth_tsu_write(mdp, 0, TSU_FWSL1);
-	sh_eth_tsu_write(mdp, TSU_FWSLC_POSTENU | TSU_FWSLC_POSTENL, TSU_FWSLC);
-	sh_eth_tsu_write(mdp, 0, TSU_QTAGM0);	/* Disable QTAG(0->1) */
-	sh_eth_tsu_write(mdp, 0, TSU_QTAGM1);	/* Disable QTAG(1->0) */
-	sh_eth_tsu_write(mdp, 0, TSU_FWSR);	/* all interrupt status clear */
-	sh_eth_tsu_write(mdp, 0, TSU_FWINMK);	/* Disable all interrupt */
-	sh_eth_tsu_write(mdp, 0, TSU_TEN);	/* Disable all CAM entry */
-	sh_eth_tsu_write(mdp, 0, TSU_POST1);	/* Disable CAM entry [ 0- 7] */
-	sh_eth_tsu_write(mdp, 0, TSU_POST2);	/* Disable CAM entry [ 8-15] */
-	sh_eth_tsu_write(mdp, 0, TSU_POST3);	/* Disable CAM entry [16-23] */
-	sh_eth_tsu_write(mdp, 0, TSU_POST4);	/* Disable CAM entry [24-31] */
-}
+	sh_eth_tsu_ग_लिखो(mdp, 0, TSU_FWEN0);	/* Disable क्रमward(0->1) */
+	sh_eth_tsu_ग_लिखो(mdp, 0, TSU_FWEN1);	/* Disable क्रमward(1->0) */
+	sh_eth_tsu_ग_लिखो(mdp, 0, TSU_FCM);	/* क्रमward fअगरo 3k-3k */
+	sh_eth_tsu_ग_लिखो(mdp, 0xc, TSU_BSYSL0);
+	sh_eth_tsu_ग_लिखो(mdp, 0xc, TSU_BSYSL1);
+	sh_eth_tsu_ग_लिखो(mdp, 0, TSU_PRISL0);
+	sh_eth_tsu_ग_लिखो(mdp, 0, TSU_PRISL1);
+	sh_eth_tsu_ग_लिखो(mdp, 0, TSU_FWSL0);
+	sh_eth_tsu_ग_लिखो(mdp, 0, TSU_FWSL1);
+	sh_eth_tsu_ग_लिखो(mdp, TSU_FWSLC_POSTENU | TSU_FWSLC_POSTENL, TSU_FWSLC);
+	sh_eth_tsu_ग_लिखो(mdp, 0, TSU_QTAGM0);	/* Disable QTAG(0->1) */
+	sh_eth_tsu_ग_लिखो(mdp, 0, TSU_QTAGM1);	/* Disable QTAG(1->0) */
+	sh_eth_tsu_ग_लिखो(mdp, 0, TSU_FWSR);	/* all पूर्णांकerrupt status clear */
+	sh_eth_tsu_ग_लिखो(mdp, 0, TSU_FWINMK);	/* Disable all पूर्णांकerrupt */
+	sh_eth_tsu_ग_लिखो(mdp, 0, TSU_TEN);	/* Disable all CAM entry */
+	sh_eth_tsu_ग_लिखो(mdp, 0, TSU_POST1);	/* Disable CAM entry [ 0- 7] */
+	sh_eth_tsu_ग_लिखो(mdp, 0, TSU_POST2);	/* Disable CAM entry [ 8-15] */
+	sh_eth_tsu_ग_लिखो(mdp, 0, TSU_POST3);	/* Disable CAM entry [16-23] */
+	sh_eth_tsu_ग_लिखो(mdp, 0, TSU_POST4);	/* Disable CAM entry [24-31] */
+पूर्ण
 
 /* MDIO bus release function */
-static int sh_mdio_release(struct sh_eth_private *mdp)
-{
-	/* unregister mdio bus */
-	mdiobus_unregister(mdp->mii_bus);
+अटल पूर्णांक sh_mdio_release(काष्ठा sh_eth_निजी *mdp)
+अणु
+	/* unरेजिस्टर mdio bus */
+	mdiobus_unरेजिस्टर(mdp->mii_bus);
 
-	/* free bitbang info */
-	free_mdio_bitbang(mdp->mii_bus);
+	/* मुक्त bitbang info */
+	मुक्त_mdio_bitbang(mdp->mii_bus);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sh_mdiobb_read(struct mii_bus *bus, int phy, int reg)
-{
-	int res;
+अटल पूर्णांक sh_mdiobb_पढ़ो(काष्ठा mii_bus *bus, पूर्णांक phy, पूर्णांक reg)
+अणु
+	पूर्णांक res;
 
-	pm_runtime_get_sync(bus->parent);
-	res = mdiobb_read(bus, phy, reg);
-	pm_runtime_put(bus->parent);
+	pm_runसमय_get_sync(bus->parent);
+	res = mdiobb_पढ़ो(bus, phy, reg);
+	pm_runसमय_put(bus->parent);
 
-	return res;
-}
+	वापस res;
+पूर्ण
 
-static int sh_mdiobb_write(struct mii_bus *bus, int phy, int reg, u16 val)
-{
-	int res;
+अटल पूर्णांक sh_mdiobb_ग_लिखो(काष्ठा mii_bus *bus, पूर्णांक phy, पूर्णांक reg, u16 val)
+अणु
+	पूर्णांक res;
 
-	pm_runtime_get_sync(bus->parent);
-	res = mdiobb_write(bus, phy, reg, val);
-	pm_runtime_put(bus->parent);
+	pm_runसमय_get_sync(bus->parent);
+	res = mdiobb_ग_लिखो(bus, phy, reg, val);
+	pm_runसमय_put(bus->parent);
 
-	return res;
-}
+	वापस res;
+पूर्ण
 
 /* MDIO bus init function */
-static int sh_mdio_init(struct sh_eth_private *mdp,
-			struct sh_eth_plat_data *pd)
-{
-	int ret;
-	struct bb_info *bitbang;
-	struct platform_device *pdev = mdp->pdev;
-	struct device *dev = &mdp->pdev->dev;
+अटल पूर्णांक sh_mdio_init(काष्ठा sh_eth_निजी *mdp,
+			काष्ठा sh_eth_plat_data *pd)
+अणु
+	पूर्णांक ret;
+	काष्ठा bb_info *bitbang;
+	काष्ठा platक्रमm_device *pdev = mdp->pdev;
+	काष्ठा device *dev = &mdp->pdev->dev;
 
-	/* create bit control struct for PHY */
-	bitbang = devm_kzalloc(dev, sizeof(struct bb_info), GFP_KERNEL);
-	if (!bitbang)
-		return -ENOMEM;
+	/* create bit control काष्ठा क्रम PHY */
+	bitbang = devm_kzalloc(dev, माप(काष्ठा bb_info), GFP_KERNEL);
+	अगर (!bitbang)
+		वापस -ENOMEM;
 
 	/* bitbang init */
 	bitbang->addr = mdp->addr + mdp->reg_offset[PIR];
@@ -3084,160 +3085,160 @@ static int sh_mdio_init(struct sh_eth_private *mdp,
 
 	/* MII controller setting */
 	mdp->mii_bus = alloc_mdio_bitbang(&bitbang->ctrl);
-	if (!mdp->mii_bus)
-		return -ENOMEM;
+	अगर (!mdp->mii_bus)
+		वापस -ENOMEM;
 
-	/* Wrap accessors with Runtime PM-aware ops */
-	mdp->mii_bus->read = sh_mdiobb_read;
-	mdp->mii_bus->write = sh_mdiobb_write;
+	/* Wrap accessors with Runसमय PM-aware ops */
+	mdp->mii_bus->पढ़ो = sh_mdiobb_पढ़ो;
+	mdp->mii_bus->ग_लिखो = sh_mdiobb_ग_लिखो;
 
-	/* Hook up MII support for ethtool */
+	/* Hook up MII support क्रम ethtool */
 	mdp->mii_bus->name = "sh_mii";
 	mdp->mii_bus->parent = dev;
-	snprintf(mdp->mii_bus->id, MII_BUS_ID_SIZE, "%s-%x",
+	snम_लिखो(mdp->mii_bus->id, MII_BUS_ID_SIZE, "%s-%x",
 		 pdev->name, pdev->id);
 
-	/* register MDIO bus */
-	if (pd->phy_irq > 0)
+	/* रेजिस्टर MDIO bus */
+	अगर (pd->phy_irq > 0)
 		mdp->mii_bus->irq[pd->phy] = pd->phy_irq;
 
-	ret = of_mdiobus_register(mdp->mii_bus, dev->of_node);
-	if (ret)
-		goto out_free_bus;
+	ret = of_mdiobus_रेजिस्टर(mdp->mii_bus, dev->of_node);
+	अगर (ret)
+		जाओ out_मुक्त_bus;
 
-	return 0;
+	वापस 0;
 
-out_free_bus:
-	free_mdio_bitbang(mdp->mii_bus);
-	return ret;
-}
+out_मुक्त_bus:
+	मुक्त_mdio_bitbang(mdp->mii_bus);
+	वापस ret;
+पूर्ण
 
-static const u16 *sh_eth_get_register_offset(int register_type)
-{
-	const u16 *reg_offset = NULL;
+अटल स्थिर u16 *sh_eth_get_रेजिस्टर_offset(पूर्णांक रेजिस्टर_type)
+अणु
+	स्थिर u16 *reg_offset = शून्य;
 
-	switch (register_type) {
-	case SH_ETH_REG_GIGABIT:
+	चयन (रेजिस्टर_type) अणु
+	हाल SH_ETH_REG_GIGABIT:
 		reg_offset = sh_eth_offset_gigabit;
-		break;
-	case SH_ETH_REG_FAST_RCAR:
+		अवरोध;
+	हाल SH_ETH_REG_FAST_RCAR:
 		reg_offset = sh_eth_offset_fast_rcar;
-		break;
-	case SH_ETH_REG_FAST_SH4:
+		अवरोध;
+	हाल SH_ETH_REG_FAST_SH4:
 		reg_offset = sh_eth_offset_fast_sh4;
-		break;
-	case SH_ETH_REG_FAST_SH3_SH2:
+		अवरोध;
+	हाल SH_ETH_REG_FAST_SH3_SH2:
 		reg_offset = sh_eth_offset_fast_sh3_sh2;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return reg_offset;
-}
+	वापस reg_offset;
+पूर्ण
 
-static const struct net_device_ops sh_eth_netdev_ops = {
-	.ndo_open		= sh_eth_open,
-	.ndo_stop		= sh_eth_close,
-	.ndo_start_xmit		= sh_eth_start_xmit,
-	.ndo_get_stats		= sh_eth_get_stats,
-	.ndo_set_rx_mode	= sh_eth_set_rx_mode,
-	.ndo_tx_timeout		= sh_eth_tx_timeout,
-	.ndo_do_ioctl		= phy_do_ioctl_running,
-	.ndo_change_mtu		= sh_eth_change_mtu,
-	.ndo_validate_addr	= eth_validate_addr,
-	.ndo_set_mac_address	= eth_mac_addr,
-	.ndo_set_features	= sh_eth_set_features,
-};
+अटल स्थिर काष्ठा net_device_ops sh_eth_netdev_ops = अणु
+	.nकरो_खोलो		= sh_eth_खोलो,
+	.nकरो_stop		= sh_eth_बंद,
+	.nकरो_start_xmit		= sh_eth_start_xmit,
+	.nकरो_get_stats		= sh_eth_get_stats,
+	.nकरो_set_rx_mode	= sh_eth_set_rx_mode,
+	.nकरो_tx_समयout		= sh_eth_tx_समयout,
+	.nकरो_करो_ioctl		= phy_करो_ioctl_running,
+	.nकरो_change_mtu		= sh_eth_change_mtu,
+	.nकरो_validate_addr	= eth_validate_addr,
+	.nकरो_set_mac_address	= eth_mac_addr,
+	.nकरो_set_features	= sh_eth_set_features,
+पूर्ण;
 
-static const struct net_device_ops sh_eth_netdev_ops_tsu = {
-	.ndo_open		= sh_eth_open,
-	.ndo_stop		= sh_eth_close,
-	.ndo_start_xmit		= sh_eth_start_xmit,
-	.ndo_get_stats		= sh_eth_get_stats,
-	.ndo_set_rx_mode	= sh_eth_set_rx_mode,
-	.ndo_vlan_rx_add_vid	= sh_eth_vlan_rx_add_vid,
-	.ndo_vlan_rx_kill_vid	= sh_eth_vlan_rx_kill_vid,
-	.ndo_tx_timeout		= sh_eth_tx_timeout,
-	.ndo_do_ioctl		= phy_do_ioctl_running,
-	.ndo_change_mtu		= sh_eth_change_mtu,
-	.ndo_validate_addr	= eth_validate_addr,
-	.ndo_set_mac_address	= eth_mac_addr,
-	.ndo_set_features	= sh_eth_set_features,
-};
+अटल स्थिर काष्ठा net_device_ops sh_eth_netdev_ops_tsu = अणु
+	.nकरो_खोलो		= sh_eth_खोलो,
+	.nकरो_stop		= sh_eth_बंद,
+	.nकरो_start_xmit		= sh_eth_start_xmit,
+	.nकरो_get_stats		= sh_eth_get_stats,
+	.nकरो_set_rx_mode	= sh_eth_set_rx_mode,
+	.nकरो_vlan_rx_add_vid	= sh_eth_vlan_rx_add_vid,
+	.nकरो_vlan_rx_समाप्त_vid	= sh_eth_vlan_rx_समाप्त_vid,
+	.nकरो_tx_समयout		= sh_eth_tx_समयout,
+	.nकरो_करो_ioctl		= phy_करो_ioctl_running,
+	.nकरो_change_mtu		= sh_eth_change_mtu,
+	.nकरो_validate_addr	= eth_validate_addr,
+	.nकरो_set_mac_address	= eth_mac_addr,
+	.nकरो_set_features	= sh_eth_set_features,
+पूर्ण;
 
-#ifdef CONFIG_OF
-static struct sh_eth_plat_data *sh_eth_parse_dt(struct device *dev)
-{
-	struct device_node *np = dev->of_node;
-	struct sh_eth_plat_data *pdata;
-	phy_interface_t interface;
-	int ret;
+#अगर_घोषित CONFIG_OF
+अटल काष्ठा sh_eth_plat_data *sh_eth_parse_dt(काष्ठा device *dev)
+अणु
+	काष्ठा device_node *np = dev->of_node;
+	काष्ठा sh_eth_plat_data *pdata;
+	phy_पूर्णांकerface_t पूर्णांकerface;
+	पूर्णांक ret;
 
-	pdata = devm_kzalloc(dev, sizeof(*pdata), GFP_KERNEL);
-	if (!pdata)
-		return NULL;
+	pdata = devm_kzalloc(dev, माप(*pdata), GFP_KERNEL);
+	अगर (!pdata)
+		वापस शून्य;
 
-	ret = of_get_phy_mode(np, &interface);
-	if (ret)
-		return NULL;
-	pdata->phy_interface = interface;
+	ret = of_get_phy_mode(np, &पूर्णांकerface);
+	अगर (ret)
+		वापस शून्य;
+	pdata->phy_पूर्णांकerface = पूर्णांकerface;
 
 	of_get_mac_address(np, pdata->mac_addr);
 
 	pdata->no_ether_link =
-		of_property_read_bool(np, "renesas,no-ether-link");
+		of_property_पढ़ो_bool(np, "renesas,no-ether-link");
 	pdata->ether_link_active_low =
-		of_property_read_bool(np, "renesas,ether-link-active-low");
+		of_property_पढ़ो_bool(np, "renesas,ether-link-active-low");
 
-	return pdata;
-}
+	वापस pdata;
+पूर्ण
 
-static const struct of_device_id sh_eth_match_table[] = {
-	{ .compatible = "renesas,gether-r8a7740", .data = &r8a7740_data },
-	{ .compatible = "renesas,ether-r8a7743", .data = &rcar_gen2_data },
-	{ .compatible = "renesas,ether-r8a7745", .data = &rcar_gen2_data },
-	{ .compatible = "renesas,ether-r8a7778", .data = &rcar_gen1_data },
-	{ .compatible = "renesas,ether-r8a7779", .data = &rcar_gen1_data },
-	{ .compatible = "renesas,ether-r8a7790", .data = &rcar_gen2_data },
-	{ .compatible = "renesas,ether-r8a7791", .data = &rcar_gen2_data },
-	{ .compatible = "renesas,ether-r8a7793", .data = &rcar_gen2_data },
-	{ .compatible = "renesas,ether-r8a7794", .data = &rcar_gen2_data },
-	{ .compatible = "renesas,gether-r8a77980", .data = &r8a77980_data },
-	{ .compatible = "renesas,ether-r7s72100", .data = &r7s72100_data },
-	{ .compatible = "renesas,ether-r7s9210", .data = &r7s9210_data },
-	{ .compatible = "renesas,rcar-gen1-ether", .data = &rcar_gen1_data },
-	{ .compatible = "renesas,rcar-gen2-ether", .data = &rcar_gen2_data },
-	{ }
-};
+अटल स्थिर काष्ठा of_device_id sh_eth_match_table[] = अणु
+	अणु .compatible = "renesas,gether-r8a7740", .data = &r8a7740_data पूर्ण,
+	अणु .compatible = "renesas,ether-r8a7743", .data = &rcar_gen2_data पूर्ण,
+	अणु .compatible = "renesas,ether-r8a7745", .data = &rcar_gen2_data पूर्ण,
+	अणु .compatible = "renesas,ether-r8a7778", .data = &rcar_gen1_data पूर्ण,
+	अणु .compatible = "renesas,ether-r8a7779", .data = &rcar_gen1_data पूर्ण,
+	अणु .compatible = "renesas,ether-r8a7790", .data = &rcar_gen2_data पूर्ण,
+	अणु .compatible = "renesas,ether-r8a7791", .data = &rcar_gen2_data पूर्ण,
+	अणु .compatible = "renesas,ether-r8a7793", .data = &rcar_gen2_data पूर्ण,
+	अणु .compatible = "renesas,ether-r8a7794", .data = &rcar_gen2_data पूर्ण,
+	अणु .compatible = "renesas,gether-r8a77980", .data = &r8a77980_data पूर्ण,
+	अणु .compatible = "renesas,ether-r7s72100", .data = &r7s72100_data पूर्ण,
+	अणु .compatible = "renesas,ether-r7s9210", .data = &r7s9210_data पूर्ण,
+	अणु .compatible = "renesas,rcar-gen1-ether", .data = &rcar_gen1_data पूर्ण,
+	अणु .compatible = "renesas,rcar-gen2-ether", .data = &rcar_gen2_data पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, sh_eth_match_table);
-#else
-static inline struct sh_eth_plat_data *sh_eth_parse_dt(struct device *dev)
-{
-	return NULL;
-}
-#endif
+#अन्यथा
+अटल अंतरभूत काष्ठा sh_eth_plat_data *sh_eth_parse_dt(काष्ठा device *dev)
+अणु
+	वापस शून्य;
+पूर्ण
+#पूर्ण_अगर
 
-static int sh_eth_drv_probe(struct platform_device *pdev)
-{
-	struct resource *res;
-	struct sh_eth_plat_data *pd = dev_get_platdata(&pdev->dev);
-	const struct platform_device_id *id = platform_get_device_id(pdev);
-	struct sh_eth_private *mdp;
-	struct net_device *ndev;
-	int ret;
+अटल पूर्णांक sh_eth_drv_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा resource *res;
+	काष्ठा sh_eth_plat_data *pd = dev_get_platdata(&pdev->dev);
+	स्थिर काष्ठा platक्रमm_device_id *id = platक्रमm_get_device_id(pdev);
+	काष्ठा sh_eth_निजी *mdp;
+	काष्ठा net_device *ndev;
+	पूर्णांक ret;
 
 	/* get base addr */
-	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
 
-	ndev = alloc_etherdev(sizeof(struct sh_eth_private));
-	if (!ndev)
-		return -ENOMEM;
+	ndev = alloc_etherdev(माप(काष्ठा sh_eth_निजी));
+	अगर (!ndev)
+		वापस -ENOMEM;
 
-	pm_runtime_enable(&pdev->dev);
-	pm_runtime_get_sync(&pdev->dev);
+	pm_runसमय_enable(&pdev->dev);
+	pm_runसमय_get_sync(&pdev->dev);
 
-	ret = platform_get_irq(pdev, 0);
-	if (ret < 0)
-		goto out_release;
+	ret = platक्रमm_get_irq(pdev, 0);
+	अगर (ret < 0)
+		जाओ out_release;
 	ndev->irq = ret;
 
 	SET_NETDEV_DEV(ndev, &pdev->dev);
@@ -3246,44 +3247,44 @@ static int sh_eth_drv_probe(struct platform_device *pdev)
 	mdp->num_tx_ring = TX_RING_SIZE;
 	mdp->num_rx_ring = RX_RING_SIZE;
 	mdp->addr = devm_ioremap_resource(&pdev->dev, res);
-	if (IS_ERR(mdp->addr)) {
+	अगर (IS_ERR(mdp->addr)) अणु
 		ret = PTR_ERR(mdp->addr);
-		goto out_release;
-	}
+		जाओ out_release;
+	पूर्ण
 
 	ndev->base_addr = res->start;
 
 	spin_lock_init(&mdp->lock);
 	mdp->pdev = pdev;
 
-	if (pdev->dev.of_node)
+	अगर (pdev->dev.of_node)
 		pd = sh_eth_parse_dt(&pdev->dev);
-	if (!pd) {
+	अगर (!pd) अणु
 		dev_err(&pdev->dev, "no platform data\n");
 		ret = -EINVAL;
-		goto out_release;
-	}
+		जाओ out_release;
+	पूर्ण
 
 	/* get PHY ID */
 	mdp->phy_id = pd->phy;
-	mdp->phy_interface = pd->phy_interface;
+	mdp->phy_पूर्णांकerface = pd->phy_पूर्णांकerface;
 	mdp->no_ether_link = pd->no_ether_link;
 	mdp->ether_link_active_low = pd->ether_link_active_low;
 
 	/* set cpu data */
-	if (id)
-		mdp->cd = (struct sh_eth_cpu_data *)id->driver_data;
-	else
-		mdp->cd = (struct sh_eth_cpu_data *)of_device_get_match_data(&pdev->dev);
+	अगर (id)
+		mdp->cd = (काष्ठा sh_eth_cpu_data *)id->driver_data;
+	अन्यथा
+		mdp->cd = (काष्ठा sh_eth_cpu_data *)of_device_get_match_data(&pdev->dev);
 
-	mdp->reg_offset = sh_eth_get_register_offset(mdp->cd->register_type);
-	if (!mdp->reg_offset) {
+	mdp->reg_offset = sh_eth_get_रेजिस्टर_offset(mdp->cd->रेजिस्टर_type);
+	अगर (!mdp->reg_offset) अणु
 		dev_err(&pdev->dev, "Unknown register type (%d)\n",
-			mdp->cd->register_type);
+			mdp->cd->रेजिस्टर_type);
 		ret = -EINVAL;
-		goto out_release;
-	}
-	sh_eth_set_default_cpu_data(mdp->cd);
+		जाओ out_release;
+	पूर्ण
+	sh_eth_set_शेष_cpu_data(mdp->cd);
 
 	/* User's manual states max MTU should be 2048 but due to the
 	 * alignment calculations in sh_eth_ring_init() the practical
@@ -3292,258 +3293,258 @@ static int sh_eth_drv_probe(struct platform_device *pdev)
 	ndev->max_mtu = 2000 - (ETH_HLEN + VLAN_HLEN + ETH_FCS_LEN);
 	ndev->min_mtu = ETH_MIN_MTU;
 
-	if (mdp->cd->rx_csum) {
+	अगर (mdp->cd->rx_csum) अणु
 		ndev->features = NETIF_F_RXCSUM;
 		ndev->hw_features = NETIF_F_RXCSUM;
-	}
+	पूर्ण
 
 	/* set function */
-	if (mdp->cd->tsu)
+	अगर (mdp->cd->tsu)
 		ndev->netdev_ops = &sh_eth_netdev_ops_tsu;
-	else
+	अन्यथा
 		ndev->netdev_ops = &sh_eth_netdev_ops;
 	ndev->ethtool_ops = &sh_eth_ethtool_ops;
-	ndev->watchdog_timeo = TX_TIMEOUT;
+	ndev->watchकरोg_समयo = TX_TIMEOUT;
 
 	/* debug message level */
 	mdp->msg_enable = SH_ETH_DEF_MSG_ENABLE;
 
-	/* read and set MAC address */
-	read_mac_address(ndev, pd->mac_addr);
-	if (!is_valid_ether_addr(ndev->dev_addr)) {
+	/* पढ़ो and set MAC address */
+	पढ़ो_mac_address(ndev, pd->mac_addr);
+	अगर (!is_valid_ether_addr(ndev->dev_addr)) अणु
 		dev_warn(&pdev->dev,
 			 "no valid MAC address supplied, using a random one.\n");
-		eth_hw_addr_random(ndev);
-	}
+		eth_hw_addr_अक्रमom(ndev);
+	पूर्ण
 
-	if (mdp->cd->tsu) {
-		int port = pdev->id < 0 ? 0 : pdev->id % 2;
-		struct resource *rtsu;
+	अगर (mdp->cd->tsu) अणु
+		पूर्णांक port = pdev->id < 0 ? 0 : pdev->id % 2;
+		काष्ठा resource *rtsu;
 
-		rtsu = platform_get_resource(pdev, IORESOURCE_MEM, 1);
-		if (!rtsu) {
+		rtsu = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 1);
+		अगर (!rtsu) अणु
 			dev_err(&pdev->dev, "no TSU resource\n");
 			ret = -ENODEV;
-			goto out_release;
-		}
-		/* We can only request the  TSU region  for the first port
-		 * of the two  sharing this TSU for the probe to succeed...
+			जाओ out_release;
+		पूर्ण
+		/* We can only request the  TSU region  क्रम the first port
+		 * of the two  sharing this TSU क्रम the probe to succeed...
 		 */
-		if (port == 0 &&
+		अगर (port == 0 &&
 		    !devm_request_mem_region(&pdev->dev, rtsu->start,
 					     resource_size(rtsu),
-					     dev_name(&pdev->dev))) {
+					     dev_name(&pdev->dev))) अणु
 			dev_err(&pdev->dev, "can't request TSU resource.\n");
 			ret = -EBUSY;
-			goto out_release;
-		}
-		/* ioremap the TSU registers */
+			जाओ out_release;
+		पूर्ण
+		/* ioremap the TSU रेजिस्टरs */
 		mdp->tsu_addr = devm_ioremap(&pdev->dev, rtsu->start,
 					     resource_size(rtsu));
-		if (!mdp->tsu_addr) {
+		अगर (!mdp->tsu_addr) अणु
 			dev_err(&pdev->dev, "TSU region ioremap() failed.\n");
 			ret = -ENOMEM;
-			goto out_release;
-		}
+			जाओ out_release;
+		पूर्ण
 		mdp->port = port;
 		ndev->features |= NETIF_F_HW_VLAN_CTAG_FILTER;
 
 		/* Need to init only the first port of the two sharing a TSU */
-		if (port == 0) {
-			if (mdp->cd->chip_reset)
+		अगर (port == 0) अणु
+			अगर (mdp->cd->chip_reset)
 				mdp->cd->chip_reset(ndev);
 
 			/* TSU init (Init only)*/
 			sh_eth_tsu_init(mdp);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (mdp->cd->rmiimode)
-		sh_eth_write(ndev, 0x1, RMIIMODE);
+	अगर (mdp->cd->rmiimode)
+		sh_eth_ग_लिखो(ndev, 0x1, RMIIMODE);
 
 	/* MDIO bus init */
 	ret = sh_mdio_init(mdp, pd);
-	if (ret) {
-		if (ret != -EPROBE_DEFER)
+	अगर (ret) अणु
+		अगर (ret != -EPROBE_DEFER)
 			dev_err(&pdev->dev, "MDIO init failed: %d\n", ret);
-		goto out_release;
-	}
+		जाओ out_release;
+	पूर्ण
 
-	netif_napi_add(ndev, &mdp->napi, sh_eth_poll, 64);
+	netअगर_napi_add(ndev, &mdp->napi, sh_eth_poll, 64);
 
-	/* network device register */
-	ret = register_netdev(ndev);
-	if (ret)
-		goto out_napi_del;
+	/* network device रेजिस्टर */
+	ret = रेजिस्टर_netdev(ndev);
+	अगर (ret)
+		जाओ out_napi_del;
 
-	if (mdp->cd->magic)
+	अगर (mdp->cd->magic)
 		device_set_wakeup_capable(&pdev->dev, 1);
 
-	/* print device information */
+	/* prपूर्णांक device inक्रमmation */
 	netdev_info(ndev, "Base address at 0x%x, %pM, IRQ %d.\n",
 		    (u32)ndev->base_addr, ndev->dev_addr, ndev->irq);
 
-	pm_runtime_put(&pdev->dev);
-	platform_set_drvdata(pdev, ndev);
+	pm_runसमय_put(&pdev->dev);
+	platक्रमm_set_drvdata(pdev, ndev);
 
-	return ret;
+	वापस ret;
 
 out_napi_del:
-	netif_napi_del(&mdp->napi);
+	netअगर_napi_del(&mdp->napi);
 	sh_mdio_release(mdp);
 
 out_release:
-	/* net_dev free */
-	free_netdev(ndev);
+	/* net_dev मुक्त */
+	मुक्त_netdev(ndev);
 
-	pm_runtime_put(&pdev->dev);
-	pm_runtime_disable(&pdev->dev);
-	return ret;
-}
+	pm_runसमय_put(&pdev->dev);
+	pm_runसमय_disable(&pdev->dev);
+	वापस ret;
+पूर्ण
 
-static int sh_eth_drv_remove(struct platform_device *pdev)
-{
-	struct net_device *ndev = platform_get_drvdata(pdev);
-	struct sh_eth_private *mdp = netdev_priv(ndev);
+अटल पूर्णांक sh_eth_drv_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा net_device *ndev = platक्रमm_get_drvdata(pdev);
+	काष्ठा sh_eth_निजी *mdp = netdev_priv(ndev);
 
-	unregister_netdev(ndev);
-	netif_napi_del(&mdp->napi);
+	unरेजिस्टर_netdev(ndev);
+	netअगर_napi_del(&mdp->napi);
 	sh_mdio_release(mdp);
-	pm_runtime_disable(&pdev->dev);
-	free_netdev(ndev);
+	pm_runसमय_disable(&pdev->dev);
+	मुक्त_netdev(ndev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_PM
-#ifdef CONFIG_PM_SLEEP
-static int sh_eth_wol_setup(struct net_device *ndev)
-{
-	struct sh_eth_private *mdp = netdev_priv(ndev);
+#अगर_घोषित CONFIG_PM
+#अगर_घोषित CONFIG_PM_SLEEP
+अटल पूर्णांक sh_eth_wol_setup(काष्ठा net_device *ndev)
+अणु
+	काष्ठा sh_eth_निजी *mdp = netdev_priv(ndev);
 
-	/* Only allow ECI interrupts */
+	/* Only allow ECI पूर्णांकerrupts */
 	synchronize_irq(ndev->irq);
 	napi_disable(&mdp->napi);
-	sh_eth_write(ndev, EESIPR_ECIIP, EESIPR);
+	sh_eth_ग_लिखो(ndev, EESIPR_ECIIP, EESIPR);
 
 	/* Enable MagicPacket */
-	sh_eth_modify(ndev, ECMR, ECMR_MPDE, ECMR_MPDE);
+	sh_eth_modअगरy(ndev, ECMR, ECMR_MPDE, ECMR_MPDE);
 
-	return enable_irq_wake(ndev->irq);
-}
+	वापस enable_irq_wake(ndev->irq);
+पूर्ण
 
-static int sh_eth_wol_restore(struct net_device *ndev)
-{
-	struct sh_eth_private *mdp = netdev_priv(ndev);
-	int ret;
+अटल पूर्णांक sh_eth_wol_restore(काष्ठा net_device *ndev)
+अणु
+	काष्ठा sh_eth_निजी *mdp = netdev_priv(ndev);
+	पूर्णांक ret;
 
 	napi_enable(&mdp->napi);
 
 	/* Disable MagicPacket */
-	sh_eth_modify(ndev, ECMR, ECMR_MPDE, 0);
+	sh_eth_modअगरy(ndev, ECMR, ECMR_MPDE, 0);
 
 	/* The device needs to be reset to restore MagicPacket logic
-	 * for next wakeup. If we close and open the device it will
-	 * both be reset and all registers restored. This is what
+	 * क्रम next wakeup. If we बंद and खोलो the device it will
+	 * both be reset and all रेजिस्टरs restored. This is what
 	 * happens during suspend and resume without WoL enabled.
 	 */
-	ret = sh_eth_close(ndev);
-	if (ret < 0)
-		return ret;
-	ret = sh_eth_open(ndev);
-	if (ret < 0)
-		return ret;
+	ret = sh_eth_बंद(ndev);
+	अगर (ret < 0)
+		वापस ret;
+	ret = sh_eth_खोलो(ndev);
+	अगर (ret < 0)
+		वापस ret;
 
-	return disable_irq_wake(ndev->irq);
-}
+	वापस disable_irq_wake(ndev->irq);
+पूर्ण
 
-static int sh_eth_suspend(struct device *dev)
-{
-	struct net_device *ndev = dev_get_drvdata(dev);
-	struct sh_eth_private *mdp = netdev_priv(ndev);
-	int ret = 0;
+अटल पूर्णांक sh_eth_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा net_device *ndev = dev_get_drvdata(dev);
+	काष्ठा sh_eth_निजी *mdp = netdev_priv(ndev);
+	पूर्णांक ret = 0;
 
-	if (!netif_running(ndev))
-		return 0;
+	अगर (!netअगर_running(ndev))
+		वापस 0;
 
-	netif_device_detach(ndev);
+	netअगर_device_detach(ndev);
 
-	if (mdp->wol_enabled)
+	अगर (mdp->wol_enabled)
 		ret = sh_eth_wol_setup(ndev);
-	else
-		ret = sh_eth_close(ndev);
+	अन्यथा
+		ret = sh_eth_बंद(ndev);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int sh_eth_resume(struct device *dev)
-{
-	struct net_device *ndev = dev_get_drvdata(dev);
-	struct sh_eth_private *mdp = netdev_priv(ndev);
-	int ret = 0;
+अटल पूर्णांक sh_eth_resume(काष्ठा device *dev)
+अणु
+	काष्ठा net_device *ndev = dev_get_drvdata(dev);
+	काष्ठा sh_eth_निजी *mdp = netdev_priv(ndev);
+	पूर्णांक ret = 0;
 
-	if (!netif_running(ndev))
-		return 0;
+	अगर (!netअगर_running(ndev))
+		वापस 0;
 
-	if (mdp->wol_enabled)
+	अगर (mdp->wol_enabled)
 		ret = sh_eth_wol_restore(ndev);
-	else
-		ret = sh_eth_open(ndev);
+	अन्यथा
+		ret = sh_eth_खोलो(ndev);
 
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	netif_device_attach(ndev);
+	netअगर_device_attach(ndev);
 
-	return ret;
-}
-#endif
+	वापस ret;
+पूर्ण
+#पूर्ण_अगर
 
-static int sh_eth_runtime_nop(struct device *dev)
-{
-	/* Runtime PM callback shared between ->runtime_suspend()
-	 * and ->runtime_resume(). Simply returns success.
+अटल पूर्णांक sh_eth_runसमय_nop(काष्ठा device *dev)
+अणु
+	/* Runसमय PM callback shared between ->runसमय_suspend()
+	 * and ->runसमय_resume(). Simply वापसs success.
 	 *
-	 * This driver re-initializes all registers after
-	 * pm_runtime_get_sync() anyway so there is no need
-	 * to save and restore registers here.
+	 * This driver re-initializes all रेजिस्टरs after
+	 * pm_runसमय_get_sync() anyway so there is no need
+	 * to save and restore रेजिस्टरs here.
 	 */
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct dev_pm_ops sh_eth_dev_pm_ops = {
+अटल स्थिर काष्ठा dev_pm_ops sh_eth_dev_pm_ops = अणु
 	SET_SYSTEM_SLEEP_PM_OPS(sh_eth_suspend, sh_eth_resume)
-	SET_RUNTIME_PM_OPS(sh_eth_runtime_nop, sh_eth_runtime_nop, NULL)
-};
-#define SH_ETH_PM_OPS (&sh_eth_dev_pm_ops)
-#else
-#define SH_ETH_PM_OPS NULL
-#endif
+	SET_RUNTIME_PM_OPS(sh_eth_runसमय_nop, sh_eth_runसमय_nop, शून्य)
+पूर्ण;
+#घोषणा SH_ETH_PM_OPS (&sh_eth_dev_pm_ops)
+#अन्यथा
+#घोषणा SH_ETH_PM_OPS शून्य
+#पूर्ण_अगर
 
-static const struct platform_device_id sh_eth_id_table[] = {
-	{ "sh7619-ether", (kernel_ulong_t)&sh7619_data },
-	{ "sh771x-ether", (kernel_ulong_t)&sh771x_data },
-	{ "sh7724-ether", (kernel_ulong_t)&sh7724_data },
-	{ "sh7734-gether", (kernel_ulong_t)&sh7734_data },
-	{ "sh7757-ether", (kernel_ulong_t)&sh7757_data },
-	{ "sh7757-gether", (kernel_ulong_t)&sh7757_data_giga },
-	{ "sh7763-gether", (kernel_ulong_t)&sh7763_data },
-	{ }
-};
-MODULE_DEVICE_TABLE(platform, sh_eth_id_table);
+अटल स्थिर काष्ठा platक्रमm_device_id sh_eth_id_table[] = अणु
+	अणु "sh7619-ether", (kernel_uदीर्घ_t)&sh7619_data पूर्ण,
+	अणु "sh771x-ether", (kernel_uदीर्घ_t)&sh771x_data पूर्ण,
+	अणु "sh7724-ether", (kernel_uदीर्घ_t)&sh7724_data पूर्ण,
+	अणु "sh7734-gether", (kernel_uदीर्घ_t)&sh7734_data पूर्ण,
+	अणु "sh7757-ether", (kernel_uदीर्घ_t)&sh7757_data पूर्ण,
+	अणु "sh7757-gether", (kernel_uदीर्घ_t)&sh7757_data_giga पूर्ण,
+	अणु "sh7763-gether", (kernel_uदीर्घ_t)&sh7763_data पूर्ण,
+	अणु पूर्ण
+पूर्ण;
+MODULE_DEVICE_TABLE(platक्रमm, sh_eth_id_table);
 
-static struct platform_driver sh_eth_driver = {
+अटल काष्ठा platक्रमm_driver sh_eth_driver = अणु
 	.probe = sh_eth_drv_probe,
-	.remove = sh_eth_drv_remove,
+	.हटाओ = sh_eth_drv_हटाओ,
 	.id_table = sh_eth_id_table,
-	.driver = {
+	.driver = अणु
 		   .name = CARDNAME,
 		   .pm = SH_ETH_PM_OPS,
 		   .of_match_table = of_match_ptr(sh_eth_match_table),
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-module_platform_driver(sh_eth_driver);
+module_platक्रमm_driver(sh_eth_driver);
 
 MODULE_AUTHOR("Nobuhiro Iwamatsu, Yoshihiro Shimoda");
 MODULE_DESCRIPTION("Renesas SuperH Ethernet driver");

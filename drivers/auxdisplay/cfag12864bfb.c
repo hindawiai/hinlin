@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  *    Filename: cfag12864bfb.c
  *     Version: 0.1.0
@@ -9,21 +10,21 @@
  *        Date: 2006-10-31
  */
 
-#include <linux/init.h>
-#include <linux/module.h>
-#include <linux/kernel.h>
-#include <linux/delay.h>
-#include <linux/errno.h>
-#include <linux/fb.h>
-#include <linux/mm.h>
-#include <linux/platform_device.h>
-#include <linux/string.h>
-#include <linux/uaccess.h>
-#include <linux/cfag12864b.h>
+#समावेश <linux/init.h>
+#समावेश <linux/module.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/fb.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/uaccess.h>
+#समावेश <linux/cfag12864b.h>
 
-#define CFAG12864BFB_NAME "cfag12864bfb"
+#घोषणा CFAG12864BFB_NAME "cfag12864bfb"
 
-static const struct fb_fix_screeninfo cfag12864bfb_fix = {
+अटल स्थिर काष्ठा fb_fix_screeninfo cfag12864bfb_fix = अणु
 	.id = "cfag12864b",
 	.type = FB_TYPE_PACKED_PIXELS,
 	.visual = FB_VISUAL_MONO10,
@@ -32,143 +33,143 @@ static const struct fb_fix_screeninfo cfag12864bfb_fix = {
 	.ywrapstep = 0,
 	.line_length = CFAG12864B_WIDTH / 8,
 	.accel = FB_ACCEL_NONE,
-};
+पूर्ण;
 
-static const struct fb_var_screeninfo cfag12864bfb_var = {
+अटल स्थिर काष्ठा fb_var_screeninfo cfag12864bfb_var = अणु
 	.xres = CFAG12864B_WIDTH,
 	.yres = CFAG12864B_HEIGHT,
-	.xres_virtual = CFAG12864B_WIDTH,
-	.yres_virtual = CFAG12864B_HEIGHT,
+	.xres_भव = CFAG12864B_WIDTH,
+	.yres_भव = CFAG12864B_HEIGHT,
 	.bits_per_pixel = 1,
-	.red = { 0, 1, 0 },
-      	.green = { 0, 1, 0 },
-      	.blue = { 0, 1, 0 },
+	.red = अणु 0, 1, 0 पूर्ण,
+      	.green = अणु 0, 1, 0 पूर्ण,
+      	.blue = अणु 0, 1, 0 पूर्ण,
 	.left_margin = 0,
 	.right_margin = 0,
 	.upper_margin = 0,
 	.lower_margin = 0,
 	.vmode = FB_VMODE_NONINTERLACED,
-};
+पूर्ण;
 
-static int cfag12864bfb_mmap(struct fb_info *info, struct vm_area_struct *vma)
-{
-	struct page *pages = virt_to_page(cfag12864b_buffer);
+अटल पूर्णांक cfag12864bfb_mmap(काष्ठा fb_info *info, काष्ठा vm_area_काष्ठा *vma)
+अणु
+	काष्ठा page *pages = virt_to_page(cfag12864b_buffer);
 
-	return vm_map_pages_zero(vma, &pages, 1);
-}
+	वापस vm_map_pages_zero(vma, &pages, 1);
+पूर्ण
 
-static const struct fb_ops cfag12864bfb_ops = {
+अटल स्थिर काष्ठा fb_ops cfag12864bfb_ops = अणु
 	.owner = THIS_MODULE,
-	.fb_read = fb_sys_read,
-	.fb_write = fb_sys_write,
+	.fb_पढ़ो = fb_sys_पढ़ो,
+	.fb_ग_लिखो = fb_sys_ग_लिखो,
 	.fb_fillrect = sys_fillrect,
 	.fb_copyarea = sys_copyarea,
 	.fb_imageblit = sys_imageblit,
 	.fb_mmap = cfag12864bfb_mmap,
-};
+पूर्ण;
 
-static int cfag12864bfb_probe(struct platform_device *device)
-{
-	int ret = -EINVAL;
- 	struct fb_info *info = framebuffer_alloc(0, &device->dev);
+अटल पूर्णांक cfag12864bfb_probe(काष्ठा platक्रमm_device *device)
+अणु
+	पूर्णांक ret = -EINVAL;
+ 	काष्ठा fb_info *info = framebuffer_alloc(0, &device->dev);
 
-	if (!info)
-		goto none;
+	अगर (!info)
+		जाओ none;
 
-	info->screen_base = (char __iomem *) cfag12864b_buffer;
+	info->screen_base = (अक्षर __iomem *) cfag12864b_buffer;
 	info->screen_size = CFAG12864B_SIZE;
 	info->fbops = &cfag12864bfb_ops;
 	info->fix = cfag12864bfb_fix;
 	info->var = cfag12864bfb_var;
-	info->pseudo_palette = NULL;
-	info->par = NULL;
+	info->pseuकरो_palette = शून्य;
+	info->par = शून्य;
 	info->flags = FBINFO_FLAG_DEFAULT;
 
-	if (register_framebuffer(info) < 0)
-		goto fballoced;
+	अगर (रेजिस्टर_framebuffer(info) < 0)
+		जाओ fballoced;
 
-	platform_set_drvdata(device, info);
+	platक्रमm_set_drvdata(device, info);
 
 	fb_info(info, "%s frame buffer device\n", info->fix.id);
 
-	return 0;
+	वापस 0;
 
 fballoced:
 	framebuffer_release(info);
 
 none:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int cfag12864bfb_remove(struct platform_device *device)
-{
-	struct fb_info *info = platform_get_drvdata(device);
+अटल पूर्णांक cfag12864bfb_हटाओ(काष्ठा platक्रमm_device *device)
+अणु
+	काष्ठा fb_info *info = platक्रमm_get_drvdata(device);
 
-	if (info) {
-		unregister_framebuffer(info);
+	अगर (info) अणु
+		unरेजिस्टर_framebuffer(info);
 		framebuffer_release(info);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct platform_driver cfag12864bfb_driver = {
+अटल काष्ठा platक्रमm_driver cfag12864bfb_driver = अणु
 	.probe	= cfag12864bfb_probe,
-	.remove = cfag12864bfb_remove,
-	.driver = {
+	.हटाओ = cfag12864bfb_हटाओ,
+	.driver = अणु
 		.name	= CFAG12864BFB_NAME,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static struct platform_device *cfag12864bfb_device;
+अटल काष्ठा platक्रमm_device *cfag12864bfb_device;
 
-static int __init cfag12864bfb_init(void)
-{
-	int ret = -EINVAL;
+अटल पूर्णांक __init cfag12864bfb_init(व्योम)
+अणु
+	पूर्णांक ret = -EINVAL;
 
 	/* cfag12864b_init() must be called first */
-	if (!cfag12864b_isinited()) {
-		printk(KERN_ERR CFAG12864BFB_NAME ": ERROR: "
+	अगर (!cfag12864b_isinited()) अणु
+		prपूर्णांकk(KERN_ERR CFAG12864BFB_NAME ": ERROR: "
 			"cfag12864b is not initialized\n");
-		goto none;
-	}
+		जाओ none;
+	पूर्ण
 
-	if (cfag12864b_enable()) {
-		printk(KERN_ERR CFAG12864BFB_NAME ": ERROR: "
+	अगर (cfag12864b_enable()) अणु
+		prपूर्णांकk(KERN_ERR CFAG12864BFB_NAME ": ERROR: "
 			"can't enable cfag12864b refreshing (being used)\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	ret = platform_driver_register(&cfag12864bfb_driver);
+	ret = platक्रमm_driver_रेजिस्टर(&cfag12864bfb_driver);
 
-	if (!ret) {
+	अगर (!ret) अणु
 		cfag12864bfb_device =
-			platform_device_alloc(CFAG12864BFB_NAME, 0);
+			platक्रमm_device_alloc(CFAG12864BFB_NAME, 0);
 
-		if (cfag12864bfb_device)
-			ret = platform_device_add(cfag12864bfb_device);
-		else
+		अगर (cfag12864bfb_device)
+			ret = platक्रमm_device_add(cfag12864bfb_device);
+		अन्यथा
 			ret = -ENOMEM;
 
-		if (ret) {
-			platform_device_put(cfag12864bfb_device);
-			platform_driver_unregister(&cfag12864bfb_driver);
-		}
-	}
+		अगर (ret) अणु
+			platक्रमm_device_put(cfag12864bfb_device);
+			platक्रमm_driver_unरेजिस्टर(&cfag12864bfb_driver);
+		पूर्ण
+	पूर्ण
 
 none:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void __exit cfag12864bfb_exit(void)
-{
-	platform_device_unregister(cfag12864bfb_device);
-	platform_driver_unregister(&cfag12864bfb_driver);
+अटल व्योम __निकास cfag12864bfb_निकास(व्योम)
+अणु
+	platक्रमm_device_unरेजिस्टर(cfag12864bfb_device);
+	platक्रमm_driver_unरेजिस्टर(&cfag12864bfb_driver);
 	cfag12864b_disable();
-}
+पूर्ण
 
 module_init(cfag12864bfb_init);
-module_exit(cfag12864bfb_exit);
+module_निकास(cfag12864bfb_निकास);
 
 MODULE_LICENSE("GPL v2");
 MODULE_AUTHOR("Miguel Ojeda <ojeda@kernel.org>");

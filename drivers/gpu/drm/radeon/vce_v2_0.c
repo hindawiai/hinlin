@@ -1,13 +1,14 @@
+<शैली गुरु>
 /*
  * Copyright 2013 Advanced Micro Devices, Inc.
  * All Rights Reserved.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the
  * "Software"), to deal in the Software without restriction, including
- * without limitation the rights to use, copy, modify, merge, publish,
+ * without limitation the rights to use, copy, modअगरy, merge, publish,
  * distribute, sub license, and/or sell copies of the Software, and to
- * permit persons to whom the Software is furnished to do so, subject to
+ * permit persons to whom the Software is furnished to करो so, subject to
  * the following conditions:
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
@@ -22,143 +23,143 @@
  * next paragraph) shall be included in all copies or substantial portions
  * of the Software.
  *
- * Authors: Christian König <christian.koenig@amd.com>
+ * Authors: Christian Kथघnig <christian.koenig@amd.com>
  */
 
-#include <linux/firmware.h>
+#समावेश <linux/firmware.h>
 
-#include "radeon.h"
-#include "radeon_asic.h"
-#include "cikd.h"
-#include "vce.h"
+#समावेश "radeon.h"
+#समावेश "radeon_asic.h"
+#समावेश "cikd.h"
+#समावेश "vce.h"
 
-#define VCE_V2_0_FW_SIZE	(256 * 1024)
-#define VCE_V2_0_STACK_SIZE	(64 * 1024)
-#define VCE_V2_0_DATA_SIZE	(23552 * RADEON_MAX_VCE_HANDLES)
+#घोषणा VCE_V2_0_FW_SIZE	(256 * 1024)
+#घोषणा VCE_V2_0_STACK_SIZE	(64 * 1024)
+#घोषणा VCE_V2_0_DATA_SIZE	(23552 * RADEON_MAX_VCE_HANDLES)
 
-static void vce_v2_0_set_sw_cg(struct radeon_device *rdev, bool gated)
-{
-	u32 tmp;
+अटल व्योम vce_v2_0_set_sw_cg(काष्ठा radeon_device *rdev, bool gated)
+अणु
+	u32 पंचांगp;
 
-	if (gated) {
-		tmp = RREG32(VCE_CLOCK_GATING_B);
-		tmp |= 0xe70000;
-		WREG32(VCE_CLOCK_GATING_B, tmp);
+	अगर (gated) अणु
+		पंचांगp = RREG32(VCE_CLOCK_GATING_B);
+		पंचांगp |= 0xe70000;
+		WREG32(VCE_CLOCK_GATING_B, पंचांगp);
 
-		tmp = RREG32(VCE_UENC_CLOCK_GATING);
-		tmp |= 0xff000000;
-		WREG32(VCE_UENC_CLOCK_GATING, tmp);
+		पंचांगp = RREG32(VCE_UENC_CLOCK_GATING);
+		पंचांगp |= 0xff000000;
+		WREG32(VCE_UENC_CLOCK_GATING, पंचांगp);
 
-		tmp = RREG32(VCE_UENC_REG_CLOCK_GATING);
-		tmp &= ~0x3fc;
-		WREG32(VCE_UENC_REG_CLOCK_GATING, tmp);
+		पंचांगp = RREG32(VCE_UENC_REG_CLOCK_GATING);
+		पंचांगp &= ~0x3fc;
+		WREG32(VCE_UENC_REG_CLOCK_GATING, पंचांगp);
 
 		WREG32(VCE_CGTT_CLK_OVERRIDE, 0);
-	} else {
-		tmp = RREG32(VCE_CLOCK_GATING_B);
-		tmp |= 0xe7;
-		tmp &= ~0xe70000;
-		WREG32(VCE_CLOCK_GATING_B, tmp);
+	पूर्ण अन्यथा अणु
+		पंचांगp = RREG32(VCE_CLOCK_GATING_B);
+		पंचांगp |= 0xe7;
+		पंचांगp &= ~0xe70000;
+		WREG32(VCE_CLOCK_GATING_B, पंचांगp);
 
-		tmp = RREG32(VCE_UENC_CLOCK_GATING);
-		tmp |= 0x1fe000;
-		tmp &= ~0xff000000;
-		WREG32(VCE_UENC_CLOCK_GATING, tmp);
+		पंचांगp = RREG32(VCE_UENC_CLOCK_GATING);
+		पंचांगp |= 0x1fe000;
+		पंचांगp &= ~0xff000000;
+		WREG32(VCE_UENC_CLOCK_GATING, पंचांगp);
 
-		tmp = RREG32(VCE_UENC_REG_CLOCK_GATING);
-		tmp |= 0x3fc;
-		WREG32(VCE_UENC_REG_CLOCK_GATING, tmp);
-	}
-}
+		पंचांगp = RREG32(VCE_UENC_REG_CLOCK_GATING);
+		पंचांगp |= 0x3fc;
+		WREG32(VCE_UENC_REG_CLOCK_GATING, पंचांगp);
+	पूर्ण
+पूर्ण
 
-static void vce_v2_0_set_dyn_cg(struct radeon_device *rdev, bool gated)
-{
-	u32 orig, tmp;
+अटल व्योम vce_v2_0_set_dyn_cg(काष्ठा radeon_device *rdev, bool gated)
+अणु
+	u32 orig, पंचांगp;
 
-	tmp = RREG32(VCE_CLOCK_GATING_B);
-	tmp &= ~0x00060006;
-	if (gated) {
-		tmp |= 0xe10000;
-	} else {
-		tmp |= 0xe1;
-		tmp &= ~0xe10000;
-	}
-	WREG32(VCE_CLOCK_GATING_B, tmp);
+	पंचांगp = RREG32(VCE_CLOCK_GATING_B);
+	पंचांगp &= ~0x00060006;
+	अगर (gated) अणु
+		पंचांगp |= 0xe10000;
+	पूर्ण अन्यथा अणु
+		पंचांगp |= 0xe1;
+		पंचांगp &= ~0xe10000;
+	पूर्ण
+	WREG32(VCE_CLOCK_GATING_B, पंचांगp);
 
-	orig = tmp = RREG32(VCE_UENC_CLOCK_GATING);
-	tmp &= ~0x1fe000;
-	tmp &= ~0xff000000;
-	if (tmp != orig)
-		WREG32(VCE_UENC_CLOCK_GATING, tmp);
+	orig = पंचांगp = RREG32(VCE_UENC_CLOCK_GATING);
+	पंचांगp &= ~0x1fe000;
+	पंचांगp &= ~0xff000000;
+	अगर (पंचांगp != orig)
+		WREG32(VCE_UENC_CLOCK_GATING, पंचांगp);
 
-	orig = tmp = RREG32(VCE_UENC_REG_CLOCK_GATING);
-	tmp &= ~0x3fc;
-	if (tmp != orig)
-		WREG32(VCE_UENC_REG_CLOCK_GATING, tmp);
+	orig = पंचांगp = RREG32(VCE_UENC_REG_CLOCK_GATING);
+	पंचांगp &= ~0x3fc;
+	अगर (पंचांगp != orig)
+		WREG32(VCE_UENC_REG_CLOCK_GATING, पंचांगp);
 
-	if (gated)
+	अगर (gated)
 		WREG32(VCE_CGTT_CLK_OVERRIDE, 0);
-}
+पूर्ण
 
-static void vce_v2_0_disable_cg(struct radeon_device *rdev)
-{
+अटल व्योम vce_v2_0_disable_cg(काष्ठा radeon_device *rdev)
+अणु
 	WREG32(VCE_CGTT_CLK_OVERRIDE, 7);
-}
+पूर्ण
 
 /*
- * Local variable sw_cg is used for debugging purposes, in case we
- * ran into problems with dynamic clock gating. Don't remove it.
+ * Local variable sw_cg is used क्रम debugging purposes, in हाल we
+ * ran पूर्णांकo problems with dynamic घड़ी gating. Don't हटाओ it.
  */
-void vce_v2_0_enable_mgcg(struct radeon_device *rdev, bool enable)
-{
+व्योम vce_v2_0_enable_mgcg(काष्ठा radeon_device *rdev, bool enable)
+अणु
 	bool sw_cg = false;
 
-	if (enable && (rdev->cg_flags & RADEON_CG_SUPPORT_VCE_MGCG)) {
-		if (sw_cg)
+	अगर (enable && (rdev->cg_flags & RADEON_CG_SUPPORT_VCE_MGCG)) अणु
+		अगर (sw_cg)
 			vce_v2_0_set_sw_cg(rdev, true);
-		else
+		अन्यथा
 			vce_v2_0_set_dyn_cg(rdev, true);
-	} else {
+	पूर्ण अन्यथा अणु
 		vce_v2_0_disable_cg(rdev);
 
-		if (sw_cg)
+		अगर (sw_cg)
 			vce_v2_0_set_sw_cg(rdev, false);
-		else
+		अन्यथा
 			vce_v2_0_set_dyn_cg(rdev, false);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void vce_v2_0_init_cg(struct radeon_device *rdev)
-{
-	u32 tmp;
+अटल व्योम vce_v2_0_init_cg(काष्ठा radeon_device *rdev)
+अणु
+	u32 पंचांगp;
 
-	tmp = RREG32(VCE_CLOCK_GATING_A);
-	tmp &= ~(CGC_CLK_GATE_DLY_TIMER_MASK | CGC_CLK_GATER_OFF_DLY_TIMER_MASK);
-	tmp |= (CGC_CLK_GATE_DLY_TIMER(0) | CGC_CLK_GATER_OFF_DLY_TIMER(4));
-	tmp |= CGC_UENC_WAIT_AWAKE;
-	WREG32(VCE_CLOCK_GATING_A, tmp);
+	पंचांगp = RREG32(VCE_CLOCK_GATING_A);
+	पंचांगp &= ~(CGC_CLK_GATE_DLY_TIMER_MASK | CGC_CLK_GATER_OFF_DLY_TIMER_MASK);
+	पंचांगp |= (CGC_CLK_GATE_DLY_TIMER(0) | CGC_CLK_GATER_OFF_DLY_TIMER(4));
+	पंचांगp |= CGC_UENC_WAIT_AWAKE;
+	WREG32(VCE_CLOCK_GATING_A, पंचांगp);
 
-	tmp = RREG32(VCE_UENC_CLOCK_GATING);
-	tmp &= ~(CLOCK_ON_DELAY_MASK | CLOCK_OFF_DELAY_MASK);
-	tmp |= (CLOCK_ON_DELAY(0) | CLOCK_OFF_DELAY(4));
-	WREG32(VCE_UENC_CLOCK_GATING, tmp);
+	पंचांगp = RREG32(VCE_UENC_CLOCK_GATING);
+	पंचांगp &= ~(CLOCK_ON_DELAY_MASK | CLOCK_OFF_DELAY_MASK);
+	पंचांगp |= (CLOCK_ON_DELAY(0) | CLOCK_OFF_DELAY(4));
+	WREG32(VCE_UENC_CLOCK_GATING, पंचांगp);
 
-	tmp = RREG32(VCE_CLOCK_GATING_B);
-	tmp |= 0x10;
-	tmp &= ~0x100000;
-	WREG32(VCE_CLOCK_GATING_B, tmp);
-}
+	पंचांगp = RREG32(VCE_CLOCK_GATING_B);
+	पंचांगp |= 0x10;
+	पंचांगp &= ~0x100000;
+	WREG32(VCE_CLOCK_GATING_B, पंचांगp);
+पूर्ण
 
-unsigned vce_v2_0_bo_size(struct radeon_device *rdev)
-{
+अचिन्हित vce_v2_0_bo_size(काष्ठा radeon_device *rdev)
+अणु
 	WARN_ON(rdev->vce_fw->size > VCE_V2_0_FW_SIZE);
-	return VCE_V2_0_FW_SIZE + VCE_V2_0_STACK_SIZE + VCE_V2_0_DATA_SIZE;
-}
+	वापस VCE_V2_0_FW_SIZE + VCE_V2_0_STACK_SIZE + VCE_V2_0_DATA_SIZE;
+पूर्ण
 
-int vce_v2_0_resume(struct radeon_device *rdev)
-{
-	uint64_t addr = rdev->vce.gpu_addr;
-	uint32_t size;
+पूर्णांक vce_v2_0_resume(काष्ठा radeon_device *rdev)
+अणु
+	uपूर्णांक64_t addr = rdev->vce.gpu_addr;
+	uपूर्णांक32_t size;
 
 	WREG32_P(VCE_CLOCK_GATING_A, 0, ~(1 << 16));
 	WREG32_P(VCE_UENC_CLOCK_GATING, 0x1FF000, ~0xFF9FF000);
@@ -195,5 +196,5 @@ int vce_v2_0_resume(struct radeon_device *rdev)
 
 	vce_v2_0_init_cg(rdev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

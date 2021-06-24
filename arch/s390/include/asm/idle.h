@@ -1,32 +1,33 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  *  Copyright IBM Corp. 2014
  *
  *  Author: Martin Schwidefsky <schwidefsky@de.ibm.com>
  */
 
-#ifndef _S390_IDLE_H
-#define _S390_IDLE_H
+#अगर_अघोषित _S390_IDLE_H
+#घोषणा _S390_IDLE_H
 
-#include <linux/types.h>
-#include <linux/device.h>
-#include <linux/seqlock.h>
+#समावेश <linux/types.h>
+#समावेश <linux/device.h>
+#समावेश <linux/seqlock.h>
 
-struct s390_idle_data {
+काष्ठा s390_idle_data अणु
 	seqcount_t seqcount;
-	unsigned long idle_count;
-	unsigned long idle_time;
-	unsigned long clock_idle_enter;
-	unsigned long clock_idle_exit;
-	unsigned long timer_idle_enter;
-	unsigned long timer_idle_exit;
-	unsigned long mt_cycles_enter[8];
-};
+	अचिन्हित दीर्घ idle_count;
+	अचिन्हित दीर्घ idle_समय;
+	अचिन्हित दीर्घ घड़ी_idle_enter;
+	अचिन्हित दीर्घ घड़ी_idle_निकास;
+	अचिन्हित दीर्घ समयr_idle_enter;
+	अचिन्हित दीर्घ समयr_idle_निकास;
+	अचिन्हित दीर्घ mt_cycles_enter[8];
+पूर्ण;
 
-extern struct device_attribute dev_attr_idle_count;
-extern struct device_attribute dev_attr_idle_time_us;
+बाह्य काष्ठा device_attribute dev_attr_idle_count;
+बाह्य काष्ठा device_attribute dev_attr_idle_समय_us;
 
-void psw_idle(struct s390_idle_data *data, unsigned long psw_mask);
-void psw_idle_exit(void);
+व्योम psw_idle(काष्ठा s390_idle_data *data, अचिन्हित दीर्घ psw_mask);
+व्योम psw_idle_निकास(व्योम);
 
-#endif /* _S390_IDLE_H */
+#पूर्ण_अगर /* _S390_IDLE_H */

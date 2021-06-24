@@ -1,100 +1,101 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 //
-// Audio driver for AK4458 DAC
+// Audio driver क्रम AK4458 DAC
 //
 // Copyright (C) 2016 Asahi Kasei Microdevices Corporation
 // Copyright 2018 NXP
 
-#include <linux/delay.h>
-#include <linux/gpio/consumer.h>
-#include <linux/i2c.h>
-#include <linux/module.h>
-#include <linux/of_device.h>
-#include <linux/of_gpio.h>
-#include <linux/pm_runtime.h>
-#include <linux/regulator/consumer.h>
-#include <linux/slab.h>
-#include <sound/initval.h>
-#include <sound/pcm_params.h>
-#include <sound/soc.h>
-#include <sound/soc-dapm.h>
-#include <sound/tlv.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/gpio/consumer.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/of_gpपन.स>
+#समावेश <linux/pm_runसमय.स>
+#समावेश <linux/regulator/consumer.h>
+#समावेश <linux/slab.h>
+#समावेश <sound/initval.h>
+#समावेश <sound/pcm_params.h>
+#समावेश <sound/soc.h>
+#समावेश <sound/soc-dapm.h>
+#समावेश <sound/tlv.h>
 
-#include "ak4458.h"
+#समावेश "ak4458.h"
 
-#define AK4458_NUM_SUPPLIES 2
-static const char *ak4458_supply_names[AK4458_NUM_SUPPLIES] = {
+#घोषणा AK4458_NUM_SUPPLIES 2
+अटल स्थिर अक्षर *ak4458_supply_names[AK4458_NUM_SUPPLIES] = अणु
 	"DVDD",
 	"AVDD",
-};
+पूर्ण;
 
-enum ak4458_type {
+क्रमागत ak4458_type अणु
 	AK4458 = 0,
 	AK4497 = 1,
-};
+पूर्ण;
 
-struct ak4458_drvdata {
-	struct snd_soc_dai_driver *dai_drv;
-	const struct snd_soc_component_driver *comp_drv;
-	enum ak4458_type type;
-};
+काष्ठा ak4458_drvdata अणु
+	काष्ठा snd_soc_dai_driver *dai_drv;
+	स्थिर काष्ठा snd_soc_component_driver *comp_drv;
+	क्रमागत ak4458_type type;
+पूर्ण;
 
 /* AK4458 Codec Private Data */
-struct ak4458_priv {
-	struct regulator_bulk_data supplies[AK4458_NUM_SUPPLIES];
-	const struct ak4458_drvdata *drvdata;
-	struct device *dev;
-	struct regmap *regmap;
-	struct gpio_desc *reset_gpiod;
-	struct gpio_desc *mute_gpiod;
-	int digfil;	/* SSLOW, SD, SLOW bits */
-	int fs;		/* sampling rate */
-	int fmt;
-	int slots;
-	int slot_width;
+काष्ठा ak4458_priv अणु
+	काष्ठा regulator_bulk_data supplies[AK4458_NUM_SUPPLIES];
+	स्थिर काष्ठा ak4458_drvdata *drvdata;
+	काष्ठा device *dev;
+	काष्ठा regmap *regmap;
+	काष्ठा gpio_desc *reset_gpiod;
+	काष्ठा gpio_desc *mute_gpiod;
+	पूर्णांक digfil;	/* SSLOW, SD, SLOW bits */
+	पूर्णांक fs;		/* sampling rate */
+	पूर्णांक fmt;
+	पूर्णांक slots;
+	पूर्णांक slot_width;
 	u32 dsd_path;    /* For ak4497 */
-};
+पूर्ण;
 
-static const struct reg_default ak4458_reg_defaults[] = {
-	{ 0x00, 0x0C },	/*	0x00	AK4458_00_CONTROL1	*/
-	{ 0x01, 0x22 },	/*	0x01	AK4458_01_CONTROL2	*/
-	{ 0x02, 0x00 },	/*	0x02	AK4458_02_CONTROL3	*/
-	{ 0x03, 0xFF },	/*	0x03	AK4458_03_LCHATT	*/
-	{ 0x04, 0xFF },	/*	0x04	AK4458_04_RCHATT	*/
-	{ 0x05, 0x00 },	/*	0x05	AK4458_05_CONTROL4	*/
-	{ 0x06, 0x00 },	/*	0x06	AK4458_06_DSD1		*/
-	{ 0x07, 0x03 },	/*	0x07	AK4458_07_CONTROL5	*/
-	{ 0x08, 0x00 },	/*	0x08	AK4458_08_SOUND_CONTROL	*/
-	{ 0x09, 0x00 },	/*	0x09	AK4458_09_DSD2		*/
-	{ 0x0A, 0x0D },	/*	0x0A	AK4458_0A_CONTROL6	*/
-	{ 0x0B, 0x0C },	/*	0x0B	AK4458_0B_CONTROL7	*/
-	{ 0x0C, 0x00 },	/*	0x0C	AK4458_0C_CONTROL8	*/
-	{ 0x0D, 0x00 },	/*	0x0D	AK4458_0D_CONTROL9	*/
-	{ 0x0E, 0x50 },	/*	0x0E	AK4458_0E_CONTROL10	*/
-	{ 0x0F, 0xFF },	/*	0x0F	AK4458_0F_L2CHATT	*/
-	{ 0x10, 0xFF },	/*	0x10	AK4458_10_R2CHATT	*/
-	{ 0x11, 0xFF },	/*	0x11	AK4458_11_L3CHATT	*/
-	{ 0x12, 0xFF },	/*	0x12	AK4458_12_R3CHATT	*/
-	{ 0x13, 0xFF },	/*	0x13	AK4458_13_L4CHATT	*/
-	{ 0x14, 0xFF },	/*	0x14	AK4458_14_R4CHATT	*/
-};
+अटल स्थिर काष्ठा reg_शेष ak4458_reg_शेषs[] = अणु
+	अणु 0x00, 0x0C पूर्ण,	/*	0x00	AK4458_00_CONTROL1	*/
+	अणु 0x01, 0x22 पूर्ण,	/*	0x01	AK4458_01_CONTROL2	*/
+	अणु 0x02, 0x00 पूर्ण,	/*	0x02	AK4458_02_CONTROL3	*/
+	अणु 0x03, 0xFF पूर्ण,	/*	0x03	AK4458_03_LCHATT	*/
+	अणु 0x04, 0xFF पूर्ण,	/*	0x04	AK4458_04_RCHATT	*/
+	अणु 0x05, 0x00 पूर्ण,	/*	0x05	AK4458_05_CONTROL4	*/
+	अणु 0x06, 0x00 पूर्ण,	/*	0x06	AK4458_06_DSD1		*/
+	अणु 0x07, 0x03 पूर्ण,	/*	0x07	AK4458_07_CONTROL5	*/
+	अणु 0x08, 0x00 पूर्ण,	/*	0x08	AK4458_08_SOUND_CONTROL	*/
+	अणु 0x09, 0x00 पूर्ण,	/*	0x09	AK4458_09_DSD2		*/
+	अणु 0x0A, 0x0D पूर्ण,	/*	0x0A	AK4458_0A_CONTROL6	*/
+	अणु 0x0B, 0x0C पूर्ण,	/*	0x0B	AK4458_0B_CONTROL7	*/
+	अणु 0x0C, 0x00 पूर्ण,	/*	0x0C	AK4458_0C_CONTROL8	*/
+	अणु 0x0D, 0x00 पूर्ण,	/*	0x0D	AK4458_0D_CONTROL9	*/
+	अणु 0x0E, 0x50 पूर्ण,	/*	0x0E	AK4458_0E_CONTROL10	*/
+	अणु 0x0F, 0xFF पूर्ण,	/*	0x0F	AK4458_0F_L2CHATT	*/
+	अणु 0x10, 0xFF पूर्ण,	/*	0x10	AK4458_10_R2CHATT	*/
+	अणु 0x11, 0xFF पूर्ण,	/*	0x11	AK4458_11_L3CHATT	*/
+	अणु 0x12, 0xFF पूर्ण,	/*	0x12	AK4458_12_R3CHATT	*/
+	अणु 0x13, 0xFF पूर्ण,	/*	0x13	AK4458_13_L4CHATT	*/
+	अणु 0x14, 0xFF पूर्ण,	/*	0x14	AK4458_14_R4CHATT	*/
+पूर्ण;
 
 /*
  * Volume control:
  * from -127 to 0 dB in 0.5 dB steps (mute instead of -127.5 dB)
  */
-static DECLARE_TLV_DB_SCALE(dac_tlv, -12750, 50, 1);
+अटल DECLARE_TLV_DB_SCALE(dac_tlv, -12750, 50, 1);
 
 /*
  * DEM1 bit DEM0 bit Mode
  * 0 0 44.1kHz
- * 0 1 OFF (default)
+ * 0 1 OFF (शेष)
  * 1 0 48kHz
  * 1 1 32kHz
  */
-static const char * const ak4458_dem_select_texts[] = {
+अटल स्थिर अक्षर * स्थिर ak4458_dem_select_texts[] = अणु
 	"44.1kHz", "OFF", "48kHz", "32kHz"
-};
+पूर्ण;
 
 /*
  * SSLOW, SD, SLOW bits Digital Filter Setting
@@ -104,20 +105,20 @@ static const char * const ak4458_dem_select_texts[] = {
  * 0, 1, 1 : Short delay Slow Roll-Off Filter
  * 1, *, * : Super Slow Roll-Off Filter
  */
-static const char * const ak4458_digfil_select_texts[] = {
+अटल स्थिर अक्षर * स्थिर ak4458_digfil_select_texts[] = अणु
 	"Sharp Roll-Off Filter",
 	"Slow Roll-Off Filter",
 	"Short delay Sharp Roll-Off Filter",
 	"Short delay Slow Roll-Off Filter",
 	"Super Slow Roll-Off Filter"
-};
+पूर्ण;
 
 /*
  * DZFB: Inverting Enable of DZF
  * 0: DZF goes H at Zero Detection
  * 1: DZF goes L at Zero Detection
  */
-static const char * const ak4458_dzfb_select_texts[] = {"H", "L"};
+अटल स्थिर अक्षर * स्थिर ak4458_dzfb_select_texts[] = अणु"H", "L"पूर्ण;
 
 /*
  * SC1-0 bits: Sound Mode Setting
@@ -126,107 +127,107 @@ static const char * const ak4458_dzfb_select_texts[] = {"H", "L"};
  * 1 0 : Sound Mode 2
  * 1 1 : Reserved
  */
-static const char * const ak4458_sc_select_texts[] = {
+अटल स्थिर अक्षर * स्थिर ak4458_sc_select_texts[] = अणु
 	"Sound Mode 0", "Sound Mode 1", "Sound Mode 2"
-};
+पूर्ण;
 
 /* FIR2-0 bits: FIR Filter Mode Setting */
-static const char * const ak4458_fir_select_texts[] = {
+अटल स्थिर अक्षर * स्थिर ak4458_fir_select_texts[] = अणु
 	"Mode 0", "Mode 1", "Mode 2", "Mode 3",
 	"Mode 4", "Mode 5", "Mode 6", "Mode 7",
-};
+पूर्ण;
 
 /* ATS1-0 bits Attenuation Speed */
-static const char * const ak4458_ats_select_texts[] = {
+अटल स्थिर अक्षर * स्थिर ak4458_ats_select_texts[] = अणु
 	"4080/fs", "2040/fs", "510/fs", "255/fs",
-};
+पूर्ण;
 
 /* DIF2 bit Audio Interface Format Setting(BICK fs) */
-static const char * const ak4458_dif_select_texts[] = {"32fs,48fs", "64fs",};
+अटल स्थिर अक्षर * स्थिर ak4458_dअगर_select_texts[] = अणु"32fs,48fs", "64fs",पूर्ण;
 
-static const struct soc_enum ak4458_dac1_dem_enum =
+अटल स्थिर काष्ठा soc_क्रमागत ak4458_dac1_dem_क्रमागत =
 	SOC_ENUM_SINGLE(AK4458_01_CONTROL2, 1,
 			ARRAY_SIZE(ak4458_dem_select_texts),
 			ak4458_dem_select_texts);
-static const struct soc_enum ak4458_dac2_dem_enum =
+अटल स्थिर काष्ठा soc_क्रमागत ak4458_dac2_dem_क्रमागत =
 	SOC_ENUM_SINGLE(AK4458_0A_CONTROL6, 0,
 			ARRAY_SIZE(ak4458_dem_select_texts),
 			ak4458_dem_select_texts);
-static const struct soc_enum ak4458_dac3_dem_enum =
+अटल स्थिर काष्ठा soc_क्रमागत ak4458_dac3_dem_क्रमागत =
 	SOC_ENUM_SINGLE(AK4458_0E_CONTROL10, 4,
 			ARRAY_SIZE(ak4458_dem_select_texts),
 			ak4458_dem_select_texts);
-static const struct soc_enum ak4458_dac4_dem_enum =
+अटल स्थिर काष्ठा soc_क्रमागत ak4458_dac4_dem_क्रमागत =
 	SOC_ENUM_SINGLE(AK4458_0E_CONTROL10, 6,
 			ARRAY_SIZE(ak4458_dem_select_texts),
 			ak4458_dem_select_texts);
-static const struct soc_enum ak4458_digfil_enum =
+अटल स्थिर काष्ठा soc_क्रमागत ak4458_digfil_क्रमागत =
 	SOC_ENUM_SINGLE_EXT(ARRAY_SIZE(ak4458_digfil_select_texts),
 			    ak4458_digfil_select_texts);
-static const struct soc_enum ak4458_dzfb_enum =
+अटल स्थिर काष्ठा soc_क्रमागत ak4458_dzfb_क्रमागत =
 	SOC_ENUM_SINGLE(AK4458_02_CONTROL3, 2,
 			ARRAY_SIZE(ak4458_dzfb_select_texts),
 			ak4458_dzfb_select_texts);
-static const struct soc_enum ak4458_sm_enum =
+अटल स्थिर काष्ठा soc_क्रमागत ak4458_sm_क्रमागत =
 	SOC_ENUM_SINGLE(AK4458_08_SOUND_CONTROL, 0,
 			ARRAY_SIZE(ak4458_sc_select_texts),
 			ak4458_sc_select_texts);
-static const struct soc_enum ak4458_fir_enum =
+अटल स्थिर काष्ठा soc_क्रमागत ak4458_fir_क्रमागत =
 	SOC_ENUM_SINGLE(AK4458_0C_CONTROL8, 0,
 			ARRAY_SIZE(ak4458_fir_select_texts),
 			ak4458_fir_select_texts);
-static const struct soc_enum ak4458_ats_enum =
+अटल स्थिर काष्ठा soc_क्रमागत ak4458_ats_क्रमागत =
 	SOC_ENUM_SINGLE(AK4458_0B_CONTROL7, 6,
 			ARRAY_SIZE(ak4458_ats_select_texts),
 			ak4458_ats_select_texts);
-static const struct soc_enum ak4458_dif_enum =
+अटल स्थिर काष्ठा soc_क्रमागत ak4458_dअगर_क्रमागत =
 	SOC_ENUM_SINGLE(AK4458_00_CONTROL1, 3,
-			ARRAY_SIZE(ak4458_dif_select_texts),
-			ak4458_dif_select_texts);
+			ARRAY_SIZE(ak4458_dअगर_select_texts),
+			ak4458_dअगर_select_texts);
 
-static int get_digfil(struct snd_kcontrol *kcontrol,
-		      struct snd_ctl_elem_value *ucontrol)
-{
-	struct snd_soc_component *component = snd_soc_kcontrol_component(kcontrol);
-	struct ak4458_priv *ak4458 = snd_soc_component_get_drvdata(component);
+अटल पूर्णांक get_digfil(काष्ठा snd_kcontrol *kcontrol,
+		      काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	काष्ठा snd_soc_component *component = snd_soc_kcontrol_component(kcontrol);
+	काष्ठा ak4458_priv *ak4458 = snd_soc_component_get_drvdata(component);
 
-	ucontrol->value.enumerated.item[0] = ak4458->digfil;
+	ucontrol->value.क्रमागतerated.item[0] = ak4458->digfil;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int set_digfil(struct snd_kcontrol *kcontrol,
-		      struct snd_ctl_elem_value *ucontrol)
-{
-	struct snd_soc_component *component = snd_soc_kcontrol_component(kcontrol);
-	struct ak4458_priv *ak4458 = snd_soc_component_get_drvdata(component);
-	int num;
+अटल पूर्णांक set_digfil(काष्ठा snd_kcontrol *kcontrol,
+		      काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	काष्ठा snd_soc_component *component = snd_soc_kcontrol_component(kcontrol);
+	काष्ठा ak4458_priv *ak4458 = snd_soc_component_get_drvdata(component);
+	पूर्णांक num;
 
-	num = ucontrol->value.enumerated.item[0];
-	if (num > 4)
-		return -EINVAL;
+	num = ucontrol->value.क्रमागतerated.item[0];
+	अगर (num > 4)
+		वापस -EINVAL;
 
 	ak4458->digfil = num;
 
-	/* write SD bit */
+	/* ग_लिखो SD bit */
 	snd_soc_component_update_bits(component, AK4458_01_CONTROL2,
 			    AK4458_SD_MASK,
 			    ((ak4458->digfil & 0x02) << 4));
 
-	/* write SLOW bit */
+	/* ग_लिखो SLOW bit */
 	snd_soc_component_update_bits(component, AK4458_02_CONTROL3,
 			    AK4458_SLOW_MASK,
 			    (ak4458->digfil & 0x01));
 
-	/* write SSLOW bit */
+	/* ग_लिखो SSLOW bit */
 	snd_soc_component_update_bits(component, AK4458_05_CONTROL4,
 			    AK4458_SSLOW_MASK,
 			    ((ak4458->digfil & 0x04) >> 2));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct snd_kcontrol_new ak4458_snd_controls[] = {
+अटल स्थिर काष्ठा snd_kcontrol_new ak4458_snd_controls[] = अणु
 	SOC_DOUBLE_R_TLV("DAC1 Playback Volume", AK4458_03_LCHATT,
 			 AK4458_04_RCHATT, 0, 0xFF, 0, dac_tlv),
 	SOC_DOUBLE_R_TLV("DAC2 Playback Volume", AK4458_0F_L2CHATT,
@@ -235,209 +236,209 @@ static const struct snd_kcontrol_new ak4458_snd_controls[] = {
 			 AK4458_12_R3CHATT, 0, 0xFF, 0, dac_tlv),
 	SOC_DOUBLE_R_TLV("DAC4 Playback Volume", AK4458_13_L4CHATT,
 			 AK4458_14_R4CHATT, 0, 0xFF, 0, dac_tlv),
-	SOC_ENUM("AK4458 De-emphasis Response DAC1", ak4458_dac1_dem_enum),
-	SOC_ENUM("AK4458 De-emphasis Response DAC2", ak4458_dac2_dem_enum),
-	SOC_ENUM("AK4458 De-emphasis Response DAC3", ak4458_dac3_dem_enum),
-	SOC_ENUM("AK4458 De-emphasis Response DAC4", ak4458_dac4_dem_enum),
-	SOC_ENUM_EXT("AK4458 Digital Filter Setting", ak4458_digfil_enum,
+	SOC_ENUM("AK4458 De-emphasis Response DAC1", ak4458_dac1_dem_क्रमागत),
+	SOC_ENUM("AK4458 De-emphasis Response DAC2", ak4458_dac2_dem_क्रमागत),
+	SOC_ENUM("AK4458 De-emphasis Response DAC3", ak4458_dac3_dem_क्रमागत),
+	SOC_ENUM("AK4458 De-emphasis Response DAC4", ak4458_dac4_dem_क्रमागत),
+	SOC_ENUM_EXT("AK4458 Digital Filter Setting", ak4458_digfil_क्रमागत,
 		     get_digfil, set_digfil),
-	SOC_ENUM("AK4458 Inverting Enable of DZFB", ak4458_dzfb_enum),
-	SOC_ENUM("AK4458 Sound Mode", ak4458_sm_enum),
-	SOC_ENUM("AK4458 FIR Filter Mode Setting", ak4458_fir_enum),
+	SOC_ENUM("AK4458 Inverting Enable of DZFB", ak4458_dzfb_क्रमागत),
+	SOC_ENUM("AK4458 Sound Mode", ak4458_sm_क्रमागत),
+	SOC_ENUM("AK4458 FIR Filter Mode Setting", ak4458_fir_क्रमागत),
 	SOC_ENUM("AK4458 Attenuation transition Time Setting",
-		 ak4458_ats_enum),
-	SOC_ENUM("AK4458 BICK fs Setting", ak4458_dif_enum),
-};
+		 ak4458_ats_क्रमागत),
+	SOC_ENUM("AK4458 BICK fs Setting", ak4458_dअगर_क्रमागत),
+पूर्ण;
 
-/* ak4458 dapm widgets */
-static const struct snd_soc_dapm_widget ak4458_dapm_widgets[] = {
-	SND_SOC_DAPM_DAC("AK4458 DAC1", NULL, AK4458_0A_CONTROL6, 2, 0),/*pw*/
+/* ak4458 dapm widमाला_लो */
+अटल स्थिर काष्ठा snd_soc_dapm_widget ak4458_dapm_widमाला_लो[] = अणु
+	SND_SOC_DAPM_DAC("AK4458 DAC1", शून्य, AK4458_0A_CONTROL6, 2, 0),/*pw*/
 	SND_SOC_DAPM_AIF_IN("AK4458 SDTI", "Playback", 0, SND_SOC_NOPM, 0, 0),
 	SND_SOC_DAPM_OUTPUT("AK4458 AOUTA"),
 
-	SND_SOC_DAPM_DAC("AK4458 DAC2", NULL, AK4458_0A_CONTROL6, 3, 0),/*pw*/
+	SND_SOC_DAPM_DAC("AK4458 DAC2", शून्य, AK4458_0A_CONTROL6, 3, 0),/*pw*/
 	SND_SOC_DAPM_OUTPUT("AK4458 AOUTB"),
 
-	SND_SOC_DAPM_DAC("AK4458 DAC3", NULL, AK4458_0B_CONTROL7, 2, 0),/*pw*/
+	SND_SOC_DAPM_DAC("AK4458 DAC3", शून्य, AK4458_0B_CONTROL7, 2, 0),/*pw*/
 	SND_SOC_DAPM_OUTPUT("AK4458 AOUTC"),
 
-	SND_SOC_DAPM_DAC("AK4458 DAC4", NULL, AK4458_0B_CONTROL7, 3, 0),/*pw*/
+	SND_SOC_DAPM_DAC("AK4458 DAC4", शून्य, AK4458_0B_CONTROL7, 3, 0),/*pw*/
 	SND_SOC_DAPM_OUTPUT("AK4458 AOUTD"),
-};
+पूर्ण;
 
-static const struct snd_soc_dapm_route ak4458_intercon[] = {
-	{"AK4458 DAC1",		NULL,	"AK4458 SDTI"},
-	{"AK4458 AOUTA",	NULL,	"AK4458 DAC1"},
+अटल स्थिर काष्ठा snd_soc_dapm_route ak4458_पूर्णांकercon[] = अणु
+	अणु"AK4458 DAC1",		शून्य,	"AK4458 SDTI"पूर्ण,
+	अणु"AK4458 AOUTA",	शून्य,	"AK4458 DAC1"पूर्ण,
 
-	{"AK4458 DAC2",		NULL,	"AK4458 SDTI"},
-	{"AK4458 AOUTB",	NULL,	"AK4458 DAC2"},
+	अणु"AK4458 DAC2",		शून्य,	"AK4458 SDTI"पूर्ण,
+	अणु"AK4458 AOUTB",	शून्य,	"AK4458 DAC2"पूर्ण,
 
-	{"AK4458 DAC3",		NULL,	"AK4458 SDTI"},
-	{"AK4458 AOUTC",	NULL,	"AK4458 DAC3"},
+	अणु"AK4458 DAC3",		शून्य,	"AK4458 SDTI"पूर्ण,
+	अणु"AK4458 AOUTC",	शून्य,	"AK4458 DAC3"पूर्ण,
 
-	{"AK4458 DAC4",		NULL,	"AK4458 SDTI"},
-	{"AK4458 AOUTD",	NULL,	"AK4458 DAC4"},
-};
+	अणु"AK4458 DAC4",		शून्य,	"AK4458 SDTI"पूर्ण,
+	अणु"AK4458 AOUTD",	शून्य,	"AK4458 DAC4"पूर्ण,
+पूर्ण;
 
 /* ak4497 controls */
-static const struct snd_kcontrol_new ak4497_snd_controls[] = {
+अटल स्थिर काष्ठा snd_kcontrol_new ak4497_snd_controls[] = अणु
 	SOC_DOUBLE_R_TLV("DAC Playback Volume", AK4458_03_LCHATT,
 			 AK4458_04_RCHATT, 0, 0xFF, 0, dac_tlv),
-	SOC_ENUM("AK4497 De-emphasis Response DAC", ak4458_dac1_dem_enum),
-	SOC_ENUM_EXT("AK4497 Digital Filter Setting", ak4458_digfil_enum,
+	SOC_ENUM("AK4497 De-emphasis Response DAC", ak4458_dac1_dem_क्रमागत),
+	SOC_ENUM_EXT("AK4497 Digital Filter Setting", ak4458_digfil_क्रमागत,
 		     get_digfil, set_digfil),
-	SOC_ENUM("AK4497 Inverting Enable of DZFB", ak4458_dzfb_enum),
-	SOC_ENUM("AK4497 Sound Mode", ak4458_sm_enum),
+	SOC_ENUM("AK4497 Inverting Enable of DZFB", ak4458_dzfb_क्रमागत),
+	SOC_ENUM("AK4497 Sound Mode", ak4458_sm_क्रमागत),
 	SOC_ENUM("AK4497 Attenuation transition Time Setting",
-		 ak4458_ats_enum),
-};
+		 ak4458_ats_क्रमागत),
+पूर्ण;
 
-/* ak4497 dapm widgets */
-static const struct snd_soc_dapm_widget ak4497_dapm_widgets[] = {
-	SND_SOC_DAPM_DAC("AK4497 DAC", NULL, AK4458_0A_CONTROL6, 2, 0),
+/* ak4497 dapm widमाला_लो */
+अटल स्थिर काष्ठा snd_soc_dapm_widget ak4497_dapm_widमाला_लो[] = अणु
+	SND_SOC_DAPM_DAC("AK4497 DAC", शून्य, AK4458_0A_CONTROL6, 2, 0),
 	SND_SOC_DAPM_AIF_IN("AK4497 SDTI", "Playback", 0, SND_SOC_NOPM, 0, 0),
 	SND_SOC_DAPM_OUTPUT("AK4497 AOUT"),
-};
+पूर्ण;
 
 /* ak4497 dapm routes */
-static const struct snd_soc_dapm_route ak4497_intercon[] = {
-	{"AK4497 DAC",		NULL,	"AK4497 SDTI"},
-	{"AK4497 AOUT",		NULL,	"AK4497 DAC"},
+अटल स्थिर काष्ठा snd_soc_dapm_route ak4497_पूर्णांकercon[] = अणु
+	अणु"AK4497 DAC",		शून्य,	"AK4497 SDTI"पूर्ण,
+	अणु"AK4497 AOUT",		शून्य,	"AK4497 DAC"पूर्ण,
 
-};
+पूर्ण;
 
-static int ak4458_get_tdm_mode(struct ak4458_priv *ak4458)
-{
-	switch (ak4458->slots * ak4458->slot_width) {
-	case 128:
-		return 1;
-	case 256:
-		return 2;
-	case 512:
-		return 3;
-	default:
-		return 0;
-	}
-}
+अटल पूर्णांक ak4458_get_tdm_mode(काष्ठा ak4458_priv *ak4458)
+अणु
+	चयन (ak4458->slots * ak4458->slot_width) अणु
+	हाल 128:
+		वापस 1;
+	हाल 256:
+		वापस 2;
+	हाल 512:
+		वापस 3;
+	शेष:
+		वापस 0;
+	पूर्ण
+पूर्ण
 
-static int ak4458_rstn_control(struct snd_soc_component *component, int bit)
-{
-	int ret;
+अटल पूर्णांक ak4458_rstn_control(काष्ठा snd_soc_component *component, पूर्णांक bit)
+अणु
+	पूर्णांक ret;
 
-	if (bit)
+	अगर (bit)
 		ret = snd_soc_component_update_bits(component,
 					  AK4458_00_CONTROL1,
 					  AK4458_RSTN_MASK,
 					  0x1);
-	else
+	अन्यथा
 		ret = snd_soc_component_update_bits(component,
 					  AK4458_00_CONTROL1,
 					  AK4458_RSTN_MASK,
 					  0x0);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ak4458_hw_params(struct snd_pcm_substream *substream,
-			    struct snd_pcm_hw_params *params,
-			    struct snd_soc_dai *dai)
-{
-	struct snd_soc_component *component = dai->component;
-	struct ak4458_priv *ak4458 = snd_soc_component_get_drvdata(component);
-	int pcm_width = max(params_physical_width(params), ak4458->slot_width);
-	u8 format, dsdsel0, dsdsel1, dchn;
-	int nfs1, dsd_bclk, ret, channels, channels_max;
+अटल पूर्णांक ak4458_hw_params(काष्ठा snd_pcm_substream *substream,
+			    काष्ठा snd_pcm_hw_params *params,
+			    काष्ठा snd_soc_dai *dai)
+अणु
+	काष्ठा snd_soc_component *component = dai->component;
+	काष्ठा ak4458_priv *ak4458 = snd_soc_component_get_drvdata(component);
+	पूर्णांक pcm_width = max(params_physical_width(params), ak4458->slot_width);
+	u8 क्रमmat, dsdsel0, dsdsel1, dchn;
+	पूर्णांक nfs1, dsd_bclk, ret, channels, channels_max;
 
 	nfs1 = params_rate(params);
 	ak4458->fs = nfs1;
 
-	/* calculate bit clock */
+	/* calculate bit घड़ी */
 	channels = params_channels(params);
 	channels_max = dai->driver->playback.channels_max;
 
-	switch (params_format(params)) {
-	case SNDRV_PCM_FORMAT_DSD_U8:
-	case SNDRV_PCM_FORMAT_DSD_U16_LE:
-	case SNDRV_PCM_FORMAT_DSD_U16_BE:
-	case SNDRV_PCM_FORMAT_DSD_U32_LE:
-	case SNDRV_PCM_FORMAT_DSD_U32_BE:
+	चयन (params_क्रमmat(params)) अणु
+	हाल SNDRV_PCM_FORMAT_DSD_U8:
+	हाल SNDRV_PCM_FORMAT_DSD_U16_LE:
+	हाल SNDRV_PCM_FORMAT_DSD_U16_BE:
+	हाल SNDRV_PCM_FORMAT_DSD_U32_LE:
+	हाल SNDRV_PCM_FORMAT_DSD_U32_BE:
 		dsd_bclk = nfs1 * params_physical_width(params);
-		switch (dsd_bclk) {
-		case 2822400:
+		चयन (dsd_bclk) अणु
+		हाल 2822400:
 			dsdsel0 = 0;
 			dsdsel1 = 0;
-			break;
-		case 5644800:
+			अवरोध;
+		हाल 5644800:
 			dsdsel0 = 1;
 			dsdsel1 = 0;
-			break;
-		case 11289600:
+			अवरोध;
+		हाल 11289600:
 			dsdsel0 = 0;
 			dsdsel1 = 1;
-			break;
-		case 22579200:
-			if (ak4458->drvdata->type == AK4497) {
+			अवरोध;
+		हाल 22579200:
+			अगर (ak4458->drvdata->type == AK4497) अणु
 				dsdsel0 = 1;
 				dsdsel1 = 1;
-			} else {
+			पूर्ण अन्यथा अणु
 				dev_err(dai->dev, "DSD512 not supported.\n");
-				return -EINVAL;
-			}
-			break;
-		default:
+				वापस -EINVAL;
+			पूर्ण
+			अवरोध;
+		शेष:
 			dev_err(dai->dev, "Unsupported dsd bclk.\n");
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
 		snd_soc_component_update_bits(component, AK4458_06_DSD1,
 					      AK4458_DSDSEL_MASK, dsdsel0);
 		snd_soc_component_update_bits(component, AK4458_09_DSD2,
 					      AK4458_DSDSEL_MASK, dsdsel1);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	/* Master Clock Frequency Auto Setting Mode Enable */
 	snd_soc_component_update_bits(component, AK4458_00_CONTROL1, 0x80, 0x80);
 
-	switch (pcm_width) {
-	case 16:
-		if (ak4458->fmt == SND_SOC_DAIFMT_I2S)
-			format = AK4458_DIF_24BIT_I2S;
-		else
-			format = AK4458_DIF_16BIT_LSB;
-		break;
-	case 32:
-		switch (ak4458->fmt) {
-		case SND_SOC_DAIFMT_I2S:
-			format = AK4458_DIF_32BIT_I2S;
-			break;
-		case SND_SOC_DAIFMT_LEFT_J:
-			format = AK4458_DIF_32BIT_MSB;
-			break;
-		case SND_SOC_DAIFMT_RIGHT_J:
-			format = AK4458_DIF_32BIT_LSB;
-			break;
-		case SND_SOC_DAIFMT_DSP_B:
-			format = AK4458_DIF_32BIT_MSB;
-			break;
-		case SND_SOC_DAIFMT_PDM:
-			format = AK4458_DIF_32BIT_MSB;
-			break;
-		default:
-			return -EINVAL;
-		}
-		break;
-	default:
-		return -EINVAL;
-	}
+	चयन (pcm_width) अणु
+	हाल 16:
+		अगर (ak4458->fmt == SND_SOC_DAIFMT_I2S)
+			क्रमmat = AK4458_DIF_24BIT_I2S;
+		अन्यथा
+			क्रमmat = AK4458_DIF_16BIT_LSB;
+		अवरोध;
+	हाल 32:
+		चयन (ak4458->fmt) अणु
+		हाल SND_SOC_DAIFMT_I2S:
+			क्रमmat = AK4458_DIF_32BIT_I2S;
+			अवरोध;
+		हाल SND_SOC_DAIFMT_LEFT_J:
+			क्रमmat = AK4458_DIF_32BIT_MSB;
+			अवरोध;
+		हाल SND_SOC_DAIFMT_RIGHT_J:
+			क्रमmat = AK4458_DIF_32BIT_LSB;
+			अवरोध;
+		हाल SND_SOC_DAIFMT_DSP_B:
+			क्रमmat = AK4458_DIF_32BIT_MSB;
+			अवरोध;
+		हाल SND_SOC_DAIFMT_PDM:
+			क्रमmat = AK4458_DIF_32BIT_MSB;
+			अवरोध;
+		शेष:
+			वापस -EINVAL;
+		पूर्ण
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
 	snd_soc_component_update_bits(component, AK4458_00_CONTROL1,
-			    AK4458_DIF_MASK, format);
+			    AK4458_DIF_MASK, क्रमmat);
 
 	/*
-	 * Enable/disable Daisy Chain if in TDM mode and the number of played
+	 * Enable/disable Daisy Chain अगर in TDM mode and the number of played
 	 * channels is bigger than the maximum supported number of channels
 	 */
 	dchn = ak4458_get_tdm_mode(ak4458) &&
@@ -448,46 +449,46 @@ static int ak4458_hw_params(struct snd_pcm_substream *substream,
 				      AK4458_DCHAIN_MASK, dchn);
 
 	ret = ak4458_rstn_control(component, 0);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ret = ak4458_rstn_control(component, 1);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ak4458_set_dai_fmt(struct snd_soc_dai *dai, unsigned int fmt)
-{
-	struct snd_soc_component *component = dai->component;
-	struct ak4458_priv *ak4458 = snd_soc_component_get_drvdata(component);
-	int ret;
+अटल पूर्णांक ak4458_set_dai_fmt(काष्ठा snd_soc_dai *dai, अचिन्हित पूर्णांक fmt)
+अणु
+	काष्ठा snd_soc_component *component = dai->component;
+	काष्ठा ak4458_priv *ak4458 = snd_soc_component_get_drvdata(component);
+	पूर्णांक ret;
 
-	switch (fmt & SND_SOC_DAIFMT_MASTER_MASK) {
-	case SND_SOC_DAIFMT_CBS_CFS: /* Slave Mode */
-		break;
-	case SND_SOC_DAIFMT_CBM_CFM: /* Master Mode is not supported */
-	case SND_SOC_DAIFMT_CBS_CFM:
-	case SND_SOC_DAIFMT_CBM_CFS:
-	default:
+	चयन (fmt & SND_SOC_DAIFMT_MASTER_MASK) अणु
+	हाल SND_SOC_DAIFMT_CBS_CFS: /* Slave Mode */
+		अवरोध;
+	हाल SND_SOC_DAIFMT_CBM_CFM: /* Master Mode is not supported */
+	हाल SND_SOC_DAIFMT_CBS_CFM:
+	हाल SND_SOC_DAIFMT_CBM_CFS:
+	शेष:
 		dev_err(component->dev, "Master mode unsupported\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	switch (fmt & SND_SOC_DAIFMT_FORMAT_MASK) {
-	case SND_SOC_DAIFMT_I2S:
-	case SND_SOC_DAIFMT_LEFT_J:
-	case SND_SOC_DAIFMT_RIGHT_J:
-	case SND_SOC_DAIFMT_DSP_B:
-	case SND_SOC_DAIFMT_PDM:
+	चयन (fmt & SND_SOC_DAIFMT_FORMAT_MASK) अणु
+	हाल SND_SOC_DAIFMT_I2S:
+	हाल SND_SOC_DAIFMT_LEFT_J:
+	हाल SND_SOC_DAIFMT_RIGHT_J:
+	हाल SND_SOC_DAIFMT_DSP_B:
+	हाल SND_SOC_DAIFMT_PDM:
 		ak4458->fmt = fmt & SND_SOC_DAIFMT_FORMAT_MASK;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		dev_err(component->dev, "Audio format 0x%02X unsupported\n",
 			fmt & SND_SOC_DAIFMT_FORMAT_MASK);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	/* DSD mode */
 	snd_soc_component_update_bits(component, AK4458_02_CONTROL3,
@@ -496,53 +497,53 @@ static int ak4458_set_dai_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 				      AK4458_DP_MASK : 0);
 
 	ret = ak4458_rstn_control(component, 0);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ret = ak4458_rstn_control(component, 1);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const int att_speed[] = { 4080, 2040, 510, 255 };
+अटल स्थिर पूर्णांक att_speed[] = अणु 4080, 2040, 510, 255 पूर्ण;
 
-static int ak4458_set_dai_mute(struct snd_soc_dai *dai, int mute, int direction)
-{
-	struct snd_soc_component *component = dai->component;
-	struct ak4458_priv *ak4458 = snd_soc_component_get_drvdata(component);
-	int nfs, ndt, reg;
-	int ats;
+अटल पूर्णांक ak4458_set_dai_mute(काष्ठा snd_soc_dai *dai, पूर्णांक mute, पूर्णांक direction)
+अणु
+	काष्ठा snd_soc_component *component = dai->component;
+	काष्ठा ak4458_priv *ak4458 = snd_soc_component_get_drvdata(component);
+	पूर्णांक nfs, ndt, reg;
+	पूर्णांक ats;
 
 	nfs = ak4458->fs;
 
-	reg = snd_soc_component_read(component, AK4458_0B_CONTROL7);
+	reg = snd_soc_component_पढ़ो(component, AK4458_0B_CONTROL7);
 	ats = (reg & AK4458_ATS_MASK) >> AK4458_ATS_SHIFT;
 
 	ndt = att_speed[ats] / (nfs / 1000);
 
-	if (mute) {
+	अगर (mute) अणु
 		snd_soc_component_update_bits(component, AK4458_01_CONTROL2,  0x01, 1);
 		mdelay(ndt);
-		if (ak4458->mute_gpiod)
+		अगर (ak4458->mute_gpiod)
 			gpiod_set_value_cansleep(ak4458->mute_gpiod, 1);
-	} else {
-		if (ak4458->mute_gpiod)
+	पूर्ण अन्यथा अणु
+		अगर (ak4458->mute_gpiod)
 			gpiod_set_value_cansleep(ak4458->mute_gpiod, 0);
 		snd_soc_component_update_bits(component, AK4458_01_CONTROL2, 0x01, 0);
 		mdelay(ndt);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ak4458_set_tdm_slot(struct snd_soc_dai *dai, unsigned int tx_mask,
-			       unsigned int rx_mask, int slots, int slot_width)
-{
-	struct snd_soc_component *component = dai->component;
-	struct ak4458_priv *ak4458 = snd_soc_component_get_drvdata(component);
-	int mode;
+अटल पूर्णांक ak4458_set_tdm_slot(काष्ठा snd_soc_dai *dai, अचिन्हित पूर्णांक tx_mask,
+			       अचिन्हित पूर्णांक rx_mask, पूर्णांक slots, पूर्णांक slot_width)
+अणु
+	काष्ठा snd_soc_component *component = dai->component;
+	काष्ठा ak4458_priv *ak4458 = snd_soc_component_get_drvdata(component);
+	पूर्णांक mode;
 
 	ak4458->slots = slots;
 	ak4458->slot_width = slot_width;
@@ -553,154 +554,154 @@ static int ak4458_set_tdm_slot(struct snd_soc_dai *dai, unsigned int tx_mask,
 			    AK4458_MODE_MASK,
 			    mode);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#define AK4458_FORMATS	(SNDRV_PCM_FMTBIT_S16_LE |\
+#घोषणा AK4458_FORMATS	(SNDRV_PCM_FMTBIT_S16_LE |\
 			 SNDRV_PCM_FMTBIT_S24_LE |\
 			 SNDRV_PCM_FMTBIT_S32_LE |\
 			 SNDRV_PCM_FMTBIT_DSD_U8 |\
 			 SNDRV_PCM_FMTBIT_DSD_U16_LE |\
 			 SNDRV_PCM_FMTBIT_DSD_U32_LE)
 
-static const unsigned int ak4458_rates[] = {
+अटल स्थिर अचिन्हित पूर्णांक ak4458_rates[] = अणु
 	8000, 11025,  16000, 22050,
 	32000, 44100, 48000, 88200,
 	96000, 176400, 192000, 352800,
 	384000, 705600, 768000, 1411200,
 	2822400,
-};
+पूर्ण;
 
-static const struct snd_pcm_hw_constraint_list ak4458_rate_constraints = {
+अटल स्थिर काष्ठा snd_pcm_hw_स्थिरraपूर्णांक_list ak4458_rate_स्थिरraपूर्णांकs = अणु
 	.count = ARRAY_SIZE(ak4458_rates),
 	.list = ak4458_rates,
-};
+पूर्ण;
 
-static int ak4458_startup(struct snd_pcm_substream *substream,
-			  struct snd_soc_dai *dai)
-{
-	int ret;
+अटल पूर्णांक ak4458_startup(काष्ठा snd_pcm_substream *substream,
+			  काष्ठा snd_soc_dai *dai)
+अणु
+	पूर्णांक ret;
 
-	ret = snd_pcm_hw_constraint_list(substream->runtime, 0,
+	ret = snd_pcm_hw_स्थिरraपूर्णांक_list(substream->runसमय, 0,
 					 SNDRV_PCM_HW_PARAM_RATE,
-					 &ak4458_rate_constraints);
+					 &ak4458_rate_स्थिरraपूर्णांकs);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const struct snd_soc_dai_ops ak4458_dai_ops = {
+अटल स्थिर काष्ठा snd_soc_dai_ops ak4458_dai_ops = अणु
 	.startup        = ak4458_startup,
 	.hw_params	= ak4458_hw_params,
 	.set_fmt	= ak4458_set_dai_fmt,
 	.mute_stream	= ak4458_set_dai_mute,
 	.set_tdm_slot	= ak4458_set_tdm_slot,
 	.no_capture_mute = 1,
-};
+पूर्ण;
 
-static struct snd_soc_dai_driver ak4458_dai = {
+अटल काष्ठा snd_soc_dai_driver ak4458_dai = अणु
 	.name = "ak4458-aif",
-	.playback = {
+	.playback = अणु
 		.stream_name = "Playback",
 		.channels_min = 1,
 		.channels_max = 8,
 		.rates = SNDRV_PCM_RATE_KNOT,
-		.formats = AK4458_FORMATS,
-	},
+		.क्रमmats = AK4458_FORMATS,
+	पूर्ण,
 	.ops = &ak4458_dai_ops,
-};
+पूर्ण;
 
-static struct snd_soc_dai_driver ak4497_dai = {
+अटल काष्ठा snd_soc_dai_driver ak4497_dai = अणु
 	.name = "ak4497-aif",
-	.playback = {
+	.playback = अणु
 		.stream_name = "Playback",
 		.channels_min = 1,
 		.channels_max = 2,
 		.rates = SNDRV_PCM_RATE_KNOT,
-		.formats = AK4458_FORMATS,
-	},
+		.क्रमmats = AK4458_FORMATS,
+	पूर्ण,
 	.ops = &ak4458_dai_ops,
-};
+पूर्ण;
 
-static void ak4458_reset(struct ak4458_priv *ak4458, bool active)
-{
-	if (ak4458->reset_gpiod) {
+अटल व्योम ak4458_reset(काष्ठा ak4458_priv *ak4458, bool active)
+अणु
+	अगर (ak4458->reset_gpiod) अणु
 		gpiod_set_value_cansleep(ak4458->reset_gpiod, active);
 		usleep_range(1000, 2000);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int ak4458_init(struct snd_soc_component *component)
-{
-	struct ak4458_priv *ak4458 = snd_soc_component_get_drvdata(component);
-	int ret;
+अटल पूर्णांक ak4458_init(काष्ठा snd_soc_component *component)
+अणु
+	काष्ठा ak4458_priv *ak4458 = snd_soc_component_get_drvdata(component);
+	पूर्णांक ret;
 
 	/* External Mute ON */
-	if (ak4458->mute_gpiod)
+	अगर (ak4458->mute_gpiod)
 		gpiod_set_value_cansleep(ak4458->mute_gpiod, 1);
 
 	ak4458_reset(ak4458, false);
 
 	ret = snd_soc_component_update_bits(component, AK4458_00_CONTROL1,
 			    0x80, 0x80);   /* ACKS bit = 1; 10000000 */
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	if (ak4458->drvdata->type == AK4497) {
+	अगर (ak4458->drvdata->type == AK4497) अणु
 		ret = snd_soc_component_update_bits(component, AK4458_09_DSD2,
 						    0x4, (ak4458->dsd_path << 2));
-		if (ret < 0)
-			return ret;
-	}
+		अगर (ret < 0)
+			वापस ret;
+	पूर्ण
 
-	return ak4458_rstn_control(component, 1);
-}
+	वापस ak4458_rstn_control(component, 1);
+पूर्ण
 
-static int ak4458_probe(struct snd_soc_component *component)
-{
-	struct ak4458_priv *ak4458 = snd_soc_component_get_drvdata(component);
+अटल पूर्णांक ak4458_probe(काष्ठा snd_soc_component *component)
+अणु
+	काष्ठा ak4458_priv *ak4458 = snd_soc_component_get_drvdata(component);
 
 	ak4458->fs = 48000;
 
-	return ak4458_init(component);
-}
+	वापस ak4458_init(component);
+पूर्ण
 
-static void ak4458_remove(struct snd_soc_component *component)
-{
-	struct ak4458_priv *ak4458 = snd_soc_component_get_drvdata(component);
+अटल व्योम ak4458_हटाओ(काष्ठा snd_soc_component *component)
+अणु
+	काष्ठा ak4458_priv *ak4458 = snd_soc_component_get_drvdata(component);
 
 	ak4458_reset(ak4458, true);
-}
+पूर्ण
 
-#ifdef CONFIG_PM
-static int __maybe_unused ak4458_runtime_suspend(struct device *dev)
-{
-	struct ak4458_priv *ak4458 = dev_get_drvdata(dev);
+#अगर_घोषित CONFIG_PM
+अटल पूर्णांक __maybe_unused ak4458_runसमय_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा ak4458_priv *ak4458 = dev_get_drvdata(dev);
 
 	regcache_cache_only(ak4458->regmap, true);
 
 	ak4458_reset(ak4458, true);
 
-	if (ak4458->mute_gpiod)
+	अगर (ak4458->mute_gpiod)
 		gpiod_set_value_cansleep(ak4458->mute_gpiod, 0);
 
 	regulator_bulk_disable(ARRAY_SIZE(ak4458->supplies),
 			       ak4458->supplies);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __maybe_unused ak4458_runtime_resume(struct device *dev)
-{
-	struct ak4458_priv *ak4458 = dev_get_drvdata(dev);
-	int ret;
+अटल पूर्णांक __maybe_unused ak4458_runसमय_resume(काष्ठा device *dev)
+अणु
+	काष्ठा ak4458_priv *ak4458 = dev_get_drvdata(dev);
+	पूर्णांक ret;
 
 	ret = regulator_bulk_enable(ARRAY_SIZE(ak4458->supplies),
 				    ak4458->supplies);
-	if (ret != 0) {
+	अगर (ret != 0) अणु
 		dev_err(ak4458->dev, "Failed to enable supplies: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	if (ak4458->mute_gpiod)
+	अगर (ak4458->mute_gpiod)
 		gpiod_set_value_cansleep(ak4458->mute_gpiod, 1);
 
 	ak4458_reset(ak4458, true);
@@ -709,80 +710,80 @@ static int __maybe_unused ak4458_runtime_resume(struct device *dev)
 	regcache_cache_only(ak4458->regmap, false);
 	regcache_mark_dirty(ak4458->regmap);
 
-	return regcache_sync(ak4458->regmap);
-}
-#endif /* CONFIG_PM */
+	वापस regcache_sync(ak4458->regmap);
+पूर्ण
+#पूर्ण_अगर /* CONFIG_PM */
 
-static const struct snd_soc_component_driver soc_codec_dev_ak4458 = {
+अटल स्थिर काष्ठा snd_soc_component_driver soc_codec_dev_ak4458 = अणु
 	.probe			= ak4458_probe,
-	.remove			= ak4458_remove,
+	.हटाओ			= ak4458_हटाओ,
 	.controls		= ak4458_snd_controls,
 	.num_controls		= ARRAY_SIZE(ak4458_snd_controls),
-	.dapm_widgets		= ak4458_dapm_widgets,
-	.num_dapm_widgets	= ARRAY_SIZE(ak4458_dapm_widgets),
-	.dapm_routes		= ak4458_intercon,
-	.num_dapm_routes	= ARRAY_SIZE(ak4458_intercon),
+	.dapm_widमाला_लो		= ak4458_dapm_widमाला_लो,
+	.num_dapm_widमाला_लो	= ARRAY_SIZE(ak4458_dapm_widमाला_लो),
+	.dapm_routes		= ak4458_पूर्णांकercon,
+	.num_dapm_routes	= ARRAY_SIZE(ak4458_पूर्णांकercon),
 	.idle_bias_on		= 1,
-	.use_pmdown_time	= 1,
+	.use_pmकरोwn_समय	= 1,
 	.endianness		= 1,
 	.non_legacy_dai_naming	= 1,
-};
+पूर्ण;
 
-static const struct snd_soc_component_driver soc_codec_dev_ak4497 = {
+अटल स्थिर काष्ठा snd_soc_component_driver soc_codec_dev_ak4497 = अणु
 	.probe			= ak4458_probe,
-	.remove			= ak4458_remove,
+	.हटाओ			= ak4458_हटाओ,
 	.controls		= ak4497_snd_controls,
 	.num_controls		= ARRAY_SIZE(ak4497_snd_controls),
-	.dapm_widgets		= ak4497_dapm_widgets,
-	.num_dapm_widgets	= ARRAY_SIZE(ak4497_dapm_widgets),
-	.dapm_routes		= ak4497_intercon,
-	.num_dapm_routes	= ARRAY_SIZE(ak4497_intercon),
+	.dapm_widमाला_लो		= ak4497_dapm_widमाला_लो,
+	.num_dapm_widमाला_लो	= ARRAY_SIZE(ak4497_dapm_widमाला_लो),
+	.dapm_routes		= ak4497_पूर्णांकercon,
+	.num_dapm_routes	= ARRAY_SIZE(ak4497_पूर्णांकercon),
 	.idle_bias_on		= 1,
-	.use_pmdown_time	= 1,
+	.use_pmकरोwn_समय	= 1,
 	.endianness		= 1,
 	.non_legacy_dai_naming	= 1,
-};
+पूर्ण;
 
-static const struct regmap_config ak4458_regmap = {
+अटल स्थिर काष्ठा regmap_config ak4458_regmap = अणु
 	.reg_bits = 8,
 	.val_bits = 8,
 
-	.max_register = AK4458_14_R4CHATT,
-	.reg_defaults = ak4458_reg_defaults,
-	.num_reg_defaults = ARRAY_SIZE(ak4458_reg_defaults),
+	.max_रेजिस्टर = AK4458_14_R4CHATT,
+	.reg_शेषs = ak4458_reg_शेषs,
+	.num_reg_शेषs = ARRAY_SIZE(ak4458_reg_शेषs),
 	.cache_type = REGCACHE_RBTREE,
-};
+पूर्ण;
 
-static const struct ak4458_drvdata ak4458_drvdata = {
+अटल स्थिर काष्ठा ak4458_drvdata ak4458_drvdata = अणु
 	.dai_drv = &ak4458_dai,
 	.comp_drv = &soc_codec_dev_ak4458,
 	.type = AK4458,
-};
+पूर्ण;
 
-static const struct ak4458_drvdata ak4497_drvdata = {
+अटल स्थिर काष्ठा ak4458_drvdata ak4497_drvdata = अणु
 	.dai_drv = &ak4497_dai,
 	.comp_drv = &soc_codec_dev_ak4497,
 	.type = AK4497,
-};
+पूर्ण;
 
-static const struct dev_pm_ops ak4458_pm = {
-	SET_RUNTIME_PM_OPS(ak4458_runtime_suspend, ak4458_runtime_resume, NULL)
-	SET_SYSTEM_SLEEP_PM_OPS(pm_runtime_force_suspend,
-				pm_runtime_force_resume)
-};
+अटल स्थिर काष्ठा dev_pm_ops ak4458_pm = अणु
+	SET_RUNTIME_PM_OPS(ak4458_runसमय_suspend, ak4458_runसमय_resume, शून्य)
+	SET_SYSTEM_SLEEP_PM_OPS(pm_runसमय_क्रमce_suspend,
+				pm_runसमय_क्रमce_resume)
+पूर्ण;
 
-static int ak4458_i2c_probe(struct i2c_client *i2c)
-{
-	struct ak4458_priv *ak4458;
-	int ret, i;
+अटल पूर्णांक ak4458_i2c_probe(काष्ठा i2c_client *i2c)
+अणु
+	काष्ठा ak4458_priv *ak4458;
+	पूर्णांक ret, i;
 
-	ak4458 = devm_kzalloc(&i2c->dev, sizeof(*ak4458), GFP_KERNEL);
-	if (!ak4458)
-		return -ENOMEM;
+	ak4458 = devm_kzalloc(&i2c->dev, माप(*ak4458), GFP_KERNEL);
+	अगर (!ak4458)
+		वापस -ENOMEM;
 
 	ak4458->regmap = devm_regmap_init_i2c(i2c, &ak4458_regmap);
-	if (IS_ERR(ak4458->regmap))
-		return PTR_ERR(ak4458->regmap);
+	अगर (IS_ERR(ak4458->regmap))
+		वापस PTR_ERR(ak4458->regmap);
 
 	i2c_set_clientdata(i2c, ak4458);
 	ak4458->dev = &i2c->dev;
@@ -791,64 +792,64 @@ static int ak4458_i2c_probe(struct i2c_client *i2c)
 
 	ak4458->reset_gpiod = devm_gpiod_get_optional(ak4458->dev, "reset",
 						      GPIOD_OUT_LOW);
-	if (IS_ERR(ak4458->reset_gpiod))
-		return PTR_ERR(ak4458->reset_gpiod);
+	अगर (IS_ERR(ak4458->reset_gpiod))
+		वापस PTR_ERR(ak4458->reset_gpiod);
 
 	ak4458->mute_gpiod = devm_gpiod_get_optional(ak4458->dev, "mute",
 						     GPIOD_OUT_LOW);
-	if (IS_ERR(ak4458->mute_gpiod))
-		return PTR_ERR(ak4458->mute_gpiod);
+	अगर (IS_ERR(ak4458->mute_gpiod))
+		वापस PTR_ERR(ak4458->mute_gpiod);
 
-	/* Optional property for ak4497 */
-	of_property_read_u32(i2c->dev.of_node, "dsd-path", &ak4458->dsd_path);
+	/* Optional property क्रम ak4497 */
+	of_property_पढ़ो_u32(i2c->dev.of_node, "dsd-path", &ak4458->dsd_path);
 
-	for (i = 0; i < ARRAY_SIZE(ak4458->supplies); i++)
+	क्रम (i = 0; i < ARRAY_SIZE(ak4458->supplies); i++)
 		ak4458->supplies[i].supply = ak4458_supply_names[i];
 
 	ret = devm_regulator_bulk_get(ak4458->dev, ARRAY_SIZE(ak4458->supplies),
 				      ak4458->supplies);
-	if (ret != 0) {
+	अगर (ret != 0) अणु
 		dev_err(ak4458->dev, "Failed to request supplies: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	ret = devm_snd_soc_register_component(ak4458->dev,
+	ret = devm_snd_soc_रेजिस्टर_component(ak4458->dev,
 					      ak4458->drvdata->comp_drv,
 					      ak4458->drvdata->dai_drv, 1);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(ak4458->dev, "Failed to register CODEC: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	pm_runtime_enable(&i2c->dev);
+	pm_runसमय_enable(&i2c->dev);
 	regcache_cache_only(ak4458->regmap, true);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ak4458_i2c_remove(struct i2c_client *i2c)
-{
-	pm_runtime_disable(&i2c->dev);
+अटल पूर्णांक ak4458_i2c_हटाओ(काष्ठा i2c_client *i2c)
+अणु
+	pm_runसमय_disable(&i2c->dev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct of_device_id ak4458_of_match[] = {
-	{ .compatible = "asahi-kasei,ak4458", .data = &ak4458_drvdata},
-	{ .compatible = "asahi-kasei,ak4497", .data = &ak4497_drvdata},
-	{ },
-};
+अटल स्थिर काष्ठा of_device_id ak4458_of_match[] = अणु
+	अणु .compatible = "asahi-kasei,ak4458", .data = &ak4458_drvdataपूर्ण,
+	अणु .compatible = "asahi-kasei,ak4497", .data = &ak4497_drvdataपूर्ण,
+	अणु पूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, ak4458_of_match);
 
-static struct i2c_driver ak4458_i2c_driver = {
-	.driver = {
+अटल काष्ठा i2c_driver ak4458_i2c_driver = अणु
+	.driver = अणु
 		.name = "ak4458",
 		.pm = &ak4458_pm,
 		.of_match_table = ak4458_of_match,
-		},
+		पूर्ण,
 	.probe_new = ak4458_i2c_probe,
-	.remove = ak4458_i2c_remove,
-};
+	.हटाओ = ak4458_i2c_हटाओ,
+पूर्ण;
 
 module_i2c_driver(ak4458_i2c_driver);
 

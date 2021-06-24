@@ -1,7 +1,8 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _PERF_UI_MAP_BROWSER_H_
-#define _PERF_UI_MAP_BROWSER_H_ 1
-struct map;
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _PERF_UI_MAP_BROWSER_H_
+#घोषणा _PERF_UI_MAP_BROWSER_H_ 1
+काष्ठा map;
 
-int map__browse(struct map *map);
-#endif /* _PERF_UI_MAP_BROWSER_H_ */
+पूर्णांक map__browse(काष्ठा map *map);
+#पूर्ण_अगर /* _PERF_UI_MAP_BROWSER_H_ */

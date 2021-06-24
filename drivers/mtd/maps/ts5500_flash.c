@@ -1,106 +1,107 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * ts5500_flash.c -- MTD map driver for Technology Systems TS-5500 board
+ * ts5500_flash.c -- MTD map driver क्रम Technology Systems TS-5500 board
  *
  * Copyright (C) 2004 Sean Young <sean@mess.org>
  *
  * Note:
- * - In order for detection to work, jumper 3 must be set.
+ * - In order क्रम detection to work, jumper 3 must be set.
  * - Drive A and B use the resident flash disk (RFD) flash translation layer.
- * - If you have created your own jffs file system and the bios overwrites
+ * - If you have created your own jffs file प्रणाली and the bios overग_लिखोs
  *   it during boot, try disabling Drive A: and B: in the boot order.
  */
 
-#include <linux/init.h>
-#include <linux/module.h>
-#include <linux/kernel.h>
-#include <linux/mtd/map.h>
-#include <linux/mtd/mtd.h>
-#include <linux/mtd/partitions.h>
-#include <linux/types.h>
+#समावेश <linux/init.h>
+#समावेश <linux/module.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/mtd/map.h>
+#समावेश <linux/mtd/mtd.h>
+#समावेश <linux/mtd/partitions.h>
+#समावेश <linux/types.h>
 
 
-#define WINDOW_ADDR	0x09400000
-#define WINDOW_SIZE	0x00200000
+#घोषणा WINDOW_ADDR	0x09400000
+#घोषणा WINDOW_SIZE	0x00200000
 
-static struct map_info ts5500_map = {
+अटल काष्ठा map_info ts5500_map = अणु
 	.name = "TS-5500 Flash",
 	.size = WINDOW_SIZE,
 	.bankwidth = 1,
 	.phys = WINDOW_ADDR
-};
+पूर्ण;
 
-static const struct mtd_partition ts5500_partitions[] = {
-	{
+अटल स्थिर काष्ठा mtd_partition ts5500_partitions[] = अणु
+	अणु
 		.name = "Drive A",
 		.offset = 0,
 		.size = 0x0e0000
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "BIOS",
 		.offset = 0x0e0000,
 		.size = 0x020000,
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "Drive B",
 		.offset = 0x100000,
 		.size = 0x100000
-	}
-};
+	पूर्ण
+पूर्ण;
 
-#define NUM_PARTITIONS ARRAY_SIZE(ts5500_partitions)
+#घोषणा NUM_PARTITIONS ARRAY_SIZE(ts5500_partitions)
 
-static struct mtd_info *mymtd;
+अटल काष्ठा mtd_info *mymtd;
 
-static int __init init_ts5500_map(void)
-{
-	int rc = 0;
+अटल पूर्णांक __init init_ts5500_map(व्योम)
+अणु
+	पूर्णांक rc = 0;
 
 	ts5500_map.virt = ioremap(ts5500_map.phys, ts5500_map.size);
 
-	if (!ts5500_map.virt) {
-		printk(KERN_ERR "Failed to ioremap\n");
+	अगर (!ts5500_map.virt) अणु
+		prपूर्णांकk(KERN_ERR "Failed to ioremap\n");
 		rc = -EIO;
-		goto err2;
-	}
+		जाओ err2;
+	पूर्ण
 
 	simple_map_init(&ts5500_map);
 
-	mymtd = do_map_probe("jedec_probe", &ts5500_map);
-	if (!mymtd)
-		mymtd = do_map_probe("map_rom", &ts5500_map);
+	mymtd = करो_map_probe("jedec_probe", &ts5500_map);
+	अगर (!mymtd)
+		mymtd = करो_map_probe("map_rom", &ts5500_map);
 
-	if (!mymtd) {
+	अगर (!mymtd) अणु
 		rc = -ENXIO;
-		goto err1;
-	}
+		जाओ err1;
+	पूर्ण
 
 	mymtd->owner = THIS_MODULE;
-	mtd_device_register(mymtd, ts5500_partitions, NUM_PARTITIONS);
+	mtd_device_रेजिस्टर(mymtd, ts5500_partitions, NUM_PARTITIONS);
 
-	return 0;
+	वापस 0;
 
 err1:
 	iounmap(ts5500_map.virt);
 err2:
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static void __exit cleanup_ts5500_map(void)
-{
-	if (mymtd) {
-		mtd_device_unregister(mymtd);
+अटल व्योम __निकास cleanup_ts5500_map(व्योम)
+अणु
+	अगर (mymtd) अणु
+		mtd_device_unरेजिस्टर(mymtd);
 		map_destroy(mymtd);
-	}
+	पूर्ण
 
-	if (ts5500_map.virt) {
+	अगर (ts5500_map.virt) अणु
 		iounmap(ts5500_map.virt);
-		ts5500_map.virt = NULL;
-	}
-}
+		ts5500_map.virt = शून्य;
+	पूर्ण
+पूर्ण
 
 module_init(init_ts5500_map);
-module_exit(cleanup_ts5500_map);
+module_निकास(cleanup_ts5500_map);
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Sean Young <sean@mess.org>");

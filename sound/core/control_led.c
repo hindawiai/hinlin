@@ -1,752 +1,753 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- *  LED state routines for driver control interface
+ *  LED state routines क्रम driver control पूर्णांकerface
  *  Copyright (c) 2021 by Jaroslav Kysela <perex@perex.cz>
  */
 
-#include <linux/slab.h>
-#include <linux/module.h>
-#include <linux/leds.h>
-#include <sound/core.h>
-#include <sound/control.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/module.h>
+#समावेश <linux/leds.h>
+#समावेश <sound/core.h>
+#समावेश <sound/control.h>
 
 MODULE_AUTHOR("Jaroslav Kysela <perex@perex.cz>");
 MODULE_DESCRIPTION("ALSA control interface to LED trigger code.");
 MODULE_LICENSE("GPL");
 
-#define MAX_LED (((SNDRV_CTL_ELEM_ACCESS_MIC_LED - SNDRV_CTL_ELEM_ACCESS_SPK_LED) \
+#घोषणा MAX_LED (((SNDRV_CTL_ELEM_ACCESS_MIC_LED - SNDRV_CTL_ELEM_ACCESS_SPK_LED) \
 			>> SNDRV_CTL_ELEM_ACCESS_LED_SHIFT) + 1)
 
-#define to_led_card_dev(_dev) \
-	container_of(_dev, struct snd_ctl_led_card, dev)
+#घोषणा to_led_card_dev(_dev) \
+	container_of(_dev, काष्ठा snd_ctl_led_card, dev)
 
-enum snd_ctl_led_mode {
+क्रमागत snd_ctl_led_mode अणु
 	 MODE_FOLLOW_MUTE = 0,
 	 MODE_FOLLOW_ROUTE,
 	 MODE_OFF,
 	 MODE_ON,
-};
+पूर्ण;
 
-struct snd_ctl_led_card {
-	struct device dev;
-	int number;
-	struct snd_ctl_led *led;
-};
+काष्ठा snd_ctl_led_card अणु
+	काष्ठा device dev;
+	पूर्णांक number;
+	काष्ठा snd_ctl_led *led;
+पूर्ण;
 
-struct snd_ctl_led {
-	struct device dev;
-	struct list_head controls;
-	const char *name;
-	unsigned int group;
-	enum led_audio trigger_type;
-	enum snd_ctl_led_mode mode;
-	struct snd_ctl_led_card *cards[SNDRV_CARDS];
-};
+काष्ठा snd_ctl_led अणु
+	काष्ठा device dev;
+	काष्ठा list_head controls;
+	स्थिर अक्षर *name;
+	अचिन्हित पूर्णांक group;
+	क्रमागत led_audio trigger_type;
+	क्रमागत snd_ctl_led_mode mode;
+	काष्ठा snd_ctl_led_card *cards[SNDRV_CARDS];
+पूर्ण;
 
-struct snd_ctl_led_ctl {
-	struct list_head list;
-	struct snd_card *card;
-	unsigned int access;
-	struct snd_kcontrol *kctl;
-	unsigned int index_offset;
-};
+काष्ठा snd_ctl_led_ctl अणु
+	काष्ठा list_head list;
+	काष्ठा snd_card *card;
+	अचिन्हित पूर्णांक access;
+	काष्ठा snd_kcontrol *kctl;
+	अचिन्हित पूर्णांक index_offset;
+पूर्ण;
 
-static DEFINE_MUTEX(snd_ctl_led_mutex);
-static bool snd_ctl_led_card_valid[SNDRV_CARDS];
-static struct snd_ctl_led snd_ctl_leds[MAX_LED] = {
-	{
+अटल DEFINE_MUTEX(snd_ctl_led_mutex);
+अटल bool snd_ctl_led_card_valid[SNDRV_CARDS];
+अटल काष्ठा snd_ctl_led snd_ctl_leds[MAX_LED] = अणु
+	अणु
 		.name = "speaker",
 		.group = (SNDRV_CTL_ELEM_ACCESS_SPK_LED >> SNDRV_CTL_ELEM_ACCESS_LED_SHIFT) - 1,
 		.trigger_type = LED_AUDIO_MUTE,
 		.mode = MODE_FOLLOW_MUTE,
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "mic",
 		.group = (SNDRV_CTL_ELEM_ACCESS_MIC_LED >> SNDRV_CTL_ELEM_ACCESS_LED_SHIFT) - 1,
 		.trigger_type = LED_AUDIO_MICMUTE,
 		.mode = MODE_FOLLOW_MUTE,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static void snd_ctl_led_sysfs_add(struct snd_card *card);
-static void snd_ctl_led_sysfs_remove(struct snd_card *card);
+अटल व्योम snd_ctl_led_sysfs_add(काष्ठा snd_card *card);
+अटल व्योम snd_ctl_led_sysfs_हटाओ(काष्ठा snd_card *card);
 
-#define UPDATE_ROUTE(route, cb) \
-	do { \
-		int route2 = (cb); \
-		if (route2 >= 0) \
+#घोषणा UPDATE_ROUTE(route, cb) \
+	करो अणु \
+		पूर्णांक route2 = (cb); \
+		अगर (route2 >= 0) \
 			route = route < 0 ? route2 : (route | route2); \
-	} while (0)
+	पूर्ण जबतक (0)
 
-static inline unsigned int access_to_group(unsigned int access)
-{
-	return ((access & SNDRV_CTL_ELEM_ACCESS_LED_MASK) >>
+अटल अंतरभूत अचिन्हित पूर्णांक access_to_group(अचिन्हित पूर्णांक access)
+अणु
+	वापस ((access & SNDRV_CTL_ELEM_ACCESS_LED_MASK) >>
 				SNDRV_CTL_ELEM_ACCESS_LED_SHIFT) - 1;
-}
+पूर्ण
 
-static inline unsigned int group_to_access(unsigned int group)
-{
-	return (group + 1) << SNDRV_CTL_ELEM_ACCESS_LED_SHIFT;
-}
+अटल अंतरभूत अचिन्हित पूर्णांक group_to_access(अचिन्हित पूर्णांक group)
+अणु
+	वापस (group + 1) << SNDRV_CTL_ELEM_ACCESS_LED_SHIFT;
+पूर्ण
 
-static struct snd_ctl_led *snd_ctl_led_get_by_access(unsigned int access)
-{
-	unsigned int group = access_to_group(access);
-	if (group >= MAX_LED)
-		return NULL;
-	return &snd_ctl_leds[group];
-}
+अटल काष्ठा snd_ctl_led *snd_ctl_led_get_by_access(अचिन्हित पूर्णांक access)
+अणु
+	अचिन्हित पूर्णांक group = access_to_group(access);
+	अगर (group >= MAX_LED)
+		वापस शून्य;
+	वापस &snd_ctl_leds[group];
+पूर्ण
 
 /*
- * A note for callers:
- *   The two static variables info and value are protected using snd_ctl_led_mutex.
+ * A note क्रम callers:
+ *   The two अटल variables info and value are रक्षित using snd_ctl_led_mutex.
  */
-static int snd_ctl_led_get(struct snd_ctl_led_ctl *lctl)
-{
-	static struct snd_ctl_elem_info info;
-	static struct snd_ctl_elem_value value;
-	struct snd_kcontrol *kctl = lctl->kctl;
-	unsigned int i;
-	int result;
+अटल पूर्णांक snd_ctl_led_get(काष्ठा snd_ctl_led_ctl *lctl)
+अणु
+	अटल काष्ठा snd_ctl_elem_info info;
+	अटल काष्ठा snd_ctl_elem_value value;
+	काष्ठा snd_kcontrol *kctl = lctl->kctl;
+	अचिन्हित पूर्णांक i;
+	पूर्णांक result;
 
-	memset(&info, 0, sizeof(info));
+	स_रखो(&info, 0, माप(info));
 	info.id = kctl->id;
 	info.id.index += lctl->index_offset;
 	info.id.numid += lctl->index_offset;
 	result = kctl->info(kctl, &info);
-	if (result < 0)
-		return -1;
-	memset(&value, 0, sizeof(value));
+	अगर (result < 0)
+		वापस -1;
+	स_रखो(&value, 0, माप(value));
 	value.id = info.id;
 	result = kctl->get(kctl, &value);
-	if (result < 0)
-		return -1;
-	if (info.type == SNDRV_CTL_ELEM_TYPE_BOOLEAN ||
-	    info.type == SNDRV_CTL_ELEM_TYPE_INTEGER) {
-		for (i = 0; i < info.count; i++)
-			if (value.value.integer.value[i] != info.value.integer.min)
-				return 1;
-	} else if (info.type == SNDRV_CTL_ELEM_TYPE_INTEGER64) {
-		for (i = 0; i < info.count; i++)
-			if (value.value.integer64.value[i] != info.value.integer64.min)
-				return 1;
-	}
-	return 0;
-}
+	अगर (result < 0)
+		वापस -1;
+	अगर (info.type == SNDRV_CTL_ELEM_TYPE_BOOLEAN ||
+	    info.type == SNDRV_CTL_ELEM_TYPE_INTEGER) अणु
+		क्रम (i = 0; i < info.count; i++)
+			अगर (value.value.पूर्णांकeger.value[i] != info.value.पूर्णांकeger.min)
+				वापस 1;
+	पूर्ण अन्यथा अगर (info.type == SNDRV_CTL_ELEM_TYPE_INTEGER64) अणु
+		क्रम (i = 0; i < info.count; i++)
+			अगर (value.value.पूर्णांकeger64.value[i] != info.value.पूर्णांकeger64.min)
+				वापस 1;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static void snd_ctl_led_set_state(struct snd_card *card, unsigned int access,
-				  struct snd_kcontrol *kctl, unsigned int ioff)
-{
-	struct snd_ctl_led *led;
-	struct snd_ctl_led_ctl *lctl;
-	int route;
+अटल व्योम snd_ctl_led_set_state(काष्ठा snd_card *card, अचिन्हित पूर्णांक access,
+				  काष्ठा snd_kcontrol *kctl, अचिन्हित पूर्णांक ioff)
+अणु
+	काष्ठा snd_ctl_led *led;
+	काष्ठा snd_ctl_led_ctl *lctl;
+	पूर्णांक route;
 	bool found;
 
 	led = snd_ctl_led_get_by_access(access);
-	if (!led)
-		return;
+	अगर (!led)
+		वापस;
 	route = -1;
 	found = false;
 	mutex_lock(&snd_ctl_led_mutex);
-	/* the card may not be registered (active) at this point */
-	if (card && !snd_ctl_led_card_valid[card->number]) {
+	/* the card may not be रेजिस्टरed (active) at this poपूर्णांक */
+	अगर (card && !snd_ctl_led_card_valid[card->number]) अणु
 		mutex_unlock(&snd_ctl_led_mutex);
-		return;
-	}
-	list_for_each_entry(lctl, &led->controls, list) {
-		if (lctl->kctl == kctl && lctl->index_offset == ioff)
+		वापस;
+	पूर्ण
+	list_क्रम_each_entry(lctl, &led->controls, list) अणु
+		अगर (lctl->kctl == kctl && lctl->index_offset == ioff)
 			found = true;
 		UPDATE_ROUTE(route, snd_ctl_led_get(lctl));
-	}
-	if (!found && kctl && card) {
-		lctl = kzalloc(sizeof(*lctl), GFP_KERNEL);
-		if (lctl) {
+	पूर्ण
+	अगर (!found && kctl && card) अणु
+		lctl = kzalloc(माप(*lctl), GFP_KERNEL);
+		अगर (lctl) अणु
 			lctl->card = card;
 			lctl->access = access;
 			lctl->kctl = kctl;
 			lctl->index_offset = ioff;
 			list_add(&lctl->list, &led->controls);
 			UPDATE_ROUTE(route, snd_ctl_led_get(lctl));
-		}
-	}
+		पूर्ण
+	पूर्ण
 	mutex_unlock(&snd_ctl_led_mutex);
-	switch (led->mode) {
-	case MODE_OFF:		route = 1; break;
-	case MODE_ON:		route = 0; break;
-	case MODE_FOLLOW_ROUTE:	if (route >= 0) route ^= 1; break;
-	case MODE_FOLLOW_MUTE:	/* noop */ break;
-	}
-	if (route >= 0)
+	चयन (led->mode) अणु
+	हाल MODE_OFF:		route = 1; अवरोध;
+	हाल MODE_ON:		route = 0; अवरोध;
+	हाल MODE_FOLLOW_ROUTE:	अगर (route >= 0) route ^= 1; अवरोध;
+	हाल MODE_FOLLOW_MUTE:	/* noop */ अवरोध;
+	पूर्ण
+	अगर (route >= 0)
 		ledtrig_audio_set(led->trigger_type, route ? LED_OFF : LED_ON);
-}
+पूर्ण
 
-static struct snd_ctl_led_ctl *snd_ctl_led_find(struct snd_kcontrol *kctl, unsigned int ioff)
-{
-	struct list_head *controls;
-	struct snd_ctl_led_ctl *lctl;
-	unsigned int group;
+अटल काष्ठा snd_ctl_led_ctl *snd_ctl_led_find(काष्ठा snd_kcontrol *kctl, अचिन्हित पूर्णांक ioff)
+अणु
+	काष्ठा list_head *controls;
+	काष्ठा snd_ctl_led_ctl *lctl;
+	अचिन्हित पूर्णांक group;
 
-	for (group = 0; group < MAX_LED; group++) {
+	क्रम (group = 0; group < MAX_LED; group++) अणु
 		controls = &snd_ctl_leds[group].controls;
-		list_for_each_entry(lctl, controls, list)
-			if (lctl->kctl == kctl && lctl->index_offset == ioff)
-				return lctl;
-	}
-	return NULL;
-}
+		list_क्रम_each_entry(lctl, controls, list)
+			अगर (lctl->kctl == kctl && lctl->index_offset == ioff)
+				वापस lctl;
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
-static unsigned int snd_ctl_led_remove(struct snd_kcontrol *kctl, unsigned int ioff,
-				       unsigned int access)
-{
-	struct snd_ctl_led_ctl *lctl;
-	unsigned int ret = 0;
+अटल अचिन्हित पूर्णांक snd_ctl_led_हटाओ(काष्ठा snd_kcontrol *kctl, अचिन्हित पूर्णांक ioff,
+				       अचिन्हित पूर्णांक access)
+अणु
+	काष्ठा snd_ctl_led_ctl *lctl;
+	अचिन्हित पूर्णांक ret = 0;
 
 	mutex_lock(&snd_ctl_led_mutex);
 	lctl = snd_ctl_led_find(kctl, ioff);
-	if (lctl && (access == 0 || access != lctl->access)) {
+	अगर (lctl && (access == 0 || access != lctl->access)) अणु
 		ret = lctl->access;
 		list_del(&lctl->list);
-		kfree(lctl);
-	}
+		kमुक्त(lctl);
+	पूर्ण
 	mutex_unlock(&snd_ctl_led_mutex);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void snd_ctl_led_notify(struct snd_card *card, unsigned int mask,
-			       struct snd_kcontrol *kctl, unsigned int ioff)
-{
-	struct snd_kcontrol_volatile *vd;
-	unsigned int access, access2;
+अटल व्योम snd_ctl_led_notअगरy(काष्ठा snd_card *card, अचिन्हित पूर्णांक mask,
+			       काष्ठा snd_kcontrol *kctl, अचिन्हित पूर्णांक ioff)
+अणु
+	काष्ठा snd_kcontrol_अस्थिर *vd;
+	अचिन्हित पूर्णांक access, access2;
 
-	if (mask == SNDRV_CTL_EVENT_MASK_REMOVE) {
-		access = snd_ctl_led_remove(kctl, ioff, 0);
-		if (access)
-			snd_ctl_led_set_state(card, access, NULL, 0);
-	} else if (mask & SNDRV_CTL_EVENT_MASK_INFO) {
+	अगर (mask == SNDRV_CTL_EVENT_MASK_REMOVE) अणु
+		access = snd_ctl_led_हटाओ(kctl, ioff, 0);
+		अगर (access)
+			snd_ctl_led_set_state(card, access, शून्य, 0);
+	पूर्ण अन्यथा अगर (mask & SNDRV_CTL_EVENT_MASK_INFO) अणु
 		vd = &kctl->vd[ioff];
 		access = vd->access & SNDRV_CTL_ELEM_ACCESS_LED_MASK;
-		access2 = snd_ctl_led_remove(kctl, ioff, access);
-		if (access2)
-			snd_ctl_led_set_state(card, access2, NULL, 0);
-		if (access)
+		access2 = snd_ctl_led_हटाओ(kctl, ioff, access);
+		अगर (access2)
+			snd_ctl_led_set_state(card, access2, शून्य, 0);
+		अगर (access)
 			snd_ctl_led_set_state(card, access, kctl, ioff);
-	} else if ((mask & (SNDRV_CTL_EVENT_MASK_ADD |
-			    SNDRV_CTL_EVENT_MASK_VALUE)) != 0) {
+	पूर्ण अन्यथा अगर ((mask & (SNDRV_CTL_EVENT_MASK_ADD |
+			    SNDRV_CTL_EVENT_MASK_VALUE)) != 0) अणु
 		vd = &kctl->vd[ioff];
 		access = vd->access & SNDRV_CTL_ELEM_ACCESS_LED_MASK;
-		if (access)
+		अगर (access)
 			snd_ctl_led_set_state(card, access, kctl, ioff);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int snd_ctl_led_set_id(int card_number, struct snd_ctl_elem_id *id,
-			      unsigned int group, bool set)
-{
-	struct snd_card *card;
-	struct snd_kcontrol *kctl;
-	struct snd_kcontrol_volatile *vd;
-	unsigned int ioff, access, new_access;
-	int err = 0;
+अटल पूर्णांक snd_ctl_led_set_id(पूर्णांक card_number, काष्ठा snd_ctl_elem_id *id,
+			      अचिन्हित पूर्णांक group, bool set)
+अणु
+	काष्ठा snd_card *card;
+	काष्ठा snd_kcontrol *kctl;
+	काष्ठा snd_kcontrol_अस्थिर *vd;
+	अचिन्हित पूर्णांक ioff, access, new_access;
+	पूर्णांक err = 0;
 
 	card = snd_card_ref(card_number);
-	if (card) {
-		down_write(&card->controls_rwsem);
+	अगर (card) अणु
+		करोwn_ग_लिखो(&card->controls_rwsem);
 		kctl = snd_ctl_find_id(card, id);
-		if (kctl) {
+		अगर (kctl) अणु
 			ioff = snd_ctl_get_ioff(kctl, id);
 			vd = &kctl->vd[ioff];
 			access = vd->access & SNDRV_CTL_ELEM_ACCESS_LED_MASK;
-			if (access != 0 && access != group_to_access(group)) {
+			अगर (access != 0 && access != group_to_access(group)) अणु
 				err = -EXDEV;
-				goto unlock;
-			}
+				जाओ unlock;
+			पूर्ण
 			new_access = vd->access & ~SNDRV_CTL_ELEM_ACCESS_LED_MASK;
-			if (set)
+			अगर (set)
 				new_access |= group_to_access(group);
-			if (new_access != vd->access) {
+			अगर (new_access != vd->access) अणु
 				vd->access = new_access;
-				snd_ctl_led_notify(card, SNDRV_CTL_EVENT_MASK_INFO, kctl, ioff);
-			}
-		} else {
+				snd_ctl_led_notअगरy(card, SNDRV_CTL_EVENT_MASK_INFO, kctl, ioff);
+			पूर्ण
+		पूर्ण अन्यथा अणु
 			err = -ENOENT;
-		}
+		पूर्ण
 unlock:
-		up_write(&card->controls_rwsem);
+		up_ग_लिखो(&card->controls_rwsem);
 		snd_card_unref(card);
-	} else {
+	पूर्ण अन्यथा अणु
 		err = -ENXIO;
-	}
-	return err;
-}
+	पूर्ण
+	वापस err;
+पूर्ण
 
-static void snd_ctl_led_refresh(void)
-{
-	unsigned int group;
+अटल व्योम snd_ctl_led_refresh(व्योम)
+अणु
+	अचिन्हित पूर्णांक group;
 
-	for (group = 0; group < MAX_LED; group++)
-		snd_ctl_led_set_state(NULL, group_to_access(group), NULL, 0);
-}
+	क्रम (group = 0; group < MAX_LED; group++)
+		snd_ctl_led_set_state(शून्य, group_to_access(group), शून्य, 0);
+पूर्ण
 
-static void snd_ctl_led_ctl_destroy(struct snd_ctl_led_ctl *lctl)
-{
+अटल व्योम snd_ctl_led_ctl_destroy(काष्ठा snd_ctl_led_ctl *lctl)
+अणु
 	list_del(&lctl->list);
-	kfree(lctl);
-}
+	kमुक्त(lctl);
+पूर्ण
 
-static void snd_ctl_led_clean(struct snd_card *card)
-{
-	unsigned int group;
-	struct snd_ctl_led *led;
-	struct snd_ctl_led_ctl *lctl;
+अटल व्योम snd_ctl_led_clean(काष्ठा snd_card *card)
+अणु
+	अचिन्हित पूर्णांक group;
+	काष्ठा snd_ctl_led *led;
+	काष्ठा snd_ctl_led_ctl *lctl;
 
-	for (group = 0; group < MAX_LED; group++) {
+	क्रम (group = 0; group < MAX_LED; group++) अणु
 		led = &snd_ctl_leds[group];
 repeat:
-		list_for_each_entry(lctl, &led->controls, list)
-			if (!card || lctl->card == card) {
+		list_क्रम_each_entry(lctl, &led->controls, list)
+			अगर (!card || lctl->card == card) अणु
 				snd_ctl_led_ctl_destroy(lctl);
-				goto repeat;
-			}
-	}
-}
+				जाओ repeat;
+			पूर्ण
+	पूर्ण
+पूर्ण
 
-static int snd_ctl_led_reset(int card_number, unsigned int group)
-{
-	struct snd_card *card;
-	struct snd_ctl_led *led;
-	struct snd_ctl_led_ctl *lctl;
-	struct snd_kcontrol_volatile *vd;
+अटल पूर्णांक snd_ctl_led_reset(पूर्णांक card_number, अचिन्हित पूर्णांक group)
+अणु
+	काष्ठा snd_card *card;
+	काष्ठा snd_ctl_led *led;
+	काष्ठा snd_ctl_led_ctl *lctl;
+	काष्ठा snd_kcontrol_अस्थिर *vd;
 	bool change = false;
 
 	card = snd_card_ref(card_number);
-	if (!card)
-		return -ENXIO;
+	अगर (!card)
+		वापस -ENXIO;
 
 	mutex_lock(&snd_ctl_led_mutex);
-	if (!snd_ctl_led_card_valid[card_number]) {
+	अगर (!snd_ctl_led_card_valid[card_number]) अणु
 		mutex_unlock(&snd_ctl_led_mutex);
 		snd_card_unref(card);
-		return -ENXIO;
-	}
+		वापस -ENXIO;
+	पूर्ण
 	led = &snd_ctl_leds[group];
 repeat:
-	list_for_each_entry(lctl, &led->controls, list)
-		if (lctl->card == card) {
+	list_क्रम_each_entry(lctl, &led->controls, list)
+		अगर (lctl->card == card) अणु
 			vd = &lctl->kctl->vd[lctl->index_offset];
 			vd->access &= ~group_to_access(group);
 			snd_ctl_led_ctl_destroy(lctl);
 			change = true;
-			goto repeat;
-		}
+			जाओ repeat;
+		पूर्ण
 	mutex_unlock(&snd_ctl_led_mutex);
-	if (change)
-		snd_ctl_led_set_state(NULL, group_to_access(group), NULL, 0);
+	अगर (change)
+		snd_ctl_led_set_state(शून्य, group_to_access(group), शून्य, 0);
 	snd_card_unref(card);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void snd_ctl_led_register(struct snd_card *card)
-{
-	struct snd_kcontrol *kctl;
-	unsigned int ioff;
+अटल व्योम snd_ctl_led_रेजिस्टर(काष्ठा snd_card *card)
+अणु
+	काष्ठा snd_kcontrol *kctl;
+	अचिन्हित पूर्णांक ioff;
 
-	if (snd_BUG_ON(card->number < 0 ||
+	अगर (snd_BUG_ON(card->number < 0 ||
 		       card->number >= ARRAY_SIZE(snd_ctl_led_card_valid)))
-		return;
+		वापस;
 	mutex_lock(&snd_ctl_led_mutex);
 	snd_ctl_led_card_valid[card->number] = true;
 	mutex_unlock(&snd_ctl_led_mutex);
-	/* the register callback is already called with held card->controls_rwsem */
-	list_for_each_entry(kctl, &card->controls, list)
-		for (ioff = 0; ioff < kctl->count; ioff++)
-			snd_ctl_led_notify(card, SNDRV_CTL_EVENT_MASK_VALUE, kctl, ioff);
+	/* the रेजिस्टर callback is alपढ़ोy called with held card->controls_rwsem */
+	list_क्रम_each_entry(kctl, &card->controls, list)
+		क्रम (ioff = 0; ioff < kctl->count; ioff++)
+			snd_ctl_led_notअगरy(card, SNDRV_CTL_EVENT_MASK_VALUE, kctl, ioff);
 	snd_ctl_led_refresh();
 	snd_ctl_led_sysfs_add(card);
-}
+पूर्ण
 
-static void snd_ctl_led_disconnect(struct snd_card *card)
-{
-	snd_ctl_led_sysfs_remove(card);
+अटल व्योम snd_ctl_led_disconnect(काष्ठा snd_card *card)
+अणु
+	snd_ctl_led_sysfs_हटाओ(card);
 	mutex_lock(&snd_ctl_led_mutex);
 	snd_ctl_led_card_valid[card->number] = false;
 	snd_ctl_led_clean(card);
 	mutex_unlock(&snd_ctl_led_mutex);
 	snd_ctl_led_refresh();
-}
+पूर्ण
 
-static void snd_ctl_led_card_release(struct device *dev)
-{
-	struct snd_ctl_led_card *led_card = to_led_card_dev(dev);
+अटल व्योम snd_ctl_led_card_release(काष्ठा device *dev)
+अणु
+	काष्ठा snd_ctl_led_card *led_card = to_led_card_dev(dev);
 
-	kfree(led_card);
-}
+	kमुक्त(led_card);
+पूर्ण
 
-static void snd_ctl_led_release(struct device *dev)
-{
-}
+अटल व्योम snd_ctl_led_release(काष्ठा device *dev)
+अणु
+पूर्ण
 
-static void snd_ctl_led_dev_release(struct device *dev)
-{
-}
+अटल व्योम snd_ctl_led_dev_release(काष्ठा device *dev)
+अणु
+पूर्ण
 
 /*
  * sysfs
  */
 
-static ssize_t show_mode(struct device *dev,
-			 struct device_attribute *attr, char *buf)
-{
-	struct snd_ctl_led *led = container_of(dev, struct snd_ctl_led, dev);
-	const char *str;
+अटल sमाप_प्रकार show_mode(काष्ठा device *dev,
+			 काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा snd_ctl_led *led = container_of(dev, काष्ठा snd_ctl_led, dev);
+	स्थिर अक्षर *str;
 
-	switch (led->mode) {
-	case MODE_FOLLOW_MUTE:	str = "follow-mute"; break;
-	case MODE_FOLLOW_ROUTE:	str = "follow-route"; break;
-	case MODE_ON:		str = "on"; break;
-	case MODE_OFF:		str = "off"; break;
-	}
-	return sprintf(buf, "%s\n", str);
-}
+	चयन (led->mode) अणु
+	हाल MODE_FOLLOW_MUTE:	str = "follow-mute"; अवरोध;
+	हाल MODE_FOLLOW_ROUTE:	str = "follow-route"; अवरोध;
+	हाल MODE_ON:		str = "on"; अवरोध;
+	हाल MODE_OFF:		str = "off"; अवरोध;
+	पूर्ण
+	वापस प्र_लिखो(buf, "%s\n", str);
+पूर्ण
 
-static ssize_t store_mode(struct device *dev, struct device_attribute *attr,
-			  const char *buf, size_t count)
-{
-	struct snd_ctl_led *led = container_of(dev, struct snd_ctl_led, dev);
-	char _buf[16];
-	size_t l = min(count, sizeof(_buf) - 1);
-	enum snd_ctl_led_mode mode;
+अटल sमाप_प्रकार store_mode(काष्ठा device *dev, काष्ठा device_attribute *attr,
+			  स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	काष्ठा snd_ctl_led *led = container_of(dev, काष्ठा snd_ctl_led, dev);
+	अक्षर _buf[16];
+	माप_प्रकार l = min(count, माप(_buf) - 1);
+	क्रमागत snd_ctl_led_mode mode;
 
-	memcpy(_buf, buf, l);
+	स_नकल(_buf, buf, l);
 	_buf[l] = '\0';
-	if (strstr(_buf, "mute"))
+	अगर (म_माला(_buf, "mute"))
 		mode = MODE_FOLLOW_MUTE;
-	else if (strstr(_buf, "route"))
+	अन्यथा अगर (म_माला(_buf, "route"))
 		mode = MODE_FOLLOW_ROUTE;
-	else if (strncmp(_buf, "off", 3) == 0 || strncmp(_buf, "0", 1) == 0)
+	अन्यथा अगर (म_भेदन(_buf, "off", 3) == 0 || म_भेदन(_buf, "0", 1) == 0)
 		mode = MODE_OFF;
-	else if (strncmp(_buf, "on", 2) == 0 || strncmp(_buf, "1", 1) == 0)
+	अन्यथा अगर (म_भेदन(_buf, "on", 2) == 0 || म_भेदन(_buf, "1", 1) == 0)
 		mode = MODE_ON;
-	else
-		return count;
+	अन्यथा
+		वापस count;
 
 	mutex_lock(&snd_ctl_led_mutex);
 	led->mode = mode;
 	mutex_unlock(&snd_ctl_led_mutex);
 
-	snd_ctl_led_set_state(NULL, group_to_access(led->group), NULL, 0);
-	return count;
-}
+	snd_ctl_led_set_state(शून्य, group_to_access(led->group), शून्य, 0);
+	वापस count;
+पूर्ण
 
-static ssize_t show_brightness(struct device *dev,
-			       struct device_attribute *attr, char *buf)
-{
-	struct snd_ctl_led *led = container_of(dev, struct snd_ctl_led, dev);
+अटल sमाप_प्रकार show_brightness(काष्ठा device *dev,
+			       काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा snd_ctl_led *led = container_of(dev, काष्ठा snd_ctl_led, dev);
 
-	return sprintf(buf, "%u\n", ledtrig_audio_get(led->trigger_type));
-}
+	वापस प्र_लिखो(buf, "%u\n", ledtrig_audio_get(led->trigger_type));
+पूर्ण
 
-static DEVICE_ATTR(mode, 0644, show_mode, store_mode);
-static DEVICE_ATTR(brightness, 0444, show_brightness, NULL);
+अटल DEVICE_ATTR(mode, 0644, show_mode, store_mode);
+अटल DEVICE_ATTR(brightness, 0444, show_brightness, शून्य);
 
-static struct attribute *snd_ctl_led_dev_attrs[] = {
+अटल काष्ठा attribute *snd_ctl_led_dev_attrs[] = अणु
 	&dev_attr_mode.attr,
 	&dev_attr_brightness.attr,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-static const struct attribute_group snd_ctl_led_dev_attr_group = {
+अटल स्थिर काष्ठा attribute_group snd_ctl_led_dev_attr_group = अणु
 	.attrs = snd_ctl_led_dev_attrs,
-};
+पूर्ण;
 
-static const struct attribute_group *snd_ctl_led_dev_attr_groups[] = {
+अटल स्थिर काष्ठा attribute_group *snd_ctl_led_dev_attr_groups[] = अणु
 	&snd_ctl_led_dev_attr_group,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-static char *find_eos(char *s)
-{
-	while (*s && *s != ',')
+अटल अक्षर *find_eos(अक्षर *s)
+अणु
+	जबतक (*s && *s != ',')
 		s++;
-	if (*s)
+	अगर (*s)
 		s++;
-	return s;
-}
+	वापस s;
+पूर्ण
 
-static char *parse_uint(char *s, unsigned int *val)
-{
-	unsigned long long res;
-	if (kstrtoull(s, 10, &res))
+अटल अक्षर *parse_uपूर्णांक(अक्षर *s, अचिन्हित पूर्णांक *val)
+अणु
+	अचिन्हित दीर्घ दीर्घ res;
+	अगर (kम_से_अदीर्घl(s, 10, &res))
 		res = 0;
 	*val = res;
-	return find_eos(s);
-}
+	वापस find_eos(s);
+पूर्ण
 
-static char *parse_string(char *s, char *val, size_t val_size)
-{
-	if (*s == '"' || *s == '\'') {
-		char c = *s;
+अटल अक्षर *parse_string(अक्षर *s, अक्षर *val, माप_प्रकार val_size)
+अणु
+	अगर (*s == '"' || *s == '\'') अणु
+		अक्षर c = *s;
 		s++;
-		while (*s && *s != c) {
-			if (val_size > 1) {
+		जबतक (*s && *s != c) अणु
+			अगर (val_size > 1) अणु
 				*val++ = *s;
 				val_size--;
-			}
+			पूर्ण
 			s++;
-		}
-	} else {
-		while (*s && *s != ',') {
-			if (val_size > 1) {
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		जबतक (*s && *s != ',') अणु
+			अगर (val_size > 1) अणु
 				*val++ = *s;
 				val_size--;
-			}
+			पूर्ण
 			s++;
-		}
-	}
+		पूर्ण
+	पूर्ण
 	*val = '\0';
-	if (*s)
+	अगर (*s)
 		s++;
-	return s;
-}
+	वापस s;
+पूर्ण
 
-static char *parse_iface(char *s, unsigned int *val)
-{
-	if (!strncasecmp(s, "card", 4))
+अटल अक्षर *parse_अगरace(अक्षर *s, अचिन्हित पूर्णांक *val)
+अणु
+	अगर (!strnहालcmp(s, "card", 4))
 		*val = SNDRV_CTL_ELEM_IFACE_CARD;
-	else if (!strncasecmp(s, "mixer", 5))
+	अन्यथा अगर (!strnहालcmp(s, "mixer", 5))
 		*val = SNDRV_CTL_ELEM_IFACE_MIXER;
-	return find_eos(s);
-}
+	वापस find_eos(s);
+पूर्ण
 
 /*
  * These types of input strings are accepted:
  *
- *   unsigned integer - numid (equivaled to numid=UINT)
- *   string - basic mixer name (equivalent to iface=MIXER,name=STR)
+ *   अचिन्हित पूर्णांकeger - numid (equivaled to numid=UINT)
+ *   string - basic mixer name (equivalent to अगरace=MIXER,name=STR)
  *   numid=UINT
- *   [iface=MIXER,][device=UINT,][subdevice=UINT,]name=STR[,index=UINT]
+ *   [अगरace=MIXER,][device=UINT,][subdevice=UINT,]name=STR[,index=UINT]
  */
-static ssize_t set_led_id(struct snd_ctl_led_card *led_card, const char *buf, size_t count,
+अटल sमाप_प्रकार set_led_id(काष्ठा snd_ctl_led_card *led_card, स्थिर अक्षर *buf, माप_प्रकार count,
 			  bool attach)
-{
-	char buf2[256], *s, *os;
-	size_t len = max(sizeof(s) - 1, count);
-	struct snd_ctl_elem_id id;
-	int err;
+अणु
+	अक्षर buf2[256], *s, *os;
+	माप_प्रकार len = max(माप(s) - 1, count);
+	काष्ठा snd_ctl_elem_id id;
+	पूर्णांक err;
 
-	strncpy(buf2, buf, len);
+	म_नकलन(buf2, buf, len);
 	buf2[len] = '\0';
-	memset(&id, 0, sizeof(id));
-	id.iface = SNDRV_CTL_ELEM_IFACE_MIXER;
+	स_रखो(&id, 0, माप(id));
+	id.अगरace = SNDRV_CTL_ELEM_IFACE_MIXER;
 	s = buf2;
-	while (*s) {
+	जबतक (*s) अणु
 		os = s;
-		if (!strncasecmp(s, "numid=", 6)) {
-			s = parse_uint(s + 6, &id.numid);
-		} else if (!strncasecmp(s, "iface=", 6)) {
-			s = parse_iface(s + 6, &id.iface);
-		} else if (!strncasecmp(s, "device=", 7)) {
-			s = parse_uint(s + 7, &id.device);
-		} else if (!strncasecmp(s, "subdevice=", 10)) {
-			s = parse_uint(s + 10, &id.subdevice);
-		} else if (!strncasecmp(s, "name=", 5)) {
-			s = parse_string(s + 5, id.name, sizeof(id.name));
-		} else if (!strncasecmp(s, "index=", 6)) {
-			s = parse_uint(s + 6, &id.index);
-		} else if (s == buf2) {
-			while (*s) {
-				if (*s < '0' || *s > '9')
-					break;
+		अगर (!strnहालcmp(s, "numid=", 6)) अणु
+			s = parse_uपूर्णांक(s + 6, &id.numid);
+		पूर्ण अन्यथा अगर (!strnहालcmp(s, "iface=", 6)) अणु
+			s = parse_अगरace(s + 6, &id.अगरace);
+		पूर्ण अन्यथा अगर (!strnहालcmp(s, "device=", 7)) अणु
+			s = parse_uपूर्णांक(s + 7, &id.device);
+		पूर्ण अन्यथा अगर (!strnहालcmp(s, "subdevice=", 10)) अणु
+			s = parse_uपूर्णांक(s + 10, &id.subdevice);
+		पूर्ण अन्यथा अगर (!strnहालcmp(s, "name=", 5)) अणु
+			s = parse_string(s + 5, id.name, माप(id.name));
+		पूर्ण अन्यथा अगर (!strnहालcmp(s, "index=", 6)) अणु
+			s = parse_uपूर्णांक(s + 6, &id.index);
+		पूर्ण अन्यथा अगर (s == buf2) अणु
+			जबतक (*s) अणु
+				अगर (*s < '0' || *s > '9')
+					अवरोध;
 				s++;
-			}
-			if (*s == '\0')
-				parse_uint(buf2, &id.numid);
-			else {
-				for (; *s >= ' '; s++);
+			पूर्ण
+			अगर (*s == '\0')
+				parse_uपूर्णांक(buf2, &id.numid);
+			अन्यथा अणु
+				क्रम (; *s >= ' '; s++);
 				*s = '\0';
-				strlcpy(id.name, buf2, sizeof(id.name));
-			}
-			break;
-		}
-		if (*s == ',')
+				strlcpy(id.name, buf2, माप(id.name));
+			पूर्ण
+			अवरोध;
+		पूर्ण
+		अगर (*s == ',')
 			s++;
-		if (s == os)
-			break;
-	}
+		अगर (s == os)
+			अवरोध;
+	पूर्ण
 
 	err = snd_ctl_led_set_id(led_card->number, &id, led_card->led->group, attach);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static ssize_t parse_attach(struct device *dev, struct device_attribute *attr,
-			    const char *buf, size_t count)
-{
-	struct snd_ctl_led_card *led_card = container_of(dev, struct snd_ctl_led_card, dev);
-	return set_led_id(led_card, buf, count, true);
-}
+अटल sमाप_प्रकार parse_attach(काष्ठा device *dev, काष्ठा device_attribute *attr,
+			    स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	काष्ठा snd_ctl_led_card *led_card = container_of(dev, काष्ठा snd_ctl_led_card, dev);
+	वापस set_led_id(led_card, buf, count, true);
+पूर्ण
 
-static ssize_t parse_detach(struct device *dev, struct device_attribute *attr,
-			    const char *buf, size_t count)
-{
-	struct snd_ctl_led_card *led_card = container_of(dev, struct snd_ctl_led_card, dev);
-	return set_led_id(led_card, buf, count, false);
-}
+अटल sमाप_प्रकार parse_detach(काष्ठा device *dev, काष्ठा device_attribute *attr,
+			    स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	काष्ठा snd_ctl_led_card *led_card = container_of(dev, काष्ठा snd_ctl_led_card, dev);
+	वापस set_led_id(led_card, buf, count, false);
+पूर्ण
 
-static ssize_t ctl_reset(struct device *dev, struct device_attribute *attr,
-			 const char *buf, size_t count)
-{
-	struct snd_ctl_led_card *led_card = container_of(dev, struct snd_ctl_led_card, dev);
-	int err;
+अटल sमाप_प्रकार ctl_reset(काष्ठा device *dev, काष्ठा device_attribute *attr,
+			 स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	काष्ठा snd_ctl_led_card *led_card = container_of(dev, काष्ठा snd_ctl_led_card, dev);
+	पूर्णांक err;
 
-	if (count > 0 && buf[0] == '1') {
+	अगर (count > 0 && buf[0] == '1') अणु
 		err = snd_ctl_led_reset(led_card->number, led_card->led->group);
-		if (err < 0)
-			return err;
-	}
-	return count;
-}
+		अगर (err < 0)
+			वापस err;
+	पूर्ण
+	वापस count;
+पूर्ण
 
-static ssize_t ctl_list(struct device *dev,
-			struct device_attribute *attr, char *buf)
-{
-	struct snd_ctl_led_card *led_card = container_of(dev, struct snd_ctl_led_card, dev);
-	struct snd_card *card;
-	struct snd_ctl_led_ctl *lctl;
-	char *buf2 = buf;
-	size_t l;
+अटल sमाप_प्रकार ctl_list(काष्ठा device *dev,
+			काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा snd_ctl_led_card *led_card = container_of(dev, काष्ठा snd_ctl_led_card, dev);
+	काष्ठा snd_card *card;
+	काष्ठा snd_ctl_led_ctl *lctl;
+	अक्षर *buf2 = buf;
+	माप_प्रकार l;
 
 	card = snd_card_ref(led_card->number);
-	if (!card)
-		return -ENXIO;
-	down_read(&card->controls_rwsem);
+	अगर (!card)
+		वापस -ENXIO;
+	करोwn_पढ़ो(&card->controls_rwsem);
 	mutex_lock(&snd_ctl_led_mutex);
-	if (snd_ctl_led_card_valid[led_card->number]) {
-		list_for_each_entry(lctl, &led_card->led->controls, list)
-			if (lctl->card == card) {
-				if (buf2 - buf > PAGE_SIZE - 16)
-					break;
-				if (buf2 != buf)
+	अगर (snd_ctl_led_card_valid[led_card->number]) अणु
+		list_क्रम_each_entry(lctl, &led_card->led->controls, list)
+			अगर (lctl->card == card) अणु
+				अगर (buf2 - buf > PAGE_SIZE - 16)
+					अवरोध;
+				अगर (buf2 != buf)
 					*buf2++ = ' ';
-				l = scnprintf(buf2, 15, "%u",
+				l = scnम_लिखो(buf2, 15, "%u",
 						lctl->kctl->id.numid +
 							lctl->index_offset);
 				buf2[l] = '\0';
 				buf2 += l + 1;
-			}
-	}
+			पूर्ण
+	पूर्ण
 	mutex_unlock(&snd_ctl_led_mutex);
-	up_read(&card->controls_rwsem);
+	up_पढ़ो(&card->controls_rwsem);
 	snd_card_unref(card);
-	return buf2 - buf;
-}
+	वापस buf2 - buf;
+पूर्ण
 
-static DEVICE_ATTR(attach, 0200, NULL, parse_attach);
-static DEVICE_ATTR(detach, 0200, NULL, parse_detach);
-static DEVICE_ATTR(reset, 0200, NULL, ctl_reset);
-static DEVICE_ATTR(list, 0444, ctl_list, NULL);
+अटल DEVICE_ATTR(attach, 0200, शून्य, parse_attach);
+अटल DEVICE_ATTR(detach, 0200, शून्य, parse_detach);
+अटल DEVICE_ATTR(reset, 0200, शून्य, ctl_reset);
+अटल DEVICE_ATTR(list, 0444, ctl_list, शून्य);
 
-static struct attribute *snd_ctl_led_card_attrs[] = {
+अटल काष्ठा attribute *snd_ctl_led_card_attrs[] = अणु
 	&dev_attr_attach.attr,
 	&dev_attr_detach.attr,
 	&dev_attr_reset.attr,
 	&dev_attr_list.attr,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-static const struct attribute_group snd_ctl_led_card_attr_group = {
+अटल स्थिर काष्ठा attribute_group snd_ctl_led_card_attr_group = अणु
 	.attrs = snd_ctl_led_card_attrs,
-};
+पूर्ण;
 
-static const struct attribute_group *snd_ctl_led_card_attr_groups[] = {
+अटल स्थिर काष्ठा attribute_group *snd_ctl_led_card_attr_groups[] = अणु
 	&snd_ctl_led_card_attr_group,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-static struct device snd_ctl_led_dev;
+अटल काष्ठा device snd_ctl_led_dev;
 
-static void snd_ctl_led_sysfs_add(struct snd_card *card)
-{
-	unsigned int group;
-	struct snd_ctl_led_card *led_card;
-	struct snd_ctl_led *led;
-	char link_name[32];
+अटल व्योम snd_ctl_led_sysfs_add(काष्ठा snd_card *card)
+अणु
+	अचिन्हित पूर्णांक group;
+	काष्ठा snd_ctl_led_card *led_card;
+	काष्ठा snd_ctl_led *led;
+	अक्षर link_name[32];
 
-	for (group = 0; group < MAX_LED; group++) {
+	क्रम (group = 0; group < MAX_LED; group++) अणु
 		led = &snd_ctl_leds[group];
-		led_card = kzalloc(sizeof(*led_card), GFP_KERNEL);
-		if (!led_card)
-			goto cerr2;
+		led_card = kzalloc(माप(*led_card), GFP_KERNEL);
+		अगर (!led_card)
+			जाओ cerr2;
 		led_card->number = card->number;
 		led_card->led = led;
 		device_initialize(&led_card->dev);
 		led_card->dev.release = snd_ctl_led_card_release;
-		if (dev_set_name(&led_card->dev, "card%d", card->number) < 0)
-			goto cerr;
+		अगर (dev_set_name(&led_card->dev, "card%d", card->number) < 0)
+			जाओ cerr;
 		led_card->dev.parent = &led->dev;
 		led_card->dev.groups = snd_ctl_led_card_attr_groups;
-		if (device_add(&led_card->dev))
-			goto cerr;
+		अगर (device_add(&led_card->dev))
+			जाओ cerr;
 		led->cards[card->number] = led_card;
-		snprintf(link_name, sizeof(link_name), "led-%s", led->name);
+		snम_लिखो(link_name, माप(link_name), "led-%s", led->name);
 		WARN(sysfs_create_link(&card->ctl_dev.kobj, &led_card->dev.kobj, link_name),
 			"can't create symlink to controlC%i device\n", card->number);
 		WARN(sysfs_create_link(&led_card->dev.kobj, &card->card_dev.kobj, "card"),
 			"can't create symlink to card%i\n", card->number);
 
-		continue;
+		जारी;
 cerr:
 		put_device(&led_card->dev);
 cerr2:
-		printk(KERN_ERR "snd_ctl_led: unable to add card%d", card->number);
-	}
-}
+		prपूर्णांकk(KERN_ERR "snd_ctl_led: unable to add card%d", card->number);
+	पूर्ण
+पूर्ण
 
-static void snd_ctl_led_sysfs_remove(struct snd_card *card)
-{
-	unsigned int group;
-	struct snd_ctl_led_card *led_card;
-	struct snd_ctl_led *led;
-	char link_name[32];
+अटल व्योम snd_ctl_led_sysfs_हटाओ(काष्ठा snd_card *card)
+अणु
+	अचिन्हित पूर्णांक group;
+	काष्ठा snd_ctl_led_card *led_card;
+	काष्ठा snd_ctl_led *led;
+	अक्षर link_name[32];
 
-	for (group = 0; group < MAX_LED; group++) {
+	क्रम (group = 0; group < MAX_LED; group++) अणु
 		led = &snd_ctl_leds[group];
 		led_card = led->cards[card->number];
-		if (!led_card)
-			continue;
-		snprintf(link_name, sizeof(link_name), "led-%s", led->name);
-		sysfs_remove_link(&card->ctl_dev.kobj, link_name);
-		sysfs_remove_link(&led_card->dev.kobj, "card");
-		device_unregister(&led_card->dev);
-		led->cards[card->number] = NULL;
-	}
-}
+		अगर (!led_card)
+			जारी;
+		snम_लिखो(link_name, माप(link_name), "led-%s", led->name);
+		sysfs_हटाओ_link(&card->ctl_dev.kobj, link_name);
+		sysfs_हटाओ_link(&led_card->dev.kobj, "card");
+		device_unरेजिस्टर(&led_card->dev);
+		led->cards[card->number] = शून्य;
+	पूर्ण
+पूर्ण
 
 /*
  * Control layer registration
  */
-static struct snd_ctl_layer_ops snd_ctl_led_lops = {
+अटल काष्ठा snd_ctl_layer_ops snd_ctl_led_lops = अणु
 	.module_name = SND_CTL_LAYER_MODULE_LED,
-	.lregister = snd_ctl_led_register,
+	.lरेजिस्टर = snd_ctl_led_रेजिस्टर,
 	.ldisconnect = snd_ctl_led_disconnect,
-	.lnotify = snd_ctl_led_notify,
-};
+	.lnotअगरy = snd_ctl_led_notअगरy,
+पूर्ण;
 
-static int __init snd_ctl_led_init(void)
-{
-	struct snd_ctl_led *led;
-	unsigned int group;
+अटल पूर्णांक __init snd_ctl_led_init(व्योम)
+अणु
+	काष्ठा snd_ctl_led *led;
+	अचिन्हित पूर्णांक group;
 
 	device_initialize(&snd_ctl_led_dev);
 	snd_ctl_led_dev.class = sound_class;
 	snd_ctl_led_dev.release = snd_ctl_led_dev_release;
 	dev_set_name(&snd_ctl_led_dev, "ctl-led");
-	if (device_add(&snd_ctl_led_dev)) {
+	अगर (device_add(&snd_ctl_led_dev)) अणु
 		put_device(&snd_ctl_led_dev);
-		return -ENOMEM;
-	}
-	for (group = 0; group < MAX_LED; group++) {
+		वापस -ENOMEM;
+	पूर्ण
+	क्रम (group = 0; group < MAX_LED; group++) अणु
 		led = &snd_ctl_leds[group];
 		INIT_LIST_HEAD(&led->controls);
 		device_initialize(&led->dev);
@@ -754,43 +755,43 @@ static int __init snd_ctl_led_init(void)
 		led->dev.release = snd_ctl_led_release;
 		led->dev.groups = snd_ctl_led_dev_attr_groups;
 		dev_set_name(&led->dev, led->name);
-		if (device_add(&led->dev)) {
+		अगर (device_add(&led->dev)) अणु
 			put_device(&led->dev);
-			for (; group > 0; group--) {
+			क्रम (; group > 0; group--) अणु
 				led = &snd_ctl_leds[group - 1];
-				device_unregister(&led->dev);
-			}
-			device_unregister(&snd_ctl_led_dev);
-			return -ENOMEM;
-		}
-	}
-	snd_ctl_register_layer(&snd_ctl_led_lops);
-	return 0;
-}
+				device_unरेजिस्टर(&led->dev);
+			पूर्ण
+			device_unरेजिस्टर(&snd_ctl_led_dev);
+			वापस -ENOMEM;
+		पूर्ण
+	पूर्ण
+	snd_ctl_रेजिस्टर_layer(&snd_ctl_led_lops);
+	वापस 0;
+पूर्ण
 
-static void __exit snd_ctl_led_exit(void)
-{
-	struct snd_ctl_led *led;
-	struct snd_card *card;
-	unsigned int group, card_number;
+अटल व्योम __निकास snd_ctl_led_निकास(व्योम)
+अणु
+	काष्ठा snd_ctl_led *led;
+	काष्ठा snd_card *card;
+	अचिन्हित पूर्णांक group, card_number;
 
 	snd_ctl_disconnect_layer(&snd_ctl_led_lops);
-	for (card_number = 0; card_number < SNDRV_CARDS; card_number++) {
-		if (!snd_ctl_led_card_valid[card_number])
-			continue;
+	क्रम (card_number = 0; card_number < SNDRV_CARDS; card_number++) अणु
+		अगर (!snd_ctl_led_card_valid[card_number])
+			जारी;
 		card = snd_card_ref(card_number);
-		if (card) {
-			snd_ctl_led_sysfs_remove(card);
+		अगर (card) अणु
+			snd_ctl_led_sysfs_हटाओ(card);
 			snd_card_unref(card);
-		}
-	}
-	for (group = 0; group < MAX_LED; group++) {
+		पूर्ण
+	पूर्ण
+	क्रम (group = 0; group < MAX_LED; group++) अणु
 		led = &snd_ctl_leds[group];
-		device_unregister(&led->dev);
-	}
-	device_unregister(&snd_ctl_led_dev);
-	snd_ctl_led_clean(NULL);
-}
+		device_unरेजिस्टर(&led->dev);
+	पूर्ण
+	device_unरेजिस्टर(&snd_ctl_led_dev);
+	snd_ctl_led_clean(शून्य);
+पूर्ण
 
 module_init(snd_ctl_led_init)
-module_exit(snd_ctl_led_exit)
+module_निकास(snd_ctl_led_निकास)

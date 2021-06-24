@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2018 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -22,66 +23,66 @@
  */
 
 /*
- * GPU doorbell structures, functions & helpers
+ * GPU करोorbell काष्ठाures, functions & helpers
  */
-struct amdgpu_doorbell {
-	/* doorbell mmio */
-	resource_size_t		base;
-	resource_size_t		size;
+काष्ठा amdgpu_करोorbell अणु
+	/* करोorbell mmio */
+	resource_माप_प्रकार		base;
+	resource_माप_प्रकार		size;
 	u32 __iomem		*ptr;
-	u32			num_doorbells;	/* Number of doorbells actually reserved for amdgpu. */
-};
+	u32			num_करोorbells;	/* Number of करोorbells actually reserved क्रम amdgpu. */
+पूर्ण;
 
-/* Reserved doorbells for amdgpu (including multimedia).
- * KFD can use all the rest in the 2M doorbell bar.
- * For asic before vega10, doorbell is 32-bit, so the
- * index/offset is in dword. For vega10 and after, doorbell
+/* Reserved करोorbells क्रम amdgpu (including mulसमयdia).
+ * KFD can use all the rest in the 2M करोorbell bar.
+ * For asic beक्रमe vega10, करोorbell is 32-bit, so the
+ * index/offset is in dword. For vega10 and after, करोorbell
  * can be 64-bit, so the index defined is in qword.
  */
-struct amdgpu_doorbell_index {
-	uint32_t kiq;
-	uint32_t mec_ring0;
-	uint32_t mec_ring1;
-	uint32_t mec_ring2;
-	uint32_t mec_ring3;
-	uint32_t mec_ring4;
-	uint32_t mec_ring5;
-	uint32_t mec_ring6;
-	uint32_t mec_ring7;
-	uint32_t userqueue_start;
-	uint32_t userqueue_end;
-	uint32_t gfx_ring0;
-	uint32_t gfx_ring1;
-	uint32_t sdma_engine[8];
-	uint32_t mes_ring;
-	uint32_t ih;
-	union {
-		struct {
-			uint32_t vcn_ring0_1;
-			uint32_t vcn_ring2_3;
-			uint32_t vcn_ring4_5;
-			uint32_t vcn_ring6_7;
-		} vcn;
-		struct {
-			uint32_t uvd_ring0_1;
-			uint32_t uvd_ring2_3;
-			uint32_t uvd_ring4_5;
-			uint32_t uvd_ring6_7;
-			uint32_t vce_ring0_1;
-			uint32_t vce_ring2_3;
-			uint32_t vce_ring4_5;
-			uint32_t vce_ring6_7;
-		} uvd_vce;
-	};
-	uint32_t first_non_cp;
-	uint32_t last_non_cp;
-	uint32_t max_assignment;
-	/* Per engine SDMA doorbell size in dword */
-	uint32_t sdma_doorbell_range;
-};
+काष्ठा amdgpu_करोorbell_index अणु
+	uपूर्णांक32_t kiq;
+	uपूर्णांक32_t mec_ring0;
+	uपूर्णांक32_t mec_ring1;
+	uपूर्णांक32_t mec_ring2;
+	uपूर्णांक32_t mec_ring3;
+	uपूर्णांक32_t mec_ring4;
+	uपूर्णांक32_t mec_ring5;
+	uपूर्णांक32_t mec_ring6;
+	uपूर्णांक32_t mec_ring7;
+	uपूर्णांक32_t userqueue_start;
+	uपूर्णांक32_t userqueue_end;
+	uपूर्णांक32_t gfx_ring0;
+	uपूर्णांक32_t gfx_ring1;
+	uपूर्णांक32_t sdma_engine[8];
+	uपूर्णांक32_t mes_ring;
+	uपूर्णांक32_t ih;
+	जोड़ अणु
+		काष्ठा अणु
+			uपूर्णांक32_t vcn_ring0_1;
+			uपूर्णांक32_t vcn_ring2_3;
+			uपूर्णांक32_t vcn_ring4_5;
+			uपूर्णांक32_t vcn_ring6_7;
+		पूर्ण vcn;
+		काष्ठा अणु
+			uपूर्णांक32_t uvd_ring0_1;
+			uपूर्णांक32_t uvd_ring2_3;
+			uपूर्णांक32_t uvd_ring4_5;
+			uपूर्णांक32_t uvd_ring6_7;
+			uपूर्णांक32_t vce_ring0_1;
+			uपूर्णांक32_t vce_ring2_3;
+			uपूर्णांक32_t vce_ring4_5;
+			uपूर्णांक32_t vce_ring6_7;
+		पूर्ण uvd_vce;
+	पूर्ण;
+	uपूर्णांक32_t first_non_cp;
+	uपूर्णांक32_t last_non_cp;
+	uपूर्णांक32_t max_assignment;
+	/* Per engine SDMA करोorbell size in dword */
+	uपूर्णांक32_t sdma_करोorbell_range;
+पूर्ण;
 
-typedef enum _AMDGPU_DOORBELL_ASSIGNMENT
-{
+प्रकार क्रमागत _AMDGPU_DOORBELL_ASSIGNMENT
+अणु
 	AMDGPU_DOORBELL_KIQ                     = 0x000,
 	AMDGPU_DOORBELL_HIQ                     = 0x001,
 	AMDGPU_DOORBELL_DIQ                     = 0x002,
@@ -99,10 +100,10 @@ typedef enum _AMDGPU_DOORBELL_ASSIGNMENT
 	AMDGPU_DOORBELL_IH                      = 0x1E8,
 	AMDGPU_DOORBELL_MAX_ASSIGNMENT          = 0x3FF,
 	AMDGPU_DOORBELL_INVALID                 = 0xFFFF
-} AMDGPU_DOORBELL_ASSIGNMENT;
+पूर्ण AMDGPU_DOORBELL_ASSIGNMENT;
 
-typedef enum _AMDGPU_VEGA20_DOORBELL_ASSIGNMENT
-{
+प्रकार क्रमागत _AMDGPU_VEGA20_DOORBELL_ASSIGNMENT
+अणु
 	/* Compute + GFX: 0~255 */
 	AMDGPU_VEGA20_DOORBELL_KIQ                     = 0x000,
 	AMDGPU_VEGA20_DOORBELL_HIQ                     = 0x001,
@@ -130,8 +131,8 @@ typedef enum _AMDGPU_VEGA20_DOORBELL_ASSIGNMENT
 	/* IH: 376~391 */
 	AMDGPU_VEGA20_DOORBELL_IH                      = 0x178,
 	/* MMSCH: 392~407
-	 * overlap the doorbell assignment with VCN as they are  mutually exclusive
-	 * VCN engine's doorbell is 32 bit and two VCN ring share one QWORD
+	 * overlap the करोorbell assignment with VCN as they are  mutually exclusive
+	 * VCN engine's करोorbell is 32 bit and two VCN ring share one QWORD
 	 */
 	AMDGPU_VEGA20_DOORBELL64_VCN0_1                  = 0x188, /* VNC0 */
 	AMDGPU_VEGA20_DOORBELL64_VCN2_3                  = 0x189,
@@ -158,10 +159,10 @@ typedef enum _AMDGPU_VEGA20_DOORBELL_ASSIGNMENT
 
 	AMDGPU_VEGA20_DOORBELL_MAX_ASSIGNMENT            = 0x18F,
 	AMDGPU_VEGA20_DOORBELL_INVALID                   = 0xFFFF
-} AMDGPU_VEGA20_DOORBELL_ASSIGNMENT;
+पूर्ण AMDGPU_VEGA20_DOORBELL_ASSIGNMENT;
 
-typedef enum _AMDGPU_NAVI10_DOORBELL_ASSIGNMENT
-{
+प्रकार क्रमागत _AMDGPU_NAVI10_DOORBELL_ASSIGNMENT
+अणु
 	/* Compute + GFX: 0~255 */
 	AMDGPU_NAVI10_DOORBELL_KIQ			= 0x000,
 	AMDGPU_NAVI10_DOORBELL_HIQ			= 0x001,
@@ -187,10 +188,10 @@ typedef enum _AMDGPU_NAVI10_DOORBELL_ASSIGNMENT
 	/* IH: 376~391 */
 	AMDGPU_NAVI10_DOORBELL_IH			= 0x178,
 	/* MMSCH: 392~407
-	 * overlap the doorbell assignment with VCN as they are  mutually exclusive
-	 * VCE engine's doorbell is 32 bit and two VCE ring share one QWORD
+	 * overlap the करोorbell assignment with VCN as they are  mutually exclusive
+	 * VCE engine's करोorbell is 32 bit and two VCE ring share one QWORD
 	 */
-	AMDGPU_NAVI10_DOORBELL64_VCN0_1			= 0x188, /* lower 32 bits for VNC0 and upper 32 bits for VNC1 */
+	AMDGPU_NAVI10_DOORBELL64_VCN0_1			= 0x188, /* lower 32 bits क्रम VNC0 and upper 32 bits क्रम VNC1 */
 	AMDGPU_NAVI10_DOORBELL64_VCN2_3			= 0x189,
 	AMDGPU_NAVI10_DOORBELL64_VCN4_5			= 0x18A,
 	AMDGPU_NAVI10_DOORBELL64_VCN6_7			= 0x18B,
@@ -205,24 +206,24 @@ typedef enum _AMDGPU_NAVI10_DOORBELL_ASSIGNMENT
 
 	AMDGPU_NAVI10_DOORBELL_MAX_ASSIGNMENT		= 0x18F,
 	AMDGPU_NAVI10_DOORBELL_INVALID			= 0xFFFF
-} AMDGPU_NAVI10_DOORBELL_ASSIGNMENT;
+पूर्ण AMDGPU_NAVI10_DOORBELL_ASSIGNMENT;
 
 /*
- * 64bit doorbell, offset are in QWORD, occupy 2KB doorbell space
+ * 64bit करोorbell, offset are in QWORD, occupy 2KB करोorbell space
  */
-typedef enum _AMDGPU_DOORBELL64_ASSIGNMENT
-{
+प्रकार क्रमागत _AMDGPU_DOORBELL64_ASSIGNMENT
+अणु
 	/*
-	 * All compute related doorbells: kiq, hiq, diq, traditional compute queue, user queue, should locate in
-	 * a continues range so that programming CP_MEC_DOORBELL_RANGE_LOWER/UPPER can cover this range.
-	 *  Compute related doorbells are allocated from 0x00 to 0x8a
+	 * All compute related करोorbells: kiq, hiq, diq, traditional compute queue, user queue, should locate in
+	 * a जारीs range so that programming CP_MEC_DOORBELL_RANGE_LOWER/UPPER can cover this range.
+	 *  Compute related करोorbells are allocated from 0x00 to 0x8a
 	 */
 
 
 	/* kernel scheduling */
 	AMDGPU_DOORBELL64_KIQ                     = 0x00,
 
-	/* HSA interface queue and debug queue */
+	/* HSA पूर्णांकerface queue and debug queue */
 	AMDGPU_DOORBELL64_HIQ                     = 0x01,
 	AMDGPU_DOORBELL64_DIQ                     = 0x02,
 
@@ -236,7 +237,7 @@ typedef enum _AMDGPU_DOORBELL64_ASSIGNMENT
 	AMDGPU_DOORBELL64_MEC_RING6               = 0x09,
 	AMDGPU_DOORBELL64_MEC_RING7               = 0x0a,
 
-	/* User queue doorbell range (128 doorbells) */
+	/* User queue करोorbell range (128 करोorbells) */
 	AMDGPU_DOORBELL64_USERQUEUE_START         = 0x0b,
 	AMDGPU_DOORBELL64_USERQUEUE_END           = 0x8a,
 
@@ -244,12 +245,12 @@ typedef enum _AMDGPU_DOORBELL64_ASSIGNMENT
 	AMDGPU_DOORBELL64_GFX_RING0               = 0x8b,
 
 	/*
-	 * Other graphics doorbells can be allocated here: from 0x8c to 0xdf
+	 * Other graphics करोorbells can be allocated here: from 0x8c to 0xdf
 	 * Graphics voltage island aperture 1
-	 * default non-graphics QWORD index is 0xe0 - 0xFF inclusive
+	 * शेष non-graphics QWORD index is 0xe0 - 0xFF inclusive
 	 */
 
-	/* For vega10 sriov, the sdma doorbell must be fixed as follow
+	/* For vega10 sriov, the sdma करोorbell must be fixed as follow
 	 * to keep the same setting with host driver, or it will
 	 * happen conflicts
 	 */
@@ -259,18 +260,18 @@ typedef enum _AMDGPU_DOORBELL64_ASSIGNMENT
 	AMDGPU_DOORBELL64_sDMA_HI_PRI_ENGINE1     = 0xF3,
 
 	/* Interrupt handler */
-	AMDGPU_DOORBELL64_IH                      = 0xF4,  /* For legacy interrupt ring buffer */
+	AMDGPU_DOORBELL64_IH                      = 0xF4,  /* For legacy पूर्णांकerrupt ring buffer */
 	AMDGPU_DOORBELL64_IH_RING1                = 0xF5,  /* For page migration request log */
 	AMDGPU_DOORBELL64_IH_RING2                = 0xF6,  /* For page migration translation/invalidation log */
 
-	/* VCN engine use 32 bits doorbell  */
-	AMDGPU_DOORBELL64_VCN0_1                  = 0xF8, /* lower 32 bits for VNC0 and upper 32 bits for VNC1 */
+	/* VCN engine use 32 bits करोorbell  */
+	AMDGPU_DOORBELL64_VCN0_1                  = 0xF8, /* lower 32 bits क्रम VNC0 and upper 32 bits क्रम VNC1 */
 	AMDGPU_DOORBELL64_VCN2_3                  = 0xF9,
 	AMDGPU_DOORBELL64_VCN4_5                  = 0xFA,
 	AMDGPU_DOORBELL64_VCN6_7                  = 0xFB,
 
-	/* overlap the doorbell assignment with VCN as they are  mutually exclusive
-	 * VCE engine's doorbell is 32 bit and two VCE ring share one QWORD
+	/* overlap the करोorbell assignment with VCN as they are  mutually exclusive
+	 * VCE engine's करोorbell is 32 bit and two VCE ring share one QWORD
 	 */
 	AMDGPU_DOORBELL64_UVD_RING0_1             = 0xF8,
 	AMDGPU_DOORBELL64_UVD_RING2_3             = 0xF9,
@@ -287,15 +288,15 @@ typedef enum _AMDGPU_DOORBELL64_ASSIGNMENT
 
 	AMDGPU_DOORBELL64_MAX_ASSIGNMENT          = 0xFF,
 	AMDGPU_DOORBELL64_INVALID                 = 0xFFFF
-} AMDGPU_DOORBELL64_ASSIGNMENT;
+पूर्ण AMDGPU_DOORBELL64_ASSIGNMENT;
 
-u32 amdgpu_mm_rdoorbell(struct amdgpu_device *adev, u32 index);
-void amdgpu_mm_wdoorbell(struct amdgpu_device *adev, u32 index, u32 v);
-u64 amdgpu_mm_rdoorbell64(struct amdgpu_device *adev, u32 index);
-void amdgpu_mm_wdoorbell64(struct amdgpu_device *adev, u32 index, u64 v);
+u32 amdgpu_mm_rकरोorbell(काष्ठा amdgpu_device *adev, u32 index);
+व्योम amdgpu_mm_wकरोorbell(काष्ठा amdgpu_device *adev, u32 index, u32 v);
+u64 amdgpu_mm_rकरोorbell64(काष्ठा amdgpu_device *adev, u32 index);
+व्योम amdgpu_mm_wकरोorbell64(काष्ठा amdgpu_device *adev, u32 index, u64 v);
 
-#define RDOORBELL32(index) amdgpu_mm_rdoorbell(adev, (index))
-#define WDOORBELL32(index, v) amdgpu_mm_wdoorbell(adev, (index), (v))
-#define RDOORBELL64(index) amdgpu_mm_rdoorbell64(adev, (index))
-#define WDOORBELL64(index, v) amdgpu_mm_wdoorbell64(adev, (index), (v))
+#घोषणा RDOORBELL32(index) amdgpu_mm_rकरोorbell(adev, (index))
+#घोषणा WDOORBELL32(index, v) amdgpu_mm_wकरोorbell(adev, (index), (v))
+#घोषणा RDOORBELL64(index) amdgpu_mm_rकरोorbell64(adev, (index))
+#घोषणा WDOORBELL64(index, v) amdgpu_mm_wकरोorbell64(adev, (index), (v))
 

@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
  * Simple Reset Controller ops
  *
@@ -6,43 +7,43 @@
  *
  * Copyright 2013 Maxime Ripard
  *
- * Maxime Ripard <maxime.ripard@free-electrons.com>
+ * Maxime Ripard <maxime.ripard@मुक्त-electrons.com>
  */
 
-#ifndef __RESET_SIMPLE_H__
-#define __RESET_SIMPLE_H__
+#अगर_अघोषित __RESET_SIMPLE_H__
+#घोषणा __RESET_SIMPLE_H__
 
-#include <linux/io.h>
-#include <linux/reset-controller.h>
-#include <linux/spinlock.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/reset-controller.h>
+#समावेश <linux/spinlock.h>
 
 /**
- * struct reset_simple_data - driver data for simple reset controllers
- * @lock: spinlock to protect registers during read-modify-write cycles
- * @membase: memory mapped I/O register range
- * @rcdev: reset controller device base structure
- * @active_low: if true, bits are cleared to assert the reset. Otherwise, bits
- *              are set to assert the reset. Note that this says nothing about
+ * काष्ठा reset_simple_data - driver data क्रम simple reset controllers
+ * @lock: spinlock to protect रेजिस्टरs during पढ़ो-modअगरy-ग_लिखो cycles
+ * @membase: memory mapped I/O रेजिस्टर range
+ * @rcdev: reset controller device base काष्ठाure
+ * @active_low: अगर true, bits are cleared to निश्चित the reset. Otherwise, bits
+ *              are set to निश्चित the reset. Note that this says nothing about
  *              the voltage level of the actual reset line.
- * @status_active_low: if true, bits read back as cleared while the reset is
- *                     asserted. Otherwise, bits read back as set while the
- *                     reset is asserted.
+ * @status_active_low: अगर true, bits पढ़ो back as cleared जबतक the reset is
+ *                     निश्चितed. Otherwise, bits पढ़ो back as set जबतक the
+ *                     reset is निश्चितed.
  * @reset_us: Minimum delay in microseconds needed that needs to be
- *            waited for between an assert and a deassert to reset the
- *            device. If multiple consumers with different delay
+ *            रुकोed क्रम between an निश्चित and a deनिश्चित to reset the
+ *            device. If multiple consumers with dअगरferent delay
  *            requirements are connected to this controller, it must
  *            be the largest minimum delay. 0 means that such a delay is
  *            unknown and the reset operation is unsupported.
  */
-struct reset_simple_data {
+काष्ठा reset_simple_data अणु
 	spinlock_t			lock;
-	void __iomem			*membase;
-	struct reset_controller_dev	rcdev;
+	व्योम __iomem			*membase;
+	काष्ठा reset_controller_dev	rcdev;
 	bool				active_low;
 	bool				status_active_low;
-	unsigned int			reset_us;
-};
+	अचिन्हित पूर्णांक			reset_us;
+पूर्ण;
 
-extern const struct reset_control_ops reset_simple_ops;
+बाह्य स्थिर काष्ठा reset_control_ops reset_simple_ops;
 
-#endif /* __RESET_SIMPLE_H__ */
+#पूर्ण_अगर /* __RESET_SIMPLE_H__ */

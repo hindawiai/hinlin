@@ -1,12 +1,13 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __ASM_LINKAGE_H
-#define __ASM_LINKAGE_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __ASM_LINKAGE_H
+#घोषणा __ASM_LINKAGE_H
 
-#define __ALIGN .align 0
-#define __ALIGN_STR ".align 0"
+#घोषणा __ALIGN .align 0
+#घोषणा __ALIGN_STR ".align 0"
 
-#define ENDPROC(name) \
+#घोषणा ENDPROC(name) \
   .type name, %function; \
   END(name)
 
-#endif
+#पूर्ण_अगर

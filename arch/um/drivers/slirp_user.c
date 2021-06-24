@@ -1,65 +1,66 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * Copyright (C) 2007 Jeff Dike (jdike@{addtoit,linux.intel}.com)
+ * Copyright (C) 2007 Jeff Dike (jdike@अणुaddtoit,linux.पूर्णांकelपूर्ण.com)
  */
 
-#include <unistd.h>
-#include <errno.h>
-#include <string.h>
-#include <sys/wait.h>
-#include <net_user.h>
-#include <os.h>
-#include "slirp.h"
+#समावेश <unistd.h>
+#समावेश <त्रुटिसं.स>
+#समावेश <माला.स>
+#समावेश <sys/रुको.h>
+#समावेश <net_user.h>
+#समावेश <os.h>
+#समावेश "slirp.h"
 
-static int slirp_user_init(void *data, void *dev)
-{
-	struct slirp_data *pri = data;
+अटल पूर्णांक slirp_user_init(व्योम *data, व्योम *dev)
+अणु
+	काष्ठा slirp_data *pri = data;
 
 	pri->dev = dev;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-struct slirp_pre_exec_data {
-	int stdin_fd;
-	int stdout_fd;
-};
+काष्ठा slirp_pre_exec_data अणु
+	पूर्णांक मानक_निवेश_fd;
+	पूर्णांक मानक_निकास_fd;
+पूर्ण;
 
-static void slirp_pre_exec(void *arg)
-{
-	struct slirp_pre_exec_data *data = arg;
+अटल व्योम slirp_pre_exec(व्योम *arg)
+अणु
+	काष्ठा slirp_pre_exec_data *data = arg;
 
-	if (data->stdin_fd != -1)
-		dup2(data->stdin_fd, 0);
-	if (data->stdout_fd != -1)
-		dup2(data->stdout_fd, 1);
-}
+	अगर (data->मानक_निवेश_fd != -1)
+		dup2(data->मानक_निवेश_fd, 0);
+	अगर (data->मानक_निकास_fd != -1)
+		dup2(data->मानक_निकास_fd, 1);
+पूर्ण
 
-static int slirp_tramp(char **argv, int fd)
-{
-	struct slirp_pre_exec_data pe_data;
-	int pid;
+अटल पूर्णांक slirp_tramp(अक्षर **argv, पूर्णांक fd)
+अणु
+	काष्ठा slirp_pre_exec_data pe_data;
+	पूर्णांक pid;
 
-	pe_data.stdin_fd = fd;
-	pe_data.stdout_fd = fd;
+	pe_data.मानक_निवेश_fd = fd;
+	pe_data.मानक_निकास_fd = fd;
 	pid = run_helper(slirp_pre_exec, &pe_data, argv);
 
-	return pid;
-}
+	वापस pid;
+पूर्ण
 
-static int slirp_open(void *data)
-{
-	struct slirp_data *pri = data;
-	int fds[2], pid, err;
+अटल पूर्णांक slirp_खोलो(व्योम *data)
+अणु
+	काष्ठा slirp_data *pri = data;
+	पूर्णांक fds[2], pid, err;
 
 	err = os_pipe(fds, 1, 1);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	err = slirp_tramp(pri->argw.argv, fds[1]);
-	if (err < 0) {
-		printk(UM_KERN_ERR "slirp_tramp failed - errno = %d\n", -err);
-		goto out;
-	}
+	अगर (err < 0) अणु
+		prपूर्णांकk(UM_KERN_ERR "slirp_tramp failed - errno = %d\n", -err);
+		जाओ out;
+	पूर्ण
 	pid = err;
 
 	pri->slave = fds[1];
@@ -67,59 +68,59 @@ static int slirp_open(void *data)
 	pri->slip.esc = 0;
 	pri->pid = err;
 
-	return fds[0];
+	वापस fds[0];
 out:
-	close(fds[0]);
-	close(fds[1]);
-	return err;
-}
+	बंद(fds[0]);
+	बंद(fds[1]);
+	वापस err;
+पूर्ण
 
-static void slirp_close(int fd, void *data)
-{
-	struct slirp_data *pri = data;
-	int err;
+अटल व्योम slirp_बंद(पूर्णांक fd, व्योम *data)
+अणु
+	काष्ठा slirp_data *pri = data;
+	पूर्णांक err;
 
-	close(fd);
-	close(pri->slave);
+	बंद(fd);
+	बंद(pri->slave);
 
 	pri->slave = -1;
 
-	if (pri->pid<1) {
-		printk(UM_KERN_ERR "slirp_close: no child process to shut "
+	अगर (pri->pid<1) अणु
+		prपूर्णांकk(UM_KERN_ERR "slirp_close: no child process to shut "
 		       "down\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
-#if 0
-	if (kill(pri->pid, SIGHUP)<0) {
-		printk(UM_KERN_ERR "slirp_close: sending hangup to %d failed "
-		       "(%d)\n", pri->pid, errno);
-	}
-#endif
-	err = helper_wait(pri->pid);
-	if (err < 0)
-		return;
+#अगर 0
+	अगर (समाप्त(pri->pid, SIGHUP)<0) अणु
+		prपूर्णांकk(UM_KERN_ERR "slirp_close: sending hangup to %d failed "
+		       "(%d)\n", pri->pid, त्रुटि_सं);
+	पूर्ण
+#पूर्ण_अगर
+	err = helper_रुको(pri->pid);
+	अगर (err < 0)
+		वापस;
 
 	pri->pid = -1;
-}
+पूर्ण
 
-int slirp_user_read(int fd, void *buf, int len, struct slirp_data *pri)
-{
-	return slip_proto_read(fd, buf, len, &pri->slip);
-}
+पूर्णांक slirp_user_पढ़ो(पूर्णांक fd, व्योम *buf, पूर्णांक len, काष्ठा slirp_data *pri)
+अणु
+	वापस slip_proto_पढ़ो(fd, buf, len, &pri->slip);
+पूर्ण
 
-int slirp_user_write(int fd, void *buf, int len, struct slirp_data *pri)
-{
-	return slip_proto_write(fd, buf, len, &pri->slip);
-}
+पूर्णांक slirp_user_ग_लिखो(पूर्णांक fd, व्योम *buf, पूर्णांक len, काष्ठा slirp_data *pri)
+अणु
+	वापस slip_proto_ग_लिखो(fd, buf, len, &pri->slip);
+पूर्ण
 
-const struct net_user_info slirp_user_info = {
+स्थिर काष्ठा net_user_info slirp_user_info = अणु
 	.init		= slirp_user_init,
-	.open		= slirp_open,
-	.close	 	= slirp_close,
-	.remove	 	= NULL,
-	.add_address	= NULL,
-	.delete_address = NULL,
+	.खोलो		= slirp_खोलो,
+	.बंद	 	= slirp_बंद,
+	.हटाओ	 	= शून्य,
+	.add_address	= शून्य,
+	.delete_address = शून्य,
 	.mtu		= BUF_SIZE,
 	.max_packet	= BUF_SIZE,
-};
+पूर्ण;

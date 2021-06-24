@@ -1,10 +1,11 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  *  Nano River Technologies viperboard driver
  *
- *  This is the core driver for the viperboard. There are cell drivers
- *  available for I2C, ADC and both GPIOs. SPI is not yet supported.
- *  The drivers do not support all features the board exposes. See user
+ *  This is the core driver क्रम the viperboard. There are cell drivers
+ *  available क्रम I2C, ADC and both GPIOs. SPI is not yet supported.
+ *  The drivers करो not support all features the board exposes. See user
  *  manual of the viperboard.
  *
  *  (C) 2012 by Lemonage GmbH
@@ -12,116 +13,116 @@
  *  All rights reserved.
  */
 
-#include <linux/kernel.h>
-#include <linux/errno.h>
-#include <linux/module.h>
-#include <linux/slab.h>
-#include <linux/types.h>
-#include <linux/mutex.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/module.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/types.h>
+#समावेश <linux/mutex.h>
 
-#include <linux/mfd/core.h>
-#include <linux/mfd/viperboard.h>
+#समावेश <linux/mfd/core.h>
+#समावेश <linux/mfd/viperboard.h>
 
-#include <linux/usb.h>
+#समावेश <linux/usb.h>
 
 
-static const struct usb_device_id vprbrd_table[] = {
-	{ USB_DEVICE(0x2058, 0x1005) },   /* Nano River Technologies */
-	{ }                               /* Terminating entry */
-};
+अटल स्थिर काष्ठा usb_device_id vprbrd_table[] = अणु
+	अणु USB_DEVICE(0x2058, 0x1005) पूर्ण,   /* Nano River Technologies */
+	अणु पूर्ण                               /* Terminating entry */
+पूर्ण;
 
 MODULE_DEVICE_TABLE(usb, vprbrd_table);
 
-static const struct mfd_cell vprbrd_devs[] = {
-	{
+अटल स्थिर काष्ठा mfd_cell vprbrd_devs[] = अणु
+	अणु
 		.name = "viperboard-gpio",
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "viperboard-i2c",
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "viperboard-adc",
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static int vprbrd_probe(struct usb_interface *interface,
-			      const struct usb_device_id *id)
-{
-	struct vprbrd *vb;
+अटल पूर्णांक vprbrd_probe(काष्ठा usb_पूर्णांकerface *पूर्णांकerface,
+			      स्थिर काष्ठा usb_device_id *id)
+अणु
+	काष्ठा vprbrd *vb;
 
 	u16 version = 0;
-	int pipe, ret;
+	पूर्णांक pipe, ret;
 
-	/* allocate memory for our device state and initialize it */
-	vb = kzalloc(sizeof(*vb), GFP_KERNEL);
-	if (!vb)
-		return -ENOMEM;
+	/* allocate memory क्रम our device state and initialize it */
+	vb = kzalloc(माप(*vb), GFP_KERNEL);
+	अगर (!vb)
+		वापस -ENOMEM;
 
 	mutex_init(&vb->lock);
 
-	vb->usb_dev = usb_get_dev(interface_to_usbdev(interface));
+	vb->usb_dev = usb_get_dev(पूर्णांकerface_to_usbdev(पूर्णांकerface));
 
-	/* save our data pointer in this interface device */
-	usb_set_intfdata(interface, vb);
+	/* save our data poपूर्णांकer in this पूर्णांकerface device */
+	usb_set_पूर्णांकfdata(पूर्णांकerface, vb);
 	dev_set_drvdata(&vb->pdev.dev, vb);
 
-	/* get version information, major first, minor then */
+	/* get version inक्रमmation, major first, minor then */
 	pipe = usb_rcvctrlpipe(vb->usb_dev, 0);
 	ret = usb_control_msg(vb->usb_dev, pipe, VPRBRD_USB_REQUEST_MAJOR,
 		VPRBRD_USB_TYPE_IN, 0x0000, 0x0000, vb->buf, 1,
 		VPRBRD_USB_TIMEOUT_MS);
-	if (ret == 1)
+	अगर (ret == 1)
 		version = vb->buf[0];
 
 	ret = usb_control_msg(vb->usb_dev, pipe, VPRBRD_USB_REQUEST_MINOR,
 		VPRBRD_USB_TYPE_IN, 0x0000, 0x0000, vb->buf, 1,
 		VPRBRD_USB_TIMEOUT_MS);
-	if (ret == 1) {
+	अगर (ret == 1) अणु
 		version <<= 8;
 		version = version | vb->buf[0];
-	}
+	पूर्ण
 
-	dev_info(&interface->dev,
+	dev_info(&पूर्णांकerface->dev,
 		 "version %x.%02x found at bus %03d address %03d\n",
 		 version >> 8, version & 0xff,
 		 vb->usb_dev->bus->busnum, vb->usb_dev->devnum);
 
-	ret = mfd_add_hotplug_devices(&interface->dev, vprbrd_devs,
+	ret = mfd_add_hotplug_devices(&पूर्णांकerface->dev, vprbrd_devs,
 				      ARRAY_SIZE(vprbrd_devs));
-	if (ret != 0) {
-		dev_err(&interface->dev, "Failed to add mfd devices to core.");
-		goto error;
-	}
+	अगर (ret != 0) अणु
+		dev_err(&पूर्णांकerface->dev, "Failed to add mfd devices to core.");
+		जाओ error;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 error:
-	if (vb) {
+	अगर (vb) अणु
 		usb_put_dev(vb->usb_dev);
-		kfree(vb);
-	}
+		kमुक्त(vb);
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void vprbrd_disconnect(struct usb_interface *interface)
-{
-	struct vprbrd *vb = usb_get_intfdata(interface);
+अटल व्योम vprbrd_disconnect(काष्ठा usb_पूर्णांकerface *पूर्णांकerface)
+अणु
+	काष्ठा vprbrd *vb = usb_get_पूर्णांकfdata(पूर्णांकerface);
 
-	mfd_remove_devices(&interface->dev);
-	usb_set_intfdata(interface, NULL);
+	mfd_हटाओ_devices(&पूर्णांकerface->dev);
+	usb_set_पूर्णांकfdata(पूर्णांकerface, शून्य);
 	usb_put_dev(vb->usb_dev);
-	kfree(vb);
+	kमुक्त(vb);
 
-	dev_dbg(&interface->dev, "disconnected\n");
-}
+	dev_dbg(&पूर्णांकerface->dev, "disconnected\n");
+पूर्ण
 
-static struct usb_driver vprbrd_driver = {
+अटल काष्ठा usb_driver vprbrd_driver = अणु
 	.name		= "viperboard",
 	.probe		= vprbrd_probe,
 	.disconnect	= vprbrd_disconnect,
 	.id_table	= vprbrd_table,
-};
+पूर्ण;
 
 module_usb_driver(vprbrd_driver);
 

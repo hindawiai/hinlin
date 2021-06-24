@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * This file is part of wl12xx
  *
@@ -6,34 +7,34 @@
  * Copyright (C) 2011 Texas Instruments Inc.
  */
 
-#include "../wlcore/cmd.h"
-#include "../wlcore/debug.h"
-#include "../wlcore/acx.h"
+#समावेश "../wlcore/cmd.h"
+#समावेश "../wlcore/debug.h"
+#समावेश "../wlcore/acx.h"
 
-#include "acx.h"
+#समावेश "acx.h"
 
-int wl1271_acx_host_if_cfg_bitmap(struct wl1271 *wl, u32 host_cfg_bitmap)
-{
-	struct wl1271_acx_host_config_bitmap *bitmap_conf;
-	int ret;
+पूर्णांक wl1271_acx_host_अगर_cfg_biपंचांगap(काष्ठा wl1271 *wl, u32 host_cfg_biपंचांगap)
+अणु
+	काष्ठा wl1271_acx_host_config_biपंचांगap *biपंचांगap_conf;
+	पूर्णांक ret;
 
-	bitmap_conf = kzalloc(sizeof(*bitmap_conf), GFP_KERNEL);
-	if (!bitmap_conf) {
+	biपंचांगap_conf = kzalloc(माप(*biपंचांगap_conf), GFP_KERNEL);
+	अगर (!biपंचांगap_conf) अणु
 		ret = -ENOMEM;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	bitmap_conf->host_cfg_bitmap = cpu_to_le32(host_cfg_bitmap);
+	biपंचांगap_conf->host_cfg_biपंचांगap = cpu_to_le32(host_cfg_biपंचांगap);
 
 	ret = wl1271_cmd_configure(wl, ACX_HOST_IF_CFG_BITMAP,
-				   bitmap_conf, sizeof(*bitmap_conf));
-	if (ret < 0) {
+				   biपंचांगap_conf, माप(*biपंचांगap_conf));
+	अगर (ret < 0) अणु
 		wl1271_warning("wl1271 bitmap config opt failed: %d", ret);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 out:
-	kfree(bitmap_conf);
+	kमुक्त(biपंचांगap_conf);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण

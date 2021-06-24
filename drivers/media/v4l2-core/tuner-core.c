@@ -1,12 +1,13 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * i2c tv tuner chip device driver
- * core core, i.e. kernel interfaces, registering and so on
+ * core core, i.e. kernel पूर्णांकerfaces, रेजिस्टरing and so on
  *
  * Copyright(c) by Ralph Metzler, Gerd Knorr, Gunther Mayer
  *
  * Copyright(c) 2005-2011 by Mauro Carvalho Chehab
- *	- Added support for a separate Radio tuner
+ *	- Added support क्रम a separate Radio tuner
  *	- Major rework and cleanups at the code
  *
  * This driver supports many devices and the idea is to let the driver
@@ -15,338 +16,338 @@
  * handle both radio and analog TV tuning.
  */
 
-#include <linux/module.h>
-#include <linux/kernel.h>
-#include <linux/string.h>
-#include <linux/timer.h>
-#include <linux/delay.h>
-#include <linux/errno.h>
-#include <linux/slab.h>
-#include <linux/poll.h>
-#include <linux/i2c.h>
-#include <linux/types.h>
-#include <linux/init.h>
-#include <linux/videodev2.h>
-#include <media/tuner.h>
-#include <media/tuner-types.h>
-#include <media/v4l2-device.h>
-#include <media/v4l2-ioctl.h>
-#include "mt20xx.h"
-#include "tda8290.h"
-#include "tea5761.h"
-#include "tea5767.h"
-#include "tuner-xc2028.h"
-#include "tuner-simple.h"
-#include "tda9887.h"
-#include "xc5000.h"
-#include "tda18271.h"
-#include "xc4000.h"
+#समावेश <linux/module.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/समयr.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/slab.h>
+#समावेश <linux/poll.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/types.h>
+#समावेश <linux/init.h>
+#समावेश <linux/videodev2.h>
+#समावेश <media/tuner.h>
+#समावेश <media/tuner-types.h>
+#समावेश <media/v4l2-device.h>
+#समावेश <media/v4l2-ioctl.h>
+#समावेश "mt20xx.h"
+#समावेश "tda8290.h"
+#समावेश "tea5761.h"
+#समावेश "tea5767.h"
+#समावेश "tuner-xc2028.h"
+#समावेश "tuner-simple.h"
+#समावेश "tda9887.h"
+#समावेश "xc5000.h"
+#समावेश "tda18271.h"
+#समावेश "xc4000.h"
 
-#define UNSET (-1U)
+#घोषणा UNSET (-1U)
 
 /*
  * Driver modprobe parameters
  */
 
-/* insmod options used at init time => read/only */
-static unsigned int addr;
-static unsigned int no_autodetect;
-static unsigned int show_i2c;
+/* insmod options used at init समय => पढ़ो/only */
+अटल अचिन्हित पूर्णांक addr;
+अटल अचिन्हित पूर्णांक no_स्वतःdetect;
+अटल अचिन्हित पूर्णांक show_i2c;
 
-module_param(addr, int, 0444);
-module_param(no_autodetect, int, 0444);
-module_param(show_i2c, int, 0444);
+module_param(addr, पूर्णांक, 0444);
+module_param(no_स्वतःdetect, पूर्णांक, 0444);
+module_param(show_i2c, पूर्णांक, 0444);
 
-/* insmod options used at runtime => read/write */
-static int tuner_debug;
-static unsigned int tv_range[2] = { 44, 958 };
-static unsigned int radio_range[2] = { 65, 108 };
-static char pal[] = "--";
-static char secam[] = "--";
-static char ntsc[] = "-";
+/* insmod options used at runसमय => पढ़ो/ग_लिखो */
+अटल पूर्णांक tuner_debug;
+अटल अचिन्हित पूर्णांक tv_range[2] = अणु 44, 958 पूर्ण;
+अटल अचिन्हित पूर्णांक radio_range[2] = अणु 65, 108 पूर्ण;
+अटल अक्षर pal[] = "--";
+अटल अक्षर secam[] = "--";
+अटल अक्षर ntsc[] = "-";
 
-module_param_named(debug, tuner_debug, int, 0644);
-module_param_array(tv_range, int, NULL, 0644);
-module_param_array(radio_range, int, NULL, 0644);
-module_param_string(pal, pal, sizeof(pal), 0644);
-module_param_string(secam, secam, sizeof(secam), 0644);
-module_param_string(ntsc, ntsc, sizeof(ntsc), 0644);
+module_param_named(debug, tuner_debug, पूर्णांक, 0644);
+module_param_array(tv_range, पूर्णांक, शून्य, 0644);
+module_param_array(radio_range, पूर्णांक, शून्य, 0644);
+module_param_string(pal, pal, माप(pal), 0644);
+module_param_string(secam, secam, माप(secam), 0644);
+module_param_string(ntsc, ntsc, माप(ntsc), 0644);
 
 /*
  * Static vars
  */
 
-static LIST_HEAD(tuner_list);
-static const struct v4l2_subdev_ops tuner_ops;
+अटल LIST_HEAD(tuner_list);
+अटल स्थिर काष्ठा v4l2_subdev_ops tuner_ops;
 
 /*
  * Debug macros
  */
 
-#undef pr_fmt
+#अघोषित pr_fmt
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": %d-%04x: " fmt,		\
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": %d-%04x: " fmt,		\
 	i2c_adapter_id(t->i2c->adapter), t->i2c->addr
 
 
-#define dprintk(fmt, arg...) do {					\
-	if (tuner_debug)						\
-		printk(KERN_DEBUG pr_fmt("%s: " fmt), __func__, ##arg);	\
-} while (0)
+#घोषणा dprपूर्णांकk(fmt, arg...) करो अणु					\
+	अगर (tuner_debug)						\
+		prपूर्णांकk(KERN_DEBUG pr_fmt("%s: " fmt), __func__, ##arg);	\
+पूर्ण जबतक (0)
 
 /*
- * Internal enums/struct used inside the driver
+ * Internal क्रमागतs/काष्ठा used inside the driver
  */
 
 /**
- * enum tuner_pad_index - tuner pad index for MEDIA_ENT_F_TUNER
+ * क्रमागत tuner_pad_index - tuner pad index क्रम MEDIA_ENT_F_TUNER
  *
  * @TUNER_PAD_RF_INPUT:
  *	Radiofrequency (RF) sink pad, usually linked to a RF connector entity.
  * @TUNER_PAD_OUTPUT:
  *	tuner video output source pad. Contains the video chrominance
- *	and luminance or the hole bandwidth of the signal converted to
+ *	and luminance or the hole bandwidth of the संकेत converted to
  *	an Intermediate Frequency (IF) or to baseband (on zero-IF tuners).
  * @TUNER_PAD_AUD_OUT:
  *	Tuner audio output source pad. Tuners used to decode analog TV
- *	signals have an extra pad for audio output. Old tuners use an
- *	analog stage with a saw filter for the audio IF frequency. The
- *	output of the pad is, in this case, the audio IF, with should be
- *	decoded either by the bridge chipset (that's the case of cx2388x
- *	chipsets) or may require an external IF sound processor, like
+ *	संकेतs have an extra pad क्रम audio output. Old tuners use an
+ *	analog stage with a saw filter क्रम the audio IF frequency. The
+ *	output of the pad is, in this हाल, the audio IF, with should be
+ *	decoded either by the bridge chipset (that's the हाल of cx2388x
+ *	chipsets) or may require an बाह्यal IF sound processor, like
  *	msp34xx. On modern silicon tuners, the audio IF decoder is usually
- *	incorporated at the tuner. On such case, the output of this pad
+ *	incorporated at the tuner. On such हाल, the output of this pad
  *	is an audio sampled data.
  * @TUNER_NUM_PADS:
  *	Number of pads of the tuner.
  */
-enum tuner_pad_index {
+क्रमागत tuner_pad_index अणु
 	TUNER_PAD_RF_INPUT,
 	TUNER_PAD_OUTPUT,
 	TUNER_PAD_AUD_OUT,
 	TUNER_NUM_PADS
-};
+पूर्ण;
 
 /**
- * enum if_vid_dec_pad_index - video IF-PLL pad index
- *	for MEDIA_ENT_F_IF_VID_DECODER
+ * क्रमागत अगर_vid_dec_pad_index - video IF-PLL pad index
+ *	क्रम MEDIA_ENT_F_IF_VID_DECODER
  *
  * @IF_VID_DEC_PAD_IF_INPUT:
  *	video Intermediate Frequency (IF) sink pad
  * @IF_VID_DEC_PAD_OUT:
  *	IF-PLL video output source pad. Contains the video chrominance
- *	and luminance IF signals.
+ *	and luminance IF संकेतs.
  * @IF_VID_DEC_PAD_NUM_PADS:
  *	Number of pads of the video IF-PLL.
  */
-enum if_vid_dec_pad_index {
+क्रमागत अगर_vid_dec_pad_index अणु
 	IF_VID_DEC_PAD_IF_INPUT,
 	IF_VID_DEC_PAD_OUT,
 	IF_VID_DEC_PAD_NUM_PADS
-};
+पूर्ण;
 
-struct tuner {
+काष्ठा tuner अणु
 	/* device */
-	struct dvb_frontend fe;
-	struct i2c_client   *i2c;
-	struct v4l2_subdev  sd;
-	struct list_head    list;
+	काष्ठा dvb_frontend fe;
+	काष्ठा i2c_client   *i2c;
+	काष्ठा v4l2_subdev  sd;
+	काष्ठा list_head    list;
 
 	/* keep track of the current settings */
 	v4l2_std_id         std;
-	unsigned int        tv_freq;
-	unsigned int        radio_freq;
-	unsigned int        audmode;
+	अचिन्हित पूर्णांक        tv_freq;
+	अचिन्हित पूर्णांक        radio_freq;
+	अचिन्हित पूर्णांक        audmode;
 
-	enum v4l2_tuner_type mode;
-	unsigned int        mode_mask; /* Combination of allowable modes */
+	क्रमागत v4l2_tuner_type mode;
+	अचिन्हित पूर्णांक        mode_mask; /* Combination of allowable modes */
 
 	bool                standby;	/* Standby mode */
 
-	unsigned int        type; /* chip type id */
-	void                *config;
-	const char          *name;
+	अचिन्हित पूर्णांक        type; /* chip type id */
+	व्योम                *config;
+	स्थिर अक्षर          *name;
 
-#if defined(CONFIG_MEDIA_CONTROLLER)
-	struct media_pad	pad[TUNER_NUM_PADS];
-#endif
-};
+#अगर defined(CONFIG_MEDIA_CONTROLLER)
+	काष्ठा media_pad	pad[TUNER_NUM_PADS];
+#पूर्ण_अगर
+पूर्ण;
 
 /*
  * Function prototypes
  */
 
-static void set_tv_freq(struct i2c_client *c, unsigned int freq);
-static void set_radio_freq(struct i2c_client *c, unsigned int freq);
+अटल व्योम set_tv_freq(काष्ठा i2c_client *c, अचिन्हित पूर्णांक freq);
+अटल व्योम set_radio_freq(काष्ठा i2c_client *c, अचिन्हित पूर्णांक freq);
 
 /*
  * tuner attach/detach logic
  */
 
-/* This macro allows us to probe dynamically, avoiding static links */
-#ifdef CONFIG_MEDIA_ATTACH
-#define tuner_symbol_probe(FUNCTION, ARGS...) ({ \
-	int __r = -EINVAL; \
+/* This macro allows us to probe dynamically, aव्योमing अटल links */
+#अगर_घोषित CONFIG_MEDIA_ATTACH
+#घोषणा tuner_symbol_probe(FUNCTION, ARGS...) (अणु \
+	पूर्णांक __r = -EINVAL; \
 	typeof(&FUNCTION) __a = symbol_request(FUNCTION); \
-	if (__a) { \
-		__r = (int) __a(ARGS); \
+	अगर (__a) अणु \
+		__r = (पूर्णांक) __a(ARGS); \
 		symbol_put(FUNCTION); \
-	} else { \
-		printk(KERN_ERR "TUNER: Unable to find " \
+	पूर्ण अन्यथा अणु \
+		prपूर्णांकk(KERN_ERR "TUNER: Unable to find " \
 				"symbol "#FUNCTION"()\n"); \
-	} \
+	पूर्ण \
 	__r; \
-})
+पूर्ण)
 
-static void tuner_detach(struct dvb_frontend *fe)
-{
-	if (fe->ops.tuner_ops.release) {
+अटल व्योम tuner_detach(काष्ठा dvb_frontend *fe)
+अणु
+	अगर (fe->ops.tuner_ops.release) अणु
 		fe->ops.tuner_ops.release(fe);
 		symbol_put_addr(fe->ops.tuner_ops.release);
-	}
-	if (fe->ops.analog_ops.release) {
+	पूर्ण
+	अगर (fe->ops.analog_ops.release) अणु
 		fe->ops.analog_ops.release(fe);
 		symbol_put_addr(fe->ops.analog_ops.release);
-	}
-}
-#else
-#define tuner_symbol_probe(FUNCTION, ARGS...) ({ \
+	पूर्ण
+पूर्ण
+#अन्यथा
+#घोषणा tuner_symbol_probe(FUNCTION, ARGS...) (अणु \
 	FUNCTION(ARGS); \
-})
+पूर्ण)
 
-static void tuner_detach(struct dvb_frontend *fe)
-{
-	if (fe->ops.tuner_ops.release)
+अटल व्योम tuner_detach(काष्ठा dvb_frontend *fe)
+अणु
+	अगर (fe->ops.tuner_ops.release)
 		fe->ops.tuner_ops.release(fe);
-	if (fe->ops.analog_ops.release)
+	अगर (fe->ops.analog_ops.release)
 		fe->ops.analog_ops.release(fe);
-}
-#endif
+पूर्ण
+#पूर्ण_अगर
 
 
-static inline struct tuner *to_tuner(struct v4l2_subdev *sd)
-{
-	return container_of(sd, struct tuner, sd);
-}
+अटल अंतरभूत काष्ठा tuner *to_tuner(काष्ठा v4l2_subdev *sd)
+अणु
+	वापस container_of(sd, काष्ठा tuner, sd);
+पूर्ण
 
 /*
- * struct analog_demod_ops callbacks
+ * काष्ठा analog_demod_ops callbacks
  */
 
-static void fe_set_params(struct dvb_frontend *fe,
-			  struct analog_parameters *params)
-{
-	struct dvb_tuner_ops *fe_tuner_ops = &fe->ops.tuner_ops;
-	struct tuner *t = fe->analog_demod_priv;
+अटल व्योम fe_set_params(काष्ठा dvb_frontend *fe,
+			  काष्ठा analog_parameters *params)
+अणु
+	काष्ठा dvb_tuner_ops *fe_tuner_ops = &fe->ops.tuner_ops;
+	काष्ठा tuner *t = fe->analog_demod_priv;
 
-	if (NULL == fe_tuner_ops->set_analog_params) {
+	अगर (शून्य == fe_tuner_ops->set_analog_params) अणु
 		pr_warn("Tuner frontend module has no way to set freq\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 	fe_tuner_ops->set_analog_params(fe, params);
-}
+पूर्ण
 
-static void fe_standby(struct dvb_frontend *fe)
-{
-	struct dvb_tuner_ops *fe_tuner_ops = &fe->ops.tuner_ops;
+अटल व्योम fe_standby(काष्ठा dvb_frontend *fe)
+अणु
+	काष्ठा dvb_tuner_ops *fe_tuner_ops = &fe->ops.tuner_ops;
 
-	if (fe_tuner_ops->sleep)
+	अगर (fe_tuner_ops->sleep)
 		fe_tuner_ops->sleep(fe);
-}
+पूर्ण
 
-static int fe_set_config(struct dvb_frontend *fe, void *priv_cfg)
-{
-	struct dvb_tuner_ops *fe_tuner_ops = &fe->ops.tuner_ops;
-	struct tuner *t = fe->analog_demod_priv;
+अटल पूर्णांक fe_set_config(काष्ठा dvb_frontend *fe, व्योम *priv_cfg)
+अणु
+	काष्ठा dvb_tuner_ops *fe_tuner_ops = &fe->ops.tuner_ops;
+	काष्ठा tuner *t = fe->analog_demod_priv;
 
-	if (fe_tuner_ops->set_config)
-		return fe_tuner_ops->set_config(fe, priv_cfg);
+	अगर (fe_tuner_ops->set_config)
+		वापस fe_tuner_ops->set_config(fe, priv_cfg);
 
 	pr_warn("Tuner frontend module has no way to set config\n");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void tuner_status(struct dvb_frontend *fe);
+अटल व्योम tuner_status(काष्ठा dvb_frontend *fe);
 
-static const struct analog_demod_ops tuner_analog_ops = {
+अटल स्थिर काष्ठा analog_demod_ops tuner_analog_ops = अणु
 	.set_params     = fe_set_params,
 	.standby        = fe_standby,
 	.set_config     = fe_set_config,
 	.tuner_status   = tuner_status
-};
+पूर्ण;
 
 /*
- * Functions to select between radio and TV and tuner probe/remove functions
+ * Functions to select between radio and TV and tuner probe/हटाओ functions
  */
 
 /**
- * set_type - Sets the tuner type for a given device
+ * set_type - Sets the tuner type क्रम a given device
  *
  * @c:			i2c_client descriptor
  * @type:		type of the tuner (e. g. tuner number)
- * @new_mode_mask:	Indicates if tuner supports TV and/or Radio
+ * @new_mode_mask:	Indicates अगर tuner supports TV and/or Radio
  * @new_config:		an optional parameter used by a few tuners to adjust
- *			internal parameters, like LNA mode
- * @tuner_callback:	an optional function to be called when switching
+ *			पूर्णांकernal parameters, like LNA mode
+ * @tuner_callback:	an optional function to be called when चयनing
  *			to analog mode
  *
- * This function applies the tuner config to tuner specified
- * by tun_setup structure. It contains several per-tuner initialization "magic"
+ * This function applies the tuner config to tuner specअगरied
+ * by tun_setup काष्ठाure. It contains several per-tuner initialization "magic"
  */
-static void set_type(struct i2c_client *c, unsigned int type,
-		     unsigned int new_mode_mask, void *new_config,
-		     int (*tuner_callback) (void *dev, int component, int cmd, int arg))
-{
-	struct tuner *t = to_tuner(i2c_get_clientdata(c));
-	struct dvb_tuner_ops *fe_tuner_ops = &t->fe.ops.tuner_ops;
-	struct analog_demod_ops *analog_ops = &t->fe.ops.analog_ops;
-	unsigned char buffer[4];
-	int tune_now = 1;
+अटल व्योम set_type(काष्ठा i2c_client *c, अचिन्हित पूर्णांक type,
+		     अचिन्हित पूर्णांक new_mode_mask, व्योम *new_config,
+		     पूर्णांक (*tuner_callback) (व्योम *dev, पूर्णांक component, पूर्णांक cmd, पूर्णांक arg))
+अणु
+	काष्ठा tuner *t = to_tuner(i2c_get_clientdata(c));
+	काष्ठा dvb_tuner_ops *fe_tuner_ops = &t->fe.ops.tuner_ops;
+	काष्ठा analog_demod_ops *analog_ops = &t->fe.ops.analog_ops;
+	अचिन्हित अक्षर buffer[4];
+	पूर्णांक tune_now = 1;
 
-	if (type == UNSET || type == TUNER_ABSENT) {
-		dprintk("tuner 0x%02x: Tuner type absent\n", c->addr);
-		return;
-	}
+	अगर (type == UNSET || type == TUNER_ABSENT) अणु
+		dprपूर्णांकk("tuner 0x%02x: Tuner type absent\n", c->addr);
+		वापस;
+	पूर्ण
 
 	t->type = type;
 	t->config = new_config;
-	if (tuner_callback != NULL) {
-		dprintk("defining GPIO callback\n");
+	अगर (tuner_callback != शून्य) अणु
+		dprपूर्णांकk("defining GPIO callback\n");
 		t->fe.callback = tuner_callback;
-	}
+	पूर्ण
 
-	/* discard private data, in case set_type() was previously called */
+	/* discard निजी data, in हाल set_type() was previously called */
 	tuner_detach(&t->fe);
-	t->fe.analog_demod_priv = NULL;
+	t->fe.analog_demod_priv = शून्य;
 
-	switch (t->type) {
-	case TUNER_MT2032:
-		if (!dvb_attach(microtune_attach,
+	चयन (t->type) अणु
+	हाल TUNER_MT2032:
+		अगर (!dvb_attach(microtune_attach,
 			   &t->fe, t->i2c->adapter, t->i2c->addr))
-			goto attach_failed;
-		break;
-	case TUNER_PHILIPS_TDA8290:
-	{
-		if (!dvb_attach(tda829x_attach, &t->fe, t->i2c->adapter,
+			जाओ attach_failed;
+		अवरोध;
+	हाल TUNER_PHILIPS_TDA8290:
+	अणु
+		अगर (!dvb_attach(tda829x_attach, &t->fe, t->i2c->adapter,
 				t->i2c->addr, t->config))
-			goto attach_failed;
-		break;
-	}
-	case TUNER_TEA5767:
-		if (!dvb_attach(tea5767_attach, &t->fe,
+			जाओ attach_failed;
+		अवरोध;
+	पूर्ण
+	हाल TUNER_TEA5767:
+		अगर (!dvb_attach(tea5767_attach, &t->fe,
 				t->i2c->adapter, t->i2c->addr))
-			goto attach_failed;
+			जाओ attach_failed;
 		t->mode_mask = T_RADIO;
-		break;
-	case TUNER_TEA5761:
-		if (!dvb_attach(tea5761_attach, &t->fe,
+		अवरोध;
+	हाल TUNER_TEA5761:
+		अगर (!dvb_attach(tea5761_attach, &t->fe,
 				t->i2c->adapter, t->i2c->addr))
-			goto attach_failed;
+			जाओ attach_failed;
 		t->mode_mask = T_RADIO;
-		break;
-	case TUNER_PHILIPS_FMD1216ME_MK3:
-	case TUNER_PHILIPS_FMD1216MEX_MK3:
+		अवरोध;
+	हाल TUNER_PHILIPS_FMD1216ME_MK3:
+	हाल TUNER_PHILIPS_FMD1216MEX_MK3:
 		buffer[0] = 0x0b;
 		buffer[1] = 0xdc;
 		buffer[2] = 0x9c;
@@ -356,191 +357,191 @@ static void set_type(struct i2c_client *c, unsigned int type,
 		buffer[2] = 0x86;
 		buffer[3] = 0x54;
 		i2c_master_send(c, buffer, 4);
-		if (!dvb_attach(simple_tuner_attach, &t->fe,
+		अगर (!dvb_attach(simple_tuner_attach, &t->fe,
 				t->i2c->adapter, t->i2c->addr, t->type))
-			goto attach_failed;
-		break;
-	case TUNER_PHILIPS_TD1316:
+			जाओ attach_failed;
+		अवरोध;
+	हाल TUNER_PHILIPS_TD1316:
 		buffer[0] = 0x0b;
 		buffer[1] = 0xdc;
 		buffer[2] = 0x86;
 		buffer[3] = 0xa4;
 		i2c_master_send(c, buffer, 4);
-		if (!dvb_attach(simple_tuner_attach, &t->fe,
+		अगर (!dvb_attach(simple_tuner_attach, &t->fe,
 				t->i2c->adapter, t->i2c->addr, t->type))
-			goto attach_failed;
-		break;
-	case TUNER_XC2028:
-	{
-		struct xc2028_config cfg = {
+			जाओ attach_failed;
+		अवरोध;
+	हाल TUNER_XC2028:
+	अणु
+		काष्ठा xc2028_config cfg = अणु
 			.i2c_adap  = t->i2c->adapter,
 			.i2c_addr  = t->i2c->addr,
-		};
-		if (!dvb_attach(xc2028_attach, &t->fe, &cfg))
-			goto attach_failed;
+		पूर्ण;
+		अगर (!dvb_attach(xc2028_attach, &t->fe, &cfg))
+			जाओ attach_failed;
 		tune_now = 0;
-		break;
-	}
-	case TUNER_TDA9887:
-		if (!dvb_attach(tda9887_attach,
+		अवरोध;
+	पूर्ण
+	हाल TUNER_TDA9887:
+		अगर (!dvb_attach(tda9887_attach,
 			   &t->fe, t->i2c->adapter, t->i2c->addr))
-			goto attach_failed;
-		break;
-	case TUNER_XC5000:
-	{
-		struct xc5000_config xc5000_cfg = {
+			जाओ attach_failed;
+		अवरोध;
+	हाल TUNER_XC5000:
+	अणु
+		काष्ठा xc5000_config xc5000_cfg = अणु
 			.i2c_address = t->i2c->addr,
-			/* if_khz will be set at dvb_attach() */
-			.if_khz	  = 0,
-		};
+			/* अगर_khz will be set at dvb_attach() */
+			.अगर_khz	  = 0,
+		पूर्ण;
 
-		if (!dvb_attach(xc5000_attach,
+		अगर (!dvb_attach(xc5000_attach,
 				&t->fe, t->i2c->adapter, &xc5000_cfg))
-			goto attach_failed;
+			जाओ attach_failed;
 		tune_now = 0;
-		break;
-	}
-	case TUNER_XC5000C:
-	{
-		struct xc5000_config xc5000c_cfg = {
+		अवरोध;
+	पूर्ण
+	हाल TUNER_XC5000C:
+	अणु
+		काष्ठा xc5000_config xc5000c_cfg = अणु
 			.i2c_address = t->i2c->addr,
-			/* if_khz will be set at dvb_attach() */
-			.if_khz	  = 0,
+			/* अगर_khz will be set at dvb_attach() */
+			.अगर_khz	  = 0,
 			.chip_id  = XC5000C,
-		};
+		पूर्ण;
 
-		if (!dvb_attach(xc5000_attach,
+		अगर (!dvb_attach(xc5000_attach,
 				&t->fe, t->i2c->adapter, &xc5000c_cfg))
-			goto attach_failed;
+			जाओ attach_failed;
 		tune_now = 0;
-		break;
-	}
-	case TUNER_NXP_TDA18271:
-	{
-		struct tda18271_config cfg = {
+		अवरोध;
+	पूर्ण
+	हाल TUNER_NXP_TDA18271:
+	अणु
+		काष्ठा tda18271_config cfg = अणु
 			.small_i2c = TDA18271_03_BYTE_CHUNK_INIT,
-		};
+		पूर्ण;
 
-		if (!dvb_attach(tda18271_attach, &t->fe, t->i2c->addr,
+		अगर (!dvb_attach(tda18271_attach, &t->fe, t->i2c->addr,
 				t->i2c->adapter, &cfg))
-			goto attach_failed;
+			जाओ attach_failed;
 		tune_now = 0;
-		break;
-	}
-	case TUNER_XC4000:
-	{
-		struct xc4000_config xc4000_cfg = {
+		अवरोध;
+	पूर्ण
+	हाल TUNER_XC4000:
+	अणु
+		काष्ठा xc4000_config xc4000_cfg = अणु
 			.i2c_address	  = t->i2c->addr,
 			/* FIXME: the correct parameters will be set */
 			/* only when the digital dvb_attach() occurs */
-			.default_pm	  = 0,
+			.शेष_pm	  = 0,
 			.dvb_amplitude	  = 0,
 			.set_smoothedcvbs = 0,
-			.if_khz		  = 0
-		};
-		if (!dvb_attach(xc4000_attach,
+			.अगर_khz		  = 0
+		पूर्ण;
+		अगर (!dvb_attach(xc4000_attach,
 				&t->fe, t->i2c->adapter, &xc4000_cfg))
-			goto attach_failed;
+			जाओ attach_failed;
 		tune_now = 0;
-		break;
-	}
-	default:
-		if (!dvb_attach(simple_tuner_attach, &t->fe,
+		अवरोध;
+	पूर्ण
+	शेष:
+		अगर (!dvb_attach(simple_tuner_attach, &t->fe,
 				t->i2c->adapter, t->i2c->addr, t->type))
-			goto attach_failed;
+			जाओ attach_failed;
 
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	if ((NULL == analog_ops->set_params) &&
-	    (fe_tuner_ops->set_analog_params)) {
+	अगर ((शून्य == analog_ops->set_params) &&
+	    (fe_tuner_ops->set_analog_params)) अणु
 
 		t->name = fe_tuner_ops->info.name;
 
 		t->fe.analog_demod_priv = t;
-		memcpy(analog_ops, &tuner_analog_ops,
-		       sizeof(struct analog_demod_ops));
+		स_नकल(analog_ops, &tuner_analog_ops,
+		       माप(काष्ठा analog_demod_ops));
 
-		if (fe_tuner_ops->get_rf_strength)
-			analog_ops->has_signal = fe_tuner_ops->get_rf_strength;
-		if (fe_tuner_ops->get_afc)
+		अगर (fe_tuner_ops->get_rf_strength)
+			analog_ops->has_संकेत = fe_tuner_ops->get_rf_strength;
+		अगर (fe_tuner_ops->get_afc)
 			analog_ops->get_afc = fe_tuner_ops->get_afc;
 
-	} else {
+	पूर्ण अन्यथा अणु
 		t->name = analog_ops->info.name;
-	}
+	पूर्ण
 
-#ifdef CONFIG_MEDIA_CONTROLLER
+#अगर_घोषित CONFIG_MEDIA_CONTROLLER
 	t->sd.entity.name = t->name;
-#endif
+#पूर्ण_अगर
 
-	dprintk("type set to %s\n", t->name);
+	dprपूर्णांकk("type set to %s\n", t->name);
 
 	t->mode_mask = new_mode_mask;
 
-	/* Some tuners require more initialization setup before use,
-	   such as firmware download or device calibration.
+	/* Some tuners require more initialization setup beक्रमe use,
+	   such as firmware करोwnload or device calibration.
 	   trying to set a frequency here will just fail
 	   FIXME: better to move set_freq to the tuner code. This is needed
-	   on analog tuners for PLL to properly work
+	   on analog tuners क्रम PLL to properly work
 	 */
-	if (tune_now) {
-		if (V4L2_TUNER_RADIO == t->mode)
+	अगर (tune_now) अणु
+		अगर (V4L2_TUNER_RADIO == t->mode)
 			set_radio_freq(c, t->radio_freq);
-		else
+		अन्यथा
 			set_tv_freq(c, t->tv_freq);
-	}
+	पूर्ण
 
-	dprintk("%s %s I2C addr 0x%02x with type %d used for 0x%02x\n",
+	dprपूर्णांकk("%s %s I2C addr 0x%02x with type %d used for 0x%02x\n",
 		  c->adapter->name, c->dev.driver->name, c->addr << 1, type,
 		  t->mode_mask);
-	return;
+	वापस;
 
 attach_failed:
-	dprintk("Tuner attach for type = %d failed.\n", t->type);
+	dprपूर्णांकk("Tuner attach for type = %d failed.\n", t->type);
 	t->type = TUNER_ABSENT;
 
-	return;
-}
+	वापस;
+पूर्ण
 
 /**
- * tuner_s_type_addr - Sets the tuner type for a device
+ * tuner_s_type_addr - Sets the tuner type क्रम a device
  *
  * @sd:		subdev descriptor
  * @tun_setup:	type to be associated to a given tuner i2c address
  *
- * This function applies the tuner config to tuner specified
- * by tun_setup structure.
+ * This function applies the tuner config to tuner specअगरied
+ * by tun_setup काष्ठाure.
  * If tuner I2C address is UNSET, then it will only set the device
- * if the tuner supports the mode specified in the call.
- * If the address is specified, the change will be applied only if
+ * अगर the tuner supports the mode specअगरied in the call.
+ * If the address is specअगरied, the change will be applied only अगर
  * tuner I2C address matches.
  * The call can change the tuner number and the tuner mode.
  */
-static int tuner_s_type_addr(struct v4l2_subdev *sd,
-			     struct tuner_setup *tun_setup)
-{
-	struct tuner *t = to_tuner(sd);
-	struct i2c_client *c = v4l2_get_subdevdata(sd);
+अटल पूर्णांक tuner_s_type_addr(काष्ठा v4l2_subdev *sd,
+			     काष्ठा tuner_setup *tun_setup)
+अणु
+	काष्ठा tuner *t = to_tuner(sd);
+	काष्ठा i2c_client *c = v4l2_get_subdevdata(sd);
 
-	dprintk("Calling set_type_addr for type=%d, addr=0x%02x, mode=0x%02x, config=%p\n",
+	dprपूर्णांकk("Calling set_type_addr for type=%d, addr=0x%02x, mode=0x%02x, config=%p\n",
 			tun_setup->type,
 			tun_setup->addr,
 			tun_setup->mode_mask,
 			tun_setup->config);
 
-	if ((t->type == UNSET && ((tun_setup->addr == ADDR_UNSET) &&
+	अगर ((t->type == UNSET && ((tun_setup->addr == ADDR_UNSET) &&
 	    (t->mode_mask & tun_setup->mode_mask))) ||
-	    (tun_setup->addr == c->addr)) {
+	    (tun_setup->addr == c->addr)) अणु
 		set_type(c, tun_setup->type, tun_setup->mode_mask,
 			 tun_setup->config, tun_setup->tuner_callback);
-	} else
-		dprintk("set addr discarded for type %i, mask %x. Asked to change tuner at addr 0x%02x, with mask %x\n",
+	पूर्ण अन्यथा
+		dprपूर्णांकk("set addr discarded for type %i, mask %x. Asked to change tuner at addr 0x%02x, with mask %x\n",
 			  t->type, t->mode_mask,
 			  tun_setup->addr, tun_setup->mode_mask);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * tuner_s_config - Sets tuner configuration
@@ -548,67 +549,67 @@ static int tuner_s_type_addr(struct v4l2_subdev *sd,
  * @sd:		subdev descriptor
  * @cfg:	tuner configuration
  *
- * Calls tuner set_config() private function to set some tuner-internal
+ * Calls tuner set_config() निजी function to set some tuner-पूर्णांकernal
  * parameters
  */
-static int tuner_s_config(struct v4l2_subdev *sd,
-			  const struct v4l2_priv_tun_config *cfg)
-{
-	struct tuner *t = to_tuner(sd);
-	struct analog_demod_ops *analog_ops = &t->fe.ops.analog_ops;
+अटल पूर्णांक tuner_s_config(काष्ठा v4l2_subdev *sd,
+			  स्थिर काष्ठा v4l2_priv_tun_config *cfg)
+अणु
+	काष्ठा tuner *t = to_tuner(sd);
+	काष्ठा analog_demod_ops *analog_ops = &t->fe.ops.analog_ops;
 
-	if (t->type != cfg->tuner)
-		return 0;
+	अगर (t->type != cfg->tuner)
+		वापस 0;
 
-	if (analog_ops->set_config) {
+	अगर (analog_ops->set_config) अणु
 		analog_ops->set_config(&t->fe, cfg->priv);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	dprintk("Tuner frontend module has no way to set config\n");
-	return 0;
-}
+	dprपूर्णांकk("Tuner frontend module has no way to set config\n");
+	वापस 0;
+पूर्ण
 
 /**
- * tuner_lookup - Seek for tuner adapters
+ * tuner_lookup - Seek क्रम tuner adapters
  *
- * @adap:	i2c_adapter struct
- * @radio:	pointer to be filled if the adapter is radio
- * @tv:		pointer to be filled if the adapter is TV
+ * @adap:	i2c_adapter काष्ठा
+ * @radio:	poपूर्णांकer to be filled अगर the adapter is radio
+ * @tv:		poपूर्णांकer to be filled अगर the adapter is TV
  *
- * Search for existing radio and/or TV tuners on the given I2C adapter,
+ * Search क्रम existing radio and/or TV tuners on the given I2C adapter,
  * discarding demod-only adapters (tda9887).
  *
  * Note that when this function is called from tuner_probe you can be
- * certain no other devices will be added/deleted at the same time, I2C
+ * certain no other devices will be added/deleted at the same समय, I2C
  * core protects against that.
  */
-static void tuner_lookup(struct i2c_adapter *adap,
-		struct tuner **radio, struct tuner **tv)
-{
-	struct tuner *pos;
+अटल व्योम tuner_lookup(काष्ठा i2c_adapter *adap,
+		काष्ठा tuner **radio, काष्ठा tuner **tv)
+अणु
+	काष्ठा tuner *pos;
 
-	*radio = NULL;
-	*tv = NULL;
+	*radio = शून्य;
+	*tv = शून्य;
 
-	list_for_each_entry(pos, &tuner_list, list) {
-		int mode_mask;
+	list_क्रम_each_entry(pos, &tuner_list, list) अणु
+		पूर्णांक mode_mask;
 
-		if (pos->i2c->adapter != adap ||
-		    strcmp(pos->i2c->dev.driver->name, "tuner"))
-			continue;
+		अगर (pos->i2c->adapter != adap ||
+		    म_भेद(pos->i2c->dev.driver->name, "tuner"))
+			जारी;
 
 		mode_mask = pos->mode_mask;
-		if (*radio == NULL && mode_mask == T_RADIO)
+		अगर (*radio == शून्य && mode_mask == T_RADIO)
 			*radio = pos;
 		/* Note: currently TDA9887 is the only demod-only
 		   device. If other devices appear then we need to
 		   make this test more general. */
-		else if (*tv == NULL && pos->type != TUNER_TDA9887 &&
+		अन्यथा अगर (*tv == शून्य && pos->type != TUNER_TDA9887 &&
 			 (pos->mode_mask & T_ANALOG_TV))
 			*tv = pos;
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
  *tuner_probe - Probes the existing tuners on an I2C bus
@@ -616,28 +617,28 @@ static void tuner_lookup(struct i2c_adapter *adap,
  * @client:	i2c_client descriptor
  * @id:		not used
  *
- * This routine probes for tuners at the expected I2C addresses. On most
- * cases, if a device answers to a given I2C address, it assumes that the
- * device is a tuner. On a few cases, however, an additional logic is needed
- * to double check if the device is really a tuner, or to identify the tuner
+ * This routine probes क्रम tuners at the expected I2C addresses. On most
+ * हालs, अगर a device answers to a given I2C address, it assumes that the
+ * device is a tuner. On a few हालs, however, an additional logic is needed
+ * to द्विगुन check अगर the device is really a tuner, or to identअगरy the tuner
  * type, like on tea5767/5761 devices.
  *
- * During client attach, set_type is called by adapter's attach_inform callback.
+ * During client attach, set_type is called by adapter's attach_inक्रमm callback.
  * set_type must then be completed by tuner_probe.
  */
-static int tuner_probe(struct i2c_client *client,
-		       const struct i2c_device_id *id)
-{
-	struct tuner *t;
-	struct tuner *radio;
-	struct tuner *tv;
-#ifdef CONFIG_MEDIA_CONTROLLER
-	int ret;
-#endif
+अटल पूर्णांक tuner_probe(काष्ठा i2c_client *client,
+		       स्थिर काष्ठा i2c_device_id *id)
+अणु
+	काष्ठा tuner *t;
+	काष्ठा tuner *radio;
+	काष्ठा tuner *tv;
+#अगर_घोषित CONFIG_MEDIA_CONTROLLER
+	पूर्णांक ret;
+#पूर्ण_अगर
 
-	t = kzalloc(sizeof(struct tuner), GFP_KERNEL);
-	if (NULL == t)
-		return -ENOMEM;
+	t = kzalloc(माप(काष्ठा tuner), GFP_KERNEL);
+	अगर (शून्य == t)
+		वापस -ENOMEM;
 	v4l2_i2c_subdev_init(&t->sd, client, &tuner_ops);
 	t->i2c = client;
 	t->name = "(tuner unset)";
@@ -645,93 +646,93 @@ static int tuner_probe(struct i2c_client *client,
 	t->audmode = V4L2_TUNER_MODE_STEREO;
 	t->standby = true;
 	t->radio_freq = 87.5 * 16000;	/* Initial freq range */
-	t->tv_freq = 400 * 16; /* Sets freq to VHF High - needed for some PLL's to properly start */
+	t->tv_freq = 400 * 16; /* Sets freq to VHF High - needed क्रम some PLL's to properly start */
 
-	if (show_i2c) {
-		unsigned char buffer[16];
-		int rc;
+	अगर (show_i2c) अणु
+		अचिन्हित अक्षर buffer[16];
+		पूर्णांक rc;
 
-		memset(buffer, 0, sizeof(buffer));
-		rc = i2c_master_recv(client, buffer, sizeof(buffer));
-		if (rc >= 0)
+		स_रखो(buffer, 0, माप(buffer));
+		rc = i2c_master_recv(client, buffer, माप(buffer));
+		अगर (rc >= 0)
 			pr_info("I2C RECV = %*ph\n", rc, buffer);
-	}
+	पूर्ण
 
-	/* autodetection code based on the i2c addr */
-	if (!no_autodetect) {
-		switch (client->addr) {
-		case 0x10:
-			if (tuner_symbol_probe(tea5761_autodetection,
+	/* स्वतःdetection code based on the i2c addr */
+	अगर (!no_स्वतःdetect) अणु
+		चयन (client->addr) अणु
+		हाल 0x10:
+			अगर (tuner_symbol_probe(tea5761_स्वतःdetection,
 					       t->i2c->adapter,
-					       t->i2c->addr) >= 0) {
+					       t->i2c->addr) >= 0) अणु
 				t->type = TUNER_TEA5761;
 				t->mode_mask = T_RADIO;
 				tuner_lookup(t->i2c->adapter, &radio, &tv);
-				if (tv)
+				अगर (tv)
 					tv->mode_mask &= ~T_RADIO;
 
-				goto register_client;
-			}
-			kfree(t);
-			return -ENODEV;
-		case 0x42:
-		case 0x43:
-		case 0x4a:
-		case 0x4b:
-			/* If chip is not tda8290, don't register.
+				जाओ रेजिस्टर_client;
+			पूर्ण
+			kमुक्त(t);
+			वापस -ENODEV;
+		हाल 0x42:
+		हाल 0x43:
+		हाल 0x4a:
+		हाल 0x4b:
+			/* If chip is not tda8290, करोn't रेजिस्टर.
 			   since it can be tda9887*/
-			if (tuner_symbol_probe(tda829x_probe, t->i2c->adapter,
-					       t->i2c->addr) >= 0) {
-				dprintk("tda829x detected\n");
-			} else {
+			अगर (tuner_symbol_probe(tda829x_probe, t->i2c->adapter,
+					       t->i2c->addr) >= 0) अणु
+				dprपूर्णांकk("tda829x detected\n");
+			पूर्ण अन्यथा अणु
 				/* Default is being tda9887 */
 				t->type = TUNER_TDA9887;
 				t->mode_mask = T_RADIO | T_ANALOG_TV;
-				goto register_client;
-			}
-			break;
-		case 0x60:
-			if (tuner_symbol_probe(tea5767_autodetection,
+				जाओ रेजिस्टर_client;
+			पूर्ण
+			अवरोध;
+		हाल 0x60:
+			अगर (tuner_symbol_probe(tea5767_स्वतःdetection,
 					       t->i2c->adapter, t->i2c->addr)
-					>= 0) {
+					>= 0) अणु
 				t->type = TUNER_TEA5767;
 				t->mode_mask = T_RADIO;
 				/* Sets freq to FM range */
 				tuner_lookup(t->i2c->adapter, &radio, &tv);
-				if (tv)
+				अगर (tv)
 					tv->mode_mask &= ~T_RADIO;
 
-				goto register_client;
-			}
-			break;
-		}
-	}
+				जाओ रेजिस्टर_client;
+			पूर्ण
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
 	/* Initializes only the first TV tuner on this adapter. Why only the
 	   first? Because there are some devices (notably the ones with TI
-	   tuners) that have more than one i2c address for the *same* device.
-	   Experience shows that, except for just one case, the first
+	   tuners) that have more than one i2c address क्रम the *same* device.
+	   Experience shows that, except क्रम just one हाल, the first
 	   address is the right one. The exception is a Russian tuner
 	   (ACORP_Y878F). So, the desired behavior is just to enable the
 	   first found TV tuner. */
 	tuner_lookup(t->i2c->adapter, &radio, &tv);
-	if (tv == NULL) {
+	अगर (tv == शून्य) अणु
 		t->mode_mask = T_ANALOG_TV;
-		if (radio == NULL)
+		अगर (radio == शून्य)
 			t->mode_mask |= T_RADIO;
-		dprintk("Setting mode_mask to 0x%02x\n", t->mode_mask);
-	}
+		dprपूर्णांकk("Setting mode_mask to 0x%02x\n", t->mode_mask);
+	पूर्ण
 
-	/* Should be just before return */
-register_client:
-#if defined(CONFIG_MEDIA_CONTROLLER)
+	/* Should be just beक्रमe वापस */
+रेजिस्टर_client:
+#अगर defined(CONFIG_MEDIA_CONTROLLER)
 	t->sd.entity.name = t->name;
 	/*
-	 * Handle the special case where the tuner has actually
-	 * two stages: the PLL to tune into a frequency and the
+	 * Handle the special हाल where the tuner has actually
+	 * two stages: the PLL to tune पूर्णांकo a frequency and the
 	 * IF-PLL demodulator (tda988x).
 	 */
-	if (t->type == TUNER_TDA9887) {
+	अगर (t->type == TUNER_TDA9887) अणु
 		t->pad[IF_VID_DEC_PAD_IF_INPUT].flags = MEDIA_PAD_FL_SINK;
 		t->pad[IF_VID_DEC_PAD_IF_INPUT].sig_type = PAD_SIGNAL_ANALOG;
 		t->pad[IF_VID_DEC_PAD_OUT].flags = MEDIA_PAD_FL_SOURCE;
@@ -740,7 +741,7 @@ register_client:
 					     IF_VID_DEC_PAD_NUM_PADS,
 					     &t->pad[0]);
 		t->sd.entity.function = MEDIA_ENT_F_IF_VID_DECODER;
-	} else {
+	पूर्ण अन्यथा अणु
 		t->pad[TUNER_PAD_RF_INPUT].flags = MEDIA_PAD_FL_SINK;
 		t->pad[TUNER_PAD_RF_INPUT].sig_type = PAD_SIGNAL_ANALOG;
 		t->pad[TUNER_PAD_OUTPUT].flags = MEDIA_PAD_FL_SOURCE;
@@ -750,18 +751,18 @@ register_client:
 		ret = media_entity_pads_init(&t->sd.entity, TUNER_NUM_PADS,
 					     &t->pad[0]);
 		t->sd.entity.function = MEDIA_ENT_F_TUNER;
-	}
+	पूर्ण
 
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		pr_err("failed to initialize media entity!\n");
-		kfree(t);
-		return ret;
-	}
-#endif
-	/* Sets a default mode */
-	if (t->mode_mask & T_ANALOG_TV)
+		kमुक्त(t);
+		वापस ret;
+	पूर्ण
+#पूर्ण_अगर
+	/* Sets a शेष mode */
+	अगर (t->mode_mask & T_ANALOG_TV)
 		t->mode = V4L2_TUNER_ANALOG_TV;
-	else
+	अन्यथा
 		t->mode = V4L2_TUNER_RADIO;
 	set_type(client, t->type, t->mode_mask, t->config, t->fe.callback);
 	list_add_tail(&t->list, &tuner_list);
@@ -770,116 +771,116 @@ register_client:
 		   t->type,
 		   t->mode_mask & T_RADIO ? " Radio" : "",
 		   t->mode_mask & T_ANALOG_TV ? " TV" : "");
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * tuner_remove - detaches a tuner
+ * tuner_हटाओ - detaches a tuner
  *
  * @client:	i2c_client descriptor
  */
 
-static int tuner_remove(struct i2c_client *client)
-{
-	struct tuner *t = to_tuner(i2c_get_clientdata(client));
+अटल पूर्णांक tuner_हटाओ(काष्ठा i2c_client *client)
+अणु
+	काष्ठा tuner *t = to_tuner(i2c_get_clientdata(client));
 
-	v4l2_device_unregister_subdev(&t->sd);
+	v4l2_device_unरेजिस्टर_subdev(&t->sd);
 	tuner_detach(&t->fe);
-	t->fe.analog_demod_priv = NULL;
+	t->fe.analog_demod_priv = शून्य;
 
 	list_del(&t->list);
-	kfree(t);
-	return 0;
-}
+	kमुक्त(t);
+	वापस 0;
+पूर्ण
 
 /*
- * Functions to switch between Radio and TV
+ * Functions to चयन between Radio and TV
  *
- * A few cards have a separate I2C tuner for radio. Those routines
- * take care of switching between TV/Radio mode, filtering only the
+ * A few cards have a separate I2C tuner क्रम radio. Those routines
+ * take care of चयनing between TV/Radio mode, filtering only the
  * commands that apply to the Radio or TV tuner.
  */
 
 /**
- * check_mode - Verify if tuner supports the requested mode
- * @t: a pointer to the module's internal struct_tuner
- * @mode: mode of the tuner, as defined by &enum v4l2_tuner_type.
+ * check_mode - Verअगरy अगर tuner supports the requested mode
+ * @t: a poपूर्णांकer to the module's पूर्णांकernal काष्ठा_tuner
+ * @mode: mode of the tuner, as defined by &क्रमागत v4l2_tuner_type.
  *
- * This function checks if the tuner is capable of tuning analog TV,
+ * This function checks अगर the tuner is capable of tuning analog TV,
  * digital TV or radio, depending on what the caller wants. If the
- * tuner can't support that mode, it returns -EINVAL. Otherwise, it
- * returns 0.
- * This function is needed for boards that have a separate tuner for
+ * tuner can't support that mode, it वापसs -EINVAL. Otherwise, it
+ * वापसs 0.
+ * This function is needed क्रम boards that have a separate tuner क्रम
  * radio (like devices with tea5767).
  *
  * NOTE: mt20xx uses V4L2_TUNER_DIGITAL_TV and calls set_tv_freq to
  *       select a TV frequency. So, t_mode = T_ANALOG_TV could actually
  *	 be used to represent a Digital TV too.
  */
-static inline int check_mode(struct tuner *t, enum v4l2_tuner_type mode)
-{
-	int t_mode;
-	if (mode == V4L2_TUNER_RADIO)
+अटल अंतरभूत पूर्णांक check_mode(काष्ठा tuner *t, क्रमागत v4l2_tuner_type mode)
+अणु
+	पूर्णांक t_mode;
+	अगर (mode == V4L2_TUNER_RADIO)
 		t_mode = T_RADIO;
-	else
+	अन्यथा
 		t_mode = T_ANALOG_TV;
 
-	if ((t_mode & t->mode_mask) == 0)
-		return -EINVAL;
+	अगर ((t_mode & t->mode_mask) == 0)
+		वापस -EINVAL;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * set_mode - Switch tuner to other mode.
- * @t:		a pointer to the module's internal struct_tuner
- * @mode:	enum v4l2_type (radio or TV)
+ * @t:		a poपूर्णांकer to the module's पूर्णांकernal काष्ठा_tuner
+ * @mode:	क्रमागत v4l2_type (radio or TV)
  *
- * If tuner doesn't support the needed mode (radio or TV), prints a
- * debug message and returns -EINVAL, changing its state to standby.
- * Otherwise, changes the mode and returns 0.
+ * If tuner करोesn't support the needed mode (radio or TV), prपूर्णांकs a
+ * debug message and वापसs -EINVAL, changing its state to standby.
+ * Otherwise, changes the mode and वापसs 0.
  */
-static int set_mode(struct tuner *t, enum v4l2_tuner_type mode)
-{
-	struct analog_demod_ops *analog_ops = &t->fe.ops.analog_ops;
+अटल पूर्णांक set_mode(काष्ठा tuner *t, क्रमागत v4l2_tuner_type mode)
+अणु
+	काष्ठा analog_demod_ops *analog_ops = &t->fe.ops.analog_ops;
 
-	if (mode != t->mode) {
-		if (check_mode(t, mode) == -EINVAL) {
-			dprintk("Tuner doesn't support mode %d. Putting tuner to sleep\n",
+	अगर (mode != t->mode) अणु
+		अगर (check_mode(t, mode) == -EINVAL) अणु
+			dprपूर्णांकk("Tuner doesn't support mode %d. Putting tuner to sleep\n",
 				  mode);
 			t->standby = true;
-			if (analog_ops->standby)
+			अगर (analog_ops->standby)
 				analog_ops->standby(&t->fe);
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 		t->mode = mode;
-		dprintk("Changing to mode %d\n", mode);
-	}
-	return 0;
-}
+		dprपूर्णांकk("Changing to mode %d\n", mode);
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /**
  * set_freq - Set the tuner to the desired frequency.
- * @t:		a pointer to the module's internal struct_tuner
+ * @t:		a poपूर्णांकer to the module's पूर्णांकernal काष्ठा_tuner
  * @freq:	frequency to set (0 means to use the current frequency)
  */
-static void set_freq(struct tuner *t, unsigned int freq)
-{
-	struct i2c_client *client = v4l2_get_subdevdata(&t->sd);
+अटल व्योम set_freq(काष्ठा tuner *t, अचिन्हित पूर्णांक freq)
+अणु
+	काष्ठा i2c_client *client = v4l2_get_subdevdata(&t->sd);
 
-	if (t->mode == V4L2_TUNER_RADIO) {
-		if (!freq)
+	अगर (t->mode == V4L2_TUNER_RADIO) अणु
+		अगर (!freq)
 			freq = t->radio_freq;
 		set_radio_freq(client, freq);
-	} else {
-		if (!freq)
+	पूर्ण अन्यथा अणु
+		अगर (!freq)
 			freq = t->tv_freq;
 		set_tv_freq(client, freq);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
- * Functions that are specific for TV mode
+ * Functions that are specअगरic क्रम TV mode
  */
 
 /**
@@ -888,139 +889,139 @@ static void set_freq(struct tuner *t, unsigned int freq)
  * @c:	i2c_client descriptor
  * @freq: frequency
  */
-static void set_tv_freq(struct i2c_client *c, unsigned int freq)
-{
-	struct tuner *t = to_tuner(i2c_get_clientdata(c));
-	struct analog_demod_ops *analog_ops = &t->fe.ops.analog_ops;
+अटल व्योम set_tv_freq(काष्ठा i2c_client *c, अचिन्हित पूर्णांक freq)
+अणु
+	काष्ठा tuner *t = to_tuner(i2c_get_clientdata(c));
+	काष्ठा analog_demod_ops *analog_ops = &t->fe.ops.analog_ops;
 
-	struct analog_parameters params = {
+	काष्ठा analog_parameters params = अणु
 		.mode      = t->mode,
 		.audmode   = t->audmode,
 		.std       = t->std
-	};
+	पूर्ण;
 
-	if (t->type == UNSET) {
+	अगर (t->type == UNSET) अणु
 		pr_warn("tuner type not set\n");
-		return;
-	}
-	if (NULL == analog_ops->set_params) {
+		वापस;
+	पूर्ण
+	अगर (शून्य == analog_ops->set_params) अणु
 		pr_warn("Tuner has no way to set tv freq\n");
-		return;
-	}
-	if (freq < tv_range[0] * 16 || freq > tv_range[1] * 16) {
-		dprintk("TV freq (%d.%02d) out of range (%d-%d)\n",
+		वापस;
+	पूर्ण
+	अगर (freq < tv_range[0] * 16 || freq > tv_range[1] * 16) अणु
+		dprपूर्णांकk("TV freq (%d.%02d) out of range (%d-%d)\n",
 			   freq / 16, freq % 16 * 100 / 16, tv_range[0],
 			   tv_range[1]);
-		/* V4L2 spec: if the freq is not possible then the closest
+		/* V4L2 spec: अगर the freq is not possible then the बंदst
 		   possible value should be selected */
-		if (freq < tv_range[0] * 16)
+		अगर (freq < tv_range[0] * 16)
 			freq = tv_range[0] * 16;
-		else
+		अन्यथा
 			freq = tv_range[1] * 16;
-	}
+	पूर्ण
 	params.frequency = freq;
-	dprintk("tv freq set to %d.%02d\n",
+	dprपूर्णांकk("tv freq set to %d.%02d\n",
 			freq / 16, freq % 16 * 100 / 16);
 	t->tv_freq = freq;
 	t->standby = false;
 
 	analog_ops->set_params(&t->fe, &params);
-}
+पूर्ण
 
 /**
- * tuner_fixup_std - force a given video standard variant
+ * tuner_fixup_std - क्रमce a given video standard variant
  *
- * @t: tuner internal struct
+ * @t: tuner पूर्णांकernal काष्ठा
  * @std:	TV standard
  *
  * A few devices or drivers have problem to detect some standard variations.
- * On other operational systems, the drivers generally have a per-country
- * code, and some logic to apply per-country hacks. V4L2 API doesn't provide
+ * On other operational प्रणालीs, the drivers generally have a per-country
+ * code, and some logic to apply per-country hacks. V4L2 API करोesn't provide
  * such hacks. Instead, it relies on a proper video standard selection from
  * the userspace application. However, as some apps are buggy, not allowing
  * to distinguish all video standard variations, a modprobe parameter can
- * be used to force a video standard match.
+ * be used to क्रमce a video standard match.
  */
-static v4l2_std_id tuner_fixup_std(struct tuner *t, v4l2_std_id std)
-{
-	if (pal[0] != '-' && (std & V4L2_STD_PAL) == V4L2_STD_PAL) {
-		switch (pal[0]) {
-		case '6':
-			return V4L2_STD_PAL_60;
-		case 'b':
-		case 'B':
-		case 'g':
-		case 'G':
-			return V4L2_STD_PAL_BG;
-		case 'i':
-		case 'I':
-			return V4L2_STD_PAL_I;
-		case 'd':
-		case 'D':
-		case 'k':
-		case 'K':
-			return V4L2_STD_PAL_DK;
-		case 'M':
-		case 'm':
-			return V4L2_STD_PAL_M;
-		case 'N':
-		case 'n':
-			if (pal[1] == 'c' || pal[1] == 'C')
-				return V4L2_STD_PAL_Nc;
-			return V4L2_STD_PAL_N;
-		default:
+अटल v4l2_std_id tuner_fixup_std(काष्ठा tuner *t, v4l2_std_id std)
+अणु
+	अगर (pal[0] != '-' && (std & V4L2_STD_PAL) == V4L2_STD_PAL) अणु
+		चयन (pal[0]) अणु
+		हाल '6':
+			वापस V4L2_STD_PAL_60;
+		हाल 'b':
+		हाल 'B':
+		हाल 'g':
+		हाल 'G':
+			वापस V4L2_STD_PAL_BG;
+		हाल 'i':
+		हाल 'I':
+			वापस V4L2_STD_PAL_I;
+		हाल 'd':
+		हाल 'D':
+		हाल 'k':
+		हाल 'K':
+			वापस V4L2_STD_PAL_DK;
+		हाल 'M':
+		हाल 'm':
+			वापस V4L2_STD_PAL_M;
+		हाल 'N':
+		हाल 'n':
+			अगर (pal[1] == 'c' || pal[1] == 'C')
+				वापस V4L2_STD_PAL_Nc;
+			वापस V4L2_STD_PAL_N;
+		शेष:
 			pr_warn("pal= argument not recognised\n");
-			break;
-		}
-	}
-	if (secam[0] != '-' && (std & V4L2_STD_SECAM) == V4L2_STD_SECAM) {
-		switch (secam[0]) {
-		case 'b':
-		case 'B':
-		case 'g':
-		case 'G':
-		case 'h':
-		case 'H':
-			return V4L2_STD_SECAM_B |
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	अगर (secam[0] != '-' && (std & V4L2_STD_SECAM) == V4L2_STD_SECAM) अणु
+		चयन (secam[0]) अणु
+		हाल 'b':
+		हाल 'B':
+		हाल 'g':
+		हाल 'G':
+		हाल 'h':
+		हाल 'H':
+			वापस V4L2_STD_SECAM_B |
 			       V4L2_STD_SECAM_G |
 			       V4L2_STD_SECAM_H;
-		case 'd':
-		case 'D':
-		case 'k':
-		case 'K':
-			return V4L2_STD_SECAM_DK;
-		case 'l':
-		case 'L':
-			if ((secam[1] == 'C') || (secam[1] == 'c'))
-				return V4L2_STD_SECAM_LC;
-			return V4L2_STD_SECAM_L;
-		default:
+		हाल 'd':
+		हाल 'D':
+		हाल 'k':
+		हाल 'K':
+			वापस V4L2_STD_SECAM_DK;
+		हाल 'l':
+		हाल 'L':
+			अगर ((secam[1] == 'C') || (secam[1] == 'c'))
+				वापस V4L2_STD_SECAM_LC;
+			वापस V4L2_STD_SECAM_L;
+		शेष:
 			pr_warn("secam= argument not recognised\n");
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	if (ntsc[0] != '-' && (std & V4L2_STD_NTSC) == V4L2_STD_NTSC) {
-		switch (ntsc[0]) {
-		case 'm':
-		case 'M':
-			return V4L2_STD_NTSC_M;
-		case 'j':
-		case 'J':
-			return V4L2_STD_NTSC_M_JP;
-		case 'k':
-		case 'K':
-			return V4L2_STD_NTSC_M_KR;
-		default:
+	अगर (ntsc[0] != '-' && (std & V4L2_STD_NTSC) == V4L2_STD_NTSC) अणु
+		चयन (ntsc[0]) अणु
+		हाल 'm':
+		हाल 'M':
+			वापस V4L2_STD_NTSC_M;
+		हाल 'j':
+		हाल 'J':
+			वापस V4L2_STD_NTSC_M_JP;
+		हाल 'k':
+		हाल 'K':
+			वापस V4L2_STD_NTSC_M_KR;
+		शेष:
 			pr_info("ntsc= argument not recognised\n");
-			break;
-		}
-	}
-	return std;
-}
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	वापस std;
+पूर्ण
 
 /*
- * Functions that are specific for Radio mode
+ * Functions that are specअगरic क्रम Radio mode
  */
 
 /**
@@ -1029,123 +1030,123 @@ static v4l2_std_id tuner_fixup_std(struct tuner *t, v4l2_std_id std)
  * @c:	i2c_client descriptor
  * @freq: frequency
  */
-static void set_radio_freq(struct i2c_client *c, unsigned int freq)
-{
-	struct tuner *t = to_tuner(i2c_get_clientdata(c));
-	struct analog_demod_ops *analog_ops = &t->fe.ops.analog_ops;
+अटल व्योम set_radio_freq(काष्ठा i2c_client *c, अचिन्हित पूर्णांक freq)
+अणु
+	काष्ठा tuner *t = to_tuner(i2c_get_clientdata(c));
+	काष्ठा analog_demod_ops *analog_ops = &t->fe.ops.analog_ops;
 
-	struct analog_parameters params = {
+	काष्ठा analog_parameters params = अणु
 		.mode      = t->mode,
 		.audmode   = t->audmode,
 		.std       = t->std
-	};
+	पूर्ण;
 
-	if (t->type == UNSET) {
+	अगर (t->type == UNSET) अणु
 		pr_warn("tuner type not set\n");
-		return;
-	}
-	if (NULL == analog_ops->set_params) {
+		वापस;
+	पूर्ण
+	अगर (शून्य == analog_ops->set_params) अणु
 		pr_warn("tuner has no way to set radio frequency\n");
-		return;
-	}
-	if (freq < radio_range[0] * 16000 || freq > radio_range[1] * 16000) {
-		dprintk("radio freq (%d.%02d) out of range (%d-%d)\n",
+		वापस;
+	पूर्ण
+	अगर (freq < radio_range[0] * 16000 || freq > radio_range[1] * 16000) अणु
+		dprपूर्णांकk("radio freq (%d.%02d) out of range (%d-%d)\n",
 			   freq / 16000, freq % 16000 * 100 / 16000,
 			   radio_range[0], radio_range[1]);
-		/* V4L2 spec: if the freq is not possible then the closest
+		/* V4L2 spec: अगर the freq is not possible then the बंदst
 		   possible value should be selected */
-		if (freq < radio_range[0] * 16000)
+		अगर (freq < radio_range[0] * 16000)
 			freq = radio_range[0] * 16000;
-		else
+		अन्यथा
 			freq = radio_range[1] * 16000;
-	}
+	पूर्ण
 	params.frequency = freq;
-	dprintk("radio freq set to %d.%02d\n",
+	dprपूर्णांकk("radio freq set to %d.%02d\n",
 			freq / 16000, freq % 16000 * 100 / 16000);
 	t->radio_freq = freq;
 	t->standby = false;
 
 	analog_ops->set_params(&t->fe, &params);
 	/*
-	 * The tuner driver might decide to change the audmode if it only
+	 * The tuner driver might decide to change the audmode अगर it only
 	 * supports stereo, so update t->audmode.
 	 */
 	t->audmode = params.audmode;
-}
+पूर्ण
 
 /*
- * Debug function for reporting tuner status to userspace
+ * Debug function क्रम reporting tuner status to userspace
  */
 
 /**
  * tuner_status - Dumps the current tuner status at dmesg
- * @fe: pointer to struct dvb_frontend
+ * @fe: poपूर्णांकer to काष्ठा dvb_frontend
  *
- * This callback is used only for driver debug purposes, answering to
+ * This callback is used only क्रम driver debug purposes, answering to
  * VIDIOC_LOG_STATUS. No changes should happen on this call.
  */
-static void tuner_status(struct dvb_frontend *fe)
-{
-	struct tuner *t = fe->analog_demod_priv;
-	unsigned long freq, freq_fraction;
-	struct dvb_tuner_ops *fe_tuner_ops = &fe->ops.tuner_ops;
-	struct analog_demod_ops *analog_ops = &fe->ops.analog_ops;
-	const char *p;
+अटल व्योम tuner_status(काष्ठा dvb_frontend *fe)
+अणु
+	काष्ठा tuner *t = fe->analog_demod_priv;
+	अचिन्हित दीर्घ freq, freq_fraction;
+	काष्ठा dvb_tuner_ops *fe_tuner_ops = &fe->ops.tuner_ops;
+	काष्ठा analog_demod_ops *analog_ops = &fe->ops.analog_ops;
+	स्थिर अक्षर *p;
 
-	switch (t->mode) {
-	case V4L2_TUNER_RADIO:
+	चयन (t->mode) अणु
+	हाल V4L2_TUNER_RADIO:
 		p = "radio";
-		break;
-	case V4L2_TUNER_DIGITAL_TV: /* Used by mt20xx */
+		अवरोध;
+	हाल V4L2_TUNER_DIGITAL_TV: /* Used by mt20xx */
 		p = "digital TV";
-		break;
-	case V4L2_TUNER_ANALOG_TV:
-	default:
+		अवरोध;
+	हाल V4L2_TUNER_ANALOG_TV:
+	शेष:
 		p = "analog TV";
-		break;
-	}
-	if (t->mode == V4L2_TUNER_RADIO) {
+		अवरोध;
+	पूर्ण
+	अगर (t->mode == V4L2_TUNER_RADIO) अणु
 		freq = t->radio_freq / 16000;
 		freq_fraction = (t->radio_freq % 16000) * 100 / 16000;
-	} else {
+	पूर्ण अन्यथा अणु
 		freq = t->tv_freq / 16;
 		freq_fraction = (t->tv_freq % 16) * 100 / 16;
-	}
+	पूर्ण
 	pr_info("Tuner mode:      %s%s\n", p,
 		   t->standby ? " on standby mode" : "");
 	pr_info("Frequency:       %lu.%02lu MHz\n", freq, freq_fraction);
-	pr_info("Standard:        0x%08lx\n", (unsigned long)t->std);
-	if (t->mode != V4L2_TUNER_RADIO)
-		return;
-	if (fe_tuner_ops->get_status) {
+	pr_info("Standard:        0x%08lx\n", (अचिन्हित दीर्घ)t->std);
+	अगर (t->mode != V4L2_TUNER_RADIO)
+		वापस;
+	अगर (fe_tuner_ops->get_status) अणु
 		u32 tuner_status;
 
 		fe_tuner_ops->get_status(&t->fe, &tuner_status);
-		if (tuner_status & TUNER_STATUS_LOCKED)
+		अगर (tuner_status & TUNER_STATUS_LOCKED)
 			pr_info("Tuner is locked.\n");
-		if (tuner_status & TUNER_STATUS_STEREO)
+		अगर (tuner_status & TUNER_STATUS_STEREO)
 			pr_info("Stereo:          yes\n");
-	}
-	if (analog_ops->has_signal) {
-		u16 signal;
+	पूर्ण
+	अगर (analog_ops->has_संकेत) अणु
+		u16 संकेत;
 
-		if (!analog_ops->has_signal(fe, &signal))
-			pr_info("Signal strength: %hu\n", signal);
-	}
-}
+		अगर (!analog_ops->has_संकेत(fe, &संकेत))
+			pr_info("Signal strength: %hu\n", संकेत);
+	पूर्ण
+पूर्ण
 
 /*
  * Function to splicitly change mode to radio. Probably not needed anymore
  */
 
-static int tuner_s_radio(struct v4l2_subdev *sd)
-{
-	struct tuner *t = to_tuner(sd);
+अटल पूर्णांक tuner_s_radio(काष्ठा v4l2_subdev *sd)
+अणु
+	काष्ठा tuner *t = to_tuner(sd);
 
-	if (set_mode(t, V4L2_TUNER_RADIO) == 0)
+	अगर (set_mode(t, V4L2_TUNER_RADIO) == 0)
 		set_freq(t, 0);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * Tuner callbacks to handle userspace ioctl's
@@ -1153,111 +1154,111 @@ static int tuner_s_radio(struct v4l2_subdev *sd)
 
 /**
  * tuner_standby - places the tuner in standby mode
- * @sd: pointer to struct v4l2_subdev
+ * @sd: poपूर्णांकer to काष्ठा v4l2_subdev
  */
-static int tuner_standby(struct v4l2_subdev *sd)
-{
-	struct tuner *t = to_tuner(sd);
-	struct analog_demod_ops *analog_ops = &t->fe.ops.analog_ops;
+अटल पूर्णांक tuner_standby(काष्ठा v4l2_subdev *sd)
+अणु
+	काष्ठा tuner *t = to_tuner(sd);
+	काष्ठा analog_demod_ops *analog_ops = &t->fe.ops.analog_ops;
 
-	dprintk("Putting tuner to sleep\n");
+	dprपूर्णांकk("Putting tuner to sleep\n");
 	t->standby = true;
-	if (analog_ops->standby)
+	अगर (analog_ops->standby)
 		analog_ops->standby(&t->fe);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int tuner_s_std(struct v4l2_subdev *sd, v4l2_std_id std)
-{
-	struct tuner *t = to_tuner(sd);
+अटल पूर्णांक tuner_s_std(काष्ठा v4l2_subdev *sd, v4l2_std_id std)
+अणु
+	काष्ठा tuner *t = to_tuner(sd);
 
-	if (set_mode(t, V4L2_TUNER_ANALOG_TV))
-		return 0;
+	अगर (set_mode(t, V4L2_TUNER_ANALOG_TV))
+		वापस 0;
 
 	t->std = tuner_fixup_std(t, std);
-	if (t->std != std)
-		dprintk("Fixup standard %llx to %llx\n", std, t->std);
+	अगर (t->std != std)
+		dprपूर्णांकk("Fixup standard %llx to %llx\n", std, t->std);
 	set_freq(t, 0);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int tuner_s_frequency(struct v4l2_subdev *sd, const struct v4l2_frequency *f)
-{
-	struct tuner *t = to_tuner(sd);
+अटल पूर्णांक tuner_s_frequency(काष्ठा v4l2_subdev *sd, स्थिर काष्ठा v4l2_frequency *f)
+अणु
+	काष्ठा tuner *t = to_tuner(sd);
 
-	if (set_mode(t, f->type) == 0)
+	अगर (set_mode(t, f->type) == 0)
 		set_freq(t, f->frequency);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * tuner_g_frequency - Get the tuned frequency for the tuner
- * @sd: pointer to struct v4l2_subdev
- * @f: pointer to struct v4l2_frequency
+ * tuner_g_frequency - Get the tuned frequency क्रम the tuner
+ * @sd: poपूर्णांकer to काष्ठा v4l2_subdev
+ * @f: poपूर्णांकer to काष्ठा v4l2_frequency
  *
- * At return, the structure f will be filled with tuner frequency
- * if the tuner matches the f->type.
- * Note: f->type should be initialized before calling it.
- * This is done by either video_ioctl2 or by the bridge driver.
+ * At वापस, the काष्ठाure f will be filled with tuner frequency
+ * अगर the tuner matches the f->type.
+ * Note: f->type should be initialized beक्रमe calling it.
+ * This is करोne by either video_ioctl2 or by the bridge driver.
  */
-static int tuner_g_frequency(struct v4l2_subdev *sd, struct v4l2_frequency *f)
-{
-	struct tuner *t = to_tuner(sd);
-	struct dvb_tuner_ops *fe_tuner_ops = &t->fe.ops.tuner_ops;
+अटल पूर्णांक tuner_g_frequency(काष्ठा v4l2_subdev *sd, काष्ठा v4l2_frequency *f)
+अणु
+	काष्ठा tuner *t = to_tuner(sd);
+	काष्ठा dvb_tuner_ops *fe_tuner_ops = &t->fe.ops.tuner_ops;
 
-	if (check_mode(t, f->type) == -EINVAL)
-		return 0;
-	if (f->type == t->mode && fe_tuner_ops->get_frequency && !t->standby) {
-		u32 abs_freq;
+	अगर (check_mode(t, f->type) == -EINVAL)
+		वापस 0;
+	अगर (f->type == t->mode && fe_tuner_ops->get_frequency && !t->standby) अणु
+		u32 असल_freq;
 
-		fe_tuner_ops->get_frequency(&t->fe, &abs_freq);
+		fe_tuner_ops->get_frequency(&t->fe, &असल_freq);
 		f->frequency = (V4L2_TUNER_RADIO == t->mode) ?
-			DIV_ROUND_CLOSEST(abs_freq * 2, 125) :
-			DIV_ROUND_CLOSEST(abs_freq, 62500);
-	} else {
+			DIV_ROUND_CLOSEST(असल_freq * 2, 125) :
+			DIV_ROUND_CLOSEST(असल_freq, 62500);
+	पूर्ण अन्यथा अणु
 		f->frequency = (V4L2_TUNER_RADIO == f->type) ?
 			t->radio_freq : t->tv_freq;
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /**
- * tuner_g_tuner - Fill in tuner information
- * @sd: pointer to struct v4l2_subdev
- * @vt: pointer to struct v4l2_tuner
+ * tuner_g_tuner - Fill in tuner inक्रमmation
+ * @sd: poपूर्णांकer to काष्ठा v4l2_subdev
+ * @vt: poपूर्णांकer to काष्ठा v4l2_tuner
  *
- * At return, the structure vt will be filled with tuner information
- * if the tuner matches vt->type.
- * Note: vt->type should be initialized before calling it.
- * This is done by either video_ioctl2 or by the bridge driver.
+ * At वापस, the काष्ठाure vt will be filled with tuner inक्रमmation
+ * अगर the tuner matches vt->type.
+ * Note: vt->type should be initialized beक्रमe calling it.
+ * This is करोne by either video_ioctl2 or by the bridge driver.
  */
-static int tuner_g_tuner(struct v4l2_subdev *sd, struct v4l2_tuner *vt)
-{
-	struct tuner *t = to_tuner(sd);
-	struct analog_demod_ops *analog_ops = &t->fe.ops.analog_ops;
-	struct dvb_tuner_ops *fe_tuner_ops = &t->fe.ops.tuner_ops;
+अटल पूर्णांक tuner_g_tuner(काष्ठा v4l2_subdev *sd, काष्ठा v4l2_tuner *vt)
+अणु
+	काष्ठा tuner *t = to_tuner(sd);
+	काष्ठा analog_demod_ops *analog_ops = &t->fe.ops.analog_ops;
+	काष्ठा dvb_tuner_ops *fe_tuner_ops = &t->fe.ops.tuner_ops;
 
-	if (check_mode(t, vt->type) == -EINVAL)
-		return 0;
-	if (vt->type == t->mode && analog_ops->get_afc)
+	अगर (check_mode(t, vt->type) == -EINVAL)
+		वापस 0;
+	अगर (vt->type == t->mode && analog_ops->get_afc)
 		analog_ops->get_afc(&t->fe, &vt->afc);
-	if (vt->type == t->mode && analog_ops->has_signal) {
-		u16 signal = (u16)vt->signal;
+	अगर (vt->type == t->mode && analog_ops->has_संकेत) अणु
+		u16 संकेत = (u16)vt->संकेत;
 
-		if (!analog_ops->has_signal(&t->fe, &signal))
-			vt->signal = signal;
-	}
-	if (vt->type != V4L2_TUNER_RADIO) {
+		अगर (!analog_ops->has_संकेत(&t->fe, &संकेत))
+			vt->संकेत = संकेत;
+	पूर्ण
+	अगर (vt->type != V4L2_TUNER_RADIO) अणु
 		vt->capability |= V4L2_TUNER_CAP_NORM;
 		vt->rangelow = tv_range[0] * 16;
 		vt->rangehigh = tv_range[1] * 16;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	/* radio mode */
-	if (vt->type == t->mode) {
+	अगर (vt->type == t->mode) अणु
 		vt->rxsubchans = V4L2_TUNER_SUB_MONO | V4L2_TUNER_SUB_STEREO;
-		if (fe_tuner_ops->get_status) {
+		अगर (fe_tuner_ops->get_status) अणु
 			u32 tuner_status;
 
 			fe_tuner_ops->get_status(&t->fe, &tuner_status);
@@ -1265,116 +1266,116 @@ static int tuner_g_tuner(struct v4l2_subdev *sd, struct v4l2_tuner *vt)
 				(tuner_status & TUNER_STATUS_STEREO) ?
 				V4L2_TUNER_SUB_STEREO :
 				V4L2_TUNER_SUB_MONO;
-		}
+		पूर्ण
 		vt->audmode = t->audmode;
-	}
+	पूर्ण
 	vt->capability |= V4L2_TUNER_CAP_LOW | V4L2_TUNER_CAP_STEREO;
 	vt->rangelow = radio_range[0] * 16000;
 	vt->rangehigh = radio_range[1] * 16000;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * tuner_s_tuner - Set the tuner's audio mode
- * @sd: pointer to struct v4l2_subdev
- * @vt: pointer to struct v4l2_tuner
+ * @sd: poपूर्णांकer to काष्ठा v4l2_subdev
+ * @vt: poपूर्णांकer to काष्ठा v4l2_tuner
  *
- * Sets the audio mode if the tuner matches vt->type.
- * Note: vt->type should be initialized before calling it.
- * This is done by either video_ioctl2 or by the bridge driver.
+ * Sets the audio mode अगर the tuner matches vt->type.
+ * Note: vt->type should be initialized beक्रमe calling it.
+ * This is करोne by either video_ioctl2 or by the bridge driver.
  */
-static int tuner_s_tuner(struct v4l2_subdev *sd, const struct v4l2_tuner *vt)
-{
-	struct tuner *t = to_tuner(sd);
+अटल पूर्णांक tuner_s_tuner(काष्ठा v4l2_subdev *sd, स्थिर काष्ठा v4l2_tuner *vt)
+अणु
+	काष्ठा tuner *t = to_tuner(sd);
 
-	if (set_mode(t, vt->type))
-		return 0;
+	अगर (set_mode(t, vt->type))
+		वापस 0;
 
-	if (t->mode == V4L2_TUNER_RADIO) {
+	अगर (t->mode == V4L2_TUNER_RADIO) अणु
 		t->audmode = vt->audmode;
 		/*
 		 * For radio audmode can only be mono or stereo. Map any
 		 * other values to stereo. The actual tuner driver that is
 		 * called in set_radio_freq can decide to limit the audmode to
-		 * mono if only mono is supported.
+		 * mono अगर only mono is supported.
 		 */
-		if (t->audmode != V4L2_TUNER_MODE_MONO &&
+		अगर (t->audmode != V4L2_TUNER_MODE_MONO &&
 		    t->audmode != V4L2_TUNER_MODE_STEREO)
 			t->audmode = V4L2_TUNER_MODE_STEREO;
-	}
+	पूर्ण
 	set_freq(t, 0);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int tuner_log_status(struct v4l2_subdev *sd)
-{
-	struct tuner *t = to_tuner(sd);
-	struct analog_demod_ops *analog_ops = &t->fe.ops.analog_ops;
+अटल पूर्णांक tuner_log_status(काष्ठा v4l2_subdev *sd)
+अणु
+	काष्ठा tuner *t = to_tuner(sd);
+	काष्ठा analog_demod_ops *analog_ops = &t->fe.ops.analog_ops;
 
-	if (analog_ops->tuner_status)
+	अगर (analog_ops->tuner_status)
 		analog_ops->tuner_status(&t->fe);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_PM_SLEEP
-static int tuner_suspend(struct device *dev)
-{
-	struct i2c_client *c = to_i2c_client(dev);
-	struct tuner *t = to_tuner(i2c_get_clientdata(c));
-	struct analog_demod_ops *analog_ops = &t->fe.ops.analog_ops;
+#अगर_घोषित CONFIG_PM_SLEEP
+अटल पूर्णांक tuner_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा i2c_client *c = to_i2c_client(dev);
+	काष्ठा tuner *t = to_tuner(i2c_get_clientdata(c));
+	काष्ठा analog_demod_ops *analog_ops = &t->fe.ops.analog_ops;
 
-	dprintk("suspend\n");
+	dprपूर्णांकk("suspend\n");
 
-	if (t->fe.ops.tuner_ops.suspend)
+	अगर (t->fe.ops.tuner_ops.suspend)
 		t->fe.ops.tuner_ops.suspend(&t->fe);
-	else if (!t->standby && analog_ops->standby)
+	अन्यथा अगर (!t->standby && analog_ops->standby)
 		analog_ops->standby(&t->fe);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int tuner_resume(struct device *dev)
-{
-	struct i2c_client *c = to_i2c_client(dev);
-	struct tuner *t = to_tuner(i2c_get_clientdata(c));
+अटल पूर्णांक tuner_resume(काष्ठा device *dev)
+अणु
+	काष्ठा i2c_client *c = to_i2c_client(dev);
+	काष्ठा tuner *t = to_tuner(i2c_get_clientdata(c));
 
-	dprintk("resume\n");
+	dprपूर्णांकk("resume\n");
 
-	if (t->fe.ops.tuner_ops.resume)
+	अगर (t->fe.ops.tuner_ops.resume)
 		t->fe.ops.tuner_ops.resume(&t->fe);
-	else if (!t->standby)
-		if (set_mode(t, t->mode) == 0)
+	अन्यथा अगर (!t->standby)
+		अगर (set_mode(t, t->mode) == 0)
 			set_freq(t, 0);
 
-	return 0;
-}
-#endif
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
-static int tuner_command(struct i2c_client *client, unsigned cmd, void *arg)
-{
-	struct v4l2_subdev *sd = i2c_get_clientdata(client);
+अटल पूर्णांक tuner_command(काष्ठा i2c_client *client, अचिन्हित cmd, व्योम *arg)
+अणु
+	काष्ठा v4l2_subdev *sd = i2c_get_clientdata(client);
 
 	/* TUNER_SET_CONFIG is still called by tuner-simple.c, so we have
 	   to handle it here.
-	   There must be a better way of doing this... */
-	switch (cmd) {
-	case TUNER_SET_CONFIG:
-		return tuner_s_config(sd, arg);
-	}
-	return -ENOIOCTLCMD;
-}
+	   There must be a better way of करोing this... */
+	चयन (cmd) अणु
+	हाल TUNER_SET_CONFIG:
+		वापस tuner_s_config(sd, arg);
+	पूर्ण
+	वापस -ENOIOCTLCMD;
+पूर्ण
 
 /*
- * Callback structs
+ * Callback काष्ठाs
  */
 
-static const struct v4l2_subdev_core_ops tuner_core_ops = {
+अटल स्थिर काष्ठा v4l2_subdev_core_ops tuner_core_ops = अणु
 	.log_status = tuner_log_status,
-};
+पूर्ण;
 
-static const struct v4l2_subdev_tuner_ops tuner_tuner_ops = {
+अटल स्थिर काष्ठा v4l2_subdev_tuner_ops tuner_tuner_ops = अणु
 	.standby = tuner_standby,
 	.s_radio = tuner_s_radio,
 	.g_tuner = tuner_g_tuner,
@@ -1383,42 +1384,42 @@ static const struct v4l2_subdev_tuner_ops tuner_tuner_ops = {
 	.g_frequency = tuner_g_frequency,
 	.s_type_addr = tuner_s_type_addr,
 	.s_config = tuner_s_config,
-};
+पूर्ण;
 
-static const struct v4l2_subdev_video_ops tuner_video_ops = {
+अटल स्थिर काष्ठा v4l2_subdev_video_ops tuner_video_ops = अणु
 	.s_std = tuner_s_std,
-};
+पूर्ण;
 
-static const struct v4l2_subdev_ops tuner_ops = {
+अटल स्थिर काष्ठा v4l2_subdev_ops tuner_ops = अणु
 	.core = &tuner_core_ops,
 	.tuner = &tuner_tuner_ops,
 	.video = &tuner_video_ops,
-};
+पूर्ण;
 
 /*
- * I2C structs and module init functions
+ * I2C काष्ठाs and module init functions
  */
 
-static const struct dev_pm_ops tuner_pm_ops = {
+अटल स्थिर काष्ठा dev_pm_ops tuner_pm_ops = अणु
 	SET_SYSTEM_SLEEP_PM_OPS(tuner_suspend, tuner_resume)
-};
+पूर्ण;
 
-static const struct i2c_device_id tuner_id[] = {
-	{ "tuner", }, /* autodetect */
-	{ }
-};
+अटल स्थिर काष्ठा i2c_device_id tuner_id[] = अणु
+	अणु "tuner", पूर्ण, /* स्वतःdetect */
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(i2c, tuner_id);
 
-static struct i2c_driver tuner_driver = {
-	.driver = {
+अटल काष्ठा i2c_driver tuner_driver = अणु
+	.driver = अणु
 		.name	= "tuner",
 		.pm	= &tuner_pm_ops,
-	},
+	पूर्ण,
 	.probe		= tuner_probe,
-	.remove		= tuner_remove,
+	.हटाओ		= tuner_हटाओ,
 	.command	= tuner_command,
 	.id_table	= tuner_id,
-};
+पूर्ण;
 
 module_i2c_driver(tuner_driver);
 

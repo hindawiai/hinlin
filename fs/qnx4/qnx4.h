@@ -1,46 +1,47 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#include <linux/fs.h>
-#include <linux/qnx4_fs.h>
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#समावेश <linux/fs.h>
+#समावेश <linux/qnx4_fs.h>
 
-#define QNX4_DEBUG 0
+#घोषणा QNX4_DEBUG 0
 
-#if QNX4_DEBUG
-#define QNX4DEBUG(X) printk X
-#else
-#define QNX4DEBUG(X) (void) 0
-#endif
+#अगर QNX4_DEBUG
+#घोषणा QNX4DEBUG(X) prपूर्णांकk X
+#अन्यथा
+#घोषणा QNX4DEBUG(X) (व्योम) 0
+#पूर्ण_अगर
 
-struct qnx4_sb_info {
-	unsigned int		Version;	/* may be useful */
-	struct qnx4_inode_entry	*BitMap;	/* useful */
-};
+काष्ठा qnx4_sb_info अणु
+	अचिन्हित पूर्णांक		Version;	/* may be useful */
+	काष्ठा qnx4_inode_entry	*BitMap;	/* useful */
+पूर्ण;
 
-struct qnx4_inode_info {
-	struct qnx4_inode_entry raw;
-	loff_t mmu_private;
-	struct inode vfs_inode;
-};
+काष्ठा qnx4_inode_info अणु
+	काष्ठा qnx4_inode_entry raw;
+	loff_t mmu_निजी;
+	काष्ठा inode vfs_inode;
+पूर्ण;
 
-extern struct inode *qnx4_iget(struct super_block *, unsigned long);
-extern struct dentry *qnx4_lookup(struct inode *dir, struct dentry *dentry, unsigned int flags);
-extern unsigned long qnx4_count_free_blocks(struct super_block *sb);
-extern unsigned long qnx4_block_map(struct inode *inode, long iblock);
+बाह्य काष्ठा inode *qnx4_iget(काष्ठा super_block *, अचिन्हित दीर्घ);
+बाह्य काष्ठा dentry *qnx4_lookup(काष्ठा inode *dir, काष्ठा dentry *dentry, अचिन्हित पूर्णांक flags);
+बाह्य अचिन्हित दीर्घ qnx4_count_मुक्त_blocks(काष्ठा super_block *sb);
+बाह्य अचिन्हित दीर्घ qnx4_block_map(काष्ठा inode *inode, दीर्घ iblock);
 
-extern const struct inode_operations qnx4_dir_inode_operations;
-extern const struct file_operations qnx4_dir_operations;
-extern int qnx4_is_free(struct super_block *sb, long block);
+बाह्य स्थिर काष्ठा inode_operations qnx4_dir_inode_operations;
+बाह्य स्थिर काष्ठा file_operations qnx4_dir_operations;
+बाह्य पूर्णांक qnx4_is_मुक्त(काष्ठा super_block *sb, दीर्घ block);
 
-static inline struct qnx4_sb_info *qnx4_sb(struct super_block *sb)
-{
-	return sb->s_fs_info;
-}
+अटल अंतरभूत काष्ठा qnx4_sb_info *qnx4_sb(काष्ठा super_block *sb)
+अणु
+	वापस sb->s_fs_info;
+पूर्ण
 
-static inline struct qnx4_inode_info *qnx4_i(struct inode *inode)
-{
-	return container_of(inode, struct qnx4_inode_info, vfs_inode);
-}
+अटल अंतरभूत काष्ठा qnx4_inode_info *qnx4_i(काष्ठा inode *inode)
+अणु
+	वापस container_of(inode, काष्ठा qnx4_inode_info, vfs_inode);
+पूर्ण
 
-static inline struct qnx4_inode_entry *qnx4_raw_inode(struct inode *inode)
-{
-	return &qnx4_i(inode)->raw;
-}
+अटल अंतरभूत काष्ठा qnx4_inode_entry *qnx4_raw_inode(काष्ठा inode *inode)
+अणु
+	वापस &qnx4_i(inode)->raw;
+पूर्ण

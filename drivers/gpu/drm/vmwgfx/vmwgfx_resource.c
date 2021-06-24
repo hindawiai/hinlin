@@ -1,14 +1,15 @@
-// SPDX-License-Identifier: GPL-2.0 OR MIT
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0 OR MIT
 /**************************************************************************
  *
  * Copyright 2009-2015 VMware, Inc., Palo Alto, CA., USA
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the
  * "Software"), to deal in the Software without restriction, including
- * without limitation the rights to use, copy, modify, merge, publish,
+ * without limitation the rights to use, copy, modअगरy, merge, publish,
  * distribute, sub license, and/or sell copies of the Software, and to
- * permit persons to whom the Software is furnished to do so, subject to
+ * permit persons to whom the Software is furnished to करो so, subject to
  * the following conditions:
  *
  * The above copyright notice and this permission notice (including the
@@ -25,163 +26,163 @@
  *
  **************************************************************************/
 
-#include <drm/ttm/ttm_placement.h>
+#समावेश <drm/tपंचांग/tपंचांग_placement.h>
 
-#include "vmwgfx_resource_priv.h"
-#include "vmwgfx_binding.h"
-#include "vmwgfx_drv.h"
+#समावेश "vmwgfx_resource_priv.h"
+#समावेश "vmwgfx_binding.h"
+#समावेश "vmwgfx_drv.h"
 
-#define VMW_RES_EVICT_ERR_COUNT 10
+#घोषणा VMW_RES_EVICT_ERR_COUNT 10
 
 /**
  * vmw_resource_mob_attach - Mark a resource as attached to its backing mob
  * @res: The resource
  */
-void vmw_resource_mob_attach(struct vmw_resource *res)
-{
-	struct vmw_buffer_object *backup = res->backup;
-	struct rb_node **new = &backup->res_tree.rb_node, *parent = NULL;
+व्योम vmw_resource_mob_attach(काष्ठा vmw_resource *res)
+अणु
+	काष्ठा vmw_buffer_object *backup = res->backup;
+	काष्ठा rb_node **new = &backup->res_tree.rb_node, *parent = शून्य;
 
-	dma_resv_assert_held(res->backup->base.base.resv);
+	dma_resv_निश्चित_held(res->backup->base.base.resv);
 	res->used_prio = (res->res_dirty) ? res->func->dirty_prio :
 		res->func->prio;
 
-	while (*new) {
-		struct vmw_resource *this =
-			container_of(*new, struct vmw_resource, mob_node);
+	जबतक (*new) अणु
+		काष्ठा vmw_resource *this =
+			container_of(*new, काष्ठा vmw_resource, mob_node);
 
 		parent = *new;
 		new = (res->backup_offset < this->backup_offset) ?
 			&((*new)->rb_left) : &((*new)->rb_right);
-	}
+	पूर्ण
 
 	rb_link_node(&res->mob_node, parent, new);
 	rb_insert_color(&res->mob_node, &backup->res_tree);
 
 	vmw_bo_prio_add(backup, res->used_prio);
-}
+पूर्ण
 
 /**
  * vmw_resource_mob_detach - Mark a resource as detached from its backing mob
  * @res: The resource
  */
-void vmw_resource_mob_detach(struct vmw_resource *res)
-{
-	struct vmw_buffer_object *backup = res->backup;
+व्योम vmw_resource_mob_detach(काष्ठा vmw_resource *res)
+अणु
+	काष्ठा vmw_buffer_object *backup = res->backup;
 
-	dma_resv_assert_held(backup->base.base.resv);
-	if (vmw_resource_mob_attached(res)) {
+	dma_resv_निश्चित_held(backup->base.base.resv);
+	अगर (vmw_resource_mob_attached(res)) अणु
 		rb_erase(&res->mob_node, &backup->res_tree);
 		RB_CLEAR_NODE(&res->mob_node);
 		vmw_bo_prio_del(backup, res->used_prio);
-	}
-}
+	पूर्ण
+पूर्ण
 
-struct vmw_resource *vmw_resource_reference(struct vmw_resource *res)
-{
+काष्ठा vmw_resource *vmw_resource_reference(काष्ठा vmw_resource *res)
+अणु
 	kref_get(&res->kref);
-	return res;
-}
+	वापस res;
+पूर्ण
 
-struct vmw_resource *
-vmw_resource_reference_unless_doomed(struct vmw_resource *res)
-{
-	return kref_get_unless_zero(&res->kref) ? res : NULL;
-}
+काष्ठा vmw_resource *
+vmw_resource_reference_unless_करोomed(काष्ठा vmw_resource *res)
+अणु
+	वापस kref_get_unless_zero(&res->kref) ? res : शून्य;
+पूर्ण
 
 /**
  * vmw_resource_release_id - release a resource id to the id manager.
  *
- * @res: Pointer to the resource.
+ * @res: Poपूर्णांकer to the resource.
  *
  * Release the resource id to the resource id manager and set it to -1
  */
-void vmw_resource_release_id(struct vmw_resource *res)
-{
-	struct vmw_private *dev_priv = res->dev_priv;
-	struct idr *idr = &dev_priv->res_idr[res->func->res_type];
+व्योम vmw_resource_release_id(काष्ठा vmw_resource *res)
+अणु
+	काष्ठा vmw_निजी *dev_priv = res->dev_priv;
+	काष्ठा idr *idr = &dev_priv->res_idr[res->func->res_type];
 
 	spin_lock(&dev_priv->resource_lock);
-	if (res->id != -1)
-		idr_remove(idr, res->id);
+	अगर (res->id != -1)
+		idr_हटाओ(idr, res->id);
 	res->id = -1;
 	spin_unlock(&dev_priv->resource_lock);
-}
+पूर्ण
 
-static void vmw_resource_release(struct kref *kref)
-{
-	struct vmw_resource *res =
-	    container_of(kref, struct vmw_resource, kref);
-	struct vmw_private *dev_priv = res->dev_priv;
-	int id;
-	struct idr *idr = &dev_priv->res_idr[res->func->res_type];
+अटल व्योम vmw_resource_release(काष्ठा kref *kref)
+अणु
+	काष्ठा vmw_resource *res =
+	    container_of(kref, काष्ठा vmw_resource, kref);
+	काष्ठा vmw_निजी *dev_priv = res->dev_priv;
+	पूर्णांक id;
+	काष्ठा idr *idr = &dev_priv->res_idr[res->func->res_type];
 
 	spin_lock(&dev_priv->resource_lock);
 	list_del_init(&res->lru_head);
 	spin_unlock(&dev_priv->resource_lock);
-	if (res->backup) {
-		struct ttm_buffer_object *bo = &res->backup->base;
+	अगर (res->backup) अणु
+		काष्ठा tपंचांग_buffer_object *bo = &res->backup->base;
 
-		ttm_bo_reserve(bo, false, false, NULL);
-		if (vmw_resource_mob_attached(res) &&
-		    res->func->unbind != NULL) {
-			struct ttm_validate_buffer val_buf;
+		tपंचांग_bo_reserve(bo, false, false, शून्य);
+		अगर (vmw_resource_mob_attached(res) &&
+		    res->func->unbind != शून्य) अणु
+			काष्ठा tपंचांग_validate_buffer val_buf;
 
 			val_buf.bo = bo;
 			val_buf.num_shared = 0;
 			res->func->unbind(res, false, &val_buf);
-		}
+		पूर्ण
 		res->backup_dirty = false;
 		vmw_resource_mob_detach(res);
-		if (res->dirty)
-			res->func->dirty_free(res);
-		if (res->coherent)
+		अगर (res->dirty)
+			res->func->dirty_मुक्त(res);
+		अगर (res->coherent)
 			vmw_bo_dirty_release(res->backup);
-		ttm_bo_unreserve(bo);
+		tपंचांग_bo_unreserve(bo);
 		vmw_bo_unreference(&res->backup);
-	}
+	पूर्ण
 
-	if (likely(res->hw_destroy != NULL)) {
+	अगर (likely(res->hw_destroy != शून्य)) अणु
 		mutex_lock(&dev_priv->binding_mutex);
-		vmw_binding_res_list_kill(&res->binding_head);
+		vmw_binding_res_list_समाप्त(&res->binding_head);
 		mutex_unlock(&dev_priv->binding_mutex);
 		res->hw_destroy(res);
-	}
+	पूर्ण
 
 	id = res->id;
-	if (res->res_free != NULL)
-		res->res_free(res);
-	else
-		kfree(res);
+	अगर (res->res_मुक्त != शून्य)
+		res->res_मुक्त(res);
+	अन्यथा
+		kमुक्त(res);
 
 	spin_lock(&dev_priv->resource_lock);
-	if (id != -1)
-		idr_remove(idr, id);
+	अगर (id != -1)
+		idr_हटाओ(idr, id);
 	spin_unlock(&dev_priv->resource_lock);
-}
+पूर्ण
 
-void vmw_resource_unreference(struct vmw_resource **p_res)
-{
-	struct vmw_resource *res = *p_res;
+व्योम vmw_resource_unreference(काष्ठा vmw_resource **p_res)
+अणु
+	काष्ठा vmw_resource *res = *p_res;
 
-	*p_res = NULL;
+	*p_res = शून्य;
 	kref_put(&res->kref, vmw_resource_release);
-}
+पूर्ण
 
 
 /**
  * vmw_resource_alloc_id - release a resource id to the id manager.
  *
- * @res: Pointer to the resource.
+ * @res: Poपूर्णांकer to the resource.
  *
- * Allocate the lowest free resource from the resource manager, and set
+ * Allocate the lowest मुक्त resource from the resource manager, and set
  * @res->id to that id. Returns 0 on success and -ENOMEM on failure.
  */
-int vmw_resource_alloc_id(struct vmw_resource *res)
-{
-	struct vmw_private *dev_priv = res->dev_priv;
-	int ret;
-	struct idr *idr = &dev_priv->res_idr[res->func->res_type];
+पूर्णांक vmw_resource_alloc_id(काष्ठा vmw_resource *res)
+अणु
+	काष्ठा vmw_निजी *dev_priv = res->dev_priv;
+	पूर्णांक ret;
+	काष्ठा idr *idr = &dev_priv->res_idr[res->func->res_type];
 
 	BUG_ON(res->id != -1);
 
@@ -189,83 +190,83 @@ int vmw_resource_alloc_id(struct vmw_resource *res)
 	spin_lock(&dev_priv->resource_lock);
 
 	ret = idr_alloc(idr, res, 1, 0, GFP_NOWAIT);
-	if (ret >= 0)
+	अगर (ret >= 0)
 		res->id = ret;
 
 	spin_unlock(&dev_priv->resource_lock);
 	idr_preload_end();
-	return ret < 0 ? ret : 0;
-}
+	वापस ret < 0 ? ret : 0;
+पूर्ण
 
 /**
- * vmw_resource_init - initialize a struct vmw_resource
+ * vmw_resource_init - initialize a काष्ठा vmw_resource
  *
- * @dev_priv:       Pointer to a device private struct.
- * @res:            The struct vmw_resource to initialize.
+ * @dev_priv:       Poपूर्णांकer to a device निजी काष्ठा.
+ * @res:            The काष्ठा vmw_resource to initialize.
  * @delay_id:       Boolean whether to defer device id allocation until
  *                  the first validation.
- * @res_free:       Resource destructor.
+ * @res_मुक्त:       Resource deकाष्ठाor.
  * @func:           Resource function table.
  */
-int vmw_resource_init(struct vmw_private *dev_priv, struct vmw_resource *res,
+पूर्णांक vmw_resource_init(काष्ठा vmw_निजी *dev_priv, काष्ठा vmw_resource *res,
 		      bool delay_id,
-		      void (*res_free) (struct vmw_resource *res),
-		      const struct vmw_res_func *func)
-{
+		      व्योम (*res_मुक्त) (काष्ठा vmw_resource *res),
+		      स्थिर काष्ठा vmw_res_func *func)
+अणु
 	kref_init(&res->kref);
-	res->hw_destroy = NULL;
-	res->res_free = res_free;
+	res->hw_destroy = शून्य;
+	res->res_मुक्त = res_मुक्त;
 	res->dev_priv = dev_priv;
 	res->func = func;
 	RB_CLEAR_NODE(&res->mob_node);
 	INIT_LIST_HEAD(&res->lru_head);
 	INIT_LIST_HEAD(&res->binding_head);
 	res->id = -1;
-	res->backup = NULL;
+	res->backup = शून्य;
 	res->backup_offset = 0;
 	res->backup_dirty = false;
 	res->res_dirty = false;
 	res->coherent = false;
 	res->used_prio = 3;
-	res->dirty = NULL;
-	if (delay_id)
-		return 0;
-	else
-		return vmw_resource_alloc_id(res);
-}
+	res->dirty = शून्य;
+	अगर (delay_id)
+		वापस 0;
+	अन्यथा
+		वापस vmw_resource_alloc_id(res);
+पूर्ण
 
 
 /**
- * vmw_user_resource_lookup_handle - lookup a struct resource from a
- * TTM user-space handle and perform basic type checks
+ * vmw_user_resource_lookup_handle - lookup a काष्ठा resource from a
+ * TTM user-space handle and perक्रमm basic type checks
  *
- * @dev_priv:     Pointer to a device private struct
- * @tfile:        Pointer to a struct ttm_object_file identifying the caller
+ * @dev_priv:     Poपूर्णांकer to a device निजी काष्ठा
+ * @tfile:        Poपूर्णांकer to a काष्ठा tपंचांग_object_file identअगरying the caller
  * @handle:       The TTM user-space handle
- * @converter:    Pointer to an object describing the resource type
- * @p_res:        On successful return the location pointed to will contain
- *                a pointer to a refcounted struct vmw_resource.
+ * @converter:    Poपूर्णांकer to an object describing the resource type
+ * @p_res:        On successful वापस the location poपूर्णांकed to will contain
+ *                a poपूर्णांकer to a refcounted काष्ठा vmw_resource.
  *
  * If the handle can't be found or is associated with an incorrect resource
- * type, -EINVAL will be returned.
+ * type, -EINVAL will be वापसed.
  */
-int vmw_user_resource_lookup_handle(struct vmw_private *dev_priv,
-				    struct ttm_object_file *tfile,
-				    uint32_t handle,
-				    const struct vmw_user_resource_conv
+पूर्णांक vmw_user_resource_lookup_handle(काष्ठा vmw_निजी *dev_priv,
+				    काष्ठा tपंचांग_object_file *tfile,
+				    uपूर्णांक32_t handle,
+				    स्थिर काष्ठा vmw_user_resource_conv
 				    *converter,
-				    struct vmw_resource **p_res)
-{
-	struct ttm_base_object *base;
-	struct vmw_resource *res;
-	int ret = -EINVAL;
+				    काष्ठा vmw_resource **p_res)
+अणु
+	काष्ठा tपंचांग_base_object *base;
+	काष्ठा vmw_resource *res;
+	पूर्णांक ret = -EINVAL;
 
-	base = ttm_base_object_lookup(tfile, handle);
-	if (unlikely(base == NULL))
-		return -EINVAL;
+	base = tपंचांग_base_object_lookup(tfile, handle);
+	अगर (unlikely(base == शून्य))
+		वापस -EINVAL;
 
-	if (unlikely(ttm_base_object_type(base) != converter->object_type))
-		goto out_bad_resource;
+	अगर (unlikely(tपंचांग_base_object_type(base) != converter->object_type))
+		जाओ out_bad_resource;
 
 	res = converter->base_obj_to_res(base);
 	kref_get(&res->kref);
@@ -274,809 +275,809 @@ int vmw_user_resource_lookup_handle(struct vmw_private *dev_priv,
 	ret = 0;
 
 out_bad_resource:
-	ttm_base_object_unref(&base);
+	tपंचांग_base_object_unref(&base);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * vmw_user_resource_lookup_handle - lookup a struct resource from a
- * TTM user-space handle and perform basic type checks
+ * vmw_user_resource_lookup_handle - lookup a काष्ठा resource from a
+ * TTM user-space handle and perक्रमm basic type checks
  *
- * @dev_priv:     Pointer to a device private struct
- * @tfile:        Pointer to a struct ttm_object_file identifying the caller
+ * @dev_priv:     Poपूर्णांकer to a device निजी काष्ठा
+ * @tfile:        Poपूर्णांकer to a काष्ठा tपंचांग_object_file identअगरying the caller
  * @handle:       The TTM user-space handle
- * @converter:    Pointer to an object describing the resource type
+ * @converter:    Poपूर्णांकer to an object describing the resource type
  *
  * If the handle can't be found or is associated with an incorrect resource
- * type, -EINVAL will be returned.
+ * type, -EINVAL will be वापसed.
  */
-struct vmw_resource *
-vmw_user_resource_noref_lookup_handle(struct vmw_private *dev_priv,
-				      struct ttm_object_file *tfile,
-				      uint32_t handle,
-				      const struct vmw_user_resource_conv
+काष्ठा vmw_resource *
+vmw_user_resource_noref_lookup_handle(काष्ठा vmw_निजी *dev_priv,
+				      काष्ठा tपंचांग_object_file *tfile,
+				      uपूर्णांक32_t handle,
+				      स्थिर काष्ठा vmw_user_resource_conv
 				      *converter)
-{
-	struct ttm_base_object *base;
+अणु
+	काष्ठा tपंचांग_base_object *base;
 
-	base = ttm_base_object_noref_lookup(tfile, handle);
-	if (!base)
-		return ERR_PTR(-ESRCH);
+	base = tपंचांग_base_object_noref_lookup(tfile, handle);
+	अगर (!base)
+		वापस ERR_PTR(-ESRCH);
 
-	if (unlikely(ttm_base_object_type(base) != converter->object_type)) {
-		ttm_base_object_noref_release();
-		return ERR_PTR(-EINVAL);
-	}
+	अगर (unlikely(tपंचांग_base_object_type(base) != converter->object_type)) अणु
+		tपंचांग_base_object_noref_release();
+		वापस ERR_PTR(-EINVAL);
+	पूर्ण
 
-	return converter->base_obj_to_res(base);
-}
+	वापस converter->base_obj_to_res(base);
+पूर्ण
 
 /*
  * Helper function that looks either a surface or bo.
  *
- * The pointer this pointed at by out_surf and out_buf needs to be null.
+ * The poपूर्णांकer this poपूर्णांकed at by out_surf and out_buf needs to be null.
  */
-int vmw_user_lookup_handle(struct vmw_private *dev_priv,
-			   struct ttm_object_file *tfile,
-			   uint32_t handle,
-			   struct vmw_surface **out_surf,
-			   struct vmw_buffer_object **out_buf)
-{
-	struct vmw_resource *res;
-	int ret;
+पूर्णांक vmw_user_lookup_handle(काष्ठा vmw_निजी *dev_priv,
+			   काष्ठा tपंचांग_object_file *tfile,
+			   uपूर्णांक32_t handle,
+			   काष्ठा vmw_surface **out_surf,
+			   काष्ठा vmw_buffer_object **out_buf)
+अणु
+	काष्ठा vmw_resource *res;
+	पूर्णांक ret;
 
 	BUG_ON(*out_surf || *out_buf);
 
 	ret = vmw_user_resource_lookup_handle(dev_priv, tfile, handle,
 					      user_surface_converter,
 					      &res);
-	if (!ret) {
+	अगर (!ret) अणु
 		*out_surf = vmw_res_to_srf(res);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	*out_surf = NULL;
-	ret = vmw_user_bo_lookup(tfile, handle, out_buf, NULL);
-	return ret;
-}
+	*out_surf = शून्य;
+	ret = vmw_user_bo_lookup(tfile, handle, out_buf, शून्य);
+	वापस ret;
+पूर्ण
 
 /**
- * vmw_resource_buf_alloc - Allocate a backup buffer for a resource.
+ * vmw_resource_buf_alloc - Allocate a backup buffer क्रम a resource.
  *
- * @res:            The resource for which to allocate a backup buffer.
- * @interruptible:  Whether any sleeps during allocation should be
- *                  performed while interruptible.
+ * @res:            The resource क्रम which to allocate a backup buffer.
+ * @पूर्णांकerruptible:  Whether any sleeps during allocation should be
+ *                  perक्रमmed जबतक पूर्णांकerruptible.
  */
-static int vmw_resource_buf_alloc(struct vmw_resource *res,
-				  bool interruptible)
-{
-	unsigned long size =
+अटल पूर्णांक vmw_resource_buf_alloc(काष्ठा vmw_resource *res,
+				  bool पूर्णांकerruptible)
+अणु
+	अचिन्हित दीर्घ size =
 		(res->backup_size + PAGE_SIZE - 1) & PAGE_MASK;
-	struct vmw_buffer_object *backup;
-	int ret;
+	काष्ठा vmw_buffer_object *backup;
+	पूर्णांक ret;
 
-	if (likely(res->backup)) {
+	अगर (likely(res->backup)) अणु
 		BUG_ON(res->backup->base.base.size < size);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	backup = kzalloc(sizeof(*backup), GFP_KERNEL);
-	if (unlikely(!backup))
-		return -ENOMEM;
+	backup = kzalloc(माप(*backup), GFP_KERNEL);
+	अगर (unlikely(!backup))
+		वापस -ENOMEM;
 
 	ret = vmw_bo_init(res->dev_priv, backup, res->backup_size,
 			      res->func->backup_placement,
-			      interruptible, false,
-			      &vmw_bo_bo_free);
-	if (unlikely(ret != 0))
-		goto out_no_bo;
+			      पूर्णांकerruptible, false,
+			      &vmw_bo_bo_मुक्त);
+	अगर (unlikely(ret != 0))
+		जाओ out_no_bo;
 
 	res->backup = backup;
 
 out_no_bo:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * vmw_resource_do_validate - Make a resource up-to-date and visible
+ * vmw_resource_करो_validate - Make a resource up-to-date and visible
  *                            to the device.
  *
  * @res:            The resource to make visible to the device.
- * @val_buf:        Information about a buffer possibly
- *                  containing backup data if a bind operation is needed.
+ * @val_buf:        Inक्रमmation about a buffer possibly
+ *                  containing backup data अगर a bind operation is needed.
  * @dirtying:       Transfer dirty regions.
  *
- * On hardware resource shortage, this function returns -EBUSY and
- * should be retried once resources have been freed up.
+ * On hardware resource लघुage, this function वापसs -EBUSY and
+ * should be retried once resources have been मुक्तd up.
  */
-static int vmw_resource_do_validate(struct vmw_resource *res,
-				    struct ttm_validate_buffer *val_buf,
+अटल पूर्णांक vmw_resource_करो_validate(काष्ठा vmw_resource *res,
+				    काष्ठा tपंचांग_validate_buffer *val_buf,
 				    bool dirtying)
-{
-	int ret = 0;
-	const struct vmw_res_func *func = res->func;
+अणु
+	पूर्णांक ret = 0;
+	स्थिर काष्ठा vmw_res_func *func = res->func;
 
-	if (unlikely(res->id == -1)) {
+	अगर (unlikely(res->id == -1)) अणु
 		ret = func->create(res);
-		if (unlikely(ret != 0))
-			return ret;
-	}
+		अगर (unlikely(ret != 0))
+			वापस ret;
+	पूर्ण
 
-	if (func->bind &&
+	अगर (func->bind &&
 	    ((func->needs_backup && !vmw_resource_mob_attached(res) &&
-	      val_buf->bo != NULL) ||
-	     (!func->needs_backup && val_buf->bo != NULL))) {
+	      val_buf->bo != शून्य) ||
+	     (!func->needs_backup && val_buf->bo != शून्य))) अणु
 		ret = func->bind(res, val_buf);
-		if (unlikely(ret != 0))
-			goto out_bind_failed;
-		if (func->needs_backup)
+		अगर (unlikely(ret != 0))
+			जाओ out_bind_failed;
+		अगर (func->needs_backup)
 			vmw_resource_mob_attach(res);
-	}
+	पूर्ण
 
 	/*
-	 * Handle the case where the backup mob is marked coherent but
+	 * Handle the हाल where the backup mob is marked coherent but
 	 * the resource isn't.
 	 */
-	if (func->dirty_alloc && vmw_resource_mob_attached(res) &&
-	    !res->coherent) {
-		if (res->backup->dirty && !res->dirty) {
+	अगर (func->dirty_alloc && vmw_resource_mob_attached(res) &&
+	    !res->coherent) अणु
+		अगर (res->backup->dirty && !res->dirty) अणु
 			ret = func->dirty_alloc(res);
-			if (ret)
-				return ret;
-		} else if (!res->backup->dirty && res->dirty) {
-			func->dirty_free(res);
-		}
-	}
+			अगर (ret)
+				वापस ret;
+		पूर्ण अन्यथा अगर (!res->backup->dirty && res->dirty) अणु
+			func->dirty_मुक्त(res);
+		पूर्ण
+	पूर्ण
 
 	/*
 	 * Transfer the dirty regions to the resource and update
 	 * the resource.
 	 */
-	if (res->dirty) {
-		if (dirtying && !res->res_dirty) {
+	अगर (res->dirty) अणु
+		अगर (dirtying && !res->res_dirty) अणु
 			pgoff_t start = res->backup_offset >> PAGE_SHIFT;
 			pgoff_t end = __KERNEL_DIV_ROUND_UP
 				(res->backup_offset + res->backup_size,
 				 PAGE_SIZE);
 
 			vmw_bo_dirty_unmap(res->backup, start, end);
-		}
+		पूर्ण
 
 		vmw_bo_dirty_transfer_to_res(res);
-		return func->dirty_sync(res);
-	}
+		वापस func->dirty_sync(res);
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 out_bind_failed:
 	func->destroy(res);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * vmw_resource_unreserve - Unreserve a resource previously reserved for
+ * vmw_resource_unreserve - Unreserve a resource previously reserved क्रम
  * command submission.
  *
- * @res:               Pointer to the struct vmw_resource to unreserve.
+ * @res:               Poपूर्णांकer to the काष्ठा vmw_resource to unreserve.
  * @dirty_set:         Change dirty status of the resource.
  * @dirty:             When changing dirty status indicates the new status.
- * @switch_backup:     Backup buffer has been switched.
- * @new_backup:        Pointer to new backup buffer if command submission
- *                     switched. May be NULL.
- * @new_backup_offset: New backup offset if @switch_backup is true.
+ * @चयन_backup:     Backup buffer has been चयनed.
+ * @new_backup:        Poपूर्णांकer to new backup buffer अगर command submission
+ *                     चयनed. May be शून्य.
+ * @new_backup_offset: New backup offset अगर @चयन_backup is true.
  *
  * Currently unreserving a resource means putting it back on the device's
- * resource lru list, so that it can be evicted if necessary.
+ * resource lru list, so that it can be evicted अगर necessary.
  */
-void vmw_resource_unreserve(struct vmw_resource *res,
+व्योम vmw_resource_unreserve(काष्ठा vmw_resource *res,
 			    bool dirty_set,
 			    bool dirty,
-			    bool switch_backup,
-			    struct vmw_buffer_object *new_backup,
-			    unsigned long new_backup_offset)
-{
-	struct vmw_private *dev_priv = res->dev_priv;
+			    bool चयन_backup,
+			    काष्ठा vmw_buffer_object *new_backup,
+			    अचिन्हित दीर्घ new_backup_offset)
+अणु
+	काष्ठा vmw_निजी *dev_priv = res->dev_priv;
 
-	if (!list_empty(&res->lru_head))
-		return;
+	अगर (!list_empty(&res->lru_head))
+		वापस;
 
-	if (switch_backup && new_backup != res->backup) {
-		if (res->backup) {
+	अगर (चयन_backup && new_backup != res->backup) अणु
+		अगर (res->backup) अणु
 			vmw_resource_mob_detach(res);
-			if (res->coherent)
+			अगर (res->coherent)
 				vmw_bo_dirty_release(res->backup);
 			vmw_bo_unreference(&res->backup);
-		}
+		पूर्ण
 
-		if (new_backup) {
+		अगर (new_backup) अणु
 			res->backup = vmw_bo_reference(new_backup);
 
 			/*
-			 * The validation code should already have added a
+			 * The validation code should alपढ़ोy have added a
 			 * dirty tracker here.
 			 */
 			WARN_ON(res->coherent && !new_backup->dirty);
 
 			vmw_resource_mob_attach(res);
-		} else {
-			res->backup = NULL;
-		}
-	} else if (switch_backup && res->coherent) {
+		पूर्ण अन्यथा अणु
+			res->backup = शून्य;
+		पूर्ण
+	पूर्ण अन्यथा अगर (चयन_backup && res->coherent) अणु
 		vmw_bo_dirty_release(res->backup);
-	}
+	पूर्ण
 
-	if (switch_backup)
+	अगर (चयन_backup)
 		res->backup_offset = new_backup_offset;
 
-	if (dirty_set)
+	अगर (dirty_set)
 		res->res_dirty = dirty;
 
-	if (!res->func->may_evict || res->id == -1 || res->pin_count)
-		return;
+	अगर (!res->func->may_evict || res->id == -1 || res->pin_count)
+		वापस;
 
 	spin_lock(&dev_priv->resource_lock);
 	list_add_tail(&res->lru_head,
 		      &res->dev_priv->res_lru[res->func->res_type]);
 	spin_unlock(&dev_priv->resource_lock);
-}
+पूर्ण
 
 /**
  * vmw_resource_check_buffer - Check whether a backup buffer is needed
- *                             for a resource and in that case, allocate
+ *                             क्रम a resource and in that हाल, allocate
  *                             one, reserve and validate it.
  *
- * @ticket:         The ww aqcquire context to use, or NULL if trylocking.
- * @res:            The resource for which to allocate a backup buffer.
- * @interruptible:  Whether any sleeps during allocation should be
- *                  performed while interruptible.
- * @val_buf:        On successful return contains data about the
+ * @ticket:         The ww aqcquire context to use, or शून्य अगर trylocking.
+ * @res:            The resource क्रम which to allocate a backup buffer.
+ * @पूर्णांकerruptible:  Whether any sleeps during allocation should be
+ *                  perक्रमmed जबतक पूर्णांकerruptible.
+ * @val_buf:        On successful वापस contains data about the
  *                  reserved and validated backup buffer.
  */
-static int
-vmw_resource_check_buffer(struct ww_acquire_ctx *ticket,
-			  struct vmw_resource *res,
-			  bool interruptible,
-			  struct ttm_validate_buffer *val_buf)
-{
-	struct ttm_operation_ctx ctx = { true, false };
-	struct list_head val_list;
+अटल पूर्णांक
+vmw_resource_check_buffer(काष्ठा ww_acquire_ctx *ticket,
+			  काष्ठा vmw_resource *res,
+			  bool पूर्णांकerruptible,
+			  काष्ठा tपंचांग_validate_buffer *val_buf)
+अणु
+	काष्ठा tपंचांग_operation_ctx ctx = अणु true, false पूर्ण;
+	काष्ठा list_head val_list;
 	bool backup_dirty = false;
-	int ret;
+	पूर्णांक ret;
 
-	if (unlikely(res->backup == NULL)) {
-		ret = vmw_resource_buf_alloc(res, interruptible);
-		if (unlikely(ret != 0))
-			return ret;
-	}
+	अगर (unlikely(res->backup == शून्य)) अणु
+		ret = vmw_resource_buf_alloc(res, पूर्णांकerruptible);
+		अगर (unlikely(ret != 0))
+			वापस ret;
+	पूर्ण
 
 	INIT_LIST_HEAD(&val_list);
-	ttm_bo_get(&res->backup->base);
+	tपंचांग_bo_get(&res->backup->base);
 	val_buf->bo = &res->backup->base;
 	val_buf->num_shared = 0;
 	list_add_tail(&val_buf->head, &val_list);
-	ret = ttm_eu_reserve_buffers(ticket, &val_list, interruptible, NULL);
-	if (unlikely(ret != 0))
-		goto out_no_reserve;
+	ret = tपंचांग_eu_reserve_buffers(ticket, &val_list, पूर्णांकerruptible, शून्य);
+	अगर (unlikely(ret != 0))
+		जाओ out_no_reserve;
 
-	if (res->func->needs_backup && !vmw_resource_mob_attached(res))
-		return 0;
+	अगर (res->func->needs_backup && !vmw_resource_mob_attached(res))
+		वापस 0;
 
 	backup_dirty = res->backup_dirty;
-	ret = ttm_bo_validate(&res->backup->base,
+	ret = tपंचांग_bo_validate(&res->backup->base,
 			      res->func->backup_placement,
 			      &ctx);
 
-	if (unlikely(ret != 0))
-		goto out_no_validate;
+	अगर (unlikely(ret != 0))
+		जाओ out_no_validate;
 
-	return 0;
+	वापस 0;
 
 out_no_validate:
-	ttm_eu_backoff_reservation(ticket, &val_list);
+	tपंचांग_eu_backoff_reservation(ticket, &val_list);
 out_no_reserve:
-	ttm_bo_put(val_buf->bo);
-	val_buf->bo = NULL;
-	if (backup_dirty)
+	tपंचांग_bo_put(val_buf->bo);
+	val_buf->bo = शून्य;
+	अगर (backup_dirty)
 		vmw_bo_unreference(&res->backup);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
- * vmw_resource_reserve - Reserve a resource for command submission
+ * vmw_resource_reserve - Reserve a resource क्रम command submission
  *
  * @res:            The resource to reserve.
  *
  * This function takes the resource off the LRU list and make sure
- * a backup buffer is present for guest-backed resources. However,
- * the buffer may not be bound to the resource at this point.
+ * a backup buffer is present क्रम guest-backed resources. However,
+ * the buffer may not be bound to the resource at this poपूर्णांक.
  *
  */
-int vmw_resource_reserve(struct vmw_resource *res, bool interruptible,
+पूर्णांक vmw_resource_reserve(काष्ठा vmw_resource *res, bool पूर्णांकerruptible,
 			 bool no_backup)
-{
-	struct vmw_private *dev_priv = res->dev_priv;
-	int ret;
+अणु
+	काष्ठा vmw_निजी *dev_priv = res->dev_priv;
+	पूर्णांक ret;
 
 	spin_lock(&dev_priv->resource_lock);
 	list_del_init(&res->lru_head);
 	spin_unlock(&dev_priv->resource_lock);
 
-	if (res->func->needs_backup && res->backup == NULL &&
-	    !no_backup) {
-		ret = vmw_resource_buf_alloc(res, interruptible);
-		if (unlikely(ret != 0)) {
+	अगर (res->func->needs_backup && res->backup == शून्य &&
+	    !no_backup) अणु
+		ret = vmw_resource_buf_alloc(res, पूर्णांकerruptible);
+		अगर (unlikely(ret != 0)) अणु
 			DRM_ERROR("Failed to allocate a backup buffer "
 				  "of size %lu. bytes\n",
-				  (unsigned long) res->backup_size);
-			return ret;
-		}
-	}
+				  (अचिन्हित दीर्घ) res->backup_size);
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * vmw_resource_backoff_reservation - Unreserve and unreference a
  *                                    backup buffer
  *.
- * @ticket:         The ww acquire ctx used for reservation.
- * @val_buf:        Backup buffer information.
+ * @ticket:         The ww acquire ctx used क्रम reservation.
+ * @val_buf:        Backup buffer inक्रमmation.
  */
-static void
-vmw_resource_backoff_reservation(struct ww_acquire_ctx *ticket,
-				 struct ttm_validate_buffer *val_buf)
-{
-	struct list_head val_list;
+अटल व्योम
+vmw_resource_backoff_reservation(काष्ठा ww_acquire_ctx *ticket,
+				 काष्ठा tपंचांग_validate_buffer *val_buf)
+अणु
+	काष्ठा list_head val_list;
 
-	if (likely(val_buf->bo == NULL))
-		return;
+	अगर (likely(val_buf->bo == शून्य))
+		वापस;
 
 	INIT_LIST_HEAD(&val_list);
 	list_add_tail(&val_buf->head, &val_list);
-	ttm_eu_backoff_reservation(ticket, &val_list);
-	ttm_bo_put(val_buf->bo);
-	val_buf->bo = NULL;
-}
+	tपंचांग_eu_backoff_reservation(ticket, &val_list);
+	tपंचांग_bo_put(val_buf->bo);
+	val_buf->bo = शून्य;
+पूर्ण
 
 /**
- * vmw_resource_do_evict - Evict a resource, and transfer its data
+ * vmw_resource_करो_evict - Evict a resource, and transfer its data
  *                         to a backup buffer.
  *
- * @ticket:         The ww acquire ticket to use, or NULL if trylocking.
+ * @ticket:         The ww acquire ticket to use, or शून्य अगर trylocking.
  * @res:            The resource to evict.
- * @interruptible:  Whether to wait interruptible.
+ * @पूर्णांकerruptible:  Whether to रुको पूर्णांकerruptible.
  */
-static int vmw_resource_do_evict(struct ww_acquire_ctx *ticket,
-				 struct vmw_resource *res, bool interruptible)
-{
-	struct ttm_validate_buffer val_buf;
-	const struct vmw_res_func *func = res->func;
-	int ret;
+अटल पूर्णांक vmw_resource_करो_evict(काष्ठा ww_acquire_ctx *ticket,
+				 काष्ठा vmw_resource *res, bool पूर्णांकerruptible)
+अणु
+	काष्ठा tपंचांग_validate_buffer val_buf;
+	स्थिर काष्ठा vmw_res_func *func = res->func;
+	पूर्णांक ret;
 
 	BUG_ON(!func->may_evict);
 
-	val_buf.bo = NULL;
+	val_buf.bo = शून्य;
 	val_buf.num_shared = 0;
-	ret = vmw_resource_check_buffer(ticket, res, interruptible, &val_buf);
-	if (unlikely(ret != 0))
-		return ret;
+	ret = vmw_resource_check_buffer(ticket, res, पूर्णांकerruptible, &val_buf);
+	अगर (unlikely(ret != 0))
+		वापस ret;
 
-	if (unlikely(func->unbind != NULL &&
-		     (!func->needs_backup || vmw_resource_mob_attached(res)))) {
+	अगर (unlikely(func->unbind != शून्य &&
+		     (!func->needs_backup || vmw_resource_mob_attached(res)))) अणु
 		ret = func->unbind(res, res->res_dirty, &val_buf);
-		if (unlikely(ret != 0))
-			goto out_no_unbind;
+		अगर (unlikely(ret != 0))
+			जाओ out_no_unbind;
 		vmw_resource_mob_detach(res);
-	}
+	पूर्ण
 	ret = func->destroy(res);
 	res->backup_dirty = true;
 	res->res_dirty = false;
 out_no_unbind:
 	vmw_resource_backoff_reservation(ticket, &val_buf);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 
 /**
  * vmw_resource_validate - Make a resource up-to-date and visible
  *                         to the device.
  * @res: The resource to make visible to the device.
- * @intr: Perform waits interruptible if possible.
+ * @पूर्णांकr: Perक्रमm रुकोs पूर्णांकerruptible अगर possible.
  * @dirtying: Pending GPU operation will dirty the resource
  *
- * On succesful return, any backup DMA buffer pointed to by @res->backup will
+ * On succesful वापस, any backup DMA buffer poपूर्णांकed to by @res->backup will
  * be reserved and validated.
- * On hardware resource shortage, this function will repeatedly evict
+ * On hardware resource लघुage, this function will repeatedly evict
  * resources of the same type until the validation succeeds.
  *
- * Return: Zero on success, -ERESTARTSYS if interrupted, negative error code
+ * Return: Zero on success, -ERESTARTSYS अगर पूर्णांकerrupted, negative error code
  * on failure.
  */
-int vmw_resource_validate(struct vmw_resource *res, bool intr,
+पूर्णांक vmw_resource_validate(काष्ठा vmw_resource *res, bool पूर्णांकr,
 			  bool dirtying)
-{
-	int ret;
-	struct vmw_resource *evict_res;
-	struct vmw_private *dev_priv = res->dev_priv;
-	struct list_head *lru_list = &dev_priv->res_lru[res->func->res_type];
-	struct ttm_validate_buffer val_buf;
-	unsigned err_count = 0;
+अणु
+	पूर्णांक ret;
+	काष्ठा vmw_resource *evict_res;
+	काष्ठा vmw_निजी *dev_priv = res->dev_priv;
+	काष्ठा list_head *lru_list = &dev_priv->res_lru[res->func->res_type];
+	काष्ठा tपंचांग_validate_buffer val_buf;
+	अचिन्हित err_count = 0;
 
-	if (!res->func->create)
-		return 0;
+	अगर (!res->func->create)
+		वापस 0;
 
-	val_buf.bo = NULL;
+	val_buf.bo = शून्य;
 	val_buf.num_shared = 0;
-	if (res->backup)
+	अगर (res->backup)
 		val_buf.bo = &res->backup->base;
-	do {
-		ret = vmw_resource_do_validate(res, &val_buf, dirtying);
-		if (likely(ret != -EBUSY))
-			break;
+	करो अणु
+		ret = vmw_resource_करो_validate(res, &val_buf, dirtying);
+		अगर (likely(ret != -EBUSY))
+			अवरोध;
 
 		spin_lock(&dev_priv->resource_lock);
-		if (list_empty(lru_list) || !res->func->may_evict) {
+		अगर (list_empty(lru_list) || !res->func->may_evict) अणु
 			DRM_ERROR("Out of device device resources "
 				  "for %s.\n", res->func->type_name);
 			ret = -EBUSY;
 			spin_unlock(&dev_priv->resource_lock);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		evict_res = vmw_resource_reference
-			(list_first_entry(lru_list, struct vmw_resource,
+			(list_first_entry(lru_list, काष्ठा vmw_resource,
 					  lru_head));
 		list_del_init(&evict_res->lru_head);
 
 		spin_unlock(&dev_priv->resource_lock);
 
-		/* Trylock backup buffers with a NULL ticket. */
-		ret = vmw_resource_do_evict(NULL, evict_res, intr);
-		if (unlikely(ret != 0)) {
+		/* Trylock backup buffers with a शून्य ticket. */
+		ret = vmw_resource_करो_evict(शून्य, evict_res, पूर्णांकr);
+		अगर (unlikely(ret != 0)) अणु
 			spin_lock(&dev_priv->resource_lock);
 			list_add_tail(&evict_res->lru_head, lru_list);
 			spin_unlock(&dev_priv->resource_lock);
-			if (ret == -ERESTARTSYS ||
-			    ++err_count > VMW_RES_EVICT_ERR_COUNT) {
+			अगर (ret == -ERESTARTSYS ||
+			    ++err_count > VMW_RES_EVICT_ERR_COUNT) अणु
 				vmw_resource_unreference(&evict_res);
-				goto out_no_validate;
-			}
-		}
+				जाओ out_no_validate;
+			पूर्ण
+		पूर्ण
 
 		vmw_resource_unreference(&evict_res);
-	} while (1);
+	पूर्ण जबतक (1);
 
-	if (unlikely(ret != 0))
-		goto out_no_validate;
-	else if (!res->func->needs_backup && res->backup) {
+	अगर (unlikely(ret != 0))
+		जाओ out_no_validate;
+	अन्यथा अगर (!res->func->needs_backup && res->backup) अणु
 		WARN_ON_ONCE(vmw_resource_mob_attached(res));
 		vmw_bo_unreference(&res->backup);
-	}
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 out_no_validate:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 
 /**
  * vmw_resource_unbind_list
  *
- * @vbo: Pointer to the current backing MOB.
+ * @vbo: Poपूर्णांकer to the current backing MOB.
  *
- * Evicts the Guest Backed hardware resource if the backup
+ * Evicts the Guest Backed hardware resource अगर the backup
  * buffer is being moved out of MOB memory.
  * Note that this function will not race with the resource
  * validation code, since resource validation and eviction
  * both require the backup buffer to be reserved.
  */
-void vmw_resource_unbind_list(struct vmw_buffer_object *vbo)
-{
-	struct ttm_validate_buffer val_buf = {
+व्योम vmw_resource_unbind_list(काष्ठा vmw_buffer_object *vbo)
+अणु
+	काष्ठा tपंचांग_validate_buffer val_buf = अणु
 		.bo = &vbo->base,
 		.num_shared = 0
-	};
+	पूर्ण;
 
-	dma_resv_assert_held(vbo->base.base.resv);
-	while (!RB_EMPTY_ROOT(&vbo->res_tree)) {
-		struct rb_node *node = vbo->res_tree.rb_node;
-		struct vmw_resource *res =
-			container_of(node, struct vmw_resource, mob_node);
+	dma_resv_निश्चित_held(vbo->base.base.resv);
+	जबतक (!RB_EMPTY_ROOT(&vbo->res_tree)) अणु
+		काष्ठा rb_node *node = vbo->res_tree.rb_node;
+		काष्ठा vmw_resource *res =
+			container_of(node, काष्ठा vmw_resource, mob_node);
 
-		if (!WARN_ON_ONCE(!res->func->unbind))
-			(void) res->func->unbind(res, res->res_dirty, &val_buf);
+		अगर (!WARN_ON_ONCE(!res->func->unbind))
+			(व्योम) res->func->unbind(res, res->res_dirty, &val_buf);
 
 		res->backup_dirty = true;
 		res->res_dirty = false;
 		vmw_resource_mob_detach(res);
-	}
+	पूर्ण
 
-	(void) ttm_bo_wait(&vbo->base, false, false);
-}
+	(व्योम) tपंचांग_bo_रुको(&vbo->base, false, false);
+पूर्ण
 
 
 /**
- * vmw_query_readback_all - Read back cached query states
+ * vmw_query_पढ़ोback_all - Read back cached query states
  *
  * @dx_query_mob: Buffer containing the DX query MOB
  *
- * Read back cached states from the device if they exist.  This function
+ * Read back cached states from the device अगर they exist.  This function
  * assumings binding_mutex is held.
  */
-int vmw_query_readback_all(struct vmw_buffer_object *dx_query_mob)
-{
-	struct vmw_resource *dx_query_ctx;
-	struct vmw_private *dev_priv;
-	struct {
+पूर्णांक vmw_query_पढ़ोback_all(काष्ठा vmw_buffer_object *dx_query_mob)
+अणु
+	काष्ठा vmw_resource *dx_query_ctx;
+	काष्ठा vmw_निजी *dev_priv;
+	काष्ठा अणु
 		SVGA3dCmdHeader header;
 		SVGA3dCmdDXReadbackAllQuery body;
-	} *cmd;
+	पूर्ण *cmd;
 
 
-	/* No query bound, so do nothing */
-	if (!dx_query_mob || !dx_query_mob->dx_query_ctx)
-		return 0;
+	/* No query bound, so करो nothing */
+	अगर (!dx_query_mob || !dx_query_mob->dx_query_ctx)
+		वापस 0;
 
 	dx_query_ctx = dx_query_mob->dx_query_ctx;
 	dev_priv     = dx_query_ctx->dev_priv;
 
-	cmd = VMW_CMD_CTX_RESERVE(dev_priv, sizeof(*cmd), dx_query_ctx->id);
-	if (unlikely(cmd == NULL))
-		return -ENOMEM;
+	cmd = VMW_CMD_CTX_RESERVE(dev_priv, माप(*cmd), dx_query_ctx->id);
+	अगर (unlikely(cmd == शून्य))
+		वापस -ENOMEM;
 
 	cmd->header.id   = SVGA_3D_CMD_DX_READBACK_ALL_QUERY;
-	cmd->header.size = sizeof(cmd->body);
+	cmd->header.size = माप(cmd->body);
 	cmd->body.cid    = dx_query_ctx->id;
 
-	vmw_cmd_commit(dev_priv, sizeof(*cmd));
+	vmw_cmd_commit(dev_priv, माप(*cmd));
 
-	/* Triggers a rebind the next time affected context is bound */
-	dx_query_mob->dx_query_ctx = NULL;
+	/* Triggers a rebind the next समय affected context is bound */
+	dx_query_mob->dx_query_ctx = शून्य;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
 
 /**
- * vmw_query_move_notify - Read back cached query states
+ * vmw_query_move_notअगरy - Read back cached query states
  *
  * @bo: The TTM buffer object about to move.
  * @old_mem: The memory region @bo is moving from.
  * @new_mem: The memory region @bo is moving to.
  *
- * Called before the query MOB is swapped out to read back cached query
+ * Called beक्रमe the query MOB is swapped out to पढ़ो back cached query
  * states from the device.
  */
-void vmw_query_move_notify(struct ttm_buffer_object *bo,
-			   struct ttm_resource *old_mem,
-			   struct ttm_resource *new_mem)
-{
-	struct vmw_buffer_object *dx_query_mob;
-	struct ttm_device *bdev = bo->bdev;
-	struct vmw_private *dev_priv;
+व्योम vmw_query_move_notअगरy(काष्ठा tपंचांग_buffer_object *bo,
+			   काष्ठा tपंचांग_resource *old_mem,
+			   काष्ठा tपंचांग_resource *new_mem)
+अणु
+	काष्ठा vmw_buffer_object *dx_query_mob;
+	काष्ठा tपंचांग_device *bdev = bo->bdev;
+	काष्ठा vmw_निजी *dev_priv;
 
 
-	dev_priv = container_of(bdev, struct vmw_private, bdev);
+	dev_priv = container_of(bdev, काष्ठा vmw_निजी, bdev);
 
 	mutex_lock(&dev_priv->binding_mutex);
 
-	dx_query_mob = container_of(bo, struct vmw_buffer_object, base);
-	if (!dx_query_mob || !dx_query_mob->dx_query_ctx) {
+	dx_query_mob = container_of(bo, काष्ठा vmw_buffer_object, base);
+	अगर (!dx_query_mob || !dx_query_mob->dx_query_ctx) अणु
 		mutex_unlock(&dev_priv->binding_mutex);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	/* If BO is being moved from MOB to system memory */
-	if (new_mem->mem_type == TTM_PL_SYSTEM &&
-	    old_mem->mem_type == VMW_PL_MOB) {
-		struct vmw_fence_obj *fence;
+	/* If BO is being moved from MOB to प्रणाली memory */
+	अगर (new_mem->mem_type == TTM_PL_SYSTEM &&
+	    old_mem->mem_type == VMW_PL_MOB) अणु
+		काष्ठा vmw_fence_obj *fence;
 
-		(void) vmw_query_readback_all(dx_query_mob);
+		(व्योम) vmw_query_पढ़ोback_all(dx_query_mob);
 		mutex_unlock(&dev_priv->binding_mutex);
 
 		/* Create a fence and attach the BO to it */
-		(void) vmw_execbuf_fence_commands(NULL, dev_priv, &fence, NULL);
+		(व्योम) vmw_execbuf_fence_commands(शून्य, dev_priv, &fence, शून्य);
 		vmw_bo_fence_single(bo, fence);
 
-		if (fence != NULL)
+		अगर (fence != शून्य)
 			vmw_fence_obj_unreference(&fence);
 
-		(void) ttm_bo_wait(bo, false, false);
-	} else
+		(व्योम) tपंचांग_bo_रुको(bo, false, false);
+	पूर्ण अन्यथा
 		mutex_unlock(&dev_priv->binding_mutex);
 
-}
+पूर्ण
 
 /**
  * vmw_resource_needs_backup - Return whether a resource needs a backup buffer.
  *
  * @res:            The resource being queried.
  */
-bool vmw_resource_needs_backup(const struct vmw_resource *res)
-{
-	return res->func->needs_backup;
-}
+bool vmw_resource_needs_backup(स्थिर काष्ठा vmw_resource *res)
+अणु
+	वापस res->func->needs_backup;
+पूर्ण
 
 /**
- * vmw_resource_evict_type - Evict all resources of a specific type
+ * vmw_resource_evict_type - Evict all resources of a specअगरic type
  *
- * @dev_priv:       Pointer to a device private struct
+ * @dev_priv:       Poपूर्णांकer to a device निजी काष्ठा
  * @type:           The resource type to evict
  *
- * To avoid thrashing starvation or as part of the hibernation sequence,
- * try to evict all evictable resources of a specific type.
+ * To aव्योम thrashing starvation or as part of the hibernation sequence,
+ * try to evict all evictable resources of a specअगरic type.
  */
-static void vmw_resource_evict_type(struct vmw_private *dev_priv,
-				    enum vmw_res_type type)
-{
-	struct list_head *lru_list = &dev_priv->res_lru[type];
-	struct vmw_resource *evict_res;
-	unsigned err_count = 0;
-	int ret;
-	struct ww_acquire_ctx ticket;
+अटल व्योम vmw_resource_evict_type(काष्ठा vmw_निजी *dev_priv,
+				    क्रमागत vmw_res_type type)
+अणु
+	काष्ठा list_head *lru_list = &dev_priv->res_lru[type];
+	काष्ठा vmw_resource *evict_res;
+	अचिन्हित err_count = 0;
+	पूर्णांक ret;
+	काष्ठा ww_acquire_ctx ticket;
 
-	do {
+	करो अणु
 		spin_lock(&dev_priv->resource_lock);
 
-		if (list_empty(lru_list))
-			goto out_unlock;
+		अगर (list_empty(lru_list))
+			जाओ out_unlock;
 
 		evict_res = vmw_resource_reference(
-			list_first_entry(lru_list, struct vmw_resource,
+			list_first_entry(lru_list, काष्ठा vmw_resource,
 					 lru_head));
 		list_del_init(&evict_res->lru_head);
 		spin_unlock(&dev_priv->resource_lock);
 
 		/* Wait lock backup buffers with a ticket. */
-		ret = vmw_resource_do_evict(&ticket, evict_res, false);
-		if (unlikely(ret != 0)) {
+		ret = vmw_resource_करो_evict(&ticket, evict_res, false);
+		अगर (unlikely(ret != 0)) अणु
 			spin_lock(&dev_priv->resource_lock);
 			list_add_tail(&evict_res->lru_head, lru_list);
 			spin_unlock(&dev_priv->resource_lock);
-			if (++err_count > VMW_RES_EVICT_ERR_COUNT) {
+			अगर (++err_count > VMW_RES_EVICT_ERR_COUNT) अणु
 				vmw_resource_unreference(&evict_res);
-				return;
-			}
-		}
+				वापस;
+			पूर्ण
+		पूर्ण
 
 		vmw_resource_unreference(&evict_res);
-	} while (1);
+	पूर्ण जबतक (1);
 
 out_unlock:
 	spin_unlock(&dev_priv->resource_lock);
-}
+पूर्ण
 
 /**
  * vmw_resource_evict_all - Evict all evictable resources
  *
- * @dev_priv:       Pointer to a device private struct
+ * @dev_priv:       Poपूर्णांकer to a device निजी काष्ठा
  *
- * To avoid thrashing starvation or as part of the hibernation sequence,
+ * To aव्योम thrashing starvation or as part of the hibernation sequence,
  * evict all evictable resources. In particular this means that all
- * guest-backed resources that are registered with the device are
+ * guest-backed resources that are रेजिस्टरed with the device are
  * evicted and the OTable becomes clean.
  */
-void vmw_resource_evict_all(struct vmw_private *dev_priv)
-{
-	enum vmw_res_type type;
+व्योम vmw_resource_evict_all(काष्ठा vmw_निजी *dev_priv)
+अणु
+	क्रमागत vmw_res_type type;
 
 	mutex_lock(&dev_priv->cmdbuf_mutex);
 
-	for (type = 0; type < vmw_res_max; ++type)
+	क्रम (type = 0; type < vmw_res_max; ++type)
 		vmw_resource_evict_type(dev_priv, type);
 
 	mutex_unlock(&dev_priv->cmdbuf_mutex);
-}
+पूर्ण
 
 /*
  * vmw_resource_pin - Add a pin reference on a resource
  *
  * @res: The resource to add a pin reference on
  *
- * This function adds a pin reference, and if needed validates the resource.
+ * This function adds a pin reference, and अगर needed validates the resource.
  * Having a pin reference means that the resource can never be evicted, and
- * its id will never change as long as there is a pin reference.
- * This function returns 0 on success and a negative error code on failure.
+ * its id will never change as दीर्घ as there is a pin reference.
+ * This function वापसs 0 on success and a negative error code on failure.
  */
-int vmw_resource_pin(struct vmw_resource *res, bool interruptible)
-{
-	struct ttm_operation_ctx ctx = { interruptible, false };
-	struct vmw_private *dev_priv = res->dev_priv;
-	int ret;
+पूर्णांक vmw_resource_pin(काष्ठा vmw_resource *res, bool पूर्णांकerruptible)
+अणु
+	काष्ठा tपंचांग_operation_ctx ctx = अणु पूर्णांकerruptible, false पूर्ण;
+	काष्ठा vmw_निजी *dev_priv = res->dev_priv;
+	पूर्णांक ret;
 
-	ttm_write_lock(&dev_priv->reservation_sem, interruptible);
+	tपंचांग_ग_लिखो_lock(&dev_priv->reservation_sem, पूर्णांकerruptible);
 	mutex_lock(&dev_priv->cmdbuf_mutex);
-	ret = vmw_resource_reserve(res, interruptible, false);
-	if (ret)
-		goto out_no_reserve;
+	ret = vmw_resource_reserve(res, पूर्णांकerruptible, false);
+	अगर (ret)
+		जाओ out_no_reserve;
 
-	if (res->pin_count == 0) {
-		struct vmw_buffer_object *vbo = NULL;
+	अगर (res->pin_count == 0) अणु
+		काष्ठा vmw_buffer_object *vbo = शून्य;
 
-		if (res->backup) {
+		अगर (res->backup) अणु
 			vbo = res->backup;
 
-			ttm_bo_reserve(&vbo->base, interruptible, false, NULL);
-			if (!vbo->base.pin_count) {
-				ret = ttm_bo_validate
+			tपंचांग_bo_reserve(&vbo->base, पूर्णांकerruptible, false, शून्य);
+			अगर (!vbo->base.pin_count) अणु
+				ret = tपंचांग_bo_validate
 					(&vbo->base,
 					 res->func->backup_placement,
 					 &ctx);
-				if (ret) {
-					ttm_bo_unreserve(&vbo->base);
-					goto out_no_validate;
-				}
-			}
+				अगर (ret) अणु
+					tपंचांग_bo_unreserve(&vbo->base);
+					जाओ out_no_validate;
+				पूर्ण
+			पूर्ण
 
 			/* Do we really need to pin the MOB as well? */
 			vmw_bo_pin_reserved(vbo, true);
-		}
-		ret = vmw_resource_validate(res, interruptible, true);
-		if (vbo)
-			ttm_bo_unreserve(&vbo->base);
-		if (ret)
-			goto out_no_validate;
-	}
+		पूर्ण
+		ret = vmw_resource_validate(res, पूर्णांकerruptible, true);
+		अगर (vbo)
+			tपंचांग_bo_unreserve(&vbo->base);
+		अगर (ret)
+			जाओ out_no_validate;
+	पूर्ण
 	res->pin_count++;
 
 out_no_validate:
-	vmw_resource_unreserve(res, false, false, false, NULL, 0UL);
+	vmw_resource_unreserve(res, false, false, false, शून्य, 0UL);
 out_no_reserve:
 	mutex_unlock(&dev_priv->cmdbuf_mutex);
-	ttm_write_unlock(&dev_priv->reservation_sem);
+	tपंचांग_ग_लिखो_unlock(&dev_priv->reservation_sem);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
  * vmw_resource_unpin - Remove a pin reference from a resource
  *
- * @res: The resource to remove a pin reference from
+ * @res: The resource to हटाओ a pin reference from
  *
  * Having a pin reference means that the resource can never be evicted, and
- * its id will never change as long as there is a pin reference.
+ * its id will never change as दीर्घ as there is a pin reference.
  */
-void vmw_resource_unpin(struct vmw_resource *res)
-{
-	struct vmw_private *dev_priv = res->dev_priv;
-	int ret;
+व्योम vmw_resource_unpin(काष्ठा vmw_resource *res)
+अणु
+	काष्ठा vmw_निजी *dev_priv = res->dev_priv;
+	पूर्णांक ret;
 
-	(void) ttm_read_lock(&dev_priv->reservation_sem, false);
+	(व्योम) tपंचांग_पढ़ो_lock(&dev_priv->reservation_sem, false);
 	mutex_lock(&dev_priv->cmdbuf_mutex);
 
 	ret = vmw_resource_reserve(res, false, true);
 	WARN_ON(ret);
 
 	WARN_ON(res->pin_count == 0);
-	if (--res->pin_count == 0 && res->backup) {
-		struct vmw_buffer_object *vbo = res->backup;
+	अगर (--res->pin_count == 0 && res->backup) अणु
+		काष्ठा vmw_buffer_object *vbo = res->backup;
 
-		(void) ttm_bo_reserve(&vbo->base, false, false, NULL);
+		(व्योम) tपंचांग_bo_reserve(&vbo->base, false, false, शून्य);
 		vmw_bo_pin_reserved(vbo, false);
-		ttm_bo_unreserve(&vbo->base);
-	}
+		tपंचांग_bo_unreserve(&vbo->base);
+	पूर्ण
 
-	vmw_resource_unreserve(res, false, false, false, NULL, 0UL);
+	vmw_resource_unreserve(res, false, false, false, शून्य, 0UL);
 
 	mutex_unlock(&dev_priv->cmdbuf_mutex);
-	ttm_read_unlock(&dev_priv->reservation_sem);
-}
+	tपंचांग_पढ़ो_unlock(&dev_priv->reservation_sem);
+पूर्ण
 
 /**
  * vmw_res_type - Return the resource type
  *
- * @res: Pointer to the resource
+ * @res: Poपूर्णांकer to the resource
  */
-enum vmw_res_type vmw_res_type(const struct vmw_resource *res)
-{
-	return res->func->res_type;
-}
+क्रमागत vmw_res_type vmw_res_type(स्थिर काष्ठा vmw_resource *res)
+अणु
+	वापस res->func->res_type;
+पूर्ण
 
 /**
  * vmw_resource_update_dirty - Update a resource's dirty tracker with a
@@ -1085,93 +1086,93 @@ enum vmw_res_type vmw_res_type(const struct vmw_resource *res)
  * @start: The first page touched.
  * @end: The last page touched + 1.
  */
-void vmw_resource_dirty_update(struct vmw_resource *res, pgoff_t start,
+व्योम vmw_resource_dirty_update(काष्ठा vmw_resource *res, pgoff_t start,
 			       pgoff_t end)
-{
-	if (res->dirty)
+अणु
+	अगर (res->dirty)
 		res->func->dirty_range_add(res, start << PAGE_SHIFT,
 					   end << PAGE_SHIFT);
-}
+पूर्ण
 
 /**
- * vmw_resources_clean - Clean resources intersecting a mob range
+ * vmw_resources_clean - Clean resources पूर्णांकersecting a mob range
  * @vbo: The mob buffer object
  * @start: The mob page offset starting the range
  * @end: The mob page offset ending the range
  * @num_prefault: Returns how many pages including the first have been
  * cleaned and are ok to prefault
  */
-int vmw_resources_clean(struct vmw_buffer_object *vbo, pgoff_t start,
+पूर्णांक vmw_resources_clean(काष्ठा vmw_buffer_object *vbo, pgoff_t start,
 			pgoff_t end, pgoff_t *num_prefault)
-{
-	struct rb_node *cur = vbo->res_tree.rb_node;
-	struct vmw_resource *found = NULL;
-	unsigned long res_start = start << PAGE_SHIFT;
-	unsigned long res_end = end << PAGE_SHIFT;
-	unsigned long last_cleaned = 0;
+अणु
+	काष्ठा rb_node *cur = vbo->res_tree.rb_node;
+	काष्ठा vmw_resource *found = शून्य;
+	अचिन्हित दीर्घ res_start = start << PAGE_SHIFT;
+	अचिन्हित दीर्घ res_end = end << PAGE_SHIFT;
+	अचिन्हित दीर्घ last_cleaned = 0;
 
 	/*
-	 * Find the resource with lowest backup_offset that intersects the
+	 * Find the resource with lowest backup_offset that पूर्णांकersects the
 	 * range.
 	 */
-	while (cur) {
-		struct vmw_resource *cur_res =
-			container_of(cur, struct vmw_resource, mob_node);
+	जबतक (cur) अणु
+		काष्ठा vmw_resource *cur_res =
+			container_of(cur, काष्ठा vmw_resource, mob_node);
 
-		if (cur_res->backup_offset >= res_end) {
+		अगर (cur_res->backup_offset >= res_end) अणु
 			cur = cur->rb_left;
-		} else if (cur_res->backup_offset + cur_res->backup_size <=
-			   res_start) {
+		पूर्ण अन्यथा अगर (cur_res->backup_offset + cur_res->backup_size <=
+			   res_start) अणु
 			cur = cur->rb_right;
-		} else {
+		पूर्ण अन्यथा अणु
 			found = cur_res;
 			cur = cur->rb_left;
-			/* Continue to look for resources with lower offsets */
-		}
-	}
+			/* Continue to look क्रम resources with lower offsets */
+		पूर्ण
+	पूर्ण
 
 	/*
 	 * In order of increasing backup_offset, clean dirty resorces
-	 * intersecting the range.
+	 * पूर्णांकersecting the range.
 	 */
-	while (found) {
-		if (found->res_dirty) {
-			int ret;
+	जबतक (found) अणु
+		अगर (found->res_dirty) अणु
+			पूर्णांक ret;
 
-			if (!found->func->clean)
-				return -EINVAL;
+			अगर (!found->func->clean)
+				वापस -EINVAL;
 
 			ret = found->func->clean(found);
-			if (ret)
-				return ret;
+			अगर (ret)
+				वापस ret;
 
 			found->res_dirty = false;
-		}
+		पूर्ण
 		last_cleaned = found->backup_offset + found->backup_size;
 		cur = rb_next(&found->mob_node);
-		if (!cur)
-			break;
+		अगर (!cur)
+			अवरोध;
 
-		found = container_of(cur, struct vmw_resource, mob_node);
-		if (found->backup_offset >= res_end)
-			break;
-	}
+		found = container_of(cur, काष्ठा vmw_resource, mob_node);
+		अगर (found->backup_offset >= res_end)
+			अवरोध;
+	पूर्ण
 
 	/*
 	 * Set number of pages allowed prefaulting and fence the buffer object
 	 */
 	*num_prefault = 1;
-	if (last_cleaned > res_start) {
-		struct ttm_buffer_object *bo = &vbo->base;
+	अगर (last_cleaned > res_start) अणु
+		काष्ठा tपंचांग_buffer_object *bo = &vbo->base;
 
 		*num_prefault = __KERNEL_DIV_ROUND_UP(last_cleaned - res_start,
 						      PAGE_SIZE);
-		vmw_bo_fence_single(bo, NULL);
-		if (bo->moving)
+		vmw_bo_fence_single(bo, शून्य);
+		अगर (bo->moving)
 			dma_fence_put(bo->moving);
 		bo->moving = dma_fence_get
 			(dma_resv_get_excl(bo->base.resv));
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

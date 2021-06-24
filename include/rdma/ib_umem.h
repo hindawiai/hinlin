@@ -1,191 +1,192 @@
-/* SPDX-License-Identifier: GPL-2.0 OR Linux-OpenIB */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 OR Linux-OpenIB */
 /*
  * Copyright (c) 2007 Cisco Systems.  All rights reserved.
  * Copyright (c) 2020 Intel Corporation.  All rights reserved.
  */
 
-#ifndef IB_UMEM_H
-#define IB_UMEM_H
+#अगर_अघोषित IB_UMEM_H
+#घोषणा IB_UMEM_H
 
-#include <linux/list.h>
-#include <linux/scatterlist.h>
-#include <linux/workqueue.h>
-#include <rdma/ib_verbs.h>
+#समावेश <linux/list.h>
+#समावेश <linux/scatterlist.h>
+#समावेश <linux/workqueue.h>
+#समावेश <rdma/ib_verbs.h>
 
-struct ib_ucontext;
-struct ib_umem_odp;
-struct dma_buf_attach_ops;
+काष्ठा ib_ucontext;
+काष्ठा ib_umem_odp;
+काष्ठा dma_buf_attach_ops;
 
-struct ib_umem {
-	struct ib_device       *ibdev;
-	struct mm_struct       *owning_mm;
+काष्ठा ib_umem अणु
+	काष्ठा ib_device       *ibdev;
+	काष्ठा mm_काष्ठा       *owning_mm;
 	u64 iova;
-	size_t			length;
-	unsigned long		address;
+	माप_प्रकार			length;
+	अचिन्हित दीर्घ		address;
 	u32 writable : 1;
 	u32 is_odp : 1;
 	u32 is_dmabuf : 1;
-	struct work_struct	work;
-	struct sg_table sg_head;
-	int             nmap;
-	unsigned int    sg_nents;
-};
+	काष्ठा work_काष्ठा	work;
+	काष्ठा sg_table sg_head;
+	पूर्णांक             nmap;
+	अचिन्हित पूर्णांक    sg_nents;
+पूर्ण;
 
-struct ib_umem_dmabuf {
-	struct ib_umem umem;
-	struct dma_buf_attachment *attach;
-	struct sg_table *sgt;
-	struct scatterlist *first_sg;
-	struct scatterlist *last_sg;
-	unsigned long first_sg_offset;
-	unsigned long last_sg_trim;
-	void *private;
-};
+काष्ठा ib_umem_dmabuf अणु
+	काष्ठा ib_umem umem;
+	काष्ठा dma_buf_attachment *attach;
+	काष्ठा sg_table *sgt;
+	काष्ठा scatterlist *first_sg;
+	काष्ठा scatterlist *last_sg;
+	अचिन्हित दीर्घ first_sg_offset;
+	अचिन्हित दीर्घ last_sg_trim;
+	व्योम *निजी;
+पूर्ण;
 
-static inline struct ib_umem_dmabuf *to_ib_umem_dmabuf(struct ib_umem *umem)
-{
-	return container_of(umem, struct ib_umem_dmabuf, umem);
-}
+अटल अंतरभूत काष्ठा ib_umem_dmabuf *to_ib_umem_dmabuf(काष्ठा ib_umem *umem)
+अणु
+	वापस container_of(umem, काष्ठा ib_umem_dmabuf, umem);
+पूर्ण
 
 /* Returns the offset of the umem start relative to the first page. */
-static inline int ib_umem_offset(struct ib_umem *umem)
-{
-	return umem->address & ~PAGE_MASK;
-}
+अटल अंतरभूत पूर्णांक ib_umem_offset(काष्ठा ib_umem *umem)
+अणु
+	वापस umem->address & ~PAGE_MASK;
+पूर्ण
 
-static inline unsigned long ib_umem_dma_offset(struct ib_umem *umem,
-					       unsigned long pgsz)
-{
-	return (sg_dma_address(umem->sg_head.sgl) + ib_umem_offset(umem)) &
+अटल अंतरभूत अचिन्हित दीर्घ ib_umem_dma_offset(काष्ठा ib_umem *umem,
+					       अचिन्हित दीर्घ pgsz)
+अणु
+	वापस (sg_dma_address(umem->sg_head.sgl) + ib_umem_offset(umem)) &
 	       (pgsz - 1);
-}
+पूर्ण
 
-static inline size_t ib_umem_num_dma_blocks(struct ib_umem *umem,
-					    unsigned long pgsz)
-{
-	return (size_t)((ALIGN(umem->iova + umem->length, pgsz) -
+अटल अंतरभूत माप_प्रकार ib_umem_num_dma_blocks(काष्ठा ib_umem *umem,
+					    अचिन्हित दीर्घ pgsz)
+अणु
+	वापस (माप_प्रकार)((ALIGN(umem->iova + umem->length, pgsz) -
 			 ALIGN_DOWN(umem->iova, pgsz))) /
 	       pgsz;
-}
+पूर्ण
 
-static inline size_t ib_umem_num_pages(struct ib_umem *umem)
-{
-	return ib_umem_num_dma_blocks(umem, PAGE_SIZE);
-}
+अटल अंतरभूत माप_प्रकार ib_umem_num_pages(काष्ठा ib_umem *umem)
+अणु
+	वापस ib_umem_num_dma_blocks(umem, PAGE_SIZE);
+पूर्ण
 
-static inline void __rdma_umem_block_iter_start(struct ib_block_iter *biter,
-						struct ib_umem *umem,
-						unsigned long pgsz)
-{
+अटल अंतरभूत व्योम __rdma_umem_block_iter_start(काष्ठा ib_block_iter *biter,
+						काष्ठा ib_umem *umem,
+						अचिन्हित दीर्घ pgsz)
+अणु
 	__rdma_block_iter_start(biter, umem->sg_head.sgl, umem->nmap, pgsz);
-}
+पूर्ण
 
 /**
- * rdma_umem_for_each_dma_block - iterate over contiguous DMA blocks of the umem
+ * rdma_umem_क्रम_each_dma_block - iterate over contiguous DMA blocks of the umem
  * @umem: umem to iterate over
- * @pgsz: Page size to split the list into
+ * @pgsz: Page size to split the list पूर्णांकo
  *
  * pgsz must be <= PAGE_SIZE or computed by ib_umem_find_best_pgsz(). The
- * returned DMA blocks will be aligned to pgsz and span the range:
+ * वापसed DMA blocks will be aligned to pgsz and span the range:
  * ALIGN_DOWN(umem->address, pgsz) to ALIGN(umem->address + umem->length, pgsz)
  *
- * Performs exactly ib_umem_num_dma_blocks() iterations.
+ * Perक्रमms exactly ib_umem_num_dma_blocks() iterations.
  */
-#define rdma_umem_for_each_dma_block(umem, biter, pgsz)                        \
-	for (__rdma_umem_block_iter_start(biter, umem, pgsz);                  \
+#घोषणा rdma_umem_क्रम_each_dma_block(umem, biter, pgsz)                        \
+	क्रम (__rdma_umem_block_iter_start(biter, umem, pgsz);                  \
 	     __rdma_block_iter_next(biter);)
 
-#ifdef CONFIG_INFINIBAND_USER_MEM
+#अगर_घोषित CONFIG_INFINIBAND_USER_MEM
 
-struct ib_umem *ib_umem_get(struct ib_device *device, unsigned long addr,
-			    size_t size, int access);
-void ib_umem_release(struct ib_umem *umem);
-int ib_umem_copy_from(void *dst, struct ib_umem *umem, size_t offset,
-		      size_t length);
-unsigned long ib_umem_find_best_pgsz(struct ib_umem *umem,
-				     unsigned long pgsz_bitmap,
-				     unsigned long virt);
+काष्ठा ib_umem *ib_umem_get(काष्ठा ib_device *device, अचिन्हित दीर्घ addr,
+			    माप_प्रकार size, पूर्णांक access);
+व्योम ib_umem_release(काष्ठा ib_umem *umem);
+पूर्णांक ib_umem_copy_from(व्योम *dst, काष्ठा ib_umem *umem, माप_प्रकार offset,
+		      माप_प्रकार length);
+अचिन्हित दीर्घ ib_umem_find_best_pgsz(काष्ठा ib_umem *umem,
+				     अचिन्हित दीर्घ pgsz_biपंचांगap,
+				     अचिन्हित दीर्घ virt);
 
 /**
  * ib_umem_find_best_pgoff - Find best HW page size
  *
- * @umem: umem struct
- * @pgsz_bitmap bitmap of HW supported page sizes
- * @pgoff_bitmask: Mask of bits that can be represented with an offset
+ * @umem: umem काष्ठा
+ * @pgsz_biपंचांगap biपंचांगap of HW supported page sizes
+ * @pgoff_biपंचांगask: Mask of bits that can be represented with an offset
  *
  * This is very similar to ib_umem_find_best_pgsz() except instead of accepting
- * an IOVA it accepts a bitmask specifying what address bits can be represented
+ * an IOVA it accepts a biपंचांगask specअगरying what address bits can be represented
  * with a page offset.
  *
- * For instance if the HW has multiple page sizes, requires 64 byte alignemnt,
- * and can support aligned offsets up to 4032 then pgoff_bitmask would be
+ * For instance अगर the HW has multiple page sizes, requires 64 byte alignemnt,
+ * and can support aligned offsets up to 4032 then pgoff_biपंचांगask would be
  * "111111000000".
  *
- * If the pgoff_bitmask requires either alignment in the low bit or an
- * unavailable page size for the high bits, this function returns 0.
+ * If the pgoff_biपंचांगask requires either alignment in the low bit or an
+ * unavailable page size क्रम the high bits, this function वापसs 0.
  */
-static inline unsigned long ib_umem_find_best_pgoff(struct ib_umem *umem,
-						    unsigned long pgsz_bitmap,
-						    u64 pgoff_bitmask)
-{
-	struct scatterlist *sg = umem->sg_head.sgl;
+अटल अंतरभूत अचिन्हित दीर्घ ib_umem_find_best_pgoff(काष्ठा ib_umem *umem,
+						    अचिन्हित दीर्घ pgsz_biपंचांगap,
+						    u64 pgoff_biपंचांगask)
+अणु
+	काष्ठा scatterlist *sg = umem->sg_head.sgl;
 	dma_addr_t dma_addr;
 
 	dma_addr = sg_dma_address(sg) + (umem->address & ~PAGE_MASK);
-	return ib_umem_find_best_pgsz(umem, pgsz_bitmap,
-				      dma_addr & pgoff_bitmask);
-}
+	वापस ib_umem_find_best_pgsz(umem, pgsz_biपंचांगap,
+				      dma_addr & pgoff_biपंचांगask);
+पूर्ण
 
-struct ib_umem_dmabuf *ib_umem_dmabuf_get(struct ib_device *device,
-					  unsigned long offset, size_t size,
-					  int fd, int access,
-					  const struct dma_buf_attach_ops *ops);
-int ib_umem_dmabuf_map_pages(struct ib_umem_dmabuf *umem_dmabuf);
-void ib_umem_dmabuf_unmap_pages(struct ib_umem_dmabuf *umem_dmabuf);
-void ib_umem_dmabuf_release(struct ib_umem_dmabuf *umem_dmabuf);
+काष्ठा ib_umem_dmabuf *ib_umem_dmabuf_get(काष्ठा ib_device *device,
+					  अचिन्हित दीर्घ offset, माप_प्रकार size,
+					  पूर्णांक fd, पूर्णांक access,
+					  स्थिर काष्ठा dma_buf_attach_ops *ops);
+पूर्णांक ib_umem_dmabuf_map_pages(काष्ठा ib_umem_dmabuf *umem_dmabuf);
+व्योम ib_umem_dmabuf_unmap_pages(काष्ठा ib_umem_dmabuf *umem_dmabuf);
+व्योम ib_umem_dmabuf_release(काष्ठा ib_umem_dmabuf *umem_dmabuf);
 
-#else /* CONFIG_INFINIBAND_USER_MEM */
+#अन्यथा /* CONFIG_INFINIBAND_USER_MEM */
 
-#include <linux/err.h>
+#समावेश <linux/err.h>
 
-static inline struct ib_umem *ib_umem_get(struct ib_device *device,
-					  unsigned long addr, size_t size,
-					  int access)
-{
-	return ERR_PTR(-EOPNOTSUPP);
-}
-static inline void ib_umem_release(struct ib_umem *umem) { }
-static inline int ib_umem_copy_from(void *dst, struct ib_umem *umem, size_t offset,
-		      		    size_t length) {
-	return -EOPNOTSUPP;
-}
-static inline unsigned long ib_umem_find_best_pgsz(struct ib_umem *umem,
-						   unsigned long pgsz_bitmap,
-						   unsigned long virt)
-{
-	return 0;
-}
-static inline unsigned long ib_umem_find_best_pgoff(struct ib_umem *umem,
-						    unsigned long pgsz_bitmap,
-						    u64 pgoff_bitmask)
-{
-	return 0;
-}
-static inline
-struct ib_umem_dmabuf *ib_umem_dmabuf_get(struct ib_device *device,
-					  unsigned long offset,
-					  size_t size, int fd,
-					  int access,
-					  struct dma_buf_attach_ops *ops)
-{
-	return ERR_PTR(-EOPNOTSUPP);
-}
-static inline int ib_umem_dmabuf_map_pages(struct ib_umem_dmabuf *umem_dmabuf)
-{
-	return -EOPNOTSUPP;
-}
-static inline void ib_umem_dmabuf_unmap_pages(struct ib_umem_dmabuf *umem_dmabuf) { }
-static inline void ib_umem_dmabuf_release(struct ib_umem_dmabuf *umem_dmabuf) { }
+अटल अंतरभूत काष्ठा ib_umem *ib_umem_get(काष्ठा ib_device *device,
+					  अचिन्हित दीर्घ addr, माप_प्रकार size,
+					  पूर्णांक access)
+अणु
+	वापस ERR_PTR(-EOPNOTSUPP);
+पूर्ण
+अटल अंतरभूत व्योम ib_umem_release(काष्ठा ib_umem *umem) अणु पूर्ण
+अटल अंतरभूत पूर्णांक ib_umem_copy_from(व्योम *dst, काष्ठा ib_umem *umem, माप_प्रकार offset,
+		      		    माप_प्रकार length) अणु
+	वापस -EOPNOTSUPP;
+पूर्ण
+अटल अंतरभूत अचिन्हित दीर्घ ib_umem_find_best_pgsz(काष्ठा ib_umem *umem,
+						   अचिन्हित दीर्घ pgsz_biपंचांगap,
+						   अचिन्हित दीर्घ virt)
+अणु
+	वापस 0;
+पूर्ण
+अटल अंतरभूत अचिन्हित दीर्घ ib_umem_find_best_pgoff(काष्ठा ib_umem *umem,
+						    अचिन्हित दीर्घ pgsz_biपंचांगap,
+						    u64 pgoff_biपंचांगask)
+अणु
+	वापस 0;
+पूर्ण
+अटल अंतरभूत
+काष्ठा ib_umem_dmabuf *ib_umem_dmabuf_get(काष्ठा ib_device *device,
+					  अचिन्हित दीर्घ offset,
+					  माप_प्रकार size, पूर्णांक fd,
+					  पूर्णांक access,
+					  काष्ठा dma_buf_attach_ops *ops)
+अणु
+	वापस ERR_PTR(-EOPNOTSUPP);
+पूर्ण
+अटल अंतरभूत पूर्णांक ib_umem_dmabuf_map_pages(काष्ठा ib_umem_dmabuf *umem_dmabuf)
+अणु
+	वापस -EOPNOTSUPP;
+पूर्ण
+अटल अंतरभूत व्योम ib_umem_dmabuf_unmap_pages(काष्ठा ib_umem_dmabuf *umem_dmabuf) अणु पूर्ण
+अटल अंतरभूत व्योम ib_umem_dmabuf_release(काष्ठा ib_umem_dmabuf *umem_dmabuf) अणु पूर्ण
 
-#endif /* CONFIG_INFINIBAND_USER_MEM */
-#endif /* IB_UMEM_H */
+#पूर्ण_अगर /* CONFIG_INFINIBAND_USER_MEM */
+#पूर्ण_अगर /* IB_UMEM_H */

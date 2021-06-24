@@ -1,124 +1,125 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Alchemy DB/PB1xxx board support.
  */
 
-#include <asm/prom.h>
-#include <asm/mach-au1x00/au1000.h>
-#include <asm/mach-db1x00/bcsr.h>
+#समावेश <यंत्र/prom.h>
+#समावेश <यंत्र/mach-au1x00/au1000.h>
+#समावेश <यंत्र/mach-db1x00/bcsr.h>
 
-int __init db1000_board_setup(void);
-int __init db1000_dev_setup(void);
-int __init db1500_pci_setup(void);
-int __init db1200_board_setup(void);
-int __init db1200_dev_setup(void);
-int __init db1300_board_setup(void);
-int __init db1300_dev_setup(void);
-int __init db1550_board_setup(void);
-int __init db1550_dev_setup(void);
-int __init db1550_pci_setup(int);
+पूर्णांक __init db1000_board_setup(व्योम);
+पूर्णांक __init db1000_dev_setup(व्योम);
+पूर्णांक __init db1500_pci_setup(व्योम);
+पूर्णांक __init db1200_board_setup(व्योम);
+पूर्णांक __init db1200_dev_setup(व्योम);
+पूर्णांक __init db1300_board_setup(व्योम);
+पूर्णांक __init db1300_dev_setup(व्योम);
+पूर्णांक __init db1550_board_setup(व्योम);
+पूर्णांक __init db1550_dev_setup(व्योम);
+पूर्णांक __init db1550_pci_setup(पूर्णांक);
 
-static const char *board_type_str(void)
-{
-	switch (BCSR_WHOAMI_BOARD(bcsr_read(BCSR_WHOAMI))) {
-	case BCSR_WHOAMI_DB1000:
-		return "DB1000";
-	case BCSR_WHOAMI_DB1500:
-		return "DB1500";
-	case BCSR_WHOAMI_DB1100:
-		return "DB1100";
-	case BCSR_WHOAMI_PB1500:
-	case BCSR_WHOAMI_PB1500R2:
-		return "PB1500";
-	case BCSR_WHOAMI_PB1100:
-		return "PB1100";
-	case BCSR_WHOAMI_PB1200_DDR1:
-	case BCSR_WHOAMI_PB1200_DDR2:
-		return "PB1200";
-	case BCSR_WHOAMI_DB1200:
-		return "DB1200";
-	case BCSR_WHOAMI_DB1300:
-		return "DB1300";
-	case BCSR_WHOAMI_DB1550:
-		return "DB1550";
-	case BCSR_WHOAMI_PB1550_SDR:
-	case BCSR_WHOAMI_PB1550_DDR:
-		return "PB1550";
-	default:
-		return "(unknown)";
-	}
-}
+अटल स्थिर अक्षर *board_type_str(व्योम)
+अणु
+	चयन (BCSR_WHOAMI_BOARD(bcsr_पढ़ो(BCSR_WHOAMI))) अणु
+	हाल BCSR_WHOAMI_DB1000:
+		वापस "DB1000";
+	हाल BCSR_WHOAMI_DB1500:
+		वापस "DB1500";
+	हाल BCSR_WHOAMI_DB1100:
+		वापस "DB1100";
+	हाल BCSR_WHOAMI_PB1500:
+	हाल BCSR_WHOAMI_PB1500R2:
+		वापस "PB1500";
+	हाल BCSR_WHOAMI_PB1100:
+		वापस "PB1100";
+	हाल BCSR_WHOAMI_PB1200_DDR1:
+	हाल BCSR_WHOAMI_PB1200_DDR2:
+		वापस "PB1200";
+	हाल BCSR_WHOAMI_DB1200:
+		वापस "DB1200";
+	हाल BCSR_WHOAMI_DB1300:
+		वापस "DB1300";
+	हाल BCSR_WHOAMI_DB1550:
+		वापस "DB1550";
+	हाल BCSR_WHOAMI_PB1550_SDR:
+	हाल BCSR_WHOAMI_PB1550_DDR:
+		वापस "PB1550";
+	शेष:
+		वापस "(unknown)";
+	पूर्ण
+पूर्ण
 
-const char *get_system_type(void)
-{
-	return board_type_str();
-}
+स्थिर अक्षर *get_प्रणाली_type(व्योम)
+अणु
+	वापस board_type_str();
+पूर्ण
 
-void __init board_setup(void)
-{
-	int ret;
+व्योम __init board_setup(व्योम)
+अणु
+	पूर्णांक ret;
 
-	switch (alchemy_get_cputype()) {
-	case ALCHEMY_CPU_AU1000:
-	case ALCHEMY_CPU_AU1500:
-	case ALCHEMY_CPU_AU1100:
+	चयन (alchemy_get_cputype()) अणु
+	हाल ALCHEMY_CPU_AU1000:
+	हाल ALCHEMY_CPU_AU1500:
+	हाल ALCHEMY_CPU_AU1100:
 		ret = db1000_board_setup();
-		break;
-	case ALCHEMY_CPU_AU1550:
+		अवरोध;
+	हाल ALCHEMY_CPU_AU1550:
 		ret = db1550_board_setup();
-		break;
-	case ALCHEMY_CPU_AU1200:
+		अवरोध;
+	हाल ALCHEMY_CPU_AU1200:
 		ret = db1200_board_setup();
-		break;
-	case ALCHEMY_CPU_AU1300:
+		अवरोध;
+	हाल ALCHEMY_CPU_AU1300:
 		ret = db1300_board_setup();
-		break;
-	default:
+		अवरोध;
+	शेष:
 		pr_err("unsupported CPU on board\n");
 		ret = -ENODEV;
-	}
-	if (ret)
+	पूर्ण
+	अगर (ret)
 		panic("cannot initialize board support");
-}
+पूर्ण
 
-static int __init db1xxx_arch_init(void)
-{
-	int id = BCSR_WHOAMI_BOARD(bcsr_read(BCSR_WHOAMI));
-	if (id == BCSR_WHOAMI_DB1550)
-		return db1550_pci_setup(0);
-	else if ((id == BCSR_WHOAMI_PB1550_SDR) ||
+अटल पूर्णांक __init db1xxx_arch_init(व्योम)
+अणु
+	पूर्णांक id = BCSR_WHOAMI_BOARD(bcsr_पढ़ो(BCSR_WHOAMI));
+	अगर (id == BCSR_WHOAMI_DB1550)
+		वापस db1550_pci_setup(0);
+	अन्यथा अगर ((id == BCSR_WHOAMI_PB1550_SDR) ||
 		 (id == BCSR_WHOAMI_PB1550_DDR))
-		return db1550_pci_setup(1);
-	else if ((id == BCSR_WHOAMI_DB1500) || (id == BCSR_WHOAMI_PB1500) ||
+		वापस db1550_pci_setup(1);
+	अन्यथा अगर ((id == BCSR_WHOAMI_DB1500) || (id == BCSR_WHOAMI_PB1500) ||
 		 (id == BCSR_WHOAMI_PB1500R2))
-		return db1500_pci_setup();
+		वापस db1500_pci_setup();
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 arch_initcall(db1xxx_arch_init);
 
-static int __init db1xxx_dev_init(void)
-{
+अटल पूर्णांक __init db1xxx_dev_init(व्योम)
+अणु
 	mips_set_machine_name(board_type_str());
-	switch (BCSR_WHOAMI_BOARD(bcsr_read(BCSR_WHOAMI))) {
-	case BCSR_WHOAMI_DB1000:
-	case BCSR_WHOAMI_DB1500:
-	case BCSR_WHOAMI_DB1100:
-	case BCSR_WHOAMI_PB1500:
-	case BCSR_WHOAMI_PB1500R2:
-	case BCSR_WHOAMI_PB1100:
-		return db1000_dev_setup();
-	case BCSR_WHOAMI_PB1200_DDR1:
-	case BCSR_WHOAMI_PB1200_DDR2:
-	case BCSR_WHOAMI_DB1200:
-		return db1200_dev_setup();
-	case BCSR_WHOAMI_DB1300:
-		return db1300_dev_setup();
-	case BCSR_WHOAMI_DB1550:
-	case BCSR_WHOAMI_PB1550_SDR:
-	case BCSR_WHOAMI_PB1550_DDR:
-		return db1550_dev_setup();
-	}
-	return 0;
-}
+	चयन (BCSR_WHOAMI_BOARD(bcsr_पढ़ो(BCSR_WHOAMI))) अणु
+	हाल BCSR_WHOAMI_DB1000:
+	हाल BCSR_WHOAMI_DB1500:
+	हाल BCSR_WHOAMI_DB1100:
+	हाल BCSR_WHOAMI_PB1500:
+	हाल BCSR_WHOAMI_PB1500R2:
+	हाल BCSR_WHOAMI_PB1100:
+		वापस db1000_dev_setup();
+	हाल BCSR_WHOAMI_PB1200_DDR1:
+	हाल BCSR_WHOAMI_PB1200_DDR2:
+	हाल BCSR_WHOAMI_DB1200:
+		वापस db1200_dev_setup();
+	हाल BCSR_WHOAMI_DB1300:
+		वापस db1300_dev_setup();
+	हाल BCSR_WHOAMI_DB1550:
+	हाल BCSR_WHOAMI_PB1550_SDR:
+	हाल BCSR_WHOAMI_PB1550_DDR:
+		वापस db1550_dev_setup();
+	पूर्ण
+	वापस 0;
+पूर्ण
 device_initcall(db1xxx_dev_init);

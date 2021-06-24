@@ -1,11 +1,12 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <linux/font.h>
-#include <linux/module.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <linux/font.h>
+#समावेश <linux/module.h>
 
-#define FONTDATAMAX 16384
+#घोषणा FONTDATAMAX 16384
 
-static const struct font_data fontdata_ter16x32 = {
-	{ 0, 0, FONTDATAMAX, 0 }, {
+अटल स्थिर काष्ठा font_data fontdata_ter16x32 = अणु
+	अणु 0, 0, FONTDATAMAX, 0 पूर्ण, अणु
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x00, 0x00, 0x00, 0x00, 0x7f, 0xfc, 0x7f, 0xfc,
 	0x70, 0x1c, 0x70, 0x1c, 0x70, 0x1c, 0x70, 0x1c,
@@ -2054,19 +2055,19 @@ static const struct font_data fontdata_ter16x32 = {
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,	/* 255 */
-} };
+पूर्ण पूर्ण;
 
 
-const struct font_desc font_ter_16x32 = {
+स्थिर काष्ठा font_desc font_ter_16x32 = अणु
 	.idx	= TER16x32_IDX,
 	.name	= "TER16x32",
 	.width	= 16,
 	.height = 32,
-	.charcount = 256,
+	.अक्षरcount = 256,
 	.data	= fontdata_ter16x32.data,
-#ifdef __sparc__
+#अगर_घोषित __sparc__
 	.pref	= 5,
-#else
+#अन्यथा
 	.pref	= -1,
-#endif
-};
+#पूर्ण_अगर
+पूर्ण;

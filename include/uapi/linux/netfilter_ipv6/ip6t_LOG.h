@@ -1,20 +1,21 @@
-/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
-#ifndef _IP6T_LOG_H
-#define _IP6T_LOG_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
+#अगर_अघोषित _IP6T_LOG_H
+#घोषणा _IP6T_LOG_H
 
 /* make sure not to change this without changing netfilter.h:NF_LOG_* (!) */
-#define IP6T_LOG_TCPSEQ		0x01	/* Log TCP sequence numbers */
-#define IP6T_LOG_TCPOPT		0x02	/* Log TCP options */
-#define IP6T_LOG_IPOPT		0x04	/* Log IP options */
-#define IP6T_LOG_UID		0x08	/* Log UID owning local socket */
-#define IP6T_LOG_NFLOG		0x10	/* Unsupported, don't use */
-#define IP6T_LOG_MACDECODE	0x20	/* Decode MAC header */
-#define IP6T_LOG_MASK		0x2f
+#घोषणा IP6T_LOG_TCPSEQ		0x01	/* Log TCP sequence numbers */
+#घोषणा IP6T_LOG_TCPOPT		0x02	/* Log TCP options */
+#घोषणा IP6T_LOG_IPOPT		0x04	/* Log IP options */
+#घोषणा IP6T_LOG_UID		0x08	/* Log UID owning local socket */
+#घोषणा IP6T_LOG_NFLOG		0x10	/* Unsupported, करोn't use */
+#घोषणा IP6T_LOG_MACDECODE	0x20	/* Decode MAC header */
+#घोषणा IP6T_LOG_MASK		0x2f
 
-struct ip6t_log_info {
-	unsigned char level;
-	unsigned char logflags;
-	char prefix[30];
-};
+काष्ठा ip6t_log_info अणु
+	अचिन्हित अक्षर level;
+	अचिन्हित अक्षर logflags;
+	अक्षर prefix[30];
+पूर्ण;
 
-#endif /*_IPT_LOG_H*/
+#पूर्ण_अगर /*_IPT_LOG_H*/

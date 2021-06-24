@@ -1,23 +1,24 @@
+<शैली गुरु>
 /*
- * SPDX-License-Identifier: MIT
+ * SPDX-License-Identअगरier: MIT
  *
- * Copyright © 2016 Intel Corporation
+ * Copyright तऊ 2016 Intel Corporation
  */
 
-#include "mock_context.h"
-#include "selftests/mock_drm.h"
-#include "selftests/mock_gtt.h"
+#समावेश "mock_context.h"
+#समावेश "selftests/mock_drm.h"
+#समावेश "selftests/mock_gtt.h"
 
-struct i915_gem_context *
-mock_context(struct drm_i915_private *i915,
-	     const char *name)
-{
-	struct i915_gem_context *ctx;
-	struct i915_gem_engines *e;
+काष्ठा i915_gem_context *
+mock_context(काष्ठा drm_i915_निजी *i915,
+	     स्थिर अक्षर *name)
+अणु
+	काष्ठा i915_gem_context *ctx;
+	काष्ठा i915_gem_engines *e;
 
-	ctx = kzalloc(sizeof(*ctx), GFP_KERNEL);
-	if (!ctx)
-		return NULL;
+	ctx = kzalloc(माप(*ctx), GFP_KERNEL);
+	अगर (!ctx)
+		वापस शून्य;
 
 	kref_init(&ctx->ref);
 	INIT_LIST_HEAD(&ctx->link);
@@ -31,130 +32,130 @@ mock_context(struct drm_i915_private *i915,
 	i915_gem_context_set_persistence(ctx);
 
 	mutex_init(&ctx->engines_mutex);
-	e = default_engines(ctx);
-	if (IS_ERR(e))
-		goto err_free;
+	e = शेष_engines(ctx);
+	अगर (IS_ERR(e))
+		जाओ err_मुक्त;
 	RCU_INIT_POINTER(ctx->engines, e);
 
 	INIT_RADIX_TREE(&ctx->handles_vma, GFP_KERNEL);
 	mutex_init(&ctx->lut_mutex);
 
-	if (name) {
-		struct i915_ppgtt *ppgtt;
+	अगर (name) अणु
+		काष्ठा i915_ppgtt *ppgtt;
 
-		strncpy(ctx->name, name, sizeof(ctx->name) - 1);
+		म_नकलन(ctx->name, name, माप(ctx->name) - 1);
 
 		ppgtt = mock_ppgtt(i915, name);
-		if (!ppgtt)
-			goto err_put;
+		अगर (!ppgtt)
+			जाओ err_put;
 
 		mutex_lock(&ctx->mutex);
 		__set_ppgtt(ctx, &ppgtt->vm);
 		mutex_unlock(&ctx->mutex);
 
 		i915_vm_put(&ppgtt->vm);
-	}
+	पूर्ण
 
-	return ctx;
+	वापस ctx;
 
-err_free:
-	kfree(ctx);
-	return NULL;
+err_मुक्त:
+	kमुक्त(ctx);
+	वापस शून्य;
 
 err_put:
-	i915_gem_context_set_closed(ctx);
+	i915_gem_context_set_बंदd(ctx);
 	i915_gem_context_put(ctx);
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-void mock_context_close(struct i915_gem_context *ctx)
-{
-	context_close(ctx);
-}
+व्योम mock_context_बंद(काष्ठा i915_gem_context *ctx)
+अणु
+	context_बंद(ctx);
+पूर्ण
 
-void mock_init_contexts(struct drm_i915_private *i915)
-{
+व्योम mock_init_contexts(काष्ठा drm_i915_निजी *i915)
+अणु
 	init_contexts(&i915->gem.contexts);
-}
+पूर्ण
 
-struct i915_gem_context *
-live_context(struct drm_i915_private *i915, struct file *file)
-{
-	struct i915_gem_context *ctx;
-	int err;
+काष्ठा i915_gem_context *
+live_context(काष्ठा drm_i915_निजी *i915, काष्ठा file *file)
+अणु
+	काष्ठा i915_gem_context *ctx;
+	पूर्णांक err;
 	u32 id;
 
 	ctx = i915_gem_create_context(i915, 0);
-	if (IS_ERR(ctx))
-		return ctx;
+	अगर (IS_ERR(ctx))
+		वापस ctx;
 
 	i915_gem_context_set_no_error_capture(ctx);
 
-	err = gem_context_register(ctx, to_drm_file(file)->driver_priv, &id);
-	if (err < 0)
-		goto err_ctx;
+	err = gem_context_रेजिस्टर(ctx, to_drm_file(file)->driver_priv, &id);
+	अगर (err < 0)
+		जाओ err_ctx;
 
-	return ctx;
+	वापस ctx;
 
 err_ctx:
-	context_close(ctx);
-	return ERR_PTR(err);
-}
+	context_बंद(ctx);
+	वापस ERR_PTR(err);
+पूर्ण
 
-struct i915_gem_context *
-live_context_for_engine(struct intel_engine_cs *engine, struct file *file)
-{
-	struct i915_gem_engines *engines;
-	struct i915_gem_context *ctx;
-	struct intel_context *ce;
+काष्ठा i915_gem_context *
+live_context_क्रम_engine(काष्ठा पूर्णांकel_engine_cs *engine, काष्ठा file *file)
+अणु
+	काष्ठा i915_gem_engines *engines;
+	काष्ठा i915_gem_context *ctx;
+	काष्ठा पूर्णांकel_context *ce;
 
 	engines = alloc_engines(1);
-	if (!engines)
-		return ERR_PTR(-ENOMEM);
+	अगर (!engines)
+		वापस ERR_PTR(-ENOMEM);
 
 	ctx = live_context(engine->i915, file);
-	if (IS_ERR(ctx)) {
-		__free_engines(engines, 0);
-		return ctx;
-	}
+	अगर (IS_ERR(ctx)) अणु
+		__मुक्त_engines(engines, 0);
+		वापस ctx;
+	पूर्ण
 
-	ce = intel_context_create(engine);
-	if (IS_ERR(ce)) {
-		__free_engines(engines, 0);
-		return ERR_CAST(ce);
-	}
+	ce = पूर्णांकel_context_create(engine);
+	अगर (IS_ERR(ce)) अणु
+		__मुक्त_engines(engines, 0);
+		वापस ERR_CAST(ce);
+	पूर्ण
 
-	intel_context_set_gem(ce, ctx);
+	पूर्णांकel_context_set_gem(ce, ctx);
 	engines->engines[0] = ce;
 	engines->num_engines = 1;
 
 	mutex_lock(&ctx->engines_mutex);
 	i915_gem_context_set_user_engines(ctx);
-	engines = rcu_replace_pointer(ctx->engines, engines, 1);
+	engines = rcu_replace_poपूर्णांकer(ctx->engines, engines, 1);
 	mutex_unlock(&ctx->engines_mutex);
 
 	engines_idle_release(ctx, engines);
 
-	return ctx;
-}
+	वापस ctx;
+पूर्ण
 
-struct i915_gem_context *
-kernel_context(struct drm_i915_private *i915)
-{
-	struct i915_gem_context *ctx;
+काष्ठा i915_gem_context *
+kernel_context(काष्ठा drm_i915_निजी *i915)
+अणु
+	काष्ठा i915_gem_context *ctx;
 
 	ctx = i915_gem_create_context(i915, 0);
-	if (IS_ERR(ctx))
-		return ctx;
+	अगर (IS_ERR(ctx))
+		वापस ctx;
 
 	i915_gem_context_clear_bannable(ctx);
 	i915_gem_context_set_persistence(ctx);
 	i915_gem_context_set_no_error_capture(ctx);
 
-	return ctx;
-}
+	वापस ctx;
+पूर्ण
 
-void kernel_context_close(struct i915_gem_context *ctx)
-{
-	context_close(ctx);
-}
+व्योम kernel_context_बंद(काष्ठा i915_gem_context *ctx)
+अणु
+	context_बंद(ctx);
+पूर्ण

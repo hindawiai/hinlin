@@ -1,24 +1,25 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * linux/arch/sh/mm/extable.c
  *  Taken from:
  *   linux/arch/i386/mm/extable.c
  */
 
-#include <linux/extable.h>
-#include <linux/uaccess.h>
+#समावेश <linux/extable.h>
+#समावेश <linux/uaccess.h>
 
-#include <asm/ptrace.h>
+#समावेश <यंत्र/ptrace.h>
 
-int fixup_exception(struct pt_regs *regs)
-{
-	const struct exception_table_entry *fixup;
+पूर्णांक fixup_exception(काष्ठा pt_regs *regs)
+अणु
+	स्थिर काष्ठा exception_table_entry *fixup;
 
 	fixup = search_exception_tables(regs->pc);
-	if (fixup) {
+	अगर (fixup) अणु
 		regs->pc = fixup->fixup;
-		return 1;
-	}
+		वापस 1;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

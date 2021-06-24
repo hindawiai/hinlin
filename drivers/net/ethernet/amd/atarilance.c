@@ -1,14 +1,15 @@
-/* atarilance.c: Ethernet driver for VME Lance cards on the Atari */
+<शैली गुरु>
+/* atarilance.c: Ethernet driver क्रम VME Lance cards on the Atari */
 /*
-	Written 1995/96 by Roman Hodek (Roman.Hodek@informatik.uni-erlangen.de)
+	Written 1995/96 by Roman Hodek (Roman.Hodek@inक्रमmatik.uni-erlangen.de)
 
 	This software may be used and distributed according to the terms
 	of the GNU General Public License, incorporated herein by reference.
 
 	This drivers was written with the following sources of reference:
-	 - The driver for the Riebl Lance card by the TU Vienna.
-	 - The modified TUW driver for PAM's VME cards
-	 - The PC-Linux driver for Lance cards (but this is for bus master
+	 - The driver क्रम the Riebl Lance card by the TU Vienna.
+	 - The modअगरied TUW driver क्रम PAM's VME cards
+	 - The PC-Linux driver क्रम Lance cards (but this is क्रम bus master
        cards, not the shared memory ones)
 	 - The Amiga Ariadne driver
 
@@ -17,336 +18,336 @@
 	v1.1: (in 1.2.13pl5)
 	      more comments
 		  deleted some debugging stuff
-		  optimized register access (keep AREG pointing to CSR0)
+		  optimized रेजिस्टर access (keep AREG poपूर्णांकing to CSR0)
 		  following AMD, CSR0_STRT should be set only after IDON is detected
-		  use memcpy() for data transfers, that also employs long word moves
-		  better probe procedure for 24-bit systems
-          non-VME-RieblCards need extra delays in memcpy
-		  must also do write test, since 0xfxe00000 may hit ROM
-		  use 8/32 tx/rx buffers, which should give better NFS performance;
-		    this is made possible by shifting the last packet buffer after the
+		  use स_नकल() क्रम data transfers, that also employs दीर्घ word moves
+		  better probe procedure क्रम 24-bit प्रणालीs
+          non-VME-RieblCards need extra delays in स_नकल
+		  must also करो ग_लिखो test, since 0xfxe00000 may hit ROM
+		  use 8/32 tx/rx buffers, which should give better NFS perक्रमmance;
+		    this is made possible by shअगरting the last packet buffer after the
 		    RieblCard reserved area
     v1.2: (in 1.2.13pl8)
-	      again fixed probing for the Falcon; 0xfe01000 hits phys. 0x00010000
-		  and thus RAM, in case of no Lance found all memory contents have to
+	      again fixed probing क्रम the Falcon; 0xfe01000 hits phys. 0x00010000
+		  and thus RAM, in हाल of no Lance found all memory contents have to
 		  be restored!
 		  Now possible to compile as module.
 	v1.3: 03/30/96 Jes Sorensen, Roman (in 1.3)
 	      Several little 1.3 adaptions
-		  When the lance is stopped it jumps back into little-endian
-		  mode. It is therefore necessary to put it back where it
-		  belongs, in big endian mode, in order to make things work.
+		  When the lance is stopped it jumps back पूर्णांकo little-endian
+		  mode. It is thereक्रमe necessary to put it back where it
+		  beदीर्घs, in big endian mode, in order to make things work.
 		  This might be the reason why multicast-mode didn't work
-		  before, but I'm not able to test it as I only got an Amiga
+		  beक्रमe, but I'm not able to test it as I only got an Amiga
 		  (we had similar problems with the A2065 driver).
 
 */
 
-static const char version[] = "atarilance.c: v1.3 04/04/96 "
+अटल स्थिर अक्षर version[] = "atarilance.c: v1.3 04/04/96 "
 			      "Roman.Hodek@informatik.uni-erlangen.de\n";
 
-#include <linux/netdevice.h>
-#include <linux/etherdevice.h>
-#include <linux/module.h>
-#include <linux/stddef.h>
-#include <linux/kernel.h>
-#include <linux/string.h>
-#include <linux/errno.h>
-#include <linux/skbuff.h>
-#include <linux/interrupt.h>
-#include <linux/init.h>
-#include <linux/bitops.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/etherdevice.h>
+#समावेश <linux/module.h>
+#समावेश <linux/मानकघोष.स>
+#समावेश <linux/kernel.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/skbuff.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/init.h>
+#समावेश <linux/bitops.h>
 
-#include <asm/setup.h>
-#include <asm/irq.h>
-#include <asm/atarihw.h>
-#include <asm/atariints.h>
-#include <asm/io.h>
+#समावेश <यंत्र/setup.h>
+#समावेश <यंत्र/irq.h>
+#समावेश <यंत्र/atarihw.h>
+#समावेश <यंत्र/atariपूर्णांकs.h>
+#समावेश <यंत्र/पन.स>
 
 /* Debug level:
- *  0 = silent, print only serious errors
- *  1 = normal, print error messages
- *  2 = debug, print debug infos
- *  3 = debug, print even more debug infos (packet data)
+ *  0 = silent, prपूर्णांक only serious errors
+ *  1 = normal, prपूर्णांक error messages
+ *  2 = debug, prपूर्णांक debug infos
+ *  3 = debug, prपूर्णांक even more debug infos (packet data)
  */
 
-#define	LANCE_DEBUG	1
+#घोषणा	LANCE_DEBUG	1
 
-#ifdef LANCE_DEBUG
-static int lance_debug = LANCE_DEBUG;
-#else
-static int lance_debug = 1;
-#endif
-module_param(lance_debug, int, 0);
+#अगर_घोषित LANCE_DEBUG
+अटल पूर्णांक lance_debug = LANCE_DEBUG;
+#अन्यथा
+अटल पूर्णांक lance_debug = 1;
+#पूर्ण_अगर
+module_param(lance_debug, पूर्णांक, 0);
 MODULE_PARM_DESC(lance_debug, "atarilance debug level (0-3)");
 MODULE_LICENSE("GPL");
 
-/* Print debug messages on probing? */
-#undef LANCE_DEBUG_PROBE
+/* Prपूर्णांक debug messages on probing? */
+#अघोषित LANCE_DEBUG_PROBE
 
-#define	DPRINTK(n,a)							\
-	do {										\
-		if (lance_debug >= n)					\
-			printk a;							\
-	} while( 0 )
+#घोषणा	DPRINTK(n,a)							\
+	करो अणु										\
+		अगर (lance_debug >= n)					\
+			prपूर्णांकk a;							\
+	पूर्ण जबतक( 0 )
 
-#ifdef LANCE_DEBUG_PROBE
-# define PROBE_PRINT(a)	printk a
-#else
+#अगर_घोषित LANCE_DEBUG_PROBE
+# define PROBE_PRINT(a)	prपूर्णांकk a
+#अन्यथा
 # define PROBE_PRINT(a)
-#endif
+#पूर्ण_अगर
 
-/* These define the number of Rx and Tx buffers as log2. (Only powers
+/* These define the number of Rx and Tx buffers as log2. (Only घातers
  * of two are valid)
  * Much more rx buffers (32) are reserved than tx buffers (8), since receiving
- * is more time critical then sending and packets may have to remain in the
- * board's memory when main memory is low.
+ * is more समय critical then sending and packets may have to reमुख्य in the
+ * board's memory when मुख्य memory is low.
  */
 
-#define TX_LOG_RING_SIZE			3
-#define RX_LOG_RING_SIZE			5
+#घोषणा TX_LOG_RING_SIZE			3
+#घोषणा RX_LOG_RING_SIZE			5
 
 /* These are the derived values */
 
-#define TX_RING_SIZE			(1 << TX_LOG_RING_SIZE)
-#define TX_RING_LEN_BITS		(TX_LOG_RING_SIZE << 5)
-#define	TX_RING_MOD_MASK		(TX_RING_SIZE - 1)
+#घोषणा TX_RING_SIZE			(1 << TX_LOG_RING_SIZE)
+#घोषणा TX_RING_LEN_BITS		(TX_LOG_RING_SIZE << 5)
+#घोषणा	TX_RING_MOD_MASK		(TX_RING_SIZE - 1)
 
-#define RX_RING_SIZE			(1 << RX_LOG_RING_SIZE)
-#define RX_RING_LEN_BITS		(RX_LOG_RING_SIZE << 5)
-#define	RX_RING_MOD_MASK		(RX_RING_SIZE - 1)
+#घोषणा RX_RING_SIZE			(1 << RX_LOG_RING_SIZE)
+#घोषणा RX_RING_LEN_BITS		(RX_LOG_RING_SIZE << 5)
+#घोषणा	RX_RING_MOD_MASK		(RX_RING_SIZE - 1)
 
-#define TX_TIMEOUT	(HZ/5)
+#घोषणा TX_TIMEOUT	(HZ/5)
 
 /* The LANCE Rx and Tx ring descriptors. */
-struct lance_rx_head {
-	unsigned short			base;		/* Low word of base addr */
-	volatile unsigned char	flag;
-	unsigned char			base_hi;	/* High word of base addr (unused) */
-	short					buf_length;	/* This length is 2s complement! */
-	volatile short			msg_length;	/* This length is "normal". */
-};
+काष्ठा lance_rx_head अणु
+	अचिन्हित लघु			base;		/* Low word of base addr */
+	अस्थिर अचिन्हित अक्षर	flag;
+	अचिन्हित अक्षर			base_hi;	/* High word of base addr (unused) */
+	लघु					buf_length;	/* This length is 2s complement! */
+	अस्थिर लघु			msg_length;	/* This length is "normal". */
+पूर्ण;
 
-struct lance_tx_head {
-	unsigned short			base;		/* Low word of base addr */
-	volatile unsigned char	flag;
-	unsigned char			base_hi;	/* High word of base addr (unused) */
-	short					length;		/* Length is 2s complement! */
-	volatile short			misc;
-};
+काष्ठा lance_tx_head अणु
+	अचिन्हित लघु			base;		/* Low word of base addr */
+	अस्थिर अचिन्हित अक्षर	flag;
+	अचिन्हित अक्षर			base_hi;	/* High word of base addr (unused) */
+	लघु					length;		/* Length is 2s complement! */
+	अस्थिर लघु			misc;
+पूर्ण;
 
-struct ringdesc {
-	unsigned short	adr_lo;		/* Low 16 bits of address */
-	unsigned char	len;		/* Length bits */
-	unsigned char	adr_hi;		/* High 8 bits of address (unused) */
-};
+काष्ठा ringdesc अणु
+	अचिन्हित लघु	adr_lo;		/* Low 16 bits of address */
+	अचिन्हित अक्षर	len;		/* Length bits */
+	अचिन्हित अक्षर	adr_hi;		/* High 8 bits of address (unused) */
+पूर्ण;
 
 /* The LANCE initialization block, described in databook. */
-struct lance_init_block {
-	unsigned short	mode;		/* Pre-set mode */
-	unsigned char	hwaddr[6];	/* Physical ethernet address */
-	unsigned		filter[2];	/* Multicast filter (unused). */
-	/* Receive and transmit ring base, along with length bits. */
-	struct ringdesc	rx_ring;
-	struct ringdesc	tx_ring;
-};
+काष्ठा lance_init_block अणु
+	अचिन्हित लघु	mode;		/* Pre-set mode */
+	अचिन्हित अक्षर	hwaddr[6];	/* Physical ethernet address */
+	अचिन्हित		filter[2];	/* Multicast filter (unused). */
+	/* Receive and transmit ring base, aदीर्घ with length bits. */
+	काष्ठा ringdesc	rx_ring;
+	काष्ठा ringdesc	tx_ring;
+पूर्ण;
 
 /* The whole layout of the Lance shared memory */
-struct lance_memory {
-	struct lance_init_block	init;
-	struct lance_tx_head	tx_head[TX_RING_SIZE];
-	struct lance_rx_head	rx_head[RX_RING_SIZE];
-	char					packet_area[];	/* packet data follow after the
+काष्ठा lance_memory अणु
+	काष्ठा lance_init_block	init;
+	काष्ठा lance_tx_head	tx_head[TX_RING_SIZE];
+	काष्ठा lance_rx_head	rx_head[RX_RING_SIZE];
+	अक्षर					packet_area[];	/* packet data follow after the
 											 * init block and the ring
 											 * descriptors and are located
-											 * at runtime */
-};
+											 * at runसमय */
+पूर्ण;
 
-/* RieblCard specifics:
- * The original TOS driver for these cards reserves the area from offset
- * 0xee70 to 0xeebb for storing configuration data. Of interest to us is the
- * Ethernet address there, and the magic for verifying the data's validity.
+/* RieblCard specअगरics:
+ * The original TOS driver क्रम these cards reserves the area from offset
+ * 0xee70 to 0xeebb क्रम storing configuration data. Of पूर्णांकerest to us is the
+ * Ethernet address there, and the magic क्रम verअगरying the data's validity.
  * The reserved area isn't touch by packet buffers. Furthermore, offset 0xfffe
- * is reserved for the interrupt vector number.
+ * is reserved क्रम the पूर्णांकerrupt vector number.
  */
-#define	RIEBL_RSVD_START	0xee70
-#define	RIEBL_RSVD_END		0xeec0
-#define RIEBL_MAGIC			0x09051990
-#define RIEBL_MAGIC_ADDR	((unsigned long *)(((char *)MEM) + 0xee8a))
-#define RIEBL_HWADDR_ADDR	((unsigned char *)(((char *)MEM) + 0xee8e))
-#define RIEBL_IVEC_ADDR		((unsigned short *)(((char *)MEM) + 0xfffe))
+#घोषणा	RIEBL_RSVD_START	0xee70
+#घोषणा	RIEBL_RSVD_END		0xeec0
+#घोषणा RIEBL_MAGIC			0x09051990
+#घोषणा RIEBL_MAGIC_ADDR	((अचिन्हित दीर्घ *)(((अक्षर *)MEM) + 0xee8a))
+#घोषणा RIEBL_HWADDR_ADDR	((अचिन्हित अक्षर *)(((अक्षर *)MEM) + 0xee8e))
+#घोषणा RIEBL_IVEC_ADDR		((अचिन्हित लघु *)(((अक्षर *)MEM) + 0xfffe))
 
-/* This is a default address for the old RieblCards without a battery
- * that have no ethernet address at boot time. 00:00:36:04 is the
- * prefix for Riebl cards, the 00:00 at the end is arbitrary.
+/* This is a शेष address क्रम the old RieblCards without a battery
+ * that have no ethernet address at boot समय. 00:00:36:04 is the
+ * prefix क्रम Riebl cards, the 00:00 at the end is arbitrary.
  */
 
-static unsigned char OldRieblDefHwaddr[6] = {
+अटल अचिन्हित अक्षर OldRieblDefHwaddr[6] = अणु
 	0x00, 0x00, 0x36, 0x04, 0x00, 0x00
-};
+पूर्ण;
 
 
-/* I/O registers of the Lance chip */
+/* I/O रेजिस्टरs of the Lance chip */
 
-struct lance_ioreg {
-/* base+0x0 */	volatile unsigned short	data;
-/* base+0x2 */	volatile unsigned short	addr;
-				unsigned char			_dummy1[3];
-/* base+0x7 */	volatile unsigned char	ivec;
-				unsigned char			_dummy2[5];
-/* base+0xd */	volatile unsigned char	eeprom;
-				unsigned char			_dummy3;
-/* base+0xf */	volatile unsigned char	mem;
-};
+काष्ठा lance_ioreg अणु
+/* base+0x0 */	अस्थिर अचिन्हित लघु	data;
+/* base+0x2 */	अस्थिर अचिन्हित लघु	addr;
+				अचिन्हित अक्षर			_dummy1[3];
+/* base+0x7 */	अस्थिर अचिन्हित अक्षर	ivec;
+				अचिन्हित अक्षर			_dummy2[5];
+/* base+0xd */	अस्थिर अचिन्हित अक्षर	eeprom;
+				अचिन्हित अक्षर			_dummy3;
+/* base+0xf */	अस्थिर अचिन्हित अक्षर	mem;
+पूर्ण;
 
 /* Types of boards this driver supports */
 
-enum lance_type {
+क्रमागत lance_type अणु
 	OLD_RIEBL,		/* old Riebl card without battery */
 	NEW_RIEBL,		/* new Riebl card with battery */
 	PAM_CARD		/* PAM card with EEPROM */
-};
+पूर्ण;
 
-static char *lance_names[] = {
+अटल अक्षर *lance_names[] = अणु
 	"Riebl-Card (without battery)",
 	"Riebl-Card (with battery)",
 	"PAM intern card"
-};
+पूर्ण;
 
-/* The driver's private device structure */
+/* The driver's निजी device काष्ठाure */
 
-struct lance_private {
-	enum lance_type		cardtype;
-	struct lance_ioreg	*iobase;
-	struct lance_memory	*mem;
-	int		 	cur_rx, cur_tx;	/* The next free ring entry */
-	int			dirty_tx;		/* Ring entries to be freed. */
+काष्ठा lance_निजी अणु
+	क्रमागत lance_type		cardtype;
+	काष्ठा lance_ioreg	*iobase;
+	काष्ठा lance_memory	*mem;
+	पूर्णांक		 	cur_rx, cur_tx;	/* The next मुक्त ring entry */
+	पूर्णांक			dirty_tx;		/* Ring entries to be मुक्तd. */
 				/* copy function */
-	void			*(*memcpy_f)( void *, const void *, size_t );
-/* This must be long for set_bit() */
-	long			tx_full;
+	व्योम			*(*स_नकल_f)( व्योम *, स्थिर व्योम *, माप_प्रकार );
+/* This must be दीर्घ क्रम set_bit() */
+	दीर्घ			tx_full;
 	spinlock_t		devlock;
-};
+पूर्ण;
 
-/* I/O register access macros */
+/* I/O रेजिस्टर access macros */
 
-#define	MEM		lp->mem
-#define	DREG	IO->data
-#define	AREG	IO->addr
-#define	REGA(a)	(*( AREG = (a), &DREG ))
+#घोषणा	MEM		lp->mem
+#घोषणा	DREG	IO->data
+#घोषणा	AREG	IO->addr
+#घोषणा	REGA(a)	(*( AREG = (a), &DREG ))
 
-/* Definitions for packet buffer access: */
-#define PKT_BUF_SZ		1544
+/* Definitions क्रम packet buffer access: */
+#घोषणा PKT_BUF_SZ		1544
 /* Get the address of a packet buffer corresponding to a given buffer head */
-#define	PKTBUF_ADDR(head)	(((unsigned char *)(MEM)) + (head)->base)
+#घोषणा	PKTBUF_ADDR(head)	(((अचिन्हित अक्षर *)(MEM)) + (head)->base)
 
-/* Possible memory/IO addresses for probing */
+/* Possible memory/IO addresses क्रम probing */
 
-static struct lance_addr {
-	unsigned long	memaddr;
-	unsigned long	ioaddr;
-	int				slow_flag;
-} lance_addr_list[] = {
-	{ 0xfe010000, 0xfe00fff0, 0 },	/* RieblCard VME in TT */
-	{ 0xffc10000, 0xffc0fff0, 0 },	/* RieblCard VME in MegaSTE
+अटल काष्ठा lance_addr अणु
+	अचिन्हित दीर्घ	memaddr;
+	अचिन्हित दीर्घ	ioaddr;
+	पूर्णांक				slow_flag;
+पूर्ण lance_addr_list[] = अणु
+	अणु 0xfe010000, 0xfe00fff0, 0 पूर्ण,	/* RieblCard VME in TT */
+	अणु 0xffc10000, 0xffc0fff0, 0 पूर्ण,	/* RieblCard VME in MegaSTE
 									   (highest byte stripped) */
-	{ 0xffe00000, 0xffff7000, 1 },	/* RieblCard in ST
+	अणु 0xffe00000, 0xffff7000, 1 पूर्ण,	/* RieblCard in ST
 									   (highest byte stripped) */
-	{ 0xffd00000, 0xffff7000, 1 },	/* RieblCard in ST with hw modif. to
-									   avoid conflict with ROM
+	अणु 0xffd00000, 0xffff7000, 1 पूर्ण,	/* RieblCard in ST with hw modअगर. to
+									   aव्योम conflict with ROM
 									   (highest byte stripped) */
-	{ 0xffcf0000, 0xffcffff0, 0 },	/* PAMCard VME in TT and MSTE
+	अणु 0xffcf0000, 0xffcffff0, 0 पूर्ण,	/* PAMCard VME in TT and MSTE
 									   (highest byte stripped) */
-	{ 0xfecf0000, 0xfecffff0, 0 },	/* Rhotron's PAMCard VME in TT and MSTE
+	अणु 0xfecf0000, 0xfecffff0, 0 पूर्ण,	/* Rhotron's PAMCard VME in TT and MSTE
 									   (highest byte stripped) */
-};
+पूर्ण;
 
-#define	N_LANCE_ADDR	ARRAY_SIZE(lance_addr_list)
+#घोषणा	N_LANCE_ADDR	ARRAY_SIZE(lance_addr_list)
 
 
-/* Definitions for the Lance */
+/* Definitions क्रम the Lance */
 
 /* tx_head flags */
-#define TMD1_ENP		0x01	/* end of packet */
-#define TMD1_STP		0x02	/* start of packet */
-#define TMD1_DEF		0x04	/* deferred */
-#define TMD1_ONE		0x08	/* one retry needed */
-#define TMD1_MORE		0x10	/* more than one retry needed */
-#define TMD1_ERR		0x40	/* error summary */
-#define TMD1_OWN 		0x80	/* ownership (set: chip owns) */
+#घोषणा TMD1_ENP		0x01	/* end of packet */
+#घोषणा TMD1_STP		0x02	/* start of packet */
+#घोषणा TMD1_DEF		0x04	/* deferred */
+#घोषणा TMD1_ONE		0x08	/* one retry needed */
+#घोषणा TMD1_MORE		0x10	/* more than one retry needed */
+#घोषणा TMD1_ERR		0x40	/* error summary */
+#घोषणा TMD1_OWN 		0x80	/* ownership (set: chip owns) */
 
-#define TMD1_OWN_CHIP	TMD1_OWN
-#define TMD1_OWN_HOST	0
+#घोषणा TMD1_OWN_CHIP	TMD1_OWN
+#घोषणा TMD1_OWN_HOST	0
 
 /* tx_head misc field */
-#define TMD3_TDR		0x03FF	/* Time Domain Reflectometry counter */
-#define TMD3_RTRY		0x0400	/* failed after 16 retries */
-#define TMD3_LCAR		0x0800	/* carrier lost */
-#define TMD3_LCOL		0x1000	/* late collision */
-#define TMD3_UFLO		0x4000	/* underflow (late memory) */
-#define TMD3_BUFF		0x8000	/* buffering error (no ENP) */
+#घोषणा TMD3_TDR		0x03FF	/* Time Doमुख्य Reflectometry counter */
+#घोषणा TMD3_RTRY		0x0400	/* failed after 16 retries */
+#घोषणा TMD3_LCAR		0x0800	/* carrier lost */
+#घोषणा TMD3_LCOL		0x1000	/* late collision */
+#घोषणा TMD3_UFLO		0x4000	/* underflow (late memory) */
+#घोषणा TMD3_BUFF		0x8000	/* buffering error (no ENP) */
 
 /* rx_head flags */
-#define RMD1_ENP		0x01	/* end of packet */
-#define RMD1_STP		0x02	/* start of packet */
-#define RMD1_BUFF		0x04	/* buffer error */
-#define RMD1_CRC		0x08	/* CRC error */
-#define RMD1_OFLO		0x10	/* overflow */
-#define RMD1_FRAM		0x20	/* framing error */
-#define RMD1_ERR		0x40	/* error summary */
-#define RMD1_OWN 		0x80	/* ownership (set: ship owns) */
+#घोषणा RMD1_ENP		0x01	/* end of packet */
+#घोषणा RMD1_STP		0x02	/* start of packet */
+#घोषणा RMD1_BUFF		0x04	/* buffer error */
+#घोषणा RMD1_CRC		0x08	/* CRC error */
+#घोषणा RMD1_OFLO		0x10	/* overflow */
+#घोषणा RMD1_FRAM		0x20	/* framing error */
+#घोषणा RMD1_ERR		0x40	/* error summary */
+#घोषणा RMD1_OWN 		0x80	/* ownership (set: ship owns) */
 
-#define RMD1_OWN_CHIP	RMD1_OWN
-#define RMD1_OWN_HOST	0
+#घोषणा RMD1_OWN_CHIP	RMD1_OWN
+#घोषणा RMD1_OWN_HOST	0
 
-/* register names */
-#define CSR0	0		/* mode/status */
-#define CSR1	1		/* init block addr (low) */
-#define CSR2	2		/* init block addr (high) */
-#define CSR3	3		/* misc */
-#define CSR8	8	  	/* address filter */
-#define CSR15	15		/* promiscuous mode */
+/* रेजिस्टर names */
+#घोषणा CSR0	0		/* mode/status */
+#घोषणा CSR1	1		/* init block addr (low) */
+#घोषणा CSR2	2		/* init block addr (high) */
+#घोषणा CSR3	3		/* misc */
+#घोषणा CSR8	8	  	/* address filter */
+#घोषणा CSR15	15		/* promiscuous mode */
 
 /* CSR0 */
-/* (R=readable, W=writeable, S=set on write, C=clear on write) */
-#define CSR0_INIT	0x0001		/* initialize (RS) */
-#define CSR0_STRT	0x0002		/* start (RS) */
-#define CSR0_STOP	0x0004		/* stop (RS) */
-#define CSR0_TDMD	0x0008		/* transmit demand (RS) */
-#define CSR0_TXON	0x0010		/* transmitter on (R) */
-#define CSR0_RXON	0x0020		/* receiver on (R) */
-#define CSR0_INEA	0x0040		/* interrupt enable (RW) */
-#define CSR0_INTR	0x0080		/* interrupt active (R) */
-#define CSR0_IDON	0x0100		/* initialization done (RC) */
-#define CSR0_TINT	0x0200		/* transmitter interrupt (RC) */
-#define CSR0_RINT	0x0400		/* receiver interrupt (RC) */
-#define CSR0_MERR	0x0800		/* memory error (RC) */
-#define CSR0_MISS	0x1000		/* missed frame (RC) */
-#define CSR0_CERR	0x2000		/* carrier error (no heartbeat :-) (RC) */
-#define CSR0_BABL	0x4000		/* babble: tx-ed too many bits (RC) */
-#define CSR0_ERR	0x8000		/* error (RC) */
+/* (R=पढ़ोable, W=ग_लिखोable, S=set on ग_लिखो, C=clear on ग_लिखो) */
+#घोषणा CSR0_INIT	0x0001		/* initialize (RS) */
+#घोषणा CSR0_STRT	0x0002		/* start (RS) */
+#घोषणा CSR0_STOP	0x0004		/* stop (RS) */
+#घोषणा CSR0_TDMD	0x0008		/* transmit demand (RS) */
+#घोषणा CSR0_TXON	0x0010		/* transmitter on (R) */
+#घोषणा CSR0_RXON	0x0020		/* receiver on (R) */
+#घोषणा CSR0_INEA	0x0040		/* पूर्णांकerrupt enable (RW) */
+#घोषणा CSR0_INTR	0x0080		/* पूर्णांकerrupt active (R) */
+#घोषणा CSR0_IDON	0x0100		/* initialization करोne (RC) */
+#घोषणा CSR0_TINT	0x0200		/* transmitter पूर्णांकerrupt (RC) */
+#घोषणा CSR0_RINT	0x0400		/* receiver पूर्णांकerrupt (RC) */
+#घोषणा CSR0_MERR	0x0800		/* memory error (RC) */
+#घोषणा CSR0_MISS	0x1000		/* missed frame (RC) */
+#घोषणा CSR0_CERR	0x2000		/* carrier error (no heartbeat :-) (RC) */
+#घोषणा CSR0_BABL	0x4000		/* babble: tx-ed too many bits (RC) */
+#घोषणा CSR0_ERR	0x8000		/* error (RC) */
 
 /* CSR3 */
-#define CSR3_BCON	0x0001		/* byte control */
-#define CSR3_ACON	0x0002		/* ALE control */
-#define CSR3_BSWP	0x0004		/* byte swap (1=big endian) */
+#घोषणा CSR3_BCON	0x0001		/* byte control */
+#घोषणा CSR3_ACON	0x0002		/* ALE control */
+#घोषणा CSR3_BSWP	0x0004		/* byte swap (1=big endian) */
 
 
 
 /***************************** Prototypes *****************************/
 
-static unsigned long lance_probe1( struct net_device *dev, struct lance_addr
+अटल अचिन्हित दीर्घ lance_probe1( काष्ठा net_device *dev, काष्ठा lance_addr
                                    *init_rec );
-static int lance_open( struct net_device *dev );
-static void lance_init_ring( struct net_device *dev );
-static netdev_tx_t lance_start_xmit(struct sk_buff *skb,
-				    struct net_device *dev);
-static irqreturn_t lance_interrupt( int irq, void *dev_id );
-static int lance_rx( struct net_device *dev );
-static int lance_close( struct net_device *dev );
-static void set_multicast_list( struct net_device *dev );
-static int lance_set_mac_address( struct net_device *dev, void *addr );
-static void lance_tx_timeout (struct net_device *dev, unsigned int txqueue);
+अटल पूर्णांक lance_खोलो( काष्ठा net_device *dev );
+अटल व्योम lance_init_ring( काष्ठा net_device *dev );
+अटल netdev_tx_t lance_start_xmit(काष्ठा sk_buff *skb,
+				    काष्ठा net_device *dev);
+अटल irqवापस_t lance_पूर्णांकerrupt( पूर्णांक irq, व्योम *dev_id );
+अटल पूर्णांक lance_rx( काष्ठा net_device *dev );
+अटल पूर्णांक lance_बंद( काष्ठा net_device *dev );
+अटल व्योम set_multicast_list( काष्ठा net_device *dev );
+अटल पूर्णांक lance_set_mac_address( काष्ठा net_device *dev, व्योम *addr );
+अटल व्योम lance_tx_समयout (काष्ठा net_device *dev, अचिन्हित पूर्णांक txqueue);
 
 /************************* End of Prototypes **************************/
 
@@ -354,69 +355,69 @@ static void lance_tx_timeout (struct net_device *dev, unsigned int txqueue);
 
 
 
-static void *slow_memcpy( void *dst, const void *src, size_t len )
+अटल व्योम *slow_स_नकल( व्योम *dst, स्थिर व्योम *src, माप_प्रकार len )
 
-{	char *cto = dst;
-	const char *cfrom = src;
+अणु	अक्षर *cto = dst;
+	स्थिर अक्षर *cfrom = src;
 
-	while( len-- ) {
+	जबतक( len-- ) अणु
 		*cto++ = *cfrom++;
 		MFPDELAY();
-	}
-	return dst;
-}
+	पूर्ण
+	वापस dst;
+पूर्ण
 
 
-struct net_device * __init atarilance_probe(int unit)
-{
-	int i;
-	static int found;
-	struct net_device *dev;
-	int err = -ENODEV;
+काष्ठा net_device * __init atarilance_probe(पूर्णांक unit)
+अणु
+	पूर्णांक i;
+	अटल पूर्णांक found;
+	काष्ठा net_device *dev;
+	पूर्णांक err = -ENODEV;
 
-	if (!MACH_IS_ATARI || found)
+	अगर (!MACH_IS_ATARI || found)
 		/* Assume there's only one board possible... That seems true, since
 		 * the Riebl/PAM board's address cannot be changed. */
-		return ERR_PTR(-ENODEV);
+		वापस ERR_PTR(-ENODEV);
 
-	dev = alloc_etherdev(sizeof(struct lance_private));
-	if (!dev)
-		return ERR_PTR(-ENOMEM);
-	if (unit >= 0) {
-		sprintf(dev->name, "eth%d", unit);
+	dev = alloc_etherdev(माप(काष्ठा lance_निजी));
+	अगर (!dev)
+		वापस ERR_PTR(-ENOMEM);
+	अगर (unit >= 0) अणु
+		प्र_लिखो(dev->name, "eth%d", unit);
 		netdev_boot_setup_check(dev);
-	}
+	पूर्ण
 
-	for( i = 0; i < N_LANCE_ADDR; ++i ) {
-		if (lance_probe1( dev, &lance_addr_list[i] )) {
+	क्रम( i = 0; i < N_LANCE_ADDR; ++i ) अणु
+		अगर (lance_probe1( dev, &lance_addr_list[i] )) अणु
 			found = 1;
-			err = register_netdev(dev);
-			if (!err)
-				return dev;
-			free_irq(dev->irq, dev);
-			break;
-		}
-	}
-	free_netdev(dev);
-	return ERR_PTR(err);
-}
+			err = रेजिस्टर_netdev(dev);
+			अगर (!err)
+				वापस dev;
+			मुक्त_irq(dev->irq, dev);
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	मुक्त_netdev(dev);
+	वापस ERR_PTR(err);
+पूर्ण
 
 
 /* Derived from hwreg_present() in atari/config.c: */
 
-static noinline int __init addr_accessible(volatile void *regp, int wordflag,
-					   int writeflag)
-{
-	int		ret;
-	unsigned long	flags;
-	long	*vbr, save_berr;
+अटल noअंतरभूत पूर्णांक __init addr_accessible(अस्थिर व्योम *regp, पूर्णांक wordflag,
+					   पूर्णांक ग_लिखोflag)
+अणु
+	पूर्णांक		ret;
+	अचिन्हित दीर्घ	flags;
+	दीर्घ	*vbr, save_berr;
 
 	local_irq_save(flags);
 
-	__asm__ __volatile__ ( "movec	%/vbr,%0" : "=r" (vbr) : );
+	__यंत्र__ __अस्थिर__ ( "movec	%/vbr,%0" : "=r" (vbr) : );
 	save_berr = vbr[2];
 
-	__asm__ __volatile__
+	__यंत्र__ __अस्थिर__
 	(	"movel	%/sp,%/d1\n\t"
 		"movel	#Lberr,%2@\n\t"
 		"moveq	#0,%0\n\t"
@@ -443,266 +444,266 @@ static noinline int __init addr_accessible(volatile void *regp, int wordflag,
 "2:		 moveq	#1,%0\n"
 "Lberr:	 movel	%/d1,%/sp"
 		: "=&d" (ret)
-		: "a" (regp), "a" (&vbr[2]), "rm" (wordflag), "rm" (writeflag)
+		: "a" (regp), "a" (&vbr[2]), "rm" (wordflag), "rm" (ग_लिखोflag)
 		: "d0", "d1", "memory"
 	);
 
 	vbr[2] = save_berr;
 	local_irq_restore(flags);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const struct net_device_ops lance_netdev_ops = {
-	.ndo_open		= lance_open,
-	.ndo_stop		= lance_close,
-	.ndo_start_xmit		= lance_start_xmit,
-	.ndo_set_rx_mode	= set_multicast_list,
-	.ndo_set_mac_address	= lance_set_mac_address,
-	.ndo_tx_timeout		= lance_tx_timeout,
-	.ndo_validate_addr	= eth_validate_addr,
-};
+अटल स्थिर काष्ठा net_device_ops lance_netdev_ops = अणु
+	.nकरो_खोलो		= lance_खोलो,
+	.nकरो_stop		= lance_बंद,
+	.nकरो_start_xmit		= lance_start_xmit,
+	.nकरो_set_rx_mode	= set_multicast_list,
+	.nकरो_set_mac_address	= lance_set_mac_address,
+	.nकरो_tx_समयout		= lance_tx_समयout,
+	.nकरो_validate_addr	= eth_validate_addr,
+पूर्ण;
 
-static unsigned long __init lance_probe1( struct net_device *dev,
-					   struct lance_addr *init_rec )
-{
-	volatile unsigned short *memaddr =
-		(volatile unsigned short *)init_rec->memaddr;
-	volatile unsigned short *ioaddr =
-		(volatile unsigned short *)init_rec->ioaddr;
-	struct lance_private	*lp;
-	struct lance_ioreg		*IO;
-	int 					i;
-	static int 				did_version;
-	unsigned short			save1, save2;
+अटल अचिन्हित दीर्घ __init lance_probe1( काष्ठा net_device *dev,
+					   काष्ठा lance_addr *init_rec )
+अणु
+	अस्थिर अचिन्हित लघु *memaddr =
+		(अस्थिर अचिन्हित लघु *)init_rec->memaddr;
+	अस्थिर अचिन्हित लघु *ioaddr =
+		(अस्थिर अचिन्हित लघु *)init_rec->ioaddr;
+	काष्ठा lance_निजी	*lp;
+	काष्ठा lance_ioreg		*IO;
+	पूर्णांक 					i;
+	अटल पूर्णांक 				did_version;
+	अचिन्हित लघु			save1, save2;
 
 	PROBE_PRINT(( "Probing for Lance card at mem %#lx io %#lx\n",
-				  (long)memaddr, (long)ioaddr ));
+				  (दीर्घ)memaddr, (दीर्घ)ioaddr ));
 
-	/* Test whether memory readable and writable */
+	/* Test whether memory पढ़ोable and writable */
 	PROBE_PRINT(( "lance_probe1: testing memory to be accessible\n" ));
-	if (!addr_accessible( memaddr, 1, 1 )) goto probe_fail;
+	अगर (!addr_accessible( memaddr, 1, 1 )) जाओ probe_fail;
 
 	/* Written values should come back... */
 	PROBE_PRINT(( "lance_probe1: testing memory to be writable (1)\n" ));
 	save1 = *memaddr;
 	*memaddr = 0x0001;
-	if (*memaddr != 0x0001) goto probe_fail;
+	अगर (*memaddr != 0x0001) जाओ probe_fail;
 	PROBE_PRINT(( "lance_probe1: testing memory to be writable (2)\n" ));
 	*memaddr = 0x0000;
-	if (*memaddr != 0x0000) goto probe_fail;
+	अगर (*memaddr != 0x0000) जाओ probe_fail;
 	*memaddr = save1;
 
-	/* First port should be readable and writable */
+	/* First port should be पढ़ोable and writable */
 	PROBE_PRINT(( "lance_probe1: testing ioport to be accessible\n" ));
-	if (!addr_accessible( ioaddr, 1, 1 )) goto probe_fail;
+	अगर (!addr_accessible( ioaddr, 1, 1 )) जाओ probe_fail;
 
-	/* and written values should be readable */
+	/* and written values should be पढ़ोable */
 	PROBE_PRINT(( "lance_probe1: testing ioport to be writeable\n" ));
 	save2 = ioaddr[1];
 	ioaddr[1] = 0x0001;
-	if (ioaddr[1] != 0x0001) goto probe_fail;
+	अगर (ioaddr[1] != 0x0001) जाओ probe_fail;
 
-	/* The CSR0_INIT bit should not be readable */
+	/* The CSR0_INIT bit should not be पढ़ोable */
 	PROBE_PRINT(( "lance_probe1: testing CSR0 register function (1)\n" ));
 	save1 = ioaddr[0];
 	ioaddr[1] = CSR0;
 	ioaddr[0] = CSR0_INIT | CSR0_STOP;
-	if (ioaddr[0] != CSR0_STOP) {
+	अगर (ioaddr[0] != CSR0_STOP) अणु
 		ioaddr[0] = save1;
 		ioaddr[1] = save2;
-		goto probe_fail;
-	}
+		जाओ probe_fail;
+	पूर्ण
 	PROBE_PRINT(( "lance_probe1: testing CSR0 register function (2)\n" ));
 	ioaddr[0] = CSR0_STOP;
-	if (ioaddr[0] != CSR0_STOP) {
+	अगर (ioaddr[0] != CSR0_STOP) अणु
 		ioaddr[0] = save1;
 		ioaddr[1] = save2;
-		goto probe_fail;
-	}
+		जाओ probe_fail;
+	पूर्ण
 
 	/* Now ok... */
 	PROBE_PRINT(( "lance_probe1: Lance card detected\n" ));
-	goto probe_ok;
+	जाओ probe_ok;
 
   probe_fail:
-	return 0;
+	वापस 0;
 
   probe_ok:
 	lp = netdev_priv(dev);
-	MEM = (struct lance_memory *)memaddr;
-	IO = lp->iobase = (struct lance_ioreg *)ioaddr;
-	dev->base_addr = (unsigned long)ioaddr; /* informational only */
-	lp->memcpy_f = init_rec->slow_flag ? slow_memcpy : memcpy;
+	MEM = (काष्ठा lance_memory *)memaddr;
+	IO = lp->iobase = (काष्ठा lance_ioreg *)ioaddr;
+	dev->base_addr = (अचिन्हित दीर्घ)ioaddr; /* inक्रमmational only */
+	lp->स_नकल_f = init_rec->slow_flag ? slow_स_नकल : स_नकल;
 
 	REGA( CSR0 ) = CSR0_STOP;
 
-	/* Now test for type: If the eeprom I/O port is readable, it is a
+	/* Now test क्रम type: If the eeprom I/O port is पढ़ोable, it is a
 	 * PAM card */
-	if (addr_accessible( &(IO->eeprom), 0, 0 )) {
+	अगर (addr_accessible( &(IO->eeprom), 0, 0 )) अणु
 		/* Switch back to Ram */
 		i = IO->mem;
 		lp->cardtype = PAM_CARD;
-	}
-	else if (*RIEBL_MAGIC_ADDR == RIEBL_MAGIC) {
+	पूर्ण
+	अन्यथा अगर (*RIEBL_MAGIC_ADDR == RIEBL_MAGIC) अणु
 		lp->cardtype = NEW_RIEBL;
-	}
-	else
+	पूर्ण
+	अन्यथा
 		lp->cardtype = OLD_RIEBL;
 
-	if (lp->cardtype == PAM_CARD ||
-		memaddr == (unsigned short *)0xffe00000) {
-		/* PAMs card and Riebl on ST use level 5 autovector */
-		if (request_irq(IRQ_AUTO_5, lance_interrupt, 0,
-				"PAM,Riebl-ST Ethernet", dev)) {
-			printk( "Lance: request for irq %d failed\n", IRQ_AUTO_5 );
-			return 0;
-		}
+	अगर (lp->cardtype == PAM_CARD ||
+		memaddr == (अचिन्हित लघु *)0xffe00000) अणु
+		/* PAMs card and Riebl on ST use level 5 स्वतःvector */
+		अगर (request_irq(IRQ_AUTO_5, lance_पूर्णांकerrupt, 0,
+				"PAM,Riebl-ST Ethernet", dev)) अणु
+			prपूर्णांकk( "Lance: request for irq %d failed\n", IRQ_AUTO_5 );
+			वापस 0;
+		पूर्ण
 		dev->irq = IRQ_AUTO_5;
-	}
-	else {
-		/* For VME-RieblCards, request a free VME int */
-		unsigned int irq = atari_register_vme_int();
-		if (!irq) {
-			printk( "Lance: request for VME interrupt failed\n" );
-			return 0;
-		}
-		if (request_irq(irq, lance_interrupt, 0, "Riebl-VME Ethernet",
-				dev)) {
-			printk( "Lance: request for irq %u failed\n", irq );
-			return 0;
-		}
+	पूर्ण
+	अन्यथा अणु
+		/* For VME-RieblCards, request a मुक्त VME पूर्णांक */
+		अचिन्हित पूर्णांक irq = atari_रेजिस्टर_vme_पूर्णांक();
+		अगर (!irq) अणु
+			prपूर्णांकk( "Lance: request for VME interrupt failed\n" );
+			वापस 0;
+		पूर्ण
+		अगर (request_irq(irq, lance_पूर्णांकerrupt, 0, "Riebl-VME Ethernet",
+				dev)) अणु
+			prपूर्णांकk( "Lance: request for irq %u failed\n", irq );
+			वापस 0;
+		पूर्ण
 		dev->irq = irq;
-	}
+	पूर्ण
 
-	printk("%s: %s at io %#lx, mem %#lx, irq %d%s, hwaddr ",
+	prपूर्णांकk("%s: %s at io %#lx, mem %#lx, irq %d%s, hwaddr ",
 		   dev->name, lance_names[lp->cardtype],
-		   (unsigned long)ioaddr,
-		   (unsigned long)memaddr,
+		   (अचिन्हित दीर्घ)ioaddr,
+		   (अचिन्हित दीर्घ)memaddr,
 		   dev->irq,
 		   init_rec->slow_flag ? " (slow memcpy)" : "" );
 
 	/* Get the ethernet address */
-	switch( lp->cardtype ) {
-	  case OLD_RIEBL:
-		/* No ethernet address! (Set some default address) */
-		memcpy(dev->dev_addr, OldRieblDefHwaddr, ETH_ALEN);
-		break;
-	  case NEW_RIEBL:
-		lp->memcpy_f(dev->dev_addr, RIEBL_HWADDR_ADDR, ETH_ALEN);
-		break;
-	  case PAM_CARD:
+	चयन( lp->cardtype ) अणु
+	  हाल OLD_RIEBL:
+		/* No ethernet address! (Set some शेष address) */
+		स_नकल(dev->dev_addr, OldRieblDefHwaddr, ETH_ALEN);
+		अवरोध;
+	  हाल NEW_RIEBL:
+		lp->स_नकल_f(dev->dev_addr, RIEBL_HWADDR_ADDR, ETH_ALEN);
+		अवरोध;
+	  हाल PAM_CARD:
 		i = IO->eeprom;
-		for( i = 0; i < 6; ++i )
+		क्रम( i = 0; i < 6; ++i )
 			dev->dev_addr[i] =
-				((((unsigned short *)MEM)[i*2] & 0x0f) << 4) |
-				((((unsigned short *)MEM)[i*2+1] & 0x0f));
+				((((अचिन्हित लघु *)MEM)[i*2] & 0x0f) << 4) |
+				((((अचिन्हित लघु *)MEM)[i*2+1] & 0x0f));
 		i = IO->mem;
-		break;
-	}
-	printk("%pM\n", dev->dev_addr);
-	if (lp->cardtype == OLD_RIEBL) {
-		printk( "%s: Warning: This is a default ethernet address!\n",
+		अवरोध;
+	पूर्ण
+	prपूर्णांकk("%pM\n", dev->dev_addr);
+	अगर (lp->cardtype == OLD_RIEBL) अणु
+		prपूर्णांकk( "%s: Warning: This is a default ethernet address!\n",
 				dev->name );
-		printk( "      Use \"ifconfig hw ether ...\" to set the address.\n" );
-	}
+		prपूर्णांकk( "      Use \"ifconfig hw ether ...\" to set the address.\n" );
+	पूर्ण
 
 	spin_lock_init(&lp->devlock);
 
 	MEM->init.mode = 0x0000;		/* Disable Rx and Tx. */
-	for( i = 0; i < 6; i++ )
+	क्रम( i = 0; i < 6; i++ )
 		MEM->init.hwaddr[i] = dev->dev_addr[i^1]; /* <- 16 bit swap! */
 	MEM->init.filter[0] = 0x00000000;
 	MEM->init.filter[1] = 0x00000000;
-	MEM->init.rx_ring.adr_lo = offsetof( struct lance_memory, rx_head );
+	MEM->init.rx_ring.adr_lo = दुरत्व( काष्ठा lance_memory, rx_head );
 	MEM->init.rx_ring.adr_hi = 0;
 	MEM->init.rx_ring.len    = RX_RING_LEN_BITS;
-	MEM->init.tx_ring.adr_lo = offsetof( struct lance_memory, tx_head );
+	MEM->init.tx_ring.adr_lo = दुरत्व( काष्ठा lance_memory, tx_head );
 	MEM->init.tx_ring.adr_hi = 0;
 	MEM->init.tx_ring.len    = TX_RING_LEN_BITS;
 
-	if (lp->cardtype == PAM_CARD)
+	अगर (lp->cardtype == PAM_CARD)
 		IO->ivec = IRQ_SOURCE_TO_VECTOR(dev->irq);
-	else
+	अन्यथा
 		*RIEBL_IVEC_ADDR = IRQ_SOURCE_TO_VECTOR(dev->irq);
 
-	if (did_version++ == 0)
+	अगर (did_version++ == 0)
 		DPRINTK( 1, ( version ));
 
 	dev->netdev_ops = &lance_netdev_ops;
 
 	/* XXX MSch */
-	dev->watchdog_timeo = TX_TIMEOUT;
+	dev->watchकरोg_समयo = TX_TIMEOUT;
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
 
-static int lance_open( struct net_device *dev )
-{
-	struct lance_private *lp = netdev_priv(dev);
-	struct lance_ioreg	 *IO = lp->iobase;
-	int i;
+अटल पूर्णांक lance_खोलो( काष्ठा net_device *dev )
+अणु
+	काष्ठा lance_निजी *lp = netdev_priv(dev);
+	काष्ठा lance_ioreg	 *IO = lp->iobase;
+	पूर्णांक i;
 
 	DPRINTK( 2, ( "%s: lance_open()\n", dev->name ));
 
 	lance_init_ring(dev);
-	/* Re-initialize the LANCE, and start it when done. */
+	/* Re-initialize the LANCE, and start it when करोne. */
 
 	REGA( CSR3 ) = CSR3_BSWP | (lp->cardtype == PAM_CARD ? CSR3_ACON : 0);
 	REGA( CSR2 ) = 0;
 	REGA( CSR1 ) = 0;
 	REGA( CSR0 ) = CSR0_INIT;
-	/* From now on, AREG is kept to point to CSR0 */
+	/* From now on, AREG is kept to poपूर्णांक to CSR0 */
 
 	i = 1000000;
-	while (--i > 0)
-		if (DREG & CSR0_IDON)
-			break;
-	if (i <= 0 || (DREG & CSR0_ERR)) {
+	जबतक (--i > 0)
+		अगर (DREG & CSR0_IDON)
+			अवरोध;
+	अगर (i <= 0 || (DREG & CSR0_ERR)) अणु
 		DPRINTK( 2, ( "lance_open(): opening %s failed, i=%d, csr0=%04x\n",
 					  dev->name, i, DREG ));
 		DREG = CSR0_STOP;
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 	DREG = CSR0_IDON;
 	DREG = CSR0_STRT;
 	DREG = CSR0_INEA;
 
-	netif_start_queue (dev);
+	netअगर_start_queue (dev);
 
 	DPRINTK( 2, ( "%s: LANCE is open, csr0 %04x\n", dev->name, DREG ));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
 /* Initialize the LANCE Rx and Tx rings. */
 
-static void lance_init_ring( struct net_device *dev )
-{
-	struct lance_private *lp = netdev_priv(dev);
-	int i;
-	unsigned offset;
+अटल व्योम lance_init_ring( काष्ठा net_device *dev )
+अणु
+	काष्ठा lance_निजी *lp = netdev_priv(dev);
+	पूर्णांक i;
+	अचिन्हित offset;
 
 	lp->tx_full = 0;
 	lp->cur_rx = lp->cur_tx = 0;
 	lp->dirty_tx = 0;
 
-	offset = offsetof( struct lance_memory, packet_area );
+	offset = दुरत्व( काष्ठा lance_memory, packet_area );
 
 /* If the packet buffer at offset 'o' would conflict with the reserved area
  * of RieblCards, advance it */
-#define	CHECK_OFFSET(o)														 \
-	do {																	 \
-		if (lp->cardtype == OLD_RIEBL || lp->cardtype == NEW_RIEBL) {		 \
-			if (((o) < RIEBL_RSVD_START) ? (o)+PKT_BUF_SZ > RIEBL_RSVD_START \
+#घोषणा	CHECK_OFFSET(o)														 \
+	करो अणु																	 \
+		अगर (lp->cardtype == OLD_RIEBL || lp->cardtype == NEW_RIEBL) अणु		 \
+			अगर (((o) < RIEBL_RSVD_START) ? (o)+PKT_BUF_SZ > RIEBL_RSVD_START \
 										 : (o) < RIEBL_RSVD_END)			 \
 				(o) = RIEBL_RSVD_END;										 \
-		}																	 \
-	} while(0)
+		पूर्ण																	 \
+	पूर्ण जबतक(0)
 
-	for( i = 0; i < TX_RING_SIZE; i++ ) {
+	क्रम( i = 0; i < TX_RING_SIZE; i++ ) अणु
 		CHECK_OFFSET(offset);
 		MEM->tx_head[i].base = offset;
 		MEM->tx_head[i].flag = TMD1_OWN_HOST;
@@ -710,9 +711,9 @@ static void lance_init_ring( struct net_device *dev )
 		MEM->tx_head[i].length = 0;
 		MEM->tx_head[i].misc = 0;
 		offset += PKT_BUF_SZ;
-	}
+	पूर्ण
 
-	for( i = 0; i < RX_RING_SIZE; i++ ) {
+	क्रम( i = 0; i < RX_RING_SIZE; i++ ) अणु
 		CHECK_OFFSET(offset);
 		MEM->rx_head[i].base = offset;
 		MEM->rx_head[i].flag = TMD1_OWN_CHIP;
@@ -720,145 +721,145 @@ static void lance_init_ring( struct net_device *dev )
 		MEM->rx_head[i].buf_length = -PKT_BUF_SZ;
 		MEM->rx_head[i].msg_length = 0;
 		offset += PKT_BUF_SZ;
-	}
-}
+	पूर्ण
+पूर्ण
 
 
 /* XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX */
 
 
-static void lance_tx_timeout (struct net_device *dev, unsigned int txqueue)
-{
-	struct lance_private *lp = netdev_priv(dev);
-	struct lance_ioreg	 *IO = lp->iobase;
+अटल व्योम lance_tx_समयout (काष्ठा net_device *dev, अचिन्हित पूर्णांक txqueue)
+अणु
+	काष्ठा lance_निजी *lp = netdev_priv(dev);
+	काष्ठा lance_ioreg	 *IO = lp->iobase;
 
 	AREG = CSR0;
 	DPRINTK( 1, ( "%s: transmit timed out, status %04x, resetting.\n",
 			  dev->name, DREG ));
 	DREG = CSR0_STOP;
 	/*
-	 * Always set BSWP after a STOP as STOP puts it back into
+	 * Always set BSWP after a STOP as STOP माला_दो it back पूर्णांकo
 	 * little endian mode.
 	 */
 	REGA( CSR3 ) = CSR3_BSWP | (lp->cardtype == PAM_CARD ? CSR3_ACON : 0);
 	dev->stats.tx_errors++;
-#ifndef final_version
-		{	int i;
+#अगर_अघोषित final_version
+		अणु	पूर्णांक i;
 			DPRINTK( 2, ( "Ring data: dirty_tx %d cur_tx %d%s cur_rx %d\n",
 						  lp->dirty_tx, lp->cur_tx,
 						  lp->tx_full ? " (full)" : "",
 						  lp->cur_rx ));
-			for( i = 0 ; i < RX_RING_SIZE; i++ )
+			क्रम( i = 0 ; i < RX_RING_SIZE; i++ )
 				DPRINTK( 2, ( "rx #%d: base=%04x blen=%04x mlen=%04x\n",
 							  i, MEM->rx_head[i].base,
 							  -MEM->rx_head[i].buf_length,
 							  MEM->rx_head[i].msg_length ));
-			for( i = 0 ; i < TX_RING_SIZE; i++ )
+			क्रम( i = 0 ; i < TX_RING_SIZE; i++ )
 				DPRINTK( 2, ( "tx #%d: base=%04x len=%04x misc=%04x\n",
 							  i, MEM->tx_head[i].base,
 							  -MEM->tx_head[i].length,
 							  MEM->tx_head[i].misc ));
-		}
-#endif
+		पूर्ण
+#पूर्ण_अगर
 	/* XXX MSch: maybe purge/reinit ring here */
 	/* lance_restart, essentially */
 	lance_init_ring(dev);
 	REGA( CSR0 ) = CSR0_INEA | CSR0_INIT | CSR0_STRT;
-	netif_trans_update(dev); /* prevent tx timeout */
-	netif_wake_queue(dev);
-}
+	netअगर_trans_update(dev); /* prevent tx समयout */
+	netअगर_wake_queue(dev);
+पूर्ण
 
 /* XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX */
 
-static netdev_tx_t
-lance_start_xmit(struct sk_buff *skb, struct net_device *dev)
-{
-	struct lance_private *lp = netdev_priv(dev);
-	struct lance_ioreg	 *IO = lp->iobase;
-	int entry, len;
-	struct lance_tx_head *head;
-	unsigned long flags;
+अटल netdev_tx_t
+lance_start_xmit(काष्ठा sk_buff *skb, काष्ठा net_device *dev)
+अणु
+	काष्ठा lance_निजी *lp = netdev_priv(dev);
+	काष्ठा lance_ioreg	 *IO = lp->iobase;
+	पूर्णांक entry, len;
+	काष्ठा lance_tx_head *head;
+	अचिन्हित दीर्घ flags;
 
 	DPRINTK( 2, ( "%s: lance_start_xmit() called, csr0 %4.4x.\n",
 				  dev->name, DREG ));
 
 
-	/* The old LANCE chips doesn't automatically pad buffers to min. size. */
+	/* The old LANCE chips करोesn't स्वतःmatically pad buffers to min. size. */
 	len = skb->len;
-	if (len < ETH_ZLEN)
+	अगर (len < ETH_ZLEN)
 		len = ETH_ZLEN;
 	/* PAM-Card has a bug: Can only send packets with even number of bytes! */
-	else if (lp->cardtype == PAM_CARD && (len & 1))
+	अन्यथा अगर (lp->cardtype == PAM_CARD && (len & 1))
 		++len;
 
-	if (len > skb->len) {
-		if (skb_padto(skb, len))
-			return NETDEV_TX_OK;
-	}
+	अगर (len > skb->len) अणु
+		अगर (skb_padto(skb, len))
+			वापस NETDEV_TX_OK;
+	पूर्ण
 
-	netif_stop_queue (dev);
+	netअगर_stop_queue (dev);
 
 	/* Fill in a Tx ring entry */
-	if (lance_debug >= 3) {
-		printk( "%s: TX pkt type 0x%04x from %pM to %pM"
+	अगर (lance_debug >= 3) अणु
+		prपूर्णांकk( "%s: TX pkt type 0x%04x from %pM to %pM"
 				" data at 0x%08x len %d\n",
-				dev->name, ((u_short *)skb->data)[6],
+				dev->name, ((u_लघु *)skb->data)[6],
 				&skb->data[6], skb->data,
-				(int)skb->data, (int)skb->len );
-	}
+				(पूर्णांक)skb->data, (पूर्णांक)skb->len );
+	पूर्ण
 
-	/* We're not prepared for the int until the last flags are set/reset. And
-	 * the int may happen already after setting the OWN_CHIP... */
+	/* We're not prepared क्रम the पूर्णांक until the last flags are set/reset. And
+	 * the पूर्णांक may happen alपढ़ोy after setting the OWN_CHIP... */
 	spin_lock_irqsave (&lp->devlock, flags);
 
 	/* Mask to ring buffer boundary. */
 	entry = lp->cur_tx & TX_RING_MOD_MASK;
 	head  = &(MEM->tx_head[entry]);
 
-	/* Caution: the write order is important here, set the "ownership" bits
+	/* Caution: the ग_लिखो order is important here, set the "ownership" bits
 	 * last.
 	 */
 
 
 	head->length = -len;
 	head->misc = 0;
-	lp->memcpy_f( PKTBUF_ADDR(head), (void *)skb->data, skb->len );
+	lp->स_नकल_f( PKTBUF_ADDR(head), (व्योम *)skb->data, skb->len );
 	head->flag = TMD1_OWN_CHIP | TMD1_ENP | TMD1_STP;
 	dev->stats.tx_bytes += skb->len;
-	dev_kfree_skb( skb );
+	dev_kमुक्त_skb( skb );
 	lp->cur_tx++;
-	while( lp->cur_tx >= TX_RING_SIZE && lp->dirty_tx >= TX_RING_SIZE ) {
+	जबतक( lp->cur_tx >= TX_RING_SIZE && lp->dirty_tx >= TX_RING_SIZE ) अणु
 		lp->cur_tx -= TX_RING_SIZE;
 		lp->dirty_tx -= TX_RING_SIZE;
-	}
+	पूर्ण
 
 	/* Trigger an immediate send poll. */
 	DREG = CSR0_INEA | CSR0_TDMD;
 
-	if ((MEM->tx_head[(entry+1) & TX_RING_MOD_MASK].flag & TMD1_OWN) ==
+	अगर ((MEM->tx_head[(entry+1) & TX_RING_MOD_MASK].flag & TMD1_OWN) ==
 		TMD1_OWN_HOST)
-		netif_start_queue (dev);
-	else
+		netअगर_start_queue (dev);
+	अन्यथा
 		lp->tx_full = 1;
 	spin_unlock_irqrestore (&lp->devlock, flags);
 
-	return NETDEV_TX_OK;
-}
+	वापस NETDEV_TX_OK;
+पूर्ण
 
-/* The LANCE interrupt handler. */
+/* The LANCE पूर्णांकerrupt handler. */
 
-static irqreturn_t lance_interrupt( int irq, void *dev_id )
-{
-	struct net_device *dev = dev_id;
-	struct lance_private *lp;
-	struct lance_ioreg	 *IO;
-	int csr0, boguscnt = 10;
-	int handled = 0;
+अटल irqवापस_t lance_पूर्णांकerrupt( पूर्णांक irq, व्योम *dev_id )
+अणु
+	काष्ठा net_device *dev = dev_id;
+	काष्ठा lance_निजी *lp;
+	काष्ठा lance_ioreg	 *IO;
+	पूर्णांक csr0, boguscnt = 10;
+	पूर्णांक handled = 0;
 
-	if (dev == NULL) {
+	अगर (dev == शून्य) अणु
 		DPRINTK( 1, ( "lance_interrupt(): interrupt for unknown device.\n" ));
-		return IRQ_NONE;
-	}
+		वापस IRQ_NONE;
+	पूर्ण
 
 	lp = netdev_priv(dev);
 	IO = lp->iobase;
@@ -866,88 +867,88 @@ static irqreturn_t lance_interrupt( int irq, void *dev_id )
 
 	AREG = CSR0;
 
-	while( ((csr0 = DREG) & (CSR0_ERR | CSR0_TINT | CSR0_RINT)) &&
-		   --boguscnt >= 0) {
+	जबतक( ((csr0 = DREG) & (CSR0_ERR | CSR0_TINT | CSR0_RINT)) &&
+		   --boguscnt >= 0) अणु
 		handled = 1;
-		/* Acknowledge all of the current interrupt sources ASAP. */
+		/* Acknowledge all of the current पूर्णांकerrupt sources ASAP. */
 		DREG = csr0 & ~(CSR0_INIT | CSR0_STRT | CSR0_STOP |
 									CSR0_TDMD | CSR0_INEA);
 
 		DPRINTK( 2, ( "%s: interrupt  csr0=%04x new csr=%04x.\n",
 					  dev->name, csr0, DREG ));
 
-		if (csr0 & CSR0_RINT)			/* Rx interrupt */
+		अगर (csr0 & CSR0_RINT)			/* Rx पूर्णांकerrupt */
 			lance_rx( dev );
 
-		if (csr0 & CSR0_TINT) {			/* Tx-done interrupt */
-			int dirty_tx = lp->dirty_tx;
+		अगर (csr0 & CSR0_TINT) अणु			/* Tx-करोne पूर्णांकerrupt */
+			पूर्णांक dirty_tx = lp->dirty_tx;
 
-			while( dirty_tx < lp->cur_tx) {
-				int entry = dirty_tx & TX_RING_MOD_MASK;
-				int status = MEM->tx_head[entry].flag;
+			जबतक( dirty_tx < lp->cur_tx) अणु
+				पूर्णांक entry = dirty_tx & TX_RING_MOD_MASK;
+				पूर्णांक status = MEM->tx_head[entry].flag;
 
-				if (status & TMD1_OWN_CHIP)
-					break;			/* It still hasn't been Txed */
+				अगर (status & TMD1_OWN_CHIP)
+					अवरोध;			/* It still hasn't been Txed */
 
 				MEM->tx_head[entry].flag = 0;
 
-				if (status & TMD1_ERR) {
+				अगर (status & TMD1_ERR) अणु
 					/* There was an major error, log it. */
-					int err_status = MEM->tx_head[entry].misc;
+					पूर्णांक err_status = MEM->tx_head[entry].misc;
 					dev->stats.tx_errors++;
-					if (err_status & TMD3_RTRY) dev->stats.tx_aborted_errors++;
-					if (err_status & TMD3_LCAR) dev->stats.tx_carrier_errors++;
-					if (err_status & TMD3_LCOL) dev->stats.tx_window_errors++;
-					if (err_status & TMD3_UFLO) {
+					अगर (err_status & TMD3_RTRY) dev->stats.tx_पातed_errors++;
+					अगर (err_status & TMD3_LCAR) dev->stats.tx_carrier_errors++;
+					अगर (err_status & TMD3_LCOL) dev->stats.tx_winकरोw_errors++;
+					अगर (err_status & TMD3_UFLO) अणु
 						/* Ackk!  On FIFO errors the Tx unit is turned off! */
-						dev->stats.tx_fifo_errors++;
+						dev->stats.tx_fअगरo_errors++;
 						/* Remove this verbosity later! */
 						DPRINTK( 1, ( "%s: Tx FIFO error! Status %04x\n",
 									  dev->name, csr0 ));
 						/* Restart the chip. */
 						DREG = CSR0_STRT;
-					}
-				} else {
-					if (status & (TMD1_MORE | TMD1_ONE | TMD1_DEF))
+					पूर्ण
+				पूर्ण अन्यथा अणु
+					अगर (status & (TMD1_MORE | TMD1_ONE | TMD1_DEF))
 						dev->stats.collisions++;
 					dev->stats.tx_packets++;
-				}
+				पूर्ण
 
-				/* XXX MSch: free skb?? */
+				/* XXX MSch: मुक्त skb?? */
 				dirty_tx++;
-			}
+			पूर्ण
 
-#ifndef final_version
-			if (lp->cur_tx - dirty_tx >= TX_RING_SIZE) {
+#अगर_अघोषित final_version
+			अगर (lp->cur_tx - dirty_tx >= TX_RING_SIZE) अणु
 				DPRINTK( 0, ( "out-of-sync dirty pointer,"
 							  " %d vs. %d, full=%ld.\n",
 							  dirty_tx, lp->cur_tx, lp->tx_full ));
 				dirty_tx += TX_RING_SIZE;
-			}
-#endif
+			पूर्ण
+#पूर्ण_अगर
 
-			if (lp->tx_full && (netif_queue_stopped(dev)) &&
-				dirty_tx > lp->cur_tx - TX_RING_SIZE + 2) {
-				/* The ring is no longer full, clear tbusy. */
+			अगर (lp->tx_full && (netअगर_queue_stopped(dev)) &&
+				dirty_tx > lp->cur_tx - TX_RING_SIZE + 2) अणु
+				/* The ring is no दीर्घer full, clear tbusy. */
 				lp->tx_full = 0;
-				netif_wake_queue (dev);
-			}
+				netअगर_wake_queue (dev);
+			पूर्ण
 
 			lp->dirty_tx = dirty_tx;
-		}
+		पूर्ण
 
 		/* Log misc errors. */
-		if (csr0 & CSR0_BABL) dev->stats.tx_errors++; /* Tx babble. */
-		if (csr0 & CSR0_MISS) dev->stats.rx_errors++; /* Missed a Rx frame. */
-		if (csr0 & CSR0_MERR) {
+		अगर (csr0 & CSR0_BABL) dev->stats.tx_errors++; /* Tx babble. */
+		अगर (csr0 & CSR0_MISS) dev->stats.rx_errors++; /* Missed a Rx frame. */
+		अगर (csr0 & CSR0_MERR) अणु
 			DPRINTK( 1, ( "%s: Bus master arbitration failure (?!?), "
 						  "status %04x.\n", dev->name, csr0 ));
 			/* Restart the chip. */
 			DREG = CSR0_STRT;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-    /* Clear any other interrupt, and set interrupt enable. */
+    /* Clear any other पूर्णांकerrupt, and set पूर्णांकerrupt enable. */
 	DREG = CSR0_BABL | CSR0_CERR | CSR0_MISS | CSR0_MERR |
 		   CSR0_IDON | CSR0_INEA;
 
@@ -955,99 +956,99 @@ static irqreturn_t lance_interrupt( int irq, void *dev_id )
 				  dev->name, DREG ));
 
 	spin_unlock (&lp->devlock);
-	return IRQ_RETVAL(handled);
-}
+	वापस IRQ_RETVAL(handled);
+पूर्ण
 
 
-static int lance_rx( struct net_device *dev )
-{
-	struct lance_private *lp = netdev_priv(dev);
-	int entry = lp->cur_rx & RX_RING_MOD_MASK;
-	int i;
+अटल पूर्णांक lance_rx( काष्ठा net_device *dev )
+अणु
+	काष्ठा lance_निजी *lp = netdev_priv(dev);
+	पूर्णांक entry = lp->cur_rx & RX_RING_MOD_MASK;
+	पूर्णांक i;
 
 	DPRINTK( 2, ( "%s: rx int, flag=%04x\n", dev->name,
 				  MEM->rx_head[entry].flag ));
 
 	/* If we own the next entry, it's a new packet. Send it up. */
-	while( (MEM->rx_head[entry].flag & RMD1_OWN) == RMD1_OWN_HOST ) {
-		struct lance_rx_head *head = &(MEM->rx_head[entry]);
-		int status = head->flag;
+	जबतक( (MEM->rx_head[entry].flag & RMD1_OWN) == RMD1_OWN_HOST ) अणु
+		काष्ठा lance_rx_head *head = &(MEM->rx_head[entry]);
+		पूर्णांक status = head->flag;
 
-		if (status != (RMD1_ENP|RMD1_STP)) {		/* There was an error. */
+		अगर (status != (RMD1_ENP|RMD1_STP)) अणु		/* There was an error. */
 			/* There is a tricky error noted by John Murphy,
 			   <murf@perftech.com> to Russ Nelson: Even with full-sized
-			   buffers it's possible for a jabber packet to use two
+			   buffers it's possible क्रम a jabber packet to use two
 			   buffers, with only the last correctly noting the error. */
-			if (status & RMD1_ENP)	/* Only count a general error at the */
+			अगर (status & RMD1_ENP)	/* Only count a general error at the */
 				dev->stats.rx_errors++; /* end of a packet.*/
-			if (status & RMD1_FRAM) dev->stats.rx_frame_errors++;
-			if (status & RMD1_OFLO) dev->stats.rx_over_errors++;
-			if (status & RMD1_CRC) dev->stats.rx_crc_errors++;
-			if (status & RMD1_BUFF) dev->stats.rx_fifo_errors++;
+			अगर (status & RMD1_FRAM) dev->stats.rx_frame_errors++;
+			अगर (status & RMD1_OFLO) dev->stats.rx_over_errors++;
+			अगर (status & RMD1_CRC) dev->stats.rx_crc_errors++;
+			अगर (status & RMD1_BUFF) dev->stats.rx_fअगरo_errors++;
 			head->flag &= (RMD1_ENP|RMD1_STP);
-		} else {
+		पूर्ण अन्यथा अणु
 			/* Malloc up new buffer, compatible with net-3. */
-			short pkt_len = head->msg_length & 0xfff;
-			struct sk_buff *skb;
+			लघु pkt_len = head->msg_length & 0xfff;
+			काष्ठा sk_buff *skb;
 
-			if (pkt_len < 60) {
-				printk( "%s: Runt packet!\n", dev->name );
+			अगर (pkt_len < 60) अणु
+				prपूर्णांकk( "%s: Runt packet!\n", dev->name );
 				dev->stats.rx_errors++;
-			}
-			else {
+			पूर्ण
+			अन्यथा अणु
 				skb = netdev_alloc_skb(dev, pkt_len + 2);
-				if (skb == NULL) {
-					for( i = 0; i < RX_RING_SIZE; i++ )
-						if (MEM->rx_head[(entry+i) & RX_RING_MOD_MASK].flag &
+				अगर (skb == शून्य) अणु
+					क्रम( i = 0; i < RX_RING_SIZE; i++ )
+						अगर (MEM->rx_head[(entry+i) & RX_RING_MOD_MASK].flag &
 							RMD1_OWN_CHIP)
-							break;
+							अवरोध;
 
-					if (i > RX_RING_SIZE - 2) {
+					अगर (i > RX_RING_SIZE - 2) अणु
 						dev->stats.rx_dropped++;
 						head->flag |= RMD1_OWN_CHIP;
 						lp->cur_rx++;
-					}
-					break;
-				}
+					पूर्ण
+					अवरोध;
+				पूर्ण
 
-				if (lance_debug >= 3) {
-					u_char *data = PKTBUF_ADDR(head);
+				अगर (lance_debug >= 3) अणु
+					u_अक्षर *data = PKTBUF_ADDR(head);
 
-					printk(KERN_DEBUG "%s: RX pkt type 0x%04x from %pM to %pM "
+					prपूर्णांकk(KERN_DEBUG "%s: RX pkt type 0x%04x from %pM to %pM "
 						   "data %8ph len %d\n",
-						   dev->name, ((u_short *)data)[6],
+						   dev->name, ((u_लघु *)data)[6],
 						   &data[6], data, &data[15], pkt_len);
-				}
+				पूर्ण
 
 				skb_reserve( skb, 2 );	/* 16 byte align */
 				skb_put( skb, pkt_len );	/* Make room */
-				lp->memcpy_f( skb->data, PKTBUF_ADDR(head), pkt_len );
+				lp->स_नकल_f( skb->data, PKTBUF_ADDR(head), pkt_len );
 				skb->protocol = eth_type_trans( skb, dev );
-				netif_rx( skb );
+				netअगर_rx( skb );
 				dev->stats.rx_packets++;
 				dev->stats.rx_bytes += pkt_len;
-			}
-		}
+			पूर्ण
+		पूर्ण
 
 		head->flag |= RMD1_OWN_CHIP;
 		entry = (++lp->cur_rx) & RX_RING_MOD_MASK;
-	}
+	पूर्ण
 	lp->cur_rx &= RX_RING_MOD_MASK;
 
 	/* From lance.c (Donald Becker): */
-	/* We should check that at least two ring entries are free.	 If not,
-	   we should free one and mark stats->rx_dropped++. */
+	/* We should check that at least two ring entries are मुक्त.	 If not,
+	   we should मुक्त one and mark stats->rx_dropped++. */
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
-static int lance_close( struct net_device *dev )
-{
-	struct lance_private *lp = netdev_priv(dev);
-	struct lance_ioreg	 *IO = lp->iobase;
+अटल पूर्णांक lance_बंद( काष्ठा net_device *dev )
+अणु
+	काष्ठा lance_निजी *lp = netdev_priv(dev);
+	काष्ठा lance_ioreg	 *IO = lp->iobase;
 
-	netif_stop_queue (dev);
+	netअगर_stop_queue (dev);
 
 	AREG = CSR0;
 
@@ -1055,104 +1056,104 @@ static int lance_close( struct net_device *dev )
 				  dev->name, DREG ));
 
 	/* We stop the LANCE here -- it occasionally polls
-	   memory if we don't. */
+	   memory अगर we करोn't. */
 	DREG = CSR0_STOP;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
-/* Set or clear the multicast filter for this adaptor.
+/* Set or clear the multicast filter क्रम this adaptor.
    num_addrs == -1		Promiscuous mode, receive all packets
    num_addrs == 0		Normal mode, clear multicast list
-   num_addrs > 0		Multicast mode, receive normal and MC packets, and do
-						best-effort filtering.
+   num_addrs > 0		Multicast mode, receive normal and MC packets, and करो
+						best-efक्रमt filtering.
  */
 
-static void set_multicast_list( struct net_device *dev )
-{
-	struct lance_private *lp = netdev_priv(dev);
-	struct lance_ioreg	 *IO = lp->iobase;
+अटल व्योम set_multicast_list( काष्ठा net_device *dev )
+अणु
+	काष्ठा lance_निजी *lp = netdev_priv(dev);
+	काष्ठा lance_ioreg	 *IO = lp->iobase;
 
-	if (netif_running(dev))
-		/* Only possible if board is already started */
-		return;
+	अगर (netअगर_running(dev))
+		/* Only possible अगर board is alपढ़ोy started */
+		वापस;
 
 	/* We take the simple way out and always enable promiscuous mode. */
 	DREG = CSR0_STOP; /* Temporarily stop the lance. */
 
-	if (dev->flags & IFF_PROMISC) {
+	अगर (dev->flags & IFF_PROMISC) अणु
 		/* Log any net taps. */
 		DPRINTK( 2, ( "%s: Promiscuous mode enabled.\n", dev->name ));
 		REGA( CSR15 ) = 0x8000; /* Set promiscuous mode */
-	} else {
-		short multicast_table[4];
-		int num_addrs = netdev_mc_count(dev);
-		int i;
-		/* We don't use the multicast table, but rely on upper-layer
+	पूर्ण अन्यथा अणु
+		लघु multicast_table[4];
+		पूर्णांक num_addrs = netdev_mc_count(dev);
+		पूर्णांक i;
+		/* We करोn't use the multicast table, but rely on upper-layer
 		 * filtering. */
-		memset( multicast_table, (num_addrs == 0) ? 0 : -1,
-				sizeof(multicast_table) );
-		for( i = 0; i < 4; i++ )
+		स_रखो( multicast_table, (num_addrs == 0) ? 0 : -1,
+				माप(multicast_table) );
+		क्रम( i = 0; i < 4; i++ )
 			REGA( CSR8+i ) = multicast_table[i];
 		REGA( CSR15 ) = 0; /* Unset promiscuous mode */
-	}
+	पूर्ण
 
 	/*
-	 * Always set BSWP after a STOP as STOP puts it back into
+	 * Always set BSWP after a STOP as STOP माला_दो it back पूर्णांकo
 	 * little endian mode.
 	 */
 	REGA( CSR3 ) = CSR3_BSWP | (lp->cardtype == PAM_CARD ? CSR3_ACON : 0);
 
 	/* Resume normal operation and reset AREG to CSR0 */
 	REGA( CSR0 ) = CSR0_IDON | CSR0_INEA | CSR0_STRT;
-}
+पूर्ण
 
 
-/* This is needed for old RieblCards and possible for new RieblCards */
+/* This is needed क्रम old RieblCards and possible क्रम new RieblCards */
 
-static int lance_set_mac_address( struct net_device *dev, void *addr )
-{
-	struct lance_private *lp = netdev_priv(dev);
-	struct sockaddr *saddr = addr;
-	int i;
+अटल पूर्णांक lance_set_mac_address( काष्ठा net_device *dev, व्योम *addr )
+अणु
+	काष्ठा lance_निजी *lp = netdev_priv(dev);
+	काष्ठा sockaddr *saddr = addr;
+	पूर्णांक i;
 
-	if (lp->cardtype != OLD_RIEBL && lp->cardtype != NEW_RIEBL)
-		return -EOPNOTSUPP;
+	अगर (lp->cardtype != OLD_RIEBL && lp->cardtype != NEW_RIEBL)
+		वापस -EOPNOTSUPP;
 
-	if (netif_running(dev)) {
-		/* Only possible while card isn't started */
+	अगर (netअगर_running(dev)) अणु
+		/* Only possible जबतक card isn't started */
 		DPRINTK( 1, ( "%s: hwaddr can be set only while card isn't open.\n",
 					  dev->name ));
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
-	memcpy( dev->dev_addr, saddr->sa_data, dev->addr_len );
-	for( i = 0; i < 6; i++ )
+	स_नकल( dev->dev_addr, saddr->sa_data, dev->addr_len );
+	क्रम( i = 0; i < 6; i++ )
 		MEM->init.hwaddr[i] = dev->dev_addr[i^1]; /* <- 16 bit swap! */
-	lp->memcpy_f( RIEBL_HWADDR_ADDR, dev->dev_addr, 6 );
-	/* set also the magic for future sessions */
+	lp->स_नकल_f( RIEBL_HWADDR_ADDR, dev->dev_addr, 6 );
+	/* set also the magic क्रम future sessions */
 	*RIEBL_MAGIC_ADDR = RIEBL_MAGIC;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
-#ifdef MODULE
-static struct net_device *atarilance_dev;
+#अगर_घोषित MODULE
+अटल काष्ठा net_device *atarilance_dev;
 
-static int __init atarilance_module_init(void)
-{
+अटल पूर्णांक __init atarilance_module_init(व्योम)
+अणु
 	atarilance_dev = atarilance_probe(-1);
-	return PTR_ERR_OR_ZERO(atarilance_dev);
-}
+	वापस PTR_ERR_OR_ZERO(atarilance_dev);
+पूर्ण
 
-static void __exit atarilance_module_exit(void)
-{
-	unregister_netdev(atarilance_dev);
-	free_irq(atarilance_dev->irq, atarilance_dev);
-	free_netdev(atarilance_dev);
-}
+अटल व्योम __निकास atarilance_module_निकास(व्योम)
+अणु
+	unरेजिस्टर_netdev(atarilance_dev);
+	मुक्त_irq(atarilance_dev->irq, atarilance_dev);
+	मुक्त_netdev(atarilance_dev);
+पूर्ण
 module_init(atarilance_module_init);
-module_exit(atarilance_module_exit);
-#endif /* MODULE */
+module_निकास(atarilance_module_निकास);
+#पूर्ण_अगर /* MODULE */

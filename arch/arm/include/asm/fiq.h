@@ -1,57 +1,58 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- *  arch/arm/include/asm/fiq.h
+ *  arch/arm/include/यंत्र/fiq.h
  *
- * Support for FIQ on ARM architectures.
+ * Support क्रम FIQ on ARM architectures.
  * Written by Philip Blundell <philb@gnu.org>, 1998
  * Re-written by Russell King
  *
- * NOTE: The FIQ mode registers are not magically preserved across
+ * NOTE: The FIQ mode रेजिस्टरs are not magically preserved across
  * suspend/resume.
  *
- * Drivers which require these registers to be preserved across power
+ * Drivers which require these रेजिस्टरs to be preserved across घातer
  * management operations must implement appropriate suspend/resume handlers to
  * save and restore them.
  */
 
-#ifndef __ASM_FIQ_H
-#define __ASM_FIQ_H
+#अगर_अघोषित __ASM_FIQ_H
+#घोषणा __ASM_FIQ_H
 
-#include <asm/ptrace.h>
+#समावेश <यंत्र/ptrace.h>
 
-struct fiq_handler {
-	struct fiq_handler *next;
+काष्ठा fiq_handler अणु
+	काष्ठा fiq_handler *next;
 	/* Name
 	 */
-	const char *name;
+	स्थिर अक्षर *name;
 	/* Called to ask driver to relinquish/
 	 * reacquire FIQ
-	 * return zero to accept, or -<errno>
+	 * वापस zero to accept, or -<त्रुटि_सं>
 	 */
-	int (*fiq_op)(void *, int relinquish);
-	/* data for the relinquish/reacquire functions
+	पूर्णांक (*fiq_op)(व्योम *, पूर्णांक relinquish);
+	/* data क्रम the relinquish/reacquire functions
 	 */
-	void *dev_id;
-};
+	व्योम *dev_id;
+पूर्ण;
 
-extern int claim_fiq(struct fiq_handler *f);
-extern void release_fiq(struct fiq_handler *f);
-extern void set_fiq_handler(void *start, unsigned int length);
-extern void enable_fiq(int fiq);
-extern void disable_fiq(int fiq);
+बाह्य पूर्णांक claim_fiq(काष्ठा fiq_handler *f);
+बाह्य व्योम release_fiq(काष्ठा fiq_handler *f);
+बाह्य व्योम set_fiq_handler(व्योम *start, अचिन्हित पूर्णांक length);
+बाह्य व्योम enable_fiq(पूर्णांक fiq);
+बाह्य व्योम disable_fiq(पूर्णांक fiq);
 
-/* helpers defined in fiqasm.S: */
-extern void __set_fiq_regs(unsigned long const *regs);
-extern void __get_fiq_regs(unsigned long *regs);
+/* helpers defined in fiqयंत्र.S: */
+बाह्य व्योम __set_fiq_regs(अचिन्हित दीर्घ स्थिर *regs);
+बाह्य व्योम __get_fiq_regs(अचिन्हित दीर्घ *regs);
 
-static inline void set_fiq_regs(struct pt_regs const *regs)
-{
+अटल अंतरभूत व्योम set_fiq_regs(काष्ठा pt_regs स्थिर *regs)
+अणु
 	__set_fiq_regs(&regs->ARM_r8);
-}
+पूर्ण
 
-static inline void get_fiq_regs(struct pt_regs *regs)
-{
+अटल अंतरभूत व्योम get_fiq_regs(काष्ठा pt_regs *regs)
+अणु
 	__get_fiq_regs(&regs->ARM_r8);
-}
+पूर्ण
 
-#endif
+#पूर्ण_अगर

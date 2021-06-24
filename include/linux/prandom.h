@@ -1,116 +1,117 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- * include/linux/prandom.h
+ * include/linux/pअक्रमom.h
  *
- * Include file for the fast pseudo-random 32-bit
+ * Include file क्रम the fast pseuकरो-अक्रमom 32-bit
  * generation.
  */
-#ifndef _LINUX_PRANDOM_H
-#define _LINUX_PRANDOM_H
+#अगर_अघोषित _LINUX_PRANDOM_H
+#घोषणा _LINUX_PRANDOM_H
 
-#include <linux/types.h>
-#include <linux/percpu.h>
+#समावेश <linux/types.h>
+#समावेश <linux/percpu.h>
 
-u32 prandom_u32(void);
-void prandom_bytes(void *buf, size_t nbytes);
-void prandom_seed(u32 seed);
-void prandom_reseed_late(void);
+u32 pअक्रमom_u32(व्योम);
+व्योम pअक्रमom_bytes(व्योम *buf, माप_प्रकार nbytes);
+व्योम pअक्रमom_seed(u32 seed);
+व्योम pअक्रमom_reseed_late(व्योम);
 
-DECLARE_PER_CPU(unsigned long, net_rand_noise);
+DECLARE_PER_CPU(अचिन्हित दीर्घ, net_अक्रम_noise);
 
-#define PRANDOM_ADD_NOISE(a, b, c, d) \
-	prandom_u32_add_noise((unsigned long)(a), (unsigned long)(b), \
-			      (unsigned long)(c), (unsigned long)(d))
+#घोषणा PRANDOM_ADD_NOISE(a, b, c, d) \
+	pअक्रमom_u32_add_noise((अचिन्हित दीर्घ)(a), (अचिन्हित दीर्घ)(b), \
+			      (अचिन्हित दीर्घ)(c), (अचिन्हित दीर्घ)(d))
 
-#if BITS_PER_LONG == 64
+#अगर BITS_PER_LONG == 64
 /*
  * The core SipHash round function.  Each line can be executed in
  * parallel given enough CPU resources.
  */
-#define PRND_SIPROUND(v0, v1, v2, v3) ( \
+#घोषणा PRND_SIPROUND(v0, v1, v2, v3) ( \
 	v0 += v1, v1 = rol64(v1, 13),  v2 += v3, v3 = rol64(v3, 16), \
 	v1 ^= v0, v0 = rol64(v0, 32),  v3 ^= v2,                     \
 	v0 += v3, v3 = rol64(v3, 21),  v2 += v1, v1 = rol64(v1, 17), \
 	v3 ^= v0,                      v1 ^= v2, v2 = rol64(v2, 32)  \
 )
 
-#define PRND_K0 (0x736f6d6570736575 ^ 0x6c7967656e657261)
-#define PRND_K1 (0x646f72616e646f6d ^ 0x7465646279746573)
+#घोषणा PRND_K0 (0x736f6d6570736575 ^ 0x6c7967656e657261)
+#घोषणा PRND_K1 (0x646f72616e646f6d ^ 0x7465646279746573)
 
-#elif BITS_PER_LONG == 32
+#या_अगर BITS_PER_LONG == 32
 /*
  * On 32-bit machines, we use HSipHash, a reduced-width version of SipHash.
- * This is weaker, but 32-bit machines are not used for high-traffic
- * applications, so there is less output for an attacker to analyze.
+ * This is weaker, but 32-bit machines are not used क्रम high-traffic
+ * applications, so there is less output क्रम an attacker to analyze.
  */
-#define PRND_SIPROUND(v0, v1, v2, v3) ( \
+#घोषणा PRND_SIPROUND(v0, v1, v2, v3) ( \
 	v0 += v1, v1 = rol32(v1,  5),  v2 += v3, v3 = rol32(v3,  8), \
 	v1 ^= v0, v0 = rol32(v0, 16),  v3 ^= v2,                     \
 	v0 += v3, v3 = rol32(v3,  7),  v2 += v1, v1 = rol32(v1, 13), \
 	v3 ^= v0,                      v1 ^= v2, v2 = rol32(v2, 16)  \
 )
-#define PRND_K0 0x6c796765
-#define PRND_K1 0x74656462
+#घोषणा PRND_K0 0x6c796765
+#घोषणा PRND_K1 0x74656462
 
-#else
-#error Unsupported BITS_PER_LONG
-#endif
+#अन्यथा
+#त्रुटि Unsupported BITS_PER_LONG
+#पूर्ण_अगर
 
-static inline void prandom_u32_add_noise(unsigned long a, unsigned long b,
-					 unsigned long c, unsigned long d)
-{
+अटल अंतरभूत व्योम pअक्रमom_u32_add_noise(अचिन्हित दीर्घ a, अचिन्हित दीर्घ b,
+					 अचिन्हित दीर्घ c, अचिन्हित दीर्घ d)
+अणु
 	/*
 	 * This is not used cryptographically; it's just
 	 * a convenient 4-word hash function. (3 xor, 2 add, 2 rol)
 	 */
-	a ^= raw_cpu_read(net_rand_noise);
+	a ^= raw_cpu_पढ़ो(net_अक्रम_noise);
 	PRND_SIPROUND(a, b, c, d);
-	raw_cpu_write(net_rand_noise, d);
-}
+	raw_cpu_ग_लिखो(net_अक्रम_noise, d);
+पूर्ण
 
-struct rnd_state {
+काष्ठा rnd_state अणु
 	__u32 s1, s2, s3, s4;
-};
+पूर्ण;
 
-u32 prandom_u32_state(struct rnd_state *state);
-void prandom_bytes_state(struct rnd_state *state, void *buf, size_t nbytes);
-void prandom_seed_full_state(struct rnd_state __percpu *pcpu_state);
+u32 pअक्रमom_u32_state(काष्ठा rnd_state *state);
+व्योम pअक्रमom_bytes_state(काष्ठा rnd_state *state, व्योम *buf, माप_प्रकार nbytes);
+व्योम pअक्रमom_seed_full_state(काष्ठा rnd_state __percpu *pcpu_state);
 
-#define prandom_init_once(pcpu_state)			\
-	DO_ONCE(prandom_seed_full_state, (pcpu_state))
+#घोषणा pअक्रमom_init_once(pcpu_state)			\
+	DO_ONCE(pअक्रमom_seed_full_state, (pcpu_state))
 
 /**
- * prandom_u32_max - returns a pseudo-random number in interval [0, ep_ro)
- * @ep_ro: right open interval endpoint
+ * pअक्रमom_u32_max - वापसs a pseuकरो-अक्रमom number in पूर्णांकerval [0, ep_ro)
+ * @ep_ro: right खोलो पूर्णांकerval endpoपूर्णांक
  *
- * Returns a pseudo-random number that is in interval [0, ep_ro). Note
+ * Returns a pseuकरो-अक्रमom number that is in पूर्णांकerval [0, ep_ro). Note
  * that the result depends on PRNG being well distributed in [0, ~0U]
  * u32 space. Here we use maximally equidistributed combined Tausworthe
- * generator, that is, prandom_u32(). This is useful when requesting a
- * random index of an array containing ep_ro elements, for example.
+ * generator, that is, pअक्रमom_u32(). This is useful when requesting a
+ * अक्रमom index of an array containing ep_ro elements, क्रम example.
  *
- * Returns: pseudo-random number in interval [0, ep_ro)
+ * Returns: pseuकरो-अक्रमom number in पूर्णांकerval [0, ep_ro)
  */
-static inline u32 prandom_u32_max(u32 ep_ro)
-{
-	return (u32)(((u64) prandom_u32() * ep_ro) >> 32);
-}
+अटल अंतरभूत u32 pअक्रमom_u32_max(u32 ep_ro)
+अणु
+	वापस (u32)(((u64) pअक्रमom_u32() * ep_ro) >> 32);
+पूर्ण
 
 /*
- * Handle minimum values for seeds
+ * Handle minimum values क्रम seeds
  */
-static inline u32 __seed(u32 x, u32 m)
-{
-	return (x < m) ? x + m : x;
-}
+अटल अंतरभूत u32 __seed(u32 x, u32 m)
+अणु
+	वापस (x < m) ? x + m : x;
+पूर्ण
 
 /**
- * prandom_seed_state - set seed for prandom_u32_state().
- * @state: pointer to state structure to receive the seed.
+ * pअक्रमom_seed_state - set seed क्रम pअक्रमom_u32_state().
+ * @state: poपूर्णांकer to state काष्ठाure to receive the seed.
  * @seed: arbitrary 64-bit value to use as a seed.
  */
-static inline void prandom_seed_state(struct rnd_state *state, u64 seed)
-{
+अटल अंतरभूत व्योम pअक्रमom_seed_state(काष्ठा rnd_state *state, u64 seed)
+अणु
 	u32 i = (seed >> 32) ^ (seed << 10) ^ seed;
 
 	state->s1 = __seed(i,   2U);
@@ -118,12 +119,12 @@ static inline void prandom_seed_state(struct rnd_state *state, u64 seed)
 	state->s3 = __seed(i,  16U);
 	state->s4 = __seed(i, 128U);
 	PRANDOM_ADD_NOISE(state, i, 0, 0);
-}
+पूर्ण
 
-/* Pseudo random number generator from numerical recipes. */
-static inline u32 next_pseudo_random32(u32 seed)
-{
-	return seed * 1664525 + 1013904223;
-}
+/* Pseuकरो अक्रमom number generator from numerical recipes. */
+अटल अंतरभूत u32 next_pseuकरो_अक्रमom32(u32 seed)
+अणु
+	वापस seed * 1664525 + 1013904223;
+पूर्ण
 
-#endif
+#पूर्ण_अगर

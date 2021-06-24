@@ -1,14 +1,15 @@
+<शैली गुरु>
 /*
  *
  * Copyright 2008 (c) Intel Corporation
  *   Jesse Barnes <jbarnes@virtuousgeek.org>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the
  * "Software"), to deal in the Software without restriction, including
- * without limitation the rights to use, copy, modify, merge, publish,
+ * without limitation the rights to use, copy, modअगरy, merge, publish,
  * distribute, sub license, and/or sell copies of the Software, and to
- * permit persons to whom the Software is furnished to do so, subject to
+ * permit persons to whom the Software is furnished to करो so, subject to
  * the following conditions:
  *
  * The above copyright notice and this permission notice (including the
@@ -24,98 +25,98 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include "display/intel_de.h"
-#include "display/intel_fbc.h"
-#include "display/intel_gmbus.h"
-#include "display/intel_vga.h"
+#समावेश "display/intel_de.h"
+#समावेश "display/intel_fbc.h"
+#समावेश "display/intel_gmbus.h"
+#समावेश "display/intel_vga.h"
 
-#include "i915_drv.h"
-#include "i915_reg.h"
-#include "i915_suspend.h"
+#समावेश "i915_drv.h"
+#समावेश "i915_reg.h"
+#समावेश "i915_suspend.h"
 
-static void intel_save_swf(struct drm_i915_private *dev_priv)
-{
-	int i;
-
-	/* Scratch space */
-	if (IS_GEN(dev_priv, 2) && IS_MOBILE(dev_priv)) {
-		for (i = 0; i < 7; i++) {
-			dev_priv->regfile.saveSWF0[i] = intel_de_read(dev_priv, SWF0(i));
-			dev_priv->regfile.saveSWF1[i] = intel_de_read(dev_priv, SWF1(i));
-		}
-		for (i = 0; i < 3; i++)
-			dev_priv->regfile.saveSWF3[i] = intel_de_read(dev_priv, SWF3(i));
-	} else if (IS_GEN(dev_priv, 2)) {
-		for (i = 0; i < 7; i++)
-			dev_priv->regfile.saveSWF1[i] = intel_de_read(dev_priv, SWF1(i));
-	} else if (HAS_GMCH(dev_priv)) {
-		for (i = 0; i < 16; i++) {
-			dev_priv->regfile.saveSWF0[i] = intel_de_read(dev_priv, SWF0(i));
-			dev_priv->regfile.saveSWF1[i] = intel_de_read(dev_priv, SWF1(i));
-		}
-		for (i = 0; i < 3; i++)
-			dev_priv->regfile.saveSWF3[i] = intel_de_read(dev_priv, SWF3(i));
-	}
-}
-
-static void intel_restore_swf(struct drm_i915_private *dev_priv)
-{
-	int i;
+अटल व्योम पूर्णांकel_save_swf(काष्ठा drm_i915_निजी *dev_priv)
+अणु
+	पूर्णांक i;
 
 	/* Scratch space */
-	if (IS_GEN(dev_priv, 2) && IS_MOBILE(dev_priv)) {
-		for (i = 0; i < 7; i++) {
-			intel_de_write(dev_priv, SWF0(i), dev_priv->regfile.saveSWF0[i]);
-			intel_de_write(dev_priv, SWF1(i), dev_priv->regfile.saveSWF1[i]);
-		}
-		for (i = 0; i < 3; i++)
-			intel_de_write(dev_priv, SWF3(i), dev_priv->regfile.saveSWF3[i]);
-	} else if (IS_GEN(dev_priv, 2)) {
-		for (i = 0; i < 7; i++)
-			intel_de_write(dev_priv, SWF1(i), dev_priv->regfile.saveSWF1[i]);
-	} else if (HAS_GMCH(dev_priv)) {
-		for (i = 0; i < 16; i++) {
-			intel_de_write(dev_priv, SWF0(i), dev_priv->regfile.saveSWF0[i]);
-			intel_de_write(dev_priv, SWF1(i), dev_priv->regfile.saveSWF1[i]);
-		}
-		for (i = 0; i < 3; i++)
-			intel_de_write(dev_priv, SWF3(i), dev_priv->regfile.saveSWF3[i]);
-	}
-}
+	अगर (IS_GEN(dev_priv, 2) && IS_MOBILE(dev_priv)) अणु
+		क्रम (i = 0; i < 7; i++) अणु
+			dev_priv->regfile.saveSWF0[i] = पूर्णांकel_de_पढ़ो(dev_priv, SWF0(i));
+			dev_priv->regfile.saveSWF1[i] = पूर्णांकel_de_पढ़ो(dev_priv, SWF1(i));
+		पूर्ण
+		क्रम (i = 0; i < 3; i++)
+			dev_priv->regfile.saveSWF3[i] = पूर्णांकel_de_पढ़ो(dev_priv, SWF3(i));
+	पूर्ण अन्यथा अगर (IS_GEN(dev_priv, 2)) अणु
+		क्रम (i = 0; i < 7; i++)
+			dev_priv->regfile.saveSWF1[i] = पूर्णांकel_de_पढ़ो(dev_priv, SWF1(i));
+	पूर्ण अन्यथा अगर (HAS_GMCH(dev_priv)) अणु
+		क्रम (i = 0; i < 16; i++) अणु
+			dev_priv->regfile.saveSWF0[i] = पूर्णांकel_de_पढ़ो(dev_priv, SWF0(i));
+			dev_priv->regfile.saveSWF1[i] = पूर्णांकel_de_पढ़ो(dev_priv, SWF1(i));
+		पूर्ण
+		क्रम (i = 0; i < 3; i++)
+			dev_priv->regfile.saveSWF3[i] = पूर्णांकel_de_पढ़ो(dev_priv, SWF3(i));
+	पूर्ण
+पूर्ण
 
-void i915_save_display(struct drm_i915_private *dev_priv)
-{
-	struct pci_dev *pdev = to_pci_dev(dev_priv->drm.dev);
+अटल व्योम पूर्णांकel_restore_swf(काष्ठा drm_i915_निजी *dev_priv)
+अणु
+	पूर्णांक i;
+
+	/* Scratch space */
+	अगर (IS_GEN(dev_priv, 2) && IS_MOBILE(dev_priv)) अणु
+		क्रम (i = 0; i < 7; i++) अणु
+			पूर्णांकel_de_ग_लिखो(dev_priv, SWF0(i), dev_priv->regfile.saveSWF0[i]);
+			पूर्णांकel_de_ग_लिखो(dev_priv, SWF1(i), dev_priv->regfile.saveSWF1[i]);
+		पूर्ण
+		क्रम (i = 0; i < 3; i++)
+			पूर्णांकel_de_ग_लिखो(dev_priv, SWF3(i), dev_priv->regfile.saveSWF3[i]);
+	पूर्ण अन्यथा अगर (IS_GEN(dev_priv, 2)) अणु
+		क्रम (i = 0; i < 7; i++)
+			पूर्णांकel_de_ग_लिखो(dev_priv, SWF1(i), dev_priv->regfile.saveSWF1[i]);
+	पूर्ण अन्यथा अगर (HAS_GMCH(dev_priv)) अणु
+		क्रम (i = 0; i < 16; i++) अणु
+			पूर्णांकel_de_ग_लिखो(dev_priv, SWF0(i), dev_priv->regfile.saveSWF0[i]);
+			पूर्णांकel_de_ग_लिखो(dev_priv, SWF1(i), dev_priv->regfile.saveSWF1[i]);
+		पूर्ण
+		क्रम (i = 0; i < 3; i++)
+			पूर्णांकel_de_ग_लिखो(dev_priv, SWF3(i), dev_priv->regfile.saveSWF3[i]);
+	पूर्ण
+पूर्ण
+
+व्योम i915_save_display(काष्ठा drm_i915_निजी *dev_priv)
+अणु
+	काष्ठा pci_dev *pdev = to_pci_dev(dev_priv->drm.dev);
 
 	/* Display arbitration control */
-	if (INTEL_GEN(dev_priv) <= 4)
-		dev_priv->regfile.saveDSPARB = intel_de_read(dev_priv, DSPARB);
+	अगर (INTEL_GEN(dev_priv) <= 4)
+		dev_priv->regfile.saveDSPARB = पूर्णांकel_de_पढ़ो(dev_priv, DSPARB);
 
-	if (IS_GEN(dev_priv, 4))
-		pci_read_config_word(pdev, GCDGMBUS,
+	अगर (IS_GEN(dev_priv, 4))
+		pci_पढ़ो_config_word(pdev, GCDGMBUS,
 				     &dev_priv->regfile.saveGCDGMBUS);
 
-	intel_save_swf(dev_priv);
-}
+	पूर्णांकel_save_swf(dev_priv);
+पूर्ण
 
-void i915_restore_display(struct drm_i915_private *dev_priv)
-{
-	struct pci_dev *pdev = to_pci_dev(dev_priv->drm.dev);
+व्योम i915_restore_display(काष्ठा drm_i915_निजी *dev_priv)
+अणु
+	काष्ठा pci_dev *pdev = to_pci_dev(dev_priv->drm.dev);
 
-	intel_restore_swf(dev_priv);
+	पूर्णांकel_restore_swf(dev_priv);
 
-	if (IS_GEN(dev_priv, 4))
-		pci_write_config_word(pdev, GCDGMBUS,
+	अगर (IS_GEN(dev_priv, 4))
+		pci_ग_लिखो_config_word(pdev, GCDGMBUS,
 				      dev_priv->regfile.saveGCDGMBUS);
 
 	/* Display arbitration */
-	if (INTEL_GEN(dev_priv) <= 4)
-		intel_de_write(dev_priv, DSPARB, dev_priv->regfile.saveDSPARB);
+	अगर (INTEL_GEN(dev_priv) <= 4)
+		पूर्णांकel_de_ग_लिखो(dev_priv, DSPARB, dev_priv->regfile.saveDSPARB);
 
-	/* only restore FBC info on the platform that supports FBC*/
-	intel_fbc_global_disable(dev_priv);
+	/* only restore FBC info on the platक्रमm that supports FBC*/
+	पूर्णांकel_fbc_global_disable(dev_priv);
 
-	intel_vga_redisable(dev_priv);
+	पूर्णांकel_vga_redisable(dev_priv);
 
-	intel_gmbus_reset(dev_priv);
-}
+	पूर्णांकel_gmbus_reset(dev_priv);
+पूर्ण

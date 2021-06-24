@@ -1,102 +1,103 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (C) 2002 ARM Ltd.
  * Copyright (C) 2008 STMicroelctronics.
  * Copyright (C) 2009 ST-Ericsson.
  * Author: Srinidhi Kasagar <srinidhi.kasagar@stericsson.com>
  *
- * This file is based on arm realview platform
+ * This file is based on arm realview platक्रमm
  */
-#include <linux/init.h>
-#include <linux/errno.h>
-#include <linux/delay.h>
-#include <linux/device.h>
-#include <linux/smp.h>
-#include <linux/io.h>
-#include <linux/of.h>
-#include <linux/of_address.h>
+#समावेश <linux/init.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/delay.h>
+#समावेश <linux/device.h>
+#समावेश <linux/smp.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/of.h>
+#समावेश <linux/of_address.h>
 
-#include <asm/cacheflush.h>
-#include <asm/smp_plat.h>
-#include <asm/smp_scu.h>
+#समावेश <यंत्र/cacheflush.h>
+#समावेश <यंत्र/smp_plat.h>
+#समावेश <यंत्र/smp_scu.h>
 
-#include "db8500-regs.h"
+#समावेश "db8500-regs.h"
 
 /* Magic triggers in backup RAM */
-#define UX500_CPU1_JUMPADDR_OFFSET 0x1FF4
-#define UX500_CPU1_WAKEMAGIC_OFFSET 0x1FF0
+#घोषणा UX500_CPU1_JUMPADDR_OFFSET 0x1FF4
+#घोषणा UX500_CPU1_WAKEMAGIC_OFFSET 0x1FF0
 
-static void __iomem *backupram;
+अटल व्योम __iomem *backupram;
 
-static void __init ux500_smp_prepare_cpus(unsigned int max_cpus)
-{
-	struct device_node *np;
-	static void __iomem *scu_base;
-	unsigned int ncores;
-	int i;
+अटल व्योम __init ux500_smp_prepare_cpus(अचिन्हित पूर्णांक max_cpus)
+अणु
+	काष्ठा device_node *np;
+	अटल व्योम __iomem *scu_base;
+	अचिन्हित पूर्णांक ncores;
+	पूर्णांक i;
 
-	np = of_find_compatible_node(NULL, NULL, "ste,dbx500-backupram");
-	if (!np) {
+	np = of_find_compatible_node(शून्य, शून्य, "ste,dbx500-backupram");
+	अगर (!np) अणु
 		pr_err("No backupram base address\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 	backupram = of_iomap(np, 0);
 	of_node_put(np);
-	if (!backupram) {
+	अगर (!backupram) अणु
 		pr_err("No backupram remap\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	np = of_find_compatible_node(NULL, NULL, "arm,cortex-a9-scu");
-	if (!np) {
+	np = of_find_compatible_node(शून्य, शून्य, "arm,cortex-a9-scu");
+	अगर (!np) अणु
 		pr_err("No SCU base address\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 	scu_base = of_iomap(np, 0);
 	of_node_put(np);
-	if (!scu_base) {
+	अगर (!scu_base) अणु
 		pr_err("No SCU remap\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	scu_enable(scu_base);
 	ncores = scu_get_core_count(scu_base);
-	for (i = 0; i < ncores; i++)
+	क्रम (i = 0; i < ncores; i++)
 		set_cpu_possible(i, true);
 	iounmap(scu_base);
-}
+पूर्ण
 
-static int ux500_boot_secondary(unsigned int cpu, struct task_struct *idle)
-{
+अटल पूर्णांक ux500_boot_secondary(अचिन्हित पूर्णांक cpu, काष्ठा task_काष्ठा *idle)
+अणु
 	/*
-	 * write the address of secondary startup into the backup ram register
-	 * at offset 0x1FF4, then write the magic number 0xA1FEED01 to the
-	 * backup ram register at offset 0x1FF0, which is what boot rom code
-	 * is waiting for. This will wake up the secondary core from WFE.
+	 * ग_लिखो the address of secondary startup पूर्णांकo the backup ram रेजिस्टर
+	 * at offset 0x1FF4, then ग_लिखो the magic number 0xA1FEED01 to the
+	 * backup ram रेजिस्टर at offset 0x1FF0, which is what boot rom code
+	 * is रुकोing क्रम. This will wake up the secondary core from WFE.
 	 */
-	writel(__pa_symbol(secondary_startup),
+	ग_लिखोl(__pa_symbol(secondary_startup),
 	       backupram + UX500_CPU1_JUMPADDR_OFFSET);
-	writel(0xA1FEED01,
+	ग_लिखोl(0xA1FEED01,
 	       backupram + UX500_CPU1_WAKEMAGIC_OFFSET);
 
-	/* make sure write buffer is drained */
+	/* make sure ग_लिखो buffer is drained */
 	mb();
 	arch_send_wakeup_ipi_mask(cpumask_of(cpu));
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_HOTPLUG_CPU
-static void ux500_cpu_die(unsigned int cpu)
-{
+#अगर_घोषित CONFIG_HOTPLUG_CPU
+अटल व्योम ux500_cpu_die(अचिन्हित पूर्णांक cpu)
+अणु
 	wfi();
-}
-#endif
+पूर्ण
+#पूर्ण_अगर
 
-static const struct smp_operations ux500_smp_ops __initconst = {
+अटल स्थिर काष्ठा smp_operations ux500_smp_ops __initस्थिर = अणु
 	.smp_prepare_cpus	= ux500_smp_prepare_cpus,
 	.smp_boot_secondary	= ux500_boot_secondary,
-#ifdef CONFIG_HOTPLUG_CPU
+#अगर_घोषित CONFIG_HOTPLUG_CPU
 	.cpu_die		= ux500_cpu_die,
-#endif
-};
+#पूर्ण_अगर
+पूर्ण;
 CPU_METHOD_OF_DECLARE(ux500_smp, "ste,dbx500-smp", &ux500_smp_ops);

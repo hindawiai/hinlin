@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * STMicroelectronics uvis25 i2c driver
  *
@@ -7,60 +8,60 @@
  * Lorenzo Bianconi <lorenzo.bianconi83@gmail.com>
  */
 
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/mod_devicetable.h>
-#include <linux/i2c.h>
-#include <linux/slab.h>
-#include <linux/regmap.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/mod_devicetable.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/regmap.h>
 
-#include "st_uvis25.h"
+#समावेश "st_uvis25.h"
 
-#define UVIS25_I2C_AUTO_INCREMENT	BIT(7)
+#घोषणा UVIS25_I2C_AUTO_INCREMENT	BIT(7)
 
-static const struct regmap_config st_uvis25_i2c_regmap_config = {
+अटल स्थिर काष्ठा regmap_config st_uvis25_i2c_regmap_config = अणु
 	.reg_bits = 8,
 	.val_bits = 8,
-	.write_flag_mask = UVIS25_I2C_AUTO_INCREMENT,
-	.read_flag_mask = UVIS25_I2C_AUTO_INCREMENT,
-};
+	.ग_लिखो_flag_mask = UVIS25_I2C_AUTO_INCREMENT,
+	.पढ़ो_flag_mask = UVIS25_I2C_AUTO_INCREMENT,
+पूर्ण;
 
-static int st_uvis25_i2c_probe(struct i2c_client *client,
-			       const struct i2c_device_id *id)
-{
-	struct regmap *regmap;
+अटल पूर्णांक st_uvis25_i2c_probe(काष्ठा i2c_client *client,
+			       स्थिर काष्ठा i2c_device_id *id)
+अणु
+	काष्ठा regmap *regmap;
 
 	regmap = devm_regmap_init_i2c(client, &st_uvis25_i2c_regmap_config);
-	if (IS_ERR(regmap)) {
+	अगर (IS_ERR(regmap)) अणु
 		dev_err(&client->dev, "Failed to register i2c regmap %ld\n",
 			PTR_ERR(regmap));
-		return PTR_ERR(regmap);
-	}
+		वापस PTR_ERR(regmap);
+	पूर्ण
 
-	return st_uvis25_probe(&client->dev, client->irq, regmap);
-}
+	वापस st_uvis25_probe(&client->dev, client->irq, regmap);
+पूर्ण
 
-static const struct of_device_id st_uvis25_i2c_of_match[] = {
-	{ .compatible = "st,uvis25", },
-	{},
-};
+अटल स्थिर काष्ठा of_device_id st_uvis25_i2c_of_match[] = अणु
+	अणु .compatible = "st,uvis25", पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, st_uvis25_i2c_of_match);
 
-static const struct i2c_device_id st_uvis25_i2c_id_table[] = {
-	{ ST_UVIS25_DEV_NAME },
-	{},
-};
+अटल स्थिर काष्ठा i2c_device_id st_uvis25_i2c_id_table[] = अणु
+	अणु ST_UVIS25_DEV_NAME पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(i2c, st_uvis25_i2c_id_table);
 
-static struct i2c_driver st_uvis25_driver = {
-	.driver = {
+अटल काष्ठा i2c_driver st_uvis25_driver = अणु
+	.driver = अणु
 		.name = "st_uvis25_i2c",
 		.pm = &st_uvis25_pm_ops,
 		.of_match_table = st_uvis25_i2c_of_match,
-	},
+	पूर्ण,
 	.probe = st_uvis25_i2c_probe,
 	.id_table = st_uvis25_i2c_id_table,
-};
+पूर्ण;
 module_i2c_driver(st_uvis25_driver);
 
 MODULE_AUTHOR("Lorenzo Bianconi <lorenzo.bianconi83@gmail.com>");

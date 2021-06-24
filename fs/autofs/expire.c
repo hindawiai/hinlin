@@ -1,104 +1,105 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Copyright 1997-1998 Transmeta Corporation -- All Rights Reserved
  * Copyright 1999-2000 Jeremy Fitzhardinge <jeremy@goop.org>
  * Copyright 2001-2006 Ian Kent <raven@themaw.net>
  */
 
-#include "autofs_i.h"
+#समावेश "autofs_i.h"
 
-/* Check if a dentry can be expired */
-static inline int autofs_can_expire(struct dentry *dentry,
-				    unsigned long timeout, unsigned int how)
-{
-	struct autofs_info *ino = autofs_dentry_ino(dentry);
+/* Check अगर a dentry can be expired */
+अटल अंतरभूत पूर्णांक स्वतःfs_can_expire(काष्ठा dentry *dentry,
+				    अचिन्हित दीर्घ समयout, अचिन्हित पूर्णांक how)
+अणु
+	काष्ठा स्वतःfs_info *ino = स्वतःfs_dentry_ino(dentry);
 
 	/* dentry in the process of being deleted */
-	if (ino == NULL)
-		return 0;
+	अगर (ino == शून्य)
+		वापस 0;
 
-	if (!(how & AUTOFS_EXP_IMMEDIATE)) {
+	अगर (!(how & AUTOFS_EXP_IMMEDIATE)) अणु
 		/* Too young to die */
-		if (!timeout || time_after(ino->last_used + timeout, jiffies))
-			return 0;
-	}
-	return 1;
-}
+		अगर (!समयout || समय_after(ino->last_used + समयout, jअगरfies))
+			वापस 0;
+	पूर्ण
+	वापस 1;
+पूर्ण
 
-/* Check a mount point for busyness */
-static int autofs_mount_busy(struct vfsmount *mnt,
-			     struct dentry *dentry, unsigned int how)
-{
-	struct dentry *top = dentry;
-	struct path path = {.mnt = mnt, .dentry = dentry};
-	int status = 1;
+/* Check a mount poपूर्णांक क्रम busyness */
+अटल पूर्णांक स्वतःfs_mount_busy(काष्ठा vfsmount *mnt,
+			     काष्ठा dentry *dentry, अचिन्हित पूर्णांक how)
+अणु
+	काष्ठा dentry *top = dentry;
+	काष्ठा path path = अणु.mnt = mnt, .dentry = dentryपूर्ण;
+	पूर्णांक status = 1;
 
 	pr_debug("dentry %p %pd\n", dentry, dentry);
 
 	path_get(&path);
 
-	if (!follow_down_one(&path))
-		goto done;
+	अगर (!follow_करोwn_one(&path))
+		जाओ करोne;
 
-	if (is_autofs_dentry(path.dentry)) {
-		struct autofs_sb_info *sbi = autofs_sbi(path.dentry->d_sb);
+	अगर (is_स्वतःfs_dentry(path.dentry)) अणु
+		काष्ठा स्वतःfs_sb_info *sbi = स्वतःfs_sbi(path.dentry->d_sb);
 
-		/* This is an autofs submount, we can't expire it */
-		if (autofs_type_indirect(sbi->type))
-			goto done;
-	}
+		/* This is an स्वतःfs submount, we can't expire it */
+		अगर (स्वतःfs_type_indirect(sbi->type))
+			जाओ करोne;
+	पूर्ण
 
-	/* Not a submount, has a forced expire been requested */
-	if (how & AUTOFS_EXP_FORCED) {
+	/* Not a submount, has a क्रमced expire been requested */
+	अगर (how & AUTOFS_EXP_FORCED) अणु
 		status = 0;
-		goto done;
-	}
+		जाओ करोne;
+	पूर्ण
 
-	/* Update the expiry counter if fs is busy */
-	if (!may_umount_tree(path.mnt)) {
-		struct autofs_info *ino;
+	/* Update the expiry counter अगर fs is busy */
+	अगर (!may_umount_tree(path.mnt)) अणु
+		काष्ठा स्वतःfs_info *ino;
 
-		ino = autofs_dentry_ino(top);
-		ino->last_used = jiffies;
-		goto done;
-	}
+		ino = स्वतःfs_dentry_ino(top);
+		ino->last_used = jअगरfies;
+		जाओ करोne;
+	पूर्ण
 
 	status = 0;
-done:
+करोne:
 	pr_debug("returning = %d\n", status);
 	path_put(&path);
-	return status;
-}
+	वापस status;
+पूर्ण
 
 /* p->d_lock held */
-static struct dentry *positive_after(struct dentry *p, struct dentry *child)
-{
-	if (child)
+अटल काष्ठा dentry *positive_after(काष्ठा dentry *p, काष्ठा dentry *child)
+अणु
+	अगर (child)
 		child = list_next_entry(child, d_child);
-	else
-		child = list_first_entry(&p->d_subdirs, struct dentry, d_child);
+	अन्यथा
+		child = list_first_entry(&p->d_subdirs, काष्ठा dentry, d_child);
 
-	list_for_each_entry_from(child, &p->d_subdirs, d_child) {
+	list_क्रम_each_entry_from(child, &p->d_subdirs, d_child) अणु
 		spin_lock_nested(&child->d_lock, DENTRY_D_LOCK_NESTED);
-		if (simple_positive(child)) {
+		अगर (simple_positive(child)) अणु
 			dget_dlock(child);
 			spin_unlock(&child->d_lock);
-			return child;
-		}
+			वापस child;
+		पूर्ण
 		spin_unlock(&child->d_lock);
-	}
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
 /*
  * Calculate and dget next entry in the subdirs list under root.
  */
-static struct dentry *get_next_positive_subdir(struct dentry *prev,
-					       struct dentry *root)
-{
-	struct autofs_sb_info *sbi = autofs_sbi(root->d_sb);
-	struct dentry *q;
+अटल काष्ठा dentry *get_next_positive_subdir(काष्ठा dentry *prev,
+					       काष्ठा dentry *root)
+अणु
+	काष्ठा स्वतःfs_sb_info *sbi = स्वतःfs_sbi(root->d_sb);
+	काष्ठा dentry *q;
 
 	spin_lock(&sbi->lookup_lock);
 	spin_lock(&root->d_lock);
@@ -106,515 +107,515 @@ static struct dentry *get_next_positive_subdir(struct dentry *prev,
 	spin_unlock(&root->d_lock);
 	spin_unlock(&sbi->lookup_lock);
 	dput(prev);
-	return q;
-}
+	वापस q;
+पूर्ण
 
 /*
- * Calculate and dget next entry in top down tree traversal.
+ * Calculate and dget next entry in top करोwn tree traversal.
  */
-static struct dentry *get_next_positive_dentry(struct dentry *prev,
-					       struct dentry *root)
-{
-	struct autofs_sb_info *sbi = autofs_sbi(root->d_sb);
-	struct dentry *p = prev, *ret = NULL, *d = NULL;
+अटल काष्ठा dentry *get_next_positive_dentry(काष्ठा dentry *prev,
+					       काष्ठा dentry *root)
+अणु
+	काष्ठा स्वतःfs_sb_info *sbi = स्वतःfs_sbi(root->d_sb);
+	काष्ठा dentry *p = prev, *ret = शून्य, *d = शून्य;
 
-	if (prev == NULL)
-		return dget(root);
+	अगर (prev == शून्य)
+		वापस dget(root);
 
 	spin_lock(&sbi->lookup_lock);
 	spin_lock(&p->d_lock);
-	while (1) {
-		struct dentry *parent;
+	जबतक (1) अणु
+		काष्ठा dentry *parent;
 
 		ret = positive_after(p, d);
-		if (ret || p == root)
-			break;
+		अगर (ret || p == root)
+			अवरोध;
 		parent = p->d_parent;
 		spin_unlock(&p->d_lock);
 		spin_lock(&parent->d_lock);
 		d = p;
 		p = parent;
-	}
+	पूर्ण
 	spin_unlock(&p->d_lock);
 	spin_unlock(&sbi->lookup_lock);
 	dput(prev);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
- * Check a direct mount point for busyness.
+ * Check a direct mount poपूर्णांक क्रम busyness.
  * Direct mounts have similar expiry semantics to tree mounts.
- * The tree is not busy iff no mountpoints are busy and there are no
- * autofs submounts.
+ * The tree is not busy अगरf no mountpoपूर्णांकs are busy and there are no
+ * स्वतःfs submounts.
  */
-static int autofs_direct_busy(struct vfsmount *mnt,
-			      struct dentry *top,
-			      unsigned long timeout,
-			      unsigned int how)
-{
+अटल पूर्णांक स्वतःfs_direct_busy(काष्ठा vfsmount *mnt,
+			      काष्ठा dentry *top,
+			      अचिन्हित दीर्घ समयout,
+			      अचिन्हित पूर्णांक how)
+अणु
 	pr_debug("top %p %pd\n", top, top);
 
 	/* Forced expire, user space handles busy mounts */
-	if (how & AUTOFS_EXP_FORCED)
-		return 0;
+	अगर (how & AUTOFS_EXP_FORCED)
+		वापस 0;
 
 	/* If it's busy update the expiry counters */
-	if (!may_umount_tree(mnt)) {
-		struct autofs_info *ino;
+	अगर (!may_umount_tree(mnt)) अणु
+		काष्ठा स्वतःfs_info *ino;
 
-		ino = autofs_dentry_ino(top);
-		if (ino)
-			ino->last_used = jiffies;
-		return 1;
-	}
+		ino = स्वतःfs_dentry_ino(top);
+		अगर (ino)
+			ino->last_used = jअगरfies;
+		वापस 1;
+	पूर्ण
 
 	/* Timeout of a direct mount is determined by its top dentry */
-	if (!autofs_can_expire(top, timeout, how))
-		return 1;
+	अगर (!स्वतःfs_can_expire(top, समयout, how))
+		वापस 1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * Check a directory tree of mount points for busyness
- * The tree is not busy iff no mountpoints are busy
+ * Check a directory tree of mount poपूर्णांकs क्रम busyness
+ * The tree is not busy अगरf no mountpoपूर्णांकs are busy
  */
-static int autofs_tree_busy(struct vfsmount *mnt,
-			    struct dentry *top,
-			    unsigned long timeout,
-			    unsigned int how)
-{
-	struct autofs_info *top_ino = autofs_dentry_ino(top);
-	struct dentry *p;
+अटल पूर्णांक स्वतःfs_tree_busy(काष्ठा vfsmount *mnt,
+			    काष्ठा dentry *top,
+			    अचिन्हित दीर्घ समयout,
+			    अचिन्हित पूर्णांक how)
+अणु
+	काष्ठा स्वतःfs_info *top_ino = स्वतःfs_dentry_ino(top);
+	काष्ठा dentry *p;
 
 	pr_debug("top %p %pd\n", top, top);
 
 	/* Negative dentry - give up */
-	if (!simple_positive(top))
-		return 1;
+	अगर (!simple_positive(top))
+		वापस 1;
 
-	p = NULL;
-	while ((p = get_next_positive_dentry(p, top))) {
+	p = शून्य;
+	जबतक ((p = get_next_positive_dentry(p, top))) अणु
 		pr_debug("dentry %p %pd\n", p, p);
 
 		/*
 		 * Is someone visiting anywhere in the subtree ?
 		 * If there's no mount we need to check the usage
-		 * count for the autofs dentry.
+		 * count क्रम the स्वतःfs dentry.
 		 * If the fs is busy update the expiry counter.
 		 */
-		if (d_mountpoint(p)) {
-			if (autofs_mount_busy(mnt, p, how)) {
-				top_ino->last_used = jiffies;
+		अगर (d_mountpoपूर्णांक(p)) अणु
+			अगर (स्वतःfs_mount_busy(mnt, p, how)) अणु
+				top_ino->last_used = jअगरfies;
 				dput(p);
-				return 1;
-			}
-		} else {
-			struct autofs_info *ino = autofs_dentry_ino(p);
-			unsigned int ino_count = READ_ONCE(ino->count);
+				वापस 1;
+			पूर्ण
+		पूर्ण अन्यथा अणु
+			काष्ठा स्वतःfs_info *ino = स्वतःfs_dentry_ino(p);
+			अचिन्हित पूर्णांक ino_count = READ_ONCE(ino->count);
 
-			/* allow for dget above and top is already dgot */
-			if (p == top)
+			/* allow क्रम dget above and top is alपढ़ोy dgot */
+			अगर (p == top)
 				ino_count += 2;
-			else
+			अन्यथा
 				ino_count++;
 
-			if (d_count(p) > ino_count) {
-				top_ino->last_used = jiffies;
+			अगर (d_count(p) > ino_count) अणु
+				top_ino->last_used = jअगरfies;
 				dput(p);
-				return 1;
-			}
-		}
-	}
+				वापस 1;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
 	/* Forced expire, user space handles busy mounts */
-	if (how & AUTOFS_EXP_FORCED)
-		return 0;
+	अगर (how & AUTOFS_EXP_FORCED)
+		वापस 0;
 
 	/* Timeout of a tree mount is ultimately determined by its top dentry */
-	if (!autofs_can_expire(top, timeout, how))
-		return 1;
+	अगर (!स्वतःfs_can_expire(top, समयout, how))
+		वापस 1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct dentry *autofs_check_leaves(struct vfsmount *mnt,
-					  struct dentry *parent,
-					  unsigned long timeout,
-					  unsigned int how)
-{
-	struct dentry *p;
+अटल काष्ठा dentry *स्वतःfs_check_leaves(काष्ठा vfsmount *mnt,
+					  काष्ठा dentry *parent,
+					  अचिन्हित दीर्घ समयout,
+					  अचिन्हित पूर्णांक how)
+अणु
+	काष्ठा dentry *p;
 
 	pr_debug("parent %p %pd\n", parent, parent);
 
-	p = NULL;
-	while ((p = get_next_positive_dentry(p, parent))) {
+	p = शून्य;
+	जबतक ((p = get_next_positive_dentry(p, parent))) अणु
 		pr_debug("dentry %p %pd\n", p, p);
 
-		if (d_mountpoint(p)) {
+		अगर (d_mountpoपूर्णांक(p)) अणु
 			/* Can we umount this guy */
-			if (autofs_mount_busy(mnt, p, how))
-				continue;
+			अगर (स्वतःfs_mount_busy(mnt, p, how))
+				जारी;
 
-			/* This isn't a submount so if a forced expire
+			/* This isn't a submount so अगर a क्रमced expire
 			 * has been requested, user space handles busy
 			 * mounts */
-			if (how & AUTOFS_EXP_FORCED)
-				return p;
+			अगर (how & AUTOFS_EXP_FORCED)
+				वापस p;
 
 			/* Can we expire this guy */
-			if (autofs_can_expire(p, timeout, how))
-				return p;
-		}
-	}
-	return NULL;
-}
+			अगर (स्वतःfs_can_expire(p, समयout, how))
+				वापस p;
+		पूर्ण
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
-/* Check if we can expire a direct mount (possibly a tree) */
-static struct dentry *autofs_expire_direct(struct super_block *sb,
-					   struct vfsmount *mnt,
-					   struct autofs_sb_info *sbi,
-					   unsigned int how)
-{
-	struct dentry *root = dget(sb->s_root);
-	struct autofs_info *ino;
-	unsigned long timeout;
+/* Check अगर we can expire a direct mount (possibly a tree) */
+अटल काष्ठा dentry *स्वतःfs_expire_direct(काष्ठा super_block *sb,
+					   काष्ठा vfsmount *mnt,
+					   काष्ठा स्वतःfs_sb_info *sbi,
+					   अचिन्हित पूर्णांक how)
+अणु
+	काष्ठा dentry *root = dget(sb->s_root);
+	काष्ठा स्वतःfs_info *ino;
+	अचिन्हित दीर्घ समयout;
 
-	if (!root)
-		return NULL;
+	अगर (!root)
+		वापस शून्य;
 
-	timeout = sbi->exp_timeout;
+	समयout = sbi->exp_समयout;
 
-	if (!autofs_direct_busy(mnt, root, timeout, how)) {
+	अगर (!स्वतःfs_direct_busy(mnt, root, समयout, how)) अणु
 		spin_lock(&sbi->fs_lock);
-		ino = autofs_dentry_ino(root);
-		/* No point expiring a pending mount */
-		if (ino->flags & AUTOFS_INF_PENDING) {
+		ino = स्वतःfs_dentry_ino(root);
+		/* No poपूर्णांक expiring a pending mount */
+		अगर (ino->flags & AUTOFS_INF_PENDING) अणु
 			spin_unlock(&sbi->fs_lock);
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 		ino->flags |= AUTOFS_INF_WANT_EXPIRE;
 		spin_unlock(&sbi->fs_lock);
 		synchronize_rcu();
-		if (!autofs_direct_busy(mnt, root, timeout, how)) {
+		अगर (!स्वतःfs_direct_busy(mnt, root, समयout, how)) अणु
 			spin_lock(&sbi->fs_lock);
 			ino->flags |= AUTOFS_INF_EXPIRING;
 			init_completion(&ino->expire_complete);
 			spin_unlock(&sbi->fs_lock);
-			return root;
-		}
+			वापस root;
+		पूर्ण
 		spin_lock(&sbi->fs_lock);
 		ino->flags &= ~AUTOFS_INF_WANT_EXPIRE;
 		spin_unlock(&sbi->fs_lock);
-	}
+	पूर्ण
 out:
 	dput(root);
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-/* Check if 'dentry' should expire, or return a nearby
+/* Check अगर 'dentry' should expire, or वापस a nearby
  * dentry that is suitable.
- * If returned dentry is different from arg dentry,
- * then a dget() reference was taken, else not.
+ * If वापसed dentry is dअगरferent from arg dentry,
+ * then a dget() reference was taken, अन्यथा not.
  */
-static struct dentry *should_expire(struct dentry *dentry,
-				    struct vfsmount *mnt,
-				    unsigned long timeout,
-				    unsigned int how)
-{
-	struct autofs_info *ino = autofs_dentry_ino(dentry);
-	unsigned int ino_count;
+अटल काष्ठा dentry *should_expire(काष्ठा dentry *dentry,
+				    काष्ठा vfsmount *mnt,
+				    अचिन्हित दीर्घ समयout,
+				    अचिन्हित पूर्णांक how)
+अणु
+	काष्ठा स्वतःfs_info *ino = स्वतःfs_dentry_ino(dentry);
+	अचिन्हित पूर्णांक ino_count;
 
-	/* No point expiring a pending mount */
-	if (ino->flags & AUTOFS_INF_PENDING)
-		return NULL;
+	/* No poपूर्णांक expiring a pending mount */
+	अगर (ino->flags & AUTOFS_INF_PENDING)
+		वापस शून्य;
 
 	/*
-	 * Case 1: (i) indirect mount or top level pseudo direct mount
-	 *	   (autofs-4.1).
+	 * Case 1: (i) indirect mount or top level pseuकरो direct mount
+	 *	   (स्वतःfs-4.1).
 	 *	   (ii) indirect mount with offset mount, check the "/"
-	 *	   offset (autofs-5.0+).
+	 *	   offset (स्वतःfs-5.0+).
 	 */
-	if (d_mountpoint(dentry)) {
+	अगर (d_mountpoपूर्णांक(dentry)) अणु
 		pr_debug("checking mountpoint %p %pd\n", dentry, dentry);
 
 		/* Can we umount this guy */
-		if (autofs_mount_busy(mnt, dentry, how))
-			return NULL;
+		अगर (स्वतःfs_mount_busy(mnt, dentry, how))
+			वापस शून्य;
 
-		/* This isn't a submount so if a forced expire
+		/* This isn't a submount so अगर a क्रमced expire
 		 * has been requested, user space handles busy
 		 * mounts */
-		if (how & AUTOFS_EXP_FORCED)
-			return dentry;
+		अगर (how & AUTOFS_EXP_FORCED)
+			वापस dentry;
 
 		/* Can we expire this guy */
-		if (autofs_can_expire(dentry, timeout, how))
-			return dentry;
-		return NULL;
-	}
+		अगर (स्वतःfs_can_expire(dentry, समयout, how))
+			वापस dentry;
+		वापस शून्य;
+	पूर्ण
 
-	if (d_is_symlink(dentry)) {
+	अगर (d_is_symlink(dentry)) अणु
 		pr_debug("checking symlink %p %pd\n", dentry, dentry);
 
 		/* Forced expire, user space handles busy mounts */
-		if (how & AUTOFS_EXP_FORCED)
-			return dentry;
+		अगर (how & AUTOFS_EXP_FORCED)
+			वापस dentry;
 
 		/*
 		 * A symlink can't be "busy" in the usual sense so
-		 * just check last used for expire timeout.
+		 * just check last used क्रम expire समयout.
 		 */
-		if (autofs_can_expire(dentry, timeout, how))
-			return dentry;
-		return NULL;
-	}
+		अगर (स्वतःfs_can_expire(dentry, समयout, how))
+			वापस dentry;
+		वापस शून्य;
+	पूर्ण
 
-	if (simple_empty(dentry))
-		return NULL;
+	अगर (simple_empty(dentry))
+		वापस शून्य;
 
-	/* Case 2: tree mount, expire iff entire tree is not busy */
-	if (!(how & AUTOFS_EXP_LEAVES)) {
-		/* Not a forced expire? */
-		if (!(how & AUTOFS_EXP_FORCED)) {
+	/* Case 2: tree mount, expire अगरf entire tree is not busy */
+	अगर (!(how & AUTOFS_EXP_LEAVES)) अणु
+		/* Not a क्रमced expire? */
+		अगर (!(how & AUTOFS_EXP_FORCED)) अणु
 			/* ref-walk currently on this dentry? */
 			ino_count = READ_ONCE(ino->count) + 1;
-			if (d_count(dentry) > ino_count)
-				return NULL;
-		}
+			अगर (d_count(dentry) > ino_count)
+				वापस शून्य;
+		पूर्ण
 
-		if (!autofs_tree_busy(mnt, dentry, timeout, how))
-			return dentry;
+		अगर (!स्वतःfs_tree_busy(mnt, dentry, समयout, how))
+			वापस dentry;
 	/*
-	 * Case 3: pseudo direct mount, expire individual leaves
-	 *	   (autofs-4.1).
+	 * Case 3: pseuकरो direct mount, expire inभागidual leaves
+	 *	   (स्वतःfs-4.1).
 	 */
-	} else {
-		struct dentry *expired;
+	पूर्ण अन्यथा अणु
+		काष्ठा dentry *expired;
 
-		/* Not a forced expire? */
-		if (!(how & AUTOFS_EXP_FORCED)) {
+		/* Not a क्रमced expire? */
+		अगर (!(how & AUTOFS_EXP_FORCED)) अणु
 			/* ref-walk currently on this dentry? */
 			ino_count = READ_ONCE(ino->count) + 1;
-			if (d_count(dentry) > ino_count)
-				return NULL;
-		}
+			अगर (d_count(dentry) > ino_count)
+				वापस शून्य;
+		पूर्ण
 
-		expired = autofs_check_leaves(mnt, dentry, timeout, how);
-		if (expired) {
-			if (expired == dentry)
+		expired = स्वतःfs_check_leaves(mnt, dentry, समयout, how);
+		अगर (expired) अणु
+			अगर (expired == dentry)
 				dput(dentry);
-			return expired;
-		}
-	}
-	return NULL;
-}
+			वापस expired;
+		पूर्ण
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
 /*
- * Find an eligible tree to time-out
- * A tree is eligible if :-
+ * Find an eligible tree to समय-out
+ * A tree is eligible अगर :-
  *  - it is unused by any user process
- *  - it has been unused for exp_timeout time
+ *  - it has been unused क्रम exp_समयout समय
  */
-static struct dentry *autofs_expire_indirect(struct super_block *sb,
-					     struct vfsmount *mnt,
-					     struct autofs_sb_info *sbi,
-					     unsigned int how)
-{
-	unsigned long timeout;
-	struct dentry *root = sb->s_root;
-	struct dentry *dentry;
-	struct dentry *expired;
-	struct dentry *found;
-	struct autofs_info *ino;
+अटल काष्ठा dentry *स्वतःfs_expire_indirect(काष्ठा super_block *sb,
+					     काष्ठा vfsmount *mnt,
+					     काष्ठा स्वतःfs_sb_info *sbi,
+					     अचिन्हित पूर्णांक how)
+अणु
+	अचिन्हित दीर्घ समयout;
+	काष्ठा dentry *root = sb->s_root;
+	काष्ठा dentry *dentry;
+	काष्ठा dentry *expired;
+	काष्ठा dentry *found;
+	काष्ठा स्वतःfs_info *ino;
 
-	if (!root)
-		return NULL;
+	अगर (!root)
+		वापस शून्य;
 
-	timeout = sbi->exp_timeout;
+	समयout = sbi->exp_समयout;
 
-	dentry = NULL;
-	while ((dentry = get_next_positive_subdir(dentry, root))) {
+	dentry = शून्य;
+	जबतक ((dentry = get_next_positive_subdir(dentry, root))) अणु
 		spin_lock(&sbi->fs_lock);
-		ino = autofs_dentry_ino(dentry);
-		if (ino->flags & AUTOFS_INF_WANT_EXPIRE) {
+		ino = स्वतःfs_dentry_ino(dentry);
+		अगर (ino->flags & AUTOFS_INF_WANT_EXPIRE) अणु
 			spin_unlock(&sbi->fs_lock);
-			continue;
-		}
+			जारी;
+		पूर्ण
 		spin_unlock(&sbi->fs_lock);
 
-		expired = should_expire(dentry, mnt, timeout, how);
-		if (!expired)
-			continue;
+		expired = should_expire(dentry, mnt, समयout, how);
+		अगर (!expired)
+			जारी;
 
 		spin_lock(&sbi->fs_lock);
-		ino = autofs_dentry_ino(expired);
+		ino = स्वतःfs_dentry_ino(expired);
 		ino->flags |= AUTOFS_INF_WANT_EXPIRE;
 		spin_unlock(&sbi->fs_lock);
 		synchronize_rcu();
 
-		/* Make sure a reference is not taken on found if
+		/* Make sure a reference is not taken on found अगर
 		 * things have changed.
 		 */
 		how &= ~AUTOFS_EXP_LEAVES;
-		found = should_expire(expired, mnt, timeout, how);
-		if (found != expired) { // something has changed, continue
+		found = should_expire(expired, mnt, समयout, how);
+		अगर (found != expired) अणु // something has changed, जारी
 			dput(found);
-			goto next;
-		}
+			जाओ next;
+		पूर्ण
 
-		if (expired != dentry)
+		अगर (expired != dentry)
 			dput(dentry);
 
 		spin_lock(&sbi->fs_lock);
-		goto found;
+		जाओ found;
 next:
 		spin_lock(&sbi->fs_lock);
 		ino->flags &= ~AUTOFS_INF_WANT_EXPIRE;
 		spin_unlock(&sbi->fs_lock);
-		if (expired != dentry)
+		अगर (expired != dentry)
 			dput(expired);
-	}
-	return NULL;
+	पूर्ण
+	वापस शून्य;
 
 found:
 	pr_debug("returning %p %pd\n", expired, expired);
 	ino->flags |= AUTOFS_INF_EXPIRING;
 	init_completion(&ino->expire_complete);
 	spin_unlock(&sbi->fs_lock);
-	return expired;
-}
+	वापस expired;
+पूर्ण
 
-int autofs_expire_wait(const struct path *path, int rcu_walk)
-{
-	struct dentry *dentry = path->dentry;
-	struct autofs_sb_info *sbi = autofs_sbi(dentry->d_sb);
-	struct autofs_info *ino = autofs_dentry_ino(dentry);
-	int status;
-	int state;
+पूर्णांक स्वतःfs_expire_रुको(स्थिर काष्ठा path *path, पूर्णांक rcu_walk)
+अणु
+	काष्ठा dentry *dentry = path->dentry;
+	काष्ठा स्वतःfs_sb_info *sbi = स्वतःfs_sbi(dentry->d_sb);
+	काष्ठा स्वतःfs_info *ino = स्वतःfs_dentry_ino(dentry);
+	पूर्णांक status;
+	पूर्णांक state;
 
 	/* Block on any pending expire */
-	if (!(ino->flags & AUTOFS_INF_WANT_EXPIRE))
-		return 0;
-	if (rcu_walk)
-		return -ECHILD;
+	अगर (!(ino->flags & AUTOFS_INF_WANT_EXPIRE))
+		वापस 0;
+	अगर (rcu_walk)
+		वापस -ECHILD;
 
 retry:
 	spin_lock(&sbi->fs_lock);
 	state = ino->flags & (AUTOFS_INF_WANT_EXPIRE | AUTOFS_INF_EXPIRING);
-	if (state == AUTOFS_INF_WANT_EXPIRE) {
+	अगर (state == AUTOFS_INF_WANT_EXPIRE) अणु
 		spin_unlock(&sbi->fs_lock);
 		/*
-		 * Possibly being selected for expire, wait until
+		 * Possibly being selected क्रम expire, रुको until
 		 * it's selected or not.
 		 */
-		schedule_timeout_uninterruptible(HZ/10);
-		goto retry;
-	}
-	if (state & AUTOFS_INF_EXPIRING) {
+		schedule_समयout_unपूर्णांकerruptible(HZ/10);
+		जाओ retry;
+	पूर्ण
+	अगर (state & AUTOFS_INF_EXPIRING) अणु
 		spin_unlock(&sbi->fs_lock);
 
 		pr_debug("waiting for expire %p name=%pd\n", dentry, dentry);
 
-		status = autofs_wait(sbi, path, NFY_NONE);
-		wait_for_completion(&ino->expire_complete);
+		status = स्वतःfs_रुको(sbi, path, NFY_NONE);
+		रुको_क्रम_completion(&ino->expire_complete);
 
 		pr_debug("expire done status=%d\n", status);
 
-		if (d_unhashed(dentry))
-			return -EAGAIN;
+		अगर (d_unhashed(dentry))
+			वापस -EAGAIN;
 
-		return status;
-	}
+		वापस status;
+	पूर्ण
 	spin_unlock(&sbi->fs_lock);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* Perform an expiry operation */
-int autofs_expire_run(struct super_block *sb,
-		      struct vfsmount *mnt,
-		      struct autofs_sb_info *sbi,
-		      struct autofs_packet_expire __user *pkt_p)
-{
-	struct autofs_packet_expire pkt;
-	struct autofs_info *ino;
-	struct dentry *dentry;
-	int ret = 0;
+/* Perक्रमm an expiry operation */
+पूर्णांक स्वतःfs_expire_run(काष्ठा super_block *sb,
+		      काष्ठा vfsmount *mnt,
+		      काष्ठा स्वतःfs_sb_info *sbi,
+		      काष्ठा स्वतःfs_packet_expire __user *pkt_p)
+अणु
+	काष्ठा स्वतःfs_packet_expire pkt;
+	काष्ठा स्वतःfs_info *ino;
+	काष्ठा dentry *dentry;
+	पूर्णांक ret = 0;
 
-	memset(&pkt, 0, sizeof(pkt));
+	स_रखो(&pkt, 0, माप(pkt));
 
 	pkt.hdr.proto_version = sbi->version;
-	pkt.hdr.type = autofs_ptype_expire;
+	pkt.hdr.type = स्वतःfs_ptype_expire;
 
-	dentry = autofs_expire_indirect(sb, mnt, sbi, 0);
-	if (!dentry)
-		return -EAGAIN;
+	dentry = स्वतःfs_expire_indirect(sb, mnt, sbi, 0);
+	अगर (!dentry)
+		वापस -EAGAIN;
 
 	pkt.len = dentry->d_name.len;
-	memcpy(pkt.name, dentry->d_name.name, pkt.len);
+	स_नकल(pkt.name, dentry->d_name.name, pkt.len);
 	pkt.name[pkt.len] = '\0';
 
-	if (copy_to_user(pkt_p, &pkt, sizeof(struct autofs_packet_expire)))
+	अगर (copy_to_user(pkt_p, &pkt, माप(काष्ठा स्वतःfs_packet_expire)))
 		ret = -EFAULT;
 
 	spin_lock(&sbi->fs_lock);
-	ino = autofs_dentry_ino(dentry);
-	/* avoid rapid-fire expire attempts if expiry fails */
-	ino->last_used = jiffies;
+	ino = स्वतःfs_dentry_ino(dentry);
+	/* aव्योम rapid-fire expire attempts अगर expiry fails */
+	ino->last_used = jअगरfies;
 	ino->flags &= ~(AUTOFS_INF_EXPIRING|AUTOFS_INF_WANT_EXPIRE);
 	complete_all(&ino->expire_complete);
 	spin_unlock(&sbi->fs_lock);
 
 	dput(dentry);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int autofs_do_expire_multi(struct super_block *sb, struct vfsmount *mnt,
-			   struct autofs_sb_info *sbi, unsigned int how)
-{
-	struct dentry *dentry;
-	int ret = -EAGAIN;
+पूर्णांक स्वतःfs_करो_expire_multi(काष्ठा super_block *sb, काष्ठा vfsmount *mnt,
+			   काष्ठा स्वतःfs_sb_info *sbi, अचिन्हित पूर्णांक how)
+अणु
+	काष्ठा dentry *dentry;
+	पूर्णांक ret = -EAGAIN;
 
-	if (autofs_type_trigger(sbi->type))
-		dentry = autofs_expire_direct(sb, mnt, sbi, how);
-	else
-		dentry = autofs_expire_indirect(sb, mnt, sbi, how);
+	अगर (स्वतःfs_type_trigger(sbi->type))
+		dentry = स्वतःfs_expire_direct(sb, mnt, sbi, how);
+	अन्यथा
+		dentry = स्वतःfs_expire_indirect(sb, mnt, sbi, how);
 
-	if (dentry) {
-		struct autofs_info *ino = autofs_dentry_ino(dentry);
-		const struct path path = { .mnt = mnt, .dentry = dentry };
+	अगर (dentry) अणु
+		काष्ठा स्वतःfs_info *ino = स्वतःfs_dentry_ino(dentry);
+		स्थिर काष्ठा path path = अणु .mnt = mnt, .dentry = dentry पूर्ण;
 
 		/* This is synchronous because it makes the daemon a
 		 * little easier
 		 */
-		ret = autofs_wait(sbi, &path, NFY_EXPIRE);
+		ret = स्वतःfs_रुको(sbi, &path, NFY_EXPIRE);
 
 		spin_lock(&sbi->fs_lock);
-		/* avoid rapid-fire expire attempts if expiry fails */
-		ino->last_used = jiffies;
+		/* aव्योम rapid-fire expire attempts अगर expiry fails */
+		ino->last_used = jअगरfies;
 		ino->flags &= ~(AUTOFS_INF_EXPIRING|AUTOFS_INF_WANT_EXPIRE);
 		complete_all(&ino->expire_complete);
 		spin_unlock(&sbi->fs_lock);
 		dput(dentry);
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
- * Call repeatedly until it returns -EAGAIN, meaning there's nothing
- * more to be done.
+ * Call repeatedly until it वापसs -EAGAIN, meaning there's nothing
+ * more to be करोne.
  */
-int autofs_expire_multi(struct super_block *sb, struct vfsmount *mnt,
-			struct autofs_sb_info *sbi, int __user *arg)
-{
-	unsigned int how = 0;
+पूर्णांक स्वतःfs_expire_multi(काष्ठा super_block *sb, काष्ठा vfsmount *mnt,
+			काष्ठा स्वतःfs_sb_info *sbi, पूर्णांक __user *arg)
+अणु
+	अचिन्हित पूर्णांक how = 0;
 
-	if (arg && get_user(how, arg))
-		return -EFAULT;
+	अगर (arg && get_user(how, arg))
+		वापस -EFAULT;
 
-	return autofs_do_expire_multi(sb, mnt, sbi, how);
-}
+	वापस स्वतःfs_करो_expire_multi(sb, mnt, sbi, how);
+पूर्ण

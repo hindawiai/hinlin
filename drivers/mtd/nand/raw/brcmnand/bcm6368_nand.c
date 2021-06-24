@@ -1,42 +1,43 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright 2015 Simon Arlott
  *
  * Derived from bcm63138_nand.c:
- * Copyright © 2015 Broadcom Corporation
+ * Copyright तऊ 2015 Broadcom Corporation
  *
- * Derived from bcm963xx_4.12L.06B_consumer/shared/opensource/include/bcm963xx/63268_map_part.h:
+ * Derived from bcm963xx_4.12L.06B_consumer/shared/खोलोsource/include/bcm963xx/63268_map_part.h:
  * Copyright 2000-2010 Broadcom Corporation
  *
- * Derived from bcm963xx_4.12L.06B_consumer/shared/opensource/flash/nandflash.c:
+ * Derived from bcm963xx_4.12L.06B_consumer/shared/खोलोsource/flash/nandflash.c:
  * Copyright 2000-2010 Broadcom Corporation
  */
 
-#include <linux/device.h>
-#include <linux/io.h>
-#include <linux/ioport.h>
-#include <linux/module.h>
-#include <linux/of.h>
-#include <linux/of_address.h>
-#include <linux/platform_device.h>
-#include <linux/slab.h>
+#समावेश <linux/device.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/ioport.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_address.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/slab.h>
 
-#include "brcmnand.h"
+#समावेश "brcmnand.h"
 
-struct bcm6368_nand_soc {
-	struct brcmnand_soc soc;
-	void __iomem *base;
-};
+काष्ठा bcm6368_nand_soc अणु
+	काष्ठा brcmnand_soc soc;
+	व्योम __iomem *base;
+पूर्ण;
 
-#define BCM6368_NAND_INT		0x00
-#define  BCM6368_NAND_STATUS_SHIFT	0
-#define  BCM6368_NAND_STATUS_MASK	(0xfff << BCM6368_NAND_STATUS_SHIFT)
-#define  BCM6368_NAND_ENABLE_SHIFT	16
-#define  BCM6368_NAND_ENABLE_MASK	(0xffff << BCM6368_NAND_ENABLE_SHIFT)
-#define BCM6368_NAND_BASE_ADDR0	0x04
-#define BCM6368_NAND_BASE_ADDR1	0x0c
+#घोषणा BCM6368_न_अंकD_INT		0x00
+#घोषणा  BCM6368_न_अंकD_STATUS_SHIFT	0
+#घोषणा  BCM6368_न_अंकD_STATUS_MASK	(0xfff << BCM6368_न_अंकD_STATUS_SHIFT)
+#घोषणा  BCM6368_न_अंकD_ENABLE_SHIFT	16
+#घोषणा  BCM6368_न_अंकD_ENABLE_MASK	(0xffff << BCM6368_न_अंकD_ENABLE_SHIFT)
+#घोषणा BCM6368_न_अंकD_BASE_ADDR0	0x04
+#घोषणा BCM6368_न_अंकD_BASE_ADDR1	0x0c
 
-enum {
+क्रमागत अणु
 	BCM6368_NP_READ		= BIT(0),
 	BCM6368_BLOCK_ERASE	= BIT(1),
 	BCM6368_COPY_BACK	= BIT(2),
@@ -45,89 +46,89 @@ enum {
 	BCM6368_DEV_RBPIN	= BIT(5),
 	BCM6368_ECC_ERR_UNC	= BIT(6),
 	BCM6368_ECC_ERR_CORR	= BIT(7),
-};
+पूर्ण;
 
-static bool bcm6368_nand_intc_ack(struct brcmnand_soc *soc)
-{
-	struct bcm6368_nand_soc *priv =
-			container_of(soc, struct bcm6368_nand_soc, soc);
-	void __iomem *mmio = priv->base + BCM6368_NAND_INT;
-	u32 val = brcmnand_readl(mmio);
+अटल bool bcm6368_nand_पूर्णांकc_ack(काष्ठा brcmnand_soc *soc)
+अणु
+	काष्ठा bcm6368_nand_soc *priv =
+			container_of(soc, काष्ठा bcm6368_nand_soc, soc);
+	व्योम __iomem *mmio = priv->base + BCM6368_न_अंकD_INT;
+	u32 val = brcmnand_पढ़ोl(mmio);
 
-	if (val & (BCM6368_CTRL_READY << BCM6368_NAND_STATUS_SHIFT)) {
-		/* Ack interrupt */
-		val &= ~BCM6368_NAND_STATUS_MASK;
-		val |= BCM6368_CTRL_READY << BCM6368_NAND_STATUS_SHIFT;
-		brcmnand_writel(val, mmio);
-		return true;
-	}
+	अगर (val & (BCM6368_CTRL_READY << BCM6368_न_अंकD_STATUS_SHIFT)) अणु
+		/* Ack पूर्णांकerrupt */
+		val &= ~BCM6368_न_अंकD_STATUS_MASK;
+		val |= BCM6368_CTRL_READY << BCM6368_न_अंकD_STATUS_SHIFT;
+		brcmnand_ग_लिखोl(val, mmio);
+		वापस true;
+	पूर्ण
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static void bcm6368_nand_intc_set(struct brcmnand_soc *soc, bool en)
-{
-	struct bcm6368_nand_soc *priv =
-			container_of(soc, struct bcm6368_nand_soc, soc);
-	void __iomem *mmio = priv->base + BCM6368_NAND_INT;
-	u32 val = brcmnand_readl(mmio);
+अटल व्योम bcm6368_nand_पूर्णांकc_set(काष्ठा brcmnand_soc *soc, bool en)
+अणु
+	काष्ठा bcm6368_nand_soc *priv =
+			container_of(soc, काष्ठा bcm6368_nand_soc, soc);
+	व्योम __iomem *mmio = priv->base + BCM6368_न_अंकD_INT;
+	u32 val = brcmnand_पढ़ोl(mmio);
 
-	/* Don't ack any interrupts */
-	val &= ~BCM6368_NAND_STATUS_MASK;
+	/* Don't ack any पूर्णांकerrupts */
+	val &= ~BCM6368_न_अंकD_STATUS_MASK;
 
-	if (en)
-		val |= BCM6368_CTRL_READY << BCM6368_NAND_ENABLE_SHIFT;
-	else
-		val &= ~(BCM6368_CTRL_READY << BCM6368_NAND_ENABLE_SHIFT);
+	अगर (en)
+		val |= BCM6368_CTRL_READY << BCM6368_न_अंकD_ENABLE_SHIFT;
+	अन्यथा
+		val &= ~(BCM6368_CTRL_READY << BCM6368_न_अंकD_ENABLE_SHIFT);
 
-	brcmnand_writel(val, mmio);
-}
+	brcmnand_ग_लिखोl(val, mmio);
+पूर्ण
 
-static int bcm6368_nand_probe(struct platform_device *pdev)
-{
-	struct device *dev = &pdev->dev;
-	struct bcm6368_nand_soc *priv;
-	struct brcmnand_soc *soc;
-	struct resource *res;
+अटल पूर्णांक bcm6368_nand_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा bcm6368_nand_soc *priv;
+	काष्ठा brcmnand_soc *soc;
+	काष्ठा resource *res;
 
-	priv = devm_kzalloc(dev, sizeof(*priv), GFP_KERNEL);
-	if (!priv)
-		return -ENOMEM;
+	priv = devm_kzalloc(dev, माप(*priv), GFP_KERNEL);
+	अगर (!priv)
+		वापस -ENOMEM;
 	soc = &priv->soc;
 
-	res = platform_get_resource_byname(pdev,
+	res = platक्रमm_get_resource_byname(pdev,
 		IORESOURCE_MEM, "nand-int-base");
 	priv->base = devm_ioremap_resource(dev, res);
-	if (IS_ERR(priv->base))
-		return PTR_ERR(priv->base);
+	अगर (IS_ERR(priv->base))
+		वापस PTR_ERR(priv->base);
 
-	soc->ctlrdy_ack = bcm6368_nand_intc_ack;
-	soc->ctlrdy_set_enabled = bcm6368_nand_intc_set;
+	soc->ctlrdy_ack = bcm6368_nand_पूर्णांकc_ack;
+	soc->ctlrdy_set_enabled = bcm6368_nand_पूर्णांकc_set;
 
-	/* Disable and ack all interrupts  */
-	brcmnand_writel(0, priv->base + BCM6368_NAND_INT);
-	brcmnand_writel(BCM6368_NAND_STATUS_MASK,
-			priv->base + BCM6368_NAND_INT);
+	/* Disable and ack all पूर्णांकerrupts  */
+	brcmnand_ग_लिखोl(0, priv->base + BCM6368_न_अंकD_INT);
+	brcmnand_ग_लिखोl(BCM6368_न_अंकD_STATUS_MASK,
+			priv->base + BCM6368_न_अंकD_INT);
 
-	return brcmnand_probe(pdev, soc);
-}
+	वापस brcmnand_probe(pdev, soc);
+पूर्ण
 
-static const struct of_device_id bcm6368_nand_of_match[] = {
-	{ .compatible = "brcm,nand-bcm6368" },
-	{},
-};
+अटल स्थिर काष्ठा of_device_id bcm6368_nand_of_match[] = अणु
+	अणु .compatible = "brcm,nand-bcm6368" पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, bcm6368_nand_of_match);
 
-static struct platform_driver bcm6368_nand_driver = {
+अटल काष्ठा platक्रमm_driver bcm6368_nand_driver = अणु
 	.probe			= bcm6368_nand_probe,
-	.remove			= brcmnand_remove,
-	.driver = {
+	.हटाओ			= brcmnand_हटाओ,
+	.driver = अणु
 		.name		= "bcm6368_nand",
 		.pm		= &brcmnand_pm_ops,
 		.of_match_table	= bcm6368_nand_of_match,
-	}
-};
-module_platform_driver(bcm6368_nand_driver);
+	पूर्ण
+पूर्ण;
+module_platक्रमm_driver(bcm6368_nand_driver);
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Simon Arlott");

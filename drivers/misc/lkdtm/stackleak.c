@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * This code tests that the current task stack is properly erased (filled
  * with STACKLEAK_POISON).
@@ -8,75 +9,75 @@
  *   Tycho Andersen <tycho@tycho.ws>
  */
 
-#include "lkdtm.h"
-#include <linux/stackleak.h>
+#समावेश "lkdtm.h"
+#समावेश <linux/stackleak.h>
 
-void lkdtm_STACKLEAK_ERASING(void)
-{
-	unsigned long *sp, left, found, i;
-	const unsigned long check_depth =
-			STACKLEAK_SEARCH_DEPTH / sizeof(unsigned long);
+व्योम lkdपंचांग_STACKLEAK_ERASING(व्योम)
+अणु
+	अचिन्हित दीर्घ *sp, left, found, i;
+	स्थिर अचिन्हित दीर्घ check_depth =
+			STACKLEAK_SEARCH_DEPTH / माप(अचिन्हित दीर्घ);
 	bool test_failed = false;
 
 	/*
 	 * For the details about the alignment of the poison values, see
 	 * the comment in stackleak_track_stack().
 	 */
-	sp = PTR_ALIGN(&i, sizeof(unsigned long));
+	sp = PTR_ALIGN(&i, माप(अचिन्हित दीर्घ));
 
-	left = ((unsigned long)sp & (THREAD_SIZE - 1)) / sizeof(unsigned long);
+	left = ((अचिन्हित दीर्घ)sp & (THREAD_SIZE - 1)) / माप(अचिन्हित दीर्घ);
 	sp--;
 
 	/*
-	 * One 'long int' at the bottom of the thread stack is reserved
+	 * One 'long int' at the bottom of the thपढ़ो stack is reserved
 	 * and not poisoned.
 	 */
-	if (left > 1) {
+	अगर (left > 1) अणु
 		left--;
-	} else {
+	पूर्ण अन्यथा अणु
 		pr_err("FAIL: not enough stack space for the test\n");
 		test_failed = true;
-		goto end;
-	}
+		जाओ end;
+	पूर्ण
 
 	pr_info("checking unused part of the thread stack (%lu bytes)...\n",
-					left * sizeof(unsigned long));
+					left * माप(अचिन्हित दीर्घ));
 
 	/*
-	 * Search for 'check_depth' poison values in a row (just like
-	 * stackleak_erase() does).
+	 * Search क्रम 'check_depth' poison values in a row (just like
+	 * stackleak_erase() करोes).
 	 */
-	for (i = 0, found = 0; i < left && found <= check_depth; i++) {
-		if (*(sp - i) == STACKLEAK_POISON)
+	क्रम (i = 0, found = 0; i < left && found <= check_depth; i++) अणु
+		अगर (*(sp - i) == STACKLEAK_POISON)
 			found++;
-		else
+		अन्यथा
 			found = 0;
-	}
+	पूर्ण
 
-	if (found <= check_depth) {
+	अगर (found <= check_depth) अणु
 		pr_err("FAIL: the erased part is not found (checked %lu bytes)\n",
-						i * sizeof(unsigned long));
+						i * माप(अचिन्हित दीर्घ));
 		test_failed = true;
-		goto end;
-	}
+		जाओ end;
+	पूर्ण
 
 	pr_info("the erased part begins after %lu not poisoned bytes\n",
-				(i - found) * sizeof(unsigned long));
+				(i - found) * माप(अचिन्हित दीर्घ));
 
-	/* The rest of thread stack should be erased */
-	for (; i < left; i++) {
-		if (*(sp - i) != STACKLEAK_POISON) {
+	/* The rest of thपढ़ो stack should be erased */
+	क्रम (; i < left; i++) अणु
+		अगर (*(sp - i) != STACKLEAK_POISON) अणु
 			pr_err("FAIL: bad value number %lu in the erased part: 0x%lx\n",
 								i, *(sp - i));
 			test_failed = true;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 end:
-	if (test_failed) {
+	अगर (test_failed) अणु
 		pr_err("FAIL: the thread stack is NOT properly erased\n");
 		dump_stack();
-	} else {
+	पूर्ण अन्यथा अणु
 		pr_info("OK: the rest of the thread stack is properly erased\n");
-	}
-}
+	पूर्ण
+पूर्ण

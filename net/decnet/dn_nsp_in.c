@@ -1,35 +1,36 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * DECnet       An implementation of the DECnet protocol suite for the LINUX
- *              operating system.  DECnet is implemented using the  BSD Socket
- *              interface as the means of communication with the user level.
+ * DECnet       An implementation of the DECnet protocol suite क्रम the LINUX
+ *              operating प्रणाली.  DECnet is implemented using the  BSD Socket
+ *              पूर्णांकerface as the means of communication with the user level.
  *
  *              DECnet Network Services Protocol (Input)
  *
- * Author:      Eduardo Marcelo Serrat <emserrat@geocities.com>
+ * Author:      Eduarकरो Marcelo Serrat <emserrat@geocities.com>
  *
  * Changes:
  *
- *    Steve Whitehouse:  Split into dn_nsp_in.c and dn_nsp_out.c from
+ *    Steve Whitehouse:  Split पूर्णांकo dn_nsp_in.c and dn_nsp_out.c from
  *                       original dn_nsp.c.
  *    Steve Whitehouse:  Updated to work with my new routing architecture.
- *    Steve Whitehouse:  Add changes from Eduardo Serrat's patches.
+ *    Steve Whitehouse:  Add changes from Eduarकरो Serrat's patches.
  *    Steve Whitehouse:  Put all ack handling code in a common routine.
- *    Steve Whitehouse:  Put other common bits into dn_nsp_rx()
+ *    Steve Whitehouse:  Put other common bits पूर्णांकo dn_nsp_rx()
  *    Steve Whitehouse:  More checks on skb->len to catch bogus packets
  *                       Fixed various race conditions and possible nasties.
- *    Steve Whitehouse:  Now handles returned conninit frames.
+ *    Steve Whitehouse:  Now handles वापसed conninit frames.
  *     David S. Miller:  New socket locking
  *    Steve Whitehouse:  Fixed lockup when socket filtering was enabled.
- *         Paul Koning:  Fix to push CC sockets into RUN when acks are
+ *         Paul Koning:  Fix to push CC sockets पूर्णांकo RUN when acks are
  *                       received.
  *    Steve Whitehouse:
- *   Patrick Caulfield:  Checking conninits for correctness & sending of error
+ *   Patrick Caulfield:  Checking conninits क्रम correctness & sending of error
  *                       responses.
- *    Steve Whitehouse:  Added backlog congestion level return codes.
+ *    Steve Whitehouse:  Added backlog congestion level वापस codes.
  *   Patrick Caulfield:
  *    Steve Whitehouse:  Added flow control support (outbound)
- *    Steve Whitehouse:  Prepare for nonlinear skbs
+ *    Steve Whitehouse:  Prepare क्रम nonlinear skbs
  */
 
 /******************************************************************************
@@ -37,202 +38,202 @@
 
 *******************************************************************************/
 
-#include <linux/errno.h>
-#include <linux/types.h>
-#include <linux/socket.h>
-#include <linux/in.h>
-#include <linux/kernel.h>
-#include <linux/timer.h>
-#include <linux/string.h>
-#include <linux/sockios.h>
-#include <linux/net.h>
-#include <linux/netdevice.h>
-#include <linux/inet.h>
-#include <linux/route.h>
-#include <linux/slab.h>
-#include <net/sock.h>
-#include <net/tcp_states.h>
-#include <linux/fcntl.h>
-#include <linux/mm.h>
-#include <linux/termios.h>
-#include <linux/interrupt.h>
-#include <linux/proc_fs.h>
-#include <linux/stat.h>
-#include <linux/init.h>
-#include <linux/poll.h>
-#include <linux/netfilter_decnet.h>
-#include <net/neighbour.h>
-#include <net/dst.h>
-#include <net/dn.h>
-#include <net/dn_nsp.h>
-#include <net/dn_dev.h>
-#include <net/dn_route.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/types.h>
+#समावेश <linux/socket.h>
+#समावेश <linux/in.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/समयr.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/sockios.h>
+#समावेश <linux/net.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/inet.h>
+#समावेश <linux/route.h>
+#समावेश <linux/slab.h>
+#समावेश <net/sock.h>
+#समावेश <net/tcp_states.h>
+#समावेश <linux/fcntl.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/termios.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/proc_fs.h>
+#समावेश <linux/स्थिति.स>
+#समावेश <linux/init.h>
+#समावेश <linux/poll.h>
+#समावेश <linux/netfilter_decnet.h>
+#समावेश <net/neighbour.h>
+#समावेश <net/dst.h>
+#समावेश <net/dn.h>
+#समावेश <net/dn_nsp.h>
+#समावेश <net/dn_dev.h>
+#समावेश <net/dn_route.h>
 
-extern int decnet_log_martians;
+बाह्य पूर्णांक decnet_log_martians;
 
-static void dn_log_martian(struct sk_buff *skb, const char *msg)
-{
-	if (decnet_log_martians) {
-		char *devname = skb->dev ? skb->dev->name : "???";
-		struct dn_skb_cb *cb = DN_SKB_CB(skb);
+अटल व्योम dn_log_martian(काष्ठा sk_buff *skb, स्थिर अक्षर *msg)
+अणु
+	अगर (decnet_log_martians) अणु
+		अक्षर *devname = skb->dev ? skb->dev->name : "???";
+		काष्ठा dn_skb_cb *cb = DN_SKB_CB(skb);
 		net_info_ratelimited("DECnet: Martian packet (%s) dev=%s src=0x%04hx dst=0x%04hx srcport=0x%04hx dstport=0x%04hx\n",
 				     msg, devname,
 				     le16_to_cpu(cb->src),
 				     le16_to_cpu(cb->dst),
 				     le16_to_cpu(cb->src_port),
 				     le16_to_cpu(cb->dst_port));
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
  * For this function we've flipped the cross-subchannel bit
- * if the message is an otherdata or linkservice message. Thus
+ * अगर the message is an otherdata or linkservice message. Thus
  * we can use it to work out what to update.
  */
-static void dn_ack(struct sock *sk, struct sk_buff *skb, unsigned short ack)
-{
-	struct dn_scp *scp = DN_SK(sk);
-	unsigned short type = ((ack >> 12) & 0x0003);
-	int wakeup = 0;
+अटल व्योम dn_ack(काष्ठा sock *sk, काष्ठा sk_buff *skb, अचिन्हित लघु ack)
+अणु
+	काष्ठा dn_scp *scp = DN_SK(sk);
+	अचिन्हित लघु type = ((ack >> 12) & 0x0003);
+	पूर्णांक wakeup = 0;
 
-	switch (type) {
-	case 0: /* ACK - Data */
-		if (dn_after(ack, scp->ackrcv_dat)) {
+	चयन (type) अणु
+	हाल 0: /* ACK - Data */
+		अगर (dn_after(ack, scp->ackrcv_dat)) अणु
 			scp->ackrcv_dat = ack & 0x0fff;
 			wakeup |= dn_nsp_check_xmit_queue(sk, skb,
 							  &scp->data_xmit_queue,
 							  ack);
-		}
-		break;
-	case 1: /* NAK - Data */
-		break;
-	case 2: /* ACK - OtherData */
-		if (dn_after(ack, scp->ackrcv_oth)) {
+		पूर्ण
+		अवरोध;
+	हाल 1: /* NAK - Data */
+		अवरोध;
+	हाल 2: /* ACK - OtherData */
+		अगर (dn_after(ack, scp->ackrcv_oth)) अणु
 			scp->ackrcv_oth = ack & 0x0fff;
 			wakeup |= dn_nsp_check_xmit_queue(sk, skb,
 							  &scp->other_xmit_queue,
 							  ack);
-		}
-		break;
-	case 3: /* NAK - OtherData */
-		break;
-	}
+		पूर्ण
+		अवरोध;
+	हाल 3: /* NAK - OtherData */
+		अवरोध;
+	पूर्ण
 
-	if (wakeup && !sock_flag(sk, SOCK_DEAD))
+	अगर (wakeup && !sock_flag(sk, SOCK_DEAD))
 		sk->sk_state_change(sk);
-}
+पूर्ण
 
 /*
  * This function is a universal ack processor.
  */
-static int dn_process_ack(struct sock *sk, struct sk_buff *skb, int oth)
-{
+अटल पूर्णांक dn_process_ack(काष्ठा sock *sk, काष्ठा sk_buff *skb, पूर्णांक oth)
+अणु
 	__le16 *ptr = (__le16 *)skb->data;
-	int len = 0;
-	unsigned short ack;
+	पूर्णांक len = 0;
+	अचिन्हित लघु ack;
 
-	if (skb->len < 2)
-		return len;
+	अगर (skb->len < 2)
+		वापस len;
 
-	if ((ack = le16_to_cpu(*ptr)) & 0x8000) {
+	अगर ((ack = le16_to_cpu(*ptr)) & 0x8000) अणु
 		skb_pull(skb, 2);
 		ptr++;
 		len += 2;
-		if ((ack & 0x4000) == 0) {
-			if (oth)
+		अगर ((ack & 0x4000) == 0) अणु
+			अगर (oth)
 				ack ^= 0x2000;
 			dn_ack(sk, skb, ack);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (skb->len < 2)
-		return len;
+	अगर (skb->len < 2)
+		वापस len;
 
-	if ((ack = le16_to_cpu(*ptr)) & 0x8000) {
+	अगर ((ack = le16_to_cpu(*ptr)) & 0x8000) अणु
 		skb_pull(skb, 2);
 		len += 2;
-		if ((ack & 0x4000) == 0) {
-			if (oth)
+		अगर ((ack & 0x4000) == 0) अणु
+			अगर (oth)
 				ack ^= 0x2000;
 			dn_ack(sk, skb, ack);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return len;
-}
+	वापस len;
+पूर्ण
 
 
 /**
- * dn_check_idf - Check an image data field format is correct.
- * @pptr: Pointer to pointer to image data
- * @len: Pointer to length of image data
+ * dn_check_idf - Check an image data field क्रमmat is correct.
+ * @pptr: Poपूर्णांकer to poपूर्णांकer to image data
+ * @len: Poपूर्णांकer to length of image data
  * @max: The maximum allowed length of the data in the image data field
  * @follow_on: Check that this many bytes exist beyond the end of the image data
  *
- * Returns: 0 if ok, -1 on error
+ * Returns: 0 अगर ok, -1 on error
  */
-static inline int dn_check_idf(unsigned char **pptr, int *len, unsigned char max, unsigned char follow_on)
-{
-	unsigned char *ptr = *pptr;
-	unsigned char flen = *ptr++;
+अटल अंतरभूत पूर्णांक dn_check_idf(अचिन्हित अक्षर **pptr, पूर्णांक *len, अचिन्हित अक्षर max, अचिन्हित अक्षर follow_on)
+अणु
+	अचिन्हित अक्षर *ptr = *pptr;
+	अचिन्हित अक्षर flen = *ptr++;
 
 	(*len)--;
-	if (flen > max)
-		return -1;
-	if ((flen + follow_on) > *len)
-		return -1;
+	अगर (flen > max)
+		वापस -1;
+	अगर ((flen + follow_on) > *len)
+		वापस -1;
 
 	*len -= flen;
 	*pptr = ptr + flen;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * Table of reason codes to pass back to node which sent us a badly
- * formed message, plus text messages for the log. A zero entry in
+ * क्रमmed message, plus text messages क्रम the log. A zero entry in
  * the reason field means "don't reply" otherwise a disc init is sent with
- * the specified reason code.
+ * the specअगरied reason code.
  */
-static struct {
-	unsigned short reason;
-	const char *text;
-} ci_err_table[] = {
- { 0,             "CI: Truncated message" },
- { NSP_REASON_ID, "CI: Destination username error" },
- { NSP_REASON_ID, "CI: Destination username type" },
- { NSP_REASON_US, "CI: Source username error" },
- { 0,             "CI: Truncated at menuver" },
- { 0,             "CI: Truncated before access or user data" },
- { NSP_REASON_IO, "CI: Access data format error" },
- { NSP_REASON_IO, "CI: User data format error" }
-};
+अटल काष्ठा अणु
+	अचिन्हित लघु reason;
+	स्थिर अक्षर *text;
+पूर्ण ci_err_table[] = अणु
+ अणु 0,             "CI: Truncated message" पूर्ण,
+ अणु NSP_REASON_ID, "CI: Destination username error" पूर्ण,
+ अणु NSP_REASON_ID, "CI: Destination username type" पूर्ण,
+ अणु NSP_REASON_US, "CI: Source username error" पूर्ण,
+ अणु 0,             "CI: Truncated at menuver" पूर्ण,
+ अणु 0,             "CI: Truncated before access or user data" पूर्ण,
+ अणु NSP_REASON_IO, "CI: Access data format error" पूर्ण,
+ अणु NSP_REASON_IO, "CI: User data format error" पूर्ण
+पूर्ण;
 
 /*
- * This function uses a slightly different lookup method
+ * This function uses a slightly dअगरferent lookup method
  * to find its sockets, since it searches on object name/number
- * rather than port numbers. Various tests are done to ensure that
- * the incoming data is in the correct format before it is queued to
+ * rather than port numbers. Various tests are करोne to ensure that
+ * the incoming data is in the correct क्रमmat beक्रमe it is queued to
  * a socket.
  */
-static struct sock *dn_find_listener(struct sk_buff *skb, unsigned short *reason)
-{
-	struct dn_skb_cb *cb = DN_SKB_CB(skb);
-	struct nsp_conn_init_msg *msg = (struct nsp_conn_init_msg *)skb->data;
-	struct sockaddr_dn dstaddr;
-	struct sockaddr_dn srcaddr;
-	unsigned char type = 0;
-	int dstlen;
-	int srclen;
-	unsigned char *ptr;
-	int len;
-	int err = 0;
-	unsigned char menuver;
+अटल काष्ठा sock *dn_find_listener(काष्ठा sk_buff *skb, अचिन्हित लघु *reason)
+अणु
+	काष्ठा dn_skb_cb *cb = DN_SKB_CB(skb);
+	काष्ठा nsp_conn_init_msg *msg = (काष्ठा nsp_conn_init_msg *)skb->data;
+	काष्ठा sockaddr_dn dstaddr;
+	काष्ठा sockaddr_dn srcaddr;
+	अचिन्हित अक्षर type = 0;
+	पूर्णांक dstlen;
+	पूर्णांक srclen;
+	अचिन्हित अक्षर *ptr;
+	पूर्णांक len;
+	पूर्णांक err = 0;
+	अचिन्हित अक्षर menuver;
 
-	memset(&dstaddr, 0, sizeof(struct sockaddr_dn));
-	memset(&srcaddr, 0, sizeof(struct sockaddr_dn));
+	स_रखो(&dstaddr, 0, माप(काष्ठा sockaddr_dn));
+	स_रखो(&srcaddr, 0, माप(काष्ठा sockaddr_dn));
 
 	/*
-	 * 1. Decode & remove message header
+	 * 1. Decode & हटाओ message header
 	 */
 	cb->src_port = msg->srcaddr;
 	cb->dst_port = msg->dstaddr;
@@ -240,114 +241,114 @@ static struct sock *dn_find_listener(struct sk_buff *skb, unsigned short *reason
 	cb->info     = msg->info;
 	cb->segsize  = le16_to_cpu(msg->segsize);
 
-	if (!pskb_may_pull(skb, sizeof(*msg)))
-		goto err_out;
+	अगर (!pskb_may_pull(skb, माप(*msg)))
+		जाओ err_out;
 
-	skb_pull(skb, sizeof(*msg));
+	skb_pull(skb, माप(*msg));
 
 	len = skb->len;
 	ptr = skb->data;
 
 	/*
-	 * 2. Check destination end username format
+	 * 2. Check destination end username क्रमmat
 	 */
 	dstlen = dn_username2sockaddr(ptr, len, &dstaddr, &type);
 	err++;
-	if (dstlen < 0)
-		goto err_out;
+	अगर (dstlen < 0)
+		जाओ err_out;
 
 	err++;
-	if (type > 1)
-		goto err_out;
+	अगर (type > 1)
+		जाओ err_out;
 
 	len -= dstlen;
 	ptr += dstlen;
 
 	/*
-	 * 3. Check source end username format
+	 * 3. Check source end username क्रमmat
 	 */
 	srclen = dn_username2sockaddr(ptr, len, &srcaddr, &type);
 	err++;
-	if (srclen < 0)
-		goto err_out;
+	अगर (srclen < 0)
+		जाओ err_out;
 
 	len -= srclen;
 	ptr += srclen;
 	err++;
-	if (len < 1)
-		goto err_out;
+	अगर (len < 1)
+		जाओ err_out;
 
 	menuver = *ptr;
 	ptr++;
 	len--;
 
 	/*
-	 * 4. Check that optional data actually exists if menuver says it does
+	 * 4. Check that optional data actually exists अगर menuver says it करोes
 	 */
 	err++;
-	if ((menuver & (DN_MENUVER_ACC | DN_MENUVER_USR)) && (len < 1))
-		goto err_out;
+	अगर ((menuver & (DN_MENUVER_ACC | DN_MENUVER_USR)) && (len < 1))
+		जाओ err_out;
 
 	/*
-	 * 5. Check optional access data format
+	 * 5. Check optional access data क्रमmat
 	 */
 	err++;
-	if (menuver & DN_MENUVER_ACC) {
-		if (dn_check_idf(&ptr, &len, 39, 1))
-			goto err_out;
-		if (dn_check_idf(&ptr, &len, 39, 1))
-			goto err_out;
-		if (dn_check_idf(&ptr, &len, 39, (menuver & DN_MENUVER_USR) ? 1 : 0))
-			goto err_out;
-	}
+	अगर (menuver & DN_MENUVER_ACC) अणु
+		अगर (dn_check_idf(&ptr, &len, 39, 1))
+			जाओ err_out;
+		अगर (dn_check_idf(&ptr, &len, 39, 1))
+			जाओ err_out;
+		अगर (dn_check_idf(&ptr, &len, 39, (menuver & DN_MENUVER_USR) ? 1 : 0))
+			जाओ err_out;
+	पूर्ण
 
 	/*
-	 * 6. Check optional user data format
+	 * 6. Check optional user data क्रमmat
 	 */
 	err++;
-	if (menuver & DN_MENUVER_USR) {
-		if (dn_check_idf(&ptr, &len, 16, 0))
-			goto err_out;
-	}
+	अगर (menuver & DN_MENUVER_USR) अणु
+		अगर (dn_check_idf(&ptr, &len, 16, 0))
+			जाओ err_out;
+	पूर्ण
 
 	/*
 	 * 7. Look up socket based on destination end username
 	 */
-	return dn_sklist_find_listener(&dstaddr);
+	वापस dn_sklist_find_listener(&dstaddr);
 err_out:
 	dn_log_martian(skb, ci_err_table[err].text);
 	*reason = ci_err_table[err].reason;
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
 
-static void dn_nsp_conn_init(struct sock *sk, struct sk_buff *skb)
-{
-	if (sk_acceptq_is_full(sk)) {
-		kfree_skb(skb);
-		return;
-	}
+अटल व्योम dn_nsp_conn_init(काष्ठा sock *sk, काष्ठा sk_buff *skb)
+अणु
+	अगर (sk_acceptq_is_full(sk)) अणु
+		kमुक्त_skb(skb);
+		वापस;
+	पूर्ण
 
 	sk_acceptq_added(sk);
 	skb_queue_tail(&sk->sk_receive_queue, skb);
 	sk->sk_state_change(sk);
-}
+पूर्ण
 
-static void dn_nsp_conn_conf(struct sock *sk, struct sk_buff *skb)
-{
-	struct dn_skb_cb *cb = DN_SKB_CB(skb);
-	struct dn_scp *scp = DN_SK(sk);
-	unsigned char *ptr;
+अटल व्योम dn_nsp_conn_conf(काष्ठा sock *sk, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा dn_skb_cb *cb = DN_SKB_CB(skb);
+	काष्ठा dn_scp *scp = DN_SK(sk);
+	अचिन्हित अक्षर *ptr;
 
-	if (skb->len < 4)
-		goto out;
+	अगर (skb->len < 4)
+		जाओ out;
 
 	ptr = skb->data;
 	cb->services = *ptr++;
 	cb->info = *ptr++;
 	cb->segsize = le16_to_cpu(*(__le16 *)ptr);
 
-	if ((scp->state == DN_CI) || (scp->state == DN_CD)) {
+	अगर ((scp->state == DN_CI) || (scp->state == DN_CD)) अणु
 		scp->persist = 0;
 		scp->addrrem = cb->src_port;
 		sk->sk_state = TCP_ESTABLISHED;
@@ -356,397 +357,397 @@ static void dn_nsp_conn_conf(struct sock *sk, struct sk_buff *skb)
 		scp->info_rem = cb->info;
 		scp->segsize_rem = cb->segsize;
 
-		if ((scp->services_rem & NSP_FC_MASK) == NSP_FC_NONE)
-			scp->max_window = decnet_no_fc_max_cwnd;
+		अगर ((scp->services_rem & NSP_FC_MASK) == NSP_FC_NONE)
+			scp->max_winकरोw = decnet_no_fc_max_cwnd;
 
-		if (skb->len > 0) {
+		अगर (skb->len > 0) अणु
 			u16 dlen = *skb->data;
-			if ((dlen <= 16) && (dlen <= skb->len)) {
+			अगर ((dlen <= 16) && (dlen <= skb->len)) अणु
 				scp->conndata_in.opt_optl = cpu_to_le16(dlen);
 				skb_copy_from_linear_data_offset(skb, 1,
 					      scp->conndata_in.opt_data, dlen);
-			}
-		}
+			पूर्ण
+		पूर्ण
 		dn_nsp_send_link(sk, DN_NOCHANGE, 0);
-		if (!sock_flag(sk, SOCK_DEAD))
+		अगर (!sock_flag(sk, SOCK_DEAD))
 			sk->sk_state_change(sk);
-	}
+	पूर्ण
 
 out:
-	kfree_skb(skb);
-}
+	kमुक्त_skb(skb);
+पूर्ण
 
-static void dn_nsp_conn_ack(struct sock *sk, struct sk_buff *skb)
-{
-	struct dn_scp *scp = DN_SK(sk);
+अटल व्योम dn_nsp_conn_ack(काष्ठा sock *sk, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा dn_scp *scp = DN_SK(sk);
 
-	if (scp->state == DN_CI) {
+	अगर (scp->state == DN_CI) अणु
 		scp->state = DN_CD;
 		scp->persist = 0;
-	}
+	पूर्ण
 
-	kfree_skb(skb);
-}
+	kमुक्त_skb(skb);
+पूर्ण
 
-static void dn_nsp_disc_init(struct sock *sk, struct sk_buff *skb)
-{
-	struct dn_scp *scp = DN_SK(sk);
-	struct dn_skb_cb *cb = DN_SKB_CB(skb);
-	unsigned short reason;
+अटल व्योम dn_nsp_disc_init(काष्ठा sock *sk, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा dn_scp *scp = DN_SK(sk);
+	काष्ठा dn_skb_cb *cb = DN_SKB_CB(skb);
+	अचिन्हित लघु reason;
 
-	if (skb->len < 2)
-		goto out;
+	अगर (skb->len < 2)
+		जाओ out;
 
 	reason = le16_to_cpu(*(__le16 *)skb->data);
 	skb_pull(skb, 2);
 
 	scp->discdata_in.opt_status = cpu_to_le16(reason);
 	scp->discdata_in.opt_optl   = 0;
-	memset(scp->discdata_in.opt_data, 0, 16);
+	स_रखो(scp->discdata_in.opt_data, 0, 16);
 
-	if (skb->len > 0) {
+	अगर (skb->len > 0) अणु
 		u16 dlen = *skb->data;
-		if ((dlen <= 16) && (dlen <= skb->len)) {
+		अगर ((dlen <= 16) && (dlen <= skb->len)) अणु
 			scp->discdata_in.opt_optl = cpu_to_le16(dlen);
 			skb_copy_from_linear_data_offset(skb, 1, scp->discdata_in.opt_data, dlen);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	scp->addrrem = cb->src_port;
 	sk->sk_state = TCP_CLOSE;
 
-	switch (scp->state) {
-	case DN_CI:
-	case DN_CD:
+	चयन (scp->state) अणु
+	हाल DN_CI:
+	हाल DN_CD:
 		scp->state = DN_RJ;
 		sk->sk_err = ECONNREFUSED;
-		break;
-	case DN_RUN:
-		sk->sk_shutdown |= SHUTDOWN_MASK;
+		अवरोध;
+	हाल DN_RUN:
+		sk->sk_shutकरोwn |= SHUTDOWN_MASK;
 		scp->state = DN_DN;
-		break;
-	case DN_DI:
+		अवरोध;
+	हाल DN_DI:
 		scp->state = DN_DIC;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	if (!sock_flag(sk, SOCK_DEAD)) {
-		if (sk->sk_socket->state != SS_UNCONNECTED)
+	अगर (!sock_flag(sk, SOCK_DEAD)) अणु
+		अगर (sk->sk_socket->state != SS_UNCONNECTED)
 			sk->sk_socket->state = SS_DISCONNECTING;
 		sk->sk_state_change(sk);
-	}
+	पूर्ण
 
 	/*
-	 * It appears that its possible for remote machines to send disc
-	 * init messages with no port identifier if we are in the CI and
+	 * It appears that its possible क्रम remote machines to send disc
+	 * init messages with no port identअगरier अगर we are in the CI and
 	 * possibly also the CD state. Obviously we shouldn't reply with
-	 * a message if we don't know what the end point is.
+	 * a message अगर we करोn't know what the end poपूर्णांक is.
 	 */
-	if (scp->addrrem) {
+	अगर (scp->addrrem) अणु
 		dn_nsp_send_disc(sk, NSP_DISCCONF, NSP_REASON_DC, GFP_ATOMIC);
-	}
-	scp->persist_fxn = dn_destroy_timer;
+	पूर्ण
+	scp->persist_fxn = dn_destroy_समयr;
 	scp->persist = dn_nsp_persist(sk);
 
 out:
-	kfree_skb(skb);
-}
+	kमुक्त_skb(skb);
+पूर्ण
 
 /*
  * disc_conf messages are also called no_resources or no_link
  * messages depending upon the "reason" field.
  */
-static void dn_nsp_disc_conf(struct sock *sk, struct sk_buff *skb)
-{
-	struct dn_scp *scp = DN_SK(sk);
-	unsigned short reason;
+अटल व्योम dn_nsp_disc_conf(काष्ठा sock *sk, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा dn_scp *scp = DN_SK(sk);
+	अचिन्हित लघु reason;
 
-	if (skb->len != 2)
-		goto out;
+	अगर (skb->len != 2)
+		जाओ out;
 
 	reason = le16_to_cpu(*(__le16 *)skb->data);
 
 	sk->sk_state = TCP_CLOSE;
 
-	switch (scp->state) {
-	case DN_CI:
+	चयन (scp->state) अणु
+	हाल DN_CI:
 		scp->state = DN_NR;
-		break;
-	case DN_DR:
-		if (reason == NSP_REASON_DC)
+		अवरोध;
+	हाल DN_DR:
+		अगर (reason == NSP_REASON_DC)
 			scp->state = DN_DRC;
-		if (reason == NSP_REASON_NL)
+		अगर (reason == NSP_REASON_NL)
 			scp->state = DN_CN;
-		break;
-	case DN_DI:
+		अवरोध;
+	हाल DN_DI:
 		scp->state = DN_DIC;
-		break;
-	case DN_RUN:
-		sk->sk_shutdown |= SHUTDOWN_MASK;
+		अवरोध;
+	हाल DN_RUN:
+		sk->sk_shutकरोwn |= SHUTDOWN_MASK;
 		fallthrough;
-	case DN_CC:
+	हाल DN_CC:
 		scp->state = DN_CN;
-	}
+	पूर्ण
 
-	if (!sock_flag(sk, SOCK_DEAD)) {
-		if (sk->sk_socket->state != SS_UNCONNECTED)
+	अगर (!sock_flag(sk, SOCK_DEAD)) अणु
+		अगर (sk->sk_socket->state != SS_UNCONNECTED)
 			sk->sk_socket->state = SS_DISCONNECTING;
 		sk->sk_state_change(sk);
-	}
+	पूर्ण
 
-	scp->persist_fxn = dn_destroy_timer;
+	scp->persist_fxn = dn_destroy_समयr;
 	scp->persist = dn_nsp_persist(sk);
 
 out:
-	kfree_skb(skb);
-}
+	kमुक्त_skb(skb);
+पूर्ण
 
-static void dn_nsp_linkservice(struct sock *sk, struct sk_buff *skb)
-{
-	struct dn_scp *scp = DN_SK(sk);
-	unsigned short segnum;
-	unsigned char lsflags;
-	signed char fcval;
-	int wake_up = 0;
-	char *ptr = skb->data;
-	unsigned char fctype = scp->services_rem & NSP_FC_MASK;
+अटल व्योम dn_nsp_linkservice(काष्ठा sock *sk, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा dn_scp *scp = DN_SK(sk);
+	अचिन्हित लघु segnum;
+	अचिन्हित अक्षर lsflags;
+	चिन्हित अक्षर fcval;
+	पूर्णांक wake_up = 0;
+	अक्षर *ptr = skb->data;
+	अचिन्हित अक्षर fctype = scp->services_rem & NSP_FC_MASK;
 
-	if (skb->len != 4)
-		goto out;
+	अगर (skb->len != 4)
+		जाओ out;
 
 	segnum = le16_to_cpu(*(__le16 *)ptr);
 	ptr += 2;
-	lsflags = *(unsigned char *)ptr++;
+	lsflags = *(अचिन्हित अक्षर *)ptr++;
 	fcval = *ptr;
 
 	/*
 	 * Here we ignore erroneous packets which should really
-	 * should cause a connection abort. It is not critical
-	 * for now though.
+	 * should cause a connection पात. It is not critical
+	 * क्रम now though.
 	 */
-	if (lsflags & 0xf8)
-		goto out;
+	अगर (lsflags & 0xf8)
+		जाओ out;
 
-	if (seq_next(scp->numoth_rcv, segnum)) {
+	अगर (seq_next(scp->numoth_rcv, segnum)) अणु
 		seq_add(&scp->numoth_rcv, 1);
-		switch(lsflags & 0x04) { /* FCVAL INT */
-		case 0x00: /* Normal Request */
-			switch(lsflags & 0x03) { /* FCVAL MOD */
-			case 0x00: /* Request count */
-				if (fcval < 0) {
-					unsigned char p_fcval = -fcval;
-					if ((scp->flowrem_dat > p_fcval) &&
-					    (fctype == NSP_FC_SCMC)) {
+		चयन(lsflags & 0x04) अणु /* FCVAL INT */
+		हाल 0x00: /* Normal Request */
+			चयन(lsflags & 0x03) अणु /* FCVAL MOD */
+			हाल 0x00: /* Request count */
+				अगर (fcval < 0) अणु
+					अचिन्हित अक्षर p_fcval = -fcval;
+					अगर ((scp->flowrem_dat > p_fcval) &&
+					    (fctype == NSP_FC_SCMC)) अणु
 						scp->flowrem_dat -= p_fcval;
-					}
-				} else if (fcval > 0) {
+					पूर्ण
+				पूर्ण अन्यथा अगर (fcval > 0) अणु
 					scp->flowrem_dat += fcval;
 					wake_up = 1;
-				}
-				break;
-			case 0x01: /* Stop outgoing data */
+				पूर्ण
+				अवरोध;
+			हाल 0x01: /* Stop outgoing data */
 				scp->flowrem_sw = DN_DONTSEND;
-				break;
-			case 0x02: /* Ok to start again */
+				अवरोध;
+			हाल 0x02: /* Ok to start again */
 				scp->flowrem_sw = DN_SEND;
 				dn_nsp_output(sk);
 				wake_up = 1;
-			}
-			break;
-		case 0x04: /* Interrupt Request */
-			if (fcval > 0) {
+			पूर्ण
+			अवरोध;
+		हाल 0x04: /* Interrupt Request */
+			अगर (fcval > 0) अणु
 				scp->flowrem_oth += fcval;
 				wake_up = 1;
-			}
-			break;
-		}
-		if (wake_up && !sock_flag(sk, SOCK_DEAD))
+			पूर्ण
+			अवरोध;
+		पूर्ण
+		अगर (wake_up && !sock_flag(sk, SOCK_DEAD))
 			sk->sk_state_change(sk);
-	}
+	पूर्ण
 
 	dn_nsp_send_oth_ack(sk);
 
 out:
-	kfree_skb(skb);
-}
+	kमुक्त_skb(skb);
+पूर्ण
 
 /*
  * Copy of sock_queue_rcv_skb (from sock.h) without
- * bh_lock_sock() (its already held when this is called) which
+ * bh_lock_sock() (its alपढ़ोy held when this is called) which
  * also allows data and other data to be queued to a socket.
  */
-static __inline__ int dn_queue_skb(struct sock *sk, struct sk_buff *skb, int sig, struct sk_buff_head *queue)
-{
-	int err;
+अटल __अंतरभूत__ पूर्णांक dn_queue_skb(काष्ठा sock *sk, काष्ठा sk_buff *skb, पूर्णांक sig, काष्ठा sk_buff_head *queue)
+अणु
+	पूर्णांक err;
 
-	/* Cast skb->rcvbuf to unsigned... It's pointless, but reduces
+	/* Cast skb->rcvbuf to अचिन्हित... It's poपूर्णांकless, but reduces
 	   number of warnings when compiling with -W --ANK
 	 */
-	if (atomic_read(&sk->sk_rmem_alloc) + skb->truesize >=
-	    (unsigned int)sk->sk_rcvbuf) {
+	अगर (atomic_पढ़ो(&sk->sk_rmem_alloc) + skb->truesize >=
+	    (अचिन्हित पूर्णांक)sk->sk_rcvbuf) अणु
 		err = -ENOMEM;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	err = sk_filter(sk, skb);
-	if (err)
-		goto out;
+	अगर (err)
+		जाओ out;
 
 	skb_set_owner_r(skb, sk);
 	skb_queue_tail(queue, skb);
 
-	if (!sock_flag(sk, SOCK_DEAD))
-		sk->sk_data_ready(sk);
+	अगर (!sock_flag(sk, SOCK_DEAD))
+		sk->sk_data_पढ़ोy(sk);
 out:
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void dn_nsp_otherdata(struct sock *sk, struct sk_buff *skb)
-{
-	struct dn_scp *scp = DN_SK(sk);
-	unsigned short segnum;
-	struct dn_skb_cb *cb = DN_SKB_CB(skb);
-	int queued = 0;
+अटल व्योम dn_nsp_otherdata(काष्ठा sock *sk, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा dn_scp *scp = DN_SK(sk);
+	अचिन्हित लघु segnum;
+	काष्ठा dn_skb_cb *cb = DN_SKB_CB(skb);
+	पूर्णांक queued = 0;
 
-	if (skb->len < 2)
-		goto out;
+	अगर (skb->len < 2)
+		जाओ out;
 
 	cb->segnum = segnum = le16_to_cpu(*(__le16 *)skb->data);
 	skb_pull(skb, 2);
 
-	if (seq_next(scp->numoth_rcv, segnum)) {
+	अगर (seq_next(scp->numoth_rcv, segnum)) अणु
 
-		if (dn_queue_skb(sk, skb, SIGURG, &scp->other_receive_queue) == 0) {
+		अगर (dn_queue_skb(sk, skb, SIGURG, &scp->other_receive_queue) == 0) अणु
 			seq_add(&scp->numoth_rcv, 1);
 			scp->other_report = 0;
 			queued = 1;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	dn_nsp_send_oth_ack(sk);
 out:
-	if (!queued)
-		kfree_skb(skb);
-}
+	अगर (!queued)
+		kमुक्त_skb(skb);
+पूर्ण
 
-static void dn_nsp_data(struct sock *sk, struct sk_buff *skb)
-{
-	int queued = 0;
-	unsigned short segnum;
-	struct dn_skb_cb *cb = DN_SKB_CB(skb);
-	struct dn_scp *scp = DN_SK(sk);
+अटल व्योम dn_nsp_data(काष्ठा sock *sk, काष्ठा sk_buff *skb)
+अणु
+	पूर्णांक queued = 0;
+	अचिन्हित लघु segnum;
+	काष्ठा dn_skb_cb *cb = DN_SKB_CB(skb);
+	काष्ठा dn_scp *scp = DN_SK(sk);
 
-	if (skb->len < 2)
-		goto out;
+	अगर (skb->len < 2)
+		जाओ out;
 
 	cb->segnum = segnum = le16_to_cpu(*(__le16 *)skb->data);
 	skb_pull(skb, 2);
 
-	if (seq_next(scp->numdat_rcv, segnum)) {
-		if (dn_queue_skb(sk, skb, SIGIO, &sk->sk_receive_queue) == 0) {
+	अगर (seq_next(scp->numdat_rcv, segnum)) अणु
+		अगर (dn_queue_skb(sk, skb, SIGIO, &sk->sk_receive_queue) == 0) अणु
 			seq_add(&scp->numdat_rcv, 1);
 			queued = 1;
-		}
+		पूर्ण
 
-		if ((scp->flowloc_sw == DN_SEND) && dn_congested(sk)) {
+		अगर ((scp->flowloc_sw == DN_SEND) && dn_congested(sk)) अणु
 			scp->flowloc_sw = DN_DONTSEND;
 			dn_nsp_send_link(sk, DN_DONTSEND, 0);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	dn_nsp_send_data_ack(sk);
 out:
-	if (!queued)
-		kfree_skb(skb);
-}
+	अगर (!queued)
+		kमुक्त_skb(skb);
+पूर्ण
 
 /*
- * If one of our conninit messages is returned, this function
- * deals with it. It puts the socket into the NO_COMMUNICATION
+ * If one of our conninit messages is वापसed, this function
+ * deals with it. It माला_दो the socket पूर्णांकo the NO_COMMUNICATION
  * state.
  */
-static void dn_returned_conn_init(struct sock *sk, struct sk_buff *skb)
-{
-	struct dn_scp *scp = DN_SK(sk);
+अटल व्योम dn_वापसed_conn_init(काष्ठा sock *sk, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा dn_scp *scp = DN_SK(sk);
 
-	if (scp->state == DN_CI) {
+	अगर (scp->state == DN_CI) अणु
 		scp->state = DN_NC;
 		sk->sk_state = TCP_CLOSE;
-		if (!sock_flag(sk, SOCK_DEAD))
+		अगर (!sock_flag(sk, SOCK_DEAD))
 			sk->sk_state_change(sk);
-	}
+	पूर्ण
 
-	kfree_skb(skb);
-}
+	kमुक्त_skb(skb);
+पूर्ण
 
-static int dn_nsp_no_socket(struct sk_buff *skb, unsigned short reason)
-{
-	struct dn_skb_cb *cb = DN_SKB_CB(skb);
-	int ret = NET_RX_DROP;
+अटल पूर्णांक dn_nsp_no_socket(काष्ठा sk_buff *skb, अचिन्हित लघु reason)
+अणु
+	काष्ठा dn_skb_cb *cb = DN_SKB_CB(skb);
+	पूर्णांक ret = NET_RX_DROP;
 
-	/* Must not reply to returned packets */
-	if (cb->rt_flags & DN_RT_F_RTS)
-		goto out;
+	/* Must not reply to वापसed packets */
+	अगर (cb->rt_flags & DN_RT_F_RTS)
+		जाओ out;
 
-	if ((reason != NSP_REASON_OK) && ((cb->nsp_flags & 0x0c) == 0x08)) {
-		switch (cb->nsp_flags & 0x70) {
-		case 0x10:
-		case 0x60: /* (Retransmitted) Connect Init */
-			dn_nsp_return_disc(skb, NSP_DISCINIT, reason);
+	अगर ((reason != NSP_REASON_OK) && ((cb->nsp_flags & 0x0c) == 0x08)) अणु
+		चयन (cb->nsp_flags & 0x70) अणु
+		हाल 0x10:
+		हाल 0x60: /* (Retransmitted) Connect Init */
+			dn_nsp_वापस_disc(skb, NSP_DISCINIT, reason);
 			ret = NET_RX_SUCCESS;
-			break;
-		case 0x20: /* Connect Confirm */
-			dn_nsp_return_disc(skb, NSP_DISCCONF, reason);
+			अवरोध;
+		हाल 0x20: /* Connect Confirm */
+			dn_nsp_वापस_disc(skb, NSP_DISCCONF, reason);
 			ret = NET_RX_SUCCESS;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
 out:
-	kfree_skb(skb);
-	return ret;
-}
+	kमुक्त_skb(skb);
+	वापस ret;
+पूर्ण
 
-static int dn_nsp_rx_packet(struct net *net, struct sock *sk2,
-			    struct sk_buff *skb)
-{
-	struct dn_skb_cb *cb = DN_SKB_CB(skb);
-	struct sock *sk = NULL;
-	unsigned char *ptr = (unsigned char *)skb->data;
-	unsigned short reason = NSP_REASON_NL;
+अटल पूर्णांक dn_nsp_rx_packet(काष्ठा net *net, काष्ठा sock *sk2,
+			    काष्ठा sk_buff *skb)
+अणु
+	काष्ठा dn_skb_cb *cb = DN_SKB_CB(skb);
+	काष्ठा sock *sk = शून्य;
+	अचिन्हित अक्षर *ptr = (अचिन्हित अक्षर *)skb->data;
+	अचिन्हित लघु reason = NSP_REASON_NL;
 
-	if (!pskb_may_pull(skb, 2))
-		goto free_out;
+	अगर (!pskb_may_pull(skb, 2))
+		जाओ मुक्त_out;
 
 	skb_reset_transport_header(skb);
 	cb->nsp_flags = *ptr++;
 
-	if (decnet_debug_level & 2)
-		printk(KERN_DEBUG "dn_nsp_rx: Message type 0x%02x\n", (int)cb->nsp_flags);
+	अगर (decnet_debug_level & 2)
+		prपूर्णांकk(KERN_DEBUG "dn_nsp_rx: Message type 0x%02x\n", (पूर्णांक)cb->nsp_flags);
 
-	if (cb->nsp_flags & 0x83)
-		goto free_out;
+	अगर (cb->nsp_flags & 0x83)
+		जाओ मुक्त_out;
 
 	/*
 	 * Filter out conninits and useless packet types
 	 */
-	if ((cb->nsp_flags & 0x0c) == 0x08) {
-		switch (cb->nsp_flags & 0x70) {
-		case 0x00: /* NOP */
-		case 0x70: /* Reserved */
-		case 0x50: /* Reserved, Phase II node init */
-			goto free_out;
-		case 0x10:
-		case 0x60:
-			if (unlikely(cb->rt_flags & DN_RT_F_RTS))
-				goto free_out;
+	अगर ((cb->nsp_flags & 0x0c) == 0x08) अणु
+		चयन (cb->nsp_flags & 0x70) अणु
+		हाल 0x00: /* NOP */
+		हाल 0x70: /* Reserved */
+		हाल 0x50: /* Reserved, Phase II node init */
+			जाओ मुक्त_out;
+		हाल 0x10:
+		हाल 0x60:
+			अगर (unlikely(cb->rt_flags & DN_RT_F_RTS))
+				जाओ मुक्त_out;
 			sk = dn_find_listener(skb, &reason);
-			goto got_it;
-		}
-	}
+			जाओ got_it;
+		पूर्ण
+	पूर्ण
 
-	if (!pskb_may_pull(skb, 3))
-		goto free_out;
+	अगर (!pskb_may_pull(skb, 3))
+		जाओ मुक्त_out;
 
 	/*
 	 * Grab the destination address.
@@ -758,114 +759,114 @@ static int dn_nsp_rx_packet(struct net *net, struct sock *sk2,
 	/*
 	 * If not a connack, grab the source address too.
 	 */
-	if (pskb_may_pull(skb, 5)) {
+	अगर (pskb_may_pull(skb, 5)) अणु
 		cb->src_port = *(__le16 *)ptr;
 		ptr += 2;
 		skb_pull(skb, 5);
-	}
+	पूर्ण
 
 	/*
 	 * Returned packets...
 	 * Swap src & dst and look up in the normal way.
 	 */
-	if (unlikely(cb->rt_flags & DN_RT_F_RTS)) {
+	अगर (unlikely(cb->rt_flags & DN_RT_F_RTS)) अणु
 		swap(cb->dst_port, cb->src_port);
 		swap(cb->dst, cb->src);
-	}
+	पूर्ण
 
 	/*
 	 * Find the socket to which this skb is destined.
 	 */
 	sk = dn_find_by_skb(skb);
 got_it:
-	if (sk != NULL) {
-		struct dn_scp *scp = DN_SK(sk);
+	अगर (sk != शून्य) अणु
+		काष्ठा dn_scp *scp = DN_SK(sk);
 
 		/* Reset backoff */
-		scp->nsp_rxtshift = 0;
+		scp->nsp_rxtshअगरt = 0;
 
 		/*
 		 * We linearize everything except data segments here.
 		 */
-		if (cb->nsp_flags & ~0x60) {
-			if (unlikely(skb_linearize(skb)))
-				goto free_out;
-		}
+		अगर (cb->nsp_flags & ~0x60) अणु
+			अगर (unlikely(skb_linearize(skb)))
+				जाओ मुक्त_out;
+		पूर्ण
 
-		return sk_receive_skb(sk, skb, 0);
-	}
+		वापस sk_receive_skb(sk, skb, 0);
+	पूर्ण
 
-	return dn_nsp_no_socket(skb, reason);
+	वापस dn_nsp_no_socket(skb, reason);
 
-free_out:
-	kfree_skb(skb);
-	return NET_RX_DROP;
-}
+मुक्त_out:
+	kमुक्त_skb(skb);
+	वापस NET_RX_DROP;
+पूर्ण
 
-int dn_nsp_rx(struct sk_buff *skb)
-{
-	return NF_HOOK(NFPROTO_DECNET, NF_DN_LOCAL_IN,
-		       &init_net, NULL, skb, skb->dev, NULL,
+पूर्णांक dn_nsp_rx(काष्ठा sk_buff *skb)
+अणु
+	वापस NF_HOOK(NFPROTO_DECNET, NF_DN_LOCAL_IN,
+		       &init_net, शून्य, skb, skb->dev, शून्य,
 		       dn_nsp_rx_packet);
-}
+पूर्ण
 
 /*
- * This is the main receive routine for sockets. It is called
+ * This is the मुख्य receive routine क्रम sockets. It is called
  * from the above when the socket is not busy, and also from
  * sock_release() when there is a backlog queued up.
  */
-int dn_nsp_backlog_rcv(struct sock *sk, struct sk_buff *skb)
-{
-	struct dn_scp *scp = DN_SK(sk);
-	struct dn_skb_cb *cb = DN_SKB_CB(skb);
+पूर्णांक dn_nsp_backlog_rcv(काष्ठा sock *sk, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा dn_scp *scp = DN_SK(sk);
+	काष्ठा dn_skb_cb *cb = DN_SKB_CB(skb);
 
-	if (cb->rt_flags & DN_RT_F_RTS) {
-		if (cb->nsp_flags == 0x18 || cb->nsp_flags == 0x68)
-			dn_returned_conn_init(sk, skb);
-		else
-			kfree_skb(skb);
-		return NET_RX_SUCCESS;
-	}
+	अगर (cb->rt_flags & DN_RT_F_RTS) अणु
+		अगर (cb->nsp_flags == 0x18 || cb->nsp_flags == 0x68)
+			dn_वापसed_conn_init(sk, skb);
+		अन्यथा
+			kमुक्त_skb(skb);
+		वापस NET_RX_SUCCESS;
+	पूर्ण
 
 	/*
 	 * Control packet.
 	 */
-	if ((cb->nsp_flags & 0x0c) == 0x08) {
-		switch (cb->nsp_flags & 0x70) {
-		case 0x10:
-		case 0x60:
+	अगर ((cb->nsp_flags & 0x0c) == 0x08) अणु
+		चयन (cb->nsp_flags & 0x70) अणु
+		हाल 0x10:
+		हाल 0x60:
 			dn_nsp_conn_init(sk, skb);
-			break;
-		case 0x20:
+			अवरोध;
+		हाल 0x20:
 			dn_nsp_conn_conf(sk, skb);
-			break;
-		case 0x30:
+			अवरोध;
+		हाल 0x30:
 			dn_nsp_disc_init(sk, skb);
-			break;
-		case 0x40:
+			अवरोध;
+		हाल 0x40:
 			dn_nsp_disc_conf(sk, skb);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-	} else if (cb->nsp_flags == 0x24) {
+	पूर्ण अन्यथा अगर (cb->nsp_flags == 0x24) अणु
 		/*
-		 * Special for connacks, 'cos they don't have
+		 * Special क्रम connacks, 'cos they don't have
 		 * ack data or ack otherdata info.
 		 */
 		dn_nsp_conn_ack(sk, skb);
-	} else {
-		int other = 1;
+	पूर्ण अन्यथा अणु
+		पूर्णांक other = 1;
 
-		/* both data and ack frames can kick a CC socket into RUN */
-		if ((scp->state == DN_CC) && !sock_flag(sk, SOCK_DEAD)) {
+		/* both data and ack frames can kick a CC socket पूर्णांकo RUN */
+		अगर ((scp->state == DN_CC) && !sock_flag(sk, SOCK_DEAD)) अणु
 			scp->state = DN_RUN;
 			sk->sk_state = TCP_ESTABLISHED;
 			sk->sk_state_change(sk);
-		}
+		पूर्ण
 
-		if ((cb->nsp_flags & 0x1c) == 0)
+		अगर ((cb->nsp_flags & 0x1c) == 0)
 			other = 0;
-		if (cb->nsp_flags == 0x04)
+		अगर (cb->nsp_flags == 0x04)
 			other = 0;
 
 		/*
@@ -877,30 +878,30 @@ int dn_nsp_backlog_rcv(struct sock *sk, struct sk_buff *skb)
 
 		/*
 		 * If we've some sort of data here then call a
-		 * suitable routine for dealing with it, otherwise
+		 * suitable routine क्रम dealing with it, otherwise
 		 * the packet is an ack and can be discarded.
 		 */
-		if ((cb->nsp_flags & 0x0c) == 0) {
+		अगर ((cb->nsp_flags & 0x0c) == 0) अणु
 
-			if (scp->state != DN_RUN)
-				goto free_out;
+			अगर (scp->state != DN_RUN)
+				जाओ मुक्त_out;
 
-			switch (cb->nsp_flags) {
-			case 0x10: /* LS */
+			चयन (cb->nsp_flags) अणु
+			हाल 0x10: /* LS */
 				dn_nsp_linkservice(sk, skb);
-				break;
-			case 0x30: /* OD */
+				अवरोध;
+			हाल 0x30: /* OD */
 				dn_nsp_otherdata(sk, skb);
-				break;
-			default:
+				अवरोध;
+			शेष:
 				dn_nsp_data(sk, skb);
-			}
+			पूर्ण
 
-		} else { /* Ack, chuck it out here */
-free_out:
-			kfree_skb(skb);
-		}
-	}
+		पूर्ण अन्यथा अणु /* Ack, chuck it out here */
+मुक्त_out:
+			kमुक्त_skb(skb);
+		पूर्ण
+	पूर्ण
 
-	return NET_RX_SUCCESS;
-}
+	वापस NET_RX_SUCCESS;
+पूर्ण

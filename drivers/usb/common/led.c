@@ -1,50 +1,51 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * LED Triggers for USB Activity
+ * LED Triggers क्रम USB Activity
  *
  * Copyright 2014 Michal Sojka <sojka@merica.cz>
  */
 
-#include <linux/module.h>
-#include <linux/kernel.h>
-#include <linux/init.h>
-#include <linux/leds.h>
-#include <linux/usb.h>
-#include "common.h"
+#समावेश <linux/module.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/init.h>
+#समावेश <linux/leds.h>
+#समावेश <linux/usb.h>
+#समावेश "common.h"
 
-#define BLINK_DELAY 30
+#घोषणा BLINK_DELAY 30
 
-static unsigned long usb_blink_delay = BLINK_DELAY;
+अटल अचिन्हित दीर्घ usb_blink_delay = BLINK_DELAY;
 
 DEFINE_LED_TRIGGER(ledtrig_usb_gadget);
 DEFINE_LED_TRIGGER(ledtrig_usb_host);
 
-void usb_led_activity(enum usb_led_event ev)
-{
-	struct led_trigger *trig = NULL;
+व्योम usb_led_activity(क्रमागत usb_led_event ev)
+अणु
+	काष्ठा led_trigger *trig = शून्य;
 
-	switch (ev) {
-	case USB_LED_EVENT_GADGET:
+	चयन (ev) अणु
+	हाल USB_LED_EVENT_GADGET:
 		trig = ledtrig_usb_gadget;
-		break;
-	case USB_LED_EVENT_HOST:
+		अवरोध;
+	हाल USB_LED_EVENT_HOST:
 		trig = ledtrig_usb_host;
-		break;
-	}
-	/* led_trigger_blink_oneshot() handles trig == NULL gracefully */
+		अवरोध;
+	पूर्ण
+	/* led_trigger_blink_oneshot() handles trig == शून्य gracefully */
 	led_trigger_blink_oneshot(trig, &usb_blink_delay, &usb_blink_delay, 0);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(usb_led_activity);
 
 
-void __init ledtrig_usb_init(void)
-{
-	led_trigger_register_simple("usb-gadget", &ledtrig_usb_gadget);
-	led_trigger_register_simple("usb-host", &ledtrig_usb_host);
-}
+व्योम __init ledtrig_usb_init(व्योम)
+अणु
+	led_trigger_रेजिस्टर_simple("usb-gadget", &ledtrig_usb_gadget);
+	led_trigger_रेजिस्टर_simple("usb-host", &ledtrig_usb_host);
+पूर्ण
 
-void __exit ledtrig_usb_exit(void)
-{
-	led_trigger_unregister_simple(ledtrig_usb_gadget);
-	led_trigger_unregister_simple(ledtrig_usb_host);
-}
+व्योम __निकास ledtrig_usb_निकास(व्योम)
+अणु
+	led_trigger_unरेजिस्टर_simple(ledtrig_usb_gadget);
+	led_trigger_unरेजिस्टर_simple(ledtrig_usb_host);
+पूर्ण

@@ -1,213 +1,214 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * vivid-kthread-out.h - video/vbi output thread support functions.
+ * vivid-kthपढ़ो-out.h - video/vbi output thपढ़ो support functions.
  *
  * Copyright 2014 Cisco Systems, Inc. and/or its affiliates. All rights reserved.
  */
 
-#include <linux/module.h>
-#include <linux/errno.h>
-#include <linux/kernel.h>
-#include <linux/init.h>
-#include <linux/sched.h>
-#include <linux/slab.h>
-#include <linux/font.h>
-#include <linux/mutex.h>
-#include <linux/videodev2.h>
-#include <linux/kthread.h>
-#include <linux/freezer.h>
-#include <linux/random.h>
-#include <linux/v4l2-dv-timings.h>
-#include <asm/div64.h>
-#include <media/videobuf2-vmalloc.h>
-#include <media/v4l2-dv-timings.h>
-#include <media/v4l2-ioctl.h>
-#include <media/v4l2-fh.h>
-#include <media/v4l2-event.h>
+#समावेश <linux/module.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/kernel.h>
+#समावेश <linux/init.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/font.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/videodev2.h>
+#समावेश <linux/kthपढ़ो.h>
+#समावेश <linux/मुक्तzer.h>
+#समावेश <linux/अक्रमom.h>
+#समावेश <linux/v4l2-dv-timings.h>
+#समावेश <यंत्र/भाग64.h>
+#समावेश <media/videobuf2-vदो_स्मृति.h>
+#समावेश <media/v4l2-dv-timings.h>
+#समावेश <media/v4l2-ioctl.h>
+#समावेश <media/v4l2-fh.h>
+#समावेश <media/v4l2-event.h>
 
-#include "vivid-core.h"
-#include "vivid-vid-common.h"
-#include "vivid-vid-cap.h"
-#include "vivid-vid-out.h"
-#include "vivid-radio-common.h"
-#include "vivid-radio-rx.h"
-#include "vivid-radio-tx.h"
-#include "vivid-sdr-cap.h"
-#include "vivid-vbi-cap.h"
-#include "vivid-vbi-out.h"
-#include "vivid-osd.h"
-#include "vivid-ctrls.h"
-#include "vivid-kthread-out.h"
-#include "vivid-meta-out.h"
+#समावेश "vivid-core.h"
+#समावेश "vivid-vid-common.h"
+#समावेश "vivid-vid-cap.h"
+#समावेश "vivid-vid-out.h"
+#समावेश "vivid-radio-common.h"
+#समावेश "vivid-radio-rx.h"
+#समावेश "vivid-radio-tx.h"
+#समावेश "vivid-sdr-cap.h"
+#समावेश "vivid-vbi-cap.h"
+#समावेश "vivid-vbi-out.h"
+#समावेश "vivid-osd.h"
+#समावेश "vivid-ctrls.h"
+#समावेश "vivid-kthread-out.h"
+#समावेश "vivid-meta-out.h"
 
-static void vivid_thread_vid_out_tick(struct vivid_dev *dev)
-{
-	struct vivid_buffer *vid_out_buf = NULL;
-	struct vivid_buffer *vbi_out_buf = NULL;
-	struct vivid_buffer *meta_out_buf = NULL;
+अटल व्योम vivid_thपढ़ो_vid_out_tick(काष्ठा vivid_dev *dev)
+अणु
+	काष्ठा vivid_buffer *vid_out_buf = शून्य;
+	काष्ठा vivid_buffer *vbi_out_buf = शून्य;
+	काष्ठा vivid_buffer *meta_out_buf = शून्य;
 
-	dprintk(dev, 1, "Video Output Thread Tick\n");
+	dprपूर्णांकk(dev, 1, "Video Output Thread Tick\n");
 
 	/* Drop a certain percentage of buffers. */
-	if (dev->perc_dropped_buffers &&
-	    prandom_u32_max(100) < dev->perc_dropped_buffers)
-		return;
+	अगर (dev->perc_dropped_buffers &&
+	    pअक्रमom_u32_max(100) < dev->perc_dropped_buffers)
+		वापस;
 
 	spin_lock(&dev->slock);
 	/*
-	 * Only dequeue buffer if there is at least one more pending.
+	 * Only dequeue buffer अगर there is at least one more pending.
 	 * This makes video loopback possible.
 	 */
-	if (!list_empty(&dev->vid_out_active) &&
-	    !list_is_singular(&dev->vid_out_active)) {
+	अगर (!list_empty(&dev->vid_out_active) &&
+	    !list_is_singular(&dev->vid_out_active)) अणु
 		vid_out_buf = list_entry(dev->vid_out_active.next,
-					 struct vivid_buffer, list);
+					 काष्ठा vivid_buffer, list);
 		list_del(&vid_out_buf->list);
-	}
-	if (!list_empty(&dev->vbi_out_active) &&
+	पूर्ण
+	अगर (!list_empty(&dev->vbi_out_active) &&
 	    (dev->field_out != V4L2_FIELD_ALTERNATE ||
-	     (dev->vbi_out_seq_count & 1))) {
+	     (dev->vbi_out_seq_count & 1))) अणु
 		vbi_out_buf = list_entry(dev->vbi_out_active.next,
-					 struct vivid_buffer, list);
+					 काष्ठा vivid_buffer, list);
 		list_del(&vbi_out_buf->list);
-	}
-	if (!list_empty(&dev->meta_out_active)) {
+	पूर्ण
+	अगर (!list_empty(&dev->meta_out_active)) अणु
 		meta_out_buf = list_entry(dev->meta_out_active.next,
-					  struct vivid_buffer, list);
+					  काष्ठा vivid_buffer, list);
 		list_del(&meta_out_buf->list);
-	}
+	पूर्ण
 	spin_unlock(&dev->slock);
 
-	if (!vid_out_buf && !vbi_out_buf && !meta_out_buf)
-		return;
+	अगर (!vid_out_buf && !vbi_out_buf && !meta_out_buf)
+		वापस;
 
-	if (vid_out_buf) {
+	अगर (vid_out_buf) अणु
 		v4l2_ctrl_request_setup(vid_out_buf->vb.vb2_buf.req_obj.req,
 					&dev->ctrl_hdl_vid_out);
 		v4l2_ctrl_request_complete(vid_out_buf->vb.vb2_buf.req_obj.req,
 					   &dev->ctrl_hdl_vid_out);
 		vid_out_buf->vb.sequence = dev->vid_out_seq_count;
-		if (dev->field_out == V4L2_FIELD_ALTERNATE) {
+		अगर (dev->field_out == V4L2_FIELD_ALTERNATE) अणु
 			/*
 			 * The sequence counter counts frames, not fields.
-			 * So divide by two.
+			 * So भागide by two.
 			 */
 			vid_out_buf->vb.sequence /= 2;
-		}
-		vid_out_buf->vb.vb2_buf.timestamp =
-			ktime_get_ns() + dev->time_wrap_offset;
-		vb2_buffer_done(&vid_out_buf->vb.vb2_buf, dev->dqbuf_error ?
+		पूर्ण
+		vid_out_buf->vb.vb2_buf.बारtamp =
+			kसमय_get_ns() + dev->समय_wrap_offset;
+		vb2_buffer_करोne(&vid_out_buf->vb.vb2_buf, dev->dqbuf_error ?
 				VB2_BUF_STATE_ERROR : VB2_BUF_STATE_DONE);
-		dprintk(dev, 2, "vid_out buffer %d done\n",
+		dprपूर्णांकk(dev, 2, "vid_out buffer %d done\n",
 			vid_out_buf->vb.vb2_buf.index);
-	}
+	पूर्ण
 
-	if (vbi_out_buf) {
+	अगर (vbi_out_buf) अणु
 		v4l2_ctrl_request_setup(vbi_out_buf->vb.vb2_buf.req_obj.req,
 					&dev->ctrl_hdl_vbi_out);
 		v4l2_ctrl_request_complete(vbi_out_buf->vb.vb2_buf.req_obj.req,
 					   &dev->ctrl_hdl_vbi_out);
-		if (dev->stream_sliced_vbi_out)
+		अगर (dev->stream_sliced_vbi_out)
 			vivid_sliced_vbi_out_process(dev, vbi_out_buf);
 
 		vbi_out_buf->vb.sequence = dev->vbi_out_seq_count;
-		vbi_out_buf->vb.vb2_buf.timestamp =
-			ktime_get_ns() + dev->time_wrap_offset;
-		vb2_buffer_done(&vbi_out_buf->vb.vb2_buf, dev->dqbuf_error ?
+		vbi_out_buf->vb.vb2_buf.बारtamp =
+			kसमय_get_ns() + dev->समय_wrap_offset;
+		vb2_buffer_करोne(&vbi_out_buf->vb.vb2_buf, dev->dqbuf_error ?
 				VB2_BUF_STATE_ERROR : VB2_BUF_STATE_DONE);
-		dprintk(dev, 2, "vbi_out buffer %d done\n",
+		dprपूर्णांकk(dev, 2, "vbi_out buffer %d done\n",
 			vbi_out_buf->vb.vb2_buf.index);
-	}
-	if (meta_out_buf) {
+	पूर्ण
+	अगर (meta_out_buf) अणु
 		v4l2_ctrl_request_setup(meta_out_buf->vb.vb2_buf.req_obj.req,
 					&dev->ctrl_hdl_meta_out);
 		v4l2_ctrl_request_complete(meta_out_buf->vb.vb2_buf.req_obj.req,
 					   &dev->ctrl_hdl_meta_out);
 		vivid_meta_out_process(dev, meta_out_buf);
 		meta_out_buf->vb.sequence = dev->meta_out_seq_count;
-		meta_out_buf->vb.vb2_buf.timestamp =
-			ktime_get_ns() + dev->time_wrap_offset;
-		vb2_buffer_done(&meta_out_buf->vb.vb2_buf, dev->dqbuf_error ?
+		meta_out_buf->vb.vb2_buf.बारtamp =
+			kसमय_get_ns() + dev->समय_wrap_offset;
+		vb2_buffer_करोne(&meta_out_buf->vb.vb2_buf, dev->dqbuf_error ?
 				VB2_BUF_STATE_ERROR : VB2_BUF_STATE_DONE);
-		dprintk(dev, 2, "meta_out buffer %d done\n",
+		dprपूर्णांकk(dev, 2, "meta_out buffer %d done\n",
 			meta_out_buf->vb.vb2_buf.index);
-	}
+	पूर्ण
 
 	dev->dqbuf_error = false;
-}
+पूर्ण
 
-static int vivid_thread_vid_out(void *data)
-{
-	struct vivid_dev *dev = data;
+अटल पूर्णांक vivid_thपढ़ो_vid_out(व्योम *data)
+अणु
+	काष्ठा vivid_dev *dev = data;
 	u64 numerators_since_start;
 	u64 buffers_since_start;
-	u64 next_jiffies_since_start;
-	unsigned long jiffies_since_start;
-	unsigned long cur_jiffies;
-	unsigned wait_jiffies;
-	unsigned numerator;
-	unsigned denominator;
+	u64 next_jअगरfies_since_start;
+	अचिन्हित दीर्घ jअगरfies_since_start;
+	अचिन्हित दीर्घ cur_jअगरfies;
+	अचिन्हित रुको_jअगरfies;
+	अचिन्हित numerator;
+	अचिन्हित denominator;
 
-	dprintk(dev, 1, "Video Output Thread Start\n");
+	dprपूर्णांकk(dev, 1, "Video Output Thread Start\n");
 
-	set_freezable();
+	set_मुक्तzable();
 
 	/* Resets frame counters */
 	dev->out_seq_offset = 0;
-	if (dev->seq_wrap)
+	अगर (dev->seq_wrap)
 		dev->out_seq_count = 0xffffff80U;
-	dev->jiffies_vid_out = jiffies;
+	dev->jअगरfies_vid_out = jअगरfies;
 	dev->vid_out_seq_start = dev->vbi_out_seq_start = 0;
 	dev->meta_out_seq_start = 0;
 	dev->out_seq_resync = false;
 
-	for (;;) {
-		try_to_freeze();
-		if (kthread_should_stop())
-			break;
+	क्रम (;;) अणु
+		try_to_मुक्तze();
+		अगर (kthपढ़ो_should_stop())
+			अवरोध;
 
-		if (!mutex_trylock(&dev->mutex)) {
+		अगर (!mutex_trylock(&dev->mutex)) अणु
 			schedule();
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		cur_jiffies = jiffies;
-		if (dev->out_seq_resync) {
-			dev->jiffies_vid_out = cur_jiffies;
+		cur_jअगरfies = jअगरfies;
+		अगर (dev->out_seq_resync) अणु
+			dev->jअगरfies_vid_out = cur_jअगरfies;
 			dev->out_seq_offset = dev->out_seq_count + 1;
 			dev->out_seq_count = 0;
 			dev->out_seq_resync = false;
-		}
-		numerator = dev->timeperframe_vid_out.numerator;
-		denominator = dev->timeperframe_vid_out.denominator;
+		पूर्ण
+		numerator = dev->समयperframe_vid_out.numerator;
+		denominator = dev->समयperframe_vid_out.denominator;
 
-		if (dev->field_out == V4L2_FIELD_ALTERNATE)
+		अगर (dev->field_out == V4L2_FIELD_ALTERNATE)
 			denominator *= 2;
 
-		/* Calculate the number of jiffies since we started streaming */
-		jiffies_since_start = cur_jiffies - dev->jiffies_vid_out;
+		/* Calculate the number of jअगरfies since we started streaming */
+		jअगरfies_since_start = cur_jअगरfies - dev->jअगरfies_vid_out;
 		/* Get the number of buffers streamed since the start */
-		buffers_since_start = (u64)jiffies_since_start * denominator +
+		buffers_since_start = (u64)jअगरfies_since_start * denominator +
 				      (HZ * numerator) / 2;
-		do_div(buffers_since_start, HZ * numerator);
+		करो_भाग(buffers_since_start, HZ * numerator);
 
 		/*
-		 * After more than 0xf0000000 (rounded down to a multiple of
-		 * 'jiffies-per-day' to ease jiffies_to_msecs calculation)
-		 * jiffies have passed since we started streaming reset the
+		 * After more than 0xf0000000 (rounded करोwn to a multiple of
+		 * 'jiffies-per-day' to ease jअगरfies_to_msecs calculation)
+		 * jअगरfies have passed since we started streaming reset the
 		 * counters and keep track of the sequence offset.
 		 */
-		if (jiffies_since_start > JIFFIES_RESYNC) {
-			dev->jiffies_vid_out = cur_jiffies;
+		अगर (jअगरfies_since_start > JIFFIES_RESYNC) अणु
+			dev->jअगरfies_vid_out = cur_jअगरfies;
 			dev->out_seq_offset = buffers_since_start;
 			buffers_since_start = 0;
-		}
+		पूर्ण
 		dev->out_seq_count = buffers_since_start + dev->out_seq_offset;
 		dev->vid_out_seq_count = dev->out_seq_count - dev->vid_out_seq_start;
 		dev->vbi_out_seq_count = dev->out_seq_count - dev->vbi_out_seq_start;
 		dev->meta_out_seq_count = dev->out_seq_count - dev->meta_out_seq_start;
 
-		vivid_thread_vid_out_tick(dev);
+		vivid_thपढ़ो_vid_out_tick(dev);
 		mutex_unlock(&dev->mutex);
 
 		/*
@@ -216,140 +217,140 @@ static int vivid_thread_vid_out(void *data)
 		 */
 		numerators_since_start = buffers_since_start * numerator;
 
-		/* And the number of jiffies since we started */
-		jiffies_since_start = jiffies - dev->jiffies_vid_out;
+		/* And the number of jअगरfies since we started */
+		jअगरfies_since_start = jअगरfies - dev->jअगरfies_vid_out;
 
 		/* Increase by the 'numerator' of one buffer */
 		numerators_since_start += numerator;
 		/*
 		 * Calculate when that next buffer is supposed to start
-		 * in jiffies since we started streaming.
+		 * in jअगरfies since we started streaming.
 		 */
-		next_jiffies_since_start = numerators_since_start * HZ +
+		next_jअगरfies_since_start = numerators_since_start * HZ +
 					   denominator / 2;
-		do_div(next_jiffies_since_start, denominator);
+		करो_भाग(next_jअगरfies_since_start, denominator);
 		/* If it is in the past, then just schedule asap */
-		if (next_jiffies_since_start < jiffies_since_start)
-			next_jiffies_since_start = jiffies_since_start;
+		अगर (next_jअगरfies_since_start < jअगरfies_since_start)
+			next_jअगरfies_since_start = jअगरfies_since_start;
 
-		wait_jiffies = next_jiffies_since_start - jiffies_since_start;
-		while (jiffies - cur_jiffies < wait_jiffies &&
-		       !kthread_should_stop())
+		रुको_jअगरfies = next_jअगरfies_since_start - jअगरfies_since_start;
+		जबतक (jअगरfies - cur_jअगरfies < रुको_jअगरfies &&
+		       !kthपढ़ो_should_stop())
 			schedule();
-	}
-	dprintk(dev, 1, "Video Output Thread End\n");
-	return 0;
-}
+	पूर्ण
+	dprपूर्णांकk(dev, 1, "Video Output Thread End\n");
+	वापस 0;
+पूर्ण
 
-static void vivid_grab_controls(struct vivid_dev *dev, bool grab)
-{
+अटल व्योम vivid_grab_controls(काष्ठा vivid_dev *dev, bool grab)
+अणु
 	v4l2_ctrl_grab(dev->ctrl_has_crop_out, grab);
 	v4l2_ctrl_grab(dev->ctrl_has_compose_out, grab);
 	v4l2_ctrl_grab(dev->ctrl_has_scaler_out, grab);
 	v4l2_ctrl_grab(dev->ctrl_tx_mode, grab);
 	v4l2_ctrl_grab(dev->ctrl_tx_rgb_range, grab);
-}
+पूर्ण
 
-int vivid_start_generating_vid_out(struct vivid_dev *dev, bool *pstreaming)
-{
-	dprintk(dev, 1, "%s\n", __func__);
+पूर्णांक vivid_start_generating_vid_out(काष्ठा vivid_dev *dev, bool *pstreaming)
+अणु
+	dprपूर्णांकk(dev, 1, "%s\n", __func__);
 
-	if (dev->kthread_vid_out) {
+	अगर (dev->kthपढ़ो_vid_out) अणु
 		u32 seq_count = dev->out_seq_count + dev->seq_wrap * 128;
 
-		if (pstreaming == &dev->vid_out_streaming)
+		अगर (pstreaming == &dev->vid_out_streaming)
 			dev->vid_out_seq_start = seq_count;
-		else if (pstreaming == &dev->vbi_out_streaming)
+		अन्यथा अगर (pstreaming == &dev->vbi_out_streaming)
 			dev->vbi_out_seq_start = seq_count;
-		else
+		अन्यथा
 			dev->meta_out_seq_start = seq_count;
 		*pstreaming = true;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	/* Resets frame counters */
-	dev->jiffies_vid_out = jiffies;
+	dev->jअगरfies_vid_out = jअगरfies;
 	dev->vid_out_seq_start = dev->seq_wrap * 128;
 	dev->vbi_out_seq_start = dev->seq_wrap * 128;
 	dev->meta_out_seq_start = dev->seq_wrap * 128;
 
-	dev->kthread_vid_out = kthread_run(vivid_thread_vid_out, dev,
+	dev->kthपढ़ो_vid_out = kthपढ़ो_run(vivid_thपढ़ो_vid_out, dev,
 			"%s-vid-out", dev->v4l2_dev.name);
 
-	if (IS_ERR(dev->kthread_vid_out)) {
-		int err = PTR_ERR(dev->kthread_vid_out);
+	अगर (IS_ERR(dev->kthपढ़ो_vid_out)) अणु
+		पूर्णांक err = PTR_ERR(dev->kthपढ़ो_vid_out);
 
-		dev->kthread_vid_out = NULL;
+		dev->kthपढ़ो_vid_out = शून्य;
 		v4l2_err(&dev->v4l2_dev, "kernel_thread() failed\n");
-		return err;
-	}
+		वापस err;
+	पूर्ण
 	*pstreaming = true;
 	vivid_grab_controls(dev, true);
 
-	dprintk(dev, 1, "returning from %s\n", __func__);
-	return 0;
-}
+	dprपूर्णांकk(dev, 1, "returning from %s\n", __func__);
+	वापस 0;
+पूर्ण
 
-void vivid_stop_generating_vid_out(struct vivid_dev *dev, bool *pstreaming)
-{
-	dprintk(dev, 1, "%s\n", __func__);
+व्योम vivid_stop_generating_vid_out(काष्ठा vivid_dev *dev, bool *pstreaming)
+अणु
+	dprपूर्णांकk(dev, 1, "%s\n", __func__);
 
-	if (dev->kthread_vid_out == NULL)
-		return;
+	अगर (dev->kthपढ़ो_vid_out == शून्य)
+		वापस;
 
 	*pstreaming = false;
-	if (pstreaming == &dev->vid_out_streaming) {
+	अगर (pstreaming == &dev->vid_out_streaming) अणु
 		/* Release all active buffers */
-		while (!list_empty(&dev->vid_out_active)) {
-			struct vivid_buffer *buf;
+		जबतक (!list_empty(&dev->vid_out_active)) अणु
+			काष्ठा vivid_buffer *buf;
 
 			buf = list_entry(dev->vid_out_active.next,
-					 struct vivid_buffer, list);
+					 काष्ठा vivid_buffer, list);
 			list_del(&buf->list);
 			v4l2_ctrl_request_complete(buf->vb.vb2_buf.req_obj.req,
 						   &dev->ctrl_hdl_vid_out);
-			vb2_buffer_done(&buf->vb.vb2_buf, VB2_BUF_STATE_ERROR);
-			dprintk(dev, 2, "vid_out buffer %d done\n",
+			vb2_buffer_करोne(&buf->vb.vb2_buf, VB2_BUF_STATE_ERROR);
+			dprपूर्णांकk(dev, 2, "vid_out buffer %d done\n",
 				buf->vb.vb2_buf.index);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (pstreaming == &dev->vbi_out_streaming) {
-		while (!list_empty(&dev->vbi_out_active)) {
-			struct vivid_buffer *buf;
+	अगर (pstreaming == &dev->vbi_out_streaming) अणु
+		जबतक (!list_empty(&dev->vbi_out_active)) अणु
+			काष्ठा vivid_buffer *buf;
 
 			buf = list_entry(dev->vbi_out_active.next,
-					 struct vivid_buffer, list);
+					 काष्ठा vivid_buffer, list);
 			list_del(&buf->list);
 			v4l2_ctrl_request_complete(buf->vb.vb2_buf.req_obj.req,
 						   &dev->ctrl_hdl_vbi_out);
-			vb2_buffer_done(&buf->vb.vb2_buf, VB2_BUF_STATE_ERROR);
-			dprintk(dev, 2, "vbi_out buffer %d done\n",
+			vb2_buffer_करोne(&buf->vb.vb2_buf, VB2_BUF_STATE_ERROR);
+			dprपूर्णांकk(dev, 2, "vbi_out buffer %d done\n",
 				buf->vb.vb2_buf.index);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (pstreaming == &dev->meta_out_streaming) {
-		while (!list_empty(&dev->meta_out_active)) {
-			struct vivid_buffer *buf;
+	अगर (pstreaming == &dev->meta_out_streaming) अणु
+		जबतक (!list_empty(&dev->meta_out_active)) अणु
+			काष्ठा vivid_buffer *buf;
 
 			buf = list_entry(dev->meta_out_active.next,
-					 struct vivid_buffer, list);
+					 काष्ठा vivid_buffer, list);
 			list_del(&buf->list);
 			v4l2_ctrl_request_complete(buf->vb.vb2_buf.req_obj.req,
 						   &dev->ctrl_hdl_meta_out);
-			vb2_buffer_done(&buf->vb.vb2_buf, VB2_BUF_STATE_ERROR);
-			dprintk(dev, 2, "meta_out buffer %d done\n",
+			vb2_buffer_करोne(&buf->vb.vb2_buf, VB2_BUF_STATE_ERROR);
+			dprपूर्णांकk(dev, 2, "meta_out buffer %d done\n",
 				buf->vb.vb2_buf.index);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (dev->vid_out_streaming || dev->vbi_out_streaming ||
+	अगर (dev->vid_out_streaming || dev->vbi_out_streaming ||
 	    dev->meta_out_streaming)
-		return;
+		वापस;
 
-	/* shutdown control thread */
+	/* shutकरोwn control thपढ़ो */
 	vivid_grab_controls(dev, false);
-	kthread_stop(dev->kthread_vid_out);
-	dev->kthread_vid_out = NULL;
-}
+	kthपढ़ो_stop(dev->kthपढ़ो_vid_out);
+	dev->kthपढ़ो_vid_out = शून्य;
+पूर्ण

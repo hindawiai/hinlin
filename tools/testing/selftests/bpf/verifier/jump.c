@@ -1,6 +1,7 @@
-{
+<शैली गुरु>
+अणु
 	"jump test 1",
-	.insns = {
+	.insns = अणु
 	BPF_MOV64_REG(BPF_REG_2, BPF_REG_10),
 	BPF_STX_MEM(BPF_DW, BPF_REG_2, BPF_REG_1, -8),
 	BPF_JMP_IMM(BPF_JEQ, BPF_REG_1, 0, 1),
@@ -17,14 +18,14 @@
 	BPF_ST_MEM(BPF_DW, BPF_REG_2, -32, 5),
 	BPF_MOV64_IMM(BPF_REG_0, 0),
 	BPF_EXIT_INSN(),
-	},
+	पूर्ण,
 	.errstr_unpriv = "R1 pointer comparison",
 	.result_unpriv = REJECT,
 	.result = ACCEPT,
-},
-{
+पूर्ण,
+अणु
 	"jump test 2",
-	.insns = {
+	.insns = अणु
 	BPF_MOV64_REG(BPF_REG_2, BPF_REG_10),
 	BPF_JMP_IMM(BPF_JEQ, BPF_REG_1, 0, 2),
 	BPF_ST_MEM(BPF_DW, BPF_REG_2, -8, 0),
@@ -45,14 +46,14 @@
 	BPF_ST_MEM(BPF_DW, BPF_REG_2, -56, 0),
 	BPF_MOV64_IMM(BPF_REG_0, 0),
 	BPF_EXIT_INSN(),
-	},
+	पूर्ण,
 	.errstr_unpriv = "R1 pointer comparison",
 	.result_unpriv = REJECT,
 	.result = ACCEPT,
-},
-{
+पूर्ण,
+अणु
 	"jump test 3",
-	.insns = {
+	.insns = अणु
 	BPF_MOV64_REG(BPF_REG_2, BPF_REG_10),
 	BPF_JMP_IMM(BPF_JEQ, BPF_REG_1, 0, 3),
 	BPF_ST_MEM(BPF_DW, BPF_REG_2, -8, 0),
@@ -80,16 +81,16 @@
 	BPF_LD_MAP_FD(BPF_REG_1, 0),
 	BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0, BPF_FUNC_map_delete_elem),
 	BPF_EXIT_INSN(),
-	},
-	.fixup_map_hash_8b = { 24 },
+	पूर्ण,
+	.fixup_map_hash_8b = अणु 24 पूर्ण,
 	.errstr_unpriv = "R1 pointer comparison",
 	.result_unpriv = REJECT,
 	.result = ACCEPT,
 	.retval = -ENOENT,
-},
-{
+पूर्ण,
+अणु
 	"jump test 4",
-	.insns = {
+	.insns = अणु
 	BPF_JMP_IMM(BPF_JEQ, BPF_REG_1, BPF_REG_10, 1),
 	BPF_JMP_IMM(BPF_JEQ, BPF_REG_1, BPF_REG_10, 2),
 	BPF_JMP_IMM(BPF_JEQ, BPF_REG_1, BPF_REG_10, 3),
@@ -132,14 +133,14 @@
 	BPF_JMP_IMM(BPF_JEQ, BPF_REG_1, BPF_REG_10, 0),
 	BPF_MOV64_IMM(BPF_REG_0, 0),
 	BPF_EXIT_INSN(),
-	},
+	पूर्ण,
 	.errstr_unpriv = "R1 pointer comparison",
 	.result_unpriv = REJECT,
 	.result = ACCEPT,
-},
-{
+पूर्ण,
+अणु
 	"jump test 5",
-	.insns = {
+	.insns = अणु
 	BPF_MOV64_REG(BPF_REG_2, BPF_REG_10),
 	BPF_MOV64_REG(BPF_REG_3, BPF_REG_2),
 	BPF_JMP_IMM(BPF_JGE, BPF_REG_1, 0, 2),
@@ -173,14 +174,14 @@
 	BPF_JMP_IMM(BPF_JA, 0, 0, 0),
 	BPF_MOV64_IMM(BPF_REG_0, 0),
 	BPF_EXIT_INSN(),
-	},
+	पूर्ण,
 	.errstr_unpriv = "R1 pointer comparison",
 	.result_unpriv = REJECT,
 	.result = ACCEPT,
-},
-{
+पूर्ण,
+अणु
 	"jump test 6",
-	.insns = {
+	.insns = अणु
 	BPF_MOV64_IMM(BPF_REG_0, 1),
 	BPF_MOV64_IMM(BPF_REG_1, 2),
 	BPF_JMP_IMM(BPF_JA, 0, 0, 2),
@@ -204,13 +205,13 @@
 	BPF_JMP_IMM(BPF_JA, 0, 0, 0),
 	BPF_JMP_IMM(BPF_JA, 0, 0, 0),
 	BPF_JMP_IMM(BPF_JA, 0, 0, -20),
-	},
+	पूर्ण,
 	.result = ACCEPT,
 	.retval = 2,
-},
-{
+पूर्ण,
+अणु
 	"jump test 7",
-	.insns = {
+	.insns = अणु
 	BPF_MOV64_IMM(BPF_REG_0, 1),
 	BPF_JMP_IMM(BPF_JA, 0, 0, 2),
 	BPF_MOV64_IMM(BPF_REG_0, 3),
@@ -233,13 +234,13 @@
 	BPF_MOV64_IMM(BPF_REG_0, 42),
 	BPF_MOV64_IMM(BPF_REG_0, 42),
 	BPF_JMP_IMM(BPF_JA, 0, 0, -20),
-	},
+	पूर्ण,
 	.result = ACCEPT,
 	.retval = 3,
-},
-{
+पूर्ण,
+अणु
 	"jump test 8",
-	.insns = {
+	.insns = अणु
 	BPF_MOV64_IMM(BPF_REG_0, 1),
 	BPF_MOV64_IMM(BPF_REG_1, 2),
 	BPF_JMP_IMM(BPF_JA, 0, 0, 2),
@@ -263,13 +264,13 @@
 	BPF_MOV64_IMM(BPF_REG_0, 42),
 	BPF_MOV64_IMM(BPF_REG_0, 42),
 	BPF_JMP_IMM(BPF_JA, 0, 0, -20),
-	},
+	पूर्ण,
 	.result = ACCEPT,
 	.retval = 3,
-},
-{
+पूर्ण,
+अणु
 	"jump/call test 9",
-	.insns = {
+	.insns = अणु
 	BPF_MOV64_IMM(BPF_REG_0, 1),
 	BPF_JMP_IMM(BPF_JA, 0, 0, 2),
 	BPF_MOV64_IMM(BPF_REG_0, 3),
@@ -293,14 +294,14 @@
 	BPF_MOV64_IMM(BPF_REG_0, 42),
 	BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 1, 0, -20),
 	BPF_EXIT_INSN(),
-	},
+	पूर्ण,
 	.prog_type = BPF_PROG_TYPE_SCHED_CLS,
 	.result = REJECT,
 	.errstr = "jump out of range from insn 1 to 4",
-},
-{
+पूर्ण,
+अणु
 	"jump/call test 10",
-	.insns = {
+	.insns = अणु
 	BPF_MOV64_IMM(BPF_REG_0, 1),
 	BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 1, 0, 2),
 	BPF_MOV64_IMM(BPF_REG_0, 3),
@@ -324,14 +325,14 @@
 	BPF_MOV64_IMM(BPF_REG_0, 42),
 	BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 1, 0, -20),
 	BPF_EXIT_INSN(),
-	},
+	पूर्ण,
 	.prog_type = BPF_PROG_TYPE_SCHED_CLS,
 	.result = REJECT,
 	.errstr = "last insn is not an exit or jmp",
-},
-{
+पूर्ण,
+अणु
 	"jump/call test 11",
-	.insns = {
+	.insns = अणु
 	BPF_MOV64_IMM(BPF_REG_0, 1),
 	BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 1, 0, 4),
 	BPF_MOV64_IMM(BPF_REG_0, 3),
@@ -368,8 +369,8 @@
 	BPF_MOV64_IMM(BPF_REG_0, 42),
 	BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 1, 0, -31),
 	BPF_EXIT_INSN(),
-	},
+	पूर्ण,
 	.prog_type = BPF_PROG_TYPE_SCHED_CLS,
 	.result = ACCEPT,
 	.retval = 3,
-},
+पूर्ण,

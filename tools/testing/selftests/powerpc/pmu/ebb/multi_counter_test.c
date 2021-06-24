@@ -1,22 +1,23 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright 2014, Michael Ellerman, IBM Corp.
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <sys/ioctl.h>
+#समावेश <मानकपन.स>
+#समावेश <मानककोष.स>
+#समावेश <sys/ioctl.h>
 
-#include "ebb.h"
+#समावेश "ebb.h"
 
 
 /*
  * Test counting multiple events using EBBs.
  */
-int multi_counter(void)
-{
-	struct event events[6];
-	int i, group_fd;
+पूर्णांक multi_counter(व्योम)
+अणु
+	काष्ठा event events[6];
+	पूर्णांक i, group_fd;
 
 	SKIP_IF(!ebb_is_supported());
 
@@ -28,19 +29,19 @@ int multi_counter(void)
 	event_init_named(&events[5], 0x500fa, "PM_RUN_INST_CMPL");
 
 	event_leader_ebb_init(&events[0]);
-	for (i = 1; i < 6; i++)
+	क्रम (i = 1; i < 6; i++)
 		event_ebb_init(&events[i]);
 
 	group_fd = -1;
-	for (i = 0; i < 6; i++) {
+	क्रम (i = 0; i < 6; i++) अणु
 		events[i].attr.exclude_kernel = 1;
 		events[i].attr.exclude_hv = 1;
 		events[i].attr.exclude_idle = 1;
 
-		FAIL_IF(event_open_with_group(&events[i], group_fd));
-		if (group_fd == -1)
+		FAIL_IF(event_खोलो_with_group(&events[i], group_fd));
+		अगर (group_fd == -1)
 			group_fd = events[0].fd;
-	}
+	पूर्ण
 
 	ebb_enable_pmc_counting(1);
 	ebb_enable_pmc_counting(2);
@@ -51,7 +52,7 @@ int multi_counter(void)
 	setup_ebb_handler(standard_ebb_callee);
 
 	FAIL_IF(ioctl(events[0].fd, PERF_EVENT_IOC_ENABLE, PERF_IOC_FLAG_GROUP));
-	FAIL_IF(event_read(&events[0]));
+	FAIL_IF(event_पढ़ो(&events[0]));
 
 	ebb_global_enable();
 
@@ -62,25 +63,25 @@ int multi_counter(void)
 	mtspr(SPRN_PMC5, pmc_sample_period(sample_period));
 	mtspr(SPRN_PMC6, pmc_sample_period(sample_period));
 
-	while (ebb_state.stats.ebb_count < 50) {
+	जबतक (ebb_state.stats.ebb_count < 50) अणु
 		FAIL_IF(core_busy_loop());
 		FAIL_IF(ebb_check_mmcr0());
-	}
+	पूर्ण
 
 	ebb_global_disable();
-	ebb_freeze_pmcs();
+	ebb_मुक्तze_pmcs();
 
 	dump_ebb_state();
 
-	for (i = 0; i < 6; i++)
-		event_close(&events[i]);
+	क्रम (i = 0; i < 6; i++)
+		event_बंद(&events[i]);
 
 	FAIL_IF(ebb_state.stats.ebb_count == 0);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int main(void)
-{
-	return test_harness(multi_counter, "multi_counter");
-}
+पूर्णांक मुख्य(व्योम)
+अणु
+	वापस test_harness(multi_counter, "multi_counter");
+पूर्ण

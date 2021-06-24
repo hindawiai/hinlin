@@ -1,3 +1,4 @@
+<शैली गुरु>
 /*
  *  linux/drivers/message/fusion/mptspi.c
  *      For use with LSI PCI chip/adapter(s)
@@ -9,29 +10,29 @@
  */
 /*=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=*/
 /*
-    This program is free software; you can redistribute it and/or modify
+    This program is मुक्त software; you can redistribute it and/or modअगरy
     it under the terms of the GNU General Public License as published by
     the Free Software Foundation; version 2 of the License.
 
     This program is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
+    GNU General Public License क्रम more details.
 
     NO WARRANTY
     THE PROGRAM IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OR
     CONDITIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED INCLUDING, WITHOUT
     LIMITATION, ANY WARRANTIES OR CONDITIONS OF TITLE, NON-INFRINGEMENT,
     MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE. Each Recipient is
-    solely responsible for determining the appropriateness of using and
+    solely responsible क्रम determining the appropriateness of using and
     distributing the Program and assumes all risks associated with its
     exercise of rights under this Agreement, including but not limited to
     the risks and costs of program errors, damage to or loss of data,
-    programs or equipment, and unavailability or interruption of operations.
+    programs or equipment, and unavailability or पूर्णांकerruption of operations.
 
     DISCLAIMER OF LIABILITY
     NEITHER RECIPIENT NOR ANY CONTRIBUTORS SHALL HAVE ANY LIABILITY FOR ANY
-    DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+    सूचीECT, INसूचीECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
     DAMAGES (INCLUDING WITHOUT LIMITATION LOST PROFITS), HOWEVER CAUSED AND
     ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR
     TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
@@ -39,40 +40,40 @@
     HEREUNDER, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGES
 
     You should have received a copy of the GNU General Public License
-    along with this program; if not, write to the Free Software
+    aदीर्घ with this program; अगर not, ग_लिखो to the Free Software
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 /*=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=*/
 
-#include <linux/module.h>
-#include <linux/kernel.h>
-#include <linux/slab.h>
-#include <linux/init.h>
-#include <linux/errno.h>
-#include <linux/kdev_t.h>
-#include <linux/blkdev.h>
-#include <linux/delay.h>	/* for mdelay */
-#include <linux/interrupt.h>
-#include <linux/reboot.h>	/* notifier code */
-#include <linux/workqueue.h>
-#include <linux/raid_class.h>
+#समावेश <linux/module.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/init.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/kdev_t.h>
+#समावेश <linux/blkdev.h>
+#समावेश <linux/delay.h>	/* क्रम mdelay */
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/reboot.h>	/* notअगरier code */
+#समावेश <linux/workqueue.h>
+#समावेश <linux/raid_class.h>
 
-#include <scsi/scsi.h>
-#include <scsi/scsi_cmnd.h>
-#include <scsi/scsi_device.h>
-#include <scsi/scsi_host.h>
-#include <scsi/scsi_tcq.h>
-#include <scsi/scsi_transport.h>
-#include <scsi/scsi_transport_spi.h>
-#include <scsi/scsi_dbg.h>
+#समावेश <scsi/scsi.h>
+#समावेश <scsi/scsi_cmnd.h>
+#समावेश <scsi/scsi_device.h>
+#समावेश <scsi/scsi_host.h>
+#समावेश <scsi/scsi_tcq.h>
+#समावेश <scsi/scsi_transport.h>
+#समावेश <scsi/scsi_transport_spi.h>
+#समावेश <scsi/scsi_dbg.h>
 
-#include "mptbase.h"
-#include "mptscsih.h"
+#समावेश "mptbase.h"
+#समावेश "mptscsih.h"
 
 /*=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=*/
-#define my_NAME		"Fusion MPT SPI Host driver"
-#define my_VERSION	MPT_LINUX_VERSION_COMMON
-#define MYNAM		"mptspi"
+#घोषणा my_NAME		"Fusion MPT SPI Host driver"
+#घोषणा my_VERSION	MPT_LINUX_VERSION_COMMON
+#घोषणा MYNAM		"mptspi"
 
 MODULE_AUTHOR(MODULEAUTHOR);
 MODULE_DESCRIPTION(my_NAME);
@@ -80,38 +81,38 @@ MODULE_LICENSE("GPL");
 MODULE_VERSION(my_VERSION);
 
 /* Command line args */
-static int mpt_saf_te = MPTSCSIH_SAF_TE;
-module_param(mpt_saf_te, int, 0);
+अटल पूर्णांक mpt_saf_te = MPTSCSIH_SAF_TE;
+module_param(mpt_saf_te, पूर्णांक, 0);
 MODULE_PARM_DESC(mpt_saf_te, " Force enabling SEP Processor: enable=1  (default=MPTSCSIH_SAF_TE=0)");
 
-static void mptspi_write_offset(struct scsi_target *, int);
-static void mptspi_write_width(struct scsi_target *, int);
-static int mptspi_write_spi_device_pg1(struct scsi_target *,
-				       struct _CONFIG_PAGE_SCSI_DEVICE_1 *);
+अटल व्योम mptspi_ग_लिखो_offset(काष्ठा scsi_target *, पूर्णांक);
+अटल व्योम mptspi_ग_लिखो_width(काष्ठा scsi_target *, पूर्णांक);
+अटल पूर्णांक mptspi_ग_लिखो_spi_device_pg1(काष्ठा scsi_target *,
+				       काष्ठा _CONFIG_PAGE_SCSI_DEVICE_1 *);
 
-static struct scsi_transport_template *mptspi_transport_template = NULL;
+अटल काष्ठा scsi_transport_ढाँचा *mptspi_transport_ढाँचा = शून्य;
 
-static u8	mptspiDoneCtx = MPT_MAX_PROTOCOL_DRIVERS;
-static u8	mptspiTaskCtx = MPT_MAX_PROTOCOL_DRIVERS;
-static u8	mptspiInternalCtx = MPT_MAX_PROTOCOL_DRIVERS; /* Used only for internal commands */
+अटल u8	mptspiDoneCtx = MPT_MAX_PROTOCOL_DRIVERS;
+अटल u8	mptspiTaskCtx = MPT_MAX_PROTOCOL_DRIVERS;
+अटल u8	mptspiInternalCtx = MPT_MAX_PROTOCOL_DRIVERS; /* Used only क्रम पूर्णांकernal commands */
 
 /**
  * 	mptspi_setTargetNegoParms  - Update the target negotiation parameters
- *	@hd: Pointer to a SCSI Host Structure
- *	@target: per target private data
+ *	@hd: Poपूर्णांकer to a SCSI Host Structure
+ *	@target: per target निजी data
  *	@sdev: SCSI device
  *
  * 	Update the target negotiation parameters based on the the Inquiry
  *	data, adapter capabilities, and NVRAM settings.
  **/
-static void
+अटल व्योम
 mptspi_setTargetNegoParms(MPT_SCSI_HOST *hd, VirtTarget *target,
-			    struct scsi_device *sdev)
-{
+			    काष्ठा scsi_device *sdev)
+अणु
 	MPT_ADAPTER *ioc = hd->ioc;
 	SpiCfgData *pspi_data = &ioc->spi_data;
-	int  id = (int) target->id;
-	int  nvram;
+	पूर्णांक  id = (पूर्णांक) target->id;
+	पूर्णांक  nvram;
 	u8 width = MPT_NARROW;
 	u8 factor = MPT_ASYNC;
 	u8 offset = 0;
@@ -120,91 +121,91 @@ mptspi_setTargetNegoParms(MPT_SCSI_HOST *hd, VirtTarget *target,
 
 	target->negoFlags = pspi_data->noQas;
 
-	if (sdev->scsi_level < SCSI_2) {
+	अगर (sdev->scsi_level < SCSI_2) अणु
 		width = 0;
 		factor = MPT_ULTRA2;
 		offset = pspi_data->maxSyncOffset;
 		target->tflags &= ~MPT_TARGET_FLAGS_Q_YES;
-	} else {
-		if (scsi_device_wide(sdev))
+	पूर्ण अन्यथा अणु
+		अगर (scsi_device_wide(sdev))
 			width = 1;
 
-		if (scsi_device_sync(sdev)) {
+		अगर (scsi_device_sync(sdev)) अणु
 			factor = pspi_data->minSyncFactor;
-			if (!scsi_device_dt(sdev))
+			अगर (!scsi_device_dt(sdev))
 					factor = MPT_ULTRA2;
-			else {
-				if (!scsi_device_ius(sdev) &&
+			अन्यथा अणु
+				अगर (!scsi_device_ius(sdev) &&
 				    !scsi_device_qas(sdev))
 					factor = MPT_ULTRA160;
-				else {
+				अन्यथा अणु
 					factor = MPT_ULTRA320;
-					if (scsi_device_qas(sdev)) {
-						ddvprintk(ioc,
-						printk(MYIOC_s_DEBUG_FMT "Enabling QAS due to "
+					अगर (scsi_device_qas(sdev)) अणु
+						ddvprपूर्णांकk(ioc,
+						prपूर्णांकk(MYIOC_s_DEBUG_FMT "Enabling QAS due to "
 						"byte56=%02x on id=%d!\n", ioc->name,
 						scsi_device_qas(sdev), id));
 						noQas = 0;
-					}
-					if (sdev->type == TYPE_TAPE &&
+					पूर्ण
+					अगर (sdev->type == TYPE_TAPE &&
 					    scsi_device_ius(sdev))
 						target->negoFlags |= MPT_TAPE_NEGO_IDP;
-				}
-			}
+				पूर्ण
+			पूर्ण
 			offset = pspi_data->maxSyncOffset;
 
 			/* If RAID, never disable QAS
-			 * else if non RAID, do not disable
-			 *   QAS if bit 1 is set
+			 * अन्यथा अगर non RAID, करो not disable
+			 *   QAS अगर bit 1 is set
 			 * bit 1 QAS support, non-raid only
 			 * bit 0 IU support
 			 */
-			if (target->raidVolume == 1)
+			अगर (target->raidVolume == 1)
 				noQas = 0;
-		} else {
+		पूर्ण अन्यथा अणु
 			factor = MPT_ASYNC;
 			offset = 0;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (!sdev->tagged_supported)
+	अगर (!sdev->tagged_supported)
 		target->tflags &= ~MPT_TARGET_FLAGS_Q_YES;
 
 	/* Update tflags based on NVRAM settings. (SCSI only)
 	 */
-	if (pspi_data->nvram && (pspi_data->nvram[id] != MPT_HOST_NVRAM_INVALID)) {
+	अगर (pspi_data->nvram && (pspi_data->nvram[id] != MPT_HOST_NVRAM_INVALID)) अणु
 		nvram = pspi_data->nvram[id];
 		nfactor = (nvram & MPT_NVRAM_SYNC_MASK) >> 8;
 
-		if (width)
+		अगर (width)
 			width = nvram & MPT_NVRAM_WIDE_DISABLE ? 0 : 1;
 
-		if (offset > 0) {
+		अगर (offset > 0) अणु
 			/* Ensure factor is set to the
 			 * maximum of: adapter, nvram, inquiry
 			 */
-			if (nfactor) {
-				if (nfactor < pspi_data->minSyncFactor )
+			अगर (nfactor) अणु
+				अगर (nfactor < pspi_data->minSyncFactor )
 					nfactor = pspi_data->minSyncFactor;
 
 				factor = max(factor, nfactor);
-				if (factor == MPT_ASYNC)
+				अगर (factor == MPT_ASYNC)
 					offset = 0;
-			} else {
+			पूर्ण अन्यथा अणु
 				offset = 0;
 				factor = MPT_ASYNC;
-		}
-		} else {
+		पूर्ण
+		पूर्ण अन्यथा अणु
 			factor = MPT_ASYNC;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	/* Make sure data is consistent
 	 */
-	if ((!width) && (factor < MPT_ULTRA2))
+	अगर ((!width) && (factor < MPT_ULTRA2))
 		factor = MPT_ULTRA2;
 
-	/* Save the data to the target structure.
+	/* Save the data to the target काष्ठाure.
 	 */
 	target->minSyncFactor = factor;
 	target->maxOffset = offset;
@@ -218,63 +219,63 @@ mptspi_setTargetNegoParms(MPT_SCSI_HOST *hd, VirtTarget *target,
 
 	/* Disable unused features.
 	 */
-	if (!width)
+	अगर (!width)
 		target->negoFlags |= MPT_TARGET_NO_NEGO_WIDE;
 
-	if (!offset)
+	अगर (!offset)
 		target->negoFlags |= MPT_TARGET_NO_NEGO_SYNC;
 
-	if ( factor > MPT_ULTRA320 )
+	अगर ( factor > MPT_ULTRA320 )
 		noQas = 0;
 
-	if (noQas && (pspi_data->noQas == 0)) {
+	अगर (noQas && (pspi_data->noQas == 0)) अणु
 		pspi_data->noQas |= MPT_TARGET_NO_NEGO_QAS;
 		target->negoFlags |= MPT_TARGET_NO_NEGO_QAS;
 
-		/* Disable QAS in a mixed configuration case
+		/* Disable QAS in a mixed configuration हाल
 		 */
 
-		ddvprintk(ioc, printk(MYIOC_s_DEBUG_FMT
+		ddvprपूर्णांकk(ioc, prपूर्णांकk(MYIOC_s_DEBUG_FMT
 			"Disabling QAS due to noQas=%02x on id=%d!\n", ioc->name, noQas, id));
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
- * 	mptspi_writeIOCPage4  - write IOC Page 4
- *	@hd: Pointer to a SCSI Host Structure
+ * 	mptspi_ग_लिखोIOCPage4  - ग_लिखो IOC Page 4
+ *	@hd: Poपूर्णांकer to a SCSI Host Structure
  *	@channel: channel number
- *	@id: write IOC Page4 for this ID & Bus
+ *	@id: ग_लिखो IOC Page4 क्रम this ID & Bus
  *
- *	Return: -EAGAIN if unable to obtain a Message Frame
- *		or 0 if success.
+ *	Return: -EAGAIN अगर unable to obtain a Message Frame
+ *		or 0 अगर success.
  *
- *	Remark: We do not wait for a return, write pages sequentially.
+ *	Remark: We करो not रुको क्रम a वापस, ग_लिखो pages sequentially.
  **/
-static int
-mptspi_writeIOCPage4(MPT_SCSI_HOST *hd, u8 channel , u8 id)
-{
+अटल पूर्णांक
+mptspi_ग_लिखोIOCPage4(MPT_SCSI_HOST *hd, u8 channel , u8 id)
+अणु
 	MPT_ADAPTER		*ioc = hd->ioc;
 	Config_t		*pReq;
 	IOCPage4_t		*IOCPage4Ptr;
 	MPT_FRAME_HDR		*mf;
 	dma_addr_t		 dataDma;
 	u32			 flagsLength;
-	int			 ii;
+	पूर्णांक			 ii;
 
-	/* Get a MF for this command.
+	/* Get a MF क्रम this command.
 	 */
-	if ((mf = mpt_get_msg_frame(ioc->DoneCtx, ioc)) == NULL) {
-		dfailprintk(ioc, printk(MYIOC_s_WARN_FMT
+	अगर ((mf = mpt_get_msg_frame(ioc->DoneCtx, ioc)) == शून्य) अणु
+		dfailprपूर्णांकk(ioc, prपूर्णांकk(MYIOC_s_WARN_FMT
 				"writeIOCPage4 : no msg frames!\n",ioc->name));
-		return -EAGAIN;
-	}
+		वापस -EAGAIN;
+	पूर्ण
 
-	/* Set the request and the data pointers.
+	/* Set the request and the data poपूर्णांकers.
 	 * Place data at end of MF.
 	 */
 	pReq = (Config_t *)mf;
 
-	/* Complete the request frame (same for all requests).
+	/* Complete the request frame (same क्रम all requests).
 	 */
 	pReq->Action = MPI_CONFIG_ACTION_PAGE_WRITE_CURRENT;
 	pReq->Reserved = 0;
@@ -283,9 +284,9 @@ mptspi_writeIOCPage4(MPT_SCSI_HOST *hd, u8 channel , u8 id)
 	pReq->ExtPageLength = 0;
 	pReq->ExtPageType = 0;
 	pReq->MsgFlags = 0;
-	for (ii=0; ii < 8; ii++) {
+	क्रम (ii=0; ii < 8; ii++) अणु
 		pReq->Reserved2[ii] = 0;
-	}
+	पूर्ण
 
 	IOCPage4Ptr = ioc->spi_data.pIocPg4;
 	dataDma = ioc->spi_data.IocPg4_dma;
@@ -300,71 +301,71 @@ mptspi_writeIOCPage4(MPT_SCSI_HOST *hd, u8 channel , u8 id)
 	flagsLength = MPT_SGE_FLAGS_SSIMPLE_WRITE |
 		(IOCPage4Ptr->Header.PageLength + ii) * 4;
 
-	ioc->add_sge((char *)&pReq->PageBufferSGE, flagsLength, dataDma);
+	ioc->add_sge((अक्षर *)&pReq->PageBufferSGE, flagsLength, dataDma);
 
-	ddvprintk(ioc, printk(MYIOC_s_DEBUG_FMT
+	ddvprपूर्णांकk(ioc, prपूर्णांकk(MYIOC_s_DEBUG_FMT
 		"writeIOCPage4: MaxSEP=%d ActiveSEP=%d id=%d bus=%d\n",
 		ioc->name, IOCPage4Ptr->MaxSEP, IOCPage4Ptr->ActiveSEP, id, channel));
 
 	mpt_put_msg_frame(ioc->DoneCtx, ioc, mf);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- *	mptspi_initTarget - Target, LUN alloc/free functionality.
- *	@hd: Pointer to MPT_SCSI_HOST structure
- *	@vtarget: per target private data
+ *	mptspi_initTarget - Target, LUN alloc/मुक्त functionality.
+ *	@hd: Poपूर्णांकer to MPT_SCSI_HOST काष्ठाure
+ *	@vtarget: per target निजी data
  *	@sdev: SCSI device
  *
- *	NOTE: It's only SAFE to call this routine if data points to
+ *	NOTE: It's only SAFE to call this routine अगर data poपूर्णांकs to
  *	sane & valid STANDARD INQUIRY data!
  *
- *	Allocate and initialize memory for this target.
+ *	Allocate and initialize memory क्रम this target.
  *	Save inquiry data.
  *
  **/
-static void
+अटल व्योम
 mptspi_initTarget(MPT_SCSI_HOST *hd, VirtTarget *vtarget,
-		    struct scsi_device *sdev)
-{
+		    काष्ठा scsi_device *sdev)
+अणु
 
 	/* Is LUN supported? If so, upper 2 bits will be 0
 	* in first byte of inquiry data.
 	*/
-	if (sdev->inq_periph_qual != 0)
-		return;
+	अगर (sdev->inq_periph_qual != 0)
+		वापस;
 
-	if (vtarget == NULL)
-		return;
+	अगर (vtarget == शून्य)
+		वापस;
 
 	vtarget->type = sdev->type;
 
-	if ((sdev->type == TYPE_PROCESSOR) && (hd->ioc->spi_data.Saf_Te)) {
-		/* Treat all Processors as SAF-TE if
+	अगर ((sdev->type == TYPE_PROCESSOR) && (hd->ioc->spi_data.Saf_Te)) अणु
+		/* Treat all Processors as SAF-TE अगर
 		 * command line option is set */
 		vtarget->tflags |= MPT_TARGET_FLAGS_SAF_TE_ISSUED;
-		mptspi_writeIOCPage4(hd, vtarget->channel, vtarget->id);
-	}else if ((sdev->type == TYPE_PROCESSOR) &&
-		!(vtarget->tflags & MPT_TARGET_FLAGS_SAF_TE_ISSUED )) {
-		if (sdev->inquiry_len > 49 ) {
-			if (sdev->inquiry[44] == 'S' &&
+		mptspi_ग_लिखोIOCPage4(hd, vtarget->channel, vtarget->id);
+	पूर्णअन्यथा अगर ((sdev->type == TYPE_PROCESSOR) &&
+		!(vtarget->tflags & MPT_TARGET_FLAGS_SAF_TE_ISSUED )) अणु
+		अगर (sdev->inquiry_len > 49 ) अणु
+			अगर (sdev->inquiry[44] == 'S' &&
 			    sdev->inquiry[45] == 'A' &&
 			    sdev->inquiry[46] == 'F' &&
 			    sdev->inquiry[47] == '-' &&
 			    sdev->inquiry[48] == 'T' &&
-			    sdev->inquiry[49] == 'E' ) {
+			    sdev->inquiry[49] == 'E' ) अणु
 				vtarget->tflags |= MPT_TARGET_FLAGS_SAF_TE_ISSUED;
-				mptspi_writeIOCPage4(hd, vtarget->channel, vtarget->id);
-			}
-		}
-	}
+				mptspi_ग_लिखोIOCPage4(hd, vtarget->channel, vtarget->id);
+			पूर्ण
+		पूर्ण
+	पूर्ण
 	mptspi_setTargetNegoParms(hd, vtarget, sdev);
-}
+पूर्ण
 
 /**
- *	mptspi_is_raid - Determines whether target is belonging to volume
- *	@hd: Pointer to a SCSI HOST structure
+ *	mptspi_is_raid - Determines whether target is beदीर्घing to volume
+ *	@hd: Poपूर्णांकer to a SCSI HOST काष्ठाure
  *	@id: target device id
  *
  *	Return:
@@ -372,42 +373,42 @@ mptspi_initTarget(MPT_SCSI_HOST *hd, VirtTarget *vtarget,
  *		zero = false
  *
  */
-static int
-mptspi_is_raid(struct _MPT_SCSI_HOST *hd, u32 id)
-{
-	int i, rc = 0;
+अटल पूर्णांक
+mptspi_is_raid(काष्ठा _MPT_SCSI_HOST *hd, u32 id)
+अणु
+	पूर्णांक i, rc = 0;
 	MPT_ADAPTER *ioc = hd->ioc;
 
-	if (!ioc->raid_data.pIocPg2)
-		goto out;
+	अगर (!ioc->raid_data.pIocPg2)
+		जाओ out;
 
-	if (!ioc->raid_data.pIocPg2->NumActiveVolumes)
-		goto out;
-	for (i=0; i < ioc->raid_data.pIocPg2->NumActiveVolumes; i++) {
-		if (ioc->raid_data.pIocPg2->RaidVolume[i].VolumeID == id) {
+	अगर (!ioc->raid_data.pIocPg2->NumActiveVolumes)
+		जाओ out;
+	क्रम (i=0; i < ioc->raid_data.pIocPg2->NumActiveVolumes; i++) अणु
+		अगर (ioc->raid_data.pIocPg2->RaidVolume[i].VolumeID == id) अणु
 			rc = 1;
-			goto out;
-		}
-	}
+			जाओ out;
+		पूर्ण
+	पूर्ण
 
  out:
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int mptspi_target_alloc(struct scsi_target *starget)
-{
-	struct Scsi_Host *shost = dev_to_shost(&starget->dev);
-	struct _MPT_SCSI_HOST *hd = shost_priv(shost);
+अटल पूर्णांक mptspi_target_alloc(काष्ठा scsi_target *starget)
+अणु
+	काष्ठा Scsi_Host *shost = dev_to_shost(&starget->dev);
+	काष्ठा _MPT_SCSI_HOST *hd = shost_priv(shost);
 	VirtTarget		*vtarget;
 	MPT_ADAPTER *ioc;
 
-	if (hd == NULL)
-		return -ENODEV;
+	अगर (hd == शून्य)
+		वापस -ENODEV;
 
 	ioc = hd->ioc;
-	vtarget = kzalloc(sizeof(VirtTarget), GFP_KERNEL);
-	if (!vtarget)
-		return -ENOMEM;
+	vtarget = kzalloc(माप(VirtTarget), GFP_KERNEL);
+	अगर (!vtarget)
+		वापस -ENOMEM;
 
 	vtarget->ioc_id = ioc->id;
 	vtarget->tflags = MPT_TARGET_FLAGS_Q_YES;
@@ -416,61 +417,61 @@ static int mptspi_target_alloc(struct scsi_target *starget)
 	vtarget->starget = starget;
 	starget->hostdata = vtarget;
 
-	if (starget->channel == 1) {
-		if (mptscsih_is_phys_disk(ioc, 0, starget->id) == 0)
-			return 0;
+	अगर (starget->channel == 1) अणु
+		अगर (mptscsih_is_phys_disk(ioc, 0, starget->id) == 0)
+			वापस 0;
 		vtarget->tflags |= MPT_TARGET_FLAGS_RAID_COMPONENT;
-		/* The real channel for this device is zero */
+		/* The real channel क्रम this device is zero */
 		vtarget->channel = 0;
-		/* The actual physdisknum (for RAID passthrough) */
+		/* The actual physdisknum (क्रम RAID passthrough) */
 		vtarget->id = mptscsih_raid_id_to_num(ioc, 0,
 		    starget->id);
-	}
+	पूर्ण
 
-	if (starget->channel == 0 &&
-	    mptspi_is_raid(hd, starget->id)) {
+	अगर (starget->channel == 0 &&
+	    mptspi_is_raid(hd, starget->id)) अणु
 		vtarget->raidVolume = 1;
-		ddvprintk(ioc, printk(MYIOC_s_DEBUG_FMT
+		ddvprपूर्णांकk(ioc, prपूर्णांकk(MYIOC_s_DEBUG_FMT
 		    "RAID Volume @ channel=%d id=%d\n", ioc->name, starget->channel,
 		    starget->id));
-	}
+	पूर्ण
 
-	if (ioc->spi_data.nvram &&
-	    ioc->spi_data.nvram[starget->id] != MPT_HOST_NVRAM_INVALID) {
+	अगर (ioc->spi_data.nvram &&
+	    ioc->spi_data.nvram[starget->id] != MPT_HOST_NVRAM_INVALID) अणु
 		u32 nvram = ioc->spi_data.nvram[starget->id];
 		spi_min_period(starget) = (nvram & MPT_NVRAM_SYNC_MASK) >> MPT_NVRAM_SYNC_SHIFT;
 		spi_max_width(starget) = nvram & MPT_NVRAM_WIDE_DISABLE ? 0 : 1;
-	} else {
+	पूर्ण अन्यथा अणु
 		spi_min_period(starget) = ioc->spi_data.minSyncFactor;
 		spi_max_width(starget) = ioc->spi_data.maxBusWidth;
-	}
+	पूर्ण
 	spi_max_offset(starget) = ioc->spi_data.maxSyncOffset;
 
 	spi_offset(starget) = 0;
 	spi_period(starget) = 0xFF;
-	mptspi_write_width(starget, 0);
+	mptspi_ग_लिखो_width(starget, 0);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void
-mptspi_target_destroy(struct scsi_target *starget)
-{
-	kfree(starget->hostdata);
-	starget->hostdata = NULL;
-}
+अटल व्योम
+mptspi_target_destroy(काष्ठा scsi_target *starget)
+अणु
+	kमुक्त(starget->hostdata);
+	starget->hostdata = शून्य;
+पूर्ण
 
 /**
- *	mptspi_print_write_nego - negotiation parameters debug info that is being sent
- *	@hd: Pointer to a SCSI HOST structure
+ *	mptspi_prपूर्णांक_ग_लिखो_nego - negotiation parameters debug info that is being sent
+ *	@hd: Poपूर्णांकer to a SCSI HOST काष्ठाure
  *	@starget: SCSI target
  *	@ii: negotiation parameters
  *
  */
-static void
-mptspi_print_write_nego(struct _MPT_SCSI_HOST *hd, struct scsi_target *starget, u32 ii)
-{
-	ddvprintk(hd->ioc, printk(MYIOC_s_DEBUG_FMT "id=%d Requested = 0x%08x"
+अटल व्योम
+mptspi_prपूर्णांक_ग_लिखो_nego(काष्ठा _MPT_SCSI_HOST *hd, काष्ठा scsi_target *starget, u32 ii)
+अणु
+	ddvprपूर्णांकk(hd->ioc, prपूर्णांकk(MYIOC_s_DEBUG_FMT "id=%d Requested = 0x%08x"
 	    " ( %s factor = 0x%02x @ offset = 0x%02x %s%s%s%s%s%s%s%s)\n",
 	    hd->ioc->name, starget->id, ii,
 	    ii & MPI_SCSIDEVPAGE0_NP_WIDE ? "Wide ": "",
@@ -483,19 +484,19 @@ mptspi_print_write_nego(struct _MPT_SCSI_HOST *hd, struct scsi_target *starget, 
 	    ii & MPI_SCSIDEVPAGE0_NP_RD_STRM ? "RDSTRM ": "",
 	    ii & MPI_SCSIDEVPAGE0_NP_RTI ? "RTI ": "",
 	    ii & MPI_SCSIDEVPAGE0_NP_PCOMP_EN ? "PCOMP ": ""));
-}
+पूर्ण
 
 /**
- *	mptspi_print_read_nego - negotiation parameters debug info that is being read
- *	@hd: Pointer to a SCSI HOST structure
+ *	mptspi_prपूर्णांक_पढ़ो_nego - negotiation parameters debug info that is being पढ़ो
+ *	@hd: Poपूर्णांकer to a SCSI HOST काष्ठाure
  *	@starget: SCSI target
  *	@ii: negotiation parameters
  *
  */
-static void
-mptspi_print_read_nego(struct _MPT_SCSI_HOST *hd, struct scsi_target *starget, u32 ii)
-{
-	ddvprintk(hd->ioc, printk(MYIOC_s_DEBUG_FMT "id=%d Read = 0x%08x"
+अटल व्योम
+mptspi_prपूर्णांक_पढ़ो_nego(काष्ठा _MPT_SCSI_HOST *hd, काष्ठा scsi_target *starget, u32 ii)
+अणु
+	ddvprपूर्णांकk(hd->ioc, prपूर्णांकk(MYIOC_s_DEBUG_FMT "id=%d Read = 0x%08x"
 	    " ( %s factor = 0x%02x @ offset = 0x%02x %s%s%s%s%s%s%s%s)\n",
 	    hd->ioc->name, starget->id, ii,
 	    ii & MPI_SCSIDEVPAGE0_NP_WIDE ? "Wide ": "",
@@ -508,72 +509,72 @@ mptspi_print_read_nego(struct _MPT_SCSI_HOST *hd, struct scsi_target *starget, u
 	    ii & MPI_SCSIDEVPAGE0_NP_RD_STRM ? "RDSTRM ": "",
 	    ii & MPI_SCSIDEVPAGE0_NP_RTI ? "RTI ": "",
 	    ii & MPI_SCSIDEVPAGE0_NP_PCOMP_EN ? "PCOMP ": ""));
-}
+पूर्ण
 
-static int mptspi_read_spi_device_pg0(struct scsi_target *starget,
-			     struct _CONFIG_PAGE_SCSI_DEVICE_0 *pass_pg0)
-{
-	struct Scsi_Host *shost = dev_to_shost(&starget->dev);
-	struct _MPT_SCSI_HOST *hd = shost_priv(shost);
-	struct _MPT_ADAPTER *ioc = hd->ioc;
-	struct _CONFIG_PAGE_SCSI_DEVICE_0 *spi_dev_pg0;
+अटल पूर्णांक mptspi_पढ़ो_spi_device_pg0(काष्ठा scsi_target *starget,
+			     काष्ठा _CONFIG_PAGE_SCSI_DEVICE_0 *pass_pg0)
+अणु
+	काष्ठा Scsi_Host *shost = dev_to_shost(&starget->dev);
+	काष्ठा _MPT_SCSI_HOST *hd = shost_priv(shost);
+	काष्ठा _MPT_ADAPTER *ioc = hd->ioc;
+	काष्ठा _CONFIG_PAGE_SCSI_DEVICE_0 *spi_dev_pg0;
 	dma_addr_t spi_dev_pg0_dma;
-	int size;
-	struct _x_config_parms cfg;
-	struct _CONFIG_PAGE_HEADER hdr;
-	int err = -EBUSY;
+	पूर्णांक size;
+	काष्ठा _x_config_parms cfg;
+	काष्ठा _CONFIG_PAGE_HEADER hdr;
+	पूर्णांक err = -EBUSY;
 
-	/* No SPI parameters for RAID devices */
-	if (starget->channel == 0 &&
+	/* No SPI parameters क्रम RAID devices */
+	अगर (starget->channel == 0 &&
 	    mptspi_is_raid(hd, starget->id))
-		return -1;
+		वापस -1;
 
 	size = ioc->spi_data.sdp0length * 4;
 	/*
-	if (ioc->spi_data.sdp0length & 1)
+	अगर (ioc->spi_data.sdp0length & 1)
 		size += size + 4;
 	size += 2048;
 	*/
 
 	spi_dev_pg0 = dma_alloc_coherent(&ioc->pcidev->dev, size, &spi_dev_pg0_dma, GFP_KERNEL);
-	if (spi_dev_pg0 == NULL) {
-		starget_printk(KERN_ERR, starget, MYIOC_s_FMT
+	अगर (spi_dev_pg0 == शून्य) अणु
+		starget_prपूर्णांकk(KERN_ERR, starget, MYIOC_s_FMT
 		    "dma_alloc_coherent for parameters failed\n", ioc->name);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	memset(&hdr, 0, sizeof(hdr));
+	स_रखो(&hdr, 0, माप(hdr));
 
 	hdr.PageVersion = ioc->spi_data.sdp0version;
 	hdr.PageLength = ioc->spi_data.sdp0length;
 	hdr.PageNumber = 0;
 	hdr.PageType = MPI_CONFIG_PAGETYPE_SCSI_DEVICE;
 
-	memset(&cfg, 0, sizeof(cfg));
+	स_रखो(&cfg, 0, माप(cfg));
 
 	cfg.cfghdr.hdr = &hdr;
 	cfg.physAddr = spi_dev_pg0_dma;
 	cfg.action = MPI_CONFIG_ACTION_PAGE_READ_CURRENT;
 	cfg.dir = 0;
 	cfg.pageAddr = starget->id;
-	cfg.timeout = 60;
+	cfg.समयout = 60;
 
-	if (mpt_config(ioc, &cfg)) {
-		starget_printk(KERN_ERR, starget, MYIOC_s_FMT "mpt_config failed\n", ioc->name);
-		goto out_free;
-	}
+	अगर (mpt_config(ioc, &cfg)) अणु
+		starget_prपूर्णांकk(KERN_ERR, starget, MYIOC_s_FMT "mpt_config failed\n", ioc->name);
+		जाओ out_मुक्त;
+	पूर्ण
 	err = 0;
-	memcpy(pass_pg0, spi_dev_pg0, size);
+	स_नकल(pass_pg0, spi_dev_pg0, size);
 
-	mptspi_print_read_nego(hd, starget, le32_to_cpu(spi_dev_pg0->NegotiatedParameters));
+	mptspi_prपूर्णांक_पढ़ो_nego(hd, starget, le32_to_cpu(spi_dev_pg0->NegotiatedParameters));
 
- out_free:
-	dma_free_coherent(&ioc->pcidev->dev, size, spi_dev_pg0, spi_dev_pg0_dma);
-	return err;
-}
+ out_मुक्त:
+	dma_मुक्त_coherent(&ioc->pcidev->dev, size, spi_dev_pg0, spi_dev_pg0_dma);
+	वापस err;
+पूर्ण
 
-static u32 mptspi_getRP(struct scsi_target *starget)
-{
+अटल u32 mptspi_getRP(काष्ठा scsi_target *starget)
+अणु
 	u32 nego = 0;
 
 	nego |= spi_iu(starget) ? MPI_SCSIDEVPAGE1_RP_IU : 0;
@@ -589,15 +590,15 @@ static u32 mptspi_getRP(struct scsi_target *starget)
 	nego |= (spi_offset(starget) << MPI_SCSIDEVPAGE1_RP_SHIFT_MAX_SYNC_OFFSET) & MPI_SCSIDEVPAGE1_RP_MAX_SYNC_OFFSET_MASK;
 	nego |= spi_width(starget) ?  MPI_SCSIDEVPAGE1_RP_WIDE : 0;
 
-	return nego;
-}
+	वापस nego;
+पूर्ण
 
-static void mptspi_read_parameters(struct scsi_target *starget)
-{
-	int nego;
-	struct _CONFIG_PAGE_SCSI_DEVICE_0 spi_dev_pg0;
+अटल व्योम mptspi_पढ़ो_parameters(काष्ठा scsi_target *starget)
+अणु
+	पूर्णांक nego;
+	काष्ठा _CONFIG_PAGE_SCSI_DEVICE_0 spi_dev_pg0;
 
-	mptspi_read_spi_device_pg0(starget, &spi_dev_pg0);
+	mptspi_पढ़ो_spi_device_pg0(starget, &spi_dev_pg0);
 
 	nego = le32_to_cpu(spi_dev_pg0.NegotiatedParameters);
 
@@ -612,31 +613,31 @@ static void mptspi_read_parameters(struct scsi_target *starget)
 	spi_period(starget) = (nego & MPI_SCSIDEVPAGE0_NP_NEG_SYNC_PERIOD_MASK) >> MPI_SCSIDEVPAGE0_NP_SHIFT_SYNC_PERIOD;
 	spi_offset(starget) = (nego & MPI_SCSIDEVPAGE0_NP_NEG_SYNC_OFFSET_MASK) >> MPI_SCSIDEVPAGE0_NP_SHIFT_SYNC_OFFSET;
 	spi_width(starget) = (nego & MPI_SCSIDEVPAGE0_NP_WIDE) ? 1 : 0;
-}
+पूर्ण
 
-static int
-mptscsih_quiesce_raid(MPT_SCSI_HOST *hd, int quiesce, u8 channel, u8 id)
-{
+अटल पूर्णांक
+mptscsih_quiesce_raid(MPT_SCSI_HOST *hd, पूर्णांक quiesce, u8 channel, u8 id)
+अणु
 	MPT_ADAPTER	*ioc = hd->ioc;
 	MpiRaidActionRequest_t	*pReq;
 	MPT_FRAME_HDR		*mf;
-	int			ret;
-	unsigned long 	 	timeleft;
+	पूर्णांक			ret;
+	अचिन्हित दीर्घ 	 	समयleft;
 
-	mutex_lock(&ioc->internal_cmds.mutex);
+	mutex_lock(&ioc->पूर्णांकernal_cmds.mutex);
 
-	/* Get and Populate a free Frame
+	/* Get and Populate a मुक्त Frame
 	 */
-	if ((mf = mpt_get_msg_frame(ioc->InternalCtx, ioc)) == NULL) {
-		dfailprintk(hd->ioc, printk(MYIOC_s_WARN_FMT
+	अगर ((mf = mpt_get_msg_frame(ioc->InternalCtx, ioc)) == शून्य) अणु
+		dfailprपूर्णांकk(hd->ioc, prपूर्णांकk(MYIOC_s_WARN_FMT
 			"%s: no msg frames!\n", ioc->name, __func__));
 		ret = -EAGAIN;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 	pReq = (MpiRaidActionRequest_t *)mf;
-	if (quiesce)
+	अगर (quiesce)
 		pReq->Action = MPI_RAID_ACTION_QUIESCE_PHYS_IO;
-	else
+	अन्यथा
 		pReq->Action = MPI_RAID_ACTION_ENABLE_PHYS_IO;
 	pReq->Reserved1 = 0;
 	pReq->ChainOffset = 0;
@@ -646,91 +647,91 @@ mptscsih_quiesce_raid(MPT_SCSI_HOST *hd, int quiesce, u8 channel, u8 id)
 	pReq->PhysDiskNum = 0;
 	pReq->MsgFlags = 0;
 	pReq->Reserved2 = 0;
-	pReq->ActionDataWord = 0; /* Reserved for this action */
+	pReq->ActionDataWord = 0; /* Reserved क्रम this action */
 
-	ioc->add_sge((char *)&pReq->ActionDataSGE,
+	ioc->add_sge((अक्षर *)&pReq->ActionDataSGE,
 		MPT_SGE_FLAGS_SSIMPLE_READ | 0, (dma_addr_t) -1);
 
-	ddvprintk(ioc, printk(MYIOC_s_DEBUG_FMT "RAID Volume action=%x channel=%d id=%d\n",
+	ddvprपूर्णांकk(ioc, prपूर्णांकk(MYIOC_s_DEBUG_FMT "RAID Volume action=%x channel=%d id=%d\n",
 			ioc->name, pReq->Action, channel, id));
 
-	INITIALIZE_MGMT_STATUS(ioc->internal_cmds.status)
+	INITIALIZE_MGMT_STATUS(ioc->पूर्णांकernal_cmds.status)
 	mpt_put_msg_frame(ioc->InternalCtx, ioc, mf);
-	timeleft = wait_for_completion_timeout(&ioc->internal_cmds.done, 10*HZ);
-	if (!(ioc->internal_cmds.status & MPT_MGMT_STATUS_COMMAND_GOOD)) {
+	समयleft = रुको_क्रम_completion_समयout(&ioc->पूर्णांकernal_cmds.करोne, 10*HZ);
+	अगर (!(ioc->पूर्णांकernal_cmds.status & MPT_MGMT_STATUS_COMMAND_GOOD)) अणु
 		ret = -ETIME;
-		dfailprintk(ioc, printk(MYIOC_s_DEBUG_FMT "%s: TIMED OUT!\n",
+		dfailprपूर्णांकk(ioc, prपूर्णांकk(MYIOC_s_DEBUG_FMT "%s: TIMED OUT!\n",
 		    ioc->name, __func__));
-		if (ioc->internal_cmds.status & MPT_MGMT_STATUS_DID_IOCRESET)
-			goto out;
-		if (!timeleft) {
-			printk(MYIOC_s_WARN_FMT "Issuing Reset from %s!!\n",
+		अगर (ioc->पूर्णांकernal_cmds.status & MPT_MGMT_STATUS_DID_IOCRESET)
+			जाओ out;
+		अगर (!समयleft) अणु
+			prपूर्णांकk(MYIOC_s_WARN_FMT "Issuing Reset from %s!!\n",
 			    ioc->name, __func__);
 			mpt_HardResetHandler(ioc, CAN_SLEEP);
-			mpt_free_msg_frame(ioc, mf);
-		}
-		goto out;
-	}
+			mpt_मुक्त_msg_frame(ioc, mf);
+		पूर्ण
+		जाओ out;
+	पूर्ण
 
-	ret = ioc->internal_cmds.completion_code;
+	ret = ioc->पूर्णांकernal_cmds.completion_code;
 
  out:
-	CLEAR_MGMT_STATUS(ioc->internal_cmds.status)
-	mutex_unlock(&ioc->internal_cmds.mutex);
-	return ret;
-}
+	CLEAR_MGMT_STATUS(ioc->पूर्णांकernal_cmds.status)
+	mutex_unlock(&ioc->पूर्णांकernal_cmds.mutex);
+	वापस ret;
+पूर्ण
 
-static void mptspi_dv_device(struct _MPT_SCSI_HOST *hd,
-			     struct scsi_device *sdev)
-{
+अटल व्योम mptspi_dv_device(काष्ठा _MPT_SCSI_HOST *hd,
+			     काष्ठा scsi_device *sdev)
+अणु
 	VirtTarget *vtarget = scsi_target(sdev)->hostdata;
 	MPT_ADAPTER *ioc = hd->ioc;
 
 	/* no DV on RAID devices */
-	if (sdev->channel == 0 &&
+	अगर (sdev->channel == 0 &&
 	    mptspi_is_raid(hd, sdev->id))
-		return;
+		वापस;
 
 	/* If this is a piece of a RAID, then quiesce first */
-	if (sdev->channel == 1 &&
-	    mptscsih_quiesce_raid(hd, 1, vtarget->channel, vtarget->id) < 0) {
-		starget_printk(KERN_ERR, scsi_target(sdev), MYIOC_s_FMT
+	अगर (sdev->channel == 1 &&
+	    mptscsih_quiesce_raid(hd, 1, vtarget->channel, vtarget->id) < 0) अणु
+		starget_prपूर्णांकk(KERN_ERR, scsi_target(sdev), MYIOC_s_FMT
 		    "Integrated RAID quiesce failed\n", ioc->name);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	hd->spi_pending |= (1 << sdev->id);
 	spi_dv_device(sdev);
 	hd->spi_pending &= ~(1 << sdev->id);
 
-	if (sdev->channel == 1 &&
+	अगर (sdev->channel == 1 &&
 	    mptscsih_quiesce_raid(hd, 0, vtarget->channel, vtarget->id) < 0)
-		starget_printk(KERN_ERR, scsi_target(sdev), MYIOC_s_FMT
+		starget_prपूर्णांकk(KERN_ERR, scsi_target(sdev), MYIOC_s_FMT
 		    "Integrated RAID resume failed\n", ioc->name);
 
-	mptspi_read_parameters(sdev->sdev_target);
+	mptspi_पढ़ो_parameters(sdev->sdev_target);
 	spi_display_xfer_agreement(sdev->sdev_target);
-	mptspi_read_parameters(sdev->sdev_target);
-}
+	mptspi_पढ़ो_parameters(sdev->sdev_target);
+पूर्ण
 
-static int mptspi_slave_alloc(struct scsi_device *sdev)
-{
+अटल पूर्णांक mptspi_slave_alloc(काष्ठा scsi_device *sdev)
+अणु
 	MPT_SCSI_HOST *hd = shost_priv(sdev->host);
 	VirtTarget		*vtarget;
 	VirtDevice		*vdevice;
-	struct scsi_target 	*starget;
+	काष्ठा scsi_target 	*starget;
 	MPT_ADAPTER *ioc = hd->ioc;
 
-	if (sdev->channel == 1 &&
+	अगर (sdev->channel == 1 &&
 		mptscsih_is_phys_disk(ioc, 0, sdev->id) == 0)
-			return -ENXIO;
+			वापस -ENXIO;
 
-	vdevice = kzalloc(sizeof(VirtDevice), GFP_KERNEL);
-	if (!vdevice) {
-		printk(MYIOC_s_ERR_FMT "slave_alloc kmalloc(%zd) FAILED!\n",
-				ioc->name, sizeof(VirtDevice));
-		return -ENOMEM;
-	}
+	vdevice = kzalloc(माप(VirtDevice), GFP_KERNEL);
+	अगर (!vdevice) अणु
+		prपूर्णांकk(MYIOC_s_ERR_FMT "slave_alloc kmalloc(%zd) FAILED!\n",
+				ioc->name, माप(VirtDevice));
+		वापस -ENOMEM;
+	पूर्ण
 
 	vdevice->lun = sdev->lun;
 	sdev->hostdata = vdevice;
@@ -740,87 +741,87 @@ static int mptspi_slave_alloc(struct scsi_device *sdev)
 	vdevice->vtarget = vtarget;
 	vtarget->num_luns++;
 
-	if (sdev->channel == 1)
+	अगर (sdev->channel == 1)
 		sdev->no_uld_attach = 1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mptspi_slave_configure(struct scsi_device *sdev)
-{
-	struct _MPT_SCSI_HOST *hd = shost_priv(sdev->host);
+अटल पूर्णांक mptspi_slave_configure(काष्ठा scsi_device *sdev)
+अणु
+	काष्ठा _MPT_SCSI_HOST *hd = shost_priv(sdev->host);
 	VirtTarget *vtarget = scsi_target(sdev)->hostdata;
-	int ret;
+	पूर्णांक ret;
 
 	mptspi_initTarget(hd, vtarget, sdev);
 
 	ret = mptscsih_slave_configure(sdev);
 
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	ddvprintk(hd->ioc, printk(MYIOC_s_DEBUG_FMT "id=%d min_period=0x%02x"
+	ddvprपूर्णांकk(hd->ioc, prपूर्णांकk(MYIOC_s_DEBUG_FMT "id=%d min_period=0x%02x"
 		" max_offset=0x%02x max_width=%d\n", hd->ioc->name,
 		sdev->id, spi_min_period(scsi_target(sdev)),
 		spi_max_offset(scsi_target(sdev)),
 		spi_max_width(scsi_target(sdev))));
 
-	if ((sdev->channel == 1 ||
+	अगर ((sdev->channel == 1 ||
 	     !(mptspi_is_raid(hd, sdev->id))) &&
 	    !spi_initial_dv(sdev->sdev_target))
 		mptspi_dv_device(hd, sdev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-mptspi_qcmd(struct Scsi_Host *shost, struct scsi_cmnd *SCpnt)
-{
-	struct _MPT_SCSI_HOST *hd = shost_priv(shost);
+अटल पूर्णांक
+mptspi_qcmd(काष्ठा Scsi_Host *shost, काष्ठा scsi_cmnd *SCpnt)
+अणु
+	काष्ठा _MPT_SCSI_HOST *hd = shost_priv(shost);
 	VirtDevice	*vdevice = SCpnt->device->hostdata;
 	MPT_ADAPTER *ioc = hd->ioc;
 
-	if (!vdevice || !vdevice->vtarget) {
+	अगर (!vdevice || !vdevice->vtarget) अणु
 		SCpnt->result = DID_NO_CONNECT << 16;
-		SCpnt->scsi_done(SCpnt);
-		return 0;
-	}
+		SCpnt->scsi_करोne(SCpnt);
+		वापस 0;
+	पूर्ण
 
-	if (SCpnt->device->channel == 1 &&
-		mptscsih_is_phys_disk(ioc, 0, SCpnt->device->id) == 0) {
+	अगर (SCpnt->device->channel == 1 &&
+		mptscsih_is_phys_disk(ioc, 0, SCpnt->device->id) == 0) अणु
 		SCpnt->result = DID_NO_CONNECT << 16;
-		SCpnt->scsi_done(SCpnt);
-		return 0;
-	}
+		SCpnt->scsi_करोne(SCpnt);
+		वापस 0;
+	पूर्ण
 
-	if (spi_dv_pending(scsi_target(SCpnt->device)))
-		ddvprintk(ioc, scsi_print_command(SCpnt));
+	अगर (spi_dv_pending(scsi_target(SCpnt->device)))
+		ddvprपूर्णांकk(ioc, scsi_prपूर्णांक_command(SCpnt));
 
-	return mptscsih_qcmd(SCpnt);
-}
+	वापस mptscsih_qcmd(SCpnt);
+पूर्ण
 
-static void mptspi_slave_destroy(struct scsi_device *sdev)
-{
-	struct scsi_target *starget = scsi_target(sdev);
+अटल व्योम mptspi_slave_destroy(काष्ठा scsi_device *sdev)
+अणु
+	काष्ठा scsi_target *starget = scsi_target(sdev);
 	VirtTarget *vtarget = starget->hostdata;
 	VirtDevice *vdevice = sdev->hostdata;
 
 	/* Will this be the last lun on a non-raid device? */
-	if (vtarget->num_luns == 1 && vdevice->configured_lun) {
-		struct _CONFIG_PAGE_SCSI_DEVICE_1 pg1;
+	अगर (vtarget->num_luns == 1 && vdevice->configured_lun) अणु
+		काष्ठा _CONFIG_PAGE_SCSI_DEVICE_1 pg1;
 
 		/* Async Narrow */
 		pg1.RequestedParameters = 0;
 		pg1.Reserved = 0;
 		pg1.Configuration = 0;
 
-		mptspi_write_spi_device_pg1(starget, &pg1);
-	}
+		mptspi_ग_लिखो_spi_device_pg1(starget, &pg1);
+	पूर्ण
 
 	mptscsih_slave_destroy(sdev);
-}
+पूर्ण
 
-static struct scsi_host_template mptspi_driver_template = {
+अटल काष्ठा scsi_host_ढाँचा mptspi_driver_ढाँचा = अणु
 	.module				= THIS_MODULE,
 	.proc_name			= "mptspi",
 	.show_info			= mptscsih_show_info,
@@ -833,7 +834,7 @@ static struct scsi_host_template mptspi_driver_template = {
 	.target_destroy			= mptspi_target_destroy,
 	.slave_destroy			= mptspi_slave_destroy,
 	.change_queue_depth 		= mptscsih_change_queue_depth,
-	.eh_abort_handler		= mptscsih_abort,
+	.eh_पात_handler		= mptscsih_पात,
 	.eh_device_reset_handler	= mptscsih_dev_reset,
 	.eh_bus_reset_handler		= mptscsih_bus_reset,
 	.eh_host_reset_handler		= mptscsih_host_reset,
@@ -844,47 +845,47 @@ static struct scsi_host_template mptspi_driver_template = {
 	.max_sectors			= 8192,
 	.cmd_per_lun			= 7,
 	.shost_attrs			= mptscsih_host_attrs,
-};
+पूर्ण;
 
-static int mptspi_write_spi_device_pg1(struct scsi_target *starget,
-			       struct _CONFIG_PAGE_SCSI_DEVICE_1 *pass_pg1)
-{
-	struct Scsi_Host *shost = dev_to_shost(&starget->dev);
-	struct _MPT_SCSI_HOST *hd = shost_priv(shost);
-	struct _MPT_ADAPTER *ioc = hd->ioc;
-	struct _CONFIG_PAGE_SCSI_DEVICE_1 *pg1;
+अटल पूर्णांक mptspi_ग_लिखो_spi_device_pg1(काष्ठा scsi_target *starget,
+			       काष्ठा _CONFIG_PAGE_SCSI_DEVICE_1 *pass_pg1)
+अणु
+	काष्ठा Scsi_Host *shost = dev_to_shost(&starget->dev);
+	काष्ठा _MPT_SCSI_HOST *hd = shost_priv(shost);
+	काष्ठा _MPT_ADAPTER *ioc = hd->ioc;
+	काष्ठा _CONFIG_PAGE_SCSI_DEVICE_1 *pg1;
 	dma_addr_t pg1_dma;
-	int size;
-	struct _x_config_parms cfg;
-	struct _CONFIG_PAGE_HEADER hdr;
-	int err = -EBUSY;
+	पूर्णांक size;
+	काष्ठा _x_config_parms cfg;
+	काष्ठा _CONFIG_PAGE_HEADER hdr;
+	पूर्णांक err = -EBUSY;
 	u32 nego_parms;
 	u32 period;
-	struct scsi_device *sdev;
-	int i;
+	काष्ठा scsi_device *sdev;
+	पूर्णांक i;
 
-	/* don't allow updating nego parameters on RAID devices */
-	if (starget->channel == 0 &&
+	/* करोn't allow updating nego parameters on RAID devices */
+	अगर (starget->channel == 0 &&
 	    mptspi_is_raid(hd, starget->id))
-		return -1;
+		वापस -1;
 
 	size = ioc->spi_data.sdp1length * 4;
 
 	pg1 = dma_alloc_coherent(&ioc->pcidev->dev, size, &pg1_dma, GFP_KERNEL);
-	if (pg1 == NULL) {
-		starget_printk(KERN_ERR, starget, MYIOC_s_FMT
+	अगर (pg1 == शून्य) अणु
+		starget_prपूर्णांकk(KERN_ERR, starget, MYIOC_s_FMT
 		    "dma_alloc_coherent for parameters failed\n", ioc->name);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	memset(&hdr, 0, sizeof(hdr));
+	स_रखो(&hdr, 0, माप(hdr));
 
 	hdr.PageVersion = ioc->spi_data.sdp1version;
 	hdr.PageLength = ioc->spi_data.sdp1length;
 	hdr.PageNumber = 1;
 	hdr.PageType = MPI_CONFIG_PAGETYPE_SCSI_DEVICE;
 
-	memset(&cfg, 0, sizeof(cfg));
+	स_रखो(&cfg, 0, माप(cfg));
 
 	cfg.cfghdr.hdr = &hdr;
 	cfg.physAddr = pg1_dma;
@@ -892,7 +893,7 @@ static int mptspi_write_spi_device_pg1(struct scsi_target *starget,
 	cfg.dir = 1;
 	cfg.pageAddr = starget->id;
 
-	memcpy(pg1, pass_pg1, size);
+	स_नकल(pg1, pass_pg1, size);
 
 	pg1->Header.PageVersion = hdr.PageVersion;
 	pg1->Header.PageLength = hdr.PageLength;
@@ -902,48 +903,48 @@ static int mptspi_write_spi_device_pg1(struct scsi_target *starget,
 	nego_parms = le32_to_cpu(pg1->RequestedParameters);
 	period = (nego_parms & MPI_SCSIDEVPAGE1_RP_MIN_SYNC_PERIOD_MASK) >>
 		MPI_SCSIDEVPAGE1_RP_SHIFT_MIN_SYNC_PERIOD;
-	if (period == 8) {
-		/* Turn on inline data padding for TAPE when running U320 */
-		for (i = 0 ; i < 16; i++) {
+	अगर (period == 8) अणु
+		/* Turn on अंतरभूत data padding क्रम TAPE when running U320 */
+		क्रम (i = 0 ; i < 16; i++) अणु
 			sdev = scsi_device_lookup_by_target(starget, i);
-			if (sdev && sdev->type == TYPE_TAPE) {
-				sdev_printk(KERN_DEBUG, sdev, MYIOC_s_FMT
+			अगर (sdev && sdev->type == TYPE_TAPE) अणु
+				sdev_prपूर्णांकk(KERN_DEBUG, sdev, MYIOC_s_FMT
 					    "IDP:ON\n", ioc->name);
 				nego_parms |= MPI_SCSIDEVPAGE1_RP_IDP;
 				pg1->RequestedParameters =
 				    cpu_to_le32(nego_parms);
-				break;
-			}
-		}
-	}
+				अवरोध;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	mptspi_print_write_nego(hd, starget, le32_to_cpu(pg1->RequestedParameters));
+	mptspi_prपूर्णांक_ग_लिखो_nego(hd, starget, le32_to_cpu(pg1->RequestedParameters));
 
-	if (mpt_config(ioc, &cfg)) {
-		starget_printk(KERN_ERR, starget, MYIOC_s_FMT
+	अगर (mpt_config(ioc, &cfg)) अणु
+		starget_prपूर्णांकk(KERN_ERR, starget, MYIOC_s_FMT
 		    "mpt_config failed\n", ioc->name);
-		goto out_free;
-	}
+		जाओ out_मुक्त;
+	पूर्ण
 	err = 0;
 
- out_free:
-	dma_free_coherent(&ioc->pcidev->dev, size, pg1, pg1_dma);
-	return err;
-}
+ out_मुक्त:
+	dma_मुक्त_coherent(&ioc->pcidev->dev, size, pg1, pg1_dma);
+	वापस err;
+पूर्ण
 
-static void mptspi_write_offset(struct scsi_target *starget, int offset)
-{
-	struct _CONFIG_PAGE_SCSI_DEVICE_1 pg1;
+अटल व्योम mptspi_ग_लिखो_offset(काष्ठा scsi_target *starget, पूर्णांक offset)
+अणु
+	काष्ठा _CONFIG_PAGE_SCSI_DEVICE_1 pg1;
 	u32 nego;
 
-	if (offset < 0)
+	अगर (offset < 0)
 		offset = 0;
 
-	if (offset > 255)
+	अगर (offset > 255)
 		offset = 255;
 
-	if (spi_offset(starget) == -1)
-		mptspi_read_parameters(starget);
+	अगर (spi_offset(starget) == -1)
+		mptspi_पढ़ो_parameters(starget);
 
 	spi_offset(starget) = offset;
 
@@ -953,29 +954,29 @@ static void mptspi_write_offset(struct scsi_target *starget, int offset)
 	pg1.Reserved = 0;
 	pg1.Configuration = 0;
 
-	mptspi_write_spi_device_pg1(starget, &pg1);
-}
+	mptspi_ग_लिखो_spi_device_pg1(starget, &pg1);
+पूर्ण
 
-static void mptspi_write_period(struct scsi_target *starget, int period)
-{
-	struct _CONFIG_PAGE_SCSI_DEVICE_1 pg1;
+अटल व्योम mptspi_ग_लिखो_period(काष्ठा scsi_target *starget, पूर्णांक period)
+अणु
+	काष्ठा _CONFIG_PAGE_SCSI_DEVICE_1 pg1;
 	u32 nego;
 
-	if (period < 8)
+	अगर (period < 8)
 		period = 8;
 
-	if (period > 255)
+	अगर (period > 255)
 		period = 255;
 
-	if (spi_period(starget) == -1)
-		mptspi_read_parameters(starget);
+	अगर (spi_period(starget) == -1)
+		mptspi_पढ़ो_parameters(starget);
 
-	if (period == 8) {
+	अगर (period == 8) अणु
 		spi_iu(starget) = 1;
 		spi_dt(starget) = 1;
-	} else if (period == 9) {
+	पूर्ण अन्यथा अगर (period == 9) अणु
 		spi_dt(starget) = 1;
-	}
+	पूर्ण
 
 	spi_period(starget) = period;
 
@@ -985,18 +986,18 @@ static void mptspi_write_period(struct scsi_target *starget, int period)
 	pg1.Reserved = 0;
 	pg1.Configuration = 0;
 
-	mptspi_write_spi_device_pg1(starget, &pg1);
-}
+	mptspi_ग_लिखो_spi_device_pg1(starget, &pg1);
+पूर्ण
 
-static void mptspi_write_dt(struct scsi_target *starget, int dt)
-{
-	struct _CONFIG_PAGE_SCSI_DEVICE_1 pg1;
+अटल व्योम mptspi_ग_लिखो_dt(काष्ठा scsi_target *starget, पूर्णांक dt)
+अणु
+	काष्ठा _CONFIG_PAGE_SCSI_DEVICE_1 pg1;
 	u32 nego;
 
-	if (spi_period(starget) == -1)
-		mptspi_read_parameters(starget);
+	अगर (spi_period(starget) == -1)
+		mptspi_पढ़ो_parameters(starget);
 
-	if (!dt && spi_period(starget) < 10)
+	अगर (!dt && spi_period(starget) < 10)
 		spi_period(starget) = 10;
 
 	spi_dt(starget) = dt;
@@ -1008,18 +1009,18 @@ static void mptspi_write_dt(struct scsi_target *starget, int dt)
 	pg1.Reserved = 0;
 	pg1.Configuration = 0;
 
-	mptspi_write_spi_device_pg1(starget, &pg1);
-}
+	mptspi_ग_लिखो_spi_device_pg1(starget, &pg1);
+पूर्ण
 
-static void mptspi_write_iu(struct scsi_target *starget, int iu)
-{
-	struct _CONFIG_PAGE_SCSI_DEVICE_1 pg1;
+अटल व्योम mptspi_ग_लिखो_iu(काष्ठा scsi_target *starget, पूर्णांक iu)
+अणु
+	काष्ठा _CONFIG_PAGE_SCSI_DEVICE_1 pg1;
 	u32 nego;
 
-	if (spi_period(starget) == -1)
-		mptspi_read_parameters(starget);
+	अगर (spi_period(starget) == -1)
+		mptspi_पढ़ो_parameters(starget);
 
-	if (!iu && spi_period(starget) < 9)
+	अगर (!iu && spi_period(starget) < 9)
 		spi_period(starget) = 9;
 
 	spi_iu(starget) = iu;
@@ -1030,13 +1031,13 @@ static void mptspi_write_iu(struct scsi_target *starget, int iu)
 	pg1.Reserved = 0;
 	pg1.Configuration = 0;
 
-	mptspi_write_spi_device_pg1(starget, &pg1);
-}
+	mptspi_ग_लिखो_spi_device_pg1(starget, &pg1);
+पूर्ण
 
-#define MPTSPI_SIMPLE_TRANSPORT_PARM(parm) 				\
-static void mptspi_write_##parm(struct scsi_target *starget, int parm)\
-{									\
-	struct _CONFIG_PAGE_SCSI_DEVICE_1 pg1;				\
+#घोषणा MPTSPI_SIMPLE_TRANSPORT_PARM(parm) 				\
+अटल व्योम mptspi_ग_लिखो_##parm(काष्ठा scsi_target *starget, पूर्णांक parm)\
+अणु									\
+	काष्ठा _CONFIG_PAGE_SCSI_DEVICE_1 pg1;				\
 	u32 nego;							\
 									\
 	spi_##parm(starget) = parm;					\
@@ -1047,8 +1048,8 @@ static void mptspi_write_##parm(struct scsi_target *starget, int parm)\
 	pg1.Reserved = 0;						\
 	pg1.Configuration = 0;						\
 									\
-	mptspi_write_spi_device_pg1(starget, &pg1);				\
-}
+	mptspi_ग_लिखो_spi_device_pg1(starget, &pg1);				\
+पूर्ण
 
 MPTSPI_SIMPLE_TRANSPORT_PARM(rd_strm)
 MPTSPI_SIMPLE_TRANSPORT_PARM(wr_flow)
@@ -1056,18 +1057,18 @@ MPTSPI_SIMPLE_TRANSPORT_PARM(rti)
 MPTSPI_SIMPLE_TRANSPORT_PARM(hold_mcs)
 MPTSPI_SIMPLE_TRANSPORT_PARM(pcomp_en)
 
-static void mptspi_write_qas(struct scsi_target *starget, int qas)
-{
-	struct _CONFIG_PAGE_SCSI_DEVICE_1 pg1;
-	struct Scsi_Host *shost = dev_to_shost(&starget->dev);
-	struct _MPT_SCSI_HOST *hd = shost_priv(shost);
+अटल व्योम mptspi_ग_लिखो_qas(काष्ठा scsi_target *starget, पूर्णांक qas)
+अणु
+	काष्ठा _CONFIG_PAGE_SCSI_DEVICE_1 pg1;
+	काष्ठा Scsi_Host *shost = dev_to_shost(&starget->dev);
+	काष्ठा _MPT_SCSI_HOST *hd = shost_priv(shost);
 	VirtTarget *vtarget = starget->hostdata;
 	u32 nego;
 
-	if ((vtarget->negoFlags & MPT_TARGET_NO_NEGO_QAS) ||
+	अगर ((vtarget->negoFlags & MPT_TARGET_NO_NEGO_QAS) ||
 	    hd->ioc->spi_data.noQas)
 		spi_qas(starget) = 0;
-	else
+	अन्यथा
 		spi_qas(starget) = qas;
 
 	nego = mptspi_getRP(starget);
@@ -1076,19 +1077,19 @@ static void mptspi_write_qas(struct scsi_target *starget, int qas)
 	pg1.Reserved = 0;
 	pg1.Configuration = 0;
 
-	mptspi_write_spi_device_pg1(starget, &pg1);
-}
+	mptspi_ग_लिखो_spi_device_pg1(starget, &pg1);
+पूर्ण
 
-static void mptspi_write_width(struct scsi_target *starget, int width)
-{
-	struct _CONFIG_PAGE_SCSI_DEVICE_1 pg1;
+अटल व्योम mptspi_ग_लिखो_width(काष्ठा scsi_target *starget, पूर्णांक width)
+अणु
+	काष्ठा _CONFIG_PAGE_SCSI_DEVICE_1 pg1;
 	u32 nego;
 
-	if (!width) {
+	अगर (!width) अणु
 		spi_dt(starget) = 0;
-		if (spi_period(starget) < 10)
+		अगर (spi_period(starget) < 10)
 			spi_period(starget) = 10;
-	}
+	पूर्ण
 
 	spi_width(starget) = width;
 
@@ -1098,329 +1099,329 @@ static void mptspi_write_width(struct scsi_target *starget, int width)
 	pg1.Reserved = 0;
 	pg1.Configuration = 0;
 
-	mptspi_write_spi_device_pg1(starget, &pg1);
-}
+	mptspi_ग_लिखो_spi_device_pg1(starget, &pg1);
+पूर्ण
 
-struct work_queue_wrapper {
-	struct work_struct	work;
-	struct _MPT_SCSI_HOST	*hd;
-	int			disk;
-};
+काष्ठा work_queue_wrapper अणु
+	काष्ठा work_काष्ठा	work;
+	काष्ठा _MPT_SCSI_HOST	*hd;
+	पूर्णांक			disk;
+पूर्ण;
 
-static void mpt_work_wrapper(struct work_struct *work)
-{
-	struct work_queue_wrapper *wqw =
-		container_of(work, struct work_queue_wrapper, work);
-	struct _MPT_SCSI_HOST *hd = wqw->hd;
+अटल व्योम mpt_work_wrapper(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा work_queue_wrapper *wqw =
+		container_of(work, काष्ठा work_queue_wrapper, work);
+	काष्ठा _MPT_SCSI_HOST *hd = wqw->hd;
 	MPT_ADAPTER *ioc = hd->ioc;
-	struct Scsi_Host *shost = ioc->sh;
-	struct scsi_device *sdev;
-	int disk = wqw->disk;
-	struct _CONFIG_PAGE_IOC_3 *pg3;
+	काष्ठा Scsi_Host *shost = ioc->sh;
+	काष्ठा scsi_device *sdev;
+	पूर्णांक disk = wqw->disk;
+	काष्ठा _CONFIG_PAGE_IOC_3 *pg3;
 
-	kfree(wqw);
+	kमुक्त(wqw);
 
 	mpt_findImVolumes(ioc);
 	pg3 = ioc->raid_data.pIocPg3;
-	if (!pg3)
-		return;
+	अगर (!pg3)
+		वापस;
 
-	shost_for_each_device(sdev,shost) {
-		struct scsi_target *starget = scsi_target(sdev);
+	shost_क्रम_each_device(sdev,shost) अणु
+		काष्ठा scsi_target *starget = scsi_target(sdev);
 		VirtTarget *vtarget = starget->hostdata;
 
 		/* only want to search RAID components */
-		if (sdev->channel != 1)
-			continue;
+		अगर (sdev->channel != 1)
+			जारी;
 
-		/* The id is the raid PhysDiskNum, even if
+		/* The id is the raid PhysDiskNum, even अगर
 		 * starget->id is the actual target address */
-		if(vtarget->id != disk)
-			continue;
+		अगर(vtarget->id != disk)
+			जारी;
 
-		starget_printk(KERN_INFO, vtarget->starget, MYIOC_s_FMT
+		starget_prपूर्णांकk(KERN_INFO, vtarget->starget, MYIOC_s_FMT
 		    "Integrated RAID requests DV of new device\n", ioc->name);
 		mptspi_dv_device(hd, sdev);
-	}
-	shost_printk(KERN_INFO, shost, MYIOC_s_FMT
+	पूर्ण
+	shost_prपूर्णांकk(KERN_INFO, shost, MYIOC_s_FMT
 	    "Integrated RAID detects new device %d\n", ioc->name, disk);
 	scsi_scan_target(&ioc->sh->shost_gendev, 1, disk, 0, SCSI_SCAN_RESCAN);
-}
+पूर्ण
 
 
-static void mpt_dv_raid(struct _MPT_SCSI_HOST *hd, int disk)
-{
-	struct work_queue_wrapper *wqw = kmalloc(sizeof(*wqw), GFP_ATOMIC);
+अटल व्योम mpt_dv_raid(काष्ठा _MPT_SCSI_HOST *hd, पूर्णांक disk)
+अणु
+	काष्ठा work_queue_wrapper *wqw = kदो_स्मृति(माप(*wqw), GFP_ATOMIC);
 	MPT_ADAPTER *ioc = hd->ioc;
 
-	if (!wqw) {
-		shost_printk(KERN_ERR, ioc->sh, MYIOC_s_FMT
+	अगर (!wqw) अणु
+		shost_prपूर्णांकk(KERN_ERR, ioc->sh, MYIOC_s_FMT
 		    "Failed to act on RAID event for physical disk %d\n",
 		    ioc->name, disk);
-		return;
-	}
+		वापस;
+	पूर्ण
 	INIT_WORK(&wqw->work, mpt_work_wrapper);
 	wqw->hd = hd;
 	wqw->disk = disk;
 
 	schedule_work(&wqw->work);
-}
+पूर्ण
 
-static int
-mptspi_event_process(MPT_ADAPTER *ioc, EventNotificationReply_t *pEvReply)
-{
+अटल पूर्णांक
+mptspi_event_process(MPT_ADAPTER *ioc, EventNotअगरicationReply_t *pEvReply)
+अणु
 	u8 event = le32_to_cpu(pEvReply->Event) & 0xFF;
-	struct _MPT_SCSI_HOST *hd = shost_priv(ioc->sh);
+	काष्ठा _MPT_SCSI_HOST *hd = shost_priv(ioc->sh);
 
-	if (ioc->bus_type != SPI)
-		return 0;
+	अगर (ioc->bus_type != SPI)
+		वापस 0;
 
-	if (hd && event ==  MPI_EVENT_INTEGRATED_RAID) {
-		int reason
+	अगर (hd && event ==  MPI_EVENT_INTEGRATED_RAID) अणु
+		पूर्णांक reason
 			= (le32_to_cpu(pEvReply->Data[0]) & 0x00FF0000) >> 16;
 
-		if (reason == MPI_EVENT_RAID_RC_DOMAIN_VAL_NEEDED) {
-			int disk = (le32_to_cpu(pEvReply->Data[0]) & 0xFF000000) >> 24;
+		अगर (reason == MPI_EVENT_RAID_RC_DOMAIN_VAL_NEEDED) अणु
+			पूर्णांक disk = (le32_to_cpu(pEvReply->Data[0]) & 0xFF000000) >> 24;
 			mpt_dv_raid(hd, disk);
-		}
-	}
-	return mptscsih_event_process(ioc, pEvReply);
-}
+		पूर्ण
+	पूर्ण
+	वापस mptscsih_event_process(ioc, pEvReply);
+पूर्ण
 
-static int
-mptspi_deny_binding(struct scsi_target *starget)
-{
-	struct _MPT_SCSI_HOST *hd =
-		(struct _MPT_SCSI_HOST *)dev_to_shost(starget->dev.parent)->hostdata;
-	return ((mptspi_is_raid(hd, starget->id)) &&
+अटल पूर्णांक
+mptspi_deny_binding(काष्ठा scsi_target *starget)
+अणु
+	काष्ठा _MPT_SCSI_HOST *hd =
+		(काष्ठा _MPT_SCSI_HOST *)dev_to_shost(starget->dev.parent)->hostdata;
+	वापस ((mptspi_is_raid(hd, starget->id)) &&
 		starget->channel == 0) ? 1 : 0;
-}
+पूर्ण
 
-static struct spi_function_template mptspi_transport_functions = {
-	.get_offset	= mptspi_read_parameters,
-	.set_offset	= mptspi_write_offset,
+अटल काष्ठा spi_function_ढाँचा mptspi_transport_functions = अणु
+	.get_offset	= mptspi_पढ़ो_parameters,
+	.set_offset	= mptspi_ग_लिखो_offset,
 	.show_offset	= 1,
-	.get_period	= mptspi_read_parameters,
-	.set_period	= mptspi_write_period,
+	.get_period	= mptspi_पढ़ो_parameters,
+	.set_period	= mptspi_ग_लिखो_period,
 	.show_period	= 1,
-	.get_width	= mptspi_read_parameters,
-	.set_width	= mptspi_write_width,
+	.get_width	= mptspi_पढ़ो_parameters,
+	.set_width	= mptspi_ग_लिखो_width,
 	.show_width	= 1,
-	.get_iu		= mptspi_read_parameters,
-	.set_iu		= mptspi_write_iu,
+	.get_iu		= mptspi_पढ़ो_parameters,
+	.set_iu		= mptspi_ग_लिखो_iu,
 	.show_iu	= 1,
-	.get_dt		= mptspi_read_parameters,
-	.set_dt		= mptspi_write_dt,
+	.get_dt		= mptspi_पढ़ो_parameters,
+	.set_dt		= mptspi_ग_लिखो_dt,
 	.show_dt	= 1,
-	.get_qas	= mptspi_read_parameters,
-	.set_qas	= mptspi_write_qas,
+	.get_qas	= mptspi_पढ़ो_parameters,
+	.set_qas	= mptspi_ग_लिखो_qas,
 	.show_qas	= 1,
-	.get_wr_flow	= mptspi_read_parameters,
-	.set_wr_flow	= mptspi_write_wr_flow,
+	.get_wr_flow	= mptspi_पढ़ो_parameters,
+	.set_wr_flow	= mptspi_ग_लिखो_wr_flow,
 	.show_wr_flow	= 1,
-	.get_rd_strm	= mptspi_read_parameters,
-	.set_rd_strm	= mptspi_write_rd_strm,
+	.get_rd_strm	= mptspi_पढ़ो_parameters,
+	.set_rd_strm	= mptspi_ग_लिखो_rd_strm,
 	.show_rd_strm	= 1,
-	.get_rti	= mptspi_read_parameters,
-	.set_rti	= mptspi_write_rti,
+	.get_rti	= mptspi_पढ़ो_parameters,
+	.set_rti	= mptspi_ग_लिखो_rti,
 	.show_rti	= 1,
-	.get_pcomp_en	= mptspi_read_parameters,
-	.set_pcomp_en	= mptspi_write_pcomp_en,
+	.get_pcomp_en	= mptspi_पढ़ो_parameters,
+	.set_pcomp_en	= mptspi_ग_लिखो_pcomp_en,
 	.show_pcomp_en	= 1,
-	.get_hold_mcs	= mptspi_read_parameters,
-	.set_hold_mcs	= mptspi_write_hold_mcs,
+	.get_hold_mcs	= mptspi_पढ़ो_parameters,
+	.set_hold_mcs	= mptspi_ग_लिखो_hold_mcs,
 	.show_hold_mcs	= 1,
 	.deny_binding	= mptspi_deny_binding,
-};
+पूर्ण;
 
 /****************************************************************************
  * Supported hardware
  */
 
-static struct pci_device_id mptspi_pci_table[] = {
-	{ PCI_VENDOR_ID_LSI_LOGIC, MPI_MANUFACTPAGE_DEVID_53C1030,
-		PCI_ANY_ID, PCI_ANY_ID },
-	{ PCI_VENDOR_ID_ATTO, MPI_MANUFACTPAGE_DEVID_53C1030,
-		PCI_ANY_ID, PCI_ANY_ID },
-	{ PCI_VENDOR_ID_LSI_LOGIC, MPI_MANUFACTPAGE_DEVID_53C1035,
-		PCI_ANY_ID, PCI_ANY_ID },
-	{0}	/* Terminating entry */
-};
+अटल काष्ठा pci_device_id mptspi_pci_table[] = अणु
+	अणु PCI_VENDOR_ID_LSI_LOGIC, MPI_MANUFACTPAGE_DEVID_53C1030,
+		PCI_ANY_ID, PCI_ANY_ID पूर्ण,
+	अणु PCI_VENDOR_ID_ATTO, MPI_MANUFACTPAGE_DEVID_53C1030,
+		PCI_ANY_ID, PCI_ANY_ID पूर्ण,
+	अणु PCI_VENDOR_ID_LSI_LOGIC, MPI_MANUFACTPAGE_DEVID_53C1035,
+		PCI_ANY_ID, PCI_ANY_ID पूर्ण,
+	अणु0पूर्ण	/* Terminating entry */
+पूर्ण;
 MODULE_DEVICE_TABLE(pci, mptspi_pci_table);
 
 
 /*
- * renegotiate for a given target
+ * renegotiate क्रम a given target
  */
-static void
-mptspi_dv_renegotiate_work(struct work_struct *work)
-{
-	struct work_queue_wrapper *wqw =
-		container_of(work, struct work_queue_wrapper, work);
-	struct _MPT_SCSI_HOST *hd = wqw->hd;
-	struct scsi_device *sdev;
-	struct scsi_target *starget;
-	struct _CONFIG_PAGE_SCSI_DEVICE_1 pg1;
+अटल व्योम
+mptspi_dv_renegotiate_work(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा work_queue_wrapper *wqw =
+		container_of(work, काष्ठा work_queue_wrapper, work);
+	काष्ठा _MPT_SCSI_HOST *hd = wqw->hd;
+	काष्ठा scsi_device *sdev;
+	काष्ठा scsi_target *starget;
+	काष्ठा _CONFIG_PAGE_SCSI_DEVICE_1 pg1;
 	u32 nego;
 	MPT_ADAPTER *ioc = hd->ioc;
 
-	kfree(wqw);
+	kमुक्त(wqw);
 
-	if (hd->spi_pending) {
-		shost_for_each_device(sdev, ioc->sh) {
-			if  (hd->spi_pending & (1 << sdev->id))
-				continue;
+	अगर (hd->spi_pending) अणु
+		shost_क्रम_each_device(sdev, ioc->sh) अणु
+			अगर  (hd->spi_pending & (1 << sdev->id))
+				जारी;
 			starget = scsi_target(sdev);
 			nego = mptspi_getRP(starget);
 			pg1.RequestedParameters = cpu_to_le32(nego);
 			pg1.Reserved = 0;
 			pg1.Configuration = 0;
-			mptspi_write_spi_device_pg1(starget, &pg1);
-		}
-	} else {
-		shost_for_each_device(sdev, ioc->sh)
+			mptspi_ग_लिखो_spi_device_pg1(starget, &pg1);
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		shost_क्रम_each_device(sdev, ioc->sh)
 			mptspi_dv_device(hd, sdev);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void
-mptspi_dv_renegotiate(struct _MPT_SCSI_HOST *hd)
-{
-	struct work_queue_wrapper *wqw = kmalloc(sizeof(*wqw), GFP_ATOMIC);
+अटल व्योम
+mptspi_dv_renegotiate(काष्ठा _MPT_SCSI_HOST *hd)
+अणु
+	काष्ठा work_queue_wrapper *wqw = kदो_स्मृति(माप(*wqw), GFP_ATOMIC);
 
-	if (!wqw)
-		return;
+	अगर (!wqw)
+		वापस;
 
 	INIT_WORK(&wqw->work, mptspi_dv_renegotiate_work);
 	wqw->hd = hd;
 
 	schedule_work(&wqw->work);
-}
+पूर्ण
 
 /*
  * spi module reset handler
  */
-static int
-mptspi_ioc_reset(MPT_ADAPTER *ioc, int reset_phase)
-{
-	int rc;
+अटल पूर्णांक
+mptspi_ioc_reset(MPT_ADAPTER *ioc, पूर्णांक reset_phase)
+अणु
+	पूर्णांक rc;
 
 	rc = mptscsih_ioc_reset(ioc, reset_phase);
-	if ((ioc->bus_type != SPI) || (!rc))
-		return rc;
+	अगर ((ioc->bus_type != SPI) || (!rc))
+		वापस rc;
 
-	/* only try to do a renegotiation if we're properly set up
-	 * if we get an ioc fault on bringup, ioc->sh will be NULL */
-	if (reset_phase == MPT_IOC_POST_RESET &&
-	    ioc->sh) {
-		struct _MPT_SCSI_HOST *hd = shost_priv(ioc->sh);
+	/* only try to करो a renegotiation अगर we're properly set up
+	 * अगर we get an ioc fault on bringup, ioc->sh will be शून्य */
+	अगर (reset_phase == MPT_IOC_POST_RESET &&
+	    ioc->sh) अणु
+		काष्ठा _MPT_SCSI_HOST *hd = shost_priv(ioc->sh);
 
 		mptspi_dv_renegotiate(hd);
-	}
+	पूर्ण
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-#ifdef CONFIG_PM
+#अगर_घोषित CONFIG_PM
 /*
  * spi module resume handler
  */
-static int
-mptspi_resume(struct pci_dev *pdev)
-{
+अटल पूर्णांक
+mptspi_resume(काष्ठा pci_dev *pdev)
+अणु
 	MPT_ADAPTER 	*ioc = pci_get_drvdata(pdev);
-	struct _MPT_SCSI_HOST *hd = shost_priv(ioc->sh);
-	int rc;
+	काष्ठा _MPT_SCSI_HOST *hd = shost_priv(ioc->sh);
+	पूर्णांक rc;
 
 	rc = mptscsih_resume(pdev);
 	mptspi_dv_renegotiate(hd);
 
-	return rc;
-}
-#endif
+	वापस rc;
+पूर्ण
+#पूर्ण_अगर
 
 /*=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=*/
 /*=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=*/
 /*
  *	mptspi_probe - Installs scsi devices per bus.
- *	@pdev: Pointer to pci_dev structure
+ *	@pdev: Poपूर्णांकer to pci_dev काष्ठाure
  *
- *	Returns 0 for success, non-zero for failure.
+ *	Returns 0 क्रम success, non-zero क्रम failure.
  *
  */
-static int
-mptspi_probe(struct pci_dev *pdev, const struct pci_device_id *id)
-{
-	struct Scsi_Host	*sh;
+अटल पूर्णांक
+mptspi_probe(काष्ठा pci_dev *pdev, स्थिर काष्ठा pci_device_id *id)
+अणु
+	काष्ठा Scsi_Host	*sh;
 	MPT_SCSI_HOST		*hd;
 	MPT_ADAPTER 		*ioc;
-	unsigned long		 flags;
-	int			 ii;
-	int			 numSGE = 0;
-	int			 scale;
-	int			 ioc_cap;
-	int			error=0;
-	int			r;
+	अचिन्हित दीर्घ		 flags;
+	पूर्णांक			 ii;
+	पूर्णांक			 numSGE = 0;
+	पूर्णांक			 scale;
+	पूर्णांक			 ioc_cap;
+	पूर्णांक			error=0;
+	पूर्णांक			r;
 
-	if ((r = mpt_attach(pdev,id)) != 0)
-		return r;
+	अगर ((r = mpt_attach(pdev,id)) != 0)
+		वापस r;
 
 	ioc = pci_get_drvdata(pdev);
 	ioc->DoneCtx = mptspiDoneCtx;
 	ioc->TaskCtx = mptspiTaskCtx;
 	ioc->InternalCtx = mptspiInternalCtx;
 
-	/*  Added sanity check on readiness of the MPT adapter.
+	/*  Added sanity check on पढ़ोiness of the MPT adapter.
 	 */
-	if (ioc->last_state != MPI_IOC_STATE_OPERATIONAL) {
-		printk(MYIOC_s_WARN_FMT
+	अगर (ioc->last_state != MPI_IOC_STATE_OPERATIONAL) अणु
+		prपूर्णांकk(MYIOC_s_WARN_FMT
 		  "Skipping because it's not operational!\n",
 		  ioc->name);
 		error = -ENODEV;
-		goto out_mptspi_probe;
-	}
+		जाओ out_mptspi_probe;
+	पूर्ण
 
-	if (!ioc->active) {
-		printk(MYIOC_s_WARN_FMT "Skipping because it's disabled!\n",
+	अगर (!ioc->active) अणु
+		prपूर्णांकk(MYIOC_s_WARN_FMT "Skipping because it's disabled!\n",
 		  ioc->name);
 		error = -ENODEV;
-		goto out_mptspi_probe;
-	}
+		जाओ out_mptspi_probe;
+	पूर्ण
 
 	/*  Sanity check - ensure at least 1 port is INITIATOR capable
 	 */
 	ioc_cap = 0;
-	for (ii=0; ii < ioc->facts.NumberOfPorts; ii++) {
-		if (ioc->pfacts[ii].ProtocolFlags &
+	क्रम (ii=0; ii < ioc->facts.NumberOfPorts; ii++) अणु
+		अगर (ioc->pfacts[ii].ProtocolFlags &
 		    MPI_PORTFACTS_PROTOCOL_INITIATOR)
 			ioc_cap ++;
-	}
+	पूर्ण
 
-	if (!ioc_cap) {
-		printk(MYIOC_s_WARN_FMT
+	अगर (!ioc_cap) अणु
+		prपूर्णांकk(MYIOC_s_WARN_FMT
 			"Skipping ioc=%p because SCSI Initiator mode is NOT enabled!\n",
 			ioc->name, ioc);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	sh = scsi_host_alloc(&mptspi_driver_template, sizeof(MPT_SCSI_HOST));
+	sh = scsi_host_alloc(&mptspi_driver_ढाँचा, माप(MPT_SCSI_HOST));
 
-	if (!sh) {
-		printk(MYIOC_s_WARN_FMT
+	अगर (!sh) अणु
+		prपूर्णांकk(MYIOC_s_WARN_FMT
 			"Unable to register controller with SCSI subsystem\n",
 			ioc->name);
 		error = -1;
-		goto out_mptspi_probe;
-        }
+		जाओ out_mptspi_probe;
+        पूर्ण
 
-	/* VMWare emulation doesn't properly implement WRITE_SAME
+	/* VMWare emulation करोesn't properly implement WRITE_SAME
 	 */
-	if (pdev->subsystem_vendor == 0x15AD)
-		sh->no_write_same = 1;
+	अगर (pdev->subप्रणाली_venकरोr == 0x15AD)
+		sh->no_ग_लिखो_same = 1;
 
 	spin_lock_irqsave(&ioc->FreeQlock, flags);
 
-	/* Attach the SCSI Host to the IOC structure
+	/* Attach the SCSI Host to the IOC काष्ठाure
 	 */
 	ioc->sh = sh;
 
@@ -1432,7 +1433,7 @@ mptspi_probe(struct pci_dev *pdev, const struct pci_device_id *id)
 	sh->max_cmd_len = 16;
 
 	/* Yikes!  This is important!
-	 * Otherwise, by default, linux
+	 * Otherwise, by शेष, linux
 	 * only scans target IDs 0-7!
 	 * pfactsN->MaxDevices unreliable
 	 * (not supported in early
@@ -1445,11 +1446,11 @@ mptspi_probe(struct pci_dev *pdev, const struct pci_device_id *id)
 
 	sh->max_lun = MPT_LAST_LUN + 1;
 	/*
-	 * If RAID Firmware Detected, setup virtual channel
+	 * If RAID Firmware Detected, setup भव channel
 	 */
-	if (ioc->ir_firmware)
+	अगर (ioc->ir_firmware)
 		sh->max_channel = 1;
-	else
+	अन्यथा
 		sh->max_channel = 0;
 	sh->this_id = ioc->pfacts[0].PortSCSIID;
 
@@ -1457,33 +1458,33 @@ mptspi_probe(struct pci_dev *pdev, const struct pci_device_id *id)
 	 */
 	sh->unique_id = ioc->id;
 
-	/* Verify that we won't exceed the maximum
+	/* Verअगरy that we won't exceed the maximum
 	 * number of chain buffers
-	 * We can optimize:  ZZ = req_sz/sizeof(SGE)
+	 * We can optimize:  ZZ = req_sz/माप(SGE)
 	 * For 32bit SGE's:
 	 *  numSGE = 1 + (ZZ-1)*(maxChain -1) + ZZ
-	 *               + (req_sz - 64)/sizeof(SGE)
-	 * A slightly different algorithm is required for
+	 *               + (req_sz - 64)/माप(SGE)
+	 * A slightly dअगरferent algorithm is required क्रम
 	 * 64bit SGEs.
 	 */
 	scale = ioc->req_sz/ioc->SGE_size;
-	if (ioc->sg_addr_size == sizeof(u64)) {
+	अगर (ioc->sg_addr_size == माप(u64)) अणु
 		numSGE = (scale - 1) *
 		  (ioc->facts.MaxChainDepth-1) + scale +
 		  (ioc->req_sz - 60) / ioc->SGE_size;
-	} else {
+	पूर्ण अन्यथा अणु
 		numSGE = 1 + (scale - 1) *
 		  (ioc->facts.MaxChainDepth-1) + scale +
 		  (ioc->req_sz - 64) / ioc->SGE_size;
-	}
+	पूर्ण
 
-	if (numSGE < sh->sg_tablesize) {
+	अगर (numSGE < sh->sg_tablesize) अणु
 		/* Reset this value */
-		dprintk(ioc, printk(MYIOC_s_DEBUG_FMT
+		dprपूर्णांकk(ioc, prपूर्णांकk(MYIOC_s_DEBUG_FMT
 		  "Resetting sg_tablesize to %d from %d\n",
 		  ioc->name, numSGE, sh->sg_tablesize));
 		sh->sg_tablesize = numSGE;
-	}
+	पूर्ण
 
 	spin_unlock_irqrestore(&ioc->FreeQlock, flags);
 
@@ -1493,18 +1494,18 @@ mptspi_probe(struct pci_dev *pdev, const struct pci_device_id *id)
 	/* SCSI needs scsi_cmnd lookup table!
 	 * (with size equal to req_depth*PtrSz!)
 	 */
-	ioc->ScsiLookup = kcalloc(ioc->req_depth, sizeof(void *), GFP_ATOMIC);
-	if (!ioc->ScsiLookup) {
+	ioc->ScsiLookup = kसुस्मृति(ioc->req_depth, माप(व्योम *), GFP_ATOMIC);
+	अगर (!ioc->ScsiLookup) अणु
 		error = -ENOMEM;
-		goto out_mptspi_probe;
-	}
+		जाओ out_mptspi_probe;
+	पूर्ण
 	spin_lock_init(&ioc->scsi_lookup_lock);
 
-	dprintk(ioc, printk(MYIOC_s_DEBUG_FMT "ScsiLookup @ %p\n",
+	dprपूर्णांकk(ioc, prपूर्णांकk(MYIOC_s_DEBUG_FMT "ScsiLookup @ %p\n",
 		 ioc->name, ioc->ScsiLookup));
 
 	ioc->spi_data.Saf_Te = mpt_saf_te;
-	ddvprintk(ioc, printk(MYIOC_s_DEBUG_FMT
+	ddvprपूर्णांकk(ioc, prपूर्णांकk(MYIOC_s_DEBUG_FMT
 		"saf_te %x\n",
 		ioc->name,
 		mpt_saf_te));
@@ -1513,107 +1514,107 @@ mptspi_probe(struct pci_dev *pdev, const struct pci_device_id *id)
 	hd->last_queue_full = 0;
 	hd->spi_pending = 0;
 
-	/* Some versions of the firmware don't support page 0; without
+	/* Some versions of the firmware करोn't support page 0; without
 	 * that we can't get the parameters */
-	if (ioc->spi_data.sdp0length != 0)
-		sh->transportt = mptspi_transport_template;
+	अगर (ioc->spi_data.sdp0length != 0)
+		sh->transportt = mptspi_transport_ढाँचा;
 
 	error = scsi_add_host (sh, &ioc->pcidev->dev);
-	if(error) {
-		dprintk(ioc, printk(MYIOC_s_ERR_FMT
+	अगर(error) अणु
+		dprपूर्णांकk(ioc, prपूर्णांकk(MYIOC_s_ERR_FMT
 		  "scsi_add_host failed\n", ioc->name));
-		goto out_mptspi_probe;
-	}
+		जाओ out_mptspi_probe;
+	पूर्ण
 
 	/*
-	 * issue internal bus reset
+	 * issue पूर्णांकernal bus reset
 	 */
-	if (ioc->spi_data.bus_reset)
+	अगर (ioc->spi_data.bus_reset)
 		mptscsih_IssueTaskMgmt(hd,
 		    MPI_SCSITASKMGMT_TASKTYPE_RESET_BUS,
 		    0, 0, 0, 0, 5);
 
 	scsi_scan_host(sh);
-	return 0;
+	वापस 0;
 
 out_mptspi_probe:
 
-	mptscsih_remove(pdev);
-	return error;
-}
+	mptscsih_हटाओ(pdev);
+	वापस error;
+पूर्ण
 
-static void mptspi_remove(struct pci_dev *pdev)
-{
+अटल व्योम mptspi_हटाओ(काष्ठा pci_dev *pdev)
+अणु
 	MPT_ADAPTER *ioc = pci_get_drvdata(pdev);
 
-	scsi_remove_host(ioc->sh);
-	mptscsih_remove(pdev);
-}
+	scsi_हटाओ_host(ioc->sh);
+	mptscsih_हटाओ(pdev);
+पूर्ण
 
-static struct pci_driver mptspi_driver = {
+अटल काष्ठा pci_driver mptspi_driver = अणु
 	.name		= "mptspi",
 	.id_table	= mptspi_pci_table,
 	.probe		= mptspi_probe,
-	.remove		= mptspi_remove,
-	.shutdown	= mptscsih_shutdown,
-#ifdef CONFIG_PM
+	.हटाओ		= mptspi_हटाओ,
+	.shutकरोwn	= mptscsih_shutकरोwn,
+#अगर_घोषित CONFIG_PM
 	.suspend	= mptscsih_suspend,
 	.resume		= mptspi_resume,
-#endif
-};
+#पूर्ण_अगर
+पूर्ण;
 
 /*=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=*/
 /**
  *	mptspi_init - Register MPT adapter(s) as SCSI host(s) with SCSI mid-layer.
  *
- *	Returns 0 for success, non-zero for failure.
+ *	Returns 0 क्रम success, non-zero क्रम failure.
  */
-static int __init
-mptspi_init(void)
-{
-	int error;
+अटल पूर्णांक __init
+mptspi_init(व्योम)
+अणु
+	पूर्णांक error;
 
-	show_mptmod_ver(my_NAME, my_VERSION);
+	show_mpपंचांगod_ver(my_NAME, my_VERSION);
 
-	mptspi_transport_template = spi_attach_transport(&mptspi_transport_functions);
-	if (!mptspi_transport_template)
-		return -ENODEV;
+	mptspi_transport_ढाँचा = spi_attach_transport(&mptspi_transport_functions);
+	अगर (!mptspi_transport_ढाँचा)
+		वापस -ENODEV;
 
-	mptspiDoneCtx = mpt_register(mptscsih_io_done, MPTSPI_DRIVER,
+	mptspiDoneCtx = mpt_रेजिस्टर(mptscsih_io_करोne, MPTSPI_DRIVER,
 	    "mptscsih_io_done");
-	mptspiTaskCtx = mpt_register(mptscsih_taskmgmt_complete, MPTSPI_DRIVER,
+	mptspiTaskCtx = mpt_रेजिस्टर(mptscsih_taskmgmt_complete, MPTSPI_DRIVER,
 	    "mptscsih_taskmgmt_complete");
-	mptspiInternalCtx = mpt_register(mptscsih_scandv_complete,
+	mptspiInternalCtx = mpt_रेजिस्टर(mptscsih_scandv_complete,
 	    MPTSPI_DRIVER, "mptscsih_scandv_complete");
 
-	mpt_event_register(mptspiDoneCtx, mptspi_event_process);
-	mpt_reset_register(mptspiDoneCtx, mptspi_ioc_reset);
+	mpt_event_रेजिस्टर(mptspiDoneCtx, mptspi_event_process);
+	mpt_reset_रेजिस्टर(mptspiDoneCtx, mptspi_ioc_reset);
 
-	error = pci_register_driver(&mptspi_driver);
-	if (error)
-		spi_release_transport(mptspi_transport_template);
+	error = pci_रेजिस्टर_driver(&mptspi_driver);
+	अगर (error)
+		spi_release_transport(mptspi_transport_ढाँचा);
 
-	return error;
-}
+	वापस error;
+पूर्ण
 
 /*=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=*/
 /*=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=*/
 /**
- *	mptspi_exit - Unregisters MPT adapter(s)
+ *	mptspi_निकास - Unरेजिस्टरs MPT adapter(s)
  */
-static void __exit
-mptspi_exit(void)
-{
-	pci_unregister_driver(&mptspi_driver);
+अटल व्योम __निकास
+mptspi_निकास(व्योम)
+अणु
+	pci_unरेजिस्टर_driver(&mptspi_driver);
 
-	mpt_reset_deregister(mptspiDoneCtx);
-	mpt_event_deregister(mptspiDoneCtx);
+	mpt_reset_deरेजिस्टर(mptspiDoneCtx);
+	mpt_event_deरेजिस्टर(mptspiDoneCtx);
 
-	mpt_deregister(mptspiInternalCtx);
-	mpt_deregister(mptspiTaskCtx);
-	mpt_deregister(mptspiDoneCtx);
-	spi_release_transport(mptspi_transport_template);
-}
+	mpt_deरेजिस्टर(mptspiInternalCtx);
+	mpt_deरेजिस्टर(mptspiTaskCtx);
+	mpt_deरेजिस्टर(mptspiDoneCtx);
+	spi_release_transport(mptspi_transport_ढाँचा);
+पूर्ण
 
 module_init(mptspi_init);
-module_exit(mptspi_exit);
+module_निकास(mptspi_निकास);

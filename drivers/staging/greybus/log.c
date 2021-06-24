@@ -1,132 +1,133 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * Greybus driver for the log protocol
+ * Greybus driver क्रम the log protocol
  *
  * Copyright 2016 Google Inc.
  */
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/slab.h>
-#include <linux/sizes.h>
-#include <linux/uaccess.h>
-#include <linux/greybus.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/sizes.h>
+#समावेश <linux/uaccess.h>
+#समावेश <linux/greybus.h>
 
-struct gb_log {
-	struct gb_connection *connection;
-};
+काष्ठा gb_log अणु
+	काष्ठा gb_connection *connection;
+पूर्ण;
 
-static int gb_log_request_handler(struct gb_operation *op)
-{
-	struct gb_connection *connection = op->connection;
-	struct device *dev = &connection->bundle->dev;
-	struct gb_log_send_log_request *receive;
+अटल पूर्णांक gb_log_request_handler(काष्ठा gb_operation *op)
+अणु
+	काष्ठा gb_connection *connection = op->connection;
+	काष्ठा device *dev = &connection->bundle->dev;
+	काष्ठा gb_log_send_log_request *receive;
 	u16 len;
 
-	if (op->type != GB_LOG_TYPE_SEND_LOG) {
+	अगर (op->type != GB_LOG_TYPE_SEND_LOG) अणु
 		dev_err(dev, "unknown request type 0x%02x\n", op->type);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	/* Verify size of payload */
-	if (op->request->payload_size < sizeof(*receive)) {
+	/* Verअगरy size of payload */
+	अगर (op->request->payload_size < माप(*receive)) अणु
 		dev_err(dev, "log request too small (%zu < %zu)\n",
-			op->request->payload_size, sizeof(*receive));
-		return -EINVAL;
-	}
+			op->request->payload_size, माप(*receive));
+		वापस -EINVAL;
+	पूर्ण
 	receive = op->request->payload;
 	len = le16_to_cpu(receive->len);
-	if (len != (op->request->payload_size - sizeof(*receive))) {
+	अगर (len != (op->request->payload_size - माप(*receive))) अणु
 		dev_err(dev, "log request wrong size %d vs %zu\n", len,
-			(op->request->payload_size - sizeof(*receive)));
-		return -EINVAL;
-	}
-	if (len == 0) {
+			(op->request->payload_size - माप(*receive)));
+		वापस -EINVAL;
+	पूर्ण
+	अगर (len == 0) अणु
 		dev_err(dev, "log request of 0 bytes?\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (len > GB_LOG_MAX_LEN) {
+	अगर (len > GB_LOG_MAX_LEN) अणु
 		dev_err(dev, "log request too big: %d\n", len);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	/* Ensure the buffer is 0 terminated */
 	receive->msg[len - 1] = '\0';
 
 	/*
-	 * Print with dev_dbg() so that it can be easily turned off using
+	 * Prपूर्णांक with dev_dbg() so that it can be easily turned off using
 	 * dynamic debugging (and prevent any DoS)
 	 */
 	dev_dbg(dev, "%s", receive->msg);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int gb_log_probe(struct gb_bundle *bundle,
-			const struct greybus_bundle_id *id)
-{
-	struct greybus_descriptor_cport *cport_desc;
-	struct gb_connection *connection;
-	struct gb_log *log;
-	int retval;
+अटल पूर्णांक gb_log_probe(काष्ठा gb_bundle *bundle,
+			स्थिर काष्ठा greybus_bundle_id *id)
+अणु
+	काष्ठा greybus_descriptor_cport *cport_desc;
+	काष्ठा gb_connection *connection;
+	काष्ठा gb_log *log;
+	पूर्णांक retval;
 
-	if (bundle->num_cports != 1)
-		return -ENODEV;
+	अगर (bundle->num_cports != 1)
+		वापस -ENODEV;
 
 	cport_desc = &bundle->cport_desc[0];
-	if (cport_desc->protocol_id != GREYBUS_PROTOCOL_LOG)
-		return -ENODEV;
+	अगर (cport_desc->protocol_id != GREYBUS_PROTOCOL_LOG)
+		वापस -ENODEV;
 
-	log = kzalloc(sizeof(*log), GFP_KERNEL);
-	if (!log)
-		return -ENOMEM;
+	log = kzalloc(माप(*log), GFP_KERNEL);
+	अगर (!log)
+		वापस -ENOMEM;
 
 	connection = gb_connection_create(bundle, le16_to_cpu(cport_desc->id),
 					  gb_log_request_handler);
-	if (IS_ERR(connection)) {
+	अगर (IS_ERR(connection)) अणु
 		retval = PTR_ERR(connection);
-		goto error_free;
-	}
+		जाओ error_मुक्त;
+	पूर्ण
 
 	log->connection = connection;
 	greybus_set_drvdata(bundle, log);
 
 	retval = gb_connection_enable(connection);
-	if (retval)
-		goto error_connection_destroy;
+	अगर (retval)
+		जाओ error_connection_destroy;
 
-	return 0;
+	वापस 0;
 
 error_connection_destroy:
 	gb_connection_destroy(connection);
-error_free:
-	kfree(log);
-	return retval;
-}
+error_मुक्त:
+	kमुक्त(log);
+	वापस retval;
+पूर्ण
 
-static void gb_log_disconnect(struct gb_bundle *bundle)
-{
-	struct gb_log *log = greybus_get_drvdata(bundle);
-	struct gb_connection *connection = log->connection;
+अटल व्योम gb_log_disconnect(काष्ठा gb_bundle *bundle)
+अणु
+	काष्ठा gb_log *log = greybus_get_drvdata(bundle);
+	काष्ठा gb_connection *connection = log->connection;
 
 	gb_connection_disable(connection);
 	gb_connection_destroy(connection);
 
-	kfree(log);
-}
+	kमुक्त(log);
+पूर्ण
 
-static const struct greybus_bundle_id gb_log_id_table[] = {
-	{ GREYBUS_DEVICE_CLASS(GREYBUS_CLASS_LOG) },
-	{ }
-};
+अटल स्थिर काष्ठा greybus_bundle_id gb_log_id_table[] = अणु
+	अणु GREYBUS_DEVICE_CLASS(GREYBUS_CLASS_LOG) पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(greybus, gb_log_id_table);
 
-static struct greybus_driver gb_log_driver = {
+अटल काष्ठा greybus_driver gb_log_driver = अणु
 	.name           = "log",
 	.probe          = gb_log_probe,
 	.disconnect     = gb_log_disconnect,
 	.id_table       = gb_log_id_table,
-};
+पूर्ण;
 module_greybus_driver(gb_log_driver);
 
 MODULE_LICENSE("GPL v2");

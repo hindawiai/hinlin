@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2018 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -23,22 +24,22 @@
  *
  */
 
-#ifndef __DCE_I2C_HW_H__
-#define __DCE_I2C_HW_H__
+#अगर_अघोषित __DCE_I2C_HW_H__
+#घोषणा __DCE_I2C_HW_H__
 
-enum dc_i2c_status {
+क्रमागत dc_i2c_status अणु
 	DC_I2C_STATUS__DC_I2C_STATUS_IDLE,
 	DC_I2C_STATUS__DC_I2C_STATUS_USED_BY_SW,
 	DC_I2C_STATUS__DC_I2C_STATUS_USED_BY_HW,
 	DC_I2C_REG_RW_CNTL_STATUS_DMCU_ONLY = 2,
-};
+पूर्ण;
 
-enum dc_i2c_arbitration {
+क्रमागत dc_i2c_arbitration अणु
 	DC_I2C_ARBITRATION__DC_I2C_SW_PRIORITY_NORMAL,
 	DC_I2C_ARBITRATION__DC_I2C_SW_PRIORITY_HIGH
-};
+पूर्ण;
 
-enum i2c_channel_operation_result {
+क्रमागत i2c_channel_operation_result अणु
 	I2C_CHANNEL_OPERATION_SUCCEEDED,
 	I2C_CHANNEL_OPERATION_FAILED,
 	I2C_CHANNEL_OPERATION_NOT_GRANTED,
@@ -53,10 +54,10 @@ enum i2c_channel_operation_result {
 	I2C_CHANNEL_OPERATION_WRONG_PARAMETER,
 	I2C_CHANNEL_OPERATION_OUT_NB_OF_RETRIES,
 	I2C_CHANNEL_OPERATION_NOT_STARTED
-};
+पूर्ण;
 
 
-enum dce_i2c_transaction_action {
+क्रमागत dce_i2c_transaction_action अणु
 	DCE_I2C_TRANSACTION_ACTION_I2C_WRITE = 0x00,
 	DCE_I2C_TRANSACTION_ACTION_I2C_READ = 0x10,
 	DCE_I2C_TRANSACTION_ACTION_I2C_STATUS_REQUEST = 0x20,
@@ -67,9 +68,9 @@ enum dce_i2c_transaction_action {
 
 	DCE_I2C_TRANSACTION_ACTION_DP_WRITE = 0x80,
 	DCE_I2C_TRANSACTION_ACTION_DP_READ = 0x90
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	I2C_SETUP_TIME_LIMIT_DCE = 255,
 	I2C_SETUP_TIME_LIMIT_DCN = 3,
 	I2C_HW_BUFFER_SIZE_DCE100 = 538,
@@ -79,9 +80,9 @@ enum {
 	DEFAULT_I2C_HW_SPEED = 50,
 	DEFAULT_I2C_HW_SPEED_100KHZ = 100,
 	TRANSACTION_TIMEOUT_IN_I2C_CLOCKS = 32,
-};
+पूर्ण;
 
-#define I2C_HW_ENGINE_COMMON_REG_LIST(id)\
+#घोषणा I2C_HW_ENGINE_COMMON_REG_LIST(id)\
 	SRI(SETUP, DC_I2C_DDC, id),\
 	SRI(SPEED, DC_I2C_DDC, id),\
 	SRI(HW_STATUS, DC_I2C_DDC, id),\
@@ -95,15 +96,15 @@ enum {
 	SR(DC_I2C_DATA),\
 	SR(MICROSECOND_TIME_BASE_DIV)
 
-#define I2C_HW_ENGINE_COMMON_REG_LIST_DCN30(id)\
+#घोषणा I2C_HW_ENGINE_COMMON_REG_LIST_DCN30(id)\
 	I2C_HW_ENGINE_COMMON_REG_LIST(id),\
 	SR(DIO_MEM_PWR_CTRL),\
 	SR(DIO_MEM_PWR_STATUS)
 
-#define I2C_SF(reg_name, field_name, post_fix)\
+#घोषणा I2C_SF(reg_name, field_name, post_fix)\
 	.field_name = reg_name ## __ ## field_name ## post_fix
 
-#define I2C_COMMON_MASK_SH_LIST_DCE_COMMON_BASE(mask_sh)\
+#घोषणा I2C_COMMON_MASK_SH_LIST_DCE_COMMON_BASE(mask_sh)\
 	I2C_SF(DC_I2C_DDC1_SETUP, DC_I2C_DDC1_ENABLE, mask_sh),\
 	I2C_SF(DC_I2C_DDC1_SETUP, DC_I2C_DDC1_TIME_LIMIT, mask_sh),\
 	I2C_SF(DC_I2C_DDC1_SETUP, DC_I2C_DDC1_DATA_DRIVE_EN, mask_sh),\
@@ -141,202 +142,202 @@ enum {
 	I2C_SF(MICROSECOND_TIME_BASE_DIV, XTAL_REF_DIV, mask_sh),\
 	I2C_SF(DC_I2C_ARBITRATION, DC_I2C_REG_RW_CNTL_STATUS, mask_sh)
 
-#define I2C_COMMON_MASK_SH_LIST_DCE110(mask_sh)\
+#घोषणा I2C_COMMON_MASK_SH_LIST_DCE110(mask_sh)\
 	I2C_COMMON_MASK_SH_LIST_DCE_COMMON_BASE(mask_sh),\
 	I2C_SF(DC_I2C_DDC1_SPEED, DC_I2C_DDC1_START_STOP_TIMING_CNTL, mask_sh)
 
-struct dce_i2c_shift {
-	uint8_t DC_I2C_DDC1_ENABLE;
-	uint8_t DC_I2C_DDC1_TIME_LIMIT;
-	uint8_t DC_I2C_DDC1_DATA_DRIVE_EN;
-	uint8_t DC_I2C_DDC1_CLK_DRIVE_EN;
-	uint8_t DC_I2C_DDC1_DATA_DRIVE_SEL;
-	uint8_t DC_I2C_DDC1_INTRA_TRANSACTION_DELAY;
-	uint8_t DC_I2C_DDC1_INTRA_BYTE_DELAY;
-	uint8_t DC_I2C_DDC1_HW_STATUS;
-	uint8_t DC_I2C_SW_DONE_USING_I2C_REG;
-	uint8_t DC_I2C_SW_USE_I2C_REG_REQ;
-	uint8_t DC_I2C_NO_QUEUED_SW_GO;
-	uint8_t DC_I2C_SW_PRIORITY;
-	uint8_t DC_I2C_SOFT_RESET;
-	uint8_t DC_I2C_SW_STATUS_RESET;
-	uint8_t DC_I2C_GO;
-	uint8_t DC_I2C_SEND_RESET;
-	uint8_t DC_I2C_TRANSACTION_COUNT;
-	uint8_t DC_I2C_DDC_SELECT;
-	uint8_t DC_I2C_DDC1_PRESCALE;
-	uint8_t DC_I2C_DDC1_THRESHOLD;
-	uint8_t DC_I2C_DDC1_START_STOP_TIMING_CNTL;
-	uint8_t DC_I2C_SW_STOPPED_ON_NACK;
-	uint8_t DC_I2C_SW_TIMEOUT;
-	uint8_t DC_I2C_SW_ABORTED;
-	uint8_t DC_I2C_SW_DONE;
-	uint8_t DC_I2C_SW_STATUS;
-	uint8_t DC_I2C_STOP_ON_NACK0;
-	uint8_t DC_I2C_START0;
-	uint8_t DC_I2C_RW0;
-	uint8_t DC_I2C_STOP0;
-	uint8_t DC_I2C_COUNT0;
-	uint8_t DC_I2C_DATA_RW;
-	uint8_t DC_I2C_DATA;
-	uint8_t DC_I2C_INDEX;
-	uint8_t DC_I2C_INDEX_WRITE;
-	uint8_t XTAL_REF_DIV;
-	uint8_t DC_I2C_DDC1_SEND_RESET_LENGTH;
-	uint8_t DC_I2C_REG_RW_CNTL_STATUS;
-	uint8_t I2C_LIGHT_SLEEP_FORCE;
-	uint8_t I2C_MEM_PWR_STATE;
-};
+काष्ठा dce_i2c_shअगरt अणु
+	uपूर्णांक8_t DC_I2C_DDC1_ENABLE;
+	uपूर्णांक8_t DC_I2C_DDC1_TIME_LIMIT;
+	uपूर्णांक8_t DC_I2C_DDC1_DATA_DRIVE_EN;
+	uपूर्णांक8_t DC_I2C_DDC1_CLK_DRIVE_EN;
+	uपूर्णांक8_t DC_I2C_DDC1_DATA_DRIVE_SEL;
+	uपूर्णांक8_t DC_I2C_DDC1_INTRA_TRANSACTION_DELAY;
+	uपूर्णांक8_t DC_I2C_DDC1_INTRA_BYTE_DELAY;
+	uपूर्णांक8_t DC_I2C_DDC1_HW_STATUS;
+	uपूर्णांक8_t DC_I2C_SW_DONE_USING_I2C_REG;
+	uपूर्णांक8_t DC_I2C_SW_USE_I2C_REG_REQ;
+	uपूर्णांक8_t DC_I2C_NO_QUEUED_SW_GO;
+	uपूर्णांक8_t DC_I2C_SW_PRIORITY;
+	uपूर्णांक8_t DC_I2C_SOFT_RESET;
+	uपूर्णांक8_t DC_I2C_SW_STATUS_RESET;
+	uपूर्णांक8_t DC_I2C_GO;
+	uपूर्णांक8_t DC_I2C_SEND_RESET;
+	uपूर्णांक8_t DC_I2C_TRANSACTION_COUNT;
+	uपूर्णांक8_t DC_I2C_DDC_SELECT;
+	uपूर्णांक8_t DC_I2C_DDC1_PRESCALE;
+	uपूर्णांक8_t DC_I2C_DDC1_THRESHOLD;
+	uपूर्णांक8_t DC_I2C_DDC1_START_STOP_TIMING_CNTL;
+	uपूर्णांक8_t DC_I2C_SW_STOPPED_ON_NACK;
+	uपूर्णांक8_t DC_I2C_SW_TIMEOUT;
+	uपूर्णांक8_t DC_I2C_SW_ABORTED;
+	uपूर्णांक8_t DC_I2C_SW_DONE;
+	uपूर्णांक8_t DC_I2C_SW_STATUS;
+	uपूर्णांक8_t DC_I2C_STOP_ON_NACK0;
+	uपूर्णांक8_t DC_I2C_START0;
+	uपूर्णांक8_t DC_I2C_RW0;
+	uपूर्णांक8_t DC_I2C_STOP0;
+	uपूर्णांक8_t DC_I2C_COUNT0;
+	uपूर्णांक8_t DC_I2C_DATA_RW;
+	uपूर्णांक8_t DC_I2C_DATA;
+	uपूर्णांक8_t DC_I2C_INDEX;
+	uपूर्णांक8_t DC_I2C_INDEX_WRITE;
+	uपूर्णांक8_t XTAL_REF_DIV;
+	uपूर्णांक8_t DC_I2C_DDC1_SEND_RESET_LENGTH;
+	uपूर्णांक8_t DC_I2C_REG_RW_CNTL_STATUS;
+	uपूर्णांक8_t I2C_LIGHT_SLEEP_FORCE;
+	uपूर्णांक8_t I2C_MEM_PWR_STATE;
+पूर्ण;
 
-struct dce_i2c_mask {
-	uint32_t DC_I2C_DDC1_ENABLE;
-	uint32_t DC_I2C_DDC1_TIME_LIMIT;
-	uint32_t DC_I2C_DDC1_DATA_DRIVE_EN;
-	uint32_t DC_I2C_DDC1_CLK_DRIVE_EN;
-	uint32_t DC_I2C_DDC1_DATA_DRIVE_SEL;
-	uint32_t DC_I2C_DDC1_INTRA_TRANSACTION_DELAY;
-	uint32_t DC_I2C_DDC1_INTRA_BYTE_DELAY;
-	uint32_t DC_I2C_DDC1_HW_STATUS;
-	uint32_t DC_I2C_SW_DONE_USING_I2C_REG;
-	uint32_t DC_I2C_SW_USE_I2C_REG_REQ;
-	uint32_t DC_I2C_NO_QUEUED_SW_GO;
-	uint32_t DC_I2C_SW_PRIORITY;
-	uint32_t DC_I2C_SOFT_RESET;
-	uint32_t DC_I2C_SW_STATUS_RESET;
-	uint32_t DC_I2C_GO;
-	uint32_t DC_I2C_SEND_RESET;
-	uint32_t DC_I2C_TRANSACTION_COUNT;
-	uint32_t DC_I2C_DDC_SELECT;
-	uint32_t DC_I2C_DDC1_PRESCALE;
-	uint32_t DC_I2C_DDC1_THRESHOLD;
-	uint32_t DC_I2C_DDC1_START_STOP_TIMING_CNTL;
-	uint32_t DC_I2C_SW_STOPPED_ON_NACK;
-	uint32_t DC_I2C_SW_TIMEOUT;
-	uint32_t DC_I2C_SW_ABORTED;
-	uint32_t DC_I2C_SW_DONE;
-	uint32_t DC_I2C_SW_STATUS;
-	uint32_t DC_I2C_STOP_ON_NACK0;
-	uint32_t DC_I2C_START0;
-	uint32_t DC_I2C_RW0;
-	uint32_t DC_I2C_STOP0;
-	uint32_t DC_I2C_COUNT0;
-	uint32_t DC_I2C_DATA_RW;
-	uint32_t DC_I2C_DATA;
-	uint32_t DC_I2C_INDEX;
-	uint32_t DC_I2C_INDEX_WRITE;
-	uint32_t XTAL_REF_DIV;
-	uint32_t DC_I2C_DDC1_SEND_RESET_LENGTH;
-	uint32_t DC_I2C_REG_RW_CNTL_STATUS;
-	uint32_t I2C_LIGHT_SLEEP_FORCE;
-	uint32_t I2C_MEM_PWR_STATE;
-};
+काष्ठा dce_i2c_mask अणु
+	uपूर्णांक32_t DC_I2C_DDC1_ENABLE;
+	uपूर्णांक32_t DC_I2C_DDC1_TIME_LIMIT;
+	uपूर्णांक32_t DC_I2C_DDC1_DATA_DRIVE_EN;
+	uपूर्णांक32_t DC_I2C_DDC1_CLK_DRIVE_EN;
+	uपूर्णांक32_t DC_I2C_DDC1_DATA_DRIVE_SEL;
+	uपूर्णांक32_t DC_I2C_DDC1_INTRA_TRANSACTION_DELAY;
+	uपूर्णांक32_t DC_I2C_DDC1_INTRA_BYTE_DELAY;
+	uपूर्णांक32_t DC_I2C_DDC1_HW_STATUS;
+	uपूर्णांक32_t DC_I2C_SW_DONE_USING_I2C_REG;
+	uपूर्णांक32_t DC_I2C_SW_USE_I2C_REG_REQ;
+	uपूर्णांक32_t DC_I2C_NO_QUEUED_SW_GO;
+	uपूर्णांक32_t DC_I2C_SW_PRIORITY;
+	uपूर्णांक32_t DC_I2C_SOFT_RESET;
+	uपूर्णांक32_t DC_I2C_SW_STATUS_RESET;
+	uपूर्णांक32_t DC_I2C_GO;
+	uपूर्णांक32_t DC_I2C_SEND_RESET;
+	uपूर्णांक32_t DC_I2C_TRANSACTION_COUNT;
+	uपूर्णांक32_t DC_I2C_DDC_SELECT;
+	uपूर्णांक32_t DC_I2C_DDC1_PRESCALE;
+	uपूर्णांक32_t DC_I2C_DDC1_THRESHOLD;
+	uपूर्णांक32_t DC_I2C_DDC1_START_STOP_TIMING_CNTL;
+	uपूर्णांक32_t DC_I2C_SW_STOPPED_ON_NACK;
+	uपूर्णांक32_t DC_I2C_SW_TIMEOUT;
+	uपूर्णांक32_t DC_I2C_SW_ABORTED;
+	uपूर्णांक32_t DC_I2C_SW_DONE;
+	uपूर्णांक32_t DC_I2C_SW_STATUS;
+	uपूर्णांक32_t DC_I2C_STOP_ON_NACK0;
+	uपूर्णांक32_t DC_I2C_START0;
+	uपूर्णांक32_t DC_I2C_RW0;
+	uपूर्णांक32_t DC_I2C_STOP0;
+	uपूर्णांक32_t DC_I2C_COUNT0;
+	uपूर्णांक32_t DC_I2C_DATA_RW;
+	uपूर्णांक32_t DC_I2C_DATA;
+	uपूर्णांक32_t DC_I2C_INDEX;
+	uपूर्णांक32_t DC_I2C_INDEX_WRITE;
+	uपूर्णांक32_t XTAL_REF_DIV;
+	uपूर्णांक32_t DC_I2C_DDC1_SEND_RESET_LENGTH;
+	uपूर्णांक32_t DC_I2C_REG_RW_CNTL_STATUS;
+	uपूर्णांक32_t I2C_LIGHT_SLEEP_FORCE;
+	uपूर्णांक32_t I2C_MEM_PWR_STATE;
+पूर्ण;
 
-#define I2C_COMMON_MASK_SH_LIST_DCN2(mask_sh)\
+#घोषणा I2C_COMMON_MASK_SH_LIST_DCN2(mask_sh)\
 	I2C_COMMON_MASK_SH_LIST_DCE110(mask_sh),\
 	I2C_SF(DC_I2C_DDC1_SETUP, DC_I2C_DDC1_SEND_RESET_LENGTH, mask_sh)
 
-#define I2C_COMMON_MASK_SH_LIST_DCN30(mask_sh)\
+#घोषणा I2C_COMMON_MASK_SH_LIST_DCN30(mask_sh)\
 	I2C_COMMON_MASK_SH_LIST_DCN2(mask_sh),\
 	I2C_SF(DIO_MEM_PWR_CTRL, I2C_LIGHT_SLEEP_FORCE, mask_sh),\
 	I2C_SF(DIO_MEM_PWR_STATUS, I2C_MEM_PWR_STATE, mask_sh)
 
-struct dce_i2c_registers {
-	uint32_t SETUP;
-	uint32_t SPEED;
-	uint32_t HW_STATUS;
-	uint32_t DC_I2C_ARBITRATION;
-	uint32_t DC_I2C_CONTROL;
-	uint32_t DC_I2C_SW_STATUS;
-	uint32_t DC_I2C_TRANSACTION0;
-	uint32_t DC_I2C_TRANSACTION1;
-	uint32_t DC_I2C_TRANSACTION2;
-	uint32_t DC_I2C_TRANSACTION3;
-	uint32_t DC_I2C_DATA;
-	uint32_t MICROSECOND_TIME_BASE_DIV;
-	uint32_t DIO_MEM_PWR_CTRL;
-	uint32_t DIO_MEM_PWR_STATUS;
-};
+काष्ठा dce_i2c_रेजिस्टरs अणु
+	uपूर्णांक32_t SETUP;
+	uपूर्णांक32_t SPEED;
+	uपूर्णांक32_t HW_STATUS;
+	uपूर्णांक32_t DC_I2C_ARBITRATION;
+	uपूर्णांक32_t DC_I2C_CONTROL;
+	uपूर्णांक32_t DC_I2C_SW_STATUS;
+	uपूर्णांक32_t DC_I2C_TRANSACTION0;
+	uपूर्णांक32_t DC_I2C_TRANSACTION1;
+	uपूर्णांक32_t DC_I2C_TRANSACTION2;
+	uपूर्णांक32_t DC_I2C_TRANSACTION3;
+	uपूर्णांक32_t DC_I2C_DATA;
+	uपूर्णांक32_t MICROSECOND_TIME_BASE_DIV;
+	uपूर्णांक32_t DIO_MEM_PWR_CTRL;
+	uपूर्णांक32_t DIO_MEM_PWR_STATUS;
+पूर्ण;
 
-enum dce_i2c_transaction_address_space {
+क्रमागत dce_i2c_transaction_address_space अणु
 	DCE_I2C_TRANSACTION_ADDRESS_SPACE_I2C = 1,
 	DCE_I2C_TRANSACTION_ADDRESS_SPACE_DPCD
-};
+पूर्ण;
 
-struct i2c_request_transaction_data {
-	enum dce_i2c_transaction_action action;
-	enum i2c_channel_operation_result status;
-	uint8_t address;
-	uint32_t length;
-	uint8_t *data;
-};
+काष्ठा i2c_request_transaction_data अणु
+	क्रमागत dce_i2c_transaction_action action;
+	क्रमागत i2c_channel_operation_result status;
+	uपूर्णांक8_t address;
+	uपूर्णांक32_t length;
+	uपूर्णांक8_t *data;
+पूर्ण;
 
-struct dce_i2c_hw {
-	struct ddc *ddc;
-	uint32_t engine_keep_power_up_count;
-	uint32_t transaction_count;
-	uint32_t buffer_used_bytes;
-	uint32_t buffer_used_write;
-	uint32_t reference_frequency;
-	uint32_t default_speed;
-	uint32_t engine_id;
-	uint32_t setup_limit;
-	uint32_t send_reset_length;
-	uint32_t buffer_size;
-	struct dc_context *ctx;
+काष्ठा dce_i2c_hw अणु
+	काष्ठा ddc *ddc;
+	uपूर्णांक32_t engine_keep_घातer_up_count;
+	uपूर्णांक32_t transaction_count;
+	uपूर्णांक32_t buffer_used_bytes;
+	uपूर्णांक32_t buffer_used_ग_लिखो;
+	uपूर्णांक32_t reference_frequency;
+	uपूर्णांक32_t शेष_speed;
+	uपूर्णांक32_t engine_id;
+	uपूर्णांक32_t setup_limit;
+	uपूर्णांक32_t send_reset_length;
+	uपूर्णांक32_t buffer_size;
+	काष्ठा dc_context *ctx;
 
-	const struct dce_i2c_registers *regs;
-	const struct dce_i2c_shift *shifts;
-	const struct dce_i2c_mask *masks;
-};
+	स्थिर काष्ठा dce_i2c_रेजिस्टरs *regs;
+	स्थिर काष्ठा dce_i2c_shअगरt *shअगरts;
+	स्थिर काष्ठा dce_i2c_mask *masks;
+पूर्ण;
 
-void dce_i2c_hw_construct(
-	struct dce_i2c_hw *dce_i2c_hw,
-	struct dc_context *ctx,
-	uint32_t engine_id,
-	const struct dce_i2c_registers *regs,
-	const struct dce_i2c_shift *shifts,
-	const struct dce_i2c_mask *masks);
+व्योम dce_i2c_hw_स्थिरruct(
+	काष्ठा dce_i2c_hw *dce_i2c_hw,
+	काष्ठा dc_context *ctx,
+	uपूर्णांक32_t engine_id,
+	स्थिर काष्ठा dce_i2c_रेजिस्टरs *regs,
+	स्थिर काष्ठा dce_i2c_shअगरt *shअगरts,
+	स्थिर काष्ठा dce_i2c_mask *masks);
 
-void dce100_i2c_hw_construct(
-	struct dce_i2c_hw *dce_i2c_hw,
-	struct dc_context *ctx,
-	uint32_t engine_id,
-	const struct dce_i2c_registers *regs,
-	const struct dce_i2c_shift *shifts,
-	const struct dce_i2c_mask *masks);
+व्योम dce100_i2c_hw_स्थिरruct(
+	काष्ठा dce_i2c_hw *dce_i2c_hw,
+	काष्ठा dc_context *ctx,
+	uपूर्णांक32_t engine_id,
+	स्थिर काष्ठा dce_i2c_रेजिस्टरs *regs,
+	स्थिर काष्ठा dce_i2c_shअगरt *shअगरts,
+	स्थिर काष्ठा dce_i2c_mask *masks);
 
-void dce112_i2c_hw_construct(
-	struct dce_i2c_hw *dce_i2c_hw,
-	struct dc_context *ctx,
-	uint32_t engine_id,
-	const struct dce_i2c_registers *regs,
-	const struct dce_i2c_shift *shifts,
-	const struct dce_i2c_mask *masks);
+व्योम dce112_i2c_hw_स्थिरruct(
+	काष्ठा dce_i2c_hw *dce_i2c_hw,
+	काष्ठा dc_context *ctx,
+	uपूर्णांक32_t engine_id,
+	स्थिर काष्ठा dce_i2c_रेजिस्टरs *regs,
+	स्थिर काष्ठा dce_i2c_shअगरt *shअगरts,
+	स्थिर काष्ठा dce_i2c_mask *masks);
 
-void dcn1_i2c_hw_construct(
-	struct dce_i2c_hw *dce_i2c_hw,
-	struct dc_context *ctx,
-	uint32_t engine_id,
-	const struct dce_i2c_registers *regs,
-	const struct dce_i2c_shift *shifts,
-	const struct dce_i2c_mask *masks);
+व्योम dcn1_i2c_hw_स्थिरruct(
+	काष्ठा dce_i2c_hw *dce_i2c_hw,
+	काष्ठा dc_context *ctx,
+	uपूर्णांक32_t engine_id,
+	स्थिर काष्ठा dce_i2c_रेजिस्टरs *regs,
+	स्थिर काष्ठा dce_i2c_shअगरt *shअगरts,
+	स्थिर काष्ठा dce_i2c_mask *masks);
 
-void dcn2_i2c_hw_construct(
-	struct dce_i2c_hw *dce_i2c_hw,
-	struct dc_context *ctx,
-	uint32_t engine_id,
-	const struct dce_i2c_registers *regs,
-	const struct dce_i2c_shift *shifts,
-	const struct dce_i2c_mask *masks);
+व्योम dcn2_i2c_hw_स्थिरruct(
+	काष्ठा dce_i2c_hw *dce_i2c_hw,
+	काष्ठा dc_context *ctx,
+	uपूर्णांक32_t engine_id,
+	स्थिर काष्ठा dce_i2c_रेजिस्टरs *regs,
+	स्थिर काष्ठा dce_i2c_shअगरt *shअगरts,
+	स्थिर काष्ठा dce_i2c_mask *masks);
 
 bool dce_i2c_submit_command_hw(
-	struct resource_pool *pool,
-	struct ddc *ddc,
-	struct i2c_command *cmd,
-	struct dce_i2c_hw *dce_i2c_hw);
+	काष्ठा resource_pool *pool,
+	काष्ठा ddc *ddc,
+	काष्ठा i2c_command *cmd,
+	काष्ठा dce_i2c_hw *dce_i2c_hw);
 
-struct dce_i2c_hw *acquire_i2c_hw_engine(
-	struct resource_pool *pool,
-	struct ddc *ddc);
+काष्ठा dce_i2c_hw *acquire_i2c_hw_engine(
+	काष्ठा resource_pool *pool,
+	काष्ठा ddc *ddc);
 
-#endif
+#पूर्ण_अगर

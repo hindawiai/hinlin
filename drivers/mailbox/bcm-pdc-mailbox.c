@@ -1,227 +1,228 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright 2016 Broadcom
  */
 
 /*
  * Broadcom PDC Mailbox Driver
- * The PDC provides a ring based programming interface to one or more hardware
+ * The PDC provides a ring based programming पूर्णांकerface to one or more hardware
  * offload engines. For example, the PDC driver works with both SPU-M and SPU2
  * cryptographic offload hardware. In some chips the PDC is referred to as MDE,
  * and in others the FA2/FA+ hardware is used with this PDC driver.
  *
- * The PDC driver registers with the Linux mailbox framework as a mailbox
- * controller, once for each PDC instance. Ring 0 for each PDC is registered as
- * a mailbox channel. The PDC driver uses interrupts to determine when data
+ * The PDC driver रेजिस्टरs with the Linux mailbox framework as a mailbox
+ * controller, once क्रम each PDC instance. Ring 0 क्रम each PDC is रेजिस्टरed as
+ * a mailbox channel. The PDC driver uses पूर्णांकerrupts to determine when data
  * transfers to and from an offload engine are complete. The PDC driver uses
- * threaded IRQs so that response messages are handled outside of interrupt
+ * thपढ़ोed IRQs so that response messages are handled outside of पूर्णांकerrupt
  * context.
  *
  * The PDC driver allows multiple messages to be pending in the descriptor
  * rings. The tx_msg_start descriptor index indicates where the last message
  * starts. The txin_numd value at this index indicates how many descriptor
  * indexes make up the message. Similar state is kept on the receive side. When
- * an rx interrupt indicates a response is ready, the PDC driver processes numd
- * descriptors from the tx and rx ring, thus processing one response at a time.
+ * an rx पूर्णांकerrupt indicates a response is पढ़ोy, the PDC driver processes numd
+ * descriptors from the tx and rx ring, thus processing one response at a समय.
  */
 
-#include <linux/errno.h>
-#include <linux/module.h>
-#include <linux/init.h>
-#include <linux/slab.h>
-#include <linux/debugfs.h>
-#include <linux/interrupt.h>
-#include <linux/wait.h>
-#include <linux/platform_device.h>
-#include <linux/io.h>
-#include <linux/of.h>
-#include <linux/of_device.h>
-#include <linux/of_address.h>
-#include <linux/of_irq.h>
-#include <linux/mailbox_controller.h>
-#include <linux/mailbox/brcm-message.h>
-#include <linux/scatterlist.h>
-#include <linux/dma-direction.h>
-#include <linux/dma-mapping.h>
-#include <linux/dmapool.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/module.h>
+#समावेश <linux/init.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/debugfs.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/रुको.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/of.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/of_address.h>
+#समावेश <linux/of_irq.h>
+#समावेश <linux/mailbox_controller.h>
+#समावेश <linux/mailbox/brcm-message.h>
+#समावेश <linux/scatterlist.h>
+#समावेश <linux/dma-direction.h>
+#समावेश <linux/dma-mapping.h>
+#समावेश <linux/dmapool.h>
 
-#define PDC_SUCCESS  0
+#घोषणा PDC_SUCCESS  0
 
-#define RING_ENTRY_SIZE   sizeof(struct dma64dd)
+#घोषणा RING_ENTRY_SIZE   माप(काष्ठा dma64dd)
 
 /* # entries in PDC dma ring */
-#define PDC_RING_ENTRIES  512
+#घोषणा PDC_RING_ENTRIES  512
 /*
- * Minimum number of ring descriptor entries that must be free to tell mailbox
+ * Minimum number of ring descriptor entries that must be मुक्त to tell mailbox
  * framework that it can submit another request
  */
-#define PDC_RING_SPACE_MIN  15
+#घोषणा PDC_RING_SPACE_MIN  15
 
-#define PDC_RING_SIZE    (PDC_RING_ENTRIES * RING_ENTRY_SIZE)
+#घोषणा PDC_RING_SIZE    (PDC_RING_ENTRIES * RING_ENTRY_SIZE)
 /* Rings are 8k aligned */
-#define RING_ALIGN_ORDER  13
-#define RING_ALIGN        BIT(RING_ALIGN_ORDER)
+#घोषणा RING_ALIGN_ORDER  13
+#घोषणा RING_ALIGN        BIT(RING_ALIGN_ORDER)
 
-#define RX_BUF_ALIGN_ORDER  5
-#define RX_BUF_ALIGN	    BIT(RX_BUF_ALIGN_ORDER)
+#घोषणा RX_BUF_ALIGN_ORDER  5
+#घोषणा RX_BUF_ALIGN	    BIT(RX_BUF_ALIGN_ORDER)
 
 /* descriptor bumping macros */
-#define XXD(x, max_mask)              ((x) & (max_mask))
-#define TXD(x, max_mask)              XXD((x), (max_mask))
-#define RXD(x, max_mask)              XXD((x), (max_mask))
-#define NEXTTXD(i, max_mask)          TXD((i) + 1, (max_mask))
-#define PREVTXD(i, max_mask)          TXD((i) - 1, (max_mask))
-#define NEXTRXD(i, max_mask)          RXD((i) + 1, (max_mask))
-#define PREVRXD(i, max_mask)          RXD((i) - 1, (max_mask))
-#define NTXDACTIVE(h, t, max_mask)    TXD((t) - (h), (max_mask))
-#define NRXDACTIVE(h, t, max_mask)    RXD((t) - (h), (max_mask))
+#घोषणा XXD(x, max_mask)              ((x) & (max_mask))
+#घोषणा TXD(x, max_mask)              XXD((x), (max_mask))
+#घोषणा RXD(x, max_mask)              XXD((x), (max_mask))
+#घोषणा NEXTTXD(i, max_mask)          TXD((i) + 1, (max_mask))
+#घोषणा PREVTXD(i, max_mask)          TXD((i) - 1, (max_mask))
+#घोषणा NEXTRXD(i, max_mask)          RXD((i) + 1, (max_mask))
+#घोषणा PREVRXD(i, max_mask)          RXD((i) - 1, (max_mask))
+#घोषणा NTXDACTIVE(h, t, max_mask)    TXD((t) - (h), (max_mask))
+#घोषणा NRXDACTIVE(h, t, max_mask)    RXD((t) - (h), (max_mask))
 
 /* Length of BCM header at start of SPU msg, in bytes */
-#define BCM_HDR_LEN  8
+#घोषणा BCM_HDR_LEN  8
 
 /*
- * PDC driver reserves ringset 0 on each SPU for its own use. The driver does
+ * PDC driver reserves ringset 0 on each SPU क्रम its own use. The driver करोes
  * not currently support use of multiple ringsets on a single PDC engine.
  */
-#define PDC_RINGSET  0
+#घोषणा PDC_RINGSET  0
 
 /*
- * Interrupt mask and status definitions. Enable interrupts for tx and rx on
+ * Interrupt mask and status definitions. Enable पूर्णांकerrupts क्रम tx and rx on
  * ring 0
  */
-#define PDC_RCVINT_0         (16 + PDC_RINGSET)
-#define PDC_RCVINTEN_0       BIT(PDC_RCVINT_0)
-#define PDC_INTMASK	     (PDC_RCVINTEN_0)
-#define PDC_LAZY_FRAMECOUNT  1
-#define PDC_LAZY_TIMEOUT     10000
-#define PDC_LAZY_INT  (PDC_LAZY_TIMEOUT | (PDC_LAZY_FRAMECOUNT << 24))
-#define PDC_INTMASK_OFFSET   0x24
-#define PDC_INTSTATUS_OFFSET 0x20
-#define PDC_RCVLAZY0_OFFSET  (0x30 + 4 * PDC_RINGSET)
-#define FA_RCVLAZY0_OFFSET   0x100
+#घोषणा PDC_RCVINT_0         (16 + PDC_RINGSET)
+#घोषणा PDC_RCVINTEN_0       BIT(PDC_RCVINT_0)
+#घोषणा PDC_INTMASK	     (PDC_RCVINTEN_0)
+#घोषणा PDC_LAZY_FRAMECOUNT  1
+#घोषणा PDC_LAZY_TIMEOUT     10000
+#घोषणा PDC_LAZY_INT  (PDC_LAZY_TIMEOUT | (PDC_LAZY_FRAMECOUNT << 24))
+#घोषणा PDC_INTMASK_OFFSET   0x24
+#घोषणा PDC_INTSTATUS_OFFSET 0x20
+#घोषणा PDC_RCVLAZY0_OFFSET  (0x30 + 4 * PDC_RINGSET)
+#घोषणा FA_RCVLAZY0_OFFSET   0x100
 
 /*
- * For SPU2, configure MDE_CKSUM_CONTROL to write 17 bytes of metadata
- * before frame
+ * For SPU2, configure MDE_CKSUM_CONTROL to ग_लिखो 17 bytes of metadata
+ * beक्रमe frame
  */
-#define PDC_SPU2_RESP_HDR_LEN  17
-#define PDC_CKSUM_CTRL         BIT(27)
-#define PDC_CKSUM_CTRL_OFFSET  0x400
+#घोषणा PDC_SPU2_RESP_HDR_LEN  17
+#घोषणा PDC_CKSUM_CTRL         BIT(27)
+#घोषणा PDC_CKSUM_CTRL_OFFSET  0x400
 
-#define PDC_SPUM_RESP_HDR_LEN  32
+#घोषणा PDC_SPUM_RESP_HDR_LEN  32
 
 /*
- * Sets the following bits for write to transmit control reg:
+ * Sets the following bits क्रम ग_लिखो to transmit control reg:
  * 11    - PtyChkDisable - parity check is disabled
- * 20:18 - BurstLen = 3 -> 2^7 = 128 byte data reads from memory
+ * 20:18 - BurstLen = 3 -> 2^7 = 128 byte data पढ़ोs from memory
  */
-#define PDC_TX_CTL		0x000C0800
+#घोषणा PDC_TX_CTL		0x000C0800
 
 /* Bit in tx control reg to enable tx channel */
-#define PDC_TX_ENABLE		0x1
+#घोषणा PDC_TX_ENABLE		0x1
 
 /*
- * Sets the following bits for write to receive control reg:
+ * Sets the following bits क्रम ग_लिखो to receive control reg:
  * 7:1   - RcvOffset - size in bytes of status region at start of rx frame buf
  * 9     - SepRxHdrDescEn - place start of new frames only in descriptors
  *                          that have StartOfFrame set
- * 10    - OflowContinue - on rx FIFO overflow, clear rx fifo, discard all
- *                         remaining bytes in current frame, report error
- *                         in rx frame status for current frame
+ * 10    - OflowContinue - on rx FIFO overflow, clear rx fअगरo, discard all
+ *                         reमुख्यing bytes in current frame, report error
+ *                         in rx frame status क्रम current frame
  * 11    - PtyChkDisable - parity check is disabled
- * 20:18 - BurstLen = 3 -> 2^7 = 128 byte data reads from memory
+ * 20:18 - BurstLen = 3 -> 2^7 = 128 byte data पढ़ोs from memory
  */
-#define PDC_RX_CTL		0x000C0E00
+#घोषणा PDC_RX_CTL		0x000C0E00
 
 /* Bit in rx control reg to enable rx channel */
-#define PDC_RX_ENABLE		0x1
+#घोषणा PDC_RX_ENABLE		0x1
 
-#define CRYPTO_D64_RS0_CD_MASK   ((PDC_RING_ENTRIES * RING_ENTRY_SIZE) - 1)
+#घोषणा CRYPTO_D64_RS0_CD_MASK   ((PDC_RING_ENTRIES * RING_ENTRY_SIZE) - 1)
 
 /* descriptor flags */
-#define D64_CTRL1_EOT   BIT(28)	/* end of descriptor table */
-#define D64_CTRL1_IOC   BIT(29)	/* interrupt on complete */
-#define D64_CTRL1_EOF   BIT(30)	/* end of frame */
-#define D64_CTRL1_SOF   BIT(31)	/* start of frame */
+#घोषणा D64_CTRL1_EOT   BIT(28)	/* end of descriptor table */
+#घोषणा D64_CTRL1_IOC   BIT(29)	/* पूर्णांकerrupt on complete */
+#घोषणा D64_CTRL1_खातापूर्ण   BIT(30)	/* end of frame */
+#घोषणा D64_CTRL1_SOF   BIT(31)	/* start of frame */
 
-#define RX_STATUS_OVERFLOW       0x00800000
-#define RX_STATUS_LEN            0x0000FFFF
+#घोषणा RX_STATUS_OVERFLOW       0x00800000
+#घोषणा RX_STATUS_LEN            0x0000FFFF
 
-#define PDC_TXREGS_OFFSET  0x200
-#define PDC_RXREGS_OFFSET  0x220
+#घोषणा PDC_TXREGS_OFFSET  0x200
+#घोषणा PDC_RXREGS_OFFSET  0x220
 
 /* Maximum size buffer the DMA engine can handle */
-#define PDC_DMA_BUF_MAX 16384
+#घोषणा PDC_DMA_BUF_MAX 16384
 
-enum pdc_hw {
+क्रमागत pdc_hw अणु
 	FA_HW,		/* FA2/FA+ hardware (i.e. Northstar Plus) */
 	PDC_HW		/* PDC/MDE hardware (i.e. Northstar 2, Pegasus) */
-};
+पूर्ण;
 
-struct pdc_dma_map {
-	void *ctx;          /* opaque context associated with frame */
-};
+काष्ठा pdc_dma_map अणु
+	व्योम *ctx;          /* opaque context associated with frame */
+पूर्ण;
 
 /* dma descriptor */
-struct dma64dd {
+काष्ठा dma64dd अणु
 	u32 ctrl1;      /* misc control bits */
 	u32 ctrl2;      /* buffer count and address extension */
 	u32 addrlow;    /* memory address of the date buffer, bits 31:0 */
 	u32 addrhigh;   /* memory address of the date buffer, bits 63:32 */
-};
+पूर्ण;
 
-/* dma registers per channel(xmt or rcv) */
-struct dma64_regs {
+/* dma रेजिस्टरs per channel(xmt or rcv) */
+काष्ठा dma64_regs अणु
 	u32  control;   /* enable, et al */
 	u32  ptr;       /* last descriptor posted to chip */
 	u32  addrlow;   /* descriptor ring base address low 32-bits */
 	u32  addrhigh;  /* descriptor ring base address bits 63:32 */
 	u32  status0;   /* last rx descriptor written by hw */
-	u32  status1;   /* driver does not use */
-};
+	u32  status1;   /* driver करोes not use */
+पूर्ण;
 
 /* cpp contortions to concatenate w/arg prescan */
-#ifndef PAD
-#define _PADLINE(line)  pad ## line
-#define _XSTR(line)     _PADLINE(line)
-#define PAD             _XSTR(__LINE__)
-#endif  /* PAD */
+#अगर_अघोषित PAD
+#घोषणा _PADLINE(line)  pad ## line
+#घोषणा _XSTR(line)     _PADLINE(line)
+#घोषणा PAD             _XSTR(__LINE__)
+#पूर्ण_अगर  /* PAD */
 
-/* dma registers. matches hw layout. */
-struct dma64 {
-	struct dma64_regs dmaxmt;  /* dma tx */
+/* dma रेजिस्टरs. matches hw layout. */
+काष्ठा dma64 अणु
+	काष्ठा dma64_regs dmaxmt;  /* dma tx */
 	u32          PAD[2];
-	struct dma64_regs dmarcv;  /* dma rx */
+	काष्ठा dma64_regs dmarcv;  /* dma rx */
 	u32          PAD[2];
-};
+पूर्ण;
 
-/* PDC registers */
-struct pdc_regs {
+/* PDC रेजिस्टरs */
+काष्ठा pdc_regs अणु
 	u32  devcontrol;             /* 0x000 */
 	u32  devstatus;              /* 0x004 */
 	u32  PAD;
 	u32  biststatus;             /* 0x00c */
 	u32  PAD[4];
-	u32  intstatus;              /* 0x020 */
-	u32  intmask;                /* 0x024 */
-	u32  gptimer;                /* 0x028 */
+	u32  पूर्णांकstatus;              /* 0x020 */
+	u32  पूर्णांकmask;                /* 0x024 */
+	u32  gpसमयr;                /* 0x028 */
 
 	u32  PAD;
-	u32  intrcvlazy_0;           /* 0x030 (Only in PDC, not FA2) */
-	u32  intrcvlazy_1;           /* 0x034 (Only in PDC, not FA2) */
-	u32  intrcvlazy_2;           /* 0x038 (Only in PDC, not FA2) */
-	u32  intrcvlazy_3;           /* 0x03c (Only in PDC, not FA2) */
+	u32  पूर्णांकrcvlazy_0;           /* 0x030 (Only in PDC, not FA2) */
+	u32  पूर्णांकrcvlazy_1;           /* 0x034 (Only in PDC, not FA2) */
+	u32  पूर्णांकrcvlazy_2;           /* 0x038 (Only in PDC, not FA2) */
+	u32  पूर्णांकrcvlazy_3;           /* 0x03c (Only in PDC, not FA2) */
 
 	u32  PAD[48];
-	u32  fa_intrecvlazy;         /* 0x100 (Only in FA2, not PDC) */
+	u32  fa_पूर्णांकrecvlazy;         /* 0x100 (Only in FA2, not PDC) */
 	u32  flowctlthresh;          /* 0x104 */
 	u32  wrrthresh;              /* 0x108 */
 	u32  gmac_idle_cnt_thresh;   /* 0x10c */
 
 	u32  PAD[4];
-	u32  ifioaccessaddr;         /* 0x120 */
-	u32  ifioaccessbyte;         /* 0x124 */
-	u32  ifioaccessdata;         /* 0x128 */
+	u32  अगरioaccessaddr;         /* 0x120 */
+	u32  अगरioaccessbyte;         /* 0x124 */
+	u32  अगरioaccessdata;         /* 0x128 */
 
 	u32  PAD[21];
 	u32  phyaccess;              /* 0x180 */
@@ -243,59 +244,59 @@ struct pdc_regs {
 	u32  pwrctl;                 /* 0x1e8 */
 	u32  PAD[5];
 
-#define PDC_NUM_DMA_RINGS   4
-	struct dma64 dmaregs[PDC_NUM_DMA_RINGS];  /* 0x0200 - 0x2fc */
+#घोषणा PDC_NUM_DMA_RINGS   4
+	काष्ठा dma64 dmaregs[PDC_NUM_DMA_RINGS];  /* 0x0200 - 0x2fc */
 
-	/* more registers follow, but we don't use them */
-};
+	/* more रेजिस्टरs follow, but we करोn't use them */
+पूर्ण;
 
-/* structure for allocating/freeing DMA rings */
-struct pdc_ring_alloc {
+/* काष्ठाure क्रम allocating/मुक्तing DMA rings */
+काष्ठा pdc_ring_alloc अणु
 	dma_addr_t  dmabase; /* DMA address of start of ring */
-	void	   *vbase;   /* base kernel virtual address of ring */
+	व्योम	   *vbase;   /* base kernel भव address of ring */
 	u32	    size;    /* ring allocation size in bytes */
-};
+पूर्ण;
 
 /*
  * context associated with a receive descriptor.
  * @rxp_ctx: opaque context associated with frame that starts at each
  *           rx ring index.
- * @dst_sg:  Scatterlist used to form reply frames beginning at a given ring
+ * @dst_sg:  Scatterlist used to क्रमm reply frames beginning at a given ring
  *           index. Retained in order to unmap each sg after reply is processed.
  * @rxin_numd: Number of rx descriptors associated with the message that starts
- *             at a descriptor index. Not set for every index. For example,
- *             if descriptor index i points to a scatterlist with 4 entries,
- *             then the next three descriptor indexes don't have a value set.
+ *             at a descriptor index. Not set क्रम every index. For example,
+ *             अगर descriptor index i poपूर्णांकs to a scatterlist with 4 entries,
+ *             then the next three descriptor indexes करोn't have a value set.
  * @resp_hdr: Virtual address of buffer used to catch DMA rx status
  * @resp_hdr_daddr: physical address of DMA rx status buffer
  */
-struct pdc_rx_ctx {
-	void *rxp_ctx;
-	struct scatterlist *dst_sg;
+काष्ठा pdc_rx_ctx अणु
+	व्योम *rxp_ctx;
+	काष्ठा scatterlist *dst_sg;
 	u32  rxin_numd;
-	void *resp_hdr;
+	व्योम *resp_hdr;
 	dma_addr_t resp_hdr_daddr;
-};
+पूर्ण;
 
-/* PDC state structure */
-struct pdc_state {
-	/* Index of the PDC whose state is in this structure instance */
+/* PDC state काष्ठाure */
+काष्ठा pdc_state अणु
+	/* Index of the PDC whose state is in this काष्ठाure instance */
 	u8 pdc_idx;
 
-	/* Platform device for this PDC instance */
-	struct platform_device *pdev;
+	/* Platक्रमm device क्रम this PDC instance */
+	काष्ठा platक्रमm_device *pdev;
 
 	/*
 	 * Each PDC instance has a mailbox controller. PDC receives request
 	 * messages through mailboxes, and sends response messages through the
 	 * mailbox framework.
 	 */
-	struct mbox_controller mbc;
+	काष्ठा mbox_controller mbc;
 
-	unsigned int pdc_irq;
+	अचिन्हित पूर्णांक pdc_irq;
 
-	/* tasklet for deferred processing after DMA rx interrupt */
-	struct tasklet_struct rx_tasklet;
+	/* tasklet क्रम deferred processing after DMA rx पूर्णांकerrupt */
+	काष्ठा tasklet_काष्ठा rx_tasklet;
 
 	/* Number of bytes of receive status prior to each rx frame */
 	u32 rx_status_len;
@@ -304,33 +305,33 @@ struct pdc_state {
 	/* Sum of length of BCM header and rx status header */
 	u32 pdc_resp_hdr_len;
 
-	/* The base virtual address of DMA hw registers */
-	void __iomem *pdc_reg_vbase;
+	/* The base भव address of DMA hw रेजिस्टरs */
+	व्योम __iomem *pdc_reg_vbase;
 
-	/* Pool for allocation of DMA rings */
-	struct dma_pool *ring_pool;
+	/* Pool क्रम allocation of DMA rings */
+	काष्ठा dma_pool *ring_pool;
 
-	/* Pool for allocation of metadata buffers for response messages */
-	struct dma_pool *rx_buf_pool;
+	/* Pool क्रम allocation of metadata buffers क्रम response messages */
+	काष्ठा dma_pool *rx_buf_pool;
 
 	/*
-	 * The base virtual address of DMA tx/rx descriptor rings. Corresponding
+	 * The base भव address of DMA tx/rx descriptor rings. Corresponding
 	 * DMA address and size of ring allocation.
 	 */
-	struct pdc_ring_alloc tx_ring_alloc;
-	struct pdc_ring_alloc rx_ring_alloc;
+	काष्ठा pdc_ring_alloc tx_ring_alloc;
+	काष्ठा pdc_ring_alloc rx_ring_alloc;
 
-	struct pdc_regs *regs;    /* start of PDC registers */
+	काष्ठा pdc_regs *regs;    /* start of PDC रेजिस्टरs */
 
-	struct dma64_regs *txregs_64; /* dma tx engine registers */
-	struct dma64_regs *rxregs_64; /* dma rx engine registers */
+	काष्ठा dma64_regs *txregs_64; /* dma tx engine रेजिस्टरs */
+	काष्ठा dma64_regs *rxregs_64; /* dma rx engine रेजिस्टरs */
 
 	/*
 	 * Arrays of PDC_RING_ENTRIES descriptors
 	 * To use multiple ringsets, this needs to be extended
 	 */
-	struct dma64dd   *txd_64;  /* tx descriptor ring */
-	struct dma64dd   *rxd_64;  /* rx descriptor ring */
+	काष्ठा dma64dd   *txd_64;  /* tx descriptor ring */
+	काष्ठा dma64dd   *rxd_64;  /* rx descriptor ring */
 
 	/* descriptor ring sizes */
 	u32      ntxd;       /* # tx descriptors */
@@ -340,16 +341,16 @@ struct pdc_state {
 
 	/*
 	 * Index of next tx descriptor to reclaim. That is, the descriptor
-	 * index of the oldest tx buffer for which the host has yet to process
+	 * index of the oldest tx buffer क्रम which the host has yet to process
 	 * the corresponding response.
 	 */
 	u32  txin;
 
 	/*
-	 * Index of the first receive descriptor for the sequence of
-	 * message fragments currently under construction. Used to build up
-	 * the rxin_numd count for a message. Updated to rxout when the host
-	 * starts a new sequence of rx buffers for a new message.
+	 * Index of the first receive descriptor क्रम the sequence of
+	 * message fragments currently under स्थिरruction. Used to build up
+	 * the rxin_numd count क्रम a message. Updated to rxout when the host
+	 * starts a new sequence of rx buffers क्रम a new message.
 	 */
 	u32  tx_msg_start;
 
@@ -369,10 +370,10 @@ struct pdc_state {
 	u32  rxin;
 
 	/*
-	 * Index of the first receive descriptor for the sequence of
-	 * message fragments currently under construction. Used to build up
-	 * the rxin_numd count for a message. Updated to rxout when the host
-	 * starts a new sequence of rx buffers for a new message.
+	 * Index of the first receive descriptor क्रम the sequence of
+	 * message fragments currently under स्थिरruction. Used to build up
+	 * the rxin_numd count क्रम a message. Updated to rxout when the host
+	 * starts a new sequence of rx buffers क्रम a new message.
 	 */
 	u32  rx_msg_start;
 
@@ -386,19 +387,19 @@ struct pdc_state {
 	/* Index of next rx descriptor to post. */
 	u32  rxout;
 
-	struct pdc_rx_ctx rx_ctx[PDC_RING_ENTRIES];
+	काष्ठा pdc_rx_ctx rx_ctx[PDC_RING_ENTRIES];
 
 	/*
-	 * Scatterlists used to form request and reply frames beginning at a
+	 * Scatterlists used to क्रमm request and reply frames beginning at a
 	 * given ring index. Retained in order to unmap each sg after reply
 	 * is processed
 	 */
-	struct scatterlist *src_sg[PDC_RING_ENTRIES];
+	काष्ठा scatterlist *src_sg[PDC_RING_ENTRIES];
 
 	/* counters */
 	u32  pdc_requests;     /* number of request messages submitted */
 	u32  pdc_replies;      /* number of reply messages received */
-	u32  last_tx_not_done; /* too few tx descriptors to indicate done */
+	u32  last_tx_not_करोne; /* too few tx descriptors to indicate करोne */
 	u32  tx_ring_full;     /* unable to accept msg because tx ring full */
 	u32  rx_ring_full;     /* unable to accept msg because rx ring full */
 	u32  txnobuf;          /* unable to create tx descriptor */
@@ -406,122 +407,122 @@ struct pdc_state {
 	u32  rx_oflow;         /* count of rx overflows */
 
 	/* hardware type - FA2 or PDC/MDE */
-	enum pdc_hw hw_type;
-};
+	क्रमागत pdc_hw hw_type;
+पूर्ण;
 
 /* Global variables */
 
-struct pdc_globals {
+काष्ठा pdc_globals अणु
 	/* Actual number of SPUs in hardware, as reported by device tree */
 	u32 num_spu;
-};
+पूर्ण;
 
-static struct pdc_globals pdcg;
+अटल काष्ठा pdc_globals pdcg;
 
-/* top level debug FS directory for PDC driver */
-static struct dentry *debugfs_dir;
+/* top level debug FS directory क्रम PDC driver */
+अटल काष्ठा dentry *debugfs_dir;
 
-static ssize_t pdc_debugfs_read(struct file *filp, char __user *ubuf,
-				size_t count, loff_t *offp)
-{
-	struct pdc_state *pdcs;
-	char *buf;
-	ssize_t ret, out_offset, out_count;
+अटल sमाप_प्रकार pdc_debugfs_पढ़ो(काष्ठा file *filp, अक्षर __user *ubuf,
+				माप_प्रकार count, loff_t *offp)
+अणु
+	काष्ठा pdc_state *pdcs;
+	अक्षर *buf;
+	sमाप_प्रकार ret, out_offset, out_count;
 
 	out_count = 512;
 
-	buf = kmalloc(out_count, GFP_KERNEL);
-	if (!buf)
-		return -ENOMEM;
+	buf = kदो_स्मृति(out_count, GFP_KERNEL);
+	अगर (!buf)
+		वापस -ENOMEM;
 
-	pdcs = filp->private_data;
+	pdcs = filp->निजी_data;
 	out_offset = 0;
-	out_offset += scnprintf(buf + out_offset, out_count - out_offset,
+	out_offset += scnम_लिखो(buf + out_offset, out_count - out_offset,
 			       "SPU %u stats:\n", pdcs->pdc_idx);
-	out_offset += scnprintf(buf + out_offset, out_count - out_offset,
+	out_offset += scnम_लिखो(buf + out_offset, out_count - out_offset,
 			       "PDC requests....................%u\n",
 			       pdcs->pdc_requests);
-	out_offset += scnprintf(buf + out_offset, out_count - out_offset,
+	out_offset += scnम_लिखो(buf + out_offset, out_count - out_offset,
 			       "PDC responses...................%u\n",
 			       pdcs->pdc_replies);
-	out_offset += scnprintf(buf + out_offset, out_count - out_offset,
+	out_offset += scnम_लिखो(buf + out_offset, out_count - out_offset,
 			       "Tx not done.....................%u\n",
-			       pdcs->last_tx_not_done);
-	out_offset += scnprintf(buf + out_offset, out_count - out_offset,
+			       pdcs->last_tx_not_करोne);
+	out_offset += scnम_लिखो(buf + out_offset, out_count - out_offset,
 			       "Tx ring full....................%u\n",
 			       pdcs->tx_ring_full);
-	out_offset += scnprintf(buf + out_offset, out_count - out_offset,
+	out_offset += scnम_लिखो(buf + out_offset, out_count - out_offset,
 			       "Rx ring full....................%u\n",
 			       pdcs->rx_ring_full);
-	out_offset += scnprintf(buf + out_offset, out_count - out_offset,
+	out_offset += scnम_लिखो(buf + out_offset, out_count - out_offset,
 			       "Tx desc write fail. Ring full...%u\n",
 			       pdcs->txnobuf);
-	out_offset += scnprintf(buf + out_offset, out_count - out_offset,
+	out_offset += scnम_लिखो(buf + out_offset, out_count - out_offset,
 			       "Rx desc write fail. Ring full...%u\n",
 			       pdcs->rxnobuf);
-	out_offset += scnprintf(buf + out_offset, out_count - out_offset,
+	out_offset += scnम_लिखो(buf + out_offset, out_count - out_offset,
 			       "Receive overflow................%u\n",
 			       pdcs->rx_oflow);
-	out_offset += scnprintf(buf + out_offset, out_count - out_offset,
+	out_offset += scnम_लिखो(buf + out_offset, out_count - out_offset,
 			       "Num frags in rx ring............%u\n",
 			       NRXDACTIVE(pdcs->rxin, pdcs->last_rx_curr,
 					  pdcs->nrxpost));
 
-	if (out_offset > out_count)
+	अगर (out_offset > out_count)
 		out_offset = out_count;
 
-	ret = simple_read_from_buffer(ubuf, count, offp, buf, out_offset);
-	kfree(buf);
-	return ret;
-}
+	ret = simple_पढ़ो_from_buffer(ubuf, count, offp, buf, out_offset);
+	kमुक्त(buf);
+	वापस ret;
+पूर्ण
 
-static const struct file_operations pdc_debugfs_stats = {
+अटल स्थिर काष्ठा file_operations pdc_debugfs_stats = अणु
 	.owner = THIS_MODULE,
-	.open = simple_open,
-	.read = pdc_debugfs_read,
-};
+	.खोलो = simple_खोलो,
+	.पढ़ो = pdc_debugfs_पढ़ो,
+पूर्ण;
 
 /**
  * pdc_setup_debugfs() - Create the debug FS directories. If the top-level
  * directory has not yet been created, create it now. Create a stats file in
- * this directory for a SPU.
- * @pdcs: PDC state structure
+ * this directory क्रम a SPU.
+ * @pdcs: PDC state काष्ठाure
  */
-static void pdc_setup_debugfs(struct pdc_state *pdcs)
-{
-	char spu_stats_name[16];
+अटल व्योम pdc_setup_debugfs(काष्ठा pdc_state *pdcs)
+अणु
+	अक्षर spu_stats_name[16];
 
-	if (!debugfs_initialized())
-		return;
+	अगर (!debugfs_initialized())
+		वापस;
 
-	snprintf(spu_stats_name, 16, "pdc%d_stats", pdcs->pdc_idx);
-	if (!debugfs_dir)
-		debugfs_dir = debugfs_create_dir(KBUILD_MODNAME, NULL);
+	snम_लिखो(spu_stats_name, 16, "pdc%d_stats", pdcs->pdc_idx);
+	अगर (!debugfs_dir)
+		debugfs_dir = debugfs_create_dir(KBUILD_MODNAME, शून्य);
 
 	/* S_IRUSR == 0400 */
 	debugfs_create_file(spu_stats_name, 0400, debugfs_dir, pdcs,
 			    &pdc_debugfs_stats);
-}
+पूर्ण
 
-static void pdc_free_debugfs(void)
-{
-	debugfs_remove_recursive(debugfs_dir);
-	debugfs_dir = NULL;
-}
+अटल व्योम pdc_मुक्त_debugfs(व्योम)
+अणु
+	debugfs_हटाओ_recursive(debugfs_dir);
+	debugfs_dir = शून्य;
+पूर्ण
 
 /**
  * pdc_build_rxd() - Build DMA descriptor to receive SPU result.
- * @pdcs:      PDC state for SPU that will generate result
- * @dma_addr:  DMA address of buffer that descriptor is being built for
+ * @pdcs:      PDC state क्रम SPU that will generate result
+ * @dma_addr:  DMA address of buffer that descriptor is being built क्रम
  * @buf_len:   Length of the receive buffer, in bytes
  * @flags:     Flags to be stored in descriptor
  */
-static inline void
-pdc_build_rxd(struct pdc_state *pdcs, dma_addr_t dma_addr,
+अटल अंतरभूत व्योम
+pdc_build_rxd(काष्ठा pdc_state *pdcs, dma_addr_t dma_addr,
 	      u32 buf_len, u32 flags)
-{
-	struct device *dev = &pdcs->pdev->dev;
-	struct dma64dd *rxd = &pdcs->rxd_64[pdcs->rxout];
+अणु
+	काष्ठा device *dev = &pdcs->pdev->dev;
+	काष्ठा dma64dd *rxd = &pdcs->rxd_64[pdcs->rxout];
 
 	dev_dbg(dev,
 		"Writing rx descriptor for PDC %u at index %u with length %u. flags %#x\n",
@@ -532,24 +533,24 @@ pdc_build_rxd(struct pdc_state *pdcs, dma_addr_t dma_addr,
 	rxd->ctrl1 = cpu_to_le32(flags);
 	rxd->ctrl2 = cpu_to_le32(buf_len);
 
-	/* bump ring index and return */
+	/* bump ring index and वापस */
 	pdcs->rxout = NEXTRXD(pdcs->rxout, pdcs->nrxpost);
-}
+पूर्ण
 
 /**
  * pdc_build_txd() - Build a DMA descriptor to transmit a SPU request to
  * hardware.
- * @pdcs:        PDC state for the SPU that will process this request
+ * @pdcs:        PDC state क्रम the SPU that will process this request
  * @dma_addr:    DMA address of packet to be transmitted
  * @buf_len:     Length of tx buffer, in bytes
  * @flags:       Flags to be stored in descriptor
  */
-static inline void
-pdc_build_txd(struct pdc_state *pdcs, dma_addr_t dma_addr, u32 buf_len,
+अटल अंतरभूत व्योम
+pdc_build_txd(काष्ठा pdc_state *pdcs, dma_addr_t dma_addr, u32 buf_len,
 	      u32 flags)
-{
-	struct device *dev = &pdcs->pdev->dev;
-	struct dma64dd *txd = &pdcs->txd_64[pdcs->txout];
+अणु
+	काष्ठा device *dev = &pdcs->pdev->dev;
+	काष्ठा dma64dd *txd = &pdcs->txd_64[pdcs->txout];
 
 	dev_dbg(dev,
 		"Writing tx descriptor for PDC %u at index %u with length %u, flags %#x\n",
@@ -560,50 +561,50 @@ pdc_build_txd(struct pdc_state *pdcs, dma_addr_t dma_addr, u32 buf_len,
 	txd->ctrl1 = cpu_to_le32(flags);
 	txd->ctrl2 = cpu_to_le32(buf_len);
 
-	/* bump ring index and return */
+	/* bump ring index and वापस */
 	pdcs->txout = NEXTTXD(pdcs->txout, pdcs->ntxpost);
-}
+पूर्ण
 
 /**
  * pdc_receive_one() - Receive a response message from a given SPU.
- * @pdcs:    PDC state for the SPU to receive from
+ * @pdcs:    PDC state क्रम the SPU to receive from
  *
- * When the return code indicates success, the response message is available in
+ * When the वापस code indicates success, the response message is available in
  * the receive buffers provided prior to submission of the request.
  *
- * Return:  PDC_SUCCESS if one or more receive descriptors was processed
+ * Return:  PDC_SUCCESS अगर one or more receive descriptors was processed
  *          -EAGAIN indicates that no response message is available
  *          -EIO an error occurred
  */
-static int
-pdc_receive_one(struct pdc_state *pdcs)
-{
-	struct device *dev = &pdcs->pdev->dev;
-	struct mbox_controller *mbc;
-	struct mbox_chan *chan;
-	struct brcm_message mssg;
+अटल पूर्णांक
+pdc_receive_one(काष्ठा pdc_state *pdcs)
+अणु
+	काष्ठा device *dev = &pdcs->pdev->dev;
+	काष्ठा mbox_controller *mbc;
+	काष्ठा mbox_chan *chan;
+	काष्ठा brcm_message mssg;
 	u32 len, rx_status;
 	u32 num_frags;
-	u8 *resp_hdr;    /* virtual addr of start of resp message DMA header */
-	u32 frags_rdy;   /* number of fragments ready to read */
+	u8 *resp_hdr;    /* भव addr of start of resp message DMA header */
+	u32 frags_rdy;   /* number of fragments पढ़ोy to पढ़ो */
 	u32 rx_idx;      /* ring index of start of receive frame */
 	dma_addr_t resp_hdr_daddr;
-	struct pdc_rx_ctx *rx_ctx;
+	काष्ठा pdc_rx_ctx *rx_ctx;
 
 	mbc = &pdcs->mbc;
 	chan = &mbc->chans[0];
 	mssg.type = BRCM_MESSAGE_SPU;
 
 	/*
-	 * return if a complete response message is not yet ready.
+	 * वापस अगर a complete response message is not yet पढ़ोy.
 	 * rxin_numd[rxin] is the number of fragments in the next msg
-	 * to read.
+	 * to पढ़ो.
 	 */
 	frags_rdy = NRXDACTIVE(pdcs->rxin, pdcs->last_rx_curr, pdcs->nrxpost);
-	if ((frags_rdy == 0) ||
+	अगर ((frags_rdy == 0) ||
 	    (frags_rdy < pdcs->rx_ctx[pdcs->rxin].rxin_numd))
-		/* No response ready */
-		return -EAGAIN;
+		/* No response पढ़ोy */
+		वापस -EAGAIN;
 
 	num_frags = pdcs->txin_numd[pdcs->txin];
 	WARN_ON(num_frags == 0);
@@ -621,7 +622,7 @@ pdc_receive_one(struct pdc_state *pdcs)
 	num_frags = rx_ctx->rxin_numd;
 	/* Return opaque context with result */
 	mssg.ctx = rx_ctx->rxp_ctx;
-	rx_ctx->rxp_ctx = NULL;
+	rx_ctx->rxp_ctx = शून्य;
 	resp_hdr = rx_ctx->resp_hdr;
 	resp_hdr_daddr = rx_ctx->resp_hdr_daddr;
 	dma_unmap_sg(dev, rx_ctx->dst_sg, sg_nents(rx_ctx->dst_sg),
@@ -637,7 +638,7 @@ pdc_receive_one(struct pdc_state *pdcs)
 		pdcs->pdc_idx, pdcs->txin, pdcs->txout, pdcs->rxin,
 		pdcs->rxout, pdcs->last_rx_curr);
 
-	if (pdcs->pdc_resp_hdr_len == PDC_SPUM_RESP_HDR_LEN) {
+	अगर (pdcs->pdc_resp_hdr_len == PDC_SPUM_RESP_HDR_LEN) अणु
 		/*
 		 * For SPU-M, get length of response msg and rx overflow status.
 		 */
@@ -645,25 +646,25 @@ pdc_receive_one(struct pdc_state *pdcs)
 		len = rx_status & RX_STATUS_LEN;
 		dev_dbg(dev,
 			"SPU response length %u bytes", len);
-		if (unlikely(((rx_status & RX_STATUS_OVERFLOW) || (!len)))) {
-			if (rx_status & RX_STATUS_OVERFLOW) {
+		अगर (unlikely(((rx_status & RX_STATUS_OVERFLOW) || (!len)))) अणु
+			अगर (rx_status & RX_STATUS_OVERFLOW) अणु
 				dev_err_ratelimited(dev,
 						    "crypto receive overflow");
 				pdcs->rx_oflow++;
-			} else {
+			पूर्ण अन्यथा अणु
 				dev_info_ratelimited(dev, "crypto rx len = 0");
-			}
-			return -EIO;
-		}
-	}
+			पूर्ण
+			वापस -EIO;
+		पूर्ण
+	पूर्ण
 
-	dma_pool_free(pdcs->rx_buf_pool, resp_hdr, resp_hdr_daddr);
+	dma_pool_मुक्त(pdcs->rx_buf_pool, resp_hdr, resp_hdr_daddr);
 
 	mbox_chan_received_data(chan, &mssg);
 
 	pdcs->pdc_replies++;
-	return PDC_SUCCESS;
-}
+	वापस PDC_SUCCESS;
+पूर्ण
 
 /**
  * pdc_receive() - Process as many responses as are available in the rx ring.
@@ -672,50 +673,50 @@ pdc_receive_one(struct pdc_state *pdcs)
  * Called within the hard IRQ.
  * Return:
  */
-static int
-pdc_receive(struct pdc_state *pdcs)
-{
-	int rx_status;
+अटल पूर्णांक
+pdc_receive(काष्ठा pdc_state *pdcs)
+अणु
+	पूर्णांक rx_status;
 
-	/* read last_rx_curr from register once */
+	/* पढ़ो last_rx_curr from रेजिस्टर once */
 	pdcs->last_rx_curr =
-	    (ioread32((const void __iomem *)&pdcs->rxregs_64->status0) &
+	    (ioपढ़ो32((स्थिर व्योम __iomem *)&pdcs->rxregs_64->status0) &
 	     CRYPTO_D64_RS0_CD_MASK) / RING_ENTRY_SIZE;
 
-	do {
-		/* Could be many frames ready */
+	करो अणु
+		/* Could be many frames पढ़ोy */
 		rx_status = pdc_receive_one(pdcs);
-	} while (rx_status == PDC_SUCCESS);
+	पूर्ण जबतक (rx_status == PDC_SUCCESS);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * pdc_tx_list_sg_add() - Add the buffers in a scatterlist to the transmit
- * descriptors for a given SPU. The scatterlist buffers contain the data for a
+ * descriptors क्रम a given SPU. The scatterlist buffers contain the data क्रम a
  * SPU request message.
  * @spu_idx:   The index of the SPU to submit the request to, [0, max_spu)
  * @sg:        Scatterlist whose buffers contain part of the SPU request
  *
  * If a scatterlist buffer is larger than PDC_DMA_BUF_MAX, multiple descriptors
- * are written for that buffer, each <= PDC_DMA_BUF_MAX byte in length.
+ * are written क्रम that buffer, each <= PDC_DMA_BUF_MAX byte in length.
  *
- * Return: PDC_SUCCESS if successful
+ * Return: PDC_SUCCESS अगर successful
  *         < 0 otherwise
  */
-static int pdc_tx_list_sg_add(struct pdc_state *pdcs, struct scatterlist *sg)
-{
+अटल पूर्णांक pdc_tx_list_sg_add(काष्ठा pdc_state *pdcs, काष्ठा scatterlist *sg)
+अणु
 	u32 flags = 0;
 	u32 eot;
 	u32 tx_avail;
 
 	/*
 	 * Num descriptors needed. Conservatively assume we need a descriptor
-	 * for every entry in sg.
+	 * क्रम every entry in sg.
 	 */
 	u32 num_desc;
 	u32 desc_w = 0;	/* Number of tx descriptors written */
-	u32 bufcnt;	/* Number of bytes of buffer pointed to by descriptor */
+	u32 bufcnt;	/* Number of bytes of buffer poपूर्णांकed to by descriptor */
 	dma_addr_t databufptr;	/* DMA address to put in descriptor */
 
 	num_desc = (u32)sg_nents(sg);
@@ -723,23 +724,23 @@ static int pdc_tx_list_sg_add(struct pdc_state *pdcs, struct scatterlist *sg)
 	/* check whether enough tx descriptors are available */
 	tx_avail = pdcs->ntxpost - NTXDACTIVE(pdcs->txin, pdcs->txout,
 					      pdcs->ntxpost);
-	if (unlikely(num_desc > tx_avail)) {
+	अगर (unlikely(num_desc > tx_avail)) अणु
 		pdcs->txnobuf++;
-		return -ENOSPC;
-	}
+		वापस -ENOSPC;
+	पूर्ण
 
 	/* build tx descriptors */
-	if (pdcs->tx_msg_start == pdcs->txout) {
+	अगर (pdcs->tx_msg_start == pdcs->txout) अणु
 		/* Start of frame */
 		pdcs->txin_numd[pdcs->tx_msg_start] = 0;
 		pdcs->src_sg[pdcs->txout] = sg;
 		flags = D64_CTRL1_SOF;
-	}
+	पूर्ण
 
-	while (sg) {
-		if (unlikely(pdcs->txout == (pdcs->ntxd - 1)))
+	जबतक (sg) अणु
+		अगर (unlikely(pdcs->txout == (pdcs->ntxd - 1)))
 			eot = D64_CTRL1_EOT;
-		else
+		अन्यथा
 			eot = 0;
 
 		/*
@@ -748,93 +749,93 @@ static int pdc_tx_list_sg_add(struct pdc_state *pdcs, struct scatterlist *sg)
 		 */
 		bufcnt = sg_dma_len(sg);
 		databufptr = sg_dma_address(sg);
-		while (bufcnt > PDC_DMA_BUF_MAX) {
+		जबतक (bufcnt > PDC_DMA_BUF_MAX) अणु
 			pdc_build_txd(pdcs, databufptr, PDC_DMA_BUF_MAX,
 				      flags | eot);
 			desc_w++;
 			bufcnt -= PDC_DMA_BUF_MAX;
 			databufptr += PDC_DMA_BUF_MAX;
-			if (unlikely(pdcs->txout == (pdcs->ntxd - 1)))
+			अगर (unlikely(pdcs->txout == (pdcs->ntxd - 1)))
 				eot = D64_CTRL1_EOT;
-			else
+			अन्यथा
 				eot = 0;
-		}
+		पूर्ण
 		sg = sg_next(sg);
-		if (!sg)
-			/* Writing last descriptor for frame */
-			flags |= (D64_CTRL1_EOF | D64_CTRL1_IOC);
+		अगर (!sg)
+			/* Writing last descriptor क्रम frame */
+			flags |= (D64_CTRL1_खातापूर्ण | D64_CTRL1_IOC);
 		pdc_build_txd(pdcs, databufptr, bufcnt, flags | eot);
 		desc_w++;
 		/* Clear start of frame after first descriptor */
 		flags &= ~D64_CTRL1_SOF;
-	}
+	पूर्ण
 	pdcs->txin_numd[pdcs->tx_msg_start] += desc_w;
 
-	return PDC_SUCCESS;
-}
+	वापस PDC_SUCCESS;
+पूर्ण
 
 /**
  * pdc_tx_list_final() - Initiate DMA transfer of last frame written to tx
  * ring.
- * @pdcs:  PDC state for SPU to process the request
+ * @pdcs:  PDC state क्रम SPU to process the request
  *
  * Sets the index of the last descriptor written in both the rx and tx ring.
  *
  * Return: PDC_SUCCESS
  */
-static int pdc_tx_list_final(struct pdc_state *pdcs)
-{
+अटल पूर्णांक pdc_tx_list_final(काष्ठा pdc_state *pdcs)
+अणु
 	/*
-	 * write barrier to ensure all register writes are complete
-	 * before chip starts to process new request
+	 * ग_लिखो barrier to ensure all रेजिस्टर ग_लिखोs are complete
+	 * beक्रमe chip starts to process new request
 	 */
 	wmb();
-	iowrite32(pdcs->rxout << 4, &pdcs->rxregs_64->ptr);
-	iowrite32(pdcs->txout << 4, &pdcs->txregs_64->ptr);
+	ioग_लिखो32(pdcs->rxout << 4, &pdcs->rxregs_64->ptr);
+	ioग_लिखो32(pdcs->txout << 4, &pdcs->txregs_64->ptr);
 	pdcs->pdc_requests++;
 
-	return PDC_SUCCESS;
-}
+	वापस PDC_SUCCESS;
+पूर्ण
 
 /**
- * pdc_rx_list_init() - Start a new receive descriptor list for a given PDC.
- * @pdcs:   PDC state for SPU handling request
- * @dst_sg: scatterlist providing rx buffers for response to be returned to
+ * pdc_rx_list_init() - Start a new receive descriptor list क्रम a given PDC.
+ * @pdcs:   PDC state क्रम SPU handling request
+ * @dst_sg: scatterlist providing rx buffers क्रम response to be वापसed to
  *	    mailbox client
- * @ctx:    Opaque context for this request
+ * @ctx:    Opaque context क्रम this request
  *
  * Posts a single receive descriptor to hold the metadata that precedes a
  * response. For example, with SPU-M, the metadata is a 32-byte DMA header and
- * an 8-byte BCM header. Moves the msg_start descriptor indexes for both tx and
+ * an 8-byte BCM header. Moves the msg_start descriptor indexes क्रम both tx and
  * rx to indicate the start of a new message.
  *
- * Return:  PDC_SUCCESS if successful
- *          < 0 if an error (e.g., rx ring is full)
+ * Return:  PDC_SUCCESS अगर successful
+ *          < 0 अगर an error (e.g., rx ring is full)
  */
-static int pdc_rx_list_init(struct pdc_state *pdcs, struct scatterlist *dst_sg,
-			    void *ctx)
-{
+अटल पूर्णांक pdc_rx_list_init(काष्ठा pdc_state *pdcs, काष्ठा scatterlist *dst_sg,
+			    व्योम *ctx)
+अणु
 	u32 flags = 0;
 	u32 rx_avail;
 	u32 rx_pkt_cnt = 1;	/* Adding a single rx buffer */
 	dma_addr_t daddr;
-	void *vaddr;
-	struct pdc_rx_ctx *rx_ctx;
+	व्योम *vaddr;
+	काष्ठा pdc_rx_ctx *rx_ctx;
 
 	rx_avail = pdcs->nrxpost - NRXDACTIVE(pdcs->rxin, pdcs->rxout,
 					      pdcs->nrxpost);
-	if (unlikely(rx_pkt_cnt > rx_avail)) {
+	अगर (unlikely(rx_pkt_cnt > rx_avail)) अणु
 		pdcs->rxnobuf++;
-		return -ENOSPC;
-	}
+		वापस -ENOSPC;
+	पूर्ण
 
-	/* allocate a buffer for the dma rx status */
+	/* allocate a buffer क्रम the dma rx status */
 	vaddr = dma_pool_zalloc(pdcs->rx_buf_pool, GFP_ATOMIC, &daddr);
-	if (unlikely(!vaddr))
-		return -ENOMEM;
+	अगर (unlikely(!vaddr))
+		वापस -ENOMEM;
 
 	/*
-	 * Update msg_start indexes for both tx and rx to indicate the start
+	 * Update msg_start indexes क्रम both tx and rx to indicate the start
 	 * of a new sequence of descriptor indexes that contain the fragments
 	 * of the same message.
 	 */
@@ -845,7 +846,7 @@ static int pdc_rx_list_init(struct pdc_state *pdcs, struct scatterlist *dst_sg,
 	flags = D64_CTRL1_SOF;
 	pdcs->rx_ctx[pdcs->rx_msg_start].rxin_numd = 1;
 
-	if (unlikely(pdcs->rxout == (pdcs->nrxd - 1)))
+	अगर (unlikely(pdcs->rxout == (pdcs->nrxd - 1)))
 		flags |= D64_CTRL1_EOT;
 
 	rx_ctx = &pdcs->rx_ctx[pdcs->rxout];
@@ -854,50 +855,50 @@ static int pdc_rx_list_init(struct pdc_state *pdcs, struct scatterlist *dst_sg,
 	rx_ctx->resp_hdr = vaddr;
 	rx_ctx->resp_hdr_daddr = daddr;
 	pdc_build_rxd(pdcs, daddr, pdcs->pdc_resp_hdr_len, flags);
-	return PDC_SUCCESS;
-}
+	वापस PDC_SUCCESS;
+पूर्ण
 
 /**
  * pdc_rx_list_sg_add() - Add the buffers in a scatterlist to the receive
- * descriptors for a given SPU. The caller must have already DMA mapped the
+ * descriptors क्रम a given SPU. The caller must have alपढ़ोy DMA mapped the
  * scatterlist.
- * @spu_idx:    Indicates which SPU the buffers are for
+ * @spu_idx:    Indicates which SPU the buffers are क्रम
  * @sg:         Scatterlist whose buffers are added to the receive ring
  *
  * If a receive buffer in the scatterlist is larger than PDC_DMA_BUF_MAX,
  * multiple receive descriptors are written, each with a buffer <=
  * PDC_DMA_BUF_MAX.
  *
- * Return: PDC_SUCCESS if successful
+ * Return: PDC_SUCCESS अगर successful
  *         < 0 otherwise (e.g., receive ring is full)
  */
-static int pdc_rx_list_sg_add(struct pdc_state *pdcs, struct scatterlist *sg)
-{
+अटल पूर्णांक pdc_rx_list_sg_add(काष्ठा pdc_state *pdcs, काष्ठा scatterlist *sg)
+अणु
 	u32 flags = 0;
 	u32 rx_avail;
 
 	/*
 	 * Num descriptors needed. Conservatively assume we need a descriptor
-	 * for every entry from our starting point in the scatterlist.
+	 * क्रम every entry from our starting poपूर्णांक in the scatterlist.
 	 */
 	u32 num_desc;
 	u32 desc_w = 0;	/* Number of tx descriptors written */
-	u32 bufcnt;	/* Number of bytes of buffer pointed to by descriptor */
+	u32 bufcnt;	/* Number of bytes of buffer poपूर्णांकed to by descriptor */
 	dma_addr_t databufptr;	/* DMA address to put in descriptor */
 
 	num_desc = (u32)sg_nents(sg);
 
 	rx_avail = pdcs->nrxpost - NRXDACTIVE(pdcs->rxin, pdcs->rxout,
 					      pdcs->nrxpost);
-	if (unlikely(num_desc > rx_avail)) {
+	अगर (unlikely(num_desc > rx_avail)) अणु
 		pdcs->rxnobuf++;
-		return -ENOSPC;
-	}
+		वापस -ENOSPC;
+	पूर्ण
 
-	while (sg) {
-		if (unlikely(pdcs->rxout == (pdcs->nrxd - 1)))
+	जबतक (sg) अणु
+		अगर (unlikely(pdcs->rxout == (pdcs->nrxd - 1)))
 			flags = D64_CTRL1_EOT;
-		else
+		अन्यथा
 			flags = 0;
 
 		/*
@@ -906,111 +907,111 @@ static int pdc_rx_list_sg_add(struct pdc_state *pdcs, struct scatterlist *sg)
 		 */
 		bufcnt = sg_dma_len(sg);
 		databufptr = sg_dma_address(sg);
-		while (bufcnt > PDC_DMA_BUF_MAX) {
+		जबतक (bufcnt > PDC_DMA_BUF_MAX) अणु
 			pdc_build_rxd(pdcs, databufptr, PDC_DMA_BUF_MAX, flags);
 			desc_w++;
 			bufcnt -= PDC_DMA_BUF_MAX;
 			databufptr += PDC_DMA_BUF_MAX;
-			if (unlikely(pdcs->rxout == (pdcs->nrxd - 1)))
+			अगर (unlikely(pdcs->rxout == (pdcs->nrxd - 1)))
 				flags = D64_CTRL1_EOT;
-			else
+			अन्यथा
 				flags = 0;
-		}
+		पूर्ण
 		pdc_build_rxd(pdcs, databufptr, bufcnt, flags);
 		desc_w++;
 		sg = sg_next(sg);
-	}
+	पूर्ण
 	pdcs->rx_ctx[pdcs->rx_msg_start].rxin_numd += desc_w;
 
-	return PDC_SUCCESS;
-}
+	वापस PDC_SUCCESS;
+पूर्ण
 
 /**
- * pdc_irq_handler() - Interrupt handler called in interrupt context.
+ * pdc_irq_handler() - Interrupt handler called in पूर्णांकerrupt context.
  * @irq:      Interrupt number that has fired
- * @data:     device struct for DMA engine that generated the interrupt
+ * @data:     device काष्ठा क्रम DMA engine that generated the पूर्णांकerrupt
  *
- * We have to clear the device interrupt status flags here. So cache the
- * status for later use in the thread function. Other than that, just return
- * WAKE_THREAD to invoke the thread function.
+ * We have to clear the device पूर्णांकerrupt status flags here. So cache the
+ * status क्रम later use in the thपढ़ो function. Other than that, just वापस
+ * WAKE_THREAD to invoke the thपढ़ो function.
  *
- * Return: IRQ_WAKE_THREAD if interrupt is ours
+ * Return: IRQ_WAKE_THREAD अगर पूर्णांकerrupt is ours
  *         IRQ_NONE otherwise
  */
-static irqreturn_t pdc_irq_handler(int irq, void *data)
-{
-	struct device *dev = (struct device *)data;
-	struct pdc_state *pdcs = dev_get_drvdata(dev);
-	u32 intstatus = ioread32(pdcs->pdc_reg_vbase + PDC_INTSTATUS_OFFSET);
+अटल irqवापस_t pdc_irq_handler(पूर्णांक irq, व्योम *data)
+अणु
+	काष्ठा device *dev = (काष्ठा device *)data;
+	काष्ठा pdc_state *pdcs = dev_get_drvdata(dev);
+	u32 पूर्णांकstatus = ioपढ़ो32(pdcs->pdc_reg_vbase + PDC_INTSTATUS_OFFSET);
 
-	if (unlikely(intstatus == 0))
-		return IRQ_NONE;
+	अगर (unlikely(पूर्णांकstatus == 0))
+		वापस IRQ_NONE;
 
-	/* Disable interrupts until soft handler runs */
-	iowrite32(0, pdcs->pdc_reg_vbase + PDC_INTMASK_OFFSET);
+	/* Disable पूर्णांकerrupts until soft handler runs */
+	ioग_लिखो32(0, pdcs->pdc_reg_vbase + PDC_INTMASK_OFFSET);
 
-	/* Clear interrupt flags in device */
-	iowrite32(intstatus, pdcs->pdc_reg_vbase + PDC_INTSTATUS_OFFSET);
+	/* Clear पूर्णांकerrupt flags in device */
+	ioग_लिखो32(पूर्णांकstatus, pdcs->pdc_reg_vbase + PDC_INTSTATUS_OFFSET);
 
-	/* Wakeup IRQ thread */
+	/* Wakeup IRQ thपढ़ो */
 	tasklet_schedule(&pdcs->rx_tasklet);
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
 /**
  * pdc_tasklet_cb() - Tasklet callback that runs the deferred processing after
- * a DMA receive interrupt. Reenables the receive interrupt.
- * @data: PDC state structure
+ * a DMA receive पूर्णांकerrupt. Reenables the receive पूर्णांकerrupt.
+ * @data: PDC state काष्ठाure
  */
-static void pdc_tasklet_cb(struct tasklet_struct *t)
-{
-	struct pdc_state *pdcs = from_tasklet(pdcs, t, rx_tasklet);
+अटल व्योम pdc_tasklet_cb(काष्ठा tasklet_काष्ठा *t)
+अणु
+	काष्ठा pdc_state *pdcs = from_tasklet(pdcs, t, rx_tasklet);
 
 	pdc_receive(pdcs);
 
-	/* reenable interrupts */
-	iowrite32(PDC_INTMASK, pdcs->pdc_reg_vbase + PDC_INTMASK_OFFSET);
-}
+	/* reenable पूर्णांकerrupts */
+	ioग_लिखो32(PDC_INTMASK, pdcs->pdc_reg_vbase + PDC_INTMASK_OFFSET);
+पूर्ण
 
 /**
- * pdc_ring_init() - Allocate DMA rings and initialize constant fields of
+ * pdc_ring_init() - Allocate DMA rings and initialize स्थिरant fields of
  * descriptors in one ringset.
  * @pdcs:    PDC instance state
  * @ringset: index of ringset being used
  *
- * Return: PDC_SUCCESS if ring initialized
+ * Return: PDC_SUCCESS अगर ring initialized
  *         < 0 otherwise
  */
-static int pdc_ring_init(struct pdc_state *pdcs, int ringset)
-{
-	int i;
-	int err = PDC_SUCCESS;
-	struct dma64 *dma_reg;
-	struct device *dev = &pdcs->pdev->dev;
-	struct pdc_ring_alloc tx;
-	struct pdc_ring_alloc rx;
+अटल पूर्णांक pdc_ring_init(काष्ठा pdc_state *pdcs, पूर्णांक ringset)
+अणु
+	पूर्णांक i;
+	पूर्णांक err = PDC_SUCCESS;
+	काष्ठा dma64 *dma_reg;
+	काष्ठा device *dev = &pdcs->pdev->dev;
+	काष्ठा pdc_ring_alloc tx;
+	काष्ठा pdc_ring_alloc rx;
 
 	/* Allocate tx ring */
 	tx.vbase = dma_pool_zalloc(pdcs->ring_pool, GFP_KERNEL, &tx.dmabase);
-	if (unlikely(!tx.vbase)) {
+	अगर (unlikely(!tx.vbase)) अणु
 		err = -ENOMEM;
-		goto done;
-	}
+		जाओ करोne;
+	पूर्ण
 
 	/* Allocate rx ring */
 	rx.vbase = dma_pool_zalloc(pdcs->ring_pool, GFP_KERNEL, &rx.dmabase);
-	if (unlikely(!rx.vbase)) {
+	अगर (unlikely(!rx.vbase)) अणु
 		err = -ENOMEM;
-		goto fail_dealloc;
-	}
+		जाओ fail_dealloc;
+	पूर्ण
 
 	dev_dbg(dev, " - base DMA addr of tx ring      %pad", &tx.dmabase);
 	dev_dbg(dev, " - base virtual addr of tx ring  %p", tx.vbase);
 	dev_dbg(dev, " - base DMA addr of rx ring      %pad", &rx.dmabase);
 	dev_dbg(dev, " - base virtual addr of rx ring  %p", rx.vbase);
 
-	memcpy(&pdcs->tx_ring_alloc, &tx, sizeof(tx));
-	memcpy(&pdcs->rx_ring_alloc, &rx, sizeof(rx));
+	स_नकल(&pdcs->tx_ring_alloc, &tx, माप(tx));
+	स_नकल(&pdcs->rx_ring_alloc, &rx, माप(rx));
 
 	pdcs->rxin = 0;
 	pdcs->rx_msg_start = 0;
@@ -1021,222 +1022,222 @@ static int pdc_ring_init(struct pdc_state *pdcs, int ringset)
 	pdcs->txout = 0;
 
 	/* Set descriptor array base addresses */
-	pdcs->txd_64 = (struct dma64dd *)pdcs->tx_ring_alloc.vbase;
-	pdcs->rxd_64 = (struct dma64dd *)pdcs->rx_ring_alloc.vbase;
+	pdcs->txd_64 = (काष्ठा dma64dd *)pdcs->tx_ring_alloc.vbase;
+	pdcs->rxd_64 = (काष्ठा dma64dd *)pdcs->rx_ring_alloc.vbase;
 
 	/* Tell device the base DMA address of each ring */
 	dma_reg = &pdcs->regs->dmaregs[ringset];
 
-	/* But first disable DMA and set curptr to 0 for both TX & RX */
-	iowrite32(PDC_TX_CTL, &dma_reg->dmaxmt.control);
-	iowrite32((PDC_RX_CTL + (pdcs->rx_status_len << 1)),
+	/* But first disable DMA and set curptr to 0 क्रम both TX & RX */
+	ioग_लिखो32(PDC_TX_CTL, &dma_reg->dmaxmt.control);
+	ioग_लिखो32((PDC_RX_CTL + (pdcs->rx_status_len << 1)),
 		  &dma_reg->dmarcv.control);
-	iowrite32(0, &dma_reg->dmaxmt.ptr);
-	iowrite32(0, &dma_reg->dmarcv.ptr);
+	ioग_लिखो32(0, &dma_reg->dmaxmt.ptr);
+	ioग_लिखो32(0, &dma_reg->dmarcv.ptr);
 
 	/* Set base DMA addresses */
-	iowrite32(lower_32_bits(pdcs->tx_ring_alloc.dmabase),
+	ioग_लिखो32(lower_32_bits(pdcs->tx_ring_alloc.dmabase),
 		  &dma_reg->dmaxmt.addrlow);
-	iowrite32(upper_32_bits(pdcs->tx_ring_alloc.dmabase),
+	ioग_लिखो32(upper_32_bits(pdcs->tx_ring_alloc.dmabase),
 		  &dma_reg->dmaxmt.addrhigh);
 
-	iowrite32(lower_32_bits(pdcs->rx_ring_alloc.dmabase),
+	ioग_लिखो32(lower_32_bits(pdcs->rx_ring_alloc.dmabase),
 		  &dma_reg->dmarcv.addrlow);
-	iowrite32(upper_32_bits(pdcs->rx_ring_alloc.dmabase),
+	ioग_लिखो32(upper_32_bits(pdcs->rx_ring_alloc.dmabase),
 		  &dma_reg->dmarcv.addrhigh);
 
 	/* Re-enable DMA */
-	iowrite32(PDC_TX_CTL | PDC_TX_ENABLE, &dma_reg->dmaxmt.control);
-	iowrite32((PDC_RX_CTL | PDC_RX_ENABLE | (pdcs->rx_status_len << 1)),
+	ioग_लिखो32(PDC_TX_CTL | PDC_TX_ENABLE, &dma_reg->dmaxmt.control);
+	ioग_लिखो32((PDC_RX_CTL | PDC_RX_ENABLE | (pdcs->rx_status_len << 1)),
 		  &dma_reg->dmarcv.control);
 
 	/* Initialize descriptors */
-	for (i = 0; i < PDC_RING_ENTRIES; i++) {
-		/* Every tx descriptor can be used for start of frame. */
-		if (i != pdcs->ntxpost) {
-			iowrite32(D64_CTRL1_SOF | D64_CTRL1_EOF,
+	क्रम (i = 0; i < PDC_RING_ENTRIES; i++) अणु
+		/* Every tx descriptor can be used क्रम start of frame. */
+		अगर (i != pdcs->ntxpost) अणु
+			ioग_लिखो32(D64_CTRL1_SOF | D64_CTRL1_खातापूर्ण,
 				  &pdcs->txd_64[i].ctrl1);
-		} else {
+		पूर्ण अन्यथा अणु
 			/* Last descriptor in ringset. Set End of Table. */
-			iowrite32(D64_CTRL1_SOF | D64_CTRL1_EOF |
+			ioग_लिखो32(D64_CTRL1_SOF | D64_CTRL1_खातापूर्ण |
 				  D64_CTRL1_EOT, &pdcs->txd_64[i].ctrl1);
-		}
+		पूर्ण
 
-		/* Every rx descriptor can be used for start of frame */
-		if (i != pdcs->nrxpost) {
-			iowrite32(D64_CTRL1_SOF,
+		/* Every rx descriptor can be used क्रम start of frame */
+		अगर (i != pdcs->nrxpost) अणु
+			ioग_लिखो32(D64_CTRL1_SOF,
 				  &pdcs->rxd_64[i].ctrl1);
-		} else {
+		पूर्ण अन्यथा अणु
 			/* Last descriptor in ringset. Set End of Table. */
-			iowrite32(D64_CTRL1_SOF | D64_CTRL1_EOT,
+			ioग_लिखो32(D64_CTRL1_SOF | D64_CTRL1_EOT,
 				  &pdcs->rxd_64[i].ctrl1);
-		}
-	}
-	return PDC_SUCCESS;
+		पूर्ण
+	पूर्ण
+	वापस PDC_SUCCESS;
 
 fail_dealloc:
-	dma_pool_free(pdcs->ring_pool, tx.vbase, tx.dmabase);
-done:
-	return err;
-}
+	dma_pool_मुक्त(pdcs->ring_pool, tx.vbase, tx.dmabase);
+करोne:
+	वापस err;
+पूर्ण
 
-static void pdc_ring_free(struct pdc_state *pdcs)
-{
-	if (pdcs->tx_ring_alloc.vbase) {
-		dma_pool_free(pdcs->ring_pool, pdcs->tx_ring_alloc.vbase,
+अटल व्योम pdc_ring_मुक्त(काष्ठा pdc_state *pdcs)
+अणु
+	अगर (pdcs->tx_ring_alloc.vbase) अणु
+		dma_pool_मुक्त(pdcs->ring_pool, pdcs->tx_ring_alloc.vbase,
 			      pdcs->tx_ring_alloc.dmabase);
-		pdcs->tx_ring_alloc.vbase = NULL;
-	}
+		pdcs->tx_ring_alloc.vbase = शून्य;
+	पूर्ण
 
-	if (pdcs->rx_ring_alloc.vbase) {
-		dma_pool_free(pdcs->ring_pool, pdcs->rx_ring_alloc.vbase,
+	अगर (pdcs->rx_ring_alloc.vbase) अणु
+		dma_pool_मुक्त(pdcs->ring_pool, pdcs->rx_ring_alloc.vbase,
 			      pdcs->rx_ring_alloc.dmabase);
-		pdcs->rx_ring_alloc.vbase = NULL;
-	}
-}
+		pdcs->rx_ring_alloc.vbase = शून्य;
+	पूर्ण
+पूर्ण
 
 /**
  * pdc_desc_count() - Count the number of DMA descriptors that will be required
- * for a given scatterlist. Account for the max length of a DMA buffer.
+ * क्रम a given scatterlist. Account क्रम the max length of a DMA buffer.
  * @sg:    Scatterlist to be DMA'd
  * Return: Number of descriptors required
  */
-static u32 pdc_desc_count(struct scatterlist *sg)
-{
+अटल u32 pdc_desc_count(काष्ठा scatterlist *sg)
+अणु
 	u32 cnt = 0;
 
-	while (sg) {
+	जबतक (sg) अणु
 		cnt += ((sg->length / PDC_DMA_BUF_MAX) + 1);
 		sg = sg_next(sg);
-	}
-	return cnt;
-}
+	पूर्ण
+	वापस cnt;
+पूर्ण
 
 /**
- * pdc_rings_full() - Check whether the tx ring has room for tx_cnt descriptors
- * and the rx ring has room for rx_cnt descriptors.
+ * pdc_rings_full() - Check whether the tx ring has room क्रम tx_cnt descriptors
+ * and the rx ring has room क्रम rx_cnt descriptors.
  * @pdcs:  PDC state
  * @tx_cnt: The number of descriptors required in the tx ring
  * @rx_cnt: The number of descriptors required i the rx ring
  *
- * Return: true if one of the rings does not have enough space
- *         false if sufficient space is available in both rings
+ * Return: true अगर one of the rings करोes not have enough space
+ *         false अगर sufficient space is available in both rings
  */
-static bool pdc_rings_full(struct pdc_state *pdcs, int tx_cnt, int rx_cnt)
-{
+अटल bool pdc_rings_full(काष्ठा pdc_state *pdcs, पूर्णांक tx_cnt, पूर्णांक rx_cnt)
+अणु
 	u32 rx_avail;
 	u32 tx_avail;
 	bool full = false;
 
-	/* Check if the tx and rx rings are likely to have enough space */
+	/* Check अगर the tx and rx rings are likely to have enough space */
 	rx_avail = pdcs->nrxpost - NRXDACTIVE(pdcs->rxin, pdcs->rxout,
 					      pdcs->nrxpost);
-	if (unlikely(rx_cnt > rx_avail)) {
+	अगर (unlikely(rx_cnt > rx_avail)) अणु
 		pdcs->rx_ring_full++;
 		full = true;
-	}
+	पूर्ण
 
-	if (likely(!full)) {
+	अगर (likely(!full)) अणु
 		tx_avail = pdcs->ntxpost - NTXDACTIVE(pdcs->txin, pdcs->txout,
 						      pdcs->ntxpost);
-		if (unlikely(tx_cnt > tx_avail)) {
+		अगर (unlikely(tx_cnt > tx_avail)) अणु
 			pdcs->tx_ring_full++;
 			full = true;
-		}
-	}
-	return full;
-}
+		पूर्ण
+	पूर्ण
+	वापस full;
+पूर्ण
 
 /**
- * pdc_last_tx_done() - If both the tx and rx rings have at least
+ * pdc_last_tx_करोne() - If both the tx and rx rings have at least
  * PDC_RING_SPACE_MIN descriptors available, then indicate that the mailbox
  * framework can submit another message.
  * @chan:  mailbox channel to check
- * Return: true if PDC can accept another message on this channel
+ * Return: true अगर PDC can accept another message on this channel
  */
-static bool pdc_last_tx_done(struct mbox_chan *chan)
-{
-	struct pdc_state *pdcs = chan->con_priv;
+अटल bool pdc_last_tx_करोne(काष्ठा mbox_chan *chan)
+अणु
+	काष्ठा pdc_state *pdcs = chan->con_priv;
 	bool ret;
 
-	if (unlikely(pdc_rings_full(pdcs, PDC_RING_SPACE_MIN,
-				    PDC_RING_SPACE_MIN))) {
-		pdcs->last_tx_not_done++;
+	अगर (unlikely(pdc_rings_full(pdcs, PDC_RING_SPACE_MIN,
+				    PDC_RING_SPACE_MIN))) अणु
+		pdcs->last_tx_not_करोne++;
 		ret = false;
-	} else {
+	पूर्ण अन्यथा अणु
 		ret = true;
-	}
-	return ret;
-}
+	पूर्ण
+	वापस ret;
+पूर्ण
 
 /**
  * pdc_send_data() - mailbox send_data function
  * @chan:	The mailbox channel on which the data is sent. The channel
  *              corresponds to a DMA ringset.
  * @data:	The mailbox message to be sent. The message must be a
- *              brcm_message structure.
+ *              brcm_message काष्ठाure.
  *
- * This function is registered as the send_data function for the mailbox
+ * This function is रेजिस्टरed as the send_data function क्रम the mailbox
  * controller. From the destination scatterlist in the mailbox message, it
  * creates a sequence of receive descriptors in the rx ring. From the source
  * scatterlist, it creates a sequence of transmit descriptors in the tx ring.
- * After creating the descriptors, it writes the rx ptr and tx ptr registers to
+ * After creating the descriptors, it ग_लिखोs the rx ptr and tx ptr रेजिस्टरs to
  * initiate the DMA transfer.
  *
- * This function does the DMA map and unmap of the src and dst scatterlists in
+ * This function करोes the DMA map and unmap of the src and dst scatterlists in
  * the mailbox message.
  *
- * Return: 0 if successful
- *	   -ENOTSUPP if the mailbox message is a type this driver does not
+ * Return: 0 अगर successful
+ *	   -ENOTSUPP अगर the mailbox message is a type this driver करोes not
  *			support
- *         < 0 if an error
+ *         < 0 अगर an error
  */
-static int pdc_send_data(struct mbox_chan *chan, void *data)
-{
-	struct pdc_state *pdcs = chan->con_priv;
-	struct device *dev = &pdcs->pdev->dev;
-	struct brcm_message *mssg = data;
-	int err = PDC_SUCCESS;
-	int src_nent;
-	int dst_nent;
-	int nent;
+अटल पूर्णांक pdc_send_data(काष्ठा mbox_chan *chan, व्योम *data)
+अणु
+	काष्ठा pdc_state *pdcs = chan->con_priv;
+	काष्ठा device *dev = &pdcs->pdev->dev;
+	काष्ठा brcm_message *mssg = data;
+	पूर्णांक err = PDC_SUCCESS;
+	पूर्णांक src_nent;
+	पूर्णांक dst_nent;
+	पूर्णांक nent;
 	u32 tx_desc_req;
 	u32 rx_desc_req;
 
-	if (unlikely(mssg->type != BRCM_MESSAGE_SPU))
-		return -ENOTSUPP;
+	अगर (unlikely(mssg->type != BRCM_MESSAGE_SPU))
+		वापस -ENOTSUPP;
 
 	src_nent = sg_nents(mssg->spu.src);
-	if (likely(src_nent)) {
+	अगर (likely(src_nent)) अणु
 		nent = dma_map_sg(dev, mssg->spu.src, src_nent, DMA_TO_DEVICE);
-		if (unlikely(nent == 0))
-			return -EIO;
-	}
+		अगर (unlikely(nent == 0))
+			वापस -EIO;
+	पूर्ण
 
 	dst_nent = sg_nents(mssg->spu.dst);
-	if (likely(dst_nent)) {
+	अगर (likely(dst_nent)) अणु
 		nent = dma_map_sg(dev, mssg->spu.dst, dst_nent,
 				  DMA_FROM_DEVICE);
-		if (unlikely(nent == 0)) {
+		अगर (unlikely(nent == 0)) अणु
 			dma_unmap_sg(dev, mssg->spu.src, src_nent,
 				     DMA_TO_DEVICE);
-			return -EIO;
-		}
-	}
+			वापस -EIO;
+		पूर्ण
+	पूर्ण
 
 	/*
-	 * Check if the tx and rx rings have enough space. Do this prior to
-	 * writing any tx or rx descriptors. Need to ensure that we do not write
-	 * a partial set of descriptors, or write just rx descriptors but
-	 * corresponding tx descriptors don't fit. Note that we want this check
+	 * Check अगर the tx and rx rings have enough space. Do this prior to
+	 * writing any tx or rx descriptors. Need to ensure that we करो not ग_लिखो
+	 * a partial set of descriptors, or ग_लिखो just rx descriptors but
+	 * corresponding tx descriptors करोn't fit. Note that we want this check
 	 * and the entire sequence of descriptor to happen without another
-	 * thread getting in. The channel spin lock in the mailbox framework
+	 * thपढ़ो getting in. The channel spin lock in the mailbox framework
 	 * ensures this.
 	 */
 	tx_desc_req = pdc_desc_count(mssg->spu.src);
 	rx_desc_req = pdc_desc_count(mssg->spu.dst);
-	if (unlikely(pdc_rings_full(pdcs, tx_desc_req, rx_desc_req + 1)))
-		return -ENOSPC;
+	अगर (unlikely(pdc_rings_full(pdcs, tx_desc_req, rx_desc_req + 1)))
+		वापस -ENOSPC;
 
 	/* Create rx descriptors to SPU catch response */
 	err = pdc_rx_list_init(pdcs, mssg->spu.dst, mssg->ctx);
@@ -1246,42 +1247,42 @@ static int pdc_send_data(struct mbox_chan *chan, void *data)
 	err |= pdc_tx_list_sg_add(pdcs, mssg->spu.src);
 	err |= pdc_tx_list_final(pdcs);	/* initiate transfer */
 
-	if (unlikely(err))
+	अगर (unlikely(err))
 		dev_err(&pdcs->pdev->dev,
 			"%s failed with error %d", __func__, err);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int pdc_startup(struct mbox_chan *chan)
-{
-	return pdc_ring_init(chan->con_priv, PDC_RINGSET);
-}
+अटल पूर्णांक pdc_startup(काष्ठा mbox_chan *chan)
+अणु
+	वापस pdc_ring_init(chan->con_priv, PDC_RINGSET);
+पूर्ण
 
-static void pdc_shutdown(struct mbox_chan *chan)
-{
-	struct pdc_state *pdcs = chan->con_priv;
+अटल व्योम pdc_shutकरोwn(काष्ठा mbox_chan *chan)
+अणु
+	काष्ठा pdc_state *pdcs = chan->con_priv;
 
-	if (!pdcs)
-		return;
+	अगर (!pdcs)
+		वापस;
 
 	dev_dbg(&pdcs->pdev->dev,
 		"Shutdown mailbox channel for PDC %u", pdcs->pdc_idx);
-	pdc_ring_free(pdcs);
-}
+	pdc_ring_मुक्त(pdcs);
+पूर्ण
 
 /**
  * pdc_hw_init() - Use the given initialization parameters to initialize the
- * state for one of the PDCs.
+ * state क्रम one of the PDCs.
  * @pdcs:  state of the PDC
  */
-static
-void pdc_hw_init(struct pdc_state *pdcs)
-{
-	struct platform_device *pdev;
-	struct device *dev;
-	struct dma64 *dma_reg;
-	int ringset = PDC_RINGSET;
+अटल
+व्योम pdc_hw_init(काष्ठा pdc_state *pdcs)
+अणु
+	काष्ठा platक्रमm_device *pdev;
+	काष्ठा device *dev;
+	काष्ठा dma64 *dma_reg;
+	पूर्णांक ringset = PDC_RINGSET;
 
 	pdev = pdcs->pdev;
 	dev = &pdev->dev;
@@ -1292,135 +1293,135 @@ void pdc_hw_init(struct pdc_state *pdcs)
 	dev_dbg(dev, " - base virtual addr of hw regs    %p",
 		pdcs->pdc_reg_vbase);
 
-	/* initialize data structures */
-	pdcs->regs = (struct pdc_regs *)pdcs->pdc_reg_vbase;
-	pdcs->txregs_64 = (struct dma64_regs *)
+	/* initialize data काष्ठाures */
+	pdcs->regs = (काष्ठा pdc_regs *)pdcs->pdc_reg_vbase;
+	pdcs->txregs_64 = (काष्ठा dma64_regs *)
 	    (((u8 *)pdcs->pdc_reg_vbase) +
-		     PDC_TXREGS_OFFSET + (sizeof(struct dma64) * ringset));
-	pdcs->rxregs_64 = (struct dma64_regs *)
+		     PDC_TXREGS_OFFSET + (माप(काष्ठा dma64) * ringset));
+	pdcs->rxregs_64 = (काष्ठा dma64_regs *)
 	    (((u8 *)pdcs->pdc_reg_vbase) +
-		     PDC_RXREGS_OFFSET + (sizeof(struct dma64) * ringset));
+		     PDC_RXREGS_OFFSET + (माप(काष्ठा dma64) * ringset));
 
 	pdcs->ntxd = PDC_RING_ENTRIES;
 	pdcs->nrxd = PDC_RING_ENTRIES;
 	pdcs->ntxpost = PDC_RING_ENTRIES - 1;
 	pdcs->nrxpost = PDC_RING_ENTRIES - 1;
-	iowrite32(0, &pdcs->regs->intmask);
+	ioग_लिखो32(0, &pdcs->regs->पूर्णांकmask);
 
 	dma_reg = &pdcs->regs->dmaregs[ringset];
 
 	/* Configure DMA but will enable later in pdc_ring_init() */
-	iowrite32(PDC_TX_CTL, &dma_reg->dmaxmt.control);
+	ioग_लिखो32(PDC_TX_CTL, &dma_reg->dmaxmt.control);
 
-	iowrite32(PDC_RX_CTL + (pdcs->rx_status_len << 1),
+	ioग_लिखो32(PDC_RX_CTL + (pdcs->rx_status_len << 1),
 		  &dma_reg->dmarcv.control);
 
-	/* Reset current index pointers after making sure DMA is disabled */
-	iowrite32(0, &dma_reg->dmaxmt.ptr);
-	iowrite32(0, &dma_reg->dmarcv.ptr);
+	/* Reset current index poपूर्णांकers after making sure DMA is disabled */
+	ioग_लिखो32(0, &dma_reg->dmaxmt.ptr);
+	ioग_लिखो32(0, &dma_reg->dmarcv.ptr);
 
-	if (pdcs->pdc_resp_hdr_len == PDC_SPU2_RESP_HDR_LEN)
-		iowrite32(PDC_CKSUM_CTRL,
+	अगर (pdcs->pdc_resp_hdr_len == PDC_SPU2_RESP_HDR_LEN)
+		ioग_लिखो32(PDC_CKSUM_CTRL,
 			  pdcs->pdc_reg_vbase + PDC_CKSUM_CTRL_OFFSET);
-}
+पूर्ण
 
 /**
  * pdc_hw_disable() - Disable the tx and rx control in the hw.
- * @pdcs: PDC state structure
+ * @pdcs: PDC state काष्ठाure
  *
  */
-static void pdc_hw_disable(struct pdc_state *pdcs)
-{
-	struct dma64 *dma_reg;
+अटल व्योम pdc_hw_disable(काष्ठा pdc_state *pdcs)
+अणु
+	काष्ठा dma64 *dma_reg;
 
 	dma_reg = &pdcs->regs->dmaregs[PDC_RINGSET];
-	iowrite32(PDC_TX_CTL, &dma_reg->dmaxmt.control);
-	iowrite32(PDC_RX_CTL + (pdcs->rx_status_len << 1),
+	ioग_लिखो32(PDC_TX_CTL, &dma_reg->dmaxmt.control);
+	ioग_लिखो32(PDC_RX_CTL + (pdcs->rx_status_len << 1),
 		  &dma_reg->dmarcv.control);
-}
+पूर्ण
 
 /**
  * pdc_rx_buf_pool_create() - Pool of receive buffers used to catch the metadata
- * header returned with each response message.
- * @pdcs: PDC state structure
+ * header वापसed with each response message.
+ * @pdcs: PDC state काष्ठाure
  *
- * The metadata is not returned to the mailbox client. So the PDC driver
+ * The metadata is not वापसed to the mailbox client. So the PDC driver
  * manages these buffers.
  *
  * Return: PDC_SUCCESS
- *         -ENOMEM if pool creation fails
+ *         -ENOMEM अगर pool creation fails
  */
-static int pdc_rx_buf_pool_create(struct pdc_state *pdcs)
-{
-	struct platform_device *pdev;
-	struct device *dev;
+अटल पूर्णांक pdc_rx_buf_pool_create(काष्ठा pdc_state *pdcs)
+अणु
+	काष्ठा platक्रमm_device *pdev;
+	काष्ठा device *dev;
 
 	pdev = pdcs->pdev;
 	dev = &pdev->dev;
 
 	pdcs->pdc_resp_hdr_len = pdcs->rx_status_len;
-	if (pdcs->use_bcm_hdr)
+	अगर (pdcs->use_bcm_hdr)
 		pdcs->pdc_resp_hdr_len += BCM_HDR_LEN;
 
 	pdcs->rx_buf_pool = dma_pool_create("pdc rx bufs", dev,
 					    pdcs->pdc_resp_hdr_len,
 					    RX_BUF_ALIGN, 0);
-	if (!pdcs->rx_buf_pool)
-		return -ENOMEM;
+	अगर (!pdcs->rx_buf_pool)
+		वापस -ENOMEM;
 
-	return PDC_SUCCESS;
-}
+	वापस PDC_SUCCESS;
+पूर्ण
 
 /**
- * pdc_interrupts_init() - Initialize the interrupt configuration for a PDC and
- * specify a threaded IRQ handler for deferred handling of interrupts outside of
- * interrupt context.
+ * pdc_पूर्णांकerrupts_init() - Initialize the पूर्णांकerrupt configuration क्रम a PDC and
+ * specअगरy a thपढ़ोed IRQ handler क्रम deferred handling of पूर्णांकerrupts outside of
+ * पूर्णांकerrupt context.
  * @pdcs:   PDC state
  *
- * Set the interrupt mask for transmit and receive done.
- * Set the lazy interrupt frame count to generate an interrupt for just one pkt.
+ * Set the पूर्णांकerrupt mask क्रम transmit and receive करोne.
+ * Set the lazy पूर्णांकerrupt frame count to generate an पूर्णांकerrupt क्रम just one pkt.
  *
  * Return:  PDC_SUCCESS
- *          <0 if threaded irq request fails
+ *          <0 अगर thपढ़ोed irq request fails
  */
-static int pdc_interrupts_init(struct pdc_state *pdcs)
-{
-	struct platform_device *pdev = pdcs->pdev;
-	struct device *dev = &pdev->dev;
-	struct device_node *dn = pdev->dev.of_node;
-	int err;
+अटल पूर्णांक pdc_पूर्णांकerrupts_init(काष्ठा pdc_state *pdcs)
+अणु
+	काष्ठा platक्रमm_device *pdev = pdcs->pdev;
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा device_node *dn = pdev->dev.of_node;
+	पूर्णांक err;
 
-	/* interrupt configuration */
-	iowrite32(PDC_INTMASK, pdcs->pdc_reg_vbase + PDC_INTMASK_OFFSET);
+	/* पूर्णांकerrupt configuration */
+	ioग_लिखो32(PDC_INTMASK, pdcs->pdc_reg_vbase + PDC_INTMASK_OFFSET);
 
-	if (pdcs->hw_type == FA_HW)
-		iowrite32(PDC_LAZY_INT, pdcs->pdc_reg_vbase +
+	अगर (pdcs->hw_type == FA_HW)
+		ioग_लिखो32(PDC_LAZY_INT, pdcs->pdc_reg_vbase +
 			  FA_RCVLAZY0_OFFSET);
-	else
-		iowrite32(PDC_LAZY_INT, pdcs->pdc_reg_vbase +
+	अन्यथा
+		ioग_लिखो32(PDC_LAZY_INT, pdcs->pdc_reg_vbase +
 			  PDC_RCVLAZY0_OFFSET);
 
-	/* read irq from device tree */
+	/* पढ़ो irq from device tree */
 	pdcs->pdc_irq = irq_of_parse_and_map(dn, 0);
 	dev_dbg(dev, "pdc device %s irq %u for pdcs %p",
 		dev_name(dev), pdcs->pdc_irq, pdcs);
 
 	err = devm_request_irq(dev, pdcs->pdc_irq, pdc_irq_handler, 0,
 			       dev_name(dev), dev);
-	if (err) {
+	अगर (err) अणु
 		dev_err(dev, "IRQ %u request failed with err %d\n",
 			pdcs->pdc_irq, err);
-		return err;
-	}
-	return PDC_SUCCESS;
-}
+		वापस err;
+	पूर्ण
+	वापस PDC_SUCCESS;
+पूर्ण
 
-static const struct mbox_chan_ops pdc_mbox_chan_ops = {
+अटल स्थिर काष्ठा mbox_chan_ops pdc_mbox_chan_ops = अणु
 	.send_data = pdc_send_data,
-	.last_tx_done = pdc_last_tx_done,
+	.last_tx_करोne = pdc_last_tx_करोne,
 	.startup = pdc_startup,
-	.shutdown = pdc_shutdown
-};
+	.shutकरोwn = pdc_shutकरोwn
+पूर्ण;
 
 /**
  * pdc_mb_init() - Initialize the mailbox controller.
@@ -1428,218 +1429,218 @@ static const struct mbox_chan_ops pdc_mbox_chan_ops = {
  *
  * Each PDC is a mailbox controller. Each ringset is a mailbox channel. Kernel
  * driver only uses one ringset and thus one mb channel. PDC uses the transmit
- * complete interrupt to determine when a mailbox message has successfully been
+ * complete पूर्णांकerrupt to determine when a mailbox message has successfully been
  * transmitted.
  *
  * Return: 0 on success
- *         < 0 if there is an allocation or registration failure
+ *         < 0 अगर there is an allocation or registration failure
  */
-static int pdc_mb_init(struct pdc_state *pdcs)
-{
-	struct device *dev = &pdcs->pdev->dev;
-	struct mbox_controller *mbc;
-	int chan_index;
-	int err;
+अटल पूर्णांक pdc_mb_init(काष्ठा pdc_state *pdcs)
+अणु
+	काष्ठा device *dev = &pdcs->pdev->dev;
+	काष्ठा mbox_controller *mbc;
+	पूर्णांक chan_index;
+	पूर्णांक err;
 
 	mbc = &pdcs->mbc;
 	mbc->dev = dev;
 	mbc->ops = &pdc_mbox_chan_ops;
 	mbc->num_chans = 1;
-	mbc->chans = devm_kcalloc(dev, mbc->num_chans, sizeof(*mbc->chans),
+	mbc->chans = devm_kसुस्मृति(dev, mbc->num_chans, माप(*mbc->chans),
 				  GFP_KERNEL);
-	if (!mbc->chans)
-		return -ENOMEM;
+	अगर (!mbc->chans)
+		वापस -ENOMEM;
 
-	mbc->txdone_irq = false;
-	mbc->txdone_poll = true;
+	mbc->txकरोne_irq = false;
+	mbc->txकरोne_poll = true;
 	mbc->txpoll_period = 1;
-	for (chan_index = 0; chan_index < mbc->num_chans; chan_index++)
+	क्रम (chan_index = 0; chan_index < mbc->num_chans; chan_index++)
 		mbc->chans[chan_index].con_priv = pdcs;
 
 	/* Register mailbox controller */
-	err = devm_mbox_controller_register(dev, mbc);
-	if (err) {
+	err = devm_mbox_controller_रेजिस्टर(dev, mbc);
+	अगर (err) अणु
 		dev_crit(dev,
 			 "Failed to register PDC mailbox controller. Error %d.",
 			 err);
-		return err;
-	}
-	return 0;
-}
+		वापस err;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /* Device tree API */
-static const int pdc_hw = PDC_HW;
-static const int fa_hw = FA_HW;
+अटल स्थिर पूर्णांक pdc_hw = PDC_HW;
+अटल स्थिर पूर्णांक fa_hw = FA_HW;
 
-static const struct of_device_id pdc_mbox_of_match[] = {
-	{.compatible = "brcm,iproc-pdc-mbox", .data = &pdc_hw},
-	{.compatible = "brcm,iproc-fa2-mbox", .data = &fa_hw},
-	{ /* sentinel */ }
-};
+अटल स्थिर काष्ठा of_device_id pdc_mbox_of_match[] = अणु
+	अणु.compatible = "brcm,iproc-pdc-mbox", .data = &pdc_hwपूर्ण,
+	अणु.compatible = "brcm,iproc-fa2-mbox", .data = &fa_hwपूर्ण,
+	अणु /* sentinel */ पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, pdc_mbox_of_match);
 
 /**
- * pdc_dt_read() - Read application-specific data from device tree.
- * @pdev:  Platform device
+ * pdc_dt_पढ़ो() - Read application-specअगरic data from device tree.
+ * @pdev:  Platक्रमm device
  * @pdcs:  PDC state
  *
  * Reads the number of bytes of receive status that precede each received frame.
  * Reads whether transmit and received frames should be preceded by an 8-byte
  * BCM header.
  *
- * Return: 0 if successful
- *         -ENODEV if device not available
+ * Return: 0 अगर successful
+ *         -ENODEV अगर device not available
  */
-static int pdc_dt_read(struct platform_device *pdev, struct pdc_state *pdcs)
-{
-	struct device *dev = &pdev->dev;
-	struct device_node *dn = pdev->dev.of_node;
-	const struct of_device_id *match;
-	const int *hw_type;
-	int err;
+अटल पूर्णांक pdc_dt_पढ़ो(काष्ठा platक्रमm_device *pdev, काष्ठा pdc_state *pdcs)
+अणु
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा device_node *dn = pdev->dev.of_node;
+	स्थिर काष्ठा of_device_id *match;
+	स्थिर पूर्णांक *hw_type;
+	पूर्णांक err;
 
-	err = of_property_read_u32(dn, "brcm,rx-status-len",
+	err = of_property_पढ़ो_u32(dn, "brcm,rx-status-len",
 				   &pdcs->rx_status_len);
-	if (err < 0)
+	अगर (err < 0)
 		dev_err(dev,
 			"%s failed to get DMA receive status length from device tree",
 			__func__);
 
-	pdcs->use_bcm_hdr = of_property_read_bool(dn, "brcm,use-bcm-hdr");
+	pdcs->use_bcm_hdr = of_property_पढ़ो_bool(dn, "brcm,use-bcm-hdr");
 
 	pdcs->hw_type = PDC_HW;
 
 	match = of_match_device(of_match_ptr(pdc_mbox_of_match), dev);
-	if (match != NULL) {
+	अगर (match != शून्य) अणु
 		hw_type = match->data;
 		pdcs->hw_type = *hw_type;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * pdc_probe() - Probe function for PDC driver.
- * @pdev:   PDC platform device
+ * pdc_probe() - Probe function क्रम PDC driver.
+ * @pdev:   PDC platक्रमm device
  *
- * Reserve and map register regions defined in device tree.
+ * Reserve and map रेजिस्टर regions defined in device tree.
  * Allocate and initialize tx and rx DMA rings.
- * Initialize a mailbox controller for each PDC.
+ * Initialize a mailbox controller क्रम each PDC.
  *
- * Return: 0 if successful
- *         < 0 if an error
+ * Return: 0 अगर successful
+ *         < 0 अगर an error
  */
-static int pdc_probe(struct platform_device *pdev)
-{
-	int err = 0;
-	struct device *dev = &pdev->dev;
-	struct resource *pdc_regs;
-	struct pdc_state *pdcs;
+अटल पूर्णांक pdc_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	पूर्णांक err = 0;
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा resource *pdc_regs;
+	काष्ठा pdc_state *pdcs;
 
-	/* PDC state for one SPU */
-	pdcs = devm_kzalloc(dev, sizeof(*pdcs), GFP_KERNEL);
-	if (!pdcs) {
+	/* PDC state क्रम one SPU */
+	pdcs = devm_kzalloc(dev, माप(*pdcs), GFP_KERNEL);
+	अगर (!pdcs) अणु
 		err = -ENOMEM;
-		goto cleanup;
-	}
+		जाओ cleanup;
+	पूर्ण
 
 	pdcs->pdev = pdev;
-	platform_set_drvdata(pdev, pdcs);
+	platक्रमm_set_drvdata(pdev, pdcs);
 	pdcs->pdc_idx = pdcg.num_spu;
 	pdcg.num_spu++;
 
 	err = dma_set_mask_and_coherent(dev, DMA_BIT_MASK(39));
-	if (err) {
+	अगर (err) अणु
 		dev_warn(dev, "PDC device cannot perform DMA. Error %d.", err);
-		goto cleanup;
-	}
+		जाओ cleanup;
+	पूर्ण
 
-	/* Create DMA pool for tx ring */
+	/* Create DMA pool क्रम tx ring */
 	pdcs->ring_pool = dma_pool_create("pdc rings", dev, PDC_RING_SIZE,
 					  RING_ALIGN, 0);
-	if (!pdcs->ring_pool) {
+	अगर (!pdcs->ring_pool) अणु
 		err = -ENOMEM;
-		goto cleanup;
-	}
+		जाओ cleanup;
+	पूर्ण
 
-	err = pdc_dt_read(pdev, pdcs);
-	if (err)
-		goto cleanup_ring_pool;
+	err = pdc_dt_पढ़ो(pdev, pdcs);
+	अगर (err)
+		जाओ cleanup_ring_pool;
 
-	pdc_regs = platform_get_resource(pdev, IORESOURCE_MEM, 0);
-	if (!pdc_regs) {
+	pdc_regs = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
+	अगर (!pdc_regs) अणु
 		err = -ENODEV;
-		goto cleanup_ring_pool;
-	}
+		जाओ cleanup_ring_pool;
+	पूर्ण
 	dev_dbg(dev, "PDC register region res.start = %pa, res.end = %pa",
 		&pdc_regs->start, &pdc_regs->end);
 
 	pdcs->pdc_reg_vbase = devm_ioremap_resource(&pdev->dev, pdc_regs);
-	if (IS_ERR(pdcs->pdc_reg_vbase)) {
+	अगर (IS_ERR(pdcs->pdc_reg_vbase)) अणु
 		err = PTR_ERR(pdcs->pdc_reg_vbase);
 		dev_err(&pdev->dev, "Failed to map registers: %d\n", err);
-		goto cleanup_ring_pool;
-	}
+		जाओ cleanup_ring_pool;
+	पूर्ण
 
-	/* create rx buffer pool after dt read to know how big buffers are */
+	/* create rx buffer pool after dt पढ़ो to know how big buffers are */
 	err = pdc_rx_buf_pool_create(pdcs);
-	if (err)
-		goto cleanup_ring_pool;
+	अगर (err)
+		जाओ cleanup_ring_pool;
 
 	pdc_hw_init(pdcs);
 
-	/* Init tasklet for deferred DMA rx processing */
+	/* Init tasklet क्रम deferred DMA rx processing */
 	tasklet_setup(&pdcs->rx_tasklet, pdc_tasklet_cb);
 
-	err = pdc_interrupts_init(pdcs);
-	if (err)
-		goto cleanup_buf_pool;
+	err = pdc_पूर्णांकerrupts_init(pdcs);
+	अगर (err)
+		जाओ cleanup_buf_pool;
 
 	/* Initialize mailbox controller */
 	err = pdc_mb_init(pdcs);
-	if (err)
-		goto cleanup_buf_pool;
+	अगर (err)
+		जाओ cleanup_buf_pool;
 
 	pdc_setup_debugfs(pdcs);
 
 	dev_dbg(dev, "pdc_probe() successful");
-	return PDC_SUCCESS;
+	वापस PDC_SUCCESS;
 
 cleanup_buf_pool:
-	tasklet_kill(&pdcs->rx_tasklet);
+	tasklet_समाप्त(&pdcs->rx_tasklet);
 	dma_pool_destroy(pdcs->rx_buf_pool);
 
 cleanup_ring_pool:
 	dma_pool_destroy(pdcs->ring_pool);
 
 cleanup:
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int pdc_remove(struct platform_device *pdev)
-{
-	struct pdc_state *pdcs = platform_get_drvdata(pdev);
+अटल पूर्णांक pdc_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा pdc_state *pdcs = platक्रमm_get_drvdata(pdev);
 
-	pdc_free_debugfs();
+	pdc_मुक्त_debugfs();
 
-	tasklet_kill(&pdcs->rx_tasklet);
+	tasklet_समाप्त(&pdcs->rx_tasklet);
 
 	pdc_hw_disable(pdcs);
 
 	dma_pool_destroy(pdcs->rx_buf_pool);
 	dma_pool_destroy(pdcs->ring_pool);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct platform_driver pdc_mbox_driver = {
+अटल काष्ठा platक्रमm_driver pdc_mbox_driver = अणु
 	.probe = pdc_probe,
-	.remove = pdc_remove,
-	.driver = {
+	.हटाओ = pdc_हटाओ,
+	.driver = अणु
 		   .name = "brcm-iproc-pdc-mbox",
 		   .of_match_table = of_match_ptr(pdc_mbox_of_match),
-		   },
-};
-module_platform_driver(pdc_mbox_driver);
+		   पूर्ण,
+पूर्ण;
+module_platक्रमm_driver(pdc_mbox_driver);
 
 MODULE_AUTHOR("Rob Rice <rob.rice@broadcom.com>");
 MODULE_DESCRIPTION("Broadcom PDC mailbox driver");

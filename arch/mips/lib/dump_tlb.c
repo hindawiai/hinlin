@@ -1,148 +1,149 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * Dump R4x00 TLB for debugging purposes.
+ * Dump R4x00 TLB क्रम debugging purposes.
  *
- * Copyright (C) 1994, 1995 by Waldorf Electronics, written by Ralf Baechle.
+ * Copyright (C) 1994, 1995 by Walकरोrf Electronics, written by Ralf Baechle.
  * Copyright (C) 1999 by Silicon Graphics, Inc.
  */
-#include <linux/kernel.h>
-#include <linux/mm.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/mm.h>
 
-#include <asm/hazards.h>
-#include <asm/mipsregs.h>
-#include <asm/mmu_context.h>
-#include <asm/page.h>
-#include <asm/tlbdebug.h>
+#समावेश <यंत्र/hazards.h>
+#समावेश <यंत्र/mipsregs.h>
+#समावेश <यंत्र/mmu_context.h>
+#समावेश <यंत्र/page.h>
+#समावेश <यंत्र/tlbdebug.h>
 
-void dump_tlb_regs(void)
-{
-	const int field = 2 * sizeof(unsigned long);
+व्योम dump_tlb_regs(व्योम)
+अणु
+	स्थिर पूर्णांक field = 2 * माप(अचिन्हित दीर्घ);
 
-	pr_info("Index    : %0x\n", read_c0_index());
-	pr_info("PageMask : %0x\n", read_c0_pagemask());
-	if (cpu_has_guestid)
-		pr_info("GuestCtl1: %0x\n", read_c0_guestctl1());
-	pr_info("EntryHi  : %0*lx\n", field, read_c0_entryhi());
-	pr_info("EntryLo0 : %0*lx\n", field, read_c0_entrylo0());
-	pr_info("EntryLo1 : %0*lx\n", field, read_c0_entrylo1());
-	pr_info("Wired    : %0x\n", read_c0_wired());
-	switch (current_cpu_type()) {
-	case CPU_R10000:
-	case CPU_R12000:
-	case CPU_R14000:
-	case CPU_R16000:
-		pr_info("FrameMask: %0x\n", read_c0_framemask());
-		break;
-	}
-	if (cpu_has_small_pages || cpu_has_rixi || cpu_has_xpa)
-		pr_info("PageGrain: %0x\n", read_c0_pagegrain());
-	if (cpu_has_htw) {
-		pr_info("PWField  : %0*lx\n", field, read_c0_pwfield());
-		pr_info("PWSize   : %0*lx\n", field, read_c0_pwsize());
-		pr_info("PWCtl    : %0x\n", read_c0_pwctl());
-	}
-}
+	pr_info("Index    : %0x\n", पढ़ो_c0_index());
+	pr_info("PageMask : %0x\n", पढ़ो_c0_pagemask());
+	अगर (cpu_has_guestid)
+		pr_info("GuestCtl1: %0x\n", पढ़ो_c0_guestctl1());
+	pr_info("EntryHi  : %0*lx\n", field, पढ़ो_c0_entryhi());
+	pr_info("EntryLo0 : %0*lx\n", field, पढ़ो_c0_entrylo0());
+	pr_info("EntryLo1 : %0*lx\n", field, पढ़ो_c0_entrylo1());
+	pr_info("Wired    : %0x\n", पढ़ो_c0_wired());
+	चयन (current_cpu_type()) अणु
+	हाल CPU_R10000:
+	हाल CPU_R12000:
+	हाल CPU_R14000:
+	हाल CPU_R16000:
+		pr_info("FrameMask: %0x\n", पढ़ो_c0_framemask());
+		अवरोध;
+	पूर्ण
+	अगर (cpu_has_small_pages || cpu_has_rixi || cpu_has_xpa)
+		pr_info("PageGrain: %0x\n", पढ़ो_c0_pagegrain());
+	अगर (cpu_has_htw) अणु
+		pr_info("PWField  : %0*lx\n", field, पढ़ो_c0_pwfield());
+		pr_info("PWSize   : %0*lx\n", field, पढ़ो_c0_pwsize());
+		pr_info("PWCtl    : %0x\n", पढ़ो_c0_pwctl());
+	पूर्ण
+पूर्ण
 
-static inline const char *msk2str(unsigned int mask)
-{
-	switch (mask) {
-	case PM_4K:	return "4kb";
-	case PM_16K:	return "16kb";
-	case PM_64K:	return "64kb";
-	case PM_256K:	return "256kb";
-#ifdef CONFIG_CPU_CAVIUM_OCTEON
-	case PM_8K:	return "8kb";
-	case PM_32K:	return "32kb";
-	case PM_128K:	return "128kb";
-	case PM_512K:	return "512kb";
-	case PM_2M:	return "2Mb";
-	case PM_8M:	return "8Mb";
-	case PM_32M:	return "32Mb";
-#endif
-#ifndef CONFIG_CPU_VR41XX
-	case PM_1M:	return "1Mb";
-	case PM_4M:	return "4Mb";
-	case PM_16M:	return "16Mb";
-	case PM_64M:	return "64Mb";
-	case PM_256M:	return "256Mb";
-	case PM_1G:	return "1Gb";
-#endif
-	}
-	return "";
-}
+अटल अंतरभूत स्थिर अक्षर *msk2str(अचिन्हित पूर्णांक mask)
+अणु
+	चयन (mask) अणु
+	हाल PM_4K:	वापस "4kb";
+	हाल PM_16K:	वापस "16kb";
+	हाल PM_64K:	वापस "64kb";
+	हाल PM_256K:	वापस "256kb";
+#अगर_घोषित CONFIG_CPU_CAVIUM_OCTEON
+	हाल PM_8K:	वापस "8kb";
+	हाल PM_32K:	वापस "32kb";
+	हाल PM_128K:	वापस "128kb";
+	हाल PM_512K:	वापस "512kb";
+	हाल PM_2M:	वापस "2Mb";
+	हाल PM_8M:	वापस "8Mb";
+	हाल PM_32M:	वापस "32Mb";
+#पूर्ण_अगर
+#अगर_अघोषित CONFIG_CPU_VR41XX
+	हाल PM_1M:	वापस "1Mb";
+	हाल PM_4M:	वापस "4Mb";
+	हाल PM_16M:	वापस "16Mb";
+	हाल PM_64M:	वापस "64Mb";
+	हाल PM_256M:	वापस "256Mb";
+	हाल PM_1G:	वापस "1Gb";
+#पूर्ण_अगर
+	पूर्ण
+	वापस "";
+पूर्ण
 
-static void dump_tlb(int first, int last)
-{
-	unsigned long s_entryhi, entryhi, asid, mmid;
-	unsigned long long entrylo0, entrylo1, pa;
-	unsigned int s_index, s_pagemask, s_guestctl1 = 0;
-	unsigned int pagemask, guestctl1 = 0, c0, c1, i;
-	unsigned long asidmask = cpu_asid_mask(&current_cpu_data);
-	int asidwidth = DIV_ROUND_UP(ilog2(asidmask) + 1, 4);
-	unsigned long s_mmid;
-#ifdef CONFIG_32BIT
-	bool xpa = cpu_has_xpa && (read_c0_pagegrain() & PG_ELPA);
-	int pwidth = xpa ? 11 : 8;
-	int vwidth = 8;
-#else
+अटल व्योम dump_tlb(पूर्णांक first, पूर्णांक last)
+अणु
+	अचिन्हित दीर्घ s_entryhi, entryhi, asid, mmid;
+	अचिन्हित दीर्घ दीर्घ entrylo0, entrylo1, pa;
+	अचिन्हित पूर्णांक s_index, s_pagemask, s_guestctl1 = 0;
+	अचिन्हित पूर्णांक pagemask, guestctl1 = 0, c0, c1, i;
+	अचिन्हित दीर्घ asidmask = cpu_asid_mask(&current_cpu_data);
+	पूर्णांक asidwidth = DIV_ROUND_UP(ilog2(asidmask) + 1, 4);
+	अचिन्हित दीर्घ s_mmid;
+#अगर_घोषित CONFIG_32BIT
+	bool xpa = cpu_has_xpa && (पढ़ो_c0_pagegrain() & PG_ELPA);
+	पूर्णांक pwidth = xpa ? 11 : 8;
+	पूर्णांक vwidth = 8;
+#अन्यथा
 	bool xpa = false;
-	int pwidth = 11;
-	int vwidth = 11;
-#endif
+	पूर्णांक pwidth = 11;
+	पूर्णांक vwidth = 11;
+#पूर्ण_अगर
 
-	s_pagemask = read_c0_pagemask();
-	s_entryhi = read_c0_entryhi();
-	s_index = read_c0_index();
+	s_pagemask = पढ़ो_c0_pagemask();
+	s_entryhi = पढ़ो_c0_entryhi();
+	s_index = पढ़ो_c0_index();
 
-	if (cpu_has_mmid)
-		asid = s_mmid = read_c0_memorymapid();
-	else
+	अगर (cpu_has_mmid)
+		asid = s_mmid = पढ़ो_c0_memorymapid();
+	अन्यथा
 		asid = s_entryhi & asidmask;
 
-	if (cpu_has_guestid)
-		s_guestctl1 = read_c0_guestctl1();
+	अगर (cpu_has_guestid)
+		s_guestctl1 = पढ़ो_c0_guestctl1();
 
-	for (i = first; i <= last; i++) {
-		write_c0_index(i);
+	क्रम (i = first; i <= last; i++) अणु
+		ग_लिखो_c0_index(i);
 		mtc0_tlbr_hazard();
-		tlb_read();
-		tlb_read_hazard();
-		pagemask = read_c0_pagemask();
-		entryhi	 = read_c0_entryhi();
-		entrylo0 = read_c0_entrylo0();
-		entrylo1 = read_c0_entrylo1();
+		tlb_पढ़ो();
+		tlb_पढ़ो_hazard();
+		pagemask = पढ़ो_c0_pagemask();
+		entryhi	 = पढ़ो_c0_entryhi();
+		entrylo0 = पढ़ो_c0_entrylo0();
+		entrylo1 = पढ़ो_c0_entrylo1();
 
-		if (cpu_has_mmid)
-			mmid = read_c0_memorymapid();
-		else
+		अगर (cpu_has_mmid)
+			mmid = पढ़ो_c0_memorymapid();
+		अन्यथा
 			mmid = entryhi & asidmask;
 
-		if (cpu_has_guestid)
-			guestctl1 = read_c0_guestctl1();
+		अगर (cpu_has_guestid)
+			guestctl1 = पढ़ो_c0_guestctl1();
 
 		/* EHINV bit marks entire entry as invalid */
-		if (cpu_has_tlbinv && entryhi & MIPS_ENTRYHI_EHINV)
-			continue;
+		अगर (cpu_has_tlbinv && entryhi & MIPS_ENTRYHI_EHINV)
+			जारी;
 		/*
-		 * Prior to tlbinv, unused entries have a virtual address of
+		 * Prior to tlbinv, unused entries have a भव address of
 		 * CKSEG0.
 		 */
-		if ((entryhi & ~0x1ffffUL) == CKSEG0)
-			continue;
+		अगर ((entryhi & ~0x1ffffUL) == CKSEG0)
+			जारी;
 		/*
-		 * ASID takes effect in absence of G (global) bit.
+		 * ASID takes effect in असलence of G (global) bit.
 		 * We check both G bits, even though architecturally they should
 		 * match one another, because some revisions of the SB1 core may
 		 * leave only a single G bit set after a machine check exception
 		 * due to duplicate TLB entry.
 		 */
-		if (!((entrylo0 | entrylo1) & ENTRYLO_G) && (mmid != asid))
-			continue;
+		अगर (!((entrylo0 | entrylo1) & ENTRYLO_G) && (mmid != asid))
+			जारी;
 
 		/*
-		 * Only print entries in use
+		 * Only prपूर्णांक entries in use
 		 */
-		printk("Index: %2d pgmask=%s ", i, msk2str(pagemask));
+		prपूर्णांकk("Index: %2d pgmask=%s ", i, msk2str(pagemask));
 
 		c0 = (entrylo0 & ENTRYLO_C) >> ENTRYLO_C_SHIFT;
 		c1 = (entrylo1 & ENTRYLO_C) >> ENTRYLO_C_SHIFT;
@@ -150,17 +151,17 @@ static void dump_tlb(int first, int last)
 		pr_cont("va=%0*lx asid=%0*lx",
 			vwidth, (entryhi & ~0x1fffUL),
 			asidwidth, mmid);
-		if (cpu_has_guestid)
+		अगर (cpu_has_guestid)
 			pr_cont(" gid=%02lx",
 				(guestctl1 & MIPS_GCTL1_RID)
 					>> MIPS_GCTL1_RID_SHIFT);
 		/* RI/XI are in awkward places, so mask them off separately */
 		pa = entrylo0 & ~(MIPS_ENTRYLO_RI | MIPS_ENTRYLO_XI);
-		if (xpa)
-			pa |= (unsigned long long)readx_c0_entrylo0() << 30;
+		अगर (xpa)
+			pa |= (अचिन्हित दीर्घ दीर्घ)पढ़ोx_c0_entrylo0() << 30;
 		pa = (pa << 6) & PAGE_MASK;
 		pr_cont("\n\t[");
-		if (cpu_has_rixi)
+		अगर (cpu_has_rixi)
 			pr_cont("ri=%d xi=%d ",
 				(entrylo0 & MIPS_ENTRYLO_RI) ? 1 : 0,
 				(entrylo0 & MIPS_ENTRYLO_XI) ? 1 : 0);
@@ -171,10 +172,10 @@ static void dump_tlb(int first, int last)
 			(entrylo0 & ENTRYLO_G) ? 1 : 0);
 		/* RI/XI are in awkward places, so mask them off separately */
 		pa = entrylo1 & ~(MIPS_ENTRYLO_RI | MIPS_ENTRYLO_XI);
-		if (xpa)
-			pa |= (unsigned long long)readx_c0_entrylo1() << 30;
+		अगर (xpa)
+			pa |= (अचिन्हित दीर्घ दीर्घ)पढ़ोx_c0_entrylo1() << 30;
 		pa = (pa << 6) & PAGE_MASK;
-		if (cpu_has_rixi)
+		अगर (cpu_has_rixi)
 			pr_cont("ri=%d xi=%d ",
 				(entrylo1 & MIPS_ENTRYLO_RI) ? 1 : 0,
 				(entrylo1 & MIPS_ENTRYLO_XI) ? 1 : 0);
@@ -183,17 +184,17 @@ static void dump_tlb(int first, int last)
 			(entrylo1 & ENTRYLO_D) ? 1 : 0,
 			(entrylo1 & ENTRYLO_V) ? 1 : 0,
 			(entrylo1 & ENTRYLO_G) ? 1 : 0);
-	}
-	printk("\n");
+	पूर्ण
+	prपूर्णांकk("\n");
 
-	write_c0_entryhi(s_entryhi);
-	write_c0_index(s_index);
-	write_c0_pagemask(s_pagemask);
-	if (cpu_has_guestid)
-		write_c0_guestctl1(s_guestctl1);
-}
+	ग_लिखो_c0_entryhi(s_entryhi);
+	ग_लिखो_c0_index(s_index);
+	ग_लिखो_c0_pagemask(s_pagemask);
+	अगर (cpu_has_guestid)
+		ग_लिखो_c0_guestctl1(s_guestctl1);
+पूर्ण
 
-void dump_tlb_all(void)
-{
+व्योम dump_tlb_all(व्योम)
+अणु
 	dump_tlb(0, current_cpu_data.tlbsize - 1);
-}
+पूर्ण

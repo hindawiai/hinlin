@@ -1,784 +1,785 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <linux/ceph/ceph_debug.h>
-#include <linux/ceph/pagelist.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <linux/ceph/ceph_debug.h>
+#समावेश <linux/ceph/pagelist.h>
 
-#include "super.h"
-#include "mds_client.h"
+#समावेश "super.h"
+#समावेश "mds_client.h"
 
-#include <linux/ceph/decode.h>
+#समावेश <linux/ceph/decode.h>
 
-#include <linux/xattr.h>
-#include <linux/security.h>
-#include <linux/posix_acl_xattr.h>
-#include <linux/slab.h>
+#समावेश <linux/xattr.h>
+#समावेश <linux/security.h>
+#समावेश <linux/posix_acl_xattr.h>
+#समावेश <linux/slab.h>
 
-#define XATTR_CEPH_PREFIX "ceph."
-#define XATTR_CEPH_PREFIX_LEN (sizeof (XATTR_CEPH_PREFIX) - 1)
+#घोषणा XATTR_CEPH_PREFIX "ceph."
+#घोषणा XATTR_CEPH_PREFIX_LEN (माप (XATTR_CEPH_PREFIX) - 1)
 
-static int __remove_xattr(struct ceph_inode_info *ci,
-			  struct ceph_inode_xattr *xattr);
+अटल पूर्णांक __हटाओ_xattr(काष्ठा ceph_inode_info *ci,
+			  काष्ठा ceph_inode_xattr *xattr);
 
-static bool ceph_is_valid_xattr(const char *name)
-{
-	return !strncmp(name, XATTR_SECURITY_PREFIX, XATTR_SECURITY_PREFIX_LEN) ||
-	       !strncmp(name, XATTR_CEPH_PREFIX, XATTR_CEPH_PREFIX_LEN) ||
-	       !strncmp(name, XATTR_TRUSTED_PREFIX, XATTR_TRUSTED_PREFIX_LEN) ||
-	       !strncmp(name, XATTR_USER_PREFIX, XATTR_USER_PREFIX_LEN);
-}
+अटल bool ceph_is_valid_xattr(स्थिर अक्षर *name)
+अणु
+	वापस !म_भेदन(name, XATTR_SECURITY_PREFIX, XATTR_SECURITY_PREFIX_LEN) ||
+	       !म_भेदन(name, XATTR_CEPH_PREFIX, XATTR_CEPH_PREFIX_LEN) ||
+	       !म_भेदन(name, XATTR_TRUSTED_PREFIX, XATTR_TRUSTED_PREFIX_LEN) ||
+	       !म_भेदन(name, XATTR_USER_PREFIX, XATTR_USER_PREFIX_LEN);
+पूर्ण
 
 /*
- * These define virtual xattrs exposing the recursive directory
+ * These define भव xattrs exposing the recursive directory
  * statistics and layout metadata.
  */
-struct ceph_vxattr {
-	char *name;
-	size_t name_size;	/* strlen(name) + 1 (for '\0') */
-	ssize_t (*getxattr_cb)(struct ceph_inode_info *ci, char *val,
-			       size_t size);
-	bool (*exists_cb)(struct ceph_inode_info *ci);
-	unsigned int flags;
-};
+काष्ठा ceph_vxattr अणु
+	अक्षर *name;
+	माप_प्रकार name_size;	/* म_माप(name) + 1 (क्रम '\0') */
+	sमाप_प्रकार (*getxattr_cb)(काष्ठा ceph_inode_info *ci, अक्षर *val,
+			       माप_प्रकार size);
+	bool (*exists_cb)(काष्ठा ceph_inode_info *ci);
+	अचिन्हित पूर्णांक flags;
+पूर्ण;
 
-#define VXATTR_FLAG_READONLY		(1<<0)
-#define VXATTR_FLAG_HIDDEN		(1<<1)
-#define VXATTR_FLAG_RSTAT		(1<<2)
-#define VXATTR_FLAG_DIRSTAT		(1<<3)
+#घोषणा VXATTR_FLAG_READONLY		(1<<0)
+#घोषणा VXATTR_FLAG_HIDDEN		(1<<1)
+#घोषणा VXATTR_FLAG_RSTAT		(1<<2)
+#घोषणा VXATTR_FLAG_सूचीSTAT		(1<<3)
 
 /* layouts */
 
-static bool ceph_vxattrcb_layout_exists(struct ceph_inode_info *ci)
-{
-	struct ceph_file_layout *fl = &ci->i_layout;
-	return (fl->stripe_unit > 0 || fl->stripe_count > 0 ||
+अटल bool ceph_vxattrcb_layout_exists(काष्ठा ceph_inode_info *ci)
+अणु
+	काष्ठा ceph_file_layout *fl = &ci->i_layout;
+	वापस (fl->stripe_unit > 0 || fl->stripe_count > 0 ||
 		fl->object_size > 0 || fl->pool_id >= 0 ||
-		rcu_dereference_raw(fl->pool_ns) != NULL);
-}
+		rcu_dereference_raw(fl->pool_ns) != शून्य);
+पूर्ण
 
-static ssize_t ceph_vxattrcb_layout(struct ceph_inode_info *ci, char *val,
-				    size_t size)
-{
-	struct ceph_fs_client *fsc = ceph_sb_to_client(ci->vfs_inode.i_sb);
-	struct ceph_osd_client *osdc = &fsc->client->osdc;
-	struct ceph_string *pool_ns;
+अटल sमाप_प्रकार ceph_vxattrcb_layout(काष्ठा ceph_inode_info *ci, अक्षर *val,
+				    माप_प्रकार size)
+अणु
+	काष्ठा ceph_fs_client *fsc = ceph_sb_to_client(ci->vfs_inode.i_sb);
+	काष्ठा ceph_osd_client *osdc = &fsc->client->osdc;
+	काष्ठा ceph_string *pool_ns;
 	s64 pool = ci->i_layout.pool_id;
-	const char *pool_name;
-	const char *ns_field = " pool_namespace=";
-	char buf[128];
-	size_t len, total_len = 0;
-	ssize_t ret;
+	स्थिर अक्षर *pool_name;
+	स्थिर अक्षर *ns_field = " pool_namespace=";
+	अक्षर buf[128];
+	माप_प्रकार len, total_len = 0;
+	sमाप_प्रकार ret;
 
 	pool_ns = ceph_try_get_string(ci->i_layout.pool_ns);
 
-	dout("ceph_vxattrcb_layout %p\n", &ci->vfs_inode);
-	down_read(&osdc->lock);
+	करोut("ceph_vxattrcb_layout %p\n", &ci->vfs_inode);
+	करोwn_पढ़ो(&osdc->lock);
 	pool_name = ceph_pg_pool_name_by_id(osdc->osdmap, pool);
-	if (pool_name) {
-		len = snprintf(buf, sizeof(buf),
+	अगर (pool_name) अणु
+		len = snम_लिखो(buf, माप(buf),
 		"stripe_unit=%u stripe_count=%u object_size=%u pool=",
 		ci->i_layout.stripe_unit, ci->i_layout.stripe_count,
 	        ci->i_layout.object_size);
-		total_len = len + strlen(pool_name);
-	} else {
-		len = snprintf(buf, sizeof(buf),
+		total_len = len + म_माप(pool_name);
+	पूर्ण अन्यथा अणु
+		len = snम_लिखो(buf, माप(buf),
 		"stripe_unit=%u stripe_count=%u object_size=%u pool=%lld",
 		ci->i_layout.stripe_unit, ci->i_layout.stripe_count,
 		ci->i_layout.object_size, pool);
 		total_len = len;
-	}
+	पूर्ण
 
-	if (pool_ns)
-		total_len += strlen(ns_field) + pool_ns->len;
+	अगर (pool_ns)
+		total_len += म_माप(ns_field) + pool_ns->len;
 
 	ret = total_len;
-	if (size >= total_len) {
-		memcpy(val, buf, len);
+	अगर (size >= total_len) अणु
+		स_नकल(val, buf, len);
 		ret = len;
-		if (pool_name) {
-			len = strlen(pool_name);
-			memcpy(val + ret, pool_name, len);
+		अगर (pool_name) अणु
+			len = म_माप(pool_name);
+			स_नकल(val + ret, pool_name, len);
 			ret += len;
-		}
-		if (pool_ns) {
-			len = strlen(ns_field);
-			memcpy(val + ret, ns_field, len);
+		पूर्ण
+		अगर (pool_ns) अणु
+			len = म_माप(ns_field);
+			स_नकल(val + ret, ns_field, len);
 			ret += len;
-			memcpy(val + ret, pool_ns->str, pool_ns->len);
+			स_नकल(val + ret, pool_ns->str, pool_ns->len);
 			ret += pool_ns->len;
-		}
-	}
-	up_read(&osdc->lock);
+		पूर्ण
+	पूर्ण
+	up_पढ़ो(&osdc->lock);
 	ceph_put_string(pool_ns);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
- * The convention with strings in xattrs is that they should not be NULL
- * terminated, since we're returning the length with them. snprintf always
- * NULL terminates however, so call it on a temporary buffer and then memcpy
- * the result into place.
+ * The convention with strings in xattrs is that they should not be शून्य
+ * terminated, since we're वापसing the length with them. snम_लिखो always
+ * शून्य terminates however, so call it on a temporary buffer and then स_नकल
+ * the result पूर्णांकo place.
  */
-static __printf(3, 4)
-int ceph_fmt_xattr(char *val, size_t size, const char *fmt, ...)
-{
-	int ret;
-	va_list args;
-	char buf[96]; /* NB: reevaluate size if new vxattrs are added */
+अटल __म_लिखो(3, 4)
+पूर्णांक ceph_fmt_xattr(अक्षर *val, माप_प्रकार size, स्थिर अक्षर *fmt, ...)
+अणु
+	पूर्णांक ret;
+	बहु_सूची args;
+	अक्षर buf[96]; /* NB: reevaluate size अगर new vxattrs are added */
 
-	va_start(args, fmt);
-	ret = vsnprintf(buf, size ? sizeof(buf) : 0, fmt, args);
-	va_end(args);
+	बहु_शुरू(args, fmt);
+	ret = vsnम_लिखो(buf, size ? माप(buf) : 0, fmt, args);
+	बहु_पूर्ण(args);
 
 	/* Sanity check */
-	if (size && ret + 1 > sizeof(buf)) {
+	अगर (size && ret + 1 > माप(buf)) अणु
 		WARN_ONCE(true, "Returned length too big (%d)", ret);
-		return -E2BIG;
-	}
+		वापस -E2BIG;
+	पूर्ण
 
-	if (ret <= size)
-		memcpy(val, buf, ret);
-	return ret;
-}
+	अगर (ret <= size)
+		स_नकल(val, buf, ret);
+	वापस ret;
+पूर्ण
 
-static ssize_t ceph_vxattrcb_layout_stripe_unit(struct ceph_inode_info *ci,
-						char *val, size_t size)
-{
-	return ceph_fmt_xattr(val, size, "%u", ci->i_layout.stripe_unit);
-}
+अटल sमाप_प्रकार ceph_vxattrcb_layout_stripe_unit(काष्ठा ceph_inode_info *ci,
+						अक्षर *val, माप_प्रकार size)
+अणु
+	वापस ceph_fmt_xattr(val, size, "%u", ci->i_layout.stripe_unit);
+पूर्ण
 
-static ssize_t ceph_vxattrcb_layout_stripe_count(struct ceph_inode_info *ci,
-						 char *val, size_t size)
-{
-	return ceph_fmt_xattr(val, size, "%u", ci->i_layout.stripe_count);
-}
+अटल sमाप_प्रकार ceph_vxattrcb_layout_stripe_count(काष्ठा ceph_inode_info *ci,
+						 अक्षर *val, माप_प्रकार size)
+अणु
+	वापस ceph_fmt_xattr(val, size, "%u", ci->i_layout.stripe_count);
+पूर्ण
 
-static ssize_t ceph_vxattrcb_layout_object_size(struct ceph_inode_info *ci,
-						char *val, size_t size)
-{
-	return ceph_fmt_xattr(val, size, "%u", ci->i_layout.object_size);
-}
+अटल sमाप_प्रकार ceph_vxattrcb_layout_object_size(काष्ठा ceph_inode_info *ci,
+						अक्षर *val, माप_प्रकार size)
+अणु
+	वापस ceph_fmt_xattr(val, size, "%u", ci->i_layout.object_size);
+पूर्ण
 
-static ssize_t ceph_vxattrcb_layout_pool(struct ceph_inode_info *ci,
-					 char *val, size_t size)
-{
-	ssize_t ret;
-	struct ceph_fs_client *fsc = ceph_sb_to_client(ci->vfs_inode.i_sb);
-	struct ceph_osd_client *osdc = &fsc->client->osdc;
+अटल sमाप_प्रकार ceph_vxattrcb_layout_pool(काष्ठा ceph_inode_info *ci,
+					 अक्षर *val, माप_प्रकार size)
+अणु
+	sमाप_प्रकार ret;
+	काष्ठा ceph_fs_client *fsc = ceph_sb_to_client(ci->vfs_inode.i_sb);
+	काष्ठा ceph_osd_client *osdc = &fsc->client->osdc;
 	s64 pool = ci->i_layout.pool_id;
-	const char *pool_name;
+	स्थिर अक्षर *pool_name;
 
-	down_read(&osdc->lock);
+	करोwn_पढ़ो(&osdc->lock);
 	pool_name = ceph_pg_pool_name_by_id(osdc->osdmap, pool);
-	if (pool_name) {
-		ret = strlen(pool_name);
-		if (ret <= size)
-			memcpy(val, pool_name, ret);
-	} else {
+	अगर (pool_name) अणु
+		ret = म_माप(pool_name);
+		अगर (ret <= size)
+			स_नकल(val, pool_name, ret);
+	पूर्ण अन्यथा अणु
 		ret = ceph_fmt_xattr(val, size, "%lld", pool);
-	}
-	up_read(&osdc->lock);
-	return ret;
-}
+	पूर्ण
+	up_पढ़ो(&osdc->lock);
+	वापस ret;
+पूर्ण
 
-static ssize_t ceph_vxattrcb_layout_pool_namespace(struct ceph_inode_info *ci,
-						   char *val, size_t size)
-{
-	ssize_t ret = 0;
-	struct ceph_string *ns = ceph_try_get_string(ci->i_layout.pool_ns);
+अटल sमाप_प्रकार ceph_vxattrcb_layout_pool_namespace(काष्ठा ceph_inode_info *ci,
+						   अक्षर *val, माप_प्रकार size)
+अणु
+	sमाप_प्रकार ret = 0;
+	काष्ठा ceph_string *ns = ceph_try_get_string(ci->i_layout.pool_ns);
 
-	if (ns) {
+	अगर (ns) अणु
 		ret = ns->len;
-		if (ret <= size)
-			memcpy(val, ns->str, ret);
+		अगर (ret <= size)
+			स_नकल(val, ns->str, ret);
 		ceph_put_string(ns);
-	}
-	return ret;
-}
+	पूर्ण
+	वापस ret;
+पूर्ण
 
 /* directories */
 
-static ssize_t ceph_vxattrcb_dir_entries(struct ceph_inode_info *ci, char *val,
-					 size_t size)
-{
-	return ceph_fmt_xattr(val, size, "%lld", ci->i_files + ci->i_subdirs);
-}
+अटल sमाप_प्रकार ceph_vxattrcb_dir_entries(काष्ठा ceph_inode_info *ci, अक्षर *val,
+					 माप_प्रकार size)
+अणु
+	वापस ceph_fmt_xattr(val, size, "%lld", ci->i_files + ci->i_subdirs);
+पूर्ण
 
-static ssize_t ceph_vxattrcb_dir_files(struct ceph_inode_info *ci, char *val,
-				       size_t size)
-{
-	return ceph_fmt_xattr(val, size, "%lld", ci->i_files);
-}
+अटल sमाप_प्रकार ceph_vxattrcb_dir_files(काष्ठा ceph_inode_info *ci, अक्षर *val,
+				       माप_प्रकार size)
+अणु
+	वापस ceph_fmt_xattr(val, size, "%lld", ci->i_files);
+पूर्ण
 
-static ssize_t ceph_vxattrcb_dir_subdirs(struct ceph_inode_info *ci, char *val,
-					 size_t size)
-{
-	return ceph_fmt_xattr(val, size, "%lld", ci->i_subdirs);
-}
+अटल sमाप_प्रकार ceph_vxattrcb_dir_subdirs(काष्ठा ceph_inode_info *ci, अक्षर *val,
+					 माप_प्रकार size)
+अणु
+	वापस ceph_fmt_xattr(val, size, "%lld", ci->i_subdirs);
+पूर्ण
 
-static ssize_t ceph_vxattrcb_dir_rentries(struct ceph_inode_info *ci, char *val,
-					  size_t size)
-{
-	return ceph_fmt_xattr(val, size, "%lld",
+अटल sमाप_प्रकार ceph_vxattrcb_dir_rentries(काष्ठा ceph_inode_info *ci, अक्षर *val,
+					  माप_प्रकार size)
+अणु
+	वापस ceph_fmt_xattr(val, size, "%lld",
 				ci->i_rfiles + ci->i_rsubdirs);
-}
+पूर्ण
 
-static ssize_t ceph_vxattrcb_dir_rfiles(struct ceph_inode_info *ci, char *val,
-					size_t size)
-{
-	return ceph_fmt_xattr(val, size, "%lld", ci->i_rfiles);
-}
+अटल sमाप_प्रकार ceph_vxattrcb_dir_rfiles(काष्ठा ceph_inode_info *ci, अक्षर *val,
+					माप_प्रकार size)
+अणु
+	वापस ceph_fmt_xattr(val, size, "%lld", ci->i_rfiles);
+पूर्ण
 
-static ssize_t ceph_vxattrcb_dir_rsubdirs(struct ceph_inode_info *ci, char *val,
-					  size_t size)
-{
-	return ceph_fmt_xattr(val, size, "%lld", ci->i_rsubdirs);
-}
+अटल sमाप_प्रकार ceph_vxattrcb_dir_rsubdirs(काष्ठा ceph_inode_info *ci, अक्षर *val,
+					  माप_प्रकार size)
+अणु
+	वापस ceph_fmt_xattr(val, size, "%lld", ci->i_rsubdirs);
+पूर्ण
 
-static ssize_t ceph_vxattrcb_dir_rsnaps(struct ceph_inode_info *ci, char *val,
-					  size_t size)
-{
-	return ceph_fmt_xattr(val, size, "%lld", ci->i_rsnaps);
-}
+अटल sमाप_प्रकार ceph_vxattrcb_dir_rsnaps(काष्ठा ceph_inode_info *ci, अक्षर *val,
+					  माप_प्रकार size)
+अणु
+	वापस ceph_fmt_xattr(val, size, "%lld", ci->i_rsnaps);
+पूर्ण
 
-static ssize_t ceph_vxattrcb_dir_rbytes(struct ceph_inode_info *ci, char *val,
-					size_t size)
-{
-	return ceph_fmt_xattr(val, size, "%lld", ci->i_rbytes);
-}
+अटल sमाप_प्रकार ceph_vxattrcb_dir_rbytes(काष्ठा ceph_inode_info *ci, अक्षर *val,
+					माप_प्रकार size)
+अणु
+	वापस ceph_fmt_xattr(val, size, "%lld", ci->i_rbytes);
+पूर्ण
 
-static ssize_t ceph_vxattrcb_dir_rctime(struct ceph_inode_info *ci, char *val,
-					size_t size)
-{
-	return ceph_fmt_xattr(val, size, "%lld.%09ld", ci->i_rctime.tv_sec,
-				ci->i_rctime.tv_nsec);
-}
+अटल sमाप_प्रकार ceph_vxattrcb_dir_rस_समय(काष्ठा ceph_inode_info *ci, अक्षर *val,
+					माप_प्रकार size)
+अणु
+	वापस ceph_fmt_xattr(val, size, "%lld.%09ld", ci->i_rस_समय.tv_sec,
+				ci->i_rस_समय.tv_nsec);
+पूर्ण
 
 /* dir pin */
-static bool ceph_vxattrcb_dir_pin_exists(struct ceph_inode_info *ci)
-{
-	return ci->i_dir_pin != -ENODATA;
-}
+अटल bool ceph_vxattrcb_dir_pin_exists(काष्ठा ceph_inode_info *ci)
+अणु
+	वापस ci->i_dir_pin != -ENODATA;
+पूर्ण
 
-static ssize_t ceph_vxattrcb_dir_pin(struct ceph_inode_info *ci, char *val,
-				     size_t size)
-{
-	return ceph_fmt_xattr(val, size, "%d", (int)ci->i_dir_pin);
-}
+अटल sमाप_प्रकार ceph_vxattrcb_dir_pin(काष्ठा ceph_inode_info *ci, अक्षर *val,
+				     माप_प्रकार size)
+अणु
+	वापस ceph_fmt_xattr(val, size, "%d", (पूर्णांक)ci->i_dir_pin);
+पूर्ण
 
 /* quotas */
-static bool ceph_vxattrcb_quota_exists(struct ceph_inode_info *ci)
-{
+अटल bool ceph_vxattrcb_quota_exists(काष्ठा ceph_inode_info *ci)
+अणु
 	bool ret = false;
 	spin_lock(&ci->i_ceph_lock);
-	if ((ci->i_max_files || ci->i_max_bytes) &&
+	अगर ((ci->i_max_files || ci->i_max_bytes) &&
 	    ci->i_vino.snap == CEPH_NOSNAP &&
 	    ci->i_snap_realm &&
 	    ci->i_snap_realm->ino == ci->i_vino.ino)
 		ret = true;
 	spin_unlock(&ci->i_ceph_lock);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static ssize_t ceph_vxattrcb_quota(struct ceph_inode_info *ci, char *val,
-				   size_t size)
-{
-	return ceph_fmt_xattr(val, size, "max_bytes=%llu max_files=%llu",
+अटल sमाप_प्रकार ceph_vxattrcb_quota(काष्ठा ceph_inode_info *ci, अक्षर *val,
+				   माप_प्रकार size)
+अणु
+	वापस ceph_fmt_xattr(val, size, "max_bytes=%llu max_files=%llu",
 				ci->i_max_bytes, ci->i_max_files);
-}
+पूर्ण
 
-static ssize_t ceph_vxattrcb_quota_max_bytes(struct ceph_inode_info *ci,
-					     char *val, size_t size)
-{
-	return ceph_fmt_xattr(val, size, "%llu", ci->i_max_bytes);
-}
+अटल sमाप_प्रकार ceph_vxattrcb_quota_max_bytes(काष्ठा ceph_inode_info *ci,
+					     अक्षर *val, माप_प्रकार size)
+अणु
+	वापस ceph_fmt_xattr(val, size, "%llu", ci->i_max_bytes);
+पूर्ण
 
-static ssize_t ceph_vxattrcb_quota_max_files(struct ceph_inode_info *ci,
-					     char *val, size_t size)
-{
-	return ceph_fmt_xattr(val, size, "%llu", ci->i_max_files);
-}
+अटल sमाप_प्रकार ceph_vxattrcb_quota_max_files(काष्ठा ceph_inode_info *ci,
+					     अक्षर *val, माप_प्रकार size)
+अणु
+	वापस ceph_fmt_xattr(val, size, "%llu", ci->i_max_files);
+पूर्ण
 
 /* snapshots */
-static bool ceph_vxattrcb_snap_btime_exists(struct ceph_inode_info *ci)
-{
-	return (ci->i_snap_btime.tv_sec != 0 || ci->i_snap_btime.tv_nsec != 0);
-}
+अटल bool ceph_vxattrcb_snap_bसमय_exists(काष्ठा ceph_inode_info *ci)
+अणु
+	वापस (ci->i_snap_bसमय.tv_sec != 0 || ci->i_snap_bसमय.tv_nsec != 0);
+पूर्ण
 
-static ssize_t ceph_vxattrcb_snap_btime(struct ceph_inode_info *ci, char *val,
-					size_t size)
-{
-	return ceph_fmt_xattr(val, size, "%lld.%09ld", ci->i_snap_btime.tv_sec,
-				ci->i_snap_btime.tv_nsec);
-}
+अटल sमाप_प्रकार ceph_vxattrcb_snap_bसमय(काष्ठा ceph_inode_info *ci, अक्षर *val,
+					माप_प्रकार size)
+अणु
+	वापस ceph_fmt_xattr(val, size, "%lld.%09ld", ci->i_snap_bसमय.tv_sec,
+				ci->i_snap_bसमय.tv_nsec);
+पूर्ण
 
-static ssize_t ceph_vxattrcb_cluster_fsid(struct ceph_inode_info *ci,
-					  char *val, size_t size)
-{
-	struct ceph_fs_client *fsc = ceph_sb_to_client(ci->vfs_inode.i_sb);
+अटल sमाप_प्रकार ceph_vxattrcb_cluster_fsid(काष्ठा ceph_inode_info *ci,
+					  अक्षर *val, माप_प्रकार size)
+अणु
+	काष्ठा ceph_fs_client *fsc = ceph_sb_to_client(ci->vfs_inode.i_sb);
 
-	return ceph_fmt_xattr(val, size, "%pU", &fsc->client->fsid);
-}
+	वापस ceph_fmt_xattr(val, size, "%pU", &fsc->client->fsid);
+पूर्ण
 
-static ssize_t ceph_vxattrcb_client_id(struct ceph_inode_info *ci,
-				       char *val, size_t size)
-{
-	struct ceph_fs_client *fsc = ceph_sb_to_client(ci->vfs_inode.i_sb);
+अटल sमाप_प्रकार ceph_vxattrcb_client_id(काष्ठा ceph_inode_info *ci,
+				       अक्षर *val, माप_प्रकार size)
+अणु
+	काष्ठा ceph_fs_client *fsc = ceph_sb_to_client(ci->vfs_inode.i_sb);
 
-	return ceph_fmt_xattr(val, size, "client%lld",
+	वापस ceph_fmt_xattr(val, size, "client%lld",
 			      ceph_client_gid(fsc->client));
-}
+पूर्ण
 
-static ssize_t ceph_vxattrcb_caps(struct ceph_inode_info *ci, char *val,
-					size_t size)
-{
-	int issued;
+अटल sमाप_प्रकार ceph_vxattrcb_caps(काष्ठा ceph_inode_info *ci, अक्षर *val,
+					माप_प्रकार size)
+अणु
+	पूर्णांक issued;
 
 	spin_lock(&ci->i_ceph_lock);
-	issued = __ceph_caps_issued(ci, NULL);
+	issued = __ceph_caps_issued(ci, शून्य);
 	spin_unlock(&ci->i_ceph_lock);
 
-	return ceph_fmt_xattr(val, size, "%s/0x%x",
+	वापस ceph_fmt_xattr(val, size, "%s/0x%x",
 			      ceph_cap_string(issued), issued);
-}
+पूर्ण
 
-#define CEPH_XATTR_NAME(_type, _name)	XATTR_CEPH_PREFIX #_type "." #_name
-#define CEPH_XATTR_NAME2(_type, _name, _name2)	\
+#घोषणा CEPH_XATTR_NAME(_type, _name)	XATTR_CEPH_PREFIX #_type "." #_name
+#घोषणा CEPH_XATTR_NAME2(_type, _name, _name2)	\
 	XATTR_CEPH_PREFIX #_type "." #_name "." #_name2
 
-#define XATTR_NAME_CEPH(_type, _name, _flags)				\
-	{								\
+#घोषणा XATTR_NAME_CEPH(_type, _name, _flags)				\
+	अणु								\
 		.name = CEPH_XATTR_NAME(_type, _name),			\
-		.name_size = sizeof (CEPH_XATTR_NAME(_type, _name)), \
+		.name_size = माप (CEPH_XATTR_NAME(_type, _name)), \
 		.getxattr_cb = ceph_vxattrcb_ ## _type ## _ ## _name, \
-		.exists_cb = NULL,					\
+		.exists_cb = शून्य,					\
 		.flags = (VXATTR_FLAG_READONLY | _flags),		\
-	}
-#define XATTR_RSTAT_FIELD(_type, _name)			\
+	पूर्ण
+#घोषणा XATTR_RSTAT_FIELD(_type, _name)			\
 	XATTR_NAME_CEPH(_type, _name, VXATTR_FLAG_RSTAT)
-#define XATTR_LAYOUT_FIELD(_type, _name, _field)			\
-	{								\
+#घोषणा XATTR_LAYOUT_FIELD(_type, _name, _field)			\
+	अणु								\
 		.name = CEPH_XATTR_NAME2(_type, _name, _field),	\
-		.name_size = sizeof (CEPH_XATTR_NAME2(_type, _name, _field)), \
+		.name_size = माप (CEPH_XATTR_NAME2(_type, _name, _field)), \
 		.getxattr_cb = ceph_vxattrcb_ ## _name ## _ ## _field, \
 		.exists_cb = ceph_vxattrcb_layout_exists,	\
 		.flags = VXATTR_FLAG_HIDDEN,			\
-	}
-#define XATTR_QUOTA_FIELD(_type, _name)					\
-	{								\
+	पूर्ण
+#घोषणा XATTR_QUOTA_FIELD(_type, _name)					\
+	अणु								\
 		.name = CEPH_XATTR_NAME(_type, _name),			\
-		.name_size = sizeof(CEPH_XATTR_NAME(_type, _name)),	\
+		.name_size = माप(CEPH_XATTR_NAME(_type, _name)),	\
 		.getxattr_cb = ceph_vxattrcb_ ## _type ## _ ## _name,	\
 		.exists_cb = ceph_vxattrcb_quota_exists,		\
 		.flags = VXATTR_FLAG_HIDDEN,				\
-	}
+	पूर्ण
 
-static struct ceph_vxattr ceph_dir_vxattrs[] = {
-	{
+अटल काष्ठा ceph_vxattr ceph_dir_vxattrs[] = अणु
+	अणु
 		.name = "ceph.dir.layout",
-		.name_size = sizeof("ceph.dir.layout"),
+		.name_size = माप("ceph.dir.layout"),
 		.getxattr_cb = ceph_vxattrcb_layout,
 		.exists_cb = ceph_vxattrcb_layout_exists,
 		.flags = VXATTR_FLAG_HIDDEN,
-	},
+	पूर्ण,
 	XATTR_LAYOUT_FIELD(dir, layout, stripe_unit),
 	XATTR_LAYOUT_FIELD(dir, layout, stripe_count),
 	XATTR_LAYOUT_FIELD(dir, layout, object_size),
 	XATTR_LAYOUT_FIELD(dir, layout, pool),
 	XATTR_LAYOUT_FIELD(dir, layout, pool_namespace),
-	XATTR_NAME_CEPH(dir, entries, VXATTR_FLAG_DIRSTAT),
-	XATTR_NAME_CEPH(dir, files, VXATTR_FLAG_DIRSTAT),
-	XATTR_NAME_CEPH(dir, subdirs, VXATTR_FLAG_DIRSTAT),
+	XATTR_NAME_CEPH(dir, entries, VXATTR_FLAG_सूचीSTAT),
+	XATTR_NAME_CEPH(dir, files, VXATTR_FLAG_सूचीSTAT),
+	XATTR_NAME_CEPH(dir, subdirs, VXATTR_FLAG_सूचीSTAT),
 	XATTR_RSTAT_FIELD(dir, rentries),
 	XATTR_RSTAT_FIELD(dir, rfiles),
 	XATTR_RSTAT_FIELD(dir, rsubdirs),
 	XATTR_RSTAT_FIELD(dir, rsnaps),
 	XATTR_RSTAT_FIELD(dir, rbytes),
-	XATTR_RSTAT_FIELD(dir, rctime),
-	{
+	XATTR_RSTAT_FIELD(dir, rस_समय),
+	अणु
 		.name = "ceph.dir.pin",
-		.name_size = sizeof("ceph.dir.pin"),
+		.name_size = माप("ceph.dir.pin"),
 		.getxattr_cb = ceph_vxattrcb_dir_pin,
 		.exists_cb = ceph_vxattrcb_dir_pin_exists,
 		.flags = VXATTR_FLAG_HIDDEN,
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "ceph.quota",
-		.name_size = sizeof("ceph.quota"),
+		.name_size = माप("ceph.quota"),
 		.getxattr_cb = ceph_vxattrcb_quota,
 		.exists_cb = ceph_vxattrcb_quota_exists,
 		.flags = VXATTR_FLAG_HIDDEN,
-	},
+	पूर्ण,
 	XATTR_QUOTA_FIELD(quota, max_bytes),
 	XATTR_QUOTA_FIELD(quota, max_files),
-	{
+	अणु
 		.name = "ceph.snap.btime",
-		.name_size = sizeof("ceph.snap.btime"),
-		.getxattr_cb = ceph_vxattrcb_snap_btime,
-		.exists_cb = ceph_vxattrcb_snap_btime_exists,
+		.name_size = माप("ceph.snap.btime"),
+		.getxattr_cb = ceph_vxattrcb_snap_bसमय,
+		.exists_cb = ceph_vxattrcb_snap_bसमय_exists,
 		.flags = VXATTR_FLAG_READONLY,
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "ceph.caps",
-		.name_size = sizeof("ceph.caps"),
+		.name_size = माप("ceph.caps"),
 		.getxattr_cb = ceph_vxattrcb_caps,
-		.exists_cb = NULL,
+		.exists_cb = शून्य,
 		.flags = VXATTR_FLAG_HIDDEN,
-	},
-	{ .name = NULL, 0 }	/* Required table terminator */
-};
+	पूर्ण,
+	अणु .name = शून्य, 0 पूर्ण	/* Required table terminator */
+पूर्ण;
 
 /* files */
 
-static struct ceph_vxattr ceph_file_vxattrs[] = {
-	{
+अटल काष्ठा ceph_vxattr ceph_file_vxattrs[] = अणु
+	अणु
 		.name = "ceph.file.layout",
-		.name_size = sizeof("ceph.file.layout"),
+		.name_size = माप("ceph.file.layout"),
 		.getxattr_cb = ceph_vxattrcb_layout,
 		.exists_cb = ceph_vxattrcb_layout_exists,
 		.flags = VXATTR_FLAG_HIDDEN,
-	},
+	पूर्ण,
 	XATTR_LAYOUT_FIELD(file, layout, stripe_unit),
 	XATTR_LAYOUT_FIELD(file, layout, stripe_count),
 	XATTR_LAYOUT_FIELD(file, layout, object_size),
 	XATTR_LAYOUT_FIELD(file, layout, pool),
 	XATTR_LAYOUT_FIELD(file, layout, pool_namespace),
-	{
+	अणु
 		.name = "ceph.snap.btime",
-		.name_size = sizeof("ceph.snap.btime"),
-		.getxattr_cb = ceph_vxattrcb_snap_btime,
-		.exists_cb = ceph_vxattrcb_snap_btime_exists,
+		.name_size = माप("ceph.snap.btime"),
+		.getxattr_cb = ceph_vxattrcb_snap_bसमय,
+		.exists_cb = ceph_vxattrcb_snap_bसमय_exists,
 		.flags = VXATTR_FLAG_READONLY,
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "ceph.caps",
-		.name_size = sizeof("ceph.caps"),
+		.name_size = माप("ceph.caps"),
 		.getxattr_cb = ceph_vxattrcb_caps,
-		.exists_cb = NULL,
+		.exists_cb = शून्य,
 		.flags = VXATTR_FLAG_HIDDEN,
-	},
-	{ .name = NULL, 0 }	/* Required table terminator */
-};
+	पूर्ण,
+	अणु .name = शून्य, 0 पूर्ण	/* Required table terminator */
+पूर्ण;
 
-static struct ceph_vxattr ceph_common_vxattrs[] = {
-	{
+अटल काष्ठा ceph_vxattr ceph_common_vxattrs[] = अणु
+	अणु
 		.name = "ceph.cluster_fsid",
-		.name_size = sizeof("ceph.cluster_fsid"),
+		.name_size = माप("ceph.cluster_fsid"),
 		.getxattr_cb = ceph_vxattrcb_cluster_fsid,
-		.exists_cb = NULL,
+		.exists_cb = शून्य,
 		.flags = VXATTR_FLAG_READONLY,
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "ceph.client_id",
-		.name_size = sizeof("ceph.client_id"),
+		.name_size = माप("ceph.client_id"),
 		.getxattr_cb = ceph_vxattrcb_client_id,
-		.exists_cb = NULL,
+		.exists_cb = शून्य,
 		.flags = VXATTR_FLAG_READONLY,
-	},
-	{ .name = NULL, 0 }	/* Required table terminator */
-};
+	पूर्ण,
+	अणु .name = शून्य, 0 पूर्ण	/* Required table terminator */
+पूर्ण;
 
-static struct ceph_vxattr *ceph_inode_vxattrs(struct inode *inode)
-{
-	if (S_ISDIR(inode->i_mode))
-		return ceph_dir_vxattrs;
-	else if (S_ISREG(inode->i_mode))
-		return ceph_file_vxattrs;
-	return NULL;
-}
+अटल काष्ठा ceph_vxattr *ceph_inode_vxattrs(काष्ठा inode *inode)
+अणु
+	अगर (S_ISसूची(inode->i_mode))
+		वापस ceph_dir_vxattrs;
+	अन्यथा अगर (S_ISREG(inode->i_mode))
+		वापस ceph_file_vxattrs;
+	वापस शून्य;
+पूर्ण
 
-static struct ceph_vxattr *ceph_match_vxattr(struct inode *inode,
-						const char *name)
-{
-	struct ceph_vxattr *vxattr = ceph_inode_vxattrs(inode);
+अटल काष्ठा ceph_vxattr *ceph_match_vxattr(काष्ठा inode *inode,
+						स्थिर अक्षर *name)
+अणु
+	काष्ठा ceph_vxattr *vxattr = ceph_inode_vxattrs(inode);
 
-	if (vxattr) {
-		while (vxattr->name) {
-			if (!strcmp(vxattr->name, name))
-				return vxattr;
+	अगर (vxattr) अणु
+		जबतक (vxattr->name) अणु
+			अगर (!म_भेद(vxattr->name, name))
+				वापस vxattr;
 			vxattr++;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	vxattr = ceph_common_vxattrs;
-	while (vxattr->name) {
-		if (!strcmp(vxattr->name, name))
-			return vxattr;
+	जबतक (vxattr->name) अणु
+		अगर (!म_भेद(vxattr->name, name))
+			वापस vxattr;
 		vxattr++;
-	}
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static int __set_xattr(struct ceph_inode_info *ci,
-			   const char *name, int name_len,
-			   const char *val, int val_len,
-			   int flags, int update_xattr,
-			   struct ceph_inode_xattr **newxattr)
-{
-	struct rb_node **p;
-	struct rb_node *parent = NULL;
-	struct ceph_inode_xattr *xattr = NULL;
-	int c;
-	int new = 0;
+अटल पूर्णांक __set_xattr(काष्ठा ceph_inode_info *ci,
+			   स्थिर अक्षर *name, पूर्णांक name_len,
+			   स्थिर अक्षर *val, पूर्णांक val_len,
+			   पूर्णांक flags, पूर्णांक update_xattr,
+			   काष्ठा ceph_inode_xattr **newxattr)
+अणु
+	काष्ठा rb_node **p;
+	काष्ठा rb_node *parent = शून्य;
+	काष्ठा ceph_inode_xattr *xattr = शून्य;
+	पूर्णांक c;
+	पूर्णांक new = 0;
 
 	p = &ci->i_xattrs.index.rb_node;
-	while (*p) {
+	जबतक (*p) अणु
 		parent = *p;
-		xattr = rb_entry(parent, struct ceph_inode_xattr, node);
-		c = strncmp(name, xattr->name, min(name_len, xattr->name_len));
-		if (c < 0)
+		xattr = rb_entry(parent, काष्ठा ceph_inode_xattr, node);
+		c = म_भेदन(name, xattr->name, min(name_len, xattr->name_len));
+		अगर (c < 0)
 			p = &(*p)->rb_left;
-		else if (c > 0)
+		अन्यथा अगर (c > 0)
 			p = &(*p)->rb_right;
-		else {
-			if (name_len == xattr->name_len)
-				break;
-			else if (name_len < xattr->name_len)
+		अन्यथा अणु
+			अगर (name_len == xattr->name_len)
+				अवरोध;
+			अन्यथा अगर (name_len < xattr->name_len)
 				p = &(*p)->rb_left;
-			else
+			अन्यथा
 				p = &(*p)->rb_right;
-		}
-		xattr = NULL;
-	}
+		पूर्ण
+		xattr = शून्य;
+	पूर्ण
 
-	if (update_xattr) {
-		int err = 0;
+	अगर (update_xattr) अणु
+		पूर्णांक err = 0;
 
-		if (xattr && (flags & XATTR_CREATE))
+		अगर (xattr && (flags & XATTR_CREATE))
 			err = -EEXIST;
-		else if (!xattr && (flags & XATTR_REPLACE))
+		अन्यथा अगर (!xattr && (flags & XATTR_REPLACE))
 			err = -ENODATA;
-		if (err) {
-			kfree(name);
-			kfree(val);
-			kfree(*newxattr);
-			return err;
-		}
-		if (update_xattr < 0) {
-			if (xattr)
-				__remove_xattr(ci, xattr);
-			kfree(name);
-			kfree(*newxattr);
-			return 0;
-		}
-	}
+		अगर (err) अणु
+			kमुक्त(name);
+			kमुक्त(val);
+			kमुक्त(*newxattr);
+			वापस err;
+		पूर्ण
+		अगर (update_xattr < 0) अणु
+			अगर (xattr)
+				__हटाओ_xattr(ci, xattr);
+			kमुक्त(name);
+			kमुक्त(*newxattr);
+			वापस 0;
+		पूर्ण
+	पूर्ण
 
-	if (!xattr) {
+	अगर (!xattr) अणु
 		new = 1;
 		xattr = *newxattr;
 		xattr->name = name;
 		xattr->name_len = name_len;
-		xattr->should_free_name = update_xattr;
+		xattr->should_मुक्त_name = update_xattr;
 
 		ci->i_xattrs.count++;
-		dout("__set_xattr count=%d\n", ci->i_xattrs.count);
-	} else {
-		kfree(*newxattr);
-		*newxattr = NULL;
-		if (xattr->should_free_val)
-			kfree(xattr->val);
+		करोut("__set_xattr count=%d\n", ci->i_xattrs.count);
+	पूर्ण अन्यथा अणु
+		kमुक्त(*newxattr);
+		*newxattr = शून्य;
+		अगर (xattr->should_मुक्त_val)
+			kमुक्त(xattr->val);
 
-		if (update_xattr) {
-			kfree(name);
+		अगर (update_xattr) अणु
+			kमुक्त(name);
 			name = xattr->name;
-		}
+		पूर्ण
 		ci->i_xattrs.names_size -= xattr->name_len;
 		ci->i_xattrs.vals_size -= xattr->val_len;
-	}
+	पूर्ण
 	ci->i_xattrs.names_size += name_len;
 	ci->i_xattrs.vals_size += val_len;
-	if (val)
+	अगर (val)
 		xattr->val = val;
-	else
+	अन्यथा
 		xattr->val = "";
 
 	xattr->val_len = val_len;
 	xattr->dirty = update_xattr;
-	xattr->should_free_val = (val && update_xattr);
+	xattr->should_मुक्त_val = (val && update_xattr);
 
-	if (new) {
+	अगर (new) अणु
 		rb_link_node(&xattr->node, parent, p);
 		rb_insert_color(&xattr->node, &ci->i_xattrs.index);
-		dout("__set_xattr_val p=%p\n", p);
-	}
+		करोut("__set_xattr_val p=%p\n", p);
+	पूर्ण
 
-	dout("__set_xattr_val added %llx.%llx xattr %p %.*s=%.*s\n",
+	करोut("__set_xattr_val added %llx.%llx xattr %p %.*s=%.*s\n",
 	     ceph_vinop(&ci->vfs_inode), xattr, name_len, name, val_len, val);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct ceph_inode_xattr *__get_xattr(struct ceph_inode_info *ci,
-			   const char *name)
-{
-	struct rb_node **p;
-	struct rb_node *parent = NULL;
-	struct ceph_inode_xattr *xattr = NULL;
-	int name_len = strlen(name);
-	int c;
+अटल काष्ठा ceph_inode_xattr *__get_xattr(काष्ठा ceph_inode_info *ci,
+			   स्थिर अक्षर *name)
+अणु
+	काष्ठा rb_node **p;
+	काष्ठा rb_node *parent = शून्य;
+	काष्ठा ceph_inode_xattr *xattr = शून्य;
+	पूर्णांक name_len = म_माप(name);
+	पूर्णांक c;
 
 	p = &ci->i_xattrs.index.rb_node;
-	while (*p) {
+	जबतक (*p) अणु
 		parent = *p;
-		xattr = rb_entry(parent, struct ceph_inode_xattr, node);
-		c = strncmp(name, xattr->name, xattr->name_len);
-		if (c == 0 && name_len > xattr->name_len)
+		xattr = rb_entry(parent, काष्ठा ceph_inode_xattr, node);
+		c = म_भेदन(name, xattr->name, xattr->name_len);
+		अगर (c == 0 && name_len > xattr->name_len)
 			c = 1;
-		if (c < 0)
+		अगर (c < 0)
 			p = &(*p)->rb_left;
-		else if (c > 0)
+		अन्यथा अगर (c > 0)
 			p = &(*p)->rb_right;
-		else {
-			dout("__get_xattr %s: found %.*s\n", name,
+		अन्यथा अणु
+			करोut("__get_xattr %s: found %.*s\n", name,
 			     xattr->val_len, xattr->val);
-			return xattr;
-		}
-	}
+			वापस xattr;
+		पूर्ण
+	पूर्ण
 
-	dout("__get_xattr %s: not found\n", name);
+	करोut("__get_xattr %s: not found\n", name);
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static void __free_xattr(struct ceph_inode_xattr *xattr)
-{
+अटल व्योम __मुक्त_xattr(काष्ठा ceph_inode_xattr *xattr)
+अणु
 	BUG_ON(!xattr);
 
-	if (xattr->should_free_name)
-		kfree(xattr->name);
-	if (xattr->should_free_val)
-		kfree(xattr->val);
+	अगर (xattr->should_मुक्त_name)
+		kमुक्त(xattr->name);
+	अगर (xattr->should_मुक्त_val)
+		kमुक्त(xattr->val);
 
-	kfree(xattr);
-}
+	kमुक्त(xattr);
+पूर्ण
 
-static int __remove_xattr(struct ceph_inode_info *ci,
-			  struct ceph_inode_xattr *xattr)
-{
-	if (!xattr)
-		return -ENODATA;
+अटल पूर्णांक __हटाओ_xattr(काष्ठा ceph_inode_info *ci,
+			  काष्ठा ceph_inode_xattr *xattr)
+अणु
+	अगर (!xattr)
+		वापस -ENODATA;
 
 	rb_erase(&xattr->node, &ci->i_xattrs.index);
 
-	if (xattr->should_free_name)
-		kfree(xattr->name);
-	if (xattr->should_free_val)
-		kfree(xattr->val);
+	अगर (xattr->should_मुक्त_name)
+		kमुक्त(xattr->name);
+	अगर (xattr->should_मुक्त_val)
+		kमुक्त(xattr->val);
 
 	ci->i_xattrs.names_size -= xattr->name_len;
 	ci->i_xattrs.vals_size -= xattr->val_len;
 	ci->i_xattrs.count--;
-	kfree(xattr);
+	kमुक्त(xattr);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static char *__copy_xattr_names(struct ceph_inode_info *ci,
-				char *dest)
-{
-	struct rb_node *p;
-	struct ceph_inode_xattr *xattr = NULL;
+अटल अक्षर *__copy_xattr_names(काष्ठा ceph_inode_info *ci,
+				अक्षर *dest)
+अणु
+	काष्ठा rb_node *p;
+	काष्ठा ceph_inode_xattr *xattr = शून्य;
 
 	p = rb_first(&ci->i_xattrs.index);
-	dout("__copy_xattr_names count=%d\n", ci->i_xattrs.count);
+	करोut("__copy_xattr_names count=%d\n", ci->i_xattrs.count);
 
-	while (p) {
-		xattr = rb_entry(p, struct ceph_inode_xattr, node);
-		memcpy(dest, xattr->name, xattr->name_len);
+	जबतक (p) अणु
+		xattr = rb_entry(p, काष्ठा ceph_inode_xattr, node);
+		स_नकल(dest, xattr->name, xattr->name_len);
 		dest[xattr->name_len] = '\0';
 
-		dout("dest=%s %p (%s) (%d/%d)\n", dest, xattr, xattr->name,
+		करोut("dest=%s %p (%s) (%d/%d)\n", dest, xattr, xattr->name,
 		     xattr->name_len, ci->i_xattrs.names_size);
 
 		dest += xattr->name_len + 1;
 		p = rb_next(p);
-	}
+	पूर्ण
 
-	return dest;
-}
+	वापस dest;
+पूर्ण
 
-void __ceph_destroy_xattrs(struct ceph_inode_info *ci)
-{
-	struct rb_node *p, *tmp;
-	struct ceph_inode_xattr *xattr = NULL;
+व्योम __ceph_destroy_xattrs(काष्ठा ceph_inode_info *ci)
+अणु
+	काष्ठा rb_node *p, *पंचांगp;
+	काष्ठा ceph_inode_xattr *xattr = शून्य;
 
 	p = rb_first(&ci->i_xattrs.index);
 
-	dout("__ceph_destroy_xattrs p=%p\n", p);
+	करोut("__ceph_destroy_xattrs p=%p\n", p);
 
-	while (p) {
-		xattr = rb_entry(p, struct ceph_inode_xattr, node);
-		tmp = p;
-		p = rb_next(tmp);
-		dout("__ceph_destroy_xattrs next p=%p (%.*s)\n", p,
+	जबतक (p) अणु
+		xattr = rb_entry(p, काष्ठा ceph_inode_xattr, node);
+		पंचांगp = p;
+		p = rb_next(पंचांगp);
+		करोut("__ceph_destroy_xattrs next p=%p (%.*s)\n", p,
 		     xattr->name_len, xattr->name);
-		rb_erase(tmp, &ci->i_xattrs.index);
+		rb_erase(पंचांगp, &ci->i_xattrs.index);
 
-		__free_xattr(xattr);
-	}
+		__मुक्त_xattr(xattr);
+	पूर्ण
 
 	ci->i_xattrs.names_size = 0;
 	ci->i_xattrs.vals_size = 0;
 	ci->i_xattrs.index_version = 0;
 	ci->i_xattrs.count = 0;
 	ci->i_xattrs.index = RB_ROOT;
-}
+पूर्ण
 
-static int __build_xattrs(struct inode *inode)
+अटल पूर्णांक __build_xattrs(काष्ठा inode *inode)
 	__releases(ci->i_ceph_lock)
 	__acquires(ci->i_ceph_lock)
-{
+अणु
 	u32 namelen;
 	u32 numattr = 0;
-	void *p, *end;
+	व्योम *p, *end;
 	u32 len;
-	const char *name, *val;
-	struct ceph_inode_info *ci = ceph_inode(inode);
+	स्थिर अक्षर *name, *val;
+	काष्ठा ceph_inode_info *ci = ceph_inode(inode);
 	u64 xattr_version;
-	struct ceph_inode_xattr **xattrs = NULL;
-	int err = 0;
-	int i;
+	काष्ठा ceph_inode_xattr **xattrs = शून्य;
+	पूर्णांक err = 0;
+	पूर्णांक i;
 
-	dout("__build_xattrs() len=%d\n",
-	     ci->i_xattrs.blob ? (int)ci->i_xattrs.blob->vec.iov_len : 0);
+	करोut("__build_xattrs() len=%d\n",
+	     ci->i_xattrs.blob ? (पूर्णांक)ci->i_xattrs.blob->vec.iov_len : 0);
 
-	if (ci->i_xattrs.index_version >= ci->i_xattrs.version)
-		return 0; /* already built */
+	अगर (ci->i_xattrs.index_version >= ci->i_xattrs.version)
+		वापस 0; /* alपढ़ोy built */
 
 	__ceph_destroy_xattrs(ci);
 
 start:
-	/* updated internal xattr rb tree */
-	if (ci->i_xattrs.blob && ci->i_xattrs.blob->vec.iov_len > 4) {
+	/* updated पूर्णांकernal xattr rb tree */
+	अगर (ci->i_xattrs.blob && ci->i_xattrs.blob->vec.iov_len > 4) अणु
 		p = ci->i_xattrs.blob->vec.iov_base;
 		end = p + ci->i_xattrs.blob->vec.iov_len;
 		ceph_decode_32_safe(&p, end, numattr, bad);
 		xattr_version = ci->i_xattrs.version;
 		spin_unlock(&ci->i_ceph_lock);
 
-		xattrs = kcalloc(numattr, sizeof(struct ceph_inode_xattr *),
+		xattrs = kसुस्मृति(numattr, माप(काष्ठा ceph_inode_xattr *),
 				 GFP_NOFS);
 		err = -ENOMEM;
-		if (!xattrs)
-			goto bad_lock;
+		अगर (!xattrs)
+			जाओ bad_lock;
 
-		for (i = 0; i < numattr; i++) {
-			xattrs[i] = kmalloc(sizeof(struct ceph_inode_xattr),
+		क्रम (i = 0; i < numattr; i++) अणु
+			xattrs[i] = kदो_स्मृति(माप(काष्ठा ceph_inode_xattr),
 					    GFP_NOFS);
-			if (!xattrs[i])
-				goto bad_lock;
-		}
+			अगर (!xattrs[i])
+				जाओ bad_lock;
+		पूर्ण
 
 		spin_lock(&ci->i_ceph_lock);
-		if (ci->i_xattrs.version != xattr_version) {
+		अगर (ci->i_xattrs.version != xattr_version) अणु
 			/* lost a race, retry */
-			for (i = 0; i < numattr; i++)
-				kfree(xattrs[i]);
-			kfree(xattrs);
-			xattrs = NULL;
-			goto start;
-		}
+			क्रम (i = 0; i < numattr; i++)
+				kमुक्त(xattrs[i]);
+			kमुक्त(xattrs);
+			xattrs = शून्य;
+			जाओ start;
+		पूर्ण
 		err = -EIO;
-		while (numattr--) {
+		जबतक (numattr--) अणु
 			ceph_decode_32_safe(&p, end, len, bad);
 			namelen = len;
 			name = p;
@@ -790,526 +791,526 @@ start:
 			err = __set_xattr(ci, name, namelen, val, len,
 					  0, 0, &xattrs[numattr]);
 
-			if (err < 0)
-				goto bad;
-		}
-		kfree(xattrs);
-	}
+			अगर (err < 0)
+				जाओ bad;
+		पूर्ण
+		kमुक्त(xattrs);
+	पूर्ण
 	ci->i_xattrs.index_version = ci->i_xattrs.version;
 	ci->i_xattrs.dirty = false;
 
-	return err;
+	वापस err;
 bad_lock:
 	spin_lock(&ci->i_ceph_lock);
 bad:
-	if (xattrs) {
-		for (i = 0; i < numattr; i++)
-			kfree(xattrs[i]);
-		kfree(xattrs);
-	}
+	अगर (xattrs) अणु
+		क्रम (i = 0; i < numattr; i++)
+			kमुक्त(xattrs[i]);
+		kमुक्त(xattrs);
+	पूर्ण
 	ci->i_xattrs.names_size = 0;
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int __get_required_blob_size(struct ceph_inode_info *ci, int name_size,
-				    int val_size)
-{
+अटल पूर्णांक __get_required_blob_size(काष्ठा ceph_inode_info *ci, पूर्णांक name_size,
+				    पूर्णांक val_size)
+अणु
 	/*
-	 * 4 bytes for the length, and additional 4 bytes per each xattr name,
+	 * 4 bytes क्रम the length, and additional 4 bytes per each xattr name,
 	 * 4 bytes per each value
 	 */
-	int size = 4 + ci->i_xattrs.count*(4 + 4) +
+	पूर्णांक size = 4 + ci->i_xattrs.count*(4 + 4) +
 			     ci->i_xattrs.names_size +
 			     ci->i_xattrs.vals_size;
-	dout("__get_required_blob_size c=%d names.size=%d vals.size=%d\n",
+	करोut("__get_required_blob_size c=%d names.size=%d vals.size=%d\n",
 	     ci->i_xattrs.count, ci->i_xattrs.names_size,
 	     ci->i_xattrs.vals_size);
 
-	if (name_size)
+	अगर (name_size)
 		size += 4 + 4 + name_size + val_size;
 
-	return size;
-}
+	वापस size;
+पूर्ण
 
 /*
- * If there are dirty xattrs, reencode xattrs into the prealloc_blob
- * and swap into place.  It returns the old i_xattrs.blob (or NULL) so
- * that it can be freed by the caller as the i_ceph_lock is likely to be
+ * If there are dirty xattrs, reencode xattrs पूर्णांकo the pपुनः_स्मृति_blob
+ * and swap पूर्णांकo place.  It वापसs the old i_xattrs.blob (or शून्य) so
+ * that it can be मुक्तd by the caller as the i_ceph_lock is likely to be
  * held.
  */
-struct ceph_buffer *__ceph_build_xattrs_blob(struct ceph_inode_info *ci)
-{
-	struct rb_node *p;
-	struct ceph_inode_xattr *xattr = NULL;
-	struct ceph_buffer *old_blob = NULL;
-	void *dest;
+काष्ठा ceph_buffer *__ceph_build_xattrs_blob(काष्ठा ceph_inode_info *ci)
+अणु
+	काष्ठा rb_node *p;
+	काष्ठा ceph_inode_xattr *xattr = शून्य;
+	काष्ठा ceph_buffer *old_blob = शून्य;
+	व्योम *dest;
 
-	dout("__build_xattrs_blob %p\n", &ci->vfs_inode);
-	if (ci->i_xattrs.dirty) {
-		int need = __get_required_blob_size(ci, 0, 0);
+	करोut("__build_xattrs_blob %p\n", &ci->vfs_inode);
+	अगर (ci->i_xattrs.dirty) अणु
+		पूर्णांक need = __get_required_blob_size(ci, 0, 0);
 
-		BUG_ON(need > ci->i_xattrs.prealloc_blob->alloc_len);
+		BUG_ON(need > ci->i_xattrs.pपुनः_स्मृति_blob->alloc_len);
 
 		p = rb_first(&ci->i_xattrs.index);
-		dest = ci->i_xattrs.prealloc_blob->vec.iov_base;
+		dest = ci->i_xattrs.pपुनः_स्मृति_blob->vec.iov_base;
 
 		ceph_encode_32(&dest, ci->i_xattrs.count);
-		while (p) {
-			xattr = rb_entry(p, struct ceph_inode_xattr, node);
+		जबतक (p) अणु
+			xattr = rb_entry(p, काष्ठा ceph_inode_xattr, node);
 
 			ceph_encode_32(&dest, xattr->name_len);
-			memcpy(dest, xattr->name, xattr->name_len);
+			स_नकल(dest, xattr->name, xattr->name_len);
 			dest += xattr->name_len;
 			ceph_encode_32(&dest, xattr->val_len);
-			memcpy(dest, xattr->val, xattr->val_len);
+			स_नकल(dest, xattr->val, xattr->val_len);
 			dest += xattr->val_len;
 
 			p = rb_next(p);
-		}
+		पूर्ण
 
 		/* adjust buffer len; it may be larger than we need */
-		ci->i_xattrs.prealloc_blob->vec.iov_len =
-			dest - ci->i_xattrs.prealloc_blob->vec.iov_base;
+		ci->i_xattrs.pपुनः_स्मृति_blob->vec.iov_len =
+			dest - ci->i_xattrs.pपुनः_स्मृति_blob->vec.iov_base;
 
-		if (ci->i_xattrs.blob)
+		अगर (ci->i_xattrs.blob)
 			old_blob = ci->i_xattrs.blob;
-		ci->i_xattrs.blob = ci->i_xattrs.prealloc_blob;
-		ci->i_xattrs.prealloc_blob = NULL;
+		ci->i_xattrs.blob = ci->i_xattrs.pपुनः_स्मृति_blob;
+		ci->i_xattrs.pपुनः_स्मृति_blob = शून्य;
 		ci->i_xattrs.dirty = false;
 		ci->i_xattrs.version++;
-	}
+	पूर्ण
 
-	return old_blob;
-}
+	वापस old_blob;
+पूर्ण
 
-static inline int __get_request_mask(struct inode *in) {
-	struct ceph_mds_request *req = current->journal_info;
-	int mask = 0;
-	if (req && req->r_target_inode == in) {
-		if (req->r_op == CEPH_MDS_OP_LOOKUP ||
+अटल अंतरभूत पूर्णांक __get_request_mask(काष्ठा inode *in) अणु
+	काष्ठा ceph_mds_request *req = current->journal_info;
+	पूर्णांक mask = 0;
+	अगर (req && req->r_target_inode == in) अणु
+		अगर (req->r_op == CEPH_MDS_OP_LOOKUP ||
 		    req->r_op == CEPH_MDS_OP_LOOKUPINO ||
 		    req->r_op == CEPH_MDS_OP_LOOKUPPARENT ||
-		    req->r_op == CEPH_MDS_OP_GETATTR) {
+		    req->r_op == CEPH_MDS_OP_GETATTR) अणु
 			mask = le32_to_cpu(req->r_args.getattr.mask);
-		} else if (req->r_op == CEPH_MDS_OP_OPEN ||
-			   req->r_op == CEPH_MDS_OP_CREATE) {
-			mask = le32_to_cpu(req->r_args.open.mask);
-		}
-	}
-	return mask;
-}
+		पूर्ण अन्यथा अगर (req->r_op == CEPH_MDS_OP_OPEN ||
+			   req->r_op == CEPH_MDS_OP_CREATE) अणु
+			mask = le32_to_cpu(req->r_args.खोलो.mask);
+		पूर्ण
+	पूर्ण
+	वापस mask;
+पूर्ण
 
-ssize_t __ceph_getxattr(struct inode *inode, const char *name, void *value,
-		      size_t size)
-{
-	struct ceph_inode_info *ci = ceph_inode(inode);
-	struct ceph_inode_xattr *xattr;
-	struct ceph_vxattr *vxattr = NULL;
-	int req_mask;
-	ssize_t err;
+sमाप_प्रकार __ceph_getxattr(काष्ठा inode *inode, स्थिर अक्षर *name, व्योम *value,
+		      माप_प्रकार size)
+अणु
+	काष्ठा ceph_inode_info *ci = ceph_inode(inode);
+	काष्ठा ceph_inode_xattr *xattr;
+	काष्ठा ceph_vxattr *vxattr = शून्य;
+	पूर्णांक req_mask;
+	sमाप_प्रकार err;
 
-	/* let's see if a virtual xattr was requested */
+	/* let's see अगर a भव xattr was requested */
 	vxattr = ceph_match_vxattr(inode, name);
-	if (vxattr) {
-		int mask = 0;
-		if (vxattr->flags & VXATTR_FLAG_RSTAT)
+	अगर (vxattr) अणु
+		पूर्णांक mask = 0;
+		अगर (vxattr->flags & VXATTR_FLAG_RSTAT)
 			mask |= CEPH_STAT_RSTAT;
-		if (vxattr->flags & VXATTR_FLAG_DIRSTAT)
-			mask |= CEPH_CAP_FILE_SHARED;
-		err = ceph_do_getattr(inode, mask, true);
-		if (err)
-			return err;
+		अगर (vxattr->flags & VXATTR_FLAG_सूचीSTAT)
+			mask |= CEPH_CAP_खाता_SHARED;
+		err = ceph_करो_getattr(inode, mask, true);
+		अगर (err)
+			वापस err;
 		err = -ENODATA;
-		if (!(vxattr->exists_cb && !vxattr->exists_cb(ci))) {
+		अगर (!(vxattr->exists_cb && !vxattr->exists_cb(ci))) अणु
 			err = vxattr->getxattr_cb(ci, value, size);
-			if (size && size < err)
-				err = -ERANGE;
-		}
-		return err;
-	}
+			अगर (size && size < err)
+				err = -दुस्फल;
+		पूर्ण
+		वापस err;
+	पूर्ण
 
 	req_mask = __get_request_mask(inode);
 
 	spin_lock(&ci->i_ceph_lock);
-	dout("getxattr %p name '%s' ver=%lld index_ver=%lld\n", inode, name,
+	करोut("getxattr %p name '%s' ver=%lld index_ver=%lld\n", inode, name,
 	     ci->i_xattrs.version, ci->i_xattrs.index_version);
 
-	if (ci->i_xattrs.version == 0 ||
+	अगर (ci->i_xattrs.version == 0 ||
 	    !((req_mask & CEPH_CAP_XATTR_SHARED) ||
-	      __ceph_caps_issued_mask_metric(ci, CEPH_CAP_XATTR_SHARED, 1))) {
+	      __ceph_caps_issued_mask_metric(ci, CEPH_CAP_XATTR_SHARED, 1))) अणु
 		spin_unlock(&ci->i_ceph_lock);
 
-		/* security module gets xattr while filling trace */
-		if (current->journal_info) {
+		/* security module माला_लो xattr जबतक filling trace */
+		अगर (current->journal_info) अणु
 			pr_warn_ratelimited("sync getxattr %p "
 					    "during filling trace\n", inode);
-			return -EBUSY;
-		}
+			वापस -EBUSY;
+		पूर्ण
 
-		/* get xattrs from mds (if we don't already have them) */
-		err = ceph_do_getattr(inode, CEPH_STAT_CAP_XATTR, true);
-		if (err)
-			return err;
+		/* get xattrs from mds (अगर we करोn't alपढ़ोy have them) */
+		err = ceph_करो_getattr(inode, CEPH_STAT_CAP_XATTR, true);
+		अगर (err)
+			वापस err;
 		spin_lock(&ci->i_ceph_lock);
-	}
+	पूर्ण
 
 	err = __build_xattrs(inode);
-	if (err < 0)
-		goto out;
+	अगर (err < 0)
+		जाओ out;
 
 	err = -ENODATA;  /* == ENOATTR */
 	xattr = __get_xattr(ci, name);
-	if (!xattr)
-		goto out;
+	अगर (!xattr)
+		जाओ out;
 
-	err = -ERANGE;
-	if (size && size < xattr->val_len)
-		goto out;
+	err = -दुस्फल;
+	अगर (size && size < xattr->val_len)
+		जाओ out;
 
 	err = xattr->val_len;
-	if (size == 0)
-		goto out;
+	अगर (size == 0)
+		जाओ out;
 
-	memcpy(value, xattr->val, xattr->val_len);
+	स_नकल(value, xattr->val, xattr->val_len);
 
-	if (current->journal_info &&
-	    !strncmp(name, XATTR_SECURITY_PREFIX, XATTR_SECURITY_PREFIX_LEN) &&
+	अगर (current->journal_info &&
+	    !म_भेदन(name, XATTR_SECURITY_PREFIX, XATTR_SECURITY_PREFIX_LEN) &&
 	    security_ismaclabel(name + XATTR_SECURITY_PREFIX_LEN))
 		ci->i_ceph_flags |= CEPH_I_SEC_INITED;
 out:
 	spin_unlock(&ci->i_ceph_lock);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-ssize_t ceph_listxattr(struct dentry *dentry, char *names, size_t size)
-{
-	struct inode *inode = d_inode(dentry);
-	struct ceph_inode_info *ci = ceph_inode(inode);
+sमाप_प्रकार ceph_listxattr(काष्ठा dentry *dentry, अक्षर *names, माप_प्रकार size)
+अणु
+	काष्ठा inode *inode = d_inode(dentry);
+	काष्ठा ceph_inode_info *ci = ceph_inode(inode);
 	bool len_only = (size == 0);
 	u32 namelen;
-	int err;
+	पूर्णांक err;
 
 	spin_lock(&ci->i_ceph_lock);
-	dout("listxattr %p ver=%lld index_ver=%lld\n", inode,
+	करोut("listxattr %p ver=%lld index_ver=%lld\n", inode,
 	     ci->i_xattrs.version, ci->i_xattrs.index_version);
 
-	if (ci->i_xattrs.version == 0 ||
-	    !__ceph_caps_issued_mask_metric(ci, CEPH_CAP_XATTR_SHARED, 1)) {
+	अगर (ci->i_xattrs.version == 0 ||
+	    !__ceph_caps_issued_mask_metric(ci, CEPH_CAP_XATTR_SHARED, 1)) अणु
 		spin_unlock(&ci->i_ceph_lock);
-		err = ceph_do_getattr(inode, CEPH_STAT_CAP_XATTR, true);
-		if (err)
-			return err;
+		err = ceph_करो_getattr(inode, CEPH_STAT_CAP_XATTR, true);
+		अगर (err)
+			वापस err;
 		spin_lock(&ci->i_ceph_lock);
-	}
+	पूर्ण
 
 	err = __build_xattrs(inode);
-	if (err < 0)
-		goto out;
+	अगर (err < 0)
+		जाओ out;
 
-	/* add 1 byte for each xattr due to the null termination */
+	/* add 1 byte क्रम each xattr due to the null termination */
 	namelen = ci->i_xattrs.names_size + ci->i_xattrs.count;
-	if (!len_only) {
-		if (namelen > size) {
-			err = -ERANGE;
-			goto out;
-		}
+	अगर (!len_only) अणु
+		अगर (namelen > size) अणु
+			err = -दुस्फल;
+			जाओ out;
+		पूर्ण
 		names = __copy_xattr_names(ci, names);
 		size -= namelen;
-	}
+	पूर्ण
 	err = namelen;
 out:
 	spin_unlock(&ci->i_ceph_lock);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int ceph_sync_setxattr(struct inode *inode, const char *name,
-			      const char *value, size_t size, int flags)
-{
-	struct ceph_fs_client *fsc = ceph_sb_to_client(inode->i_sb);
-	struct ceph_inode_info *ci = ceph_inode(inode);
-	struct ceph_mds_request *req;
-	struct ceph_mds_client *mdsc = fsc->mdsc;
-	struct ceph_osd_client *osdc = &fsc->client->osdc;
-	struct ceph_pagelist *pagelist = NULL;
-	int op = CEPH_MDS_OP_SETXATTR;
-	int err;
+अटल पूर्णांक ceph_sync_setxattr(काष्ठा inode *inode, स्थिर अक्षर *name,
+			      स्थिर अक्षर *value, माप_प्रकार size, पूर्णांक flags)
+अणु
+	काष्ठा ceph_fs_client *fsc = ceph_sb_to_client(inode->i_sb);
+	काष्ठा ceph_inode_info *ci = ceph_inode(inode);
+	काष्ठा ceph_mds_request *req;
+	काष्ठा ceph_mds_client *mdsc = fsc->mdsc;
+	काष्ठा ceph_osd_client *osdc = &fsc->client->osdc;
+	काष्ठा ceph_pagelist *pagelist = शून्य;
+	पूर्णांक op = CEPH_MDS_OP_SETXATTR;
+	पूर्णांक err;
 
-	if (size > 0) {
-		/* copy value into pagelist */
+	अगर (size > 0) अणु
+		/* copy value पूर्णांकo pagelist */
 		pagelist = ceph_pagelist_alloc(GFP_NOFS);
-		if (!pagelist)
-			return -ENOMEM;
+		अगर (!pagelist)
+			वापस -ENOMEM;
 
 		err = ceph_pagelist_append(pagelist, value, size);
-		if (err)
-			goto out;
-	} else if (!value) {
-		if (flags & CEPH_XATTR_REPLACE)
+		अगर (err)
+			जाओ out;
+	पूर्ण अन्यथा अगर (!value) अणु
+		अगर (flags & CEPH_XATTR_REPLACE)
 			op = CEPH_MDS_OP_RMXATTR;
-		else
+		अन्यथा
 			flags |= CEPH_XATTR_REMOVE;
-	}
+	पूर्ण
 
-	dout("setxattr value=%.*s\n", (int)size, value);
+	करोut("setxattr value=%.*s\n", (पूर्णांक)size, value);
 
-	/* do request */
+	/* करो request */
 	req = ceph_mdsc_create_request(mdsc, op, USE_AUTH_MDS);
-	if (IS_ERR(req)) {
+	अगर (IS_ERR(req)) अणु
 		err = PTR_ERR(req);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	req->r_path2 = kstrdup(name, GFP_NOFS);
-	if (!req->r_path2) {
+	अगर (!req->r_path2) अणु
 		ceph_mdsc_put_request(req);
 		err = -ENOMEM;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (op == CEPH_MDS_OP_SETXATTR) {
+	अगर (op == CEPH_MDS_OP_SETXATTR) अणु
 		req->r_args.setxattr.flags = cpu_to_le32(flags);
 		req->r_args.setxattr.osdmap_epoch =
 			cpu_to_le32(osdc->osdmap->epoch);
 		req->r_pagelist = pagelist;
-		pagelist = NULL;
-	}
+		pagelist = शून्य;
+	पूर्ण
 
 	req->r_inode = inode;
 	ihold(inode);
 	req->r_num_caps = 1;
 	req->r_inode_drop = CEPH_CAP_XATTR_SHARED;
 
-	dout("xattr.ver (before): %lld\n", ci->i_xattrs.version);
-	err = ceph_mdsc_do_request(mdsc, NULL, req);
+	करोut("xattr.ver (before): %lld\n", ci->i_xattrs.version);
+	err = ceph_mdsc_करो_request(mdsc, शून्य, req);
 	ceph_mdsc_put_request(req);
-	dout("xattr.ver (after): %lld\n", ci->i_xattrs.version);
+	करोut("xattr.ver (after): %lld\n", ci->i_xattrs.version);
 
 out:
-	if (pagelist)
+	अगर (pagelist)
 		ceph_pagelist_release(pagelist);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-int __ceph_setxattr(struct inode *inode, const char *name,
-			const void *value, size_t size, int flags)
-{
-	struct ceph_vxattr *vxattr;
-	struct ceph_inode_info *ci = ceph_inode(inode);
-	struct ceph_mds_client *mdsc = ceph_sb_to_client(inode->i_sb)->mdsc;
-	struct ceph_cap_flush *prealloc_cf = NULL;
-	struct ceph_buffer *old_blob = NULL;
-	int issued;
-	int err;
-	int dirty = 0;
-	int name_len = strlen(name);
-	int val_len = size;
-	char *newname = NULL;
-	char *newval = NULL;
-	struct ceph_inode_xattr *xattr = NULL;
-	int required_blob_size;
+पूर्णांक __ceph_setxattr(काष्ठा inode *inode, स्थिर अक्षर *name,
+			स्थिर व्योम *value, माप_प्रकार size, पूर्णांक flags)
+अणु
+	काष्ठा ceph_vxattr *vxattr;
+	काष्ठा ceph_inode_info *ci = ceph_inode(inode);
+	काष्ठा ceph_mds_client *mdsc = ceph_sb_to_client(inode->i_sb)->mdsc;
+	काष्ठा ceph_cap_flush *pपुनः_स्मृति_cf = शून्य;
+	काष्ठा ceph_buffer *old_blob = शून्य;
+	पूर्णांक issued;
+	पूर्णांक err;
+	पूर्णांक dirty = 0;
+	पूर्णांक name_len = म_माप(name);
+	पूर्णांक val_len = size;
+	अक्षर *newname = शून्य;
+	अक्षर *newval = शून्य;
+	काष्ठा ceph_inode_xattr *xattr = शून्य;
+	पूर्णांक required_blob_size;
 	bool check_realm = false;
 	bool lock_snap_rwsem = false;
 
-	if (ceph_snap(inode) != CEPH_NOSNAP)
-		return -EROFS;
+	अगर (ceph_snap(inode) != CEPH_NOSNAP)
+		वापस -EROFS;
 
 	vxattr = ceph_match_vxattr(inode, name);
-	if (vxattr) {
-		if (vxattr->flags & VXATTR_FLAG_READONLY)
-			return -EOPNOTSUPP;
-		if (value && !strncmp(vxattr->name, "ceph.quota", 10))
+	अगर (vxattr) अणु
+		अगर (vxattr->flags & VXATTR_FLAG_READONLY)
+			वापस -EOPNOTSUPP;
+		अगर (value && !म_भेदन(vxattr->name, "ceph.quota", 10))
 			check_realm = true;
-	}
+	पूर्ण
 
 	/* pass any unhandled ceph.* xattrs through to the MDS */
-	if (!strncmp(name, XATTR_CEPH_PREFIX, XATTR_CEPH_PREFIX_LEN))
-		goto do_sync_unlocked;
+	अगर (!म_भेदन(name, XATTR_CEPH_PREFIX, XATTR_CEPH_PREFIX_LEN))
+		जाओ करो_sync_unlocked;
 
-	/* preallocate memory for xattr name, value, index node */
+	/* pपुनः_स्मृतिate memory क्रम xattr name, value, index node */
 	err = -ENOMEM;
 	newname = kmemdup(name, name_len + 1, GFP_NOFS);
-	if (!newname)
-		goto out;
+	अगर (!newname)
+		जाओ out;
 
-	if (val_len) {
+	अगर (val_len) अणु
 		newval = kmemdup(value, val_len, GFP_NOFS);
-		if (!newval)
-			goto out;
-	}
+		अगर (!newval)
+			जाओ out;
+	पूर्ण
 
-	xattr = kmalloc(sizeof(struct ceph_inode_xattr), GFP_NOFS);
-	if (!xattr)
-		goto out;
+	xattr = kदो_स्मृति(माप(काष्ठा ceph_inode_xattr), GFP_NOFS);
+	अगर (!xattr)
+		जाओ out;
 
-	prealloc_cf = ceph_alloc_cap_flush();
-	if (!prealloc_cf)
-		goto out;
+	pपुनः_स्मृति_cf = ceph_alloc_cap_flush();
+	अगर (!pपुनः_स्मृति_cf)
+		जाओ out;
 
 	spin_lock(&ci->i_ceph_lock);
 retry:
-	issued = __ceph_caps_issued(ci, NULL);
-	if (ci->i_xattrs.version == 0 || !(issued & CEPH_CAP_XATTR_EXCL))
-		goto do_sync;
+	issued = __ceph_caps_issued(ci, शून्य);
+	अगर (ci->i_xattrs.version == 0 || !(issued & CEPH_CAP_XATTR_EXCL))
+		जाओ करो_sync;
 
-	if (!lock_snap_rwsem && !ci->i_head_snapc) {
+	अगर (!lock_snap_rwsem && !ci->i_head_snapc) अणु
 		lock_snap_rwsem = true;
-		if (!down_read_trylock(&mdsc->snap_rwsem)) {
+		अगर (!करोwn_पढ़ो_trylock(&mdsc->snap_rwsem)) अणु
 			spin_unlock(&ci->i_ceph_lock);
-			down_read(&mdsc->snap_rwsem);
+			करोwn_पढ़ो(&mdsc->snap_rwsem);
 			spin_lock(&ci->i_ceph_lock);
-			goto retry;
-		}
-	}
+			जाओ retry;
+		पूर्ण
+	पूर्ण
 
-	dout("setxattr %p name '%s' issued %s\n", inode, name,
+	करोut("setxattr %p name '%s' issued %s\n", inode, name,
 	     ceph_cap_string(issued));
 	__build_xattrs(inode);
 
 	required_blob_size = __get_required_blob_size(ci, name_len, val_len);
 
-	if (!ci->i_xattrs.prealloc_blob ||
-	    required_blob_size > ci->i_xattrs.prealloc_blob->alloc_len) {
-		struct ceph_buffer *blob;
+	अगर (!ci->i_xattrs.pपुनः_स्मृति_blob ||
+	    required_blob_size > ci->i_xattrs.pपुनः_स्मृति_blob->alloc_len) अणु
+		काष्ठा ceph_buffer *blob;
 
 		spin_unlock(&ci->i_ceph_lock);
 		ceph_buffer_put(old_blob); /* Shouldn't be required */
-		dout(" pre-allocating new blob size=%d\n", required_blob_size);
+		करोut(" pre-allocating new blob size=%d\n", required_blob_size);
 		blob = ceph_buffer_new(required_blob_size, GFP_NOFS);
-		if (!blob)
-			goto do_sync_unlocked;
+		अगर (!blob)
+			जाओ करो_sync_unlocked;
 		spin_lock(&ci->i_ceph_lock);
-		/* prealloc_blob can't be released while holding i_ceph_lock */
-		if (ci->i_xattrs.prealloc_blob)
-			old_blob = ci->i_xattrs.prealloc_blob;
-		ci->i_xattrs.prealloc_blob = blob;
-		goto retry;
-	}
+		/* pपुनः_स्मृति_blob can't be released जबतक holding i_ceph_lock */
+		अगर (ci->i_xattrs.pपुनः_स्मृति_blob)
+			old_blob = ci->i_xattrs.pपुनः_स्मृति_blob;
+		ci->i_xattrs.pपुनः_स्मृति_blob = blob;
+		जाओ retry;
+	पूर्ण
 
 	err = __set_xattr(ci, newname, name_len, newval, val_len,
 			  flags, value ? 1 : -1, &xattr);
 
-	if (!err) {
+	अगर (!err) अणु
 		dirty = __ceph_mark_dirty_caps(ci, CEPH_CAP_XATTR_EXCL,
-					       &prealloc_cf);
+					       &pपुनः_स्मृति_cf);
 		ci->i_xattrs.dirty = true;
-		inode->i_ctime = current_time(inode);
-	}
+		inode->i_स_समय = current_समय(inode);
+	पूर्ण
 
 	spin_unlock(&ci->i_ceph_lock);
 	ceph_buffer_put(old_blob);
-	if (lock_snap_rwsem)
-		up_read(&mdsc->snap_rwsem);
-	if (dirty)
+	अगर (lock_snap_rwsem)
+		up_पढ़ो(&mdsc->snap_rwsem);
+	अगर (dirty)
 		__mark_inode_dirty(inode, dirty);
-	ceph_free_cap_flush(prealloc_cf);
-	return err;
+	ceph_मुक्त_cap_flush(pपुनः_स्मृति_cf);
+	वापस err;
 
-do_sync:
+करो_sync:
 	spin_unlock(&ci->i_ceph_lock);
-do_sync_unlocked:
-	if (lock_snap_rwsem)
-		up_read(&mdsc->snap_rwsem);
+करो_sync_unlocked:
+	अगर (lock_snap_rwsem)
+		up_पढ़ो(&mdsc->snap_rwsem);
 
-	/* security module set xattr while filling trace */
-	if (current->journal_info) {
+	/* security module set xattr जबतक filling trace */
+	अगर (current->journal_info) अणु
 		pr_warn_ratelimited("sync setxattr %p "
 				    "during filling trace\n", inode);
 		err = -EBUSY;
-	} else {
+	पूर्ण अन्यथा अणु
 		err = ceph_sync_setxattr(inode, name, value, size, flags);
-		if (err >= 0 && check_realm) {
-			/* check if snaprealm was created for quota inode */
+		अगर (err >= 0 && check_realm) अणु
+			/* check अगर snaprealm was created क्रम quota inode */
 			spin_lock(&ci->i_ceph_lock);
-			if ((ci->i_max_files || ci->i_max_bytes) &&
+			अगर ((ci->i_max_files || ci->i_max_bytes) &&
 			    !(ci->i_snap_realm &&
 			      ci->i_snap_realm->ino == ci->i_vino.ino))
 				err = -EOPNOTSUPP;
 			spin_unlock(&ci->i_ceph_lock);
-		}
-	}
+		पूर्ण
+	पूर्ण
 out:
-	ceph_free_cap_flush(prealloc_cf);
-	kfree(newname);
-	kfree(newval);
-	kfree(xattr);
-	return err;
-}
+	ceph_मुक्त_cap_flush(pपुनः_स्मृति_cf);
+	kमुक्त(newname);
+	kमुक्त(newval);
+	kमुक्त(xattr);
+	वापस err;
+पूर्ण
 
-static int ceph_get_xattr_handler(const struct xattr_handler *handler,
-				  struct dentry *dentry, struct inode *inode,
-				  const char *name, void *value, size_t size)
-{
-	if (!ceph_is_valid_xattr(name))
-		return -EOPNOTSUPP;
-	return __ceph_getxattr(inode, name, value, size);
-}
+अटल पूर्णांक ceph_get_xattr_handler(स्थिर काष्ठा xattr_handler *handler,
+				  काष्ठा dentry *dentry, काष्ठा inode *inode,
+				  स्थिर अक्षर *name, व्योम *value, माप_प्रकार size)
+अणु
+	अगर (!ceph_is_valid_xattr(name))
+		वापस -EOPNOTSUPP;
+	वापस __ceph_getxattr(inode, name, value, size);
+पूर्ण
 
-static int ceph_set_xattr_handler(const struct xattr_handler *handler,
-				  struct user_namespace *mnt_userns,
-				  struct dentry *unused, struct inode *inode,
-				  const char *name, const void *value,
-				  size_t size, int flags)
-{
-	if (!ceph_is_valid_xattr(name))
-		return -EOPNOTSUPP;
-	return __ceph_setxattr(inode, name, value, size, flags);
-}
+अटल पूर्णांक ceph_set_xattr_handler(स्थिर काष्ठा xattr_handler *handler,
+				  काष्ठा user_namespace *mnt_userns,
+				  काष्ठा dentry *unused, काष्ठा inode *inode,
+				  स्थिर अक्षर *name, स्थिर व्योम *value,
+				  माप_प्रकार size, पूर्णांक flags)
+अणु
+	अगर (!ceph_is_valid_xattr(name))
+		वापस -EOPNOTSUPP;
+	वापस __ceph_setxattr(inode, name, value, size, flags);
+पूर्ण
 
-static const struct xattr_handler ceph_other_xattr_handler = {
+अटल स्थिर काष्ठा xattr_handler ceph_other_xattr_handler = अणु
 	.prefix = "",  /* match any name => handlers called with full name */
 	.get = ceph_get_xattr_handler,
 	.set = ceph_set_xattr_handler,
-};
+पूर्ण;
 
-#ifdef CONFIG_SECURITY
-bool ceph_security_xattr_wanted(struct inode *in)
-{
-	return in->i_security != NULL;
-}
+#अगर_घोषित CONFIG_SECURITY
+bool ceph_security_xattr_wanted(काष्ठा inode *in)
+अणु
+	वापस in->i_security != शून्य;
+पूर्ण
 
-bool ceph_security_xattr_deadlock(struct inode *in)
-{
-	struct ceph_inode_info *ci;
+bool ceph_security_xattr_deadlock(काष्ठा inode *in)
+अणु
+	काष्ठा ceph_inode_info *ci;
 	bool ret;
-	if (!in->i_security)
-		return false;
+	अगर (!in->i_security)
+		वापस false;
 	ci = ceph_inode(in);
 	spin_lock(&ci->i_ceph_lock);
 	ret = !(ci->i_ceph_flags & CEPH_I_SEC_INITED) &&
 	      !(ci->i_xattrs.version > 0 &&
 		__ceph_caps_issued_mask(ci, CEPH_CAP_XATTR_SHARED, 0));
 	spin_unlock(&ci->i_ceph_lock);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-#ifdef CONFIG_CEPH_FS_SECURITY_LABEL
-int ceph_security_init_secctx(struct dentry *dentry, umode_t mode,
-			   struct ceph_acl_sec_ctx *as_ctx)
-{
-	struct ceph_pagelist *pagelist = as_ctx->pagelist;
-	const char *name;
-	size_t name_len;
-	int err;
+#अगर_घोषित CONFIG_CEPH_FS_SECURITY_LABEL
+पूर्णांक ceph_security_init_secctx(काष्ठा dentry *dentry, umode_t mode,
+			   काष्ठा ceph_acl_sec_ctx *as_ctx)
+अणु
+	काष्ठा ceph_pagelist *pagelist = as_ctx->pagelist;
+	स्थिर अक्षर *name;
+	माप_प्रकार name_len;
+	पूर्णांक err;
 
 	err = security_dentry_init_security(dentry, mode, &dentry->d_name,
 					    &as_ctx->sec_ctx,
 					    &as_ctx->sec_ctxlen);
-	if (err < 0) {
+	अगर (err < 0) अणु
 		WARN_ON_ONCE(err != -EOPNOTSUPP);
-		err = 0; /* do nothing */
-		goto out;
-	}
+		err = 0; /* करो nothing */
+		जाओ out;
+	पूर्ण
 
 	err = -ENOMEM;
-	if (!pagelist) {
+	अगर (!pagelist) अणु
 		pagelist = ceph_pagelist_alloc(GFP_KERNEL);
-		if (!pagelist)
-			goto out;
+		अगर (!pagelist)
+			जाओ out;
 		err = ceph_pagelist_reserve(pagelist, PAGE_SIZE);
-		if (err)
-			goto out;
+		अगर (err)
+			जाओ out;
 		ceph_pagelist_encode_32(pagelist, 1);
-	}
+	पूर्ण
 
 	/*
 	 * FIXME: Make security_dentry_init_security() generic. Currently
@@ -1317,27 +1318,27 @@ int ceph_security_init_secctx(struct dentry *dentry, umode_t mode,
 	 * dentry_init_security hook.
 	 */
 	name = XATTR_NAME_SELINUX;
-	name_len = strlen(name);
+	name_len = म_माप(name);
 	err = ceph_pagelist_reserve(pagelist,
 				    4 * 2 + name_len + as_ctx->sec_ctxlen);
-	if (err)
-		goto out;
+	अगर (err)
+		जाओ out;
 
-	if (as_ctx->pagelist) {
+	अगर (as_ctx->pagelist) अणु
 		/* update count of KV pairs */
-		BUG_ON(pagelist->length <= sizeof(__le32));
-		if (list_is_singular(&pagelist->head)) {
+		BUG_ON(pagelist->length <= माप(__le32));
+		अगर (list_is_singular(&pagelist->head)) अणु
 			le32_add_cpu((__le32*)pagelist->mapped_tail, 1);
-		} else {
-			struct page *page = list_first_entry(&pagelist->head,
-							     struct page, lru);
-			void *addr = kmap_atomic(page);
+		पूर्ण अन्यथा अणु
+			काष्ठा page *page = list_first_entry(&pagelist->head,
+							     काष्ठा page, lru);
+			व्योम *addr = kmap_atomic(page);
 			le32_add_cpu((__le32*)addr, 1);
 			kunmap_atomic(addr);
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		as_ctx->pagelist = pagelist;
-	}
+	पूर्ण
 
 	ceph_pagelist_encode_32(pagelist, name_len);
 	ceph_pagelist_append(pagelist, name, name_len);
@@ -1347,35 +1348,35 @@ int ceph_security_init_secctx(struct dentry *dentry, umode_t mode,
 
 	err = 0;
 out:
-	if (pagelist && !as_ctx->pagelist)
+	अगर (pagelist && !as_ctx->pagelist)
 		ceph_pagelist_release(pagelist);
-	return err;
-}
-#endif /* CONFIG_CEPH_FS_SECURITY_LABEL */
-#endif /* CONFIG_SECURITY */
+	वापस err;
+पूर्ण
+#पूर्ण_अगर /* CONFIG_CEPH_FS_SECURITY_LABEL */
+#पूर्ण_अगर /* CONFIG_SECURITY */
 
-void ceph_release_acl_sec_ctx(struct ceph_acl_sec_ctx *as_ctx)
-{
-#ifdef CONFIG_CEPH_FS_POSIX_ACL
+व्योम ceph_release_acl_sec_ctx(काष्ठा ceph_acl_sec_ctx *as_ctx)
+अणु
+#अगर_घोषित CONFIG_CEPH_FS_POSIX_ACL
 	posix_acl_release(as_ctx->acl);
-	posix_acl_release(as_ctx->default_acl);
-#endif
-#ifdef CONFIG_CEPH_FS_SECURITY_LABEL
+	posix_acl_release(as_ctx->शेष_acl);
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_CEPH_FS_SECURITY_LABEL
 	security_release_secctx(as_ctx->sec_ctx, as_ctx->sec_ctxlen);
-#endif
-	if (as_ctx->pagelist)
+#पूर्ण_अगर
+	अगर (as_ctx->pagelist)
 		ceph_pagelist_release(as_ctx->pagelist);
-}
+पूर्ण
 
 /*
- * List of handlers for synthetic system.* attributes. Other
+ * List of handlers क्रम synthetic प्रणाली.* attributes. Other
  * attributes are handled directly.
  */
-const struct xattr_handler *ceph_xattr_handlers[] = {
-#ifdef CONFIG_CEPH_FS_POSIX_ACL
+स्थिर काष्ठा xattr_handler *ceph_xattr_handlers[] = अणु
+#अगर_घोषित CONFIG_CEPH_FS_POSIX_ACL
 	&posix_acl_access_xattr_handler,
-	&posix_acl_default_xattr_handler,
-#endif
+	&posix_acl_शेष_xattr_handler,
+#पूर्ण_अगर
 	&ceph_other_xattr_handler,
-	NULL,
-};
+	शून्य,
+पूर्ण;

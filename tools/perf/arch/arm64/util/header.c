@@ -1,101 +1,102 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <perf/cpumap.h>
-#include <util/cpumap.h>
-#include <internal/cpumap.h>
-#include <api/fs/fs.h>
-#include <errno.h>
-#include "debug.h"
-#include "header.h"
+<शैली गुरु>
+#समावेश <मानकपन.स>
+#समावेश <मानककोष.स>
+#समावेश <perf/cpumap.h>
+#समावेश <util/cpumap.h>
+#समावेश <पूर्णांकernal/cpumap.h>
+#समावेश <api/fs/fs.h>
+#समावेश <त्रुटिसं.स>
+#समावेश "debug.h"
+#समावेश "header.h"
 
-#define MIDR "/regs/identification/midr_el1"
-#define MIDR_SIZE 19
-#define MIDR_REVISION_MASK      0xf
-#define MIDR_VARIANT_SHIFT      20
-#define MIDR_VARIANT_MASK       (0xf << MIDR_VARIANT_SHIFT)
+#घोषणा MIDR "/regs/identification/midr_el1"
+#घोषणा MIDR_SIZE 19
+#घोषणा MIDR_REVISION_MASK      0xf
+#घोषणा MIDR_VARIANT_SHIFT      20
+#घोषणा MIDR_VARIANT_MASK       (0xf << MIDR_VARIANT_SHIFT)
 
-static int _get_cpuid(char *buf, size_t sz, struct perf_cpu_map *cpus)
-{
-	const char *sysfs = sysfs__mountpoint();
+अटल पूर्णांक _get_cpuid(अक्षर *buf, माप_प्रकार sz, काष्ठा perf_cpu_map *cpus)
+अणु
+	स्थिर अक्षर *sysfs = sysfs__mountpoपूर्णांक();
 	u64 midr = 0;
-	int cpu;
+	पूर्णांक cpu;
 
-	if (!sysfs || sz < MIDR_SIZE)
-		return EINVAL;
+	अगर (!sysfs || sz < MIDR_SIZE)
+		वापस EINVAL;
 
 	cpus = perf_cpu_map__get(cpus);
 
-	for (cpu = 0; cpu < perf_cpu_map__nr(cpus); cpu++) {
-		char path[PATH_MAX];
-		FILE *file;
+	क्रम (cpu = 0; cpu < perf_cpu_map__nr(cpus); cpu++) अणु
+		अक्षर path[PATH_MAX];
+		खाता *file;
 
-		scnprintf(path, PATH_MAX, "%s/devices/system/cpu/cpu%d"MIDR,
+		scnम_लिखो(path, PATH_MAX, "%s/devices/system/cpu/cpu%d"MIDR,
 				sysfs, cpus->map[cpu]);
 
-		file = fopen(path, "r");
-		if (!file) {
+		file = ख_खोलो(path, "r");
+		अगर (!file) अणु
 			pr_debug("fopen failed for file %s\n", path);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		if (!fgets(buf, MIDR_SIZE, file)) {
-			fclose(file);
-			continue;
-		}
-		fclose(file);
+		अगर (!ख_माला_लो(buf, MIDR_SIZE, file)) अणु
+			ख_बंद(file);
+			जारी;
+		पूर्ण
+		ख_बंद(file);
 
 		/* Ignore/clear Variant[23:20] and
 		 * Revision[3:0] of MIDR
 		 */
-		midr = strtoul(buf, NULL, 16);
+		midr = म_से_अदीर्घ(buf, शून्य, 16);
 		midr &= (~(MIDR_VARIANT_MASK | MIDR_REVISION_MASK));
-		scnprintf(buf, MIDR_SIZE, "0x%016lx", midr);
-		/* got midr break loop */
-		break;
-	}
+		scnम_लिखो(buf, MIDR_SIZE, "0x%016lx", midr);
+		/* got midr अवरोध loop */
+		अवरोध;
+	पूर्ण
 
 	perf_cpu_map__put(cpus);
 
-	if (!midr)
-		return EINVAL;
+	अगर (!midr)
+		वापस EINVAL;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int get_cpuid(char *buf, size_t sz)
-{
-	struct perf_cpu_map *cpus = perf_cpu_map__new(NULL);
-	int ret;
+पूर्णांक get_cpuid(अक्षर *buf, माप_प्रकार sz)
+अणु
+	काष्ठा perf_cpu_map *cpus = perf_cpu_map__new(शून्य);
+	पूर्णांक ret;
 
-	if (!cpus)
-		return EINVAL;
+	अगर (!cpus)
+		वापस EINVAL;
 
 	ret = _get_cpuid(buf, sz, cpus);
 
 	perf_cpu_map__put(cpus);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-char *get_cpuid_str(struct perf_pmu *pmu)
-{
-	char *buf = NULL;
-	int res;
+अक्षर *get_cpuid_str(काष्ठा perf_pmu *pmu)
+अणु
+	अक्षर *buf = शून्य;
+	पूर्णांक res;
 
-	if (!pmu || !pmu->cpus)
-		return NULL;
+	अगर (!pmu || !pmu->cpus)
+		वापस शून्य;
 
-	buf = malloc(MIDR_SIZE);
-	if (!buf)
-		return NULL;
+	buf = दो_स्मृति(MIDR_SIZE);
+	अगर (!buf)
+		वापस शून्य;
 
-	/* read midr from list of cpus mapped to this pmu */
+	/* पढ़ो midr from list of cpus mapped to this pmu */
 	res = _get_cpuid(buf, MIDR_SIZE, pmu->cpus);
-	if (res) {
+	अगर (res) अणु
 		pr_err("failed to get cpuid string for PMU %s\n", pmu->name);
-		free(buf);
-		buf = NULL;
-	}
+		मुक्त(buf);
+		buf = शून्य;
+	पूर्ण
 
-	return buf;
-}
+	वापस buf;
+पूर्ण

@@ -1,22 +1,23 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /* Copyright (c)  2018 Intel Corporation */
 
-#ifndef _IGC_PHY_H_
-#define _IGC_PHY_H_
+#अगर_अघोषित _IGC_PHY_H_
+#घोषणा _IGC_PHY_H_
 
-#include "igc_mac.h"
+#समावेश "igc_mac.h"
 
-s32 igc_check_reset_block(struct igc_hw *hw);
-s32 igc_phy_hw_reset(struct igc_hw *hw);
-s32 igc_get_phy_id(struct igc_hw *hw);
-s32 igc_phy_has_link(struct igc_hw *hw, u32 iterations,
-		     u32 usec_interval, bool *success);
-s32 igc_check_downshift(struct igc_hw *hw);
-s32 igc_setup_copper_link(struct igc_hw *hw);
-void igc_power_up_phy_copper(struct igc_hw *hw);
-void igc_power_down_phy_copper(struct igc_hw *hw);
-s32 igc_write_phy_reg_gpy(struct igc_hw *hw, u32 offset, u16 data);
-s32 igc_read_phy_reg_gpy(struct igc_hw *hw, u32 offset, u16 *data);
-u16 igc_read_phy_fw_version(struct igc_hw *hw);
+s32 igc_check_reset_block(काष्ठा igc_hw *hw);
+s32 igc_phy_hw_reset(काष्ठा igc_hw *hw);
+s32 igc_get_phy_id(काष्ठा igc_hw *hw);
+s32 igc_phy_has_link(काष्ठा igc_hw *hw, u32 iterations,
+		     u32 usec_पूर्णांकerval, bool *success);
+s32 igc_check_करोwnshअगरt(काष्ठा igc_hw *hw);
+s32 igc_setup_copper_link(काष्ठा igc_hw *hw);
+व्योम igc_घातer_up_phy_copper(काष्ठा igc_hw *hw);
+व्योम igc_घातer_करोwn_phy_copper(काष्ठा igc_hw *hw);
+s32 igc_ग_लिखो_phy_reg_gpy(काष्ठा igc_hw *hw, u32 offset, u16 data);
+s32 igc_पढ़ो_phy_reg_gpy(काष्ठा igc_hw *hw, u32 offset, u16 *data);
+u16 igc_पढ़ो_phy_fw_version(काष्ठा igc_hw *hw);
 
-#endif
+#पूर्ण_अगर

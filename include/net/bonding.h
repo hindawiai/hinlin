@@ -1,10 +1,11 @@
+<शैली गुरु>
 /*
- * Bond several ethernet interfaces into a Cisco, running 'Etherchannel'.
+ * Bond several ethernet पूर्णांकerfaces पूर्णांकo a Cisco, running 'Etherchannel'.
  *
  * Portions are (c) Copyright 1995 Simon "Guru Aleph-Null" Janes
  * NCM: Network and Communications Management, Inc.
  *
- * BUT, I'm the one who modified it for ethernet, so:
+ * BUT, I'm the one who modअगरied it क्रम ethernet, so:
  * (c) Copyright 1999, Thomas Davis, tadavis@lbl.gov
  *
  *	This software may be used and distributed according to the terms
@@ -12,759 +13,759 @@
  *
  */
 
-#ifndef _NET_BONDING_H
-#define _NET_BONDING_H
+#अगर_अघोषित _NET_BONDING_H
+#घोषणा _NET_BONDING_H
 
-#include <linux/timer.h>
-#include <linux/proc_fs.h>
-#include <linux/if_bonding.h>
-#include <linux/cpumask.h>
-#include <linux/in6.h>
-#include <linux/netpoll.h>
-#include <linux/inetdevice.h>
-#include <linux/etherdevice.h>
-#include <linux/reciprocal_div.h>
-#include <linux/if_link.h>
+#समावेश <linux/समयr.h>
+#समावेश <linux/proc_fs.h>
+#समावेश <linux/अगर_bonding.h>
+#समावेश <linux/cpumask.h>
+#समावेश <linux/in6.h>
+#समावेश <linux/netpoll.h>
+#समावेश <linux/inetdevice.h>
+#समावेश <linux/etherdevice.h>
+#समावेश <linux/reciprocal_भाग.h>
+#समावेश <linux/अगर_link.h>
 
-#include <net/bond_3ad.h>
-#include <net/bond_alb.h>
-#include <net/bond_options.h>
+#समावेश <net/bond_3ad.h>
+#समावेश <net/bond_alb.h>
+#समावेश <net/bond_options.h>
 
-#define BOND_MAX_ARP_TARGETS	16
+#घोषणा BOND_MAX_ARP_TARGETS	16
 
-#define BOND_DEFAULT_MIIMON	100
+#घोषणा BOND_DEFAULT_MIIMON	100
 
-#ifndef __long_aligned
-#define __long_aligned __attribute__((aligned((sizeof(long)))))
-#endif
+#अगर_अघोषित __दीर्घ_aligned
+#घोषणा __दीर्घ_aligned __attribute__((aligned((माप(दीर्घ)))))
+#पूर्ण_अगर
 
-#define slave_info(bond_dev, slave_dev, fmt, ...) \
+#घोषणा slave_info(bond_dev, slave_dev, fmt, ...) \
 	netdev_info(bond_dev, "(slave %s): " fmt, (slave_dev)->name, ##__VA_ARGS__)
-#define slave_warn(bond_dev, slave_dev, fmt, ...) \
+#घोषणा slave_warn(bond_dev, slave_dev, fmt, ...) \
 	netdev_warn(bond_dev, "(slave %s): " fmt, (slave_dev)->name, ##__VA_ARGS__)
-#define slave_dbg(bond_dev, slave_dev, fmt, ...) \
+#घोषणा slave_dbg(bond_dev, slave_dev, fmt, ...) \
 	netdev_dbg(bond_dev, "(slave %s): " fmt, (slave_dev)->name, ##__VA_ARGS__)
-#define slave_err(bond_dev, slave_dev, fmt, ...) \
+#घोषणा slave_err(bond_dev, slave_dev, fmt, ...) \
 	netdev_err(bond_dev, "(slave %s): " fmt, (slave_dev)->name, ##__VA_ARGS__)
 
-#define BOND_MODE(bond) ((bond)->params.mode)
+#घोषणा BOND_MODE(bond) ((bond)->params.mode)
 
 /* slave list primitives */
-#define bond_slave_list(bond) (&(bond)->dev->adj_list.lower)
+#घोषणा bond_slave_list(bond) (&(bond)->dev->adj_list.lower)
 
-#define bond_has_slaves(bond) !list_empty(bond_slave_list(bond))
+#घोषणा bond_has_slaves(bond) !list_empty(bond_slave_list(bond))
 
-/* IMPORTANT: bond_first/last_slave can return NULL in case of an empty list */
-#define bond_first_slave(bond) \
+/* IMPORTANT: bond_first/last_slave can वापस शून्य in हाल of an empty list */
+#घोषणा bond_first_slave(bond) \
 	(bond_has_slaves(bond) ? \
-		netdev_adjacent_get_private(bond_slave_list(bond)->next) : \
-		NULL)
-#define bond_last_slave(bond) \
+		netdev_adjacent_get_निजी(bond_slave_list(bond)->next) : \
+		शून्य)
+#घोषणा bond_last_slave(bond) \
 	(bond_has_slaves(bond) ? \
-		netdev_adjacent_get_private(bond_slave_list(bond)->prev) : \
-		NULL)
+		netdev_adjacent_get_निजी(bond_slave_list(bond)->prev) : \
+		शून्य)
 
-/* Caller must have rcu_read_lock */
-#define bond_first_slave_rcu(bond) \
-	netdev_lower_get_first_private_rcu(bond->dev)
+/* Caller must have rcu_पढ़ो_lock */
+#घोषणा bond_first_slave_rcu(bond) \
+	netdev_lower_get_first_निजी_rcu(bond->dev)
 
-#define bond_is_first_slave(bond, pos) (pos == bond_first_slave(bond))
-#define bond_is_last_slave(bond, pos) (pos == bond_last_slave(bond))
+#घोषणा bond_is_first_slave(bond, pos) (pos == bond_first_slave(bond))
+#घोषणा bond_is_last_slave(bond, pos) (pos == bond_last_slave(bond))
 
 /**
- * bond_for_each_slave - iterate over all slaves
+ * bond_क्रम_each_slave - iterate over all slaves
  * @bond:	the bond holding this list
  * @pos:	current slave
  * @iter:	list_head * iterator
  *
  * Caller must hold RTNL
  */
-#define bond_for_each_slave(bond, pos, iter) \
-	netdev_for_each_lower_private((bond)->dev, pos, iter)
+#घोषणा bond_क्रम_each_slave(bond, pos, iter) \
+	netdev_क्रम_each_lower_निजी((bond)->dev, pos, iter)
 
-/* Caller must have rcu_read_lock */
-#define bond_for_each_slave_rcu(bond, pos, iter) \
-	netdev_for_each_lower_private_rcu((bond)->dev, pos, iter)
+/* Caller must have rcu_पढ़ो_lock */
+#घोषणा bond_क्रम_each_slave_rcu(bond, pos, iter) \
+	netdev_क्रम_each_lower_निजी_rcu((bond)->dev, pos, iter)
 
-#define BOND_XFRM_FEATURES (NETIF_F_HW_ESP | NETIF_F_HW_ESP_TX_CSUM | \
+#घोषणा BOND_XFRM_FEATURES (NETIF_F_HW_ESP | NETIF_F_HW_ESP_TX_CSUM | \
 			    NETIF_F_GSO_ESP)
 
-#define BOND_TLS_FEATURES (NETIF_F_HW_TLS_TX | NETIF_F_HW_TLS_RX)
+#घोषणा BOND_TLS_FEATURES (NETIF_F_HW_TLS_TX | NETIF_F_HW_TLS_RX)
 
-#ifdef CONFIG_NET_POLL_CONTROLLER
-extern atomic_t netpoll_block_tx;
+#अगर_घोषित CONFIG_NET_POLL_CONTROLLER
+बाह्य atomic_t netpoll_block_tx;
 
-static inline void block_netpoll_tx(void)
-{
+अटल अंतरभूत व्योम block_netpoll_tx(व्योम)
+अणु
 	atomic_inc(&netpoll_block_tx);
-}
+पूर्ण
 
-static inline void unblock_netpoll_tx(void)
-{
+अटल अंतरभूत व्योम unblock_netpoll_tx(व्योम)
+अणु
 	atomic_dec(&netpoll_block_tx);
-}
+पूर्ण
 
-static inline int is_netpoll_tx_blocked(struct net_device *dev)
-{
-	if (unlikely(netpoll_tx_running(dev)))
-		return atomic_read(&netpoll_block_tx);
-	return 0;
-}
-#else
-#define block_netpoll_tx()
-#define unblock_netpoll_tx()
-#define is_netpoll_tx_blocked(dev) (0)
-#endif
+अटल अंतरभूत पूर्णांक is_netpoll_tx_blocked(काष्ठा net_device *dev)
+अणु
+	अगर (unlikely(netpoll_tx_running(dev)))
+		वापस atomic_पढ़ो(&netpoll_block_tx);
+	वापस 0;
+पूर्ण
+#अन्यथा
+#घोषणा block_netpoll_tx()
+#घोषणा unblock_netpoll_tx()
+#घोषणा is_netpoll_tx_blocked(dev) (0)
+#पूर्ण_अगर
 
-struct bond_params {
-	int mode;
-	int xmit_policy;
-	int miimon;
-	u8 num_peer_notif;
-	int arp_interval;
-	int arp_validate;
-	int arp_all_targets;
-	int use_carrier;
-	int fail_over_mac;
-	int updelay;
-	int downdelay;
-	int peer_notif_delay;
-	int lacp_fast;
-	unsigned int min_links;
-	int ad_select;
-	char primary[IFNAMSIZ];
-	int primary_reselect;
-	__be32 arp_targets[BOND_MAX_ARP_TARGETS];
-	int tx_queues;
-	int all_slaves_active;
-	int resend_igmp;
-	int lp_interval;
-	int packets_per_slave;
-	int tlb_dynamic_lb;
-	struct reciprocal_value reciprocal_packets_per_slave;
+काष्ठा bond_params अणु
+	पूर्णांक mode;
+	पूर्णांक xmit_policy;
+	पूर्णांक miimon;
+	u8 num_peer_notअगर;
+	पूर्णांक arp_पूर्णांकerval;
+	पूर्णांक arp_validate;
+	पूर्णांक arp_all_tarमाला_लो;
+	पूर्णांक use_carrier;
+	पूर्णांक fail_over_mac;
+	पूर्णांक updelay;
+	पूर्णांक करोwndelay;
+	पूर्णांक peer_notअगर_delay;
+	पूर्णांक lacp_fast;
+	अचिन्हित पूर्णांक min_links;
+	पूर्णांक ad_select;
+	अक्षर primary[IFNAMSIZ];
+	पूर्णांक primary_reselect;
+	__be32 arp_tarमाला_लो[BOND_MAX_ARP_TARGETS];
+	पूर्णांक tx_queues;
+	पूर्णांक all_slaves_active;
+	पूर्णांक resend_igmp;
+	पूर्णांक lp_पूर्णांकerval;
+	पूर्णांक packets_per_slave;
+	पूर्णांक tlb_dynamic_lb;
+	काष्ठा reciprocal_value reciprocal_packets_per_slave;
 	u16 ad_actor_sys_prio;
 	u16 ad_user_port_key;
 
 	/* 2 bytes of padding : see ether_addr_equal_64bits() */
-	u8 ad_actor_system[ETH_ALEN + 2];
-};
+	u8 ad_actor_प्रणाली[ETH_ALEN + 2];
+पूर्ण;
 
-struct bond_parm_tbl {
-	char *modename;
-	int mode;
-};
+काष्ठा bond_parm_tbl अणु
+	अक्षर *modename;
+	पूर्णांक mode;
+पूर्ण;
 
-struct slave {
-	struct net_device *dev; /* first - useful for panic debug */
-	struct bonding *bond; /* our master */
-	int    delay;
-	/* all three in jiffies */
-	unsigned long last_link_up;
-	unsigned long last_rx;
-	unsigned long target_last_arp_rx[BOND_MAX_ARP_TARGETS];
+काष्ठा slave अणु
+	काष्ठा net_device *dev; /* first - useful क्रम panic debug */
+	काष्ठा bonding *bond; /* our master */
+	पूर्णांक    delay;
+	/* all three in jअगरfies */
+	अचिन्हित दीर्घ last_link_up;
+	अचिन्हित दीर्घ last_rx;
+	अचिन्हित दीर्घ target_last_arp_rx[BOND_MAX_ARP_TARGETS];
 	s8     link;		/* one of BOND_LINK_XXXX */
 	s8     link_new_state;	/* one of BOND_LINK_XXXX */
 	u8     backup:1,   /* indicates backup slave. Value corresponds with
 			      BOND_STATE_ACTIVE and BOND_STATE_BACKUP */
 	       inactive:1, /* indicates inactive slave */
-	       should_notify:1, /* indicates whether the state changed */
-	       should_notify_link:1; /* indicates whether the link changed */
+	       should_notअगरy:1, /* indicates whether the state changed */
+	       should_notअगरy_link:1; /* indicates whether the link changed */
 	u8     duplex;
 	u32    original_mtu;
 	u32    link_failure_count;
 	u32    speed;
 	u16    queue_id;
 	u8     perm_hwaddr[MAX_ADDR_LEN];
-	struct ad_slave_info *ad_info;
-	struct tlb_slave_info tlb_info;
-#ifdef CONFIG_NET_POLL_CONTROLLER
-	struct netpoll *np;
-#endif
-	struct delayed_work notify_work;
-	struct kobject kobj;
-	struct rtnl_link_stats64 slave_stats;
-};
+	काष्ठा ad_slave_info *ad_info;
+	काष्ठा tlb_slave_info tlb_info;
+#अगर_घोषित CONFIG_NET_POLL_CONTROLLER
+	काष्ठा netpoll *np;
+#पूर्ण_अगर
+	काष्ठा delayed_work notअगरy_work;
+	काष्ठा kobject kobj;
+	काष्ठा rtnl_link_stats64 slave_stats;
+पूर्ण;
 
-static inline struct slave *to_slave(struct kobject *kobj)
-{
-	return container_of(kobj, struct slave, kobj);
-}
+अटल अंतरभूत काष्ठा slave *to_slave(काष्ठा kobject *kobj)
+अणु
+	वापस container_of(kobj, काष्ठा slave, kobj);
+पूर्ण
 
-struct bond_up_slave {
-	unsigned int	count;
-	struct rcu_head rcu;
-	struct slave	*arr[];
-};
-
-/*
- * Link pseudo-state only used internally by monitors
- */
-#define BOND_LINK_NOCHANGE -1
+काष्ठा bond_up_slave अणु
+	अचिन्हित पूर्णांक	count;
+	काष्ठा rcu_head rcu;
+	काष्ठा slave	*arr[];
+पूर्ण;
 
 /*
- * Here are the locking policies for the two bonding locks:
- * Get rcu_read_lock when reading or RTNL when writing slave list.
+ * Link pseuकरो-state only used पूर्णांकernally by monitors
  */
-struct bonding {
-	struct   net_device *dev; /* first - useful for panic debug */
-	struct   slave __rcu *curr_active_slave;
-	struct   slave __rcu *current_arp_slave;
-	struct   slave __rcu *primary_slave;
-	struct   bond_up_slave __rcu *usable_slaves;
-	struct   bond_up_slave __rcu *all_slaves;
-	bool     force_primary;
+#घोषणा BOND_LINK_NOCHANGE -1
+
+/*
+ * Here are the locking policies क्रम the two bonding locks:
+ * Get rcu_पढ़ो_lock when पढ़ोing or RTNL when writing slave list.
+ */
+काष्ठा bonding अणु
+	काष्ठा   net_device *dev; /* first - useful क्रम panic debug */
+	काष्ठा   slave __rcu *curr_active_slave;
+	काष्ठा   slave __rcu *current_arp_slave;
+	काष्ठा   slave __rcu *primary_slave;
+	काष्ठा   bond_up_slave __rcu *usable_slaves;
+	काष्ठा   bond_up_slave __rcu *all_slaves;
+	bool     क्रमce_primary;
 	s32      slave_cnt; /* never change this value outside the attach/detach wrappers */
-	int     (*recv_probe)(const struct sk_buff *, struct bonding *,
-			      struct slave *);
-	/* mode_lock is used for mode-specific locking needs, currently used by:
+	पूर्णांक     (*recv_probe)(स्थिर काष्ठा sk_buff *, काष्ठा bonding *,
+			      काष्ठा slave *);
+	/* mode_lock is used क्रम mode-specअगरic locking needs, currently used by:
 	 * 3ad mode (4) - protect against running bond_3ad_unbind_slave() and
 	 *                bond_3ad_state_machine_handler() concurrently and also
 	 *                the access to the state machine shared variables.
-	 * TLB mode (5) - to sync the use and modifications of its hash table
-	 * ALB mode (6) - to sync the use and modifications of its hash table
+	 * TLB mode (5) - to sync the use and modअगरications of its hash table
+	 * ALB mode (6) - to sync the use and modअगरications of its hash table
 	 */
 	spinlock_t mode_lock;
 	spinlock_t stats_lock;
-	u8	 send_peer_notif;
+	u8	 send_peer_notअगर;
 	u8       igmp_retrans;
-#ifdef CONFIG_PROC_FS
-	struct   proc_dir_entry *proc_entry;
-	char     proc_file_name[IFNAMSIZ];
-#endif /* CONFIG_PROC_FS */
-	struct   list_head bond_list;
+#अगर_घोषित CONFIG_PROC_FS
+	काष्ठा   proc_dir_entry *proc_entry;
+	अक्षर     proc_file_name[IFNAMSIZ];
+#पूर्ण_अगर /* CONFIG_PROC_FS */
+	काष्ठा   list_head bond_list;
 	u32      rr_tx_counter;
-	struct   ad_bond_info ad_info;
-	struct   alb_bond_info alb_info;
-	struct   bond_params params;
-	struct   workqueue_struct *wq;
-	struct   delayed_work mii_work;
-	struct   delayed_work arp_work;
-	struct   delayed_work alb_work;
-	struct   delayed_work ad_work;
-	struct   delayed_work mcast_work;
-	struct   delayed_work slave_arr_work;
-#ifdef CONFIG_DEBUG_FS
+	काष्ठा   ad_bond_info ad_info;
+	काष्ठा   alb_bond_info alb_info;
+	काष्ठा   bond_params params;
+	काष्ठा   workqueue_काष्ठा *wq;
+	काष्ठा   delayed_work mii_work;
+	काष्ठा   delayed_work arp_work;
+	काष्ठा   delayed_work alb_work;
+	काष्ठा   delayed_work ad_work;
+	काष्ठा   delayed_work mcast_work;
+	काष्ठा   delayed_work slave_arr_work;
+#अगर_घोषित CONFIG_DEBUG_FS
 	/* debugging support via debugfs */
-	struct	 dentry *debug_dir;
-#endif /* CONFIG_DEBUG_FS */
-	struct rtnl_link_stats64 bond_stats;
-#ifdef CONFIG_XFRM_OFFLOAD
-	struct xfrm_state *xs;
-#endif /* CONFIG_XFRM_OFFLOAD */
-};
+	काष्ठा	 dentry *debug_dir;
+#पूर्ण_अगर /* CONFIG_DEBUG_FS */
+	काष्ठा rtnl_link_stats64 bond_stats;
+#अगर_घोषित CONFIG_XFRM_OFFLOAD
+	काष्ठा xfrm_state *xs;
+#पूर्ण_अगर /* CONFIG_XFRM_OFFLOAD */
+पूर्ण;
 
-#define bond_slave_get_rcu(dev) \
-	((struct slave *) rcu_dereference(dev->rx_handler_data))
+#घोषणा bond_slave_get_rcu(dev) \
+	((काष्ठा slave *) rcu_dereference(dev->rx_handler_data))
 
-#define bond_slave_get_rtnl(dev) \
-	((struct slave *) rtnl_dereference(dev->rx_handler_data))
+#घोषणा bond_slave_get_rtnl(dev) \
+	((काष्ठा slave *) rtnl_dereference(dev->rx_handler_data))
 
-void bond_queue_slave_event(struct slave *slave);
-void bond_lower_state_changed(struct slave *slave);
+व्योम bond_queue_slave_event(काष्ठा slave *slave);
+व्योम bond_lower_state_changed(काष्ठा slave *slave);
 
-struct bond_vlan_tag {
+काष्ठा bond_vlan_tag अणु
 	__be16		vlan_proto;
-	unsigned short	vlan_id;
-};
+	अचिन्हित लघु	vlan_id;
+पूर्ण;
 
-bool bond_sk_check(struct bonding *bond);
+bool bond_sk_check(काष्ठा bonding *bond);
 
 /**
- * Returns NULL if the net_device does not belong to any of the bond's slaves
+ * Returns शून्य अगर the net_device करोes not beदीर्घ to any of the bond's slaves
  *
- * Caller must hold bond lock for read
+ * Caller must hold bond lock क्रम पढ़ो
  */
-static inline struct slave *bond_get_slave_by_dev(struct bonding *bond,
-						  struct net_device *slave_dev)
-{
-	return netdev_lower_dev_get_private(bond->dev, slave_dev);
-}
+अटल अंतरभूत काष्ठा slave *bond_get_slave_by_dev(काष्ठा bonding *bond,
+						  काष्ठा net_device *slave_dev)
+अणु
+	वापस netdev_lower_dev_get_निजी(bond->dev, slave_dev);
+पूर्ण
 
-static inline struct bonding *bond_get_bond_by_slave(struct slave *slave)
-{
-	return slave->bond;
-}
+अटल अंतरभूत काष्ठा bonding *bond_get_bond_by_slave(काष्ठा slave *slave)
+अणु
+	वापस slave->bond;
+पूर्ण
 
-static inline bool bond_should_override_tx_queue(struct bonding *bond)
-{
-	return BOND_MODE(bond) == BOND_MODE_ACTIVEBACKUP ||
+अटल अंतरभूत bool bond_should_override_tx_queue(काष्ठा bonding *bond)
+अणु
+	वापस BOND_MODE(bond) == BOND_MODE_ACTIVEBACKUP ||
 	       BOND_MODE(bond) == BOND_MODE_ROUNDROBIN;
-}
+पूर्ण
 
-static inline bool bond_is_lb(const struct bonding *bond)
-{
-	return BOND_MODE(bond) == BOND_MODE_TLB ||
+अटल अंतरभूत bool bond_is_lb(स्थिर काष्ठा bonding *bond)
+अणु
+	वापस BOND_MODE(bond) == BOND_MODE_TLB ||
 	       BOND_MODE(bond) == BOND_MODE_ALB;
-}
+पूर्ण
 
-static inline bool bond_needs_speed_duplex(const struct bonding *bond)
-{
-	return BOND_MODE(bond) == BOND_MODE_8023AD || bond_is_lb(bond);
-}
+अटल अंतरभूत bool bond_needs_speed_duplex(स्थिर काष्ठा bonding *bond)
+अणु
+	वापस BOND_MODE(bond) == BOND_MODE_8023AD || bond_is_lb(bond);
+पूर्ण
 
-static inline bool bond_is_nondyn_tlb(const struct bonding *bond)
-{
-	return (bond_is_lb(bond) && bond->params.tlb_dynamic_lb == 0);
-}
+अटल अंतरभूत bool bond_is_nondyn_tlb(स्थिर काष्ठा bonding *bond)
+अणु
+	वापस (bond_is_lb(bond) && bond->params.tlb_dynamic_lb == 0);
+पूर्ण
 
-static inline bool bond_mode_can_use_xmit_hash(const struct bonding *bond)
-{
-	return (BOND_MODE(bond) == BOND_MODE_8023AD ||
+अटल अंतरभूत bool bond_mode_can_use_xmit_hash(स्थिर काष्ठा bonding *bond)
+अणु
+	वापस (BOND_MODE(bond) == BOND_MODE_8023AD ||
 		BOND_MODE(bond) == BOND_MODE_XOR ||
 		BOND_MODE(bond) == BOND_MODE_TLB ||
 		BOND_MODE(bond) == BOND_MODE_ALB);
-}
+पूर्ण
 
-static inline bool bond_mode_uses_xmit_hash(const struct bonding *bond)
-{
-	return (BOND_MODE(bond) == BOND_MODE_8023AD ||
+अटल अंतरभूत bool bond_mode_uses_xmit_hash(स्थिर काष्ठा bonding *bond)
+अणु
+	वापस (BOND_MODE(bond) == BOND_MODE_8023AD ||
 		BOND_MODE(bond) == BOND_MODE_XOR ||
 		bond_is_nondyn_tlb(bond));
-}
+पूर्ण
 
-static inline bool bond_mode_uses_arp(int mode)
-{
-	return mode != BOND_MODE_8023AD && mode != BOND_MODE_TLB &&
+अटल अंतरभूत bool bond_mode_uses_arp(पूर्णांक mode)
+अणु
+	वापस mode != BOND_MODE_8023AD && mode != BOND_MODE_TLB &&
 	       mode != BOND_MODE_ALB;
-}
+पूर्ण
 
-static inline bool bond_mode_uses_primary(int mode)
-{
-	return mode == BOND_MODE_ACTIVEBACKUP || mode == BOND_MODE_TLB ||
+अटल अंतरभूत bool bond_mode_uses_primary(पूर्णांक mode)
+अणु
+	वापस mode == BOND_MODE_ACTIVEBACKUP || mode == BOND_MODE_TLB ||
 	       mode == BOND_MODE_ALB;
-}
+पूर्ण
 
-static inline bool bond_uses_primary(struct bonding *bond)
-{
-	return bond_mode_uses_primary(BOND_MODE(bond));
-}
+अटल अंतरभूत bool bond_uses_primary(काष्ठा bonding *bond)
+अणु
+	वापस bond_mode_uses_primary(BOND_MODE(bond));
+पूर्ण
 
-static inline struct net_device *bond_option_active_slave_get_rcu(struct bonding *bond)
-{
-	struct slave *slave = rcu_dereference(bond->curr_active_slave);
+अटल अंतरभूत काष्ठा net_device *bond_option_active_slave_get_rcu(काष्ठा bonding *bond)
+अणु
+	काष्ठा slave *slave = rcu_dereference(bond->curr_active_slave);
 
-	return bond_uses_primary(bond) && slave ? slave->dev : NULL;
-}
+	वापस bond_uses_primary(bond) && slave ? slave->dev : शून्य;
+पूर्ण
 
-static inline bool bond_slave_is_up(struct slave *slave)
-{
-	return netif_running(slave->dev) && netif_carrier_ok(slave->dev);
-}
+अटल अंतरभूत bool bond_slave_is_up(काष्ठा slave *slave)
+अणु
+	वापस netअगर_running(slave->dev) && netअगर_carrier_ok(slave->dev);
+पूर्ण
 
-static inline void bond_set_active_slave(struct slave *slave)
-{
-	if (slave->backup) {
+अटल अंतरभूत व्योम bond_set_active_slave(काष्ठा slave *slave)
+अणु
+	अगर (slave->backup) अणु
 		slave->backup = 0;
 		bond_queue_slave_event(slave);
 		bond_lower_state_changed(slave);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static inline void bond_set_backup_slave(struct slave *slave)
-{
-	if (!slave->backup) {
+अटल अंतरभूत व्योम bond_set_backup_slave(काष्ठा slave *slave)
+अणु
+	अगर (!slave->backup) अणु
 		slave->backup = 1;
 		bond_queue_slave_event(slave);
 		bond_lower_state_changed(slave);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static inline void bond_set_slave_state(struct slave *slave,
-					int slave_state, bool notify)
-{
-	if (slave->backup == slave_state)
-		return;
+अटल अंतरभूत व्योम bond_set_slave_state(काष्ठा slave *slave,
+					पूर्णांक slave_state, bool notअगरy)
+अणु
+	अगर (slave->backup == slave_state)
+		वापस;
 
 	slave->backup = slave_state;
-	if (notify) {
+	अगर (notअगरy) अणु
 		bond_lower_state_changed(slave);
 		bond_queue_slave_event(slave);
-		slave->should_notify = 0;
-	} else {
-		if (slave->should_notify)
-			slave->should_notify = 0;
-		else
-			slave->should_notify = 1;
-	}
-}
+		slave->should_notअगरy = 0;
+	पूर्ण अन्यथा अणु
+		अगर (slave->should_notअगरy)
+			slave->should_notअगरy = 0;
+		अन्यथा
+			slave->should_notअगरy = 1;
+	पूर्ण
+पूर्ण
 
-static inline void bond_slave_state_change(struct bonding *bond)
-{
-	struct list_head *iter;
-	struct slave *tmp;
+अटल अंतरभूत व्योम bond_slave_state_change(काष्ठा bonding *bond)
+अणु
+	काष्ठा list_head *iter;
+	काष्ठा slave *पंचांगp;
 
-	bond_for_each_slave(bond, tmp, iter) {
-		if (tmp->link == BOND_LINK_UP)
-			bond_set_active_slave(tmp);
-		else if (tmp->link == BOND_LINK_DOWN)
-			bond_set_backup_slave(tmp);
-	}
-}
+	bond_क्रम_each_slave(bond, पंचांगp, iter) अणु
+		अगर (पंचांगp->link == BOND_LINK_UP)
+			bond_set_active_slave(पंचांगp);
+		अन्यथा अगर (पंचांगp->link == BOND_LINK_DOWN)
+			bond_set_backup_slave(पंचांगp);
+	पूर्ण
+पूर्ण
 
-static inline void bond_slave_state_notify(struct bonding *bond)
-{
-	struct list_head *iter;
-	struct slave *tmp;
+अटल अंतरभूत व्योम bond_slave_state_notअगरy(काष्ठा bonding *bond)
+अणु
+	काष्ठा list_head *iter;
+	काष्ठा slave *पंचांगp;
 
-	bond_for_each_slave(bond, tmp, iter) {
-		if (tmp->should_notify) {
-			bond_lower_state_changed(tmp);
-			tmp->should_notify = 0;
-		}
-	}
-}
+	bond_क्रम_each_slave(bond, पंचांगp, iter) अणु
+		अगर (पंचांगp->should_notअगरy) अणु
+			bond_lower_state_changed(पंचांगp);
+			पंचांगp->should_notअगरy = 0;
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static inline int bond_slave_state(struct slave *slave)
-{
-	return slave->backup;
-}
+अटल अंतरभूत पूर्णांक bond_slave_state(काष्ठा slave *slave)
+अणु
+	वापस slave->backup;
+पूर्ण
 
-static inline bool bond_is_active_slave(struct slave *slave)
-{
-	return !bond_slave_state(slave);
-}
+अटल अंतरभूत bool bond_is_active_slave(काष्ठा slave *slave)
+अणु
+	वापस !bond_slave_state(slave);
+पूर्ण
 
-static inline bool bond_slave_can_tx(struct slave *slave)
-{
-	return bond_slave_is_up(slave) && slave->link == BOND_LINK_UP &&
+अटल अंतरभूत bool bond_slave_can_tx(काष्ठा slave *slave)
+अणु
+	वापस bond_slave_is_up(slave) && slave->link == BOND_LINK_UP &&
 	       bond_is_active_slave(slave);
-}
+पूर्ण
 
-static inline bool bond_is_active_slave_dev(const struct net_device *slave_dev)
-{
-	struct slave *slave;
+अटल अंतरभूत bool bond_is_active_slave_dev(स्थिर काष्ठा net_device *slave_dev)
+अणु
+	काष्ठा slave *slave;
 	bool active;
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	slave = bond_slave_get_rcu(slave_dev);
 	active = bond_is_active_slave(slave);
-	rcu_read_unlock();
+	rcu_पढ़ो_unlock();
 
-	return active;
-}
+	वापस active;
+पूर्ण
 
-static inline void bond_hw_addr_copy(u8 *dst, const u8 *src, unsigned int len)
-{
-	if (len == ETH_ALEN) {
+अटल अंतरभूत व्योम bond_hw_addr_copy(u8 *dst, स्थिर u8 *src, अचिन्हित पूर्णांक len)
+अणु
+	अगर (len == ETH_ALEN) अणु
 		ether_addr_copy(dst, src);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	memcpy(dst, src, len);
-}
+	स_नकल(dst, src, len);
+पूर्ण
 
-#define BOND_PRI_RESELECT_ALWAYS	0
-#define BOND_PRI_RESELECT_BETTER	1
-#define BOND_PRI_RESELECT_FAILURE	2
+#घोषणा BOND_PRI_RESELECT_ALWAYS	0
+#घोषणा BOND_PRI_RESELECT_BETTER	1
+#घोषणा BOND_PRI_RESELECT_FAILURE	2
 
-#define BOND_FOM_NONE			0
-#define BOND_FOM_ACTIVE			1
-#define BOND_FOM_FOLLOW			2
+#घोषणा BOND_FOM_NONE			0
+#घोषणा BOND_FOM_ACTIVE			1
+#घोषणा BOND_FOM_FOLLOW			2
 
-#define BOND_ARP_TARGETS_ANY		0
-#define BOND_ARP_TARGETS_ALL		1
+#घोषणा BOND_ARP_TARGETS_ANY		0
+#घोषणा BOND_ARP_TARGETS_ALL		1
 
-#define BOND_ARP_VALIDATE_NONE		0
-#define BOND_ARP_VALIDATE_ACTIVE	(1 << BOND_STATE_ACTIVE)
-#define BOND_ARP_VALIDATE_BACKUP	(1 << BOND_STATE_BACKUP)
-#define BOND_ARP_VALIDATE_ALL		(BOND_ARP_VALIDATE_ACTIVE | \
+#घोषणा BOND_ARP_VALIDATE_NONE		0
+#घोषणा BOND_ARP_VALIDATE_ACTIVE	(1 << BOND_STATE_ACTIVE)
+#घोषणा BOND_ARP_VALIDATE_BACKUP	(1 << BOND_STATE_BACKUP)
+#घोषणा BOND_ARP_VALIDATE_ALL		(BOND_ARP_VALIDATE_ACTIVE | \
 					 BOND_ARP_VALIDATE_BACKUP)
-#define BOND_ARP_FILTER			(BOND_ARP_VALIDATE_ALL + 1)
-#define BOND_ARP_FILTER_ACTIVE		(BOND_ARP_VALIDATE_ACTIVE | \
+#घोषणा BOND_ARP_FILTER			(BOND_ARP_VALIDATE_ALL + 1)
+#घोषणा BOND_ARP_FILTER_ACTIVE		(BOND_ARP_VALIDATE_ACTIVE | \
 					 BOND_ARP_FILTER)
-#define BOND_ARP_FILTER_BACKUP		(BOND_ARP_VALIDATE_BACKUP | \
+#घोषणा BOND_ARP_FILTER_BACKUP		(BOND_ARP_VALIDATE_BACKUP | \
 					 BOND_ARP_FILTER)
 
-#define BOND_SLAVE_NOTIFY_NOW		true
-#define BOND_SLAVE_NOTIFY_LATER		false
+#घोषणा BOND_SLAVE_NOTIFY_NOW		true
+#घोषणा BOND_SLAVE_NOTIFY_LATER		false
 
-static inline int slave_do_arp_validate(struct bonding *bond,
-					struct slave *slave)
-{
-	return bond->params.arp_validate & (1 << bond_slave_state(slave));
-}
+अटल अंतरभूत पूर्णांक slave_करो_arp_validate(काष्ठा bonding *bond,
+					काष्ठा slave *slave)
+अणु
+	वापस bond->params.arp_validate & (1 << bond_slave_state(slave));
+पूर्ण
 
-static inline int slave_do_arp_validate_only(struct bonding *bond)
-{
-	return bond->params.arp_validate & BOND_ARP_FILTER;
-}
+अटल अंतरभूत पूर्णांक slave_करो_arp_validate_only(काष्ठा bonding *bond)
+अणु
+	वापस bond->params.arp_validate & BOND_ARP_FILTER;
+पूर्ण
 
-static inline int bond_is_ip_target_ok(__be32 addr)
-{
-	return !ipv4_is_lbcast(addr) && !ipv4_is_zeronet(addr);
-}
+अटल अंतरभूत पूर्णांक bond_is_ip_target_ok(__be32 addr)
+अणु
+	वापस !ipv4_is_lbcast(addr) && !ipv4_is_zeronet(addr);
+पूर्ण
 
 /* Get the oldest arp which we've received on this slave for bond's
- * arp_targets.
+ * arp_tarमाला_लो.
  */
-static inline unsigned long slave_oldest_target_arp_rx(struct bonding *bond,
-						       struct slave *slave)
-{
-	int i = 1;
-	unsigned long ret = slave->target_last_arp_rx[0];
+अटल अंतरभूत अचिन्हित दीर्घ slave_oldest_target_arp_rx(काष्ठा bonding *bond,
+						       काष्ठा slave *slave)
+अणु
+	पूर्णांक i = 1;
+	अचिन्हित दीर्घ ret = slave->target_last_arp_rx[0];
 
-	for (; (i < BOND_MAX_ARP_TARGETS) && bond->params.arp_targets[i]; i++)
-		if (time_before(slave->target_last_arp_rx[i], ret))
+	क्रम (; (i < BOND_MAX_ARP_TARGETS) && bond->params.arp_tarमाला_लो[i]; i++)
+		अगर (समय_beक्रमe(slave->target_last_arp_rx[i], ret))
 			ret = slave->target_last_arp_rx[i];
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static inline unsigned long slave_last_rx(struct bonding *bond,
-					struct slave *slave)
-{
-	if (bond->params.arp_all_targets == BOND_ARP_TARGETS_ALL)
-		return slave_oldest_target_arp_rx(bond, slave);
+अटल अंतरभूत अचिन्हित दीर्घ slave_last_rx(काष्ठा bonding *bond,
+					काष्ठा slave *slave)
+अणु
+	अगर (bond->params.arp_all_tarमाला_लो == BOND_ARP_TARGETS_ALL)
+		वापस slave_oldest_target_arp_rx(bond, slave);
 
-	return slave->last_rx;
-}
+	वापस slave->last_rx;
+पूर्ण
 
-#ifdef CONFIG_NET_POLL_CONTROLLER
-static inline netdev_tx_t bond_netpoll_send_skb(const struct slave *slave,
-					 struct sk_buff *skb)
-{
-	return netpoll_send_skb(slave->np, skb);
-}
-#else
-static inline netdev_tx_t bond_netpoll_send_skb(const struct slave *slave,
-					 struct sk_buff *skb)
-{
+#अगर_घोषित CONFIG_NET_POLL_CONTROLLER
+अटल अंतरभूत netdev_tx_t bond_netpoll_send_skb(स्थिर काष्ठा slave *slave,
+					 काष्ठा sk_buff *skb)
+अणु
+	वापस netpoll_send_skb(slave->np, skb);
+पूर्ण
+#अन्यथा
+अटल अंतरभूत netdev_tx_t bond_netpoll_send_skb(स्थिर काष्ठा slave *slave,
+					 काष्ठा sk_buff *skb)
+अणु
 	BUG();
-	return NETDEV_TX_OK;
-}
-#endif
+	वापस NETDEV_TX_OK;
+पूर्ण
+#पूर्ण_अगर
 
-static inline void bond_set_slave_inactive_flags(struct slave *slave,
-						 bool notify)
-{
-	if (!bond_is_lb(slave->bond))
-		bond_set_slave_state(slave, BOND_STATE_BACKUP, notify);
-	if (!slave->bond->params.all_slaves_active)
+अटल अंतरभूत व्योम bond_set_slave_inactive_flags(काष्ठा slave *slave,
+						 bool notअगरy)
+अणु
+	अगर (!bond_is_lb(slave->bond))
+		bond_set_slave_state(slave, BOND_STATE_BACKUP, notअगरy);
+	अगर (!slave->bond->params.all_slaves_active)
 		slave->inactive = 1;
-}
+पूर्ण
 
-static inline void bond_set_slave_active_flags(struct slave *slave,
-					       bool notify)
-{
-	bond_set_slave_state(slave, BOND_STATE_ACTIVE, notify);
+अटल अंतरभूत व्योम bond_set_slave_active_flags(काष्ठा slave *slave,
+					       bool notअगरy)
+अणु
+	bond_set_slave_state(slave, BOND_STATE_ACTIVE, notअगरy);
 	slave->inactive = 0;
-}
+पूर्ण
 
-static inline bool bond_is_slave_inactive(struct slave *slave)
-{
-	return slave->inactive;
-}
+अटल अंतरभूत bool bond_is_slave_inactive(काष्ठा slave *slave)
+अणु
+	वापस slave->inactive;
+पूर्ण
 
-static inline void bond_propose_link_state(struct slave *slave, int state)
-{
+अटल अंतरभूत व्योम bond_propose_link_state(काष्ठा slave *slave, पूर्णांक state)
+अणु
 	slave->link_new_state = state;
-}
+पूर्ण
 
-static inline void bond_commit_link_state(struct slave *slave, bool notify)
-{
-	if (slave->link_new_state == BOND_LINK_NOCHANGE)
-		return;
+अटल अंतरभूत व्योम bond_commit_link_state(काष्ठा slave *slave, bool notअगरy)
+अणु
+	अगर (slave->link_new_state == BOND_LINK_NOCHANGE)
+		वापस;
 
 	slave->link = slave->link_new_state;
-	if (notify) {
+	अगर (notअगरy) अणु
 		bond_queue_slave_event(slave);
 		bond_lower_state_changed(slave);
-		slave->should_notify_link = 0;
-	} else {
-		if (slave->should_notify_link)
-			slave->should_notify_link = 0;
-		else
-			slave->should_notify_link = 1;
-	}
-}
+		slave->should_notअगरy_link = 0;
+	पूर्ण अन्यथा अणु
+		अगर (slave->should_notअगरy_link)
+			slave->should_notअगरy_link = 0;
+		अन्यथा
+			slave->should_notअगरy_link = 1;
+	पूर्ण
+पूर्ण
 
-static inline void bond_set_slave_link_state(struct slave *slave, int state,
-					     bool notify)
-{
+अटल अंतरभूत व्योम bond_set_slave_link_state(काष्ठा slave *slave, पूर्णांक state,
+					     bool notअगरy)
+अणु
 	bond_propose_link_state(slave, state);
-	bond_commit_link_state(slave, notify);
-}
+	bond_commit_link_state(slave, notअगरy);
+पूर्ण
 
-static inline void bond_slave_link_notify(struct bonding *bond)
-{
-	struct list_head *iter;
-	struct slave *tmp;
+अटल अंतरभूत व्योम bond_slave_link_notअगरy(काष्ठा bonding *bond)
+अणु
+	काष्ठा list_head *iter;
+	काष्ठा slave *पंचांगp;
 
-	bond_for_each_slave(bond, tmp, iter) {
-		if (tmp->should_notify_link) {
-			bond_queue_slave_event(tmp);
-			bond_lower_state_changed(tmp);
-			tmp->should_notify_link = 0;
-		}
-	}
-}
+	bond_क्रम_each_slave(bond, पंचांगp, iter) अणु
+		अगर (पंचांगp->should_notअगरy_link) अणु
+			bond_queue_slave_event(पंचांगp);
+			bond_lower_state_changed(पंचांगp);
+			पंचांगp->should_notअगरy_link = 0;
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static inline __be32 bond_confirm_addr(struct net_device *dev, __be32 dst, __be32 local)
-{
-	struct in_device *in_dev;
+अटल अंतरभूत __be32 bond_confirm_addr(काष्ठा net_device *dev, __be32 dst, __be32 local)
+अणु
+	काष्ठा in_device *in_dev;
 	__be32 addr = 0;
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	in_dev = __in_dev_get_rcu(dev);
 
-	if (in_dev)
+	अगर (in_dev)
 		addr = inet_confirm_addr(dev_net(dev), in_dev, dst, local,
 					 RT_SCOPE_HOST);
-	rcu_read_unlock();
-	return addr;
-}
+	rcu_पढ़ो_unlock();
+	वापस addr;
+पूर्ण
 
-struct bond_net {
-	struct net		*net;	/* Associated network namespace */
-	struct list_head	dev_list;
-#ifdef CONFIG_PROC_FS
-	struct proc_dir_entry	*proc_dir;
-#endif
-	struct class_attribute	class_attr_bonding_masters;
-};
+काष्ठा bond_net अणु
+	काष्ठा net		*net;	/* Associated network namespace */
+	काष्ठा list_head	dev_list;
+#अगर_घोषित CONFIG_PROC_FS
+	काष्ठा proc_dir_entry	*proc_dir;
+#पूर्ण_अगर
+	काष्ठा class_attribute	class_attr_bonding_masters;
+पूर्ण;
 
-int bond_arp_rcv(const struct sk_buff *skb, struct bonding *bond, struct slave *slave);
-netdev_tx_t bond_dev_queue_xmit(struct bonding *bond, struct sk_buff *skb, struct net_device *slave_dev);
-int bond_create(struct net *net, const char *name);
-int bond_create_sysfs(struct bond_net *net);
-void bond_destroy_sysfs(struct bond_net *net);
-void bond_prepare_sysfs_group(struct bonding *bond);
-int bond_sysfs_slave_add(struct slave *slave);
-void bond_sysfs_slave_del(struct slave *slave);
-int bond_enslave(struct net_device *bond_dev, struct net_device *slave_dev,
-		 struct netlink_ext_ack *extack);
-int bond_release(struct net_device *bond_dev, struct net_device *slave_dev);
-u32 bond_xmit_hash(struct bonding *bond, struct sk_buff *skb);
-int bond_set_carrier(struct bonding *bond);
-void bond_select_active_slave(struct bonding *bond);
-void bond_change_active_slave(struct bonding *bond, struct slave *new_active);
-void bond_create_debugfs(void);
-void bond_destroy_debugfs(void);
-void bond_debug_register(struct bonding *bond);
-void bond_debug_unregister(struct bonding *bond);
-void bond_debug_reregister(struct bonding *bond);
-const char *bond_mode_name(int mode);
-void bond_setup(struct net_device *bond_dev);
-unsigned int bond_get_num_tx_queues(void);
-int bond_netlink_init(void);
-void bond_netlink_fini(void);
-struct net_device *bond_option_active_slave_get_rcu(struct bonding *bond);
-const char *bond_slave_link_status(s8 link);
-struct bond_vlan_tag *bond_verify_device_path(struct net_device *start_dev,
-					      struct net_device *end_dev,
-					      int level);
-int bond_update_slave_arr(struct bonding *bond, struct slave *skipslave);
-void bond_slave_arr_work_rearm(struct bonding *bond, unsigned long delay);
-void bond_work_init_all(struct bonding *bond);
+पूर्णांक bond_arp_rcv(स्थिर काष्ठा sk_buff *skb, काष्ठा bonding *bond, काष्ठा slave *slave);
+netdev_tx_t bond_dev_queue_xmit(काष्ठा bonding *bond, काष्ठा sk_buff *skb, काष्ठा net_device *slave_dev);
+पूर्णांक bond_create(काष्ठा net *net, स्थिर अक्षर *name);
+पूर्णांक bond_create_sysfs(काष्ठा bond_net *net);
+व्योम bond_destroy_sysfs(काष्ठा bond_net *net);
+व्योम bond_prepare_sysfs_group(काष्ठा bonding *bond);
+पूर्णांक bond_sysfs_slave_add(काष्ठा slave *slave);
+व्योम bond_sysfs_slave_del(काष्ठा slave *slave);
+पूर्णांक bond_enslave(काष्ठा net_device *bond_dev, काष्ठा net_device *slave_dev,
+		 काष्ठा netlink_ext_ack *extack);
+पूर्णांक bond_release(काष्ठा net_device *bond_dev, काष्ठा net_device *slave_dev);
+u32 bond_xmit_hash(काष्ठा bonding *bond, काष्ठा sk_buff *skb);
+पूर्णांक bond_set_carrier(काष्ठा bonding *bond);
+व्योम bond_select_active_slave(काष्ठा bonding *bond);
+व्योम bond_change_active_slave(काष्ठा bonding *bond, काष्ठा slave *new_active);
+व्योम bond_create_debugfs(व्योम);
+व्योम bond_destroy_debugfs(व्योम);
+व्योम bond_debug_रेजिस्टर(काष्ठा bonding *bond);
+व्योम bond_debug_unरेजिस्टर(काष्ठा bonding *bond);
+व्योम bond_debug_reरेजिस्टर(काष्ठा bonding *bond);
+स्थिर अक्षर *bond_mode_name(पूर्णांक mode);
+व्योम bond_setup(काष्ठा net_device *bond_dev);
+अचिन्हित पूर्णांक bond_get_num_tx_queues(व्योम);
+पूर्णांक bond_netlink_init(व्योम);
+व्योम bond_netlink_fini(व्योम);
+काष्ठा net_device *bond_option_active_slave_get_rcu(काष्ठा bonding *bond);
+स्थिर अक्षर *bond_slave_link_status(s8 link);
+काष्ठा bond_vlan_tag *bond_verअगरy_device_path(काष्ठा net_device *start_dev,
+					      काष्ठा net_device *end_dev,
+					      पूर्णांक level);
+पूर्णांक bond_update_slave_arr(काष्ठा bonding *bond, काष्ठा slave *skipslave);
+व्योम bond_slave_arr_work_rearm(काष्ठा bonding *bond, अचिन्हित दीर्घ delay);
+व्योम bond_work_init_all(काष्ठा bonding *bond);
 
-#ifdef CONFIG_PROC_FS
-void bond_create_proc_entry(struct bonding *bond);
-void bond_remove_proc_entry(struct bonding *bond);
-void bond_create_proc_dir(struct bond_net *bn);
-void bond_destroy_proc_dir(struct bond_net *bn);
-#else
-static inline void bond_create_proc_entry(struct bonding *bond)
-{
-}
+#अगर_घोषित CONFIG_PROC_FS
+व्योम bond_create_proc_entry(काष्ठा bonding *bond);
+व्योम bond_हटाओ_proc_entry(काष्ठा bonding *bond);
+व्योम bond_create_proc_dir(काष्ठा bond_net *bn);
+व्योम bond_destroy_proc_dir(काष्ठा bond_net *bn);
+#अन्यथा
+अटल अंतरभूत व्योम bond_create_proc_entry(काष्ठा bonding *bond)
+अणु
+पूर्ण
 
-static inline void bond_remove_proc_entry(struct bonding *bond)
-{
-}
+अटल अंतरभूत व्योम bond_हटाओ_proc_entry(काष्ठा bonding *bond)
+अणु
+पूर्ण
 
-static inline void bond_create_proc_dir(struct bond_net *bn)
-{
-}
+अटल अंतरभूत व्योम bond_create_proc_dir(काष्ठा bond_net *bn)
+अणु
+पूर्ण
 
-static inline void bond_destroy_proc_dir(struct bond_net *bn)
-{
-}
-#endif
+अटल अंतरभूत व्योम bond_destroy_proc_dir(काष्ठा bond_net *bn)
+अणु
+पूर्ण
+#पूर्ण_अगर
 
-static inline struct slave *bond_slave_has_mac(struct bonding *bond,
-					       const u8 *mac)
-{
-	struct list_head *iter;
-	struct slave *tmp;
+अटल अंतरभूत काष्ठा slave *bond_slave_has_mac(काष्ठा bonding *bond,
+					       स्थिर u8 *mac)
+अणु
+	काष्ठा list_head *iter;
+	काष्ठा slave *पंचांगp;
 
-	bond_for_each_slave(bond, tmp, iter)
-		if (ether_addr_equal_64bits(mac, tmp->dev->dev_addr))
-			return tmp;
+	bond_क्रम_each_slave(bond, पंचांगp, iter)
+		अगर (ether_addr_equal_64bits(mac, पंचांगp->dev->dev_addr))
+			वापस पंचांगp;
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-/* Caller must hold rcu_read_lock() for read */
-static inline struct slave *bond_slave_has_mac_rcu(struct bonding *bond,
-					       const u8 *mac)
-{
-	struct list_head *iter;
-	struct slave *tmp;
+/* Caller must hold rcu_पढ़ो_lock() क्रम पढ़ो */
+अटल अंतरभूत काष्ठा slave *bond_slave_has_mac_rcu(काष्ठा bonding *bond,
+					       स्थिर u8 *mac)
+अणु
+	काष्ठा list_head *iter;
+	काष्ठा slave *पंचांगp;
 
-	bond_for_each_slave_rcu(bond, tmp, iter)
-		if (ether_addr_equal_64bits(mac, tmp->dev->dev_addr))
-			return tmp;
+	bond_क्रम_each_slave_rcu(bond, पंचांगp, iter)
+		अगर (ether_addr_equal_64bits(mac, पंचांगp->dev->dev_addr))
+			वापस पंचांगp;
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-/* Caller must hold rcu_read_lock() for read */
-static inline bool bond_slave_has_mac_rx(struct bonding *bond, const u8 *mac)
-{
-	struct list_head *iter;
-	struct slave *tmp;
-	struct netdev_hw_addr *ha;
+/* Caller must hold rcu_पढ़ो_lock() क्रम पढ़ो */
+अटल अंतरभूत bool bond_slave_has_mac_rx(काष्ठा bonding *bond, स्थिर u8 *mac)
+अणु
+	काष्ठा list_head *iter;
+	काष्ठा slave *पंचांगp;
+	काष्ठा netdev_hw_addr *ha;
 
-	bond_for_each_slave_rcu(bond, tmp, iter)
-		if (ether_addr_equal_64bits(mac, tmp->dev->dev_addr))
-			return true;
+	bond_क्रम_each_slave_rcu(bond, पंचांगp, iter)
+		अगर (ether_addr_equal_64bits(mac, पंचांगp->dev->dev_addr))
+			वापस true;
 
-	if (netdev_uc_empty(bond->dev))
-		return false;
+	अगर (netdev_uc_empty(bond->dev))
+		वापस false;
 
-	netdev_for_each_uc_addr(ha, bond->dev)
-		if (ether_addr_equal_64bits(mac, ha->addr))
-			return true;
+	netdev_क्रम_each_uc_addr(ha, bond->dev)
+		अगर (ether_addr_equal_64bits(mac, ha->addr))
+			वापस true;
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-/* Check if the ip is present in arp ip list, or first free slot if ip == 0
- * Returns -1 if not found, index if found
+/* Check अगर the ip is present in arp ip list, or first मुक्त slot अगर ip == 0
+ * Returns -1 अगर not found, index अगर found
  */
-static inline int bond_get_targets_ip(__be32 *targets, __be32 ip)
-{
-	int i;
+अटल अंतरभूत पूर्णांक bond_get_tarमाला_लो_ip(__be32 *tarमाला_लो, __be32 ip)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < BOND_MAX_ARP_TARGETS; i++)
-		if (targets[i] == ip)
-			return i;
-		else if (targets[i] == 0)
-			break;
+	क्रम (i = 0; i < BOND_MAX_ARP_TARGETS; i++)
+		अगर (tarमाला_लो[i] == ip)
+			वापस i;
+		अन्यथा अगर (tarमाला_लो[i] == 0)
+			अवरोध;
 
-	return -1;
-}
+	वापस -1;
+पूर्ण
 
-/* exported from bond_main.c */
-extern unsigned int bond_net_id;
-extern const struct bond_parm_tbl bond_lacp_tbl[];
-extern const struct bond_parm_tbl xmit_hashtype_tbl[];
-extern const struct bond_parm_tbl arp_validate_tbl[];
-extern const struct bond_parm_tbl arp_all_targets_tbl[];
-extern const struct bond_parm_tbl fail_over_mac_tbl[];
-extern const struct bond_parm_tbl pri_reselect_tbl[];
-extern struct bond_parm_tbl ad_select_tbl[];
+/* exported from bond_मुख्य.c */
+बाह्य अचिन्हित पूर्णांक bond_net_id;
+बाह्य स्थिर काष्ठा bond_parm_tbl bond_lacp_tbl[];
+बाह्य स्थिर काष्ठा bond_parm_tbl xmit_hashtype_tbl[];
+बाह्य स्थिर काष्ठा bond_parm_tbl arp_validate_tbl[];
+बाह्य स्थिर काष्ठा bond_parm_tbl arp_all_tarमाला_लो_tbl[];
+बाह्य स्थिर काष्ठा bond_parm_tbl fail_over_mac_tbl[];
+बाह्य स्थिर काष्ठा bond_parm_tbl pri_reselect_tbl[];
+बाह्य काष्ठा bond_parm_tbl ad_select_tbl[];
 
 /* exported from bond_netlink.c */
-extern struct rtnl_link_ops bond_link_ops;
+बाह्य काष्ठा rtnl_link_ops bond_link_ops;
 
 /* exported from bond_sysfs_slave.c */
-extern const struct sysfs_ops slave_sysfs_ops;
+बाह्य स्थिर काष्ठा sysfs_ops slave_sysfs_ops;
 
-static inline netdev_tx_t bond_tx_drop(struct net_device *dev, struct sk_buff *skb)
-{
-	atomic_long_inc(&dev->tx_dropped);
-	dev_kfree_skb_any(skb);
-	return NET_XMIT_DROP;
-}
+अटल अंतरभूत netdev_tx_t bond_tx_drop(काष्ठा net_device *dev, काष्ठा sk_buff *skb)
+अणु
+	atomic_दीर्घ_inc(&dev->tx_dropped);
+	dev_kमुक्त_skb_any(skb);
+	वापस NET_XMIT_DROP;
+पूर्ण
 
-#endif /* _NET_BONDING_H */
+#पूर्ण_अगर /* _NET_BONDING_H */

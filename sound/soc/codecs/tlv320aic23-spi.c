@@ -1,42 +1,43 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * ALSA SoC TLV320AIC23 codec driver SPI interface
+ * ALSA SoC TLV320AIC23 codec driver SPI पूर्णांकerface
  *
  * Author:      Arun KS, <arunks@mistralsolutions.com>
  * Copyright:   (C) 2008 Mistral Solutions Pvt Ltd.,
  *
- * Based on sound/soc/codecs/wm8731.c by Richard Purdie
+ * Based on sound/soc/codecs/wm8731.c by Riअक्षरd Purdie
  */
 
-#include <linux/module.h>
-#include <linux/regmap.h>
-#include <linux/spi/spi.h>
-#include <sound/soc.h>
+#समावेश <linux/module.h>
+#समावेश <linux/regmap.h>
+#समावेश <linux/spi/spi.h>
+#समावेश <sound/soc.h>
 
-#include "tlv320aic23.h"
+#समावेश "tlv320aic23.h"
 
-static int aic23_spi_probe(struct spi_device *spi)
-{
-	int ret;
-	struct regmap *regmap;
+अटल पूर्णांक aic23_spi_probe(काष्ठा spi_device *spi)
+अणु
+	पूर्णांक ret;
+	काष्ठा regmap *regmap;
 
 	dev_dbg(&spi->dev, "probing tlv320aic23 spi device\n");
 
 	spi->mode = SPI_MODE_0;
 	ret = spi_setup(spi);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	regmap = devm_regmap_init_spi(spi, &tlv320aic23_regmap);
-	return tlv320aic23_probe(&spi->dev, regmap);
-}
+	वापस tlv320aic23_probe(&spi->dev, regmap);
+पूर्ण
 
-static struct spi_driver aic23_spi = {
-	.driver = {
+अटल काष्ठा spi_driver aic23_spi = अणु
+	.driver = अणु
 		.name = "tlv320aic23",
-	},
+	पूर्ण,
 	.probe = aic23_spi_probe,
-};
+पूर्ण;
 
 module_spi_driver(aic23_spi);
 

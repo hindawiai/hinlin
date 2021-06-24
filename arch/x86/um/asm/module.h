@@ -1,24 +1,25 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __UM_MODULE_H
-#define __UM_MODULE_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __UM_MODULE_H
+#घोषणा __UM_MODULE_H
 
 /* UML is simple */
-struct mod_arch_specific
-{
-};
+काष्ठा mod_arch_specअगरic
+अणु
+पूर्ण;
 
-#ifdef CONFIG_X86_32
+#अगर_घोषित CONFIG_X86_32
 
-#define Elf_Shdr Elf32_Shdr
-#define Elf_Sym Elf32_Sym
-#define Elf_Ehdr Elf32_Ehdr
+#घोषणा Elf_Shdr Elf32_Shdr
+#घोषणा Elf_Sym Elf32_Sym
+#घोषणा Elf_Ehdr Elf32_Ehdr
 
-#else
+#अन्यथा
 
-#define Elf_Shdr Elf64_Shdr
-#define Elf_Sym Elf64_Sym
-#define Elf_Ehdr Elf64_Ehdr
+#घोषणा Elf_Shdr Elf64_Shdr
+#घोषणा Elf_Sym Elf64_Sym
+#घोषणा Elf_Ehdr Elf64_Ehdr
 
-#endif
+#पूर्ण_अगर
 
-#endif
+#पूर्ण_अगर

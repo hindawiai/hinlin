@@ -1,29 +1,30 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /* speakup_keyhelp.c
- * help module for speakup
+ * help module क्रम speakup
  *
  *written by David Borowski.
  *
  *  Copyright (C) 2003  David Borowski.
  */
 
-#include <linux/keyboard.h>
-#include "spk_priv.h"
-#include "speakup.h"
+#समावेश <linux/keyboard.h>
+#समावेश "spk_priv.h"
+#समावेश "speakup.h"
 
-#define MAXFUNCS 130
-#define MAXKEYS 256
-static const int num_key_names = MSG_KEYNAMES_END - MSG_KEYNAMES_START + 1;
-static u_short key_offsets[MAXFUNCS], key_data[MAXKEYS];
-static u_short masks[] = { 32, 16, 8, 4, 2, 1 };
+#घोषणा MAXFUNCS 130
+#घोषणा MAXKEYS 256
+अटल स्थिर पूर्णांक num_key_names = MSG_KEYNAMES_END - MSG_KEYNAMES_START + 1;
+अटल u_लघु key_offsets[MAXFUNCS], key_data[MAXKEYS];
+अटल u_लघु masks[] = अणु 32, 16, 8, 4, 2, 1 पूर्ण;
 
-static short letter_offsets[26] = {
+अटल लघु letter_offsets[26] = अणु
 	-1, -1, -1, -1, -1, -1, -1, -1,
 	-1, -1, -1, -1, -1, -1, -1, -1,
 	-1, -1, -1, -1, -1, -1, -1, -1,
-	-1, -1 };
+	-1, -1 पूर्ण;
 
-static u_char funcvals[] = {
+अटल u_अक्षर funcvals[] = अणु
 	ATTRIB_BLEEP_DEC, ATTRIB_BLEEP_INC, BLEEPS_DEC, BLEEPS_INC,
 	SAY_FIRST_CHAR, SAY_LAST_CHAR, SAY_CHAR, SAY_CHAR_NUM,
 	SAY_NEXT_CHAR, SAY_PHONETIC_CHAR, SAY_PREV_CHAR, SPEAKUP_PARKED,
@@ -41,169 +42,169 @@ static u_char funcvals[] = {
 	TONE_INC, VOICE_DEC, VOICE_INC, VOL_DEC,
 	VOL_INC, CLEAR_WIN, SAY_WIN, SET_WIN,
 	ENABLE_WIN, SAY_WORD, SAY_NEXT_WORD, SAY_PREV_WORD, 0
-};
+पूर्ण;
 
-static u_char *state_tbl;
-static int cur_item, nstates;
+अटल u_अक्षर *state_tbl;
+अटल पूर्णांक cur_item, nstates;
 
-static void build_key_data(void)
-{
-	u_char *kp, counters[MAXFUNCS], ch, ch1;
-	u_short *p_key, key;
-	int i, offset = 1;
+अटल व्योम build_key_data(व्योम)
+अणु
+	u_अक्षर *kp, counters[MAXFUNCS], ch, ch1;
+	u_लघु *p_key, key;
+	पूर्णांक i, offset = 1;
 
-	nstates = (int)(state_tbl[-1]);
-	memset(counters, 0, sizeof(counters));
-	memset(key_offsets, 0, sizeof(key_offsets));
+	nstates = (पूर्णांक)(state_tbl[-1]);
+	स_रखो(counters, 0, माप(counters));
+	स_रखो(key_offsets, 0, माप(key_offsets));
 	kp = state_tbl + nstates + 1;
-	while (*kp++) {
+	जबतक (*kp++) अणु
 		/* count occurrences of each function */
-		for (i = 0; i < nstates; i++, kp++) {
-			if (!*kp)
-				continue;
-			if ((state_tbl[i] & 16) != 0 && *kp == SPK_KEY)
-				continue;
+		क्रम (i = 0; i < nstates; i++, kp++) अणु
+			अगर (!*kp)
+				जारी;
+			अगर ((state_tbl[i] & 16) != 0 && *kp == SPK_KEY)
+				जारी;
 			counters[*kp]++;
-		}
-	}
-	for (i = 0; i < MAXFUNCS; i++) {
-		if (counters[i] == 0)
-			continue;
+		पूर्ण
+	पूर्ण
+	क्रम (i = 0; i < MAXFUNCS; i++) अणु
+		अगर (counters[i] == 0)
+			जारी;
 		key_offsets[i] = offset;
 		offset += (counters[i] + 1);
-		if (offset >= MAXKEYS)
-			break;
-	}
+		अगर (offset >= MAXKEYS)
+			अवरोध;
+	पूर्ण
 /* leave counters set so high keycodes come first.
- * this is done so num pad and other extended keys maps are spoken before
+ * this is करोne so num pad and other extended keys maps are spoken beक्रमe
  * the alpha with speakup type mapping.
  */
 	kp = state_tbl + nstates + 1;
-	while ((ch = *kp++)) {
-		for (i = 0; i < nstates; i++) {
+	जबतक ((ch = *kp++)) अणु
+		क्रम (i = 0; i < nstates; i++) अणु
 			ch1 = *kp++;
-			if (!ch1)
-				continue;
-			if ((state_tbl[i] & 16) != 0 && ch1 == SPK_KEY)
-				continue;
+			अगर (!ch1)
+				जारी;
+			अगर ((state_tbl[i] & 16) != 0 && ch1 == SPK_KEY)
+				जारी;
 			key = (state_tbl[i] << 8) + ch;
 			counters[ch1]--;
 			offset = key_offsets[ch1];
-			if (!offset)
-				continue;
+			अगर (!offset)
+				जारी;
 			p_key = key_data + offset + counters[ch1];
 			*p_key = key;
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static void say_key(int key)
-{
-	int i, state = key >> 8;
+अटल व्योम say_key(पूर्णांक key)
+अणु
+	पूर्णांक i, state = key >> 8;
 
 	key &= 0xff;
-	for (i = 0; i < 6; i++) {
-		if (state & masks[i])
-			synth_printf(" %s", spk_msg_get(MSG_STATES_START + i));
-	}
-	if ((key > 0) && (key <= num_key_names))
-		synth_printf(" %s\n",
+	क्रम (i = 0; i < 6; i++) अणु
+		अगर (state & masks[i])
+			synth_म_लिखो(" %s", spk_msg_get(MSG_STATES_START + i));
+	पूर्ण
+	अगर ((key > 0) && (key <= num_key_names))
+		synth_म_लिखो(" %s\n",
 			     spk_msg_get(MSG_KEYNAMES_START + (key - 1)));
-}
+पूर्ण
 
-static int help_init(void)
-{
-	char start = SPACE;
-	int i;
-	int num_funcs = MSG_FUNCNAMES_END - MSG_FUNCNAMES_START + 1;
+अटल पूर्णांक help_init(व्योम)
+अणु
+	अक्षर start = SPACE;
+	पूर्णांक i;
+	पूर्णांक num_funcs = MSG_FUNCNAMES_END - MSG_FUNCNAMES_START + 1;
 
 	state_tbl = spk_our_keys[0] + SHIFT_TBL_SIZE + 2;
-	for (i = 0; i < num_funcs; i++) {
-		char *cur_funcname = spk_msg_get(MSG_FUNCNAMES_START + i);
+	क्रम (i = 0; i < num_funcs; i++) अणु
+		अक्षर *cur_funcname = spk_msg_get(MSG_FUNCNAMES_START + i);
 
-		if (start == *cur_funcname)
-			continue;
+		अगर (start == *cur_funcname)
+			जारी;
 		start = *cur_funcname;
 		letter_offsets[(start & 31) - 1] = i;
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-int spk_handle_help(struct vc_data *vc, u_char type, u_char ch, u_short key)
-{
-	int i, n;
-	char *name;
-	u_char func, *kp;
-	u_short *p_keys, val;
+पूर्णांक spk_handle_help(काष्ठा vc_data *vc, u_अक्षर type, u_अक्षर ch, u_लघु key)
+अणु
+	पूर्णांक i, n;
+	अक्षर *name;
+	u_अक्षर func, *kp;
+	u_लघु *p_keys, val;
 
-	if (letter_offsets[0] == -1)
+	अगर (letter_offsets[0] == -1)
 		help_init();
-	if (type == KT_LATIN) {
-		if (ch == SPACE) {
-			spk_special_handler = NULL;
-			synth_printf("%s\n", spk_msg_get(MSG_LEAVING_HELP));
-			return 1;
-		}
-		ch |= 32; /* lower case */
-		if (ch < 'a' || ch > 'z')
-			return -1;
-		if (letter_offsets[ch - 'a'] == -1) {
-			synth_printf(spk_msg_get(MSG_NO_COMMAND), ch);
-			synth_printf("\n");
-			return 1;
-		}
+	अगर (type == KT_LATIN) अणु
+		अगर (ch == SPACE) अणु
+			spk_special_handler = शून्य;
+			synth_म_लिखो("%s\n", spk_msg_get(MSG_LEAVING_HELP));
+			वापस 1;
+		पूर्ण
+		ch |= 32; /* lower हाल */
+		अगर (ch < 'a' || ch > 'z')
+			वापस -1;
+		अगर (letter_offsets[ch - 'a'] == -1) अणु
+			synth_म_लिखो(spk_msg_get(MSG_NO_COMMAND), ch);
+			synth_म_लिखो("\n");
+			वापस 1;
+		पूर्ण
 		cur_item = letter_offsets[ch - 'a'];
-	} else if (type == KT_CUR) {
-		if (ch == 0 &&
+	पूर्ण अन्यथा अगर (type == KT_CUR) अणु
+		अगर (ch == 0 &&
 		    (MSG_FUNCNAMES_START + cur_item + 1) <= MSG_FUNCNAMES_END)
 			cur_item++;
-		else if (ch == 3 && cur_item > 0)
+		अन्यथा अगर (ch == 3 && cur_item > 0)
 			cur_item--;
-		else
-			return -1;
-	} else if (type == KT_SPKUP && ch == SPEAKUP_HELP &&
-		   !spk_special_handler) {
+		अन्यथा
+			वापस -1;
+	पूर्ण अन्यथा अगर (type == KT_SPKUP && ch == SPEAKUP_HELP &&
+		   !spk_special_handler) अणु
 		spk_special_handler = spk_handle_help;
-		synth_printf("%s\n", spk_msg_get(MSG_HELP_INFO));
-		build_key_data(); /* rebuild each time in case new mapping */
-		return 1;
-	} else {
-		name = NULL;
-		if ((type != KT_SPKUP) && (key > 0) && (key <= num_key_names)) {
-			synth_printf("%s\n",
+		synth_म_लिखो("%s\n", spk_msg_get(MSG_HELP_INFO));
+		build_key_data(); /* rebuild each समय in हाल new mapping */
+		वापस 1;
+	पूर्ण अन्यथा अणु
+		name = शून्य;
+		अगर ((type != KT_SPKUP) && (key > 0) && (key <= num_key_names)) अणु
+			synth_म_लिखो("%s\n",
 				     spk_msg_get(MSG_KEYNAMES_START + key - 1));
-			return 1;
-		}
-		for (i = 0; funcvals[i] != 0 && !name; i++) {
-			if (ch == funcvals[i])
+			वापस 1;
+		पूर्ण
+		क्रम (i = 0; funcvals[i] != 0 && !name; i++) अणु
+			अगर (ch == funcvals[i])
 				name = spk_msg_get(MSG_FUNCNAMES_START + i);
-		}
-		if (!name)
-			return -1;
+		पूर्ण
+		अगर (!name)
+			वापस -1;
 		kp = spk_our_keys[key] + 1;
-		for (i = 0; i < nstates; i++) {
-			if (ch == kp[i])
-				break;
-		}
+		क्रम (i = 0; i < nstates; i++) अणु
+			अगर (ch == kp[i])
+				अवरोध;
+		पूर्ण
 		key += (state_tbl[i] << 8);
 		say_key(key);
-		synth_printf(spk_msg_get(MSG_KEYDESC), name);
-		synth_printf("\n");
-		return 1;
-	}
+		synth_म_लिखो(spk_msg_get(MSG_KEYDESC), name);
+		synth_म_लिखो("\n");
+		वापस 1;
+	पूर्ण
 	name = spk_msg_get(MSG_FUNCNAMES_START + cur_item);
 	func = funcvals[cur_item];
-	synth_printf("%s", name);
-	if (key_offsets[func] == 0) {
-		synth_printf(" %s\n", spk_msg_get(MSG_IS_UNASSIGNED));
-		return 1;
-	}
+	synth_म_लिखो("%s", name);
+	अगर (key_offsets[func] == 0) अणु
+		synth_म_लिखो(" %s\n", spk_msg_get(MSG_IS_UNASSIGNED));
+		वापस 1;
+	पूर्ण
 	p_keys = key_data + key_offsets[func];
-	for (n = 0; p_keys[n]; n++) {
+	क्रम (n = 0; p_keys[n]; n++) अणु
 		val = p_keys[n];
-		if (n > 0)
-			synth_printf("%s ", spk_msg_get(MSG_DISJUNCTION));
+		अगर (n > 0)
+			synth_म_लिखो("%s ", spk_msg_get(MSG_DISJUNCTION));
 		say_key(val);
-	}
-	return 1;
-}
+	पूर्ण
+	वापस 1;
+पूर्ण

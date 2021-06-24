@@ -1,25 +1,26 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * Power Supply for UCSI
+ * Power Supply क्रम UCSI
  *
  * Copyright (C) 2020, Intel Corporation
- * Author: K V, Abhilash <abhilash.k.v@intel.com>
- * Author: Heikki Krogerus <heikki.krogerus@linux.intel.com>
+ * Author: K V, Abhilash <abhilash.k.v@पूर्णांकel.com>
+ * Author: Heikki Krogerus <heikki.krogerus@linux.पूर्णांकel.com>
  */
 
-#include <linux/property.h>
-#include <linux/usb/pd.h>
+#समावेश <linux/property.h>
+#समावेश <linux/usb/pd.h>
 
-#include "ucsi.h"
+#समावेश "ucsi.h"
 
-/* Power Supply access to expose source power information */
-enum ucsi_psy_online_states {
+/* Power Supply access to expose source घातer inक्रमmation */
+क्रमागत ucsi_psy_online_states अणु
 	UCSI_PSY_OFFLINE = 0,
 	UCSI_PSY_FIXED_ONLINE,
 	UCSI_PSY_PROG_ONLINE,
-};
+पूर्ण;
 
-static enum power_supply_property ucsi_psy_props[] = {
+अटल क्रमागत घातer_supply_property ucsi_psy_props[] = अणु
 	POWER_SUPPLY_PROP_USB_TYPE,
 	POWER_SUPPLY_PROP_ONLINE,
 	POWER_SUPPLY_PROP_VOLTAGE_MIN,
@@ -27,197 +28,197 @@ static enum power_supply_property ucsi_psy_props[] = {
 	POWER_SUPPLY_PROP_VOLTAGE_NOW,
 	POWER_SUPPLY_PROP_CURRENT_MAX,
 	POWER_SUPPLY_PROP_CURRENT_NOW,
-};
+पूर्ण;
 
-static int ucsi_psy_get_online(struct ucsi_connector *con,
-			       union power_supply_propval *val)
-{
-	val->intval = UCSI_PSY_OFFLINE;
-	if (con->status.flags & UCSI_CONSTAT_CONNECTED &&
-	    (con->status.flags & UCSI_CONSTAT_PWR_DIR) == TYPEC_SINK)
-		val->intval = UCSI_PSY_FIXED_ONLINE;
-	return 0;
-}
+अटल पूर्णांक ucsi_psy_get_online(काष्ठा ucsi_connector *con,
+			       जोड़ घातer_supply_propval *val)
+अणु
+	val->पूर्णांकval = UCSI_PSY_OFFLINE;
+	अगर (con->status.flags & UCSI_CONSTAT_CONNECTED &&
+	    (con->status.flags & UCSI_CONSTAT_PWR_सूची) == TYPEC_SINK)
+		val->पूर्णांकval = UCSI_PSY_FIXED_ONLINE;
+	वापस 0;
+पूर्ण
 
-static int ucsi_psy_get_voltage_min(struct ucsi_connector *con,
-				    union power_supply_propval *val)
-{
-	u32 pdo;
+अटल पूर्णांक ucsi_psy_get_voltage_min(काष्ठा ucsi_connector *con,
+				    जोड़ घातer_supply_propval *val)
+अणु
+	u32 pकरो;
 
-	switch (UCSI_CONSTAT_PWR_OPMODE(con->status.flags)) {
-	case UCSI_CONSTAT_PWR_OPMODE_PD:
-		pdo = con->src_pdos[0];
-		val->intval = pdo_fixed_voltage(pdo) * 1000;
-		break;
-	case UCSI_CONSTAT_PWR_OPMODE_TYPEC3_0:
-	case UCSI_CONSTAT_PWR_OPMODE_TYPEC1_5:
-	case UCSI_CONSTAT_PWR_OPMODE_BC:
-	case UCSI_CONSTAT_PWR_OPMODE_DEFAULT:
-		val->intval = UCSI_TYPEC_VSAFE5V * 1000;
-		break;
-	default:
-		val->intval = 0;
-		break;
-	}
-	return 0;
-}
+	चयन (UCSI_CONSTAT_PWR_OPMODE(con->status.flags)) अणु
+	हाल UCSI_CONSTAT_PWR_OPMODE_PD:
+		pकरो = con->src_pकरोs[0];
+		val->पूर्णांकval = pकरो_fixed_voltage(pकरो) * 1000;
+		अवरोध;
+	हाल UCSI_CONSTAT_PWR_OPMODE_TYPEC3_0:
+	हाल UCSI_CONSTAT_PWR_OPMODE_TYPEC1_5:
+	हाल UCSI_CONSTAT_PWR_OPMODE_BC:
+	हाल UCSI_CONSTAT_PWR_OPMODE_DEFAULT:
+		val->पूर्णांकval = UCSI_TYPEC_VSAFE5V * 1000;
+		अवरोध;
+	शेष:
+		val->पूर्णांकval = 0;
+		अवरोध;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int ucsi_psy_get_voltage_max(struct ucsi_connector *con,
-				    union power_supply_propval *val)
-{
-	u32 pdo;
+अटल पूर्णांक ucsi_psy_get_voltage_max(काष्ठा ucsi_connector *con,
+				    जोड़ घातer_supply_propval *val)
+अणु
+	u32 pकरो;
 
-	switch (UCSI_CONSTAT_PWR_OPMODE(con->status.flags)) {
-	case UCSI_CONSTAT_PWR_OPMODE_PD:
-		if (con->num_pdos > 0) {
-			pdo = con->src_pdos[con->num_pdos - 1];
-			val->intval = pdo_fixed_voltage(pdo) * 1000;
-		} else {
-			val->intval = 0;
-		}
-		break;
-	case UCSI_CONSTAT_PWR_OPMODE_TYPEC3_0:
-	case UCSI_CONSTAT_PWR_OPMODE_TYPEC1_5:
-	case UCSI_CONSTAT_PWR_OPMODE_BC:
-	case UCSI_CONSTAT_PWR_OPMODE_DEFAULT:
-		val->intval = UCSI_TYPEC_VSAFE5V * 1000;
-		break;
-	default:
-		val->intval = 0;
-		break;
-	}
-	return 0;
-}
+	चयन (UCSI_CONSTAT_PWR_OPMODE(con->status.flags)) अणु
+	हाल UCSI_CONSTAT_PWR_OPMODE_PD:
+		अगर (con->num_pकरोs > 0) अणु
+			pकरो = con->src_pकरोs[con->num_pकरोs - 1];
+			val->पूर्णांकval = pकरो_fixed_voltage(pकरो) * 1000;
+		पूर्ण अन्यथा अणु
+			val->पूर्णांकval = 0;
+		पूर्ण
+		अवरोध;
+	हाल UCSI_CONSTAT_PWR_OPMODE_TYPEC3_0:
+	हाल UCSI_CONSTAT_PWR_OPMODE_TYPEC1_5:
+	हाल UCSI_CONSTAT_PWR_OPMODE_BC:
+	हाल UCSI_CONSTAT_PWR_OPMODE_DEFAULT:
+		val->पूर्णांकval = UCSI_TYPEC_VSAFE5V * 1000;
+		अवरोध;
+	शेष:
+		val->पूर्णांकval = 0;
+		अवरोध;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int ucsi_psy_get_voltage_now(struct ucsi_connector *con,
-				    union power_supply_propval *val)
-{
-	int index;
-	u32 pdo;
+अटल पूर्णांक ucsi_psy_get_voltage_now(काष्ठा ucsi_connector *con,
+				    जोड़ घातer_supply_propval *val)
+अणु
+	पूर्णांक index;
+	u32 pकरो;
 
-	switch (UCSI_CONSTAT_PWR_OPMODE(con->status.flags)) {
-	case UCSI_CONSTAT_PWR_OPMODE_PD:
-		index = rdo_index(con->rdo);
-		if (index > 0) {
-			pdo = con->src_pdos[index - 1];
-			val->intval = pdo_fixed_voltage(pdo) * 1000;
-		} else {
-			val->intval = 0;
-		}
-		break;
-	case UCSI_CONSTAT_PWR_OPMODE_TYPEC3_0:
-	case UCSI_CONSTAT_PWR_OPMODE_TYPEC1_5:
-	case UCSI_CONSTAT_PWR_OPMODE_BC:
-	case UCSI_CONSTAT_PWR_OPMODE_DEFAULT:
-		val->intval = UCSI_TYPEC_VSAFE5V * 1000;
-		break;
-	default:
-		val->intval = 0;
-		break;
-	}
-	return 0;
-}
+	चयन (UCSI_CONSTAT_PWR_OPMODE(con->status.flags)) अणु
+	हाल UCSI_CONSTAT_PWR_OPMODE_PD:
+		index = rकरो_index(con->rकरो);
+		अगर (index > 0) अणु
+			pकरो = con->src_pकरोs[index - 1];
+			val->पूर्णांकval = pकरो_fixed_voltage(pकरो) * 1000;
+		पूर्ण अन्यथा अणु
+			val->पूर्णांकval = 0;
+		पूर्ण
+		अवरोध;
+	हाल UCSI_CONSTAT_PWR_OPMODE_TYPEC3_0:
+	हाल UCSI_CONSTAT_PWR_OPMODE_TYPEC1_5:
+	हाल UCSI_CONSTAT_PWR_OPMODE_BC:
+	हाल UCSI_CONSTAT_PWR_OPMODE_DEFAULT:
+		val->पूर्णांकval = UCSI_TYPEC_VSAFE5V * 1000;
+		अवरोध;
+	शेष:
+		val->पूर्णांकval = 0;
+		अवरोध;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int ucsi_psy_get_current_max(struct ucsi_connector *con,
-				    union power_supply_propval *val)
-{
-	u32 pdo;
+अटल पूर्णांक ucsi_psy_get_current_max(काष्ठा ucsi_connector *con,
+				    जोड़ घातer_supply_propval *val)
+अणु
+	u32 pकरो;
 
-	switch (UCSI_CONSTAT_PWR_OPMODE(con->status.flags)) {
-	case UCSI_CONSTAT_PWR_OPMODE_PD:
-		if (con->num_pdos > 0) {
-			pdo = con->src_pdos[con->num_pdos - 1];
-			val->intval = pdo_max_current(pdo) * 1000;
-		} else {
-			val->intval = 0;
-		}
-		break;
-	case UCSI_CONSTAT_PWR_OPMODE_TYPEC1_5:
-		val->intval = UCSI_TYPEC_1_5_CURRENT * 1000;
-		break;
-	case UCSI_CONSTAT_PWR_OPMODE_TYPEC3_0:
-		val->intval = UCSI_TYPEC_3_0_CURRENT * 1000;
-		break;
-	case UCSI_CONSTAT_PWR_OPMODE_BC:
-	case UCSI_CONSTAT_PWR_OPMODE_DEFAULT:
-	/* UCSI can't tell b/w DCP/CDP or USB2/3x1/3x2 SDP chargers */
-	default:
-		val->intval = 0;
-		break;
-	}
-	return 0;
-}
+	चयन (UCSI_CONSTAT_PWR_OPMODE(con->status.flags)) अणु
+	हाल UCSI_CONSTAT_PWR_OPMODE_PD:
+		अगर (con->num_pकरोs > 0) अणु
+			pकरो = con->src_pकरोs[con->num_pकरोs - 1];
+			val->पूर्णांकval = pकरो_max_current(pकरो) * 1000;
+		पूर्ण अन्यथा अणु
+			val->पूर्णांकval = 0;
+		पूर्ण
+		अवरोध;
+	हाल UCSI_CONSTAT_PWR_OPMODE_TYPEC1_5:
+		val->पूर्णांकval = UCSI_TYPEC_1_5_CURRENT * 1000;
+		अवरोध;
+	हाल UCSI_CONSTAT_PWR_OPMODE_TYPEC3_0:
+		val->पूर्णांकval = UCSI_TYPEC_3_0_CURRENT * 1000;
+		अवरोध;
+	हाल UCSI_CONSTAT_PWR_OPMODE_BC:
+	हाल UCSI_CONSTAT_PWR_OPMODE_DEFAULT:
+	/* UCSI can't tell b/w DCP/CDP or USB2/3x1/3x2 SDP अक्षरgers */
+	शेष:
+		val->पूर्णांकval = 0;
+		अवरोध;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int ucsi_psy_get_current_now(struct ucsi_connector *con,
-				    union power_supply_propval *val)
-{
+अटल पूर्णांक ucsi_psy_get_current_now(काष्ठा ucsi_connector *con,
+				    जोड़ घातer_supply_propval *val)
+अणु
 	u16 flags = con->status.flags;
 
-	if (UCSI_CONSTAT_PWR_OPMODE(flags) == UCSI_CONSTAT_PWR_OPMODE_PD)
-		val->intval = rdo_op_current(con->rdo) * 1000;
-	else
-		val->intval = 0;
-	return 0;
-}
+	अगर (UCSI_CONSTAT_PWR_OPMODE(flags) == UCSI_CONSTAT_PWR_OPMODE_PD)
+		val->पूर्णांकval = rकरो_op_current(con->rकरो) * 1000;
+	अन्यथा
+		val->पूर्णांकval = 0;
+	वापस 0;
+पूर्ण
 
-static int ucsi_psy_get_usb_type(struct ucsi_connector *con,
-				 union power_supply_propval *val)
-{
+अटल पूर्णांक ucsi_psy_get_usb_type(काष्ठा ucsi_connector *con,
+				 जोड़ घातer_supply_propval *val)
+अणु
 	u16 flags = con->status.flags;
 
-	val->intval = POWER_SUPPLY_USB_TYPE_C;
-	if (flags & UCSI_CONSTAT_CONNECTED &&
+	val->पूर्णांकval = POWER_SUPPLY_USB_TYPE_C;
+	अगर (flags & UCSI_CONSTAT_CONNECTED &&
 	    UCSI_CONSTAT_PWR_OPMODE(flags) == UCSI_CONSTAT_PWR_OPMODE_PD)
-		val->intval = POWER_SUPPLY_USB_TYPE_PD;
+		val->पूर्णांकval = POWER_SUPPLY_USB_TYPE_PD;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ucsi_psy_get_prop(struct power_supply *psy,
-			     enum power_supply_property psp,
-			     union power_supply_propval *val)
-{
-	struct ucsi_connector *con = power_supply_get_drvdata(psy);
+अटल पूर्णांक ucsi_psy_get_prop(काष्ठा घातer_supply *psy,
+			     क्रमागत घातer_supply_property psp,
+			     जोड़ घातer_supply_propval *val)
+अणु
+	काष्ठा ucsi_connector *con = घातer_supply_get_drvdata(psy);
 
-	switch (psp) {
-	case POWER_SUPPLY_PROP_USB_TYPE:
-		return ucsi_psy_get_usb_type(con, val);
-	case POWER_SUPPLY_PROP_ONLINE:
-		return ucsi_psy_get_online(con, val);
-	case POWER_SUPPLY_PROP_VOLTAGE_MIN:
-		return ucsi_psy_get_voltage_min(con, val);
-	case POWER_SUPPLY_PROP_VOLTAGE_MAX:
-		return ucsi_psy_get_voltage_max(con, val);
-	case POWER_SUPPLY_PROP_VOLTAGE_NOW:
-		return ucsi_psy_get_voltage_now(con, val);
-	case POWER_SUPPLY_PROP_CURRENT_MAX:
-		return ucsi_psy_get_current_max(con, val);
-	case POWER_SUPPLY_PROP_CURRENT_NOW:
-		return ucsi_psy_get_current_now(con, val);
-	default:
-		return -EINVAL;
-	}
-}
+	चयन (psp) अणु
+	हाल POWER_SUPPLY_PROP_USB_TYPE:
+		वापस ucsi_psy_get_usb_type(con, val);
+	हाल POWER_SUPPLY_PROP_ONLINE:
+		वापस ucsi_psy_get_online(con, val);
+	हाल POWER_SUPPLY_PROP_VOLTAGE_MIN:
+		वापस ucsi_psy_get_voltage_min(con, val);
+	हाल POWER_SUPPLY_PROP_VOLTAGE_MAX:
+		वापस ucsi_psy_get_voltage_max(con, val);
+	हाल POWER_SUPPLY_PROP_VOLTAGE_NOW:
+		वापस ucsi_psy_get_voltage_now(con, val);
+	हाल POWER_SUPPLY_PROP_CURRENT_MAX:
+		वापस ucsi_psy_get_current_max(con, val);
+	हाल POWER_SUPPLY_PROP_CURRENT_NOW:
+		वापस ucsi_psy_get_current_now(con, val);
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+पूर्ण
 
-static enum power_supply_usb_type ucsi_psy_usb_types[] = {
+अटल क्रमागत घातer_supply_usb_type ucsi_psy_usb_types[] = अणु
 	POWER_SUPPLY_USB_TYPE_C,
 	POWER_SUPPLY_USB_TYPE_PD,
 	POWER_SUPPLY_USB_TYPE_PD_PPS,
-};
+पूर्ण;
 
-int ucsi_register_port_psy(struct ucsi_connector *con)
-{
-	struct power_supply_config psy_cfg = {};
-	struct device *dev = con->ucsi->dev;
-	char *psy_name;
+पूर्णांक ucsi_रेजिस्टर_port_psy(काष्ठा ucsi_connector *con)
+अणु
+	काष्ठा घातer_supply_config psy_cfg = अणुपूर्ण;
+	काष्ठा device *dev = con->ucsi->dev;
+	अक्षर *psy_name;
 
 	psy_cfg.drv_data = con;
 	psy_cfg.fwnode = dev_fwnode(dev);
 
-	psy_name = devm_kasprintf(dev, GFP_KERNEL, "ucsi-source-psy-%s%d",
+	psy_name = devm_kaप्र_लिखो(dev, GFP_KERNEL, "ucsi-source-psy-%s%d",
 				  dev_name(dev), con->num);
-	if (!psy_name)
-		return -ENOMEM;
+	अगर (!psy_name)
+		वापस -ENOMEM;
 
 	con->psy_desc.name = psy_name;
 	con->psy_desc.type = POWER_SUPPLY_TYPE_USB;
@@ -227,24 +228,24 @@ int ucsi_register_port_psy(struct ucsi_connector *con)
 	con->psy_desc.num_properties = ARRAY_SIZE(ucsi_psy_props);
 	con->psy_desc.get_property = ucsi_psy_get_prop;
 
-	con->psy = power_supply_register(dev, &con->psy_desc, &psy_cfg);
+	con->psy = घातer_supply_रेजिस्टर(dev, &con->psy_desc, &psy_cfg);
 
-	return PTR_ERR_OR_ZERO(con->psy);
-}
+	वापस PTR_ERR_OR_ZERO(con->psy);
+पूर्ण
 
-void ucsi_unregister_port_psy(struct ucsi_connector *con)
-{
-	if (IS_ERR_OR_NULL(con->psy))
-		return;
+व्योम ucsi_unरेजिस्टर_port_psy(काष्ठा ucsi_connector *con)
+अणु
+	अगर (IS_ERR_OR_शून्य(con->psy))
+		वापस;
 
-	power_supply_unregister(con->psy);
-	con->psy = NULL;
-}
+	घातer_supply_unरेजिस्टर(con->psy);
+	con->psy = शून्य;
+पूर्ण
 
-void ucsi_port_psy_changed(struct ucsi_connector *con)
-{
-	if (IS_ERR_OR_NULL(con->psy))
-		return;
+व्योम ucsi_port_psy_changed(काष्ठा ucsi_connector *con)
+अणु
+	अगर (IS_ERR_OR_शून्य(con->psy))
+		वापस;
 
-	power_supply_changed(con->psy);
-}
+	घातer_supply_changed(con->psy);
+पूर्ण

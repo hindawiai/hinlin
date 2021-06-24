@@ -1,138 +1,139 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * connection tracking expectations.
  */
 
-#ifndef _NF_CONNTRACK_EXPECT_H
-#define _NF_CONNTRACK_EXPECT_H
+#अगर_अघोषित _NF_CONNTRACK_EXPECT_H
+#घोषणा _NF_CONNTRACK_EXPECT_H
 
-#include <linux/refcount.h>
+#समावेश <linux/refcount.h>
 
-#include <net/netfilter/nf_conntrack.h>
-#include <net/netfilter/nf_conntrack_zones.h>
+#समावेश <net/netfilter/nf_conntrack.h>
+#समावेश <net/netfilter/nf_conntrack_zones.h>
 
-extern unsigned int nf_ct_expect_hsize;
-extern unsigned int nf_ct_expect_max;
-extern struct hlist_head *nf_ct_expect_hash;
+बाह्य अचिन्हित पूर्णांक nf_ct_expect_hsize;
+बाह्य अचिन्हित पूर्णांक nf_ct_expect_max;
+बाह्य काष्ठा hlist_head *nf_ct_expect_hash;
 
-struct nf_conntrack_expect {
+काष्ठा nf_conntrack_expect अणु
 	/* Conntrack expectation list member */
-	struct hlist_node lnode;
+	काष्ठा hlist_node lnode;
 
 	/* Hash member */
-	struct hlist_node hnode;
+	काष्ठा hlist_node hnode;
 
 	/* We expect this tuple, with the following mask */
-	struct nf_conntrack_tuple tuple;
-	struct nf_conntrack_tuple_mask mask;
+	काष्ठा nf_conntrack_tuple tuple;
+	काष्ठा nf_conntrack_tuple_mask mask;
 
 	/* Function to call after setup and insertion */
-	void (*expectfn)(struct nf_conn *new,
-			 struct nf_conntrack_expect *this);
+	व्योम (*expectfn)(काष्ठा nf_conn *new,
+			 काष्ठा nf_conntrack_expect *this);
 
 	/* Helper to assign to new connection */
-	struct nf_conntrack_helper *helper;
+	काष्ठा nf_conntrack_helper *helper;
 
 	/* The conntrack of the master connection */
-	struct nf_conn *master;
+	काष्ठा nf_conn *master;
 
 	/* Timer function; deletes the expectation. */
-	struct timer_list timeout;
+	काष्ठा समयr_list समयout;
 
 	/* Usage count. */
 	refcount_t use;
 
 	/* Flags */
-	unsigned int flags;
+	अचिन्हित पूर्णांक flags;
 
 	/* Expectation class */
-	unsigned int class;
+	अचिन्हित पूर्णांक class;
 
-#if IS_ENABLED(CONFIG_NF_NAT)
-	union nf_inet_addr saved_addr;
+#अगर IS_ENABLED(CONFIG_NF_NAT)
+	जोड़ nf_inet_addr saved_addr;
 	/* This is the original per-proto part, used to map the
 	 * expected connection the way the recipient expects. */
-	union nf_conntrack_man_proto saved_proto;
+	जोड़ nf_conntrack_man_proto saved_proto;
 	/* Direction relative to the master connection. */
-	enum ip_conntrack_dir dir;
-#endif
+	क्रमागत ip_conntrack_dir dir;
+#पूर्ण_अगर
 
-	struct rcu_head rcu;
-};
+	काष्ठा rcu_head rcu;
+पूर्ण;
 
-static inline struct net *nf_ct_exp_net(struct nf_conntrack_expect *exp)
-{
-	return nf_ct_net(exp->master);
-}
+अटल अंतरभूत काष्ठा net *nf_ct_exp_net(काष्ठा nf_conntrack_expect *exp)
+अणु
+	वापस nf_ct_net(exp->master);
+पूर्ण
 
-#define NF_CT_EXP_POLICY_NAME_LEN	16
+#घोषणा NF_CT_EXP_POLICY_NAME_LEN	16
 
-struct nf_conntrack_expect_policy {
-	unsigned int	max_expected;
-	unsigned int	timeout;
-	char		name[NF_CT_EXP_POLICY_NAME_LEN];
-};
+काष्ठा nf_conntrack_expect_policy अणु
+	अचिन्हित पूर्णांक	max_expected;
+	अचिन्हित पूर्णांक	समयout;
+	अक्षर		name[NF_CT_EXP_POLICY_NAME_LEN];
+पूर्ण;
 
-#define NF_CT_EXPECT_CLASS_DEFAULT	0
-#define NF_CT_EXPECT_MAX_CNT		255
+#घोषणा NF_CT_EXPECT_CLASS_DEFAULT	0
+#घोषणा NF_CT_EXPECT_MAX_CNT		255
 
-/* Allow to reuse expectations with the same tuples from different master
+/* Allow to reuse expectations with the same tuples from dअगरferent master
  * conntracks.
  */
-#define NF_CT_EXP_F_SKIP_MASTER	0x1
+#घोषणा NF_CT_EXP_F_SKIP_MASTER	0x1
 
-int nf_conntrack_expect_pernet_init(struct net *net);
-void nf_conntrack_expect_pernet_fini(struct net *net);
+पूर्णांक nf_conntrack_expect_pernet_init(काष्ठा net *net);
+व्योम nf_conntrack_expect_pernet_fini(काष्ठा net *net);
 
-int nf_conntrack_expect_init(void);
-void nf_conntrack_expect_fini(void);
+पूर्णांक nf_conntrack_expect_init(व्योम);
+व्योम nf_conntrack_expect_fini(व्योम);
 
-struct nf_conntrack_expect *
-__nf_ct_expect_find(struct net *net,
-		    const struct nf_conntrack_zone *zone,
-		    const struct nf_conntrack_tuple *tuple);
+काष्ठा nf_conntrack_expect *
+__nf_ct_expect_find(काष्ठा net *net,
+		    स्थिर काष्ठा nf_conntrack_zone *zone,
+		    स्थिर काष्ठा nf_conntrack_tuple *tuple);
 
-struct nf_conntrack_expect *
-nf_ct_expect_find_get(struct net *net,
-		      const struct nf_conntrack_zone *zone,
-		      const struct nf_conntrack_tuple *tuple);
+काष्ठा nf_conntrack_expect *
+nf_ct_expect_find_get(काष्ठा net *net,
+		      स्थिर काष्ठा nf_conntrack_zone *zone,
+		      स्थिर काष्ठा nf_conntrack_tuple *tuple);
 
-struct nf_conntrack_expect *
-nf_ct_find_expectation(struct net *net,
-		       const struct nf_conntrack_zone *zone,
-		       const struct nf_conntrack_tuple *tuple);
+काष्ठा nf_conntrack_expect *
+nf_ct_find_expectation(काष्ठा net *net,
+		       स्थिर काष्ठा nf_conntrack_zone *zone,
+		       स्थिर काष्ठा nf_conntrack_tuple *tuple);
 
-void nf_ct_unlink_expect_report(struct nf_conntrack_expect *exp,
-				u32 portid, int report);
-static inline void nf_ct_unlink_expect(struct nf_conntrack_expect *exp)
-{
+व्योम nf_ct_unlink_expect_report(काष्ठा nf_conntrack_expect *exp,
+				u32 portid, पूर्णांक report);
+अटल अंतरभूत व्योम nf_ct_unlink_expect(काष्ठा nf_conntrack_expect *exp)
+अणु
 	nf_ct_unlink_expect_report(exp, 0, 0);
-}
+पूर्ण
 
-void nf_ct_remove_expectations(struct nf_conn *ct);
-void nf_ct_unexpect_related(struct nf_conntrack_expect *exp);
-bool nf_ct_remove_expect(struct nf_conntrack_expect *exp);
+व्योम nf_ct_हटाओ_expectations(काष्ठा nf_conn *ct);
+व्योम nf_ct_unexpect_related(काष्ठा nf_conntrack_expect *exp);
+bool nf_ct_हटाओ_expect(काष्ठा nf_conntrack_expect *exp);
 
-void nf_ct_expect_iterate_destroy(bool (*iter)(struct nf_conntrack_expect *e, void *data), void *data);
-void nf_ct_expect_iterate_net(struct net *net,
-			      bool (*iter)(struct nf_conntrack_expect *e, void *data),
-                              void *data, u32 portid, int report);
+व्योम nf_ct_expect_iterate_destroy(bool (*iter)(काष्ठा nf_conntrack_expect *e, व्योम *data), व्योम *data);
+व्योम nf_ct_expect_iterate_net(काष्ठा net *net,
+			      bool (*iter)(काष्ठा nf_conntrack_expect *e, व्योम *data),
+                              व्योम *data, u32 portid, पूर्णांक report);
 
-/* Allocate space for an expectation: this is mandatory before calling
+/* Allocate space क्रम an expectation: this is mandatory beक्रमe calling
    nf_ct_expect_related.  You will have to call put afterwards. */
-struct nf_conntrack_expect *nf_ct_expect_alloc(struct nf_conn *me);
-void nf_ct_expect_init(struct nf_conntrack_expect *, unsigned int, u_int8_t,
-		       const union nf_inet_addr *,
-		       const union nf_inet_addr *,
-		       u_int8_t, const __be16 *, const __be16 *);
-void nf_ct_expect_put(struct nf_conntrack_expect *exp);
-int nf_ct_expect_related_report(struct nf_conntrack_expect *expect,
-				u32 portid, int report, unsigned int flags);
-static inline int nf_ct_expect_related(struct nf_conntrack_expect *expect,
-				       unsigned int flags)
-{
-	return nf_ct_expect_related_report(expect, 0, 0, flags);
-}
+काष्ठा nf_conntrack_expect *nf_ct_expect_alloc(काष्ठा nf_conn *me);
+व्योम nf_ct_expect_init(काष्ठा nf_conntrack_expect *, अचिन्हित पूर्णांक, u_पूर्णांक8_t,
+		       स्थिर जोड़ nf_inet_addr *,
+		       स्थिर जोड़ nf_inet_addr *,
+		       u_पूर्णांक8_t, स्थिर __be16 *, स्थिर __be16 *);
+व्योम nf_ct_expect_put(काष्ठा nf_conntrack_expect *exp);
+पूर्णांक nf_ct_expect_related_report(काष्ठा nf_conntrack_expect *expect,
+				u32 portid, पूर्णांक report, अचिन्हित पूर्णांक flags);
+अटल अंतरभूत पूर्णांक nf_ct_expect_related(काष्ठा nf_conntrack_expect *expect,
+				       अचिन्हित पूर्णांक flags)
+अणु
+	वापस nf_ct_expect_related_report(expect, 0, 0, flags);
+पूर्ण
 
-#endif /*_NF_CONNTRACK_EXPECT_H*/
+#पूर्ण_अगर /*_NF_CONNTRACK_EXPECT_H*/
 

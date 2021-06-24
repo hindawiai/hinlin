@@ -1,50 +1,51 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * SPU local store allocation routines
  *
  * Copyright 2007 Benjamin Herrenschmidt, IBM Corp.
  */
 
-#undef DEBUG
+#अघोषित DEBUG
 
-#include <linux/kernel.h>
-#include <linux/mm.h>
-#include <linux/slab.h>
-#include <linux/vmalloc.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/vदो_स्मृति.h>
 
-#include <asm/spu.h>
-#include <asm/spu_csa.h>
-#include <asm/mmu.h>
+#समावेश <यंत्र/spu.h>
+#समावेश <यंत्र/spu_csa.h>
+#समावेश <यंत्र/mmu.h>
 
-#include "spufs.h"
+#समावेश "spufs.h"
 
-int spu_alloc_lscsa(struct spu_state *csa)
-{
-	struct spu_lscsa *lscsa;
-	unsigned char *p;
+पूर्णांक spu_alloc_lscsa(काष्ठा spu_state *csa)
+अणु
+	काष्ठा spu_lscsa *lscsa;
+	अचिन्हित अक्षर *p;
 
-	lscsa = vzalloc(sizeof(*lscsa));
-	if (!lscsa)
-		return -ENOMEM;
+	lscsa = vzalloc(माप(*lscsa));
+	अगर (!lscsa)
+		वापस -ENOMEM;
 	csa->lscsa = lscsa;
 
-	/* Set LS pages reserved to allow for user-space mapping. */
-	for (p = lscsa->ls; p < lscsa->ls + LS_SIZE; p += PAGE_SIZE)
-		SetPageReserved(vmalloc_to_page(p));
+	/* Set LS pages reserved to allow क्रम user-space mapping. */
+	क्रम (p = lscsa->ls; p < lscsa->ls + LS_SIZE; p += PAGE_SIZE)
+		SetPageReserved(vदो_स्मृति_to_page(p));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void spu_free_lscsa(struct spu_state *csa)
-{
-	/* Clear reserved bit before vfree. */
-	unsigned char *p;
+व्योम spu_मुक्त_lscsa(काष्ठा spu_state *csa)
+अणु
+	/* Clear reserved bit beक्रमe vमुक्त. */
+	अचिन्हित अक्षर *p;
 
-	if (csa->lscsa == NULL)
-		return;
+	अगर (csa->lscsa == शून्य)
+		वापस;
 
-	for (p = csa->lscsa->ls; p < csa->lscsa->ls + LS_SIZE; p += PAGE_SIZE)
-		ClearPageReserved(vmalloc_to_page(p));
+	क्रम (p = csa->lscsa->ls; p < csa->lscsa->ls + LS_SIZE; p += PAGE_SIZE)
+		ClearPageReserved(vदो_स्मृति_to_page(p));
 
-	vfree(csa->lscsa);
-}
+	vमुक्त(csa->lscsa);
+पूर्ण

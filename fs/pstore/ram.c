@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * RAM Oops/Panic logger
  *
@@ -6,368 +7,368 @@
  * Copyright (C) 2011 Kees Cook <keescook@chromium.org>
  */
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include <linux/kernel.h>
-#include <linux/err.h>
-#include <linux/module.h>
-#include <linux/version.h>
-#include <linux/pstore.h>
-#include <linux/io.h>
-#include <linux/ioport.h>
-#include <linux/platform_device.h>
-#include <linux/slab.h>
-#include <linux/compiler.h>
-#include <linux/pstore_ram.h>
-#include <linux/of.h>
-#include <linux/of_address.h>
-#include "internal.h"
+#समावेश <linux/kernel.h>
+#समावेश <linux/err.h>
+#समावेश <linux/module.h>
+#समावेश <linux/version.h>
+#समावेश <linux/pstore.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/ioport.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/compiler.h>
+#समावेश <linux/pstore_ram.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_address.h>
+#समावेश "internal.h"
 
-#define RAMOOPS_KERNMSG_HDR "===="
-#define MIN_MEM_SIZE 4096UL
+#घोषणा RAMOOPS_KERNMSG_HDR "===="
+#घोषणा MIN_MEM_SIZE 4096UL
 
-static ulong record_size = MIN_MEM_SIZE;
-module_param(record_size, ulong, 0400);
+अटल uदीर्घ record_size = MIN_MEM_SIZE;
+module_param(record_size, uदीर्घ, 0400);
 MODULE_PARM_DESC(record_size,
 		"size of each dump done on oops/panic");
 
-static ulong ramoops_console_size = MIN_MEM_SIZE;
-module_param_named(console_size, ramoops_console_size, ulong, 0400);
+अटल uदीर्घ ramoops_console_size = MIN_MEM_SIZE;
+module_param_named(console_size, ramoops_console_size, uदीर्घ, 0400);
 MODULE_PARM_DESC(console_size, "size of kernel console log");
 
-static ulong ramoops_ftrace_size = MIN_MEM_SIZE;
-module_param_named(ftrace_size, ramoops_ftrace_size, ulong, 0400);
+अटल uदीर्घ ramoops_ftrace_size = MIN_MEM_SIZE;
+module_param_named(ftrace_size, ramoops_ftrace_size, uदीर्घ, 0400);
 MODULE_PARM_DESC(ftrace_size, "size of ftrace log");
 
-static ulong ramoops_pmsg_size = MIN_MEM_SIZE;
-module_param_named(pmsg_size, ramoops_pmsg_size, ulong, 0400);
+अटल uदीर्घ ramoops_pmsg_size = MIN_MEM_SIZE;
+module_param_named(pmsg_size, ramoops_pmsg_size, uदीर्घ, 0400);
 MODULE_PARM_DESC(pmsg_size, "size of user space message log");
 
-static unsigned long long mem_address;
-module_param_hw(mem_address, ullong, other, 0400);
+अटल अचिन्हित दीर्घ दीर्घ mem_address;
+module_param_hw(mem_address, ulदीर्घ, other, 0400);
 MODULE_PARM_DESC(mem_address,
 		"start of reserved RAM used to store oops/panic logs");
 
-static ulong mem_size;
-module_param(mem_size, ulong, 0400);
+अटल uदीर्घ mem_size;
+module_param(mem_size, uदीर्घ, 0400);
 MODULE_PARM_DESC(mem_size,
 		"size of reserved RAM used to store oops/panic logs");
 
-static unsigned int mem_type;
-module_param(mem_type, uint, 0400);
+अटल अचिन्हित पूर्णांक mem_type;
+module_param(mem_type, uपूर्णांक, 0400);
 MODULE_PARM_DESC(mem_type,
 		"memory type: 0=write-combined (default), 1=unbuffered, 2=cached");
 
-static int ramoops_max_reason = -1;
-module_param_named(max_reason, ramoops_max_reason, int, 0400);
+अटल पूर्णांक ramoops_max_reason = -1;
+module_param_named(max_reason, ramoops_max_reason, पूर्णांक, 0400);
 MODULE_PARM_DESC(max_reason,
 		 "maximum reason for kmsg dump (default 2: Oops and Panic) ");
 
-static int ramoops_ecc;
-module_param_named(ecc, ramoops_ecc, int, 0400);
+अटल पूर्णांक ramoops_ecc;
+module_param_named(ecc, ramoops_ecc, पूर्णांक, 0400);
 MODULE_PARM_DESC(ramoops_ecc,
 		"if non-zero, the option enables ECC support and specifies "
 		"ECC buffer size in bytes (1 is a special value, means 16 "
 		"bytes ECC)");
 
-static int ramoops_dump_oops = -1;
-module_param_named(dump_oops, ramoops_dump_oops, int, 0400);
+अटल पूर्णांक ramoops_dump_oops = -1;
+module_param_named(dump_oops, ramoops_dump_oops, पूर्णांक, 0400);
 MODULE_PARM_DESC(dump_oops,
 		 "(deprecated: use max_reason instead) set to 1 to dump oopses & panics, 0 to only dump panics");
 
-struct ramoops_context {
-	struct persistent_ram_zone **dprzs;	/* Oops dump zones */
-	struct persistent_ram_zone *cprz;	/* Console zone */
-	struct persistent_ram_zone **fprzs;	/* Ftrace zones */
-	struct persistent_ram_zone *mprz;	/* PMSG zone */
+काष्ठा ramoops_context अणु
+	काष्ठा persistent_ram_zone **dprzs;	/* Oops dump zones */
+	काष्ठा persistent_ram_zone *cprz;	/* Console zone */
+	काष्ठा persistent_ram_zone **fprzs;	/* Ftrace zones */
+	काष्ठा persistent_ram_zone *mprz;	/* PMSG zone */
 	phys_addr_t phys_addr;
-	unsigned long size;
-	unsigned int memtype;
-	size_t record_size;
-	size_t console_size;
-	size_t ftrace_size;
-	size_t pmsg_size;
+	अचिन्हित दीर्घ size;
+	अचिन्हित पूर्णांक memtype;
+	माप_प्रकार record_size;
+	माप_प्रकार console_size;
+	माप_प्रकार ftrace_size;
+	माप_प्रकार pmsg_size;
 	u32 flags;
-	struct persistent_ram_ecc_info ecc_info;
-	unsigned int max_dump_cnt;
-	unsigned int dump_write_cnt;
-	/* _read_cnt need clear on ramoops_pstore_open */
-	unsigned int dump_read_cnt;
-	unsigned int console_read_cnt;
-	unsigned int max_ftrace_cnt;
-	unsigned int ftrace_read_cnt;
-	unsigned int pmsg_read_cnt;
-	struct pstore_info pstore;
-};
+	काष्ठा persistent_ram_ecc_info ecc_info;
+	अचिन्हित पूर्णांक max_dump_cnt;
+	अचिन्हित पूर्णांक dump_ग_लिखो_cnt;
+	/* _पढ़ो_cnt need clear on ramoops_pstore_खोलो */
+	अचिन्हित पूर्णांक dump_पढ़ो_cnt;
+	अचिन्हित पूर्णांक console_पढ़ो_cnt;
+	अचिन्हित पूर्णांक max_ftrace_cnt;
+	अचिन्हित पूर्णांक ftrace_पढ़ो_cnt;
+	अचिन्हित पूर्णांक pmsg_पढ़ो_cnt;
+	काष्ठा pstore_info pstore;
+पूर्ण;
 
-static struct platform_device *dummy;
+अटल काष्ठा platक्रमm_device *dummy;
 
-static int ramoops_pstore_open(struct pstore_info *psi)
-{
-	struct ramoops_context *cxt = psi->data;
+अटल पूर्णांक ramoops_pstore_खोलो(काष्ठा pstore_info *psi)
+अणु
+	काष्ठा ramoops_context *cxt = psi->data;
 
-	cxt->dump_read_cnt = 0;
-	cxt->console_read_cnt = 0;
-	cxt->ftrace_read_cnt = 0;
-	cxt->pmsg_read_cnt = 0;
-	return 0;
-}
+	cxt->dump_पढ़ो_cnt = 0;
+	cxt->console_पढ़ो_cnt = 0;
+	cxt->ftrace_पढ़ो_cnt = 0;
+	cxt->pmsg_पढ़ो_cnt = 0;
+	वापस 0;
+पूर्ण
 
-static struct persistent_ram_zone *
-ramoops_get_next_prz(struct persistent_ram_zone *przs[], int id,
-		     struct pstore_record *record)
-{
-	struct persistent_ram_zone *prz;
+अटल काष्ठा persistent_ram_zone *
+ramoops_get_next_prz(काष्ठा persistent_ram_zone *przs[], पूर्णांक id,
+		     काष्ठा pstore_record *record)
+अणु
+	काष्ठा persistent_ram_zone *prz;
 
-	/* Give up if we never existed or have hit the end. */
-	if (!przs)
-		return NULL;
+	/* Give up अगर we never existed or have hit the end. */
+	अगर (!przs)
+		वापस शून्य;
 
 	prz = przs[id];
-	if (!prz)
-		return NULL;
+	अगर (!prz)
+		वापस शून्य;
 
-	/* Update old/shadowed buffer. */
-	if (prz->type == PSTORE_TYPE_DMESG)
+	/* Update old/shaकरोwed buffer. */
+	अगर (prz->type == PSTORE_TYPE_DMESG)
 		persistent_ram_save_old(prz);
 
-	if (!persistent_ram_old_size(prz))
-		return NULL;
+	अगर (!persistent_ram_old_size(prz))
+		वापस शून्य;
 
 	record->type = prz->type;
 	record->id = id;
 
-	return prz;
-}
+	वापस prz;
+पूर्ण
 
-static int ramoops_read_kmsg_hdr(char *buffer, struct timespec64 *time,
+अटल पूर्णांक ramoops_पढ़ो_kmsg_hdr(अक्षर *buffer, काष्ठा बारpec64 *समय,
 				  bool *compressed)
-{
-	char data_type;
-	int header_length = 0;
+अणु
+	अक्षर data_type;
+	पूर्णांक header_length = 0;
 
-	if (sscanf(buffer, RAMOOPS_KERNMSG_HDR "%lld.%lu-%c\n%n",
-		   (time64_t *)&time->tv_sec, &time->tv_nsec, &data_type,
-		   &header_length) == 3) {
-		time->tv_nsec *= 1000;
-		if (data_type == 'C')
+	अगर (माला_पूछो(buffer, RAMOOPS_KERNMSG_HDR "%lld.%lu-%c\n%n",
+		   (समय64_t *)&समय->tv_sec, &समय->tv_nsec, &data_type,
+		   &header_length) == 3) अणु
+		समय->tv_nsec *= 1000;
+		अगर (data_type == 'C')
 			*compressed = true;
-		else
+		अन्यथा
 			*compressed = false;
-	} else if (sscanf(buffer, RAMOOPS_KERNMSG_HDR "%lld.%lu\n%n",
-			  (time64_t *)&time->tv_sec, &time->tv_nsec,
-			  &header_length) == 2) {
-		time->tv_nsec *= 1000;
+	पूर्ण अन्यथा अगर (माला_पूछो(buffer, RAMOOPS_KERNMSG_HDR "%lld.%lu\n%n",
+			  (समय64_t *)&समय->tv_sec, &समय->tv_nsec,
+			  &header_length) == 2) अणु
+		समय->tv_nsec *= 1000;
 		*compressed = false;
-	} else {
-		time->tv_sec = 0;
-		time->tv_nsec = 0;
+	पूर्ण अन्यथा अणु
+		समय->tv_sec = 0;
+		समय->tv_nsec = 0;
 		*compressed = false;
-	}
-	return header_length;
-}
+	पूर्ण
+	वापस header_length;
+पूर्ण
 
-static bool prz_ok(struct persistent_ram_zone *prz)
-{
-	return !!prz && !!(persistent_ram_old_size(prz) +
-			   persistent_ram_ecc_string(prz, NULL, 0));
-}
+अटल bool prz_ok(काष्ठा persistent_ram_zone *prz)
+अणु
+	वापस !!prz && !!(persistent_ram_old_size(prz) +
+			   persistent_ram_ecc_string(prz, शून्य, 0));
+पूर्ण
 
-static ssize_t ramoops_pstore_read(struct pstore_record *record)
-{
-	ssize_t size = 0;
-	struct ramoops_context *cxt = record->psi->data;
-	struct persistent_ram_zone *prz = NULL;
-	int header_length = 0;
-	bool free_prz = false;
+अटल sमाप_प्रकार ramoops_pstore_पढ़ो(काष्ठा pstore_record *record)
+अणु
+	sमाप_प्रकार size = 0;
+	काष्ठा ramoops_context *cxt = record->psi->data;
+	काष्ठा persistent_ram_zone *prz = शून्य;
+	पूर्णांक header_length = 0;
+	bool मुक्त_prz = false;
 
 	/*
-	 * Ramoops headers provide time stamps for PSTORE_TYPE_DMESG, but
-	 * PSTORE_TYPE_CONSOLE and PSTORE_TYPE_FTRACE don't currently have
-	 * valid time stamps, so it is initialized to zero.
+	 * Ramoops headers provide समय stamps क्रम PSTORE_TYPE_DMESG, but
+	 * PSTORE_TYPE_CONSOLE and PSTORE_TYPE_FTRACE करोn't currently have
+	 * valid समय stamps, so it is initialized to zero.
 	 */
-	record->time.tv_sec = 0;
-	record->time.tv_nsec = 0;
+	record->समय.tv_sec = 0;
+	record->समय.tv_nsec = 0;
 	record->compressed = false;
 
-	/* Find the next valid persistent_ram_zone for DMESG */
-	while (cxt->dump_read_cnt < cxt->max_dump_cnt && !prz) {
-		prz = ramoops_get_next_prz(cxt->dprzs, cxt->dump_read_cnt++,
+	/* Find the next valid persistent_ram_zone क्रम DMESG */
+	जबतक (cxt->dump_पढ़ो_cnt < cxt->max_dump_cnt && !prz) अणु
+		prz = ramoops_get_next_prz(cxt->dprzs, cxt->dump_पढ़ो_cnt++,
 					   record);
-		if (!prz_ok(prz))
-			continue;
-		header_length = ramoops_read_kmsg_hdr(persistent_ram_old(prz),
-						      &record->time,
+		अगर (!prz_ok(prz))
+			जारी;
+		header_length = ramoops_पढ़ो_kmsg_hdr(persistent_ram_old(prz),
+						      &record->समय,
 						      &record->compressed);
-		/* Clear and skip this DMESG record if it has no valid header */
-		if (!header_length) {
-			persistent_ram_free_old(prz);
+		/* Clear and skip this DMESG record अगर it has no valid header */
+		अगर (!header_length) अणु
+			persistent_ram_मुक्त_old(prz);
 			persistent_ram_zap(prz);
-			prz = NULL;
-		}
-	}
+			prz = शून्य;
+		पूर्ण
+	पूर्ण
 
-	if (!prz_ok(prz) && !cxt->console_read_cnt++)
+	अगर (!prz_ok(prz) && !cxt->console_पढ़ो_cnt++)
 		prz = ramoops_get_next_prz(&cxt->cprz, 0 /* single */, record);
 
-	if (!prz_ok(prz) && !cxt->pmsg_read_cnt++)
+	अगर (!prz_ok(prz) && !cxt->pmsg_पढ़ो_cnt++)
 		prz = ramoops_get_next_prz(&cxt->mprz, 0 /* single */, record);
 
 	/* ftrace is last since it may want to dynamically allocate memory. */
-	if (!prz_ok(prz)) {
-		if (!(cxt->flags & RAMOOPS_FLAG_FTRACE_PER_CPU) &&
-		    !cxt->ftrace_read_cnt++) {
+	अगर (!prz_ok(prz)) अणु
+		अगर (!(cxt->flags & RAMOOPS_FLAG_FTRACE_PER_CPU) &&
+		    !cxt->ftrace_पढ़ो_cnt++) अणु
 			prz = ramoops_get_next_prz(cxt->fprzs, 0 /* single */,
 						   record);
-		} else {
+		पूर्ण अन्यथा अणु
 			/*
 			 * Build a new dummy record which combines all the
 			 * per-cpu records including metadata and ecc info.
 			 */
-			struct persistent_ram_zone *tmp_prz, *prz_next;
+			काष्ठा persistent_ram_zone *पंचांगp_prz, *prz_next;
 
-			tmp_prz = kzalloc(sizeof(struct persistent_ram_zone),
+			पंचांगp_prz = kzalloc(माप(काष्ठा persistent_ram_zone),
 					  GFP_KERNEL);
-			if (!tmp_prz)
-				return -ENOMEM;
-			prz = tmp_prz;
-			free_prz = true;
+			अगर (!पंचांगp_prz)
+				वापस -ENOMEM;
+			prz = पंचांगp_prz;
+			मुक्त_prz = true;
 
-			while (cxt->ftrace_read_cnt < cxt->max_ftrace_cnt) {
+			जबतक (cxt->ftrace_पढ़ो_cnt < cxt->max_ftrace_cnt) अणु
 				prz_next = ramoops_get_next_prz(cxt->fprzs,
-						cxt->ftrace_read_cnt++, record);
+						cxt->ftrace_पढ़ो_cnt++, record);
 
-				if (!prz_ok(prz_next))
-					continue;
+				अगर (!prz_ok(prz_next))
+					जारी;
 
-				tmp_prz->ecc_info = prz_next->ecc_info;
-				tmp_prz->corrected_bytes +=
+				पंचांगp_prz->ecc_info = prz_next->ecc_info;
+				पंचांगp_prz->corrected_bytes +=
 						prz_next->corrected_bytes;
-				tmp_prz->bad_blocks += prz_next->bad_blocks;
+				पंचांगp_prz->bad_blocks += prz_next->bad_blocks;
 
 				size = pstore_ftrace_combine_log(
-						&tmp_prz->old_log,
-						&tmp_prz->old_log_size,
+						&पंचांगp_prz->old_log,
+						&पंचांगp_prz->old_log_size,
 						prz_next->old_log,
 						prz_next->old_log_size);
-				if (size)
-					goto out;
-			}
+				अगर (size)
+					जाओ out;
+			पूर्ण
 			record->id = 0;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (!prz_ok(prz)) {
+	अगर (!prz_ok(prz)) अणु
 		size = 0;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	size = persistent_ram_old_size(prz) - header_length;
 
 	/* ECC correction notice */
-	record->ecc_notice_size = persistent_ram_ecc_string(prz, NULL, 0);
+	record->ecc_notice_size = persistent_ram_ecc_string(prz, शून्य, 0);
 
-	record->buf = kmalloc(size + record->ecc_notice_size + 1, GFP_KERNEL);
-	if (record->buf == NULL) {
+	record->buf = kदो_स्मृति(size + record->ecc_notice_size + 1, GFP_KERNEL);
+	अगर (record->buf == शून्य) अणु
 		size = -ENOMEM;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	memcpy(record->buf, (char *)persistent_ram_old(prz) + header_length,
+	स_नकल(record->buf, (अक्षर *)persistent_ram_old(prz) + header_length,
 	       size);
 
 	persistent_ram_ecc_string(prz, record->buf + size,
 				  record->ecc_notice_size + 1);
 
 out:
-	if (free_prz) {
-		kfree(prz->old_log);
-		kfree(prz);
-	}
+	अगर (मुक्त_prz) अणु
+		kमुक्त(prz->old_log);
+		kमुक्त(prz);
+	पूर्ण
 
-	return size;
-}
+	वापस size;
+पूर्ण
 
-static size_t ramoops_write_kmsg_hdr(struct persistent_ram_zone *prz,
-				     struct pstore_record *record)
-{
-	char hdr[36]; /* "===="(4), %lld(20), "."(1), %06lu(6), "-%c\n"(3) */
-	size_t len;
+अटल माप_प्रकार ramoops_ग_लिखो_kmsg_hdr(काष्ठा persistent_ram_zone *prz,
+				     काष्ठा pstore_record *record)
+अणु
+	अक्षर hdr[36]; /* "===="(4), %lld(20), "."(1), %06lu(6), "-%c\n"(3) */
+	माप_प्रकार len;
 
-	len = scnprintf(hdr, sizeof(hdr),
+	len = scnम_लिखो(hdr, माप(hdr),
 		RAMOOPS_KERNMSG_HDR "%lld.%06lu-%c\n",
-		(time64_t)record->time.tv_sec,
-		record->time.tv_nsec / 1000,
+		(समय64_t)record->समय.tv_sec,
+		record->समय.tv_nsec / 1000,
 		record->compressed ? 'C' : 'D');
-	persistent_ram_write(prz, hdr, len);
+	persistent_ram_ग_लिखो(prz, hdr, len);
 
-	return len;
-}
+	वापस len;
+पूर्ण
 
-static int notrace ramoops_pstore_write(struct pstore_record *record)
-{
-	struct ramoops_context *cxt = record->psi->data;
-	struct persistent_ram_zone *prz;
-	size_t size, hlen;
+अटल पूर्णांक notrace ramoops_pstore_ग_लिखो(काष्ठा pstore_record *record)
+अणु
+	काष्ठा ramoops_context *cxt = record->psi->data;
+	काष्ठा persistent_ram_zone *prz;
+	माप_प्रकार size, hlen;
 
-	if (record->type == PSTORE_TYPE_CONSOLE) {
-		if (!cxt->cprz)
-			return -ENOMEM;
-		persistent_ram_write(cxt->cprz, record->buf, record->size);
-		return 0;
-	} else if (record->type == PSTORE_TYPE_FTRACE) {
-		int zonenum;
+	अगर (record->type == PSTORE_TYPE_CONSOLE) अणु
+		अगर (!cxt->cprz)
+			वापस -ENOMEM;
+		persistent_ram_ग_लिखो(cxt->cprz, record->buf, record->size);
+		वापस 0;
+	पूर्ण अन्यथा अगर (record->type == PSTORE_TYPE_FTRACE) अणु
+		पूर्णांक zonक्रमागत;
 
-		if (!cxt->fprzs)
-			return -ENOMEM;
+		अगर (!cxt->fprzs)
+			वापस -ENOMEM;
 		/*
-		 * Choose zone by if we're using per-cpu buffers.
+		 * Choose zone by अगर we're using per-cpu buffers.
 		 */
-		if (cxt->flags & RAMOOPS_FLAG_FTRACE_PER_CPU)
-			zonenum = smp_processor_id();
-		else
-			zonenum = 0;
+		अगर (cxt->flags & RAMOOPS_FLAG_FTRACE_PER_CPU)
+			zonक्रमागत = smp_processor_id();
+		अन्यथा
+			zonक्रमागत = 0;
 
-		persistent_ram_write(cxt->fprzs[zonenum], record->buf,
+		persistent_ram_ग_लिखो(cxt->fprzs[zonक्रमागत], record->buf,
 				     record->size);
-		return 0;
-	} else if (record->type == PSTORE_TYPE_PMSG) {
+		वापस 0;
+	पूर्ण अन्यथा अगर (record->type == PSTORE_TYPE_PMSG) अणु
 		pr_warn_ratelimited("PMSG shouldn't call %s\n", __func__);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (record->type != PSTORE_TYPE_DMESG)
-		return -EINVAL;
+	अगर (record->type != PSTORE_TYPE_DMESG)
+		वापस -EINVAL;
 
 	/*
-	 * We could filter on record->reason here if we wanted to (which
-	 * would duplicate what happened before the "max_reason" setting
-	 * was added), but that would defeat the purpose of a system
-	 * changing printk.always_kmsg_dump, so instead log everything that
-	 * the kmsg dumper sends us, since it should be doing the filtering
-	 * based on the combination of printk.always_kmsg_dump and our
+	 * We could filter on record->reason here अगर we wanted to (which
+	 * would duplicate what happened beक्रमe the "max_reason" setting
+	 * was added), but that would defeat the purpose of a प्रणाली
+	 * changing prपूर्णांकk.always_kmsg_dump, so instead log everything that
+	 * the kmsg dumper sends us, since it should be करोing the filtering
+	 * based on the combination of prपूर्णांकk.always_kmsg_dump and our
 	 * requested "max_reason".
 	 */
 
 	/*
 	 * Explicitly only take the first part of any new crash.
 	 * If our buffer is larger than kmsg_bytes, this can never happen,
-	 * and if our buffer is smaller than kmsg_bytes, we don't want the
+	 * and अगर our buffer is smaller than kmsg_bytes, we करोn't want the
 	 * report split across multiple records.
 	 */
-	if (record->part != 1)
-		return -ENOSPC;
+	अगर (record->part != 1)
+		वापस -ENOSPC;
 
-	if (!cxt->dprzs)
-		return -ENOSPC;
+	अगर (!cxt->dprzs)
+		वापस -ENOSPC;
 
-	prz = cxt->dprzs[cxt->dump_write_cnt];
+	prz = cxt->dprzs[cxt->dump_ग_लिखो_cnt];
 
 	/*
 	 * Since this is a new crash dump, we need to reset the buffer in
-	 * case it still has an old dump present. Without this, the new dump
+	 * हाल it still has an old dump present. Without this, the new dump
 	 * will get appended, which would seriously confuse anything trying
-	 * to check dump file contents. Specifically, ramoops_read_kmsg_hdr()
+	 * to check dump file contents. Specअगरically, ramoops_पढ़ो_kmsg_hdr()
 	 * expects to find a dump header in the beginning of buffer data, so
 	 * we must to reset the buffer values, in order to ensure that the
 	 * header will be written to the beginning of the buffer.
@@ -375,300 +376,300 @@ static int notrace ramoops_pstore_write(struct pstore_record *record)
 	persistent_ram_zap(prz);
 
 	/* Build header and append record contents. */
-	hlen = ramoops_write_kmsg_hdr(prz, record);
-	if (!hlen)
-		return -ENOMEM;
+	hlen = ramoops_ग_लिखो_kmsg_hdr(prz, record);
+	अगर (!hlen)
+		वापस -ENOMEM;
 
 	size = record->size;
-	if (size + hlen > prz->buffer_size)
+	अगर (size + hlen > prz->buffer_size)
 		size = prz->buffer_size - hlen;
-	persistent_ram_write(prz, record->buf, size);
+	persistent_ram_ग_लिखो(prz, record->buf, size);
 
-	cxt->dump_write_cnt = (cxt->dump_write_cnt + 1) % cxt->max_dump_cnt;
+	cxt->dump_ग_लिखो_cnt = (cxt->dump_ग_लिखो_cnt + 1) % cxt->max_dump_cnt;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int notrace ramoops_pstore_write_user(struct pstore_record *record,
-					     const char __user *buf)
-{
-	if (record->type == PSTORE_TYPE_PMSG) {
-		struct ramoops_context *cxt = record->psi->data;
+अटल पूर्णांक notrace ramoops_pstore_ग_लिखो_user(काष्ठा pstore_record *record,
+					     स्थिर अक्षर __user *buf)
+अणु
+	अगर (record->type == PSTORE_TYPE_PMSG) अणु
+		काष्ठा ramoops_context *cxt = record->psi->data;
 
-		if (!cxt->mprz)
-			return -ENOMEM;
-		return persistent_ram_write_user(cxt->mprz, buf, record->size);
-	}
+		अगर (!cxt->mprz)
+			वापस -ENOMEM;
+		वापस persistent_ram_ग_लिखो_user(cxt->mprz, buf, record->size);
+	पूर्ण
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static int ramoops_pstore_erase(struct pstore_record *record)
-{
-	struct ramoops_context *cxt = record->psi->data;
-	struct persistent_ram_zone *prz;
+अटल पूर्णांक ramoops_pstore_erase(काष्ठा pstore_record *record)
+अणु
+	काष्ठा ramoops_context *cxt = record->psi->data;
+	काष्ठा persistent_ram_zone *prz;
 
-	switch (record->type) {
-	case PSTORE_TYPE_DMESG:
-		if (record->id >= cxt->max_dump_cnt)
-			return -EINVAL;
+	चयन (record->type) अणु
+	हाल PSTORE_TYPE_DMESG:
+		अगर (record->id >= cxt->max_dump_cnt)
+			वापस -EINVAL;
 		prz = cxt->dprzs[record->id];
-		break;
-	case PSTORE_TYPE_CONSOLE:
+		अवरोध;
+	हाल PSTORE_TYPE_CONSOLE:
 		prz = cxt->cprz;
-		break;
-	case PSTORE_TYPE_FTRACE:
-		if (record->id >= cxt->max_ftrace_cnt)
-			return -EINVAL;
+		अवरोध;
+	हाल PSTORE_TYPE_FTRACE:
+		अगर (record->id >= cxt->max_ftrace_cnt)
+			वापस -EINVAL;
 		prz = cxt->fprzs[record->id];
-		break;
-	case PSTORE_TYPE_PMSG:
+		अवरोध;
+	हाल PSTORE_TYPE_PMSG:
 		prz = cxt->mprz;
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	persistent_ram_free_old(prz);
+	persistent_ram_मुक्त_old(prz);
 	persistent_ram_zap(prz);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct ramoops_context oops_cxt = {
-	.pstore = {
+अटल काष्ठा ramoops_context oops_cxt = अणु
+	.pstore = अणु
 		.owner	= THIS_MODULE,
 		.name	= "ramoops",
-		.open	= ramoops_pstore_open,
-		.read	= ramoops_pstore_read,
-		.write	= ramoops_pstore_write,
-		.write_user	= ramoops_pstore_write_user,
+		.खोलो	= ramoops_pstore_खोलो,
+		.पढ़ो	= ramoops_pstore_पढ़ो,
+		.ग_लिखो	= ramoops_pstore_ग_लिखो,
+		.ग_लिखो_user	= ramoops_pstore_ग_लिखो_user,
 		.erase	= ramoops_pstore_erase,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static void ramoops_free_przs(struct ramoops_context *cxt)
-{
-	int i;
+अटल व्योम ramoops_मुक्त_przs(काष्ठा ramoops_context *cxt)
+अणु
+	पूर्णांक i;
 
 	/* Free dump PRZs */
-	if (cxt->dprzs) {
-		for (i = 0; i < cxt->max_dump_cnt; i++)
-			persistent_ram_free(cxt->dprzs[i]);
+	अगर (cxt->dprzs) अणु
+		क्रम (i = 0; i < cxt->max_dump_cnt; i++)
+			persistent_ram_मुक्त(cxt->dprzs[i]);
 
-		kfree(cxt->dprzs);
+		kमुक्त(cxt->dprzs);
 		cxt->max_dump_cnt = 0;
-	}
+	पूर्ण
 
 	/* Free ftrace PRZs */
-	if (cxt->fprzs) {
-		for (i = 0; i < cxt->max_ftrace_cnt; i++)
-			persistent_ram_free(cxt->fprzs[i]);
-		kfree(cxt->fprzs);
+	अगर (cxt->fprzs) अणु
+		क्रम (i = 0; i < cxt->max_ftrace_cnt; i++)
+			persistent_ram_मुक्त(cxt->fprzs[i]);
+		kमुक्त(cxt->fprzs);
 		cxt->max_ftrace_cnt = 0;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int ramoops_init_przs(const char *name,
-			     struct device *dev, struct ramoops_context *cxt,
-			     struct persistent_ram_zone ***przs,
-			     phys_addr_t *paddr, size_t mem_sz,
-			     ssize_t record_size,
-			     unsigned int *cnt, u32 sig, u32 flags)
-{
-	int err = -ENOMEM;
-	int i;
-	size_t zone_sz;
-	struct persistent_ram_zone **prz_ar;
+अटल पूर्णांक ramoops_init_przs(स्थिर अक्षर *name,
+			     काष्ठा device *dev, काष्ठा ramoops_context *cxt,
+			     काष्ठा persistent_ram_zone ***przs,
+			     phys_addr_t *paddr, माप_प्रकार mem_sz,
+			     sमाप_प्रकार record_size,
+			     अचिन्हित पूर्णांक *cnt, u32 sig, u32 flags)
+अणु
+	पूर्णांक err = -ENOMEM;
+	पूर्णांक i;
+	माप_प्रकार zone_sz;
+	काष्ठा persistent_ram_zone **prz_ar;
 
-	/* Allocate nothing for 0 mem_sz or 0 record_size. */
-	if (mem_sz == 0 || record_size == 0) {
+	/* Allocate nothing क्रम 0 mem_sz or 0 record_size. */
+	अगर (mem_sz == 0 || record_size == 0) अणु
 		*cnt = 0;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	/*
 	 * If we have a negative record size, calculate it based on
 	 * mem_sz / *cnt. If we have a positive record size, calculate
 	 * cnt from mem_sz / record_size.
 	 */
-	if (record_size < 0) {
-		if (*cnt == 0)
-			return 0;
+	अगर (record_size < 0) अणु
+		अगर (*cnt == 0)
+			वापस 0;
 		record_size = mem_sz / *cnt;
-		if (record_size == 0) {
+		अगर (record_size == 0) अणु
 			dev_err(dev, "%s record size == 0 (%zu / %u)\n",
 				name, mem_sz, *cnt);
-			goto fail;
-		}
-	} else {
+			जाओ fail;
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		*cnt = mem_sz / record_size;
-		if (*cnt == 0) {
+		अगर (*cnt == 0) अणु
 			dev_err(dev, "%s record count == 0 (%zu / %zu)\n",
 				name, mem_sz, record_size);
-			goto fail;
-		}
-	}
+			जाओ fail;
+		पूर्ण
+	पूर्ण
 
-	if (*paddr + mem_sz - cxt->phys_addr > cxt->size) {
+	अगर (*paddr + mem_sz - cxt->phys_addr > cxt->size) अणु
 		dev_err(dev, "no room for %s mem region (0x%zx@0x%llx) in (0x%lx@0x%llx)\n",
 			name,
-			mem_sz, (unsigned long long)*paddr,
-			cxt->size, (unsigned long long)cxt->phys_addr);
-		goto fail;
-	}
+			mem_sz, (अचिन्हित दीर्घ दीर्घ)*paddr,
+			cxt->size, (अचिन्हित दीर्घ दीर्घ)cxt->phys_addr);
+		जाओ fail;
+	पूर्ण
 
 	zone_sz = mem_sz / *cnt;
-	if (!zone_sz) {
+	अगर (!zone_sz) अणु
 		dev_err(dev, "%s zone size == 0\n", name);
-		goto fail;
-	}
+		जाओ fail;
+	पूर्ण
 
-	prz_ar = kcalloc(*cnt, sizeof(**przs), GFP_KERNEL);
-	if (!prz_ar)
-		goto fail;
+	prz_ar = kसुस्मृति(*cnt, माप(**przs), GFP_KERNEL);
+	अगर (!prz_ar)
+		जाओ fail;
 
-	for (i = 0; i < *cnt; i++) {
-		char *label;
+	क्रम (i = 0; i < *cnt; i++) अणु
+		अक्षर *label;
 
-		if (*cnt == 1)
-			label = kasprintf(GFP_KERNEL, "ramoops:%s", name);
-		else
-			label = kasprintf(GFP_KERNEL, "ramoops:%s(%d/%d)",
+		अगर (*cnt == 1)
+			label = kaप्र_लिखो(GFP_KERNEL, "ramoops:%s", name);
+		अन्यथा
+			label = kaप्र_लिखो(GFP_KERNEL, "ramoops:%s(%d/%d)",
 					  name, i, *cnt - 1);
 		prz_ar[i] = persistent_ram_new(*paddr, zone_sz, sig,
 					       &cxt->ecc_info,
 					       cxt->memtype, flags, label);
-		kfree(label);
-		if (IS_ERR(prz_ar[i])) {
+		kमुक्त(label);
+		अगर (IS_ERR(prz_ar[i])) अणु
 			err = PTR_ERR(prz_ar[i]);
 			dev_err(dev, "failed to request %s mem region (0x%zx@0x%llx): %d\n",
 				name, record_size,
-				(unsigned long long)*paddr, err);
+				(अचिन्हित दीर्घ दीर्घ)*paddr, err);
 
-			while (i > 0) {
+			जबतक (i > 0) अणु
 				i--;
-				persistent_ram_free(prz_ar[i]);
-			}
-			kfree(prz_ar);
-			goto fail;
-		}
+				persistent_ram_मुक्त(prz_ar[i]);
+			पूर्ण
+			kमुक्त(prz_ar);
+			जाओ fail;
+		पूर्ण
 		*paddr += zone_sz;
 		prz_ar[i]->type = pstore_name_to_type(name);
-	}
+	पूर्ण
 
 	*przs = prz_ar;
-	return 0;
+	वापस 0;
 
 fail:
 	*cnt = 0;
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int ramoops_init_prz(const char *name,
-			    struct device *dev, struct ramoops_context *cxt,
-			    struct persistent_ram_zone **prz,
-			    phys_addr_t *paddr, size_t sz, u32 sig)
-{
-	char *label;
+अटल पूर्णांक ramoops_init_prz(स्थिर अक्षर *name,
+			    काष्ठा device *dev, काष्ठा ramoops_context *cxt,
+			    काष्ठा persistent_ram_zone **prz,
+			    phys_addr_t *paddr, माप_प्रकार sz, u32 sig)
+अणु
+	अक्षर *label;
 
-	if (!sz)
-		return 0;
+	अगर (!sz)
+		वापस 0;
 
-	if (*paddr + sz - cxt->phys_addr > cxt->size) {
+	अगर (*paddr + sz - cxt->phys_addr > cxt->size) अणु
 		dev_err(dev, "no room for %s mem region (0x%zx@0x%llx) in (0x%lx@0x%llx)\n",
-			name, sz, (unsigned long long)*paddr,
-			cxt->size, (unsigned long long)cxt->phys_addr);
-		return -ENOMEM;
-	}
+			name, sz, (अचिन्हित दीर्घ दीर्घ)*paddr,
+			cxt->size, (अचिन्हित दीर्घ दीर्घ)cxt->phys_addr);
+		वापस -ENOMEM;
+	पूर्ण
 
-	label = kasprintf(GFP_KERNEL, "ramoops:%s", name);
+	label = kaप्र_लिखो(GFP_KERNEL, "ramoops:%s", name);
 	*prz = persistent_ram_new(*paddr, sz, sig, &cxt->ecc_info,
 				  cxt->memtype, PRZ_FLAG_ZAP_OLD, label);
-	kfree(label);
-	if (IS_ERR(*prz)) {
-		int err = PTR_ERR(*prz);
+	kमुक्त(label);
+	अगर (IS_ERR(*prz)) अणु
+		पूर्णांक err = PTR_ERR(*prz);
 
 		dev_err(dev, "failed to request %s mem region (0x%zx@0x%llx): %d\n",
-			name, sz, (unsigned long long)*paddr, err);
-		return err;
-	}
+			name, sz, (अचिन्हित दीर्घ दीर्घ)*paddr, err);
+		वापस err;
+	पूर्ण
 
 	*paddr += sz;
 	(*prz)->type = pstore_name_to_type(name);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* Read a u32 from a dt property and make sure it's safe for an int. */
-static int ramoops_parse_dt_u32(struct platform_device *pdev,
-				const char *propname,
-				u32 default_value, u32 *value)
-{
+/* Read a u32 from a dt property and make sure it's safe क्रम an पूर्णांक. */
+अटल पूर्णांक ramoops_parse_dt_u32(काष्ठा platक्रमm_device *pdev,
+				स्थिर अक्षर *propname,
+				u32 शेष_value, u32 *value)
+अणु
 	u32 val32 = 0;
-	int ret;
+	पूर्णांक ret;
 
-	ret = of_property_read_u32(pdev->dev.of_node, propname, &val32);
-	if (ret == -EINVAL) {
-		/* field is missing, use default value. */
-		val32 = default_value;
-	} else if (ret < 0) {
+	ret = of_property_पढ़ो_u32(pdev->dev.of_node, propname, &val32);
+	अगर (ret == -EINVAL) अणु
+		/* field is missing, use शेष value. */
+		val32 = शेष_value;
+	पूर्ण अन्यथा अगर (ret < 0) अणु
 		dev_err(&pdev->dev, "failed to parse property %s: %d\n",
 			propname, ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	/* Sanity check our results. */
-	if (val32 > INT_MAX) {
+	अगर (val32 > पूर्णांक_उच्च) अणु
 		dev_err(&pdev->dev, "%s %u > INT_MAX\n", propname, val32);
-		return -EOVERFLOW;
-	}
+		वापस -EOVERFLOW;
+	पूर्ण
 
 	*value = val32;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ramoops_parse_dt(struct platform_device *pdev,
-			    struct ramoops_platform_data *pdata)
-{
-	struct device_node *of_node = pdev->dev.of_node;
-	struct device_node *parent_node;
-	struct resource *res;
+अटल पूर्णांक ramoops_parse_dt(काष्ठा platक्रमm_device *pdev,
+			    काष्ठा ramoops_platक्रमm_data *pdata)
+अणु
+	काष्ठा device_node *of_node = pdev->dev.of_node;
+	काष्ठा device_node *parent_node;
+	काष्ठा resource *res;
 	u32 value;
-	int ret;
+	पूर्णांक ret;
 
 	dev_dbg(&pdev->dev, "using Device Tree\n");
 
-	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
-	if (!res) {
+	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
+	अगर (!res) अणु
 		dev_err(&pdev->dev,
 			"failed to locate DT /reserved-memory resource\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	pdata->mem_size = resource_size(res);
 	pdata->mem_address = res->start;
 	/*
-	 * Setting "unbuffered" is deprecated and will be ignored if
-	 * "mem_type" is also specified.
+	 * Setting "unbuffered" is deprecated and will be ignored अगर
+	 * "mem_type" is also specअगरied.
 	 */
-	pdata->mem_type = of_property_read_bool(of_node, "unbuffered");
+	pdata->mem_type = of_property_पढ़ो_bool(of_node, "unbuffered");
 	/*
-	 * Setting "no-dump-oops" is deprecated and will be ignored if
-	 * "max_reason" is also specified.
+	 * Setting "no-dump-oops" is deprecated and will be ignored अगर
+	 * "max_reason" is also specअगरied.
 	 */
-	if (of_property_read_bool(of_node, "no-dump-oops"))
+	अगर (of_property_पढ़ो_bool(of_node, "no-dump-oops"))
 		pdata->max_reason = KMSG_DUMP_PANIC;
-	else
+	अन्यथा
 		pdata->max_reason = KMSG_DUMP_OOPS;
 
-#define parse_u32(name, field, default_value) {				\
-		ret = ramoops_parse_dt_u32(pdev, name, default_value,	\
+#घोषणा parse_u32(name, field, शेष_value) अणु				\
+		ret = ramoops_parse_dt_u32(pdev, name, शेष_value,	\
 					    &value);			\
-		if (ret < 0)						\
-			return ret;					\
+		अगर (ret < 0)						\
+			वापस ret;					\
 		field = value;						\
-	}
+	पूर्ण
 
 	parse_u32("mem-type", pdata->record_size, pdata->mem_type);
 	parse_u32("record-size", pdata->record_size, 0);
@@ -679,12 +680,12 @@ static int ramoops_parse_dt(struct platform_device *pdev,
 	parse_u32("flags", pdata->flags, 0);
 	parse_u32("max-reason", pdata->max_reason, pdata->max_reason);
 
-#undef parse_u32
+#अघोषित parse_u32
 
 	/*
 	 * Some old Chromebooks relied on the kernel setting the
 	 * console_size and pmsg_size to the record size since that's
-	 * what the downstream kernel did.  These same Chromebooks had
+	 * what the करोwnstream kernel did.  These same Chromebooks had
 	 * "ramoops" straight under the root node which isn't
 	 * according to the current upstream bindings (though it was
 	 * arguably acceptable under a prior version of the bindings).
@@ -693,66 +694,66 @@ static int ramoops_parse_dt(struct platform_device *pdev,
 	 * expected behavior.
 	 */
 	parent_node = of_get_parent(of_node);
-	if (!of_node_name_eq(parent_node, "reserved-memory") &&
+	अगर (!of_node_name_eq(parent_node, "reserved-memory") &&
 	    !pdata->console_size && !pdata->ftrace_size &&
-	    !pdata->pmsg_size && !pdata->ecc_info.ecc_size) {
+	    !pdata->pmsg_size && !pdata->ecc_info.ecc_size) अणु
 		pdata->console_size = pdata->record_size;
 		pdata->pmsg_size = pdata->record_size;
-	}
+	पूर्ण
 	of_node_put(parent_node);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ramoops_probe(struct platform_device *pdev)
-{
-	struct device *dev = &pdev->dev;
-	struct ramoops_platform_data *pdata = dev->platform_data;
-	struct ramoops_platform_data pdata_local;
-	struct ramoops_context *cxt = &oops_cxt;
-	size_t dump_mem_sz;
+अटल पूर्णांक ramoops_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा ramoops_platक्रमm_data *pdata = dev->platक्रमm_data;
+	काष्ठा ramoops_platक्रमm_data pdata_local;
+	काष्ठा ramoops_context *cxt = &oops_cxt;
+	माप_प्रकार dump_mem_sz;
 	phys_addr_t paddr;
-	int err = -EINVAL;
+	पूर्णांक err = -EINVAL;
 
 	/*
-	 * Only a single ramoops area allowed at a time, so fail extra
+	 * Only a single ramoops area allowed at a समय, so fail extra
 	 * probes.
 	 */
-	if (cxt->max_dump_cnt) {
+	अगर (cxt->max_dump_cnt) अणु
 		pr_err("already initialized\n");
-		goto fail_out;
-	}
+		जाओ fail_out;
+	पूर्ण
 
-	if (dev_of_node(dev) && !pdata) {
+	अगर (dev_of_node(dev) && !pdata) अणु
 		pdata = &pdata_local;
-		memset(pdata, 0, sizeof(*pdata));
+		स_रखो(pdata, 0, माप(*pdata));
 
 		err = ramoops_parse_dt(pdev, pdata);
-		if (err < 0)
-			goto fail_out;
-	}
+		अगर (err < 0)
+			जाओ fail_out;
+	पूर्ण
 
-	/* Make sure we didn't get bogus platform data pointer. */
-	if (!pdata) {
+	/* Make sure we didn't get bogus platक्रमm data poपूर्णांकer. */
+	अगर (!pdata) अणु
 		pr_err("NULL platform data\n");
-		goto fail_out;
-	}
+		जाओ fail_out;
+	पूर्ण
 
-	if (!pdata->mem_size || (!pdata->record_size && !pdata->console_size &&
-			!pdata->ftrace_size && !pdata->pmsg_size)) {
+	अगर (!pdata->mem_size || (!pdata->record_size && !pdata->console_size &&
+			!pdata->ftrace_size && !pdata->pmsg_size)) अणु
 		pr_err("The memory size and the record/console size must be "
 			"non-zero\n");
-		goto fail_out;
-	}
+		जाओ fail_out;
+	पूर्ण
 
-	if (pdata->record_size && !is_power_of_2(pdata->record_size))
-		pdata->record_size = rounddown_pow_of_two(pdata->record_size);
-	if (pdata->console_size && !is_power_of_2(pdata->console_size))
-		pdata->console_size = rounddown_pow_of_two(pdata->console_size);
-	if (pdata->ftrace_size && !is_power_of_2(pdata->ftrace_size))
-		pdata->ftrace_size = rounddown_pow_of_two(pdata->ftrace_size);
-	if (pdata->pmsg_size && !is_power_of_2(pdata->pmsg_size))
-		pdata->pmsg_size = rounddown_pow_of_two(pdata->pmsg_size);
+	अगर (pdata->record_size && !is_घातer_of_2(pdata->record_size))
+		pdata->record_size = roundकरोwn_घात_of_two(pdata->record_size);
+	अगर (pdata->console_size && !is_घातer_of_2(pdata->console_size))
+		pdata->console_size = roundकरोwn_घात_of_two(pdata->console_size);
+	अगर (pdata->ftrace_size && !is_घातer_of_2(pdata->ftrace_size))
+		pdata->ftrace_size = roundकरोwn_घात_of_two(pdata->ftrace_size);
+	अगर (pdata->pmsg_size && !is_घातer_of_2(pdata->pmsg_size))
+		pdata->pmsg_size = roundकरोwn_घात_of_two(pdata->pmsg_size);
 
 	cxt->size = pdata->mem_size;
 	cxt->phys_addr = pdata->mem_address;
@@ -771,13 +772,13 @@ static int ramoops_probe(struct platform_device *pdev)
 	err = ramoops_init_przs("dmesg", dev, cxt, &cxt->dprzs, &paddr,
 				dump_mem_sz, cxt->record_size,
 				&cxt->max_dump_cnt, 0, 0);
-	if (err)
-		goto fail_out;
+	अगर (err)
+		जाओ fail_out;
 
 	err = ramoops_init_prz("console", dev, cxt, &cxt->cprz, &paddr,
 			       cxt->console_size, 0);
-	if (err)
-		goto fail_init_cprz;
+	अगर (err)
+		जाओ fail_init_cprz;
 
 	cxt->max_ftrace_cnt = (cxt->flags & RAMOOPS_FLAG_FTRACE_PER_CPU)
 				? nr_cpu_ids
@@ -787,53 +788,53 @@ static int ramoops_probe(struct platform_device *pdev)
 				&cxt->max_ftrace_cnt, LINUX_VERSION_CODE,
 				(cxt->flags & RAMOOPS_FLAG_FTRACE_PER_CPU)
 					? PRZ_FLAG_NO_LOCK : 0);
-	if (err)
-		goto fail_init_fprz;
+	अगर (err)
+		जाओ fail_init_fprz;
 
 	err = ramoops_init_prz("pmsg", dev, cxt, &cxt->mprz, &paddr,
 				cxt->pmsg_size, 0);
-	if (err)
-		goto fail_init_mprz;
+	अगर (err)
+		जाओ fail_init_mprz;
 
 	cxt->pstore.data = cxt;
 	/*
 	 * Prepare frontend flags based on which areas are initialized.
-	 * For ramoops_init_przs() cases, the "max count" variable tells
-	 * if there are regions present. For ramoops_init_prz() cases,
+	 * For ramoops_init_przs() हालs, the "max count" variable tells
+	 * अगर there are regions present. For ramoops_init_prz() हालs,
 	 * the single region size is how to check.
 	 */
 	cxt->pstore.flags = 0;
-	if (cxt->max_dump_cnt) {
+	अगर (cxt->max_dump_cnt) अणु
 		cxt->pstore.flags |= PSTORE_FLAGS_DMESG;
 		cxt->pstore.max_reason = pdata->max_reason;
-	}
-	if (cxt->console_size)
+	पूर्ण
+	अगर (cxt->console_size)
 		cxt->pstore.flags |= PSTORE_FLAGS_CONSOLE;
-	if (cxt->max_ftrace_cnt)
+	अगर (cxt->max_ftrace_cnt)
 		cxt->pstore.flags |= PSTORE_FLAGS_FTRACE;
-	if (cxt->pmsg_size)
+	अगर (cxt->pmsg_size)
 		cxt->pstore.flags |= PSTORE_FLAGS_PMSG;
 
 	/*
-	 * Since bufsize is only used for dmesg crash dumps, it
+	 * Since bufsize is only used क्रम dmesg crash dumps, it
 	 * must match the size of the dprz record (after PRZ header
-	 * and ECC bytes have been accounted for).
+	 * and ECC bytes have been accounted क्रम).
 	 */
-	if (cxt->pstore.flags & PSTORE_FLAGS_DMESG) {
+	अगर (cxt->pstore.flags & PSTORE_FLAGS_DMESG) अणु
 		cxt->pstore.bufsize = cxt->dprzs[0]->buffer_size;
 		cxt->pstore.buf = kzalloc(cxt->pstore.bufsize, GFP_KERNEL);
-		if (!cxt->pstore.buf) {
+		अगर (!cxt->pstore.buf) अणु
 			pr_err("cannot allocate pstore crash dump buffer\n");
 			err = -ENOMEM;
-			goto fail_clear;
-		}
-	}
+			जाओ fail_clear;
+		पूर्ण
+	पूर्ण
 
-	err = pstore_register(&cxt->pstore);
-	if (err) {
+	err = pstore_रेजिस्टर(&cxt->pstore);
+	अगर (err) अणु
 		pr_err("registering with pstore failed\n");
-		goto fail_buf;
-	}
+		जाओ fail_buf;
+	पूर्ण
 
 	/*
 	 * Update the module parameter variables as well so they are visible
@@ -848,76 +849,76 @@ static int ramoops_probe(struct platform_device *pdev)
 	ramoops_ftrace_size = pdata->ftrace_size;
 
 	pr_info("using 0x%lx@0x%llx, ecc: %d\n",
-		cxt->size, (unsigned long long)cxt->phys_addr,
+		cxt->size, (अचिन्हित दीर्घ दीर्घ)cxt->phys_addr,
 		cxt->ecc_info.ecc_size);
 
-	return 0;
+	वापस 0;
 
 fail_buf:
-	kfree(cxt->pstore.buf);
+	kमुक्त(cxt->pstore.buf);
 fail_clear:
 	cxt->pstore.bufsize = 0;
-	persistent_ram_free(cxt->mprz);
+	persistent_ram_मुक्त(cxt->mprz);
 fail_init_mprz:
 fail_init_fprz:
-	persistent_ram_free(cxt->cprz);
+	persistent_ram_मुक्त(cxt->cprz);
 fail_init_cprz:
-	ramoops_free_przs(cxt);
+	ramoops_मुक्त_przs(cxt);
 fail_out:
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int ramoops_remove(struct platform_device *pdev)
-{
-	struct ramoops_context *cxt = &oops_cxt;
+अटल पूर्णांक ramoops_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा ramoops_context *cxt = &oops_cxt;
 
-	pstore_unregister(&cxt->pstore);
+	pstore_unरेजिस्टर(&cxt->pstore);
 
-	kfree(cxt->pstore.buf);
+	kमुक्त(cxt->pstore.buf);
 	cxt->pstore.bufsize = 0;
 
-	persistent_ram_free(cxt->mprz);
-	persistent_ram_free(cxt->cprz);
-	ramoops_free_przs(cxt);
+	persistent_ram_मुक्त(cxt->mprz);
+	persistent_ram_मुक्त(cxt->cprz);
+	ramoops_मुक्त_przs(cxt);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct of_device_id dt_match[] = {
-	{ .compatible = "ramoops" },
-	{}
-};
+अटल स्थिर काष्ठा of_device_id dt_match[] = अणु
+	अणु .compatible = "ramoops" पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
-static struct platform_driver ramoops_driver = {
+अटल काष्ठा platक्रमm_driver ramoops_driver = अणु
 	.probe		= ramoops_probe,
-	.remove		= ramoops_remove,
-	.driver		= {
+	.हटाओ		= ramoops_हटाओ,
+	.driver		= अणु
 		.name		= "ramoops",
 		.of_match_table	= dt_match,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static inline void ramoops_unregister_dummy(void)
-{
-	platform_device_unregister(dummy);
-	dummy = NULL;
-}
+अटल अंतरभूत व्योम ramoops_unरेजिस्टर_dummy(व्योम)
+अणु
+	platक्रमm_device_unरेजिस्टर(dummy);
+	dummy = शून्य;
+पूर्ण
 
-static void __init ramoops_register_dummy(void)
-{
-	struct ramoops_platform_data pdata;
+अटल व्योम __init ramoops_रेजिस्टर_dummy(व्योम)
+अणु
+	काष्ठा ramoops_platक्रमm_data pdata;
 
 	/*
-	 * Prepare a dummy platform data structure to carry the module
+	 * Prepare a dummy platक्रमm data काष्ठाure to carry the module
 	 * parameters. If mem_size isn't set, then there are no module
 	 * parameters, and we can skip this.
 	 */
-	if (!mem_size)
-		return;
+	अगर (!mem_size)
+		वापस;
 
 	pr_info("using module parameters\n");
 
-	memset(&pdata, 0, sizeof(pdata));
+	स_रखो(&pdata, 0, माप(pdata));
 	pdata.mem_size = mem_size;
 	pdata.mem_address = mem_address;
 	pdata.mem_type = mem_type;
@@ -926,51 +927,51 @@ static void __init ramoops_register_dummy(void)
 	pdata.ftrace_size = ramoops_ftrace_size;
 	pdata.pmsg_size = ramoops_pmsg_size;
 	/* If "max_reason" is set, its value has priority over "dump_oops". */
-	if (ramoops_max_reason >= 0)
+	अगर (ramoops_max_reason >= 0)
 		pdata.max_reason = ramoops_max_reason;
-	/* Otherwise, if "dump_oops" is set, parse it into "max_reason". */
-	else if (ramoops_dump_oops != -1)
+	/* Otherwise, अगर "dump_oops" is set, parse it पूर्णांकo "max_reason". */
+	अन्यथा अगर (ramoops_dump_oops != -1)
 		pdata.max_reason = ramoops_dump_oops ? KMSG_DUMP_OOPS
 						     : KMSG_DUMP_PANIC;
-	/* And if neither are explicitly set, use the default. */
-	else
+	/* And अगर neither are explicitly set, use the शेष. */
+	अन्यथा
 		pdata.max_reason = KMSG_DUMP_OOPS;
 	pdata.flags = RAMOOPS_FLAG_FTRACE_PER_CPU;
 
 	/*
 	 * For backwards compatibility ramoops.ecc=1 means 16 bytes ECC
-	 * (using 1 byte for ECC isn't much of use anyway).
+	 * (using 1 byte क्रम ECC isn't much of use anyway).
 	 */
 	pdata.ecc_info.ecc_size = ramoops_ecc == 1 ? 16 : ramoops_ecc;
 
-	dummy = platform_device_register_data(NULL, "ramoops", -1,
-			&pdata, sizeof(pdata));
-	if (IS_ERR(dummy)) {
+	dummy = platक्रमm_device_रेजिस्टर_data(शून्य, "ramoops", -1,
+			&pdata, माप(pdata));
+	अगर (IS_ERR(dummy)) अणु
 		pr_info("could not create platform device: %ld\n",
 			PTR_ERR(dummy));
-		dummy = NULL;
-	}
-}
+		dummy = शून्य;
+	पूर्ण
+पूर्ण
 
-static int __init ramoops_init(void)
-{
-	int ret;
+अटल पूर्णांक __init ramoops_init(व्योम)
+अणु
+	पूर्णांक ret;
 
-	ramoops_register_dummy();
-	ret = platform_driver_register(&ramoops_driver);
-	if (ret != 0)
-		ramoops_unregister_dummy();
+	ramoops_रेजिस्टर_dummy();
+	ret = platक्रमm_driver_रेजिस्टर(&ramoops_driver);
+	अगर (ret != 0)
+		ramoops_unरेजिस्टर_dummy();
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 postcore_initcall(ramoops_init);
 
-static void __exit ramoops_exit(void)
-{
-	platform_driver_unregister(&ramoops_driver);
-	ramoops_unregister_dummy();
-}
-module_exit(ramoops_exit);
+अटल व्योम __निकास ramoops_निकास(व्योम)
+अणु
+	platक्रमm_driver_unरेजिस्टर(&ramoops_driver);
+	ramoops_unरेजिस्टर_dummy();
+पूर्ण
+module_निकास(ramoops_निकास);
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Marco Stornelli <marco.stornelli@gmail.com>");

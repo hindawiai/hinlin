@@ -1,16 +1,17 @@
-/* i810_dma.c -- DMA support for the i810 -*- linux-c -*-
- * Created: Mon Dec 13 01:50:01 1999 by jhartmann@precisioninsight.com
+<शैली गुरु>
+/* i810_dma.c -- DMA support क्रम the i810 -*- linux-c -*-
+ * Created: Mon Dec 13 01:50:01 1999 by jharपंचांगann@precisioninsight.com
  *
  * Copyright 1999 Precision Insight, Inc., Cedar Park, Texas.
- * Copyright 2000 VA Linux Systems, Inc., Sunnyvale, California.
+ * Copyright 2000 VA Linux Systems, Inc., Sunnyvale, Calअगरornia.
  * All Rights Reserved.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice (including the next
  * paragraph) shall be included in all copies or substantial portions of the
@@ -25,279 +26,279 @@
  * DEALINGS IN THE SOFTWARE.
  *
  * Authors: Rickard E. (Rik) Faith <faith@valinux.com>
- *	    Jeff Hartmann <jhartmann@valinux.com>
+ *	    Jeff Harपंचांगann <jharपंचांगann@valinux.com>
  *          Keith Whitwell <keith@tungstengraphics.com>
  *
  */
 
-#include <linux/delay.h>
-#include <linux/mman.h>
-#include <linux/pci.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/mman.h>
+#समावेश <linux/pci.h>
 
-#include <drm/drm_agpsupport.h>
-#include <drm/drm_device.h>
-#include <drm/drm_drv.h>
-#include <drm/drm_file.h>
-#include <drm/drm_ioctl.h>
-#include <drm/drm_irq.h>
-#include <drm/drm_print.h>
-#include <drm/i810_drm.h>
+#समावेश <drm/drm_agpsupport.h>
+#समावेश <drm/drm_device.h>
+#समावेश <drm/drm_drv.h>
+#समावेश <drm/drm_file.h>
+#समावेश <drm/drm_ioctl.h>
+#समावेश <drm/drm_irq.h>
+#समावेश <drm/drm_prपूर्णांक.h>
+#समावेश <drm/i810_drm.h>
 
-#include "i810_drv.h"
+#समावेश "i810_drv.h"
 
-#define I810_BUF_FREE		2
-#define I810_BUF_CLIENT		1
-#define I810_BUF_HARDWARE	0
+#घोषणा I810_BUF_FREE		2
+#घोषणा I810_BUF_CLIENT		1
+#घोषणा I810_BUF_HARDWARE	0
 
-#define I810_BUF_UNMAPPED 0
-#define I810_BUF_MAPPED   1
+#घोषणा I810_BUF_UNMAPPED 0
+#घोषणा I810_BUF_MAPPED   1
 
-static struct drm_buf *i810_freelist_get(struct drm_device * dev)
-{
-	struct drm_device_dma *dma = dev->dma;
-	int i;
-	int used;
+अटल काष्ठा drm_buf *i810_मुक्तlist_get(काष्ठा drm_device * dev)
+अणु
+	काष्ठा drm_device_dma *dma = dev->dma;
+	पूर्णांक i;
+	पूर्णांक used;
 
 	/* Linear search might not be the best solution */
 
-	for (i = 0; i < dma->buf_count; i++) {
-		struct drm_buf *buf = dma->buflist[i];
-		drm_i810_buf_priv_t *buf_priv = buf->dev_private;
-		/* In use is already a pointer */
+	क्रम (i = 0; i < dma->buf_count; i++) अणु
+		काष्ठा drm_buf *buf = dma->buflist[i];
+		drm_i810_buf_priv_t *buf_priv = buf->dev_निजी;
+		/* In use is alपढ़ोy a poपूर्णांकer */
 		used = cmpxchg(buf_priv->in_use, I810_BUF_FREE,
 			       I810_BUF_CLIENT);
-		if (used == I810_BUF_FREE)
-			return buf;
-	}
-	return NULL;
-}
+		अगर (used == I810_BUF_FREE)
+			वापस buf;
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
-/* This should only be called if the buffer is not sent to the hardware
- * yet, the hardware updates in use for us once its on the ring buffer.
+/* This should only be called अगर the buffer is not sent to the hardware
+ * yet, the hardware updates in use क्रम us once its on the ring buffer.
  */
 
-static int i810_freelist_put(struct drm_device *dev, struct drm_buf *buf)
-{
-	drm_i810_buf_priv_t *buf_priv = buf->dev_private;
-	int used;
+अटल पूर्णांक i810_मुक्तlist_put(काष्ठा drm_device *dev, काष्ठा drm_buf *buf)
+अणु
+	drm_i810_buf_priv_t *buf_priv = buf->dev_निजी;
+	पूर्णांक used;
 
-	/* In use is already a pointer */
+	/* In use is alपढ़ोy a poपूर्णांकer */
 	used = cmpxchg(buf_priv->in_use, I810_BUF_CLIENT, I810_BUF_FREE);
-	if (used != I810_BUF_CLIENT) {
+	अगर (used != I810_BUF_CLIENT) अणु
 		DRM_ERROR("Freeing buffer thats not in use : %d\n", buf->idx);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int i810_mmap_buffers(struct file *filp, struct vm_area_struct *vma)
-{
-	struct drm_file *priv = filp->private_data;
-	struct drm_device *dev;
-	drm_i810_private_t *dev_priv;
-	struct drm_buf *buf;
+अटल पूर्णांक i810_mmap_buffers(काष्ठा file *filp, काष्ठा vm_area_काष्ठा *vma)
+अणु
+	काष्ठा drm_file *priv = filp->निजी_data;
+	काष्ठा drm_device *dev;
+	drm_i810_निजी_t *dev_priv;
+	काष्ठा drm_buf *buf;
 	drm_i810_buf_priv_t *buf_priv;
 
 	dev = priv->minor->dev;
-	dev_priv = dev->dev_private;
+	dev_priv = dev->dev_निजी;
 	buf = dev_priv->mmap_buffer;
-	buf_priv = buf->dev_private;
+	buf_priv = buf->dev_निजी;
 
 	vma->vm_flags |= VM_DONTCOPY;
 
 	buf_priv->currently_mapped = I810_BUF_MAPPED;
 
-	if (io_remap_pfn_range(vma, vma->vm_start,
+	अगर (io_remap_pfn_range(vma, vma->vm_start,
 			       vma->vm_pgoff,
 			       vma->vm_end - vma->vm_start, vma->vm_page_prot))
-		return -EAGAIN;
-	return 0;
-}
+		वापस -EAGAIN;
+	वापस 0;
+पूर्ण
 
-static const struct file_operations i810_buffer_fops = {
-	.open = drm_open,
+अटल स्थिर काष्ठा file_operations i810_buffer_fops = अणु
+	.खोलो = drm_खोलो,
 	.release = drm_release,
 	.unlocked_ioctl = drm_ioctl,
 	.mmap = i810_mmap_buffers,
 	.compat_ioctl = drm_compat_ioctl,
 	.llseek = noop_llseek,
-};
+पूर्ण;
 
-static int i810_map_buffer(struct drm_buf *buf, struct drm_file *file_priv)
-{
-	struct drm_device *dev = file_priv->minor->dev;
-	drm_i810_buf_priv_t *buf_priv = buf->dev_private;
-	drm_i810_private_t *dev_priv = dev->dev_private;
-	const struct file_operations *old_fops;
-	int retcode = 0;
+अटल पूर्णांक i810_map_buffer(काष्ठा drm_buf *buf, काष्ठा drm_file *file_priv)
+अणु
+	काष्ठा drm_device *dev = file_priv->minor->dev;
+	drm_i810_buf_priv_t *buf_priv = buf->dev_निजी;
+	drm_i810_निजी_t *dev_priv = dev->dev_निजी;
+	स्थिर काष्ठा file_operations *old_fops;
+	पूर्णांक retcode = 0;
 
-	if (buf_priv->currently_mapped == I810_BUF_MAPPED)
-		return -EINVAL;
+	अगर (buf_priv->currently_mapped == I810_BUF_MAPPED)
+		वापस -EINVAL;
 
 	/* This is all entirely broken */
 	old_fops = file_priv->filp->f_op;
 	file_priv->filp->f_op = &i810_buffer_fops;
 	dev_priv->mmap_buffer = buf;
-	buf_priv->virtual = (void *)vm_mmap(file_priv->filp, 0, buf->total,
+	buf_priv->भव = (व्योम *)vm_mmap(file_priv->filp, 0, buf->total,
 					    PROT_READ | PROT_WRITE,
 					    MAP_SHARED, buf->bus_address);
-	dev_priv->mmap_buffer = NULL;
+	dev_priv->mmap_buffer = शून्य;
 	file_priv->filp->f_op = old_fops;
-	if (IS_ERR(buf_priv->virtual)) {
+	अगर (IS_ERR(buf_priv->भव)) अणु
 		/* Real error */
 		DRM_ERROR("mmap error\n");
-		retcode = PTR_ERR(buf_priv->virtual);
-		buf_priv->virtual = NULL;
-	}
+		retcode = PTR_ERR(buf_priv->भव);
+		buf_priv->भव = शून्य;
+	पूर्ण
 
-	return retcode;
-}
+	वापस retcode;
+पूर्ण
 
-static int i810_unmap_buffer(struct drm_buf *buf)
-{
-	drm_i810_buf_priv_t *buf_priv = buf->dev_private;
-	int retcode = 0;
+अटल पूर्णांक i810_unmap_buffer(काष्ठा drm_buf *buf)
+अणु
+	drm_i810_buf_priv_t *buf_priv = buf->dev_निजी;
+	पूर्णांक retcode = 0;
 
-	if (buf_priv->currently_mapped != I810_BUF_MAPPED)
-		return -EINVAL;
+	अगर (buf_priv->currently_mapped != I810_BUF_MAPPED)
+		वापस -EINVAL;
 
-	retcode = vm_munmap((unsigned long)buf_priv->virtual,
-			    (size_t) buf->total);
+	retcode = vm_munmap((अचिन्हित दीर्घ)buf_priv->भव,
+			    (माप_प्रकार) buf->total);
 
 	buf_priv->currently_mapped = I810_BUF_UNMAPPED;
-	buf_priv->virtual = NULL;
+	buf_priv->भव = शून्य;
 
-	return retcode;
-}
+	वापस retcode;
+पूर्ण
 
-static int i810_dma_get_buffer(struct drm_device *dev, drm_i810_dma_t *d,
-			       struct drm_file *file_priv)
-{
-	struct drm_buf *buf;
+अटल पूर्णांक i810_dma_get_buffer(काष्ठा drm_device *dev, drm_i810_dma_t *d,
+			       काष्ठा drm_file *file_priv)
+अणु
+	काष्ठा drm_buf *buf;
 	drm_i810_buf_priv_t *buf_priv;
-	int retcode = 0;
+	पूर्णांक retcode = 0;
 
-	buf = i810_freelist_get(dev);
-	if (!buf) {
+	buf = i810_मुक्तlist_get(dev);
+	अगर (!buf) अणु
 		retcode = -ENOMEM;
 		DRM_DEBUG("retcode=%d\n", retcode);
-		return retcode;
-	}
+		वापस retcode;
+	पूर्ण
 
 	retcode = i810_map_buffer(buf, file_priv);
-	if (retcode) {
-		i810_freelist_put(dev, buf);
+	अगर (retcode) अणु
+		i810_मुक्तlist_put(dev, buf);
 		DRM_ERROR("mapbuf failed, retcode %d\n", retcode);
-		return retcode;
-	}
+		वापस retcode;
+	पूर्ण
 	buf->file_priv = file_priv;
-	buf_priv = buf->dev_private;
+	buf_priv = buf->dev_निजी;
 	d->granted = 1;
 	d->request_idx = buf->idx;
 	d->request_size = buf->total;
-	d->virtual = buf_priv->virtual;
+	d->भव = buf_priv->भव;
 
-	return retcode;
-}
+	वापस retcode;
+पूर्ण
 
-static int i810_dma_cleanup(struct drm_device *dev)
-{
-	struct drm_device_dma *dma = dev->dma;
+अटल पूर्णांक i810_dma_cleanup(काष्ठा drm_device *dev)
+अणु
+	काष्ठा drm_device_dma *dma = dev->dma;
 
-	/* Make sure interrupts are disabled here because the uninstall ioctl
-	 * may not have been called from userspace and after dev_private
-	 * is freed, it's too late.
+	/* Make sure पूर्णांकerrupts are disabled here because the uninstall ioctl
+	 * may not have been called from userspace and after dev_निजी
+	 * is मुक्तd, it's too late.
 	 */
-	if (drm_core_check_feature(dev, DRIVER_HAVE_IRQ) && dev->irq_enabled)
+	अगर (drm_core_check_feature(dev, DRIVER_HAVE_IRQ) && dev->irq_enabled)
 		drm_irq_uninstall(dev);
 
-	if (dev->dev_private) {
-		int i;
-		drm_i810_private_t *dev_priv =
-		    (drm_i810_private_t *) dev->dev_private;
+	अगर (dev->dev_निजी) अणु
+		पूर्णांक i;
+		drm_i810_निजी_t *dev_priv =
+		    (drm_i810_निजी_t *) dev->dev_निजी;
 
-		if (dev_priv->ring.virtual_start)
-			drm_legacy_ioremapfree(&dev_priv->ring.map, dev);
-		if (dev_priv->hw_status_page) {
-			dma_free_coherent(&dev->pdev->dev, PAGE_SIZE,
+		अगर (dev_priv->ring.भव_start)
+			drm_legacy_ioremapमुक्त(&dev_priv->ring.map, dev);
+		अगर (dev_priv->hw_status_page) अणु
+			dma_मुक्त_coherent(&dev->pdev->dev, PAGE_SIZE,
 					  dev_priv->hw_status_page,
 					  dev_priv->dma_status_page);
-		}
-		kfree(dev->dev_private);
-		dev->dev_private = NULL;
+		पूर्ण
+		kमुक्त(dev->dev_निजी);
+		dev->dev_निजी = शून्य;
 
-		for (i = 0; i < dma->buf_count; i++) {
-			struct drm_buf *buf = dma->buflist[i];
-			drm_i810_buf_priv_t *buf_priv = buf->dev_private;
+		क्रम (i = 0; i < dma->buf_count; i++) अणु
+			काष्ठा drm_buf *buf = dma->buflist[i];
+			drm_i810_buf_priv_t *buf_priv = buf->dev_निजी;
 
-			if (buf_priv->kernel_virtual && buf->total)
-				drm_legacy_ioremapfree(&buf_priv->map, dev);
-		}
-	}
-	return 0;
-}
+			अगर (buf_priv->kernel_भव && buf->total)
+				drm_legacy_ioremapमुक्त(&buf_priv->map, dev);
+		पूर्ण
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int i810_wait_ring(struct drm_device *dev, int n)
-{
-	drm_i810_private_t *dev_priv = dev->dev_private;
+अटल पूर्णांक i810_रुको_ring(काष्ठा drm_device *dev, पूर्णांक n)
+अणु
+	drm_i810_निजी_t *dev_priv = dev->dev_निजी;
 	drm_i810_ring_buffer_t *ring = &(dev_priv->ring);
-	int iters = 0;
-	unsigned long end;
-	unsigned int last_head = I810_READ(LP_RING + RING_HEAD) & HEAD_ADDR;
+	पूर्णांक iters = 0;
+	अचिन्हित दीर्घ end;
+	अचिन्हित पूर्णांक last_head = I810_READ(LP_RING + RING_HEAD) & HEAD_ADDR;
 
-	end = jiffies + (HZ * 3);
-	while (ring->space < n) {
+	end = jअगरfies + (HZ * 3);
+	जबतक (ring->space < n) अणु
 		ring->head = I810_READ(LP_RING + RING_HEAD) & HEAD_ADDR;
 		ring->space = ring->head - (ring->tail + 8);
-		if (ring->space < 0)
+		अगर (ring->space < 0)
 			ring->space += ring->Size;
 
-		if (ring->head != last_head) {
-			end = jiffies + (HZ * 3);
+		अगर (ring->head != last_head) अणु
+			end = jअगरfies + (HZ * 3);
 			last_head = ring->head;
-		}
+		पूर्ण
 
 		iters++;
-		if (time_before(end, jiffies)) {
+		अगर (समय_beक्रमe(end, jअगरfies)) अणु
 			DRM_ERROR("space: %d wanted %d\n", ring->space, n);
 			DRM_ERROR("lockup\n");
-			goto out_wait_ring;
-		}
+			जाओ out_रुको_ring;
+		पूर्ण
 		udelay(1);
-	}
+	पूर्ण
 
-out_wait_ring:
-	return iters;
-}
+out_रुको_ring:
+	वापस iters;
+पूर्ण
 
-static void i810_kernel_lost_context(struct drm_device *dev)
-{
-	drm_i810_private_t *dev_priv = dev->dev_private;
+अटल व्योम i810_kernel_lost_context(काष्ठा drm_device *dev)
+अणु
+	drm_i810_निजी_t *dev_priv = dev->dev_निजी;
 	drm_i810_ring_buffer_t *ring = &(dev_priv->ring);
 
 	ring->head = I810_READ(LP_RING + RING_HEAD) & HEAD_ADDR;
 	ring->tail = I810_READ(LP_RING + RING_TAIL);
 	ring->space = ring->head - (ring->tail + 8);
-	if (ring->space < 0)
+	अगर (ring->space < 0)
 		ring->space += ring->Size;
-}
+पूर्ण
 
-static int i810_freelist_init(struct drm_device *dev, drm_i810_private_t *dev_priv)
-{
-	struct drm_device_dma *dma = dev->dma;
-	int my_idx = 24;
+अटल पूर्णांक i810_मुक्तlist_init(काष्ठा drm_device *dev, drm_i810_निजी_t *dev_priv)
+अणु
+	काष्ठा drm_device_dma *dma = dev->dma;
+	पूर्णांक my_idx = 24;
 	u32 *hw_status = (u32 *) (dev_priv->hw_status_page + my_idx);
-	int i;
+	पूर्णांक i;
 
-	if (dma->buf_count > 1019) {
-		/* Not enough space in the status page for the freelist */
-		return -EINVAL;
-	}
+	अगर (dma->buf_count > 1019) अणु
+		/* Not enough space in the status page क्रम the मुक्तlist */
+		वापस -EINVAL;
+	पूर्ण
 
-	for (i = 0; i < dma->buf_count; i++) {
-		struct drm_buf *buf = dma->buflist[i];
-		drm_i810_buf_priv_t *buf_priv = buf->dev_private;
+	क्रम (i = 0; i < dma->buf_count; i++) अणु
+		काष्ठा drm_buf *buf = dma->buflist[i];
+		drm_i810_buf_priv_t *buf_priv = buf->dev_निजी;
 
 		buf_priv->in_use = hw_status++;
 		buf_priv->my_use_idx = my_idx;
@@ -312,48 +313,48 @@ static int i810_freelist_init(struct drm_device *dev, drm_i810_private_t *dev_pr
 		buf_priv->map.mtrr = 0;
 
 		drm_legacy_ioremap(&buf_priv->map, dev);
-		buf_priv->kernel_virtual = buf_priv->map.handle;
+		buf_priv->kernel_भव = buf_priv->map.handle;
 
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int i810_dma_initialize(struct drm_device *dev,
-			       drm_i810_private_t *dev_priv,
+अटल पूर्णांक i810_dma_initialize(काष्ठा drm_device *dev,
+			       drm_i810_निजी_t *dev_priv,
 			       drm_i810_init_t *init)
-{
-	struct drm_map_list *r_list;
-	memset(dev_priv, 0, sizeof(drm_i810_private_t));
+अणु
+	काष्ठा drm_map_list *r_list;
+	स_रखो(dev_priv, 0, माप(drm_i810_निजी_t));
 
-	list_for_each_entry(r_list, &dev->maplist, head) {
-		if (r_list->map &&
+	list_क्रम_each_entry(r_list, &dev->maplist, head) अणु
+		अगर (r_list->map &&
 		    r_list->map->type == _DRM_SHM &&
-		    r_list->map->flags & _DRM_CONTAINS_LOCK) {
+		    r_list->map->flags & _DRM_CONTAINS_LOCK) अणु
 			dev_priv->sarea_map = r_list->map;
-			break;
-		}
-	}
-	if (!dev_priv->sarea_map) {
-		dev->dev_private = (void *)dev_priv;
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	अगर (!dev_priv->sarea_map) अणु
+		dev->dev_निजी = (व्योम *)dev_priv;
 		i810_dma_cleanup(dev);
 		DRM_ERROR("can not find sarea!\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 	dev_priv->mmio_map = drm_legacy_findmap(dev, init->mmio_offset);
-	if (!dev_priv->mmio_map) {
-		dev->dev_private = (void *)dev_priv;
+	अगर (!dev_priv->mmio_map) अणु
+		dev->dev_निजी = (व्योम *)dev_priv;
 		i810_dma_cleanup(dev);
 		DRM_ERROR("can not find mmio map!\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 	dev->agp_buffer_token = init->buffers_offset;
 	dev->agp_buffer_map = drm_legacy_findmap(dev, init->buffers_offset);
-	if (!dev->agp_buffer_map) {
-		dev->dev_private = (void *)dev_priv;
+	अगर (!dev->agp_buffer_map) अणु
+		dev->dev_निजी = (व्योम *)dev_priv;
 		i810_dma_cleanup(dev);
 		DRM_ERROR("can not find dma buffer map!\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	dev_priv->sarea_priv = (drm_i810_sarea_t *)
 	    ((u8 *) dev_priv->sarea_map->handle + init->sarea_priv_offset);
@@ -370,15 +371,15 @@ static int i810_dma_initialize(struct drm_device *dev,
 
 	drm_legacy_ioremap(&dev_priv->ring.map, dev);
 
-	if (dev_priv->ring.map.handle == NULL) {
-		dev->dev_private = (void *)dev_priv;
+	अगर (dev_priv->ring.map.handle == शून्य) अणु
+		dev->dev_निजी = (व्योम *)dev_priv;
 		i810_dma_cleanup(dev);
 		DRM_ERROR("can not ioremap virtual address for"
 			  " ring buffer\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
-	dev_priv->ring.virtual_start = dev_priv->ring.map.handle;
+	dev_priv->ring.भव_start = dev_priv->ring.map.handle;
 
 	dev_priv->ring.tail_mask = dev_priv->ring.Size - 1;
 
@@ -400,69 +401,69 @@ static int i810_dma_initialize(struct drm_device *dev,
 	dev_priv->hw_status_page =
 		dma_alloc_coherent(&dev->pdev->dev, PAGE_SIZE,
 				   &dev_priv->dma_status_page, GFP_KERNEL);
-	if (!dev_priv->hw_status_page) {
-		dev->dev_private = (void *)dev_priv;
+	अगर (!dev_priv->hw_status_page) अणु
+		dev->dev_निजी = (व्योम *)dev_priv;
 		i810_dma_cleanup(dev);
 		DRM_ERROR("Can not allocate hardware status page\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 	DRM_DEBUG("hw status page @ %p\n", dev_priv->hw_status_page);
 
 	I810_WRITE(0x02080, dev_priv->dma_status_page);
 	DRM_DEBUG("Enabled hardware status page\n");
 
-	/* Now we need to init our freelist */
-	if (i810_freelist_init(dev, dev_priv) != 0) {
-		dev->dev_private = (void *)dev_priv;
+	/* Now we need to init our मुक्तlist */
+	अगर (i810_मुक्तlist_init(dev, dev_priv) != 0) अणु
+		dev->dev_निजी = (व्योम *)dev_priv;
 		i810_dma_cleanup(dev);
 		DRM_ERROR("Not enough space in the status page for"
 			  " the freelist\n");
-		return -ENOMEM;
-	}
-	dev->dev_private = (void *)dev_priv;
+		वापस -ENOMEM;
+	पूर्ण
+	dev->dev_निजी = (व्योम *)dev_priv;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int i810_dma_init(struct drm_device *dev, void *data,
-			 struct drm_file *file_priv)
-{
-	drm_i810_private_t *dev_priv;
+अटल पूर्णांक i810_dma_init(काष्ठा drm_device *dev, व्योम *data,
+			 काष्ठा drm_file *file_priv)
+अणु
+	drm_i810_निजी_t *dev_priv;
 	drm_i810_init_t *init = data;
-	int retcode = 0;
+	पूर्णांक retcode = 0;
 
-	switch (init->func) {
-	case I810_INIT_DMA_1_4:
+	चयन (init->func) अणु
+	हाल I810_INIT_DMA_1_4:
 		DRM_INFO("Using v1.4 init.\n");
-		dev_priv = kmalloc(sizeof(drm_i810_private_t), GFP_KERNEL);
-		if (dev_priv == NULL)
-			return -ENOMEM;
+		dev_priv = kदो_स्मृति(माप(drm_i810_निजी_t), GFP_KERNEL);
+		अगर (dev_priv == शून्य)
+			वापस -ENOMEM;
 		retcode = i810_dma_initialize(dev, dev_priv, init);
-		break;
+		अवरोध;
 
-	case I810_CLEANUP_DMA:
+	हाल I810_CLEANUP_DMA:
 		DRM_INFO("DMA Cleanup\n");
 		retcode = i810_dma_cleanup(dev);
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	return retcode;
-}
+	वापस retcode;
+पूर्ण
 
-/* Most efficient way to verify state for the i810 is as it is
- * emitted.  Non-conformant state is silently dropped.
+/* Most efficient way to verअगरy state क्रम the i810 is as it is
+ * emitted.  Non-conक्रमmant state is silently dropped.
  *
- * Use 'volatile' & local var tmp to force the emitted values to be
- * identical to the verified ones.
+ * Use 'volatile' & local var पंचांगp to क्रमce the emitted values to be
+ * identical to the verअगरied ones.
  */
-static void i810EmitContextVerified(struct drm_device *dev,
-				    volatile unsigned int *code)
-{
-	drm_i810_private_t *dev_priv = dev->dev_private;
-	int i, j = 0;
-	unsigned int tmp;
+अटल व्योम i810EmitContextVerअगरied(काष्ठा drm_device *dev,
+				    अस्थिर अचिन्हित पूर्णांक *code)
+अणु
+	drm_i810_निजी_t *dev_priv = dev->dev_निजी;
+	पूर्णांक i, j = 0;
+	अचिन्हित पूर्णांक पंचांगp;
 	RING_LOCALS;
 
 	BEGIN_LP_RING(I810_CTX_SETUP_SIZE);
@@ -473,28 +474,28 @@ static void i810EmitContextVerified(struct drm_device *dev,
 	OUT_RING(GFX_OP_STIPPLE);
 	OUT_RING(code[I810_CTXREG_ST1]);
 
-	for (i = 4; i < I810_CTX_SETUP_SIZE; i++) {
-		tmp = code[i];
+	क्रम (i = 4; i < I810_CTX_SETUP_SIZE; i++) अणु
+		पंचांगp = code[i];
 
-		if ((tmp & (7 << 29)) == (3 << 29) &&
-		    (tmp & (0x1f << 24)) < (0x1d << 24)) {
-			OUT_RING(tmp);
+		अगर ((पंचांगp & (7 << 29)) == (3 << 29) &&
+		    (पंचांगp & (0x1f << 24)) < (0x1d << 24)) अणु
+			OUT_RING(पंचांगp);
 			j++;
-		} else
-			printk("constext state dropped!!!\n");
-	}
+		पूर्ण अन्यथा
+			prपूर्णांकk("constext state dropped!!!\n");
+	पूर्ण
 
-	if (j & 1)
+	अगर (j & 1)
 		OUT_RING(0);
 
 	ADVANCE_LP_RING();
-}
+पूर्ण
 
-static void i810EmitTexVerified(struct drm_device *dev, volatile unsigned int *code)
-{
-	drm_i810_private_t *dev_priv = dev->dev_private;
-	int i, j = 0;
-	unsigned int tmp;
+अटल व्योम i810EmitTexVerअगरied(काष्ठा drm_device *dev, अस्थिर अचिन्हित पूर्णांक *code)
+अणु
+	drm_i810_निजी_t *dev_priv = dev->dev_निजी;
+	पूर्णांक i, j = 0;
+	अचिन्हित पूर्णांक पंचांगp;
 	RING_LOCALS;
 
 	BEGIN_LP_RING(I810_TEX_SETUP_SIZE);
@@ -504,41 +505,41 @@ static void i810EmitTexVerified(struct drm_device *dev, volatile unsigned int *c
 	OUT_RING(code[I810_TEXREG_MI2]);
 	OUT_RING(code[I810_TEXREG_MI3]);
 
-	for (i = 4; i < I810_TEX_SETUP_SIZE; i++) {
-		tmp = code[i];
+	क्रम (i = 4; i < I810_TEX_SETUP_SIZE; i++) अणु
+		पंचांगp = code[i];
 
-		if ((tmp & (7 << 29)) == (3 << 29) &&
-		    (tmp & (0x1f << 24)) < (0x1d << 24)) {
-			OUT_RING(tmp);
+		अगर ((पंचांगp & (7 << 29)) == (3 << 29) &&
+		    (पंचांगp & (0x1f << 24)) < (0x1d << 24)) अणु
+			OUT_RING(पंचांगp);
 			j++;
-		} else
-			printk("texture state dropped!!!\n");
-	}
+		पूर्ण अन्यथा
+			prपूर्णांकk("texture state dropped!!!\n");
+	पूर्ण
 
-	if (j & 1)
+	अगर (j & 1)
 		OUT_RING(0);
 
 	ADVANCE_LP_RING();
-}
+पूर्ण
 
-/* Need to do some additional checking when setting the dest buffer.
+/* Need to करो some additional checking when setting the dest buffer.
  */
-static void i810EmitDestVerified(struct drm_device *dev,
-				 volatile unsigned int *code)
-{
-	drm_i810_private_t *dev_priv = dev->dev_private;
-	unsigned int tmp;
+अटल व्योम i810EmitDestVerअगरied(काष्ठा drm_device *dev,
+				 अस्थिर अचिन्हित पूर्णांक *code)
+अणु
+	drm_i810_निजी_t *dev_priv = dev->dev_निजी;
+	अचिन्हित पूर्णांक पंचांगp;
 	RING_LOCALS;
 
 	BEGIN_LP_RING(I810_DEST_SETUP_SIZE + 2);
 
-	tmp = code[I810_DESTREG_DI1];
-	if (tmp == dev_priv->front_di1 || tmp == dev_priv->back_di1) {
+	पंचांगp = code[I810_DESTREG_DI1];
+	अगर (पंचांगp == dev_priv->front_di1 || पंचांगp == dev_priv->back_di1) अणु
 		OUT_RING(CMD_OP_DESTBUFFER_INFO);
-		OUT_RING(tmp);
-	} else
+		OUT_RING(पंचांगp);
+	पूर्ण अन्यथा
 		DRM_DEBUG("bad di1 %x (allow %x or %x)\n",
-			  tmp, dev_priv->front_di1, dev_priv->back_di1);
+			  पंचांगp, dev_priv->front_di1, dev_priv->back_di1);
 
 	/* invarient:
 	 */
@@ -556,80 +557,80 @@ static void i810EmitDestVerified(struct drm_device *dev,
 	OUT_RING(0);
 
 	ADVANCE_LP_RING();
-}
+पूर्ण
 
-static void i810EmitState(struct drm_device *dev)
-{
-	drm_i810_private_t *dev_priv = dev->dev_private;
+अटल व्योम i810EmitState(काष्ठा drm_device *dev)
+अणु
+	drm_i810_निजी_t *dev_priv = dev->dev_निजी;
 	drm_i810_sarea_t *sarea_priv = dev_priv->sarea_priv;
-	unsigned int dirty = sarea_priv->dirty;
+	अचिन्हित पूर्णांक dirty = sarea_priv->dirty;
 
 	DRM_DEBUG("%x\n", dirty);
 
-	if (dirty & I810_UPLOAD_BUFFERS) {
-		i810EmitDestVerified(dev, sarea_priv->BufferState);
+	अगर (dirty & I810_UPLOAD_BUFFERS) अणु
+		i810EmitDestVerअगरied(dev, sarea_priv->BufferState);
 		sarea_priv->dirty &= ~I810_UPLOAD_BUFFERS;
-	}
+	पूर्ण
 
-	if (dirty & I810_UPLOAD_CTX) {
-		i810EmitContextVerified(dev, sarea_priv->ContextState);
+	अगर (dirty & I810_UPLOAD_CTX) अणु
+		i810EmitContextVerअगरied(dev, sarea_priv->ContextState);
 		sarea_priv->dirty &= ~I810_UPLOAD_CTX;
-	}
+	पूर्ण
 
-	if (dirty & I810_UPLOAD_TEX0) {
-		i810EmitTexVerified(dev, sarea_priv->TexState[0]);
+	अगर (dirty & I810_UPLOAD_TEX0) अणु
+		i810EmitTexVerअगरied(dev, sarea_priv->TexState[0]);
 		sarea_priv->dirty &= ~I810_UPLOAD_TEX0;
-	}
+	पूर्ण
 
-	if (dirty & I810_UPLOAD_TEX1) {
-		i810EmitTexVerified(dev, sarea_priv->TexState[1]);
+	अगर (dirty & I810_UPLOAD_TEX1) अणु
+		i810EmitTexVerअगरied(dev, sarea_priv->TexState[1]);
 		sarea_priv->dirty &= ~I810_UPLOAD_TEX1;
-	}
-}
+	पूर्ण
+पूर्ण
 
-/* need to verify
+/* need to verअगरy
  */
-static void i810_dma_dispatch_clear(struct drm_device *dev, int flags,
-				    unsigned int clear_color,
-				    unsigned int clear_zval)
-{
-	drm_i810_private_t *dev_priv = dev->dev_private;
+अटल व्योम i810_dma_dispatch_clear(काष्ठा drm_device *dev, पूर्णांक flags,
+				    अचिन्हित पूर्णांक clear_color,
+				    अचिन्हित पूर्णांक clear_zval)
+अणु
+	drm_i810_निजी_t *dev_priv = dev->dev_निजी;
 	drm_i810_sarea_t *sarea_priv = dev_priv->sarea_priv;
-	int nbox = sarea_priv->nbox;
-	struct drm_clip_rect *pbox = sarea_priv->boxes;
-	int pitch = dev_priv->pitch;
-	int cpp = 2;
-	int i;
+	पूर्णांक nbox = sarea_priv->nbox;
+	काष्ठा drm_clip_rect *pbox = sarea_priv->boxes;
+	पूर्णांक pitch = dev_priv->pitch;
+	पूर्णांक cpp = 2;
+	पूर्णांक i;
 	RING_LOCALS;
 
-	if (dev_priv->current_page == 1) {
-		unsigned int tmp = flags;
+	अगर (dev_priv->current_page == 1) अणु
+		अचिन्हित पूर्णांक पंचांगp = flags;
 
 		flags &= ~(I810_FRONT | I810_BACK);
-		if (tmp & I810_FRONT)
+		अगर (पंचांगp & I810_FRONT)
 			flags |= I810_BACK;
-		if (tmp & I810_BACK)
+		अगर (पंचांगp & I810_BACK)
 			flags |= I810_FRONT;
-	}
+	पूर्ण
 
 	i810_kernel_lost_context(dev);
 
-	if (nbox > I810_NR_SAREA_CLIPRECTS)
+	अगर (nbox > I810_NR_SAREA_CLIPRECTS)
 		nbox = I810_NR_SAREA_CLIPRECTS;
 
-	for (i = 0; i < nbox; i++, pbox++) {
-		unsigned int x = pbox->x1;
-		unsigned int y = pbox->y1;
-		unsigned int width = (pbox->x2 - x) * cpp;
-		unsigned int height = pbox->y2 - y;
-		unsigned int start = y * pitch + x * cpp;
+	क्रम (i = 0; i < nbox; i++, pbox++) अणु
+		अचिन्हित पूर्णांक x = pbox->x1;
+		अचिन्हित पूर्णांक y = pbox->y1;
+		अचिन्हित पूर्णांक width = (pbox->x2 - x) * cpp;
+		अचिन्हित पूर्णांक height = pbox->y2 - y;
+		अचिन्हित पूर्णांक start = y * pitch + x * cpp;
 
-		if (pbox->x1 > pbox->x2 ||
+		अगर (pbox->x1 > pbox->x2 ||
 		    pbox->y1 > pbox->y2 ||
 		    pbox->x2 > dev_priv->w || pbox->y2 > dev_priv->h)
-			continue;
+			जारी;
 
-		if (flags & I810_FRONT) {
+		अगर (flags & I810_FRONT) अणु
 			BEGIN_LP_RING(6);
 			OUT_RING(BR00_BITBLT_CLIENT | BR00_OP_COLOR_BLT | 0x3);
 			OUT_RING(BR13_SOLID_PATTERN | (0xF0 << 16) | pitch);
@@ -638,9 +639,9 @@ static void i810_dma_dispatch_clear(struct drm_device *dev, int flags,
 			OUT_RING(clear_color);
 			OUT_RING(0);
 			ADVANCE_LP_RING();
-		}
+		पूर्ण
 
-		if (flags & I810_BACK) {
+		अगर (flags & I810_BACK) अणु
 			BEGIN_LP_RING(6);
 			OUT_RING(BR00_BITBLT_CLIENT | BR00_OP_COLOR_BLT | 0x3);
 			OUT_RING(BR13_SOLID_PATTERN | (0xF0 << 16) | pitch);
@@ -649,9 +650,9 @@ static void i810_dma_dispatch_clear(struct drm_device *dev, int flags,
 			OUT_RING(clear_color);
 			OUT_RING(0);
 			ADVANCE_LP_RING();
-		}
+		पूर्ण
 
-		if (flags & I810_DEPTH) {
+		अगर (flags & I810_DEPTH) अणु
 			BEGIN_LP_RING(6);
 			OUT_RING(BR00_BITBLT_CLIENT | BR00_OP_COLOR_BLT | 0x3);
 			OUT_RING(BR13_SOLID_PATTERN | (0xF0 << 16) | pitch);
@@ -660,97 +661,97 @@ static void i810_dma_dispatch_clear(struct drm_device *dev, int flags,
 			OUT_RING(clear_zval);
 			OUT_RING(0);
 			ADVANCE_LP_RING();
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static void i810_dma_dispatch_swap(struct drm_device *dev)
-{
-	drm_i810_private_t *dev_priv = dev->dev_private;
+अटल व्योम i810_dma_dispatch_swap(काष्ठा drm_device *dev)
+अणु
+	drm_i810_निजी_t *dev_priv = dev->dev_निजी;
 	drm_i810_sarea_t *sarea_priv = dev_priv->sarea_priv;
-	int nbox = sarea_priv->nbox;
-	struct drm_clip_rect *pbox = sarea_priv->boxes;
-	int pitch = dev_priv->pitch;
-	int cpp = 2;
-	int i;
+	पूर्णांक nbox = sarea_priv->nbox;
+	काष्ठा drm_clip_rect *pbox = sarea_priv->boxes;
+	पूर्णांक pitch = dev_priv->pitch;
+	पूर्णांक cpp = 2;
+	पूर्णांक i;
 	RING_LOCALS;
 
 	DRM_DEBUG("swapbuffers\n");
 
 	i810_kernel_lost_context(dev);
 
-	if (nbox > I810_NR_SAREA_CLIPRECTS)
+	अगर (nbox > I810_NR_SAREA_CLIPRECTS)
 		nbox = I810_NR_SAREA_CLIPRECTS;
 
-	for (i = 0; i < nbox; i++, pbox++) {
-		unsigned int w = pbox->x2 - pbox->x1;
-		unsigned int h = pbox->y2 - pbox->y1;
-		unsigned int dst = pbox->x1 * cpp + pbox->y1 * pitch;
-		unsigned int start = dst;
+	क्रम (i = 0; i < nbox; i++, pbox++) अणु
+		अचिन्हित पूर्णांक w = pbox->x2 - pbox->x1;
+		अचिन्हित पूर्णांक h = pbox->y2 - pbox->y1;
+		अचिन्हित पूर्णांक dst = pbox->x1 * cpp + pbox->y1 * pitch;
+		अचिन्हित पूर्णांक start = dst;
 
-		if (pbox->x1 > pbox->x2 ||
+		अगर (pbox->x1 > pbox->x2 ||
 		    pbox->y1 > pbox->y2 ||
 		    pbox->x2 > dev_priv->w || pbox->y2 > dev_priv->h)
-			continue;
+			जारी;
 
 		BEGIN_LP_RING(6);
 		OUT_RING(BR00_BITBLT_CLIENT | BR00_OP_SRC_COPY_BLT | 0x4);
 		OUT_RING(pitch | (0xCC << 16));
 		OUT_RING((h << 16) | (w * cpp));
-		if (dev_priv->current_page == 0)
+		अगर (dev_priv->current_page == 0)
 			OUT_RING(dev_priv->front_offset + start);
-		else
+		अन्यथा
 			OUT_RING(dev_priv->back_offset + start);
 		OUT_RING(pitch);
-		if (dev_priv->current_page == 0)
+		अगर (dev_priv->current_page == 0)
 			OUT_RING(dev_priv->back_offset + start);
-		else
+		अन्यथा
 			OUT_RING(dev_priv->front_offset + start);
 		ADVANCE_LP_RING();
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void i810_dma_dispatch_vertex(struct drm_device *dev,
-				     struct drm_buf *buf, int discard, int used)
-{
-	drm_i810_private_t *dev_priv = dev->dev_private;
-	drm_i810_buf_priv_t *buf_priv = buf->dev_private;
+अटल व्योम i810_dma_dispatch_vertex(काष्ठा drm_device *dev,
+				     काष्ठा drm_buf *buf, पूर्णांक discard, पूर्णांक used)
+अणु
+	drm_i810_निजी_t *dev_priv = dev->dev_निजी;
+	drm_i810_buf_priv_t *buf_priv = buf->dev_निजी;
 	drm_i810_sarea_t *sarea_priv = dev_priv->sarea_priv;
-	struct drm_clip_rect *box = sarea_priv->boxes;
-	int nbox = sarea_priv->nbox;
-	unsigned long address = (unsigned long)buf->bus_address;
-	unsigned long start = address - dev->agp->base;
-	int i = 0;
+	काष्ठा drm_clip_rect *box = sarea_priv->boxes;
+	पूर्णांक nbox = sarea_priv->nbox;
+	अचिन्हित दीर्घ address = (अचिन्हित दीर्घ)buf->bus_address;
+	अचिन्हित दीर्घ start = address - dev->agp->base;
+	पूर्णांक i = 0;
 	RING_LOCALS;
 
 	i810_kernel_lost_context(dev);
 
-	if (nbox > I810_NR_SAREA_CLIPRECTS)
+	अगर (nbox > I810_NR_SAREA_CLIPRECTS)
 		nbox = I810_NR_SAREA_CLIPRECTS;
 
-	if (used < 0 || used > 4 * 1024)
+	अगर (used < 0 || used > 4 * 1024)
 		used = 0;
 
-	if (sarea_priv->dirty)
+	अगर (sarea_priv->dirty)
 		i810EmitState(dev);
 
-	if (buf_priv->currently_mapped == I810_BUF_MAPPED) {
-		unsigned int prim = (sarea_priv->vertex_prim & PR_MASK);
+	अगर (buf_priv->currently_mapped == I810_BUF_MAPPED) अणु
+		अचिन्हित पूर्णांक prim = (sarea_priv->vertex_prim & PR_MASK);
 
-		*(u32 *) buf_priv->kernel_virtual =
+		*(u32 *) buf_priv->kernel_भव =
 		    ((GFX_OP_PRIMITIVE | prim | ((used / 4) - 2)));
 
-		if (used & 4) {
-			*(u32 *) ((char *) buf_priv->kernel_virtual + used) = 0;
+		अगर (used & 4) अणु
+			*(u32 *) ((अक्षर *) buf_priv->kernel_भव + used) = 0;
 			used += 4;
-		}
+		पूर्ण
 
 		i810_unmap_buffer(buf);
-	}
+	पूर्ण
 
-	if (used) {
-		do {
-			if (i < nbox) {
+	अगर (used) अणु
+		करो अणु
+			अगर (i < nbox) अणु
 				BEGIN_LP_RING(4);
 				OUT_RING(GFX_OP_SCISSOR | SC_UPDATE_SCISSOR |
 					 SC_ENABLE);
@@ -759,7 +760,7 @@ static void i810_dma_dispatch_vertex(struct drm_device *dev,
 				OUT_RING((box[i].x2 -
 					  1) | ((box[i].y2 - 1) << 16));
 				ADVANCE_LP_RING();
-			}
+			पूर्ण
 
 			BEGIN_LP_RING(4);
 			OUT_RING(CMD_OP_BATCH_BUFFER);
@@ -768,13 +769,13 @@ static void i810_dma_dispatch_vertex(struct drm_device *dev,
 			OUT_RING(0);
 			ADVANCE_LP_RING();
 
-		} while (++i < nbox);
-	}
+		पूर्ण जबतक (++i < nbox);
+	पूर्ण
 
-	if (discard) {
+	अगर (discard) अणु
 		dev_priv->counter++;
 
-		(void)cmpxchg(buf_priv->in_use, I810_BUF_CLIENT,
+		(व्योम)cmpxchg(buf_priv->in_use, I810_BUF_CLIENT,
 			      I810_BUF_HARDWARE);
 
 		BEGIN_LP_RING(8);
@@ -787,13 +788,13 @@ static void i810_dma_dispatch_vertex(struct drm_device *dev,
 		OUT_RING(CMD_REPORT_HEAD);
 		OUT_RING(0);
 		ADVANCE_LP_RING();
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void i810_dma_dispatch_flip(struct drm_device *dev)
-{
-	drm_i810_private_t *dev_priv = dev->dev_private;
-	int pitch = dev_priv->pitch;
+अटल व्योम i810_dma_dispatch_flip(काष्ठा drm_device *dev)
+अणु
+	drm_i810_निजी_t *dev_priv = dev->dev_निजी;
+	पूर्णांक pitch = dev_priv->pitch;
 	RING_LOCALS;
 
 	DRM_DEBUG("page=%d pfCurrentPage=%d\n",
@@ -810,16 +811,16 @@ static void i810_dma_dispatch_flip(struct drm_device *dev)
 	BEGIN_LP_RING(I810_DEST_SETUP_SIZE + 2);
 	/* On i815 at least ASYNC is buggy */
 	/* pitch<<5 is from 11.2.8 p158,
-	   its the pitch / 8 then left shifted 8,
+	   its the pitch / 8 then left shअगरted 8,
 	   so (pitch >> 3) << 8 */
 	OUT_RING(CMD_OP_FRONTBUFFER_INFO | (pitch << 5) /*| ASYNC_FLIP */ );
-	if (dev_priv->current_page == 0) {
+	अगर (dev_priv->current_page == 0) अणु
 		OUT_RING(dev_priv->back_offset);
 		dev_priv->current_page = 1;
-	} else {
+	पूर्ण अन्यथा अणु
 		OUT_RING(dev_priv->front_offset);
 		dev_priv->current_page = 0;
-	}
+	पूर्ण
 	OUT_RING(0);
 	ADVANCE_LP_RING();
 
@@ -829,16 +830,16 @@ static void i810_dma_dispatch_flip(struct drm_device *dev)
 	ADVANCE_LP_RING();
 
 	/* Increment the frame counter.  The client-side 3D driver must
-	 * throttle the framerate by waiting for this value before
-	 * performing the swapbuffer ioctl.
+	 * throttle the framerate by रुकोing क्रम this value beक्रमe
+	 * perक्रमming the swapbuffer ioctl.
 	 */
 	dev_priv->sarea_priv->pf_current_page = dev_priv->current_page;
 
-}
+पूर्ण
 
-static void i810_dma_quiescent(struct drm_device *dev)
-{
-	drm_i810_private_t *dev_priv = dev->dev_private;
+अटल व्योम i810_dma_quiescent(काष्ठा drm_device *dev)
+अणु
+	drm_i810_निजी_t *dev_priv = dev->dev_निजी;
 	RING_LOCALS;
 
 	i810_kernel_lost_context(dev);
@@ -850,14 +851,14 @@ static void i810_dma_quiescent(struct drm_device *dev)
 	OUT_RING(0);
 	ADVANCE_LP_RING();
 
-	i810_wait_ring(dev, dev_priv->ring.Size - 8);
-}
+	i810_रुको_ring(dev, dev_priv->ring.Size - 8);
+पूर्ण
 
-static void i810_flush_queue(struct drm_device *dev)
-{
-	drm_i810_private_t *dev_priv = dev->dev_private;
-	struct drm_device_dma *dma = dev->dma;
-	int i;
+अटल व्योम i810_flush_queue(काष्ठा drm_device *dev)
+अणु
+	drm_i810_निजी_t *dev_priv = dev->dev_निजी;
+	काष्ठा drm_device_dma *dma = dev->dma;
+	पूर्णांक i;
 	RING_LOCALS;
 
 	i810_kernel_lost_context(dev);
@@ -867,70 +868,70 @@ static void i810_flush_queue(struct drm_device *dev)
 	OUT_RING(0);
 	ADVANCE_LP_RING();
 
-	i810_wait_ring(dev, dev_priv->ring.Size - 8);
+	i810_रुको_ring(dev, dev_priv->ring.Size - 8);
 
-	for (i = 0; i < dma->buf_count; i++) {
-		struct drm_buf *buf = dma->buflist[i];
-		drm_i810_buf_priv_t *buf_priv = buf->dev_private;
+	क्रम (i = 0; i < dma->buf_count; i++) अणु
+		काष्ठा drm_buf *buf = dma->buflist[i];
+		drm_i810_buf_priv_t *buf_priv = buf->dev_निजी;
 
-		int used = cmpxchg(buf_priv->in_use, I810_BUF_HARDWARE,
+		पूर्णांक used = cmpxchg(buf_priv->in_use, I810_BUF_HARDWARE,
 				   I810_BUF_FREE);
 
-		if (used == I810_BUF_HARDWARE)
+		अगर (used == I810_BUF_HARDWARE)
 			DRM_DEBUG("reclaimed from HARDWARE\n");
-		if (used == I810_BUF_CLIENT)
+		अगर (used == I810_BUF_CLIENT)
 			DRM_DEBUG("still on client\n");
-	}
+	पूर्ण
 
-	return;
-}
+	वापस;
+पूर्ण
 
 /* Must be called with the lock held */
-void i810_driver_reclaim_buffers(struct drm_device *dev,
-				 struct drm_file *file_priv)
-{
-	struct drm_device_dma *dma = dev->dma;
-	int i;
+व्योम i810_driver_reclaim_buffers(काष्ठा drm_device *dev,
+				 काष्ठा drm_file *file_priv)
+अणु
+	काष्ठा drm_device_dma *dma = dev->dma;
+	पूर्णांक i;
 
-	if (!dma)
-		return;
-	if (!dev->dev_private)
-		return;
-	if (!dma->buflist)
-		return;
+	अगर (!dma)
+		वापस;
+	अगर (!dev->dev_निजी)
+		वापस;
+	अगर (!dma->buflist)
+		वापस;
 
 	i810_flush_queue(dev);
 
-	for (i = 0; i < dma->buf_count; i++) {
-		struct drm_buf *buf = dma->buflist[i];
-		drm_i810_buf_priv_t *buf_priv = buf->dev_private;
+	क्रम (i = 0; i < dma->buf_count; i++) अणु
+		काष्ठा drm_buf *buf = dma->buflist[i];
+		drm_i810_buf_priv_t *buf_priv = buf->dev_निजी;
 
-		if (buf->file_priv == file_priv && buf_priv) {
-			int used = cmpxchg(buf_priv->in_use, I810_BUF_CLIENT,
+		अगर (buf->file_priv == file_priv && buf_priv) अणु
+			पूर्णांक used = cmpxchg(buf_priv->in_use, I810_BUF_CLIENT,
 					   I810_BUF_FREE);
 
-			if (used == I810_BUF_CLIENT)
+			अगर (used == I810_BUF_CLIENT)
 				DRM_DEBUG("reclaimed from client\n");
-			if (buf_priv->currently_mapped == I810_BUF_MAPPED)
+			अगर (buf_priv->currently_mapped == I810_BUF_MAPPED)
 				buf_priv->currently_mapped = I810_BUF_UNMAPPED;
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static int i810_flush_ioctl(struct drm_device *dev, void *data,
-			    struct drm_file *file_priv)
-{
+अटल पूर्णांक i810_flush_ioctl(काष्ठा drm_device *dev, व्योम *data,
+			    काष्ठा drm_file *file_priv)
+अणु
 	LOCK_TEST_WITH_RETURN(dev, file_priv);
 
 	i810_flush_queue(dev);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int i810_dma_vertex(struct drm_device *dev, void *data,
-			   struct drm_file *file_priv)
-{
-	struct drm_device_dma *dma = dev->dma;
-	drm_i810_private_t *dev_priv = (drm_i810_private_t *) dev->dev_private;
+अटल पूर्णांक i810_dma_vertex(काष्ठा drm_device *dev, व्योम *data,
+			   काष्ठा drm_file *file_priv)
+अणु
+	काष्ठा drm_device_dma *dma = dev->dma;
+	drm_i810_निजी_t *dev_priv = (drm_i810_निजी_t *) dev->dev_निजी;
 	u32 *hw_status = dev_priv->hw_status_page;
 	drm_i810_sarea_t *sarea_priv = (drm_i810_sarea_t *)
 	    dev_priv->sarea_priv;
@@ -941,64 +942,64 @@ static int i810_dma_vertex(struct drm_device *dev, void *data,
 	DRM_DEBUG("idx %d used %d discard %d\n",
 		  vertex->idx, vertex->used, vertex->discard);
 
-	if (vertex->idx < 0 || vertex->idx >= dma->buf_count)
-		return -EINVAL;
+	अगर (vertex->idx < 0 || vertex->idx >= dma->buf_count)
+		वापस -EINVAL;
 
 	i810_dma_dispatch_vertex(dev,
 				 dma->buflist[vertex->idx],
 				 vertex->discard, vertex->used);
 
 	sarea_priv->last_enqueue = dev_priv->counter - 1;
-	sarea_priv->last_dispatch = (int)hw_status[5];
+	sarea_priv->last_dispatch = (पूर्णांक)hw_status[5];
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int i810_clear_bufs(struct drm_device *dev, void *data,
-			   struct drm_file *file_priv)
-{
+अटल पूर्णांक i810_clear_bufs(काष्ठा drm_device *dev, व्योम *data,
+			   काष्ठा drm_file *file_priv)
+अणु
 	drm_i810_clear_t *clear = data;
 
 	LOCK_TEST_WITH_RETURN(dev, file_priv);
 
-	/* GH: Someone's doing nasty things... */
-	if (!dev->dev_private)
-		return -EINVAL;
+	/* GH: Someone's करोing nasty things... */
+	अगर (!dev->dev_निजी)
+		वापस -EINVAL;
 
 	i810_dma_dispatch_clear(dev, clear->flags,
 				clear->clear_color, clear->clear_depth);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int i810_swap_bufs(struct drm_device *dev, void *data,
-			  struct drm_file *file_priv)
-{
+अटल पूर्णांक i810_swap_bufs(काष्ठा drm_device *dev, व्योम *data,
+			  काष्ठा drm_file *file_priv)
+अणु
 	DRM_DEBUG("\n");
 
 	LOCK_TEST_WITH_RETURN(dev, file_priv);
 
 	i810_dma_dispatch_swap(dev);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int i810_getage(struct drm_device *dev, void *data,
-		       struct drm_file *file_priv)
-{
-	drm_i810_private_t *dev_priv = (drm_i810_private_t *) dev->dev_private;
+अटल पूर्णांक i810_getage(काष्ठा drm_device *dev, व्योम *data,
+		       काष्ठा drm_file *file_priv)
+अणु
+	drm_i810_निजी_t *dev_priv = (drm_i810_निजी_t *) dev->dev_निजी;
 	u32 *hw_status = dev_priv->hw_status_page;
 	drm_i810_sarea_t *sarea_priv = (drm_i810_sarea_t *)
 	    dev_priv->sarea_priv;
 
-	sarea_priv->last_dispatch = (int)hw_status[5];
-	return 0;
-}
+	sarea_priv->last_dispatch = (पूर्णांक)hw_status[5];
+	वापस 0;
+पूर्ण
 
-static int i810_getbuf(struct drm_device *dev, void *data,
-		       struct drm_file *file_priv)
-{
-	int retcode = 0;
+अटल पूर्णांक i810_getbuf(काष्ठा drm_device *dev, व्योम *data,
+		       काष्ठा drm_file *file_priv)
+अणु
+	पूर्णांक retcode = 0;
 	drm_i810_dma_t *d = data;
-	drm_i810_private_t *dev_priv = (drm_i810_private_t *) dev->dev_private;
+	drm_i810_निजी_t *dev_priv = (drm_i810_निजी_t *) dev->dev_निजी;
 	u32 *hw_status = dev_priv->hw_status_page;
 	drm_i810_sarea_t *sarea_priv = (drm_i810_sarea_t *)
 	    dev_priv->sarea_priv;
@@ -1012,43 +1013,43 @@ static int i810_getbuf(struct drm_device *dev, void *data,
 	DRM_DEBUG("i810_dma: %d returning %d, granted = %d\n",
 		  task_pid_nr(current), retcode, d->granted);
 
-	sarea_priv->last_dispatch = (int)hw_status[5];
+	sarea_priv->last_dispatch = (पूर्णांक)hw_status[5];
 
-	return retcode;
-}
+	वापस retcode;
+पूर्ण
 
-static int i810_copybuf(struct drm_device *dev, void *data,
-			struct drm_file *file_priv)
-{
-	/* Never copy - 2.4.x doesn't need it */
-	return 0;
-}
+अटल पूर्णांक i810_copybuf(काष्ठा drm_device *dev, व्योम *data,
+			काष्ठा drm_file *file_priv)
+अणु
+	/* Never copy - 2.4.x करोesn't need it */
+	वापस 0;
+पूर्ण
 
-static int i810_docopy(struct drm_device *dev, void *data,
-			struct drm_file *file_priv)
-{
-	/* Never copy - 2.4.x doesn't need it */
-	return 0;
-}
+अटल पूर्णांक i810_करोcopy(काष्ठा drm_device *dev, व्योम *data,
+			काष्ठा drm_file *file_priv)
+अणु
+	/* Never copy - 2.4.x करोesn't need it */
+	वापस 0;
+पूर्ण
 
-static void i810_dma_dispatch_mc(struct drm_device *dev, struct drm_buf *buf, int used,
-				 unsigned int last_render)
-{
-	drm_i810_private_t *dev_priv = dev->dev_private;
-	drm_i810_buf_priv_t *buf_priv = buf->dev_private;
+अटल व्योम i810_dma_dispatch_mc(काष्ठा drm_device *dev, काष्ठा drm_buf *buf, पूर्णांक used,
+				 अचिन्हित पूर्णांक last_render)
+अणु
+	drm_i810_निजी_t *dev_priv = dev->dev_निजी;
+	drm_i810_buf_priv_t *buf_priv = buf->dev_निजी;
 	drm_i810_sarea_t *sarea_priv = dev_priv->sarea_priv;
-	unsigned long address = (unsigned long)buf->bus_address;
-	unsigned long start = address - dev->agp->base;
-	int u;
+	अचिन्हित दीर्घ address = (अचिन्हित दीर्घ)buf->bus_address;
+	अचिन्हित दीर्घ start = address - dev->agp->base;
+	पूर्णांक u;
 	RING_LOCALS;
 
 	i810_kernel_lost_context(dev);
 
 	u = cmpxchg(buf_priv->in_use, I810_BUF_CLIENT, I810_BUF_HARDWARE);
-	if (u != I810_BUF_CLIENT)
+	अगर (u != I810_BUF_CLIENT)
 		DRM_DEBUG("MC found buffer that isn't mine!\n");
 
-	if (used < 0 || used > 4 * 1024)
+	अगर (used < 0 || used > 4 * 1024)
 		used = 0;
 
 	sarea_priv->dirty = 0x7f;
@@ -1061,14 +1062,14 @@ static void i810_dma_dispatch_mc(struct drm_device *dev, struct drm_buf *buf, in
 	DRM_DEBUG("used : %d\n", used);
 	DRM_DEBUG("start + used - 4 : %ld\n", start + used - 4);
 
-	if (buf_priv->currently_mapped == I810_BUF_MAPPED) {
-		if (used & 4) {
-			*(u32 *) ((char *) buf_priv->virtual + used) = 0;
+	अगर (buf_priv->currently_mapped == I810_BUF_MAPPED) अणु
+		अगर (used & 4) अणु
+			*(u32 *) ((अक्षर *) buf_priv->भव + used) = 0;
 			used += 4;
-		}
+		पूर्ण
 
 		i810_unmap_buffer(buf);
-	}
+	पूर्ण
 	BEGIN_LP_RING(4);
 	OUT_RING(CMD_OP_BATCH_BUFFER);
 	OUT_RING(start | BB1_PROTECTED);
@@ -1087,13 +1088,13 @@ static void i810_dma_dispatch_mc(struct drm_device *dev, struct drm_buf *buf, in
 	OUT_RING(last_render);
 	OUT_RING(0);
 	ADVANCE_LP_RING();
-}
+पूर्ण
 
-static int i810_dma_mc(struct drm_device *dev, void *data,
-		       struct drm_file *file_priv)
-{
-	struct drm_device_dma *dma = dev->dma;
-	drm_i810_private_t *dev_priv = (drm_i810_private_t *) dev->dev_private;
+अटल पूर्णांक i810_dma_mc(काष्ठा drm_device *dev, व्योम *data,
+		       काष्ठा drm_file *file_priv)
+अणु
+	काष्ठा drm_device_dma *dma = dev->dma;
+	drm_i810_निजी_t *dev_priv = (drm_i810_निजी_t *) dev->dev_निजी;
 	u32 *hw_status = dev_priv->hw_status_page;
 	drm_i810_sarea_t *sarea_priv = (drm_i810_sarea_t *)
 	    dev_priv->sarea_priv;
@@ -1101,151 +1102,151 @@ static int i810_dma_mc(struct drm_device *dev, void *data,
 
 	LOCK_TEST_WITH_RETURN(dev, file_priv);
 
-	if (mc->idx >= dma->buf_count || mc->idx < 0)
-		return -EINVAL;
+	अगर (mc->idx >= dma->buf_count || mc->idx < 0)
+		वापस -EINVAL;
 
 	i810_dma_dispatch_mc(dev, dma->buflist[mc->idx], mc->used,
 			     mc->last_render);
 
 	sarea_priv->last_enqueue = dev_priv->counter - 1;
-	sarea_priv->last_dispatch = (int)hw_status[5];
+	sarea_priv->last_dispatch = (पूर्णांक)hw_status[5];
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int i810_rstatus(struct drm_device *dev, void *data,
-			struct drm_file *file_priv)
-{
-	drm_i810_private_t *dev_priv = (drm_i810_private_t *) dev->dev_private;
+अटल पूर्णांक i810_rstatus(काष्ठा drm_device *dev, व्योम *data,
+			काष्ठा drm_file *file_priv)
+अणु
+	drm_i810_निजी_t *dev_priv = (drm_i810_निजी_t *) dev->dev_निजी;
 
-	return (int)(((u32 *) (dev_priv->hw_status_page))[4]);
-}
+	वापस (पूर्णांक)(((u32 *) (dev_priv->hw_status_page))[4]);
+पूर्ण
 
-static int i810_ov0_info(struct drm_device *dev, void *data,
-			 struct drm_file *file_priv)
-{
-	drm_i810_private_t *dev_priv = (drm_i810_private_t *) dev->dev_private;
+अटल पूर्णांक i810_ov0_info(काष्ठा drm_device *dev, व्योम *data,
+			 काष्ठा drm_file *file_priv)
+अणु
+	drm_i810_निजी_t *dev_priv = (drm_i810_निजी_t *) dev->dev_निजी;
 	drm_i810_overlay_t *ov = data;
 
 	ov->offset = dev_priv->overlay_offset;
 	ov->physical = dev_priv->overlay_physical;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int i810_fstatus(struct drm_device *dev, void *data,
-			struct drm_file *file_priv)
-{
-	drm_i810_private_t *dev_priv = (drm_i810_private_t *) dev->dev_private;
+अटल पूर्णांक i810_ख_स्थितिus(काष्ठा drm_device *dev, व्योम *data,
+			काष्ठा drm_file *file_priv)
+अणु
+	drm_i810_निजी_t *dev_priv = (drm_i810_निजी_t *) dev->dev_निजी;
 
 	LOCK_TEST_WITH_RETURN(dev, file_priv);
-	return I810_READ(0x30008);
-}
+	वापस I810_READ(0x30008);
+पूर्ण
 
-static int i810_ov0_flip(struct drm_device *dev, void *data,
-			 struct drm_file *file_priv)
-{
-	drm_i810_private_t *dev_priv = (drm_i810_private_t *) dev->dev_private;
+अटल पूर्णांक i810_ov0_flip(काष्ठा drm_device *dev, व्योम *data,
+			 काष्ठा drm_file *file_priv)
+अणु
+	drm_i810_निजी_t *dev_priv = (drm_i810_निजी_t *) dev->dev_निजी;
 
 	LOCK_TEST_WITH_RETURN(dev, file_priv);
 
 	/* Tell the overlay to update */
 	I810_WRITE(0x30000, dev_priv->overlay_physical | 0x80000000);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* Not sure why this isn't set all the time:
+/* Not sure why this isn't set all the समय:
  */
-static void i810_do_init_pageflip(struct drm_device *dev)
-{
-	drm_i810_private_t *dev_priv = dev->dev_private;
+अटल व्योम i810_करो_init_pageflip(काष्ठा drm_device *dev)
+अणु
+	drm_i810_निजी_t *dev_priv = dev->dev_निजी;
 
 	DRM_DEBUG("\n");
 	dev_priv->page_flipping = 1;
 	dev_priv->current_page = 0;
 	dev_priv->sarea_priv->pf_current_page = dev_priv->current_page;
-}
+पूर्ण
 
-static int i810_do_cleanup_pageflip(struct drm_device *dev)
-{
-	drm_i810_private_t *dev_priv = dev->dev_private;
+अटल पूर्णांक i810_करो_cleanup_pageflip(काष्ठा drm_device *dev)
+अणु
+	drm_i810_निजी_t *dev_priv = dev->dev_निजी;
 
 	DRM_DEBUG("\n");
-	if (dev_priv->current_page != 0)
+	अगर (dev_priv->current_page != 0)
 		i810_dma_dispatch_flip(dev);
 
 	dev_priv->page_flipping = 0;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int i810_flip_bufs(struct drm_device *dev, void *data,
-			  struct drm_file *file_priv)
-{
-	drm_i810_private_t *dev_priv = dev->dev_private;
+अटल पूर्णांक i810_flip_bufs(काष्ठा drm_device *dev, व्योम *data,
+			  काष्ठा drm_file *file_priv)
+अणु
+	drm_i810_निजी_t *dev_priv = dev->dev_निजी;
 
 	DRM_DEBUG("\n");
 
 	LOCK_TEST_WITH_RETURN(dev, file_priv);
 
-	if (!dev_priv->page_flipping)
-		i810_do_init_pageflip(dev);
+	अगर (!dev_priv->page_flipping)
+		i810_करो_init_pageflip(dev);
 
 	i810_dma_dispatch_flip(dev);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int i810_driver_load(struct drm_device *dev, unsigned long flags)
-{
+पूर्णांक i810_driver_load(काष्ठा drm_device *dev, अचिन्हित दीर्घ flags)
+अणु
 	dev->agp = drm_agp_init(dev);
-	if (dev->agp) {
+	अगर (dev->agp) अणु
 		dev->agp->agp_mtrr = arch_phys_wc_add(
 			dev->agp->agp_info.aper_base,
 			dev->agp->agp_info.aper_size *
 			1024 * 1024);
-	}
+	पूर्ण
 
 	/* Our userspace depends upon the agp mapping support. */
-	if (!dev->agp)
-		return -EINVAL;
+	अगर (!dev->agp)
+		वापस -EINVAL;
 
 	pci_set_master(dev->pdev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void i810_driver_lastclose(struct drm_device *dev)
-{
+व्योम i810_driver_lastबंद(काष्ठा drm_device *dev)
+अणु
 	i810_dma_cleanup(dev);
-}
+पूर्ण
 
-void i810_driver_preclose(struct drm_device *dev, struct drm_file *file_priv)
-{
-	if (dev->dev_private) {
-		drm_i810_private_t *dev_priv = dev->dev_private;
-		if (dev_priv->page_flipping)
-			i810_do_cleanup_pageflip(dev);
-	}
+व्योम i810_driver_preबंद(काष्ठा drm_device *dev, काष्ठा drm_file *file_priv)
+अणु
+	अगर (dev->dev_निजी) अणु
+		drm_i810_निजी_t *dev_priv = dev->dev_निजी;
+		अगर (dev_priv->page_flipping)
+			i810_करो_cleanup_pageflip(dev);
+	पूर्ण
 
-	if (file_priv->master && file_priv->master->lock.hw_lock) {
+	अगर (file_priv->master && file_priv->master->lock.hw_lock) अणु
 		drm_legacy_idlelock_take(&file_priv->master->lock);
 		i810_driver_reclaim_buffers(dev, file_priv);
 		drm_legacy_idlelock_release(&file_priv->master->lock);
-	} else {
+	पूर्ण अन्यथा अणु
 		/* master disappeared, clean up stuff anyway and hope nothing
 		 * goes wrong */
 		i810_driver_reclaim_buffers(dev, file_priv);
-	}
+	पूर्ण
 
-}
+पूर्ण
 
-int i810_driver_dma_quiescent(struct drm_device *dev)
-{
+पूर्णांक i810_driver_dma_quiescent(काष्ठा drm_device *dev)
+अणु
 	i810_dma_quiescent(dev);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-const struct drm_ioctl_desc i810_ioctls[] = {
+स्थिर काष्ठा drm_ioctl_desc i810_ioctls[] = अणु
 	DRM_IOCTL_DEF_DRV(I810_INIT, i810_dma_init, DRM_AUTH|DRM_MASTER|DRM_ROOT_ONLY|DRM_UNLOCKED),
 	DRM_IOCTL_DEF_DRV(I810_VERTEX, i810_dma_vertex, DRM_AUTH|DRM_UNLOCKED),
 	DRM_IOCTL_DEF_DRV(I810_CLEAR, i810_clear_bufs, DRM_AUTH|DRM_UNLOCKED),
@@ -1254,13 +1255,13 @@ const struct drm_ioctl_desc i810_ioctls[] = {
 	DRM_IOCTL_DEF_DRV(I810_GETBUF, i810_getbuf, DRM_AUTH|DRM_UNLOCKED),
 	DRM_IOCTL_DEF_DRV(I810_SWAP, i810_swap_bufs, DRM_AUTH|DRM_UNLOCKED),
 	DRM_IOCTL_DEF_DRV(I810_COPY, i810_copybuf, DRM_AUTH|DRM_UNLOCKED),
-	DRM_IOCTL_DEF_DRV(I810_DOCOPY, i810_docopy, DRM_AUTH|DRM_UNLOCKED),
+	DRM_IOCTL_DEF_DRV(I810_DOCOPY, i810_करोcopy, DRM_AUTH|DRM_UNLOCKED),
 	DRM_IOCTL_DEF_DRV(I810_OV0INFO, i810_ov0_info, DRM_AUTH|DRM_UNLOCKED),
-	DRM_IOCTL_DEF_DRV(I810_FSTATUS, i810_fstatus, DRM_AUTH|DRM_UNLOCKED),
+	DRM_IOCTL_DEF_DRV(I810_FSTATUS, i810_ख_स्थितिus, DRM_AUTH|DRM_UNLOCKED),
 	DRM_IOCTL_DEF_DRV(I810_OV0FLIP, i810_ov0_flip, DRM_AUTH|DRM_UNLOCKED),
 	DRM_IOCTL_DEF_DRV(I810_MC, i810_dma_mc, DRM_AUTH|DRM_MASTER|DRM_ROOT_ONLY|DRM_UNLOCKED),
 	DRM_IOCTL_DEF_DRV(I810_RSTATUS, i810_rstatus, DRM_AUTH|DRM_UNLOCKED),
 	DRM_IOCTL_DEF_DRV(I810_FLIP, i810_flip_bufs, DRM_AUTH|DRM_UNLOCKED),
-};
+पूर्ण;
 
-int i810_max_ioctl = ARRAY_SIZE(i810_ioctls);
+पूर्णांक i810_max_ioctl = ARRAY_SIZE(i810_ioctls);

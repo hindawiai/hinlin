@@ -1,146 +1,147 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /* Copyright 2020 NXP */
 
-#ifndef __NET_TC_GATE_H
-#define __NET_TC_GATE_H
+#अगर_अघोषित __NET_TC_GATE_H
+#घोषणा __NET_TC_GATE_H
 
-#include <net/act_api.h>
-#include <linux/tc_act/tc_gate.h>
+#समावेश <net/act_api.h>
+#समावेश <linux/tc_act/tc_gate.h>
 
-struct action_gate_entry {
+काष्ठा action_gate_entry अणु
 	u8			gate_state;
-	u32			interval;
+	u32			पूर्णांकerval;
 	s32			ipv;
 	s32			maxoctets;
-};
+पूर्ण;
 
-struct tcfg_gate_entry {
-	int			index;
+काष्ठा tcfg_gate_entry अणु
+	पूर्णांक			index;
 	u8			gate_state;
-	u32			interval;
+	u32			पूर्णांकerval;
 	s32			ipv;
 	s32			maxoctets;
-	struct list_head	list;
-};
+	काष्ठा list_head	list;
+पूर्ण;
 
-struct tcf_gate_params {
+काष्ठा tcf_gate_params अणु
 	s32			tcfg_priority;
-	u64			tcfg_basetime;
-	u64			tcfg_cycletime;
-	u64			tcfg_cycletime_ext;
+	u64			tcfg_baseसमय;
+	u64			tcfg_cycleसमय;
+	u64			tcfg_cycleसमय_ext;
 	u32			tcfg_flags;
-	s32			tcfg_clockid;
-	size_t			num_entries;
-	struct list_head	entries;
-};
+	s32			tcfg_घड़ीid;
+	माप_प्रकार			num_entries;
+	काष्ठा list_head	entries;
+पूर्ण;
 
-#define GATE_ACT_GATE_OPEN	BIT(0)
-#define GATE_ACT_PENDING	BIT(1)
+#घोषणा GATE_ACT_GATE_OPEN	BIT(0)
+#घोषणा GATE_ACT_PENDING	BIT(1)
 
-struct tcf_gate {
-	struct tc_action	common;
-	struct tcf_gate_params	param;
+काष्ठा tcf_gate अणु
+	काष्ठा tc_action	common;
+	काष्ठा tcf_gate_params	param;
 	u8			current_gate_status;
-	ktime_t			current_close_time;
+	kसमय_प्रकार			current_बंद_समय;
 	u32			current_entry_octets;
 	s32			current_max_octets;
-	struct tcfg_gate_entry	*next_entry;
-	struct hrtimer		hitimer;
-	enum tk_offsets		tk_offset;
-};
+	काष्ठा tcfg_gate_entry	*next_entry;
+	काष्ठा hrसमयr		hiसमयr;
+	क्रमागत tk_offsets		tk_offset;
+पूर्ण;
 
-#define to_gate(a) ((struct tcf_gate *)a)
+#घोषणा to_gate(a) ((काष्ठा tcf_gate *)a)
 
-static inline bool is_tcf_gate(const struct tc_action *a)
-{
-#ifdef CONFIG_NET_CLS_ACT
-	if (a->ops && a->ops->id == TCA_ID_GATE)
-		return true;
-#endif
-	return false;
-}
+अटल अंतरभूत bool is_tcf_gate(स्थिर काष्ठा tc_action *a)
+अणु
+#अगर_घोषित CONFIG_NET_CLS_ACT
+	अगर (a->ops && a->ops->id == TCA_ID_GATE)
+		वापस true;
+#पूर्ण_अगर
+	वापस false;
+पूर्ण
 
-static inline u32 tcf_gate_index(const struct tc_action *a)
-{
-	return a->tcfa_index;
-}
+अटल अंतरभूत u32 tcf_gate_index(स्थिर काष्ठा tc_action *a)
+अणु
+	वापस a->tcfa_index;
+पूर्ण
 
-static inline s32 tcf_gate_prio(const struct tc_action *a)
-{
+अटल अंतरभूत s32 tcf_gate_prio(स्थिर काष्ठा tc_action *a)
+अणु
 	s32 tcfg_prio;
 
 	tcfg_prio = to_gate(a)->param.tcfg_priority;
 
-	return tcfg_prio;
-}
+	वापस tcfg_prio;
+पूर्ण
 
-static inline u64 tcf_gate_basetime(const struct tc_action *a)
-{
-	u64 tcfg_basetime;
+अटल अंतरभूत u64 tcf_gate_baseसमय(स्थिर काष्ठा tc_action *a)
+अणु
+	u64 tcfg_baseसमय;
 
-	tcfg_basetime = to_gate(a)->param.tcfg_basetime;
+	tcfg_baseसमय = to_gate(a)->param.tcfg_baseसमय;
 
-	return tcfg_basetime;
-}
+	वापस tcfg_baseसमय;
+पूर्ण
 
-static inline u64 tcf_gate_cycletime(const struct tc_action *a)
-{
-	u64 tcfg_cycletime;
+अटल अंतरभूत u64 tcf_gate_cycleसमय(स्थिर काष्ठा tc_action *a)
+अणु
+	u64 tcfg_cycleसमय;
 
-	tcfg_cycletime = to_gate(a)->param.tcfg_cycletime;
+	tcfg_cycleसमय = to_gate(a)->param.tcfg_cycleसमय;
 
-	return tcfg_cycletime;
-}
+	वापस tcfg_cycleसमय;
+पूर्ण
 
-static inline u64 tcf_gate_cycletimeext(const struct tc_action *a)
-{
-	u64 tcfg_cycletimeext;
+अटल अंतरभूत u64 tcf_gate_cycleसमयext(स्थिर काष्ठा tc_action *a)
+अणु
+	u64 tcfg_cycleसमयext;
 
-	tcfg_cycletimeext = to_gate(a)->param.tcfg_cycletime_ext;
+	tcfg_cycleसमयext = to_gate(a)->param.tcfg_cycleसमय_ext;
 
-	return tcfg_cycletimeext;
-}
+	वापस tcfg_cycleसमयext;
+पूर्ण
 
-static inline u32 tcf_gate_num_entries(const struct tc_action *a)
-{
+अटल अंतरभूत u32 tcf_gate_num_entries(स्थिर काष्ठा tc_action *a)
+अणु
 	u32 num_entries;
 
 	num_entries = to_gate(a)->param.num_entries;
 
-	return num_entries;
-}
+	वापस num_entries;
+पूर्ण
 
-static inline struct action_gate_entry
-			*tcf_gate_get_list(const struct tc_action *a)
-{
-	struct action_gate_entry *oe;
-	struct tcf_gate_params *p;
-	struct tcfg_gate_entry *entry;
+अटल अंतरभूत काष्ठा action_gate_entry
+			*tcf_gate_get_list(स्थिर काष्ठा tc_action *a)
+अणु
+	काष्ठा action_gate_entry *oe;
+	काष्ठा tcf_gate_params *p;
+	काष्ठा tcfg_gate_entry *entry;
 	u32 num_entries;
-	int i = 0;
+	पूर्णांक i = 0;
 
 	p = &to_gate(a)->param;
 	num_entries = p->num_entries;
 
-	list_for_each_entry(entry, &p->entries, list)
+	list_क्रम_each_entry(entry, &p->entries, list)
 		i++;
 
-	if (i != num_entries)
-		return NULL;
+	अगर (i != num_entries)
+		वापस शून्य;
 
-	oe = kcalloc(num_entries, sizeof(*oe), GFP_ATOMIC);
-	if (!oe)
-		return NULL;
+	oe = kसुस्मृति(num_entries, माप(*oe), GFP_ATOMIC);
+	अगर (!oe)
+		वापस शून्य;
 
 	i = 0;
-	list_for_each_entry(entry, &p->entries, list) {
+	list_क्रम_each_entry(entry, &p->entries, list) अणु
 		oe[i].gate_state = entry->gate_state;
-		oe[i].interval = entry->interval;
+		oe[i].पूर्णांकerval = entry->पूर्णांकerval;
 		oe[i].ipv = entry->ipv;
 		oe[i].maxoctets = entry->maxoctets;
 		i++;
-	}
+	पूर्ण
 
-	return oe;
-}
-#endif
+	वापस oe;
+पूर्ण
+#पूर्ण_अगर

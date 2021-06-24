@@ -1,17 +1,18 @@
+<शैली गुरु>
 /*
  * AGPGART driver frontend compatibility ioctls
  * Copyright (C) 2004 Silicon Graphics, Inc.
  * Copyright (C) 2002-2003 Dave Jones
- * Copyright (C) 1999 Jeff Hartmann
+ * Copyright (C) 1999 Jeff Harपंचांगann
  * Copyright (C) 1999 Precision Insight, Inc.
  * Copyright (C) 1999 Xi Graphics, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
@@ -26,266 +27,266 @@
  *
  */
 
-#include <linux/kernel.h>
-#include <linux/pci.h>
-#include <linux/fs.h>
-#include <linux/agpgart.h>
-#include <linux/slab.h>
-#include <linux/uaccess.h>
-#include "agp.h"
-#include "compat_ioctl.h"
+#समावेश <linux/kernel.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/agpgart.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/uaccess.h>
+#समावेश "agp.h"
+#समावेश "compat_ioctl.h"
 
-static int compat_agpioc_info_wrap(struct agp_file_private *priv, void __user *arg)
-{
-	struct agp_info32 userinfo;
-	struct agp_kern_info kerninfo;
+अटल पूर्णांक compat_agpioc_info_wrap(काष्ठा agp_file_निजी *priv, व्योम __user *arg)
+अणु
+	काष्ठा agp_info32 userinfo;
+	काष्ठा agp_kern_info kerninfo;
 
 	agp_copy_info(agp_bridge, &kerninfo);
 
 	userinfo.version.major = kerninfo.version.major;
 	userinfo.version.minor = kerninfo.version.minor;
-	userinfo.bridge_id = kerninfo.device->vendor |
+	userinfo.bridge_id = kerninfo.device->venकरोr |
 	    (kerninfo.device->device << 16);
 	userinfo.agp_mode = kerninfo.mode;
-	userinfo.aper_base = (compat_long_t)kerninfo.aper_base;
+	userinfo.aper_base = (compat_दीर्घ_t)kerninfo.aper_base;
 	userinfo.aper_size = kerninfo.aper_size;
-	userinfo.pg_total = userinfo.pg_system = kerninfo.max_memory;
+	userinfo.pg_total = userinfo.pg_प्रणाली = kerninfo.max_memory;
 	userinfo.pg_used = kerninfo.current_memory;
 
-	if (copy_to_user(arg, &userinfo, sizeof(userinfo)))
-		return -EFAULT;
+	अगर (copy_to_user(arg, &userinfo, माप(userinfo)))
+		वापस -EFAULT;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int compat_agpioc_reserve_wrap(struct agp_file_private *priv, void __user *arg)
-{
-	struct agp_region32 ureserve;
-	struct agp_region kreserve;
-	struct agp_client *client;
-	struct agp_file_private *client_priv;
+अटल पूर्णांक compat_agpioc_reserve_wrap(काष्ठा agp_file_निजी *priv, व्योम __user *arg)
+अणु
+	काष्ठा agp_region32 ureserve;
+	काष्ठा agp_region kreserve;
+	काष्ठा agp_client *client;
+	काष्ठा agp_file_निजी *client_priv;
 
 	DBG("");
-	if (copy_from_user(&ureserve, arg, sizeof(ureserve)))
-		return -EFAULT;
+	अगर (copy_from_user(&ureserve, arg, माप(ureserve)))
+		वापस -EFAULT;
 
-	if ((unsigned) ureserve.seg_count >= ~0U/sizeof(struct agp_segment32))
-		return -EFAULT;
+	अगर ((अचिन्हित) ureserve.seg_count >= ~0U/माप(काष्ठा agp_segment32))
+		वापस -EFAULT;
 
 	kreserve.pid = ureserve.pid;
 	kreserve.seg_count = ureserve.seg_count;
 
 	client = agp_find_client_by_pid(kreserve.pid);
 
-	if (kreserve.seg_count == 0) {
-		/* remove a client */
-		client_priv = agp_find_private(kreserve.pid);
+	अगर (kreserve.seg_count == 0) अणु
+		/* हटाओ a client */
+		client_priv = agp_find_निजी(kreserve.pid);
 
-		if (client_priv != NULL) {
+		अगर (client_priv != शून्य) अणु
 			set_bit(AGP_FF_IS_CLIENT, &client_priv->access_flags);
 			set_bit(AGP_FF_IS_VALID, &client_priv->access_flags);
-		}
-		if (client == NULL) {
-			/* client is already removed */
-			return 0;
-		}
-		return agp_remove_client(kreserve.pid);
-	} else {
-		struct agp_segment32 *usegment;
-		struct agp_segment *ksegment;
-		int seg;
+		पूर्ण
+		अगर (client == शून्य) अणु
+			/* client is alपढ़ोy हटाओd */
+			वापस 0;
+		पूर्ण
+		वापस agp_हटाओ_client(kreserve.pid);
+	पूर्ण अन्यथा अणु
+		काष्ठा agp_segment32 *usegment;
+		काष्ठा agp_segment *ksegment;
+		पूर्णांक seg;
 
-		if (ureserve.seg_count >= 16384)
-			return -EINVAL;
+		अगर (ureserve.seg_count >= 16384)
+			वापस -EINVAL;
 
-		usegment = kmalloc_array(ureserve.seg_count,
-					 sizeof(*usegment),
+		usegment = kदो_स्मृति_array(ureserve.seg_count,
+					 माप(*usegment),
 					 GFP_KERNEL);
-		if (!usegment)
-			return -ENOMEM;
+		अगर (!usegment)
+			वापस -ENOMEM;
 
-		ksegment = kmalloc_array(kreserve.seg_count,
-					 sizeof(*ksegment),
+		ksegment = kदो_स्मृति_array(kreserve.seg_count,
+					 माप(*ksegment),
 					 GFP_KERNEL);
-		if (!ksegment) {
-			kfree(usegment);
-			return -ENOMEM;
-		}
+		अगर (!ksegment) अणु
+			kमुक्त(usegment);
+			वापस -ENOMEM;
+		पूर्ण
 
-		if (copy_from_user(usegment, (void __user *) ureserve.seg_list,
-				   sizeof(*usegment) * ureserve.seg_count)) {
-			kfree(usegment);
-			kfree(ksegment);
-			return -EFAULT;
-		}
+		अगर (copy_from_user(usegment, (व्योम __user *) ureserve.seg_list,
+				   माप(*usegment) * ureserve.seg_count)) अणु
+			kमुक्त(usegment);
+			kमुक्त(ksegment);
+			वापस -EFAULT;
+		पूर्ण
 
-		for (seg = 0; seg < ureserve.seg_count; seg++) {
+		क्रम (seg = 0; seg < ureserve.seg_count; seg++) अणु
 			ksegment[seg].pg_start = usegment[seg].pg_start;
 			ksegment[seg].pg_count = usegment[seg].pg_count;
 			ksegment[seg].prot = usegment[seg].prot;
-		}
+		पूर्ण
 
-		kfree(usegment);
+		kमुक्त(usegment);
 		kreserve.seg_list = ksegment;
 
-		if (client == NULL) {
+		अगर (client == शून्य) अणु
 			/* Create the client and add the segment */
 			client = agp_create_client(kreserve.pid);
 
-			if (client == NULL) {
-				kfree(ksegment);
-				return -ENOMEM;
-			}
-			client_priv = agp_find_private(kreserve.pid);
+			अगर (client == शून्य) अणु
+				kमुक्त(ksegment);
+				वापस -ENOMEM;
+			पूर्ण
+			client_priv = agp_find_निजी(kreserve.pid);
 
-			if (client_priv != NULL) {
+			अगर (client_priv != शून्य) अणु
 				set_bit(AGP_FF_IS_CLIENT, &client_priv->access_flags);
 				set_bit(AGP_FF_IS_VALID, &client_priv->access_flags);
-			}
-		}
-		return agp_create_segment(client, &kreserve);
-	}
+			पूर्ण
+		पूर्ण
+		वापस agp_create_segment(client, &kreserve);
+	पूर्ण
 	/* Will never really happen */
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static int compat_agpioc_allocate_wrap(struct agp_file_private *priv, void __user *arg)
-{
-	struct agp_memory *memory;
-	struct agp_allocate32 alloc;
+अटल पूर्णांक compat_agpioc_allocate_wrap(काष्ठा agp_file_निजी *priv, व्योम __user *arg)
+अणु
+	काष्ठा agp_memory *memory;
+	काष्ठा agp_allocate32 alloc;
 
 	DBG("");
-	if (copy_from_user(&alloc, arg, sizeof(alloc)))
-		return -EFAULT;
+	अगर (copy_from_user(&alloc, arg, माप(alloc)))
+		वापस -EFAULT;
 
 	memory = agp_allocate_memory_wrap(alloc.pg_count, alloc.type);
 
-	if (memory == NULL)
-		return -ENOMEM;
+	अगर (memory == शून्य)
+		वापस -ENOMEM;
 
 	alloc.key = memory->key;
 	alloc.physical = memory->physical;
 
-	if (copy_to_user(arg, &alloc, sizeof(alloc))) {
-		agp_free_memory_wrap(memory);
-		return -EFAULT;
-	}
-	return 0;
-}
+	अगर (copy_to_user(arg, &alloc, माप(alloc))) अणु
+		agp_मुक्त_memory_wrap(memory);
+		वापस -EFAULT;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int compat_agpioc_bind_wrap(struct agp_file_private *priv, void __user *arg)
-{
-	struct agp_bind32 bind_info;
-	struct agp_memory *memory;
+अटल पूर्णांक compat_agpioc_bind_wrap(काष्ठा agp_file_निजी *priv, व्योम __user *arg)
+अणु
+	काष्ठा agp_bind32 bind_info;
+	काष्ठा agp_memory *memory;
 
 	DBG("");
-	if (copy_from_user(&bind_info, arg, sizeof(bind_info)))
-		return -EFAULT;
+	अगर (copy_from_user(&bind_info, arg, माप(bind_info)))
+		वापस -EFAULT;
 
 	memory = agp_find_mem_by_key(bind_info.key);
 
-	if (memory == NULL)
-		return -EINVAL;
+	अगर (memory == शून्य)
+		वापस -EINVAL;
 
-	return agp_bind_memory(memory, bind_info.pg_start);
-}
+	वापस agp_bind_memory(memory, bind_info.pg_start);
+पूर्ण
 
-static int compat_agpioc_unbind_wrap(struct agp_file_private *priv, void __user *arg)
-{
-	struct agp_memory *memory;
-	struct agp_unbind32 unbind;
+अटल पूर्णांक compat_agpioc_unbind_wrap(काष्ठा agp_file_निजी *priv, व्योम __user *arg)
+अणु
+	काष्ठा agp_memory *memory;
+	काष्ठा agp_unbind32 unbind;
 
 	DBG("");
-	if (copy_from_user(&unbind, arg, sizeof(unbind)))
-		return -EFAULT;
+	अगर (copy_from_user(&unbind, arg, माप(unbind)))
+		वापस -EFAULT;
 
 	memory = agp_find_mem_by_key(unbind.key);
 
-	if (memory == NULL)
-		return -EINVAL;
+	अगर (memory == शून्य)
+		वापस -EINVAL;
 
-	return agp_unbind_memory(memory);
-}
+	वापस agp_unbind_memory(memory);
+पूर्ण
 
-long compat_agp_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
-{
-	struct agp_file_private *curr_priv = file->private_data;
-	int ret_val = -ENOTTY;
+दीर्घ compat_agp_ioctl(काष्ठा file *file, अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
+अणु
+	काष्ठा agp_file_निजी *curr_priv = file->निजी_data;
+	पूर्णांक ret_val = -ENOTTY;
 
 	mutex_lock(&(agp_fe.agp_mutex));
 
-	if ((agp_fe.current_controller == NULL) &&
-	    (cmd != AGPIOC_ACQUIRE32)) {
+	अगर ((agp_fe.current_controller == शून्य) &&
+	    (cmd != AGPIOC_ACQUIRE32)) अणु
 		ret_val = -EINVAL;
-		goto ioctl_out;
-	}
-	if ((agp_fe.backend_acquired != true) &&
-	    (cmd != AGPIOC_ACQUIRE32)) {
+		जाओ ioctl_out;
+	पूर्ण
+	अगर ((agp_fe.backend_acquired != true) &&
+	    (cmd != AGPIOC_ACQUIRE32)) अणु
 		ret_val = -EBUSY;
-		goto ioctl_out;
-	}
-	if (cmd != AGPIOC_ACQUIRE32) {
-		if (!(test_bit(AGP_FF_IS_CONTROLLER, &curr_priv->access_flags))) {
+		जाओ ioctl_out;
+	पूर्ण
+	अगर (cmd != AGPIOC_ACQUIRE32) अणु
+		अगर (!(test_bit(AGP_FF_IS_CONTROLLER, &curr_priv->access_flags))) अणु
 			ret_val = -EPERM;
-			goto ioctl_out;
-		}
+			जाओ ioctl_out;
+		पूर्ण
 		/* Use the original pid of the controller,
-		 * in case it's threaded */
+		 * in हाल it's thपढ़ोed */
 
-		if (agp_fe.current_controller->pid != curr_priv->my_pid) {
+		अगर (agp_fe.current_controller->pid != curr_priv->my_pid) अणु
 			ret_val = -EBUSY;
-			goto ioctl_out;
-		}
-	}
+			जाओ ioctl_out;
+		पूर्ण
+	पूर्ण
 
-	switch (cmd) {
-	case AGPIOC_INFO32:
-		ret_val = compat_agpioc_info_wrap(curr_priv, (void __user *) arg);
-		break;
+	चयन (cmd) अणु
+	हाल AGPIOC_INFO32:
+		ret_val = compat_agpioc_info_wrap(curr_priv, (व्योम __user *) arg);
+		अवरोध;
 
-	case AGPIOC_ACQUIRE32:
+	हाल AGPIOC_ACQUIRE32:
 		ret_val = agpioc_acquire_wrap(curr_priv);
-		break;
+		अवरोध;
 
-	case AGPIOC_RELEASE32:
+	हाल AGPIOC_RELEASE32:
 		ret_val = agpioc_release_wrap(curr_priv);
-		break;
+		अवरोध;
 
-	case AGPIOC_SETUP32:
-		ret_val = agpioc_setup_wrap(curr_priv, (void __user *) arg);
-		break;
+	हाल AGPIOC_SETUP32:
+		ret_val = agpioc_setup_wrap(curr_priv, (व्योम __user *) arg);
+		अवरोध;
 
-	case AGPIOC_RESERVE32:
-		ret_val = compat_agpioc_reserve_wrap(curr_priv, (void __user *) arg);
-		break;
+	हाल AGPIOC_RESERVE32:
+		ret_val = compat_agpioc_reserve_wrap(curr_priv, (व्योम __user *) arg);
+		अवरोध;
 
-	case AGPIOC_PROTECT32:
+	हाल AGPIOC_PROTECT32:
 		ret_val = agpioc_protect_wrap(curr_priv);
-		break;
+		अवरोध;
 
-	case AGPIOC_ALLOCATE32:
-		ret_val = compat_agpioc_allocate_wrap(curr_priv, (void __user *) arg);
-		break;
+	हाल AGPIOC_ALLOCATE32:
+		ret_val = compat_agpioc_allocate_wrap(curr_priv, (व्योम __user *) arg);
+		अवरोध;
 
-	case AGPIOC_DEALLOCATE32:
-		ret_val = agpioc_deallocate_wrap(curr_priv, (int) arg);
-		break;
+	हाल AGPIOC_DEALLOCATE32:
+		ret_val = agpioc_deallocate_wrap(curr_priv, (पूर्णांक) arg);
+		अवरोध;
 
-	case AGPIOC_BIND32:
-		ret_val = compat_agpioc_bind_wrap(curr_priv, (void __user *) arg);
-		break;
+	हाल AGPIOC_BIND32:
+		ret_val = compat_agpioc_bind_wrap(curr_priv, (व्योम __user *) arg);
+		अवरोध;
 
-	case AGPIOC_UNBIND32:
-		ret_val = compat_agpioc_unbind_wrap(curr_priv, (void __user *) arg);
-		break;
+	हाल AGPIOC_UNBIND32:
+		ret_val = compat_agpioc_unbind_wrap(curr_priv, (व्योम __user *) arg);
+		अवरोध;
 
-	case AGPIOC_CHIPSET_FLUSH32:
-		break;
-	}
+	हाल AGPIOC_CHIPSET_FLUSH32:
+		अवरोध;
+	पूर्ण
 
 ioctl_out:
 	DBG("ioctl returns %d\n", ret_val);
 	mutex_unlock(&(agp_fe.agp_mutex));
-	return ret_val;
-}
+	वापस ret_val;
+पूर्ण
 

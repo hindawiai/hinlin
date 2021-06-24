@@ -1,85 +1,86 @@
-/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
 /*
  *  S390 version
  *    Copyright IBM Corp. 1999, 2000
  */
 
-#ifndef _ASM_S390_SIGCONTEXT_H
-#define _ASM_S390_SIGCONTEXT_H
+#अगर_अघोषित _ASM_S390_SIGCONTEXT_H
+#घोषणा _ASM_S390_SIGCONTEXT_H
 
-#include <linux/compiler.h>
-#include <linux/types.h>
+#समावेश <linux/compiler.h>
+#समावेश <linux/types.h>
 
-#define __NUM_GPRS		16
-#define __NUM_FPRS		16
-#define __NUM_ACRS		16
-#define __NUM_VXRS		32
-#define __NUM_VXRS_LOW		16
-#define __NUM_VXRS_HIGH		16
+#घोषणा __NUM_GPRS		16
+#घोषणा __NUM_FPRS		16
+#घोषणा __NUM_ACRS		16
+#घोषणा __NUM_VXRS		32
+#घोषणा __NUM_VXRS_LOW		16
+#घोषणा __NUM_VXRS_HIGH		16
 
-#ifndef __s390x__
+#अगर_अघोषित __s390x__
 
-/* Has to be at least _NSIG_WORDS from asm/signal.h */
-#define _SIGCONTEXT_NSIG	64
-#define _SIGCONTEXT_NSIG_BPW	32
-/* Size of stack frame allocated when calling signal handler. */
-#define __SIGNAL_FRAMESIZE	96
+/* Has to be at least _NSIG_WORDS from यंत्र/संकेत.स */
+#घोषणा _SIGCONTEXT_NSIG	64
+#घोषणा _SIGCONTEXT_NSIG_BPW	32
+/* Size of stack frame allocated when calling संकेत handler. */
+#घोषणा __SIGNAL_FRAMESIZE	96
 
-#else /* __s390x__ */
+#अन्यथा /* __s390x__ */
 
-/* Has to be at least _NSIG_WORDS from asm/signal.h */
-#define _SIGCONTEXT_NSIG	64
-#define _SIGCONTEXT_NSIG_BPW	64 
-/* Size of stack frame allocated when calling signal handler. */
-#define __SIGNAL_FRAMESIZE	160
+/* Has to be at least _NSIG_WORDS from यंत्र/संकेत.स */
+#घोषणा _SIGCONTEXT_NSIG	64
+#घोषणा _SIGCONTEXT_NSIG_BPW	64 
+/* Size of stack frame allocated when calling संकेत handler. */
+#घोषणा __SIGNAL_FRAMESIZE	160
 
-#endif /* __s390x__ */
+#पूर्ण_अगर /* __s390x__ */
 
-#define _SIGCONTEXT_NSIG_WORDS	(_SIGCONTEXT_NSIG / _SIGCONTEXT_NSIG_BPW)
-#define _SIGMASK_COPY_SIZE	(sizeof(unsigned long)*_SIGCONTEXT_NSIG_WORDS)
+#घोषणा _SIGCONTEXT_NSIG_WORDS	(_SIGCONTEXT_NSIG / _SIGCONTEXT_NSIG_BPW)
+#घोषणा _SIGMASK_COPY_SIZE	(माप(अचिन्हित दीर्घ)*_SIGCONTEXT_NSIG_WORDS)
 
-typedef struct 
-{
-        unsigned long mask;
-        unsigned long addr;
-} __attribute__ ((aligned(8))) _psw_t;
+प्रकार काष्ठा 
+अणु
+        अचिन्हित दीर्घ mask;
+        अचिन्हित दीर्घ addr;
+पूर्ण __attribute__ ((aligned(8))) _psw_t;
 
-typedef struct
-{
+प्रकार काष्ठा
+अणु
 	_psw_t psw;
-	unsigned long gprs[__NUM_GPRS];
-	unsigned int  acrs[__NUM_ACRS];
-} _s390_regs_common;
+	अचिन्हित दीर्घ gprs[__NUM_GPRS];
+	अचिन्हित पूर्णांक  acrs[__NUM_ACRS];
+पूर्ण _s390_regs_common;
 
-typedef struct
-{
-	unsigned int fpc;
-	unsigned int pad;
-	double   fprs[__NUM_FPRS];
-} _s390_fp_regs;
+प्रकार काष्ठा
+अणु
+	अचिन्हित पूर्णांक fpc;
+	अचिन्हित पूर्णांक pad;
+	द्विगुन   fprs[__NUM_FPRS];
+पूर्ण _s390_fp_regs;
 
-typedef struct
-{
+प्रकार काष्ठा
+अणु
 	_s390_regs_common regs;
 	_s390_fp_regs     fpregs;
-} _sigregs;
+पूर्ण _sigregs;
 
-typedef struct
-{
-#ifndef __s390x__
-	unsigned long gprs_high[__NUM_GPRS];
-#endif
-	unsigned long long vxrs_low[__NUM_VXRS_LOW];
+प्रकार काष्ठा
+अणु
+#अगर_अघोषित __s390x__
+	अचिन्हित दीर्घ gprs_high[__NUM_GPRS];
+#पूर्ण_अगर
+	अचिन्हित दीर्घ दीर्घ vxrs_low[__NUM_VXRS_LOW];
 	__vector128 vxrs_high[__NUM_VXRS_HIGH];
-	unsigned char __reserved[128];
-} _sigregs_ext;
+	अचिन्हित अक्षर __reserved[128];
+पूर्ण _sigregs_ext;
 
-struct sigcontext
-{
-	unsigned long	oldmask[_SIGCONTEXT_NSIG_WORDS];
+काष्ठा sigcontext
+अणु
+	अचिन्हित दीर्घ	oldmask[_SIGCONTEXT_NSIG_WORDS];
 	_sigregs        __user *sregs;
-};
+पूर्ण;
 
 
-#endif
+#पूर्ण_अगर
 

@@ -1,12 +1,13 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __JIT_H__
-#define __JIT_H__
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __JIT_H__
+#घोषणा __JIT_H__
 
-#include <data.h>
+#समावेश <data.h>
 
-int jit_process(struct perf_session *session, struct perf_data *output,
-		struct machine *machine, char *filename, pid_t pid, pid_t tid, u64 *nbytes);
+पूर्णांक jit_process(काष्ठा perf_session *session, काष्ठा perf_data *output,
+		काष्ठा machine *machine, अक्षर *filename, pid_t pid, pid_t tid, u64 *nbytes);
 
-int jit_inject_record(const char *filename);
+पूर्णांक jit_inject_record(स्थिर अक्षर *filename);
 
-#endif /* __JIT_H__ */
+#पूर्ण_अगर /* __JIT_H__ */

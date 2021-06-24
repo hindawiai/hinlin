@@ -1,410 +1,411 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (c) 2016, Linaro Limited
  * Copyright (c) 2014, The Linux Foundation. All rights reserved.
  */
 
-#include <linux/clk-provider.h>
-#include <linux/err.h>
-#include <linux/export.h>
-#include <linux/init.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/mutex.h>
-#include <linux/of.h>
-#include <linux/of_device.h>
-#include <linux/platform_device.h>
-#include <linux/soc/qcom/smd-rpm.h>
+#समावेश <linux/clk-provider.h>
+#समावेश <linux/err.h>
+#समावेश <linux/export.h>
+#समावेश <linux/init.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/soc/qcom/smd-rpm.h>
 
-#include <dt-bindings/clock/qcom,rpmcc.h>
-#include <dt-bindings/mfd/qcom-rpm.h>
+#समावेश <dt-bindings/घड़ी/qcom,rpmcc.h>
+#समावेश <dt-bindings/mfd/qcom-rpm.h>
 
-#define QCOM_RPM_KEY_SOFTWARE_ENABLE			0x6e657773
-#define QCOM_RPM_KEY_PIN_CTRL_CLK_BUFFER_ENABLE_KEY	0x62636370
-#define QCOM_RPM_SMD_KEY_RATE				0x007a484b
-#define QCOM_RPM_SMD_KEY_ENABLE				0x62616e45
-#define QCOM_RPM_SMD_KEY_STATE				0x54415453
-#define QCOM_RPM_SCALING_ENABLE_ID			0x2
+#घोषणा QCOM_RPM_KEY_SOFTWARE_ENABLE			0x6e657773
+#घोषणा QCOM_RPM_KEY_PIN_CTRL_CLK_BUFFER_ENABLE_KEY	0x62636370
+#घोषणा QCOM_RPM_SMD_KEY_RATE				0x007a484b
+#घोषणा QCOM_RPM_SMD_KEY_ENABLE				0x62616e45
+#घोषणा QCOM_RPM_SMD_KEY_STATE				0x54415453
+#घोषणा QCOM_RPM_SCALING_ENABLE_ID			0x2
 
-#define __DEFINE_CLK_SMD_RPM(_platform, _name, _active, type, r_id, stat_id,  \
+#घोषणा __DEFINE_CLK_SMD_RPM(_platक्रमm, _name, _active, type, r_id, stat_id,  \
 			     key)					      \
-	static struct clk_smd_rpm _platform##_##_active;		      \
-	static struct clk_smd_rpm _platform##_##_name = {		      \
+	अटल काष्ठा clk_smd_rpm _platक्रमm##_##_active;		      \
+	अटल काष्ठा clk_smd_rpm _platक्रमm##_##_name = अणु		      \
 		.rpm_res_type = (type),					      \
 		.rpm_clk_id = (r_id),					      \
 		.rpm_status_id = (stat_id),				      \
 		.rpm_key = (key),					      \
-		.peer = &_platform##_##_active,				      \
-		.rate = INT_MAX,					      \
-		.hw.init = &(struct clk_init_data){			      \
+		.peer = &_platक्रमm##_##_active,				      \
+		.rate = पूर्णांक_उच्च,					      \
+		.hw.init = &(काष्ठा clk_init_data)अणु			      \
 			.ops = &clk_smd_rpm_ops,			      \
 			.name = #_name,					      \
-			.parent_names = (const char *[]){ "xo_board" },       \
+			.parent_names = (स्थिर अक्षर *[])अणु "xo_board" पूर्ण,       \
 			.num_parents = 1,				      \
-		},							      \
-	};								      \
-	static struct clk_smd_rpm _platform##_##_active = {		      \
+		पूर्ण,							      \
+	पूर्ण;								      \
+	अटल काष्ठा clk_smd_rpm _platक्रमm##_##_active = अणु		      \
 		.rpm_res_type = (type),					      \
 		.rpm_clk_id = (r_id),					      \
 		.rpm_status_id = (stat_id),				      \
 		.active_only = true,					      \
 		.rpm_key = (key),					      \
-		.peer = &_platform##_##_name,				      \
-		.rate = INT_MAX,					      \
-		.hw.init = &(struct clk_init_data){			      \
+		.peer = &_platक्रमm##_##_name,				      \
+		.rate = पूर्णांक_उच्च,					      \
+		.hw.init = &(काष्ठा clk_init_data)अणु			      \
 			.ops = &clk_smd_rpm_ops,			      \
 			.name = #_active,				      \
-			.parent_names = (const char *[]){ "xo_board" },	      \
+			.parent_names = (स्थिर अक्षर *[])अणु "xo_board" पूर्ण,	      \
 			.num_parents = 1,				      \
-		},							      \
-	}
+		पूर्ण,							      \
+	पूर्ण
 
-#define __DEFINE_CLK_SMD_RPM_BRANCH(_platform, _name, _active, type, r_id,    \
+#घोषणा __DEFINE_CLK_SMD_RPM_BRANCH(_platक्रमm, _name, _active, type, r_id,    \
 				    stat_id, r, key)			      \
-	static struct clk_smd_rpm _platform##_##_active;		      \
-	static struct clk_smd_rpm _platform##_##_name = {		      \
+	अटल काष्ठा clk_smd_rpm _platक्रमm##_##_active;		      \
+	अटल काष्ठा clk_smd_rpm _platक्रमm##_##_name = अणु		      \
 		.rpm_res_type = (type),					      \
 		.rpm_clk_id = (r_id),					      \
 		.rpm_status_id = (stat_id),				      \
 		.rpm_key = (key),					      \
 		.branch = true,						      \
-		.peer = &_platform##_##_active,				      \
+		.peer = &_platक्रमm##_##_active,				      \
 		.rate = (r),						      \
-		.hw.init = &(struct clk_init_data){			      \
+		.hw.init = &(काष्ठा clk_init_data)अणु			      \
 			.ops = &clk_smd_rpm_branch_ops,			      \
 			.name = #_name,					      \
-			.parent_names = (const char *[]){ "xo_board" },	      \
+			.parent_names = (स्थिर अक्षर *[])अणु "xo_board" पूर्ण,	      \
 			.num_parents = 1,				      \
-		},							      \
-	};								      \
-	static struct clk_smd_rpm _platform##_##_active = {		      \
+		पूर्ण,							      \
+	पूर्ण;								      \
+	अटल काष्ठा clk_smd_rpm _platक्रमm##_##_active = अणु		      \
 		.rpm_res_type = (type),					      \
 		.rpm_clk_id = (r_id),					      \
 		.rpm_status_id = (stat_id),				      \
 		.active_only = true,					      \
 		.rpm_key = (key),					      \
 		.branch = true,						      \
-		.peer = &_platform##_##_name,				      \
+		.peer = &_platक्रमm##_##_name,				      \
 		.rate = (r),						      \
-		.hw.init = &(struct clk_init_data){			      \
+		.hw.init = &(काष्ठा clk_init_data)अणु			      \
 			.ops = &clk_smd_rpm_branch_ops,			      \
 			.name = #_active,				      \
-			.parent_names = (const char *[]){ "xo_board" },	      \
+			.parent_names = (स्थिर अक्षर *[])अणु "xo_board" पूर्ण,	      \
 			.num_parents = 1,				      \
-		},							      \
-	}
+		पूर्ण,							      \
+	पूर्ण
 
-#define DEFINE_CLK_SMD_RPM(_platform, _name, _active, type, r_id)	      \
-		__DEFINE_CLK_SMD_RPM(_platform, _name, _active, type, r_id,   \
+#घोषणा DEFINE_CLK_SMD_RPM(_platक्रमm, _name, _active, type, r_id)	      \
+		__DEFINE_CLK_SMD_RPM(_platक्रमm, _name, _active, type, r_id,   \
 		0, QCOM_RPM_SMD_KEY_RATE)
 
-#define DEFINE_CLK_SMD_RPM_BRANCH(_platform, _name, _active, type, r_id, r)   \
-		__DEFINE_CLK_SMD_RPM_BRANCH(_platform, _name, _active, type,  \
+#घोषणा DEFINE_CLK_SMD_RPM_BRANCH(_platक्रमm, _name, _active, type, r_id, r)   \
+		__DEFINE_CLK_SMD_RPM_BRANCH(_platक्रमm, _name, _active, type,  \
 		r_id, 0, r, QCOM_RPM_SMD_KEY_ENABLE)
 
-#define DEFINE_CLK_SMD_RPM_QDSS(_platform, _name, _active, type, r_id)	      \
-		__DEFINE_CLK_SMD_RPM(_platform, _name, _active, type, r_id,   \
+#घोषणा DEFINE_CLK_SMD_RPM_QDSS(_platक्रमm, _name, _active, type, r_id)	      \
+		__DEFINE_CLK_SMD_RPM(_platक्रमm, _name, _active, type, r_id,   \
 		0, QCOM_RPM_SMD_KEY_STATE)
 
-#define DEFINE_CLK_SMD_RPM_XO_BUFFER(_platform, _name, _active, r_id)	      \
-		__DEFINE_CLK_SMD_RPM_BRANCH(_platform, _name, _active,	      \
+#घोषणा DEFINE_CLK_SMD_RPM_XO_BUFFER(_platक्रमm, _name, _active, r_id)	      \
+		__DEFINE_CLK_SMD_RPM_BRANCH(_platक्रमm, _name, _active,	      \
 		QCOM_SMD_RPM_CLK_BUF_A, r_id, 0, 1000,			      \
 		QCOM_RPM_KEY_SOFTWARE_ENABLE)
 
-#define DEFINE_CLK_SMD_RPM_XO_BUFFER_PINCTRL(_platform, _name, _active, r_id) \
-		__DEFINE_CLK_SMD_RPM_BRANCH(_platform, _name, _active,	      \
+#घोषणा DEFINE_CLK_SMD_RPM_XO_BUFFER_PINCTRL(_platक्रमm, _name, _active, r_id) \
+		__DEFINE_CLK_SMD_RPM_BRANCH(_platक्रमm, _name, _active,	      \
 		QCOM_SMD_RPM_CLK_BUF_A, r_id, 0, 1000,			      \
 		QCOM_RPM_KEY_PIN_CTRL_CLK_BUFFER_ENABLE_KEY)
 
-#define to_clk_smd_rpm(_hw) container_of(_hw, struct clk_smd_rpm, hw)
+#घोषणा to_clk_smd_rpm(_hw) container_of(_hw, काष्ठा clk_smd_rpm, hw)
 
-struct clk_smd_rpm {
-	const int rpm_res_type;
-	const int rpm_key;
-	const int rpm_clk_id;
-	const int rpm_status_id;
-	const bool active_only;
+काष्ठा clk_smd_rpm अणु
+	स्थिर पूर्णांक rpm_res_type;
+	स्थिर पूर्णांक rpm_key;
+	स्थिर पूर्णांक rpm_clk_id;
+	स्थिर पूर्णांक rpm_status_id;
+	स्थिर bool active_only;
 	bool enabled;
 	bool branch;
-	struct clk_smd_rpm *peer;
-	struct clk_hw hw;
-	unsigned long rate;
-	struct qcom_smd_rpm *rpm;
-};
+	काष्ठा clk_smd_rpm *peer;
+	काष्ठा clk_hw hw;
+	अचिन्हित दीर्घ rate;
+	काष्ठा qcom_smd_rpm *rpm;
+पूर्ण;
 
-struct clk_smd_rpm_req {
+काष्ठा clk_smd_rpm_req अणु
 	__le32 key;
 	__le32 nbytes;
 	__le32 value;
-};
+पूर्ण;
 
-struct rpm_cc {
-	struct qcom_rpm *rpm;
-	struct clk_smd_rpm **clks;
-	size_t num_clks;
-};
+काष्ठा rpm_cc अणु
+	काष्ठा qcom_rpm *rpm;
+	काष्ठा clk_smd_rpm **clks;
+	माप_प्रकार num_clks;
+पूर्ण;
 
-struct rpm_smd_clk_desc {
-	struct clk_smd_rpm **clks;
-	size_t num_clks;
-};
+काष्ठा rpm_smd_clk_desc अणु
+	काष्ठा clk_smd_rpm **clks;
+	माप_प्रकार num_clks;
+पूर्ण;
 
-static DEFINE_MUTEX(rpm_smd_clk_lock);
+अटल DEFINE_MUTEX(rpm_smd_clk_lock);
 
-static int clk_smd_rpm_handoff(struct clk_smd_rpm *r)
-{
-	int ret;
-	struct clk_smd_rpm_req req = {
+अटल पूर्णांक clk_smd_rpm_hanकरोff(काष्ठा clk_smd_rpm *r)
+अणु
+	पूर्णांक ret;
+	काष्ठा clk_smd_rpm_req req = अणु
 		.key = cpu_to_le32(r->rpm_key),
-		.nbytes = cpu_to_le32(sizeof(u32)),
-		.value = cpu_to_le32(r->branch ? 1 : INT_MAX),
-	};
+		.nbytes = cpu_to_le32(माप(u32)),
+		.value = cpu_to_le32(r->branch ? 1 : पूर्णांक_उच्च),
+	पूर्ण;
 
-	ret = qcom_rpm_smd_write(r->rpm, QCOM_SMD_RPM_ACTIVE_STATE,
+	ret = qcom_rpm_smd_ग_लिखो(r->rpm, QCOM_SMD_RPM_ACTIVE_STATE,
 				 r->rpm_res_type, r->rpm_clk_id, &req,
-				 sizeof(req));
-	if (ret)
-		return ret;
-	ret = qcom_rpm_smd_write(r->rpm, QCOM_SMD_RPM_SLEEP_STATE,
+				 माप(req));
+	अगर (ret)
+		वापस ret;
+	ret = qcom_rpm_smd_ग_लिखो(r->rpm, QCOM_SMD_RPM_SLEEP_STATE,
 				 r->rpm_res_type, r->rpm_clk_id, &req,
-				 sizeof(req));
-	if (ret)
-		return ret;
+				 माप(req));
+	अगर (ret)
+		वापस ret;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int clk_smd_rpm_set_rate_active(struct clk_smd_rpm *r,
-				       unsigned long rate)
-{
-	struct clk_smd_rpm_req req = {
+अटल पूर्णांक clk_smd_rpm_set_rate_active(काष्ठा clk_smd_rpm *r,
+				       अचिन्हित दीर्घ rate)
+अणु
+	काष्ठा clk_smd_rpm_req req = अणु
 		.key = cpu_to_le32(r->rpm_key),
-		.nbytes = cpu_to_le32(sizeof(u32)),
+		.nbytes = cpu_to_le32(माप(u32)),
 		.value = cpu_to_le32(DIV_ROUND_UP(rate, 1000)), /* to kHz */
-	};
+	पूर्ण;
 
-	return qcom_rpm_smd_write(r->rpm, QCOM_SMD_RPM_ACTIVE_STATE,
+	वापस qcom_rpm_smd_ग_लिखो(r->rpm, QCOM_SMD_RPM_ACTIVE_STATE,
 				  r->rpm_res_type, r->rpm_clk_id, &req,
-				  sizeof(req));
-}
+				  माप(req));
+पूर्ण
 
-static int clk_smd_rpm_set_rate_sleep(struct clk_smd_rpm *r,
-				      unsigned long rate)
-{
-	struct clk_smd_rpm_req req = {
+अटल पूर्णांक clk_smd_rpm_set_rate_sleep(काष्ठा clk_smd_rpm *r,
+				      अचिन्हित दीर्घ rate)
+अणु
+	काष्ठा clk_smd_rpm_req req = अणु
 		.key = cpu_to_le32(r->rpm_key),
-		.nbytes = cpu_to_le32(sizeof(u32)),
+		.nbytes = cpu_to_le32(माप(u32)),
 		.value = cpu_to_le32(DIV_ROUND_UP(rate, 1000)), /* to kHz */
-	};
+	पूर्ण;
 
-	return qcom_rpm_smd_write(r->rpm, QCOM_SMD_RPM_SLEEP_STATE,
+	वापस qcom_rpm_smd_ग_लिखो(r->rpm, QCOM_SMD_RPM_SLEEP_STATE,
 				  r->rpm_res_type, r->rpm_clk_id, &req,
-				  sizeof(req));
-}
+				  माप(req));
+पूर्ण
 
-static void to_active_sleep(struct clk_smd_rpm *r, unsigned long rate,
-			    unsigned long *active, unsigned long *sleep)
-{
+अटल व्योम to_active_sleep(काष्ठा clk_smd_rpm *r, अचिन्हित दीर्घ rate,
+			    अचिन्हित दीर्घ *active, अचिन्हित दीर्घ *sleep)
+अणु
 	*active = rate;
 
 	/*
-	 * Active-only clocks don't care what the rate is during sleep. So,
-	 * they vote for zero.
+	 * Active-only घड़ीs करोn't care what the rate is during sleep. So,
+	 * they vote क्रम zero.
 	 */
-	if (r->active_only)
+	अगर (r->active_only)
 		*sleep = 0;
-	else
+	अन्यथा
 		*sleep = *active;
-}
+पूर्ण
 
-static int clk_smd_rpm_prepare(struct clk_hw *hw)
-{
-	struct clk_smd_rpm *r = to_clk_smd_rpm(hw);
-	struct clk_smd_rpm *peer = r->peer;
-	unsigned long this_rate = 0, this_sleep_rate = 0;
-	unsigned long peer_rate = 0, peer_sleep_rate = 0;
-	unsigned long active_rate, sleep_rate;
-	int ret = 0;
+अटल पूर्णांक clk_smd_rpm_prepare(काष्ठा clk_hw *hw)
+अणु
+	काष्ठा clk_smd_rpm *r = to_clk_smd_rpm(hw);
+	काष्ठा clk_smd_rpm *peer = r->peer;
+	अचिन्हित दीर्घ this_rate = 0, this_sleep_rate = 0;
+	अचिन्हित दीर्घ peer_rate = 0, peer_sleep_rate = 0;
+	अचिन्हित दीर्घ active_rate, sleep_rate;
+	पूर्णांक ret = 0;
 
 	mutex_lock(&rpm_smd_clk_lock);
 
-	/* Don't send requests to the RPM if the rate has not been set. */
-	if (!r->rate)
-		goto out;
+	/* Don't send requests to the RPM अगर the rate has not been set. */
+	अगर (!r->rate)
+		जाओ out;
 
 	to_active_sleep(r, r->rate, &this_rate, &this_sleep_rate);
 
-	/* Take peer clock's rate into account only if it's enabled. */
-	if (peer->enabled)
+	/* Take peer घड़ी's rate into account only if it's enabled. */
+	अगर (peer->enabled)
 		to_active_sleep(peer, peer->rate,
 				&peer_rate, &peer_sleep_rate);
 
 	active_rate = max(this_rate, peer_rate);
 
-	if (r->branch)
+	अगर (r->branch)
 		active_rate = !!active_rate;
 
 	ret = clk_smd_rpm_set_rate_active(r, active_rate);
-	if (ret)
-		goto out;
+	अगर (ret)
+		जाओ out;
 
 	sleep_rate = max(this_sleep_rate, peer_sleep_rate);
-	if (r->branch)
+	अगर (r->branch)
 		sleep_rate = !!sleep_rate;
 
 	ret = clk_smd_rpm_set_rate_sleep(r, sleep_rate);
-	if (ret)
-		/* Undo the active set vote and restore it */
+	अगर (ret)
+		/* Unकरो the active set vote and restore it */
 		ret = clk_smd_rpm_set_rate_active(r, peer_rate);
 
 out:
-	if (!ret)
+	अगर (!ret)
 		r->enabled = true;
 
 	mutex_unlock(&rpm_smd_clk_lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void clk_smd_rpm_unprepare(struct clk_hw *hw)
-{
-	struct clk_smd_rpm *r = to_clk_smd_rpm(hw);
-	struct clk_smd_rpm *peer = r->peer;
-	unsigned long peer_rate = 0, peer_sleep_rate = 0;
-	unsigned long active_rate, sleep_rate;
-	int ret;
+अटल व्योम clk_smd_rpm_unprepare(काष्ठा clk_hw *hw)
+अणु
+	काष्ठा clk_smd_rpm *r = to_clk_smd_rpm(hw);
+	काष्ठा clk_smd_rpm *peer = r->peer;
+	अचिन्हित दीर्घ peer_rate = 0, peer_sleep_rate = 0;
+	अचिन्हित दीर्घ active_rate, sleep_rate;
+	पूर्णांक ret;
 
 	mutex_lock(&rpm_smd_clk_lock);
 
-	if (!r->rate)
-		goto out;
+	अगर (!r->rate)
+		जाओ out;
 
-	/* Take peer clock's rate into account only if it's enabled. */
-	if (peer->enabled)
+	/* Take peer घड़ी's rate into account only if it's enabled. */
+	अगर (peer->enabled)
 		to_active_sleep(peer, peer->rate, &peer_rate,
 				&peer_sleep_rate);
 
 	active_rate = r->branch ? !!peer_rate : peer_rate;
 	ret = clk_smd_rpm_set_rate_active(r, active_rate);
-	if (ret)
-		goto out;
+	अगर (ret)
+		जाओ out;
 
 	sleep_rate = r->branch ? !!peer_sleep_rate : peer_sleep_rate;
 	ret = clk_smd_rpm_set_rate_sleep(r, sleep_rate);
-	if (ret)
-		goto out;
+	अगर (ret)
+		जाओ out;
 
 	r->enabled = false;
 
 out:
 	mutex_unlock(&rpm_smd_clk_lock);
-}
+पूर्ण
 
-static int clk_smd_rpm_set_rate(struct clk_hw *hw, unsigned long rate,
-				unsigned long parent_rate)
-{
-	struct clk_smd_rpm *r = to_clk_smd_rpm(hw);
-	struct clk_smd_rpm *peer = r->peer;
-	unsigned long active_rate, sleep_rate;
-	unsigned long this_rate = 0, this_sleep_rate = 0;
-	unsigned long peer_rate = 0, peer_sleep_rate = 0;
-	int ret = 0;
+अटल पूर्णांक clk_smd_rpm_set_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
+				अचिन्हित दीर्घ parent_rate)
+अणु
+	काष्ठा clk_smd_rpm *r = to_clk_smd_rpm(hw);
+	काष्ठा clk_smd_rpm *peer = r->peer;
+	अचिन्हित दीर्घ active_rate, sleep_rate;
+	अचिन्हित दीर्घ this_rate = 0, this_sleep_rate = 0;
+	अचिन्हित दीर्घ peer_rate = 0, peer_sleep_rate = 0;
+	पूर्णांक ret = 0;
 
 	mutex_lock(&rpm_smd_clk_lock);
 
-	if (!r->enabled)
-		goto out;
+	अगर (!r->enabled)
+		जाओ out;
 
 	to_active_sleep(r, rate, &this_rate, &this_sleep_rate);
 
-	/* Take peer clock's rate into account only if it's enabled. */
-	if (peer->enabled)
+	/* Take peer घड़ी's rate into account only if it's enabled. */
+	अगर (peer->enabled)
 		to_active_sleep(peer, peer->rate,
 				&peer_rate, &peer_sleep_rate);
 
 	active_rate = max(this_rate, peer_rate);
 	ret = clk_smd_rpm_set_rate_active(r, active_rate);
-	if (ret)
-		goto out;
+	अगर (ret)
+		जाओ out;
 
 	sleep_rate = max(this_sleep_rate, peer_sleep_rate);
 	ret = clk_smd_rpm_set_rate_sleep(r, sleep_rate);
-	if (ret)
-		goto out;
+	अगर (ret)
+		जाओ out;
 
 	r->rate = rate;
 
 out:
 	mutex_unlock(&rpm_smd_clk_lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static long clk_smd_rpm_round_rate(struct clk_hw *hw, unsigned long rate,
-				   unsigned long *parent_rate)
-{
+अटल दीर्घ clk_smd_rpm_round_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
+				   अचिन्हित दीर्घ *parent_rate)
+अणु
 	/*
-	 * RPM handles rate rounding and we don't have a way to
-	 * know what the rate will be, so just return whatever
+	 * RPM handles rate rounding and we करोn't have a way to
+	 * know what the rate will be, so just वापस whatever
 	 * rate is requested.
 	 */
-	return rate;
-}
+	वापस rate;
+पूर्ण
 
-static unsigned long clk_smd_rpm_recalc_rate(struct clk_hw *hw,
-					     unsigned long parent_rate)
-{
-	struct clk_smd_rpm *r = to_clk_smd_rpm(hw);
+अटल अचिन्हित दीर्घ clk_smd_rpm_recalc_rate(काष्ठा clk_hw *hw,
+					     अचिन्हित दीर्घ parent_rate)
+अणु
+	काष्ठा clk_smd_rpm *r = to_clk_smd_rpm(hw);
 
 	/*
-	 * RPM handles rate rounding and we don't have a way to
-	 * know what the rate will be, so just return whatever
+	 * RPM handles rate rounding and we करोn't have a way to
+	 * know what the rate will be, so just वापस whatever
 	 * rate was set.
 	 */
-	return r->rate;
-}
+	वापस r->rate;
+पूर्ण
 
-static int clk_smd_rpm_enable_scaling(struct qcom_smd_rpm *rpm)
-{
-	int ret;
-	struct clk_smd_rpm_req req = {
+अटल पूर्णांक clk_smd_rpm_enable_scaling(काष्ठा qcom_smd_rpm *rpm)
+अणु
+	पूर्णांक ret;
+	काष्ठा clk_smd_rpm_req req = अणु
 		.key = cpu_to_le32(QCOM_RPM_SMD_KEY_ENABLE),
-		.nbytes = cpu_to_le32(sizeof(u32)),
+		.nbytes = cpu_to_le32(माप(u32)),
 		.value = cpu_to_le32(1),
-	};
+	पूर्ण;
 
-	ret = qcom_rpm_smd_write(rpm, QCOM_SMD_RPM_SLEEP_STATE,
+	ret = qcom_rpm_smd_ग_लिखो(rpm, QCOM_SMD_RPM_SLEEP_STATE,
 				 QCOM_SMD_RPM_MISC_CLK,
-				 QCOM_RPM_SCALING_ENABLE_ID, &req, sizeof(req));
-	if (ret) {
+				 QCOM_RPM_SCALING_ENABLE_ID, &req, माप(req));
+	अगर (ret) अणु
 		pr_err("RPM clock scaling (sleep set) not enabled!\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	ret = qcom_rpm_smd_write(rpm, QCOM_SMD_RPM_ACTIVE_STATE,
+	ret = qcom_rpm_smd_ग_लिखो(rpm, QCOM_SMD_RPM_ACTIVE_STATE,
 				 QCOM_SMD_RPM_MISC_CLK,
-				 QCOM_RPM_SCALING_ENABLE_ID, &req, sizeof(req));
-	if (ret) {
+				 QCOM_RPM_SCALING_ENABLE_ID, &req, माप(req));
+	अगर (ret) अणु
 		pr_err("RPM clock scaling (active set) not enabled!\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	pr_debug("%s: RPM clock scaling is enabled\n", __func__);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct clk_ops clk_smd_rpm_ops = {
+अटल स्थिर काष्ठा clk_ops clk_smd_rpm_ops = अणु
 	.prepare	= clk_smd_rpm_prepare,
 	.unprepare	= clk_smd_rpm_unprepare,
 	.set_rate	= clk_smd_rpm_set_rate,
 	.round_rate	= clk_smd_rpm_round_rate,
 	.recalc_rate	= clk_smd_rpm_recalc_rate,
-};
+पूर्ण;
 
-static const struct clk_ops clk_smd_rpm_branch_ops = {
+अटल स्थिर काष्ठा clk_ops clk_smd_rpm_branch_ops = अणु
 	.prepare	= clk_smd_rpm_prepare,
 	.unprepare	= clk_smd_rpm_unprepare,
-};
+पूर्ण;
 
 /* msm8916 */
 DEFINE_CLK_SMD_RPM(msm8916, pcnoc_clk, pcnoc_a_clk, QCOM_SMD_RPM_BUS_CLK, 0);
@@ -420,7 +421,7 @@ DEFINE_CLK_SMD_RPM_XO_BUFFER_PINCTRL(msm8916, bb_clk2_pin, bb_clk2_a_pin, 2);
 DEFINE_CLK_SMD_RPM_XO_BUFFER_PINCTRL(msm8916, rf_clk1_pin, rf_clk1_a_pin, 4);
 DEFINE_CLK_SMD_RPM_XO_BUFFER_PINCTRL(msm8916, rf_clk2_pin, rf_clk2_a_pin, 5);
 
-static struct clk_smd_rpm *msm8916_clks[] = {
+अटल काष्ठा clk_smd_rpm *msm8916_clks[] = अणु
 	[RPM_SMD_PCNOC_CLK]		= &msm8916_pcnoc_clk,
 	[RPM_SMD_PCNOC_A_CLK]		= &msm8916_pcnoc_a_clk,
 	[RPM_SMD_SNOC_CLK]		= &msm8916_snoc_clk,
@@ -445,12 +446,12 @@ static struct clk_smd_rpm *msm8916_clks[] = {
 	[RPM_SMD_RF_CLK1_A_PIN]		= &msm8916_rf_clk1_a_pin,
 	[RPM_SMD_RF_CLK2_PIN]		= &msm8916_rf_clk2_pin,
 	[RPM_SMD_RF_CLK2_A_PIN]		= &msm8916_rf_clk2_a_pin,
-};
+पूर्ण;
 
-static const struct rpm_smd_clk_desc rpm_clk_msm8916 = {
+अटल स्थिर काष्ठा rpm_smd_clk_desc rpm_clk_msm8916 = अणु
 	.clks = msm8916_clks,
 	.num_clks = ARRAY_SIZE(msm8916_clks),
-};
+पूर्ण;
 
 /* msm8936 */
 DEFINE_CLK_SMD_RPM(msm8936, pcnoc_clk, pcnoc_a_clk, QCOM_SMD_RPM_BUS_CLK, 0);
@@ -467,7 +468,7 @@ DEFINE_CLK_SMD_RPM_XO_BUFFER_PINCTRL(msm8936, bb_clk2_pin, bb_clk2_a_pin, 2);
 DEFINE_CLK_SMD_RPM_XO_BUFFER_PINCTRL(msm8936, rf_clk1_pin, rf_clk1_a_pin, 4);
 DEFINE_CLK_SMD_RPM_XO_BUFFER_PINCTRL(msm8936, rf_clk2_pin, rf_clk2_a_pin, 5);
 
-static struct clk_smd_rpm *msm8936_clks[] = {
+अटल काष्ठा clk_smd_rpm *msm8936_clks[] = अणु
 	[RPM_SMD_PCNOC_CLK]		= &msm8936_pcnoc_clk,
 	[RPM_SMD_PCNOC_A_CLK]		= &msm8936_pcnoc_a_clk,
 	[RPM_SMD_SNOC_CLK]		= &msm8936_snoc_clk,
@@ -494,12 +495,12 @@ static struct clk_smd_rpm *msm8936_clks[] = {
 	[RPM_SMD_RF_CLK1_A_PIN]		= &msm8936_rf_clk1_a_pin,
 	[RPM_SMD_RF_CLK2_PIN]		= &msm8936_rf_clk2_pin,
 	[RPM_SMD_RF_CLK2_A_PIN]		= &msm8936_rf_clk2_a_pin,
-};
+पूर्ण;
 
-static const struct rpm_smd_clk_desc rpm_clk_msm8936 = {
+अटल स्थिर काष्ठा rpm_smd_clk_desc rpm_clk_msm8936 = अणु
 		.clks = msm8936_clks,
 		.num_clks = ARRAY_SIZE(msm8936_clks),
-};
+पूर्ण;
 
 /* msm8974 */
 DEFINE_CLK_SMD_RPM(msm8974, pnoc_clk, pnoc_a_clk, QCOM_SMD_RPM_BUS_CLK, 0);
@@ -515,16 +516,16 @@ DEFINE_CLK_SMD_RPM_XO_BUFFER(msm8974, cxo_d1, cxo_d1_a, 2);
 DEFINE_CLK_SMD_RPM_XO_BUFFER(msm8974, cxo_a0, cxo_a0_a, 4);
 DEFINE_CLK_SMD_RPM_XO_BUFFER(msm8974, cxo_a1, cxo_a1_a, 5);
 DEFINE_CLK_SMD_RPM_XO_BUFFER(msm8974, cxo_a2, cxo_a2_a, 6);
-DEFINE_CLK_SMD_RPM_XO_BUFFER(msm8974, diff_clk, diff_a_clk, 7);
-DEFINE_CLK_SMD_RPM_XO_BUFFER(msm8974, div_clk1, div_a_clk1, 11);
-DEFINE_CLK_SMD_RPM_XO_BUFFER(msm8974, div_clk2, div_a_clk2, 12);
+DEFINE_CLK_SMD_RPM_XO_BUFFER(msm8974, dअगरf_clk, dअगरf_a_clk, 7);
+DEFINE_CLK_SMD_RPM_XO_BUFFER(msm8974, भाग_clk1, भाग_a_clk1, 11);
+DEFINE_CLK_SMD_RPM_XO_BUFFER(msm8974, भाग_clk2, भाग_a_clk2, 12);
 DEFINE_CLK_SMD_RPM_XO_BUFFER_PINCTRL(msm8974, cxo_d0_pin, cxo_d0_a_pin, 1);
 DEFINE_CLK_SMD_RPM_XO_BUFFER_PINCTRL(msm8974, cxo_d1_pin, cxo_d1_a_pin, 2);
 DEFINE_CLK_SMD_RPM_XO_BUFFER_PINCTRL(msm8974, cxo_a0_pin, cxo_a0_a_pin, 4);
 DEFINE_CLK_SMD_RPM_XO_BUFFER_PINCTRL(msm8974, cxo_a1_pin, cxo_a1_a_pin, 5);
 DEFINE_CLK_SMD_RPM_XO_BUFFER_PINCTRL(msm8974, cxo_a2_pin, cxo_a2_a_pin, 6);
 
-static struct clk_smd_rpm *msm8974_clks[] = {
+अटल काष्ठा clk_smd_rpm *msm8974_clks[] = अणु
 	[RPM_SMD_PNOC_CLK]		= &msm8974_pnoc_clk,
 	[RPM_SMD_PNOC_A_CLK]		= &msm8974_pnoc_a_clk,
 	[RPM_SMD_SNOC_CLK]		= &msm8974_snoc_clk,
@@ -551,12 +552,12 @@ static struct clk_smd_rpm *msm8974_clks[] = {
 	[RPM_SMD_CXO_A1_A]		= &msm8974_cxo_a1_a,
 	[RPM_SMD_CXO_A2]		= &msm8974_cxo_a2,
 	[RPM_SMD_CXO_A2_A]		= &msm8974_cxo_a2_a,
-	[RPM_SMD_DIFF_CLK]		= &msm8974_diff_clk,
-	[RPM_SMD_DIFF_A_CLK]		= &msm8974_diff_a_clk,
-	[RPM_SMD_DIV_CLK1]		= &msm8974_div_clk1,
-	[RPM_SMD_DIV_A_CLK1]		= &msm8974_div_a_clk1,
-	[RPM_SMD_DIV_CLK2]		= &msm8974_div_clk2,
-	[RPM_SMD_DIV_A_CLK2]		= &msm8974_div_a_clk2,
+	[RPM_SMD_DIFF_CLK]		= &msm8974_dअगरf_clk,
+	[RPM_SMD_DIFF_A_CLK]		= &msm8974_dअगरf_a_clk,
+	[RPM_SMD_DIV_CLK1]		= &msm8974_भाग_clk1,
+	[RPM_SMD_DIV_A_CLK1]		= &msm8974_भाग_a_clk1,
+	[RPM_SMD_DIV_CLK2]		= &msm8974_भाग_clk2,
+	[RPM_SMD_DIV_A_CLK2]		= &msm8974_भाग_a_clk2,
 	[RPM_SMD_CXO_D0_PIN]		= &msm8974_cxo_d0_pin,
 	[RPM_SMD_CXO_D0_A_PIN]		= &msm8974_cxo_d0_a_pin,
 	[RPM_SMD_CXO_D1_PIN]		= &msm8974_cxo_d1_pin,
@@ -567,12 +568,12 @@ static struct clk_smd_rpm *msm8974_clks[] = {
 	[RPM_SMD_CXO_A1_A_PIN]		= &msm8974_cxo_a1_a_pin,
 	[RPM_SMD_CXO_A2_PIN]		= &msm8974_cxo_a2_pin,
 	[RPM_SMD_CXO_A2_A_PIN]		= &msm8974_cxo_a2_a_pin,
-};
+पूर्ण;
 
-static const struct rpm_smd_clk_desc rpm_clk_msm8974 = {
+अटल स्थिर काष्ठा rpm_smd_clk_desc rpm_clk_msm8974 = अणु
 	.clks = msm8974_clks,
 	.num_clks = ARRAY_SIZE(msm8974_clks),
-};
+पूर्ण;
 
 
 /* msm8976 */
@@ -587,11 +588,11 @@ DEFINE_CLK_SMD_RPM_QDSS(msm8976, qdss_clk, qdss_a_clk,
 DEFINE_CLK_SMD_RPM_XO_BUFFER(msm8976, bb_clk1, bb_clk1_a, 1);
 DEFINE_CLK_SMD_RPM_XO_BUFFER(msm8976, bb_clk2, bb_clk2_a, 2);
 DEFINE_CLK_SMD_RPM_XO_BUFFER(msm8976, rf_clk2, rf_clk2_a, 5);
-DEFINE_CLK_SMD_RPM_XO_BUFFER(msm8976, div_clk2, div_clk2_a, 12);
+DEFINE_CLK_SMD_RPM_XO_BUFFER(msm8976, भाग_clk2, भाग_clk2_a, 12);
 DEFINE_CLK_SMD_RPM_XO_BUFFER_PINCTRL(msm8976, bb_clk1_pin, bb_clk1_a_pin, 1);
 DEFINE_CLK_SMD_RPM_XO_BUFFER_PINCTRL(msm8976, bb_clk2_pin, bb_clk2_a_pin, 2);
 
-static struct clk_smd_rpm *msm8976_clks[] = {
+अटल काष्ठा clk_smd_rpm *msm8976_clks[] = अणु
 	[RPM_SMD_PCNOC_CLK] = &msm8976_pcnoc_clk,
 	[RPM_SMD_PCNOC_A_CLK] = &msm8976_pcnoc_a_clk,
 	[RPM_SMD_SNOC_CLK] = &msm8976_snoc_clk,
@@ -612,16 +613,16 @@ static struct clk_smd_rpm *msm8976_clks[] = {
 	[RPM_SMD_BB_CLK2_A_PIN] = &msm8976_bb_clk2_a_pin,
 	[RPM_SMD_MMSSNOC_AHB_CLK] = &msm8976_mmssnoc_ahb_clk,
 	[RPM_SMD_MMSSNOC_AHB_A_CLK] = &msm8976_mmssnoc_ahb_a_clk,
-	[RPM_SMD_DIV_CLK2] = &msm8976_div_clk2,
-	[RPM_SMD_DIV_A_CLK2] = &msm8976_div_clk2_a,
+	[RPM_SMD_DIV_CLK2] = &msm8976_भाग_clk2,
+	[RPM_SMD_DIV_A_CLK2] = &msm8976_भाग_clk2_a,
 	[RPM_SMD_IPA_CLK] = &msm8976_ipa_clk,
 	[RPM_SMD_IPA_A_CLK] = &msm8976_ipa_a_clk,
-};
+पूर्ण;
 
-static const struct rpm_smd_clk_desc rpm_clk_msm8976 = {
+अटल स्थिर काष्ठा rpm_smd_clk_desc rpm_clk_msm8976 = अणु
 	.clks = msm8976_clks,
 	.num_clks = ARRAY_SIZE(msm8976_clks),
-};
+पूर्ण;
 
 /* msm8992 */
 DEFINE_CLK_SMD_RPM(msm8992, pnoc_clk, pnoc_a_clk, QCOM_SMD_RPM_BUS_CLK, 0);
@@ -635,9 +636,9 @@ DEFINE_CLK_SMD_RPM_XO_BUFFER_PINCTRL(msm8992, bb_clk1_pin, bb_clk1_a_pin, 1);
 DEFINE_CLK_SMD_RPM_XO_BUFFER(msm8992, bb_clk2, bb_clk2_a, 2);
 DEFINE_CLK_SMD_RPM_XO_BUFFER_PINCTRL(msm8992, bb_clk2_pin, bb_clk2_a_pin, 2);
 
-DEFINE_CLK_SMD_RPM_XO_BUFFER(msm8992, div_clk1, div_clk1_a, 11);
-DEFINE_CLK_SMD_RPM_XO_BUFFER(msm8992, div_clk2, div_clk2_a, 12);
-DEFINE_CLK_SMD_RPM_XO_BUFFER(msm8992, div_clk3, div_clk3_a, 13);
+DEFINE_CLK_SMD_RPM_XO_BUFFER(msm8992, भाग_clk1, भाग_clk1_a, 11);
+DEFINE_CLK_SMD_RPM_XO_BUFFER(msm8992, भाग_clk2, भाग_clk2_a, 12);
+DEFINE_CLK_SMD_RPM_XO_BUFFER(msm8992, भाग_clk3, भाग_clk3_a, 13);
 DEFINE_CLK_SMD_RPM(msm8992, ipa_clk, ipa_a_clk, QCOM_SMD_RPM_IPA_CLK, 0);
 DEFINE_CLK_SMD_RPM_XO_BUFFER(msm8992, ln_bb_clk, ln_bb_a_clk, 8);
 DEFINE_CLK_SMD_RPM(msm8992, mmssnoc_ahb_clk, mmssnoc_ahb_a_clk,
@@ -652,7 +653,7 @@ DEFINE_CLK_SMD_RPM_XO_BUFFER_PINCTRL(msm8992, rf_clk2_pin, rf_clk2_a_pin, 5);
 DEFINE_CLK_SMD_RPM(msm8992, ce1_clk, ce1_a_clk, QCOM_SMD_RPM_CE_CLK, 0);
 DEFINE_CLK_SMD_RPM(msm8992, ce2_clk, ce2_a_clk, QCOM_SMD_RPM_CE_CLK, 1);
 
-static struct clk_smd_rpm *msm8992_clks[] = {
+अटल काष्ठा clk_smd_rpm *msm8992_clks[] = अणु
 	[RPM_SMD_PNOC_CLK] = &msm8992_pnoc_clk,
 	[RPM_SMD_PNOC_A_CLK] = &msm8992_pnoc_a_clk,
 	[RPM_SMD_OCMEMGX_CLK] = &msm8992_ocmemgx_clk,
@@ -673,12 +674,12 @@ static struct clk_smd_rpm *msm8992_clks[] = {
 	[RPM_SMD_BB_CLK2_A] = &msm8992_bb_clk2_a,
 	[RPM_SMD_BB_CLK2_PIN] = &msm8992_bb_clk2_pin,
 	[RPM_SMD_BB_CLK2_A_PIN] = &msm8992_bb_clk2_a_pin,
-	[RPM_SMD_DIV_CLK1] = &msm8992_div_clk1,
-	[RPM_SMD_DIV_A_CLK1] = &msm8992_div_clk1_a,
-	[RPM_SMD_DIV_CLK2] = &msm8992_div_clk2,
-	[RPM_SMD_DIV_A_CLK2] = &msm8992_div_clk2_a,
-	[RPM_SMD_DIV_CLK3] = &msm8992_div_clk3,
-	[RPM_SMD_DIV_A_CLK3] = &msm8992_div_clk3_a,
+	[RPM_SMD_DIV_CLK1] = &msm8992_भाग_clk1,
+	[RPM_SMD_DIV_A_CLK1] = &msm8992_भाग_clk1_a,
+	[RPM_SMD_DIV_CLK2] = &msm8992_भाग_clk2,
+	[RPM_SMD_DIV_A_CLK2] = &msm8992_भाग_clk2_a,
+	[RPM_SMD_DIV_CLK3] = &msm8992_भाग_clk3,
+	[RPM_SMD_DIV_A_CLK3] = &msm8992_भाग_clk3_a,
 	[RPM_SMD_IPA_CLK] = &msm8992_ipa_clk,
 	[RPM_SMD_IPA_A_CLK] = &msm8992_ipa_a_clk,
 	[RPM_SMD_LN_BB_CLK] = &msm8992_ln_bb_clk,
@@ -699,12 +700,12 @@ static struct clk_smd_rpm *msm8992_clks[] = {
 	[RPM_SMD_CE1_A_CLK] = &msm8992_ce1_a_clk,
 	[RPM_SMD_CE2_CLK] = &msm8992_ce2_clk,
 	[RPM_SMD_CE2_A_CLK] = &msm8992_ce2_a_clk,
-};
+पूर्ण;
 
-static const struct rpm_smd_clk_desc rpm_clk_msm8992 = {
+अटल स्थिर काष्ठा rpm_smd_clk_desc rpm_clk_msm8992 = अणु
 	.clks = msm8992_clks,
 	.num_clks = ARRAY_SIZE(msm8992_clks),
-};
+पूर्ण;
 
 /* msm8994 */
 DEFINE_CLK_SMD_RPM(msm8994, pnoc_clk, pnoc_a_clk, QCOM_SMD_RPM_BUS_CLK, 0);
@@ -718,9 +719,9 @@ DEFINE_CLK_SMD_RPM_XO_BUFFER_PINCTRL(msm8994, bb_clk1_pin, bb_clk1_a_pin, 1);
 DEFINE_CLK_SMD_RPM_XO_BUFFER(msm8994, bb_clk2, bb_clk2_a, 2);
 DEFINE_CLK_SMD_RPM_XO_BUFFER_PINCTRL(msm8994, bb_clk2_pin, bb_clk2_a_pin, 2);
 
-DEFINE_CLK_SMD_RPM_XO_BUFFER(msm8994, div_clk1, div_clk1_a, 11);
-DEFINE_CLK_SMD_RPM_XO_BUFFER(msm8994, div_clk2, div_clk2_a, 12);
-DEFINE_CLK_SMD_RPM_XO_BUFFER(msm8994, div_clk3, div_clk3_a, 13);
+DEFINE_CLK_SMD_RPM_XO_BUFFER(msm8994, भाग_clk1, भाग_clk1_a, 11);
+DEFINE_CLK_SMD_RPM_XO_BUFFER(msm8994, भाग_clk2, भाग_clk2_a, 12);
+DEFINE_CLK_SMD_RPM_XO_BUFFER(msm8994, भाग_clk3, भाग_clk3_a, 13);
 DEFINE_CLK_SMD_RPM(msm8994, ipa_clk, ipa_a_clk, QCOM_SMD_RPM_IPA_CLK, 0);
 DEFINE_CLK_SMD_RPM_XO_BUFFER(msm8994, ln_bb_clk, ln_bb_a_clk, 8);
 DEFINE_CLK_SMD_RPM(msm8994, mmssnoc_ahb_clk, mmssnoc_ahb_a_clk,
@@ -736,7 +737,7 @@ DEFINE_CLK_SMD_RPM(msm8994, ce1_clk, ce1_a_clk, QCOM_SMD_RPM_CE_CLK, 0);
 DEFINE_CLK_SMD_RPM(msm8994, ce2_clk, ce2_a_clk, QCOM_SMD_RPM_CE_CLK, 1);
 DEFINE_CLK_SMD_RPM(msm8994, ce3_clk, ce3_a_clk, QCOM_SMD_RPM_CE_CLK, 2);
 
-static struct clk_smd_rpm *msm8994_clks[] = {
+अटल काष्ठा clk_smd_rpm *msm8994_clks[] = अणु
 	[RPM_SMD_PNOC_CLK] = &msm8994_pnoc_clk,
 	[RPM_SMD_PNOC_A_CLK] = &msm8994_pnoc_a_clk,
 	[RPM_SMD_OCMEMGX_CLK] = &msm8994_ocmemgx_clk,
@@ -757,12 +758,12 @@ static struct clk_smd_rpm *msm8994_clks[] = {
 	[RPM_SMD_BB_CLK2_A] = &msm8994_bb_clk2_a,
 	[RPM_SMD_BB_CLK2_PIN] = &msm8994_bb_clk2_pin,
 	[RPM_SMD_BB_CLK2_A_PIN] = &msm8994_bb_clk2_a_pin,
-	[RPM_SMD_DIV_CLK1] = &msm8994_div_clk1,
-	[RPM_SMD_DIV_A_CLK1] = &msm8994_div_clk1_a,
-	[RPM_SMD_DIV_CLK2] = &msm8994_div_clk2,
-	[RPM_SMD_DIV_A_CLK2] = &msm8994_div_clk2_a,
-	[RPM_SMD_DIV_CLK3] = &msm8994_div_clk3,
-	[RPM_SMD_DIV_A_CLK3] = &msm8994_div_clk3_a,
+	[RPM_SMD_DIV_CLK1] = &msm8994_भाग_clk1,
+	[RPM_SMD_DIV_A_CLK1] = &msm8994_भाग_clk1_a,
+	[RPM_SMD_DIV_CLK2] = &msm8994_भाग_clk2,
+	[RPM_SMD_DIV_A_CLK2] = &msm8994_भाग_clk2_a,
+	[RPM_SMD_DIV_CLK3] = &msm8994_भाग_clk3,
+	[RPM_SMD_DIV_A_CLK3] = &msm8994_भाग_clk3_a,
 	[RPM_SMD_IPA_CLK] = &msm8994_ipa_clk,
 	[RPM_SMD_IPA_A_CLK] = &msm8994_ipa_a_clk,
 	[RPM_SMD_LN_BB_CLK] = &msm8994_ln_bb_clk,
@@ -785,12 +786,12 @@ static struct clk_smd_rpm *msm8994_clks[] = {
 	[RPM_SMD_CE2_A_CLK] = &msm8994_ce2_a_clk,
 	[RPM_SMD_CE3_CLK] = &msm8994_ce3_clk,
 	[RPM_SMD_CE3_A_CLK] = &msm8994_ce3_a_clk,
-};
+पूर्ण;
 
-static const struct rpm_smd_clk_desc rpm_clk_msm8994 = {
+अटल स्थिर काष्ठा rpm_smd_clk_desc rpm_clk_msm8994 = अणु
 	.clks = msm8994_clks,
 	.num_clks = ARRAY_SIZE(msm8994_clks),
-};
+पूर्ण;
 
 /* msm8996 */
 DEFINE_CLK_SMD_RPM(msm8996, pcnoc_clk, pcnoc_a_clk, QCOM_SMD_RPM_BUS_CLK, 0);
@@ -812,15 +813,15 @@ DEFINE_CLK_SMD_RPM_XO_BUFFER(msm8996, bb_clk2, bb_clk2_a, 2);
 DEFINE_CLK_SMD_RPM_XO_BUFFER(msm8996, rf_clk1, rf_clk1_a, 4);
 DEFINE_CLK_SMD_RPM_XO_BUFFER(msm8996, rf_clk2, rf_clk2_a, 5);
 DEFINE_CLK_SMD_RPM_XO_BUFFER(msm8996, ln_bb_clk, ln_bb_a_clk, 8);
-DEFINE_CLK_SMD_RPM_XO_BUFFER(msm8996, div_clk1, div_clk1_a, 0xb);
-DEFINE_CLK_SMD_RPM_XO_BUFFER(msm8996, div_clk2, div_clk2_a, 0xc);
-DEFINE_CLK_SMD_RPM_XO_BUFFER(msm8996, div_clk3, div_clk3_a, 0xd);
+DEFINE_CLK_SMD_RPM_XO_BUFFER(msm8996, भाग_clk1, भाग_clk1_a, 0xb);
+DEFINE_CLK_SMD_RPM_XO_BUFFER(msm8996, भाग_clk2, भाग_clk2_a, 0xc);
+DEFINE_CLK_SMD_RPM_XO_BUFFER(msm8996, भाग_clk3, भाग_clk3_a, 0xd);
 DEFINE_CLK_SMD_RPM_XO_BUFFER_PINCTRL(msm8996, bb_clk1_pin, bb_clk1_a_pin, 1);
 DEFINE_CLK_SMD_RPM_XO_BUFFER_PINCTRL(msm8996, bb_clk2_pin, bb_clk2_a_pin, 2);
 DEFINE_CLK_SMD_RPM_XO_BUFFER_PINCTRL(msm8996, rf_clk1_pin, rf_clk1_a_pin, 4);
 DEFINE_CLK_SMD_RPM_XO_BUFFER_PINCTRL(msm8996, rf_clk2_pin, rf_clk2_a_pin, 5);
 
-static struct clk_smd_rpm *msm8996_clks[] = {
+अटल काष्ठा clk_smd_rpm *msm8996_clks[] = अणु
 	[RPM_SMD_PCNOC_CLK] = &msm8996_pcnoc_clk,
 	[RPM_SMD_PCNOC_A_CLK] = &msm8996_pcnoc_a_clk,
 	[RPM_SMD_SNOC_CLK] = &msm8996_snoc_clk,
@@ -851,12 +852,12 @@ static struct clk_smd_rpm *msm8996_clks[] = {
 	[RPM_SMD_RF_CLK2_A] = &msm8996_rf_clk2_a,
 	[RPM_SMD_LN_BB_CLK] = &msm8996_ln_bb_clk,
 	[RPM_SMD_LN_BB_A_CLK] = &msm8996_ln_bb_a_clk,
-	[RPM_SMD_DIV_CLK1] = &msm8996_div_clk1,
-	[RPM_SMD_DIV_A_CLK1] = &msm8996_div_clk1_a,
-	[RPM_SMD_DIV_CLK2] = &msm8996_div_clk2,
-	[RPM_SMD_DIV_A_CLK2] = &msm8996_div_clk2_a,
-	[RPM_SMD_DIV_CLK3] = &msm8996_div_clk3,
-	[RPM_SMD_DIV_A_CLK3] = &msm8996_div_clk3_a,
+	[RPM_SMD_DIV_CLK1] = &msm8996_भाग_clk1,
+	[RPM_SMD_DIV_A_CLK1] = &msm8996_भाग_clk1_a,
+	[RPM_SMD_DIV_CLK2] = &msm8996_भाग_clk2,
+	[RPM_SMD_DIV_A_CLK2] = &msm8996_भाग_clk2_a,
+	[RPM_SMD_DIV_CLK3] = &msm8996_भाग_clk3,
+	[RPM_SMD_DIV_A_CLK3] = &msm8996_भाग_clk3_a,
 	[RPM_SMD_BB_CLK1_PIN] = &msm8996_bb_clk1_pin,
 	[RPM_SMD_BB_CLK1_A_PIN] = &msm8996_bb_clk1_a_pin,
 	[RPM_SMD_BB_CLK2_PIN] = &msm8996_bb_clk2_pin,
@@ -865,12 +866,12 @@ static struct clk_smd_rpm *msm8996_clks[] = {
 	[RPM_SMD_RF_CLK1_A_PIN] = &msm8996_rf_clk1_a_pin,
 	[RPM_SMD_RF_CLK2_PIN] = &msm8996_rf_clk2_pin,
 	[RPM_SMD_RF_CLK2_A_PIN] = &msm8996_rf_clk2_a_pin,
-};
+पूर्ण;
 
-static const struct rpm_smd_clk_desc rpm_clk_msm8996 = {
+अटल स्थिर काष्ठा rpm_smd_clk_desc rpm_clk_msm8996 = अणु
 	.clks = msm8996_clks,
 	.num_clks = ARRAY_SIZE(msm8996_clks),
-};
+पूर्ण;
 
 /* QCS404 */
 DEFINE_CLK_SMD_RPM_QDSS(qcs404, qdss_clk, qdss_a_clk, QCOM_SMD_RPM_MISC_CLK, 1);
@@ -890,7 +891,7 @@ DEFINE_CLK_SMD_RPM_XO_BUFFER_PINCTRL(qcs404, rf_clk1_pin, rf_clk1_a_pin, 4);
 DEFINE_CLK_SMD_RPM_XO_BUFFER(qcs404, ln_bb_clk, ln_bb_a_clk, 8);
 DEFINE_CLK_SMD_RPM_XO_BUFFER_PINCTRL(qcs404, ln_bb_clk_pin, ln_bb_clk_a_pin, 8);
 
-static struct clk_smd_rpm *qcs404_clks[] = {
+अटल काष्ठा clk_smd_rpm *qcs404_clks[] = अणु
 	[RPM_SMD_QDSS_CLK] = &qcs404_qdss_clk,
 	[RPM_SMD_QDSS_A_CLK] = &qcs404_qdss_a_clk,
 	[RPM_SMD_PNOC_CLK] = &qcs404_pnoc_clk,
@@ -909,12 +910,12 @@ static struct clk_smd_rpm *qcs404_clks[] = {
 	[RPM_SMD_RF_CLK1_A] = &qcs404_rf_clk1_a,
 	[RPM_SMD_LN_BB_CLK] = &qcs404_ln_bb_clk,
 	[RPM_SMD_LN_BB_A_CLK] = &qcs404_ln_bb_a_clk,
-};
+पूर्ण;
 
-static const struct rpm_smd_clk_desc rpm_clk_qcs404 = {
+अटल स्थिर काष्ठा rpm_smd_clk_desc rpm_clk_qcs404 = अणु
 	.clks = qcs404_clks,
 	.num_clks = ARRAY_SIZE(qcs404_clks),
-};
+पूर्ण;
 
 /* msm8998 */
 DEFINE_CLK_SMD_RPM(msm8998, bimc_clk, bimc_a_clk, QCOM_SMD_RPM_MEM_CLK, 0);
@@ -922,7 +923,7 @@ DEFINE_CLK_SMD_RPM(msm8998, pcnoc_clk, pcnoc_a_clk, QCOM_SMD_RPM_BUS_CLK, 0);
 DEFINE_CLK_SMD_RPM(msm8998, snoc_clk, snoc_a_clk, QCOM_SMD_RPM_BUS_CLK, 1);
 DEFINE_CLK_SMD_RPM(msm8998, cnoc_clk, cnoc_a_clk, QCOM_SMD_RPM_BUS_CLK, 2);
 DEFINE_CLK_SMD_RPM(msm8998, ce1_clk, ce1_a_clk, QCOM_SMD_RPM_CE_CLK, 0);
-DEFINE_CLK_SMD_RPM_XO_BUFFER(msm8998, div_clk1, div_clk1_a, 0xb);
+DEFINE_CLK_SMD_RPM_XO_BUFFER(msm8998, भाग_clk1, भाग_clk1_a, 0xb);
 DEFINE_CLK_SMD_RPM(msm8998, ipa_clk, ipa_a_clk, QCOM_SMD_RPM_IPA_CLK, 0);
 DEFINE_CLK_SMD_RPM_XO_BUFFER(msm8998, ln_bb_clk1, ln_bb_clk1_a, 1);
 DEFINE_CLK_SMD_RPM_XO_BUFFER(msm8998, ln_bb_clk2, ln_bb_clk2_a, 2);
@@ -940,7 +941,7 @@ DEFINE_CLK_SMD_RPM_XO_BUFFER(msm8998, rf_clk1, rf_clk1_a, 4);
 DEFINE_CLK_SMD_RPM_XO_BUFFER_PINCTRL(msm8998, rf_clk2_pin, rf_clk2_a_pin, 5);
 DEFINE_CLK_SMD_RPM_XO_BUFFER(msm8998, rf_clk3, rf_clk3_a, 6);
 DEFINE_CLK_SMD_RPM_XO_BUFFER_PINCTRL(msm8998, rf_clk3_pin, rf_clk3_a_pin, 6);
-static struct clk_smd_rpm *msm8998_clks[] = {
+अटल काष्ठा clk_smd_rpm *msm8998_clks[] = अणु
 	[RPM_SMD_BIMC_CLK] = &msm8998_bimc_clk,
 	[RPM_SMD_BIMC_A_CLK] = &msm8998_bimc_a_clk,
 	[RPM_SMD_PCNOC_CLK] = &msm8998_pcnoc_clk,
@@ -951,8 +952,8 @@ static struct clk_smd_rpm *msm8998_clks[] = {
 	[RPM_SMD_CNOC_A_CLK] = &msm8998_cnoc_a_clk,
 	[RPM_SMD_CE1_CLK] = &msm8998_ce1_clk,
 	[RPM_SMD_CE1_A_CLK] = &msm8998_ce1_a_clk,
-	[RPM_SMD_DIV_CLK1] = &msm8998_div_clk1,
-	[RPM_SMD_DIV_A_CLK1] = &msm8998_div_clk1_a,
+	[RPM_SMD_DIV_CLK1] = &msm8998_भाग_clk1,
+	[RPM_SMD_DIV_A_CLK1] = &msm8998_भाग_clk1_a,
 	[RPM_SMD_IPA_CLK] = &msm8998_ipa_clk,
 	[RPM_SMD_IPA_A_CLK] = &msm8998_ipa_a_clk,
 	[RPM_SMD_LN_BB_CLK1] = &msm8998_ln_bb_clk1,
@@ -977,12 +978,12 @@ static struct clk_smd_rpm *msm8998_clks[] = {
 	[RPM_SMD_RF_CLK3_A] = &msm8998_rf_clk3_a,
 	[RPM_SMD_RF_CLK3_PIN] = &msm8998_rf_clk3_pin,
 	[RPM_SMD_RF_CLK3_A_PIN] = &msm8998_rf_clk3_a_pin,
-};
+पूर्ण;
 
-static const struct rpm_smd_clk_desc rpm_clk_msm8998 = {
+अटल स्थिर काष्ठा rpm_smd_clk_desc rpm_clk_msm8998 = अणु
 	.clks = msm8998_clks,
 	.num_clks = ARRAY_SIZE(msm8998_clks),
-};
+पूर्ण;
 
 /* sdm660 */
 DEFINE_CLK_SMD_RPM_BRANCH(sdm660, bi_tcxo, bi_tcxo_a, QCOM_SMD_RPM_MISC_CLK, 0,
@@ -1001,7 +1002,7 @@ DEFINE_CLK_SMD_RPM(sdm660, aggre2_noc_clk, aggre2_noc_a_clk,
 DEFINE_CLK_SMD_RPM_QDSS(sdm660, qdss_clk, qdss_a_clk,
 						QCOM_SMD_RPM_MISC_CLK, 1);
 DEFINE_CLK_SMD_RPM_XO_BUFFER(sdm660, rf_clk1, rf_clk1_a, 4);
-DEFINE_CLK_SMD_RPM_XO_BUFFER(sdm660, div_clk1, div_clk1_a, 11);
+DEFINE_CLK_SMD_RPM_XO_BUFFER(sdm660, भाग_clk1, भाग_clk1_a, 11);
 DEFINE_CLK_SMD_RPM_XO_BUFFER(sdm660, ln_bb_clk1, ln_bb_clk1_a, 1);
 DEFINE_CLK_SMD_RPM_XO_BUFFER(sdm660, ln_bb_clk2, ln_bb_clk2_a, 2);
 DEFINE_CLK_SMD_RPM_XO_BUFFER(sdm660, ln_bb_clk3, ln_bb_clk3_a, 3);
@@ -1013,7 +1014,7 @@ DEFINE_CLK_SMD_RPM_XO_BUFFER_PINCTRL(sdm660, ln_bb_clk2_pin,
 							ln_bb_clk2_pin_a, 2);
 DEFINE_CLK_SMD_RPM_XO_BUFFER_PINCTRL(sdm660, ln_bb_clk3_pin,
 							ln_bb_clk3_pin_a, 3);
-static struct clk_smd_rpm *sdm660_clks[] = {
+अटल काष्ठा clk_smd_rpm *sdm660_clks[] = अणु
 	[RPM_SMD_XO_CLK_SRC] = &sdm660_bi_tcxo,
 	[RPM_SMD_XO_A_CLK_SRC] = &sdm660_bi_tcxo_a,
 	[RPM_SMD_SNOC_CLK] = &sdm660_snoc_clk,
@@ -1036,8 +1037,8 @@ static struct clk_smd_rpm *sdm660_clks[] = {
 	[RPM_SMD_QDSS_A_CLK] = &sdm660_qdss_a_clk,
 	[RPM_SMD_RF_CLK1] = &sdm660_rf_clk1,
 	[RPM_SMD_RF_CLK1_A] = &sdm660_rf_clk1_a,
-	[RPM_SMD_DIV_CLK1] = &sdm660_div_clk1,
-	[RPM_SMD_DIV_A_CLK1] = &sdm660_div_clk1_a,
+	[RPM_SMD_DIV_CLK1] = &sdm660_भाग_clk1,
+	[RPM_SMD_DIV_A_CLK1] = &sdm660_भाग_clk1_a,
 	[RPM_SMD_LN_BB_CLK] = &sdm660_ln_bb_clk1,
 	[RPM_SMD_LN_BB_A_CLK] = &sdm660_ln_bb_clk1_a,
 	[RPM_SMD_LN_BB_CLK2] = &sdm660_ln_bb_clk2,
@@ -1052,125 +1053,125 @@ static struct clk_smd_rpm *sdm660_clks[] = {
 	[RPM_SMD_LN_BB_CLK2_A_PIN] = &sdm660_ln_bb_clk2_pin_a,
 	[RPM_SMD_LN_BB_CLK3_PIN] = &sdm660_ln_bb_clk3_pin,
 	[RPM_SMD_LN_BB_CLK3_A_PIN] = &sdm660_ln_bb_clk3_pin_a,
-};
+पूर्ण;
 
-static const struct rpm_smd_clk_desc rpm_clk_sdm660 = {
+अटल स्थिर काष्ठा rpm_smd_clk_desc rpm_clk_sdm660 = अणु
 	.clks = sdm660_clks,
 	.num_clks = ARRAY_SIZE(sdm660_clks),
-};
+पूर्ण;
 
-static const struct of_device_id rpm_smd_clk_match_table[] = {
-	{ .compatible = "qcom,rpmcc-msm8916", .data = &rpm_clk_msm8916 },
-	{ .compatible = "qcom,rpmcc-msm8936", .data = &rpm_clk_msm8936 },
-	{ .compatible = "qcom,rpmcc-msm8974", .data = &rpm_clk_msm8974 },
-	{ .compatible = "qcom,rpmcc-msm8976", .data = &rpm_clk_msm8976 },
-	{ .compatible = "qcom,rpmcc-msm8992", .data = &rpm_clk_msm8992 },
-	{ .compatible = "qcom,rpmcc-msm8994", .data = &rpm_clk_msm8994 },
-	{ .compatible = "qcom,rpmcc-msm8996", .data = &rpm_clk_msm8996 },
-	{ .compatible = "qcom,rpmcc-msm8998", .data = &rpm_clk_msm8998 },
-	{ .compatible = "qcom,rpmcc-qcs404",  .data = &rpm_clk_qcs404  },
-	{ .compatible = "qcom,rpmcc-sdm660",  .data = &rpm_clk_sdm660  },
-	{ }
-};
+अटल स्थिर काष्ठा of_device_id rpm_smd_clk_match_table[] = अणु
+	अणु .compatible = "qcom,rpmcc-msm8916", .data = &rpm_clk_msm8916 पूर्ण,
+	अणु .compatible = "qcom,rpmcc-msm8936", .data = &rpm_clk_msm8936 पूर्ण,
+	अणु .compatible = "qcom,rpmcc-msm8974", .data = &rpm_clk_msm8974 पूर्ण,
+	अणु .compatible = "qcom,rpmcc-msm8976", .data = &rpm_clk_msm8976 पूर्ण,
+	अणु .compatible = "qcom,rpmcc-msm8992", .data = &rpm_clk_msm8992 पूर्ण,
+	अणु .compatible = "qcom,rpmcc-msm8994", .data = &rpm_clk_msm8994 पूर्ण,
+	अणु .compatible = "qcom,rpmcc-msm8996", .data = &rpm_clk_msm8996 पूर्ण,
+	अणु .compatible = "qcom,rpmcc-msm8998", .data = &rpm_clk_msm8998 पूर्ण,
+	अणु .compatible = "qcom,rpmcc-qcs404",  .data = &rpm_clk_qcs404  पूर्ण,
+	अणु .compatible = "qcom,rpmcc-sdm660",  .data = &rpm_clk_sdm660  पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, rpm_smd_clk_match_table);
 
-static struct clk_hw *qcom_smdrpm_clk_hw_get(struct of_phandle_args *clkspec,
-					     void *data)
-{
-	struct rpm_cc *rcc = data;
-	unsigned int idx = clkspec->args[0];
+अटल काष्ठा clk_hw *qcom_smdrpm_clk_hw_get(काष्ठा of_phandle_args *clkspec,
+					     व्योम *data)
+अणु
+	काष्ठा rpm_cc *rcc = data;
+	अचिन्हित पूर्णांक idx = clkspec->args[0];
 
-	if (idx >= rcc->num_clks) {
+	अगर (idx >= rcc->num_clks) अणु
 		pr_err("%s: invalid index %u\n", __func__, idx);
-		return ERR_PTR(-EINVAL);
-	}
+		वापस ERR_PTR(-EINVAL);
+	पूर्ण
 
-	return rcc->clks[idx] ? &rcc->clks[idx]->hw : ERR_PTR(-ENOENT);
-}
+	वापस rcc->clks[idx] ? &rcc->clks[idx]->hw : ERR_PTR(-ENOENT);
+पूर्ण
 
-static int rpm_smd_clk_probe(struct platform_device *pdev)
-{
-	struct rpm_cc *rcc;
-	int ret;
-	size_t num_clks, i;
-	struct qcom_smd_rpm *rpm;
-	struct clk_smd_rpm **rpm_smd_clks;
-	const struct rpm_smd_clk_desc *desc;
+अटल पूर्णांक rpm_smd_clk_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा rpm_cc *rcc;
+	पूर्णांक ret;
+	माप_प्रकार num_clks, i;
+	काष्ठा qcom_smd_rpm *rpm;
+	काष्ठा clk_smd_rpm **rpm_smd_clks;
+	स्थिर काष्ठा rpm_smd_clk_desc *desc;
 
 	rpm = dev_get_drvdata(pdev->dev.parent);
-	if (!rpm) {
+	अगर (!rpm) अणु
 		dev_err(&pdev->dev, "Unable to retrieve handle to RPM\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
 	desc = of_device_get_match_data(&pdev->dev);
-	if (!desc)
-		return -EINVAL;
+	अगर (!desc)
+		वापस -EINVAL;
 
 	rpm_smd_clks = desc->clks;
 	num_clks = desc->num_clks;
 
-	rcc = devm_kzalloc(&pdev->dev, sizeof(*rcc), GFP_KERNEL);
-	if (!rcc)
-		return -ENOMEM;
+	rcc = devm_kzalloc(&pdev->dev, माप(*rcc), GFP_KERNEL);
+	अगर (!rcc)
+		वापस -ENOMEM;
 
 	rcc->clks = rpm_smd_clks;
 	rcc->num_clks = num_clks;
 
-	for (i = 0; i < num_clks; i++) {
-		if (!rpm_smd_clks[i])
-			continue;
+	क्रम (i = 0; i < num_clks; i++) अणु
+		अगर (!rpm_smd_clks[i])
+			जारी;
 
 		rpm_smd_clks[i]->rpm = rpm;
 
-		ret = clk_smd_rpm_handoff(rpm_smd_clks[i]);
-		if (ret)
-			goto err;
-	}
+		ret = clk_smd_rpm_hanकरोff(rpm_smd_clks[i]);
+		अगर (ret)
+			जाओ err;
+	पूर्ण
 
 	ret = clk_smd_rpm_enable_scaling(rpm);
-	if (ret)
-		goto err;
+	अगर (ret)
+		जाओ err;
 
-	for (i = 0; i < num_clks; i++) {
-		if (!rpm_smd_clks[i])
-			continue;
+	क्रम (i = 0; i < num_clks; i++) अणु
+		अगर (!rpm_smd_clks[i])
+			जारी;
 
-		ret = devm_clk_hw_register(&pdev->dev, &rpm_smd_clks[i]->hw);
-		if (ret)
-			goto err;
-	}
+		ret = devm_clk_hw_रेजिस्टर(&pdev->dev, &rpm_smd_clks[i]->hw);
+		अगर (ret)
+			जाओ err;
+	पूर्ण
 
 	ret = devm_of_clk_add_hw_provider(&pdev->dev, qcom_smdrpm_clk_hw_get,
 				     rcc);
-	if (ret)
-		goto err;
+	अगर (ret)
+		जाओ err;
 
-	return 0;
+	वापस 0;
 err:
 	dev_err(&pdev->dev, "Error registering SMD clock driver (%d)\n", ret);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static struct platform_driver rpm_smd_clk_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver rpm_smd_clk_driver = अणु
+	.driver = अणु
 		.name = "qcom-clk-smd-rpm",
 		.of_match_table = rpm_smd_clk_match_table,
-	},
+	पूर्ण,
 	.probe = rpm_smd_clk_probe,
-};
+पूर्ण;
 
-static int __init rpm_smd_clk_init(void)
-{
-	return platform_driver_register(&rpm_smd_clk_driver);
-}
+अटल पूर्णांक __init rpm_smd_clk_init(व्योम)
+अणु
+	वापस platक्रमm_driver_रेजिस्टर(&rpm_smd_clk_driver);
+पूर्ण
 core_initcall(rpm_smd_clk_init);
 
-static void __exit rpm_smd_clk_exit(void)
-{
-	platform_driver_unregister(&rpm_smd_clk_driver);
-}
-module_exit(rpm_smd_clk_exit);
+अटल व्योम __निकास rpm_smd_clk_निकास(व्योम)
+अणु
+	platक्रमm_driver_unरेजिस्टर(&rpm_smd_clk_driver);
+पूर्ण
+module_निकास(rpm_smd_clk_निकास);
 
 MODULE_DESCRIPTION("Qualcomm RPM over SMD Clock Controller Driver");
 MODULE_LICENSE("GPL v2");

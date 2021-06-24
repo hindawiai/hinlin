@@ -1,24 +1,25 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * SHA-256, as specified in
- * http://csrc.nist.gov/groups/STM/cavp/documents/shs/sha256-384-512.pdf
+ * SHA-256, as specअगरied in
+ * http://csrc.nist.gov/groups/STM/cavp/करोcuments/shs/sha256-384-512.pdf
  *
  * SHA-256 code by Jean-Luc Cooke <jlcooke@certainkey.com>.
  *
  * Copyright (c) Jean-Luc Cooke <jlcooke@certainkey.com>
- * Copyright (c) Andrew McDonald <andrew@mcdonald.org.uk>
- * Copyright (c) 2002 James Morris <jmorris@intercode.com.au>
+ * Copyright (c) Andrew McDonald <andrew@mcकरोnald.org.uk>
+ * Copyright (c) 2002 James Morris <jmorris@पूर्णांकercode.com.au>
  * Copyright (c) 2014 Red Hat Inc.
  */
 
-#include <linux/bitops.h>
-#include <linux/export.h>
-#include <linux/module.h>
-#include <linux/string.h>
-#include <crypto/sha2.h>
-#include <asm/unaligned.h>
+#समावेश <linux/bitops.h>
+#समावेश <linux/export.h>
+#समावेश <linux/module.h>
+#समावेश <linux/माला.स>
+#समावेश <crypto/sha2.h>
+#समावेश <यंत्र/unaligned.h>
 
-static const u32 SHA256_K[] = {
+अटल स्थिर u32 SHA256_K[] = अणु
 	0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5,
 	0x3956c25b, 0x59f111f1, 0x923f82a4, 0xab1c5ed5,
 	0xd807aa98, 0x12835b01, 0x243185be, 0x550c7dc3,
@@ -35,48 +36,48 @@ static const u32 SHA256_K[] = {
 	0x391c0cb3, 0x4ed8aa4a, 0x5b9cca4f, 0x682e6ff3,
 	0x748f82ee, 0x78a5636f, 0x84c87814, 0x8cc70208,
 	0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2,
-};
+पूर्ण;
 
-static inline u32 Ch(u32 x, u32 y, u32 z)
-{
-	return z ^ (x & (y ^ z));
-}
+अटल अंतरभूत u32 Ch(u32 x, u32 y, u32 z)
+अणु
+	वापस z ^ (x & (y ^ z));
+पूर्ण
 
-static inline u32 Maj(u32 x, u32 y, u32 z)
-{
-	return (x & y) | (z & (x | y));
-}
+अटल अंतरभूत u32 Maj(u32 x, u32 y, u32 z)
+अणु
+	वापस (x & y) | (z & (x | y));
+पूर्ण
 
-#define e0(x)       (ror32(x, 2) ^ ror32(x, 13) ^ ror32(x, 22))
-#define e1(x)       (ror32(x, 6) ^ ror32(x, 11) ^ ror32(x, 25))
-#define s0(x)       (ror32(x, 7) ^ ror32(x, 18) ^ (x >> 3))
-#define s1(x)       (ror32(x, 17) ^ ror32(x, 19) ^ (x >> 10))
+#घोषणा e0(x)       (ror32(x, 2) ^ ror32(x, 13) ^ ror32(x, 22))
+#घोषणा e1(x)       (ror32(x, 6) ^ ror32(x, 11) ^ ror32(x, 25))
+#घोषणा s0(x)       (ror32(x, 7) ^ ror32(x, 18) ^ (x >> 3))
+#घोषणा s1(x)       (ror32(x, 17) ^ ror32(x, 19) ^ (x >> 10))
 
-static inline void LOAD_OP(int I, u32 *W, const u8 *input)
-{
+अटल अंतरभूत व्योम LOAD_OP(पूर्णांक I, u32 *W, स्थिर u8 *input)
+अणु
 	W[I] = get_unaligned_be32((__u32 *)input + I);
-}
+पूर्ण
 
-static inline void BLEND_OP(int I, u32 *W)
-{
+अटल अंतरभूत व्योम BLEND_OP(पूर्णांक I, u32 *W)
+अणु
 	W[I] = s1(W[I-2]) + W[I-7] + s0(W[I-15]) + W[I-16];
-}
+पूर्ण
 
-#define SHA256_ROUND(i, a, b, c, d, e, f, g, h) do {		\
+#घोषणा SHA256_ROUND(i, a, b, c, d, e, f, g, h) करो अणु		\
 	u32 t1, t2;						\
 	t1 = h + e1(e) + Ch(e, f, g) + SHA256_K[i] + W[i];	\
 	t2 = e0(a) + Maj(a, b, c);				\
 	d += t1;						\
 	h = t1 + t2;						\
-} while (0)
+पूर्ण जबतक (0)
 
-static void sha256_transform(u32 *state, const u8 *input, u32 *W)
-{
+अटल व्योम sha256_transक्रमm(u32 *state, स्थिर u8 *input, u32 *W)
+अणु
 	u32 a, b, c, d, e, f, g, h;
-	int i;
+	पूर्णांक i;
 
 	/* load the input */
-	for (i = 0; i < 16; i += 8) {
+	क्रम (i = 0; i < 16; i += 8) अणु
 		LOAD_OP(i + 0, W, input);
 		LOAD_OP(i + 1, W, input);
 		LOAD_OP(i + 2, W, input);
@@ -85,10 +86,10 @@ static void sha256_transform(u32 *state, const u8 *input, u32 *W)
 		LOAD_OP(i + 5, W, input);
 		LOAD_OP(i + 6, W, input);
 		LOAD_OP(i + 7, W, input);
-	}
+	पूर्ण
 
 	/* now blend */
-	for (i = 16; i < 64; i += 8) {
+	क्रम (i = 16; i < 64; i += 8) अणु
 		BLEND_OP(i + 0, W);
 		BLEND_OP(i + 1, W);
 		BLEND_OP(i + 2, W);
@@ -97,14 +98,14 @@ static void sha256_transform(u32 *state, const u8 *input, u32 *W)
 		BLEND_OP(i + 5, W);
 		BLEND_OP(i + 6, W);
 		BLEND_OP(i + 7, W);
-	}
+	पूर्ण
 
-	/* load the state into our registers */
+	/* load the state पूर्णांकo our रेजिस्टरs */
 	a = state[0];  b = state[1];  c = state[2];  d = state[3];
 	e = state[4];  f = state[5];  g = state[6];  h = state[7];
 
 	/* now iterate */
-	for (i = 0; i < 64; i += 8) {
+	क्रम (i = 0; i < 64; i += 8) अणु
 		SHA256_ROUND(i + 0, a, b, c, d, e, f, g, h);
 		SHA256_ROUND(i + 1, h, a, b, c, d, e, f, g);
 		SHA256_ROUND(i + 2, g, h, a, b, c, d, e, f);
@@ -113,57 +114,57 @@ static void sha256_transform(u32 *state, const u8 *input, u32 *W)
 		SHA256_ROUND(i + 5, d, e, f, g, h, a, b, c);
 		SHA256_ROUND(i + 6, c, d, e, f, g, h, a, b);
 		SHA256_ROUND(i + 7, b, c, d, e, f, g, h, a);
-	}
+	पूर्ण
 
 	state[0] += a; state[1] += b; state[2] += c; state[3] += d;
 	state[4] += e; state[5] += f; state[6] += g; state[7] += h;
-}
+पूर्ण
 
-void sha256_update(struct sha256_state *sctx, const u8 *data, unsigned int len)
-{
-	unsigned int partial, done;
-	const u8 *src;
+व्योम sha256_update(काष्ठा sha256_state *sctx, स्थिर u8 *data, अचिन्हित पूर्णांक len)
+अणु
+	अचिन्हित पूर्णांक partial, करोne;
+	स्थिर u8 *src;
 	u32 W[64];
 
 	partial = sctx->count & 0x3f;
 	sctx->count += len;
-	done = 0;
+	करोne = 0;
 	src = data;
 
-	if ((partial + len) > 63) {
-		if (partial) {
-			done = -partial;
-			memcpy(sctx->buf + partial, data, done + 64);
+	अगर ((partial + len) > 63) अणु
+		अगर (partial) अणु
+			करोne = -partial;
+			स_नकल(sctx->buf + partial, data, करोne + 64);
 			src = sctx->buf;
-		}
+		पूर्ण
 
-		do {
-			sha256_transform(sctx->state, src, W);
-			done += 64;
-			src = data + done;
-		} while (done + 63 < len);
+		करो अणु
+			sha256_transक्रमm(sctx->state, src, W);
+			करोne += 64;
+			src = data + करोne;
+		पूर्ण जबतक (करोne + 63 < len);
 
-		memzero_explicit(W, sizeof(W));
+		memzero_explicit(W, माप(W));
 
 		partial = 0;
-	}
-	memcpy(sctx->buf + partial, src, len - done);
-}
+	पूर्ण
+	स_नकल(sctx->buf + partial, src, len - करोne);
+पूर्ण
 EXPORT_SYMBOL(sha256_update);
 
-void sha224_update(struct sha256_state *sctx, const u8 *data, unsigned int len)
-{
+व्योम sha224_update(काष्ठा sha256_state *sctx, स्थिर u8 *data, अचिन्हित पूर्णांक len)
+अणु
 	sha256_update(sctx, data, len);
-}
+पूर्ण
 EXPORT_SYMBOL(sha224_update);
 
-static void __sha256_final(struct sha256_state *sctx, u8 *out, int digest_words)
-{
+अटल व्योम __sha256_final(काष्ठा sha256_state *sctx, u8 *out, पूर्णांक digest_words)
+अणु
 	__be32 *dst = (__be32 *)out;
 	__be64 bits;
-	unsigned int index, pad_len;
-	int i;
-	static const u8 padding[64] = { 0x80, };
+	अचिन्हित पूर्णांक index, pad_len;
+	पूर्णांक i;
+	अटल स्थिर u8 padding[64] = अणु 0x80, पूर्ण;
 
 	/* Save number of bits */
 	bits = cpu_to_be64(sctx->count << 3);
@@ -173,37 +174,37 @@ static void __sha256_final(struct sha256_state *sctx, u8 *out, int digest_words)
 	pad_len = (index < 56) ? (56 - index) : ((64+56) - index);
 	sha256_update(sctx, padding, pad_len);
 
-	/* Append length (before padding) */
-	sha256_update(sctx, (const u8 *)&bits, sizeof(bits));
+	/* Append length (beक्रमe padding) */
+	sha256_update(sctx, (स्थिर u8 *)&bits, माप(bits));
 
 	/* Store state in digest */
-	for (i = 0; i < digest_words; i++)
+	क्रम (i = 0; i < digest_words; i++)
 		put_unaligned_be32(sctx->state[i], &dst[i]);
 
-	/* Zeroize sensitive information. */
-	memzero_explicit(sctx, sizeof(*sctx));
-}
+	/* Zeroize sensitive inक्रमmation. */
+	memzero_explicit(sctx, माप(*sctx));
+पूर्ण
 
-void sha256_final(struct sha256_state *sctx, u8 *out)
-{
+व्योम sha256_final(काष्ठा sha256_state *sctx, u8 *out)
+अणु
 	__sha256_final(sctx, out, 8);
-}
+पूर्ण
 EXPORT_SYMBOL(sha256_final);
 
-void sha224_final(struct sha256_state *sctx, u8 *out)
-{
+व्योम sha224_final(काष्ठा sha256_state *sctx, u8 *out)
+अणु
 	__sha256_final(sctx, out, 7);
-}
+पूर्ण
 EXPORT_SYMBOL(sha224_final);
 
-void sha256(const u8 *data, unsigned int len, u8 *out)
-{
-	struct sha256_state sctx;
+व्योम sha256(स्थिर u8 *data, अचिन्हित पूर्णांक len, u8 *out)
+अणु
+	काष्ठा sha256_state sctx;
 
 	sha256_init(&sctx);
 	sha256_update(&sctx, data, len);
 	sha256_final(&sctx, out);
-}
+पूर्ण
 EXPORT_SYMBOL(sha256);
 
 MODULE_LICENSE("GPL");

@@ -1,261 +1,262 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Dynamic reconfiguration memory support
  *
  * Copyright 2017 IBM Corporation
  */
 
-#define pr_fmt(fmt) "drmem: " fmt
+#घोषणा pr_fmt(fmt) "drmem: " fmt
 
-#include <linux/kernel.h>
-#include <linux/of.h>
-#include <linux/of_fdt.h>
-#include <linux/memblock.h>
-#include <asm/prom.h>
-#include <asm/drmem.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_fdt.h>
+#समावेश <linux/memblock.h>
+#समावेश <यंत्र/prom.h>
+#समावेश <यंत्र/drस्मृति.स>
 
-static int n_root_addr_cells, n_root_size_cells;
+अटल पूर्णांक n_root_addr_cells, n_root_size_cells;
 
-static struct drmem_lmb_info __drmem_info;
-struct drmem_lmb_info *drmem_info = &__drmem_info;
+अटल काष्ठा drmem_lmb_info __drmem_info;
+काष्ठा drmem_lmb_info *drmem_info = &__drmem_info;
 
-u64 drmem_lmb_memory_max(void)
-{
-	struct drmem_lmb *last_lmb;
+u64 drmem_lmb_memory_max(व्योम)
+अणु
+	काष्ठा drmem_lmb *last_lmb;
 
 	last_lmb = &drmem_info->lmbs[drmem_info->n_lmbs - 1];
-	return last_lmb->base_addr + drmem_lmb_size();
-}
+	वापस last_lmb->base_addr + drmem_lmb_size();
+पूर्ण
 
-static u32 drmem_lmb_flags(struct drmem_lmb *lmb)
-{
+अटल u32 drmem_lmb_flags(काष्ठा drmem_lmb *lmb)
+अणु
 	/*
 	 * Return the value of the lmb flags field minus the reserved
-	 * bit used internally for hotplug processing.
+	 * bit used पूर्णांकernally क्रम hotplug processing.
 	 */
-	return lmb->flags & ~DRMEM_LMB_RESERVED;
-}
+	वापस lmb->flags & ~DRMEM_LMB_RESERVED;
+पूर्ण
 
-static struct property *clone_property(struct property *prop, u32 prop_sz)
-{
-	struct property *new_prop;
+अटल काष्ठा property *clone_property(काष्ठा property *prop, u32 prop_sz)
+अणु
+	काष्ठा property *new_prop;
 
-	new_prop = kzalloc(sizeof(*new_prop), GFP_KERNEL);
-	if (!new_prop)
-		return NULL;
+	new_prop = kzalloc(माप(*new_prop), GFP_KERNEL);
+	अगर (!new_prop)
+		वापस शून्य;
 
 	new_prop->name = kstrdup(prop->name, GFP_KERNEL);
 	new_prop->value = kzalloc(prop_sz, GFP_KERNEL);
-	if (!new_prop->name || !new_prop->value) {
-		kfree(new_prop->name);
-		kfree(new_prop->value);
-		kfree(new_prop);
-		return NULL;
-	}
+	अगर (!new_prop->name || !new_prop->value) अणु
+		kमुक्त(new_prop->name);
+		kमुक्त(new_prop->value);
+		kमुक्त(new_prop);
+		वापस शून्य;
+	पूर्ण
 
 	new_prop->length = prop_sz;
-#if defined(CONFIG_OF_DYNAMIC)
+#अगर defined(CONFIG_OF_DYNAMIC)
 	of_property_set_flag(new_prop, OF_DYNAMIC);
-#endif
-	return new_prop;
-}
+#पूर्ण_अगर
+	वापस new_prop;
+पूर्ण
 
-static int drmem_update_dt_v1(struct device_node *memory,
-			      struct property *prop)
-{
-	struct property *new_prop;
-	struct of_drconf_cell_v1 *dr_cell;
-	struct drmem_lmb *lmb;
+अटल पूर्णांक drmem_update_dt_v1(काष्ठा device_node *memory,
+			      काष्ठा property *prop)
+अणु
+	काष्ठा property *new_prop;
+	काष्ठा of_drconf_cell_v1 *dr_cell;
+	काष्ठा drmem_lmb *lmb;
 	u32 *p;
 
 	new_prop = clone_property(prop, prop->length);
-	if (!new_prop)
-		return -1;
+	अगर (!new_prop)
+		वापस -1;
 
 	p = new_prop->value;
 	*p++ = cpu_to_be32(drmem_info->n_lmbs);
 
-	dr_cell = (struct of_drconf_cell_v1 *)p;
+	dr_cell = (काष्ठा of_drconf_cell_v1 *)p;
 
-	for_each_drmem_lmb(lmb) {
+	क्रम_each_drmem_lmb(lmb) अणु
 		dr_cell->base_addr = cpu_to_be64(lmb->base_addr);
 		dr_cell->drc_index = cpu_to_be32(lmb->drc_index);
 		dr_cell->aa_index = cpu_to_be32(lmb->aa_index);
 		dr_cell->flags = cpu_to_be32(drmem_lmb_flags(lmb));
 
 		dr_cell++;
-	}
+	पूर्ण
 
 	of_update_property(memory, new_prop);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void init_drconf_v2_cell(struct of_drconf_cell_v2 *dr_cell,
-				struct drmem_lmb *lmb)
-{
+अटल व्योम init_drconf_v2_cell(काष्ठा of_drconf_cell_v2 *dr_cell,
+				काष्ठा drmem_lmb *lmb)
+अणु
 	dr_cell->base_addr = cpu_to_be64(lmb->base_addr);
 	dr_cell->drc_index = cpu_to_be32(lmb->drc_index);
 	dr_cell->aa_index = cpu_to_be32(lmb->aa_index);
 	dr_cell->flags = cpu_to_be32(drmem_lmb_flags(lmb));
-}
+पूर्ण
 
-static int drmem_update_dt_v2(struct device_node *memory,
-			      struct property *prop)
-{
-	struct property *new_prop;
-	struct of_drconf_cell_v2 *dr_cell;
-	struct drmem_lmb *lmb, *prev_lmb;
+अटल पूर्णांक drmem_update_dt_v2(काष्ठा device_node *memory,
+			      काष्ठा property *prop)
+अणु
+	काष्ठा property *new_prop;
+	काष्ठा of_drconf_cell_v2 *dr_cell;
+	काष्ठा drmem_lmb *lmb, *prev_lmb;
 	u32 lmb_sets, prop_sz, seq_lmbs;
 	u32 *p;
 
 	/* First pass, determine how many LMB sets are needed. */
 	lmb_sets = 0;
-	prev_lmb = NULL;
-	for_each_drmem_lmb(lmb) {
-		if (!prev_lmb) {
+	prev_lmb = शून्य;
+	क्रम_each_drmem_lmb(lmb) अणु
+		अगर (!prev_lmb) अणु
 			prev_lmb = lmb;
 			lmb_sets++;
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		if (prev_lmb->aa_index != lmb->aa_index ||
+		अगर (prev_lmb->aa_index != lmb->aa_index ||
 		    drmem_lmb_flags(prev_lmb) != drmem_lmb_flags(lmb))
 			lmb_sets++;
 
 		prev_lmb = lmb;
-	}
+	पूर्ण
 
-	prop_sz = lmb_sets * sizeof(*dr_cell) + sizeof(__be32);
+	prop_sz = lmb_sets * माप(*dr_cell) + माप(__be32);
 	new_prop = clone_property(prop, prop_sz);
-	if (!new_prop)
-		return -1;
+	अगर (!new_prop)
+		वापस -1;
 
 	p = new_prop->value;
 	*p++ = cpu_to_be32(lmb_sets);
 
-	dr_cell = (struct of_drconf_cell_v2 *)p;
+	dr_cell = (काष्ठा of_drconf_cell_v2 *)p;
 
 	/* Second pass, populate the LMB set data */
-	prev_lmb = NULL;
+	prev_lmb = शून्य;
 	seq_lmbs = 0;
-	for_each_drmem_lmb(lmb) {
-		if (prev_lmb == NULL) {
+	क्रम_each_drmem_lmb(lmb) अणु
+		अगर (prev_lmb == शून्य) अणु
 			/* Start of first LMB set */
 			prev_lmb = lmb;
 			init_drconf_v2_cell(dr_cell, lmb);
 			seq_lmbs++;
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		if (prev_lmb->aa_index != lmb->aa_index ||
-		    drmem_lmb_flags(prev_lmb) != drmem_lmb_flags(lmb)) {
+		अगर (prev_lmb->aa_index != lmb->aa_index ||
+		    drmem_lmb_flags(prev_lmb) != drmem_lmb_flags(lmb)) अणु
 			/* end of one set, start of another */
 			dr_cell->seq_lmbs = cpu_to_be32(seq_lmbs);
 			dr_cell++;
 
 			init_drconf_v2_cell(dr_cell, lmb);
 			seq_lmbs = 1;
-		} else {
+		पूर्ण अन्यथा अणु
 			seq_lmbs++;
-		}
+		पूर्ण
 
 		prev_lmb = lmb;
-	}
+	पूर्ण
 
-	/* close out last LMB set */
+	/* बंद out last LMB set */
 	dr_cell->seq_lmbs = cpu_to_be32(seq_lmbs);
 	of_update_property(memory, new_prop);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int drmem_update_dt(void)
-{
-	struct device_node *memory;
-	struct property *prop;
-	int rc = -1;
+पूर्णांक drmem_update_dt(व्योम)
+अणु
+	काष्ठा device_node *memory;
+	काष्ठा property *prop;
+	पूर्णांक rc = -1;
 
 	memory = of_find_node_by_path("/ibm,dynamic-reconfiguration-memory");
-	if (!memory)
-		return -1;
+	अगर (!memory)
+		वापस -1;
 
-	prop = of_find_property(memory, "ibm,dynamic-memory", NULL);
-	if (prop) {
+	prop = of_find_property(memory, "ibm,dynamic-memory", शून्य);
+	अगर (prop) अणु
 		rc = drmem_update_dt_v1(memory, prop);
-	} else {
-		prop = of_find_property(memory, "ibm,dynamic-memory-v2", NULL);
-		if (prop)
+	पूर्ण अन्यथा अणु
+		prop = of_find_property(memory, "ibm,dynamic-memory-v2", शून्य);
+		अगर (prop)
 			rc = drmem_update_dt_v2(memory, prop);
-	}
+	पूर्ण
 
 	of_node_put(memory);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static void read_drconf_v1_cell(struct drmem_lmb *lmb,
-				       const __be32 **prop)
-{
-	const __be32 *p = *prop;
+अटल व्योम पढ़ो_drconf_v1_cell(काष्ठा drmem_lmb *lmb,
+				       स्थिर __be32 **prop)
+अणु
+	स्थिर __be32 *p = *prop;
 
-	lmb->base_addr = of_read_number(p, n_root_addr_cells);
+	lmb->base_addr = of_पढ़ो_number(p, n_root_addr_cells);
 	p += n_root_addr_cells;
-	lmb->drc_index = of_read_number(p++, 1);
+	lmb->drc_index = of_पढ़ो_number(p++, 1);
 
 	p++; /* skip reserved field */
 
-	lmb->aa_index = of_read_number(p++, 1);
-	lmb->flags = of_read_number(p++, 1);
+	lmb->aa_index = of_पढ़ो_number(p++, 1);
+	lmb->flags = of_पढ़ो_number(p++, 1);
 
 	*prop = p;
-}
+पूर्ण
 
-static int
-__walk_drmem_v1_lmbs(const __be32 *prop, const __be32 *usm, void *data,
-		     int (*func)(struct drmem_lmb *, const __be32 **, void *))
-{
-	struct drmem_lmb lmb;
+अटल पूर्णांक
+__walk_drmem_v1_lmbs(स्थिर __be32 *prop, स्थिर __be32 *usm, व्योम *data,
+		     पूर्णांक (*func)(काष्ठा drmem_lmb *, स्थिर __be32 **, व्योम *))
+अणु
+	काष्ठा drmem_lmb lmb;
 	u32 i, n_lmbs;
-	int ret = 0;
+	पूर्णांक ret = 0;
 
-	n_lmbs = of_read_number(prop++, 1);
-	for (i = 0; i < n_lmbs; i++) {
-		read_drconf_v1_cell(&lmb, &prop);
+	n_lmbs = of_पढ़ो_number(prop++, 1);
+	क्रम (i = 0; i < n_lmbs; i++) अणु
+		पढ़ो_drconf_v1_cell(&lmb, &prop);
 		ret = func(&lmb, &usm, data);
-		if (ret)
-			break;
-	}
+		अगर (ret)
+			अवरोध;
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void read_drconf_v2_cell(struct of_drconf_cell_v2 *dr_cell,
-				       const __be32 **prop)
-{
-	const __be32 *p = *prop;
+अटल व्योम पढ़ो_drconf_v2_cell(काष्ठा of_drconf_cell_v2 *dr_cell,
+				       स्थिर __be32 **prop)
+अणु
+	स्थिर __be32 *p = *prop;
 
-	dr_cell->seq_lmbs = of_read_number(p++, 1);
-	dr_cell->base_addr = of_read_number(p, n_root_addr_cells);
+	dr_cell->seq_lmbs = of_पढ़ो_number(p++, 1);
+	dr_cell->base_addr = of_पढ़ो_number(p, n_root_addr_cells);
 	p += n_root_addr_cells;
-	dr_cell->drc_index = of_read_number(p++, 1);
-	dr_cell->aa_index = of_read_number(p++, 1);
-	dr_cell->flags = of_read_number(p++, 1);
+	dr_cell->drc_index = of_पढ़ो_number(p++, 1);
+	dr_cell->aa_index = of_पढ़ो_number(p++, 1);
+	dr_cell->flags = of_पढ़ो_number(p++, 1);
 
 	*prop = p;
-}
+पूर्ण
 
-static int
-__walk_drmem_v2_lmbs(const __be32 *prop, const __be32 *usm, void *data,
-		     int (*func)(struct drmem_lmb *, const __be32 **, void *))
-{
-	struct of_drconf_cell_v2 dr_cell;
-	struct drmem_lmb lmb;
+अटल पूर्णांक
+__walk_drmem_v2_lmbs(स्थिर __be32 *prop, स्थिर __be32 *usm, व्योम *data,
+		     पूर्णांक (*func)(काष्ठा drmem_lmb *, स्थिर __be32 **, व्योम *))
+अणु
+	काष्ठा of_drconf_cell_v2 dr_cell;
+	काष्ठा drmem_lmb lmb;
 	u32 i, j, lmb_sets;
-	int ret = 0;
+	पूर्णांक ret = 0;
 
-	lmb_sets = of_read_number(prop++, 1);
-	for (i = 0; i < lmb_sets; i++) {
-		read_drconf_v2_cell(&dr_cell, &prop);
+	lmb_sets = of_पढ़ो_number(prop++, 1);
+	क्रम (i = 0; i < lmb_sets; i++) अणु
+		पढ़ो_drconf_v2_cell(&dr_cell, &prop);
 
-		for (j = 0; j < dr_cell.seq_lmbs; j++) {
+		क्रम (j = 0; j < dr_cell.seq_lmbs; j++) अणु
 			lmb.base_addr = dr_cell.base_addr;
 			dr_cell.base_addr += drmem_lmb_size();
 
@@ -266,24 +267,24 @@ __walk_drmem_v2_lmbs(const __be32 *prop, const __be32 *usm, void *data,
 			lmb.flags = dr_cell.flags;
 
 			ret = func(&lmb, &usm, data);
-			if (ret)
-				break;
-		}
-	}
+			अगर (ret)
+				अवरोध;
+		पूर्ण
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-#ifdef CONFIG_PPC_PSERIES
-int __init walk_drmem_lmbs_early(unsigned long node, void *data,
-		int (*func)(struct drmem_lmb *, const __be32 **, void *))
-{
-	const __be32 *prop, *usm;
-	int len, ret = -ENODEV;
+#अगर_घोषित CONFIG_PPC_PSERIES
+पूर्णांक __init walk_drmem_lmbs_early(अचिन्हित दीर्घ node, व्योम *data,
+		पूर्णांक (*func)(काष्ठा drmem_lmb *, स्थिर __be32 **, व्योम *))
+अणु
+	स्थिर __be32 *prop, *usm;
+	पूर्णांक len, ret = -ENODEV;
 
 	prop = of_get_flat_dt_prop(node, "ibm,lmb-size", &len);
-	if (!prop || len < dt_root_size_cells * sizeof(__be32))
-		return ret;
+	अगर (!prop || len < dt_root_size_cells * माप(__be32))
+		वापस ret;
 
 	/* Get the address & size cells */
 	n_root_addr_cells = dt_root_addr_cells;
@@ -294,64 +295,64 @@ int __init walk_drmem_lmbs_early(unsigned long node, void *data,
 	usm = of_get_flat_dt_prop(node, "linux,drconf-usable-memory", &len);
 
 	prop = of_get_flat_dt_prop(node, "ibm,dynamic-memory", &len);
-	if (prop) {
+	अगर (prop) अणु
 		ret = __walk_drmem_v1_lmbs(prop, usm, data, func);
-	} else {
+	पूर्ण अन्यथा अणु
 		prop = of_get_flat_dt_prop(node, "ibm,dynamic-memory-v2",
 					   &len);
-		if (prop)
+		अगर (prop)
 			ret = __walk_drmem_v2_lmbs(prop, usm, data, func);
-	}
+	पूर्ण
 
 	memblock_dump_all();
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-#endif
+#पूर्ण_अगर
 
-static int init_drmem_lmb_size(struct device_node *dn)
-{
-	const __be32 *prop;
-	int len;
+अटल पूर्णांक init_drmem_lmb_size(काष्ठा device_node *dn)
+अणु
+	स्थिर __be32 *prop;
+	पूर्णांक len;
 
-	if (drmem_info->lmb_size)
-		return 0;
+	अगर (drmem_info->lmb_size)
+		वापस 0;
 
 	prop = of_get_property(dn, "ibm,lmb-size", &len);
-	if (!prop || len < n_root_size_cells * sizeof(__be32)) {
+	अगर (!prop || len < n_root_size_cells * माप(__be32)) अणु
 		pr_info("Could not determine LMB size\n");
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
-	drmem_info->lmb_size = of_read_number(prop, n_root_size_cells);
-	return 0;
-}
+	drmem_info->lmb_size = of_पढ़ो_number(prop, n_root_size_cells);
+	वापस 0;
+पूर्ण
 
 /*
- * Returns the property linux,drconf-usable-memory if
+ * Returns the property linux,drconf-usable-memory अगर
  * it exists (the property exists only in kexec/kdump kernels,
  * added by kexec-tools)
  */
-static const __be32 *of_get_usable_memory(struct device_node *dn)
-{
-	const __be32 *prop;
+अटल स्थिर __be32 *of_get_usable_memory(काष्ठा device_node *dn)
+अणु
+	स्थिर __be32 *prop;
 	u32 len;
 
 	prop = of_get_property(dn, "linux,drconf-usable-memory", &len);
-	if (!prop || len < sizeof(unsigned int))
-		return NULL;
+	अगर (!prop || len < माप(अचिन्हित पूर्णांक))
+		वापस शून्य;
 
-	return prop;
-}
+	वापस prop;
+पूर्ण
 
-int walk_drmem_lmbs(struct device_node *dn, void *data,
-		    int (*func)(struct drmem_lmb *, const __be32 **, void *))
-{
-	const __be32 *prop, *usm;
-	int ret = -ENODEV;
+पूर्णांक walk_drmem_lmbs(काष्ठा device_node *dn, व्योम *data,
+		    पूर्णांक (*func)(काष्ठा drmem_lmb *, स्थिर __be32 **, व्योम *))
+अणु
+	स्थिर __be32 *prop, *usm;
+	पूर्णांक ret = -ENODEV;
 
-	if (!of_root)
-		return ret;
+	अगर (!of_root)
+		वापस ret;
 
 	/* Get the address & size cells */
 	of_node_get(of_root);
@@ -359,72 +360,72 @@ int walk_drmem_lmbs(struct device_node *dn, void *data,
 	n_root_size_cells = of_n_size_cells(of_root);
 	of_node_put(of_root);
 
-	if (init_drmem_lmb_size(dn))
-		return ret;
+	अगर (init_drmem_lmb_size(dn))
+		वापस ret;
 
 	usm = of_get_usable_memory(dn);
 
-	prop = of_get_property(dn, "ibm,dynamic-memory", NULL);
-	if (prop) {
+	prop = of_get_property(dn, "ibm,dynamic-memory", शून्य);
+	अगर (prop) अणु
 		ret = __walk_drmem_v1_lmbs(prop, usm, data, func);
-	} else {
-		prop = of_get_property(dn, "ibm,dynamic-memory-v2", NULL);
-		if (prop)
+	पूर्ण अन्यथा अणु
+		prop = of_get_property(dn, "ibm,dynamic-memory-v2", शून्य);
+		अगर (prop)
 			ret = __walk_drmem_v2_lmbs(prop, usm, data, func);
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void __init init_drmem_v1_lmbs(const __be32 *prop)
-{
-	struct drmem_lmb *lmb;
+अटल व्योम __init init_drmem_v1_lmbs(स्थिर __be32 *prop)
+अणु
+	काष्ठा drmem_lmb *lmb;
 
-	drmem_info->n_lmbs = of_read_number(prop++, 1);
-	if (drmem_info->n_lmbs == 0)
-		return;
+	drmem_info->n_lmbs = of_पढ़ो_number(prop++, 1);
+	अगर (drmem_info->n_lmbs == 0)
+		वापस;
 
-	drmem_info->lmbs = kcalloc(drmem_info->n_lmbs, sizeof(*lmb),
+	drmem_info->lmbs = kसुस्मृति(drmem_info->n_lmbs, माप(*lmb),
 				   GFP_KERNEL);
-	if (!drmem_info->lmbs)
-		return;
+	अगर (!drmem_info->lmbs)
+		वापस;
 
-	for_each_drmem_lmb(lmb)
-		read_drconf_v1_cell(lmb, &prop);
-}
+	क्रम_each_drmem_lmb(lmb)
+		पढ़ो_drconf_v1_cell(lmb, &prop);
+पूर्ण
 
-static void __init init_drmem_v2_lmbs(const __be32 *prop)
-{
-	struct drmem_lmb *lmb;
-	struct of_drconf_cell_v2 dr_cell;
-	const __be32 *p;
+अटल व्योम __init init_drmem_v2_lmbs(स्थिर __be32 *prop)
+अणु
+	काष्ठा drmem_lmb *lmb;
+	काष्ठा of_drconf_cell_v2 dr_cell;
+	स्थिर __be32 *p;
 	u32 i, j, lmb_sets;
-	int lmb_index;
+	पूर्णांक lmb_index;
 
-	lmb_sets = of_read_number(prop++, 1);
-	if (lmb_sets == 0)
-		return;
+	lmb_sets = of_पढ़ो_number(prop++, 1);
+	अगर (lmb_sets == 0)
+		वापस;
 
 	/* first pass, calculate the number of LMBs */
 	p = prop;
-	for (i = 0; i < lmb_sets; i++) {
-		read_drconf_v2_cell(&dr_cell, &p);
+	क्रम (i = 0; i < lmb_sets; i++) अणु
+		पढ़ो_drconf_v2_cell(&dr_cell, &p);
 		drmem_info->n_lmbs += dr_cell.seq_lmbs;
-	}
+	पूर्ण
 
-	drmem_info->lmbs = kcalloc(drmem_info->n_lmbs, sizeof(*lmb),
+	drmem_info->lmbs = kसुस्मृति(drmem_info->n_lmbs, माप(*lmb),
 				   GFP_KERNEL);
-	if (!drmem_info->lmbs)
-		return;
+	अगर (!drmem_info->lmbs)
+		वापस;
 
-	/* second pass, read in the LMB information */
+	/* second pass, पढ़ो in the LMB inक्रमmation */
 	lmb_index = 0;
 	p = prop;
 
-	for (i = 0; i < lmb_sets; i++) {
-		read_drconf_v2_cell(&dr_cell, &p);
+	क्रम (i = 0; i < lmb_sets; i++) अणु
+		पढ़ो_drconf_v2_cell(&dr_cell, &p);
 
-		for (j = 0; j < dr_cell.seq_lmbs; j++) {
+		क्रम (j = 0; j < dr_cell.seq_lmbs; j++) अणु
 			lmb = &drmem_info->lmbs[lmb_index++];
 
 			lmb->base_addr = dr_cell.base_addr;
@@ -435,36 +436,36 @@ static void __init init_drmem_v2_lmbs(const __be32 *prop)
 
 			lmb->aa_index = dr_cell.aa_index;
 			lmb->flags = dr_cell.flags;
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static int __init drmem_init(void)
-{
-	struct device_node *dn;
-	const __be32 *prop;
+अटल पूर्णांक __init drmem_init(व्योम)
+अणु
+	काष्ठा device_node *dn;
+	स्थिर __be32 *prop;
 
 	dn = of_find_node_by_path("/ibm,dynamic-reconfiguration-memory");
-	if (!dn) {
+	अगर (!dn) अणु
 		pr_info("No dynamic reconfiguration memory found\n");
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	if (init_drmem_lmb_size(dn)) {
+	अगर (init_drmem_lmb_size(dn)) अणु
 		of_node_put(dn);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	prop = of_get_property(dn, "ibm,dynamic-memory", NULL);
-	if (prop) {
+	prop = of_get_property(dn, "ibm,dynamic-memory", शून्य);
+	अगर (prop) अणु
 		init_drmem_v1_lmbs(prop);
-	} else {
-		prop = of_get_property(dn, "ibm,dynamic-memory-v2", NULL);
-		if (prop)
+	पूर्ण अन्यथा अणु
+		prop = of_get_property(dn, "ibm,dynamic-memory-v2", शून्य);
+		अगर (prop)
 			init_drmem_v2_lmbs(prop);
-	}
+	पूर्ण
 
 	of_node_put(dn);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 late_initcall(drmem_init);

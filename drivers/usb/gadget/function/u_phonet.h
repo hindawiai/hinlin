@@ -1,26 +1,27 @@
-/* SPDX-License-Identifier: GPL-2.0+ */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0+ */
 /*
- * u_phonet.h - interface to Phonet
+ * u_phonet.h - पूर्णांकerface to Phonet
  *
  * Copyright (C) 2007-2008 by Nokia Corporation
  */
 
-#ifndef __U_PHONET_H
-#define __U_PHONET_H
+#अगर_अघोषित __U_PHONET_H
+#घोषणा __U_PHONET_H
 
-#include <linux/usb/composite.h>
-#include <linux/usb/cdc.h>
+#समावेश <linux/usb/composite.h>
+#समावेश <linux/usb/cdc.h>
 
-struct f_phonet_opts {
-	struct usb_function_instance func_inst;
+काष्ठा f_phonet_opts अणु
+	काष्ठा usb_function_instance func_inst;
 	bool bound;
-	struct net_device *net;
-};
+	काष्ठा net_device *net;
+पूर्ण;
 
-struct net_device *gphonet_setup_default(void);
-void gphonet_set_gadget(struct net_device *net, struct usb_gadget *g);
-int gphonet_register_netdev(struct net_device *net);
-int phonet_bind_config(struct usb_configuration *c, struct net_device *dev);
-void gphonet_cleanup(struct net_device *dev);
+काष्ठा net_device *gphonet_setup_शेष(व्योम);
+व्योम gphonet_set_gadget(काष्ठा net_device *net, काष्ठा usb_gadget *g);
+पूर्णांक gphonet_रेजिस्टर_netdev(काष्ठा net_device *net);
+पूर्णांक phonet_bind_config(काष्ठा usb_configuration *c, काष्ठा net_device *dev);
+व्योम gphonet_cleanup(काष्ठा net_device *dev);
 
-#endif /* __U_PHONET_H */
+#पूर्ण_अगर /* __U_PHONET_H */

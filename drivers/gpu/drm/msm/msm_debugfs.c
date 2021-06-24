@@ -1,223 +1,224 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (C) 2013-2016 Red Hat
  * Author: Rob Clark <robdclark@gmail.com>
  */
 
-#ifdef CONFIG_DEBUG_FS
+#अगर_घोषित CONFIG_DEBUG_FS
 
-#include <linux/debugfs.h>
+#समावेश <linux/debugfs.h>
 
-#include <drm/drm_debugfs.h>
-#include <drm/drm_file.h>
+#समावेश <drm/drm_debugfs.h>
+#समावेश <drm/drm_file.h>
 
-#include "msm_drv.h"
-#include "msm_gpu.h"
-#include "msm_kms.h"
-#include "msm_debugfs.h"
+#समावेश "msm_drv.h"
+#समावेश "msm_gpu.h"
+#समावेश "msm_kms.h"
+#समावेश "msm_debugfs.h"
 
-struct msm_gpu_show_priv {
-	struct msm_gpu_state *state;
-	struct drm_device *dev;
-};
+काष्ठा msm_gpu_show_priv अणु
+	काष्ठा msm_gpu_state *state;
+	काष्ठा drm_device *dev;
+पूर्ण;
 
-static int msm_gpu_show(struct seq_file *m, void *arg)
-{
-	struct drm_printer p = drm_seq_file_printer(m);
-	struct msm_gpu_show_priv *show_priv = m->private;
-	struct msm_drm_private *priv = show_priv->dev->dev_private;
-	struct msm_gpu *gpu = priv->gpu;
-	int ret;
+अटल पूर्णांक msm_gpu_show(काष्ठा seq_file *m, व्योम *arg)
+अणु
+	काष्ठा drm_prपूर्णांकer p = drm_seq_file_prपूर्णांकer(m);
+	काष्ठा msm_gpu_show_priv *show_priv = m->निजी;
+	काष्ठा msm_drm_निजी *priv = show_priv->dev->dev_निजी;
+	काष्ठा msm_gpu *gpu = priv->gpu;
+	पूर्णांक ret;
 
-	ret = mutex_lock_interruptible(&show_priv->dev->struct_mutex);
-	if (ret)
-		return ret;
+	ret = mutex_lock_पूर्णांकerruptible(&show_priv->dev->काष्ठा_mutex);
+	अगर (ret)
+		वापस ret;
 
-	drm_printf(&p, "%s Status:\n", gpu->name);
+	drm_म_लिखो(&p, "%s Status:\n", gpu->name);
 	gpu->funcs->show(gpu, show_priv->state, &p);
 
-	mutex_unlock(&show_priv->dev->struct_mutex);
+	mutex_unlock(&show_priv->dev->काष्ठा_mutex);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int msm_gpu_release(struct inode *inode, struct file *file)
-{
-	struct seq_file *m = file->private_data;
-	struct msm_gpu_show_priv *show_priv = m->private;
-	struct msm_drm_private *priv = show_priv->dev->dev_private;
-	struct msm_gpu *gpu = priv->gpu;
+अटल पूर्णांक msm_gpu_release(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	काष्ठा seq_file *m = file->निजी_data;
+	काष्ठा msm_gpu_show_priv *show_priv = m->निजी;
+	काष्ठा msm_drm_निजी *priv = show_priv->dev->dev_निजी;
+	काष्ठा msm_gpu *gpu = priv->gpu;
 
-	mutex_lock(&show_priv->dev->struct_mutex);
+	mutex_lock(&show_priv->dev->काष्ठा_mutex);
 	gpu->funcs->gpu_state_put(show_priv->state);
-	mutex_unlock(&show_priv->dev->struct_mutex);
+	mutex_unlock(&show_priv->dev->काष्ठा_mutex);
 
-	kfree(show_priv);
+	kमुक्त(show_priv);
 
-	return single_release(inode, file);
-}
+	वापस single_release(inode, file);
+पूर्ण
 
-static int msm_gpu_open(struct inode *inode, struct file *file)
-{
-	struct drm_device *dev = inode->i_private;
-	struct msm_drm_private *priv = dev->dev_private;
-	struct msm_gpu *gpu = priv->gpu;
-	struct msm_gpu_show_priv *show_priv;
-	int ret;
+अटल पूर्णांक msm_gpu_खोलो(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	काष्ठा drm_device *dev = inode->i_निजी;
+	काष्ठा msm_drm_निजी *priv = dev->dev_निजी;
+	काष्ठा msm_gpu *gpu = priv->gpu;
+	काष्ठा msm_gpu_show_priv *show_priv;
+	पूर्णांक ret;
 
-	if (!gpu || !gpu->funcs->gpu_state_get)
-		return -ENODEV;
+	अगर (!gpu || !gpu->funcs->gpu_state_get)
+		वापस -ENODEV;
 
-	show_priv = kmalloc(sizeof(*show_priv), GFP_KERNEL);
-	if (!show_priv)
-		return -ENOMEM;
+	show_priv = kदो_स्मृति(माप(*show_priv), GFP_KERNEL);
+	अगर (!show_priv)
+		वापस -ENOMEM;
 
-	ret = mutex_lock_interruptible(&dev->struct_mutex);
-	if (ret)
-		goto free_priv;
+	ret = mutex_lock_पूर्णांकerruptible(&dev->काष्ठा_mutex);
+	अगर (ret)
+		जाओ मुक्त_priv;
 
-	pm_runtime_get_sync(&gpu->pdev->dev);
+	pm_runसमय_get_sync(&gpu->pdev->dev);
 	show_priv->state = gpu->funcs->gpu_state_get(gpu);
-	pm_runtime_put_sync(&gpu->pdev->dev);
+	pm_runसमय_put_sync(&gpu->pdev->dev);
 
-	mutex_unlock(&dev->struct_mutex);
+	mutex_unlock(&dev->काष्ठा_mutex);
 
-	if (IS_ERR(show_priv->state)) {
+	अगर (IS_ERR(show_priv->state)) अणु
 		ret = PTR_ERR(show_priv->state);
-		goto free_priv;
-	}
+		जाओ मुक्त_priv;
+	पूर्ण
 
 	show_priv->dev = dev;
 
-	ret = single_open(file, msm_gpu_show, show_priv);
-	if (ret)
-		goto free_priv;
+	ret = single_खोलो(file, msm_gpu_show, show_priv);
+	अगर (ret)
+		जाओ मुक्त_priv;
 
-	return 0;
+	वापस 0;
 
-free_priv:
-	kfree(show_priv);
-	return ret;
-}
+मुक्त_priv:
+	kमुक्त(show_priv);
+	वापस ret;
+पूर्ण
 
-static const struct file_operations msm_gpu_fops = {
+अटल स्थिर काष्ठा file_operations msm_gpu_fops = अणु
 	.owner = THIS_MODULE,
-	.open = msm_gpu_open,
-	.read = seq_read,
+	.खोलो = msm_gpu_खोलो,
+	.पढ़ो = seq_पढ़ो,
 	.llseek = seq_lseek,
 	.release = msm_gpu_release,
-};
+पूर्ण;
 
-static int msm_gem_show(struct drm_device *dev, struct seq_file *m)
-{
-	struct msm_drm_private *priv = dev->dev_private;
-	int ret;
+अटल पूर्णांक msm_gem_show(काष्ठा drm_device *dev, काष्ठा seq_file *m)
+अणु
+	काष्ठा msm_drm_निजी *priv = dev->dev_निजी;
+	पूर्णांक ret;
 
-	ret = mutex_lock_interruptible(&priv->obj_lock);
-	if (ret)
-		return ret;
+	ret = mutex_lock_पूर्णांकerruptible(&priv->obj_lock);
+	अगर (ret)
+		वापस ret;
 
 	msm_gem_describe_objects(&priv->objects, m);
 
 	mutex_unlock(&priv->obj_lock);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int msm_mm_show(struct drm_device *dev, struct seq_file *m)
-{
-	struct drm_printer p = drm_seq_file_printer(m);
+अटल पूर्णांक msm_mm_show(काष्ठा drm_device *dev, काष्ठा seq_file *m)
+अणु
+	काष्ठा drm_prपूर्णांकer p = drm_seq_file_prपूर्णांकer(m);
 
-	drm_mm_print(&dev->vma_offset_manager->vm_addr_space_mm, &p);
+	drm_mm_prपूर्णांक(&dev->vma_offset_manager->vm_addr_space_mm, &p);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int msm_fb_show(struct drm_device *dev, struct seq_file *m)
-{
-	struct msm_drm_private *priv = dev->dev_private;
-	struct drm_framebuffer *fb, *fbdev_fb = NULL;
+अटल पूर्णांक msm_fb_show(काष्ठा drm_device *dev, काष्ठा seq_file *m)
+अणु
+	काष्ठा msm_drm_निजी *priv = dev->dev_निजी;
+	काष्ठा drm_framebuffer *fb, *fbdev_fb = शून्य;
 
-	if (priv->fbdev) {
-		seq_printf(m, "fbcon ");
+	अगर (priv->fbdev) अणु
+		seq_म_लिखो(m, "fbcon ");
 		fbdev_fb = priv->fbdev->fb;
 		msm_framebuffer_describe(fbdev_fb, m);
-	}
+	पूर्ण
 
 	mutex_lock(&dev->mode_config.fb_lock);
-	list_for_each_entry(fb, &dev->mode_config.fb_list, head) {
-		if (fb == fbdev_fb)
-			continue;
+	list_क्रम_each_entry(fb, &dev->mode_config.fb_list, head) अणु
+		अगर (fb == fbdev_fb)
+			जारी;
 
-		seq_printf(m, "user ");
+		seq_म_लिखो(m, "user ");
 		msm_framebuffer_describe(fb, m);
-	}
+	पूर्ण
 	mutex_unlock(&dev->mode_config.fb_lock);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int show_locked(struct seq_file *m, void *arg)
-{
-	struct drm_info_node *node = (struct drm_info_node *) m->private;
-	struct drm_device *dev = node->minor->dev;
-	int (*show)(struct drm_device *dev, struct seq_file *m) =
+अटल पूर्णांक show_locked(काष्ठा seq_file *m, व्योम *arg)
+अणु
+	काष्ठा drm_info_node *node = (काष्ठा drm_info_node *) m->निजी;
+	काष्ठा drm_device *dev = node->minor->dev;
+	पूर्णांक (*show)(काष्ठा drm_device *dev, काष्ठा seq_file *m) =
 			node->info_ent->data;
-	int ret;
+	पूर्णांक ret;
 
-	ret = mutex_lock_interruptible(&dev->struct_mutex);
-	if (ret)
-		return ret;
+	ret = mutex_lock_पूर्णांकerruptible(&dev->काष्ठा_mutex);
+	अगर (ret)
+		वापस ret;
 
 	ret = show(dev, m);
 
-	mutex_unlock(&dev->struct_mutex);
+	mutex_unlock(&dev->काष्ठा_mutex);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static struct drm_info_list msm_debugfs_list[] = {
-		{"gem", show_locked, 0, msm_gem_show},
-		{ "mm", show_locked, 0, msm_mm_show },
-		{ "fb", show_locked, 0, msm_fb_show },
-};
+अटल काष्ठा drm_info_list msm_debugfs_list[] = अणु
+		अणु"gem", show_locked, 0, msm_gem_showपूर्ण,
+		अणु "mm", show_locked, 0, msm_mm_show पूर्ण,
+		अणु "fb", show_locked, 0, msm_fb_show पूर्ण,
+पूर्ण;
 
-static int late_init_minor(struct drm_minor *minor)
-{
-	int ret;
+अटल पूर्णांक late_init_minor(काष्ठा drm_minor *minor)
+अणु
+	पूर्णांक ret;
 
-	if (!minor)
-		return 0;
+	अगर (!minor)
+		वापस 0;
 
 	ret = msm_rd_debugfs_init(minor);
-	if (ret) {
+	अगर (ret) अणु
 		DRM_DEV_ERROR(minor->dev->dev, "could not install rd debugfs\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	ret = msm_perf_debugfs_init(minor);
-	if (ret) {
+	अगर (ret) अणु
 		DRM_DEV_ERROR(minor->dev->dev, "could not install perf debugfs\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int msm_debugfs_late_init(struct drm_device *dev)
-{
-	int ret;
+पूर्णांक msm_debugfs_late_init(काष्ठा drm_device *dev)
+अणु
+	पूर्णांक ret;
 	ret = late_init_minor(dev->primary);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 	ret = late_init_minor(dev->render);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-void msm_debugfs_init(struct drm_minor *minor)
-{
-	struct drm_device *dev = minor->dev;
-	struct msm_drm_private *priv = dev->dev_private;
+व्योम msm_debugfs_init(काष्ठा drm_minor *minor)
+अणु
+	काष्ठा drm_device *dev = minor->dev;
+	काष्ठा msm_drm_निजी *priv = dev->dev_निजी;
 
 	drm_debugfs_create_files(msm_debugfs_list,
 				 ARRAY_SIZE(msm_debugfs_list),
@@ -226,8 +227,8 @@ void msm_debugfs_init(struct drm_minor *minor)
 	debugfs_create_file("gpu", S_IRUSR, minor->debugfs_root,
 		dev, &msm_gpu_fops);
 
-	if (priv->kms && priv->kms->funcs->debugfs_init)
+	अगर (priv->kms && priv->kms->funcs->debugfs_init)
 		priv->kms->funcs->debugfs_init(priv->kms, minor);
-}
-#endif
+पूर्ण
+#पूर्ण_अगर
 

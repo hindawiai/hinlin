@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Samsung S5P Multi Format Codec v 5.1
  *
@@ -6,226 +7,226 @@
  * Kamil Debski, <k.debski@samsung.com>
  */
 
-#include <linux/clk.h>
-#include <linux/delay.h>
-#include <linux/interrupt.h>
-#include <linux/io.h>
-#include <linux/module.h>
-#include <linux/platform_device.h>
-#include <linux/sched.h>
-#include <linux/slab.h>
-#include <linux/videodev2.h>
-#include <media/v4l2-event.h>
-#include <linux/workqueue.h>
-#include <linux/of.h>
-#include <linux/of_device.h>
-#include <linux/of_reserved_mem.h>
-#include <media/videobuf2-v4l2.h>
-#include "s5p_mfc_common.h"
-#include "s5p_mfc_ctrl.h"
-#include "s5p_mfc_debug.h"
-#include "s5p_mfc_dec.h"
-#include "s5p_mfc_enc.h"
-#include "s5p_mfc_intr.h"
-#include "s5p_mfc_iommu.h"
-#include "s5p_mfc_opr.h"
-#include "s5p_mfc_cmd.h"
-#include "s5p_mfc_pm.h"
+#समावेश <linux/clk.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/module.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/videodev2.h>
+#समावेश <media/v4l2-event.h>
+#समावेश <linux/workqueue.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/of_reserved_स्मृति.स>
+#समावेश <media/videobuf2-v4l2.h>
+#समावेश "s5p_mfc_common.h"
+#समावेश "s5p_mfc_ctrl.h"
+#समावेश "s5p_mfc_debug.h"
+#समावेश "s5p_mfc_dec.h"
+#समावेश "s5p_mfc_enc.h"
+#समावेश "s5p_mfc_intr.h"
+#समावेश "s5p_mfc_iommu.h"
+#समावेश "s5p_mfc_opr.h"
+#समावेश "s5p_mfc_cmd.h"
+#समावेश "s5p_mfc_pm.h"
 
-#define S5P_MFC_DEC_NAME	"s5p-mfc-dec"
-#define S5P_MFC_ENC_NAME	"s5p-mfc-enc"
+#घोषणा S5P_MFC_DEC_NAME	"s5p-mfc-dec"
+#घोषणा S5P_MFC_ENC_NAME	"s5p-mfc-enc"
 
-int mfc_debug_level;
-module_param_named(debug, mfc_debug_level, int, S_IRUGO | S_IWUSR);
+पूर्णांक mfc_debug_level;
+module_param_named(debug, mfc_debug_level, पूर्णांक, S_IRUGO | S_IWUSR);
 MODULE_PARM_DESC(debug, "Debug level - higher value produces more verbose messages");
 
-static char *mfc_mem_size;
-module_param_named(mem, mfc_mem_size, charp, 0644);
+अटल अक्षर *mfc_mem_size;
+module_param_named(mem, mfc_mem_size, अक्षरp, 0644);
 MODULE_PARM_DESC(mem, "Preallocated memory size for the firmware and context buffers");
 
-/* Helper functions for interrupt processing */
+/* Helper functions क्रम पूर्णांकerrupt processing */
 
 /* Remove from hw execution round robin */
-void clear_work_bit(struct s5p_mfc_ctx *ctx)
-{
-	struct s5p_mfc_dev *dev = ctx->dev;
+व्योम clear_work_bit(काष्ठा s5p_mfc_ctx *ctx)
+अणु
+	काष्ठा s5p_mfc_dev *dev = ctx->dev;
 
 	spin_lock(&dev->condlock);
 	__clear_bit(ctx->num, &dev->ctx_work_bits);
 	spin_unlock(&dev->condlock);
-}
+पूर्ण
 
 /* Add to hw execution round robin */
-void set_work_bit(struct s5p_mfc_ctx *ctx)
-{
-	struct s5p_mfc_dev *dev = ctx->dev;
+व्योम set_work_bit(काष्ठा s5p_mfc_ctx *ctx)
+अणु
+	काष्ठा s5p_mfc_dev *dev = ctx->dev;
 
 	spin_lock(&dev->condlock);
 	__set_bit(ctx->num, &dev->ctx_work_bits);
 	spin_unlock(&dev->condlock);
-}
+पूर्ण
 
 /* Remove from hw execution round robin */
-void clear_work_bit_irqsave(struct s5p_mfc_ctx *ctx)
-{
-	struct s5p_mfc_dev *dev = ctx->dev;
-	unsigned long flags;
+व्योम clear_work_bit_irqsave(काष्ठा s5p_mfc_ctx *ctx)
+अणु
+	काष्ठा s5p_mfc_dev *dev = ctx->dev;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&dev->condlock, flags);
 	__clear_bit(ctx->num, &dev->ctx_work_bits);
 	spin_unlock_irqrestore(&dev->condlock, flags);
-}
+पूर्ण
 
 /* Add to hw execution round robin */
-void set_work_bit_irqsave(struct s5p_mfc_ctx *ctx)
-{
-	struct s5p_mfc_dev *dev = ctx->dev;
-	unsigned long flags;
+व्योम set_work_bit_irqsave(काष्ठा s5p_mfc_ctx *ctx)
+अणु
+	काष्ठा s5p_mfc_dev *dev = ctx->dev;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&dev->condlock, flags);
 	__set_bit(ctx->num, &dev->ctx_work_bits);
 	spin_unlock_irqrestore(&dev->condlock, flags);
-}
+पूर्ण
 
-int s5p_mfc_get_new_ctx(struct s5p_mfc_dev *dev)
-{
-	unsigned long flags;
-	int ctx;
+पूर्णांक s5p_mfc_get_new_ctx(काष्ठा s5p_mfc_dev *dev)
+अणु
+	अचिन्हित दीर्घ flags;
+	पूर्णांक ctx;
 
 	spin_lock_irqsave(&dev->condlock, flags);
 	ctx = dev->curr_ctx;
-	do {
+	करो अणु
 		ctx = (ctx + 1) % MFC_NUM_CONTEXTS;
-		if (ctx == dev->curr_ctx) {
-			if (!test_bit(ctx, &dev->ctx_work_bits))
+		अगर (ctx == dev->curr_ctx) अणु
+			अगर (!test_bit(ctx, &dev->ctx_work_bits))
 				ctx = -EAGAIN;
-			break;
-		}
-	} while (!test_bit(ctx, &dev->ctx_work_bits));
+			अवरोध;
+		पूर्ण
+	पूर्ण जबतक (!test_bit(ctx, &dev->ctx_work_bits));
 	spin_unlock_irqrestore(&dev->condlock, flags);
 
-	return ctx;
-}
+	वापस ctx;
+पूर्ण
 
-/* Wake up context wait_queue */
-static void wake_up_ctx(struct s5p_mfc_ctx *ctx, unsigned int reason,
-			unsigned int err)
-{
-	ctx->int_cond = 1;
-	ctx->int_type = reason;
-	ctx->int_err = err;
+/* Wake up context रुको_queue */
+अटल व्योम wake_up_ctx(काष्ठा s5p_mfc_ctx *ctx, अचिन्हित पूर्णांक reason,
+			अचिन्हित पूर्णांक err)
+अणु
+	ctx->पूर्णांक_cond = 1;
+	ctx->पूर्णांक_type = reason;
+	ctx->पूर्णांक_err = err;
 	wake_up(&ctx->queue);
-}
+पूर्ण
 
-/* Wake up device wait_queue */
-static void wake_up_dev(struct s5p_mfc_dev *dev, unsigned int reason,
-			unsigned int err)
-{
-	dev->int_cond = 1;
-	dev->int_type = reason;
-	dev->int_err = err;
+/* Wake up device रुको_queue */
+अटल व्योम wake_up_dev(काष्ठा s5p_mfc_dev *dev, अचिन्हित पूर्णांक reason,
+			अचिन्हित पूर्णांक err)
+अणु
+	dev->पूर्णांक_cond = 1;
+	dev->पूर्णांक_type = reason;
+	dev->पूर्णांक_err = err;
 	wake_up(&dev->queue);
-}
+पूर्ण
 
-void s5p_mfc_cleanup_queue(struct list_head *lh, struct vb2_queue *vq)
-{
-	struct s5p_mfc_buf *b;
-	int i;
+व्योम s5p_mfc_cleanup_queue(काष्ठा list_head *lh, काष्ठा vb2_queue *vq)
+अणु
+	काष्ठा s5p_mfc_buf *b;
+	पूर्णांक i;
 
-	while (!list_empty(lh)) {
-		b = list_entry(lh->next, struct s5p_mfc_buf, list);
-		for (i = 0; i < b->b->vb2_buf.num_planes; i++)
+	जबतक (!list_empty(lh)) अणु
+		b = list_entry(lh->next, काष्ठा s5p_mfc_buf, list);
+		क्रम (i = 0; i < b->b->vb2_buf.num_planes; i++)
 			vb2_set_plane_payload(&b->b->vb2_buf, i, 0);
-		vb2_buffer_done(&b->b->vb2_buf, VB2_BUF_STATE_ERROR);
+		vb2_buffer_करोne(&b->b->vb2_buf, VB2_BUF_STATE_ERROR);
 		list_del(&b->list);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void s5p_mfc_watchdog(struct timer_list *t)
-{
-	struct s5p_mfc_dev *dev = from_timer(dev, t, watchdog_timer);
+अटल व्योम s5p_mfc_watchकरोg(काष्ठा समयr_list *t)
+अणु
+	काष्ठा s5p_mfc_dev *dev = from_समयr(dev, t, watchकरोg_समयr);
 
-	if (test_bit(0, &dev->hw_lock))
-		atomic_inc(&dev->watchdog_cnt);
-	if (atomic_read(&dev->watchdog_cnt) >= MFC_WATCHDOG_CNT) {
-		/* This means that hw is busy and no interrupts were
-		 * generated by hw for the Nth time of running this
-		 * watchdog timer. This usually means a serious hw
-		 * error. Now it is time to kill all instances and
+	अगर (test_bit(0, &dev->hw_lock))
+		atomic_inc(&dev->watchकरोg_cnt);
+	अगर (atomic_पढ़ो(&dev->watchकरोg_cnt) >= MFC_WATCHDOG_CNT) अणु
+		/* This means that hw is busy and no पूर्णांकerrupts were
+		 * generated by hw क्रम the Nth समय of running this
+		 * watchकरोg समयr. This usually means a serious hw
+		 * error. Now it is समय to समाप्त all instances and
 		 * reset the MFC. */
 		mfc_err("Time out during waiting for HW\n");
-		schedule_work(&dev->watchdog_work);
-	}
-	dev->watchdog_timer.expires = jiffies +
-					msecs_to_jiffies(MFC_WATCHDOG_INTERVAL);
-	add_timer(&dev->watchdog_timer);
-}
+		schedule_work(&dev->watchकरोg_work);
+	पूर्ण
+	dev->watchकरोg_समयr.expires = jअगरfies +
+					msecs_to_jअगरfies(MFC_WATCHDOG_INTERVAL);
+	add_समयr(&dev->watchकरोg_समयr);
+पूर्ण
 
-static void s5p_mfc_watchdog_worker(struct work_struct *work)
-{
-	struct s5p_mfc_dev *dev;
-	struct s5p_mfc_ctx *ctx;
-	unsigned long flags;
-	int mutex_locked;
-	int i, ret;
+अटल व्योम s5p_mfc_watchकरोg_worker(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा s5p_mfc_dev *dev;
+	काष्ठा s5p_mfc_ctx *ctx;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक mutex_locked;
+	पूर्णांक i, ret;
 
-	dev = container_of(work, struct s5p_mfc_dev, watchdog_work);
+	dev = container_of(work, काष्ठा s5p_mfc_dev, watchकरोg_work);
 
 	mfc_err("Driver timeout error handling\n");
-	/* Lock the mutex that protects open and release.
+	/* Lock the mutex that protects खोलो and release.
 	 * This is necessary as they may load and unload firmware. */
 	mutex_locked = mutex_trylock(&dev->mfc_mutex);
-	if (!mutex_locked)
+	अगर (!mutex_locked)
 		mfc_err("Error: some instance may be closing/opening\n");
 	spin_lock_irqsave(&dev->irqlock, flags);
 
-	s5p_mfc_clock_off();
+	s5p_mfc_घड़ी_off();
 
-	for (i = 0; i < MFC_NUM_CONTEXTS; i++) {
+	क्रम (i = 0; i < MFC_NUM_CONTEXTS; i++) अणु
 		ctx = dev->ctx[i];
-		if (!ctx)
-			continue;
+		अगर (!ctx)
+			जारी;
 		ctx->state = MFCINST_ERROR;
 		s5p_mfc_cleanup_queue(&ctx->dst_queue, &ctx->vq_dst);
 		s5p_mfc_cleanup_queue(&ctx->src_queue, &ctx->vq_src);
 		clear_work_bit(ctx);
 		wake_up_ctx(ctx, S5P_MFC_R2H_CMD_ERR_RET, 0);
-	}
+	पूर्ण
 	clear_bit(0, &dev->hw_lock);
 	spin_unlock_irqrestore(&dev->irqlock, flags);
 
 	/* De-init MFC */
 	s5p_mfc_deinit_hw(dev);
 
-	/* Double check if there is at least one instance running.
+	/* Double check अगर there is at least one instance running.
 	 * If no instance is in memory than no firmware should be present */
-	if (dev->num_inst > 0) {
+	अगर (dev->num_inst > 0) अणु
 		ret = s5p_mfc_load_firmware(dev);
-		if (ret) {
+		अगर (ret) अणु
 			mfc_err("Failed to reload FW\n");
-			goto unlock;
-		}
-		s5p_mfc_clock_on();
+			जाओ unlock;
+		पूर्ण
+		s5p_mfc_घड़ी_on();
 		ret = s5p_mfc_init_hw(dev);
-		s5p_mfc_clock_off();
-		if (ret)
+		s5p_mfc_घड़ी_off();
+		अगर (ret)
 			mfc_err("Failed to reinit FW\n");
-	}
+	पूर्ण
 unlock:
-	if (mutex_locked)
+	अगर (mutex_locked)
 		mutex_unlock(&dev->mfc_mutex);
-}
+पूर्ण
 
-static void s5p_mfc_handle_frame_all_extracted(struct s5p_mfc_ctx *ctx)
-{
-	struct s5p_mfc_buf *dst_buf;
-	struct s5p_mfc_dev *dev = ctx->dev;
+अटल व्योम s5p_mfc_handle_frame_all_extracted(काष्ठा s5p_mfc_ctx *ctx)
+अणु
+	काष्ठा s5p_mfc_buf *dst_buf;
+	काष्ठा s5p_mfc_dev *dev = ctx->dev;
 
 	ctx->state = MFCINST_FINISHED;
 	ctx->sequence++;
-	while (!list_empty(&ctx->dst_queue)) {
+	जबतक (!list_empty(&ctx->dst_queue)) अणु
 		dst_buf = list_entry(ctx->dst_queue.next,
-				     struct s5p_mfc_buf, list);
+				     काष्ठा s5p_mfc_buf, list);
 		mfc_debug(2, "Cleaning up buffer: %d\n",
 					  dst_buf->b->vb2_buf.index);
 		vb2_set_plane_payload(&dst_buf->b->vb2_buf, 0, 0);
@@ -235,109 +236,109 @@ static void s5p_mfc_handle_frame_all_extracted(struct s5p_mfc_ctx *ctx)
 		ctx->dst_queue_cnt--;
 		dst_buf->b->sequence = (ctx->sequence++);
 
-		if (s5p_mfc_hw_call(dev->mfc_ops, get_pic_type_top, ctx) ==
+		अगर (s5p_mfc_hw_call(dev->mfc_ops, get_pic_type_top, ctx) ==
 			s5p_mfc_hw_call(dev->mfc_ops, get_pic_type_bot, ctx))
 			dst_buf->b->field = V4L2_FIELD_NONE;
-		else
+		अन्यथा
 			dst_buf->b->field = V4L2_FIELD_INTERLACED;
 		dst_buf->b->flags |= V4L2_BUF_FLAG_LAST;
 
 		ctx->dec_dst_flag &= ~(1 << dst_buf->b->vb2_buf.index);
-		vb2_buffer_done(&dst_buf->b->vb2_buf, VB2_BUF_STATE_DONE);
-	}
-}
+		vb2_buffer_करोne(&dst_buf->b->vb2_buf, VB2_BUF_STATE_DONE);
+	पूर्ण
+पूर्ण
 
-static void s5p_mfc_handle_frame_copy_time(struct s5p_mfc_ctx *ctx)
-{
-	struct s5p_mfc_dev *dev = ctx->dev;
-	struct s5p_mfc_buf *dst_buf, *src_buf;
+अटल व्योम s5p_mfc_handle_frame_copy_समय(काष्ठा s5p_mfc_ctx *ctx)
+अणु
+	काष्ठा s5p_mfc_dev *dev = ctx->dev;
+	काष्ठा s5p_mfc_buf *dst_buf, *src_buf;
 	u32 dec_y_addr;
-	unsigned int frame_type;
+	अचिन्हित पूर्णांक frame_type;
 
-	/* Make sure we actually have a new frame before continuing. */
+	/* Make sure we actually have a new frame beक्रमe continuing. */
 	frame_type = s5p_mfc_hw_call(dev->mfc_ops, get_dec_frame_type, dev);
-	if (frame_type == S5P_FIMV_DECODE_FRAME_SKIPPED)
-		return;
+	अगर (frame_type == S5P_FIMV_DECODE_FRAME_SKIPPED)
+		वापस;
 	dec_y_addr = (u32)s5p_mfc_hw_call(dev->mfc_ops, get_dec_y_adr, dev);
 
-	/* Copy timestamp / timecode from decoded src to dst and set
+	/* Copy बारtamp / समयcode from decoded src to dst and set
 	   appropriate flags. */
-	src_buf = list_entry(ctx->src_queue.next, struct s5p_mfc_buf, list);
-	list_for_each_entry(dst_buf, &ctx->dst_queue, list) {
+	src_buf = list_entry(ctx->src_queue.next, काष्ठा s5p_mfc_buf, list);
+	list_क्रम_each_entry(dst_buf, &ctx->dst_queue, list) अणु
 		u32 addr = (u32)vb2_dma_contig_plane_dma_addr(&dst_buf->b->vb2_buf, 0);
 
-		if (addr == dec_y_addr) {
-			dst_buf->b->timecode = src_buf->b->timecode;
-			dst_buf->b->vb2_buf.timestamp =
-						src_buf->b->vb2_buf.timestamp;
+		अगर (addr == dec_y_addr) अणु
+			dst_buf->b->समयcode = src_buf->b->समयcode;
+			dst_buf->b->vb2_buf.बारtamp =
+						src_buf->b->vb2_buf.बारtamp;
 			dst_buf->b->flags &=
 				~V4L2_BUF_FLAG_TSTAMP_SRC_MASK;
 			dst_buf->b->flags |=
 				src_buf->b->flags
 				& V4L2_BUF_FLAG_TSTAMP_SRC_MASK;
-			switch (frame_type) {
-			case S5P_FIMV_DECODE_FRAME_I_FRAME:
+			चयन (frame_type) अणु
+			हाल S5P_FIMV_DECODE_FRAME_I_FRAME:
 				dst_buf->b->flags |=
 						V4L2_BUF_FLAG_KEYFRAME;
-				break;
-			case S5P_FIMV_DECODE_FRAME_P_FRAME:
+				अवरोध;
+			हाल S5P_FIMV_DECODE_FRAME_P_FRAME:
 				dst_buf->b->flags |=
 						V4L2_BUF_FLAG_PFRAME;
-				break;
-			case S5P_FIMV_DECODE_FRAME_B_FRAME:
+				अवरोध;
+			हाल S5P_FIMV_DECODE_FRAME_B_FRAME:
 				dst_buf->b->flags |=
 						V4L2_BUF_FLAG_BFRAME;
-				break;
-			default:
+				अवरोध;
+			शेष:
 				/* Don't know how to handle
 				   S5P_FIMV_DECODE_FRAME_OTHER_FRAME. */
 				mfc_debug(2, "Unexpected frame type: %d\n",
 						frame_type);
-			}
-			break;
-		}
-	}
-}
+			पूर्ण
+			अवरोध;
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static void s5p_mfc_handle_frame_new(struct s5p_mfc_ctx *ctx, unsigned int err)
-{
-	struct s5p_mfc_dev *dev = ctx->dev;
-	struct s5p_mfc_buf  *dst_buf;
+अटल व्योम s5p_mfc_handle_frame_new(काष्ठा s5p_mfc_ctx *ctx, अचिन्हित पूर्णांक err)
+अणु
+	काष्ठा s5p_mfc_dev *dev = ctx->dev;
+	काष्ठा s5p_mfc_buf  *dst_buf;
 	u32 dspl_y_addr;
-	unsigned int frame_type;
+	अचिन्हित पूर्णांक frame_type;
 
 	dspl_y_addr = (u32)s5p_mfc_hw_call(dev->mfc_ops, get_dspl_y_adr, dev);
-	if (IS_MFCV6_PLUS(dev))
+	अगर (IS_MFCV6_PLUS(dev))
 		frame_type = s5p_mfc_hw_call(dev->mfc_ops,
 			get_disp_frame_type, ctx);
-	else
+	अन्यथा
 		frame_type = s5p_mfc_hw_call(dev->mfc_ops,
 			get_dec_frame_type, dev);
 
-	/* If frame is same as previous then skip and do not dequeue */
-	if (frame_type == S5P_FIMV_DECODE_FRAME_SKIPPED) {
-		if (!ctx->after_packed_pb)
+	/* If frame is same as previous then skip and करो not dequeue */
+	अगर (frame_type == S5P_FIMV_DECODE_FRAME_SKIPPED) अणु
+		अगर (!ctx->after_packed_pb)
 			ctx->sequence++;
 		ctx->after_packed_pb = 0;
-		return;
-	}
+		वापस;
+	पूर्ण
 	ctx->sequence++;
-	/* The MFC returns address of the buffer, now we have to
-	 * check which videobuf does it correspond to */
-	list_for_each_entry(dst_buf, &ctx->dst_queue, list) {
+	/* The MFC वापसs address of the buffer, now we have to
+	 * check which videobuf करोes it correspond to */
+	list_क्रम_each_entry(dst_buf, &ctx->dst_queue, list) अणु
 		u32 addr = (u32)vb2_dma_contig_plane_dma_addr(&dst_buf->b->vb2_buf, 0);
 
-		/* Check if this is the buffer we're looking for */
-		if (addr == dspl_y_addr) {
+		/* Check अगर this is the buffer we're looking क्रम */
+		अगर (addr == dspl_y_addr) अणु
 			list_del(&dst_buf->list);
 			ctx->dst_queue_cnt--;
 			dst_buf->b->sequence = ctx->sequence;
-			if (s5p_mfc_hw_call(dev->mfc_ops,
+			अगर (s5p_mfc_hw_call(dev->mfc_ops,
 					get_pic_type_top, ctx) ==
 				s5p_mfc_hw_call(dev->mfc_ops,
 					get_pic_type_bot, ctx))
 				dst_buf->b->field = V4L2_FIELD_NONE;
-			else
+			अन्यथा
 				dst_buf->b->field =
 							V4L2_FIELD_INTERLACED;
 			vb2_set_plane_payload(&dst_buf->b->vb2_buf, 0,
@@ -347,23 +348,23 @@ static void s5p_mfc_handle_frame_new(struct s5p_mfc_ctx *ctx, unsigned int err)
 			clear_bit(dst_buf->b->vb2_buf.index,
 							&ctx->dec_dst_flag);
 
-			vb2_buffer_done(&dst_buf->b->vb2_buf, err ?
+			vb2_buffer_करोne(&dst_buf->b->vb2_buf, err ?
 				VB2_BUF_STATE_ERROR : VB2_BUF_STATE_DONE);
 
-			break;
-		}
-	}
-}
+			अवरोध;
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-/* Handle frame decoding interrupt */
-static void s5p_mfc_handle_frame(struct s5p_mfc_ctx *ctx,
-					unsigned int reason, unsigned int err)
-{
-	struct s5p_mfc_dev *dev = ctx->dev;
-	unsigned int dst_frame_status;
-	unsigned int dec_frame_status;
-	struct s5p_mfc_buf *src_buf;
-	unsigned int res_change;
+/* Handle frame decoding पूर्णांकerrupt */
+अटल व्योम s5p_mfc_handle_frame(काष्ठा s5p_mfc_ctx *ctx,
+					अचिन्हित पूर्णांक reason, अचिन्हित पूर्णांक err)
+अणु
+	काष्ठा s5p_mfc_dev *dev = ctx->dev;
+	अचिन्हित पूर्णांक dst_frame_status;
+	अचिन्हित पूर्णांक dec_frame_status;
+	काष्ठा s5p_mfc_buf *src_buf;
+	अचिन्हित पूर्णांक res_change;
 
 	dst_frame_status = s5p_mfc_hw_call(dev->mfc_ops, get_dspl_status, dev)
 				& S5P_FIMV_DEC_STATUS_DECODING_STATUS_MASK;
@@ -373,111 +374,111 @@ static void s5p_mfc_handle_frame(struct s5p_mfc_ctx *ctx,
 				& S5P_FIMV_DEC_STATUS_RESOLUTION_MASK)
 				>> S5P_FIMV_DEC_STATUS_RESOLUTION_SHIFT;
 	mfc_debug(2, "Frame Status: %x\n", dst_frame_status);
-	if (ctx->state == MFCINST_RES_CHANGE_INIT)
+	अगर (ctx->state == MFCINST_RES_CHANGE_INIT)
 		ctx->state = MFCINST_RES_CHANGE_FLUSH;
-	if (res_change == S5P_FIMV_RES_INCREASE ||
-		res_change == S5P_FIMV_RES_DECREASE) {
+	अगर (res_change == S5P_FIMV_RES_INCREASE ||
+		res_change == S5P_FIMV_RES_DECREASE) अणु
 		ctx->state = MFCINST_RES_CHANGE_INIT;
-		s5p_mfc_hw_call(dev->mfc_ops, clear_int_flags, dev);
+		s5p_mfc_hw_call(dev->mfc_ops, clear_पूर्णांक_flags, dev);
 		wake_up_ctx(ctx, reason, err);
 		WARN_ON(test_and_clear_bit(0, &dev->hw_lock) == 0);
-		s5p_mfc_clock_off();
+		s5p_mfc_घड़ी_off();
 		s5p_mfc_hw_call(dev->mfc_ops, try_run, dev);
-		return;
-	}
-	if (ctx->dpb_flush_flag)
+		वापस;
+	पूर्ण
+	अगर (ctx->dpb_flush_flag)
 		ctx->dpb_flush_flag = 0;
 
-	/* All frames remaining in the buffer have been extracted  */
-	if (dst_frame_status == S5P_FIMV_DEC_STATUS_DECODING_EMPTY) {
-		if (ctx->state == MFCINST_RES_CHANGE_FLUSH) {
-			static const struct v4l2_event ev_src_ch = {
+	/* All frames reमुख्यing in the buffer have been extracted  */
+	अगर (dst_frame_status == S5P_FIMV_DEC_STATUS_DECODING_EMPTY) अणु
+		अगर (ctx->state == MFCINST_RES_CHANGE_FLUSH) अणु
+			अटल स्थिर काष्ठा v4l2_event ev_src_ch = अणु
 				.type = V4L2_EVENT_SOURCE_CHANGE,
 				.u.src_change.changes =
 					V4L2_EVENT_SRC_CH_RESOLUTION,
-			};
+			पूर्ण;
 
 			s5p_mfc_handle_frame_all_extracted(ctx);
 			ctx->state = MFCINST_RES_CHANGE_END;
 			v4l2_event_queue_fh(&ctx->fh, &ev_src_ch);
 
-			goto leave_handle_frame;
-		} else {
+			जाओ leave_handle_frame;
+		पूर्ण अन्यथा अणु
 			s5p_mfc_handle_frame_all_extracted(ctx);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (dec_frame_status == S5P_FIMV_DEC_STATUS_DECODING_DISPLAY)
-		s5p_mfc_handle_frame_copy_time(ctx);
+	अगर (dec_frame_status == S5P_FIMV_DEC_STATUS_DECODING_DISPLAY)
+		s5p_mfc_handle_frame_copy_समय(ctx);
 
 	/* A frame has been decoded and is in the buffer  */
-	if (dst_frame_status == S5P_FIMV_DEC_STATUS_DISPLAY_ONLY ||
-	    dst_frame_status == S5P_FIMV_DEC_STATUS_DECODING_DISPLAY) {
+	अगर (dst_frame_status == S5P_FIMV_DEC_STATUS_DISPLAY_ONLY ||
+	    dst_frame_status == S5P_FIMV_DEC_STATUS_DECODING_DISPLAY) अणु
 		s5p_mfc_handle_frame_new(ctx, err);
-	} else {
+	पूर्ण अन्यथा अणु
 		mfc_debug(2, "No frame decode\n");
-	}
+	पूर्ण
 	/* Mark source buffer as complete */
-	if (dst_frame_status != S5P_FIMV_DEC_STATUS_DISPLAY_ONLY
-		&& !list_empty(&ctx->src_queue)) {
-		src_buf = list_entry(ctx->src_queue.next, struct s5p_mfc_buf,
+	अगर (dst_frame_status != S5P_FIMV_DEC_STATUS_DISPLAY_ONLY
+		&& !list_empty(&ctx->src_queue)) अणु
+		src_buf = list_entry(ctx->src_queue.next, काष्ठा s5p_mfc_buf,
 								list);
 		ctx->consumed_stream += s5p_mfc_hw_call(dev->mfc_ops,
 						get_consumed_stream, dev);
-		if (ctx->codec_mode != S5P_MFC_CODEC_H264_DEC &&
+		अगर (ctx->codec_mode != S5P_MFC_CODEC_H264_DEC &&
 			ctx->codec_mode != S5P_MFC_CODEC_VP8_DEC &&
 			ctx->consumed_stream + STUFF_BYTE <
-			src_buf->b->vb2_buf.planes[0].bytesused) {
+			src_buf->b->vb2_buf.planes[0].bytesused) अणु
 			/* Run MFC again on the same buffer */
 			mfc_debug(2, "Running again the same buffer\n");
 			ctx->after_packed_pb = 1;
-		} else {
+		पूर्ण अन्यथा अणु
 			mfc_debug(2, "MFC needs next buffer\n");
 			ctx->consumed_stream = 0;
-			if (src_buf->flags & MFC_BUF_FLAG_EOS)
+			अगर (src_buf->flags & MFC_BUF_FLAG_EOS)
 				ctx->state = MFCINST_FINISHING;
 			list_del(&src_buf->list);
 			ctx->src_queue_cnt--;
-			if (s5p_mfc_hw_call(dev->mfc_ops, err_dec, err) > 0)
-				vb2_buffer_done(&src_buf->b->vb2_buf,
+			अगर (s5p_mfc_hw_call(dev->mfc_ops, err_dec, err) > 0)
+				vb2_buffer_करोne(&src_buf->b->vb2_buf,
 						VB2_BUF_STATE_ERROR);
-			else
-				vb2_buffer_done(&src_buf->b->vb2_buf,
+			अन्यथा
+				vb2_buffer_करोne(&src_buf->b->vb2_buf,
 						VB2_BUF_STATE_DONE);
-		}
-	}
+		पूर्ण
+	पूर्ण
 leave_handle_frame:
-	if ((ctx->src_queue_cnt == 0 && ctx->state != MFCINST_FINISHING)
+	अगर ((ctx->src_queue_cnt == 0 && ctx->state != MFCINST_FINISHING)
 				    || ctx->dst_queue_cnt < ctx->pb_count)
 		clear_work_bit(ctx);
-	s5p_mfc_hw_call(dev->mfc_ops, clear_int_flags, dev);
+	s5p_mfc_hw_call(dev->mfc_ops, clear_पूर्णांक_flags, dev);
 	wake_up_ctx(ctx, reason, err);
 	WARN_ON(test_and_clear_bit(0, &dev->hw_lock) == 0);
-	s5p_mfc_clock_off();
-	/* if suspending, wake up device and do not try_run again*/
-	if (test_bit(0, &dev->enter_suspend))
+	s5p_mfc_घड़ी_off();
+	/* अगर suspending, wake up device and करो not try_run again*/
+	अगर (test_bit(0, &dev->enter_suspend))
 		wake_up_dev(dev, reason, err);
-	else
+	अन्यथा
 		s5p_mfc_hw_call(dev->mfc_ops, try_run, dev);
-}
+पूर्ण
 
-/* Error handling for interrupt */
-static void s5p_mfc_handle_error(struct s5p_mfc_dev *dev,
-		struct s5p_mfc_ctx *ctx, unsigned int reason, unsigned int err)
-{
+/* Error handling क्रम पूर्णांकerrupt */
+अटल व्योम s5p_mfc_handle_error(काष्ठा s5p_mfc_dev *dev,
+		काष्ठा s5p_mfc_ctx *ctx, अचिन्हित पूर्णांक reason, अचिन्हित पूर्णांक err)
+अणु
 	mfc_err("Interrupt Error: %08x\n", err);
 
-	if (ctx) {
+	अगर (ctx) अणु
 		/* Error recovery is dependent on the state of context */
-		switch (ctx->state) {
-		case MFCINST_RES_CHANGE_INIT:
-		case MFCINST_RES_CHANGE_FLUSH:
-		case MFCINST_RES_CHANGE_END:
-		case MFCINST_FINISHING:
-		case MFCINST_FINISHED:
-		case MFCINST_RUNNING:
+		चयन (ctx->state) अणु
+		हाल MFCINST_RES_CHANGE_INIT:
+		हाल MFCINST_RES_CHANGE_FLUSH:
+		हाल MFCINST_RES_CHANGE_END:
+		हाल MFCINST_FINISHING:
+		हाल MFCINST_FINISHED:
+		हाल MFCINST_RUNNING:
 			/* It is highly probable that an error occurred
-			 * while decoding a frame */
+			 * जबतक decoding a frame */
 			clear_work_bit(ctx);
 			ctx->state = MFCINST_ERROR;
 			/* Mark all dst buffers as having an error */
@@ -485,33 +486,33 @@ static void s5p_mfc_handle_error(struct s5p_mfc_dev *dev,
 			/* Mark all src buffers as having an error */
 			s5p_mfc_cleanup_queue(&ctx->src_queue, &ctx->vq_src);
 			wake_up_ctx(ctx, reason, err);
-			break;
-		default:
+			अवरोध;
+		शेष:
 			clear_work_bit(ctx);
 			ctx->state = MFCINST_ERROR;
 			wake_up_ctx(ctx, reason, err);
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 	WARN_ON(test_and_clear_bit(0, &dev->hw_lock) == 0);
-	s5p_mfc_hw_call(dev->mfc_ops, clear_int_flags, dev);
-	s5p_mfc_clock_off();
+	s5p_mfc_hw_call(dev->mfc_ops, clear_पूर्णांक_flags, dev);
+	s5p_mfc_घड़ी_off();
 	wake_up_dev(dev, reason, err);
-}
+पूर्ण
 
-/* Header parsing interrupt handling */
-static void s5p_mfc_handle_seq_done(struct s5p_mfc_ctx *ctx,
-				 unsigned int reason, unsigned int err)
-{
-	struct s5p_mfc_dev *dev;
+/* Header parsing पूर्णांकerrupt handling */
+अटल व्योम s5p_mfc_handle_seq_करोne(काष्ठा s5p_mfc_ctx *ctx,
+				 अचिन्हित पूर्णांक reason, अचिन्हित पूर्णांक err)
+अणु
+	काष्ठा s5p_mfc_dev *dev;
 
-	if (!ctx)
-		return;
+	अगर (!ctx)
+		वापस;
 	dev = ctx->dev;
-	if (ctx->c_ops->post_seq_start) {
-		if (ctx->c_ops->post_seq_start(ctx))
+	अगर (ctx->c_ops->post_seq_start) अणु
+		अगर (ctx->c_ops->post_seq_start(ctx))
 			mfc_err("post_seq_start() failed\n");
-	} else {
+	पूर्ण अन्यथा अणु
 		ctx->img_width = s5p_mfc_hw_call(dev->mfc_ops, get_img_width,
 				dev);
 		ctx->img_height = s5p_mfc_hw_call(dev->mfc_ops, get_img_height,
@@ -523,252 +524,252 @@ static void s5p_mfc_handle_seq_done(struct s5p_mfc_ctx *ctx,
 				dev);
 		ctx->mv_count = s5p_mfc_hw_call(dev->mfc_ops, get_mv_count,
 				dev);
-		if (FW_HAS_E_MIN_SCRATCH_BUF(dev))
+		अगर (FW_HAS_E_MIN_SCRATCH_BUF(dev))
 			ctx->scratch_buf_size = s5p_mfc_hw_call(dev->mfc_ops,
 						get_min_scratch_buf_size, dev);
-		if (ctx->img_width == 0 || ctx->img_height == 0)
+		अगर (ctx->img_width == 0 || ctx->img_height == 0)
 			ctx->state = MFCINST_ERROR;
-		else
+		अन्यथा
 			ctx->state = MFCINST_HEAD_PARSED;
 
-		if ((ctx->codec_mode == S5P_MFC_CODEC_H264_DEC ||
+		अगर ((ctx->codec_mode == S5P_MFC_CODEC_H264_DEC ||
 			ctx->codec_mode == S5P_MFC_CODEC_H264_MVC_DEC) &&
-				!list_empty(&ctx->src_queue)) {
-			struct s5p_mfc_buf *src_buf;
+				!list_empty(&ctx->src_queue)) अणु
+			काष्ठा s5p_mfc_buf *src_buf;
 			src_buf = list_entry(ctx->src_queue.next,
-					struct s5p_mfc_buf, list);
-			if (s5p_mfc_hw_call(dev->mfc_ops, get_consumed_stream,
+					काष्ठा s5p_mfc_buf, list);
+			अगर (s5p_mfc_hw_call(dev->mfc_ops, get_consumed_stream,
 						dev) <
 					src_buf->b->vb2_buf.planes[0].bytesused)
 				ctx->head_processed = 0;
-			else
+			अन्यथा
 				ctx->head_processed = 1;
-		} else {
+		पूर्ण अन्यथा अणु
 			ctx->head_processed = 1;
-		}
-	}
-	s5p_mfc_hw_call(dev->mfc_ops, clear_int_flags, dev);
+		पूर्ण
+	पूर्ण
+	s5p_mfc_hw_call(dev->mfc_ops, clear_पूर्णांक_flags, dev);
 	clear_work_bit(ctx);
 	WARN_ON(test_and_clear_bit(0, &dev->hw_lock) == 0);
-	s5p_mfc_clock_off();
+	s5p_mfc_घड़ी_off();
 	s5p_mfc_hw_call(dev->mfc_ops, try_run, dev);
 	wake_up_ctx(ctx, reason, err);
-}
+पूर्ण
 
-/* Header parsing interrupt handling */
-static void s5p_mfc_handle_init_buffers(struct s5p_mfc_ctx *ctx,
-				 unsigned int reason, unsigned int err)
-{
-	struct s5p_mfc_buf *src_buf;
-	struct s5p_mfc_dev *dev;
+/* Header parsing पूर्णांकerrupt handling */
+अटल व्योम s5p_mfc_handle_init_buffers(काष्ठा s5p_mfc_ctx *ctx,
+				 अचिन्हित पूर्णांक reason, अचिन्हित पूर्णांक err)
+अणु
+	काष्ठा s5p_mfc_buf *src_buf;
+	काष्ठा s5p_mfc_dev *dev;
 
-	if (!ctx)
-		return;
+	अगर (!ctx)
+		वापस;
 	dev = ctx->dev;
-	s5p_mfc_hw_call(dev->mfc_ops, clear_int_flags, dev);
-	ctx->int_type = reason;
-	ctx->int_err = err;
-	ctx->int_cond = 1;
+	s5p_mfc_hw_call(dev->mfc_ops, clear_पूर्णांक_flags, dev);
+	ctx->पूर्णांक_type = reason;
+	ctx->पूर्णांक_err = err;
+	ctx->पूर्णांक_cond = 1;
 	clear_work_bit(ctx);
-	if (err == 0) {
+	अगर (err == 0) अणु
 		ctx->state = MFCINST_RUNNING;
-		if (!ctx->dpb_flush_flag && ctx->head_processed) {
-			if (!list_empty(&ctx->src_queue)) {
+		अगर (!ctx->dpb_flush_flag && ctx->head_processed) अणु
+			अगर (!list_empty(&ctx->src_queue)) अणु
 				src_buf = list_entry(ctx->src_queue.next,
-					     struct s5p_mfc_buf, list);
+					     काष्ठा s5p_mfc_buf, list);
 				list_del(&src_buf->list);
 				ctx->src_queue_cnt--;
-				vb2_buffer_done(&src_buf->b->vb2_buf,
+				vb2_buffer_करोne(&src_buf->b->vb2_buf,
 						VB2_BUF_STATE_DONE);
-			}
-		} else {
+			पूर्ण
+		पूर्ण अन्यथा अणु
 			ctx->dpb_flush_flag = 0;
-		}
+		पूर्ण
 		WARN_ON(test_and_clear_bit(0, &dev->hw_lock) == 0);
 
-		s5p_mfc_clock_off();
+		s5p_mfc_घड़ी_off();
 
 		wake_up(&ctx->queue);
 		s5p_mfc_hw_call(dev->mfc_ops, try_run, dev);
-	} else {
+	पूर्ण अन्यथा अणु
 		WARN_ON(test_and_clear_bit(0, &dev->hw_lock) == 0);
 
-		s5p_mfc_clock_off();
+		s5p_mfc_घड़ी_off();
 
 		wake_up(&ctx->queue);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void s5p_mfc_handle_stream_complete(struct s5p_mfc_ctx *ctx)
-{
-	struct s5p_mfc_dev *dev = ctx->dev;
-	struct s5p_mfc_buf *mb_entry;
+अटल व्योम s5p_mfc_handle_stream_complete(काष्ठा s5p_mfc_ctx *ctx)
+अणु
+	काष्ठा s5p_mfc_dev *dev = ctx->dev;
+	काष्ठा s5p_mfc_buf *mb_entry;
 
 	mfc_debug(2, "Stream completed\n");
 
 	ctx->state = MFCINST_FINISHED;
 
-	if (!list_empty(&ctx->dst_queue)) {
-		mb_entry = list_entry(ctx->dst_queue.next, struct s5p_mfc_buf,
+	अगर (!list_empty(&ctx->dst_queue)) अणु
+		mb_entry = list_entry(ctx->dst_queue.next, काष्ठा s5p_mfc_buf,
 									list);
 		list_del(&mb_entry->list);
 		ctx->dst_queue_cnt--;
 		vb2_set_plane_payload(&mb_entry->b->vb2_buf, 0, 0);
-		vb2_buffer_done(&mb_entry->b->vb2_buf, VB2_BUF_STATE_DONE);
-	}
+		vb2_buffer_करोne(&mb_entry->b->vb2_buf, VB2_BUF_STATE_DONE);
+	पूर्ण
 
 	clear_work_bit(ctx);
 
 	WARN_ON(test_and_clear_bit(0, &dev->hw_lock) == 0);
 
-	s5p_mfc_clock_off();
+	s5p_mfc_घड़ी_off();
 	wake_up(&ctx->queue);
 	s5p_mfc_hw_call(dev->mfc_ops, try_run, dev);
-}
+पूर्ण
 
 /* Interrupt processing */
-static irqreturn_t s5p_mfc_irq(int irq, void *priv)
-{
-	struct s5p_mfc_dev *dev = priv;
-	struct s5p_mfc_ctx *ctx;
-	unsigned int reason;
-	unsigned int err;
+अटल irqवापस_t s5p_mfc_irq(पूर्णांक irq, व्योम *priv)
+अणु
+	काष्ठा s5p_mfc_dev *dev = priv;
+	काष्ठा s5p_mfc_ctx *ctx;
+	अचिन्हित पूर्णांक reason;
+	अचिन्हित पूर्णांक err;
 
 	mfc_debug_enter();
-	/* Reset the timeout watchdog */
-	atomic_set(&dev->watchdog_cnt, 0);
+	/* Reset the समयout watchकरोg */
+	atomic_set(&dev->watchकरोg_cnt, 0);
 	spin_lock(&dev->irqlock);
 	ctx = dev->ctx[dev->curr_ctx];
-	/* Get the reason of interrupt and the error code */
-	reason = s5p_mfc_hw_call(dev->mfc_ops, get_int_reason, dev);
-	err = s5p_mfc_hw_call(dev->mfc_ops, get_int_err, dev);
+	/* Get the reason of पूर्णांकerrupt and the error code */
+	reason = s5p_mfc_hw_call(dev->mfc_ops, get_पूर्णांक_reason, dev);
+	err = s5p_mfc_hw_call(dev->mfc_ops, get_पूर्णांक_err, dev);
 	mfc_debug(1, "Int reason: %d (err: %08x)\n", reason, err);
-	switch (reason) {
-	case S5P_MFC_R2H_CMD_ERR_RET:
+	चयन (reason) अणु
+	हाल S5P_MFC_R2H_CMD_ERR_RET:
 		/* An error has occurred */
-		if (ctx->state == MFCINST_RUNNING &&
+		अगर (ctx->state == MFCINST_RUNNING &&
 			(s5p_mfc_hw_call(dev->mfc_ops, err_dec, err) >=
 				dev->warn_start ||
 				err == S5P_FIMV_ERR_NO_VALID_SEQ_HDR ||
 				err == S5P_FIMV_ERR_INCOMPLETE_FRAME ||
 				err == S5P_FIMV_ERR_TIMEOUT))
 			s5p_mfc_handle_frame(ctx, reason, err);
-		else
+		अन्यथा
 			s5p_mfc_handle_error(dev, ctx, reason, err);
 		clear_bit(0, &dev->enter_suspend);
-		break;
+		अवरोध;
 
-	case S5P_MFC_R2H_CMD_SLICE_DONE_RET:
-	case S5P_MFC_R2H_CMD_FIELD_DONE_RET:
-	case S5P_MFC_R2H_CMD_FRAME_DONE_RET:
-		if (ctx->c_ops->post_frame_start) {
-			if (ctx->c_ops->post_frame_start(ctx))
+	हाल S5P_MFC_R2H_CMD_SLICE_DONE_RET:
+	हाल S5P_MFC_R2H_CMD_FIELD_DONE_RET:
+	हाल S5P_MFC_R2H_CMD_FRAME_DONE_RET:
+		अगर (ctx->c_ops->post_frame_start) अणु
+			अगर (ctx->c_ops->post_frame_start(ctx))
 				mfc_err("post_frame_start() failed\n");
 
-			if (ctx->state == MFCINST_FINISHING &&
-						list_empty(&ctx->ref_queue)) {
-				s5p_mfc_hw_call(dev->mfc_ops, clear_int_flags, dev);
+			अगर (ctx->state == MFCINST_FINISHING &&
+						list_empty(&ctx->ref_queue)) अणु
+				s5p_mfc_hw_call(dev->mfc_ops, clear_पूर्णांक_flags, dev);
 				s5p_mfc_handle_stream_complete(ctx);
-				break;
-			}
-			s5p_mfc_hw_call(dev->mfc_ops, clear_int_flags, dev);
+				अवरोध;
+			पूर्ण
+			s5p_mfc_hw_call(dev->mfc_ops, clear_पूर्णांक_flags, dev);
 			WARN_ON(test_and_clear_bit(0, &dev->hw_lock) == 0);
-			s5p_mfc_clock_off();
+			s5p_mfc_घड़ी_off();
 			wake_up_ctx(ctx, reason, err);
 			s5p_mfc_hw_call(dev->mfc_ops, try_run, dev);
-		} else {
+		पूर्ण अन्यथा अणु
 			s5p_mfc_handle_frame(ctx, reason, err);
-		}
-		break;
+		पूर्ण
+		अवरोध;
 
-	case S5P_MFC_R2H_CMD_SEQ_DONE_RET:
-		s5p_mfc_handle_seq_done(ctx, reason, err);
-		break;
+	हाल S5P_MFC_R2H_CMD_SEQ_DONE_RET:
+		s5p_mfc_handle_seq_करोne(ctx, reason, err);
+		अवरोध;
 
-	case S5P_MFC_R2H_CMD_OPEN_INSTANCE_RET:
+	हाल S5P_MFC_R2H_CMD_OPEN_INSTANCE_RET:
 		ctx->inst_no = s5p_mfc_hw_call(dev->mfc_ops, get_inst_no, dev);
 		ctx->state = MFCINST_GOT_INST;
-		goto irq_cleanup_hw;
+		जाओ irq_cleanup_hw;
 
-	case S5P_MFC_R2H_CMD_CLOSE_INSTANCE_RET:
+	हाल S5P_MFC_R2H_CMD_CLOSE_INSTANCE_RET:
 		ctx->inst_no = MFC_NO_INSTANCE_SET;
 		ctx->state = MFCINST_FREE;
-		goto irq_cleanup_hw;
+		जाओ irq_cleanup_hw;
 
-	case S5P_MFC_R2H_CMD_SYS_INIT_RET:
-	case S5P_MFC_R2H_CMD_FW_STATUS_RET:
-	case S5P_MFC_R2H_CMD_SLEEP_RET:
-	case S5P_MFC_R2H_CMD_WAKEUP_RET:
-		if (ctx)
+	हाल S5P_MFC_R2H_CMD_SYS_INIT_RET:
+	हाल S5P_MFC_R2H_CMD_FW_STATUS_RET:
+	हाल S5P_MFC_R2H_CMD_SLEEP_RET:
+	हाल S5P_MFC_R2H_CMD_WAKEUP_RET:
+		अगर (ctx)
 			clear_work_bit(ctx);
-		s5p_mfc_hw_call(dev->mfc_ops, clear_int_flags, dev);
+		s5p_mfc_hw_call(dev->mfc_ops, clear_पूर्णांक_flags, dev);
 		clear_bit(0, &dev->hw_lock);
 		clear_bit(0, &dev->enter_suspend);
 		wake_up_dev(dev, reason, err);
-		break;
+		अवरोध;
 
-	case S5P_MFC_R2H_CMD_INIT_BUFFERS_RET:
+	हाल S5P_MFC_R2H_CMD_INIT_BUFFERS_RET:
 		s5p_mfc_handle_init_buffers(ctx, reason, err);
-		break;
+		अवरोध;
 
-	case S5P_MFC_R2H_CMD_COMPLETE_SEQ_RET:
-		s5p_mfc_hw_call(dev->mfc_ops, clear_int_flags, dev);
-		ctx->int_type = reason;
-		ctx->int_err = err;
+	हाल S5P_MFC_R2H_CMD_COMPLETE_SEQ_RET:
+		s5p_mfc_hw_call(dev->mfc_ops, clear_पूर्णांक_flags, dev);
+		ctx->पूर्णांक_type = reason;
+		ctx->पूर्णांक_err = err;
 		s5p_mfc_handle_stream_complete(ctx);
-		break;
+		अवरोध;
 
-	case S5P_MFC_R2H_CMD_DPB_FLUSH_RET:
+	हाल S5P_MFC_R2H_CMD_DPB_FLUSH_RET:
 		ctx->state = MFCINST_RUNNING;
-		goto irq_cleanup_hw;
+		जाओ irq_cleanup_hw;
 
-	default:
+	शेष:
 		mfc_debug(2, "Unknown int reason\n");
-		s5p_mfc_hw_call(dev->mfc_ops, clear_int_flags, dev);
-	}
+		s5p_mfc_hw_call(dev->mfc_ops, clear_पूर्णांक_flags, dev);
+	पूर्ण
 	spin_unlock(&dev->irqlock);
 	mfc_debug_leave();
-	return IRQ_HANDLED;
+	वापस IRQ_HANDLED;
 irq_cleanup_hw:
-	s5p_mfc_hw_call(dev->mfc_ops, clear_int_flags, dev);
-	ctx->int_type = reason;
-	ctx->int_err = err;
-	ctx->int_cond = 1;
-	if (test_and_clear_bit(0, &dev->hw_lock) == 0)
+	s5p_mfc_hw_call(dev->mfc_ops, clear_पूर्णांक_flags, dev);
+	ctx->पूर्णांक_type = reason;
+	ctx->पूर्णांक_err = err;
+	ctx->पूर्णांक_cond = 1;
+	अगर (test_and_clear_bit(0, &dev->hw_lock) == 0)
 		mfc_err("Failed to unlock hw\n");
 
-	s5p_mfc_clock_off();
+	s5p_mfc_घड़ी_off();
 	clear_work_bit(ctx);
 	wake_up(&ctx->queue);
 
 	s5p_mfc_hw_call(dev->mfc_ops, try_run, dev);
 	spin_unlock(&dev->irqlock);
 	mfc_debug(2, "Exit via irq_cleanup_hw\n");
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
 /* Open an MFC node */
-static int s5p_mfc_open(struct file *file)
-{
-	struct video_device *vdev = video_devdata(file);
-	struct s5p_mfc_dev *dev = video_drvdata(file);
-	struct s5p_mfc_ctx *ctx = NULL;
-	struct vb2_queue *q;
-	int ret = 0;
+अटल पूर्णांक s5p_mfc_खोलो(काष्ठा file *file)
+अणु
+	काष्ठा video_device *vdev = video_devdata(file);
+	काष्ठा s5p_mfc_dev *dev = video_drvdata(file);
+	काष्ठा s5p_mfc_ctx *ctx = शून्य;
+	काष्ठा vb2_queue *q;
+	पूर्णांक ret = 0;
 
 	mfc_debug_enter();
-	if (mutex_lock_interruptible(&dev->mfc_mutex))
-		return -ERESTARTSYS;
+	अगर (mutex_lock_पूर्णांकerruptible(&dev->mfc_mutex))
+		वापस -ERESTARTSYS;
 	dev->num_inst++;	/* It is guarded by mfc_mutex in vfd */
-	/* Allocate memory for context */
-	ctx = kzalloc(sizeof(*ctx), GFP_KERNEL);
-	if (!ctx) {
+	/* Allocate memory क्रम context */
+	ctx = kzalloc(माप(*ctx), GFP_KERNEL);
+	अगर (!ctx) अणु
 		ret = -ENOMEM;
-		goto err_alloc;
-	}
-	init_waitqueue_head(&ctx->queue);
+		जाओ err_alloc;
+	पूर्ण
+	init_रुकोqueue_head(&ctx->queue);
 	v4l2_fh_init(&ctx->fh, vdev);
-	file->private_data = &ctx->fh;
+	file->निजी_data = &ctx->fh;
 	v4l2_fh_add(&ctx->fh);
 	ctx->dev = dev;
 	INIT_LIST_HEAD(&ctx->src_queue);
@@ -777,311 +778,311 @@ static int s5p_mfc_open(struct file *file)
 	ctx->dst_queue_cnt = 0;
 	/* Get context number */
 	ctx->num = 0;
-	while (dev->ctx[ctx->num]) {
+	जबतक (dev->ctx[ctx->num]) अणु
 		ctx->num++;
-		if (ctx->num >= MFC_NUM_CONTEXTS) {
+		अगर (ctx->num >= MFC_NUM_CONTEXTS) अणु
 			mfc_debug(2, "Too many open contexts\n");
 			ret = -EBUSY;
-			goto err_no_ctx;
-		}
-	}
+			जाओ err_no_ctx;
+		पूर्ण
+	पूर्ण
 	/* Mark context as idle */
 	clear_work_bit_irqsave(ctx);
 	dev->ctx[ctx->num] = ctx;
-	if (vdev == dev->vfd_dec) {
+	अगर (vdev == dev->vfd_dec) अणु
 		ctx->type = MFCINST_DECODER;
 		ctx->c_ops = get_dec_codec_ops();
 		s5p_mfc_dec_init(ctx);
 		/* Setup ctrl handler */
 		ret = s5p_mfc_dec_ctrls_setup(ctx);
-		if (ret) {
+		अगर (ret) अणु
 			mfc_err("Failed to setup mfc controls\n");
-			goto err_ctrls_setup;
-		}
-	} else if (vdev == dev->vfd_enc) {
+			जाओ err_ctrls_setup;
+		पूर्ण
+	पूर्ण अन्यथा अगर (vdev == dev->vfd_enc) अणु
 		ctx->type = MFCINST_ENCODER;
 		ctx->c_ops = get_enc_codec_ops();
-		/* only for encoder */
+		/* only क्रम encoder */
 		INIT_LIST_HEAD(&ctx->ref_queue);
 		ctx->ref_queue_cnt = 0;
 		s5p_mfc_enc_init(ctx);
 		/* Setup ctrl handler */
 		ret = s5p_mfc_enc_ctrls_setup(ctx);
-		if (ret) {
+		अगर (ret) अणु
 			mfc_err("Failed to setup mfc controls\n");
-			goto err_ctrls_setup;
-		}
-	} else {
+			जाओ err_ctrls_setup;
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		ret = -ENOENT;
-		goto err_bad_node;
-	}
+		जाओ err_bad_node;
+	पूर्ण
 	ctx->fh.ctrl_handler = &ctx->ctrl_handler;
 	ctx->inst_no = MFC_NO_INSTANCE_SET;
-	/* Load firmware if this is the first instance */
-	if (dev->num_inst == 1) {
-		dev->watchdog_timer.expires = jiffies +
-					msecs_to_jiffies(MFC_WATCHDOG_INTERVAL);
-		add_timer(&dev->watchdog_timer);
-		ret = s5p_mfc_power_on();
-		if (ret < 0) {
+	/* Load firmware अगर this is the first instance */
+	अगर (dev->num_inst == 1) अणु
+		dev->watchकरोg_समयr.expires = jअगरfies +
+					msecs_to_jअगरfies(MFC_WATCHDOG_INTERVAL);
+		add_समयr(&dev->watchकरोg_समयr);
+		ret = s5p_mfc_घातer_on();
+		अगर (ret < 0) अणु
 			mfc_err("power on failed\n");
-			goto err_pwr_enable;
-		}
-		s5p_mfc_clock_on();
+			जाओ err_pwr_enable;
+		पूर्ण
+		s5p_mfc_घड़ी_on();
 		ret = s5p_mfc_load_firmware(dev);
-		if (ret) {
-			s5p_mfc_clock_off();
-			goto err_load_fw;
-		}
+		अगर (ret) अणु
+			s5p_mfc_घड़ी_off();
+			जाओ err_load_fw;
+		पूर्ण
 		/* Init the FW */
 		ret = s5p_mfc_init_hw(dev);
-		s5p_mfc_clock_off();
-		if (ret)
-			goto err_init_hw;
-	}
-	/* Init videobuf2 queue for CAPTURE */
+		s5p_mfc_घड़ी_off();
+		अगर (ret)
+			जाओ err_init_hw;
+	पूर्ण
+	/* Init videobuf2 queue क्रम CAPTURE */
 	q = &ctx->vq_dst;
 	q->type = V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE;
 	q->drv_priv = &ctx->fh;
 	q->lock = &dev->mfc_mutex;
-	if (vdev == dev->vfd_dec) {
+	अगर (vdev == dev->vfd_dec) अणु
 		q->io_modes = VB2_MMAP;
 		q->ops = get_dec_queue_ops();
-	} else if (vdev == dev->vfd_enc) {
+	पूर्ण अन्यथा अगर (vdev == dev->vfd_enc) अणु
 		q->io_modes = VB2_MMAP | VB2_USERPTR;
 		q->ops = get_enc_queue_ops();
-	} else {
+	पूर्ण अन्यथा अणु
 		ret = -ENOENT;
-		goto err_queue_init;
-	}
+		जाओ err_queue_init;
+	पूर्ण
 	/*
-	 * We'll do mostly sequential access, so sacrifice TLB efficiency for
+	 * We'll करो mostly sequential access, so sacrअगरice TLB efficiency क्रम
 	 * faster allocation.
 	 */
 	q->dma_attrs = DMA_ATTR_ALLOC_SINGLE_PAGES;
 	q->mem_ops = &vb2_dma_contig_memops;
-	q->timestamp_flags = V4L2_BUF_FLAG_TIMESTAMP_COPY;
+	q->बारtamp_flags = V4L2_BUF_FLAG_TIMESTAMP_COPY;
 	ret = vb2_queue_init(q);
-	if (ret) {
+	अगर (ret) अणु
 		mfc_err("Failed to initialize videobuf2 queue(capture)\n");
-		goto err_queue_init;
-	}
-	/* Init videobuf2 queue for OUTPUT */
+		जाओ err_queue_init;
+	पूर्ण
+	/* Init videobuf2 queue क्रम OUTPUT */
 	q = &ctx->vq_src;
 	q->type = V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;
 	q->drv_priv = &ctx->fh;
 	q->lock = &dev->mfc_mutex;
-	if (vdev == dev->vfd_dec) {
+	अगर (vdev == dev->vfd_dec) अणु
 		q->io_modes = VB2_MMAP;
 		q->ops = get_dec_queue_ops();
-	} else if (vdev == dev->vfd_enc) {
+	पूर्ण अन्यथा अगर (vdev == dev->vfd_enc) अणु
 		q->io_modes = VB2_MMAP | VB2_USERPTR;
 		q->ops = get_enc_queue_ops();
-	} else {
+	पूर्ण अन्यथा अणु
 		ret = -ENOENT;
-		goto err_queue_init;
-	}
-	/* One way to indicate end-of-stream for MFC is to set the
-	 * bytesused == 0. However by default videobuf2 handles bytesused
-	 * equal to 0 as a special case and changes its value to the size
+		जाओ err_queue_init;
+	पूर्ण
+	/* One way to indicate end-of-stream क्रम MFC is to set the
+	 * bytesused == 0. However by शेष videobuf2 handles bytesused
+	 * equal to 0 as a special हाल and changes its value to the size
 	 * of the buffer. Set the allow_zero_bytesused flag so that videobuf2
-	 * will keep the value of bytesused intact.
+	 * will keep the value of bytesused पूर्णांकact.
 	 */
 	q->allow_zero_bytesused = 1;
 
 	/*
-	 * We'll do mostly sequential access, so sacrifice TLB efficiency for
+	 * We'll करो mostly sequential access, so sacrअगरice TLB efficiency क्रम
 	 * faster allocation.
 	 */
 	q->dma_attrs = DMA_ATTR_ALLOC_SINGLE_PAGES;
 	q->mem_ops = &vb2_dma_contig_memops;
-	q->timestamp_flags = V4L2_BUF_FLAG_TIMESTAMP_COPY;
+	q->बारtamp_flags = V4L2_BUF_FLAG_TIMESTAMP_COPY;
 	ret = vb2_queue_init(q);
-	if (ret) {
+	अगर (ret) अणु
 		mfc_err("Failed to initialize videobuf2 queue(output)\n");
-		goto err_queue_init;
-	}
+		जाओ err_queue_init;
+	पूर्ण
 	mutex_unlock(&dev->mfc_mutex);
 	mfc_debug_leave();
-	return ret;
+	वापस ret;
 	/* Deinit when failure occurred */
 err_queue_init:
-	if (dev->num_inst == 1)
+	अगर (dev->num_inst == 1)
 		s5p_mfc_deinit_hw(dev);
 err_init_hw:
 err_load_fw:
 err_pwr_enable:
-	if (dev->num_inst == 1) {
-		if (s5p_mfc_power_off() < 0)
+	अगर (dev->num_inst == 1) अणु
+		अगर (s5p_mfc_घातer_off() < 0)
 			mfc_err("power off failed\n");
-		del_timer_sync(&dev->watchdog_timer);
-	}
+		del_समयr_sync(&dev->watchकरोg_समयr);
+	पूर्ण
 err_ctrls_setup:
 	s5p_mfc_dec_ctrls_delete(ctx);
 err_bad_node:
-	dev->ctx[ctx->num] = NULL;
+	dev->ctx[ctx->num] = शून्य;
 err_no_ctx:
 	v4l2_fh_del(&ctx->fh);
-	v4l2_fh_exit(&ctx->fh);
-	kfree(ctx);
+	v4l2_fh_निकास(&ctx->fh);
+	kमुक्त(ctx);
 err_alloc:
 	dev->num_inst--;
 	mutex_unlock(&dev->mfc_mutex);
 	mfc_debug_leave();
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /* Release MFC context */
-static int s5p_mfc_release(struct file *file)
-{
-	struct s5p_mfc_ctx *ctx = fh_to_ctx(file->private_data);
-	struct s5p_mfc_dev *dev = ctx->dev;
+अटल पूर्णांक s5p_mfc_release(काष्ठा file *file)
+अणु
+	काष्ठा s5p_mfc_ctx *ctx = fh_to_ctx(file->निजी_data);
+	काष्ठा s5p_mfc_dev *dev = ctx->dev;
 
-	/* if dev is null, do cleanup that doesn't need dev */
+	/* अगर dev is null, करो cleanup that करोesn't need dev */
 	mfc_debug_enter();
-	if (dev)
+	अगर (dev)
 		mutex_lock(&dev->mfc_mutex);
 	vb2_queue_release(&ctx->vq_src);
 	vb2_queue_release(&ctx->vq_dst);
-	if (dev) {
-		s5p_mfc_clock_on();
+	अगर (dev) अणु
+		s5p_mfc_घड़ी_on();
 
 		/* Mark context as idle */
 		clear_work_bit_irqsave(ctx);
 		/*
-		 * If instance was initialised and not yet freed,
-		 * return instance and free resources
+		 * If instance was initialised and not yet मुक्तd,
+		 * वापस instance and मुक्त resources
 		*/
-		if (ctx->state != MFCINST_FREE && ctx->state != MFCINST_INIT) {
+		अगर (ctx->state != MFCINST_FREE && ctx->state != MFCINST_INIT) अणु
 			mfc_debug(2, "Has to free instance\n");
-			s5p_mfc_close_mfc_inst(dev, ctx);
-		}
+			s5p_mfc_बंद_mfc_inst(dev, ctx);
+		पूर्ण
 		/* hardware locking scheme */
-		if (dev->curr_ctx == ctx->num)
+		अगर (dev->curr_ctx == ctx->num)
 			clear_bit(0, &dev->hw_lock);
 		dev->num_inst--;
-		if (dev->num_inst == 0) {
+		अगर (dev->num_inst == 0) अणु
 			mfc_debug(2, "Last instance\n");
 			s5p_mfc_deinit_hw(dev);
-			del_timer_sync(&dev->watchdog_timer);
-			s5p_mfc_clock_off();
-			if (s5p_mfc_power_off() < 0)
+			del_समयr_sync(&dev->watchकरोg_समयr);
+			s5p_mfc_घड़ी_off();
+			अगर (s5p_mfc_घातer_off() < 0)
 				mfc_err("Power off failed\n");
-		} else {
+		पूर्ण अन्यथा अणु
 			mfc_debug(2, "Shutting down clock\n");
-			s5p_mfc_clock_off();
-		}
-	}
-	if (dev)
-		dev->ctx[ctx->num] = NULL;
+			s5p_mfc_घड़ी_off();
+		पूर्ण
+	पूर्ण
+	अगर (dev)
+		dev->ctx[ctx->num] = शून्य;
 	s5p_mfc_dec_ctrls_delete(ctx);
 	v4l2_fh_del(&ctx->fh);
-	/* vdev is gone if dev is null */
-	if (dev)
-		v4l2_fh_exit(&ctx->fh);
-	kfree(ctx);
+	/* vdev is gone अगर dev is null */
+	अगर (dev)
+		v4l2_fh_निकास(&ctx->fh);
+	kमुक्त(ctx);
 	mfc_debug_leave();
-	if (dev)
+	अगर (dev)
 		mutex_unlock(&dev->mfc_mutex);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* Poll */
-static __poll_t s5p_mfc_poll(struct file *file,
-				 struct poll_table_struct *wait)
-{
-	struct s5p_mfc_ctx *ctx = fh_to_ctx(file->private_data);
-	struct s5p_mfc_dev *dev = ctx->dev;
-	struct vb2_queue *src_q, *dst_q;
-	struct vb2_buffer *src_vb = NULL, *dst_vb = NULL;
+अटल __poll_t s5p_mfc_poll(काष्ठा file *file,
+				 काष्ठा poll_table_काष्ठा *रुको)
+अणु
+	काष्ठा s5p_mfc_ctx *ctx = fh_to_ctx(file->निजी_data);
+	काष्ठा s5p_mfc_dev *dev = ctx->dev;
+	काष्ठा vb2_queue *src_q, *dst_q;
+	काष्ठा vb2_buffer *src_vb = शून्य, *dst_vb = शून्य;
 	__poll_t rc = 0;
-	unsigned long flags;
+	अचिन्हित दीर्घ flags;
 
 	mutex_lock(&dev->mfc_mutex);
 	src_q = &ctx->vq_src;
 	dst_q = &ctx->vq_dst;
 	/*
 	 * There has to be at least one buffer queued on each queued_list, which
-	 * means either in driver already or waiting for driver to claim it
+	 * means either in driver alपढ़ोy or रुकोing क्रम driver to claim it
 	 * and start processing.
 	 */
-	if ((!src_q->streaming || list_empty(&src_q->queued_list))
-		&& (!dst_q->streaming || list_empty(&dst_q->queued_list))) {
+	अगर ((!src_q->streaming || list_empty(&src_q->queued_list))
+		&& (!dst_q->streaming || list_empty(&dst_q->queued_list))) अणु
 		rc = EPOLLERR;
-		goto end;
-	}
+		जाओ end;
+	पूर्ण
 	mutex_unlock(&dev->mfc_mutex);
-	poll_wait(file, &ctx->fh.wait, wait);
-	poll_wait(file, &src_q->done_wq, wait);
-	poll_wait(file, &dst_q->done_wq, wait);
+	poll_रुको(file, &ctx->fh.रुको, रुको);
+	poll_रुको(file, &src_q->करोne_wq, रुको);
+	poll_रुको(file, &dst_q->करोne_wq, रुको);
 	mutex_lock(&dev->mfc_mutex);
-	if (v4l2_event_pending(&ctx->fh))
+	अगर (v4l2_event_pending(&ctx->fh))
 		rc |= EPOLLPRI;
-	spin_lock_irqsave(&src_q->done_lock, flags);
-	if (!list_empty(&src_q->done_list))
-		src_vb = list_first_entry(&src_q->done_list, struct vb2_buffer,
-								done_entry);
-	if (src_vb && (src_vb->state == VB2_BUF_STATE_DONE
+	spin_lock_irqsave(&src_q->करोne_lock, flags);
+	अगर (!list_empty(&src_q->करोne_list))
+		src_vb = list_first_entry(&src_q->करोne_list, काष्ठा vb2_buffer,
+								करोne_entry);
+	अगर (src_vb && (src_vb->state == VB2_BUF_STATE_DONE
 				|| src_vb->state == VB2_BUF_STATE_ERROR))
 		rc |= EPOLLOUT | EPOLLWRNORM;
-	spin_unlock_irqrestore(&src_q->done_lock, flags);
-	spin_lock_irqsave(&dst_q->done_lock, flags);
-	if (!list_empty(&dst_q->done_list))
-		dst_vb = list_first_entry(&dst_q->done_list, struct vb2_buffer,
-								done_entry);
-	if (dst_vb && (dst_vb->state == VB2_BUF_STATE_DONE
+	spin_unlock_irqrestore(&src_q->करोne_lock, flags);
+	spin_lock_irqsave(&dst_q->करोne_lock, flags);
+	अगर (!list_empty(&dst_q->करोne_list))
+		dst_vb = list_first_entry(&dst_q->करोne_list, काष्ठा vb2_buffer,
+								करोne_entry);
+	अगर (dst_vb && (dst_vb->state == VB2_BUF_STATE_DONE
 				|| dst_vb->state == VB2_BUF_STATE_ERROR))
 		rc |= EPOLLIN | EPOLLRDNORM;
-	spin_unlock_irqrestore(&dst_q->done_lock, flags);
+	spin_unlock_irqrestore(&dst_q->करोne_lock, flags);
 end:
 	mutex_unlock(&dev->mfc_mutex);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
 /* Mmap */
-static int s5p_mfc_mmap(struct file *file, struct vm_area_struct *vma)
-{
-	struct s5p_mfc_ctx *ctx = fh_to_ctx(file->private_data);
-	unsigned long offset = vma->vm_pgoff << PAGE_SHIFT;
-	int ret;
+अटल पूर्णांक s5p_mfc_mmap(काष्ठा file *file, काष्ठा vm_area_काष्ठा *vma)
+अणु
+	काष्ठा s5p_mfc_ctx *ctx = fh_to_ctx(file->निजी_data);
+	अचिन्हित दीर्घ offset = vma->vm_pgoff << PAGE_SHIFT;
+	पूर्णांक ret;
 
-	if (offset < DST_QUEUE_OFF_BASE) {
+	अगर (offset < DST_QUEUE_OFF_BASE) अणु
 		mfc_debug(2, "mmaping source\n");
 		ret = vb2_mmap(&ctx->vq_src, vma);
-	} else {		/* capture */
+	पूर्ण अन्यथा अणु		/* capture */
 		mfc_debug(2, "mmaping destination\n");
 		vma->vm_pgoff -= (DST_QUEUE_OFF_BASE >> PAGE_SHIFT);
 		ret = vb2_mmap(&ctx->vq_dst, vma);
-	}
-	return ret;
-}
+	पूर्ण
+	वापस ret;
+पूर्ण
 
 /* v4l2 ops */
-static const struct v4l2_file_operations s5p_mfc_fops = {
+अटल स्थिर काष्ठा v4l2_file_operations s5p_mfc_fops = अणु
 	.owner = THIS_MODULE,
-	.open = s5p_mfc_open,
+	.खोलो = s5p_mfc_खोलो,
 	.release = s5p_mfc_release,
 	.poll = s5p_mfc_poll,
 	.unlocked_ioctl = video_ioctl2,
 	.mmap = s5p_mfc_mmap,
-};
+पूर्ण;
 
 /* DMA memory related helper functions */
-static void s5p_mfc_memdev_release(struct device *dev)
-{
+अटल व्योम s5p_mfc_memdev_release(काष्ठा device *dev)
+अणु
 	of_reserved_mem_device_release(dev);
-}
+पूर्ण
 
-static struct device *s5p_mfc_alloc_memdev(struct device *dev,
-					   const char *name, unsigned int idx)
-{
-	struct device *child;
-	int ret;
+अटल काष्ठा device *s5p_mfc_alloc_memdev(काष्ठा device *dev,
+					   स्थिर अक्षर *name, अचिन्हित पूर्णांक idx)
+अणु
+	काष्ठा device *child;
+	पूर्णांक ret;
 
-	child = devm_kzalloc(dev, sizeof(*child), GFP_KERNEL);
-	if (!child)
-		return NULL;
+	child = devm_kzalloc(dev, माप(*child), GFP_KERNEL);
+	अगर (!child)
+		वापस शून्य;
 
 	device_initialize(child);
 	dev_set_name(child, "%s:%s", dev_name(dev), name);
@@ -1089,80 +1090,80 @@ static struct device *s5p_mfc_alloc_memdev(struct device *dev,
 	child->coherent_dma_mask = dev->coherent_dma_mask;
 	child->dma_mask = dev->dma_mask;
 	child->release = s5p_mfc_memdev_release;
-	child->dma_parms = devm_kzalloc(dev, sizeof(*child->dma_parms),
+	child->dma_parms = devm_kzalloc(dev, माप(*child->dma_parms),
 					GFP_KERNEL);
-	if (!child->dma_parms)
-		goto err;
+	अगर (!child->dma_parms)
+		जाओ err;
 
 	/*
-	 * The memdevs are not proper OF platform devices, so in order for them
-	 * to be treated as valid DMA masters we need a bit of a hack to force
+	 * The memdevs are not proper OF platक्रमm devices, so in order क्रम them
+	 * to be treated as valid DMA masters we need a bit of a hack to क्रमce
 	 * them to inherit the MFC node's DMA configuration.
 	 */
 	of_dma_configure(child, dev->of_node, true);
 
-	if (device_add(child) == 0) {
+	अगर (device_add(child) == 0) अणु
 		ret = of_reserved_mem_device_init_by_idx(child, dev->of_node,
 							 idx);
-		if (ret == 0)
-			return child;
+		अगर (ret == 0)
+			वापस child;
 		device_del(child);
-	}
+	पूर्ण
 err:
 	put_device(child);
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static int s5p_mfc_configure_2port_memory(struct s5p_mfc_dev *mfc_dev)
-{
-	struct device *dev = &mfc_dev->plat_dev->dev;
-	void *bank2_virt;
+अटल पूर्णांक s5p_mfc_configure_2port_memory(काष्ठा s5p_mfc_dev *mfc_dev)
+अणु
+	काष्ठा device *dev = &mfc_dev->plat_dev->dev;
+	व्योम *bank2_virt;
 	dma_addr_t bank2_dma_addr;
-	unsigned long align_size = 1 << MFC_BASE_ALIGN_ORDER;
-	int ret;
+	अचिन्हित दीर्घ align_size = 1 << MFC_BASE_ALIGN_ORDER;
+	पूर्णांक ret;
 
 	/*
-	 * Create and initialize virtual devices for accessing
+	 * Create and initialize भव devices क्रम accessing
 	 * reserved memory regions.
 	 */
 	mfc_dev->mem_dev[BANK_L_CTX] = s5p_mfc_alloc_memdev(dev, "left",
 							   BANK_L_CTX);
-	if (!mfc_dev->mem_dev[BANK_L_CTX])
-		return -ENODEV;
+	अगर (!mfc_dev->mem_dev[BANK_L_CTX])
+		वापस -ENODEV;
 	mfc_dev->mem_dev[BANK_R_CTX] = s5p_mfc_alloc_memdev(dev, "right",
 							   BANK_R_CTX);
-	if (!mfc_dev->mem_dev[BANK_R_CTX]) {
-		device_unregister(mfc_dev->mem_dev[BANK_L_CTX]);
-		return -ENODEV;
-	}
+	अगर (!mfc_dev->mem_dev[BANK_R_CTX]) अणु
+		device_unरेजिस्टर(mfc_dev->mem_dev[BANK_L_CTX]);
+		वापस -ENODEV;
+	पूर्ण
 
-	/* Allocate memory for firmware and initialize both banks addresses */
+	/* Allocate memory क्रम firmware and initialize both banks addresses */
 	ret = s5p_mfc_alloc_firmware(mfc_dev);
-	if (ret) {
-		device_unregister(mfc_dev->mem_dev[BANK_R_CTX]);
-		device_unregister(mfc_dev->mem_dev[BANK_L_CTX]);
-		return ret;
-	}
+	अगर (ret) अणु
+		device_unरेजिस्टर(mfc_dev->mem_dev[BANK_R_CTX]);
+		device_unरेजिस्टर(mfc_dev->mem_dev[BANK_L_CTX]);
+		वापस ret;
+	पूर्ण
 
 	mfc_dev->dma_base[BANK_L_CTX] = mfc_dev->fw_buf.dma;
 
 	bank2_virt = dma_alloc_coherent(mfc_dev->mem_dev[BANK_R_CTX],
 				       align_size, &bank2_dma_addr, GFP_KERNEL);
-	if (!bank2_virt) {
+	अगर (!bank2_virt) अणु
 		mfc_err("Allocating bank2 base failed\n");
 		s5p_mfc_release_firmware(mfc_dev);
-		device_unregister(mfc_dev->mem_dev[BANK_R_CTX]);
-		device_unregister(mfc_dev->mem_dev[BANK_L_CTX]);
-		return -ENOMEM;
-	}
+		device_unरेजिस्टर(mfc_dev->mem_dev[BANK_R_CTX]);
+		device_unरेजिस्टर(mfc_dev->mem_dev[BANK_L_CTX]);
+		वापस -ENOMEM;
+	पूर्ण
 
 	/* Valid buffers passed to MFC encoder with LAST_FRAME command
 	 * should not have address of bank2 - MFC will treat it as a null frame.
-	 * To avoid such situation we set bank2 address below the pool address.
+	 * To aव्योम such situation we set bank2 address below the pool address.
 	 */
 	mfc_dev->dma_base[BANK_R_CTX] = bank2_dma_addr - align_size;
 
-	dma_free_coherent(mfc_dev->mem_dev[BANK_R_CTX], align_size, bank2_virt,
+	dma_मुक्त_coherent(mfc_dev->mem_dev[BANK_R_CTX], align_size, bank2_virt,
 			  bank2_dma_addr);
 
 	vb2_dma_contig_set_max_seg_size(mfc_dev->mem_dev[BANK_L_CTX],
@@ -1170,43 +1171,43 @@ static int s5p_mfc_configure_2port_memory(struct s5p_mfc_dev *mfc_dev)
 	vb2_dma_contig_set_max_seg_size(mfc_dev->mem_dev[BANK_R_CTX],
 					DMA_BIT_MASK(32));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void s5p_mfc_unconfigure_2port_memory(struct s5p_mfc_dev *mfc_dev)
-{
-	device_unregister(mfc_dev->mem_dev[BANK_L_CTX]);
-	device_unregister(mfc_dev->mem_dev[BANK_R_CTX]);
+अटल व्योम s5p_mfc_unconfigure_2port_memory(काष्ठा s5p_mfc_dev *mfc_dev)
+अणु
+	device_unरेजिस्टर(mfc_dev->mem_dev[BANK_L_CTX]);
+	device_unरेजिस्टर(mfc_dev->mem_dev[BANK_R_CTX]);
 	vb2_dma_contig_clear_max_seg_size(mfc_dev->mem_dev[BANK_L_CTX]);
 	vb2_dma_contig_clear_max_seg_size(mfc_dev->mem_dev[BANK_R_CTX]);
-}
+पूर्ण
 
-static int s5p_mfc_configure_common_memory(struct s5p_mfc_dev *mfc_dev)
-{
-	struct device *dev = &mfc_dev->plat_dev->dev;
-	unsigned long mem_size = SZ_4M;
-	unsigned int bitmap_size;
+अटल पूर्णांक s5p_mfc_configure_common_memory(काष्ठा s5p_mfc_dev *mfc_dev)
+अणु
+	काष्ठा device *dev = &mfc_dev->plat_dev->dev;
+	अचिन्हित दीर्घ mem_size = SZ_4M;
+	अचिन्हित पूर्णांक biपंचांगap_size;
 
-	if (IS_ENABLED(CONFIG_DMA_CMA) || exynos_is_iommu_available(dev))
+	अगर (IS_ENABLED(CONFIG_DMA_CMA) || exynos_is_iommu_available(dev))
 		mem_size = SZ_8M;
 
-	if (mfc_mem_size)
-		mem_size = memparse(mfc_mem_size, NULL);
+	अगर (mfc_mem_size)
+		mem_size = memparse(mfc_mem_size, शून्य);
 
-	bitmap_size = BITS_TO_LONGS(mem_size >> PAGE_SHIFT) * sizeof(long);
+	biपंचांगap_size = BITS_TO_LONGS(mem_size >> PAGE_SHIFT) * माप(दीर्घ);
 
-	mfc_dev->mem_bitmap = kzalloc(bitmap_size, GFP_KERNEL);
-	if (!mfc_dev->mem_bitmap)
-		return -ENOMEM;
+	mfc_dev->mem_biपंचांगap = kzalloc(biपंचांगap_size, GFP_KERNEL);
+	अगर (!mfc_dev->mem_biपंचांगap)
+		वापस -ENOMEM;
 
 	mfc_dev->mem_virt = dma_alloc_coherent(dev, mem_size,
 					       &mfc_dev->mem_base, GFP_KERNEL);
-	if (!mfc_dev->mem_virt) {
-		kfree(mfc_dev->mem_bitmap);
+	अगर (!mfc_dev->mem_virt) अणु
+		kमुक्त(mfc_dev->mem_biपंचांगap);
 		dev_err(dev, "failed to preallocate %ld MiB for the firmware and context buffers\n",
 			(mem_size / SZ_1M));
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 	mfc_dev->mem_size = mem_size;
 	mfc_dev->dma_base[BANK_L_CTX] = mfc_dev->mem_base;
 	mfc_dev->dma_base[BANK_R_CTX] = mfc_dev->mem_base;
@@ -1215,15 +1216,15 @@ static int s5p_mfc_configure_common_memory(struct s5p_mfc_dev *mfc_dev)
 	 * MFC hardware cannot handle 0 as a base address, so mark first 128K
 	 * as used (to keep required base alignment) and adjust base address
 	 */
-	if (mfc_dev->mem_base == (dma_addr_t)0) {
-		unsigned int offset = 1 << MFC_BASE_ALIGN_ORDER;
+	अगर (mfc_dev->mem_base == (dma_addr_t)0) अणु
+		अचिन्हित पूर्णांक offset = 1 << MFC_BASE_ALIGN_ORDER;
 
-		bitmap_set(mfc_dev->mem_bitmap, 0, offset >> PAGE_SHIFT);
+		biपंचांगap_set(mfc_dev->mem_biपंचांगap, 0, offset >> PAGE_SHIFT);
 		mfc_dev->dma_base[BANK_L_CTX] += offset;
 		mfc_dev->dma_base[BANK_R_CTX] += offset;
-	}
+	पूर्ण
 
-	/* Firmware allocation cannot fail in this case */
+	/* Firmware allocation cannot fail in this हाल */
 	s5p_mfc_alloc_firmware(mfc_dev);
 
 	mfc_dev->mem_dev[BANK_L_CTX] = mfc_dev->mem_dev[BANK_R_CTX] = dev;
@@ -1232,147 +1233,147 @@ static int s5p_mfc_configure_common_memory(struct s5p_mfc_dev *mfc_dev)
 	dev_info(dev, "preallocated %ld MiB buffer for the firmware and context buffers\n",
 		 (mem_size / SZ_1M));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void s5p_mfc_unconfigure_common_memory(struct s5p_mfc_dev *mfc_dev)
-{
-	struct device *dev = &mfc_dev->plat_dev->dev;
+अटल व्योम s5p_mfc_unconfigure_common_memory(काष्ठा s5p_mfc_dev *mfc_dev)
+अणु
+	काष्ठा device *dev = &mfc_dev->plat_dev->dev;
 
-	dma_free_coherent(dev, mfc_dev->mem_size, mfc_dev->mem_virt,
+	dma_मुक्त_coherent(dev, mfc_dev->mem_size, mfc_dev->mem_virt,
 			  mfc_dev->mem_base);
-	kfree(mfc_dev->mem_bitmap);
+	kमुक्त(mfc_dev->mem_biपंचांगap);
 	vb2_dma_contig_clear_max_seg_size(dev);
-}
+पूर्ण
 
-static int s5p_mfc_configure_dma_memory(struct s5p_mfc_dev *mfc_dev)
-{
-	struct device *dev = &mfc_dev->plat_dev->dev;
+अटल पूर्णांक s5p_mfc_configure_dma_memory(काष्ठा s5p_mfc_dev *mfc_dev)
+अणु
+	काष्ठा device *dev = &mfc_dev->plat_dev->dev;
 
-	if (exynos_is_iommu_available(dev) || !IS_TWOPORT(mfc_dev))
-		return s5p_mfc_configure_common_memory(mfc_dev);
-	else
-		return s5p_mfc_configure_2port_memory(mfc_dev);
-}
+	अगर (exynos_is_iommu_available(dev) || !IS_TWOPORT(mfc_dev))
+		वापस s5p_mfc_configure_common_memory(mfc_dev);
+	अन्यथा
+		वापस s5p_mfc_configure_2port_memory(mfc_dev);
+पूर्ण
 
-static void s5p_mfc_unconfigure_dma_memory(struct s5p_mfc_dev *mfc_dev)
-{
-	struct device *dev = &mfc_dev->plat_dev->dev;
+अटल व्योम s5p_mfc_unconfigure_dma_memory(काष्ठा s5p_mfc_dev *mfc_dev)
+अणु
+	काष्ठा device *dev = &mfc_dev->plat_dev->dev;
 
 	s5p_mfc_release_firmware(mfc_dev);
-	if (exynos_is_iommu_available(dev) || !IS_TWOPORT(mfc_dev))
+	अगर (exynos_is_iommu_available(dev) || !IS_TWOPORT(mfc_dev))
 		s5p_mfc_unconfigure_common_memory(mfc_dev);
-	else
+	अन्यथा
 		s5p_mfc_unconfigure_2port_memory(mfc_dev);
-}
+पूर्ण
 
 /* MFC probe function */
-static int s5p_mfc_probe(struct platform_device *pdev)
-{
-	struct s5p_mfc_dev *dev;
-	struct video_device *vfd;
-	struct resource *res;
-	int ret;
+अटल पूर्णांक s5p_mfc_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा s5p_mfc_dev *dev;
+	काष्ठा video_device *vfd;
+	काष्ठा resource *res;
+	पूर्णांक ret;
 
 	pr_debug("%s++\n", __func__);
-	dev = devm_kzalloc(&pdev->dev, sizeof(*dev), GFP_KERNEL);
-	if (!dev)
-		return -ENOMEM;
+	dev = devm_kzalloc(&pdev->dev, माप(*dev), GFP_KERNEL);
+	अगर (!dev)
+		वापस -ENOMEM;
 
 	spin_lock_init(&dev->irqlock);
 	spin_lock_init(&dev->condlock);
 	dev->plat_dev = pdev;
-	if (!dev->plat_dev) {
+	अगर (!dev->plat_dev) अणु
 		dev_err(&pdev->dev, "No platform data specified\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
 	dev->variant = of_device_get_match_data(&pdev->dev);
 
-	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
 	dev->regs_base = devm_ioremap_resource(&pdev->dev, res);
-	if (IS_ERR(dev->regs_base))
-		return PTR_ERR(dev->regs_base);
+	अगर (IS_ERR(dev->regs_base))
+		वापस PTR_ERR(dev->regs_base);
 
-	res = platform_get_resource(pdev, IORESOURCE_IRQ, 0);
-	if (!res) {
+	res = platक्रमm_get_resource(pdev, IORESOURCE_IRQ, 0);
+	अगर (!res) अणु
 		dev_err(&pdev->dev, "failed to get irq resource\n");
-		return -ENOENT;
-	}
+		वापस -ENOENT;
+	पूर्ण
 	dev->irq = res->start;
 	ret = devm_request_irq(&pdev->dev, dev->irq, s5p_mfc_irq,
 					0, pdev->name, dev);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&pdev->dev, "Failed to install irq (%d)\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	ret = s5p_mfc_configure_dma_memory(dev);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(&pdev->dev, "failed to configure DMA memory\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	ret = s5p_mfc_init_pm(dev);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(&pdev->dev, "failed to get mfc clock source\n");
-		goto err_dma;
-	}
+		जाओ err_dma;
+	पूर्ण
 
 	/*
-	 * Load fails if fs isn't mounted. Try loading anyway.
-	 * _open() will load it, it it fails now. Ignore failure.
+	 * Load fails अगर fs isn't mounted. Try loading anyway.
+	 * _खोलो() will load it, it it fails now. Ignore failure.
 	 */
 	s5p_mfc_load_firmware(dev);
 
 	mutex_init(&dev->mfc_mutex);
-	init_waitqueue_head(&dev->queue);
+	init_रुकोqueue_head(&dev->queue);
 	dev->hw_lock = 0;
-	INIT_WORK(&dev->watchdog_work, s5p_mfc_watchdog_worker);
-	atomic_set(&dev->watchdog_cnt, 0);
-	timer_setup(&dev->watchdog_timer, s5p_mfc_watchdog, 0);
+	INIT_WORK(&dev->watchकरोg_work, s5p_mfc_watchकरोg_worker);
+	atomic_set(&dev->watchकरोg_cnt, 0);
+	समयr_setup(&dev->watchकरोg_समयr, s5p_mfc_watchकरोg, 0);
 
-	ret = v4l2_device_register(&pdev->dev, &dev->v4l2_dev);
-	if (ret)
-		goto err_v4l2_dev_reg;
+	ret = v4l2_device_रेजिस्टर(&pdev->dev, &dev->v4l2_dev);
+	अगर (ret)
+		जाओ err_v4l2_dev_reg;
 
 	/* decoder */
 	vfd = video_device_alloc();
-	if (!vfd) {
+	अगर (!vfd) अणु
 		v4l2_err(&dev->v4l2_dev, "Failed to allocate video device\n");
 		ret = -ENOMEM;
-		goto err_dec_alloc;
-	}
+		जाओ err_dec_alloc;
+	पूर्ण
 	vfd->fops	= &s5p_mfc_fops;
 	vfd->ioctl_ops	= get_dec_v4l2_ioctl_ops();
 	vfd->release	= video_device_release;
 	vfd->lock	= &dev->mfc_mutex;
 	vfd->v4l2_dev	= &dev->v4l2_dev;
-	vfd->vfl_dir	= VFL_DIR_M2M;
+	vfd->vfl_dir	= VFL_सूची_M2M;
 	vfd->device_caps = V4L2_CAP_VIDEO_M2M_MPLANE | V4L2_CAP_STREAMING;
 	set_bit(V4L2_FL_QUIRK_INVERTED_CROP, &vfd->flags);
-	snprintf(vfd->name, sizeof(vfd->name), "%s", S5P_MFC_DEC_NAME);
+	snम_लिखो(vfd->name, माप(vfd->name), "%s", S5P_MFC_DEC_NAME);
 	dev->vfd_dec	= vfd;
 	video_set_drvdata(vfd, dev);
 
 	/* encoder */
 	vfd = video_device_alloc();
-	if (!vfd) {
+	अगर (!vfd) अणु
 		v4l2_err(&dev->v4l2_dev, "Failed to allocate video device\n");
 		ret = -ENOMEM;
-		goto err_enc_alloc;
-	}
+		जाओ err_enc_alloc;
+	पूर्ण
 	vfd->fops	= &s5p_mfc_fops;
 	vfd->ioctl_ops	= get_enc_v4l2_ioctl_ops();
 	vfd->release	= video_device_release;
 	vfd->lock	= &dev->mfc_mutex;
 	vfd->v4l2_dev	= &dev->v4l2_dev;
-	vfd->vfl_dir	= VFL_DIR_M2M;
+	vfd->vfl_dir	= VFL_सूची_M2M;
 	vfd->device_caps = V4L2_CAP_VIDEO_M2M_MPLANE | V4L2_CAP_STREAMING;
-	snprintf(vfd->name, sizeof(vfd->name), "%s", S5P_MFC_ENC_NAME);
+	snम_लिखो(vfd->name, माप(vfd->name), "%s", S5P_MFC_ENC_NAME);
 	dev->vfd_enc	= vfd;
 	video_set_drvdata(vfd, dev);
-	platform_set_drvdata(pdev, dev);
+	platक्रमm_set_drvdata(pdev, dev);
 
 	/* Initialize HW ops and commands based on MFC version */
 	s5p_mfc_init_hw_ops(dev);
@@ -1380,302 +1381,302 @@ static int s5p_mfc_probe(struct platform_device *pdev)
 	s5p_mfc_init_regs(dev);
 
 	/* Register decoder and encoder */
-	ret = video_register_device(dev->vfd_dec, VFL_TYPE_VIDEO, 0);
-	if (ret) {
+	ret = video_रेजिस्टर_device(dev->vfd_dec, VFL_TYPE_VIDEO, 0);
+	अगर (ret) अणु
 		v4l2_err(&dev->v4l2_dev, "Failed to register video device\n");
-		goto err_dec_reg;
-	}
+		जाओ err_dec_reg;
+	पूर्ण
 	v4l2_info(&dev->v4l2_dev,
 		  "decoder registered as /dev/video%d\n", dev->vfd_dec->num);
 
-	ret = video_register_device(dev->vfd_enc, VFL_TYPE_VIDEO, 0);
-	if (ret) {
+	ret = video_रेजिस्टर_device(dev->vfd_enc, VFL_TYPE_VIDEO, 0);
+	अगर (ret) अणु
 		v4l2_err(&dev->v4l2_dev, "Failed to register video device\n");
-		goto err_enc_reg;
-	}
+		जाओ err_enc_reg;
+	पूर्ण
 	v4l2_info(&dev->v4l2_dev,
 		  "encoder registered as /dev/video%d\n", dev->vfd_enc->num);
 
 	pr_debug("%s--\n", __func__);
-	return 0;
+	वापस 0;
 
-/* Deinit MFC if probe had failed */
+/* Deinit MFC अगर probe had failed */
 err_enc_reg:
-	video_unregister_device(dev->vfd_dec);
+	video_unरेजिस्टर_device(dev->vfd_dec);
 err_dec_reg:
 	video_device_release(dev->vfd_enc);
 err_enc_alloc:
 	video_device_release(dev->vfd_dec);
 err_dec_alloc:
-	v4l2_device_unregister(&dev->v4l2_dev);
+	v4l2_device_unरेजिस्टर(&dev->v4l2_dev);
 err_v4l2_dev_reg:
 	s5p_mfc_final_pm(dev);
 err_dma:
 	s5p_mfc_unconfigure_dma_memory(dev);
 
 	pr_debug("%s-- with error\n", __func__);
-	return ret;
+	वापस ret;
 
-}
+पूर्ण
 
 /* Remove the driver */
-static int s5p_mfc_remove(struct platform_device *pdev)
-{
-	struct s5p_mfc_dev *dev = platform_get_drvdata(pdev);
-	struct s5p_mfc_ctx *ctx;
-	int i;
+अटल पूर्णांक s5p_mfc_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा s5p_mfc_dev *dev = platक्रमm_get_drvdata(pdev);
+	काष्ठा s5p_mfc_ctx *ctx;
+	पूर्णांक i;
 
 	v4l2_info(&dev->v4l2_dev, "Removing %s\n", pdev->name);
 
 	/*
-	 * Clear ctx dev pointer to avoid races between s5p_mfc_remove()
+	 * Clear ctx dev poपूर्णांकer to aव्योम races between s5p_mfc_हटाओ()
 	 * and s5p_mfc_release() and s5p_mfc_release() accessing ctx->dev
-	 * after s5p_mfc_remove() is run during unbind.
+	 * after s5p_mfc_हटाओ() is run during unbind.
 	*/
 	mutex_lock(&dev->mfc_mutex);
-	for (i = 0; i < MFC_NUM_CONTEXTS; i++) {
+	क्रम (i = 0; i < MFC_NUM_CONTEXTS; i++) अणु
 		ctx = dev->ctx[i];
-		if (!ctx)
-			continue;
+		अगर (!ctx)
+			जारी;
 		/* clear ctx->dev */
-		ctx->dev = NULL;
-	}
+		ctx->dev = शून्य;
+	पूर्ण
 	mutex_unlock(&dev->mfc_mutex);
 
-	del_timer_sync(&dev->watchdog_timer);
-	flush_work(&dev->watchdog_work);
+	del_समयr_sync(&dev->watchकरोg_समयr);
+	flush_work(&dev->watchकरोg_work);
 
-	video_unregister_device(dev->vfd_enc);
-	video_unregister_device(dev->vfd_dec);
+	video_unरेजिस्टर_device(dev->vfd_enc);
+	video_unरेजिस्टर_device(dev->vfd_dec);
 	video_device_release(dev->vfd_enc);
 	video_device_release(dev->vfd_dec);
-	v4l2_device_unregister(&dev->v4l2_dev);
+	v4l2_device_unरेजिस्टर(&dev->v4l2_dev);
 	s5p_mfc_unconfigure_dma_memory(dev);
 
 	s5p_mfc_final_pm(dev);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_PM_SLEEP
+#अगर_घोषित CONFIG_PM_SLEEP
 
-static int s5p_mfc_suspend(struct device *dev)
-{
-	struct s5p_mfc_dev *m_dev = dev_get_drvdata(dev);
-	int ret;
+अटल पूर्णांक s5p_mfc_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा s5p_mfc_dev *m_dev = dev_get_drvdata(dev);
+	पूर्णांक ret;
 
-	if (m_dev->num_inst == 0)
-		return 0;
+	अगर (m_dev->num_inst == 0)
+		वापस 0;
 
-	if (test_and_set_bit(0, &m_dev->enter_suspend) != 0) {
+	अगर (test_and_set_bit(0, &m_dev->enter_suspend) != 0) अणु
 		mfc_err("Error: going to suspend for a second time\n");
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
-	/* Check if we're processing then wait if it necessary. */
-	while (test_and_set_bit(0, &m_dev->hw_lock) != 0) {
+	/* Check अगर we're processing then रुको अगर it necessary. */
+	जबतक (test_and_set_bit(0, &m_dev->hw_lock) != 0) अणु
 		/* Try and lock the HW */
-		/* Wait on the interrupt waitqueue */
-		ret = wait_event_interruptible_timeout(m_dev->queue,
-			m_dev->int_cond, msecs_to_jiffies(MFC_INT_TIMEOUT));
-		if (ret == 0) {
+		/* Wait on the पूर्णांकerrupt रुकोqueue */
+		ret = रुको_event_पूर्णांकerruptible_समयout(m_dev->queue,
+			m_dev->पूर्णांक_cond, msecs_to_jअगरfies(MFC_INT_TIMEOUT));
+		अगर (ret == 0) अणु
 			mfc_err("Waiting for hardware to finish timed out\n");
 			clear_bit(0, &m_dev->enter_suspend);
-			return -EIO;
-		}
-	}
+			वापस -EIO;
+		पूर्ण
+	पूर्ण
 
 	ret = s5p_mfc_sleep(m_dev);
-	if (ret) {
+	अगर (ret) अणु
 		clear_bit(0, &m_dev->enter_suspend);
 		clear_bit(0, &m_dev->hw_lock);
-	}
-	return ret;
-}
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static int s5p_mfc_resume(struct device *dev)
-{
-	struct s5p_mfc_dev *m_dev = dev_get_drvdata(dev);
+अटल पूर्णांक s5p_mfc_resume(काष्ठा device *dev)
+अणु
+	काष्ठा s5p_mfc_dev *m_dev = dev_get_drvdata(dev);
 
-	if (m_dev->num_inst == 0)
-		return 0;
-	return s5p_mfc_wakeup(m_dev);
-}
-#endif
+	अगर (m_dev->num_inst == 0)
+		वापस 0;
+	वापस s5p_mfc_wakeup(m_dev);
+पूर्ण
+#पूर्ण_अगर
 
 /* Power management */
-static const struct dev_pm_ops s5p_mfc_pm_ops = {
+अटल स्थिर काष्ठा dev_pm_ops s5p_mfc_pm_ops = अणु
 	SET_SYSTEM_SLEEP_PM_OPS(s5p_mfc_suspend, s5p_mfc_resume)
-};
+पूर्ण;
 
-static struct s5p_mfc_buf_size_v5 mfc_buf_size_v5 = {
+अटल काष्ठा s5p_mfc_buf_size_v5 mfc_buf_size_v5 = अणु
 	.h264_ctx	= MFC_H264_CTX_BUF_SIZE,
 	.non_h264_ctx	= MFC_CTX_BUF_SIZE,
 	.dsc		= DESC_BUF_SIZE,
 	.shm		= SHARED_BUF_SIZE,
-};
+पूर्ण;
 
-static struct s5p_mfc_buf_size buf_size_v5 = {
+अटल काष्ठा s5p_mfc_buf_size buf_size_v5 = अणु
 	.fw	= MAX_FW_SIZE,
 	.cpb	= MAX_CPB_SIZE,
 	.priv	= &mfc_buf_size_v5,
-};
+पूर्ण;
 
-static struct s5p_mfc_variant mfc_drvdata_v5 = {
+अटल काष्ठा s5p_mfc_variant mfc_drvdata_v5 = अणु
 	.version	= MFC_VERSION,
 	.version_bit	= MFC_V5_BIT,
 	.port_num	= MFC_NUM_PORTS,
 	.buf_size	= &buf_size_v5,
 	.fw_name[0]	= "s5p-mfc.fw",
-	.clk_names	= {"mfc", "sclk_mfc"},
-	.num_clocks	= 2,
-	.use_clock_gating = true,
-};
+	.clk_names	= अणु"mfc", "sclk_mfc"पूर्ण,
+	.num_घड़ीs	= 2,
+	.use_घड़ी_gating = true,
+पूर्ण;
 
-static struct s5p_mfc_buf_size_v6 mfc_buf_size_v6 = {
+अटल काष्ठा s5p_mfc_buf_size_v6 mfc_buf_size_v6 = अणु
 	.dev_ctx	= MFC_CTX_BUF_SIZE_V6,
 	.h264_dec_ctx	= MFC_H264_DEC_CTX_BUF_SIZE_V6,
 	.other_dec_ctx	= MFC_OTHER_DEC_CTX_BUF_SIZE_V6,
 	.h264_enc_ctx	= MFC_H264_ENC_CTX_BUF_SIZE_V6,
 	.other_enc_ctx	= MFC_OTHER_ENC_CTX_BUF_SIZE_V6,
-};
+पूर्ण;
 
-static struct s5p_mfc_buf_size buf_size_v6 = {
+अटल काष्ठा s5p_mfc_buf_size buf_size_v6 = अणु
 	.fw	= MAX_FW_SIZE_V6,
 	.cpb	= MAX_CPB_SIZE_V6,
 	.priv	= &mfc_buf_size_v6,
-};
+पूर्ण;
 
-static struct s5p_mfc_variant mfc_drvdata_v6 = {
+अटल काष्ठा s5p_mfc_variant mfc_drvdata_v6 = अणु
 	.version	= MFC_VERSION_V6,
 	.version_bit	= MFC_V6_BIT,
 	.port_num	= MFC_NUM_PORTS_V6,
 	.buf_size	= &buf_size_v6,
 	.fw_name[0]     = "s5p-mfc-v6.fw",
 	/*
-	 * v6-v2 firmware contains bug fixes and interface change
-	 * for init buffer command
+	 * v6-v2 firmware contains bug fixes and पूर्णांकerface change
+	 * क्रम init buffer command
 	 */
 	.fw_name[1]     = "s5p-mfc-v6-v2.fw",
-	.clk_names	= {"mfc"},
-	.num_clocks	= 1,
-};
+	.clk_names	= अणु"mfc"पूर्ण,
+	.num_घड़ीs	= 1,
+पूर्ण;
 
-static struct s5p_mfc_buf_size_v6 mfc_buf_size_v7 = {
+अटल काष्ठा s5p_mfc_buf_size_v6 mfc_buf_size_v7 = अणु
 	.dev_ctx	= MFC_CTX_BUF_SIZE_V7,
 	.h264_dec_ctx	= MFC_H264_DEC_CTX_BUF_SIZE_V7,
 	.other_dec_ctx	= MFC_OTHER_DEC_CTX_BUF_SIZE_V7,
 	.h264_enc_ctx	= MFC_H264_ENC_CTX_BUF_SIZE_V7,
 	.other_enc_ctx	= MFC_OTHER_ENC_CTX_BUF_SIZE_V7,
-};
+पूर्ण;
 
-static struct s5p_mfc_buf_size buf_size_v7 = {
+अटल काष्ठा s5p_mfc_buf_size buf_size_v7 = अणु
 	.fw	= MAX_FW_SIZE_V7,
 	.cpb	= MAX_CPB_SIZE_V7,
 	.priv	= &mfc_buf_size_v7,
-};
+पूर्ण;
 
-static struct s5p_mfc_variant mfc_drvdata_v7 = {
+अटल काष्ठा s5p_mfc_variant mfc_drvdata_v7 = अणु
 	.version	= MFC_VERSION_V7,
 	.version_bit	= MFC_V7_BIT,
 	.port_num	= MFC_NUM_PORTS_V7,
 	.buf_size	= &buf_size_v7,
 	.fw_name[0]     = "s5p-mfc-v7.fw",
-	.clk_names	= {"mfc", "sclk_mfc"},
-	.num_clocks	= 2,
-};
+	.clk_names	= अणु"mfc", "sclk_mfc"पूर्ण,
+	.num_घड़ीs	= 2,
+पूर्ण;
 
-static struct s5p_mfc_buf_size_v6 mfc_buf_size_v8 = {
+अटल काष्ठा s5p_mfc_buf_size_v6 mfc_buf_size_v8 = अणु
 	.dev_ctx	= MFC_CTX_BUF_SIZE_V8,
 	.h264_dec_ctx	= MFC_H264_DEC_CTX_BUF_SIZE_V8,
 	.other_dec_ctx	= MFC_OTHER_DEC_CTX_BUF_SIZE_V8,
 	.h264_enc_ctx	= MFC_H264_ENC_CTX_BUF_SIZE_V8,
 	.other_enc_ctx	= MFC_OTHER_ENC_CTX_BUF_SIZE_V8,
-};
+पूर्ण;
 
-static struct s5p_mfc_buf_size buf_size_v8 = {
+अटल काष्ठा s5p_mfc_buf_size buf_size_v8 = अणु
 	.fw	= MAX_FW_SIZE_V8,
 	.cpb	= MAX_CPB_SIZE_V8,
 	.priv	= &mfc_buf_size_v8,
-};
+पूर्ण;
 
-static struct s5p_mfc_variant mfc_drvdata_v8 = {
+अटल काष्ठा s5p_mfc_variant mfc_drvdata_v8 = अणु
 	.version	= MFC_VERSION_V8,
 	.version_bit	= MFC_V8_BIT,
 	.port_num	= MFC_NUM_PORTS_V8,
 	.buf_size	= &buf_size_v8,
 	.fw_name[0]     = "s5p-mfc-v8.fw",
-	.clk_names	= {"mfc"},
-	.num_clocks	= 1,
-};
+	.clk_names	= अणु"mfc"पूर्ण,
+	.num_घड़ीs	= 1,
+पूर्ण;
 
-static struct s5p_mfc_variant mfc_drvdata_v8_5433 = {
+अटल काष्ठा s5p_mfc_variant mfc_drvdata_v8_5433 = अणु
 	.version	= MFC_VERSION_V8,
 	.version_bit	= MFC_V8_BIT,
 	.port_num	= MFC_NUM_PORTS_V8,
 	.buf_size	= &buf_size_v8,
 	.fw_name[0]     = "s5p-mfc-v8.fw",
-	.clk_names	= {"pclk", "aclk", "aclk_xiu"},
-	.num_clocks	= 3,
-};
+	.clk_names	= अणु"pclk", "aclk", "aclk_xiu"पूर्ण,
+	.num_घड़ीs	= 3,
+पूर्ण;
 
-static struct s5p_mfc_buf_size_v6 mfc_buf_size_v10 = {
+अटल काष्ठा s5p_mfc_buf_size_v6 mfc_buf_size_v10 = अणु
 	.dev_ctx        = MFC_CTX_BUF_SIZE_V10,
 	.h264_dec_ctx   = MFC_H264_DEC_CTX_BUF_SIZE_V10,
 	.other_dec_ctx  = MFC_OTHER_DEC_CTX_BUF_SIZE_V10,
 	.h264_enc_ctx   = MFC_H264_ENC_CTX_BUF_SIZE_V10,
 	.hevc_enc_ctx   = MFC_HEVC_ENC_CTX_BUF_SIZE_V10,
 	.other_enc_ctx  = MFC_OTHER_ENC_CTX_BUF_SIZE_V10,
-};
+पूर्ण;
 
-static struct s5p_mfc_buf_size buf_size_v10 = {
+अटल काष्ठा s5p_mfc_buf_size buf_size_v10 = अणु
 	.fw     = MAX_FW_SIZE_V10,
 	.cpb    = MAX_CPB_SIZE_V10,
 	.priv   = &mfc_buf_size_v10,
-};
+पूर्ण;
 
-static struct s5p_mfc_variant mfc_drvdata_v10 = {
+अटल काष्ठा s5p_mfc_variant mfc_drvdata_v10 = अणु
 	.version        = MFC_VERSION_V10,
 	.version_bit    = MFC_V10_BIT,
 	.port_num       = MFC_NUM_PORTS_V10,
 	.buf_size       = &buf_size_v10,
 	.fw_name[0]     = "s5p-mfc-v10.fw",
-};
+पूर्ण;
 
-static const struct of_device_id exynos_mfc_match[] = {
-	{
+अटल स्थिर काष्ठा of_device_id exynos_mfc_match[] = अणु
+	अणु
 		.compatible = "samsung,mfc-v5",
 		.data = &mfc_drvdata_v5,
-	}, {
+	पूर्ण, अणु
 		.compatible = "samsung,mfc-v6",
 		.data = &mfc_drvdata_v6,
-	}, {
+	पूर्ण, अणु
 		.compatible = "samsung,mfc-v7",
 		.data = &mfc_drvdata_v7,
-	}, {
+	पूर्ण, अणु
 		.compatible = "samsung,mfc-v8",
 		.data = &mfc_drvdata_v8,
-	}, {
+	पूर्ण, अणु
 		.compatible = "samsung,exynos5433-mfc",
 		.data = &mfc_drvdata_v8_5433,
-	}, {
+	पूर्ण, अणु
 		.compatible = "samsung,mfc-v10",
 		.data = &mfc_drvdata_v10,
-	},
-	{},
-};
+	पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, exynos_mfc_match);
 
-static struct platform_driver s5p_mfc_driver = {
+अटल काष्ठा platक्रमm_driver s5p_mfc_driver = अणु
 	.probe		= s5p_mfc_probe,
-	.remove		= s5p_mfc_remove,
-	.driver	= {
+	.हटाओ		= s5p_mfc_हटाओ,
+	.driver	= अणु
 		.name	= S5P_MFC_NAME,
 		.pm	= &s5p_mfc_pm_ops,
 		.of_match_table = exynos_mfc_match,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-module_platform_driver(s5p_mfc_driver);
+module_platक्रमm_driver(s5p_mfc_driver);
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Kamil Debski <k.debski@samsung.com>");

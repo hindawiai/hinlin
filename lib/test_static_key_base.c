@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * Kernel module for testing static keys.
+ * Kernel module क्रम testing अटल keys.
  *
  * Copyright 2015 Akamai Technologies Inc. All Rights Reserved
  *
@@ -8,17 +9,17 @@
  *      Jason Baron       <jbaron@akamai.com>
  */
 
-#include <linux/module.h>
-#include <linux/jump_label.h>
+#समावेश <linux/module.h>
+#समावेश <linux/jump_label.h>
 
 /* old keys */
-struct static_key base_old_true_key = STATIC_KEY_INIT_TRUE;
+काष्ठा अटल_key base_old_true_key = STATIC_KEY_INIT_TRUE;
 EXPORT_SYMBOL_GPL(base_old_true_key);
-struct static_key base_inv_old_true_key = STATIC_KEY_INIT_TRUE;
+काष्ठा अटल_key base_inv_old_true_key = STATIC_KEY_INIT_TRUE;
 EXPORT_SYMBOL_GPL(base_inv_old_true_key);
-struct static_key base_old_false_key = STATIC_KEY_INIT_FALSE;
+काष्ठा अटल_key base_old_false_key = STATIC_KEY_INIT_FALSE;
 EXPORT_SYMBOL_GPL(base_old_false_key);
-struct static_key base_inv_old_false_key = STATIC_KEY_INIT_FALSE;
+काष्ठा अटल_key base_inv_old_false_key = STATIC_KEY_INIT_FALSE;
 EXPORT_SYMBOL_GPL(base_inv_old_false_key);
 
 /* new keys */
@@ -31,30 +32,30 @@ EXPORT_SYMBOL_GPL(base_false_key);
 DEFINE_STATIC_KEY_FALSE(base_inv_false_key);
 EXPORT_SYMBOL_GPL(base_inv_false_key);
 
-static void invert_key(struct static_key *key)
-{
-	if (static_key_enabled(key))
-		static_key_disable(key);
-	else
-		static_key_enable(key);
-}
+अटल व्योम invert_key(काष्ठा अटल_key *key)
+अणु
+	अगर (अटल_key_enabled(key))
+		अटल_key_disable(key);
+	अन्यथा
+		अटल_key_enable(key);
+पूर्ण
 
-static int __init test_static_key_base_init(void)
-{
+अटल पूर्णांक __init test_अटल_key_base_init(व्योम)
+अणु
 	invert_key(&base_inv_old_true_key);
 	invert_key(&base_inv_old_false_key);
 	invert_key(&base_inv_true_key.key);
 	invert_key(&base_inv_false_key.key);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void __exit test_static_key_base_exit(void)
-{
-}
+अटल व्योम __निकास test_अटल_key_base_निकास(व्योम)
+अणु
+पूर्ण
 
-module_init(test_static_key_base_init);
-module_exit(test_static_key_base_exit);
+module_init(test_अटल_key_base_init);
+module_निकास(test_अटल_key_base_निकास);
 
 MODULE_AUTHOR("Jason Baron <jbaron@akamai.com>");
 MODULE_LICENSE("GPL");

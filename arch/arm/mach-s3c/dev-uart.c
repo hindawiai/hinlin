@@ -1,41 +1,42 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 //
 //	originally from arch/arm/plat-s3c24xx/devs.c
 //
 // Copyright (c) 2004 Simtec Electronics
 //	Ben Dooks <ben@simtec.co.uk>
 //
-// Base S3C24XX platform device definitions
+// Base S3C24XX platक्रमm device definitions
 
-#include <linux/kernel.h>
-#include <linux/platform_device.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/platक्रमm_device.h>
 
-#include "devs.h"
+#समावेश "devs.h"
 
 /* uart devices */
 
-static struct platform_device s3c24xx_uart_device0 = {
+अटल काष्ठा platक्रमm_device s3c24xx_uart_device0 = अणु
 	.id		= 0,
-};
+पूर्ण;
 
-static struct platform_device s3c24xx_uart_device1 = {
+अटल काष्ठा platक्रमm_device s3c24xx_uart_device1 = अणु
 	.id		= 1,
-};
+पूर्ण;
 
-static struct platform_device s3c24xx_uart_device2 = {
+अटल काष्ठा platक्रमm_device s3c24xx_uart_device2 = अणु
 	.id		= 2,
-};
+पूर्ण;
 
-static struct platform_device s3c24xx_uart_device3 = {
+अटल काष्ठा platक्रमm_device s3c24xx_uart_device3 = अणु
 	.id		= 3,
-};
+पूर्ण;
 
-struct platform_device *s3c24xx_uart_src[4] = {
+काष्ठा platक्रमm_device *s3c24xx_uart_src[4] = अणु
 	&s3c24xx_uart_device0,
 	&s3c24xx_uart_device1,
 	&s3c24xx_uart_device2,
 	&s3c24xx_uart_device3,
-};
+पूर्ण;
 
-struct platform_device *s3c24xx_uart_devs[4] = {
-};
+काष्ठा platक्रमm_device *s3c24xx_uart_devs[4] = अणु
+पूर्ण;

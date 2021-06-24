@@ -1,36 +1,37 @@
+<शैली गुरु>
 /*
  * vdso2c - A vdso image preparation tool
  * Copyright (c) 2014 Andy Lutomirski and others
  * Licensed under the GPL v2
  *
  * vdso2c requires stripped and unstripped input.  It would be trivial
- * to fully strip the input in here, but, for reasons described below,
- * we need to write a section table.  Doing this is more or less
+ * to fully strip the input in here, but, क्रम reasons described below,
+ * we need to ग_लिखो a section table.  Doing this is more or less
  * equivalent to dropping all non-allocatable sections, but it's
- * easier to let objcopy handle that instead of doing it ourselves.
- * If we ever need to do something fancier than what objcopy provides,
- * it would be straightforward to add here.
+ * easier to let objcopy handle that instead of करोing it ourselves.
+ * If we ever need to करो something fancier than what objcopy provides,
+ * it would be straightक्रमward to add here.
  *
- * We keep a section table for a few reasons:
+ * We keep a section table क्रम a few reasons:
  *
- * Binutils has issues debugging the vDSO: it reads the section table to
- * find SHT_NOTE; it won't look at PT_NOTE for the in-memory vDSO, which
- * would break build-id if we removed the section table.  Binutils
+ * Binutils has issues debugging the vDSO: it पढ़ोs the section table to
+ * find SHT_NOTE; it won't look at PT_NOTE क्रम the in-memory vDSO, which
+ * would अवरोध build-id अगर we हटाओd the section table.  Binutils
  * also requires that shstrndx != 0.  See:
  * https://sourceware.org/bugzilla/show_bug.cgi?id=17064
  *
- * elfutils might not look for PT_NOTE if there is a section table at
- * all.  I don't know whether this matters for any practical purpose.
+ * elfutils might not look क्रम PT_NOTE अगर there is a section table at
+ * all.  I करोn't know whether this matters क्रम any practical purpose.
  *
  * For simplicity, rather than hacking up a partial section table, we
- * just write a mostly complete one.  We omit non-dynamic symbols,
+ * just ग_लिखो a mostly complete one.  We omit non-dynamic symbols,
  * though, since they're rather large.
  *
- * Once binutils gets fixed, we might be able to drop this for all but
+ * Once binutils माला_लो fixed, we might be able to drop this क्रम all but
  * the 64-bit vdso, since build-id only works in kernel RPMs, and
- * systems that update to new enough kernel RPMs will likely update
- * binutils in sync.  build-id has never worked for home-built kernel
- * RPMs without manual symlinking, and I suspect that no one ever does
+ * प्रणालीs that update to new enough kernel RPMs will likely update
+ * binutils in sync.  build-id has never worked क्रम home-built kernel
+ * RPMs without manual symlinking, and I suspect that no one ever करोes
  * that.
  */
 
@@ -38,191 +39,191 @@
  * Copyright (c) 2017 Oracle and/or its affiliates. All rights reserved.
  */
 
-#include <inttypes.h>
-#include <stdint.h>
-#include <unistd.h>
-#include <stdarg.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
-#include <fcntl.h>
-#include <err.h>
+#समावेश <पूर्णांकtypes.h>
+#समावेश <मानक_निवेशt.h>
+#समावेश <unistd.h>
+#समावेश <मानकतर्क.स>
+#समावेश <मानककोष.स>
+#समावेश <मानकपन.स>
+#समावेश <माला.स>
+#समावेश <fcntl.h>
+#समावेश <err.h>
 
-#include <sys/mman.h>
-#include <sys/types.h>
-#include <tools/be_byteshift.h>
+#समावेश <sys/mman.h>
+#समावेश <sys/types.h>
+#समावेश <tools/be_byteshअगरt.h>
 
-#include <linux/elf.h>
-#include <linux/types.h>
-#include <linux/kernel.h>
+#समावेश <linux/elf.h>
+#समावेश <linux/types.h>
+#समावेश <linux/kernel.h>
 
-const char *outfilename;
+स्थिर अक्षर *outfilename;
 
 /* Symbols that we need in vdso2c. */
-enum {
+क्रमागत अणु
 	sym_vvar_start,
 	sym_VDSO_FAKE_SECTION_TABLE_START,
 	sym_VDSO_FAKE_SECTION_TABLE_END,
-};
+पूर्ण;
 
-struct vdso_sym {
-	const char *name;
-	int export;
-};
+काष्ठा vdso_sym अणु
+	स्थिर अक्षर *name;
+	पूर्णांक export;
+पूर्ण;
 
-struct vdso_sym required_syms[] = {
-	[sym_vvar_start] = {"vvar_start", 1},
-	[sym_VDSO_FAKE_SECTION_TABLE_START] = {
+काष्ठा vdso_sym required_syms[] = अणु
+	[sym_vvar_start] = अणु"vvar_start", 1पूर्ण,
+	[sym_VDSO_FAKE_SECTION_TABLE_START] = अणु
 		"VDSO_FAKE_SECTION_TABLE_START", 0
-	},
-	[sym_VDSO_FAKE_SECTION_TABLE_END] = {
+	पूर्ण,
+	[sym_VDSO_FAKE_SECTION_TABLE_END] = अणु
 		"VDSO_FAKE_SECTION_TABLE_END", 0
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-__attribute__((format(printf, 1, 2))) __attribute__((noreturn))
-static void fail(const char *format, ...)
-{
-	va_list ap;
+__attribute__((क्रमmat(म_लिखो, 1, 2))) __attribute__((noवापस))
+अटल व्योम fail(स्थिर अक्षर *क्रमmat, ...)
+अणु
+	बहु_सूची ap;
 
-	va_start(ap, format);
-	fprintf(stderr, "Error: ");
-	vfprintf(stderr, format, ap);
-	if (outfilename)
+	बहु_शुरू(ap, क्रमmat);
+	ख_लिखो(मानक_त्रुटि, "Error: ");
+	भख_लिखो(मानक_त्रुटि, क्रमmat, ap);
+	अगर (outfilename)
 		unlink(outfilename);
-	exit(1);
-	va_end(ap);
-}
+	निकास(1);
+	बहु_पूर्ण(ap);
+पूर्ण
 
 /*
- * Evil macros for big-endian reads and writes
+ * Evil macros क्रम big-endian पढ़ोs and ग_लिखोs
  */
-#define GBE(x, bits, ifnot)						\
+#घोषणा GBE(x, bits, अगरnot)						\
 	__builtin_choose_expr(						\
-		(sizeof(*(x)) == bits/8),				\
-		(__typeof__(*(x)))get_unaligned_be##bits(x), ifnot)
+		(माप(*(x)) == bits/8),				\
+		(__typeof__(*(x)))get_unaligned_be##bits(x), अगरnot)
 
-#define LAST_GBE(x)							\
-	__builtin_choose_expr(sizeof(*(x)) == 1, *(x), (void)(0))
+#घोषणा LAST_GBE(x)							\
+	__builtin_choose_expr(माप(*(x)) == 1, *(x), (व्योम)(0))
 
-#define GET_BE(x)							\
+#घोषणा GET_BE(x)							\
 	GBE(x, 64, GBE(x, 32, GBE(x, 16, LAST_GBE(x))))
 
-#define PBE(x, val, bits, ifnot)					\
+#घोषणा PBE(x, val, bits, अगरnot)					\
 	__builtin_choose_expr(						\
-		(sizeof(*(x)) == bits/8),				\
-		put_unaligned_be##bits((val), (x)), ifnot)
+		(माप(*(x)) == bits/8),				\
+		put_unaligned_be##bits((val), (x)), अगरnot)
 
-#define LAST_PBE(x, val)						\
-	__builtin_choose_expr(sizeof(*(x)) == 1, *(x) = (val), (void)(0))
+#घोषणा LAST_PBE(x, val)						\
+	__builtin_choose_expr(माप(*(x)) == 1, *(x) = (val), (व्योम)(0))
 
-#define PUT_BE(x, val)					\
+#घोषणा PUT_BE(x, val)					\
 	PBE(x, val, 64, PBE(x, val, 32, PBE(x, val, 16, LAST_PBE(x, val))))
 
-#define NSYMS ARRAY_SIZE(required_syms)
+#घोषणा NSYMS ARRAY_SIZE(required_syms)
 
-#define BITSFUNC3(name, bits, suffix) name##bits##suffix
-#define BITSFUNC2(name, bits, suffix) BITSFUNC3(name, bits, suffix)
-#define BITSFUNC(name) BITSFUNC2(name, ELF_BITS, )
+#घोषणा BITSFUNC3(name, bits, suffix) name##bits##suffix
+#घोषणा BITSFUNC2(name, bits, suffix) BITSFUNC3(name, bits, suffix)
+#घोषणा BITSFUNC(name) BITSFUNC2(name, ELF_BITS, )
 
-#define INT_BITS BITSFUNC2(int, ELF_BITS, _t)
+#घोषणा INT_BITS BITSFUNC2(पूर्णांक, ELF_BITS, _t)
 
-#define ELF_BITS_XFORM2(bits, x) Elf##bits##_##x
-#define ELF_BITS_XFORM(bits, x) ELF_BITS_XFORM2(bits, x)
-#define ELF(x) ELF_BITS_XFORM(ELF_BITS, x)
+#घोषणा ELF_BITS_XFORM2(bits, x) Elf##bits##_##x
+#घोषणा ELF_BITS_XFORM(bits, x) ELF_BITS_XFORM2(bits, x)
+#घोषणा ELF(x) ELF_BITS_XFORM(ELF_BITS, x)
 
-#define ELF_BITS 64
-#include "vdso2c.h"
-#undef ELF_BITS
+#घोषणा ELF_BITS 64
+#समावेश "vdso2c.h"
+#अघोषित ELF_BITS
 
-#define ELF_BITS 32
-#include "vdso2c.h"
-#undef ELF_BITS
+#घोषणा ELF_BITS 32
+#समावेश "vdso2c.h"
+#अघोषित ELF_BITS
 
-static void go(void *raw_addr, size_t raw_len,
-	       void *stripped_addr, size_t stripped_len,
-	       FILE *outfile, const char *name)
-{
+अटल व्योम go(व्योम *raw_addr, माप_प्रकार raw_len,
+	       व्योम *stripped_addr, माप_प्रकार stripped_len,
+	       खाता *outfile, स्थिर अक्षर *name)
+अणु
 	Elf64_Ehdr *hdr = (Elf64_Ehdr *)raw_addr;
 
-	if (hdr->e_ident[EI_CLASS] == ELFCLASS64) {
+	अगर (hdr->e_ident[EI_CLASS] == ELFCLASS64) अणु
 		go64(raw_addr, raw_len, stripped_addr, stripped_len,
 		     outfile, name);
-	} else if (hdr->e_ident[EI_CLASS] == ELFCLASS32) {
+	पूर्ण अन्यथा अगर (hdr->e_ident[EI_CLASS] == ELFCLASS32) अणु
 		go32(raw_addr, raw_len, stripped_addr, stripped_len,
 		     outfile, name);
-	} else {
+	पूर्ण अन्यथा अणु
 		fail("unknown ELF class\n");
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void map_input(const char *name, void **addr, size_t *len, int prot)
-{
-	off_t tmp_len;
+अटल व्योम map_input(स्थिर अक्षर *name, व्योम **addr, माप_प्रकार *len, पूर्णांक prot)
+अणु
+	off_t पंचांगp_len;
 
-	int fd = open(name, O_RDONLY);
+	पूर्णांक fd = खोलो(name, O_RDONLY);
 
-	if (fd == -1)
+	अगर (fd == -1)
 		err(1, "%s", name);
 
-	tmp_len = lseek(fd, 0, SEEK_END);
-	if (tmp_len == (off_t)-1)
+	पंचांगp_len = lseek(fd, 0, अंत_से);
+	अगर (पंचांगp_len == (off_t)-1)
 		err(1, "lseek");
-	*len = (size_t)tmp_len;
+	*len = (माप_प्रकार)पंचांगp_len;
 
-	*addr = mmap(NULL, tmp_len, prot, MAP_PRIVATE, fd, 0);
-	if (*addr == MAP_FAILED)
+	*addr = mmap(शून्य, पंचांगp_len, prot, MAP_PRIVATE, fd, 0);
+	अगर (*addr == MAP_FAILED)
 		err(1, "mmap");
 
-	close(fd);
-}
+	बंद(fd);
+पूर्ण
 
-int main(int argc, char **argv)
-{
-	size_t raw_len, stripped_len;
-	void *raw_addr, *stripped_addr;
-	FILE *outfile;
-	char *name, *tmp;
-	int namelen;
+पूर्णांक मुख्य(पूर्णांक argc, अक्षर **argv)
+अणु
+	माप_प्रकार raw_len, stripped_len;
+	व्योम *raw_addr, *stripped_addr;
+	खाता *outfile;
+	अक्षर *name, *पंचांगp;
+	पूर्णांक namelen;
 
-	if (argc != 4) {
-		printf("Usage: vdso2c RAW_INPUT STRIPPED_INPUT OUTPUT\n");
-		return 1;
-	}
+	अगर (argc != 4) अणु
+		म_लिखो("Usage: vdso2c RAW_INPUT STRIPPED_INPUT OUTPUT\n");
+		वापस 1;
+	पूर्ण
 
 	/*
-	 * Figure out the struct name.  If we're writing to a .so file,
+	 * Figure out the काष्ठा name.  If we're writing to a .so file,
 	 * generate raw output insted.
 	 */
 	name = strdup(argv[3]);
-	namelen = strlen(name);
-	if (namelen >= 3 && !strcmp(name + namelen - 3, ".so")) {
-		name = NULL;
-	} else {
-		tmp = strrchr(name, '/');
-		if (tmp)
-			name = tmp + 1;
-		tmp = strchr(name, '.');
-		if (tmp)
-			*tmp = '\0';
-		for (tmp = name; *tmp; tmp++)
-			if (*tmp == '-')
-				*tmp = '_';
-	}
+	namelen = म_माप(name);
+	अगर (namelen >= 3 && !म_भेद(name + namelen - 3, ".so")) अणु
+		name = शून्य;
+	पूर्ण अन्यथा अणु
+		पंचांगp = म_खोजप(name, '/');
+		अगर (पंचांगp)
+			name = पंचांगp + 1;
+		पंचांगp = म_अक्षर(name, '.');
+		अगर (पंचांगp)
+			*पंचांगp = '\0';
+		क्रम (पंचांगp = name; *पंचांगp; पंचांगp++)
+			अगर (*पंचांगp == '-')
+				*पंचांगp = '_';
+	पूर्ण
 
 	map_input(argv[1], &raw_addr, &raw_len, PROT_READ);
 	map_input(argv[2], &stripped_addr, &stripped_len, PROT_READ);
 
 	outfilename = argv[3];
-	outfile = fopen(outfilename, "w");
-	if (!outfile)
+	outfile = ख_खोलो(outfilename, "w");
+	अगर (!outfile)
 		err(1, "%s", argv[2]);
 
 	go(raw_addr, raw_len, stripped_addr, stripped_len, outfile, name);
 
 	munmap(raw_addr, raw_len);
 	munmap(stripped_addr, stripped_len);
-	fclose(outfile);
+	ख_बंद(outfile);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

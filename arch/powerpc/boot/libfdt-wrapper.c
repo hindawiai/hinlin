@@ -1,162 +1,163 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * This file does the necessary interface mapping between the bootwrapper
- * device tree operations and the interface provided by shared source
+ * This file करोes the necessary पूर्णांकerface mapping between the bootwrapper
+ * device tree operations and the पूर्णांकerface provided by shared source
  * files flatdevicetree.[ch].
  *
  * Copyright 2007 David Gibson, IBM Corporation.
  */
 
-#include <stddef.h>
-#include <stdio.h>
-#include <page.h>
-#include <libfdt.h>
-#include "ops.h"
+#समावेश <मानकघोष.स>
+#समावेश <मानकपन.स>
+#समावेश <page.h>
+#समावेश <libfdt.h>
+#समावेश "ops.h"
 
-#define DEBUG	0
-#define BAD_ERROR(err)	(((err) < 0) \
+#घोषणा DEBUG	0
+#घोषणा BAD_ERROR(err)	(((err) < 0) \
 			 && ((err) != -FDT_ERR_NOTFOUND) \
 			 && ((err) != -FDT_ERR_EXISTS))
 
-#define check_err(err) \
-	({ \
-		if (BAD_ERROR(err) || ((err < 0) && DEBUG)) \
-			printf("%s():%d  %s\n\r", __func__, __LINE__, \
-			       fdt_strerror(err)); \
-		if (BAD_ERROR(err)) \
-			exit(); \
+#घोषणा check_err(err) \
+	(अणु \
+		अगर (BAD_ERROR(err) || ((err < 0) && DEBUG)) \
+			म_लिखो("%s():%d  %s\n\r", __func__, __LINE__, \
+			       fdt_म_त्रुटि(err)); \
+		अगर (BAD_ERROR(err)) \
+			निकास(); \
 		(err < 0) ? -1 : 0; \
-	})
+	पूर्ण)
 
-#define offset_devp(off)	\
-	({ \
-		unsigned long _offset = (off); \
-		check_err(_offset) ? NULL : (void *)(_offset+1); \
-	})
+#घोषणा offset_devp(off)	\
+	(अणु \
+		अचिन्हित दीर्घ _offset = (off); \
+		check_err(_offset) ? शून्य : (व्योम *)(_offset+1); \
+	पूर्ण)
 
-#define devp_offset_find(devp)	(((unsigned long)(devp))-1)
-#define devp_offset(devp)	(devp ? ((unsigned long)(devp))-1 : 0)
+#घोषणा devp_offset_find(devp)	(((अचिन्हित दीर्घ)(devp))-1)
+#घोषणा devp_offset(devp)	(devp ? ((अचिन्हित दीर्घ)(devp))-1 : 0)
 
-static void *fdt;
-static void *buf; /* = NULL */
+अटल व्योम *fdt;
+अटल व्योम *buf; /* = शून्य */
 
-#define EXPAND_GRANULARITY	1024
+#घोषणा EXPAND_GRANULARITY	1024
 
-static void expand_buf(int minexpand)
-{
-	int size = fdt_totalsize(fdt);
-	int rc;
+अटल व्योम expand_buf(पूर्णांक minexpand)
+अणु
+	पूर्णांक size = fdt_totalsize(fdt);
+	पूर्णांक rc;
 
 	size = _ALIGN(size + minexpand, EXPAND_GRANULARITY);
-	buf = platform_ops.realloc(buf, size);
-	if (!buf)
+	buf = platक्रमm_ops.पुनः_स्मृति(buf, size);
+	अगर (!buf)
 		fatal("Couldn't find %d bytes to expand device tree\n\r", size);
-	rc = fdt_open_into(fdt, buf, size);
-	if (rc != 0)
+	rc = fdt_खोलो_पूर्णांकo(fdt, buf, size);
+	अगर (rc != 0)
 		fatal("Couldn't expand fdt into new buffer: %s\n\r",
-		      fdt_strerror(rc));
+		      fdt_म_त्रुटि(rc));
 
 	fdt = buf;
-}
+पूर्ण
 
-static void *fdt_wrapper_finddevice(const char *path)
-{
-	return offset_devp(fdt_path_offset(fdt, path));
-}
+अटल व्योम *fdt_wrapper_finddevice(स्थिर अक्षर *path)
+अणु
+	वापस offset_devp(fdt_path_offset(fdt, path));
+पूर्ण
 
-static int fdt_wrapper_getprop(const void *devp, const char *name,
-			       void *buf, const int buflen)
-{
-	const void *p;
-	int len;
+अटल पूर्णांक fdt_wrapper_getprop(स्थिर व्योम *devp, स्थिर अक्षर *name,
+			       व्योम *buf, स्थिर पूर्णांक buflen)
+अणु
+	स्थिर व्योम *p;
+	पूर्णांक len;
 
 	p = fdt_getprop(fdt, devp_offset(devp), name, &len);
-	if (!p)
-		return check_err(len);
-	memcpy(buf, p, min(len, buflen));
-	return len;
-}
+	अगर (!p)
+		वापस check_err(len);
+	स_नकल(buf, p, min(len, buflen));
+	वापस len;
+पूर्ण
 
-static int fdt_wrapper_setprop(const void *devp, const char *name,
-			       const void *buf, const int len)
-{
-	int rc;
+अटल पूर्णांक fdt_wrapper_setprop(स्थिर व्योम *devp, स्थिर अक्षर *name,
+			       स्थिर व्योम *buf, स्थिर पूर्णांक len)
+अणु
+	पूर्णांक rc;
 
 	rc = fdt_setprop(fdt, devp_offset(devp), name, buf, len);
-	if (rc == -FDT_ERR_NOSPACE) {
+	अगर (rc == -FDT_ERR_NOSPACE) अणु
 		expand_buf(len + 16);
 		rc = fdt_setprop(fdt, devp_offset(devp), name, buf, len);
-	}
+	पूर्ण
 
-	return check_err(rc);
-}
+	वापस check_err(rc);
+पूर्ण
 
-static int fdt_wrapper_del_node(const void *devp)
-{
-	return fdt_del_node(fdt, devp_offset(devp));
-}
+अटल पूर्णांक fdt_wrapper_del_node(स्थिर व्योम *devp)
+अणु
+	वापस fdt_del_node(fdt, devp_offset(devp));
+पूर्ण
 
-static void *fdt_wrapper_get_parent(const void *devp)
-{
-	return offset_devp(fdt_parent_offset(fdt, devp_offset(devp)));
-}
+अटल व्योम *fdt_wrapper_get_parent(स्थिर व्योम *devp)
+अणु
+	वापस offset_devp(fdt_parent_offset(fdt, devp_offset(devp)));
+पूर्ण
 
-static void *fdt_wrapper_create_node(const void *devp, const char *name)
-{
-	int offset;
+अटल व्योम *fdt_wrapper_create_node(स्थिर व्योम *devp, स्थिर अक्षर *name)
+अणु
+	पूर्णांक offset;
 
 	offset = fdt_add_subnode(fdt, devp_offset(devp), name);
-	if (offset == -FDT_ERR_NOSPACE) {
-		expand_buf(strlen(name) + 16);
+	अगर (offset == -FDT_ERR_NOSPACE) अणु
+		expand_buf(म_माप(name) + 16);
 		offset = fdt_add_subnode(fdt, devp_offset(devp), name);
-	}
+	पूर्ण
 
-	return offset_devp(offset);
-}
+	वापस offset_devp(offset);
+पूर्ण
 
-static void *fdt_wrapper_find_node_by_prop_value(const void *prev,
-						 const char *name,
-						 const char *val,
-						 int len)
-{
-	int offset = fdt_node_offset_by_prop_value(fdt, devp_offset_find(prev),
+अटल व्योम *fdt_wrapper_find_node_by_prop_value(स्थिर व्योम *prev,
+						 स्थिर अक्षर *name,
+						 स्थिर अक्षर *val,
+						 पूर्णांक len)
+अणु
+	पूर्णांक offset = fdt_node_offset_by_prop_value(fdt, devp_offset_find(prev),
 	                                           name, val, len);
-	return offset_devp(offset);
-}
+	वापस offset_devp(offset);
+पूर्ण
 
-static void *fdt_wrapper_find_node_by_compatible(const void *prev,
-						 const char *val)
-{
-	int offset = fdt_node_offset_by_compatible(fdt, devp_offset_find(prev),
+अटल व्योम *fdt_wrapper_find_node_by_compatible(स्थिर व्योम *prev,
+						 स्थिर अक्षर *val)
+अणु
+	पूर्णांक offset = fdt_node_offset_by_compatible(fdt, devp_offset_find(prev),
 	                                           val);
-	return offset_devp(offset);
-}
+	वापस offset_devp(offset);
+पूर्ण
 
-static char *fdt_wrapper_get_path(const void *devp, char *buf, int len)
-{
-	int rc;
+अटल अक्षर *fdt_wrapper_get_path(स्थिर व्योम *devp, अक्षर *buf, पूर्णांक len)
+अणु
+	पूर्णांक rc;
 
 	rc = fdt_get_path(fdt, devp_offset(devp), buf, len);
-	if (check_err(rc))
-		return NULL;
-	return buf;
-}
+	अगर (check_err(rc))
+		वापस शून्य;
+	वापस buf;
+पूर्ण
 
-static unsigned long fdt_wrapper_finalize(void)
-{
-	int rc;
+अटल अचिन्हित दीर्घ fdt_wrapper_finalize(व्योम)
+अणु
+	पूर्णांक rc;
 
 	rc = fdt_pack(fdt);
-	if (rc != 0)
+	अगर (rc != 0)
 		fatal("Couldn't pack flat tree: %s\n\r",
-		      fdt_strerror(rc));
-	return (unsigned long)fdt;
-}
+		      fdt_म_त्रुटि(rc));
+	वापस (अचिन्हित दीर्घ)fdt;
+पूर्ण
 
-void fdt_init(void *blob)
-{
-	int err;
-	int bufsize;
+व्योम fdt_init(व्योम *blob)
+अणु
+	पूर्णांक err;
+	पूर्णांक bufsize;
 
 	dt_ops.finddevice = fdt_wrapper_finddevice;
 	dt_ops.getprop = fdt_wrapper_getprop;
@@ -169,17 +170,17 @@ void fdt_init(void *blob)
 	dt_ops.get_path = fdt_wrapper_get_path;
 	dt_ops.finalize = fdt_wrapper_finalize;
 
-	/* Make sure the dt blob is the right version and so forth */
+	/* Make sure the dt blob is the right version and so क्रमth */
 	fdt = blob;
 	bufsize = fdt_totalsize(fdt) + EXPAND_GRANULARITY;
-	buf = malloc(bufsize);
-	if(!buf)
+	buf = दो_स्मृति(bufsize);
+	अगर(!buf)
 		fatal("malloc failed. can't relocate the device tree\n\r");
 
-	err = fdt_open_into(fdt, buf, bufsize);
+	err = fdt_खोलो_पूर्णांकo(fdt, buf, bufsize);
 
-	if (err != 0)
-		fatal("fdt_init(): %s\n\r", fdt_strerror(err));
+	अगर (err != 0)
+		fatal("fdt_init(): %s\n\r", fdt_म_त्रुटि(err));
 
 	fdt = buf;
-}
+पूर्ण

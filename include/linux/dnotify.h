@@ -1,51 +1,52 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _LINUX_DNOTIFY_H
-#define _LINUX_DNOTIFY_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _LINUX_DNOTIFY_H
+#घोषणा _LINUX_DNOTIFY_H
 /*
- * Directory notification for Linux
+ * Directory notअगरication क्रम Linux
  *
  * Copyright (C) 2000,2002 Stephen Rothwell
  */
 
-#include <linux/fs.h>
+#समावेश <linux/fs.h>
 
-struct dnotify_struct {
-	struct dnotify_struct *	dn_next;
+काष्ठा dnotअगरy_काष्ठा अणु
+	काष्ठा dnotअगरy_काष्ठा *	dn_next;
 	__u32			dn_mask;
-	int			dn_fd;
-	struct file *		dn_filp;
+	पूर्णांक			dn_fd;
+	काष्ठा file *		dn_filp;
 	fl_owner_t		dn_owner;
-};
+पूर्ण;
 
-#ifdef __KERNEL__
+#अगर_घोषित __KERNEL__
 
 
-#ifdef CONFIG_DNOTIFY
+#अगर_घोषित CONFIG_DNOTIFY
 
-#define DNOTIFY_ALL_EVENTS (FS_DELETE | FS_DELETE_CHILD |\
+#घोषणा DNOTIFY_ALL_EVENTS (FS_DELETE | FS_DELETE_CHILD |\
 			    FS_MODIFY | FS_MODIFY_CHILD |\
 			    FS_ACCESS | FS_ACCESS_CHILD |\
 			    FS_ATTRIB | FS_ATTRIB_CHILD |\
 			    FS_CREATE | FS_DN_RENAME |\
 			    FS_MOVED_FROM | FS_MOVED_TO)
 
-extern int dir_notify_enable;
-extern void dnotify_flush(struct file *, fl_owner_t);
-extern int fcntl_dirnotify(int, struct file *, unsigned long);
+बाह्य पूर्णांक dir_notअगरy_enable;
+बाह्य व्योम dnotअगरy_flush(काष्ठा file *, fl_owner_t);
+बाह्य पूर्णांक fcntl_dirnotअगरy(पूर्णांक, काष्ठा file *, अचिन्हित दीर्घ);
 
-#else
+#अन्यथा
 
-static inline void dnotify_flush(struct file *filp, fl_owner_t id)
-{
-}
+अटल अंतरभूत व्योम dnotअगरy_flush(काष्ठा file *filp, fl_owner_t id)
+अणु
+पूर्ण
 
-static inline int fcntl_dirnotify(int fd, struct file *filp, unsigned long arg)
-{
-	return -EINVAL;
-}
+अटल अंतरभूत पूर्णांक fcntl_dirnotअगरy(पूर्णांक fd, काष्ठा file *filp, अचिन्हित दीर्घ arg)
+अणु
+	वापस -EINVAL;
+पूर्ण
 
-#endif /* CONFIG_DNOTIFY */
+#पूर्ण_अगर /* CONFIG_DNOTIFY */
 
-#endif /* __KERNEL __ */
+#पूर्ण_अगर /* __KERNEL __ */
 
-#endif /* _LINUX_DNOTIFY_H */
+#पूर्ण_अगर /* _LINUX_DNOTIFY_H */

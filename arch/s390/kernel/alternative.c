@@ -1,113 +1,114 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <linux/module.h>
-#include <asm/alternative.h>
-#include <asm/facility.h>
-#include <asm/nospec-branch.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <linux/module.h>
+#समावेश <यंत्र/alternative.h>
+#समावेश <यंत्र/facility.h>
+#समावेश <यंत्र/nospec-branch.h>
 
-#define MAX_PATCH_LEN (255 - 1)
+#घोषणा MAX_PATCH_LEN (255 - 1)
 
-static int __initdata_or_module alt_instr_disabled;
+अटल पूर्णांक __initdata_or_module alt_instr_disabled;
 
-static int __init disable_alternative_instructions(char *str)
-{
+अटल पूर्णांक __init disable_alternative_inकाष्ठाions(अक्षर *str)
+अणु
 	alt_instr_disabled = 1;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-early_param("noaltinstr", disable_alternative_instructions);
+early_param("noaltinstr", disable_alternative_inकाष्ठाions);
 
-struct brcl_insn {
+काष्ठा brcl_insn अणु
 	u16 opc;
 	s32 disp;
-} __packed;
+पूर्ण __packed;
 
-static u16 __initdata_or_module nop16 = 0x0700;
-static u32 __initdata_or_module nop32 = 0x47000000;
-static struct brcl_insn __initdata_or_module nop48 = {
+अटल u16 __initdata_or_module nop16 = 0x0700;
+अटल u32 __initdata_or_module nop32 = 0x47000000;
+अटल काष्ठा brcl_insn __initdata_or_module nop48 = अणु
 	0xc004, 0
-};
+पूर्ण;
 
-static const void *nops[] __initdata_or_module = {
+अटल स्थिर व्योम *nops[] __initdata_or_module = अणु
 	&nop16,
 	&nop32,
 	&nop48
-};
+पूर्ण;
 
-static void __init_or_module add_jump_padding(void *insns, unsigned int len)
-{
-	struct brcl_insn brcl = {
+अटल व्योम __init_or_module add_jump_padding(व्योम *insns, अचिन्हित पूर्णांक len)
+अणु
+	काष्ठा brcl_insn brcl = अणु
 		0xc0f4,
 		len / 2
-	};
+	पूर्ण;
 
-	memcpy(insns, &brcl, sizeof(brcl));
-	insns += sizeof(brcl);
-	len -= sizeof(brcl);
+	स_नकल(insns, &brcl, माप(brcl));
+	insns += माप(brcl);
+	len -= माप(brcl);
 
-	while (len > 0) {
-		memcpy(insns, &nop16, 2);
+	जबतक (len > 0) अणु
+		स_नकल(insns, &nop16, 2);
 		insns += 2;
 		len -= 2;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void __init_or_module add_padding(void *insns, unsigned int len)
-{
-	if (len > 6)
+अटल व्योम __init_or_module add_padding(व्योम *insns, अचिन्हित पूर्णांक len)
+अणु
+	अगर (len > 6)
 		add_jump_padding(insns, len);
-	else if (len >= 2)
-		memcpy(insns, nops[len / 2 - 1], len);
-}
+	अन्यथा अगर (len >= 2)
+		स_नकल(insns, nops[len / 2 - 1], len);
+पूर्ण
 
-static void __init_or_module __apply_alternatives(struct alt_instr *start,
-						  struct alt_instr *end)
-{
-	struct alt_instr *a;
+अटल व्योम __init_or_module __apply_alternatives(काष्ठा alt_instr *start,
+						  काष्ठा alt_instr *end)
+अणु
+	काष्ठा alt_instr *a;
 	u8 *instr, *replacement;
 	u8 insnbuf[MAX_PATCH_LEN];
 
 	/*
 	 * The scan order should be from start to end. A later scanned
-	 * alternative code can overwrite previously scanned alternative code.
+	 * alternative code can overग_लिखो previously scanned alternative code.
 	 */
-	for (a = start; a < end; a++) {
-		int insnbuf_sz = 0;
+	क्रम (a = start; a < end; a++) अणु
+		पूर्णांक insnbuf_sz = 0;
 
 		instr = (u8 *)&a->instr_offset + a->instr_offset;
 		replacement = (u8 *)&a->repl_offset + a->repl_offset;
 
-		if (!__test_facility(a->facility,
+		अगर (!__test_facility(a->facility,
 				     S390_lowcore.alt_stfle_fac_list))
-			continue;
+			जारी;
 
-		if (unlikely(a->instrlen % 2 || a->replacementlen % 2)) {
+		अगर (unlikely(a->inम_माप % 2 || a->replacementlen % 2)) अणु
 			WARN_ONCE(1, "cpu alternatives instructions length is "
 				     "odd, skipping patching\n");
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		memcpy(insnbuf, replacement, a->replacementlen);
+		स_नकल(insnbuf, replacement, a->replacementlen);
 		insnbuf_sz = a->replacementlen;
 
-		if (a->instrlen > a->replacementlen) {
+		अगर (a->inम_माप > a->replacementlen) अणु
 			add_padding(insnbuf + a->replacementlen,
-				    a->instrlen - a->replacementlen);
-			insnbuf_sz += a->instrlen - a->replacementlen;
-		}
+				    a->inम_माप - a->replacementlen);
+			insnbuf_sz += a->inम_माप - a->replacementlen;
+		पूर्ण
 
-		s390_kernel_write(instr, insnbuf, insnbuf_sz);
-	}
-}
+		s390_kernel_ग_लिखो(instr, insnbuf, insnbuf_sz);
+	पूर्ण
+पूर्ण
 
-void __init_or_module apply_alternatives(struct alt_instr *start,
-					 struct alt_instr *end)
-{
-	if (!alt_instr_disabled)
+व्योम __init_or_module apply_alternatives(काष्ठा alt_instr *start,
+					 काष्ठा alt_instr *end)
+अणु
+	अगर (!alt_instr_disabled)
 		__apply_alternatives(start, end);
-}
+पूर्ण
 
-extern struct alt_instr __alt_instructions[], __alt_instructions_end[];
-void __init apply_alternative_instructions(void)
-{
-	apply_alternatives(__alt_instructions, __alt_instructions_end);
-}
+बाह्य काष्ठा alt_instr __alt_inकाष्ठाions[], __alt_inकाष्ठाions_end[];
+व्योम __init apply_alternative_inकाष्ठाions(व्योम)
+अणु
+	apply_alternatives(__alt_inकाष्ठाions, __alt_inकाष्ठाions_end);
+पूर्ण

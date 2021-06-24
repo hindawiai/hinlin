@@ -1,116 +1,117 @@
-// SPDX-License-Identifier: GPL-2.0 OR BSD-3-Clause
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0 OR BSD-3-Clause
 /*
  * Copyright (C) 2005-2014 Intel Corporation
  */
-#include <linux/slab.h>
-#include <net/mac80211.h>
+#समावेश <linux/slab.h>
+#समावेश <net/mac80211.h>
 
-#include "iwl-trans.h"
+#समावेश "iwl-trans.h"
 
-#include "dev.h"
-#include "calib.h"
-#include "agn.h"
+#समावेश "dev.h"
+#समावेश "calib.h"
+#समावेश "agn.h"
 
 /*****************************************************************************
  * INIT calibrations framework
  *****************************************************************************/
 
 /* Opaque calibration results */
-struct iwl_calib_result {
-	struct list_head list;
-	size_t cmd_len;
-	struct iwl_calib_hdr hdr;
+काष्ठा iwl_calib_result अणु
+	काष्ठा list_head list;
+	माप_प्रकार cmd_len;
+	काष्ठा iwl_calib_hdr hdr;
 	/* data follows */
-};
+पूर्ण;
 
-struct statistics_general_data {
+काष्ठा statistics_general_data अणु
 	u32 beacon_silence_rssi_a;
 	u32 beacon_silence_rssi_b;
 	u32 beacon_silence_rssi_c;
 	u32 beacon_energy_a;
 	u32 beacon_energy_b;
 	u32 beacon_energy_c;
-};
+पूर्ण;
 
-int iwl_send_calib_results(struct iwl_priv *priv)
-{
-	struct iwl_host_cmd hcmd = {
+पूर्णांक iwl_send_calib_results(काष्ठा iwl_priv *priv)
+अणु
+	काष्ठा iwl_host_cmd hcmd = अणु
 		.id = REPLY_PHY_CALIBRATION_CMD,
-	};
-	struct iwl_calib_result *res;
+	पूर्ण;
+	काष्ठा iwl_calib_result *res;
 
-	list_for_each_entry(res, &priv->calib_results, list) {
-		int ret;
+	list_क्रम_each_entry(res, &priv->calib_results, list) अणु
+		पूर्णांक ret;
 
 		hcmd.len[0] = res->cmd_len;
 		hcmd.data[0] = &res->hdr;
 		hcmd.dataflags[0] = IWL_HCMD_DFL_NOCOPY;
 		ret = iwl_dvm_send_cmd(priv, &hcmd);
-		if (ret) {
+		अगर (ret) अणु
 			IWL_ERR(priv, "Error %d on calib cmd %d\n",
 				ret, res->hdr.op_code);
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int iwl_calib_set(struct iwl_priv *priv,
-		  const struct iwl_calib_hdr *cmd, int len)
-{
-	struct iwl_calib_result *res, *tmp;
+पूर्णांक iwl_calib_set(काष्ठा iwl_priv *priv,
+		  स्थिर काष्ठा iwl_calib_hdr *cmd, पूर्णांक len)
+अणु
+	काष्ठा iwl_calib_result *res, *पंचांगp;
 
-	res = kmalloc(sizeof(*res) + len - sizeof(struct iwl_calib_hdr),
+	res = kदो_स्मृति(माप(*res) + len - माप(काष्ठा iwl_calib_hdr),
 		      GFP_ATOMIC);
-	if (!res)
-		return -ENOMEM;
-	memcpy(&res->hdr, cmd, len);
+	अगर (!res)
+		वापस -ENOMEM;
+	स_नकल(&res->hdr, cmd, len);
 	res->cmd_len = len;
 
-	list_for_each_entry(tmp, &priv->calib_results, list) {
-		if (tmp->hdr.op_code == res->hdr.op_code) {
-			list_replace(&tmp->list, &res->list);
-			kfree(tmp);
-			return 0;
-		}
-	}
+	list_क्रम_each_entry(पंचांगp, &priv->calib_results, list) अणु
+		अगर (पंचांगp->hdr.op_code == res->hdr.op_code) अणु
+			list_replace(&पंचांगp->list, &res->list);
+			kमुक्त(पंचांगp);
+			वापस 0;
+		पूर्ण
+	पूर्ण
 
-	/* wasn't in list already */
+	/* wasn't in list alपढ़ोy */
 	list_add_tail(&res->list, &priv->calib_results);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void iwl_calib_free_results(struct iwl_priv *priv)
-{
-	struct iwl_calib_result *res, *tmp;
+व्योम iwl_calib_मुक्त_results(काष्ठा iwl_priv *priv)
+अणु
+	काष्ठा iwl_calib_result *res, *पंचांगp;
 
-	list_for_each_entry_safe(res, tmp, &priv->calib_results, list) {
+	list_क्रम_each_entry_safe(res, पंचांगp, &priv->calib_results, list) अणु
 		list_del(&res->list);
-		kfree(res);
-	}
-}
+		kमुक्त(res);
+	पूर्ण
+पूर्ण
 
 /*****************************************************************************
  * RUNTIME calibrations framework
  *****************************************************************************/
 
-/* "false alarms" are signals that our DSP tries to lock onto,
+/* "false alarms" are संकेतs that our DSP tries to lock onto,
  *   but then determines that they are either noise, or transmissions
  *   from a distant wireless network (also "noise", really) that get
  *   "stepped on" by stronger transmissions within our own network.
  * This algorithm attempts to set a sensitivity level that is high
  *   enough to receive all of our own network traffic, but not so
- *   high that our DSP gets too busy trying to lock onto non-network
+ *   high that our DSP माला_लो too busy trying to lock onto non-network
  *   activity/noise. */
-static int iwl_sens_energy_cck(struct iwl_priv *priv,
+अटल पूर्णांक iwl_sens_energy_cck(काष्ठा iwl_priv *priv,
 				   u32 norm_fa,
-				   u32 rx_enable_time,
-				   struct statistics_general_data *rx_info)
-{
+				   u32 rx_enable_समय,
+				   काष्ठा statistics_general_data *rx_info)
+अणु
 	u32 max_nrg_cck = 0;
-	int i = 0;
+	पूर्णांक i = 0;
 	u8 max_silence_rssi = 0;
 	u32 silence_ref = 0;
 	u8 silence_rssi_a = 0;
@@ -121,25 +122,25 @@ static int iwl_sens_energy_cck(struct iwl_priv *priv,
 	/* "false_alarms" values below are cross-multiplications to assess the
 	 *   numbers of false alarms within the measured period of actual Rx
 	 *   (Rx is off when we're txing), vs the min/max expected false alarms
-	 *   (some should be expected if rx is sensitive enough) in a
-	 *   hypothetical listening period of 200 time units (TU), 204.8 msec:
+	 *   (some should be expected अगर rx is sensitive enough) in a
+	 *   hypothetical listening period of 200 समय units (TU), 204.8 msec:
 	 *
-	 * MIN_FA/fixed-time < false_alarms/actual-rx-time < MAX_FA/beacon-time
+	 * MIN_FA/fixed-समय < false_alarms/actual-rx-समय < MAX_FA/beacon-समय
 	 *
 	 * */
 	u32 false_alarms = norm_fa * 200 * 1024;
-	u32 max_false_alarms = MAX_FA_CCK * rx_enable_time;
-	u32 min_false_alarms = MIN_FA_CCK * rx_enable_time;
-	struct iwl_sensitivity_data *data = NULL;
-	const struct iwl_sensitivity_ranges *ranges = priv->hw_params.sens;
+	u32 max_false_alarms = MAX_FA_CCK * rx_enable_समय;
+	u32 min_false_alarms = MIN_FA_CCK * rx_enable_समय;
+	काष्ठा iwl_sensitivity_data *data = शून्य;
+	स्थिर काष्ठा iwl_sensitivity_ranges *ranges = priv->hw_params.sens;
 
 	data = &(priv->sensitivity_data);
 
-	data->nrg_auto_corr_silence_diff = 0;
+	data->nrg_स्वतः_corr_silence_dअगरf = 0;
 
 	/* Find max silence rssi among all 3 receivers.
 	 * This is background noise, which may include transmissions from other
-	 *    networks, measured during silence before our network's beacon */
+	 *    networks, measured during silence beक्रमe our network's beacon */
 	silence_rssi_a = (u8)((rx_info->beacon_silence_rssi_a &
 			    ALL_BAND_FILTER) >> 8);
 	silence_rssi_b = (u8)((rx_info->beacon_silence_rssi_b &
@@ -153,14 +154,14 @@ static int iwl_sens_energy_cck(struct iwl_priv *priv,
 	/* Store silence rssi in 20-beacon history table */
 	data->nrg_silence_rssi[data->nrg_silence_idx] = max_silence_rssi;
 	data->nrg_silence_idx++;
-	if (data->nrg_silence_idx >= NRG_NUM_PREV_STAT_L)
+	अगर (data->nrg_silence_idx >= NRG_NUM_PREV_STAT_L)
 		data->nrg_silence_idx = 0;
 
 	/* Find max silence rssi across 20 beacon history */
-	for (i = 0; i < NRG_NUM_PREV_STAT_L; i++) {
+	क्रम (i = 0; i < NRG_NUM_PREV_STAT_L; i++) अणु
 		val = data->nrg_silence_rssi[i];
 		silence_ref = max(silence_ref, val);
-	}
+	पूर्ण
 	IWL_DEBUG_CALIB(priv, "silence a %u, b %u, c %u, 20-bcn max %u\n",
 			silence_rssi_a, silence_rssi_b, silence_rssi_c,
 			silence_ref);
@@ -173,15 +174,15 @@ static int iwl_sens_energy_cck(struct iwl_priv *priv,
 	data->nrg_value[i] = min(rx_info->beacon_energy_a, val);
 
 	data->nrg_energy_idx++;
-	if (data->nrg_energy_idx >= 10)
+	अगर (data->nrg_energy_idx >= 10)
 		data->nrg_energy_idx = 0;
 
 	/* Find min rx energy (max value) across 10 beacon history.
-	 * This is the minimum signal level that we want to receive well.
-	 * Add backoff (margin so we don't miss slightly lower energy frames).
-	 * This establishes an upper bound (min value) for energy threshold. */
+	 * This is the minimum संकेत level that we want to receive well.
+	 * Add backoff (margin so we करोn't miss slightly lower energy frames).
+	 * This establishes an upper bound (min value) क्रम energy threshold. */
 	max_nrg_cck = data->nrg_value[0];
-	for (i = 1; i < 10; i++)
+	क्रम (i = 1; i < 10; i++)
 		max_nrg_cck = (u32) max(max_nrg_cck, (data->nrg_value[i]));
 	max_nrg_cck += 6;
 
@@ -191,80 +192,80 @@ static int iwl_sens_energy_cck(struct iwl_priv *priv,
 
 	/* Count number of consecutive beacons with fewer-than-desired
 	 *   false alarms. */
-	if (false_alarms < min_false_alarms)
+	अगर (false_alarms < min_false_alarms)
 		data->num_in_cck_no_fa++;
-	else
+	अन्यथा
 		data->num_in_cck_no_fa = 0;
 	IWL_DEBUG_CALIB(priv, "consecutive bcns with few false alarms = %u\n",
 			data->num_in_cck_no_fa);
 
-	/* If we got too many false alarms this time, reduce sensitivity */
-	if ((false_alarms > max_false_alarms) &&
-		(data->auto_corr_cck > AUTO_CORR_MAX_TH_CCK)) {
+	/* If we got too many false alarms this समय, reduce sensitivity */
+	अगर ((false_alarms > max_false_alarms) &&
+		(data->स्वतः_corr_cck > AUTO_CORR_MAX_TH_CCK)) अणु
 		IWL_DEBUG_CALIB(priv, "norm FA %u > max FA %u\n",
 		     false_alarms, max_false_alarms);
 		IWL_DEBUG_CALIB(priv, "... reducing sensitivity\n");
 		data->nrg_curr_state = IWL_FA_TOO_MANY;
-		/* Store for "fewer than desired" on later beacon */
+		/* Store क्रम "fewer than desired" on later beacon */
 		data->nrg_silence_ref = silence_ref;
 
 		/* increase energy threshold (reduce nrg value)
 		 *   to decrease sensitivity */
 		data->nrg_th_cck = data->nrg_th_cck - NRG_STEP_CCK;
-	/* Else if we got fewer than desired, increase sensitivity */
-	} else if (false_alarms < min_false_alarms) {
+	/* Else अगर we got fewer than desired, increase sensitivity */
+	पूर्ण अन्यथा अगर (false_alarms < min_false_alarms) अणु
 		data->nrg_curr_state = IWL_FA_TOO_FEW;
 
-		/* Compare silence level with silence level for most recent
+		/* Compare silence level with silence level क्रम most recent
 		 *   healthy number or too many false alarms */
-		data->nrg_auto_corr_silence_diff = (s32)data->nrg_silence_ref -
+		data->nrg_स्वतः_corr_silence_dअगरf = (s32)data->nrg_silence_ref -
 						   (s32)silence_ref;
 
 		IWL_DEBUG_CALIB(priv, "norm FA %u < min FA %u, silence diff %d\n",
 			 false_alarms, min_false_alarms,
-			 data->nrg_auto_corr_silence_diff);
+			 data->nrg_स्वतः_corr_silence_dअगरf);
 
-		/* Increase value to increase sensitivity, but only if:
+		/* Increase value to increase sensitivity, but only अगर:
 		 * 1a) previous beacon did *not* have *too many* false alarms
-		 * 1b) AND there's a significant difference in Rx levels
+		 * 1b) AND there's a signअगरicant dअगरference in Rx levels
 		 *      from a previous beacon with too many, or healthy # FAs
 		 * OR 2) We've seen a lot of beacons (100) with too few
 		 *       false alarms */
-		if ((data->nrg_prev_state != IWL_FA_TOO_MANY) &&
-			((data->nrg_auto_corr_silence_diff > NRG_DIFF) ||
-			(data->num_in_cck_no_fa > MAX_NUMBER_CCK_NO_FA))) {
+		अगर ((data->nrg_prev_state != IWL_FA_TOO_MANY) &&
+			((data->nrg_स्वतः_corr_silence_dअगरf > NRG_DIFF) ||
+			(data->num_in_cck_no_fa > MAX_NUMBER_CCK_NO_FA))) अणु
 
 			IWL_DEBUG_CALIB(priv, "... increasing sensitivity\n");
 			/* Increase nrg value to increase sensitivity */
 			val = data->nrg_th_cck + NRG_STEP_CCK;
 			data->nrg_th_cck = min((u32)ranges->min_nrg_cck, val);
-		} else {
+		पूर्ण अन्यथा अणु
 			IWL_DEBUG_CALIB(priv, "... but not changing sensitivity\n");
-		}
+		पूर्ण
 
 	/* Else we got a healthy number of false alarms, keep status quo */
-	} else {
+	पूर्ण अन्यथा अणु
 		IWL_DEBUG_CALIB(priv, " FA in safe zone\n");
 		data->nrg_curr_state = IWL_FA_GOOD_RANGE;
 
-		/* Store for use in "fewer than desired" with later beacon */
+		/* Store क्रम use in "fewer than desired" with later beacon */
 		data->nrg_silence_ref = silence_ref;
 
 		/* If previous beacon had too many false alarms,
 		 *   give it some extra margin by reducing sensitivity again
-		 *   (but don't go below measured energy of desired Rx) */
-		if (data->nrg_prev_state == IWL_FA_TOO_MANY) {
+		 *   (but करोn't go below measured energy of desired Rx) */
+		अगर (data->nrg_prev_state == IWL_FA_TOO_MANY) अणु
 			IWL_DEBUG_CALIB(priv, "... increasing margin\n");
-			if (data->nrg_th_cck > (max_nrg_cck + NRG_MARGIN))
+			अगर (data->nrg_th_cck > (max_nrg_cck + NRG_MARGIN))
 				data->nrg_th_cck -= NRG_MARGIN;
-			else
+			अन्यथा
 				data->nrg_th_cck = max_nrg_cck;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	/* Make sure the energy threshold does not go above the measured
-	 * energy of the desired Rx signals (reduced by backoff margin),
-	 * or else we might start missing Rx frames.
+	/* Make sure the energy threshold करोes not go above the measured
+	 * energy of the desired Rx संकेतs (reduced by backoff margin),
+	 * or अन्यथा we might start missing Rx frames.
 	 * Lower value is higher energy, so we use max()!
 	 */
 	data->nrg_th_cck = max(max_nrg_cck, data->nrg_th_cck);
@@ -273,119 +274,119 @@ static int iwl_sens_energy_cck(struct iwl_priv *priv,
 	data->nrg_prev_state = data->nrg_curr_state;
 
 	/* Auto-correlation CCK algorithm */
-	if (false_alarms > min_false_alarms) {
+	अगर (false_alarms > min_false_alarms) अणु
 
-		/* increase auto_corr values to decrease sensitivity
+		/* increase स्वतः_corr values to decrease sensitivity
 		 * so the DSP won't be disturbed by the noise
 		 */
-		if (data->auto_corr_cck < AUTO_CORR_MAX_TH_CCK)
-			data->auto_corr_cck = AUTO_CORR_MAX_TH_CCK + 1;
-		else {
-			val = data->auto_corr_cck + AUTO_CORR_STEP_CCK;
-			data->auto_corr_cck =
-				min((u32)ranges->auto_corr_max_cck, val);
-		}
-		val = data->auto_corr_cck_mrc + AUTO_CORR_STEP_CCK;
-		data->auto_corr_cck_mrc =
-			min((u32)ranges->auto_corr_max_cck_mrc, val);
-	} else if ((false_alarms < min_false_alarms) &&
-	   ((data->nrg_auto_corr_silence_diff > NRG_DIFF) ||
-	   (data->num_in_cck_no_fa > MAX_NUMBER_CCK_NO_FA))) {
+		अगर (data->स्वतः_corr_cck < AUTO_CORR_MAX_TH_CCK)
+			data->स्वतः_corr_cck = AUTO_CORR_MAX_TH_CCK + 1;
+		अन्यथा अणु
+			val = data->स्वतः_corr_cck + AUTO_CORR_STEP_CCK;
+			data->स्वतः_corr_cck =
+				min((u32)ranges->स्वतः_corr_max_cck, val);
+		पूर्ण
+		val = data->स्वतः_corr_cck_mrc + AUTO_CORR_STEP_CCK;
+		data->स्वतः_corr_cck_mrc =
+			min((u32)ranges->स्वतः_corr_max_cck_mrc, val);
+	पूर्ण अन्यथा अगर ((false_alarms < min_false_alarms) &&
+	   ((data->nrg_स्वतः_corr_silence_dअगरf > NRG_DIFF) ||
+	   (data->num_in_cck_no_fa > MAX_NUMBER_CCK_NO_FA))) अणु
 
-		/* Decrease auto_corr values to increase sensitivity */
-		val = data->auto_corr_cck - AUTO_CORR_STEP_CCK;
-		data->auto_corr_cck =
-			max((u32)ranges->auto_corr_min_cck, val);
-		val = data->auto_corr_cck_mrc - AUTO_CORR_STEP_CCK;
-		data->auto_corr_cck_mrc =
-			max((u32)ranges->auto_corr_min_cck_mrc, val);
-	}
+		/* Decrease स्वतः_corr values to increase sensitivity */
+		val = data->स्वतः_corr_cck - AUTO_CORR_STEP_CCK;
+		data->स्वतः_corr_cck =
+			max((u32)ranges->स्वतः_corr_min_cck, val);
+		val = data->स्वतः_corr_cck_mrc - AUTO_CORR_STEP_CCK;
+		data->स्वतः_corr_cck_mrc =
+			max((u32)ranges->स्वतः_corr_min_cck_mrc, val);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
-static int iwl_sens_auto_corr_ofdm(struct iwl_priv *priv,
+अटल पूर्णांक iwl_sens_स्वतः_corr_ofdm(काष्ठा iwl_priv *priv,
 				       u32 norm_fa,
-				       u32 rx_enable_time)
-{
+				       u32 rx_enable_समय)
+अणु
 	u32 val;
 	u32 false_alarms = norm_fa * 200 * 1024;
-	u32 max_false_alarms = MAX_FA_OFDM * rx_enable_time;
-	u32 min_false_alarms = MIN_FA_OFDM * rx_enable_time;
-	struct iwl_sensitivity_data *data = NULL;
-	const struct iwl_sensitivity_ranges *ranges = priv->hw_params.sens;
+	u32 max_false_alarms = MAX_FA_OFDM * rx_enable_समय;
+	u32 min_false_alarms = MIN_FA_OFDM * rx_enable_समय;
+	काष्ठा iwl_sensitivity_data *data = शून्य;
+	स्थिर काष्ठा iwl_sensitivity_ranges *ranges = priv->hw_params.sens;
 
 	data = &(priv->sensitivity_data);
 
-	/* If we got too many false alarms this time, reduce sensitivity */
-	if (false_alarms > max_false_alarms) {
+	/* If we got too many false alarms this समय, reduce sensitivity */
+	अगर (false_alarms > max_false_alarms) अणु
 
 		IWL_DEBUG_CALIB(priv, "norm FA %u > max FA %u)\n",
 			     false_alarms, max_false_alarms);
 
-		val = data->auto_corr_ofdm + AUTO_CORR_STEP_OFDM;
-		data->auto_corr_ofdm =
-			min((u32)ranges->auto_corr_max_ofdm, val);
+		val = data->स्वतः_corr_ofdm + AUTO_CORR_STEP_OFDM;
+		data->स्वतः_corr_ofdm =
+			min((u32)ranges->स्वतः_corr_max_ofdm, val);
 
-		val = data->auto_corr_ofdm_mrc + AUTO_CORR_STEP_OFDM;
-		data->auto_corr_ofdm_mrc =
-			min((u32)ranges->auto_corr_max_ofdm_mrc, val);
+		val = data->स्वतः_corr_ofdm_mrc + AUTO_CORR_STEP_OFDM;
+		data->स्वतः_corr_ofdm_mrc =
+			min((u32)ranges->स्वतः_corr_max_ofdm_mrc, val);
 
-		val = data->auto_corr_ofdm_x1 + AUTO_CORR_STEP_OFDM;
-		data->auto_corr_ofdm_x1 =
-			min((u32)ranges->auto_corr_max_ofdm_x1, val);
+		val = data->स्वतः_corr_ofdm_x1 + AUTO_CORR_STEP_OFDM;
+		data->स्वतः_corr_ofdm_x1 =
+			min((u32)ranges->स्वतः_corr_max_ofdm_x1, val);
 
-		val = data->auto_corr_ofdm_mrc_x1 + AUTO_CORR_STEP_OFDM;
-		data->auto_corr_ofdm_mrc_x1 =
-			min((u32)ranges->auto_corr_max_ofdm_mrc_x1, val);
-	}
+		val = data->स्वतः_corr_ofdm_mrc_x1 + AUTO_CORR_STEP_OFDM;
+		data->स्वतः_corr_ofdm_mrc_x1 =
+			min((u32)ranges->स्वतः_corr_max_ofdm_mrc_x1, val);
+	पूर्ण
 
-	/* Else if we got fewer than desired, increase sensitivity */
-	else if (false_alarms < min_false_alarms) {
+	/* Else अगर we got fewer than desired, increase sensitivity */
+	अन्यथा अगर (false_alarms < min_false_alarms) अणु
 
 		IWL_DEBUG_CALIB(priv, "norm FA %u < min FA %u\n",
 			     false_alarms, min_false_alarms);
 
-		val = data->auto_corr_ofdm - AUTO_CORR_STEP_OFDM;
-		data->auto_corr_ofdm =
-			max((u32)ranges->auto_corr_min_ofdm, val);
+		val = data->स्वतः_corr_ofdm - AUTO_CORR_STEP_OFDM;
+		data->स्वतः_corr_ofdm =
+			max((u32)ranges->स्वतः_corr_min_ofdm, val);
 
-		val = data->auto_corr_ofdm_mrc - AUTO_CORR_STEP_OFDM;
-		data->auto_corr_ofdm_mrc =
-			max((u32)ranges->auto_corr_min_ofdm_mrc, val);
+		val = data->स्वतः_corr_ofdm_mrc - AUTO_CORR_STEP_OFDM;
+		data->स्वतः_corr_ofdm_mrc =
+			max((u32)ranges->स्वतः_corr_min_ofdm_mrc, val);
 
-		val = data->auto_corr_ofdm_x1 - AUTO_CORR_STEP_OFDM;
-		data->auto_corr_ofdm_x1 =
-			max((u32)ranges->auto_corr_min_ofdm_x1, val);
+		val = data->स्वतः_corr_ofdm_x1 - AUTO_CORR_STEP_OFDM;
+		data->स्वतः_corr_ofdm_x1 =
+			max((u32)ranges->स्वतः_corr_min_ofdm_x1, val);
 
-		val = data->auto_corr_ofdm_mrc_x1 - AUTO_CORR_STEP_OFDM;
-		data->auto_corr_ofdm_mrc_x1 =
-			max((u32)ranges->auto_corr_min_ofdm_mrc_x1, val);
-	} else {
+		val = data->स्वतः_corr_ofdm_mrc_x1 - AUTO_CORR_STEP_OFDM;
+		data->स्वतः_corr_ofdm_mrc_x1 =
+			max((u32)ranges->स्वतः_corr_min_ofdm_mrc_x1, val);
+	पूर्ण अन्यथा अणु
 		IWL_DEBUG_CALIB(priv, "min FA %u < norm FA %u < max FA %u OK\n",
 			 min_false_alarms, false_alarms, max_false_alarms);
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static void iwl_prepare_legacy_sensitivity_tbl(struct iwl_priv *priv,
-				struct iwl_sensitivity_data *data,
+अटल व्योम iwl_prepare_legacy_sensitivity_tbl(काष्ठा iwl_priv *priv,
+				काष्ठा iwl_sensitivity_data *data,
 				__le16 *tbl)
-{
+अणु
 	tbl[HD_AUTO_CORR32_X4_TH_ADD_MIN_INDEX] =
-				cpu_to_le16((u16)data->auto_corr_ofdm);
+				cpu_to_le16((u16)data->स्वतः_corr_ofdm);
 	tbl[HD_AUTO_CORR32_X4_TH_ADD_MIN_MRC_INDEX] =
-				cpu_to_le16((u16)data->auto_corr_ofdm_mrc);
+				cpu_to_le16((u16)data->स्वतः_corr_ofdm_mrc);
 	tbl[HD_AUTO_CORR32_X1_TH_ADD_MIN_INDEX] =
-				cpu_to_le16((u16)data->auto_corr_ofdm_x1);
+				cpu_to_le16((u16)data->स्वतः_corr_ofdm_x1);
 	tbl[HD_AUTO_CORR32_X1_TH_ADD_MIN_MRC_INDEX] =
-				cpu_to_le16((u16)data->auto_corr_ofdm_mrc_x1);
+				cpu_to_le16((u16)data->स्वतः_corr_ofdm_mrc_x1);
 
 	tbl[HD_AUTO_CORR40_X4_TH_ADD_MIN_INDEX] =
-				cpu_to_le16((u16)data->auto_corr_cck);
+				cpu_to_le16((u16)data->स्वतः_corr_cck);
 	tbl[HD_AUTO_CORR40_X4_TH_ADD_MIN_MRC_INDEX] =
-				cpu_to_le16((u16)data->auto_corr_cck_mrc);
+				cpu_to_le16((u16)data->स्वतः_corr_cck_mrc);
 
 	tbl[HD_MIN_ENERGY_CCK_DET_INDEX] =
 				cpu_to_le16((u16)data->nrg_th_cck);
@@ -400,69 +401,69 @@ static void iwl_prepare_legacy_sensitivity_tbl(struct iwl_priv *priv,
 				cpu_to_le16(data->nrg_th_cca);
 
 	IWL_DEBUG_CALIB(priv, "ofdm: ac %u mrc %u x1 %u mrc_x1 %u thresh %u\n",
-			data->auto_corr_ofdm, data->auto_corr_ofdm_mrc,
-			data->auto_corr_ofdm_x1, data->auto_corr_ofdm_mrc_x1,
+			data->स्वतः_corr_ofdm, data->स्वतः_corr_ofdm_mrc,
+			data->स्वतः_corr_ofdm_x1, data->स्वतः_corr_ofdm_mrc_x1,
 			data->nrg_th_ofdm);
 
 	IWL_DEBUG_CALIB(priv, "cck: ac %u mrc %u thresh %u\n",
-			data->auto_corr_cck, data->auto_corr_cck_mrc,
+			data->स्वतः_corr_cck, data->स्वतः_corr_cck_mrc,
 			data->nrg_th_cck);
-}
+पूर्ण
 
-/* Prepare a SENSITIVITY_CMD, send to uCode if values have changed */
-static int iwl_sensitivity_write(struct iwl_priv *priv)
-{
-	struct iwl_sensitivity_cmd cmd;
-	struct iwl_sensitivity_data *data = NULL;
-	struct iwl_host_cmd cmd_out = {
+/* Prepare a SENSITIVITY_CMD, send to uCode अगर values have changed */
+अटल पूर्णांक iwl_sensitivity_ग_लिखो(काष्ठा iwl_priv *priv)
+अणु
+	काष्ठा iwl_sensitivity_cmd cmd;
+	काष्ठा iwl_sensitivity_data *data = शून्य;
+	काष्ठा iwl_host_cmd cmd_out = अणु
 		.id = SENSITIVITY_CMD,
-		.len = { sizeof(struct iwl_sensitivity_cmd), },
+		.len = अणु माप(काष्ठा iwl_sensitivity_cmd), पूर्ण,
 		.flags = CMD_ASYNC,
-		.data = { &cmd, },
-	};
+		.data = अणु &cmd, पूर्ण,
+	पूर्ण;
 
 	data = &(priv->sensitivity_data);
 
-	memset(&cmd, 0, sizeof(cmd));
+	स_रखो(&cmd, 0, माप(cmd));
 
 	iwl_prepare_legacy_sensitivity_tbl(priv, data, &cmd.table[0]);
 
 	/* Update uCode's "work" table, and copy it to DSP */
 	cmd.control = SENSITIVITY_CMD_CONTROL_WORK_TABLE;
 
-	/* Don't send command to uCode if nothing has changed */
-	if (!memcmp(&cmd.table[0], &(priv->sensitivity_tbl[0]),
-		    sizeof(u16)*HD_TABLE_SIZE)) {
+	/* Don't send command to uCode अगर nothing has changed */
+	अगर (!स_भेद(&cmd.table[0], &(priv->sensitivity_tbl[0]),
+		    माप(u16)*HD_TABLE_SIZE)) अणु
 		IWL_DEBUG_CALIB(priv, "No change in SENSITIVITY_CMD\n");
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	/* Copy table for comparison next time */
-	memcpy(&(priv->sensitivity_tbl[0]), &(cmd.table[0]),
-	       sizeof(u16)*HD_TABLE_SIZE);
+	/* Copy table क्रम comparison next समय */
+	स_नकल(&(priv->sensitivity_tbl[0]), &(cmd.table[0]),
+	       माप(u16)*HD_TABLE_SIZE);
 
-	return iwl_dvm_send_cmd(priv, &cmd_out);
-}
+	वापस iwl_dvm_send_cmd(priv, &cmd_out);
+पूर्ण
 
-/* Prepare a SENSITIVITY_CMD, send to uCode if values have changed */
-static int iwl_enhance_sensitivity_write(struct iwl_priv *priv)
-{
-	struct iwl_enhance_sensitivity_cmd cmd;
-	struct iwl_sensitivity_data *data = NULL;
-	struct iwl_host_cmd cmd_out = {
+/* Prepare a SENSITIVITY_CMD, send to uCode अगर values have changed */
+अटल पूर्णांक iwl_enhance_sensitivity_ग_लिखो(काष्ठा iwl_priv *priv)
+अणु
+	काष्ठा iwl_enhance_sensitivity_cmd cmd;
+	काष्ठा iwl_sensitivity_data *data = शून्य;
+	काष्ठा iwl_host_cmd cmd_out = अणु
 		.id = SENSITIVITY_CMD,
-		.len = { sizeof(struct iwl_enhance_sensitivity_cmd), },
+		.len = अणु माप(काष्ठा iwl_enhance_sensitivity_cmd), पूर्ण,
 		.flags = CMD_ASYNC,
-		.data = { &cmd, },
-	};
+		.data = अणु &cmd, पूर्ण,
+	पूर्ण;
 
 	data = &(priv->sensitivity_data);
 
-	memset(&cmd, 0, sizeof(cmd));
+	स_रखो(&cmd, 0, माप(cmd));
 
 	iwl_prepare_legacy_sensitivity_tbl(priv, data, &cmd.enhance_table[0]);
 
-	if (priv->lib->hd_v2) {
+	अगर (priv->lib->hd_v2) अणु
 		cmd.enhance_table[HD_INA_NON_SQUARE_DET_OFDM_INDEX] =
 			HD_INA_NON_SQUARE_DET_OFDM_DATA_V2;
 		cmd.enhance_table[HD_INA_NON_SQUARE_DET_CCK_INDEX] =
@@ -485,7 +486,7 @@ static int iwl_enhance_sensitivity_write(struct iwl_priv *priv)
 			HD_CCK_NON_SQUARE_DET_SLOPE_DATA_V2;
 		cmd.enhance_table[HD_CCK_NON_SQUARE_DET_INTERCEPT_INDEX] =
 			HD_CCK_NON_SQUARE_DET_INTERCEPT_DATA_V2;
-	} else {
+	पूर्ण अन्यथा अणु
 		cmd.enhance_table[HD_INA_NON_SQUARE_DET_OFDM_INDEX] =
 			HD_INA_NON_SQUARE_DET_OFDM_DATA_V1;
 		cmd.enhance_table[HD_INA_NON_SQUARE_DET_CCK_INDEX] =
@@ -508,50 +509,50 @@ static int iwl_enhance_sensitivity_write(struct iwl_priv *priv)
 			HD_CCK_NON_SQUARE_DET_SLOPE_DATA_V1;
 		cmd.enhance_table[HD_CCK_NON_SQUARE_DET_INTERCEPT_INDEX] =
 			HD_CCK_NON_SQUARE_DET_INTERCEPT_DATA_V1;
-	}
+	पूर्ण
 
 	/* Update uCode's "work" table, and copy it to DSP */
 	cmd.control = SENSITIVITY_CMD_CONTROL_WORK_TABLE;
 
-	/* Don't send command to uCode if nothing has changed */
-	if (!memcmp(&cmd.enhance_table[0], &(priv->sensitivity_tbl[0]),
-		    sizeof(u16)*HD_TABLE_SIZE) &&
-	    !memcmp(&cmd.enhance_table[HD_INA_NON_SQUARE_DET_OFDM_INDEX],
+	/* Don't send command to uCode अगर nothing has changed */
+	अगर (!स_भेद(&cmd.enhance_table[0], &(priv->sensitivity_tbl[0]),
+		    माप(u16)*HD_TABLE_SIZE) &&
+	    !स_भेद(&cmd.enhance_table[HD_INA_NON_SQUARE_DET_OFDM_INDEX],
 		    &(priv->enhance_sensitivity_tbl[0]),
-		    sizeof(u16)*ENHANCE_HD_TABLE_ENTRIES)) {
+		    माप(u16)*ENHANCE_HD_TABLE_ENTRIES)) अणु
 		IWL_DEBUG_CALIB(priv, "No change in SENSITIVITY_CMD\n");
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	/* Copy table for comparison next time */
-	memcpy(&(priv->sensitivity_tbl[0]), &(cmd.enhance_table[0]),
-	       sizeof(u16)*HD_TABLE_SIZE);
-	memcpy(&(priv->enhance_sensitivity_tbl[0]),
+	/* Copy table क्रम comparison next समय */
+	स_नकल(&(priv->sensitivity_tbl[0]), &(cmd.enhance_table[0]),
+	       माप(u16)*HD_TABLE_SIZE);
+	स_नकल(&(priv->enhance_sensitivity_tbl[0]),
 	       &(cmd.enhance_table[HD_INA_NON_SQUARE_DET_OFDM_INDEX]),
-	       sizeof(u16)*ENHANCE_HD_TABLE_ENTRIES);
+	       माप(u16)*ENHANCE_HD_TABLE_ENTRIES);
 
-	return iwl_dvm_send_cmd(priv, &cmd_out);
-}
+	वापस iwl_dvm_send_cmd(priv, &cmd_out);
+पूर्ण
 
-void iwl_init_sensitivity(struct iwl_priv *priv)
-{
-	int ret = 0;
-	int i;
-	struct iwl_sensitivity_data *data = NULL;
-	const struct iwl_sensitivity_ranges *ranges = priv->hw_params.sens;
+व्योम iwl_init_sensitivity(काष्ठा iwl_priv *priv)
+अणु
+	पूर्णांक ret = 0;
+	पूर्णांक i;
+	काष्ठा iwl_sensitivity_data *data = शून्य;
+	स्थिर काष्ठा iwl_sensitivity_ranges *ranges = priv->hw_params.sens;
 
-	if (priv->calib_disabled & IWL_SENSITIVITY_CALIB_DISABLED)
-		return;
+	अगर (priv->calib_disabled & IWL_SENSITIVITY_CALIB_DISABLED)
+		वापस;
 
 	IWL_DEBUG_CALIB(priv, "Start iwl_init_sensitivity\n");
 
 	/* Clear driver's sensitivity algo data */
 	data = &(priv->sensitivity_data);
 
-	if (ranges == NULL)
-		return;
+	अगर (ranges == शून्य)
+		वापस;
 
-	memset(data, 0, sizeof(struct iwl_sensitivity_data));
+	स_रखो(data, 0, माप(काष्ठा iwl_sensitivity_data));
 
 	data->num_in_cck_no_fa = 0;
 	data->nrg_curr_state = IWL_FA_TOO_MANY;
@@ -560,18 +561,18 @@ void iwl_init_sensitivity(struct iwl_priv *priv)
 	data->nrg_silence_idx = 0;
 	data->nrg_energy_idx = 0;
 
-	for (i = 0; i < 10; i++)
+	क्रम (i = 0; i < 10; i++)
 		data->nrg_value[i] = 0;
 
-	for (i = 0; i < NRG_NUM_PREV_STAT_L; i++)
+	क्रम (i = 0; i < NRG_NUM_PREV_STAT_L; i++)
 		data->nrg_silence_rssi[i] = 0;
 
-	data->auto_corr_ofdm =  ranges->auto_corr_min_ofdm;
-	data->auto_corr_ofdm_mrc = ranges->auto_corr_min_ofdm_mrc;
-	data->auto_corr_ofdm_x1  = ranges->auto_corr_min_ofdm_x1;
-	data->auto_corr_ofdm_mrc_x1 = ranges->auto_corr_min_ofdm_mrc_x1;
-	data->auto_corr_cck = AUTO_CORR_CCK_MIN_VAL_DEF;
-	data->auto_corr_cck_mrc = ranges->auto_corr_min_cck_mrc;
+	data->स्वतः_corr_ofdm =  ranges->स्वतः_corr_min_ofdm;
+	data->स्वतः_corr_ofdm_mrc = ranges->स्वतः_corr_min_ofdm_mrc;
+	data->स्वतः_corr_ofdm_x1  = ranges->स्वतः_corr_min_ofdm_x1;
+	data->स्वतः_corr_ofdm_mrc_x1 = ranges->स्वतः_corr_min_ofdm_mrc_x1;
+	data->स्वतः_corr_cck = AUTO_CORR_CCK_MIN_VAL_DEF;
+	data->स्वतः_corr_cck_mrc = ranges->स्वतः_corr_min_cck_mrc;
 	data->nrg_th_cck = ranges->nrg_th_cck;
 	data->nrg_th_ofdm = ranges->nrg_th_ofdm;
 	data->barker_corr_th_min = ranges->barker_corr_th_min;
@@ -583,49 +584,49 @@ void iwl_init_sensitivity(struct iwl_priv *priv)
 	data->last_bad_plcp_cnt_cck = 0;
 	data->last_fa_cnt_cck = 0;
 
-	if (priv->fw->enhance_sensitivity_table)
-		ret |= iwl_enhance_sensitivity_write(priv);
-	else
-		ret |= iwl_sensitivity_write(priv);
+	अगर (priv->fw->enhance_sensitivity_table)
+		ret |= iwl_enhance_sensitivity_ग_लिखो(priv);
+	अन्यथा
+		ret |= iwl_sensitivity_ग_लिखो(priv);
 	IWL_DEBUG_CALIB(priv, "<<return 0x%X\n", ret);
-}
+पूर्ण
 
-void iwl_sensitivity_calibration(struct iwl_priv *priv)
-{
-	u32 rx_enable_time;
+व्योम iwl_sensitivity_calibration(काष्ठा iwl_priv *priv)
+अणु
+	u32 rx_enable_समय;
 	u32 fa_cck;
 	u32 fa_ofdm;
 	u32 bad_plcp_cck;
 	u32 bad_plcp_ofdm;
 	u32 norm_fa_ofdm;
 	u32 norm_fa_cck;
-	struct iwl_sensitivity_data *data = NULL;
-	struct statistics_rx_non_phy *rx_info;
-	struct statistics_rx_phy *ofdm, *cck;
-	struct statistics_general_data statis;
+	काष्ठा iwl_sensitivity_data *data = शून्य;
+	काष्ठा statistics_rx_non_phy *rx_info;
+	काष्ठा statistics_rx_phy *ofdm, *cck;
+	काष्ठा statistics_general_data statis;
 
-	if (priv->calib_disabled & IWL_SENSITIVITY_CALIB_DISABLED)
-		return;
+	अगर (priv->calib_disabled & IWL_SENSITIVITY_CALIB_DISABLED)
+		वापस;
 
 	data = &(priv->sensitivity_data);
 
-	if (!iwl_is_any_associated(priv)) {
+	अगर (!iwl_is_any_associated(priv)) अणु
 		IWL_DEBUG_CALIB(priv, "<< - not associated\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	spin_lock_bh(&priv->statistics.lock);
 	rx_info = &priv->statistics.rx_non_phy;
 	ofdm = &priv->statistics.rx_ofdm;
 	cck = &priv->statistics.rx_cck;
-	if (rx_info->interference_data_flag != INTERFERENCE_DATA_AVAILABLE) {
+	अगर (rx_info->पूर्णांकerference_data_flag != INTERFERENCE_DATA_AVAILABLE) अणु
 		IWL_DEBUG_CALIB(priv, "<< invalid data.\n");
 		spin_unlock_bh(&priv->statistics.lock);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/* Extract Statistics: */
-	rx_enable_time = le32_to_cpu(rx_info->channel_load);
+	rx_enable_समय = le32_to_cpu(rx_info->channel_load);
 	fa_cck = le32_to_cpu(cck->false_alarm_cnt);
 	fa_ofdm = le32_to_cpu(ofdm->false_alarm_cnt);
 	bad_plcp_cck = le32_to_cpu(cck->plcp_err);
@@ -646,75 +647,75 @@ void iwl_sensitivity_calibration(struct iwl_priv *priv)
 
 	spin_unlock_bh(&priv->statistics.lock);
 
-	IWL_DEBUG_CALIB(priv, "rx_enable_time = %u usecs\n", rx_enable_time);
+	IWL_DEBUG_CALIB(priv, "rx_enable_time = %u usecs\n", rx_enable_समय);
 
-	if (!rx_enable_time) {
+	अगर (!rx_enable_समय) अणु
 		IWL_DEBUG_CALIB(priv, "<< RX Enable Time == 0!\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	/* These statistics increase monotonically, and do not reset
-	 *   at each beacon.  Calculate difference from last value, or just
-	 *   use the new statistics value if it has reset or wrapped around. */
-	if (data->last_bad_plcp_cnt_cck > bad_plcp_cck)
+	/* These statistics increase monotonically, and करो not reset
+	 *   at each beacon.  Calculate dअगरference from last value, or just
+	 *   use the new statistics value अगर it has reset or wrapped around. */
+	अगर (data->last_bad_plcp_cnt_cck > bad_plcp_cck)
 		data->last_bad_plcp_cnt_cck = bad_plcp_cck;
-	else {
+	अन्यथा अणु
 		bad_plcp_cck -= data->last_bad_plcp_cnt_cck;
 		data->last_bad_plcp_cnt_cck += bad_plcp_cck;
-	}
+	पूर्ण
 
-	if (data->last_bad_plcp_cnt_ofdm > bad_plcp_ofdm)
+	अगर (data->last_bad_plcp_cnt_ofdm > bad_plcp_ofdm)
 		data->last_bad_plcp_cnt_ofdm = bad_plcp_ofdm;
-	else {
+	अन्यथा अणु
 		bad_plcp_ofdm -= data->last_bad_plcp_cnt_ofdm;
 		data->last_bad_plcp_cnt_ofdm += bad_plcp_ofdm;
-	}
+	पूर्ण
 
-	if (data->last_fa_cnt_ofdm > fa_ofdm)
+	अगर (data->last_fa_cnt_ofdm > fa_ofdm)
 		data->last_fa_cnt_ofdm = fa_ofdm;
-	else {
+	अन्यथा अणु
 		fa_ofdm -= data->last_fa_cnt_ofdm;
 		data->last_fa_cnt_ofdm += fa_ofdm;
-	}
+	पूर्ण
 
-	if (data->last_fa_cnt_cck > fa_cck)
+	अगर (data->last_fa_cnt_cck > fa_cck)
 		data->last_fa_cnt_cck = fa_cck;
-	else {
+	अन्यथा अणु
 		fa_cck -= data->last_fa_cnt_cck;
 		data->last_fa_cnt_cck += fa_cck;
-	}
+	पूर्ण
 
-	/* Total aborted signal locks */
+	/* Total पातed संकेत locks */
 	norm_fa_ofdm = fa_ofdm + bad_plcp_ofdm;
 	norm_fa_cck = fa_cck + bad_plcp_cck;
 
 	IWL_DEBUG_CALIB(priv, "cck: fa %u badp %u  ofdm: fa %u badp %u\n", fa_cck,
 			bad_plcp_cck, fa_ofdm, bad_plcp_ofdm);
 
-	iwl_sens_auto_corr_ofdm(priv, norm_fa_ofdm, rx_enable_time);
-	iwl_sens_energy_cck(priv, norm_fa_cck, rx_enable_time, &statis);
-	if (priv->fw->enhance_sensitivity_table)
-		iwl_enhance_sensitivity_write(priv);
-	else
-		iwl_sensitivity_write(priv);
-}
+	iwl_sens_स्वतः_corr_ofdm(priv, norm_fa_ofdm, rx_enable_समय);
+	iwl_sens_energy_cck(priv, norm_fa_cck, rx_enable_समय, &statis);
+	अगर (priv->fw->enhance_sensitivity_table)
+		iwl_enhance_sensitivity_ग_लिखो(priv);
+	अन्यथा
+		iwl_sensitivity_ग_लिखो(priv);
+पूर्ण
 
-static inline u8 find_first_chain(u8 mask)
-{
-	if (mask & ANT_A)
-		return CHAIN_A;
-	if (mask & ANT_B)
-		return CHAIN_B;
-	return CHAIN_C;
-}
+अटल अंतरभूत u8 find_first_chain(u8 mask)
+अणु
+	अगर (mask & ANT_A)
+		वापस CHAIN_A;
+	अगर (mask & ANT_B)
+		वापस CHAIN_B;
+	वापस CHAIN_C;
+पूर्ण
 
 /*
  * Run disconnected antenna algorithm to find out which antennas are
  * disconnected.
  */
-static void iwl_find_disconn_antenna(struct iwl_priv *priv, u32* average_sig,
-				     struct iwl_chain_noise_data *data)
-{
+अटल व्योम iwl_find_disconn_antenna(काष्ठा iwl_priv *priv, u32* average_sig,
+				     काष्ठा iwl_chain_noise_data *data)
+अणु
 	u32 active_chains = 0;
 	u32 max_average_sig;
 	u16 max_average_sig_antenna_i;
@@ -722,51 +723,51 @@ static void iwl_find_disconn_antenna(struct iwl_priv *priv, u32* average_sig,
 	u8 first_chain;
 	u16 i = 0;
 
-	average_sig[0] = data->chain_signal_a / IWL_CAL_NUM_BEACONS;
-	average_sig[1] = data->chain_signal_b / IWL_CAL_NUM_BEACONS;
-	average_sig[2] = data->chain_signal_c / IWL_CAL_NUM_BEACONS;
+	average_sig[0] = data->chain_संकेत_a / IWL_CAL_NUM_BEACONS;
+	average_sig[1] = data->chain_संकेत_b / IWL_CAL_NUM_BEACONS;
+	average_sig[2] = data->chain_संकेत_c / IWL_CAL_NUM_BEACONS;
 
-	if (average_sig[0] >= average_sig[1]) {
+	अगर (average_sig[0] >= average_sig[1]) अणु
 		max_average_sig = average_sig[0];
 		max_average_sig_antenna_i = 0;
 		active_chains = (1 << max_average_sig_antenna_i);
-	} else {
+	पूर्ण अन्यथा अणु
 		max_average_sig = average_sig[1];
 		max_average_sig_antenna_i = 1;
 		active_chains = (1 << max_average_sig_antenna_i);
-	}
+	पूर्ण
 
-	if (average_sig[2] >= max_average_sig) {
+	अगर (average_sig[2] >= max_average_sig) अणु
 		max_average_sig = average_sig[2];
 		max_average_sig_antenna_i = 2;
 		active_chains = (1 << max_average_sig_antenna_i);
-	}
+	पूर्ण
 
 	IWL_DEBUG_CALIB(priv, "average_sig: a %d b %d c %d\n",
 		     average_sig[0], average_sig[1], average_sig[2]);
 	IWL_DEBUG_CALIB(priv, "max_average_sig = %d, antenna %d\n",
 		     max_average_sig, max_average_sig_antenna_i);
 
-	/* Compare signal strengths for all 3 receivers. */
-	for (i = 0; i < NUM_RX_CHAINS; i++) {
-		if (i != max_average_sig_antenna_i) {
+	/* Compare संकेत strengths क्रम all 3 receivers. */
+	क्रम (i = 0; i < NUM_RX_CHAINS; i++) अणु
+		अगर (i != max_average_sig_antenna_i) अणु
 			s32 rssi_delta = (max_average_sig - average_sig[i]);
 
-			/* If signal is very weak, compared with
+			/* If संकेत is very weak, compared with
 			 * strongest, mark it as disconnected. */
-			if (rssi_delta > MAXIMUM_ALLOWED_PATHLOSS)
+			अगर (rssi_delta > MAXIMUM_ALLOWED_PATHLOSS)
 				data->disconn_array[i] = 1;
-			else
+			अन्यथा
 				active_chains |= (1 << i);
 			IWL_DEBUG_CALIB(priv, "i = %d  rssiDelta = %d  "
 			     "disconn_array[i] = %d\n",
 			     i, rssi_delta, data->disconn_array[i]);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	/*
-	 * The above algorithm sometimes fails when the ucode
-	 * reports 0 for all chains. It's not clear why that
+	 * The above algorithm someबार fails when the ucode
+	 * reports 0 क्रम all chains. It's not clear why that
 	 * happens to start with, but it is then causing trouble
 	 * because this can make us enable more chains than the
 	 * hardware really has.
@@ -777,19 +778,19 @@ static void iwl_find_disconn_antenna(struct iwl_priv *priv, u32* average_sig,
 	active_chains &= priv->nvm_data->valid_rx_ant;
 
 	num_tx_chains = 0;
-	for (i = 0; i < NUM_RX_CHAINS; i++) {
+	क्रम (i = 0; i < NUM_RX_CHAINS; i++) अणु
 		/* loops on all the bits of
 		 * priv->hw_setting.valid_tx_ant */
 		u8 ant_msk = (1 << i);
-		if (!(priv->nvm_data->valid_tx_ant & ant_msk))
-			continue;
+		अगर (!(priv->nvm_data->valid_tx_ant & ant_msk))
+			जारी;
 
 		num_tx_chains++;
-		if (data->disconn_array[i] == 0)
+		अगर (data->disconn_array[i] == 0)
 			/* there is a Tx antenna connected */
-			break;
-		if (num_tx_chains == priv->hw_params.tx_chains_num &&
-		    data->disconn_array[i]) {
+			अवरोध;
+		अगर (num_tx_chains == priv->hw_params.tx_chains_num &&
+		    data->disconn_array[i]) अणु
 			/*
 			 * If all chains are disconnected
 			 * connect the first valid tx chain
@@ -801,11 +802,11 @@ static void iwl_find_disconn_antenna(struct iwl_priv *priv, u32* average_sig,
 			IWL_DEBUG_CALIB(priv,
 					"All Tx chains are disconnected W/A - declare %d as connected\n",
 					first_chain);
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	if (active_chains != priv->nvm_data->valid_rx_ant &&
+	अगर (active_chains != priv->nvm_data->valid_rx_ant &&
 	    active_chains != priv->chain_noise_data.active_chains)
 		IWL_DEBUG_CALIB(priv,
 				"Detected that not all antennas are connected! "
@@ -813,78 +814,78 @@ static void iwl_find_disconn_antenna(struct iwl_priv *priv, u32* average_sig,
 				active_chains,
 				priv->nvm_data->valid_rx_ant);
 
-	/* Save for use within RXON, TX, SCAN commands, etc. */
+	/* Save क्रम use within RXON, TX, SCAN commands, etc. */
 	data->active_chains = active_chains;
 	IWL_DEBUG_CALIB(priv, "active_chains (bitwise) = 0x%x\n",
 			active_chains);
-}
+पूर्ण
 
-static void iwlagn_gain_computation(struct iwl_priv *priv,
+अटल व्योम iwlagn_gain_computation(काष्ठा iwl_priv *priv,
 				    u32 average_noise[NUM_RX_CHAINS],
-				    u8 default_chain)
-{
-	int i;
+				    u8 शेष_chain)
+अणु
+	पूर्णांक i;
 	s32 delta_g;
-	struct iwl_chain_noise_data *data = &priv->chain_noise_data;
+	काष्ठा iwl_chain_noise_data *data = &priv->chain_noise_data;
 
 	/*
-	 * Find Gain Code for the chains based on "default chain"
+	 * Find Gain Code क्रम the chains based on "default chain"
 	 */
-	for (i = default_chain + 1; i < NUM_RX_CHAINS; i++) {
-		if ((data->disconn_array[i])) {
+	क्रम (i = शेष_chain + 1; i < NUM_RX_CHAINS; i++) अणु
+		अगर ((data->disconn_array[i])) अणु
 			data->delta_gain_code[i] = 0;
-			continue;
-		}
+			जारी;
+		पूर्ण
 
 		delta_g = (priv->lib->chain_noise_scale *
-			((s32)average_noise[default_chain] -
+			((s32)average_noise[शेष_chain] -
 			(s32)average_noise[i])) / 1500;
 
 		/* bound gain by 2 bits value max, 3rd bit is sign */
 		data->delta_gain_code[i] =
-			min(abs(delta_g), CHAIN_NOISE_MAX_DELTA_GAIN_CODE);
+			min(असल(delta_g), CHAIN_NOISE_MAX_DELTA_GAIN_CODE);
 
-		if (delta_g < 0)
+		अगर (delta_g < 0)
 			/*
 			 * set negative sign ...
-			 * note to Intel developers:  This is uCode API format,
-			 *   not the format of any internal device registers.
-			 *   Do not change this format for e.g. 6050 or similar
-			 *   devices.  Change format only if more resolution
+			 * note to Intel developers:  This is uCode API क्रमmat,
+			 *   not the क्रमmat of any पूर्णांकernal device रेजिस्टरs.
+			 *   Do not change this क्रमmat क्रम e.g. 6050 or similar
+			 *   devices.  Change क्रमmat only अगर more resolution
 			 *   (i.e. more than 2 bits magnitude) is needed.
 			 */
 			data->delta_gain_code[i] |= (1 << 2);
-	}
+	पूर्ण
 
 	IWL_DEBUG_CALIB(priv, "Delta gains: ANT_B = %d  ANT_C = %d\n",
 			data->delta_gain_code[1], data->delta_gain_code[2]);
 
-	if (!data->radio_write) {
-		struct iwl_calib_chain_noise_gain_cmd cmd;
+	अगर (!data->radio_ग_लिखो) अणु
+		काष्ठा iwl_calib_chain_noise_gain_cmd cmd;
 
-		memset(&cmd, 0, sizeof(cmd));
+		स_रखो(&cmd, 0, माप(cmd));
 
 		iwl_set_calib_hdr(&cmd.hdr,
 			priv->phy_calib_chain_noise_gain_cmd);
 		cmd.delta_gain_1 = data->delta_gain_code[1];
 		cmd.delta_gain_2 = data->delta_gain_code[2];
 		iwl_dvm_send_cmd_pdu(priv, REPLY_PHY_CALIBRATION_CMD,
-			CMD_ASYNC, sizeof(cmd), &cmd);
+			CMD_ASYNC, माप(cmd), &cmd);
 
-		data->radio_write = 1;
+		data->radio_ग_लिखो = 1;
 		data->state = IWL_CHAIN_NOISE_CALIBRATED;
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
- * Accumulate 16 beacons of signal and noise statistics for each of
+ * Accumulate 16 beacons of संकेत and noise statistics क्रम each of
  *   3 receivers/antennas/rx-chains, then figure out:
  * 1)  Which antennas are connected.
- * 2)  Differential rx gain settings to balance the 3 receivers.
+ * 2)  Dअगरferential rx gain settings to balance the 3 receivers.
  */
-void iwl_chain_noise_calibration(struct iwl_priv *priv)
-{
-	struct iwl_chain_noise_data *data = NULL;
+व्योम iwl_chain_noise_calibration(काष्ठा iwl_priv *priv)
+अणु
+	काष्ठा iwl_chain_noise_data *data = शून्य;
 
 	u32 chain_noise_a;
 	u32 chain_noise_b;
@@ -892,8 +893,8 @@ void iwl_chain_noise_calibration(struct iwl_priv *priv)
 	u32 chain_sig_a;
 	u32 chain_sig_b;
 	u32 chain_sig_c;
-	u32 average_sig[NUM_RX_CHAINS] = {INITIALIZATION_VALUE};
-	u32 average_noise[NUM_RX_CHAINS] = {INITIALIZATION_VALUE};
+	u32 average_sig[NUM_RX_CHAINS] = अणुINITIALIZATION_VALUEपूर्ण;
+	u32 average_noise[NUM_RX_CHAINS] = अणुINITIALIZATION_VALUEपूर्ण;
 	u32 min_average_noise = MIN_AVERAGE_NOISE_MAX_VALUE;
 	u16 min_average_noise_antenna_i = INITIALIZATION_VALUE;
 	u16 i = 0;
@@ -901,39 +902,39 @@ void iwl_chain_noise_calibration(struct iwl_priv *priv)
 	u16 stat_chnum = INITIALIZATION_VALUE;
 	u8 rxon_band24;
 	u8 stat_band24;
-	struct statistics_rx_non_phy *rx_info;
+	काष्ठा statistics_rx_non_phy *rx_info;
 
 	/*
 	 * MULTI-FIXME:
-	 * When we support multiple interfaces on different channels,
-	 * this must be modified/fixed.
+	 * When we support multiple पूर्णांकerfaces on dअगरferent channels,
+	 * this must be modअगरied/fixed.
 	 */
-	struct iwl_rxon_context *ctx = &priv->contexts[IWL_RXON_CTX_BSS];
+	काष्ठा iwl_rxon_context *ctx = &priv->contexts[IWL_RXON_CTX_BSS];
 
-	if (priv->calib_disabled & IWL_CHAIN_NOISE_CALIB_DISABLED)
-		return;
+	अगर (priv->calib_disabled & IWL_CHAIN_NOISE_CALIB_DISABLED)
+		वापस;
 
 	data = &(priv->chain_noise_data);
 
 	/*
 	 * Accumulate just the first "chain_noise_num_beacons" after
-	 * the first association, then we're done forever.
+	 * the first association, then we're करोne क्रमever.
 	 */
-	if (data->state != IWL_CHAIN_NOISE_ACCUMULATE) {
-		if (data->state == IWL_CHAIN_NOISE_ALIVE)
+	अगर (data->state != IWL_CHAIN_NOISE_ACCUMULATE) अणु
+		अगर (data->state == IWL_CHAIN_NOISE_ALIVE)
 			IWL_DEBUG_CALIB(priv, "Wait for noise calib reset\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	spin_lock_bh(&priv->statistics.lock);
 
 	rx_info = &priv->statistics.rx_non_phy;
 
-	if (rx_info->interference_data_flag != INTERFERENCE_DATA_AVAILABLE) {
+	अगर (rx_info->पूर्णांकerference_data_flag != INTERFERENCE_DATA_AVAILABLE) अणु
 		IWL_DEBUG_CALIB(priv, " << Interference data unavailable\n");
 		spin_unlock_bh(&priv->statistics.lock);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	rxon_band24 = !!(ctx->staging.flags & RXON_FLG_BAND_24G_MSK);
 	rxon_chnum = le16_to_cpu(ctx->staging.channel);
@@ -941,14 +942,14 @@ void iwl_chain_noise_calibration(struct iwl_priv *priv)
 		!!(priv->statistics.flag & STATISTICS_REPLY_FLG_BAND_24G_MSK);
 	stat_chnum = le32_to_cpu(priv->statistics.flag) >> 16;
 
-	/* Make sure we accumulate data for just the associated channel
-	 *   (even if scanning). */
-	if ((rxon_chnum != stat_chnum) || (rxon_band24 != stat_band24)) {
+	/* Make sure we accumulate data क्रम just the associated channel
+	 *   (even अगर scanning). */
+	अगर ((rxon_chnum != stat_chnum) || (rxon_band24 != stat_band24)) अणु
 		IWL_DEBUG_CALIB(priv, "Stats not from chan=%d, band24=%d\n",
 				rxon_chnum, rxon_band24);
 		spin_unlock_bh(&priv->statistics.lock);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/*
 	 *  Accumulate beacon statistics values across
@@ -973,9 +974,9 @@ void iwl_chain_noise_calibration(struct iwl_priv *priv)
 	data->chain_noise_b = (chain_noise_b + data->chain_noise_b);
 	data->chain_noise_c = (chain_noise_c + data->chain_noise_c);
 
-	data->chain_signal_a = (chain_sig_a + data->chain_signal_a);
-	data->chain_signal_b = (chain_sig_b + data->chain_signal_b);
-	data->chain_signal_c = (chain_sig_c + data->chain_signal_c);
+	data->chain_संकेत_a = (chain_sig_a + data->chain_संकेत_a);
+	data->chain_संकेत_b = (chain_sig_b + data->chain_संकेत_b);
+	data->chain_संकेत_c = (chain_sig_c + data->chain_संकेत_c);
 
 	IWL_DEBUG_CALIB(priv, "chan=%d, band24=%d, beacon=%d\n",
 			rxon_chnum, rxon_band24, data->beacon_count);
@@ -985,37 +986,37 @@ void iwl_chain_noise_calibration(struct iwl_priv *priv)
 			chain_noise_a, chain_noise_b, chain_noise_c);
 
 	/* If this is the "chain_noise_num_beacons", determine:
-	 * 1)  Disconnected antennas (using signal strengths)
-	 * 2)  Differential gain (using silence noise) to balance receivers */
-	if (data->beacon_count != IWL_CAL_NUM_BEACONS)
-		return;
+	 * 1)  Disconnected antennas (using संकेत strengths)
+	 * 2)  Dअगरferential gain (using silence noise) to balance receivers */
+	अगर (data->beacon_count != IWL_CAL_NUM_BEACONS)
+		वापस;
 
-	/* Analyze signal for disconnected antenna */
-	if (priv->lib->bt_params &&
-	    priv->lib->bt_params->advanced_bt_coexist) {
-		/* Disable disconnected antenna algorithm for advanced
+	/* Analyze संकेत क्रम disconnected antenna */
+	अगर (priv->lib->bt_params &&
+	    priv->lib->bt_params->advanced_bt_coexist) अणु
+		/* Disable disconnected antenna algorithm क्रम advanced
 		   bt coex, assuming valid antennas are connected */
 		data->active_chains = priv->nvm_data->valid_rx_ant;
-		for (i = 0; i < NUM_RX_CHAINS; i++)
-			if (!(data->active_chains & (1<<i)))
+		क्रम (i = 0; i < NUM_RX_CHAINS; i++)
+			अगर (!(data->active_chains & (1<<i)))
 				data->disconn_array[i] = 1;
-	} else
+	पूर्ण अन्यथा
 		iwl_find_disconn_antenna(priv, average_sig, data);
 
-	/* Analyze noise for rx balance */
+	/* Analyze noise क्रम rx balance */
 	average_noise[0] = data->chain_noise_a / IWL_CAL_NUM_BEACONS;
 	average_noise[1] = data->chain_noise_b / IWL_CAL_NUM_BEACONS;
 	average_noise[2] = data->chain_noise_c / IWL_CAL_NUM_BEACONS;
 
-	for (i = 0; i < NUM_RX_CHAINS; i++) {
-		if (!(data->disconn_array[i]) &&
-		   (average_noise[i] <= min_average_noise)) {
+	क्रम (i = 0; i < NUM_RX_CHAINS; i++) अणु
+		अगर (!(data->disconn_array[i]) &&
+		   (average_noise[i] <= min_average_noise)) अणु
 			/* This means that chain i is active and has
 			 * lower noise values so far: */
 			min_average_noise = average_noise[i];
 			min_average_noise_antenna_i = i;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	IWL_DEBUG_CALIB(priv, "average_noise: a %d b %d c %d\n",
 			average_noise[0], average_noise[1],
@@ -1028,27 +1029,27 @@ void iwl_chain_noise_calibration(struct iwl_priv *priv)
 		priv, average_noise,
 		find_first_chain(priv->nvm_data->valid_rx_ant));
 
-	/* Some power changes may have been made during the calibration.
+	/* Some घातer changes may have been made during the calibration.
 	 * Update and commit the RXON
 	 */
 	iwl_update_chain_flags(priv);
 
 	data->state = IWL_CHAIN_NOISE_DONE;
-	iwl_power_update_mode(priv, false);
-}
+	iwl_घातer_update_mode(priv, false);
+पूर्ण
 
-void iwl_reset_run_time_calib(struct iwl_priv *priv)
-{
-	int i;
-	memset(&(priv->sensitivity_data), 0,
-	       sizeof(struct iwl_sensitivity_data));
-	memset(&(priv->chain_noise_data), 0,
-	       sizeof(struct iwl_chain_noise_data));
-	for (i = 0; i < NUM_RX_CHAINS; i++)
+व्योम iwl_reset_run_समय_calib(काष्ठा iwl_priv *priv)
+अणु
+	पूर्णांक i;
+	स_रखो(&(priv->sensitivity_data), 0,
+	       माप(काष्ठा iwl_sensitivity_data));
+	स_रखो(&(priv->chain_noise_data), 0,
+	       माप(काष्ठा iwl_chain_noise_data));
+	क्रम (i = 0; i < NUM_RX_CHAINS; i++)
 		priv->chain_noise_data.delta_gain_code[i] =
 				CHAIN_NOISE_DELTA_GAIN_INIT_VAL;
 
-	/* Ask for statistics now, the uCode will send notification
+	/* Ask क्रम statistics now, the uCode will send notअगरication
 	 * periodically after association */
 	iwl_send_statistics_request(priv, CMD_ASYNC, true);
-}
+पूर्ण

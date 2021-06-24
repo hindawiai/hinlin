@@ -1,8 +1,9 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 
-#ifndef __ASMARM_ARCH_CNTVOFF_H
-#define __ASMARM_ARCH_CNTVOFF_H
+#अगर_अघोषित __ASMARM_ARCH_CNTVOFF_H
+#घोषणा __ASMARM_ARCH_CNTVOFF_H
 
-extern void secure_cntvoff_init(void);
+बाह्य व्योम secure_cntvoff_init(व्योम);
 
-#endif
+#पूर्ण_अगर

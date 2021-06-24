@@ -1,10 +1,11 @@
-#ifndef MISC_H
-#define MISC_H
+<शैली गुरु>
+#अगर_अघोषित MISC_H
+#घोषणा MISC_H
 
-#include <linux/compiler.h>
+#समावेश <linux/compiler.h>
 
-void error(char *x) __noreturn;
-extern unsigned long free_mem_ptr;
-extern unsigned long free_mem_end_ptr;
+व्योम error(अक्षर *x) __noवापस;
+बाह्य अचिन्हित दीर्घ मुक्त_mem_ptr;
+बाह्य अचिन्हित दीर्घ मुक्त_mem_end_ptr;
 
-#endif
+#पूर्ण_अगर

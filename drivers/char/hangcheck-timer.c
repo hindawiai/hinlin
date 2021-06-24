@@ -1,8 +1,9 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * hangcheck-timer.c
+ * hangcheck-समयr.c
  *
- * Driver for a little io fencing timer.
+ * Driver क्रम a little io fencing समयr.
  *
  * Copyright (C) 2002, 2003 Oracle.  All rights reserved.
  *
@@ -10,52 +11,52 @@
  */
 
 /*
- * The hangcheck-timer driver uses the TSC to catch delays that
- * jiffies does not notice.  A timer is set.  When the timer fires, it
- * checks whether it was delayed and if that delay exceeds a given
- * margin of error.  The hangcheck_tick module parameter takes the timer
+ * The hangcheck-समयr driver uses the TSC to catch delays that
+ * jअगरfies करोes not notice.  A समयr is set.  When the समयr fires, it
+ * checks whether it was delayed and अगर that delay exceeds a given
+ * margin of error.  The hangcheck_tick module parameter takes the समयr
  * duration in seconds.  The hangcheck_margin parameter defines the
- * margin of error, in seconds.  The defaults are 60 seconds for the
- * timer and 180 seconds for the margin of error.  IOW, a timer is set
- * for 60 seconds.  When the timer fires, the callback checks the
- * actual duration that the timer waited.  If the duration exceeds the
- * allotted time and margin (here 60 + 180, or 240 seconds), the machine
+ * margin of error, in seconds.  The शेषs are 60 seconds क्रम the
+ * समयr and 180 seconds क्रम the margin of error.  IOW, a समयr is set
+ * क्रम 60 seconds.  When the समयr fires, the callback checks the
+ * actual duration that the समयr रुकोed.  If the duration exceeds the
+ * allotted समय and margin (here 60 + 180, or 240 seconds), the machine
  * is restarted.  A healthy machine will have the duration match the
- * expected timeout very closely.
+ * expected समयout very बंदly.
  */
 
-#include <linux/module.h>
-#include <linux/moduleparam.h>
-#include <linux/types.h>
-#include <linux/kernel.h>
-#include <linux/fs.h>
-#include <linux/mm.h>
-#include <linux/reboot.h>
-#include <linux/init.h>
-#include <linux/delay.h>
-#include <linux/uaccess.h>
-#include <linux/sysrq.h>
-#include <linux/timer.h>
-#include <linux/hrtimer.h>
+#समावेश <linux/module.h>
+#समावेश <linux/moduleparam.h>
+#समावेश <linux/types.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/reboot.h>
+#समावेश <linux/init.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/uaccess.h>
+#समावेश <linux/sysrq.h>
+#समावेश <linux/समयr.h>
+#समावेश <linux/hrसमयr.h>
 
-#define VERSION_STR "0.9.1"
+#घोषणा VERSION_STR "0.9.1"
 
-#define DEFAULT_IOFENCE_MARGIN 60	/* Default fudge factor, in seconds */
-#define DEFAULT_IOFENCE_TICK 180	/* Default timer timeout, in seconds */
+#घोषणा DEFAULT_IOFENCE_MARGIN 60	/* Default fudge factor, in seconds */
+#घोषणा DEFAULT_IOFENCE_TICK 180	/* Default समयr समयout, in seconds */
 
-static int hangcheck_tick = DEFAULT_IOFENCE_TICK;
-static int hangcheck_margin = DEFAULT_IOFENCE_MARGIN;
-static int hangcheck_reboot;  /* Defaults to not reboot */
-static int hangcheck_dump_tasks;  /* Defaults to not dumping SysRQ T */
+अटल पूर्णांक hangcheck_tick = DEFAULT_IOFENCE_TICK;
+अटल पूर्णांक hangcheck_margin = DEFAULT_IOFENCE_MARGIN;
+अटल पूर्णांक hangcheck_reboot;  /* Defaults to not reboot */
+अटल पूर्णांक hangcheck_dump_tasks;  /* Defaults to not dumping SysRQ T */
 
 /* options - modular */
-module_param(hangcheck_tick, int, 0);
+module_param(hangcheck_tick, पूर्णांक, 0);
 MODULE_PARM_DESC(hangcheck_tick, "Timer delay.");
-module_param(hangcheck_margin, int, 0);
+module_param(hangcheck_margin, पूर्णांक, 0);
 MODULE_PARM_DESC(hangcheck_margin, "If the hangcheck timer has been delayed more than hangcheck_margin seconds, the driver will fire.");
-module_param(hangcheck_reboot, int, 0);
+module_param(hangcheck_reboot, पूर्णांक, 0);
 MODULE_PARM_DESC(hangcheck_reboot, "If nonzero, the machine will reboot when the timer margin is exceeded.");
-module_param(hangcheck_dump_tasks, int, 0);
+module_param(hangcheck_dump_tasks, पूर्णांक, 0);
 MODULE_PARM_DESC(hangcheck_dump_tasks, "If nonzero, the machine will dump the system task state when the timer margin is exceeded.");
 
 MODULE_AUTHOR("Oracle");
@@ -64,112 +65,112 @@ MODULE_LICENSE("GPL");
 MODULE_VERSION(VERSION_STR);
 
 /* options - nonmodular */
-#ifndef MODULE
+#अगर_अघोषित MODULE
 
-static int __init hangcheck_parse_tick(char *str)
-{
-	int par;
-	if (get_option(&str,&par))
+अटल पूर्णांक __init hangcheck_parse_tick(अक्षर *str)
+अणु
+	पूर्णांक par;
+	अगर (get_option(&str,&par))
 		hangcheck_tick = par;
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-static int __init hangcheck_parse_margin(char *str)
-{
-	int par;
-	if (get_option(&str,&par))
+अटल पूर्णांक __init hangcheck_parse_margin(अक्षर *str)
+अणु
+	पूर्णांक par;
+	अगर (get_option(&str,&par))
 		hangcheck_margin = par;
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-static int __init hangcheck_parse_reboot(char *str)
-{
-	int par;
-	if (get_option(&str,&par))
+अटल पूर्णांक __init hangcheck_parse_reboot(अक्षर *str)
+अणु
+	पूर्णांक par;
+	अगर (get_option(&str,&par))
 		hangcheck_reboot = par;
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-static int __init hangcheck_parse_dump_tasks(char *str)
-{
-	int par;
-	if (get_option(&str,&par))
+अटल पूर्णांक __init hangcheck_parse_dump_tasks(अक्षर *str)
+अणु
+	पूर्णांक par;
+	अगर (get_option(&str,&par))
 		hangcheck_dump_tasks = par;
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
 __setup("hcheck_tick", hangcheck_parse_tick);
 __setup("hcheck_margin", hangcheck_parse_margin);
 __setup("hcheck_reboot", hangcheck_parse_reboot);
 __setup("hcheck_dump_tasks", hangcheck_parse_dump_tasks);
-#endif /* not MODULE */
+#पूर्ण_अगर /* not MODULE */
 
-#define TIMER_FREQ 1000000000ULL
+#घोषणा TIMER_FREQ 1000000000ULL
 
-/* Last time scheduled */
-static unsigned long long hangcheck_tsc, hangcheck_tsc_margin;
+/* Last समय scheduled */
+अटल अचिन्हित दीर्घ दीर्घ hangcheck_tsc, hangcheck_tsc_margin;
 
-static void hangcheck_fire(struct timer_list *);
+अटल व्योम hangcheck_fire(काष्ठा समयr_list *);
 
-static DEFINE_TIMER(hangcheck_ticktock, hangcheck_fire);
+अटल DEFINE_TIMER(hangcheck_ticktock, hangcheck_fire);
 
-static void hangcheck_fire(struct timer_list *unused)
-{
-	unsigned long long cur_tsc, tsc_diff;
+अटल व्योम hangcheck_fire(काष्ठा समयr_list *unused)
+अणु
+	अचिन्हित दीर्घ दीर्घ cur_tsc, tsc_dअगरf;
 
-	cur_tsc = ktime_get_ns();
+	cur_tsc = kसमय_get_ns();
 
-	if (cur_tsc > hangcheck_tsc)
-		tsc_diff = cur_tsc - hangcheck_tsc;
-	else
-		tsc_diff = (cur_tsc + (~0ULL - hangcheck_tsc)); /* or something */
+	अगर (cur_tsc > hangcheck_tsc)
+		tsc_dअगरf = cur_tsc - hangcheck_tsc;
+	अन्यथा
+		tsc_dअगरf = (cur_tsc + (~0ULL - hangcheck_tsc)); /* or something */
 
-	if (tsc_diff > hangcheck_tsc_margin) {
-		if (hangcheck_dump_tasks) {
-			printk(KERN_CRIT "Hangcheck: Task state:\n");
-#ifdef CONFIG_MAGIC_SYSRQ
+	अगर (tsc_dअगरf > hangcheck_tsc_margin) अणु
+		अगर (hangcheck_dump_tasks) अणु
+			prपूर्णांकk(KERN_CRIT "Hangcheck: Task state:\n");
+#अगर_घोषित CONFIG_MAGIC_SYSRQ
 			handle_sysrq('t');
-#endif  /* CONFIG_MAGIC_SYSRQ */
-		}
-		if (hangcheck_reboot) {
-			printk(KERN_CRIT "Hangcheck: hangcheck is restarting the machine.\n");
+#पूर्ण_अगर  /* CONFIG_MAGIC_SYSRQ */
+		पूर्ण
+		अगर (hangcheck_reboot) अणु
+			prपूर्णांकk(KERN_CRIT "Hangcheck: hangcheck is restarting the machine.\n");
 			emergency_restart();
-		} else {
-			printk(KERN_CRIT "Hangcheck: hangcheck value past margin!\n");
-		}
-	}
-#if 0
+		पूर्ण अन्यथा अणु
+			prपूर्णांकk(KERN_CRIT "Hangcheck: hangcheck value past margin!\n");
+		पूर्ण
+	पूर्ण
+#अगर 0
 	/*
 	 * Enable to investigate delays in detail
 	 */
-	printk("Hangcheck: called %Ld ns since last time (%Ld ns overshoot)\n",
-			tsc_diff, tsc_diff - hangcheck_tick*TIMER_FREQ);
-#endif
-	mod_timer(&hangcheck_ticktock, jiffies + (hangcheck_tick*HZ));
-	hangcheck_tsc = ktime_get_ns();
-}
+	prपूर्णांकk("Hangcheck: called %Ld ns since last time (%Ld ns overshoot)\n",
+			tsc_dअगरf, tsc_dअगरf - hangcheck_tick*TIMER_FREQ);
+#पूर्ण_अगर
+	mod_समयr(&hangcheck_ticktock, jअगरfies + (hangcheck_tick*HZ));
+	hangcheck_tsc = kसमय_get_ns();
+पूर्ण
 
 
-static int __init hangcheck_init(void)
-{
-	printk("Hangcheck: starting hangcheck timer %s (tick is %d seconds, margin is %d seconds).\n",
+अटल पूर्णांक __init hangcheck_init(व्योम)
+अणु
+	prपूर्णांकk("Hangcheck: starting hangcheck timer %s (tick is %d seconds, margin is %d seconds).\n",
 	       VERSION_STR, hangcheck_tick, hangcheck_margin);
 	hangcheck_tsc_margin =
-		(unsigned long long)hangcheck_margin + hangcheck_tick;
+		(अचिन्हित दीर्घ दीर्घ)hangcheck_margin + hangcheck_tick;
 	hangcheck_tsc_margin *= TIMER_FREQ;
 
-	hangcheck_tsc = ktime_get_ns();
-	mod_timer(&hangcheck_ticktock, jiffies + (hangcheck_tick*HZ));
+	hangcheck_tsc = kसमय_get_ns();
+	mod_समयr(&hangcheck_ticktock, jअगरfies + (hangcheck_tick*HZ));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
-static void __exit hangcheck_exit(void)
-{
-	del_timer_sync(&hangcheck_ticktock);
-        printk("Hangcheck: Stopped hangcheck timer.\n");
-}
+अटल व्योम __निकास hangcheck_निकास(व्योम)
+अणु
+	del_समयr_sync(&hangcheck_ticktock);
+        prपूर्णांकk("Hangcheck: Stopped hangcheck timer.\n");
+पूर्ण
 
 module_init(hangcheck_init);
-module_exit(hangcheck_exit);
+module_निकास(hangcheck_निकास);

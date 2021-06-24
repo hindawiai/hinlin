@@ -1,44 +1,45 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * Functions corresponding to SET methods under BIOS attributes interface GUID for use
+ * Functions corresponding to SET methods under BIOS attributes पूर्णांकerface GUID क्रम use
  * with dell-wmi-sysman
  *
  *  Copyright (c) 2020 Dell Inc.
  */
 
-#include <linux/wmi.h>
-#include "dell-wmi-sysman.h"
+#समावेश <linux/wmi.h>
+#समावेश "dell-wmi-sysman.h"
 
-#define SETDEFAULTVALUES_METHOD_ID					0x02
-#define SETBIOSDEFAULTS_METHOD_ID					0x03
-#define SETATTRIBUTE_METHOD_ID						0x04
+#घोषणा SETDEFAULTVALUES_METHOD_ID					0x02
+#घोषणा SETBIOSDEFAULTS_METHOD_ID					0x03
+#घोषणा SETATTRIBUTE_METHOD_ID						0x04
 
-static int call_biosattributes_interface(struct wmi_device *wdev, char *in_args, size_t size,
-					int method_id)
-{
-	struct acpi_buffer output = {ACPI_ALLOCATE_BUFFER, NULL};
-	struct acpi_buffer input;
-	union acpi_object *obj;
+अटल पूर्णांक call_biosattributes_पूर्णांकerface(काष्ठा wmi_device *wdev, अक्षर *in_args, माप_प्रकार size,
+					पूर्णांक method_id)
+अणु
+	काष्ठा acpi_buffer output = अणुACPI_ALLOCATE_BUFFER, शून्यपूर्ण;
+	काष्ठा acpi_buffer input;
+	जोड़ acpi_object *obj;
 	acpi_status status;
-	int ret = -EIO;
+	पूर्णांक ret = -EIO;
 
 	input.length =  (acpi_size) size;
-	input.pointer = in_args;
+	input.poपूर्णांकer = in_args;
 	status = wmidev_evaluate_method(wdev, 0, method_id, &input, &output);
-	if (ACPI_FAILURE(status))
-		return -EIO;
-	obj = (union acpi_object *)output.pointer;
-	if (obj->type == ACPI_TYPE_INTEGER)
-		ret = obj->integer.value;
+	अगर (ACPI_FAILURE(status))
+		वापस -EIO;
+	obj = (जोड़ acpi_object *)output.poपूर्णांकer;
+	अगर (obj->type == ACPI_TYPE_INTEGER)
+		ret = obj->पूर्णांकeger.value;
 
-	if (wmi_priv.pending_changes == 0) {
+	अगर (wmi_priv.pending_changes == 0) अणु
 		wmi_priv.pending_changes = 1;
 		/* let userland know it may need to check reboot pending again */
 		kobject_uevent(&wmi_priv.class_dev->kobj, KOBJ_CHANGE);
-	}
-	kfree(output.pointer);
-	return map_wmi_error(ret);
-}
+	पूर्ण
+	kमुक्त(output.poपूर्णांकer);
+	वापस map_wmi_error(ret);
+पूर्ण
 
 /**
  * set_attribute() - Update an attribute value
@@ -47,18 +48,18 @@ static int call_biosattributes_interface(struct wmi_device *wdev, char *in_args,
  *
  * Sets an attribute to new value
  */
-int set_attribute(const char *a_name, const char *a_value)
-{
-	size_t security_area_size, buffer_size;
-	size_t a_name_size, a_value_size;
-	char *buffer = NULL, *start;
-	int ret;
+पूर्णांक set_attribute(स्थिर अक्षर *a_name, स्थिर अक्षर *a_value)
+अणु
+	माप_प्रकार security_area_size, buffer_size;
+	माप_प्रकार a_name_size, a_value_size;
+	अक्षर *buffer = शून्य, *start;
+	पूर्णांक ret;
 
 	mutex_lock(&wmi_priv.mutex);
-	if (!wmi_priv.bios_attr_wdev) {
+	अगर (!wmi_priv.bios_attr_wdev) अणु
 		ret = -ENODEV;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	/* build/calculate buffer */
 	security_area_size = calculate_security_buffer(wmi_priv.current_admin_password);
@@ -66,10 +67,10 @@ int set_attribute(const char *a_name, const char *a_value)
 	a_value_size = calculate_string_buffer(a_value);
 	buffer_size = security_area_size + a_name_size + a_value_size;
 	buffer = kzalloc(buffer_size, GFP_KERNEL);
-	if (!buffer) {
+	अगर (!buffer) अणु
 		ret = -ENOMEM;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	/* build security area */
 	populate_security_buffer(buffer, wmi_priv.current_admin_password);
@@ -77,109 +78,109 @@ int set_attribute(const char *a_name, const char *a_value)
 	/* build variables to set */
 	start = buffer + security_area_size;
 	ret = populate_string_buffer(start, a_name_size, a_name);
-	if (ret < 0)
-		goto out;
+	अगर (ret < 0)
+		जाओ out;
 	start += ret;
 	ret = populate_string_buffer(start, a_value_size, a_value);
-	if (ret < 0)
-		goto out;
+	अगर (ret < 0)
+		जाओ out;
 
-	print_hex_dump_bytes("set attribute data: ", DUMP_PREFIX_NONE, buffer, buffer_size);
-	ret = call_biosattributes_interface(wmi_priv.bios_attr_wdev,
+	prपूर्णांक_hex_dump_bytes("set attribute data: ", DUMP_PREFIX_NONE, buffer, buffer_size);
+	ret = call_biosattributes_पूर्णांकerface(wmi_priv.bios_attr_wdev,
 					    buffer, buffer_size,
 					    SETATTRIBUTE_METHOD_ID);
-	if (ret == -EOPNOTSUPP)
+	अगर (ret == -EOPNOTSUPP)
 		dev_err(&wmi_priv.bios_attr_wdev->dev, "admin password must be configured\n");
-	else if (ret == -EACCES)
+	अन्यथा अगर (ret == -EACCES)
 		dev_err(&wmi_priv.bios_attr_wdev->dev, "invalid password\n");
 
 out:
-	kfree(buffer);
+	kमुक्त(buffer);
 	mutex_unlock(&wmi_priv.mutex);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * set_bios_defaults() - Resets BIOS defaults
+ * set_bios_शेषs() - Resets BIOS शेषs
  * @deftype: the type of BIOS value reset to issue.
  *
- * Resets BIOS defaults
+ * Resets BIOS शेषs
  */
-int set_bios_defaults(u8 deftype)
-{
-	size_t security_area_size, buffer_size;
-	size_t integer_area_size = sizeof(u8);
-	char *buffer = NULL;
-	u8 *defaultType;
-	int ret;
+पूर्णांक set_bios_शेषs(u8 deftype)
+अणु
+	माप_प्रकार security_area_size, buffer_size;
+	माप_प्रकार पूर्णांकeger_area_size = माप(u8);
+	अक्षर *buffer = शून्य;
+	u8 *शेषType;
+	पूर्णांक ret;
 
 	mutex_lock(&wmi_priv.mutex);
-	if (!wmi_priv.bios_attr_wdev) {
+	अगर (!wmi_priv.bios_attr_wdev) अणु
 		ret = -ENODEV;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	security_area_size = calculate_security_buffer(wmi_priv.current_admin_password);
-	buffer_size = security_area_size + integer_area_size;
+	buffer_size = security_area_size + पूर्णांकeger_area_size;
 	buffer = kzalloc(buffer_size, GFP_KERNEL);
-	if (!buffer) {
+	अगर (!buffer) अणु
 		ret = -ENOMEM;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	/* build security area */
 	populate_security_buffer(buffer, wmi_priv.current_admin_password);
 
-	defaultType = buffer + security_area_size;
-	*defaultType = deftype;
+	शेषType = buffer + security_area_size;
+	*शेषType = deftype;
 
-	ret = call_biosattributes_interface(wmi_priv.bios_attr_wdev, buffer, buffer_size,
+	ret = call_biosattributes_पूर्णांकerface(wmi_priv.bios_attr_wdev, buffer, buffer_size,
 					    SETBIOSDEFAULTS_METHOD_ID);
-	if (ret)
+	अगर (ret)
 		dev_err(&wmi_priv.bios_attr_wdev->dev, "reset BIOS defaults failed: %d\n", ret);
 
-	kfree(buffer);
+	kमुक्त(buffer);
 out:
 	mutex_unlock(&wmi_priv.mutex);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int bios_attr_set_interface_probe(struct wmi_device *wdev, const void *context)
-{
+अटल पूर्णांक bios_attr_set_पूर्णांकerface_probe(काष्ठा wmi_device *wdev, स्थिर व्योम *context)
+अणु
 	mutex_lock(&wmi_priv.mutex);
 	wmi_priv.bios_attr_wdev = wdev;
 	mutex_unlock(&wmi_priv.mutex);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void bios_attr_set_interface_remove(struct wmi_device *wdev)
-{
+अटल व्योम bios_attr_set_पूर्णांकerface_हटाओ(काष्ठा wmi_device *wdev)
+अणु
 	mutex_lock(&wmi_priv.mutex);
-	wmi_priv.bios_attr_wdev = NULL;
+	wmi_priv.bios_attr_wdev = शून्य;
 	mutex_unlock(&wmi_priv.mutex);
-}
+पूर्ण
 
-static const struct wmi_device_id bios_attr_set_interface_id_table[] = {
-	{ .guid_string = DELL_WMI_BIOS_ATTRIBUTES_INTERFACE_GUID },
-	{ },
-};
-static struct wmi_driver bios_attr_set_interface_driver = {
-	.driver = {
+अटल स्थिर काष्ठा wmi_device_id bios_attr_set_पूर्णांकerface_id_table[] = अणु
+	अणु .guid_string = DELL_WMI_BIOS_ATTRIBUTES_INTERFACE_GUID पूर्ण,
+	अणु पूर्ण,
+पूर्ण;
+अटल काष्ठा wmi_driver bios_attr_set_पूर्णांकerface_driver = अणु
+	.driver = अणु
 		.name = DRIVER_NAME
-	},
-	.probe = bios_attr_set_interface_probe,
-	.remove = bios_attr_set_interface_remove,
-	.id_table = bios_attr_set_interface_id_table,
-};
+	पूर्ण,
+	.probe = bios_attr_set_पूर्णांकerface_probe,
+	.हटाओ = bios_attr_set_पूर्णांकerface_हटाओ,
+	.id_table = bios_attr_set_पूर्णांकerface_id_table,
+पूर्ण;
 
-int init_bios_attr_set_interface(void)
-{
-	return wmi_driver_register(&bios_attr_set_interface_driver);
-}
+पूर्णांक init_bios_attr_set_पूर्णांकerface(व्योम)
+अणु
+	वापस wmi_driver_रेजिस्टर(&bios_attr_set_पूर्णांकerface_driver);
+पूर्ण
 
-void exit_bios_attr_set_interface(void)
-{
-	wmi_driver_unregister(&bios_attr_set_interface_driver);
-}
+व्योम निकास_bios_attr_set_पूर्णांकerface(व्योम)
+अणु
+	wmi_driver_unरेजिस्टर(&bios_attr_set_पूर्णांकerface_driver);
+पूर्ण
 
-MODULE_DEVICE_TABLE(wmi, bios_attr_set_interface_id_table);
+MODULE_DEVICE_TABLE(wmi, bios_attr_set_पूर्णांकerface_id_table);

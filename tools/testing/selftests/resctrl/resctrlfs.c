@@ -1,51 +1,52 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * Basic resctrl file system operations
+ * Basic resctrl file प्रणाली operations
  *
  * Copyright (C) 2018 Intel Corporation
  *
  * Authors:
- *    Sai Praneeth Prakhya <sai.praneeth.prakhya@intel.com>,
- *    Fenghua Yu <fenghua.yu@intel.com>
+ *    Sai Praneeth Prakhya <sai.praneeth.prakhya@पूर्णांकel.com>,
+ *    Fenghua Yu <fenghua.yu@पूर्णांकel.com>
  */
-#include "resctrl.h"
+#समावेश "resctrl.h"
 
-static int find_resctrl_mount(char *buffer)
-{
-	FILE *mounts;
-	char line[256], *fs, *mntpoint;
+अटल पूर्णांक find_resctrl_mount(अक्षर *buffer)
+अणु
+	खाता *mounts;
+	अक्षर line[256], *fs, *mntpoपूर्णांक;
 
-	mounts = fopen("/proc/mounts", "r");
-	if (!mounts) {
-		perror("/proc/mounts");
-		return -ENXIO;
-	}
-	while (!feof(mounts)) {
-		if (!fgets(line, 256, mounts))
-			break;
-		fs = strtok(line, " \t");
-		if (!fs)
-			continue;
-		mntpoint = strtok(NULL, " \t");
-		if (!mntpoint)
-			continue;
-		fs = strtok(NULL, " \t");
-		if (!fs)
-			continue;
-		if (strcmp(fs, "resctrl"))
-			continue;
+	mounts = ख_खोलो("/proc/mounts", "r");
+	अगर (!mounts) अणु
+		लिखो_त्रुटि("/proc/mounts");
+		वापस -ENXIO;
+	पूर्ण
+	जबतक (!ख_पूर्ण(mounts)) अणु
+		अगर (!ख_माला_लो(line, 256, mounts))
+			अवरोध;
+		fs = म_मोहर(line, " \t");
+		अगर (!fs)
+			जारी;
+		mntpoपूर्णांक = म_मोहर(शून्य, " \t");
+		अगर (!mntpoपूर्णांक)
+			जारी;
+		fs = म_मोहर(शून्य, " \t");
+		अगर (!fs)
+			जारी;
+		अगर (म_भेद(fs, "resctrl"))
+			जारी;
 
-		fclose(mounts);
-		if (buffer)
-			strncpy(buffer, mntpoint, 256);
+		ख_बंद(mounts);
+		अगर (buffer)
+			म_नकलन(buffer, mntpoपूर्णांक, 256);
 
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	fclose(mounts);
+	ख_बंद(mounts);
 
-	return -ENOENT;
-}
+	वापस -ENOENT;
+पूर्ण
 
 /*
  * remount_resctrlfs - Remount resctrl FS at /sys/fs/resctrl
@@ -57,690 +58,690 @@ static int find_resctrl_mount(char *buffer)
  *
  * Return: 0 on success, non-zero on failure
  */
-int remount_resctrlfs(bool mum_resctrlfs)
-{
-	char mountpoint[256];
-	int ret;
+पूर्णांक remount_resctrlfs(bool mum_resctrlfs)
+अणु
+	अक्षर mountpoपूर्णांक[256];
+	पूर्णांक ret;
 
-	ret = find_resctrl_mount(mountpoint);
-	if (ret)
-		strcpy(mountpoint, RESCTRL_PATH);
+	ret = find_resctrl_mount(mountpoपूर्णांक);
+	अगर (ret)
+		म_नकल(mountpoपूर्णांक, RESCTRL_PATH);
 
-	if (!ret && mum_resctrlfs && umount(mountpoint))
-		ksft_print_msg("Fail: unmounting \"%s\"\n", mountpoint);
+	अगर (!ret && mum_resctrlfs && umount(mountpoपूर्णांक))
+		ksft_prपूर्णांक_msg("Fail: unmounting \"%s\"\n", mountpoपूर्णांक);
 
-	if (!ret && !mum_resctrlfs)
-		return 0;
+	अगर (!ret && !mum_resctrlfs)
+		वापस 0;
 
-	ksft_print_msg("Mounting resctrl to \"%s\"\n", RESCTRL_PATH);
-	ret = mount("resctrl", RESCTRL_PATH, "resctrl", 0, NULL);
-	if (ret)
-		perror("# mount");
+	ksft_prपूर्णांक_msg("Mounting resctrl to \"%s\"\n", RESCTRL_PATH);
+	ret = mount("resctrl", RESCTRL_PATH, "resctrl", 0, शून्य);
+	अगर (ret)
+		लिखो_त्रुटि("# mount");
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int umount_resctrlfs(void)
-{
-	if (find_resctrl_mount(NULL))
-		return 0;
+पूर्णांक umount_resctrlfs(व्योम)
+अणु
+	अगर (find_resctrl_mount(शून्य))
+		वापस 0;
 
-	if (umount(RESCTRL_PATH)) {
-		perror("# Unable to umount resctrl");
+	अगर (umount(RESCTRL_PATH)) अणु
+		लिखो_त्रुटि("# Unable to umount resctrl");
 
-		return errno;
-	}
+		वापस त्रुटि_सं;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * get_resource_id - Get socket number/l3 id for a specified CPU
+ * get_resource_id - Get socket number/l3 id क्रम a specअगरied CPU
  * @cpu_no:	CPU number
  * @resource_id: Socket number or l3_id
  *
  * Return: >= 0 on success, < 0 on failure.
  */
-int get_resource_id(int cpu_no, int *resource_id)
-{
-	char phys_pkg_path[1024];
-	FILE *fp;
+पूर्णांक get_resource_id(पूर्णांक cpu_no, पूर्णांक *resource_id)
+अणु
+	अक्षर phys_pkg_path[1024];
+	खाता *fp;
 
-	if (is_amd)
-		sprintf(phys_pkg_path, "%s%d/cache/index3/id",
+	अगर (is_amd)
+		प्र_लिखो(phys_pkg_path, "%s%d/cache/index3/id",
 			PHYS_ID_PATH, cpu_no);
-	else
-		sprintf(phys_pkg_path, "%s%d/topology/physical_package_id",
+	अन्यथा
+		प्र_लिखो(phys_pkg_path, "%s%d/topology/physical_package_id",
 			PHYS_ID_PATH, cpu_no);
 
-	fp = fopen(phys_pkg_path, "r");
-	if (!fp) {
-		perror("Failed to open physical_package_id");
+	fp = ख_खोलो(phys_pkg_path, "r");
+	अगर (!fp) अणु
+		लिखो_त्रुटि("Failed to open physical_package_id");
 
-		return -1;
-	}
-	if (fscanf(fp, "%d", resource_id) <= 0) {
-		perror("Could not get socket number or l3 id");
-		fclose(fp);
+		वापस -1;
+	पूर्ण
+	अगर (ख_पूछो(fp, "%d", resource_id) <= 0) अणु
+		लिखो_त्रुटि("Could not get socket number or l3 id");
+		ख_बंद(fp);
 
-		return -1;
-	}
-	fclose(fp);
+		वापस -1;
+	पूर्ण
+	ख_बंद(fp);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * get_cache_size - Get cache size for a specified CPU
+ * get_cache_size - Get cache size क्रम a specअगरied CPU
  * @cpu_no:	CPU number
  * @cache_type:	Cache level L2/L3
- * @cache_size:	pointer to cache_size
+ * @cache_size:	poपूर्णांकer to cache_size
  *
  * Return: = 0 on success, < 0 on failure.
  */
-int get_cache_size(int cpu_no, char *cache_type, unsigned long *cache_size)
-{
-	char cache_path[1024], cache_str[64];
-	int length, i, cache_num;
-	FILE *fp;
+पूर्णांक get_cache_size(पूर्णांक cpu_no, अक्षर *cache_type, अचिन्हित दीर्घ *cache_size)
+अणु
+	अक्षर cache_path[1024], cache_str[64];
+	पूर्णांक length, i, cache_num;
+	खाता *fp;
 
-	if (!strcmp(cache_type, "L3")) {
+	अगर (!म_भेद(cache_type, "L3")) अणु
 		cache_num = 3;
-	} else if (!strcmp(cache_type, "L2")) {
+	पूर्ण अन्यथा अगर (!म_भेद(cache_type, "L2")) अणु
 		cache_num = 2;
-	} else {
-		perror("Invalid cache level");
-		return -1;
-	}
+	पूर्ण अन्यथा अणु
+		लिखो_त्रुटि("Invalid cache level");
+		वापस -1;
+	पूर्ण
 
-	sprintf(cache_path, "/sys/bus/cpu/devices/cpu%d/cache/index%d/size",
+	प्र_लिखो(cache_path, "/sys/bus/cpu/devices/cpu%d/cache/index%d/size",
 		cpu_no, cache_num);
-	fp = fopen(cache_path, "r");
-	if (!fp) {
-		perror("Failed to open cache size");
+	fp = ख_खोलो(cache_path, "r");
+	अगर (!fp) अणु
+		लिखो_त्रुटि("Failed to open cache size");
 
-		return -1;
-	}
-	if (fscanf(fp, "%s", cache_str) <= 0) {
-		perror("Could not get cache_size");
-		fclose(fp);
+		वापस -1;
+	पूर्ण
+	अगर (ख_पूछो(fp, "%s", cache_str) <= 0) अणु
+		लिखो_त्रुटि("Could not get cache_size");
+		ख_बंद(fp);
 
-		return -1;
-	}
-	fclose(fp);
+		वापस -1;
+	पूर्ण
+	ख_बंद(fp);
 
-	length = (int)strlen(cache_str);
+	length = (पूर्णांक)म_माप(cache_str);
 
 	*cache_size = 0;
 
-	for (i = 0; i < length; i++) {
-		if ((cache_str[i] >= '0') && (cache_str[i] <= '9'))
+	क्रम (i = 0; i < length; i++) अणु
+		अगर ((cache_str[i] >= '0') && (cache_str[i] <= '9'))
 
 			*cache_size = *cache_size * 10 + (cache_str[i] - '0');
 
-		else if (cache_str[i] == 'K')
+		अन्यथा अगर (cache_str[i] == 'K')
 
 			*cache_size = *cache_size * 1024;
 
-		else if (cache_str[i] == 'M')
+		अन्यथा अगर (cache_str[i] == 'M')
 
 			*cache_size = *cache_size * 1024 * 1024;
 
-		else
-			break;
-	}
+		अन्यथा
+			अवरोध;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#define CORE_SIBLINGS_PATH	"/sys/bus/cpu/devices/cpu"
+#घोषणा CORE_SIBLINGS_PATH	"/sys/bus/cpu/devices/cpu"
 
 /*
- * get_cbm_mask - Get cbm mask for given cache
+ * get_cbm_mask - Get cbm mask क्रम given cache
  * @cache_type:	Cache level L2/L3
- * @cbm_mask:	cbm_mask returned as a string
+ * @cbm_mask:	cbm_mask वापसed as a string
  *
  * Return: = 0 on success, < 0 on failure.
  */
-int get_cbm_mask(char *cache_type, char *cbm_mask)
-{
-	char cbm_mask_path[1024];
-	FILE *fp;
+पूर्णांक get_cbm_mask(अक्षर *cache_type, अक्षर *cbm_mask)
+अणु
+	अक्षर cbm_mask_path[1024];
+	खाता *fp;
 
-	if (!cbm_mask)
-		return -1;
+	अगर (!cbm_mask)
+		वापस -1;
 
-	sprintf(cbm_mask_path, "%s/%s/cbm_mask", CBM_MASK_PATH, cache_type);
+	प्र_लिखो(cbm_mask_path, "%s/%s/cbm_mask", CBM_MASK_PATH, cache_type);
 
-	fp = fopen(cbm_mask_path, "r");
-	if (!fp) {
-		perror("Failed to open cache level");
+	fp = ख_खोलो(cbm_mask_path, "r");
+	अगर (!fp) अणु
+		लिखो_त्रुटि("Failed to open cache level");
 
-		return -1;
-	}
-	if (fscanf(fp, "%s", cbm_mask) <= 0) {
-		perror("Could not get max cbm_mask");
-		fclose(fp);
+		वापस -1;
+	पूर्ण
+	अगर (ख_पूछो(fp, "%s", cbm_mask) <= 0) अणु
+		लिखो_त्रुटि("Could not get max cbm_mask");
+		ख_बंद(fp);
 
-		return -1;
-	}
-	fclose(fp);
+		वापस -1;
+	पूर्ण
+	ख_बंद(fp);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * get_core_sibling - Get sibling core id from the same socket for given CPU
+ * get_core_sibling - Get sibling core id from the same socket क्रम given CPU
  * @cpu_no:	CPU number
  *
  * Return:	> 0 on success, < 0 on failure.
  */
-int get_core_sibling(int cpu_no)
-{
-	char core_siblings_path[1024], cpu_list_str[64];
-	int sibling_cpu_no = -1;
-	FILE *fp;
+पूर्णांक get_core_sibling(पूर्णांक cpu_no)
+अणु
+	अक्षर core_siblings_path[1024], cpu_list_str[64];
+	पूर्णांक sibling_cpu_no = -1;
+	खाता *fp;
 
-	sprintf(core_siblings_path, "%s%d/topology/core_siblings_list",
+	प्र_लिखो(core_siblings_path, "%s%d/topology/core_siblings_list",
 		CORE_SIBLINGS_PATH, cpu_no);
 
-	fp = fopen(core_siblings_path, "r");
-	if (!fp) {
-		perror("Failed to open core siblings path");
+	fp = ख_खोलो(core_siblings_path, "r");
+	अगर (!fp) अणु
+		लिखो_त्रुटि("Failed to open core siblings path");
 
-		return -1;
-	}
-	if (fscanf(fp, "%s", cpu_list_str) <= 0) {
-		perror("Could not get core_siblings list");
-		fclose(fp);
+		वापस -1;
+	पूर्ण
+	अगर (ख_पूछो(fp, "%s", cpu_list_str) <= 0) अणु
+		लिखो_त्रुटि("Could not get core_siblings list");
+		ख_बंद(fp);
 
-		return -1;
-	}
-	fclose(fp);
+		वापस -1;
+	पूर्ण
+	ख_बंद(fp);
 
-	char *token = strtok(cpu_list_str, "-,");
+	अक्षर *token = म_मोहर(cpu_list_str, "-,");
 
-	while (token) {
-		sibling_cpu_no = atoi(token);
-		/* Skipping core 0 as we don't want to run test on core 0 */
-		if (sibling_cpu_no != 0 && sibling_cpu_no != cpu_no)
-			break;
-		token = strtok(NULL, "-,");
-	}
+	जबतक (token) अणु
+		sibling_cpu_no = म_से_प(token);
+		/* Skipping core 0 as we करोn't want to run test on core 0 */
+		अगर (sibling_cpu_no != 0 && sibling_cpu_no != cpu_no)
+			अवरोध;
+		token = म_मोहर(शून्य, "-,");
+	पूर्ण
 
-	return sibling_cpu_no;
-}
+	वापस sibling_cpu_no;
+पूर्ण
 
 /*
- * taskset_benchmark - Taskset PID (i.e. benchmark) to a specified cpu
+ * taskset_benchmark - Taskset PID (i.e. benchmark) to a specअगरied cpu
  * @bm_pid:	PID that should be binded
  * @cpu_no:	CPU number at which the PID would be binded
  *
  * Return: 0 on success, non-zero on failure
  */
-int taskset_benchmark(pid_t bm_pid, int cpu_no)
-{
+पूर्णांक taskset_benchmark(pid_t bm_pid, पूर्णांक cpu_no)
+अणु
 	cpu_set_t my_set;
 
 	CPU_ZERO(&my_set);
 	CPU_SET(cpu_no, &my_set);
 
-	if (sched_setaffinity(bm_pid, sizeof(cpu_set_t), &my_set)) {
-		perror("Unable to taskset benchmark");
+	अगर (sched_setaffinity(bm_pid, माप(cpu_set_t), &my_set)) अणु
+		लिखो_त्रुटि("Unable to taskset benchmark");
 
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * run_benchmark - Run a specified benchmark or fill_buf (default benchmark)
- *		   in specified signal. Direct benchmark stdio to /dev/null.
- * @signum:	signal number
- * @info:	signal info
- * @ucontext:	user context in signal handling
+ * run_benchmark - Run a specअगरied benchmark or fill_buf (शेष benchmark)
+ *		   in specअगरied संकेत. Direct benchmark stdio to /dev/null.
+ * @signum:	संकेत number
+ * @info:	संकेत info
+ * @ucontext:	user context in संकेत handling
  *
- * Return: void
+ * Return: व्योम
  */
-void run_benchmark(int signum, siginfo_t *info, void *ucontext)
-{
-	int operation, ret, malloc_and_init_memory, memflush;
-	unsigned long span, buffer_span;
-	char **benchmark_cmd;
-	char resctrl_val[64];
-	FILE *fp;
+व्योम run_benchmark(पूर्णांक signum, siginfo_t *info, व्योम *ucontext)
+अणु
+	पूर्णांक operation, ret, दो_स्मृति_and_init_memory, memflush;
+	अचिन्हित दीर्घ span, buffer_span;
+	अक्षर **benchmark_cmd;
+	अक्षर resctrl_val[64];
+	खाता *fp;
 
 	benchmark_cmd = info->si_ptr;
 
 	/*
-	 * Direct stdio of child to /dev/null, so that only parent writes to
+	 * Direct stdio of child to /dev/null, so that only parent ग_लिखोs to
 	 * stdio (console)
 	 */
-	fp = freopen("/dev/null", "w", stdout);
-	if (!fp)
+	fp = ख_व_खोलो("/dev/null", "w", मानक_निकास);
+	अगर (!fp)
 		PARENT_EXIT("Unable to direct benchmark status to /dev/null");
 
-	if (strcmp(benchmark_cmd[0], "fill_buf") == 0) {
-		/* Execute default fill_buf benchmark */
-		span = strtoul(benchmark_cmd[1], NULL, 10);
-		malloc_and_init_memory = atoi(benchmark_cmd[2]);
-		memflush =  atoi(benchmark_cmd[3]);
-		operation = atoi(benchmark_cmd[4]);
-		sprintf(resctrl_val, "%s", benchmark_cmd[5]);
+	अगर (म_भेद(benchmark_cmd[0], "fill_buf") == 0) अणु
+		/* Execute शेष fill_buf benchmark */
+		span = म_से_अदीर्घ(benchmark_cmd[1], शून्य, 10);
+		दो_स्मृति_and_init_memory = म_से_प(benchmark_cmd[2]);
+		memflush =  म_से_प(benchmark_cmd[3]);
+		operation = म_से_प(benchmark_cmd[4]);
+		प्र_लिखो(resctrl_val, "%s", benchmark_cmd[5]);
 
-		if (strncmp(resctrl_val, CMT_STR, sizeof(CMT_STR)))
+		अगर (म_भेदन(resctrl_val, CMT_STR, माप(CMT_STR)))
 			buffer_span = span * MB;
-		else
+		अन्यथा
 			buffer_span = span;
 
-		if (run_fill_buf(buffer_span, malloc_and_init_memory, memflush,
+		अगर (run_fill_buf(buffer_span, दो_स्मृति_and_init_memory, memflush,
 				 operation, resctrl_val))
-			fprintf(stderr, "Error in running fill buffer\n");
-	} else {
-		/* Execute specified benchmark */
+			ख_लिखो(मानक_त्रुटि, "Error in running fill buffer\n");
+	पूर्ण अन्यथा अणु
+		/* Execute specअगरied benchmark */
 		ret = execvp(benchmark_cmd[0], benchmark_cmd);
-		if (ret)
-			perror("wrong\n");
-	}
+		अगर (ret)
+			लिखो_त्रुटि("wrong\n");
+	पूर्ण
 
-	fclose(stdout);
+	ख_बंद(मानक_निकास);
 	PARENT_EXIT("Unable to run specified benchmark");
-}
+पूर्ण
 
 /*
- * create_grp - Create a group only if one doesn't exist
+ * create_grp - Create a group only अगर one करोesn't exist
  * @grp_name:	Name of the group
  * @grp:	Full path and name of the group
  * @parent_grp:	Full path and name of the parent group
  *
  * Return: 0 on success, non-zero on failure
  */
-static int create_grp(const char *grp_name, char *grp, const char *parent_grp)
-{
-	int found_grp = 0;
-	struct dirent *ep;
-	DIR *dp;
+अटल पूर्णांक create_grp(स्थिर अक्षर *grp_name, अक्षर *grp, स्थिर अक्षर *parent_grp)
+अणु
+	पूर्णांक found_grp = 0;
+	काष्ठा dirent *ep;
+	सूची *dp;
 
 	/*
-	 * At this point, we are guaranteed to have resctrl FS mounted and if
+	 * At this poपूर्णांक, we are guaranteed to have resctrl FS mounted and अगर
 	 * length of grp_name == 0, it means, user wants to use root con_mon
-	 * grp, so do nothing
+	 * grp, so करो nothing
 	 */
-	if (strlen(grp_name) == 0)
-		return 0;
+	अगर (म_माप(grp_name) == 0)
+		वापस 0;
 
-	/* Check if requested grp exists or not */
-	dp = opendir(parent_grp);
-	if (dp) {
-		while ((ep = readdir(dp)) != NULL) {
-			if (strcmp(ep->d_name, grp_name) == 0)
+	/* Check अगर requested grp exists or not */
+	dp = सूची_खोलो(parent_grp);
+	अगर (dp) अणु
+		जबतक ((ep = सूची_पढ़ो(dp)) != शून्य) अणु
+			अगर (म_भेद(ep->d_name, grp_name) == 0)
 				found_grp = 1;
-		}
-		closedir(dp);
-	} else {
-		perror("Unable to open resctrl for group");
+		पूर्ण
+		बंद_सूची(dp);
+	पूर्ण अन्यथा अणु
+		लिखो_त्रुटि("Unable to open resctrl for group");
 
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
-	/* Requested grp doesn't exist, hence create it */
-	if (found_grp == 0) {
-		if (mkdir(grp, 0) == -1) {
-			perror("Unable to create group");
+	/* Requested grp करोesn't exist, hence create it */
+	अगर (found_grp == 0) अणु
+		अगर (सूची_गढ़ो(grp, 0) == -1) अणु
+			लिखो_त्रुटि("Unable to create group");
 
-			return -1;
-		}
-	}
+			वापस -1;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int write_pid_to_tasks(char *tasks, pid_t pid)
-{
-	FILE *fp;
+अटल पूर्णांक ग_लिखो_pid_to_tasks(अक्षर *tasks, pid_t pid)
+अणु
+	खाता *fp;
 
-	fp = fopen(tasks, "w");
-	if (!fp) {
-		perror("Failed to open tasks file");
+	fp = ख_खोलो(tasks, "w");
+	अगर (!fp) अणु
+		लिखो_त्रुटि("Failed to open tasks file");
 
-		return -1;
-	}
-	if (fprintf(fp, "%d\n", pid) < 0) {
-		perror("Failed to wr pid to tasks file");
-		fclose(fp);
+		वापस -1;
+	पूर्ण
+	अगर (ख_लिखो(fp, "%d\n", pid) < 0) अणु
+		लिखो_त्रुटि("Failed to wr pid to tasks file");
+		ख_बंद(fp);
 
-		return -1;
-	}
-	fclose(fp);
+		वापस -1;
+	पूर्ण
+	ख_बंद(fp);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * write_bm_pid_to_resctrl - Write a PID (i.e. benchmark) to resctrl FS
+ * ग_लिखो_bm_pid_to_resctrl - Write a PID (i.e. benchmark) to resctrl FS
  * @bm_pid:		PID that should be written
  * @ctrlgrp:		Name of the control monitor group (con_mon grp)
  * @mongrp:		Name of the monitor group (mon grp)
  * @resctrl_val:	Resctrl feature (Eg: mbm, mba.. etc)
  *
- * If a con_mon grp is requested, create it and write pid to it, otherwise
- * write pid to root con_mon grp.
- * If a mon grp is requested, create it and write pid to it, otherwise
+ * If a con_mon grp is requested, create it and ग_लिखो pid to it, otherwise
+ * ग_लिखो pid to root con_mon grp.
+ * If a mon grp is requested, create it and ग_लिखो pid to it, otherwise
  * pid is not written, this means that pid is in con_mon grp and hence
- * should consult con_mon grp's mon_data directory for results.
+ * should consult con_mon grp's mon_data directory क्रम results.
  *
  * Return: 0 on success, non-zero on failure
  */
-int write_bm_pid_to_resctrl(pid_t bm_pid, char *ctrlgrp, char *mongrp,
-			    char *resctrl_val)
-{
-	char controlgroup[128], monitorgroup[512], monitorgroup_p[256];
-	char tasks[1024];
-	int ret = 0;
+पूर्णांक ग_लिखो_bm_pid_to_resctrl(pid_t bm_pid, अक्षर *ctrlgrp, अक्षर *mongrp,
+			    अक्षर *resctrl_val)
+अणु
+	अक्षर controlgroup[128], monitorgroup[512], monitorgroup_p[256];
+	अक्षर tasks[1024];
+	पूर्णांक ret = 0;
 
-	if (strlen(ctrlgrp))
-		sprintf(controlgroup, "%s/%s", RESCTRL_PATH, ctrlgrp);
-	else
-		sprintf(controlgroup, "%s", RESCTRL_PATH);
+	अगर (म_माप(ctrlgrp))
+		प्र_लिखो(controlgroup, "%s/%s", RESCTRL_PATH, ctrlgrp);
+	अन्यथा
+		प्र_लिखो(controlgroup, "%s", RESCTRL_PATH);
 
-	/* Create control and monitoring group and write pid into it */
+	/* Create control and monitoring group and ग_लिखो pid पूर्णांकo it */
 	ret = create_grp(ctrlgrp, controlgroup, RESCTRL_PATH);
-	if (ret)
-		goto out;
-	sprintf(tasks, "%s/tasks", controlgroup);
-	ret = write_pid_to_tasks(tasks, bm_pid);
-	if (ret)
-		goto out;
+	अगर (ret)
+		जाओ out;
+	प्र_लिखो(tasks, "%s/tasks", controlgroup);
+	ret = ग_लिखो_pid_to_tasks(tasks, bm_pid);
+	अगर (ret)
+		जाओ out;
 
-	/* Create mon grp and write pid into it for "mbm" and "cmt" test */
-	if (!strncmp(resctrl_val, CMT_STR, sizeof(CMT_STR)) ||
-	    !strncmp(resctrl_val, MBM_STR, sizeof(MBM_STR))) {
-		if (strlen(mongrp)) {
-			sprintf(monitorgroup_p, "%s/mon_groups", controlgroup);
-			sprintf(monitorgroup, "%s/%s", monitorgroup_p, mongrp);
+	/* Create mon grp and ग_लिखो pid पूर्णांकo it क्रम "mbm" and "cmt" test */
+	अगर (!म_भेदन(resctrl_val, CMT_STR, माप(CMT_STR)) ||
+	    !म_भेदन(resctrl_val, MBM_STR, माप(MBM_STR))) अणु
+		अगर (म_माप(mongrp)) अणु
+			प्र_लिखो(monitorgroup_p, "%s/mon_groups", controlgroup);
+			प्र_लिखो(monitorgroup, "%s/%s", monitorgroup_p, mongrp);
 			ret = create_grp(mongrp, monitorgroup, monitorgroup_p);
-			if (ret)
-				goto out;
+			अगर (ret)
+				जाओ out;
 
-			sprintf(tasks, "%s/mon_groups/%s/tasks",
+			प्र_लिखो(tasks, "%s/mon_groups/%s/tasks",
 				controlgroup, mongrp);
-			ret = write_pid_to_tasks(tasks, bm_pid);
-			if (ret)
-				goto out;
-		}
-	}
+			ret = ग_लिखो_pid_to_tasks(tasks, bm_pid);
+			अगर (ret)
+				जाओ out;
+		पूर्ण
+	पूर्ण
 
 out:
-	ksft_print_msg("Writing benchmark parameters to resctrl FS\n");
-	if (ret)
-		perror("# writing to resctrlfs");
+	ksft_prपूर्णांक_msg("Writing benchmark parameters to resctrl FS\n");
+	अगर (ret)
+		लिखो_त्रुटि("# writing to resctrlfs");
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
- * write_schemata - Update schemata of a con_mon grp
+ * ग_लिखो_schemata - Update schemata of a con_mon grp
  * @ctrlgrp:		Name of the con_mon grp
  * @schemata:		Schemata that should be updated to
  * @cpu_no:		CPU number that the benchmark PID is binded to
  * @resctrl_val:	Resctrl feature (Eg: mbm, mba.. etc)
  *
- * Update schemata of a con_mon grp *only* if requested resctrl feature is
+ * Update schemata of a con_mon grp *only* अगर requested resctrl feature is
  * allocation type
  *
  * Return: 0 on success, non-zero on failure
  */
-int write_schemata(char *ctrlgrp, char *schemata, int cpu_no, char *resctrl_val)
-{
-	char controlgroup[1024], schema[1024], reason[64];
-	int resource_id, ret = 0;
-	FILE *fp;
+पूर्णांक ग_लिखो_schemata(अक्षर *ctrlgrp, अक्षर *schemata, पूर्णांक cpu_no, अक्षर *resctrl_val)
+अणु
+	अक्षर controlgroup[1024], schema[1024], reason[64];
+	पूर्णांक resource_id, ret = 0;
+	खाता *fp;
 
-	if (strncmp(resctrl_val, MBA_STR, sizeof(MBA_STR)) &&
-	    strncmp(resctrl_val, CAT_STR, sizeof(CAT_STR)) &&
-	    strncmp(resctrl_val, CMT_STR, sizeof(CMT_STR)))
-		return -ENOENT;
+	अगर (म_भेदन(resctrl_val, MBA_STR, माप(MBA_STR)) &&
+	    म_भेदन(resctrl_val, CAT_STR, माप(CAT_STR)) &&
+	    म_भेदन(resctrl_val, CMT_STR, माप(CMT_STR)))
+		वापस -ENOENT;
 
-	if (!schemata) {
-		ksft_print_msg("Skipping empty schemata update\n");
+	अगर (!schemata) अणु
+		ksft_prपूर्णांक_msg("Skipping empty schemata update\n");
 
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
-	if (get_resource_id(cpu_no, &resource_id) < 0) {
-		sprintf(reason, "Failed to get resource id");
+	अगर (get_resource_id(cpu_no, &resource_id) < 0) अणु
+		प्र_लिखो(reason, "Failed to get resource id");
 		ret = -1;
 
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (strlen(ctrlgrp) != 0)
-		sprintf(controlgroup, "%s/%s/schemata", RESCTRL_PATH, ctrlgrp);
-	else
-		sprintf(controlgroup, "%s/schemata", RESCTRL_PATH);
+	अगर (म_माप(ctrlgrp) != 0)
+		प्र_लिखो(controlgroup, "%s/%s/schemata", RESCTRL_PATH, ctrlgrp);
+	अन्यथा
+		प्र_लिखो(controlgroup, "%s/schemata", RESCTRL_PATH);
 
-	if (!strncmp(resctrl_val, CAT_STR, sizeof(CAT_STR)) ||
-	    !strncmp(resctrl_val, CMT_STR, sizeof(CMT_STR)))
-		sprintf(schema, "%s%d%c%s", "L3:", resource_id, '=', schemata);
-	if (!strncmp(resctrl_val, MBA_STR, sizeof(MBA_STR)))
-		sprintf(schema, "%s%d%c%s", "MB:", resource_id, '=', schemata);
+	अगर (!म_भेदन(resctrl_val, CAT_STR, माप(CAT_STR)) ||
+	    !म_भेदन(resctrl_val, CMT_STR, माप(CMT_STR)))
+		प्र_लिखो(schema, "%s%d%c%s", "L3:", resource_id, '=', schemata);
+	अगर (!म_भेदन(resctrl_val, MBA_STR, माप(MBA_STR)))
+		प्र_लिखो(schema, "%s%d%c%s", "MB:", resource_id, '=', schemata);
 
-	fp = fopen(controlgroup, "w");
-	if (!fp) {
-		sprintf(reason, "Failed to open control group");
+	fp = ख_खोलो(controlgroup, "w");
+	अगर (!fp) अणु
+		प्र_लिखो(reason, "Failed to open control group");
 		ret = -1;
 
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (fprintf(fp, "%s\n", schema) < 0) {
-		sprintf(reason, "Failed to write schemata in control group");
-		fclose(fp);
+	अगर (ख_लिखो(fp, "%s\n", schema) < 0) अणु
+		प्र_लिखो(reason, "Failed to write schemata in control group");
+		ख_बंद(fp);
 		ret = -1;
 
-		goto out;
-	}
-	fclose(fp);
+		जाओ out;
+	पूर्ण
+	ख_बंद(fp);
 
 out:
-	ksft_print_msg("Write schema \"%s\" to resctrl FS%s%s\n",
+	ksft_prपूर्णांक_msg("Write schema \"%s\" to resctrl FS%s%s\n",
 		       schema, ret ? " # " : "",
 		       ret ? reason : "");
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-bool check_resctrlfs_support(void)
-{
-	FILE *inf = fopen("/proc/filesystems", "r");
-	DIR *dp;
-	char *res;
+bool check_resctrlfs_support(व्योम)
+अणु
+	खाता *inf = ख_खोलो("/proc/filesystems", "r");
+	सूची *dp;
+	अक्षर *res;
 	bool ret = false;
 
-	if (!inf)
-		return false;
+	अगर (!inf)
+		वापस false;
 
 	res = fgrep(inf, "nodev\tresctrl\n");
 
-	if (res) {
+	अगर (res) अणु
 		ret = true;
-		free(res);
-	}
+		मुक्त(res);
+	पूर्ण
 
-	fclose(inf);
+	ख_बंद(inf);
 
-	ksft_print_msg("%s Check kernel supports resctrl filesystem\n",
+	ksft_prपूर्णांक_msg("%s Check kernel supports resctrl filesystem\n",
 		       ret ? "Pass:" : "Fail:");
 
-	if (!ret)
-		return ret;
+	अगर (!ret)
+		वापस ret;
 
-	dp = opendir(RESCTRL_PATH);
-	ksft_print_msg("%s Check resctrl mountpoint \"%s\" exists\n",
+	dp = सूची_खोलो(RESCTRL_PATH);
+	ksft_prपूर्णांक_msg("%s Check resctrl mountpoint \"%s\" exists\n",
 		       dp ? "Pass:" : "Fail:", RESCTRL_PATH);
-	if (dp)
-		closedir(dp);
+	अगर (dp)
+		बंद_सूची(dp);
 
-	ksft_print_msg("resctrl filesystem %s mounted\n",
-		       find_resctrl_mount(NULL) ? "not" : "is");
+	ksft_prपूर्णांक_msg("resctrl filesystem %s mounted\n",
+		       find_resctrl_mount(शून्य) ? "not" : "is");
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-char *fgrep(FILE *inf, const char *str)
-{
-	char line[256];
-	int slen = strlen(str);
+अक्षर *fgrep(खाता *inf, स्थिर अक्षर *str)
+अणु
+	अक्षर line[256];
+	पूर्णांक slen = म_माप(str);
 
-	while (!feof(inf)) {
-		if (!fgets(line, 256, inf))
-			break;
-		if (strncmp(line, str, slen))
-			continue;
+	जबतक (!ख_पूर्ण(inf)) अणु
+		अगर (!ख_माला_लो(line, 256, inf))
+			अवरोध;
+		अगर (म_भेदन(line, str, slen))
+			जारी;
 
-		return strdup(line);
-	}
+		वापस strdup(line);
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
 /*
- * validate_resctrl_feature_request - Check if requested feature is valid.
+ * validate_resctrl_feature_request - Check अगर requested feature is valid.
  * @resctrl_val:	Requested feature
  *
- * Return: True if the feature is supported, else false
+ * Return: True अगर the feature is supported, अन्यथा false
  */
-bool validate_resctrl_feature_request(const char *resctrl_val)
-{
-	struct stat statbuf;
+bool validate_resctrl_feature_request(स्थिर अक्षर *resctrl_val)
+अणु
+	काष्ठा stat statbuf;
 	bool found = false;
-	char *res;
-	FILE *inf;
+	अक्षर *res;
+	खाता *inf;
 
-	if (!resctrl_val)
-		return false;
+	अगर (!resctrl_val)
+		वापस false;
 
-	if (remount_resctrlfs(false))
-		return false;
+	अगर (remount_resctrlfs(false))
+		वापस false;
 
-	if (!strncmp(resctrl_val, CAT_STR, sizeof(CAT_STR))) {
-		if (!stat(L3_PATH, &statbuf))
-			return true;
-	} else if (!strncmp(resctrl_val, MBA_STR, sizeof(MBA_STR))) {
-		if (!stat(MB_PATH, &statbuf))
-			return true;
-	} else if (!strncmp(resctrl_val, MBM_STR, sizeof(MBM_STR)) ||
-		   !strncmp(resctrl_val, CMT_STR, sizeof(CMT_STR))) {
-		if (!stat(L3_MON_PATH, &statbuf)) {
-			inf = fopen(L3_MON_FEATURES_PATH, "r");
-			if (!inf)
-				return false;
+	अगर (!म_भेदन(resctrl_val, CAT_STR, माप(CAT_STR))) अणु
+		अगर (!stat(L3_PATH, &statbuf))
+			वापस true;
+	पूर्ण अन्यथा अगर (!म_भेदन(resctrl_val, MBA_STR, माप(MBA_STR))) अणु
+		अगर (!stat(MB_PATH, &statbuf))
+			वापस true;
+	पूर्ण अन्यथा अगर (!म_भेदन(resctrl_val, MBM_STR, माप(MBM_STR)) ||
+		   !म_भेदन(resctrl_val, CMT_STR, माप(CMT_STR))) अणु
+		अगर (!stat(L3_MON_PATH, &statbuf)) अणु
+			inf = ख_खोलो(L3_MON_FEATURES_PATH, "r");
+			अगर (!inf)
+				वापस false;
 
-			if (!strncmp(resctrl_val, CMT_STR, sizeof(CMT_STR))) {
+			अगर (!म_भेदन(resctrl_val, CMT_STR, माप(CMT_STR))) अणु
 				res = fgrep(inf, "llc_occupancy");
-				if (res) {
+				अगर (res) अणु
 					found = true;
-					free(res);
-				}
-			}
+					मुक्त(res);
+				पूर्ण
+			पूर्ण
 
-			if (!strncmp(resctrl_val, MBM_STR, sizeof(MBM_STR))) {
+			अगर (!म_भेदन(resctrl_val, MBM_STR, माप(MBM_STR))) अणु
 				res = fgrep(inf, "mbm_total_bytes");
-				if (res) {
-					free(res);
+				अगर (res) अणु
+					मुक्त(res);
 					res = fgrep(inf, "mbm_local_bytes");
-					if (res) {
+					अगर (res) अणु
 						found = true;
-						free(res);
-					}
-				}
-			}
-			fclose(inf);
-		}
-	}
+						मुक्त(res);
+					पूर्ण
+				पूर्ण
+			पूर्ण
+			ख_बंद(inf);
+		पूर्ण
+	पूर्ण
 
-	return found;
-}
+	वापस found;
+पूर्ण
 
-int filter_dmesg(void)
-{
-	char line[1024];
-	FILE *fp;
-	int pipefds[2];
+पूर्णांक filter_dmesg(व्योम)
+अणु
+	अक्षर line[1024];
+	खाता *fp;
+	पूर्णांक pipefds[2];
 	pid_t pid;
-	int ret;
+	पूर्णांक ret;
 
 	ret = pipe(pipefds);
-	if (ret) {
-		perror("pipe");
-		return ret;
-	}
-	pid = fork();
-	if (pid == 0) {
-		close(pipefds[0]);
-		dup2(pipefds[1], STDOUT_FILENO);
-		execlp("dmesg", "dmesg", NULL);
-		perror("executing dmesg");
-		exit(1);
-	}
-	close(pipefds[1]);
-	fp = fdopen(pipefds[0], "r");
-	if (!fp) {
-		perror("fdopen(pipe)");
-		kill(pid, SIGTERM);
+	अगर (ret) अणु
+		लिखो_त्रुटि("pipe");
+		वापस ret;
+	पूर्ण
+	pid = विभाजन();
+	अगर (pid == 0) अणु
+		बंद(pipefds[0]);
+		dup2(pipefds[1], STDOUT_खाताNO);
+		execlp("dmesg", "dmesg", शून्य);
+		लिखो_त्रुटि("executing dmesg");
+		निकास(1);
+	पूर्ण
+	बंद(pipefds[1]);
+	fp = fकरोpen(pipefds[0], "r");
+	अगर (!fp) अणु
+		लिखो_त्रुटि("fdopen(pipe)");
+		समाप्त(pid, संक_इति);
 
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
-	while (fgets(line, 1024, fp)) {
-		if (strstr(line, "intel_rdt:"))
-			ksft_print_msg("dmesg: %s", line);
-		if (strstr(line, "resctrl:"))
-			ksft_print_msg("dmesg: %s", line);
-	}
-	fclose(fp);
-	waitpid(pid, NULL, 0);
+	जबतक (ख_माला_लो(line, 1024, fp)) अणु
+		अगर (म_माला(line, "intel_rdt:"))
+			ksft_prपूर्णांक_msg("dmesg: %s", line);
+		अगर (म_माला(line, "resctrl:"))
+			ksft_prपूर्णांक_msg("dmesg: %s", line);
+	पूर्ण
+	ख_बंद(fp);
+	रुकोpid(pid, शून्य, 0);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int validate_bw_report_request(char *bw_report)
-{
-	if (strcmp(bw_report, "reads") == 0)
-		return 0;
-	if (strcmp(bw_report, "writes") == 0)
-		return 0;
-	if (strcmp(bw_report, "nt-writes") == 0) {
-		strcpy(bw_report, "writes");
-		return 0;
-	}
-	if (strcmp(bw_report, "total") == 0)
-		return 0;
+पूर्णांक validate_bw_report_request(अक्षर *bw_report)
+अणु
+	अगर (म_भेद(bw_report, "reads") == 0)
+		वापस 0;
+	अगर (म_भेद(bw_report, "writes") == 0)
+		वापस 0;
+	अगर (म_भेद(bw_report, "nt-writes") == 0) अणु
+		म_नकल(bw_report, "writes");
+		वापस 0;
+	पूर्ण
+	अगर (म_भेद(bw_report, "total") == 0)
+		वापस 0;
 
-	fprintf(stderr, "Requested iMC B/W report type unavailable\n");
+	ख_लिखो(मानक_त्रुटि, "Requested iMC B/W report type unavailable\n");
 
-	return -1;
-}
+	वापस -1;
+पूर्ण
 
-int perf_event_open(struct perf_event_attr *hw_event, pid_t pid, int cpu,
-		    int group_fd, unsigned long flags)
-{
-	int ret;
+पूर्णांक perf_event_खोलो(काष्ठा perf_event_attr *hw_event, pid_t pid, पूर्णांक cpu,
+		    पूर्णांक group_fd, अचिन्हित दीर्घ flags)
+अणु
+	पूर्णांक ret;
 
-	ret = syscall(__NR_perf_event_open, hw_event, pid, cpu,
+	ret = syscall(__NR_perf_event_खोलो, hw_event, pid, cpu,
 		      group_fd, flags);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-unsigned int count_bits(unsigned long n)
-{
-	unsigned int count = 0;
+अचिन्हित पूर्णांक count_bits(अचिन्हित दीर्घ n)
+अणु
+	अचिन्हित पूर्णांक count = 0;
 
-	while (n) {
+	जबतक (n) अणु
 		count += n & 1;
 		n >>= 1;
-	}
+	पूर्ण
 
-	return count;
-}
+	वापस count;
+पूर्ण

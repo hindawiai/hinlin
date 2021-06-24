@@ -1,195 +1,196 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- *	LED Flash class driver for the AAT1290
- *	1.5A Step-Up Current Regulator for Flash LEDs
+ *	LED Flash class driver क्रम the AAT1290
+ *	1.5A Step-Up Current Regulator क्रम Flash LEDs
  *
  *	Copyright (C) 2015, Samsung Electronics Co., Ltd.
  *	Author: Jacek Anaszewski <j.anaszewski@samsung.com>
  */
 
-#include <linux/delay.h>
-#include <linux/gpio/consumer.h>
-#include <linux/led-class-flash.h>
-#include <linux/leds.h>
-#include <linux/module.h>
-#include <linux/mutex.h>
-#include <linux/of.h>
-#include <linux/pinctrl/consumer.h>
-#include <linux/platform_device.h>
-#include <linux/slab.h>
-#include <media/v4l2-flash-led-class.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/gpio/consumer.h>
+#समावेश <linux/led-class-flash.h>
+#समावेश <linux/leds.h>
+#समावेश <linux/module.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/of.h>
+#समावेश <linux/pinctrl/consumer.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/slab.h>
+#समावेश <media/v4l2-flash-led-class.h>
 
-#define AAT1290_MOVIE_MODE_CURRENT_ADDR	17
-#define AAT1290_MAX_MM_CURR_PERCENT_0	16
-#define AAT1290_MAX_MM_CURR_PERCENT_100	1
+#घोषणा AAT1290_MOVIE_MODE_CURRENT_ADDR	17
+#घोषणा AAT1290_MAX_MM_CURR_PERCENT_0	16
+#घोषणा AAT1290_MAX_MM_CURR_PERCENT_100	1
 
-#define AAT1290_FLASH_SAFETY_TIMER_ADDR	18
+#घोषणा AAT1290_FLASH_SAFETY_TIMER_ADDR	18
 
-#define AAT1290_MOVIE_MODE_CONFIG_ADDR	19
-#define AAT1290_MOVIE_MODE_OFF		1
-#define AAT1290_MOVIE_MODE_ON		3
+#घोषणा AAT1290_MOVIE_MODE_CONFIG_ADDR	19
+#घोषणा AAT1290_MOVIE_MODE_OFF		1
+#घोषणा AAT1290_MOVIE_MODE_ON		3
 
-#define AAT1290_MM_CURRENT_RATIO_ADDR	20
-#define AAT1290_MM_TO_FL_1_92		1
+#घोषणा AAT1290_MM_CURRENT_RATIO_ADDR	20
+#घोषणा AAT1290_MM_TO_FL_1_92		1
 
-#define AAT1290_MM_TO_FL_RATIO		1000 / 1920
-#define AAT1290_MAX_MM_CURRENT(fl_max)	(fl_max * AAT1290_MM_TO_FL_RATIO)
+#घोषणा AAT1290_MM_TO_FL_RATIO		1000 / 1920
+#घोषणा AAT1290_MAX_MM_CURRENT(fl_max)	(fl_max * AAT1290_MM_TO_FL_RATIO)
 
-#define AAT1290_LATCH_TIME_MIN_US	500
-#define AAT1290_LATCH_TIME_MAX_US	1000
-#define AAT1290_EN_SET_TICK_TIME_US	1
-#define AAT1290_FLEN_OFF_DELAY_TIME_US	10
-#define AAT1290_FLASH_TM_NUM_LEVELS	16
-#define AAT1290_MM_CURRENT_SCALE_SIZE	15
+#घोषणा AAT1290_LATCH_TIME_MIN_US	500
+#घोषणा AAT1290_LATCH_TIME_MAX_US	1000
+#घोषणा AAT1290_EN_SET_TICK_TIME_US	1
+#घोषणा AAT1290_FLEN_OFF_DELAY_TIME_US	10
+#घोषणा AAT1290_FLASH_TM_NUM_LEVELS	16
+#घोषणा AAT1290_MM_CURRENT_SCALE_SIZE	15
 
-#define AAT1290_NAME			"aat1290"
+#घोषणा AAT1290_NAME			"aat1290"
 
 
-struct aat1290_led_config_data {
+काष्ठा aat1290_led_config_data अणु
 	/* maximum LED current in movie mode */
 	u32 max_mm_current;
 	/* maximum LED current in flash mode */
 	u32 max_flash_current;
-	/* maximum flash timeout */
-	u32 max_flash_tm;
-	/* external strobe capability */
-	bool has_external_strobe;
+	/* maximum flash समयout */
+	u32 max_flash_पंचांग;
+	/* बाह्यal strobe capability */
+	bool has_बाह्यal_strobe;
 	/* max LED brightness level */
-	enum led_brightness max_brightness;
-};
+	क्रमागत led_brightness max_brightness;
+पूर्ण;
 
-struct aat1290_led {
-	/* platform device data */
-	struct platform_device *pdev;
+काष्ठा aat1290_led अणु
+	/* platक्रमm device data */
+	काष्ठा platक्रमm_device *pdev;
 	/* secures access to the device */
-	struct mutex lock;
+	काष्ठा mutex lock;
 
 	/* corresponding LED Flash class device */
-	struct led_classdev_flash fled_cdev;
+	काष्ठा led_classdev_flash fled_cdev;
 	/* V4L2 Flash device */
-	struct v4l2_flash *v4l2_flash;
+	काष्ठा v4l2_flash *v4l2_flash;
 
 	/* FLEN pin */
-	struct gpio_desc *gpio_fl_en;
+	काष्ठा gpio_desc *gpio_fl_en;
 	/* EN|SET pin  */
-	struct gpio_desc *gpio_en_set;
+	काष्ठा gpio_desc *gpio_en_set;
 	/* movie mode current scale */
-	int *mm_current_scale;
+	पूर्णांक *mm_current_scale;
 	/* device mode */
 	bool movie_mode;
 	/* brightness cache */
-	unsigned int torch_brightness;
-};
+	अचिन्हित पूर्णांक torch_brightness;
+पूर्ण;
 
-static struct aat1290_led *fled_cdev_to_led(
-				struct led_classdev_flash *fled_cdev)
-{
-	return container_of(fled_cdev, struct aat1290_led, fled_cdev);
-}
+अटल काष्ठा aat1290_led *fled_cdev_to_led(
+				काष्ठा led_classdev_flash *fled_cdev)
+अणु
+	वापस container_of(fled_cdev, काष्ठा aat1290_led, fled_cdev);
+पूर्ण
 
-static struct led_classdev_flash *led_cdev_to_fled_cdev(
-				struct led_classdev *led_cdev)
-{
-	return container_of(led_cdev, struct led_classdev_flash, led_cdev);
-}
+अटल काष्ठा led_classdev_flash *led_cdev_to_fled_cdev(
+				काष्ठा led_classdev *led_cdev)
+अणु
+	वापस container_of(led_cdev, काष्ठा led_classdev_flash, led_cdev);
+पूर्ण
 
-static void aat1290_as2cwire_write(struct aat1290_led *led, int addr, int value)
-{
-	int i;
+अटल व्योम aat1290_as2cwire_ग_लिखो(काष्ठा aat1290_led *led, पूर्णांक addr, पूर्णांक value)
+अणु
+	पूर्णांक i;
 
 	gpiod_direction_output(led->gpio_fl_en, 0);
 	gpiod_direction_output(led->gpio_en_set, 0);
 
 	udelay(AAT1290_FLEN_OFF_DELAY_TIME_US);
 
-	/* write address */
-	for (i = 0; i < addr; ++i) {
+	/* ग_लिखो address */
+	क्रम (i = 0; i < addr; ++i) अणु
 		udelay(AAT1290_EN_SET_TICK_TIME_US);
 		gpiod_direction_output(led->gpio_en_set, 0);
 		udelay(AAT1290_EN_SET_TICK_TIME_US);
 		gpiod_direction_output(led->gpio_en_set, 1);
-	}
+	पूर्ण
 
 	usleep_range(AAT1290_LATCH_TIME_MIN_US, AAT1290_LATCH_TIME_MAX_US);
 
-	/* write data */
-	for (i = 0; i < value; ++i) {
+	/* ग_लिखो data */
+	क्रम (i = 0; i < value; ++i) अणु
 		udelay(AAT1290_EN_SET_TICK_TIME_US);
 		gpiod_direction_output(led->gpio_en_set, 0);
 		udelay(AAT1290_EN_SET_TICK_TIME_US);
 		gpiod_direction_output(led->gpio_en_set, 1);
-	}
+	पूर्ण
 
 	usleep_range(AAT1290_LATCH_TIME_MIN_US, AAT1290_LATCH_TIME_MAX_US);
-}
+पूर्ण
 
-static void aat1290_set_flash_safety_timer(struct aat1290_led *led,
-					unsigned int micro_sec)
-{
-	struct led_classdev_flash *fled_cdev = &led->fled_cdev;
-	struct led_flash_setting *flash_tm = &fled_cdev->timeout;
-	int flash_tm_reg = AAT1290_FLASH_TM_NUM_LEVELS -
-				(micro_sec / flash_tm->step) + 1;
+अटल व्योम aat1290_set_flash_safety_समयr(काष्ठा aat1290_led *led,
+					अचिन्हित पूर्णांक micro_sec)
+अणु
+	काष्ठा led_classdev_flash *fled_cdev = &led->fled_cdev;
+	काष्ठा led_flash_setting *flash_पंचांग = &fled_cdev->समयout;
+	पूर्णांक flash_पंचांग_reg = AAT1290_FLASH_TM_NUM_LEVELS -
+				(micro_sec / flash_पंचांग->step) + 1;
 
-	aat1290_as2cwire_write(led, AAT1290_FLASH_SAFETY_TIMER_ADDR,
-							flash_tm_reg);
-}
+	aat1290_as2cwire_ग_लिखो(led, AAT1290_FLASH_SAFETY_TIMER_ADDR,
+							flash_पंचांग_reg);
+पूर्ण
 
-/* LED subsystem callbacks */
+/* LED subप्रणाली callbacks */
 
-static int aat1290_led_brightness_set(struct led_classdev *led_cdev,
-					enum led_brightness brightness)
-{
-	struct led_classdev_flash *fled_cdev = led_cdev_to_fled_cdev(led_cdev);
-	struct aat1290_led *led = fled_cdev_to_led(fled_cdev);
+अटल पूर्णांक aat1290_led_brightness_set(काष्ठा led_classdev *led_cdev,
+					क्रमागत led_brightness brightness)
+अणु
+	काष्ठा led_classdev_flash *fled_cdev = led_cdev_to_fled_cdev(led_cdev);
+	काष्ठा aat1290_led *led = fled_cdev_to_led(fled_cdev);
 
 	mutex_lock(&led->lock);
 
-	if (brightness == 0) {
+	अगर (brightness == 0) अणु
 		gpiod_direction_output(led->gpio_fl_en, 0);
 		gpiod_direction_output(led->gpio_en_set, 0);
 		led->movie_mode = false;
-	} else {
-		if (!led->movie_mode) {
-			aat1290_as2cwire_write(led,
+	पूर्ण अन्यथा अणु
+		अगर (!led->movie_mode) अणु
+			aat1290_as2cwire_ग_लिखो(led,
 				AAT1290_MM_CURRENT_RATIO_ADDR,
 				AAT1290_MM_TO_FL_1_92);
 			led->movie_mode = true;
-		}
+		पूर्ण
 
-		aat1290_as2cwire_write(led, AAT1290_MOVIE_MODE_CURRENT_ADDR,
+		aat1290_as2cwire_ग_लिखो(led, AAT1290_MOVIE_MODE_CURRENT_ADDR,
 				AAT1290_MAX_MM_CURR_PERCENT_0 - brightness);
-		aat1290_as2cwire_write(led, AAT1290_MOVIE_MODE_CONFIG_ADDR,
+		aat1290_as2cwire_ग_लिखो(led, AAT1290_MOVIE_MODE_CONFIG_ADDR,
 				AAT1290_MOVIE_MODE_ON);
-	}
+	पूर्ण
 
 	mutex_unlock(&led->lock);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int aat1290_led_flash_strobe_set(struct led_classdev_flash *fled_cdev,
+अटल पूर्णांक aat1290_led_flash_strobe_set(काष्ठा led_classdev_flash *fled_cdev,
 					 bool state)
 
-{
-	struct aat1290_led *led = fled_cdev_to_led(fled_cdev);
-	struct led_classdev *led_cdev = &fled_cdev->led_cdev;
-	struct led_flash_setting *timeout = &fled_cdev->timeout;
+अणु
+	काष्ठा aat1290_led *led = fled_cdev_to_led(fled_cdev);
+	काष्ठा led_classdev *led_cdev = &fled_cdev->led_cdev;
+	काष्ठा led_flash_setting *समयout = &fled_cdev->समयout;
 
 	mutex_lock(&led->lock);
 
-	if (state) {
-		aat1290_set_flash_safety_timer(led, timeout->val);
+	अगर (state) अणु
+		aat1290_set_flash_safety_समयr(led, समयout->val);
 		gpiod_direction_output(led->gpio_fl_en, 1);
-	} else {
+	पूर्ण अन्यथा अणु
 		gpiod_direction_output(led->gpio_fl_en, 0);
 		gpiod_direction_output(led->gpio_en_set, 0);
-	}
+	पूर्ण
 
 	/*
 	 * To reenter movie mode after a flash event the part must be cycled
 	 * off and back on to reset the movie mode and reprogrammed via the
-	 * AS2Cwire. Therefore the brightness and movie_mode properties needs
+	 * AS2Cwire. Thereक्रमe the brightness and movie_mode properties needs
 	 * to be updated here to reflect the actual state.
 	 */
 	led_cdev->brightness = 0;
@@ -197,210 +198,210 @@ static int aat1290_led_flash_strobe_set(struct led_classdev_flash *fled_cdev,
 
 	mutex_unlock(&led->lock);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int aat1290_led_flash_timeout_set(struct led_classdev_flash *fled_cdev,
-						u32 timeout)
-{
+अटल पूर्णांक aat1290_led_flash_समयout_set(काष्ठा led_classdev_flash *fled_cdev,
+						u32 समयout)
+अणु
 	/*
-	 * Don't do anything - flash timeout is cached in the led-class-flash
+	 * Don't करो anything - flash समयout is cached in the led-class-flash
 	 * core and will be applied in the strobe_set op, as writing the
-	 * safety timer register spuriously turns the torch mode on.
+	 * safety समयr रेजिस्टर spuriously turns the torch mode on.
 	 */
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int aat1290_led_parse_dt(struct aat1290_led *led,
-			struct aat1290_led_config_data *cfg,
-			struct device_node **sub_node)
-{
-	struct device *dev = &led->pdev->dev;
-	struct device_node *child_node;
-#if IS_ENABLED(CONFIG_V4L2_FLASH_LED_CLASS)
-	struct pinctrl *pinctrl;
-#endif
-	int ret = 0;
+अटल पूर्णांक aat1290_led_parse_dt(काष्ठा aat1290_led *led,
+			काष्ठा aat1290_led_config_data *cfg,
+			काष्ठा device_node **sub_node)
+अणु
+	काष्ठा device *dev = &led->pdev->dev;
+	काष्ठा device_node *child_node;
+#अगर IS_ENABLED(CONFIG_V4L2_FLASH_LED_CLASS)
+	काष्ठा pinctrl *pinctrl;
+#पूर्ण_अगर
+	पूर्णांक ret = 0;
 
 	led->gpio_fl_en = devm_gpiod_get(dev, "flen", GPIOD_ASIS);
-	if (IS_ERR(led->gpio_fl_en)) {
+	अगर (IS_ERR(led->gpio_fl_en)) अणु
 		ret = PTR_ERR(led->gpio_fl_en);
 		dev_err(dev, "Unable to claim gpio \"flen\".\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	led->gpio_en_set = devm_gpiod_get(dev, "enset", GPIOD_ASIS);
-	if (IS_ERR(led->gpio_en_set)) {
+	अगर (IS_ERR(led->gpio_en_set)) अणु
 		ret = PTR_ERR(led->gpio_en_set);
 		dev_err(dev, "Unable to claim gpio \"enset\".\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-#if IS_ENABLED(CONFIG_V4L2_FLASH_LED_CLASS)
-	pinctrl = devm_pinctrl_get_select_default(&led->pdev->dev);
-	if (IS_ERR(pinctrl)) {
-		cfg->has_external_strobe = false;
+#अगर IS_ENABLED(CONFIG_V4L2_FLASH_LED_CLASS)
+	pinctrl = devm_pinctrl_get_select_शेष(&led->pdev->dev);
+	अगर (IS_ERR(pinctrl)) अणु
+		cfg->has_बाह्यal_strobe = false;
 		dev_info(dev,
 			 "No support for external strobe detected.\n");
-	} else {
-		cfg->has_external_strobe = true;
-	}
-#endif
+	पूर्ण अन्यथा अणु
+		cfg->has_बाह्यal_strobe = true;
+	पूर्ण
+#पूर्ण_अगर
 
-	child_node = of_get_next_available_child(dev_of_node(dev), NULL);
-	if (!child_node) {
+	child_node = of_get_next_available_child(dev_of_node(dev), शून्य);
+	अगर (!child_node) अणु
 		dev_err(dev, "No DT child node found for connected LED.\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	ret = of_property_read_u32(child_node, "led-max-microamp",
+	ret = of_property_पढ़ो_u32(child_node, "led-max-microamp",
 				&cfg->max_mm_current);
 	/*
-	 * led-max-microamp will default to 1/20 of flash-max-microamp
-	 * in case it is missing.
+	 * led-max-microamp will शेष to 1/20 of flash-max-microamp
+	 * in हाल it is missing.
 	 */
-	if (ret < 0)
+	अगर (ret < 0)
 		dev_warn(dev,
 			"led-max-microamp DT property missing\n");
 
-	ret = of_property_read_u32(child_node, "flash-max-microamp",
+	ret = of_property_पढ़ो_u32(child_node, "flash-max-microamp",
 				&cfg->max_flash_current);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(dev,
 			"flash-max-microamp DT property missing\n");
-		goto err_parse_dt;
-	}
+		जाओ err_parse_dt;
+	पूर्ण
 
-	ret = of_property_read_u32(child_node, "flash-max-timeout-us",
-				&cfg->max_flash_tm);
-	if (ret < 0) {
+	ret = of_property_पढ़ो_u32(child_node, "flash-max-timeout-us",
+				&cfg->max_flash_पंचांग);
+	अगर (ret < 0) अणु
 		dev_err(dev,
 			"flash-max-timeout-us DT property missing\n");
-		goto err_parse_dt;
-	}
+		जाओ err_parse_dt;
+	पूर्ण
 
 	*sub_node = child_node;
 
 err_parse_dt:
 	of_node_put(child_node);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void aat1290_led_validate_mm_current(struct aat1290_led *led,
-					struct aat1290_led_config_data *cfg)
-{
-	int i, b = 0, e = AAT1290_MM_CURRENT_SCALE_SIZE;
+अटल व्योम aat1290_led_validate_mm_current(काष्ठा aat1290_led *led,
+					काष्ठा aat1290_led_config_data *cfg)
+अणु
+	पूर्णांक i, b = 0, e = AAT1290_MM_CURRENT_SCALE_SIZE;
 
-	while (e - b > 1) {
+	जबतक (e - b > 1) अणु
 		i = b + (e - b) / 2;
-		if (cfg->max_mm_current < led->mm_current_scale[i])
+		अगर (cfg->max_mm_current < led->mm_current_scale[i])
 			e = i;
-		else
+		अन्यथा
 			b = i;
-	}
+	पूर्ण
 
 	cfg->max_mm_current = led->mm_current_scale[b];
 	cfg->max_brightness = b + 1;
-}
+पूर्ण
 
-static int init_mm_current_scale(struct aat1290_led *led,
-			struct aat1290_led_config_data *cfg)
-{
-	static const int max_mm_current_percent[] = {
+अटल पूर्णांक init_mm_current_scale(काष्ठा aat1290_led *led,
+			काष्ठा aat1290_led_config_data *cfg)
+अणु
+	अटल स्थिर पूर्णांक max_mm_current_percent[] = अणु
 		20, 22, 25, 28, 32, 36, 40, 45, 50, 56,
 		63, 71, 79, 89, 100
-	};
-	int i, max_mm_current =
+	पूर्ण;
+	पूर्णांक i, max_mm_current =
 			AAT1290_MAX_MM_CURRENT(cfg->max_flash_current);
 
 	led->mm_current_scale = devm_kzalloc(&led->pdev->dev,
-					sizeof(max_mm_current_percent),
+					माप(max_mm_current_percent),
 					GFP_KERNEL);
-	if (!led->mm_current_scale)
-		return -ENOMEM;
+	अगर (!led->mm_current_scale)
+		वापस -ENOMEM;
 
-	for (i = 0; i < AAT1290_MM_CURRENT_SCALE_SIZE; ++i)
+	क्रम (i = 0; i < AAT1290_MM_CURRENT_SCALE_SIZE; ++i)
 		led->mm_current_scale[i] = max_mm_current *
 					  max_mm_current_percent[i] / 100;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int aat1290_led_get_configuration(struct aat1290_led *led,
-					struct aat1290_led_config_data *cfg,
-					struct device_node **sub_node)
-{
-	int ret;
+अटल पूर्णांक aat1290_led_get_configuration(काष्ठा aat1290_led *led,
+					काष्ठा aat1290_led_config_data *cfg,
+					काष्ठा device_node **sub_node)
+अणु
+	पूर्णांक ret;
 
 	ret = aat1290_led_parse_dt(led, cfg, sub_node);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 	/*
 	 * Init non-linear movie mode current scale basing
 	 * on the max flash current from led configuration.
 	 */
 	ret = init_mm_current_scale(led, cfg);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	aat1290_led_validate_mm_current(led, cfg);
 
-#if IS_ENABLED(CONFIG_V4L2_FLASH_LED_CLASS)
-#else
-	devm_kfree(&led->pdev->dev, led->mm_current_scale);
-#endif
+#अगर IS_ENABLED(CONFIG_V4L2_FLASH_LED_CLASS)
+#अन्यथा
+	devm_kमुक्त(&led->pdev->dev, led->mm_current_scale);
+#पूर्ण_अगर
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void aat1290_init_flash_timeout(struct aat1290_led *led,
-				struct aat1290_led_config_data *cfg)
-{
-	struct led_classdev_flash *fled_cdev = &led->fled_cdev;
-	struct led_flash_setting *setting;
+अटल व्योम aat1290_init_flash_समयout(काष्ठा aat1290_led *led,
+				काष्ठा aat1290_led_config_data *cfg)
+अणु
+	काष्ठा led_classdev_flash *fled_cdev = &led->fled_cdev;
+	काष्ठा led_flash_setting *setting;
 
-	/* Init flash timeout setting */
-	setting = &fled_cdev->timeout;
-	setting->min = cfg->max_flash_tm / AAT1290_FLASH_TM_NUM_LEVELS;
-	setting->max = cfg->max_flash_tm;
+	/* Init flash समयout setting */
+	setting = &fled_cdev->समयout;
+	setting->min = cfg->max_flash_पंचांग / AAT1290_FLASH_TM_NUM_LEVELS;
+	setting->max = cfg->max_flash_पंचांग;
 	setting->step = setting->min;
 	setting->val = setting->max;
-}
+पूर्ण
 
-#if IS_ENABLED(CONFIG_V4L2_FLASH_LED_CLASS)
-static enum led_brightness aat1290_intensity_to_brightness(
-					struct v4l2_flash *v4l2_flash,
-					s32 intensity)
-{
-	struct led_classdev_flash *fled_cdev = v4l2_flash->fled_cdev;
-	struct aat1290_led *led = fled_cdev_to_led(fled_cdev);
-	int i;
+#अगर IS_ENABLED(CONFIG_V4L2_FLASH_LED_CLASS)
+अटल क्रमागत led_brightness aat1290_पूर्णांकensity_to_brightness(
+					काष्ठा v4l2_flash *v4l2_flash,
+					s32 पूर्णांकensity)
+अणु
+	काष्ठा led_classdev_flash *fled_cdev = v4l2_flash->fled_cdev;
+	काष्ठा aat1290_led *led = fled_cdev_to_led(fled_cdev);
+	पूर्णांक i;
 
-	for (i = AAT1290_MM_CURRENT_SCALE_SIZE - 1; i >= 0; --i)
-		if (intensity >= led->mm_current_scale[i])
-			return i + 1;
+	क्रम (i = AAT1290_MM_CURRENT_SCALE_SIZE - 1; i >= 0; --i)
+		अगर (पूर्णांकensity >= led->mm_current_scale[i])
+			वापस i + 1;
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-static s32 aat1290_brightness_to_intensity(struct v4l2_flash *v4l2_flash,
-					enum led_brightness brightness)
-{
-	struct led_classdev_flash *fled_cdev = v4l2_flash->fled_cdev;
-	struct aat1290_led *led = fled_cdev_to_led(fled_cdev);
+अटल s32 aat1290_brightness_to_पूर्णांकensity(काष्ठा v4l2_flash *v4l2_flash,
+					क्रमागत led_brightness brightness)
+अणु
+	काष्ठा led_classdev_flash *fled_cdev = v4l2_flash->fled_cdev;
+	काष्ठा aat1290_led *led = fled_cdev_to_led(fled_cdev);
 
-	return led->mm_current_scale[brightness - 1];
-}
+	वापस led->mm_current_scale[brightness - 1];
+पूर्ण
 
-static int aat1290_led_external_strobe_set(struct v4l2_flash *v4l2_flash,
+अटल पूर्णांक aat1290_led_बाह्यal_strobe_set(काष्ठा v4l2_flash *v4l2_flash,
 						bool enable)
-{
-	struct aat1290_led *led = fled_cdev_to_led(v4l2_flash->fled_cdev);
-	struct led_classdev_flash *fled_cdev = v4l2_flash->fled_cdev;
-	struct led_classdev *led_cdev = &fled_cdev->led_cdev;
-	struct pinctrl *pinctrl;
+अणु
+	काष्ठा aat1290_led *led = fled_cdev_to_led(v4l2_flash->fled_cdev);
+	काष्ठा led_classdev_flash *fled_cdev = v4l2_flash->fled_cdev;
+	काष्ठा led_classdev *led_cdev = &fled_cdev->led_cdev;
+	काष्ठा pinctrl *pinctrl;
 
 	gpiod_direction_output(led->gpio_fl_en, 0);
 	gpiod_direction_output(led->gpio_en_set, 0);
@@ -410,78 +411,78 @@ static int aat1290_led_external_strobe_set(struct v4l2_flash *v4l2_flash,
 
 	pinctrl = devm_pinctrl_get_select(&led->pdev->dev,
 						enable ? "isp" : "host");
-	if (IS_ERR(pinctrl)) {
+	अगर (IS_ERR(pinctrl)) अणु
 		dev_warn(&led->pdev->dev, "Unable to switch strobe source.\n");
-		return PTR_ERR(pinctrl);
-	}
+		वापस PTR_ERR(pinctrl);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void aat1290_init_v4l2_flash_config(struct aat1290_led *led,
-					struct aat1290_led_config_data *led_cfg,
-					struct v4l2_flash_config *v4l2_sd_cfg)
-{
-	struct led_classdev *led_cdev = &led->fled_cdev.led_cdev;
-	struct led_flash_setting *s;
+अटल व्योम aat1290_init_v4l2_flash_config(काष्ठा aat1290_led *led,
+					काष्ठा aat1290_led_config_data *led_cfg,
+					काष्ठा v4l2_flash_config *v4l2_sd_cfg)
+अणु
+	काष्ठा led_classdev *led_cdev = &led->fled_cdev.led_cdev;
+	काष्ठा led_flash_setting *s;
 
 	strlcpy(v4l2_sd_cfg->dev_name, led_cdev->dev->kobj.name,
-		sizeof(v4l2_sd_cfg->dev_name));
+		माप(v4l2_sd_cfg->dev_name));
 
-	s = &v4l2_sd_cfg->intensity;
+	s = &v4l2_sd_cfg->पूर्णांकensity;
 	s->min = led->mm_current_scale[0];
 	s->max = led_cfg->max_mm_current;
 	s->step = 1;
 	s->val = s->max;
 
-	v4l2_sd_cfg->has_external_strobe = led_cfg->has_external_strobe;
-}
+	v4l2_sd_cfg->has_बाह्यal_strobe = led_cfg->has_बाह्यal_strobe;
+पूर्ण
 
-static const struct v4l2_flash_ops v4l2_flash_ops = {
-	.external_strobe_set = aat1290_led_external_strobe_set,
-	.intensity_to_led_brightness = aat1290_intensity_to_brightness,
-	.led_brightness_to_intensity = aat1290_brightness_to_intensity,
-};
-#else
-static inline void aat1290_init_v4l2_flash_config(struct aat1290_led *led,
-				struct aat1290_led_config_data *led_cfg,
-				struct v4l2_flash_config *v4l2_sd_cfg)
-{
-}
-static const struct v4l2_flash_ops v4l2_flash_ops;
-#endif
+अटल स्थिर काष्ठा v4l2_flash_ops v4l2_flash_ops = अणु
+	.बाह्यal_strobe_set = aat1290_led_बाह्यal_strobe_set,
+	.पूर्णांकensity_to_led_brightness = aat1290_पूर्णांकensity_to_brightness,
+	.led_brightness_to_पूर्णांकensity = aat1290_brightness_to_पूर्णांकensity,
+पूर्ण;
+#अन्यथा
+अटल अंतरभूत व्योम aat1290_init_v4l2_flash_config(काष्ठा aat1290_led *led,
+				काष्ठा aat1290_led_config_data *led_cfg,
+				काष्ठा v4l2_flash_config *v4l2_sd_cfg)
+अणु
+पूर्ण
+अटल स्थिर काष्ठा v4l2_flash_ops v4l2_flash_ops;
+#पूर्ण_अगर
 
-static const struct led_flash_ops flash_ops = {
+अटल स्थिर काष्ठा led_flash_ops flash_ops = अणु
 	.strobe_set = aat1290_led_flash_strobe_set,
-	.timeout_set = aat1290_led_flash_timeout_set,
-};
+	.समयout_set = aat1290_led_flash_समयout_set,
+पूर्ण;
 
-static int aat1290_led_probe(struct platform_device *pdev)
-{
-	struct device *dev = &pdev->dev;
-	struct device_node *sub_node = NULL;
-	struct aat1290_led *led;
-	struct led_classdev *led_cdev;
-	struct led_classdev_flash *fled_cdev;
-	struct led_init_data init_data = {};
-	struct aat1290_led_config_data led_cfg = {};
-	struct v4l2_flash_config v4l2_sd_cfg = {};
-	int ret;
+अटल पूर्णांक aat1290_led_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा device_node *sub_node = शून्य;
+	काष्ठा aat1290_led *led;
+	काष्ठा led_classdev *led_cdev;
+	काष्ठा led_classdev_flash *fled_cdev;
+	काष्ठा led_init_data init_data = अणुपूर्ण;
+	काष्ठा aat1290_led_config_data led_cfg = अणुपूर्ण;
+	काष्ठा v4l2_flash_config v4l2_sd_cfg = अणुपूर्ण;
+	पूर्णांक ret;
 
-	led = devm_kzalloc(dev, sizeof(*led), GFP_KERNEL);
-	if (!led)
-		return -ENOMEM;
+	led = devm_kzalloc(dev, माप(*led), GFP_KERNEL);
+	अगर (!led)
+		वापस -ENOMEM;
 
 	led->pdev = pdev;
-	platform_set_drvdata(pdev, led);
+	platक्रमm_set_drvdata(pdev, led);
 
 	fled_cdev = &led->fled_cdev;
 	fled_cdev->ops = &flash_ops;
 	led_cdev = &fled_cdev->led_cdev;
 
 	ret = aat1290_led_get_configuration(led, &led_cfg, &sub_node);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	mutex_init(&led->lock);
 
@@ -490,16 +491,16 @@ static int aat1290_led_probe(struct platform_device *pdev)
 	led_cdev->max_brightness = led_cfg.max_brightness;
 	led_cdev->flags |= LED_DEV_CAP_FLASH;
 
-	aat1290_init_flash_timeout(led, &led_cfg);
+	aat1290_init_flash_समयout(led, &led_cfg);
 
 	init_data.fwnode = of_fwnode_handle(sub_node);
 	init_data.devicename = AAT1290_NAME;
 
 	/* Register LED Flash class device */
-	ret = led_classdev_flash_register_ext(&pdev->dev, fled_cdev,
+	ret = led_classdev_flash_रेजिस्टर_ext(&pdev->dev, fled_cdev,
 					      &init_data);
-	if (ret < 0)
-		goto err_flash_register;
+	अगर (ret < 0)
+		जाओ err_flash_रेजिस्टर;
 
 	aat1290_init_v4l2_flash_config(led, &led_cfg, &v4l2_sd_cfg);
 
@@ -507,49 +508,49 @@ static int aat1290_led_probe(struct platform_device *pdev)
 	led->v4l2_flash = v4l2_flash_init(dev, of_fwnode_handle(sub_node),
 					  fled_cdev, &v4l2_flash_ops,
 					  &v4l2_sd_cfg);
-	if (IS_ERR(led->v4l2_flash)) {
+	अगर (IS_ERR(led->v4l2_flash)) अणु
 		ret = PTR_ERR(led->v4l2_flash);
-		goto error_v4l2_flash_init;
-	}
+		जाओ error_v4l2_flash_init;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 error_v4l2_flash_init:
-	led_classdev_flash_unregister(fled_cdev);
-err_flash_register:
+	led_classdev_flash_unरेजिस्टर(fled_cdev);
+err_flash_रेजिस्टर:
 	mutex_destroy(&led->lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int aat1290_led_remove(struct platform_device *pdev)
-{
-	struct aat1290_led *led = platform_get_drvdata(pdev);
+अटल पूर्णांक aat1290_led_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा aat1290_led *led = platक्रमm_get_drvdata(pdev);
 
 	v4l2_flash_release(led->v4l2_flash);
-	led_classdev_flash_unregister(&led->fled_cdev);
+	led_classdev_flash_unरेजिस्टर(&led->fled_cdev);
 
 	mutex_destroy(&led->lock);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct of_device_id aat1290_led_dt_match[] = {
-	{ .compatible = "skyworks,aat1290" },
-	{},
-};
+अटल स्थिर काष्ठा of_device_id aat1290_led_dt_match[] = अणु
+	अणु .compatible = "skyworks,aat1290" पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, aat1290_led_dt_match);
 
-static struct platform_driver aat1290_led_driver = {
+अटल काष्ठा platक्रमm_driver aat1290_led_driver = अणु
 	.probe		= aat1290_led_probe,
-	.remove		= aat1290_led_remove,
-	.driver		= {
+	.हटाओ		= aat1290_led_हटाओ,
+	.driver		= अणु
 		.name	= "aat1290",
 		.of_match_table = aat1290_led_dt_match,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-module_platform_driver(aat1290_led_driver);
+module_platक्रमm_driver(aat1290_led_driver);
 
 MODULE_AUTHOR("Jacek Anaszewski <j.anaszewski@samsung.com>");
 MODULE_DESCRIPTION("Skyworks Current Regulator for Flash LEDs");

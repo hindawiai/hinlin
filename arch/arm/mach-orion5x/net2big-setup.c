@@ -1,3 +1,4 @@
+<शैली गुरु>
 /*
  * arch/arm/mach-orion5x/net2big-setup.c
  *
@@ -10,24 +11,24 @@
  * warranty of any kind, whether express or implied.
  */
 
-#include <linux/kernel.h>
-#include <linux/init.h>
-#include <linux/platform_device.h>
-#include <linux/mtd/physmap.h>
-#include <linux/mv643xx_eth.h>
-#include <linux/leds.h>
-#include <linux/gpio_keys.h>
-#include <linux/input.h>
-#include <linux/i2c.h>
-#include <linux/ata_platform.h>
-#include <linux/gpio.h>
-#include <linux/delay.h>
-#include <asm/mach-types.h>
-#include <asm/mach/arch.h>
-#include <plat/orion-gpio.h>
-#include "common.h"
-#include "mpp.h"
-#include "orion5x.h"
+#समावेश <linux/kernel.h>
+#समावेश <linux/init.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/mtd/physmap.h>
+#समावेश <linux/mv643xx_eth.h>
+#समावेश <linux/leds.h>
+#समावेश <linux/gpio_keys.h>
+#समावेश <linux/input.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/ata_platक्रमm.h>
+#समावेश <linux/gpपन.स>
+#समावेश <linux/delay.h>
+#समावेश <यंत्र/mach-types.h>
+#समावेश <यंत्र/mach/arch.h>
+#समावेश <plat/orion-gpपन.स>
+#समावेश "common.h"
+#समावेश "mpp.h"
+#समावेश "orion5x.h"
 
 /*****************************************************************************
  * LaCie 2Big Network Info
@@ -37,56 +38,56 @@
  * 512KB NOR flash Device bus boot chip select
  */
 
-#define NET2BIG_NOR_BOOT_BASE		0xfff80000
-#define NET2BIG_NOR_BOOT_SIZE		SZ_512K
+#घोषणा NET2BIG_NOR_BOOT_BASE		0xfff80000
+#घोषणा NET2BIG_NOR_BOOT_SIZE		SZ_512K
 
 /*****************************************************************************
  * 512KB NOR Flash on Boot Device
  ****************************************************************************/
 
 /*
- * TODO: Check write support on flash MX29LV400CBTC-70G
+ * TODO: Check ग_लिखो support on flash MX29LV400CBTC-70G
  */
 
-static struct mtd_partition net2big_partitions[] = {
-	{
+अटल काष्ठा mtd_partition net2big_partitions[] = अणु
+	अणु
 		.name		= "Full512kb",
 		.size		= MTDPART_SIZ_FULL,
 		.offset		= 0x00000000,
 		.mask_flags	= MTD_WRITEABLE,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static struct physmap_flash_data net2big_nor_flash_data = {
+अटल काष्ठा physmap_flash_data net2big_nor_flash_data = अणु
 	.width		= 1,
 	.parts		= net2big_partitions,
 	.nr_parts	= ARRAY_SIZE(net2big_partitions),
-};
+पूर्ण;
 
-static struct resource net2big_nor_flash_resource = {
+अटल काष्ठा resource net2big_nor_flash_resource = अणु
 	.flags			= IORESOURCE_MEM,
 	.start			= NET2BIG_NOR_BOOT_BASE,
 	.end			= NET2BIG_NOR_BOOT_BASE
 					+ NET2BIG_NOR_BOOT_SIZE - 1,
-};
+पूर्ण;
 
-static struct platform_device net2big_nor_flash = {
+अटल काष्ठा platक्रमm_device net2big_nor_flash = अणु
 	.name			= "physmap-flash",
 	.id			= 0,
-	.dev		= {
-		.platform_data	= &net2big_nor_flash_data,
-	},
+	.dev		= अणु
+		.platक्रमm_data	= &net2big_nor_flash_data,
+	पूर्ण,
 	.num_resources		= 1,
 	.resource		= &net2big_nor_flash_resource,
-};
+पूर्ण;
 
 /*****************************************************************************
  * Ethernet
  ****************************************************************************/
 
-static struct mv643xx_eth_platform_data net2big_eth_data = {
+अटल काष्ठा mv643xx_eth_platक्रमm_data net2big_eth_data = अणु
 	.phy_addr	= MV643XX_ETH_PHY_ADDR(8),
-};
+पूर्ण;
 
 /*****************************************************************************
  * I2C devices
@@ -97,98 +98,98 @@ static struct mv643xx_eth_platform_data net2big_eth_data = {
  * 0x32     | Ricoh 5C372b | RTC
  * 0x50     | HT24LC08     | eeprom (1kB)
  */
-static struct i2c_board_info __initdata net2big_i2c_devices[] = {
-	{
+अटल काष्ठा i2c_board_info __initdata net2big_i2c_devices[] = अणु
+	अणु
 		I2C_BOARD_INFO("rs5c372b", 0x32),
-	}, {
+	पूर्ण, अणु
 		I2C_BOARD_INFO("24c08", 0x50),
-	},
-};
+	पूर्ण,
+पूर्ण;
 
 /*****************************************************************************
  * SATA
  ****************************************************************************/
 
-static struct mv_sata_platform_data net2big_sata_data = {
+अटल काष्ठा mv_sata_platक्रमm_data net2big_sata_data = अणु
 	.n_ports	= 2,
-};
+पूर्ण;
 
-#define NET2BIG_GPIO_SATA_POWER_REQ	19
-#define NET2BIG_GPIO_SATA0_POWER	23
-#define NET2BIG_GPIO_SATA1_POWER	25
+#घोषणा NET2BIG_GPIO_SATA_POWER_REQ	19
+#घोषणा NET2BIG_GPIO_SATA0_POWER	23
+#घोषणा NET2BIG_GPIO_SATA1_POWER	25
 
-static void __init net2big_sata_power_init(void)
-{
-	int err;
+अटल व्योम __init net2big_sata_घातer_init(व्योम)
+अणु
+	पूर्णांक err;
 
 	/* Configure GPIOs over MPP max number. */
 	orion_gpio_set_valid(NET2BIG_GPIO_SATA0_POWER, 1);
 	orion_gpio_set_valid(NET2BIG_GPIO_SATA1_POWER, 1);
 
 	err = gpio_request(NET2BIG_GPIO_SATA0_POWER, "SATA0 power status");
-	if (err == 0) {
+	अगर (err == 0) अणु
 		err = gpio_direction_input(NET2BIG_GPIO_SATA0_POWER);
-		if (err)
-			gpio_free(NET2BIG_GPIO_SATA0_POWER);
-	}
-	if (err) {
+		अगर (err)
+			gpio_मुक्त(NET2BIG_GPIO_SATA0_POWER);
+	पूर्ण
+	अगर (err) अणु
 		pr_err("net2big: failed to setup SATA0 power GPIO\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	err = gpio_request(NET2BIG_GPIO_SATA1_POWER, "SATA1 power status");
-	if (err == 0) {
+	अगर (err == 0) अणु
 		err = gpio_direction_input(NET2BIG_GPIO_SATA1_POWER);
-		if (err)
-			gpio_free(NET2BIG_GPIO_SATA1_POWER);
-	}
-	if (err) {
+		अगर (err)
+			gpio_मुक्त(NET2BIG_GPIO_SATA1_POWER);
+	पूर्ण
+	अगर (err) अणु
 		pr_err("net2big: failed to setup SATA1 power GPIO\n");
-		goto err_free_1;
-	}
+		जाओ err_मुक्त_1;
+	पूर्ण
 
 	err = gpio_request(NET2BIG_GPIO_SATA_POWER_REQ, "SATA power request");
-	if (err == 0) {
+	अगर (err == 0) अणु
 		err = gpio_direction_output(NET2BIG_GPIO_SATA_POWER_REQ, 0);
-		if (err)
-			gpio_free(NET2BIG_GPIO_SATA_POWER_REQ);
-	}
-	if (err) {
+		अगर (err)
+			gpio_मुक्त(NET2BIG_GPIO_SATA_POWER_REQ);
+	पूर्ण
+	अगर (err) अणु
 		pr_err("net2big: failed to setup SATA power request GPIO\n");
-		goto err_free_2;
-	}
+		जाओ err_मुक्त_2;
+	पूर्ण
 
-	if (gpio_get_value(NET2BIG_GPIO_SATA0_POWER) &&
-		gpio_get_value(NET2BIG_GPIO_SATA1_POWER)) {
-		return;
-	}
+	अगर (gpio_get_value(NET2BIG_GPIO_SATA0_POWER) &&
+		gpio_get_value(NET2BIG_GPIO_SATA1_POWER)) अणु
+		वापस;
+	पूर्ण
 
 	/*
-	 * SATA power up on both disk is done by pulling high the CPLD power
-	 * request line. The 300ms delay is related to the CPLD clock and is
-	 * needed to be sure that the CPLD has take into account the low line
+	 * SATA घातer up on both disk is करोne by pulling high the CPLD घातer
+	 * request line. The 300ms delay is related to the CPLD घड़ी and is
+	 * needed to be sure that the CPLD has take पूर्णांकo account the low line
 	 * status.
 	 */
 	msleep(300);
 	gpio_set_value(NET2BIG_GPIO_SATA_POWER_REQ, 1);
 	pr_info("net2big: power up SATA hard disks\n");
 
-	return;
+	वापस;
 
-err_free_2:
-	gpio_free(NET2BIG_GPIO_SATA1_POWER);
-err_free_1:
-	gpio_free(NET2BIG_GPIO_SATA0_POWER);
+err_मुक्त_2:
+	gpio_मुक्त(NET2BIG_GPIO_SATA1_POWER);
+err_मुक्त_1:
+	gpio_मुक्त(NET2BIG_GPIO_SATA0_POWER);
 
-	return;
-}
+	वापस;
+पूर्ण
 
 /*****************************************************************************
  * GPIO LEDs
  ****************************************************************************/
 
 /*
- * The power front LEDs (blue and red) and SATA red LEDs are controlled via a
+ * The घातer front LEDs (blue and red) and SATA red LEDs are controlled via a
  * single GPIO line and are compatible with the leds-gpio driver.
  *
  * The SATA blue LEDs have some hardware blink capabilities which are detailed
@@ -200,65 +201,65 @@ err_free_1:
  *       1        |       0        |  off
  *       ?        |       1        |  on
  *
- * Notes: The blue and the red front LED's can't be on at the same time.
+ * Notes: The blue and the red front LED's can't be on at the same समय.
  *        Blue LED have priority.
  */
 
-#define NET2BIG_GPIO_PWR_RED_LED	6
-#define NET2BIG_GPIO_PWR_BLUE_LED	16
-#define NET2BIG_GPIO_PWR_LED_BLINK_STOP	7
+#घोषणा NET2BIG_GPIO_PWR_RED_LED	6
+#घोषणा NET2BIG_GPIO_PWR_BLUE_LED	16
+#घोषणा NET2BIG_GPIO_PWR_LED_BLINK_STOP	7
 
-#define NET2BIG_GPIO_SATA0_RED_LED	11
-#define NET2BIG_GPIO_SATA1_RED_LED	10
+#घोषणा NET2BIG_GPIO_SATA0_RED_LED	11
+#घोषणा NET2BIG_GPIO_SATA1_RED_LED	10
 
-#define NET2BIG_GPIO_SATA0_BLUE_LED	17
-#define NET2BIG_GPIO_SATA1_BLUE_LED	13
+#घोषणा NET2BIG_GPIO_SATA0_BLUE_LED	17
+#घोषणा NET2BIG_GPIO_SATA1_BLUE_LED	13
 
-static struct gpio_led net2big_leds[] = {
-	{
+अटल काष्ठा gpio_led net2big_leds[] = अणु
+	अणु
 		.name = "net2big:red:power",
 		.gpio = NET2BIG_GPIO_PWR_RED_LED,
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "net2big:blue:power",
 		.gpio = NET2BIG_GPIO_PWR_BLUE_LED,
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "net2big:red:sata0",
 		.gpio = NET2BIG_GPIO_SATA0_RED_LED,
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "net2big:red:sata1",
 		.gpio = NET2BIG_GPIO_SATA1_RED_LED,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static struct gpio_led_platform_data net2big_led_data = {
+अटल काष्ठा gpio_led_platक्रमm_data net2big_led_data = अणु
 	.num_leds = ARRAY_SIZE(net2big_leds),
 	.leds = net2big_leds,
-};
+पूर्ण;
 
-static struct platform_device net2big_gpio_leds = {
+अटल काष्ठा platक्रमm_device net2big_gpio_leds = अणु
 	.name           = "leds-gpio",
 	.id             = -1,
-	.dev            = {
-		.platform_data  = &net2big_led_data,
-	},
-};
+	.dev            = अणु
+		.platक्रमm_data  = &net2big_led_data,
+	पूर्ण,
+पूर्ण;
 
-static void __init net2big_gpio_leds_init(void)
-{
-	int err;
+अटल व्योम __init net2big_gpio_leds_init(व्योम)
+अणु
+	पूर्णांक err;
 
-	/* Stop initial CPLD slow red/blue blinking on power LED. */
+	/* Stop initial CPLD slow red/blue blinking on घातer LED. */
 	err = gpio_request(NET2BIG_GPIO_PWR_LED_BLINK_STOP,
 			   "Power LED blink stop");
-	if (err == 0) {
+	अगर (err == 0) अणु
 		err = gpio_direction_output(NET2BIG_GPIO_PWR_LED_BLINK_STOP, 1);
-		if (err)
-			gpio_free(NET2BIG_GPIO_PWR_LED_BLINK_STOP);
-	}
-	if (err)
+		अगर (err)
+			gpio_मुक्त(NET2BIG_GPIO_PWR_LED_BLINK_STOP);
+	पूर्ण
+	अगर (err)
 		pr_err("net2big: failed to setup power LED blink GPIO\n");
 
 	/*
@@ -267,80 +268,80 @@ static void __init net2big_gpio_leds_init(void)
 	 */
 	err = gpio_request(NET2BIG_GPIO_SATA0_BLUE_LED,
 			   "SATA0 blue LED control");
-	if (err == 0) {
+	अगर (err == 0) अणु
 		err = gpio_direction_output(NET2BIG_GPIO_SATA0_BLUE_LED, 1);
-		if (err)
-			gpio_free(NET2BIG_GPIO_SATA0_BLUE_LED);
-	}
-	if (err)
+		अगर (err)
+			gpio_मुक्त(NET2BIG_GPIO_SATA0_BLUE_LED);
+	पूर्ण
+	अगर (err)
 		pr_err("net2big: failed to setup SATA0 blue LED GPIO\n");
 
 	err = gpio_request(NET2BIG_GPIO_SATA1_BLUE_LED,
 			   "SATA1 blue LED control");
-	if (err == 0) {
+	अगर (err == 0) अणु
 		err = gpio_direction_output(NET2BIG_GPIO_SATA1_BLUE_LED, 1);
-		if (err)
-			gpio_free(NET2BIG_GPIO_SATA1_BLUE_LED);
-	}
-	if (err)
+		अगर (err)
+			gpio_मुक्त(NET2BIG_GPIO_SATA1_BLUE_LED);
+	पूर्ण
+	अगर (err)
 		pr_err("net2big: failed to setup SATA1 blue LED GPIO\n");
 
-	platform_device_register(&net2big_gpio_leds);
-}
+	platक्रमm_device_रेजिस्टर(&net2big_gpio_leds);
+पूर्ण
 
 /****************************************************************************
  * GPIO keys
  ****************************************************************************/
 
-#define NET2BIG_GPIO_PUSH_BUTTON	18
-#define NET2BIG_GPIO_POWER_SWITCH_ON	8
-#define NET2BIG_GPIO_POWER_SWITCH_OFF	9
+#घोषणा NET2BIG_GPIO_PUSH_BUTTON	18
+#घोषणा NET2BIG_GPIO_POWER_SWITCH_ON	8
+#घोषणा NET2BIG_GPIO_POWER_SWITCH_OFF	9
 
-#define NET2BIG_SWITCH_POWER_ON		0x1
-#define NET2BIG_SWITCH_POWER_OFF	0x2
+#घोषणा NET2BIG_SWITCH_POWER_ON		0x1
+#घोषणा NET2BIG_SWITCH_POWER_OFF	0x2
 
-static struct gpio_keys_button net2big_buttons[] = {
-	{
+अटल काष्ठा gpio_keys_button net2big_buttons[] = अणु
+	अणु
 		.type		= EV_SW,
 		.code		= NET2BIG_SWITCH_POWER_OFF,
 		.gpio		= NET2BIG_GPIO_POWER_SWITCH_OFF,
 		.desc		= "Power rocker switch (auto|off)",
 		.active_low	= 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		.type		= EV_SW,
 		.code		= NET2BIG_SWITCH_POWER_ON,
 		.gpio		= NET2BIG_GPIO_POWER_SWITCH_ON,
 		.desc		= "Power rocker switch (on|auto)",
 		.active_low	= 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		.type		= EV_KEY,
 		.code		= KEY_POWER,
 		.gpio		= NET2BIG_GPIO_PUSH_BUTTON,
 		.desc		= "Front Push Button",
 		.active_low	= 0,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static struct gpio_keys_platform_data net2big_button_data = {
+अटल काष्ठा gpio_keys_platक्रमm_data net2big_button_data = अणु
 	.buttons	= net2big_buttons,
 	.nbuttons	= ARRAY_SIZE(net2big_buttons),
-};
+पूर्ण;
 
-static struct platform_device net2big_gpio_buttons = {
+अटल काष्ठा platक्रमm_device net2big_gpio_buttons = अणु
 	.name		= "gpio-keys",
 	.id		= -1,
-	.dev		= {
-		.platform_data	= &net2big_button_data,
-	},
-};
+	.dev		= अणु
+		.platक्रमm_data	= &net2big_button_data,
+	पूर्ण,
+पूर्ण;
 
 /*****************************************************************************
  * General Setup
  ****************************************************************************/
 
-static unsigned int net2big_mpp_modes[] __initdata = {
+अटल अचिन्हित पूर्णांक net2big_mpp_modes[] __initdata = अणु
 	MPP0_GPIO,	/* Raid mode (bit 0) */
 	MPP1_GPIO,	/* USB port 2 fuse (0 = Fail, 1 = Ok) */
 	MPP2_GPIO,	/* Raid mode (bit 1) */
@@ -349,8 +350,8 @@ static unsigned int net2big_mpp_modes[] __initdata = {
 	MPP5_GPIO,	/* Fan fail detection */
 	MPP6_GPIO,	/* Red front LED (0 = Off, 1 = On) */
 	MPP7_GPIO,	/* Disable initial blinking on front LED */
-	MPP8_GPIO,	/* Rear power switch (on|auto) */
-	MPP9_GPIO,	/* Rear power switch (auto|off) */
+	MPP8_GPIO,	/* Rear घातer चयन (on|स्वतः) */
+	MPP9_GPIO,	/* Rear घातer चयन (स्वतः|off) */
 	MPP10_GPIO,	/* SATA 1 red LED (0 = Off, 1 = On) */
 	MPP11_GPIO,	/* SATA 0 red LED (0 = Off, 1 = On) */
 	MPP12_GPIO,	/* Board ID (bit 1) */
@@ -360,23 +361,23 @@ static unsigned int net2big_mpp_modes[] __initdata = {
 	MPP16_GPIO,	/* Blue front LED control */
 	MPP17_GPIO,	/* SATA 0 blue LED blink control */
 	MPP18_GPIO,	/* Front button (0 = Released, 1 = Pushed ) */
-	MPP19_GPIO,	/* SATA{0,1} power On/Off request */
+	MPP19_GPIO,	/* SATAअणु0,1पूर्ण घातer On/Off request */
 	0,
 	/* 22: USB port 1 fuse (0 = Fail, 1 = Ok) */
-	/* 23: SATA 0 power status */
-	/* 24: Board power off */
-	/* 25: SATA 1 power status */
-};
+	/* 23: SATA 0 घातer status */
+	/* 24: Board घातer off */
+	/* 25: SATA 1 घातer status */
+पूर्ण;
 
-#define NET2BIG_GPIO_POWER_OFF		24
+#घोषणा NET2BIG_GPIO_POWER_OFF		24
 
-static void net2big_power_off(void)
-{
+अटल व्योम net2big_घातer_off(व्योम)
+अणु
 	gpio_set_value(NET2BIG_GPIO_POWER_OFF, 1);
-}
+पूर्ण
 
-static void __init net2big_init(void)
-{
+अटल व्योम __init net2big_init(व्योम)
+अणु
 	/*
 	 * Setup basic Orion functions. Need to be called early.
 	 */
@@ -394,31 +395,31 @@ static void __init net2big_init(void)
 	orion5x_uart0_init();
 	orion5x_xor_init();
 
-	net2big_sata_power_init();
+	net2big_sata_घातer_init();
 	orion5x_sata_init(&net2big_sata_data);
 
-	mvebu_mbus_add_window_by_id(ORION_MBUS_DEVBUS_BOOT_TARGET,
+	mvebu_mbus_add_winकरोw_by_id(ORION_MBUS_DEVBUS_BOOT_TARGET,
 				    ORION_MBUS_DEVBUS_BOOT_ATTR,
 				    NET2BIG_NOR_BOOT_BASE,
 				    NET2BIG_NOR_BOOT_SIZE);
-	platform_device_register(&net2big_nor_flash);
+	platक्रमm_device_रेजिस्टर(&net2big_nor_flash);
 
-	platform_device_register(&net2big_gpio_buttons);
+	platक्रमm_device_रेजिस्टर(&net2big_gpio_buttons);
 	net2big_gpio_leds_init();
 
-	i2c_register_board_info(0, net2big_i2c_devices,
+	i2c_रेजिस्टर_board_info(0, net2big_i2c_devices,
 				ARRAY_SIZE(net2big_i2c_devices));
 
 	orion_gpio_set_valid(NET2BIG_GPIO_POWER_OFF, 1);
 
-	if (gpio_request(NET2BIG_GPIO_POWER_OFF, "power-off") == 0 &&
+	अगर (gpio_request(NET2BIG_GPIO_POWER_OFF, "power-off") == 0 &&
 	    gpio_direction_output(NET2BIG_GPIO_POWER_OFF, 0) == 0)
-		pm_power_off = net2big_power_off;
-	else
+		pm_घातer_off = net2big_घातer_off;
+	अन्यथा
 		pr_err("net2big: failed to configure power-off GPIO\n");
 
 	pr_notice("net2big: Flash writing is not yet supported.\n");
-}
+पूर्ण
 
 /* Warning: LaCie use a wrong mach-type (0x20e=526) in their bootloader. */
 MACHINE_START(NET2BIG, "LaCie 2Big Network")
@@ -428,7 +429,7 @@ MACHINE_START(NET2BIG, "LaCie 2Big Network")
 	.map_io		= orion5x_map_io,
 	.init_early	= orion5x_init_early,
 	.init_irq	= orion5x_init_irq,
-	.init_time	= orion5x_timer_init,
+	.init_समय	= orion5x_समयr_init,
 	.fixup		= tag_fixup_mem32,
 	.restart	= orion5x_restart,
 MACHINE_END

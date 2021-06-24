@@ -1,17 +1,18 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _ASM_HEXAGON_FUTEX_H
-#define _ASM_HEXAGON_FUTEX_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _ASM_HEXAGON_FUTEX_H
+#घोषणा _ASM_HEXAGON_FUTEX_H
 
-#ifdef __KERNEL__
+#अगर_घोषित __KERNEL__
 
-#include <linux/futex.h>
-#include <linux/uaccess.h>
-#include <asm/errno.h>
+#समावेश <linux/futex.h>
+#समावेश <linux/uaccess.h>
+#समावेश <यंत्र/त्रुटिसं.स>
 
 /* XXX TODO-- need to add sync barriers! */
 
-#define __futex_atomic_op(insn, ret, oldval, uaddr, oparg) \
-	__asm__ __volatile( \
+#घोषणा __futex_atomic_op(insn, ret, oldval, uaddr, oparg) \
+	__यंत्र__ __अस्थिर( \
 	"1: %0 = memw_locked(%3);\n" \
 	    /* For example: %1 = %4 */ \
 	    insn \
@@ -31,55 +32,55 @@
 	: "p2", "memory")
 
 
-static inline int
-arch_futex_atomic_op_inuser(int op, int oparg, int *oval, u32 __user *uaddr)
-{
-	int oldval = 0, ret;
+अटल अंतरभूत पूर्णांक
+arch_futex_atomic_op_inuser(पूर्णांक op, पूर्णांक oparg, पूर्णांक *oval, u32 __user *uaddr)
+अणु
+	पूर्णांक oldval = 0, ret;
 
-	if (!access_ok(uaddr, sizeof(u32)))
-		return -EFAULT;
+	अगर (!access_ok(uaddr, माप(u32)))
+		वापस -EFAULT;
 
-	switch (op) {
-	case FUTEX_OP_SET:
+	चयन (op) अणु
+	हाल FUTEX_OP_SET:
 		__futex_atomic_op("%1 = %4\n", ret, oldval, uaddr, oparg);
-		break;
-	case FUTEX_OP_ADD:
+		अवरोध;
+	हाल FUTEX_OP_ADD:
 		__futex_atomic_op("%1 = add(%0,%4)\n", ret, oldval, uaddr,
 				  oparg);
-		break;
-	case FUTEX_OP_OR:
+		अवरोध;
+	हाल FUTEX_OP_OR:
 		__futex_atomic_op("%1 = or(%0,%4)\n", ret, oldval, uaddr,
 				  oparg);
-		break;
-	case FUTEX_OP_ANDN:
+		अवरोध;
+	हाल FUTEX_OP_ANDN:
 		__futex_atomic_op("%1 = not(%4); %1 = and(%0,%1)\n", ret,
 				  oldval, uaddr, oparg);
-		break;
-	case FUTEX_OP_XOR:
+		अवरोध;
+	हाल FUTEX_OP_XOR:
 		__futex_atomic_op("%1 = xor(%0,%4)\n", ret, oldval, uaddr,
 				  oparg);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		ret = -ENOSYS;
-	}
+	पूर्ण
 
-	if (!ret)
+	अगर (!ret)
 		*oval = oldval;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static inline int
+अटल अंतरभूत पूर्णांक
 futex_atomic_cmpxchg_inatomic(u32 *uval, u32 __user *uaddr, u32 oldval,
 			      u32 newval)
-{
-	int prev;
-	int ret;
+अणु
+	पूर्णांक prev;
+	पूर्णांक ret;
 
-	if (!access_ok(uaddr, sizeof(u32)))
-		return -EFAULT;
+	अगर (!access_ok(uaddr, माप(u32)))
+		वापस -EFAULT;
 
-	__asm__ __volatile__ (
+	__यंत्र__ __अस्थिर__ (
 	"1: %1 = memw_locked(%3)\n"
 	"   {\n"
 	"      p2 = cmp.eq(%1,%4)\n"
@@ -100,8 +101,8 @@ futex_atomic_cmpxchg_inatomic(u32 *uval, u32 __user *uaddr, u32 oldval,
 	: "p2", "memory");
 
 	*uval = prev;
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-#endif /* __KERNEL__ */
-#endif /* _ASM_HEXAGON_FUTEX_H */
+#पूर्ण_अगर /* __KERNEL__ */
+#पूर्ण_अगर /* _ASM_HEXAGON_FUTEX_H */

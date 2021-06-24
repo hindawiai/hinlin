@@ -1,71 +1,72 @@
-// SPDX-License-Identifier: LGPL-2.1
+<शैली गुरु>
+// SPDX-License-Identअगरier: LGPL-2.1
 /*
  * Copyright (C) 2010 Red Hat Inc, Steven Rostedt <srostedt@redhat.com>
  *
  */
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <stdarg.h>
-#include <errno.h>
+#समावेश <मानकपन.स>
+#समावेश <मानककोष.स>
+#समावेश <माला.स>
+#समावेश <मानकतर्क.स>
+#समावेश <त्रुटिसं.स>
 
-#define __weak __attribute__((weak))
+#घोषणा __weak __attribute__((weak))
 
-void __vwarning(const char *fmt, va_list ap)
-{
-	if (errno)
-		perror("libtraceevent");
-	errno = 0;
+व्योम __vwarning(स्थिर अक्षर *fmt, बहु_सूची ap)
+अणु
+	अगर (त्रुटि_सं)
+		लिखो_त्रुटि("libtraceevent");
+	त्रुटि_सं = 0;
 
-	fprintf(stderr, "  ");
-	vfprintf(stderr, fmt, ap);
+	ख_लिखो(मानक_त्रुटि, "  ");
+	भख_लिखो(मानक_त्रुटि, fmt, ap);
 
-	fprintf(stderr, "\n");
-}
+	ख_लिखो(मानक_त्रुटि, "\n");
+पूर्ण
 
-void __warning(const char *fmt, ...)
-{
-	va_list ap;
+व्योम __warning(स्थिर अक्षर *fmt, ...)
+अणु
+	बहु_सूची ap;
 
-	va_start(ap, fmt);
+	बहु_शुरू(ap, fmt);
 	__vwarning(fmt, ap);
-	va_end(ap);
-}
+	बहु_पूर्ण(ap);
+पूर्ण
 
-void __weak warning(const char *fmt, ...)
-{
-	va_list ap;
+व्योम __weak warning(स्थिर अक्षर *fmt, ...)
+अणु
+	बहु_सूची ap;
 
-	va_start(ap, fmt);
+	बहु_शुरू(ap, fmt);
 	__vwarning(fmt, ap);
-	va_end(ap);
-}
+	बहु_पूर्ण(ap);
+पूर्ण
 
-void __vpr_stat(const char *fmt, va_list ap)
-{
-	vprintf(fmt, ap);
-	printf("\n");
-}
+व्योम __vpr_stat(स्थिर अक्षर *fmt, बहु_सूची ap)
+अणु
+	भ_लिखो(fmt, ap);
+	म_लिखो("\n");
+पूर्ण
 
-void __pr_stat(const char *fmt, ...)
-{
-	va_list ap;
+व्योम __pr_stat(स्थिर अक्षर *fmt, ...)
+अणु
+	बहु_सूची ap;
 
-	va_start(ap, fmt);
+	बहु_शुरू(ap, fmt);
 	__vpr_stat(fmt, ap);
-	va_end(ap);
-}
+	बहु_पूर्ण(ap);
+पूर्ण
 
-void __weak vpr_stat(const char *fmt, va_list ap)
-{
+व्योम __weak vpr_stat(स्थिर अक्षर *fmt, बहु_सूची ap)
+अणु
 	__vpr_stat(fmt, ap);
-}
+पूर्ण
 
-void __weak pr_stat(const char *fmt, ...)
-{
-	va_list ap;
+व्योम __weak pr_stat(स्थिर अक्षर *fmt, ...)
+अणु
+	बहु_सूची ap;
 
-	va_start(ap, fmt);
+	बहु_शुरू(ap, fmt);
 	__vpr_stat(fmt, ap);
-	va_end(ap);
-}
+	बहु_पूर्ण(ap);
+पूर्ण

@@ -1,87 +1,88 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Janz MODULbus VMOD-ICAN3 CAN Interface Driver
  *
  * Copyright (c) 2010 Ira W. Snyder <iws@ovro.caltech.edu>
  */
 
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/interrupt.h>
-#include <linux/delay.h>
-#include <linux/platform_device.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/platक्रमm_device.h>
 
-#include <linux/netdevice.h>
-#include <linux/can.h>
-#include <linux/can/dev.h>
-#include <linux/can/skb.h>
-#include <linux/can/error.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/can.h>
+#समावेश <linux/can/dev.h>
+#समावेश <linux/can/skb.h>
+#समावेश <linux/can/error.h>
 
-#include <linux/mfd/janz.h>
-#include <asm/io.h>
+#समावेश <linux/mfd/janz.h>
+#समावेश <यंत्र/पन.स>
 
-/* the DPM has 64k of memory, organized into 256x 256 byte pages */
-#define DPM_NUM_PAGES		256
-#define DPM_PAGE_SIZE		256
-#define DPM_PAGE_ADDR(p)	((p) * DPM_PAGE_SIZE)
+/* the DPM has 64k of memory, organized पूर्णांकo 256x 256 byte pages */
+#घोषणा DPM_NUM_PAGES		256
+#घोषणा DPM_PAGE_SIZE		256
+#घोषणा DPM_PAGE_ADDR(p)	((p) * DPM_PAGE_SIZE)
 
-/* JANZ ICAN3 "old-style" host interface queue page numbers */
-#define QUEUE_OLD_CONTROL	0
-#define QUEUE_OLD_RB0		1
-#define QUEUE_OLD_RB1		2
-#define QUEUE_OLD_WB0		3
-#define QUEUE_OLD_WB1		4
+/* JANZ ICAN3 "old-style" host पूर्णांकerface queue page numbers */
+#घोषणा QUEUE_OLD_CONTROL	0
+#घोषणा QUEUE_OLD_RB0		1
+#घोषणा QUEUE_OLD_RB1		2
+#घोषणा QUEUE_OLD_WB0		3
+#घोषणा QUEUE_OLD_WB1		4
 
-/* Janz ICAN3 "old-style" host interface control registers */
-#define MSYNC_PEER		0x00		/* ICAN only */
-#define MSYNC_LOCL		0x01		/* host only */
-#define TARGET_RUNNING		0x02
-#define FIRMWARE_STAMP		0x60		/* big endian firmware stamp */
+/* Janz ICAN3 "old-style" host पूर्णांकerface control रेजिस्टरs */
+#घोषणा MSYNC_PEER		0x00		/* ICAN only */
+#घोषणा MSYNC_LOCL		0x01		/* host only */
+#घोषणा TARGET_RUNNING		0x02
+#घोषणा FIRMWARE_STAMP		0x60		/* big endian firmware stamp */
 
-#define MSYNC_RB0		0x01
-#define MSYNC_RB1		0x02
-#define MSYNC_RBLW		0x04
-#define MSYNC_RB_MASK		(MSYNC_RB0 | MSYNC_RB1)
+#घोषणा MSYNC_RB0		0x01
+#घोषणा MSYNC_RB1		0x02
+#घोषणा MSYNC_RBLW		0x04
+#घोषणा MSYNC_RB_MASK		(MSYNC_RB0 | MSYNC_RB1)
 
-#define MSYNC_WB0		0x10
-#define MSYNC_WB1		0x20
-#define MSYNC_WBLW		0x40
-#define MSYNC_WB_MASK		(MSYNC_WB0 | MSYNC_WB1)
+#घोषणा MSYNC_WB0		0x10
+#घोषणा MSYNC_WB1		0x20
+#घोषणा MSYNC_WBLW		0x40
+#घोषणा MSYNC_WB_MASK		(MSYNC_WB0 | MSYNC_WB1)
 
-/* Janz ICAN3 "new-style" host interface queue page numbers */
-#define QUEUE_TOHOST		5
-#define QUEUE_FROMHOST_MID	6
-#define QUEUE_FROMHOST_HIGH	7
-#define QUEUE_FROMHOST_LOW	8
+/* Janz ICAN3 "new-style" host पूर्णांकerface queue page numbers */
+#घोषणा QUEUE_TOHOST		5
+#घोषणा QUEUE_FROMHOST_MID	6
+#घोषणा QUEUE_FROMHOST_HIGH	7
+#घोषणा QUEUE_FROMHOST_LOW	8
 
-/* The first free page in the DPM is #9 */
-#define DPM_FREE_START		9
+/* The first मुक्त page in the DPM is #9 */
+#घोषणा DPM_FREE_START		9
 
-/* Janz ICAN3 "new-style" and "fast" host interface descriptor flags */
-#define DESC_VALID		0x80
-#define DESC_WRAP		0x40
-#define DESC_INTERRUPT		0x20
-#define DESC_IVALID		0x10
-#define DESC_LEN(len)		(len)
+/* Janz ICAN3 "new-style" and "fast" host पूर्णांकerface descriptor flags */
+#घोषणा DESC_VALID		0x80
+#घोषणा DESC_WRAP		0x40
+#घोषणा DESC_INTERRUPT		0x20
+#घोषणा DESC_IVALID		0x10
+#घोषणा DESC_LEN(len)		(len)
 
 /* Janz ICAN3 Firmware Messages */
-#define MSG_CONNECTI		0x02
-#define MSG_DISCONNECT		0x03
-#define MSG_IDVERS		0x04
-#define MSG_MSGLOST		0x05
-#define MSG_NEWHOSTIF		0x08
-#define MSG_INQUIRY		0x0a
-#define MSG_SETAFILMASK		0x10
-#define MSG_INITFDPMQUEUE	0x11
-#define MSG_HWCONF		0x12
-#define MSG_FMSGLOST		0x15
-#define MSG_CEVTIND		0x37
-#define MSG_CBTRREQ		0x41
-#define MSG_COFFREQ		0x42
-#define MSG_CONREQ		0x43
-#define MSG_CCONFREQ		0x47
-#define MSG_NMTS		0xb0
-#define MSG_LMTS		0xb4
+#घोषणा MSG_CONNECTI		0x02
+#घोषणा MSG_DISCONNECT		0x03
+#घोषणा MSG_IDVERS		0x04
+#घोषणा MSG_MSGLOST		0x05
+#घोषणा MSG_NEWHOSTIF		0x08
+#घोषणा MSG_INQUIRY		0x0a
+#घोषणा MSG_SETAFILMASK		0x10
+#घोषणा MSG_INITFDPMQUEUE	0x11
+#घोषणा MSG_HWCONF		0x12
+#घोषणा MSG_FMSGLOST		0x15
+#घोषणा MSG_CEVTIND		0x37
+#घोषणा MSG_CBTRREQ		0x41
+#घोषणा MSG_COFFREQ		0x42
+#घोषणा MSG_CONREQ		0x43
+#घोषणा MSG_CCONFREQ		0x47
+#घोषणा MSG_NMTS		0xb0
+#घोषणा MSG_LMTS		0xb4
 
 /*
  * Janz ICAN3 CAN Inquiry Message Types
@@ -91,57 +92,57 @@
  * NOTE: response. The controller never responds to a message with
  * NOTE: the INQUIRY_EXTENDED subspec :(
  */
-#define INQUIRY_STATUS		0x00
-#define INQUIRY_TERMINATION	0x01
-#define INQUIRY_EXTENDED	0x04
+#घोषणा INQUIRY_STATUS		0x00
+#घोषणा INQUIRY_TERMINATION	0x01
+#घोषणा INQUIRY_EXTENDED	0x04
 
 /* Janz ICAN3 CAN Set Acceptance Filter Mask Message Types */
-#define SETAFILMASK_REJECT	0x00
-#define SETAFILMASK_FASTIF	0x02
+#घोषणा SETAFILMASK_REJECT	0x00
+#घोषणा SETAFILMASK_FASTIF	0x02
 
 /* Janz ICAN3 CAN Hardware Configuration Message Types */
-#define HWCONF_TERMINATE_ON	0x01
-#define HWCONF_TERMINATE_OFF	0x00
+#घोषणा HWCONF_TERMINATE_ON	0x01
+#घोषणा HWCONF_TERMINATE_OFF	0x00
 
 /* Janz ICAN3 CAN Event Indication Message Types */
-#define CEVTIND_EI		0x01
-#define CEVTIND_DOI		0x02
-#define CEVTIND_LOST		0x04
-#define CEVTIND_FULL		0x08
-#define CEVTIND_BEI		0x10
+#घोषणा CEVTIND_EI		0x01
+#घोषणा CEVTIND_DOI		0x02
+#घोषणा CEVTIND_LOST		0x04
+#घोषणा CEVTIND_FULL		0x08
+#घोषणा CEVTIND_BEI		0x10
 
-#define CEVTIND_CHIP_SJA1000	0x02
+#घोषणा CEVTIND_CHIP_SJA1000	0x02
 
-#define ICAN3_BUSERR_QUOTA_MAX	255
+#घोषणा ICAN3_BUSERR_QUOTA_MAX	255
 
 /* Janz ICAN3 CAN Frame Conversion */
-#define ICAN3_SNGL	0x02
-#define ICAN3_ECHO	0x10
-#define ICAN3_EFF_RTR	0x40
-#define ICAN3_SFF_RTR	0x10
-#define ICAN3_EFF	0x80
+#घोषणा ICAN3_SNGL	0x02
+#घोषणा ICAN3_ECHO	0x10
+#घोषणा ICAN3_EFF_RTR	0x40
+#घोषणा ICAN3_SFF_RTR	0x10
+#घोषणा ICAN3_EFF	0x80
 
-#define ICAN3_CAN_TYPE_MASK	0x0f
-#define ICAN3_CAN_TYPE_SFF	0x00
-#define ICAN3_CAN_TYPE_EFF	0x01
+#घोषणा ICAN3_CAN_TYPE_MASK	0x0f
+#घोषणा ICAN3_CAN_TYPE_SFF	0x00
+#घोषणा ICAN3_CAN_TYPE_EFF	0x01
 
-#define ICAN3_CAN_DLC_MASK	0x0f
+#घोषणा ICAN3_CAN_DLC_MASK	0x0f
 
 /* Janz ICAN3 NMTS subtypes */
-#define NMTS_CREATE_NODE_REQ	0x0
-#define NMTS_SLAVE_STATE_IND	0x8
-#define NMTS_SLAVE_EVENT_IND	0x9
+#घोषणा NMTS_CREATE_NODE_REQ	0x0
+#घोषणा NMTS_SLAVE_STATE_IND	0x8
+#घोषणा NMTS_SLAVE_EVENT_IND	0x9
 
 /* Janz ICAN3 LMTS subtypes */
-#define LMTS_BUSON_REQ		0x0
-#define LMTS_BUSOFF_REQ		0x1
-#define LMTS_CAN_CONF_REQ	0x2
+#घोषणा LMTS_BUSON_REQ		0x0
+#घोषणा LMTS_BUSOFF_REQ		0x1
+#घोषणा LMTS_CAN_CONF_REQ	0x2
 
 /* Janz ICAN3 NMTS Event indications */
-#define NE_LOCAL_OCCURRED	0x3
-#define NE_LOCAL_RESOLVED	0x2
-#define NE_REMOTE_OCCURRED	0xc
-#define NE_REMOTE_RESOLVED	0x8
+#घोषणा NE_LOCAL_OCCURRED	0x3
+#घोषणा NE_LOCAL_RESOLVED	0x2
+#घोषणा NE_REMOTE_OCCURRED	0xc
+#घोषणा NE_REMOTE_RESOLVED	0x8
 
 /*
  * SJA1000 Status and Error Register Definitions
@@ -149,295 +150,295 @@
  * Copied from drivers/net/can/sja1000/sja1000.h
  */
 
-/* status register content */
-#define SR_BS		0x80
-#define SR_ES		0x40
-#define SR_TS		0x20
-#define SR_RS		0x10
-#define SR_TCS		0x08
-#define SR_TBS		0x04
-#define SR_DOS		0x02
-#define SR_RBS		0x01
+/* status रेजिस्टर content */
+#घोषणा SR_BS		0x80
+#घोषणा SR_ES		0x40
+#घोषणा SR_TS		0x20
+#घोषणा SR_RS		0x10
+#घोषणा SR_TCS		0x08
+#घोषणा SR_TBS		0x04
+#घोषणा SR_DOS		0x02
+#घोषणा SR_RBS		0x01
 
-#define SR_CRIT (SR_BS|SR_ES)
+#घोषणा SR_CRIT (SR_BS|SR_ES)
 
-/* ECC register */
-#define ECC_SEG		0x1F
-#define ECC_DIR		0x20
-#define ECC_ERR		6
-#define ECC_BIT		0x00
-#define ECC_FORM	0x40
-#define ECC_STUFF	0x80
-#define ECC_MASK	0xc0
+/* ECC रेजिस्टर */
+#घोषणा ECC_SEG		0x1F
+#घोषणा ECC_सूची		0x20
+#घोषणा ECC_ERR		6
+#घोषणा ECC_BIT		0x00
+#घोषणा ECC_FORM	0x40
+#घोषणा ECC_STUFF	0x80
+#घोषणा ECC_MASK	0xc0
 
-/* Number of buffers for use in the "new-style" host interface */
-#define ICAN3_NEW_BUFFERS	16
+/* Number of buffers क्रम use in the "new-style" host पूर्णांकerface */
+#घोषणा ICAN3_NEW_BUFFERS	16
 
-/* Number of buffers for use in the "fast" host interface */
-#define ICAN3_TX_BUFFERS	512
-#define ICAN3_RX_BUFFERS	1024
+/* Number of buffers क्रम use in the "fast" host पूर्णांकerface */
+#घोषणा ICAN3_TX_BUFFERS	512
+#घोषणा ICAN3_RX_BUFFERS	1024
 
 /* SJA1000 Clock Input */
-#define ICAN3_CAN_CLOCK		8000000
+#घोषणा ICAN3_CAN_CLOCK		8000000
 
 /* Janz ICAN3 firmware types */
-enum ican3_fwtype {
+क्रमागत ican3_fwtype अणु
 	ICAN3_FWTYPE_ICANOS,
 	ICAN3_FWTYPE_CAL_CANOPEN,
-};
+पूर्ण;
 
 /* Driver Name */
-#define DRV_NAME "janz-ican3"
+#घोषणा DRV_NAME "janz-ican3"
 
-/* DPM Control Registers -- starts at offset 0x100 in the MODULbus registers */
-struct ican3_dpm_control {
-	/* window address register */
-	u8 window_address;
+/* DPM Control Registers -- starts at offset 0x100 in the MODULbus रेजिस्टरs */
+काष्ठा ican3_dpm_control अणु
+	/* winकरोw address रेजिस्टर */
+	u8 winकरोw_address;
 	u8 unused1;
 
 	/*
-	 * Read access: clear interrupt from microcontroller
-	 * Write access: send interrupt to microcontroller
+	 * Read access: clear पूर्णांकerrupt from microcontroller
+	 * Write access: send पूर्णांकerrupt to microcontroller
 	 */
-	u8 interrupt;
+	u8 पूर्णांकerrupt;
 	u8 unused2;
 
-	/* write-only: reset all hardware on the module */
+	/* ग_लिखो-only: reset all hardware on the module */
 	u8 hwreset;
 	u8 unused3;
 
-	/* write-only: generate an interrupt to the TPU */
-	u8 tpuinterrupt;
-};
+	/* ग_लिखो-only: generate an पूर्णांकerrupt to the TPU */
+	u8 tpuपूर्णांकerrupt;
+पूर्ण;
 
-struct ican3_dev {
+काष्ठा ican3_dev अणु
 
 	/* must be the first member */
-	struct can_priv can;
+	काष्ठा can_priv can;
 
 	/* CAN network device */
-	struct net_device *ndev;
-	struct napi_struct napi;
+	काष्ठा net_device *ndev;
+	काष्ठा napi_काष्ठा napi;
 
 	/* module number */
-	unsigned int num;
+	अचिन्हित पूर्णांक num;
 
-	/* base address of registers and IRQ */
-	struct janz_cmodio_onboard_regs __iomem *ctrl;
-	struct ican3_dpm_control __iomem *dpmctrl;
-	void __iomem *dpm;
-	int irq;
+	/* base address of रेजिस्टरs and IRQ */
+	काष्ठा janz_cmodio_onboard_regs __iomem *ctrl;
+	काष्ठा ican3_dpm_control __iomem *dpmctrl;
+	व्योम __iomem *dpm;
+	पूर्णांक irq;
 
 	/* CAN bus termination status */
-	struct completion termination_comp;
+	काष्ठा completion termination_comp;
 	bool termination_enabled;
 
-	/* CAN bus error status registers */
-	struct completion buserror_comp;
-	struct can_berr_counter bec;
+	/* CAN bus error status रेजिस्टरs */
+	काष्ठा completion buserror_comp;
+	काष्ठा can_berr_counter bec;
 
 	/* firmware type */
-	enum ican3_fwtype fwtype;
-	char fwinfo[32];
+	क्रमागत ican3_fwtype fwtype;
+	अक्षर fwinfo[32];
 
-	/* old and new style host interface */
-	unsigned int iftype;
+	/* old and new style host पूर्णांकerface */
+	अचिन्हित पूर्णांक अगरtype;
 
-	/* queue for echo packets */
-	struct sk_buff_head echoq;
+	/* queue क्रम echo packets */
+	काष्ठा sk_buff_head echoq;
 
 	/*
 	 * Any function which changes the current DPM page must hold this
-	 * lock while it is performing data accesses. This ensures that the
-	 * function will not be preempted and end up reading data from a
-	 * different DPM page than it expects.
+	 * lock जबतक it is perक्रमming data accesses. This ensures that the
+	 * function will not be preempted and end up पढ़ोing data from a
+	 * dअगरferent DPM page than it expects.
 	 */
 	spinlock_t lock;
 
-	/* new host interface */
-	unsigned int rx_int;
-	unsigned int rx_num;
-	unsigned int tx_num;
+	/* new host पूर्णांकerface */
+	अचिन्हित पूर्णांक rx_पूर्णांक;
+	अचिन्हित पूर्णांक rx_num;
+	अचिन्हित पूर्णांक tx_num;
 
-	/* fast host interface */
-	unsigned int fastrx_start;
-	unsigned int fastrx_num;
-	unsigned int fasttx_start;
-	unsigned int fasttx_num;
+	/* fast host पूर्णांकerface */
+	अचिन्हित पूर्णांक fastrx_start;
+	अचिन्हित पूर्णांक fastrx_num;
+	अचिन्हित पूर्णांक fasttx_start;
+	अचिन्हित पूर्णांक fasttx_num;
 
-	/* first free DPM page */
-	unsigned int free_page;
-};
+	/* first मुक्त DPM page */
+	अचिन्हित पूर्णांक मुक्त_page;
+पूर्ण;
 
-struct ican3_msg {
+काष्ठा ican3_msg अणु
 	u8 control;
 	u8 spec;
 	__le16 len;
 	u8 data[252];
-};
+पूर्ण;
 
-struct ican3_new_desc {
+काष्ठा ican3_new_desc अणु
 	u8 control;
-	u8 pointer;
-};
+	u8 poपूर्णांकer;
+पूर्ण;
 
-struct ican3_fast_desc {
+काष्ठा ican3_fast_desc अणु
 	u8 control;
 	u8 command;
 	u8 data[14];
-};
+पूर्ण;
 
-/* write to the window basic address register */
-static inline void ican3_set_page(struct ican3_dev *mod, unsigned int page)
-{
+/* ग_लिखो to the winकरोw basic address रेजिस्टर */
+अटल अंतरभूत व्योम ican3_set_page(काष्ठा ican3_dev *mod, अचिन्हित पूर्णांक page)
+अणु
 	BUG_ON(page >= DPM_NUM_PAGES);
-	iowrite8(page, &mod->dpmctrl->window_address);
-}
+	ioग_लिखो8(page, &mod->dpmctrl->winकरोw_address);
+पूर्ण
 
 /*
- * ICAN3 "old-style" host interface
+ * ICAN3 "old-style" host पूर्णांकerface
  */
 
 /*
- * Receive a message from the ICAN3 "old-style" firmware interface
+ * Receive a message from the ICAN3 "old-style" firmware पूर्णांकerface
  *
  * LOCKING: must hold mod->lock
  *
- * returns 0 on success, -ENOMEM when no message exists
+ * वापसs 0 on success, -ENOMEM when no message exists
  */
-static int ican3_old_recv_msg(struct ican3_dev *mod, struct ican3_msg *msg)
-{
-	unsigned int mbox, mbox_page;
+अटल पूर्णांक ican3_old_recv_msg(काष्ठा ican3_dev *mod, काष्ठा ican3_msg *msg)
+अणु
+	अचिन्हित पूर्णांक mbox, mbox_page;
 	u8 locl, peer, xord;
 
-	/* get the MSYNC registers */
+	/* get the MSYNC रेजिस्टरs */
 	ican3_set_page(mod, QUEUE_OLD_CONTROL);
-	peer = ioread8(mod->dpm + MSYNC_PEER);
-	locl = ioread8(mod->dpm + MSYNC_LOCL);
+	peer = ioपढ़ो8(mod->dpm + MSYNC_PEER);
+	locl = ioपढ़ो8(mod->dpm + MSYNC_LOCL);
 	xord = locl ^ peer;
 
-	if ((xord & MSYNC_RB_MASK) == 0x00) {
+	अगर ((xord & MSYNC_RB_MASK) == 0x00) अणु
 		netdev_dbg(mod->ndev, "no mbox for reading\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
-	/* find the first free mbox to read */
-	if ((xord & MSYNC_RB_MASK) == MSYNC_RB_MASK)
+	/* find the first मुक्त mbox to पढ़ो */
+	अगर ((xord & MSYNC_RB_MASK) == MSYNC_RB_MASK)
 		mbox = (xord & MSYNC_RBLW) ? MSYNC_RB0 : MSYNC_RB1;
-	else
+	अन्यथा
 		mbox = (xord & MSYNC_RB0) ? MSYNC_RB0 : MSYNC_RB1;
 
 	/* copy the message */
 	mbox_page = (mbox == MSYNC_RB0) ? QUEUE_OLD_RB0 : QUEUE_OLD_RB1;
 	ican3_set_page(mod, mbox_page);
-	memcpy_fromio(msg, mod->dpm, sizeof(*msg));
+	स_नकल_fromio(msg, mod->dpm, माप(*msg));
 
 	/*
-	 * notify the firmware that the read buffer is available
-	 * for it to fill again
+	 * notअगरy the firmware that the पढ़ो buffer is available
+	 * क्रम it to fill again
 	 */
 	locl ^= mbox;
 
 	ican3_set_page(mod, QUEUE_OLD_CONTROL);
-	iowrite8(locl, mod->dpm + MSYNC_LOCL);
-	return 0;
-}
+	ioग_लिखो8(locl, mod->dpm + MSYNC_LOCL);
+	वापस 0;
+पूर्ण
 
 /*
- * Send a message through the "old-style" firmware interface
+ * Send a message through the "old-style" firmware पूर्णांकerface
  *
  * LOCKING: must hold mod->lock
  *
- * returns 0 on success, -ENOMEM when no free space exists
+ * वापसs 0 on success, -ENOMEM when no मुक्त space exists
  */
-static int ican3_old_send_msg(struct ican3_dev *mod, struct ican3_msg *msg)
-{
-	unsigned int mbox, mbox_page;
+अटल पूर्णांक ican3_old_send_msg(काष्ठा ican3_dev *mod, काष्ठा ican3_msg *msg)
+अणु
+	अचिन्हित पूर्णांक mbox, mbox_page;
 	u8 locl, peer, xord;
 
-	/* get the MSYNC registers */
+	/* get the MSYNC रेजिस्टरs */
 	ican3_set_page(mod, QUEUE_OLD_CONTROL);
-	peer = ioread8(mod->dpm + MSYNC_PEER);
-	locl = ioread8(mod->dpm + MSYNC_LOCL);
+	peer = ioपढ़ो8(mod->dpm + MSYNC_PEER);
+	locl = ioपढ़ो8(mod->dpm + MSYNC_LOCL);
 	xord = locl ^ peer;
 
-	if ((xord & MSYNC_WB_MASK) == MSYNC_WB_MASK) {
+	अगर ((xord & MSYNC_WB_MASK) == MSYNC_WB_MASK) अणु
 		netdev_err(mod->ndev, "no mbox for writing\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
-	/* calculate a free mbox to use */
+	/* calculate a मुक्त mbox to use */
 	mbox = (xord & MSYNC_WB0) ? MSYNC_WB1 : MSYNC_WB0;
 
 	/* copy the message to the DPM */
 	mbox_page = (mbox == MSYNC_WB0) ? QUEUE_OLD_WB0 : QUEUE_OLD_WB1;
 	ican3_set_page(mod, mbox_page);
-	memcpy_toio(mod->dpm, msg, sizeof(*msg));
+	स_नकल_toio(mod->dpm, msg, माप(*msg));
 
 	locl ^= mbox;
-	if (mbox == MSYNC_WB1)
+	अगर (mbox == MSYNC_WB1)
 		locl |= MSYNC_WBLW;
 
 	ican3_set_page(mod, QUEUE_OLD_CONTROL);
-	iowrite8(locl, mod->dpm + MSYNC_LOCL);
-	return 0;
-}
+	ioग_लिखो8(locl, mod->dpm + MSYNC_LOCL);
+	वापस 0;
+पूर्ण
 
 /*
  * ICAN3 "new-style" Host Interface Setup
  */
 
-static void ican3_init_new_host_interface(struct ican3_dev *mod)
-{
-	struct ican3_new_desc desc;
-	unsigned long flags;
-	void __iomem *dst;
-	int i;
+अटल व्योम ican3_init_new_host_पूर्णांकerface(काष्ठा ican3_dev *mod)
+अणु
+	काष्ठा ican3_new_desc desc;
+	अचिन्हित दीर्घ flags;
+	व्योम __iomem *dst;
+	पूर्णांक i;
 
 	spin_lock_irqsave(&mod->lock, flags);
 
-	/* setup the internal datastructures for RX */
+	/* setup the पूर्णांकernal dataकाष्ठाures क्रम RX */
 	mod->rx_num = 0;
-	mod->rx_int = 0;
+	mod->rx_पूर्णांक = 0;
 
 	/* tohost queue descriptors are in page 5 */
 	ican3_set_page(mod, QUEUE_TOHOST);
 	dst = mod->dpm;
 
 	/* initialize the tohost (rx) queue descriptors: pages 9-24 */
-	for (i = 0; i < ICAN3_NEW_BUFFERS; i++) {
+	क्रम (i = 0; i < ICAN3_NEW_BUFFERS; i++) अणु
 		desc.control = DESC_INTERRUPT | DESC_LEN(1); /* I L=1 */
-		desc.pointer = mod->free_page;
+		desc.poपूर्णांकer = mod->मुक्त_page;
 
 		/* set wrap flag on last buffer */
-		if (i == ICAN3_NEW_BUFFERS - 1)
+		अगर (i == ICAN3_NEW_BUFFERS - 1)
 			desc.control |= DESC_WRAP;
 
-		memcpy_toio(dst, &desc, sizeof(desc));
-		dst += sizeof(desc);
-		mod->free_page++;
-	}
+		स_नकल_toio(dst, &desc, माप(desc));
+		dst += माप(desc);
+		mod->मुक्त_page++;
+	पूर्ण
 
 	/* fromhost (tx) mid queue descriptors are in page 6 */
 	ican3_set_page(mod, QUEUE_FROMHOST_MID);
 	dst = mod->dpm;
 
-	/* setup the internal datastructures for TX */
+	/* setup the पूर्णांकernal dataकाष्ठाures क्रम TX */
 	mod->tx_num = 0;
 
 	/* initialize the fromhost mid queue descriptors: pages 25-40 */
-	for (i = 0; i < ICAN3_NEW_BUFFERS; i++) {
+	क्रम (i = 0; i < ICAN3_NEW_BUFFERS; i++) अणु
 		desc.control = DESC_VALID | DESC_LEN(1); /* V L=1 */
-		desc.pointer = mod->free_page;
+		desc.poपूर्णांकer = mod->मुक्त_page;
 
 		/* set wrap flag on last buffer */
-		if (i == ICAN3_NEW_BUFFERS - 1)
+		अगर (i == ICAN3_NEW_BUFFERS - 1)
 			desc.control |= DESC_WRAP;
 
-		memcpy_toio(dst, &desc, sizeof(desc));
-		dst += sizeof(desc);
-		mod->free_page++;
-	}
+		स_नकल_toio(dst, &desc, माप(desc));
+		dst += माप(desc);
+		mod->मुक्त_page++;
+	पूर्ण
 
 	/* fromhost hi queue descriptors are in page 7 */
 	ican3_set_page(mod, QUEUE_FROMHOST_HIGH);
@@ -445,9 +446,9 @@ static void ican3_init_new_host_interface(struct ican3_dev *mod)
 
 	/* initialize only a single buffer in the fromhost hi queue (unused) */
 	desc.control = DESC_VALID | DESC_WRAP | DESC_LEN(1); /* VW L=1 */
-	desc.pointer = mod->free_page;
-	memcpy_toio(dst, &desc, sizeof(desc));
-	mod->free_page++;
+	desc.poपूर्णांकer = mod->मुक्त_page;
+	स_नकल_toio(dst, &desc, माप(desc));
+	mod->मुक्त_page++;
 
 	/* fromhost low queue descriptors are in page 8 */
 	ican3_set_page(mod, QUEUE_FROMHOST_LOW);
@@ -455,97 +456,97 @@ static void ican3_init_new_host_interface(struct ican3_dev *mod)
 
 	/* initialize only a single buffer in the fromhost low queue (unused) */
 	desc.control = DESC_VALID | DESC_WRAP | DESC_LEN(1); /* VW L=1 */
-	desc.pointer = mod->free_page;
-	memcpy_toio(dst, &desc, sizeof(desc));
-	mod->free_page++;
+	desc.poपूर्णांकer = mod->मुक्त_page;
+	स_नकल_toio(dst, &desc, माप(desc));
+	mod->मुक्त_page++;
 
 	spin_unlock_irqrestore(&mod->lock, flags);
-}
+पूर्ण
 
 /*
  * ICAN3 Fast Host Interface Setup
  */
 
-static void ican3_init_fast_host_interface(struct ican3_dev *mod)
-{
-	struct ican3_fast_desc desc;
-	unsigned long flags;
-	unsigned int addr;
-	void __iomem *dst;
-	int i;
+अटल व्योम ican3_init_fast_host_पूर्णांकerface(काष्ठा ican3_dev *mod)
+अणु
+	काष्ठा ican3_fast_desc desc;
+	अचिन्हित दीर्घ flags;
+	अचिन्हित पूर्णांक addr;
+	व्योम __iomem *dst;
+	पूर्णांक i;
 
 	spin_lock_irqsave(&mod->lock, flags);
 
 	/* save the start recv page */
-	mod->fastrx_start = mod->free_page;
+	mod->fastrx_start = mod->मुक्त_page;
 	mod->fastrx_num = 0;
 
 	/* build a single fast tohost queue descriptor */
-	memset(&desc, 0, sizeof(desc));
+	स_रखो(&desc, 0, माप(desc));
 	desc.control = 0x00;
 	desc.command = 1;
 
 	/* build the tohost queue descriptor ring in memory */
 	addr = 0;
-	for (i = 0; i < ICAN3_RX_BUFFERS; i++) {
+	क्रम (i = 0; i < ICAN3_RX_BUFFERS; i++) अणु
 
 		/* set the wrap bit on the last buffer */
-		if (i == ICAN3_RX_BUFFERS - 1)
+		अगर (i == ICAN3_RX_BUFFERS - 1)
 			desc.control |= DESC_WRAP;
 
-		/* switch to the correct page */
-		ican3_set_page(mod, mod->free_page);
+		/* चयन to the correct page */
+		ican3_set_page(mod, mod->मुक्त_page);
 
 		/* copy the descriptor to the DPM */
 		dst = mod->dpm + addr;
-		memcpy_toio(dst, &desc, sizeof(desc));
-		addr += sizeof(desc);
+		स_नकल_toio(dst, &desc, माप(desc));
+		addr += माप(desc);
 
-		/* move to the next page if necessary */
-		if (addr >= DPM_PAGE_SIZE) {
+		/* move to the next page अगर necessary */
+		अगर (addr >= DPM_PAGE_SIZE) अणु
 			addr = 0;
-			mod->free_page++;
-		}
-	}
+			mod->मुक्त_page++;
+		पूर्ण
+	पूर्ण
 
 	/* make sure we page-align the next queue */
-	if (addr != 0)
-		mod->free_page++;
+	अगर (addr != 0)
+		mod->मुक्त_page++;
 
 	/* save the start xmit page */
-	mod->fasttx_start = mod->free_page;
+	mod->fasttx_start = mod->मुक्त_page;
 	mod->fasttx_num = 0;
 
 	/* build a single fast fromhost queue descriptor */
-	memset(&desc, 0, sizeof(desc));
+	स_रखो(&desc, 0, माप(desc));
 	desc.control = DESC_VALID;
 	desc.command = 1;
 
 	/* build the fromhost queue descriptor ring in memory */
 	addr = 0;
-	for (i = 0; i < ICAN3_TX_BUFFERS; i++) {
+	क्रम (i = 0; i < ICAN3_TX_BUFFERS; i++) अणु
 
 		/* set the wrap bit on the last buffer */
-		if (i == ICAN3_TX_BUFFERS - 1)
+		अगर (i == ICAN3_TX_BUFFERS - 1)
 			desc.control |= DESC_WRAP;
 
-		/* switch to the correct page */
-		ican3_set_page(mod, mod->free_page);
+		/* चयन to the correct page */
+		ican3_set_page(mod, mod->मुक्त_page);
 
 		/* copy the descriptor to the DPM */
 		dst = mod->dpm + addr;
-		memcpy_toio(dst, &desc, sizeof(desc));
-		addr += sizeof(desc);
+		स_नकल_toio(dst, &desc, माप(desc));
+		addr += माप(desc);
 
-		/* move to the next page if necessary */
-		if (addr >= DPM_PAGE_SIZE) {
+		/* move to the next page अगर necessary */
+		अगर (addr >= DPM_PAGE_SIZE) अणु
 			addr = 0;
-			mod->free_page++;
-		}
-	}
+			mod->मुक्त_page++;
+		पूर्ण
+	पूर्ण
 
 	spin_unlock_irqrestore(&mod->lock, flags);
-}
+पूर्ण
 
 /*
  * ICAN3 "new-style" Host Interface Message Helpers
@@ -554,188 +555,188 @@ static void ican3_init_fast_host_interface(struct ican3_dev *mod)
 /*
  * LOCKING: must hold mod->lock
  */
-static int ican3_new_send_msg(struct ican3_dev *mod, struct ican3_msg *msg)
-{
-	struct ican3_new_desc desc;
-	void __iomem *desc_addr = mod->dpm + (mod->tx_num * sizeof(desc));
+अटल पूर्णांक ican3_new_send_msg(काष्ठा ican3_dev *mod, काष्ठा ican3_msg *msg)
+अणु
+	काष्ठा ican3_new_desc desc;
+	व्योम __iomem *desc_addr = mod->dpm + (mod->tx_num * माप(desc));
 
-	/* switch to the fromhost mid queue, and read the buffer descriptor */
+	/* चयन to the fromhost mid queue, and पढ़ो the buffer descriptor */
 	ican3_set_page(mod, QUEUE_FROMHOST_MID);
-	memcpy_fromio(&desc, desc_addr, sizeof(desc));
+	स_नकल_fromio(&desc, desc_addr, माप(desc));
 
-	if (!(desc.control & DESC_VALID)) {
+	अगर (!(desc.control & DESC_VALID)) अणु
 		netdev_dbg(mod->ndev, "%s: no free buffers\n", __func__);
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
-	/* switch to the data page, copy the data */
-	ican3_set_page(mod, desc.pointer);
-	memcpy_toio(mod->dpm, msg, sizeof(*msg));
+	/* चयन to the data page, copy the data */
+	ican3_set_page(mod, desc.poपूर्णांकer);
+	स_नकल_toio(mod->dpm, msg, माप(*msg));
 
-	/* switch back to the descriptor, set the valid bit, write it back */
+	/* चयन back to the descriptor, set the valid bit, ग_लिखो it back */
 	ican3_set_page(mod, QUEUE_FROMHOST_MID);
 	desc.control ^= DESC_VALID;
-	memcpy_toio(desc_addr, &desc, sizeof(desc));
+	स_नकल_toio(desc_addr, &desc, माप(desc));
 
 	/* update the tx number */
 	mod->tx_num = (desc.control & DESC_WRAP) ? 0 : (mod->tx_num + 1);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * LOCKING: must hold mod->lock
  */
-static int ican3_new_recv_msg(struct ican3_dev *mod, struct ican3_msg *msg)
-{
-	struct ican3_new_desc desc;
-	void __iomem *desc_addr = mod->dpm + (mod->rx_num * sizeof(desc));
+अटल पूर्णांक ican3_new_recv_msg(काष्ठा ican3_dev *mod, काष्ठा ican3_msg *msg)
+अणु
+	काष्ठा ican3_new_desc desc;
+	व्योम __iomem *desc_addr = mod->dpm + (mod->rx_num * माप(desc));
 
-	/* switch to the tohost queue, and read the buffer descriptor */
+	/* चयन to the tohost queue, and पढ़ो the buffer descriptor */
 	ican3_set_page(mod, QUEUE_TOHOST);
-	memcpy_fromio(&desc, desc_addr, sizeof(desc));
+	स_नकल_fromio(&desc, desc_addr, माप(desc));
 
-	if (!(desc.control & DESC_VALID)) {
+	अगर (!(desc.control & DESC_VALID)) अणु
 		netdev_dbg(mod->ndev, "%s: no buffers to recv\n", __func__);
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
-	/* switch to the data page, copy the data */
-	ican3_set_page(mod, desc.pointer);
-	memcpy_fromio(msg, mod->dpm, sizeof(*msg));
+	/* चयन to the data page, copy the data */
+	ican3_set_page(mod, desc.poपूर्णांकer);
+	स_नकल_fromio(msg, mod->dpm, माप(*msg));
 
-	/* switch back to the descriptor, toggle the valid bit, write it back */
+	/* चयन back to the descriptor, toggle the valid bit, ग_लिखो it back */
 	ican3_set_page(mod, QUEUE_TOHOST);
 	desc.control ^= DESC_VALID;
-	memcpy_toio(desc_addr, &desc, sizeof(desc));
+	स_नकल_toio(desc_addr, &desc, माप(desc));
 
 	/* update the rx number */
 	mod->rx_num = (desc.control & DESC_WRAP) ? 0 : (mod->rx_num + 1);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * Message Send / Recv Helpers
  */
 
-static int ican3_send_msg(struct ican3_dev *mod, struct ican3_msg *msg)
-{
-	unsigned long flags;
-	int ret;
+अटल पूर्णांक ican3_send_msg(काष्ठा ican3_dev *mod, काष्ठा ican3_msg *msg)
+अणु
+	अचिन्हित दीर्घ flags;
+	पूर्णांक ret;
 
 	spin_lock_irqsave(&mod->lock, flags);
 
-	if (mod->iftype == 0)
+	अगर (mod->अगरtype == 0)
 		ret = ican3_old_send_msg(mod, msg);
-	else
+	अन्यथा
 		ret = ican3_new_send_msg(mod, msg);
 
 	spin_unlock_irqrestore(&mod->lock, flags);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int ican3_recv_msg(struct ican3_dev *mod, struct ican3_msg *msg)
-{
-	unsigned long flags;
-	int ret;
+अटल पूर्णांक ican3_recv_msg(काष्ठा ican3_dev *mod, काष्ठा ican3_msg *msg)
+अणु
+	अचिन्हित दीर्घ flags;
+	पूर्णांक ret;
 
 	spin_lock_irqsave(&mod->lock, flags);
 
-	if (mod->iftype == 0)
+	अगर (mod->अगरtype == 0)
 		ret = ican3_old_recv_msg(mod, msg);
-	else
+	अन्यथा
 		ret = ican3_new_recv_msg(mod, msg);
 
 	spin_unlock_irqrestore(&mod->lock, flags);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
- * Quick Pre-constructed Messages
+ * Quick Pre-स्थिरructed Messages
  */
 
-static int ican3_msg_connect(struct ican3_dev *mod)
-{
-	struct ican3_msg msg;
+अटल पूर्णांक ican3_msg_connect(काष्ठा ican3_dev *mod)
+अणु
+	काष्ठा ican3_msg msg;
 
-	memset(&msg, 0, sizeof(msg));
+	स_रखो(&msg, 0, माप(msg));
 	msg.spec = MSG_CONNECTI;
 	msg.len = cpu_to_le16(0);
 
-	return ican3_send_msg(mod, &msg);
-}
+	वापस ican3_send_msg(mod, &msg);
+पूर्ण
 
-static int ican3_msg_disconnect(struct ican3_dev *mod)
-{
-	struct ican3_msg msg;
+अटल पूर्णांक ican3_msg_disconnect(काष्ठा ican3_dev *mod)
+अणु
+	काष्ठा ican3_msg msg;
 
-	memset(&msg, 0, sizeof(msg));
+	स_रखो(&msg, 0, माप(msg));
 	msg.spec = MSG_DISCONNECT;
 	msg.len = cpu_to_le16(0);
 
-	return ican3_send_msg(mod, &msg);
-}
+	वापस ican3_send_msg(mod, &msg);
+पूर्ण
 
-static int ican3_msg_newhostif(struct ican3_dev *mod)
-{
-	struct ican3_msg msg;
-	int ret;
+अटल पूर्णांक ican3_msg_newhostअगर(काष्ठा ican3_dev *mod)
+अणु
+	काष्ठा ican3_msg msg;
+	पूर्णांक ret;
 
-	memset(&msg, 0, sizeof(msg));
+	स_रखो(&msg, 0, माप(msg));
 	msg.spec = MSG_NEWHOSTIF;
 	msg.len = cpu_to_le16(0);
 
-	/* If we're not using the old interface, switching seems bogus */
-	WARN_ON(mod->iftype != 0);
+	/* If we're not using the old पूर्णांकerface, चयनing seems bogus */
+	WARN_ON(mod->अगरtype != 0);
 
 	ret = ican3_send_msg(mod, &msg);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	/* mark the module as using the new host interface */
-	mod->iftype = 1;
-	return 0;
-}
+	/* mark the module as using the new host पूर्णांकerface */
+	mod->अगरtype = 1;
+	वापस 0;
+पूर्ण
 
-static int ican3_msg_fasthostif(struct ican3_dev *mod)
-{
-	struct ican3_msg msg;
-	unsigned int addr;
+अटल पूर्णांक ican3_msg_fasthostअगर(काष्ठा ican3_dev *mod)
+अणु
+	काष्ठा ican3_msg msg;
+	अचिन्हित पूर्णांक addr;
 
-	memset(&msg, 0, sizeof(msg));
+	स_रखो(&msg, 0, माप(msg));
 	msg.spec = MSG_INITFDPMQUEUE;
 	msg.len = cpu_to_le16(8);
 
-	/* write the tohost queue start address */
+	/* ग_लिखो the tohost queue start address */
 	addr = DPM_PAGE_ADDR(mod->fastrx_start);
 	msg.data[0] = addr & 0xff;
 	msg.data[1] = (addr >> 8) & 0xff;
 	msg.data[2] = (addr >> 16) & 0xff;
 	msg.data[3] = (addr >> 24) & 0xff;
 
-	/* write the fromhost queue start address */
+	/* ग_लिखो the fromhost queue start address */
 	addr = DPM_PAGE_ADDR(mod->fasttx_start);
 	msg.data[4] = addr & 0xff;
 	msg.data[5] = (addr >> 8) & 0xff;
 	msg.data[6] = (addr >> 16) & 0xff;
 	msg.data[7] = (addr >> 24) & 0xff;
 
-	/* If we're not using the new interface yet, we cannot do this */
-	WARN_ON(mod->iftype != 1);
+	/* If we're not using the new पूर्णांकerface yet, we cannot करो this */
+	WARN_ON(mod->अगरtype != 1);
 
-	return ican3_send_msg(mod, &msg);
-}
+	वापस ican3_send_msg(mod, &msg);
+पूर्ण
 
 /*
  * Setup the CAN filter to either accept or reject all
  * messages from the CAN bus.
  */
-static int ican3_set_id_filter(struct ican3_dev *mod, bool accept)
-{
-	struct ican3_msg msg;
-	int ret;
+अटल पूर्णांक ican3_set_id_filter(काष्ठा ican3_dev *mod, bool accept)
+अणु
+	काष्ठा ican3_msg msg;
+	पूर्णांक ret;
 
 	/* Standard Frame Format */
-	memset(&msg, 0, sizeof(msg));
+	स_रखो(&msg, 0, माप(msg));
 	msg.spec = MSG_SETAFILMASK;
 	msg.len = cpu_to_le16(5);
 	msg.data[0] = 0x00; /* IDLo LSB */
@@ -743,15 +744,15 @@ static int ican3_set_id_filter(struct ican3_dev *mod, bool accept)
 	msg.data[2] = 0xff; /* IDHi LSB */
 	msg.data[3] = 0x07; /* IDHi MSB */
 
-	/* accept all frames for fast host if, or reject all frames */
+	/* accept all frames क्रम fast host अगर, or reject all frames */
 	msg.data[4] = accept ? SETAFILMASK_FASTIF : SETAFILMASK_REJECT;
 
 	ret = ican3_send_msg(mod, &msg);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	/* Extended Frame Format */
-	memset(&msg, 0, sizeof(msg));
+	स_रखो(&msg, 0, माप(msg));
 	msg.spec = MSG_SETAFILMASK;
 	msg.len = cpu_to_le16(13);
 	msg.data[0] = 0;    /* MUX = 0 */
@@ -764,35 +765,35 @@ static int ican3_set_id_filter(struct ican3_dev *mod, bool accept)
 	msg.data[7] = 0xff;
 	msg.data[8] = 0x3f; /* IDHi MSB */
 
-	/* accept all frames for fast host if, or reject all frames */
+	/* accept all frames क्रम fast host अगर, or reject all frames */
 	msg.data[9] = accept ? SETAFILMASK_FASTIF : SETAFILMASK_REJECT;
 
-	return ican3_send_msg(mod, &msg);
-}
+	वापस ican3_send_msg(mod, &msg);
+पूर्ण
 
 /*
  * Bring the CAN bus online or offline
  */
-static int ican3_set_bus_state(struct ican3_dev *mod, bool on)
-{
-	struct can_bittiming *bt = &mod->can.bittiming;
-	struct ican3_msg msg;
+अटल पूर्णांक ican3_set_bus_state(काष्ठा ican3_dev *mod, bool on)
+अणु
+	काष्ठा can_bittiming *bt = &mod->can.bittiming;
+	काष्ठा ican3_msg msg;
 	u8 btr0, btr1;
-	int res;
+	पूर्णांक res;
 
 	/* This algorithm was stolen from drivers/net/can/sja1000/sja1000.c      */
-	/* The bittiming register command for the ICAN3 just sets the bit timing */
-	/* registers on the SJA1000 chip directly                                */
+	/* The bittiming रेजिस्टर command क्रम the ICAN3 just sets the bit timing */
+	/* रेजिस्टरs on the SJA1000 chip directly                                */
 	btr0 = ((bt->brp - 1) & 0x3f) | (((bt->sjw - 1) & 0x3) << 6);
 	btr1 = ((bt->prop_seg + bt->phase_seg1 - 1) & 0xf) |
 		(((bt->phase_seg2 - 1) & 0x7) << 4);
-	if (mod->can.ctrlmode & CAN_CTRLMODE_3_SAMPLES)
+	अगर (mod->can.ctrlmode & CAN_CTRLMODE_3_SAMPLES)
 		btr1 |= 0x80;
 
-	if (mod->fwtype == ICAN3_FWTYPE_ICANOS) {
-		if (on) {
+	अगर (mod->fwtype == ICAN3_FWTYPE_ICANOS) अणु
+		अगर (on) अणु
 			/* set bittiming */
-			memset(&msg, 0, sizeof(msg));
+			स_रखो(&msg, 0, माप(msg));
 			msg.spec = MSG_CBTRREQ;
 			msg.len = cpu_to_le16(4);
 			msg.data[0] = 0x00;
@@ -801,177 +802,177 @@ static int ican3_set_bus_state(struct ican3_dev *mod, bool on)
 			msg.data[3] = btr1;
 
 			res = ican3_send_msg(mod, &msg);
-			if (res)
-				return res;
-		}
+			अगर (res)
+				वापस res;
+		पूर्ण
 
 		/* can-on/off request */
-		memset(&msg, 0, sizeof(msg));
+		स_रखो(&msg, 0, माप(msg));
 		msg.spec = on ? MSG_CONREQ : MSG_COFFREQ;
 		msg.len = cpu_to_le16(0);
 
-		return ican3_send_msg(mod, &msg);
+		वापस ican3_send_msg(mod, &msg);
 
-	} else if (mod->fwtype == ICAN3_FWTYPE_CAL_CANOPEN) {
+	पूर्ण अन्यथा अगर (mod->fwtype == ICAN3_FWTYPE_CAL_CANOPEN) अणु
 		/* bittiming + can-on/off request */
-		memset(&msg, 0, sizeof(msg));
+		स_रखो(&msg, 0, माप(msg));
 		msg.spec = MSG_LMTS;
-		if (on) {
+		अगर (on) अणु
 			msg.len = cpu_to_le16(4);
 			msg.data[0] = LMTS_BUSON_REQ;
 			msg.data[1] = 0;
 			msg.data[2] = btr0;
 			msg.data[3] = btr1;
-		} else {
+		पूर्ण अन्यथा अणु
 			msg.len = cpu_to_le16(2);
 			msg.data[0] = LMTS_BUSOFF_REQ;
 			msg.data[1] = 0;
-		}
+		पूर्ण
 		res = ican3_send_msg(mod, &msg);
-		if (res)
-			return res;
+		अगर (res)
+			वापस res;
 
-		if (on) {
-			/* create NMT Slave Node for error processing
+		अगर (on) अणु
+			/* create NMT Slave Node क्रम error processing
 			 *   class 2 (with error capability, see CiA/DS203-1)
 			 *   id    1
 			 *   name  locnod1 (must be exactly 7 bytes)
 			 */
-			memset(&msg, 0, sizeof(msg));
+			स_रखो(&msg, 0, माप(msg));
 			msg.spec = MSG_NMTS;
 			msg.len = cpu_to_le16(11);
 			msg.data[0] = NMTS_CREATE_NODE_REQ;
 			msg.data[1] = 0;
 			msg.data[2] = 2;                 /* node class */
 			msg.data[3] = 1;                 /* node id */
-			strcpy(msg.data + 4, "locnod1"); /* node name  */
-			return ican3_send_msg(mod, &msg);
-		}
-		return 0;
-	}
-	return -ENOTSUPP;
-}
+			म_नकल(msg.data + 4, "locnod1"); /* node name  */
+			वापस ican3_send_msg(mod, &msg);
+		पूर्ण
+		वापस 0;
+	पूर्ण
+	वापस -ENOTSUPP;
+पूर्ण
 
-static int ican3_set_termination(struct ican3_dev *mod, bool on)
-{
-	struct ican3_msg msg;
+अटल पूर्णांक ican3_set_termination(काष्ठा ican3_dev *mod, bool on)
+अणु
+	काष्ठा ican3_msg msg;
 
-	memset(&msg, 0, sizeof(msg));
+	स_रखो(&msg, 0, माप(msg));
 	msg.spec = MSG_HWCONF;
 	msg.len = cpu_to_le16(2);
 	msg.data[0] = 0x00;
 	msg.data[1] = on ? HWCONF_TERMINATE_ON : HWCONF_TERMINATE_OFF;
 
-	return ican3_send_msg(mod, &msg);
-}
+	वापस ican3_send_msg(mod, &msg);
+पूर्ण
 
-static int ican3_send_inquiry(struct ican3_dev *mod, u8 subspec)
-{
-	struct ican3_msg msg;
+अटल पूर्णांक ican3_send_inquiry(काष्ठा ican3_dev *mod, u8 subspec)
+अणु
+	काष्ठा ican3_msg msg;
 
-	memset(&msg, 0, sizeof(msg));
+	स_रखो(&msg, 0, माप(msg));
 	msg.spec = MSG_INQUIRY;
 	msg.len = cpu_to_le16(2);
 	msg.data[0] = subspec;
 	msg.data[1] = 0x00;
 
-	return ican3_send_msg(mod, &msg);
-}
+	वापस ican3_send_msg(mod, &msg);
+पूर्ण
 
-static int ican3_set_buserror(struct ican3_dev *mod, u8 quota)
-{
-	struct ican3_msg msg;
+अटल पूर्णांक ican3_set_buserror(काष्ठा ican3_dev *mod, u8 quota)
+अणु
+	काष्ठा ican3_msg msg;
 
-	if (mod->fwtype == ICAN3_FWTYPE_ICANOS) {
-		memset(&msg, 0, sizeof(msg));
+	अगर (mod->fwtype == ICAN3_FWTYPE_ICANOS) अणु
+		स_रखो(&msg, 0, माप(msg));
 		msg.spec = MSG_CCONFREQ;
 		msg.len = cpu_to_le16(2);
 		msg.data[0] = 0x00;
 		msg.data[1] = quota;
-	} else if (mod->fwtype == ICAN3_FWTYPE_CAL_CANOPEN) {
-		memset(&msg, 0, sizeof(msg));
+	पूर्ण अन्यथा अगर (mod->fwtype == ICAN3_FWTYPE_CAL_CANOPEN) अणु
+		स_रखो(&msg, 0, माप(msg));
 		msg.spec = MSG_LMTS;
 		msg.len = cpu_to_le16(4);
 		msg.data[0] = LMTS_CAN_CONF_REQ;
 		msg.data[1] = 0x00;
 		msg.data[2] = 0x00;
 		msg.data[3] = quota;
-	} else {
-		return -ENOTSUPP;
-	}
-	return ican3_send_msg(mod, &msg);
-}
+	पूर्ण अन्यथा अणु
+		वापस -ENOTSUPP;
+	पूर्ण
+	वापस ican3_send_msg(mod, &msg);
+पूर्ण
 
 /*
  * ICAN3 to Linux CAN Frame Conversion
  */
 
-static void ican3_to_can_frame(struct ican3_dev *mod,
-			       struct ican3_fast_desc *desc,
-			       struct can_frame *cf)
-{
-	if ((desc->command & ICAN3_CAN_TYPE_MASK) == ICAN3_CAN_TYPE_SFF) {
-		if (desc->data[1] & ICAN3_SFF_RTR)
+अटल व्योम ican3_to_can_frame(काष्ठा ican3_dev *mod,
+			       काष्ठा ican3_fast_desc *desc,
+			       काष्ठा can_frame *cf)
+अणु
+	अगर ((desc->command & ICAN3_CAN_TYPE_MASK) == ICAN3_CAN_TYPE_SFF) अणु
+		अगर (desc->data[1] & ICAN3_SFF_RTR)
 			cf->can_id |= CAN_RTR_FLAG;
 
 		cf->can_id |= desc->data[0] << 3;
 		cf->can_id |= (desc->data[1] & 0xe0) >> 5;
 		cf->len = can_cc_dlc2len(desc->data[1] & ICAN3_CAN_DLC_MASK);
-		memcpy(cf->data, &desc->data[2], cf->len);
-	} else {
+		स_नकल(cf->data, &desc->data[2], cf->len);
+	पूर्ण अन्यथा अणु
 		cf->len = can_cc_dlc2len(desc->data[0] & ICAN3_CAN_DLC_MASK);
-		if (desc->data[0] & ICAN3_EFF_RTR)
+		अगर (desc->data[0] & ICAN3_EFF_RTR)
 			cf->can_id |= CAN_RTR_FLAG;
 
-		if (desc->data[0] & ICAN3_EFF) {
+		अगर (desc->data[0] & ICAN3_EFF) अणु
 			cf->can_id |= CAN_EFF_FLAG;
 			cf->can_id |= desc->data[2] << 21; /* 28-21 */
 			cf->can_id |= desc->data[3] << 13; /* 20-13 */
 			cf->can_id |= desc->data[4] << 5;  /* 12-5  */
 			cf->can_id |= (desc->data[5] & 0xf8) >> 3;
-		} else {
+		पूर्ण अन्यथा अणु
 			cf->can_id |= desc->data[2] << 3;  /* 10-3  */
 			cf->can_id |= desc->data[3] >> 5;  /* 2-0   */
-		}
+		पूर्ण
 
-		memcpy(cf->data, &desc->data[6], cf->len);
-	}
-}
+		स_नकल(cf->data, &desc->data[6], cf->len);
+	पूर्ण
+पूर्ण
 
-static void can_frame_to_ican3(struct ican3_dev *mod,
-			       struct can_frame *cf,
-			       struct ican3_fast_desc *desc)
-{
+अटल व्योम can_frame_to_ican3(काष्ठा ican3_dev *mod,
+			       काष्ठा can_frame *cf,
+			       काष्ठा ican3_fast_desc *desc)
+अणु
 	/* clear out any stale data in the descriptor */
-	memset(desc->data, 0, sizeof(desc->data));
+	स_रखो(desc->data, 0, माप(desc->data));
 
-	/* we always use the extended format, with the ECHO flag set */
+	/* we always use the extended क्रमmat, with the ECHO flag set */
 	desc->command = ICAN3_CAN_TYPE_EFF;
 	desc->data[0] |= cf->len;
 	desc->data[1] |= ICAN3_ECHO;
 
 	/* support single transmission (no retries) mode */
-	if (mod->can.ctrlmode & CAN_CTRLMODE_ONE_SHOT)
+	अगर (mod->can.ctrlmode & CAN_CTRLMODE_ONE_SHOT)
 		desc->data[1] |= ICAN3_SNGL;
 
-	if (cf->can_id & CAN_RTR_FLAG)
+	अगर (cf->can_id & CAN_RTR_FLAG)
 		desc->data[0] |= ICAN3_EFF_RTR;
 
-	/* pack the id into the correct places */
-	if (cf->can_id & CAN_EFF_FLAG) {
+	/* pack the id पूर्णांकo the correct places */
+	अगर (cf->can_id & CAN_EFF_FLAG) अणु
 		desc->data[0] |= ICAN3_EFF;
 		desc->data[2] = (cf->can_id & 0x1fe00000) >> 21; /* 28-21 */
 		desc->data[3] = (cf->can_id & 0x001fe000) >> 13; /* 20-13 */
 		desc->data[4] = (cf->can_id & 0x00001fe0) >> 5;  /* 12-5  */
 		desc->data[5] = (cf->can_id & 0x0000001f) << 3;  /* 4-0   */
-	} else {
+	पूर्ण अन्यथा अणु
 		desc->data[2] = (cf->can_id & 0x7F8) >> 3; /* bits 10-3 */
 		desc->data[3] = (cf->can_id & 0x007) << 5; /* bits 2-0  */
-	}
+	पूर्ण
 
-	/* copy the data bits into the descriptor */
-	memcpy(&desc->data[6], cf->data, cf->len);
-}
+	/* copy the data bits पूर्णांकo the descriptor */
+	स_नकल(&desc->data[6], cf->data, cf->len);
+पूर्ण
 
 /*
  * Interrupt Handling
@@ -982,73 +983,73 @@ static void can_frame_to_ican3(struct ican3_dev *mod,
  * this message in production code, but it is very useful when debugging to be
  * able to display this message.
  */
-static void ican3_handle_idvers(struct ican3_dev *mod, struct ican3_msg *msg)
-{
+अटल व्योम ican3_handle_idvers(काष्ठा ican3_dev *mod, काष्ठा ican3_msg *msg)
+अणु
 	netdev_dbg(mod->ndev, "IDVERS response: %s\n", msg->data);
-}
+पूर्ण
 
-static void ican3_handle_msglost(struct ican3_dev *mod, struct ican3_msg *msg)
-{
-	struct net_device *dev = mod->ndev;
-	struct net_device_stats *stats = &dev->stats;
-	struct can_frame *cf;
-	struct sk_buff *skb;
+अटल व्योम ican3_handle_msglost(काष्ठा ican3_dev *mod, काष्ठा ican3_msg *msg)
+अणु
+	काष्ठा net_device *dev = mod->ndev;
+	काष्ठा net_device_stats *stats = &dev->stats;
+	काष्ठा can_frame *cf;
+	काष्ठा sk_buff *skb;
 
 	/*
 	 * Report that communication messages with the microcontroller firmware
-	 * are being lost. These are never CAN frames, so we do not generate an
-	 * error frame for userspace
+	 * are being lost. These are never CAN frames, so we करो not generate an
+	 * error frame क्रम userspace
 	 */
-	if (msg->spec == MSG_MSGLOST) {
+	अगर (msg->spec == MSG_MSGLOST) अणु
 		netdev_err(mod->ndev, "lost %d control messages\n", msg->data[0]);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/*
 	 * Oops, this indicates that we have lost messages in the fast queue,
-	 * which are exclusively CAN messages. Our driver isn't reading CAN
+	 * which are exclusively CAN messages. Our driver isn't पढ़ोing CAN
 	 * frames fast enough.
 	 *
 	 * We'll pretend that the SJA1000 told us that it ran out of buffer
-	 * space, because there is not a better message for this.
+	 * space, because there is not a better message क्रम this.
 	 */
 	skb = alloc_can_err_skb(dev, &cf);
-	if (skb) {
+	अगर (skb) अणु
 		cf->can_id |= CAN_ERR_CRTL;
 		cf->data[1] = CAN_ERR_CRTL_RX_OVERFLOW;
 		stats->rx_over_errors++;
 		stats->rx_errors++;
-		netif_rx(skb);
-	}
-}
+		netअगर_rx(skb);
+	पूर्ण
+पूर्ण
 
 /*
  * Handle CAN Event Indication Messages from the firmware
  *
- * The ICAN3 firmware provides the values of some SJA1000 registers when it
+ * The ICAN3 firmware provides the values of some SJA1000 रेजिस्टरs when it
  * generates this message. The code below is largely copied from the
  * drivers/net/can/sja1000/sja1000.c file, and adapted as necessary
  */
-static int ican3_handle_cevtind(struct ican3_dev *mod, struct ican3_msg *msg)
-{
-	struct net_device *dev = mod->ndev;
-	struct net_device_stats *stats = &dev->stats;
-	enum can_state state = mod->can.state;
+अटल पूर्णांक ican3_handle_cevtind(काष्ठा ican3_dev *mod, काष्ठा ican3_msg *msg)
+अणु
+	काष्ठा net_device *dev = mod->ndev;
+	काष्ठा net_device_stats *stats = &dev->stats;
+	क्रमागत can_state state = mod->can.state;
 	u8 isrc, ecc, status, rxerr, txerr;
-	struct can_frame *cf;
-	struct sk_buff *skb;
+	काष्ठा can_frame *cf;
+	काष्ठा sk_buff *skb;
 
 	/* we can only handle the SJA1000 part */
-	if (msg->data[1] != CEVTIND_CHIP_SJA1000) {
+	अगर (msg->data[1] != CEVTIND_CHIP_SJA1000) अणु
 		netdev_err(mod->ndev, "unable to handle errors on non-SJA1000\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	/* check the message length for sanity */
-	if (le16_to_cpu(msg->len) < 6) {
+	/* check the message length क्रम sanity */
+	अगर (le16_to_cpu(msg->len) < 6) अणु
 		netdev_err(mod->ndev, "error message too short\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	isrc = msg->data[0];
 	ecc = msg->data[2];
@@ -1058,257 +1059,257 @@ static int ican3_handle_cevtind(struct ican3_dev *mod, struct ican3_msg *msg)
 
 	/*
 	 * This hardware lacks any support other than bus error messages to
-	 * determine if packet transmission has failed.
+	 * determine अगर packet transmission has failed.
 	 *
 	 * When TX errors happen, one echo skb needs to be dropped from the
 	 * front of the queue.
 	 *
-	 * A small bit of code is duplicated here and below, to avoid error
-	 * skb allocation when it will just be freed immediately.
+	 * A small bit of code is duplicated here and below, to aव्योम error
+	 * skb allocation when it will just be मुक्तd immediately.
 	 */
-	if (isrc == CEVTIND_BEI) {
-		int ret;
+	अगर (isrc == CEVTIND_BEI) अणु
+		पूर्णांक ret;
 		netdev_dbg(mod->ndev, "bus error interrupt\n");
 
 		/* TX error */
-		if (!(ecc & ECC_DIR)) {
-			kfree_skb(skb_dequeue(&mod->echoq));
+		अगर (!(ecc & ECC_सूची)) अणु
+			kमुक्त_skb(skb_dequeue(&mod->echoq));
 			stats->tx_errors++;
-		} else {
+		पूर्ण अन्यथा अणु
 			stats->rx_errors++;
-		}
+		पूर्ण
 
 		/*
-		 * The controller automatically disables bus-error interrupts
-		 * and therefore we must re-enable them.
+		 * The controller स्वतःmatically disables bus-error पूर्णांकerrupts
+		 * and thereक्रमe we must re-enable them.
 		 */
 		ret = ican3_set_buserror(mod, 1);
-		if (ret) {
+		अगर (ret) अणु
 			netdev_err(mod->ndev, "unable to re-enable bus-error\n");
-			return ret;
-		}
+			वापस ret;
+		पूर्ण
 
-		/* bus error reporting is off, return immediately */
-		if (!(mod->can.ctrlmode & CAN_CTRLMODE_BERR_REPORTING))
-			return 0;
-	}
+		/* bus error reporting is off, वापस immediately */
+		अगर (!(mod->can.ctrlmode & CAN_CTRLMODE_BERR_REPORTING))
+			वापस 0;
+	पूर्ण
 
 	skb = alloc_can_err_skb(dev, &cf);
-	if (skb == NULL)
-		return -ENOMEM;
+	अगर (skb == शून्य)
+		वापस -ENOMEM;
 
-	/* data overrun interrupt */
-	if (isrc == CEVTIND_DOI || isrc == CEVTIND_LOST) {
+	/* data overrun पूर्णांकerrupt */
+	अगर (isrc == CEVTIND_DOI || isrc == CEVTIND_LOST) अणु
 		netdev_dbg(mod->ndev, "data overrun interrupt\n");
 		cf->can_id |= CAN_ERR_CRTL;
 		cf->data[1] = CAN_ERR_CRTL_RX_OVERFLOW;
 		stats->rx_over_errors++;
 		stats->rx_errors++;
-	}
+	पूर्ण
 
-	/* error warning + passive interrupt */
-	if (isrc == CEVTIND_EI) {
+	/* error warning + passive पूर्णांकerrupt */
+	अगर (isrc == CEVTIND_EI) अणु
 		netdev_dbg(mod->ndev, "error warning + passive interrupt\n");
-		if (status & SR_BS) {
+		अगर (status & SR_BS) अणु
 			state = CAN_STATE_BUS_OFF;
 			cf->can_id |= CAN_ERR_BUSOFF;
 			mod->can.can_stats.bus_off++;
 			can_bus_off(dev);
-		} else if (status & SR_ES) {
-			if (rxerr >= 128 || txerr >= 128)
+		पूर्ण अन्यथा अगर (status & SR_ES) अणु
+			अगर (rxerr >= 128 || txerr >= 128)
 				state = CAN_STATE_ERROR_PASSIVE;
-			else
+			अन्यथा
 				state = CAN_STATE_ERROR_WARNING;
-		} else {
+		पूर्ण अन्यथा अणु
 			state = CAN_STATE_ERROR_ACTIVE;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	/* bus error interrupt */
-	if (isrc == CEVTIND_BEI) {
+	/* bus error पूर्णांकerrupt */
+	अगर (isrc == CEVTIND_BEI) अणु
 		mod->can.can_stats.bus_error++;
 		cf->can_id |= CAN_ERR_PROT | CAN_ERR_BUSERROR;
 
-		switch (ecc & ECC_MASK) {
-		case ECC_BIT:
+		चयन (ecc & ECC_MASK) अणु
+		हाल ECC_BIT:
 			cf->data[2] |= CAN_ERR_PROT_BIT;
-			break;
-		case ECC_FORM:
+			अवरोध;
+		हाल ECC_FORM:
 			cf->data[2] |= CAN_ERR_PROT_FORM;
-			break;
-		case ECC_STUFF:
+			अवरोध;
+		हाल ECC_STUFF:
 			cf->data[2] |= CAN_ERR_PROT_STUFF;
-			break;
-		default:
+			अवरोध;
+		शेष:
 			cf->data[3] = ecc & ECC_SEG;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		if (!(ecc & ECC_DIR))
+		अगर (!(ecc & ECC_सूची))
 			cf->data[2] |= CAN_ERR_PROT_TX;
 
 		cf->data[6] = txerr;
 		cf->data[7] = rxerr;
-	}
+	पूर्ण
 
-	if (state != mod->can.state && (state == CAN_STATE_ERROR_WARNING ||
-					state == CAN_STATE_ERROR_PASSIVE)) {
+	अगर (state != mod->can.state && (state == CAN_STATE_ERROR_WARNING ||
+					state == CAN_STATE_ERROR_PASSIVE)) अणु
 		cf->can_id |= CAN_ERR_CRTL;
-		if (state == CAN_STATE_ERROR_WARNING) {
+		अगर (state == CAN_STATE_ERROR_WARNING) अणु
 			mod->can.can_stats.error_warning++;
 			cf->data[1] = (txerr > rxerr) ?
 				CAN_ERR_CRTL_TX_WARNING :
 				CAN_ERR_CRTL_RX_WARNING;
-		} else {
+		पूर्ण अन्यथा अणु
 			mod->can.can_stats.error_passive++;
 			cf->data[1] = (txerr > rxerr) ?
 				CAN_ERR_CRTL_TX_PASSIVE :
 				CAN_ERR_CRTL_RX_PASSIVE;
-		}
+		पूर्ण
 
 		cf->data[6] = txerr;
 		cf->data[7] = rxerr;
-	}
+	पूर्ण
 
 	mod->can.state = state;
-	netif_rx(skb);
-	return 0;
-}
+	netअगर_rx(skb);
+	वापस 0;
+पूर्ण
 
-static void ican3_handle_inquiry(struct ican3_dev *mod, struct ican3_msg *msg)
-{
-	switch (msg->data[0]) {
-	case INQUIRY_STATUS:
-	case INQUIRY_EXTENDED:
+अटल व्योम ican3_handle_inquiry(काष्ठा ican3_dev *mod, काष्ठा ican3_msg *msg)
+अणु
+	चयन (msg->data[0]) अणु
+	हाल INQUIRY_STATUS:
+	हाल INQUIRY_EXTENDED:
 		mod->bec.rxerr = msg->data[5];
 		mod->bec.txerr = msg->data[6];
 		complete(&mod->buserror_comp);
-		break;
-	case INQUIRY_TERMINATION:
+		अवरोध;
+	हाल INQUIRY_TERMINATION:
 		mod->termination_enabled = msg->data[6] & HWCONF_TERMINATE_ON;
 		complete(&mod->termination_comp);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		netdev_err(mod->ndev, "received an unknown inquiry response\n");
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
 /* Handle NMTS Slave Event Indication Messages from the firmware */
-static void ican3_handle_nmtsind(struct ican3_dev *mod, struct ican3_msg *msg)
-{
+अटल व्योम ican3_handle_nmtsind(काष्ठा ican3_dev *mod, काष्ठा ican3_msg *msg)
+अणु
 	u16 subspec;
 
 	subspec = msg->data[0] + msg->data[1] * 0x100;
-	if (subspec == NMTS_SLAVE_EVENT_IND) {
-		switch (msg->data[2]) {
-		case NE_LOCAL_OCCURRED:
-		case NE_LOCAL_RESOLVED:
+	अगर (subspec == NMTS_SLAVE_EVENT_IND) अणु
+		चयन (msg->data[2]) अणु
+		हाल NE_LOCAL_OCCURRED:
+		हाल NE_LOCAL_RESOLVED:
 			/* now follows the same message as Raw ICANOS CEVTIND
-			 * shift the data at the same place and call this method
+			 * shअगरt the data at the same place and call this method
 			 */
 			le16_add_cpu(&msg->len, -3);
-			memmove(msg->data, msg->data + 3, le16_to_cpu(msg->len));
+			स_हटाओ(msg->data, msg->data + 3, le16_to_cpu(msg->len));
 			ican3_handle_cevtind(mod, msg);
-			break;
-		case NE_REMOTE_OCCURRED:
-		case NE_REMOTE_RESOLVED:
+			अवरोध;
+		हाल NE_REMOTE_OCCURRED:
+		हाल NE_REMOTE_RESOLVED:
 			/* should not occurre, ignore */
-			break;
-		default:
+			अवरोध;
+		शेष:
 			netdev_warn(mod->ndev, "unknown NMTS event indication %x\n",
 				    msg->data[2]);
-			break;
-		}
-	} else if (subspec == NMTS_SLAVE_STATE_IND) {
+			अवरोध;
+		पूर्ण
+	पूर्ण अन्यथा अगर (subspec == NMTS_SLAVE_STATE_IND) अणु
 		/* ignore state indications */
-	} else {
+	पूर्ण अन्यथा अणु
 		netdev_warn(mod->ndev, "unhandled NMTS indication %x\n",
 			    subspec);
-		return;
-	}
-}
+		वापस;
+	पूर्ण
+पूर्ण
 
-static void ican3_handle_unknown_message(struct ican3_dev *mod,
-					struct ican3_msg *msg)
-{
+अटल व्योम ican3_handle_unknown_message(काष्ठा ican3_dev *mod,
+					काष्ठा ican3_msg *msg)
+अणु
 	netdev_warn(mod->ndev, "received unknown message: spec 0x%.2x length %d\n",
 			   msg->spec, le16_to_cpu(msg->len));
-}
+पूर्ण
 
 /*
  * Handle a control message from the firmware
  */
-static void ican3_handle_message(struct ican3_dev *mod, struct ican3_msg *msg)
-{
+अटल व्योम ican3_handle_message(काष्ठा ican3_dev *mod, काष्ठा ican3_msg *msg)
+अणु
 	netdev_dbg(mod->ndev, "%s: modno %d spec 0x%.2x len %d bytes\n", __func__,
 			   mod->num, msg->spec, le16_to_cpu(msg->len));
 
-	switch (msg->spec) {
-	case MSG_IDVERS:
+	चयन (msg->spec) अणु
+	हाल MSG_IDVERS:
 		ican3_handle_idvers(mod, msg);
-		break;
-	case MSG_MSGLOST:
-	case MSG_FMSGLOST:
+		अवरोध;
+	हाल MSG_MSGLOST:
+	हाल MSG_FMSGLOST:
 		ican3_handle_msglost(mod, msg);
-		break;
-	case MSG_CEVTIND:
+		अवरोध;
+	हाल MSG_CEVTIND:
 		ican3_handle_cevtind(mod, msg);
-		break;
-	case MSG_INQUIRY:
+		अवरोध;
+	हाल MSG_INQUIRY:
 		ican3_handle_inquiry(mod, msg);
-		break;
-	case MSG_NMTS:
+		अवरोध;
+	हाल MSG_NMTS:
 		ican3_handle_nmtsind(mod, msg);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		ican3_handle_unknown_message(mod, msg);
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
 /*
- * The ican3 needs to store all echo skbs, and therefore cannot
- * use the generic infrastructure for this.
+ * The ican3 needs to store all echo skbs, and thereक्रमe cannot
+ * use the generic infraकाष्ठाure क्रम this.
  */
-static void ican3_put_echo_skb(struct ican3_dev *mod, struct sk_buff *skb)
-{
+अटल व्योम ican3_put_echo_skb(काष्ठा ican3_dev *mod, काष्ठा sk_buff *skb)
+अणु
 	skb = can_create_echo_skb(skb);
-	if (!skb)
-		return;
+	अगर (!skb)
+		वापस;
 
-	/* save this skb for tx interrupt echo handling */
+	/* save this skb क्रम tx पूर्णांकerrupt echo handling */
 	skb_queue_tail(&mod->echoq, skb);
-}
+पूर्ण
 
-static unsigned int ican3_get_echo_skb(struct ican3_dev *mod)
-{
-	struct sk_buff *skb = skb_dequeue(&mod->echoq);
-	struct can_frame *cf;
+अटल अचिन्हित पूर्णांक ican3_get_echo_skb(काष्ठा ican3_dev *mod)
+अणु
+	काष्ठा sk_buff *skb = skb_dequeue(&mod->echoq);
+	काष्ठा can_frame *cf;
 	u8 dlc;
 
 	/* this should never trigger unless there is a driver bug */
-	if (!skb) {
+	अगर (!skb) अणु
 		netdev_err(mod->ndev, "BUG: echo skb not occupied\n");
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	cf = (struct can_frame *)skb->data;
+	cf = (काष्ठा can_frame *)skb->data;
 	dlc = cf->len;
 
 	/* check flag whether this packet has to be looped back */
-	if (skb->pkt_type != PACKET_LOOPBACK) {
-		kfree_skb(skb);
-		return dlc;
-	}
+	अगर (skb->pkt_type != PACKET_LOOPBACK) अणु
+		kमुक्त_skb(skb);
+		वापस dlc;
+	पूर्ण
 
 	skb->protocol = htons(ETH_P_CAN);
 	skb->pkt_type = PACKET_BROADCAST;
 	skb->ip_summed = CHECKSUM_UNNECESSARY;
 	skb->dev = mod->ndev;
-	netif_receive_skb(skb);
-	return dlc;
-}
+	netअगर_receive_skb(skb);
+	वापस dlc;
+पूर्ण
 
 /*
  * Compare an skb with an existing echo skb
@@ -1317,89 +1318,89 @@ static unsigned int ican3_get_echo_skb(struct ican3_dev *mod)
  * On these devices, this function can be used to compare a received skb
  * with the saved echo skbs so that the hardware echo skb can be dropped.
  *
- * Returns true if the skb's are identical, false otherwise.
+ * Returns true अगर the skb's are identical, false otherwise.
  */
-static bool ican3_echo_skb_matches(struct ican3_dev *mod, struct sk_buff *skb)
-{
-	struct can_frame *cf = (struct can_frame *)skb->data;
-	struct sk_buff *echo_skb = skb_peek(&mod->echoq);
-	struct can_frame *echo_cf;
+अटल bool ican3_echo_skb_matches(काष्ठा ican3_dev *mod, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा can_frame *cf = (काष्ठा can_frame *)skb->data;
+	काष्ठा sk_buff *echo_skb = skb_peek(&mod->echoq);
+	काष्ठा can_frame *echo_cf;
 
-	if (!echo_skb)
-		return false;
+	अगर (!echo_skb)
+		वापस false;
 
-	echo_cf = (struct can_frame *)echo_skb->data;
-	if (cf->can_id != echo_cf->can_id)
-		return false;
+	echo_cf = (काष्ठा can_frame *)echo_skb->data;
+	अगर (cf->can_id != echo_cf->can_id)
+		वापस false;
 
-	if (cf->len != echo_cf->len)
-		return false;
+	अगर (cf->len != echo_cf->len)
+		वापस false;
 
-	return memcmp(cf->data, echo_cf->data, cf->len) == 0;
-}
+	वापस स_भेद(cf->data, echo_cf->data, cf->len) == 0;
+पूर्ण
 
 /*
  * Check that there is room in the TX ring to transmit another skb
  *
  * LOCKING: must hold mod->lock
  */
-static bool ican3_txok(struct ican3_dev *mod)
-{
-	struct ican3_fast_desc __iomem *desc;
+अटल bool ican3_txok(काष्ठा ican3_dev *mod)
+अणु
+	काष्ठा ican3_fast_desc __iomem *desc;
 	u8 control;
 
 	/* check that we have echo queue space */
-	if (skb_queue_len(&mod->echoq) >= ICAN3_TX_BUFFERS)
-		return false;
+	अगर (skb_queue_len(&mod->echoq) >= ICAN3_TX_BUFFERS)
+		वापस false;
 
 	/* copy the control bits of the descriptor */
 	ican3_set_page(mod, mod->fasttx_start + (mod->fasttx_num / 16));
-	desc = mod->dpm + ((mod->fasttx_num % 16) * sizeof(*desc));
-	control = ioread8(&desc->control);
+	desc = mod->dpm + ((mod->fasttx_num % 16) * माप(*desc));
+	control = ioपढ़ो8(&desc->control);
 
-	/* if the control bits are not valid, then we have no more space */
-	if (!(control & DESC_VALID))
-		return false;
+	/* अगर the control bits are not valid, then we have no more space */
+	अगर (!(control & DESC_VALID))
+		वापस false;
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
 /*
  * Receive one CAN frame from the hardware
  *
  * CONTEXT: must be called from user context
  */
-static int ican3_recv_skb(struct ican3_dev *mod)
-{
-	struct net_device *ndev = mod->ndev;
-	struct net_device_stats *stats = &ndev->stats;
-	struct ican3_fast_desc desc;
-	void __iomem *desc_addr;
-	struct can_frame *cf;
-	struct sk_buff *skb;
-	unsigned long flags;
+अटल पूर्णांक ican3_recv_skb(काष्ठा ican3_dev *mod)
+अणु
+	काष्ठा net_device *ndev = mod->ndev;
+	काष्ठा net_device_stats *stats = &ndev->stats;
+	काष्ठा ican3_fast_desc desc;
+	व्योम __iomem *desc_addr;
+	काष्ठा can_frame *cf;
+	काष्ठा sk_buff *skb;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&mod->lock, flags);
 
 	/* copy the whole descriptor */
 	ican3_set_page(mod, mod->fastrx_start + (mod->fastrx_num / 16));
-	desc_addr = mod->dpm + ((mod->fastrx_num % 16) * sizeof(desc));
-	memcpy_fromio(&desc, desc_addr, sizeof(desc));
+	desc_addr = mod->dpm + ((mod->fastrx_num % 16) * माप(desc));
+	स_नकल_fromio(&desc, desc_addr, माप(desc));
 
 	spin_unlock_irqrestore(&mod->lock, flags);
 
 	/* check that we actually have a CAN frame */
-	if (!(desc.control & DESC_VALID))
-		return -ENOBUFS;
+	अगर (!(desc.control & DESC_VALID))
+		वापस -ENOBUFS;
 
 	/* allocate an skb */
 	skb = alloc_can_skb(ndev, &cf);
-	if (unlikely(skb == NULL)) {
+	अगर (unlikely(skb == शून्य)) अणु
 		stats->rx_dropped++;
-		goto err_noalloc;
-	}
+		जाओ err_noalloc;
+	पूर्ण
 
-	/* convert the ICAN3 frame into Linux CAN format */
+	/* convert the ICAN3 frame पूर्णांकo Linux CAN क्रमmat */
 	ican3_to_can_frame(mod, &desc, cf);
 
 	/*
@@ -1412,350 +1413,350 @@ static int ican3_recv_skb(struct ican3_dev *mod)
 	 *
 	 * Also, the netdevice queue needs to be allowed to send packets again.
 	 */
-	if (ican3_echo_skb_matches(mod, skb)) {
+	अगर (ican3_echo_skb_matches(mod, skb)) अणु
 		stats->tx_packets++;
 		stats->tx_bytes += ican3_get_echo_skb(mod);
-		kfree_skb(skb);
-		goto err_noalloc;
-	}
+		kमुक्त_skb(skb);
+		जाओ err_noalloc;
+	पूर्ण
 
 	/* update statistics, receive the skb */
 	stats->rx_packets++;
 	stats->rx_bytes += cf->len;
-	netif_receive_skb(skb);
+	netअगर_receive_skb(skb);
 
 err_noalloc:
-	/* toggle the valid bit and return the descriptor to the ring */
+	/* toggle the valid bit and वापस the descriptor to the ring */
 	desc.control ^= DESC_VALID;
 
 	spin_lock_irqsave(&mod->lock, flags);
 
 	ican3_set_page(mod, mod->fastrx_start + (mod->fastrx_num / 16));
-	memcpy_toio(desc_addr, &desc, 1);
+	स_नकल_toio(desc_addr, &desc, 1);
 
-	/* update the next buffer pointer */
+	/* update the next buffer poपूर्णांकer */
 	mod->fastrx_num = (desc.control & DESC_WRAP) ? 0
 						     : (mod->fastrx_num + 1);
 
 	/* there are still more buffers to process */
 	spin_unlock_irqrestore(&mod->lock, flags);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ican3_napi(struct napi_struct *napi, int budget)
-{
-	struct ican3_dev *mod = container_of(napi, struct ican3_dev, napi);
-	unsigned long flags;
-	int received = 0;
-	int ret;
+अटल पूर्णांक ican3_napi(काष्ठा napi_काष्ठा *napi, पूर्णांक budget)
+अणु
+	काष्ठा ican3_dev *mod = container_of(napi, काष्ठा ican3_dev, napi);
+	अचिन्हित दीर्घ flags;
+	पूर्णांक received = 0;
+	पूर्णांक ret;
 
 	/* process all communication messages */
-	while (true) {
-		struct ican3_msg msg;
+	जबतक (true) अणु
+		काष्ठा ican3_msg msg;
 		ret = ican3_recv_msg(mod, &msg);
-		if (ret)
-			break;
+		अगर (ret)
+			अवरोध;
 
 		ican3_handle_message(mod, &msg);
-	}
+	पूर्ण
 
-	/* process all CAN frames from the fast interface */
-	while (received < budget) {
+	/* process all CAN frames from the fast पूर्णांकerface */
+	जबतक (received < budget) अणु
 		ret = ican3_recv_skb(mod);
-		if (ret)
-			break;
+		अगर (ret)
+			अवरोध;
 
 		received++;
-	}
+	पूर्ण
 
 	/* We have processed all packets that the adapter had, but it
 	 * was less than our budget, stop polling */
-	if (received < budget)
-		napi_complete_done(napi, received);
+	अगर (received < budget)
+		napi_complete_करोne(napi, received);
 
 	spin_lock_irqsave(&mod->lock, flags);
 
-	/* Wake up the transmit queue if necessary */
-	if (netif_queue_stopped(mod->ndev) && ican3_txok(mod))
-		netif_wake_queue(mod->ndev);
+	/* Wake up the transmit queue अगर necessary */
+	अगर (netअगर_queue_stopped(mod->ndev) && ican3_txok(mod))
+		netअगर_wake_queue(mod->ndev);
 
 	spin_unlock_irqrestore(&mod->lock, flags);
 
-	/* re-enable interrupt generation */
-	iowrite8(1 << mod->num, &mod->ctrl->int_enable);
-	return received;
-}
+	/* re-enable पूर्णांकerrupt generation */
+	ioग_लिखो8(1 << mod->num, &mod->ctrl->पूर्णांक_enable);
+	वापस received;
+पूर्ण
 
-static irqreturn_t ican3_irq(int irq, void *dev_id)
-{
-	struct ican3_dev *mod = dev_id;
+अटल irqवापस_t ican3_irq(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा ican3_dev *mod = dev_id;
 	u8 stat;
 
 	/*
-	 * The interrupt status register on this device reports interrupts
+	 * The पूर्णांकerrupt status रेजिस्टर on this device reports पूर्णांकerrupts
 	 * as zeroes instead of using ones like most other devices
 	 */
-	stat = ioread8(&mod->ctrl->int_disable) & (1 << mod->num);
-	if (stat == (1 << mod->num))
-		return IRQ_NONE;
+	stat = ioपढ़ो8(&mod->ctrl->पूर्णांक_disable) & (1 << mod->num);
+	अगर (stat == (1 << mod->num))
+		वापस IRQ_NONE;
 
-	/* clear the MODULbus interrupt from the microcontroller */
-	ioread8(&mod->dpmctrl->interrupt);
+	/* clear the MODULbus पूर्णांकerrupt from the microcontroller */
+	ioपढ़ो8(&mod->dpmctrl->पूर्णांकerrupt);
 
-	/* disable interrupt generation, schedule the NAPI poller */
-	iowrite8(1 << mod->num, &mod->ctrl->int_disable);
+	/* disable पूर्णांकerrupt generation, schedule the NAPI poller */
+	ioग_लिखो8(1 << mod->num, &mod->ctrl->पूर्णांक_disable);
 	napi_schedule(&mod->napi);
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
 /*
- * Firmware reset, startup, and shutdown
+ * Firmware reset, startup, and shutकरोwn
  */
 
 /*
- * Reset an ICAN module to its power-on state
+ * Reset an ICAN module to its घातer-on state
  *
- * CONTEXT: no network device registered
+ * CONTEXT: no network device रेजिस्टरed
  */
-static int ican3_reset_module(struct ican3_dev *mod)
-{
-	unsigned long start;
+अटल पूर्णांक ican3_reset_module(काष्ठा ican3_dev *mod)
+अणु
+	अचिन्हित दीर्घ start;
 	u8 runold, runnew;
 
-	/* disable interrupts so no more work is scheduled */
-	iowrite8(1 << mod->num, &mod->ctrl->int_disable);
+	/* disable पूर्णांकerrupts so no more work is scheduled */
+	ioग_लिखो8(1 << mod->num, &mod->ctrl->पूर्णांक_disable);
 
 	/* the first unallocated page in the DPM is #9 */
-	mod->free_page = DPM_FREE_START;
+	mod->मुक्त_page = DPM_FREE_START;
 
 	ican3_set_page(mod, QUEUE_OLD_CONTROL);
-	runold = ioread8(mod->dpm + TARGET_RUNNING);
+	runold = ioपढ़ो8(mod->dpm + TARGET_RUNNING);
 
 	/* reset the module */
-	iowrite8(0x00, &mod->dpmctrl->hwreset);
+	ioग_लिखो8(0x00, &mod->dpmctrl->hwreset);
 
-	/* wait until the module has finished resetting and is running */
-	start = jiffies;
-	do {
+	/* रुको until the module has finished resetting and is running */
+	start = jअगरfies;
+	करो अणु
 		ican3_set_page(mod, QUEUE_OLD_CONTROL);
-		runnew = ioread8(mod->dpm + TARGET_RUNNING);
-		if (runnew == (runold ^ 0xff))
-			return 0;
+		runnew = ioपढ़ो8(mod->dpm + TARGET_RUNNING);
+		अगर (runnew == (runold ^ 0xff))
+			वापस 0;
 
 		msleep(10);
-	} while (time_before(jiffies, start + HZ / 2));
+	पूर्ण जबतक (समय_beक्रमe(jअगरfies, start + HZ / 2));
 
 	netdev_err(mod->ndev, "failed to reset CAN module\n");
-	return -ETIMEDOUT;
-}
+	वापस -ETIMEDOUT;
+पूर्ण
 
-static void ican3_shutdown_module(struct ican3_dev *mod)
-{
+अटल व्योम ican3_shutकरोwn_module(काष्ठा ican3_dev *mod)
+अणु
 	ican3_msg_disconnect(mod);
 	ican3_reset_module(mod);
-}
+पूर्ण
 
 /*
- * Startup an ICAN module, bringing it into fast mode
+ * Startup an ICAN module, bringing it पूर्णांकo fast mode
  */
-static int ican3_startup_module(struct ican3_dev *mod)
-{
-	int ret;
+अटल पूर्णांक ican3_startup_module(काष्ठा ican3_dev *mod)
+अणु
+	पूर्णांक ret;
 
 	ret = ican3_reset_module(mod);
-	if (ret) {
+	अगर (ret) अणु
 		netdev_err(mod->ndev, "unable to reset module\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	/* detect firmware */
-	memcpy_fromio(mod->fwinfo, mod->dpm + FIRMWARE_STAMP, sizeof(mod->fwinfo) - 1);
-	if (strncmp(mod->fwinfo, "JANZ-ICAN3", 10)) {
+	स_नकल_fromio(mod->fwinfo, mod->dpm + FIRMWARE_STAMP, माप(mod->fwinfo) - 1);
+	अगर (म_भेदन(mod->fwinfo, "JANZ-ICAN3", 10)) अणु
 		netdev_err(mod->ndev, "ICAN3 not detected (found %s)\n", mod->fwinfo);
-		return -ENODEV;
-	}
-	if (strstr(mod->fwinfo, "CAL/CANopen"))
+		वापस -ENODEV;
+	पूर्ण
+	अगर (म_माला(mod->fwinfo, "CAL/CANopen"))
 		mod->fwtype = ICAN3_FWTYPE_CAL_CANOPEN;
-	else
+	अन्यथा
 		mod->fwtype = ICAN3_FWTYPE_ICANOS;
 
-	/* re-enable interrupts so we can send messages */
-	iowrite8(1 << mod->num, &mod->ctrl->int_enable);
+	/* re-enable पूर्णांकerrupts so we can send messages */
+	ioग_लिखो8(1 << mod->num, &mod->ctrl->पूर्णांक_enable);
 
 	ret = ican3_msg_connect(mod);
-	if (ret) {
+	अगर (ret) अणु
 		netdev_err(mod->ndev, "unable to connect to module\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	ican3_init_new_host_interface(mod);
-	ret = ican3_msg_newhostif(mod);
-	if (ret) {
+	ican3_init_new_host_पूर्णांकerface(mod);
+	ret = ican3_msg_newhostअगर(mod);
+	अगर (ret) अणु
 		netdev_err(mod->ndev, "unable to switch to new-style interface\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	/* default to "termination on" */
+	/* शेष to "termination on" */
 	ret = ican3_set_termination(mod, true);
-	if (ret) {
+	अगर (ret) अणु
 		netdev_err(mod->ndev, "unable to enable termination\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	/* default to "bus errors enabled" */
+	/* शेष to "bus errors enabled" */
 	ret = ican3_set_buserror(mod, 1);
-	if (ret) {
+	अगर (ret) अणु
 		netdev_err(mod->ndev, "unable to set bus-error\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	ican3_init_fast_host_interface(mod);
-	ret = ican3_msg_fasthostif(mod);
-	if (ret) {
+	ican3_init_fast_host_पूर्णांकerface(mod);
+	ret = ican3_msg_fasthostअगर(mod);
+	अगर (ret) अणु
 		netdev_err(mod->ndev, "unable to switch to fast host interface\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	ret = ican3_set_id_filter(mod, true);
-	if (ret) {
+	अगर (ret) अणु
 		netdev_err(mod->ndev, "unable to set acceptance filter\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * CAN Network Device
  */
 
-static int ican3_open(struct net_device *ndev)
-{
-	struct ican3_dev *mod = netdev_priv(ndev);
-	int ret;
+अटल पूर्णांक ican3_खोलो(काष्ठा net_device *ndev)
+अणु
+	काष्ठा ican3_dev *mod = netdev_priv(ndev);
+	पूर्णांक ret;
 
-	/* open the CAN layer */
-	ret = open_candev(ndev);
-	if (ret) {
+	/* खोलो the CAN layer */
+	ret = खोलो_candev(ndev);
+	अगर (ret) अणु
 		netdev_err(mod->ndev, "unable to start CAN layer\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	/* bring the bus online */
 	ret = ican3_set_bus_state(mod, true);
-	if (ret) {
+	अगर (ret) अणु
 		netdev_err(mod->ndev, "unable to set bus-on\n");
-		close_candev(ndev);
-		return ret;
-	}
+		बंद_candev(ndev);
+		वापस ret;
+	पूर्ण
 
 	/* start up the network device */
 	mod->can.state = CAN_STATE_ERROR_ACTIVE;
-	netif_start_queue(ndev);
+	netअगर_start_queue(ndev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ican3_stop(struct net_device *ndev)
-{
-	struct ican3_dev *mod = netdev_priv(ndev);
-	int ret;
+अटल पूर्णांक ican3_stop(काष्ठा net_device *ndev)
+अणु
+	काष्ठा ican3_dev *mod = netdev_priv(ndev);
+	पूर्णांक ret;
 
 	/* stop the network device xmit routine */
-	netif_stop_queue(ndev);
+	netअगर_stop_queue(ndev);
 	mod->can.state = CAN_STATE_STOPPED;
 
 	/* bring the bus offline, stop receiving packets */
 	ret = ican3_set_bus_state(mod, false);
-	if (ret) {
+	अगर (ret) अणु
 		netdev_err(mod->ndev, "unable to set bus-off\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	/* drop all outstanding echo skbs */
 	skb_queue_purge(&mod->echoq);
 
-	/* close the CAN layer */
-	close_candev(ndev);
-	return 0;
-}
+	/* बंद the CAN layer */
+	बंद_candev(ndev);
+	वापस 0;
+पूर्ण
 
-static netdev_tx_t ican3_xmit(struct sk_buff *skb, struct net_device *ndev)
-{
-	struct ican3_dev *mod = netdev_priv(ndev);
-	struct can_frame *cf = (struct can_frame *)skb->data;
-	struct ican3_fast_desc desc;
-	void __iomem *desc_addr;
-	unsigned long flags;
+अटल netdev_tx_t ican3_xmit(काष्ठा sk_buff *skb, काष्ठा net_device *ndev)
+अणु
+	काष्ठा ican3_dev *mod = netdev_priv(ndev);
+	काष्ठा can_frame *cf = (काष्ठा can_frame *)skb->data;
+	काष्ठा ican3_fast_desc desc;
+	व्योम __iomem *desc_addr;
+	अचिन्हित दीर्घ flags;
 
-	if (can_dropped_invalid_skb(ndev, skb))
-		return NETDEV_TX_OK;
+	अगर (can_dropped_invalid_skb(ndev, skb))
+		वापस NETDEV_TX_OK;
 
 	spin_lock_irqsave(&mod->lock, flags);
 
 	/* check that we can actually transmit */
-	if (!ican3_txok(mod)) {
+	अगर (!ican3_txok(mod)) अणु
 		netdev_err(mod->ndev, "BUG: no free descriptors\n");
 		spin_unlock_irqrestore(&mod->lock, flags);
-		return NETDEV_TX_BUSY;
-	}
+		वापस NETDEV_TX_BUSY;
+	पूर्ण
 
 	/* copy the control bits of the descriptor */
 	ican3_set_page(mod, mod->fasttx_start + (mod->fasttx_num / 16));
-	desc_addr = mod->dpm + ((mod->fasttx_num % 16) * sizeof(desc));
-	memset(&desc, 0, sizeof(desc));
-	memcpy_fromio(&desc, desc_addr, 1);
+	desc_addr = mod->dpm + ((mod->fasttx_num % 16) * माप(desc));
+	स_रखो(&desc, 0, माप(desc));
+	स_नकल_fromio(&desc, desc_addr, 1);
 
-	/* convert the Linux CAN frame into ICAN3 format */
+	/* convert the Linux CAN frame पूर्णांकo ICAN3 क्रमmat */
 	can_frame_to_ican3(mod, cf, &desc);
 
 	/*
-	 * This hardware doesn't have TX-done notifications, so we'll try and
+	 * This hardware करोesn't have TX-done notifications, so we'll try and
 	 * emulate it the best we can using ECHO skbs. Add the skb to the ECHO
-	 * stack. Upon packet reception, check if the ECHO skb and received
+	 * stack. Upon packet reception, check अगर the ECHO skb and received
 	 * skb match, and use that to wake the queue.
 	 */
 	ican3_put_echo_skb(mod, skb);
 
 	/*
 	 * the programming manual says that you must set the IVALID bit, then
-	 * interrupt, then set the valid bit. Quite weird, but it seems to be
-	 * required for this to work
+	 * पूर्णांकerrupt, then set the valid bit. Quite weird, but it seems to be
+	 * required क्रम this to work
 	 */
 	desc.control |= DESC_IVALID;
-	memcpy_toio(desc_addr, &desc, sizeof(desc));
+	स_नकल_toio(desc_addr, &desc, माप(desc));
 
-	/* generate a MODULbus interrupt to the microcontroller */
-	iowrite8(0x01, &mod->dpmctrl->interrupt);
+	/* generate a MODULbus पूर्णांकerrupt to the microcontroller */
+	ioग_लिखो8(0x01, &mod->dpmctrl->पूर्णांकerrupt);
 
 	desc.control ^= DESC_VALID;
-	memcpy_toio(desc_addr, &desc, sizeof(desc));
+	स_नकल_toio(desc_addr, &desc, माप(desc));
 
-	/* update the next buffer pointer */
+	/* update the next buffer poपूर्णांकer */
 	mod->fasttx_num = (desc.control & DESC_WRAP) ? 0
 						     : (mod->fasttx_num + 1);
 
-	/* if there is no free descriptor space, stop the transmit queue */
-	if (!ican3_txok(mod))
-		netif_stop_queue(ndev);
+	/* अगर there is no मुक्त descriptor space, stop the transmit queue */
+	अगर (!ican3_txok(mod))
+		netअगर_stop_queue(ndev);
 
 	spin_unlock_irqrestore(&mod->lock, flags);
-	return NETDEV_TX_OK;
-}
+	वापस NETDEV_TX_OK;
+पूर्ण
 
-static const struct net_device_ops ican3_netdev_ops = {
-	.ndo_open	= ican3_open,
-	.ndo_stop	= ican3_stop,
-	.ndo_start_xmit	= ican3_xmit,
-	.ndo_change_mtu = can_change_mtu,
-};
+अटल स्थिर काष्ठा net_device_ops ican3_netdev_ops = अणु
+	.nकरो_खोलो	= ican3_खोलो,
+	.nकरो_stop	= ican3_stop,
+	.nकरो_start_xmit	= ican3_xmit,
+	.nकरो_change_mtu = can_change_mtu,
+पूर्ण;
 
 /*
  * Low-level CAN Device
  */
 
-/* This structure was stolen from drivers/net/can/sja1000/sja1000.c */
-static const struct can_bittiming_const ican3_bittiming_const = {
+/* This काष्ठाure was stolen from drivers/net/can/sja1000/sja1000.c */
+अटल स्थिर काष्ठा can_bittiming_स्थिर ican3_bittiming_स्थिर = अणु
 	.name = DRV_NAME,
 	.tseg1_min = 1,
 	.tseg1_max = 16,
@@ -1765,287 +1766,287 @@ static const struct can_bittiming_const ican3_bittiming_const = {
 	.brp_min = 1,
 	.brp_max = 64,
 	.brp_inc = 1,
-};
+पूर्ण;
 
-static int ican3_set_mode(struct net_device *ndev, enum can_mode mode)
-{
-	struct ican3_dev *mod = netdev_priv(ndev);
-	int ret;
+अटल पूर्णांक ican3_set_mode(काष्ठा net_device *ndev, क्रमागत can_mode mode)
+अणु
+	काष्ठा ican3_dev *mod = netdev_priv(ndev);
+	पूर्णांक ret;
 
-	if (mode != CAN_MODE_START)
-		return -ENOTSUPP;
+	अगर (mode != CAN_MODE_START)
+		वापस -ENOTSUPP;
 
 	/* bring the bus online */
 	ret = ican3_set_bus_state(mod, true);
-	if (ret) {
+	अगर (ret) अणु
 		netdev_err(ndev, "unable to set bus-on\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	/* start up the network device */
 	mod->can.state = CAN_STATE_ERROR_ACTIVE;
 
-	if (netif_queue_stopped(ndev))
-		netif_wake_queue(ndev);
+	अगर (netअगर_queue_stopped(ndev))
+		netअगर_wake_queue(ndev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ican3_get_berr_counter(const struct net_device *ndev,
-				  struct can_berr_counter *bec)
-{
-	struct ican3_dev *mod = netdev_priv(ndev);
-	int ret;
+अटल पूर्णांक ican3_get_berr_counter(स्थिर काष्ठा net_device *ndev,
+				  काष्ठा can_berr_counter *bec)
+अणु
+	काष्ठा ican3_dev *mod = netdev_priv(ndev);
+	पूर्णांक ret;
 
 	ret = ican3_send_inquiry(mod, INQUIRY_STATUS);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	if (!wait_for_completion_timeout(&mod->buserror_comp, HZ)) {
+	अगर (!रुको_क्रम_completion_समयout(&mod->buserror_comp, HZ)) अणु
 		netdev_info(mod->ndev, "%s timed out\n", __func__);
-		return -ETIMEDOUT;
-	}
+		वापस -ETIMEDOUT;
+	पूर्ण
 
 	bec->rxerr = mod->bec.rxerr;
 	bec->txerr = mod->bec.txerr;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * Sysfs Attributes
  */
 
-static ssize_t ican3_sysfs_show_term(struct device *dev,
-				     struct device_attribute *attr,
-				     char *buf)
-{
-	struct ican3_dev *mod = netdev_priv(to_net_dev(dev));
-	int ret;
+अटल sमाप_प्रकार ican3_sysfs_show_term(काष्ठा device *dev,
+				     काष्ठा device_attribute *attr,
+				     अक्षर *buf)
+अणु
+	काष्ठा ican3_dev *mod = netdev_priv(to_net_dev(dev));
+	पूर्णांक ret;
 
 	ret = ican3_send_inquiry(mod, INQUIRY_TERMINATION);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	if (!wait_for_completion_timeout(&mod->termination_comp, HZ)) {
+	अगर (!रुको_क्रम_completion_समयout(&mod->termination_comp, HZ)) अणु
 		netdev_info(mod->ndev, "%s timed out\n", __func__);
-		return -ETIMEDOUT;
-	}
+		वापस -ETIMEDOUT;
+	पूर्ण
 
-	return snprintf(buf, PAGE_SIZE, "%u\n", mod->termination_enabled);
-}
+	वापस snम_लिखो(buf, PAGE_SIZE, "%u\n", mod->termination_enabled);
+पूर्ण
 
-static ssize_t ican3_sysfs_set_term(struct device *dev,
-				    struct device_attribute *attr,
-				    const char *buf, size_t count)
-{
-	struct ican3_dev *mod = netdev_priv(to_net_dev(dev));
-	unsigned long enable;
-	int ret;
+अटल sमाप_प्रकार ican3_sysfs_set_term(काष्ठा device *dev,
+				    काष्ठा device_attribute *attr,
+				    स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	काष्ठा ican3_dev *mod = netdev_priv(to_net_dev(dev));
+	अचिन्हित दीर्घ enable;
+	पूर्णांक ret;
 
-	if (kstrtoul(buf, 0, &enable))
-		return -EINVAL;
+	अगर (kम_से_अदीर्घ(buf, 0, &enable))
+		वापस -EINVAL;
 
 	ret = ican3_set_termination(mod, enable);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static ssize_t ican3_sysfs_show_fwinfo(struct device *dev,
-				       struct device_attribute *attr,
-				       char *buf)
-{
-	struct ican3_dev *mod = netdev_priv(to_net_dev(dev));
+अटल sमाप_प्रकार ican3_sysfs_show_fwinfo(काष्ठा device *dev,
+				       काष्ठा device_attribute *attr,
+				       अक्षर *buf)
+अणु
+	काष्ठा ican3_dev *mod = netdev_priv(to_net_dev(dev));
 
-	return scnprintf(buf, PAGE_SIZE, "%s\n", mod->fwinfo);
-}
+	वापस scnम_लिखो(buf, PAGE_SIZE, "%s\n", mod->fwinfo);
+पूर्ण
 
-static DEVICE_ATTR(termination, 0644, ican3_sysfs_show_term,
+अटल DEVICE_ATTR(termination, 0644, ican3_sysfs_show_term,
 		   ican3_sysfs_set_term);
-static DEVICE_ATTR(fwinfo, 0444, ican3_sysfs_show_fwinfo, NULL);
+अटल DEVICE_ATTR(fwinfo, 0444, ican3_sysfs_show_fwinfo, शून्य);
 
-static struct attribute *ican3_sysfs_attrs[] = {
+अटल काष्ठा attribute *ican3_sysfs_attrs[] = अणु
 	&dev_attr_termination.attr,
 	&dev_attr_fwinfo.attr,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-static const struct attribute_group ican3_sysfs_attr_group = {
+अटल स्थिर काष्ठा attribute_group ican3_sysfs_attr_group = अणु
 	.attrs = ican3_sysfs_attrs,
-};
+पूर्ण;
 
 /*
- * PCI Subsystem
+ * PCI Subप्रणाली
  */
 
-static int ican3_probe(struct platform_device *pdev)
-{
-	struct janz_platform_data *pdata;
-	struct net_device *ndev;
-	struct ican3_dev *mod;
-	struct resource *res;
-	struct device *dev;
-	int ret;
+अटल पूर्णांक ican3_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा janz_platक्रमm_data *pdata;
+	काष्ठा net_device *ndev;
+	काष्ठा ican3_dev *mod;
+	काष्ठा resource *res;
+	काष्ठा device *dev;
+	पूर्णांक ret;
 
 	pdata = dev_get_platdata(&pdev->dev);
-	if (!pdata)
-		return -ENXIO;
+	अगर (!pdata)
+		वापस -ENXIO;
 
 	dev_dbg(&pdev->dev, "probe: module number %d\n", pdata->modno);
 
-	/* save the struct device for printing */
+	/* save the काष्ठा device क्रम prपूर्णांकing */
 	dev = &pdev->dev;
 
-	/* allocate the CAN device and private data */
-	ndev = alloc_candev(sizeof(*mod), 0);
-	if (!ndev) {
+	/* allocate the CAN device and निजी data */
+	ndev = alloc_candev(माप(*mod), 0);
+	अगर (!ndev) अणु
 		dev_err(dev, "unable to allocate CANdev\n");
 		ret = -ENOMEM;
-		goto out_return;
-	}
+		जाओ out_वापस;
+	पूर्ण
 
-	platform_set_drvdata(pdev, ndev);
+	platक्रमm_set_drvdata(pdev, ndev);
 	mod = netdev_priv(ndev);
 	mod->ndev = ndev;
 	mod->num = pdata->modno;
-	netif_napi_add(ndev, &mod->napi, ican3_napi, ICAN3_RX_BUFFERS);
+	netअगर_napi_add(ndev, &mod->napi, ican3_napi, ICAN3_RX_BUFFERS);
 	skb_queue_head_init(&mod->echoq);
 	spin_lock_init(&mod->lock);
 	init_completion(&mod->termination_comp);
 	init_completion(&mod->buserror_comp);
 
-	/* setup device-specific sysfs attributes */
+	/* setup device-specअगरic sysfs attributes */
 	ndev->sysfs_groups[0] = &ican3_sysfs_attr_group;
 
 	/* the first unallocated page in the DPM is 9 */
-	mod->free_page = DPM_FREE_START;
+	mod->मुक्त_page = DPM_FREE_START;
 
 	ndev->netdev_ops = &ican3_netdev_ops;
 	ndev->flags |= IFF_ECHO;
 	SET_NETDEV_DEV(ndev, &pdev->dev);
 
-	mod->can.clock.freq = ICAN3_CAN_CLOCK;
-	mod->can.bittiming_const = &ican3_bittiming_const;
-	mod->can.do_set_mode = ican3_set_mode;
-	mod->can.do_get_berr_counter = ican3_get_berr_counter;
+	mod->can.घड़ी.freq = ICAN3_CAN_CLOCK;
+	mod->can.bittiming_स्थिर = &ican3_bittiming_स्थिर;
+	mod->can.करो_set_mode = ican3_set_mode;
+	mod->can.करो_get_berr_counter = ican3_get_berr_counter;
 	mod->can.ctrlmode_supported = CAN_CTRLMODE_3_SAMPLES
 				    | CAN_CTRLMODE_BERR_REPORTING
 				    | CAN_CTRLMODE_ONE_SHOT;
 
 	/* find our IRQ number */
-	mod->irq = platform_get_irq(pdev, 0);
-	if (mod->irq < 0) {
+	mod->irq = platक्रमm_get_irq(pdev, 0);
+	अगर (mod->irq < 0) अणु
 		ret = -ENODEV;
-		goto out_free_ndev;
-	}
+		जाओ out_मुक्त_ndev;
+	पूर्ण
 
 	ndev->irq = mod->irq;
 
-	/* get access to the MODULbus registers for this module */
-	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
-	if (!res) {
+	/* get access to the MODULbus रेजिस्टरs क्रम this module */
+	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
+	अगर (!res) अणु
 		dev_err(dev, "MODULbus registers not found\n");
 		ret = -ENODEV;
-		goto out_free_ndev;
-	}
+		जाओ out_मुक्त_ndev;
+	पूर्ण
 
 	mod->dpm = ioremap(res->start, resource_size(res));
-	if (!mod->dpm) {
+	अगर (!mod->dpm) अणु
 		dev_err(dev, "MODULbus registers not ioremap\n");
 		ret = -ENOMEM;
-		goto out_free_ndev;
-	}
+		जाओ out_मुक्त_ndev;
+	पूर्ण
 
 	mod->dpmctrl = mod->dpm + DPM_PAGE_SIZE;
 
-	/* get access to the control registers for this module */
-	res = platform_get_resource(pdev, IORESOURCE_MEM, 1);
-	if (!res) {
+	/* get access to the control रेजिस्टरs क्रम this module */
+	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 1);
+	अगर (!res) अणु
 		dev_err(dev, "CONTROL registers not found\n");
 		ret = -ENODEV;
-		goto out_iounmap_dpm;
-	}
+		जाओ out_iounmap_dpm;
+	पूर्ण
 
 	mod->ctrl = ioremap(res->start, resource_size(res));
-	if (!mod->ctrl) {
+	अगर (!mod->ctrl) अणु
 		dev_err(dev, "CONTROL registers not ioremap\n");
 		ret = -ENOMEM;
-		goto out_iounmap_dpm;
-	}
+		जाओ out_iounmap_dpm;
+	पूर्ण
 
 	/* disable our IRQ, then hookup the IRQ handler */
-	iowrite8(1 << mod->num, &mod->ctrl->int_disable);
+	ioग_लिखो8(1 << mod->num, &mod->ctrl->पूर्णांक_disable);
 	ret = request_irq(mod->irq, ican3_irq, IRQF_SHARED, DRV_NAME, mod);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev, "unable to request IRQ\n");
-		goto out_iounmap_ctrl;
-	}
+		जाओ out_iounmap_ctrl;
+	पूर्ण
 
-	/* reset and initialize the CAN controller into fast mode */
+	/* reset and initialize the CAN controller पूर्णांकo fast mode */
 	napi_enable(&mod->napi);
 	ret = ican3_startup_module(mod);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev, "%s: unable to start CANdev\n", __func__);
-		goto out_free_irq;
-	}
+		जाओ out_मुक्त_irq;
+	पूर्ण
 
-	/* register with the Linux CAN layer */
-	ret = register_candev(ndev);
-	if (ret) {
+	/* रेजिस्टर with the Linux CAN layer */
+	ret = रेजिस्टर_candev(ndev);
+	अगर (ret) अणु
 		dev_err(dev, "%s: unable to register CANdev\n", __func__);
-		goto out_free_irq;
-	}
+		जाओ out_मुक्त_irq;
+	पूर्ण
 
 	netdev_info(mod->ndev, "module %d: registered CAN device\n", pdata->modno);
-	return 0;
+	वापस 0;
 
-out_free_irq:
+out_मुक्त_irq:
 	napi_disable(&mod->napi);
-	iowrite8(1 << mod->num, &mod->ctrl->int_disable);
-	free_irq(mod->irq, mod);
+	ioग_लिखो8(1 << mod->num, &mod->ctrl->पूर्णांक_disable);
+	मुक्त_irq(mod->irq, mod);
 out_iounmap_ctrl:
 	iounmap(mod->ctrl);
 out_iounmap_dpm:
 	iounmap(mod->dpm);
-out_free_ndev:
-	free_candev(ndev);
-out_return:
-	return ret;
-}
+out_मुक्त_ndev:
+	मुक्त_candev(ndev);
+out_वापस:
+	वापस ret;
+पूर्ण
 
-static int ican3_remove(struct platform_device *pdev)
-{
-	struct net_device *ndev = platform_get_drvdata(pdev);
-	struct ican3_dev *mod = netdev_priv(ndev);
+अटल पूर्णांक ican3_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा net_device *ndev = platक्रमm_get_drvdata(pdev);
+	काष्ठा ican3_dev *mod = netdev_priv(ndev);
 
-	/* unregister the netdevice, stop interrupts */
-	unregister_netdev(ndev);
+	/* unरेजिस्टर the netdevice, stop पूर्णांकerrupts */
+	unरेजिस्टर_netdev(ndev);
 	napi_disable(&mod->napi);
-	iowrite8(1 << mod->num, &mod->ctrl->int_disable);
-	free_irq(mod->irq, mod);
+	ioग_लिखो8(1 << mod->num, &mod->ctrl->पूर्णांक_disable);
+	मुक्त_irq(mod->irq, mod);
 
-	/* put the module into reset */
-	ican3_shutdown_module(mod);
+	/* put the module पूर्णांकo reset */
+	ican3_shutकरोwn_module(mod);
 
-	/* unmap all registers */
+	/* unmap all रेजिस्टरs */
 	iounmap(mod->ctrl);
 	iounmap(mod->dpm);
 
-	free_candev(ndev);
+	मुक्त_candev(ndev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct platform_driver ican3_driver = {
-	.driver		= {
+अटल काष्ठा platक्रमm_driver ican3_driver = अणु
+	.driver		= अणु
 		.name	= DRV_NAME,
-	},
+	पूर्ण,
 	.probe		= ican3_probe,
-	.remove		= ican3_remove,
-};
+	.हटाओ		= ican3_हटाओ,
+पूर्ण;
 
-module_platform_driver(ican3_driver);
+module_platक्रमm_driver(ican3_driver);
 
 MODULE_AUTHOR("Ira W. Snyder <iws@ovro.caltech.edu>");
 MODULE_DESCRIPTION("Janz MODULbus VMOD-ICAN3 Driver");

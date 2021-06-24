@@ -1,9 +1,10 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /* Copyright(c) 2009-2012  Realtek Corporation.*/
 
-#include "table.h"
+#समावेश "table.h"
 
-u32 rtl8192sephy_reg_2t2rarray[PHY_REG_2T2RARRAYLENGTH] = {
+u32 rtl8192sephy_reg_2t2rarray[PHY_REG_2T2RARRAYLENGTH] = अणु
 	0x01c, 0x07000000,
 	0x800, 0x00040000,
 	0x804, 0x00008003,
@@ -190,9 +191,9 @@ u32 rtl8192sephy_reg_2t2rarray[PHY_REG_2T2RARRAYLENGTH] = {
 	0xf14, 0x00000003,
 	0xf4c, 0x00000000,
 	0xf00, 0x00000300,
-};
+पूर्ण;
 
-u32 rtl8192sephy_changeto_1t1rarray[PHY_CHANGETO_1T1RARRAYLENGTH] = {
+u32 rtl8192sephy_changeto_1t1rarray[PHY_CHANGETO_1T1RARRAYLENGTH] = अणु
 	0x844, 0xffffffff, 0x00010000,
 	0x804, 0x0000000f, 0x00000001,
 	0x824, 0x00f0000f, 0x00300004,
@@ -209,9 +210,9 @@ u32 rtl8192sephy_changeto_1t1rarray[PHY_CHANGETO_1T1RARRAYLENGTH] = {
 	0xd04, 0x0000000f, 0x00000001,
 	0x1f4, 0xffff0000, 0x00007777,
 	0x234, 0xf8000000, 0x0000000a,
-};
+पूर्ण;
 
-u32 rtl8192sephy_changeto_1t2rarray[PHY_CHANGETO_1T2RARRAYLENGTH] = {
+u32 rtl8192sephy_changeto_1t2rarray[PHY_CHANGETO_1T2RARRAYLENGTH] = अणु
 	0x804, 0x0000000f, 0x00000003,
 	0x824, 0x00f0000f, 0x00300004,
 	0x82c, 0x00f0000f, 0x00300002,
@@ -227,9 +228,9 @@ u32 rtl8192sephy_changeto_1t2rarray[PHY_CHANGETO_1T2RARRAYLENGTH] = {
 	0xd04, 0x0000000f, 0x00000003,
 	0x1f4, 0xffff0000, 0x00007777,
 	0x234, 0xf8000000, 0x0000000a,
-};
+पूर्ण;
 
-u32 rtl8192sephy_reg_array_pg[PHY_REG_ARRAY_PGLENGTH] = {
+u32 rtl8192sephy_reg_array_pg[PHY_REG_ARRAY_PGLENGTH] = अणु
 	0xe00, 0xffffffff, 0x06090909,
 	0xe04, 0xffffffff, 0x00030406,
 	0xe08, 0x0000ff00, 0x00000000,
@@ -258,9 +259,9 @@ u32 rtl8192sephy_reg_array_pg[PHY_REG_ARRAY_PGLENGTH] = {
 	0xe14, 0xffffffff, 0x00000002,
 	0xe18, 0xffffffff, 0x02020202,
 	0xe1c, 0xffffffff, 0x00000002,
-};
+पूर्ण;
 
-u32 rtl8192seradioa_1t_array[RADIOA_1T_ARRAYLENGTH] = {
+u32 rtl8192seradioa_1t_array[RADIOA_1T_ARRAYLENGTH] = अणु
 	0x000, 0x00030159,
 	0x001, 0x00030250,
 	0x002, 0x00010000,
@@ -362,9 +363,9 @@ u32 rtl8192seradioa_1t_array[RADIOA_1T_ARRAYLENGTH] = {
 	0x000, 0x00030159,
 	0x010, 0x0004000f,
 	0x011, 0x000203f9,
-};
+पूर्ण;
 
-u32 rtl8192seradiob_array[RADIOB_ARRAYLENGTH] = {
+u32 rtl8192seradiob_array[RADIOB_ARRAYLENGTH] = अणु
 	0x000, 0x00030159,
 	0x001, 0x00001041,
 	0x002, 0x00011000,
@@ -376,17 +377,17 @@ u32 rtl8192seradiob_array[RADIOB_ARRAYLENGTH] = {
 	0x013, 0x00008c60,
 	0x013, 0x00004450,
 	0x013, 0x00000020,
-};
+पूर्ण;
 
-u32 rtl8192seradiob_gm_array[RADIOB_GM_ARRAYLENGTH] = {
+u32 rtl8192seradiob_gm_array[RADIOB_GM_ARRAYLENGTH] = अणु
 	0x000, 0x00030159,
 	0x001, 0x00001041,
 	0x002, 0x00011000,
 	0x005, 0x00080fc0,
 	0x007, 0x000fc803,
-};
+पूर्ण;
 
-u32 rtl8192semac_2t_array[MAC_2T_ARRAYLENGTH] = {
+u32 rtl8192semac_2t_array[MAC_2T_ARRAYLENGTH] = अणु
 	0x020, 0x00000035,
 	0x048, 0x0000000e,
 	0x049, 0x000000f0,
@@ -440,9 +441,9 @@ u32 rtl8192semac_2t_array[MAC_2T_ARRAYLENGTH] = {
 	0x236, 0x0000000c,
 	0x503, 0x00000022,
 	0x560, 0x00000000,
-};
+पूर्ण;
 
-u32 rtl8192seagctab_array[AGCTAB_ARRAYLENGTH] = {
+u32 rtl8192seagctab_array[AGCTAB_ARRAYLENGTH] = अणु
 	0xc78, 0x7f000001,
 	0xc78, 0x7f010001,
 	0xc78, 0x7e020001,
@@ -603,5 +604,5 @@ u32 rtl8192seagctab_array[AGCTAB_ARRAYLENGTH] = {
 	0xc78, 0x721d001e,
 	0xc78, 0x721e001e,
 	0xc78, 0x721f001e,
-};
+पूर्ण;
 

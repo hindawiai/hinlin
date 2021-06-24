@@ -1,1543 +1,1544 @@
-// SPDX-License-Identifier: GPL-2.0
-/* kernel/rwsem.c: R/W semaphores, public implementation
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+/* kernel/rwsem.c: R/W semaphores, खुला implementation
  *
  * Written by David Howells (dhowells@redhat.com).
- * Derived from asm-i386/semaphore.h
+ * Derived from यंत्र-i386/semaphore.h
  *
- * Writer lock-stealing by Alex Shi <alex.shi@intel.com>
+ * Writer lock-stealing by Alex Shi <alex.shi@पूर्णांकel.com>
  * and Michel Lespinasse <walken@google.com>
  *
- * Optimistic spinning by Tim Chen <tim.c.chen@intel.com>
+ * Optimistic spinning by Tim Chen <tim.c.chen@पूर्णांकel.com>
  * and Davidlohr Bueso <davidlohr@hp.com>. Based on mutexes.
  *
  * Rwsem count bit fields re-definition and rwsem rearchitecture by
- * Waiman Long <longman@redhat.com> and
+ * Waiman Long <दीर्घman@redhat.com> and
  * Peter Zijlstra <peterz@infradead.org>.
  */
 
-#include <linux/types.h>
-#include <linux/kernel.h>
-#include <linux/sched.h>
-#include <linux/sched/rt.h>
-#include <linux/sched/task.h>
-#include <linux/sched/debug.h>
-#include <linux/sched/wake_q.h>
-#include <linux/sched/signal.h>
-#include <linux/sched/clock.h>
-#include <linux/export.h>
-#include <linux/rwsem.h>
-#include <linux/atomic.h>
+#समावेश <linux/types.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/sched/rt.h>
+#समावेश <linux/sched/task.h>
+#समावेश <linux/sched/debug.h>
+#समावेश <linux/sched/wake_q.h>
+#समावेश <linux/sched/संकेत.स>
+#समावेश <linux/sched/घड़ी.h>
+#समावेश <linux/export.h>
+#समावेश <linux/rwsem.h>
+#समावेश <linux/atomic.h>
 
-#include "lock_events.h"
+#समावेश "lock_events.h"
 
 /*
- * The least significant 2 bits of the owner value has the following
+ * The least signअगरicant 2 bits of the owner value has the following
  * meanings when set.
- *  - Bit 0: RWSEM_READER_OWNED - The rwsem is owned by readers
- *  - Bit 1: RWSEM_NONSPINNABLE - Cannot spin on a reader-owned lock
+ *  - Bit 0: RWSEM_READER_OWNED - The rwsem is owned by पढ़ोers
+ *  - Bit 1: RWSEM_NONSPINNABLE - Cannot spin on a पढ़ोer-owned lock
  *
- * When the rwsem is reader-owned and a spinning writer has timed out,
+ * When the rwsem is पढ़ोer-owned and a spinning ग_लिखोr has समयd out,
  * the nonspinnable bit will be set to disable optimistic spinning.
 
- * When a writer acquires a rwsem, it puts its task_struct pointer
- * into the owner field. It is cleared after an unlock.
+ * When a ग_लिखोr acquires a rwsem, it माला_दो its task_काष्ठा poपूर्णांकer
+ * पूर्णांकo the owner field. It is cleared after an unlock.
  *
- * When a reader acquires a rwsem, it will also puts its task_struct
- * pointer into the owner field with the RWSEM_READER_OWNED bit set.
+ * When a पढ़ोer acquires a rwsem, it will also माला_दो its task_काष्ठा
+ * poपूर्णांकer पूर्णांकo the owner field with the RWSEM_READER_OWNED bit set.
  * On unlock, the owner field will largely be left untouched. So
- * for a free or reader-owned rwsem, the owner value may contain
- * information about the last reader that acquires the rwsem.
+ * क्रम a मुक्त or पढ़ोer-owned rwsem, the owner value may contain
+ * inक्रमmation about the last पढ़ोer that acquires the rwsem.
  *
- * That information may be helpful in debugging cases where the system
- * seems to hang on a reader owned rwsem especially if only one reader
- * is involved. Ideally we would like to track all the readers that own
+ * That inक्रमmation may be helpful in debugging हालs where the प्रणाली
+ * seems to hang on a पढ़ोer owned rwsem especially अगर only one पढ़ोer
+ * is involved. Ideally we would like to track all the पढ़ोers that own
  * a rwsem, but the overhead is simply too big.
  *
- * A fast path reader optimistic lock stealing is supported when the rwsem
- * is previously owned by a writer and the following conditions are met:
+ * A fast path पढ़ोer optimistic lock stealing is supported when the rwsem
+ * is previously owned by a ग_लिखोr and the following conditions are met:
  *  - OSQ is empty
- *  - rwsem is not currently writer owned
- *  - the handoff isn't set.
+ *  - rwsem is not currently ग_लिखोr owned
+ *  - the hanकरोff isn't set.
  */
-#define RWSEM_READER_OWNED	(1UL << 0)
-#define RWSEM_NONSPINNABLE	(1UL << 1)
-#define RWSEM_OWNER_FLAGS_MASK	(RWSEM_READER_OWNED | RWSEM_NONSPINNABLE)
+#घोषणा RWSEM_READER_OWNED	(1UL << 0)
+#घोषणा RWSEM_NONSPINNABLE	(1UL << 1)
+#घोषणा RWSEM_OWNER_FLAGS_MASK	(RWSEM_READER_OWNED | RWSEM_NONSPINNABLE)
 
-#ifdef CONFIG_DEBUG_RWSEMS
-# define DEBUG_RWSEMS_WARN_ON(c, sem)	do {			\
-	if (!debug_locks_silent &&				\
+#अगर_घोषित CONFIG_DEBUG_RWSEMS
+# define DEBUG_RWSEMS_WARN_ON(c, sem)	करो अणु			\
+	अगर (!debug_locks_silent &&				\
 	    WARN_ONCE(c, "DEBUG_RWSEMS_WARN_ON(%s): count = 0x%lx, magic = 0x%lx, owner = 0x%lx, curr 0x%lx, list %sempty\n",\
-		#c, atomic_long_read(&(sem)->count),		\
-		(unsigned long) sem->magic,			\
-		atomic_long_read(&(sem)->owner), (long)current,	\
-		list_empty(&(sem)->wait_list) ? "" : "not "))	\
+		#c, atomic_दीर्घ_पढ़ो(&(sem)->count),		\
+		(अचिन्हित दीर्घ) sem->magic,			\
+		atomic_दीर्घ_पढ़ो(&(sem)->owner), (दीर्घ)current,	\
+		list_empty(&(sem)->रुको_list) ? "" : "not "))	\
 			debug_locks_off();			\
-	} while (0)
-#else
+	पूर्ण जबतक (0)
+#अन्यथा
 # define DEBUG_RWSEMS_WARN_ON(c, sem)
-#endif
+#पूर्ण_अगर
 
 /*
  * On 64-bit architectures, the bit definitions of the count are:
  *
- * Bit  0    - writer locked bit
- * Bit  1    - waiters present bit
- * Bit  2    - lock handoff bit
+ * Bit  0    - ग_लिखोr locked bit
+ * Bit  1    - रुकोers present bit
+ * Bit  2    - lock hanकरोff bit
  * Bits 3-7  - reserved
- * Bits 8-62 - 55-bit reader count
- * Bit  63   - read fail bit
+ * Bits 8-62 - 55-bit पढ़ोer count
+ * Bit  63   - पढ़ो fail bit
  *
  * On 32-bit architectures, the bit definitions of the count are:
  *
- * Bit  0    - writer locked bit
- * Bit  1    - waiters present bit
- * Bit  2    - lock handoff bit
+ * Bit  0    - ग_लिखोr locked bit
+ * Bit  1    - रुकोers present bit
+ * Bit  2    - lock hanकरोff bit
  * Bits 3-7  - reserved
- * Bits 8-30 - 23-bit reader count
- * Bit  31   - read fail bit
+ * Bits 8-30 - 23-bit पढ़ोer count
+ * Bit  31   - पढ़ो fail bit
  *
- * It is not likely that the most significant bit (read fail bit) will ever
- * be set. This guard bit is still checked anyway in the down_read() fastpath
- * just in case we need to use up more of the reader bits for other purpose
+ * It is not likely that the most signअगरicant bit (पढ़ो fail bit) will ever
+ * be set. This guard bit is still checked anyway in the करोwn_पढ़ो() fastpath
+ * just in हाल we need to use up more of the पढ़ोer bits क्रम other purpose
  * in the future.
  *
- * atomic_long_fetch_add() is used to obtain reader lock, whereas
- * atomic_long_cmpxchg() will be used to obtain writer lock.
+ * atomic_दीर्घ_fetch_add() is used to obtain पढ़ोer lock, whereas
+ * atomic_दीर्घ_cmpxchg() will be used to obtain ग_लिखोr lock.
  *
- * There are three places where the lock handoff bit may be set or cleared.
- * 1) rwsem_mark_wake() for readers.
- * 2) rwsem_try_write_lock() for writers.
- * 3) Error path of rwsem_down_write_slowpath().
+ * There are three places where the lock hanकरोff bit may be set or cleared.
+ * 1) rwsem_mark_wake() क्रम पढ़ोers.
+ * 2) rwsem_try_ग_लिखो_lock() क्रम ग_लिखोrs.
+ * 3) Error path of rwsem_करोwn_ग_लिखो_slowpath().
  *
- * For all the above cases, wait_lock will be held. A writer must also
- * be the first one in the wait_list to be eligible for setting the handoff
- * bit. So concurrent setting/clearing of handoff bit is not possible.
+ * For all the above हालs, रुको_lock will be held. A ग_लिखोr must also
+ * be the first one in the रुको_list to be eligible क्रम setting the hanकरोff
+ * bit. So concurrent setting/clearing of hanकरोff bit is not possible.
  */
-#define RWSEM_WRITER_LOCKED	(1UL << 0)
-#define RWSEM_FLAG_WAITERS	(1UL << 1)
-#define RWSEM_FLAG_HANDOFF	(1UL << 2)
-#define RWSEM_FLAG_READFAIL	(1UL << (BITS_PER_LONG - 1))
+#घोषणा RWSEM_WRITER_LOCKED	(1UL << 0)
+#घोषणा RWSEM_FLAG_WAITERS	(1UL << 1)
+#घोषणा RWSEM_FLAG_HANDOFF	(1UL << 2)
+#घोषणा RWSEM_FLAG_READFAIL	(1UL << (BITS_PER_LONG - 1))
 
-#define RWSEM_READER_SHIFT	8
-#define RWSEM_READER_BIAS	(1UL << RWSEM_READER_SHIFT)
-#define RWSEM_READER_MASK	(~(RWSEM_READER_BIAS - 1))
-#define RWSEM_WRITER_MASK	RWSEM_WRITER_LOCKED
-#define RWSEM_LOCK_MASK		(RWSEM_WRITER_MASK|RWSEM_READER_MASK)
-#define RWSEM_READ_FAILED_MASK	(RWSEM_WRITER_MASK|RWSEM_FLAG_WAITERS|\
+#घोषणा RWSEM_READER_SHIFT	8
+#घोषणा RWSEM_READER_BIAS	(1UL << RWSEM_READER_SHIFT)
+#घोषणा RWSEM_READER_MASK	(~(RWSEM_READER_BIAS - 1))
+#घोषणा RWSEM_WRITER_MASK	RWSEM_WRITER_LOCKED
+#घोषणा RWSEM_LOCK_MASK		(RWSEM_WRITER_MASK|RWSEM_READER_MASK)
+#घोषणा RWSEM_READ_FAILED_MASK	(RWSEM_WRITER_MASK|RWSEM_FLAG_WAITERS|\
 				 RWSEM_FLAG_HANDOFF|RWSEM_FLAG_READFAIL)
 
 /*
- * All writes to owner are protected by WRITE_ONCE() to make sure that
- * store tearing can't happen as optimistic spinners may read and use
+ * All ग_लिखोs to owner are रक्षित by WRITE_ONCE() to make sure that
+ * store tearing can't happen as optimistic spinners may पढ़ो and use
  * the owner value concurrently without lock. Read from owner, however,
- * may not need READ_ONCE() as long as the pointer value is only used
- * for comparison and isn't being dereferenced.
+ * may not need READ_ONCE() as दीर्घ as the poपूर्णांकer value is only used
+ * क्रम comparison and isn't being dereferenced.
  */
-static inline void rwsem_set_owner(struct rw_semaphore *sem)
-{
-	atomic_long_set(&sem->owner, (long)current);
-}
+अटल अंतरभूत व्योम rwsem_set_owner(काष्ठा rw_semaphore *sem)
+अणु
+	atomic_दीर्घ_set(&sem->owner, (दीर्घ)current);
+पूर्ण
 
-static inline void rwsem_clear_owner(struct rw_semaphore *sem)
-{
-	atomic_long_set(&sem->owner, 0);
-}
+अटल अंतरभूत व्योम rwsem_clear_owner(काष्ठा rw_semaphore *sem)
+अणु
+	atomic_दीर्घ_set(&sem->owner, 0);
+पूर्ण
 
 /*
  * Test the flags in the owner field.
  */
-static inline bool rwsem_test_oflags(struct rw_semaphore *sem, long flags)
-{
-	return atomic_long_read(&sem->owner) & flags;
-}
+अटल अंतरभूत bool rwsem_test_oflags(काष्ठा rw_semaphore *sem, दीर्घ flags)
+अणु
+	वापस atomic_दीर्घ_पढ़ो(&sem->owner) & flags;
+पूर्ण
 
 /*
- * The task_struct pointer of the last owning reader will be left in
+ * The task_काष्ठा poपूर्णांकer of the last owning पढ़ोer will be left in
  * the owner field.
  *
  * Note that the owner value just indicates the task has owned the rwsem
  * previously, it may not be the real owner or one of the real owners
  * anymore when that field is examined, so take it with a grain of salt.
  *
- * The reader non-spinnable bit is preserved.
+ * The पढ़ोer non-spinnable bit is preserved.
  */
-static inline void __rwsem_set_reader_owned(struct rw_semaphore *sem,
-					    struct task_struct *owner)
-{
-	unsigned long val = (unsigned long)owner | RWSEM_READER_OWNED |
-		(atomic_long_read(&sem->owner) & RWSEM_NONSPINNABLE);
+अटल अंतरभूत व्योम __rwsem_set_पढ़ोer_owned(काष्ठा rw_semaphore *sem,
+					    काष्ठा task_काष्ठा *owner)
+अणु
+	अचिन्हित दीर्घ val = (अचिन्हित दीर्घ)owner | RWSEM_READER_OWNED |
+		(atomic_दीर्घ_पढ़ो(&sem->owner) & RWSEM_NONSPINNABLE);
 
-	atomic_long_set(&sem->owner, val);
-}
+	atomic_दीर्घ_set(&sem->owner, val);
+पूर्ण
 
-static inline void rwsem_set_reader_owned(struct rw_semaphore *sem)
-{
-	__rwsem_set_reader_owned(sem, current);
-}
+अटल अंतरभूत व्योम rwsem_set_पढ़ोer_owned(काष्ठा rw_semaphore *sem)
+अणु
+	__rwsem_set_पढ़ोer_owned(sem, current);
+पूर्ण
 
 /*
- * Return true if the rwsem is owned by a reader.
+ * Return true अगर the rwsem is owned by a पढ़ोer.
  */
-static inline bool is_rwsem_reader_owned(struct rw_semaphore *sem)
-{
-#ifdef CONFIG_DEBUG_RWSEMS
+अटल अंतरभूत bool is_rwsem_पढ़ोer_owned(काष्ठा rw_semaphore *sem)
+अणु
+#अगर_घोषित CONFIG_DEBUG_RWSEMS
 	/*
-	 * Check the count to see if it is write-locked.
+	 * Check the count to see अगर it is ग_लिखो-locked.
 	 */
-	long count = atomic_long_read(&sem->count);
+	दीर्घ count = atomic_दीर्घ_पढ़ो(&sem->count);
 
-	if (count & RWSEM_WRITER_MASK)
-		return false;
-#endif
-	return rwsem_test_oflags(sem, RWSEM_READER_OWNED);
-}
+	अगर (count & RWSEM_WRITER_MASK)
+		वापस false;
+#पूर्ण_अगर
+	वापस rwsem_test_oflags(sem, RWSEM_READER_OWNED);
+पूर्ण
 
-#ifdef CONFIG_DEBUG_RWSEMS
+#अगर_घोषित CONFIG_DEBUG_RWSEMS
 /*
- * With CONFIG_DEBUG_RWSEMS configured, it will make sure that if there
- * is a task pointer in owner of a reader-owned rwsem, it will be the
+ * With CONFIG_DEBUG_RWSEMS configured, it will make sure that अगर there
+ * is a task poपूर्णांकer in owner of a पढ़ोer-owned rwsem, it will be the
  * real owner or one of the real owners. The only exception is when the
- * unlock is done by up_read_non_owner().
+ * unlock is करोne by up_पढ़ो_non_owner().
  */
-static inline void rwsem_clear_reader_owned(struct rw_semaphore *sem)
-{
-	unsigned long val = atomic_long_read(&sem->owner);
+अटल अंतरभूत व्योम rwsem_clear_पढ़ोer_owned(काष्ठा rw_semaphore *sem)
+अणु
+	अचिन्हित दीर्घ val = atomic_दीर्घ_पढ़ो(&sem->owner);
 
-	while ((val & ~RWSEM_OWNER_FLAGS_MASK) == (unsigned long)current) {
-		if (atomic_long_try_cmpxchg(&sem->owner, &val,
+	जबतक ((val & ~RWSEM_OWNER_FLAGS_MASK) == (अचिन्हित दीर्घ)current) अणु
+		अगर (atomic_दीर्घ_try_cmpxchg(&sem->owner, &val,
 					    val & RWSEM_OWNER_FLAGS_MASK))
-			return;
-	}
-}
-#else
-static inline void rwsem_clear_reader_owned(struct rw_semaphore *sem)
-{
-}
-#endif
+			वापस;
+	पूर्ण
+पूर्ण
+#अन्यथा
+अटल अंतरभूत व्योम rwsem_clear_पढ़ोer_owned(काष्ठा rw_semaphore *sem)
+अणु
+पूर्ण
+#पूर्ण_अगर
 
 /*
- * Set the RWSEM_NONSPINNABLE bits if the RWSEM_READER_OWNED flag
- * remains set. Otherwise, the operation will be aborted.
+ * Set the RWSEM_NONSPINNABLE bits अगर the RWSEM_READER_OWNED flag
+ * reमुख्यs set. Otherwise, the operation will be पातed.
  */
-static inline void rwsem_set_nonspinnable(struct rw_semaphore *sem)
-{
-	unsigned long owner = atomic_long_read(&sem->owner);
+अटल अंतरभूत व्योम rwsem_set_nonspinnable(काष्ठा rw_semaphore *sem)
+अणु
+	अचिन्हित दीर्घ owner = atomic_दीर्घ_पढ़ो(&sem->owner);
 
-	do {
-		if (!(owner & RWSEM_READER_OWNED))
-			break;
-		if (owner & RWSEM_NONSPINNABLE)
-			break;
-	} while (!atomic_long_try_cmpxchg(&sem->owner, &owner,
+	करो अणु
+		अगर (!(owner & RWSEM_READER_OWNED))
+			अवरोध;
+		अगर (owner & RWSEM_NONSPINNABLE)
+			अवरोध;
+	पूर्ण जबतक (!atomic_दीर्घ_try_cmpxchg(&sem->owner, &owner,
 					  owner | RWSEM_NONSPINNABLE));
-}
+पूर्ण
 
-static inline bool rwsem_read_trylock(struct rw_semaphore *sem, long *cntp)
-{
-	*cntp = atomic_long_add_return_acquire(RWSEM_READER_BIAS, &sem->count);
+अटल अंतरभूत bool rwsem_पढ़ो_trylock(काष्ठा rw_semaphore *sem, दीर्घ *cntp)
+अणु
+	*cntp = atomic_दीर्घ_add_वापस_acquire(RWSEM_READER_BIAS, &sem->count);
 
-	if (WARN_ON_ONCE(*cntp < 0))
+	अगर (WARN_ON_ONCE(*cntp < 0))
 		rwsem_set_nonspinnable(sem);
 
-	if (!(*cntp & RWSEM_READ_FAILED_MASK)) {
-		rwsem_set_reader_owned(sem);
-		return true;
-	}
+	अगर (!(*cntp & RWSEM_READ_FAILED_MASK)) अणु
+		rwsem_set_पढ़ोer_owned(sem);
+		वापस true;
+	पूर्ण
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static inline bool rwsem_write_trylock(struct rw_semaphore *sem)
-{
-	long tmp = RWSEM_UNLOCKED_VALUE;
+अटल अंतरभूत bool rwsem_ग_लिखो_trylock(काष्ठा rw_semaphore *sem)
+अणु
+	दीर्घ पंचांगp = RWSEM_UNLOCKED_VALUE;
 
-	if (atomic_long_try_cmpxchg_acquire(&sem->count, &tmp, RWSEM_WRITER_LOCKED)) {
+	अगर (atomic_दीर्घ_try_cmpxchg_acquire(&sem->count, &पंचांगp, RWSEM_WRITER_LOCKED)) अणु
 		rwsem_set_owner(sem);
-		return true;
-	}
+		वापस true;
+	पूर्ण
 
-	return false;
-}
-
-/*
- * Return just the real task structure pointer of the owner
- */
-static inline struct task_struct *rwsem_owner(struct rw_semaphore *sem)
-{
-	return (struct task_struct *)
-		(atomic_long_read(&sem->owner) & ~RWSEM_OWNER_FLAGS_MASK);
-}
+	वापस false;
+पूर्ण
 
 /*
- * Return the real task structure pointer of the owner and the embedded
- * flags in the owner. pflags must be non-NULL.
+ * Return just the real task काष्ठाure poपूर्णांकer of the owner
  */
-static inline struct task_struct *
-rwsem_owner_flags(struct rw_semaphore *sem, unsigned long *pflags)
-{
-	unsigned long owner = atomic_long_read(&sem->owner);
+अटल अंतरभूत काष्ठा task_काष्ठा *rwsem_owner(काष्ठा rw_semaphore *sem)
+अणु
+	वापस (काष्ठा task_काष्ठा *)
+		(atomic_दीर्घ_पढ़ो(&sem->owner) & ~RWSEM_OWNER_FLAGS_MASK);
+पूर्ण
+
+/*
+ * Return the real task काष्ठाure poपूर्णांकer of the owner and the embedded
+ * flags in the owner. pflags must be non-शून्य.
+ */
+अटल अंतरभूत काष्ठा task_काष्ठा *
+rwsem_owner_flags(काष्ठा rw_semaphore *sem, अचिन्हित दीर्घ *pflags)
+अणु
+	अचिन्हित दीर्घ owner = atomic_दीर्घ_पढ़ो(&sem->owner);
 
 	*pflags = owner & RWSEM_OWNER_FLAGS_MASK;
-	return (struct task_struct *)(owner & ~RWSEM_OWNER_FLAGS_MASK);
-}
+	वापस (काष्ठा task_काष्ठा *)(owner & ~RWSEM_OWNER_FLAGS_MASK);
+पूर्ण
 
 /*
  * Guide to the rw_semaphore's count field.
  *
  * When the RWSEM_WRITER_LOCKED bit in count is set, the lock is owned
- * by a writer.
+ * by a ग_लिखोr.
  *
- * The lock is owned by readers when
+ * The lock is owned by पढ़ोers when
  * (1) the RWSEM_WRITER_LOCKED isn't set in count,
- * (2) some of the reader bits are set in count, and
+ * (2) some of the पढ़ोer bits are set in count, and
  * (3) the owner field has RWSEM_READ_OWNED bit set.
  *
- * Having some reader bits set is not enough to guarantee a readers owned
- * lock as the readers may be in the process of backing out from the count
- * and a writer has just released the lock. So another writer may steal
+ * Having some पढ़ोer bits set is not enough to guarantee a पढ़ोers owned
+ * lock as the पढ़ोers may be in the process of backing out from the count
+ * and a ग_लिखोr has just released the lock. So another ग_लिखोr may steal
  * the lock immediately after that.
  */
 
 /*
  * Initialize an rwsem:
  */
-void __init_rwsem(struct rw_semaphore *sem, const char *name,
-		  struct lock_class_key *key)
-{
-#ifdef CONFIG_DEBUG_LOCK_ALLOC
+व्योम __init_rwsem(काष्ठा rw_semaphore *sem, स्थिर अक्षर *name,
+		  काष्ठा lock_class_key *key)
+अणु
+#अगर_घोषित CONFIG_DEBUG_LOCK_ALLOC
 	/*
 	 * Make sure we are not reinitializing a held semaphore:
 	 */
-	debug_check_no_locks_freed((void *)sem, sizeof(*sem));
-	lockdep_init_map_wait(&sem->dep_map, name, key, 0, LD_WAIT_SLEEP);
-#endif
-#ifdef CONFIG_DEBUG_RWSEMS
+	debug_check_no_locks_मुक्तd((व्योम *)sem, माप(*sem));
+	lockdep_init_map_रुको(&sem->dep_map, name, key, 0, LD_WAIT_SLEEP);
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_DEBUG_RWSEMS
 	sem->magic = sem;
-#endif
-	atomic_long_set(&sem->count, RWSEM_UNLOCKED_VALUE);
-	raw_spin_lock_init(&sem->wait_lock);
-	INIT_LIST_HEAD(&sem->wait_list);
-	atomic_long_set(&sem->owner, 0L);
-#ifdef CONFIG_RWSEM_SPIN_ON_OWNER
+#पूर्ण_अगर
+	atomic_दीर्घ_set(&sem->count, RWSEM_UNLOCKED_VALUE);
+	raw_spin_lock_init(&sem->रुको_lock);
+	INIT_LIST_HEAD(&sem->रुको_list);
+	atomic_दीर्घ_set(&sem->owner, 0L);
+#अगर_घोषित CONFIG_RWSEM_SPIN_ON_OWNER
 	osq_lock_init(&sem->osq);
-#endif
-}
+#पूर्ण_अगर
+पूर्ण
 EXPORT_SYMBOL(__init_rwsem);
 
-enum rwsem_waiter_type {
+क्रमागत rwsem_रुकोer_type अणु
 	RWSEM_WAITING_FOR_WRITE,
 	RWSEM_WAITING_FOR_READ
-};
+पूर्ण;
 
-struct rwsem_waiter {
-	struct list_head list;
-	struct task_struct *task;
-	enum rwsem_waiter_type type;
-	unsigned long timeout;
-};
-#define rwsem_first_waiter(sem) \
-	list_first_entry(&sem->wait_list, struct rwsem_waiter, list)
+काष्ठा rwsem_रुकोer अणु
+	काष्ठा list_head list;
+	काष्ठा task_काष्ठा *task;
+	क्रमागत rwsem_रुकोer_type type;
+	अचिन्हित दीर्घ समयout;
+पूर्ण;
+#घोषणा rwsem_first_रुकोer(sem) \
+	list_first_entry(&sem->रुको_list, काष्ठा rwsem_रुकोer, list)
 
-enum rwsem_wake_type {
-	RWSEM_WAKE_ANY,		/* Wake whatever's at head of wait list */
-	RWSEM_WAKE_READERS,	/* Wake readers only */
-	RWSEM_WAKE_READ_OWNED	/* Waker thread holds the read lock */
-};
+क्रमागत rwsem_wake_type अणु
+	RWSEM_WAKE_ANY,		/* Wake whatever's at head of रुको list */
+	RWSEM_WAKE_READERS,	/* Wake पढ़ोers only */
+	RWSEM_WAKE_READ_OWNED	/* Waker thपढ़ो holds the पढ़ो lock */
+पूर्ण;
 
-enum writer_wait_state {
-	WRITER_NOT_FIRST,	/* Writer is not first in wait list */
-	WRITER_FIRST,		/* Writer is first in wait list     */
-	WRITER_HANDOFF		/* Writer is first & handoff needed */
-};
+क्रमागत ग_लिखोr_रुको_state अणु
+	WRITER_NOT_FIRST,	/* Writer is not first in रुको list */
+	WRITER_FIRST,		/* Writer is first in रुको list     */
+	WRITER_HANDOFF		/* Writer is first & hanकरोff needed */
+पूर्ण;
 
 /*
- * The typical HZ value is either 250 or 1000. So set the minimum waiting
- * time to at least 4ms or 1 jiffy (if it is higher than 4ms) in the wait
- * queue before initiating the handoff protocol.
+ * The typical HZ value is either 250 or 1000. So set the minimum रुकोing
+ * समय to at least 4ms or 1 jअगरfy (अगर it is higher than 4ms) in the रुको
+ * queue beक्रमe initiating the hanकरोff protocol.
  */
-#define RWSEM_WAIT_TIMEOUT	DIV_ROUND_UP(HZ, 250)
+#घोषणा RWSEM_WAIT_TIMEOUT	DIV_ROUND_UP(HZ, 250)
 
 /*
- * Magic number to batch-wakeup waiting readers, even when writers are
+ * Magic number to batch-wakeup रुकोing पढ़ोers, even when ग_लिखोrs are
  * also present in the queue. This both limits the amount of work the
- * waking thread must do and also prevents any potential counter overflow,
+ * waking thपढ़ो must करो and also prevents any potential counter overflow,
  * however unlikely.
  */
-#define MAX_READERS_WAKEUP	0x100
+#घोषणा MAX_READERS_WAKEUP	0x100
 
 /*
  * handle the lock release when processes blocked on it that can now run
- * - if we come here from up_xxxx(), then the RWSEM_FLAG_WAITERS bit must
+ * - अगर we come here from up_xxxx(), then the RWSEM_FLAG_WAITERS bit must
  *   have been set.
  * - there must be someone on the queue
- * - the wait_lock must be held by the caller
- * - tasks are marked for wakeup, the caller must later invoke wake_up_q()
+ * - the रुको_lock must be held by the caller
+ * - tasks are marked क्रम wakeup, the caller must later invoke wake_up_q()
  *   to actually wakeup the blocked task(s) and drop the reference count,
- *   preferably when the wait_lock is released
+ *   preferably when the रुको_lock is released
  * - woken process blocks are discarded from the list after having task zeroed
- * - writers are only marked woken if downgrading is false
+ * - ग_लिखोrs are only marked woken अगर करोwngrading is false
  */
-static void rwsem_mark_wake(struct rw_semaphore *sem,
-			    enum rwsem_wake_type wake_type,
-			    struct wake_q_head *wake_q)
-{
-	struct rwsem_waiter *waiter, *tmp;
-	long oldcount, woken = 0, adjustment = 0;
-	struct list_head wlist;
+अटल व्योम rwsem_mark_wake(काष्ठा rw_semaphore *sem,
+			    क्रमागत rwsem_wake_type wake_type,
+			    काष्ठा wake_q_head *wake_q)
+अणु
+	काष्ठा rwsem_रुकोer *रुकोer, *पंचांगp;
+	दीर्घ oldcount, woken = 0, adjusपंचांगent = 0;
+	काष्ठा list_head wlist;
 
-	lockdep_assert_held(&sem->wait_lock);
+	lockdep_निश्चित_held(&sem->रुको_lock);
 
 	/*
-	 * Take a peek at the queue head waiter such that we can determine
-	 * the wakeup(s) to perform.
+	 * Take a peek at the queue head रुकोer such that we can determine
+	 * the wakeup(s) to perक्रमm.
 	 */
-	waiter = rwsem_first_waiter(sem);
+	रुकोer = rwsem_first_रुकोer(sem);
 
-	if (waiter->type == RWSEM_WAITING_FOR_WRITE) {
-		if (wake_type == RWSEM_WAKE_ANY) {
+	अगर (रुकोer->type == RWSEM_WAITING_FOR_WRITE) अणु
+		अगर (wake_type == RWSEM_WAKE_ANY) अणु
 			/*
-			 * Mark writer at the front of the queue for wakeup.
+			 * Mark ग_लिखोr at the front of the queue क्रम wakeup.
 			 * Until the task is actually later awoken later by
-			 * the caller, other writers are able to steal it.
+			 * the caller, other ग_लिखोrs are able to steal it.
 			 * Readers, on the other hand, will block as they
-			 * will notice the queued writer.
+			 * will notice the queued ग_लिखोr.
 			 */
-			wake_q_add(wake_q, waiter->task);
-			lockevent_inc(rwsem_wake_writer);
-		}
+			wake_q_add(wake_q, रुकोer->task);
+			lockevent_inc(rwsem_wake_ग_लिखोr);
+		पूर्ण
 
-		return;
-	}
-
-	/*
-	 * No reader wakeup if there are too many of them already.
-	 */
-	if (unlikely(atomic_long_read(&sem->count) < 0))
-		return;
+		वापस;
+	पूर्ण
 
 	/*
-	 * Writers might steal the lock before we grant it to the next reader.
-	 * We prefer to do the first reader grant before counting readers
-	 * so we can bail out early if a writer stole the lock.
+	 * No पढ़ोer wakeup अगर there are too many of them alपढ़ोy.
 	 */
-	if (wake_type != RWSEM_WAKE_READ_OWNED) {
-		struct task_struct *owner;
+	अगर (unlikely(atomic_दीर्घ_पढ़ो(&sem->count) < 0))
+		वापस;
 
-		adjustment = RWSEM_READER_BIAS;
-		oldcount = atomic_long_fetch_add(adjustment, &sem->count);
-		if (unlikely(oldcount & RWSEM_WRITER_MASK)) {
+	/*
+	 * Writers might steal the lock beक्रमe we grant it to the next पढ़ोer.
+	 * We prefer to करो the first पढ़ोer grant beक्रमe counting पढ़ोers
+	 * so we can bail out early अगर a ग_लिखोr stole the lock.
+	 */
+	अगर (wake_type != RWSEM_WAKE_READ_OWNED) अणु
+		काष्ठा task_काष्ठा *owner;
+
+		adjusपंचांगent = RWSEM_READER_BIAS;
+		oldcount = atomic_दीर्घ_fetch_add(adjusपंचांगent, &sem->count);
+		अगर (unlikely(oldcount & RWSEM_WRITER_MASK)) अणु
 			/*
-			 * When we've been waiting "too" long (for writers
+			 * When we've been रुकोing "too" दीर्घ (क्रम ग_लिखोrs
 			 * to give up the lock), request a HANDOFF to
-			 * force the issue.
+			 * क्रमce the issue.
 			 */
-			if (!(oldcount & RWSEM_FLAG_HANDOFF) &&
-			    time_after(jiffies, waiter->timeout)) {
-				adjustment -= RWSEM_FLAG_HANDOFF;
-				lockevent_inc(rwsem_rlock_handoff);
-			}
+			अगर (!(oldcount & RWSEM_FLAG_HANDOFF) &&
+			    समय_after(jअगरfies, रुकोer->समयout)) अणु
+				adjusपंचांगent -= RWSEM_FLAG_HANDOFF;
+				lockevent_inc(rwsem_rlock_hanकरोff);
+			पूर्ण
 
-			atomic_long_add(-adjustment, &sem->count);
-			return;
-		}
+			atomic_दीर्घ_add(-adjusपंचांगent, &sem->count);
+			वापस;
+		पूर्ण
 		/*
-		 * Set it to reader-owned to give spinners an early
-		 * indication that readers now have the lock.
-		 * The reader nonspinnable bit seen at slowpath entry of
-		 * the reader is copied over.
+		 * Set it to पढ़ोer-owned to give spinners an early
+		 * indication that पढ़ोers now have the lock.
+		 * The पढ़ोer nonspinnable bit seen at slowpath entry of
+		 * the पढ़ोer is copied over.
 		 */
-		owner = waiter->task;
-		__rwsem_set_reader_owned(sem, owner);
-	}
+		owner = रुकोer->task;
+		__rwsem_set_पढ़ोer_owned(sem, owner);
+	पूर्ण
 
 	/*
-	 * Grant up to MAX_READERS_WAKEUP read locks to all the readers in the
+	 * Grant up to MAX_READERS_WAKEUP पढ़ो locks to all the पढ़ोers in the
 	 * queue. We know that the woken will be at least 1 as we accounted
-	 * for above. Note we increment the 'active part' of the count by the
-	 * number of readers before waking any processes up.
+	 * क्रम above. Note we increment the 'active part' of the count by the
+	 * number of पढ़ोers beक्रमe waking any processes up.
 	 *
 	 * This is an adaptation of the phase-fair R/W locks where at the
-	 * reader phase (first waiter is a reader), all readers are eligible
-	 * to acquire the lock at the same time irrespective of their order
-	 * in the queue. The writers acquire the lock according to their
+	 * पढ़ोer phase (first रुकोer is a पढ़ोer), all पढ़ोers are eligible
+	 * to acquire the lock at the same समय irrespective of their order
+	 * in the queue. The ग_लिखोrs acquire the lock according to their
 	 * order in the queue.
 	 *
-	 * We have to do wakeup in 2 passes to prevent the possibility that
-	 * the reader count may be decremented before it is incremented. It
-	 * is because the to-be-woken waiter may not have slept yet. So it
-	 * may see waiter->task got cleared, finish its critical section and
-	 * do an unlock before the reader count increment.
+	 * We have to करो wakeup in 2 passes to prevent the possibility that
+	 * the पढ़ोer count may be decremented beक्रमe it is incremented. It
+	 * is because the to-be-woken रुकोer may not have slept yet. So it
+	 * may see रुकोer->task got cleared, finish its critical section and
+	 * करो an unlock beक्रमe the पढ़ोer count increment.
 	 *
-	 * 1) Collect the read-waiters in a separate list, count them and
-	 *    fully increment the reader count in rwsem.
-	 * 2) For each waiters in the new list, clear waiter->task and
-	 *    put them into wake_q to be woken up later.
+	 * 1) Collect the पढ़ो-रुकोers in a separate list, count them and
+	 *    fully increment the पढ़ोer count in rwsem.
+	 * 2) For each रुकोers in the new list, clear रुकोer->task and
+	 *    put them पूर्णांकo wake_q to be woken up later.
 	 */
 	INIT_LIST_HEAD(&wlist);
-	list_for_each_entry_safe(waiter, tmp, &sem->wait_list, list) {
-		if (waiter->type == RWSEM_WAITING_FOR_WRITE)
-			continue;
+	list_क्रम_each_entry_safe(रुकोer, पंचांगp, &sem->रुको_list, list) अणु
+		अगर (रुकोer->type == RWSEM_WAITING_FOR_WRITE)
+			जारी;
 
 		woken++;
-		list_move_tail(&waiter->list, &wlist);
+		list_move_tail(&रुकोer->list, &wlist);
 
 		/*
-		 * Limit # of readers that can be woken up per wakeup call.
+		 * Limit # of पढ़ोers that can be woken up per wakeup call.
 		 */
-		if (woken >= MAX_READERS_WAKEUP)
-			break;
-	}
+		अगर (woken >= MAX_READERS_WAKEUP)
+			अवरोध;
+	पूर्ण
 
-	adjustment = woken * RWSEM_READER_BIAS - adjustment;
-	lockevent_cond_inc(rwsem_wake_reader, woken);
-	if (list_empty(&sem->wait_list)) {
+	adjusपंचांगent = woken * RWSEM_READER_BIAS - adjusपंचांगent;
+	lockevent_cond_inc(rwsem_wake_पढ़ोer, woken);
+	अगर (list_empty(&sem->रुको_list)) अणु
 		/* hit end of list above */
-		adjustment -= RWSEM_FLAG_WAITERS;
-	}
+		adjusपंचांगent -= RWSEM_FLAG_WAITERS;
+	पूर्ण
 
 	/*
-	 * When we've woken a reader, we no longer need to force writers
+	 * When we've woken a पढ़ोer, we no दीर्घer need to क्रमce ग_लिखोrs
 	 * to give up the lock and we can clear HANDOFF.
 	 */
-	if (woken && (atomic_long_read(&sem->count) & RWSEM_FLAG_HANDOFF))
-		adjustment -= RWSEM_FLAG_HANDOFF;
+	अगर (woken && (atomic_दीर्घ_पढ़ो(&sem->count) & RWSEM_FLAG_HANDOFF))
+		adjusपंचांगent -= RWSEM_FLAG_HANDOFF;
 
-	if (adjustment)
-		atomic_long_add(adjustment, &sem->count);
+	अगर (adjusपंचांगent)
+		atomic_दीर्घ_add(adjusपंचांगent, &sem->count);
 
 	/* 2nd pass */
-	list_for_each_entry_safe(waiter, tmp, &wlist, list) {
-		struct task_struct *tsk;
+	list_क्रम_each_entry_safe(रुकोer, पंचांगp, &wlist, list) अणु
+		काष्ठा task_काष्ठा *tsk;
 
-		tsk = waiter->task;
-		get_task_struct(tsk);
+		tsk = रुकोer->task;
+		get_task_काष्ठा(tsk);
 
 		/*
-		 * Ensure calling get_task_struct() before setting the reader
-		 * waiter to nil such that rwsem_down_read_slowpath() cannot
-		 * race with do_exit() by always holding a reference count
+		 * Ensure calling get_task_काष्ठा() beक्रमe setting the पढ़ोer
+		 * रुकोer to nil such that rwsem_करोwn_पढ़ो_slowpath() cannot
+		 * race with करो_निकास() by always holding a reference count
 		 * to the task to wakeup.
 		 */
-		smp_store_release(&waiter->task, NULL);
+		smp_store_release(&रुकोer->task, शून्य);
 		/*
-		 * Ensure issuing the wakeup (either by us or someone else)
-		 * after setting the reader waiter to nil.
+		 * Ensure issuing the wakeup (either by us or someone अन्यथा)
+		 * after setting the पढ़ोer रुकोer to nil.
 		 */
 		wake_q_add_safe(wake_q, tsk);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
- * This function must be called with the sem->wait_lock held to prevent
- * race conditions between checking the rwsem wait list and setting the
+ * This function must be called with the sem->रुको_lock held to prevent
+ * race conditions between checking the rwsem रुको list and setting the
  * sem->count accordingly.
  *
- * If wstate is WRITER_HANDOFF, it will make sure that either the handoff
- * bit is set or the lock is acquired with handoff bit cleared.
+ * If wstate is WRITER_HANDOFF, it will make sure that either the hanकरोff
+ * bit is set or the lock is acquired with hanकरोff bit cleared.
  */
-static inline bool rwsem_try_write_lock(struct rw_semaphore *sem,
-					enum writer_wait_state wstate)
-{
-	long count, new;
+अटल अंतरभूत bool rwsem_try_ग_लिखो_lock(काष्ठा rw_semaphore *sem,
+					क्रमागत ग_लिखोr_रुको_state wstate)
+अणु
+	दीर्घ count, new;
 
-	lockdep_assert_held(&sem->wait_lock);
+	lockdep_निश्चित_held(&sem->रुको_lock);
 
-	count = atomic_long_read(&sem->count);
-	do {
-		bool has_handoff = !!(count & RWSEM_FLAG_HANDOFF);
+	count = atomic_दीर्घ_पढ़ो(&sem->count);
+	करो अणु
+		bool has_hanकरोff = !!(count & RWSEM_FLAG_HANDOFF);
 
-		if (has_handoff && wstate == WRITER_NOT_FIRST)
-			return false;
+		अगर (has_hanकरोff && wstate == WRITER_NOT_FIRST)
+			वापस false;
 
 		new = count;
 
-		if (count & RWSEM_LOCK_MASK) {
-			if (has_handoff || (wstate != WRITER_HANDOFF))
-				return false;
+		अगर (count & RWSEM_LOCK_MASK) अणु
+			अगर (has_hanकरोff || (wstate != WRITER_HANDOFF))
+				वापस false;
 
 			new |= RWSEM_FLAG_HANDOFF;
-		} else {
+		पूर्ण अन्यथा अणु
 			new |= RWSEM_WRITER_LOCKED;
 			new &= ~RWSEM_FLAG_HANDOFF;
 
-			if (list_is_singular(&sem->wait_list))
+			अगर (list_is_singular(&sem->रुको_list))
 				new &= ~RWSEM_FLAG_WAITERS;
-		}
-	} while (!atomic_long_try_cmpxchg_acquire(&sem->count, &count, new));
+		पूर्ण
+	पूर्ण जबतक (!atomic_दीर्घ_try_cmpxchg_acquire(&sem->count, &count, new));
 
 	/*
-	 * We have either acquired the lock with handoff bit cleared or
-	 * set the handoff bit.
+	 * We have either acquired the lock with hanकरोff bit cleared or
+	 * set the hanकरोff bit.
 	 */
-	if (new & RWSEM_FLAG_HANDOFF)
-		return false;
+	अगर (new & RWSEM_FLAG_HANDOFF)
+		वापस false;
 
 	rwsem_set_owner(sem);
-	return true;
-}
+	वापस true;
+पूर्ण
 
-#ifdef CONFIG_RWSEM_SPIN_ON_OWNER
+#अगर_घोषित CONFIG_RWSEM_SPIN_ON_OWNER
 /*
- * Try to acquire write lock before the writer has been put on wait queue.
+ * Try to acquire ग_लिखो lock beक्रमe the ग_लिखोr has been put on रुको queue.
  */
-static inline bool rwsem_try_write_lock_unqueued(struct rw_semaphore *sem)
-{
-	long count = atomic_long_read(&sem->count);
+अटल अंतरभूत bool rwsem_try_ग_लिखो_lock_unqueued(काष्ठा rw_semaphore *sem)
+अणु
+	दीर्घ count = atomic_दीर्घ_पढ़ो(&sem->count);
 
-	while (!(count & (RWSEM_LOCK_MASK|RWSEM_FLAG_HANDOFF))) {
-		if (atomic_long_try_cmpxchg_acquire(&sem->count, &count,
-					count | RWSEM_WRITER_LOCKED)) {
+	जबतक (!(count & (RWSEM_LOCK_MASK|RWSEM_FLAG_HANDOFF))) अणु
+		अगर (atomic_दीर्घ_try_cmpxchg_acquire(&sem->count, &count,
+					count | RWSEM_WRITER_LOCKED)) अणु
 			rwsem_set_owner(sem);
 			lockevent_inc(rwsem_opt_lock);
-			return true;
-		}
-	}
-	return false;
-}
+			वापस true;
+		पूर्ण
+	पूर्ण
+	वापस false;
+पूर्ण
 
-static inline bool owner_on_cpu(struct task_struct *owner)
-{
+अटल अंतरभूत bool owner_on_cpu(काष्ठा task_काष्ठा *owner)
+अणु
 	/*
-	 * As lock holder preemption issue, we both skip spinning if
+	 * As lock holder preemption issue, we both skip spinning अगर
 	 * task is not on cpu or its cpu is preempted
 	 */
-	return owner->on_cpu && !vcpu_is_preempted(task_cpu(owner));
-}
+	वापस owner->on_cpu && !vcpu_is_preempted(task_cpu(owner));
+पूर्ण
 
-static inline bool rwsem_can_spin_on_owner(struct rw_semaphore *sem)
-{
-	struct task_struct *owner;
-	unsigned long flags;
+अटल अंतरभूत bool rwsem_can_spin_on_owner(काष्ठा rw_semaphore *sem)
+अणु
+	काष्ठा task_काष्ठा *owner;
+	अचिन्हित दीर्घ flags;
 	bool ret = true;
 
-	if (need_resched()) {
+	अगर (need_resched()) अणु
 		lockevent_inc(rwsem_opt_fail);
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
 	preempt_disable();
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	owner = rwsem_owner_flags(sem, &flags);
 	/*
-	 * Don't check the read-owner as the entry may be stale.
+	 * Don't check the पढ़ो-owner as the entry may be stale.
 	 */
-	if ((flags & RWSEM_NONSPINNABLE) ||
+	अगर ((flags & RWSEM_NONSPINNABLE) ||
 	    (owner && !(flags & RWSEM_READER_OWNED) && !owner_on_cpu(owner)))
 		ret = false;
-	rcu_read_unlock();
+	rcu_पढ़ो_unlock();
 	preempt_enable();
 
 	lockevent_cond_inc(rwsem_opt_fail, !ret);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
- * The rwsem_spin_on_owner() function returns the following 4 values
+ * The rwsem_spin_on_owner() function वापसs the following 4 values
  * depending on the lock owner state.
- *   OWNER_NULL  : owner is currently NULL
- *   OWNER_WRITER: when owner changes and is a writer
- *   OWNER_READER: when owner changes and the new owner may be a reader.
+ *   OWNER_शून्य  : owner is currently शून्य
+ *   OWNER_WRITER: when owner changes and is a ग_लिखोr
+ *   OWNER_READER: when owner changes and the new owner may be a पढ़ोer.
  *   OWNER_NONSPINNABLE:
  *		   when optimistic spinning has to stop because either the
- *		   owner stops running, is unknown, or its timeslice has
+ *		   owner stops running, is unknown, or its बारlice has
  *		   been used up.
  */
-enum owner_state {
-	OWNER_NULL		= 1 << 0,
+क्रमागत owner_state अणु
+	OWNER_शून्य		= 1 << 0,
 	OWNER_WRITER		= 1 << 1,
 	OWNER_READER		= 1 << 2,
 	OWNER_NONSPINNABLE	= 1 << 3,
-};
-#define OWNER_SPINNABLE		(OWNER_NULL | OWNER_WRITER | OWNER_READER)
+पूर्ण;
+#घोषणा OWNER_SPINNABLE		(OWNER_शून्य | OWNER_WRITER | OWNER_READER)
 
-static inline enum owner_state
-rwsem_owner_state(struct task_struct *owner, unsigned long flags)
-{
-	if (flags & RWSEM_NONSPINNABLE)
-		return OWNER_NONSPINNABLE;
+अटल अंतरभूत क्रमागत owner_state
+rwsem_owner_state(काष्ठा task_काष्ठा *owner, अचिन्हित दीर्घ flags)
+अणु
+	अगर (flags & RWSEM_NONSPINNABLE)
+		वापस OWNER_NONSPINNABLE;
 
-	if (flags & RWSEM_READER_OWNED)
-		return OWNER_READER;
+	अगर (flags & RWSEM_READER_OWNED)
+		वापस OWNER_READER;
 
-	return owner ? OWNER_WRITER : OWNER_NULL;
-}
+	वापस owner ? OWNER_WRITER : OWNER_शून्य;
+पूर्ण
 
-static noinline enum owner_state
-rwsem_spin_on_owner(struct rw_semaphore *sem)
-{
-	struct task_struct *new, *owner;
-	unsigned long flags, new_flags;
-	enum owner_state state;
+अटल noअंतरभूत क्रमागत owner_state
+rwsem_spin_on_owner(काष्ठा rw_semaphore *sem)
+अणु
+	काष्ठा task_काष्ठा *new, *owner;
+	अचिन्हित दीर्घ flags, new_flags;
+	क्रमागत owner_state state;
 
 	owner = rwsem_owner_flags(sem, &flags);
 	state = rwsem_owner_state(owner, flags);
-	if (state != OWNER_WRITER)
-		return state;
+	अगर (state != OWNER_WRITER)
+		वापस state;
 
-	rcu_read_lock();
-	for (;;) {
+	rcu_पढ़ो_lock();
+	क्रम (;;) अणु
 		/*
-		 * When a waiting writer set the handoff flag, it may spin
-		 * on the owner as well. Once that writer acquires the lock,
-		 * we can spin on it. So we don't need to quit even when the
-		 * handoff bit is set.
+		 * When a रुकोing ग_लिखोr set the hanकरोff flag, it may spin
+		 * on the owner as well. Once that ग_लिखोr acquires the lock,
+		 * we can spin on it. So we करोn't need to quit even when the
+		 * hanकरोff bit is set.
 		 */
 		new = rwsem_owner_flags(sem, &new_flags);
-		if ((new != owner) || (new_flags != flags)) {
+		अगर ((new != owner) || (new_flags != flags)) अणु
 			state = rwsem_owner_state(new, new_flags);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		/*
 		 * Ensure we emit the owner->on_cpu, dereference _after_
-		 * checking sem->owner still matches owner, if that fails,
-		 * owner might point to free()d memory, if it still matches,
-		 * the rcu_read_lock() ensures the memory stays valid.
+		 * checking sem->owner still matches owner, अगर that fails,
+		 * owner might poपूर्णांक to मुक्त()d memory, अगर it still matches,
+		 * the rcu_पढ़ो_lock() ensures the memory stays valid.
 		 */
 		barrier();
 
-		if (need_resched() || !owner_on_cpu(owner)) {
+		अगर (need_resched() || !owner_on_cpu(owner)) अणु
 			state = OWNER_NONSPINNABLE;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		cpu_relax();
-	}
-	rcu_read_unlock();
+	पूर्ण
+	rcu_पढ़ो_unlock();
 
-	return state;
-}
+	वापस state;
+पूर्ण
 
 /*
- * Calculate reader-owned rwsem spinning threshold for writer
+ * Calculate पढ़ोer-owned rwsem spinning threshold क्रम ग_लिखोr
  *
- * The more readers own the rwsem, the longer it will take for them to
- * wind down and free the rwsem. So the empirical formula used to
- * determine the actual spinning time limit here is:
+ * The more पढ़ोers own the rwsem, the दीर्घer it will take क्रम them to
+ * wind करोwn and मुक्त the rwsem. So the empirical क्रमmula used to
+ * determine the actual spinning समय limit here is:
  *
- *   Spinning threshold = (10 + nr_readers/2)us
+ *   Spinning threshold = (10 + nr_पढ़ोers/2)us
  *
- * The limit is capped to a maximum of 25us (30 readers). This is just
+ * The limit is capped to a maximum of 25us (30 पढ़ोers). This is just
  * a heuristic and is subjected to change in the future.
  */
-static inline u64 rwsem_rspin_threshold(struct rw_semaphore *sem)
-{
-	long count = atomic_long_read(&sem->count);
-	int readers = count >> RWSEM_READER_SHIFT;
+अटल अंतरभूत u64 rwsem_rspin_threshold(काष्ठा rw_semaphore *sem)
+अणु
+	दीर्घ count = atomic_दीर्घ_पढ़ो(&sem->count);
+	पूर्णांक पढ़ोers = count >> RWSEM_READER_SHIFT;
 	u64 delta;
 
-	if (readers > 30)
-		readers = 30;
-	delta = (20 + readers) * NSEC_PER_USEC / 2;
+	अगर (पढ़ोers > 30)
+		पढ़ोers = 30;
+	delta = (20 + पढ़ोers) * NSEC_PER_USEC / 2;
 
-	return sched_clock() + delta;
-}
+	वापस sched_घड़ी() + delta;
+पूर्ण
 
-static bool rwsem_optimistic_spin(struct rw_semaphore *sem)
-{
+अटल bool rwsem_optimistic_spin(काष्ठा rw_semaphore *sem)
+अणु
 	bool taken = false;
-	int prev_owner_state = OWNER_NULL;
-	int loop = 0;
+	पूर्णांक prev_owner_state = OWNER_शून्य;
+	पूर्णांक loop = 0;
 	u64 rspin_threshold = 0;
 
 	preempt_disable();
 
-	/* sem->wait_lock should not be held when doing optimistic spinning */
-	if (!osq_lock(&sem->osq))
-		goto done;
+	/* sem->रुको_lock should not be held when करोing optimistic spinning */
+	अगर (!osq_lock(&sem->osq))
+		जाओ करोne;
 
 	/*
 	 * Optimistically spin on the owner field and attempt to acquire the
 	 * lock whenever the owner changes. Spinning will be stopped when:
-	 *  1) the owning writer isn't running; or
-	 *  2) readers own the lock and spinning time has exceeded limit.
+	 *  1) the owning ग_लिखोr isn't running; or
+	 *  2) पढ़ोers own the lock and spinning समय has exceeded limit.
 	 */
-	for (;;) {
-		enum owner_state owner_state;
+	क्रम (;;) अणु
+		क्रमागत owner_state owner_state;
 
 		owner_state = rwsem_spin_on_owner(sem);
-		if (!(owner_state & OWNER_SPINNABLE))
-			break;
+		अगर (!(owner_state & OWNER_SPINNABLE))
+			अवरोध;
 
 		/*
 		 * Try to acquire the lock
 		 */
-		taken = rwsem_try_write_lock_unqueued(sem);
+		taken = rwsem_try_ग_लिखो_lock_unqueued(sem);
 
-		if (taken)
-			break;
+		अगर (taken)
+			अवरोध;
 
 		/*
-		 * Time-based reader-owned rwsem optimistic spinning
+		 * Time-based पढ़ोer-owned rwsem optimistic spinning
 		 */
-		if (owner_state == OWNER_READER) {
+		अगर (owner_state == OWNER_READER) अणु
 			/*
-			 * Re-initialize rspin_threshold every time when
-			 * the owner state changes from non-reader to reader.
-			 * This allows a writer to steal the lock in between
-			 * 2 reader phases and have the threshold reset at
-			 * the beginning of the 2nd reader phase.
+			 * Re-initialize rspin_threshold every समय when
+			 * the owner state changes from non-पढ़ोer to पढ़ोer.
+			 * This allows a ग_लिखोr to steal the lock in between
+			 * 2 पढ़ोer phases and have the threshold reset at
+			 * the beginning of the 2nd पढ़ोer phase.
 			 */
-			if (prev_owner_state != OWNER_READER) {
-				if (rwsem_test_oflags(sem, RWSEM_NONSPINNABLE))
-					break;
+			अगर (prev_owner_state != OWNER_READER) अणु
+				अगर (rwsem_test_oflags(sem, RWSEM_NONSPINNABLE))
+					अवरोध;
 				rspin_threshold = rwsem_rspin_threshold(sem);
 				loop = 0;
-			}
+			पूर्ण
 
 			/*
-			 * Check time threshold once every 16 iterations to
-			 * avoid calling sched_clock() too frequently so
-			 * as to reduce the average latency between the times
-			 * when the lock becomes free and when the spinner
-			 * is ready to do a trylock.
+			 * Check समय threshold once every 16 iterations to
+			 * aव्योम calling sched_घड़ी() too frequently so
+			 * as to reduce the average latency between the बार
+			 * when the lock becomes मुक्त and when the spinner
+			 * is पढ़ोy to करो a trylock.
 			 */
-			else if (!(++loop & 0xf) && (sched_clock() > rspin_threshold)) {
+			अन्यथा अगर (!(++loop & 0xf) && (sched_घड़ी() > rspin_threshold)) अणु
 				rwsem_set_nonspinnable(sem);
 				lockevent_inc(rwsem_opt_nospin);
-				break;
-			}
-		}
+				अवरोध;
+			पूर्ण
+		पूर्ण
 
 		/*
-		 * An RT task cannot do optimistic spinning if it cannot
+		 * An RT task cannot करो optimistic spinning अगर it cannot
 		 * be sure the lock holder is running or live-lock may
-		 * happen if the current task and the lock holder happen
-		 * to run in the same CPU. However, aborting optimistic
-		 * spinning while a NULL owner is detected may miss some
-		 * opportunity where spinning can continue without causing
+		 * happen अगर the current task and the lock holder happen
+		 * to run in the same CPU. However, पातing optimistic
+		 * spinning जबतक a शून्य owner is detected may miss some
+		 * opportunity where spinning can जारी without causing
 		 * problem.
 		 *
-		 * There are 2 possible cases where an RT task may be able
-		 * to continue spinning.
+		 * There are 2 possible हालs where an RT task may be able
+		 * to जारी spinning.
 		 *
 		 * 1) The lock owner is in the process of releasing the
 		 *    lock, sem->owner is cleared but the lock has not
 		 *    been released yet.
-		 * 2) The lock was free and owner cleared, but another
-		 *    task just comes in and acquire the lock before
+		 * 2) The lock was मुक्त and owner cleared, but another
+		 *    task just comes in and acquire the lock beक्रमe
 		 *    we try to get it. The new owner may be a spinnable
-		 *    writer.
+		 *    ग_लिखोr.
 		 *
 		 * To take advantage of two scenarios listed above, the RT
-		 * task is made to retry one more time to see if it can
-		 * acquire the lock or continue spinning on the new owning
-		 * writer. Of course, if the time lag is long enough or the
-		 * new owner is not a writer or spinnable, the RT task will
+		 * task is made to retry one more समय to see अगर it can
+		 * acquire the lock or जारी spinning on the new owning
+		 * ग_लिखोr. Of course, अगर the समय lag is दीर्घ enough or the
+		 * new owner is not a ग_लिखोr or spinnable, the RT task will
 		 * quit spinning.
 		 *
-		 * If the owner is a writer, the need_resched() check is
-		 * done inside rwsem_spin_on_owner(). If the owner is not
-		 * a writer, need_resched() check needs to be done here.
+		 * If the owner is a ग_लिखोr, the need_resched() check is
+		 * करोne inside rwsem_spin_on_owner(). If the owner is not
+		 * a ग_लिखोr, need_resched() check needs to be करोne here.
 		 */
-		if (owner_state != OWNER_WRITER) {
-			if (need_resched())
-				break;
-			if (rt_task(current) &&
+		अगर (owner_state != OWNER_WRITER) अणु
+			अगर (need_resched())
+				अवरोध;
+			अगर (rt_task(current) &&
 			   (prev_owner_state != OWNER_WRITER))
-				break;
-		}
+				अवरोध;
+		पूर्ण
 		prev_owner_state = owner_state;
 
 		/*
-		 * The cpu_relax() call is a compiler barrier which forces
-		 * everything in this loop to be re-loaded. We don't need
+		 * The cpu_relax() call is a compiler barrier which क्रमces
+		 * everything in this loop to be re-loaded. We करोn't need
 		 * memory barriers as we'll eventually observe the right
 		 * values at the cost of a few extra spins.
 		 */
 		cpu_relax();
-	}
+	पूर्ण
 	osq_unlock(&sem->osq);
-done:
+करोne:
 	preempt_enable();
 	lockevent_cond_inc(rwsem_opt_fail, !taken);
-	return taken;
-}
+	वापस taken;
+पूर्ण
 
 /*
- * Clear the owner's RWSEM_NONSPINNABLE bit if it is set. This should
- * only be called when the reader count reaches 0.
+ * Clear the owner's RWSEM_NONSPINNABLE bit अगर it is set. This should
+ * only be called when the पढ़ोer count reaches 0.
  */
-static inline void clear_nonspinnable(struct rw_semaphore *sem)
-{
-	if (rwsem_test_oflags(sem, RWSEM_NONSPINNABLE))
-		atomic_long_andnot(RWSEM_NONSPINNABLE, &sem->owner);
-}
+अटल अंतरभूत व्योम clear_nonspinnable(काष्ठा rw_semaphore *sem)
+अणु
+	अगर (rwsem_test_oflags(sem, RWSEM_NONSPINNABLE))
+		atomic_दीर्घ_andnot(RWSEM_NONSPINNABLE, &sem->owner);
+पूर्ण
 
-#else
-static inline bool rwsem_can_spin_on_owner(struct rw_semaphore *sem)
-{
-	return false;
-}
+#अन्यथा
+अटल अंतरभूत bool rwsem_can_spin_on_owner(काष्ठा rw_semaphore *sem)
+अणु
+	वापस false;
+पूर्ण
 
-static inline bool rwsem_optimistic_spin(struct rw_semaphore *sem)
-{
-	return false;
-}
+अटल अंतरभूत bool rwsem_optimistic_spin(काष्ठा rw_semaphore *sem)
+अणु
+	वापस false;
+पूर्ण
 
-static inline void clear_nonspinnable(struct rw_semaphore *sem) { }
+अटल अंतरभूत व्योम clear_nonspinnable(काष्ठा rw_semaphore *sem) अणु पूर्ण
 
-static inline int
-rwsem_spin_on_owner(struct rw_semaphore *sem)
-{
-	return 0;
-}
-#define OWNER_NULL	1
-#endif
+अटल अंतरभूत पूर्णांक
+rwsem_spin_on_owner(काष्ठा rw_semaphore *sem)
+अणु
+	वापस 0;
+पूर्ण
+#घोषणा OWNER_शून्य	1
+#पूर्ण_अगर
 
 /*
- * Wait for the read lock to be granted
+ * Wait क्रम the पढ़ो lock to be granted
  */
-static struct rw_semaphore __sched *
-rwsem_down_read_slowpath(struct rw_semaphore *sem, long count, int state)
-{
-	long adjustment = -RWSEM_READER_BIAS;
-	long rcnt = (count >> RWSEM_READER_SHIFT);
-	struct rwsem_waiter waiter;
+अटल काष्ठा rw_semaphore __sched *
+rwsem_करोwn_पढ़ो_slowpath(काष्ठा rw_semaphore *sem, दीर्घ count, पूर्णांक state)
+अणु
+	दीर्घ adjusपंचांगent = -RWSEM_READER_BIAS;
+	दीर्घ rcnt = (count >> RWSEM_READER_SHIFT);
+	काष्ठा rwsem_रुकोer रुकोer;
 	DEFINE_WAKE_Q(wake_q);
 	bool wake = false;
 
 	/*
-	 * To prevent a constant stream of readers from starving a sleeping
-	 * waiter, don't attempt optimistic lock stealing if the lock is
-	 * currently owned by readers.
+	 * To prevent a स्थिरant stream of पढ़ोers from starving a sleeping
+	 * रुकोer, करोn't attempt optimistic lock stealing अगर the lock is
+	 * currently owned by पढ़ोers.
 	 */
-	if ((atomic_long_read(&sem->owner) & RWSEM_READER_OWNED) &&
+	अगर ((atomic_दीर्घ_पढ़ो(&sem->owner) & RWSEM_READER_OWNED) &&
 	    (rcnt > 1) && !(count & RWSEM_WRITER_LOCKED))
-		goto queue;
+		जाओ queue;
 
 	/*
 	 * Reader optimistic lock stealing.
 	 */
-	if (!(count & (RWSEM_WRITER_LOCKED | RWSEM_FLAG_HANDOFF))) {
-		rwsem_set_reader_owned(sem);
+	अगर (!(count & (RWSEM_WRITER_LOCKED | RWSEM_FLAG_HANDOFF))) अणु
+		rwsem_set_पढ़ोer_owned(sem);
 		lockevent_inc(rwsem_rlock_steal);
 
 		/*
-		 * Wake up other readers in the wait queue if it is
-		 * the first reader.
+		 * Wake up other पढ़ोers in the रुको queue अगर it is
+		 * the first पढ़ोer.
 		 */
-		if ((rcnt == 1) && (count & RWSEM_FLAG_WAITERS)) {
-			raw_spin_lock_irq(&sem->wait_lock);
-			if (!list_empty(&sem->wait_list))
+		अगर ((rcnt == 1) && (count & RWSEM_FLAG_WAITERS)) अणु
+			raw_spin_lock_irq(&sem->रुको_lock);
+			अगर (!list_empty(&sem->रुको_list))
 				rwsem_mark_wake(sem, RWSEM_WAKE_READ_OWNED,
 						&wake_q);
-			raw_spin_unlock_irq(&sem->wait_lock);
+			raw_spin_unlock_irq(&sem->रुको_lock);
 			wake_up_q(&wake_q);
-		}
-		return sem;
-	}
+		पूर्ण
+		वापस sem;
+	पूर्ण
 
 queue:
-	waiter.task = current;
-	waiter.type = RWSEM_WAITING_FOR_READ;
-	waiter.timeout = jiffies + RWSEM_WAIT_TIMEOUT;
+	रुकोer.task = current;
+	रुकोer.type = RWSEM_WAITING_FOR_READ;
+	रुकोer.समयout = jअगरfies + RWSEM_WAIT_TIMEOUT;
 
-	raw_spin_lock_irq(&sem->wait_lock);
-	if (list_empty(&sem->wait_list)) {
+	raw_spin_lock_irq(&sem->रुको_lock);
+	अगर (list_empty(&sem->रुको_list)) अणु
 		/*
-		 * In case the wait queue is empty and the lock isn't owned
-		 * by a writer or has the handoff bit set, this reader can
-		 * exit the slowpath and return immediately as its
-		 * RWSEM_READER_BIAS has already been set in the count.
+		 * In हाल the रुको queue is empty and the lock isn't owned
+		 * by a ग_लिखोr or has the hanकरोff bit set, this पढ़ोer can
+		 * निकास the slowpath and वापस immediately as its
+		 * RWSEM_READER_BIAS has alपढ़ोy been set in the count.
 		 */
-		if (!(atomic_long_read(&sem->count) &
-		     (RWSEM_WRITER_MASK | RWSEM_FLAG_HANDOFF))) {
+		अगर (!(atomic_दीर्घ_पढ़ो(&sem->count) &
+		     (RWSEM_WRITER_MASK | RWSEM_FLAG_HANDOFF))) अणु
 			/* Provide lock ACQUIRE */
 			smp_acquire__after_ctrl_dep();
-			raw_spin_unlock_irq(&sem->wait_lock);
-			rwsem_set_reader_owned(sem);
+			raw_spin_unlock_irq(&sem->रुको_lock);
+			rwsem_set_पढ़ोer_owned(sem);
 			lockevent_inc(rwsem_rlock_fast);
-			return sem;
-		}
-		adjustment += RWSEM_FLAG_WAITERS;
-	}
-	list_add_tail(&waiter.list, &sem->wait_list);
+			वापस sem;
+		पूर्ण
+		adjusपंचांगent += RWSEM_FLAG_WAITERS;
+	पूर्ण
+	list_add_tail(&रुकोer.list, &sem->रुको_list);
 
-	/* we're now waiting on the lock, but no longer actively locking */
-	count = atomic_long_add_return(adjustment, &sem->count);
+	/* we're now रुकोing on the lock, but no दीर्घer actively locking */
+	count = atomic_दीर्घ_add_वापस(adjusपंचांगent, &sem->count);
 
 	/*
 	 * If there are no active locks, wake the front queued process(es).
 	 *
-	 * If there are no writers and we are first in the queue,
-	 * wake our own waiter to join the existing active readers !
+	 * If there are no ग_लिखोrs and we are first in the queue,
+	 * wake our own रुकोer to join the existing active पढ़ोers !
 	 */
-	if (!(count & RWSEM_LOCK_MASK)) {
+	अगर (!(count & RWSEM_LOCK_MASK)) अणु
 		clear_nonspinnable(sem);
 		wake = true;
-	}
-	if (wake || (!(count & RWSEM_WRITER_MASK) &&
-		    (adjustment & RWSEM_FLAG_WAITERS)))
+	पूर्ण
+	अगर (wake || (!(count & RWSEM_WRITER_MASK) &&
+		    (adjusपंचांगent & RWSEM_FLAG_WAITERS)))
 		rwsem_mark_wake(sem, RWSEM_WAKE_ANY, &wake_q);
 
-	raw_spin_unlock_irq(&sem->wait_lock);
+	raw_spin_unlock_irq(&sem->रुको_lock);
 	wake_up_q(&wake_q);
 
-	/* wait to be given the lock */
-	for (;;) {
+	/* रुको to be given the lock */
+	क्रम (;;) अणु
 		set_current_state(state);
-		if (!smp_load_acquire(&waiter.task)) {
+		अगर (!smp_load_acquire(&रुकोer.task)) अणु
 			/* Matches rwsem_mark_wake()'s smp_store_release(). */
-			break;
-		}
-		if (signal_pending_state(state, current)) {
-			raw_spin_lock_irq(&sem->wait_lock);
-			if (waiter.task)
-				goto out_nolock;
-			raw_spin_unlock_irq(&sem->wait_lock);
-			/* Ordered by sem->wait_lock against rwsem_mark_wake(). */
-			break;
-		}
+			अवरोध;
+		पूर्ण
+		अगर (संकेत_pending_state(state, current)) अणु
+			raw_spin_lock_irq(&sem->रुको_lock);
+			अगर (रुकोer.task)
+				जाओ out_nolock;
+			raw_spin_unlock_irq(&sem->रुको_lock);
+			/* Ordered by sem->रुको_lock against rwsem_mark_wake(). */
+			अवरोध;
+		पूर्ण
 		schedule();
-		lockevent_inc(rwsem_sleep_reader);
-	}
+		lockevent_inc(rwsem_sleep_पढ़ोer);
+	पूर्ण
 
 	__set_current_state(TASK_RUNNING);
 	lockevent_inc(rwsem_rlock);
-	return sem;
+	वापस sem;
 
 out_nolock:
-	list_del(&waiter.list);
-	if (list_empty(&sem->wait_list)) {
-		atomic_long_andnot(RWSEM_FLAG_WAITERS|RWSEM_FLAG_HANDOFF,
+	list_del(&रुकोer.list);
+	अगर (list_empty(&sem->रुको_list)) अणु
+		atomic_दीर्घ_andnot(RWSEM_FLAG_WAITERS|RWSEM_FLAG_HANDOFF,
 				   &sem->count);
-	}
-	raw_spin_unlock_irq(&sem->wait_lock);
+	पूर्ण
+	raw_spin_unlock_irq(&sem->रुको_lock);
 	__set_current_state(TASK_RUNNING);
 	lockevent_inc(rwsem_rlock_fail);
-	return ERR_PTR(-EINTR);
-}
+	वापस ERR_PTR(-EINTR);
+पूर्ण
 
 /*
- * Wait until we successfully acquire the write lock
+ * Wait until we successfully acquire the ग_लिखो lock
  */
-static struct rw_semaphore *
-rwsem_down_write_slowpath(struct rw_semaphore *sem, int state)
-{
-	long count;
-	enum writer_wait_state wstate;
-	struct rwsem_waiter waiter;
-	struct rw_semaphore *ret = sem;
+अटल काष्ठा rw_semaphore *
+rwsem_करोwn_ग_लिखो_slowpath(काष्ठा rw_semaphore *sem, पूर्णांक state)
+अणु
+	दीर्घ count;
+	क्रमागत ग_लिखोr_रुको_state wstate;
+	काष्ठा rwsem_रुकोer रुकोer;
+	काष्ठा rw_semaphore *ret = sem;
 	DEFINE_WAKE_Q(wake_q);
 
-	/* do optimistic spinning and steal lock if possible */
-	if (rwsem_can_spin_on_owner(sem) && rwsem_optimistic_spin(sem)) {
+	/* करो optimistic spinning and steal lock अगर possible */
+	अगर (rwsem_can_spin_on_owner(sem) && rwsem_optimistic_spin(sem)) अणु
 		/* rwsem_optimistic_spin() implies ACQUIRE on success */
-		return sem;
-	}
+		वापस sem;
+	पूर्ण
 
 	/*
 	 * Optimistic spinning failed, proceed to the slowpath
 	 * and block until we can acquire the sem.
 	 */
-	waiter.task = current;
-	waiter.type = RWSEM_WAITING_FOR_WRITE;
-	waiter.timeout = jiffies + RWSEM_WAIT_TIMEOUT;
+	रुकोer.task = current;
+	रुकोer.type = RWSEM_WAITING_FOR_WRITE;
+	रुकोer.समयout = jअगरfies + RWSEM_WAIT_TIMEOUT;
 
-	raw_spin_lock_irq(&sem->wait_lock);
+	raw_spin_lock_irq(&sem->रुको_lock);
 
-	/* account for this before adding a new element to the list */
-	wstate = list_empty(&sem->wait_list) ? WRITER_FIRST : WRITER_NOT_FIRST;
+	/* account क्रम this beक्रमe adding a new element to the list */
+	wstate = list_empty(&sem->रुको_list) ? WRITER_FIRST : WRITER_NOT_FIRST;
 
-	list_add_tail(&waiter.list, &sem->wait_list);
+	list_add_tail(&रुकोer.list, &sem->रुको_list);
 
-	/* we're now waiting on the lock */
-	if (wstate == WRITER_NOT_FIRST) {
-		count = atomic_long_read(&sem->count);
+	/* we're now रुकोing on the lock */
+	अगर (wstate == WRITER_NOT_FIRST) अणु
+		count = atomic_दीर्घ_पढ़ो(&sem->count);
 
 		/*
-		 * If there were already threads queued before us and:
+		 * If there were alपढ़ोy thपढ़ोs queued beक्रमe us and:
 		 *  1) there are no active locks, wake the front
-		 *     queued process(es) as the handoff bit might be set.
-		 *  2) there are no active writers and some readers, the lock
-		 *     must be read owned; so we try to wake any read lock
-		 *     waiters that were queued ahead of us.
+		 *     queued process(es) as the hanकरोff bit might be set.
+		 *  2) there are no active ग_लिखोrs and some पढ़ोers, the lock
+		 *     must be पढ़ो owned; so we try to wake any पढ़ो lock
+		 *     रुकोers that were queued ahead of us.
 		 */
-		if (count & RWSEM_WRITER_MASK)
-			goto wait;
+		अगर (count & RWSEM_WRITER_MASK)
+			जाओ रुको;
 
 		rwsem_mark_wake(sem, (count & RWSEM_READER_MASK)
 					? RWSEM_WAKE_READERS
 					: RWSEM_WAKE_ANY, &wake_q);
 
-		if (!wake_q_empty(&wake_q)) {
+		अगर (!wake_q_empty(&wake_q)) अणु
 			/*
-			 * We want to minimize wait_lock hold time especially
-			 * when a large number of readers are to be woken up.
+			 * We want to minimize रुको_lock hold समय especially
+			 * when a large number of पढ़ोers are to be woken up.
 			 */
-			raw_spin_unlock_irq(&sem->wait_lock);
+			raw_spin_unlock_irq(&sem->रुको_lock);
 			wake_up_q(&wake_q);
 			wake_q_init(&wake_q);	/* Used again, reinit */
-			raw_spin_lock_irq(&sem->wait_lock);
-		}
-	} else {
-		atomic_long_or(RWSEM_FLAG_WAITERS, &sem->count);
-	}
+			raw_spin_lock_irq(&sem->रुको_lock);
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		atomic_दीर्घ_or(RWSEM_FLAG_WAITERS, &sem->count);
+	पूर्ण
 
-wait:
-	/* wait until we successfully acquire the lock */
+रुको:
+	/* रुको until we successfully acquire the lock */
 	set_current_state(state);
-	for (;;) {
-		if (rwsem_try_write_lock(sem, wstate)) {
-			/* rwsem_try_write_lock() implies ACQUIRE on success */
-			break;
-		}
+	क्रम (;;) अणु
+		अगर (rwsem_try_ग_लिखो_lock(sem, wstate)) अणु
+			/* rwsem_try_ग_लिखो_lock() implies ACQUIRE on success */
+			अवरोध;
+		पूर्ण
 
-		raw_spin_unlock_irq(&sem->wait_lock);
+		raw_spin_unlock_irq(&sem->रुको_lock);
 
 		/*
-		 * After setting the handoff bit and failing to acquire
+		 * After setting the hanकरोff bit and failing to acquire
 		 * the lock, attempt to spin on owner to accelerate lock
-		 * transfer. If the previous owner is a on-cpu writer and it
-		 * has just released the lock, OWNER_NULL will be returned.
-		 * In this case, we attempt to acquire the lock again
+		 * transfer. If the previous owner is a on-cpu ग_लिखोr and it
+		 * has just released the lock, OWNER_शून्य will be वापसed.
+		 * In this हाल, we attempt to acquire the lock again
 		 * without sleeping.
 		 */
-		if (wstate == WRITER_HANDOFF &&
-		    rwsem_spin_on_owner(sem) == OWNER_NULL)
-			goto trylock_again;
+		अगर (wstate == WRITER_HANDOFF &&
+		    rwsem_spin_on_owner(sem) == OWNER_शून्य)
+			जाओ trylock_again;
 
 		/* Block until there are no active lockers. */
-		for (;;) {
-			if (signal_pending_state(state, current))
-				goto out_nolock;
+		क्रम (;;) अणु
+			अगर (संकेत_pending_state(state, current))
+				जाओ out_nolock;
 
 			schedule();
-			lockevent_inc(rwsem_sleep_writer);
+			lockevent_inc(rwsem_sleep_ग_लिखोr);
 			set_current_state(state);
 			/*
-			 * If HANDOFF bit is set, unconditionally do
+			 * If HANDOFF bit is set, unconditionally करो
 			 * a trylock.
 			 */
-			if (wstate == WRITER_HANDOFF)
-				break;
+			अगर (wstate == WRITER_HANDOFF)
+				अवरोध;
 
-			if ((wstate == WRITER_NOT_FIRST) &&
-			    (rwsem_first_waiter(sem) == &waiter))
+			अगर ((wstate == WRITER_NOT_FIRST) &&
+			    (rwsem_first_रुकोer(sem) == &रुकोer))
 				wstate = WRITER_FIRST;
 
-			count = atomic_long_read(&sem->count);
-			if (!(count & RWSEM_LOCK_MASK))
-				break;
+			count = atomic_दीर्घ_पढ़ो(&sem->count);
+			अगर (!(count & RWSEM_LOCK_MASK))
+				अवरोध;
 
 			/*
-			 * The setting of the handoff bit is deferred
-			 * until rwsem_try_write_lock() is called.
+			 * The setting of the hanकरोff bit is deferred
+			 * until rwsem_try_ग_लिखो_lock() is called.
 			 */
-			if ((wstate == WRITER_FIRST) && (rt_task(current) ||
-			    time_after(jiffies, waiter.timeout))) {
+			अगर ((wstate == WRITER_FIRST) && (rt_task(current) ||
+			    समय_after(jअगरfies, रुकोer.समयout))) अणु
 				wstate = WRITER_HANDOFF;
-				lockevent_inc(rwsem_wlock_handoff);
-				break;
-			}
-		}
+				lockevent_inc(rwsem_wlock_hanकरोff);
+				अवरोध;
+			पूर्ण
+		पूर्ण
 trylock_again:
-		raw_spin_lock_irq(&sem->wait_lock);
-	}
+		raw_spin_lock_irq(&sem->रुको_lock);
+	पूर्ण
 	__set_current_state(TASK_RUNNING);
-	list_del(&waiter.list);
-	raw_spin_unlock_irq(&sem->wait_lock);
+	list_del(&रुकोer.list);
+	raw_spin_unlock_irq(&sem->रुको_lock);
 	lockevent_inc(rwsem_wlock);
 
-	return ret;
+	वापस ret;
 
 out_nolock:
 	__set_current_state(TASK_RUNNING);
-	raw_spin_lock_irq(&sem->wait_lock);
-	list_del(&waiter.list);
+	raw_spin_lock_irq(&sem->रुको_lock);
+	list_del(&रुकोer.list);
 
-	if (unlikely(wstate == WRITER_HANDOFF))
-		atomic_long_add(-RWSEM_FLAG_HANDOFF,  &sem->count);
+	अगर (unlikely(wstate == WRITER_HANDOFF))
+		atomic_दीर्घ_add(-RWSEM_FLAG_HANDOFF,  &sem->count);
 
-	if (list_empty(&sem->wait_list))
-		atomic_long_andnot(RWSEM_FLAG_WAITERS, &sem->count);
-	else
+	अगर (list_empty(&sem->रुको_list))
+		atomic_दीर्घ_andnot(RWSEM_FLAG_WAITERS, &sem->count);
+	अन्यथा
 		rwsem_mark_wake(sem, RWSEM_WAKE_ANY, &wake_q);
-	raw_spin_unlock_irq(&sem->wait_lock);
+	raw_spin_unlock_irq(&sem->रुको_lock);
 	wake_up_q(&wake_q);
 	lockevent_inc(rwsem_wlock_fail);
 
-	return ERR_PTR(-EINTR);
-}
+	वापस ERR_PTR(-EINTR);
+पूर्ण
 
 /*
- * handle waking up a waiter on the semaphore
- * - up_read/up_write has decremented the active part of count if we come here
+ * handle waking up a रुकोer on the semaphore
+ * - up_पढ़ो/up_ग_लिखो has decremented the active part of count अगर we come here
  */
-static struct rw_semaphore *rwsem_wake(struct rw_semaphore *sem, long count)
-{
-	unsigned long flags;
+अटल काष्ठा rw_semaphore *rwsem_wake(काष्ठा rw_semaphore *sem, दीर्घ count)
+अणु
+	अचिन्हित दीर्घ flags;
 	DEFINE_WAKE_Q(wake_q);
 
-	raw_spin_lock_irqsave(&sem->wait_lock, flags);
+	raw_spin_lock_irqsave(&sem->रुको_lock, flags);
 
-	if (!list_empty(&sem->wait_list))
+	अगर (!list_empty(&sem->रुको_list))
 		rwsem_mark_wake(sem, RWSEM_WAKE_ANY, &wake_q);
 
-	raw_spin_unlock_irqrestore(&sem->wait_lock, flags);
+	raw_spin_unlock_irqrestore(&sem->रुको_lock, flags);
 	wake_up_q(&wake_q);
 
-	return sem;
-}
+	वापस sem;
+पूर्ण
 
 /*
- * downgrade a write lock into a read lock
- * - caller incremented waiting part of count and discovered it still negative
- * - just wake up any readers at the front of the queue
+ * करोwngrade a ग_लिखो lock पूर्णांकo a पढ़ो lock
+ * - caller incremented रुकोing part of count and discovered it still negative
+ * - just wake up any पढ़ोers at the front of the queue
  */
-static struct rw_semaphore *rwsem_downgrade_wake(struct rw_semaphore *sem)
-{
-	unsigned long flags;
+अटल काष्ठा rw_semaphore *rwsem_करोwngrade_wake(काष्ठा rw_semaphore *sem)
+अणु
+	अचिन्हित दीर्घ flags;
 	DEFINE_WAKE_Q(wake_q);
 
-	raw_spin_lock_irqsave(&sem->wait_lock, flags);
+	raw_spin_lock_irqsave(&sem->रुको_lock, flags);
 
-	if (!list_empty(&sem->wait_list))
+	अगर (!list_empty(&sem->रुको_list))
 		rwsem_mark_wake(sem, RWSEM_WAKE_READ_OWNED, &wake_q);
 
-	raw_spin_unlock_irqrestore(&sem->wait_lock, flags);
+	raw_spin_unlock_irqrestore(&sem->रुको_lock, flags);
 	wake_up_q(&wake_q);
 
-	return sem;
-}
+	वापस sem;
+पूर्ण
 
 /*
- * lock for reading
+ * lock क्रम पढ़ोing
  */
-static inline int __down_read_common(struct rw_semaphore *sem, int state)
-{
-	long count;
+अटल अंतरभूत पूर्णांक __करोwn_पढ़ो_common(काष्ठा rw_semaphore *sem, पूर्णांक state)
+अणु
+	दीर्घ count;
 
-	if (!rwsem_read_trylock(sem, &count)) {
-		if (IS_ERR(rwsem_down_read_slowpath(sem, count, state)))
-			return -EINTR;
-		DEBUG_RWSEMS_WARN_ON(!is_rwsem_reader_owned(sem), sem);
-	}
-	return 0;
-}
+	अगर (!rwsem_पढ़ो_trylock(sem, &count)) अणु
+		अगर (IS_ERR(rwsem_करोwn_पढ़ो_slowpath(sem, count, state)))
+			वापस -EINTR;
+		DEBUG_RWSEMS_WARN_ON(!is_rwsem_पढ़ोer_owned(sem), sem);
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static inline void __down_read(struct rw_semaphore *sem)
-{
-	__down_read_common(sem, TASK_UNINTERRUPTIBLE);
-}
+अटल अंतरभूत व्योम __करोwn_पढ़ो(काष्ठा rw_semaphore *sem)
+अणु
+	__करोwn_पढ़ो_common(sem, TASK_UNINTERRUPTIBLE);
+पूर्ण
 
-static inline int __down_read_interruptible(struct rw_semaphore *sem)
-{
-	return __down_read_common(sem, TASK_INTERRUPTIBLE);
-}
+अटल अंतरभूत पूर्णांक __करोwn_पढ़ो_पूर्णांकerruptible(काष्ठा rw_semaphore *sem)
+अणु
+	वापस __करोwn_पढ़ो_common(sem, TASK_INTERRUPTIBLE);
+पूर्ण
 
-static inline int __down_read_killable(struct rw_semaphore *sem)
-{
-	return __down_read_common(sem, TASK_KILLABLE);
-}
+अटल अंतरभूत पूर्णांक __करोwn_पढ़ो_समाप्तable(काष्ठा rw_semaphore *sem)
+अणु
+	वापस __करोwn_पढ़ो_common(sem, TASK_KILLABLE);
+पूर्ण
 
-static inline int __down_read_trylock(struct rw_semaphore *sem)
-{
-	long tmp;
+अटल अंतरभूत पूर्णांक __करोwn_पढ़ो_trylock(काष्ठा rw_semaphore *sem)
+अणु
+	दीर्घ पंचांगp;
 
 	DEBUG_RWSEMS_WARN_ON(sem->magic != sem, sem);
 
 	/*
-	 * Optimize for the case when the rwsem is not locked at all.
+	 * Optimize क्रम the हाल when the rwsem is not locked at all.
 	 */
-	tmp = RWSEM_UNLOCKED_VALUE;
-	do {
-		if (atomic_long_try_cmpxchg_acquire(&sem->count, &tmp,
-					tmp + RWSEM_READER_BIAS)) {
-			rwsem_set_reader_owned(sem);
-			return 1;
-		}
-	} while (!(tmp & RWSEM_READ_FAILED_MASK));
-	return 0;
-}
+	पंचांगp = RWSEM_UNLOCKED_VALUE;
+	करो अणु
+		अगर (atomic_दीर्घ_try_cmpxchg_acquire(&sem->count, &पंचांगp,
+					पंचांगp + RWSEM_READER_BIAS)) अणु
+			rwsem_set_पढ़ोer_owned(sem);
+			वापस 1;
+		पूर्ण
+	पूर्ण जबतक (!(पंचांगp & RWSEM_READ_FAILED_MASK));
+	वापस 0;
+पूर्ण
 
 /*
- * lock for writing
+ * lock क्रम writing
  */
-static inline int __down_write_common(struct rw_semaphore *sem, int state)
-{
-	if (unlikely(!rwsem_write_trylock(sem))) {
-		if (IS_ERR(rwsem_down_write_slowpath(sem, state)))
-			return -EINTR;
-	}
+अटल अंतरभूत पूर्णांक __करोwn_ग_लिखो_common(काष्ठा rw_semaphore *sem, पूर्णांक state)
+अणु
+	अगर (unlikely(!rwsem_ग_लिखो_trylock(sem))) अणु
+		अगर (IS_ERR(rwsem_करोwn_ग_लिखो_slowpath(sem, state)))
+			वापस -EINTR;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static inline void __down_write(struct rw_semaphore *sem)
-{
-	__down_write_common(sem, TASK_UNINTERRUPTIBLE);
-}
+अटल अंतरभूत व्योम __करोwn_ग_लिखो(काष्ठा rw_semaphore *sem)
+अणु
+	__करोwn_ग_लिखो_common(sem, TASK_UNINTERRUPTIBLE);
+पूर्ण
 
-static inline int __down_write_killable(struct rw_semaphore *sem)
-{
-	return __down_write_common(sem, TASK_KILLABLE);
-}
+अटल अंतरभूत पूर्णांक __करोwn_ग_लिखो_समाप्तable(काष्ठा rw_semaphore *sem)
+अणु
+	वापस __करोwn_ग_लिखो_common(sem, TASK_KILLABLE);
+पूर्ण
 
-static inline int __down_write_trylock(struct rw_semaphore *sem)
-{
+अटल अंतरभूत पूर्णांक __करोwn_ग_लिखो_trylock(काष्ठा rw_semaphore *sem)
+अणु
 	DEBUG_RWSEMS_WARN_ON(sem->magic != sem, sem);
-	return rwsem_write_trylock(sem);
-}
+	वापस rwsem_ग_लिखो_trylock(sem);
+पूर्ण
 
 /*
- * unlock after reading
+ * unlock after पढ़ोing
  */
-static inline void __up_read(struct rw_semaphore *sem)
-{
-	long tmp;
+अटल अंतरभूत व्योम __up_पढ़ो(काष्ठा rw_semaphore *sem)
+अणु
+	दीर्घ पंचांगp;
 
 	DEBUG_RWSEMS_WARN_ON(sem->magic != sem, sem);
-	DEBUG_RWSEMS_WARN_ON(!is_rwsem_reader_owned(sem), sem);
+	DEBUG_RWSEMS_WARN_ON(!is_rwsem_पढ़ोer_owned(sem), sem);
 
-	rwsem_clear_reader_owned(sem);
-	tmp = atomic_long_add_return_release(-RWSEM_READER_BIAS, &sem->count);
-	DEBUG_RWSEMS_WARN_ON(tmp < 0, sem);
-	if (unlikely((tmp & (RWSEM_LOCK_MASK|RWSEM_FLAG_WAITERS)) ==
-		      RWSEM_FLAG_WAITERS)) {
+	rwsem_clear_पढ़ोer_owned(sem);
+	पंचांगp = atomic_दीर्घ_add_वापस_release(-RWSEM_READER_BIAS, &sem->count);
+	DEBUG_RWSEMS_WARN_ON(पंचांगp < 0, sem);
+	अगर (unlikely((पंचांगp & (RWSEM_LOCK_MASK|RWSEM_FLAG_WAITERS)) ==
+		      RWSEM_FLAG_WAITERS)) अणु
 		clear_nonspinnable(sem);
-		rwsem_wake(sem, tmp);
-	}
-}
+		rwsem_wake(sem, पंचांगp);
+	पूर्ण
+पूर्ण
 
 /*
  * unlock after writing
  */
-static inline void __up_write(struct rw_semaphore *sem)
-{
-	long tmp;
+अटल अंतरभूत व्योम __up_ग_लिखो(काष्ठा rw_semaphore *sem)
+अणु
+	दीर्घ पंचांगp;
 
 	DEBUG_RWSEMS_WARN_ON(sem->magic != sem, sem);
 	/*
-	 * sem->owner may differ from current if the ownership is transferred
-	 * to an anonymous writer by setting the RWSEM_NONSPINNABLE bits.
+	 * sem->owner may dअगरfer from current अगर the ownership is transferred
+	 * to an anonymous ग_लिखोr by setting the RWSEM_NONSPINNABLE bits.
 	 */
 	DEBUG_RWSEMS_WARN_ON((rwsem_owner(sem) != current) &&
 			    !rwsem_test_oflags(sem, RWSEM_NONSPINNABLE), sem);
 
 	rwsem_clear_owner(sem);
-	tmp = atomic_long_fetch_add_release(-RWSEM_WRITER_LOCKED, &sem->count);
-	if (unlikely(tmp & RWSEM_FLAG_WAITERS))
-		rwsem_wake(sem, tmp);
-}
+	पंचांगp = atomic_दीर्घ_fetch_add_release(-RWSEM_WRITER_LOCKED, &sem->count);
+	अगर (unlikely(पंचांगp & RWSEM_FLAG_WAITERS))
+		rwsem_wake(sem, पंचांगp);
+पूर्ण
 
 /*
- * downgrade write lock to read lock
+ * करोwngrade ग_लिखो lock to पढ़ो lock
  */
-static inline void __downgrade_write(struct rw_semaphore *sem)
-{
-	long tmp;
+अटल अंतरभूत व्योम __करोwngrade_ग_लिखो(काष्ठा rw_semaphore *sem)
+अणु
+	दीर्घ पंचांगp;
 
 	/*
-	 * When downgrading from exclusive to shared ownership,
-	 * anything inside the write-locked region cannot leak
-	 * into the read side. In contrast, anything in the
-	 * read-locked region is ok to be re-ordered into the
-	 * write side. As such, rely on RELEASE semantics.
+	 * When करोwngrading from exclusive to shared ownership,
+	 * anything inside the ग_लिखो-locked region cannot leak
+	 * पूर्णांकo the पढ़ो side. In contrast, anything in the
+	 * पढ़ो-locked region is ok to be re-ordered पूर्णांकo the
+	 * ग_लिखो side. As such, rely on RELEASE semantics.
 	 */
 	DEBUG_RWSEMS_WARN_ON(rwsem_owner(sem) != current, sem);
-	tmp = atomic_long_fetch_add_release(
+	पंचांगp = atomic_दीर्घ_fetch_add_release(
 		-RWSEM_WRITER_LOCKED+RWSEM_READER_BIAS, &sem->count);
-	rwsem_set_reader_owned(sem);
-	if (tmp & RWSEM_FLAG_WAITERS)
-		rwsem_downgrade_wake(sem);
-}
+	rwsem_set_पढ़ोer_owned(sem);
+	अगर (पंचांगp & RWSEM_FLAG_WAITERS)
+		rwsem_करोwngrade_wake(sem);
+पूर्ण
 
 /*
- * lock for reading
+ * lock क्रम पढ़ोing
  */
-void __sched down_read(struct rw_semaphore *sem)
-{
+व्योम __sched करोwn_पढ़ो(काष्ठा rw_semaphore *sem)
+अणु
 	might_sleep();
-	rwsem_acquire_read(&sem->dep_map, 0, 0, _RET_IP_);
+	rwsem_acquire_पढ़ो(&sem->dep_map, 0, 0, _RET_IP_);
 
-	LOCK_CONTENDED(sem, __down_read_trylock, __down_read);
-}
-EXPORT_SYMBOL(down_read);
+	LOCK_CONTENDED(sem, __करोwn_पढ़ो_trylock, __करोwn_पढ़ो);
+पूर्ण
+EXPORT_SYMBOL(करोwn_पढ़ो);
 
-int __sched down_read_interruptible(struct rw_semaphore *sem)
-{
+पूर्णांक __sched करोwn_पढ़ो_पूर्णांकerruptible(काष्ठा rw_semaphore *sem)
+अणु
 	might_sleep();
-	rwsem_acquire_read(&sem->dep_map, 0, 0, _RET_IP_);
+	rwsem_acquire_पढ़ो(&sem->dep_map, 0, 0, _RET_IP_);
 
-	if (LOCK_CONTENDED_RETURN(sem, __down_read_trylock, __down_read_interruptible)) {
+	अगर (LOCK_CONTENDED_RETURN(sem, __करोwn_पढ़ो_trylock, __करोwn_पढ़ो_पूर्णांकerruptible)) अणु
 		rwsem_release(&sem->dep_map, _RET_IP_);
-		return -EINTR;
-	}
+		वापस -EINTR;
+	पूर्ण
 
-	return 0;
-}
-EXPORT_SYMBOL(down_read_interruptible);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL(करोwn_पढ़ो_पूर्णांकerruptible);
 
-int __sched down_read_killable(struct rw_semaphore *sem)
-{
+पूर्णांक __sched करोwn_पढ़ो_समाप्तable(काष्ठा rw_semaphore *sem)
+अणु
 	might_sleep();
-	rwsem_acquire_read(&sem->dep_map, 0, 0, _RET_IP_);
+	rwsem_acquire_पढ़ो(&sem->dep_map, 0, 0, _RET_IP_);
 
-	if (LOCK_CONTENDED_RETURN(sem, __down_read_trylock, __down_read_killable)) {
+	अगर (LOCK_CONTENDED_RETURN(sem, __करोwn_पढ़ो_trylock, __करोwn_पढ़ो_समाप्तable)) अणु
 		rwsem_release(&sem->dep_map, _RET_IP_);
-		return -EINTR;
-	}
+		वापस -EINTR;
+	पूर्ण
 
-	return 0;
-}
-EXPORT_SYMBOL(down_read_killable);
-
-/*
- * trylock for reading -- returns 1 if successful, 0 if contention
- */
-int down_read_trylock(struct rw_semaphore *sem)
-{
-	int ret = __down_read_trylock(sem);
-
-	if (ret == 1)
-		rwsem_acquire_read(&sem->dep_map, 0, 1, _RET_IP_);
-	return ret;
-}
-EXPORT_SYMBOL(down_read_trylock);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL(करोwn_पढ़ो_समाप्तable);
 
 /*
- * lock for writing
+ * trylock क्रम पढ़ोing -- वापसs 1 अगर successful, 0 अगर contention
  */
-void __sched down_write(struct rw_semaphore *sem)
-{
+पूर्णांक करोwn_पढ़ो_trylock(काष्ठा rw_semaphore *sem)
+अणु
+	पूर्णांक ret = __करोwn_पढ़ो_trylock(sem);
+
+	अगर (ret == 1)
+		rwsem_acquire_पढ़ो(&sem->dep_map, 0, 1, _RET_IP_);
+	वापस ret;
+पूर्ण
+EXPORT_SYMBOL(करोwn_पढ़ो_trylock);
+
+/*
+ * lock क्रम writing
+ */
+व्योम __sched करोwn_ग_लिखो(काष्ठा rw_semaphore *sem)
+अणु
 	might_sleep();
 	rwsem_acquire(&sem->dep_map, 0, 0, _RET_IP_);
-	LOCK_CONTENDED(sem, __down_write_trylock, __down_write);
-}
-EXPORT_SYMBOL(down_write);
+	LOCK_CONTENDED(sem, __करोwn_ग_लिखो_trylock, __करोwn_ग_लिखो);
+पूर्ण
+EXPORT_SYMBOL(करोwn_ग_लिखो);
 
 /*
- * lock for writing
+ * lock क्रम writing
  */
-int __sched down_write_killable(struct rw_semaphore *sem)
-{
+पूर्णांक __sched करोwn_ग_लिखो_समाप्तable(काष्ठा rw_semaphore *sem)
+अणु
 	might_sleep();
 	rwsem_acquire(&sem->dep_map, 0, 0, _RET_IP_);
 
-	if (LOCK_CONTENDED_RETURN(sem, __down_write_trylock,
-				  __down_write_killable)) {
+	अगर (LOCK_CONTENDED_RETURN(sem, __करोwn_ग_लिखो_trylock,
+				  __करोwn_ग_लिखो_समाप्तable)) अणु
 		rwsem_release(&sem->dep_map, _RET_IP_);
-		return -EINTR;
-	}
+		वापस -EINTR;
+	पूर्ण
 
-	return 0;
-}
-EXPORT_SYMBOL(down_write_killable);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL(करोwn_ग_लिखो_समाप्तable);
 
 /*
- * trylock for writing -- returns 1 if successful, 0 if contention
+ * trylock क्रम writing -- वापसs 1 अगर successful, 0 अगर contention
  */
-int down_write_trylock(struct rw_semaphore *sem)
-{
-	int ret = __down_write_trylock(sem);
+पूर्णांक करोwn_ग_लिखो_trylock(काष्ठा rw_semaphore *sem)
+अणु
+	पूर्णांक ret = __करोwn_ग_लिखो_trylock(sem);
 
-	if (ret == 1)
+	अगर (ret == 1)
 		rwsem_acquire(&sem->dep_map, 0, 1, _RET_IP_);
 
-	return ret;
-}
-EXPORT_SYMBOL(down_write_trylock);
+	वापस ret;
+पूर्ण
+EXPORT_SYMBOL(करोwn_ग_लिखो_trylock);
 
 /*
- * release a read lock
+ * release a पढ़ो lock
  */
-void up_read(struct rw_semaphore *sem)
-{
+व्योम up_पढ़ो(काष्ठा rw_semaphore *sem)
+अणु
 	rwsem_release(&sem->dep_map, _RET_IP_);
-	__up_read(sem);
-}
-EXPORT_SYMBOL(up_read);
+	__up_पढ़ो(sem);
+पूर्ण
+EXPORT_SYMBOL(up_पढ़ो);
 
 /*
- * release a write lock
+ * release a ग_लिखो lock
  */
-void up_write(struct rw_semaphore *sem)
-{
+व्योम up_ग_लिखो(काष्ठा rw_semaphore *sem)
+अणु
 	rwsem_release(&sem->dep_map, _RET_IP_);
-	__up_write(sem);
-}
-EXPORT_SYMBOL(up_write);
+	__up_ग_लिखो(sem);
+पूर्ण
+EXPORT_SYMBOL(up_ग_लिखो);
 
 /*
- * downgrade write lock to read lock
+ * करोwngrade ग_लिखो lock to पढ़ो lock
  */
-void downgrade_write(struct rw_semaphore *sem)
-{
-	lock_downgrade(&sem->dep_map, _RET_IP_);
-	__downgrade_write(sem);
-}
-EXPORT_SYMBOL(downgrade_write);
+व्योम करोwngrade_ग_लिखो(काष्ठा rw_semaphore *sem)
+अणु
+	lock_करोwngrade(&sem->dep_map, _RET_IP_);
+	__करोwngrade_ग_लिखो(sem);
+पूर्ण
+EXPORT_SYMBOL(करोwngrade_ग_लिखो);
 
-#ifdef CONFIG_DEBUG_LOCK_ALLOC
+#अगर_घोषित CONFIG_DEBUG_LOCK_ALLOC
 
-void down_read_nested(struct rw_semaphore *sem, int subclass)
-{
+व्योम करोwn_पढ़ो_nested(काष्ठा rw_semaphore *sem, पूर्णांक subclass)
+अणु
 	might_sleep();
-	rwsem_acquire_read(&sem->dep_map, subclass, 0, _RET_IP_);
-	LOCK_CONTENDED(sem, __down_read_trylock, __down_read);
-}
-EXPORT_SYMBOL(down_read_nested);
+	rwsem_acquire_पढ़ो(&sem->dep_map, subclass, 0, _RET_IP_);
+	LOCK_CONTENDED(sem, __करोwn_पढ़ो_trylock, __करोwn_पढ़ो);
+पूर्ण
+EXPORT_SYMBOL(करोwn_पढ़ो_nested);
 
-int down_read_killable_nested(struct rw_semaphore *sem, int subclass)
-{
+पूर्णांक करोwn_पढ़ो_समाप्तable_nested(काष्ठा rw_semaphore *sem, पूर्णांक subclass)
+अणु
 	might_sleep();
-	rwsem_acquire_read(&sem->dep_map, subclass, 0, _RET_IP_);
+	rwsem_acquire_पढ़ो(&sem->dep_map, subclass, 0, _RET_IP_);
 
-	if (LOCK_CONTENDED_RETURN(sem, __down_read_trylock, __down_read_killable)) {
+	अगर (LOCK_CONTENDED_RETURN(sem, __करोwn_पढ़ो_trylock, __करोwn_पढ़ो_समाप्तable)) अणु
 		rwsem_release(&sem->dep_map, _RET_IP_);
-		return -EINTR;
-	}
+		वापस -EINTR;
+	पूर्ण
 
-	return 0;
-}
-EXPORT_SYMBOL(down_read_killable_nested);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL(करोwn_पढ़ो_समाप्तable_nested);
 
-void _down_write_nest_lock(struct rw_semaphore *sem, struct lockdep_map *nest)
-{
+व्योम _करोwn_ग_लिखो_nest_lock(काष्ठा rw_semaphore *sem, काष्ठा lockdep_map *nest)
+अणु
 	might_sleep();
 	rwsem_acquire_nest(&sem->dep_map, 0, 0, nest, _RET_IP_);
-	LOCK_CONTENDED(sem, __down_write_trylock, __down_write);
-}
-EXPORT_SYMBOL(_down_write_nest_lock);
+	LOCK_CONTENDED(sem, __करोwn_ग_लिखो_trylock, __करोwn_ग_लिखो);
+पूर्ण
+EXPORT_SYMBOL(_करोwn_ग_लिखो_nest_lock);
 
-void down_read_non_owner(struct rw_semaphore *sem)
-{
+व्योम करोwn_पढ़ो_non_owner(काष्ठा rw_semaphore *sem)
+अणु
 	might_sleep();
-	__down_read(sem);
-	__rwsem_set_reader_owned(sem, NULL);
-}
-EXPORT_SYMBOL(down_read_non_owner);
+	__करोwn_पढ़ो(sem);
+	__rwsem_set_पढ़ोer_owned(sem, शून्य);
+पूर्ण
+EXPORT_SYMBOL(करोwn_पढ़ो_non_owner);
 
-void down_write_nested(struct rw_semaphore *sem, int subclass)
-{
-	might_sleep();
-	rwsem_acquire(&sem->dep_map, subclass, 0, _RET_IP_);
-	LOCK_CONTENDED(sem, __down_write_trylock, __down_write);
-}
-EXPORT_SYMBOL(down_write_nested);
-
-int __sched down_write_killable_nested(struct rw_semaphore *sem, int subclass)
-{
+व्योम करोwn_ग_लिखो_nested(काष्ठा rw_semaphore *sem, पूर्णांक subclass)
+अणु
 	might_sleep();
 	rwsem_acquire(&sem->dep_map, subclass, 0, _RET_IP_);
+	LOCK_CONTENDED(sem, __करोwn_ग_लिखो_trylock, __करोwn_ग_लिखो);
+पूर्ण
+EXPORT_SYMBOL(करोwn_ग_लिखो_nested);
 
-	if (LOCK_CONTENDED_RETURN(sem, __down_write_trylock,
-				  __down_write_killable)) {
+पूर्णांक __sched करोwn_ग_लिखो_समाप्तable_nested(काष्ठा rw_semaphore *sem, पूर्णांक subclass)
+अणु
+	might_sleep();
+	rwsem_acquire(&sem->dep_map, subclass, 0, _RET_IP_);
+
+	अगर (LOCK_CONTENDED_RETURN(sem, __करोwn_ग_लिखो_trylock,
+				  __करोwn_ग_लिखो_समाप्तable)) अणु
 		rwsem_release(&sem->dep_map, _RET_IP_);
-		return -EINTR;
-	}
+		वापस -EINTR;
+	पूर्ण
 
-	return 0;
-}
-EXPORT_SYMBOL(down_write_killable_nested);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL(करोwn_ग_लिखो_समाप्तable_nested);
 
-void up_read_non_owner(struct rw_semaphore *sem)
-{
-	DEBUG_RWSEMS_WARN_ON(!is_rwsem_reader_owned(sem), sem);
-	__up_read(sem);
-}
-EXPORT_SYMBOL(up_read_non_owner);
+व्योम up_पढ़ो_non_owner(काष्ठा rw_semaphore *sem)
+अणु
+	DEBUG_RWSEMS_WARN_ON(!is_rwsem_पढ़ोer_owned(sem), sem);
+	__up_पढ़ो(sem);
+पूर्ण
+EXPORT_SYMBOL(up_पढ़ो_non_owner);
 
-#endif
+#पूर्ण_अगर

@@ -1,9 +1,10 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Copyright (c) 2001 Jean-Fredric Clere, Nikolas Zimmermann, Georg Acher
  *		      Mark Cave-Ayland, Carlo E Prelz, Dick Streefland
  * Copyright (c) 2002, 2003 Tuukka Toivonen
- * Copyright (c) 2008 Erik Andrén
+ * Copyright (c) 2008 Erik Andrथऊn
  * Copyright (c) 2008 Chia-I Wu
  *
  * P/N 861037:      Sensor HDCS1000        ASIC STV0600
@@ -15,12 +16,12 @@
  * P/N 861040-0000: Sensor ST VV6410       ASIC STV0610   - QuickCam Web
  */
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include "stv06xx_hdcs.h"
+#समावेश "stv06xx_hdcs.h"
 
-static struct v4l2_pix_format hdcs1x00_mode[] = {
-	{
+अटल काष्ठा v4l2_pix_क्रमmat hdcs1x00_mode[] = अणु
+	अणु
 		HDCS_1X00_DEF_WIDTH,
 		HDCS_1X00_DEF_HEIGHT,
 		V4L2_PIX_FMT_SGRBG8,
@@ -30,11 +31,11 @@ static struct v4l2_pix_format hdcs1x00_mode[] = {
 		.bytesperline = HDCS_1X00_DEF_WIDTH,
 		.colorspace = V4L2_COLORSPACE_SRGB,
 		.priv = 1
-	}
-};
+	पूर्ण
+पूर्ण;
 
-static struct v4l2_pix_format hdcs1020_mode[] = {
-	{
+अटल काष्ठा v4l2_pix_क्रमmat hdcs1020_mode[] = अणु
+	अणु
 		HDCS_1020_DEF_WIDTH,
 		HDCS_1020_DEF_HEIGHT,
 		V4L2_PIX_FMT_SGRBG8,
@@ -44,136 +45,136 @@ static struct v4l2_pix_format hdcs1020_mode[] = {
 		.bytesperline = HDCS_1020_DEF_WIDTH,
 		.colorspace = V4L2_COLORSPACE_SRGB,
 		.priv = 1
-	}
-};
+	पूर्ण
+पूर्ण;
 
-enum hdcs_power_state {
+क्रमागत hdcs_घातer_state अणु
 	HDCS_STATE_SLEEP,
 	HDCS_STATE_IDLE,
 	HDCS_STATE_RUN
-};
+पूर्ण;
 
 /* no lock? */
-struct hdcs {
-	enum hdcs_power_state state;
-	int w, h;
+काष्ठा hdcs अणु
+	क्रमागत hdcs_घातer_state state;
+	पूर्णांक w, h;
 
 	/* visible area of the sensor array */
-	struct {
-		int left, top;
-		int width, height;
-		int border;
-	} array;
+	काष्ठा अणु
+		पूर्णांक left, top;
+		पूर्णांक width, height;
+		पूर्णांक border;
+	पूर्ण array;
 
-	struct {
+	काष्ठा अणु
 		/* Column timing overhead */
 		u8 cto;
 		/* Column processing overhead */
 		u8 cpo;
-		/* Row sample period constant */
+		/* Row sample period स्थिरant */
 		u16 rs;
 		/* Exposure reset duration */
 		u16 er;
-	} exp;
+	पूर्ण exp;
 
-	int psmp;
-};
+	पूर्णांक psmp;
+पूर्ण;
 
-static int hdcs_reg_write_seq(struct sd *sd, u8 reg, u8 *vals, u8 len)
-{
+अटल पूर्णांक hdcs_reg_ग_लिखो_seq(काष्ठा sd *sd, u8 reg, u8 *vals, u8 len)
+अणु
 	u8 regs[I2C_MAX_BYTES * 2];
-	int i;
+	पूर्णांक i;
 
-	if (unlikely((len <= 0) || (len >= I2C_MAX_BYTES) ||
+	अगर (unlikely((len <= 0) || (len >= I2C_MAX_BYTES) ||
 		     (reg + len > 0xff)))
-		return -EINVAL;
+		वापस -EINVAL;
 
-	for (i = 0; i < len; i++) {
+	क्रम (i = 0; i < len; i++) अणु
 		regs[2 * i] = reg;
 		regs[2 * i + 1] = vals[i];
-		/* All addresses are shifted left one bit
+		/* All addresses are shअगरted left one bit
 		 * as bit 0 toggles r/w */
 		reg += 2;
-	}
+	पूर्ण
 
-	return stv06xx_write_sensor_bytes(sd, regs, len);
-}
+	वापस stv06xx_ग_लिखो_sensor_bytes(sd, regs, len);
+पूर्ण
 
-static int hdcs_set_state(struct sd *sd, enum hdcs_power_state state)
-{
-	struct hdcs *hdcs = sd->sensor_priv;
+अटल पूर्णांक hdcs_set_state(काष्ठा sd *sd, क्रमागत hdcs_घातer_state state)
+अणु
+	काष्ठा hdcs *hdcs = sd->sensor_priv;
 	u8 val;
-	int ret;
+	पूर्णांक ret;
 
-	if (hdcs->state == state)
-		return 0;
+	अगर (hdcs->state == state)
+		वापस 0;
 
-	/* we need to go idle before running or sleeping */
-	if (hdcs->state != HDCS_STATE_IDLE) {
-		ret = stv06xx_write_sensor(sd, HDCS_REG_CONTROL(sd), 0);
-		if (ret)
-			return ret;
-	}
+	/* we need to go idle beक्रमe running or sleeping */
+	अगर (hdcs->state != HDCS_STATE_IDLE) अणु
+		ret = stv06xx_ग_लिखो_sensor(sd, HDCS_REG_CONTROL(sd), 0);
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
 	hdcs->state = HDCS_STATE_IDLE;
 
-	if (state == HDCS_STATE_IDLE)
-		return 0;
+	अगर (state == HDCS_STATE_IDLE)
+		वापस 0;
 
-	switch (state) {
-	case HDCS_STATE_SLEEP:
+	चयन (state) अणु
+	हाल HDCS_STATE_SLEEP:
 		val = HDCS_SLEEP_MODE;
-		break;
+		अवरोध;
 
-	case HDCS_STATE_RUN:
+	हाल HDCS_STATE_RUN:
 		val = HDCS_RUN_ENABLE;
-		break;
+		अवरोध;
 
-	default:
-		return -EINVAL;
-	}
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	ret = stv06xx_write_sensor(sd, HDCS_REG_CONTROL(sd), val);
+	ret = stv06xx_ग_लिखो_sensor(sd, HDCS_REG_CONTROL(sd), val);
 
-	/* Update the state if the write succeeded */
-	if (!ret)
+	/* Update the state अगर the ग_लिखो succeeded */
+	अगर (!ret)
 		hdcs->state = state;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int hdcs_reset(struct sd *sd)
-{
-	struct hdcs *hdcs = sd->sensor_priv;
-	int err;
+अटल पूर्णांक hdcs_reset(काष्ठा sd *sd)
+अणु
+	काष्ठा hdcs *hdcs = sd->sensor_priv;
+	पूर्णांक err;
 
-	err = stv06xx_write_sensor(sd, HDCS_REG_CONTROL(sd), 1);
-	if (err < 0)
-		return err;
+	err = stv06xx_ग_लिखो_sensor(sd, HDCS_REG_CONTROL(sd), 1);
+	अगर (err < 0)
+		वापस err;
 
-	err = stv06xx_write_sensor(sd, HDCS_REG_CONTROL(sd), 0);
-	if (err < 0)
+	err = stv06xx_ग_लिखो_sensor(sd, HDCS_REG_CONTROL(sd), 0);
+	अगर (err < 0)
 		hdcs->state = HDCS_STATE_IDLE;
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int hdcs_set_exposure(struct gspca_dev *gspca_dev, __s32 val)
-{
-	struct sd *sd = (struct sd *) gspca_dev;
-	struct hdcs *hdcs = sd->sensor_priv;
-	int rowexp, srowexp;
-	int max_srowexp;
-	/* Column time period */
-	int ct;
+अटल पूर्णांक hdcs_set_exposure(काष्ठा gspca_dev *gspca_dev, __s32 val)
+अणु
+	काष्ठा sd *sd = (काष्ठा sd *) gspca_dev;
+	काष्ठा hdcs *hdcs = sd->sensor_priv;
+	पूर्णांक rowexp, srowexp;
+	पूर्णांक max_srowexp;
+	/* Column समय period */
+	पूर्णांक ct;
 	/* Column processing period */
-	int cp;
+	पूर्णांक cp;
 	/* Row processing period */
-	int rp;
+	पूर्णांक rp;
 	/* Minimum number of column timing periods
 	   within the column processing period */
-	int mnct;
-	int cycles, err;
+	पूर्णांक mnct;
+	पूर्णांक cycles, err;
 	u8 exp[14];
 
 	cycles = val * HDCS_CLK_FREQ_MHZ * 257;
@@ -186,30 +187,30 @@ static int hdcs_set_exposure(struct gspca_dev *gspca_dev, __s32 val)
 
 	rowexp = cycles / rp;
 
-	/* the remaining cycles */
+	/* the reमुख्यing cycles */
 	cycles -= rowexp * rp;
 
 	/* calculate sub-row exposure */
-	if (IS_1020(sd)) {
+	अगर (IS_1020(sd)) अणु
 		/* see HDCS-1020 datasheet 3.5.6.4, p. 63 */
 		srowexp = hdcs->w - (cycles + hdcs->exp.er + 13) / ct;
 
 		mnct = (hdcs->exp.er + 12 + ct - 1) / ct;
 		max_srowexp = hdcs->w - mnct;
-	} else {
+	पूर्ण अन्यथा अणु
 		/* see HDCS-1000 datasheet 3.4.5.5, p. 61 */
 		srowexp = cp - hdcs->exp.er - 6 - cycles;
 
 		mnct = (hdcs->exp.er + 5 + ct - 1) / ct;
 		max_srowexp = cp - mnct * ct - 1;
-	}
+	पूर्ण
 
-	if (srowexp < 0)
+	अगर (srowexp < 0)
 		srowexp = 0;
-	else if (srowexp > max_srowexp)
+	अन्यथा अगर (srowexp > max_srowexp)
 		srowexp = max_srowexp;
 
-	if (IS_1020(sd)) {
+	अगर (IS_1020(sd)) अणु
 		exp[0] = HDCS20_CONTROL;
 		exp[1] = 0x00;		/* Stop streaming */
 		exp[2] = HDCS_ROWEXPL;
@@ -222,8 +223,8 @@ static int hdcs_set_exposure(struct gspca_dev *gspca_dev, __s32 val)
 		exp[9] = 0x10;		/* Clear exposure error flag*/
 		exp[10] = HDCS20_CONTROL;
 		exp[11] = 0x04;		/* Restart streaming */
-		err = stv06xx_write_sensor_bytes(sd, exp, 6);
-	} else {
+		err = stv06xx_ग_लिखो_sensor_bytes(sd, exp, 6);
+	पूर्ण अन्यथा अणु
 		exp[0] = HDCS00_CONTROL;
 		exp[1] = 0x00;         /* Stop streaming */
 		exp[2] = HDCS_ROWEXPL;
@@ -238,22 +239,22 @@ static int hdcs_set_exposure(struct gspca_dev *gspca_dev, __s32 val)
 		exp[11] = 0x10;         /* Clear exposure error flag*/
 		exp[12] = HDCS00_CONTROL;
 		exp[13] = 0x04;         /* Restart streaming */
-		err = stv06xx_write_sensor_bytes(sd, exp, 7);
-		if (err < 0)
-			return err;
-	}
+		err = stv06xx_ग_लिखो_sensor_bytes(sd, exp, 7);
+		अगर (err < 0)
+			वापस err;
+	पूर्ण
 	gspca_dbg(gspca_dev, D_CONF, "Writing exposure %d, rowexp %d, srowexp %d\n",
 		  val, rowexp, srowexp);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int hdcs_set_gains(struct sd *sd, u8 g)
-{
-	int err;
+अटल पूर्णांक hdcs_set_gains(काष्ठा sd *sd, u8 g)
+अणु
+	पूर्णांक err;
 	u8 gains[4];
 
 	/* the voltage gain Av = (1 + 19 * val / 127) * (1 + bit7) */
-	if (g > 127)
+	अगर (g > 127)
 		g = 0x80 | (g / 2);
 
 	gains[0] = g;
@@ -261,47 +262,47 @@ static int hdcs_set_gains(struct sd *sd, u8 g)
 	gains[2] = g;
 	gains[3] = g;
 
-	err = hdcs_reg_write_seq(sd, HDCS_ERECPGA, gains, 4);
-	return err;
-}
+	err = hdcs_reg_ग_लिखो_seq(sd, HDCS_ERECPGA, gains, 4);
+	वापस err;
+पूर्ण
 
-static int hdcs_set_gain(struct gspca_dev *gspca_dev, __s32 val)
-{
+अटल पूर्णांक hdcs_set_gain(काष्ठा gspca_dev *gspca_dev, __s32 val)
+अणु
 	gspca_dbg(gspca_dev, D_CONF, "Writing gain %d\n", val);
-	return hdcs_set_gains((struct sd *) gspca_dev,
+	वापस hdcs_set_gains((काष्ठा sd *) gspca_dev,
 			       val & 0xff);
-}
+पूर्ण
 
-static int hdcs_set_size(struct sd *sd,
-		unsigned int width, unsigned int height)
-{
-	struct hdcs *hdcs = sd->sensor_priv;
+अटल पूर्णांक hdcs_set_size(काष्ठा sd *sd,
+		अचिन्हित पूर्णांक width, अचिन्हित पूर्णांक height)
+अणु
+	काष्ठा hdcs *hdcs = sd->sensor_priv;
 	u8 win[4];
-	unsigned int x, y;
-	int err;
+	अचिन्हित पूर्णांक x, y;
+	पूर्णांक err;
 
 	/* must be multiple of 4 */
 	width = (width + 3) & ~0x3;
 	height = (height + 3) & ~0x3;
 
-	if (width > hdcs->array.width)
+	अगर (width > hdcs->array.width)
 		width = hdcs->array.width;
 
-	if (IS_1020(sd)) {
+	अगर (IS_1020(sd)) अणु
 		/* the borders are also invalid */
-		if (height + 2 * hdcs->array.border + HDCS_1020_BOTTOM_Y_SKIP
+		अगर (height + 2 * hdcs->array.border + HDCS_1020_BOTTOM_Y_SKIP
 				  > hdcs->array.height)
 			height = hdcs->array.height - 2 * hdcs->array.border -
 				HDCS_1020_BOTTOM_Y_SKIP;
 
 		y = (hdcs->array.height - HDCS_1020_BOTTOM_Y_SKIP - height) / 2
 				+ hdcs->array.top;
-	} else {
-		if (height > hdcs->array.height)
+	पूर्ण अन्यथा अणु
+		अगर (height > hdcs->array.height)
 			height = hdcs->array.height;
 
 		y = hdcs->array.top + (hdcs->array.height - height) / 2;
-	}
+	पूर्ण
 
 	x = hdcs->array.left + (hdcs->array.width - width) / 2;
 
@@ -310,67 +311,67 @@ static int hdcs_set_size(struct sd *sd,
 	win[2] = (y + height) / 4 - 1;
 	win[3] = (x + width) / 4 - 1;
 
-	err = hdcs_reg_write_seq(sd, HDCS_FWROW, win, 4);
-	if (err < 0)
-		return err;
+	err = hdcs_reg_ग_लिखो_seq(sd, HDCS_FWROW, win, 4);
+	अगर (err < 0)
+		वापस err;
 
 	/* Update the current width and height */
 	hdcs->w = width;
 	hdcs->h = height;
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int hdcs_s_ctrl(struct v4l2_ctrl *ctrl)
-{
-	struct gspca_dev *gspca_dev =
-		container_of(ctrl->handler, struct gspca_dev, ctrl_handler);
-	int err = -EINVAL;
+अटल पूर्णांक hdcs_s_ctrl(काष्ठा v4l2_ctrl *ctrl)
+अणु
+	काष्ठा gspca_dev *gspca_dev =
+		container_of(ctrl->handler, काष्ठा gspca_dev, ctrl_handler);
+	पूर्णांक err = -EINVAL;
 
-	switch (ctrl->id) {
-	case V4L2_CID_GAIN:
+	चयन (ctrl->id) अणु
+	हाल V4L2_CID_GAIN:
 		err = hdcs_set_gain(gspca_dev, ctrl->val);
-		break;
-	case V4L2_CID_EXPOSURE:
+		अवरोध;
+	हाल V4L2_CID_EXPOSURE:
 		err = hdcs_set_exposure(gspca_dev, ctrl->val);
-		break;
-	}
-	return err;
-}
+		अवरोध;
+	पूर्ण
+	वापस err;
+पूर्ण
 
-static const struct v4l2_ctrl_ops hdcs_ctrl_ops = {
+अटल स्थिर काष्ठा v4l2_ctrl_ops hdcs_ctrl_ops = अणु
 	.s_ctrl = hdcs_s_ctrl,
-};
+पूर्ण;
 
-static int hdcs_init_controls(struct sd *sd)
-{
-	struct v4l2_ctrl_handler *hdl = &sd->gspca_dev.ctrl_handler;
+अटल पूर्णांक hdcs_init_controls(काष्ठा sd *sd)
+अणु
+	काष्ठा v4l2_ctrl_handler *hdl = &sd->gspca_dev.ctrl_handler;
 
 	v4l2_ctrl_handler_init(hdl, 2);
 	v4l2_ctrl_new_std(hdl, &hdcs_ctrl_ops,
 			V4L2_CID_EXPOSURE, 0, 0xff, 1, HDCS_DEFAULT_EXPOSURE);
 	v4l2_ctrl_new_std(hdl, &hdcs_ctrl_ops,
 			V4L2_CID_GAIN, 0, 0xff, 1, HDCS_DEFAULT_GAIN);
-	return hdl->error;
-}
+	वापस hdl->error;
+पूर्ण
 
-static int hdcs_probe_1x00(struct sd *sd)
-{
-	struct hdcs *hdcs;
+अटल पूर्णांक hdcs_probe_1x00(काष्ठा sd *sd)
+अणु
+	काष्ठा hdcs *hdcs;
 	u16 sensor;
-	int ret;
+	पूर्णांक ret;
 
-	ret = stv06xx_read_sensor(sd, HDCS_IDENT, &sensor);
-	if (ret < 0 || sensor != 0x08)
-		return -ENODEV;
+	ret = stv06xx_पढ़ो_sensor(sd, HDCS_IDENT, &sensor);
+	अगर (ret < 0 || sensor != 0x08)
+		वापस -ENODEV;
 
 	pr_info("HDCS-1000/1100 sensor detected\n");
 
 	sd->gspca_dev.cam.cam_mode = hdcs1x00_mode;
 	sd->gspca_dev.cam.nmodes = ARRAY_SIZE(hdcs1x00_mode);
 
-	hdcs = kmalloc(sizeof(struct hdcs), GFP_KERNEL);
-	if (!hdcs)
-		return -ENOMEM;
+	hdcs = kदो_स्मृति(माप(काष्ठा hdcs), GFP_KERNEL);
+	अगर (!hdcs)
+		वापस -ENOMEM;
 
 	hdcs->array.left = 8;
 	hdcs->array.top = 8;
@@ -385,7 +386,7 @@ static int hdcs_probe_1x00(struct sd *sd)
 
 	/*
 	 * Frame rate on HDCS-1000 with STV600 depends on PSMP:
-	 *  4 = doesn't work at all
+	 *  4 = करोesn't work at all
 	 *  5 = 7.8 fps,
 	 *  6 = 6.9 fps,
 	 *  8 = 6.3 fps,
@@ -394,8 +395,8 @@ static int hdcs_probe_1x00(struct sd *sd)
 	 * 31 = 2.8 fps
 	 *
 	 * Frame rate on HDCS-1000 with STV602 depends on PSMP:
-	 * 15 = doesn't work at all
-	 * 18 = doesn't work at all
+	 * 15 = करोesn't work at all
+	 * 18 = करोesn't work at all
 	 * 19 = 7.3 fps
 	 * 20 = 7.4 fps
 	 * 21 = 7.4 fps
@@ -407,27 +408,27 @@ static int hdcs_probe_1x00(struct sd *sd)
 
 	sd->sensor_priv = hdcs;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int hdcs_probe_1020(struct sd *sd)
-{
-	struct hdcs *hdcs;
+अटल पूर्णांक hdcs_probe_1020(काष्ठा sd *sd)
+अणु
+	काष्ठा hdcs *hdcs;
 	u16 sensor;
-	int ret;
+	पूर्णांक ret;
 
-	ret = stv06xx_read_sensor(sd, HDCS_IDENT, &sensor);
-	if (ret < 0 || sensor != 0x10)
-		return -ENODEV;
+	ret = stv06xx_पढ़ो_sensor(sd, HDCS_IDENT, &sensor);
+	अगर (ret < 0 || sensor != 0x10)
+		वापस -ENODEV;
 
 	pr_info("HDCS-1020 sensor detected\n");
 
 	sd->gspca_dev.cam.cam_mode = hdcs1020_mode;
 	sd->gspca_dev.cam.nmodes = ARRAY_SIZE(hdcs1020_mode);
 
-	hdcs = kmalloc(sizeof(struct hdcs), GFP_KERNEL);
-	if (!hdcs)
-		return -ENOMEM;
+	hdcs = kदो_स्मृति(माप(काष्ठा hdcs), GFP_KERNEL);
+	अगर (!hdcs)
+		वापस -ENOMEM;
 
 	/*
 	 * From Andrey's test image: looks like HDCS-1020 upper-left
@@ -449,83 +450,83 @@ static int hdcs_probe_1020(struct sd *sd)
 
 	sd->sensor_priv = hdcs;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int hdcs_start(struct sd *sd)
-{
-	struct gspca_dev *gspca_dev = (struct gspca_dev *)sd;
+अटल पूर्णांक hdcs_start(काष्ठा sd *sd)
+अणु
+	काष्ठा gspca_dev *gspca_dev = (काष्ठा gspca_dev *)sd;
 
 	gspca_dbg(gspca_dev, D_STREAM, "Starting stream\n");
 
-	return hdcs_set_state(sd, HDCS_STATE_RUN);
-}
+	वापस hdcs_set_state(sd, HDCS_STATE_RUN);
+पूर्ण
 
-static int hdcs_stop(struct sd *sd)
-{
-	struct gspca_dev *gspca_dev = (struct gspca_dev *)sd;
+अटल पूर्णांक hdcs_stop(काष्ठा sd *sd)
+अणु
+	काष्ठा gspca_dev *gspca_dev = (काष्ठा gspca_dev *)sd;
 
 	gspca_dbg(gspca_dev, D_STREAM, "Halting stream\n");
 
-	return hdcs_set_state(sd, HDCS_STATE_SLEEP);
-}
+	वापस hdcs_set_state(sd, HDCS_STATE_SLEEP);
+पूर्ण
 
-static int hdcs_init(struct sd *sd)
-{
-	struct hdcs *hdcs = sd->sensor_priv;
-	int i, err = 0;
+अटल पूर्णांक hdcs_init(काष्ठा sd *sd)
+अणु
+	काष्ठा hdcs *hdcs = sd->sensor_priv;
+	पूर्णांक i, err = 0;
 
 	/* Set the STV0602AA in STV0600 emulation mode */
-	if (sd->bridge == BRIDGE_STV602)
-		stv06xx_write_bridge(sd, STV_STV0600_EMULATION, 1);
+	अगर (sd->bridge == BRIDGE_STV602)
+		stv06xx_ग_लिखो_bridge(sd, STV_STV0600_EMULATION, 1);
 
 	/* Execute the bridge init */
-	for (i = 0; i < ARRAY_SIZE(stv_bridge_init) && !err; i++) {
-		err = stv06xx_write_bridge(sd, stv_bridge_init[i][0],
+	क्रम (i = 0; i < ARRAY_SIZE(stv_bridge_init) && !err; i++) अणु
+		err = stv06xx_ग_लिखो_bridge(sd, stv_bridge_init[i][0],
 					   stv_bridge_init[i][1]);
-	}
-	if (err < 0)
-		return err;
+	पूर्ण
+	अगर (err < 0)
+		वापस err;
 
 	/* sensor soft reset */
 	hdcs_reset(sd);
 
 	/* Execute the sensor init */
-	for (i = 0; i < ARRAY_SIZE(stv_sensor_init) && !err; i++) {
-		err = stv06xx_write_sensor(sd, stv_sensor_init[i][0],
+	क्रम (i = 0; i < ARRAY_SIZE(stv_sensor_init) && !err; i++) अणु
+		err = stv06xx_ग_लिखो_sensor(sd, stv_sensor_init[i][0],
 					     stv_sensor_init[i][1]);
-	}
-	if (err < 0)
-		return err;
+	पूर्ण
+	अगर (err < 0)
+		वापस err;
 
 	/* Enable continuous frame capture, bit 2: stop when frame complete */
-	err = stv06xx_write_sensor(sd, HDCS_REG_CONFIG(sd), BIT(3));
-	if (err < 0)
-		return err;
+	err = stv06xx_ग_लिखो_sensor(sd, HDCS_REG_CONFIG(sd), BIT(3));
+	अगर (err < 0)
+		वापस err;
 
 	/* Set PGA sample duration
-	(was 0x7E for the STV602, but caused slow framerate with HDCS-1020) */
-	if (IS_1020(sd))
-		err = stv06xx_write_sensor(sd, HDCS_TCTRL,
+	(was 0x7E क्रम the STV602, but caused slow framerate with HDCS-1020) */
+	अगर (IS_1020(sd))
+		err = stv06xx_ग_लिखो_sensor(sd, HDCS_TCTRL,
 				(HDCS_ADC_START_SIG_DUR << 6) | hdcs->psmp);
-	else
-		err = stv06xx_write_sensor(sd, HDCS_TCTRL,
+	अन्यथा
+		err = stv06xx_ग_लिखो_sensor(sd, HDCS_TCTRL,
 				(HDCS_ADC_START_SIG_DUR << 5) | hdcs->psmp);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
-	return hdcs_set_size(sd, hdcs->array.width, hdcs->array.height);
-}
+	वापस hdcs_set_size(sd, hdcs->array.width, hdcs->array.height);
+पूर्ण
 
-static int hdcs_dump(struct sd *sd)
-{
+अटल पूर्णांक hdcs_dump(काष्ठा sd *sd)
+अणु
 	u16 reg, val;
 
 	pr_info("Dumping sensor registers:\n");
 
-	for (reg = HDCS_IDENT; reg <= HDCS_ROWEXPH; reg++) {
-		stv06xx_read_sensor(sd, reg, &val);
+	क्रम (reg = HDCS_IDENT; reg <= HDCS_ROWEXPH; reg++) अणु
+		stv06xx_पढ़ो_sensor(sd, reg, &val);
 		pr_info("reg 0x%02x = 0x%02x\n", reg, val);
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण

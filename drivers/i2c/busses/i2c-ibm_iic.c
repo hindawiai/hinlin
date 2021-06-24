@@ -1,8 +1,9 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * drivers/i2c/busses/i2c-ibm_iic.c
  *
- * Support for the IIC peripheral on IBM PPC 4xx
+ * Support क्रम the IIC peripheral on IBM PPC 4xx
  *
  * Copyright (c) 2003, 2004 Zultys Technologies.
  * Eugene Surovegin <eugene.surovegin@zultys.com> or <ebs@ebshome.net>
@@ -22,116 +23,116 @@
  *   	Copyright 1995-97 Simon G. Vogl
  *                1998-99 Hans Berglund
  *
- *   	With some changes from Kyösti Mälkki <kmalkki@cc.hut.fi>
- *	and even Frodo Looijaard <frodol@dds.nl>
+ *   	With some changes from Kyथघsti Mथअlkki <kmalkki@cc.hut.fi>
+ *	and even Froकरो Looijaard <froकरोl@dds.nl>
  */
 
-#include <linux/module.h>
-#include <linux/kernel.h>
-#include <linux/ioport.h>
-#include <linux/delay.h>
-#include <linux/slab.h>
-#include <linux/interrupt.h>
-#include <linux/sched/signal.h>
+#समावेश <linux/module.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/ioport.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/sched/संकेत.स>
 
-#include <asm/irq.h>
-#include <linux/io.h>
-#include <linux/i2c.h>
-#include <linux/of_address.h>
-#include <linux/of_irq.h>
-#include <linux/of_platform.h>
+#समावेश <यंत्र/irq.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/i2c.h>
+#समावेश <linux/of_address.h>
+#समावेश <linux/of_irq.h>
+#समावेश <linux/of_platक्रमm.h>
 
-#include "i2c-ibm_iic.h"
+#समावेश "i2c-ibm_iic.h"
 
-#define DRIVER_VERSION "2.2"
+#घोषणा DRIVER_VERSION "2.2"
 
 MODULE_DESCRIPTION("IBM IIC driver v" DRIVER_VERSION);
 MODULE_LICENSE("GPL");
 
-static bool iic_force_poll;
-module_param(iic_force_poll, bool, 0);
-MODULE_PARM_DESC(iic_force_poll, "Force polling mode");
+अटल bool iic_क्रमce_poll;
+module_param(iic_क्रमce_poll, bool, 0);
+MODULE_PARM_DESC(iic_क्रमce_poll, "Force polling mode");
 
-static bool iic_force_fast;
-module_param(iic_force_fast, bool, 0);
-MODULE_PARM_DESC(iic_force_fast, "Force fast mode (400 kHz)");
+अटल bool iic_क्रमce_fast;
+module_param(iic_क्रमce_fast, bool, 0);
+MODULE_PARM_DESC(iic_क्रमce_fast, "Force fast mode (400 kHz)");
 
-#define DBG_LEVEL 0
+#घोषणा DBG_LEVEL 0
 
-#ifdef DBG
-#undef DBG
-#endif
+#अगर_घोषित DBG
+#अघोषित DBG
+#पूर्ण_अगर
 
-#ifdef DBG2
-#undef DBG2
-#endif
+#अगर_घोषित DBG2
+#अघोषित DBG2
+#पूर्ण_अगर
 
-#if DBG_LEVEL > 0
-#  define DBG(f,x...)	printk(KERN_DEBUG "ibm-iic" f, ##x)
-#else
-#  define DBG(f,x...)	((void)0)
-#endif
-#if DBG_LEVEL > 1
+#अगर DBG_LEVEL > 0
+#  define DBG(f,x...)	prपूर्णांकk(KERN_DEBUG "ibm-iic" f, ##x)
+#अन्यथा
+#  define DBG(f,x...)	((व्योम)0)
+#पूर्ण_अगर
+#अगर DBG_LEVEL > 1
 #  define DBG2(f,x...) 	DBG(f, ##x)
-#else
-#  define DBG2(f,x...) 	((void)0)
-#endif
-#if DBG_LEVEL > 2
-static void dump_iic_regs(const char* header, struct ibm_iic_private* dev)
-{
-	volatile struct iic_regs __iomem *iic = dev->vaddr;
-	printk(KERN_DEBUG "ibm-iic%d: %s\n", dev->idx, header);
-	printk(KERN_DEBUG
+#अन्यथा
+#  define DBG2(f,x...) 	((व्योम)0)
+#पूर्ण_अगर
+#अगर DBG_LEVEL > 2
+अटल व्योम dump_iic_regs(स्थिर अक्षर* header, काष्ठा ibm_iic_निजी* dev)
+अणु
+	अस्थिर काष्ठा iic_regs __iomem *iic = dev->vaddr;
+	prपूर्णांकk(KERN_DEBUG "ibm-iic%d: %s\n", dev->idx, header);
+	prपूर्णांकk(KERN_DEBUG
 	       "  cntl     = 0x%02x, mdcntl = 0x%02x\n"
 	       "  sts      = 0x%02x, extsts = 0x%02x\n"
 	       "  clkdiv   = 0x%02x, xfrcnt = 0x%02x\n"
 	       "  xtcntlss = 0x%02x, directcntl = 0x%02x\n",
 		in_8(&iic->cntl), in_8(&iic->mdcntl), in_8(&iic->sts),
-		in_8(&iic->extsts), in_8(&iic->clkdiv), in_8(&iic->xfrcnt),
+		in_8(&iic->extsts), in_8(&iic->clkभाग), in_8(&iic->xfrcnt),
 		in_8(&iic->xtcntlss), in_8(&iic->directcntl));
-}
+पूर्ण
 #  define DUMP_REGS(h,dev)	dump_iic_regs((h),(dev))
-#else
-#  define DUMP_REGS(h,dev)	((void)0)
-#endif
+#अन्यथा
+#  define DUMP_REGS(h,dev)	((व्योम)0)
+#पूर्ण_अगर
 
-/* Bus timings (in ns) for bit-banging */
-static struct ibm_iic_timings {
-	unsigned int hd_sta;
-	unsigned int su_sto;
-	unsigned int low;
-	unsigned int high;
-	unsigned int buf;
-} timings [] = {
+/* Bus timings (in ns) क्रम bit-banging */
+अटल काष्ठा ibm_iic_timings अणु
+	अचिन्हित पूर्णांक hd_sta;
+	अचिन्हित पूर्णांक su_sto;
+	अचिन्हित पूर्णांक low;
+	अचिन्हित पूर्णांक high;
+	अचिन्हित पूर्णांक buf;
+पूर्ण timings [] = अणु
 /* Standard mode (100 KHz) */
-{
+अणु
 	.hd_sta	= 4000,
 	.su_sto	= 4000,
 	.low	= 4700,
 	.high	= 4000,
 	.buf	= 4700,
-},
+पूर्ण,
 /* Fast mode (400 KHz) */
-{
+अणु
 	.hd_sta = 600,
 	.su_sto	= 600,
 	.low 	= 1300,
 	.high 	= 600,
 	.buf	= 1300,
-}};
+पूर्णपूर्ण;
 
-/* Enable/disable interrupt generation */
-static inline void iic_interrupt_mode(struct ibm_iic_private* dev, int enable)
-{
-	out_8(&dev->vaddr->intmsk, enable ? INTRMSK_EIMTC : 0);
-}
+/* Enable/disable पूर्णांकerrupt generation */
+अटल अंतरभूत व्योम iic_पूर्णांकerrupt_mode(काष्ठा ibm_iic_निजी* dev, पूर्णांक enable)
+अणु
+	out_8(&dev->vaddr->पूर्णांकmsk, enable ? INTRMSK_EIMTC : 0);
+पूर्ण
 
 /*
- * Initialize IIC interface.
+ * Initialize IIC पूर्णांकerface.
  */
-static void iic_dev_init(struct ibm_iic_private* dev)
-{
-	volatile struct iic_regs __iomem *iic = dev->vaddr;
+अटल व्योम iic_dev_init(काष्ठा ibm_iic_निजी* dev)
+अणु
+	अस्थिर काष्ठा iic_regs __iomem *iic = dev->vaddr;
 
 	DBG("%d: init\n", dev->idx);
 
@@ -148,8 +149,8 @@ static void iic_dev_init(struct ibm_iic_private* dev)
 	out_8(&iic->extsts, EXTSTS_IRQP | EXTSTS_IRQD | EXTSTS_LA
 			    | EXTSTS_ICT | EXTSTS_XFRA);
 
-	/* Set clock divider */
-	out_8(&iic->clkdiv, dev->clckdiv);
+	/* Set घड़ी भागider */
+	out_8(&iic->clkभाग, dev->clckभाग);
 
 	/* Clear transfer count */
 	out_8(&iic->xfrcnt, 0);
@@ -158,26 +159,26 @@ static void iic_dev_init(struct ibm_iic_private* dev)
 	out_8(&iic->xtcntlss, XTCNTLSS_SRC | XTCNTLSS_SRS | XTCNTLSS_SWC
 			    | XTCNTLSS_SWS);
 
-	/* Clear control register */
+	/* Clear control रेजिस्टर */
 	out_8(&iic->cntl, 0);
 
-	/* Enable interrupts if possible */
-	iic_interrupt_mode(dev, dev->irq >= 0);
+	/* Enable पूर्णांकerrupts अगर possible */
+	iic_पूर्णांकerrupt_mode(dev, dev->irq >= 0);
 
 	/* Set mode control */
 	out_8(&iic->mdcntl, MDCNTL_FMDB | MDCNTL_EINT | MDCNTL_EUBS
 			    | (dev->fast_mode ? MDCNTL_FSM : 0));
 
 	DUMP_REGS("iic_init", dev);
-}
+पूर्ण
 
 /*
- * Reset IIC interface
+ * Reset IIC पूर्णांकerface
  */
-static void iic_dev_reset(struct ibm_iic_private* dev)
-{
-	volatile struct iic_regs __iomem *iic = dev->vaddr;
-	int i;
+अटल व्योम iic_dev_reset(काष्ठा ibm_iic_निजी* dev)
+अणु
+	अस्थिर काष्ठा iic_regs __iomem *iic = dev->vaddr;
+	पूर्णांक i;
 	u8 dc;
 
 	DBG("%d: soft reset\n", dev->idx);
@@ -186,119 +187,119 @@ static void iic_dev_reset(struct ibm_iic_private* dev)
     	/* Place chip in the reset state */
 	out_8(&iic->xtcntlss, XTCNTLSS_SRST);
 
-	/* Check if bus is free */
+	/* Check अगर bus is मुक्त */
 	dc = in_8(&iic->directcntl);
-	if (!DIRCTNL_FREE(dc)){
+	अगर (!सूचीCTNL_FREE(dc))अणु
 		DBG("%d: trying to regain bus control\n", dev->idx);
 
-		/* Try to set bus free state */
-		out_8(&iic->directcntl, DIRCNTL_SDAC | DIRCNTL_SCC);
+		/* Try to set bus मुक्त state */
+		out_8(&iic->directcntl, सूचीCNTL_SDAC | सूचीCNTL_SCC);
 
 		/* Wait until we regain bus control */
-		for (i = 0; i < 100; ++i){
+		क्रम (i = 0; i < 100; ++i)अणु
 			dc = in_8(&iic->directcntl);
-			if (DIRCTNL_FREE(dc))
-				break;
+			अगर (सूचीCTNL_FREE(dc))
+				अवरोध;
 
 			/* Toggle SCL line */
-			dc ^= DIRCNTL_SCC;
+			dc ^= सूचीCNTL_SCC;
 			out_8(&iic->directcntl, dc);
 			udelay(10);
-			dc ^= DIRCNTL_SCC;
+			dc ^= सूचीCNTL_SCC;
 			out_8(&iic->directcntl, dc);
 
 			/* be nice */
 			cond_resched();
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	/* Remove reset */
 	out_8(&iic->xtcntlss, 0);
 
-	/* Reinitialize interface */
+	/* Reinitialize पूर्णांकerface */
 	iic_dev_init(dev);
-}
+पूर्ण
 
 /*
- * Do 0-length transaction using bit-banging through IIC_DIRECTCNTL register.
+ * Do 0-length transaction using bit-banging through IIC_सूचीECTCNTL रेजिस्टर.
  */
 
-/* Wait for SCL and/or SDA to be high */
-static int iic_dc_wait(volatile struct iic_regs __iomem *iic, u8 mask)
-{
-	unsigned long x = jiffies + HZ / 28 + 2;
-	while ((in_8(&iic->directcntl) & mask) != mask){
-		if (unlikely(time_after(jiffies, x)))
-			return -1;
+/* Wait क्रम SCL and/or SDA to be high */
+अटल पूर्णांक iic_dc_रुको(अस्थिर काष्ठा iic_regs __iomem *iic, u8 mask)
+अणु
+	अचिन्हित दीर्घ x = jअगरfies + HZ / 28 + 2;
+	जबतक ((in_8(&iic->directcntl) & mask) != mask)अणु
+		अगर (unlikely(समय_after(jअगरfies, x)))
+			वापस -1;
 		cond_resched();
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int iic_smbus_quick(struct ibm_iic_private* dev, const struct i2c_msg* p)
-{
-	volatile struct iic_regs __iomem *iic = dev->vaddr;
-	const struct ibm_iic_timings *t = &timings[dev->fast_mode ? 1 : 0];
+अटल पूर्णांक iic_smbus_quick(काष्ठा ibm_iic_निजी* dev, स्थिर काष्ठा i2c_msg* p)
+अणु
+	अस्थिर काष्ठा iic_regs __iomem *iic = dev->vaddr;
+	स्थिर काष्ठा ibm_iic_timings *t = &timings[dev->fast_mode ? 1 : 0];
 	u8 mask, v, sda;
-	int i, res;
+	पूर्णांक i, res;
 
 	/* Only 7-bit addresses are supported */
-	if (unlikely(p->flags & I2C_M_TEN)){
+	अगर (unlikely(p->flags & I2C_M_TEN))अणु
 		DBG("%d: smbus_quick - 10 bit addresses are not supported\n",
 			dev->idx);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	DBG("%d: smbus_quick(0x%02x)\n", dev->idx, p->addr);
 
-	/* Reset IIC interface */
+	/* Reset IIC पूर्णांकerface */
 	out_8(&iic->xtcntlss, XTCNTLSS_SRST);
 
-	/* Wait for bus to become free */
-	out_8(&iic->directcntl, DIRCNTL_SDAC | DIRCNTL_SCC);
-	if (unlikely(iic_dc_wait(iic, DIRCNTL_MSDA | DIRCNTL_MSC)))
-		goto err;
+	/* Wait क्रम bus to become मुक्त */
+	out_8(&iic->directcntl, सूचीCNTL_SDAC | सूचीCNTL_SCC);
+	अगर (unlikely(iic_dc_रुको(iic, सूचीCNTL_MSDA | सूचीCNTL_MSC)))
+		जाओ err;
 	ndelay(t->buf);
 
 	/* START */
-	out_8(&iic->directcntl, DIRCNTL_SCC);
+	out_8(&iic->directcntl, सूचीCNTL_SCC);
 	sda = 0;
 	ndelay(t->hd_sta);
 
 	/* Send address */
 	v = i2c_8bit_addr_from_msg(p);
-	for (i = 0, mask = 0x80; i < 8; ++i, mask >>= 1){
+	क्रम (i = 0, mask = 0x80; i < 8; ++i, mask >>= 1)अणु
 		out_8(&iic->directcntl, sda);
 		ndelay(t->low / 2);
-		sda = (v & mask) ? DIRCNTL_SDAC : 0;
+		sda = (v & mask) ? सूचीCNTL_SDAC : 0;
 		out_8(&iic->directcntl, sda);
 		ndelay(t->low / 2);
 
-		out_8(&iic->directcntl, DIRCNTL_SCC | sda);
-		if (unlikely(iic_dc_wait(iic, DIRCNTL_MSC)))
-			goto err;
+		out_8(&iic->directcntl, सूचीCNTL_SCC | sda);
+		अगर (unlikely(iic_dc_रुको(iic, सूचीCNTL_MSC)))
+			जाओ err;
 		ndelay(t->high);
-	}
+	पूर्ण
 
 	/* ACK */
 	out_8(&iic->directcntl, sda);
 	ndelay(t->low / 2);
-	out_8(&iic->directcntl, DIRCNTL_SDAC);
+	out_8(&iic->directcntl, सूचीCNTL_SDAC);
 	ndelay(t->low / 2);
-	out_8(&iic->directcntl, DIRCNTL_SDAC | DIRCNTL_SCC);
-	if (unlikely(iic_dc_wait(iic, DIRCNTL_MSC)))
-		goto err;
-	res = (in_8(&iic->directcntl) & DIRCNTL_MSDA) ? -EREMOTEIO : 1;
+	out_8(&iic->directcntl, सूचीCNTL_SDAC | सूचीCNTL_SCC);
+	अगर (unlikely(iic_dc_रुको(iic, सूचीCNTL_MSC)))
+		जाओ err;
+	res = (in_8(&iic->directcntl) & सूचीCNTL_MSDA) ? -EREMOTEIO : 1;
 	ndelay(t->high);
 
 	/* STOP */
 	out_8(&iic->directcntl, 0);
 	ndelay(t->low);
-	out_8(&iic->directcntl, DIRCNTL_SCC);
-	if (unlikely(iic_dc_wait(iic, DIRCNTL_MSC)))
-		goto err;
+	out_8(&iic->directcntl, सूचीCNTL_SCC);
+	अगर (unlikely(iic_dc_रुको(iic, सूचीCNTL_MSC)))
+		जाओ err;
 	ndelay(t->su_sto);
-	out_8(&iic->directcntl, DIRCNTL_SDAC | DIRCNTL_SCC);
+	out_8(&iic->directcntl, सूचीCNTL_SDAC | सूचीCNTL_SCC);
 
 	ndelay(t->buf);
 
@@ -307,43 +308,43 @@ out:
 	/* Remove reset */
 	out_8(&iic->xtcntlss, 0);
 
-	/* Reinitialize interface */
+	/* Reinitialize पूर्णांकerface */
 	iic_dev_init(dev);
 
-	return res;
+	वापस res;
 err:
 	DBG("%d: smbus_quick - bus is stuck\n", dev->idx);
 	res = -EREMOTEIO;
-	goto out;
-}
+	जाओ out;
+पूर्ण
 
 /*
- * IIC interrupt handler
+ * IIC पूर्णांकerrupt handler
  */
-static irqreturn_t iic_handler(int irq, void *dev_id)
-{
-	struct ibm_iic_private* dev = (struct ibm_iic_private*)dev_id;
-	volatile struct iic_regs __iomem *iic = dev->vaddr;
+अटल irqवापस_t iic_handler(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा ibm_iic_निजी* dev = (काष्ठा ibm_iic_निजी*)dev_id;
+	अस्थिर काष्ठा iic_regs __iomem *iic = dev->vaddr;
 
 	DBG2("%d: irq handler, STS = 0x%02x, EXTSTS = 0x%02x\n",
 	     dev->idx, in_8(&iic->sts), in_8(&iic->extsts));
 
-	/* Acknowledge IRQ and wakeup iic_wait_for_tc */
+	/* Acknowledge IRQ and wakeup iic_रुको_क्रम_tc */
 	out_8(&iic->sts, STS_IRQA | STS_SCMP);
-	wake_up_interruptible(&dev->wq);
+	wake_up_पूर्णांकerruptible(&dev->wq);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
 /*
- * Get master transfer result and clear errors if any.
+ * Get master transfer result and clear errors अगर any.
  * Returns the number of actually transferred bytes or error (<0)
  */
-static int iic_xfer_result(struct ibm_iic_private* dev)
-{
-	volatile struct iic_regs __iomem *iic = dev->vaddr;
+अटल पूर्णांक iic_xfer_result(काष्ठा ibm_iic_निजी* dev)
+अणु
+	अस्थिर काष्ठा iic_regs __iomem *iic = dev->vaddr;
 
-	if (unlikely(in_8(&iic->sts) & STS_ERR)){
+	अगर (unlikely(in_8(&iic->sts) & STS_ERR))अणु
 		DBG("%d: xfer error, EXTSTS = 0x%02x\n", dev->idx,
 			in_8(&iic->extsts));
 
@@ -354,130 +355,130 @@ static int iic_xfer_result(struct ibm_iic_private* dev)
 		/* Flush master data buffer */
 		out_8(&iic->mdcntl, in_8(&iic->mdcntl) | MDCNTL_FMDB);
 
-		/* Is bus free?
+		/* Is bus मुक्त?
 		 * If error happened during combined xfer
-		 * IIC interface is usually stuck in some strange
+		 * IIC पूर्णांकerface is usually stuck in some strange
 		 * state, the only way out - soft reset.
 		 */
-		if ((in_8(&iic->extsts) & EXTSTS_BCS_MASK) != EXTSTS_BCS_FREE){
+		अगर ((in_8(&iic->extsts) & EXTSTS_BCS_MASK) != EXTSTS_BCS_FREE)अणु
 			DBG("%d: bus is stuck, resetting\n", dev->idx);
 			iic_dev_reset(dev);
-		}
-		return -EREMOTEIO;
-	}
-	else
-		return in_8(&iic->xfrcnt) & XFRCNT_MTC_MASK;
-}
+		पूर्ण
+		वापस -EREMOTEIO;
+	पूर्ण
+	अन्यथा
+		वापस in_8(&iic->xfrcnt) & XFRCNT_MTC_MASK;
+पूर्ण
 
 /*
- * Try to abort active transfer.
+ * Try to पात active transfer.
  */
-static void iic_abort_xfer(struct ibm_iic_private* dev)
-{
-	volatile struct iic_regs __iomem *iic = dev->vaddr;
-	unsigned long x;
+अटल व्योम iic_पात_xfer(काष्ठा ibm_iic_निजी* dev)
+अणु
+	अस्थिर काष्ठा iic_regs __iomem *iic = dev->vaddr;
+	अचिन्हित दीर्घ x;
 
 	DBG("%d: iic_abort_xfer\n", dev->idx);
 
 	out_8(&iic->cntl, CNTL_HMT);
 
 	/*
-	 * Wait for the abort command to complete.
-	 * It's not worth to be optimized, just poll (timeout >= 1 tick)
+	 * Wait क्रम the पात command to complete.
+	 * It's not worth to be optimized, just poll (समयout >= 1 tick)
 	 */
-	x = jiffies + 2;
-	while ((in_8(&iic->extsts) & EXTSTS_BCS_MASK) != EXTSTS_BCS_FREE){
-		if (time_after(jiffies, x)){
+	x = jअगरfies + 2;
+	जबतक ((in_8(&iic->extsts) & EXTSTS_BCS_MASK) != EXTSTS_BCS_FREE)अणु
+		अगर (समय_after(jअगरfies, x))अणु
 			DBG("%d: abort timeout, resetting...\n", dev->idx);
 			iic_dev_reset(dev);
-			return;
-		}
+			वापस;
+		पूर्ण
 		schedule();
-	}
+	पूर्ण
 
 	/* Just to clear errors */
 	iic_xfer_result(dev);
-}
+पूर्ण
 
 /*
- * Wait for master transfer to complete.
- * It puts current process to sleep until we get interrupt or timeout expires.
+ * Wait क्रम master transfer to complete.
+ * It माला_दो current process to sleep until we get पूर्णांकerrupt or समयout expires.
  * Returns the number of transferred bytes or error (<0)
  */
-static int iic_wait_for_tc(struct ibm_iic_private* dev){
+अटल पूर्णांक iic_रुको_क्रम_tc(काष्ठा ibm_iic_निजी* dev)अणु
 
-	volatile struct iic_regs __iomem *iic = dev->vaddr;
-	int ret = 0;
+	अस्थिर काष्ठा iic_regs __iomem *iic = dev->vaddr;
+	पूर्णांक ret = 0;
 
-	if (dev->irq >= 0){
+	अगर (dev->irq >= 0)अणु
 		/* Interrupt mode */
-		ret = wait_event_interruptible_timeout(dev->wq,
-			!(in_8(&iic->sts) & STS_PT), dev->adap.timeout);
+		ret = रुको_event_पूर्णांकerruptible_समयout(dev->wq,
+			!(in_8(&iic->sts) & STS_PT), dev->adap.समयout);
 
-		if (unlikely(ret < 0))
+		अगर (unlikely(ret < 0))
 			DBG("%d: wait interrupted\n", dev->idx);
-		else if (unlikely(in_8(&iic->sts) & STS_PT)){
+		अन्यथा अगर (unlikely(in_8(&iic->sts) & STS_PT))अणु
 			DBG("%d: wait timeout\n", dev->idx);
 			ret = -ETIMEDOUT;
-		}
-	}
-	else {
+		पूर्ण
+	पूर्ण
+	अन्यथा अणु
 		/* Polling mode */
-		unsigned long x = jiffies + dev->adap.timeout;
+		अचिन्हित दीर्घ x = jअगरfies + dev->adap.समयout;
 
-		while (in_8(&iic->sts) & STS_PT){
-			if (unlikely(time_after(jiffies, x))){
+		जबतक (in_8(&iic->sts) & STS_PT)अणु
+			अगर (unlikely(समय_after(jअगरfies, x)))अणु
 				DBG("%d: poll timeout\n", dev->idx);
 				ret = -ETIMEDOUT;
-				break;
-			}
+				अवरोध;
+			पूर्ण
 
-			if (signal_pending(current)){
+			अगर (संकेत_pending(current))अणु
 				DBG("%d: poll interrupted\n", dev->idx);
 				ret = -ERESTARTSYS;
-				break;
-			}
+				अवरोध;
+			पूर्ण
 			schedule();
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (unlikely(ret < 0))
-		iic_abort_xfer(dev);
-	else
+	अगर (unlikely(ret < 0))
+		iic_पात_xfer(dev);
+	अन्यथा
 		ret = iic_xfer_result(dev);
 
 	DBG2("%d: iic_wait_for_tc -> %d\n", dev->idx, ret);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
  * Low level master transfer routine
  */
-static int iic_xfer_bytes(struct ibm_iic_private* dev, struct i2c_msg* pm,
-			  int combined_xfer)
-{
-	volatile struct iic_regs __iomem *iic = dev->vaddr;
-	char* buf = pm->buf;
-	int i, j, loops, ret = 0;
-	int len = pm->len;
+अटल पूर्णांक iic_xfer_bytes(काष्ठा ibm_iic_निजी* dev, काष्ठा i2c_msg* pm,
+			  पूर्णांक combined_xfer)
+अणु
+	अस्थिर काष्ठा iic_regs __iomem *iic = dev->vaddr;
+	अक्षर* buf = pm->buf;
+	पूर्णांक i, j, loops, ret = 0;
+	पूर्णांक len = pm->len;
 
 	u8 cntl = (in_8(&iic->cntl) & CNTL_AMD) | CNTL_PT;
-	if (pm->flags & I2C_M_RD)
+	अगर (pm->flags & I2C_M_RD)
 		cntl |= CNTL_RW;
 
 	loops = (len + 3) / 4;
-	for (i = 0; i < loops; ++i, len -= 4){
-		int count = len > 4 ? 4 : len;
+	क्रम (i = 0; i < loops; ++i, len -= 4)अणु
+		पूर्णांक count = len > 4 ? 4 : len;
 		u8 cmd = cntl | ((count - 1) << CNTL_TCT_SHIFT);
 
-		if (!(cntl & CNTL_RW))
-			for (j = 0; j < count; ++j)
-				out_8((void __iomem *)&iic->mdbuf, *buf++);
+		अगर (!(cntl & CNTL_RW))
+			क्रम (j = 0; j < count; ++j)
+				out_8((व्योम __iomem *)&iic->mdbuf, *buf++);
 
-		if (i < loops - 1)
+		अगर (i < loops - 1)
 			cmd |= CNTL_CHT;
-		else if (combined_xfer)
+		अन्यथा अगर (combined_xfer)
 			cmd |= CNTL_RPST;
 
 		DBG2("%d: xfer_bytes, %d, CNTL = 0x%02x\n", dev->idx, count, cmd);
@@ -485,111 +486,111 @@ static int iic_xfer_bytes(struct ibm_iic_private* dev, struct i2c_msg* pm,
 		/* Start transfer */
 		out_8(&iic->cntl, cmd);
 
-		/* Wait for completion */
-		ret = iic_wait_for_tc(dev);
+		/* Wait क्रम completion */
+		ret = iic_रुको_क्रम_tc(dev);
 
-		if (unlikely(ret < 0))
-			break;
-		else if (unlikely(ret != count)){
+		अगर (unlikely(ret < 0))
+			अवरोध;
+		अन्यथा अगर (unlikely(ret != count))अणु
 			DBG("%d: xfer_bytes, requested %d, transferred %d\n",
 				dev->idx, count, ret);
 
-			/* If it's not a last part of xfer, abort it */
-			if (combined_xfer || (i < loops - 1))
-    				iic_abort_xfer(dev);
+			/* If it's not a last part of xfer, पात it */
+			अगर (combined_xfer || (i < loops - 1))
+    				iic_पात_xfer(dev);
 
 			ret = -EREMOTEIO;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		if (cntl & CNTL_RW)
-			for (j = 0; j < count; ++j)
-				*buf++ = in_8((void __iomem *)&iic->mdbuf);
-	}
+		अगर (cntl & CNTL_RW)
+			क्रम (j = 0; j < count; ++j)
+				*buf++ = in_8((व्योम __iomem *)&iic->mdbuf);
+	पूर्ण
 
-	return ret > 0 ? 0 : ret;
-}
+	वापस ret > 0 ? 0 : ret;
+पूर्ण
 
 /*
- * Set target slave address for master transfer
+ * Set target slave address क्रम master transfer
  */
-static inline void iic_address(struct ibm_iic_private* dev, struct i2c_msg* msg)
-{
-	volatile struct iic_regs __iomem *iic = dev->vaddr;
+अटल अंतरभूत व्योम iic_address(काष्ठा ibm_iic_निजी* dev, काष्ठा i2c_msg* msg)
+अणु
+	अस्थिर काष्ठा iic_regs __iomem *iic = dev->vaddr;
 	u16 addr = msg->addr;
 
 	DBG2("%d: iic_address, 0x%03x (%d-bit)\n", dev->idx,
 		addr, msg->flags & I2C_M_TEN ? 10 : 7);
 
-	if (msg->flags & I2C_M_TEN){
+	अगर (msg->flags & I2C_M_TEN)अणु
 	    out_8(&iic->cntl, CNTL_AMD);
 	    out_8(&iic->lmadr, addr);
 	    out_8(&iic->hmadr, 0xf0 | ((addr >> 7) & 0x06));
-	}
-	else {
+	पूर्ण
+	अन्यथा अणु
 	    out_8(&iic->cntl, 0);
 	    out_8(&iic->lmadr, addr << 1);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static inline int iic_invalid_address(const struct i2c_msg* p)
-{
-	return (p->addr > 0x3ff) || (!(p->flags & I2C_M_TEN) && (p->addr > 0x7f));
-}
+अटल अंतरभूत पूर्णांक iic_invalid_address(स्थिर काष्ठा i2c_msg* p)
+अणु
+	वापस (p->addr > 0x3ff) || (!(p->flags & I2C_M_TEN) && (p->addr > 0x7f));
+पूर्ण
 
-static inline int iic_address_neq(const struct i2c_msg* p1,
-				  const struct i2c_msg* p2)
-{
-	return (p1->addr != p2->addr)
+अटल अंतरभूत पूर्णांक iic_address_neq(स्थिर काष्ठा i2c_msg* p1,
+				  स्थिर काष्ठा i2c_msg* p2)
+अणु
+	वापस (p1->addr != p2->addr)
 		|| ((p1->flags & I2C_M_TEN) != (p2->flags & I2C_M_TEN));
-}
+पूर्ण
 
 /*
- * Generic master transfer entrypoint.
+ * Generic master transfer entrypoपूर्णांक.
  * Returns the number of processed messages or error (<0)
  */
-static int iic_xfer(struct i2c_adapter *adap, struct i2c_msg *msgs, int num)
-{
-    	struct ibm_iic_private* dev = (struct ibm_iic_private*)(i2c_get_adapdata(adap));
-	volatile struct iic_regs __iomem *iic = dev->vaddr;
-	int i, ret = 0;
+अटल पूर्णांक iic_xfer(काष्ठा i2c_adapter *adap, काष्ठा i2c_msg *msgs, पूर्णांक num)
+अणु
+    	काष्ठा ibm_iic_निजी* dev = (काष्ठा ibm_iic_निजी*)(i2c_get_adapdata(adap));
+	अस्थिर काष्ठा iic_regs __iomem *iic = dev->vaddr;
+	पूर्णांक i, ret = 0;
 
 	DBG2("%d: iic_xfer, %d msg(s)\n", dev->idx, num);
 
 	/* Check the sanity of the passed messages.
-	 * Uhh, generic i2c layer is more suitable place for such code...
+	 * Uhh, generic i2c layer is more suitable place क्रम such code...
 	 */
-	if (unlikely(iic_invalid_address(&msgs[0]))){
+	अगर (unlikely(iic_invalid_address(&msgs[0])))अणु
 		DBG("%d: invalid address 0x%03x (%d-bit)\n", dev->idx,
 			msgs[0].addr, msgs[0].flags & I2C_M_TEN ? 10 : 7);
-		return -EINVAL;
-	}
-	for (i = 0; i < num; ++i){
-		if (unlikely(msgs[i].len <= 0)){
-			if (num == 1 && !msgs[0].len){
-				/* Special case for I2C_SMBUS_QUICK emulation.
-				 * IBM IIC doesn't support 0-length transactions
+		वापस -EINVAL;
+	पूर्ण
+	क्रम (i = 0; i < num; ++i)अणु
+		अगर (unlikely(msgs[i].len <= 0))अणु
+			अगर (num == 1 && !msgs[0].len)अणु
+				/* Special हाल क्रम I2C_SMBUS_QUICK emulation.
+				 * IBM IIC करोesn't support 0-length transactions
 				 * so we have to emulate them using bit-banging.
 				 */
-				return iic_smbus_quick(dev, &msgs[0]);
-			}
+				वापस iic_smbus_quick(dev, &msgs[0]);
+			पूर्ण
 			DBG("%d: invalid len %d in msg[%d]\n", dev->idx,
 				msgs[i].len, i);
-			return -EINVAL;
-		}
-		if (unlikely(iic_address_neq(&msgs[0], &msgs[i]))){
+			वापस -EINVAL;
+		पूर्ण
+		अगर (unlikely(iic_address_neq(&msgs[0], &msgs[i])))अणु
 			DBG("%d: invalid addr in msg[%d]\n", dev->idx, i);
-			return -EINVAL;
-		}
-	}
+			वापस -EINVAL;
+		पूर्ण
+	पूर्ण
 
 	/* Check bus state */
-	if (unlikely((in_8(&iic->extsts) & EXTSTS_BCS_MASK) != EXTSTS_BCS_FREE)){
+	अगर (unlikely((in_8(&iic->extsts) & EXTSTS_BCS_MASK) != EXTSTS_BCS_FREE))अणु
 		DBG("%d: iic_xfer, bus is not free\n", dev->idx);
 
 		/* Usually it means something serious has happened.
 		 * We *cannot* have unfinished previous transfer
-		 * so it doesn't make any sense to try to stop it.
+		 * so it करोesn't make any sense to try to stop it.
 		 * Probably we were not able to recover from the
 		 * previous error.
 		 * The only *reasonable* thing I can think of here
@@ -597,208 +598,208 @@ static int iic_xfer(struct i2c_adapter *adap, struct i2c_msg *msgs, int num)
 		 */
 		iic_dev_reset(dev);
 
-		if ((in_8(&iic->extsts) & EXTSTS_BCS_MASK) != EXTSTS_BCS_FREE){
+		अगर ((in_8(&iic->extsts) & EXTSTS_BCS_MASK) != EXTSTS_BCS_FREE)अणु
 			DBG("%d: iic_xfer, bus is still not free\n", dev->idx);
-			return -EREMOTEIO;
-		}
-	}
-	else {
-		/* Flush master data buffer (just in case) */
+			वापस -EREMOTEIO;
+		पूर्ण
+	पूर्ण
+	अन्यथा अणु
+		/* Flush master data buffer (just in हाल) */
 		out_8(&iic->mdcntl, in_8(&iic->mdcntl) | MDCNTL_FMDB);
-	}
+	पूर्ण
 
 	/* Load slave address */
 	iic_address(dev, &msgs[0]);
 
 	/* Do real transfer */
-    	for (i = 0; i < num && !ret; ++i)
+    	क्रम (i = 0; i < num && !ret; ++i)
 		ret = iic_xfer_bytes(dev, &msgs[i], i < num - 1);
 
-	return ret < 0 ? ret : num;
-}
+	वापस ret < 0 ? ret : num;
+पूर्ण
 
-static u32 iic_func(struct i2c_adapter *adap)
-{
-	return I2C_FUNC_I2C | I2C_FUNC_SMBUS_EMUL | I2C_FUNC_10BIT_ADDR;
-}
+अटल u32 iic_func(काष्ठा i2c_adapter *adap)
+अणु
+	वापस I2C_FUNC_I2C | I2C_FUNC_SMBUS_EMUL | I2C_FUNC_10BIT_ADDR;
+पूर्ण
 
-static const struct i2c_algorithm iic_algo = {
+अटल स्थिर काष्ठा i2c_algorithm iic_algo = अणु
 	.master_xfer 	= iic_xfer,
 	.functionality	= iic_func
-};
+पूर्ण;
 
 /*
- * Calculates IICx_CLCKDIV value for a specific OPB clock frequency
+ * Calculates IICx_CLCKDIV value क्रम a specअगरic OPB घड़ी frequency
  */
-static inline u8 iic_clckdiv(unsigned int opb)
-{
+अटल अंतरभूत u8 iic_clckभाग(अचिन्हित पूर्णांक opb)
+अणु
 	/* Compatibility kludge, should go away after all cards
-	 * are fixed to fill correct value for opbfreq.
-	 * Previous driver version used hardcoded divider value 4,
+	 * are fixed to fill correct value क्रम opbfreq.
+	 * Previous driver version used hardcoded भागider value 4,
 	 * it corresponds to OPB frequency from the range (40, 50] MHz
 	 */
-	if (!opb){
-		printk(KERN_WARNING "ibm-iic: using compatibility value for OPB freq,"
+	अगर (!opb)अणु
+		prपूर्णांकk(KERN_WARNING "ibm-iic: using compatibility value for OPB freq,"
 			" fix your board specific setup\n");
 		opb = 50000000;
-	}
+	पूर्ण
 
 	/* Convert to MHz */
 	opb /= 1000000;
 
-	if (opb < 20 || opb > 150){
-		printk(KERN_WARNING "ibm-iic: invalid OPB clock frequency %u MHz\n",
+	अगर (opb < 20 || opb > 150)अणु
+		prपूर्णांकk(KERN_WARNING "ibm-iic: invalid OPB clock frequency %u MHz\n",
 			opb);
 		opb = opb < 20 ? 20 : 150;
-	}
-	return (u8)((opb + 9) / 10 - 1);
-}
+	पूर्ण
+	वापस (u8)((opb + 9) / 10 - 1);
+पूर्ण
 
-static int iic_request_irq(struct platform_device *ofdev,
-				     struct ibm_iic_private *dev)
-{
-	struct device_node *np = ofdev->dev.of_node;
-	int irq;
+अटल पूर्णांक iic_request_irq(काष्ठा platक्रमm_device *ofdev,
+				     काष्ठा ibm_iic_निजी *dev)
+अणु
+	काष्ठा device_node *np = ofdev->dev.of_node;
+	पूर्णांक irq;
 
-	if (iic_force_poll)
-		return 0;
+	अगर (iic_क्रमce_poll)
+		वापस 0;
 
 	irq = irq_of_parse_and_map(np, 0);
-	if (!irq) {
+	अगर (!irq) अणु
 		dev_err(&ofdev->dev, "irq_of_parse_and_map failed\n");
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	/* Disable interrupts until we finish initialization, assumes
+	/* Disable पूर्णांकerrupts until we finish initialization, assumes
 	 *  level-sensitive IRQ setup...
 	 */
-	iic_interrupt_mode(dev, 0);
-	if (request_irq(irq, iic_handler, 0, "IBM IIC", dev)) {
+	iic_पूर्णांकerrupt_mode(dev, 0);
+	अगर (request_irq(irq, iic_handler, 0, "IBM IIC", dev)) अणु
 		dev_err(&ofdev->dev, "request_irq %d failed\n", irq);
 		/* Fallback to the polling mode */
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	return irq;
-}
+	वापस irq;
+पूर्ण
 
 /*
- * Register single IIC interface
+ * Register single IIC पूर्णांकerface
  */
-static int iic_probe(struct platform_device *ofdev)
-{
-	struct device_node *np = ofdev->dev.of_node;
-	struct ibm_iic_private *dev;
-	struct i2c_adapter *adap;
-	const u32 *freq;
-	int ret;
+अटल पूर्णांक iic_probe(काष्ठा platक्रमm_device *ofdev)
+अणु
+	काष्ठा device_node *np = ofdev->dev.of_node;
+	काष्ठा ibm_iic_निजी *dev;
+	काष्ठा i2c_adapter *adap;
+	स्थिर u32 *freq;
+	पूर्णांक ret;
 
-	dev = kzalloc(sizeof(*dev), GFP_KERNEL);
-	if (!dev) {
+	dev = kzalloc(माप(*dev), GFP_KERNEL);
+	अगर (!dev) अणु
 		dev_err(&ofdev->dev, "failed to allocate device data\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
-	platform_set_drvdata(ofdev, dev);
+	platक्रमm_set_drvdata(ofdev, dev);
 
 	dev->vaddr = of_iomap(np, 0);
-	if (dev->vaddr == NULL) {
+	अगर (dev->vaddr == शून्य) अणु
 		dev_err(&ofdev->dev, "failed to iomap device\n");
 		ret = -ENXIO;
-		goto error_cleanup;
-	}
+		जाओ error_cleanup;
+	पूर्ण
 
-	init_waitqueue_head(&dev->wq);
+	init_रुकोqueue_head(&dev->wq);
 
 	dev->irq = iic_request_irq(ofdev, dev);
-	if (!dev->irq)
+	अगर (!dev->irq)
 		dev_warn(&ofdev->dev, "using polling mode\n");
 
-	/* Board specific settings */
-	if (iic_force_fast || of_get_property(np, "fast-mode", NULL))
+	/* Board specअगरic settings */
+	अगर (iic_क्रमce_fast || of_get_property(np, "fast-mode", शून्य))
 		dev->fast_mode = 1;
 
-	freq = of_get_property(np, "clock-frequency", NULL);
-	if (freq == NULL) {
-		freq = of_get_property(np->parent, "clock-frequency", NULL);
-		if (freq == NULL) {
+	freq = of_get_property(np, "clock-frequency", शून्य);
+	अगर (freq == शून्य) अणु
+		freq = of_get_property(np->parent, "clock-frequency", शून्य);
+		अगर (freq == शून्य) अणु
 			dev_err(&ofdev->dev, "Unable to get bus frequency\n");
 			ret = -EINVAL;
-			goto error_cleanup;
-		}
-	}
+			जाओ error_cleanup;
+		पूर्ण
+	पूर्ण
 
-	dev->clckdiv = iic_clckdiv(*freq);
-	dev_dbg(&ofdev->dev, "clckdiv = %d\n", dev->clckdiv);
+	dev->clckभाग = iic_clckभाग(*freq);
+	dev_dbg(&ofdev->dev, "clckdiv = %d\n", dev->clckभाग);
 
-	/* Initialize IIC interface */
+	/* Initialize IIC पूर्णांकerface */
 	iic_dev_init(dev);
 
 	/* Register it with i2c layer */
 	adap = &dev->adap;
 	adap->dev.parent = &ofdev->dev;
 	adap->dev.of_node = of_node_get(np);
-	strlcpy(adap->name, "IBM IIC", sizeof(adap->name));
+	strlcpy(adap->name, "IBM IIC", माप(adap->name));
 	i2c_set_adapdata(adap, dev);
 	adap->class = I2C_CLASS_HWMON | I2C_CLASS_SPD;
 	adap->algo = &iic_algo;
-	adap->timeout = HZ;
+	adap->समयout = HZ;
 
 	ret = i2c_add_adapter(adap);
-	if (ret  < 0)
-		goto error_cleanup;
+	अगर (ret  < 0)
+		जाओ error_cleanup;
 
 	dev_info(&ofdev->dev, "using %s mode\n",
 		 dev->fast_mode ? "fast (400 kHz)" : "standard (100 kHz)");
 
-	return 0;
+	वापस 0;
 
 error_cleanup:
-	if (dev->irq) {
-		iic_interrupt_mode(dev, 0);
-		free_irq(dev->irq, dev);
-	}
+	अगर (dev->irq) अणु
+		iic_पूर्णांकerrupt_mode(dev, 0);
+		मुक्त_irq(dev->irq, dev);
+	पूर्ण
 
-	if (dev->vaddr)
+	अगर (dev->vaddr)
 		iounmap(dev->vaddr);
 
-	kfree(dev);
-	return ret;
-}
+	kमुक्त(dev);
+	वापस ret;
+पूर्ण
 
 /*
- * Cleanup initialized IIC interface
+ * Cleanup initialized IIC पूर्णांकerface
  */
-static int iic_remove(struct platform_device *ofdev)
-{
-	struct ibm_iic_private *dev = platform_get_drvdata(ofdev);
+अटल पूर्णांक iic_हटाओ(काष्ठा platक्रमm_device *ofdev)
+अणु
+	काष्ठा ibm_iic_निजी *dev = platक्रमm_get_drvdata(ofdev);
 
 	i2c_del_adapter(&dev->adap);
 
-	if (dev->irq) {
-		iic_interrupt_mode(dev, 0);
-		free_irq(dev->irq, dev);
-	}
+	अगर (dev->irq) अणु
+		iic_पूर्णांकerrupt_mode(dev, 0);
+		मुक्त_irq(dev->irq, dev);
+	पूर्ण
 
 	iounmap(dev->vaddr);
-	kfree(dev);
+	kमुक्त(dev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct of_device_id ibm_iic_match[] = {
-	{ .compatible = "ibm,iic", },
-	{}
-};
+अटल स्थिर काष्ठा of_device_id ibm_iic_match[] = अणु
+	अणु .compatible = "ibm,iic", पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, ibm_iic_match);
 
-static struct platform_driver ibm_iic_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver ibm_iic_driver = अणु
+	.driver = अणु
 		.name = "ibm-iic",
 		.of_match_table = ibm_iic_match,
-	},
+	पूर्ण,
 	.probe	= iic_probe,
-	.remove	= iic_remove,
-};
+	.हटाओ	= iic_हटाओ,
+पूर्ण;
 
-module_platform_driver(ibm_iic_driver);
+module_platक्रमm_driver(ibm_iic_driver);

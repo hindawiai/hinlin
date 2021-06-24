@@ -1,12 +1,13 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * "splice": joining two ropes together by interweaving their strands.
+ * "splice": joining two ropes together by पूर्णांकerweaving their stअक्रमs.
  *
  * This is the "extended pipe" functionality, where a pipe is used as
  * an arbitrary in-memory buffer. Think of a pipe as a small kernel
  * buffer that you can use to transfer data from one end to the other.
  *
- * The traditional unix read/write is extended with a "splice()" operation
+ * The traditional unix पढ़ो/ग_लिखो is extended with a "splice()" operation
  * that transfers data buffers to or from a pipe buffer.
  *
  * Named by Larry McVoy, original implementation from Linus, extended by
@@ -18,192 +19,192 @@
  * Copyright (C) 2006 Ingo Molnar <mingo@elte.hu>
  *
  */
-#include <linux/bvec.h>
-#include <linux/fs.h>
-#include <linux/file.h>
-#include <linux/pagemap.h>
-#include <linux/splice.h>
-#include <linux/memcontrol.h>
-#include <linux/mm_inline.h>
-#include <linux/swap.h>
-#include <linux/writeback.h>
-#include <linux/export.h>
-#include <linux/syscalls.h>
-#include <linux/uio.h>
-#include <linux/security.h>
-#include <linux/gfp.h>
-#include <linux/socket.h>
-#include <linux/sched/signal.h>
+#समावेश <linux/bvec.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/file.h>
+#समावेश <linux/pagemap.h>
+#समावेश <linux/splice.h>
+#समावेश <linux/memcontrol.h>
+#समावेश <linux/mm_अंतरभूत.h>
+#समावेश <linux/swap.h>
+#समावेश <linux/ग_लिखोback.h>
+#समावेश <linux/export.h>
+#समावेश <linux/syscalls.h>
+#समावेश <linux/uपन.स>
+#समावेश <linux/security.h>
+#समावेश <linux/gfp.h>
+#समावेश <linux/socket.h>
+#समावेश <linux/sched/संकेत.स>
 
-#include "internal.h"
+#समावेश "internal.h"
 
 /*
- * Attempt to steal a page from a pipe buffer. This should perhaps go into
- * a vm helper function, it's already simplified quite a bit by the
- * addition of remove_mapping(). If success is returned, the caller may
- * attempt to reuse this page for another destination.
+ * Attempt to steal a page from a pipe buffer. This should perhaps go पूर्णांकo
+ * a vm helper function, it's alपढ़ोy simplअगरied quite a bit by the
+ * addition of हटाओ_mapping(). If success is वापसed, the caller may
+ * attempt to reuse this page क्रम another destination.
  */
-static bool page_cache_pipe_buf_try_steal(struct pipe_inode_info *pipe,
-		struct pipe_buffer *buf)
-{
-	struct page *page = buf->page;
-	struct address_space *mapping;
+अटल bool page_cache_pipe_buf_try_steal(काष्ठा pipe_inode_info *pipe,
+		काष्ठा pipe_buffer *buf)
+अणु
+	काष्ठा page *page = buf->page;
+	काष्ठा address_space *mapping;
 
 	lock_page(page);
 
 	mapping = page_mapping(page);
-	if (mapping) {
+	अगर (mapping) अणु
 		WARN_ON(!PageUptodate(page));
 
 		/*
-		 * At least for ext2 with nobh option, we need to wait on
-		 * writeback completing on this page, since we'll remove it
-		 * from the pagecache.  Otherwise truncate wont wait on the
-		 * page, allowing the disk blocks to be reused by someone else
-		 * before we actually wrote our data to them. fs corruption
+		 * At least क्रम ext2 with nobh option, we need to रुको on
+		 * ग_लिखोback completing on this page, since we'll हटाओ it
+		 * from the pagecache.  Otherwise truncate wont रुको on the
+		 * page, allowing the disk blocks to be reused by someone अन्यथा
+		 * beक्रमe we actually wrote our data to them. fs corruption
 		 * ensues.
 		 */
-		wait_on_page_writeback(page);
+		रुको_on_page_ग_लिखोback(page);
 
-		if (page_has_private(page) &&
+		अगर (page_has_निजी(page) &&
 		    !try_to_release_page(page, GFP_KERNEL))
-			goto out_unlock;
+			जाओ out_unlock;
 
 		/*
 		 * If we succeeded in removing the mapping, set LRU flag
-		 * and return good.
+		 * and वापस good.
 		 */
-		if (remove_mapping(mapping, page)) {
+		अगर (हटाओ_mapping(mapping, page)) अणु
 			buf->flags |= PIPE_BUF_FLAG_LRU;
-			return true;
-		}
-	}
+			वापस true;
+		पूर्ण
+	पूर्ण
 
 	/*
-	 * Raced with truncate or failed to remove page from current
-	 * address space, unlock and return failure.
+	 * Raced with truncate or failed to हटाओ page from current
+	 * address space, unlock and वापस failure.
 	 */
 out_unlock:
 	unlock_page(page);
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static void page_cache_pipe_buf_release(struct pipe_inode_info *pipe,
-					struct pipe_buffer *buf)
-{
+अटल व्योम page_cache_pipe_buf_release(काष्ठा pipe_inode_info *pipe,
+					काष्ठा pipe_buffer *buf)
+अणु
 	put_page(buf->page);
 	buf->flags &= ~PIPE_BUF_FLAG_LRU;
-}
+पूर्ण
 
 /*
  * Check whether the contents of buf is OK to access. Since the content
  * is a page cache page, IO may be in flight.
  */
-static int page_cache_pipe_buf_confirm(struct pipe_inode_info *pipe,
-				       struct pipe_buffer *buf)
-{
-	struct page *page = buf->page;
-	int err;
+अटल पूर्णांक page_cache_pipe_buf_confirm(काष्ठा pipe_inode_info *pipe,
+				       काष्ठा pipe_buffer *buf)
+अणु
+	काष्ठा page *page = buf->page;
+	पूर्णांक err;
 
-	if (!PageUptodate(page)) {
+	अगर (!PageUptodate(page)) अणु
 		lock_page(page);
 
 		/*
 		 * Page got truncated/unhashed. This will cause a 0-byte
-		 * splice, if this is the first page.
+		 * splice, अगर this is the first page.
 		 */
-		if (!page->mapping) {
+		अगर (!page->mapping) अणु
 			err = -ENODATA;
-			goto error;
-		}
+			जाओ error;
+		पूर्ण
 
 		/*
-		 * Uh oh, read-error from disk.
+		 * Uh oh, पढ़ो-error from disk.
 		 */
-		if (!PageUptodate(page)) {
+		अगर (!PageUptodate(page)) अणु
 			err = -EIO;
-			goto error;
-		}
+			जाओ error;
+		पूर्ण
 
 		/*
-		 * Page is ok afterall, we are done.
+		 * Page is ok afterall, we are करोne.
 		 */
 		unlock_page(page);
-	}
+	पूर्ण
 
-	return 0;
+	वापस 0;
 error:
 	unlock_page(page);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-const struct pipe_buf_operations page_cache_pipe_buf_ops = {
+स्थिर काष्ठा pipe_buf_operations page_cache_pipe_buf_ops = अणु
 	.confirm	= page_cache_pipe_buf_confirm,
 	.release	= page_cache_pipe_buf_release,
 	.try_steal	= page_cache_pipe_buf_try_steal,
 	.get		= generic_pipe_buf_get,
-};
+पूर्ण;
 
-static bool user_page_pipe_buf_try_steal(struct pipe_inode_info *pipe,
-		struct pipe_buffer *buf)
-{
-	if (!(buf->flags & PIPE_BUF_FLAG_GIFT))
-		return false;
+अटल bool user_page_pipe_buf_try_steal(काष्ठा pipe_inode_info *pipe,
+		काष्ठा pipe_buffer *buf)
+अणु
+	अगर (!(buf->flags & PIPE_BUF_FLAG_GIFT))
+		वापस false;
 
 	buf->flags |= PIPE_BUF_FLAG_LRU;
-	return generic_pipe_buf_try_steal(pipe, buf);
-}
+	वापस generic_pipe_buf_try_steal(pipe, buf);
+पूर्ण
 
-static const struct pipe_buf_operations user_page_pipe_buf_ops = {
+अटल स्थिर काष्ठा pipe_buf_operations user_page_pipe_buf_ops = अणु
 	.release	= page_cache_pipe_buf_release,
 	.try_steal	= user_page_pipe_buf_try_steal,
 	.get		= generic_pipe_buf_get,
-};
+पूर्ण;
 
-static void wakeup_pipe_readers(struct pipe_inode_info *pipe)
-{
+अटल व्योम wakeup_pipe_पढ़ोers(काष्ठा pipe_inode_info *pipe)
+अणु
 	smp_mb();
-	if (waitqueue_active(&pipe->rd_wait))
-		wake_up_interruptible(&pipe->rd_wait);
-	kill_fasync(&pipe->fasync_readers, SIGIO, POLL_IN);
-}
+	अगर (रुकोqueue_active(&pipe->rd_रुको))
+		wake_up_पूर्णांकerruptible(&pipe->rd_रुको);
+	समाप्त_fasync(&pipe->fasync_पढ़ोers, SIGIO, POLL_IN);
+पूर्ण
 
 /**
- * splice_to_pipe - fill passed data into a pipe
+ * splice_to_pipe - fill passed data पूर्णांकo a pipe
  * @pipe:	pipe to fill
  * @spd:	data to fill
  *
  * Description:
- *    @spd contains a map of pages and len/offset tuples, along with
- *    the struct pipe_buf_operations associated with these pages. This
+ *    @spd contains a map of pages and len/offset tuples, aदीर्घ with
+ *    the काष्ठा pipe_buf_operations associated with these pages. This
  *    function will link that data to the pipe.
  *
  */
-ssize_t splice_to_pipe(struct pipe_inode_info *pipe,
-		       struct splice_pipe_desc *spd)
-{
-	unsigned int spd_pages = spd->nr_pages;
-	unsigned int tail = pipe->tail;
-	unsigned int head = pipe->head;
-	unsigned int mask = pipe->ring_size - 1;
-	int ret = 0, page_nr = 0;
+sमाप_प्रकार splice_to_pipe(काष्ठा pipe_inode_info *pipe,
+		       काष्ठा splice_pipe_desc *spd)
+अणु
+	अचिन्हित पूर्णांक spd_pages = spd->nr_pages;
+	अचिन्हित पूर्णांक tail = pipe->tail;
+	अचिन्हित पूर्णांक head = pipe->head;
+	अचिन्हित पूर्णांक mask = pipe->ring_size - 1;
+	पूर्णांक ret = 0, page_nr = 0;
 
-	if (!spd_pages)
-		return 0;
+	अगर (!spd_pages)
+		वापस 0;
 
-	if (unlikely(!pipe->readers)) {
+	अगर (unlikely(!pipe->पढ़ोers)) अणु
 		send_sig(SIGPIPE, current, 0);
 		ret = -EPIPE;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	while (!pipe_full(head, tail, pipe->max_usage)) {
-		struct pipe_buffer *buf = &pipe->bufs[head & mask];
+	जबतक (!pipe_full(head, tail, pipe->max_usage)) अणु
+		काष्ठा pipe_buffer *buf = &pipe->bufs[head & mask];
 
 		buf->page = spd->pages[page_nr];
 		buf->offset = spd->partial[page_nr].offset;
 		buf->len = spd->partial[page_nr].len;
-		buf->private = spd->partial[page_nr].private;
+		buf->निजी = spd->partial[page_nr].निजी;
 		buf->ops = spd->ops;
 		buf->flags = 0;
 
@@ -212,212 +213,212 @@ ssize_t splice_to_pipe(struct pipe_inode_info *pipe,
 		page_nr++;
 		ret += buf->len;
 
-		if (!--spd->nr_pages)
-			break;
-	}
+		अगर (!--spd->nr_pages)
+			अवरोध;
+	पूर्ण
 
-	if (!ret)
+	अगर (!ret)
 		ret = -EAGAIN;
 
 out:
-	while (page_nr < spd_pages)
+	जबतक (page_nr < spd_pages)
 		spd->spd_release(spd, page_nr++);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(splice_to_pipe);
 
-ssize_t add_to_pipe(struct pipe_inode_info *pipe, struct pipe_buffer *buf)
-{
-	unsigned int head = pipe->head;
-	unsigned int tail = pipe->tail;
-	unsigned int mask = pipe->ring_size - 1;
-	int ret;
+sमाप_प्रकार add_to_pipe(काष्ठा pipe_inode_info *pipe, काष्ठा pipe_buffer *buf)
+अणु
+	अचिन्हित पूर्णांक head = pipe->head;
+	अचिन्हित पूर्णांक tail = pipe->tail;
+	अचिन्हित पूर्णांक mask = pipe->ring_size - 1;
+	पूर्णांक ret;
 
-	if (unlikely(!pipe->readers)) {
+	अगर (unlikely(!pipe->पढ़ोers)) अणु
 		send_sig(SIGPIPE, current, 0);
 		ret = -EPIPE;
-	} else if (pipe_full(head, tail, pipe->max_usage)) {
+	पूर्ण अन्यथा अगर (pipe_full(head, tail, pipe->max_usage)) अणु
 		ret = -EAGAIN;
-	} else {
+	पूर्ण अन्यथा अणु
 		pipe->bufs[head & mask] = *buf;
 		pipe->head = head + 1;
-		return buf->len;
-	}
+		वापस buf->len;
+	पूर्ण
 	pipe_buf_release(pipe, buf);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL(add_to_pipe);
 
 /*
- * Check if we need to grow the arrays holding pages and partial page
+ * Check अगर we need to grow the arrays holding pages and partial page
  * descriptions.
  */
-int splice_grow_spd(const struct pipe_inode_info *pipe, struct splice_pipe_desc *spd)
-{
-	unsigned int max_usage = READ_ONCE(pipe->max_usage);
+पूर्णांक splice_grow_spd(स्थिर काष्ठा pipe_inode_info *pipe, काष्ठा splice_pipe_desc *spd)
+अणु
+	अचिन्हित पूर्णांक max_usage = READ_ONCE(pipe->max_usage);
 
 	spd->nr_pages_max = max_usage;
-	if (max_usage <= PIPE_DEF_BUFFERS)
-		return 0;
+	अगर (max_usage <= PIPE_DEF_BUFFERS)
+		वापस 0;
 
-	spd->pages = kmalloc_array(max_usage, sizeof(struct page *), GFP_KERNEL);
-	spd->partial = kmalloc_array(max_usage, sizeof(struct partial_page),
+	spd->pages = kदो_स्मृति_array(max_usage, माप(काष्ठा page *), GFP_KERNEL);
+	spd->partial = kदो_स्मृति_array(max_usage, माप(काष्ठा partial_page),
 				     GFP_KERNEL);
 
-	if (spd->pages && spd->partial)
-		return 0;
+	अगर (spd->pages && spd->partial)
+		वापस 0;
 
-	kfree(spd->pages);
-	kfree(spd->partial);
-	return -ENOMEM;
-}
+	kमुक्त(spd->pages);
+	kमुक्त(spd->partial);
+	वापस -ENOMEM;
+पूर्ण
 
-void splice_shrink_spd(struct splice_pipe_desc *spd)
-{
-	if (spd->nr_pages_max <= PIPE_DEF_BUFFERS)
-		return;
+व्योम splice_shrink_spd(काष्ठा splice_pipe_desc *spd)
+अणु
+	अगर (spd->nr_pages_max <= PIPE_DEF_BUFFERS)
+		वापस;
 
-	kfree(spd->pages);
-	kfree(spd->partial);
-}
+	kमुक्त(spd->pages);
+	kमुक्त(spd->partial);
+पूर्ण
 
 /**
- * generic_file_splice_read - splice data from file to a pipe
+ * generic_file_splice_पढ़ो - splice data from file to a pipe
  * @in:		file to splice from
  * @ppos:	position in @in
  * @pipe:	pipe to splice to
  * @len:	number of bytes to splice
- * @flags:	splice modifier flags
+ * @flags:	splice modअगरier flags
  *
  * Description:
- *    Will read pages from given file and fill them into a pipe. Can be
- *    used as long as it has more or less sane ->read_iter().
+ *    Will पढ़ो pages from given file and fill them पूर्णांकo a pipe. Can be
+ *    used as दीर्घ as it has more or less sane ->पढ़ो_iter().
  *
  */
-ssize_t generic_file_splice_read(struct file *in, loff_t *ppos,
-				 struct pipe_inode_info *pipe, size_t len,
-				 unsigned int flags)
-{
-	struct iov_iter to;
-	struct kiocb kiocb;
-	unsigned int i_head;
-	int ret;
+sमाप_प्रकार generic_file_splice_पढ़ो(काष्ठा file *in, loff_t *ppos,
+				 काष्ठा pipe_inode_info *pipe, माप_प्रकार len,
+				 अचिन्हित पूर्णांक flags)
+अणु
+	काष्ठा iov_iter to;
+	काष्ठा kiocb kiocb;
+	अचिन्हित पूर्णांक i_head;
+	पूर्णांक ret;
 
 	iov_iter_pipe(&to, READ, pipe, len);
 	i_head = to.head;
 	init_sync_kiocb(&kiocb, in);
 	kiocb.ki_pos = *ppos;
-	ret = call_read_iter(in, &kiocb, &to);
-	if (ret > 0) {
+	ret = call_पढ़ो_iter(in, &kiocb, &to);
+	अगर (ret > 0) अणु
 		*ppos = kiocb.ki_pos;
 		file_accessed(in);
-	} else if (ret < 0) {
+	पूर्ण अन्यथा अगर (ret < 0) अणु
 		to.head = i_head;
 		to.iov_offset = 0;
-		iov_iter_advance(&to, 0); /* to free what was emitted */
+		iov_iter_advance(&to, 0); /* to मुक्त what was emitted */
 		/*
-		 * callers of ->splice_read() expect -EAGAIN on
+		 * callers of ->splice_पढ़ो() expect -EAGAIN on
 		 * "can't put anything in there", rather than -EFAULT.
 		 */
-		if (ret == -EFAULT)
+		अगर (ret == -EFAULT)
 			ret = -EAGAIN;
-	}
+	पूर्ण
 
-	return ret;
-}
-EXPORT_SYMBOL(generic_file_splice_read);
+	वापस ret;
+पूर्ण
+EXPORT_SYMBOL(generic_file_splice_पढ़ो);
 
-const struct pipe_buf_operations default_pipe_buf_ops = {
+स्थिर काष्ठा pipe_buf_operations शेष_pipe_buf_ops = अणु
 	.release	= generic_pipe_buf_release,
 	.try_steal	= generic_pipe_buf_try_steal,
 	.get		= generic_pipe_buf_get,
-};
+पूर्ण;
 
-/* Pipe buffer operations for a socket and similar. */
-const struct pipe_buf_operations nosteal_pipe_buf_ops = {
+/* Pipe buffer operations क्रम a socket and similar. */
+स्थिर काष्ठा pipe_buf_operations nosteal_pipe_buf_ops = अणु
 	.release	= generic_pipe_buf_release,
 	.get		= generic_pipe_buf_get,
-};
+पूर्ण;
 EXPORT_SYMBOL(nosteal_pipe_buf_ops);
 
 /*
  * Send 'sd->len' bytes to socket from 'sd->file' at position 'sd->pos'
  * using sendpage(). Return the number of bytes sent.
  */
-static int pipe_to_sendpage(struct pipe_inode_info *pipe,
-			    struct pipe_buffer *buf, struct splice_desc *sd)
-{
-	struct file *file = sd->u.file;
+अटल पूर्णांक pipe_to_sendpage(काष्ठा pipe_inode_info *pipe,
+			    काष्ठा pipe_buffer *buf, काष्ठा splice_desc *sd)
+अणु
+	काष्ठा file *file = sd->u.file;
 	loff_t pos = sd->pos;
-	int more;
+	पूर्णांक more;
 
-	if (!likely(file->f_op->sendpage))
-		return -EINVAL;
+	अगर (!likely(file->f_op->sendpage))
+		वापस -EINVAL;
 
 	more = (sd->flags & SPLICE_F_MORE) ? MSG_MORE : 0;
 
-	if (sd->len < sd->total_len &&
+	अगर (sd->len < sd->total_len &&
 	    pipe_occupancy(pipe->head, pipe->tail) > 1)
 		more |= MSG_SENDPAGE_NOTLAST;
 
-	return file->f_op->sendpage(file, buf->page, buf->offset,
+	वापस file->f_op->sendpage(file, buf->page, buf->offset,
 				    sd->len, &pos, more);
-}
+पूर्ण
 
-static void wakeup_pipe_writers(struct pipe_inode_info *pipe)
-{
+अटल व्योम wakeup_pipe_ग_लिखोrs(काष्ठा pipe_inode_info *pipe)
+अणु
 	smp_mb();
-	if (waitqueue_active(&pipe->wr_wait))
-		wake_up_interruptible(&pipe->wr_wait);
-	kill_fasync(&pipe->fasync_writers, SIGIO, POLL_OUT);
-}
+	अगर (रुकोqueue_active(&pipe->wr_रुको))
+		wake_up_पूर्णांकerruptible(&pipe->wr_रुको);
+	समाप्त_fasync(&pipe->fasync_ग_लिखोrs, SIGIO, POLL_OUT);
+पूर्ण
 
 /**
  * splice_from_pipe_feed - feed available data from a pipe to a file
  * @pipe:	pipe to splice from
- * @sd:		information to @actor
+ * @sd:		inक्रमmation to @actor
  * @actor:	handler that splices the data
  *
  * Description:
- *    This function loops over the pipe and calls @actor to do the
- *    actual moving of a single struct pipe_buffer to the desired
- *    destination.  It returns when there's no more buffers left in
- *    the pipe or if the requested number of bytes (@sd->total_len)
- *    have been copied.  It returns a positive number (one) if the
- *    pipe needs to be filled with more data, zero if the required
- *    number of bytes have been copied and -errno on error.
+ *    This function loops over the pipe and calls @actor to करो the
+ *    actual moving of a single काष्ठा pipe_buffer to the desired
+ *    destination.  It वापसs when there's no more buffers left in
+ *    the pipe or अगर the requested number of bytes (@sd->total_len)
+ *    have been copied.  It वापसs a positive number (one) अगर the
+ *    pipe needs to be filled with more data, zero अगर the required
+ *    number of bytes have been copied and -त्रुटि_सं on error.
  *
- *    This, together with splice_from_pipe_{begin,end,next}, may be
+ *    This, together with splice_from_pipe_अणुbegin,end,nextपूर्ण, may be
  *    used to implement the functionality of __splice_from_pipe() when
  *    locking is required around copying the pipe buffers to the
  *    destination.
  */
-static int splice_from_pipe_feed(struct pipe_inode_info *pipe, struct splice_desc *sd,
+अटल पूर्णांक splice_from_pipe_feed(काष्ठा pipe_inode_info *pipe, काष्ठा splice_desc *sd,
 			  splice_actor *actor)
-{
-	unsigned int head = pipe->head;
-	unsigned int tail = pipe->tail;
-	unsigned int mask = pipe->ring_size - 1;
-	int ret;
+अणु
+	अचिन्हित पूर्णांक head = pipe->head;
+	अचिन्हित पूर्णांक tail = pipe->tail;
+	अचिन्हित पूर्णांक mask = pipe->ring_size - 1;
+	पूर्णांक ret;
 
-	while (!pipe_empty(head, tail)) {
-		struct pipe_buffer *buf = &pipe->bufs[tail & mask];
+	जबतक (!pipe_empty(head, tail)) अणु
+		काष्ठा pipe_buffer *buf = &pipe->bufs[tail & mask];
 
 		sd->len = buf->len;
-		if (sd->len > sd->total_len)
+		अगर (sd->len > sd->total_len)
 			sd->len = sd->total_len;
 
 		ret = pipe_buf_confirm(pipe, buf);
-		if (unlikely(ret)) {
-			if (ret == -ENODATA)
+		अगर (unlikely(ret)) अणु
+			अगर (ret == -ENODATA)
 				ret = 0;
-			return ret;
-		}
+			वापस ret;
+		पूर्ण
 
 		ret = actor(pipe, buf, sd);
-		if (ret <= 0)
-			return ret;
+		अगर (ret <= 0)
+			वापस ret;
 
 		buf->offset += ret;
 		buf->len -= ret;
@@ -427,144 +428,144 @@ static int splice_from_pipe_feed(struct pipe_inode_info *pipe, struct splice_des
 		sd->pos += ret;
 		sd->total_len -= ret;
 
-		if (!buf->len) {
+		अगर (!buf->len) अणु
 			pipe_buf_release(pipe, buf);
 			tail++;
 			pipe->tail = tail;
-			if (pipe->files)
+			अगर (pipe->files)
 				sd->need_wakeup = true;
-		}
+		पूर्ण
 
-		if (!sd->total_len)
-			return 0;
-	}
+		अगर (!sd->total_len)
+			वापस 0;
+	पूर्ण
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
 /* We know we have a pipe buffer, but maybe it's empty? */
-static inline bool eat_empty_buffer(struct pipe_inode_info *pipe)
-{
-	unsigned int tail = pipe->tail;
-	unsigned int mask = pipe->ring_size - 1;
-	struct pipe_buffer *buf = &pipe->bufs[tail & mask];
+अटल अंतरभूत bool eat_empty_buffer(काष्ठा pipe_inode_info *pipe)
+अणु
+	अचिन्हित पूर्णांक tail = pipe->tail;
+	अचिन्हित पूर्णांक mask = pipe->ring_size - 1;
+	काष्ठा pipe_buffer *buf = &pipe->bufs[tail & mask];
 
-	if (unlikely(!buf->len)) {
+	अगर (unlikely(!buf->len)) अणु
 		pipe_buf_release(pipe, buf);
 		pipe->tail = tail+1;
-		return true;
-	}
+		वापस true;
+	पूर्ण
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
 /**
- * splice_from_pipe_next - wait for some data to splice from
+ * splice_from_pipe_next - रुको क्रम some data to splice from
  * @pipe:	pipe to splice from
- * @sd:		information about the splice operation
+ * @sd:		inक्रमmation about the splice operation
  *
  * Description:
- *    This function will wait for some data and return a positive
- *    value (one) if pipe buffers are available.  It will return zero
- *    or -errno if no more data needs to be spliced.
+ *    This function will रुको क्रम some data and वापस a positive
+ *    value (one) अगर pipe buffers are available.  It will वापस zero
+ *    or -त्रुटि_सं अगर no more data needs to be spliced.
  */
-static int splice_from_pipe_next(struct pipe_inode_info *pipe, struct splice_desc *sd)
-{
+अटल पूर्णांक splice_from_pipe_next(काष्ठा pipe_inode_info *pipe, काष्ठा splice_desc *sd)
+अणु
 	/*
-	 * Check for signal early to make process killable when there are
+	 * Check क्रम संकेत early to make process समाप्तable when there are
 	 * always buffers available
 	 */
-	if (signal_pending(current))
-		return -ERESTARTSYS;
+	अगर (संकेत_pending(current))
+		वापस -ERESTARTSYS;
 
 repeat:
-	while (pipe_empty(pipe->head, pipe->tail)) {
-		if (!pipe->writers)
-			return 0;
+	जबतक (pipe_empty(pipe->head, pipe->tail)) अणु
+		अगर (!pipe->ग_लिखोrs)
+			वापस 0;
 
-		if (sd->num_spliced)
-			return 0;
+		अगर (sd->num_spliced)
+			वापस 0;
 
-		if (sd->flags & SPLICE_F_NONBLOCK)
-			return -EAGAIN;
+		अगर (sd->flags & SPLICE_F_NONBLOCK)
+			वापस -EAGAIN;
 
-		if (signal_pending(current))
-			return -ERESTARTSYS;
+		अगर (संकेत_pending(current))
+			वापस -ERESTARTSYS;
 
-		if (sd->need_wakeup) {
-			wakeup_pipe_writers(pipe);
+		अगर (sd->need_wakeup) अणु
+			wakeup_pipe_ग_लिखोrs(pipe);
 			sd->need_wakeup = false;
-		}
+		पूर्ण
 
-		pipe_wait_readable(pipe);
-	}
+		pipe_रुको_पढ़ोable(pipe);
+	पूर्ण
 
-	if (eat_empty_buffer(pipe))
-		goto repeat;
+	अगर (eat_empty_buffer(pipe))
+		जाओ repeat;
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
 /**
  * splice_from_pipe_begin - start splicing from pipe
- * @sd:		information about the splice operation
+ * @sd:		inक्रमmation about the splice operation
  *
  * Description:
- *    This function should be called before a loop containing
+ *    This function should be called beक्रमe a loop containing
  *    splice_from_pipe_next() and splice_from_pipe_feed() to
  *    initialize the necessary fields of @sd.
  */
-static void splice_from_pipe_begin(struct splice_desc *sd)
-{
+अटल व्योम splice_from_pipe_begin(काष्ठा splice_desc *sd)
+अणु
 	sd->num_spliced = 0;
 	sd->need_wakeup = false;
-}
+पूर्ण
 
 /**
  * splice_from_pipe_end - finish splicing from pipe
  * @pipe:	pipe to splice from
- * @sd:		information about the splice operation
+ * @sd:		inक्रमmation about the splice operation
  *
  * Description:
- *    This function will wake up pipe writers if necessary.  It should
+ *    This function will wake up pipe ग_लिखोrs अगर necessary.  It should
  *    be called after a loop containing splice_from_pipe_next() and
  *    splice_from_pipe_feed().
  */
-static void splice_from_pipe_end(struct pipe_inode_info *pipe, struct splice_desc *sd)
-{
-	if (sd->need_wakeup)
-		wakeup_pipe_writers(pipe);
-}
+अटल व्योम splice_from_pipe_end(काष्ठा pipe_inode_info *pipe, काष्ठा splice_desc *sd)
+अणु
+	अगर (sd->need_wakeup)
+		wakeup_pipe_ग_लिखोrs(pipe);
+पूर्ण
 
 /**
  * __splice_from_pipe - splice data from a pipe to given actor
  * @pipe:	pipe to splice from
- * @sd:		information to @actor
+ * @sd:		inक्रमmation to @actor
  * @actor:	handler that splices the data
  *
  * Description:
- *    This function does little more than loop over the pipe and call
- *    @actor to do the actual moving of a single struct pipe_buffer to
+ *    This function करोes little more than loop over the pipe and call
+ *    @actor to करो the actual moving of a single काष्ठा pipe_buffer to
  *    the desired destination. See pipe_to_file, pipe_to_sendpage, or
  *    pipe_to_user.
  *
  */
-ssize_t __splice_from_pipe(struct pipe_inode_info *pipe, struct splice_desc *sd,
+sमाप_प्रकार __splice_from_pipe(काष्ठा pipe_inode_info *pipe, काष्ठा splice_desc *sd,
 			   splice_actor *actor)
-{
-	int ret;
+अणु
+	पूर्णांक ret;
 
 	splice_from_pipe_begin(sd);
-	do {
+	करो अणु
 		cond_resched();
 		ret = splice_from_pipe_next(pipe, sd);
-		if (ret > 0)
+		अगर (ret > 0)
 			ret = splice_from_pipe_feed(pipe, sd, actor);
-	} while (ret > 0);
+	पूर्ण जबतक (ret > 0);
 	splice_from_pipe_end(pipe, sd);
 
-	return sd->num_spliced ? sd->num_spliced : ret;
-}
+	वापस sd->num_spliced ? sd->num_spliced : ret;
+पूर्ण
 EXPORT_SYMBOL(__splice_from_pipe);
 
 /**
@@ -573,7 +574,7 @@ EXPORT_SYMBOL(__splice_from_pipe);
  * @out:	file to splice to
  * @ppos:	position in @out
  * @len:	how many bytes to splice
- * @flags:	splice modifier flags
+ * @flags:	splice modअगरier flags
  * @actor:	handler that splices the data
  *
  * Description:
@@ -581,80 +582,80 @@ EXPORT_SYMBOL(__splice_from_pipe);
  *    otherwise it's identical to __splice_from_pipe().
  *
  */
-ssize_t splice_from_pipe(struct pipe_inode_info *pipe, struct file *out,
-			 loff_t *ppos, size_t len, unsigned int flags,
+sमाप_प्रकार splice_from_pipe(काष्ठा pipe_inode_info *pipe, काष्ठा file *out,
+			 loff_t *ppos, माप_प्रकार len, अचिन्हित पूर्णांक flags,
 			 splice_actor *actor)
-{
-	ssize_t ret;
-	struct splice_desc sd = {
+अणु
+	sमाप_प्रकार ret;
+	काष्ठा splice_desc sd = अणु
 		.total_len = len,
 		.flags = flags,
 		.pos = *ppos,
 		.u.file = out,
-	};
+	पूर्ण;
 
 	pipe_lock(pipe);
 	ret = __splice_from_pipe(pipe, &sd, actor);
 	pipe_unlock(pipe);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * iter_file_splice_write - splice data from a pipe to a file
+ * iter_file_splice_ग_लिखो - splice data from a pipe to a file
  * @pipe:	pipe info
- * @out:	file to write to
+ * @out:	file to ग_लिखो to
  * @ppos:	position in @out
  * @len:	number of bytes to splice
- * @flags:	splice modifier flags
+ * @flags:	splice modअगरier flags
  *
  * Description:
  *    Will either move or copy pages (determined by @flags options) from
  *    the given pipe inode to the given file.
- *    This one is ->write_iter-based.
+ *    This one is ->ग_लिखो_iter-based.
  *
  */
-ssize_t
-iter_file_splice_write(struct pipe_inode_info *pipe, struct file *out,
-			  loff_t *ppos, size_t len, unsigned int flags)
-{
-	struct splice_desc sd = {
+sमाप_प्रकार
+iter_file_splice_ग_लिखो(काष्ठा pipe_inode_info *pipe, काष्ठा file *out,
+			  loff_t *ppos, माप_प्रकार len, अचिन्हित पूर्णांक flags)
+अणु
+	काष्ठा splice_desc sd = अणु
 		.total_len = len,
 		.flags = flags,
 		.pos = *ppos,
 		.u.file = out,
-	};
-	int nbufs = pipe->max_usage;
-	struct bio_vec *array = kcalloc(nbufs, sizeof(struct bio_vec),
+	पूर्ण;
+	पूर्णांक nbufs = pipe->max_usage;
+	काष्ठा bio_vec *array = kसुस्मृति(nbufs, माप(काष्ठा bio_vec),
 					GFP_KERNEL);
-	ssize_t ret;
+	sमाप_प्रकार ret;
 
-	if (unlikely(!array))
-		return -ENOMEM;
+	अगर (unlikely(!array))
+		वापस -ENOMEM;
 
 	pipe_lock(pipe);
 
 	splice_from_pipe_begin(&sd);
-	while (sd.total_len) {
-		struct iov_iter from;
-		unsigned int head, tail, mask;
-		size_t left;
-		int n;
+	जबतक (sd.total_len) अणु
+		काष्ठा iov_iter from;
+		अचिन्हित पूर्णांक head, tail, mask;
+		माप_प्रकार left;
+		पूर्णांक n;
 
 		ret = splice_from_pipe_next(pipe, &sd);
-		if (ret <= 0)
-			break;
+		अगर (ret <= 0)
+			अवरोध;
 
-		if (unlikely(nbufs < pipe->max_usage)) {
-			kfree(array);
+		अगर (unlikely(nbufs < pipe->max_usage)) अणु
+			kमुक्त(array);
 			nbufs = pipe->max_usage;
-			array = kcalloc(nbufs, sizeof(struct bio_vec),
+			array = kसुस्मृति(nbufs, माप(काष्ठा bio_vec),
 					GFP_KERNEL);
-			if (!array) {
+			अगर (!array) अणु
 				ret = -ENOMEM;
-				break;
-			}
-		}
+				अवरोध;
+			पूर्ण
+		पूर्ण
 
 		head = pipe->head;
 		tail = pipe->tail;
@@ -662,33 +663,33 @@ iter_file_splice_write(struct pipe_inode_info *pipe, struct file *out,
 
 		/* build the vector */
 		left = sd.total_len;
-		for (n = 0; !pipe_empty(head, tail) && left && n < nbufs; tail++) {
-			struct pipe_buffer *buf = &pipe->bufs[tail & mask];
-			size_t this_len = buf->len;
+		क्रम (n = 0; !pipe_empty(head, tail) && left && n < nbufs; tail++) अणु
+			काष्ठा pipe_buffer *buf = &pipe->bufs[tail & mask];
+			माप_प्रकार this_len = buf->len;
 
 			/* zero-length bvecs are not supported, skip them */
-			if (!this_len)
-				continue;
+			अगर (!this_len)
+				जारी;
 			this_len = min(this_len, left);
 
 			ret = pipe_buf_confirm(pipe, buf);
-			if (unlikely(ret)) {
-				if (ret == -ENODATA)
+			अगर (unlikely(ret)) अणु
+				अगर (ret == -ENODATA)
 					ret = 0;
-				goto done;
-			}
+				जाओ करोne;
+			पूर्ण
 
 			array[n].bv_page = buf->page;
 			array[n].bv_len = this_len;
 			array[n].bv_offset = buf->offset;
 			left -= this_len;
 			n++;
-		}
+		पूर्ण
 
 		iov_iter_bvec(&from, WRITE, array, n, sd.total_len - left);
-		ret = vfs_iter_write(out, &from, &sd.pos, 0);
-		if (ret <= 0)
-			break;
+		ret = vfs_iter_ग_लिखो(out, &from, &sd.pos, 0);
+		अगर (ret <= 0)
+			अवरोध;
 
 		sd.num_spliced += ret;
 		sd.total_len -= ret;
@@ -696,156 +697,156 @@ iter_file_splice_write(struct pipe_inode_info *pipe, struct file *out,
 
 		/* dismiss the fully eaten buffers, adjust the partial one */
 		tail = pipe->tail;
-		while (ret) {
-			struct pipe_buffer *buf = &pipe->bufs[tail & mask];
-			if (ret >= buf->len) {
+		जबतक (ret) अणु
+			काष्ठा pipe_buffer *buf = &pipe->bufs[tail & mask];
+			अगर (ret >= buf->len) अणु
 				ret -= buf->len;
 				buf->len = 0;
 				pipe_buf_release(pipe, buf);
 				tail++;
 				pipe->tail = tail;
-				if (pipe->files)
+				अगर (pipe->files)
 					sd.need_wakeup = true;
-			} else {
+			पूर्ण अन्यथा अणु
 				buf->offset += ret;
 				buf->len -= ret;
 				ret = 0;
-			}
-		}
-	}
-done:
-	kfree(array);
+			पूर्ण
+		पूर्ण
+	पूर्ण
+करोne:
+	kमुक्त(array);
 	splice_from_pipe_end(pipe, &sd);
 
 	pipe_unlock(pipe);
 
-	if (sd.num_spliced)
+	अगर (sd.num_spliced)
 		ret = sd.num_spliced;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-EXPORT_SYMBOL(iter_file_splice_write);
+EXPORT_SYMBOL(iter_file_splice_ग_लिखो);
 
 /**
  * generic_splice_sendpage - splice data from a pipe to a socket
  * @pipe:	pipe to splice from
- * @out:	socket to write to
+ * @out:	socket to ग_लिखो to
  * @ppos:	position in @out
  * @len:	number of bytes to splice
- * @flags:	splice modifier flags
+ * @flags:	splice modअगरier flags
  *
  * Description:
  *    Will send @len bytes from the pipe to a network socket. No data copying
  *    is involved.
  *
  */
-ssize_t generic_splice_sendpage(struct pipe_inode_info *pipe, struct file *out,
-				loff_t *ppos, size_t len, unsigned int flags)
-{
-	return splice_from_pipe(pipe, out, ppos, len, flags, pipe_to_sendpage);
-}
+sमाप_प्रकार generic_splice_sendpage(काष्ठा pipe_inode_info *pipe, काष्ठा file *out,
+				loff_t *ppos, माप_प्रकार len, अचिन्हित पूर्णांक flags)
+अणु
+	वापस splice_from_pipe(pipe, out, ppos, len, flags, pipe_to_sendpage);
+पूर्ण
 
 EXPORT_SYMBOL(generic_splice_sendpage);
 
-static int warn_unsupported(struct file *file, const char *op)
-{
+अटल पूर्णांक warn_unsupported(काष्ठा file *file, स्थिर अक्षर *op)
+अणु
 	pr_debug_ratelimited(
 		"splice %s not supported for file %pD4 (pid: %d comm: %.20s)\n",
 		op, file, current->pid, current->comm);
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
 /*
  * Attempt to initiate a splice from pipe to file.
  */
-static long do_splice_from(struct pipe_inode_info *pipe, struct file *out,
-			   loff_t *ppos, size_t len, unsigned int flags)
-{
-	if (unlikely(!out->f_op->splice_write))
-		return warn_unsupported(out, "write");
-	return out->f_op->splice_write(pipe, out, ppos, len, flags);
-}
+अटल दीर्घ करो_splice_from(काष्ठा pipe_inode_info *pipe, काष्ठा file *out,
+			   loff_t *ppos, माप_प्रकार len, अचिन्हित पूर्णांक flags)
+अणु
+	अगर (unlikely(!out->f_op->splice_ग_लिखो))
+		वापस warn_unsupported(out, "write");
+	वापस out->f_op->splice_ग_लिखो(pipe, out, ppos, len, flags);
+पूर्ण
 
 /*
  * Attempt to initiate a splice from a file to a pipe.
  */
-static long do_splice_to(struct file *in, loff_t *ppos,
-			 struct pipe_inode_info *pipe, size_t len,
-			 unsigned int flags)
-{
-	unsigned int p_space;
-	int ret;
+अटल दीर्घ करो_splice_to(काष्ठा file *in, loff_t *ppos,
+			 काष्ठा pipe_inode_info *pipe, माप_प्रकार len,
+			 अचिन्हित पूर्णांक flags)
+अणु
+	अचिन्हित पूर्णांक p_space;
+	पूर्णांक ret;
 
-	if (unlikely(!(in->f_mode & FMODE_READ)))
-		return -EBADF;
+	अगर (unlikely(!(in->f_mode & FMODE_READ)))
+		वापस -EBADF;
 
-	/* Don't try to read more the pipe has space for. */
+	/* Don't try to पढ़ो more the pipe has space क्रम. */
 	p_space = pipe->max_usage - pipe_occupancy(pipe->head, pipe->tail);
-	len = min_t(size_t, len, p_space << PAGE_SHIFT);
+	len = min_t(माप_प्रकार, len, p_space << PAGE_SHIFT);
 
-	ret = rw_verify_area(READ, in, ppos, len);
-	if (unlikely(ret < 0))
-		return ret;
+	ret = rw_verअगरy_area(READ, in, ppos, len);
+	अगर (unlikely(ret < 0))
+		वापस ret;
 
-	if (unlikely(len > MAX_RW_COUNT))
+	अगर (unlikely(len > MAX_RW_COUNT))
 		len = MAX_RW_COUNT;
 
-	if (unlikely(!in->f_op->splice_read))
-		return warn_unsupported(in, "read");
-	return in->f_op->splice_read(in, ppos, pipe, len, flags);
-}
+	अगर (unlikely(!in->f_op->splice_पढ़ो))
+		वापस warn_unsupported(in, "read");
+	वापस in->f_op->splice_पढ़ो(in, ppos, pipe, len, flags);
+पूर्ण
 
 /**
  * splice_direct_to_actor - splices data directly between two non-pipes
  * @in:		file to splice from
- * @sd:		actor information on where to splice to
+ * @sd:		actor inक्रमmation on where to splice to
  * @actor:	handles the data splicing
  *
  * Description:
- *    This is a special case helper to splice directly between two
- *    points, without requiring an explicit pipe. Internally an allocated
- *    pipe is cached in the process, and reused during the lifetime of
+ *    This is a special हाल helper to splice directly between two
+ *    poपूर्णांकs, without requiring an explicit pipe. Internally an allocated
+ *    pipe is cached in the process, and reused during the lअगरeसमय of
  *    that process.
  *
  */
-ssize_t splice_direct_to_actor(struct file *in, struct splice_desc *sd,
+sमाप_प्रकार splice_direct_to_actor(काष्ठा file *in, काष्ठा splice_desc *sd,
 			       splice_direct_actor *actor)
-{
-	struct pipe_inode_info *pipe;
-	long ret, bytes;
+अणु
+	काष्ठा pipe_inode_info *pipe;
+	दीर्घ ret, bytes;
 	umode_t i_mode;
-	size_t len;
-	int i, flags, more;
+	माप_प्रकार len;
+	पूर्णांक i, flags, more;
 
 	/*
-	 * We require the input being a regular file, as we don't want to
-	 * randomly drop data for eg socket -> socket splicing. Use the
-	 * piped splicing for that!
+	 * We require the input being a regular file, as we करोn't want to
+	 * अक्रमomly drop data क्रम eg socket -> socket splicing. Use the
+	 * piped splicing क्रम that!
 	 */
 	i_mode = file_inode(in)->i_mode;
-	if (unlikely(!S_ISREG(i_mode) && !S_ISBLK(i_mode)))
-		return -EINVAL;
+	अगर (unlikely(!S_ISREG(i_mode) && !S_ISBLK(i_mode)))
+		वापस -EINVAL;
 
 	/*
-	 * neither in nor out is a pipe, setup an internal pipe attached to
+	 * neither in nor out is a pipe, setup an पूर्णांकernal pipe attached to
 	 * 'out' and transfer the wanted data from 'in' to 'out' through that
 	 */
 	pipe = current->splice_pipe;
-	if (unlikely(!pipe)) {
+	अगर (unlikely(!pipe)) अणु
 		pipe = alloc_pipe_info();
-		if (!pipe)
-			return -ENOMEM;
+		अगर (!pipe)
+			वापस -ENOMEM;
 
 		/*
-		 * We don't have an immediate reader, but we'll read the stuff
+		 * We करोn't have an immediate reader, but we'll पढ़ो the stuff
 		 * out of the pipe right after the splice_to_pipe(). So set
 		 * PIPE_READERS appropriately.
 		 */
-		pipe->readers = 1;
+		pipe->पढ़ोers = 1;
 
 		current->splice_pipe = pipe;
-	}
+	पूर्ण
 
 	/*
 	 * Do the splice.
@@ -863,680 +864,680 @@ ssize_t splice_direct_to_actor(struct file *in, struct splice_desc *sd,
 
 	WARN_ON_ONCE(!pipe_empty(pipe->head, pipe->tail));
 
-	while (len) {
-		size_t read_len;
+	जबतक (len) अणु
+		माप_प्रकार पढ़ो_len;
 		loff_t pos = sd->pos, prev_pos = pos;
 
-		ret = do_splice_to(in, &pos, pipe, len, flags);
-		if (unlikely(ret <= 0))
-			goto out_release;
+		ret = करो_splice_to(in, &pos, pipe, len, flags);
+		अगर (unlikely(ret <= 0))
+			जाओ out_release;
 
-		read_len = ret;
-		sd->total_len = read_len;
+		पढ़ो_len = ret;
+		sd->total_len = पढ़ो_len;
 
 		/*
 		 * If more data is pending, set SPLICE_F_MORE
 		 * If this is the last data and SPLICE_F_MORE was not set
 		 * initially, clears it.
 		 */
-		if (read_len < len)
+		अगर (पढ़ो_len < len)
 			sd->flags |= SPLICE_F_MORE;
-		else if (!more)
+		अन्यथा अगर (!more)
 			sd->flags &= ~SPLICE_F_MORE;
 		/*
 		 * NOTE: nonblocking mode only applies to the input. We
-		 * must not do the output in nonblocking mode as then we
-		 * could get stuck data in the internal pipe:
+		 * must not करो the output in nonblocking mode as then we
+		 * could get stuck data in the पूर्णांकernal pipe:
 		 */
 		ret = actor(pipe, sd);
-		if (unlikely(ret <= 0)) {
+		अगर (unlikely(ret <= 0)) अणु
 			sd->pos = prev_pos;
-			goto out_release;
-		}
+			जाओ out_release;
+		पूर्ण
 
 		bytes += ret;
 		len -= ret;
 		sd->pos = pos;
 
-		if (ret < read_len) {
+		अगर (ret < पढ़ो_len) अणु
 			sd->pos = prev_pos + ret;
-			goto out_release;
-		}
-	}
+			जाओ out_release;
+		पूर्ण
+	पूर्ण
 
-done:
+करोne:
 	pipe->tail = pipe->head = 0;
 	file_accessed(in);
-	return bytes;
+	वापस bytes;
 
 out_release:
 	/*
 	 * If we did an incomplete transfer we must release
 	 * the pipe buffers in question:
 	 */
-	for (i = 0; i < pipe->ring_size; i++) {
-		struct pipe_buffer *buf = &pipe->bufs[i];
+	क्रम (i = 0; i < pipe->ring_size; i++) अणु
+		काष्ठा pipe_buffer *buf = &pipe->bufs[i];
 
-		if (buf->ops)
+		अगर (buf->ops)
 			pipe_buf_release(pipe, buf);
-	}
+	पूर्ण
 
-	if (!bytes)
+	अगर (!bytes)
 		bytes = ret;
 
-	goto done;
-}
+	जाओ करोne;
+पूर्ण
 EXPORT_SYMBOL(splice_direct_to_actor);
 
-static int direct_splice_actor(struct pipe_inode_info *pipe,
-			       struct splice_desc *sd)
-{
-	struct file *file = sd->u.file;
+अटल पूर्णांक direct_splice_actor(काष्ठा pipe_inode_info *pipe,
+			       काष्ठा splice_desc *sd)
+अणु
+	काष्ठा file *file = sd->u.file;
 
-	return do_splice_from(pipe, file, sd->opos, sd->total_len,
+	वापस करो_splice_from(pipe, file, sd->opos, sd->total_len,
 			      sd->flags);
-}
+पूर्ण
 
 /**
- * do_splice_direct - splices data directly between two files
+ * करो_splice_direct - splices data directly between two files
  * @in:		file to splice from
  * @ppos:	input file offset
  * @out:	file to splice to
  * @opos:	output file offset
  * @len:	number of bytes to splice
- * @flags:	splice modifier flags
+ * @flags:	splice modअगरier flags
  *
  * Description:
- *    For use by do_sendfile(). splice can easily emulate sendfile, but
- *    doing it in the application would incur an extra system call
+ *    For use by करो_sendfile(). splice can easily emulate sendfile, but
+ *    करोing it in the application would incur an extra प्रणाली call
  *    (splice in + splice out, as compared to just sendfile()). So this helper
- *    can splice directly through a process-private pipe.
+ *    can splice directly through a process-निजी pipe.
  *
  */
-long do_splice_direct(struct file *in, loff_t *ppos, struct file *out,
-		      loff_t *opos, size_t len, unsigned int flags)
-{
-	struct splice_desc sd = {
+दीर्घ करो_splice_direct(काष्ठा file *in, loff_t *ppos, काष्ठा file *out,
+		      loff_t *opos, माप_प्रकार len, अचिन्हित पूर्णांक flags)
+अणु
+	काष्ठा splice_desc sd = अणु
 		.len		= len,
 		.total_len	= len,
 		.flags		= flags,
 		.pos		= *ppos,
 		.u.file		= out,
 		.opos		= opos,
-	};
-	long ret;
+	पूर्ण;
+	दीर्घ ret;
 
-	if (unlikely(!(out->f_mode & FMODE_WRITE)))
-		return -EBADF;
+	अगर (unlikely(!(out->f_mode & FMODE_WRITE)))
+		वापस -EBADF;
 
-	if (unlikely(out->f_flags & O_APPEND))
-		return -EINVAL;
+	अगर (unlikely(out->f_flags & O_APPEND))
+		वापस -EINVAL;
 
-	ret = rw_verify_area(WRITE, out, opos, len);
-	if (unlikely(ret < 0))
-		return ret;
+	ret = rw_verअगरy_area(WRITE, out, opos, len);
+	अगर (unlikely(ret < 0))
+		वापस ret;
 
 	ret = splice_direct_to_actor(in, &sd, direct_splice_actor);
-	if (ret > 0)
+	अगर (ret > 0)
 		*ppos = sd.pos;
 
-	return ret;
-}
-EXPORT_SYMBOL(do_splice_direct);
+	वापस ret;
+पूर्ण
+EXPORT_SYMBOL(करो_splice_direct);
 
-static int wait_for_space(struct pipe_inode_info *pipe, unsigned flags)
-{
-	for (;;) {
-		if (unlikely(!pipe->readers)) {
+अटल पूर्णांक रुको_क्रम_space(काष्ठा pipe_inode_info *pipe, अचिन्हित flags)
+अणु
+	क्रम (;;) अणु
+		अगर (unlikely(!pipe->पढ़ोers)) अणु
 			send_sig(SIGPIPE, current, 0);
-			return -EPIPE;
-		}
-		if (!pipe_full(pipe->head, pipe->tail, pipe->max_usage))
-			return 0;
-		if (flags & SPLICE_F_NONBLOCK)
-			return -EAGAIN;
-		if (signal_pending(current))
-			return -ERESTARTSYS;
-		pipe_wait_writable(pipe);
-	}
-}
+			वापस -EPIPE;
+		पूर्ण
+		अगर (!pipe_full(pipe->head, pipe->tail, pipe->max_usage))
+			वापस 0;
+		अगर (flags & SPLICE_F_NONBLOCK)
+			वापस -EAGAIN;
+		अगर (संकेत_pending(current))
+			वापस -ERESTARTSYS;
+		pipe_रुको_writable(pipe);
+	पूर्ण
+पूर्ण
 
-static int splice_pipe_to_pipe(struct pipe_inode_info *ipipe,
-			       struct pipe_inode_info *opipe,
-			       size_t len, unsigned int flags);
+अटल पूर्णांक splice_pipe_to_pipe(काष्ठा pipe_inode_info *ipipe,
+			       काष्ठा pipe_inode_info *opipe,
+			       माप_प्रकार len, अचिन्हित पूर्णांक flags);
 
-long splice_file_to_pipe(struct file *in,
-			 struct pipe_inode_info *opipe,
+दीर्घ splice_file_to_pipe(काष्ठा file *in,
+			 काष्ठा pipe_inode_info *opipe,
 			 loff_t *offset,
-			 size_t len, unsigned int flags)
-{
-	long ret;
+			 माप_प्रकार len, अचिन्हित पूर्णांक flags)
+अणु
+	दीर्घ ret;
 
 	pipe_lock(opipe);
-	ret = wait_for_space(opipe, flags);
-	if (!ret)
-		ret = do_splice_to(in, offset, opipe, len, flags);
+	ret = रुको_क्रम_space(opipe, flags);
+	अगर (!ret)
+		ret = करो_splice_to(in, offset, opipe, len, flags);
 	pipe_unlock(opipe);
-	if (ret > 0)
-		wakeup_pipe_readers(opipe);
-	return ret;
-}
+	अगर (ret > 0)
+		wakeup_pipe_पढ़ोers(opipe);
+	वापस ret;
+पूर्ण
 
 /*
  * Determine where to splice to/from.
  */
-long do_splice(struct file *in, loff_t *off_in, struct file *out,
-	       loff_t *off_out, size_t len, unsigned int flags)
-{
-	struct pipe_inode_info *ipipe;
-	struct pipe_inode_info *opipe;
+दीर्घ करो_splice(काष्ठा file *in, loff_t *off_in, काष्ठा file *out,
+	       loff_t *off_out, माप_प्रकार len, अचिन्हित पूर्णांक flags)
+अणु
+	काष्ठा pipe_inode_info *ipipe;
+	काष्ठा pipe_inode_info *opipe;
 	loff_t offset;
-	long ret;
+	दीर्घ ret;
 
-	if (unlikely(!(in->f_mode & FMODE_READ) ||
+	अगर (unlikely(!(in->f_mode & FMODE_READ) ||
 		     !(out->f_mode & FMODE_WRITE)))
-		return -EBADF;
+		वापस -EBADF;
 
 	ipipe = get_pipe_info(in, true);
 	opipe = get_pipe_info(out, true);
 
-	if (ipipe && opipe) {
-		if (off_in || off_out)
-			return -ESPIPE;
+	अगर (ipipe && opipe) अणु
+		अगर (off_in || off_out)
+			वापस -ESPIPE;
 
 		/* Splicing to self would be fun, but... */
-		if (ipipe == opipe)
-			return -EINVAL;
+		अगर (ipipe == opipe)
+			वापस -EINVAL;
 
-		if ((in->f_flags | out->f_flags) & O_NONBLOCK)
+		अगर ((in->f_flags | out->f_flags) & O_NONBLOCK)
 			flags |= SPLICE_F_NONBLOCK;
 
-		return splice_pipe_to_pipe(ipipe, opipe, len, flags);
-	}
+		वापस splice_pipe_to_pipe(ipipe, opipe, len, flags);
+	पूर्ण
 
-	if (ipipe) {
-		if (off_in)
-			return -ESPIPE;
-		if (off_out) {
-			if (!(out->f_mode & FMODE_PWRITE))
-				return -EINVAL;
+	अगर (ipipe) अणु
+		अगर (off_in)
+			वापस -ESPIPE;
+		अगर (off_out) अणु
+			अगर (!(out->f_mode & FMODE_PWRITE))
+				वापस -EINVAL;
 			offset = *off_out;
-		} else {
+		पूर्ण अन्यथा अणु
 			offset = out->f_pos;
-		}
+		पूर्ण
 
-		if (unlikely(out->f_flags & O_APPEND))
-			return -EINVAL;
+		अगर (unlikely(out->f_flags & O_APPEND))
+			वापस -EINVAL;
 
-		ret = rw_verify_area(WRITE, out, &offset, len);
-		if (unlikely(ret < 0))
-			return ret;
+		ret = rw_verअगरy_area(WRITE, out, &offset, len);
+		अगर (unlikely(ret < 0))
+			वापस ret;
 
-		if (in->f_flags & O_NONBLOCK)
+		अगर (in->f_flags & O_NONBLOCK)
 			flags |= SPLICE_F_NONBLOCK;
 
-		file_start_write(out);
-		ret = do_splice_from(ipipe, out, &offset, len, flags);
-		file_end_write(out);
+		file_start_ग_लिखो(out);
+		ret = करो_splice_from(ipipe, out, &offset, len, flags);
+		file_end_ग_लिखो(out);
 
-		if (!off_out)
+		अगर (!off_out)
 			out->f_pos = offset;
-		else
+		अन्यथा
 			*off_out = offset;
 
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	if (opipe) {
-		if (off_out)
-			return -ESPIPE;
-		if (off_in) {
-			if (!(in->f_mode & FMODE_PREAD))
-				return -EINVAL;
+	अगर (opipe) अणु
+		अगर (off_out)
+			वापस -ESPIPE;
+		अगर (off_in) अणु
+			अगर (!(in->f_mode & FMODE_PREAD))
+				वापस -EINVAL;
 			offset = *off_in;
-		} else {
+		पूर्ण अन्यथा अणु
 			offset = in->f_pos;
-		}
+		पूर्ण
 
-		if (out->f_flags & O_NONBLOCK)
+		अगर (out->f_flags & O_NONBLOCK)
 			flags |= SPLICE_F_NONBLOCK;
 
 		ret = splice_file_to_pipe(in, opipe, &offset, len, flags);
-		if (!off_in)
+		अगर (!off_in)
 			in->f_pos = offset;
-		else
+		अन्यथा
 			*off_in = offset;
 
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static long __do_splice(struct file *in, loff_t __user *off_in,
-			struct file *out, loff_t __user *off_out,
-			size_t len, unsigned int flags)
-{
-	struct pipe_inode_info *ipipe;
-	struct pipe_inode_info *opipe;
-	loff_t offset, *__off_in = NULL, *__off_out = NULL;
-	long ret;
+अटल दीर्घ __करो_splice(काष्ठा file *in, loff_t __user *off_in,
+			काष्ठा file *out, loff_t __user *off_out,
+			माप_प्रकार len, अचिन्हित पूर्णांक flags)
+अणु
+	काष्ठा pipe_inode_info *ipipe;
+	काष्ठा pipe_inode_info *opipe;
+	loff_t offset, *__off_in = शून्य, *__off_out = शून्य;
+	दीर्घ ret;
 
 	ipipe = get_pipe_info(in, true);
 	opipe = get_pipe_info(out, true);
 
-	if (ipipe && off_in)
-		return -ESPIPE;
-	if (opipe && off_out)
-		return -ESPIPE;
+	अगर (ipipe && off_in)
+		वापस -ESPIPE;
+	अगर (opipe && off_out)
+		वापस -ESPIPE;
 
-	if (off_out) {
-		if (copy_from_user(&offset, off_out, sizeof(loff_t)))
-			return -EFAULT;
+	अगर (off_out) अणु
+		अगर (copy_from_user(&offset, off_out, माप(loff_t)))
+			वापस -EFAULT;
 		__off_out = &offset;
-	}
-	if (off_in) {
-		if (copy_from_user(&offset, off_in, sizeof(loff_t)))
-			return -EFAULT;
+	पूर्ण
+	अगर (off_in) अणु
+		अगर (copy_from_user(&offset, off_in, माप(loff_t)))
+			वापस -EFAULT;
 		__off_in = &offset;
-	}
+	पूर्ण
 
-	ret = do_splice(in, __off_in, out, __off_out, len, flags);
-	if (ret < 0)
-		return ret;
+	ret = करो_splice(in, __off_in, out, __off_out, len, flags);
+	अगर (ret < 0)
+		वापस ret;
 
-	if (__off_out && copy_to_user(off_out, __off_out, sizeof(loff_t)))
-		return -EFAULT;
-	if (__off_in && copy_to_user(off_in, __off_in, sizeof(loff_t)))
-		return -EFAULT;
+	अगर (__off_out && copy_to_user(off_out, __off_out, माप(loff_t)))
+		वापस -EFAULT;
+	अगर (__off_in && copy_to_user(off_in, __off_in, माप(loff_t)))
+		वापस -EFAULT;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int iter_to_pipe(struct iov_iter *from,
-			struct pipe_inode_info *pipe,
-			unsigned flags)
-{
-	struct pipe_buffer buf = {
+अटल पूर्णांक iter_to_pipe(काष्ठा iov_iter *from,
+			काष्ठा pipe_inode_info *pipe,
+			अचिन्हित flags)
+अणु
+	काष्ठा pipe_buffer buf = अणु
 		.ops = &user_page_pipe_buf_ops,
 		.flags = flags
-	};
-	size_t total = 0;
-	int ret = 0;
+	पूर्ण;
+	माप_प्रकार total = 0;
+	पूर्णांक ret = 0;
 	bool failed = false;
 
-	while (iov_iter_count(from) && !failed) {
-		struct page *pages[16];
-		ssize_t copied;
-		size_t start;
-		int n;
+	जबतक (iov_iter_count(from) && !failed) अणु
+		काष्ठा page *pages[16];
+		sमाप_प्रकार copied;
+		माप_प्रकार start;
+		पूर्णांक n;
 
 		copied = iov_iter_get_pages(from, pages, ~0UL, 16, &start);
-		if (copied <= 0) {
+		अगर (copied <= 0) अणु
 			ret = copied;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		for (n = 0; copied; n++, start = 0) {
-			int size = min_t(int, copied, PAGE_SIZE - start);
-			if (!failed) {
+		क्रम (n = 0; copied; n++, start = 0) अणु
+			पूर्णांक size = min_t(पूर्णांक, copied, PAGE_SIZE - start);
+			अगर (!failed) अणु
 				buf.page = pages[n];
 				buf.offset = start;
 				buf.len = size;
 				ret = add_to_pipe(pipe, &buf);
-				if (unlikely(ret < 0)) {
+				अगर (unlikely(ret < 0)) अणु
 					failed = true;
-				} else {
+				पूर्ण अन्यथा अणु
 					iov_iter_advance(from, ret);
 					total += ret;
-				}
-			} else {
+				पूर्ण
+			पूर्ण अन्यथा अणु
 				put_page(pages[n]);
-			}
+			पूर्ण
 			copied -= size;
-		}
-	}
-	return total ? total : ret;
-}
+		पूर्ण
+	पूर्ण
+	वापस total ? total : ret;
+पूर्ण
 
-static int pipe_to_user(struct pipe_inode_info *pipe, struct pipe_buffer *buf,
-			struct splice_desc *sd)
-{
-	int n = copy_page_to_iter(buf->page, buf->offset, sd->len, sd->u.data);
-	return n == sd->len ? n : -EFAULT;
-}
+अटल पूर्णांक pipe_to_user(काष्ठा pipe_inode_info *pipe, काष्ठा pipe_buffer *buf,
+			काष्ठा splice_desc *sd)
+अणु
+	पूर्णांक n = copy_page_to_iter(buf->page, buf->offset, sd->len, sd->u.data);
+	वापस n == sd->len ? n : -EFAULT;
+पूर्ण
 
 /*
  * For lack of a better implementation, implement vmsplice() to userspace
  * as a simple copy of the pipes pages to the user iov.
  */
-static long vmsplice_to_user(struct file *file, struct iov_iter *iter,
-			     unsigned int flags)
-{
-	struct pipe_inode_info *pipe = get_pipe_info(file, true);
-	struct splice_desc sd = {
+अटल दीर्घ vmsplice_to_user(काष्ठा file *file, काष्ठा iov_iter *iter,
+			     अचिन्हित पूर्णांक flags)
+अणु
+	काष्ठा pipe_inode_info *pipe = get_pipe_info(file, true);
+	काष्ठा splice_desc sd = अणु
 		.total_len = iov_iter_count(iter),
 		.flags = flags,
 		.u.data = iter
-	};
-	long ret = 0;
+	पूर्ण;
+	दीर्घ ret = 0;
 
-	if (!pipe)
-		return -EBADF;
+	अगर (!pipe)
+		वापस -EBADF;
 
-	if (sd.total_len) {
+	अगर (sd.total_len) अणु
 		pipe_lock(pipe);
 		ret = __splice_from_pipe(pipe, &sd, pipe_to_user);
 		pipe_unlock(pipe);
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
- * vmsplice splices a user address range into a pipe. It can be thought of
+ * vmsplice splices a user address range पूर्णांकo a pipe. It can be thought of
  * as splice-from-memory, where the regular splice is splice-from-file (or
- * to file). In both cases the output is a pipe, naturally.
+ * to file). In both हालs the output is a pipe, naturally.
  */
-static long vmsplice_to_pipe(struct file *file, struct iov_iter *iter,
-			     unsigned int flags)
-{
-	struct pipe_inode_info *pipe;
-	long ret = 0;
-	unsigned buf_flag = 0;
+अटल दीर्घ vmsplice_to_pipe(काष्ठा file *file, काष्ठा iov_iter *iter,
+			     अचिन्हित पूर्णांक flags)
+अणु
+	काष्ठा pipe_inode_info *pipe;
+	दीर्घ ret = 0;
+	अचिन्हित buf_flag = 0;
 
-	if (flags & SPLICE_F_GIFT)
+	अगर (flags & SPLICE_F_GIFT)
 		buf_flag = PIPE_BUF_FLAG_GIFT;
 
 	pipe = get_pipe_info(file, true);
-	if (!pipe)
-		return -EBADF;
+	अगर (!pipe)
+		वापस -EBADF;
 
 	pipe_lock(pipe);
-	ret = wait_for_space(pipe, flags);
-	if (!ret)
+	ret = रुको_क्रम_space(pipe, flags);
+	अगर (!ret)
 		ret = iter_to_pipe(iter, pipe, buf_flag);
 	pipe_unlock(pipe);
-	if (ret > 0)
-		wakeup_pipe_readers(pipe);
-	return ret;
-}
+	अगर (ret > 0)
+		wakeup_pipe_पढ़ोers(pipe);
+	वापस ret;
+पूर्ण
 
-static int vmsplice_type(struct fd f, int *type)
-{
-	if (!f.file)
-		return -EBADF;
-	if (f.file->f_mode & FMODE_WRITE) {
+अटल पूर्णांक vmsplice_type(काष्ठा fd f, पूर्णांक *type)
+अणु
+	अगर (!f.file)
+		वापस -EBADF;
+	अगर (f.file->f_mode & FMODE_WRITE) अणु
 		*type = WRITE;
-	} else if (f.file->f_mode & FMODE_READ) {
+	पूर्ण अन्यथा अगर (f.file->f_mode & FMODE_READ) अणु
 		*type = READ;
-	} else {
+	पूर्ण अन्यथा अणु
 		fdput(f);
-		return -EBADF;
-	}
-	return 0;
-}
+		वापस -EBADF;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /*
  * Note that vmsplice only really supports true splicing _from_ user memory
  * to a pipe, not the other way around. Splicing from user memory is a simple
  * operation that can be supported without any funky alignment restrictions
- * or nasty vm tricks. We simply map in the user memory and fill them into
+ * or nasty vm tricks. We simply map in the user memory and fill them पूर्णांकo
  * a pipe. The reverse isn't quite as easy, though. There are two possible
- * solutions for that:
+ * solutions क्रम that:
  *
- *	- memcpy() the data internally, at which point we might as well just
- *	  do a regular read() on the buffer anyway.
+ *	- स_नकल() the data पूर्णांकernally, at which poपूर्णांक we might as well just
+ *	  करो a regular पढ़ो() on the buffer anyway.
  *	- Lots of nasty vm tricks, that are neither fast nor flexible (it
  *	  has restriction limitations on both ends of the pipe).
  *
  * Currently we punt and implement it as a normal copy, see pipe_to_user().
  *
  */
-SYSCALL_DEFINE4(vmsplice, int, fd, const struct iovec __user *, uiov,
-		unsigned long, nr_segs, unsigned int, flags)
-{
-	struct iovec iovstack[UIO_FASTIOV];
-	struct iovec *iov = iovstack;
-	struct iov_iter iter;
-	ssize_t error;
-	struct fd f;
-	int type;
+SYSCALL_DEFINE4(vmsplice, पूर्णांक, fd, स्थिर काष्ठा iovec __user *, uiov,
+		अचिन्हित दीर्घ, nr_segs, अचिन्हित पूर्णांक, flags)
+अणु
+	काष्ठा iovec iovstack[UIO_FASTIOV];
+	काष्ठा iovec *iov = iovstack;
+	काष्ठा iov_iter iter;
+	sमाप_प्रकार error;
+	काष्ठा fd f;
+	पूर्णांक type;
 
-	if (unlikely(flags & ~SPLICE_F_ALL))
-		return -EINVAL;
+	अगर (unlikely(flags & ~SPLICE_F_ALL))
+		वापस -EINVAL;
 
 	f = fdget(fd);
 	error = vmsplice_type(f, &type);
-	if (error)
-		return error;
+	अगर (error)
+		वापस error;
 
 	error = import_iovec(type, uiov, nr_segs,
 			     ARRAY_SIZE(iovstack), &iov, &iter);
-	if (error < 0)
-		goto out_fdput;
+	अगर (error < 0)
+		जाओ out_fdput;
 
-	if (!iov_iter_count(&iter))
+	अगर (!iov_iter_count(&iter))
 		error = 0;
-	else if (iov_iter_rw(&iter) == WRITE)
+	अन्यथा अगर (iov_iter_rw(&iter) == WRITE)
 		error = vmsplice_to_pipe(f.file, &iter, flags);
-	else
+	अन्यथा
 		error = vmsplice_to_user(f.file, &iter, flags);
 
-	kfree(iov);
+	kमुक्त(iov);
 out_fdput:
 	fdput(f);
-	return error;
-}
+	वापस error;
+पूर्ण
 
-SYSCALL_DEFINE6(splice, int, fd_in, loff_t __user *, off_in,
-		int, fd_out, loff_t __user *, off_out,
-		size_t, len, unsigned int, flags)
-{
-	struct fd in, out;
-	long error;
+SYSCALL_DEFINE6(splice, पूर्णांक, fd_in, loff_t __user *, off_in,
+		पूर्णांक, fd_out, loff_t __user *, off_out,
+		माप_प्रकार, len, अचिन्हित पूर्णांक, flags)
+अणु
+	काष्ठा fd in, out;
+	दीर्घ error;
 
-	if (unlikely(!len))
-		return 0;
+	अगर (unlikely(!len))
+		वापस 0;
 
-	if (unlikely(flags & ~SPLICE_F_ALL))
-		return -EINVAL;
+	अगर (unlikely(flags & ~SPLICE_F_ALL))
+		वापस -EINVAL;
 
 	error = -EBADF;
 	in = fdget(fd_in);
-	if (in.file) {
+	अगर (in.file) अणु
 		out = fdget(fd_out);
-		if (out.file) {
-			error = __do_splice(in.file, off_in, out.file, off_out,
+		अगर (out.file) अणु
+			error = __करो_splice(in.file, off_in, out.file, off_out,
 						len, flags);
 			fdput(out);
-		}
+		पूर्ण
 		fdput(in);
-	}
-	return error;
-}
+	पूर्ण
+	वापस error;
+पूर्ण
 
 /*
- * Make sure there's data to read. Wait for input if we can, otherwise
- * return an appropriate error.
+ * Make sure there's data to पढ़ो. Wait क्रम input अगर we can, otherwise
+ * वापस an appropriate error.
  */
-static int ipipe_prep(struct pipe_inode_info *pipe, unsigned int flags)
-{
-	int ret;
+अटल पूर्णांक ipipe_prep(काष्ठा pipe_inode_info *pipe, अचिन्हित पूर्णांक flags)
+अणु
+	पूर्णांक ret;
 
 	/*
 	 * Check the pipe occupancy without the inode lock first. This function
 	 * is speculative anyways, so missing one is ok.
 	 */
-	if (!pipe_empty(pipe->head, pipe->tail))
-		return 0;
+	अगर (!pipe_empty(pipe->head, pipe->tail))
+		वापस 0;
 
 	ret = 0;
 	pipe_lock(pipe);
 
-	while (pipe_empty(pipe->head, pipe->tail)) {
-		if (signal_pending(current)) {
+	जबतक (pipe_empty(pipe->head, pipe->tail)) अणु
+		अगर (संकेत_pending(current)) अणु
 			ret = -ERESTARTSYS;
-			break;
-		}
-		if (!pipe->writers)
-			break;
-		if (flags & SPLICE_F_NONBLOCK) {
+			अवरोध;
+		पूर्ण
+		अगर (!pipe->ग_लिखोrs)
+			अवरोध;
+		अगर (flags & SPLICE_F_NONBLOCK) अणु
 			ret = -EAGAIN;
-			break;
-		}
-		pipe_wait_readable(pipe);
-	}
+			अवरोध;
+		पूर्ण
+		pipe_रुको_पढ़ोable(pipe);
+	पूर्ण
 
 	pipe_unlock(pipe);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
- * Make sure there's writeable room. Wait for room if we can, otherwise
- * return an appropriate error.
+ * Make sure there's ग_लिखोable room. Wait क्रम room अगर we can, otherwise
+ * वापस an appropriate error.
  */
-static int opipe_prep(struct pipe_inode_info *pipe, unsigned int flags)
-{
-	int ret;
+अटल पूर्णांक opipe_prep(काष्ठा pipe_inode_info *pipe, अचिन्हित पूर्णांक flags)
+अणु
+	पूर्णांक ret;
 
 	/*
 	 * Check pipe occupancy without the inode lock first. This function
 	 * is speculative anyways, so missing one is ok.
 	 */
-	if (!pipe_full(pipe->head, pipe->tail, pipe->max_usage))
-		return 0;
+	अगर (!pipe_full(pipe->head, pipe->tail, pipe->max_usage))
+		वापस 0;
 
 	ret = 0;
 	pipe_lock(pipe);
 
-	while (pipe_full(pipe->head, pipe->tail, pipe->max_usage)) {
-		if (!pipe->readers) {
+	जबतक (pipe_full(pipe->head, pipe->tail, pipe->max_usage)) अणु
+		अगर (!pipe->पढ़ोers) अणु
 			send_sig(SIGPIPE, current, 0);
 			ret = -EPIPE;
-			break;
-		}
-		if (flags & SPLICE_F_NONBLOCK) {
+			अवरोध;
+		पूर्ण
+		अगर (flags & SPLICE_F_NONBLOCK) अणु
 			ret = -EAGAIN;
-			break;
-		}
-		if (signal_pending(current)) {
+			अवरोध;
+		पूर्ण
+		अगर (संकेत_pending(current)) अणु
 			ret = -ERESTARTSYS;
-			break;
-		}
-		pipe_wait_writable(pipe);
-	}
+			अवरोध;
+		पूर्ण
+		pipe_रुको_writable(pipe);
+	पूर्ण
 
 	pipe_unlock(pipe);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
  * Splice contents of ipipe to opipe.
  */
-static int splice_pipe_to_pipe(struct pipe_inode_info *ipipe,
-			       struct pipe_inode_info *opipe,
-			       size_t len, unsigned int flags)
-{
-	struct pipe_buffer *ibuf, *obuf;
-	unsigned int i_head, o_head;
-	unsigned int i_tail, o_tail;
-	unsigned int i_mask, o_mask;
-	int ret = 0;
+अटल पूर्णांक splice_pipe_to_pipe(काष्ठा pipe_inode_info *ipipe,
+			       काष्ठा pipe_inode_info *opipe,
+			       माप_प्रकार len, अचिन्हित पूर्णांक flags)
+अणु
+	काष्ठा pipe_buffer *ibuf, *obuf;
+	अचिन्हित पूर्णांक i_head, o_head;
+	अचिन्हित पूर्णांक i_tail, o_tail;
+	अचिन्हित पूर्णांक i_mask, o_mask;
+	पूर्णांक ret = 0;
 	bool input_wakeup = false;
 
 
 retry:
 	ret = ipipe_prep(ipipe, flags);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ret = opipe_prep(opipe, flags);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	/*
 	 * Potential ABBA deadlock, work around it by ordering lock
-	 * grabbing by pipe info address. Otherwise two different processes
-	 * could deadlock (one doing tee from A -> B, the other from B -> A).
+	 * grabbing by pipe info address. Otherwise two dअगरferent processes
+	 * could deadlock (one करोing tee from A -> B, the other from B -> A).
 	 */
-	pipe_double_lock(ipipe, opipe);
+	pipe_द्विगुन_lock(ipipe, opipe);
 
 	i_tail = ipipe->tail;
 	i_mask = ipipe->ring_size - 1;
 	o_head = opipe->head;
 	o_mask = opipe->ring_size - 1;
 
-	do {
-		size_t o_len;
+	करो अणु
+		माप_प्रकार o_len;
 
-		if (!opipe->readers) {
+		अगर (!opipe->पढ़ोers) अणु
 			send_sig(SIGPIPE, current, 0);
-			if (!ret)
+			अगर (!ret)
 				ret = -EPIPE;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		i_head = ipipe->head;
 		o_tail = opipe->tail;
 
-		if (pipe_empty(i_head, i_tail) && !ipipe->writers)
-			break;
+		अगर (pipe_empty(i_head, i_tail) && !ipipe->ग_लिखोrs)
+			अवरोध;
 
 		/*
 		 * Cannot make any progress, because either the input
 		 * pipe is empty or the output pipe is full.
 		 */
-		if (pipe_empty(i_head, i_tail) ||
-		    pipe_full(o_head, o_tail, opipe->max_usage)) {
-			/* Already processed some buffers, break */
-			if (ret)
-				break;
+		अगर (pipe_empty(i_head, i_tail) ||
+		    pipe_full(o_head, o_tail, opipe->max_usage)) अणु
+			/* Alपढ़ोy processed some buffers, अवरोध */
+			अगर (ret)
+				अवरोध;
 
-			if (flags & SPLICE_F_NONBLOCK) {
+			अगर (flags & SPLICE_F_NONBLOCK) अणु
 				ret = -EAGAIN;
-				break;
-			}
+				अवरोध;
+			पूर्ण
 
 			/*
-			 * We raced with another reader/writer and haven't
-			 * managed to process any buffers.  A zero return
-			 * value means EOF, so retry instead.
+			 * We raced with another पढ़ोer/ग_लिखोr and haven't
+			 * managed to process any buffers.  A zero वापस
+			 * value means खातापूर्ण, so retry instead.
 			 */
 			pipe_unlock(ipipe);
 			pipe_unlock(opipe);
-			goto retry;
-		}
+			जाओ retry;
+		पूर्ण
 
 		ibuf = &ipipe->bufs[i_tail & i_mask];
 		obuf = &opipe->bufs[o_head & o_mask];
 
-		if (len >= ibuf->len) {
+		अगर (len >= ibuf->len) अणु
 			/*
 			 * Simply move the whole buffer from ipipe to opipe
 			 */
 			*obuf = *ibuf;
-			ibuf->ops = NULL;
+			ibuf->ops = शून्य;
 			i_tail++;
 			ipipe->tail = i_tail;
 			input_wakeup = true;
 			o_len = obuf->len;
 			o_head++;
 			opipe->head = o_head;
-		} else {
+		पूर्ण अन्यथा अणु
 			/*
 			 * Get a reference to this pipe buffer,
 			 * so we can copy the contents over.
 			 */
-			if (!pipe_buf_get(ipipe, ibuf)) {
-				if (ret == 0)
+			अगर (!pipe_buf_get(ipipe, ibuf)) अणु
+				अगर (ret == 0)
 					ret = -EFAULT;
-				break;
-			}
+				अवरोध;
+			पूर्ण
 			*obuf = *ibuf;
 
 			/*
-			 * Don't inherit the gift and merge flags, we need to
+			 * Don't inherit the gअगरt and merge flags, we need to
 			 * prevent multiple steals of this page.
 			 */
 			obuf->flags &= ~PIPE_BUF_FLAG_GIFT;
@@ -1548,69 +1549,69 @@ retry:
 			o_len = len;
 			o_head++;
 			opipe->head = o_head;
-		}
+		पूर्ण
 		ret += o_len;
 		len -= o_len;
-	} while (len);
+	पूर्ण जबतक (len);
 
 	pipe_unlock(ipipe);
 	pipe_unlock(opipe);
 
 	/*
-	 * If we put data in the output pipe, wakeup any potential readers.
+	 * If we put data in the output pipe, wakeup any potential पढ़ोers.
 	 */
-	if (ret > 0)
-		wakeup_pipe_readers(opipe);
+	अगर (ret > 0)
+		wakeup_pipe_पढ़ोers(opipe);
 
-	if (input_wakeup)
-		wakeup_pipe_writers(ipipe);
+	अगर (input_wakeup)
+		wakeup_pipe_ग_लिखोrs(ipipe);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
  * Link contents of ipipe to opipe.
  */
-static int link_pipe(struct pipe_inode_info *ipipe,
-		     struct pipe_inode_info *opipe,
-		     size_t len, unsigned int flags)
-{
-	struct pipe_buffer *ibuf, *obuf;
-	unsigned int i_head, o_head;
-	unsigned int i_tail, o_tail;
-	unsigned int i_mask, o_mask;
-	int ret = 0;
+अटल पूर्णांक link_pipe(काष्ठा pipe_inode_info *ipipe,
+		     काष्ठा pipe_inode_info *opipe,
+		     माप_प्रकार len, अचिन्हित पूर्णांक flags)
+अणु
+	काष्ठा pipe_buffer *ibuf, *obuf;
+	अचिन्हित पूर्णांक i_head, o_head;
+	अचिन्हित पूर्णांक i_tail, o_tail;
+	अचिन्हित पूर्णांक i_mask, o_mask;
+	पूर्णांक ret = 0;
 
 	/*
 	 * Potential ABBA deadlock, work around it by ordering lock
-	 * grabbing by pipe info address. Otherwise two different processes
-	 * could deadlock (one doing tee from A -> B, the other from B -> A).
+	 * grabbing by pipe info address. Otherwise two dअगरferent processes
+	 * could deadlock (one करोing tee from A -> B, the other from B -> A).
 	 */
-	pipe_double_lock(ipipe, opipe);
+	pipe_द्विगुन_lock(ipipe, opipe);
 
 	i_tail = ipipe->tail;
 	i_mask = ipipe->ring_size - 1;
 	o_head = opipe->head;
 	o_mask = opipe->ring_size - 1;
 
-	do {
-		if (!opipe->readers) {
+	करो अणु
+		अगर (!opipe->पढ़ोers) अणु
 			send_sig(SIGPIPE, current, 0);
-			if (!ret)
+			अगर (!ret)
 				ret = -EPIPE;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		i_head = ipipe->head;
 		o_tail = opipe->tail;
 
 		/*
 		 * If we have iterated all input buffers or run out of
-		 * output room, break.
+		 * output room, अवरोध.
 		 */
-		if (pipe_empty(i_head, i_tail) ||
+		अगर (pipe_empty(i_head, i_tail) ||
 		    pipe_full(o_head, o_tail, opipe->max_usage))
-			break;
+			अवरोध;
 
 		ibuf = &ipipe->bufs[i_tail & i_mask];
 		obuf = &opipe->bufs[o_head & o_mask];
@@ -1619,22 +1620,22 @@ static int link_pipe(struct pipe_inode_info *ipipe,
 		 * Get a reference to this pipe buffer,
 		 * so we can copy the contents over.
 		 */
-		if (!pipe_buf_get(ipipe, ibuf)) {
-			if (ret == 0)
+		अगर (!pipe_buf_get(ipipe, ibuf)) अणु
+			अगर (ret == 0)
 				ret = -EFAULT;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		*obuf = *ibuf;
 
 		/*
-		 * Don't inherit the gift and merge flag, we need to prevent
+		 * Don't inherit the gअगरt and merge flag, we need to prevent
 		 * multiple steals of this page.
 		 */
 		obuf->flags &= ~PIPE_BUF_FLAG_GIFT;
 		obuf->flags &= ~PIPE_BUF_FLAG_CAN_MERGE;
 
-		if (obuf->len > len)
+		अगर (obuf->len > len)
 			obuf->len = len;
 		ret += obuf->len;
 		len -= obuf->len;
@@ -1642,80 +1643,80 @@ static int link_pipe(struct pipe_inode_info *ipipe,
 		o_head++;
 		opipe->head = o_head;
 		i_tail++;
-	} while (len);
+	पूर्ण जबतक (len);
 
 	pipe_unlock(ipipe);
 	pipe_unlock(opipe);
 
 	/*
-	 * If we put data in the output pipe, wakeup any potential readers.
+	 * If we put data in the output pipe, wakeup any potential पढ़ोers.
 	 */
-	if (ret > 0)
-		wakeup_pipe_readers(opipe);
+	अगर (ret > 0)
+		wakeup_pipe_पढ़ोers(opipe);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
- * This is a tee(1) implementation that works on pipes. It doesn't copy
+ * This is a tee(1) implementation that works on pipes. It करोesn't copy
  * any data, it simply references the 'in' pages on the 'out' pipe.
  * The 'flags' used are the SPLICE_F_* variants, currently the only
  * applicable one is SPLICE_F_NONBLOCK.
  */
-long do_tee(struct file *in, struct file *out, size_t len, unsigned int flags)
-{
-	struct pipe_inode_info *ipipe = get_pipe_info(in, true);
-	struct pipe_inode_info *opipe = get_pipe_info(out, true);
-	int ret = -EINVAL;
+दीर्घ करो_tee(काष्ठा file *in, काष्ठा file *out, माप_प्रकार len, अचिन्हित पूर्णांक flags)
+अणु
+	काष्ठा pipe_inode_info *ipipe = get_pipe_info(in, true);
+	काष्ठा pipe_inode_info *opipe = get_pipe_info(out, true);
+	पूर्णांक ret = -EINVAL;
 
-	if (unlikely(!(in->f_mode & FMODE_READ) ||
+	अगर (unlikely(!(in->f_mode & FMODE_READ) ||
 		     !(out->f_mode & FMODE_WRITE)))
-		return -EBADF;
+		वापस -EBADF;
 
 	/*
 	 * Duplicate the contents of ipipe to opipe without actually
 	 * copying the data.
 	 */
-	if (ipipe && opipe && ipipe != opipe) {
-		if ((in->f_flags | out->f_flags) & O_NONBLOCK)
+	अगर (ipipe && opipe && ipipe != opipe) अणु
+		अगर ((in->f_flags | out->f_flags) & O_NONBLOCK)
 			flags |= SPLICE_F_NONBLOCK;
 
 		/*
 		 * Keep going, unless we encounter an error. The ipipe/opipe
-		 * ordering doesn't really matter.
+		 * ordering करोesn't really matter.
 		 */
 		ret = ipipe_prep(ipipe, flags);
-		if (!ret) {
+		अगर (!ret) अणु
 			ret = opipe_prep(opipe, flags);
-			if (!ret)
+			अगर (!ret)
 				ret = link_pipe(ipipe, opipe, len, flags);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-SYSCALL_DEFINE4(tee, int, fdin, int, fdout, size_t, len, unsigned int, flags)
-{
-	struct fd in, out;
-	int error;
+SYSCALL_DEFINE4(tee, पूर्णांक, fdin, पूर्णांक, fकरोut, माप_प्रकार, len, अचिन्हित पूर्णांक, flags)
+अणु
+	काष्ठा fd in, out;
+	पूर्णांक error;
 
-	if (unlikely(flags & ~SPLICE_F_ALL))
-		return -EINVAL;
+	अगर (unlikely(flags & ~SPLICE_F_ALL))
+		वापस -EINVAL;
 
-	if (unlikely(!len))
-		return 0;
+	अगर (unlikely(!len))
+		वापस 0;
 
 	error = -EBADF;
 	in = fdget(fdin);
-	if (in.file) {
-		out = fdget(fdout);
-		if (out.file) {
-			error = do_tee(in.file, out.file, len, flags);
+	अगर (in.file) अणु
+		out = fdget(fकरोut);
+		अगर (out.file) अणु
+			error = करो_tee(in.file, out.file, len, flags);
 			fdput(out);
-		}
+		पूर्ण
  		fdput(in);
- 	}
+ 	पूर्ण
 
-	return error;
-}
+	वापस error;
+पूर्ण

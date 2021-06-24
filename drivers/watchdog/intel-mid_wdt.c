@@ -1,204 +1,205 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- *      intel-mid_wdt: generic Intel MID SCU watchdog driver
+ *      पूर्णांकel-mid_wdt: generic Intel MID SCU watchकरोg driver
  *
- *      Platforms supported so far:
- *      - Merrifield only
+ *      Platक्रमms supported so far:
+ *      - Merrअगरield only
  *
  *      Copyright (C) 2014 Intel Corporation. All rights reserved.
- *      Contact: David Cohen <david.a.cohen@linux.intel.com>
+ *      Contact: David Cohen <david.a.cohen@linux.पूर्णांकel.com>
  */
 
-#include <linux/interrupt.h>
-#include <linux/module.h>
-#include <linux/nmi.h>
-#include <linux/platform_device.h>
-#include <linux/watchdog.h>
-#include <linux/platform_data/intel-mid_wdt.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/module.h>
+#समावेश <linux/nmi.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/watchकरोg.h>
+#समावेश <linux/platक्रमm_data/पूर्णांकel-mid_wdt.h>
 
-#include <asm/intel_scu_ipc.h>
-#include <asm/intel-mid.h>
+#समावेश <यंत्र/पूर्णांकel_scu_ipc.h>
+#समावेश <यंत्र/पूर्णांकel-mid.h>
 
-#define IPC_WATCHDOG 0xf8
+#घोषणा IPC_WATCHDOG 0xf8
 
-#define MID_WDT_PRETIMEOUT		15
-#define MID_WDT_TIMEOUT_MIN		(1 + MID_WDT_PRETIMEOUT)
-#define MID_WDT_TIMEOUT_MAX		170
-#define MID_WDT_DEFAULT_TIMEOUT		90
+#घोषणा MID_WDT_PRETIMEOUT		15
+#घोषणा MID_WDT_TIMEOUT_MIN		(1 + MID_WDT_PRETIMEOUT)
+#घोषणा MID_WDT_TIMEOUT_MAX		170
+#घोषणा MID_WDT_DEFAULT_TIMEOUT		90
 
-/* SCU watchdog messages */
-enum {
+/* SCU watchकरोg messages */
+क्रमागत अणु
 	SCU_WATCHDOG_START = 0,
 	SCU_WATCHDOG_STOP,
 	SCU_WATCHDOG_KEEPALIVE,
-};
+पूर्ण;
 
-struct mid_wdt {
-	struct watchdog_device wd;
-	struct device *dev;
-	struct intel_scu_ipc_dev *scu;
-};
+काष्ठा mid_wdt अणु
+	काष्ठा watchकरोg_device wd;
+	काष्ठा device *dev;
+	काष्ठा पूर्णांकel_scu_ipc_dev *scu;
+पूर्ण;
 
-static inline int
-wdt_command(struct mid_wdt *mid, int sub, const void *in, size_t inlen, size_t size)
-{
-	struct intel_scu_ipc_dev *scu = mid->scu;
+अटल अंतरभूत पूर्णांक
+wdt_command(काष्ठा mid_wdt *mid, पूर्णांक sub, स्थिर व्योम *in, माप_प्रकार inlen, माप_प्रकार size)
+अणु
+	काष्ठा पूर्णांकel_scu_ipc_dev *scu = mid->scu;
 
-	return intel_scu_ipc_dev_command_with_size(scu, IPC_WATCHDOG, sub, in,
-						   inlen, size, NULL, 0);
-}
+	वापस पूर्णांकel_scu_ipc_dev_command_with_size(scu, IPC_WATCHDOG, sub, in,
+						   inlen, size, शून्य, 0);
+पूर्ण
 
-static int wdt_start(struct watchdog_device *wd)
-{
-	struct mid_wdt *mid = watchdog_get_drvdata(wd);
-	int ret, in_size;
-	int timeout = wd->timeout;
-	struct ipc_wd_start {
-		u32 pretimeout;
-		u32 timeout;
-	} ipc_wd_start = { timeout - MID_WDT_PRETIMEOUT, timeout };
+अटल पूर्णांक wdt_start(काष्ठा watchकरोg_device *wd)
+अणु
+	काष्ठा mid_wdt *mid = watchकरोg_get_drvdata(wd);
+	पूर्णांक ret, in_size;
+	पूर्णांक समयout = wd->समयout;
+	काष्ठा ipc_wd_start अणु
+		u32 preसमयout;
+		u32 समयout;
+	पूर्ण ipc_wd_start = अणु समयout - MID_WDT_PRETIMEOUT, समयout पूर्ण;
 
 	/*
-	 * SCU expects the input size for watchdog IPC to be 2 which is the
-	 * size of the structure in dwords. SCU IPC normally takes bytes
-	 * but this is a special case where we specify size to be different
+	 * SCU expects the input size क्रम watchकरोg IPC to be 2 which is the
+	 * size of the काष्ठाure in dwords. SCU IPC normally takes bytes
+	 * but this is a special हाल where we specअगरy size to be dअगरferent
 	 * than inlen.
 	 */
-	in_size = DIV_ROUND_UP(sizeof(ipc_wd_start), 4);
+	in_size = DIV_ROUND_UP(माप(ipc_wd_start), 4);
 
 	ret = wdt_command(mid, SCU_WATCHDOG_START, &ipc_wd_start,
-			  sizeof(ipc_wd_start), in_size);
-	if (ret)
+			  माप(ipc_wd_start), in_size);
+	अगर (ret)
 		dev_crit(mid->dev, "error starting watchdog: %d\n", ret);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int wdt_ping(struct watchdog_device *wd)
-{
-	struct mid_wdt *mid = watchdog_get_drvdata(wd);
-	int ret;
+अटल पूर्णांक wdt_ping(काष्ठा watchकरोg_device *wd)
+अणु
+	काष्ठा mid_wdt *mid = watchकरोg_get_drvdata(wd);
+	पूर्णांक ret;
 
-	ret = wdt_command(mid, SCU_WATCHDOG_KEEPALIVE, NULL, 0, 0);
-	if (ret)
+	ret = wdt_command(mid, SCU_WATCHDOG_KEEPALIVE, शून्य, 0, 0);
+	अगर (ret)
 		dev_crit(mid->dev, "Error executing keepalive: %d\n", ret);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int wdt_stop(struct watchdog_device *wd)
-{
-	struct mid_wdt *mid = watchdog_get_drvdata(wd);
-	int ret;
+अटल पूर्णांक wdt_stop(काष्ठा watchकरोg_device *wd)
+अणु
+	काष्ठा mid_wdt *mid = watchकरोg_get_drvdata(wd);
+	पूर्णांक ret;
 
-	ret = wdt_command(mid, SCU_WATCHDOG_STOP, NULL, 0, 0);
-	if (ret)
+	ret = wdt_command(mid, SCU_WATCHDOG_STOP, शून्य, 0, 0);
+	अगर (ret)
 		dev_crit(mid->dev, "Error stopping watchdog: %d\n", ret);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static irqreturn_t mid_wdt_irq(int irq, void *dev_id)
-{
+अटल irqवापस_t mid_wdt_irq(पूर्णांक irq, व्योम *dev_id)
+अणु
 	panic("Kernel Watchdog");
 
 	/* This code should not be reached */
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static const struct watchdog_info mid_wdt_info = {
+अटल स्थिर काष्ठा watchकरोg_info mid_wdt_info = अणु
 	.identity = "Intel MID SCU watchdog",
 	.options = WDIOF_KEEPALIVEPING | WDIOF_SETTIMEOUT | WDIOF_MAGICCLOSE,
-};
+पूर्ण;
 
-static const struct watchdog_ops mid_wdt_ops = {
+अटल स्थिर काष्ठा watchकरोg_ops mid_wdt_ops = अणु
 	.owner = THIS_MODULE,
 	.start = wdt_start,
 	.stop = wdt_stop,
 	.ping = wdt_ping,
-};
+पूर्ण;
 
-static int mid_wdt_probe(struct platform_device *pdev)
-{
-	struct device *dev = &pdev->dev;
-	struct watchdog_device *wdt_dev;
-	struct intel_mid_wdt_pdata *pdata = dev->platform_data;
-	struct mid_wdt *mid;
-	int ret;
+अटल पूर्णांक mid_wdt_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा watchकरोg_device *wdt_dev;
+	काष्ठा पूर्णांकel_mid_wdt_pdata *pdata = dev->platक्रमm_data;
+	काष्ठा mid_wdt *mid;
+	पूर्णांक ret;
 
-	if (!pdata) {
+	अगर (!pdata) अणु
 		dev_err(dev, "missing platform data\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (pdata->probe) {
+	अगर (pdata->probe) अणु
 		ret = pdata->probe(pdev);
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	mid = devm_kzalloc(dev, sizeof(*mid), GFP_KERNEL);
-	if (!mid)
-		return -ENOMEM;
+	mid = devm_kzalloc(dev, माप(*mid), GFP_KERNEL);
+	अगर (!mid)
+		वापस -ENOMEM;
 
 	mid->dev = dev;
 	wdt_dev = &mid->wd;
 
 	wdt_dev->info = &mid_wdt_info;
 	wdt_dev->ops = &mid_wdt_ops;
-	wdt_dev->min_timeout = MID_WDT_TIMEOUT_MIN;
-	wdt_dev->max_timeout = MID_WDT_TIMEOUT_MAX;
-	wdt_dev->timeout = MID_WDT_DEFAULT_TIMEOUT;
+	wdt_dev->min_समयout = MID_WDT_TIMEOUT_MIN;
+	wdt_dev->max_समयout = MID_WDT_TIMEOUT_MAX;
+	wdt_dev->समयout = MID_WDT_DEFAULT_TIMEOUT;
 	wdt_dev->parent = dev;
 
-	watchdog_set_nowayout(wdt_dev, WATCHDOG_NOWAYOUT);
-	watchdog_set_drvdata(wdt_dev, mid);
+	watchकरोg_set_nowayout(wdt_dev, WATCHDOG_NOWAYOUT);
+	watchकरोg_set_drvdata(wdt_dev, mid);
 
-	mid->scu = devm_intel_scu_ipc_dev_get(dev);
-	if (!mid->scu)
-		return -EPROBE_DEFER;
+	mid->scu = devm_पूर्णांकel_scu_ipc_dev_get(dev);
+	अगर (!mid->scu)
+		वापस -EPROBE_DEFER;
 
 	ret = devm_request_irq(dev, pdata->irq, mid_wdt_irq,
 			       IRQF_SHARED | IRQF_NO_SUSPEND, "watchdog",
 			       wdt_dev);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev, "error requesting warning irq %d\n", pdata->irq);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	/*
-	 * The firmware followed by U-Boot leaves the watchdog running
-	 * with the default threshold which may vary. When we get here
-	 * we should make a decision to prevent any side effects before
+	 * The firmware followed by U-Boot leaves the watchकरोg running
+	 * with the शेष threshold which may vary. When we get here
+	 * we should make a decision to prevent any side effects beक्रमe
 	 * user space daemon will take care of it. The best option,
-	 * taking into consideration that there is no way to read values
-	 * back from hardware, is to enforce watchdog being run with
+	 * taking पूर्णांकo consideration that there is no way to पढ़ो values
+	 * back from hardware, is to enक्रमce watchकरोg being run with
 	 * deterministic values.
 	 */
 	ret = wdt_start(wdt_dev);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	/* Make sure the watchdog is serviced */
+	/* Make sure the watchकरोg is serviced */
 	set_bit(WDOG_HW_RUNNING, &wdt_dev->status);
 
-	ret = devm_watchdog_register_device(dev, wdt_dev);
-	if (ret)
-		return ret;
+	ret = devm_watchकरोg_रेजिस्टर_device(dev, wdt_dev);
+	अगर (ret)
+		वापस ret;
 
 	dev_info(dev, "Intel MID watchdog device probed\n");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct platform_driver mid_wdt_driver = {
+अटल काष्ठा platक्रमm_driver mid_wdt_driver = अणु
 	.probe		= mid_wdt_probe,
-	.driver		= {
+	.driver		= अणु
 		.name	= "intel_mid_wdt",
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-module_platform_driver(mid_wdt_driver);
+module_platक्रमm_driver(mid_wdt_driver);
 
 MODULE_AUTHOR("David Cohen <david.a.cohen@linux.intel.com>");
 MODULE_DESCRIPTION("Watchdog Driver for Intel MID platform");

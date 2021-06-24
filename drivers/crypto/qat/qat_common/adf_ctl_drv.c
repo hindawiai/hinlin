@@ -1,360 +1,361 @@
-// SPDX-License-Identifier: (BSD-3-Clause OR GPL-2.0-only)
+<शैली गुरु>
+// SPDX-License-Identअगरier: (BSD-3-Clause OR GPL-2.0-only)
 /* Copyright(c) 2014 - 2020 Intel Corporation */
-#include <linux/module.h>
-#include <linux/mutex.h>
-#include <linux/slab.h>
-#include <linux/fs.h>
-#include <linux/bitops.h>
-#include <linux/pci.h>
-#include <linux/cdev.h>
-#include <linux/uaccess.h>
-#include <linux/crypto.h>
+#समावेश <linux/module.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/bitops.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/cdev.h>
+#समावेश <linux/uaccess.h>
+#समावेश <linux/crypto.h>
 
-#include "adf_accel_devices.h"
-#include "adf_common_drv.h"
-#include "adf_cfg.h"
-#include "adf_cfg_common.h"
-#include "adf_cfg_user.h"
+#समावेश "adf_accel_devices.h"
+#समावेश "adf_common_drv.h"
+#समावेश "adf_cfg.h"
+#समावेश "adf_cfg_common.h"
+#समावेश "adf_cfg_user.h"
 
-#define DEVICE_NAME "qat_adf_ctl"
+#घोषणा DEVICE_NAME "qat_adf_ctl"
 
-static DEFINE_MUTEX(adf_ctl_lock);
-static long adf_ctl_ioctl(struct file *fp, unsigned int cmd, unsigned long arg);
+अटल DEFINE_MUTEX(adf_ctl_lock);
+अटल दीर्घ adf_ctl_ioctl(काष्ठा file *fp, अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg);
 
-static const struct file_operations adf_ctl_ops = {
+अटल स्थिर काष्ठा file_operations adf_ctl_ops = अणु
 	.owner = THIS_MODULE,
 	.unlocked_ioctl = adf_ctl_ioctl,
 	.compat_ioctl = compat_ptr_ioctl,
-};
+पूर्ण;
 
-struct adf_ctl_drv_info {
-	unsigned int major;
-	struct cdev drv_cdev;
-	struct class *drv_class;
-};
+काष्ठा adf_ctl_drv_info अणु
+	अचिन्हित पूर्णांक major;
+	काष्ठा cdev drv_cdev;
+	काष्ठा class *drv_class;
+पूर्ण;
 
-static struct adf_ctl_drv_info adf_ctl_drv;
+अटल काष्ठा adf_ctl_drv_info adf_ctl_drv;
 
-static void adf_chr_drv_destroy(void)
-{
+अटल व्योम adf_chr_drv_destroy(व्योम)
+अणु
 	device_destroy(adf_ctl_drv.drv_class, MKDEV(adf_ctl_drv.major, 0));
 	cdev_del(&adf_ctl_drv.drv_cdev);
 	class_destroy(adf_ctl_drv.drv_class);
-	unregister_chrdev_region(MKDEV(adf_ctl_drv.major, 0), 1);
-}
+	unरेजिस्टर_chrdev_region(MKDEV(adf_ctl_drv.major, 0), 1);
+पूर्ण
 
-static int adf_chr_drv_create(void)
-{
+अटल पूर्णांक adf_chr_drv_create(व्योम)
+अणु
 	dev_t dev_id;
-	struct device *drv_device;
+	काष्ठा device *drv_device;
 
-	if (alloc_chrdev_region(&dev_id, 0, 1, DEVICE_NAME)) {
+	अगर (alloc_chrdev_region(&dev_id, 0, 1, DEVICE_NAME)) अणु
 		pr_err("QAT: unable to allocate chrdev region\n");
-		return -EFAULT;
-	}
+		वापस -EFAULT;
+	पूर्ण
 
 	adf_ctl_drv.drv_class = class_create(THIS_MODULE, DEVICE_NAME);
-	if (IS_ERR(adf_ctl_drv.drv_class)) {
+	अगर (IS_ERR(adf_ctl_drv.drv_class)) अणु
 		pr_err("QAT: class_create failed for adf_ctl\n");
-		goto err_chrdev_unreg;
-	}
+		जाओ err_chrdev_unreg;
+	पूर्ण
 	adf_ctl_drv.major = MAJOR(dev_id);
 	cdev_init(&adf_ctl_drv.drv_cdev, &adf_ctl_ops);
-	if (cdev_add(&adf_ctl_drv.drv_cdev, dev_id, 1)) {
+	अगर (cdev_add(&adf_ctl_drv.drv_cdev, dev_id, 1)) अणु
 		pr_err("QAT: cdev add failed\n");
-		goto err_class_destr;
-	}
+		जाओ err_class_destr;
+	पूर्ण
 
-	drv_device = device_create(adf_ctl_drv.drv_class, NULL,
+	drv_device = device_create(adf_ctl_drv.drv_class, शून्य,
 				   MKDEV(adf_ctl_drv.major, 0),
-				   NULL, DEVICE_NAME);
-	if (IS_ERR(drv_device)) {
+				   शून्य, DEVICE_NAME);
+	अगर (IS_ERR(drv_device)) अणु
 		pr_err("QAT: failed to create device\n");
-		goto err_cdev_del;
-	}
-	return 0;
+		जाओ err_cdev_del;
+	पूर्ण
+	वापस 0;
 err_cdev_del:
 	cdev_del(&adf_ctl_drv.drv_cdev);
 err_class_destr:
 	class_destroy(adf_ctl_drv.drv_class);
 err_chrdev_unreg:
-	unregister_chrdev_region(dev_id, 1);
-	return -EFAULT;
-}
+	unरेजिस्टर_chrdev_region(dev_id, 1);
+	वापस -EFAULT;
+पूर्ण
 
-static int adf_ctl_alloc_resources(struct adf_user_cfg_ctl_data **ctl_data,
-				   unsigned long arg)
-{
-	struct adf_user_cfg_ctl_data *cfg_data;
+अटल पूर्णांक adf_ctl_alloc_resources(काष्ठा adf_user_cfg_ctl_data **ctl_data,
+				   अचिन्हित दीर्घ arg)
+अणु
+	काष्ठा adf_user_cfg_ctl_data *cfg_data;
 
-	cfg_data = kzalloc(sizeof(*cfg_data), GFP_KERNEL);
-	if (!cfg_data)
-		return -ENOMEM;
+	cfg_data = kzalloc(माप(*cfg_data), GFP_KERNEL);
+	अगर (!cfg_data)
+		वापस -ENOMEM;
 
 	/* Initialize device id to NO DEVICE as 0 is a valid device id */
 	cfg_data->device_id = ADF_CFG_NO_DEVICE;
 
-	if (copy_from_user(cfg_data, (void __user *)arg, sizeof(*cfg_data))) {
+	अगर (copy_from_user(cfg_data, (व्योम __user *)arg, माप(*cfg_data))) अणु
 		pr_err("QAT: failed to copy from user cfg_data.\n");
-		kfree(cfg_data);
-		return -EIO;
-	}
+		kमुक्त(cfg_data);
+		वापस -EIO;
+	पूर्ण
 
 	*ctl_data = cfg_data;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int adf_add_key_value_data(struct adf_accel_dev *accel_dev,
-				  const char *section,
-				  const struct adf_user_cfg_key_val *key_val)
-{
-	if (key_val->type == ADF_HEX) {
-		long *ptr = (long *)key_val->val;
-		long val = *ptr;
+अटल पूर्णांक adf_add_key_value_data(काष्ठा adf_accel_dev *accel_dev,
+				  स्थिर अक्षर *section,
+				  स्थिर काष्ठा adf_user_cfg_key_val *key_val)
+अणु
+	अगर (key_val->type == ADF_HEX) अणु
+		दीर्घ *ptr = (दीर्घ *)key_val->val;
+		दीर्घ val = *ptr;
 
-		if (adf_cfg_add_key_value_param(accel_dev, section,
-						key_val->key, (void *)val,
-						key_val->type)) {
+		अगर (adf_cfg_add_key_value_param(accel_dev, section,
+						key_val->key, (व्योम *)val,
+						key_val->type)) अणु
 			dev_err(&GET_DEV(accel_dev),
 				"failed to add hex keyvalue.\n");
-			return -EFAULT;
-		}
-	} else {
-		if (adf_cfg_add_key_value_param(accel_dev, section,
+			वापस -EFAULT;
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		अगर (adf_cfg_add_key_value_param(accel_dev, section,
 						key_val->key, key_val->val,
-						key_val->type)) {
+						key_val->type)) अणु
 			dev_err(&GET_DEV(accel_dev),
 				"failed to add keyvalue.\n");
-			return -EFAULT;
-		}
-	}
-	return 0;
-}
+			वापस -EFAULT;
+		पूर्ण
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int adf_copy_key_value_data(struct adf_accel_dev *accel_dev,
-				   struct adf_user_cfg_ctl_data *ctl_data)
-{
-	struct adf_user_cfg_key_val key_val;
-	struct adf_user_cfg_key_val *params_head;
-	struct adf_user_cfg_section section, *section_head;
+अटल पूर्णांक adf_copy_key_value_data(काष्ठा adf_accel_dev *accel_dev,
+				   काष्ठा adf_user_cfg_ctl_data *ctl_data)
+अणु
+	काष्ठा adf_user_cfg_key_val key_val;
+	काष्ठा adf_user_cfg_key_val *params_head;
+	काष्ठा adf_user_cfg_section section, *section_head;
 
 	section_head = ctl_data->config_section;
 
-	while (section_head) {
-		if (copy_from_user(&section, (void __user *)section_head,
-				   sizeof(*section_head))) {
+	जबतक (section_head) अणु
+		अगर (copy_from_user(&section, (व्योम __user *)section_head,
+				   माप(*section_head))) अणु
 			dev_err(&GET_DEV(accel_dev),
 				"failed to copy section info\n");
-			goto out_err;
-		}
+			जाओ out_err;
+		पूर्ण
 
-		if (adf_cfg_section_add(accel_dev, section.name)) {
+		अगर (adf_cfg_section_add(accel_dev, section.name)) अणु
 			dev_err(&GET_DEV(accel_dev),
 				"failed to add section.\n");
-			goto out_err;
-		}
+			जाओ out_err;
+		पूर्ण
 
 		params_head = section.params;
 
-		while (params_head) {
-			if (copy_from_user(&key_val, (void __user *)params_head,
-					   sizeof(key_val))) {
+		जबतक (params_head) अणु
+			अगर (copy_from_user(&key_val, (व्योम __user *)params_head,
+					   माप(key_val))) अणु
 				dev_err(&GET_DEV(accel_dev),
 					"Failed to copy keyvalue.\n");
-				goto out_err;
-			}
-			if (adf_add_key_value_data(accel_dev, section.name,
-						   &key_val)) {
-				goto out_err;
-			}
+				जाओ out_err;
+			पूर्ण
+			अगर (adf_add_key_value_data(accel_dev, section.name,
+						   &key_val)) अणु
+				जाओ out_err;
+			पूर्ण
 			params_head = key_val.next;
-		}
+		पूर्ण
 		section_head = section.next;
-	}
-	return 0;
+	पूर्ण
+	वापस 0;
 out_err:
 	adf_cfg_del_all(accel_dev);
-	return -EFAULT;
-}
+	वापस -EFAULT;
+पूर्ण
 
-static int adf_ctl_ioctl_dev_config(struct file *fp, unsigned int cmd,
-				    unsigned long arg)
-{
-	int ret;
-	struct adf_user_cfg_ctl_data *ctl_data;
-	struct adf_accel_dev *accel_dev;
+अटल पूर्णांक adf_ctl_ioctl_dev_config(काष्ठा file *fp, अचिन्हित पूर्णांक cmd,
+				    अचिन्हित दीर्घ arg)
+अणु
+	पूर्णांक ret;
+	काष्ठा adf_user_cfg_ctl_data *ctl_data;
+	काष्ठा adf_accel_dev *accel_dev;
 
 	ret = adf_ctl_alloc_resources(&ctl_data, arg);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	accel_dev = adf_devmgr_get_dev_by_id(ctl_data->device_id);
-	if (!accel_dev) {
+	अगर (!accel_dev) अणु
 		ret = -EFAULT;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (adf_dev_started(accel_dev)) {
+	अगर (adf_dev_started(accel_dev)) अणु
 		ret = -EFAULT;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (adf_copy_key_value_data(accel_dev, ctl_data)) {
+	अगर (adf_copy_key_value_data(accel_dev, ctl_data)) अणु
 		ret = -EFAULT;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 	set_bit(ADF_STATUS_CONFIGURED, &accel_dev->status);
 out:
-	kfree(ctl_data);
-	return ret;
-}
+	kमुक्त(ctl_data);
+	वापस ret;
+पूर्ण
 
-static int adf_ctl_is_device_in_use(int id)
-{
-	struct adf_accel_dev *dev;
+अटल पूर्णांक adf_ctl_is_device_in_use(पूर्णांक id)
+अणु
+	काष्ठा adf_accel_dev *dev;
 
-	list_for_each_entry(dev, adf_devmgr_get_head(), list) {
-		if (id == dev->accel_id || id == ADF_CFG_ALL_DEVICES) {
-			if (adf_devmgr_in_reset(dev) || adf_dev_in_use(dev)) {
+	list_क्रम_each_entry(dev, adf_devmgr_get_head(), list) अणु
+		अगर (id == dev->accel_id || id == ADF_CFG_ALL_DEVICES) अणु
+			अगर (adf_devmgr_in_reset(dev) || adf_dev_in_use(dev)) अणु
 				dev_info(&GET_DEV(dev),
 					 "device qat_dev%d is busy\n",
 					 dev->accel_id);
-				return -EBUSY;
-			}
-		}
-	}
-	return 0;
-}
+				वापस -EBUSY;
+			पूर्ण
+		पूर्ण
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static void adf_ctl_stop_devices(u32 id)
-{
-	struct adf_accel_dev *accel_dev;
+अटल व्योम adf_ctl_stop_devices(u32 id)
+अणु
+	काष्ठा adf_accel_dev *accel_dev;
 
-	list_for_each_entry(accel_dev, adf_devmgr_get_head(), list) {
-		if (id == accel_dev->accel_id || id == ADF_CFG_ALL_DEVICES) {
-			if (!adf_dev_started(accel_dev))
-				continue;
+	list_क्रम_each_entry(accel_dev, adf_devmgr_get_head(), list) अणु
+		अगर (id == accel_dev->accel_id || id == ADF_CFG_ALL_DEVICES) अणु
+			अगर (!adf_dev_started(accel_dev))
+				जारी;
 
 			/* First stop all VFs */
-			if (!accel_dev->is_vf)
-				continue;
+			अगर (!accel_dev->is_vf)
+				जारी;
 
 			adf_dev_stop(accel_dev);
-			adf_dev_shutdown(accel_dev);
-		}
-	}
+			adf_dev_shutकरोwn(accel_dev);
+		पूर्ण
+	पूर्ण
 
-	list_for_each_entry(accel_dev, adf_devmgr_get_head(), list) {
-		if (id == accel_dev->accel_id || id == ADF_CFG_ALL_DEVICES) {
-			if (!adf_dev_started(accel_dev))
-				continue;
+	list_क्रम_each_entry(accel_dev, adf_devmgr_get_head(), list) अणु
+		अगर (id == accel_dev->accel_id || id == ADF_CFG_ALL_DEVICES) अणु
+			अगर (!adf_dev_started(accel_dev))
+				जारी;
 
 			adf_dev_stop(accel_dev);
-			adf_dev_shutdown(accel_dev);
-		}
-	}
-}
+			adf_dev_shutकरोwn(accel_dev);
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static int adf_ctl_ioctl_dev_stop(struct file *fp, unsigned int cmd,
-				  unsigned long arg)
-{
-	int ret;
-	struct adf_user_cfg_ctl_data *ctl_data;
+अटल पूर्णांक adf_ctl_ioctl_dev_stop(काष्ठा file *fp, अचिन्हित पूर्णांक cmd,
+				  अचिन्हित दीर्घ arg)
+अणु
+	पूर्णांक ret;
+	काष्ठा adf_user_cfg_ctl_data *ctl_data;
 
 	ret = adf_ctl_alloc_resources(&ctl_data, arg);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	if (adf_devmgr_verify_id(ctl_data->device_id)) {
+	अगर (adf_devmgr_verअगरy_id(ctl_data->device_id)) अणु
 		pr_err("QAT: Device %d not found\n", ctl_data->device_id);
 		ret = -ENODEV;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	ret = adf_ctl_is_device_in_use(ctl_data->device_id);
-	if (ret)
-		goto out;
+	अगर (ret)
+		जाओ out;
 
-	if (ctl_data->device_id == ADF_CFG_ALL_DEVICES)
+	अगर (ctl_data->device_id == ADF_CFG_ALL_DEVICES)
 		pr_info("QAT: Stopping all acceleration devices.\n");
-	else
+	अन्यथा
 		pr_info("QAT: Stopping acceleration device qat_dev%d.\n",
 			ctl_data->device_id);
 
 	adf_ctl_stop_devices(ctl_data->device_id);
 
 out:
-	kfree(ctl_data);
-	return ret;
-}
+	kमुक्त(ctl_data);
+	वापस ret;
+पूर्ण
 
-static int adf_ctl_ioctl_dev_start(struct file *fp, unsigned int cmd,
-				   unsigned long arg)
-{
-	int ret;
-	struct adf_user_cfg_ctl_data *ctl_data;
-	struct adf_accel_dev *accel_dev;
+अटल पूर्णांक adf_ctl_ioctl_dev_start(काष्ठा file *fp, अचिन्हित पूर्णांक cmd,
+				   अचिन्हित दीर्घ arg)
+अणु
+	पूर्णांक ret;
+	काष्ठा adf_user_cfg_ctl_data *ctl_data;
+	काष्ठा adf_accel_dev *accel_dev;
 
 	ret = adf_ctl_alloc_resources(&ctl_data, arg);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ret = -ENODEV;
 	accel_dev = adf_devmgr_get_dev_by_id(ctl_data->device_id);
-	if (!accel_dev)
-		goto out;
+	अगर (!accel_dev)
+		जाओ out;
 
-	if (!adf_dev_started(accel_dev)) {
+	अगर (!adf_dev_started(accel_dev)) अणु
 		dev_info(&GET_DEV(accel_dev),
 			 "Starting acceleration device qat_dev%d.\n",
 			 ctl_data->device_id);
 		ret = adf_dev_init(accel_dev);
-		if (!ret)
+		अगर (!ret)
 			ret = adf_dev_start(accel_dev);
-	} else {
+	पूर्ण अन्यथा अणु
 		dev_info(&GET_DEV(accel_dev),
 			 "Acceleration device qat_dev%d already started.\n",
 			 ctl_data->device_id);
-	}
-	if (ret) {
+	पूर्ण
+	अगर (ret) अणु
 		dev_err(&GET_DEV(accel_dev), "Failed to start qat_dev%d\n",
 			ctl_data->device_id);
 		adf_dev_stop(accel_dev);
-		adf_dev_shutdown(accel_dev);
-	}
+		adf_dev_shutकरोwn(accel_dev);
+	पूर्ण
 out:
-	kfree(ctl_data);
-	return ret;
-}
+	kमुक्त(ctl_data);
+	वापस ret;
+पूर्ण
 
-static int adf_ctl_ioctl_get_num_devices(struct file *fp, unsigned int cmd,
-					 unsigned long arg)
-{
+अटल पूर्णांक adf_ctl_ioctl_get_num_devices(काष्ठा file *fp, अचिन्हित पूर्णांक cmd,
+					 अचिन्हित दीर्घ arg)
+अणु
 	u32 num_devices = 0;
 
 	adf_devmgr_get_num_dev(&num_devices);
-	if (copy_to_user((void __user *)arg, &num_devices, sizeof(num_devices)))
-		return -EFAULT;
+	अगर (copy_to_user((व्योम __user *)arg, &num_devices, माप(num_devices)))
+		वापस -EFAULT;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int adf_ctl_ioctl_get_status(struct file *fp, unsigned int cmd,
-				    unsigned long arg)
-{
-	struct adf_hw_device_data *hw_data;
-	struct adf_dev_status_info dev_info;
-	struct adf_accel_dev *accel_dev;
+अटल पूर्णांक adf_ctl_ioctl_get_status(काष्ठा file *fp, अचिन्हित पूर्णांक cmd,
+				    अचिन्हित दीर्घ arg)
+अणु
+	काष्ठा adf_hw_device_data *hw_data;
+	काष्ठा adf_dev_status_info dev_info;
+	काष्ठा adf_accel_dev *accel_dev;
 
-	if (copy_from_user(&dev_info, (void __user *)arg,
-			   sizeof(struct adf_dev_status_info))) {
+	अगर (copy_from_user(&dev_info, (व्योम __user *)arg,
+			   माप(काष्ठा adf_dev_status_info))) अणु
 		pr_err("QAT: failed to copy from user.\n");
-		return -EFAULT;
-	}
+		वापस -EFAULT;
+	पूर्ण
 
 	accel_dev = adf_devmgr_get_dev_by_id(dev_info.accel_id);
-	if (!accel_dev)
-		return -ENODEV;
+	अगर (!accel_dev)
+		वापस -ENODEV;
 
 	hw_data = accel_dev->hw_device;
 	dev_info.state = adf_dev_started(accel_dev) ? DEV_UP : DEV_DOWN;
@@ -363,102 +364,102 @@ static int adf_ctl_ioctl_get_status(struct file *fp, unsigned int cmd,
 	dev_info.num_logical_accel = hw_data->num_logical_accel;
 	dev_info.banks_per_accel = hw_data->num_banks
 					/ hw_data->num_logical_accel;
-	strlcpy(dev_info.name, hw_data->dev_class->name, sizeof(dev_info.name));
+	strlcpy(dev_info.name, hw_data->dev_class->name, माप(dev_info.name));
 	dev_info.instance_id = hw_data->instance_id;
 	dev_info.type = hw_data->dev_class->type;
 	dev_info.bus = accel_to_pci_dev(accel_dev)->bus->number;
 	dev_info.dev = PCI_SLOT(accel_to_pci_dev(accel_dev)->devfn);
 	dev_info.fun = PCI_FUNC(accel_to_pci_dev(accel_dev)->devfn);
 
-	if (copy_to_user((void __user *)arg, &dev_info,
-			 sizeof(struct adf_dev_status_info))) {
+	अगर (copy_to_user((व्योम __user *)arg, &dev_info,
+			 माप(काष्ठा adf_dev_status_info))) अणु
 		dev_err(&GET_DEV(accel_dev), "failed to copy status.\n");
-		return -EFAULT;
-	}
-	return 0;
-}
+		वापस -EFAULT;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static long adf_ctl_ioctl(struct file *fp, unsigned int cmd, unsigned long arg)
-{
-	int ret;
+अटल दीर्घ adf_ctl_ioctl(काष्ठा file *fp, अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
+अणु
+	पूर्णांक ret;
 
-	if (mutex_lock_interruptible(&adf_ctl_lock))
-		return -EFAULT;
+	अगर (mutex_lock_पूर्णांकerruptible(&adf_ctl_lock))
+		वापस -EFAULT;
 
-	switch (cmd) {
-	case IOCTL_CONFIG_SYS_RESOURCE_PARAMETERS:
+	चयन (cmd) अणु
+	हाल IOCTL_CONFIG_SYS_RESOURCE_PARAMETERS:
 		ret = adf_ctl_ioctl_dev_config(fp, cmd, arg);
-		break;
+		अवरोध;
 
-	case IOCTL_STOP_ACCEL_DEV:
+	हाल IOCTL_STOP_ACCEL_DEV:
 		ret = adf_ctl_ioctl_dev_stop(fp, cmd, arg);
-		break;
+		अवरोध;
 
-	case IOCTL_START_ACCEL_DEV:
+	हाल IOCTL_START_ACCEL_DEV:
 		ret = adf_ctl_ioctl_dev_start(fp, cmd, arg);
-		break;
+		अवरोध;
 
-	case IOCTL_GET_NUM_DEVICES:
+	हाल IOCTL_GET_NUM_DEVICES:
 		ret = adf_ctl_ioctl_get_num_devices(fp, cmd, arg);
-		break;
+		अवरोध;
 
-	case IOCTL_STATUS_ACCEL_DEV:
+	हाल IOCTL_STATUS_ACCEL_DEV:
 		ret = adf_ctl_ioctl_get_status(fp, cmd, arg);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		pr_err("QAT: Invalid ioctl\n");
 		ret = -EFAULT;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 	mutex_unlock(&adf_ctl_lock);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int __init adf_register_ctl_device_driver(void)
-{
-	if (adf_chr_drv_create())
-		goto err_chr_dev;
+अटल पूर्णांक __init adf_रेजिस्टर_ctl_device_driver(व्योम)
+अणु
+	अगर (adf_chr_drv_create())
+		जाओ err_chr_dev;
 
-	if (adf_init_aer())
-		goto err_aer;
+	अगर (adf_init_aer())
+		जाओ err_aer;
 
-	if (adf_init_pf_wq())
-		goto err_pf_wq;
+	अगर (adf_init_pf_wq())
+		जाओ err_pf_wq;
 
-	if (adf_init_vf_wq())
-		goto err_vf_wq;
+	अगर (adf_init_vf_wq())
+		जाओ err_vf_wq;
 
-	if (qat_crypto_register())
-		goto err_crypto_register;
+	अगर (qat_crypto_रेजिस्टर())
+		जाओ err_crypto_रेजिस्टर;
 
-	return 0;
+	वापस 0;
 
-err_crypto_register:
-	adf_exit_vf_wq();
+err_crypto_रेजिस्टर:
+	adf_निकास_vf_wq();
 err_vf_wq:
-	adf_exit_pf_wq();
+	adf_निकास_pf_wq();
 err_pf_wq:
-	adf_exit_aer();
+	adf_निकास_aer();
 err_aer:
 	adf_chr_drv_destroy();
 err_chr_dev:
 	mutex_destroy(&adf_ctl_lock);
-	return -EFAULT;
-}
+	वापस -EFAULT;
+पूर्ण
 
-static void __exit adf_unregister_ctl_device_driver(void)
-{
+अटल व्योम __निकास adf_unरेजिस्टर_ctl_device_driver(व्योम)
+अणु
 	adf_chr_drv_destroy();
-	adf_exit_aer();
-	adf_exit_vf_wq();
-	adf_exit_pf_wq();
-	qat_crypto_unregister();
+	adf_निकास_aer();
+	adf_निकास_vf_wq();
+	adf_निकास_pf_wq();
+	qat_crypto_unरेजिस्टर();
 	adf_clean_vf_map(false);
 	mutex_destroy(&adf_ctl_lock);
-}
+पूर्ण
 
-module_init(adf_register_ctl_device_driver);
-module_exit(adf_unregister_ctl_device_driver);
+module_init(adf_रेजिस्टर_ctl_device_driver);
+module_निकास(adf_unरेजिस्टर_ctl_device_driver);
 MODULE_LICENSE("Dual BSD/GPL");
 MODULE_AUTHOR("Intel");
 MODULE_DESCRIPTION("Intel(R) QuickAssist Technology");

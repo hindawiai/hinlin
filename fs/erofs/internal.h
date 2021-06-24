@@ -1,234 +1,235 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * Copyright (C) 2017-2018 HUAWEI, Inc.
  *             https://www.huawei.com/
  * Created by Gao Xiang <gaoxiang25@huawei.com>
  */
-#ifndef __EROFS_INTERNAL_H
-#define __EROFS_INTERNAL_H
+#अगर_अघोषित __EROFS_INTERNAL_H
+#घोषणा __EROFS_INTERNAL_H
 
-#include <linux/fs.h>
-#include <linux/dcache.h>
-#include <linux/mm.h>
-#include <linux/pagemap.h>
-#include <linux/bio.h>
-#include <linux/buffer_head.h>
-#include <linux/magic.h>
-#include <linux/slab.h>
-#include <linux/vmalloc.h>
-#include "erofs_fs.h"
+#समावेश <linux/fs.h>
+#समावेश <linux/dcache.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/pagemap.h>
+#समावेश <linux/bपन.स>
+#समावेश <linux/buffer_head.h>
+#समावेश <linux/magic.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/vदो_स्मृति.h>
+#समावेश "erofs_fs.h"
 
 /* redefine pr_fmt "erofs: " */
-#undef pr_fmt
-#define pr_fmt(fmt) "erofs: " fmt
+#अघोषित pr_fmt
+#घोषणा pr_fmt(fmt) "erofs: " fmt
 
-__printf(3, 4) void _erofs_err(struct super_block *sb,
-			       const char *function, const char *fmt, ...);
-#define erofs_err(sb, fmt, ...)	\
+__म_लिखो(3, 4) व्योम _erofs_err(काष्ठा super_block *sb,
+			       स्थिर अक्षर *function, स्थिर अक्षर *fmt, ...);
+#घोषणा erofs_err(sb, fmt, ...)	\
 	_erofs_err(sb, __func__, fmt "\n", ##__VA_ARGS__)
-__printf(3, 4) void _erofs_info(struct super_block *sb,
-			       const char *function, const char *fmt, ...);
-#define erofs_info(sb, fmt, ...) \
+__म_लिखो(3, 4) व्योम _erofs_info(काष्ठा super_block *sb,
+			       स्थिर अक्षर *function, स्थिर अक्षर *fmt, ...);
+#घोषणा erofs_info(sb, fmt, ...) \
 	_erofs_info(sb, __func__, fmt "\n", ##__VA_ARGS__)
-#ifdef CONFIG_EROFS_FS_DEBUG
-#define erofs_dbg(x, ...)       pr_debug(x "\n", ##__VA_ARGS__)
-#define DBG_BUGON               BUG_ON
-#else
-#define erofs_dbg(x, ...)       ((void)0)
-#define DBG_BUGON(x)            ((void)(x))
-#endif	/* !CONFIG_EROFS_FS_DEBUG */
+#अगर_घोषित CONFIG_EROFS_FS_DEBUG
+#घोषणा erofs_dbg(x, ...)       pr_debug(x "\n", ##__VA_ARGS__)
+#घोषणा DBG_BUGON               BUG_ON
+#अन्यथा
+#घोषणा erofs_dbg(x, ...)       ((व्योम)0)
+#घोषणा DBG_BUGON(x)            ((व्योम)(x))
+#पूर्ण_अगर	/* !CONFIG_EROFS_FS_DEBUG */
 
-/* EROFS_SUPER_MAGIC_V1 to represent the whole file system */
-#define EROFS_SUPER_MAGIC   EROFS_SUPER_MAGIC_V1
+/* EROFS_SUPER_MAGIC_V1 to represent the whole file प्रणाली */
+#घोषणा EROFS_SUPER_MAGIC   EROFS_SUPER_MAGIC_V1
 
-typedef u64 erofs_nid_t;
-typedef u64 erofs_off_t;
-/* data type for filesystem-wide blocks number */
-typedef u32 erofs_blk_t;
+प्रकार u64 erofs_nid_t;
+प्रकार u64 erofs_off_t;
+/* data type क्रम fileप्रणाली-wide blocks number */
+प्रकार u32 erofs_blk_t;
 
-struct erofs_fs_context {
-#ifdef CONFIG_EROFS_FS_ZIP
+काष्ठा erofs_fs_context अणु
+#अगर_घोषित CONFIG_EROFS_FS_ZIP
 	/* current strategy of how to use managed cache */
-	unsigned char cache_strategy;
-	/* strategy of sync decompression (false - auto, true - force on) */
-	bool readahead_sync_decompress;
+	अचिन्हित अक्षर cache_strategy;
+	/* strategy of sync decompression (false - स्वतः, true - क्रमce on) */
+	bool पढ़ोahead_sync_decompress;
 
-	/* threshold for decompression synchronously */
-	unsigned int max_sync_decompress_pages;
-#endif
-	unsigned int mount_opt;
-};
+	/* threshold क्रम decompression synchronously */
+	अचिन्हित पूर्णांक max_sync_decompress_pages;
+#पूर्ण_अगर
+	अचिन्हित पूर्णांक mount_opt;
+पूर्ण;
 
-/* all filesystem-wide lz4 configurations */
-struct erofs_sb_lz4_info {
-	/* # of pages needed for EROFS lz4 rolling decompression */
+/* all fileप्रणाली-wide lz4 configurations */
+काष्ठा erofs_sb_lz4_info अणु
+	/* # of pages needed क्रम EROFS lz4 rolling decompression */
 	u16 max_distance_pages;
-	/* maximum possible blocks for pclusters in the filesystem */
+	/* maximum possible blocks क्रम pclusters in the fileप्रणाली */
 	u16 max_pclusterblks;
-};
+पूर्ण;
 
-struct erofs_sb_info {
-#ifdef CONFIG_EROFS_FS_ZIP
-	/* list for all registered superblocks, mainly for shrinker */
-	struct list_head list;
-	struct mutex umount_mutex;
+काष्ठा erofs_sb_info अणु
+#अगर_घोषित CONFIG_EROFS_FS_ZIP
+	/* list क्रम all रेजिस्टरed superblocks, मुख्यly क्रम shrinker */
+	काष्ठा list_head list;
+	काष्ठा mutex umount_mutex;
 
 	/* managed XArray arranged in physical block number */
-	struct xarray managed_pslots;
+	काष्ठा xarray managed_pslots;
 
-	unsigned int shrinker_run_no;
+	अचिन्हित पूर्णांक shrinker_run_no;
 	u16 available_compr_algs;
 
-	/* pseudo inode to manage cached pages */
-	struct inode *managed_cache;
+	/* pseuकरो inode to manage cached pages */
+	काष्ठा inode *managed_cache;
 
-	struct erofs_sb_lz4_info lz4;
-#endif	/* CONFIG_EROFS_FS_ZIP */
+	काष्ठा erofs_sb_lz4_info lz4;
+#पूर्ण_अगर	/* CONFIG_EROFS_FS_ZIP */
 	u32 blocks;
 	u32 meta_blkaddr;
-#ifdef CONFIG_EROFS_FS_XATTR
+#अगर_घोषित CONFIG_EROFS_FS_XATTR
 	u32 xattr_blkaddr;
-#endif
+#पूर्ण_अगर
 
-	/* inode slot unit size in bit shift */
-	unsigned char islotbits;
+	/* inode slot unit size in bit shअगरt */
+	अचिन्हित अक्षर islotbits;
 
 	u32 sb_size;			/* total superblock size */
-	u32 build_time_nsec;
-	u64 build_time;
+	u32 build_समय_nsec;
+	u64 build_समय;
 
 	/* what we really care is nid, rather than ino.. */
 	erofs_nid_t root_nid;
-	/* used for statfs, f_files - f_favail */
+	/* used क्रम statfs, f_files - f_favail */
 	u64 inos;
 
-	u8 uuid[16];                    /* 128-bit uuid for volume */
+	u8 uuid[16];                    /* 128-bit uuid क्रम volume */
 	u8 volume_name[16];             /* volume name */
 	u32 feature_compat;
 	u32 feature_incompat;
 
-	struct erofs_fs_context ctx;	/* options */
-};
+	काष्ठा erofs_fs_context ctx;	/* options */
+पूर्ण;
 
-#define EROFS_SB(sb) ((struct erofs_sb_info *)(sb)->s_fs_info)
-#define EROFS_I_SB(inode) ((struct erofs_sb_info *)(inode)->i_sb->s_fs_info)
+#घोषणा EROFS_SB(sb) ((काष्ठा erofs_sb_info *)(sb)->s_fs_info)
+#घोषणा EROFS_I_SB(inode) ((काष्ठा erofs_sb_info *)(inode)->i_sb->s_fs_info)
 
-/* Mount flags set via mount options or defaults */
-#define EROFS_MOUNT_XATTR_USER		0x00000010
-#define EROFS_MOUNT_POSIX_ACL		0x00000020
+/* Mount flags set via mount options or शेषs */
+#घोषणा EROFS_MOUNT_XATTR_USER		0x00000010
+#घोषणा EROFS_MOUNT_POSIX_ACL		0x00000020
 
-#define clear_opt(ctx, option)	((ctx)->mount_opt &= ~EROFS_MOUNT_##option)
-#define set_opt(ctx, option)	((ctx)->mount_opt |= EROFS_MOUNT_##option)
-#define test_opt(ctx, option)	((ctx)->mount_opt & EROFS_MOUNT_##option)
+#घोषणा clear_opt(ctx, option)	((ctx)->mount_opt &= ~EROFS_MOUNT_##option)
+#घोषणा set_opt(ctx, option)	((ctx)->mount_opt |= EROFS_MOUNT_##option)
+#घोषणा test_opt(ctx, option)	((ctx)->mount_opt & EROFS_MOUNT_##option)
 
-enum {
+क्रमागत अणु
 	EROFS_ZIP_CACHE_DISABLED,
 	EROFS_ZIP_CACHE_READAHEAD,
 	EROFS_ZIP_CACHE_READAROUND
-};
+पूर्ण;
 
-#ifdef CONFIG_EROFS_FS_ZIP
-#define EROFS_LOCKED_MAGIC     (INT_MIN | 0xE0F510CCL)
+#अगर_घोषित CONFIG_EROFS_FS_ZIP
+#घोषणा EROFS_LOCKED_MAGIC     (पूर्णांक_न्यून | 0xE0F510CCL)
 
 /* basic unit of the workstation of a super_block */
-struct erofs_workgroup {
+काष्ठा erofs_workgroup अणु
 	/* the workgroup index in the workstation */
 	pgoff_t index;
 
 	/* overall workgroup reference count */
 	atomic_t refcount;
-};
+पूर्ण;
 
-#if defined(CONFIG_SMP)
-static inline bool erofs_workgroup_try_to_freeze(struct erofs_workgroup *grp,
-						 int val)
-{
+#अगर defined(CONFIG_SMP)
+अटल अंतरभूत bool erofs_workgroup_try_to_मुक्तze(काष्ठा erofs_workgroup *grp,
+						 पूर्णांक val)
+अणु
 	preempt_disable();
-	if (val != atomic_cmpxchg(&grp->refcount, val, EROFS_LOCKED_MAGIC)) {
+	अगर (val != atomic_cmpxchg(&grp->refcount, val, EROFS_LOCKED_MAGIC)) अणु
 		preempt_enable();
-		return false;
-	}
-	return true;
-}
+		वापस false;
+	पूर्ण
+	वापस true;
+पूर्ण
 
-static inline void erofs_workgroup_unfreeze(struct erofs_workgroup *grp,
-					    int orig_val)
-{
+अटल अंतरभूत व्योम erofs_workgroup_unमुक्तze(काष्ठा erofs_workgroup *grp,
+					    पूर्णांक orig_val)
+अणु
 	/*
-	 * other observers should notice all modifications
-	 * in the freezing period.
+	 * other observers should notice all modअगरications
+	 * in the मुक्तzing period.
 	 */
 	smp_mb();
 	atomic_set(&grp->refcount, orig_val);
 	preempt_enable();
-}
+पूर्ण
 
-static inline int erofs_wait_on_workgroup_freezed(struct erofs_workgroup *grp)
-{
-	return atomic_cond_read_relaxed(&grp->refcount,
+अटल अंतरभूत पूर्णांक erofs_रुको_on_workgroup_मुक्तzed(काष्ठा erofs_workgroup *grp)
+अणु
+	वापस atomic_cond_पढ़ो_relaxed(&grp->refcount,
 					VAL != EROFS_LOCKED_MAGIC);
-}
-#else
-static inline bool erofs_workgroup_try_to_freeze(struct erofs_workgroup *grp,
-						 int val)
-{
+पूर्ण
+#अन्यथा
+अटल अंतरभूत bool erofs_workgroup_try_to_मुक्तze(काष्ठा erofs_workgroup *grp,
+						 पूर्णांक val)
+अणु
 	preempt_disable();
-	/* no need to spin on UP platforms, let's just disable preemption. */
-	if (val != atomic_read(&grp->refcount)) {
+	/* no need to spin on UP platक्रमms, let's just disable preemption. */
+	अगर (val != atomic_पढ़ो(&grp->refcount)) अणु
 		preempt_enable();
-		return false;
-	}
-	return true;
-}
+		वापस false;
+	पूर्ण
+	वापस true;
+पूर्ण
 
-static inline void erofs_workgroup_unfreeze(struct erofs_workgroup *grp,
-					    int orig_val)
-{
+अटल अंतरभूत व्योम erofs_workgroup_unमुक्तze(काष्ठा erofs_workgroup *grp,
+					    पूर्णांक orig_val)
+अणु
 	preempt_enable();
-}
+पूर्ण
 
-static inline int erofs_wait_on_workgroup_freezed(struct erofs_workgroup *grp)
-{
-	int v = atomic_read(&grp->refcount);
+अटल अंतरभूत पूर्णांक erofs_रुको_on_workgroup_मुक्तzed(काष्ठा erofs_workgroup *grp)
+अणु
+	पूर्णांक v = atomic_पढ़ो(&grp->refcount);
 
-	/* workgroup is never freezed on uniprocessor systems */
+	/* workgroup is never मुक्तzed on uniprocessor प्रणालीs */
 	DBG_BUGON(v == EROFS_LOCKED_MAGIC);
-	return v;
-}
-#endif	/* !CONFIG_SMP */
-#endif	/* !CONFIG_EROFS_FS_ZIP */
+	वापस v;
+पूर्ण
+#पूर्ण_अगर	/* !CONFIG_SMP */
+#पूर्ण_अगर	/* !CONFIG_EROFS_FS_ZIP */
 
 /* we strictly follow PAGE_SIZE and no buffer head yet */
-#define LOG_BLOCK_SIZE		PAGE_SHIFT
+#घोषणा LOG_BLOCK_SIZE		PAGE_SHIFT
 
-#undef LOG_SECTORS_PER_BLOCK
-#define LOG_SECTORS_PER_BLOCK	(PAGE_SHIFT - 9)
+#अघोषित LOG_SECTORS_PER_BLOCK
+#घोषणा LOG_SECTORS_PER_BLOCK	(PAGE_SHIFT - 9)
 
-#undef SECTORS_PER_BLOCK
-#define SECTORS_PER_BLOCK	(1 << SECTORS_PER_BLOCK)
+#अघोषित SECTORS_PER_BLOCK
+#घोषणा SECTORS_PER_BLOCK	(1 << SECTORS_PER_BLOCK)
 
-#define EROFS_BLKSIZ		(1 << LOG_BLOCK_SIZE)
+#घोषणा EROFS_BLKSIZ		(1 << LOG_BLOCK_SIZE)
 
-#if (EROFS_BLKSIZ % 4096 || !EROFS_BLKSIZ)
-#error erofs cannot be used in this platform
-#endif
+#अगर (EROFS_BLKSIZ % 4096 || !EROFS_BLKSIZ)
+#त्रुटि erofs cannot be used in this platक्रमm
+#पूर्ण_अगर
 
-#define ROOT_NID(sb)		((sb)->root_nid)
+#घोषणा ROOT_NID(sb)		((sb)->root_nid)
 
-#define erofs_blknr(addr)       ((addr) / EROFS_BLKSIZ)
-#define erofs_blkoff(addr)      ((addr) % EROFS_BLKSIZ)
-#define blknr_to_addr(nr)       ((erofs_off_t)(nr) * EROFS_BLKSIZ)
+#घोषणा erofs_blknr(addr)       ((addr) / EROFS_BLKSIZ)
+#घोषणा erofs_blkoff(addr)      ((addr) % EROFS_BLKSIZ)
+#घोषणा blknr_to_addr(nr)       ((erofs_off_t)(nr) * EROFS_BLKSIZ)
 
-static inline erofs_off_t iloc(struct erofs_sb_info *sbi, erofs_nid_t nid)
-{
-	return blknr_to_addr(sbi->meta_blkaddr) + (nid << sbi->islotbits);
-}
+अटल अंतरभूत erofs_off_t iloc(काष्ठा erofs_sb_info *sbi, erofs_nid_t nid)
+अणु
+	वापस blknr_to_addr(sbi->meta_blkaddr) + (nid << sbi->islotbits);
+पूर्ण
 
-#define EROFS_FEATURE_FUNCS(name, compat, feature) \
-static inline bool erofs_sb_has_##name(struct erofs_sb_info *sbi) \
-{ \
-	return sbi->feature_##compat & EROFS_FEATURE_##feature; \
-}
+#घोषणा EROFS_FEATURE_FUNCS(name, compat, feature) \
+अटल अंतरभूत bool erofs_sb_has_##name(काष्ठा erofs_sb_info *sbi) \
+अणु \
+	वापस sbi->feature_##compat & EROFS_FEATURE_##feature; \
+पूर्ण
 
 EROFS_FEATURE_FUNCS(lz4_0padding, incompat, INCOMPAT_LZ4_0PADDING)
 EROFS_FEATURE_FUNCS(compr_cfgs, incompat, INCOMPAT_COMPR_CFGS)
@@ -236,237 +237,237 @@ EROFS_FEATURE_FUNCS(big_pcluster, incompat, INCOMPAT_BIG_PCLUSTER)
 EROFS_FEATURE_FUNCS(sb_chksum, compat, COMPAT_SB_CHKSUM)
 
 /* atomic flag definitions */
-#define EROFS_I_EA_INITED_BIT	0
-#define EROFS_I_Z_INITED_BIT	1
+#घोषणा EROFS_I_EA_INITED_BIT	0
+#घोषणा EROFS_I_Z_INITED_BIT	1
 
 /* bitlock definitions (arranged in reverse order) */
-#define EROFS_I_BL_XATTR_BIT	(BITS_PER_LONG - 1)
-#define EROFS_I_BL_Z_BIT	(BITS_PER_LONG - 2)
+#घोषणा EROFS_I_BL_XATTR_BIT	(BITS_PER_LONG - 1)
+#घोषणा EROFS_I_BL_Z_BIT	(BITS_PER_LONG - 2)
 
-struct erofs_inode {
+काष्ठा erofs_inode अणु
 	erofs_nid_t nid;
 
 	/* atomic flags (including bitlocks) */
-	unsigned long flags;
+	अचिन्हित दीर्घ flags;
 
-	unsigned char datalayout;
-	unsigned char inode_isize;
-	unsigned short xattr_isize;
+	अचिन्हित अक्षर datalayout;
+	अचिन्हित अक्षर inode_isize;
+	अचिन्हित लघु xattr_isize;
 
-	unsigned int xattr_shared_count;
-	unsigned int *xattr_shared_xattrs;
+	अचिन्हित पूर्णांक xattr_shared_count;
+	अचिन्हित पूर्णांक *xattr_shared_xattrs;
 
-	union {
+	जोड़ अणु
 		erofs_blk_t raw_blkaddr;
-#ifdef CONFIG_EROFS_FS_ZIP
-		struct {
-			unsigned short z_advise;
-			unsigned char  z_algorithmtype[2];
-			unsigned char  z_logical_clusterbits;
-		};
-#endif	/* CONFIG_EROFS_FS_ZIP */
-	};
+#अगर_घोषित CONFIG_EROFS_FS_ZIP
+		काष्ठा अणु
+			अचिन्हित लघु z_advise;
+			अचिन्हित अक्षर  z_algorithmtype[2];
+			अचिन्हित अक्षर  z_logical_clusterbits;
+		पूर्ण;
+#पूर्ण_अगर	/* CONFIG_EROFS_FS_ZIP */
+	पूर्ण;
 	/* the corresponding vfs inode */
-	struct inode vfs_inode;
-};
+	काष्ठा inode vfs_inode;
+पूर्ण;
 
-#define EROFS_I(ptr)	\
-	container_of(ptr, struct erofs_inode, vfs_inode)
+#घोषणा EROFS_I(ptr)	\
+	container_of(ptr, काष्ठा erofs_inode, vfs_inode)
 
-static inline unsigned long erofs_inode_datablocks(struct inode *inode)
-{
+अटल अंतरभूत अचिन्हित दीर्घ erofs_inode_datablocks(काष्ठा inode *inode)
+अणु
 	/* since i_size cannot be changed */
-	return DIV_ROUND_UP(inode->i_size, EROFS_BLKSIZ);
-}
+	वापस DIV_ROUND_UP(inode->i_size, EROFS_BLKSIZ);
+पूर्ण
 
-static inline unsigned int erofs_bitrange(unsigned int value, unsigned int bit,
-					  unsigned int bits)
-{
+अटल अंतरभूत अचिन्हित पूर्णांक erofs_bitrange(अचिन्हित पूर्णांक value, अचिन्हित पूर्णांक bit,
+					  अचिन्हित पूर्णांक bits)
+अणु
 
-	return (value >> bit) & ((1 << bits) - 1);
-}
+	वापस (value >> bit) & ((1 << bits) - 1);
+पूर्ण
 
 
-static inline unsigned int erofs_inode_version(unsigned int value)
-{
-	return erofs_bitrange(value, EROFS_I_VERSION_BIT,
+अटल अंतरभूत अचिन्हित पूर्णांक erofs_inode_version(अचिन्हित पूर्णांक value)
+अणु
+	वापस erofs_bitrange(value, EROFS_I_VERSION_BIT,
 			      EROFS_I_VERSION_BITS);
-}
+पूर्ण
 
-static inline unsigned int erofs_inode_datalayout(unsigned int value)
-{
-	return erofs_bitrange(value, EROFS_I_DATALAYOUT_BIT,
+अटल अंतरभूत अचिन्हित पूर्णांक erofs_inode_datalayout(अचिन्हित पूर्णांक value)
+अणु
+	वापस erofs_bitrange(value, EROFS_I_DATALAYOUT_BIT,
 			      EROFS_I_DATALAYOUT_BITS);
-}
+पूर्ण
 
-extern const struct super_operations erofs_sops;
+बाह्य स्थिर काष्ठा super_operations erofs_sops;
 
-extern const struct address_space_operations erofs_raw_access_aops;
-extern const struct address_space_operations z_erofs_aops;
+बाह्य स्थिर काष्ठा address_space_operations erofs_raw_access_aops;
+बाह्य स्थिर काष्ठा address_space_operations z_erofs_aops;
 
 /*
  * Logical to physical block mapping
  *
- * Different with other file systems, it is used for 2 access modes:
+ * Dअगरferent with other file प्रणालीs, it is used क्रम 2 access modes:
  *
  * 1) RAW access mode:
  *
  * Users pass a valid (m_lblk, m_lofs -- usually 0) pair,
- * and get the valid m_pblk, m_pofs and the longest m_len(in bytes).
+ * and get the valid m_pblk, m_pofs and the दीर्घest m_len(in bytes).
  *
  * Note that m_lblk in the RAW access mode refers to the number of
  * the compressed ondisk block rather than the uncompressed
- * in-memory block for the compressed file.
+ * in-memory block क्रम the compressed file.
  *
- * m_pofs equals to m_lofs except for the inline data page.
+ * m_pofs equals to m_lofs except क्रम the अंतरभूत data page.
  *
  * 2) Normal access mode:
  *
- * If the inode is not compressed, it has no difference with
- * the RAW access mode. However, if the inode is compressed,
+ * If the inode is not compressed, it has no dअगरference with
+ * the RAW access mode. However, अगर the inode is compressed,
  * users should pass a valid (m_lblk, m_lofs) pair, and get
  * the needed m_pblk, m_pofs, m_len to get the compressed data
  * and the updated m_lblk, m_lofs which indicates the start
  * of the corresponding uncompressed data in the file.
  */
-enum {
+क्रमागत अणु
 	BH_Zipped = BH_PrivateStart,
 	BH_FullMapped,
-};
+पूर्ण;
 
 /* Has a disk mapping */
-#define EROFS_MAP_MAPPED	(1 << BH_Mapped)
+#घोषणा EROFS_MAP_MAPPED	(1 << BH_Mapped)
 /* Located in metadata (could be copied from bd_inode) */
-#define EROFS_MAP_META		(1 << BH_Meta)
+#घोषणा EROFS_MAP_META		(1 << BH_Meta)
 /* The extent has been compressed */
-#define EROFS_MAP_ZIPPED	(1 << BH_Zipped)
+#घोषणा EROFS_MAP_ZIPPED	(1 << BH_Zipped)
 /* The length of extent is full */
-#define EROFS_MAP_FULL_MAPPED	(1 << BH_FullMapped)
+#घोषणा EROFS_MAP_FULL_MAPPED	(1 << BH_FullMapped)
 
-struct erofs_map_blocks {
+काष्ठा erofs_map_blocks अणु
 	erofs_off_t m_pa, m_la;
 	u64 m_plen, m_llen;
 
-	unsigned int m_flags;
+	अचिन्हित पूर्णांक m_flags;
 
-	struct page *mpage;
-};
+	काष्ठा page *mpage;
+पूर्ण;
 
-/* Flags used by erofs_map_blocks_flatmode() */
-#define EROFS_GET_BLOCKS_RAW    0x0001
+/* Flags used by erofs_map_blocks_flaपंचांगode() */
+#घोषणा EROFS_GET_BLOCKS_RAW    0x0001
 
 /* zmap.c */
-#ifdef CONFIG_EROFS_FS_ZIP
-int z_erofs_fill_inode(struct inode *inode);
-int z_erofs_map_blocks_iter(struct inode *inode,
-			    struct erofs_map_blocks *map,
-			    int flags);
-#else
-static inline int z_erofs_fill_inode(struct inode *inode) { return -EOPNOTSUPP; }
-static inline int z_erofs_map_blocks_iter(struct inode *inode,
-					  struct erofs_map_blocks *map,
-					  int flags)
-{
-	return -EOPNOTSUPP;
-}
-#endif	/* !CONFIG_EROFS_FS_ZIP */
+#अगर_घोषित CONFIG_EROFS_FS_ZIP
+पूर्णांक z_erofs_fill_inode(काष्ठा inode *inode);
+पूर्णांक z_erofs_map_blocks_iter(काष्ठा inode *inode,
+			    काष्ठा erofs_map_blocks *map,
+			    पूर्णांक flags);
+#अन्यथा
+अटल अंतरभूत पूर्णांक z_erofs_fill_inode(काष्ठा inode *inode) अणु वापस -EOPNOTSUPP; पूर्ण
+अटल अंतरभूत पूर्णांक z_erofs_map_blocks_iter(काष्ठा inode *inode,
+					  काष्ठा erofs_map_blocks *map,
+					  पूर्णांक flags)
+अणु
+	वापस -EOPNOTSUPP;
+पूर्ण
+#पूर्ण_अगर	/* !CONFIG_EROFS_FS_ZIP */
 
 /* data.c */
-struct page *erofs_get_meta_page(struct super_block *sb, erofs_blk_t blkaddr);
+काष्ठा page *erofs_get_meta_page(काष्ठा super_block *sb, erofs_blk_t blkaddr);
 
 /* inode.c */
-static inline unsigned long erofs_inode_hash(erofs_nid_t nid)
-{
-#if BITS_PER_LONG == 32
-	return (nid >> 32) ^ (nid & 0xffffffff);
-#else
-	return nid;
-#endif
-}
+अटल अंतरभूत अचिन्हित दीर्घ erofs_inode_hash(erofs_nid_t nid)
+अणु
+#अगर BITS_PER_LONG == 32
+	वापस (nid >> 32) ^ (nid & 0xffffffff);
+#अन्यथा
+	वापस nid;
+#पूर्ण_अगर
+पूर्ण
 
-extern const struct inode_operations erofs_generic_iops;
-extern const struct inode_operations erofs_symlink_iops;
-extern const struct inode_operations erofs_fast_symlink_iops;
+बाह्य स्थिर काष्ठा inode_operations erofs_generic_iops;
+बाह्य स्थिर काष्ठा inode_operations erofs_symlink_iops;
+बाह्य स्थिर काष्ठा inode_operations erofs_fast_symlink_iops;
 
-struct inode *erofs_iget(struct super_block *sb, erofs_nid_t nid, bool dir);
-int erofs_getattr(struct user_namespace *mnt_userns, const struct path *path,
-		  struct kstat *stat, u32 request_mask,
-		  unsigned int query_flags);
+काष्ठा inode *erofs_iget(काष्ठा super_block *sb, erofs_nid_t nid, bool dir);
+पूर्णांक erofs_getattr(काष्ठा user_namespace *mnt_userns, स्थिर काष्ठा path *path,
+		  काष्ठा kstat *stat, u32 request_mask,
+		  अचिन्हित पूर्णांक query_flags);
 
 /* namei.c */
-extern const struct inode_operations erofs_dir_iops;
+बाह्य स्थिर काष्ठा inode_operations erofs_dir_iops;
 
-int erofs_namei(struct inode *dir, struct qstr *name,
-		erofs_nid_t *nid, unsigned int *d_type);
+पूर्णांक erofs_namei(काष्ठा inode *dir, काष्ठा qstr *name,
+		erofs_nid_t *nid, अचिन्हित पूर्णांक *d_type);
 
 /* dir.c */
-extern const struct file_operations erofs_dir_fops;
+बाह्य स्थिर काष्ठा file_operations erofs_dir_fops;
 
-static inline void *erofs_vm_map_ram(struct page **pages, unsigned int count)
-{
-	int retried = 0;
+अटल अंतरभूत व्योम *erofs_vm_map_ram(काष्ठा page **pages, अचिन्हित पूर्णांक count)
+अणु
+	पूर्णांक retried = 0;
 
-	while (1) {
-		void *p = vm_map_ram(pages, count, -1);
+	जबतक (1) अणु
+		व्योम *p = vm_map_ram(pages, count, -1);
 
-		/* retry two more times (totally 3 times) */
-		if (p || ++retried >= 3)
-			return p;
+		/* retry two more बार (totally 3 बार) */
+		अगर (p || ++retried >= 3)
+			वापस p;
 		vm_unmap_aliases();
-	}
-	return NULL;
-}
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
 /* pcpubuf.c */
-void *erofs_get_pcpubuf(unsigned int requiredpages);
-void erofs_put_pcpubuf(void *ptr);
-int erofs_pcpubuf_growsize(unsigned int nrpages);
-void erofs_pcpubuf_init(void);
-void erofs_pcpubuf_exit(void);
+व्योम *erofs_get_pcpubuf(अचिन्हित पूर्णांक requiredpages);
+व्योम erofs_put_pcpubuf(व्योम *ptr);
+पूर्णांक erofs_pcpubuf_growsize(अचिन्हित पूर्णांक nrpages);
+व्योम erofs_pcpubuf_init(व्योम);
+व्योम erofs_pcpubuf_निकास(व्योम);
 
 /* utils.c / zdata.c */
-struct page *erofs_allocpage(struct list_head *pool, gfp_t gfp);
+काष्ठा page *erofs_allocpage(काष्ठा list_head *pool, gfp_t gfp);
 
-#ifdef CONFIG_EROFS_FS_ZIP
-int erofs_workgroup_put(struct erofs_workgroup *grp);
-struct erofs_workgroup *erofs_find_workgroup(struct super_block *sb,
+#अगर_घोषित CONFIG_EROFS_FS_ZIP
+पूर्णांक erofs_workgroup_put(काष्ठा erofs_workgroup *grp);
+काष्ठा erofs_workgroup *erofs_find_workgroup(काष्ठा super_block *sb,
 					     pgoff_t index);
-struct erofs_workgroup *erofs_insert_workgroup(struct super_block *sb,
-					       struct erofs_workgroup *grp);
-void erofs_workgroup_free_rcu(struct erofs_workgroup *grp);
-void erofs_shrinker_register(struct super_block *sb);
-void erofs_shrinker_unregister(struct super_block *sb);
-int __init erofs_init_shrinker(void);
-void erofs_exit_shrinker(void);
-int __init z_erofs_init_zip_subsystem(void);
-void z_erofs_exit_zip_subsystem(void);
-int erofs_try_to_free_all_cached_pages(struct erofs_sb_info *sbi,
-				       struct erofs_workgroup *egrp);
-int erofs_try_to_free_cached_page(struct address_space *mapping,
-				  struct page *page);
-int z_erofs_load_lz4_config(struct super_block *sb,
-			    struct erofs_super_block *dsb,
-			    struct z_erofs_lz4_cfgs *lz4, int len);
-#else
-static inline void erofs_shrinker_register(struct super_block *sb) {}
-static inline void erofs_shrinker_unregister(struct super_block *sb) {}
-static inline int erofs_init_shrinker(void) { return 0; }
-static inline void erofs_exit_shrinker(void) {}
-static inline int z_erofs_init_zip_subsystem(void) { return 0; }
-static inline void z_erofs_exit_zip_subsystem(void) {}
-static inline int z_erofs_load_lz4_config(struct super_block *sb,
-				  struct erofs_super_block *dsb,
-				  struct z_erofs_lz4_cfgs *lz4, int len)
-{
-	if (lz4 || dsb->u1.lz4_max_distance) {
+काष्ठा erofs_workgroup *erofs_insert_workgroup(काष्ठा super_block *sb,
+					       काष्ठा erofs_workgroup *grp);
+व्योम erofs_workgroup_मुक्त_rcu(काष्ठा erofs_workgroup *grp);
+व्योम erofs_shrinker_रेजिस्टर(काष्ठा super_block *sb);
+व्योम erofs_shrinker_unरेजिस्टर(काष्ठा super_block *sb);
+पूर्णांक __init erofs_init_shrinker(व्योम);
+व्योम erofs_निकास_shrinker(व्योम);
+पूर्णांक __init z_erofs_init_zip_subप्रणाली(व्योम);
+व्योम z_erofs_निकास_zip_subप्रणाली(व्योम);
+पूर्णांक erofs_try_to_मुक्त_all_cached_pages(काष्ठा erofs_sb_info *sbi,
+				       काष्ठा erofs_workgroup *egrp);
+पूर्णांक erofs_try_to_मुक्त_cached_page(काष्ठा address_space *mapping,
+				  काष्ठा page *page);
+पूर्णांक z_erofs_load_lz4_config(काष्ठा super_block *sb,
+			    काष्ठा erofs_super_block *dsb,
+			    काष्ठा z_erofs_lz4_cfgs *lz4, पूर्णांक len);
+#अन्यथा
+अटल अंतरभूत व्योम erofs_shrinker_रेजिस्टर(काष्ठा super_block *sb) अणुपूर्ण
+अटल अंतरभूत व्योम erofs_shrinker_unरेजिस्टर(काष्ठा super_block *sb) अणुपूर्ण
+अटल अंतरभूत पूर्णांक erofs_init_shrinker(व्योम) अणु वापस 0; पूर्ण
+अटल अंतरभूत व्योम erofs_निकास_shrinker(व्योम) अणुपूर्ण
+अटल अंतरभूत पूर्णांक z_erofs_init_zip_subप्रणाली(व्योम) अणु वापस 0; पूर्ण
+अटल अंतरभूत व्योम z_erofs_निकास_zip_subप्रणाली(व्योम) अणुपूर्ण
+अटल अंतरभूत पूर्णांक z_erofs_load_lz4_config(काष्ठा super_block *sb,
+				  काष्ठा erofs_super_block *dsb,
+				  काष्ठा z_erofs_lz4_cfgs *lz4, पूर्णांक len)
+अणु
+	अगर (lz4 || dsb->u1.lz4_max_distance) अणु
 		erofs_err(sb, "lz4 algorithm isn't enabled");
-		return -EINVAL;
-	}
-	return 0;
-}
-#endif	/* !CONFIG_EROFS_FS_ZIP */
+		वापस -EINVAL;
+	पूर्ण
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर	/* !CONFIG_EROFS_FS_ZIP */
 
-#define EFSCORRUPTED    EUCLEAN         /* Filesystem is corrupted */
+#घोषणा EFSCORRUPTED    EUCLEAN         /* Fileप्रणाली is corrupted */
 
-#endif	/* __EROFS_INTERNAL_H */
+#पूर्ण_अगर	/* __EROFS_INTERNAL_H */
 

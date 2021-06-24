@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  *  RZ1000/1001 driver based upon
  *
@@ -6,139 +7,139 @@
  *  Copyright (C) 1995-1998  Linus Torvalds & author (see below)
  *  Principal Author:  mlord@pobox.com (Mark Lord)
  *
- *  See linux/MAINTAINERS for address of current maintainer.
+ *  See linux/MAINTAINERS क्रम address of current मुख्यtainer.
  *
- *  This file provides support for disabling the buggy read-ahead
+ *  This file provides support क्रम disabling the buggy पढ़ो-ahead
  *  mode of the RZ1000 IDE chipset, commonly used on Intel motherboards.
  */
 
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/pci.h>
-#include <linux/blkdev.h>
-#include <linux/delay.h>
-#include <scsi/scsi_host.h>
-#include <linux/libata.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/blkdev.h>
+#समावेश <linux/delay.h>
+#समावेश <scsi/scsi_host.h>
+#समावेश <linux/libata.h>
 
-#define DRV_NAME	"pata_rz1000"
-#define DRV_VERSION	"0.2.4"
+#घोषणा DRV_NAME	"pata_rz1000"
+#घोषणा DRV_VERSION	"0.2.4"
 
 
 /**
  *	rz1000_set_mode		-	mode setting function
  *	@link: ATA link
- *	@unused: returned device on set_mode failure
+ *	@unused: वापसed device on set_mode failure
  *
- *	Use a non standard set_mode function. We don't want to be tuned. We
- *	would prefer to be BIOS generic but for the fact our hardware is
+ *	Use a non standard set_mode function. We करोn't want to be tuned. We
+ *	would prefer to be BIOS generic but क्रम the fact our hardware is
  *	whacked out.
  */
 
-static int rz1000_set_mode(struct ata_link *link, struct ata_device **unused)
-{
-	struct ata_device *dev;
+अटल पूर्णांक rz1000_set_mode(काष्ठा ata_link *link, काष्ठा ata_device **unused)
+अणु
+	काष्ठा ata_device *dev;
 
-	ata_for_each_dev(dev, link, ENABLED) {
-		/* We don't really care */
+	ata_क्रम_each_dev(dev, link, ENABLED) अणु
+		/* We करोn't really care */
 		dev->pio_mode = XFER_PIO_0;
 		dev->xfer_mode = XFER_PIO_0;
-		dev->xfer_shift = ATA_SHIFT_PIO;
+		dev->xfer_shअगरt = ATA_SHIFT_PIO;
 		dev->flags |= ATA_DFLAG_PIO;
 		ata_dev_info(dev, "configured for PIO\n");
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 
-static struct scsi_host_template rz1000_sht = {
+अटल काष्ठा scsi_host_ढाँचा rz1000_sht = अणु
 	ATA_PIO_SHT(DRV_NAME),
-};
+पूर्ण;
 
-static struct ata_port_operations rz1000_port_ops = {
+अटल काष्ठा ata_port_operations rz1000_port_ops = अणु
 	.inherits	= &ata_sff_port_ops,
 	.cable_detect	= ata_cable_40wire,
 	.set_mode	= rz1000_set_mode,
-};
+पूर्ण;
 
-static int rz1000_fifo_disable(struct pci_dev *pdev)
-{
+अटल पूर्णांक rz1000_fअगरo_disable(काष्ठा pci_dev *pdev)
+अणु
 	u16 reg;
 	/* Be exceptionally paranoid as we must be sure to apply the fix */
-	if (pci_read_config_word(pdev, 0x40, &reg) != 0)
-		return -1;
+	अगर (pci_पढ़ो_config_word(pdev, 0x40, &reg) != 0)
+		वापस -1;
 	reg &= 0xDFFF;
-	if (pci_write_config_word(pdev, 0x40, reg) != 0)
-		return -1;
-	printk(KERN_INFO DRV_NAME ": disabled chipset readahead.\n");
-	return 0;
-}
+	अगर (pci_ग_लिखो_config_word(pdev, 0x40, reg) != 0)
+		वापस -1;
+	prपूर्णांकk(KERN_INFO DRV_NAME ": disabled chipset readahead.\n");
+	वापस 0;
+पूर्ण
 
 /**
  *	rz1000_init_one - Register RZ1000 ATA PCI device with kernel services
- *	@pdev: PCI device to register
+ *	@pdev: PCI device to रेजिस्टर
  *	@ent: Entry in rz1000_pci_tbl matching with @pdev
  *
- *	Configure an RZ1000 interface. This doesn't require much special
- *	handling except that we *MUST* kill the chipset readahead or the
+ *	Configure an RZ1000 पूर्णांकerface. This करोesn't require much special
+ *	handling except that we *MUST* समाप्त the chipset पढ़ोahead or the
  *	user may experience data corruption.
  */
 
-static int rz1000_init_one (struct pci_dev *pdev, const struct pci_device_id *ent)
-{
-	static const struct ata_port_info info = {
+अटल पूर्णांक rz1000_init_one (काष्ठा pci_dev *pdev, स्थिर काष्ठा pci_device_id *ent)
+अणु
+	अटल स्थिर काष्ठा ata_port_info info = अणु
 		.flags = ATA_FLAG_SLAVE_POSS,
 		.pio_mask = ATA_PIO4,
 		.port_ops = &rz1000_port_ops
-	};
-	const struct ata_port_info *ppi[] = { &info, NULL };
+	पूर्ण;
+	स्थिर काष्ठा ata_port_info *ppi[] = अणु &info, शून्य पूर्ण;
 
-	ata_print_version_once(&pdev->dev, DRV_VERSION);
+	ata_prपूर्णांक_version_once(&pdev->dev, DRV_VERSION);
 
-	if (rz1000_fifo_disable(pdev) == 0)
-		return ata_pci_sff_init_one(pdev, ppi, &rz1000_sht, NULL, 0);
+	अगर (rz1000_fअगरo_disable(pdev) == 0)
+		वापस ata_pci_sff_init_one(pdev, ppi, &rz1000_sht, शून्य, 0);
 
-	printk(KERN_ERR DRV_NAME ": failed to disable read-ahead on chipset..\n");
+	prपूर्णांकk(KERN_ERR DRV_NAME ": failed to disable read-ahead on chipset..\n");
 	/* Not safe to use so skip */
-	return -ENODEV;
-}
+	वापस -ENODEV;
+पूर्ण
 
-#ifdef CONFIG_PM_SLEEP
-static int rz1000_reinit_one(struct pci_dev *pdev)
-{
-	struct ata_host *host = pci_get_drvdata(pdev);
-	int rc;
+#अगर_घोषित CONFIG_PM_SLEEP
+अटल पूर्णांक rz1000_reinit_one(काष्ठा pci_dev *pdev)
+अणु
+	काष्ठा ata_host *host = pci_get_drvdata(pdev);
+	पूर्णांक rc;
 
-	rc = ata_pci_device_do_resume(pdev);
-	if (rc)
-		return rc;
+	rc = ata_pci_device_करो_resume(pdev);
+	अगर (rc)
+		वापस rc;
 
-	/* If this fails on resume (which is a "can't happen" case), we
+	/* If this fails on resume (which is a "can't happen" हाल), we
 	   must stop as any progress risks data loss */
-	if (rz1000_fifo_disable(pdev))
+	अगर (rz1000_fअगरo_disable(pdev))
 		panic("rz1000 fifo");
 
 	ata_host_resume(host);
-	return 0;
-}
-#endif
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
-static const struct pci_device_id pata_rz1000[] = {
-	{ PCI_VDEVICE(PCTECH, PCI_DEVICE_ID_PCTECH_RZ1000), },
-	{ PCI_VDEVICE(PCTECH, PCI_DEVICE_ID_PCTECH_RZ1001), },
+अटल स्थिर काष्ठा pci_device_id pata_rz1000[] = अणु
+	अणु PCI_VDEVICE(PCTECH, PCI_DEVICE_ID_PCTECH_RZ1000), पूर्ण,
+	अणु PCI_VDEVICE(PCTECH, PCI_DEVICE_ID_PCTECH_RZ1001), पूर्ण,
 
-	{ },
-};
+	अणु पूर्ण,
+पूर्ण;
 
-static struct pci_driver rz1000_pci_driver = {
+अटल काष्ठा pci_driver rz1000_pci_driver = अणु
 	.name 		= DRV_NAME,
 	.id_table	= pata_rz1000,
 	.probe 		= rz1000_init_one,
-	.remove		= ata_pci_remove_one,
-#ifdef CONFIG_PM_SLEEP
+	.हटाओ		= ata_pci_हटाओ_one,
+#अगर_घोषित CONFIG_PM_SLEEP
 	.suspend	= ata_pci_device_suspend,
 	.resume		= rz1000_reinit_one,
-#endif
-};
+#पूर्ण_अगर
+पूर्ण;
 
 module_pci_driver(rz1000_pci_driver);
 

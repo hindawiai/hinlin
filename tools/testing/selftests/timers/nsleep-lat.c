@@ -1,4 +1,5 @@
-/* Measure nanosleep timer latency
+<शैली गुरु>
+/* Measure nanosleep समयr latency
  *              by: john stultz (john.stultz@linaro.org)
  *		(C) Copyright Linaro 2013
  *              Licensed under the GPLv2
@@ -6,7 +7,7 @@
  *  To build:
  *	$ gcc nsleep-lat.c -o nsleep-lat -lrt
  *
- *   This program is free software: you can redistribute it and/or modify
+ *   This program is मुक्त software: you can redistribute it and/or modअगरy
  *   it under the terms of the GNU General Public License as published by
  *   the Free Software Foundation, either version 2 of the License, or
  *   (at your option) any later version.
@@ -14,167 +15,167 @@
  *   This program is distributed in the hope that it will be useful,
  *   but WITHOUT ANY WARRANTY; without even the implied warranty of
  *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *   GNU General Public License for more details.
+ *   GNU General Public License क्रम more details.
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <time.h>
-#include <sys/time.h>
-#include <sys/timex.h>
-#include <string.h>
-#include <signal.h>
-#include "../kselftest.h"
+#समावेश <मानकपन.स>
+#समावेश <मानककोष.स>
+#समावेश <समय.स>
+#समावेश <sys/समय.स>
+#समावेश <sys/समयx.h>
+#समावेश <माला.स>
+#समावेश <संकेत.स>
+#समावेश "../kselftest.h"
 
-#define NSEC_PER_SEC 1000000000ULL
+#घोषणा NSEC_PER_SEC 1000000000ULL
 
-#define UNRESONABLE_LATENCY 40000000 /* 40ms in nanosecs */
+#घोषणा UNRESONABLE_LATENCY 40000000 /* 40ms in nanosecs */
 
 
-#define CLOCK_REALTIME			0
-#define CLOCK_MONOTONIC			1
-#define CLOCK_PROCESS_CPUTIME_ID	2
-#define CLOCK_THREAD_CPUTIME_ID		3
-#define CLOCK_MONOTONIC_RAW		4
-#define CLOCK_REALTIME_COARSE		5
-#define CLOCK_MONOTONIC_COARSE		6
-#define CLOCK_BOOTTIME			7
-#define CLOCK_REALTIME_ALARM		8
-#define CLOCK_BOOTTIME_ALARM		9
-#define CLOCK_HWSPECIFIC		10
-#define CLOCK_TAI			11
-#define NR_CLOCKIDS			12
+#घोषणा CLOCK_REALTIME			0
+#घोषणा CLOCK_MONOTONIC			1
+#घोषणा CLOCK_PROCESS_CPUTIME_ID	2
+#घोषणा CLOCK_THREAD_CPUTIME_ID		3
+#घोषणा CLOCK_MONOTONIC_RAW		4
+#घोषणा CLOCK_REALTIME_COARSE		5
+#घोषणा CLOCK_MONOTONIC_COARSE		6
+#घोषणा CLOCK_BOOTTIME			7
+#घोषणा CLOCK_REALTIME_ALARM		8
+#घोषणा CLOCK_BOOTTIME_ALARM		9
+#घोषणा CLOCK_HWSPECIFIC		10
+#घोषणा CLOCK_TAI			11
+#घोषणा NR_CLOCKIDS			12
 
-#define UNSUPPORTED 0xf00f
+#घोषणा UNSUPPORTED 0xf00f
 
-char *clockstring(int clockid)
-{
-	switch (clockid) {
-	case CLOCK_REALTIME:
-		return "CLOCK_REALTIME";
-	case CLOCK_MONOTONIC:
-		return "CLOCK_MONOTONIC";
-	case CLOCK_PROCESS_CPUTIME_ID:
-		return "CLOCK_PROCESS_CPUTIME_ID";
-	case CLOCK_THREAD_CPUTIME_ID:
-		return "CLOCK_THREAD_CPUTIME_ID";
-	case CLOCK_MONOTONIC_RAW:
-		return "CLOCK_MONOTONIC_RAW";
-	case CLOCK_REALTIME_COARSE:
-		return "CLOCK_REALTIME_COARSE";
-	case CLOCK_MONOTONIC_COARSE:
-		return "CLOCK_MONOTONIC_COARSE";
-	case CLOCK_BOOTTIME:
-		return "CLOCK_BOOTTIME";
-	case CLOCK_REALTIME_ALARM:
-		return "CLOCK_REALTIME_ALARM";
-	case CLOCK_BOOTTIME_ALARM:
-		return "CLOCK_BOOTTIME_ALARM";
-	case CLOCK_TAI:
-		return "CLOCK_TAI";
-	};
-	return "UNKNOWN_CLOCKID";
-}
+अक्षर *घड़ीstring(पूर्णांक घड़ीid)
+अणु
+	चयन (घड़ीid) अणु
+	हाल CLOCK_REALTIME:
+		वापस "CLOCK_REALTIME";
+	हाल CLOCK_MONOTONIC:
+		वापस "CLOCK_MONOTONIC";
+	हाल CLOCK_PROCESS_CPUTIME_ID:
+		वापस "CLOCK_PROCESS_CPUTIME_ID";
+	हाल CLOCK_THREAD_CPUTIME_ID:
+		वापस "CLOCK_THREAD_CPUTIME_ID";
+	हाल CLOCK_MONOTONIC_RAW:
+		वापस "CLOCK_MONOTONIC_RAW";
+	हाल CLOCK_REALTIME_COARSE:
+		वापस "CLOCK_REALTIME_COARSE";
+	हाल CLOCK_MONOTONIC_COARSE:
+		वापस "CLOCK_MONOTONIC_COARSE";
+	हाल CLOCK_BOOTTIME:
+		वापस "CLOCK_BOOTTIME";
+	हाल CLOCK_REALTIME_ALARM:
+		वापस "CLOCK_REALTIME_ALARM";
+	हाल CLOCK_BOOTTIME_ALARM:
+		वापस "CLOCK_BOOTTIME_ALARM";
+	हाल CLOCK_TAI:
+		वापस "CLOCK_TAI";
+	पूर्ण;
+	वापस "UNKNOWN_CLOCKID";
+पूर्ण
 
-struct timespec timespec_add(struct timespec ts, unsigned long long ns)
-{
+काष्ठा बारpec बारpec_add(काष्ठा बारpec ts, अचिन्हित दीर्घ दीर्घ ns)
+अणु
 	ts.tv_nsec += ns;
-	while (ts.tv_nsec >= NSEC_PER_SEC) {
+	जबतक (ts.tv_nsec >= NSEC_PER_SEC) अणु
 		ts.tv_nsec -= NSEC_PER_SEC;
 		ts.tv_sec++;
-	}
-	return ts;
-}
+	पूर्ण
+	वापस ts;
+पूर्ण
 
 
-long long timespec_sub(struct timespec a, struct timespec b)
-{
-	long long ret = NSEC_PER_SEC * b.tv_sec + b.tv_nsec;
+दीर्घ दीर्घ बारpec_sub(काष्ठा बारpec a, काष्ठा बारpec b)
+अणु
+	दीर्घ दीर्घ ret = NSEC_PER_SEC * b.tv_sec + b.tv_nsec;
 
 	ret -= NSEC_PER_SEC * a.tv_sec + a.tv_nsec;
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int nanosleep_lat_test(int clockid, long long ns)
-{
-	struct timespec start, end, target;
-	long long latency = 0;
-	int i, count;
+पूर्णांक nanosleep_lat_test(पूर्णांक घड़ीid, दीर्घ दीर्घ ns)
+अणु
+	काष्ठा बारpec start, end, target;
+	दीर्घ दीर्घ latency = 0;
+	पूर्णांक i, count;
 
 	target.tv_sec = ns/NSEC_PER_SEC;
 	target.tv_nsec = ns%NSEC_PER_SEC;
 
-	if (clock_gettime(clockid, &start))
-		return UNSUPPORTED;
-	if (clock_nanosleep(clockid, 0, &target, NULL))
-		return UNSUPPORTED;
+	अगर (घड़ी_समय_लो(घड़ीid, &start))
+		वापस UNSUPPORTED;
+	अगर (घड़ी_nanosleep(घड़ीid, 0, &target, शून्य))
+		वापस UNSUPPORTED;
 
 	count = 10;
 
 	/* First check relative latency */
-	clock_gettime(clockid, &start);
-	for (i = 0; i < count; i++)
-		clock_nanosleep(clockid, 0, &target, NULL);
-	clock_gettime(clockid, &end);
+	घड़ी_समय_लो(घड़ीid, &start);
+	क्रम (i = 0; i < count; i++)
+		घड़ी_nanosleep(घड़ीid, 0, &target, शून्य);
+	घड़ी_समय_लो(घड़ीid, &end);
 
-	if (((timespec_sub(start, end)/count)-ns) > UNRESONABLE_LATENCY) {
-		printf("Large rel latency: %lld ns :", (timespec_sub(start, end)/count)-ns);
-		return -1;
-	}
+	अगर (((बारpec_sub(start, end)/count)-ns) > UNRESONABLE_LATENCY) अणु
+		म_लिखो("Large rel latency: %lld ns :", (बारpec_sub(start, end)/count)-ns);
+		वापस -1;
+	पूर्ण
 
-	/* Next check absolute latency */
-	for (i = 0; i < count; i++) {
-		clock_gettime(clockid, &start);
-		target = timespec_add(start, ns);
-		clock_nanosleep(clockid, TIMER_ABSTIME, &target, NULL);
-		clock_gettime(clockid, &end);
-		latency += timespec_sub(target, end);
-	}
+	/* Next check असलolute latency */
+	क्रम (i = 0; i < count; i++) अणु
+		घड़ी_समय_लो(घड़ीid, &start);
+		target = बारpec_add(start, ns);
+		घड़ी_nanosleep(घड़ीid, TIMER_ABSTIME, &target, शून्य);
+		घड़ी_समय_लो(घड़ीid, &end);
+		latency += बारpec_sub(target, end);
+	पूर्ण
 
-	if (latency/count > UNRESONABLE_LATENCY) {
-		printf("Large abs latency: %lld ns :", latency/count);
-		return -1;
-	}
+	अगर (latency/count > UNRESONABLE_LATENCY) अणु
+		म_लिखो("Large abs latency: %lld ns :", latency/count);
+		वापस -1;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
 
-int main(int argc, char **argv)
-{
-	long long length;
-	int clockid, ret;
+पूर्णांक मुख्य(पूर्णांक argc, अक्षर **argv)
+अणु
+	दीर्घ दीर्घ length;
+	पूर्णांक घड़ीid, ret;
 
-	for (clockid = CLOCK_REALTIME; clockid < NR_CLOCKIDS; clockid++) {
+	क्रम (घड़ीid = CLOCK_REALTIME; घड़ीid < NR_CLOCKIDS; घड़ीid++) अणु
 
-		/* Skip cputime clockids since nanosleep won't increment cputime */
-		if (clockid == CLOCK_PROCESS_CPUTIME_ID ||
-				clockid == CLOCK_THREAD_CPUTIME_ID ||
-				clockid == CLOCK_HWSPECIFIC)
-			continue;
+		/* Skip cpuसमय घड़ीids since nanosleep won't increment cpuसमय */
+		अगर (घड़ीid == CLOCK_PROCESS_CPUTIME_ID ||
+				घड़ीid == CLOCK_THREAD_CPUTIME_ID ||
+				घड़ीid == CLOCK_HWSPECIFIC)
+			जारी;
 
-		printf("nsleep latency %-26s ", clockstring(clockid));
-		fflush(stdout);
+		म_लिखो("nsleep latency %-26s ", घड़ीstring(घड़ीid));
+		ख_साफ(मानक_निकास);
 
 		length = 10;
-		while (length <= (NSEC_PER_SEC * 10)) {
-			ret = nanosleep_lat_test(clockid, length);
-			if (ret)
-				break;
+		जबतक (length <= (NSEC_PER_SEC * 10)) अणु
+			ret = nanosleep_lat_test(घड़ीid, length);
+			अगर (ret)
+				अवरोध;
 			length *= 100;
 
-		}
+		पूर्ण
 
-		if (ret == UNSUPPORTED) {
-			printf("[UNSUPPORTED]\n");
-			continue;
-		}
-		if (ret < 0) {
-			printf("[FAILED]\n");
-			return ksft_exit_fail();
-		}
-		printf("[OK]\n");
-	}
-	return ksft_exit_pass();
-}
+		अगर (ret == UNSUPPORTED) अणु
+			म_लिखो("[UNSUPPORTED]\n");
+			जारी;
+		पूर्ण
+		अगर (ret < 0) अणु
+			म_लिखो("[FAILED]\n");
+			वापस ksft_निकास_fail();
+		पूर्ण
+		म_लिखो("[OK]\n");
+	पूर्ण
+	वापस ksft_निकास_pass();
+पूर्ण

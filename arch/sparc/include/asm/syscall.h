@@ -1,142 +1,143 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __ASM_SPARC_SYSCALL_H
-#define __ASM_SPARC_SYSCALL_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __ASM_SPARC_SYSCALL_H
+#घोषणा __ASM_SPARC_SYSCALL_H
 
-#include <uapi/linux/audit.h>
-#include <linux/kernel.h>
-#include <linux/compat.h>
-#include <linux/sched.h>
-#include <asm/ptrace.h>
-#include <asm/thread_info.h>
+#समावेश <uapi/linux/audit.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/compat.h>
+#समावेश <linux/sched.h>
+#समावेश <यंत्र/ptrace.h>
+#समावेश <यंत्र/thपढ़ो_info.h>
 
 /*
- * The syscall table always contains 32 bit pointers since we know that the
+ * The syscall table always contains 32 bit poपूर्णांकers since we know that the
  * address of the function to be called is (way) below 4GB.  So the "int"
- * type here is what we want [need] for both 32 bit and 64 bit systems.
+ * type here is what we want [need] क्रम both 32 bit and 64 bit प्रणालीs.
  */
-extern const unsigned int sys_call_table[];
+बाह्य स्थिर अचिन्हित पूर्णांक sys_call_table[];
 
-/* The system call number is given by the user in %g1 */
-static inline long syscall_get_nr(struct task_struct *task,
-				  struct pt_regs *regs)
-{
-	int syscall_p = pt_regs_is_syscall(regs);
+/* The प्रणाली call number is given by the user in %g1 */
+अटल अंतरभूत दीर्घ syscall_get_nr(काष्ठा task_काष्ठा *task,
+				  काष्ठा pt_regs *regs)
+अणु
+	पूर्णांक syscall_p = pt_regs_is_syscall(regs);
 
-	return (syscall_p ? regs->u_regs[UREG_G1] : -1L);
-}
+	वापस (syscall_p ? regs->u_regs[UREG_G1] : -1L);
+पूर्ण
 
-static inline void syscall_rollback(struct task_struct *task,
-				    struct pt_regs *regs)
-{
-	/* XXX This needs some thought.  On Sparc we don't
+अटल अंतरभूत व्योम syscall_rollback(काष्ठा task_काष्ठा *task,
+				    काष्ठा pt_regs *regs)
+अणु
+	/* XXX This needs some thought.  On Sparc we करोn't
 	 * XXX save away the original %o0 value somewhere.
-	 * XXX Instead we hold it in register %l5 at the top
-	 * XXX level trap frame and pass this down to the signal
+	 * XXX Instead we hold it in रेजिस्टर %l5 at the top
+	 * XXX level trap frame and pass this करोwn to the संकेत
 	 * XXX dispatch code which is the only place that value
 	 * XXX ever was needed.
 	 */
-}
+पूर्ण
 
-#ifdef CONFIG_SPARC32
-static inline bool syscall_has_error(struct pt_regs *regs)
-{
-	return (regs->psr & PSR_C) ? true : false;
-}
-static inline void syscall_set_error(struct pt_regs *regs)
-{
+#अगर_घोषित CONFIG_SPARC32
+अटल अंतरभूत bool syscall_has_error(काष्ठा pt_regs *regs)
+अणु
+	वापस (regs->psr & PSR_C) ? true : false;
+पूर्ण
+अटल अंतरभूत व्योम syscall_set_error(काष्ठा pt_regs *regs)
+अणु
 	regs->psr |= PSR_C;
-}
-static inline void syscall_clear_error(struct pt_regs *regs)
-{
+पूर्ण
+अटल अंतरभूत व्योम syscall_clear_error(काष्ठा pt_regs *regs)
+अणु
 	regs->psr &= ~PSR_C;
-}
-#else
-static inline bool syscall_has_error(struct pt_regs *regs)
-{
-	return (regs->tstate & (TSTATE_XCARRY | TSTATE_ICARRY)) ? true : false;
-}
-static inline void syscall_set_error(struct pt_regs *regs)
-{
+पूर्ण
+#अन्यथा
+अटल अंतरभूत bool syscall_has_error(काष्ठा pt_regs *regs)
+अणु
+	वापस (regs->tstate & (TSTATE_XCARRY | TSTATE_ICARRY)) ? true : false;
+पूर्ण
+अटल अंतरभूत व्योम syscall_set_error(काष्ठा pt_regs *regs)
+अणु
 	regs->tstate |= (TSTATE_XCARRY | TSTATE_ICARRY);
-}
-static inline void syscall_clear_error(struct pt_regs *regs)
-{
+पूर्ण
+अटल अंतरभूत व्योम syscall_clear_error(काष्ठा pt_regs *regs)
+अणु
 	regs->tstate &= ~(TSTATE_XCARRY | TSTATE_ICARRY);
-}
-#endif
+पूर्ण
+#पूर्ण_अगर
 
-static inline long syscall_get_error(struct task_struct *task,
-				     struct pt_regs *regs)
-{
-	long val = regs->u_regs[UREG_I0];
+अटल अंतरभूत दीर्घ syscall_get_error(काष्ठा task_काष्ठा *task,
+				     काष्ठा pt_regs *regs)
+अणु
+	दीर्घ val = regs->u_regs[UREG_I0];
 
-	return (syscall_has_error(regs) ? -val : 0);
-}
+	वापस (syscall_has_error(regs) ? -val : 0);
+पूर्ण
 
-static inline long syscall_get_return_value(struct task_struct *task,
-					    struct pt_regs *regs)
-{
-	long val = regs->u_regs[UREG_I0];
+अटल अंतरभूत दीर्घ syscall_get_वापस_value(काष्ठा task_काष्ठा *task,
+					    काष्ठा pt_regs *regs)
+अणु
+	दीर्घ val = regs->u_regs[UREG_I0];
 
-	return val;
-}
+	वापस val;
+पूर्ण
 
-static inline void syscall_set_return_value(struct task_struct *task,
-					    struct pt_regs *regs,
-					    int error, long val)
-{
-	if (error) {
+अटल अंतरभूत व्योम syscall_set_वापस_value(काष्ठा task_काष्ठा *task,
+					    काष्ठा pt_regs *regs,
+					    पूर्णांक error, दीर्घ val)
+अणु
+	अगर (error) अणु
 		syscall_set_error(regs);
 		regs->u_regs[UREG_I0] = -error;
-	} else {
+	पूर्ण अन्यथा अणु
 		syscall_clear_error(regs);
 		regs->u_regs[UREG_I0] = val;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static inline void syscall_get_arguments(struct task_struct *task,
-					 struct pt_regs *regs,
-					 unsigned long *args)
-{
-	int zero_extend = 0;
-	unsigned int j;
-	unsigned int n = 6;
+अटल अंतरभूत व्योम syscall_get_arguments(काष्ठा task_काष्ठा *task,
+					 काष्ठा pt_regs *regs,
+					 अचिन्हित दीर्घ *args)
+अणु
+	पूर्णांक zero_extend = 0;
+	अचिन्हित पूर्णांक j;
+	अचिन्हित पूर्णांक n = 6;
 
-#ifdef CONFIG_SPARC64
-	if (test_tsk_thread_flag(task, TIF_32BIT))
+#अगर_घोषित CONFIG_SPARC64
+	अगर (test_tsk_thपढ़ो_flag(task, TIF_32BIT))
 		zero_extend = 1;
-#endif
+#पूर्ण_अगर
 
-	for (j = 0; j < n; j++) {
-		unsigned long val = regs->u_regs[UREG_I0 + j];
+	क्रम (j = 0; j < n; j++) अणु
+		अचिन्हित दीर्घ val = regs->u_regs[UREG_I0 + j];
 
-		if (zero_extend)
+		अगर (zero_extend)
 			args[j] = (u32) val;
-		else
+		अन्यथा
 			args[j] = val;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static inline void syscall_set_arguments(struct task_struct *task,
-					 struct pt_regs *regs,
-					 const unsigned long *args)
-{
-	unsigned int i;
+अटल अंतरभूत व्योम syscall_set_arguments(काष्ठा task_काष्ठा *task,
+					 काष्ठा pt_regs *regs,
+					 स्थिर अचिन्हित दीर्घ *args)
+अणु
+	अचिन्हित पूर्णांक i;
 
-	for (i = 0; i < 6; i++)
+	क्रम (i = 0; i < 6; i++)
 		regs->u_regs[UREG_I0 + i] = args[i];
-}
+पूर्ण
 
-static inline int syscall_get_arch(struct task_struct *task)
-{
-#if defined(CONFIG_SPARC64) && defined(CONFIG_COMPAT)
-	return test_tsk_thread_flag(task, TIF_32BIT)
+अटल अंतरभूत पूर्णांक syscall_get_arch(काष्ठा task_काष्ठा *task)
+अणु
+#अगर defined(CONFIG_SPARC64) && defined(CONFIG_COMPAT)
+	वापस test_tsk_thपढ़ो_flag(task, TIF_32BIT)
 		? AUDIT_ARCH_SPARC : AUDIT_ARCH_SPARC64;
-#elif defined(CONFIG_SPARC64)
-	return AUDIT_ARCH_SPARC64;
-#else
-	return AUDIT_ARCH_SPARC;
-#endif
-}
+#या_अगर defined(CONFIG_SPARC64)
+	वापस AUDIT_ARCH_SPARC64;
+#अन्यथा
+	वापस AUDIT_ARCH_SPARC;
+#पूर्ण_अगर
+पूर्ण
 
-#endif /* __ASM_SPARC_SYSCALL_H */
+#पूर्ण_अगर /* __ASM_SPARC_SYSCALL_H */

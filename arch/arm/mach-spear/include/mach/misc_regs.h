@@ -1,7 +1,8 @@
+<शैली गुरु>
 /*
  * arch/arm/mach-spear3xx/include/mach/misc_regs.h
  *
- * Miscellaneous registers definitions for SPEAr3xx machine family
+ * Miscellaneous रेजिस्टरs definitions क्रम SPEAr3xx machine family
  *
  * Copyright (C) 2009 ST Microelectronics
  * Viresh Kumar <vireshk@kernel.org>
@@ -11,12 +12,12 @@
  * warranty of any kind, whether express or implied.
  */
 
-#ifndef __MACH_MISC_REGS_H
-#define __MACH_MISC_REGS_H
+#अगर_अघोषित __MACH_MISC_REGS_H
+#घोषणा __MACH_MISC_REGS_H
 
-#include <mach/spear.h>
+#समावेश <mach/spear.h>
 
-#define MISC_BASE		(VA_SPEAR_ICM3_MISC_REG_BASE)
-#define DMA_CHN_CFG		(MISC_BASE + 0x0A0)
+#घोषणा MISC_BASE		(VA_SPEAR_ICM3_MISC_REG_BASE)
+#घोषणा DMA_CHN_CFG		(MISC_BASE + 0x0A0)
 
-#endif /* __MACH_MISC_REGS_H */
+#पूर्ण_अगर /* __MACH_MISC_REGS_H */

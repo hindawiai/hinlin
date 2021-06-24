@@ -1,54 +1,55 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (C) 2005-2006 Micronas USA Inc.
  */
 
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/moduleparam.h>
-#include <linux/spinlock.h>
-#include <linux/delay.h>
-#include <linux/sched.h>
-#include <linux/time.h>
-#include <linux/mm.h>
-#include <linux/i2c.h>
-#include <linux/mutex.h>
-#include <linux/uaccess.h>
-#include <linux/slab.h>
-#include <sound/core.h>
-#include <sound/pcm.h>
-#include <sound/initval.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/moduleparam.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/समय.स>
+#समावेश <linux/mm.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/uaccess.h>
+#समावेश <linux/slab.h>
+#समावेश <sound/core.h>
+#समावेश <sound/pcm.h>
+#समावेश <sound/initval.h>
 
-#include "go7007-priv.h"
+#समावेश "go7007-priv.h"
 
-static int index[SNDRV_CARDS] = SNDRV_DEFAULT_IDX;
-static char *id[SNDRV_CARDS] = SNDRV_DEFAULT_STR;
-static bool enable[SNDRV_CARDS] = SNDRV_DEFAULT_ENABLE_PNP;
+अटल पूर्णांक index[SNDRV_CARDS] = SNDRV_DEFAULT_IDX;
+अटल अक्षर *id[SNDRV_CARDS] = SNDRV_DEFAULT_STR;
+अटल bool enable[SNDRV_CARDS] = SNDRV_DEFAULT_ENABLE_PNP;
 
-module_param_array(index, int, NULL, 0444);
-module_param_array(id, charp, NULL, 0444);
-module_param_array(enable, bool, NULL, 0444);
+module_param_array(index, पूर्णांक, शून्य, 0444);
+module_param_array(id, अक्षरp, शून्य, 0444);
+module_param_array(enable, bool, शून्य, 0444);
 MODULE_PARM_DESC(index, "Index value for the go7007 audio driver");
 MODULE_PARM_DESC(id, "ID string for the go7007 audio driver");
 MODULE_PARM_DESC(enable, "Enable for the go7007 audio driver");
 
-struct go7007_snd {
-	struct snd_card *card;
-	struct snd_pcm *pcm;
-	struct snd_pcm_substream *substream;
+काष्ठा go7007_snd अणु
+	काष्ठा snd_card *card;
+	काष्ठा snd_pcm *pcm;
+	काष्ठा snd_pcm_substream *substream;
 	spinlock_t lock;
-	int w_idx;
-	int hw_ptr;
-	int avail;
-	int capturing;
-};
+	पूर्णांक w_idx;
+	पूर्णांक hw_ptr;
+	पूर्णांक avail;
+	पूर्णांक capturing;
+पूर्ण;
 
-static const struct snd_pcm_hardware go7007_snd_capture_hw = {
+अटल स्थिर काष्ठा snd_pcm_hardware go7007_snd_capture_hw = अणु
 	.info			= (SNDRV_PCM_INFO_MMAP |
 					SNDRV_PCM_INFO_INTERLEAVED |
 					SNDRV_PCM_INFO_BLOCK_TRANSFER |
 					SNDRV_PCM_INFO_MMAP_VALID),
-	.formats		= SNDRV_PCM_FMTBIT_S16_LE,
+	.क्रमmats		= SNDRV_PCM_FMTBIT_S16_LE,
 	.rates			= SNDRV_PCM_RATE_48000,
 	.rate_min		= 48000,
 	.rate_max		= 48000,
@@ -59,213 +60,213 @@ static const struct snd_pcm_hardware go7007_snd_capture_hw = {
 	.period_bytes_max	= (128*1024),
 	.periods_min		= 1,
 	.periods_max		= 32,
-};
+पूर्ण;
 
-static void parse_audio_stream_data(struct go7007 *go, u8 *buf, int length)
-{
-	struct go7007_snd *gosnd = go->snd_context;
-	struct snd_pcm_runtime *runtime = gosnd->substream->runtime;
-	int frames = bytes_to_frames(runtime, length);
-	unsigned long flags;
+अटल व्योम parse_audio_stream_data(काष्ठा go7007 *go, u8 *buf, पूर्णांक length)
+अणु
+	काष्ठा go7007_snd *gosnd = go->snd_context;
+	काष्ठा snd_pcm_runसमय *runसमय = gosnd->substream->runसमय;
+	पूर्णांक frames = bytes_to_frames(runसमय, length);
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&gosnd->lock, flags);
 	gosnd->hw_ptr += frames;
-	if (gosnd->hw_ptr >= runtime->buffer_size)
-		gosnd->hw_ptr -= runtime->buffer_size;
+	अगर (gosnd->hw_ptr >= runसमय->buffer_size)
+		gosnd->hw_ptr -= runसमय->buffer_size;
 	gosnd->avail += frames;
 	spin_unlock_irqrestore(&gosnd->lock, flags);
-	if (gosnd->w_idx + length > runtime->dma_bytes) {
-		int cpy = runtime->dma_bytes - gosnd->w_idx;
+	अगर (gosnd->w_idx + length > runसमय->dma_bytes) अणु
+		पूर्णांक cpy = runसमय->dma_bytes - gosnd->w_idx;
 
-		memcpy(runtime->dma_area + gosnd->w_idx, buf, cpy);
+		स_नकल(runसमय->dma_area + gosnd->w_idx, buf, cpy);
 		length -= cpy;
 		buf += cpy;
 		gosnd->w_idx = 0;
-	}
-	memcpy(runtime->dma_area + gosnd->w_idx, buf, length);
+	पूर्ण
+	स_नकल(runसमय->dma_area + gosnd->w_idx, buf, length);
 	gosnd->w_idx += length;
 	spin_lock_irqsave(&gosnd->lock, flags);
-	if (gosnd->avail < runtime->period_size) {
+	अगर (gosnd->avail < runसमय->period_size) अणु
 		spin_unlock_irqrestore(&gosnd->lock, flags);
-		return;
-	}
-	gosnd->avail -= runtime->period_size;
+		वापस;
+	पूर्ण
+	gosnd->avail -= runसमय->period_size;
 	spin_unlock_irqrestore(&gosnd->lock, flags);
-	if (gosnd->capturing)
+	अगर (gosnd->capturing)
 		snd_pcm_period_elapsed(gosnd->substream);
-}
+पूर्ण
 
-static int go7007_snd_hw_params(struct snd_pcm_substream *substream,
-				struct snd_pcm_hw_params *hw_params)
-{
-	struct go7007 *go = snd_pcm_substream_chip(substream);
+अटल पूर्णांक go7007_snd_hw_params(काष्ठा snd_pcm_substream *substream,
+				काष्ठा snd_pcm_hw_params *hw_params)
+अणु
+	काष्ठा go7007 *go = snd_pcm_substream_chip(substream);
 
 	go->audio_deliver = parse_audio_stream_data;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int go7007_snd_hw_free(struct snd_pcm_substream *substream)
-{
-	struct go7007 *go = snd_pcm_substream_chip(substream);
+अटल पूर्णांक go7007_snd_hw_मुक्त(काष्ठा snd_pcm_substream *substream)
+अणु
+	काष्ठा go7007 *go = snd_pcm_substream_chip(substream);
 
-	go->audio_deliver = NULL;
-	return 0;
-}
+	go->audio_deliver = शून्य;
+	वापस 0;
+पूर्ण
 
-static int go7007_snd_capture_open(struct snd_pcm_substream *substream)
-{
-	struct go7007 *go = snd_pcm_substream_chip(substream);
-	struct go7007_snd *gosnd = go->snd_context;
-	unsigned long flags;
-	int r;
+अटल पूर्णांक go7007_snd_capture_खोलो(काष्ठा snd_pcm_substream *substream)
+अणु
+	काष्ठा go7007 *go = snd_pcm_substream_chip(substream);
+	काष्ठा go7007_snd *gosnd = go->snd_context;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक r;
 
 	spin_lock_irqsave(&gosnd->lock, flags);
-	if (gosnd->substream == NULL) {
+	अगर (gosnd->substream == शून्य) अणु
 		gosnd->substream = substream;
-		substream->runtime->hw = go7007_snd_capture_hw;
+		substream->runसमय->hw = go7007_snd_capture_hw;
 		r = 0;
-	} else
+	पूर्ण अन्यथा
 		r = -EBUSY;
 	spin_unlock_irqrestore(&gosnd->lock, flags);
-	return r;
-}
+	वापस r;
+पूर्ण
 
-static int go7007_snd_capture_close(struct snd_pcm_substream *substream)
-{
-	struct go7007 *go = snd_pcm_substream_chip(substream);
-	struct go7007_snd *gosnd = go->snd_context;
+अटल पूर्णांक go7007_snd_capture_बंद(काष्ठा snd_pcm_substream *substream)
+अणु
+	काष्ठा go7007 *go = snd_pcm_substream_chip(substream);
+	काष्ठा go7007_snd *gosnd = go->snd_context;
 
-	gosnd->substream = NULL;
-	return 0;
-}
+	gosnd->substream = शून्य;
+	वापस 0;
+पूर्ण
 
-static int go7007_snd_pcm_prepare(struct snd_pcm_substream *substream)
-{
-	return 0;
-}
+अटल पूर्णांक go7007_snd_pcm_prepare(काष्ठा snd_pcm_substream *substream)
+अणु
+	वापस 0;
+पूर्ण
 
-static int go7007_snd_pcm_trigger(struct snd_pcm_substream *substream, int cmd)
-{
-	struct go7007 *go = snd_pcm_substream_chip(substream);
-	struct go7007_snd *gosnd = go->snd_context;
+अटल पूर्णांक go7007_snd_pcm_trigger(काष्ठा snd_pcm_substream *substream, पूर्णांक cmd)
+अणु
+	काष्ठा go7007 *go = snd_pcm_substream_chip(substream);
+	काष्ठा go7007_snd *gosnd = go->snd_context;
 
-	switch (cmd) {
-	case SNDRV_PCM_TRIGGER_START:
-		/* Just set a flag to indicate we should signal ALSA when
+	चयन (cmd) अणु
+	हाल SNDRV_PCM_TRIGGER_START:
+		/* Just set a flag to indicate we should संकेत ALSA when
 		 * sound comes in */
 		gosnd->capturing = 1;
-		return 0;
-	case SNDRV_PCM_TRIGGER_STOP:
+		वापस 0;
+	हाल SNDRV_PCM_TRIGGER_STOP:
 		gosnd->hw_ptr = gosnd->w_idx = gosnd->avail = 0;
 		gosnd->capturing = 0;
-		return 0;
-	default:
-		return -EINVAL;
-	}
-}
+		वापस 0;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+पूर्ण
 
-static snd_pcm_uframes_t go7007_snd_pcm_pointer(struct snd_pcm_substream *substream)
-{
-	struct go7007 *go = snd_pcm_substream_chip(substream);
-	struct go7007_snd *gosnd = go->snd_context;
+अटल snd_pcm_uframes_t go7007_snd_pcm_poपूर्णांकer(काष्ठा snd_pcm_substream *substream)
+अणु
+	काष्ठा go7007 *go = snd_pcm_substream_chip(substream);
+	काष्ठा go7007_snd *gosnd = go->snd_context;
 
-	return gosnd->hw_ptr;
-}
+	वापस gosnd->hw_ptr;
+पूर्ण
 
-static const struct snd_pcm_ops go7007_snd_capture_ops = {
-	.open		= go7007_snd_capture_open,
-	.close		= go7007_snd_capture_close,
+अटल स्थिर काष्ठा snd_pcm_ops go7007_snd_capture_ops = अणु
+	.खोलो		= go7007_snd_capture_खोलो,
+	.बंद		= go7007_snd_capture_बंद,
 	.hw_params	= go7007_snd_hw_params,
-	.hw_free	= go7007_snd_hw_free,
+	.hw_मुक्त	= go7007_snd_hw_मुक्त,
 	.prepare	= go7007_snd_pcm_prepare,
 	.trigger	= go7007_snd_pcm_trigger,
-	.pointer	= go7007_snd_pcm_pointer,
-};
+	.poपूर्णांकer	= go7007_snd_pcm_poपूर्णांकer,
+पूर्ण;
 
-static int go7007_snd_free(struct snd_device *device)
-{
-	struct go7007 *go = device->device_data;
+अटल पूर्णांक go7007_snd_मुक्त(काष्ठा snd_device *device)
+अणु
+	काष्ठा go7007 *go = device->device_data;
 
-	kfree(go->snd_context);
-	go->snd_context = NULL;
-	return 0;
-}
+	kमुक्त(go->snd_context);
+	go->snd_context = शून्य;
+	वापस 0;
+पूर्ण
 
-static struct snd_device_ops go7007_snd_device_ops = {
-	.dev_free	= go7007_snd_free,
-};
+अटल काष्ठा snd_device_ops go7007_snd_device_ops = अणु
+	.dev_मुक्त	= go7007_snd_मुक्त,
+पूर्ण;
 
-int go7007_snd_init(struct go7007 *go)
-{
-	static int dev;
-	struct go7007_snd *gosnd;
-	int ret;
+पूर्णांक go7007_snd_init(काष्ठा go7007 *go)
+अणु
+	अटल पूर्णांक dev;
+	काष्ठा go7007_snd *gosnd;
+	पूर्णांक ret;
 
-	if (dev >= SNDRV_CARDS)
-		return -ENODEV;
-	if (!enable[dev]) {
+	अगर (dev >= SNDRV_CARDS)
+		वापस -ENODEV;
+	अगर (!enable[dev]) अणु
 		dev++;
-		return -ENOENT;
-	}
-	gosnd = kmalloc(sizeof(struct go7007_snd), GFP_KERNEL);
-	if (gosnd == NULL)
-		return -ENOMEM;
+		वापस -ENOENT;
+	पूर्ण
+	gosnd = kदो_स्मृति(माप(काष्ठा go7007_snd), GFP_KERNEL);
+	अगर (gosnd == शून्य)
+		वापस -ENOMEM;
 	spin_lock_init(&gosnd->lock);
 	gosnd->hw_ptr = gosnd->w_idx = gosnd->avail = 0;
 	gosnd->capturing = 0;
 	ret = snd_card_new(go->dev, index[dev], id[dev], THIS_MODULE, 0,
 			   &gosnd->card);
-	if (ret < 0)
-		goto free_snd;
+	अगर (ret < 0)
+		जाओ मुक्त_snd;
 
 	ret = snd_device_new(gosnd->card, SNDRV_DEV_LOWLEVEL, go,
 			&go7007_snd_device_ops);
-	if (ret < 0)
-		goto free_card;
+	अगर (ret < 0)
+		जाओ मुक्त_card;
 
 	ret = snd_pcm_new(gosnd->card, "go7007", 0, 0, 1, &gosnd->pcm);
-	if (ret < 0)
-		goto free_card;
+	अगर (ret < 0)
+		जाओ मुक्त_card;
 
-	strscpy(gosnd->card->driver, "go7007", sizeof(gosnd->card->driver));
-	strscpy(gosnd->card->shortname, go->name, sizeof(gosnd->card->shortname));
-	strscpy(gosnd->card->longname, gosnd->card->shortname,
-		sizeof(gosnd->card->longname));
+	strscpy(gosnd->card->driver, "go7007", माप(gosnd->card->driver));
+	strscpy(gosnd->card->लघुname, go->name, माप(gosnd->card->लघुname));
+	strscpy(gosnd->card->दीर्घname, gosnd->card->लघुname,
+		माप(gosnd->card->दीर्घname));
 
-	gosnd->pcm->private_data = go;
+	gosnd->pcm->निजी_data = go;
 	snd_pcm_set_ops(gosnd->pcm, SNDRV_PCM_STREAM_CAPTURE,
 			&go7007_snd_capture_ops);
 	snd_pcm_set_managed_buffer_all(gosnd->pcm, SNDRV_DMA_TYPE_VMALLOC,
-				       NULL, 0, 0);
+				       शून्य, 0, 0);
 
-	ret = snd_card_register(gosnd->card);
-	if (ret < 0)
-		goto free_card;
+	ret = snd_card_रेजिस्टर(gosnd->card);
+	अगर (ret < 0)
+		जाओ मुक्त_card;
 
-	gosnd->substream = NULL;
+	gosnd->substream = शून्य;
 	go->snd_context = gosnd;
 	v4l2_device_get(&go->v4l2_dev);
 	++dev;
 
-	return 0;
+	वापस 0;
 
-free_card:
-	snd_card_free(gosnd->card);
-free_snd:
-	kfree(gosnd);
-	return ret;
-}
+मुक्त_card:
+	snd_card_मुक्त(gosnd->card);
+मुक्त_snd:
+	kमुक्त(gosnd);
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL(go7007_snd_init);
 
-int go7007_snd_remove(struct go7007 *go)
-{
-	struct go7007_snd *gosnd = go->snd_context;
+पूर्णांक go7007_snd_हटाओ(काष्ठा go7007 *go)
+अणु
+	काष्ठा go7007_snd *gosnd = go->snd_context;
 
 	snd_card_disconnect(gosnd->card);
-	snd_card_free_when_closed(gosnd->card);
+	snd_card_मुक्त_when_बंदd(gosnd->card);
 	v4l2_device_put(&go->v4l2_dev);
-	return 0;
-}
-EXPORT_SYMBOL(go7007_snd_remove);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL(go7007_snd_हटाओ);
 
 MODULE_LICENSE("GPL v2");

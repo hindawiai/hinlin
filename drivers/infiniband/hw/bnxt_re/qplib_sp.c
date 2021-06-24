@@ -1,3 +1,4 @@
+<शैली गुरु>
 /*
  * Broadcom NetXtreme-E RoCE driver.
  *
@@ -7,25 +8,25 @@
  * This software is available to you under a choice of one of two
  * licenses.  You may choose to be licensed under the terms of the GNU
  * General Public License (GPL) Version 2, available from the file
- * COPYING in the main directory of this source tree, or the
+ * COPYING in the मुख्य directory of this source tree, or the
  * BSD license below:
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
+ * Redistribution and use in source and binary क्रमms, with or without
+ * modअगरication, are permitted provided that the following conditions
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
  *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
+ * 2. Redistributions in binary क्रमm must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
- *    the documentation and/or other materials provided with the
+ *    the करोcumentation and/or other materials provided with the
  *    distribution.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS''
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
  * THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
  * PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS
- * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * BE LIABLE FOR ANY सूचीECT, INसूचीECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
  * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
  * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR
  * BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
@@ -36,76 +37,76 @@
  * Description: Slow Path Operators
  */
 
-#define dev_fmt(fmt) "QPLIB: " fmt
+#घोषणा dev_fmt(fmt) "QPLIB: " fmt
 
-#include <linux/interrupt.h>
-#include <linux/spinlock.h>
-#include <linux/sched.h>
-#include <linux/pci.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/pci.h>
 
-#include "roce_hsi.h"
+#समावेश "roce_hsi.h"
 
-#include "qplib_res.h"
-#include "qplib_rcfw.h"
-#include "qplib_sp.h"
+#समावेश "qplib_res.h"
+#समावेश "qplib_rcfw.h"
+#समावेश "qplib_sp.h"
 
-const struct bnxt_qplib_gid bnxt_qplib_gid_zero = {{ 0, 0, 0, 0, 0, 0, 0, 0,
-						     0, 0, 0, 0, 0, 0, 0, 0 } };
+स्थिर काष्ठा bnxt_qplib_gid bnxt_qplib_gid_zero = अणुअणु 0, 0, 0, 0, 0, 0, 0, 0,
+						     0, 0, 0, 0, 0, 0, 0, 0 पूर्ण पूर्ण;
 
 /* Device */
 
-static void bnxt_qplib_query_version(struct bnxt_qplib_rcfw *rcfw,
-				     char *fw_ver)
-{
-	struct cmdq_query_version req;
-	struct creq_query_version_resp resp;
+अटल व्योम bnxt_qplib_query_version(काष्ठा bnxt_qplib_rcfw *rcfw,
+				     अक्षर *fw_ver)
+अणु
+	काष्ठा cmdq_query_version req;
+	काष्ठा creq_query_version_resp resp;
 	u16 cmd_flags = 0;
-	int rc = 0;
+	पूर्णांक rc = 0;
 
 	RCFW_CMD_PREP(req, QUERY_VERSION, cmd_flags);
 
-	rc = bnxt_qplib_rcfw_send_message(rcfw, (void *)&req,
-					  (void *)&resp, NULL, 0);
-	if (rc)
-		return;
+	rc = bnxt_qplib_rcfw_send_message(rcfw, (व्योम *)&req,
+					  (व्योम *)&resp, शून्य, 0);
+	अगर (rc)
+		वापस;
 	fw_ver[0] = resp.fw_maj;
 	fw_ver[1] = resp.fw_minor;
 	fw_ver[2] = resp.fw_bld;
 	fw_ver[3] = resp.fw_rsvd;
-}
+पूर्ण
 
-int bnxt_qplib_get_dev_attr(struct bnxt_qplib_rcfw *rcfw,
-			    struct bnxt_qplib_dev_attr *attr, bool vf)
-{
-	struct cmdq_query_func req;
-	struct creq_query_func_resp resp;
-	struct bnxt_qplib_rcfw_sbuf *sbuf;
-	struct creq_query_func_resp_sb *sb;
+पूर्णांक bnxt_qplib_get_dev_attr(काष्ठा bnxt_qplib_rcfw *rcfw,
+			    काष्ठा bnxt_qplib_dev_attr *attr, bool vf)
+अणु
+	काष्ठा cmdq_query_func req;
+	काष्ठा creq_query_func_resp resp;
+	काष्ठा bnxt_qplib_rcfw_sbuf *sbuf;
+	काष्ठा creq_query_func_resp_sb *sb;
 	u16 cmd_flags = 0;
 	u32 temp;
 	u8 *tqm_alloc;
-	int i, rc = 0;
+	पूर्णांक i, rc = 0;
 
 	RCFW_CMD_PREP(req, QUERY_FUNC, cmd_flags);
 
-	sbuf = bnxt_qplib_rcfw_alloc_sbuf(rcfw, sizeof(*sb));
-	if (!sbuf) {
+	sbuf = bnxt_qplib_rcfw_alloc_sbuf(rcfw, माप(*sb));
+	अगर (!sbuf) अणु
 		dev_err(&rcfw->pdev->dev,
 			"SP: QUERY_FUNC alloc side buffer failed\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	sb = sbuf->sb;
-	req.resp_size = sizeof(*sb) / BNXT_QPLIB_CMDQE_UNITS;
-	rc = bnxt_qplib_rcfw_send_message(rcfw, (void *)&req, (void *)&resp,
-					  (void *)sbuf, 0);
-	if (rc)
-		goto bail;
+	req.resp_size = माप(*sb) / BNXT_QPLIB_CMDQE_UNITS;
+	rc = bnxt_qplib_rcfw_send_message(rcfw, (व्योम *)&req, (व्योम *)&resp,
+					  (व्योम *)sbuf, 0);
+	अगर (rc)
+		जाओ bail;
 
 	/* Extract the context from the side buffer */
 	attr->max_qp = le32_to_cpu(sb->max_qp);
-	/* max_qp value reported by FW for PF doesn't include the QP1 for PF */
-	if (!vf)
+	/* max_qp value reported by FW क्रम PF करोesn't include the QP1 क्रम PF */
+	अगर (!vf)
 		attr->max_qp += 1;
 	attr->max_qp_rd_atom =
 		sb->max_qp_rd_atom > BNXT_QPLIB_MAX_OUT_RD_ATOM ?
@@ -115,7 +116,7 @@ int bnxt_qplib_get_dev_attr(struct bnxt_qplib_rcfw *rcfw,
 		BNXT_QPLIB_MAX_OUT_RD_ATOM : sb->max_qp_init_rd_atom;
 	attr->max_qp_wqes = le16_to_cpu(sb->max_qp_wr);
 	/*
-	 * 128 WQEs needs to be reserved for the HW (8916). Prevent
+	 * 128 WQEs needs to be reserved क्रम the HW (8916). Prevent
 	 * reporting the max number
 	 */
 	attr->max_qp_wqes -= BNXT_QPLIB_RESERVED_QP_WRS + 1;
@@ -138,44 +139,44 @@ int bnxt_qplib_get_dev_attr(struct bnxt_qplib_rcfw *rcfw,
 	attr->max_pkey = le32_to_cpu(sb->max_pkeys);
 	/*
 	 * Some versions of FW reports more than 0xFFFF.
-	 * Restrict it for now to 0xFFFF to avoid
+	 * Restrict it क्रम now to 0xFFFF to aव्योम
 	 * reporting trucated value
 	 */
-	if (attr->max_pkey > 0xFFFF) {
+	अगर (attr->max_pkey > 0xFFFF) अणु
 		/* ib_port_attr::pkey_tbl_len is u16 */
 		attr->max_pkey = 0xFFFF;
-	}
+	पूर्ण
 
-	attr->max_inline_data = le32_to_cpu(sb->max_inline_data);
+	attr->max_अंतरभूत_data = le32_to_cpu(sb->max_अंतरभूत_data);
 	attr->l2_db_size = (sb->l2_db_space_size + 1) *
 			    (0x01 << RCFW_DBR_BASE_PAGE_SHIFT);
 	attr->max_sgid = BNXT_QPLIB_NUM_GIDS_SUPPORTED;
 
 	bnxt_qplib_query_version(rcfw, attr->fw_ver);
 
-	for (i = 0; i < MAX_TQM_ALLOC_REQ / 4; i++) {
+	क्रम (i = 0; i < MAX_TQM_ALLOC_REQ / 4; i++) अणु
 		temp = le32_to_cpu(sb->tqm_alloc_reqs[i]);
 		tqm_alloc = (u8 *)&temp;
 		attr->tqm_alloc_reqs[i * 4] = *tqm_alloc;
 		attr->tqm_alloc_reqs[i * 4 + 1] = *(++tqm_alloc);
 		attr->tqm_alloc_reqs[i * 4 + 2] = *(++tqm_alloc);
 		attr->tqm_alloc_reqs[i * 4 + 3] = *(++tqm_alloc);
-	}
+	पूर्ण
 
 	attr->is_atomic = false;
 bail:
-	bnxt_qplib_rcfw_free_sbuf(rcfw, sbuf);
-	return rc;
-}
+	bnxt_qplib_rcfw_मुक्त_sbuf(rcfw, sbuf);
+	वापस rc;
+पूर्ण
 
-int bnxt_qplib_set_func_resources(struct bnxt_qplib_res *res,
-				  struct bnxt_qplib_rcfw *rcfw,
-				  struct bnxt_qplib_ctx *ctx)
-{
-	struct cmdq_set_func_resources req;
-	struct creq_set_func_resources_resp resp;
+पूर्णांक bnxt_qplib_set_func_resources(काष्ठा bnxt_qplib_res *res,
+				  काष्ठा bnxt_qplib_rcfw *rcfw,
+				  काष्ठा bnxt_qplib_ctx *ctx)
+अणु
+	काष्ठा cmdq_set_func_resources req;
+	काष्ठा creq_set_func_resources_resp resp;
 	u16 cmd_flags = 0;
-	int rc = 0;
+	पूर्णांक rc = 0;
 
 	RCFW_CMD_PREP(req, SET_FUNC_RESOURCES, cmd_flags);
 
@@ -190,78 +191,78 @@ int bnxt_qplib_set_func_resources(struct bnxt_qplib_res *res,
 	req.max_cq_per_vf = cpu_to_le32(ctx->vf_res.max_cq_per_vf);
 	req.max_gid_per_vf = cpu_to_le32(ctx->vf_res.max_gid_per_vf);
 
-	rc = bnxt_qplib_rcfw_send_message(rcfw, (void *)&req,
-					  (void *)&resp,
-					  NULL, 0);
-	if (rc) {
+	rc = bnxt_qplib_rcfw_send_message(rcfw, (व्योम *)&req,
+					  (व्योम *)&resp,
+					  शून्य, 0);
+	अगर (rc) अणु
 		dev_err(&res->pdev->dev, "Failed to set function resources\n");
-	}
-	return rc;
-}
+	पूर्ण
+	वापस rc;
+पूर्ण
 
 /* SGID */
-int bnxt_qplib_get_sgid(struct bnxt_qplib_res *res,
-			struct bnxt_qplib_sgid_tbl *sgid_tbl, int index,
-			struct bnxt_qplib_gid *gid)
-{
-	if (index >= sgid_tbl->max) {
+पूर्णांक bnxt_qplib_get_sgid(काष्ठा bnxt_qplib_res *res,
+			काष्ठा bnxt_qplib_sgid_tbl *sgid_tbl, पूर्णांक index,
+			काष्ठा bnxt_qplib_gid *gid)
+अणु
+	अगर (index >= sgid_tbl->max) अणु
 		dev_err(&res->pdev->dev,
 			"Index %d exceeded SGID table max (%d)\n",
 			index, sgid_tbl->max);
-		return -EINVAL;
-	}
-	memcpy(gid, &sgid_tbl->tbl[index].gid, sizeof(*gid));
-	return 0;
-}
+		वापस -EINVAL;
+	पूर्ण
+	स_नकल(gid, &sgid_tbl->tbl[index].gid, माप(*gid));
+	वापस 0;
+पूर्ण
 
-int bnxt_qplib_del_sgid(struct bnxt_qplib_sgid_tbl *sgid_tbl,
-			struct bnxt_qplib_gid *gid, u16 vlan_id, bool update)
-{
-	struct bnxt_qplib_res *res = to_bnxt_qplib(sgid_tbl,
-						   struct bnxt_qplib_res,
+पूर्णांक bnxt_qplib_del_sgid(काष्ठा bnxt_qplib_sgid_tbl *sgid_tbl,
+			काष्ठा bnxt_qplib_gid *gid, u16 vlan_id, bool update)
+अणु
+	काष्ठा bnxt_qplib_res *res = to_bnxt_qplib(sgid_tbl,
+						   काष्ठा bnxt_qplib_res,
 						   sgid_tbl);
-	struct bnxt_qplib_rcfw *rcfw = res->rcfw;
-	int index;
+	काष्ठा bnxt_qplib_rcfw *rcfw = res->rcfw;
+	पूर्णांक index;
 
-	if (!sgid_tbl) {
+	अगर (!sgid_tbl) अणु
 		dev_err(&res->pdev->dev, "SGID table not allocated\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 	/* Do we need a sgid_lock here? */
-	if (!sgid_tbl->active) {
+	अगर (!sgid_tbl->active) अणु
 		dev_err(&res->pdev->dev, "SGID table has no active entries\n");
-		return -ENOMEM;
-	}
-	for (index = 0; index < sgid_tbl->max; index++) {
-		if (!memcmp(&sgid_tbl->tbl[index].gid, gid, sizeof(*gid)) &&
+		वापस -ENOMEM;
+	पूर्ण
+	क्रम (index = 0; index < sgid_tbl->max; index++) अणु
+		अगर (!स_भेद(&sgid_tbl->tbl[index].gid, gid, माप(*gid)) &&
 		    vlan_id == sgid_tbl->tbl[index].vlan_id)
-			break;
-	}
-	if (index == sgid_tbl->max) {
+			अवरोध;
+	पूर्ण
+	अगर (index == sgid_tbl->max) अणु
 		dev_warn(&res->pdev->dev, "GID not found in the SGID table\n");
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 	/* Remove GID from the SGID table */
-	if (update) {
-		struct cmdq_delete_gid req;
-		struct creq_delete_gid_resp resp;
+	अगर (update) अणु
+		काष्ठा cmdq_delete_gid req;
+		काष्ठा creq_delete_gid_resp resp;
 		u16 cmd_flags = 0;
-		int rc;
+		पूर्णांक rc;
 
 		RCFW_CMD_PREP(req, DELETE_GID, cmd_flags);
-		if (sgid_tbl->hw_id[index] == 0xFFFF) {
+		अगर (sgid_tbl->hw_id[index] == 0xFFFF) अणु
 			dev_err(&res->pdev->dev,
 				"GID entry contains an invalid HW id\n");
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 		req.gid_index = cpu_to_le16(sgid_tbl->hw_id[index]);
-		rc = bnxt_qplib_rcfw_send_message(rcfw, (void *)&req,
-						  (void *)&resp, NULL, 0);
-		if (rc)
-			return rc;
-	}
-	memcpy(&sgid_tbl->tbl[index].gid, &bnxt_qplib_gid_zero,
-	       sizeof(bnxt_qplib_gid_zero));
+		rc = bnxt_qplib_rcfw_send_message(rcfw, (व्योम *)&req,
+						  (व्योम *)&resp, शून्य, 0);
+		अगर (rc)
+			वापस rc;
+	पूर्ण
+	स_नकल(&sgid_tbl->tbl[index].gid, &bnxt_qplib_gid_zero,
+	       माप(bnxt_qplib_gid_zero));
 	sgid_tbl->tbl[index].vlan_id = 0xFFFF;
 	sgid_tbl->vlan[index] = 0;
 	sgid_tbl->active--;
@@ -271,52 +272,52 @@ int bnxt_qplib_del_sgid(struct bnxt_qplib_sgid_tbl *sgid_tbl,
 	sgid_tbl->hw_id[index] = (u16)-1;
 
 	/* unlock */
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int bnxt_qplib_add_sgid(struct bnxt_qplib_sgid_tbl *sgid_tbl,
-			struct bnxt_qplib_gid *gid, u8 *smac, u16 vlan_id,
+पूर्णांक bnxt_qplib_add_sgid(काष्ठा bnxt_qplib_sgid_tbl *sgid_tbl,
+			काष्ठा bnxt_qplib_gid *gid, u8 *smac, u16 vlan_id,
 			bool update, u32 *index)
-{
-	struct bnxt_qplib_res *res = to_bnxt_qplib(sgid_tbl,
-						   struct bnxt_qplib_res,
+अणु
+	काष्ठा bnxt_qplib_res *res = to_bnxt_qplib(sgid_tbl,
+						   काष्ठा bnxt_qplib_res,
 						   sgid_tbl);
-	struct bnxt_qplib_rcfw *rcfw = res->rcfw;
-	int i, free_idx;
+	काष्ठा bnxt_qplib_rcfw *rcfw = res->rcfw;
+	पूर्णांक i, मुक्त_idx;
 
-	if (!sgid_tbl) {
+	अगर (!sgid_tbl) अणु
 		dev_err(&res->pdev->dev, "SGID table not allocated\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 	/* Do we need a sgid_lock here? */
-	if (sgid_tbl->active == sgid_tbl->max) {
+	अगर (sgid_tbl->active == sgid_tbl->max) अणु
 		dev_err(&res->pdev->dev, "SGID table is full\n");
-		return -ENOMEM;
-	}
-	free_idx = sgid_tbl->max;
-	for (i = 0; i < sgid_tbl->max; i++) {
-		if (!memcmp(&sgid_tbl->tbl[i], gid, sizeof(*gid)) &&
-		    sgid_tbl->tbl[i].vlan_id == vlan_id) {
+		वापस -ENOMEM;
+	पूर्ण
+	मुक्त_idx = sgid_tbl->max;
+	क्रम (i = 0; i < sgid_tbl->max; i++) अणु
+		अगर (!स_भेद(&sgid_tbl->tbl[i], gid, माप(*gid)) &&
+		    sgid_tbl->tbl[i].vlan_id == vlan_id) अणु
 			dev_dbg(&res->pdev->dev,
 				"SGID entry already exist in entry %d!\n", i);
 			*index = i;
-			return -EALREADY;
-		} else if (!memcmp(&sgid_tbl->tbl[i], &bnxt_qplib_gid_zero,
-				   sizeof(bnxt_qplib_gid_zero)) &&
-			   free_idx == sgid_tbl->max) {
-			free_idx = i;
-		}
-	}
-	if (free_idx == sgid_tbl->max) {
+			वापस -EALREADY;
+		पूर्ण अन्यथा अगर (!स_भेद(&sgid_tbl->tbl[i], &bnxt_qplib_gid_zero,
+				   माप(bnxt_qplib_gid_zero)) &&
+			   मुक्त_idx == sgid_tbl->max) अणु
+			मुक्त_idx = i;
+		पूर्ण
+	पूर्ण
+	अगर (मुक्त_idx == sgid_tbl->max) अणु
 		dev_err(&res->pdev->dev,
 			"SGID table is FULL but count is not MAX??\n");
-		return -ENOMEM;
-	}
-	if (update) {
-		struct cmdq_add_gid req;
-		struct creq_add_gid_resp resp;
+		वापस -ENOMEM;
+	पूर्ण
+	अगर (update) अणु
+		काष्ठा cmdq_add_gid req;
+		काष्ठा creq_add_gid_resp resp;
 		u16 cmd_flags = 0;
-		int rc;
+		पूर्णांक rc;
 
 		RCFW_CMD_PREP(req, ADD_GID, cmd_flags);
 
@@ -326,56 +327,56 @@ int bnxt_qplib_add_sgid(struct bnxt_qplib_sgid_tbl *sgid_tbl,
 		req.gid[3] = cpu_to_be32(((u32 *)gid->data)[0]);
 		/*
 		 * driver should ensure that all RoCE traffic is always VLAN
-		 * tagged if RoCE traffic is running on non-zero VLAN ID or
+		 * tagged अगर RoCE traffic is running on non-zero VLAN ID or
 		 * RoCE traffic is running on non-zero Priority.
 		 */
-		if ((vlan_id != 0xFFFF) || res->prio) {
-			if (vlan_id != 0xFFFF)
+		अगर ((vlan_id != 0xFFFF) || res->prio) अणु
+			अगर (vlan_id != 0xFFFF)
 				req.vlan = cpu_to_le16
 				(vlan_id & CMDQ_ADD_GID_VLAN_VLAN_ID_MASK);
 			req.vlan |= cpu_to_le16
 					(CMDQ_ADD_GID_VLAN_TPID_TPID_8100 |
 					 CMDQ_ADD_GID_VLAN_VLAN_EN);
-		}
+		पूर्ण
 
-		/* MAC in network format */
+		/* MAC in network क्रमmat */
 		req.src_mac[0] = cpu_to_be16(((u16 *)smac)[0]);
 		req.src_mac[1] = cpu_to_be16(((u16 *)smac)[1]);
 		req.src_mac[2] = cpu_to_be16(((u16 *)smac)[2]);
 
-		rc = bnxt_qplib_rcfw_send_message(rcfw, (void *)&req,
-						  (void *)&resp, NULL, 0);
-		if (rc)
-			return rc;
-		sgid_tbl->hw_id[free_idx] = le32_to_cpu(resp.xid);
-	}
+		rc = bnxt_qplib_rcfw_send_message(rcfw, (व्योम *)&req,
+						  (व्योम *)&resp, शून्य, 0);
+		अगर (rc)
+			वापस rc;
+		sgid_tbl->hw_id[मुक्त_idx] = le32_to_cpu(resp.xid);
+	पूर्ण
 	/* Add GID to the sgid_tbl */
-	memcpy(&sgid_tbl->tbl[free_idx], gid, sizeof(*gid));
-	sgid_tbl->tbl[free_idx].vlan_id = vlan_id;
+	स_नकल(&sgid_tbl->tbl[मुक्त_idx], gid, माप(*gid));
+	sgid_tbl->tbl[मुक्त_idx].vlan_id = vlan_id;
 	sgid_tbl->active++;
-	if (vlan_id != 0xFFFF)
-		sgid_tbl->vlan[free_idx] = 1;
+	अगर (vlan_id != 0xFFFF)
+		sgid_tbl->vlan[मुक्त_idx] = 1;
 
 	dev_dbg(&res->pdev->dev,
 		"SGID added hw_id[0x%x] = 0x%x active = 0x%x\n",
-		 free_idx, sgid_tbl->hw_id[free_idx], sgid_tbl->active);
+		 मुक्त_idx, sgid_tbl->hw_id[मुक्त_idx], sgid_tbl->active);
 
-	*index = free_idx;
+	*index = मुक्त_idx;
 	/* unlock */
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int bnxt_qplib_update_sgid(struct bnxt_qplib_sgid_tbl *sgid_tbl,
-			   struct bnxt_qplib_gid *gid, u16 gid_idx,
+पूर्णांक bnxt_qplib_update_sgid(काष्ठा bnxt_qplib_sgid_tbl *sgid_tbl,
+			   काष्ठा bnxt_qplib_gid *gid, u16 gid_idx,
 			   u8 *smac)
-{
-	struct bnxt_qplib_res *res = to_bnxt_qplib(sgid_tbl,
-						   struct bnxt_qplib_res,
+अणु
+	काष्ठा bnxt_qplib_res *res = to_bnxt_qplib(sgid_tbl,
+						   काष्ठा bnxt_qplib_res,
 						   sgid_tbl);
-	struct bnxt_qplib_rcfw *rcfw = res->rcfw;
-	struct creq_modify_gid_resp resp;
-	struct cmdq_modify_gid req;
-	int rc;
+	काष्ठा bnxt_qplib_rcfw *rcfw = res->rcfw;
+	काष्ठा creq_modअगरy_gid_resp resp;
+	काष्ठा cmdq_modअगरy_gid req;
+	पूर्णांक rc;
 	u16 cmd_flags = 0;
 
 	RCFW_CMD_PREP(req, MODIFY_GID, cmd_flags);
@@ -384,126 +385,126 @@ int bnxt_qplib_update_sgid(struct bnxt_qplib_sgid_tbl *sgid_tbl,
 	req.gid[1] = cpu_to_be32(((u32 *)gid->data)[2]);
 	req.gid[2] = cpu_to_be32(((u32 *)gid->data)[1]);
 	req.gid[3] = cpu_to_be32(((u32 *)gid->data)[0]);
-	if (res->prio) {
+	अगर (res->prio) अणु
 		req.vlan |= cpu_to_le16
 			(CMDQ_ADD_GID_VLAN_TPID_TPID_8100 |
 			 CMDQ_ADD_GID_VLAN_VLAN_EN);
-	}
+	पूर्ण
 
-	/* MAC in network format */
+	/* MAC in network क्रमmat */
 	req.src_mac[0] = cpu_to_be16(((u16 *)smac)[0]);
 	req.src_mac[1] = cpu_to_be16(((u16 *)smac)[1]);
 	req.src_mac[2] = cpu_to_be16(((u16 *)smac)[2]);
 
 	req.gid_index = cpu_to_le16(gid_idx);
 
-	rc = bnxt_qplib_rcfw_send_message(rcfw, (void *)&req,
-					  (void *)&resp, NULL, 0);
-	return rc;
-}
+	rc = bnxt_qplib_rcfw_send_message(rcfw, (व्योम *)&req,
+					  (व्योम *)&resp, शून्य, 0);
+	वापस rc;
+पूर्ण
 
 /* pkeys */
-int bnxt_qplib_get_pkey(struct bnxt_qplib_res *res,
-			struct bnxt_qplib_pkey_tbl *pkey_tbl, u16 index,
+पूर्णांक bnxt_qplib_get_pkey(काष्ठा bnxt_qplib_res *res,
+			काष्ठा bnxt_qplib_pkey_tbl *pkey_tbl, u16 index,
 			u16 *pkey)
-{
-	if (index == 0xFFFF) {
+अणु
+	अगर (index == 0xFFFF) अणु
 		*pkey = 0xFFFF;
-		return 0;
-	}
-	if (index >= pkey_tbl->max) {
+		वापस 0;
+	पूर्ण
+	अगर (index >= pkey_tbl->max) अणु
 		dev_err(&res->pdev->dev,
 			"Index %d exceeded PKEY table max (%d)\n",
 			index, pkey_tbl->max);
-		return -EINVAL;
-	}
-	memcpy(pkey, &pkey_tbl->tbl[index], sizeof(*pkey));
-	return 0;
-}
+		वापस -EINVAL;
+	पूर्ण
+	स_नकल(pkey, &pkey_tbl->tbl[index], माप(*pkey));
+	वापस 0;
+पूर्ण
 
-int bnxt_qplib_del_pkey(struct bnxt_qplib_res *res,
-			struct bnxt_qplib_pkey_tbl *pkey_tbl, u16 *pkey,
+पूर्णांक bnxt_qplib_del_pkey(काष्ठा bnxt_qplib_res *res,
+			काष्ठा bnxt_qplib_pkey_tbl *pkey_tbl, u16 *pkey,
 			bool update)
-{
-	int i, rc = 0;
+अणु
+	पूर्णांक i, rc = 0;
 
-	if (!pkey_tbl) {
+	अगर (!pkey_tbl) अणु
 		dev_err(&res->pdev->dev, "PKEY table not allocated\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	/* Do we need a pkey_lock here? */
-	if (!pkey_tbl->active) {
+	अगर (!pkey_tbl->active) अणु
 		dev_err(&res->pdev->dev, "PKEY table has no active entries\n");
-		return -ENOMEM;
-	}
-	for (i = 0; i < pkey_tbl->max; i++) {
-		if (!memcmp(&pkey_tbl->tbl[i], pkey, sizeof(*pkey)))
-			break;
-	}
-	if (i == pkey_tbl->max) {
+		वापस -ENOMEM;
+	पूर्ण
+	क्रम (i = 0; i < pkey_tbl->max; i++) अणु
+		अगर (!स_भेद(&pkey_tbl->tbl[i], pkey, माप(*pkey)))
+			अवरोध;
+	पूर्ण
+	अगर (i == pkey_tbl->max) अणु
 		dev_err(&res->pdev->dev,
 			"PKEY 0x%04x not found in the pkey table\n", *pkey);
-		return -ENOMEM;
-	}
-	memset(&pkey_tbl->tbl[i], 0, sizeof(*pkey));
+		वापस -ENOMEM;
+	पूर्ण
+	स_रखो(&pkey_tbl->tbl[i], 0, माप(*pkey));
 	pkey_tbl->active--;
 
 	/* unlock */
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-int bnxt_qplib_add_pkey(struct bnxt_qplib_res *res,
-			struct bnxt_qplib_pkey_tbl *pkey_tbl, u16 *pkey,
+पूर्णांक bnxt_qplib_add_pkey(काष्ठा bnxt_qplib_res *res,
+			काष्ठा bnxt_qplib_pkey_tbl *pkey_tbl, u16 *pkey,
 			bool update)
-{
-	int i, free_idx, rc = 0;
+अणु
+	पूर्णांक i, मुक्त_idx, rc = 0;
 
-	if (!pkey_tbl) {
+	अगर (!pkey_tbl) अणु
 		dev_err(&res->pdev->dev, "PKEY table not allocated\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	/* Do we need a pkey_lock here? */
-	if (pkey_tbl->active == pkey_tbl->max) {
+	अगर (pkey_tbl->active == pkey_tbl->max) अणु
 		dev_err(&res->pdev->dev, "PKEY table is full\n");
-		return -ENOMEM;
-	}
-	free_idx = pkey_tbl->max;
-	for (i = 0; i < pkey_tbl->max; i++) {
-		if (!memcmp(&pkey_tbl->tbl[i], pkey, sizeof(*pkey)))
-			return -EALREADY;
-		else if (!pkey_tbl->tbl[i] && free_idx == pkey_tbl->max)
-			free_idx = i;
-	}
-	if (free_idx == pkey_tbl->max) {
+		वापस -ENOMEM;
+	पूर्ण
+	मुक्त_idx = pkey_tbl->max;
+	क्रम (i = 0; i < pkey_tbl->max; i++) अणु
+		अगर (!स_भेद(&pkey_tbl->tbl[i], pkey, माप(*pkey)))
+			वापस -EALREADY;
+		अन्यथा अगर (!pkey_tbl->tbl[i] && मुक्त_idx == pkey_tbl->max)
+			मुक्त_idx = i;
+	पूर्ण
+	अगर (मुक्त_idx == pkey_tbl->max) अणु
 		dev_err(&res->pdev->dev,
 			"PKEY table is FULL but count is not MAX??\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 	/* Add PKEY to the pkey_tbl */
-	memcpy(&pkey_tbl->tbl[free_idx], pkey, sizeof(*pkey));
+	स_नकल(&pkey_tbl->tbl[मुक्त_idx], pkey, माप(*pkey));
 	pkey_tbl->active++;
 
 	/* unlock */
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
 /* AH */
-int bnxt_qplib_create_ah(struct bnxt_qplib_res *res, struct bnxt_qplib_ah *ah,
+पूर्णांक bnxt_qplib_create_ah(काष्ठा bnxt_qplib_res *res, काष्ठा bnxt_qplib_ah *ah,
 			 bool block)
-{
-	struct bnxt_qplib_rcfw *rcfw = res->rcfw;
-	struct cmdq_create_ah req;
-	struct creq_create_ah_resp resp;
+अणु
+	काष्ठा bnxt_qplib_rcfw *rcfw = res->rcfw;
+	काष्ठा cmdq_create_ah req;
+	काष्ठा creq_create_ah_resp resp;
 	u16 cmd_flags = 0;
 	u32 temp32[4];
 	u16 temp16[3];
-	int rc;
+	पूर्णांक rc;
 
 	RCFW_CMD_PREP(req, CREATE_AH, cmd_flags);
 
-	memcpy(temp32, ah->dgid.data, sizeof(struct bnxt_qplib_gid));
+	स_नकल(temp32, ah->dgid.data, माप(काष्ठा bnxt_qplib_gid));
 	req.dgid[0] = cpu_to_le32(temp32[0]);
 	req.dgid[1] = cpu_to_le32(temp32[1]);
 	req.dgid[2] = cpu_to_le32(temp32[2]);
@@ -518,27 +519,27 @@ int bnxt_qplib_create_ah(struct bnxt_qplib_res *res, struct bnxt_qplib_ah *ah,
 	req.pd_id = cpu_to_le32(ah->pd->id);
 	req.traffic_class = ah->traffic_class;
 
-	/* MAC in network format */
-	memcpy(temp16, ah->dmac, 6);
+	/* MAC in network क्रमmat */
+	स_नकल(temp16, ah->dmac, 6);
 	req.dest_mac[0] = cpu_to_le16(temp16[0]);
 	req.dest_mac[1] = cpu_to_le16(temp16[1]);
 	req.dest_mac[2] = cpu_to_le16(temp16[2]);
 
-	rc = bnxt_qplib_rcfw_send_message(rcfw, (void *)&req, (void *)&resp,
-					  NULL, block);
-	if (rc)
-		return rc;
+	rc = bnxt_qplib_rcfw_send_message(rcfw, (व्योम *)&req, (व्योम *)&resp,
+					  शून्य, block);
+	अगर (rc)
+		वापस rc;
 
 	ah->id = le32_to_cpu(resp.xid);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void bnxt_qplib_destroy_ah(struct bnxt_qplib_res *res, struct bnxt_qplib_ah *ah,
+व्योम bnxt_qplib_destroy_ah(काष्ठा bnxt_qplib_res *res, काष्ठा bnxt_qplib_ah *ah,
 			   bool block)
-{
-	struct bnxt_qplib_rcfw *rcfw = res->rcfw;
-	struct cmdq_destroy_ah req;
-	struct creq_destroy_ah_resp resp;
+अणु
+	काष्ठा bnxt_qplib_rcfw *rcfw = res->rcfw;
+	काष्ठा cmdq_destroy_ah req;
+	काष्ठा creq_destroy_ah_resp resp;
 	u16 cmd_flags = 0;
 
 	/* Clean up the AH table in the device */
@@ -546,130 +547,130 @@ void bnxt_qplib_destroy_ah(struct bnxt_qplib_res *res, struct bnxt_qplib_ah *ah,
 
 	req.ah_cid = cpu_to_le32(ah->id);
 
-	bnxt_qplib_rcfw_send_message(rcfw, (void *)&req, (void *)&resp, NULL,
+	bnxt_qplib_rcfw_send_message(rcfw, (व्योम *)&req, (व्योम *)&resp, शून्य,
 				     block);
-}
+पूर्ण
 
 /* MRW */
-int bnxt_qplib_free_mrw(struct bnxt_qplib_res *res, struct bnxt_qplib_mrw *mrw)
-{
-	struct bnxt_qplib_rcfw *rcfw = res->rcfw;
-	struct cmdq_deallocate_key req;
-	struct creq_deallocate_key_resp resp;
+पूर्णांक bnxt_qplib_मुक्त_mrw(काष्ठा bnxt_qplib_res *res, काष्ठा bnxt_qplib_mrw *mrw)
+अणु
+	काष्ठा bnxt_qplib_rcfw *rcfw = res->rcfw;
+	काष्ठा cmdq_deallocate_key req;
+	काष्ठा creq_deallocate_key_resp resp;
 	u16 cmd_flags = 0;
-	int rc;
+	पूर्णांक rc;
 
-	if (mrw->lkey == 0xFFFFFFFF) {
+	अगर (mrw->lkey == 0xFFFFFFFF) अणु
 		dev_info(&res->pdev->dev, "SP: Free a reserved lkey MRW\n");
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	RCFW_CMD_PREP(req, DEALLOCATE_KEY, cmd_flags);
 
 	req.mrw_flags = mrw->type;
 
-	if ((mrw->type == CMDQ_ALLOCATE_MRW_MRW_FLAGS_MW_TYPE1)  ||
+	अगर ((mrw->type == CMDQ_ALLOCATE_MRW_MRW_FLAGS_MW_TYPE1)  ||
 	    (mrw->type == CMDQ_ALLOCATE_MRW_MRW_FLAGS_MW_TYPE2A) ||
 	    (mrw->type == CMDQ_ALLOCATE_MRW_MRW_FLAGS_MW_TYPE2B))
 		req.key = cpu_to_le32(mrw->rkey);
-	else
+	अन्यथा
 		req.key = cpu_to_le32(mrw->lkey);
 
-	rc = bnxt_qplib_rcfw_send_message(rcfw, (void *)&req, (void *)&resp,
-					  NULL, 0);
-	if (rc)
-		return rc;
+	rc = bnxt_qplib_rcfw_send_message(rcfw, (व्योम *)&req, (व्योम *)&resp,
+					  शून्य, 0);
+	अगर (rc)
+		वापस rc;
 
 	/* Free the qplib's MRW memory */
-	if (mrw->hwq.max_elements)
-		bnxt_qplib_free_hwq(res, &mrw->hwq);
+	अगर (mrw->hwq.max_elements)
+		bnxt_qplib_मुक्त_hwq(res, &mrw->hwq);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int bnxt_qplib_alloc_mrw(struct bnxt_qplib_res *res, struct bnxt_qplib_mrw *mrw)
-{
-	struct bnxt_qplib_rcfw *rcfw = res->rcfw;
-	struct cmdq_allocate_mrw req;
-	struct creq_allocate_mrw_resp resp;
+पूर्णांक bnxt_qplib_alloc_mrw(काष्ठा bnxt_qplib_res *res, काष्ठा bnxt_qplib_mrw *mrw)
+अणु
+	काष्ठा bnxt_qplib_rcfw *rcfw = res->rcfw;
+	काष्ठा cmdq_allocate_mrw req;
+	काष्ठा creq_allocate_mrw_resp resp;
 	u16 cmd_flags = 0;
-	unsigned long tmp;
-	int rc;
+	अचिन्हित दीर्घ पंचांगp;
+	पूर्णांक rc;
 
 	RCFW_CMD_PREP(req, ALLOCATE_MRW, cmd_flags);
 
 	req.pd_id = cpu_to_le32(mrw->pd->id);
 	req.mrw_flags = mrw->type;
-	if ((mrw->type == CMDQ_ALLOCATE_MRW_MRW_FLAGS_PMR &&
+	अगर ((mrw->type == CMDQ_ALLOCATE_MRW_MRW_FLAGS_PMR &&
 	     mrw->flags & BNXT_QPLIB_FR_PMR) ||
 	    mrw->type == CMDQ_ALLOCATE_MRW_MRW_FLAGS_MW_TYPE2A ||
 	    mrw->type == CMDQ_ALLOCATE_MRW_MRW_FLAGS_MW_TYPE2B)
 		req.access = CMDQ_ALLOCATE_MRW_ACCESS_CONSUMER_OWNED_KEY;
-	tmp = (unsigned long)mrw;
-	req.mrw_handle = cpu_to_le64(tmp);
+	पंचांगp = (अचिन्हित दीर्घ)mrw;
+	req.mrw_handle = cpu_to_le64(पंचांगp);
 
-	rc = bnxt_qplib_rcfw_send_message(rcfw, (void *)&req,
-					  (void *)&resp, NULL, 0);
-	if (rc)
-		return rc;
+	rc = bnxt_qplib_rcfw_send_message(rcfw, (व्योम *)&req,
+					  (व्योम *)&resp, शून्य, 0);
+	अगर (rc)
+		वापस rc;
 
-	if ((mrw->type == CMDQ_ALLOCATE_MRW_MRW_FLAGS_MW_TYPE1)  ||
+	अगर ((mrw->type == CMDQ_ALLOCATE_MRW_MRW_FLAGS_MW_TYPE1)  ||
 	    (mrw->type == CMDQ_ALLOCATE_MRW_MRW_FLAGS_MW_TYPE2A) ||
 	    (mrw->type == CMDQ_ALLOCATE_MRW_MRW_FLAGS_MW_TYPE2B))
 		mrw->rkey = le32_to_cpu(resp.xid);
-	else
+	अन्यथा
 		mrw->lkey = le32_to_cpu(resp.xid);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int bnxt_qplib_dereg_mrw(struct bnxt_qplib_res *res, struct bnxt_qplib_mrw *mrw,
+पूर्णांक bnxt_qplib_dereg_mrw(काष्ठा bnxt_qplib_res *res, काष्ठा bnxt_qplib_mrw *mrw,
 			 bool block)
-{
-	struct bnxt_qplib_rcfw *rcfw = res->rcfw;
-	struct cmdq_deregister_mr req;
-	struct creq_deregister_mr_resp resp;
+अणु
+	काष्ठा bnxt_qplib_rcfw *rcfw = res->rcfw;
+	काष्ठा cmdq_deरेजिस्टर_mr req;
+	काष्ठा creq_deरेजिस्टर_mr_resp resp;
 	u16 cmd_flags = 0;
-	int rc;
+	पूर्णांक rc;
 
 	RCFW_CMD_PREP(req, DEREGISTER_MR, cmd_flags);
 
 	req.lkey = cpu_to_le32(mrw->lkey);
-	rc = bnxt_qplib_rcfw_send_message(rcfw, (void *)&req,
-					  (void *)&resp, NULL, block);
-	if (rc)
-		return rc;
+	rc = bnxt_qplib_rcfw_send_message(rcfw, (व्योम *)&req,
+					  (व्योम *)&resp, शून्य, block);
+	अगर (rc)
+		वापस rc;
 
 	/* Free the qplib's MR memory */
-	if (mrw->hwq.max_elements) {
+	अगर (mrw->hwq.max_elements) अणु
 		mrw->va = 0;
 		mrw->total_size = 0;
-		bnxt_qplib_free_hwq(res, &mrw->hwq);
-	}
+		bnxt_qplib_मुक्त_hwq(res, &mrw->hwq);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int bnxt_qplib_reg_mr(struct bnxt_qplib_res *res, struct bnxt_qplib_mrw *mr,
-		      struct ib_umem *umem, int num_pbls, u32 buf_pg_size)
-{
-	struct bnxt_qplib_rcfw *rcfw = res->rcfw;
-	struct bnxt_qplib_hwq_attr hwq_attr = {};
-	struct bnxt_qplib_sg_info sginfo = {};
-	struct creq_register_mr_resp resp;
-	struct cmdq_register_mr req;
+पूर्णांक bnxt_qplib_reg_mr(काष्ठा bnxt_qplib_res *res, काष्ठा bnxt_qplib_mrw *mr,
+		      काष्ठा ib_umem *umem, पूर्णांक num_pbls, u32 buf_pg_size)
+अणु
+	काष्ठा bnxt_qplib_rcfw *rcfw = res->rcfw;
+	काष्ठा bnxt_qplib_hwq_attr hwq_attr = अणुपूर्ण;
+	काष्ठा bnxt_qplib_sg_info sginfo = अणुपूर्ण;
+	काष्ठा creq_रेजिस्टर_mr_resp resp;
+	काष्ठा cmdq_रेजिस्टर_mr req;
 	u16 cmd_flags = 0, level;
-	int pages, rc;
+	पूर्णांक pages, rc;
 	u32 pg_size;
 
-	if (num_pbls) {
-		pages = roundup_pow_of_two(num_pbls);
-		/* Allocate memory for the non-leaf pages to store buf ptrs.
-		 * Non-leaf pages always uses system PAGE_SIZE
+	अगर (num_pbls) अणु
+		pages = roundup_घात_of_two(num_pbls);
+		/* Allocate memory क्रम the non-leaf pages to store buf ptrs.
+		 * Non-leaf pages always uses प्रणाली PAGE_SIZE
 		 */
-		/* Free the hwq if it already exist, must be a rereg */
-		if (mr->hwq.max_elements)
-			bnxt_qplib_free_hwq(res, &mr->hwq);
-		/* Use system PAGE_SIZE */
+		/* Free the hwq अगर it alपढ़ोy exist, must be a rereg */
+		अगर (mr->hwq.max_elements)
+			bnxt_qplib_मुक्त_hwq(res, &mr->hwq);
+		/* Use प्रणाली PAGE_SIZE */
 		hwq_attr.res = res;
 		hwq_attr.depth = pages;
 		hwq_attr.stride = buf_pg_size;
@@ -680,25 +681,25 @@ int bnxt_qplib_reg_mr(struct bnxt_qplib_res *res, struct bnxt_qplib_mrw *mr,
 		hwq_attr.sginfo->pgsize = PAGE_SIZE;
 		hwq_attr.sginfo->pgshft = PAGE_SHIFT;
 		rc = bnxt_qplib_alloc_init_hwq(&mr->hwq, &hwq_attr);
-		if (rc) {
+		अगर (rc) अणु
 			dev_err(&res->pdev->dev,
 				"SP: Reg MR memory allocation failed\n");
-			return -ENOMEM;
-		}
-	}
+			वापस -ENOMEM;
+		पूर्ण
+	पूर्ण
 
 	RCFW_CMD_PREP(req, REGISTER_MR, cmd_flags);
 
 	/* Configure the request */
-	if (mr->hwq.level == PBL_LVL_MAX) {
-		/* No PBL provided, just use system PAGE_SIZE */
+	अगर (mr->hwq.level == PBL_LVL_MAX) अणु
+		/* No PBL provided, just use प्रणाली PAGE_SIZE */
 		level = 0;
 		req.pbl = 0;
 		pg_size = PAGE_SIZE;
-	} else {
+	पूर्ण अन्यथा अणु
 		level = mr->hwq.level;
 		req.pbl = cpu_to_le64(mr->hwq.pbl[PBL_LVL_0].pg_map_arr[0]);
-	}
+	पूर्ण
 	pg_size = buf_pg_size ? buf_pg_size : PAGE_SIZE;
 	req.log2_pg_size_lvl = (level << CMDQ_REGISTER_MR_LVL_SFT) |
 			       ((ilog2(pg_size) <<
@@ -712,35 +713,35 @@ int bnxt_qplib_reg_mr(struct bnxt_qplib_res *res, struct bnxt_qplib_mrw *mr,
 	req.key = cpu_to_le32(mr->lkey);
 	req.mr_size = cpu_to_le64(mr->total_size);
 
-	rc = bnxt_qplib_rcfw_send_message(rcfw, (void *)&req,
-					  (void *)&resp, NULL, false);
-	if (rc)
-		goto fail;
+	rc = bnxt_qplib_rcfw_send_message(rcfw, (व्योम *)&req,
+					  (व्योम *)&resp, शून्य, false);
+	अगर (rc)
+		जाओ fail;
 
-	return 0;
+	वापस 0;
 
 fail:
-	if (mr->hwq.max_elements)
-		bnxt_qplib_free_hwq(res, &mr->hwq);
-	return rc;
-}
+	अगर (mr->hwq.max_elements)
+		bnxt_qplib_मुक्त_hwq(res, &mr->hwq);
+	वापस rc;
+पूर्ण
 
-int bnxt_qplib_alloc_fast_reg_page_list(struct bnxt_qplib_res *res,
-					struct bnxt_qplib_frpl *frpl,
-					int max_pg_ptrs)
-{
-	struct bnxt_qplib_hwq_attr hwq_attr = {};
-	struct bnxt_qplib_sg_info sginfo = {};
-	int pg_ptrs, pages, rc;
+पूर्णांक bnxt_qplib_alloc_fast_reg_page_list(काष्ठा bnxt_qplib_res *res,
+					काष्ठा bnxt_qplib_frpl *frpl,
+					पूर्णांक max_pg_ptrs)
+अणु
+	काष्ठा bnxt_qplib_hwq_attr hwq_attr = अणुपूर्ण;
+	काष्ठा bnxt_qplib_sg_info sginfo = अणुपूर्ण;
+	पूर्णांक pg_ptrs, pages, rc;
 
 	/* Re-calculate the max to fit the HWQ allocation model */
-	pg_ptrs = roundup_pow_of_two(max_pg_ptrs);
+	pg_ptrs = roundup_घात_of_two(max_pg_ptrs);
 	pages = pg_ptrs >> MAX_PBL_LVL_1_PGS_SHIFT;
-	if (!pages)
+	अगर (!pages)
 		pages++;
 
-	if (pages > MAX_PBL_LVL_1_PGS)
-		return -ENOMEM;
+	अगर (pages > MAX_PBL_LVL_1_PGS)
+		वापस -ENOMEM;
 
 	sginfo.pgsize = PAGE_SIZE;
 	sginfo.nopte = true;
@@ -751,59 +752,59 @@ int bnxt_qplib_alloc_fast_reg_page_list(struct bnxt_qplib_res *res,
 	hwq_attr.sginfo = &sginfo;
 	hwq_attr.type = HWQ_TYPE_CTX;
 	rc = bnxt_qplib_alloc_init_hwq(&frpl->hwq, &hwq_attr);
-	if (!rc)
+	अगर (!rc)
 		frpl->max_pg_ptrs = pg_ptrs;
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-int bnxt_qplib_free_fast_reg_page_list(struct bnxt_qplib_res *res,
-				       struct bnxt_qplib_frpl *frpl)
-{
-	bnxt_qplib_free_hwq(res, &frpl->hwq);
-	return 0;
-}
+पूर्णांक bnxt_qplib_मुक्त_fast_reg_page_list(काष्ठा bnxt_qplib_res *res,
+				       काष्ठा bnxt_qplib_frpl *frpl)
+अणु
+	bnxt_qplib_मुक्त_hwq(res, &frpl->hwq);
+	वापस 0;
+पूर्ण
 
-int bnxt_qplib_map_tc2cos(struct bnxt_qplib_res *res, u16 *cids)
-{
-	struct bnxt_qplib_rcfw *rcfw = res->rcfw;
-	struct cmdq_map_tc_to_cos req;
-	struct creq_map_tc_to_cos_resp resp;
+पूर्णांक bnxt_qplib_map_tc2cos(काष्ठा bnxt_qplib_res *res, u16 *cids)
+अणु
+	काष्ठा bnxt_qplib_rcfw *rcfw = res->rcfw;
+	काष्ठा cmdq_map_tc_to_cos req;
+	काष्ठा creq_map_tc_to_cos_resp resp;
 	u16 cmd_flags = 0;
 
 	RCFW_CMD_PREP(req, MAP_TC_TO_COS, cmd_flags);
 	req.cos0 = cpu_to_le16(cids[0]);
 	req.cos1 = cpu_to_le16(cids[1]);
 
-	return bnxt_qplib_rcfw_send_message(rcfw, (void *)&req, (void *)&resp,
-						NULL, 0);
-}
+	वापस bnxt_qplib_rcfw_send_message(rcfw, (व्योम *)&req, (व्योम *)&resp,
+						शून्य, 0);
+पूर्ण
 
-int bnxt_qplib_get_roce_stats(struct bnxt_qplib_rcfw *rcfw,
-			      struct bnxt_qplib_roce_stats *stats)
-{
-	struct cmdq_query_roce_stats req;
-	struct creq_query_roce_stats_resp resp;
-	struct bnxt_qplib_rcfw_sbuf *sbuf;
-	struct creq_query_roce_stats_resp_sb *sb;
+पूर्णांक bnxt_qplib_get_roce_stats(काष्ठा bnxt_qplib_rcfw *rcfw,
+			      काष्ठा bnxt_qplib_roce_stats *stats)
+अणु
+	काष्ठा cmdq_query_roce_stats req;
+	काष्ठा creq_query_roce_stats_resp resp;
+	काष्ठा bnxt_qplib_rcfw_sbuf *sbuf;
+	काष्ठा creq_query_roce_stats_resp_sb *sb;
 	u16 cmd_flags = 0;
-	int rc = 0;
+	पूर्णांक rc = 0;
 
 	RCFW_CMD_PREP(req, QUERY_ROCE_STATS, cmd_flags);
 
-	sbuf = bnxt_qplib_rcfw_alloc_sbuf(rcfw, sizeof(*sb));
-	if (!sbuf) {
+	sbuf = bnxt_qplib_rcfw_alloc_sbuf(rcfw, माप(*sb));
+	अगर (!sbuf) अणु
 		dev_err(&rcfw->pdev->dev,
 			"SP: QUERY_ROCE_STATS alloc side buffer failed\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	sb = sbuf->sb;
-	req.resp_size = sizeof(*sb) / BNXT_QPLIB_CMDQE_UNITS;
-	rc = bnxt_qplib_rcfw_send_message(rcfw, (void *)&req, (void *)&resp,
-					  (void *)sbuf, 0);
-	if (rc)
-		goto bail;
+	req.resp_size = माप(*sb) / BNXT_QPLIB_CMDQE_UNITS;
+	rc = bnxt_qplib_rcfw_send_message(rcfw, (व्योम *)&req, (व्योम *)&resp,
+					  (व्योम *)sbuf, 0);
+	अगर (rc)
+		जाओ bail;
 	/* Extract the context from the side buffer */
 	stats->to_retransmits = le64_to_cpu(sb->to_retransmits);
 	stats->seq_err_naks_rcvd = le64_to_cpu(sb->seq_err_naks_rcvd);
@@ -824,11 +825,11 @@ int bnxt_qplib_get_roce_stats(struct bnxt_qplib_rcfw *rcfw,
 	stats->res_exceeds_wqe = le64_to_cpu(sb->res_exceeds_wqe);
 	stats->res_opcode_err = le64_to_cpu(sb->res_opcode_err);
 	stats->res_rx_invalid_rkey = le64_to_cpu(sb->res_rx_invalid_rkey);
-	stats->res_rx_domain_err = le64_to_cpu(sb->res_rx_domain_err);
+	stats->res_rx_करोमुख्य_err = le64_to_cpu(sb->res_rx_करोमुख्य_err);
 	stats->res_rx_no_perm = le64_to_cpu(sb->res_rx_no_perm);
 	stats->res_rx_range_err = le64_to_cpu(sb->res_rx_range_err);
 	stats->res_tx_invalid_rkey = le64_to_cpu(sb->res_tx_invalid_rkey);
-	stats->res_tx_domain_err = le64_to_cpu(sb->res_tx_domain_err);
+	stats->res_tx_करोमुख्य_err = le64_to_cpu(sb->res_tx_करोमुख्य_err);
 	stats->res_tx_no_perm = le64_to_cpu(sb->res_tx_no_perm);
 	stats->res_tx_range_err = le64_to_cpu(sb->res_tx_range_err);
 	stats->res_irrq_oflow = le64_to_cpu(sb->res_irrq_oflow);
@@ -839,22 +840,22 @@ int bnxt_qplib_get_roce_stats(struct bnxt_qplib_rcfw *rcfw,
 	stats->res_srq_err = le64_to_cpu(sb->res_srq_err);
 	stats->res_cmp_err = le64_to_cpu(sb->res_cmp_err);
 	stats->res_invalid_dup_rkey = le64_to_cpu(sb->res_invalid_dup_rkey);
-	stats->res_wqe_format_err = le64_to_cpu(sb->res_wqe_format_err);
+	stats->res_wqe_क्रमmat_err = le64_to_cpu(sb->res_wqe_क्रमmat_err);
 	stats->res_cq_load_err = le64_to_cpu(sb->res_cq_load_err);
 	stats->res_srq_load_err = le64_to_cpu(sb->res_srq_load_err);
 	stats->res_tx_pci_err = le64_to_cpu(sb->res_tx_pci_err);
 	stats->res_rx_pci_err = le64_to_cpu(sb->res_rx_pci_err);
-	if (!rcfw->init_oos_stats) {
+	अगर (!rcfw->init_oos_stats) अणु
 		rcfw->oos_prev = le64_to_cpu(sb->res_oos_drop_count);
 		rcfw->init_oos_stats = 1;
-	} else {
+	पूर्ण अन्यथा अणु
 		stats->res_oos_drop_count +=
 				(le64_to_cpu(sb->res_oos_drop_count) -
 				 rcfw->oos_prev) & BNXT_QPLIB_OOS_COUNT_MASK;
 		rcfw->oos_prev = le64_to_cpu(sb->res_oos_drop_count);
-	}
+	पूर्ण
 
 bail:
-	bnxt_qplib_rcfw_free_sbuf(rcfw, sbuf);
-	return rc;
-}
+	bnxt_qplib_rcfw_मुक्त_sbuf(rcfw, sbuf);
+	वापस rc;
+पूर्ण

@@ -1,253 +1,254 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  *  Copyright (C) 2007
  *
  *  Author: Eric Biederman <ebiederm@xmision.com>
  */
 
-#include <linux/module.h>
-#include <linux/ipc.h>
-#include <linux/nsproxy.h>
-#include <linux/sysctl.h>
-#include <linux/uaccess.h>
-#include <linux/ipc_namespace.h>
-#include <linux/msg.h>
-#include "util.h"
+#समावेश <linux/module.h>
+#समावेश <linux/ipc.h>
+#समावेश <linux/nsproxy.h>
+#समावेश <linux/sysctl.h>
+#समावेश <linux/uaccess.h>
+#समावेश <linux/ipc_namespace.h>
+#समावेश <linux/msg.h>
+#समावेश "util.h"
 
-static void *get_ipc(struct ctl_table *table)
-{
-	char *which = table->data;
-	struct ipc_namespace *ipc_ns = current->nsproxy->ipc_ns;
-	which = (which - (char *)&init_ipc_ns) + (char *)ipc_ns;
-	return which;
-}
+अटल व्योम *get_ipc(काष्ठा ctl_table *table)
+अणु
+	अक्षर *which = table->data;
+	काष्ठा ipc_namespace *ipc_ns = current->nsproxy->ipc_ns;
+	which = (which - (अक्षर *)&init_ipc_ns) + (अक्षर *)ipc_ns;
+	वापस which;
+पूर्ण
 
-#ifdef CONFIG_PROC_SYSCTL
-static int proc_ipc_dointvec(struct ctl_table *table, int write,
-		void *buffer, size_t *lenp, loff_t *ppos)
-{
-	struct ctl_table ipc_table;
+#अगर_घोषित CONFIG_PROC_SYSCTL
+अटल पूर्णांक proc_ipc_करोपूर्णांकvec(काष्ठा ctl_table *table, पूर्णांक ग_लिखो,
+		व्योम *buffer, माप_प्रकार *lenp, loff_t *ppos)
+अणु
+	काष्ठा ctl_table ipc_table;
 
-	memcpy(&ipc_table, table, sizeof(ipc_table));
+	स_नकल(&ipc_table, table, माप(ipc_table));
 	ipc_table.data = get_ipc(table);
 
-	return proc_dointvec(&ipc_table, write, buffer, lenp, ppos);
-}
+	वापस proc_करोपूर्णांकvec(&ipc_table, ग_लिखो, buffer, lenp, ppos);
+पूर्ण
 
-static int proc_ipc_dointvec_minmax(struct ctl_table *table, int write,
-		void *buffer, size_t *lenp, loff_t *ppos)
-{
-	struct ctl_table ipc_table;
+अटल पूर्णांक proc_ipc_करोपूर्णांकvec_minmax(काष्ठा ctl_table *table, पूर्णांक ग_लिखो,
+		व्योम *buffer, माप_प्रकार *lenp, loff_t *ppos)
+अणु
+	काष्ठा ctl_table ipc_table;
 
-	memcpy(&ipc_table, table, sizeof(ipc_table));
+	स_नकल(&ipc_table, table, माप(ipc_table));
 	ipc_table.data = get_ipc(table);
 
-	return proc_dointvec_minmax(&ipc_table, write, buffer, lenp, ppos);
-}
+	वापस proc_करोपूर्णांकvec_minmax(&ipc_table, ग_लिखो, buffer, lenp, ppos);
+पूर्ण
 
-static int proc_ipc_dointvec_minmax_orphans(struct ctl_table *table, int write,
-		void *buffer, size_t *lenp, loff_t *ppos)
-{
-	struct ipc_namespace *ns = current->nsproxy->ipc_ns;
-	int err = proc_ipc_dointvec_minmax(table, write, buffer, lenp, ppos);
+अटल पूर्णांक proc_ipc_करोपूर्णांकvec_minmax_orphans(काष्ठा ctl_table *table, पूर्णांक ग_लिखो,
+		व्योम *buffer, माप_प्रकार *lenp, loff_t *ppos)
+अणु
+	काष्ठा ipc_namespace *ns = current->nsproxy->ipc_ns;
+	पूर्णांक err = proc_ipc_करोपूर्णांकvec_minmax(table, ग_लिखो, buffer, lenp, ppos);
 
-	if (err < 0)
-		return err;
-	if (ns->shm_rmid_forced)
+	अगर (err < 0)
+		वापस err;
+	अगर (ns->shm_rmid_क्रमced)
 		shm_destroy_orphaned(ns);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int proc_ipc_doulongvec_minmax(struct ctl_table *table, int write,
-		void *buffer, size_t *lenp, loff_t *ppos)
-{
-	struct ctl_table ipc_table;
-	memcpy(&ipc_table, table, sizeof(ipc_table));
+अटल पूर्णांक proc_ipc_करोuदीर्घvec_minmax(काष्ठा ctl_table *table, पूर्णांक ग_लिखो,
+		व्योम *buffer, माप_प्रकार *lenp, loff_t *ppos)
+अणु
+	काष्ठा ctl_table ipc_table;
+	स_नकल(&ipc_table, table, माप(ipc_table));
 	ipc_table.data = get_ipc(table);
 
-	return proc_doulongvec_minmax(&ipc_table, write, buffer,
+	वापस proc_करोuदीर्घvec_minmax(&ipc_table, ग_लिखो, buffer,
 					lenp, ppos);
-}
+पूर्ण
 
-static int proc_ipc_auto_msgmni(struct ctl_table *table, int write,
-		void *buffer, size_t *lenp, loff_t *ppos)
-{
-	struct ctl_table ipc_table;
-	int dummy = 0;
+अटल पूर्णांक proc_ipc_स्वतः_msgmni(काष्ठा ctl_table *table, पूर्णांक ग_लिखो,
+		व्योम *buffer, माप_प्रकार *lenp, loff_t *ppos)
+अणु
+	काष्ठा ctl_table ipc_table;
+	पूर्णांक dummy = 0;
 
-	memcpy(&ipc_table, table, sizeof(ipc_table));
+	स_नकल(&ipc_table, table, माप(ipc_table));
 	ipc_table.data = &dummy;
 
-	if (write)
+	अगर (ग_लिखो)
 		pr_info_once("writing to auto_msgmni has no effect");
 
-	return proc_dointvec_minmax(&ipc_table, write, buffer, lenp, ppos);
-}
+	वापस proc_करोपूर्णांकvec_minmax(&ipc_table, ग_लिखो, buffer, lenp, ppos);
+पूर्ण
 
-static int proc_ipc_sem_dointvec(struct ctl_table *table, int write,
-	void *buffer, size_t *lenp, loff_t *ppos)
-{
-	int ret, semmni;
-	struct ipc_namespace *ns = current->nsproxy->ipc_ns;
+अटल पूर्णांक proc_ipc_sem_करोपूर्णांकvec(काष्ठा ctl_table *table, पूर्णांक ग_लिखो,
+	व्योम *buffer, माप_प्रकार *lenp, loff_t *ppos)
+अणु
+	पूर्णांक ret, semmni;
+	काष्ठा ipc_namespace *ns = current->nsproxy->ipc_ns;
 
 	semmni = ns->sem_ctls[3];
-	ret = proc_ipc_dointvec(table, write, buffer, lenp, ppos);
+	ret = proc_ipc_करोपूर्णांकvec(table, ग_लिखो, buffer, lenp, ppos);
 
-	if (!ret)
+	अगर (!ret)
 		ret = sem_check_semmni(current->nsproxy->ipc_ns);
 
 	/*
-	 * Reset the semmni value if an error happens.
+	 * Reset the semmni value अगर an error happens.
 	 */
-	if (ret)
+	अगर (ret)
 		ns->sem_ctls[3] = semmni;
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-#else
-#define proc_ipc_doulongvec_minmax NULL
-#define proc_ipc_dointvec	   NULL
-#define proc_ipc_dointvec_minmax   NULL
-#define proc_ipc_dointvec_minmax_orphans   NULL
-#define proc_ipc_auto_msgmni	   NULL
-#define proc_ipc_sem_dointvec	   NULL
-#endif
+#अन्यथा
+#घोषणा proc_ipc_करोuदीर्घvec_minmax शून्य
+#घोषणा proc_ipc_करोपूर्णांकvec	   शून्य
+#घोषणा proc_ipc_करोपूर्णांकvec_minmax   शून्य
+#घोषणा proc_ipc_करोपूर्णांकvec_minmax_orphans   शून्य
+#घोषणा proc_ipc_स्वतः_msgmni	   शून्य
+#घोषणा proc_ipc_sem_करोपूर्णांकvec	   शून्य
+#पूर्ण_अगर
 
-int ipc_mni = IPCMNI;
-int ipc_mni_shift = IPCMNI_SHIFT;
-int ipc_min_cycle = RADIX_TREE_MAP_SIZE;
+पूर्णांक ipc_mni = IPCMNI;
+पूर्णांक ipc_mni_shअगरt = IPCMNI_SHIFT;
+पूर्णांक ipc_min_cycle = RADIX_TREE_MAP_SIZE;
 
-static struct ctl_table ipc_kern_table[] = {
-	{
+अटल काष्ठा ctl_table ipc_kern_table[] = अणु
+	अणु
 		.procname	= "shmmax",
 		.data		= &init_ipc_ns.shm_ctlmax,
-		.maxlen		= sizeof(init_ipc_ns.shm_ctlmax),
+		.maxlen		= माप(init_ipc_ns.shm_ctlmax),
 		.mode		= 0644,
-		.proc_handler	= proc_ipc_doulongvec_minmax,
-	},
-	{
+		.proc_handler	= proc_ipc_करोuदीर्घvec_minmax,
+	पूर्ण,
+	अणु
 		.procname	= "shmall",
 		.data		= &init_ipc_ns.shm_ctlall,
-		.maxlen		= sizeof(init_ipc_ns.shm_ctlall),
+		.maxlen		= माप(init_ipc_ns.shm_ctlall),
 		.mode		= 0644,
-		.proc_handler	= proc_ipc_doulongvec_minmax,
-	},
-	{
+		.proc_handler	= proc_ipc_करोuदीर्घvec_minmax,
+	पूर्ण,
+	अणु
 		.procname	= "shmmni",
 		.data		= &init_ipc_ns.shm_ctlmni,
-		.maxlen		= sizeof(init_ipc_ns.shm_ctlmni),
+		.maxlen		= माप(init_ipc_ns.shm_ctlmni),
 		.mode		= 0644,
-		.proc_handler	= proc_ipc_dointvec_minmax,
+		.proc_handler	= proc_ipc_करोपूर्णांकvec_minmax,
 		.extra1		= SYSCTL_ZERO,
 		.extra2		= &ipc_mni,
-	},
-	{
+	पूर्ण,
+	अणु
 		.procname	= "shm_rmid_forced",
-		.data		= &init_ipc_ns.shm_rmid_forced,
-		.maxlen		= sizeof(init_ipc_ns.shm_rmid_forced),
+		.data		= &init_ipc_ns.shm_rmid_क्रमced,
+		.maxlen		= माप(init_ipc_ns.shm_rmid_क्रमced),
 		.mode		= 0644,
-		.proc_handler	= proc_ipc_dointvec_minmax_orphans,
+		.proc_handler	= proc_ipc_करोपूर्णांकvec_minmax_orphans,
 		.extra1		= SYSCTL_ZERO,
 		.extra2		= SYSCTL_ONE,
-	},
-	{
+	पूर्ण,
+	अणु
 		.procname	= "msgmax",
 		.data		= &init_ipc_ns.msg_ctlmax,
-		.maxlen		= sizeof(init_ipc_ns.msg_ctlmax),
+		.maxlen		= माप(init_ipc_ns.msg_ctlmax),
 		.mode		= 0644,
-		.proc_handler	= proc_ipc_dointvec_minmax,
+		.proc_handler	= proc_ipc_करोपूर्णांकvec_minmax,
 		.extra1		= SYSCTL_ZERO,
-		.extra2		= SYSCTL_INT_MAX,
-	},
-	{
+		.extra2		= SYSCTL_पूर्णांक_उच्च,
+	पूर्ण,
+	अणु
 		.procname	= "msgmni",
 		.data		= &init_ipc_ns.msg_ctlmni,
-		.maxlen		= sizeof(init_ipc_ns.msg_ctlmni),
+		.maxlen		= माप(init_ipc_ns.msg_ctlmni),
 		.mode		= 0644,
-		.proc_handler	= proc_ipc_dointvec_minmax,
+		.proc_handler	= proc_ipc_करोपूर्णांकvec_minmax,
 		.extra1		= SYSCTL_ZERO,
 		.extra2		= &ipc_mni,
-	},
-	{
+	पूर्ण,
+	अणु
 		.procname	= "auto_msgmni",
-		.data		= NULL,
-		.maxlen		= sizeof(int),
+		.data		= शून्य,
+		.maxlen		= माप(पूर्णांक),
 		.mode		= 0644,
-		.proc_handler	= proc_ipc_auto_msgmni,
+		.proc_handler	= proc_ipc_स्वतः_msgmni,
 		.extra1		= SYSCTL_ZERO,
 		.extra2		= SYSCTL_ONE,
-	},
-	{
+	पूर्ण,
+	अणु
 		.procname	=  "msgmnb",
 		.data		= &init_ipc_ns.msg_ctlmnb,
-		.maxlen		= sizeof(init_ipc_ns.msg_ctlmnb),
+		.maxlen		= माप(init_ipc_ns.msg_ctlmnb),
 		.mode		= 0644,
-		.proc_handler	= proc_ipc_dointvec_minmax,
+		.proc_handler	= proc_ipc_करोपूर्णांकvec_minmax,
 		.extra1		= SYSCTL_ZERO,
-		.extra2		= SYSCTL_INT_MAX,
-	},
-	{
+		.extra2		= SYSCTL_पूर्णांक_उच्च,
+	पूर्ण,
+	अणु
 		.procname	= "sem",
 		.data		= &init_ipc_ns.sem_ctls,
-		.maxlen		= 4*sizeof(int),
+		.maxlen		= 4*माप(पूर्णांक),
 		.mode		= 0644,
-		.proc_handler	= proc_ipc_sem_dointvec,
-	},
-#ifdef CONFIG_CHECKPOINT_RESTORE
-	{
+		.proc_handler	= proc_ipc_sem_करोपूर्णांकvec,
+	पूर्ण,
+#अगर_घोषित CONFIG_CHECKPOINT_RESTORE
+	अणु
 		.procname	= "sem_next_id",
 		.data		= &init_ipc_ns.ids[IPC_SEM_IDS].next_id,
-		.maxlen		= sizeof(init_ipc_ns.ids[IPC_SEM_IDS].next_id),
+		.maxlen		= माप(init_ipc_ns.ids[IPC_SEM_IDS].next_id),
 		.mode		= 0644,
-		.proc_handler	= proc_ipc_dointvec_minmax,
+		.proc_handler	= proc_ipc_करोपूर्णांकvec_minmax,
 		.extra1		= SYSCTL_ZERO,
-		.extra2		= SYSCTL_INT_MAX,
-	},
-	{
+		.extra2		= SYSCTL_पूर्णांक_उच्च,
+	पूर्ण,
+	अणु
 		.procname	= "msg_next_id",
 		.data		= &init_ipc_ns.ids[IPC_MSG_IDS].next_id,
-		.maxlen		= sizeof(init_ipc_ns.ids[IPC_MSG_IDS].next_id),
+		.maxlen		= माप(init_ipc_ns.ids[IPC_MSG_IDS].next_id),
 		.mode		= 0644,
-		.proc_handler	= proc_ipc_dointvec_minmax,
+		.proc_handler	= proc_ipc_करोपूर्णांकvec_minmax,
 		.extra1		= SYSCTL_ZERO,
-		.extra2		= SYSCTL_INT_MAX,
-	},
-	{
+		.extra2		= SYSCTL_पूर्णांक_उच्च,
+	पूर्ण,
+	अणु
 		.procname	= "shm_next_id",
 		.data		= &init_ipc_ns.ids[IPC_SHM_IDS].next_id,
-		.maxlen		= sizeof(init_ipc_ns.ids[IPC_SHM_IDS].next_id),
+		.maxlen		= माप(init_ipc_ns.ids[IPC_SHM_IDS].next_id),
 		.mode		= 0644,
-		.proc_handler	= proc_ipc_dointvec_minmax,
+		.proc_handler	= proc_ipc_करोपूर्णांकvec_minmax,
 		.extra1		= SYSCTL_ZERO,
-		.extra2		= SYSCTL_INT_MAX,
-	},
-#endif
-	{}
-};
+		.extra2		= SYSCTL_पूर्णांक_उच्च,
+	पूर्ण,
+#पूर्ण_अगर
+	अणुपूर्ण
+पूर्ण;
 
-static struct ctl_table ipc_root_table[] = {
-	{
+अटल काष्ठा ctl_table ipc_root_table[] = अणु
+	अणु
 		.procname	= "kernel",
 		.mode		= 0555,
 		.child		= ipc_kern_table,
-	},
-	{}
-};
+	पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
-static int __init ipc_sysctl_init(void)
-{
-	register_sysctl_table(ipc_root_table);
-	return 0;
-}
+अटल पूर्णांक __init ipc_sysctl_init(व्योम)
+अणु
+	रेजिस्टर_sysctl_table(ipc_root_table);
+	वापस 0;
+पूर्ण
 
 device_initcall(ipc_sysctl_init);
 
-static int __init ipc_mni_extend(char *str)
-{
+अटल पूर्णांक __init ipc_mni_extend(अक्षर *str)
+अणु
 	ipc_mni = IPCMNI_EXTEND;
-	ipc_mni_shift = IPCMNI_EXTEND_SHIFT;
+	ipc_mni_shअगरt = IPCMNI_EXTEND_SHIFT;
 	ipc_min_cycle = IPCMNI_EXTEND_MIN_CYCLE;
 	pr_info("IPCMNI extended to %d.\n", ipc_mni);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 early_param("ipcmni_extend", ipc_mni_extend);

@@ -1,59 +1,60 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * container.c  - ACPI Generic Container Driver
  *
- * Copyright (C) 2004 Anil S Keshavamurthy (anil.s.keshavamurthy@intel.com)
+ * Copyright (C) 2004 Anil S Keshavamurthy (anil.s.keshavamurthy@पूर्णांकel.com)
  * Copyright (C) 2004 Keiichiro Tokunaga (tokunaga.keiich@jp.fujitsu.com)
  * Copyright (C) 2004 Motoyuki Ito (motoyuki@soft.fujitsu.com)
  * Copyright (C) 2004 FUJITSU LIMITED
  * Copyright (C) 2004, 2013 Intel Corp.
- * Author: Rafael J. Wysocki <rafael.j.wysocki@intel.com>
+ * Author: Rafael J. Wysocki <rafael.j.wysocki@पूर्णांकel.com>
  */
-#include <linux/acpi.h>
-#include <linux/container.h>
+#समावेश <linux/acpi.h>
+#समावेश <linux/container.h>
 
-#include "internal.h"
+#समावेश "internal.h"
 
-static const struct acpi_device_id container_device_ids[] = {
-	{"ACPI0004", 0},
-	{"PNP0A05", 0},
-	{"PNP0A06", 0},
-	{"", 0},
-};
+अटल स्थिर काष्ठा acpi_device_id container_device_ids[] = अणु
+	अणु"ACPI0004", 0पूर्ण,
+	अणु"PNP0A05", 0पूर्ण,
+	अणु"PNP0A06", 0पूर्ण,
+	अणु"", 0पूर्ण,
+पूर्ण;
 
-#ifdef CONFIG_ACPI_CONTAINER
+#अगर_घोषित CONFIG_ACPI_CONTAINER
 
-static int acpi_container_offline(struct container_dev *cdev)
-{
-	struct acpi_device *adev = ACPI_COMPANION(&cdev->dev);
-	struct acpi_device *child;
+अटल पूर्णांक acpi_container_offline(काष्ठा container_dev *cdev)
+अणु
+	काष्ठा acpi_device *adev = ACPI_COMPANION(&cdev->dev);
+	काष्ठा acpi_device *child;
 
 	/* Check all of the dependent devices' physical companions. */
-	list_for_each_entry(child, &adev->children, node)
-		if (!acpi_scan_is_offline(child, false))
-			return -EBUSY;
+	list_क्रम_each_entry(child, &adev->children, node)
+		अगर (!acpi_scan_is_offline(child, false))
+			वापस -EBUSY;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void acpi_container_release(struct device *dev)
-{
-	kfree(to_container_dev(dev));
-}
+अटल व्योम acpi_container_release(काष्ठा device *dev)
+अणु
+	kमुक्त(to_container_dev(dev));
+पूर्ण
 
-static int container_device_attach(struct acpi_device *adev,
-				   const struct acpi_device_id *not_used)
-{
-	struct container_dev *cdev;
-	struct device *dev;
-	int ret;
+अटल पूर्णांक container_device_attach(काष्ठा acpi_device *adev,
+				   स्थिर काष्ठा acpi_device_id *not_used)
+अणु
+	काष्ठा container_dev *cdev;
+	काष्ठा device *dev;
+	पूर्णांक ret;
 
-	if (adev->flags.is_dock_station)
-		return 0;
+	अगर (adev->flags.is_करोck_station)
+		वापस 0;
 
-	cdev = kzalloc(sizeof(*cdev), GFP_KERNEL);
-	if (!cdev)
-		return -ENOMEM;
+	cdev = kzalloc(माप(*cdev), GFP_KERNEL);
+	अगर (!cdev)
+		वापस -ENOMEM;
 
 	cdev->offline = acpi_container_offline;
 	dev = &cdev->dev;
@@ -61,56 +62,56 @@ static int container_device_attach(struct acpi_device *adev,
 	dev_set_name(dev, "%s", dev_name(&adev->dev));
 	ACPI_COMPANION_SET(dev, adev);
 	dev->release = acpi_container_release;
-	ret = device_register(dev);
-	if (ret) {
+	ret = device_रेजिस्टर(dev);
+	अगर (ret) अणु
 		put_device(dev);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 	adev->driver_data = dev;
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-static void container_device_detach(struct acpi_device *adev)
-{
-	struct device *dev = acpi_driver_data(adev);
+अटल व्योम container_device_detach(काष्ठा acpi_device *adev)
+अणु
+	काष्ठा device *dev = acpi_driver_data(adev);
 
-	adev->driver_data = NULL;
-	if (dev)
-		device_unregister(dev);
-}
+	adev->driver_data = शून्य;
+	अगर (dev)
+		device_unरेजिस्टर(dev);
+पूर्ण
 
-static void container_device_online(struct acpi_device *adev)
-{
-	struct device *dev = acpi_driver_data(adev);
+अटल व्योम container_device_online(काष्ठा acpi_device *adev)
+अणु
+	काष्ठा device *dev = acpi_driver_data(adev);
 
 	kobject_uevent(&dev->kobj, KOBJ_ONLINE);
-}
+पूर्ण
 
-static struct acpi_scan_handler container_handler = {
+अटल काष्ठा acpi_scan_handler container_handler = अणु
 	.ids = container_device_ids,
 	.attach = container_device_attach,
 	.detach = container_device_detach,
-	.hotplug = {
+	.hotplug = अणु
 		.enabled = true,
 		.demand_offline = true,
-		.notify_online = container_device_online,
-	},
-};
+		.notअगरy_online = container_device_online,
+	पूर्ण,
+पूर्ण;
 
-void __init acpi_container_init(void)
-{
+व्योम __init acpi_container_init(व्योम)
+अणु
 	acpi_scan_add_handler(&container_handler);
-}
+पूर्ण
 
-#else
+#अन्यथा
 
-static struct acpi_scan_handler container_handler = {
+अटल काष्ठा acpi_scan_handler container_handler = अणु
 	.ids = container_device_ids,
-};
+पूर्ण;
 
-void __init acpi_container_init(void)
-{
+व्योम __init acpi_container_init(व्योम)
+अणु
 	acpi_scan_add_handler_with_hotplug(&container_handler, "container");
-}
+पूर्ण
 
-#endif /* CONFIG_ACPI_CONTAINER */
+#पूर्ण_अगर /* CONFIG_ACPI_CONTAINER */

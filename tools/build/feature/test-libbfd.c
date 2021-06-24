@@ -1,16 +1,17 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <bfd.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <bfd.h>
 
-extern int printf(const char *format, ...);
+बाह्य पूर्णांक म_लिखो(स्थिर अक्षर *क्रमmat, ...);
 
-int main(void)
-{
-	char symbol[4096] = "FieldName__9ClassNameFd";
-	char *tmp;
+पूर्णांक मुख्य(व्योम)
+अणु
+	अक्षर symbol[4096] = "FieldName__9ClassNameFd";
+	अक्षर *पंचांगp;
 
-	tmp = bfd_demangle(0, symbol, 0);
+	पंचांगp = bfd_demangle(0, symbol, 0);
 
-	printf("demangled symbol: {%s}\n", tmp);
+	म_लिखो("demangled symbol: {%s}\n", पंचांगp);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

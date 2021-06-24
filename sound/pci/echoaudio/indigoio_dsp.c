@@ -1,3 +1,4 @@
+<शैली गुरु>
 /****************************************************************************
 
    Copyright Echo Digital Audio Corporation (c) 1998 - 2004
@@ -6,46 +7,46 @@
 
    This file is part of Echo Digital Audio's generic driver library.
 
-   Echo Digital Audio's generic driver library is free software;
-   you can redistribute it and/or modify it under the terms of
+   Echo Digital Audio's generic driver library is मुक्त software;
+   you can redistribute it and/or modअगरy it under the terms of
    the GNU General Public License as published by the Free Software
    Foundation.
 
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-   GNU General Public License for more details.
+   GNU General Public License क्रम more details.
 
    You should have received a copy of the GNU General Public License
-   along with this program; if not, write to the Free Software
+   aदीर्घ with this program; अगर not, ग_लिखो to the Free Software
    Foundation, Inc., 59 Temple Place - Suite 330, Boston,
    MA  02111-1307, USA.
 
    *************************************************************************
 
- Translation from C++ and adaptation for use in ALSA-Driver
+ Translation from C++ and adaptation क्रम use in ALSA-Driver
  were made by Giuliano Pochini <pochini@shiny.it>
 
 ****************************************************************************/
 
 
-static int set_vmixer_gain(struct echoaudio *chip, u16 output, u16 pipe,
-			   int gain);
-static int update_vmixer_level(struct echoaudio *chip);
+अटल पूर्णांक set_vmixer_gain(काष्ठा echoaudio *chip, u16 output, u16 pipe,
+			   पूर्णांक gain);
+अटल पूर्णांक update_vmixer_level(काष्ठा echoaudio *chip);
 
 
-static int init_hw(struct echoaudio *chip, u16 device_id, u16 subdevice_id)
-{
-	int err;
+अटल पूर्णांक init_hw(काष्ठा echoaudio *chip, u16 device_id, u16 subdevice_id)
+अणु
+	पूर्णांक err;
 
-	if (snd_BUG_ON((subdevice_id & 0xfff0) != INDIGO_IO))
-		return -ENODEV;
+	अगर (snd_BUG_ON((subdevice_id & 0xfff0) != INDIGO_IO))
+		वापस -ENODEV;
 
-	if ((err = init_dsp_comm_page(chip))) {
+	अगर ((err = init_dsp_comm_page(chip))) अणु
 		dev_err(chip->card->dev,
 			"init_hw - could not initialize DSP comm page\n");
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
 	chip->device_id = device_id;
 	chip->subdevice_id = subdevice_id;
@@ -54,64 +55,64 @@ static int init_hw(struct echoaudio *chip, u16 device_id, u16 subdevice_id)
 	/* Since this card has no ASIC, mark it as loaded so everything
 	   works OK */
 	chip->asic_loaded = true;
-	chip->input_clock_types = ECHO_CLOCK_BIT_INTERNAL;
+	chip->input_घड़ी_प्रकारypes = ECHO_CLOCK_BIT_INTERNAL;
 
-	if ((err = load_firmware(chip)) < 0)
-		return err;
+	अगर ((err = load_firmware(chip)) < 0)
+		वापस err;
 	chip->bad_board = false;
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
 
 
-static int set_mixer_defaults(struct echoaudio *chip)
-{
-	return init_line_levels(chip);
-}
+अटल पूर्णांक set_mixer_शेषs(काष्ठा echoaudio *chip)
+अणु
+	वापस init_line_levels(chip);
+पूर्ण
 
 
 
-static u32 detect_input_clocks(const struct echoaudio *chip)
-{
-	return ECHO_CLOCK_BIT_INTERNAL;
-}
+अटल u32 detect_input_घड़ीs(स्थिर काष्ठा echoaudio *chip)
+अणु
+	वापस ECHO_CLOCK_BIT_INTERNAL;
+पूर्ण
 
 
 
-/* The IndigoIO has no ASIC. Just do nothing */
-static int load_asic(struct echoaudio *chip)
-{
-	return 0;
-}
+/* The IndigoIO has no ASIC. Just करो nothing */
+अटल पूर्णांक load_asic(काष्ठा echoaudio *chip)
+अणु
+	वापस 0;
+पूर्ण
 
 
 
-static int set_sample_rate(struct echoaudio *chip, u32 rate)
-{
-	if (wait_handshake(chip))
-		return -EIO;
+अटल पूर्णांक set_sample_rate(काष्ठा echoaudio *chip, u32 rate)
+अणु
+	अगर (रुको_handshake(chip))
+		वापस -EIO;
 
 	chip->sample_rate = rate;
 	chip->comm_page->sample_rate = cpu_to_le32(rate);
 	clear_handshake(chip);
-	return send_vector(chip, DSP_VC_UPDATE_CLOCKS);
-}
+	वापस send_vector(chip, DSP_VC_UPDATE_CLOCKS);
+पूर्ण
 
 
 
-/* This function routes the sound from a virtual channel to a real output */
-static int set_vmixer_gain(struct echoaudio *chip, u16 output, u16 pipe,
-			   int gain)
-{
-	int index;
+/* This function routes the sound from a भव channel to a real output */
+अटल पूर्णांक set_vmixer_gain(काष्ठा echoaudio *chip, u16 output, u16 pipe,
+			   पूर्णांक gain)
+अणु
+	पूर्णांक index;
 
-	if (snd_BUG_ON(pipe >= num_pipes_out(chip) ||
+	अगर (snd_BUG_ON(pipe >= num_pipes_out(chip) ||
 		       output >= num_busses_out(chip)))
-		return -EINVAL;
+		वापस -EINVAL;
 
-	if (wait_handshake(chip))
-		return -EIO;
+	अगर (रुको_handshake(chip))
+		वापस -EIO;
 
 	chip->vmixer_gain[output][pipe] = gain;
 	index = output * num_pipes_out(chip) + pipe;
@@ -119,17 +120,17 @@ static int set_vmixer_gain(struct echoaudio *chip, u16 output, u16 pipe,
 
 	dev_dbg(chip->card->dev,
 		"set_vmixer_gain: pipe %d, out %d = %d\n", pipe, output, gain);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
 
-/* Tell the DSP to read and update virtual mixer levels in comm page. */
-static int update_vmixer_level(struct echoaudio *chip)
-{
-	if (wait_handshake(chip))
-		return -EIO;
+/* Tell the DSP to पढ़ो and update भव mixer levels in comm page. */
+अटल पूर्णांक update_vmixer_level(काष्ठा echoaudio *chip)
+अणु
+	अगर (रुको_handshake(chip))
+		वापस -EIO;
 	clear_handshake(chip);
-	return send_vector(chip, DSP_VC_SET_VMIXER_GAIN);
-}
+	वापस send_vector(chip, DSP_VC_SET_VMIXER_GAIN);
+पूर्ण
 

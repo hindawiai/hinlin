@@ -1,19 +1,20 @@
+<शैली गुरु>
 /*
- * Network-device interface management.
+ * Network-device पूर्णांकerface management.
  *
  * Copyright (c) 2004-2005, Keir Fraser
  *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License version 2
+ * This program is मुक्त software; you can redistribute it and/or
+ * modअगरy it under the terms of the GNU General Public License version 2
  * as published by the Free Software Foundation; or, when distributed
- * separately from the Linux kernel or incorporated into other
+ * separately from the Linux kernel or incorporated पूर्णांकo other
  * software packages, subject to the following license:
  *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a copy
  * of this source file (the "Software"), to deal in the Software without
- * restriction, including without limitation the rights to use, copy, modify,
+ * restriction, including without limitation the rights to use, copy, modअगरy,
  * merge, publish, distribute, sublicense, and/or sell copies of the Software,
- * and to permit persons to whom the Software is furnished to do so, subject to
+ * and to permit persons to whom the Software is furnished to करो so, subject to
  * the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
@@ -28,517 +29,517 @@
  * IN THE SOFTWARE.
  */
 
-#include "common.h"
+#समावेश "common.h"
 
-#include <linux/kthread.h>
-#include <linux/sched/task.h>
-#include <linux/ethtool.h>
-#include <linux/rtnetlink.h>
-#include <linux/if_vlan.h>
-#include <linux/vmalloc.h>
+#समावेश <linux/kthपढ़ो.h>
+#समावेश <linux/sched/task.h>
+#समावेश <linux/ethtool.h>
+#समावेश <linux/rtnetlink.h>
+#समावेश <linux/अगर_vlan.h>
+#समावेश <linux/vदो_स्मृति.h>
 
-#include <xen/events.h>
-#include <asm/xen/hypercall.h>
-#include <xen/balloon.h>
+#समावेश <xen/events.h>
+#समावेश <यंत्र/xen/hypercall.h>
+#समावेश <xen/balloon.h>
 
-#define XENVIF_QUEUE_LENGTH 32
-#define XENVIF_NAPI_WEIGHT  64
+#घोषणा XENVIF_QUEUE_LENGTH 32
+#घोषणा XENVIF_NAPI_WEIGHT  64
 
-/* Number of bytes allowed on the internal guest Rx queue. */
-#define XENVIF_RX_QUEUE_BYTES (XEN_NETIF_RX_RING_SIZE/2 * PAGE_SIZE)
+/* Number of bytes allowed on the पूर्णांकernal guest Rx queue. */
+#घोषणा XENVIF_RX_QUEUE_BYTES (XEN_NETIF_RX_RING_SIZE/2 * PAGE_SIZE)
 
 /* This function is used to set SKBFL_ZEROCOPY_ENABLE as well as
  * increasing the inflight counter. We need to increase the inflight
- * counter because core driver calls into xenvif_zerocopy_callback
- * which calls xenvif_skb_zerocopy_complete.
+ * counter because core driver calls पूर्णांकo xenvअगर_zerocopy_callback
+ * which calls xenvअगर_skb_zerocopy_complete.
  */
-void xenvif_skb_zerocopy_prepare(struct xenvif_queue *queue,
-				 struct sk_buff *skb)
-{
+व्योम xenvअगर_skb_zerocopy_prepare(काष्ठा xenvअगर_queue *queue,
+				 काष्ठा sk_buff *skb)
+अणु
 	skb_shinfo(skb)->flags |= SKBFL_ZEROCOPY_ENABLE;
 	atomic_inc(&queue->inflight_packets);
-}
+पूर्ण
 
-void xenvif_skb_zerocopy_complete(struct xenvif_queue *queue)
-{
+व्योम xenvअगर_skb_zerocopy_complete(काष्ठा xenvअगर_queue *queue)
+अणु
 	atomic_dec(&queue->inflight_packets);
 
-	/* Wake the dealloc thread _after_ decrementing inflight_packets so
-	 * that if kthread_stop() has already been called, the dealloc thread
-	 * does not wait forever with nothing to wake it.
+	/* Wake the dealloc thपढ़ो _after_ decrementing inflight_packets so
+	 * that अगर kthपढ़ो_stop() has alपढ़ोy been called, the dealloc thपढ़ो
+	 * करोes not रुको क्रमever with nothing to wake it.
 	 */
 	wake_up(&queue->dealloc_wq);
-}
+पूर्ण
 
-int xenvif_schedulable(struct xenvif *vif)
-{
-	return netif_running(vif->dev) &&
-		test_bit(VIF_STATUS_CONNECTED, &vif->status) &&
-		!vif->disabled;
-}
+पूर्णांक xenvअगर_schedulable(काष्ठा xenvअगर *vअगर)
+अणु
+	वापस netअगर_running(vअगर->dev) &&
+		test_bit(VIF_STATUS_CONNECTED, &vअगर->status) &&
+		!vअगर->disabled;
+पूर्ण
 
-static bool xenvif_handle_tx_interrupt(struct xenvif_queue *queue)
-{
+अटल bool xenvअगर_handle_tx_पूर्णांकerrupt(काष्ठा xenvअगर_queue *queue)
+अणु
 	bool rc;
 
 	rc = RING_HAS_UNCONSUMED_REQUESTS(&queue->tx);
-	if (rc)
+	अगर (rc)
 		napi_schedule(&queue->napi);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static irqreturn_t xenvif_tx_interrupt(int irq, void *dev_id)
-{
-	struct xenvif_queue *queue = dev_id;
-	int old;
+अटल irqवापस_t xenvअगर_tx_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा xenvअगर_queue *queue = dev_id;
+	पूर्णांक old;
 
 	old = atomic_fetch_or(NETBK_TX_EOI, &queue->eoi_pending);
 	WARN(old & NETBK_TX_EOI, "Interrupt while EOI pending\n");
 
-	if (!xenvif_handle_tx_interrupt(queue)) {
+	अगर (!xenvअगर_handle_tx_पूर्णांकerrupt(queue)) अणु
 		atomic_andnot(NETBK_TX_EOI, &queue->eoi_pending);
 		xen_irq_lateeoi(irq, XEN_EOI_FLAG_SPURIOUS);
-	}
+	पूर्ण
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static int xenvif_poll(struct napi_struct *napi, int budget)
-{
-	struct xenvif_queue *queue =
-		container_of(napi, struct xenvif_queue, napi);
-	int work_done;
+अटल पूर्णांक xenvअगर_poll(काष्ठा napi_काष्ठा *napi, पूर्णांक budget)
+अणु
+	काष्ठा xenvअगर_queue *queue =
+		container_of(napi, काष्ठा xenvअगर_queue, napi);
+	पूर्णांक work_करोne;
 
-	/* This vif is rogue, we pretend we've there is nothing to do
-	 * for this vif to deschedule it from NAPI. But this interface
-	 * will be turned off in thread context later.
+	/* This vअगर is rogue, we pretend we've there is nothing to करो
+	 * क्रम this vअगर to deschedule it from NAPI. But this पूर्णांकerface
+	 * will be turned off in thपढ़ो context later.
 	 */
-	if (unlikely(queue->vif->disabled)) {
+	अगर (unlikely(queue->vअगर->disabled)) अणु
 		napi_complete(napi);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	work_done = xenvif_tx_action(queue, budget);
+	work_करोne = xenvअगर_tx_action(queue, budget);
 
-	if (work_done < budget) {
-		napi_complete_done(napi, work_done);
+	अगर (work_करोne < budget) अणु
+		napi_complete_करोne(napi, work_करोne);
 		/* If the queue is rate-limited, it shall be
-		 * rescheduled in the timer callback.
+		 * rescheduled in the समयr callback.
 		 */
-		if (likely(!queue->rate_limited))
-			xenvif_napi_schedule_or_enable_events(queue);
-	}
+		अगर (likely(!queue->rate_limited))
+			xenvअगर_napi_schedule_or_enable_events(queue);
+	पूर्ण
 
-	return work_done;
-}
+	वापस work_करोne;
+पूर्ण
 
-static bool xenvif_handle_rx_interrupt(struct xenvif_queue *queue)
-{
+अटल bool xenvअगर_handle_rx_पूर्णांकerrupt(काष्ठा xenvअगर_queue *queue)
+अणु
 	bool rc;
 
-	rc = xenvif_have_rx_work(queue, false);
-	if (rc)
-		xenvif_kick_thread(queue);
-	return rc;
-}
+	rc = xenvअगर_have_rx_work(queue, false);
+	अगर (rc)
+		xenvअगर_kick_thपढ़ो(queue);
+	वापस rc;
+पूर्ण
 
-static irqreturn_t xenvif_rx_interrupt(int irq, void *dev_id)
-{
-	struct xenvif_queue *queue = dev_id;
-	int old;
+अटल irqवापस_t xenvअगर_rx_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा xenvअगर_queue *queue = dev_id;
+	पूर्णांक old;
 
 	old = atomic_fetch_or(NETBK_RX_EOI, &queue->eoi_pending);
 	WARN(old & NETBK_RX_EOI, "Interrupt while EOI pending\n");
 
-	if (!xenvif_handle_rx_interrupt(queue)) {
+	अगर (!xenvअगर_handle_rx_पूर्णांकerrupt(queue)) अणु
 		atomic_andnot(NETBK_RX_EOI, &queue->eoi_pending);
 		xen_irq_lateeoi(irq, XEN_EOI_FLAG_SPURIOUS);
-	}
+	पूर्ण
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-irqreturn_t xenvif_interrupt(int irq, void *dev_id)
-{
-	struct xenvif_queue *queue = dev_id;
-	int old;
+irqवापस_t xenvअगर_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा xenvअगर_queue *queue = dev_id;
+	पूर्णांक old;
 	bool has_rx, has_tx;
 
 	old = atomic_fetch_or(NETBK_COMMON_EOI, &queue->eoi_pending);
 	WARN(old, "Interrupt while EOI pending\n");
 
-	has_tx = xenvif_handle_tx_interrupt(queue);
-	has_rx = xenvif_handle_rx_interrupt(queue);
+	has_tx = xenvअगर_handle_tx_पूर्णांकerrupt(queue);
+	has_rx = xenvअगर_handle_rx_पूर्णांकerrupt(queue);
 
-	if (!has_rx && !has_tx) {
+	अगर (!has_rx && !has_tx) अणु
 		atomic_andnot(NETBK_COMMON_EOI, &queue->eoi_pending);
 		xen_irq_lateeoi(irq, XEN_EOI_FLAG_SPURIOUS);
-	}
+	पूर्ण
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-int xenvif_queue_stopped(struct xenvif_queue *queue)
-{
-	struct net_device *dev = queue->vif->dev;
-	unsigned int id = queue->id;
-	return netif_tx_queue_stopped(netdev_get_tx_queue(dev, id));
-}
+पूर्णांक xenvअगर_queue_stopped(काष्ठा xenvअगर_queue *queue)
+अणु
+	काष्ठा net_device *dev = queue->vअगर->dev;
+	अचिन्हित पूर्णांक id = queue->id;
+	वापस netअगर_tx_queue_stopped(netdev_get_tx_queue(dev, id));
+पूर्ण
 
-void xenvif_wake_queue(struct xenvif_queue *queue)
-{
-	struct net_device *dev = queue->vif->dev;
-	unsigned int id = queue->id;
-	netif_tx_wake_queue(netdev_get_tx_queue(dev, id));
-}
+व्योम xenvअगर_wake_queue(काष्ठा xenvअगर_queue *queue)
+अणु
+	काष्ठा net_device *dev = queue->vअगर->dev;
+	अचिन्हित पूर्णांक id = queue->id;
+	netअगर_tx_wake_queue(netdev_get_tx_queue(dev, id));
+पूर्ण
 
-static u16 xenvif_select_queue(struct net_device *dev, struct sk_buff *skb,
-			       struct net_device *sb_dev)
-{
-	struct xenvif *vif = netdev_priv(dev);
-	unsigned int size = vif->hash.size;
-	unsigned int num_queues;
+अटल u16 xenvअगर_select_queue(काष्ठा net_device *dev, काष्ठा sk_buff *skb,
+			       काष्ठा net_device *sb_dev)
+अणु
+	काष्ठा xenvअगर *vअगर = netdev_priv(dev);
+	अचिन्हित पूर्णांक size = vअगर->hash.size;
+	अचिन्हित पूर्णांक num_queues;
 
-	/* If queues are not set up internally - always return 0
+	/* If queues are not set up पूर्णांकernally - always वापस 0
 	 * as the packet going to be dropped anyway */
-	num_queues = READ_ONCE(vif->num_queues);
-	if (num_queues < 1)
-		return 0;
+	num_queues = READ_ONCE(vअगर->num_queues);
+	अगर (num_queues < 1)
+		वापस 0;
 
-	if (vif->hash.alg == XEN_NETIF_CTRL_HASH_ALGORITHM_NONE)
-		return netdev_pick_tx(dev, skb, NULL) %
+	अगर (vअगर->hash.alg == XEN_NETIF_CTRL_HASH_ALGORITHM_NONE)
+		वापस netdev_pick_tx(dev, skb, शून्य) %
 		       dev->real_num_tx_queues;
 
-	xenvif_set_skb_hash(vif, skb);
+	xenvअगर_set_skb_hash(vअगर, skb);
 
-	if (size == 0)
-		return skb_get_hash_raw(skb) % dev->real_num_tx_queues;
+	अगर (size == 0)
+		वापस skb_get_hash_raw(skb) % dev->real_num_tx_queues;
 
-	return vif->hash.mapping[vif->hash.mapping_sel]
+	वापस vअगर->hash.mapping[vअगर->hash.mapping_sel]
 				[skb_get_hash_raw(skb) % size];
-}
+पूर्ण
 
-static netdev_tx_t
-xenvif_start_xmit(struct sk_buff *skb, struct net_device *dev)
-{
-	struct xenvif *vif = netdev_priv(dev);
-	struct xenvif_queue *queue = NULL;
-	unsigned int num_queues;
+अटल netdev_tx_t
+xenvअगर_start_xmit(काष्ठा sk_buff *skb, काष्ठा net_device *dev)
+अणु
+	काष्ठा xenvअगर *vअगर = netdev_priv(dev);
+	काष्ठा xenvअगर_queue *queue = शून्य;
+	अचिन्हित पूर्णांक num_queues;
 	u16 index;
-	struct xenvif_rx_cb *cb;
+	काष्ठा xenvअगर_rx_cb *cb;
 
 	BUG_ON(skb->dev != dev);
 
-	/* Drop the packet if queues are not set up.
-	 * This handler should be called inside an RCU read section
-	 * so we don't need to enter it here explicitly.
+	/* Drop the packet अगर queues are not set up.
+	 * This handler should be called inside an RCU पढ़ो section
+	 * so we करोn't need to enter it here explicitly.
 	 */
-	num_queues = READ_ONCE(vif->num_queues);
-	if (num_queues < 1)
-		goto drop;
+	num_queues = READ_ONCE(vअगर->num_queues);
+	अगर (num_queues < 1)
+		जाओ drop;
 
 	/* Obtain the queue to be used to transmit this packet */
 	index = skb_get_queue_mapping(skb);
-	if (index >= num_queues) {
+	अगर (index >= num_queues) अणु
 		pr_warn_ratelimited("Invalid queue %hu for packet on interface %s\n",
-				    index, vif->dev->name);
+				    index, vअगर->dev->name);
 		index %= num_queues;
-	}
-	queue = &vif->queues[index];
+	पूर्ण
+	queue = &vअगर->queues[index];
 
-	/* Drop the packet if queue is not ready */
-	if (queue->task == NULL ||
-	    queue->dealloc_task == NULL ||
-	    !xenvif_schedulable(vif))
-		goto drop;
+	/* Drop the packet अगर queue is not पढ़ोy */
+	अगर (queue->task == शून्य ||
+	    queue->dealloc_task == शून्य ||
+	    !xenvअगर_schedulable(vअगर))
+		जाओ drop;
 
-	if (vif->multicast_control && skb->pkt_type == PACKET_MULTICAST) {
-		struct ethhdr *eth = (struct ethhdr *)skb->data;
+	अगर (vअगर->multicast_control && skb->pkt_type == PACKET_MULTICAST) अणु
+		काष्ठा ethhdr *eth = (काष्ठा ethhdr *)skb->data;
 
-		if (!xenvif_mcast_match(vif, eth->h_dest))
-			goto drop;
-	}
+		अगर (!xenvअगर_mcast_match(vअगर, eth->h_dest))
+			जाओ drop;
+	पूर्ण
 
 	cb = XENVIF_RX_CB(skb);
-	cb->expires = jiffies + vif->drain_timeout;
+	cb->expires = jअगरfies + vअगर->drain_समयout;
 
 	/* If there is no hash algorithm configured then make sure there
-	 * is no hash information in the socket buffer otherwise it
-	 * would be incorrectly forwarded to the frontend.
+	 * is no hash inक्रमmation in the socket buffer otherwise it
+	 * would be incorrectly क्रमwarded to the frontend.
 	 */
-	if (vif->hash.alg == XEN_NETIF_CTRL_HASH_ALGORITHM_NONE)
+	अगर (vअगर->hash.alg == XEN_NETIF_CTRL_HASH_ALGORITHM_NONE)
 		skb_clear_hash(skb);
 
-	xenvif_rx_queue_tail(queue, skb);
-	xenvif_kick_thread(queue);
+	xenvअगर_rx_queue_tail(queue, skb);
+	xenvअगर_kick_thपढ़ो(queue);
 
-	return NETDEV_TX_OK;
+	वापस NETDEV_TX_OK;
 
  drop:
-	vif->dev->stats.tx_dropped++;
-	dev_kfree_skb(skb);
-	return NETDEV_TX_OK;
-}
+	vअगर->dev->stats.tx_dropped++;
+	dev_kमुक्त_skb(skb);
+	वापस NETDEV_TX_OK;
+पूर्ण
 
-static struct net_device_stats *xenvif_get_stats(struct net_device *dev)
-{
-	struct xenvif *vif = netdev_priv(dev);
-	struct xenvif_queue *queue = NULL;
-	unsigned int num_queues;
+अटल काष्ठा net_device_stats *xenvअगर_get_stats(काष्ठा net_device *dev)
+अणु
+	काष्ठा xenvअगर *vअगर = netdev_priv(dev);
+	काष्ठा xenvअगर_queue *queue = शून्य;
+	अचिन्हित पूर्णांक num_queues;
 	u64 rx_bytes = 0;
 	u64 rx_packets = 0;
 	u64 tx_bytes = 0;
 	u64 tx_packets = 0;
-	unsigned int index;
+	अचिन्हित पूर्णांक index;
 
-	rcu_read_lock();
-	num_queues = READ_ONCE(vif->num_queues);
+	rcu_पढ़ो_lock();
+	num_queues = READ_ONCE(vअगर->num_queues);
 
 	/* Aggregate tx and rx stats from each queue */
-	for (index = 0; index < num_queues; ++index) {
-		queue = &vif->queues[index];
+	क्रम (index = 0; index < num_queues; ++index) अणु
+		queue = &vअगर->queues[index];
 		rx_bytes += queue->stats.rx_bytes;
 		rx_packets += queue->stats.rx_packets;
 		tx_bytes += queue->stats.tx_bytes;
 		tx_packets += queue->stats.tx_packets;
-	}
+	पूर्ण
 
-	rcu_read_unlock();
+	rcu_पढ़ो_unlock();
 
-	vif->dev->stats.rx_bytes = rx_bytes;
-	vif->dev->stats.rx_packets = rx_packets;
-	vif->dev->stats.tx_bytes = tx_bytes;
-	vif->dev->stats.tx_packets = tx_packets;
+	vअगर->dev->stats.rx_bytes = rx_bytes;
+	vअगर->dev->stats.rx_packets = rx_packets;
+	vअगर->dev->stats.tx_bytes = tx_bytes;
+	vअगर->dev->stats.tx_packets = tx_packets;
 
-	return &vif->dev->stats;
-}
+	वापस &vअगर->dev->stats;
+पूर्ण
 
-static void xenvif_up(struct xenvif *vif)
-{
-	struct xenvif_queue *queue = NULL;
-	unsigned int num_queues = vif->num_queues;
-	unsigned int queue_index;
+अटल व्योम xenvअगर_up(काष्ठा xenvअगर *vअगर)
+अणु
+	काष्ठा xenvअगर_queue *queue = शून्य;
+	अचिन्हित पूर्णांक num_queues = vअगर->num_queues;
+	अचिन्हित पूर्णांक queue_index;
 
-	for (queue_index = 0; queue_index < num_queues; ++queue_index) {
-		queue = &vif->queues[queue_index];
+	क्रम (queue_index = 0; queue_index < num_queues; ++queue_index) अणु
+		queue = &vअगर->queues[queue_index];
 		napi_enable(&queue->napi);
 		enable_irq(queue->tx_irq);
-		if (queue->tx_irq != queue->rx_irq)
+		अगर (queue->tx_irq != queue->rx_irq)
 			enable_irq(queue->rx_irq);
-		xenvif_napi_schedule_or_enable_events(queue);
-	}
-}
+		xenvअगर_napi_schedule_or_enable_events(queue);
+	पूर्ण
+पूर्ण
 
-static void xenvif_down(struct xenvif *vif)
-{
-	struct xenvif_queue *queue = NULL;
-	unsigned int num_queues = vif->num_queues;
-	unsigned int queue_index;
+अटल व्योम xenvअगर_करोwn(काष्ठा xenvअगर *vअगर)
+अणु
+	काष्ठा xenvअगर_queue *queue = शून्य;
+	अचिन्हित पूर्णांक num_queues = vअगर->num_queues;
+	अचिन्हित पूर्णांक queue_index;
 
-	for (queue_index = 0; queue_index < num_queues; ++queue_index) {
-		queue = &vif->queues[queue_index];
+	क्रम (queue_index = 0; queue_index < num_queues; ++queue_index) अणु
+		queue = &vअगर->queues[queue_index];
 		disable_irq(queue->tx_irq);
-		if (queue->tx_irq != queue->rx_irq)
+		अगर (queue->tx_irq != queue->rx_irq)
 			disable_irq(queue->rx_irq);
 		napi_disable(&queue->napi);
-		del_timer_sync(&queue->credit_timeout);
-	}
-}
+		del_समयr_sync(&queue->credit_समयout);
+	पूर्ण
+पूर्ण
 
-static int xenvif_open(struct net_device *dev)
-{
-	struct xenvif *vif = netdev_priv(dev);
-	if (test_bit(VIF_STATUS_CONNECTED, &vif->status))
-		xenvif_up(vif);
-	netif_tx_start_all_queues(dev);
-	return 0;
-}
+अटल पूर्णांक xenvअगर_खोलो(काष्ठा net_device *dev)
+अणु
+	काष्ठा xenvअगर *vअगर = netdev_priv(dev);
+	अगर (test_bit(VIF_STATUS_CONNECTED, &vअगर->status))
+		xenvअगर_up(vअगर);
+	netअगर_tx_start_all_queues(dev);
+	वापस 0;
+पूर्ण
 
-static int xenvif_close(struct net_device *dev)
-{
-	struct xenvif *vif = netdev_priv(dev);
-	if (test_bit(VIF_STATUS_CONNECTED, &vif->status))
-		xenvif_down(vif);
-	netif_tx_stop_all_queues(dev);
-	return 0;
-}
+अटल पूर्णांक xenvअगर_बंद(काष्ठा net_device *dev)
+अणु
+	काष्ठा xenvअगर *vअगर = netdev_priv(dev);
+	अगर (test_bit(VIF_STATUS_CONNECTED, &vअगर->status))
+		xenvअगर_करोwn(vअगर);
+	netअगर_tx_stop_all_queues(dev);
+	वापस 0;
+पूर्ण
 
-static int xenvif_change_mtu(struct net_device *dev, int mtu)
-{
-	struct xenvif *vif = netdev_priv(dev);
-	int max = vif->can_sg ? ETH_MAX_MTU - VLAN_ETH_HLEN : ETH_DATA_LEN;
+अटल पूर्णांक xenvअगर_change_mtu(काष्ठा net_device *dev, पूर्णांक mtu)
+अणु
+	काष्ठा xenvअगर *vअगर = netdev_priv(dev);
+	पूर्णांक max = vअगर->can_sg ? ETH_MAX_MTU - VLAN_ETH_HLEN : ETH_DATA_LEN;
 
-	if (mtu > max)
-		return -EINVAL;
+	अगर (mtu > max)
+		वापस -EINVAL;
 	dev->mtu = mtu;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static netdev_features_t xenvif_fix_features(struct net_device *dev,
+अटल netdev_features_t xenvअगर_fix_features(काष्ठा net_device *dev,
 	netdev_features_t features)
-{
-	struct xenvif *vif = netdev_priv(dev);
+अणु
+	काष्ठा xenvअगर *vअगर = netdev_priv(dev);
 
-	if (!vif->can_sg)
+	अगर (!vअगर->can_sg)
 		features &= ~NETIF_F_SG;
-	if (~(vif->gso_mask) & GSO_BIT(TCPV4))
+	अगर (~(vअगर->gso_mask) & GSO_BIT(TCPV4))
 		features &= ~NETIF_F_TSO;
-	if (~(vif->gso_mask) & GSO_BIT(TCPV6))
+	अगर (~(vअगर->gso_mask) & GSO_BIT(TCPV6))
 		features &= ~NETIF_F_TSO6;
-	if (!vif->ip_csum)
+	अगर (!vअगर->ip_csum)
 		features &= ~NETIF_F_IP_CSUM;
-	if (!vif->ipv6_csum)
+	अगर (!vअगर->ipv6_csum)
 		features &= ~NETIF_F_IPV6_CSUM;
 
-	return features;
-}
+	वापस features;
+पूर्ण
 
-static const struct xenvif_stat {
-	char name[ETH_GSTRING_LEN];
+अटल स्थिर काष्ठा xenvअगर_stat अणु
+	अक्षर name[ETH_GSTRING_LEN];
 	u16 offset;
-} xenvif_stats[] = {
-	{
+पूर्ण xenvअगर_stats[] = अणु
+	अणु
 		"rx_gso_checksum_fixup",
-		offsetof(struct xenvif_stats, rx_gso_checksum_fixup)
-	},
+		दुरत्व(काष्ठा xenvअगर_stats, rx_gso_checksum_fixup)
+	पूर्ण,
 	/* If (sent != success + fail), there are probably packets never
-	 * freed up properly!
+	 * मुक्तd up properly!
 	 */
-	{
+	अणु
 		"tx_zerocopy_sent",
-		offsetof(struct xenvif_stats, tx_zerocopy_sent),
-	},
-	{
+		दुरत्व(काष्ठा xenvअगर_stats, tx_zerocopy_sent),
+	पूर्ण,
+	अणु
 		"tx_zerocopy_success",
-		offsetof(struct xenvif_stats, tx_zerocopy_success),
-	},
-	{
+		दुरत्व(काष्ठा xenvअगर_stats, tx_zerocopy_success),
+	पूर्ण,
+	अणु
 		"tx_zerocopy_fail",
-		offsetof(struct xenvif_stats, tx_zerocopy_fail)
-	},
+		दुरत्व(काष्ठा xenvअगर_stats, tx_zerocopy_fail)
+	पूर्ण,
 	/* Number of packets exceeding MAX_SKB_FRAG slots. You should use
 	 * a guest with the same MAX_SKB_FRAG
 	 */
-	{
+	अणु
 		"tx_frag_overflow",
-		offsetof(struct xenvif_stats, tx_frag_overflow)
-	},
-};
+		दुरत्व(काष्ठा xenvअगर_stats, tx_frag_overflow)
+	पूर्ण,
+पूर्ण;
 
-static int xenvif_get_sset_count(struct net_device *dev, int string_set)
-{
-	switch (string_set) {
-	case ETH_SS_STATS:
-		return ARRAY_SIZE(xenvif_stats);
-	default:
-		return -EINVAL;
-	}
-}
+अटल पूर्णांक xenvअगर_get_sset_count(काष्ठा net_device *dev, पूर्णांक string_set)
+अणु
+	चयन (string_set) अणु
+	हाल ETH_SS_STATS:
+		वापस ARRAY_SIZE(xenvअगर_stats);
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+पूर्ण
 
-static void xenvif_get_ethtool_stats(struct net_device *dev,
-				     struct ethtool_stats *stats, u64 * data)
-{
-	struct xenvif *vif = netdev_priv(dev);
-	unsigned int num_queues;
-	int i;
-	unsigned int queue_index;
+अटल व्योम xenvअगर_get_ethtool_stats(काष्ठा net_device *dev,
+				     काष्ठा ethtool_stats *stats, u64 * data)
+अणु
+	काष्ठा xenvअगर *vअगर = netdev_priv(dev);
+	अचिन्हित पूर्णांक num_queues;
+	पूर्णांक i;
+	अचिन्हित पूर्णांक queue_index;
 
-	rcu_read_lock();
-	num_queues = READ_ONCE(vif->num_queues);
+	rcu_पढ़ो_lock();
+	num_queues = READ_ONCE(vअगर->num_queues);
 
-	for (i = 0; i < ARRAY_SIZE(xenvif_stats); i++) {
-		unsigned long accum = 0;
-		for (queue_index = 0; queue_index < num_queues; ++queue_index) {
-			void *vif_stats = &vif->queues[queue_index].stats;
-			accum += *(unsigned long *)(vif_stats + xenvif_stats[i].offset);
-		}
+	क्रम (i = 0; i < ARRAY_SIZE(xenvअगर_stats); i++) अणु
+		अचिन्हित दीर्घ accum = 0;
+		क्रम (queue_index = 0; queue_index < num_queues; ++queue_index) अणु
+			व्योम *vअगर_stats = &vअगर->queues[queue_index].stats;
+			accum += *(अचिन्हित दीर्घ *)(vअगर_stats + xenvअगर_stats[i].offset);
+		पूर्ण
 		data[i] = accum;
-	}
+	पूर्ण
 
-	rcu_read_unlock();
-}
+	rcu_पढ़ो_unlock();
+पूर्ण
 
-static void xenvif_get_strings(struct net_device *dev, u32 stringset, u8 * data)
-{
-	int i;
+अटल व्योम xenvअगर_get_strings(काष्ठा net_device *dev, u32 stringset, u8 * data)
+अणु
+	पूर्णांक i;
 
-	switch (stringset) {
-	case ETH_SS_STATS:
-		for (i = 0; i < ARRAY_SIZE(xenvif_stats); i++)
-			memcpy(data + i * ETH_GSTRING_LEN,
-			       xenvif_stats[i].name, ETH_GSTRING_LEN);
-		break;
-	}
-}
+	चयन (stringset) अणु
+	हाल ETH_SS_STATS:
+		क्रम (i = 0; i < ARRAY_SIZE(xenvअगर_stats); i++)
+			स_नकल(data + i * ETH_GSTRING_LEN,
+			       xenvअगर_stats[i].name, ETH_GSTRING_LEN);
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static const struct ethtool_ops xenvif_ethtool_ops = {
+अटल स्थिर काष्ठा ethtool_ops xenvअगर_ethtool_ops = अणु
 	.get_link	= ethtool_op_get_link,
 
-	.get_sset_count = xenvif_get_sset_count,
-	.get_ethtool_stats = xenvif_get_ethtool_stats,
-	.get_strings = xenvif_get_strings,
-};
+	.get_sset_count = xenvअगर_get_sset_count,
+	.get_ethtool_stats = xenvअगर_get_ethtool_stats,
+	.get_strings = xenvअगर_get_strings,
+पूर्ण;
 
-static const struct net_device_ops xenvif_netdev_ops = {
-	.ndo_select_queue = xenvif_select_queue,
-	.ndo_start_xmit	= xenvif_start_xmit,
-	.ndo_get_stats	= xenvif_get_stats,
-	.ndo_open	= xenvif_open,
-	.ndo_stop	= xenvif_close,
-	.ndo_change_mtu	= xenvif_change_mtu,
-	.ndo_fix_features = xenvif_fix_features,
-	.ndo_set_mac_address = eth_mac_addr,
-	.ndo_validate_addr   = eth_validate_addr,
-};
+अटल स्थिर काष्ठा net_device_ops xenvअगर_netdev_ops = अणु
+	.nकरो_select_queue = xenvअगर_select_queue,
+	.nकरो_start_xmit	= xenvअगर_start_xmit,
+	.nकरो_get_stats	= xenvअगर_get_stats,
+	.nकरो_खोलो	= xenvअगर_खोलो,
+	.nकरो_stop	= xenvअगर_बंद,
+	.nकरो_change_mtu	= xenvअगर_change_mtu,
+	.nकरो_fix_features = xenvअगर_fix_features,
+	.nकरो_set_mac_address = eth_mac_addr,
+	.nकरो_validate_addr   = eth_validate_addr,
+पूर्ण;
 
-struct xenvif *xenvif_alloc(struct device *parent, domid_t domid,
-			    unsigned int handle)
-{
-	int err;
-	struct net_device *dev;
-	struct xenvif *vif;
-	char name[IFNAMSIZ] = {};
+काष्ठा xenvअगर *xenvअगर_alloc(काष्ठा device *parent, करोmid_t करोmid,
+			    अचिन्हित पूर्णांक handle)
+अणु
+	पूर्णांक err;
+	काष्ठा net_device *dev;
+	काष्ठा xenvअगर *vअगर;
+	अक्षर name[IFNAMSIZ] = अणुपूर्ण;
 
-	snprintf(name, IFNAMSIZ - 1, "vif%u.%u", domid, handle);
+	snम_लिखो(name, IFNAMSIZ - 1, "vif%u.%u", करोmid, handle);
 	/* Allocate a netdev with the max. supported number of queues.
 	 * When the guest selects the desired number, it will be updated
-	 * via netif_set_real_num_*_queues().
+	 * via netअगर_set_real_num_*_queues().
 	 */
-	dev = alloc_netdev_mq(sizeof(struct xenvif), name, NET_NAME_UNKNOWN,
-			      ether_setup, xenvif_max_queues);
-	if (dev == NULL) {
+	dev = alloc_netdev_mq(माप(काष्ठा xenvअगर), name, NET_NAME_UNKNOWN,
+			      ether_setup, xenvअगर_max_queues);
+	अगर (dev == शून्य) अणु
 		pr_warn("Could not allocate netdev for %s\n", name);
-		return ERR_PTR(-ENOMEM);
-	}
+		वापस ERR_PTR(-ENOMEM);
+	पूर्ण
 
 	SET_NETDEV_DEV(dev, parent);
 
-	vif = netdev_priv(dev);
+	vअगर = netdev_priv(dev);
 
-	vif->domid  = domid;
-	vif->handle = handle;
-	vif->can_sg = 1;
-	vif->ip_csum = 1;
-	vif->dev = dev;
-	vif->disabled = false;
-	vif->drain_timeout = msecs_to_jiffies(rx_drain_timeout_msecs);
-	vif->stall_timeout = msecs_to_jiffies(rx_stall_timeout_msecs);
+	vअगर->करोmid  = करोmid;
+	vअगर->handle = handle;
+	vअगर->can_sg = 1;
+	vअगर->ip_csum = 1;
+	vअगर->dev = dev;
+	vअगर->disabled = false;
+	vअगर->drain_समयout = msecs_to_jअगरfies(rx_drain_समयout_msecs);
+	vअगर->stall_समयout = msecs_to_jअगरfies(rx_stall_समयout_msecs);
 
 	/* Start out with no queues. */
-	vif->queues = NULL;
-	vif->num_queues = 0;
+	vअगर->queues = शून्य;
+	vअगर->num_queues = 0;
 
-	vif->xdp_headroom = 0;
+	vअगर->xdp_headroom = 0;
 
-	spin_lock_init(&vif->lock);
-	INIT_LIST_HEAD(&vif->fe_mcast_addr);
+	spin_lock_init(&vअगर->lock);
+	INIT_LIST_HEAD(&vअगर->fe_mcast_addr);
 
-	dev->netdev_ops	= &xenvif_netdev_ops;
+	dev->netdev_ops	= &xenvअगर_netdev_ops;
 	dev->hw_features = NETIF_F_SG |
 		NETIF_F_IP_CSUM | NETIF_F_IPV6_CSUM |
 		NETIF_F_TSO | NETIF_F_TSO6 | NETIF_F_FRAGLIST;
 	dev->features = dev->hw_features | NETIF_F_RXCSUM;
-	dev->ethtool_ops = &xenvif_ethtool_ops;
+	dev->ethtool_ops = &xenvअगर_ethtool_ops;
 
 	dev->tx_queue_len = XENVIF_QUEUE_LENGTH;
 
@@ -548,36 +549,36 @@ struct xenvif *xenvif_alloc(struct device *parent, domid_t domid,
 	/*
 	 * Initialise a dummy MAC address. We choose the numerically
 	 * largest non-broadcast address to prevent the address getting
-	 * stolen by an Ethernet bridge for STP purposes.
+	 * stolen by an Ethernet bridge क्रम STP purposes.
 	 * (FE:FF:FF:FF:FF:FF)
 	 */
 	eth_broadcast_addr(dev->dev_addr);
 	dev->dev_addr[0] &= ~0x01;
 
-	netif_carrier_off(dev);
+	netअगर_carrier_off(dev);
 
-	err = register_netdev(dev);
-	if (err) {
+	err = रेजिस्टर_netdev(dev);
+	अगर (err) अणु
 		netdev_warn(dev, "Could not register device: err=%d\n", err);
-		free_netdev(dev);
-		return ERR_PTR(err);
-	}
+		मुक्त_netdev(dev);
+		वापस ERR_PTR(err);
+	पूर्ण
 
 	netdev_dbg(dev, "Successfully created xenvif\n");
 
 	__module_get(THIS_MODULE);
 
-	return vif;
-}
+	वापस vअगर;
+पूर्ण
 
-int xenvif_init_queue(struct xenvif_queue *queue)
-{
-	int err, i;
+पूर्णांक xenvअगर_init_queue(काष्ठा xenvअगर_queue *queue)
+अणु
+	पूर्णांक err, i;
 
-	queue->credit_bytes = queue->remaining_credit = ~0UL;
+	queue->credit_bytes = queue->reमुख्यing_credit = ~0UL;
 	queue->credit_usec  = 0UL;
-	timer_setup(&queue->credit_timeout, xenvif_tx_credit_callback, 0);
-	queue->credit_window_start = get_jiffies_64();
+	समयr_setup(&queue->credit_समयout, xenvअगर_tx_credit_callback, 0);
+	queue->credit_winकरोw_start = get_jअगरfies_64();
 
 	queue->rx_queue_max = XENVIF_RX_QUEUE_BYTES;
 
@@ -586,286 +587,286 @@ int xenvif_init_queue(struct xenvif_queue *queue)
 
 	queue->pending_cons = 0;
 	queue->pending_prod = MAX_PENDING_REQS;
-	for (i = 0; i < MAX_PENDING_REQS; ++i)
+	क्रम (i = 0; i < MAX_PENDING_REQS; ++i)
 		queue->pending_ring[i] = i;
 
 	spin_lock_init(&queue->callback_lock);
 	spin_lock_init(&queue->response_lock);
 
 	/* If ballooning is disabled, this will consume real memory, so you
-	 * better enable it. The long term solution would be to use just a
+	 * better enable it. The दीर्घ term solution would be to use just a
 	 * bunch of valid page descriptors, without dependency on ballooning
 	 */
 	err = gnttab_alloc_pages(MAX_PENDING_REQS,
 				 queue->mmap_pages);
-	if (err) {
-		netdev_err(queue->vif->dev, "Could not reserve mmap_pages\n");
-		return -ENOMEM;
-	}
+	अगर (err) अणु
+		netdev_err(queue->vअगर->dev, "Could not reserve mmap_pages\n");
+		वापस -ENOMEM;
+	पूर्ण
 
-	for (i = 0; i < MAX_PENDING_REQS; i++) {
-		queue->pending_tx_info[i].callback_struct = (struct ubuf_info)
-			{ .callback = xenvif_zerocopy_callback,
-			  { { .ctx = NULL,
-			      .desc = i } } };
+	क्रम (i = 0; i < MAX_PENDING_REQS; i++) अणु
+		queue->pending_tx_info[i].callback_काष्ठा = (काष्ठा ubuf_info)
+			अणु .callback = xenvअगर_zerocopy_callback,
+			  अणु अणु .ctx = शून्य,
+			      .desc = i पूर्ण पूर्ण पूर्ण;
 		queue->grant_tx_handle[i] = NETBACK_INVALID_HANDLE;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void xenvif_carrier_on(struct xenvif *vif)
-{
+व्योम xenvअगर_carrier_on(काष्ठा xenvअगर *vअगर)
+अणु
 	rtnl_lock();
-	if (!vif->can_sg && vif->dev->mtu > ETH_DATA_LEN)
-		dev_set_mtu(vif->dev, ETH_DATA_LEN);
-	netdev_update_features(vif->dev);
-	set_bit(VIF_STATUS_CONNECTED, &vif->status);
-	if (netif_running(vif->dev))
-		xenvif_up(vif);
+	अगर (!vअगर->can_sg && vअगर->dev->mtu > ETH_DATA_LEN)
+		dev_set_mtu(vअगर->dev, ETH_DATA_LEN);
+	netdev_update_features(vअगर->dev);
+	set_bit(VIF_STATUS_CONNECTED, &vअगर->status);
+	अगर (netअगर_running(vअगर->dev))
+		xenvअगर_up(vअगर);
 	rtnl_unlock();
-}
+पूर्ण
 
-int xenvif_connect_ctrl(struct xenvif *vif, grant_ref_t ring_ref,
-			unsigned int evtchn)
-{
-	struct net_device *dev = vif->dev;
-	struct xenbus_device *xendev = xenvif_to_xenbus_device(vif);
-	void *addr;
-	struct xen_netif_ctrl_sring *shared;
+पूर्णांक xenvअगर_connect_ctrl(काष्ठा xenvअगर *vअगर, grant_ref_t ring_ref,
+			अचिन्हित पूर्णांक evtchn)
+अणु
+	काष्ठा net_device *dev = vअगर->dev;
+	काष्ठा xenbus_device *xendev = xenvअगर_to_xenbus_device(vअगर);
+	व्योम *addr;
+	काष्ठा xen_netअगर_ctrl_sring *shared;
 	RING_IDX rsp_prod, req_prod;
-	int err;
+	पूर्णांक err;
 
 	err = xenbus_map_ring_valloc(xendev, &ring_ref, 1, &addr);
-	if (err)
-		goto err;
+	अगर (err)
+		जाओ err;
 
-	shared = (struct xen_netif_ctrl_sring *)addr;
+	shared = (काष्ठा xen_netअगर_ctrl_sring *)addr;
 	rsp_prod = READ_ONCE(shared->rsp_prod);
 	req_prod = READ_ONCE(shared->req_prod);
 
-	BACK_RING_ATTACH(&vif->ctrl, shared, rsp_prod, XEN_PAGE_SIZE);
+	BACK_RING_ATTACH(&vअगर->ctrl, shared, rsp_prod, XEN_PAGE_SIZE);
 
 	err = -EIO;
-	if (req_prod - rsp_prod > RING_SIZE(&vif->ctrl))
-		goto err_unmap;
+	अगर (req_prod - rsp_prod > RING_SIZE(&vअगर->ctrl))
+		जाओ err_unmap;
 
-	err = bind_interdomain_evtchn_to_irq_lateeoi(xendev, evtchn);
-	if (err < 0)
-		goto err_unmap;
+	err = bind_पूर्णांकerकरोमुख्य_evtchn_to_irq_lateeoi(xendev, evtchn);
+	अगर (err < 0)
+		जाओ err_unmap;
 
-	vif->ctrl_irq = err;
+	vअगर->ctrl_irq = err;
 
-	xenvif_init_hash(vif);
+	xenvअगर_init_hash(vअगर);
 
-	err = request_threaded_irq(vif->ctrl_irq, NULL, xenvif_ctrl_irq_fn,
-				   IRQF_ONESHOT, "xen-netback-ctrl", vif);
-	if (err) {
+	err = request_thपढ़ोed_irq(vअगर->ctrl_irq, शून्य, xenvअगर_ctrl_irq_fn,
+				   IRQF_ONESHOT, "xen-netback-ctrl", vअगर);
+	अगर (err) अणु
 		pr_warn("Could not setup irq handler for %s\n", dev->name);
-		goto err_deinit;
-	}
+		जाओ err_deinit;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 err_deinit:
-	xenvif_deinit_hash(vif);
-	unbind_from_irqhandler(vif->ctrl_irq, vif);
-	vif->ctrl_irq = 0;
+	xenvअगर_deinit_hash(vअगर);
+	unbind_from_irqhandler(vअगर->ctrl_irq, vअगर);
+	vअगर->ctrl_irq = 0;
 
 err_unmap:
-	xenbus_unmap_ring_vfree(xendev, vif->ctrl.sring);
-	vif->ctrl.sring = NULL;
+	xenbus_unmap_ring_vमुक्त(xendev, vअगर->ctrl.sring);
+	vअगर->ctrl.sring = शून्य;
 
 err:
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void xenvif_disconnect_queue(struct xenvif_queue *queue)
-{
-	if (queue->task) {
-		kthread_stop(queue->task);
-		put_task_struct(queue->task);
-		queue->task = NULL;
-	}
+अटल व्योम xenvअगर_disconnect_queue(काष्ठा xenvअगर_queue *queue)
+अणु
+	अगर (queue->task) अणु
+		kthपढ़ो_stop(queue->task);
+		put_task_काष्ठा(queue->task);
+		queue->task = शून्य;
+	पूर्ण
 
-	if (queue->dealloc_task) {
-		kthread_stop(queue->dealloc_task);
-		queue->dealloc_task = NULL;
-	}
+	अगर (queue->dealloc_task) अणु
+		kthपढ़ो_stop(queue->dealloc_task);
+		queue->dealloc_task = शून्य;
+	पूर्ण
 
-	if (queue->napi.poll) {
-		netif_napi_del(&queue->napi);
-		queue->napi.poll = NULL;
-	}
+	अगर (queue->napi.poll) अणु
+		netअगर_napi_del(&queue->napi);
+		queue->napi.poll = शून्य;
+	पूर्ण
 
-	if (queue->tx_irq) {
+	अगर (queue->tx_irq) अणु
 		unbind_from_irqhandler(queue->tx_irq, queue);
-		if (queue->tx_irq == queue->rx_irq)
+		अगर (queue->tx_irq == queue->rx_irq)
 			queue->rx_irq = 0;
 		queue->tx_irq = 0;
-	}
+	पूर्ण
 
-	if (queue->rx_irq) {
+	अगर (queue->rx_irq) अणु
 		unbind_from_irqhandler(queue->rx_irq, queue);
 		queue->rx_irq = 0;
-	}
+	पूर्ण
 
-	xenvif_unmap_frontend_data_rings(queue);
-}
+	xenvअगर_unmap_frontend_data_rings(queue);
+पूर्ण
 
-int xenvif_connect_data(struct xenvif_queue *queue,
-			unsigned long tx_ring_ref,
-			unsigned long rx_ring_ref,
-			unsigned int tx_evtchn,
-			unsigned int rx_evtchn)
-{
-	struct xenbus_device *dev = xenvif_to_xenbus_device(queue->vif);
-	struct task_struct *task;
-	int err;
+पूर्णांक xenvअगर_connect_data(काष्ठा xenvअगर_queue *queue,
+			अचिन्हित दीर्घ tx_ring_ref,
+			अचिन्हित दीर्घ rx_ring_ref,
+			अचिन्हित पूर्णांक tx_evtchn,
+			अचिन्हित पूर्णांक rx_evtchn)
+अणु
+	काष्ठा xenbus_device *dev = xenvअगर_to_xenbus_device(queue->vअगर);
+	काष्ठा task_काष्ठा *task;
+	पूर्णांक err;
 
 	BUG_ON(queue->tx_irq);
 	BUG_ON(queue->task);
 	BUG_ON(queue->dealloc_task);
 
-	err = xenvif_map_frontend_data_rings(queue, tx_ring_ref,
+	err = xenvअगर_map_frontend_data_rings(queue, tx_ring_ref,
 					     rx_ring_ref);
-	if (err < 0)
-		goto err;
+	अगर (err < 0)
+		जाओ err;
 
-	init_waitqueue_head(&queue->wq);
-	init_waitqueue_head(&queue->dealloc_wq);
+	init_रुकोqueue_head(&queue->wq);
+	init_रुकोqueue_head(&queue->dealloc_wq);
 	atomic_set(&queue->inflight_packets, 0);
 
-	netif_napi_add(queue->vif->dev, &queue->napi, xenvif_poll,
+	netअगर_napi_add(queue->vअगर->dev, &queue->napi, xenvअगर_poll,
 			XENVIF_NAPI_WEIGHT);
 
 	queue->stalled = true;
 
-	task = kthread_run(xenvif_kthread_guest_rx, queue,
+	task = kthपढ़ो_run(xenvअगर_kthपढ़ो_guest_rx, queue,
 			   "%s-guest-rx", queue->name);
-	if (IS_ERR(task))
-		goto kthread_err;
+	अगर (IS_ERR(task))
+		जाओ kthपढ़ो_err;
 	queue->task = task;
 	/*
-	 * Take a reference to the task in order to prevent it from being freed
-	 * if the thread function returns before kthread_stop is called.
+	 * Take a reference to the task in order to prevent it from being मुक्तd
+	 * अगर the thपढ़ो function वापसs beक्रमe kthपढ़ो_stop is called.
 	 */
-	get_task_struct(task);
+	get_task_काष्ठा(task);
 
-	task = kthread_run(xenvif_dealloc_kthread, queue,
+	task = kthपढ़ो_run(xenvअगर_dealloc_kthपढ़ो, queue,
 			   "%s-dealloc", queue->name);
-	if (IS_ERR(task))
-		goto kthread_err;
+	अगर (IS_ERR(task))
+		जाओ kthपढ़ो_err;
 	queue->dealloc_task = task;
 
-	if (tx_evtchn == rx_evtchn) {
+	अगर (tx_evtchn == rx_evtchn) अणु
 		/* feature-split-event-channels == 0 */
-		err = bind_interdomain_evtchn_to_irqhandler_lateeoi(
-			dev, tx_evtchn, xenvif_interrupt, 0,
+		err = bind_पूर्णांकerकरोमुख्य_evtchn_to_irqhandler_lateeoi(
+			dev, tx_evtchn, xenvअगर_पूर्णांकerrupt, 0,
 			queue->name, queue);
-		if (err < 0)
-			goto err;
+		अगर (err < 0)
+			जाओ err;
 		queue->tx_irq = queue->rx_irq = err;
 		disable_irq(queue->tx_irq);
-	} else {
+	पूर्ण अन्यथा अणु
 		/* feature-split-event-channels == 1 */
-		snprintf(queue->tx_irq_name, sizeof(queue->tx_irq_name),
+		snम_लिखो(queue->tx_irq_name, माप(queue->tx_irq_name),
 			 "%s-tx", queue->name);
-		err = bind_interdomain_evtchn_to_irqhandler_lateeoi(
-			dev, tx_evtchn, xenvif_tx_interrupt, 0,
+		err = bind_पूर्णांकerकरोमुख्य_evtchn_to_irqhandler_lateeoi(
+			dev, tx_evtchn, xenvअगर_tx_पूर्णांकerrupt, 0,
 			queue->tx_irq_name, queue);
-		if (err < 0)
-			goto err;
+		अगर (err < 0)
+			जाओ err;
 		queue->tx_irq = err;
 		disable_irq(queue->tx_irq);
 
-		snprintf(queue->rx_irq_name, sizeof(queue->rx_irq_name),
+		snम_लिखो(queue->rx_irq_name, माप(queue->rx_irq_name),
 			 "%s-rx", queue->name);
-		err = bind_interdomain_evtchn_to_irqhandler_lateeoi(
-			dev, rx_evtchn, xenvif_rx_interrupt, 0,
+		err = bind_पूर्णांकerकरोमुख्य_evtchn_to_irqhandler_lateeoi(
+			dev, rx_evtchn, xenvअगर_rx_पूर्णांकerrupt, 0,
 			queue->rx_irq_name, queue);
-		if (err < 0)
-			goto err;
+		अगर (err < 0)
+			जाओ err;
 		queue->rx_irq = err;
 		disable_irq(queue->rx_irq);
-	}
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
-kthread_err:
+kthपढ़ो_err:
 	pr_warn("Could not allocate kthread for %s\n", queue->name);
 	err = PTR_ERR(task);
 err:
-	xenvif_disconnect_queue(queue);
-	return err;
-}
+	xenvअगर_disconnect_queue(queue);
+	वापस err;
+पूर्ण
 
-void xenvif_carrier_off(struct xenvif *vif)
-{
-	struct net_device *dev = vif->dev;
+व्योम xenvअगर_carrier_off(काष्ठा xenvअगर *vअगर)
+अणु
+	काष्ठा net_device *dev = vअगर->dev;
 
 	rtnl_lock();
-	if (test_and_clear_bit(VIF_STATUS_CONNECTED, &vif->status)) {
-		netif_carrier_off(dev); /* discard queued packets */
-		if (netif_running(dev))
-			xenvif_down(vif);
-	}
+	अगर (test_and_clear_bit(VIF_STATUS_CONNECTED, &vअगर->status)) अणु
+		netअगर_carrier_off(dev); /* discard queued packets */
+		अगर (netअगर_running(dev))
+			xenvअगर_करोwn(vअगर);
+	पूर्ण
 	rtnl_unlock();
-}
+पूर्ण
 
-void xenvif_disconnect_data(struct xenvif *vif)
-{
-	struct xenvif_queue *queue = NULL;
-	unsigned int num_queues = vif->num_queues;
-	unsigned int queue_index;
+व्योम xenvअगर_disconnect_data(काष्ठा xenvअगर *vअगर)
+अणु
+	काष्ठा xenvअगर_queue *queue = शून्य;
+	अचिन्हित पूर्णांक num_queues = vअगर->num_queues;
+	अचिन्हित पूर्णांक queue_index;
 
-	xenvif_carrier_off(vif);
+	xenvअगर_carrier_off(vअगर);
 
-	for (queue_index = 0; queue_index < num_queues; ++queue_index) {
-		queue = &vif->queues[queue_index];
+	क्रम (queue_index = 0; queue_index < num_queues; ++queue_index) अणु
+		queue = &vअगर->queues[queue_index];
 
-		xenvif_disconnect_queue(queue);
-	}
+		xenvअगर_disconnect_queue(queue);
+	पूर्ण
 
-	xenvif_mcast_addr_list_free(vif);
-}
+	xenvअगर_mcast_addr_list_मुक्त(vअगर);
+पूर्ण
 
-void xenvif_disconnect_ctrl(struct xenvif *vif)
-{
-	if (vif->ctrl_irq) {
-		xenvif_deinit_hash(vif);
-		unbind_from_irqhandler(vif->ctrl_irq, vif);
-		vif->ctrl_irq = 0;
-	}
+व्योम xenvअगर_disconnect_ctrl(काष्ठा xenvअगर *vअगर)
+अणु
+	अगर (vअगर->ctrl_irq) अणु
+		xenvअगर_deinit_hash(vअगर);
+		unbind_from_irqhandler(vअगर->ctrl_irq, vअगर);
+		vअगर->ctrl_irq = 0;
+	पूर्ण
 
-	if (vif->ctrl.sring) {
-		xenbus_unmap_ring_vfree(xenvif_to_xenbus_device(vif),
-					vif->ctrl.sring);
-		vif->ctrl.sring = NULL;
-	}
-}
+	अगर (vअगर->ctrl.sring) अणु
+		xenbus_unmap_ring_vमुक्त(xenvअगर_to_xenbus_device(vअगर),
+					vअगर->ctrl.sring);
+		vअगर->ctrl.sring = शून्य;
+	पूर्ण
+पूर्ण
 
-/* Reverse the relevant parts of xenvif_init_queue().
- * Used for queue teardown from xenvif_free(), and on the
+/* Reverse the relevant parts of xenvअगर_init_queue().
+ * Used क्रम queue tearकरोwn from xenvअगर_मुक्त(), and on the
  * error handling paths in xenbus.c:connect().
  */
-void xenvif_deinit_queue(struct xenvif_queue *queue)
-{
-	gnttab_free_pages(MAX_PENDING_REQS, queue->mmap_pages);
-}
+व्योम xenvअगर_deinit_queue(काष्ठा xenvअगर_queue *queue)
+अणु
+	gnttab_मुक्त_pages(MAX_PENDING_REQS, queue->mmap_pages);
+पूर्ण
 
-void xenvif_free(struct xenvif *vif)
-{
-	struct xenvif_queue *queues = vif->queues;
-	unsigned int num_queues = vif->num_queues;
-	unsigned int queue_index;
+व्योम xenvअगर_मुक्त(काष्ठा xenvअगर *vअगर)
+अणु
+	काष्ठा xenvअगर_queue *queues = vअगर->queues;
+	अचिन्हित पूर्णांक num_queues = vअगर->num_queues;
+	अचिन्हित पूर्णांक queue_index;
 
-	unregister_netdev(vif->dev);
-	free_netdev(vif->dev);
+	unरेजिस्टर_netdev(vअगर->dev);
+	मुक्त_netdev(vअगर->dev);
 
-	for (queue_index = 0; queue_index < num_queues; ++queue_index)
-		xenvif_deinit_queue(&queues[queue_index]);
-	vfree(queues);
+	क्रम (queue_index = 0; queue_index < num_queues; ++queue_index)
+		xenvअगर_deinit_queue(&queues[queue_index]);
+	vमुक्त(queues);
 
 	module_put(THIS_MODULE);
-}
+पूर्ण

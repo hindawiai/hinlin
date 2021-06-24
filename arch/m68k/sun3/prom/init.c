@@ -1,36 +1,37 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * init.c:  Initialize internal variables used by the PROM
+ * init.c:  Initialize पूर्णांकernal variables used by the PROM
  *          library functions.
  *
  * Copyright (C) 1995 David S. Miller (davem@caip.rutgers.edu)
  */
 
-#include <linux/kernel.h>
-#include <linux/init.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/init.h>
 
-#include <asm/openprom.h>
-#include <asm/oplib.h>
+#समावेश <यंत्र/खोलोprom.h>
+#समावेश <यंत्र/oplib.h>
 
-struct linux_romvec *romvec;
-enum prom_major_version prom_vers;
-unsigned int prom_rev, prom_prev;
+काष्ठा linux_romvec *romvec;
+क्रमागत prom_major_version prom_vers;
+अचिन्हित पूर्णांक prom_rev, prom_prev;
 
 /* The root node of the prom device tree. */
-int prom_root_node;
+पूर्णांक prom_root_node;
 
-/* Pointer to the device tree operations structure. */
-struct linux_nodeops *prom_nodeops;
+/* Poपूर्णांकer to the device tree operations काष्ठाure. */
+काष्ठा linux_nodeops *prom_nodeops;
 
-/* You must call prom_init() before you attempt to use any of the
+/* You must call prom_init() beक्रमe you attempt to use any of the
  * routines in the prom library.
- * It gets passed the pointer to the PROM vector.
+ * It माला_लो passed the poपूर्णांकer to the PROM vector.
  */
 
-void __init prom_init(struct linux_romvec *rp)
-{
+व्योम __init prom_init(काष्ठा linux_romvec *rp)
+अणु
 	romvec = rp;
 
 	/* Initialization successful. */
-	return;
-}
+	वापस;
+पूर्ण

@@ -1,467 +1,468 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * Proprietary commands extension for STMicroelectronics NFC NCI Chip
+ * Proprietary commands extension क्रम STMicroelectronics NFC NCI Chip
  *
  * Copyright (C) 2014-2015  STMicroelectronics SAS. All rights reserved.
  */
 
-#include <net/genetlink.h>
-#include <linux/module.h>
-#include <linux/nfc.h>
-#include <linux/delay.h>
-#include <net/nfc/nci_core.h>
+#समावेश <net/genetlink.h>
+#समावेश <linux/module.h>
+#समावेश <linux/nfc.h>
+#समावेश <linux/delay.h>
+#समावेश <net/nfc/nci_core.h>
 
-#include "st-nci.h"
+#समावेश "st-nci.h"
 
-#define ST_NCI_HCI_DM_GETDATA			0x10
-#define ST_NCI_HCI_DM_PUTDATA			0x11
-#define ST_NCI_HCI_DM_LOAD			0x12
-#define ST_NCI_HCI_DM_GETINFO			0x13
-#define ST_NCI_HCI_DM_FWUPD_START		0x14
-#define ST_NCI_HCI_DM_FWUPD_STOP		0x15
-#define ST_NCI_HCI_DM_UPDATE_AID		0x20
-#define ST_NCI_HCI_DM_RESET			0x3e
+#घोषणा ST_NCI_HCI_DM_GETDATA			0x10
+#घोषणा ST_NCI_HCI_DM_PUTDATA			0x11
+#घोषणा ST_NCI_HCI_DM_LOAD			0x12
+#घोषणा ST_NCI_HCI_DM_GETINFO			0x13
+#घोषणा ST_NCI_HCI_DM_FWUPD_START		0x14
+#घोषणा ST_NCI_HCI_DM_FWUPD_STOP		0x15
+#घोषणा ST_NCI_HCI_DM_UPDATE_AID		0x20
+#घोषणा ST_NCI_HCI_DM_RESET			0x3e
 
-#define ST_NCI_HCI_DM_FIELD_GENERATOR		0x32
-#define ST_NCI_HCI_DM_VDC_MEASUREMENT_VALUE	0x33
-#define ST_NCI_HCI_DM_VDC_VALUE_COMPARISON	0x34
+#घोषणा ST_NCI_HCI_DM_FIELD_GENERATOR		0x32
+#घोषणा ST_NCI_HCI_DM_VDC_MEASUREMENT_VALUE	0x33
+#घोषणा ST_NCI_HCI_DM_VDC_VALUE_COMPARISON	0x34
 
-#define ST_NCI_FACTORY_MODE_ON			1
-#define ST_NCI_FACTORY_MODE_OFF			0
+#घोषणा ST_NCI_FACTORY_MODE_ON			1
+#घोषणा ST_NCI_FACTORY_MODE_OFF			0
 
-#define ST_NCI_EVT_POST_DATA			0x02
+#घोषणा ST_NCI_EVT_POST_DATA			0x02
 
-struct get_param_data {
+काष्ठा get_param_data अणु
 	u8 gate;
 	u8 data;
-} __packed;
+पूर्ण __packed;
 
-static int st_nci_factory_mode(struct nfc_dev *dev, void *data,
-			       size_t data_len)
-{
-	struct nci_dev *ndev = nfc_get_drvdata(dev);
-	struct st_nci_info *info = nci_get_drvdata(ndev);
+अटल पूर्णांक st_nci_factory_mode(काष्ठा nfc_dev *dev, व्योम *data,
+			       माप_प्रकार data_len)
+अणु
+	काष्ठा nci_dev *ndev = nfc_get_drvdata(dev);
+	काष्ठा st_nci_info *info = nci_get_drvdata(ndev);
 
-	if (data_len != 1)
-		return -EINVAL;
+	अगर (data_len != 1)
+		वापस -EINVAL;
 
 	pr_debug("factory mode: %x\n", ((u8 *)data)[0]);
 
-	switch (((u8 *)data)[0]) {
-	case ST_NCI_FACTORY_MODE_ON:
+	चयन (((u8 *)data)[0]) अणु
+	हाल ST_NCI_FACTORY_MODE_ON:
 		test_and_set_bit(ST_NCI_FACTORY_MODE, &info->flags);
-	break;
-	case ST_NCI_FACTORY_MODE_OFF:
+	अवरोध;
+	हाल ST_NCI_FACTORY_MODE_OFF:
 		clear_bit(ST_NCI_FACTORY_MODE, &info->flags);
-	break;
-	default:
-		return -EINVAL;
-	}
+	अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int st_nci_hci_clear_all_pipes(struct nfc_dev *dev, void *data,
-				      size_t data_len)
-{
-	struct nci_dev *ndev = nfc_get_drvdata(dev);
+अटल पूर्णांक st_nci_hci_clear_all_pipes(काष्ठा nfc_dev *dev, व्योम *data,
+				      माप_प्रकार data_len)
+अणु
+	काष्ठा nci_dev *ndev = nfc_get_drvdata(dev);
 
-	return nci_hci_clear_all_pipes(ndev);
-}
+	वापस nci_hci_clear_all_pipes(ndev);
+पूर्ण
 
-static int st_nci_hci_dm_put_data(struct nfc_dev *dev, void *data,
-				  size_t data_len)
-{
-	struct nci_dev *ndev = nfc_get_drvdata(dev);
+अटल पूर्णांक st_nci_hci_dm_put_data(काष्ठा nfc_dev *dev, व्योम *data,
+				  माप_प्रकार data_len)
+अणु
+	काष्ठा nci_dev *ndev = nfc_get_drvdata(dev);
 
-	return nci_hci_send_cmd(ndev, ST_NCI_DEVICE_MGNT_GATE,
+	वापस nci_hci_send_cmd(ndev, ST_NCI_DEVICE_MGNT_GATE,
 				ST_NCI_HCI_DM_PUTDATA, data,
-				data_len, NULL);
-}
+				data_len, शून्य);
+पूर्ण
 
-static int st_nci_hci_dm_update_aid(struct nfc_dev *dev, void *data,
-				    size_t data_len)
-{
-	struct nci_dev *ndev = nfc_get_drvdata(dev);
+अटल पूर्णांक st_nci_hci_dm_update_aid(काष्ठा nfc_dev *dev, व्योम *data,
+				    माप_प्रकार data_len)
+अणु
+	काष्ठा nci_dev *ndev = nfc_get_drvdata(dev);
 
-	return nci_hci_send_cmd(ndev, ST_NCI_DEVICE_MGNT_GATE,
-			ST_NCI_HCI_DM_UPDATE_AID, data, data_len, NULL);
-}
+	वापस nci_hci_send_cmd(ndev, ST_NCI_DEVICE_MGNT_GATE,
+			ST_NCI_HCI_DM_UPDATE_AID, data, data_len, शून्य);
+पूर्ण
 
-static int st_nci_hci_dm_get_info(struct nfc_dev *dev, void *data,
-				  size_t data_len)
-{
-	int r;
-	struct sk_buff *msg, *skb;
-	struct nci_dev *ndev = nfc_get_drvdata(dev);
+अटल पूर्णांक st_nci_hci_dm_get_info(काष्ठा nfc_dev *dev, व्योम *data,
+				  माप_प्रकार data_len)
+अणु
+	पूर्णांक r;
+	काष्ठा sk_buff *msg, *skb;
+	काष्ठा nci_dev *ndev = nfc_get_drvdata(dev);
 
 	r = nci_hci_send_cmd(ndev, ST_NCI_DEVICE_MGNT_GATE, ST_NCI_HCI_DM_GETINFO,
 			     data, data_len, &skb);
-	if (r)
-		goto exit;
+	अगर (r)
+		जाओ निकास;
 
-	msg = nfc_vendor_cmd_alloc_reply_skb(dev, ST_NCI_VENDOR_OUI,
+	msg = nfc_venकरोr_cmd_alloc_reply_skb(dev, ST_NCI_VENDOR_OUI,
 					     HCI_DM_GET_INFO, skb->len);
-	if (!msg) {
+	अगर (!msg) अणु
 		r = -ENOMEM;
-		goto free_skb;
-	}
+		जाओ मुक्त_skb;
+	पूर्ण
 
-	if (nla_put(msg, NFC_ATTR_VENDOR_DATA, skb->len, skb->data)) {
-		kfree_skb(msg);
+	अगर (nla_put(msg, NFC_ATTR_VENDOR_DATA, skb->len, skb->data)) अणु
+		kमुक्त_skb(msg);
 		r = -ENOBUFS;
-		goto free_skb;
-	}
+		जाओ मुक्त_skb;
+	पूर्ण
 
-	r = nfc_vendor_cmd_reply(msg);
+	r = nfc_venकरोr_cmd_reply(msg);
 
-free_skb:
-	kfree_skb(skb);
-exit:
-	return r;
-}
+मुक्त_skb:
+	kमुक्त_skb(skb);
+निकास:
+	वापस r;
+पूर्ण
 
-static int st_nci_hci_dm_get_data(struct nfc_dev *dev, void *data,
-				  size_t data_len)
-{
-	int r;
-	struct sk_buff *msg, *skb;
-	struct nci_dev *ndev = nfc_get_drvdata(dev);
+अटल पूर्णांक st_nci_hci_dm_get_data(काष्ठा nfc_dev *dev, व्योम *data,
+				  माप_प्रकार data_len)
+अणु
+	पूर्णांक r;
+	काष्ठा sk_buff *msg, *skb;
+	काष्ठा nci_dev *ndev = nfc_get_drvdata(dev);
 
 	r = nci_hci_send_cmd(ndev, ST_NCI_DEVICE_MGNT_GATE, ST_NCI_HCI_DM_GETDATA,
 			     data, data_len, &skb);
-	if (r)
-		goto exit;
+	अगर (r)
+		जाओ निकास;
 
-	msg = nfc_vendor_cmd_alloc_reply_skb(dev, ST_NCI_VENDOR_OUI,
+	msg = nfc_venकरोr_cmd_alloc_reply_skb(dev, ST_NCI_VENDOR_OUI,
 					     HCI_DM_GET_DATA, skb->len);
-	if (!msg) {
+	अगर (!msg) अणु
 		r = -ENOMEM;
-		goto free_skb;
-	}
+		जाओ मुक्त_skb;
+	पूर्ण
 
-	if (nla_put(msg, NFC_ATTR_VENDOR_DATA, skb->len, skb->data)) {
-		kfree_skb(msg);
+	अगर (nla_put(msg, NFC_ATTR_VENDOR_DATA, skb->len, skb->data)) अणु
+		kमुक्त_skb(msg);
 		r = -ENOBUFS;
-		goto free_skb;
-	}
+		जाओ मुक्त_skb;
+	पूर्ण
 
-	r = nfc_vendor_cmd_reply(msg);
+	r = nfc_venकरोr_cmd_reply(msg);
 
-free_skb:
-	kfree_skb(skb);
-exit:
-	return r;
-}
+मुक्त_skb:
+	kमुक्त_skb(skb);
+निकास:
+	वापस r;
+पूर्ण
 
-static int st_nci_hci_dm_fwupd_start(struct nfc_dev *dev, void *data,
-				     size_t data_len)
-{
-	int r;
-	struct nci_dev *ndev = nfc_get_drvdata(dev);
+अटल पूर्णांक st_nci_hci_dm_fwupd_start(काष्ठा nfc_dev *dev, व्योम *data,
+				     माप_प्रकार data_len)
+अणु
+	पूर्णांक r;
+	काष्ठा nci_dev *ndev = nfc_get_drvdata(dev);
 
-	dev->fw_download_in_progress = true;
+	dev->fw_करोwnload_in_progress = true;
 	r = nci_hci_send_cmd(ndev, ST_NCI_DEVICE_MGNT_GATE,
-			ST_NCI_HCI_DM_FWUPD_START, data, data_len, NULL);
-	if (r)
-		dev->fw_download_in_progress = false;
+			ST_NCI_HCI_DM_FWUPD_START, data, data_len, शून्य);
+	अगर (r)
+		dev->fw_करोwnload_in_progress = false;
 
-	return r;
-}
+	वापस r;
+पूर्ण
 
-static int st_nci_hci_dm_fwupd_end(struct nfc_dev *dev, void *data,
-				   size_t data_len)
-{
-	struct nci_dev *ndev = nfc_get_drvdata(dev);
+अटल पूर्णांक st_nci_hci_dm_fwupd_end(काष्ठा nfc_dev *dev, व्योम *data,
+				   माप_प्रकार data_len)
+अणु
+	काष्ठा nci_dev *ndev = nfc_get_drvdata(dev);
 
-	return nci_hci_send_cmd(ndev, ST_NCI_DEVICE_MGNT_GATE,
-			ST_NCI_HCI_DM_FWUPD_STOP, data, data_len, NULL);
-}
+	वापस nci_hci_send_cmd(ndev, ST_NCI_DEVICE_MGNT_GATE,
+			ST_NCI_HCI_DM_FWUPD_STOP, data, data_len, शून्य);
+पूर्ण
 
-static int st_nci_hci_dm_direct_load(struct nfc_dev *dev, void *data,
-				     size_t data_len)
-{
-	struct nci_dev *ndev = nfc_get_drvdata(dev);
+अटल पूर्णांक st_nci_hci_dm_direct_load(काष्ठा nfc_dev *dev, व्योम *data,
+				     माप_प्रकार data_len)
+अणु
+	काष्ठा nci_dev *ndev = nfc_get_drvdata(dev);
 
-	if (dev->fw_download_in_progress) {
-		dev->fw_download_in_progress = false;
-		return nci_hci_send_cmd(ndev, ST_NCI_DEVICE_MGNT_GATE,
-				ST_NCI_HCI_DM_LOAD, data, data_len, NULL);
-	}
-	return -EPROTO;
-}
+	अगर (dev->fw_करोwnload_in_progress) अणु
+		dev->fw_करोwnload_in_progress = false;
+		वापस nci_hci_send_cmd(ndev, ST_NCI_DEVICE_MGNT_GATE,
+				ST_NCI_HCI_DM_LOAD, data, data_len, शून्य);
+	पूर्ण
+	वापस -EPROTO;
+पूर्ण
 
-static int st_nci_hci_dm_reset(struct nfc_dev *dev, void *data,
-			       size_t data_len)
-{
-	struct nci_dev *ndev = nfc_get_drvdata(dev);
+अटल पूर्णांक st_nci_hci_dm_reset(काष्ठा nfc_dev *dev, व्योम *data,
+			       माप_प्रकार data_len)
+अणु
+	काष्ठा nci_dev *ndev = nfc_get_drvdata(dev);
 
 	nci_hci_send_cmd(ndev, ST_NCI_DEVICE_MGNT_GATE,
-			ST_NCI_HCI_DM_RESET, data, data_len, NULL);
+			ST_NCI_HCI_DM_RESET, data, data_len, शून्य);
 	msleep(200);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int st_nci_hci_get_param(struct nfc_dev *dev, void *data,
-				size_t data_len)
-{
-	int r;
-	struct sk_buff *msg, *skb;
-	struct nci_dev *ndev = nfc_get_drvdata(dev);
-	struct get_param_data *param = (struct get_param_data *)data;
+अटल पूर्णांक st_nci_hci_get_param(काष्ठा nfc_dev *dev, व्योम *data,
+				माप_प्रकार data_len)
+अणु
+	पूर्णांक r;
+	काष्ठा sk_buff *msg, *skb;
+	काष्ठा nci_dev *ndev = nfc_get_drvdata(dev);
+	काष्ठा get_param_data *param = (काष्ठा get_param_data *)data;
 
-	if (data_len < sizeof(struct get_param_data))
-		return -EPROTO;
+	अगर (data_len < माप(काष्ठा get_param_data))
+		वापस -EPROTO;
 
 	r = nci_hci_get_param(ndev, param->gate, param->data, &skb);
-	if (r)
-		goto exit;
+	अगर (r)
+		जाओ निकास;
 
-	msg = nfc_vendor_cmd_alloc_reply_skb(dev, ST_NCI_VENDOR_OUI,
+	msg = nfc_venकरोr_cmd_alloc_reply_skb(dev, ST_NCI_VENDOR_OUI,
 					     HCI_GET_PARAM, skb->len);
-	if (!msg) {
+	अगर (!msg) अणु
 		r = -ENOMEM;
-		goto free_skb;
-	}
+		जाओ मुक्त_skb;
+	पूर्ण
 
-	if (nla_put(msg, NFC_ATTR_VENDOR_DATA, skb->len, skb->data)) {
-		kfree_skb(msg);
+	अगर (nla_put(msg, NFC_ATTR_VENDOR_DATA, skb->len, skb->data)) अणु
+		kमुक्त_skb(msg);
 		r = -ENOBUFS;
-		goto free_skb;
-	}
+		जाओ मुक्त_skb;
+	पूर्ण
 
-	r = nfc_vendor_cmd_reply(msg);
+	r = nfc_venकरोr_cmd_reply(msg);
 
-free_skb:
-	kfree_skb(skb);
-exit:
-	return r;
-}
+मुक्त_skb:
+	kमुक्त_skb(skb);
+निकास:
+	वापस r;
+पूर्ण
 
-static int st_nci_hci_dm_field_generator(struct nfc_dev *dev, void *data,
-					 size_t data_len)
-{
-	struct nci_dev *ndev = nfc_get_drvdata(dev);
+अटल पूर्णांक st_nci_hci_dm_field_generator(काष्ठा nfc_dev *dev, व्योम *data,
+					 माप_प्रकार data_len)
+अणु
+	काष्ठा nci_dev *ndev = nfc_get_drvdata(dev);
 
-	return nci_hci_send_cmd(ndev, ST_NCI_DEVICE_MGNT_GATE,
-				ST_NCI_HCI_DM_FIELD_GENERATOR, data, data_len, NULL);
-}
+	वापस nci_hci_send_cmd(ndev, ST_NCI_DEVICE_MGNT_GATE,
+				ST_NCI_HCI_DM_FIELD_GENERATOR, data, data_len, शून्य);
+पूर्ण
 
-static int st_nci_hci_dm_vdc_measurement_value(struct nfc_dev *dev, void *data,
-					       size_t data_len)
-{
-	int r;
-	struct sk_buff *msg, *skb;
-	struct nci_dev *ndev = nfc_get_drvdata(dev);
+अटल पूर्णांक st_nci_hci_dm_vdc_measurement_value(काष्ठा nfc_dev *dev, व्योम *data,
+					       माप_प्रकार data_len)
+अणु
+	पूर्णांक r;
+	काष्ठा sk_buff *msg, *skb;
+	काष्ठा nci_dev *ndev = nfc_get_drvdata(dev);
 
-	if (data_len != 4)
-		return -EPROTO;
+	अगर (data_len != 4)
+		वापस -EPROTO;
 
 	r = nci_hci_send_cmd(ndev, ST_NCI_DEVICE_MGNT_GATE,
 			     ST_NCI_HCI_DM_VDC_MEASUREMENT_VALUE,
 			     data, data_len, &skb);
-	if (r)
-		goto exit;
+	अगर (r)
+		जाओ निकास;
 
-	msg = nfc_vendor_cmd_alloc_reply_skb(dev, ST_NCI_VENDOR_OUI,
+	msg = nfc_venकरोr_cmd_alloc_reply_skb(dev, ST_NCI_VENDOR_OUI,
 				HCI_DM_VDC_MEASUREMENT_VALUE, skb->len);
-	if (!msg) {
+	अगर (!msg) अणु
 		r = -ENOMEM;
-		goto free_skb;
-	}
+		जाओ मुक्त_skb;
+	पूर्ण
 
-	if (nla_put(msg, NFC_ATTR_VENDOR_DATA, skb->len, skb->data)) {
-		kfree_skb(msg);
+	अगर (nla_put(msg, NFC_ATTR_VENDOR_DATA, skb->len, skb->data)) अणु
+		kमुक्त_skb(msg);
 		r = -ENOBUFS;
-		goto free_skb;
-	}
+		जाओ मुक्त_skb;
+	पूर्ण
 
-	r = nfc_vendor_cmd_reply(msg);
+	r = nfc_venकरोr_cmd_reply(msg);
 
-free_skb:
-	kfree_skb(skb);
-exit:
-	return r;
-}
+मुक्त_skb:
+	kमुक्त_skb(skb);
+निकास:
+	वापस r;
+पूर्ण
 
-static int st_nci_hci_dm_vdc_value_comparison(struct nfc_dev *dev, void *data,
-					      size_t data_len)
-{
-	int r;
-	struct sk_buff *msg, *skb;
-	struct nci_dev *ndev = nfc_get_drvdata(dev);
+अटल पूर्णांक st_nci_hci_dm_vdc_value_comparison(काष्ठा nfc_dev *dev, व्योम *data,
+					      माप_प्रकार data_len)
+अणु
+	पूर्णांक r;
+	काष्ठा sk_buff *msg, *skb;
+	काष्ठा nci_dev *ndev = nfc_get_drvdata(dev);
 
-	if (data_len != 2)
-		return -EPROTO;
+	अगर (data_len != 2)
+		वापस -EPROTO;
 
 	r = nci_hci_send_cmd(ndev, ST_NCI_DEVICE_MGNT_GATE,
 			     ST_NCI_HCI_DM_VDC_VALUE_COMPARISON,
 			     data, data_len, &skb);
-	if (r)
-		goto exit;
+	अगर (r)
+		जाओ निकास;
 
-	msg = nfc_vendor_cmd_alloc_reply_skb(dev, ST_NCI_VENDOR_OUI,
+	msg = nfc_venकरोr_cmd_alloc_reply_skb(dev, ST_NCI_VENDOR_OUI,
 					HCI_DM_VDC_VALUE_COMPARISON, skb->len);
-	if (!msg) {
+	अगर (!msg) अणु
 		r = -ENOMEM;
-		goto free_skb;
-	}
+		जाओ मुक्त_skb;
+	पूर्ण
 
-	if (nla_put(msg, NFC_ATTR_VENDOR_DATA, skb->len, skb->data)) {
-		kfree_skb(msg);
+	अगर (nla_put(msg, NFC_ATTR_VENDOR_DATA, skb->len, skb->data)) अणु
+		kमुक्त_skb(msg);
 		r = -ENOBUFS;
-		goto free_skb;
-	}
+		जाओ मुक्त_skb;
+	पूर्ण
 
-	r = nfc_vendor_cmd_reply(msg);
+	r = nfc_venकरोr_cmd_reply(msg);
 
-free_skb:
-	kfree_skb(skb);
-exit:
-	return r;
-}
+मुक्त_skb:
+	kमुक्त_skb(skb);
+निकास:
+	वापस r;
+पूर्ण
 
-static int st_nci_loopback(struct nfc_dev *dev, void *data,
-			   size_t data_len)
-{
-	int r;
-	struct sk_buff *msg, *skb;
-	struct nci_dev *ndev = nfc_get_drvdata(dev);
+अटल पूर्णांक st_nci_loopback(काष्ठा nfc_dev *dev, व्योम *data,
+			   माप_प्रकार data_len)
+अणु
+	पूर्णांक r;
+	काष्ठा sk_buff *msg, *skb;
+	काष्ठा nci_dev *ndev = nfc_get_drvdata(dev);
 
-	if (data_len <= 0)
-		return -EPROTO;
+	अगर (data_len <= 0)
+		वापस -EPROTO;
 
 	r = nci_nfcc_loopback(ndev, data, data_len, &skb);
-	if (r < 0)
-		return r;
+	अगर (r < 0)
+		वापस r;
 
-	msg = nfc_vendor_cmd_alloc_reply_skb(dev, ST_NCI_VENDOR_OUI,
+	msg = nfc_venकरोr_cmd_alloc_reply_skb(dev, ST_NCI_VENDOR_OUI,
 					     LOOPBACK, skb->len);
-	if (!msg) {
+	अगर (!msg) अणु
 		r = -ENOMEM;
-		goto free_skb;
-	}
+		जाओ मुक्त_skb;
+	पूर्ण
 
-	if (nla_put(msg, NFC_ATTR_VENDOR_DATA, skb->len, skb->data)) {
-		kfree_skb(msg);
+	अगर (nla_put(msg, NFC_ATTR_VENDOR_DATA, skb->len, skb->data)) अणु
+		kमुक्त_skb(msg);
 		r = -ENOBUFS;
-		goto free_skb;
-	}
+		जाओ मुक्त_skb;
+	पूर्ण
 
-	r = nfc_vendor_cmd_reply(msg);
-free_skb:
-	kfree_skb(skb);
-	return r;
-}
+	r = nfc_venकरोr_cmd_reply(msg);
+मुक्त_skb:
+	kमुक्त_skb(skb);
+	वापस r;
+पूर्ण
 
-static int st_nci_manufacturer_specific(struct nfc_dev *dev, void *data,
-					size_t data_len)
-{
-	struct sk_buff *msg;
-	struct nci_dev *ndev = nfc_get_drvdata(dev);
+अटल पूर्णांक st_nci_manufacturer_specअगरic(काष्ठा nfc_dev *dev, व्योम *data,
+					माप_प्रकार data_len)
+अणु
+	काष्ठा sk_buff *msg;
+	काष्ठा nci_dev *ndev = nfc_get_drvdata(dev);
 
-	msg = nfc_vendor_cmd_alloc_reply_skb(dev, ST_NCI_VENDOR_OUI,
+	msg = nfc_venकरोr_cmd_alloc_reply_skb(dev, ST_NCI_VENDOR_OUI,
 					MANUFACTURER_SPECIFIC,
-					sizeof(ndev->manufact_specific_info));
-	if (!msg)
-		return -ENOMEM;
+					माप(ndev->manufact_specअगरic_info));
+	अगर (!msg)
+		वापस -ENOMEM;
 
-	if (nla_put(msg, NFC_ATTR_VENDOR_DATA, sizeof(ndev->manufact_specific_info),
-		    &ndev->manufact_specific_info)) {
-		kfree_skb(msg);
-		return -ENOBUFS;
-	}
+	अगर (nla_put(msg, NFC_ATTR_VENDOR_DATA, माप(ndev->manufact_specअगरic_info),
+		    &ndev->manufact_specअगरic_info)) अणु
+		kमुक्त_skb(msg);
+		वापस -ENOBUFS;
+	पूर्ण
 
-	return nfc_vendor_cmd_reply(msg);
-}
+	वापस nfc_venकरोr_cmd_reply(msg);
+पूर्ण
 
-static struct nfc_vendor_cmd st_nci_vendor_cmds[] = {
-	{
-		.vendor_id = ST_NCI_VENDOR_OUI,
+अटल काष्ठा nfc_venकरोr_cmd st_nci_venकरोr_cmds[] = अणु
+	अणु
+		.venकरोr_id = ST_NCI_VENDOR_OUI,
 		.subcmd = FACTORY_MODE,
-		.doit = st_nci_factory_mode,
-	},
-	{
-		.vendor_id = ST_NCI_VENDOR_OUI,
+		.करोit = st_nci_factory_mode,
+	पूर्ण,
+	अणु
+		.venकरोr_id = ST_NCI_VENDOR_OUI,
 		.subcmd = HCI_CLEAR_ALL_PIPES,
-		.doit = st_nci_hci_clear_all_pipes,
-	},
-	{
-		.vendor_id = ST_NCI_VENDOR_OUI,
+		.करोit = st_nci_hci_clear_all_pipes,
+	पूर्ण,
+	अणु
+		.venकरोr_id = ST_NCI_VENDOR_OUI,
 		.subcmd = HCI_DM_PUT_DATA,
-		.doit = st_nci_hci_dm_put_data,
-	},
-	{
-		.vendor_id = ST_NCI_VENDOR_OUI,
+		.करोit = st_nci_hci_dm_put_data,
+	पूर्ण,
+	अणु
+		.venकरोr_id = ST_NCI_VENDOR_OUI,
 		.subcmd = HCI_DM_UPDATE_AID,
-		.doit = st_nci_hci_dm_update_aid,
-	},
-	{
-		.vendor_id = ST_NCI_VENDOR_OUI,
+		.करोit = st_nci_hci_dm_update_aid,
+	पूर्ण,
+	अणु
+		.venकरोr_id = ST_NCI_VENDOR_OUI,
 		.subcmd = HCI_DM_GET_INFO,
-		.doit = st_nci_hci_dm_get_info,
-	},
-	{
-		.vendor_id = ST_NCI_VENDOR_OUI,
+		.करोit = st_nci_hci_dm_get_info,
+	पूर्ण,
+	अणु
+		.venकरोr_id = ST_NCI_VENDOR_OUI,
 		.subcmd = HCI_DM_GET_DATA,
-		.doit = st_nci_hci_dm_get_data,
-	},
-	{
-		.vendor_id = ST_NCI_VENDOR_OUI,
-		.subcmd = HCI_DM_DIRECT_LOAD,
-		.doit = st_nci_hci_dm_direct_load,
-	},
-	{
-		.vendor_id = ST_NCI_VENDOR_OUI,
+		.करोit = st_nci_hci_dm_get_data,
+	पूर्ण,
+	अणु
+		.venकरोr_id = ST_NCI_VENDOR_OUI,
+		.subcmd = HCI_DM_सूचीECT_LOAD,
+		.करोit = st_nci_hci_dm_direct_load,
+	पूर्ण,
+	अणु
+		.venकरोr_id = ST_NCI_VENDOR_OUI,
 		.subcmd = HCI_DM_RESET,
-		.doit = st_nci_hci_dm_reset,
-	},
-	{
-		.vendor_id = ST_NCI_VENDOR_OUI,
+		.करोit = st_nci_hci_dm_reset,
+	पूर्ण,
+	अणु
+		.venकरोr_id = ST_NCI_VENDOR_OUI,
 		.subcmd = HCI_GET_PARAM,
-		.doit = st_nci_hci_get_param,
-	},
-	{
-		.vendor_id = ST_NCI_VENDOR_OUI,
+		.करोit = st_nci_hci_get_param,
+	पूर्ण,
+	अणु
+		.venकरोr_id = ST_NCI_VENDOR_OUI,
 		.subcmd = HCI_DM_FIELD_GENERATOR,
-		.doit = st_nci_hci_dm_field_generator,
-	},
-	{
-		.vendor_id = ST_NCI_VENDOR_OUI,
+		.करोit = st_nci_hci_dm_field_generator,
+	पूर्ण,
+	अणु
+		.venकरोr_id = ST_NCI_VENDOR_OUI,
 		.subcmd = HCI_DM_FWUPD_START,
-		.doit = st_nci_hci_dm_fwupd_start,
-	},
-	{
-		.vendor_id = ST_NCI_VENDOR_OUI,
+		.करोit = st_nci_hci_dm_fwupd_start,
+	पूर्ण,
+	अणु
+		.venकरोr_id = ST_NCI_VENDOR_OUI,
 		.subcmd = HCI_DM_FWUPD_END,
-		.doit = st_nci_hci_dm_fwupd_end,
-	},
-	{
-		.vendor_id = ST_NCI_VENDOR_OUI,
+		.करोit = st_nci_hci_dm_fwupd_end,
+	पूर्ण,
+	अणु
+		.venकरोr_id = ST_NCI_VENDOR_OUI,
 		.subcmd = LOOPBACK,
-		.doit = st_nci_loopback,
-	},
-	{
-		.vendor_id = ST_NCI_VENDOR_OUI,
+		.करोit = st_nci_loopback,
+	पूर्ण,
+	अणु
+		.venकरोr_id = ST_NCI_VENDOR_OUI,
 		.subcmd = HCI_DM_VDC_MEASUREMENT_VALUE,
-		.doit = st_nci_hci_dm_vdc_measurement_value,
-	},
-	{
-		.vendor_id = ST_NCI_VENDOR_OUI,
+		.करोit = st_nci_hci_dm_vdc_measurement_value,
+	पूर्ण,
+	अणु
+		.venकरोr_id = ST_NCI_VENDOR_OUI,
 		.subcmd = HCI_DM_VDC_VALUE_COMPARISON,
-		.doit = st_nci_hci_dm_vdc_value_comparison,
-	},
-	{
-		.vendor_id = ST_NCI_VENDOR_OUI,
+		.करोit = st_nci_hci_dm_vdc_value_comparison,
+	पूर्ण,
+	अणु
+		.venकरोr_id = ST_NCI_VENDOR_OUI,
 		.subcmd = MANUFACTURER_SPECIFIC,
-		.doit = st_nci_manufacturer_specific,
-	},
-};
+		.करोit = st_nci_manufacturer_specअगरic,
+	पूर्ण,
+पूर्ण;
 
-int st_nci_vendor_cmds_init(struct nci_dev *ndev)
-{
-	return nfc_set_vendor_cmds(ndev->nfc_dev, st_nci_vendor_cmds,
-				   sizeof(st_nci_vendor_cmds));
-}
-EXPORT_SYMBOL(st_nci_vendor_cmds_init);
+पूर्णांक st_nci_venकरोr_cmds_init(काष्ठा nci_dev *ndev)
+अणु
+	वापस nfc_set_venकरोr_cmds(ndev->nfc_dev, st_nci_venकरोr_cmds,
+				   माप(st_nci_venकरोr_cmds));
+पूर्ण
+EXPORT_SYMBOL(st_nci_venकरोr_cmds_init);

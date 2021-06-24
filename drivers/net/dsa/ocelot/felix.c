@@ -1,53 +1,54 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /* Copyright 2019-2021 NXP Semiconductors
  *
- * This is an umbrella module for all network switches that are
- * register-compatible with Ocelot and that perform I/O to their host CPU
+ * This is an umbrella module क्रम all network चयनes that are
+ * रेजिस्टर-compatible with Ocelot and that perक्रमm I/O to their host CPU
  * through an NPI (Node Processor Interface) Ethernet port.
  */
-#include <uapi/linux/if_bridge.h>
-#include <soc/mscc/ocelot_vcap.h>
-#include <soc/mscc/ocelot_qsys.h>
-#include <soc/mscc/ocelot_sys.h>
-#include <soc/mscc/ocelot_dev.h>
-#include <soc/mscc/ocelot_ana.h>
-#include <soc/mscc/ocelot_ptp.h>
-#include <soc/mscc/ocelot.h>
-#include <linux/dsa/8021q.h>
-#include <linux/dsa/ocelot.h>
-#include <linux/platform_device.h>
-#include <linux/ptp_classify.h>
-#include <linux/module.h>
-#include <linux/of_net.h>
-#include <linux/pci.h>
-#include <linux/of.h>
-#include <linux/pcs-lynx.h>
-#include <net/pkt_sched.h>
-#include <net/dsa.h>
-#include "felix.h"
+#समावेश <uapi/linux/अगर_bridge.h>
+#समावेश <soc/mscc/ocelot_vcap.h>
+#समावेश <soc/mscc/ocelot_qsys.h>
+#समावेश <soc/mscc/ocelot_sys.h>
+#समावेश <soc/mscc/ocelot_dev.h>
+#समावेश <soc/mscc/ocelot_ana.h>
+#समावेश <soc/mscc/ocelot_ptp.h>
+#समावेश <soc/mscc/ocelot.h>
+#समावेश <linux/dsa/8021q.h>
+#समावेश <linux/dsa/ocelot.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/ptp_classअगरy.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of_net.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/of.h>
+#समावेश <linux/pcs-lynx.h>
+#समावेश <net/pkt_sched.h>
+#समावेश <net/dsa.h>
+#समावेश "felix.h"
 
-static int felix_tag_8021q_rxvlan_add(struct felix *felix, int port, u16 vid,
+अटल पूर्णांक felix_tag_8021q_rxvlan_add(काष्ठा felix *felix, पूर्णांक port, u16 vid,
 				      bool pvid, bool untagged)
-{
-	struct ocelot_vcap_filter *outer_tagging_rule;
-	struct ocelot *ocelot = &felix->ocelot;
-	struct dsa_switch *ds = felix->ds;
-	int key_length, upstream, err;
+अणु
+	काष्ठा ocelot_vcap_filter *outer_tagging_rule;
+	काष्ठा ocelot *ocelot = &felix->ocelot;
+	काष्ठा dsa_चयन *ds = felix->ds;
+	पूर्णांक key_length, upstream, err;
 
-	/* We don't need to install the rxvlan into the other ports' filtering
+	/* We करोn't need to install the rxvlan into the other ports' filtering
 	 * tables, because we're just pushing the rxvlan when sending towards
 	 * the CPU
 	 */
-	if (!pvid)
-		return 0;
+	अगर (!pvid)
+		वापस 0;
 
 	key_length = ocelot->vcap[VCAP_ES0].keys[VCAP_ES0_IGR_PORT].length;
 	upstream = dsa_upstream_port(ds, port);
 
-	outer_tagging_rule = kzalloc(sizeof(struct ocelot_vcap_filter),
+	outer_tagging_rule = kzalloc(माप(काष्ठा ocelot_vcap_filter),
 				     GFP_KERNEL);
-	if (!outer_tagging_rule)
-		return -ENOMEM;
+	अगर (!outer_tagging_rule)
+		वापस -ENOMEM;
 
 	outer_tagging_rule->key_type = OCELOT_VCAP_KEY_ANY;
 	outer_tagging_rule->prio = 1;
@@ -65,37 +66,37 @@ static int felix_tag_8021q_rxvlan_add(struct felix *felix, int port, u16 vid,
 	outer_tagging_rule->action.tag_a_vid_sel = 1;
 	outer_tagging_rule->action.vid_a_val = vid;
 
-	err = ocelot_vcap_filter_add(ocelot, outer_tagging_rule, NULL);
-	if (err)
-		kfree(outer_tagging_rule);
+	err = ocelot_vcap_filter_add(ocelot, outer_tagging_rule, शून्य);
+	अगर (err)
+		kमुक्त(outer_tagging_rule);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int felix_tag_8021q_txvlan_add(struct felix *felix, int port, u16 vid,
+अटल पूर्णांक felix_tag_8021q_txvlan_add(काष्ठा felix *felix, पूर्णांक port, u16 vid,
 				      bool pvid, bool untagged)
-{
-	struct ocelot_vcap_filter *untagging_rule, *redirect_rule;
-	struct ocelot *ocelot = &felix->ocelot;
-	struct dsa_switch *ds = felix->ds;
-	int upstream, err;
+अणु
+	काष्ठा ocelot_vcap_filter *untagging_rule, *redirect_rule;
+	काष्ठा ocelot *ocelot = &felix->ocelot;
+	काष्ठा dsa_चयन *ds = felix->ds;
+	पूर्णांक upstream, err;
 
 	/* tag_8021q.c assumes we are implementing this via port VLAN
 	 * membership, which we aren't. So we don't need to add any VCAP filter
-	 * for the CPU port.
+	 * क्रम the CPU port.
 	 */
-	if (ocelot->ports[port]->is_dsa_8021q_cpu)
-		return 0;
+	अगर (ocelot->ports[port]->is_dsa_8021q_cpu)
+		वापस 0;
 
-	untagging_rule = kzalloc(sizeof(struct ocelot_vcap_filter), GFP_KERNEL);
-	if (!untagging_rule)
-		return -ENOMEM;
+	untagging_rule = kzalloc(माप(काष्ठा ocelot_vcap_filter), GFP_KERNEL);
+	अगर (!untagging_rule)
+		वापस -ENOMEM;
 
-	redirect_rule = kzalloc(sizeof(struct ocelot_vcap_filter), GFP_KERNEL);
-	if (!redirect_rule) {
-		kfree(untagging_rule);
-		return -ENOMEM;
-	}
+	redirect_rule = kzalloc(माप(काष्ठा ocelot_vcap_filter), GFP_KERNEL);
+	अगर (!redirect_rule) अणु
+		kमुक्त(untagging_rule);
+		वापस -ENOMEM;
+	पूर्ण
 
 	upstream = dsa_upstream_port(ds, port);
 
@@ -114,12 +115,12 @@ static int felix_tag_8021q_txvlan_add(struct felix *felix, int port, u16 vid,
 	untagging_rule->action.pag_override_mask = 0xff;
 	untagging_rule->action.pag_val = port;
 
-	err = ocelot_vcap_filter_add(ocelot, untagging_rule, NULL);
-	if (err) {
-		kfree(untagging_rule);
-		kfree(redirect_rule);
-		return err;
-	}
+	err = ocelot_vcap_filter_add(ocelot, untagging_rule, शून्य);
+	अगर (err) अणु
+		kमुक्त(untagging_rule);
+		kमुक्त(redirect_rule);
+		वापस err;
+	पूर्ण
 
 	redirect_rule->key_type = OCELOT_VCAP_KEY_ANY;
 	redirect_rule->ingress_port_mask = BIT(upstream);
@@ -130,170 +131,170 @@ static int felix_tag_8021q_txvlan_add(struct felix *felix, int port, u16 vid,
 	redirect_rule->block_id = VCAP_IS2;
 	redirect_rule->type = OCELOT_VCAP_FILTER_OFFLOAD;
 	redirect_rule->lookup = 0;
-	redirect_rule->action.mask_mode = OCELOT_MASK_MODE_REDIRECT;
+	redirect_rule->action.mask_mode = OCELOT_MASK_MODE_REसूचीECT;
 	redirect_rule->action.port_mask = BIT(port);
 
-	err = ocelot_vcap_filter_add(ocelot, redirect_rule, NULL);
-	if (err) {
+	err = ocelot_vcap_filter_add(ocelot, redirect_rule, शून्य);
+	अगर (err) अणु
 		ocelot_vcap_filter_del(ocelot, untagging_rule);
-		kfree(redirect_rule);
-		return err;
-	}
+		kमुक्त(redirect_rule);
+		वापस err;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int felix_tag_8021q_vlan_add(struct dsa_switch *ds, int port, u16 vid,
+अटल पूर्णांक felix_tag_8021q_vlan_add(काष्ठा dsa_चयन *ds, पूर्णांक port, u16 vid,
 				    u16 flags)
-{
+अणु
 	bool untagged = flags & BRIDGE_VLAN_INFO_UNTAGGED;
 	bool pvid = flags & BRIDGE_VLAN_INFO_PVID;
-	struct ocelot *ocelot = ds->priv;
+	काष्ठा ocelot *ocelot = ds->priv;
 
-	if (vid_is_dsa_8021q_rxvlan(vid))
-		return felix_tag_8021q_rxvlan_add(ocelot_to_felix(ocelot),
+	अगर (vid_is_dsa_8021q_rxvlan(vid))
+		वापस felix_tag_8021q_rxvlan_add(ocelot_to_felix(ocelot),
 						  port, vid, pvid, untagged);
 
-	if (vid_is_dsa_8021q_txvlan(vid))
-		return felix_tag_8021q_txvlan_add(ocelot_to_felix(ocelot),
+	अगर (vid_is_dsa_8021q_txvlan(vid))
+		वापस felix_tag_8021q_txvlan_add(ocelot_to_felix(ocelot),
 						  port, vid, pvid, untagged);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int felix_tag_8021q_rxvlan_del(struct felix *felix, int port, u16 vid)
-{
-	struct ocelot_vcap_filter *outer_tagging_rule;
-	struct ocelot_vcap_block *block_vcap_es0;
-	struct ocelot *ocelot = &felix->ocelot;
+अटल पूर्णांक felix_tag_8021q_rxvlan_del(काष्ठा felix *felix, पूर्णांक port, u16 vid)
+अणु
+	काष्ठा ocelot_vcap_filter *outer_tagging_rule;
+	काष्ठा ocelot_vcap_block *block_vcap_es0;
+	काष्ठा ocelot *ocelot = &felix->ocelot;
 
 	block_vcap_es0 = &ocelot->block[VCAP_ES0];
 
 	outer_tagging_rule = ocelot_vcap_block_find_filter_by_id(block_vcap_es0,
 								 port, false);
-	/* In rxvlan_add, we had the "if (!pvid) return 0" logic to avoid
+	/* In rxvlan_add, we had the "if (!pvid) return 0" logic to aव्योम
 	 * installing outer tagging ES0 rules where they weren't needed.
-	 * But in rxvlan_del, the API doesn't give us the "flags" anymore,
-	 * so that forces us to be slightly sloppy here, and just assume that
-	 * if we didn't find an outer_tagging_rule it means that there was
+	 * But in rxvlan_del, the API करोesn't give us the "flags" anymore,
+	 * so that क्रमces us to be slightly sloppy here, and just assume that
+	 * अगर we didn't find an outer_tagging_rule it means that there was
 	 * none in the first place, i.e. rxvlan_del is called on a non-pvid
 	 * port. This is most probably true though.
 	 */
-	if (!outer_tagging_rule)
-		return 0;
+	अगर (!outer_tagging_rule)
+		वापस 0;
 
-	return ocelot_vcap_filter_del(ocelot, outer_tagging_rule);
-}
+	वापस ocelot_vcap_filter_del(ocelot, outer_tagging_rule);
+पूर्ण
 
-static int felix_tag_8021q_txvlan_del(struct felix *felix, int port, u16 vid)
-{
-	struct ocelot_vcap_filter *untagging_rule, *redirect_rule;
-	struct ocelot_vcap_block *block_vcap_is1;
-	struct ocelot_vcap_block *block_vcap_is2;
-	struct ocelot *ocelot = &felix->ocelot;
-	int err;
+अटल पूर्णांक felix_tag_8021q_txvlan_del(काष्ठा felix *felix, पूर्णांक port, u16 vid)
+अणु
+	काष्ठा ocelot_vcap_filter *untagging_rule, *redirect_rule;
+	काष्ठा ocelot_vcap_block *block_vcap_is1;
+	काष्ठा ocelot_vcap_block *block_vcap_is2;
+	काष्ठा ocelot *ocelot = &felix->ocelot;
+	पूर्णांक err;
 
-	if (ocelot->ports[port]->is_dsa_8021q_cpu)
-		return 0;
+	अगर (ocelot->ports[port]->is_dsa_8021q_cpu)
+		वापस 0;
 
 	block_vcap_is1 = &ocelot->block[VCAP_IS1];
 	block_vcap_is2 = &ocelot->block[VCAP_IS2];
 
 	untagging_rule = ocelot_vcap_block_find_filter_by_id(block_vcap_is1,
 							     port, false);
-	if (!untagging_rule)
-		return 0;
+	अगर (!untagging_rule)
+		वापस 0;
 
 	err = ocelot_vcap_filter_del(ocelot, untagging_rule);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	redirect_rule = ocelot_vcap_block_find_filter_by_id(block_vcap_is2,
 							    port, false);
-	if (!redirect_rule)
-		return 0;
+	अगर (!redirect_rule)
+		वापस 0;
 
-	return ocelot_vcap_filter_del(ocelot, redirect_rule);
-}
+	वापस ocelot_vcap_filter_del(ocelot, redirect_rule);
+पूर्ण
 
-static int felix_tag_8021q_vlan_del(struct dsa_switch *ds, int port, u16 vid)
-{
-	struct ocelot *ocelot = ds->priv;
+अटल पूर्णांक felix_tag_8021q_vlan_del(काष्ठा dsa_चयन *ds, पूर्णांक port, u16 vid)
+अणु
+	काष्ठा ocelot *ocelot = ds->priv;
 
-	if (vid_is_dsa_8021q_rxvlan(vid))
-		return felix_tag_8021q_rxvlan_del(ocelot_to_felix(ocelot),
+	अगर (vid_is_dsa_8021q_rxvlan(vid))
+		वापस felix_tag_8021q_rxvlan_del(ocelot_to_felix(ocelot),
 						  port, vid);
 
-	if (vid_is_dsa_8021q_txvlan(vid))
-		return felix_tag_8021q_txvlan_del(ocelot_to_felix(ocelot),
+	अगर (vid_is_dsa_8021q_txvlan(vid))
+		वापस felix_tag_8021q_txvlan_del(ocelot_to_felix(ocelot),
 						  port, vid);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct dsa_8021q_ops felix_tag_8021q_ops = {
+अटल स्थिर काष्ठा dsa_8021q_ops felix_tag_8021q_ops = अणु
 	.vlan_add	= felix_tag_8021q_vlan_add,
 	.vlan_del	= felix_tag_8021q_vlan_del,
-};
+पूर्ण;
 
 /* Alternatively to using the NPI functionality, that same hardware MAC
- * connected internally to the enetc or fman DSA master can be configured to
- * use the software-defined tag_8021q frame format. As far as the hardware is
+ * connected पूर्णांकernally to the enetc or fman DSA master can be configured to
+ * use the software-defined tag_8021q frame क्रमmat. As far as the hardware is
  * concerned, it thinks it is a "dumb switch" - the queues of the CPU port
  * module are now disconnected from it, but can still be accessed through
- * register-based MMIO.
+ * रेजिस्टर-based MMIO.
  */
-static void felix_8021q_cpu_port_init(struct ocelot *ocelot, int port)
-{
+अटल व्योम felix_8021q_cpu_port_init(काष्ठा ocelot *ocelot, पूर्णांक port)
+अणु
 	ocelot->ports[port]->is_dsa_8021q_cpu = true;
 	ocelot->npi = -1;
 
-	/* Overwrite PGID_CPU with the non-tagging port */
-	ocelot_write_rix(ocelot, BIT(port), ANA_PGID_PGID, PGID_CPU);
+	/* Overग_लिखो PGID_CPU with the non-tagging port */
+	ocelot_ग_लिखो_rix(ocelot, BIT(port), ANA_PGID_PGID, PGID_CPU);
 
 	ocelot_apply_bridge_fwd_mask(ocelot);
-}
+पूर्ण
 
-static void felix_8021q_cpu_port_deinit(struct ocelot *ocelot, int port)
-{
+अटल व्योम felix_8021q_cpu_port_deinit(काष्ठा ocelot *ocelot, पूर्णांक port)
+अणु
 	ocelot->ports[port]->is_dsa_8021q_cpu = false;
 
 	/* Restore PGID_CPU */
-	ocelot_write_rix(ocelot, BIT(ocelot->num_phys_ports), ANA_PGID_PGID,
+	ocelot_ग_लिखो_rix(ocelot, BIT(ocelot->num_phys_ports), ANA_PGID_PGID,
 			 PGID_CPU);
 
 	ocelot_apply_bridge_fwd_mask(ocelot);
-}
+पूर्ण
 
-/* Set up a VCAP IS2 rule for delivering PTP frames to the CPU port module.
+/* Set up a VCAP IS2 rule क्रम delivering PTP frames to the CPU port module.
  * If the quirk_no_xtr_irq is in place, then also copy those PTP frames to the
  * tag_8021q CPU port.
  */
-static int felix_setup_mmio_filtering(struct felix *felix)
-{
-	unsigned long user_ports = 0, cpu_ports = 0;
-	struct ocelot_vcap_filter *redirect_rule;
-	struct ocelot_vcap_filter *tagging_rule;
-	struct ocelot *ocelot = &felix->ocelot;
-	struct dsa_switch *ds = felix->ds;
-	int port, ret;
+अटल पूर्णांक felix_setup_mmio_filtering(काष्ठा felix *felix)
+अणु
+	अचिन्हित दीर्घ user_ports = 0, cpu_ports = 0;
+	काष्ठा ocelot_vcap_filter *redirect_rule;
+	काष्ठा ocelot_vcap_filter *tagging_rule;
+	काष्ठा ocelot *ocelot = &felix->ocelot;
+	काष्ठा dsa_चयन *ds = felix->ds;
+	पूर्णांक port, ret;
 
-	tagging_rule = kzalloc(sizeof(struct ocelot_vcap_filter), GFP_KERNEL);
-	if (!tagging_rule)
-		return -ENOMEM;
+	tagging_rule = kzalloc(माप(काष्ठा ocelot_vcap_filter), GFP_KERNEL);
+	अगर (!tagging_rule)
+		वापस -ENOMEM;
 
-	redirect_rule = kzalloc(sizeof(struct ocelot_vcap_filter), GFP_KERNEL);
-	if (!redirect_rule) {
-		kfree(tagging_rule);
-		return -ENOMEM;
-	}
+	redirect_rule = kzalloc(माप(काष्ठा ocelot_vcap_filter), GFP_KERNEL);
+	अगर (!redirect_rule) अणु
+		kमुक्त(tagging_rule);
+		वापस -ENOMEM;
+	पूर्ण
 
-	for (port = 0; port < ocelot->num_phys_ports; port++) {
-		if (dsa_is_user_port(ds, port))
+	क्रम (port = 0; port < ocelot->num_phys_ports; port++) अणु
+		अगर (dsa_is_user_port(ds, port))
 			user_ports |= BIT(port);
-		if (dsa_is_cpu_port(ds, port))
+		अगर (dsa_is_cpu_port(ds, port))
 			cpu_ports |= BIT(port);
-	}
+	पूर्ण
 
 	tagging_rule->key_type = OCELOT_VCAP_KEY_ETYPE;
 	*(__be16 *)tagging_rule->key.etype.etype.value = htons(ETH_P_1588);
@@ -308,12 +309,12 @@ static int felix_setup_mmio_filtering(struct felix *felix)
 	tagging_rule->action.pag_override_mask = 0xff;
 	tagging_rule->action.pag_val = ocelot->num_phys_ports;
 
-	ret = ocelot_vcap_filter_add(ocelot, tagging_rule, NULL);
-	if (ret) {
-		kfree(tagging_rule);
-		kfree(redirect_rule);
-		return ret;
-	}
+	ret = ocelot_vcap_filter_add(ocelot, tagging_rule, शून्य);
+	अगर (ret) अणु
+		kमुक्त(tagging_rule);
+		kमुक्त(redirect_rule);
+		वापस ret;
+	पूर्ण
 
 	redirect_rule->key_type = OCELOT_VCAP_KEY_ANY;
 	redirect_rule->ingress_port_mask = user_ports;
@@ -325,26 +326,26 @@ static int felix_setup_mmio_filtering(struct felix *felix)
 	redirect_rule->type = OCELOT_VCAP_FILTER_OFFLOAD;
 	redirect_rule->lookup = 0;
 	redirect_rule->action.cpu_copy_ena = true;
-	if (felix->info->quirk_no_xtr_irq) {
+	अगर (felix->info->quirk_no_xtr_irq) अणु
 		/* Redirect to the tag_8021q CPU but also copy PTP packets to
 		 * the CPU port module
 		 */
-		redirect_rule->action.mask_mode = OCELOT_MASK_MODE_REDIRECT;
+		redirect_rule->action.mask_mode = OCELOT_MASK_MODE_REसूचीECT;
 		redirect_rule->action.port_mask = cpu_ports;
-	} else {
+	पूर्ण अन्यथा अणु
 		/* Trap PTP packets only to the CPU port module (which is
 		 * redirected to the NPI port)
 		 */
 		redirect_rule->action.mask_mode = OCELOT_MASK_MODE_PERMIT_DENY;
 		redirect_rule->action.port_mask = 0;
-	}
+	पूर्ण
 
-	ret = ocelot_vcap_filter_add(ocelot, redirect_rule, NULL);
-	if (ret) {
+	ret = ocelot_vcap_filter_add(ocelot, redirect_rule, शून्य);
+	अगर (ret) अणु
 		ocelot_vcap_filter_del(ocelot, tagging_rule);
-		kfree(redirect_rule);
-		return ret;
-	}
+		kमुक्त(redirect_rule);
+		वापस ret;
+	पूर्ण
 
 	/* The ownership of the CPU port module's queues might have just been
 	 * transferred to the tag_8021q tagger from the NPI-based tagger.
@@ -355,16 +356,16 @@ static int felix_setup_mmio_filtering(struct felix *felix)
 	 */
 	ocelot_drain_cpu_queue(ocelot, 0);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int felix_teardown_mmio_filtering(struct felix *felix)
-{
-	struct ocelot_vcap_filter *tagging_rule, *redirect_rule;
-	struct ocelot_vcap_block *block_vcap_is1;
-	struct ocelot_vcap_block *block_vcap_is2;
-	struct ocelot *ocelot = &felix->ocelot;
-	int err;
+अटल पूर्णांक felix_tearकरोwn_mmio_filtering(काष्ठा felix *felix)
+अणु
+	काष्ठा ocelot_vcap_filter *tagging_rule, *redirect_rule;
+	काष्ठा ocelot_vcap_block *block_vcap_is1;
+	काष्ठा ocelot_vcap_block *block_vcap_is2;
+	काष्ठा ocelot *ocelot = &felix->ocelot;
+	पूर्णांक err;
 
 	block_vcap_is1 = &ocelot->block[VCAP_IS1];
 	block_vcap_is2 = &ocelot->block[VCAP_IS2];
@@ -372,51 +373,51 @@ static int felix_teardown_mmio_filtering(struct felix *felix)
 	tagging_rule = ocelot_vcap_block_find_filter_by_id(block_vcap_is1,
 							   ocelot->num_phys_ports,
 							   false);
-	if (!tagging_rule)
-		return -ENOENT;
+	अगर (!tagging_rule)
+		वापस -ENOENT;
 
 	err = ocelot_vcap_filter_del(ocelot, tagging_rule);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	redirect_rule = ocelot_vcap_block_find_filter_by_id(block_vcap_is2,
 							    ocelot->num_phys_ports,
 							    false);
-	if (!redirect_rule)
-		return -ENOENT;
+	अगर (!redirect_rule)
+		वापस -ENOENT;
 
-	return ocelot_vcap_filter_del(ocelot, redirect_rule);
-}
+	वापस ocelot_vcap_filter_del(ocelot, redirect_rule);
+पूर्ण
 
-static int felix_setup_tag_8021q(struct dsa_switch *ds, int cpu)
-{
-	struct ocelot *ocelot = ds->priv;
-	struct felix *felix = ocelot_to_felix(ocelot);
-	unsigned long cpu_flood;
-	int port, err;
+अटल पूर्णांक felix_setup_tag_8021q(काष्ठा dsa_चयन *ds, पूर्णांक cpu)
+अणु
+	काष्ठा ocelot *ocelot = ds->priv;
+	काष्ठा felix *felix = ocelot_to_felix(ocelot);
+	अचिन्हित दीर्घ cpu_flood;
+	पूर्णांक port, err;
 
 	felix_8021q_cpu_port_init(ocelot, cpu);
 
-	for (port = 0; port < ds->num_ports; port++) {
-		if (dsa_is_unused_port(ds, port))
-			continue;
+	क्रम (port = 0; port < ds->num_ports; port++) अणु
+		अगर (dsa_is_unused_port(ds, port))
+			जारी;
 
-		/* This overwrites ocelot_init():
-		 * Do not forward BPDU frames to the CPU port module,
-		 * for 2 reasons:
+		/* This overग_लिखोs ocelot_init():
+		 * Do not क्रमward BPDU frames to the CPU port module,
+		 * क्रम 2 reasons:
 		 * - When these packets are injected from the tag_8021q
 		 *   CPU port, we want them to go out, not loop back
-		 *   into the system.
+		 *   पूर्णांकo the प्रणाली.
 		 * - STP traffic ingressing on a user port should go to
 		 *   the tag_8021q CPU port, not to the hardware CPU
 		 *   port module.
 		 */
-		ocelot_write_gix(ocelot,
-				 ANA_PORT_CPU_FWD_BPDU_CFG_BPDU_REDIR_ENA(0),
+		ocelot_ग_लिखो_gix(ocelot,
+				 ANA_PORT_CPU_FWD_BPDU_CFG_BPDU_REसूची_ENA(0),
 				 ANA_PORT_CPU_FWD_BPDU_CFG, port);
-	}
+	पूर्ण
 
-	/* In tag_8021q mode, the CPU port module is unused, except for PTP
+	/* In tag_8021q mode, the CPU port module is unused, except क्रम PTP
 	 * frames. So we want to disable flooding of any kind to the CPU port
 	 * module, since packets going there will end in a black hole.
 	 */
@@ -425,546 +426,546 @@ static int felix_setup_tag_8021q(struct dsa_switch *ds, int cpu)
 	ocelot_rmw_rix(ocelot, 0, cpu_flood, ANA_PGID_PGID, PGID_MC);
 	ocelot_rmw_rix(ocelot, 0, cpu_flood, ANA_PGID_PGID, PGID_BC);
 
-	felix->dsa_8021q_ctx = kzalloc(sizeof(*felix->dsa_8021q_ctx),
+	felix->dsa_8021q_ctx = kzalloc(माप(*felix->dsa_8021q_ctx),
 				       GFP_KERNEL);
-	if (!felix->dsa_8021q_ctx)
-		return -ENOMEM;
+	अगर (!felix->dsa_8021q_ctx)
+		वापस -ENOMEM;
 
 	felix->dsa_8021q_ctx->ops = &felix_tag_8021q_ops;
 	felix->dsa_8021q_ctx->proto = htons(ETH_P_8021AD);
 	felix->dsa_8021q_ctx->ds = ds;
 
 	err = dsa_8021q_setup(felix->dsa_8021q_ctx, true);
-	if (err)
-		goto out_free_dsa_8021_ctx;
+	अगर (err)
+		जाओ out_मुक्त_dsa_8021_ctx;
 
 	err = felix_setup_mmio_filtering(felix);
-	if (err)
-		goto out_teardown_dsa_8021q;
+	अगर (err)
+		जाओ out_tearकरोwn_dsa_8021q;
 
-	return 0;
+	वापस 0;
 
-out_teardown_dsa_8021q:
+out_tearकरोwn_dsa_8021q:
 	dsa_8021q_setup(felix->dsa_8021q_ctx, false);
-out_free_dsa_8021_ctx:
-	kfree(felix->dsa_8021q_ctx);
-	return err;
-}
+out_मुक्त_dsa_8021_ctx:
+	kमुक्त(felix->dsa_8021q_ctx);
+	वापस err;
+पूर्ण
 
-static void felix_teardown_tag_8021q(struct dsa_switch *ds, int cpu)
-{
-	struct ocelot *ocelot = ds->priv;
-	struct felix *felix = ocelot_to_felix(ocelot);
-	int err, port;
+अटल व्योम felix_tearकरोwn_tag_8021q(काष्ठा dsa_चयन *ds, पूर्णांक cpu)
+अणु
+	काष्ठा ocelot *ocelot = ds->priv;
+	काष्ठा felix *felix = ocelot_to_felix(ocelot);
+	पूर्णांक err, port;
 
-	err = felix_teardown_mmio_filtering(felix);
-	if (err)
+	err = felix_tearकरोwn_mmio_filtering(felix);
+	अगर (err)
 		dev_err(ds->dev, "felix_teardown_mmio_filtering returned %d",
 			err);
 
 	err = dsa_8021q_setup(felix->dsa_8021q_ctx, false);
-	if (err)
+	अगर (err)
 		dev_err(ds->dev, "dsa_8021q_setup returned %d", err);
 
-	kfree(felix->dsa_8021q_ctx);
+	kमुक्त(felix->dsa_8021q_ctx);
 
-	for (port = 0; port < ds->num_ports; port++) {
-		if (dsa_is_unused_port(ds, port))
-			continue;
+	क्रम (port = 0; port < ds->num_ports; port++) अणु
+		अगर (dsa_is_unused_port(ds, port))
+			जारी;
 
 		/* Restore the logic from ocelot_init:
-		 * do not forward BPDU frames to the front ports.
+		 * करो not क्रमward BPDU frames to the front ports.
 		 */
-		ocelot_write_gix(ocelot,
-				 ANA_PORT_CPU_FWD_BPDU_CFG_BPDU_REDIR_ENA(0xffff),
+		ocelot_ग_लिखो_gix(ocelot,
+				 ANA_PORT_CPU_FWD_BPDU_CFG_BPDU_REसूची_ENA(0xffff),
 				 ANA_PORT_CPU_FWD_BPDU_CFG,
 				 port);
-	}
+	पूर्ण
 
 	felix_8021q_cpu_port_deinit(ocelot, cpu);
-}
+पूर्ण
 
 /* The CPU port module is connected to the Node Processor Interface (NPI). This
  * is the mode through which frames can be injected from and extracted to an
- * external CPU, over Ethernet. In NXP SoCs, the "external CPU" is the ARM CPU
- * running Linux, and this forms a DSA setup together with the enetc or fman
+ * बाह्यal CPU, over Ethernet. In NXP SoCs, the "external CPU" is the ARM CPU
+ * running Linux, and this क्रमms a DSA setup together with the enetc or fman
  * DSA master.
  */
-static void felix_npi_port_init(struct ocelot *ocelot, int port)
-{
+अटल व्योम felix_npi_port_init(काष्ठा ocelot *ocelot, पूर्णांक port)
+अणु
 	ocelot->npi = port;
 
-	ocelot_write(ocelot, QSYS_EXT_CPU_CFG_EXT_CPUQ_MSK_M |
+	ocelot_ग_लिखो(ocelot, QSYS_EXT_CPU_CFG_EXT_CPUQ_MSK_M |
 		     QSYS_EXT_CPU_CFG_EXT_CPU_PORT(port),
 		     QSYS_EXT_CPU_CFG);
 
 	/* NPI port Injection/Extraction configuration */
-	ocelot_fields_write(ocelot, port, SYS_PORT_MODE_INCL_XTR_HDR,
+	ocelot_fields_ग_लिखो(ocelot, port, SYS_PORT_MODE_INCL_XTR_HDR,
 			    ocelot->npi_xtr_prefix);
-	ocelot_fields_write(ocelot, port, SYS_PORT_MODE_INCL_INJ_HDR,
+	ocelot_fields_ग_लिखो(ocelot, port, SYS_PORT_MODE_INCL_INJ_HDR,
 			    ocelot->npi_inj_prefix);
 
-	/* Disable transmission of pause frames */
-	ocelot_fields_write(ocelot, port, SYS_PAUSE_CFG_PAUSE_ENA, 0);
-}
+	/* Disable transmission of छोड़ो frames */
+	ocelot_fields_ग_लिखो(ocelot, port, SYS_PAUSE_CFG_PAUSE_ENA, 0);
+पूर्ण
 
-static void felix_npi_port_deinit(struct ocelot *ocelot, int port)
-{
-	/* Restore hardware defaults */
-	int unused_port = ocelot->num_phys_ports + 2;
+अटल व्योम felix_npi_port_deinit(काष्ठा ocelot *ocelot, पूर्णांक port)
+अणु
+	/* Restore hardware शेषs */
+	पूर्णांक unused_port = ocelot->num_phys_ports + 2;
 
 	ocelot->npi = -1;
 
-	ocelot_write(ocelot, QSYS_EXT_CPU_CFG_EXT_CPU_PORT(unused_port),
+	ocelot_ग_लिखो(ocelot, QSYS_EXT_CPU_CFG_EXT_CPU_PORT(unused_port),
 		     QSYS_EXT_CPU_CFG);
 
-	ocelot_fields_write(ocelot, port, SYS_PORT_MODE_INCL_XTR_HDR,
+	ocelot_fields_ग_लिखो(ocelot, port, SYS_PORT_MODE_INCL_XTR_HDR,
 			    OCELOT_TAG_PREFIX_DISABLED);
-	ocelot_fields_write(ocelot, port, SYS_PORT_MODE_INCL_INJ_HDR,
+	ocelot_fields_ग_लिखो(ocelot, port, SYS_PORT_MODE_INCL_INJ_HDR,
 			    OCELOT_TAG_PREFIX_DISABLED);
 
-	/* Enable transmission of pause frames */
-	ocelot_fields_write(ocelot, port, SYS_PAUSE_CFG_PAUSE_ENA, 1);
-}
+	/* Enable transmission of छोड़ो frames */
+	ocelot_fields_ग_लिखो(ocelot, port, SYS_PAUSE_CFG_PAUSE_ENA, 1);
+पूर्ण
 
-static int felix_setup_tag_npi(struct dsa_switch *ds, int cpu)
-{
-	struct ocelot *ocelot = ds->priv;
-	unsigned long cpu_flood;
+अटल पूर्णांक felix_setup_tag_npi(काष्ठा dsa_चयन *ds, पूर्णांक cpu)
+अणु
+	काष्ठा ocelot *ocelot = ds->priv;
+	अचिन्हित दीर्घ cpu_flood;
 
 	felix_npi_port_init(ocelot, cpu);
 
 	/* Include the CPU port module (and indirectly, the NPI port)
-	 * in the forwarding mask for unknown unicast - the hardware
-	 * default value for ANA_FLOODING_FLD_UNICAST excludes
-	 * BIT(ocelot->num_phys_ports), and so does ocelot_init,
+	 * in the क्रमwarding mask क्रम unknown unicast - the hardware
+	 * शेष value क्रम ANA_FLOODING_FLD_UNICAST excludes
+	 * BIT(ocelot->num_phys_ports), and so करोes ocelot_init,
 	 * since Ocelot relies on whitelisting MAC addresses towards
 	 * PGID_CPU.
-	 * We do this because DSA does not yet perform RX filtering,
-	 * and the NPI port does not perform source address learning,
+	 * We करो this because DSA करोes not yet perक्रमm RX filtering,
+	 * and the NPI port करोes not perक्रमm source address learning,
 	 * so traffic sent to Linux is effectively unknown from the
-	 * switch's perspective.
+	 * चयन's perspective.
 	 */
 	cpu_flood = ANA_PGID_PGID_PGID(BIT(ocelot->num_phys_ports));
 	ocelot_rmw_rix(ocelot, cpu_flood, cpu_flood, ANA_PGID_PGID, PGID_UC);
 	ocelot_rmw_rix(ocelot, cpu_flood, cpu_flood, ANA_PGID_PGID, PGID_MC);
 	ocelot_rmw_rix(ocelot, cpu_flood, cpu_flood, ANA_PGID_PGID, PGID_BC);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void felix_teardown_tag_npi(struct dsa_switch *ds, int cpu)
-{
-	struct ocelot *ocelot = ds->priv;
+अटल व्योम felix_tearकरोwn_tag_npi(काष्ठा dsa_चयन *ds, पूर्णांक cpu)
+अणु
+	काष्ठा ocelot *ocelot = ds->priv;
 
 	felix_npi_port_deinit(ocelot, cpu);
-}
+पूर्ण
 
-static int felix_set_tag_protocol(struct dsa_switch *ds, int cpu,
-				  enum dsa_tag_protocol proto)
-{
-	int err;
+अटल पूर्णांक felix_set_tag_protocol(काष्ठा dsa_चयन *ds, पूर्णांक cpu,
+				  क्रमागत dsa_tag_protocol proto)
+अणु
+	पूर्णांक err;
 
-	switch (proto) {
-	case DSA_TAG_PROTO_SEVILLE:
-	case DSA_TAG_PROTO_OCELOT:
+	चयन (proto) अणु
+	हाल DSA_TAG_PROTO_SEVILLE:
+	हाल DSA_TAG_PROTO_OCELOT:
 		err = felix_setup_tag_npi(ds, cpu);
-		break;
-	case DSA_TAG_PROTO_OCELOT_8021Q:
+		अवरोध;
+	हाल DSA_TAG_PROTO_OCELOT_8021Q:
 		err = felix_setup_tag_8021q(ds, cpu);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		err = -EPROTONOSUPPORT;
-	}
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void felix_del_tag_protocol(struct dsa_switch *ds, int cpu,
-				   enum dsa_tag_protocol proto)
-{
-	switch (proto) {
-	case DSA_TAG_PROTO_SEVILLE:
-	case DSA_TAG_PROTO_OCELOT:
-		felix_teardown_tag_npi(ds, cpu);
-		break;
-	case DSA_TAG_PROTO_OCELOT_8021Q:
-		felix_teardown_tag_8021q(ds, cpu);
-		break;
-	default:
-		break;
-	}
-}
+अटल व्योम felix_del_tag_protocol(काष्ठा dsa_चयन *ds, पूर्णांक cpu,
+				   क्रमागत dsa_tag_protocol proto)
+अणु
+	चयन (proto) अणु
+	हाल DSA_TAG_PROTO_SEVILLE:
+	हाल DSA_TAG_PROTO_OCELOT:
+		felix_tearकरोwn_tag_npi(ds, cpu);
+		अवरोध;
+	हाल DSA_TAG_PROTO_OCELOT_8021Q:
+		felix_tearकरोwn_tag_8021q(ds, cpu);
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-/* This always leaves the switch in a consistent state, because although the
+/* This always leaves the चयन in a consistent state, because although the
  * tag_8021q setup can fail, the NPI setup can't. So either the change is made,
  * or the restoration is guaranteed to work.
  */
-static int felix_change_tag_protocol(struct dsa_switch *ds, int cpu,
-				     enum dsa_tag_protocol proto)
-{
-	struct ocelot *ocelot = ds->priv;
-	struct felix *felix = ocelot_to_felix(ocelot);
-	enum dsa_tag_protocol old_proto = felix->tag_proto;
-	int err;
+अटल पूर्णांक felix_change_tag_protocol(काष्ठा dsa_चयन *ds, पूर्णांक cpu,
+				     क्रमागत dsa_tag_protocol proto)
+अणु
+	काष्ठा ocelot *ocelot = ds->priv;
+	काष्ठा felix *felix = ocelot_to_felix(ocelot);
+	क्रमागत dsa_tag_protocol old_proto = felix->tag_proto;
+	पूर्णांक err;
 
-	if (proto != DSA_TAG_PROTO_SEVILLE &&
+	अगर (proto != DSA_TAG_PROTO_SEVILLE &&
 	    proto != DSA_TAG_PROTO_OCELOT &&
 	    proto != DSA_TAG_PROTO_OCELOT_8021Q)
-		return -EPROTONOSUPPORT;
+		वापस -EPROTONOSUPPORT;
 
 	felix_del_tag_protocol(ds, cpu, old_proto);
 
 	err = felix_set_tag_protocol(ds, cpu, proto);
-	if (err) {
+	अगर (err) अणु
 		felix_set_tag_protocol(ds, cpu, old_proto);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
 	felix->tag_proto = proto;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static enum dsa_tag_protocol felix_get_tag_protocol(struct dsa_switch *ds,
-						    int port,
-						    enum dsa_tag_protocol mp)
-{
-	struct ocelot *ocelot = ds->priv;
-	struct felix *felix = ocelot_to_felix(ocelot);
+अटल क्रमागत dsa_tag_protocol felix_get_tag_protocol(काष्ठा dsa_चयन *ds,
+						    पूर्णांक port,
+						    क्रमागत dsa_tag_protocol mp)
+अणु
+	काष्ठा ocelot *ocelot = ds->priv;
+	काष्ठा felix *felix = ocelot_to_felix(ocelot);
 
-	return felix->tag_proto;
-}
+	वापस felix->tag_proto;
+पूर्ण
 
-static int felix_set_ageing_time(struct dsa_switch *ds,
-				 unsigned int ageing_time)
-{
-	struct ocelot *ocelot = ds->priv;
+अटल पूर्णांक felix_set_ageing_समय(काष्ठा dsa_चयन *ds,
+				 अचिन्हित पूर्णांक ageing_समय)
+अणु
+	काष्ठा ocelot *ocelot = ds->priv;
 
-	ocelot_set_ageing_time(ocelot, ageing_time);
+	ocelot_set_ageing_समय(ocelot, ageing_समय);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int felix_fdb_dump(struct dsa_switch *ds, int port,
-			  dsa_fdb_dump_cb_t *cb, void *data)
-{
-	struct ocelot *ocelot = ds->priv;
+अटल पूर्णांक felix_fdb_dump(काष्ठा dsa_चयन *ds, पूर्णांक port,
+			  dsa_fdb_dump_cb_t *cb, व्योम *data)
+अणु
+	काष्ठा ocelot *ocelot = ds->priv;
 
-	return ocelot_fdb_dump(ocelot, port, cb, data);
-}
+	वापस ocelot_fdb_dump(ocelot, port, cb, data);
+पूर्ण
 
-static int felix_fdb_add(struct dsa_switch *ds, int port,
-			 const unsigned char *addr, u16 vid)
-{
-	struct ocelot *ocelot = ds->priv;
+अटल पूर्णांक felix_fdb_add(काष्ठा dsa_चयन *ds, पूर्णांक port,
+			 स्थिर अचिन्हित अक्षर *addr, u16 vid)
+अणु
+	काष्ठा ocelot *ocelot = ds->priv;
 
-	return ocelot_fdb_add(ocelot, port, addr, vid);
-}
+	वापस ocelot_fdb_add(ocelot, port, addr, vid);
+पूर्ण
 
-static int felix_fdb_del(struct dsa_switch *ds, int port,
-			 const unsigned char *addr, u16 vid)
-{
-	struct ocelot *ocelot = ds->priv;
+अटल पूर्णांक felix_fdb_del(काष्ठा dsa_चयन *ds, पूर्णांक port,
+			 स्थिर अचिन्हित अक्षर *addr, u16 vid)
+अणु
+	काष्ठा ocelot *ocelot = ds->priv;
 
-	return ocelot_fdb_del(ocelot, port, addr, vid);
-}
+	वापस ocelot_fdb_del(ocelot, port, addr, vid);
+पूर्ण
 
-static int felix_mdb_add(struct dsa_switch *ds, int port,
-			 const struct switchdev_obj_port_mdb *mdb)
-{
-	struct ocelot *ocelot = ds->priv;
+अटल पूर्णांक felix_mdb_add(काष्ठा dsa_चयन *ds, पूर्णांक port,
+			 स्थिर काष्ठा चयनdev_obj_port_mdb *mdb)
+अणु
+	काष्ठा ocelot *ocelot = ds->priv;
 
-	return ocelot_port_mdb_add(ocelot, port, mdb);
-}
+	वापस ocelot_port_mdb_add(ocelot, port, mdb);
+पूर्ण
 
-static int felix_mdb_del(struct dsa_switch *ds, int port,
-			 const struct switchdev_obj_port_mdb *mdb)
-{
-	struct ocelot *ocelot = ds->priv;
+अटल पूर्णांक felix_mdb_del(काष्ठा dsa_चयन *ds, पूर्णांक port,
+			 स्थिर काष्ठा चयनdev_obj_port_mdb *mdb)
+अणु
+	काष्ठा ocelot *ocelot = ds->priv;
 
-	return ocelot_port_mdb_del(ocelot, port, mdb);
-}
+	वापस ocelot_port_mdb_del(ocelot, port, mdb);
+पूर्ण
 
-static void felix_bridge_stp_state_set(struct dsa_switch *ds, int port,
+अटल व्योम felix_bridge_stp_state_set(काष्ठा dsa_चयन *ds, पूर्णांक port,
 				       u8 state)
-{
-	struct ocelot *ocelot = ds->priv;
+अणु
+	काष्ठा ocelot *ocelot = ds->priv;
 
-	return ocelot_bridge_stp_state_set(ocelot, port, state);
-}
+	वापस ocelot_bridge_stp_state_set(ocelot, port, state);
+पूर्ण
 
-static int felix_pre_bridge_flags(struct dsa_switch *ds, int port,
-				  struct switchdev_brport_flags val,
-				  struct netlink_ext_ack *extack)
-{
-	struct ocelot *ocelot = ds->priv;
+अटल पूर्णांक felix_pre_bridge_flags(काष्ठा dsa_चयन *ds, पूर्णांक port,
+				  काष्ठा चयनdev_brport_flags val,
+				  काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा ocelot *ocelot = ds->priv;
 
-	return ocelot_port_pre_bridge_flags(ocelot, port, val);
-}
+	वापस ocelot_port_pre_bridge_flags(ocelot, port, val);
+पूर्ण
 
-static int felix_bridge_flags(struct dsa_switch *ds, int port,
-			      struct switchdev_brport_flags val,
-			      struct netlink_ext_ack *extack)
-{
-	struct ocelot *ocelot = ds->priv;
+अटल पूर्णांक felix_bridge_flags(काष्ठा dsa_चयन *ds, पूर्णांक port,
+			      काष्ठा चयनdev_brport_flags val,
+			      काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा ocelot *ocelot = ds->priv;
 
 	ocelot_port_bridge_flags(ocelot, port, val);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int felix_bridge_join(struct dsa_switch *ds, int port,
-			     struct net_device *br)
-{
-	struct ocelot *ocelot = ds->priv;
+अटल पूर्णांक felix_bridge_join(काष्ठा dsa_चयन *ds, पूर्णांक port,
+			     काष्ठा net_device *br)
+अणु
+	काष्ठा ocelot *ocelot = ds->priv;
 
 	ocelot_port_bridge_join(ocelot, port, br);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void felix_bridge_leave(struct dsa_switch *ds, int port,
-			       struct net_device *br)
-{
-	struct ocelot *ocelot = ds->priv;
+अटल व्योम felix_bridge_leave(काष्ठा dsa_चयन *ds, पूर्णांक port,
+			       काष्ठा net_device *br)
+अणु
+	काष्ठा ocelot *ocelot = ds->priv;
 
 	ocelot_port_bridge_leave(ocelot, port, br);
-}
+पूर्ण
 
-static int felix_lag_join(struct dsa_switch *ds, int port,
-			  struct net_device *bond,
-			  struct netdev_lag_upper_info *info)
-{
-	struct ocelot *ocelot = ds->priv;
+अटल पूर्णांक felix_lag_join(काष्ठा dsa_चयन *ds, पूर्णांक port,
+			  काष्ठा net_device *bond,
+			  काष्ठा netdev_lag_upper_info *info)
+अणु
+	काष्ठा ocelot *ocelot = ds->priv;
 
-	return ocelot_port_lag_join(ocelot, port, bond, info);
-}
+	वापस ocelot_port_lag_join(ocelot, port, bond, info);
+पूर्ण
 
-static int felix_lag_leave(struct dsa_switch *ds, int port,
-			   struct net_device *bond)
-{
-	struct ocelot *ocelot = ds->priv;
+अटल पूर्णांक felix_lag_leave(काष्ठा dsa_चयन *ds, पूर्णांक port,
+			   काष्ठा net_device *bond)
+अणु
+	काष्ठा ocelot *ocelot = ds->priv;
 
 	ocelot_port_lag_leave(ocelot, port, bond);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int felix_lag_change(struct dsa_switch *ds, int port)
-{
-	struct dsa_port *dp = dsa_to_port(ds, port);
-	struct ocelot *ocelot = ds->priv;
+अटल पूर्णांक felix_lag_change(काष्ठा dsa_चयन *ds, पूर्णांक port)
+अणु
+	काष्ठा dsa_port *dp = dsa_to_port(ds, port);
+	काष्ठा ocelot *ocelot = ds->priv;
 
 	ocelot_port_lag_change(ocelot, port, dp->lag_tx_enabled);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int felix_vlan_prepare(struct dsa_switch *ds, int port,
-			      const struct switchdev_obj_port_vlan *vlan)
-{
-	struct ocelot *ocelot = ds->priv;
+अटल पूर्णांक felix_vlan_prepare(काष्ठा dsa_चयन *ds, पूर्णांक port,
+			      स्थिर काष्ठा चयनdev_obj_port_vlan *vlan)
+अणु
+	काष्ठा ocelot *ocelot = ds->priv;
 	u16 flags = vlan->flags;
 
-	/* Ocelot switches copy frames as-is to the CPU, so the flags:
-	 * egress-untagged or not, pvid or not, make no difference. This
-	 * behavior is already better than what DSA just tries to approximate
+	/* Ocelot चयनes copy frames as-is to the CPU, so the flags:
+	 * egress-untagged or not, pvid or not, make no dअगरference. This
+	 * behavior is alपढ़ोy better than what DSA just tries to approximate
 	 * when it installs the VLAN with the same flags on the CPU port.
-	 * Just accept any configuration, and don't let ocelot deny installing
-	 * multiple native VLANs on the NPI port, because the switch doesn't
-	 * look at the port tag settings towards the NPI interface anyway.
+	 * Just accept any configuration, and करोn't let ocelot deny installing
+	 * multiple native VLANs on the NPI port, because the चयन करोesn't
+	 * look at the port tag settings towards the NPI पूर्णांकerface anyway.
 	 */
-	if (port == ocelot->npi)
-		return 0;
+	अगर (port == ocelot->npi)
+		वापस 0;
 
-	return ocelot_vlan_prepare(ocelot, port, vlan->vid,
+	वापस ocelot_vlan_prepare(ocelot, port, vlan->vid,
 				   flags & BRIDGE_VLAN_INFO_PVID,
 				   flags & BRIDGE_VLAN_INFO_UNTAGGED);
-}
+पूर्ण
 
-static int felix_vlan_filtering(struct dsa_switch *ds, int port, bool enabled,
-				struct netlink_ext_ack *extack)
-{
-	struct ocelot *ocelot = ds->priv;
+अटल पूर्णांक felix_vlan_filtering(काष्ठा dsa_चयन *ds, पूर्णांक port, bool enabled,
+				काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा ocelot *ocelot = ds->priv;
 
-	return ocelot_port_vlan_filtering(ocelot, port, enabled);
-}
+	वापस ocelot_port_vlan_filtering(ocelot, port, enabled);
+पूर्ण
 
-static int felix_vlan_add(struct dsa_switch *ds, int port,
-			  const struct switchdev_obj_port_vlan *vlan,
-			  struct netlink_ext_ack *extack)
-{
-	struct ocelot *ocelot = ds->priv;
+अटल पूर्णांक felix_vlan_add(काष्ठा dsa_चयन *ds, पूर्णांक port,
+			  स्थिर काष्ठा चयनdev_obj_port_vlan *vlan,
+			  काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा ocelot *ocelot = ds->priv;
 	u16 flags = vlan->flags;
-	int err;
+	पूर्णांक err;
 
 	err = felix_vlan_prepare(ds, port, vlan);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	return ocelot_vlan_add(ocelot, port, vlan->vid,
+	वापस ocelot_vlan_add(ocelot, port, vlan->vid,
 			       flags & BRIDGE_VLAN_INFO_PVID,
 			       flags & BRIDGE_VLAN_INFO_UNTAGGED);
-}
+पूर्ण
 
-static int felix_vlan_del(struct dsa_switch *ds, int port,
-			  const struct switchdev_obj_port_vlan *vlan)
-{
-	struct ocelot *ocelot = ds->priv;
+अटल पूर्णांक felix_vlan_del(काष्ठा dsa_चयन *ds, पूर्णांक port,
+			  स्थिर काष्ठा चयनdev_obj_port_vlan *vlan)
+अणु
+	काष्ठा ocelot *ocelot = ds->priv;
 
-	return ocelot_vlan_del(ocelot, port, vlan->vid);
-}
+	वापस ocelot_vlan_del(ocelot, port, vlan->vid);
+पूर्ण
 
-static int felix_port_enable(struct dsa_switch *ds, int port,
-			     struct phy_device *phy)
-{
-	struct ocelot *ocelot = ds->priv;
+अटल पूर्णांक felix_port_enable(काष्ठा dsa_चयन *ds, पूर्णांक port,
+			     काष्ठा phy_device *phy)
+अणु
+	काष्ठा ocelot *ocelot = ds->priv;
 
 	ocelot_port_enable(ocelot, port, phy);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void felix_port_disable(struct dsa_switch *ds, int port)
-{
-	struct ocelot *ocelot = ds->priv;
+अटल व्योम felix_port_disable(काष्ठा dsa_चयन *ds, पूर्णांक port)
+अणु
+	काष्ठा ocelot *ocelot = ds->priv;
 
-	return ocelot_port_disable(ocelot, port);
-}
+	वापस ocelot_port_disable(ocelot, port);
+पूर्ण
 
-static void felix_phylink_validate(struct dsa_switch *ds, int port,
-				   unsigned long *supported,
-				   struct phylink_link_state *state)
-{
-	struct ocelot *ocelot = ds->priv;
-	struct felix *felix = ocelot_to_felix(ocelot);
+अटल व्योम felix_phylink_validate(काष्ठा dsa_चयन *ds, पूर्णांक port,
+				   अचिन्हित दीर्घ *supported,
+				   काष्ठा phylink_link_state *state)
+अणु
+	काष्ठा ocelot *ocelot = ds->priv;
+	काष्ठा felix *felix = ocelot_to_felix(ocelot);
 
-	if (felix->info->phylink_validate)
+	अगर (felix->info->phylink_validate)
 		felix->info->phylink_validate(ocelot, port, supported, state);
-}
+पूर्ण
 
-static void felix_phylink_mac_config(struct dsa_switch *ds, int port,
-				     unsigned int link_an_mode,
-				     const struct phylink_link_state *state)
-{
-	struct ocelot *ocelot = ds->priv;
-	struct felix *felix = ocelot_to_felix(ocelot);
-	struct dsa_port *dp = dsa_to_port(ds, port);
+अटल व्योम felix_phylink_mac_config(काष्ठा dsa_चयन *ds, पूर्णांक port,
+				     अचिन्हित पूर्णांक link_an_mode,
+				     स्थिर काष्ठा phylink_link_state *state)
+अणु
+	काष्ठा ocelot *ocelot = ds->priv;
+	काष्ठा felix *felix = ocelot_to_felix(ocelot);
+	काष्ठा dsa_port *dp = dsa_to_port(ds, port);
 
-	if (felix->pcs[port])
+	अगर (felix->pcs[port])
 		phylink_set_pcs(dp->pl, &felix->pcs[port]->pcs);
-}
+पूर्ण
 
-static void felix_phylink_mac_link_down(struct dsa_switch *ds, int port,
-					unsigned int link_an_mode,
-					phy_interface_t interface)
-{
-	struct ocelot *ocelot = ds->priv;
-	struct ocelot_port *ocelot_port = ocelot->ports[port];
-	int err;
+अटल व्योम felix_phylink_mac_link_करोwn(काष्ठा dsa_चयन *ds, पूर्णांक port,
+					अचिन्हित पूर्णांक link_an_mode,
+					phy_पूर्णांकerface_t पूर्णांकerface)
+अणु
+	काष्ठा ocelot *ocelot = ds->priv;
+	काष्ठा ocelot_port *ocelot_port = ocelot->ports[port];
+	पूर्णांक err;
 
 	ocelot_port_rmwl(ocelot_port, 0, DEV_MAC_ENA_CFG_RX_ENA,
 			 DEV_MAC_ENA_CFG);
 
-	ocelot_fields_write(ocelot, port, QSYS_SWITCH_PORT_MODE_PORT_ENA, 0);
+	ocelot_fields_ग_लिखो(ocelot, port, QSYS_SWITCH_PORT_MODE_PORT_ENA, 0);
 
 	err = ocelot_port_flush(ocelot, port);
-	if (err)
+	अगर (err)
 		dev_err(ocelot->dev, "failed to flush port %d: %d\n",
 			port, err);
 
 	/* Put the port in reset. */
-	ocelot_port_writel(ocelot_port,
+	ocelot_port_ग_लिखोl(ocelot_port,
 			   DEV_CLOCK_CFG_MAC_TX_RST |
 			   DEV_CLOCK_CFG_MAC_RX_RST |
 			   DEV_CLOCK_CFG_LINK_SPEED(OCELOT_SPEED_1000),
 			   DEV_CLOCK_CFG);
-}
+पूर्ण
 
-static void felix_phylink_mac_link_up(struct dsa_switch *ds, int port,
-				      unsigned int link_an_mode,
-				      phy_interface_t interface,
-				      struct phy_device *phydev,
-				      int speed, int duplex,
-				      bool tx_pause, bool rx_pause)
-{
-	struct ocelot *ocelot = ds->priv;
-	struct ocelot_port *ocelot_port = ocelot->ports[port];
-	struct felix *felix = ocelot_to_felix(ocelot);
+अटल व्योम felix_phylink_mac_link_up(काष्ठा dsa_चयन *ds, पूर्णांक port,
+				      अचिन्हित पूर्णांक link_an_mode,
+				      phy_पूर्णांकerface_t पूर्णांकerface,
+				      काष्ठा phy_device *phydev,
+				      पूर्णांक speed, पूर्णांक duplex,
+				      bool tx_छोड़ो, bool rx_छोड़ो)
+अणु
+	काष्ठा ocelot *ocelot = ds->priv;
+	काष्ठा ocelot_port *ocelot_port = ocelot->ports[port];
+	काष्ठा felix *felix = ocelot_to_felix(ocelot);
 	u32 mac_fc_cfg;
 
 	/* Take port out of reset by clearing the MAC_TX_RST, MAC_RX_RST and
-	 * PORT_RST bits in DEV_CLOCK_CFG. Note that the way this system is
-	 * integrated is that the MAC speed is fixed and it's the PCS who is
-	 * performing the rate adaptation, so we have to write "1000Mbps" into
-	 * the LINK_SPEED field of DEV_CLOCK_CFG (which is also its default
+	 * PORT_RST bits in DEV_CLOCK_CFG. Note that the way this प्रणाली is
+	 * पूर्णांकegrated is that the MAC speed is fixed and it's the PCS who is
+	 * perक्रमming the rate adaptation, so we have to ग_लिखो "1000Mbps" पूर्णांकo
+	 * the LINK_SPEED field of DEV_CLOCK_CFG (which is also its शेष
 	 * value).
 	 */
-	ocelot_port_writel(ocelot_port,
+	ocelot_port_ग_लिखोl(ocelot_port,
 			   DEV_CLOCK_CFG_LINK_SPEED(OCELOT_SPEED_1000),
 			   DEV_CLOCK_CFG);
 
-	switch (speed) {
-	case SPEED_10:
+	चयन (speed) अणु
+	हाल SPEED_10:
 		mac_fc_cfg = SYS_MAC_FC_CFG_FC_LINK_SPEED(3);
-		break;
-	case SPEED_100:
+		अवरोध;
+	हाल SPEED_100:
 		mac_fc_cfg = SYS_MAC_FC_CFG_FC_LINK_SPEED(2);
-		break;
-	case SPEED_1000:
-	case SPEED_2500:
+		अवरोध;
+	हाल SPEED_1000:
+	हाल SPEED_2500:
 		mac_fc_cfg = SYS_MAC_FC_CFG_FC_LINK_SPEED(1);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		dev_err(ocelot->dev, "Unsupported speed on port %d: %d\n",
 			port, speed);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	/* handle Rx pause in all cases, with 2500base-X this is used for rate
+	/* handle Rx छोड़ो in all हालs, with 2500base-X this is used क्रम rate
 	 * adaptation.
 	 */
 	mac_fc_cfg |= SYS_MAC_FC_CFG_RX_FC_ENA;
 
-	if (tx_pause)
+	अगर (tx_छोड़ो)
 		mac_fc_cfg |= SYS_MAC_FC_CFG_TX_FC_ENA |
 			      SYS_MAC_FC_CFG_PAUSE_VAL_CFG(0xffff) |
 			      SYS_MAC_FC_CFG_FC_LATENCY_CFG(0x7) |
 			      SYS_MAC_FC_CFG_ZERO_PAUSE_ENA;
 
-	/* Flow control. Link speed is only used here to evaluate the time
-	 * specification in incoming pause frames.
+	/* Flow control. Link speed is only used here to evaluate the समय
+	 * specअगरication in incoming छोड़ो frames.
 	 */
-	ocelot_write_rix(ocelot, mac_fc_cfg, SYS_MAC_FC_CFG, port);
+	ocelot_ग_लिखो_rix(ocelot, mac_fc_cfg, SYS_MAC_FC_CFG, port);
 
-	ocelot_write_rix(ocelot, 0, ANA_POL_FLOWC, port);
+	ocelot_ग_लिखो_rix(ocelot, 0, ANA_POL_FLOWC, port);
 
-	/* Undo the effects of felix_phylink_mac_link_down:
+	/* Unकरो the effects of felix_phylink_mac_link_करोwn:
 	 * enable MAC module
 	 */
-	ocelot_port_writel(ocelot_port, DEV_MAC_ENA_CFG_RX_ENA |
+	ocelot_port_ग_लिखोl(ocelot_port, DEV_MAC_ENA_CFG_RX_ENA |
 			   DEV_MAC_ENA_CFG_TX_ENA, DEV_MAC_ENA_CFG);
 
-	/* Enable receiving frames on the port, and activate auto-learning of
+	/* Enable receiving frames on the port, and activate स्वतः-learning of
 	 * MAC addresses.
 	 */
-	ocelot_write_gix(ocelot, ANA_PORT_PORT_CFG_LEARNAUTO |
+	ocelot_ग_लिखो_gix(ocelot, ANA_PORT_PORT_CFG_LEARNAUTO |
 			 ANA_PORT_PORT_CFG_RECV_ENA |
 			 ANA_PORT_PORT_CFG_PORTID_VAL(port),
 			 ANA_PORT_PORT_CFG, port);
 
-	/* Core: Enable port for frame transfer */
-	ocelot_fields_write(ocelot, port,
+	/* Core: Enable port क्रम frame transfer */
+	ocelot_fields_ग_लिखो(ocelot, port,
 			    QSYS_SWITCH_PORT_MODE_PORT_ENA, 1);
 
-	if (felix->info->port_sched_speed_set)
+	अगर (felix->info->port_sched_speed_set)
 		felix->info->port_sched_speed_set(ocelot, port, speed);
-}
+पूर्ण
 
-static void felix_port_qos_map_init(struct ocelot *ocelot, int port)
-{
-	int i;
+अटल व्योम felix_port_qos_map_init(काष्ठा ocelot *ocelot, पूर्णांक port)
+अणु
+	पूर्णांक i;
 
 	ocelot_rmw_gix(ocelot,
 		       ANA_PORT_QOS_CFG_QOS_PCP_ENA,
@@ -972,7 +973,7 @@ static void felix_port_qos_map_init(struct ocelot *ocelot, int port)
 		       ANA_PORT_QOS_CFG,
 		       port);
 
-	for (i = 0; i < OCELOT_NUM_TC * 2; i++) {
+	क्रम (i = 0; i < OCELOT_NUM_TC * 2; i++) अणु
 		ocelot_rmw_ix(ocelot,
 			      (ANA_PORT_PCP_DEI_MAP_DP_PCP_DEI_VAL & i) |
 			      ANA_PORT_PCP_DEI_MAP_QOS_PCP_DEI_VAL(i),
@@ -980,117 +981,117 @@ static void felix_port_qos_map_init(struct ocelot *ocelot, int port)
 			      ANA_PORT_PCP_DEI_MAP_QOS_PCP_DEI_VAL_M,
 			      ANA_PORT_PCP_DEI_MAP,
 			      port, i);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void felix_get_strings(struct dsa_switch *ds, int port,
+अटल व्योम felix_get_strings(काष्ठा dsa_चयन *ds, पूर्णांक port,
 			      u32 stringset, u8 *data)
-{
-	struct ocelot *ocelot = ds->priv;
+अणु
+	काष्ठा ocelot *ocelot = ds->priv;
 
-	return ocelot_get_strings(ocelot, port, stringset, data);
-}
+	वापस ocelot_get_strings(ocelot, port, stringset, data);
+पूर्ण
 
-static void felix_get_ethtool_stats(struct dsa_switch *ds, int port, u64 *data)
-{
-	struct ocelot *ocelot = ds->priv;
+अटल व्योम felix_get_ethtool_stats(काष्ठा dsa_चयन *ds, पूर्णांक port, u64 *data)
+अणु
+	काष्ठा ocelot *ocelot = ds->priv;
 
 	ocelot_get_ethtool_stats(ocelot, port, data);
-}
+पूर्ण
 
-static int felix_get_sset_count(struct dsa_switch *ds, int port, int sset)
-{
-	struct ocelot *ocelot = ds->priv;
+अटल पूर्णांक felix_get_sset_count(काष्ठा dsa_चयन *ds, पूर्णांक port, पूर्णांक sset)
+अणु
+	काष्ठा ocelot *ocelot = ds->priv;
 
-	return ocelot_get_sset_count(ocelot, port, sset);
-}
+	वापस ocelot_get_sset_count(ocelot, port, sset);
+पूर्ण
 
-static int felix_get_ts_info(struct dsa_switch *ds, int port,
-			     struct ethtool_ts_info *info)
-{
-	struct ocelot *ocelot = ds->priv;
+अटल पूर्णांक felix_get_ts_info(काष्ठा dsa_चयन *ds, पूर्णांक port,
+			     काष्ठा ethtool_ts_info *info)
+अणु
+	काष्ठा ocelot *ocelot = ds->priv;
 
-	return ocelot_get_ts_info(ocelot, port, info);
-}
+	वापस ocelot_get_ts_info(ocelot, port, info);
+पूर्ण
 
-static int felix_parse_ports_node(struct felix *felix,
-				  struct device_node *ports_node,
-				  phy_interface_t *port_phy_modes)
-{
-	struct ocelot *ocelot = &felix->ocelot;
-	struct device *dev = felix->ocelot.dev;
-	struct device_node *child;
+अटल पूर्णांक felix_parse_ports_node(काष्ठा felix *felix,
+				  काष्ठा device_node *ports_node,
+				  phy_पूर्णांकerface_t *port_phy_modes)
+अणु
+	काष्ठा ocelot *ocelot = &felix->ocelot;
+	काष्ठा device *dev = felix->ocelot.dev;
+	काष्ठा device_node *child;
 
-	for_each_available_child_of_node(ports_node, child) {
-		phy_interface_t phy_mode;
+	क्रम_each_available_child_of_node(ports_node, child) अणु
+		phy_पूर्णांकerface_t phy_mode;
 		u32 port;
-		int err;
+		पूर्णांक err;
 
-		/* Get switch port number from DT */
-		if (of_property_read_u32(child, "reg", &port) < 0) {
+		/* Get चयन port number from DT */
+		अगर (of_property_पढ़ो_u32(child, "reg", &port) < 0) अणु
 			dev_err(dev, "Port number not defined in device tree "
 				"(property \"reg\")\n");
 			of_node_put(child);
-			return -ENODEV;
-		}
+			वापस -ENODEV;
+		पूर्ण
 
 		/* Get PHY mode from DT */
 		err = of_get_phy_mode(child, &phy_mode);
-		if (err) {
+		अगर (err) अणु
 			dev_err(dev, "Failed to read phy-mode or "
 				"phy-interface-type property for port %d\n",
 				port);
 			of_node_put(child);
-			return -ENODEV;
-		}
+			वापस -ENODEV;
+		पूर्ण
 
 		err = felix->info->prevalidate_phy_mode(ocelot, port, phy_mode);
-		if (err < 0) {
+		अगर (err < 0) अणु
 			dev_err(dev, "Unsupported PHY mode %s on port %d\n",
 				phy_modes(phy_mode), port);
 			of_node_put(child);
-			return err;
-		}
+			वापस err;
+		पूर्ण
 
 		port_phy_modes[port] = phy_mode;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int felix_parse_dt(struct felix *felix, phy_interface_t *port_phy_modes)
-{
-	struct device *dev = felix->ocelot.dev;
-	struct device_node *switch_node;
-	struct device_node *ports_node;
-	int err;
+अटल पूर्णांक felix_parse_dt(काष्ठा felix *felix, phy_पूर्णांकerface_t *port_phy_modes)
+अणु
+	काष्ठा device *dev = felix->ocelot.dev;
+	काष्ठा device_node *चयन_node;
+	काष्ठा device_node *ports_node;
+	पूर्णांक err;
 
-	switch_node = dev->of_node;
+	चयन_node = dev->of_node;
 
-	ports_node = of_get_child_by_name(switch_node, "ports");
-	if (!ports_node) {
+	ports_node = of_get_child_by_name(चयन_node, "ports");
+	अगर (!ports_node) अणु
 		dev_err(dev, "Incorrect bindings: absent \"ports\" node\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
 	err = felix_parse_ports_node(felix, ports_node, port_phy_modes);
 	of_node_put(ports_node);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int felix_init_structs(struct felix *felix, int num_phys_ports)
-{
-	struct ocelot *ocelot = &felix->ocelot;
-	phy_interface_t *port_phy_modes;
-	struct resource res;
-	int port, i, err;
+अटल पूर्णांक felix_init_काष्ठाs(काष्ठा felix *felix, पूर्णांक num_phys_ports)
+अणु
+	काष्ठा ocelot *ocelot = &felix->ocelot;
+	phy_पूर्णांकerface_t *port_phy_modes;
+	काष्ठा resource res;
+	पूर्णांक port, i, err;
 
 	ocelot->num_phys_ports = num_phys_ports;
-	ocelot->ports = devm_kcalloc(ocelot->dev, num_phys_ports,
-				     sizeof(struct ocelot_port *), GFP_KERNEL);
-	if (!ocelot->ports)
-		return -ENOMEM;
+	ocelot->ports = devm_kसुस्मृति(ocelot->dev, num_phys_ports,
+				     माप(काष्ठा ocelot_port *), GFP_KERNEL);
+	अगर (!ocelot->ports)
+		वापस -ENOMEM;
 
 	ocelot->map		= felix->info->map;
 	ocelot->stats_layout	= felix->info->stats_layout;
@@ -1102,536 +1103,536 @@ static int felix_init_structs(struct felix *felix, int num_phys_ports)
 	ocelot->npi_xtr_prefix	= OCELOT_TAG_PREFIX_SHORT;
 	ocelot->devlink		= felix->ds->devlink;
 
-	port_phy_modes = kcalloc(num_phys_ports, sizeof(phy_interface_t),
+	port_phy_modes = kसुस्मृति(num_phys_ports, माप(phy_पूर्णांकerface_t),
 				 GFP_KERNEL);
-	if (!port_phy_modes)
-		return -ENOMEM;
+	अगर (!port_phy_modes)
+		वापस -ENOMEM;
 
 	err = felix_parse_dt(felix, port_phy_modes);
-	if (err) {
-		kfree(port_phy_modes);
-		return err;
-	}
+	अगर (err) अणु
+		kमुक्त(port_phy_modes);
+		वापस err;
+	पूर्ण
 
-	for (i = 0; i < TARGET_MAX; i++) {
-		struct regmap *target;
+	क्रम (i = 0; i < TARGET_MAX; i++) अणु
+		काष्ठा regmap *target;
 
-		if (!felix->info->target_io_res[i].name)
-			continue;
+		अगर (!felix->info->target_io_res[i].name)
+			जारी;
 
-		memcpy(&res, &felix->info->target_io_res[i], sizeof(res));
+		स_नकल(&res, &felix->info->target_io_res[i], माप(res));
 		res.flags = IORESOURCE_MEM;
-		res.start += felix->switch_base;
-		res.end += felix->switch_base;
+		res.start += felix->चयन_base;
+		res.end += felix->चयन_base;
 
 		target = ocelot_regmap_init(ocelot, &res);
-		if (IS_ERR(target)) {
+		अगर (IS_ERR(target)) अणु
 			dev_err(ocelot->dev,
 				"Failed to map device memory space\n");
-			kfree(port_phy_modes);
-			return PTR_ERR(target);
-		}
+			kमुक्त(port_phy_modes);
+			वापस PTR_ERR(target);
+		पूर्ण
 
-		ocelot->targets[i] = target;
-	}
+		ocelot->tarमाला_लो[i] = target;
+	पूर्ण
 
 	err = ocelot_regfields_init(ocelot, felix->info->regfields);
-	if (err) {
+	अगर (err) अणु
 		dev_err(ocelot->dev, "failed to init reg fields map\n");
-		kfree(port_phy_modes);
-		return err;
-	}
+		kमुक्त(port_phy_modes);
+		वापस err;
+	पूर्ण
 
-	for (port = 0; port < num_phys_ports; port++) {
-		struct ocelot_port *ocelot_port;
-		struct regmap *target;
+	क्रम (port = 0; port < num_phys_ports; port++) अणु
+		काष्ठा ocelot_port *ocelot_port;
+		काष्ठा regmap *target;
 
 		ocelot_port = devm_kzalloc(ocelot->dev,
-					   sizeof(struct ocelot_port),
+					   माप(काष्ठा ocelot_port),
 					   GFP_KERNEL);
-		if (!ocelot_port) {
+		अगर (!ocelot_port) अणु
 			dev_err(ocelot->dev,
 				"failed to allocate port memory\n");
-			kfree(port_phy_modes);
-			return -ENOMEM;
-		}
+			kमुक्त(port_phy_modes);
+			वापस -ENOMEM;
+		पूर्ण
 
-		memcpy(&res, &felix->info->port_io_res[port], sizeof(res));
+		स_नकल(&res, &felix->info->port_io_res[port], माप(res));
 		res.flags = IORESOURCE_MEM;
-		res.start += felix->switch_base;
-		res.end += felix->switch_base;
+		res.start += felix->चयन_base;
+		res.end += felix->चयन_base;
 
 		target = ocelot_regmap_init(ocelot, &res);
-		if (IS_ERR(target)) {
+		अगर (IS_ERR(target)) अणु
 			dev_err(ocelot->dev,
 				"Failed to map memory space for port %d\n",
 				port);
-			kfree(port_phy_modes);
-			return PTR_ERR(target);
-		}
+			kमुक्त(port_phy_modes);
+			वापस PTR_ERR(target);
+		पूर्ण
 
 		ocelot_port->phy_mode = port_phy_modes[port];
 		ocelot_port->ocelot = ocelot;
 		ocelot_port->target = target;
 		ocelot->ports[port] = ocelot_port;
-	}
+	पूर्ण
 
-	kfree(port_phy_modes);
+	kमुक्त(port_phy_modes);
 
-	if (felix->info->mdio_bus_alloc) {
+	अगर (felix->info->mdio_bus_alloc) अणु
 		err = felix->info->mdio_bus_alloc(ocelot);
-		if (err < 0)
-			return err;
-	}
+		अगर (err < 0)
+			वापस err;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* Hardware initialization done here so that we can allocate structures with
- * devm without fear of dsa_register_switch returning -EPROBE_DEFER and causing
- * us to allocate structures twice (leak memory) and map PCI memory twice
+/* Hardware initialization करोne here so that we can allocate काष्ठाures with
+ * devm without fear of dsa_रेजिस्टर_चयन वापसing -EPROBE_DEFER and causing
+ * us to allocate काष्ठाures twice (leak memory) and map PCI memory twice
  * (which will not work).
  */
-static int felix_setup(struct dsa_switch *ds)
-{
-	struct ocelot *ocelot = ds->priv;
-	struct felix *felix = ocelot_to_felix(ocelot);
-	int port, err;
+अटल पूर्णांक felix_setup(काष्ठा dsa_चयन *ds)
+अणु
+	काष्ठा ocelot *ocelot = ds->priv;
+	काष्ठा felix *felix = ocelot_to_felix(ocelot);
+	पूर्णांक port, err;
 
-	err = felix_init_structs(felix, ds->num_ports);
-	if (err)
-		return err;
+	err = felix_init_काष्ठाs(felix, ds->num_ports);
+	अगर (err)
+		वापस err;
 
 	err = ocelot_init(ocelot);
-	if (err)
-		goto out_mdiobus_free;
+	अगर (err)
+		जाओ out_mdiobus_मुक्त;
 
-	if (ocelot->ptp) {
-		err = ocelot_init_timestamp(ocelot, felix->info->ptp_caps);
-		if (err) {
+	अगर (ocelot->ptp) अणु
+		err = ocelot_init_बारtamp(ocelot, felix->info->ptp_caps);
+		अगर (err) अणु
 			dev_err(ocelot->dev,
 				"Timestamp initialization failed\n");
 			ocelot->ptp = 0;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	for (port = 0; port < ds->num_ports; port++) {
-		if (dsa_is_unused_port(ds, port))
-			continue;
+	क्रम (port = 0; port < ds->num_ports; port++) अणु
+		अगर (dsa_is_unused_port(ds, port))
+			जारी;
 
 		ocelot_init_port(ocelot, port);
 
-		/* Set the default QoS Classification based on PCP and DEI
+		/* Set the शेष QoS Classअगरication based on PCP and DEI
 		 * bits of vlan tag.
 		 */
 		felix_port_qos_map_init(ocelot, port);
-	}
+	पूर्ण
 
-	err = ocelot_devlink_sb_register(ocelot);
-	if (err)
-		goto out_deinit_ports;
+	err = ocelot_devlink_sb_रेजिस्टर(ocelot);
+	अगर (err)
+		जाओ out_deinit_ports;
 
-	for (port = 0; port < ds->num_ports; port++) {
-		if (!dsa_is_cpu_port(ds, port))
-			continue;
+	क्रम (port = 0; port < ds->num_ports; port++) अणु
+		अगर (!dsa_is_cpu_port(ds, port))
+			जारी;
 
-		/* The initial tag protocol is NPI which always returns 0, so
-		 * there's no real point in checking for errors.
+		/* The initial tag protocol is NPI which always वापसs 0, so
+		 * there's no real poपूर्णांक in checking क्रम errors.
 		 */
 		felix_set_tag_protocol(ds, port, felix->tag_proto);
-	}
+	पूर्ण
 
-	ds->mtu_enforcement_ingress = true;
+	ds->mtu_enक्रमcement_ingress = true;
 	ds->assisted_learning_on_cpu_port = true;
 
-	return 0;
+	वापस 0;
 
 out_deinit_ports:
-	for (port = 0; port < ocelot->num_phys_ports; port++) {
-		if (dsa_is_unused_port(ds, port))
-			continue;
+	क्रम (port = 0; port < ocelot->num_phys_ports; port++) अणु
+		अगर (dsa_is_unused_port(ds, port))
+			जारी;
 
 		ocelot_deinit_port(ocelot, port);
-	}
+	पूर्ण
 
-	ocelot_deinit_timestamp(ocelot);
+	ocelot_deinit_बारtamp(ocelot);
 	ocelot_deinit(ocelot);
 
-out_mdiobus_free:
-	if (felix->info->mdio_bus_free)
-		felix->info->mdio_bus_free(ocelot);
+out_mdiobus_मुक्त:
+	अगर (felix->info->mdio_bus_मुक्त)
+		felix->info->mdio_bus_मुक्त(ocelot);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void felix_teardown(struct dsa_switch *ds)
-{
-	struct ocelot *ocelot = ds->priv;
-	struct felix *felix = ocelot_to_felix(ocelot);
-	int port;
+अटल व्योम felix_tearकरोwn(काष्ठा dsa_चयन *ds)
+अणु
+	काष्ठा ocelot *ocelot = ds->priv;
+	काष्ठा felix *felix = ocelot_to_felix(ocelot);
+	पूर्णांक port;
 
-	for (port = 0; port < ds->num_ports; port++) {
-		if (!dsa_is_cpu_port(ds, port))
-			continue;
+	क्रम (port = 0; port < ds->num_ports; port++) अणु
+		अगर (!dsa_is_cpu_port(ds, port))
+			जारी;
 
 		felix_del_tag_protocol(ds, port, felix->tag_proto);
-	}
+	पूर्ण
 
-	ocelot_devlink_sb_unregister(ocelot);
-	ocelot_deinit_timestamp(ocelot);
+	ocelot_devlink_sb_unरेजिस्टर(ocelot);
+	ocelot_deinit_बारtamp(ocelot);
 	ocelot_deinit(ocelot);
 
-	for (port = 0; port < ocelot->num_phys_ports; port++) {
-		if (dsa_is_unused_port(ds, port))
-			continue;
+	क्रम (port = 0; port < ocelot->num_phys_ports; port++) अणु
+		अगर (dsa_is_unused_port(ds, port))
+			जारी;
 
 		ocelot_deinit_port(ocelot, port);
-	}
+	पूर्ण
 
-	if (felix->info->mdio_bus_free)
-		felix->info->mdio_bus_free(ocelot);
-}
+	अगर (felix->info->mdio_bus_मुक्त)
+		felix->info->mdio_bus_मुक्त(ocelot);
+पूर्ण
 
-static int felix_hwtstamp_get(struct dsa_switch *ds, int port,
-			      struct ifreq *ifr)
-{
-	struct ocelot *ocelot = ds->priv;
+अटल पूर्णांक felix_hwtstamp_get(काष्ठा dsa_चयन *ds, पूर्णांक port,
+			      काष्ठा अगरreq *अगरr)
+अणु
+	काष्ठा ocelot *ocelot = ds->priv;
 
-	return ocelot_hwstamp_get(ocelot, port, ifr);
-}
+	वापस ocelot_hwstamp_get(ocelot, port, अगरr);
+पूर्ण
 
-static int felix_hwtstamp_set(struct dsa_switch *ds, int port,
-			      struct ifreq *ifr)
-{
-	struct ocelot *ocelot = ds->priv;
+अटल पूर्णांक felix_hwtstamp_set(काष्ठा dsa_चयन *ds, पूर्णांक port,
+			      काष्ठा अगरreq *अगरr)
+अणु
+	काष्ठा ocelot *ocelot = ds->priv;
 
-	return ocelot_hwstamp_set(ocelot, port, ifr);
-}
+	वापस ocelot_hwstamp_set(ocelot, port, अगरr);
+पूर्ण
 
-static bool felix_check_xtr_pkt(struct ocelot *ocelot, unsigned int ptp_type)
-{
-	struct felix *felix = ocelot_to_felix(ocelot);
-	int err, grp = 0;
+अटल bool felix_check_xtr_pkt(काष्ठा ocelot *ocelot, अचिन्हित पूर्णांक ptp_type)
+अणु
+	काष्ठा felix *felix = ocelot_to_felix(ocelot);
+	पूर्णांक err, grp = 0;
 
-	if (felix->tag_proto != DSA_TAG_PROTO_OCELOT_8021Q)
-		return false;
+	अगर (felix->tag_proto != DSA_TAG_PROTO_OCELOT_8021Q)
+		वापस false;
 
-	if (!felix->info->quirk_no_xtr_irq)
-		return false;
+	अगर (!felix->info->quirk_no_xtr_irq)
+		वापस false;
 
-	if (ptp_type == PTP_CLASS_NONE)
-		return false;
+	अगर (ptp_type == PTP_CLASS_NONE)
+		वापस false;
 
-	while (ocelot_read(ocelot, QS_XTR_DATA_PRESENT) & BIT(grp)) {
-		struct sk_buff *skb;
-		unsigned int type;
+	जबतक (ocelot_पढ़ो(ocelot, QS_XTR_DATA_PRESENT) & BIT(grp)) अणु
+		काष्ठा sk_buff *skb;
+		अचिन्हित पूर्णांक type;
 
 		err = ocelot_xtr_poll_frame(ocelot, grp, &skb);
-		if (err)
-			goto out;
+		अगर (err)
+			जाओ out;
 
 		/* We trap to the CPU port module all PTP frames, but
-		 * felix_rxtstamp() only gets called for event frames.
-		 * So we need to avoid sending duplicate general
-		 * message frames by running a second BPF classifier
+		 * felix_rxtstamp() only माला_लो called क्रम event frames.
+		 * So we need to aव्योम sending duplicate general
+		 * message frames by running a second BPF classअगरier
 		 * here and dropping those.
 		 */
 		__skb_push(skb, ETH_HLEN);
 
-		type = ptp_classify_raw(skb);
+		type = ptp_classअगरy_raw(skb);
 
 		__skb_pull(skb, ETH_HLEN);
 
-		if (type == PTP_CLASS_NONE) {
-			kfree_skb(skb);
-			continue;
-		}
+		अगर (type == PTP_CLASS_NONE) अणु
+			kमुक्त_skb(skb);
+			जारी;
+		पूर्ण
 
-		netif_rx(skb);
-	}
+		netअगर_rx(skb);
+	पूर्ण
 
 out:
-	if (err < 0)
+	अगर (err < 0)
 		ocelot_drain_cpu_queue(ocelot, 0);
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static bool felix_rxtstamp(struct dsa_switch *ds, int port,
-			   struct sk_buff *skb, unsigned int type)
-{
+अटल bool felix_rxtstamp(काष्ठा dsa_चयन *ds, पूर्णांक port,
+			   काष्ठा sk_buff *skb, अचिन्हित पूर्णांक type)
+अणु
 	u8 *extraction = skb->data - ETH_HLEN - OCELOT_TAG_LEN;
-	struct skb_shared_hwtstamps *shhwtstamps;
-	struct ocelot *ocelot = ds->priv;
+	काष्ठा skb_shared_hwtstamps *shhwtstamps;
+	काष्ठा ocelot *ocelot = ds->priv;
 	u32 tstamp_lo, tstamp_hi;
-	struct timespec64 ts;
+	काष्ठा बारpec64 ts;
 	u64 tstamp, val;
 
 	/* If the "no XTR IRQ" workaround is in use, tell DSA to defer this skb
-	 * for RX timestamping. Then free it, and poll for its copy through
-	 * MMIO in the CPU port module, and inject that into the stack from
+	 * क्रम RX बारtamping. Then मुक्त it, and poll क्रम its copy through
+	 * MMIO in the CPU port module, and inject that पूर्णांकo the stack from
 	 * ocelot_xtr_poll().
 	 */
-	if (felix_check_xtr_pkt(ocelot, type)) {
-		kfree_skb(skb);
-		return true;
-	}
+	अगर (felix_check_xtr_pkt(ocelot, type)) अणु
+		kमुक्त_skb(skb);
+		वापस true;
+	पूर्ण
 
-	ocelot_ptp_gettime64(&ocelot->ptp_info, &ts);
-	tstamp = ktime_set(ts.tv_sec, ts.tv_nsec);
+	ocelot_ptp_समय_लो64(&ocelot->ptp_info, &ts);
+	tstamp = kसमय_set(ts.tv_sec, ts.tv_nsec);
 
 	ocelot_xfh_get_rew_val(extraction, &val);
 	tstamp_lo = (u32)val;
 
 	tstamp_hi = tstamp >> 32;
-	if ((tstamp & 0xffffffff) < tstamp_lo)
+	अगर ((tstamp & 0xffffffff) < tstamp_lo)
 		tstamp_hi--;
 
 	tstamp = ((u64)tstamp_hi << 32) | tstamp_lo;
 
 	shhwtstamps = skb_hwtstamps(skb);
-	memset(shhwtstamps, 0, sizeof(struct skb_shared_hwtstamps));
+	स_रखो(shhwtstamps, 0, माप(काष्ठा skb_shared_hwtstamps));
 	shhwtstamps->hwtstamp = tstamp;
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static void felix_txtstamp(struct dsa_switch *ds, int port,
-			   struct sk_buff *skb)
-{
-	struct ocelot *ocelot = ds->priv;
-	struct sk_buff *clone = NULL;
+अटल व्योम felix_txtstamp(काष्ठा dsa_चयन *ds, पूर्णांक port,
+			   काष्ठा sk_buff *skb)
+अणु
+	काष्ठा ocelot *ocelot = ds->priv;
+	काष्ठा sk_buff *clone = शून्य;
 
-	if (!ocelot->ptp)
-		return;
+	अगर (!ocelot->ptp)
+		वापस;
 
-	if (ocelot_port_txtstamp_request(ocelot, port, skb, &clone))
-		return;
+	अगर (ocelot_port_txtstamp_request(ocelot, port, skb, &clone))
+		वापस;
 
-	if (clone)
+	अगर (clone)
 		OCELOT_SKB_CB(skb)->clone = clone;
-}
+पूर्ण
 
-static int felix_change_mtu(struct dsa_switch *ds, int port, int new_mtu)
-{
-	struct ocelot *ocelot = ds->priv;
+अटल पूर्णांक felix_change_mtu(काष्ठा dsa_चयन *ds, पूर्णांक port, पूर्णांक new_mtu)
+अणु
+	काष्ठा ocelot *ocelot = ds->priv;
 
 	ocelot_port_set_maxlen(ocelot, port, new_mtu);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int felix_get_max_mtu(struct dsa_switch *ds, int port)
-{
-	struct ocelot *ocelot = ds->priv;
+अटल पूर्णांक felix_get_max_mtu(काष्ठा dsa_चयन *ds, पूर्णांक port)
+अणु
+	काष्ठा ocelot *ocelot = ds->priv;
 
-	return ocelot_get_max_mtu(ocelot, port);
-}
+	वापस ocelot_get_max_mtu(ocelot, port);
+पूर्ण
 
-static int felix_cls_flower_add(struct dsa_switch *ds, int port,
-				struct flow_cls_offload *cls, bool ingress)
-{
-	struct ocelot *ocelot = ds->priv;
+अटल पूर्णांक felix_cls_flower_add(काष्ठा dsa_चयन *ds, पूर्णांक port,
+				काष्ठा flow_cls_offload *cls, bool ingress)
+अणु
+	काष्ठा ocelot *ocelot = ds->priv;
 
-	return ocelot_cls_flower_replace(ocelot, port, cls, ingress);
-}
+	वापस ocelot_cls_flower_replace(ocelot, port, cls, ingress);
+पूर्ण
 
-static int felix_cls_flower_del(struct dsa_switch *ds, int port,
-				struct flow_cls_offload *cls, bool ingress)
-{
-	struct ocelot *ocelot = ds->priv;
+अटल पूर्णांक felix_cls_flower_del(काष्ठा dsa_चयन *ds, पूर्णांक port,
+				काष्ठा flow_cls_offload *cls, bool ingress)
+अणु
+	काष्ठा ocelot *ocelot = ds->priv;
 
-	return ocelot_cls_flower_destroy(ocelot, port, cls, ingress);
-}
+	वापस ocelot_cls_flower_destroy(ocelot, port, cls, ingress);
+पूर्ण
 
-static int felix_cls_flower_stats(struct dsa_switch *ds, int port,
-				  struct flow_cls_offload *cls, bool ingress)
-{
-	struct ocelot *ocelot = ds->priv;
+अटल पूर्णांक felix_cls_flower_stats(काष्ठा dsa_चयन *ds, पूर्णांक port,
+				  काष्ठा flow_cls_offload *cls, bool ingress)
+अणु
+	काष्ठा ocelot *ocelot = ds->priv;
 
-	return ocelot_cls_flower_stats(ocelot, port, cls, ingress);
-}
+	वापस ocelot_cls_flower_stats(ocelot, port, cls, ingress);
+पूर्ण
 
-static int felix_port_policer_add(struct dsa_switch *ds, int port,
-				  struct dsa_mall_policer_tc_entry *policer)
-{
-	struct ocelot *ocelot = ds->priv;
-	struct ocelot_policer pol = {
-		.rate = div_u64(policer->rate_bytes_per_sec, 1000) * 8,
+अटल पूर्णांक felix_port_policer_add(काष्ठा dsa_चयन *ds, पूर्णांक port,
+				  काष्ठा dsa_mall_policer_tc_entry *policer)
+अणु
+	काष्ठा ocelot *ocelot = ds->priv;
+	काष्ठा ocelot_policer pol = अणु
+		.rate = भाग_u64(policer->rate_bytes_per_sec, 1000) * 8,
 		.burst = policer->burst,
-	};
+	पूर्ण;
 
-	return ocelot_port_policer_add(ocelot, port, &pol);
-}
+	वापस ocelot_port_policer_add(ocelot, port, &pol);
+पूर्ण
 
-static void felix_port_policer_del(struct dsa_switch *ds, int port)
-{
-	struct ocelot *ocelot = ds->priv;
+अटल व्योम felix_port_policer_del(काष्ठा dsa_चयन *ds, पूर्णांक port)
+अणु
+	काष्ठा ocelot *ocelot = ds->priv;
 
 	ocelot_port_policer_del(ocelot, port);
-}
+पूर्ण
 
-static int felix_port_setup_tc(struct dsa_switch *ds, int port,
-			       enum tc_setup_type type,
-			       void *type_data)
-{
-	struct ocelot *ocelot = ds->priv;
-	struct felix *felix = ocelot_to_felix(ocelot);
+अटल पूर्णांक felix_port_setup_tc(काष्ठा dsa_चयन *ds, पूर्णांक port,
+			       क्रमागत tc_setup_type type,
+			       व्योम *type_data)
+अणु
+	काष्ठा ocelot *ocelot = ds->priv;
+	काष्ठा felix *felix = ocelot_to_felix(ocelot);
 
-	if (felix->info->port_setup_tc)
-		return felix->info->port_setup_tc(ds, port, type, type_data);
-	else
-		return -EOPNOTSUPP;
-}
+	अगर (felix->info->port_setup_tc)
+		वापस felix->info->port_setup_tc(ds, port, type, type_data);
+	अन्यथा
+		वापस -EOPNOTSUPP;
+पूर्ण
 
-static int felix_sb_pool_get(struct dsa_switch *ds, unsigned int sb_index,
+अटल पूर्णांक felix_sb_pool_get(काष्ठा dsa_चयन *ds, अचिन्हित पूर्णांक sb_index,
 			     u16 pool_index,
-			     struct devlink_sb_pool_info *pool_info)
-{
-	struct ocelot *ocelot = ds->priv;
+			     काष्ठा devlink_sb_pool_info *pool_info)
+अणु
+	काष्ठा ocelot *ocelot = ds->priv;
 
-	return ocelot_sb_pool_get(ocelot, sb_index, pool_index, pool_info);
-}
+	वापस ocelot_sb_pool_get(ocelot, sb_index, pool_index, pool_info);
+पूर्ण
 
-static int felix_sb_pool_set(struct dsa_switch *ds, unsigned int sb_index,
+अटल पूर्णांक felix_sb_pool_set(काष्ठा dsa_चयन *ds, अचिन्हित पूर्णांक sb_index,
 			     u16 pool_index, u32 size,
-			     enum devlink_sb_threshold_type threshold_type,
-			     struct netlink_ext_ack *extack)
-{
-	struct ocelot *ocelot = ds->priv;
+			     क्रमागत devlink_sb_threshold_type threshold_type,
+			     काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा ocelot *ocelot = ds->priv;
 
-	return ocelot_sb_pool_set(ocelot, sb_index, pool_index, size,
+	वापस ocelot_sb_pool_set(ocelot, sb_index, pool_index, size,
 				  threshold_type, extack);
-}
+पूर्ण
 
-static int felix_sb_port_pool_get(struct dsa_switch *ds, int port,
-				  unsigned int sb_index, u16 pool_index,
+अटल पूर्णांक felix_sb_port_pool_get(काष्ठा dsa_चयन *ds, पूर्णांक port,
+				  अचिन्हित पूर्णांक sb_index, u16 pool_index,
 				  u32 *p_threshold)
-{
-	struct ocelot *ocelot = ds->priv;
+अणु
+	काष्ठा ocelot *ocelot = ds->priv;
 
-	return ocelot_sb_port_pool_get(ocelot, port, sb_index, pool_index,
+	वापस ocelot_sb_port_pool_get(ocelot, port, sb_index, pool_index,
 				       p_threshold);
-}
+पूर्ण
 
-static int felix_sb_port_pool_set(struct dsa_switch *ds, int port,
-				  unsigned int sb_index, u16 pool_index,
-				  u32 threshold, struct netlink_ext_ack *extack)
-{
-	struct ocelot *ocelot = ds->priv;
+अटल पूर्णांक felix_sb_port_pool_set(काष्ठा dsa_चयन *ds, पूर्णांक port,
+				  अचिन्हित पूर्णांक sb_index, u16 pool_index,
+				  u32 threshold, काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा ocelot *ocelot = ds->priv;
 
-	return ocelot_sb_port_pool_set(ocelot, port, sb_index, pool_index,
+	वापस ocelot_sb_port_pool_set(ocelot, port, sb_index, pool_index,
 				       threshold, extack);
-}
+पूर्ण
 
-static int felix_sb_tc_pool_bind_get(struct dsa_switch *ds, int port,
-				     unsigned int sb_index, u16 tc_index,
-				     enum devlink_sb_pool_type pool_type,
+अटल पूर्णांक felix_sb_tc_pool_bind_get(काष्ठा dsa_चयन *ds, पूर्णांक port,
+				     अचिन्हित पूर्णांक sb_index, u16 tc_index,
+				     क्रमागत devlink_sb_pool_type pool_type,
 				     u16 *p_pool_index, u32 *p_threshold)
-{
-	struct ocelot *ocelot = ds->priv;
+अणु
+	काष्ठा ocelot *ocelot = ds->priv;
 
-	return ocelot_sb_tc_pool_bind_get(ocelot, port, sb_index, tc_index,
+	वापस ocelot_sb_tc_pool_bind_get(ocelot, port, sb_index, tc_index,
 					  pool_type, p_pool_index,
 					  p_threshold);
-}
+पूर्ण
 
-static int felix_sb_tc_pool_bind_set(struct dsa_switch *ds, int port,
-				     unsigned int sb_index, u16 tc_index,
-				     enum devlink_sb_pool_type pool_type,
+अटल पूर्णांक felix_sb_tc_pool_bind_set(काष्ठा dsa_चयन *ds, पूर्णांक port,
+				     अचिन्हित पूर्णांक sb_index, u16 tc_index,
+				     क्रमागत devlink_sb_pool_type pool_type,
 				     u16 pool_index, u32 threshold,
-				     struct netlink_ext_ack *extack)
-{
-	struct ocelot *ocelot = ds->priv;
+				     काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा ocelot *ocelot = ds->priv;
 
-	return ocelot_sb_tc_pool_bind_set(ocelot, port, sb_index, tc_index,
+	वापस ocelot_sb_tc_pool_bind_set(ocelot, port, sb_index, tc_index,
 					  pool_type, pool_index, threshold,
 					  extack);
-}
+पूर्ण
 
-static int felix_sb_occ_snapshot(struct dsa_switch *ds,
-				 unsigned int sb_index)
-{
-	struct ocelot *ocelot = ds->priv;
+अटल पूर्णांक felix_sb_occ_snapshot(काष्ठा dsa_चयन *ds,
+				 अचिन्हित पूर्णांक sb_index)
+अणु
+	काष्ठा ocelot *ocelot = ds->priv;
 
-	return ocelot_sb_occ_snapshot(ocelot, sb_index);
-}
+	वापस ocelot_sb_occ_snapshot(ocelot, sb_index);
+पूर्ण
 
-static int felix_sb_occ_max_clear(struct dsa_switch *ds,
-				  unsigned int sb_index)
-{
-	struct ocelot *ocelot = ds->priv;
+अटल पूर्णांक felix_sb_occ_max_clear(काष्ठा dsa_चयन *ds,
+				  अचिन्हित पूर्णांक sb_index)
+अणु
+	काष्ठा ocelot *ocelot = ds->priv;
 
-	return ocelot_sb_occ_max_clear(ocelot, sb_index);
-}
+	वापस ocelot_sb_occ_max_clear(ocelot, sb_index);
+पूर्ण
 
-static int felix_sb_occ_port_pool_get(struct dsa_switch *ds, int port,
-				      unsigned int sb_index, u16 pool_index,
+अटल पूर्णांक felix_sb_occ_port_pool_get(काष्ठा dsa_चयन *ds, पूर्णांक port,
+				      अचिन्हित पूर्णांक sb_index, u16 pool_index,
 				      u32 *p_cur, u32 *p_max)
-{
-	struct ocelot *ocelot = ds->priv;
+अणु
+	काष्ठा ocelot *ocelot = ds->priv;
 
-	return ocelot_sb_occ_port_pool_get(ocelot, port, sb_index, pool_index,
+	वापस ocelot_sb_occ_port_pool_get(ocelot, port, sb_index, pool_index,
 					   p_cur, p_max);
-}
+पूर्ण
 
-static int felix_sb_occ_tc_port_bind_get(struct dsa_switch *ds, int port,
-					 unsigned int sb_index, u16 tc_index,
-					 enum devlink_sb_pool_type pool_type,
+अटल पूर्णांक felix_sb_occ_tc_port_bind_get(काष्ठा dsa_चयन *ds, पूर्णांक port,
+					 अचिन्हित पूर्णांक sb_index, u16 tc_index,
+					 क्रमागत devlink_sb_pool_type pool_type,
 					 u32 *p_cur, u32 *p_max)
-{
-	struct ocelot *ocelot = ds->priv;
+अणु
+	काष्ठा ocelot *ocelot = ds->priv;
 
-	return ocelot_sb_occ_tc_port_bind_get(ocelot, port, sb_index, tc_index,
+	वापस ocelot_sb_occ_tc_port_bind_get(ocelot, port, sb_index, tc_index,
 					      pool_type, p_cur, p_max);
-}
+पूर्ण
 
-static int felix_mrp_add(struct dsa_switch *ds, int port,
-			 const struct switchdev_obj_mrp *mrp)
-{
-	struct ocelot *ocelot = ds->priv;
+अटल पूर्णांक felix_mrp_add(काष्ठा dsa_चयन *ds, पूर्णांक port,
+			 स्थिर काष्ठा चयनdev_obj_mrp *mrp)
+अणु
+	काष्ठा ocelot *ocelot = ds->priv;
 
-	return ocelot_mrp_add(ocelot, port, mrp);
-}
+	वापस ocelot_mrp_add(ocelot, port, mrp);
+पूर्ण
 
-static int felix_mrp_del(struct dsa_switch *ds, int port,
-			 const struct switchdev_obj_mrp *mrp)
-{
-	struct ocelot *ocelot = ds->priv;
+अटल पूर्णांक felix_mrp_del(काष्ठा dsa_चयन *ds, पूर्णांक port,
+			 स्थिर काष्ठा चयनdev_obj_mrp *mrp)
+अणु
+	काष्ठा ocelot *ocelot = ds->priv;
 
-	return ocelot_mrp_add(ocelot, port, mrp);
-}
+	वापस ocelot_mrp_add(ocelot, port, mrp);
+पूर्ण
 
-static int
-felix_mrp_add_ring_role(struct dsa_switch *ds, int port,
-			const struct switchdev_obj_ring_role_mrp *mrp)
-{
-	struct ocelot *ocelot = ds->priv;
+अटल पूर्णांक
+felix_mrp_add_ring_role(काष्ठा dsa_चयन *ds, पूर्णांक port,
+			स्थिर काष्ठा चयनdev_obj_ring_role_mrp *mrp)
+अणु
+	काष्ठा ocelot *ocelot = ds->priv;
 
-	return ocelot_mrp_add_ring_role(ocelot, port, mrp);
-}
+	वापस ocelot_mrp_add_ring_role(ocelot, port, mrp);
+पूर्ण
 
-static int
-felix_mrp_del_ring_role(struct dsa_switch *ds, int port,
-			const struct switchdev_obj_ring_role_mrp *mrp)
-{
-	struct ocelot *ocelot = ds->priv;
+अटल पूर्णांक
+felix_mrp_del_ring_role(काष्ठा dsa_चयन *ds, पूर्णांक port,
+			स्थिर काष्ठा चयनdev_obj_ring_role_mrp *mrp)
+अणु
+	काष्ठा ocelot *ocelot = ds->priv;
 
-	return ocelot_mrp_del_ring_role(ocelot, port, mrp);
-}
+	वापस ocelot_mrp_del_ring_role(ocelot, port, mrp);
+पूर्ण
 
-const struct dsa_switch_ops felix_switch_ops = {
+स्थिर काष्ठा dsa_चयन_ops felix_चयन_ops = अणु
 	.get_tag_protocol		= felix_get_tag_protocol,
 	.change_tag_protocol		= felix_change_tag_protocol,
 	.setup				= felix_setup,
-	.teardown			= felix_teardown,
-	.set_ageing_time		= felix_set_ageing_time,
+	.tearकरोwn			= felix_tearकरोwn,
+	.set_ageing_समय		= felix_set_ageing_समय,
 	.get_strings			= felix_get_strings,
 	.get_ethtool_stats		= felix_get_ethtool_stats,
 	.get_sset_count			= felix_get_sset_count,
 	.get_ts_info			= felix_get_ts_info,
 	.phylink_validate		= felix_phylink_validate,
 	.phylink_mac_config		= felix_phylink_mac_config,
-	.phylink_mac_link_down		= felix_phylink_mac_link_down,
+	.phylink_mac_link_करोwn		= felix_phylink_mac_link_करोwn,
 	.phylink_mac_link_up		= felix_phylink_mac_link_up,
 	.port_enable			= felix_port_enable,
 	.port_disable			= felix_port_disable,
@@ -1677,26 +1678,26 @@ const struct dsa_switch_ops felix_switch_ops = {
 	.port_mrp_del			= felix_mrp_del,
 	.port_mrp_add_ring_role		= felix_mrp_add_ring_role,
 	.port_mrp_del_ring_role		= felix_mrp_del_ring_role,
-};
+पूर्ण;
 
-struct net_device *felix_port_to_netdev(struct ocelot *ocelot, int port)
-{
-	struct felix *felix = ocelot_to_felix(ocelot);
-	struct dsa_switch *ds = felix->ds;
+काष्ठा net_device *felix_port_to_netdev(काष्ठा ocelot *ocelot, पूर्णांक port)
+अणु
+	काष्ठा felix *felix = ocelot_to_felix(ocelot);
+	काष्ठा dsa_चयन *ds = felix->ds;
 
-	if (!dsa_is_user_port(ds, port))
-		return NULL;
+	अगर (!dsa_is_user_port(ds, port))
+		वापस शून्य;
 
-	return dsa_to_port(ds, port)->slave;
-}
+	वापस dsa_to_port(ds, port)->slave;
+पूर्ण
 
-int felix_netdev_to_port(struct net_device *dev)
-{
-	struct dsa_port *dp;
+पूर्णांक felix_netdev_to_port(काष्ठा net_device *dev)
+अणु
+	काष्ठा dsa_port *dp;
 
 	dp = dsa_port_from_netdev(dev);
-	if (IS_ERR(dp))
-		return -EINVAL;
+	अगर (IS_ERR(dp))
+		वापस -EINVAL;
 
-	return dp->index;
-}
+	वापस dp->index;
+पूर्ण

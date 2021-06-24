@@ -1,111 +1,112 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Copyright (C) STMicroelectronics SA 2014
  * Authors: Benjamin Gaignard <benjamin.gaignard@st.com>
  *          Fabien Dessenne <fabien.dessenne@st.com>
  *          Vincent Abriou <vincent.abriou@st.com>
- *          for STMicroelectronics.
+ *          क्रम STMicroelectronics.
  */
 
-#include <linux/module.h>
-#include <linux/io.h>
-#include <linux/notifier.h>
-#include <linux/of_platform.h>
-#include <linux/platform_device.h>
+#समावेश <linux/module.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/notअगरier.h>
+#समावेश <linux/of_platक्रमm.h>
+#समावेश <linux/platक्रमm_device.h>
 
-#include <drm/drm_modes.h>
-#include <drm/drm_print.h>
+#समावेश <drm/drm_modes.h>
+#समावेश <drm/drm_prपूर्णांक.h>
 
-#include "sti_drv.h"
-#include "sti_vtg.h"
+#समावेश "sti_drv.h"
+#समावेश "sti_vtg.h"
 
-#define VTG_MODE_MASTER         0
+#घोषणा VTG_MODE_MASTER         0
 
-/* registers offset */
-#define VTG_MODE            0x0000
-#define VTG_CLKLN           0x0008
-#define VTG_HLFLN           0x000C
-#define VTG_DRST_AUTOC      0x0010
-#define VTG_VID_TFO         0x0040
-#define VTG_VID_TFS         0x0044
-#define VTG_VID_BFO         0x0048
-#define VTG_VID_BFS         0x004C
+/* रेजिस्टरs offset */
+#घोषणा VTG_MODE            0x0000
+#घोषणा VTG_CLKLN           0x0008
+#घोषणा VTG_HLFLN           0x000C
+#घोषणा VTG_DRST_AUTOC      0x0010
+#घोषणा VTG_VID_TFO         0x0040
+#घोषणा VTG_VID_TFS         0x0044
+#घोषणा VTG_VID_BFO         0x0048
+#घोषणा VTG_VID_BFS         0x004C
 
-#define VTG_HOST_ITS        0x0078
-#define VTG_HOST_ITS_BCLR   0x007C
-#define VTG_HOST_ITM_BCLR   0x0088
-#define VTG_HOST_ITM_BSET   0x008C
+#घोषणा VTG_HOST_ITS        0x0078
+#घोषणा VTG_HOST_ITS_BCLR   0x007C
+#घोषणा VTG_HOST_ITM_BCLR   0x0088
+#घोषणा VTG_HOST_ITM_BSET   0x008C
 
-#define VTG_H_HD_1          0x00C0
-#define VTG_TOP_V_VD_1      0x00C4
-#define VTG_BOT_V_VD_1      0x00C8
-#define VTG_TOP_V_HD_1      0x00CC
-#define VTG_BOT_V_HD_1      0x00D0
+#घोषणा VTG_H_HD_1          0x00C0
+#घोषणा VTG_TOP_V_VD_1      0x00C4
+#घोषणा VTG_BOT_V_VD_1      0x00C8
+#घोषणा VTG_TOP_V_HD_1      0x00CC
+#घोषणा VTG_BOT_V_HD_1      0x00D0
 
-#define VTG_H_HD_2          0x00E0
-#define VTG_TOP_V_VD_2      0x00E4
-#define VTG_BOT_V_VD_2      0x00E8
-#define VTG_TOP_V_HD_2      0x00EC
-#define VTG_BOT_V_HD_2      0x00F0
+#घोषणा VTG_H_HD_2          0x00E0
+#घोषणा VTG_TOP_V_VD_2      0x00E4
+#घोषणा VTG_BOT_V_VD_2      0x00E8
+#घोषणा VTG_TOP_V_HD_2      0x00EC
+#घोषणा VTG_BOT_V_HD_2      0x00F0
 
-#define VTG_H_HD_3          0x0100
-#define VTG_TOP_V_VD_3      0x0104
-#define VTG_BOT_V_VD_3      0x0108
-#define VTG_TOP_V_HD_3      0x010C
-#define VTG_BOT_V_HD_3      0x0110
+#घोषणा VTG_H_HD_3          0x0100
+#घोषणा VTG_TOP_V_VD_3      0x0104
+#घोषणा VTG_BOT_V_VD_3      0x0108
+#घोषणा VTG_TOP_V_HD_3      0x010C
+#घोषणा VTG_BOT_V_HD_3      0x0110
 
-#define VTG_H_HD_4          0x0120
-#define VTG_TOP_V_VD_4      0x0124
-#define VTG_BOT_V_VD_4      0x0128
-#define VTG_TOP_V_HD_4      0x012c
-#define VTG_BOT_V_HD_4      0x0130
+#घोषणा VTG_H_HD_4          0x0120
+#घोषणा VTG_TOP_V_VD_4      0x0124
+#घोषणा VTG_BOT_V_VD_4      0x0128
+#घोषणा VTG_TOP_V_HD_4      0x012c
+#घोषणा VTG_BOT_V_HD_4      0x0130
 
-#define VTG_IRQ_BOTTOM      BIT(0)
-#define VTG_IRQ_TOP         BIT(1)
-#define VTG_IRQ_MASK        (VTG_IRQ_TOP | VTG_IRQ_BOTTOM)
+#घोषणा VTG_IRQ_BOTTOM      BIT(0)
+#घोषणा VTG_IRQ_TOP         BIT(1)
+#घोषणा VTG_IRQ_MASK        (VTG_IRQ_TOP | VTG_IRQ_BOTTOM)
 
-/* Delay introduced by the HDMI in nb of pixel */
-#define HDMI_DELAY          (5)
+/* Delay पूर्णांकroduced by the HDMI in nb of pixel */
+#घोषणा HDMI_DELAY          (5)
 
-/* Delay introduced by the DVO in nb of pixel */
-#define DVO_DELAY           (7)
+/* Delay पूर्णांकroduced by the DVO in nb of pixel */
+#घोषणा DVO_DELAY           (7)
 
-/* delay introduced by the Arbitrary Waveform Generator in nb of pixels */
-#define AWG_DELAY_HD        (-9)
-#define AWG_DELAY_ED        (-8)
-#define AWG_DELAY_SD        (-7)
+/* delay पूर्णांकroduced by the Arbitrary Waveक्रमm Generator in nb of pixels */
+#घोषणा AWG_DELAY_HD        (-9)
+#घोषणा AWG_DELAY_ED        (-8)
+#घोषणा AWG_DELAY_SD        (-7)
 
 /*
- * STI VTG register offset structure
+ * STI VTG रेजिस्टर offset काष्ठाure
  *
- *@h_hd:     stores the VTG_H_HD_x     register offset
- *@top_v_vd: stores the VTG_TOP_V_VD_x register offset
- *@bot_v_vd: stores the VTG_BOT_V_VD_x register offset
- *@top_v_hd: stores the VTG_TOP_V_HD_x register offset
- *@bot_v_hd: stores the VTG_BOT_V_HD_x register offset
+ *@h_hd:     stores the VTG_H_HD_x     रेजिस्टर offset
+ *@top_v_vd: stores the VTG_TOP_V_VD_x रेजिस्टर offset
+ *@bot_v_vd: stores the VTG_BOT_V_VD_x रेजिस्टर offset
+ *@top_v_hd: stores the VTG_TOP_V_HD_x रेजिस्टर offset
+ *@bot_v_hd: stores the VTG_BOT_V_HD_x रेजिस्टर offset
  */
-struct sti_vtg_regs_offs {
+काष्ठा sti_vtg_regs_offs अणु
 	u32 h_hd;
 	u32 top_v_vd;
 	u32 bot_v_vd;
 	u32 top_v_hd;
 	u32 bot_v_hd;
-};
+पूर्ण;
 
-#define VTG_MAX_SYNC_OUTPUT 4
-static const struct sti_vtg_regs_offs vtg_regs_offs[VTG_MAX_SYNC_OUTPUT] = {
-	{ VTG_H_HD_1,
-	  VTG_TOP_V_VD_1, VTG_BOT_V_VD_1, VTG_TOP_V_HD_1, VTG_BOT_V_HD_1 },
-	{ VTG_H_HD_2,
-	  VTG_TOP_V_VD_2, VTG_BOT_V_VD_2, VTG_TOP_V_HD_2, VTG_BOT_V_HD_2 },
-	{ VTG_H_HD_3,
-	  VTG_TOP_V_VD_3, VTG_BOT_V_VD_3, VTG_TOP_V_HD_3, VTG_BOT_V_HD_3 },
-	{ VTG_H_HD_4,
-	  VTG_TOP_V_VD_4, VTG_BOT_V_VD_4, VTG_TOP_V_HD_4, VTG_BOT_V_HD_4 }
-};
+#घोषणा VTG_MAX_SYNC_OUTPUT 4
+अटल स्थिर काष्ठा sti_vtg_regs_offs vtg_regs_offs[VTG_MAX_SYNC_OUTPUT] = अणु
+	अणु VTG_H_HD_1,
+	  VTG_TOP_V_VD_1, VTG_BOT_V_VD_1, VTG_TOP_V_HD_1, VTG_BOT_V_HD_1 पूर्ण,
+	अणु VTG_H_HD_2,
+	  VTG_TOP_V_VD_2, VTG_BOT_V_VD_2, VTG_TOP_V_HD_2, VTG_BOT_V_HD_2 पूर्ण,
+	अणु VTG_H_HD_3,
+	  VTG_TOP_V_VD_3, VTG_BOT_V_VD_3, VTG_TOP_V_HD_3, VTG_BOT_V_HD_3 पूर्ण,
+	अणु VTG_H_HD_4,
+	  VTG_TOP_V_VD_4, VTG_BOT_V_VD_4, VTG_TOP_V_HD_4, VTG_BOT_V_HD_4 पूर्ण
+पूर्ण;
 
 /*
- * STI VTG synchronisation parameters structure
+ * STI VTG synchronisation parameters काष्ठाure
  *
  *@hsync: sample number falling and rising edge
  *@vsync_line_top: vertical top field line number falling and rising edge
@@ -113,52 +114,52 @@ static const struct sti_vtg_regs_offs vtg_regs_offs[VTG_MAX_SYNC_OUTPUT] = {
  *@vsync_off_top: vertical top field sample number rising and falling edge
  *@vsync_off_bot: vertical bottom field sample number rising and falling edge
  */
-struct sti_vtg_sync_params {
+काष्ठा sti_vtg_sync_params अणु
 	u32 hsync;
 	u32 vsync_line_top;
 	u32 vsync_line_bot;
 	u32 vsync_off_top;
 	u32 vsync_off_bot;
-};
+पूर्ण;
 
 /*
- * STI VTG structure
+ * STI VTG काष्ठाure
  *
- * @regs: register mapping
+ * @regs: रेजिस्टर mapping
  * @sync_params: synchronisation parameters used to generate timings
  * @irq: VTG irq
  * @irq_status: store the IRQ status value
- * @notifier_list: notifier callback
- * @crtc: the CRTC for vblank event
+ * @notअगरier_list: notअगरier callback
+ * @crtc: the CRTC क्रम vblank event
  */
-struct sti_vtg {
-	void __iomem *regs;
-	struct sti_vtg_sync_params sync_params[VTG_MAX_SYNC_OUTPUT];
-	int irq;
+काष्ठा sti_vtg अणु
+	व्योम __iomem *regs;
+	काष्ठा sti_vtg_sync_params sync_params[VTG_MAX_SYNC_OUTPUT];
+	पूर्णांक irq;
 	u32 irq_status;
-	struct raw_notifier_head notifier_list;
-	struct drm_crtc *crtc;
-};
+	काष्ठा raw_notअगरier_head notअगरier_list;
+	काष्ठा drm_crtc *crtc;
+पूर्ण;
 
-struct sti_vtg *of_vtg_find(struct device_node *np)
-{
-	struct platform_device *pdev;
+काष्ठा sti_vtg *of_vtg_find(काष्ठा device_node *np)
+अणु
+	काष्ठा platक्रमm_device *pdev;
 
 	pdev = of_find_device_by_node(np);
-	if (!pdev)
-		return NULL;
+	अगर (!pdev)
+		वापस शून्य;
 
-	return (struct sti_vtg *)platform_get_drvdata(pdev);
-}
+	वापस (काष्ठा sti_vtg *)platक्रमm_get_drvdata(pdev);
+पूर्ण
 
-static void vtg_reset(struct sti_vtg *vtg)
-{
-	writel(1, vtg->regs + VTG_DRST_AUTOC);
-}
+अटल व्योम vtg_reset(काष्ठा sti_vtg *vtg)
+अणु
+	ग_लिखोl(1, vtg->regs + VTG_DRST_AUTOC);
+पूर्ण
 
-static void vtg_set_output_window(void __iomem *regs,
-				  const struct drm_display_mode *mode)
-{
+अटल व्योम vtg_set_output_winकरोw(व्योम __iomem *regs,
+				  स्थिर काष्ठा drm_display_mode *mode)
+अणु
 	u32 video_top_field_start;
 	u32 video_top_field_stop;
 	u32 video_bottom_field_start;
@@ -168,29 +169,29 @@ static void vtg_set_output_window(void __iomem *regs,
 	u32 xstop = sti_vtg_get_pixel_number(*mode, mode->hdisplay - 1);
 	u32 ystop = sti_vtg_get_line_number(*mode, mode->vdisplay - 1);
 
-	/* Set output window to fit the display mode selected */
+	/* Set output winकरोw to fit the display mode selected */
 	video_top_field_start = (ystart << 16) | xstart;
 	video_top_field_stop = (ystop << 16) | xstop;
 
-	/* Only progressive supported for now */
+	/* Only progressive supported क्रम now */
 	video_bottom_field_start = video_top_field_start;
 	video_bottom_field_stop = video_top_field_stop;
 
-	writel(video_top_field_start, regs + VTG_VID_TFO);
-	writel(video_top_field_stop, regs + VTG_VID_TFS);
-	writel(video_bottom_field_start, regs + VTG_VID_BFO);
-	writel(video_bottom_field_stop, regs + VTG_VID_BFS);
-}
+	ग_लिखोl(video_top_field_start, regs + VTG_VID_TFO);
+	ग_लिखोl(video_top_field_stop, regs + VTG_VID_TFS);
+	ग_लिखोl(video_bottom_field_start, regs + VTG_VID_BFO);
+	ग_लिखोl(video_bottom_field_stop, regs + VTG_VID_BFS);
+पूर्ण
 
-static void vtg_set_hsync_vsync_pos(struct sti_vtg_sync_params *sync,
-				    int delay,
-				    const struct drm_display_mode *mode)
-{
-	long clocksperline, start, stop;
+अटल व्योम vtg_set_hsync_vsync_pos(काष्ठा sti_vtg_sync_params *sync,
+				    पूर्णांक delay,
+				    स्थिर काष्ठा drm_display_mode *mode)
+अणु
+	दीर्घ घड़ीsperline, start, stop;
 	u32 risesync_top, fallsync_top;
 	u32 risesync_offs_top, fallsync_offs_top;
 
-	clocksperline = mode->htotal;
+	घड़ीsperline = mode->htotal;
 
 	/* Get the hsync position */
 	start = 0;
@@ -199,106 +200,106 @@ static void vtg_set_hsync_vsync_pos(struct sti_vtg_sync_params *sync,
 	start += delay;
 	stop  += delay;
 
-	if (start < 0)
-		start += clocksperline;
-	else if (start >= clocksperline)
-		start -= clocksperline;
+	अगर (start < 0)
+		start += घड़ीsperline;
+	अन्यथा अगर (start >= घड़ीsperline)
+		start -= घड़ीsperline;
 
-	if (stop < 0)
-		stop += clocksperline;
-	else if (stop >= clocksperline)
-		stop -= clocksperline;
+	अगर (stop < 0)
+		stop += घड़ीsperline;
+	अन्यथा अगर (stop >= घड़ीsperline)
+		stop -= घड़ीsperline;
 
 	sync->hsync = (stop << 16) | start;
 
 	/* Get the vsync position */
-	if (delay >= 0) {
+	अगर (delay >= 0) अणु
 		risesync_top = 1;
 		fallsync_top = risesync_top;
 		fallsync_top += mode->vsync_end - mode->vsync_start;
 
 		fallsync_offs_top = (u32)delay;
 		risesync_offs_top = (u32)delay;
-	} else {
+	पूर्ण अन्यथा अणु
 		risesync_top = mode->vtotal;
 		fallsync_top = mode->vsync_end - mode->vsync_start;
 
-		fallsync_offs_top = clocksperline + delay;
-		risesync_offs_top = clocksperline + delay;
-	}
+		fallsync_offs_top = घड़ीsperline + delay;
+		risesync_offs_top = घड़ीsperline + delay;
+	पूर्ण
 
 	sync->vsync_line_top = (fallsync_top << 16) | risesync_top;
 	sync->vsync_off_top = (fallsync_offs_top << 16) | risesync_offs_top;
 
-	/* Only progressive supported for now */
+	/* Only progressive supported क्रम now */
 	sync->vsync_line_bot = sync->vsync_line_top;
 	sync->vsync_off_bot = sync->vsync_off_top;
-}
+पूर्ण
 
-static void vtg_set_mode(struct sti_vtg *vtg,
-			 int type,
-			 struct sti_vtg_sync_params *sync,
-			 const struct drm_display_mode *mode)
-{
-	unsigned int i;
+अटल व्योम vtg_set_mode(काष्ठा sti_vtg *vtg,
+			 पूर्णांक type,
+			 काष्ठा sti_vtg_sync_params *sync,
+			 स्थिर काष्ठा drm_display_mode *mode)
+अणु
+	अचिन्हित पूर्णांक i;
 
-	/* Set the number of clock cycles per line */
-	writel(mode->htotal, vtg->regs + VTG_CLKLN);
+	/* Set the number of घड़ी cycles per line */
+	ग_लिखोl(mode->htotal, vtg->regs + VTG_CLKLN);
 
-	/* Set Half Line Per Field (only progressive supported for now) */
-	writel(mode->vtotal * 2, vtg->regs + VTG_HLFLN);
+	/* Set Half Line Per Field (only progressive supported क्रम now) */
+	ग_लिखोl(mode->vtotal * 2, vtg->regs + VTG_HLFLN);
 
-	/* Program output window */
-	vtg_set_output_window(vtg->regs, mode);
+	/* Program output winकरोw */
+	vtg_set_output_winकरोw(vtg->regs, mode);
 
-	/* Set hsync and vsync position for HDMI */
+	/* Set hsync and vsync position क्रम HDMI */
 	vtg_set_hsync_vsync_pos(&sync[VTG_SYNC_ID_HDMI - 1], HDMI_DELAY, mode);
 
-	/* Set hsync and vsync position for HD DCS */
+	/* Set hsync and vsync position क्रम HD DCS */
 	vtg_set_hsync_vsync_pos(&sync[VTG_SYNC_ID_HDDCS - 1], 0, mode);
 
-	/* Set hsync and vsync position for HDF */
+	/* Set hsync and vsync position क्रम HDF */
 	vtg_set_hsync_vsync_pos(&sync[VTG_SYNC_ID_HDF - 1], AWG_DELAY_HD, mode);
 
-	/* Set hsync and vsync position for DVO */
+	/* Set hsync and vsync position क्रम DVO */
 	vtg_set_hsync_vsync_pos(&sync[VTG_SYNC_ID_DVO - 1], DVO_DELAY, mode);
 
-	/* Progam the syncs outputs */
-	for (i = 0; i < VTG_MAX_SYNC_OUTPUT ; i++) {
-		writel(sync[i].hsync,
+	/* Progam the syncs outमाला_दो */
+	क्रम (i = 0; i < VTG_MAX_SYNC_OUTPUT ; i++) अणु
+		ग_लिखोl(sync[i].hsync,
 		       vtg->regs + vtg_regs_offs[i].h_hd);
-		writel(sync[i].vsync_line_top,
+		ग_लिखोl(sync[i].vsync_line_top,
 		       vtg->regs + vtg_regs_offs[i].top_v_vd);
-		writel(sync[i].vsync_line_bot,
+		ग_लिखोl(sync[i].vsync_line_bot,
 		       vtg->regs + vtg_regs_offs[i].bot_v_vd);
-		writel(sync[i].vsync_off_top,
+		ग_लिखोl(sync[i].vsync_off_top,
 		       vtg->regs + vtg_regs_offs[i].top_v_hd);
-		writel(sync[i].vsync_off_bot,
+		ग_लिखोl(sync[i].vsync_off_bot,
 		       vtg->regs + vtg_regs_offs[i].bot_v_hd);
-	}
+	पूर्ण
 
 	/* mode */
-	writel(type, vtg->regs + VTG_MODE);
-}
+	ग_लिखोl(type, vtg->regs + VTG_MODE);
+पूर्ण
 
-static void vtg_enable_irq(struct sti_vtg *vtg)
-{
-	/* clear interrupt status and mask */
-	writel(0xFFFF, vtg->regs + VTG_HOST_ITS_BCLR);
-	writel(0xFFFF, vtg->regs + VTG_HOST_ITM_BCLR);
-	writel(VTG_IRQ_MASK, vtg->regs + VTG_HOST_ITM_BSET);
-}
+अटल व्योम vtg_enable_irq(काष्ठा sti_vtg *vtg)
+अणु
+	/* clear पूर्णांकerrupt status and mask */
+	ग_लिखोl(0xFFFF, vtg->regs + VTG_HOST_ITS_BCLR);
+	ग_लिखोl(0xFFFF, vtg->regs + VTG_HOST_ITM_BCLR);
+	ग_लिखोl(VTG_IRQ_MASK, vtg->regs + VTG_HOST_ITM_BSET);
+पूर्ण
 
-void sti_vtg_set_config(struct sti_vtg *vtg,
-		const struct drm_display_mode *mode)
-{
-	/* write configuration */
+व्योम sti_vtg_set_config(काष्ठा sti_vtg *vtg,
+		स्थिर काष्ठा drm_display_mode *mode)
+अणु
+	/* ग_लिखो configuration */
 	vtg_set_mode(vtg, VTG_MODE_MASTER, vtg->sync_params, mode);
 
 	vtg_reset(vtg);
 
 	vtg_enable_irq(vtg);
-}
+पूर्ण
 
 /**
  * sti_vtg_get_line_number
@@ -307,20 +308,20 @@ void sti_vtg_set_config(struct sti_vtg *vtg,
  * @y:    line
  *
  * Return the line number according to the display mode taking
- * into account the Sync and Back Porch information.
+ * पूर्णांकo account the Sync and Back Porch inक्रमmation.
  * Video frame line numbers start at 1, y starts at 0.
- * In interlaced modes the start line is the field line number of the odd
+ * In पूर्णांकerlaced modes the start line is the field line number of the odd
  * field, but y is still defined as a progressive frame.
  */
-u32 sti_vtg_get_line_number(struct drm_display_mode mode, int y)
-{
+u32 sti_vtg_get_line_number(काष्ठा drm_display_mode mode, पूर्णांक y)
+अणु
 	u32 start_line = mode.vtotal - mode.vsync_start + 1;
 
-	if (mode.flags & DRM_MODE_FLAG_INTERLACE)
+	अगर (mode.flags & DRM_MODE_FLAG_INTERLACE)
 		start_line *= 2;
 
-	return start_line + y;
-}
+	वापस start_line + y;
+पूर्ण
 
 /**
  * sti_vtg_get_pixel_number
@@ -329,113 +330,113 @@ u32 sti_vtg_get_line_number(struct drm_display_mode mode, int y)
  * @x:    row
  *
  * Return the pixel number according to the display mode taking
- * into account the Sync and Back Porch information.
+ * पूर्णांकo account the Sync and Back Porch inक्रमmation.
  * Pixels are counted from 0.
  */
-u32 sti_vtg_get_pixel_number(struct drm_display_mode mode, int x)
-{
-	return mode.htotal - mode.hsync_start + x;
-}
+u32 sti_vtg_get_pixel_number(काष्ठा drm_display_mode mode, पूर्णांक x)
+अणु
+	वापस mode.htotal - mode.hsync_start + x;
+पूर्ण
 
-int sti_vtg_register_client(struct sti_vtg *vtg, struct notifier_block *nb,
-			    struct drm_crtc *crtc)
-{
+पूर्णांक sti_vtg_रेजिस्टर_client(काष्ठा sti_vtg *vtg, काष्ठा notअगरier_block *nb,
+			    काष्ठा drm_crtc *crtc)
+अणु
 	vtg->crtc = crtc;
-	return raw_notifier_chain_register(&vtg->notifier_list, nb);
-}
+	वापस raw_notअगरier_chain_रेजिस्टर(&vtg->notअगरier_list, nb);
+पूर्ण
 
-int sti_vtg_unregister_client(struct sti_vtg *vtg, struct notifier_block *nb)
-{
-	return raw_notifier_chain_unregister(&vtg->notifier_list, nb);
-}
+पूर्णांक sti_vtg_unरेजिस्टर_client(काष्ठा sti_vtg *vtg, काष्ठा notअगरier_block *nb)
+अणु
+	वापस raw_notअगरier_chain_unरेजिस्टर(&vtg->notअगरier_list, nb);
+पूर्ण
 
-static irqreturn_t vtg_irq_thread(int irq, void *arg)
-{
-	struct sti_vtg *vtg = arg;
+अटल irqवापस_t vtg_irq_thपढ़ो(पूर्णांक irq, व्योम *arg)
+अणु
+	काष्ठा sti_vtg *vtg = arg;
 	u32 event;
 
 	event = (vtg->irq_status & VTG_IRQ_TOP) ?
 		VTG_TOP_FIELD_EVENT : VTG_BOTTOM_FIELD_EVENT;
 
-	raw_notifier_call_chain(&vtg->notifier_list, event, vtg->crtc);
+	raw_notअगरier_call_chain(&vtg->notअगरier_list, event, vtg->crtc);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static irqreturn_t vtg_irq(int irq, void *arg)
-{
-	struct sti_vtg *vtg = arg;
+अटल irqवापस_t vtg_irq(पूर्णांक irq, व्योम *arg)
+अणु
+	काष्ठा sti_vtg *vtg = arg;
 
-	vtg->irq_status = readl(vtg->regs + VTG_HOST_ITS);
+	vtg->irq_status = पढ़ोl(vtg->regs + VTG_HOST_ITS);
 
-	writel(vtg->irq_status, vtg->regs + VTG_HOST_ITS_BCLR);
+	ग_लिखोl(vtg->irq_status, vtg->regs + VTG_HOST_ITS_BCLR);
 
-	/* force sync bus write */
-	readl(vtg->regs + VTG_HOST_ITS);
+	/* क्रमce sync bus ग_लिखो */
+	पढ़ोl(vtg->regs + VTG_HOST_ITS);
 
-	return IRQ_WAKE_THREAD;
-}
+	वापस IRQ_WAKE_THREAD;
+पूर्ण
 
-static int vtg_probe(struct platform_device *pdev)
-{
-	struct device *dev = &pdev->dev;
-	struct sti_vtg *vtg;
-	struct resource *res;
-	int ret;
+अटल पूर्णांक vtg_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा sti_vtg *vtg;
+	काष्ठा resource *res;
+	पूर्णांक ret;
 
-	vtg = devm_kzalloc(dev, sizeof(*vtg), GFP_KERNEL);
-	if (!vtg)
-		return -ENOMEM;
+	vtg = devm_kzalloc(dev, माप(*vtg), GFP_KERNEL);
+	अगर (!vtg)
+		वापस -ENOMEM;
 
 	/* Get Memory ressources */
-	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
-	if (!res) {
+	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
+	अगर (!res) अणु
 		DRM_ERROR("Get memory resource failed\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 	vtg->regs = devm_ioremap(dev, res->start, resource_size(res));
-	if (!vtg->regs) {
+	अगर (!vtg->regs) अणु
 		DRM_ERROR("failed to remap I/O memory\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
-	vtg->irq = platform_get_irq(pdev, 0);
-	if (vtg->irq < 0) {
+	vtg->irq = platक्रमm_get_irq(pdev, 0);
+	अगर (vtg->irq < 0) अणु
 		DRM_ERROR("Failed to get VTG interrupt\n");
-		return vtg->irq;
-	}
+		वापस vtg->irq;
+	पूर्ण
 
-	RAW_INIT_NOTIFIER_HEAD(&vtg->notifier_list);
+	RAW_INIT_NOTIFIER_HEAD(&vtg->notअगरier_list);
 
-	ret = devm_request_threaded_irq(dev, vtg->irq, vtg_irq,
-					vtg_irq_thread, IRQF_ONESHOT,
+	ret = devm_request_thपढ़ोed_irq(dev, vtg->irq, vtg_irq,
+					vtg_irq_thपढ़ो, IRQF_ONESHOT,
 					dev_name(dev), vtg);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		DRM_ERROR("Failed to register VTG interrupt\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	platform_set_drvdata(pdev, vtg);
+	platक्रमm_set_drvdata(pdev, vtg);
 
 	DRM_INFO("%s %s\n", __func__, dev_name(dev));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct of_device_id vtg_of_match[] = {
-	{ .compatible = "st,vtg", },
-	{ /* sentinel */ }
-};
+अटल स्थिर काष्ठा of_device_id vtg_of_match[] = अणु
+	अणु .compatible = "st,vtg", पूर्ण,
+	अणु /* sentinel */ पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, vtg_of_match);
 
-struct platform_driver sti_vtg_driver = {
-	.driver = {
+काष्ठा platक्रमm_driver sti_vtg_driver = अणु
+	.driver = अणु
 		.name = "sti-vtg",
 		.owner = THIS_MODULE,
 		.of_match_table = vtg_of_match,
-	},
+	पूर्ण,
 	.probe	= vtg_probe,
-};
+पूर्ण;
 
 MODULE_AUTHOR("Benjamin Gaignard <benjamin.gaignard@st.com>");
 MODULE_DESCRIPTION("STMicroelectronics SoC DRM driver");

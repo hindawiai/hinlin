@@ -1,59 +1,60 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
- * Driver header file for pin controller driver
- * Copyright (C) 2017 Spreadtrum  - http://www.spreadtrum.com
+ * Driver header file क्रम pin controller driver
+ * Copyright (C) 2017 Spपढ़ोtrum  - http://www.spपढ़ोtrum.com
  */
 
-#ifndef __PINCTRL_SPRD_H__
-#define __PINCTRL_SPRD_H__
+#अगर_अघोषित __PINCTRL_SPRD_H__
+#घोषणा __PINCTRL_SPRD_H__
 
-struct platform_device;
+काष्ठा platक्रमm_device;
 
-#define NUM_OFFSET	(20)
-#define TYPE_OFFSET	(16)
-#define BIT_OFFSET	(8)
-#define WIDTH_OFFSET	(4)
+#घोषणा NUM_OFFSET	(20)
+#घोषणा TYPE_OFFSET	(16)
+#घोषणा BIT_OFFSET	(8)
+#घोषणा WIDTH_OFFSET	(4)
 
-#define SPRD_PIN_INFO(num, type, offset, width, reg)	\
+#घोषणा SPRD_PIN_INFO(num, type, offset, width, reg)	\
 		(((num) & 0xFFF) << NUM_OFFSET |	\
 		 ((type) & 0xF) << TYPE_OFFSET |	\
 		 ((offset) & 0xFF) << BIT_OFFSET |	\
 		 ((width) & 0xF) << WIDTH_OFFSET |	\
 		 ((reg) & 0xF))
 
-#define SPRD_PINCTRL_PIN(pin)	SPRD_PINCTRL_PIN_DATA(pin, #pin)
+#घोषणा SPRD_PINCTRL_PIN(pin)	SPRD_PINCTRL_PIN_DATA(pin, #pin)
 
-#define SPRD_PINCTRL_PIN_DATA(a, b)				\
-	{							\
+#घोषणा SPRD_PINCTRL_PIN_DATA(a, b)				\
+	अणु							\
 		.name = b,					\
 		.num = (((a) >> NUM_OFFSET) & 0xfff),		\
 		.type = (((a) >> TYPE_OFFSET) & 0xf),		\
 		.bit_offset = (((a) >> BIT_OFFSET) & 0xff),	\
 		.bit_width = ((a) >> WIDTH_OFFSET & 0xf),	\
 		.reg = ((a) & 0xf)				\
-	}
+	पूर्ण
 
-enum pin_type {
+क्रमागत pin_type अणु
 	GLOBAL_CTRL_PIN,
 	COMMON_PIN,
 	MISC_PIN,
-};
+पूर्ण;
 
-struct sprd_pins_info {
-	const char *name;
-	unsigned int num;
-	enum pin_type type;
+काष्ठा sprd_pins_info अणु
+	स्थिर अक्षर *name;
+	अचिन्हित पूर्णांक num;
+	क्रमागत pin_type type;
 
-	/* for global control pins configuration */
-	unsigned long bit_offset;
-	unsigned long bit_width;
-	unsigned int reg;
-};
+	/* क्रम global control pins configuration */
+	अचिन्हित दीर्घ bit_offset;
+	अचिन्हित दीर्घ bit_width;
+	अचिन्हित पूर्णांक reg;
+पूर्ण;
 
-int sprd_pinctrl_core_probe(struct platform_device *pdev,
-			    struct sprd_pins_info *sprd_soc_pin_info,
-			    int pins_cnt);
-int sprd_pinctrl_remove(struct platform_device *pdev);
-void sprd_pinctrl_shutdown(struct platform_device *pdev);
+पूर्णांक sprd_pinctrl_core_probe(काष्ठा platक्रमm_device *pdev,
+			    काष्ठा sprd_pins_info *sprd_soc_pin_info,
+			    पूर्णांक pins_cnt);
+पूर्णांक sprd_pinctrl_हटाओ(काष्ठा platक्रमm_device *pdev);
+व्योम sprd_pinctrl_shutकरोwn(काष्ठा platक्रमm_device *pdev);
 
-#endif /* __PINCTRL_SPRD_H__ */
+#पूर्ण_अगर /* __PINCTRL_SPRD_H__ */

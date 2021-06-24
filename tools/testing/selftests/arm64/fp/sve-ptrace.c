@@ -1,336 +1,337 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (C) 2015-2020 ARM Limited.
  * Original author: Dave Martin <Dave.Martin@arm.com>
  */
-#include <errno.h>
-#include <stddef.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-#include <sys/auxv.h>
-#include <sys/ptrace.h>
-#include <sys/types.h>
-#include <sys/uio.h>
-#include <sys/wait.h>
-#include <asm/sigcontext.h>
-#include <asm/ptrace.h>
+#समावेश <त्रुटिसं.स>
+#समावेश <मानकघोष.स>
+#समावेश <मानकपन.स>
+#समावेश <मानककोष.स>
+#समावेश <माला.स>
+#समावेश <unistd.h>
+#समावेश <sys/auxv.h>
+#समावेश <sys/ptrace.h>
+#समावेश <sys/types.h>
+#समावेश <sys/uपन.स>
+#समावेश <sys/रुको.h>
+#समावेश <यंत्र/sigcontext.h>
+#समावेश <यंत्र/ptrace.h>
 
-#include "../../kselftest.h"
+#समावेश "../../kselftest.h"
 
-/* <linux/elf.h> and <sys/auxv.h> don't like each other, so: */
-#ifndef NT_ARM_SVE
-#define NT_ARM_SVE 0x405
-#endif
+/* <linux/elf.h> and <sys/auxv.h> करोn't like each other, so: */
+#अगर_अघोषित NT_ARM_SVE
+#घोषणा NT_ARM_SVE 0x405
+#पूर्ण_अगर
 
-/* Number of registers filled in by sve_store_patterns */
-#define NR_VREGS 5
+/* Number of रेजिस्टरs filled in by sve_store_patterns */
+#घोषणा NR_VREGS 5
 
-void sve_store_patterns(__uint128_t v[NR_VREGS]);
+व्योम sve_store_patterns(__uपूर्णांक128_t v[NR_VREGS]);
 
-static void dump(const void *buf, size_t size)
-{
-	size_t i;
-	const unsigned char *p = buf;
+अटल व्योम dump(स्थिर व्योम *buf, माप_प्रकार size)
+अणु
+	माप_प्रकार i;
+	स्थिर अचिन्हित अक्षर *p = buf;
 
-	for (i = 0; i < size; ++i)
-		printf(" %.2x", *p++);
-}
+	क्रम (i = 0; i < size; ++i)
+		म_लिखो(" %.2x", *p++);
+पूर्ण
 
-static int check_vregs(const __uint128_t vregs[NR_VREGS])
-{
-	int i;
-	int ok = 1;
+अटल पूर्णांक check_vregs(स्थिर __uपूर्णांक128_t vregs[NR_VREGS])
+अणु
+	पूर्णांक i;
+	पूर्णांक ok = 1;
 
-	for (i = 0; i < NR_VREGS; ++i) {
-		printf("# v[%d]:", i);
-		dump(&vregs[i], sizeof vregs[i]);
-		putchar('\n');
+	क्रम (i = 0; i < NR_VREGS; ++i) अणु
+		म_लिखो("# v[%d]:", i);
+		dump(&vregs[i], माप vregs[i]);
+		अक्षर_दो('\n');
 
-		if (vregs[i] != vregs[0])
+		अगर (vregs[i] != vregs[0])
 			ok = 0;
-	}
+	पूर्ण
 
-	return ok;
-}
+	वापस ok;
+पूर्ण
 
-static int do_child(void)
-{
-	if (ptrace(PTRACE_TRACEME, -1, NULL, NULL))
-		ksft_exit_fail_msg("PTRACE_TRACEME", strerror(errno));
+अटल पूर्णांक करो_child(व्योम)
+अणु
+	अगर (ptrace(PTRACE_TRACEME, -1, शून्य, शून्य))
+		ksft_निकास_fail_msg("PTRACE_TRACEME", म_त्रुटि(त्रुटि_सं));
 
-	if (raise(SIGSTOP))
-		ksft_exit_fail_msg("raise(SIGSTOP)", strerror(errno));
+	अगर (उठाओ(SIGSTOP))
+		ksft_निकास_fail_msg("raise(SIGSTOP)", म_त्रुटि(त्रुटि_सं));
 
-	return EXIT_SUCCESS;
-}
+	वापस निकास_सफल;
+पूर्ण
 
-static struct user_sve_header *get_sve(pid_t pid, void **buf, size_t *size)
-{
-	struct user_sve_header *sve;
-	void *p;
-	size_t sz = sizeof *sve;
-	struct iovec iov;
+अटल काष्ठा user_sve_header *get_sve(pid_t pid, व्योम **buf, माप_प्रकार *size)
+अणु
+	काष्ठा user_sve_header *sve;
+	व्योम *p;
+	माप_प्रकार sz = माप *sve;
+	काष्ठा iovec iov;
 
-	while (1) {
-		if (*size < sz) {
-			p = realloc(*buf, sz);
-			if (!p) {
-				errno = ENOMEM;
-				goto error;
-			}
+	जबतक (1) अणु
+		अगर (*size < sz) अणु
+			p = पुनः_स्मृति(*buf, sz);
+			अगर (!p) अणु
+				त्रुटि_सं = ENOMEM;
+				जाओ error;
+			पूर्ण
 
 			*buf = p;
 			*size = sz;
-		}
+		पूर्ण
 
 		iov.iov_base = *buf;
 		iov.iov_len = sz;
-		if (ptrace(PTRACE_GETREGSET, pid, NT_ARM_SVE, &iov))
-			goto error;
+		अगर (ptrace(PTRACE_GETREGSET, pid, NT_ARM_SVE, &iov))
+			जाओ error;
 
 		sve = *buf;
-		if (sve->size <= sz)
-			break;
+		अगर (sve->size <= sz)
+			अवरोध;
 
 		sz = sve->size;
-	}
+	पूर्ण
 
-	return sve;
+	वापस sve;
 
 error:
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static int set_sve(pid_t pid, const struct user_sve_header *sve)
-{
-	struct iovec iov;
+अटल पूर्णांक set_sve(pid_t pid, स्थिर काष्ठा user_sve_header *sve)
+अणु
+	काष्ठा iovec iov;
 
-	iov.iov_base = (void *)sve;
+	iov.iov_base = (व्योम *)sve;
 	iov.iov_len = sve->size;
-	return ptrace(PTRACE_SETREGSET, pid, NT_ARM_SVE, &iov);
-}
+	वापस ptrace(PTRACE_SETREGSET, pid, NT_ARM_SVE, &iov);
+पूर्ण
 
-static void dump_sve_regs(const struct user_sve_header *sve, unsigned int num,
-			  unsigned int vlmax)
-{
-	unsigned int vq;
-	unsigned int i;
+अटल व्योम dump_sve_regs(स्थिर काष्ठा user_sve_header *sve, अचिन्हित पूर्णांक num,
+			  अचिन्हित पूर्णांक vlmax)
+अणु
+	अचिन्हित पूर्णांक vq;
+	अचिन्हित पूर्णांक i;
 
-	if ((sve->flags & SVE_PT_REGS_MASK) != SVE_PT_REGS_SVE)
-		ksft_exit_fail_msg("Dumping non-SVE register\n");
+	अगर ((sve->flags & SVE_PT_REGS_MASK) != SVE_PT_REGS_SVE)
+		ksft_निकास_fail_msg("Dumping non-SVE register\n");
 
-	if (vlmax > sve->vl)
+	अगर (vlmax > sve->vl)
 		vlmax = sve->vl;
 
 	vq = sve_vq_from_vl(sve->vl);
-	for (i = 0; i < num; ++i) {
-		printf("# z%u:", i);
-		dump((const char *)sve + SVE_PT_SVE_ZREG_OFFSET(vq, i),
+	क्रम (i = 0; i < num; ++i) अणु
+		म_लिखो("# z%u:", i);
+		dump((स्थिर अक्षर *)sve + SVE_PT_SVE_ZREG_OFFSET(vq, i),
 		     vlmax);
-		printf("%s\n", vlmax == sve->vl ? "" : " ...");
-	}
-}
+		म_लिखो("%s\n", vlmax == sve->vl ? "" : " ...");
+	पूर्ण
+पूर्ण
 
-static int do_parent(pid_t child)
-{
-	int ret = EXIT_FAILURE;
+अटल पूर्णांक करो_parent(pid_t child)
+अणु
+	पूर्णांक ret = निकास_त्रुटि;
 	pid_t pid;
-	int status;
+	पूर्णांक status;
 	siginfo_t si;
-	void *svebuf = NULL, *newsvebuf;
-	size_t svebufsz = 0, newsvebufsz;
-	struct user_sve_header *sve, *new_sve;
-	struct user_fpsimd_state *fpsimd;
-	unsigned int i, j;
-	unsigned char *p;
-	unsigned int vq;
+	व्योम *svebuf = शून्य, *newsvebuf;
+	माप_प्रकार svebufsz = 0, newsvebufsz;
+	काष्ठा user_sve_header *sve, *new_sve;
+	काष्ठा user_fpsimd_state *fpsimd;
+	अचिन्हित पूर्णांक i, j;
+	अचिन्हित अक्षर *p;
+	अचिन्हित पूर्णांक vq;
 
 	/* Attach to the child */
-	while (1) {
-		int sig;
+	जबतक (1) अणु
+		पूर्णांक sig;
 
-		pid = wait(&status);
-		if (pid == -1) {
-			perror("wait");
-			goto error;
-		}
+		pid = रुको(&status);
+		अगर (pid == -1) अणु
+			लिखो_त्रुटि("wait");
+			जाओ error;
+		पूर्ण
 
 		/*
 		 * This should never happen but it's hard to flag in
 		 * the framework.
 		 */
-		if (pid != child)
-			continue;
+		अगर (pid != child)
+			जारी;
 
-		if (WIFEXITED(status) || WIFSIGNALED(status))
-			ksft_exit_fail_msg("Child died unexpectedly\n");
+		अगर (WIFEXITED(status) || WIFSIGNALED(status))
+			ksft_निकास_fail_msg("Child died unexpectedly\n");
 
 		ksft_test_result(WIFSTOPPED(status), "WIFSTOPPED(%d)\n",
 				 status);
-		if (!WIFSTOPPED(status))
-			goto error;
+		अगर (!WIFSTOPPED(status))
+			जाओ error;
 
 		sig = WSTOPSIG(status);
 
-		if (ptrace(PTRACE_GETSIGINFO, pid, NULL, &si)) {
-			if (errno == ESRCH)
-				goto disappeared;
+		अगर (ptrace(PTRACE_GETSIGINFO, pid, शून्य, &si)) अणु
+			अगर (त्रुटि_सं == ESRCH)
+				जाओ disappeared;
 
-			if (errno == EINVAL) {
+			अगर (त्रुटि_सं == EINVAL) अणु
 				sig = 0; /* bust group-stop */
-				goto cont;
-			}
+				जाओ cont;
+			पूर्ण
 
 			ksft_test_result_fail("PTRACE_GETSIGINFO: %s\n",
-					      strerror(errno));
-			goto error;
-		}
+					      म_त्रुटि(त्रुटि_सं));
+			जाओ error;
+		पूर्ण
 
-		if (sig == SIGSTOP && si.si_code == SI_TKILL &&
+		अगर (sig == SIGSTOP && si.si_code == SI_TKILL &&
 		    si.si_pid == pid)
-			break;
+			अवरोध;
 
 	cont:
-		if (ptrace(PTRACE_CONT, pid, NULL, sig)) {
-			if (errno == ESRCH)
-				goto disappeared;
+		अगर (ptrace(PTRACE_CONT, pid, शून्य, sig)) अणु
+			अगर (त्रुटि_सं == ESRCH)
+				जाओ disappeared;
 
 			ksft_test_result_fail("PTRACE_CONT: %s\n",
-					      strerror(errno));
-			goto error;
-		}
-	}
+					      म_त्रुटि(त्रुटि_सं));
+			जाओ error;
+		पूर्ण
+	पूर्ण
 
 	sve = get_sve(pid, &svebuf, &svebufsz);
-	if (!sve) {
-		int e = errno;
+	अगर (!sve) अणु
+		पूर्णांक e = त्रुटि_सं;
 
-		ksft_test_result_fail("get_sve: %s\n", strerror(errno));
-		if (e == ESRCH)
-			goto disappeared;
+		ksft_test_result_fail("get_sve: %s\n", म_त्रुटि(त्रुटि_सं));
+		अगर (e == ESRCH)
+			जाओ disappeared;
 
-		goto error;
-	} else {
+		जाओ error;
+	पूर्ण अन्यथा अणु
 		ksft_test_result_pass("get_sve\n");
-	}
+	पूर्ण
 
 	ksft_test_result((sve->flags & SVE_PT_REGS_MASK) == SVE_PT_REGS_FPSIMD,
 			 "FPSIMD registers\n");
-	if ((sve->flags & SVE_PT_REGS_MASK) != SVE_PT_REGS_FPSIMD)
-		goto error;
+	अगर ((sve->flags & SVE_PT_REGS_MASK) != SVE_PT_REGS_FPSIMD)
+		जाओ error;
 
-	fpsimd = (struct user_fpsimd_state *)((char *)sve +
+	fpsimd = (काष्ठा user_fpsimd_state *)((अक्षर *)sve +
 					      SVE_PT_FPSIMD_OFFSET);
-	for (i = 0; i < 32; ++i) {
-		p = (unsigned char *)&fpsimd->vregs[i];
+	क्रम (i = 0; i < 32; ++i) अणु
+		p = (अचिन्हित अक्षर *)&fpsimd->vregs[i];
 
-		for (j = 0; j < sizeof fpsimd->vregs[i]; ++j)
+		क्रम (j = 0; j < माप fpsimd->vregs[i]; ++j)
 			p[j] = j;
-	}
+	पूर्ण
 
-	if (set_sve(pid, sve)) {
-		int e = errno;
+	अगर (set_sve(pid, sve)) अणु
+		पूर्णांक e = त्रुटि_सं;
 
 		ksft_test_result_fail("set_sve(FPSIMD): %s\n",
-				      strerror(errno));
-		if (e == ESRCH)
-			goto disappeared;
+				      म_त्रुटि(त्रुटि_सं));
+		अगर (e == ESRCH)
+			जाओ disappeared;
 
-		goto error;
-	}
+		जाओ error;
+	पूर्ण
 
 	vq = sve_vq_from_vl(sve->vl);
 
 	newsvebufsz = SVE_PT_SVE_ZREG_OFFSET(vq, 1);
-	new_sve = newsvebuf = malloc(newsvebufsz);
-	if (!new_sve) {
-		errno = ENOMEM;
-		perror(NULL);
-		goto error;
-	}
+	new_sve = newsvebuf = दो_स्मृति(newsvebufsz);
+	अगर (!new_sve) अणु
+		त्रुटि_सं = ENOMEM;
+		लिखो_त्रुटि(शून्य);
+		जाओ error;
+	पूर्ण
 
 	*new_sve = *sve;
 	new_sve->flags &= ~SVE_PT_REGS_MASK;
 	new_sve->flags |= SVE_PT_REGS_SVE;
-	memset((char *)new_sve + SVE_PT_SVE_ZREG_OFFSET(vq, 0),
+	स_रखो((अक्षर *)new_sve + SVE_PT_SVE_ZREG_OFFSET(vq, 0),
 	       0, SVE_PT_SVE_ZREG_SIZE(vq));
 	new_sve->size = SVE_PT_SVE_ZREG_OFFSET(vq, 1);
-	if (set_sve(pid, new_sve)) {
-		int e = errno;
+	अगर (set_sve(pid, new_sve)) अणु
+		पूर्णांक e = त्रुटि_सं;
 
-		ksft_test_result_fail("set_sve(ZREG): %s\n", strerror(errno));
-		if (e == ESRCH)
-			goto disappeared;
+		ksft_test_result_fail("set_sve(ZREG): %s\n", म_त्रुटि(त्रुटि_सं));
+		अगर (e == ESRCH)
+			जाओ disappeared;
 
-		goto error;
-	}
+		जाओ error;
+	पूर्ण
 
 	new_sve = get_sve(pid, &newsvebuf, &newsvebufsz);
-	if (!new_sve) {
-		int e = errno;
+	अगर (!new_sve) अणु
+		पूर्णांक e = त्रुटि_सं;
 
-		ksft_test_result_fail("get_sve(ZREG): %s\n", strerror(errno));
-		if (e == ESRCH)
-			goto disappeared;
+		ksft_test_result_fail("get_sve(ZREG): %s\n", म_त्रुटि(त्रुटि_सं));
+		अगर (e == ESRCH)
+			जाओ disappeared;
 
-		goto error;
-	}
+		जाओ error;
+	पूर्ण
 
 	ksft_test_result((new_sve->flags & SVE_PT_REGS_MASK) == SVE_PT_REGS_SVE,
 			 "SVE registers\n");
-	if ((new_sve->flags & SVE_PT_REGS_MASK) != SVE_PT_REGS_SVE)
-		goto error;
+	अगर ((new_sve->flags & SVE_PT_REGS_MASK) != SVE_PT_REGS_SVE)
+		जाओ error;
 
-	dump_sve_regs(new_sve, 3, sizeof fpsimd->vregs[0]);
+	dump_sve_regs(new_sve, 3, माप fpsimd->vregs[0]);
 
-	p = (unsigned char *)new_sve + SVE_PT_SVE_ZREG_OFFSET(vq, 1);
-	for (i = 0; i < sizeof fpsimd->vregs[0]; ++i) {
-		unsigned char expected = i;
+	p = (अचिन्हित अक्षर *)new_sve + SVE_PT_SVE_ZREG_OFFSET(vq, 1);
+	क्रम (i = 0; i < माप fpsimd->vregs[0]; ++i) अणु
+		अचिन्हित अक्षर expected = i;
 
-		if (__BYTE_ORDER == __BIG_ENDIAN)
-			expected = sizeof fpsimd->vregs[0] - 1 - expected;
+		अगर (__BYTE_ORDER == __BIG_ENDIAN)
+			expected = माप fpsimd->vregs[0] - 1 - expected;
 
 		ksft_test_result(p[i] == expected, "p[%d] == expected\n", i);
-		if (p[i] != expected)
-			goto error;
-	}
+		अगर (p[i] != expected)
+			जाओ error;
+	पूर्ण
 
-	ret = EXIT_SUCCESS;
+	ret = निकास_सफल;
 
 error:
-	kill(child, SIGKILL);
+	समाप्त(child, SIGKILL);
 
 disappeared:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int main(void)
-{
-	int ret = EXIT_SUCCESS;
-	__uint128_t v[NR_VREGS];
+पूर्णांक मुख्य(व्योम)
+अणु
+	पूर्णांक ret = निकास_सफल;
+	__uपूर्णांक128_t v[NR_VREGS];
 	pid_t child;
 
-	ksft_print_header();
+	ksft_prपूर्णांक_header();
 	ksft_set_plan(20);
 
-	if (!(getauxval(AT_HWCAP) & HWCAP_SVE))
-		ksft_exit_skip("SVE not available\n");
+	अगर (!(getauxval(AT_HWCAP) & HWCAP_SVE))
+		ksft_निकास_skip("SVE not available\n");
 
 	sve_store_patterns(v);
 
-	if (!check_vregs(v))
-		ksft_exit_fail_msg("Initial check_vregs() failed\n");
+	अगर (!check_vregs(v))
+		ksft_निकास_fail_msg("Initial check_vregs() failed\n");
 
-	child = fork();
-	if (!child)
-		return do_child();
+	child = विभाजन();
+	अगर (!child)
+		वापस करो_child();
 
-	if (do_parent(child))
-		ret = EXIT_FAILURE;
+	अगर (करो_parent(child))
+		ret = निकास_त्रुटि;
 
-	ksft_print_cnts();
+	ksft_prपूर्णांक_cnts();
 
-	return ret;
-}
+	वापस ret;
+पूर्ण

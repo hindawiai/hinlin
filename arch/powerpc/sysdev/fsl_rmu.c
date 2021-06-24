@@ -1,10 +1,11 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Freescale MPC85xx/MPC86xx RapidIO RMU support
  *
  * Copyright 2009 Sysgo AG
  * Thomas Moll <thomas.moll@sysgo.com>
- * - fixed maintenance access routines, check for aligned access
+ * - fixed मुख्यtenance access routines, check क्रम aligned access
  *
  * Copyright 2009 Integrated Device Technology, Inc.
  * Alex Bounine <alexandre.bounine@idt.com>
@@ -12,97 +13,97 @@
  * - Added Machine Check exception handling
  *
  * Copyright (C) 2007, 2008, 2010, 2011 Freescale Semiconductor, Inc.
- * Zhang Wei <wei.zhang@freescale.com>
- * Lian Minghuan-B31939 <Minghuan.Lian@freescale.com>
- * Liu Gang <Gang.Liu@freescale.com>
+ * Zhang Wei <wei.zhang@मुक्तscale.com>
+ * Lian Minghuan-B31939 <Minghuan.Lian@मुक्तscale.com>
+ * Liu Gang <Gang.Liu@मुक्तscale.com>
  *
  * Copyright 2005 MontaVista Software, Inc.
  * Matt Porter <mporter@kernel.crashing.org>
  */
 
-#include <linux/types.h>
-#include <linux/dma-mapping.h>
-#include <linux/interrupt.h>
-#include <linux/of_irq.h>
-#include <linux/of_platform.h>
-#include <linux/slab.h>
+#समावेश <linux/types.h>
+#समावेश <linux/dma-mapping.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/of_irq.h>
+#समावेश <linux/of_platक्रमm.h>
+#समावेश <linux/slab.h>
 
-#include "fsl_rio.h"
+#समावेश "fsl_rio.h"
 
-#define GET_RMM_HANDLE(mport) \
-		(((struct rio_priv *)(mport->priv))->rmm_handle)
+#घोषणा GET_RMM_HANDLE(mport) \
+		(((काष्ठा rio_priv *)(mport->priv))->rmm_handle)
 
-/* RapidIO definition irq, which read from OF-tree */
-#define IRQ_RIO_PW(m)		(((struct fsl_rio_pw *)(m))->pwirq)
-#define IRQ_RIO_BELL(m) (((struct fsl_rio_dbell *)(m))->bellirq)
-#define IRQ_RIO_TX(m) (((struct fsl_rmu *)(GET_RMM_HANDLE(m)))->txirq)
-#define IRQ_RIO_RX(m) (((struct fsl_rmu *)(GET_RMM_HANDLE(m)))->rxirq)
+/* RapidIO definition irq, which पढ़ो from OF-tree */
+#घोषणा IRQ_RIO_PW(m)		(((काष्ठा fsl_rio_pw *)(m))->pwirq)
+#घोषणा IRQ_RIO_BELL(m) (((काष्ठा fsl_rio_dbell *)(m))->bellirq)
+#घोषणा IRQ_RIO_TX(m) (((काष्ठा fsl_rmu *)(GET_RMM_HANDLE(m)))->txirq)
+#घोषणा IRQ_RIO_RX(m) (((काष्ठा fsl_rmu *)(GET_RMM_HANDLE(m)))->rxirq)
 
-#define RIO_MIN_TX_RING_SIZE	2
-#define RIO_MAX_TX_RING_SIZE	2048
-#define RIO_MIN_RX_RING_SIZE	2
-#define RIO_MAX_RX_RING_SIZE	2048
+#घोषणा RIO_MIN_TX_RING_SIZE	2
+#घोषणा RIO_MAX_TX_RING_SIZE	2048
+#घोषणा RIO_MIN_RX_RING_SIZE	2
+#घोषणा RIO_MAX_RX_RING_SIZE	2048
 
-#define RIO_IPWMR_SEN		0x00100000
-#define RIO_IPWMR_QFIE		0x00000100
-#define RIO_IPWMR_EIE		0x00000020
-#define RIO_IPWMR_CQ		0x00000002
-#define RIO_IPWMR_PWE		0x00000001
+#घोषणा RIO_IPWMR_SEN		0x00100000
+#घोषणा RIO_IPWMR_QFIE		0x00000100
+#घोषणा RIO_IPWMR_EIE		0x00000020
+#घोषणा RIO_IPWMR_CQ		0x00000002
+#घोषणा RIO_IPWMR_PWE		0x00000001
 
-#define RIO_IPWSR_QF		0x00100000
-#define RIO_IPWSR_TE		0x00000080
-#define RIO_IPWSR_QFI		0x00000010
-#define RIO_IPWSR_PWD		0x00000008
-#define RIO_IPWSR_PWB		0x00000004
+#घोषणा RIO_IPWSR_QF		0x00100000
+#घोषणा RIO_IPWSR_TE		0x00000080
+#घोषणा RIO_IPWSR_QFI		0x00000010
+#घोषणा RIO_IPWSR_PWD		0x00000008
+#घोषणा RIO_IPWSR_PWB		0x00000004
 
-#define RIO_EPWISR		0x10010
+#घोषणा RIO_EPWISR		0x10010
 /* EPWISR Error match value */
-#define RIO_EPWISR_PINT1	0x80000000
-#define RIO_EPWISR_PINT2	0x40000000
-#define RIO_EPWISR_MU		0x00000002
-#define RIO_EPWISR_PW		0x00000001
+#घोषणा RIO_EPWISR_PINT1	0x80000000
+#घोषणा RIO_EPWISR_PINT2	0x40000000
+#घोषणा RIO_EPWISR_MU		0x00000002
+#घोषणा RIO_EPWISR_PW		0x00000001
 
-#define IPWSR_CLEAR		0x98
-#define OMSR_CLEAR		0x1cb3
-#define IMSR_CLEAR		0x491
-#define IDSR_CLEAR		0x91
-#define ODSR_CLEAR		0x1c00
-#define LTLEECSR_ENABLE_ALL	0xFFC000FC
-#define RIO_LTLEECSR		0x060c
+#घोषणा IPWSR_CLEAR		0x98
+#घोषणा OMSR_CLEAR		0x1cb3
+#घोषणा IMSR_CLEAR		0x491
+#घोषणा IDSR_CLEAR		0x91
+#घोषणा ODSR_CLEAR		0x1c00
+#घोषणा LTLEECSR_ENABLE_ALL	0xFFC000FC
+#घोषणा RIO_LTLEECSR		0x060c
 
-#define RIO_IM0SR		0x64
-#define RIO_IM1SR		0x164
-#define RIO_OM0SR		0x4
-#define RIO_OM1SR		0x104
+#घोषणा RIO_IM0SR		0x64
+#घोषणा RIO_IM1SR		0x164
+#घोषणा RIO_OM0SR		0x4
+#घोषणा RIO_OM1SR		0x104
 
-#define RIO_DBELL_WIN_SIZE	0x1000
+#घोषणा RIO_DBELL_WIN_SIZE	0x1000
 
-#define RIO_MSG_OMR_MUI		0x00000002
-#define RIO_MSG_OSR_TE		0x00000080
-#define RIO_MSG_OSR_QOI		0x00000020
-#define RIO_MSG_OSR_QFI		0x00000010
-#define RIO_MSG_OSR_MUB		0x00000004
-#define RIO_MSG_OSR_EOMI	0x00000002
-#define RIO_MSG_OSR_QEI		0x00000001
+#घोषणा RIO_MSG_OMR_MUI		0x00000002
+#घोषणा RIO_MSG_OSR_TE		0x00000080
+#घोषणा RIO_MSG_OSR_QOI		0x00000020
+#घोषणा RIO_MSG_OSR_QFI		0x00000010
+#घोषणा RIO_MSG_OSR_MUB		0x00000004
+#घोषणा RIO_MSG_OSR_EOMI	0x00000002
+#घोषणा RIO_MSG_OSR_QEI		0x00000001
 
-#define RIO_MSG_IMR_MI		0x00000002
-#define RIO_MSG_ISR_TE		0x00000080
-#define RIO_MSG_ISR_QFI		0x00000010
-#define RIO_MSG_ISR_DIQI	0x00000001
+#घोषणा RIO_MSG_IMR_MI		0x00000002
+#घोषणा RIO_MSG_ISR_TE		0x00000080
+#घोषणा RIO_MSG_ISR_QFI		0x00000010
+#घोषणा RIO_MSG_ISR_DIQI	0x00000001
 
-#define RIO_MSG_DESC_SIZE	32
-#define RIO_MSG_BUFFER_SIZE	4096
+#घोषणा RIO_MSG_DESC_SIZE	32
+#घोषणा RIO_MSG_BUFFER_SIZE	4096
 
-#define DOORBELL_DMR_DI		0x00000002
-#define DOORBELL_DSR_TE		0x00000080
-#define DOORBELL_DSR_QFI	0x00000010
-#define DOORBELL_DSR_DIQI	0x00000001
+#घोषणा DOORBELL_DMR_DI		0x00000002
+#घोषणा DOORBELL_DSR_TE		0x00000080
+#घोषणा DOORBELL_DSR_QFI	0x00000010
+#घोषणा DOORBELL_DSR_DIQI	0x00000001
 
-#define DOORBELL_MESSAGE_SIZE	0x08
+#घोषणा DOORBELL_MESSAGE_SIZE	0x08
 
-static DEFINE_SPINLOCK(fsl_rio_doorbell_lock);
+अटल DEFINE_SPINLOCK(fsl_rio_करोorbell_lock);
 
-struct rio_msg_regs {
+काष्ठा rio_msg_regs अणु
 	u32 omr;
 	u32 osr;
 	u32 pad1;
@@ -118,12 +119,12 @@ struct rio_msg_regs {
 	u32 imr;
 	u32 isr;
 	u32 pad5;
-	u32 ifqdpar;
+	u32 अगरqdpar;
 	u32 pad6;
-	u32 ifqepar;
-};
+	u32 अगरqepar;
+पूर्ण;
 
-struct rio_dbell_regs {
+काष्ठा rio_dbell_regs अणु
 	u32 odmr;
 	u32 odsr;
 	u32 pad1[4];
@@ -138,17 +139,17 @@ struct rio_dbell_regs {
 	u32 dqdpar;
 	u32 pad5;
 	u32 dqepar;
-};
+पूर्ण;
 
-struct rio_pw_regs {
+काष्ठा rio_pw_regs अणु
 	u32 pwmr;
 	u32 pwsr;
 	u32 epwqbar;
 	u32 pwqbar;
-};
+पूर्ण;
 
 
-struct rio_tx_desc {
+काष्ठा rio_tx_desc अणु
 	u32 pad1;
 	u32 saddr;
 	u32 dport;
@@ -157,210 +158,210 @@ struct rio_tx_desc {
 	u32 pad3;
 	u32 dwcnt;
 	u32 pad4;
-};
+पूर्ण;
 
-struct rio_msg_tx_ring {
-	void *virt;
+काष्ठा rio_msg_tx_ring अणु
+	व्योम *virt;
 	dma_addr_t phys;
-	void *virt_buffer[RIO_MAX_TX_RING_SIZE];
+	व्योम *virt_buffer[RIO_MAX_TX_RING_SIZE];
 	dma_addr_t phys_buffer[RIO_MAX_TX_RING_SIZE];
-	int tx_slot;
-	int size;
-	void *dev_id;
-};
+	पूर्णांक tx_slot;
+	पूर्णांक size;
+	व्योम *dev_id;
+पूर्ण;
 
-struct rio_msg_rx_ring {
-	void *virt;
+काष्ठा rio_msg_rx_ring अणु
+	व्योम *virt;
 	dma_addr_t phys;
-	void *virt_buffer[RIO_MAX_RX_RING_SIZE];
-	int rx_slot;
-	int size;
-	void *dev_id;
-};
+	व्योम *virt_buffer[RIO_MAX_RX_RING_SIZE];
+	पूर्णांक rx_slot;
+	पूर्णांक size;
+	व्योम *dev_id;
+पूर्ण;
 
-struct fsl_rmu {
-	struct rio_msg_regs __iomem *msg_regs;
-	struct rio_msg_tx_ring msg_tx_ring;
-	struct rio_msg_rx_ring msg_rx_ring;
-	int txirq;
-	int rxirq;
-};
+काष्ठा fsl_rmu अणु
+	काष्ठा rio_msg_regs __iomem *msg_regs;
+	काष्ठा rio_msg_tx_ring msg_tx_ring;
+	काष्ठा rio_msg_rx_ring msg_rx_ring;
+	पूर्णांक txirq;
+	पूर्णांक rxirq;
+पूर्ण;
 
-struct rio_dbell_msg {
+काष्ठा rio_dbell_msg अणु
 	u16 pad1;
 	u16 tid;
 	u16 sid;
 	u16 info;
-};
+पूर्ण;
 
 /**
- * fsl_rio_tx_handler - MPC85xx outbound message interrupt handler
- * @irq: Linux interrupt number
- * @dev_instance: Pointer to interrupt-specific data
+ * fsl_rio_tx_handler - MPC85xx outbound message पूर्णांकerrupt handler
+ * @irq: Linux पूर्णांकerrupt number
+ * @dev_instance: Poपूर्णांकer to पूर्णांकerrupt-specअगरic data
  *
- * Handles outbound message interrupts. Executes a register outbound
- * mailbox event handler and acks the interrupt occurrence.
+ * Handles outbound message पूर्णांकerrupts. Executes a रेजिस्टर outbound
+ * mailbox event handler and acks the पूर्णांकerrupt occurrence.
  */
-static irqreturn_t
-fsl_rio_tx_handler(int irq, void *dev_instance)
-{
-	int osr;
-	struct rio_mport *port = (struct rio_mport *)dev_instance;
-	struct fsl_rmu *rmu = GET_RMM_HANDLE(port);
+अटल irqवापस_t
+fsl_rio_tx_handler(पूर्णांक irq, व्योम *dev_instance)
+अणु
+	पूर्णांक osr;
+	काष्ठा rio_mport *port = (काष्ठा rio_mport *)dev_instance;
+	काष्ठा fsl_rmu *rmu = GET_RMM_HANDLE(port);
 
 	osr = in_be32(&rmu->msg_regs->osr);
 
-	if (osr & RIO_MSG_OSR_TE) {
+	अगर (osr & RIO_MSG_OSR_TE) अणु
 		pr_info("RIO: outbound message transmission error\n");
 		out_be32(&rmu->msg_regs->osr, RIO_MSG_OSR_TE);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (osr & RIO_MSG_OSR_QOI) {
+	अगर (osr & RIO_MSG_OSR_QOI) अणु
 		pr_info("RIO: outbound message queue overflow\n");
 		out_be32(&rmu->msg_regs->osr, RIO_MSG_OSR_QOI);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (osr & RIO_MSG_OSR_EOMI) {
+	अगर (osr & RIO_MSG_OSR_EOMI) अणु
 		u32 dqp = in_be32(&rmu->msg_regs->odqdpar);
-		int slot = (dqp - rmu->msg_tx_ring.phys) >> 5;
-		if (port->outb_msg[0].mcback != NULL) {
+		पूर्णांक slot = (dqp - rmu->msg_tx_ring.phys) >> 5;
+		अगर (port->outb_msg[0].mcback != शून्य) अणु
 			port->outb_msg[0].mcback(port, rmu->msg_tx_ring.dev_id,
 					-1,
 					slot);
-		}
-		/* Ack the end-of-message interrupt */
+		पूर्ण
+		/* Ack the end-of-message पूर्णांकerrupt */
 		out_be32(&rmu->msg_regs->osr, RIO_MSG_OSR_EOMI);
-	}
+	पूर्ण
 
 out:
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
 /**
- * fsl_rio_rx_handler - MPC85xx inbound message interrupt handler
- * @irq: Linux interrupt number
- * @dev_instance: Pointer to interrupt-specific data
+ * fsl_rio_rx_handler - MPC85xx inbound message पूर्णांकerrupt handler
+ * @irq: Linux पूर्णांकerrupt number
+ * @dev_instance: Poपूर्णांकer to पूर्णांकerrupt-specअगरic data
  *
- * Handles inbound message interrupts. Executes a registered inbound
- * mailbox event handler and acks the interrupt occurrence.
+ * Handles inbound message पूर्णांकerrupts. Executes a रेजिस्टरed inbound
+ * mailbox event handler and acks the पूर्णांकerrupt occurrence.
  */
-static irqreturn_t
-fsl_rio_rx_handler(int irq, void *dev_instance)
-{
-	int isr;
-	struct rio_mport *port = (struct rio_mport *)dev_instance;
-	struct fsl_rmu *rmu = GET_RMM_HANDLE(port);
+अटल irqवापस_t
+fsl_rio_rx_handler(पूर्णांक irq, व्योम *dev_instance)
+अणु
+	पूर्णांक isr;
+	काष्ठा rio_mport *port = (काष्ठा rio_mport *)dev_instance;
+	काष्ठा fsl_rmu *rmu = GET_RMM_HANDLE(port);
 
 	isr = in_be32(&rmu->msg_regs->isr);
 
-	if (isr & RIO_MSG_ISR_TE) {
+	अगर (isr & RIO_MSG_ISR_TE) अणु
 		pr_info("RIO: inbound message reception error\n");
-		out_be32((void *)&rmu->msg_regs->isr, RIO_MSG_ISR_TE);
-		goto out;
-	}
+		out_be32((व्योम *)&rmu->msg_regs->isr, RIO_MSG_ISR_TE);
+		जाओ out;
+	पूर्ण
 
 	/* XXX Need to check/dispatch until queue empty */
-	if (isr & RIO_MSG_ISR_DIQI) {
+	अगर (isr & RIO_MSG_ISR_DIQI) अणु
 		/*
-		* Can receive messages for any mailbox/letter to that
+		* Can receive messages क्रम any mailbox/letter to that
 		* mailbox destination. So, make the callback with an
 		* unknown/invalid mailbox number argument.
 		*/
-		if (port->inb_msg[0].mcback != NULL)
+		अगर (port->inb_msg[0].mcback != शून्य)
 			port->inb_msg[0].mcback(port, rmu->msg_rx_ring.dev_id,
 				-1,
 				-1);
 
-		/* Ack the queueing interrupt */
+		/* Ack the queueing पूर्णांकerrupt */
 		out_be32(&rmu->msg_regs->isr, RIO_MSG_ISR_DIQI);
-	}
+	पूर्ण
 
 out:
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
 /**
- * fsl_rio_dbell_handler - MPC85xx doorbell interrupt handler
- * @irq: Linux interrupt number
- * @dev_instance: Pointer to interrupt-specific data
+ * fsl_rio_dbell_handler - MPC85xx करोorbell पूर्णांकerrupt handler
+ * @irq: Linux पूर्णांकerrupt number
+ * @dev_instance: Poपूर्णांकer to पूर्णांकerrupt-specअगरic data
  *
- * Handles doorbell interrupts. Parses a list of registered
- * doorbell event handlers and executes a matching event handler.
+ * Handles करोorbell पूर्णांकerrupts. Parses a list of रेजिस्टरed
+ * करोorbell event handlers and executes a matching event handler.
  */
-static irqreturn_t
-fsl_rio_dbell_handler(int irq, void *dev_instance)
-{
-	int dsr;
-	struct fsl_rio_dbell *fsl_dbell = (struct fsl_rio_dbell *)dev_instance;
-	int i;
+अटल irqवापस_t
+fsl_rio_dbell_handler(पूर्णांक irq, व्योम *dev_instance)
+अणु
+	पूर्णांक dsr;
+	काष्ठा fsl_rio_dbell *fsl_dbell = (काष्ठा fsl_rio_dbell *)dev_instance;
+	पूर्णांक i;
 
 	dsr = in_be32(&fsl_dbell->dbell_regs->dsr);
 
-	if (dsr & DOORBELL_DSR_TE) {
+	अगर (dsr & DOORBELL_DSR_TE) अणु
 		pr_info("RIO: doorbell reception error\n");
 		out_be32(&fsl_dbell->dbell_regs->dsr, DOORBELL_DSR_TE);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (dsr & DOORBELL_DSR_QFI) {
+	अगर (dsr & DOORBELL_DSR_QFI) अणु
 		pr_info("RIO: doorbell queue full\n");
 		out_be32(&fsl_dbell->dbell_regs->dsr, DOORBELL_DSR_QFI);
-	}
+	पूर्ण
 
 	/* XXX Need to check/dispatch until queue empty */
-	if (dsr & DOORBELL_DSR_DIQI) {
-		struct rio_dbell_msg *dmsg =
+	अगर (dsr & DOORBELL_DSR_DIQI) अणु
+		काष्ठा rio_dbell_msg *dmsg =
 			fsl_dbell->dbell_ring.virt +
 			(in_be32(&fsl_dbell->dbell_regs->dqdpar) & 0xfff);
-		struct rio_dbell *dbell;
-		int found = 0;
+		काष्ठा rio_dbell *dbell;
+		पूर्णांक found = 0;
 
 		pr_debug
 			("RIO: processing doorbell,"
 			" sid %2.2x tid %2.2x info %4.4x\n",
 			dmsg->sid, dmsg->tid, dmsg->info);
 
-		for (i = 0; i < MAX_PORT_NUM; i++) {
-			if (fsl_dbell->mport[i]) {
-				list_for_each_entry(dbell,
-					&fsl_dbell->mport[i]->dbells, node) {
-					if ((dbell->res->start
+		क्रम (i = 0; i < MAX_PORT_NUM; i++) अणु
+			अगर (fsl_dbell->mport[i]) अणु
+				list_क्रम_each_entry(dbell,
+					&fsl_dbell->mport[i]->dbells, node) अणु
+					अगर ((dbell->res->start
 						<= dmsg->info)
 						&& (dbell->res->end
-						>= dmsg->info)) {
+						>= dmsg->info)) अणु
 						found = 1;
-						break;
-					}
-				}
-				if (found && dbell->dinb) {
+						अवरोध;
+					पूर्ण
+				पूर्ण
+				अगर (found && dbell->dinb) अणु
 					dbell->dinb(fsl_dbell->mport[i],
 						dbell->dev_id, dmsg->sid,
 						dmsg->tid,
 						dmsg->info);
-					break;
-				}
-			}
-		}
+					अवरोध;
+				पूर्ण
+			पूर्ण
+		पूर्ण
 
-		if (!found) {
+		अगर (!found) अणु
 			pr_debug
 				("RIO: spurious doorbell,"
 				" sid %2.2x tid %2.2x info %4.4x\n",
 				dmsg->sid, dmsg->tid,
 				dmsg->info);
-		}
+		पूर्ण
 		setbits32(&fsl_dbell->dbell_regs->dmr, DOORBELL_DMR_DI);
 		out_be32(&fsl_dbell->dbell_regs->dsr, DOORBELL_DSR_DIQI);
-	}
+	पूर्ण
 
 out:
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-void msg_unit_error_handler(void)
-{
+व्योम msg_unit_error_handler(व्योम)
+अणु
 
 	/*XXX: Error recovery is not implemented, we just clear errors */
 	out_be32((u32 *)(rio_regs_win + RIO_LTLEDCSR), 0);
@@ -374,262 +375,262 @@ void msg_unit_error_handler(void)
 	out_be32(&dbell->dbell_regs->dsr, IDSR_CLEAR);
 
 	out_be32(&pw->pw_regs->pwsr, IPWSR_CLEAR);
-}
+पूर्ण
 
 /**
- * fsl_rio_port_write_handler - MPC85xx port write interrupt handler
- * @irq: Linux interrupt number
- * @dev_instance: Pointer to interrupt-specific data
+ * fsl_rio_port_ग_लिखो_handler - MPC85xx port ग_लिखो पूर्णांकerrupt handler
+ * @irq: Linux पूर्णांकerrupt number
+ * @dev_instance: Poपूर्णांकer to पूर्णांकerrupt-specअगरic data
  *
- * Handles port write interrupts. Parses a list of registered
- * port write event handlers and executes a matching event handler.
+ * Handles port ग_लिखो पूर्णांकerrupts. Parses a list of रेजिस्टरed
+ * port ग_लिखो event handlers and executes a matching event handler.
  */
-static irqreturn_t
-fsl_rio_port_write_handler(int irq, void *dev_instance)
-{
+अटल irqवापस_t
+fsl_rio_port_ग_लिखो_handler(पूर्णांक irq, व्योम *dev_instance)
+अणु
 	u32 ipwmr, ipwsr;
-	struct fsl_rio_pw *pw = (struct fsl_rio_pw *)dev_instance;
-	u32 epwisr, tmp;
+	काष्ठा fsl_rio_pw *pw = (काष्ठा fsl_rio_pw *)dev_instance;
+	u32 epwisr, पंचांगp;
 
 	epwisr = in_be32(rio_regs_win + RIO_EPWISR);
-	if (!(epwisr & RIO_EPWISR_PW))
-		goto pw_done;
+	अगर (!(epwisr & RIO_EPWISR_PW))
+		जाओ pw_करोne;
 
 	ipwmr = in_be32(&pw->pw_regs->pwmr);
 	ipwsr = in_be32(&pw->pw_regs->pwsr);
 
-#ifdef DEBUG_PW
+#अगर_घोषित DEBUG_PW
 	pr_debug("PW Int->IPWMR: 0x%08x IPWSR: 0x%08x (", ipwmr, ipwsr);
-	if (ipwsr & RIO_IPWSR_QF)
+	अगर (ipwsr & RIO_IPWSR_QF)
 		pr_debug(" QF");
-	if (ipwsr & RIO_IPWSR_TE)
+	अगर (ipwsr & RIO_IPWSR_TE)
 		pr_debug(" TE");
-	if (ipwsr & RIO_IPWSR_QFI)
+	अगर (ipwsr & RIO_IPWSR_QFI)
 		pr_debug(" QFI");
-	if (ipwsr & RIO_IPWSR_PWD)
+	अगर (ipwsr & RIO_IPWSR_PWD)
 		pr_debug(" PWD");
-	if (ipwsr & RIO_IPWSR_PWB)
+	अगर (ipwsr & RIO_IPWSR_PWB)
 		pr_debug(" PWB");
 	pr_debug(" )\n");
-#endif
-	/* Schedule deferred processing if PW was received */
-	if (ipwsr & RIO_IPWSR_QFI) {
-		/* Save PW message (if there is room in FIFO),
+#पूर्ण_अगर
+	/* Schedule deferred processing अगर PW was received */
+	अगर (ipwsr & RIO_IPWSR_QFI) अणु
+		/* Save PW message (अगर there is room in FIFO),
 		 * otherwise discard it.
 		 */
-		if (kfifo_avail(&pw->pw_fifo) >= RIO_PW_MSG_SIZE) {
-			pw->port_write_msg.msg_count++;
-			kfifo_in(&pw->pw_fifo, pw->port_write_msg.virt,
+		अगर (kfअगरo_avail(&pw->pw_fअगरo) >= RIO_PW_MSG_SIZE) अणु
+			pw->port_ग_लिखो_msg.msg_count++;
+			kfअगरo_in(&pw->pw_fअगरo, pw->port_ग_लिखो_msg.virt,
 				 RIO_PW_MSG_SIZE);
-		} else {
-			pw->port_write_msg.discard_count++;
+		पूर्ण अन्यथा अणु
+			pw->port_ग_लिखो_msg.discard_count++;
 			pr_debug("RIO: ISR Discarded Port-Write Msg(s) (%d)\n",
-				 pw->port_write_msg.discard_count);
-		}
-		/* Clear interrupt and issue Clear Queue command. This allows
-		 * another port-write to be received.
+				 pw->port_ग_लिखो_msg.discard_count);
+		पूर्ण
+		/* Clear पूर्णांकerrupt and issue Clear Queue command. This allows
+		 * another port-ग_लिखो to be received.
 		 */
 		out_be32(&pw->pw_regs->pwsr,	RIO_IPWSR_QFI);
 		out_be32(&pw->pw_regs->pwmr, ipwmr | RIO_IPWMR_CQ);
 
 		schedule_work(&pw->pw_work);
-	}
+	पूर्ण
 
-	if ((ipwmr & RIO_IPWMR_EIE) && (ipwsr & RIO_IPWSR_TE)) {
-		pw->port_write_msg.err_count++;
+	अगर ((ipwmr & RIO_IPWMR_EIE) && (ipwsr & RIO_IPWSR_TE)) अणु
+		pw->port_ग_लिखो_msg.err_count++;
 		pr_debug("RIO: Port-Write Transaction Err (%d)\n",
-			 pw->port_write_msg.err_count);
-		/* Clear Transaction Error: port-write controller should be
+			 pw->port_ग_लिखो_msg.err_count);
+		/* Clear Transaction Error: port-ग_लिखो controller should be
 		 * disabled when clearing this error
 		 */
 		out_be32(&pw->pw_regs->pwmr, ipwmr & ~RIO_IPWMR_PWE);
 		out_be32(&pw->pw_regs->pwsr,	RIO_IPWSR_TE);
 		out_be32(&pw->pw_regs->pwmr, ipwmr);
-	}
+	पूर्ण
 
-	if (ipwsr & RIO_IPWSR_PWD) {
-		pw->port_write_msg.discard_count++;
+	अगर (ipwsr & RIO_IPWSR_PWD) अणु
+		pw->port_ग_लिखो_msg.discard_count++;
 		pr_debug("RIO: Port Discarded Port-Write Msg(s) (%d)\n",
-			 pw->port_write_msg.discard_count);
+			 pw->port_ग_लिखो_msg.discard_count);
 		out_be32(&pw->pw_regs->pwsr, RIO_IPWSR_PWD);
-	}
+	पूर्ण
 
-pw_done:
-	if (epwisr & RIO_EPWISR_PINT1) {
-		tmp = in_be32(rio_regs_win + RIO_LTLEDCSR);
-		pr_debug("RIO_LTLEDCSR = 0x%x\n", tmp);
+pw_करोne:
+	अगर (epwisr & RIO_EPWISR_PINT1) अणु
+		पंचांगp = in_be32(rio_regs_win + RIO_LTLEDCSR);
+		pr_debug("RIO_LTLEDCSR = 0x%x\n", पंचांगp);
 		fsl_rio_port_error_handler(0);
-	}
+	पूर्ण
 
-	if (epwisr & RIO_EPWISR_PINT2) {
-		tmp = in_be32(rio_regs_win + RIO_LTLEDCSR);
-		pr_debug("RIO_LTLEDCSR = 0x%x\n", tmp);
+	अगर (epwisr & RIO_EPWISR_PINT2) अणु
+		पंचांगp = in_be32(rio_regs_win + RIO_LTLEDCSR);
+		pr_debug("RIO_LTLEDCSR = 0x%x\n", पंचांगp);
 		fsl_rio_port_error_handler(1);
-	}
+	पूर्ण
 
-	if (epwisr & RIO_EPWISR_MU) {
-		tmp = in_be32(rio_regs_win + RIO_LTLEDCSR);
-		pr_debug("RIO_LTLEDCSR = 0x%x\n", tmp);
+	अगर (epwisr & RIO_EPWISR_MU) अणु
+		पंचांगp = in_be32(rio_regs_win + RIO_LTLEDCSR);
+		pr_debug("RIO_LTLEDCSR = 0x%x\n", पंचांगp);
 		msg_unit_error_handler();
-	}
+	पूर्ण
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static void fsl_pw_dpc(struct work_struct *work)
-{
-	struct fsl_rio_pw *pw = container_of(work, struct fsl_rio_pw, pw_work);
-	union rio_pw_msg msg_buffer;
-	int i;
+अटल व्योम fsl_pw_dpc(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा fsl_rio_pw *pw = container_of(work, काष्ठा fsl_rio_pw, pw_work);
+	जोड़ rio_pw_msg msg_buffer;
+	पूर्णांक i;
 
 	/*
-	 * Process port-write messages
+	 * Process port-ग_लिखो messages
 	 */
-	while (kfifo_out_spinlocked(&pw->pw_fifo, (unsigned char *)&msg_buffer,
-			 RIO_PW_MSG_SIZE, &pw->pw_fifo_lock)) {
-#ifdef DEBUG_PW
-		{
+	जबतक (kfअगरo_out_spinlocked(&pw->pw_fअगरo, (अचिन्हित अक्षर *)&msg_buffer,
+			 RIO_PW_MSG_SIZE, &pw->pw_fअगरo_lock)) अणु
+#अगर_घोषित DEBUG_PW
+		अणु
 		u32 i;
 		pr_debug("%s : Port-Write Message:", __func__);
-		for (i = 0; i < RIO_PW_MSG_SIZE/sizeof(u32); i++) {
-			if ((i%4) == 0)
+		क्रम (i = 0; i < RIO_PW_MSG_SIZE/माप(u32); i++) अणु
+			अगर ((i%4) == 0)
 				pr_debug("\n0x%02x: 0x%08x", i*4,
 					 msg_buffer.raw[i]);
-			else
+			अन्यथा
 				pr_debug(" 0x%08x", msg_buffer.raw[i]);
-		}
+		पूर्ण
 		pr_debug("\n");
-		}
-#endif
-		/* Pass the port-write message to RIO core for processing */
-		for (i = 0; i < MAX_PORT_NUM; i++) {
-			if (pw->mport[i])
-				rio_inb_pwrite_handler(pw->mport[i],
+		पूर्ण
+#पूर्ण_अगर
+		/* Pass the port-ग_लिखो message to RIO core क्रम processing */
+		क्रम (i = 0; i < MAX_PORT_NUM; i++) अणु
+			अगर (pw->mport[i])
+				rio_inb_pग_लिखो_handler(pw->mport[i],
 						       &msg_buffer);
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
 /**
- * fsl_rio_pw_enable - enable/disable port-write interface init
- * @mport: Master port implementing the port write unit
- * @enable:    1=enable; 0=disable port-write message handling
+ * fsl_rio_pw_enable - enable/disable port-ग_लिखो पूर्णांकerface init
+ * @mport: Master port implementing the port ग_लिखो unit
+ * @enable:    1=enable; 0=disable port-ग_लिखो message handling
  */
-int fsl_rio_pw_enable(struct rio_mport *mport, int enable)
-{
+पूर्णांक fsl_rio_pw_enable(काष्ठा rio_mport *mport, पूर्णांक enable)
+अणु
 	u32 rval;
 
 	rval = in_be32(&pw->pw_regs->pwmr);
 
-	if (enable)
+	अगर (enable)
 		rval |= RIO_IPWMR_PWE;
-	else
+	अन्यथा
 		rval &= ~RIO_IPWMR_PWE;
 
 	out_be32(&pw->pw_regs->pwmr, rval);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * fsl_rio_port_write_init - MPC85xx port write interface init
- * @mport: Master port implementing the port write unit
+ * fsl_rio_port_ग_लिखो_init - MPC85xx port ग_लिखो पूर्णांकerface init
+ * @mport: Master port implementing the port ग_लिखो unit
  *
- * Initializes port write unit hardware and DMA buffer
+ * Initializes port ग_लिखो unit hardware and DMA buffer
  * ring. Called from fsl_rio_setup(). Returns %0 on success
  * or %-ENOMEM on failure.
  */
 
-int fsl_rio_port_write_init(struct fsl_rio_pw *pw)
-{
-	int rc = 0;
+पूर्णांक fsl_rio_port_ग_लिखो_init(काष्ठा fsl_rio_pw *pw)
+अणु
+	पूर्णांक rc = 0;
 
-	/* Following configurations require a disabled port write controller */
+	/* Following configurations require a disabled port ग_लिखो controller */
 	out_be32(&pw->pw_regs->pwmr,
 		 in_be32(&pw->pw_regs->pwmr) & ~RIO_IPWMR_PWE);
 
-	/* Initialize port write */
-	pw->port_write_msg.virt = dma_alloc_coherent(pw->dev,
+	/* Initialize port ग_लिखो */
+	pw->port_ग_लिखो_msg.virt = dma_alloc_coherent(pw->dev,
 					RIO_PW_MSG_SIZE,
-					&pw->port_write_msg.phys, GFP_KERNEL);
-	if (!pw->port_write_msg.virt) {
+					&pw->port_ग_लिखो_msg.phys, GFP_KERNEL);
+	अगर (!pw->port_ग_लिखो_msg.virt) अणु
 		pr_err("RIO: unable allocate port write queue\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
-	pw->port_write_msg.err_count = 0;
-	pw->port_write_msg.discard_count = 0;
+	pw->port_ग_लिखो_msg.err_count = 0;
+	pw->port_ग_लिखो_msg.discard_count = 0;
 
-	/* Point dequeue/enqueue pointers at first entry */
+	/* Poपूर्णांक dequeue/enqueue poपूर्णांकers at first entry */
 	out_be32(&pw->pw_regs->epwqbar, 0);
-	out_be32(&pw->pw_regs->pwqbar, (u32) pw->port_write_msg.phys);
+	out_be32(&pw->pw_regs->pwqbar, (u32) pw->port_ग_लिखो_msg.phys);
 
 	pr_debug("EIPWQBAR: 0x%08x IPWQBAR: 0x%08x\n",
 		 in_be32(&pw->pw_regs->epwqbar),
 		 in_be32(&pw->pw_regs->pwqbar));
 
-	/* Clear interrupt status IPWSR */
+	/* Clear पूर्णांकerrupt status IPWSR */
 	out_be32(&pw->pw_regs->pwsr,
 		 (RIO_IPWSR_TE | RIO_IPWSR_QFI | RIO_IPWSR_PWD));
 
-	/* Configure port write controller for snooping enable all reporting,
+	/* Configure port ग_लिखो controller क्रम snooping enable all reporting,
 	   clear queue full */
 	out_be32(&pw->pw_regs->pwmr,
 		 RIO_IPWMR_SEN | RIO_IPWMR_QFIE | RIO_IPWMR_EIE | RIO_IPWMR_CQ);
 
 
-	/* Hook up port-write handler */
-	rc = request_irq(IRQ_RIO_PW(pw), fsl_rio_port_write_handler,
-			IRQF_SHARED, "port-write", (void *)pw);
-	if (rc < 0) {
+	/* Hook up port-ग_लिखो handler */
+	rc = request_irq(IRQ_RIO_PW(pw), fsl_rio_port_ग_लिखो_handler,
+			IRQF_SHARED, "port-write", (व्योम *)pw);
+	अगर (rc < 0) अणु
 		pr_err("MPC85xx RIO: unable to request inbound doorbell irq");
-		goto err_out;
-	}
+		जाओ err_out;
+	पूर्ण
 	/* Enable Error Interrupt */
 	out_be32((u32 *)(rio_regs_win + RIO_LTLEECSR), LTLEECSR_ENABLE_ALL);
 
 	INIT_WORK(&pw->pw_work, fsl_pw_dpc);
-	spin_lock_init(&pw->pw_fifo_lock);
-	if (kfifo_alloc(&pw->pw_fifo, RIO_PW_MSG_SIZE * 32, GFP_KERNEL)) {
+	spin_lock_init(&pw->pw_fअगरo_lock);
+	अगर (kfअगरo_alloc(&pw->pw_fअगरo, RIO_PW_MSG_SIZE * 32, GFP_KERNEL)) अणु
 		pr_err("FIFO allocation failed\n");
 		rc = -ENOMEM;
-		goto err_out_irq;
-	}
+		जाओ err_out_irq;
+	पूर्ण
 
 	pr_debug("IPWMR: 0x%08x IPWSR: 0x%08x\n",
 		 in_be32(&pw->pw_regs->pwmr),
 		 in_be32(&pw->pw_regs->pwsr));
 
-	return rc;
+	वापस rc;
 
 err_out_irq:
-	free_irq(IRQ_RIO_PW(pw), (void *)pw);
+	मुक्त_irq(IRQ_RIO_PW(pw), (व्योम *)pw);
 err_out:
-	dma_free_coherent(pw->dev, RIO_PW_MSG_SIZE,
-		pw->port_write_msg.virt,
-		pw->port_write_msg.phys);
-	return rc;
-}
+	dma_मुक्त_coherent(pw->dev, RIO_PW_MSG_SIZE,
+		pw->port_ग_लिखो_msg.virt,
+		pw->port_ग_लिखो_msg.phys);
+	वापस rc;
+पूर्ण
 
 /**
- * fsl_rio_doorbell_send - Send a MPC85xx doorbell message
+ * fsl_rio_करोorbell_send - Send a MPC85xx करोorbell message
  * @mport: RapidIO master port info
- * @index: ID of RapidIO interface
+ * @index: ID of RapidIO पूर्णांकerface
  * @destid: Destination ID of target device
- * @data: 16-bit info field of RapidIO doorbell message
+ * @data: 16-bit info field of RapidIO करोorbell message
  *
- * Sends a MPC85xx doorbell message. Returns %0 on success or
+ * Sends a MPC85xx करोorbell message. Returns %0 on success or
  * %-EINVAL on failure.
  */
-int fsl_rio_doorbell_send(struct rio_mport *mport,
-				int index, u16 destid, u16 data)
-{
-	unsigned long flags;
+पूर्णांक fsl_rio_करोorbell_send(काष्ठा rio_mport *mport,
+				पूर्णांक index, u16 destid, u16 data)
+अणु
+	अचिन्हित दीर्घ flags;
 
 	pr_debug("fsl_doorbell_send: index %d destid %4.4x data %4.4x\n",
 		 index, destid, data);
 
-	spin_lock_irqsave(&fsl_rio_doorbell_lock, flags);
+	spin_lock_irqsave(&fsl_rio_करोorbell_lock, flags);
 
 	/* In the serial version silicons, such as MPC8548, MPC8641,
 	 * below operations is must be.
@@ -640,10 +641,10 @@ int fsl_rio_doorbell_send(struct rio_mport *mport,
 	out_be32(&dbell->dbell_regs->oddatr, (index << 20) | data);
 	out_be32(&dbell->dbell_regs->odmr, 0x00000001);
 
-	spin_unlock_irqrestore(&fsl_rio_doorbell_lock, flags);
+	spin_unlock_irqrestore(&fsl_rio_करोorbell_lock, flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * fsl_add_outb_message - Add message to the MPC85xx outbound message queue
@@ -656,127 +657,127 @@ int fsl_rio_doorbell_send(struct rio_mport *mport,
  * Adds the @buffer message to the MPC85xx outbound message queue. Returns
  * %0 on success or %-EINVAL on failure.
  */
-int
-fsl_add_outb_message(struct rio_mport *mport, struct rio_dev *rdev, int mbox,
-			void *buffer, size_t len)
-{
-	struct fsl_rmu *rmu = GET_RMM_HANDLE(mport);
+पूर्णांक
+fsl_add_outb_message(काष्ठा rio_mport *mport, काष्ठा rio_dev *rdev, पूर्णांक mbox,
+			व्योम *buffer, माप_प्रकार len)
+अणु
+	काष्ठा fsl_rmu *rmu = GET_RMM_HANDLE(mport);
 	u32 omr;
-	struct rio_tx_desc *desc = (struct rio_tx_desc *)rmu->msg_tx_ring.virt
+	काष्ठा rio_tx_desc *desc = (काष्ठा rio_tx_desc *)rmu->msg_tx_ring.virt
 					+ rmu->msg_tx_ring.tx_slot;
-	int ret = 0;
+	पूर्णांक ret = 0;
 
 	pr_debug("RIO: fsl_add_outb_message(): destid %4.4x mbox %d buffer " \
 		 "%p len %8.8zx\n", rdev->destid, mbox, buffer, len);
-	if ((len < 8) || (len > RIO_MAX_MSG_SIZE)) {
+	अगर ((len < 8) || (len > RIO_MAX_MSG_SIZE)) अणु
 		ret = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	/* Copy and clear rest of buffer */
-	memcpy(rmu->msg_tx_ring.virt_buffer[rmu->msg_tx_ring.tx_slot], buffer,
+	स_नकल(rmu->msg_tx_ring.virt_buffer[rmu->msg_tx_ring.tx_slot], buffer,
 			len);
-	if (len < (RIO_MAX_MSG_SIZE - 4))
-		memset(rmu->msg_tx_ring.virt_buffer[rmu->msg_tx_ring.tx_slot]
+	अगर (len < (RIO_MAX_MSG_SIZE - 4))
+		स_रखो(rmu->msg_tx_ring.virt_buffer[rmu->msg_tx_ring.tx_slot]
 				+ len, 0, RIO_MAX_MSG_SIZE - len);
 
-	/* Set mbox field for message, and set destid */
+	/* Set mbox field क्रम message, and set destid */
 	desc->dport = (rdev->destid << 16) | (mbox & 0x3);
 
-	/* Enable EOMI interrupt and priority */
+	/* Enable EOMI पूर्णांकerrupt and priority */
 	desc->dattr = 0x28000000 | ((mport->index) << 20);
 
-	/* Set transfer size aligned to next power of 2 (in double words) */
-	desc->dwcnt = is_power_of_2(len) ? len : 1 << get_bitmask_order(len);
+	/* Set transfer size aligned to next घातer of 2 (in द्विगुन words) */
+	desc->dwcnt = is_घातer_of_2(len) ? len : 1 << get_biपंचांगask_order(len);
 
 	/* Set snooping and source buffer address */
 	desc->saddr = 0x00000004
 		| rmu->msg_tx_ring.phys_buffer[rmu->msg_tx_ring.tx_slot];
 
-	/* Increment enqueue pointer */
+	/* Increment enqueue poपूर्णांकer */
 	omr = in_be32(&rmu->msg_regs->omr);
 	out_be32(&rmu->msg_regs->omr, omr | RIO_MSG_OMR_MUI);
 
 	/* Go to next descriptor */
-	if (++rmu->msg_tx_ring.tx_slot == rmu->msg_tx_ring.size)
+	अगर (++rmu->msg_tx_ring.tx_slot == rmu->msg_tx_ring.size)
 		rmu->msg_tx_ring.tx_slot = 0;
 
 out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * fsl_open_outb_mbox - Initialize MPC85xx outbound mailbox
+ * fsl_खोलो_outb_mbox - Initialize MPC85xx outbound mailbox
  * @mport: Master port implementing the outbound message unit
- * @dev_id: Device specific pointer to pass on event
- * @mbox: Mailbox to open
+ * @dev_id: Device specअगरic poपूर्णांकer to pass on event
+ * @mbox: Mailbox to खोलो
  * @entries: Number of entries in the outbound mailbox ring
  *
- * Initializes buffer ring, request the outbound message interrupt,
+ * Initializes buffer ring, request the outbound message पूर्णांकerrupt,
  * and enables the outbound message unit. Returns %0 on success and
  * %-EINVAL or %-ENOMEM on failure.
  */
-int
-fsl_open_outb_mbox(struct rio_mport *mport, void *dev_id, int mbox, int entries)
-{
-	int i, j, rc = 0;
-	struct rio_priv *priv = mport->priv;
-	struct fsl_rmu *rmu = GET_RMM_HANDLE(mport);
+पूर्णांक
+fsl_खोलो_outb_mbox(काष्ठा rio_mport *mport, व्योम *dev_id, पूर्णांक mbox, पूर्णांक entries)
+अणु
+	पूर्णांक i, j, rc = 0;
+	काष्ठा rio_priv *priv = mport->priv;
+	काष्ठा fsl_rmu *rmu = GET_RMM_HANDLE(mport);
 
-	if ((entries < RIO_MIN_TX_RING_SIZE) ||
-		(entries > RIO_MAX_TX_RING_SIZE) || (!is_power_of_2(entries))) {
+	अगर ((entries < RIO_MIN_TX_RING_SIZE) ||
+		(entries > RIO_MAX_TX_RING_SIZE) || (!is_घातer_of_2(entries))) अणु
 		rc = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	/* Initialize shadow copy ring */
+	/* Initialize shaकरोw copy ring */
 	rmu->msg_tx_ring.dev_id = dev_id;
 	rmu->msg_tx_ring.size = entries;
 
-	for (i = 0; i < rmu->msg_tx_ring.size; i++) {
+	क्रम (i = 0; i < rmu->msg_tx_ring.size; i++) अणु
 		rmu->msg_tx_ring.virt_buffer[i] =
 			dma_alloc_coherent(priv->dev, RIO_MSG_BUFFER_SIZE,
 				&rmu->msg_tx_ring.phys_buffer[i], GFP_KERNEL);
-		if (!rmu->msg_tx_ring.virt_buffer[i]) {
+		अगर (!rmu->msg_tx_ring.virt_buffer[i]) अणु
 			rc = -ENOMEM;
-			for (j = 0; j < rmu->msg_tx_ring.size; j++)
-				if (rmu->msg_tx_ring.virt_buffer[j])
-					dma_free_coherent(priv->dev,
+			क्रम (j = 0; j < rmu->msg_tx_ring.size; j++)
+				अगर (rmu->msg_tx_ring.virt_buffer[j])
+					dma_मुक्त_coherent(priv->dev,
 							RIO_MSG_BUFFER_SIZE,
 							rmu->msg_tx_ring.
 							virt_buffer[j],
 							rmu->msg_tx_ring.
 							phys_buffer[j]);
-			goto out;
-		}
-	}
+			जाओ out;
+		पूर्ण
+	पूर्ण
 
 	/* Initialize outbound message descriptor ring */
 	rmu->msg_tx_ring.virt = dma_alloc_coherent(priv->dev,
 						   rmu->msg_tx_ring.size * RIO_MSG_DESC_SIZE,
 						   &rmu->msg_tx_ring.phys,
 						   GFP_KERNEL);
-	if (!rmu->msg_tx_ring.virt) {
+	अगर (!rmu->msg_tx_ring.virt) अणु
 		rc = -ENOMEM;
-		goto out_dma;
-	}
+		जाओ out_dma;
+	पूर्ण
 	rmu->msg_tx_ring.tx_slot = 0;
 
-	/* Point dequeue/enqueue pointers at first entry in ring */
+	/* Poपूर्णांक dequeue/enqueue poपूर्णांकers at first entry in ring */
 	out_be32(&rmu->msg_regs->odqdpar, rmu->msg_tx_ring.phys);
 	out_be32(&rmu->msg_regs->odqepar, rmu->msg_tx_ring.phys);
 
-	/* Configure for snooping */
+	/* Configure क्रम snooping */
 	out_be32(&rmu->msg_regs->osar, 0x00000004);
 
-	/* Clear interrupt status */
+	/* Clear पूर्णांकerrupt status */
 	out_be32(&rmu->msg_regs->osr, 0x000000b3);
 
 	/* Hook up outbound message handler */
 	rc = request_irq(IRQ_RIO_TX(mport), fsl_rio_tx_handler, 0,
-			 "msg_tx", (void *)mport);
-	if (rc < 0)
-		goto out_irq;
+			 "msg_tx", (व्योम *)mport);
+	अगर (rc < 0)
+		जाओ out_irq;
 
 	/*
 	 * Configure outbound message unit
@@ -790,152 +791,152 @@ fsl_open_outb_mbox(struct rio_mport *mport, void *dev_id, int mbox, int entries)
 	/* Set number of entries */
 	out_be32(&rmu->msg_regs->omr,
 		 in_be32(&rmu->msg_regs->omr) |
-		 ((get_bitmask_order(entries) - 2) << 12));
+		 ((get_biपंचांगask_order(entries) - 2) << 12));
 
 	/* Now enable the unit */
 	out_be32(&rmu->msg_regs->omr, in_be32(&rmu->msg_regs->omr) | 0x1);
 
 out:
-	return rc;
+	वापस rc;
 
 out_irq:
-	dma_free_coherent(priv->dev,
+	dma_मुक्त_coherent(priv->dev,
 		rmu->msg_tx_ring.size * RIO_MSG_DESC_SIZE,
 		rmu->msg_tx_ring.virt, rmu->msg_tx_ring.phys);
 
 out_dma:
-	for (i = 0; i < rmu->msg_tx_ring.size; i++)
-		dma_free_coherent(priv->dev, RIO_MSG_BUFFER_SIZE,
+	क्रम (i = 0; i < rmu->msg_tx_ring.size; i++)
+		dma_मुक्त_coherent(priv->dev, RIO_MSG_BUFFER_SIZE,
 		rmu->msg_tx_ring.virt_buffer[i],
 		rmu->msg_tx_ring.phys_buffer[i]);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
 /**
- * fsl_close_outb_mbox - Shut down MPC85xx outbound mailbox
+ * fsl_बंद_outb_mbox - Shut करोwn MPC85xx outbound mailbox
  * @mport: Master port implementing the outbound message unit
- * @mbox: Mailbox to close
+ * @mbox: Mailbox to बंद
  *
- * Disables the outbound message unit, free all buffers, and
- * frees the outbound message interrupt.
+ * Disables the outbound message unit, मुक्त all buffers, and
+ * मुक्तs the outbound message पूर्णांकerrupt.
  */
-void fsl_close_outb_mbox(struct rio_mport *mport, int mbox)
-{
-	struct rio_priv *priv = mport->priv;
-	struct fsl_rmu *rmu = GET_RMM_HANDLE(mport);
+व्योम fsl_बंद_outb_mbox(काष्ठा rio_mport *mport, पूर्णांक mbox)
+अणु
+	काष्ठा rio_priv *priv = mport->priv;
+	काष्ठा fsl_rmu *rmu = GET_RMM_HANDLE(mport);
 
 	/* Disable inbound message unit */
 	out_be32(&rmu->msg_regs->omr, 0);
 
 	/* Free ring */
-	dma_free_coherent(priv->dev,
+	dma_मुक्त_coherent(priv->dev,
 	rmu->msg_tx_ring.size * RIO_MSG_DESC_SIZE,
 	rmu->msg_tx_ring.virt, rmu->msg_tx_ring.phys);
 
-	/* Free interrupt */
-	free_irq(IRQ_RIO_TX(mport), (void *)mport);
-}
+	/* Free पूर्णांकerrupt */
+	मुक्त_irq(IRQ_RIO_TX(mport), (व्योम *)mport);
+पूर्ण
 
 /**
- * fsl_open_inb_mbox - Initialize MPC85xx inbound mailbox
+ * fsl_खोलो_inb_mbox - Initialize MPC85xx inbound mailbox
  * @mport: Master port implementing the inbound message unit
- * @dev_id: Device specific pointer to pass on event
- * @mbox: Mailbox to open
+ * @dev_id: Device specअगरic poपूर्णांकer to pass on event
+ * @mbox: Mailbox to खोलो
  * @entries: Number of entries in the inbound mailbox ring
  *
- * Initializes buffer ring, request the inbound message interrupt,
+ * Initializes buffer ring, request the inbound message पूर्णांकerrupt,
  * and enables the inbound message unit. Returns %0 on success
  * and %-EINVAL or %-ENOMEM on failure.
  */
-int
-fsl_open_inb_mbox(struct rio_mport *mport, void *dev_id, int mbox, int entries)
-{
-	int i, rc = 0;
-	struct rio_priv *priv = mport->priv;
-	struct fsl_rmu *rmu = GET_RMM_HANDLE(mport);
+पूर्णांक
+fsl_खोलो_inb_mbox(काष्ठा rio_mport *mport, व्योम *dev_id, पूर्णांक mbox, पूर्णांक entries)
+अणु
+	पूर्णांक i, rc = 0;
+	काष्ठा rio_priv *priv = mport->priv;
+	काष्ठा fsl_rmu *rmu = GET_RMM_HANDLE(mport);
 
-	if ((entries < RIO_MIN_RX_RING_SIZE) ||
-		(entries > RIO_MAX_RX_RING_SIZE) || (!is_power_of_2(entries))) {
+	अगर ((entries < RIO_MIN_RX_RING_SIZE) ||
+		(entries > RIO_MAX_RX_RING_SIZE) || (!is_घातer_of_2(entries))) अणु
 		rc = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	/* Initialize client buffer ring */
 	rmu->msg_rx_ring.dev_id = dev_id;
 	rmu->msg_rx_ring.size = entries;
 	rmu->msg_rx_ring.rx_slot = 0;
-	for (i = 0; i < rmu->msg_rx_ring.size; i++)
-		rmu->msg_rx_ring.virt_buffer[i] = NULL;
+	क्रम (i = 0; i < rmu->msg_rx_ring.size; i++)
+		rmu->msg_rx_ring.virt_buffer[i] = शून्य;
 
 	/* Initialize inbound message ring */
 	rmu->msg_rx_ring.virt = dma_alloc_coherent(priv->dev,
 				rmu->msg_rx_ring.size * RIO_MAX_MSG_SIZE,
 				&rmu->msg_rx_ring.phys, GFP_KERNEL);
-	if (!rmu->msg_rx_ring.virt) {
+	अगर (!rmu->msg_rx_ring.virt) अणु
 		rc = -ENOMEM;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	/* Point dequeue/enqueue pointers at first entry in ring */
-	out_be32(&rmu->msg_regs->ifqdpar, (u32) rmu->msg_rx_ring.phys);
-	out_be32(&rmu->msg_regs->ifqepar, (u32) rmu->msg_rx_ring.phys);
+	/* Poपूर्णांक dequeue/enqueue poपूर्णांकers at first entry in ring */
+	out_be32(&rmu->msg_regs->अगरqdpar, (u32) rmu->msg_rx_ring.phys);
+	out_be32(&rmu->msg_regs->अगरqepar, (u32) rmu->msg_rx_ring.phys);
 
-	/* Clear interrupt status */
+	/* Clear पूर्णांकerrupt status */
 	out_be32(&rmu->msg_regs->isr, 0x00000091);
 
 	/* Hook up inbound message handler */
 	rc = request_irq(IRQ_RIO_RX(mport), fsl_rio_rx_handler, 0,
-			 "msg_rx", (void *)mport);
-	if (rc < 0) {
-		dma_free_coherent(priv->dev,
+			 "msg_rx", (व्योम *)mport);
+	अगर (rc < 0) अणु
+		dma_मुक्त_coherent(priv->dev,
 			rmu->msg_rx_ring.size * RIO_MAX_MSG_SIZE,
 			rmu->msg_rx_ring.virt, rmu->msg_rx_ring.phys);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	/*
 	 * Configure inbound message unit:
 	 *      Snooping
 	 *      4KB max message size
-	 *      Unmask all interrupt sources
+	 *      Unmask all पूर्णांकerrupt sources
 	 *      Disable
 	 */
 	out_be32(&rmu->msg_regs->imr, 0x001b0060);
 
 	/* Set number of queue entries */
-	setbits32(&rmu->msg_regs->imr, (get_bitmask_order(entries) - 2) << 12);
+	setbits32(&rmu->msg_regs->imr, (get_biपंचांगask_order(entries) - 2) << 12);
 
 	/* Now enable the unit */
 	setbits32(&rmu->msg_regs->imr, 0x1);
 
 out:
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
 /**
- * fsl_close_inb_mbox - Shut down MPC85xx inbound mailbox
+ * fsl_बंद_inb_mbox - Shut करोwn MPC85xx inbound mailbox
  * @mport: Master port implementing the inbound message unit
- * @mbox: Mailbox to close
+ * @mbox: Mailbox to बंद
  *
- * Disables the inbound message unit, free all buffers, and
- * frees the inbound message interrupt.
+ * Disables the inbound message unit, मुक्त all buffers, and
+ * मुक्तs the inbound message पूर्णांकerrupt.
  */
-void fsl_close_inb_mbox(struct rio_mport *mport, int mbox)
-{
-	struct rio_priv *priv = mport->priv;
-	struct fsl_rmu *rmu = GET_RMM_HANDLE(mport);
+व्योम fsl_बंद_inb_mbox(काष्ठा rio_mport *mport, पूर्णांक mbox)
+अणु
+	काष्ठा rio_priv *priv = mport->priv;
+	काष्ठा fsl_rmu *rmu = GET_RMM_HANDLE(mport);
 
 	/* Disable inbound message unit */
 	out_be32(&rmu->msg_regs->imr, 0);
 
 	/* Free ring */
-	dma_free_coherent(priv->dev, rmu->msg_rx_ring.size * RIO_MAX_MSG_SIZE,
+	dma_मुक्त_coherent(priv->dev, rmu->msg_rx_ring.size * RIO_MAX_MSG_SIZE,
 	rmu->msg_rx_ring.virt, rmu->msg_rx_ring.phys);
 
-	/* Free interrupt */
-	free_irq(IRQ_RIO_RX(mport), (void *)mport);
-}
+	/* Free पूर्णांकerrupt */
+	मुक्त_irq(IRQ_RIO_RX(mport), (व्योम *)mport);
+पूर्ण
 
 /**
  * fsl_add_inb_buffer - Add buffer to the MPC85xx inbound message queue
@@ -946,29 +947,29 @@ void fsl_close_inb_mbox(struct rio_mport *mport, int mbox)
  * Adds the @buf buffer to the MPC85xx inbound message queue. Returns
  * %0 on success or %-EINVAL on failure.
  */
-int fsl_add_inb_buffer(struct rio_mport *mport, int mbox, void *buf)
-{
-	int rc = 0;
-	struct fsl_rmu *rmu = GET_RMM_HANDLE(mport);
+पूर्णांक fsl_add_inb_buffer(काष्ठा rio_mport *mport, पूर्णांक mbox, व्योम *buf)
+अणु
+	पूर्णांक rc = 0;
+	काष्ठा fsl_rmu *rmu = GET_RMM_HANDLE(mport);
 
 	pr_debug("RIO: fsl_add_inb_buffer(), msg_rx_ring.rx_slot %d\n",
 		 rmu->msg_rx_ring.rx_slot);
 
-	if (rmu->msg_rx_ring.virt_buffer[rmu->msg_rx_ring.rx_slot]) {
-		printk(KERN_ERR
+	अगर (rmu->msg_rx_ring.virt_buffer[rmu->msg_rx_ring.rx_slot]) अणु
+		prपूर्णांकk(KERN_ERR
 			"RIO: error adding inbound buffer %d, buffer exists\n",
 			rmu->msg_rx_ring.rx_slot);
 		rc = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	rmu->msg_rx_ring.virt_buffer[rmu->msg_rx_ring.rx_slot] = buf;
-	if (++rmu->msg_rx_ring.rx_slot == rmu->msg_rx_ring.size)
+	अगर (++rmu->msg_rx_ring.rx_slot == rmu->msg_rx_ring.size)
 		rmu->msg_rx_ring.rx_slot = 0;
 
 out:
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
 /**
  * fsl_get_inb_message - Fetch inbound message from the MPC85xx message unit
@@ -976,132 +977,132 @@ out:
  * @mbox: Inbound mailbox number
  *
  * Gets the next available inbound message from the inbound message queue.
- * A pointer to the message is returned on success or NULL on failure.
+ * A poपूर्णांकer to the message is वापसed on success or शून्य on failure.
  */
-void *fsl_get_inb_message(struct rio_mport *mport, int mbox)
-{
-	struct fsl_rmu *rmu = GET_RMM_HANDLE(mport);
+व्योम *fsl_get_inb_message(काष्ठा rio_mport *mport, पूर्णांक mbox)
+अणु
+	काष्ठा fsl_rmu *rmu = GET_RMM_HANDLE(mport);
 	u32 phys_buf;
-	void *virt_buf;
-	void *buf = NULL;
-	int buf_idx;
+	व्योम *virt_buf;
+	व्योम *buf = शून्य;
+	पूर्णांक buf_idx;
 
-	phys_buf = in_be32(&rmu->msg_regs->ifqdpar);
+	phys_buf = in_be32(&rmu->msg_regs->अगरqdpar);
 
 	/* If no more messages, then bail out */
-	if (phys_buf == in_be32(&rmu->msg_regs->ifqepar))
-		goto out2;
+	अगर (phys_buf == in_be32(&rmu->msg_regs->अगरqepar))
+		जाओ out2;
 
 	virt_buf = rmu->msg_rx_ring.virt + (phys_buf
 						- rmu->msg_rx_ring.phys);
 	buf_idx = (phys_buf - rmu->msg_rx_ring.phys) / RIO_MAX_MSG_SIZE;
 	buf = rmu->msg_rx_ring.virt_buffer[buf_idx];
 
-	if (!buf) {
-		printk(KERN_ERR
+	अगर (!buf) अणु
+		prपूर्णांकk(KERN_ERR
 			"RIO: inbound message copy failed, no buffers\n");
-		goto out1;
-	}
+		जाओ out1;
+	पूर्ण
 
 	/* Copy max message size, caller is expected to allocate that big */
-	memcpy(buf, virt_buf, RIO_MAX_MSG_SIZE);
+	स_नकल(buf, virt_buf, RIO_MAX_MSG_SIZE);
 
 	/* Clear the available buffer */
-	rmu->msg_rx_ring.virt_buffer[buf_idx] = NULL;
+	rmu->msg_rx_ring.virt_buffer[buf_idx] = शून्य;
 
 out1:
 	setbits32(&rmu->msg_regs->imr, RIO_MSG_IMR_MI);
 
 out2:
-	return buf;
-}
+	वापस buf;
+पूर्ण
 
 /**
- * fsl_rio_doorbell_init - MPC85xx doorbell interface init
- * @mport: Master port implementing the inbound doorbell unit
+ * fsl_rio_करोorbell_init - MPC85xx करोorbell पूर्णांकerface init
+ * @mport: Master port implementing the inbound करोorbell unit
  *
- * Initializes doorbell unit hardware and inbound DMA buffer
+ * Initializes करोorbell unit hardware and inbound DMA buffer
  * ring. Called from fsl_rio_setup(). Returns %0 on success
  * or %-ENOMEM on failure.
  */
-int fsl_rio_doorbell_init(struct fsl_rio_dbell *dbell)
-{
-	int rc = 0;
+पूर्णांक fsl_rio_करोorbell_init(काष्ठा fsl_rio_dbell *dbell)
+अणु
+	पूर्णांक rc = 0;
 
-	/* Initialize inbound doorbells */
+	/* Initialize inbound करोorbells */
 	dbell->dbell_ring.virt = dma_alloc_coherent(dbell->dev, 512 *
 		DOORBELL_MESSAGE_SIZE, &dbell->dbell_ring.phys, GFP_KERNEL);
-	if (!dbell->dbell_ring.virt) {
-		printk(KERN_ERR "RIO: unable allocate inbound doorbell ring\n");
+	अगर (!dbell->dbell_ring.virt) अणु
+		prपूर्णांकk(KERN_ERR "RIO: unable allocate inbound doorbell ring\n");
 		rc = -ENOMEM;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	/* Point dequeue/enqueue pointers at first entry in ring */
+	/* Poपूर्णांक dequeue/enqueue poपूर्णांकers at first entry in ring */
 	out_be32(&dbell->dbell_regs->dqdpar, (u32) dbell->dbell_ring.phys);
 	out_be32(&dbell->dbell_regs->dqepar, (u32) dbell->dbell_ring.phys);
 
-	/* Clear interrupt status */
+	/* Clear पूर्णांकerrupt status */
 	out_be32(&dbell->dbell_regs->dsr, 0x00000091);
 
-	/* Hook up doorbell handler */
+	/* Hook up करोorbell handler */
 	rc = request_irq(IRQ_RIO_BELL(dbell), fsl_rio_dbell_handler, 0,
-			 "dbell_rx", (void *)dbell);
-	if (rc < 0) {
-		dma_free_coherent(dbell->dev, 512 * DOORBELL_MESSAGE_SIZE,
+			 "dbell_rx", (व्योम *)dbell);
+	अगर (rc < 0) अणु
+		dma_मुक्त_coherent(dbell->dev, 512 * DOORBELL_MESSAGE_SIZE,
 			 dbell->dbell_ring.virt, dbell->dbell_ring.phys);
-		printk(KERN_ERR
+		prपूर्णांकk(KERN_ERR
 			"MPC85xx RIO: unable to request inbound doorbell irq");
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	/* Configure doorbells for snooping, 512 entries, and enable */
+	/* Configure करोorbells क्रम snooping, 512 entries, and enable */
 	out_be32(&dbell->dbell_regs->dmr, 0x00108161);
 
 out:
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-int fsl_rio_setup_rmu(struct rio_mport *mport, struct device_node *node)
-{
-	struct rio_priv *priv;
-	struct fsl_rmu *rmu;
+पूर्णांक fsl_rio_setup_rmu(काष्ठा rio_mport *mport, काष्ठा device_node *node)
+अणु
+	काष्ठा rio_priv *priv;
+	काष्ठा fsl_rmu *rmu;
 	u64 msg_start;
-	const u32 *msg_addr;
-	int mlen;
-	int aw;
+	स्थिर u32 *msg_addr;
+	पूर्णांक mlen;
+	पूर्णांक aw;
 
-	if (!mport || !mport->priv)
-		return -EINVAL;
+	अगर (!mport || !mport->priv)
+		वापस -EINVAL;
 
 	priv = mport->priv;
 
-	if (!node) {
+	अगर (!node) अणु
 		dev_warn(priv->dev, "Can't get %pOF property 'fsl,rmu'\n",
 			priv->dev->of_node);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	rmu = kzalloc(sizeof(struct fsl_rmu), GFP_KERNEL);
-	if (!rmu)
-		return -ENOMEM;
+	rmu = kzalloc(माप(काष्ठा fsl_rmu), GFP_KERNEL);
+	अगर (!rmu)
+		वापस -ENOMEM;
 
 	aw = of_n_addr_cells(node);
 	msg_addr = of_get_property(node, "reg", &mlen);
-	if (!msg_addr) {
+	अगर (!msg_addr) अणु
 		pr_err("%pOF: unable to find 'reg' property of message-unit\n",
 			node);
-		kfree(rmu);
-		return -ENOMEM;
-	}
-	msg_start = of_read_number(msg_addr, aw);
+		kमुक्त(rmu);
+		वापस -ENOMEM;
+	पूर्ण
+	msg_start = of_पढ़ो_number(msg_addr, aw);
 
-	rmu->msg_regs = (struct rio_msg_regs *)
+	rmu->msg_regs = (काष्ठा rio_msg_regs *)
 			(rmu_regs_win + (u32)msg_start);
 
 	rmu->txirq = irq_of_parse_and_map(node, 0);
 	rmu->rxirq = irq_of_parse_and_map(node, 1);
-	printk(KERN_INFO "%pOF: txirq: %d, rxirq %d\n",
+	prपूर्णांकk(KERN_INFO "%pOF: txirq: %d, rxirq %d\n",
 		node, rmu->txirq, rmu->rxirq);
 
 	priv->rmm_handle = rmu;
@@ -1110,5 +1111,5 @@ int fsl_rio_setup_rmu(struct rio_mport *mport, struct device_node *node)
 	rio_init_mbox_res(&mport->riores[RIO_INB_MBOX_RESOURCE], 0, 0);
 	rio_init_mbox_res(&mport->riores[RIO_OUTB_MBOX_RESOURCE], 0, 0);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

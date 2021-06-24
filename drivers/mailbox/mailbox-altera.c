@@ -1,316 +1,317 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright Altera Corporation (C) 2013-2014. All rights reserved
  */
 
-#include <linux/device.h>
-#include <linux/interrupt.h>
-#include <linux/io.h>
-#include <linux/kernel.h>
-#include <linux/mailbox_controller.h>
-#include <linux/module.h>
-#include <linux/of.h>
-#include <linux/platform_device.h>
+#समावेश <linux/device.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/kernel.h>
+#समावेश <linux/mailbox_controller.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of.h>
+#समावेश <linux/platक्रमm_device.h>
 
-#define DRIVER_NAME	"altera-mailbox"
+#घोषणा DRIVER_NAME	"altera-mailbox"
 
-#define MAILBOX_CMD_REG			0x00
-#define MAILBOX_PTR_REG			0x04
-#define MAILBOX_STS_REG			0x08
-#define MAILBOX_INTMASK_REG		0x0C
+#घोषणा MAILBOX_CMD_REG			0x00
+#घोषणा MAILBOX_PTR_REG			0x04
+#घोषणा MAILBOX_STS_REG			0x08
+#घोषणा MAILBOX_INTMASK_REG		0x0C
 
-#define INT_PENDING_MSK			0x1
-#define INT_SPACE_MSK			0x2
+#घोषणा INT_PENDING_MSK			0x1
+#घोषणा INT_SPACE_MSK			0x2
 
-#define STS_PENDING_MSK			0x1
-#define STS_FULL_MSK			0x2
-#define STS_FULL_OFT			0x1
+#घोषणा STS_PENDING_MSK			0x1
+#घोषणा STS_FULL_MSK			0x2
+#घोषणा STS_FULL_OFT			0x1
 
-#define MBOX_PENDING(status)	(((status) & STS_PENDING_MSK))
-#define MBOX_FULL(status)	(((status) & STS_FULL_MSK) >> STS_FULL_OFT)
+#घोषणा MBOX_PENDING(status)	(((status) & STS_PENDING_MSK))
+#घोषणा MBOX_FULL(status)	(((status) & STS_FULL_MSK) >> STS_FULL_OFT)
 
-enum altera_mbox_msg {
+क्रमागत altera_mbox_msg अणु
 	MBOX_CMD = 0,
 	MBOX_PTR,
-};
+पूर्ण;
 
-#define MBOX_POLLING_MS		5	/* polling interval 5ms */
+#घोषणा MBOX_POLLING_MS		5	/* polling पूर्णांकerval 5ms */
 
-struct altera_mbox {
+काष्ठा altera_mbox अणु
 	bool is_sender;		/* 1-sender, 0-receiver */
-	bool intr_mode;
-	int irq;
-	void __iomem *mbox_base;
-	struct device *dev;
-	struct mbox_controller controller;
+	bool पूर्णांकr_mode;
+	पूर्णांक irq;
+	व्योम __iomem *mbox_base;
+	काष्ठा device *dev;
+	काष्ठा mbox_controller controller;
 
 	/* If the controller supports only RX polling mode */
-	struct timer_list rxpoll_timer;
-	struct mbox_chan *chan;
-};
+	काष्ठा समयr_list rxpoll_समयr;
+	काष्ठा mbox_chan *chan;
+पूर्ण;
 
-static struct altera_mbox *mbox_chan_to_altera_mbox(struct mbox_chan *chan)
-{
-	if (!chan || !chan->con_priv)
-		return NULL;
+अटल काष्ठा altera_mbox *mbox_chan_to_altera_mbox(काष्ठा mbox_chan *chan)
+अणु
+	अगर (!chan || !chan->con_priv)
+		वापस शून्य;
 
-	return (struct altera_mbox *)chan->con_priv;
-}
+	वापस (काष्ठा altera_mbox *)chan->con_priv;
+पूर्ण
 
-static inline int altera_mbox_full(struct altera_mbox *mbox)
-{
+अटल अंतरभूत पूर्णांक altera_mbox_full(काष्ठा altera_mbox *mbox)
+अणु
 	u32 status;
 
-	status = readl_relaxed(mbox->mbox_base + MAILBOX_STS_REG);
-	return MBOX_FULL(status);
-}
+	status = पढ़ोl_relaxed(mbox->mbox_base + MAILBOX_STS_REG);
+	वापस MBOX_FULL(status);
+पूर्ण
 
-static inline int altera_mbox_pending(struct altera_mbox *mbox)
-{
+अटल अंतरभूत पूर्णांक altera_mbox_pending(काष्ठा altera_mbox *mbox)
+अणु
 	u32 status;
 
-	status = readl_relaxed(mbox->mbox_base + MAILBOX_STS_REG);
-	return MBOX_PENDING(status);
-}
+	status = पढ़ोl_relaxed(mbox->mbox_base + MAILBOX_STS_REG);
+	वापस MBOX_PENDING(status);
+पूर्ण
 
-static void altera_mbox_rx_intmask(struct altera_mbox *mbox, bool enable)
-{
+अटल व्योम altera_mbox_rx_पूर्णांकmask(काष्ठा altera_mbox *mbox, bool enable)
+अणु
 	u32 mask;
 
-	mask = readl_relaxed(mbox->mbox_base + MAILBOX_INTMASK_REG);
-	if (enable)
+	mask = पढ़ोl_relaxed(mbox->mbox_base + MAILBOX_INTMASK_REG);
+	अगर (enable)
 		mask |= INT_PENDING_MSK;
-	else
+	अन्यथा
 		mask &= ~INT_PENDING_MSK;
-	writel_relaxed(mask, mbox->mbox_base + MAILBOX_INTMASK_REG);
-}
+	ग_लिखोl_relaxed(mask, mbox->mbox_base + MAILBOX_INTMASK_REG);
+पूर्ण
 
-static void altera_mbox_tx_intmask(struct altera_mbox *mbox, bool enable)
-{
+अटल व्योम altera_mbox_tx_पूर्णांकmask(काष्ठा altera_mbox *mbox, bool enable)
+अणु
 	u32 mask;
 
-	mask = readl_relaxed(mbox->mbox_base + MAILBOX_INTMASK_REG);
-	if (enable)
+	mask = पढ़ोl_relaxed(mbox->mbox_base + MAILBOX_INTMASK_REG);
+	अगर (enable)
 		mask |= INT_SPACE_MSK;
-	else
+	अन्यथा
 		mask &= ~INT_SPACE_MSK;
-	writel_relaxed(mask, mbox->mbox_base + MAILBOX_INTMASK_REG);
-}
+	ग_लिखोl_relaxed(mask, mbox->mbox_base + MAILBOX_INTMASK_REG);
+पूर्ण
 
-static bool altera_mbox_is_sender(struct altera_mbox *mbox)
-{
+अटल bool altera_mbox_is_sender(काष्ठा altera_mbox *mbox)
+अणु
 	u32 reg;
-	/* Write a magic number to PTR register and read back this register.
-	 * This register is read-write if it is a sender.
+	/* Write a magic number to PTR रेजिस्टर and पढ़ो back this रेजिस्टर.
+	 * This रेजिस्टर is पढ़ो-ग_लिखो अगर it is a sender.
 	 */
-	#define MBOX_MAGIC	0xA5A5AA55
-	writel_relaxed(MBOX_MAGIC, mbox->mbox_base + MAILBOX_PTR_REG);
-	reg = readl_relaxed(mbox->mbox_base + MAILBOX_PTR_REG);
-	if (reg == MBOX_MAGIC) {
+	#घोषणा MBOX_MAGIC	0xA5A5AA55
+	ग_लिखोl_relaxed(MBOX_MAGIC, mbox->mbox_base + MAILBOX_PTR_REG);
+	reg = पढ़ोl_relaxed(mbox->mbox_base + MAILBOX_PTR_REG);
+	अगर (reg == MBOX_MAGIC) अणु
 		/* Clear to 0 */
-		writel_relaxed(0, mbox->mbox_base + MAILBOX_PTR_REG);
-		return true;
-	}
-	return false;
-}
+		ग_लिखोl_relaxed(0, mbox->mbox_base + MAILBOX_PTR_REG);
+		वापस true;
+	पूर्ण
+	वापस false;
+पूर्ण
 
-static void altera_mbox_rx_data(struct mbox_chan *chan)
-{
-	struct altera_mbox *mbox = mbox_chan_to_altera_mbox(chan);
+अटल व्योम altera_mbox_rx_data(काष्ठा mbox_chan *chan)
+अणु
+	काष्ठा altera_mbox *mbox = mbox_chan_to_altera_mbox(chan);
 	u32 data[2];
 
-	if (altera_mbox_pending(mbox)) {
+	अगर (altera_mbox_pending(mbox)) अणु
 		data[MBOX_PTR] =
-			readl_relaxed(mbox->mbox_base + MAILBOX_PTR_REG);
+			पढ़ोl_relaxed(mbox->mbox_base + MAILBOX_PTR_REG);
 		data[MBOX_CMD] =
-			readl_relaxed(mbox->mbox_base + MAILBOX_CMD_REG);
-		mbox_chan_received_data(chan, (void *)data);
-	}
-}
+			पढ़ोl_relaxed(mbox->mbox_base + MAILBOX_CMD_REG);
+		mbox_chan_received_data(chan, (व्योम *)data);
+	पूर्ण
+पूर्ण
 
-static void altera_mbox_poll_rx(struct timer_list *t)
-{
-	struct altera_mbox *mbox = from_timer(mbox, t, rxpoll_timer);
+अटल व्योम altera_mbox_poll_rx(काष्ठा समयr_list *t)
+अणु
+	काष्ठा altera_mbox *mbox = from_समयr(mbox, t, rxpoll_समयr);
 
 	altera_mbox_rx_data(mbox->chan);
 
-	mod_timer(&mbox->rxpoll_timer,
-		  jiffies + msecs_to_jiffies(MBOX_POLLING_MS));
-}
+	mod_समयr(&mbox->rxpoll_समयr,
+		  jअगरfies + msecs_to_jअगरfies(MBOX_POLLING_MS));
+पूर्ण
 
-static irqreturn_t altera_mbox_tx_interrupt(int irq, void *p)
-{
-	struct mbox_chan *chan = (struct mbox_chan *)p;
-	struct altera_mbox *mbox = mbox_chan_to_altera_mbox(chan);
+अटल irqवापस_t altera_mbox_tx_पूर्णांकerrupt(पूर्णांक irq, व्योम *p)
+अणु
+	काष्ठा mbox_chan *chan = (काष्ठा mbox_chan *)p;
+	काष्ठा altera_mbox *mbox = mbox_chan_to_altera_mbox(chan);
 
-	altera_mbox_tx_intmask(mbox, false);
-	mbox_chan_txdone(chan, 0);
+	altera_mbox_tx_पूर्णांकmask(mbox, false);
+	mbox_chan_txकरोne(chan, 0);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static irqreturn_t altera_mbox_rx_interrupt(int irq, void *p)
-{
-	struct mbox_chan *chan = (struct mbox_chan *)p;
+अटल irqवापस_t altera_mbox_rx_पूर्णांकerrupt(पूर्णांक irq, व्योम *p)
+अणु
+	काष्ठा mbox_chan *chan = (काष्ठा mbox_chan *)p;
 
 	altera_mbox_rx_data(chan);
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static int altera_mbox_startup_sender(struct mbox_chan *chan)
-{
-	int ret;
-	struct altera_mbox *mbox = mbox_chan_to_altera_mbox(chan);
+अटल पूर्णांक altera_mbox_startup_sender(काष्ठा mbox_chan *chan)
+अणु
+	पूर्णांक ret;
+	काष्ठा altera_mbox *mbox = mbox_chan_to_altera_mbox(chan);
 
-	if (mbox->intr_mode) {
-		ret = request_irq(mbox->irq, altera_mbox_tx_interrupt, 0,
+	अगर (mbox->पूर्णांकr_mode) अणु
+		ret = request_irq(mbox->irq, altera_mbox_tx_पूर्णांकerrupt, 0,
 				  DRIVER_NAME, chan);
-		if (unlikely(ret)) {
+		अगर (unlikely(ret)) अणु
 			dev_err(mbox->dev,
 				"failed to register mailbox interrupt:%d\n",
 				ret);
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int altera_mbox_startup_receiver(struct mbox_chan *chan)
-{
-	int ret;
-	struct altera_mbox *mbox = mbox_chan_to_altera_mbox(chan);
+अटल पूर्णांक altera_mbox_startup_receiver(काष्ठा mbox_chan *chan)
+अणु
+	पूर्णांक ret;
+	काष्ठा altera_mbox *mbox = mbox_chan_to_altera_mbox(chan);
 
-	if (mbox->intr_mode) {
-		ret = request_irq(mbox->irq, altera_mbox_rx_interrupt, 0,
+	अगर (mbox->पूर्णांकr_mode) अणु
+		ret = request_irq(mbox->irq, altera_mbox_rx_पूर्णांकerrupt, 0,
 				  DRIVER_NAME, chan);
-		if (unlikely(ret)) {
-			mbox->intr_mode = false;
-			goto polling; /* use polling if failed */
-		}
+		अगर (unlikely(ret)) अणु
+			mbox->पूर्णांकr_mode = false;
+			जाओ polling; /* use polling अगर failed */
+		पूर्ण
 
-		altera_mbox_rx_intmask(mbox, true);
-		return 0;
-	}
+		altera_mbox_rx_पूर्णांकmask(mbox, true);
+		वापस 0;
+	पूर्ण
 
 polling:
-	/* Setup polling timer */
+	/* Setup polling समयr */
 	mbox->chan = chan;
-	timer_setup(&mbox->rxpoll_timer, altera_mbox_poll_rx, 0);
-	mod_timer(&mbox->rxpoll_timer,
-		  jiffies + msecs_to_jiffies(MBOX_POLLING_MS));
+	समयr_setup(&mbox->rxpoll_समयr, altera_mbox_poll_rx, 0);
+	mod_समयr(&mbox->rxpoll_समयr,
+		  jअगरfies + msecs_to_jअगरfies(MBOX_POLLING_MS));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int altera_mbox_send_data(struct mbox_chan *chan, void *data)
-{
-	struct altera_mbox *mbox = mbox_chan_to_altera_mbox(chan);
+अटल पूर्णांक altera_mbox_send_data(काष्ठा mbox_chan *chan, व्योम *data)
+अणु
+	काष्ठा altera_mbox *mbox = mbox_chan_to_altera_mbox(chan);
 	u32 *udata = (u32 *)data;
 
-	if (!mbox || !data)
-		return -EINVAL;
-	if (!mbox->is_sender) {
+	अगर (!mbox || !data)
+		वापस -EINVAL;
+	अगर (!mbox->is_sender) अणु
 		dev_warn(mbox->dev,
 			 "failed to send. This is receiver mailbox.\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (altera_mbox_full(mbox))
-		return -EBUSY;
+	अगर (altera_mbox_full(mbox))
+		वापस -EBUSY;
 
-	/* Enable interrupt before send */
-	if (mbox->intr_mode)
-		altera_mbox_tx_intmask(mbox, true);
+	/* Enable पूर्णांकerrupt beक्रमe send */
+	अगर (mbox->पूर्णांकr_mode)
+		altera_mbox_tx_पूर्णांकmask(mbox, true);
 
-	/* Pointer register must write before command register */
-	writel_relaxed(udata[MBOX_PTR], mbox->mbox_base + MAILBOX_PTR_REG);
-	writel_relaxed(udata[MBOX_CMD], mbox->mbox_base + MAILBOX_CMD_REG);
+	/* Poपूर्णांकer रेजिस्टर must ग_लिखो beक्रमe command रेजिस्टर */
+	ग_लिखोl_relaxed(udata[MBOX_PTR], mbox->mbox_base + MAILBOX_PTR_REG);
+	ग_लिखोl_relaxed(udata[MBOX_CMD], mbox->mbox_base + MAILBOX_CMD_REG);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static bool altera_mbox_last_tx_done(struct mbox_chan *chan)
-{
-	struct altera_mbox *mbox = mbox_chan_to_altera_mbox(chan);
+अटल bool altera_mbox_last_tx_करोne(काष्ठा mbox_chan *chan)
+अणु
+	काष्ठा altera_mbox *mbox = mbox_chan_to_altera_mbox(chan);
 
-	/* Return false if mailbox is full */
-	return altera_mbox_full(mbox) ? false : true;
-}
+	/* Return false अगर mailbox is full */
+	वापस altera_mbox_full(mbox) ? false : true;
+पूर्ण
 
-static bool altera_mbox_peek_data(struct mbox_chan *chan)
-{
-	struct altera_mbox *mbox = mbox_chan_to_altera_mbox(chan);
+अटल bool altera_mbox_peek_data(काष्ठा mbox_chan *chan)
+अणु
+	काष्ठा altera_mbox *mbox = mbox_chan_to_altera_mbox(chan);
 
-	return altera_mbox_pending(mbox) ? true : false;
-}
+	वापस altera_mbox_pending(mbox) ? true : false;
+पूर्ण
 
-static int altera_mbox_startup(struct mbox_chan *chan)
-{
-	struct altera_mbox *mbox = mbox_chan_to_altera_mbox(chan);
-	int ret = 0;
+अटल पूर्णांक altera_mbox_startup(काष्ठा mbox_chan *chan)
+अणु
+	काष्ठा altera_mbox *mbox = mbox_chan_to_altera_mbox(chan);
+	पूर्णांक ret = 0;
 
-	if (!mbox)
-		return -EINVAL;
+	अगर (!mbox)
+		वापस -EINVAL;
 
-	if (mbox->is_sender)
+	अगर (mbox->is_sender)
 		ret = altera_mbox_startup_sender(chan);
-	else
+	अन्यथा
 		ret = altera_mbox_startup_receiver(chan);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void altera_mbox_shutdown(struct mbox_chan *chan)
-{
-	struct altera_mbox *mbox = mbox_chan_to_altera_mbox(chan);
+अटल व्योम altera_mbox_shutकरोwn(काष्ठा mbox_chan *chan)
+अणु
+	काष्ठा altera_mbox *mbox = mbox_chan_to_altera_mbox(chan);
 
-	if (mbox->intr_mode) {
-		/* Unmask all interrupt masks */
-		writel_relaxed(~0, mbox->mbox_base + MAILBOX_INTMASK_REG);
-		free_irq(mbox->irq, chan);
-	} else if (!mbox->is_sender) {
-		del_timer_sync(&mbox->rxpoll_timer);
-	}
-}
+	अगर (mbox->पूर्णांकr_mode) अणु
+		/* Unmask all पूर्णांकerrupt masks */
+		ग_लिखोl_relaxed(~0, mbox->mbox_base + MAILBOX_INTMASK_REG);
+		मुक्त_irq(mbox->irq, chan);
+	पूर्ण अन्यथा अगर (!mbox->is_sender) अणु
+		del_समयr_sync(&mbox->rxpoll_समयr);
+	पूर्ण
+पूर्ण
 
-static const struct mbox_chan_ops altera_mbox_ops = {
+अटल स्थिर काष्ठा mbox_chan_ops altera_mbox_ops = अणु
 	.send_data = altera_mbox_send_data,
 	.startup = altera_mbox_startup,
-	.shutdown = altera_mbox_shutdown,
-	.last_tx_done = altera_mbox_last_tx_done,
+	.shutकरोwn = altera_mbox_shutकरोwn,
+	.last_tx_करोne = altera_mbox_last_tx_करोne,
 	.peek_data = altera_mbox_peek_data,
-};
+पूर्ण;
 
-static int altera_mbox_probe(struct platform_device *pdev)
-{
-	struct altera_mbox *mbox;
-	struct resource	*regs;
-	struct mbox_chan *chans;
-	int ret;
+अटल पूर्णांक altera_mbox_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा altera_mbox *mbox;
+	काष्ठा resource	*regs;
+	काष्ठा mbox_chan *chans;
+	पूर्णांक ret;
 
-	mbox = devm_kzalloc(&pdev->dev, sizeof(*mbox),
+	mbox = devm_kzalloc(&pdev->dev, माप(*mbox),
 			    GFP_KERNEL);
-	if (!mbox)
-		return -ENOMEM;
+	अगर (!mbox)
+		वापस -ENOMEM;
 
 	/* Allocated one channel */
-	chans = devm_kzalloc(&pdev->dev, sizeof(*chans), GFP_KERNEL);
-	if (!chans)
-		return -ENOMEM;
+	chans = devm_kzalloc(&pdev->dev, माप(*chans), GFP_KERNEL);
+	अगर (!chans)
+		वापस -ENOMEM;
 
-	regs = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+	regs = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
 
 	mbox->mbox_base = devm_ioremap_resource(&pdev->dev, regs);
-	if (IS_ERR(mbox->mbox_base))
-		return PTR_ERR(mbox->mbox_base);
+	अगर (IS_ERR(mbox->mbox_base))
+		वापस PTR_ERR(mbox->mbox_base);
 
 	/* Check is it a sender or receiver? */
 	mbox->is_sender = altera_mbox_is_sender(mbox);
 
-	mbox->irq = platform_get_irq(pdev, 0);
-	if (mbox->irq >= 0)
-		mbox->intr_mode = true;
+	mbox->irq = platक्रमm_get_irq(pdev, 0);
+	अगर (mbox->irq >= 0)
+		mbox->पूर्णांकr_mode = true;
 
 	mbox->dev = &pdev->dev;
 
@@ -321,42 +322,42 @@ static int altera_mbox_probe(struct platform_device *pdev)
 	mbox->controller.chans = chans;
 	mbox->controller.ops = &altera_mbox_ops;
 
-	if (mbox->is_sender) {
-		if (mbox->intr_mode) {
-			mbox->controller.txdone_irq = true;
-		} else {
-			mbox->controller.txdone_poll = true;
+	अगर (mbox->is_sender) अणु
+		अगर (mbox->पूर्णांकr_mode) अणु
+			mbox->controller.txकरोne_irq = true;
+		पूर्ण अन्यथा अणु
+			mbox->controller.txकरोne_poll = true;
 			mbox->controller.txpoll_period = MBOX_POLLING_MS;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	ret = devm_mbox_controller_register(&pdev->dev, &mbox->controller);
-	if (ret) {
+	ret = devm_mbox_controller_रेजिस्टर(&pdev->dev, &mbox->controller);
+	अगर (ret) अणु
 		dev_err(&pdev->dev, "Register mailbox failed\n");
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
-	platform_set_drvdata(pdev, mbox);
+	platक्रमm_set_drvdata(pdev, mbox);
 err:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const struct of_device_id altera_mbox_match[] = {
-	{ .compatible = "altr,mailbox-1.0" },
-	{ /* Sentinel */ }
-};
+अटल स्थिर काष्ठा of_device_id altera_mbox_match[] = अणु
+	अणु .compatible = "altr,mailbox-1.0" पूर्ण,
+	अणु /* Sentinel */ पूर्ण
+पूर्ण;
 
 MODULE_DEVICE_TABLE(of, altera_mbox_match);
 
-static struct platform_driver altera_mbox_driver = {
+अटल काष्ठा platक्रमm_driver altera_mbox_driver = अणु
 	.probe	= altera_mbox_probe,
-	.driver	= {
+	.driver	= अणु
 		.name	= DRIVER_NAME,
 		.of_match_table	= altera_mbox_match,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-module_platform_driver(altera_mbox_driver);
+module_platक्रमm_driver(altera_mbox_driver);
 
 MODULE_LICENSE("GPL v2");
 MODULE_DESCRIPTION("Altera mailbox specific functions");

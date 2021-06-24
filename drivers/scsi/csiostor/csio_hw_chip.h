@@ -1,5 +1,6 @@
+<शैली गुरु>
 /*
- * This file is part of the Chelsio FCoE driver for Linux.
+ * This file is part of the Chelsio FCoE driver क्रम Linux.
  *
  * Copyright (c) 2008-2013 Chelsio Communications, Inc. All rights reserved.
  *
@@ -8,17 +9,17 @@
  * General Public License (GPL) Version 2, available from the file
  * OpenIB.org BSD license below:
  *
- *     Redistribution and use in source and binary forms, with or
- *     without modification, are permitted provided that the following
+ *     Redistribution and use in source and binary क्रमms, with or
+ *     without modअगरication, are permitted provided that the following
  *     conditions are met:
  *
  *      - Redistributions of source code must retain the above
  *        copyright notice, this list of conditions and the following
  *        disclaimer.
  *
- *      - Redistributions in binary form must reproduce the above
+ *      - Redistributions in binary क्रमm must reproduce the above
  *        copyright notice, this list of conditions and the following
- *        disclaimer in the documentation and/or other materials
+ *        disclaimer in the करोcumentation and/or other materials
  *        provided with the distribution.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
@@ -31,33 +32,33 @@
  * SOFTWARE.
  */
 
-#ifndef __CSIO_HW_CHIP_H__
-#define __CSIO_HW_CHIP_H__
+#अगर_अघोषित __CSIO_HW_CHIP_H__
+#घोषणा __CSIO_HW_CHIP_H__
 
-#include "csio_defs.h"
+#समावेश "csio_defs.h"
 
 /* Define MACRO values */
-#define CSIO_HW_T5				0x5000
-#define CSIO_T5_FCOE_ASIC			0x5600
-#define CSIO_HW_T6				0x6000
-#define CSIO_T6_FCOE_ASIC			0x6600
-#define CSIO_HW_CHIP_MASK			0xF000
+#घोषणा CSIO_HW_T5				0x5000
+#घोषणा CSIO_T5_FCOE_ASIC			0x5600
+#घोषणा CSIO_HW_T6				0x6000
+#घोषणा CSIO_T6_FCOE_ASIC			0x6600
+#घोषणा CSIO_HW_CHIP_MASK			0xF000
 
-#define T5_REGMAP_SIZE				(332 * 1024)
-#define FW_FNAME_T5				"cxgb4/t5fw.bin"
-#define FW_CFG_NAME_T5				"cxgb4/t5-config.txt"
-#define FW_FNAME_T6				"cxgb4/t6fw.bin"
-#define FW_CFG_NAME_T6				"cxgb4/t6-config.txt"
+#घोषणा T5_REGMAP_SIZE				(332 * 1024)
+#घोषणा FW_FNAME_T5				"cxgb4/t5fw.bin"
+#घोषणा FW_CFG_NAME_T5				"cxgb4/t5-config.txt"
+#घोषणा FW_FNAME_T6				"cxgb4/t6fw.bin"
+#घोषणा FW_CFG_NAME_T6				"cxgb4/t6-config.txt"
 
-#define CHELSIO_CHIP_CODE(version, revision) (((version) << 4) | (revision))
-#define CHELSIO_CHIP_FPGA          0x100
-#define CHELSIO_CHIP_VERSION(code) (((code) >> 12) & 0xf)
-#define CHELSIO_CHIP_RELEASE(code) ((code) & 0xf)
+#घोषणा CHELSIO_CHIP_CODE(version, revision) (((version) << 4) | (revision))
+#घोषणा CHELSIO_CHIP_FPGA          0x100
+#घोषणा CHELSIO_CHIP_VERSION(code) (((code) >> 12) & 0xf)
+#घोषणा CHELSIO_CHIP_RELEASE(code) ((code) & 0xf)
 
-#define CHELSIO_T5		0x5
-#define CHELSIO_T6		0x6
+#घोषणा CHELSIO_T5		0x5
+#घोषणा CHELSIO_T6		0x6
 
-enum chip_type {
+क्रमागत chip_type अणु
 	T5_A0 = CHELSIO_CHIP_CODE(CHELSIO_T5, 0),
 	T5_A1 = CHELSIO_CHIP_CODE(CHELSIO_T5, 1),
 	T5_FIRST_REV	= T5_A0,
@@ -66,70 +67,70 @@ enum chip_type {
 	T6_A0 = CHELSIO_CHIP_CODE(CHELSIO_T6, 0),
 	T6_FIRST_REV    = T6_A0,
 	T6_LAST_REV     = T6_A0,
-};
+पूर्ण;
 
-static inline int csio_is_t5(uint16_t chip)
-{
-	return (chip == CSIO_HW_T5);
-}
+अटल अंतरभूत पूर्णांक csio_is_t5(uपूर्णांक16_t chip)
+अणु
+	वापस (chip == CSIO_HW_T5);
+पूर्ण
 
-static inline int csio_is_t6(uint16_t chip)
-{
-	return (chip == CSIO_HW_T6);
-}
+अटल अंतरभूत पूर्णांक csio_is_t6(uपूर्णांक16_t chip)
+अणु
+	वापस (chip == CSIO_HW_T6);
+पूर्ण
 
 /* Define MACRO DEFINITIONS */
-#define CSIO_DEVICE(devid, idx)						\
-	{ PCI_VENDOR_ID_CHELSIO, (devid), PCI_ANY_ID, PCI_ANY_ID, 0, 0, (idx) }
+#घोषणा CSIO_DEVICE(devid, idx)						\
+	अणु PCI_VENDOR_ID_CHELSIO, (devid), PCI_ANY_ID, PCI_ANY_ID, 0, 0, (idx) पूर्ण
 
-#include "t4fw_api.h"
-#include "t4fw_version.h"
+#समावेश "t4fw_api.h"
+#समावेश "t4fw_version.h"
 
-#define FW_VERSION(chip) ( \
+#घोषणा FW_VERSION(chip) ( \
 		FW_HDR_FW_VER_MAJOR_G(chip##FW_VERSION_MAJOR) | \
 		FW_HDR_FW_VER_MINOR_G(chip##FW_VERSION_MINOR) | \
 		FW_HDR_FW_VER_MICRO_G(chip##FW_VERSION_MICRO) | \
 		FW_HDR_FW_VER_BUILD_G(chip##FW_VERSION_BUILD))
-#define FW_INTFVER(chip, intf) (FW_HDR_INTFVER_##intf)
+#घोषणा FW_INTFVER(chip, पूर्णांकf) (FW_HDR_INTFVER_##पूर्णांकf)
 
-struct fw_info {
+काष्ठा fw_info अणु
 	u8 chip;
-	char *fs_name;
-	char *fw_mod_name;
-	struct fw_hdr fw_hdr;
-};
+	अक्षर *fs_name;
+	अक्षर *fw_mod_name;
+	काष्ठा fw_hdr fw_hdr;
+पूर्ण;
 
 /* Declare ENUMS */
-enum { MEM_EDC0, MEM_EDC1, MEM_MC, MEM_MC0 = MEM_MC, MEM_MC1 };
+क्रमागत अणु MEM_EDC0, MEM_EDC1, MEM_MC, MEM_MC0 = MEM_MC, MEM_MC1 पूर्ण;
 
-enum {
+क्रमागत अणु
 	MEMWIN_APERTURE = 2048,
 	MEMWIN_BASE     = 0x1b800,
-};
+पूर्ण;
 
 /* Slow path handlers */
-struct intr_info {
-	unsigned int mask;       /* bits to check in interrupt status */
-	const char *msg;         /* message to print or NULL */
-	short stat_idx;          /* stat counter to increment or -1 */
-	unsigned short fatal;    /* whether the condition reported is fatal */
-};
+काष्ठा पूर्णांकr_info अणु
+	अचिन्हित पूर्णांक mask;       /* bits to check in पूर्णांकerrupt status */
+	स्थिर अक्षर *msg;         /* message to prपूर्णांक or शून्य */
+	लघु stat_idx;          /* stat counter to increment or -1 */
+	अचिन्हित लघु fatal;    /* whether the condition reported is fatal */
+पूर्ण;
 
-/* T4/T5 Chip specific ops */
-struct csio_hw;
-struct csio_hw_chip_ops {
-	int (*chip_set_mem_win)(struct csio_hw *, uint32_t);
-	void (*chip_pcie_intr_handler)(struct csio_hw *);
-	uint32_t (*chip_flash_cfg_addr)(struct csio_hw *);
-	int (*chip_mc_read)(struct csio_hw *, int, uint32_t,
-					__be32 *, uint64_t *);
-	int (*chip_edc_read)(struct csio_hw *, int, uint32_t,
-					__be32 *, uint64_t *);
-	int (*chip_memory_rw)(struct csio_hw *, u32, int, u32,
-					u32, uint32_t *, int);
-	void (*chip_dfs_create_ext_mem)(struct csio_hw *);
-};
+/* T4/T5 Chip specअगरic ops */
+काष्ठा csio_hw;
+काष्ठा csio_hw_chip_ops अणु
+	पूर्णांक (*chip_set_mem_win)(काष्ठा csio_hw *, uपूर्णांक32_t);
+	व्योम (*chip_pcie_पूर्णांकr_handler)(काष्ठा csio_hw *);
+	uपूर्णांक32_t (*chip_flash_cfg_addr)(काष्ठा csio_hw *);
+	पूर्णांक (*chip_mc_पढ़ो)(काष्ठा csio_hw *, पूर्णांक, uपूर्णांक32_t,
+					__be32 *, uपूर्णांक64_t *);
+	पूर्णांक (*chip_edc_पढ़ो)(काष्ठा csio_hw *, पूर्णांक, uपूर्णांक32_t,
+					__be32 *, uपूर्णांक64_t *);
+	पूर्णांक (*chip_memory_rw)(काष्ठा csio_hw *, u32, पूर्णांक, u32,
+					u32, uपूर्णांक32_t *, पूर्णांक);
+	व्योम (*chip_dfs_create_ext_mem)(काष्ठा csio_hw *);
+पूर्ण;
 
-extern struct csio_hw_chip_ops t5_ops;
+बाह्य काष्ठा csio_hw_chip_ops t5_ops;
 
-#endif /* #ifndef __CSIO_HW_CHIP_H__ */
+#पूर्ण_अगर /* #अगर_अघोषित __CSIO_HW_CHIP_H__ */

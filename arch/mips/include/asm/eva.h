@@ -1,43 +1,44 @@
+<शैली गुरु>
 /*
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the main directory of this archive
- * for more details.
+ * License.  See the file "COPYING" in the मुख्य directory of this archive
+ * क्रम more details.
  *
  * Copyright (C) 2014, Imagination Technologies Ltd.
  *
- * EVA functions for generic code
+ * EVA functions क्रम generic code
  */
 
-#ifndef _ASM_EVA_H
-#define _ASM_EVA_H
+#अगर_अघोषित _ASM_EVA_H
+#घोषणा _ASM_EVA_H
 
-#include <kernel-entry-init.h>
+#समावेश <kernel-entry-init.h>
 
-#ifdef __ASSEMBLY__
+#अगर_घोषित __ASSEMBLY__
 
-#ifdef CONFIG_EVA
+#अगर_घोषित CONFIG_EVA
 
 /*
  * EVA early init code
  *
- * Platforms must define their own 'platform_eva_init' macro in
- * their kernel-entry-init.h header. This macro usually does the
- * platform specific configuration of the segmentation registers,
+ * Platक्रमms must define their own 'platform_eva_init' macro in
+ * their kernel-entry-init.h header. This macro usually करोes the
+ * platक्रमm specअगरic configuration of the segmentation रेजिस्टरs,
  * and it is normally called from assembly code.
  *
  */
 
 .macro eva_init
-platform_eva_init
+platक्रमm_eva_init
 .endm
 
-#else
+#अन्यथा
 
 .macro eva_init
 .endm
 
-#endif /* CONFIG_EVA */
+#पूर्ण_अगर /* CONFIG_EVA */
 
-#endif /* __ASSEMBLY__ */
+#पूर्ण_अगर /* __ASSEMBLY__ */
 
-#endif
+#पूर्ण_अगर

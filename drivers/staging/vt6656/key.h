@@ -1,11 +1,12 @@
-/* SPDX-License-Identifier: GPL-2.0+ */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0+ */
 /*
  * Copyright (c) 1996, 2003 VIA Networking Technologies, Inc.
  * All rights reserved.
  *
  * File: key.h
  *
- * Purpose: Implement functions for 802.11i Key management
+ * Purpose: Implement functions क्रम 802.11i Key management
  *
  * Author: Jerry Chen
  *
@@ -13,30 +14,30 @@
  *
  */
 
-#ifndef __KEY_H__
-#define __KEY_H__
+#अगर_अघोषित __KEY_H__
+#घोषणा __KEY_H__
 
-#include "device.h"
+#समावेश "device.h"
 
-#define MAX_KEY_TABLE       11
+#घोषणा MAX_KEY_TABLE       11
 
-#define KEY_CTL_WEP         0x00
-#define KEY_CTL_NONE        0x01
-#define KEY_CTL_TKIP        0x02
-#define KEY_CTL_CCMP        0x03
+#घोषणा KEY_CTL_WEP         0x00
+#घोषणा KEY_CTL_NONE        0x01
+#घोषणा KEY_CTL_TKIP        0x02
+#घोषणा KEY_CTL_CCMP        0x03
 
-#define VNT_KEY_ONFLY_ALL	0x4000
-#define VNT_KEY_ONFLY		0x8000
-#define VNT_KEY_ALLGROUP	0x04
-#define VNT_KEY_GROUP		0x40
-#define VNT_KEY_PAIRWISE	VNT_KEY_ONFLY
-#define VNT_KEY_GROUP_ADDRESS	(VNT_KEY_ALLGROUP | VNT_KEY_GROUP)
-#define VNT_KEY_DEFAULTKEY	(VNT_KEY_GROUP_ADDRESS | VNT_KEY_ONFLY |\
+#घोषणा VNT_KEY_ONFLY_ALL	0x4000
+#घोषणा VNT_KEY_ONFLY		0x8000
+#घोषणा VNT_KEY_ALLGROUP	0x04
+#घोषणा VNT_KEY_GROUP		0x40
+#घोषणा VNT_KEY_PAIRWISE	VNT_KEY_ONFLY
+#घोषणा VNT_KEY_GROUP_ADDRESS	(VNT_KEY_ALLGROUP | VNT_KEY_GROUP)
+#घोषणा VNT_KEY_DEFAULTKEY	(VNT_KEY_GROUP_ADDRESS | VNT_KEY_ONFLY |\
 				VNT_KEY_ONFLY_ALL)
 
-int vnt_key_init_table(struct vnt_private *priv);
+पूर्णांक vnt_key_init_table(काष्ठा vnt_निजी *priv);
 
-int vnt_set_keys(struct ieee80211_hw *hw, struct ieee80211_sta *sta,
-		 struct ieee80211_vif *vif, struct ieee80211_key_conf *key);
+पूर्णांक vnt_set_keys(काष्ठा ieee80211_hw *hw, काष्ठा ieee80211_sta *sta,
+		 काष्ठा ieee80211_vअगर *vअगर, काष्ठा ieee80211_key_conf *key);
 
-#endif /* __KEY_H__ */
+#पूर्ण_अगर /* __KEY_H__ */

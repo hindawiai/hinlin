@@ -1,8 +1,9 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _ARCH_HALTPOLL_H
-#define _ARCH_HALTPOLL_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _ARCH_HALTPOLL_H
+#घोषणा _ARCH_HALTPOLL_H
 
-void arch_haltpoll_enable(unsigned int cpu);
-void arch_haltpoll_disable(unsigned int cpu);
+व्योम arch_haltpoll_enable(अचिन्हित पूर्णांक cpu);
+व्योम arch_haltpoll_disable(अचिन्हित पूर्णांक cpu);
 
-#endif
+#पूर्ण_अगर

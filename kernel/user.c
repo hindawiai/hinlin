@@ -1,190 +1,191 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * The "user cache".
  *
  * (C) Copyright 1991-2000 Linus Torvalds
  *
- * We have a per-user structure to keep track of how many
+ * We have a per-user काष्ठाure to keep track of how many
  * processes, files etc the user has claimed, in order to be
- * able to have per-user limits for system resources. 
+ * able to have per-user limits क्रम प्रणाली resources. 
  */
 
-#include <linux/init.h>
-#include <linux/sched.h>
-#include <linux/slab.h>
-#include <linux/bitops.h>
-#include <linux/key.h>
-#include <linux/sched/user.h>
-#include <linux/interrupt.h>
-#include <linux/export.h>
-#include <linux/user_namespace.h>
-#include <linux/proc_ns.h>
+#समावेश <linux/init.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/bitops.h>
+#समावेश <linux/key.h>
+#समावेश <linux/sched/user.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/export.h>
+#समावेश <linux/user_namespace.h>
+#समावेश <linux/proc_ns.h>
 
 /*
- * userns count is 1 for root user, 1 for init_uts_ns,
- * and 1 for... ?
+ * userns count is 1 क्रम root user, 1 क्रम init_uts_ns,
+ * and 1 क्रम... ?
  */
-struct user_namespace init_user_ns = {
-	.uid_map = {
+काष्ठा user_namespace init_user_ns = अणु
+	.uid_map = अणु
 		.nr_extents = 1,
-		{
-			.extent[0] = {
+		अणु
+			.extent[0] = अणु
 				.first = 0,
 				.lower_first = 0,
 				.count = 4294967295U,
-			},
-		},
-	},
-	.gid_map = {
+			पूर्ण,
+		पूर्ण,
+	पूर्ण,
+	.gid_map = अणु
 		.nr_extents = 1,
-		{
-			.extent[0] = {
+		अणु
+			.extent[0] = अणु
 				.first = 0,
 				.lower_first = 0,
 				.count = 4294967295U,
-			},
-		},
-	},
-	.projid_map = {
+			पूर्ण,
+		पूर्ण,
+	पूर्ण,
+	.projid_map = अणु
 		.nr_extents = 1,
-		{
-			.extent[0] = {
+		अणु
+			.extent[0] = अणु
 				.first = 0,
 				.lower_first = 0,
 				.count = 4294967295U,
-			},
-		},
-	},
+			पूर्ण,
+		पूर्ण,
+	पूर्ण,
 	.ns.count = REFCOUNT_INIT(3),
 	.owner = GLOBAL_ROOT_UID,
 	.group = GLOBAL_ROOT_GID,
 	.ns.inum = PROC_USER_INIT_INO,
-#ifdef CONFIG_USER_NS
+#अगर_घोषित CONFIG_USER_NS
 	.ns.ops = &userns_operations,
-#endif
+#पूर्ण_अगर
 	.flags = USERNS_INIT_FLAGS,
-#ifdef CONFIG_KEYS
+#अगर_घोषित CONFIG_KEYS
 	.keyring_name_list = LIST_HEAD_INIT(init_user_ns.keyring_name_list),
 	.keyring_sem = __RWSEM_INITIALIZER(init_user_ns.keyring_sem),
-#endif
-};
+#पूर्ण_अगर
+पूर्ण;
 EXPORT_SYMBOL_GPL(init_user_ns);
 
 /*
  * UID task count cache, to get fast user lookup in "alloc_uid"
- * when changing user ID's (ie setuid() and friends).
+ * when changing user ID's (ie setuid() and मित्रs).
  */
 
-#define UIDHASH_BITS	(CONFIG_BASE_SMALL ? 3 : 7)
-#define UIDHASH_SZ	(1 << UIDHASH_BITS)
-#define UIDHASH_MASK		(UIDHASH_SZ - 1)
-#define __uidhashfn(uid)	(((uid >> UIDHASH_BITS) + uid) & UIDHASH_MASK)
-#define uidhashentry(uid)	(uidhash_table + __uidhashfn((__kuid_val(uid))))
+#घोषणा UIDHASH_BITS	(CONFIG_BASE_SMALL ? 3 : 7)
+#घोषणा UIDHASH_SZ	(1 << UIDHASH_BITS)
+#घोषणा UIDHASH_MASK		(UIDHASH_SZ - 1)
+#घोषणा __uidhashfn(uid)	(((uid >> UIDHASH_BITS) + uid) & UIDHASH_MASK)
+#घोषणा uidhashentry(uid)	(uidhash_table + __uidhashfn((__kuid_val(uid))))
 
-static struct kmem_cache *uid_cachep;
-static struct hlist_head uidhash_table[UIDHASH_SZ];
+अटल काष्ठा kmem_cache *uid_cachep;
+अटल काष्ठा hlist_head uidhash_table[UIDHASH_SZ];
 
 /*
  * The uidhash_lock is mostly taken from process context, but it is
  * occasionally also taken from softirq/tasklet context, when
- * task-structs get RCU-freed. Hence all locking must be softirq-safe.
- * But free_uid() is also called with local interrupts disabled, and running
- * local_bh_enable() with local interrupts disabled is an error - we'll run
- * softirq callbacks, and they can unconditionally enable interrupts, and
- * the caller of free_uid() didn't expect that..
+ * task-काष्ठाs get RCU-मुक्तd. Hence all locking must be softirq-safe.
+ * But मुक्त_uid() is also called with local पूर्णांकerrupts disabled, and running
+ * local_bh_enable() with local पूर्णांकerrupts disabled is an error - we'll run
+ * softirq callbacks, and they can unconditionally enable पूर्णांकerrupts, and
+ * the caller of मुक्त_uid() didn't expect that..
  */
-static DEFINE_SPINLOCK(uidhash_lock);
+अटल DEFINE_SPINLOCK(uidhash_lock);
 
-/* root_user.__count is 1, for init task cred */
-struct user_struct root_user = {
+/* root_user.__count is 1, क्रम init task cred */
+काष्ठा user_काष्ठा root_user = अणु
 	.__count	= REFCOUNT_INIT(1),
 	.processes	= ATOMIC_INIT(1),
-	.sigpending	= ATOMIC_INIT(0),
+	.संक_बाकी	= ATOMIC_INIT(0),
 	.locked_shm     = 0,
 	.uid		= GLOBAL_ROOT_UID,
 	.ratelimit	= RATELIMIT_STATE_INIT(root_user.ratelimit, 0, 0),
-};
+पूर्ण;
 
 /*
  * These routines must be called with the uidhash spinlock held!
  */
-static void uid_hash_insert(struct user_struct *up, struct hlist_head *hashent)
-{
+अटल व्योम uid_hash_insert(काष्ठा user_काष्ठा *up, काष्ठा hlist_head *hashent)
+अणु
 	hlist_add_head(&up->uidhash_node, hashent);
-}
+पूर्ण
 
-static void uid_hash_remove(struct user_struct *up)
-{
+अटल व्योम uid_hash_हटाओ(काष्ठा user_काष्ठा *up)
+अणु
 	hlist_del_init(&up->uidhash_node);
-}
+पूर्ण
 
-static struct user_struct *uid_hash_find(kuid_t uid, struct hlist_head *hashent)
-{
-	struct user_struct *user;
+अटल काष्ठा user_काष्ठा *uid_hash_find(kuid_t uid, काष्ठा hlist_head *hashent)
+अणु
+	काष्ठा user_काष्ठा *user;
 
-	hlist_for_each_entry(user, hashent, uidhash_node) {
-		if (uid_eq(user->uid, uid)) {
+	hlist_क्रम_each_entry(user, hashent, uidhash_node) अणु
+		अगर (uid_eq(user->uid, uid)) अणु
 			refcount_inc(&user->__count);
-			return user;
-		}
-	}
+			वापस user;
+		पूर्ण
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
 /* IRQs are disabled and uidhash_lock is held upon function entry.
  * IRQ state (as stored in flags) is restored and uidhash_lock released
- * upon function exit.
+ * upon function निकास.
  */
-static void free_user(struct user_struct *up, unsigned long flags)
+अटल व्योम मुक्त_user(काष्ठा user_काष्ठा *up, अचिन्हित दीर्घ flags)
 	__releases(&uidhash_lock)
-{
-	uid_hash_remove(up);
+अणु
+	uid_hash_हटाओ(up);
 	spin_unlock_irqrestore(&uidhash_lock, flags);
-	kmem_cache_free(uid_cachep, up);
-}
+	kmem_cache_मुक्त(uid_cachep, up);
+पूर्ण
 
 /*
- * Locate the user_struct for the passed UID.  If found, take a ref on it.  The
- * caller must undo that ref with free_uid().
+ * Locate the user_काष्ठा क्रम the passed UID.  If found, take a ref on it.  The
+ * caller must unकरो that ref with मुक्त_uid().
  *
- * If the user_struct could not be found, return NULL.
+ * If the user_काष्ठा could not be found, वापस शून्य.
  */
-struct user_struct *find_user(kuid_t uid)
-{
-	struct user_struct *ret;
-	unsigned long flags;
+काष्ठा user_काष्ठा *find_user(kuid_t uid)
+अणु
+	काष्ठा user_काष्ठा *ret;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&uidhash_lock, flags);
 	ret = uid_hash_find(uid, uidhashentry(uid));
 	spin_unlock_irqrestore(&uidhash_lock, flags);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-void free_uid(struct user_struct *up)
-{
-	unsigned long flags;
+व्योम मुक्त_uid(काष्ठा user_काष्ठा *up)
+अणु
+	अचिन्हित दीर्घ flags;
 
-	if (!up)
-		return;
+	अगर (!up)
+		वापस;
 
-	if (refcount_dec_and_lock_irqsave(&up->__count, &uidhash_lock, &flags))
-		free_user(up, flags);
-}
+	अगर (refcount_dec_and_lock_irqsave(&up->__count, &uidhash_lock, &flags))
+		मुक्त_user(up, flags);
+पूर्ण
 
-struct user_struct *alloc_uid(kuid_t uid)
-{
-	struct hlist_head *hashent = uidhashentry(uid);
-	struct user_struct *up, *new;
+काष्ठा user_काष्ठा *alloc_uid(kuid_t uid)
+अणु
+	काष्ठा hlist_head *hashent = uidhashentry(uid);
+	काष्ठा user_काष्ठा *up, *new;
 
 	spin_lock_irq(&uidhash_lock);
 	up = uid_hash_find(uid, hashent);
 	spin_unlock_irq(&uidhash_lock);
 
-	if (!up) {
+	अगर (!up) अणु
 		new = kmem_cache_zalloc(uid_cachep, GFP_KERNEL);
-		if (!new)
-			return NULL;
+		अगर (!new)
+			वापस शून्य;
 
 		new->uid = uid;
 		refcount_set(&new->__count, 1);
@@ -192,38 +193,38 @@ struct user_struct *alloc_uid(kuid_t uid)
 		ratelimit_set_flags(&new->ratelimit, RATELIMIT_MSG_ON_RELEASE);
 
 		/*
-		 * Before adding this, check whether we raced
-		 * on adding the same user already..
+		 * Beक्रमe adding this, check whether we raced
+		 * on adding the same user alपढ़ोy..
 		 */
 		spin_lock_irq(&uidhash_lock);
 		up = uid_hash_find(uid, hashent);
-		if (up) {
-			kmem_cache_free(uid_cachep, new);
-		} else {
+		अगर (up) अणु
+			kmem_cache_मुक्त(uid_cachep, new);
+		पूर्ण अन्यथा अणु
 			uid_hash_insert(new, hashent);
 			up = new;
-		}
+		पूर्ण
 		spin_unlock_irq(&uidhash_lock);
-	}
+	पूर्ण
 
-	return up;
-}
+	वापस up;
+पूर्ण
 
-static int __init uid_cache_init(void)
-{
-	int n;
+अटल पूर्णांक __init uid_cache_init(व्योम)
+अणु
+	पूर्णांक n;
 
-	uid_cachep = kmem_cache_create("uid_cache", sizeof(struct user_struct),
-			0, SLAB_HWCACHE_ALIGN|SLAB_PANIC, NULL);
+	uid_cachep = kmem_cache_create("uid_cache", माप(काष्ठा user_काष्ठा),
+			0, SLAB_HWCACHE_ALIGN|SLAB_PANIC, शून्य);
 
-	for(n = 0; n < UIDHASH_SZ; ++n)
+	क्रम(n = 0; n < UIDHASH_SZ; ++n)
 		INIT_HLIST_HEAD(uidhash_table + n);
 
-	/* Insert the root user immediately (init already runs as root) */
+	/* Insert the root user immediately (init alपढ़ोy runs as root) */
 	spin_lock_irq(&uidhash_lock);
 	uid_hash_insert(&root_user, uidhashentry(GLOBAL_ROOT_UID));
 	spin_unlock_irq(&uidhash_lock);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 subsys_initcall(uid_cache_init);

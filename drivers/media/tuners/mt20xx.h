@@ -1,25 +1,26 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
 */
 
-#ifndef __MT20XX_H__
-#define __MT20XX_H__
+#अगर_अघोषित __MT20XX_H__
+#घोषणा __MT20XX_H__
 
-#include <linux/i2c.h>
-#include <media/dvb_frontend.h>
+#समावेश <linux/i2c.h>
+#समावेश <media/dvb_frontend.h>
 
-#if IS_REACHABLE(CONFIG_MEDIA_TUNER_MT20XX)
-extern struct dvb_frontend *microtune_attach(struct dvb_frontend *fe,
-					     struct i2c_adapter* i2c_adap,
+#अगर IS_REACHABLE(CONFIG_MEDIA_TUNER_MT20XX)
+बाह्य काष्ठा dvb_frontend *microtune_attach(काष्ठा dvb_frontend *fe,
+					     काष्ठा i2c_adapter* i2c_adap,
 					     u8 i2c_addr);
-#else
-static inline struct dvb_frontend *microtune_attach(struct dvb_frontend *fe,
-					     struct i2c_adapter* i2c_adap,
+#अन्यथा
+अटल अंतरभूत काष्ठा dvb_frontend *microtune_attach(काष्ठा dvb_frontend *fe,
+					     काष्ठा i2c_adapter* i2c_adap,
 					     u8 i2c_addr)
-{
-	printk(KERN_WARNING "%s: driver disabled by Kconfig\n", __func__);
-	return NULL;
-}
-#endif
+अणु
+	prपूर्णांकk(KERN_WARNING "%s: driver disabled by Kconfig\n", __func__);
+	वापस शून्य;
+पूर्ण
+#पूर्ण_अगर
 
-#endif /* __MT20XX_H__ */
+#पूर्ण_अगर /* __MT20XX_H__ */

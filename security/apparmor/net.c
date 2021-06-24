@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * AppArmor security module
  *
@@ -8,23 +9,23 @@
  * Copyright 2009-2017 Canonical Ltd.
  */
 
-#include "include/apparmor.h"
-#include "include/audit.h"
-#include "include/cred.h"
-#include "include/label.h"
-#include "include/net.h"
-#include "include/policy.h"
-#include "include/secid.h"
+#समावेश "include/apparmor.h"
+#समावेश "include/audit.h"
+#समावेश "include/cred.h"
+#समावेश "include/label.h"
+#समावेश "include/net.h"
+#समावेश "include/policy.h"
+#समावेश "include/secid.h"
 
-#include "net_names.h"
+#समावेश "net_names.h"
 
 
-struct aa_sfs_entry aa_sfs_entry_network[] = {
-	AA_SFS_FILE_STRING("af_mask",	AA_SFS_AF_MASK),
-	{ }
-};
+काष्ठा aa_sfs_entry aa_sfs_entry_network[] = अणु
+	AA_SFS_खाता_STRING("af_mask",	AA_SFS_AF_MASK),
+	अणु पूर्ण
+पूर्ण;
 
-static const char * const net_mask_names[] = {
+अटल स्थिर अक्षर * स्थिर net_mask_names[] = अणु
 	"unknown",
 	"send",
 	"receive",
@@ -64,193 +65,193 @@ static const char * const net_mask_names[] = {
 	"unknown",
 	"unknown",
 	"unknown",
-};
+पूर्ण;
 
 
-/* audit callback for net specific fields */
-void audit_net_cb(struct audit_buffer *ab, void *va)
-{
-	struct common_audit_data *sa = va;
+/* audit callback क्रम net specअगरic fields */
+व्योम audit_net_cb(काष्ठा audit_buffer *ab, व्योम *va)
+अणु
+	काष्ठा common_audit_data *sa = va;
 
-	if (address_family_names[sa->u.net->family])
-		audit_log_format(ab, " family=\"%s\"",
+	अगर (address_family_names[sa->u.net->family])
+		audit_log_क्रमmat(ab, " family=\"%s\"",
 				 address_family_names[sa->u.net->family]);
-	else
-		audit_log_format(ab, " family=\"unknown(%d)\"",
+	अन्यथा
+		audit_log_क्रमmat(ab, " family=\"unknown(%d)\"",
 				 sa->u.net->family);
-	if (sock_type_names[aad(sa)->net.type])
-		audit_log_format(ab, " sock_type=\"%s\"",
+	अगर (sock_type_names[aad(sa)->net.type])
+		audit_log_क्रमmat(ab, " sock_type=\"%s\"",
 				 sock_type_names[aad(sa)->net.type]);
-	else
-		audit_log_format(ab, " sock_type=\"unknown(%d)\"",
+	अन्यथा
+		audit_log_क्रमmat(ab, " sock_type=\"unknown(%d)\"",
 				 aad(sa)->net.type);
-	audit_log_format(ab, " protocol=%d", aad(sa)->net.protocol);
+	audit_log_क्रमmat(ab, " protocol=%d", aad(sa)->net.protocol);
 
-	if (aad(sa)->request & NET_PERMS_MASK) {
-		audit_log_format(ab, " requested_mask=");
-		aa_audit_perm_mask(ab, aad(sa)->request, NULL, 0,
+	अगर (aad(sa)->request & NET_PERMS_MASK) अणु
+		audit_log_क्रमmat(ab, " requested_mask=");
+		aa_audit_perm_mask(ab, aad(sa)->request, शून्य, 0,
 				   net_mask_names, NET_PERMS_MASK);
 
-		if (aad(sa)->denied & NET_PERMS_MASK) {
-			audit_log_format(ab, " denied_mask=");
-			aa_audit_perm_mask(ab, aad(sa)->denied, NULL, 0,
+		अगर (aad(sa)->denied & NET_PERMS_MASK) अणु
+			audit_log_क्रमmat(ab, " denied_mask=");
+			aa_audit_perm_mask(ab, aad(sa)->denied, शून्य, 0,
 					   net_mask_names, NET_PERMS_MASK);
-		}
-	}
-	if (aad(sa)->peer) {
-		audit_log_format(ab, " peer=");
+		पूर्ण
+	पूर्ण
+	अगर (aad(sa)->peer) अणु
+		audit_log_क्रमmat(ab, " peer=");
 		aa_label_xaudit(ab, labels_ns(aad(sa)->label), aad(sa)->peer,
 				FLAGS_NONE, GFP_ATOMIC);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /* Generic af perm */
-int aa_profile_af_perm(struct aa_profile *profile, struct common_audit_data *sa,
-		       u32 request, u16 family, int type)
-{
-	struct aa_perms perms = { };
-	unsigned int state;
+पूर्णांक aa_profile_af_perm(काष्ठा aa_profile *profile, काष्ठा common_audit_data *sa,
+		       u32 request, u16 family, पूर्णांक type)
+अणु
+	काष्ठा aa_perms perms = अणु पूर्ण;
+	अचिन्हित पूर्णांक state;
 	__be16 buffer[2];
 
 	AA_BUG(family >= AF_MAX);
 	AA_BUG(type < 0 || type >= SOCK_MAX);
 
-	if (profile_unconfined(profile))
-		return 0;
-	state = PROFILE_MEDIATES(profile, AA_CLASS_NET);
-	if (!state)
-		return 0;
+	अगर (profile_unconfined(profile))
+		वापस 0;
+	state = PROखाता_MEDIATES(profile, AA_CLASS_NET);
+	अगर (!state)
+		वापस 0;
 
 	buffer[0] = cpu_to_be16(family);
 	buffer[1] = cpu_to_be16((u16) type);
-	state = aa_dfa_match_len(profile->policy.dfa, state, (char *) &buffer,
+	state = aa_dfa_match_len(profile->policy.dfa, state, (अक्षर *) &buffer,
 				 4);
 	aa_compute_perms(profile->policy.dfa, state, &perms);
 	aa_apply_modes_to_perms(profile, &perms);
 
-	return aa_check_perms(profile, &perms, request, sa, audit_net_cb);
-}
+	वापस aa_check_perms(profile, &perms, request, sa, audit_net_cb);
+पूर्ण
 
-int aa_af_perm(struct aa_label *label, const char *op, u32 request, u16 family,
-	       int type, int protocol)
-{
-	struct aa_profile *profile;
-	DEFINE_AUDIT_NET(sa, op, NULL, family, type, protocol);
+पूर्णांक aa_af_perm(काष्ठा aa_label *label, स्थिर अक्षर *op, u32 request, u16 family,
+	       पूर्णांक type, पूर्णांक protocol)
+अणु
+	काष्ठा aa_profile *profile;
+	DEFINE_AUDIT_NET(sa, op, शून्य, family, type, protocol);
 
-	return fn_for_each_confined(label, profile,
+	वापस fn_क्रम_each_confined(label, profile,
 			aa_profile_af_perm(profile, &sa, request, family,
 					   type));
-}
+पूर्ण
 
-static int aa_label_sk_perm(struct aa_label *label, const char *op, u32 request,
-			    struct sock *sk)
-{
-	int error = 0;
+अटल पूर्णांक aa_label_sk_perm(काष्ठा aa_label *label, स्थिर अक्षर *op, u32 request,
+			    काष्ठा sock *sk)
+अणु
+	पूर्णांक error = 0;
 
 	AA_BUG(!label);
 	AA_BUG(!sk);
 
-	if (!unconfined(label)) {
-		struct aa_profile *profile;
+	अगर (!unconfined(label)) अणु
+		काष्ठा aa_profile *profile;
 		DEFINE_AUDIT_SK(sa, op, sk);
 
-		error = fn_for_each_confined(label, profile,
+		error = fn_क्रम_each_confined(label, profile,
 			    aa_profile_af_sk_perm(profile, &sa, request, sk));
-	}
+	पूर्ण
 
-	return error;
-}
+	वापस error;
+पूर्ण
 
-int aa_sk_perm(const char *op, u32 request, struct sock *sk)
-{
-	struct aa_label *label;
-	int error;
+पूर्णांक aa_sk_perm(स्थिर अक्षर *op, u32 request, काष्ठा sock *sk)
+अणु
+	काष्ठा aa_label *label;
+	पूर्णांक error;
 
 	AA_BUG(!sk);
-	AA_BUG(in_interrupt());
+	AA_BUG(in_पूर्णांकerrupt());
 
-	/* TODO: switch to begin_current_label ???? */
+	/* TODO: चयन to begin_current_label ???? */
 	label = begin_current_label_crit_section();
 	error = aa_label_sk_perm(label, op, request, sk);
 	end_current_label_crit_section(label);
 
-	return error;
-}
+	वापस error;
+पूर्ण
 
 
-int aa_sock_file_perm(struct aa_label *label, const char *op, u32 request,
-		      struct socket *sock)
-{
+पूर्णांक aa_sock_file_perm(काष्ठा aa_label *label, स्थिर अक्षर *op, u32 request,
+		      काष्ठा socket *sock)
+अणु
 	AA_BUG(!label);
 	AA_BUG(!sock);
 	AA_BUG(!sock->sk);
 
-	return aa_label_sk_perm(label, op, request, sock->sk);
-}
+	वापस aa_label_sk_perm(label, op, request, sock->sk);
+पूर्ण
 
-#ifdef CONFIG_NETWORK_SECMARK
-static int apparmor_secmark_init(struct aa_secmark *secmark)
-{
-	struct aa_label *label;
+#अगर_घोषित CONFIG_NETWORK_SECMARK
+अटल पूर्णांक apparmor_secmark_init(काष्ठा aa_secmark *secmark)
+अणु
+	काष्ठा aa_label *label;
 
-	if (secmark->label[0] == '*') {
+	अगर (secmark->label[0] == '*') अणु
 		secmark->secid = AA_SECID_WILDCARD;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	label = aa_label_strn_parse(&root_ns->unconfined->label,
-				    secmark->label, strlen(secmark->label),
+				    secmark->label, म_माप(secmark->label),
 				    GFP_ATOMIC, false, false);
 
-	if (IS_ERR(label))
-		return PTR_ERR(label);
+	अगर (IS_ERR(label))
+		वापस PTR_ERR(label);
 
 	secmark->secid = label->secid;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int aa_secmark_perm(struct aa_profile *profile, u32 request, u32 secid,
-			   struct common_audit_data *sa)
-{
-	int i, ret;
-	struct aa_perms perms = { };
+अटल पूर्णांक aa_secmark_perm(काष्ठा aa_profile *profile, u32 request, u32 secid,
+			   काष्ठा common_audit_data *sa)
+अणु
+	पूर्णांक i, ret;
+	काष्ठा aa_perms perms = अणु पूर्ण;
 
-	if (profile->secmark_count == 0)
-		return 0;
+	अगर (profile->secmark_count == 0)
+		वापस 0;
 
-	for (i = 0; i < profile->secmark_count; i++) {
-		if (!profile->secmark[i].secid) {
+	क्रम (i = 0; i < profile->secmark_count; i++) अणु
+		अगर (!profile->secmark[i].secid) अणु
 			ret = apparmor_secmark_init(&profile->secmark[i]);
-			if (ret)
-				return ret;
-		}
+			अगर (ret)
+				वापस ret;
+		पूर्ण
 
-		if (profile->secmark[i].secid == secid ||
-		    profile->secmark[i].secid == AA_SECID_WILDCARD) {
-			if (profile->secmark[i].deny)
+		अगर (profile->secmark[i].secid == secid ||
+		    profile->secmark[i].secid == AA_SECID_WILDCARD) अणु
+			अगर (profile->secmark[i].deny)
 				perms.deny = ALL_PERMS_MASK;
-			else
+			अन्यथा
 				perms.allow = ALL_PERMS_MASK;
 
-			if (profile->secmark[i].audit)
+			अगर (profile->secmark[i].audit)
 				perms.audit = ALL_PERMS_MASK;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	aa_apply_modes_to_perms(profile, &perms);
 
-	return aa_check_perms(profile, &perms, request, sa, audit_net_cb);
-}
+	वापस aa_check_perms(profile, &perms, request, sa, audit_net_cb);
+पूर्ण
 
-int apparmor_secmark_check(struct aa_label *label, char *op, u32 request,
-			   u32 secid, const struct sock *sk)
-{
-	struct aa_profile *profile;
+पूर्णांक apparmor_secmark_check(काष्ठा aa_label *label, अक्षर *op, u32 request,
+			   u32 secid, स्थिर काष्ठा sock *sk)
+अणु
+	काष्ठा aa_profile *profile;
 	DEFINE_AUDIT_SK(sa, op, sk);
 
-	return fn_for_each_confined(label, profile,
+	वापस fn_क्रम_each_confined(label, profile,
 				    aa_secmark_perm(profile, request, secid,
 						    &sa));
-}
-#endif
+पूर्ण
+#पूर्ण_अगर

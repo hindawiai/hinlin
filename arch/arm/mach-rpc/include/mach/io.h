@@ -1,28 +1,29 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
- *  arch/arm/mach-rpc/include/mach/io.h
+ *  arch/arm/mach-rpc/include/mach/पन.स
  *
  *  Copyright (C) 1997 Russell King
  *
- * Modifications:
+ * Modअगरications:
  *  06-Dec-1997	RMK	Created.
  */
-#ifndef __ASM_ARM_ARCH_IO_H
-#define __ASM_ARM_ARCH_IO_H
+#अगर_अघोषित __ASM_ARM_ARCH_IO_H
+#घोषणा __ASM_ARM_ARCH_IO_H
 
-#include <mach/hardware.h>
+#समावेश <mach/hardware.h>
 
-#define IO_SPACE_LIMIT 0xffff
+#घोषणा IO_SPACE_LIMIT 0xffff
 
 /*
- * We need PC style IO addressing for:
+ * We need PC style IO addressing क्रम:
  *  - floppy (at 0x3f2,0x3f4,0x3f5,0x3f7)
  *  - parport (at 0x278-0x27a, 0x27b-0x27f, 0x778-0x77a)
- *  - 8250 serial (only for compile)
+ *  - 8250 serial (only क्रम compile)
  *
  * These peripherals are found in an area of MMIO which looks very much
- * like an ISA bus, but with registers at the low byte of each word.
+ * like an ISA bus, but with रेजिस्टरs at the low byte of each word.
  */
-#define __io(a)		(PCIO_BASE + ((a) << 2))
+#घोषणा __io(a)		(PCIO_BASE + ((a) << 2))
 
-#endif
+#पूर्ण_अगर

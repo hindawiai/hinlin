@@ -1,10 +1,11 @@
-// SPDX-License-Identifier: GPL-2.0-only
-/* radio-cadet.c - A video4linux driver for the ADS Cadet AM/FM Radio Card
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
+/* radio-cadet.c - A video4linux driver क्रम the ADS Cadet AM/FM Radio Card
  *
  * by Fred Gleason <fredg@wava.com>
  * Version 0.3.3
  *
- * (Loosely) based on code for the Aztech radio card by
+ * (Loosely) based on code क्रम the Aztech radio card by
  *
  * Russell Kroll    (rkroll@exploits.org)
  * Quay Ly
@@ -15,11 +16,11 @@
  *
  * History:
  * 2000-04-29	Russell Kroll <rkroll@exploits.org>
- *		Added ISAPnP detection for Linux 2.3/2.4
+ *		Added ISAPnP detection क्रम Linux 2.3/2.4
  *
  * 2001-01-10	Russell Kroll <rkroll@exploits.org>
  *		Removed dead CONFIG_RADIO_CADET_PORT code
- *		PnP detection on load is now default (no args necessary)
+ *		PnP detection on load is now शेष (no args necessary)
  *
  * 2002-01-17	Adam Belay <ambx1@neo.rr.com>
  *		Updated to latest pnp code
@@ -31,75 +32,75 @@
  *		Changed API to V4L2
  */
 
-#include <linux/module.h>	/* Modules			*/
-#include <linux/init.h>		/* Initdata			*/
-#include <linux/ioport.h>	/* request_region		*/
-#include <linux/delay.h>	/* udelay			*/
-#include <linux/videodev2.h>	/* V4L2 API defs		*/
-#include <linux/param.h>
-#include <linux/pnp.h>
-#include <linux/sched.h>
-#include <linux/io.h>		/* outb, outb_p			*/
-#include <media/v4l2-device.h>
-#include <media/v4l2-ioctl.h>
-#include <media/v4l2-ctrls.h>
-#include <media/v4l2-fh.h>
-#include <media/v4l2-event.h>
+#समावेश <linux/module.h>	/* Modules			*/
+#समावेश <linux/init.h>		/* Initdata			*/
+#समावेश <linux/ioport.h>	/* request_region		*/
+#समावेश <linux/delay.h>	/* udelay			*/
+#समावेश <linux/videodev2.h>	/* V4L2 API defs		*/
+#समावेश <linux/param.h>
+#समावेश <linux/pnp.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/पन.स>		/* outb, outb_p			*/
+#समावेश <media/v4l2-device.h>
+#समावेश <media/v4l2-ioctl.h>
+#समावेश <media/v4l2-ctrls.h>
+#समावेश <media/v4l2-fh.h>
+#समावेश <media/v4l2-event.h>
 
 MODULE_AUTHOR("Fred Gleason, Russell Kroll, Quay Lu, Donald Song, Jason Lewis, Scott McGrath, William McGrath");
 MODULE_DESCRIPTION("A driver for the ADS Cadet AM/FM/RDS radio card.");
 MODULE_LICENSE("GPL");
 MODULE_VERSION("0.3.4");
 
-static int io = -1;		/* default to isapnp activation */
-static int radio_nr = -1;
+अटल पूर्णांक io = -1;		/* शेष to isapnp activation */
+अटल पूर्णांक radio_nr = -1;
 
-module_param(io, int, 0);
+module_param(io, पूर्णांक, 0);
 MODULE_PARM_DESC(io, "I/O address of Cadet card (0x330,0x332,0x334,0x336,0x338,0x33a,0x33c,0x33e)");
-module_param(radio_nr, int, 0);
+module_param(radio_nr, पूर्णांक, 0);
 
-#define RDS_BUFFER 256
-#define RDS_RX_FLAG 1
-#define MBS_RX_FLAG 2
+#घोषणा RDS_BUFFER 256
+#घोषणा RDS_RX_FLAG 1
+#घोषणा MBS_RX_FLAG 2
 
-struct cadet {
-	struct v4l2_device v4l2_dev;
-	struct video_device vdev;
-	struct v4l2_ctrl_handler ctrl_handler;
-	int io;
+काष्ठा cadet अणु
+	काष्ठा v4l2_device v4l2_dev;
+	काष्ठा video_device vdev;
+	काष्ठा v4l2_ctrl_handler ctrl_handler;
+	पूर्णांक io;
 	bool is_fm_band;
 	u32 curfreq;
-	int tunestat;
-	int sigstrength;
-	wait_queue_head_t read_queue;
-	struct timer_list readtimer;
+	पूर्णांक tunestat;
+	पूर्णांक sigstrength;
+	रुको_queue_head_t पढ़ो_queue;
+	काष्ठा समयr_list पढ़ोसमयr;
 	u8 rdsin, rdsout, rdsstat;
-	unsigned char rdsbuf[RDS_BUFFER];
-	struct mutex lock;
-	int reading;
-};
+	अचिन्हित अक्षर rdsbuf[RDS_BUFFER];
+	काष्ठा mutex lock;
+	पूर्णांक पढ़ोing;
+पूर्ण;
 
-static struct cadet cadet_card;
+अटल काष्ठा cadet cadet_card;
 
 /*
  * Signal Strength Threshold Values
- * The V4L API spec does not define any particular unit for the signal
+ * The V4L API spec करोes not define any particular unit क्रम the संकेत
  * strength value.  These values are in microvolts of RF at the tuner's input.
  */
-static u16 sigtable[2][4] = {
-	{ 1835, 2621,  4128, 65535 },
-	{ 2185, 4369, 13107, 65535 },
-};
+अटल u16 sigtable[2][4] = अणु
+	अणु 1835, 2621,  4128, 65535 पूर्ण,
+	अणु 2185, 4369, 13107, 65535 पूर्ण,
+पूर्ण;
 
-static const struct v4l2_frequency_band bands[] = {
-	{
+अटल स्थिर काष्ठा v4l2_frequency_band bands[] = अणु
+	अणु
 		.index = 0,
 		.type = V4L2_TUNER_RADIO,
 		.capability = V4L2_TUNER_CAP_LOW | V4L2_TUNER_CAP_FREQ_BANDS,
 		.rangelow = 8320,      /* 520 kHz */
 		.rangehigh = 26400,    /* 1650 kHz */
 		.modulation = V4L2_BAND_MODULATION_AM,
-	}, {
+	पूर्ण, अणु
 		.index = 1,
 		.type = V4L2_TUNER_RADIO,
 		.capability = V4L2_TUNER_CAP_STEREO | V4L2_TUNER_CAP_RDS |
@@ -108,30 +109,30 @@ static const struct v4l2_frequency_band bands[] = {
 		.rangelow = 1400000,   /* 87.5 MHz */
 		.rangehigh = 1728000,  /* 108.0 MHz */
 		.modulation = V4L2_BAND_MODULATION_FM,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
 
-static int cadet_getstereo(struct cadet *dev)
-{
-	int ret = V4L2_TUNER_SUB_MONO;
+अटल पूर्णांक cadet_माला_लोtereo(काष्ठा cadet *dev)
+अणु
+	पूर्णांक ret = V4L2_TUNER_SUB_MONO;
 
-	if (!dev->is_fm_band)	/* Only FM has stereo capability! */
-		return V4L2_TUNER_SUB_MONO;
+	अगर (!dev->is_fm_band)	/* Only FM has stereo capability! */
+		वापस V4L2_TUNER_SUB_MONO;
 
 	outb(7, dev->io);          /* Select tuner control */
-	if ((inb(dev->io + 1) & 0x40) == 0)
+	अगर ((inb(dev->io + 1) & 0x40) == 0)
 		ret = V4L2_TUNER_SUB_STEREO;
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static unsigned cadet_gettune(struct cadet *dev)
-{
-	int curvol, i;
-	unsigned fifo = 0;
+अटल अचिन्हित cadet_gettune(काष्ठा cadet *dev)
+अणु
+	पूर्णांक curvol, i;
+	अचिन्हित fअगरo = 0;
 
 	/*
-	 * Prepare for read
+	 * Prepare क्रम पढ़ो
 	 */
 
 	outb(7, dev->io);       /* Select tuner control */
@@ -140,106 +141,106 @@ static unsigned cadet_gettune(struct cadet *dev)
 	dev->tunestat = 0xffff;
 
 	/*
-	 * Read the shift register
+	 * Read the shअगरt रेजिस्टर
 	 */
-	for (i = 0; i < 25; i++) {
-		fifo = (fifo << 1) | ((inb(dev->io + 1) >> 7) & 0x01);
-		if (i < 24) {
+	क्रम (i = 0; i < 25; i++) अणु
+		fअगरo = (fअगरo << 1) | ((inb(dev->io + 1) >> 7) & 0x01);
+		अगर (i < 24) अणु
 			outb(0x01, dev->io + 1);
 			dev->tunestat &= inb(dev->io + 1);
 			outb(0x00, dev->io + 1);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	/*
 	 * Restore volume/mute setting
 	 */
 	outb(curvol, dev->io + 1);
-	return fifo;
-}
+	वापस fअगरo;
+पूर्ण
 
-static unsigned cadet_getfreq(struct cadet *dev)
-{
-	int i;
-	unsigned freq = 0, test, fifo = 0;
+अटल अचिन्हित cadet_getfreq(काष्ठा cadet *dev)
+अणु
+	पूर्णांक i;
+	अचिन्हित freq = 0, test, fअगरo = 0;
 
 	/*
 	 * Read current tuning
 	 */
-	fifo = cadet_gettune(dev);
+	fअगरo = cadet_gettune(dev);
 
 	/*
 	 * Convert to actual frequency
 	 */
-	if (!dev->is_fm_band)    /* AM */
-		return ((fifo & 0x7fff) - 450) * 16;
+	अगर (!dev->is_fm_band)    /* AM */
+		वापस ((fअगरo & 0x7fff) - 450) * 16;
 
 	test = 12500;
-	for (i = 0; i < 14; i++) {
-		if ((fifo & 0x01) != 0)
+	क्रम (i = 0; i < 14; i++) अणु
+		अगर ((fअगरo & 0x01) != 0)
 			freq += test;
 		test = test << 1;
-		fifo = fifo >> 1;
-	}
+		fअगरo = fअगरo >> 1;
+	पूर्ण
 	freq -= 10700000;           /* IF frequency is 10.7 MHz */
 	freq = (freq * 16) / 1000;   /* Make it 1/16 kHz */
-	return freq;
-}
+	वापस freq;
+पूर्ण
 
-static void cadet_settune(struct cadet *dev, unsigned fifo)
-{
-	int i;
-	unsigned test;
+अटल व्योम cadet_settune(काष्ठा cadet *dev, अचिन्हित fअगरo)
+अणु
+	पूर्णांक i;
+	अचिन्हित test;
 
 	outb(7, dev->io);                /* Select tuner control */
 	/*
-	 * Write the shift register
+	 * Write the shअगरt रेजिस्टर
 	 */
 	test = 0;
-	test = (fifo >> 23) & 0x02;      /* Align data for SDO */
+	test = (fअगरo >> 23) & 0x02;      /* Align data क्रम SDO */
 	test |= 0x1c;                /* SDM=1, SWE=1, SEN=1, SCK=0 */
 	outb(7, dev->io);                /* Select tuner control */
-	outb(test, dev->io + 1);           /* Initialize for write */
-	for (i = 0; i < 25; i++) {
+	outb(test, dev->io + 1);           /* Initialize क्रम ग_लिखो */
+	क्रम (i = 0; i < 25; i++) अणु
 		test |= 0x01;              /* Toggle SCK High */
 		outb(test, dev->io + 1);
 		test &= 0xfe;              /* Toggle SCK Low */
 		outb(test, dev->io + 1);
-		fifo = fifo << 1;            /* Prepare the next bit */
-		test = 0x1c | ((fifo >> 23) & 0x02);
+		fअगरo = fअगरo << 1;            /* Prepare the next bit */
+		test = 0x1c | ((fअगरo >> 23) & 0x02);
 		outb(test, dev->io + 1);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void cadet_setfreq(struct cadet *dev, unsigned freq)
-{
-	unsigned fifo;
-	int i, j, test;
-	int curvol;
+अटल व्योम cadet_setfreq(काष्ठा cadet *dev, अचिन्हित freq)
+अणु
+	अचिन्हित fअगरo;
+	पूर्णांक i, j, test;
+	पूर्णांक curvol;
 
 	freq = clamp(freq, bands[dev->is_fm_band].rangelow,
 			   bands[dev->is_fm_band].rangehigh);
 	dev->curfreq = freq;
 	/*
-	 * Formulate a fifo command
+	 * Formulate a fअगरo command
 	 */
-	fifo = 0;
-	if (dev->is_fm_band) {    /* FM */
+	fअगरo = 0;
+	अगर (dev->is_fm_band) अणु    /* FM */
 		test = 102400;
 		freq = freq / 16;       /* Make it kHz */
 		freq += 10700;               /* IF is 10700 kHz */
-		for (i = 0; i < 14; i++) {
-			fifo = fifo << 1;
-			if (freq >= test) {
-				fifo |= 0x01;
+		क्रम (i = 0; i < 14; i++) अणु
+			fअगरo = fअगरo << 1;
+			अगर (freq >= test) अणु
+				fअगरo |= 0x01;
 				freq -= test;
-			}
+			पूर्ण
 			test = test >> 1;
-		}
-	} else {	/* AM */
-		fifo = (freq / 16) + 450;	/* Make it kHz */
-		fifo |= 0x100000;		/* Select AM Band */
-	}
+		पूर्ण
+	पूर्ण अन्यथा अणु	/* AM */
+		fअगरo = (freq / 16) + 450;	/* Make it kHz */
+		fअगरo |= 0x100000;		/* Select AM Band */
+	पूर्ण
 
 	/*
 	 * Save current volume/mute setting
@@ -251,8 +252,8 @@ static void cadet_setfreq(struct cadet *dev, unsigned freq)
 	/*
 	 * Tune the card
 	 */
-	for (j = 3; j > -1; j--) {
-		cadet_settune(dev, fifo | (j << 16));
+	क्रम (j = 3; j > -1; j--) अणु
+		cadet_settune(dev, fअगरo | (j << 16));
 
 		outb(7, dev->io);         /* Select tuner control */
 		outb(curvol, dev->io + 1);
@@ -260,384 +261,384 @@ static void cadet_setfreq(struct cadet *dev, unsigned freq)
 		msleep(100);
 
 		cadet_gettune(dev);
-		if ((dev->tunestat & 0x40) == 0) {   /* Tuned */
+		अगर ((dev->tunestat & 0x40) == 0) अणु   /* Tuned */
 			dev->sigstrength = sigtable[dev->is_fm_band][j];
-			goto reset_rds;
-		}
-	}
+			जाओ reset_rds;
+		पूर्ण
+	पूर्ण
 	dev->sigstrength = 0;
 reset_rds:
 	outb(3, dev->io);
 	outb(inb(dev->io + 1) & 0x7f, dev->io + 1);
-}
+पूर्ण
 
-static bool cadet_has_rds_data(struct cadet *dev)
-{
+अटल bool cadet_has_rds_data(काष्ठा cadet *dev)
+अणु
 	bool result;
 
 	mutex_lock(&dev->lock);
 	result = dev->rdsin != dev->rdsout;
 	mutex_unlock(&dev->lock);
-	return result;
-}
+	वापस result;
+पूर्ण
 
 
-static void cadet_handler(struct timer_list *t)
-{
-	struct cadet *dev = from_timer(dev, t, readtimer);
+अटल व्योम cadet_handler(काष्ठा समयr_list *t)
+अणु
+	काष्ठा cadet *dev = from_समयr(dev, t, पढ़ोसमयr);
 
-	/* Service the RDS fifo */
-	if (mutex_trylock(&dev->lock)) {
+	/* Service the RDS fअगरo */
+	अगर (mutex_trylock(&dev->lock)) अणु
 		outb(0x3, dev->io);       /* Select RDS Decoder Control */
-		if ((inb(dev->io + 1) & 0x20) != 0)
+		अगर ((inb(dev->io + 1) & 0x20) != 0)
 			pr_err("cadet: RDS fifo overflow\n");
-		outb(0x80, dev->io);      /* Select RDS fifo */
+		outb(0x80, dev->io);      /* Select RDS fअगरo */
 
-		while ((inb(dev->io) & 0x80) != 0) {
+		जबतक ((inb(dev->io) & 0x80) != 0) अणु
 			dev->rdsbuf[dev->rdsin] = inb(dev->io + 1);
-			if (dev->rdsin + 1 != dev->rdsout)
+			अगर (dev->rdsin + 1 != dev->rdsout)
 				dev->rdsin++;
-		}
+		पूर्ण
 		mutex_unlock(&dev->lock);
-	}
+	पूर्ण
 
 	/*
-	 * Service pending read
+	 * Service pending पढ़ो
 	 */
-	if (cadet_has_rds_data(dev))
-		wake_up_interruptible(&dev->read_queue);
+	अगर (cadet_has_rds_data(dev))
+		wake_up_पूर्णांकerruptible(&dev->पढ़ो_queue);
 
 	/*
-	 * Clean up and exit
+	 * Clean up and निकास
 	 */
-	dev->readtimer.expires = jiffies + msecs_to_jiffies(50);
-	add_timer(&dev->readtimer);
-}
+	dev->पढ़ोसमयr.expires = jअगरfies + msecs_to_jअगरfies(50);
+	add_समयr(&dev->पढ़ोसमयr);
+पूर्ण
 
-static void cadet_start_rds(struct cadet *dev)
-{
+अटल व्योम cadet_start_rds(काष्ठा cadet *dev)
+अणु
 	dev->rdsstat = 1;
-	outb(0x80, dev->io);        /* Select RDS fifo */
-	timer_setup(&dev->readtimer, cadet_handler, 0);
-	dev->readtimer.expires = jiffies + msecs_to_jiffies(50);
-	add_timer(&dev->readtimer);
-}
+	outb(0x80, dev->io);        /* Select RDS fअगरo */
+	समयr_setup(&dev->पढ़ोसमयr, cadet_handler, 0);
+	dev->पढ़ोसमयr.expires = jअगरfies + msecs_to_jअगरfies(50);
+	add_समयr(&dev->पढ़ोसमयr);
+पूर्ण
 
-static ssize_t cadet_read(struct file *file, char __user *data, size_t count, loff_t *ppos)
-{
-	struct cadet *dev = video_drvdata(file);
-	unsigned char readbuf[RDS_BUFFER];
-	int i = 0;
+अटल sमाप_प्रकार cadet_पढ़ो(काष्ठा file *file, अक्षर __user *data, माप_प्रकार count, loff_t *ppos)
+अणु
+	काष्ठा cadet *dev = video_drvdata(file);
+	अचिन्हित अक्षर पढ़ोbuf[RDS_BUFFER];
+	पूर्णांक i = 0;
 
 	mutex_lock(&dev->lock);
-	if (dev->rdsstat == 0)
+	अगर (dev->rdsstat == 0)
 		cadet_start_rds(dev);
 	mutex_unlock(&dev->lock);
 
-	if (!cadet_has_rds_data(dev) && (file->f_flags & O_NONBLOCK))
-		return -EWOULDBLOCK;
-	i = wait_event_interruptible(dev->read_queue, cadet_has_rds_data(dev));
-	if (i)
-		return i;
+	अगर (!cadet_has_rds_data(dev) && (file->f_flags & O_NONBLOCK))
+		वापस -EWOULDBLOCK;
+	i = रुको_event_पूर्णांकerruptible(dev->पढ़ो_queue, cadet_has_rds_data(dev));
+	अगर (i)
+		वापस i;
 
 	mutex_lock(&dev->lock);
-	while (i < count && dev->rdsin != dev->rdsout)
-		readbuf[i++] = dev->rdsbuf[dev->rdsout++];
+	जबतक (i < count && dev->rdsin != dev->rdsout)
+		पढ़ोbuf[i++] = dev->rdsbuf[dev->rdsout++];
 	mutex_unlock(&dev->lock);
 
-	if (i && copy_to_user(data, readbuf, i))
-		return -EFAULT;
-	return i;
-}
+	अगर (i && copy_to_user(data, पढ़ोbuf, i))
+		वापस -EFAULT;
+	वापस i;
+पूर्ण
 
 
-static int vidioc_querycap(struct file *file, void *priv,
-				struct v4l2_capability *v)
-{
-	strscpy(v->driver, "ADS Cadet", sizeof(v->driver));
-	strscpy(v->card, "ADS Cadet", sizeof(v->card));
-	strscpy(v->bus_info, "ISA:radio-cadet", sizeof(v->bus_info));
-	return 0;
-}
+अटल पूर्णांक vidioc_querycap(काष्ठा file *file, व्योम *priv,
+				काष्ठा v4l2_capability *v)
+अणु
+	strscpy(v->driver, "ADS Cadet", माप(v->driver));
+	strscpy(v->card, "ADS Cadet", माप(v->card));
+	strscpy(v->bus_info, "ISA:radio-cadet", माप(v->bus_info));
+	वापस 0;
+पूर्ण
 
-static int vidioc_g_tuner(struct file *file, void *priv,
-				struct v4l2_tuner *v)
-{
-	struct cadet *dev = video_drvdata(file);
+अटल पूर्णांक vidioc_g_tuner(काष्ठा file *file, व्योम *priv,
+				काष्ठा v4l2_tuner *v)
+अणु
+	काष्ठा cadet *dev = video_drvdata(file);
 
-	if (v->index)
-		return -EINVAL;
+	अगर (v->index)
+		वापस -EINVAL;
 	v->type = V4L2_TUNER_RADIO;
-	strscpy(v->name, "Radio", sizeof(v->name));
+	strscpy(v->name, "Radio", माप(v->name));
 	v->capability = bands[0].capability | bands[1].capability;
 	v->rangelow = bands[0].rangelow;	   /* 520 kHz (start of AM band) */
 	v->rangehigh = bands[1].rangehigh;    /* 108.0 MHz (end of FM band) */
-	if (dev->is_fm_band) {
-		v->rxsubchans = cadet_getstereo(dev);
+	अगर (dev->is_fm_band) अणु
+		v->rxsubchans = cadet_माला_लोtereo(dev);
 		outb(3, dev->io);
 		outb(inb(dev->io + 1) & 0x7f, dev->io + 1);
 		mdelay(100);
 		outb(3, dev->io);
-		if (inb(dev->io + 1) & 0x80)
+		अगर (inb(dev->io + 1) & 0x80)
 			v->rxsubchans |= V4L2_TUNER_SUB_RDS;
-	} else {
+	पूर्ण अन्यथा अणु
 		v->rangelow = 8320;      /* 520 kHz */
 		v->rangehigh = 26400;    /* 1650 kHz */
 		v->rxsubchans = V4L2_TUNER_SUB_MONO;
-	}
+	पूर्ण
 	v->audmode = V4L2_TUNER_MODE_STEREO;
-	v->signal = dev->sigstrength; /* We might need to modify scaling of this */
-	return 0;
-}
+	v->संकेत = dev->sigstrength; /* We might need to modअगरy scaling of this */
+	वापस 0;
+पूर्ण
 
-static int vidioc_s_tuner(struct file *file, void *priv,
-				const struct v4l2_tuner *v)
-{
-	return v->index ? -EINVAL : 0;
-}
+अटल पूर्णांक vidioc_s_tuner(काष्ठा file *file, व्योम *priv,
+				स्थिर काष्ठा v4l2_tuner *v)
+अणु
+	वापस v->index ? -EINVAL : 0;
+पूर्ण
 
-static int vidioc_enum_freq_bands(struct file *file, void *priv,
-				struct v4l2_frequency_band *band)
-{
-	if (band->tuner)
-		return -EINVAL;
-	if (band->index >= ARRAY_SIZE(bands))
-		return -EINVAL;
+अटल पूर्णांक vidioc_क्रमागत_freq_bands(काष्ठा file *file, व्योम *priv,
+				काष्ठा v4l2_frequency_band *band)
+अणु
+	अगर (band->tuner)
+		वापस -EINVAL;
+	अगर (band->index >= ARRAY_SIZE(bands))
+		वापस -EINVAL;
 	*band = bands[band->index];
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int vidioc_g_frequency(struct file *file, void *priv,
-				struct v4l2_frequency *f)
-{
-	struct cadet *dev = video_drvdata(file);
+अटल पूर्णांक vidioc_g_frequency(काष्ठा file *file, व्योम *priv,
+				काष्ठा v4l2_frequency *f)
+अणु
+	काष्ठा cadet *dev = video_drvdata(file);
 
-	if (f->tuner)
-		return -EINVAL;
+	अगर (f->tuner)
+		वापस -EINVAL;
 	f->type = V4L2_TUNER_RADIO;
 	f->frequency = dev->curfreq;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
-static int vidioc_s_frequency(struct file *file, void *priv,
-				const struct v4l2_frequency *f)
-{
-	struct cadet *dev = video_drvdata(file);
+अटल पूर्णांक vidioc_s_frequency(काष्ठा file *file, व्योम *priv,
+				स्थिर काष्ठा v4l2_frequency *f)
+अणु
+	काष्ठा cadet *dev = video_drvdata(file);
 
-	if (f->tuner)
-		return -EINVAL;
+	अगर (f->tuner)
+		वापस -EINVAL;
 	dev->is_fm_band =
 		f->frequency >= (bands[0].rangehigh + bands[1].rangelow) / 2;
 	cadet_setfreq(dev, f->frequency);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int cadet_s_ctrl(struct v4l2_ctrl *ctrl)
-{
-	struct cadet *dev = container_of(ctrl->handler, struct cadet, ctrl_handler);
+अटल पूर्णांक cadet_s_ctrl(काष्ठा v4l2_ctrl *ctrl)
+अणु
+	काष्ठा cadet *dev = container_of(ctrl->handler, काष्ठा cadet, ctrl_handler);
 
-	switch (ctrl->id) {
-	case V4L2_CID_AUDIO_MUTE:
+	चयन (ctrl->id) अणु
+	हाल V4L2_CID_AUDIO_MUTE:
 		outb(7, dev->io);                /* Select tuner control */
-		if (ctrl->val)
+		अगर (ctrl->val)
 			outb(0x00, dev->io + 1);
-		else
+		अन्यथा
 			outb(0x20, dev->io + 1);
-		return 0;
-	}
-	return -EINVAL;
-}
+		वापस 0;
+	पूर्ण
+	वापस -EINVAL;
+पूर्ण
 
-static int cadet_open(struct file *file)
-{
-	struct cadet *dev = video_drvdata(file);
-	int err;
+अटल पूर्णांक cadet_खोलो(काष्ठा file *file)
+अणु
+	काष्ठा cadet *dev = video_drvdata(file);
+	पूर्णांक err;
 
 	mutex_lock(&dev->lock);
-	err = v4l2_fh_open(file);
-	if (err)
-		goto fail;
-	if (v4l2_fh_is_singular_file(file))
-		init_waitqueue_head(&dev->read_queue);
+	err = v4l2_fh_खोलो(file);
+	अगर (err)
+		जाओ fail;
+	अगर (v4l2_fh_is_singular_file(file))
+		init_रुकोqueue_head(&dev->पढ़ो_queue);
 fail:
 	mutex_unlock(&dev->lock);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int cadet_release(struct file *file)
-{
-	struct cadet *dev = video_drvdata(file);
+अटल पूर्णांक cadet_release(काष्ठा file *file)
+अणु
+	काष्ठा cadet *dev = video_drvdata(file);
 
 	mutex_lock(&dev->lock);
-	if (v4l2_fh_is_singular_file(file) && dev->rdsstat) {
-		del_timer_sync(&dev->readtimer);
+	अगर (v4l2_fh_is_singular_file(file) && dev->rdsstat) अणु
+		del_समयr_sync(&dev->पढ़ोसमयr);
 		dev->rdsstat = 0;
-	}
+	पूर्ण
 	v4l2_fh_release(file);
 	mutex_unlock(&dev->lock);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static __poll_t cadet_poll(struct file *file, struct poll_table_struct *wait)
-{
-	struct cadet *dev = video_drvdata(file);
-	__poll_t req_events = poll_requested_events(wait);
-	__poll_t res = v4l2_ctrl_poll(file, wait);
+अटल __poll_t cadet_poll(काष्ठा file *file, काष्ठा poll_table_काष्ठा *रुको)
+अणु
+	काष्ठा cadet *dev = video_drvdata(file);
+	__poll_t req_events = poll_requested_events(रुको);
+	__poll_t res = v4l2_ctrl_poll(file, रुको);
 
-	poll_wait(file, &dev->read_queue, wait);
-	if (dev->rdsstat == 0 && (req_events & (EPOLLIN | EPOLLRDNORM))) {
+	poll_रुको(file, &dev->पढ़ो_queue, रुको);
+	अगर (dev->rdsstat == 0 && (req_events & (EPOLLIN | EPOLLRDNORM))) अणु
 		mutex_lock(&dev->lock);
-		if (dev->rdsstat == 0)
+		अगर (dev->rdsstat == 0)
 			cadet_start_rds(dev);
 		mutex_unlock(&dev->lock);
-	}
-	if (cadet_has_rds_data(dev))
+	पूर्ण
+	अगर (cadet_has_rds_data(dev))
 		res |= EPOLLIN | EPOLLRDNORM;
-	return res;
-}
+	वापस res;
+पूर्ण
 
 
-static const struct v4l2_file_operations cadet_fops = {
+अटल स्थिर काष्ठा v4l2_file_operations cadet_fops = अणु
 	.owner		= THIS_MODULE,
-	.open		= cadet_open,
+	.खोलो		= cadet_खोलो,
 	.release	= cadet_release,
-	.read		= cadet_read,
+	.पढ़ो		= cadet_पढ़ो,
 	.unlocked_ioctl	= video_ioctl2,
 	.poll		= cadet_poll,
-};
+पूर्ण;
 
-static const struct v4l2_ioctl_ops cadet_ioctl_ops = {
+अटल स्थिर काष्ठा v4l2_ioctl_ops cadet_ioctl_ops = अणु
 	.vidioc_querycap    = vidioc_querycap,
 	.vidioc_g_tuner     = vidioc_g_tuner,
 	.vidioc_s_tuner     = vidioc_s_tuner,
 	.vidioc_g_frequency = vidioc_g_frequency,
 	.vidioc_s_frequency = vidioc_s_frequency,
-	.vidioc_enum_freq_bands = vidioc_enum_freq_bands,
+	.vidioc_क्रमागत_freq_bands = vidioc_क्रमागत_freq_bands,
 	.vidioc_log_status  = v4l2_ctrl_log_status,
 	.vidioc_subscribe_event = v4l2_ctrl_subscribe_event,
 	.vidioc_unsubscribe_event = v4l2_event_unsubscribe,
-};
+पूर्ण;
 
-static const struct v4l2_ctrl_ops cadet_ctrl_ops = {
+अटल स्थिर काष्ठा v4l2_ctrl_ops cadet_ctrl_ops = अणु
 	.s_ctrl = cadet_s_ctrl,
-};
+पूर्ण;
 
-#ifdef CONFIG_PNP
+#अगर_घोषित CONFIG_PNP
 
-static const struct pnp_device_id cadet_pnp_devices[] = {
+अटल स्थिर काष्ठा pnp_device_id cadet_pnp_devices[] = अणु
 	/* ADS Cadet AM/FM Radio Card */
-	{.id = "MSM0c24", .driver_data = 0},
-	{.id = ""}
-};
+	अणु.id = "MSM0c24", .driver_data = 0पूर्ण,
+	अणु.id = ""पूर्ण
+पूर्ण;
 
 MODULE_DEVICE_TABLE(pnp, cadet_pnp_devices);
 
-static int cadet_pnp_probe(struct pnp_dev *dev, const struct pnp_device_id *dev_id)
-{
-	if (!dev)
-		return -ENODEV;
+अटल पूर्णांक cadet_pnp_probe(काष्ठा pnp_dev *dev, स्थिर काष्ठा pnp_device_id *dev_id)
+अणु
+	अगर (!dev)
+		वापस -ENODEV;
 	/* only support one device */
-	if (io > 0)
-		return -EBUSY;
+	अगर (io > 0)
+		वापस -EBUSY;
 
-	if (!pnp_port_valid(dev, 0))
-		return -ENODEV;
+	अगर (!pnp_port_valid(dev, 0))
+		वापस -ENODEV;
 
 	io = pnp_port_start(dev, 0);
 
-	printk(KERN_INFO "radio-cadet: PnP reports device at %#x\n", io);
+	prपूर्णांकk(KERN_INFO "radio-cadet: PnP reports device at %#x\n", io);
 
-	return io;
-}
+	वापस io;
+पूर्ण
 
-static struct pnp_driver cadet_pnp_driver = {
+अटल काष्ठा pnp_driver cadet_pnp_driver = अणु
 	.name		= "radio-cadet",
 	.id_table	= cadet_pnp_devices,
 	.probe		= cadet_pnp_probe,
-	.remove		= NULL,
-};
+	.हटाओ		= शून्य,
+पूर्ण;
 
-#else
-static struct pnp_driver cadet_pnp_driver;
-#endif
+#अन्यथा
+अटल काष्ठा pnp_driver cadet_pnp_driver;
+#पूर्ण_अगर
 
-static void cadet_probe(struct cadet *dev)
-{
-	static int iovals[8] = { 0x330, 0x332, 0x334, 0x336, 0x338, 0x33a, 0x33c, 0x33e };
-	int i;
+अटल व्योम cadet_probe(काष्ठा cadet *dev)
+अणु
+	अटल पूर्णांक iovals[8] = अणु 0x330, 0x332, 0x334, 0x336, 0x338, 0x33a, 0x33c, 0x33e पूर्ण;
+	पूर्णांक i;
 
-	for (i = 0; i < 8; i++) {
+	क्रम (i = 0; i < 8; i++) अणु
 		dev->io = iovals[i];
-		if (request_region(dev->io, 2, "cadet-probe")) {
+		अगर (request_region(dev->io, 2, "cadet-probe")) अणु
 			cadet_setfreq(dev, bands[1].rangelow);
-			if (cadet_getfreq(dev) == bands[1].rangelow) {
+			अगर (cadet_getfreq(dev) == bands[1].rangelow) अणु
 				release_region(dev->io, 2);
-				return;
-			}
+				वापस;
+			पूर्ण
 			release_region(dev->io, 2);
-		}
-	}
+		पूर्ण
+	पूर्ण
 	dev->io = -1;
-}
+पूर्ण
 
 /*
- * io should only be set if the user has used something like
- * isapnp (the userspace program) to initialize this card for us
+ * io should only be set अगर the user has used something like
+ * isapnp (the userspace program) to initialize this card क्रम us
  */
 
-static int __init cadet_init(void)
-{
-	struct cadet *dev = &cadet_card;
-	struct v4l2_device *v4l2_dev = &dev->v4l2_dev;
-	struct v4l2_ctrl_handler *hdl;
-	int res = -ENODEV;
+अटल पूर्णांक __init cadet_init(व्योम)
+अणु
+	काष्ठा cadet *dev = &cadet_card;
+	काष्ठा v4l2_device *v4l2_dev = &dev->v4l2_dev;
+	काष्ठा v4l2_ctrl_handler *hdl;
+	पूर्णांक res = -ENODEV;
 
-	strscpy(v4l2_dev->name, "cadet", sizeof(v4l2_dev->name));
+	strscpy(v4l2_dev->name, "cadet", माप(v4l2_dev->name));
 	mutex_init(&dev->lock);
 
 	/* If a probe was requested then probe ISAPnP first (safest) */
-	if (io < 0)
-		pnp_register_driver(&cadet_pnp_driver);
+	अगर (io < 0)
+		pnp_रेजिस्टर_driver(&cadet_pnp_driver);
 	dev->io = io;
 
-	/* If that fails then probe unsafely if probe is requested */
-	if (dev->io < 0)
+	/* If that fails then probe unsafely अगर probe is requested */
+	अगर (dev->io < 0)
 		cadet_probe(dev);
 
 	/* Else we bail out */
-	if (dev->io < 0) {
-#ifdef MODULE
+	अगर (dev->io < 0) अणु
+#अगर_घोषित MODULE
 		v4l2_err(v4l2_dev, "you must set an I/O address with io=0x330, 0x332, 0x334,\n");
 		v4l2_err(v4l2_dev, "0x336, 0x338, 0x33a, 0x33c or 0x33e\n");
-#endif
-		goto fail;
-	}
-	if (!request_region(dev->io, 2, "cadet"))
-		goto fail;
+#पूर्ण_अगर
+		जाओ fail;
+	पूर्ण
+	अगर (!request_region(dev->io, 2, "cadet"))
+		जाओ fail;
 
-	res = v4l2_device_register(NULL, v4l2_dev);
-	if (res < 0) {
+	res = v4l2_device_रेजिस्टर(शून्य, v4l2_dev);
+	अगर (res < 0) अणु
 		release_region(dev->io, 2);
 		v4l2_err(v4l2_dev, "could not register v4l2_device\n");
-		goto fail;
-	}
+		जाओ fail;
+	पूर्ण
 
 	hdl = &dev->ctrl_handler;
 	v4l2_ctrl_handler_init(hdl, 2);
 	v4l2_ctrl_new_std(hdl, &cadet_ctrl_ops,
 			V4L2_CID_AUDIO_MUTE, 0, 1, 1, 1);
 	v4l2_dev->ctrl_handler = hdl;
-	if (hdl->error) {
+	अगर (hdl->error) अणु
 		res = hdl->error;
 		v4l2_err(v4l2_dev, "Could not register controls\n");
-		goto err_hdl;
-	}
+		जाओ err_hdl;
+	पूर्ण
 
 	dev->is_fm_band = true;
 	dev->curfreq = bands[dev->is_fm_band].rangelow;
 	cadet_setfreq(dev, dev->curfreq);
-	strscpy(dev->vdev.name, v4l2_dev->name, sizeof(dev->vdev.name));
+	strscpy(dev->vdev.name, v4l2_dev->name, माप(dev->vdev.name));
 	dev->vdev.v4l2_dev = v4l2_dev;
 	dev->vdev.fops = &cadet_fops;
 	dev->vdev.ioctl_ops = &cadet_ioctl_ops;
@@ -647,33 +648,33 @@ static int __init cadet_init(void)
 				V4L2_CAP_READWRITE | V4L2_CAP_RDS_CAPTURE;
 	video_set_drvdata(&dev->vdev, dev);
 
-	res = video_register_device(&dev->vdev, VFL_TYPE_RADIO, radio_nr);
-	if (res < 0)
-		goto err_hdl;
+	res = video_रेजिस्टर_device(&dev->vdev, VFL_TYPE_RADIO, radio_nr);
+	अगर (res < 0)
+		जाओ err_hdl;
 	v4l2_info(v4l2_dev, "ADS Cadet Radio Card at 0x%x\n", dev->io);
-	return 0;
+	वापस 0;
 err_hdl:
-	v4l2_ctrl_handler_free(hdl);
-	v4l2_device_unregister(v4l2_dev);
+	v4l2_ctrl_handler_मुक्त(hdl);
+	v4l2_device_unरेजिस्टर(v4l2_dev);
 	release_region(dev->io, 2);
 fail:
-	pnp_unregister_driver(&cadet_pnp_driver);
-	return res;
-}
+	pnp_unरेजिस्टर_driver(&cadet_pnp_driver);
+	वापस res;
+पूर्ण
 
-static void __exit cadet_exit(void)
-{
-	struct cadet *dev = &cadet_card;
+अटल व्योम __निकास cadet_निकास(व्योम)
+अणु
+	काष्ठा cadet *dev = &cadet_card;
 
-	video_unregister_device(&dev->vdev);
-	v4l2_ctrl_handler_free(&dev->ctrl_handler);
-	v4l2_device_unregister(&dev->v4l2_dev);
+	video_unरेजिस्टर_device(&dev->vdev);
+	v4l2_ctrl_handler_मुक्त(&dev->ctrl_handler);
+	v4l2_device_unरेजिस्टर(&dev->v4l2_dev);
 	outb(7, dev->io);	/* Mute */
 	outb(0x00, dev->io + 1);
 	release_region(dev->io, 2);
-	pnp_unregister_driver(&cadet_pnp_driver);
-}
+	pnp_unरेजिस्टर_driver(&cadet_pnp_driver);
+पूर्ण
 
 module_init(cadet_init);
-module_exit(cadet_exit);
+module_निकास(cadet_निकास);
 

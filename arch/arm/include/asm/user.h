@@ -1,104 +1,105 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _ARM_USER_H
-#define _ARM_USER_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _ARM_USER_H
+#घोषणा _ARM_USER_H
 
-#include <asm/page.h>
-#include <asm/ptrace.h>
-/* Core file format: The core file is written in such a way that gdb
-   can understand it and provide useful information to the user (under
+#समावेश <यंत्र/page.h>
+#समावेश <यंत्र/ptrace.h>
+/* Core file क्रमmat: The core file is written in such a way that gdb
+   can understand it and provide useful inक्रमmation to the user (under
    linux we use the 'trad-core' bfd).  There are quite a number of
-   obstacles to being able to view the contents of the floating point
-   registers, and until these are solved you will not be able to view the
-   contents of them.  Actually, you can read in the core file and look at
-   the contents of the user struct to find out what the floating point
-   registers contain.
+   obstacles to being able to view the contents of the भग्नing poपूर्णांक
+   रेजिस्टरs, and until these are solved you will not be able to view the
+   contents of them.  Actually, you can पढ़ो in the core file and look at
+   the contents of the user काष्ठा to find out what the भग्नing poपूर्णांक
+   रेजिस्टरs contain.
    The actual file contents are as follows:
-   UPAGE: 1 page consisting of a user struct that tells gdb what is present
-   in the file.  Directly after this is a copy of the task_struct, which
-   is currently not used by gdb, but it may come in useful at some point.
-   All of the registers are stored as part of the upage.  The upage should
+   UPAGE: 1 page consisting of a user काष्ठा that tells gdb what is present
+   in the file.  Directly after this is a copy of the task_काष्ठा, which
+   is currently not used by gdb, but it may come in useful at some poपूर्णांक.
+   All of the रेजिस्टरs are stored as part of the upage.  The upage should
    always be only one page.
    DATA: The data area is stored.  We use current->end_text to
    current->brk to pick up all of the user variables, plus any memory
-   that may have been malloced.  No attempt is made to determine if a page
-   is demand-zero or if a page is totally unused, we just cover the entire
-   range.  All of the addresses are rounded in such a way that an integral
+   that may have been दो_स्मृतिed.  No attempt is made to determine अगर a page
+   is demand-zero or अगर a page is totally unused, we just cover the entire
+   range.  All of the addresses are rounded in such a way that an पूर्णांकegral
    number of pages is written.
-   STACK: We need the stack information in order to get a meaningful
-   backtrace.  We need to write the data from (esp) to
+   STACK: We need the stack inक्रमmation in order to get a meaningful
+   backtrace.  We need to ग_लिखो the data from (esp) to
    current->start_stack, so we round each of these off in order to be able
-   to write an integer number of pages.
+   to ग_लिखो an पूर्णांकeger number of pages.
    The minimum core file size is 3 pages, or 12288 bytes.
 */
 
-struct user_fp {
-	struct fp_reg {
-		unsigned int sign1:1;
-		unsigned int unused:15;
-		unsigned int sign2:1;
-		unsigned int exponent:14;
-		unsigned int j:1;
-		unsigned int mantissa1:31;
-		unsigned int mantissa0:32;
-	} fpregs[8];
-	unsigned int fpsr:32;
-	unsigned int fpcr:32;
-	unsigned char ftype[8];
-	unsigned int init_flag;
-};
+काष्ठा user_fp अणु
+	काष्ठा fp_reg अणु
+		अचिन्हित पूर्णांक sign1:1;
+		अचिन्हित पूर्णांक unused:15;
+		अचिन्हित पूर्णांक sign2:1;
+		अचिन्हित पूर्णांक exponent:14;
+		अचिन्हित पूर्णांक j:1;
+		अचिन्हित पूर्णांक mantissa1:31;
+		अचिन्हित पूर्णांक mantissa0:32;
+	पूर्ण fpregs[8];
+	अचिन्हित पूर्णांक fpsr:32;
+	अचिन्हित पूर्णांक fpcr:32;
+	अचिन्हित अक्षर ftype[8];
+	अचिन्हित पूर्णांक init_flag;
+पूर्ण;
 
-/* When the kernel dumps core, it starts by dumping the user struct -
+/* When the kernel dumps core, it starts by dumping the user काष्ठा -
    this will be used by gdb to figure out where the data and stack segments
-   are within the file, and what virtual addresses to use. */
-struct user{
-/* We start with the registers, to mimic the way that "memory" is returned
+   are within the file, and what भव addresses to use. */
+काष्ठा userअणु
+/* We start with the रेजिस्टरs, to mimic the way that "memory" is वापसed
    from the ptrace(3,...) function.  */
-  struct pt_regs regs;		/* Where the registers are actually stored */
-/* ptrace does not yet supply these.  Someday.... */
-  int u_fpvalid;		/* True if math co-processor being used. */
-                                /* for this mess. Not yet used. */
+  काष्ठा pt_regs regs;		/* Where the रेजिस्टरs are actually stored */
+/* ptrace करोes not yet supply these.  Someday.... */
+  पूर्णांक u_fpvalid;		/* True अगर math co-processor being used. */
+                                /* क्रम this mess. Not yet used. */
 /* The rest of this junk is to help gdb figure out what goes where */
-  unsigned long int u_tsize;	/* Text segment size (pages). */
-  unsigned long int u_dsize;	/* Data segment size (pages). */
-  unsigned long int u_ssize;	/* Stack segment size (pages). */
-  unsigned long start_code;     /* Starting virtual address of text. */
-  unsigned long start_stack;	/* Starting virtual address of stack area.
+  अचिन्हित दीर्घ पूर्णांक u_tsize;	/* Text segment size (pages). */
+  अचिन्हित दीर्घ पूर्णांक u_dsize;	/* Data segment size (pages). */
+  अचिन्हित दीर्घ पूर्णांक u_ssize;	/* Stack segment size (pages). */
+  अचिन्हित दीर्घ start_code;     /* Starting भव address of text. */
+  अचिन्हित दीर्घ start_stack;	/* Starting भव address of stack area.
 				   This is actually the bottom of the stack,
 				   the top of the stack is always found in the
-				   esp register.  */
-  long int signal;     		/* Signal that caused the core dump. */
-  int reserved;			/* No longer used */
-  unsigned long u_ar0;		/* Used by gdb to help find the values for */
-				/* the registers. */
-  unsigned long magic;		/* To uniquely identify a core file */
-  char u_comm[32];		/* User command that was responsible */
-  int u_debugreg[8];		/* No longer used */
-  struct user_fp u_fp;		/* FP state */
-  struct user_fp_struct * u_fp0;/* Used by gdb to help find the values for */
-  				/* the FP registers. */
-};
-#define NBPG PAGE_SIZE
-#define UPAGES 1
-#define HOST_TEXT_START_ADDR (u.start_code)
-#define HOST_STACK_END_ADDR (u.start_stack + u.u_ssize * NBPG)
+				   esp रेजिस्टर.  */
+  दीर्घ पूर्णांक संकेत;     		/* Signal that caused the core dump. */
+  पूर्णांक reserved;			/* No दीर्घer used */
+  अचिन्हित दीर्घ u_ar0;		/* Used by gdb to help find the values क्रम */
+				/* the रेजिस्टरs. */
+  अचिन्हित दीर्घ magic;		/* To uniquely identअगरy a core file */
+  अक्षर u_comm[32];		/* User command that was responsible */
+  पूर्णांक u_debugreg[8];		/* No दीर्घer used */
+  काष्ठा user_fp u_fp;		/* FP state */
+  काष्ठा user_fp_काष्ठा * u_fp0;/* Used by gdb to help find the values क्रम */
+  				/* the FP रेजिस्टरs. */
+पूर्ण;
+#घोषणा NBPG PAGE_SIZE
+#घोषणा UPAGES 1
+#घोषणा HOST_TEXT_START_ADDR (u.start_code)
+#घोषणा HOST_STACK_END_ADDR (u.start_stack + u.u_ssize * NBPG)
 
 /*
- * User specific VFP registers. If only VFPv2 is present, registers 16 to 31
- * are ignored by the ptrace system call and the signal handler.
+ * User specअगरic VFP रेजिस्टरs. If only VFPv2 is present, रेजिस्टरs 16 to 31
+ * are ignored by the ptrace प्रणाली call and the संकेत handler.
  */
-struct user_vfp {
-	unsigned long long fpregs[32];
-	unsigned long fpscr;
-};
+काष्ठा user_vfp अणु
+	अचिन्हित दीर्घ दीर्घ fpregs[32];
+	अचिन्हित दीर्घ fpscr;
+पूर्ण;
 
 /*
- * VFP exception registers exposed to user space during signal delivery.
+ * VFP exception रेजिस्टरs exposed to user space during संकेत delivery.
  * Fields not relavant to the current VFP architecture are ignored.
  */
-struct user_vfp_exc {
-	unsigned long	fpexc;
-	unsigned long	fpinst;
-	unsigned long	fpinst2;
-};
+काष्ठा user_vfp_exc अणु
+	अचिन्हित दीर्घ	fpexc;
+	अचिन्हित दीर्घ	fpinst;
+	अचिन्हित दीर्घ	fpinst2;
+पूर्ण;
 
-#endif /* _ARM_USER_H */
+#पूर्ण_अगर /* _ARM_USER_H */

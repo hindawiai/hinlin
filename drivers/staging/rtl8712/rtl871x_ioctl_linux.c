@@ -1,227 +1,228 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /******************************************************************************
  * rtl871x_ioctl_linux.c
  *
  * Copyright(c) 2007 - 2010 Realtek Corporation. All rights reserved.
- * Linux device driver for RTL8192SU
+ * Linux device driver क्रम RTL8192SU
  *
- * Modifications for inclusion into the Linux staging tree are
+ * Modअगरications क्रम inclusion पूर्णांकo the Linux staging tree are
  * Copyright(c) 2010 Larry Finger. All rights reserved.
  *
- * Contact information:
+ * Contact inक्रमmation:
  * WLAN FAE <wlanfae@realtek.com>
  * Larry Finger <Larry.Finger@lwfinger.net>
  *
  ******************************************************************************/
 
-#define _RTL871X_IOCTL_LINUX_C_
-#define _RTL871X_MP_IOCTL_C_
+#घोषणा _RTL871X_IOCTL_LINUX_C_
+#घोषणा _RTL871X_MP_IOCTL_C_
 
-#include "osdep_service.h"
-#include "drv_types.h"
-#include "wlan_bssdef.h"
-#include "rtl871x_debug.h"
-#include "wifi.h"
-#include "rtl871x_mlme.h"
-#include "rtl871x_ioctl.h"
-#include "rtl871x_ioctl_set.h"
-#include "rtl871x_mp_ioctl.h"
-#include "mlme_osdep.h"
-#include <linux/wireless.h>
-#include <linux/module.h>
-#include <linux/kernel.h>
-#include <linux/io.h>
-#include <linux/semaphore.h>
-#include <net/iw_handler.h>
-#include <linux/if_arp.h>
-#include <linux/etherdevice.h>
+#समावेश "osdep_service.h"
+#समावेश "drv_types.h"
+#समावेश "wlan_bssdef.h"
+#समावेश "rtl871x_debug.h"
+#समावेश "wifi.h"
+#समावेश "rtl871x_mlme.h"
+#समावेश "rtl871x_ioctl.h"
+#समावेश "rtl871x_ioctl_set.h"
+#समावेश "rtl871x_mp_ioctl.h"
+#समावेश "mlme_osdep.h"
+#समावेश <linux/wireless.h>
+#समावेश <linux/module.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/semaphore.h>
+#समावेश <net/iw_handler.h>
+#समावेश <linux/अगर_arp.h>
+#समावेश <linux/etherdevice.h>
 
-#define RTL_IOCTL_WPA_SUPPLICANT	(SIOCIWFIRSTPRIV + 0x1E)
+#घोषणा RTL_IOCTL_WPA_SUPPLICANT	(SIOCIWFIRSTPRIV + 0x1E)
 
-#define SCAN_ITEM_SIZE 768
-#define MAX_CUSTOM_LEN 64
-#define RATE_COUNT 4
+#घोषणा SCAN_ITEM_SIZE 768
+#घोषणा MAX_CUSTOM_LEN 64
+#घोषणा RATE_COUNT 4
 
-static const u32 rtl8180_rates[] = {1000000, 2000000, 5500000, 11000000,
+अटल स्थिर u32 rtl8180_rates[] = अणु1000000, 2000000, 5500000, 11000000,
 		       6000000, 9000000, 12000000, 18000000,
-		       24000000, 36000000, 48000000, 54000000};
+		       24000000, 36000000, 48000000, 54000000पूर्ण;
 
-static const long ieee80211_wlan_frequencies[] = {
+अटल स्थिर दीर्घ ieee80211_wlan_frequencies[] = अणु
 	2412, 2417, 2422, 2427,
 	2432, 2437, 2442, 2447,
 	2452, 2457, 2462, 2467,
 	2472, 2484
-};
+पूर्ण;
 
-void r8712_indicate_wx_assoc_event(struct _adapter *padapter)
-{
-	union iwreq_data wrqu;
-	struct mlme_priv *pmlmepriv = &padapter->mlmepriv;
+व्योम r8712_indicate_wx_assoc_event(काष्ठा _adapter *padapter)
+अणु
+	जोड़ iwreq_data wrqu;
+	काष्ठा mlme_priv *pmlmepriv = &padapter->mlmepriv;
 
 	wrqu.ap_addr.sa_family = ARPHRD_ETHER;
-	memcpy(wrqu.ap_addr.sa_data, pmlmepriv->cur_network.network.MacAddress,
+	स_नकल(wrqu.ap_addr.sa_data, pmlmepriv->cur_network.network.MacAddress,
 		ETH_ALEN);
-	wireless_send_event(padapter->pnetdev, SIOCGIWAP, &wrqu, NULL);
-}
+	wireless_send_event(padapter->pnetdev, SIOCGIWAP, &wrqu, शून्य);
+पूर्ण
 
-void r8712_indicate_wx_disassoc_event(struct _adapter *padapter)
-{
-	union iwreq_data wrqu;
+व्योम r8712_indicate_wx_disassoc_event(काष्ठा _adapter *padapter)
+अणु
+	जोड़ iwreq_data wrqu;
 
 	wrqu.ap_addr.sa_family = ARPHRD_ETHER;
 	eth_zero_addr(wrqu.ap_addr.sa_data);
-	wireless_send_event(padapter->pnetdev, SIOCGIWAP, &wrqu, NULL);
-}
+	wireless_send_event(padapter->pnetdev, SIOCGIWAP, &wrqu, शून्य);
+पूर्ण
 
-static inline void handle_pairwise_key(struct sta_info *psta,
-				       struct ieee_param *param,
-				       struct _adapter *padapter)
-{
+अटल अंतरभूत व्योम handle_pairwise_key(काष्ठा sta_info *psta,
+				       काष्ठा ieee_param *param,
+				       काष्ठा _adapter *padapter)
+अणु
 	/* pairwise key */
-	memcpy(psta->x_UncstKey.skey, param->u.crypt.key,
+	स_नकल(psta->x_UncstKey.skey, param->u.crypt.key,
 	       (param->u.crypt. key_len > 16 ? 16 : param->u.crypt.key_len));
-	if (strcmp(param->u.crypt.alg, "TKIP") == 0) { /* set mic key */
-		memcpy(psta->tkiptxmickey. skey,
+	अगर (म_भेद(param->u.crypt.alg, "TKIP") == 0) अणु /* set mic key */
+		स_नकल(psta->tkiptxmickey. skey,
 		       &(param->u.crypt.key[16]), 8);
-		memcpy(psta->tkiprxmickey. skey,
+		स_नकल(psta->tkiprxmickey. skey,
 		       &(param->u.crypt.key[24]), 8);
 		padapter->securitypriv. busetkipkey = false;
-		mod_timer(&padapter->securitypriv.tkip_timer,
-			  jiffies + msecs_to_jiffies(50));
-	}
-	r8712_setstakey_cmd(padapter, (unsigned char *)psta, true);
-}
+		mod_समयr(&padapter->securitypriv.tkip_समयr,
+			  jअगरfies + msecs_to_jअगरfies(50));
+	पूर्ण
+	r8712_setstakey_cmd(padapter, (अचिन्हित अक्षर *)psta, true);
+पूर्ण
 
-static inline void handle_group_key(struct ieee_param *param,
-				    struct _adapter *padapter)
-{
-	union Keytype *gk = padapter->securitypriv.XGrpKey;
-	union Keytype *gtk = padapter->securitypriv.XGrptxmickey;
-	union Keytype *grk = padapter->securitypriv.XGrprxmickey;
+अटल अंतरभूत व्योम handle_group_key(काष्ठा ieee_param *param,
+				    काष्ठा _adapter *padapter)
+अणु
+	जोड़ Keytype *gk = padapter->securitypriv.XGrpKey;
+	जोड़ Keytype *gtk = padapter->securitypriv.XGrptxmickey;
+	जोड़ Keytype *grk = padapter->securitypriv.XGrprxmickey;
 
-	if (param->u.crypt.idx > 0 &&
-	    param->u.crypt.idx < 3) {
+	अगर (param->u.crypt.idx > 0 &&
+	    param->u.crypt.idx < 3) अणु
 		/* group key idx is 1 or 2 */
-		memcpy(gk[param->u.crypt.idx - 1].skey,
+		स_नकल(gk[param->u.crypt.idx - 1].skey,
 		       param->u.crypt.key,
 		       (param->u.crypt.key_len > 16 ? 16 :
 			param->u.crypt.key_len));
-		memcpy(gtk[param->u.crypt.idx - 1].skey,
+		स_नकल(gtk[param->u.crypt.idx - 1].skey,
 		       &param->u.crypt.key[16], 8);
-		memcpy(grk[param->u.crypt.idx - 1].skey,
+		स_नकल(grk[param->u.crypt.idx - 1].skey,
 		       &param->u.crypt.key[24], 8);
 		padapter->securitypriv.binstallGrpkey = true;
 		r8712_set_key(padapter, &padapter->securitypriv,
 			param->u.crypt.idx);
-		if (padapter->registrypriv.power_mgnt > PS_MODE_ACTIVE) {
-			if (padapter->registrypriv.power_mgnt !=
+		अगर (padapter->registrypriv.घातer_mgnt > PS_MODE_ACTIVE) अणु
+			अगर (padapter->registrypriv.घातer_mgnt !=
 			    padapter->pwrctrlpriv.pwr_mode)
-				mod_timer(&padapter->mlmepriv.dhcp_timer,
-					  jiffies + msecs_to_jiffies(60000));
-		}
-	}
-}
+				mod_समयr(&padapter->mlmepriv.dhcp_समयr,
+					  jअगरfies + msecs_to_jअगरfies(60000));
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static noinline_for_stack char *translate_scan_wpa(struct iw_request_info *info,
-						   struct wlan_network *pnetwork,
-						   struct iw_event *iwe,
-						   char *start, char *stop)
-{
+अटल noअंतरभूत_क्रम_stack अक्षर *translate_scan_wpa(काष्ठा iw_request_info *info,
+						   काष्ठा wlan_network *pnetwork,
+						   काष्ठा iw_event *iwe,
+						   अक्षर *start, अक्षर *stop)
+अणु
 	/* parsing WPA/WPA2 IE */
 	u8 buf[MAX_WPA_IE_LEN];
 	u8 wpa_ie[255], rsn_ie[255];
 	u16 wpa_len = 0, rsn_len = 0;
-	int n, i;
+	पूर्णांक n, i;
 
 	r8712_get_sec_ie(pnetwork->network.IEs,
 			 pnetwork->network.IELength, rsn_ie, &rsn_len,
 			 wpa_ie, &wpa_len);
-	if (wpa_len > 0) {
-		memset(buf, 0, MAX_WPA_IE_LEN);
-		n = sprintf(buf, "wpa_ie=");
-		for (i = 0; i < wpa_len; i++) {
-			n += scnprintf(buf + n, MAX_WPA_IE_LEN - n,
+	अगर (wpa_len > 0) अणु
+		स_रखो(buf, 0, MAX_WPA_IE_LEN);
+		n = प्र_लिखो(buf, "wpa_ie=");
+		क्रम (i = 0; i < wpa_len; i++) अणु
+			n += scnम_लिखो(buf + n, MAX_WPA_IE_LEN - n,
 						"%02x", wpa_ie[i]);
-			if (n == MAX_WPA_IE_LEN - 1)
-				break;
-		}
-		memset(iwe, 0, sizeof(*iwe));
+			अगर (n == MAX_WPA_IE_LEN - 1)
+				अवरोध;
+		पूर्ण
+		स_रखो(iwe, 0, माप(*iwe));
 		iwe->cmd = IWEVCUSTOM;
-		iwe->u.data.length = (u16)strlen(buf);
-		start = iwe_stream_add_point(info, start, stop,
+		iwe->u.data.length = (u16)म_माप(buf);
+		start = iwe_stream_add_poपूर्णांक(info, start, stop,
 			iwe, buf);
-		memset(iwe, 0, sizeof(*iwe));
+		स_रखो(iwe, 0, माप(*iwe));
 		iwe->cmd = IWEVGENIE;
 		iwe->u.data.length = (u16)wpa_len;
-		start = iwe_stream_add_point(info, start, stop,
+		start = iwe_stream_add_poपूर्णांक(info, start, stop,
 			iwe, wpa_ie);
-	}
-	if (rsn_len > 0) {
-		memset(buf, 0, MAX_WPA_IE_LEN);
-		n = sprintf(buf, "rsn_ie=");
-		for (i = 0; i < rsn_len; i++) {
-			n += scnprintf(buf + n, MAX_WPA_IE_LEN - n,
+	पूर्ण
+	अगर (rsn_len > 0) अणु
+		स_रखो(buf, 0, MAX_WPA_IE_LEN);
+		n = प्र_लिखो(buf, "rsn_ie=");
+		क्रम (i = 0; i < rsn_len; i++) अणु
+			n += scnम_लिखो(buf + n, MAX_WPA_IE_LEN - n,
 						"%02x", rsn_ie[i]);
-			if (n == MAX_WPA_IE_LEN - 1)
-				break;
-		}
-		memset(iwe, 0, sizeof(*iwe));
+			अगर (n == MAX_WPA_IE_LEN - 1)
+				अवरोध;
+		पूर्ण
+		स_रखो(iwe, 0, माप(*iwe));
 		iwe->cmd = IWEVCUSTOM;
-		iwe->u.data.length = strlen(buf);
-		start = iwe_stream_add_point(info, start, stop,
+		iwe->u.data.length = म_माप(buf);
+		start = iwe_stream_add_poपूर्णांक(info, start, stop,
 			iwe, buf);
-		memset(iwe, 0, sizeof(*iwe));
+		स_रखो(iwe, 0, माप(*iwe));
 		iwe->cmd = IWEVGENIE;
 		iwe->u.data.length = rsn_len;
-		start = iwe_stream_add_point(info, start, stop, iwe,
+		start = iwe_stream_add_poपूर्णांक(info, start, stop, iwe,
 			rsn_ie);
-	}
+	पूर्ण
 
-	return start;
-}
+	वापस start;
+पूर्ण
 
-static noinline_for_stack char *translate_scan_wps(struct iw_request_info *info,
-						   struct wlan_network *pnetwork,
-						   struct iw_event *iwe,
-						   char *start, char *stop)
-{
+अटल noअंतरभूत_क्रम_stack अक्षर *translate_scan_wps(काष्ठा iw_request_info *info,
+						   काष्ठा wlan_network *pnetwork,
+						   काष्ठा iw_event *iwe,
+						   अक्षर *start, अक्षर *stop)
+अणु
 	/* parsing WPS IE */
 	u8 wps_ie[512];
-	uint wps_ielen;
+	uपूर्णांक wps_ielen;
 
-	if (r8712_get_wps_ie(pnetwork->network.IEs,
+	अगर (r8712_get_wps_ie(pnetwork->network.IEs,
 	    pnetwork->network.IELength,
-	    wps_ie, &wps_ielen)) {
-		if (wps_ielen > 2) {
+	    wps_ie, &wps_ielen)) अणु
+		अगर (wps_ielen > 2) अणु
 			iwe->cmd = IWEVGENIE;
 			iwe->u.data.length = (u16)wps_ielen;
-			start = iwe_stream_add_point(info, start, stop,
+			start = iwe_stream_add_poपूर्णांक(info, start, stop,
 				iwe, wps_ie);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return start;
-}
+	वापस start;
+पूर्ण
 
-static char *translate_scan(struct _adapter *padapter,
-			    struct iw_request_info *info,
-			    struct wlan_network *pnetwork,
-			    char *start, char *stop)
-{
-	struct iw_event iwe;
-	char *current_val;
+अटल अक्षर *translate_scan(काष्ठा _adapter *padapter,
+			    काष्ठा iw_request_info *info,
+			    काष्ठा wlan_network *pnetwork,
+			    अक्षर *start, अक्षर *stop)
+अणु
+	काष्ठा iw_event iwe;
+	अक्षर *current_val;
 	s8 *p;
 	u32 i = 0, ht_ielen = 0;
 	u16	cap, ht_cap = false;
 	u8 rssi;
 
-	if ((pnetwork->network.Configuration.DSConfig < 1) ||
-	    (pnetwork->network.Configuration.DSConfig > 14)) {
-		if (pnetwork->network.Configuration.DSConfig < 1)
+	अगर ((pnetwork->network.Configuration.DSConfig < 1) ||
+	    (pnetwork->network.Configuration.DSConfig > 14)) अणु
+		अगर (pnetwork->network.Configuration.DSConfig < 1)
 			pnetwork->network.Configuration.DSConfig = 1;
-		else
+		अन्यथा
 			pnetwork->network.Configuration.DSConfig = 14;
-	}
+	पूर्ण
 	/* AP MAC address */
 	iwe.cmd = SIOCGIWAP;
 	iwe.u.ap_addr.sa_family = ARPHRD_ETHER;
@@ -231,72 +232,72 @@ static char *translate_scan(struct _adapter *padapter,
 	iwe.cmd = SIOCGIWESSID;
 	iwe.u.data.flags = 1;
 	iwe.u.data.length = min_t(u32, pnetwork->network.Ssid.SsidLength, 32);
-	start = iwe_stream_add_point(info, start, stop, &iwe,
+	start = iwe_stream_add_poपूर्णांक(info, start, stop, &iwe,
 				     pnetwork->network.Ssid.Ssid);
 	/* parsing HT_CAP_IE */
 	p = r8712_get_ie(&pnetwork->network.IEs[12], WLAN_EID_HT_CAPABILITY,
 			 &ht_ielen, pnetwork->network.IELength - 12);
-	if (p && ht_ielen > 0)
+	अगर (p && ht_ielen > 0)
 		ht_cap = true;
 	/* Add the protocol name */
 	iwe.cmd = SIOCGIWNAME;
-	if (r8712_is_cckratesonly_included(pnetwork->network.rates)) {
-		if (ht_cap)
-			snprintf(iwe.u.name, IFNAMSIZ, "IEEE 802.11bn");
-		else
-			snprintf(iwe.u.name, IFNAMSIZ, "IEEE 802.11b");
-	} else if (r8712_is_cckrates_included(pnetwork->network.rates)) {
-		if (ht_cap)
-			snprintf(iwe.u.name, IFNAMSIZ, "IEEE 802.11bgn");
-		else
-			snprintf(iwe.u.name, IFNAMSIZ, "IEEE 802.11bg");
-	} else {
-		if (ht_cap)
-			snprintf(iwe.u.name, IFNAMSIZ, "IEEE 802.11gn");
-		else
-			snprintf(iwe.u.name, IFNAMSIZ, "IEEE 802.11g");
-	}
+	अगर (r8712_is_cckratesonly_included(pnetwork->network.rates)) अणु
+		अगर (ht_cap)
+			snम_लिखो(iwe.u.name, IFNAMSIZ, "IEEE 802.11bn");
+		अन्यथा
+			snम_लिखो(iwe.u.name, IFNAMSIZ, "IEEE 802.11b");
+	पूर्ण अन्यथा अगर (r8712_is_cckrates_included(pnetwork->network.rates)) अणु
+		अगर (ht_cap)
+			snम_लिखो(iwe.u.name, IFNAMSIZ, "IEEE 802.11bgn");
+		अन्यथा
+			snम_लिखो(iwe.u.name, IFNAMSIZ, "IEEE 802.11bg");
+	पूर्ण अन्यथा अणु
+		अगर (ht_cap)
+			snम_लिखो(iwe.u.name, IFNAMSIZ, "IEEE 802.11gn");
+		अन्यथा
+			snम_लिखो(iwe.u.name, IFNAMSIZ, "IEEE 802.11g");
+	पूर्ण
 	start = iwe_stream_add_event(info, start, stop, &iwe, IW_EV_CHAR_LEN);
 	/* Add mode */
 	iwe.cmd = SIOCGIWMODE;
-	memcpy((u8 *)&cap, r8712_get_capability_from_ie(pnetwork->network.IEs),
+	स_नकल((u8 *)&cap, r8712_get_capability_from_ie(pnetwork->network.IEs),
 		2);
 	le16_to_cpus(&cap);
-	if (cap & (WLAN_CAPABILITY_IBSS | WLAN_CAPABILITY_ESS)) {
-		if (cap & WLAN_CAPABILITY_ESS)
+	अगर (cap & (WLAN_CAPABILITY_IBSS | WLAN_CAPABILITY_ESS)) अणु
+		अगर (cap & WLAN_CAPABILITY_ESS)
 			iwe.u.mode = (u32)IW_MODE_MASTER;
-		else
+		अन्यथा
 			iwe.u.mode = (u32)IW_MODE_ADHOC;
 		start = iwe_stream_add_event(info, start, stop, &iwe,
 			IW_EV_UINT_LEN);
-	}
+	पूर्ण
 	/* Add frequency/channel */
 	iwe.cmd = SIOCGIWFREQ;
-	{
+	अणु
 		/*  check legal index */
 		u8 dsconfig = pnetwork->network.Configuration.DSConfig;
 
-		if (dsconfig >= 1 && dsconfig <= sizeof(
-		    ieee80211_wlan_frequencies) / sizeof(long))
+		अगर (dsconfig >= 1 && dsconfig <= माप(
+		    ieee80211_wlan_frequencies) / माप(दीर्घ))
 			iwe.u.freq.m =
 				(s32)(ieee80211_wlan_frequencies
 				      [dsconfig - 1] * 100000);
-		else
+		अन्यथा
 			iwe.u.freq.m = 0;
-	}
+	पूर्ण
 	iwe.u.freq.e = (s16)1;
 	iwe.u.freq.i = (u8)pnetwork->network.Configuration.DSConfig;
 	start = iwe_stream_add_event(info, start, stop, &iwe,
 		IW_EV_FREQ_LEN);
 	/* Add encryption capability */
 	iwe.cmd = SIOCGIWENCODE;
-	if (cap & WLAN_CAPABILITY_PRIVACY)
+	अगर (cap & WLAN_CAPABILITY_PRIVACY)
 		iwe.u.data.flags = (u16)(IW_ENCODE_ENABLED |
 				    IW_ENCODE_NOKEY);
-	else
+	अन्यथा
 		iwe.u.data.flags = (u16)(IW_ENCODE_DISABLED);
 	iwe.u.data.length = (u16)0;
-	start = iwe_stream_add_point(info, start, stop, &iwe,
+	start = iwe_stream_add_poपूर्णांक(info, start, stop, &iwe,
 		pnetwork->network.Ssid.Ssid);
 	/*Add basic and extended rates */
 	current_val = start + iwe_stream_lcp_len(info);
@@ -305,15 +306,15 @@ static char *translate_scan(struct _adapter *padapter,
 	iwe.u.bitrate.disabled = 0;
 	iwe.u.bitrate.value = 0;
 	i = 0;
-	while (pnetwork->network.rates[i] != 0) {
+	जबतक (pnetwork->network.rates[i] != 0) अणु
 		/* Bit rate given in 500 kb/s units */
 		iwe.u.bitrate.value = (pnetwork->network.rates[i++] &
 				      0x7F) * 500000;
 		current_val = iwe_stream_add_value(info, start, current_val,
 			      stop, &iwe, IW_EV_PARAM_LEN);
-	}
-	/* Check if we added any event */
-	if ((current_val - start) > iwe_stream_lcp_len(info))
+	पूर्ण
+	/* Check अगर we added any event */
+	अगर ((current_val - start) > iwe_stream_lcp_len(info))
 		start = current_val;
 
 	start = translate_scan_wpa(info, pnetwork, &iwe, start, stop);
@@ -322,70 +323,70 @@ static char *translate_scan(struct _adapter *padapter,
 
 	/* Add quality statistics */
 	iwe.cmd = IWEVQUAL;
-	rssi = r8712_signal_scale_mapping(pnetwork->network.Rssi);
-	/* we only update signal_level (signal strength) that is rssi. */
+	rssi = r8712_संकेत_scale_mapping(pnetwork->network.Rssi);
+	/* we only update संकेत_level (संकेत strength) that is rssi. */
 	iwe.u.qual.updated = (u8)(IW_QUAL_QUAL_INVALID | IW_QUAL_LEVEL_UPDATED |
 				  IW_QUAL_NOISE_INVALID);
-	iwe.u.qual.level = rssi;  /* signal strength */
-	iwe.u.qual.qual = 0; /* signal quality */
+	iwe.u.qual.level = rssi;  /* संकेत strength */
+	iwe.u.qual.qual = 0; /* संकेत quality */
 	iwe.u.qual.noise = 0; /* noise level */
 	start = iwe_stream_add_event(info, start, stop, &iwe, IW_EV_QUAL_LEN);
 	/* how to translate rssi to ?% */
-	return start;
-}
+	वापस start;
+पूर्ण
 
-static int wpa_set_auth_algs(struct net_device *dev, u32 value)
-{
-	struct _adapter *padapter = netdev_priv(dev);
-	int ret = 0;
+अटल पूर्णांक wpa_set_auth_algs(काष्ठा net_device *dev, u32 value)
+अणु
+	काष्ठा _adapter *padapter = netdev_priv(dev);
+	पूर्णांक ret = 0;
 
-	if ((value & AUTH_ALG_SHARED_KEY) && (value & AUTH_ALG_OPEN_SYSTEM)) {
+	अगर ((value & AUTH_ALG_SHARED_KEY) && (value & AUTH_ALG_OPEN_SYSTEM)) अणु
 		padapter->securitypriv.ndisencryptstatus =
 						 Ndis802_11Encryption1Enabled;
 		padapter->securitypriv.ndisauthtype =
 						 Ndis802_11AuthModeAutoSwitch;
 		padapter->securitypriv.AuthAlgrthm = 3;
-	} else if (value & AUTH_ALG_SHARED_KEY) {
+	पूर्ण अन्यथा अगर (value & AUTH_ALG_SHARED_KEY) अणु
 		padapter->securitypriv.ndisencryptstatus =
 						 Ndis802_11Encryption1Enabled;
 		padapter->securitypriv.ndisauthtype = Ndis802_11AuthModeShared;
 		padapter->securitypriv.AuthAlgrthm = 1;
-	} else if (value & AUTH_ALG_OPEN_SYSTEM) {
-		if (padapter->securitypriv.ndisauthtype <
-						 Ndis802_11AuthModeWPAPSK) {
+	पूर्ण अन्यथा अगर (value & AUTH_ALG_OPEN_SYSTEM) अणु
+		अगर (padapter->securitypriv.ndisauthtype <
+						 Ndis802_11AuthModeWPAPSK) अणु
 			padapter->securitypriv.ndisauthtype =
 						 Ndis802_11AuthModeOpen;
 			padapter->securitypriv.AuthAlgrthm = 0;
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		ret = -EINVAL;
-	}
-	return ret;
-}
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static int wpa_set_encryption(struct net_device *dev, struct ieee_param *param,
+अटल पूर्णांक wpa_set_encryption(काष्ठा net_device *dev, काष्ठा ieee_param *param,
 			      u32 param_len)
-{
-	int ret = 0;
+अणु
+	पूर्णांक ret = 0;
 	u32 wep_key_idx, wep_key_len = 0;
-	struct NDIS_802_11_WEP	 *pwep = NULL;
-	struct _adapter *padapter = netdev_priv(dev);
-	struct mlme_priv *pmlmepriv = &padapter->mlmepriv;
-	struct security_priv *psecuritypriv = &padapter->securitypriv;
+	काष्ठा NDIS_802_11_WEP	 *pwep = शून्य;
+	काष्ठा _adapter *padapter = netdev_priv(dev);
+	काष्ठा mlme_priv *pmlmepriv = &padapter->mlmepriv;
+	काष्ठा security_priv *psecuritypriv = &padapter->securitypriv;
 
 	param->u.crypt.err = 0;
 	param->u.crypt.alg[IEEE_CRYPT_ALG_NAME_LEN - 1] = '\0';
-	if (param_len != (u32)((u8 *) param->u.crypt.key - (u8 *)param) +
+	अगर (param_len != (u32)((u8 *) param->u.crypt.key - (u8 *)param) +
 			 param->u.crypt.key_len)
-		return -EINVAL;
-	if (!is_broadcast_ether_addr(param->sta_addr))
-		return -EINVAL;
+		वापस -EINVAL;
+	अगर (!is_broadcast_ether_addr(param->sta_addr))
+		वापस -EINVAL;
 
-	if (param->u.crypt.idx >= WEP_KEYS) {
-		/* for large key indices, set the default (0) */
+	अगर (param->u.crypt.idx >= WEP_KEYS) अणु
+		/* क्रम large key indices, set the शेष (0) */
 		param->u.crypt.idx = 0;
-	}
-	if (strcmp(param->u.crypt.alg, "WEP") == 0) {
+	पूर्ण
+	अगर (म_भेद(param->u.crypt.alg, "WEP") == 0) अणु
 		netdev_info(dev, "r8712u: %s: crypt.alg = WEP\n", __func__);
 		padapter->securitypriv.ndisencryptstatus =
 			     Ndis802_11Encryption1Enabled;
@@ -393,496 +394,496 @@ static int wpa_set_encryption(struct net_device *dev, struct ieee_param *param,
 		padapter->securitypriv.XGrpPrivacy = _WEP40_;
 		wep_key_idx = param->u.crypt.idx;
 		wep_key_len = param->u.crypt.key_len;
-		if (wep_key_idx >= WEP_KEYS)
+		अगर (wep_key_idx >= WEP_KEYS)
 			wep_key_idx = 0;
-		if (wep_key_len <= 0)
-			return -EINVAL;
+		अगर (wep_key_len <= 0)
+			वापस -EINVAL;
 
 		wep_key_len = wep_key_len <= 5 ? 5 : 13;
-		pwep = kzalloc(sizeof(*pwep), GFP_ATOMIC);
-		if (!pwep)
-			return -ENOMEM;
+		pwep = kzalloc(माप(*pwep), GFP_ATOMIC);
+		अगर (!pwep)
+			वापस -ENOMEM;
 		pwep->KeyLength = wep_key_len;
 		pwep->Length = wep_key_len +
-			offsetof(struct NDIS_802_11_WEP, KeyMaterial);
-		if (wep_key_len == 13) {
+			दुरत्व(काष्ठा NDIS_802_11_WEP, KeyMaterial);
+		अगर (wep_key_len == 13) अणु
 			padapter->securitypriv.PrivacyAlgrthm = _WEP104_;
 			padapter->securitypriv.XGrpPrivacy = _WEP104_;
-		}
+		पूर्ण
 		pwep->KeyIndex = wep_key_idx;
 		pwep->KeyIndex |= 0x80000000;
-		memcpy(pwep->KeyMaterial, param->u.crypt.key, pwep->KeyLength);
-		if (param->u.crypt.set_tx) {
-			if (r8712_set_802_11_add_wep(padapter, pwep))
+		स_नकल(pwep->KeyMaterial, param->u.crypt.key, pwep->KeyLength);
+		अगर (param->u.crypt.set_tx) अणु
+			अगर (r8712_set_802_11_add_wep(padapter, pwep))
 				ret = -EOPNOTSUPP;
-		} else {
-			/* don't update "psecuritypriv->PrivacyAlgrthm" and
+		पूर्ण अन्यथा अणु
+			/* करोn't update "psecuritypriv->PrivacyAlgrthm" and
 			 * "psecuritypriv->PrivacyKeyIndex=keyid", but can
 			 * r8712_set_key to fw/cam
 			 */
-			if (wep_key_idx >= WEP_KEYS) {
+			अगर (wep_key_idx >= WEP_KEYS) अणु
 				ret = -EOPNOTSUPP;
-				goto exit;
-			}
-			memcpy(&psecuritypriv->DefKey[wep_key_idx].skey[0],
+				जाओ निकास;
+			पूर्ण
+			स_नकल(&psecuritypriv->DefKey[wep_key_idx].skey[0],
 			       pwep->KeyMaterial,
 			       pwep->KeyLength);
 			psecuritypriv->DefKeylen[wep_key_idx] =
 				pwep->KeyLength;
 			r8712_set_key(padapter, psecuritypriv, wep_key_idx);
-		}
-		goto exit;
-	}
-	if (padapter->securitypriv.AuthAlgrthm == 2) { /* 802_1x */
-		struct sta_info *psta, *pbcmc_sta;
-		struct sta_priv *pstapriv = &padapter->stapriv;
-		struct security_priv *spriv = &padapter->securitypriv;
+		पूर्ण
+		जाओ निकास;
+	पूर्ण
+	अगर (padapter->securitypriv.AuthAlgrthm == 2) अणु /* 802_1x */
+		काष्ठा sta_info *psta, *pbcmc_sta;
+		काष्ठा sta_priv *pstapriv = &padapter->stapriv;
+		काष्ठा security_priv *spriv = &padapter->securitypriv;
 
-		if (check_fwstate(pmlmepriv, WIFI_STATION_STATE |
-		    WIFI_MP_STATE)) { /* sta mode */
+		अगर (check_fwstate(pmlmepriv, WIFI_STATION_STATE |
+		    WIFI_MP_STATE)) अणु /* sta mode */
 			psta = r8712_get_stainfo(pstapriv,
 						 get_bssid(pmlmepriv));
-			if (psta) {
+			अगर (psta) अणु
 				psta->ieee8021x_blocked = false;
-				if (spriv->ndisencryptstatus ==
+				अगर (spriv->ndisencryptstatus ==
 				    Ndis802_11Encryption2Enabled ||
 				    spriv->ndisencryptstatus ==
 				    Ndis802_11Encryption3Enabled)
 					psta->XPrivacy = spriv->PrivacyAlgrthm;
-				if (param->u.crypt.set_tx == 1)
+				अगर (param->u.crypt.set_tx == 1)
 					handle_pairwise_key(psta, param,
 							    padapter);
-				else /* group key */
+				अन्यथा /* group key */
 					handle_group_key(param, padapter);
-			}
+			पूर्ण
 			pbcmc_sta = r8712_get_bcmc_stainfo(padapter);
-			if (pbcmc_sta) {
+			अगर (pbcmc_sta) अणु
 				pbcmc_sta->ieee8021x_blocked = false;
-				if (spriv->ndisencryptstatus ==
+				अगर (spriv->ndisencryptstatus ==
 				    Ndis802_11Encryption2Enabled ||
 				    spriv->ndisencryptstatus ==
 				    Ndis802_11Encryption3Enabled)
 					pbcmc_sta->XPrivacy =
 						spriv->PrivacyAlgrthm;
-			}
-		}
-	}
-exit:
-	kfree(pwep);
-	return ret;
-}
+			पूर्ण
+		पूर्ण
+	पूर्ण
+निकास:
+	kमुक्त(pwep);
+	वापस ret;
+पूर्ण
 
-static int r871x_set_wpa_ie(struct _adapter *padapter, char *pie,
-			    unsigned short ielen)
-{
-	u8 *buf = NULL;
-	int group_cipher = 0, pairwise_cipher = 0;
-	int ret = 0;
+अटल पूर्णांक r871x_set_wpa_ie(काष्ठा _adapter *padapter, अक्षर *pie,
+			    अचिन्हित लघु ielen)
+अणु
+	u8 *buf = शून्य;
+	पूर्णांक group_cipher = 0, pairwise_cipher = 0;
+	पूर्णांक ret = 0;
 
-	if (ielen > MAX_WPA_IE_LEN || !pie)
-		return -EINVAL;
-	if (ielen) {
+	अगर (ielen > MAX_WPA_IE_LEN || !pie)
+		वापस -EINVAL;
+	अगर (ielen) अणु
 		buf = kmemdup(pie, ielen, GFP_ATOMIC);
-		if (!buf)
-			return -ENOMEM;
-		if (ielen < RSN_HEADER_LEN) {
+		अगर (!buf)
+			वापस -ENOMEM;
+		अगर (ielen < RSN_HEADER_LEN) अणु
 			ret  = -EINVAL;
-			goto exit;
-		}
-		if (r8712_parse_wpa_ie(buf, ielen, &group_cipher,
-		    &pairwise_cipher) == 0) {
+			जाओ निकास;
+		पूर्ण
+		अगर (r8712_parse_wpa_ie(buf, ielen, &group_cipher,
+		    &pairwise_cipher) == 0) अणु
 			padapter->securitypriv.AuthAlgrthm = 2;
 			padapter->securitypriv.ndisauthtype =
 				  Ndis802_11AuthModeWPAPSK;
-		}
-		if (r8712_parse_wpa2_ie(buf, ielen, &group_cipher,
-		    &pairwise_cipher) == 0) {
+		पूर्ण
+		अगर (r8712_parse_wpa2_ie(buf, ielen, &group_cipher,
+		    &pairwise_cipher) == 0) अणु
 			padapter->securitypriv.AuthAlgrthm = 2;
 			padapter->securitypriv.ndisauthtype =
 				  Ndis802_11AuthModeWPA2PSK;
-		}
-		switch (group_cipher) {
-		case WPA_CIPHER_NONE:
+		पूर्ण
+		चयन (group_cipher) अणु
+		हाल WPA_CIPHER_NONE:
 			padapter->securitypriv.XGrpPrivacy =
 				 _NO_PRIVACY_;
 			padapter->securitypriv.ndisencryptstatus =
 				 Ndis802_11EncryptionDisabled;
-			break;
-		case WPA_CIPHER_WEP40:
+			अवरोध;
+		हाल WPA_CIPHER_WEP40:
 			padapter->securitypriv.XGrpPrivacy = _WEP40_;
 			padapter->securitypriv.ndisencryptstatus =
 				 Ndis802_11Encryption1Enabled;
-			break;
-		case WPA_CIPHER_TKIP:
+			अवरोध;
+		हाल WPA_CIPHER_TKIP:
 			padapter->securitypriv.XGrpPrivacy = _TKIP_;
 			padapter->securitypriv.ndisencryptstatus =
 				 Ndis802_11Encryption2Enabled;
-			break;
-		case WPA_CIPHER_CCMP:
+			अवरोध;
+		हाल WPA_CIPHER_CCMP:
 			padapter->securitypriv.XGrpPrivacy = _AES_;
 			padapter->securitypriv.ndisencryptstatus =
 				 Ndis802_11Encryption3Enabled;
-			break;
-		case WPA_CIPHER_WEP104:
+			अवरोध;
+		हाल WPA_CIPHER_WEP104:
 			padapter->securitypriv.XGrpPrivacy = _WEP104_;
 			padapter->securitypriv.ndisencryptstatus =
 				 Ndis802_11Encryption1Enabled;
-			break;
-		}
-		switch (pairwise_cipher) {
-		case WPA_CIPHER_NONE:
+			अवरोध;
+		पूर्ण
+		चयन (pairwise_cipher) अणु
+		हाल WPA_CIPHER_NONE:
 			padapter->securitypriv.PrivacyAlgrthm =
 				 _NO_PRIVACY_;
 			padapter->securitypriv.ndisencryptstatus =
 				 Ndis802_11EncryptionDisabled;
-			break;
-		case WPA_CIPHER_WEP40:
+			अवरोध;
+		हाल WPA_CIPHER_WEP40:
 			padapter->securitypriv.PrivacyAlgrthm = _WEP40_;
 			padapter->securitypriv.ndisencryptstatus =
 				 Ndis802_11Encryption1Enabled;
-			break;
-		case WPA_CIPHER_TKIP:
+			अवरोध;
+		हाल WPA_CIPHER_TKIP:
 			padapter->securitypriv.PrivacyAlgrthm = _TKIP_;
 			padapter->securitypriv.ndisencryptstatus =
 				 Ndis802_11Encryption2Enabled;
-			break;
-		case WPA_CIPHER_CCMP:
+			अवरोध;
+		हाल WPA_CIPHER_CCMP:
 			padapter->securitypriv.PrivacyAlgrthm = _AES_;
 			padapter->securitypriv.ndisencryptstatus =
 				 Ndis802_11Encryption3Enabled;
-			break;
-		case WPA_CIPHER_WEP104:
+			अवरोध;
+		हाल WPA_CIPHER_WEP104:
 			padapter->securitypriv.PrivacyAlgrthm = _WEP104_;
 			padapter->securitypriv.ndisencryptstatus =
 				 Ndis802_11Encryption1Enabled;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		padapter->securitypriv.wps_phase = false;
-		{/* set wps_ie */
+		अणु/* set wps_ie */
 			u16 cnt = 0;
-			u8 eid, wps_oui[4] = {0x0, 0x50, 0xf2, 0x04};
+			u8 eid, wps_oui[4] = अणु0x0, 0x50, 0xf2, 0x04पूर्ण;
 
-			while (cnt < ielen) {
+			जबतक (cnt < ielen) अणु
 				eid = buf[cnt];
 
-				if ((eid == WLAN_EID_VENDOR_SPECIFIC) &&
-				    (!memcmp(&buf[cnt + 2], wps_oui, 4))) {
+				अगर ((eid == WLAN_EID_VENDOR_SPECIFIC) &&
+				    (!स_भेद(&buf[cnt + 2], wps_oui, 4))) अणु
 					netdev_info(padapter->pnetdev, "r8712u: SET WPS_IE\n");
 					padapter->securitypriv.wps_ie_len =
 					    ((buf[cnt + 1] + 2) <
 					    (MAX_WPA_IE_LEN << 2)) ?
 					    (buf[cnt + 1] + 2) :
 					    (MAX_WPA_IE_LEN << 2);
-					memcpy(padapter->securitypriv.wps_ie,
+					स_नकल(padapter->securitypriv.wps_ie,
 					    &buf[cnt],
 					    padapter->securitypriv.wps_ie_len);
 					padapter->securitypriv.wps_phase =
 								 true;
 					netdev_info(padapter->pnetdev, "r8712u: SET WPS_IE, wps_phase==true\n");
 					cnt += buf[cnt + 1] + 2;
-					break;
-				}
+					अवरोध;
+				पूर्ण
 
 				cnt += buf[cnt + 1] + 2;
-			}
-		}
-	}
-exit:
-	kfree(buf);
-	return ret;
-}
+			पूर्ण
+		पूर्ण
+	पूर्ण
+निकास:
+	kमुक्त(buf);
+	वापस ret;
+पूर्ण
 
-static int r8711_wx_get_name(struct net_device *dev,
-			     struct iw_request_info *info,
-			     union iwreq_data *wrqu, char *extra)
-{
-	struct _adapter *padapter = netdev_priv(dev);
+अटल पूर्णांक r8711_wx_get_name(काष्ठा net_device *dev,
+			     काष्ठा iw_request_info *info,
+			     जोड़ iwreq_data *wrqu, अक्षर *extra)
+अणु
+	काष्ठा _adapter *padapter = netdev_priv(dev);
 	u32 ht_ielen = 0;
-	char *p;
+	अक्षर *p;
 	u8 ht_cap = false;
-	struct	mlme_priv	*pmlmepriv = &(padapter->mlmepriv);
-	struct wlan_bssid_ex *pcur_bss = &pmlmepriv->cur_network.network;
+	काष्ठा	mlme_priv	*pmlmepriv = &(padapter->mlmepriv);
+	काष्ठा wlan_bssid_ex *pcur_bss = &pmlmepriv->cur_network.network;
 	u8 *prates;
 
-	if (check_fwstate(pmlmepriv, _FW_LINKED | WIFI_ADHOC_MASTER_STATE) ==
-	    true) {
+	अगर (check_fwstate(pmlmepriv, _FW_LINKED | WIFI_ADHOC_MASTER_STATE) ==
+	    true) अणु
 		/* parsing HT_CAP_IE */
 		p = r8712_get_ie(&pcur_bss->IEs[12], WLAN_EID_HT_CAPABILITY,
 				 &ht_ielen, pcur_bss->IELength - 12);
-		if (p && ht_ielen > 0)
+		अगर (p && ht_ielen > 0)
 			ht_cap = true;
 		prates = pcur_bss->rates;
-		if (r8712_is_cckratesonly_included(prates)) {
-			if (ht_cap)
-				snprintf(wrqu->name, IFNAMSIZ,
+		अगर (r8712_is_cckratesonly_included(prates)) अणु
+			अगर (ht_cap)
+				snम_लिखो(wrqu->name, IFNAMSIZ,
 					 "IEEE 802.11bn");
-			else
-				snprintf(wrqu->name, IFNAMSIZ,
+			अन्यथा
+				snम_लिखो(wrqu->name, IFNAMSIZ,
 					 "IEEE 802.11b");
-		} else if (r8712_is_cckrates_included(prates)) {
-			if (ht_cap)
-				snprintf(wrqu->name, IFNAMSIZ,
+		पूर्ण अन्यथा अगर (r8712_is_cckrates_included(prates)) अणु
+			अगर (ht_cap)
+				snम_लिखो(wrqu->name, IFNAMSIZ,
 					 "IEEE 802.11bgn");
-			else
-				snprintf(wrqu->name, IFNAMSIZ,
+			अन्यथा
+				snम_लिखो(wrqu->name, IFNAMSIZ,
 					 "IEEE 802.11bg");
-		} else {
-			if (ht_cap)
-				snprintf(wrqu->name, IFNAMSIZ,
+		पूर्ण अन्यथा अणु
+			अगर (ht_cap)
+				snम_लिखो(wrqu->name, IFNAMSIZ,
 					 "IEEE 802.11gn");
-			else
-				snprintf(wrqu->name, IFNAMSIZ,
+			अन्यथा
+				snम_लिखो(wrqu->name, IFNAMSIZ,
 					 "IEEE 802.11g");
-		}
-	} else {
-		snprintf(wrqu->name, IFNAMSIZ, "unassociated");
-	}
-	return 0;
-}
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		snम_लिखो(wrqu->name, IFNAMSIZ, "unassociated");
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static const long frequency_list[] = {
+अटल स्थिर दीर्घ frequency_list[] = अणु
 	2412, 2417, 2422, 2427, 2432, 2437, 2442, 2447, 2452, 2457, 2462,
 	2467, 2472, 2484, 4915, 4920, 4925, 4935, 4940, 4945, 4960, 4980,
 	5035, 5040, 5045, 5055, 5060, 5080, 5170, 5180, 5190, 5200, 5210,
 	5220, 5230, 5240, 5260, 5280, 5300, 5320, 5500, 5520, 5540, 5560,
 	5580, 5600, 5620, 5640, 5660, 5680, 5700, 5745, 5765, 5785, 5805,
 	5825
-};
+पूर्ण;
 
-static int r8711_wx_set_freq(struct net_device *dev,
-			     struct iw_request_info *info,
-			     union iwreq_data *wrqu, char *extra)
-{
-	struct _adapter *padapter = netdev_priv(dev);
-	struct iw_freq *fwrq = &wrqu->freq;
-	int rc = 0;
+अटल पूर्णांक r8711_wx_set_freq(काष्ठा net_device *dev,
+			     काष्ठा iw_request_info *info,
+			     जोड़ iwreq_data *wrqu, अक्षर *extra)
+अणु
+	काष्ठा _adapter *padapter = netdev_priv(dev);
+	काष्ठा iw_freq *fwrq = &wrqu->freq;
+	पूर्णांक rc = 0;
 
 /* If setting by frequency, convert to a channel */
-	if ((fwrq->e == 1) &&
-	  (fwrq->m >= (int) 2.412e8) &&
-	  (fwrq->m <= (int) 2.487e8)) {
-		int f = fwrq->m / 100000;
-		int c = 0;
+	अगर ((fwrq->e == 1) &&
+	  (fwrq->m >= (पूर्णांक) 2.412e8) &&
+	  (fwrq->m <= (पूर्णांक) 2.487e8)) अणु
+		पूर्णांक f = fwrq->m / 100000;
+		पूर्णांक c = 0;
 
-		while ((c < 14) && (f != frequency_list[c]))
+		जबतक ((c < 14) && (f != frequency_list[c]))
 			c++;
 		fwrq->e = 0;
 		fwrq->m = c + 1;
-	}
+	पूर्ण
 	/* Setting by channel number */
-	if ((fwrq->m > 14) || (fwrq->e > 0)) {
+	अगर ((fwrq->m > 14) || (fwrq->e > 0)) अणु
 		rc = -EOPNOTSUPP;
-	} else {
-		int channel = fwrq->m;
+	पूर्ण अन्यथा अणु
+		पूर्णांक channel = fwrq->m;
 
-		if ((channel < 1) || (channel > 14)) {
+		अगर ((channel < 1) || (channel > 14)) अणु
 			rc = -EINVAL;
-		} else {
+		पूर्ण अन्यथा अणु
 			/* Yes ! We can set it !!! */
 			padapter->registrypriv.channel = channel;
-		}
-	}
-	return rc;
-}
+		पूर्ण
+	पूर्ण
+	वापस rc;
+पूर्ण
 
-static int r8711_wx_get_freq(struct net_device *dev,
-			     struct iw_request_info *info,
-			     union iwreq_data *wrqu, char *extra)
-{
-	struct _adapter *padapter = netdev_priv(dev);
-	struct mlme_priv *pmlmepriv = &padapter->mlmepriv;
-	struct wlan_bssid_ex *pcur_bss = &pmlmepriv->cur_network.network;
+अटल पूर्णांक r8711_wx_get_freq(काष्ठा net_device *dev,
+			     काष्ठा iw_request_info *info,
+			     जोड़ iwreq_data *wrqu, अक्षर *extra)
+अणु
+	काष्ठा _adapter *padapter = netdev_priv(dev);
+	काष्ठा mlme_priv *pmlmepriv = &padapter->mlmepriv;
+	काष्ठा wlan_bssid_ex *pcur_bss = &pmlmepriv->cur_network.network;
 
-	if (!check_fwstate(pmlmepriv, _FW_LINKED))
-		return -ENOLINK;
+	अगर (!check_fwstate(pmlmepriv, _FW_LINKED))
+		वापस -ENOLINK;
 
 	wrqu->freq.m = ieee80211_wlan_frequencies[
 		       pcur_bss->Configuration.DSConfig - 1] * 100000;
 	wrqu->freq.e = 1;
 	wrqu->freq.i = pcur_bss->Configuration.DSConfig;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int r8711_wx_set_mode(struct net_device *dev,
-			     struct iw_request_info *a,
-			     union iwreq_data *wrqu, char *b)
-{
-	struct _adapter *padapter = netdev_priv(dev);
-	enum NDIS_802_11_NETWORK_INFRASTRUCTURE networkType;
+अटल पूर्णांक r8711_wx_set_mode(काष्ठा net_device *dev,
+			     काष्ठा iw_request_info *a,
+			     जोड़ iwreq_data *wrqu, अक्षर *b)
+अणु
+	काष्ठा _adapter *padapter = netdev_priv(dev);
+	क्रमागत NDIS_802_11_NETWORK_INFRASTRUCTURE networkType;
 
-	switch (wrqu->mode) {
-	case IW_MODE_AUTO:
+	चयन (wrqu->mode) अणु
+	हाल IW_MODE_AUTO:
 		networkType = Ndis802_11AutoUnknown;
-		break;
-	case IW_MODE_ADHOC:
+		अवरोध;
+	हाल IW_MODE_ADHOC:
 		networkType = Ndis802_11IBSS;
-		break;
-	case IW_MODE_MASTER:
+		अवरोध;
+	हाल IW_MODE_MASTER:
 		networkType = Ndis802_11APMode;
-		break;
-	case IW_MODE_INFRA:
-		networkType = Ndis802_11Infrastructure;
-		break;
-	default:
-		return -EINVAL;
-	}
-	if (Ndis802_11APMode == networkType)
+		अवरोध;
+	हाल IW_MODE_INFRA:
+		networkType = Ndis802_11Infraकाष्ठाure;
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+	अगर (Ndis802_11APMode == networkType)
 		r8712_setopmode_cmd(padapter, networkType);
-	else
+	अन्यथा
 		r8712_setopmode_cmd(padapter, Ndis802_11AutoUnknown);
 
-	r8712_set_802_11_infrastructure_mode(padapter, networkType);
-	return 0;
-}
+	r8712_set_802_11_infraकाष्ठाure_mode(padapter, networkType);
+	वापस 0;
+पूर्ण
 
-static int r8711_wx_get_mode(struct net_device *dev, struct iw_request_info *a,
-			     union iwreq_data *wrqu, char *b)
-{
-	struct _adapter *padapter = netdev_priv(dev);
-	struct mlme_priv *pmlmepriv = &padapter->mlmepriv;
+अटल पूर्णांक r8711_wx_get_mode(काष्ठा net_device *dev, काष्ठा iw_request_info *a,
+			     जोड़ iwreq_data *wrqu, अक्षर *b)
+अणु
+	काष्ठा _adapter *padapter = netdev_priv(dev);
+	काष्ठा mlme_priv *pmlmepriv = &padapter->mlmepriv;
 
-	if (check_fwstate(pmlmepriv, WIFI_STATION_STATE))
+	अगर (check_fwstate(pmlmepriv, WIFI_STATION_STATE))
 		wrqu->mode = IW_MODE_INFRA;
-	else if (check_fwstate(pmlmepriv,
+	अन्यथा अगर (check_fwstate(pmlmepriv,
 		 WIFI_ADHOC_MASTER_STATE | WIFI_ADHOC_STATE))
 		wrqu->mode = IW_MODE_ADHOC;
-	else if (check_fwstate(pmlmepriv, WIFI_AP_STATE))
+	अन्यथा अगर (check_fwstate(pmlmepriv, WIFI_AP_STATE))
 		wrqu->mode = IW_MODE_MASTER;
-	else
+	अन्यथा
 		wrqu->mode = IW_MODE_AUTO;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int r871x_wx_set_pmkid(struct net_device *dev,
-			     struct iw_request_info *a,
-			     union iwreq_data *wrqu, char *extra)
-{
-	struct _adapter *padapter = netdev_priv(dev);
-	struct security_priv *psecuritypriv = &padapter->securitypriv;
-	struct iw_pmksa *pPMK = (struct iw_pmksa *) extra;
-	struct RT_PMKID_LIST *pl = psecuritypriv->PMKIDList;
-	u8 strZeroMacAddress[ETH_ALEN] = {0x00};
-	u8 strIssueBssid[ETH_ALEN] = {0x00};
+अटल पूर्णांक r871x_wx_set_pmkid(काष्ठा net_device *dev,
+			     काष्ठा iw_request_info *a,
+			     जोड़ iwreq_data *wrqu, अक्षर *extra)
+अणु
+	काष्ठा _adapter *padapter = netdev_priv(dev);
+	काष्ठा security_priv *psecuritypriv = &padapter->securitypriv;
+	काष्ठा iw_pmksa *pPMK = (काष्ठा iw_pmksa *) extra;
+	काष्ठा RT_PMKID_LIST *pl = psecuritypriv->PMKIDList;
+	u8 strZeroMacAddress[ETH_ALEN] = अणु0x00पूर्ण;
+	u8 strIssueBssid[ETH_ALEN] = अणु0x00पूर्ण;
 	u8 j, blInserted = false;
-	int intReturn = false;
+	पूर्णांक पूर्णांकReturn = false;
 
 /*
- *	There are the BSSID information in the bssid.sa_data array.
+ *	There are the BSSID inक्रमmation in the bssid.sa_data array.
  *	If cmd is IW_PMKSA_FLUSH, it means the wpa_supplicant wants to clear
- *	all the PMKID information. If cmd is IW_PMKSA_ADD, it means the
+ *	all the PMKID inक्रमmation. If cmd is IW_PMKSA_ADD, it means the
  *	wpa_supplicant wants to add a PMKID/BSSID to driver.
  *	If cmd is IW_PMKSA_REMOVE, it means the wpa_supplicant wants to
- *	remove a PMKID/BSSID from driver.
+ *	हटाओ a PMKID/BSSID from driver.
  */
-	if (!pPMK)
-		return -EINVAL;
-	memcpy(strIssueBssid, pPMK->bssid.sa_data, ETH_ALEN);
-	switch (pPMK->cmd) {
-	case IW_PMKSA_ADD:
-		if (!memcmp(strIssueBssid, strZeroMacAddress, ETH_ALEN))
-			return intReturn;
-		intReturn = true;
+	अगर (!pPMK)
+		वापस -EINVAL;
+	स_नकल(strIssueBssid, pPMK->bssid.sa_data, ETH_ALEN);
+	चयन (pPMK->cmd) अणु
+	हाल IW_PMKSA_ADD:
+		अगर (!स_भेद(strIssueBssid, strZeroMacAddress, ETH_ALEN))
+			वापस पूर्णांकReturn;
+		पूर्णांकReturn = true;
 		blInserted = false;
-		/* overwrite PMKID */
-		for (j = 0; j < NUM_PMKID_CACHE; j++) {
-			if (!memcmp(pl[j].Bssid, strIssueBssid, ETH_ALEN)) {
-				/* BSSID is matched, the same AP => rewrite
+		/* overग_लिखो PMKID */
+		क्रम (j = 0; j < NUM_PMKID_CACHE; j++) अणु
+			अगर (!स_भेद(pl[j].Bssid, strIssueBssid, ETH_ALEN)) अणु
+				/* BSSID is matched, the same AP => reग_लिखो
 				 * with new PMKID.
 				 */
 				netdev_info(dev, "r8712u: %s: BSSID exists in the PMKList.\n",
 					    __func__);
-				memcpy(pl[j].PMKID, pPMK->pmkid, IW_PMKID_LEN);
+				स_नकल(pl[j].PMKID, pPMK->pmkid, IW_PMKID_LEN);
 				pl[j].bUsed = true;
 				psecuritypriv->PMKIDIndex = j + 1;
 				blInserted = true;
-				break;
-			}
-		}
-		if (!blInserted) {
+				अवरोध;
+			पूर्ण
+		पूर्ण
+		अगर (!blInserted) अणु
 			/* Find a new entry */
 			netdev_info(dev, "r8712u: %s: Use the new entry index = %d for this PMKID.\n",
 				    __func__, psecuritypriv->PMKIDIndex);
-			memcpy(pl[psecuritypriv->PMKIDIndex].Bssid,
+			स_नकल(pl[psecuritypriv->PMKIDIndex].Bssid,
 			       strIssueBssid, ETH_ALEN);
-			memcpy(pl[psecuritypriv->PMKIDIndex].PMKID,
+			स_नकल(pl[psecuritypriv->PMKIDIndex].PMKID,
 			       pPMK->pmkid, IW_PMKID_LEN);
 			pl[psecuritypriv->PMKIDIndex].bUsed = true;
 			psecuritypriv->PMKIDIndex++;
-			if (psecuritypriv->PMKIDIndex == NUM_PMKID_CACHE)
+			अगर (psecuritypriv->PMKIDIndex == NUM_PMKID_CACHE)
 				psecuritypriv->PMKIDIndex = 0;
-		}
-		break;
-	case IW_PMKSA_REMOVE:
-		intReturn = true;
-		for (j = 0; j < NUM_PMKID_CACHE; j++) {
-			if (!memcmp(pl[j].Bssid, strIssueBssid, ETH_ALEN)) {
+		पूर्ण
+		अवरोध;
+	हाल IW_PMKSA_REMOVE:
+		पूर्णांकReturn = true;
+		क्रम (j = 0; j < NUM_PMKID_CACHE; j++) अणु
+			अगर (!स_भेद(pl[j].Bssid, strIssueBssid, ETH_ALEN)) अणु
 				/* BSSID is matched, the same AP => Remove
-				 * this PMKID information and reset it.
+				 * this PMKID inक्रमmation and reset it.
 				 */
 				eth_zero_addr(pl[j].Bssid);
 				pl[j].bUsed = false;
-				break;
-			}
-		}
-		break;
-	case IW_PMKSA_FLUSH:
-		memset(psecuritypriv->PMKIDList, 0,
-			sizeof(struct RT_PMKID_LIST) * NUM_PMKID_CACHE);
+				अवरोध;
+			पूर्ण
+		पूर्ण
+		अवरोध;
+	हाल IW_PMKSA_FLUSH:
+		स_रखो(psecuritypriv->PMKIDList, 0,
+			माप(काष्ठा RT_PMKID_LIST) * NUM_PMKID_CACHE);
 		psecuritypriv->PMKIDIndex = 0;
-		intReturn = true;
-		break;
-	default:
+		पूर्णांकReturn = true;
+		अवरोध;
+	शेष:
 		netdev_info(dev, "r8712u: %s: unknown Command\n", __func__);
-		intReturn = false;
-		break;
-	}
-	return intReturn;
-}
+		पूर्णांकReturn = false;
+		अवरोध;
+	पूर्ण
+	वापस पूर्णांकReturn;
+पूर्ण
 
-static int r8711_wx_get_sens(struct net_device *dev,
-			     struct iw_request_info *info,
-			     union iwreq_data *wrqu, char *extra)
-{
+अटल पूर्णांक r8711_wx_get_sens(काष्ठा net_device *dev,
+			     काष्ठा iw_request_info *info,
+			     जोड़ iwreq_data *wrqu, अक्षर *extra)
+अणु
 	wrqu->sens.value = 0;
-	wrqu->sens.fixed = 0;	/* no auto select */
+	wrqu->sens.fixed = 0;	/* no स्वतः select */
 	wrqu->sens.disabled = 1;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int r8711_wx_get_range(struct net_device *dev,
-				struct iw_request_info *info,
-				union iwreq_data *wrqu, char *extra)
-{
-	struct iw_range *range = (struct iw_range *)extra;
+अटल पूर्णांक r8711_wx_get_range(काष्ठा net_device *dev,
+				काष्ठा iw_request_info *info,
+				जोड़ iwreq_data *wrqu, अक्षर *extra)
+अणु
+	काष्ठा iw_range *range = (काष्ठा iw_range *)extra;
 	u16 val;
-	int i;
+	पूर्णांक i;
 
-	wrqu->data.length = sizeof(*range);
-	memset(range, 0, sizeof(*range));
-	/* Let's try to keep this struct in the same order as in
+	wrqu->data.length = माप(*range);
+	स_रखो(range, 0, माप(*range));
+	/* Let's try to keep this काष्ठा in the same order as in
 	 * linux/include/wireless.h
 	 */
 
-	/* TODO: See what values we can set, and remove the ones we can't
-	 * set, or fill them with some default data.
+	/* TODO: See what values we can set, and हटाओ the ones we can't
+	 * set, or fill them with some शेष data.
 	 */
 	/* ~5 Mb/s real (802.11b) */
 	range->throughput = 5 * 1000 * 1000;
 	/* TODO: 8711 sensitivity ? */
-	/* signal level threshold range */
+	/* संकेत level threshold range */
 	/* percent values between 0 and 100. */
 	range->max_qual.qual = 100;
 	range->max_qual.level = 100;
 	range->max_qual.noise = 100;
 	range->max_qual.updated = 7; /* Updated all three */
 	range->avg_qual.qual = 92; /* > 8% missed beacons is 'bad' */
-	/* TODO: Find real 'good' to 'bad' threshold value for RSSI */
+	/* TODO: Find real 'good' to 'bad' threshold value क्रम RSSI */
 	range->avg_qual.level = 0x100 - 78;
 	range->avg_qual.noise = 0;
 	range->avg_qual.updated = 7; /* Updated all three */
 	range->num_bitrates = RATE_COUNT;
-	for (i = 0; i < RATE_COUNT && i < IW_MAX_BITRATES; i++)
+	क्रम (i = 0; i < RATE_COUNT && i < IW_MAX_BITRATES; i++)
 		range->bitrate[i] = rtl8180_rates[i];
 	range->min_frag = MIN_FRAG_THRESHOLD;
 	range->max_frag = MAX_FRAG_THRESHOLD;
@@ -890,837 +891,837 @@ static int r8711_wx_get_range(struct net_device *dev,
 	range->we_version_compiled = WIRELESS_EXT;
 	range->we_version_source = 16;
 	range->num_channels = 14;
-	for (i = 0, val = 0; i < 14; i++) {
-		/* Include only legal frequencies for some countries */
+	क्रम (i = 0, val = 0; i < 14; i++) अणु
+		/* Include only legal frequencies क्रम some countries */
 		range->freq[val].i = i + 1;
 		range->freq[val].m = ieee80211_wlan_frequencies[i] * 100000;
 		range->freq[val].e = 1;
 		val++;
-		if (val == IW_MAX_FREQUENCIES)
-			break;
-	}
+		अगर (val == IW_MAX_FREQUENCIES)
+			अवरोध;
+	पूर्ण
 	range->num_frequency = val;
 	range->enc_capa = IW_ENC_CAPA_WPA |
 			  IW_ENC_CAPA_WPA2 |
 			  IW_ENC_CAPA_CIPHER_TKIP |
 			  IW_ENC_CAPA_CIPHER_CCMP;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int r8711_wx_get_rate(struct net_device *dev,
-			     struct iw_request_info *info,
-			     union iwreq_data *wrqu, char *extra);
+अटल पूर्णांक r8711_wx_get_rate(काष्ठा net_device *dev,
+			     काष्ठा iw_request_info *info,
+			     जोड़ iwreq_data *wrqu, अक्षर *extra);
 
-static int r871x_wx_set_priv(struct net_device *dev,
-				struct iw_request_info *info,
-				union iwreq_data *awrq,
-				char *extra)
-{
-	int ret = 0, len = 0;
-	char *ext;
-	struct _adapter *padapter = netdev_priv(dev);
-	struct iw_point *dwrq = (struct iw_point *)awrq;
+अटल पूर्णांक r871x_wx_set_priv(काष्ठा net_device *dev,
+				काष्ठा iw_request_info *info,
+				जोड़ iwreq_data *awrq,
+				अक्षर *extra)
+अणु
+	पूर्णांक ret = 0, len = 0;
+	अक्षर *ext;
+	काष्ठा _adapter *padapter = netdev_priv(dev);
+	काष्ठा iw_poपूर्णांक *dwrq = (काष्ठा iw_poपूर्णांक *)awrq;
 
 	len = dwrq->length;
-	ext = strndup_user(dwrq->pointer, len);
-	if (IS_ERR(ext))
-		return PTR_ERR(ext);
+	ext = strndup_user(dwrq->poपूर्णांकer, len);
+	अगर (IS_ERR(ext))
+		वापस PTR_ERR(ext);
 
-	if (!strcasecmp(ext, "RSSI")) {
-		/*Return received signal strength indicator in -db for */
+	अगर (!strहालcmp(ext, "RSSI")) अणु
+		/*Return received संकेत strength indicator in -db क्रम */
 		/* current AP */
 		/*<ssid> Rssi xx */
-		struct mlme_priv *pmlmepriv = &(padapter->mlmepriv);
-		struct wlan_network *pcur_network = &pmlmepriv->cur_network;
-		/*static u8 xxxx; */
-		if (check_fwstate(pmlmepriv, _FW_LINKED)) {
-			sprintf(ext, "%s rssi %d",
+		काष्ठा mlme_priv *pmlmepriv = &(padapter->mlmepriv);
+		काष्ठा wlan_network *pcur_network = &pmlmepriv->cur_network;
+		/*अटल u8 xxxx; */
+		अगर (check_fwstate(pmlmepriv, _FW_LINKED)) अणु
+			प्र_लिखो(ext, "%s rssi %d",
 				pcur_network->network.Ssid.Ssid,
 				/*(xxxx=xxxx+10) */
 				((padapter->recvpriv.fw_rssi) >> 1) - 95
 				/*pcur_network->network.Rssi */
 				);
-		} else {
-			sprintf(ext, "OK");
-		}
-	} else if (!strcasecmp(ext, "LINKSPEED")) {
+		पूर्ण अन्यथा अणु
+			प्र_लिखो(ext, "OK");
+		पूर्ण
+	पूर्ण अन्यथा अगर (!strहालcmp(ext, "LINKSPEED")) अणु
 		/*Return link speed in MBPS */
 		/*LinkSpeed xx */
-		union iwreq_data wrqd;
-		int ret_inner;
-		int mbps;
+		जोड़ iwreq_data wrqd;
+		पूर्णांक ret_inner;
+		पूर्णांक mbps;
 
 		ret_inner = r8711_wx_get_rate(dev, info, &wrqd, extra);
-		if (ret_inner != 0)
+		अगर (ret_inner != 0)
 			mbps = 0;
-		else
+		अन्यथा
 			mbps = wrqd.bitrate.value / 1000000;
-		sprintf(ext, "LINKSPEED %d", mbps);
-	} else if (!strcasecmp(ext, "MACADDR")) {
+		प्र_लिखो(ext, "LINKSPEED %d", mbps);
+	पूर्ण अन्यथा अगर (!strहालcmp(ext, "MACADDR")) अणु
 		/*Return mac address of the station */
 		/* Macaddr = xx:xx:xx:xx:xx:xx */
-		sprintf(ext, "MACADDR = %pM", dev->dev_addr);
-	} else if (!strcasecmp(ext, "SCAN-ACTIVE")) {
+		प्र_लिखो(ext, "MACADDR = %pM", dev->dev_addr);
+	पूर्ण अन्यथा अगर (!strहालcmp(ext, "SCAN-ACTIVE")) अणु
 		/*Set scan type to active */
-		/*OK if successful */
-		struct mlme_priv *pmlmepriv = &padapter->mlmepriv;
+		/*OK अगर successful */
+		काष्ठा mlme_priv *pmlmepriv = &padapter->mlmepriv;
 
 		pmlmepriv->passive_mode = 1;
-		sprintf(ext, "OK");
-	} else if (!strcasecmp(ext, "SCAN-PASSIVE")) {
+		प्र_लिखो(ext, "OK");
+	पूर्ण अन्यथा अगर (!strहालcmp(ext, "SCAN-PASSIVE")) अणु
 		/*Set scan type to passive */
-		/*OK if successful */
-		struct mlme_priv *pmlmepriv = &padapter->mlmepriv;
+		/*OK अगर successful */
+		काष्ठा mlme_priv *pmlmepriv = &padapter->mlmepriv;
 
 		pmlmepriv->passive_mode = 0;
-		sprintf(ext, "OK");
-	} else if (!strncmp(ext, "DCE-E", 5)) {
+		प्र_लिखो(ext, "OK");
+	पूर्ण अन्यथा अगर (!म_भेदन(ext, "DCE-E", 5)) अणु
 		/*Set scan type to passive */
-		/*OK if successful */
+		/*OK अगर successful */
 		r8712_disconnectCtrlEx_cmd(padapter
 			, 1 /*u32 enableDrvCtrl */
 			, 5 /*u32 tryPktCnt */
 			, 100 /*u32 tryPktInterval */
 			, 5000 /*u32 firstStageTO */
 		);
-		sprintf(ext, "OK");
-	} else if (!strncmp(ext, "DCE-D", 5)) {
+		प्र_लिखो(ext, "OK");
+	पूर्ण अन्यथा अगर (!म_भेदन(ext, "DCE-D", 5)) अणु
 		/*Set scan type to passive */
-		/*OK if successfu */
+		/*OK अगर successfu */
 		r8712_disconnectCtrlEx_cmd(padapter
 			, 0 /*u32 enableDrvCtrl */
 			, 5 /*u32 tryPktCnt */
 			, 100 /*u32 tryPktInterval */
 			, 5000 /*u32 firstStageTO */
 		);
-		sprintf(ext, "OK");
-	} else {
+		प्र_लिखो(ext, "OK");
+	पूर्ण अन्यथा अणु
 		netdev_info(dev, "r8712u: %s: unknown Command %s.\n",
 			    __func__, ext);
-		goto FREE_EXT;
-	}
-	if (copy_to_user(dwrq->pointer, ext,
-				min(dwrq->length, (__u16)(strlen(ext) + 1))))
+		जाओ FREE_EXT;
+	पूर्ण
+	अगर (copy_to_user(dwrq->poपूर्णांकer, ext,
+				min(dwrq->length, (__u16)(म_माप(ext) + 1))))
 		ret = -EFAULT;
 
 FREE_EXT:
-	kfree(ext);
-	return ret;
-}
+	kमुक्त(ext);
+	वापस ret;
+पूर्ण
 
 /* set bssid flow
- * s1. set_802_11_infrastructure_mode()
+ * s1. set_802_11_infraकाष्ठाure_mode()
  * s2. set_802_11_authentication_mode()
  * s3. set_802_11_encryption_mode()
  * s4. set_802_11_bssid()
  *
- * This function intends to handle the Set AP command, which specifies the
- * MAC# of a preferred Access Point.
+ * This function पूर्णांकends to handle the Set AP command, which specअगरies the
+ * MAC# of a preferred Access Poपूर्णांक.
  * Currently, the request comes via Wireless Extensions' SIOCSIWAP ioctl.
  *
- * For this operation to succeed, there is no need for the interface to be up.
+ * For this operation to succeed, there is no need क्रम the पूर्णांकerface to be up.
  *
  */
-static int r8711_wx_set_wap(struct net_device *dev,
-			 struct iw_request_info *info,
-			 union iwreq_data *awrq,
-			 char *extra)
-{
-	int ret = -EINPROGRESS;
-	struct _adapter *padapter = netdev_priv(dev);
-	struct mlme_priv *pmlmepriv = &padapter->mlmepriv;
-	struct  __queue *queue = &pmlmepriv->scanned_queue;
-	struct sockaddr *temp = (struct sockaddr *)awrq;
-	unsigned long irqL;
-	struct list_head *phead;
+अटल पूर्णांक r8711_wx_set_wap(काष्ठा net_device *dev,
+			 काष्ठा iw_request_info *info,
+			 जोड़ iwreq_data *awrq,
+			 अक्षर *extra)
+अणु
+	पूर्णांक ret = -EINPROGRESS;
+	काष्ठा _adapter *padapter = netdev_priv(dev);
+	काष्ठा mlme_priv *pmlmepriv = &padapter->mlmepriv;
+	काष्ठा  __queue *queue = &pmlmepriv->scanned_queue;
+	काष्ठा sockaddr *temp = (काष्ठा sockaddr *)awrq;
+	अचिन्हित दीर्घ irqL;
+	काष्ठा list_head *phead;
 	u8 *dst_bssid;
-	struct wlan_network *pnetwork = NULL;
-	enum NDIS_802_11_AUTHENTICATION_MODE	authmode;
+	काष्ठा wlan_network *pnetwork = शून्य;
+	क्रमागत NDIS_802_11_AUTHENTICATION_MODE	authmode;
 
-	if (check_fwstate(pmlmepriv, _FW_UNDER_SURVEY))
-		return -EBUSY;
-	if (check_fwstate(pmlmepriv, _FW_UNDER_LINKING))
-		return ret;
-	if (temp->sa_family != ARPHRD_ETHER)
-		return -EINVAL;
+	अगर (check_fwstate(pmlmepriv, _FW_UNDER_SURVEY))
+		वापस -EBUSY;
+	अगर (check_fwstate(pmlmepriv, _FW_UNDER_LINKING))
+		वापस ret;
+	अगर (temp->sa_family != ARPHRD_ETHER)
+		वापस -EINVAL;
 	authmode = padapter->securitypriv.ndisauthtype;
 	spin_lock_irqsave(&queue->lock, irqL);
 	phead = &queue->queue;
 	pmlmepriv->pscanned = phead->next;
-	while (1) {
-		if (end_of_queue_search(phead, pmlmepriv->pscanned))
-			break;
+	जबतक (1) अणु
+		अगर (end_of_queue_search(phead, pmlmepriv->pscanned))
+			अवरोध;
 		pnetwork = container_of(pmlmepriv->pscanned,
-					struct wlan_network, list);
+					काष्ठा wlan_network, list);
 		pmlmepriv->pscanned = pmlmepriv->pscanned->next;
 		dst_bssid = pnetwork->network.MacAddress;
-		if (!memcmp(dst_bssid, temp->sa_data, ETH_ALEN)) {
-			r8712_set_802_11_infrastructure_mode(padapter,
-			    pnetwork->network.InfrastructureMode);
-			break;
-		}
-	}
+		अगर (!स_भेद(dst_bssid, temp->sa_data, ETH_ALEN)) अणु
+			r8712_set_802_11_infraकाष्ठाure_mode(padapter,
+			    pnetwork->network.Infraकाष्ठाureMode);
+			अवरोध;
+		पूर्ण
+	पूर्ण
 	spin_unlock_irqrestore(&queue->lock, irqL);
-	if (!ret) {
-		if (!r8712_set_802_11_authentication_mode(padapter, authmode)) {
+	अगर (!ret) अणु
+		अगर (!r8712_set_802_11_authentication_mode(padapter, authmode)) अणु
 			ret = -ENOMEM;
-		} else {
-			if (!r8712_set_802_11_bssid(padapter, temp->sa_data))
+		पूर्ण अन्यथा अणु
+			अगर (!r8712_set_802_11_bssid(padapter, temp->sa_data))
 				ret = -1;
-		}
-	}
-	return ret;
-}
+		पूर्ण
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static int r8711_wx_get_wap(struct net_device *dev,
-				struct iw_request_info *info,
-				union iwreq_data *wrqu, char *extra)
-{
-	struct _adapter *padapter = netdev_priv(dev);
-	struct mlme_priv *pmlmepriv = &padapter->mlmepriv;
-	struct wlan_bssid_ex *pcur_bss = &pmlmepriv->cur_network.network;
+अटल पूर्णांक r8711_wx_get_wap(काष्ठा net_device *dev,
+				काष्ठा iw_request_info *info,
+				जोड़ iwreq_data *wrqu, अक्षर *extra)
+अणु
+	काष्ठा _adapter *padapter = netdev_priv(dev);
+	काष्ठा mlme_priv *pmlmepriv = &padapter->mlmepriv;
+	काष्ठा wlan_bssid_ex *pcur_bss = &pmlmepriv->cur_network.network;
 
 	wrqu->ap_addr.sa_family = ARPHRD_ETHER;
-	if (check_fwstate(pmlmepriv, _FW_LINKED | WIFI_ADHOC_MASTER_STATE |
+	अगर (check_fwstate(pmlmepriv, _FW_LINKED | WIFI_ADHOC_MASTER_STATE |
 				     WIFI_AP_STATE))
 		ether_addr_copy(wrqu->ap_addr.sa_data, pcur_bss->MacAddress);
-	else
+	अन्यथा
 		eth_zero_addr(wrqu->ap_addr.sa_data);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int r871x_wx_set_mlme(struct net_device *dev,
-			     struct iw_request_info *info,
-			     union iwreq_data *wrqu, char *extra)
-{
-	int ret = 0;
-	struct _adapter *padapter = netdev_priv(dev);
-	struct iw_mlme *mlme = (struct iw_mlme *) extra;
+अटल पूर्णांक r871x_wx_set_mlme(काष्ठा net_device *dev,
+			     काष्ठा iw_request_info *info,
+			     जोड़ iwreq_data *wrqu, अक्षर *extra)
+अणु
+	पूर्णांक ret = 0;
+	काष्ठा _adapter *padapter = netdev_priv(dev);
+	काष्ठा iw_mlme *mlme = (काष्ठा iw_mlme *) extra;
 
-	if (!mlme)
-		return -1;
-	switch (mlme->cmd) {
-	case IW_MLME_DEAUTH:
-		if (!r8712_set_802_11_disassociate(padapter))
+	अगर (!mlme)
+		वापस -1;
+	चयन (mlme->cmd) अणु
+	हाल IW_MLME_DEAUTH:
+		अगर (!r8712_set_802_11_disassociate(padapter))
 			ret = -1;
-		break;
-	case IW_MLME_DISASSOC:
-		if (!r8712_set_802_11_disassociate(padapter))
+		अवरोध;
+	हाल IW_MLME_DISASSOC:
+		अगर (!r8712_set_802_11_disassociate(padapter))
 			ret = -1;
-		break;
-	default:
-		return -EOPNOTSUPP;
-	}
-	return ret;
-}
+		अवरोध;
+	शेष:
+		वापस -EOPNOTSUPP;
+	पूर्ण
+	वापस ret;
+पूर्ण
 
 /*
  *
- * This function intends to handle the Set Scan command.
+ * This function पूर्णांकends to handle the Set Scan command.
  * Currently, the request comes via Wireless Extensions' SIOCSIWSCAN ioctl.
  *
- * For this operation to succeed, the interface is brought Up beforehand.
+ * For this operation to succeed, the पूर्णांकerface is brought Up beक्रमehand.
  *
  */
-static int r8711_wx_set_scan(struct net_device *dev,
-			struct iw_request_info *a,
-			union iwreq_data *wrqu, char *extra)
-{
-	struct _adapter *padapter = netdev_priv(dev);
-	struct mlme_priv *pmlmepriv = &padapter->mlmepriv;
+अटल पूर्णांक r8711_wx_set_scan(काष्ठा net_device *dev,
+			काष्ठा iw_request_info *a,
+			जोड़ iwreq_data *wrqu, अक्षर *extra)
+अणु
+	काष्ठा _adapter *padapter = netdev_priv(dev);
+	काष्ठा mlme_priv *pmlmepriv = &padapter->mlmepriv;
 	u8 status = true;
 
-	if (padapter->driver_stopped) {
+	अगर (padapter->driver_stopped) अणु
 		netdev_info(dev, "In %s: driver_stopped=%d\n",
 			    __func__, padapter->driver_stopped);
-		return -1;
-	}
-	if (!padapter->bup)
-		return -ENETDOWN;
-	if (!padapter->hw_init_completed)
-		return -1;
-	if ((check_fwstate(pmlmepriv, _FW_UNDER_SURVEY | _FW_UNDER_LINKING)) ||
+		वापस -1;
+	पूर्ण
+	अगर (!padapter->bup)
+		वापस -ENETDOWN;
+	अगर (!padapter->hw_init_completed)
+		वापस -1;
+	अगर ((check_fwstate(pmlmepriv, _FW_UNDER_SURVEY | _FW_UNDER_LINKING)) ||
 	    (pmlmepriv->sitesurveyctrl.traffic_busy))
-		return 0;
-	if (wrqu->data.length == sizeof(struct iw_scan_req)) {
-		struct iw_scan_req *req = (struct iw_scan_req *)extra;
+		वापस 0;
+	अगर (wrqu->data.length == माप(काष्ठा iw_scan_req)) अणु
+		काष्ठा iw_scan_req *req = (काष्ठा iw_scan_req *)extra;
 
-		if (wrqu->data.flags & IW_SCAN_THIS_ESSID) {
-			struct ndis_802_11_ssid ssid;
-			unsigned long irqL;
+		अगर (wrqu->data.flags & IW_SCAN_THIS_ESSID) अणु
+			काष्ठा ndis_802_11_ssid ssid;
+			अचिन्हित दीर्घ irqL;
 			u32 len = min_t(u8, req->essid_len, IW_ESSID_MAX_SIZE);
 
-			memset((unsigned char *)&ssid, 0,
-				 sizeof(struct ndis_802_11_ssid));
-			memcpy(ssid.Ssid, req->essid, len);
+			स_रखो((अचिन्हित अक्षर *)&ssid, 0,
+				 माप(काष्ठा ndis_802_11_ssid));
+			स_नकल(ssid.Ssid, req->essid, len);
 			ssid.SsidLength = len;
 			spin_lock_irqsave(&pmlmepriv->lock, irqL);
-			if ((check_fwstate(pmlmepriv, _FW_UNDER_SURVEY |
+			अगर ((check_fwstate(pmlmepriv, _FW_UNDER_SURVEY |
 			     _FW_UNDER_LINKING)) ||
-			    (pmlmepriv->sitesurveyctrl.traffic_busy)) {
-				if (check_fwstate(pmlmepriv, _FW_UNDER_LINKING))
+			    (pmlmepriv->sitesurveyctrl.traffic_busy)) अणु
+				अगर (check_fwstate(pmlmepriv, _FW_UNDER_LINKING))
 					status = false;
-			} else {
+			पूर्ण अन्यथा अणु
 				status = r8712_sitesurvey_cmd(padapter, &ssid);
-			}
+			पूर्ण
 			spin_unlock_irqrestore(&pmlmepriv->lock, irqL);
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		status = r8712_set_802_11_bssid_list_scan(padapter);
-	}
-	if (!status)
-		return -1;
-	return 0;
-}
+	पूर्ण
+	अगर (!status)
+		वापस -1;
+	वापस 0;
+पूर्ण
 
-static int r8711_wx_get_scan(struct net_device *dev,
-				struct iw_request_info *a,
-				union iwreq_data *wrqu, char *extra)
-{
-	struct _adapter *padapter = netdev_priv(dev);
-	struct mlme_priv *pmlmepriv = &padapter->mlmepriv;
-	struct  __queue *queue = &pmlmepriv->scanned_queue;
-	struct wlan_network *pnetwork = NULL;
-	unsigned long irqL;
-	struct list_head *plist, *phead;
-	char *ev = extra;
-	char *stop = ev + wrqu->data.length;
+अटल पूर्णांक r8711_wx_get_scan(काष्ठा net_device *dev,
+				काष्ठा iw_request_info *a,
+				जोड़ iwreq_data *wrqu, अक्षर *extra)
+अणु
+	काष्ठा _adapter *padapter = netdev_priv(dev);
+	काष्ठा mlme_priv *pmlmepriv = &padapter->mlmepriv;
+	काष्ठा  __queue *queue = &pmlmepriv->scanned_queue;
+	काष्ठा wlan_network *pnetwork = शून्य;
+	अचिन्हित दीर्घ irqL;
+	काष्ठा list_head *plist, *phead;
+	अक्षर *ev = extra;
+	अक्षर *stop = ev + wrqu->data.length;
 	u32 ret = 0, cnt = 0;
 
-	if (padapter->driver_stopped)
-		return -EINVAL;
-	while (check_fwstate(pmlmepriv, _FW_UNDER_SURVEY |
-			     _FW_UNDER_LINKING)) {
+	अगर (padapter->driver_stopped)
+		वापस -EINVAL;
+	जबतक (check_fwstate(pmlmepriv, _FW_UNDER_SURVEY |
+			     _FW_UNDER_LINKING)) अणु
 		msleep(30);
 		cnt++;
-		if (cnt > 100)
-			break;
-	}
+		अगर (cnt > 100)
+			अवरोध;
+	पूर्ण
 	spin_lock_irqsave(&queue->lock, irqL);
 	phead = &queue->queue;
 	plist = phead->next;
-	while (1) {
-		if (end_of_queue_search(phead, plist))
-			break;
-		if ((stop - ev) < SCAN_ITEM_SIZE) {
+	जबतक (1) अणु
+		अगर (end_of_queue_search(phead, plist))
+			अवरोध;
+		अगर ((stop - ev) < SCAN_ITEM_SIZE) अणु
 			ret = -E2BIG;
-			break;
-		}
-		pnetwork = container_of(plist, struct wlan_network, list);
+			अवरोध;
+		पूर्ण
+		pnetwork = container_of(plist, काष्ठा wlan_network, list);
 		ev = translate_scan(padapter, a, pnetwork, ev, stop);
 		plist = plist->next;
-	}
+	पूर्ण
 	spin_unlock_irqrestore(&queue->lock, irqL);
 	wrqu->data.length = ev - extra;
 	wrqu->data.flags = 0;
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /* set ssid flow
- * s1. set_802_11_infrastructure_mode()
+ * s1. set_802_11_infraकाष्ठाure_mode()
  * s2. set_802_11_authenticaion_mode()
  * s3. set_802_11_encryption_mode()
  * s4. set_802_11_ssid()
  *
- * This function intends to handle the Set ESSID command.
+ * This function पूर्णांकends to handle the Set ESSID command.
  * Currently, the request comes via the Wireless Extensions' SIOCSIWESSID ioctl.
  *
- * For this operation to succeed, there is no need for the interface to be Up.
+ * For this operation to succeed, there is no need क्रम the पूर्णांकerface to be Up.
  *
  */
-static int r8711_wx_set_essid(struct net_device *dev,
-				struct iw_request_info *a,
-				union iwreq_data *wrqu, char *extra)
-{
-	struct _adapter *padapter = netdev_priv(dev);
-	struct mlme_priv *pmlmepriv = &padapter->mlmepriv;
-	struct  __queue *queue = &pmlmepriv->scanned_queue;
-	struct wlan_network *pnetwork = NULL;
-	enum NDIS_802_11_AUTHENTICATION_MODE	authmode;
-	struct ndis_802_11_ssid ndis_ssid;
+अटल पूर्णांक r8711_wx_set_essid(काष्ठा net_device *dev,
+				काष्ठा iw_request_info *a,
+				जोड़ iwreq_data *wrqu, अक्षर *extra)
+अणु
+	काष्ठा _adapter *padapter = netdev_priv(dev);
+	काष्ठा mlme_priv *pmlmepriv = &padapter->mlmepriv;
+	काष्ठा  __queue *queue = &pmlmepriv->scanned_queue;
+	काष्ठा wlan_network *pnetwork = शून्य;
+	क्रमागत NDIS_802_11_AUTHENTICATION_MODE	authmode;
+	काष्ठा ndis_802_11_ssid ndis_ssid;
 	u8 *dst_ssid, *src_ssid;
-	struct list_head *phead;
+	काष्ठा list_head *phead;
 	u32 len;
 
-	if (check_fwstate(pmlmepriv, _FW_UNDER_SURVEY))
-		return -EBUSY;
-	if (check_fwstate(pmlmepriv, _FW_UNDER_LINKING))
-		return 0;
-	if (wrqu->essid.length > IW_ESSID_MAX_SIZE)
-		return -E2BIG;
+	अगर (check_fwstate(pmlmepriv, _FW_UNDER_SURVEY))
+		वापस -EBUSY;
+	अगर (check_fwstate(pmlmepriv, _FW_UNDER_LINKING))
+		वापस 0;
+	अगर (wrqu->essid.length > IW_ESSID_MAX_SIZE)
+		वापस -E2BIG;
 	authmode = padapter->securitypriv.ndisauthtype;
-	if (wrqu->essid.flags && wrqu->essid.length) {
+	अगर (wrqu->essid.flags && wrqu->essid.length) अणु
 		len = (wrqu->essid.length < IW_ESSID_MAX_SIZE) ?
 		       wrqu->essid.length : IW_ESSID_MAX_SIZE;
-		memset(&ndis_ssid, 0, sizeof(struct ndis_802_11_ssid));
+		स_रखो(&ndis_ssid, 0, माप(काष्ठा ndis_802_11_ssid));
 		ndis_ssid.SsidLength = len;
-		memcpy(ndis_ssid.Ssid, extra, len);
+		स_नकल(ndis_ssid.Ssid, extra, len);
 		src_ssid = ndis_ssid.Ssid;
 		phead = &queue->queue;
 		pmlmepriv->pscanned = phead->next;
-		while (1) {
-			if (end_of_queue_search(phead, pmlmepriv->pscanned))
-				break;
+		जबतक (1) अणु
+			अगर (end_of_queue_search(phead, pmlmepriv->pscanned))
+				अवरोध;
 			pnetwork = container_of(pmlmepriv->pscanned,
-						struct wlan_network, list);
+						काष्ठा wlan_network, list);
 			pmlmepriv->pscanned = pmlmepriv->pscanned->next;
 			dst_ssid = pnetwork->network.Ssid.Ssid;
-			if ((!memcmp(dst_ssid, src_ssid, ndis_ssid.SsidLength))
+			अगर ((!स_भेद(dst_ssid, src_ssid, ndis_ssid.SsidLength))
 			    && (pnetwork->network.Ssid.SsidLength ==
-			     ndis_ssid.SsidLength)) {
-				if (check_fwstate(pmlmepriv,
-							WIFI_ADHOC_STATE)) {
-					if (pnetwork->network.
-						InfrastructureMode
+			     ndis_ssid.SsidLength)) अणु
+				अगर (check_fwstate(pmlmepriv,
+							WIFI_ADHOC_STATE)) अणु
+					अगर (pnetwork->network.
+						Infraकाष्ठाureMode
 						!=
 						padapter->mlmepriv.
 						cur_network.network.
-						InfrastructureMode)
-						continue;
-				}
+						Infraकाष्ठाureMode)
+						जारी;
+				पूर्ण
 
-				r8712_set_802_11_infrastructure_mode(
+				r8712_set_802_11_infraकाष्ठाure_mode(
 				     padapter,
-				     pnetwork->network.InfrastructureMode);
-				break;
-			}
-		}
+				     pnetwork->network.Infraकाष्ठाureMode);
+				अवरोध;
+			पूर्ण
+		पूर्ण
 		r8712_set_802_11_authentication_mode(padapter, authmode);
 		r8712_set_802_11_ssid(padapter, &ndis_ssid);
-	}
-	return -EINPROGRESS;
-}
+	पूर्ण
+	वापस -EINPROGRESS;
+पूर्ण
 
-static int r8711_wx_get_essid(struct net_device *dev,
-				struct iw_request_info *a,
-				union iwreq_data *wrqu, char *extra)
-{
-	struct _adapter *padapter = netdev_priv(dev);
-	struct mlme_priv *pmlmepriv = &padapter->mlmepriv;
-	struct wlan_bssid_ex *pcur_bss = &pmlmepriv->cur_network.network;
+अटल पूर्णांक r8711_wx_get_essid(काष्ठा net_device *dev,
+				काष्ठा iw_request_info *a,
+				जोड़ iwreq_data *wrqu, अक्षर *extra)
+अणु
+	काष्ठा _adapter *padapter = netdev_priv(dev);
+	काष्ठा mlme_priv *pmlmepriv = &padapter->mlmepriv;
+	काष्ठा wlan_bssid_ex *pcur_bss = &pmlmepriv->cur_network.network;
 	u32 len, ret = 0;
 
-	if (check_fwstate(pmlmepriv, _FW_LINKED | WIFI_ADHOC_MASTER_STATE)) {
+	अगर (check_fwstate(pmlmepriv, _FW_LINKED | WIFI_ADHOC_MASTER_STATE)) अणु
 		len = pcur_bss->Ssid.SsidLength;
 		wrqu->essid.length = len;
-		memcpy(extra, pcur_bss->Ssid.Ssid, len);
+		स_नकल(extra, pcur_bss->Ssid.Ssid, len);
 		wrqu->essid.flags = 1;
-	} else {
+	पूर्ण अन्यथा अणु
 		ret = -ENOLINK;
-	}
-	return ret;
-}
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static int r8711_wx_set_rate(struct net_device *dev,
-				struct iw_request_info *a,
-				union iwreq_data *wrqu, char *extra)
-{
-	struct _adapter *padapter = netdev_priv(dev);
+अटल पूर्णांक r8711_wx_set_rate(काष्ठा net_device *dev,
+				काष्ठा iw_request_info *a,
+				जोड़ iwreq_data *wrqu, अक्षर *extra)
+अणु
+	काष्ठा _adapter *padapter = netdev_priv(dev);
 	u32 target_rate = wrqu->bitrate.value;
 	u32 fixed = wrqu->bitrate.fixed;
 	u32 ratevalue = 0;
 	u8 datarates[NumRates];
-	u8 mpdatarate[NumRates] = {11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0, 0xff};
-	int i;
+	u8 mpdatarate[NumRates] = अणु11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0, 0xffपूर्ण;
+	पूर्णांक i;
 
-	if (target_rate == -1) {
+	अगर (target_rate == -1) अणु
 		ratevalue = 11;
-		goto set_rate;
-	}
+		जाओ set_rate;
+	पूर्ण
 	target_rate = target_rate / 100000;
-	switch (target_rate) {
-	case 10:
+	चयन (target_rate) अणु
+	हाल 10:
 		ratevalue = 0;
-		break;
-	case 20:
+		अवरोध;
+	हाल 20:
 		ratevalue = 1;
-		break;
-	case 55:
+		अवरोध;
+	हाल 55:
 		ratevalue = 2;
-		break;
-	case 60:
+		अवरोध;
+	हाल 60:
 		ratevalue = 3;
-		break;
-	case 90:
+		अवरोध;
+	हाल 90:
 		ratevalue = 4;
-		break;
-	case 110:
+		अवरोध;
+	हाल 110:
 		ratevalue = 5;
-		break;
-	case 120:
+		अवरोध;
+	हाल 120:
 		ratevalue = 6;
-		break;
-	case 180:
+		अवरोध;
+	हाल 180:
 		ratevalue = 7;
-		break;
-	case 240:
+		अवरोध;
+	हाल 240:
 		ratevalue = 8;
-		break;
-	case 360:
+		अवरोध;
+	हाल 360:
 		ratevalue = 9;
-		break;
-	case 480:
+		अवरोध;
+	हाल 480:
 		ratevalue = 10;
-		break;
-	case 540:
+		अवरोध;
+	हाल 540:
 		ratevalue = 11;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		ratevalue = 11;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 set_rate:
-	for (i = 0; i < NumRates; i++) {
-		if (ratevalue == mpdatarate[i]) {
+	क्रम (i = 0; i < NumRates; i++) अणु
+		अगर (ratevalue == mpdatarate[i]) अणु
 			datarates[i] = mpdatarate[i];
-			if (fixed == 0)
-				break;
-		} else {
+			अगर (fixed == 0)
+				अवरोध;
+		पूर्ण अन्यथा अणु
 			datarates[i] = 0xff;
-		}
-	}
-	return r8712_setdatarate_cmd(padapter, datarates);
-}
+		पूर्ण
+	पूर्ण
+	वापस r8712_setdatarate_cmd(padapter, datarates);
+पूर्ण
 
-static int r8711_wx_get_rate(struct net_device *dev,
-			     struct iw_request_info *info,
-			     union iwreq_data *wrqu, char *extra)
-{
-	struct _adapter *padapter = netdev_priv(dev);
-	struct mlme_priv *pmlmepriv = &padapter->mlmepriv;
-	struct wlan_bssid_ex *pcur_bss = &pmlmepriv->cur_network.network;
-	struct ieee80211_ht_cap *pht_capie;
-	unsigned char rf_type = padapter->registrypriv.rf_config;
-	int i;
+अटल पूर्णांक r8711_wx_get_rate(काष्ठा net_device *dev,
+			     काष्ठा iw_request_info *info,
+			     जोड़ iwreq_data *wrqu, अक्षर *extra)
+अणु
+	काष्ठा _adapter *padapter = netdev_priv(dev);
+	काष्ठा mlme_priv *pmlmepriv = &padapter->mlmepriv;
+	काष्ठा wlan_bssid_ex *pcur_bss = &pmlmepriv->cur_network.network;
+	काष्ठा ieee80211_ht_cap *pht_capie;
+	अचिन्हित अक्षर rf_type = padapter->registrypriv.rf_config;
+	पूर्णांक i;
 	u8 *p;
 	u16 rate, max_rate = 0, ht_cap = false;
 	u32 ht_ielen = 0;
-	u8 bw_40MHz = 0, short_GI = 0;
+	u8 bw_40MHz = 0, लघु_GI = 0;
 	u16 mcs_rate = 0;
 
 	i = 0;
-	if (!check_fwstate(pmlmepriv, _FW_LINKED | WIFI_ADHOC_MASTER_STATE))
-		return -ENOLINK;
+	अगर (!check_fwstate(pmlmepriv, _FW_LINKED | WIFI_ADHOC_MASTER_STATE))
+		वापस -ENOLINK;
 	p = r8712_get_ie(&pcur_bss->IEs[12], WLAN_EID_HT_CAPABILITY, &ht_ielen,
 			 pcur_bss->IELength - 12);
-	if (p && ht_ielen > 0) {
+	अगर (p && ht_ielen > 0) अणु
 		ht_cap = true;
-		pht_capie = (struct ieee80211_ht_cap *)(p + 2);
-		memcpy(&mcs_rate, &pht_capie->mcs, 2);
+		pht_capie = (काष्ठा ieee80211_ht_cap *)(p + 2);
+		स_नकल(&mcs_rate, &pht_capie->mcs, 2);
 		bw_40MHz = (le16_to_cpu(pht_capie->cap_info) &
 			    IEEE80211_HT_CAP_SUP_WIDTH_20_40) ? 1 : 0;
-		short_GI = (le16_to_cpu(pht_capie->cap_info) &
+		लघु_GI = (le16_to_cpu(pht_capie->cap_info) &
 			    (IEEE80211_HT_CAP_SGI_20 |
 			    IEEE80211_HT_CAP_SGI_40)) ? 1 : 0;
-	}
-	while ((pcur_bss->rates[i] != 0) &&
-	       (pcur_bss->rates[i] != 0xFF)) {
+	पूर्ण
+	जबतक ((pcur_bss->rates[i] != 0) &&
+	       (pcur_bss->rates[i] != 0xFF)) अणु
 		rate = pcur_bss->rates[i] & 0x7F;
-		if (rate > max_rate)
+		अगर (rate > max_rate)
 			max_rate = rate;
-		wrqu->bitrate.fixed = 0;	/* no auto select */
+		wrqu->bitrate.fixed = 0;	/* no स्वतः select */
 		wrqu->bitrate.value = rate * 500000;
 		i++;
-	}
-	if (ht_cap) {
-		if (mcs_rate & 0x8000 /* MCS15 */
+	पूर्ण
+	अगर (ht_cap) अणु
+		अगर (mcs_rate & 0x8000 /* MCS15 */
 		    &&
 		    rf_type == RTL8712_RF_2T2R)
-			max_rate = (bw_40MHz) ? ((short_GI) ? 300 : 270) :
-			((short_GI) ? 144 : 130);
-		else /* default MCS7 */
-			max_rate = (bw_40MHz) ? ((short_GI) ? 150 : 135) :
-			((short_GI) ? 72 : 65);
+			max_rate = (bw_40MHz) ? ((लघु_GI) ? 300 : 270) :
+			((लघु_GI) ? 144 : 130);
+		अन्यथा /* शेष MCS7 */
+			max_rate = (bw_40MHz) ? ((लघु_GI) ? 150 : 135) :
+			((लघु_GI) ? 72 : 65);
 		max_rate *= 2; /* Mbps/2 */
-	}
+	पूर्ण
 	wrqu->bitrate.value = max_rate * 500000;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int r8711_wx_get_rts(struct net_device *dev,
-				struct iw_request_info *info,
-				union iwreq_data *wrqu, char *extra)
-{
-	struct _adapter *padapter = netdev_priv(dev);
+अटल पूर्णांक r8711_wx_get_rts(काष्ठा net_device *dev,
+				काष्ठा iw_request_info *info,
+				जोड़ iwreq_data *wrqu, अक्षर *extra)
+अणु
+	काष्ठा _adapter *padapter = netdev_priv(dev);
 
 	wrqu->rts.value = padapter->registrypriv.rts_thresh;
-	wrqu->rts.fixed = 0;	/* no auto select */
-	return 0;
-}
+	wrqu->rts.fixed = 0;	/* no स्वतः select */
+	वापस 0;
+पूर्ण
 
-static int r8711_wx_set_frag(struct net_device *dev,
-				struct iw_request_info *info,
-				union iwreq_data *wrqu, char *extra)
-{
-	struct _adapter *padapter = netdev_priv(dev);
+अटल पूर्णांक r8711_wx_set_frag(काष्ठा net_device *dev,
+				काष्ठा iw_request_info *info,
+				जोड़ iwreq_data *wrqu, अक्षर *extra)
+अणु
+	काष्ठा _adapter *padapter = netdev_priv(dev);
 
-	if (wrqu->frag.disabled) {
+	अगर (wrqu->frag.disabled) अणु
 		padapter->xmitpriv.frag_len = MAX_FRAG_THRESHOLD;
-	} else {
-		if (wrqu->frag.value < MIN_FRAG_THRESHOLD ||
+	पूर्ण अन्यथा अणु
+		अगर (wrqu->frag.value < MIN_FRAG_THRESHOLD ||
 		    wrqu->frag.value > MAX_FRAG_THRESHOLD)
-			return -EINVAL;
+			वापस -EINVAL;
 		padapter->xmitpriv.frag_len = wrqu->frag.value & ~0x1;
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int r8711_wx_get_frag(struct net_device *dev,
-				struct iw_request_info *info,
-				union iwreq_data *wrqu, char *extra)
-{
-	struct _adapter *padapter = netdev_priv(dev);
+अटल पूर्णांक r8711_wx_get_frag(काष्ठा net_device *dev,
+				काष्ठा iw_request_info *info,
+				जोड़ iwreq_data *wrqu, अक्षर *extra)
+अणु
+	काष्ठा _adapter *padapter = netdev_priv(dev);
 
 	wrqu->frag.value = padapter->xmitpriv.frag_len;
-	wrqu->frag.fixed = 0;	/* no auto select */
-	return 0;
-}
+	wrqu->frag.fixed = 0;	/* no स्वतः select */
+	वापस 0;
+पूर्ण
 
-static int r8711_wx_get_retry(struct net_device *dev,
-				struct iw_request_info *info,
-				union iwreq_data *wrqu, char *extra)
-{
+अटल पूर्णांक r8711_wx_get_retry(काष्ठा net_device *dev,
+				काष्ठा iw_request_info *info,
+				जोड़ iwreq_data *wrqu, अक्षर *extra)
+अणु
 	wrqu->retry.value = 7;
-	wrqu->retry.fixed = 0;	/* no auto select */
+	wrqu->retry.fixed = 0;	/* no स्वतः select */
 	wrqu->retry.disabled = 1;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int r8711_wx_set_enc(struct net_device *dev,
-				struct iw_request_info *info,
-				union iwreq_data *wrqu, char *keybuf)
-{
+अटल पूर्णांक r8711_wx_set_enc(काष्ठा net_device *dev,
+				काष्ठा iw_request_info *info,
+				जोड़ iwreq_data *wrqu, अक्षर *keybuf)
+अणु
 	u32 key;
 	u32 keyindex_provided;
-	struct NDIS_802_11_WEP	 wep;
-	enum NDIS_802_11_AUTHENTICATION_MODE authmode;
-	struct iw_point *erq = &(wrqu->encoding);
-	struct _adapter *padapter = netdev_priv(dev);
+	काष्ठा NDIS_802_11_WEP	 wep;
+	क्रमागत NDIS_802_11_AUTHENTICATION_MODE authmode;
+	काष्ठा iw_poपूर्णांक *erq = &(wrqu->encoding);
+	काष्ठा _adapter *padapter = netdev_priv(dev);
 
 	key = erq->flags & IW_ENCODE_INDEX;
-	memset(&wep, 0, sizeof(struct NDIS_802_11_WEP));
-	if (erq->flags & IW_ENCODE_DISABLED) {
+	स_रखो(&wep, 0, माप(काष्ठा NDIS_802_11_WEP));
+	अगर (erq->flags & IW_ENCODE_DISABLED) अणु
 		netdev_info(dev, "r8712u: %s: EncryptionDisabled\n", __func__);
 		padapter->securitypriv.ndisencryptstatus =
 				 Ndis802_11EncryptionDisabled;
 		padapter->securitypriv.PrivacyAlgrthm = _NO_PRIVACY_;
 		padapter->securitypriv.XGrpPrivacy = _NO_PRIVACY_;
-		padapter->securitypriv.AuthAlgrthm = 0; /* open system */
+		padapter->securitypriv.AuthAlgrthm = 0; /* खोलो प्रणाली */
 		authmode = Ndis802_11AuthModeOpen;
 		padapter->securitypriv.ndisauthtype = authmode;
-		return 0;
-	}
-	if (key) {
-		if (key > WEP_KEYS)
-			return -EINVAL;
+		वापस 0;
+	पूर्ण
+	अगर (key) अणु
+		अगर (key > WEP_KEYS)
+			वापस -EINVAL;
 		key--;
 		keyindex_provided = 1;
-	} else {
+	पूर्ण अन्यथा अणु
 		keyindex_provided = 0;
 		key = padapter->securitypriv.PrivacyKeyIndex;
-	}
+	पूर्ण
 	/* set authentication mode */
-	if (erq->flags & IW_ENCODE_OPEN) {
+	अगर (erq->flags & IW_ENCODE_OPEN) अणु
 		netdev_info(dev, "r8712u: %s: IW_ENCODE_OPEN\n", __func__);
 		padapter->securitypriv.ndisencryptstatus =
 				 Ndis802_11Encryption1Enabled;
-		padapter->securitypriv.AuthAlgrthm = 0; /* open system */
+		padapter->securitypriv.AuthAlgrthm = 0; /* खोलो प्रणाली */
 		padapter->securitypriv.PrivacyAlgrthm = _NO_PRIVACY_;
 		padapter->securitypriv.XGrpPrivacy = _NO_PRIVACY_;
 		authmode = Ndis802_11AuthModeOpen;
 		padapter->securitypriv.ndisauthtype = authmode;
-	} else if (erq->flags & IW_ENCODE_RESTRICTED) {
+	पूर्ण अन्यथा अगर (erq->flags & IW_ENCODE_RESTRICTED) अणु
 		netdev_info(dev,
 				"r8712u: %s: IW_ENCODE_RESTRICTED\n", __func__);
 		padapter->securitypriv.ndisencryptstatus =
 				 Ndis802_11Encryption1Enabled;
-		padapter->securitypriv.AuthAlgrthm = 1; /* shared system */
+		padapter->securitypriv.AuthAlgrthm = 1; /* shared प्रणाली */
 		padapter->securitypriv.PrivacyAlgrthm = _WEP40_;
 		padapter->securitypriv.XGrpPrivacy = _WEP40_;
 		authmode = Ndis802_11AuthModeShared;
 		padapter->securitypriv.ndisauthtype = authmode;
-	} else {
+	पूर्ण अन्यथा अणु
 		padapter->securitypriv.ndisencryptstatus =
 				 Ndis802_11Encryption1Enabled;
-		padapter->securitypriv.AuthAlgrthm = 0; /* open system */
+		padapter->securitypriv.AuthAlgrthm = 0; /* खोलो प्रणाली */
 		padapter->securitypriv.PrivacyAlgrthm = _NO_PRIVACY_;
 		padapter->securitypriv.XGrpPrivacy = _NO_PRIVACY_;
 		authmode = Ndis802_11AuthModeOpen;
 		padapter->securitypriv.ndisauthtype = authmode;
-	}
+	पूर्ण
 	wep.KeyIndex = key;
-	if (erq->length > 0) {
+	अगर (erq->length > 0) अणु
 		wep.KeyLength = erq->length <= 5 ? 5 : 13;
 		wep.Length = wep.KeyLength +
-			     offsetof(struct NDIS_802_11_WEP, KeyMaterial);
-	} else {
+			     दुरत्व(काष्ठा NDIS_802_11_WEP, KeyMaterial);
+	पूर्ण अन्यथा अणु
 		wep.KeyLength = 0;
-		if (keyindex_provided == 1) { /* set key_id only, no given
+		अगर (keyindex_provided == 1) अणु /* set key_id only, no given
 					       * KeyMaterial(erq->length==0).
 					       */
 			padapter->securitypriv.PrivacyKeyIndex = key;
-			switch (padapter->securitypriv.DefKeylen[key]) {
-			case 5:
+			चयन (padapter->securitypriv.DefKeylen[key]) अणु
+			हाल 5:
 				padapter->securitypriv.PrivacyAlgrthm =
 						 _WEP40_;
-				break;
-			case 13:
+				अवरोध;
+			हाल 13:
 				padapter->securitypriv.PrivacyAlgrthm =
 						 _WEP104_;
-				break;
-			default:
+				अवरोध;
+			शेष:
 				padapter->securitypriv.PrivacyAlgrthm =
 						 _NO_PRIVACY_;
-				break;
-			}
-			return 0;
-		}
-	}
+				अवरोध;
+			पूर्ण
+			वापस 0;
+		पूर्ण
+	पूर्ण
 	wep.KeyIndex |= 0x80000000;	/* transmit key */
-	memcpy(wep.KeyMaterial, keybuf, wep.KeyLength);
-	if (r8712_set_802_11_add_wep(padapter, &wep))
-		return -EOPNOTSUPP;
-	return 0;
-}
+	स_नकल(wep.KeyMaterial, keybuf, wep.KeyLength);
+	अगर (r8712_set_802_11_add_wep(padapter, &wep))
+		वापस -EOPNOTSUPP;
+	वापस 0;
+पूर्ण
 
-static int r8711_wx_get_enc(struct net_device *dev,
-				struct iw_request_info *info,
-				union iwreq_data *wrqu, char *keybuf)
-{
-	uint key;
-	struct _adapter *padapter = netdev_priv(dev);
-	struct iw_point *erq = &(wrqu->encoding);
-	struct	mlme_priv	*pmlmepriv = &(padapter->mlmepriv);
-	union Keytype *dk = padapter->securitypriv.DefKey;
+अटल पूर्णांक r8711_wx_get_enc(काष्ठा net_device *dev,
+				काष्ठा iw_request_info *info,
+				जोड़ iwreq_data *wrqu, अक्षर *keybuf)
+अणु
+	uपूर्णांक key;
+	काष्ठा _adapter *padapter = netdev_priv(dev);
+	काष्ठा iw_poपूर्णांक *erq = &(wrqu->encoding);
+	काष्ठा	mlme_priv	*pmlmepriv = &(padapter->mlmepriv);
+	जोड़ Keytype *dk = padapter->securitypriv.DefKey;
 
-	if (!check_fwstate(pmlmepriv, _FW_LINKED)) {
-		if (!check_fwstate(pmlmepriv, WIFI_ADHOC_MASTER_STATE)) {
+	अगर (!check_fwstate(pmlmepriv, _FW_LINKED)) अणु
+		अगर (!check_fwstate(pmlmepriv, WIFI_ADHOC_MASTER_STATE)) अणु
 			erq->length = 0;
 			erq->flags |= IW_ENCODE_DISABLED;
-			return 0;
-		}
-	}
+			वापस 0;
+		पूर्ण
+	पूर्ण
 	key = erq->flags & IW_ENCODE_INDEX;
-	if (key) {
-		if (key > WEP_KEYS)
-			return -EINVAL;
+	अगर (key) अणु
+		अगर (key > WEP_KEYS)
+			वापस -EINVAL;
 		key--;
-	} else {
+	पूर्ण अन्यथा अणु
 		key = padapter->securitypriv.PrivacyKeyIndex;
-	}
+	पूर्ण
 	erq->flags = key + 1;
-	switch (padapter->securitypriv.ndisencryptstatus) {
-	case Ndis802_11EncryptionNotSupported:
-	case Ndis802_11EncryptionDisabled:
+	चयन (padapter->securitypriv.ndisencryptstatus) अणु
+	हाल Ndis802_11EncryptionNotSupported:
+	हाल Ndis802_11EncryptionDisabled:
 		erq->length = 0;
 		erq->flags |= IW_ENCODE_DISABLED;
-		break;
-	case Ndis802_11Encryption1Enabled:
+		अवरोध;
+	हाल Ndis802_11Encryption1Enabled:
 		erq->length = padapter->securitypriv.DefKeylen[key];
-		if (erq->length) {
-			memcpy(keybuf, dk[key].skey,
+		अगर (erq->length) अणु
+			स_नकल(keybuf, dk[key].skey,
 			       padapter->securitypriv.DefKeylen[key]);
 			erq->flags |= IW_ENCODE_ENABLED;
-			if (padapter->securitypriv.ndisauthtype ==
+			अगर (padapter->securitypriv.ndisauthtype ==
 			    Ndis802_11AuthModeOpen)
 				erq->flags |= IW_ENCODE_OPEN;
-			else if (padapter->securitypriv.ndisauthtype ==
+			अन्यथा अगर (padapter->securitypriv.ndisauthtype ==
 				 Ndis802_11AuthModeShared)
 				erq->flags |= IW_ENCODE_RESTRICTED;
-		} else {
+		पूर्ण अन्यथा अणु
 			erq->length = 0;
 			erq->flags |= IW_ENCODE_DISABLED;
-		}
-		break;
-	case Ndis802_11Encryption2Enabled:
-	case Ndis802_11Encryption3Enabled:
+		पूर्ण
+		अवरोध;
+	हाल Ndis802_11Encryption2Enabled:
+	हाल Ndis802_11Encryption3Enabled:
 		erq->length = 16;
 		erq->flags |= (IW_ENCODE_ENABLED | IW_ENCODE_OPEN |
 			       IW_ENCODE_NOKEY);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		erq->length = 0;
 		erq->flags |= IW_ENCODE_DISABLED;
-		break;
-	}
-	return 0;
-}
+		अवरोध;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int r8711_wx_get_power(struct net_device *dev,
-				struct iw_request_info *info,
-				union iwreq_data *wrqu, char *extra)
-{
-	wrqu->power.value = 0;
-	wrqu->power.fixed = 0;	/* no auto select */
-	wrqu->power.disabled = 1;
-	return 0;
-}
+अटल पूर्णांक r8711_wx_get_घातer(काष्ठा net_device *dev,
+				काष्ठा iw_request_info *info,
+				जोड़ iwreq_data *wrqu, अक्षर *extra)
+अणु
+	wrqu->घातer.value = 0;
+	wrqu->घातer.fixed = 0;	/* no स्वतः select */
+	wrqu->घातer.disabled = 1;
+	वापस 0;
+पूर्ण
 
-static int r871x_wx_set_gen_ie(struct net_device *dev,
-				struct iw_request_info *info,
-				union iwreq_data *wrqu, char *extra)
-{
-	struct _adapter *padapter = netdev_priv(dev);
+अटल पूर्णांक r871x_wx_set_gen_ie(काष्ठा net_device *dev,
+				काष्ठा iw_request_info *info,
+				जोड़ iwreq_data *wrqu, अक्षर *extra)
+अणु
+	काष्ठा _adapter *padapter = netdev_priv(dev);
 
-	return r871x_set_wpa_ie(padapter, extra, wrqu->data.length);
-}
+	वापस r871x_set_wpa_ie(padapter, extra, wrqu->data.length);
+पूर्ण
 
-static int r871x_wx_set_auth(struct net_device *dev,
-				struct iw_request_info *info,
-				union iwreq_data *wrqu, char *extra)
-{
-	struct _adapter *padapter = netdev_priv(dev);
-	struct iw_param *param = (struct iw_param *)&(wrqu->param);
-	int paramid;
-	int paramval;
-	int ret = 0;
+अटल पूर्णांक r871x_wx_set_auth(काष्ठा net_device *dev,
+				काष्ठा iw_request_info *info,
+				जोड़ iwreq_data *wrqu, अक्षर *extra)
+अणु
+	काष्ठा _adapter *padapter = netdev_priv(dev);
+	काष्ठा iw_param *param = (काष्ठा iw_param *)&(wrqu->param);
+	पूर्णांक paramid;
+	पूर्णांक paramval;
+	पूर्णांक ret = 0;
 
 	paramid = param->flags & IW_AUTH_INDEX;
 	paramval = param->value;
-	switch (paramid) {
-	case IW_AUTH_WPA_VERSION:
-		break;
-	case IW_AUTH_CIPHER_PAIRWISE:
-		break;
-	case IW_AUTH_CIPHER_GROUP:
-		break;
-	case IW_AUTH_KEY_MGMT:
+	चयन (paramid) अणु
+	हाल IW_AUTH_WPA_VERSION:
+		अवरोध;
+	हाल IW_AUTH_CIPHER_PAIRWISE:
+		अवरोध;
+	हाल IW_AUTH_CIPHER_GROUP:
+		अवरोध;
+	हाल IW_AUTH_KEY_MGMT:
 		/*
-		 *  ??? does not use these parameters
+		 *  ??? करोes not use these parameters
 		 */
-		break;
-	case IW_AUTH_TKIP_COUNTERMEASURES:
-		if (paramval) {
+		अवरोध;
+	हाल IW_AUTH_TKIP_COUNTERMEASURES:
+		अगर (paramval) अणु
 			/* wpa_supplicant is enabling tkip countermeasure. */
 			padapter->securitypriv.btkip_countermeasure = true;
-		} else {
+		पूर्ण अन्यथा अणु
 			/* wpa_supplicant is disabling tkip countermeasure. */
 			padapter->securitypriv.btkip_countermeasure = false;
-		}
-		break;
-	case IW_AUTH_DROP_UNENCRYPTED:
+		पूर्ण
+		अवरोध;
+	हाल IW_AUTH_DROP_UNENCRYPTED:
 		/* HACK:
 		 *
 		 * wpa_supplicant calls set_wpa_enabled when the driver
-		 * is loaded and unloaded, regardless of if WPA is being
+		 * is loaded and unloaded, regardless of अगर WPA is being
 		 * used.  No other calls are made which can be used to
-		 * determine if encryption will be used or not prior to
+		 * determine अगर encryption will be used or not prior to
 		 * association being expected.  If encryption is not being
-		 * used, drop_unencrypted is set to false, else true -- we
-		 * can use this to determine if the CAP_PRIVACY_ON bit should
+		 * used, drop_unencrypted is set to false, अन्यथा true -- we
+		 * can use this to determine अगर the CAP_PRIVACY_ON bit should
 		 * be set.
 		 */
-		if (padapter->securitypriv.ndisencryptstatus ==
-		    Ndis802_11Encryption1Enabled) {
+		अगर (padapter->securitypriv.ndisencryptstatus ==
+		    Ndis802_11Encryption1Enabled) अणु
 			/* it means init value, or using wep,
 			 * ndisencryptstatus =
 			 *	Ndis802_11Encryption1Enabled,
 			 * then it needn't reset it;
 			 */
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		if (paramval) {
+		अगर (paramval) अणु
 			padapter->securitypriv.ndisencryptstatus =
 				   Ndis802_11EncryptionDisabled;
 			padapter->securitypriv.PrivacyAlgrthm =
@@ -1730,466 +1731,466 @@ static int r871x_wx_set_auth(struct net_device *dev,
 			padapter->securitypriv.AuthAlgrthm = 0;
 			padapter->securitypriv.ndisauthtype =
 				  Ndis802_11AuthModeOpen;
-		}
-		break;
-	case IW_AUTH_80211_AUTH_ALG:
+		पूर्ण
+		अवरोध;
+	हाल IW_AUTH_80211_AUTH_ALG:
 		ret = wpa_set_auth_algs(dev, (u32)paramval);
-		break;
-	case IW_AUTH_WPA_ENABLED:
-		break;
-	case IW_AUTH_RX_UNENCRYPTED_EAPOL:
-		break;
-	case IW_AUTH_PRIVACY_INVOKED:
-		break;
-	default:
-		return -EOPNOTSUPP;
-	}
+		अवरोध;
+	हाल IW_AUTH_WPA_ENABLED:
+		अवरोध;
+	हाल IW_AUTH_RX_UNENCRYPTED_EAPOL:
+		अवरोध;
+	हाल IW_AUTH_PRIVACY_INVOKED:
+		अवरोध;
+	शेष:
+		वापस -EOPNOTSUPP;
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int r871x_wx_set_enc_ext(struct net_device *dev,
-			     struct iw_request_info *info,
-			     union iwreq_data *wrqu, char *extra)
-{
-	struct iw_point *pencoding = &wrqu->encoding;
-	struct iw_encode_ext *pext = (struct iw_encode_ext *)extra;
-	struct ieee_param *param = NULL;
-	char *alg_name;
+अटल पूर्णांक r871x_wx_set_enc_ext(काष्ठा net_device *dev,
+			     काष्ठा iw_request_info *info,
+			     जोड़ iwreq_data *wrqu, अक्षर *extra)
+अणु
+	काष्ठा iw_poपूर्णांक *pencoding = &wrqu->encoding;
+	काष्ठा iw_encode_ext *pext = (काष्ठा iw_encode_ext *)extra;
+	काष्ठा ieee_param *param = शून्य;
+	अक्षर *alg_name;
 	u32 param_len;
-	int ret = 0;
+	पूर्णांक ret = 0;
 
-	switch (pext->alg) {
-	case IW_ENCODE_ALG_NONE:
+	चयन (pext->alg) अणु
+	हाल IW_ENCODE_ALG_NONE:
 		alg_name = "none";
-		break;
-	case IW_ENCODE_ALG_WEP:
+		अवरोध;
+	हाल IW_ENCODE_ALG_WEP:
 		alg_name = "WEP";
-		break;
-	case IW_ENCODE_ALG_TKIP:
+		अवरोध;
+	हाल IW_ENCODE_ALG_TKIP:
 		alg_name = "TKIP";
-		break;
-	case IW_ENCODE_ALG_CCMP:
+		अवरोध;
+	हाल IW_ENCODE_ALG_CCMP:
 		alg_name = "CCMP";
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	param_len = sizeof(struct ieee_param) + pext->key_len;
+	param_len = माप(काष्ठा ieee_param) + pext->key_len;
 	param = kzalloc(param_len, GFP_ATOMIC);
-	if (!param)
-		return -ENOMEM;
+	अगर (!param)
+		वापस -ENOMEM;
 	param->cmd = IEEE_CMD_SET_ENCRYPTION;
 	eth_broadcast_addr(param->sta_addr);
-	strscpy((char *)param->u.crypt.alg, alg_name, IEEE_CRYPT_ALG_NAME_LEN);
-	if (pext->ext_flags & IW_ENCODE_EXT_GROUP_KEY)
+	strscpy((अक्षर *)param->u.crypt.alg, alg_name, IEEE_CRYPT_ALG_NAME_LEN);
+	अगर (pext->ext_flags & IW_ENCODE_EXT_GROUP_KEY)
 		param->u.crypt.set_tx = 0;
-	if (pext->ext_flags & IW_ENCODE_EXT_SET_TX_KEY)
+	अगर (pext->ext_flags & IW_ENCODE_EXT_SET_TX_KEY)
 		param->u.crypt.set_tx = 1;
 	param->u.crypt.idx = (pencoding->flags & 0x00FF) - 1;
-	if (pext->ext_flags & IW_ENCODE_EXT_RX_SEQ_VALID)
-		memcpy(param->u.crypt.seq, pext->rx_seq, 8);
-	if (pext->key_len) {
+	अगर (pext->ext_flags & IW_ENCODE_EXT_RX_SEQ_VALID)
+		स_नकल(param->u.crypt.seq, pext->rx_seq, 8);
+	अगर (pext->key_len) अणु
 		param->u.crypt.key_len = pext->key_len;
-		memcpy(param + 1, pext + 1, pext->key_len);
-	}
+		स_नकल(param + 1, pext + 1, pext->key_len);
+	पूर्ण
 	ret = wpa_set_encryption(dev, param, param_len);
-	kfree(param);
-	return ret;
-}
+	kमुक्त(param);
+	वापस ret;
+पूर्ण
 
-static int r871x_wx_get_nick(struct net_device *dev,
-			     struct iw_request_info *info,
-			     union iwreq_data *wrqu, char *extra)
-{
-	if (extra) {
+अटल पूर्णांक r871x_wx_get_nick(काष्ठा net_device *dev,
+			     काष्ठा iw_request_info *info,
+			     जोड़ iwreq_data *wrqu, अक्षर *extra)
+अणु
+	अगर (extra) अणु
 		wrqu->data.length = 8;
 		wrqu->data.flags = 1;
-		memcpy(extra, "rtl_wifi", 8);
-	}
-	return 0;
-}
+		स_नकल(extra, "rtl_wifi", 8);
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int r8711_wx_read32(struct net_device *dev,
-				struct iw_request_info *info,
-				union iwreq_data *wrqu, char *keybuf)
-{
-	struct _adapter *padapter = netdev_priv(dev);
+अटल पूर्णांक r8711_wx_पढ़ो32(काष्ठा net_device *dev,
+				काष्ठा iw_request_info *info,
+				जोड़ iwreq_data *wrqu, अक्षर *keybuf)
+अणु
+	काष्ठा _adapter *padapter = netdev_priv(dev);
 	u32 addr;
 	u32 data32;
 
-	get_user(addr, (u32 __user *)wrqu->data.pointer);
-	data32 = r8712_read32(padapter, addr);
-	put_user(data32, (u32 __user *)wrqu->data.pointer);
+	get_user(addr, (u32 __user *)wrqu->data.poपूर्णांकer);
+	data32 = r8712_पढ़ो32(padapter, addr);
+	put_user(data32, (u32 __user *)wrqu->data.poपूर्णांकer);
 	wrqu->data.length = (data32 & 0xffff0000) >> 16;
 	wrqu->data.flags = data32 & 0xffff;
-	get_user(addr, (u32 __user *)wrqu->data.pointer);
-	return 0;
-}
+	get_user(addr, (u32 __user *)wrqu->data.poपूर्णांकer);
+	वापस 0;
+पूर्ण
 
-static int r8711_wx_write32(struct net_device *dev,
-				 struct iw_request_info *info,
-				 union iwreq_data *wrqu, char *keybuf)
-{
-	struct _adapter *padapter = netdev_priv(dev);
+अटल पूर्णांक r8711_wx_ग_लिखो32(काष्ठा net_device *dev,
+				 काष्ठा iw_request_info *info,
+				 जोड़ iwreq_data *wrqu, अक्षर *keybuf)
+अणु
+	काष्ठा _adapter *padapter = netdev_priv(dev);
 	u32 addr;
 	u32 data32;
 
-	get_user(addr, (u32 __user *)wrqu->data.pointer);
+	get_user(addr, (u32 __user *)wrqu->data.poपूर्णांकer);
 	data32 = ((u32)wrqu->data.length << 16) | (u32)wrqu->data.flags;
-	r8712_write32(padapter, addr, data32);
-	return 0;
-}
+	r8712_ग_लिखो32(padapter, addr, data32);
+	वापस 0;
+पूर्ण
 
-static int dummy(struct net_device *dev,
-		struct iw_request_info *a,
-		union iwreq_data *wrqu, char *b)
-{
-	return -EINVAL;
-}
+अटल पूर्णांक dummy(काष्ठा net_device *dev,
+		काष्ठा iw_request_info *a,
+		जोड़ iwreq_data *wrqu, अक्षर *b)
+अणु
+	वापस -EINVAL;
+पूर्ण
 
-static int r8711_drvext_hdl(struct net_device *dev,
-				struct iw_request_info *info,
-				union iwreq_data *wrqu, char *extra)
-{
-	return 0;
-}
+अटल पूर्णांक r8711_drvext_hdl(काष्ठा net_device *dev,
+				काष्ठा iw_request_info *info,
+				जोड़ iwreq_data *wrqu, अक्षर *extra)
+अणु
+	वापस 0;
+पूर्ण
 
-static int r871x_mp_ioctl_hdl(struct net_device *dev,
-				struct iw_request_info *info,
-				union iwreq_data *wrqu, char *extra)
-{
-	struct _adapter *padapter = netdev_priv(dev);
-	struct iw_point *p = &wrqu->data;
-	struct oid_par_priv oid_par;
-	struct mp_ioctl_handler *phandler;
-	struct mp_ioctl_param *poidparam;
-	unsigned long BytesRead, BytesWritten, BytesNeeded;
+अटल पूर्णांक r871x_mp_ioctl_hdl(काष्ठा net_device *dev,
+				काष्ठा iw_request_info *info,
+				जोड़ iwreq_data *wrqu, अक्षर *extra)
+अणु
+	काष्ठा _adapter *padapter = netdev_priv(dev);
+	काष्ठा iw_poपूर्णांक *p = &wrqu->data;
+	काष्ठा oid_par_priv oid_par;
+	काष्ठा mp_ioctl_handler *phandler;
+	काष्ठा mp_ioctl_param *poidparam;
+	अचिन्हित दीर्घ BytesRead, BytesWritten, BytesNeeded;
 	u8 *pparmbuf, bset;
 	u16 len;
-	uint status;
-	int ret = 0;
+	uपूर्णांक status;
+	पूर्णांक ret = 0;
 
-	if ((!p->length) || (!p->pointer))
-		return -EINVAL;
+	अगर ((!p->length) || (!p->poपूर्णांकer))
+		वापस -EINVAL;
 
 	bset = (u8)(p->flags & 0xFFFF);
 	len = p->length;
-	pparmbuf = memdup_user(p->pointer, len);
-	if (IS_ERR(pparmbuf))
-		return PTR_ERR(pparmbuf);
+	pparmbuf = memdup_user(p->poपूर्णांकer, len);
+	अगर (IS_ERR(pparmbuf))
+		वापस PTR_ERR(pparmbuf);
 
-	poidparam = (struct mp_ioctl_param *)pparmbuf;
-	if (poidparam->subcode >= MAX_MP_IOCTL_SUBCODE) {
+	poidparam = (काष्ठा mp_ioctl_param *)pparmbuf;
+	अगर (poidparam->subcode >= MAX_MP_IOCTL_SUBCODE) अणु
 		ret = -EINVAL;
-		goto _r871x_mp_ioctl_hdl_exit;
-	}
+		जाओ _r871x_mp_ioctl_hdl_निकास;
+	पूर्ण
 	phandler = mp_ioctl_hdl + poidparam->subcode;
-	if ((phandler->paramsize != 0) &&
-	    (poidparam->len < phandler->paramsize)) {
+	अगर ((phandler->paramsize != 0) &&
+	    (poidparam->len < phandler->paramsize)) अणु
 		ret = -EINVAL;
-		goto _r871x_mp_ioctl_hdl_exit;
-	}
-	if (phandler->oid == 0 && phandler->handler) {
+		जाओ _r871x_mp_ioctl_hdl_निकास;
+	पूर्ण
+	अगर (phandler->oid == 0 && phandler->handler) अणु
 		status = phandler->handler(&oid_par);
-	} else if (phandler->handler) {
+	पूर्ण अन्यथा अगर (phandler->handler) अणु
 		oid_par.adapter_context = padapter;
 		oid_par.oid = phandler->oid;
-		oid_par.information_buf = poidparam->data;
-		oid_par.information_buf_len = poidparam->len;
+		oid_par.inक्रमmation_buf = poidparam->data;
+		oid_par.inक्रमmation_buf_len = poidparam->len;
 		oid_par.dbg = 0;
 		BytesWritten = 0;
 		BytesNeeded = 0;
-		if (bset) {
+		अगर (bset) अणु
 			oid_par.bytes_rw = &BytesRead;
 			oid_par.bytes_needed = &BytesNeeded;
 			oid_par.type_of_oid = SET_OID;
-		} else {
+		पूर्ण अन्यथा अणु
 			oid_par.bytes_rw = &BytesWritten;
 			oid_par.bytes_needed = &BytesNeeded;
 			oid_par.type_of_oid = QUERY_OID;
-		}
+		पूर्ण
 		status = phandler->handler(&oid_par);
-		/* todo:check status, BytesNeeded, etc. */
-	} else {
+		/* toकरो:check status, BytesNeeded, etc. */
+	पूर्ण अन्यथा अणु
 		netdev_info(dev, "r8712u: %s: err!, subcode=%d, oid=%d, handler=%p\n",
 			    __func__, poidparam->subcode, phandler->oid,
 			    phandler->handler);
 		ret = -EFAULT;
-		goto _r871x_mp_ioctl_hdl_exit;
-	}
-	if (bset == 0x00) { /* query info */
-		if (copy_to_user(p->pointer, pparmbuf, len))
+		जाओ _r871x_mp_ioctl_hdl_निकास;
+	पूर्ण
+	अगर (bset == 0x00) अणु /* query info */
+		अगर (copy_to_user(p->poपूर्णांकer, pparmbuf, len))
 			ret = -EFAULT;
-	}
-	if (status) {
+	पूर्ण
+	अगर (status) अणु
 		ret = -EFAULT;
-		goto _r871x_mp_ioctl_hdl_exit;
-	}
-_r871x_mp_ioctl_hdl_exit:
-	kfree(pparmbuf);
-	return ret;
-}
+		जाओ _r871x_mp_ioctl_hdl_निकास;
+	पूर्ण
+_r871x_mp_ioctl_hdl_निकास:
+	kमुक्त(pparmbuf);
+	वापस ret;
+पूर्ण
 
-static int r871x_get_ap_info(struct net_device *dev,
-				struct iw_request_info *info,
-				union iwreq_data *wrqu, char *extra)
-{
-	struct _adapter *padapter = netdev_priv(dev);
-	struct mlme_priv *pmlmepriv = &padapter->mlmepriv;
-	struct  __queue *queue = &pmlmepriv->scanned_queue;
-	struct iw_point *pdata = &wrqu->data;
-	struct wlan_network *pnetwork = NULL;
+अटल पूर्णांक r871x_get_ap_info(काष्ठा net_device *dev,
+				काष्ठा iw_request_info *info,
+				जोड़ iwreq_data *wrqu, अक्षर *extra)
+अणु
+	काष्ठा _adapter *padapter = netdev_priv(dev);
+	काष्ठा mlme_priv *pmlmepriv = &padapter->mlmepriv;
+	काष्ठा  __queue *queue = &pmlmepriv->scanned_queue;
+	काष्ठा iw_poपूर्णांक *pdata = &wrqu->data;
+	काष्ठा wlan_network *pnetwork = शून्य;
 	u32 cnt = 0, wpa_ielen;
-	unsigned long irqL;
-	struct list_head *plist, *phead;
-	unsigned char *pbuf;
+	अचिन्हित दीर्घ irqL;
+	काष्ठा list_head *plist, *phead;
+	अचिन्हित अक्षर *pbuf;
 	u8 bssid[ETH_ALEN];
-	char data[33];
+	अक्षर data[33];
 
-	if (padapter->driver_stopped || !pdata)
-		return -EINVAL;
-	while (check_fwstate(pmlmepriv, _FW_UNDER_SURVEY |
-			     _FW_UNDER_LINKING)) {
+	अगर (padapter->driver_stopped || !pdata)
+		वापस -EINVAL;
+	जबतक (check_fwstate(pmlmepriv, _FW_UNDER_SURVEY |
+			     _FW_UNDER_LINKING)) अणु
 		msleep(30);
 		cnt++;
-		if (cnt > 100)
-			break;
-	}
+		अगर (cnt > 100)
+			अवरोध;
+	पूर्ण
 	pdata->flags = 0;
-	if (pdata->length < 32)
-		return -EINVAL;
-	if (copy_from_user(data, pdata->pointer, 32))
-		return -EINVAL;
+	अगर (pdata->length < 32)
+		वापस -EINVAL;
+	अगर (copy_from_user(data, pdata->poपूर्णांकer, 32))
+		वापस -EINVAL;
 	data[32] = 0;
 
 	spin_lock_irqsave(&(pmlmepriv->scanned_queue.lock), irqL);
 	phead = &queue->queue;
 	plist = phead->next;
-	while (1) {
-		if (end_of_queue_search(phead, plist))
-			break;
-		pnetwork = container_of(plist, struct wlan_network, list);
-		if (!mac_pton(data, bssid)) {
+	जबतक (1) अणु
+		अगर (end_of_queue_search(phead, plist))
+			अवरोध;
+		pnetwork = container_of(plist, काष्ठा wlan_network, list);
+		अगर (!mac_pton(data, bssid)) अणु
 			netdev_info(dev, "r8712u: Invalid BSSID '%s'.\n",
 				    (u8 *)data);
 			spin_unlock_irqrestore(&(pmlmepriv->scanned_queue.lock),
 					       irqL);
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 		netdev_info(dev, "r8712u: BSSID:%pM\n", bssid);
-		if (ether_addr_equal(bssid, pnetwork->network.MacAddress)) {
-			/* BSSID match, then check if supporting wpa/wpa2 */
+		अगर (ether_addr_equal(bssid, pnetwork->network.MacAddress)) अणु
+			/* BSSID match, then check अगर supporting wpa/wpa2 */
 			pbuf = r8712_get_wpa_ie(&pnetwork->network.IEs[12],
 			       &wpa_ielen, pnetwork->network.IELength - 12);
-			if (pbuf && (wpa_ielen > 0)) {
+			अगर (pbuf && (wpa_ielen > 0)) अणु
 				pdata->flags = 1;
-				break;
-			}
+				अवरोध;
+			पूर्ण
 			pbuf = r8712_get_wpa2_ie(&pnetwork->network.IEs[12],
 			       &wpa_ielen, pnetwork->network.IELength - 12);
-			if (pbuf && (wpa_ielen > 0)) {
+			अगर (pbuf && (wpa_ielen > 0)) अणु
 				pdata->flags = 2;
-				break;
-			}
-		}
+				अवरोध;
+			पूर्ण
+		पूर्ण
 		plist = plist->next;
-	}
+	पूर्ण
 	spin_unlock_irqrestore(&(pmlmepriv->scanned_queue.lock), irqL);
-	if (pdata->length >= 34) {
-		if (copy_to_user((u8 __user *)pdata->pointer + 32,
+	अगर (pdata->length >= 34) अणु
+		अगर (copy_to_user((u8 __user *)pdata->poपूर्णांकer + 32,
 		    (u8 *)&pdata->flags, 1))
-			return -EINVAL;
-	}
-	return 0;
-}
+			वापस -EINVAL;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int r871x_set_pid(struct net_device *dev,
-				struct iw_request_info *info,
-				union iwreq_data *wrqu, char *extra)
-{
-	struct _adapter *padapter = netdev_priv(dev);
-	struct iw_point *pdata = &wrqu->data;
+अटल पूर्णांक r871x_set_pid(काष्ठा net_device *dev,
+				काष्ठा iw_request_info *info,
+				जोड़ iwreq_data *wrqu, अक्षर *extra)
+अणु
+	काष्ठा _adapter *padapter = netdev_priv(dev);
+	काष्ठा iw_poपूर्णांक *pdata = &wrqu->data;
 
-	if (padapter->driver_stopped || !pdata)
-		return -EINVAL;
-	if (copy_from_user(&padapter->pid, pdata->pointer, sizeof(int)))
-		return -EINVAL;
-	return 0;
-}
+	अगर (padapter->driver_stopped || !pdata)
+		वापस -EINVAL;
+	अगर (copy_from_user(&padapter->pid, pdata->poपूर्णांकer, माप(पूर्णांक)))
+		वापस -EINVAL;
+	वापस 0;
+पूर्ण
 
-static int r871x_set_chplan(struct net_device *dev,
-				struct iw_request_info *info,
-				union iwreq_data *wrqu, char *extra)
-{
-	int ret = 0;
-	struct _adapter *padapter = netdev_priv(dev);
-	struct iw_point *pdata = &wrqu->data;
-	int ch_plan = -1;
+अटल पूर्णांक r871x_set_chplan(काष्ठा net_device *dev,
+				काष्ठा iw_request_info *info,
+				जोड़ iwreq_data *wrqu, अक्षर *extra)
+अणु
+	पूर्णांक ret = 0;
+	काष्ठा _adapter *padapter = netdev_priv(dev);
+	काष्ठा iw_poपूर्णांक *pdata = &wrqu->data;
+	पूर्णांक ch_plan = -1;
 
-	if (padapter->driver_stopped || !pdata) {
+	अगर (padapter->driver_stopped || !pdata) अणु
 		ret = -EINVAL;
-		goto exit;
-	}
-	ch_plan = (int)*extra;
+		जाओ निकास;
+	पूर्ण
+	ch_plan = (पूर्णांक)*extra;
 	r8712_set_chplan_cmd(padapter, ch_plan);
 
-exit:
+निकास:
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int r871x_wps_start(struct net_device *dev,
-			   struct iw_request_info *info,
-			   union iwreq_data *wrqu, char *extra)
-{
-	struct _adapter *padapter = netdev_priv(dev);
-	struct iw_point *pdata = &wrqu->data;
+अटल पूर्णांक r871x_wps_start(काष्ठा net_device *dev,
+			   काष्ठा iw_request_info *info,
+			   जोड़ iwreq_data *wrqu, अक्षर *extra)
+अणु
+	काष्ठा _adapter *padapter = netdev_priv(dev);
+	काष्ठा iw_poपूर्णांक *pdata = &wrqu->data;
 	u32   u32wps_start = 0;
 
-	if (padapter->driver_stopped || !pdata)
-		return -EINVAL;
-	if (copy_from_user((void *)&u32wps_start, pdata->pointer, 4))
-		return -EFAULT;
-	if (u32wps_start == 0)
+	अगर (padapter->driver_stopped || !pdata)
+		वापस -EINVAL;
+	अगर (copy_from_user((व्योम *)&u32wps_start, pdata->poपूर्णांकer, 4))
+		वापस -EFAULT;
+	अगर (u32wps_start == 0)
 		u32wps_start = *extra;
-	if (u32wps_start == 1) /* WPS Start */
+	अगर (u32wps_start == 1) /* WPS Start */
 		padapter->ledpriv.LedControlHandler(padapter,
 			   LED_CTL_START_WPS);
-	else if (u32wps_start == 2) /* WPS Stop because of wps success */
+	अन्यथा अगर (u32wps_start == 2) /* WPS Stop because of wps success */
 		padapter->ledpriv.LedControlHandler(padapter,
 			   LED_CTL_STOP_WPS);
-	else if (u32wps_start == 3) /* WPS Stop because of wps fail */
+	अन्यथा अगर (u32wps_start == 3) /* WPS Stop because of wps fail */
 		padapter->ledpriv.LedControlHandler(padapter,
 			   LED_CTL_STOP_WPS_FAIL);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int wpa_set_param(struct net_device *dev, u8 name, u32 value)
-{
-	struct _adapter *padapter = netdev_priv(dev);
+अटल पूर्णांक wpa_set_param(काष्ठा net_device *dev, u8 name, u32 value)
+अणु
+	काष्ठा _adapter *padapter = netdev_priv(dev);
 
-	switch (name) {
-	case IEEE_PARAM_WPA_ENABLED:
+	चयन (name) अणु
+	हाल IEEE_PARAM_WPA_ENABLED:
 		padapter->securitypriv.AuthAlgrthm = 2; /* 802.1x */
-		switch ((value) & 0xff) {
-		case 1: /* WPA */
+		चयन ((value) & 0xff) अणु
+		हाल 1: /* WPA */
 			padapter->securitypriv.ndisauthtype =
 				Ndis802_11AuthModeWPAPSK; /* WPA_PSK */
 			padapter->securitypriv.ndisencryptstatus =
 				Ndis802_11Encryption2Enabled;
-			break;
-		case 2: /* WPA2 */
+			अवरोध;
+		हाल 2: /* WPA2 */
 			padapter->securitypriv.ndisauthtype =
 				Ndis802_11AuthModeWPA2PSK; /* WPA2_PSK */
 			padapter->securitypriv.ndisencryptstatus =
 				Ndis802_11Encryption3Enabled;
-			break;
-		}
-		break;
-	case IEEE_PARAM_TKIP_COUNTERMEASURES:
-		break;
-	case IEEE_PARAM_DROP_UNENCRYPTED:
+			अवरोध;
+		पूर्ण
+		अवरोध;
+	हाल IEEE_PARAM_TKIP_COUNTERMEASURES:
+		अवरोध;
+	हाल IEEE_PARAM_DROP_UNENCRYPTED:
 		/* HACK:
 		 *
 		 * wpa_supplicant calls set_wpa_enabled when the driver
-		 * is loaded and unloaded, regardless of if WPA is being
+		 * is loaded and unloaded, regardless of अगर WPA is being
 		 * used.  No other calls are made which can be used to
-		 * determine if encryption will be used or not prior to
+		 * determine अगर encryption will be used or not prior to
 		 * association being expected.  If encryption is not being
-		 * used, drop_unencrypted is set to false, else true -- we
-		 * can use this to determine if the CAP_PRIVACY_ON bit should
+		 * used, drop_unencrypted is set to false, अन्यथा true -- we
+		 * can use this to determine अगर the CAP_PRIVACY_ON bit should
 		 * be set.
 		 */
-		break;
-	case IEEE_PARAM_PRIVACY_INVOKED:
-		break;
-	case IEEE_PARAM_AUTH_ALGS:
-		return wpa_set_auth_algs(dev, value);
-	case IEEE_PARAM_IEEE_802_1X:
-		break;
-	case IEEE_PARAM_WPAX_SELECT:
-		/* added for WPA2 mixed mode */
-		break;
-	default:
-		return -EOPNOTSUPP;
-	}
-	return 0;
-}
+		अवरोध;
+	हाल IEEE_PARAM_PRIVACY_INVOKED:
+		अवरोध;
+	हाल IEEE_PARAM_AUTH_ALGS:
+		वापस wpa_set_auth_algs(dev, value);
+	हाल IEEE_PARAM_IEEE_802_1X:
+		अवरोध;
+	हाल IEEE_PARAM_WPAX_SELECT:
+		/* added क्रम WPA2 mixed mode */
+		अवरोध;
+	शेष:
+		वापस -EOPNOTSUPP;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int wpa_mlme(struct net_device *dev, u32 command, u32 reason)
-{
-	struct _adapter *padapter = netdev_priv(dev);
+अटल पूर्णांक wpa_mlme(काष्ठा net_device *dev, u32 command, u32 reason)
+अणु
+	काष्ठा _adapter *padapter = netdev_priv(dev);
 
-	switch (command) {
-	case IEEE_MLME_STA_DEAUTH:
-		if (!r8712_set_802_11_disassociate(padapter))
-			return -1;
-		break;
-	case IEEE_MLME_STA_DISASSOC:
-		if (!r8712_set_802_11_disassociate(padapter))
-			return -1;
-		break;
-	default:
-		return -EOPNOTSUPP;
-	}
-	return 0;
-}
+	चयन (command) अणु
+	हाल IEEE_MLME_STA_DEAUTH:
+		अगर (!r8712_set_802_11_disassociate(padapter))
+			वापस -1;
+		अवरोध;
+	हाल IEEE_MLME_STA_DISASSOC:
+		अगर (!r8712_set_802_11_disassociate(padapter))
+			वापस -1;
+		अवरोध;
+	शेष:
+		वापस -EOPNOTSUPP;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int wpa_supplicant_ioctl(struct net_device *dev, struct iw_point *p)
-{
-	struct ieee_param *param;
-	int ret = 0;
-	struct _adapter *padapter = netdev_priv(dev);
+अटल पूर्णांक wpa_supplicant_ioctl(काष्ठा net_device *dev, काष्ठा iw_poपूर्णांक *p)
+अणु
+	काष्ठा ieee_param *param;
+	पूर्णांक ret = 0;
+	काष्ठा _adapter *padapter = netdev_priv(dev);
 
-	if (p->length < sizeof(struct ieee_param) || !p->pointer)
-		return -EINVAL;
-	param = memdup_user(p->pointer, p->length);
-	if (IS_ERR(param))
-		return PTR_ERR(param);
-	switch (param->cmd) {
-	case IEEE_CMD_SET_WPA_PARAM:
+	अगर (p->length < माप(काष्ठा ieee_param) || !p->poपूर्णांकer)
+		वापस -EINVAL;
+	param = memdup_user(p->poपूर्णांकer, p->length);
+	अगर (IS_ERR(param))
+		वापस PTR_ERR(param);
+	चयन (param->cmd) अणु
+	हाल IEEE_CMD_SET_WPA_PARAM:
 		ret = wpa_set_param(dev, param->u.wpa_param.name,
 		      param->u.wpa_param.value);
-		break;
-	case IEEE_CMD_SET_WPA_IE:
-		ret =  r871x_set_wpa_ie(padapter, (char *)param->u.wpa_ie.data,
+		अवरोध;
+	हाल IEEE_CMD_SET_WPA_IE:
+		ret =  r871x_set_wpa_ie(padapter, (अक्षर *)param->u.wpa_ie.data,
 		       (u16)param->u.wpa_ie.len);
-		break;
-	case IEEE_CMD_SET_ENCRYPTION:
+		अवरोध;
+	हाल IEEE_CMD_SET_ENCRYPTION:
 		ret = wpa_set_encryption(dev, param, p->length);
-		break;
-	case IEEE_CMD_MLME:
+		अवरोध;
+	हाल IEEE_CMD_MLME:
 		ret = wpa_mlme(dev, param->u.mlme.command,
 		      param->u.mlme.reason_code);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		ret = -EOPNOTSUPP;
-		break;
-	}
-	if (ret == 0 && copy_to_user(p->pointer, param, p->length))
+		अवरोध;
+	पूर्ण
+	अगर (ret == 0 && copy_to_user(p->poपूर्णांकer, param, p->length))
 		ret = -EFAULT;
-	kfree(param);
-	return ret;
-}
+	kमुक्त(param);
+	वापस ret;
+पूर्ण
 
-/* based on "driver_ipw" and for hostapd */
-int r871x_ioctl(struct net_device *dev, struct ifreq *rq, int cmd)
-{
-	struct iwreq *wrq = (struct iwreq *)rq;
+/* based on "driver_ipw" and क्रम hostapd */
+पूर्णांक r871x_ioctl(काष्ठा net_device *dev, काष्ठा अगरreq *rq, पूर्णांक cmd)
+अणु
+	काष्ठा iwreq *wrq = (काष्ठा iwreq *)rq;
 
-	switch (cmd) {
-	case RTL_IOCTL_WPA_SUPPLICANT:
-		return wpa_supplicant_ioctl(dev, &wrq->u.data);
-	default:
-		return -EOPNOTSUPP;
-	}
-	return 0;
-}
+	चयन (cmd) अणु
+	हाल RTL_IOCTL_WPA_SUPPLICANT:
+		वापस wpa_supplicant_ioctl(dev, &wrq->u.data);
+	शेष:
+		वापस -EOPNOTSUPP;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static iw_handler r8711_handlers[] = {
-	NULL,				/* SIOCSIWCOMMIT */
+अटल iw_handler r8711_handlers[] = अणु
+	शून्य,				/* SIOCSIWCOMMIT */
 	r8711_wx_get_name,		/* SIOCGIWNAME */
 	dummy,				/* SIOCSIWNWID */
 	dummy,				/* SIOCGIWNWID */
@@ -2199,20 +2200,20 @@ static iw_handler r8711_handlers[] = {
 	r8711_wx_get_mode,		/* SIOCGIWMODE */
 	dummy,				/* SIOCSIWSENS */
 	r8711_wx_get_sens,		/* SIOCGIWSENS */
-	NULL,				/* SIOCSIWRANGE */
+	शून्य,				/* SIOCSIWRANGE */
 	r8711_wx_get_range,		/* SIOCGIWRANGE */
 	r871x_wx_set_priv,		/* SIOCSIWPRIV */
-	NULL,				/* SIOCGIWPRIV */
-	NULL,				/* SIOCSIWSTATS */
-	NULL,				/* SIOCGIWSTATS */
+	शून्य,				/* SIOCGIWPRIV */
+	शून्य,				/* SIOCSIWSTATS */
+	शून्य,				/* SIOCGIWSTATS */
 	dummy,				/* SIOCSIWSPY */
 	dummy,				/* SIOCGIWSPY */
-	NULL,				/* SIOCGIWTHRSPY */
-	NULL,				/* SIOCWIWTHRSPY */
+	शून्य,				/* SIOCGIWTHRSPY */
+	शून्य,				/* SIOCWIWTHRSPY */
 	r8711_wx_set_wap,		/* SIOCSIWAP */
 	r8711_wx_get_wap,		/* SIOCGIWAP */
 	r871x_wx_set_mlme,		/* request MLME operation;
-					 *  uses struct iw_mlme
+					 *  uses काष्ठा iw_mlme
 					 */
 	dummy,				/* SIOCGIWAPLIST -- deprecated */
 	r8711_wx_set_scan,		/* SIOCSIWSCAN */
@@ -2221,8 +2222,8 @@ static iw_handler r8711_handlers[] = {
 	r8711_wx_get_essid,		/* SIOCGIWESSID */
 	dummy,				/* SIOCSIWNICKN */
 	r871x_wx_get_nick,		/* SIOCGIWNICKN */
-	NULL,				/* -- hole -- */
-	NULL,				/* -- hole -- */
+	शून्य,				/* -- hole -- */
+	शून्य,				/* -- hole -- */
 	r8711_wx_set_rate,		/* SIOCSIWRATE */
 	r8711_wx_get_rate,		/* SIOCGIWRATE */
 	dummy,				/* SIOCSIWRTS */
@@ -2236,95 +2237,95 @@ static iw_handler r8711_handlers[] = {
 	r8711_wx_set_enc,		/* SIOCSIWENCODE */
 	r8711_wx_get_enc,		/* SIOCGIWENCODE */
 	dummy,				/* SIOCSIWPOWER */
-	r8711_wx_get_power,		/* SIOCGIWPOWER */
-	NULL,				/*---hole---*/
-	NULL,				/*---hole---*/
+	r8711_wx_get_घातer,		/* SIOCGIWPOWER */
+	शून्य,				/*---hole---*/
+	शून्य,				/*---hole---*/
 	r871x_wx_set_gen_ie,		/* SIOCSIWGENIE */
-	NULL,				/* SIOCGIWGENIE */
+	शून्य,				/* SIOCGIWGENIE */
 	r871x_wx_set_auth,		/* SIOCSIWAUTH */
-	NULL,				/* SIOCGIWAUTH */
+	शून्य,				/* SIOCGIWAUTH */
 	r871x_wx_set_enc_ext,		/* SIOCSIWENCODEEXT */
-	NULL,				/* SIOCGIWENCODEEXT */
+	शून्य,				/* SIOCGIWENCODEEXT */
 	r871x_wx_set_pmkid,		/* SIOCSIWPMKSA */
-	NULL,				/*---hole---*/
-};
+	शून्य,				/*---hole---*/
+पूर्ण;
 
-static const struct iw_priv_args r8711_private_args[] = {
-	{
+अटल स्थिर काष्ठा iw_priv_args r8711_निजी_args[] = अणु
+	अणु
 		SIOCIWFIRSTPRIV + 0x0,
 		IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, 0, "read32"
-	},
-	{
+	पूर्ण,
+	अणु
 		SIOCIWFIRSTPRIV + 0x1,
 		IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, 0, "write32"
-	},
-	{
+	पूर्ण,
+	अणु
 		SIOCIWFIRSTPRIV + 0x2, 0, 0, "driver_ext"
-	},
-	{
+	पूर्ण,
+	अणु
 		SIOCIWFIRSTPRIV + 0x3, 0, 0, "mp_ioctl"
-	},
-	{
+	पूर्ण,
+	अणु
 		SIOCIWFIRSTPRIV + 0x4,
 		IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, 0, "apinfo"
-	},
-	{
+	पूर्ण,
+	अणु
 		SIOCIWFIRSTPRIV + 0x5,
 		IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, 0, "setpid"
-	},
-	{
+	पूर्ण,
+	अणु
 		SIOCIWFIRSTPRIV + 0x6,
 		IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, 0, "wps_start"
-	},
-	{
+	पूर्ण,
+	अणु
 		SIOCIWFIRSTPRIV + 0x7,
 		IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, 0, "chplan"
-	}
-};
+	पूर्ण
+पूर्ण;
 
-static iw_handler r8711_private_handler[] = {
-	r8711_wx_read32,
-	r8711_wx_write32,
+अटल iw_handler r8711_निजी_handler[] = अणु
+	r8711_wx_पढ़ो32,
+	r8711_wx_ग_लिखो32,
 	r8711_drvext_hdl,
 	r871x_mp_ioctl_hdl,
-	r871x_get_ap_info, /*for MM DTV platform*/
+	r871x_get_ap_info, /*क्रम MM DTV platक्रमm*/
 	r871x_set_pid,
 	r871x_wps_start,
 	r871x_set_chplan
-};
+पूर्ण;
 
-static struct iw_statistics *r871x_get_wireless_stats(struct net_device *dev)
-{
-	struct _adapter *padapter = netdev_priv(dev);
-	struct iw_statistics *piwstats = &padapter->iwstats;
-	int tmp_level = 0;
-	int tmp_qual = 0;
-	int tmp_noise = 0;
+अटल काष्ठा iw_statistics *r871x_get_wireless_stats(काष्ठा net_device *dev)
+अणु
+	काष्ठा _adapter *padapter = netdev_priv(dev);
+	काष्ठा iw_statistics *piwstats = &padapter->iwstats;
+	पूर्णांक पंचांगp_level = 0;
+	पूर्णांक पंचांगp_qual = 0;
+	पूर्णांक पंचांगp_noise = 0;
 
-	if (check_fwstate(&padapter->mlmepriv, _FW_LINKED) != true) {
+	अगर (check_fwstate(&padapter->mlmepriv, _FW_LINKED) != true) अणु
 		piwstats->qual.qual = 0;
 		piwstats->qual.level = 0;
 		piwstats->qual.noise = 0;
-	} else {
+	पूर्ण अन्यथा अणु
 		/* show percentage, we need transfer dbm to original value. */
-		tmp_level = padapter->recvpriv.fw_rssi;
-		tmp_qual = padapter->recvpriv.signal;
-		tmp_noise = padapter->recvpriv.noise;
-		piwstats->qual.level = tmp_level;
-		piwstats->qual.qual = tmp_qual;
-		piwstats->qual.noise = tmp_noise;
-	}
+		पंचांगp_level = padapter->recvpriv.fw_rssi;
+		पंचांगp_qual = padapter->recvpriv.संकेत;
+		पंचांगp_noise = padapter->recvpriv.noise;
+		piwstats->qual.level = पंचांगp_level;
+		piwstats->qual.qual = पंचांगp_qual;
+		piwstats->qual.noise = पंचांगp_noise;
+	पूर्ण
 	piwstats->qual.updated = IW_QUAL_ALL_UPDATED;
-	return &padapter->iwstats;
-}
+	वापस &padapter->iwstats;
+पूर्ण
 
-struct iw_handler_def r871x_handlers_def = {
+काष्ठा iw_handler_def r871x_handlers_def = अणु
 	.standard = r8711_handlers,
 	.num_standard = ARRAY_SIZE(r8711_handlers),
-	.private = r8711_private_handler,
-	.private_args = (struct iw_priv_args *)r8711_private_args,
-	.num_private = ARRAY_SIZE(r8711_private_handler),
-	.num_private_args = sizeof(r8711_private_args) /
-			    sizeof(struct iw_priv_args),
+	.निजी = r8711_निजी_handler,
+	.निजी_args = (काष्ठा iw_priv_args *)r8711_निजी_args,
+	.num_निजी = ARRAY_SIZE(r8711_निजी_handler),
+	.num_निजी_args = माप(r8711_निजी_args) /
+			    माप(काष्ठा iw_priv_args),
 	.get_wireless_stats = r871x_get_wireless_stats
-};
+पूर्ण;

@@ -1,75 +1,76 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _LINUX_SEQ_FILE_H
-#define _LINUX_SEQ_FILE_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _LINUX_SEQ_खाता_H
+#घोषणा _LINUX_SEQ_खाता_H
 
-#include <linux/types.h>
-#include <linux/string.h>
-#include <linux/bug.h>
-#include <linux/mutex.h>
-#include <linux/cpumask.h>
-#include <linux/nodemask.h>
-#include <linux/fs.h>
-#include <linux/cred.h>
+#समावेश <linux/types.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/bug.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/cpumask.h>
+#समावेश <linux/nodemask.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/cred.h>
 
-struct seq_operations;
+काष्ठा seq_operations;
 
-struct seq_file {
-	char *buf;
-	size_t size;
-	size_t from;
-	size_t count;
-	size_t pad_until;
+काष्ठा seq_file अणु
+	अक्षर *buf;
+	माप_प्रकार size;
+	माप_प्रकार from;
+	माप_प्रकार count;
+	माप_प्रकार pad_until;
 	loff_t index;
-	loff_t read_pos;
-	struct mutex lock;
-	const struct seq_operations *op;
-	int poll_event;
-	const struct file *file;
-	void *private;
-};
+	loff_t पढ़ो_pos;
+	काष्ठा mutex lock;
+	स्थिर काष्ठा seq_operations *op;
+	पूर्णांक poll_event;
+	स्थिर काष्ठा file *file;
+	व्योम *निजी;
+पूर्ण;
 
-struct seq_operations {
-	void * (*start) (struct seq_file *m, loff_t *pos);
-	void (*stop) (struct seq_file *m, void *v);
-	void * (*next) (struct seq_file *m, void *v, loff_t *pos);
-	int (*show) (struct seq_file *m, void *v);
-};
+काष्ठा seq_operations अणु
+	व्योम * (*start) (काष्ठा seq_file *m, loff_t *pos);
+	व्योम (*stop) (काष्ठा seq_file *m, व्योम *v);
+	व्योम * (*next) (काष्ठा seq_file *m, व्योम *v, loff_t *pos);
+	पूर्णांक (*show) (काष्ठा seq_file *m, व्योम *v);
+पूर्ण;
 
-#define SEQ_SKIP 1
+#घोषणा SEQ_SKIP 1
 
 /**
- * seq_has_overflowed - check if the buffer has overflowed
+ * seq_has_overflowed - check अगर the buffer has overflowed
  * @m: the seq_file handle
  *
  * seq_files have a buffer which may overflow. When this happens a larger
- * buffer is reallocated and all the data will be printed again.
+ * buffer is पुनः_स्मृतिated and all the data will be prपूर्णांकed again.
  * The overflow state is true when m->count == m->size.
  *
- * Returns true if the buffer received more than it can hold.
+ * Returns true अगर the buffer received more than it can hold.
  */
-static inline bool seq_has_overflowed(struct seq_file *m)
-{
-	return m->count == m->size;
-}
+अटल अंतरभूत bool seq_has_overflowed(काष्ठा seq_file *m)
+अणु
+	वापस m->count == m->size;
+पूर्ण
 
 /**
- * seq_get_buf - get buffer to write arbitrary data to
+ * seq_get_buf - get buffer to ग_लिखो arbitrary data to
  * @m: the seq_file handle
  * @bufp: the beginning of the buffer is stored here
  *
- * Return the number of bytes available in the buffer, or zero if
+ * Return the number of bytes available in the buffer, or zero अगर
  * there's no space.
  */
-static inline size_t seq_get_buf(struct seq_file *m, char **bufp)
-{
+अटल अंतरभूत माप_प्रकार seq_get_buf(काष्ठा seq_file *m, अक्षर **bufp)
+अणु
 	BUG_ON(m->count > m->size);
-	if (m->count < m->size)
+	अगर (m->count < m->size)
 		*bufp = m->buf + m->count;
-	else
-		*bufp = NULL;
+	अन्यथा
+		*bufp = शून्य;
 
-	return m->size - m->count;
-}
+	वापस m->size - m->count;
+पूर्ण
 
 /**
  * seq_commit - commit data to the buffer
@@ -77,205 +78,205 @@ static inline size_t seq_get_buf(struct seq_file *m, char **bufp)
  * @num: the number of bytes to commit
  *
  * Commit @num bytes of data written to a buffer previously acquired
- * by seq_buf_get.  To signal an error condition, or that the data
+ * by seq_buf_get.  To संकेत an error condition, or that the data
  * didn't fit in the available space, pass a negative @num value.
  */
-static inline void seq_commit(struct seq_file *m, int num)
-{
-	if (num < 0) {
+अटल अंतरभूत व्योम seq_commit(काष्ठा seq_file *m, पूर्णांक num)
+अणु
+	अगर (num < 0) अणु
 		m->count = m->size;
-	} else {
+	पूर्ण अन्यथा अणु
 		BUG_ON(m->count + num > m->size);
 		m->count += num;
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
  * seq_setwidth - set padding width
  * @m: the seq_file handle
  * @size: the max number of bytes to pad.
  *
- * Call seq_setwidth() for setting max width, then call seq_printf() etc. and
- * finally call seq_pad() to pad the remaining bytes.
+ * Call seq_setwidth() क्रम setting max width, then call seq_म_लिखो() etc. and
+ * finally call seq_pad() to pad the reमुख्यing bytes.
  */
-static inline void seq_setwidth(struct seq_file *m, size_t size)
-{
+अटल अंतरभूत व्योम seq_setwidth(काष्ठा seq_file *m, माप_प्रकार size)
+अणु
 	m->pad_until = m->count + size;
-}
-void seq_pad(struct seq_file *m, char c);
+पूर्ण
+व्योम seq_pad(काष्ठा seq_file *m, अक्षर c);
 
-char *mangle_path(char *s, const char *p, const char *esc);
-int seq_open(struct file *, const struct seq_operations *);
-ssize_t seq_read(struct file *, char __user *, size_t, loff_t *);
-ssize_t seq_read_iter(struct kiocb *iocb, struct iov_iter *iter);
-loff_t seq_lseek(struct file *, loff_t, int);
-int seq_release(struct inode *, struct file *);
-int seq_write(struct seq_file *seq, const void *data, size_t len);
+अक्षर *mangle_path(अक्षर *s, स्थिर अक्षर *p, स्थिर अक्षर *esc);
+पूर्णांक seq_खोलो(काष्ठा file *, स्थिर काष्ठा seq_operations *);
+sमाप_प्रकार seq_पढ़ो(काष्ठा file *, अक्षर __user *, माप_प्रकार, loff_t *);
+sमाप_प्रकार seq_पढ़ो_iter(काष्ठा kiocb *iocb, काष्ठा iov_iter *iter);
+loff_t seq_lseek(काष्ठा file *, loff_t, पूर्णांक);
+पूर्णांक seq_release(काष्ठा inode *, काष्ठा file *);
+पूर्णांक seq_ग_लिखो(काष्ठा seq_file *seq, स्थिर व्योम *data, माप_प्रकार len);
 
-__printf(2, 0)
-void seq_vprintf(struct seq_file *m, const char *fmt, va_list args);
-__printf(2, 3)
-void seq_printf(struct seq_file *m, const char *fmt, ...);
-void seq_putc(struct seq_file *m, char c);
-void seq_puts(struct seq_file *m, const char *s);
-void seq_put_decimal_ull_width(struct seq_file *m, const char *delimiter,
-			       unsigned long long num, unsigned int width);
-void seq_put_decimal_ull(struct seq_file *m, const char *delimiter,
-			 unsigned long long num);
-void seq_put_decimal_ll(struct seq_file *m, const char *delimiter, long long num);
-void seq_put_hex_ll(struct seq_file *m, const char *delimiter,
-		    unsigned long long v, unsigned int width);
+__म_लिखो(2, 0)
+व्योम seq_भ_लिखो(काष्ठा seq_file *m, स्थिर अक्षर *fmt, बहु_सूची args);
+__म_लिखो(2, 3)
+व्योम seq_म_लिखो(काष्ठा seq_file *m, स्थिर अक्षर *fmt, ...);
+व्योम seq_अ_दो(काष्ठा seq_file *m, अक्षर c);
+व्योम seq_माला_दो(काष्ठा seq_file *m, स्थिर अक्षर *s);
+व्योम seq_put_decimal_ull_width(काष्ठा seq_file *m, स्थिर अक्षर *delimiter,
+			       अचिन्हित दीर्घ दीर्घ num, अचिन्हित पूर्णांक width);
+व्योम seq_put_decimal_ull(काष्ठा seq_file *m, स्थिर अक्षर *delimiter,
+			 अचिन्हित दीर्घ दीर्घ num);
+व्योम seq_put_decimal_ll(काष्ठा seq_file *m, स्थिर अक्षर *delimiter, दीर्घ दीर्घ num);
+व्योम seq_put_hex_ll(काष्ठा seq_file *m, स्थिर अक्षर *delimiter,
+		    अचिन्हित दीर्घ दीर्घ v, अचिन्हित पूर्णांक width);
 
-void seq_escape(struct seq_file *m, const char *s, const char *esc);
-void seq_escape_mem_ascii(struct seq_file *m, const char *src, size_t isz);
+व्योम seq_escape(काष्ठा seq_file *m, स्थिर अक्षर *s, स्थिर अक्षर *esc);
+व्योम seq_escape_mem_ascii(काष्ठा seq_file *m, स्थिर अक्षर *src, माप_प्रकार isz);
 
-void seq_hex_dump(struct seq_file *m, const char *prefix_str, int prefix_type,
-		  int rowsize, int groupsize, const void *buf, size_t len,
+व्योम seq_hex_dump(काष्ठा seq_file *m, स्थिर अक्षर *prefix_str, पूर्णांक prefix_type,
+		  पूर्णांक rowsize, पूर्णांक groupsize, स्थिर व्योम *buf, माप_प्रकार len,
 		  bool ascii);
 
-int seq_path(struct seq_file *, const struct path *, const char *);
-int seq_file_path(struct seq_file *, struct file *, const char *);
-int seq_dentry(struct seq_file *, struct dentry *, const char *);
-int seq_path_root(struct seq_file *m, const struct path *path,
-		  const struct path *root, const char *esc);
+पूर्णांक seq_path(काष्ठा seq_file *, स्थिर काष्ठा path *, स्थिर अक्षर *);
+पूर्णांक seq_file_path(काष्ठा seq_file *, काष्ठा file *, स्थिर अक्षर *);
+पूर्णांक seq_dentry(काष्ठा seq_file *, काष्ठा dentry *, स्थिर अक्षर *);
+पूर्णांक seq_path_root(काष्ठा seq_file *m, स्थिर काष्ठा path *path,
+		  स्थिर काष्ठा path *root, स्थिर अक्षर *esc);
 
-int single_open(struct file *, int (*)(struct seq_file *, void *), void *);
-int single_open_size(struct file *, int (*)(struct seq_file *, void *), void *, size_t);
-int single_release(struct inode *, struct file *);
-void *__seq_open_private(struct file *, const struct seq_operations *, int);
-int seq_open_private(struct file *, const struct seq_operations *, int);
-int seq_release_private(struct inode *, struct file *);
+पूर्णांक single_खोलो(काष्ठा file *, पूर्णांक (*)(काष्ठा seq_file *, व्योम *), व्योम *);
+पूर्णांक single_खोलो_size(काष्ठा file *, पूर्णांक (*)(काष्ठा seq_file *, व्योम *), व्योम *, माप_प्रकार);
+पूर्णांक single_release(काष्ठा inode *, काष्ठा file *);
+व्योम *__seq_खोलो_निजी(काष्ठा file *, स्थिर काष्ठा seq_operations *, पूर्णांक);
+पूर्णांक seq_खोलो_निजी(काष्ठा file *, स्थिर काष्ठा seq_operations *, पूर्णांक);
+पूर्णांक seq_release_निजी(काष्ठा inode *, काष्ठा file *);
 
-#ifdef CONFIG_BINARY_PRINTF
-void seq_bprintf(struct seq_file *m, const char *f, const u32 *binary);
-#endif
+#अगर_घोषित CONFIG_BINARY_PRINTF
+व्योम seq_bम_लिखो(काष्ठा seq_file *m, स्थिर अक्षर *f, स्थिर u32 *binary);
+#पूर्ण_अगर
 
-#define DEFINE_SEQ_ATTRIBUTE(__name)					\
-static int __name ## _open(struct inode *inode, struct file *file)	\
-{									\
-	int ret = seq_open(file, &__name ## _sops);			\
-	if (!ret && inode->i_private) {					\
-		struct seq_file *seq_f = file->private_data;		\
-		seq_f->private = inode->i_private;			\
-	}								\
-	return ret;							\
-}									\
+#घोषणा DEFINE_SEQ_ATTRIBUTE(__name)					\
+अटल पूर्णांक __name ## _खोलो(काष्ठा inode *inode, काष्ठा file *file)	\
+अणु									\
+	पूर्णांक ret = seq_खोलो(file, &__name ## _sops);			\
+	अगर (!ret && inode->i_निजी) अणु					\
+		काष्ठा seq_file *seq_f = file->निजी_data;		\
+		seq_f->निजी = inode->i_निजी;			\
+	पूर्ण								\
+	वापस ret;							\
+पूर्ण									\
 									\
-static const struct file_operations __name ## _fops = {			\
+अटल स्थिर काष्ठा file_operations __name ## _fops = अणु			\
 	.owner		= THIS_MODULE,					\
-	.open		= __name ## _open,				\
-	.read		= seq_read,					\
+	.खोलो		= __name ## _खोलो,				\
+	.पढ़ो		= seq_पढ़ो,					\
 	.llseek		= seq_lseek,					\
 	.release	= seq_release,					\
-}
+पूर्ण
 
-#define DEFINE_SHOW_ATTRIBUTE(__name)					\
-static int __name ## _open(struct inode *inode, struct file *file)	\
-{									\
-	return single_open(file, __name ## _show, inode->i_private);	\
-}									\
+#घोषणा DEFINE_SHOW_ATTRIBUTE(__name)					\
+अटल पूर्णांक __name ## _खोलो(काष्ठा inode *inode, काष्ठा file *file)	\
+अणु									\
+	वापस single_खोलो(file, __name ## _show, inode->i_निजी);	\
+पूर्ण									\
 									\
-static const struct file_operations __name ## _fops = {			\
+अटल स्थिर काष्ठा file_operations __name ## _fops = अणु			\
 	.owner		= THIS_MODULE,					\
-	.open		= __name ## _open,				\
-	.read		= seq_read,					\
+	.खोलो		= __name ## _खोलो,				\
+	.पढ़ो		= seq_पढ़ो,					\
 	.llseek		= seq_lseek,					\
 	.release	= single_release,				\
-}
+पूर्ण
 
-#define DEFINE_PROC_SHOW_ATTRIBUTE(__name)				\
-static int __name ## _open(struct inode *inode, struct file *file)	\
-{									\
-	return single_open(file, __name ## _show, inode->i_private);	\
-}									\
+#घोषणा DEFINE_PROC_SHOW_ATTRIBUTE(__name)				\
+अटल पूर्णांक __name ## _खोलो(काष्ठा inode *inode, काष्ठा file *file)	\
+अणु									\
+	वापस single_खोलो(file, __name ## _show, inode->i_निजी);	\
+पूर्ण									\
 									\
-static const struct proc_ops __name ## _proc_ops = {			\
-	.proc_open	= __name ## _open,				\
-	.proc_read	= seq_read,					\
+अटल स्थिर काष्ठा proc_ops __name ## _proc_ops = अणु			\
+	.proc_खोलो	= __name ## _खोलो,				\
+	.proc_पढ़ो	= seq_पढ़ो,					\
 	.proc_lseek	= seq_lseek,					\
 	.proc_release	= single_release,				\
-}
+पूर्ण
 
-static inline struct user_namespace *seq_user_ns(struct seq_file *seq)
-{
-#ifdef CONFIG_USER_NS
-	return seq->file->f_cred->user_ns;
-#else
-	extern struct user_namespace init_user_ns;
-	return &init_user_ns;
-#endif
-}
+अटल अंतरभूत काष्ठा user_namespace *seq_user_ns(काष्ठा seq_file *seq)
+अणु
+#अगर_घोषित CONFIG_USER_NS
+	वापस seq->file->f_cred->user_ns;
+#अन्यथा
+	बाह्य काष्ठा user_namespace init_user_ns;
+	वापस &init_user_ns;
+#पूर्ण_अगर
+पूर्ण
 
 /**
  * seq_show_options - display mount options with appropriate escapes.
  * @m: the seq_file handle
  * @name: the mount option name
- * @value: the mount option name's value, can be NULL
+ * @value: the mount option name's value, can be शून्य
  */
-static inline void seq_show_option(struct seq_file *m, const char *name,
-				   const char *value)
-{
-	seq_putc(m, ',');
+अटल अंतरभूत व्योम seq_show_option(काष्ठा seq_file *m, स्थिर अक्षर *name,
+				   स्थिर अक्षर *value)
+अणु
+	seq_अ_दो(m, ',');
 	seq_escape(m, name, ",= \t\n\\");
-	if (value) {
-		seq_putc(m, '=');
+	अगर (value) अणु
+		seq_अ_दो(m, '=');
 		seq_escape(m, value, ", \t\n\\");
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
  * seq_show_option_n - display mount options with appropriate escapes
- *		       where @value must be a specific length.
+ *		       where @value must be a specअगरic length.
  * @m: the seq_file handle
  * @name: the mount option name
- * @value: the mount option name's value, cannot be NULL
+ * @value: the mount option name's value, cannot be शून्य
  * @length: the length of @value to display
  *
  * This is a macro since this uses "length" to define the size of the
  * stack buffer.
  */
-#define seq_show_option_n(m, name, value, length) {	\
-	char val_buf[length + 1];			\
-	strncpy(val_buf, value, length);		\
+#घोषणा seq_show_option_n(m, name, value, length) अणु	\
+	अक्षर val_buf[length + 1];			\
+	म_नकलन(val_buf, value, length);		\
 	val_buf[length] = '\0';				\
 	seq_show_option(m, name, val_buf);		\
-}
+पूर्ण
 
-#define SEQ_START_TOKEN ((void *)1)
+#घोषणा SEQ_START_TOKEN ((व्योम *)1)
 /*
- * Helpers for iteration over list_head-s in seq_files
+ * Helpers क्रम iteration over list_head-s in seq_files
  */
 
-extern struct list_head *seq_list_start(struct list_head *head,
+बाह्य काष्ठा list_head *seq_list_start(काष्ठा list_head *head,
 		loff_t pos);
-extern struct list_head *seq_list_start_head(struct list_head *head,
+बाह्य काष्ठा list_head *seq_list_start_head(काष्ठा list_head *head,
 		loff_t pos);
-extern struct list_head *seq_list_next(void *v, struct list_head *head,
+बाह्य काष्ठा list_head *seq_list_next(व्योम *v, काष्ठा list_head *head,
 		loff_t *ppos);
 
 /*
- * Helpers for iteration over hlist_head-s in seq_files
+ * Helpers क्रम iteration over hlist_head-s in seq_files
  */
 
-extern struct hlist_node *seq_hlist_start(struct hlist_head *head,
+बाह्य काष्ठा hlist_node *seq_hlist_start(काष्ठा hlist_head *head,
 					  loff_t pos);
-extern struct hlist_node *seq_hlist_start_head(struct hlist_head *head,
+बाह्य काष्ठा hlist_node *seq_hlist_start_head(काष्ठा hlist_head *head,
 					       loff_t pos);
-extern struct hlist_node *seq_hlist_next(void *v, struct hlist_head *head,
+बाह्य काष्ठा hlist_node *seq_hlist_next(व्योम *v, काष्ठा hlist_head *head,
 					 loff_t *ppos);
 
-extern struct hlist_node *seq_hlist_start_rcu(struct hlist_head *head,
+बाह्य काष्ठा hlist_node *seq_hlist_start_rcu(काष्ठा hlist_head *head,
 					      loff_t pos);
-extern struct hlist_node *seq_hlist_start_head_rcu(struct hlist_head *head,
+बाह्य काष्ठा hlist_node *seq_hlist_start_head_rcu(काष्ठा hlist_head *head,
 						   loff_t pos);
-extern struct hlist_node *seq_hlist_next_rcu(void *v,
-						   struct hlist_head *head,
+बाह्य काष्ठा hlist_node *seq_hlist_next_rcu(व्योम *v,
+						   काष्ठा hlist_head *head,
 						   loff_t *ppos);
 
-/* Helpers for iterating over per-cpu hlist_head-s in seq_files */
-extern struct hlist_node *seq_hlist_start_percpu(struct hlist_head __percpu *head, int *cpu, loff_t pos);
+/* Helpers क्रम iterating over per-cpu hlist_head-s in seq_files */
+बाह्य काष्ठा hlist_node *seq_hlist_start_percpu(काष्ठा hlist_head __percpu *head, पूर्णांक *cpu, loff_t pos);
 
-extern struct hlist_node *seq_hlist_next_percpu(void *v, struct hlist_head __percpu *head, int *cpu, loff_t *pos);
+बाह्य काष्ठा hlist_node *seq_hlist_next_percpu(व्योम *v, काष्ठा hlist_head __percpu *head, पूर्णांक *cpu, loff_t *pos);
 
-void seq_file_init(void);
-#endif
+व्योम seq_file_init(व्योम);
+#पूर्ण_अगर

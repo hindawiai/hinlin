@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  *
  * Hardware accelerated Matrox Millennium I, II, Mystique, G100, G200, G400 and G450.
@@ -11,34 +12,34 @@
  *
  */
 
-#include "matroxfb_maven.h"
-#include "matroxfb_crtc2.h"
-#include "matroxfb_misc.h"
-#include "matroxfb_DAC1064.h"
-#include <linux/matroxfb.h>
-#include <linux/slab.h>
-#include <linux/uaccess.h>
+#समावेश "matroxfb_maven.h"
+#समावेश "matroxfb_crtc2.h"
+#समावेश "matroxfb_misc.h"
+#समावेश "matroxfb_DAC1064.h"
+#समावेश <linux/matroxfb.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/uaccess.h>
 
 /* **************************************************** */
 
-static int mem = 8192;
+अटल पूर्णांक mem = 8192;
 
-module_param(mem, int, 0);
+module_param(mem, पूर्णांक, 0);
 MODULE_PARM_DESC(mem, "Memory size reserved for dualhead (default=8MB)");
 
 /* **************************************************** */
 
-static int matroxfb_dh_setcolreg(unsigned regno, unsigned red, unsigned green,
-		unsigned blue, unsigned transp, struct fb_info* info) {
-	u_int32_t col;
-#define m2info (container_of(info, struct matroxfb_dh_fb_info, fbcon))
+अटल पूर्णांक matroxfb_dh_setcolreg(अचिन्हित regno, अचिन्हित red, अचिन्हित green,
+		अचिन्हित blue, अचिन्हित transp, काष्ठा fb_info* info) अणु
+	u_पूर्णांक32_t col;
+#घोषणा m2info (container_of(info, काष्ठा matroxfb_dh_fb_info, fbcon))
 
-	if (regno >= 16)
-		return 1;
-	if (m2info->fbcon.var.grayscale) {
+	अगर (regno >= 16)
+		वापस 1;
+	अगर (m2info->fbcon.var.grayscale) अणु
 		/* gray = 0.30*R + 0.59*G + 0.11*B */
 		red = green = blue = (red * 77 + green * 151 + blue * 28) >> 8;
-	}
+	पूर्ण
 	red = CNVT_TOHW(red, m2info->fbcon.var.red.length);
 	green = CNVT_TOHW(green, m2info->fbcon.var.green.length);
 	blue = CNVT_TOHW(blue, m2info->fbcon.var.blue.length);
@@ -49,174 +50,174 @@ static int matroxfb_dh_setcolreg(unsigned regno, unsigned red, unsigned green,
 	      (blue << m2info->fbcon.var.blue.offset)   |
 	      (transp << m2info->fbcon.var.transp.offset);
 
-	switch (m2info->fbcon.var.bits_per_pixel) {
-		case 16:
+	चयन (m2info->fbcon.var.bits_per_pixel) अणु
+		हाल 16:
 			m2info->cmap[regno] = col | (col << 16);
-			break;
-		case 32:
+			अवरोध;
+		हाल 32:
 			m2info->cmap[regno] = col;
-			break;
-	}
-	return 0;
-#undef m2info
-}
+			अवरोध;
+	पूर्ण
+	वापस 0;
+#अघोषित m2info
+पूर्ण
 
-static void matroxfb_dh_restore(struct matroxfb_dh_fb_info* m2info,
-		struct my_timming* mt,
-		int mode,
-		unsigned int pos) {
-	u_int32_t tmp;
-	u_int32_t datactl;
-	struct matrox_fb_info *minfo = m2info->primary_dev;
+अटल व्योम matroxfb_dh_restore(काष्ठा matroxfb_dh_fb_info* m2info,
+		काष्ठा my_timming* mt,
+		पूर्णांक mode,
+		अचिन्हित पूर्णांक pos) अणु
+	u_पूर्णांक32_t पंचांगp;
+	u_पूर्णांक32_t datactl;
+	काष्ठा matrox_fb_info *minfo = m2info->primary_dev;
 
-	switch (mode) {
-		case 15:
-			tmp = 0x00200000;
-			break;
-		case 16:
-			tmp = 0x00400000;
-			break;
-/*		case 32: */
-		default:
-			tmp = 0x00800000;
-			break;
-	}
-	tmp |= 0x00000001;	/* enable CRTC2 */
+	चयन (mode) अणु
+		हाल 15:
+			पंचांगp = 0x00200000;
+			अवरोध;
+		हाल 16:
+			पंचांगp = 0x00400000;
+			अवरोध;
+/*		हाल 32: */
+		शेष:
+			पंचांगp = 0x00800000;
+			अवरोध;
+	पूर्ण
+	पंचांगp |= 0x00000001;	/* enable CRTC2 */
 	datactl = 0;
-	if (minfo->outputs[1].src == MATROXFB_SRC_CRTC2) {
-		if (minfo->devflags.g450dac) {
-			tmp |= 0x00000006; /* source from secondary pixel PLL */
+	अगर (minfo->outमाला_दो[1].src == MATROXFB_SRC_CRTC2) अणु
+		अगर (minfo->devflags.g450dac) अणु
+			पंचांगp |= 0x00000006; /* source from secondary pixel PLL */
 			/* no vidrst when in monitor mode */
-			if (minfo->outputs[1].mode != MATROXFB_OUTPUT_MODE_MONITOR) {
-				tmp |=  0xC0001000; /* Enable H/V vidrst */
-			}
-		} else {
-			tmp |= 0x00000002; /* source from VDOCLK */
-			tmp |= 0xC0000000; /* enable vvidrst & hvidrst */
-			/* MGA TVO is our clock source */
-		}
-	} else if (minfo->outputs[0].src == MATROXFB_SRC_CRTC2) {
-		tmp |= 0x00000004; /* source from pixclock */
-		/* PIXPLL is our clock source */
-	}
-	if (minfo->outputs[0].src == MATROXFB_SRC_CRTC2) {
-		tmp |= 0x00100000;	/* connect CRTC2 to DAC */
-	}
-	if (mt->interlaced) {
-		tmp |= 0x02000000;	/* interlaced, second field is bigger, as G450 apparently ignores it */
+			अगर (minfo->outमाला_दो[1].mode != MATROXFB_OUTPUT_MODE_MONITOR) अणु
+				पंचांगp |=  0xC0001000; /* Enable H/V vidrst */
+			पूर्ण
+		पूर्ण अन्यथा अणु
+			पंचांगp |= 0x00000002; /* source from VDOCLK */
+			पंचांगp |= 0xC0000000; /* enable vvidrst & hvidrst */
+			/* MGA TVO is our घड़ी source */
+		पूर्ण
+	पूर्ण अन्यथा अगर (minfo->outमाला_दो[0].src == MATROXFB_SRC_CRTC2) अणु
+		पंचांगp |= 0x00000004; /* source from pixघड़ी */
+		/* PIXPLL is our घड़ी source */
+	पूर्ण
+	अगर (minfo->outमाला_दो[0].src == MATROXFB_SRC_CRTC2) अणु
+		पंचांगp |= 0x00100000;	/* connect CRTC2 to DAC */
+	पूर्ण
+	अगर (mt->पूर्णांकerlaced) अणु
+		पंचांगp |= 0x02000000;	/* पूर्णांकerlaced, second field is bigger, as G450 apparently ignores it */
 		mt->VDisplay >>= 1;
 		mt->VSyncStart >>= 1;
 		mt->VSyncEnd >>= 1;
 		mt->VTotal >>= 1;
-	}
-	if ((mt->HTotal & 7) == 2) {
+	पूर्ण
+	अगर ((mt->HTotal & 7) == 2) अणु
 		datactl |= 0x00000010;
 		mt->HTotal &= ~7;
-	}
-	tmp |= 0x10000000;	/* 0x10000000 is VIDRST polarity */
+	पूर्ण
+	पंचांगp |= 0x10000000;	/* 0x10000000 is VIDRST polarity */
 	mga_outl(0x3C14, ((mt->HDisplay - 8) << 16) | (mt->HTotal - 8));
 	mga_outl(0x3C18, ((mt->HSyncEnd - 8) << 16) | (mt->HSyncStart - 8));
 	mga_outl(0x3C1C, ((mt->VDisplay - 1) << 16) | (mt->VTotal - 1));
 	mga_outl(0x3C20, ((mt->VSyncEnd - 1) << 16) | (mt->VSyncStart - 1));
 	mga_outl(0x3C24, ((mt->VSyncStart) << 16) | (mt->HSyncStart));	/* preload */
-	{
-		u_int32_t linelen = m2info->fbcon.var.xres_virtual * (m2info->fbcon.var.bits_per_pixel >> 3);
-		if (tmp & 0x02000000) {
+	अणु
+		u_पूर्णांक32_t linelen = m2info->fbcon.var.xres_भव * (m2info->fbcon.var.bits_per_pixel >> 3);
+		अगर (पंचांगp & 0x02000000) अणु
 			/* field #0 is smaller, so... */
 			mga_outl(0x3C2C, pos);			/* field #1 vmemory start */
 			mga_outl(0x3C28, pos + linelen);	/* field #0 vmemory start */
 			linelen <<= 1;
-			m2info->interlaced = 1;
-		} else {
+			m2info->पूर्णांकerlaced = 1;
+		पूर्ण अन्यथा अणु
 			mga_outl(0x3C28, pos);		/* vmemory start */
-			m2info->interlaced = 0;
-		}
+			m2info->पूर्णांकerlaced = 0;
+		पूर्ण
 		mga_outl(0x3C40, linelen);
-	}
+	पूर्ण
 	mga_outl(0x3C4C, datactl);	/* data control */
-	if (tmp & 0x02000000) {
-		int i;
+	अगर (पंचांगp & 0x02000000) अणु
+		पूर्णांक i;
 
-		mga_outl(0x3C10, tmp & ~0x02000000);
-		for (i = 0; i < 2; i++) {
-			unsigned int nl;
-			unsigned int lastl = 0;
+		mga_outl(0x3C10, पंचांगp & ~0x02000000);
+		क्रम (i = 0; i < 2; i++) अणु
+			अचिन्हित पूर्णांक nl;
+			अचिन्हित पूर्णांक lastl = 0;
 
-			while ((nl = mga_inl(0x3C48) & 0xFFF) >= lastl) {
+			जबतक ((nl = mga_inl(0x3C48) & 0xFFF) >= lastl) अणु
 				lastl = nl;
-			}
-		}
-	}
-	mga_outl(0x3C10, tmp);
-	minfo->hw.crtc2.ctl = tmp;
+			पूर्ण
+		पूर्ण
+	पूर्ण
+	mga_outl(0x3C10, पंचांगp);
+	minfo->hw.crtc2.ctl = पंचांगp;
 
-	tmp = mt->VDisplay << 16;	/* line compare */
-	if (mt->sync & FB_SYNC_HOR_HIGH_ACT)
-		tmp |= 0x00000100;
-	if (mt->sync & FB_SYNC_VERT_HIGH_ACT)
-		tmp |= 0x00000200;
-	mga_outl(0x3C44, tmp);
-}
+	पंचांगp = mt->VDisplay << 16;	/* line compare */
+	अगर (mt->sync & FB_SYNC_HOR_HIGH_ACT)
+		पंचांगp |= 0x00000100;
+	अगर (mt->sync & FB_SYNC_VERT_HIGH_ACT)
+		पंचांगp |= 0x00000200;
+	mga_outl(0x3C44, पंचांगp);
+पूर्ण
 
-static void matroxfb_dh_disable(struct matroxfb_dh_fb_info* m2info) {
-	struct matrox_fb_info *minfo = m2info->primary_dev;
+अटल व्योम matroxfb_dh_disable(काष्ठा matroxfb_dh_fb_info* m2info) अणु
+	काष्ठा matrox_fb_info *minfo = m2info->primary_dev;
 
-	mga_outl(0x3C10, 0x00000004);	/* disable CRTC2, CRTC1->DAC1, PLL as clock source */
+	mga_outl(0x3C10, 0x00000004);	/* disable CRTC2, CRTC1->DAC1, PLL as घड़ी source */
 	minfo->hw.crtc2.ctl = 0x00000004;
-}
+पूर्ण
 
-static void matroxfb_dh_pan_var(struct matroxfb_dh_fb_info* m2info,
-		struct fb_var_screeninfo* var) {
-	unsigned int pos;
-	unsigned int linelen;
-	unsigned int pixelsize;
-	struct matrox_fb_info *minfo = m2info->primary_dev;
+अटल व्योम matroxfb_dh_pan_var(काष्ठा matroxfb_dh_fb_info* m2info,
+		काष्ठा fb_var_screeninfo* var) अणु
+	अचिन्हित पूर्णांक pos;
+	अचिन्हित पूर्णांक linelen;
+	अचिन्हित पूर्णांक pixelsize;
+	काष्ठा matrox_fb_info *minfo = m2info->primary_dev;
 
 	m2info->fbcon.var.xoffset = var->xoffset;
 	m2info->fbcon.var.yoffset = var->yoffset;
 	pixelsize = m2info->fbcon.var.bits_per_pixel >> 3;
-	linelen = m2info->fbcon.var.xres_virtual * pixelsize;
+	linelen = m2info->fbcon.var.xres_भव * pixelsize;
 	pos = m2info->fbcon.var.yoffset * linelen + m2info->fbcon.var.xoffset * pixelsize;
 	pos += m2info->video.offbase;
-	if (m2info->interlaced) {
+	अगर (m2info->पूर्णांकerlaced) अणु
 		mga_outl(0x3C2C, pos);
 		mga_outl(0x3C28, pos + linelen);
-	} else {
+	पूर्ण अन्यथा अणु
 		mga_outl(0x3C28, pos);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int matroxfb_dh_decode_var(struct matroxfb_dh_fb_info* m2info,
-		struct fb_var_screeninfo* var,
-		int *visual,
-		int *video_cmap_len,
-		int *mode) {
-	unsigned int mask;
-	unsigned int memlen;
-	unsigned int vramlen;
+अटल पूर्णांक matroxfb_dh_decode_var(काष्ठा matroxfb_dh_fb_info* m2info,
+		काष्ठा fb_var_screeninfo* var,
+		पूर्णांक *visual,
+		पूर्णांक *video_cmap_len,
+		पूर्णांक *mode) अणु
+	अचिन्हित पूर्णांक mask;
+	अचिन्हित पूर्णांक memlen;
+	अचिन्हित पूर्णांक vramlen;
 
-	switch (var->bits_per_pixel) {
-		case 16:	mask = 0x1F;
-				break;
-		case 32:	mask = 0x0F;
-				break;
-		default:	return -EINVAL;
-	}
+	चयन (var->bits_per_pixel) अणु
+		हाल 16:	mask = 0x1F;
+				अवरोध;
+		हाल 32:	mask = 0x0F;
+				अवरोध;
+		शेष:	वापस -EINVAL;
+	पूर्ण
 	vramlen = m2info->video.len_usable;
-	if (var->yres_virtual < var->yres)
-		var->yres_virtual = var->yres;
-	if (var->xres_virtual < var->xres)
-		var->xres_virtual = var->xres;
-	var->xres_virtual = (var->xres_virtual + mask) & ~mask;
-	if (var->yres_virtual > 32767)
-		return -EINVAL;
-	memlen = var->xres_virtual * var->yres_virtual * (var->bits_per_pixel >> 3);
-	if (memlen > vramlen)
-		return -EINVAL;
-	if (var->xoffset + var->xres > var->xres_virtual)
-		var->xoffset = var->xres_virtual - var->xres;
-	if (var->yoffset + var->yres > var->yres_virtual)
-		var->yoffset = var->yres_virtual - var->yres;
+	अगर (var->yres_भव < var->yres)
+		var->yres_भव = var->yres;
+	अगर (var->xres_भव < var->xres)
+		var->xres_भव = var->xres;
+	var->xres_भव = (var->xres_भव + mask) & ~mask;
+	अगर (var->yres_भव > 32767)
+		वापस -EINVAL;
+	memlen = var->xres_भव * var->yres_भव * (var->bits_per_pixel >> 3);
+	अगर (memlen > vramlen)
+		वापस -EINVAL;
+	अगर (var->xoffset + var->xres > var->xres_भव)
+		var->xoffset = var->xres_भव - var->xres;
+	अगर (var->yoffset + var->yres > var->yres_भव)
+		var->yoffset = var->yres_भव - var->yres;
 
 	var->xres &= ~7;
 	var->left_margin &= ~7;
@@ -224,8 +225,8 @@ static int matroxfb_dh_decode_var(struct matroxfb_dh_fb_info* m2info,
 	var->hsync_len &= ~7;
 
 	*mode = var->bits_per_pixel;
-	if (var->bits_per_pixel == 16) {
-		if (var->green.length == 5) {
+	अगर (var->bits_per_pixel == 16) अणु
+		अगर (var->green.length == 5) अणु
 			var->red.offset = 10;
 			var->red.length = 5;
 			var->green.offset = 5;
@@ -235,7 +236,7 @@ static int matroxfb_dh_decode_var(struct matroxfb_dh_fb_info* m2info,
 			var->transp.offset = 15;
 			var->transp.length = 1;
 			*mode = 15;
-		} else {
+		पूर्ण अन्यथा अणु
 			var->red.offset = 11;
 			var->red.length = 5;
 			var->green.offset = 5;
@@ -244,8 +245,8 @@ static int matroxfb_dh_decode_var(struct matroxfb_dh_fb_info* m2info,
 			var->blue.length = 5;
 			var->transp.offset = 0;
 			var->transp.length = 0;
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 			var->red.offset = 16;
 			var->red.length = 8;
 			var->green.offset = 8;
@@ -254,52 +255,52 @@ static int matroxfb_dh_decode_var(struct matroxfb_dh_fb_info* m2info,
 			var->blue.length = 8;
 			var->transp.offset = 24;
 			var->transp.length = 8;
-	}
+	पूर्ण
 	*visual = FB_VISUAL_TRUECOLOR;
 	*video_cmap_len = 16;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int matroxfb_dh_open(struct fb_info* info, int user) {
-#define m2info (container_of(info, struct matroxfb_dh_fb_info, fbcon))
-	struct matrox_fb_info *minfo = m2info->primary_dev;
+अटल पूर्णांक matroxfb_dh_खोलो(काष्ठा fb_info* info, पूर्णांक user) अणु
+#घोषणा m2info (container_of(info, काष्ठा matroxfb_dh_fb_info, fbcon))
+	काष्ठा matrox_fb_info *minfo = m2info->primary_dev;
 
-	if (minfo) {
-		int err;
+	अगर (minfo) अणु
+		पूर्णांक err;
 
-		if (minfo->dead) {
-			return -ENXIO;
-		}
-		err = minfo->fbops.fb_open(&minfo->fbcon, user);
-		if (err) {
-			return err;
-		}
-	}
-	return 0;
-#undef m2info
-}
+		अगर (minfo->dead) अणु
+			वापस -ENXIO;
+		पूर्ण
+		err = minfo->fbops.fb_खोलो(&minfo->fbcon, user);
+		अगर (err) अणु
+			वापस err;
+		पूर्ण
+	पूर्ण
+	वापस 0;
+#अघोषित m2info
+पूर्ण
 
-static int matroxfb_dh_release(struct fb_info* info, int user) {
-#define m2info (container_of(info, struct matroxfb_dh_fb_info, fbcon))
-	int err = 0;
-	struct matrox_fb_info *minfo = m2info->primary_dev;
+अटल पूर्णांक matroxfb_dh_release(काष्ठा fb_info* info, पूर्णांक user) अणु
+#घोषणा m2info (container_of(info, काष्ठा matroxfb_dh_fb_info, fbcon))
+	पूर्णांक err = 0;
+	काष्ठा matrox_fb_info *minfo = m2info->primary_dev;
 
-	if (minfo) {
+	अगर (minfo) अणु
 		err = minfo->fbops.fb_release(&minfo->fbcon, user);
-	}
-	return err;
-#undef m2info
-}
+	पूर्ण
+	वापस err;
+#अघोषित m2info
+पूर्ण
 
 /*
- * This function is called before the register_framebuffer so
+ * This function is called beक्रमe the रेजिस्टर_framebuffer so
  * no locking is needed.
  */
-static void matroxfb_dh_init_fix(struct matroxfb_dh_fb_info *m2info)
-{
-	struct fb_fix_screeninfo *fix = &m2info->fbcon.fix;
+अटल व्योम matroxfb_dh_init_fix(काष्ठा matroxfb_dh_fb_info *m2info)
+अणु
+	काष्ठा fb_fix_screeninfo *fix = &m2info->fbcon.fix;
 
-	strcpy(fix->id, "MATROX DH");
+	म_नकल(fix->id, "MATROX DH");
 
 	fix->smem_start = m2info->video.base;
 	fix->smem_len = m2info->video.len_usable;
@@ -309,263 +310,263 @@ static void matroxfb_dh_init_fix(struct matroxfb_dh_fb_info *m2info)
 	fix->mmio_start = m2info->mmio.base;
 	fix->mmio_len = m2info->mmio.len;
 	fix->accel = 0;		/* no accel... */
-}
+पूर्ण
 
-static int matroxfb_dh_check_var(struct fb_var_screeninfo* var, struct fb_info* info) {
-#define m2info (container_of(info, struct matroxfb_dh_fb_info, fbcon))
-	int visual;
-	int cmap_len;
-	int mode;
+अटल पूर्णांक matroxfb_dh_check_var(काष्ठा fb_var_screeninfo* var, काष्ठा fb_info* info) अणु
+#घोषणा m2info (container_of(info, काष्ठा matroxfb_dh_fb_info, fbcon))
+	पूर्णांक visual;
+	पूर्णांक cmap_len;
+	पूर्णांक mode;
 
-	return matroxfb_dh_decode_var(m2info, var, &visual, &cmap_len, &mode);
-#undef m2info
-}
+	वापस matroxfb_dh_decode_var(m2info, var, &visual, &cmap_len, &mode);
+#अघोषित m2info
+पूर्ण
 
-static int matroxfb_dh_set_par(struct fb_info* info) {
-#define m2info (container_of(info, struct matroxfb_dh_fb_info, fbcon))
-	int visual;
-	int cmap_len;
-	int mode;
-	int err;
-	struct fb_var_screeninfo* var = &info->var;
-	struct matrox_fb_info *minfo = m2info->primary_dev;
+अटल पूर्णांक matroxfb_dh_set_par(काष्ठा fb_info* info) अणु
+#घोषणा m2info (container_of(info, काष्ठा matroxfb_dh_fb_info, fbcon))
+	पूर्णांक visual;
+	पूर्णांक cmap_len;
+	पूर्णांक mode;
+	पूर्णांक err;
+	काष्ठा fb_var_screeninfo* var = &info->var;
+	काष्ठा matrox_fb_info *minfo = m2info->primary_dev;
 
-	if ((err = matroxfb_dh_decode_var(m2info, var, &visual, &cmap_len, &mode)) != 0)
-		return err;
+	अगर ((err = matroxfb_dh_decode_var(m2info, var, &visual, &cmap_len, &mode)) != 0)
+		वापस err;
 	/* cmap */
-	{
+	अणु
 		m2info->fbcon.screen_base = vaddr_va(m2info->video.vbase);
 		m2info->fbcon.fix.visual = visual;
 		m2info->fbcon.fix.type = FB_TYPE_PACKED_PIXELS;
 		m2info->fbcon.fix.type_aux = 0;
-		m2info->fbcon.fix.line_length = (var->xres_virtual * var->bits_per_pixel) >> 3;
-	}
-	{
-		struct my_timming mt;
-		unsigned int pos;
-		int out;
-		int cnt;
+		m2info->fbcon.fix.line_length = (var->xres_भव * var->bits_per_pixel) >> 3;
+	पूर्ण
+	अणु
+		काष्ठा my_timming mt;
+		अचिन्हित पूर्णांक pos;
+		पूर्णांक out;
+		पूर्णांक cnt;
 
 		matroxfb_var2my(&m2info->fbcon.var, &mt);
 		mt.crtc = MATROXFB_SRC_CRTC2;
 		/* CRTC2 delay */
 		mt.delay = 34;
 
-		pos = (m2info->fbcon.var.yoffset * m2info->fbcon.var.xres_virtual + m2info->fbcon.var.xoffset) * m2info->fbcon.var.bits_per_pixel >> 3;
+		pos = (m2info->fbcon.var.yoffset * m2info->fbcon.var.xres_भव + m2info->fbcon.var.xoffset) * m2info->fbcon.var.bits_per_pixel >> 3;
 		pos += m2info->video.offbase;
 		cnt = 0;
-		down_read(&minfo->altout.lock);
-		for (out = 0; out < MATROXFB_MAX_OUTPUTS; out++) {
-			if (minfo->outputs[out].src == MATROXFB_SRC_CRTC2) {
+		करोwn_पढ़ो(&minfo->altout.lock);
+		क्रम (out = 0; out < MATROXFB_MAX_OUTPUTS; out++) अणु
+			अगर (minfo->outमाला_दो[out].src == MATROXFB_SRC_CRTC2) अणु
 				cnt++;
-				if (minfo->outputs[out].output->compute) {
-					minfo->outputs[out].output->compute(minfo->outputs[out].data, &mt);
-				}
-			}
-		}
-		minfo->crtc2.pixclock = mt.pixclock;
+				अगर (minfo->outमाला_दो[out].output->compute) अणु
+					minfo->outमाला_दो[out].output->compute(minfo->outमाला_दो[out].data, &mt);
+				पूर्ण
+			पूर्ण
+		पूर्ण
+		minfo->crtc2.pixघड़ी = mt.pixघड़ी;
 		minfo->crtc2.mnp = mt.mnp;
-		up_read(&minfo->altout.lock);
-		if (cnt) {
+		up_पढ़ो(&minfo->altout.lock);
+		अगर (cnt) अणु
 			matroxfb_dh_restore(m2info, &mt, mode, pos);
-		} else {
+		पूर्ण अन्यथा अणु
 			matroxfb_dh_disable(m2info);
-		}
+		पूर्ण
 		DAC1064_global_init(minfo);
 		DAC1064_global_restore(minfo);
-		down_read(&minfo->altout.lock);
-		for (out = 0; out < MATROXFB_MAX_OUTPUTS; out++) {
-			if (minfo->outputs[out].src == MATROXFB_SRC_CRTC2 &&
-			    minfo->outputs[out].output->program) {
-				minfo->outputs[out].output->program(minfo->outputs[out].data);
-			}
-		}
-		for (out = 0; out < MATROXFB_MAX_OUTPUTS; out++) {
-			if (minfo->outputs[out].src == MATROXFB_SRC_CRTC2 &&
-			    minfo->outputs[out].output->start) {
-				minfo->outputs[out].output->start(minfo->outputs[out].data);
-			}
-		}
-		up_read(&minfo->altout.lock);
-	}
+		करोwn_पढ़ो(&minfo->altout.lock);
+		क्रम (out = 0; out < MATROXFB_MAX_OUTPUTS; out++) अणु
+			अगर (minfo->outमाला_दो[out].src == MATROXFB_SRC_CRTC2 &&
+			    minfo->outमाला_दो[out].output->program) अणु
+				minfo->outमाला_दो[out].output->program(minfo->outमाला_दो[out].data);
+			पूर्ण
+		पूर्ण
+		क्रम (out = 0; out < MATROXFB_MAX_OUTPUTS; out++) अणु
+			अगर (minfo->outमाला_दो[out].src == MATROXFB_SRC_CRTC2 &&
+			    minfo->outमाला_दो[out].output->start) अणु
+				minfo->outमाला_दो[out].output->start(minfo->outमाला_दो[out].data);
+			पूर्ण
+		पूर्ण
+		up_पढ़ो(&minfo->altout.lock);
+	पूर्ण
 	m2info->initialized = 1;
-	return 0;
-#undef m2info
-}
+	वापस 0;
+#अघोषित m2info
+पूर्ण
 
-static int matroxfb_dh_pan_display(struct fb_var_screeninfo* var, struct fb_info* info) {
-#define m2info (container_of(info, struct matroxfb_dh_fb_info, fbcon))
+अटल पूर्णांक matroxfb_dh_pan_display(काष्ठा fb_var_screeninfo* var, काष्ठा fb_info* info) अणु
+#घोषणा m2info (container_of(info, काष्ठा matroxfb_dh_fb_info, fbcon))
 	matroxfb_dh_pan_var(m2info, var);
-	return 0;
-#undef m2info
-}
+	वापस 0;
+#अघोषित m2info
+पूर्ण
 
-static int matroxfb_dh_get_vblank(const struct matroxfb_dh_fb_info* m2info, struct fb_vblank* vblank) {
-	struct matrox_fb_info *minfo = m2info->primary_dev;
+अटल पूर्णांक matroxfb_dh_get_vblank(स्थिर काष्ठा matroxfb_dh_fb_info* m2info, काष्ठा fb_vblank* vblank) अणु
+	काष्ठा matrox_fb_info *minfo = m2info->primary_dev;
 
 	matroxfb_enable_irq(minfo, 0);
-	memset(vblank, 0, sizeof(*vblank));
+	स_रखो(vblank, 0, माप(*vblank));
 	vblank->flags = FB_VBLANK_HAVE_VCOUNT | FB_VBLANK_HAVE_VBLANK;
 	/* mask out reserved bits + field number (odd/even) */
 	vblank->vcount = mga_inl(0x3C48) & 0x000007FF;
 	/* compatibility stuff */
-	if (vblank->vcount >= m2info->fbcon.var.yres)
+	अगर (vblank->vcount >= m2info->fbcon.var.yres)
 		vblank->flags |= FB_VBLANK_VBLANKING;
-	if (test_bit(0, &minfo->irq_flags)) {
+	अगर (test_bit(0, &minfo->irq_flags)) अणु
                 vblank->flags |= FB_VBLANK_HAVE_COUNT;
-                /* Only one writer, aligned int value...
+                /* Only one ग_लिखोr, aligned पूर्णांक value...
                    it should work without lock and without atomic_t */
 		vblank->count = minfo->crtc2.vsync.cnt;
-        }
-	return 0;
-}
+        पूर्ण
+	वापस 0;
+पूर्ण
 
-static int matroxfb_dh_ioctl(struct fb_info *info,
-		unsigned int cmd,
-		unsigned long arg)
-{
-#define m2info (container_of(info, struct matroxfb_dh_fb_info, fbcon))
-	struct matrox_fb_info *minfo = m2info->primary_dev;
+अटल पूर्णांक matroxfb_dh_ioctl(काष्ठा fb_info *info,
+		अचिन्हित पूर्णांक cmd,
+		अचिन्हित दीर्घ arg)
+अणु
+#घोषणा m2info (container_of(info, काष्ठा matroxfb_dh_fb_info, fbcon))
+	काष्ठा matrox_fb_info *minfo = m2info->primary_dev;
 
 	DBG(__func__)
 
-	switch (cmd) {
-		case FBIOGET_VBLANK:
-			{
-				struct fb_vblank vblank;
-				int err;
+	चयन (cmd) अणु
+		हाल FBIOGET_VBLANK:
+			अणु
+				काष्ठा fb_vblank vblank;
+				पूर्णांक err;
 
 				err = matroxfb_dh_get_vblank(m2info, &vblank);
-				if (err)
-					return err;
-				if (copy_to_user((void __user *)arg, &vblank, sizeof(vblank)))
-					return -EFAULT;
-				return 0;
-			}
-		case FBIO_WAITFORVSYNC:
-			{
-				u_int32_t crt;
+				अगर (err)
+					वापस err;
+				अगर (copy_to_user((व्योम __user *)arg, &vblank, माप(vblank)))
+					वापस -EFAULT;
+				वापस 0;
+			पूर्ण
+		हाल FBIO_WAITFORVSYNC:
+			अणु
+				u_पूर्णांक32_t crt;
 
-				if (get_user(crt, (u_int32_t __user *)arg))
-					return -EFAULT;
+				अगर (get_user(crt, (u_पूर्णांक32_t __user *)arg))
+					वापस -EFAULT;
 
-				if (crt != 0)
-					return -ENODEV;
-				return matroxfb_wait_for_sync(minfo, 1);
-			}
-		case MATROXFB_SET_OUTPUT_MODE:
-		case MATROXFB_GET_OUTPUT_MODE:
-		case MATROXFB_GET_ALL_OUTPUTS:
-			{
-				return minfo->fbcon.fbops->fb_ioctl(&minfo->fbcon, cmd, arg);
-			}
-		case MATROXFB_SET_OUTPUT_CONNECTION:
-			{
-				u_int32_t tmp;
-				int out;
-				int changes;
+				अगर (crt != 0)
+					वापस -ENODEV;
+				वापस matroxfb_रुको_क्रम_sync(minfo, 1);
+			पूर्ण
+		हाल MATROXFB_SET_OUTPUT_MODE:
+		हाल MATROXFB_GET_OUTPUT_MODE:
+		हाल MATROXFB_GET_ALL_OUTPUTS:
+			अणु
+				वापस minfo->fbcon.fbops->fb_ioctl(&minfo->fbcon, cmd, arg);
+			पूर्ण
+		हाल MATROXFB_SET_OUTPUT_CONNECTION:
+			अणु
+				u_पूर्णांक32_t पंचांगp;
+				पूर्णांक out;
+				पूर्णांक changes;
 
-				if (get_user(tmp, (u_int32_t __user *)arg))
-					return -EFAULT;
-				for (out = 0; out < 32; out++) {
-					if (tmp & (1 << out)) {
-						if (out >= MATROXFB_MAX_OUTPUTS)
-							return -ENXIO;
-						if (!minfo->outputs[out].output)
-							return -ENXIO;
-						switch (minfo->outputs[out].src) {
-							case MATROXFB_SRC_NONE:
-							case MATROXFB_SRC_CRTC2:
-								break;
-							default:
-								return -EBUSY;
-						}
-					}
-				}
-				if (minfo->devflags.panellink) {
-					if (tmp & MATROXFB_OUTPUT_CONN_DFP)
-						return -EINVAL;
-					if ((minfo->outputs[2].src == MATROXFB_SRC_CRTC1) && tmp)
-						return -EBUSY;
-				}
+				अगर (get_user(पंचांगp, (u_पूर्णांक32_t __user *)arg))
+					वापस -EFAULT;
+				क्रम (out = 0; out < 32; out++) अणु
+					अगर (पंचांगp & (1 << out)) अणु
+						अगर (out >= MATROXFB_MAX_OUTPUTS)
+							वापस -ENXIO;
+						अगर (!minfo->outमाला_दो[out].output)
+							वापस -ENXIO;
+						चयन (minfo->outमाला_दो[out].src) अणु
+							हाल MATROXFB_SRC_NONE:
+							हाल MATROXFB_SRC_CRTC2:
+								अवरोध;
+							शेष:
+								वापस -EBUSY;
+						पूर्ण
+					पूर्ण
+				पूर्ण
+				अगर (minfo->devflags.panellink) अणु
+					अगर (पंचांगp & MATROXFB_OUTPUT_CONN_DFP)
+						वापस -EINVAL;
+					अगर ((minfo->outमाला_दो[2].src == MATROXFB_SRC_CRTC1) && पंचांगp)
+						वापस -EBUSY;
+				पूर्ण
 				changes = 0;
-				for (out = 0; out < MATROXFB_MAX_OUTPUTS; out++) {
-					if (tmp & (1 << out)) {
-						if (minfo->outputs[out].src != MATROXFB_SRC_CRTC2) {
+				क्रम (out = 0; out < MATROXFB_MAX_OUTPUTS; out++) अणु
+					अगर (पंचांगp & (1 << out)) अणु
+						अगर (minfo->outमाला_दो[out].src != MATROXFB_SRC_CRTC2) अणु
 							changes = 1;
-							minfo->outputs[out].src = MATROXFB_SRC_CRTC2;
-						}
-					} else if (minfo->outputs[out].src == MATROXFB_SRC_CRTC2) {
+							minfo->outमाला_दो[out].src = MATROXFB_SRC_CRTC2;
+						पूर्ण
+					पूर्ण अन्यथा अगर (minfo->outमाला_दो[out].src == MATROXFB_SRC_CRTC2) अणु
 						changes = 1;
-						minfo->outputs[out].src = MATROXFB_SRC_NONE;
-					}
-				}
-				if (!changes)
-					return 0;
+						minfo->outमाला_दो[out].src = MATROXFB_SRC_NONE;
+					पूर्ण
+				पूर्ण
+				अगर (!changes)
+					वापस 0;
 				matroxfb_dh_set_par(info);
-				return 0;
-			}
-		case MATROXFB_GET_OUTPUT_CONNECTION:
-			{
-				u_int32_t conn = 0;
-				int out;
+				वापस 0;
+			पूर्ण
+		हाल MATROXFB_GET_OUTPUT_CONNECTION:
+			अणु
+				u_पूर्णांक32_t conn = 0;
+				पूर्णांक out;
 
-				for (out = 0; out < MATROXFB_MAX_OUTPUTS; out++) {
-					if (minfo->outputs[out].src == MATROXFB_SRC_CRTC2) {
+				क्रम (out = 0; out < MATROXFB_MAX_OUTPUTS; out++) अणु
+					अगर (minfo->outमाला_दो[out].src == MATROXFB_SRC_CRTC2) अणु
 						conn |= 1 << out;
-					}
-				}
-				if (put_user(conn, (u_int32_t __user *)arg))
-					return -EFAULT;
-				return 0;
-			}
-		case MATROXFB_GET_AVAILABLE_OUTPUTS:
-			{
-				u_int32_t tmp = 0;
-				int out;
+					पूर्ण
+				पूर्ण
+				अगर (put_user(conn, (u_पूर्णांक32_t __user *)arg))
+					वापस -EFAULT;
+				वापस 0;
+			पूर्ण
+		हाल MATROXFB_GET_AVAILABLE_OUTPUTS:
+			अणु
+				u_पूर्णांक32_t पंचांगp = 0;
+				पूर्णांक out;
 
-				for (out = 0; out < MATROXFB_MAX_OUTPUTS; out++) {
-					if (minfo->outputs[out].output) {
-						switch (minfo->outputs[out].src) {
-							case MATROXFB_SRC_NONE:
-							case MATROXFB_SRC_CRTC2:
-								tmp |= 1 << out;
-								break;
-						}
-					}
-				}
-				if (minfo->devflags.panellink) {
-					tmp &= ~MATROXFB_OUTPUT_CONN_DFP;
-					if (minfo->outputs[2].src == MATROXFB_SRC_CRTC1) {
-						tmp = 0;
-					}
-				}
-				if (put_user(tmp, (u_int32_t __user *)arg))
-					return -EFAULT;
-				return 0;
-			}
-	}
-	return -ENOTTY;
-#undef m2info
-}
+				क्रम (out = 0; out < MATROXFB_MAX_OUTPUTS; out++) अणु
+					अगर (minfo->outमाला_दो[out].output) अणु
+						चयन (minfo->outमाला_दो[out].src) अणु
+							हाल MATROXFB_SRC_NONE:
+							हाल MATROXFB_SRC_CRTC2:
+								पंचांगp |= 1 << out;
+								अवरोध;
+						पूर्ण
+					पूर्ण
+				पूर्ण
+				अगर (minfo->devflags.panellink) अणु
+					पंचांगp &= ~MATROXFB_OUTPUT_CONN_DFP;
+					अगर (minfo->outमाला_दो[2].src == MATROXFB_SRC_CRTC1) अणु
+						पंचांगp = 0;
+					पूर्ण
+				पूर्ण
+				अगर (put_user(पंचांगp, (u_पूर्णांक32_t __user *)arg))
+					वापस -EFAULT;
+				वापस 0;
+			पूर्ण
+	पूर्ण
+	वापस -ENOTTY;
+#अघोषित m2info
+पूर्ण
 
-static int matroxfb_dh_blank(int blank, struct fb_info* info) {
-#define m2info (container_of(info, struct matroxfb_dh_fb_info, fbcon))
-	switch (blank) {
-		case 1:
-		case 2:
-		case 3:
-		case 4:
-		default:;
-	}
-	/* do something... */
-	return 0;
-#undef m2info
-}
+अटल पूर्णांक matroxfb_dh_blank(पूर्णांक blank, काष्ठा fb_info* info) अणु
+#घोषणा m2info (container_of(info, काष्ठा matroxfb_dh_fb_info, fbcon))
+	चयन (blank) अणु
+		हाल 1:
+		हाल 2:
+		हाल 3:
+		हाल 4:
+		शेष:;
+	पूर्ण
+	/* करो something... */
+	वापस 0;
+#अघोषित m2info
+पूर्ण
 
-static const struct fb_ops matroxfb_dh_ops = {
+अटल स्थिर काष्ठा fb_ops matroxfb_dh_ops = अणु
 	.owner =	THIS_MODULE,
-	.fb_open =	matroxfb_dh_open,
+	.fb_खोलो =	matroxfb_dh_खोलो,
 	.fb_release =	matroxfb_dh_release,
 	.fb_check_var =	matroxfb_dh_check_var,
 	.fb_set_par =	matroxfb_dh_set_par,
@@ -576,17 +577,17 @@ static const struct fb_ops matroxfb_dh_ops = {
 	.fb_fillrect =	cfb_fillrect,
 	.fb_copyarea =	cfb_copyarea,
 	.fb_imageblit =	cfb_imageblit,
-};
+पूर्ण;
 
-static struct fb_var_screeninfo matroxfb_dh_defined = {
-		640,480,640,480,/* W,H, virtual W,H */
+अटल काष्ठा fb_var_screeninfo matroxfb_dh_defined = अणु
+		640,480,640,480,/* W,H, भव W,H */
 		0,0,		/* offset */
 		32,		/* depth */
 		0,		/* gray */
-		{0,0,0},	/* R */
-		{0,0,0},	/* G */
-		{0,0,0},	/* B */
-		{0,0,0},	/* alpha */
+		अणु0,0,0पूर्ण,	/* R */
+		अणु0,0,0पूर्ण,	/* G */
+		अणु0,0,0पूर्ण,	/* B */
+		अणु0,0,0पूर्ण,	/* alpha */
 		0,		/* nonstd */
 		FB_ACTIVATE_NOW,
 		-1,-1,		/* display size */
@@ -594,35 +595,35 @@ static struct fb_var_screeninfo matroxfb_dh_defined = {
 		39721L,48L,16L,33L,10L,
 		96L,2,0,	/* no sync info */
 		FB_VMODE_NONINTERLACED,
-};
+पूर्ण;
 
-static int matroxfb_dh_regit(const struct matrox_fb_info *minfo,
-			     struct matroxfb_dh_fb_info *m2info)
-{
-#define minfo (m2info->primary_dev)
-	void* oldcrtc2;
+अटल पूर्णांक matroxfb_dh_regit(स्थिर काष्ठा matrox_fb_info *minfo,
+			     काष्ठा matroxfb_dh_fb_info *m2info)
+अणु
+#घोषणा minfo (m2info->primary_dev)
+	व्योम* oldcrtc2;
 
 	m2info->fbcon.fbops = &matroxfb_dh_ops;
 	m2info->fbcon.flags = FBINFO_FLAG_DEFAULT;
 	m2info->fbcon.flags |= FBINFO_HWACCEL_XPAN |
 			       FBINFO_HWACCEL_YPAN;
-	m2info->fbcon.pseudo_palette = m2info->cmap;
+	m2info->fbcon.pseuकरो_palette = m2info->cmap;
 	fb_alloc_cmap(&m2info->fbcon.cmap, 256, 1);
 
-	if (mem < 64)
+	अगर (mem < 64)
 		mem *= 1024;
-	if (mem < 64*1024)
+	अगर (mem < 64*1024)
 		mem *= 1024;
 	mem &= ~0x00000FFF;	/* PAGE_MASK? */
-	if (minfo->video.len_usable + mem <= minfo->video.len)
+	अगर (minfo->video.len_usable + mem <= minfo->video.len)
 		m2info->video.offbase = minfo->video.len - mem;
-	else if (minfo->video.len < mem) {
-		return -ENOMEM;
-	} else { /* check yres on first head... */
+	अन्यथा अगर (minfo->video.len < mem) अणु
+		वापस -ENOMEM;
+	पूर्ण अन्यथा अणु /* check yres on first head... */
 		m2info->video.borrowed = mem;
 		minfo->video.len_usable -= mem;
 		m2info->video.offbase = minfo->video.len_usable;
-	}
+	पूर्ण
 	m2info->video.base = minfo->video.base + m2info->video.offbase;
 	m2info->video.len = m2info->video.len_usable = m2info->video.len_maximum = mem;
 	m2info->video.vbase.vaddr = vaddr_va(minfo->video.vbase) + m2info->video.offbase;
@@ -631,109 +632,109 @@ static int matroxfb_dh_regit(const struct matrox_fb_info *minfo,
 	m2info->mmio.len = minfo->mmio.len;
 
 	matroxfb_dh_init_fix(m2info);
-	if (register_framebuffer(&m2info->fbcon)) {
-		return -ENXIO;
-	}
-	if (!m2info->initialized)
+	अगर (रेजिस्टर_framebuffer(&m2info->fbcon)) अणु
+		वापस -ENXIO;
+	पूर्ण
+	अगर (!m2info->initialized)
 		fb_set_var(&m2info->fbcon, &matroxfb_dh_defined);
-	down_write(&minfo->crtc2.lock);
+	करोwn_ग_लिखो(&minfo->crtc2.lock);
 	oldcrtc2 = minfo->crtc2.info;
 	minfo->crtc2.info = m2info;
-	up_write(&minfo->crtc2.lock);
-	if (oldcrtc2) {
-		printk(KERN_ERR "matroxfb_crtc2: Internal consistency check failed: crtc2 already present: %p\n",
+	up_ग_लिखो(&minfo->crtc2.lock);
+	अगर (oldcrtc2) अणु
+		prपूर्णांकk(KERN_ERR "matroxfb_crtc2: Internal consistency check failed: crtc2 already present: %p\n",
 			oldcrtc2);
-	}
-	return 0;
-#undef minfo
-}
+	पूर्ण
+	वापस 0;
+#अघोषित minfo
+पूर्ण
 
 /* ************************** */
 
-static int matroxfb_dh_registerfb(struct matroxfb_dh_fb_info* m2info) {
-#define minfo (m2info->primary_dev)
-	if (matroxfb_dh_regit(minfo, m2info)) {
-		printk(KERN_ERR "matroxfb_crtc2: secondary head failed to register\n");
-		return -1;
-	}
-	printk(KERN_INFO "matroxfb_crtc2: secondary head of fb%u was registered as fb%u\n",
+अटल पूर्णांक matroxfb_dh_रेजिस्टरfb(काष्ठा matroxfb_dh_fb_info* m2info) अणु
+#घोषणा minfo (m2info->primary_dev)
+	अगर (matroxfb_dh_regit(minfo, m2info)) अणु
+		prपूर्णांकk(KERN_ERR "matroxfb_crtc2: secondary head failed to register\n");
+		वापस -1;
+	पूर्ण
+	prपूर्णांकk(KERN_INFO "matroxfb_crtc2: secondary head of fb%u was registered as fb%u\n",
 		minfo->fbcon.node, m2info->fbcon.node);
-	m2info->fbcon_registered = 1;
-	return 0;
-#undef minfo
-}
+	m2info->fbcon_रेजिस्टरed = 1;
+	वापस 0;
+#अघोषित minfo
+पूर्ण
 
-static void matroxfb_dh_deregisterfb(struct matroxfb_dh_fb_info* m2info) {
-#define minfo (m2info->primary_dev)
-	if (m2info->fbcon_registered) {
-		int id;
-		struct matroxfb_dh_fb_info* crtc2;
+अटल व्योम matroxfb_dh_deरेजिस्टरfb(काष्ठा matroxfb_dh_fb_info* m2info) अणु
+#घोषणा minfo (m2info->primary_dev)
+	अगर (m2info->fbcon_रेजिस्टरed) अणु
+		पूर्णांक id;
+		काष्ठा matroxfb_dh_fb_info* crtc2;
 
-		down_write(&minfo->crtc2.lock);
+		करोwn_ग_लिखो(&minfo->crtc2.lock);
 		crtc2 = minfo->crtc2.info;
-		if (crtc2 == m2info)
-			minfo->crtc2.info = NULL;
-		up_write(&minfo->crtc2.lock);
-		if (crtc2 != m2info) {
-			printk(KERN_ERR "matroxfb_crtc2: Internal consistency check failed: crtc2 mismatch at unload: %p != %p\n",
+		अगर (crtc2 == m2info)
+			minfo->crtc2.info = शून्य;
+		up_ग_लिखो(&minfo->crtc2.lock);
+		अगर (crtc2 != m2info) अणु
+			prपूर्णांकk(KERN_ERR "matroxfb_crtc2: Internal consistency check failed: crtc2 mismatch at unload: %p != %p\n",
 				crtc2, m2info);
-			printk(KERN_ERR "matroxfb_crtc2: Expect kernel crash after module unload.\n");
-			return;
-		}
+			prपूर्णांकk(KERN_ERR "matroxfb_crtc2: Expect kernel crash after module unload.\n");
+			वापस;
+		पूर्ण
 		id = m2info->fbcon.node;
-		unregister_framebuffer(&m2info->fbcon);
-		/* return memory back to primary head */
+		unरेजिस्टर_framebuffer(&m2info->fbcon);
+		/* वापस memory back to primary head */
 		minfo->video.len_usable += m2info->video.borrowed;
-		printk(KERN_INFO "matroxfb_crtc2: fb%u unregistered\n", id);
-		m2info->fbcon_registered = 0;
-	}
-#undef minfo
-}
+		prपूर्णांकk(KERN_INFO "matroxfb_crtc2: fb%u unregistered\n", id);
+		m2info->fbcon_रेजिस्टरed = 0;
+	पूर्ण
+#अघोषित minfo
+पूर्ण
 
-static void* matroxfb_crtc2_probe(struct matrox_fb_info* minfo) {
-	struct matroxfb_dh_fb_info* m2info;
+अटल व्योम* matroxfb_crtc2_probe(काष्ठा matrox_fb_info* minfo) अणु
+	काष्ठा matroxfb_dh_fb_info* m2info;
 
 	/* hardware is CRTC2 incapable... */
-	if (!minfo->devflags.crtc2)
-		return NULL;
-	m2info = kzalloc(sizeof(*m2info), GFP_KERNEL);
-	if (!m2info)
-		return NULL;
+	अगर (!minfo->devflags.crtc2)
+		वापस शून्य;
+	m2info = kzalloc(माप(*m2info), GFP_KERNEL);
+	अगर (!m2info)
+		वापस शून्य;
 
 	m2info->primary_dev = minfo;
-	if (matroxfb_dh_registerfb(m2info)) {
-		kfree(m2info);
-		printk(KERN_ERR "matroxfb_crtc2: CRTC2 framebuffer failed to register\n");
-		return NULL;
-	}
-	return m2info;
-}
+	अगर (matroxfb_dh_रेजिस्टरfb(m2info)) अणु
+		kमुक्त(m2info);
+		prपूर्णांकk(KERN_ERR "matroxfb_crtc2: CRTC2 framebuffer failed to register\n");
+		वापस शून्य;
+	पूर्ण
+	वापस m2info;
+पूर्ण
 
-static void matroxfb_crtc2_remove(struct matrox_fb_info* minfo, void* crtc2) {
-	matroxfb_dh_deregisterfb(crtc2);
-	kfree(crtc2);
-}
+अटल व्योम matroxfb_crtc2_हटाओ(काष्ठा matrox_fb_info* minfo, व्योम* crtc2) अणु
+	matroxfb_dh_deरेजिस्टरfb(crtc2);
+	kमुक्त(crtc2);
+पूर्ण
 
-static struct matroxfb_driver crtc2 = {
+अटल काष्ठा matroxfb_driver crtc2 = अणु
 		.name =		"Matrox G400 CRTC2",
 		.probe =	matroxfb_crtc2_probe,
-		.remove =	matroxfb_crtc2_remove };
+		.हटाओ =	matroxfb_crtc2_हटाओ पूर्ण;
 
-static int matroxfb_crtc2_init(void) {
-	if (fb_get_options("matrox_crtc2fb", NULL))
-		return -ENODEV;
+अटल पूर्णांक matroxfb_crtc2_init(व्योम) अणु
+	अगर (fb_get_options("matrox_crtc2fb", शून्य))
+		वापस -ENODEV;
 
-	matroxfb_register_driver(&crtc2);
-	return 0;
-}
+	matroxfb_रेजिस्टर_driver(&crtc2);
+	वापस 0;
+पूर्ण
 
-static void matroxfb_crtc2_exit(void) {
-	matroxfb_unregister_driver(&crtc2);
-}
+अटल व्योम matroxfb_crtc2_निकास(व्योम) अणु
+	matroxfb_unरेजिस्टर_driver(&crtc2);
+पूर्ण
 
 MODULE_AUTHOR("(c) 1999-2002 Petr Vandrovec <vandrove@vc.cvut.cz>");
 MODULE_DESCRIPTION("Matrox G400 CRTC2 driver");
 MODULE_LICENSE("GPL");
 module_init(matroxfb_crtc2_init);
-module_exit(matroxfb_crtc2_exit);
-/* we do not have __setup() yet */
+module_निकास(matroxfb_crtc2_निकास);
+/* we करो not have __setup() yet */

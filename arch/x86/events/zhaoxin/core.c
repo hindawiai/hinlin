@@ -1,294 +1,295 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Zhaoxin PMU; like Intel Architectural PerfMon-v2
  */
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include <linux/stddef.h>
-#include <linux/types.h>
-#include <linux/init.h>
-#include <linux/slab.h>
-#include <linux/export.h>
-#include <linux/nmi.h>
+#समावेश <linux/मानकघोष.स>
+#समावेश <linux/types.h>
+#समावेश <linux/init.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/export.h>
+#समावेश <linux/nmi.h>
 
-#include <asm/cpufeature.h>
-#include <asm/hardirq.h>
-#include <asm/apic.h>
+#समावेश <यंत्र/cpufeature.h>
+#समावेश <यंत्र/hardirq.h>
+#समावेश <यंत्र/apic.h>
 
-#include "../perf_event.h"
+#समावेश "../perf_event.h"
 
 /*
  * Zhaoxin PerfMon, used on zxc and later.
  */
-static u64 zx_pmon_event_map[PERF_COUNT_HW_MAX] __read_mostly = {
+अटल u64 zx_pmon_event_map[PERF_COUNT_HW_MAX] __पढ़ो_mostly = अणु
 
 	[PERF_COUNT_HW_CPU_CYCLES]        = 0x0082,
 	[PERF_COUNT_HW_INSTRUCTIONS]      = 0x00c0,
 	[PERF_COUNT_HW_CACHE_REFERENCES]  = 0x0515,
 	[PERF_COUNT_HW_CACHE_MISSES]      = 0x051a,
 	[PERF_COUNT_HW_BUS_CYCLES]        = 0x0083,
-};
+पूर्ण;
 
-static struct event_constraint zxc_event_constraints[] __read_mostly = {
+अटल काष्ठा event_स्थिरraपूर्णांक zxc_event_स्थिरraपूर्णांकs[] __पढ़ो_mostly = अणु
 
-	FIXED_EVENT_CONSTRAINT(0x0082, 1), /* unhalted core clock cycles */
+	FIXED_EVENT_CONSTRAINT(0x0082, 1), /* unhalted core घड़ी cycles */
 	EVENT_CONSTRAINT_END
-};
+पूर्ण;
 
-static struct event_constraint zxd_event_constraints[] __read_mostly = {
+अटल काष्ठा event_स्थिरraपूर्णांक zxd_event_स्थिरraपूर्णांकs[] __पढ़ो_mostly = अणु
 
-	FIXED_EVENT_CONSTRAINT(0x00c0, 0), /* retired instructions */
-	FIXED_EVENT_CONSTRAINT(0x0082, 1), /* unhalted core clock cycles */
-	FIXED_EVENT_CONSTRAINT(0x0083, 2), /* unhalted bus clock cycles */
+	FIXED_EVENT_CONSTRAINT(0x00c0, 0), /* retired inकाष्ठाions */
+	FIXED_EVENT_CONSTRAINT(0x0082, 1), /* unhalted core घड़ी cycles */
+	FIXED_EVENT_CONSTRAINT(0x0083, 2), /* unhalted bus घड़ी cycles */
 	EVENT_CONSTRAINT_END
-};
+पूर्ण;
 
-static __initconst const u64 zxd_hw_cache_event_ids
+अटल __initस्थिर स्थिर u64 zxd_hw_cache_event_ids
 				[PERF_COUNT_HW_CACHE_MAX]
 				[PERF_COUNT_HW_CACHE_OP_MAX]
-				[PERF_COUNT_HW_CACHE_RESULT_MAX] = {
-[C(L1D)] = {
-	[C(OP_READ)] = {
+				[PERF_COUNT_HW_CACHE_RESULT_MAX] = अणु
+[C(L1D)] = अणु
+	[C(OP_READ)] = अणु
 		[C(RESULT_ACCESS)] = 0x0042,
 		[C(RESULT_MISS)] = 0x0538,
-	},
-	[C(OP_WRITE)] = {
+	पूर्ण,
+	[C(OP_WRITE)] = अणु
 		[C(RESULT_ACCESS)] = 0x0043,
 		[C(RESULT_MISS)] = 0x0562,
-	},
-	[C(OP_PREFETCH)] = {
+	पूर्ण,
+	[C(OP_PREFETCH)] = अणु
 		[C(RESULT_ACCESS)] = -1,
 		[C(RESULT_MISS)] = -1,
-	},
-},
-[C(L1I)] = {
-	[C(OP_READ)] = {
+	पूर्ण,
+पूर्ण,
+[C(L1I)] = अणु
+	[C(OP_READ)] = अणु
 		[C(RESULT_ACCESS)] = 0x0300,
 		[C(RESULT_MISS)] = 0x0301,
-	},
-	[C(OP_WRITE)] = {
+	पूर्ण,
+	[C(OP_WRITE)] = अणु
 		[C(RESULT_ACCESS)] = -1,
 		[C(RESULT_MISS)] = -1,
-	},
-	[C(OP_PREFETCH)] = {
+	पूर्ण,
+	[C(OP_PREFETCH)] = अणु
 		[C(RESULT_ACCESS)] = 0x030a,
 		[C(RESULT_MISS)] = 0x030b,
-	},
-},
-[C(LL)] = {
-	[C(OP_READ)] = {
+	पूर्ण,
+पूर्ण,
+[C(LL)] = अणु
+	[C(OP_READ)] = अणु
 		[C(RESULT_ACCESS)] = -1,
 		[C(RESULT_MISS)] = -1,
-	},
-	[C(OP_WRITE)] = {
+	पूर्ण,
+	[C(OP_WRITE)] = अणु
 		[C(RESULT_ACCESS)] = -1,
 		[C(RESULT_MISS)] = -1,
-	},
-	[C(OP_PREFETCH)] = {
+	पूर्ण,
+	[C(OP_PREFETCH)] = अणु
 		[C(RESULT_ACCESS)] = -1,
 		[C(RESULT_MISS)] = -1,
-	},
-},
-[C(DTLB)] = {
-	[C(OP_READ)] = {
+	पूर्ण,
+पूर्ण,
+[C(DTLB)] = अणु
+	[C(OP_READ)] = अणु
 		[C(RESULT_ACCESS)] = 0x0042,
 		[C(RESULT_MISS)] = 0x052c,
-	},
-	[C(OP_WRITE)] = {
+	पूर्ण,
+	[C(OP_WRITE)] = अणु
 		[C(RESULT_ACCESS)] = 0x0043,
 		[C(RESULT_MISS)] = 0x0530,
-	},
-	[C(OP_PREFETCH)] = {
+	पूर्ण,
+	[C(OP_PREFETCH)] = अणु
 		[C(RESULT_ACCESS)] = 0x0564,
 		[C(RESULT_MISS)] = 0x0565,
-	},
-},
-[C(ITLB)] = {
-	[C(OP_READ)] = {
+	पूर्ण,
+पूर्ण,
+[C(ITLB)] = अणु
+	[C(OP_READ)] = अणु
 		[C(RESULT_ACCESS)] = 0x00c0,
 		[C(RESULT_MISS)] = 0x0534,
-	},
-	[C(OP_WRITE)] = {
+	पूर्ण,
+	[C(OP_WRITE)] = अणु
 		[C(RESULT_ACCESS)] = -1,
 		[C(RESULT_MISS)] = -1,
-	},
-	[C(OP_PREFETCH)] = {
+	पूर्ण,
+	[C(OP_PREFETCH)] = अणु
 		[C(RESULT_ACCESS)] = -1,
 		[C(RESULT_MISS)] = -1,
-	},
-},
-[C(BPU)] = {
-	[C(OP_READ)] = {
+	पूर्ण,
+पूर्ण,
+[C(BPU)] = अणु
+	[C(OP_READ)] = अणु
 		[C(RESULT_ACCESS)] = 0x0700,
 		[C(RESULT_MISS)] = 0x0709,
-	},
-	[C(OP_WRITE)] = {
+	पूर्ण,
+	[C(OP_WRITE)] = अणु
 		[C(RESULT_ACCESS)] = -1,
 		[C(RESULT_MISS)] = -1,
-	},
-	[C(OP_PREFETCH)] = {
+	पूर्ण,
+	[C(OP_PREFETCH)] = अणु
 		[C(RESULT_ACCESS)] = -1,
 		[C(RESULT_MISS)] = -1,
-	},
-},
-[C(NODE)] = {
-	[C(OP_READ)] = {
+	पूर्ण,
+पूर्ण,
+[C(NODE)] = अणु
+	[C(OP_READ)] = अणु
 		[C(RESULT_ACCESS)] = -1,
 		[C(RESULT_MISS)] = -1,
-	},
-	[C(OP_WRITE)] = {
+	पूर्ण,
+	[C(OP_WRITE)] = अणु
 		[C(RESULT_ACCESS)] = -1,
 		[C(RESULT_MISS)] = -1,
-	},
-	[C(OP_PREFETCH)] = {
+	पूर्ण,
+	[C(OP_PREFETCH)] = अणु
 		[C(RESULT_ACCESS)] = -1,
 		[C(RESULT_MISS)] = -1,
-	},
-},
-};
+	पूर्ण,
+पूर्ण,
+पूर्ण;
 
-static __initconst const u64 zxe_hw_cache_event_ids
+अटल __initस्थिर स्थिर u64 zxe_hw_cache_event_ids
 				[PERF_COUNT_HW_CACHE_MAX]
 				[PERF_COUNT_HW_CACHE_OP_MAX]
-				[PERF_COUNT_HW_CACHE_RESULT_MAX] = {
-[C(L1D)] = {
-	[C(OP_READ)] = {
+				[PERF_COUNT_HW_CACHE_RESULT_MAX] = अणु
+[C(L1D)] = अणु
+	[C(OP_READ)] = अणु
 		[C(RESULT_ACCESS)] = 0x0568,
 		[C(RESULT_MISS)] = 0x054b,
-	},
-	[C(OP_WRITE)] = {
+	पूर्ण,
+	[C(OP_WRITE)] = अणु
 		[C(RESULT_ACCESS)] = 0x0669,
 		[C(RESULT_MISS)] = 0x0562,
-	},
-	[C(OP_PREFETCH)] = {
+	पूर्ण,
+	[C(OP_PREFETCH)] = अणु
 		[C(RESULT_ACCESS)] = -1,
 		[C(RESULT_MISS)] = -1,
-	},
-},
-[C(L1I)] = {
-	[C(OP_READ)] = {
+	पूर्ण,
+पूर्ण,
+[C(L1I)] = अणु
+	[C(OP_READ)] = अणु
 		[C(RESULT_ACCESS)] = 0x0300,
 		[C(RESULT_MISS)] = 0x0301,
-	},
-	[C(OP_WRITE)] = {
+	पूर्ण,
+	[C(OP_WRITE)] = अणु
 		[C(RESULT_ACCESS)] = -1,
 		[C(RESULT_MISS)] = -1,
-	},
-	[C(OP_PREFETCH)] = {
+	पूर्ण,
+	[C(OP_PREFETCH)] = अणु
 		[C(RESULT_ACCESS)] = 0x030a,
 		[C(RESULT_MISS)] = 0x030b,
-	},
-},
-[C(LL)] = {
-	[C(OP_READ)] = {
+	पूर्ण,
+पूर्ण,
+[C(LL)] = अणु
+	[C(OP_READ)] = अणु
 		[C(RESULT_ACCESS)] = 0x0,
 		[C(RESULT_MISS)] = 0x0,
-	},
-	[C(OP_WRITE)] = {
+	पूर्ण,
+	[C(OP_WRITE)] = अणु
 		[C(RESULT_ACCESS)] = 0x0,
 		[C(RESULT_MISS)] = 0x0,
-	},
-	[C(OP_PREFETCH)] = {
+	पूर्ण,
+	[C(OP_PREFETCH)] = अणु
 		[C(RESULT_ACCESS)] = 0x0,
 		[C(RESULT_MISS)] = 0x0,
-	},
-},
-[C(DTLB)] = {
-	[C(OP_READ)] = {
+	पूर्ण,
+पूर्ण,
+[C(DTLB)] = अणु
+	[C(OP_READ)] = अणु
 		[C(RESULT_ACCESS)] = 0x0568,
 		[C(RESULT_MISS)] = 0x052c,
-	},
-	[C(OP_WRITE)] = {
+	पूर्ण,
+	[C(OP_WRITE)] = अणु
 		[C(RESULT_ACCESS)] = 0x0669,
 		[C(RESULT_MISS)] = 0x0530,
-	},
-	[C(OP_PREFETCH)] = {
+	पूर्ण,
+	[C(OP_PREFETCH)] = अणु
 		[C(RESULT_ACCESS)] = 0x0564,
 		[C(RESULT_MISS)] = 0x0565,
-	},
-},
-[C(ITLB)] = {
-	[C(OP_READ)] = {
+	पूर्ण,
+पूर्ण,
+[C(ITLB)] = अणु
+	[C(OP_READ)] = अणु
 		[C(RESULT_ACCESS)] = 0x00c0,
 		[C(RESULT_MISS)] = 0x0534,
-	},
-	[C(OP_WRITE)] = {
+	पूर्ण,
+	[C(OP_WRITE)] = अणु
 		[C(RESULT_ACCESS)] = -1,
 		[C(RESULT_MISS)] = -1,
-	},
-	[C(OP_PREFETCH)] = {
+	पूर्ण,
+	[C(OP_PREFETCH)] = अणु
 		[C(RESULT_ACCESS)] = -1,
 		[C(RESULT_MISS)] = -1,
-	},
-},
-[C(BPU)] = {
-	[C(OP_READ)] = {
+	पूर्ण,
+पूर्ण,
+[C(BPU)] = अणु
+	[C(OP_READ)] = अणु
 		[C(RESULT_ACCESS)] = 0x0028,
 		[C(RESULT_MISS)] = 0x0029,
-	},
-	[C(OP_WRITE)] = {
+	पूर्ण,
+	[C(OP_WRITE)] = अणु
 		[C(RESULT_ACCESS)] = -1,
 		[C(RESULT_MISS)] = -1,
-	},
-	[C(OP_PREFETCH)] = {
+	पूर्ण,
+	[C(OP_PREFETCH)] = अणु
 		[C(RESULT_ACCESS)] = -1,
 		[C(RESULT_MISS)] = -1,
-	},
-},
-[C(NODE)] = {
-	[C(OP_READ)] = {
+	पूर्ण,
+पूर्ण,
+[C(NODE)] = अणु
+	[C(OP_READ)] = अणु
 		[C(RESULT_ACCESS)] = -1,
 		[C(RESULT_MISS)] = -1,
-	},
-	[C(OP_WRITE)] = {
+	पूर्ण,
+	[C(OP_WRITE)] = अणु
 		[C(RESULT_ACCESS)] = -1,
 		[C(RESULT_MISS)] = -1,
-	},
-	[C(OP_PREFETCH)] = {
+	पूर्ण,
+	[C(OP_PREFETCH)] = अणु
 		[C(RESULT_ACCESS)] = -1,
 		[C(RESULT_MISS)] = -1,
-	},
-},
-};
+	पूर्ण,
+पूर्ण,
+पूर्ण;
 
-static void zhaoxin_pmu_disable_all(void)
-{
+अटल व्योम zhaoxin_pmu_disable_all(व्योम)
+अणु
 	wrmsrl(MSR_CORE_PERF_GLOBAL_CTRL, 0);
-}
+पूर्ण
 
-static void zhaoxin_pmu_enable_all(int added)
-{
-	wrmsrl(MSR_CORE_PERF_GLOBAL_CTRL, x86_pmu.intel_ctrl);
-}
+अटल व्योम zhaoxin_pmu_enable_all(पूर्णांक added)
+अणु
+	wrmsrl(MSR_CORE_PERF_GLOBAL_CTRL, x86_pmu.पूर्णांकel_ctrl);
+पूर्ण
 
-static inline u64 zhaoxin_pmu_get_status(void)
-{
+अटल अंतरभूत u64 zhaoxin_pmu_get_status(व्योम)
+अणु
 	u64 status;
 
 	rdmsrl(MSR_CORE_PERF_GLOBAL_STATUS, status);
 
-	return status;
-}
+	वापस status;
+पूर्ण
 
-static inline void zhaoxin_pmu_ack_status(u64 ack)
-{
+अटल अंतरभूत व्योम zhaoxin_pmu_ack_status(u64 ack)
+अणु
 	wrmsrl(MSR_CORE_PERF_GLOBAL_OVF_CTRL, ack);
-}
+पूर्ण
 
-static inline void zxc_pmu_ack_status(u64 ack)
-{
+अटल अंतरभूत व्योम zxc_pmu_ack_status(u64 ack)
+अणु
 	/*
 	 * ZXC needs global control enabled in order to clear status bits.
 	 */
 	zhaoxin_pmu_enable_all(0);
 	zhaoxin_pmu_ack_status(ack);
 	zhaoxin_pmu_disable_all();
-}
+पूर्ण
 
-static void zhaoxin_pmu_disable_fixed(struct hw_perf_event *hwc)
-{
-	int idx = hwc->idx - INTEL_PMC_IDX_FIXED;
+अटल व्योम zhaoxin_pmu_disable_fixed(काष्ठा hw_perf_event *hwc)
+अणु
+	पूर्णांक idx = hwc->idx - INTEL_PMC_IDX_FIXED;
 	u64 ctrl_val, mask;
 
 	mask = 0xfULL << (idx * 4);
@@ -296,34 +297,34 @@ static void zhaoxin_pmu_disable_fixed(struct hw_perf_event *hwc)
 	rdmsrl(hwc->config_base, ctrl_val);
 	ctrl_val &= ~mask;
 	wrmsrl(hwc->config_base, ctrl_val);
-}
+पूर्ण
 
-static void zhaoxin_pmu_disable_event(struct perf_event *event)
-{
-	struct hw_perf_event *hwc = &event->hw;
+अटल व्योम zhaoxin_pmu_disable_event(काष्ठा perf_event *event)
+अणु
+	काष्ठा hw_perf_event *hwc = &event->hw;
 
-	if (unlikely(hwc->config_base == MSR_ARCH_PERFMON_FIXED_CTR_CTRL)) {
+	अगर (unlikely(hwc->config_base == MSR_ARCH_PERFMON_FIXED_CTR_CTRL)) अणु
 		zhaoxin_pmu_disable_fixed(hwc);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	x86_pmu_disable_event(event);
-}
+पूर्ण
 
-static void zhaoxin_pmu_enable_fixed(struct hw_perf_event *hwc)
-{
-	int idx = hwc->idx - INTEL_PMC_IDX_FIXED;
+अटल व्योम zhaoxin_pmu_enable_fixed(काष्ठा hw_perf_event *hwc)
+अणु
+	पूर्णांक idx = hwc->idx - INTEL_PMC_IDX_FIXED;
 	u64 ctrl_val, bits, mask;
 
 	/*
 	 * Enable IRQ generation (0x8),
 	 * and enable ring-3 counting (0x2) and ring-0 counting (0x1)
-	 * if requested:
+	 * अगर requested:
 	 */
 	bits = 0x8ULL;
-	if (hwc->config & ARCH_PERFMON_EVENTSEL_USR)
+	अगर (hwc->config & ARCH_PERFMON_EVENTSEL_USR)
 		bits |= 0x2;
-	if (hwc->config & ARCH_PERFMON_EVENTSEL_OS)
+	अगर (hwc->config & ARCH_PERFMON_EVENTSEL_OS)
 		bits |= 0x1;
 
 	bits <<= (idx * 4);
@@ -333,106 +334,106 @@ static void zhaoxin_pmu_enable_fixed(struct hw_perf_event *hwc)
 	ctrl_val &= ~mask;
 	ctrl_val |= bits;
 	wrmsrl(hwc->config_base, ctrl_val);
-}
+पूर्ण
 
-static void zhaoxin_pmu_enable_event(struct perf_event *event)
-{
-	struct hw_perf_event *hwc = &event->hw;
+अटल व्योम zhaoxin_pmu_enable_event(काष्ठा perf_event *event)
+अणु
+	काष्ठा hw_perf_event *hwc = &event->hw;
 
-	if (unlikely(hwc->config_base == MSR_ARCH_PERFMON_FIXED_CTR_CTRL)) {
+	अगर (unlikely(hwc->config_base == MSR_ARCH_PERFMON_FIXED_CTR_CTRL)) अणु
 		zhaoxin_pmu_enable_fixed(hwc);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	__x86_pmu_enable_event(hwc, ARCH_PERFMON_EVENTSEL_ENABLE);
-}
+पूर्ण
 
 /*
  * This handler is triggered by the local APIC, so the APIC IRQ handling
  * rules apply:
  */
-static int zhaoxin_pmu_handle_irq(struct pt_regs *regs)
-{
-	struct perf_sample_data data;
-	struct cpu_hw_events *cpuc;
-	int handled = 0;
+अटल पूर्णांक zhaoxin_pmu_handle_irq(काष्ठा pt_regs *regs)
+अणु
+	काष्ठा perf_sample_data data;
+	काष्ठा cpu_hw_events *cpuc;
+	पूर्णांक handled = 0;
 	u64 status;
-	int bit;
+	पूर्णांक bit;
 
 	cpuc = this_cpu_ptr(&cpu_hw_events);
-	apic_write(APIC_LVTPC, APIC_DM_NMI);
+	apic_ग_लिखो(APIC_LVTPC, APIC_DM_NMI);
 	zhaoxin_pmu_disable_all();
 	status = zhaoxin_pmu_get_status();
-	if (!status)
-		goto done;
+	अगर (!status)
+		जाओ करोne;
 
 again:
-	if (x86_pmu.enabled_ack)
+	अगर (x86_pmu.enabled_ack)
 		zxc_pmu_ack_status(status);
-	else
+	अन्यथा
 		zhaoxin_pmu_ack_status(status);
 
 	inc_irq_stat(apic_perf_irqs);
 
 	/*
-	 * CondChgd bit 63 doesn't mean any overflow status. Ignore
+	 * CondChgd bit 63 करोesn't mean any overflow status. Ignore
 	 * and clear the bit.
 	 */
-	if (__test_and_clear_bit(63, (unsigned long *)&status)) {
-		if (!status)
-			goto done;
-	}
+	अगर (__test_and_clear_bit(63, (अचिन्हित दीर्घ *)&status)) अणु
+		अगर (!status)
+			जाओ करोne;
+	पूर्ण
 
-	for_each_set_bit(bit, (unsigned long *)&status, X86_PMC_IDX_MAX) {
-		struct perf_event *event = cpuc->events[bit];
+	क्रम_each_set_bit(bit, (अचिन्हित दीर्घ *)&status, X86_PMC_IDX_MAX) अणु
+		काष्ठा perf_event *event = cpuc->events[bit];
 
 		handled++;
 
-		if (!test_bit(bit, cpuc->active_mask))
-			continue;
+		अगर (!test_bit(bit, cpuc->active_mask))
+			जारी;
 
 		x86_perf_event_update(event);
 		perf_sample_data_init(&data, 0, event->hw.last_period);
 
-		if (!x86_perf_event_set_period(event))
-			continue;
+		अगर (!x86_perf_event_set_period(event))
+			जारी;
 
-		if (perf_event_overflow(event, &data, regs))
+		अगर (perf_event_overflow(event, &data, regs))
 			x86_pmu_stop(event, 0);
-	}
+	पूर्ण
 
 	/*
-	 * Repeat if there is more work to be done:
+	 * Repeat अगर there is more work to be करोne:
 	 */
 	status = zhaoxin_pmu_get_status();
-	if (status)
-		goto again;
+	अगर (status)
+		जाओ again;
 
-done:
+करोne:
 	zhaoxin_pmu_enable_all(0);
-	return handled;
-}
+	वापस handled;
+पूर्ण
 
-static u64 zhaoxin_pmu_event_map(int hw_event)
-{
-	return zx_pmon_event_map[hw_event];
-}
+अटल u64 zhaoxin_pmu_event_map(पूर्णांक hw_event)
+अणु
+	वापस zx_pmon_event_map[hw_event];
+पूर्ण
 
-static struct event_constraint *
-zhaoxin_get_event_constraints(struct cpu_hw_events *cpuc, int idx,
-			struct perf_event *event)
-{
-	struct event_constraint *c;
+अटल काष्ठा event_स्थिरraपूर्णांक *
+zhaoxin_get_event_स्थिरraपूर्णांकs(काष्ठा cpu_hw_events *cpuc, पूर्णांक idx,
+			काष्ठा perf_event *event)
+अणु
+	काष्ठा event_स्थिरraपूर्णांक *c;
 
-	if (x86_pmu.event_constraints) {
-		for_each_event_constraint(c, x86_pmu.event_constraints) {
-			if ((event->hw.config & c->cmask) == c->code)
-				return c;
-		}
-	}
+	अगर (x86_pmu.event_स्थिरraपूर्णांकs) अणु
+		क्रम_each_event_स्थिरraपूर्णांक(c, x86_pmu.event_स्थिरraपूर्णांकs) अणु
+			अगर ((event->hw.config & c->cmask) == c->code)
+				वापस c;
+		पूर्ण
+	पूर्ण
 
-	return &unconstrained;
-}
+	वापस &unस्थिरrained;
+पूर्ण
 
 PMU_FORMAT_ATTR(event,	"config:0-7");
 PMU_FORMAT_ATTR(umask,	"config:8-15");
@@ -440,23 +441,23 @@ PMU_FORMAT_ATTR(edge,	"config:18");
 PMU_FORMAT_ATTR(inv,	"config:23");
 PMU_FORMAT_ATTR(cmask,	"config:24-31");
 
-static struct attribute *zx_arch_formats_attr[] = {
-	&format_attr_event.attr,
-	&format_attr_umask.attr,
-	&format_attr_edge.attr,
-	&format_attr_inv.attr,
-	&format_attr_cmask.attr,
-	NULL,
-};
+अटल काष्ठा attribute *zx_arch_क्रमmats_attr[] = अणु
+	&क्रमmat_attr_event.attr,
+	&क्रमmat_attr_umask.attr,
+	&क्रमmat_attr_edge.attr,
+	&क्रमmat_attr_inv.attr,
+	&क्रमmat_attr_cmask.attr,
+	शून्य,
+पूर्ण;
 
-static ssize_t zhaoxin_event_sysfs_show(char *page, u64 config)
-{
+अटल sमाप_प्रकार zhaoxin_event_sysfs_show(अक्षर *page, u64 config)
+अणु
 	u64 event = (config & ARCH_PERFMON_EVENTSEL_EVENT);
 
-	return x86_event_sysfs_show(page, config, event);
-}
+	वापस x86_event_sysfs_show(page, config, event);
+पूर्ण
 
-static const struct x86_pmu zhaoxin_pmu __initconst = {
+अटल स्थिर काष्ठा x86_pmu zhaoxin_pmu __initस्थिर = अणु
 	.name			= "zhaoxin",
 	.handle_irq		= zhaoxin_pmu_handle_irq,
 	.disable_all		= zhaoxin_pmu_disable_all,
@@ -471,45 +472,45 @@ static const struct x86_pmu zhaoxin_pmu __initconst = {
 	.max_events		= ARRAY_SIZE(zx_pmon_event_map),
 	.apic			= 1,
 	/*
-	 * For zxd/zxe, read/write operation for PMCx MSR is 48 bits.
+	 * For zxd/zxe, पढ़ो/ग_लिखो operation क्रम PMCx MSR is 48 bits.
 	 */
 	.max_period		= (1ULL << 47) - 1,
-	.get_event_constraints	= zhaoxin_get_event_constraints,
+	.get_event_स्थिरraपूर्णांकs	= zhaoxin_get_event_स्थिरraपूर्णांकs,
 
-	.format_attrs		= zx_arch_formats_attr,
+	.क्रमmat_attrs		= zx_arch_क्रमmats_attr,
 	.events_sysfs_show	= zhaoxin_event_sysfs_show,
-};
+पूर्ण;
 
-static const struct { int id; char *name; } zx_arch_events_map[] __initconst = {
-	{ PERF_COUNT_HW_CPU_CYCLES, "cpu cycles" },
-	{ PERF_COUNT_HW_INSTRUCTIONS, "instructions" },
-	{ PERF_COUNT_HW_BUS_CYCLES, "bus cycles" },
-	{ PERF_COUNT_HW_CACHE_REFERENCES, "cache references" },
-	{ PERF_COUNT_HW_CACHE_MISSES, "cache misses" },
-	{ PERF_COUNT_HW_BRANCH_INSTRUCTIONS, "branch instructions" },
-	{ PERF_COUNT_HW_BRANCH_MISSES, "branch misses" },
-};
+अटल स्थिर काष्ठा अणु पूर्णांक id; अक्षर *name; पूर्ण zx_arch_events_map[] __initस्थिर = अणु
+	अणु PERF_COUNT_HW_CPU_CYCLES, "cpu cycles" पूर्ण,
+	अणु PERF_COUNT_HW_INSTRUCTIONS, "instructions" पूर्ण,
+	अणु PERF_COUNT_HW_BUS_CYCLES, "bus cycles" पूर्ण,
+	अणु PERF_COUNT_HW_CACHE_REFERENCES, "cache references" पूर्ण,
+	अणु PERF_COUNT_HW_CACHE_MISSES, "cache misses" पूर्ण,
+	अणु PERF_COUNT_HW_BRANCH_INSTRUCTIONS, "branch instructions" पूर्ण,
+	अणु PERF_COUNT_HW_BRANCH_MISSES, "branch misses" पूर्ण,
+पूर्ण;
 
-static __init void zhaoxin_arch_events_quirk(void)
-{
-	int bit;
+अटल __init व्योम zhaoxin_arch_events_quirk(व्योम)
+अणु
+	पूर्णांक bit;
 
 	/* disable event that reported as not present by cpuid */
-	for_each_set_bit(bit, x86_pmu.events_mask, ARRAY_SIZE(zx_arch_events_map)) {
+	क्रम_each_set_bit(bit, x86_pmu.events_mask, ARRAY_SIZE(zx_arch_events_map)) अणु
 		zx_pmon_event_map[zx_arch_events_map[bit].id] = 0;
 		pr_warn("CPUID marked event: \'%s\' unavailable\n",
 			zx_arch_events_map[bit].name);
-	}
-}
+	पूर्ण
+पूर्ण
 
-__init int zhaoxin_pmu_init(void)
-{
-	union cpuid10_edx edx;
-	union cpuid10_eax eax;
-	union cpuid10_ebx ebx;
-	struct event_constraint *c;
-	unsigned int unused;
-	int version;
+__init पूर्णांक zhaoxin_pmu_init(व्योम)
+अणु
+	जोड़ cpuid10_edx edx;
+	जोड़ cpuid10_eax eax;
+	जोड़ cpuid10_ebx ebx;
+	काष्ठा event_स्थिरraपूर्णांक *c;
+	अचिन्हित पूर्णांक unused;
+	पूर्णांक version;
 
 	pr_info("Welcome to zhaoxin pmu!\n");
 
@@ -519,12 +520,12 @@ __init int zhaoxin_pmu_init(void)
 	 */
 	cpuid(10, &eax.full, &ebx.full, &unused, &edx.full);
 
-	if (eax.split.mask_length < ARCH_PERFMON_EVENTS_COUNT - 1)
-		return -ENODEV;
+	अगर (eax.split.mask_length < ARCH_PERFMON_EVENTS_COUNT - 1)
+		वापस -ENODEV;
 
 	version = eax.split.version_id;
-	if (version != 2)
-		return -ENODEV;
+	अगर (version != 2)
+		वापस -ENODEV;
 
 	x86_pmu = zhaoxin_pmu;
 	pr_info("Version check pass!\n");
@@ -539,75 +540,75 @@ __init int zhaoxin_pmu_init(void)
 	x86_pmu.num_counters_fixed = edx.split.num_counters_fixed;
 	x86_add_quirk(zhaoxin_arch_events_quirk);
 
-	switch (boot_cpu_data.x86) {
-	case 0x06:
-		if (boot_cpu_data.x86_model == 0x0f || boot_cpu_data.x86_model == 0x19) {
+	चयन (boot_cpu_data.x86) अणु
+	हाल 0x06:
+		अगर (boot_cpu_data.x86_model == 0x0f || boot_cpu_data.x86_model == 0x19) अणु
 
 			x86_pmu.max_period = x86_pmu.cntval_mask >> 1;
 
-			/* Clearing status works only if the global control is enable on zxc. */
+			/* Clearing status works only अगर the global control is enable on zxc. */
 			x86_pmu.enabled_ack = 1;
 
-			x86_pmu.event_constraints = zxc_event_constraints;
+			x86_pmu.event_स्थिरraपूर्णांकs = zxc_event_स्थिरraपूर्णांकs;
 			zx_pmon_event_map[PERF_COUNT_HW_INSTRUCTIONS] = 0;
 			zx_pmon_event_map[PERF_COUNT_HW_CACHE_REFERENCES] = 0;
 			zx_pmon_event_map[PERF_COUNT_HW_CACHE_MISSES] = 0;
 			zx_pmon_event_map[PERF_COUNT_HW_BUS_CYCLES] = 0;
 
 			pr_cont("ZXC events, ");
-			break;
-		}
-		return -ENODEV;
+			अवरोध;
+		पूर्ण
+		वापस -ENODEV;
 
-	case 0x07:
+	हाल 0x07:
 		zx_pmon_event_map[PERF_COUNT_HW_STALLED_CYCLES_FRONTEND] =
 			X86_CONFIG(.event = 0x01, .umask = 0x01, .inv = 0x01, .cmask = 0x01);
 
 		zx_pmon_event_map[PERF_COUNT_HW_STALLED_CYCLES_BACKEND] =
 			X86_CONFIG(.event = 0x0f, .umask = 0x04, .inv = 0, .cmask = 0);
 
-		switch (boot_cpu_data.x86_model) {
-		case 0x1b:
-			memcpy(hw_cache_event_ids, zxd_hw_cache_event_ids,
-			       sizeof(hw_cache_event_ids));
+		चयन (boot_cpu_data.x86_model) अणु
+		हाल 0x1b:
+			स_नकल(hw_cache_event_ids, zxd_hw_cache_event_ids,
+			       माप(hw_cache_event_ids));
 
-			x86_pmu.event_constraints = zxd_event_constraints;
+			x86_pmu.event_स्थिरraपूर्णांकs = zxd_event_स्थिरraपूर्णांकs;
 
 			zx_pmon_event_map[PERF_COUNT_HW_BRANCH_INSTRUCTIONS] = 0x0700;
 			zx_pmon_event_map[PERF_COUNT_HW_BRANCH_MISSES] = 0x0709;
 
 			pr_cont("ZXD events, ");
-			break;
-		case 0x3b:
-			memcpy(hw_cache_event_ids, zxe_hw_cache_event_ids,
-			       sizeof(hw_cache_event_ids));
+			अवरोध;
+		हाल 0x3b:
+			स_नकल(hw_cache_event_ids, zxe_hw_cache_event_ids,
+			       माप(hw_cache_event_ids));
 
-			x86_pmu.event_constraints = zxd_event_constraints;
+			x86_pmu.event_स्थिरraपूर्णांकs = zxd_event_स्थिरraपूर्णांकs;
 
 			zx_pmon_event_map[PERF_COUNT_HW_BRANCH_INSTRUCTIONS] = 0x0028;
 			zx_pmon_event_map[PERF_COUNT_HW_BRANCH_MISSES] = 0x0029;
 
 			pr_cont("ZXE events, ");
-			break;
-		default:
-			return -ENODEV;
-		}
-		break;
+			अवरोध;
+		शेष:
+			वापस -ENODEV;
+		पूर्ण
+		अवरोध;
 
-	default:
-		return -ENODEV;
-	}
+	शेष:
+		वापस -ENODEV;
+	पूर्ण
 
-	x86_pmu.intel_ctrl = (1 << (x86_pmu.num_counters)) - 1;
-	x86_pmu.intel_ctrl |= ((1LL << x86_pmu.num_counters_fixed)-1) << INTEL_PMC_IDX_FIXED;
+	x86_pmu.पूर्णांकel_ctrl = (1 << (x86_pmu.num_counters)) - 1;
+	x86_pmu.पूर्णांकel_ctrl |= ((1LL << x86_pmu.num_counters_fixed)-1) << INTEL_PMC_IDX_FIXED;
 
-	if (x86_pmu.event_constraints) {
-		for_each_event_constraint(c, x86_pmu.event_constraints) {
+	अगर (x86_pmu.event_स्थिरraपूर्णांकs) अणु
+		क्रम_each_event_स्थिरraपूर्णांक(c, x86_pmu.event_स्थिरraपूर्णांकs) अणु
 			c->idxmsk64 |= (1ULL << x86_pmu.num_counters) - 1;
 			c->weight += x86_pmu.num_counters;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 

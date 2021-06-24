@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  *
  * Authors:
@@ -7,90 +8,90 @@
  * Based on: net/mac80211/util.c
  */
 
-#include "ieee802154_i.h"
-#include "driver-ops.h"
+#समावेश "ieee802154_i.h"
+#समावेश "driver-ops.h"
 
-/* privid for wpan_phys to determine whether they belong to us or not */
-const void *const mac802154_wpan_phy_privid = &mac802154_wpan_phy_privid;
+/* privid क्रम wpan_phys to determine whether they beदीर्घ to us or not */
+स्थिर व्योम *स्थिर mac802154_wpan_phy_privid = &mac802154_wpan_phy_privid;
 
-void ieee802154_wake_queue(struct ieee802154_hw *hw)
-{
-	struct ieee802154_local *local = hw_to_local(hw);
-	struct ieee802154_sub_if_data *sdata;
+व्योम ieee802154_wake_queue(काष्ठा ieee802154_hw *hw)
+अणु
+	काष्ठा ieee802154_local *local = hw_to_local(hw);
+	काष्ठा ieee802154_sub_अगर_data *sdata;
 
-	rcu_read_lock();
-	list_for_each_entry_rcu(sdata, &local->interfaces, list) {
-		if (!sdata->dev)
-			continue;
+	rcu_पढ़ो_lock();
+	list_क्रम_each_entry_rcu(sdata, &local->पूर्णांकerfaces, list) अणु
+		अगर (!sdata->dev)
+			जारी;
 
-		netif_wake_queue(sdata->dev);
-	}
-	rcu_read_unlock();
-}
+		netअगर_wake_queue(sdata->dev);
+	पूर्ण
+	rcu_पढ़ो_unlock();
+पूर्ण
 EXPORT_SYMBOL(ieee802154_wake_queue);
 
-void ieee802154_stop_queue(struct ieee802154_hw *hw)
-{
-	struct ieee802154_local *local = hw_to_local(hw);
-	struct ieee802154_sub_if_data *sdata;
+व्योम ieee802154_stop_queue(काष्ठा ieee802154_hw *hw)
+अणु
+	काष्ठा ieee802154_local *local = hw_to_local(hw);
+	काष्ठा ieee802154_sub_अगर_data *sdata;
 
-	rcu_read_lock();
-	list_for_each_entry_rcu(sdata, &local->interfaces, list) {
-		if (!sdata->dev)
-			continue;
+	rcu_पढ़ो_lock();
+	list_क्रम_each_entry_rcu(sdata, &local->पूर्णांकerfaces, list) अणु
+		अगर (!sdata->dev)
+			जारी;
 
-		netif_stop_queue(sdata->dev);
-	}
-	rcu_read_unlock();
-}
+		netअगर_stop_queue(sdata->dev);
+	पूर्ण
+	rcu_पढ़ो_unlock();
+पूर्ण
 EXPORT_SYMBOL(ieee802154_stop_queue);
 
-enum hrtimer_restart ieee802154_xmit_ifs_timer(struct hrtimer *timer)
-{
-	struct ieee802154_local *local =
-		container_of(timer, struct ieee802154_local, ifs_timer);
+क्रमागत hrसमयr_restart ieee802154_xmit_अगरs_समयr(काष्ठा hrसमयr *समयr)
+अणु
+	काष्ठा ieee802154_local *local =
+		container_of(समयr, काष्ठा ieee802154_local, अगरs_समयr);
 
 	ieee802154_wake_queue(&local->hw);
 
-	return HRTIMER_NORESTART;
-}
+	वापस HRTIMER_NORESTART;
+पूर्ण
 
-void ieee802154_xmit_complete(struct ieee802154_hw *hw, struct sk_buff *skb,
-			      bool ifs_handling)
-{
-	if (ifs_handling) {
-		struct ieee802154_local *local = hw_to_local(hw);
-		u8 max_sifs_size;
+व्योम ieee802154_xmit_complete(काष्ठा ieee802154_hw *hw, काष्ठा sk_buff *skb,
+			      bool अगरs_handling)
+अणु
+	अगर (अगरs_handling) अणु
+		काष्ठा ieee802154_local *local = hw_to_local(hw);
+		u8 max_sअगरs_size;
 
-		/* If transceiver sets CRC on his own we need to use lifs
+		/* If transceiver sets CRC on his own we need to use lअगरs
 		 * threshold len above 16 otherwise 18, because it's not
 		 * part of skb->len.
 		 */
-		if (hw->flags & IEEE802154_HW_TX_OMIT_CKSUM)
-			max_sifs_size = IEEE802154_MAX_SIFS_FRAME_SIZE -
+		अगर (hw->flags & IEEE802154_HW_TX_OMIT_CKSUM)
+			max_sअगरs_size = IEEE802154_MAX_SIFS_FRAME_SIZE -
 					IEEE802154_FCS_LEN;
-		else
-			max_sifs_size = IEEE802154_MAX_SIFS_FRAME_SIZE;
+		अन्यथा
+			max_sअगरs_size = IEEE802154_MAX_SIFS_FRAME_SIZE;
 
-		if (skb->len > max_sifs_size)
-			hrtimer_start(&local->ifs_timer,
-				      hw->phy->lifs_period * NSEC_PER_USEC,
+		अगर (skb->len > max_sअगरs_size)
+			hrसमयr_start(&local->अगरs_समयr,
+				      hw->phy->lअगरs_period * NSEC_PER_USEC,
 				      HRTIMER_MODE_REL);
-		else
-			hrtimer_start(&local->ifs_timer,
-				      hw->phy->sifs_period * NSEC_PER_USEC,
+		अन्यथा
+			hrसमयr_start(&local->अगरs_समयr,
+				      hw->phy->sअगरs_period * NSEC_PER_USEC,
 				      HRTIMER_MODE_REL);
-	} else {
+	पूर्ण अन्यथा अणु
 		ieee802154_wake_queue(hw);
-	}
+	पूर्ण
 
 	dev_consume_skb_any(skb);
-}
+पूर्ण
 EXPORT_SYMBOL(ieee802154_xmit_complete);
 
-void ieee802154_stop_device(struct ieee802154_local *local)
-{
+व्योम ieee802154_stop_device(काष्ठा ieee802154_local *local)
+अणु
 	flush_workqueue(local->workqueue);
-	hrtimer_cancel(&local->ifs_timer);
+	hrसमयr_cancel(&local->अगरs_समयr);
 	drv_stop(local);
-}
+पूर्ण

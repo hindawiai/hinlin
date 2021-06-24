@@ -1,76 +1,77 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 
-#ifndef _LINUX_FPGA_BRIDGE_H
-#define _LINUX_FPGA_BRIDGE_H
+#अगर_अघोषित _LINUX_FPGA_BRIDGE_H
+#घोषणा _LINUX_FPGA_BRIDGE_H
 
-#include <linux/device.h>
-#include <linux/fpga/fpga-mgr.h>
+#समावेश <linux/device.h>
+#समावेश <linux/fpga/fpga-mgr.h>
 
-struct fpga_bridge;
+काष्ठा fpga_bridge;
 
 /**
- * struct fpga_bridge_ops - ops for low level FPGA bridge drivers
- * @enable_show: returns the FPGA bridge's status
+ * काष्ठा fpga_bridge_ops - ops क्रम low level FPGA bridge drivers
+ * @enable_show: वापसs the FPGA bridge's status
  * @enable_set: set a FPGA bridge as enabled or disabled
- * @fpga_bridge_remove: set FPGA into a specific state during driver remove
+ * @fpga_bridge_हटाओ: set FPGA पूर्णांकo a specअगरic state during driver हटाओ
  * @groups: optional attribute groups.
  */
-struct fpga_bridge_ops {
-	int (*enable_show)(struct fpga_bridge *bridge);
-	int (*enable_set)(struct fpga_bridge *bridge, bool enable);
-	void (*fpga_bridge_remove)(struct fpga_bridge *bridge);
-	const struct attribute_group **groups;
-};
+काष्ठा fpga_bridge_ops अणु
+	पूर्णांक (*enable_show)(काष्ठा fpga_bridge *bridge);
+	पूर्णांक (*enable_set)(काष्ठा fpga_bridge *bridge, bool enable);
+	व्योम (*fpga_bridge_हटाओ)(काष्ठा fpga_bridge *bridge);
+	स्थिर काष्ठा attribute_group **groups;
+पूर्ण;
 
 /**
- * struct fpga_bridge - FPGA bridge structure
+ * काष्ठा fpga_bridge - FPGA bridge काष्ठाure
  * @name: name of low level FPGA bridge
  * @dev: FPGA bridge device
- * @mutex: enforces exclusive reference to bridge
- * @br_ops: pointer to struct of FPGA bridge ops
- * @info: fpga image specific information
+ * @mutex: enक्रमces exclusive reference to bridge
+ * @br_ops: poपूर्णांकer to काष्ठा of FPGA bridge ops
+ * @info: fpga image specअगरic inक्रमmation
  * @node: FPGA bridge list node
- * @priv: low level driver private date
+ * @priv: low level driver निजी date
  */
-struct fpga_bridge {
-	const char *name;
-	struct device dev;
-	struct mutex mutex; /* for exclusive reference to bridge */
-	const struct fpga_bridge_ops *br_ops;
-	struct fpga_image_info *info;
-	struct list_head node;
-	void *priv;
-};
+काष्ठा fpga_bridge अणु
+	स्थिर अक्षर *name;
+	काष्ठा device dev;
+	काष्ठा mutex mutex; /* क्रम exclusive reference to bridge */
+	स्थिर काष्ठा fpga_bridge_ops *br_ops;
+	काष्ठा fpga_image_info *info;
+	काष्ठा list_head node;
+	व्योम *priv;
+पूर्ण;
 
-#define to_fpga_bridge(d) container_of(d, struct fpga_bridge, dev)
+#घोषणा to_fpga_bridge(d) container_of(d, काष्ठा fpga_bridge, dev)
 
-struct fpga_bridge *of_fpga_bridge_get(struct device_node *node,
-				       struct fpga_image_info *info);
-struct fpga_bridge *fpga_bridge_get(struct device *dev,
-				    struct fpga_image_info *info);
-void fpga_bridge_put(struct fpga_bridge *bridge);
-int fpga_bridge_enable(struct fpga_bridge *bridge);
-int fpga_bridge_disable(struct fpga_bridge *bridge);
+काष्ठा fpga_bridge *of_fpga_bridge_get(काष्ठा device_node *node,
+				       काष्ठा fpga_image_info *info);
+काष्ठा fpga_bridge *fpga_bridge_get(काष्ठा device *dev,
+				    काष्ठा fpga_image_info *info);
+व्योम fpga_bridge_put(काष्ठा fpga_bridge *bridge);
+पूर्णांक fpga_bridge_enable(काष्ठा fpga_bridge *bridge);
+पूर्णांक fpga_bridge_disable(काष्ठा fpga_bridge *bridge);
 
-int fpga_bridges_enable(struct list_head *bridge_list);
-int fpga_bridges_disable(struct list_head *bridge_list);
-void fpga_bridges_put(struct list_head *bridge_list);
-int fpga_bridge_get_to_list(struct device *dev,
-			    struct fpga_image_info *info,
-			    struct list_head *bridge_list);
-int of_fpga_bridge_get_to_list(struct device_node *np,
-			       struct fpga_image_info *info,
-			       struct list_head *bridge_list);
+पूर्णांक fpga_bridges_enable(काष्ठा list_head *bridge_list);
+पूर्णांक fpga_bridges_disable(काष्ठा list_head *bridge_list);
+व्योम fpga_bridges_put(काष्ठा list_head *bridge_list);
+पूर्णांक fpga_bridge_get_to_list(काष्ठा device *dev,
+			    काष्ठा fpga_image_info *info,
+			    काष्ठा list_head *bridge_list);
+पूर्णांक of_fpga_bridge_get_to_list(काष्ठा device_node *np,
+			       काष्ठा fpga_image_info *info,
+			       काष्ठा list_head *bridge_list);
 
-struct fpga_bridge *fpga_bridge_create(struct device *dev, const char *name,
-				       const struct fpga_bridge_ops *br_ops,
-				       void *priv);
-void fpga_bridge_free(struct fpga_bridge *br);
-int fpga_bridge_register(struct fpga_bridge *br);
-void fpga_bridge_unregister(struct fpga_bridge *br);
+काष्ठा fpga_bridge *fpga_bridge_create(काष्ठा device *dev, स्थिर अक्षर *name,
+				       स्थिर काष्ठा fpga_bridge_ops *br_ops,
+				       व्योम *priv);
+व्योम fpga_bridge_मुक्त(काष्ठा fpga_bridge *br);
+पूर्णांक fpga_bridge_रेजिस्टर(काष्ठा fpga_bridge *br);
+व्योम fpga_bridge_unरेजिस्टर(काष्ठा fpga_bridge *br);
 
-struct fpga_bridge
-*devm_fpga_bridge_create(struct device *dev, const char *name,
-			 const struct fpga_bridge_ops *br_ops, void *priv);
+काष्ठा fpga_bridge
+*devm_fpga_bridge_create(काष्ठा device *dev, स्थिर अक्षर *name,
+			 स्थिर काष्ठा fpga_bridge_ops *br_ops, व्योम *priv);
 
-#endif /* _LINUX_FPGA_BRIDGE_H */
+#पूर्ण_अगर /* _LINUX_FPGA_BRIDGE_H */

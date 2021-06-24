@@ -1,94 +1,95 @@
-// SPDX-License-Identifier: GPL-2.0-only
-/* drivers/atm/idt77105.c - IDT77105 (PHY) driver */
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
+/* drivers/aपंचांग/idt77105.c - IDT77105 (PHY) driver */
  
 /* Written 1999 by Greg Banks, NEC Australia <gnb@linuxfan.com>. Based on suni.c */
 
 
-#include <linux/module.h>
-#include <linux/kernel.h>
-#include <linux/mm.h>
-#include <linux/errno.h>
-#include <linux/atmdev.h>
-#include <linux/sonet.h>
-#include <linux/delay.h>
-#include <linux/timer.h>
-#include <linux/init.h>
-#include <linux/capability.h>
-#include <linux/atm_idt77105.h>
-#include <linux/spinlock.h>
-#include <linux/slab.h>
-#include <asm/param.h>
-#include <linux/uaccess.h>
+#समावेश <linux/module.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/aपंचांगdev.h>
+#समावेश <linux/sonet.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/समयr.h>
+#समावेश <linux/init.h>
+#समावेश <linux/capability.h>
+#समावेश <linux/aपंचांग_idt77105.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/slab.h>
+#समावेश <यंत्र/param.h>
+#समावेश <linux/uaccess.h>
 
-#include "idt77105.h"
+#समावेश "idt77105.h"
 
-#undef GENERAL_DEBUG
+#अघोषित GENERAL_DEBUG
 
-#ifdef GENERAL_DEBUG
-#define DPRINTK(format,args...) printk(KERN_DEBUG format,##args)
-#else
-#define DPRINTK(format,args...)
-#endif
-
-
-struct idt77105_priv {
-	struct idt77105_stats stats;    /* link diagnostics */
-	struct atm_dev *dev;		/* device back-pointer */
-	struct idt77105_priv *next;
-        int loop_mode;
-        unsigned char old_mcr;          /* storage of MCR reg while signal lost */
-};
-
-static DEFINE_SPINLOCK(idt77105_priv_lock);
-
-#define PRIV(dev) ((struct idt77105_priv *) dev->phy_data)
-
-#define PUT(val,reg) dev->ops->phy_put(dev,val,IDT77105_##reg)
-#define GET(reg) dev->ops->phy_get(dev,IDT77105_##reg)
-
-static void idt77105_stats_timer_func(struct timer_list *);
-static void idt77105_restart_timer_func(struct timer_list *);
+#अगर_घोषित GENERAL_DEBUG
+#घोषणा DPRINTK(क्रमmat,args...) prपूर्णांकk(KERN_DEBUG क्रमmat,##args)
+#अन्यथा
+#घोषणा DPRINTK(क्रमmat,args...)
+#पूर्ण_अगर
 
 
-static DEFINE_TIMER(stats_timer, idt77105_stats_timer_func);
-static DEFINE_TIMER(restart_timer, idt77105_restart_timer_func);
-static int start_timer = 1;
-static struct idt77105_priv *idt77105_all = NULL;
+काष्ठा idt77105_priv अणु
+	काष्ठा idt77105_stats stats;    /* link diagnostics */
+	काष्ठा aपंचांग_dev *dev;		/* device back-poपूर्णांकer */
+	काष्ठा idt77105_priv *next;
+        पूर्णांक loop_mode;
+        अचिन्हित अक्षर old_mcr;          /* storage of MCR reg जबतक संकेत lost */
+पूर्ण;
+
+अटल DEFINE_SPINLOCK(idt77105_priv_lock);
+
+#घोषणा PRIV(dev) ((काष्ठा idt77105_priv *) dev->phy_data)
+
+#घोषणा PUT(val,reg) dev->ops->phy_put(dev,val,IDT77105_##reg)
+#घोषणा GET(reg) dev->ops->phy_get(dev,IDT77105_##reg)
+
+अटल व्योम idt77105_stats_समयr_func(काष्ठा समयr_list *);
+अटल व्योम idt77105_restart_समयr_func(काष्ठा समयr_list *);
+
+
+अटल DEFINE_TIMER(stats_समयr, idt77105_stats_समयr_func);
+अटल DEFINE_TIMER(restart_समयr, idt77105_restart_समयr_func);
+अटल पूर्णांक start_समयr = 1;
+अटल काष्ठा idt77105_priv *idt77105_all = शून्य;
 
 /*
  * Retrieve the value of one of the IDT77105's counters.
- * `counter' is one of the IDT77105_CTRSEL_* constants.
+ * `counter' is one of the IDT77105_CTRSEL_* स्थिरants.
  */
-static u16 get_counter(struct atm_dev *dev, int counter)
-{
+अटल u16 get_counter(काष्ठा aपंचांग_dev *dev, पूर्णांक counter)
+अणु
         u16 val;
         
-        /* write the counter bit into PHY register 6 */
+        /* ग_लिखो the counter bit पूर्णांकo PHY रेजिस्टर 6 */
         PUT(counter, CTRSEL);
-        /* read the low 8 bits from register 4 */
+        /* पढ़ो the low 8 bits from रेजिस्टर 4 */
         val = GET(CTRLO);
-        /* read the high 8 bits from register 5 */
+        /* पढ़ो the high 8 bits from रेजिस्टर 5 */
         val |= GET(CTRHI)<<8;
         
-        return val;
-}
+        वापस val;
+पूर्ण
 
 /*
  * Timer function called every second to gather statistics
- * from the 77105. This is done because the h/w registers
- * will overflow if not read at least once per second. The
+ * from the 77105. This is करोne because the h/w रेजिस्टरs
+ * will overflow अगर not पढ़ो at least once per second. The
  * kernel's stats are much higher precision. Also, having
  * a separate copy of the stats allows implementation of
  * an ioctl which gathers the stats *without* zero'ing them.
  */
-static void idt77105_stats_timer_func(struct timer_list *unused)
-{
-	struct idt77105_priv *walk;
-	struct atm_dev *dev;
-	struct idt77105_stats *stats;
+अटल व्योम idt77105_stats_समयr_func(काष्ठा समयr_list *unused)
+अणु
+	काष्ठा idt77105_priv *walk;
+	काष्ठा aपंचांग_dev *dev;
+	काष्ठा idt77105_stats *stats;
 
         DPRINTK("IDT77105 gathering statistics\n");
-	for (walk = idt77105_all; walk; walk = walk->next) {
+	क्रम (walk = idt77105_all; walk; walk = walk->next) अणु
 		dev = walk->dev;
                 
 		stats = &walk->stats;
@@ -96,85 +97,85 @@ static void idt77105_stats_timer_func(struct timer_list *unused)
                 stats->tx_cells += get_counter(dev, IDT77105_CTRSEL_TCC);
                 stats->rx_cells += get_counter(dev, IDT77105_CTRSEL_RCC);
                 stats->rx_hec_errors += get_counter(dev, IDT77105_CTRSEL_RHEC);
-	}
-        if (!start_timer) mod_timer(&stats_timer,jiffies+IDT77105_STATS_TIMER_PERIOD);
-}
+	पूर्ण
+        अगर (!start_समयr) mod_समयr(&stats_समयr,jअगरfies+IDT77105_STATS_TIMER_PERIOD);
+पूर्ण
 
 
 /*
- * A separate timer func which handles restarting PHY chips which
+ * A separate समयr func which handles restarting PHY chips which
  * have had the cable re-inserted after being pulled out. This is
- * done by polling the Good Signal Bit in the Interrupt Status
- * register every 5 seconds. The other technique (checking Good
- * Signal Bit in the interrupt handler) cannot be used because PHY
- * interrupts need to be disabled when the cable is pulled out
- * to avoid lots of spurious cell error interrupts.
+ * करोne by polling the Good Signal Bit in the Interrupt Status
+ * रेजिस्टर every 5 seconds. The other technique (checking Good
+ * Signal Bit in the पूर्णांकerrupt handler) cannot be used because PHY
+ * पूर्णांकerrupts need to be disabled when the cable is pulled out
+ * to aव्योम lots of spurious cell error पूर्णांकerrupts.
  */
-static void idt77105_restart_timer_func(struct timer_list *unused)
-{
-	struct idt77105_priv *walk;
-	struct atm_dev *dev;
-        unsigned char istat;
+अटल व्योम idt77105_restart_समयr_func(काष्ठा समयr_list *unused)
+अणु
+	काष्ठा idt77105_priv *walk;
+	काष्ठा aपंचांग_dev *dev;
+        अचिन्हित अक्षर istat;
 
         DPRINTK("IDT77105 checking for cable re-insertion\n");
-	for (walk = idt77105_all; walk; walk = walk->next) {
+	क्रम (walk = idt77105_all; walk; walk = walk->next) अणु
 		dev = walk->dev;
                 
-                if (dev->signal != ATM_PHY_SIG_LOST)
-                    continue;
+                अगर (dev->संकेत != ATM_PHY_SIG_LOST)
+                    जारी;
                     
-                istat = GET(ISTAT); /* side effect: clears all interrupt status bits */
-                if (istat & IDT77105_ISTAT_GOODSIG) {
-                    /* Found signal again */
-                    atm_dev_signal_change(dev, ATM_PHY_SIG_FOUND);
-	            printk(KERN_NOTICE "%s(itf %d): signal detected again\n",
+                istat = GET(ISTAT); /* side effect: clears all पूर्णांकerrupt status bits */
+                अगर (istat & IDT77105_ISTAT_GOODSIG) अणु
+                    /* Found संकेत again */
+                    aपंचांग_dev_संकेत_change(dev, ATM_PHY_SIG_FOUND);
+	            prपूर्णांकk(KERN_NOTICE "%s(itf %d): signal detected again\n",
                         dev->type,dev->number);
                     /* flush the receive FIFO */
                     PUT( GET(DIAG) | IDT77105_DIAG_RFLUSH, DIAG);
-                    /* re-enable interrupts */
+                    /* re-enable पूर्णांकerrupts */
 	            PUT( walk->old_mcr ,MCR);
-                }
-	}
-        if (!start_timer) mod_timer(&restart_timer,jiffies+IDT77105_RESTART_TIMER_PERIOD);
-}
+                पूर्ण
+	पूर्ण
+        अगर (!start_समयr) mod_समयr(&restart_समयr,jअगरfies+IDT77105_RESTART_TIMER_PERIOD);
+पूर्ण
 
 
-static int fetch_stats(struct atm_dev *dev,struct idt77105_stats __user *arg,int zero)
-{
-	unsigned long flags;
-	struct idt77105_stats stats;
+अटल पूर्णांक fetch_stats(काष्ठा aपंचांग_dev *dev,काष्ठा idt77105_stats __user *arg,पूर्णांक zero)
+अणु
+	अचिन्हित दीर्घ flags;
+	काष्ठा idt77105_stats stats;
 
 	spin_lock_irqsave(&idt77105_priv_lock, flags);
-	memcpy(&stats, &PRIV(dev)->stats, sizeof(struct idt77105_stats));
-	if (zero)
-		memset(&PRIV(dev)->stats, 0, sizeof(struct idt77105_stats));
+	स_नकल(&stats, &PRIV(dev)->stats, माप(काष्ठा idt77105_stats));
+	अगर (zero)
+		स_रखो(&PRIV(dev)->stats, 0, माप(काष्ठा idt77105_stats));
 	spin_unlock_irqrestore(&idt77105_priv_lock, flags);
-	if (arg == NULL)
-		return 0;
-	return copy_to_user(arg, &stats,
-		    sizeof(struct idt77105_stats)) ? -EFAULT : 0;
-}
+	अगर (arg == शून्य)
+		वापस 0;
+	वापस copy_to_user(arg, &stats,
+		    माप(काष्ठा idt77105_stats)) ? -EFAULT : 0;
+पूर्ण
 
 
-static int set_loopback(struct atm_dev *dev,int mode)
-{
-	int diag;
+अटल पूर्णांक set_loopback(काष्ठा aपंचांग_dev *dev,पूर्णांक mode)
+अणु
+	पूर्णांक diag;
 
 	diag = GET(DIAG) & ~IDT77105_DIAG_LCMASK;
-	switch (mode) {
-		case ATM_LM_NONE:
-			break;
-		case ATM_LM_LOC_ATM:
+	चयन (mode) अणु
+		हाल ATM_LM_NONE:
+			अवरोध;
+		हाल ATM_LM_LOC_ATM:
 			diag |= IDT77105_DIAG_LC_PHY_LOOPBACK;
-			break;
-		case ATM_LM_RMT_ATM:
+			अवरोध;
+		हाल ATM_LM_RMT_ATM:
 			diag |= IDT77105_DIAG_LC_LINE_LOOPBACK;
-			break;
-		default:
-			return -EINVAL;
-	}
+			अवरोध;
+		शेष:
+			वापस -EINVAL;
+	पूर्ण
 	PUT(diag,DIAG);
-	printk(KERN_NOTICE "%s(%d) Loopback mode is: %s\n", dev->type,
+	prपूर्णांकk(KERN_NOTICE "%s(%d) Loopback mode is: %s\n", dev->type,
 	    dev->number,
 	    (mode == ATM_LM_NONE ? "NONE" : 
 	      (mode == ATM_LM_LOC_ATM ? "DIAG (local)" :
@@ -182,51 +183,51 @@ static int set_loopback(struct atm_dev *dev,int mode)
 		  "unknown")))
 		    );
 	PRIV(dev)->loop_mode = mode;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
-static int idt77105_ioctl(struct atm_dev *dev,unsigned int cmd,void __user *arg)
-{
-        printk(KERN_NOTICE "%s(%d) idt77105_ioctl() called\n",dev->type,dev->number);
-	switch (cmd) {
-		case IDT77105_GETSTATZ:
-			if (!capable(CAP_NET_ADMIN)) return -EPERM;
+अटल पूर्णांक idt77105_ioctl(काष्ठा aपंचांग_dev *dev,अचिन्हित पूर्णांक cmd,व्योम __user *arg)
+अणु
+        prपूर्णांकk(KERN_NOTICE "%s(%d) idt77105_ioctl() called\n",dev->type,dev->number);
+	चयन (cmd) अणु
+		हाल IDT77105_GETSTATZ:
+			अगर (!capable(CAP_NET_ADMIN)) वापस -EPERM;
 			fallthrough;
-		case IDT77105_GETSTAT:
-			return fetch_stats(dev, arg, cmd == IDT77105_GETSTATZ);
-		case ATM_SETLOOP:
-			return set_loopback(dev,(int)(unsigned long) arg);
-		case ATM_GETLOOP:
-			return put_user(PRIV(dev)->loop_mode,(int __user *)arg) ?
+		हाल IDT77105_GETSTAT:
+			वापस fetch_stats(dev, arg, cmd == IDT77105_GETSTATZ);
+		हाल ATM_SETLOOP:
+			वापस set_loopback(dev,(पूर्णांक)(अचिन्हित दीर्घ) arg);
+		हाल ATM_GETLOOP:
+			वापस put_user(PRIV(dev)->loop_mode,(पूर्णांक __user *)arg) ?
 			    -EFAULT : 0;
-		case ATM_QUERYLOOP:
-			return put_user(ATM_LM_LOC_ATM | ATM_LM_RMT_ATM,
-			    (int __user *) arg) ? -EFAULT : 0;
-		default:
-			return -ENOIOCTLCMD;
-	}
-}
+		हाल ATM_QUERYLOOP:
+			वापस put_user(ATM_LM_LOC_ATM | ATM_LM_RMT_ATM,
+			    (पूर्णांक __user *) arg) ? -EFAULT : 0;
+		शेष:
+			वापस -ENOIOCTLCMD;
+	पूर्ण
+पूर्ण
 
 
 
-static void idt77105_int(struct atm_dev *dev)
-{
-        unsigned char istat;
+अटल व्योम idt77105_पूर्णांक(काष्ठा aपंचांग_dev *dev)
+अणु
+        अचिन्हित अक्षर istat;
         
-        istat = GET(ISTAT); /* side effect: clears all interrupt status bits */
+        istat = GET(ISTAT); /* side effect: clears all पूर्णांकerrupt status bits */
      
-        DPRINTK("IDT77105 generated an interrupt, istat=%02x\n", (unsigned)istat);
+        DPRINTK("IDT77105 generated an interrupt, istat=%02x\n", (अचिन्हित)istat);
                 
-        if (istat & IDT77105_ISTAT_RSCC) {
-            /* Rx Signal Condition Change - line went up or down */
-            if (istat & IDT77105_ISTAT_GOODSIG) {   /* signal detected again */
-                /* This should not happen (restart timer does it) but JIC */
-		atm_dev_signal_change(dev, ATM_PHY_SIG_FOUND);
-            } else {    /* signal lost */
+        अगर (istat & IDT77105_ISTAT_RSCC) अणु
+            /* Rx Signal Condition Change - line went up or करोwn */
+            अगर (istat & IDT77105_ISTAT_GOODSIG) अणु   /* संकेत detected again */
+                /* This should not happen (restart समयr करोes it) but JIC */
+		aपंचांग_dev_संकेत_change(dev, ATM_PHY_SIG_FOUND);
+            पूर्ण अन्यथा अणु    /* संकेत lost */
                 /*
-                 * Disable interrupts and stop all transmission and
-                 * reception - the restart timer will restore these.
+                 * Disable पूर्णांकerrupts and stop all transmission and
+                 * reception - the restart समयr will restore these.
                  */
                 PRIV(dev)->old_mcr = GET(MCR);
 	        PUT(
@@ -235,141 +236,141 @@ static void idt77105_int(struct atm_dev *dev)
                     IDT77105_MCR_DRIC|
                     IDT77105_MCR_HALTTX
                     ) & ~IDT77105_MCR_EIP, MCR);
-		atm_dev_signal_change(dev, ATM_PHY_SIG_LOST);
-	        printk(KERN_NOTICE "%s(itf %d): signal lost\n",
+		aपंचांग_dev_संकेत_change(dev, ATM_PHY_SIG_LOST);
+	        prपूर्णांकk(KERN_NOTICE "%s(itf %d): signal lost\n",
                     dev->type,dev->number);
-            }
-        }
+            पूर्ण
+        पूर्ण
         
-        if (istat & IDT77105_ISTAT_RFO) {
-            /* Rx FIFO Overrun -- perform a FIFO flush */
+        अगर (istat & IDT77105_ISTAT_RFO) अणु
+            /* Rx FIFO Overrun -- perक्रमm a FIFO flush */
             PUT( GET(DIAG) | IDT77105_DIAG_RFLUSH, DIAG);
-	    printk(KERN_NOTICE "%s(itf %d): receive FIFO overrun\n",
+	    prपूर्णांकk(KERN_NOTICE "%s(itf %d): receive FIFO overrun\n",
                 dev->type,dev->number);
-        }
-#ifdef GENERAL_DEBUG
-        if (istat & (IDT77105_ISTAT_HECERR | IDT77105_ISTAT_SCR |
-                     IDT77105_ISTAT_RSE)) {
-            /* normally don't care - just report in stats */
-	    printk(KERN_NOTICE "%s(itf %d): received cell with error\n",
+        पूर्ण
+#अगर_घोषित GENERAL_DEBUG
+        अगर (istat & (IDT77105_ISTAT_HECERR | IDT77105_ISTAT_SCR |
+                     IDT77105_ISTAT_RSE)) अणु
+            /* normally करोn't care - just report in stats */
+	    prपूर्णांकk(KERN_NOTICE "%s(itf %d): received cell with error\n",
                 dev->type,dev->number);
-        }
-#endif
-}
+        पूर्ण
+#पूर्ण_अगर
+पूर्ण
 
 
-static int idt77105_start(struct atm_dev *dev)
-{
-	unsigned long flags;
+अटल पूर्णांक idt77105_start(काष्ठा aपंचांग_dev *dev)
+अणु
+	अचिन्हित दीर्घ flags;
 
-	if (!(dev->phy_data = kmalloc(sizeof(struct idt77105_priv),GFP_KERNEL)))
-		return -ENOMEM;
+	अगर (!(dev->phy_data = kदो_स्मृति(माप(काष्ठा idt77105_priv),GFP_KERNEL)))
+		वापस -ENOMEM;
 	PRIV(dev)->dev = dev;
 	spin_lock_irqsave(&idt77105_priv_lock, flags);
 	PRIV(dev)->next = idt77105_all;
 	idt77105_all = PRIV(dev);
 	spin_unlock_irqrestore(&idt77105_priv_lock, flags);
-	memset(&PRIV(dev)->stats,0,sizeof(struct idt77105_stats));
+	स_रखो(&PRIV(dev)->stats,0,माप(काष्ठा idt77105_stats));
         
-        /* initialise dev->signal from Good Signal Bit */
-	atm_dev_signal_change(dev,
+        /* initialise dev->संकेत from Good Signal Bit */
+	aपंचांग_dev_संकेत_change(dev,
 		GET(ISTAT) & IDT77105_ISTAT_GOODSIG ?
 		ATM_PHY_SIG_FOUND : ATM_PHY_SIG_LOST);
-	if (dev->signal == ATM_PHY_SIG_LOST)
-		printk(KERN_WARNING "%s(itf %d): no signal\n",dev->type,
+	अगर (dev->संकेत == ATM_PHY_SIG_LOST)
+		prपूर्णांकk(KERN_WARNING "%s(itf %d): no signal\n",dev->type,
 		    dev->number);
 
         /* initialise loop mode from hardware */
-        switch ( GET(DIAG) & IDT77105_DIAG_LCMASK ) {
-        case IDT77105_DIAG_LC_NORMAL:
+        चयन ( GET(DIAG) & IDT77105_DIAG_LCMASK ) अणु
+        हाल IDT77105_DIAG_LC_NORMAL:
             PRIV(dev)->loop_mode = ATM_LM_NONE;
-            break;
-        case IDT77105_DIAG_LC_PHY_LOOPBACK:
+            अवरोध;
+        हाल IDT77105_DIAG_LC_PHY_LOOPBACK:
             PRIV(dev)->loop_mode = ATM_LM_LOC_ATM;
-            break;
-        case IDT77105_DIAG_LC_LINE_LOOPBACK:
+            अवरोध;
+        हाल IDT77105_DIAG_LC_LINE_LOOPBACK:
             PRIV(dev)->loop_mode = ATM_LM_RMT_ATM;
-            break;
-        }
+            अवरोध;
+        पूर्ण
         
-        /* enable interrupts, e.g. on loss of signal */
+        /* enable पूर्णांकerrupts, e.g. on loss of संकेत */
         PRIV(dev)->old_mcr = GET(MCR);
-        if (dev->signal == ATM_PHY_SIG_FOUND) {
+        अगर (dev->संकेत == ATM_PHY_SIG_FOUND) अणु
             PRIV(dev)->old_mcr |= IDT77105_MCR_EIP;
 	    PUT(PRIV(dev)->old_mcr, MCR);
-        }
+        पूर्ण
 
                     
-	idt77105_stats_timer_func(0); /* clear 77105 counters */
-	(void) fetch_stats(dev,NULL,1); /* clear kernel counters */
+	idt77105_stats_समयr_func(0); /* clear 77105 counters */
+	(व्योम) fetch_stats(dev,शून्य,1); /* clear kernel counters */
         
 	spin_lock_irqsave(&idt77105_priv_lock, flags);
-	if (start_timer) {
-		start_timer = 0;
+	अगर (start_समयr) अणु
+		start_समयr = 0;
                 
-		stats_timer.expires = jiffies+IDT77105_STATS_TIMER_PERIOD;
-		add_timer(&stats_timer);
+		stats_समयr.expires = jअगरfies+IDT77105_STATS_TIMER_PERIOD;
+		add_समयr(&stats_समयr);
                 
-		restart_timer.expires = jiffies+IDT77105_RESTART_TIMER_PERIOD;
-		add_timer(&restart_timer);
-	}
+		restart_समयr.expires = jअगरfies+IDT77105_RESTART_TIMER_PERIOD;
+		add_समयr(&restart_समयr);
+	पूर्ण
 	spin_unlock_irqrestore(&idt77105_priv_lock, flags);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
-static int idt77105_stop(struct atm_dev *dev)
-{
-	struct idt77105_priv *walk, *prev;
+अटल पूर्णांक idt77105_stop(काष्ठा aपंचांग_dev *dev)
+अणु
+	काष्ठा idt77105_priv *walk, *prev;
 
         DPRINTK("%s(itf %d): stopping IDT77105\n",dev->type,dev->number);
         
-        /* disable interrupts */
+        /* disable पूर्णांकerrupts */
 	PUT( GET(MCR) & ~IDT77105_MCR_EIP, MCR );
         
-        /* detach private struct from atm_dev & free */
-	for (prev = NULL, walk = idt77105_all ;
-             walk != NULL;
-             prev = walk, walk = walk->next) {
-            if (walk->dev == dev) {
-                if (prev != NULL)
+        /* detach निजी काष्ठा from aपंचांग_dev & मुक्त */
+	क्रम (prev = शून्य, walk = idt77105_all ;
+             walk != शून्य;
+             prev = walk, walk = walk->next) अणु
+            अगर (walk->dev == dev) अणु
+                अगर (prev != शून्य)
                     prev->next = walk->next;
-                else
+                अन्यथा
                     idt77105_all = walk->next;
-	        dev->phy = NULL;
-                dev->phy_data = NULL;
-                kfree(walk);
-                break;
-            }
-        }
+	        dev->phy = शून्य;
+                dev->phy_data = शून्य;
+                kमुक्त(walk);
+                अवरोध;
+            पूर्ण
+        पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
-static const struct atmphy_ops idt77105_ops = {
+अटल स्थिर काष्ठा aपंचांगphy_ops idt77105_ops = अणु
 	.start = 	idt77105_start,
 	.ioctl =	idt77105_ioctl,
-	.interrupt =	idt77105_int,
+	.पूर्णांकerrupt =	idt77105_पूर्णांक,
 	.stop =		idt77105_stop,
-};
+पूर्ण;
 
 
-int idt77105_init(struct atm_dev *dev)
-{
+पूर्णांक idt77105_init(काष्ठा aपंचांग_dev *dev)
+अणु
 	dev->phy = &idt77105_ops;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 EXPORT_SYMBOL(idt77105_init);
 
-static void __exit idt77105_exit(void)
-{
-	/* turn off timers */
-	del_timer_sync(&stats_timer);
-	del_timer_sync(&restart_timer);
-}
+अटल व्योम __निकास idt77105_निकास(व्योम)
+अणु
+	/* turn off समयrs */
+	del_समयr_sync(&stats_समयr);
+	del_समयr_sync(&restart_समयr);
+पूर्ण
 
-module_exit(idt77105_exit);
+module_निकास(idt77105_निकास);
 
 MODULE_LICENSE("GPL");

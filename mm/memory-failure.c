@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (C) 2008, 2009 Intel Corporation
  * Authors: Andi Kleen, Fengguang Wu
@@ -7,92 +8,92 @@
  * hardware as being corrupted usually due to a multi-bit ECC memory or cache
  * failure.
  * 
- * In addition there is a "soft offline" entry point that allows stop using
- * not-yet-corrupted-by-suspicious pages without killing anything.
+ * In addition there is a "soft offline" entry poपूर्णांक that allows stop using
+ * not-yet-corrupted-by-suspicious pages without समाप्तing anything.
  *
  * Handles page cache pages in various states.	The tricky part
  * here is that we can access any page asynchronously in respect to 
- * other VM users, because memory failures could happen anytime and 
+ * other VM users, because memory failures could happen anyसमय and 
  * anywhere. This could violate some of their assumptions. This is why 
  * this code has to be extremely careful. Generally it tries to use 
- * normal locking rules, as in get the standard locks, even if that means 
- * the error handling takes potentially a long time.
+ * normal locking rules, as in get the standard locks, even अगर that means 
+ * the error handling takes potentially a दीर्घ समय.
  *
- * It can be very tempting to add handling for obscure cases here.
- * In general any code for handling new cases should only be added iff:
+ * It can be very tempting to add handling क्रम obscure हालs here.
+ * In general any code क्रम handling new हालs should only be added अगरf:
  * - You know how to test it.
  * - You have a test that can be added to mce-test
  *   https://git.kernel.org/cgit/utils/cpu/mce/mce-test.git/
- * - The case actually shows up as a frequent (top 10) page state in
+ * - The हाल actually shows up as a frequent (top 10) page state in
  *   tools/vm/page-types when running a real workload.
  * 
- * There are several operations here with exponential complexity because
- * of unsuitable VM data structures. For example the operation to map back 
+ * There are several operations here with exponential complनिकासy because
+ * of unsuitable VM data काष्ठाures. For example the operation to map back 
  * from RMAP chains to processes has to walk the complete process list and 
- * has non linear complexity with the number. But since memory corruptions
- * are rare we hope to get away with this. This avoids impacting the core 
+ * has non linear complनिकासy with the number. But since memory corruptions
+ * are rare we hope to get away with this. This aव्योमs impacting the core 
  * VM.
  */
-#include <linux/kernel.h>
-#include <linux/mm.h>
-#include <linux/page-flags.h>
-#include <linux/kernel-page-flags.h>
-#include <linux/sched/signal.h>
-#include <linux/sched/task.h>
-#include <linux/ksm.h>
-#include <linux/rmap.h>
-#include <linux/export.h>
-#include <linux/pagemap.h>
-#include <linux/swap.h>
-#include <linux/backing-dev.h>
-#include <linux/migrate.h>
-#include <linux/suspend.h>
-#include <linux/slab.h>
-#include <linux/swapops.h>
-#include <linux/hugetlb.h>
-#include <linux/memory_hotplug.h>
-#include <linux/mm_inline.h>
-#include <linux/memremap.h>
-#include <linux/kfifo.h>
-#include <linux/ratelimit.h>
-#include <linux/page-isolation.h>
-#include "internal.h"
-#include "ras/ras_event.h"
+#समावेश <linux/kernel.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/page-flags.h>
+#समावेश <linux/kernel-page-flags.h>
+#समावेश <linux/sched/संकेत.स>
+#समावेश <linux/sched/task.h>
+#समावेश <linux/ksm.h>
+#समावेश <linux/rmap.h>
+#समावेश <linux/export.h>
+#समावेश <linux/pagemap.h>
+#समावेश <linux/swap.h>
+#समावेश <linux/backing-dev.h>
+#समावेश <linux/migrate.h>
+#समावेश <linux/suspend.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/swapops.h>
+#समावेश <linux/hugetlb.h>
+#समावेश <linux/memory_hotplug.h>
+#समावेश <linux/mm_अंतरभूत.h>
+#समावेश <linux/memremap.h>
+#समावेश <linux/kfअगरo.h>
+#समावेश <linux/ratelimit.h>
+#समावेश <linux/page-isolation.h>
+#समावेश "internal.h"
+#समावेश "ras/ras_event.h"
 
-int sysctl_memory_failure_early_kill __read_mostly = 0;
+पूर्णांक sysctl_memory_failure_early_समाप्त __पढ़ो_mostly = 0;
 
-int sysctl_memory_failure_recovery __read_mostly = 1;
+पूर्णांक sysctl_memory_failure_recovery __पढ़ो_mostly = 1;
 
-atomic_long_t num_poisoned_pages __read_mostly = ATOMIC_LONG_INIT(0);
+atomic_दीर्घ_t num_poisoned_pages __पढ़ो_mostly = ATOMIC_LONG_INIT(0);
 
-static bool page_handle_poison(struct page *page, bool hugepage_or_freepage, bool release)
-{
-	if (hugepage_or_freepage) {
+अटल bool page_handle_poison(काष्ठा page *page, bool hugepage_or_मुक्तpage, bool release)
+अणु
+	अगर (hugepage_or_मुक्तpage) अणु
 		/*
-		 * Doing this check for free pages is also fine since dissolve_free_huge_page
-		 * returns 0 for non-hugetlb pages as well.
+		 * Doing this check क्रम मुक्त pages is also fine since dissolve_मुक्त_huge_page
+		 * वापसs 0 क्रम non-hugetlb pages as well.
 		 */
-		if (dissolve_free_huge_page(page) || !take_page_off_buddy(page))
+		अगर (dissolve_मुक्त_huge_page(page) || !take_page_off_buddy(page))
 			/*
 			 * We could fail to take off the target page from buddy
-			 * for example due to racy page allocation, but that's
+			 * क्रम example due to racy page allocation, but that's
 			 * acceptable because soft-offlined page is not broken
-			 * and if someone really want to use it, they should
+			 * and अगर someone really want to use it, they should
 			 * take it.
 			 */
-			return false;
-	}
+			वापस false;
+	पूर्ण
 
 	SetPageHWPoison(page);
-	if (release)
+	अगर (release)
 		put_page(page);
 	page_ref_inc(page);
 	num_poisoned_pages_inc();
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-#if defined(CONFIG_HWPOISON_INJECT) || defined(CONFIG_HWPOISON_INJECT_MODULE)
+#अगर defined(CONFIG_HWPOISON_INJECT) || defined(CONFIG_HWPOISON_INJECT_MODULE)
 
 u32 hwpoison_filter_enable = 0;
 u32 hwpoison_filter_dev_major = ~0U;
@@ -105,97 +106,97 @@ EXPORT_SYMBOL_GPL(hwpoison_filter_dev_minor);
 EXPORT_SYMBOL_GPL(hwpoison_filter_flags_mask);
 EXPORT_SYMBOL_GPL(hwpoison_filter_flags_value);
 
-static int hwpoison_filter_dev(struct page *p)
-{
-	struct address_space *mapping;
+अटल पूर्णांक hwpoison_filter_dev(काष्ठा page *p)
+अणु
+	काष्ठा address_space *mapping;
 	dev_t dev;
 
-	if (hwpoison_filter_dev_major == ~0U &&
+	अगर (hwpoison_filter_dev_major == ~0U &&
 	    hwpoison_filter_dev_minor == ~0U)
-		return 0;
+		वापस 0;
 
 	/*
-	 * page_mapping() does not accept slab pages.
+	 * page_mapping() करोes not accept slab pages.
 	 */
-	if (PageSlab(p))
-		return -EINVAL;
+	अगर (PageSlab(p))
+		वापस -EINVAL;
 
 	mapping = page_mapping(p);
-	if (mapping == NULL || mapping->host == NULL)
-		return -EINVAL;
+	अगर (mapping == शून्य || mapping->host == शून्य)
+		वापस -EINVAL;
 
 	dev = mapping->host->i_sb->s_dev;
-	if (hwpoison_filter_dev_major != ~0U &&
+	अगर (hwpoison_filter_dev_major != ~0U &&
 	    hwpoison_filter_dev_major != MAJOR(dev))
-		return -EINVAL;
-	if (hwpoison_filter_dev_minor != ~0U &&
+		वापस -EINVAL;
+	अगर (hwpoison_filter_dev_minor != ~0U &&
 	    hwpoison_filter_dev_minor != MINOR(dev))
-		return -EINVAL;
+		वापस -EINVAL;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int hwpoison_filter_flags(struct page *p)
-{
-	if (!hwpoison_filter_flags_mask)
-		return 0;
+अटल पूर्णांक hwpoison_filter_flags(काष्ठा page *p)
+अणु
+	अगर (!hwpoison_filter_flags_mask)
+		वापस 0;
 
-	if ((stable_page_flags(p) & hwpoison_filter_flags_mask) ==
+	अगर ((stable_page_flags(p) & hwpoison_filter_flags_mask) ==
 				    hwpoison_filter_flags_value)
-		return 0;
-	else
-		return -EINVAL;
-}
+		वापस 0;
+	अन्यथा
+		वापस -EINVAL;
+पूर्ण
 
 /*
  * This allows stress tests to limit test scope to a collection of tasks
- * by putting them under some memcg. This prevents killing unrelated/important
+ * by putting them under some memcg. This prevents समाप्तing unrelated/important
  * processes such as /sbin/init. Note that the target task may share clean
  * pages with init (eg. libc text), which is harmless. If the target task
  * share _dirty_ pages with another task B, the test scheme must make sure B
  * is also included in the memcg. At last, due to race conditions this filter
- * can only guarantee that the page either belongs to the memcg tasks, or is
- * a freed page.
+ * can only guarantee that the page either beदीर्घs to the memcg tasks, or is
+ * a मुक्तd page.
  */
-#ifdef CONFIG_MEMCG
+#अगर_घोषित CONFIG_MEMCG
 u64 hwpoison_filter_memcg;
 EXPORT_SYMBOL_GPL(hwpoison_filter_memcg);
-static int hwpoison_filter_task(struct page *p)
-{
-	if (!hwpoison_filter_memcg)
-		return 0;
+अटल पूर्णांक hwpoison_filter_task(काष्ठा page *p)
+अणु
+	अगर (!hwpoison_filter_memcg)
+		वापस 0;
 
-	if (page_cgroup_ino(p) != hwpoison_filter_memcg)
-		return -EINVAL;
+	अगर (page_cgroup_ino(p) != hwpoison_filter_memcg)
+		वापस -EINVAL;
 
-	return 0;
-}
-#else
-static int hwpoison_filter_task(struct page *p) { return 0; }
-#endif
+	वापस 0;
+पूर्ण
+#अन्यथा
+अटल पूर्णांक hwpoison_filter_task(काष्ठा page *p) अणु वापस 0; पूर्ण
+#पूर्ण_अगर
 
-int hwpoison_filter(struct page *p)
-{
-	if (!hwpoison_filter_enable)
-		return 0;
+पूर्णांक hwpoison_filter(काष्ठा page *p)
+अणु
+	अगर (!hwpoison_filter_enable)
+		वापस 0;
 
-	if (hwpoison_filter_dev(p))
-		return -EINVAL;
+	अगर (hwpoison_filter_dev(p))
+		वापस -EINVAL;
 
-	if (hwpoison_filter_flags(p))
-		return -EINVAL;
+	अगर (hwpoison_filter_flags(p))
+		वापस -EINVAL;
 
-	if (hwpoison_filter_task(p))
-		return -EINVAL;
+	अगर (hwpoison_filter_task(p))
+		वापस -EINVAL;
 
-	return 0;
-}
-#else
-int hwpoison_filter(struct page *p)
-{
-	return 0;
-}
-#endif
+	वापस 0;
+पूर्ण
+#अन्यथा
+पूर्णांक hwpoison_filter(काष्ठा page *p)
+अणु
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
 EXPORT_SYMBOL_GPL(hwpoison_filter);
 
@@ -204,96 +205,96 @@ EXPORT_SYMBOL_GPL(hwpoison_filter);
  * the page.
  *
  * General strategy:
- * Find all processes having the page mapped and kill them.
+ * Find all processes having the page mapped and समाप्त them.
  * But we keep a page reference around so that the page is not
- * actually freed yet.
+ * actually मुक्तd yet.
  * Then stash the page away
  *
  * There's no convenient way to get back to mapped processes
- * from the VMAs. So do a brute-force search over all
+ * from the VMAs. So करो a brute-क्रमce search over all
  * running processes.
  *
  * Remember that machine checks are not common (or rather
- * if they are common you have other problems), so this shouldn't
- * be a performance issue.
+ * अगर they are common you have other problems), so this shouldn't
+ * be a perक्रमmance issue.
  *
- * Also there are some races possible while we get from the
+ * Also there are some races possible जबतक we get from the
  * error detection to actually handle it.
  */
 
-struct to_kill {
-	struct list_head nd;
-	struct task_struct *tsk;
-	unsigned long addr;
-	short size_shift;
-};
+काष्ठा to_समाप्त अणु
+	काष्ठा list_head nd;
+	काष्ठा task_काष्ठा *tsk;
+	अचिन्हित दीर्घ addr;
+	लघु size_shअगरt;
+पूर्ण;
 
 /*
- * Send all the processes who have the page mapped a signal.
- * ``action optional'' if they are not immediately affected by the error
- * ``action required'' if error happened in current execution context
+ * Send all the processes who have the page mapped a संकेत.
+ * ``action optional'' अगर they are not immediately affected by the error
+ * ``action required'' अगर error happened in current execution context
  */
-static int kill_proc(struct to_kill *tk, unsigned long pfn, int flags)
-{
-	struct task_struct *t = tk->tsk;
-	short addr_lsb = tk->size_shift;
-	int ret = 0;
+अटल पूर्णांक समाप्त_proc(काष्ठा to_समाप्त *tk, अचिन्हित दीर्घ pfn, पूर्णांक flags)
+अणु
+	काष्ठा task_काष्ठा *t = tk->tsk;
+	लघु addr_lsb = tk->size_shअगरt;
+	पूर्णांक ret = 0;
 
 	pr_err("Memory failure: %#lx: Sending SIGBUS to %s:%d due to hardware memory corruption\n",
 			pfn, t->comm, t->pid);
 
-	if (flags & MF_ACTION_REQUIRED) {
-		if (t == current)
-			ret = force_sig_mceerr(BUS_MCEERR_AR,
-					 (void __user *)tk->addr, addr_lsb);
-		else
-			/* Signal other processes sharing the page if they have PF_MCE_EARLY set. */
-			ret = send_sig_mceerr(BUS_MCEERR_AO, (void __user *)tk->addr,
+	अगर (flags & MF_ACTION_REQUIRED) अणु
+		अगर (t == current)
+			ret = क्रमce_sig_mceerr(BUS_MCEERR_AR,
+					 (व्योम __user *)tk->addr, addr_lsb);
+		अन्यथा
+			/* Signal other processes sharing the page अगर they have PF_MCE_EARLY set. */
+			ret = send_sig_mceerr(BUS_MCEERR_AO, (व्योम __user *)tk->addr,
 				addr_lsb, t);
-	} else {
+	पूर्ण अन्यथा अणु
 		/*
-		 * Don't use force here, it's convenient if the signal
+		 * Don't use force here, it's convenient अगर the संकेत
 		 * can be temporarily blocked.
 		 * This could cause a loop when the user sets SIGBUS
-		 * to SIG_IGN, but hopefully no one will do that?
+		 * to संक_छोड़ो, but hopefully no one will करो that?
 		 */
-		ret = send_sig_mceerr(BUS_MCEERR_AO, (void __user *)tk->addr,
+		ret = send_sig_mceerr(BUS_MCEERR_AO, (व्योम __user *)tk->addr,
 				      addr_lsb, t);  /* synchronous? */
-	}
-	if (ret < 0)
+	पूर्ण
+	अगर (ret < 0)
 		pr_info("Memory failure: Error sending signal to %s:%d: %d\n",
 			t->comm, t->pid, ret);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
  * Unknown page type encountered. Try to check whether it can turn PageLRU by
- * lru_add_drain_all, or a free page by reclaiming slabs when possible.
+ * lru_add_drain_all, or a मुक्त page by reclaiming sद_असल when possible.
  */
-void shake_page(struct page *p, int access)
-{
-	if (PageHuge(p))
-		return;
+व्योम shake_page(काष्ठा page *p, पूर्णांक access)
+अणु
+	अगर (PageHuge(p))
+		वापस;
 
-	if (!PageSlab(p)) {
+	अगर (!PageSlab(p)) अणु
 		lru_add_drain_all();
-		if (PageLRU(p) || is_free_buddy_page(p))
-			return;
-	}
+		अगर (PageLRU(p) || is_मुक्त_buddy_page(p))
+			वापस;
+	पूर्ण
 
 	/*
-	 * Only call shrink_node_slabs here (which would also shrink
-	 * other caches) if access is not potentially fatal.
+	 * Only call shrink_node_sद_असल here (which would also shrink
+	 * other caches) अगर access is not potentially fatal.
 	 */
-	if (access)
+	अगर (access)
 		drop_slab_node(page_to_nid(p));
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(shake_page);
 
-static unsigned long dev_pagemap_mapping_shift(struct page *page,
-		struct vm_area_struct *vma)
-{
-	unsigned long address = vma_address(page, vma);
+अटल अचिन्हित दीर्घ dev_pagemap_mapping_shअगरt(काष्ठा page *page,
+		काष्ठा vm_area_काष्ठा *vma)
+अणु
+	अचिन्हित दीर्घ address = vma_address(page, vma);
 	pgd_t *pgd;
 	p4d_t *p4d;
 	pud_t *pud;
@@ -301,267 +302,267 @@ static unsigned long dev_pagemap_mapping_shift(struct page *page,
 	pte_t *pte;
 
 	pgd = pgd_offset(vma->vm_mm, address);
-	if (!pgd_present(*pgd))
-		return 0;
+	अगर (!pgd_present(*pgd))
+		वापस 0;
 	p4d = p4d_offset(pgd, address);
-	if (!p4d_present(*p4d))
-		return 0;
+	अगर (!p4d_present(*p4d))
+		वापस 0;
 	pud = pud_offset(p4d, address);
-	if (!pud_present(*pud))
-		return 0;
-	if (pud_devmap(*pud))
-		return PUD_SHIFT;
+	अगर (!pud_present(*pud))
+		वापस 0;
+	अगर (pud_devmap(*pud))
+		वापस PUD_SHIFT;
 	pmd = pmd_offset(pud, address);
-	if (!pmd_present(*pmd))
-		return 0;
-	if (pmd_devmap(*pmd))
-		return PMD_SHIFT;
+	अगर (!pmd_present(*pmd))
+		वापस 0;
+	अगर (pmd_devmap(*pmd))
+		वापस PMD_SHIFT;
 	pte = pte_offset_map(pmd, address);
-	if (!pte_present(*pte))
-		return 0;
-	if (pte_devmap(*pte))
-		return PAGE_SHIFT;
-	return 0;
-}
+	अगर (!pte_present(*pte))
+		वापस 0;
+	अगर (pte_devmap(*pte))
+		वापस PAGE_SHIFT;
+	वापस 0;
+पूर्ण
 
 /*
- * Failure handling: if we can't find or can't kill a process there's
- * not much we can do.	We just print a message and ignore otherwise.
+ * Failure handling: अगर we can't find or can't kill a process there's
+ * not much we can करो.	We just prपूर्णांक a message and ignore otherwise.
  */
 
 /*
- * Schedule a process for later kill.
- * Uses GFP_ATOMIC allocations to avoid potential recursions in the VM.
+ * Schedule a process क्रम later समाप्त.
+ * Uses GFP_ATOMIC allocations to aव्योम potential recursions in the VM.
  */
-static void add_to_kill(struct task_struct *tsk, struct page *p,
-		       struct vm_area_struct *vma,
-		       struct list_head *to_kill)
-{
-	struct to_kill *tk;
+अटल व्योम add_to_समाप्त(काष्ठा task_काष्ठा *tsk, काष्ठा page *p,
+		       काष्ठा vm_area_काष्ठा *vma,
+		       काष्ठा list_head *to_समाप्त)
+अणु
+	काष्ठा to_समाप्त *tk;
 
-	tk = kmalloc(sizeof(struct to_kill), GFP_ATOMIC);
-	if (!tk) {
+	tk = kदो_स्मृति(माप(काष्ठा to_समाप्त), GFP_ATOMIC);
+	अगर (!tk) अणु
 		pr_err("Memory failure: Out of memory while machine check handling\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	tk->addr = page_address_in_vma(p, vma);
-	if (is_zone_device_page(p))
-		tk->size_shift = dev_pagemap_mapping_shift(p, vma);
-	else
-		tk->size_shift = page_shift(compound_head(p));
+	अगर (is_zone_device_page(p))
+		tk->size_shअगरt = dev_pagemap_mapping_shअगरt(p, vma);
+	अन्यथा
+		tk->size_shअगरt = page_shअगरt(compound_head(p));
 
 	/*
-	 * Send SIGKILL if "tk->addr == -EFAULT". Also, as
-	 * "tk->size_shift" is always non-zero for !is_zone_device_page(),
+	 * Send SIGKILL अगर "tk->addr == -EFAULT". Also, as
+	 * "tk->size_shift" is always non-zero क्रम !is_zone_device_page(),
 	 * so "tk->size_shift == 0" effectively checks no mapping on
-	 * ZONE_DEVICE. Indeed, when a devdax page is mmapped N times
+	 * ZONE_DEVICE. Indeed, when a devdax page is mmapped N बार
 	 * to a process' address space, it's possible not all N VMAs
-	 * contain mappings for the page, but at least one VMA does.
+	 * contain mappings क्रम the page, but at least one VMA करोes.
 	 * Only deliver SIGBUS with payload derived from the VMA that
-	 * has a mapping for the page.
+	 * has a mapping क्रम the page.
 	 */
-	if (tk->addr == -EFAULT) {
+	अगर (tk->addr == -EFAULT) अणु
 		pr_info("Memory failure: Unable to find user space address %lx in %s\n",
 			page_to_pfn(p), tsk->comm);
-	} else if (tk->size_shift == 0) {
-		kfree(tk);
-		return;
-	}
+	पूर्ण अन्यथा अगर (tk->size_shअगरt == 0) अणु
+		kमुक्त(tk);
+		वापस;
+	पूर्ण
 
-	get_task_struct(tsk);
+	get_task_काष्ठा(tsk);
 	tk->tsk = tsk;
-	list_add_tail(&tk->nd, to_kill);
-}
+	list_add_tail(&tk->nd, to_समाप्त);
+पूर्ण
 
 /*
  * Kill the processes that have been collected earlier.
  *
- * Only do anything when DOIT is set, otherwise just free the list
- * (this is used for clean pages which do not need killing)
- * Also when FAIL is set do a force kill because something went
+ * Only करो anything when DOIT is set, otherwise just मुक्त the list
+ * (this is used क्रम clean pages which करो not need समाप्तing)
+ * Also when FAIL is set करो a क्रमce समाप्त because something went
  * wrong earlier.
  */
-static void kill_procs(struct list_head *to_kill, int forcekill, bool fail,
-		unsigned long pfn, int flags)
-{
-	struct to_kill *tk, *next;
+अटल व्योम समाप्त_procs(काष्ठा list_head *to_समाप्त, पूर्णांक क्रमceसमाप्त, bool fail,
+		अचिन्हित दीर्घ pfn, पूर्णांक flags)
+अणु
+	काष्ठा to_समाप्त *tk, *next;
 
-	list_for_each_entry_safe (tk, next, to_kill, nd) {
-		if (forcekill) {
+	list_क्रम_each_entry_safe (tk, next, to_समाप्त, nd) अणु
+		अगर (क्रमceसमाप्त) अणु
 			/*
-			 * In case something went wrong with munmapping
-			 * make sure the process doesn't catch the
-			 * signal and then access the memory. Just kill it.
+			 * In हाल something went wrong with munmapping
+			 * make sure the process करोesn't catch the
+			 * संकेत and then access the memory. Just समाप्त it.
 			 */
-			if (fail || tk->addr == -EFAULT) {
+			अगर (fail || tk->addr == -EFAULT) अणु
 				pr_err("Memory failure: %#lx: forcibly killing %s:%d because of failure to unmap corrupted page\n",
 				       pfn, tk->tsk->comm, tk->tsk->pid);
-				do_send_sig_info(SIGKILL, SEND_SIG_PRIV,
+				करो_send_sig_info(SIGKILL, SEND_SIG_PRIV,
 						 tk->tsk, PIDTYPE_PID);
-			}
+			पूर्ण
 
 			/*
 			 * In theory the process could have mapped
-			 * something else on the address in-between. We could
-			 * check for that, but we need to tell the
+			 * something अन्यथा on the address in-between. We could
+			 * check क्रम that, but we need to tell the
 			 * process anyways.
 			 */
-			else if (kill_proc(tk, pfn, flags) < 0)
+			अन्यथा अगर (समाप्त_proc(tk, pfn, flags) < 0)
 				pr_err("Memory failure: %#lx: Cannot send advisory machine check signal to %s:%d\n",
 				       pfn, tk->tsk->comm, tk->tsk->pid);
-		}
-		put_task_struct(tk->tsk);
-		kfree(tk);
-	}
-}
+		पूर्ण
+		put_task_काष्ठा(tk->tsk);
+		kमुक्त(tk);
+	पूर्ण
+पूर्ण
 
 /*
- * Find a dedicated thread which is supposed to handle SIGBUS(BUS_MCEERR_AO)
- * on behalf of the thread group. Return task_struct of the (first found)
- * dedicated thread if found, and return NULL otherwise.
+ * Find a dedicated thपढ़ो which is supposed to handle SIGBUS(BUS_MCEERR_AO)
+ * on behalf of the thपढ़ो group. Return task_काष्ठा of the (first found)
+ * dedicated thपढ़ो अगर found, and वापस शून्य otherwise.
  *
- * We already hold read_lock(&tasklist_lock) in the caller, so we don't
- * have to call rcu_read_lock/unlock() in this function.
+ * We alपढ़ोy hold पढ़ो_lock(&tasklist_lock) in the caller, so we करोn't
+ * have to call rcu_पढ़ो_lock/unlock() in this function.
  */
-static struct task_struct *find_early_kill_thread(struct task_struct *tsk)
-{
-	struct task_struct *t;
+अटल काष्ठा task_काष्ठा *find_early_समाप्त_thपढ़ो(काष्ठा task_काष्ठा *tsk)
+अणु
+	काष्ठा task_काष्ठा *t;
 
-	for_each_thread(tsk, t) {
-		if (t->flags & PF_MCE_PROCESS) {
-			if (t->flags & PF_MCE_EARLY)
-				return t;
-		} else {
-			if (sysctl_memory_failure_early_kill)
-				return t;
-		}
-	}
-	return NULL;
-}
+	क्रम_each_thपढ़ो(tsk, t) अणु
+		अगर (t->flags & PF_MCE_PROCESS) अणु
+			अगर (t->flags & PF_MCE_EARLY)
+				वापस t;
+		पूर्ण अन्यथा अणु
+			अगर (sysctl_memory_failure_early_समाप्त)
+				वापस t;
+		पूर्ण
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
 /*
  * Determine whether a given process is "early kill" process which expects
- * to be signaled when some page under the process is hwpoisoned.
- * Return task_struct of the dedicated thread (main thread unless explicitly
- * specified) if the process is "early kill" and otherwise returns NULL.
+ * to be संकेतed when some page under the process is hwpoisoned.
+ * Return task_काष्ठा of the dedicated thपढ़ो (मुख्य thपढ़ो unless explicitly
+ * specअगरied) अगर the process is "early kill" and otherwise वापसs शून्य.
  *
- * Note that the above is true for Action Optional case. For Action Required
- * case, it's only meaningful to the current thread which need to be signaled
- * with SIGBUS, this error is Action Optional for other non current
- * processes sharing the same error page,if the process is "early kill", the
- * task_struct of the dedicated thread will also be returned.
+ * Note that the above is true क्रम Action Optional हाल. For Action Required
+ * हाल, it's only meaningful to the current thपढ़ो which need to be संकेतed
+ * with SIGBUS, this error is Action Optional क्रम other non current
+ * processes sharing the same error page,अगर the process is "early kill", the
+ * task_काष्ठा of the dedicated thपढ़ो will also be वापसed.
  */
-static struct task_struct *task_early_kill(struct task_struct *tsk,
-					   int force_early)
-{
-	if (!tsk->mm)
-		return NULL;
+अटल काष्ठा task_काष्ठा *task_early_समाप्त(काष्ठा task_काष्ठा *tsk,
+					   पूर्णांक क्रमce_early)
+अणु
+	अगर (!tsk->mm)
+		वापस शून्य;
 	/*
 	 * Comparing ->mm here because current task might represent
-	 * a subthread, while tsk always points to the main thread.
+	 * a subthपढ़ो, जबतक tsk always poपूर्णांकs to the मुख्य thपढ़ो.
 	 */
-	if (force_early && tsk->mm == current->mm)
-		return current;
+	अगर (क्रमce_early && tsk->mm == current->mm)
+		वापस current;
 
-	return find_early_kill_thread(tsk);
-}
+	वापस find_early_समाप्त_thपढ़ो(tsk);
+पूर्ण
 
 /*
  * Collect processes when the error hit an anonymous page.
  */
-static void collect_procs_anon(struct page *page, struct list_head *to_kill,
-				int force_early)
-{
-	struct vm_area_struct *vma;
-	struct task_struct *tsk;
-	struct anon_vma *av;
+अटल व्योम collect_procs_anon(काष्ठा page *page, काष्ठा list_head *to_समाप्त,
+				पूर्णांक क्रमce_early)
+अणु
+	काष्ठा vm_area_काष्ठा *vma;
+	काष्ठा task_काष्ठा *tsk;
+	काष्ठा anon_vma *av;
 	pgoff_t pgoff;
 
-	av = page_lock_anon_vma_read(page);
-	if (av == NULL)	/* Not actually mapped anymore */
-		return;
+	av = page_lock_anon_vma_पढ़ो(page);
+	अगर (av == शून्य)	/* Not actually mapped anymore */
+		वापस;
 
 	pgoff = page_to_pgoff(page);
-	read_lock(&tasklist_lock);
-	for_each_process (tsk) {
-		struct anon_vma_chain *vmac;
-		struct task_struct *t = task_early_kill(tsk, force_early);
+	पढ़ो_lock(&tasklist_lock);
+	क्रम_each_process (tsk) अणु
+		काष्ठा anon_vma_chain *vmac;
+		काष्ठा task_काष्ठा *t = task_early_समाप्त(tsk, क्रमce_early);
 
-		if (!t)
-			continue;
-		anon_vma_interval_tree_foreach(vmac, &av->rb_root,
-					       pgoff, pgoff) {
+		अगर (!t)
+			जारी;
+		anon_vma_पूर्णांकerval_tree_क्रमeach(vmac, &av->rb_root,
+					       pgoff, pgoff) अणु
 			vma = vmac->vma;
-			if (!page_mapped_in_vma(page, vma))
-				continue;
-			if (vma->vm_mm == t->mm)
-				add_to_kill(t, page, vma, to_kill);
-		}
-	}
-	read_unlock(&tasklist_lock);
-	page_unlock_anon_vma_read(av);
-}
+			अगर (!page_mapped_in_vma(page, vma))
+				जारी;
+			अगर (vma->vm_mm == t->mm)
+				add_to_समाप्त(t, page, vma, to_समाप्त);
+		पूर्ण
+	पूर्ण
+	पढ़ो_unlock(&tasklist_lock);
+	page_unlock_anon_vma_पढ़ो(av);
+पूर्ण
 
 /*
  * Collect processes when the error hit a file mapped page.
  */
-static void collect_procs_file(struct page *page, struct list_head *to_kill,
-				int force_early)
-{
-	struct vm_area_struct *vma;
-	struct task_struct *tsk;
-	struct address_space *mapping = page->mapping;
+अटल व्योम collect_procs_file(काष्ठा page *page, काष्ठा list_head *to_समाप्त,
+				पूर्णांक क्रमce_early)
+अणु
+	काष्ठा vm_area_काष्ठा *vma;
+	काष्ठा task_काष्ठा *tsk;
+	काष्ठा address_space *mapping = page->mapping;
 	pgoff_t pgoff;
 
-	i_mmap_lock_read(mapping);
-	read_lock(&tasklist_lock);
+	i_mmap_lock_पढ़ो(mapping);
+	पढ़ो_lock(&tasklist_lock);
 	pgoff = page_to_pgoff(page);
-	for_each_process(tsk) {
-		struct task_struct *t = task_early_kill(tsk, force_early);
+	क्रम_each_process(tsk) अणु
+		काष्ठा task_काष्ठा *t = task_early_समाप्त(tsk, क्रमce_early);
 
-		if (!t)
-			continue;
-		vma_interval_tree_foreach(vma, &mapping->i_mmap, pgoff,
-				      pgoff) {
+		अगर (!t)
+			जारी;
+		vma_पूर्णांकerval_tree_क्रमeach(vma, &mapping->i_mmap, pgoff,
+				      pgoff) अणु
 			/*
-			 * Send early kill signal to tasks where a vma covers
+			 * Send early समाप्त संकेत to tasks where a vma covers
 			 * the page but the corrupted page is not necessarily
 			 * mapped it in its pte.
-			 * Assume applications who requested early kill want
-			 * to be informed of all such data corruptions.
+			 * Assume applications who requested early समाप्त want
+			 * to be inक्रमmed of all such data corruptions.
 			 */
-			if (vma->vm_mm == t->mm)
-				add_to_kill(t, page, vma, to_kill);
-		}
-	}
-	read_unlock(&tasklist_lock);
-	i_mmap_unlock_read(mapping);
-}
+			अगर (vma->vm_mm == t->mm)
+				add_to_समाप्त(t, page, vma, to_समाप्त);
+		पूर्ण
+	पूर्ण
+	पढ़ो_unlock(&tasklist_lock);
+	i_mmap_unlock_पढ़ो(mapping);
+पूर्ण
 
 /*
- * Collect the processes who have the corrupted page mapped to kill.
+ * Collect the processes who have the corrupted page mapped to समाप्त.
  */
-static void collect_procs(struct page *page, struct list_head *tokill,
-				int force_early)
-{
-	if (!page->mapping)
-		return;
+अटल व्योम collect_procs(काष्ठा page *page, काष्ठा list_head *toसमाप्त,
+				पूर्णांक क्रमce_early)
+अणु
+	अगर (!page->mapping)
+		वापस;
 
-	if (PageAnon(page))
-		collect_procs_anon(page, tokill, force_early);
-	else
-		collect_procs_file(page, tokill, force_early);
-}
+	अगर (PageAnon(page))
+		collect_procs_anon(page, toसमाप्त, क्रमce_early);
+	अन्यथा
+		collect_procs_file(page, toसमाप्त, क्रमce_early);
+पूर्ण
 
-static const char *action_name[] = {
+अटल स्थिर अक्षर *action_name[] = अणु
 	[MF_IGNORED] = "Ignored",
 	[MF_FAILED] = "Failed",
 	[MF_DELAYED] = "Delayed",
 	[MF_RECOVERED] = "Recovered",
-};
+पूर्ण;
 
-static const char * const action_page_types[] = {
+अटल स्थिर अक्षर * स्थिर action_page_types[] = अणु
 	[MF_MSG_KERNEL]			= "reserved kernel page",
 	[MF_MSG_KERNEL_HIGH_ORDER]	= "high-order kernel page",
 	[MF_MSG_SLAB]			= "kernel slab page",
@@ -571,13 +572,13 @@ static const char * const action_page_types[] = {
 	[MF_MSG_FREE_HUGE]		= "free huge page",
 	[MF_MSG_NON_PMD_HUGE]		= "non-pmd-sized huge page",
 	[MF_MSG_UNMAP_FAILED]		= "unmapping failed page",
-	[MF_MSG_DIRTY_SWAPCACHE]	= "dirty swapcache page",
+	[MF_MSG_सूचीTY_SWAPCACHE]	= "dirty swapcache page",
 	[MF_MSG_CLEAN_SWAPCACHE]	= "clean swapcache page",
-	[MF_MSG_DIRTY_MLOCKED_LRU]	= "dirty mlocked LRU page",
+	[MF_MSG_सूचीTY_MLOCKED_LRU]	= "dirty mlocked LRU page",
 	[MF_MSG_CLEAN_MLOCKED_LRU]	= "clean mlocked LRU page",
-	[MF_MSG_DIRTY_UNEVICTABLE_LRU]	= "dirty unevictable LRU page",
+	[MF_MSG_सूचीTY_UNEVICTABLE_LRU]	= "dirty unevictable LRU page",
 	[MF_MSG_CLEAN_UNEVICTABLE_LRU]	= "clean unevictable LRU page",
-	[MF_MSG_DIRTY_LRU]		= "dirty LRU page",
+	[MF_MSG_सूचीTY_LRU]		= "dirty LRU page",
 	[MF_MSG_CLEAN_LRU]		= "clean LRU page",
 	[MF_MSG_TRUNCATED_LRU]		= "already truncated LRU page",
 	[MF_MSG_BUDDY]			= "free buddy page",
@@ -585,149 +586,149 @@ static const char * const action_page_types[] = {
 	[MF_MSG_DAX]			= "dax page",
 	[MF_MSG_UNSPLIT_THP]		= "unsplit thp",
 	[MF_MSG_UNKNOWN]		= "unknown page",
-};
+पूर्ण;
 
 /*
  * XXX: It is possible that a page is isolated from LRU cache,
- * and then kept in swap cache or failed to remove from page cache.
- * The page count will stop it from being freed by unpoison.
+ * and then kept in swap cache or failed to हटाओ from page cache.
+ * The page count will stop it from being मुक्तd by unpoison.
  * Stress tests should be aware of this memory leak problem.
  */
-static int delete_from_lru_cache(struct page *p)
-{
-	if (!isolate_lru_page(p)) {
+अटल पूर्णांक delete_from_lru_cache(काष्ठा page *p)
+अणु
+	अगर (!isolate_lru_page(p)) अणु
 		/*
-		 * Clear sensible page flags, so that the buddy system won't
-		 * complain when the page is unpoison-and-freed.
+		 * Clear sensible page flags, so that the buddy प्रणाली won't
+		 * complain when the page is unpoison-and-मुक्तd.
 		 */
 		ClearPageActive(p);
 		ClearPageUnevictable(p);
 
 		/*
 		 * Poisoned page might never drop its ref count to 0 so we have
-		 * to uncharge it manually from its memcg.
+		 * to unअक्षरge it manually from its memcg.
 		 */
-		mem_cgroup_uncharge(p);
+		mem_cgroup_unअक्षरge(p);
 
 		/*
 		 * drop the page count elevated by isolate_lru_page()
 		 */
 		put_page(p);
-		return 0;
-	}
-	return -EIO;
-}
+		वापस 0;
+	पूर्ण
+	वापस -EIO;
+पूर्ण
 
-static int truncate_error_page(struct page *p, unsigned long pfn,
-				struct address_space *mapping)
-{
-	int ret = MF_FAILED;
+अटल पूर्णांक truncate_error_page(काष्ठा page *p, अचिन्हित दीर्घ pfn,
+				काष्ठा address_space *mapping)
+अणु
+	पूर्णांक ret = MF_FAILED;
 
-	if (mapping->a_ops->error_remove_page) {
-		int err = mapping->a_ops->error_remove_page(mapping, p);
+	अगर (mapping->a_ops->error_हटाओ_page) अणु
+		पूर्णांक err = mapping->a_ops->error_हटाओ_page(mapping, p);
 
-		if (err != 0) {
+		अगर (err != 0) अणु
 			pr_info("Memory failure: %#lx: Failed to punch page: %d\n",
 				pfn, err);
-		} else if (page_has_private(p) &&
-			   !try_to_release_page(p, GFP_NOIO)) {
+		पूर्ण अन्यथा अगर (page_has_निजी(p) &&
+			   !try_to_release_page(p, GFP_NOIO)) अणु
 			pr_info("Memory failure: %#lx: failed to release buffers\n",
 				pfn);
-		} else {
+		पूर्ण अन्यथा अणु
 			ret = MF_RECOVERED;
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		/*
-		 * If the file system doesn't support it just invalidate
-		 * This fails on dirty or anything with private pages
+		 * If the file प्रणाली करोesn't support it just invalidate
+		 * This fails on dirty or anything with निजी pages
 		 */
-		if (invalidate_inode_page(p))
+		अगर (invalidate_inode_page(p))
 			ret = MF_RECOVERED;
-		else
+		अन्यथा
 			pr_info("Memory failure: %#lx: Failed to invalidate\n",
 				pfn);
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
  * Error hit kernel page.
- * Do nothing, try to be lucky and not touch this instead. For a few cases we
+ * Do nothing, try to be lucky and not touch this instead. For a few हालs we
  * could be more sophisticated.
  */
-static int me_kernel(struct page *p, unsigned long pfn)
-{
-	return MF_IGNORED;
-}
+अटल पूर्णांक me_kernel(काष्ठा page *p, अचिन्हित दीर्घ pfn)
+अणु
+	वापस MF_IGNORED;
+पूर्ण
 
 /*
  * Page in unknown state. Do nothing.
  */
-static int me_unknown(struct page *p, unsigned long pfn)
-{
+अटल पूर्णांक me_unknown(काष्ठा page *p, अचिन्हित दीर्घ pfn)
+अणु
 	pr_err("Memory failure: %#lx: Unknown page state\n", pfn);
-	return MF_FAILED;
-}
+	वापस MF_FAILED;
+पूर्ण
 
 /*
  * Clean (or cleaned) page cache page.
  */
-static int me_pagecache_clean(struct page *p, unsigned long pfn)
-{
-	struct address_space *mapping;
+अटल पूर्णांक me_pagecache_clean(काष्ठा page *p, अचिन्हित दीर्घ pfn)
+अणु
+	काष्ठा address_space *mapping;
 
 	delete_from_lru_cache(p);
 
 	/*
-	 * For anonymous pages we're done the only reference left
+	 * For anonymous pages we're करोne the only reference left
 	 * should be the one m_f() holds.
 	 */
-	if (PageAnon(p))
-		return MF_RECOVERED;
+	अगर (PageAnon(p))
+		वापस MF_RECOVERED;
 
 	/*
 	 * Now truncate the page in the page cache. This is really
 	 * more like a "temporary hole punch"
-	 * Don't do this for block devices when someone else
-	 * has a reference, because it could be file system metadata
+	 * Don't करो this क्रम block devices when someone अन्यथा
+	 * has a reference, because it could be file प्रणाली metadata
 	 * and that's not safe to truncate.
 	 */
 	mapping = page_mapping(p);
-	if (!mapping) {
+	अगर (!mapping) अणु
 		/*
-		 * Page has been teared down in the meanwhile
+		 * Page has been teared करोwn in the meanजबतक
 		 */
-		return MF_FAILED;
-	}
+		वापस MF_FAILED;
+	पूर्ण
 
 	/*
-	 * Truncation is a bit tricky. Enable it per file system for now.
+	 * Truncation is a bit tricky. Enable it per file प्रणाली क्रम now.
 	 *
-	 * Open: to take i_mutex or not for this? Right now we don't.
+	 * Open: to take i_mutex or not क्रम this? Right now we करोn't.
 	 */
-	return truncate_error_page(p, pfn, mapping);
-}
+	वापस truncate_error_page(p, pfn, mapping);
+पूर्ण
 
 /*
  * Dirty pagecache page
  * Issues: when the error hit a hole page the error is not properly
  * propagated.
  */
-static int me_pagecache_dirty(struct page *p, unsigned long pfn)
-{
-	struct address_space *mapping = page_mapping(p);
+अटल पूर्णांक me_pagecache_dirty(काष्ठा page *p, अचिन्हित दीर्घ pfn)
+अणु
+	काष्ठा address_space *mapping = page_mapping(p);
 
 	SetPageError(p);
-	/* TBD: print more information about the file. */
-	if (mapping) {
+	/* TBD: prपूर्णांक more inक्रमmation about the file. */
+	अगर (mapping) अणु
 		/*
-		 * IO error will be reported by write(), fsync(), etc.
+		 * IO error will be reported by ग_लिखो(), fsync(), etc.
 		 * who check the mapping.
 		 * This way the application knows that something went
 		 * wrong with its dirty file data.
 		 *
-		 * There's one open issue:
+		 * There's one खोलो issue:
 		 *
 		 * The EIO will be only reported on the next IO
 		 * operation and then cleared through the IO map.
@@ -735,31 +736,31 @@ static int me_pagecache_dirty(struct page *p, unsigned long pfn)
 		 * first through the AS_EIO flag in the address space
 		 * and then through the PageError flag in the page.
 		 * Since we drop pages on memory failure handling the
-		 * only mechanism open to use is through AS_AIO.
+		 * only mechanism खोलो to use is through AS_AIO.
 		 *
-		 * This has the disadvantage that it gets cleared on
-		 * the first operation that returns an error, while
+		 * This has the disadvantage that it माला_लो cleared on
+		 * the first operation that वापसs an error, जबतक
 		 * the PageError bit is more sticky and only cleared
-		 * when the page is reread or dropped.  If an
+		 * when the page is reपढ़ो or dropped.  If an
 		 * application assumes it will always get error on
-		 * fsync, but does other operations on the fd before
+		 * fsync, but करोes other operations on the fd beक्रमe
 		 * and the page is dropped between then the error
 		 * will not be properly reported.
 		 *
-		 * This can already happen even without hwpoisoned
+		 * This can alपढ़ोy happen even without hwpoisoned
 		 * pages: first on metadata IO errors (which only
 		 * report through AS_EIO) or when the page is dropped
-		 * at the wrong time.
+		 * at the wrong समय.
 		 *
 		 * So right now we assume that the application DTRT on
 		 * the first EIO, but we're not worse than other parts
 		 * of the kernel.
 		 */
 		mapping_set_error(mapping, -EIO);
-	}
+	पूर्ण
 
-	return me_pagecache_clean(p, pfn);
-}
+	वापस me_pagecache_clean(p, pfn);
+पूर्ण
 
 /*
  * Clean and dirty swap cache.
@@ -771,74 +772,74 @@ static int me_pagecache_dirty(struct page *p, unsigned long pfn)
  * try_to_unmap(TTU_IGNORE_HWPOISON) to convert the normal PTEs to swap PTEs,
  * and then
  *      - clear dirty bit to prevent IO
- *      - remove from LRU
- *      - but keep in the swap cache, so that when we return to it on
+ *      - हटाओ from LRU
+ *      - but keep in the swap cache, so that when we वापस to it on
  *        a later page fault, we know the application is accessing
- *        corrupted data and shall be killed (we installed simple
- *        interception code in do_swap_page to catch it).
+ *        corrupted data and shall be समाप्तed (we installed simple
+ *        पूर्णांकerception code in करो_swap_page to catch it).
  *
  * Clean swap cache pages can be directly isolated. A later page fault will
  * bring in the known good data from disk.
  */
-static int me_swapcache_dirty(struct page *p, unsigned long pfn)
-{
+अटल पूर्णांक me_swapcache_dirty(काष्ठा page *p, अचिन्हित दीर्घ pfn)
+अणु
 	ClearPageDirty(p);
 	/* Trigger EIO in shmem: */
 	ClearPageUptodate(p);
 
-	if (!delete_from_lru_cache(p))
-		return MF_DELAYED;
-	else
-		return MF_FAILED;
-}
+	अगर (!delete_from_lru_cache(p))
+		वापस MF_DELAYED;
+	अन्यथा
+		वापस MF_FAILED;
+पूर्ण
 
-static int me_swapcache_clean(struct page *p, unsigned long pfn)
-{
+अटल पूर्णांक me_swapcache_clean(काष्ठा page *p, अचिन्हित दीर्घ pfn)
+अणु
 	delete_from_swap_cache(p);
 
-	if (!delete_from_lru_cache(p))
-		return MF_RECOVERED;
-	else
-		return MF_FAILED;
-}
+	अगर (!delete_from_lru_cache(p))
+		वापस MF_RECOVERED;
+	अन्यथा
+		वापस MF_FAILED;
+पूर्ण
 
 /*
  * Huge pages. Needs work.
  * Issues:
  * - Error on hugepage is contained in hugepage unit (not in raw page unit.)
- *   To narrow down kill region to one page, we need to break up pmd.
+ *   To narrow करोwn समाप्त region to one page, we need to अवरोध up pmd.
  */
-static int me_huge_page(struct page *p, unsigned long pfn)
-{
-	int res;
-	struct page *hpage = compound_head(p);
-	struct address_space *mapping;
+अटल पूर्णांक me_huge_page(काष्ठा page *p, अचिन्हित दीर्घ pfn)
+अणु
+	पूर्णांक res;
+	काष्ठा page *hpage = compound_head(p);
+	काष्ठा address_space *mapping;
 
-	if (!PageHuge(hpage))
-		return MF_DELAYED;
+	अगर (!PageHuge(hpage))
+		वापस MF_DELAYED;
 
 	mapping = page_mapping(hpage);
-	if (mapping) {
+	अगर (mapping) अणु
 		res = truncate_error_page(hpage, pfn, mapping);
-	} else {
+	पूर्ण अन्यथा अणु
 		res = MF_FAILED;
 		unlock_page(hpage);
 		/*
 		 * migration entry prevents later access on error anonymous
-		 * hugepage, so we can free and dissolve it into buddy to
+		 * hugepage, so we can मुक्त and dissolve it पूर्णांकo buddy to
 		 * save healthy subpages.
 		 */
-		if (PageAnon(hpage))
+		अगर (PageAnon(hpage))
 			put_page(hpage);
-		if (!dissolve_free_huge_page(p) && take_page_off_buddy(p)) {
+		अगर (!dissolve_मुक्त_huge_page(p) && take_page_off_buddy(p)) अणु
 			page_ref_inc(p);
 			res = MF_RECOVERED;
-		}
+		पूर्ण
 		lock_page(hpage);
-	}
+	पूर्ण
 
-	return res;
-}
+	वापस res;
+पूर्ण
 
 /*
  * Various page states we can handle.
@@ -846,335 +847,335 @@ static int me_huge_page(struct page *p, unsigned long pfn)
  * A page state is defined by its current page->flags bits.
  * The table matches them in order and calls the right handler.
  *
- * This is quite tricky because we can access page at any time
+ * This is quite tricky because we can access page at any समय
  * in its live cycle, so all accesses have to be extremely careful.
  *
  * This is not complete. More states could be added.
- * For any missing state don't attempt recovery.
+ * For any missing state करोn't attempt recovery.
  */
 
-#define dirty		(1UL << PG_dirty)
-#define sc		((1UL << PG_swapcache) | (1UL << PG_swapbacked))
-#define unevict		(1UL << PG_unevictable)
-#define mlock		(1UL << PG_mlocked)
-#define lru		(1UL << PG_lru)
-#define head		(1UL << PG_head)
-#define slab		(1UL << PG_slab)
-#define reserved	(1UL << PG_reserved)
+#घोषणा dirty		(1UL << PG_dirty)
+#घोषणा sc		((1UL << PG_swapcache) | (1UL << PG_swapbacked))
+#घोषणा unevict		(1UL << PG_unevictable)
+#घोषणा mlock		(1UL << PG_mlocked)
+#घोषणा lru		(1UL << PG_lru)
+#घोषणा head		(1UL << PG_head)
+#घोषणा slab		(1UL << PG_slab)
+#घोषणा reserved	(1UL << PG_reserved)
 
-static struct page_state {
-	unsigned long mask;
-	unsigned long res;
-	enum mf_action_page_type type;
-	int (*action)(struct page *p, unsigned long pfn);
-} error_states[] = {
-	{ reserved,	reserved,	MF_MSG_KERNEL,	me_kernel },
+अटल काष्ठा page_state अणु
+	अचिन्हित दीर्घ mask;
+	अचिन्हित दीर्घ res;
+	क्रमागत mf_action_page_type type;
+	पूर्णांक (*action)(काष्ठा page *p, अचिन्हित दीर्घ pfn);
+पूर्ण error_states[] = अणु
+	अणु reserved,	reserved,	MF_MSG_KERNEL,	me_kernel पूर्ण,
 	/*
-	 * free pages are specially detected outside this table:
-	 * PG_buddy pages only make a small fraction of all free pages.
+	 * मुक्त pages are specially detected outside this table:
+	 * PG_buddy pages only make a small fraction of all मुक्त pages.
 	 */
 
 	/*
-	 * Could in theory check if slab page is free or if we can drop
+	 * Could in theory check अगर slab page is मुक्त or अगर we can drop
 	 * currently unused objects without touching them. But just
-	 * treat it as standard kernel for now.
+	 * treat it as standard kernel क्रम now.
 	 */
-	{ slab,		slab,		MF_MSG_SLAB,	me_kernel },
+	अणु slab,		slab,		MF_MSG_SLAB,	me_kernel पूर्ण,
 
-	{ head,		head,		MF_MSG_HUGE,		me_huge_page },
+	अणु head,		head,		MF_MSG_HUGE,		me_huge_page पूर्ण,
 
-	{ sc|dirty,	sc|dirty,	MF_MSG_DIRTY_SWAPCACHE,	me_swapcache_dirty },
-	{ sc|dirty,	sc,		MF_MSG_CLEAN_SWAPCACHE,	me_swapcache_clean },
+	अणु sc|dirty,	sc|dirty,	MF_MSG_सूचीTY_SWAPCACHE,	me_swapcache_dirty पूर्ण,
+	अणु sc|dirty,	sc,		MF_MSG_CLEAN_SWAPCACHE,	me_swapcache_clean पूर्ण,
 
-	{ mlock|dirty,	mlock|dirty,	MF_MSG_DIRTY_MLOCKED_LRU,	me_pagecache_dirty },
-	{ mlock|dirty,	mlock,		MF_MSG_CLEAN_MLOCKED_LRU,	me_pagecache_clean },
+	अणु mlock|dirty,	mlock|dirty,	MF_MSG_सूचीTY_MLOCKED_LRU,	me_pagecache_dirty पूर्ण,
+	अणु mlock|dirty,	mlock,		MF_MSG_CLEAN_MLOCKED_LRU,	me_pagecache_clean पूर्ण,
 
-	{ unevict|dirty, unevict|dirty,	MF_MSG_DIRTY_UNEVICTABLE_LRU,	me_pagecache_dirty },
-	{ unevict|dirty, unevict,	MF_MSG_CLEAN_UNEVICTABLE_LRU,	me_pagecache_clean },
+	अणु unevict|dirty, unevict|dirty,	MF_MSG_सूचीTY_UNEVICTABLE_LRU,	me_pagecache_dirty पूर्ण,
+	अणु unevict|dirty, unevict,	MF_MSG_CLEAN_UNEVICTABLE_LRU,	me_pagecache_clean पूर्ण,
 
-	{ lru|dirty,	lru|dirty,	MF_MSG_DIRTY_LRU,	me_pagecache_dirty },
-	{ lru|dirty,	lru,		MF_MSG_CLEAN_LRU,	me_pagecache_clean },
+	अणु lru|dirty,	lru|dirty,	MF_MSG_सूचीTY_LRU,	me_pagecache_dirty पूर्ण,
+	अणु lru|dirty,	lru,		MF_MSG_CLEAN_LRU,	me_pagecache_clean पूर्ण,
 
 	/*
 	 * Catchall entry: must be at end.
 	 */
-	{ 0,		0,		MF_MSG_UNKNOWN,	me_unknown },
-};
+	अणु 0,		0,		MF_MSG_UNKNOWN,	me_unknown पूर्ण,
+पूर्ण;
 
-#undef dirty
-#undef sc
-#undef unevict
-#undef mlock
-#undef lru
-#undef head
-#undef slab
-#undef reserved
+#अघोषित dirty
+#अघोषित sc
+#अघोषित unevict
+#अघोषित mlock
+#अघोषित lru
+#अघोषित head
+#अघोषित slab
+#अघोषित reserved
 
 /*
  * "Dirty/Clean" indication is not 100% accurate due to the possibility of
  * setting PG_dirty outside page lock. See also comment above set_page_dirty().
  */
-static void action_result(unsigned long pfn, enum mf_action_page_type type,
-			  enum mf_result result)
-{
+अटल व्योम action_result(अचिन्हित दीर्घ pfn, क्रमागत mf_action_page_type type,
+			  क्रमागत mf_result result)
+अणु
 	trace_memory_failure_event(pfn, type, result);
 
 	pr_err("Memory failure: %#lx: recovery action for %s: %s\n",
 		pfn, action_page_types[type], action_name[result]);
-}
+पूर्ण
 
-static int page_action(struct page_state *ps, struct page *p,
-			unsigned long pfn)
-{
-	int result;
-	int count;
+अटल पूर्णांक page_action(काष्ठा page_state *ps, काष्ठा page *p,
+			अचिन्हित दीर्घ pfn)
+अणु
+	पूर्णांक result;
+	पूर्णांक count;
 
 	result = ps->action(p, pfn);
 
 	count = page_count(p) - 1;
-	if (ps->action == me_swapcache_dirty && result == MF_DELAYED)
+	अगर (ps->action == me_swapcache_dirty && result == MF_DELAYED)
 		count--;
-	if (count > 0) {
+	अगर (count > 0) अणु
 		pr_err("Memory failure: %#lx: %s still referenced by %d users\n",
 		       pfn, action_page_types[ps->type], count);
 		result = MF_FAILED;
-	}
+	पूर्ण
 	action_result(pfn, ps->type, result);
 
-	/* Could do more checks here if page looks ok */
+	/* Could करो more checks here अगर page looks ok */
 	/*
-	 * Could adjust zone counters here to correct for the missing page.
+	 * Could adjust zone counters here to correct क्रम the missing page.
 	 */
 
-	return (result == MF_RECOVERED || result == MF_DELAYED) ? 0 : -EBUSY;
-}
+	वापस (result == MF_RECOVERED || result == MF_DELAYED) ? 0 : -EBUSY;
+पूर्ण
 
 /*
- * Return true if a page type of a given page is supported by hwpoison
- * mechanism (while handling could fail), otherwise false.  This function
- * does not return true for hugetlb or device memory pages, so it's assumed
+ * Return true अगर a page type of a given page is supported by hwpoison
+ * mechanism (जबतक handling could fail), otherwise false.  This function
+ * करोes not वापस true क्रम hugetlb or device memory pages, so it's assumed
  * to be called only in the context where we never have such pages.
  */
-static inline bool HWPoisonHandlable(struct page *page)
-{
-	return PageLRU(page) || __PageMovable(page);
-}
+अटल अंतरभूत bool HWPoisonHandlable(काष्ठा page *page)
+अणु
+	वापस PageLRU(page) || __PageMovable(page);
+पूर्ण
 
 /**
- * __get_hwpoison_page() - Get refcount for memory error handling:
+ * __get_hwpoison_page() - Get refcount क्रम memory error handling:
  * @page:	raw error page (hit by memory error)
  *
- * Return: return 0 if failed to grab the refcount, otherwise true (some
+ * Return: वापस 0 अगर failed to grab the refcount, otherwise true (some
  * non-zero value.)
  */
-static int __get_hwpoison_page(struct page *page)
-{
-	struct page *head = compound_head(page);
-	int ret = 0;
+अटल पूर्णांक __get_hwpoison_page(काष्ठा page *page)
+अणु
+	काष्ठा page *head = compound_head(page);
+	पूर्णांक ret = 0;
 	bool hugetlb = false;
 
 	ret = get_hwpoison_huge_page(head, &hugetlb);
-	if (hugetlb)
-		return ret;
+	अगर (hugetlb)
+		वापस ret;
 
 	/*
 	 * This check prevents from calling get_hwpoison_unless_zero()
-	 * for any unsupported type of page in order to reduce the risk of
+	 * क्रम any unsupported type of page in order to reduce the risk of
 	 * unexpected races caused by taking a page refcount.
 	 */
-	if (!HWPoisonHandlable(head))
-		return 0;
+	अगर (!HWPoisonHandlable(head))
+		वापस 0;
 
-	if (PageTransHuge(head)) {
+	अगर (PageTransHuge(head)) अणु
 		/*
-		 * Non anonymous thp exists only in allocation/free time. We
+		 * Non anonymous thp exists only in allocation/मुक्त समय. We
 		 * can't handle such a case correctly, so let's give it up.
 		 * This should be better than triggering BUG_ON when kernel
 		 * tries to touch the "partially handled" page.
 		 */
-		if (!PageAnon(head)) {
+		अगर (!PageAnon(head)) अणु
 			pr_err("Memory failure: %#lx: non anonymous thp\n",
 				page_to_pfn(page));
-			return 0;
-		}
-	}
+			वापस 0;
+		पूर्ण
+	पूर्ण
 
-	if (get_page_unless_zero(head)) {
-		if (head == compound_head(page))
-			return 1;
+	अगर (get_page_unless_zero(head)) अणु
+		अगर (head == compound_head(page))
+			वापस 1;
 
 		pr_info("Memory failure: %#lx cannot catch tail\n",
 			page_to_pfn(page));
 		put_page(head);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * Safely get reference count of an arbitrary page.
  *
- * Returns 0 for a free page, 1 for an in-use page,
- * -EIO for a page-type we cannot handle and -EBUSY if we raced with an
+ * Returns 0 क्रम a मुक्त page, 1 क्रम an in-use page,
+ * -EIO क्रम a page-type we cannot handle and -EBUSY अगर we raced with an
  * allocation.
- * We only incremented refcount in case the page was already in-use and it
+ * We only incremented refcount in हाल the page was alपढ़ोy in-use and it
  * is a known type we can handle.
  */
-static int get_any_page(struct page *p, unsigned long flags)
-{
-	int ret = 0, pass = 0;
+अटल पूर्णांक get_any_page(काष्ठा page *p, अचिन्हित दीर्घ flags)
+अणु
+	पूर्णांक ret = 0, pass = 0;
 	bool count_increased = false;
 
-	if (flags & MF_COUNT_INCREASED)
+	अगर (flags & MF_COUNT_INCREASED)
 		count_increased = true;
 
 try_again:
-	if (!count_increased && !__get_hwpoison_page(p)) {
-		if (page_count(p)) {
+	अगर (!count_increased && !__get_hwpoison_page(p)) अणु
+		अगर (page_count(p)) अणु
 			/* We raced with an allocation, retry. */
-			if (pass++ < 3)
-				goto try_again;
+			अगर (pass++ < 3)
+				जाओ try_again;
 			ret = -EBUSY;
-		} else if (!PageHuge(p) && !is_free_buddy_page(p)) {
+		पूर्ण अन्यथा अगर (!PageHuge(p) && !is_मुक्त_buddy_page(p)) अणु
 			/* We raced with put_page, retry. */
-			if (pass++ < 3)
-				goto try_again;
+			अगर (pass++ < 3)
+				जाओ try_again;
 			ret = -EIO;
-		}
-	} else {
-		if (PageHuge(p) || HWPoisonHandlable(p)) {
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		अगर (PageHuge(p) || HWPoisonHandlable(p)) अणु
 			ret = 1;
-		} else {
+		पूर्ण अन्यथा अणु
 			/*
 			 * A page we cannot handle. Check whether we can turn
-			 * it into something we can handle.
+			 * it पूर्णांकo something we can handle.
 			 */
-			if (pass++ < 3) {
+			अगर (pass++ < 3) अणु
 				put_page(p);
 				shake_page(p, 1);
 				count_increased = false;
-				goto try_again;
-			}
+				जाओ try_again;
+			पूर्ण
 			put_page(p);
 			ret = -EIO;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int get_hwpoison_page(struct page *p, unsigned long flags,
-			     enum mf_flags ctxt)
-{
-	int ret;
+अटल पूर्णांक get_hwpoison_page(काष्ठा page *p, अचिन्हित दीर्घ flags,
+			     क्रमागत mf_flags ctxt)
+अणु
+	पूर्णांक ret;
 
 	zone_pcp_disable(page_zone(p));
-	if (ctxt == MF_SOFT_OFFLINE)
+	अगर (ctxt == MF_SOFT_OFFLINE)
 		ret = get_any_page(p, flags);
-	else
+	अन्यथा
 		ret = __get_hwpoison_page(p);
 	zone_pcp_enable(page_zone(p));
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
- * Do all that is necessary to remove user space mappings. Unmap
- * the pages and send SIGBUS to the processes if the data was dirty.
+ * Do all that is necessary to हटाओ user space mappings. Unmap
+ * the pages and send SIGBUS to the processes अगर the data was dirty.
  */
-static bool hwpoison_user_mappings(struct page *p, unsigned long pfn,
-				  int flags, struct page **hpagep)
-{
-	enum ttu_flags ttu = TTU_IGNORE_MLOCK;
-	struct address_space *mapping;
-	LIST_HEAD(tokill);
+अटल bool hwpoison_user_mappings(काष्ठा page *p, अचिन्हित दीर्घ pfn,
+				  पूर्णांक flags, काष्ठा page **hpagep)
+अणु
+	क्रमागत ttu_flags ttu = TTU_IGNORE_MLOCK;
+	काष्ठा address_space *mapping;
+	LIST_HEAD(toसमाप्त);
 	bool unmap_success = true;
-	int kill = 1, forcekill;
-	struct page *hpage = *hpagep;
+	पूर्णांक समाप्त = 1, क्रमceसमाप्त;
+	काष्ठा page *hpage = *hpagep;
 	bool mlocked = PageMlocked(hpage);
 
 	/*
-	 * Here we are interested only in user-mapped pages, so skip any
+	 * Here we are पूर्णांकerested only in user-mapped pages, so skip any
 	 * other types of pages.
 	 */
-	if (PageReserved(p) || PageSlab(p))
-		return true;
-	if (!(PageLRU(hpage) || PageHuge(p)))
-		return true;
+	अगर (PageReserved(p) || PageSlab(p))
+		वापस true;
+	अगर (!(PageLRU(hpage) || PageHuge(p)))
+		वापस true;
 
 	/*
-	 * This check implies we don't kill processes if their pages
-	 * are in the swap cache early. Those are always late kills.
+	 * This check implies we करोn't समाप्त processes अगर their pages
+	 * are in the swap cache early. Those are always late समाप्तs.
 	 */
-	if (!page_mapped(hpage))
-		return true;
+	अगर (!page_mapped(hpage))
+		वापस true;
 
-	if (PageKsm(p)) {
+	अगर (PageKsm(p)) अणु
 		pr_err("Memory failure: %#lx: can't handle KSM pages.\n", pfn);
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
-	if (PageSwapCache(p)) {
+	अगर (PageSwapCache(p)) अणु
 		pr_err("Memory failure: %#lx: keeping poisoned page in swap cache\n",
 			pfn);
 		ttu |= TTU_IGNORE_HWPOISON;
-	}
+	पूर्ण
 
 	/*
-	 * Propagate the dirty bit from PTEs to struct page first, because we
-	 * need this to decide if we should kill or just drop the page.
+	 * Propagate the dirty bit from PTEs to काष्ठा page first, because we
+	 * need this to decide अगर we should समाप्त or just drop the page.
 	 * XXX: the dirty test could be racy: set_page_dirty() may not always
-	 * be called inside page lock (it's recommended but not enforced).
+	 * be called inside page lock (it's recommended but not enक्रमced).
 	 */
 	mapping = page_mapping(hpage);
-	if (!(flags & MF_MUST_KILL) && !PageDirty(hpage) && mapping &&
-	    mapping_can_writeback(mapping)) {
-		if (page_mkclean(hpage)) {
+	अगर (!(flags & MF_MUST_KILL) && !PageDirty(hpage) && mapping &&
+	    mapping_can_ग_लिखोback(mapping)) अणु
+		अगर (page_mkclean(hpage)) अणु
 			SetPageDirty(hpage);
-		} else {
-			kill = 0;
+		पूर्ण अन्यथा अणु
+			समाप्त = 0;
 			ttu |= TTU_IGNORE_HWPOISON;
 			pr_info("Memory failure: %#lx: corrupted page was clean: dropped without side effects\n",
 				pfn);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	/*
 	 * First collect all the processes that have the page
-	 * mapped in dirty form.  This has to be done before try_to_unmap,
-	 * because ttu takes the rmap data structures down.
+	 * mapped in dirty क्रमm.  This has to be करोne beक्रमe try_to_unmap,
+	 * because ttu takes the rmap data काष्ठाures करोwn.
 	 *
 	 * Error handling: We ignore errors here because
-	 * there's nothing that can be done.
+	 * there's nothing that can be करोne.
 	 */
-	if (kill)
-		collect_procs(hpage, &tokill, flags & MF_ACTION_REQUIRED);
+	अगर (समाप्त)
+		collect_procs(hpage, &toसमाप्त, flags & MF_ACTION_REQUIRED);
 
-	if (!PageHuge(hpage)) {
+	अगर (!PageHuge(hpage)) अणु
 		unmap_success = try_to_unmap(hpage, ttu);
-	} else {
-		if (!PageAnon(hpage)) {
+	पूर्ण अन्यथा अणु
+		अगर (!PageAnon(hpage)) अणु
 			/*
 			 * For hugetlb pages in shared mappings, try_to_unmap
 			 * could potentially call huge_pmd_unshare.  Because of
-			 * this, take semaphore in write mode here and set
+			 * this, take semaphore in ग_लिखो mode here and set
 			 * TTU_RMAP_LOCKED to indicate we have taken the lock
 			 * at this higer level.
 			 */
-			mapping = hugetlb_page_mapping_lock_write(hpage);
-			if (mapping) {
+			mapping = hugetlb_page_mapping_lock_ग_लिखो(hpage);
+			अगर (mapping) अणु
 				unmap_success = try_to_unmap(hpage,
 						     ttu|TTU_RMAP_LOCKED);
-				i_mmap_unlock_write(mapping);
-			} else {
+				i_mmap_unlock_ग_लिखो(mapping);
+			पूर्ण अन्यथा अणु
 				pr_info("Memory failure: %#lx: could not lock mapping for mapped huge page\n", pfn);
 				unmap_success = false;
-			}
-		} else {
+			पूर्ण
+		पूर्ण अन्यथा अणु
 			unmap_success = try_to_unmap(hpage, ttu);
-		}
-	}
-	if (!unmap_success)
+		पूर्ण
+	पूर्ण
+	अगर (!unmap_success)
 		pr_err("Memory failure: %#lx: failed to unmap page (mapcount=%d)\n",
 		       pfn, page_mapcount(hpage));
 
@@ -1182,190 +1183,190 @@ static bool hwpoison_user_mappings(struct page *p, unsigned long pfn,
 	 * try_to_unmap() might put mlocked page in lru cache, so call
 	 * shake_page() again to ensure that it's flushed.
 	 */
-	if (mlocked)
+	अगर (mlocked)
 		shake_page(hpage, 0);
 
 	/*
 	 * Now that the dirty bit has been propagated to the
-	 * struct page and all unmaps done we can decide if
-	 * killing is needed or not.  Only kill when the page
+	 * काष्ठा page and all unmaps करोne we can decide अगर
+	 * समाप्तing is needed or not.  Only समाप्त when the page
 	 * was dirty or the process is not restartable,
-	 * otherwise the tokill list is merely
-	 * freed.  When there was a problem unmapping earlier
-	 * use a more force-full uncatchable kill to prevent
+	 * otherwise the toसमाप्त list is merely
+	 * मुक्तd.  When there was a problem unmapping earlier
+	 * use a more क्रमce-full uncatchable समाप्त to prevent
 	 * any accesses to the poisoned memory.
 	 */
-	forcekill = PageDirty(hpage) || (flags & MF_MUST_KILL);
-	kill_procs(&tokill, forcekill, !unmap_success, pfn, flags);
+	क्रमceसमाप्त = PageDirty(hpage) || (flags & MF_MUST_KILL);
+	समाप्त_procs(&toसमाप्त, क्रमceसमाप्त, !unmap_success, pfn, flags);
 
-	return unmap_success;
-}
+	वापस unmap_success;
+पूर्ण
 
-static int identify_page_state(unsigned long pfn, struct page *p,
-				unsigned long page_flags)
-{
-	struct page_state *ps;
+अटल पूर्णांक identअगरy_page_state(अचिन्हित दीर्घ pfn, काष्ठा page *p,
+				अचिन्हित दीर्घ page_flags)
+अणु
+	काष्ठा page_state *ps;
 
 	/*
 	 * The first check uses the current page flags which may not have any
-	 * relevant information. The second check with the saved page flags is
-	 * carried out only if the first check can't determine the page status.
+	 * relevant inक्रमmation. The second check with the saved page flags is
+	 * carried out only अगर the first check can't determine the page status.
 	 */
-	for (ps = error_states;; ps++)
-		if ((p->flags & ps->mask) == ps->res)
-			break;
+	क्रम (ps = error_states;; ps++)
+		अगर ((p->flags & ps->mask) == ps->res)
+			अवरोध;
 
 	page_flags |= (p->flags & (1UL << PG_dirty));
 
-	if (!ps->mask)
-		for (ps = error_states;; ps++)
-			if ((page_flags & ps->mask) == ps->res)
-				break;
-	return page_action(ps, p, pfn);
-}
+	अगर (!ps->mask)
+		क्रम (ps = error_states;; ps++)
+			अगर ((page_flags & ps->mask) == ps->res)
+				अवरोध;
+	वापस page_action(ps, p, pfn);
+पूर्ण
 
-static int try_to_split_thp_page(struct page *page, const char *msg)
-{
+अटल पूर्णांक try_to_split_thp_page(काष्ठा page *page, स्थिर अक्षर *msg)
+अणु
 	lock_page(page);
-	if (!PageAnon(page) || unlikely(split_huge_page(page))) {
-		unsigned long pfn = page_to_pfn(page);
+	अगर (!PageAnon(page) || unlikely(split_huge_page(page))) अणु
+		अचिन्हित दीर्घ pfn = page_to_pfn(page);
 
 		unlock_page(page);
-		if (!PageAnon(page))
+		अगर (!PageAnon(page))
 			pr_info("%s: %#lx: non anonymous thp\n", msg, pfn);
-		else
+		अन्यथा
 			pr_info("%s: %#lx: thp split failed\n", msg, pfn);
 		put_page(page);
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 	unlock_page(page);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int memory_failure_hugetlb(unsigned long pfn, int flags)
-{
-	struct page *p = pfn_to_page(pfn);
-	struct page *head = compound_head(p);
-	int res;
-	unsigned long page_flags;
+अटल पूर्णांक memory_failure_hugetlb(अचिन्हित दीर्घ pfn, पूर्णांक flags)
+अणु
+	काष्ठा page *p = pfn_to_page(pfn);
+	काष्ठा page *head = compound_head(p);
+	पूर्णांक res;
+	अचिन्हित दीर्घ page_flags;
 
-	if (TestSetPageHWPoison(head)) {
+	अगर (TestSetPageHWPoison(head)) अणु
 		pr_err("Memory failure: %#lx: already hardware poisoned\n",
 		       pfn);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	num_poisoned_pages_inc();
 
-	if (!(flags & MF_COUNT_INCREASED) && !get_hwpoison_page(p, flags, 0)) {
+	अगर (!(flags & MF_COUNT_INCREASED) && !get_hwpoison_page(p, flags, 0)) अणु
 		/*
 		 * Check "filter hit" and "race with other subpage."
 		 */
 		lock_page(head);
-		if (PageHWPoison(head)) {
-			if ((hwpoison_filter(p) && TestClearPageHWPoison(p))
-			    || (p != head && TestSetPageHWPoison(head))) {
+		अगर (PageHWPoison(head)) अणु
+			अगर ((hwpoison_filter(p) && TestClearPageHWPoison(p))
+			    || (p != head && TestSetPageHWPoison(head))) अणु
 				num_poisoned_pages_dec();
 				unlock_page(head);
-				return 0;
-			}
-		}
+				वापस 0;
+			पूर्ण
+		पूर्ण
 		unlock_page(head);
 		res = MF_FAILED;
-		if (!dissolve_free_huge_page(p) && take_page_off_buddy(p)) {
+		अगर (!dissolve_मुक्त_huge_page(p) && take_page_off_buddy(p)) अणु
 			page_ref_inc(p);
 			res = MF_RECOVERED;
-		}
+		पूर्ण
 		action_result(pfn, MF_MSG_FREE_HUGE, res);
-		return res == MF_RECOVERED ? 0 : -EBUSY;
-	}
+		वापस res == MF_RECOVERED ? 0 : -EBUSY;
+	पूर्ण
 
 	lock_page(head);
 	page_flags = head->flags;
 
-	if (!PageHWPoison(head)) {
+	अगर (!PageHWPoison(head)) अणु
 		pr_err("Memory failure: %#lx: just unpoisoned\n", pfn);
 		num_poisoned_pages_dec();
 		unlock_page(head);
 		put_page(head);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	/*
-	 * TODO: hwpoison for pud-sized hugetlb doesn't work right now, so
+	 * TODO: hwpoison क्रम pud-sized hugetlb करोesn't work right now, so
 	 * simply disable it. In order to make it work properly, we need
 	 * make sure that:
-	 *  - conversion of a pud that maps an error hugetlb into hwpoison
+	 *  - conversion of a pud that maps an error hugetlb पूर्णांकo hwpoison
 	 *    entry properly works, and
 	 *  - other mm code walking over page table is aware of pud-aligned
 	 *    hwpoison entries.
 	 */
-	if (huge_page_size(page_hstate(head)) > PMD_SIZE) {
+	अगर (huge_page_size(page_hstate(head)) > PMD_SIZE) अणु
 		action_result(pfn, MF_MSG_NON_PMD_HUGE, MF_IGNORED);
 		res = -EBUSY;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (!hwpoison_user_mappings(p, pfn, flags, &head)) {
+	अगर (!hwpoison_user_mappings(p, pfn, flags, &head)) अणु
 		action_result(pfn, MF_MSG_UNMAP_FAILED, MF_IGNORED);
 		res = -EBUSY;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	res = identify_page_state(pfn, p, page_flags);
+	res = identअगरy_page_state(pfn, p, page_flags);
 out:
 	unlock_page(head);
-	return res;
-}
+	वापस res;
+पूर्ण
 
-static int memory_failure_dev_pagemap(unsigned long pfn, int flags,
-		struct dev_pagemap *pgmap)
-{
-	struct page *page = pfn_to_page(pfn);
-	const bool unmap_success = true;
-	unsigned long size = 0;
-	struct to_kill *tk;
-	LIST_HEAD(tokill);
-	int rc = -EBUSY;
+अटल पूर्णांक memory_failure_dev_pagemap(अचिन्हित दीर्घ pfn, पूर्णांक flags,
+		काष्ठा dev_pagemap *pgmap)
+अणु
+	काष्ठा page *page = pfn_to_page(pfn);
+	स्थिर bool unmap_success = true;
+	अचिन्हित दीर्घ size = 0;
+	काष्ठा to_समाप्त *tk;
+	LIST_HEAD(toसमाप्त);
+	पूर्णांक rc = -EBUSY;
 	loff_t start;
 	dax_entry_t cookie;
 
-	if (flags & MF_COUNT_INCREASED)
+	अगर (flags & MF_COUNT_INCREASED)
 		/*
-		 * Drop the extra refcount in case we come from madvise().
+		 * Drop the extra refcount in हाल we come from madvise().
 		 */
 		put_page(page);
 
 	/* device metadata space is not recoverable */
-	if (!pgmap_pfn_valid(pgmap, pfn)) {
+	अगर (!pgmap_pfn_valid(pgmap, pfn)) अणु
 		rc = -ENXIO;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	/*
-	 * Prevent the inode from being freed while we are interrogating
+	 * Prevent the inode from being मुक्तd जबतक we are पूर्णांकerrogating
 	 * the address_space, typically this would be handled by
-	 * lock_page(), but dax pages do not use the page lock. This
+	 * lock_page(), but dax pages करो not use the page lock. This
 	 * also prevents changes to the mapping of this pfn until
-	 * poison signaling is complete.
+	 * poison संकेतing is complete.
 	 */
 	cookie = dax_lock_page(page);
-	if (!cookie)
-		goto out;
+	अगर (!cookie)
+		जाओ out;
 
-	if (hwpoison_filter(page)) {
+	अगर (hwpoison_filter(page)) अणु
 		rc = 0;
-		goto unlock;
-	}
+		जाओ unlock;
+	पूर्ण
 
-	if (pgmap->type == MEMORY_DEVICE_PRIVATE) {
+	अगर (pgmap->type == MEMORY_DEVICE_PRIVATE) अणु
 		/*
 		 * TODO: Handle HMM pages which may need coordination
 		 * with device-side memory.
 		 */
-		goto unlock;
-	}
+		जाओ unlock;
+	पूर्ण
 
 	/*
 	 * Use this flag as an indication that the dax page has been
@@ -1375,27 +1376,27 @@ static int memory_failure_dev_pagemap(unsigned long pfn, int flags,
 
 	/*
 	 * Unlike System-RAM there is no possibility to swap in a
-	 * different physical page at a given virtual address, so all
+	 * dअगरferent physical page at a given भव address, so all
 	 * userspace consumption of ZONE_DEVICE memory necessitates
 	 * SIGBUS (i.e. MF_MUST_KILL)
 	 */
 	flags |= MF_ACTION_REQUIRED | MF_MUST_KILL;
-	collect_procs(page, &tokill, flags & MF_ACTION_REQUIRED);
+	collect_procs(page, &toसमाप्त, flags & MF_ACTION_REQUIRED);
 
-	list_for_each_entry(tk, &tokill, nd)
-		if (tk->size_shift)
-			size = max(size, 1UL << tk->size_shift);
-	if (size) {
+	list_क्रम_each_entry(tk, &toसमाप्त, nd)
+		अगर (tk->size_shअगरt)
+			size = max(size, 1UL << tk->size_shअगरt);
+	अगर (size) अणु
 		/*
-		 * Unmap the largest mapping to avoid breaking up
-		 * device-dax mappings which are constant size. The
-		 * actual size of the mapping being torn down is
-		 * communicated in siginfo, see kill_proc()
+		 * Unmap the largest mapping to aव्योम अवरोधing up
+		 * device-dax mappings which are स्थिरant size. The
+		 * actual size of the mapping being torn करोwn is
+		 * communicated in siginfo, see समाप्त_proc()
 		 */
 		start = (page->index << PAGE_SHIFT) & ~(size - 1);
 		unmap_mapping_range(page->mapping, start, size, 0);
-	}
-	kill_procs(&tokill, flags & MF_MUST_KILL, !unmap_success, pfn, flags);
+	पूर्ण
+	समाप्त_procs(&toसमाप्त, flags & MF_MUST_KILL, !unmap_success, pfn, flags);
 	rc = 0;
 unlock:
 	dax_unlock_page(page, cookie);
@@ -1403,8 +1404,8 @@ out:
 	/* drop pgmap ref acquired in caller */
 	put_dev_pagemap(pgmap);
 	action_result(pfn, MF_MSG_DAX, rc ? MF_FAILED : MF_RECOVERED);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
 /**
  * memory_failure - Handle memory failure of a page.
@@ -1414,100 +1415,100 @@ out:
  * This function is called by the low level machine check code
  * of an architecture when it detects hardware memory corruption
  * of a page. It tries its best to recover, which includes
- * dropping pages, killing processes etc.
+ * dropping pages, समाप्तing processes etc.
  *
- * The function is primarily of use for corruptions that
+ * The function is primarily of use क्रम corruptions that
  * happen outside the current execution context (e.g. when
  * detected by a background scrubber)
  *
- * Must run in process context (e.g. a work queue) with interrupts
+ * Must run in process context (e.g. a work queue) with पूर्णांकerrupts
  * enabled and no spinlocks hold.
  */
-int memory_failure(unsigned long pfn, int flags)
-{
-	struct page *p;
-	struct page *hpage;
-	struct page *orig_head;
-	struct dev_pagemap *pgmap;
-	int res;
-	unsigned long page_flags;
+पूर्णांक memory_failure(अचिन्हित दीर्घ pfn, पूर्णांक flags)
+अणु
+	काष्ठा page *p;
+	काष्ठा page *hpage;
+	काष्ठा page *orig_head;
+	काष्ठा dev_pagemap *pgmap;
+	पूर्णांक res;
+	अचिन्हित दीर्घ page_flags;
 	bool retry = true;
 
-	if (!sysctl_memory_failure_recovery)
+	अगर (!sysctl_memory_failure_recovery)
 		panic("Memory failure on page %lx", pfn);
 
 	p = pfn_to_online_page(pfn);
-	if (!p) {
-		if (pfn_valid(pfn)) {
-			pgmap = get_dev_pagemap(pfn, NULL);
-			if (pgmap)
-				return memory_failure_dev_pagemap(pfn, flags,
+	अगर (!p) अणु
+		अगर (pfn_valid(pfn)) अणु
+			pgmap = get_dev_pagemap(pfn, शून्य);
+			अगर (pgmap)
+				वापस memory_failure_dev_pagemap(pfn, flags,
 								  pgmap);
-		}
+		पूर्ण
 		pr_err("Memory failure: %#lx: memory outside kernel control\n",
 			pfn);
-		return -ENXIO;
-	}
+		वापस -ENXIO;
+	पूर्ण
 
 try_again:
-	if (PageHuge(p))
-		return memory_failure_hugetlb(pfn, flags);
-	if (TestSetPageHWPoison(p)) {
+	अगर (PageHuge(p))
+		वापस memory_failure_hugetlb(pfn, flags);
+	अगर (TestSetPageHWPoison(p)) अणु
 		pr_err("Memory failure: %#lx: already hardware poisoned\n",
 			pfn);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	orig_head = hpage = compound_head(p);
 	num_poisoned_pages_inc();
 
 	/*
-	 * We need/can do nothing about count=0 pages.
-	 * 1) it's a free page, and therefore in safe hand:
+	 * We need/can करो nothing about count=0 pages.
+	 * 1) it's a मुक्त page, and thereक्रमe in safe hand:
 	 *    prep_new_page() will be the gate keeper.
 	 * 2) it's part of a non-compound high order page.
 	 *    Implies some kernel user: cannot stop them from
 	 *    R/W the page; let's pray that the page has been
-	 *    used and will be freed some time later.
+	 *    used and will be मुक्तd some समय later.
 	 * In fact it's dangerous to directly bump up page count from 0,
-	 * that may make page_ref_freeze()/page_ref_unfreeze() mismatch.
+	 * that may make page_ref_मुक्तze()/page_ref_unमुक्तze() mismatch.
 	 */
-	if (!(flags & MF_COUNT_INCREASED) && !get_hwpoison_page(p, flags, 0)) {
-		if (is_free_buddy_page(p)) {
-			if (take_page_off_buddy(p)) {
+	अगर (!(flags & MF_COUNT_INCREASED) && !get_hwpoison_page(p, flags, 0)) अणु
+		अगर (is_मुक्त_buddy_page(p)) अणु
+			अगर (take_page_off_buddy(p)) अणु
 				page_ref_inc(p);
 				res = MF_RECOVERED;
-			} else {
+			पूर्ण अन्यथा अणु
 				/* We lost the race, try again */
-				if (retry) {
+				अगर (retry) अणु
 					ClearPageHWPoison(p);
 					num_poisoned_pages_dec();
 					retry = false;
-					goto try_again;
-				}
+					जाओ try_again;
+				पूर्ण
 				res = MF_FAILED;
-			}
+			पूर्ण
 			action_result(pfn, MF_MSG_BUDDY, res);
-			return res == MF_RECOVERED ? 0 : -EBUSY;
-		} else {
+			वापस res == MF_RECOVERED ? 0 : -EBUSY;
+		पूर्ण अन्यथा अणु
 			action_result(pfn, MF_MSG_KERNEL_HIGH_ORDER, MF_IGNORED);
-			return -EBUSY;
-		}
-	}
+			वापस -EBUSY;
+		पूर्ण
+	पूर्ण
 
-	if (PageTransHuge(hpage)) {
-		if (try_to_split_thp_page(p, "Memory Failure") < 0) {
+	अगर (PageTransHuge(hpage)) अणु
+		अगर (try_to_split_thp_page(p, "Memory Failure") < 0) अणु
 			action_result(pfn, MF_MSG_UNSPLIT_THP, MF_IGNORED);
-			return -EBUSY;
-		}
+			वापस -EBUSY;
+		पूर्ण
 		VM_BUG_ON_PAGE(!page_count(p), p);
-	}
+	पूर्ण
 
 	/*
-	 * We ignore non-LRU pages for good reasons.
-	 * - PG_locked is only well defined for LRU pages and a few others
-	 * - to avoid races with __SetPageLocked()
-	 * - to avoid races with __SetPageSlab*() (and more non-atomic ops)
+	 * We ignore non-LRU pages क्रम good reasons.
+	 * - PG_locked is only well defined क्रम LRU pages and a few others
+	 * - to aव्योम races with __SetPageLocked()
+	 * - to aव्योम races with __SetPageSlab*() (and more non-atomic ops)
 	 * The check (unnecessarily) ignores LRU pages being isolated and
 	 * walked by the page reclaim code, however that's not a big loss.
 	 */
@@ -1519,189 +1520,189 @@ try_again:
 	 * The page could have changed compound pages during the locking.
 	 * If this happens just bail out.
 	 */
-	if (PageCompound(p) && compound_head(p) != orig_head) {
+	अगर (PageCompound(p) && compound_head(p) != orig_head) अणु
 		action_result(pfn, MF_MSG_DIFFERENT_COMPOUND, MF_IGNORED);
 		res = -EBUSY;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	/*
 	 * We use page flags to determine what action should be taken, but
-	 * the flags can be modified by the error containment action.  One
+	 * the flags can be modअगरied by the error containment action.  One
 	 * example is an mlocked page, where PG_mlocked is cleared by
-	 * page_remove_rmap() in try_to_unmap_one(). So to determine page status
-	 * correctly, we save a copy of the page flags at this time.
+	 * page_हटाओ_rmap() in try_to_unmap_one(). So to determine page status
+	 * correctly, we save a copy of the page flags at this समय.
 	 */
 	page_flags = p->flags;
 
 	/*
 	 * unpoison always clear PG_hwpoison inside page lock
 	 */
-	if (!PageHWPoison(p)) {
+	अगर (!PageHWPoison(p)) अणु
 		pr_err("Memory failure: %#lx: just unpoisoned\n", pfn);
 		num_poisoned_pages_dec();
 		unlock_page(p);
 		put_page(p);
-		return 0;
-	}
-	if (hwpoison_filter(p)) {
-		if (TestClearPageHWPoison(p))
+		वापस 0;
+	पूर्ण
+	अगर (hwpoison_filter(p)) अणु
+		अगर (TestClearPageHWPoison(p))
 			num_poisoned_pages_dec();
 		unlock_page(p);
 		put_page(p);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	/*
-	 * __munlock_pagevec may clear a writeback page's LRU flag without
-	 * page_lock. We need wait writeback completion for this page or it
-	 * may trigger vfs BUG while evict inode.
+	 * __munlock_pagevec may clear a ग_लिखोback page's LRU flag without
+	 * page_lock. We need रुको ग_लिखोback completion क्रम this page or it
+	 * may trigger vfs BUG जबतक evict inode.
 	 */
-	if (!PageTransTail(p) && !PageLRU(p) && !PageWriteback(p))
-		goto identify_page_state;
+	अगर (!PageTransTail(p) && !PageLRU(p) && !PageWriteback(p))
+		जाओ identअगरy_page_state;
 
 	/*
-	 * It's very difficult to mess with pages currently under IO
-	 * and in many cases impossible, so we just avoid it here.
+	 * It's very dअगरficult to mess with pages currently under IO
+	 * and in many हालs impossible, so we just aव्योम it here.
 	 */
-	wait_on_page_writeback(p);
+	रुको_on_page_ग_लिखोback(p);
 
 	/*
 	 * Now take care of user space mappings.
 	 * Abort on fail: __delete_from_page_cache() assumes unmapped page.
 	 */
-	if (!hwpoison_user_mappings(p, pfn, flags, &p)) {
+	अगर (!hwpoison_user_mappings(p, pfn, flags, &p)) अणु
 		action_result(pfn, MF_MSG_UNMAP_FAILED, MF_IGNORED);
 		res = -EBUSY;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	/*
-	 * Torn down by someone else?
+	 * Torn करोwn by someone अन्यथा?
 	 */
-	if (PageLRU(p) && !PageSwapCache(p) && p->mapping == NULL) {
+	अगर (PageLRU(p) && !PageSwapCache(p) && p->mapping == शून्य) अणु
 		action_result(pfn, MF_MSG_TRUNCATED_LRU, MF_IGNORED);
 		res = -EBUSY;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-identify_page_state:
-	res = identify_page_state(pfn, p, page_flags);
+identअगरy_page_state:
+	res = identअगरy_page_state(pfn, p, page_flags);
 out:
 	unlock_page(p);
-	return res;
-}
+	वापस res;
+पूर्ण
 EXPORT_SYMBOL_GPL(memory_failure);
 
-#define MEMORY_FAILURE_FIFO_ORDER	4
-#define MEMORY_FAILURE_FIFO_SIZE	(1 << MEMORY_FAILURE_FIFO_ORDER)
+#घोषणा MEMORY_FAILURE_FIFO_ORDER	4
+#घोषणा MEMORY_FAILURE_FIFO_SIZE	(1 << MEMORY_FAILURE_FIFO_ORDER)
 
-struct memory_failure_entry {
-	unsigned long pfn;
-	int flags;
-};
+काष्ठा memory_failure_entry अणु
+	अचिन्हित दीर्घ pfn;
+	पूर्णांक flags;
+पूर्ण;
 
-struct memory_failure_cpu {
-	DECLARE_KFIFO(fifo, struct memory_failure_entry,
+काष्ठा memory_failure_cpu अणु
+	DECLARE_KFIFO(fअगरo, काष्ठा memory_failure_entry,
 		      MEMORY_FAILURE_FIFO_SIZE);
 	spinlock_t lock;
-	struct work_struct work;
-};
+	काष्ठा work_काष्ठा work;
+पूर्ण;
 
-static DEFINE_PER_CPU(struct memory_failure_cpu, memory_failure_cpu);
+अटल DEFINE_PER_CPU(काष्ठा memory_failure_cpu, memory_failure_cpu);
 
 /**
  * memory_failure_queue - Schedule handling memory failure of a page.
  * @pfn: Page Number of the corrupted page
- * @flags: Flags for memory failure handling
+ * @flags: Flags क्रम memory failure handling
  *
  * This function is called by the low level hardware error handler
  * when it detects hardware memory corruption of a page. It schedules
- * the recovering of error page, including dropping pages, killing
+ * the recovering of error page, including dropping pages, समाप्तing
  * processes etc.
  *
- * The function is primarily of use for corruptions that
+ * The function is primarily of use क्रम corruptions that
  * happen outside the current execution context (e.g. when
  * detected by a background scrubber)
  *
  * Can run in IRQ context.
  */
-void memory_failure_queue(unsigned long pfn, int flags)
-{
-	struct memory_failure_cpu *mf_cpu;
-	unsigned long proc_flags;
-	struct memory_failure_entry entry = {
+व्योम memory_failure_queue(अचिन्हित दीर्घ pfn, पूर्णांक flags)
+अणु
+	काष्ठा memory_failure_cpu *mf_cpu;
+	अचिन्हित दीर्घ proc_flags;
+	काष्ठा memory_failure_entry entry = अणु
 		.pfn =		pfn,
 		.flags =	flags,
-	};
+	पूर्ण;
 
 	mf_cpu = &get_cpu_var(memory_failure_cpu);
 	spin_lock_irqsave(&mf_cpu->lock, proc_flags);
-	if (kfifo_put(&mf_cpu->fifo, entry))
+	अगर (kfअगरo_put(&mf_cpu->fअगरo, entry))
 		schedule_work_on(smp_processor_id(), &mf_cpu->work);
-	else
+	अन्यथा
 		pr_err("Memory failure: buffer overflow when queuing memory failure at %#lx\n",
 		       pfn);
 	spin_unlock_irqrestore(&mf_cpu->lock, proc_flags);
 	put_cpu_var(memory_failure_cpu);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(memory_failure_queue);
 
-static void memory_failure_work_func(struct work_struct *work)
-{
-	struct memory_failure_cpu *mf_cpu;
-	struct memory_failure_entry entry = { 0, };
-	unsigned long proc_flags;
-	int gotten;
+अटल व्योम memory_failure_work_func(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा memory_failure_cpu *mf_cpu;
+	काष्ठा memory_failure_entry entry = अणु 0, पूर्ण;
+	अचिन्हित दीर्घ proc_flags;
+	पूर्णांक gotten;
 
-	mf_cpu = container_of(work, struct memory_failure_cpu, work);
-	for (;;) {
+	mf_cpu = container_of(work, काष्ठा memory_failure_cpu, work);
+	क्रम (;;) अणु
 		spin_lock_irqsave(&mf_cpu->lock, proc_flags);
-		gotten = kfifo_get(&mf_cpu->fifo, &entry);
+		gotten = kfअगरo_get(&mf_cpu->fअगरo, &entry);
 		spin_unlock_irqrestore(&mf_cpu->lock, proc_flags);
-		if (!gotten)
-			break;
-		if (entry.flags & MF_SOFT_OFFLINE)
+		अगर (!gotten)
+			अवरोध;
+		अगर (entry.flags & MF_SOFT_OFFLINE)
 			soft_offline_page(entry.pfn, entry.flags);
-		else
+		अन्यथा
 			memory_failure(entry.pfn, entry.flags);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
- * Process memory_failure work queued on the specified CPU.
- * Used to avoid return-to-userspace racing with the memory_failure workqueue.
+ * Process memory_failure work queued on the specअगरied CPU.
+ * Used to aव्योम वापस-to-userspace racing with the memory_failure workqueue.
  */
-void memory_failure_queue_kick(int cpu)
-{
-	struct memory_failure_cpu *mf_cpu;
+व्योम memory_failure_queue_kick(पूर्णांक cpu)
+अणु
+	काष्ठा memory_failure_cpu *mf_cpu;
 
 	mf_cpu = &per_cpu(memory_failure_cpu, cpu);
 	cancel_work_sync(&mf_cpu->work);
 	memory_failure_work_func(&mf_cpu->work);
-}
+पूर्ण
 
-static int __init memory_failure_init(void)
-{
-	struct memory_failure_cpu *mf_cpu;
-	int cpu;
+अटल पूर्णांक __init memory_failure_init(व्योम)
+अणु
+	काष्ठा memory_failure_cpu *mf_cpu;
+	पूर्णांक cpu;
 
-	for_each_possible_cpu(cpu) {
+	क्रम_each_possible_cpu(cpu) अणु
 		mf_cpu = &per_cpu(memory_failure_cpu, cpu);
 		spin_lock_init(&mf_cpu->lock);
-		INIT_KFIFO(mf_cpu->fifo);
+		INIT_KFIFO(mf_cpu->fअगरo);
 		INIT_WORK(&mf_cpu->work, memory_failure_work_func);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 core_initcall(memory_failure_init);
 
-#define unpoison_pr_info(fmt, pfn, rs)			\
-({							\
-	if (__ratelimit(rs))				\
+#घोषणा unpoison_pr_info(fmt, pfn, rs)			\
+(अणु							\
+	अगर (__ratelimit(rs))				\
 		pr_info(fmt, pfn);			\
-})
+पूर्ण)
 
 /**
  * unpoison_memory - Unpoison a previously poisoned page
@@ -1710,110 +1711,110 @@ core_initcall(memory_failure_init);
  * Software-unpoison a page that has been poisoned by
  * memory_failure() earlier.
  *
- * This is only done on the software-level, so it only works
- * for linux injected failures, not real hardware failures
+ * This is only करोne on the software-level, so it only works
+ * क्रम linux injected failures, not real hardware failures
  *
- * Returns 0 for success, otherwise -errno.
+ * Returns 0 क्रम success, otherwise -त्रुटि_सं.
  */
-int unpoison_memory(unsigned long pfn)
-{
-	struct page *page;
-	struct page *p;
-	int freeit = 0;
-	unsigned long flags = 0;
-	static DEFINE_RATELIMIT_STATE(unpoison_rs, DEFAULT_RATELIMIT_INTERVAL,
+पूर्णांक unpoison_memory(अचिन्हित दीर्घ pfn)
+अणु
+	काष्ठा page *page;
+	काष्ठा page *p;
+	पूर्णांक मुक्तit = 0;
+	अचिन्हित दीर्घ flags = 0;
+	अटल DEFINE_RATELIMIT_STATE(unpoison_rs, DEFAULT_RATELIMIT_INTERVAL,
 					DEFAULT_RATELIMIT_BURST);
 
-	if (!pfn_valid(pfn))
-		return -ENXIO;
+	अगर (!pfn_valid(pfn))
+		वापस -ENXIO;
 
 	p = pfn_to_page(pfn);
 	page = compound_head(p);
 
-	if (!PageHWPoison(p)) {
+	अगर (!PageHWPoison(p)) अणु
 		unpoison_pr_info("Unpoison: Page was already unpoisoned %#lx\n",
 				 pfn, &unpoison_rs);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	if (page_count(page) > 1) {
+	अगर (page_count(page) > 1) अणु
 		unpoison_pr_info("Unpoison: Someone grabs the hwpoison page %#lx\n",
 				 pfn, &unpoison_rs);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	if (page_mapped(page)) {
+	अगर (page_mapped(page)) अणु
 		unpoison_pr_info("Unpoison: Someone maps the hwpoison page %#lx\n",
 				 pfn, &unpoison_rs);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	if (page_mapping(page)) {
+	अगर (page_mapping(page)) अणु
 		unpoison_pr_info("Unpoison: the hwpoison page has non-NULL mapping %#lx\n",
 				 pfn, &unpoison_rs);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	/*
 	 * unpoison_memory() can encounter thp only when the thp is being
 	 * worked by memory_failure() and the page lock is not held yet.
-	 * In such case, we yield to memory_failure() and make unpoison fail.
+	 * In such हाल, we yield to memory_failure() and make unpoison fail.
 	 */
-	if (!PageHuge(page) && PageTransHuge(page)) {
+	अगर (!PageHuge(page) && PageTransHuge(page)) अणु
 		unpoison_pr_info("Unpoison: Memory failure is now running on %#lx\n",
 				 pfn, &unpoison_rs);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	if (!get_hwpoison_page(p, flags, 0)) {
-		if (TestClearPageHWPoison(p))
+	अगर (!get_hwpoison_page(p, flags, 0)) अणु
+		अगर (TestClearPageHWPoison(p))
 			num_poisoned_pages_dec();
 		unpoison_pr_info("Unpoison: Software-unpoisoned free page %#lx\n",
 				 pfn, &unpoison_rs);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	lock_page(page);
 	/*
 	 * This test is racy because PG_hwpoison is set outside of page lock.
 	 * That's acceptable because that won't trigger kernel panic. Instead,
 	 * the PG_hwpoison page will be caught and isolated on the entrance to
-	 * the free buddy page pool.
+	 * the मुक्त buddy page pool.
 	 */
-	if (TestClearPageHWPoison(page)) {
+	अगर (TestClearPageHWPoison(page)) अणु
 		unpoison_pr_info("Unpoison: Software-unpoisoned page %#lx\n",
 				 pfn, &unpoison_rs);
 		num_poisoned_pages_dec();
-		freeit = 1;
-	}
+		मुक्तit = 1;
+	पूर्ण
 	unlock_page(page);
 
 	put_page(page);
-	if (freeit && !(pfn == my_zero_pfn(0) && page_count(p) == 1))
+	अगर (मुक्तit && !(pfn == my_zero_pfn(0) && page_count(p) == 1))
 		put_page(page);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(unpoison_memory);
 
-static bool isolate_page(struct page *page, struct list_head *pagelist)
-{
+अटल bool isolate_page(काष्ठा page *page, काष्ठा list_head *pagelist)
+अणु
 	bool isolated = false;
 	bool lru = PageLRU(page);
 
-	if (PageHuge(page)) {
+	अगर (PageHuge(page)) अणु
 		isolated = isolate_huge_page(page, pagelist);
-	} else {
-		if (lru)
+	पूर्ण अन्यथा अणु
+		अगर (lru)
 			isolated = !isolate_lru_page(page);
-		else
+		अन्यथा
 			isolated = !isolate_movable_page(page, ISOLATE_UNEVICTABLE);
 
-		if (isolated)
+		अगर (isolated)
 			list_add(&page->lru, pagelist);
-	}
+	पूर्ण
 
-	if (isolated && lru)
+	अगर (isolated && lru)
 		inc_node_page_state(page, NR_ISOLATED_ANON +
 				    page_is_file_lru(page));
 
@@ -1821,50 +1822,50 @@ static bool isolate_page(struct page *page, struct list_head *pagelist)
 	 * If we succeed to isolate the page, we grabbed another refcount on
 	 * the page, so we can safely drop the one we got from get_any_pages().
 	 * If we failed to isolate the page, it means that we cannot go further
-	 * and we will return an error, so drop the reference we got from
+	 * and we will वापस an error, so drop the reference we got from
 	 * get_any_pages() as well.
 	 */
 	put_page(page);
-	return isolated;
-}
+	वापस isolated;
+पूर्ण
 
 /*
  * __soft_offline_page handles hugetlb-pages and non-hugetlb pages.
  * If the page is a non-dirty unmapped page-cache page, it simply invalidates.
  * If the page is mapped, it migrates the contents over.
  */
-static int __soft_offline_page(struct page *page)
-{
-	int ret = 0;
-	unsigned long pfn = page_to_pfn(page);
-	struct page *hpage = compound_head(page);
-	char const *msg_page[] = {"page", "hugepage"};
+अटल पूर्णांक __soft_offline_page(काष्ठा page *page)
+अणु
+	पूर्णांक ret = 0;
+	अचिन्हित दीर्घ pfn = page_to_pfn(page);
+	काष्ठा page *hpage = compound_head(page);
+	अक्षर स्थिर *msg_page[] = अणु"page", "hugepage"पूर्ण;
 	bool huge = PageHuge(page);
 	LIST_HEAD(pagelist);
-	struct migration_target_control mtc = {
+	काष्ठा migration_target_control mtc = अणु
 		.nid = NUMA_NO_NODE,
 		.gfp_mask = GFP_USER | __GFP_MOVABLE | __GFP_RETRY_MAYFAIL,
-	};
+	पूर्ण;
 
 	/*
 	 * Check PageHWPoison again inside page lock because PageHWPoison
 	 * is set by memory_failure() outside page lock. Note that
-	 * memory_failure() also double-checks PageHWPoison inside page lock,
+	 * memory_failure() also द्विगुन-checks PageHWPoison inside page lock,
 	 * so there's no race between soft_offline_page() and memory_failure().
 	 */
 	lock_page(page);
-	if (!PageHuge(page))
-		wait_on_page_writeback(page);
-	if (PageHWPoison(page)) {
+	अगर (!PageHuge(page))
+		रुको_on_page_ग_लिखोback(page);
+	अगर (PageHWPoison(page)) अणु
 		unlock_page(page);
 		put_page(page);
 		pr_info("soft offline: %#lx page already poisoned\n", pfn);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	if (!PageHuge(page))
+	अगर (!PageHuge(page))
 		/*
-		 * Try to invalidate first. This should work for
+		 * Try to invalidate first. This should work क्रम
 		 * non dirty unmapped page cache pages.
 		 */
 		ret = invalidate_inode_page(page);
@@ -1874,127 +1875,127 @@ static int __soft_offline_page(struct page *page)
 	 * RED-PEN would be better to keep it isolated here, but we
 	 * would need to fix isolation locking first.
 	 */
-	if (ret) {
+	अगर (ret) अणु
 		pr_info("soft_offline: %#lx: invalidated\n", pfn);
 		page_handle_poison(page, false, true);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	if (isolate_page(hpage, &pagelist)) {
-		ret = migrate_pages(&pagelist, alloc_migration_target, NULL,
-			(unsigned long)&mtc, MIGRATE_SYNC, MR_MEMORY_FAILURE);
-		if (!ret) {
+	अगर (isolate_page(hpage, &pagelist)) अणु
+		ret = migrate_pages(&pagelist, alloc_migration_target, शून्य,
+			(अचिन्हित दीर्घ)&mtc, MIGRATE_SYNC, MR_MEMORY_FAILURE);
+		अगर (!ret) अणु
 			bool release = !huge;
 
-			if (!page_handle_poison(page, huge, release))
+			अगर (!page_handle_poison(page, huge, release))
 				ret = -EBUSY;
-		} else {
-			if (!list_empty(&pagelist))
+		पूर्ण अन्यथा अणु
+			अगर (!list_empty(&pagelist))
 				putback_movable_pages(&pagelist);
 
 			pr_info("soft offline: %#lx: %s migration failed %d, type %lx (%pGp)\n",
 				pfn, msg_page[huge], ret, page->flags, &page->flags);
-			if (ret > 0)
+			अगर (ret > 0)
 				ret = -EBUSY;
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		pr_info("soft offline: %#lx: %s isolation failed, page count %d, type %lx (%pGp)\n",
 			pfn, msg_page[huge], page_count(page), page->flags, &page->flags);
 		ret = -EBUSY;
-	}
-	return ret;
-}
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static int soft_offline_in_use_page(struct page *page)
-{
-	struct page *hpage = compound_head(page);
+अटल पूर्णांक soft_offline_in_use_page(काष्ठा page *page)
+अणु
+	काष्ठा page *hpage = compound_head(page);
 
-	if (!PageHuge(page) && PageTransHuge(hpage))
-		if (try_to_split_thp_page(page, "soft offline") < 0)
-			return -EBUSY;
-	return __soft_offline_page(page);
-}
+	अगर (!PageHuge(page) && PageTransHuge(hpage))
+		अगर (try_to_split_thp_page(page, "soft offline") < 0)
+			वापस -EBUSY;
+	वापस __soft_offline_page(page);
+पूर्ण
 
-static int soft_offline_free_page(struct page *page)
-{
-	int rc = 0;
+अटल पूर्णांक soft_offline_मुक्त_page(काष्ठा page *page)
+अणु
+	पूर्णांक rc = 0;
 
-	if (!page_handle_poison(page, true, false))
+	अगर (!page_handle_poison(page, true, false))
 		rc = -EBUSY;
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static void put_ref_page(struct page *page)
-{
-	if (page)
+अटल व्योम put_ref_page(काष्ठा page *page)
+अणु
+	अगर (page)
 		put_page(page);
-}
+पूर्ण
 
 /**
  * soft_offline_page - Soft offline a page.
  * @pfn: pfn to soft-offline
  * @flags: flags. Same as memory_failure().
  *
- * Returns 0 on success, otherwise negated errno.
+ * Returns 0 on success, otherwise negated त्रुटि_सं.
  *
  * Soft offline a page, by migration or invalidation,
- * without killing anything. This is for the case when
+ * without समाप्तing anything. This is क्रम the हाल when
  * a page is not corrupted yet (so it's still valid to access),
  * but has had a number of corrected errors and is better taken
  * out.
  *
- * The actual policy on when to do that is maintained by
+ * The actual policy on when to करो that is मुख्यtained by
  * user space.
  *
  * This should never impact any application or cause data loss,
- * however it might take some time.
+ * however it might take some समय.
  *
- * This is not a 100% solution for all memory, but tries to be
- * ``good enough'' for the majority of memory.
+ * This is not a 100% solution क्रम all memory, but tries to be
+ * ``good enough'' क्रम the majority of memory.
  */
-int soft_offline_page(unsigned long pfn, int flags)
-{
-	int ret;
+पूर्णांक soft_offline_page(अचिन्हित दीर्घ pfn, पूर्णांक flags)
+अणु
+	पूर्णांक ret;
 	bool try_again = true;
-	struct page *page, *ref_page = NULL;
+	काष्ठा page *page, *ref_page = शून्य;
 
 	WARN_ON_ONCE(!pfn_valid(pfn) && (flags & MF_COUNT_INCREASED));
 
-	if (!pfn_valid(pfn))
-		return -ENXIO;
-	if (flags & MF_COUNT_INCREASED)
+	अगर (!pfn_valid(pfn))
+		वापस -ENXIO;
+	अगर (flags & MF_COUNT_INCREASED)
 		ref_page = pfn_to_page(pfn);
 
 	/* Only online pages can be soft-offlined (esp., not ZONE_DEVICE). */
 	page = pfn_to_online_page(pfn);
-	if (!page) {
+	अगर (!page) अणु
 		put_ref_page(ref_page);
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
-	if (PageHWPoison(page)) {
+	अगर (PageHWPoison(page)) अणु
 		pr_info("%s: %#lx page already poisoned\n", __func__, pfn);
 		put_ref_page(ref_page);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 retry:
 	get_online_mems();
 	ret = get_hwpoison_page(page, flags, MF_SOFT_OFFLINE);
 	put_online_mems();
 
-	if (ret > 0) {
+	अगर (ret > 0) अणु
 		ret = soft_offline_in_use_page(page);
-	} else if (ret == 0) {
-		if (soft_offline_free_page(page) && try_again) {
+	पूर्ण अन्यथा अगर (ret == 0) अणु
+		अगर (soft_offline_मुक्त_page(page) && try_again) अणु
 			try_again = false;
-			goto retry;
-		}
-	} else if (ret == -EIO) {
+			जाओ retry;
+		पूर्ण
+	पूर्ण अन्यथा अगर (ret == -EIO) अणु
 		pr_info("%s: %#lx: unknown page type: %lx (%pGp)\n",
 			 __func__, pfn, page->flags, &page->flags);
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण

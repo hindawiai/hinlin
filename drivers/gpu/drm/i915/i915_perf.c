@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
- * Copyright © 2015-2016 Intel Corporation
+ * Copyright तऊ 2015-2016 Intel Corporation
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice (including the next
  * paragraph) shall be included in all copies or substantial portions of the
@@ -28,21 +29,21 @@
 /**
  * DOC: i915 Perf Overview
  *
- * Gen graphics supports a large number of performance counters that can help
+ * Gen graphics supports a large number of perक्रमmance counters that can help
  * driver and application developers understand and optimize their use of the
  * GPU.
  *
- * This i915 perf interface enables userspace to configure and open a file
- * descriptor representing a stream of GPU metrics which can then be read() as
+ * This i915 perf पूर्णांकerface enables userspace to configure and खोलो a file
+ * descriptor representing a stream of GPU metrics which can then be पढ़ो() as
  * a stream of sample records.
  *
- * The interface is particularly suited to exposing buffered metrics that are
+ * The पूर्णांकerface is particularly suited to exposing buffered metrics that are
  * captured by DMA from the GPU, unsynchronized with and unrelated to the CPU.
  *
  * Streams representing a single context are accessible to applications with a
- * corresponding drm file descriptor, such that OpenGL can use the interface
- * without special privileges. Access to system-wide metrics requires root
- * privileges by default, unless changed via the dev.i915.perf_event_paranoid
+ * corresponding drm file descriptor, such that OpenGL can use the पूर्णांकerface
+ * without special privileges. Access to प्रणाली-wide metrics requires root
+ * privileges by शेष, unless changed via the dev.i915.perf_event_paranoid
  * sysctl option.
  *
  */
@@ -50,93 +51,93 @@
 /**
  * DOC: i915 Perf History and Comparison with Core Perf
  *
- * The interface was initially inspired by the core Perf infrastructure but
- * some notable differences are:
+ * The पूर्णांकerface was initially inspired by the core Perf infraकाष्ठाure but
+ * some notable dअगरferences are:
  *
  * i915 perf file descriptors represent a "stream" instead of an "event"; where
- * a perf event primarily corresponds to a single 64bit value, while a stream
+ * a perf event primarily corresponds to a single 64bit value, जबतक a stream
  * might sample sets of tightly-coupled counters, depending on the
- * configuration.  For example the Gen OA unit isn't designed to support
- * orthogonal configurations of individual counters; it's configured for a set
- * of related counters. Samples for an i915 perf stream capturing OA metrics
- * will include a set of counter values packed in a compact HW specific format.
- * The OA unit supports a number of different packing formats which can be
- * selected by the user opening the stream. Perf has support for grouping
+ * configuration.  For example the Gen OA unit isn't deचिन्हित to support
+ * orthogonal configurations of inभागidual counters; it's configured क्रम a set
+ * of related counters. Samples क्रम an i915 perf stream capturing OA metrics
+ * will include a set of counter values packed in a compact HW specअगरic क्रमmat.
+ * The OA unit supports a number of dअगरferent packing क्रमmats which can be
+ * selected by the user खोलोing the stream. Perf has support क्रम grouping
  * events, but each event in the group is configured, validated and
- * authenticated individually with separate system calls.
+ * authenticated inभागidually with separate प्रणाली calls.
  *
  * i915 perf stream configurations are provided as an array of u64 (key,value)
- * pairs, instead of a fixed struct with multiple miscellaneous config members,
- * interleaved with event-type specific members.
+ * pairs, instead of a fixed काष्ठा with multiple miscellaneous config members,
+ * पूर्णांकerleaved with event-type specअगरic members.
  *
- * i915 perf doesn't support exposing metrics via an mmap'd circular buffer.
+ * i915 perf करोesn't support exposing metrics via an mmap'd circular buffer.
  * The supported metrics are being written to memory by the GPU unsynchronized
- * with the CPU, using HW specific packing formats for counter sets. Sometimes
- * the constraints on HW configuration require reports to be filtered before it
+ * with the CPU, using HW specअगरic packing क्रमmats क्रम counter sets. Someबार
+ * the स्थिरraपूर्णांकs on HW configuration require reports to be filtered beक्रमe it
  * would be acceptable to expose them to unprivileged applications - to hide
- * the metrics of other processes/contexts. For these use cases a read() based
- * interface is a good fit, and provides an opportunity to filter data as it
- * gets copied from the GPU mapped buffers to userspace buffers.
+ * the metrics of other processes/contexts. For these use हालs a पढ़ो() based
+ * पूर्णांकerface is a good fit, and provides an opportunity to filter data as it
+ * माला_लो copied from the GPU mapped buffers to userspace buffers.
  *
  *
  * Issues hit with first prototype based on Core Perf
  * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  *
  * The first prototype of this driver was based on the core perf
- * infrastructure, and while we did make that mostly work, with some changes to
- * perf, we found we were breaking or working around too many assumptions baked
- * into perf's currently cpu centric design.
+ * infraकाष्ठाure, and जबतक we did make that mostly work, with some changes to
+ * perf, we found we were अवरोधing or working around too many assumptions baked
+ * पूर्णांकo perf's currently cpu centric design.
  *
  * In the end we didn't see a clear benefit to making perf's implementation and
- * interface more complex by changing design assumptions while we knew we still
+ * पूर्णांकerface more complex by changing design assumptions जबतक we knew we still
  * wouldn't be able to use any existing perf based userspace tools.
  *
- * Also considering the Gen specific nature of the Observability hardware and
- * how userspace will sometimes need to combine i915 perf OA metrics with
+ * Also considering the Gen specअगरic nature of the Observability hardware and
+ * how userspace will someबार need to combine i915 perf OA metrics with
  * side-band OA data captured via MI_REPORT_PERF_COUNT commands; we're
- * expecting the interface to be used by a platform specific userspace such as
+ * expecting the पूर्णांकerface to be used by a platक्रमm specअगरic userspace such as
  * OpenGL or tools. This is to say; we aren't inherently missing out on having
- * a standard vendor/architecture agnostic interface by not using perf.
+ * a standard venकरोr/architecture agnostic पूर्णांकerface by not using perf.
  *
  *
- * For posterity, in case we might re-visit trying to adapt core perf to be
- * better suited to exposing i915 metrics these were the main pain points we
+ * For posterity, in हाल we might re-visit trying to adapt core perf to be
+ * better suited to exposing i915 metrics these were the मुख्य pain poपूर्णांकs we
  * hit:
  *
- * - The perf based OA PMU driver broke some significant design assumptions:
+ * - The perf based OA PMU driver broke some signअगरicant design assumptions:
  *
- *   Existing perf pmus are used for profiling work on a cpu and we were
- *   introducing the idea of _IS_DEVICE pmus with different security
+ *   Existing perf pmus are used क्रम profiling work on a cpu and we were
+ *   पूर्णांकroducing the idea of _IS_DEVICE pmus with dअगरferent security
  *   implications, the need to fake cpu-related data (such as user/kernel
- *   registers) to fit with perf's current design, and adding _DEVICE records
- *   as a way to forward device-specific status records.
+ *   रेजिस्टरs) to fit with perf's current design, and adding _DEVICE records
+ *   as a way to क्रमward device-specअगरic status records.
  *
- *   The OA unit writes reports of counters into a circular buffer, without
+ *   The OA unit ग_लिखोs reports of counters पूर्णांकo a circular buffer, without
  *   involvement from the CPU, making our PMU driver the first of a kind.
  *
- *   Given the way we were periodically forward data from the GPU-mapped, OA
- *   buffer to perf's buffer, those bursts of sample writes looked to perf like
+ *   Given the way we were periodically क्रमward data from the GPU-mapped, OA
+ *   buffer to perf's buffer, those bursts of sample ग_लिखोs looked to perf like
  *   we were sampling too fast and so we had to subvert its throttling checks.
  *
- *   Perf supports groups of counters and allows those to be read via
- *   transactions internally but transactions currently seem designed to be
- *   explicitly initiated from the cpu (say in response to a userspace read())
- *   and while we could pull a report out of the OA buffer we can't
+ *   Perf supports groups of counters and allows those to be पढ़ो via
+ *   transactions पूर्णांकernally but transactions currently seem deचिन्हित to be
+ *   explicitly initiated from the cpu (say in response to a userspace पढ़ो())
+ *   and जबतक we could pull a report out of the OA buffer we can't
  *   trigger a report from the cpu on demand.
  *
  *   Related to being report based; the OA counters are configured in HW as a
- *   set while perf generally expects counter configurations to be orthogonal.
+ *   set जबतक perf generally expects counter configurations to be orthogonal.
  *   Although counters can be associated with a group leader as they are
- *   opened, there's no clear precedent for being able to provide group-wide
- *   configuration attributes (for example we want to let userspace choose the
- *   OA unit report format used to capture all counters in a set, or specify a
- *   GPU context to filter metrics on). We avoided using perf's grouping
- *   feature and forwarded OA reports to userspace via perf's 'raw' sample
+ *   खोलोed, there's no clear precedent क्रम being able to provide group-wide
+ *   configuration attributes (क्रम example we want to let userspace choose the
+ *   OA unit report क्रमmat used to capture all counters in a set, or specअगरy a
+ *   GPU context to filter metrics on). We aव्योमed using perf's grouping
+ *   feature and क्रमwarded OA reports to userspace via perf's 'raw' sample
  *   field. This suited our userspace well considering how coupled the counters
  *   are when dealing with normalizing. It would be inconvenient to split
- *   counters up into separate events, only to require userspace to recombine
- *   them. For Mesa it's also convenient to be forwarded raw, periodic reports
- *   for combining with the side-band raw reports it captures using
+ *   counters up पूर्णांकo separate events, only to require userspace to recombine
+ *   them. For Mesa it's also convenient to be क्रमwarded raw, periodic reports
+ *   क्रम combining with the side-band raw reports it captures using
  *   MI_REPORT_PERF_COUNT commands.
  *
  *   - As a side note on perf's grouping feature; there was also some concern
@@ -145,203 +146,203 @@
  *     lower the effective sampling resolutions we could use when the available
  *     memory bandwidth is limited.
  *
- *     With the OA unit's report formats, counters are packed together as 32
+ *     With the OA unit's report क्रमmats, counters are packed together as 32
  *     or 40bit values, with the largest report size being 256 bytes.
  *
- *     PERF_FORMAT_GROUP values are 64bit, but there doesn't appear to be a
- *     documented ordering to the values, implying PERF_FORMAT_ID must also be
- *     used to add a 64bit ID before each value; giving 16 bytes per counter.
+ *     PERF_FORMAT_GROUP values are 64bit, but there करोesn't appear to be a
+ *     करोcumented ordering to the values, implying PERF_FORMAT_ID must also be
+ *     used to add a 64bit ID beक्रमe each value; giving 16 bytes per counter.
  *
- *   Related to counter orthogonality; we can't time share the OA unit, while
- *   event scheduling is a central design idea within perf for allowing
- *   userspace to open + enable more events than can be configured in HW at any
- *   one time.  The OA unit is not designed to allow re-configuration while in
- *   use. We can't reconfigure the OA unit without losing internal OA unit
+ *   Related to counter orthogonality; we can't समय share the OA unit, जबतक
+ *   event scheduling is a central design idea within perf क्रम allowing
+ *   userspace to खोलो + enable more events than can be configured in HW at any
+ *   one समय.  The OA unit is not deचिन्हित to allow re-configuration जबतक in
+ *   use. We can't reconfigure the OA unit without losing पूर्णांकernal OA unit
  *   state which we can't access explicitly to save and restore. Reconfiguring
- *   the OA unit is also relatively slow, involving ~100 register writes. From
+ *   the OA unit is also relatively slow, involving ~100 रेजिस्टर ग_लिखोs. From
  *   userspace Mesa also depends on a stable OA configuration when emitting
  *   MI_REPORT_PERF_COUNT commands and importantly the OA unit can't be
- *   disabled while there are outstanding MI_RPC commands lest we hang the
+ *   disabled जबतक there are outstanding MI_RPC commands lest we hang the
  *   command streamer.
  *
  *   The contents of sample records aren't extensible by device drivers (i.e.
  *   the sample_type bits). As an example; Sourab Gupta had been looking to
- *   attach GPU timestamps to our OA samples. We were shoehorning OA reports
- *   into sample records by using the 'raw' field, but it's tricky to pack more
- *   than one thing into this field because events/core.c currently only lets a
- *   pmu give a single raw data pointer plus len which will be copied into the
+ *   attach GPU बारtamps to our OA samples. We were shoehorning OA reports
+ *   पूर्णांकo sample records by using the 'raw' field, but it's tricky to pack more
+ *   than one thing पूर्णांकo this field because events/core.c currently only lets a
+ *   pmu give a single raw data poपूर्णांकer plus len which will be copied पूर्णांकo the
  *   ring buffer. To include more than the OA report we'd have to copy the
- *   report into an intermediate larger buffer. I'd been considering allowing a
- *   vector of data+len values to be specified for copying the raw data, but
- *   it felt like a kludge to being using the raw field for this purpose.
+ *   report पूर्णांकo an पूर्णांकermediate larger buffer. I'd been considering allowing a
+ *   vector of data+len values to be specअगरied क्रम copying the raw data, but
+ *   it felt like a kludge to being using the raw field क्रम this purpose.
  *
  * - It felt like our perf based PMU was making some technical compromises
- *   just for the sake of using perf:
+ *   just क्रम the sake of using perf:
  *
- *   perf_event_open() requires events to either relate to a pid or a specific
- *   cpu core, while our device pmu related to neither.  Events opened with a
- *   pid will be automatically enabled/disabled according to the scheduling of
- *   that process - so not appropriate for us. When an event is related to a
- *   cpu id, perf ensures pmu methods will be invoked via an inter process
- *   interrupt on that core. To avoid invasive changes our userspace opened OA
- *   perf events for a specific cpu. This was workable but it meant the
+ *   perf_event_खोलो() requires events to either relate to a pid or a specअगरic
+ *   cpu core, जबतक our device pmu related to neither.  Events खोलोed with a
+ *   pid will be स्वतःmatically enabled/disabled according to the scheduling of
+ *   that process - so not appropriate क्रम us. When an event is related to a
+ *   cpu id, perf ensures pmu methods will be invoked via an पूर्णांकer process
+ *   पूर्णांकerrupt on that core. To aव्योम invasive changes our userspace खोलोed OA
+ *   perf events क्रम a specअगरic cpu. This was workable but it meant the
  *   majority of the OA driver ran in atomic context, including all OA report
- *   forwarding, which wasn't really necessary in our case and seems to make
- *   our locking requirements somewhat complex as we handled the interaction
+ *   क्रमwarding, which wasn't really necessary in our हाल and seems to make
+ *   our locking requirements somewhat complex as we handled the पूर्णांकeraction
  *   with the rest of the i915 driver.
  */
 
-#include <linux/anon_inodes.h>
-#include <linux/sizes.h>
-#include <linux/uuid.h>
+#समावेश <linux/anon_inodes.h>
+#समावेश <linux/sizes.h>
+#समावेश <linux/uuid.h>
 
-#include "gem/i915_gem_context.h"
-#include "gt/intel_engine_pm.h"
-#include "gt/intel_engine_user.h"
-#include "gt/intel_execlists_submission.h"
-#include "gt/intel_gpu_commands.h"
-#include "gt/intel_gt.h"
-#include "gt/intel_gt_clock_utils.h"
-#include "gt/intel_lrc.h"
-#include "gt/intel_ring.h"
+#समावेश "gem/i915_gem_context.h"
+#समावेश "gt/intel_engine_pm.h"
+#समावेश "gt/intel_engine_user.h"
+#समावेश "gt/intel_execlists_submission.h"
+#समावेश "gt/intel_gpu_commands.h"
+#समावेश "gt/intel_gt.h"
+#समावेश "gt/intel_gt_clock_utils.h"
+#समावेश "gt/intel_lrc.h"
+#समावेश "gt/intel_ring.h"
 
-#include "i915_drv.h"
-#include "i915_perf.h"
+#समावेश "i915_drv.h"
+#समावेश "i915_perf.h"
 
-/* HW requires this to be a power of two, between 128k and 16M, though driver
- * is currently generally designed assuming the largest 16M size is used such
- * that the overflow cases are unlikely in normal operation.
+/* HW requires this to be a घातer of two, between 128k and 16M, though driver
+ * is currently generally deचिन्हित assuming the largest 16M size is used such
+ * that the overflow हालs are unlikely in normal operation.
  */
-#define OA_BUFFER_SIZE		SZ_16M
+#घोषणा OA_BUFFER_SIZE		SZ_16M
 
-#define OA_TAKEN(tail, head)	((tail - head) & (OA_BUFFER_SIZE - 1))
+#घोषणा OA_TAKEN(tail, head)	((tail - head) & (OA_BUFFER_SIZE - 1))
 
 /**
- * DOC: OA Tail Pointer Race
+ * DOC: OA Tail Poपूर्णांकer Race
  *
- * There's a HW race condition between OA unit tail pointer register updates and
- * writes to memory whereby the tail pointer can sometimes get ahead of what's
+ * There's a HW race condition between OA unit tail poपूर्णांकer रेजिस्टर updates and
+ * ग_लिखोs to memory whereby the tail poपूर्णांकer can someबार get ahead of what's
  * been written out to the OA buffer so far (in terms of what's visible to the
  * CPU).
  *
- * Although this can be observed explicitly while copying reports to userspace
- * by checking for a zeroed report-id field in tail reports, we want to account
- * for this earlier, as part of the oa_buffer_check_unlocked to avoid lots of
- * redundant read() attempts.
+ * Although this can be observed explicitly जबतक copying reports to userspace
+ * by checking क्रम a zeroed report-id field in tail reports, we want to account
+ * क्रम this earlier, as part of the oa_buffer_check_unlocked to aव्योम lots of
+ * redundant पढ़ो() attempts.
  *
- * We workaround this issue in oa_buffer_check_unlocked() by reading the reports
+ * We workaround this issue in oa_buffer_check_unlocked() by पढ़ोing the reports
  * in the OA buffer, starting from the tail reported by the HW until we find a
  * report with its first 2 dwords not 0 meaning its previous report is
- * completely in memory and ready to be read. Those dwords are also set to 0
- * once read and the whole buffer is cleared upon OA buffer initialization. The
- * first dword is the reason for this report while the second is the timestamp,
+ * completely in memory and पढ़ोy to be पढ़ो. Those dwords are also set to 0
+ * once पढ़ो and the whole buffer is cleared upon OA buffer initialization. The
+ * first dword is the reason क्रम this report जबतक the second is the बारtamp,
  * making the chances of having those 2 fields at 0 fairly unlikely. A more
  * detailed explanation is available in oa_buffer_check_unlocked().
  *
- * Most of the implementation details for this workaround are in
+ * Most of the implementation details क्रम this workaround are in
  * oa_buffer_check_unlocked() and _append_oa_reports()
  *
- * Note for posterity: previously the driver used to define an effective tail
- * pointer that lagged the real pointer by a 'tail margin' measured in bytes
+ * Note क्रम posterity: previously the driver used to define an effective tail
+ * poपूर्णांकer that lagged the real poपूर्णांकer by a 'tail margin' measured in bytes
  * derived from %OA_TAIL_MARGIN_NSEC and the configured sampling frequency.
- * This was flawed considering that the OA unit may also automatically generate
- * non-periodic reports (such as on context switch) or the OA unit may be
+ * This was flawed considering that the OA unit may also स्वतःmatically generate
+ * non-periodic reports (such as on context चयन) or the OA unit may be
  * enabled without any periodic sampling.
  */
-#define OA_TAIL_MARGIN_NSEC	100000ULL
-#define INVALID_TAIL_PTR	0xffffffff
+#घोषणा OA_TAIL_MARGIN_NSEC	100000ULL
+#घोषणा INVALID_TAIL_PTR	0xffffffff
 
-/* The default frequency for checking whether the OA unit has written new
+/* The शेष frequency क्रम checking whether the OA unit has written new
  * reports to the circular OA buffer...
  */
-#define DEFAULT_POLL_FREQUENCY_HZ 200
-#define DEFAULT_POLL_PERIOD_NS (NSEC_PER_SEC / DEFAULT_POLL_FREQUENCY_HZ)
+#घोषणा DEFAULT_POLL_FREQUENCY_HZ 200
+#घोषणा DEFAULT_POLL_PERIOD_NS (NSEC_PER_SEC / DEFAULT_POLL_FREQUENCY_HZ)
 
-/* for sysctl proc_dointvec_minmax of dev.i915.perf_stream_paranoid */
-static u32 i915_perf_stream_paranoid = true;
+/* क्रम sysctl proc_करोपूर्णांकvec_minmax of dev.i915.perf_stream_paranoid */
+अटल u32 i915_perf_stream_paranoid = true;
 
 /* The maximum exponent the hardware accepts is 63 (essentially it selects one
- * of the 64bit timestamp bits to trigger reports from) but there's currently
- * no known use case for sampling as infrequently as once per 47 thousand years.
+ * of the 64bit बारtamp bits to trigger reports from) but there's currently
+ * no known use हाल क्रम sampling as infrequently as once per 47 thousand years.
  *
- * Since the timestamps included in OA reports are only 32bits it seems
- * reasonable to limit the OA exponent where it's still possible to account for
- * overflow in OA report timestamps.
+ * Since the बारtamps included in OA reports are only 32bits it seems
+ * reasonable to limit the OA exponent where it's still possible to account क्रम
+ * overflow in OA report बारtamps.
  */
-#define OA_EXPONENT_MAX 31
+#घोषणा OA_EXPONENT_MAX 31
 
-#define INVALID_CTX_ID 0xffffffff
+#घोषणा INVALID_CTX_ID 0xffffffff
 
-/* On Gen8+ automatically triggered OA reports include a 'reason' field... */
-#define OAREPORT_REASON_MASK           0x3f
-#define OAREPORT_REASON_MASK_EXTENDED  0x7f
-#define OAREPORT_REASON_SHIFT          19
-#define OAREPORT_REASON_TIMER          (1<<0)
-#define OAREPORT_REASON_CTX_SWITCH     (1<<3)
-#define OAREPORT_REASON_CLK_RATIO      (1<<5)
+/* On Gen8+ स्वतःmatically triggered OA reports include a 'reason' field... */
+#घोषणा OAREPORT_REASON_MASK           0x3f
+#घोषणा OAREPORT_REASON_MASK_EXTENDED  0x7f
+#घोषणा OAREPORT_REASON_SHIFT          19
+#घोषणा OAREPORT_REASON_TIMER          (1<<0)
+#घोषणा OAREPORT_REASON_CTX_SWITCH     (1<<3)
+#घोषणा OAREPORT_REASON_CLK_RATIO      (1<<5)
 
 
-/* For sysctl proc_dointvec_minmax of i915_oa_max_sample_rate
+/* For sysctl proc_करोपूर्णांकvec_minmax of i915_oa_max_sample_rate
  *
  * The highest sampling frequency we can theoretically program the OA unit
- * with is always half the timestamp frequency: E.g. 6.25Mhz for Haswell.
+ * with is always half the बारtamp frequency: E.g. 6.25Mhz क्रम Haswell.
  *
- * Initialized just before we register the sysctl parameter.
+ * Initialized just beक्रमe we रेजिस्टर the sysctl parameter.
  */
-static int oa_sample_rate_hard_limit;
+अटल पूर्णांक oa_sample_rate_hard_limit;
 
-/* Theoretically we can program the OA unit to sample every 160ns but don't
- * allow that by default unless root...
+/* Theoretically we can program the OA unit to sample every 160ns but करोn't
+ * allow that by शेष unless root...
  *
- * The default threshold of 100000Hz is based on perf's similar
+ * The शेष threshold of 100000Hz is based on perf's similar
  * kernel.perf_event_max_sample_rate sysctl parameter.
  */
-static u32 i915_oa_max_sample_rate = 100000;
+अटल u32 i915_oa_max_sample_rate = 100000;
 
-/* XXX: beware if future OA HW adds new report formats that the current
- * code assumes all reports have a power-of-two size and ~(size - 1) can
- * be used as a mask to align the OA tail pointer.
+/* XXX: beware अगर future OA HW adds new report क्रमmats that the current
+ * code assumes all reports have a घातer-of-two size and ~(size - 1) can
+ * be used as a mask to align the OA tail poपूर्णांकer.
  */
-static const struct i915_oa_format oa_formats[I915_OA_FORMAT_MAX] = {
-	[I915_OA_FORMAT_A13]	    = { 0, 64 },
-	[I915_OA_FORMAT_A29]	    = { 1, 128 },
-	[I915_OA_FORMAT_A13_B8_C8]  = { 2, 128 },
-	/* A29_B8_C8 Disallowed as 192 bytes doesn't factor into buffer size */
-	[I915_OA_FORMAT_B4_C8]	    = { 4, 64 },
-	[I915_OA_FORMAT_A45_B8_C8]  = { 5, 256 },
-	[I915_OA_FORMAT_B4_C8_A16]  = { 6, 128 },
-	[I915_OA_FORMAT_C4_B8]	    = { 7, 64 },
-	[I915_OA_FORMAT_A12]		    = { 0, 64 },
-	[I915_OA_FORMAT_A12_B8_C8]	    = { 2, 128 },
-	[I915_OA_FORMAT_A32u40_A4u32_B8_C8] = { 5, 256 },
-};
+अटल स्थिर काष्ठा i915_oa_क्रमmat oa_क्रमmats[I915_OA_FORMAT_MAX] = अणु
+	[I915_OA_FORMAT_A13]	    = अणु 0, 64 पूर्ण,
+	[I915_OA_FORMAT_A29]	    = अणु 1, 128 पूर्ण,
+	[I915_OA_FORMAT_A13_B8_C8]  = अणु 2, 128 पूर्ण,
+	/* A29_B8_C8 Disallowed as 192 bytes करोesn't factor पूर्णांकo buffer size */
+	[I915_OA_FORMAT_B4_C8]	    = अणु 4, 64 पूर्ण,
+	[I915_OA_FORMAT_A45_B8_C8]  = अणु 5, 256 पूर्ण,
+	[I915_OA_FORMAT_B4_C8_A16]  = अणु 6, 128 पूर्ण,
+	[I915_OA_FORMAT_C4_B8]	    = अणु 7, 64 पूर्ण,
+	[I915_OA_FORMAT_A12]		    = अणु 0, 64 पूर्ण,
+	[I915_OA_FORMAT_A12_B8_C8]	    = अणु 2, 128 पूर्ण,
+	[I915_OA_FORMAT_A32u40_A4u32_B8_C8] = अणु 5, 256 पूर्ण,
+पूर्ण;
 
-#define SAMPLE_OA_REPORT      (1<<0)
+#घोषणा SAMPLE_OA_REPORT      (1<<0)
 
 /**
- * struct perf_open_properties - for validated properties given to open a stream
+ * काष्ठा perf_खोलो_properties - क्रम validated properties given to खोलो a stream
  * @sample_flags: `DRM_I915_PERF_PROP_SAMPLE_*` properties are tracked as flags
  * @single_context: Whether a single or all gpu contexts should be monitored
- * @hold_preemption: Whether the preemption is disabled for the filtered
+ * @hold_preemption: Whether the preemption is disabled क्रम the filtered
  *                   context
- * @ctx_handle: A gem ctx handle for use with @single_context
- * @metrics_set: An ID for an OA unit metric set advertised via sysfs
- * @oa_format: An OA unit HW report format
+ * @ctx_handle: A gem ctx handle क्रम use with @single_context
+ * @metrics_set: An ID क्रम an OA unit metric set advertised via sysfs
+ * @oa_क्रमmat: An OA unit HW report क्रमmat
  * @oa_periodic: Whether to enable periodic OA unit sampling
  * @oa_period_exponent: The OA unit sampling period is derived from this
  * @engine: The engine (typically rcs0) being monitored by the OA unit
- * @has_sseu: Whether @sseu was specified by userspace
- * @sseu: internal SSEU configuration computed either from the userspace
- *        specified configuration in the opening parameters or a default value
- *        (see get_default_sseu_config())
- * @poll_oa_period: The period in nanoseconds at which the CPU will check for OA
+ * @has_sseu: Whether @sseu was specअगरied by userspace
+ * @sseu: पूर्णांकernal SSEU configuration computed either from the userspace
+ *        specअगरied configuration in the खोलोing parameters or a शेष value
+ *        (see get_शेष_sseu_config())
+ * @poll_oa_period: The period in nanoseconds at which the CPU will check क्रम OA
  * data availability
  *
- * As read_properties_unlocked() enumerates and validates the properties given
- * to open a stream of metrics the configuration is built up in the structure
+ * As पढ़ो_properties_unlocked() क्रमागतerates and validates the properties given
+ * to खोलो a stream of metrics the configuration is built up in the काष्ठाure
  * which starts out zero initialized.
  */
-struct perf_open_properties {
+काष्ठा perf_खोलो_properties अणु
 	u32 sample_flags;
 
 	u64 single_context:1;
@@ -349,146 +350,146 @@ struct perf_open_properties {
 	u64 ctx_handle;
 
 	/* OA sampling state */
-	int metrics_set;
-	int oa_format;
+	पूर्णांक metrics_set;
+	पूर्णांक oa_क्रमmat;
 	bool oa_periodic;
-	int oa_period_exponent;
+	पूर्णांक oa_period_exponent;
 
-	struct intel_engine_cs *engine;
+	काष्ठा पूर्णांकel_engine_cs *engine;
 
 	bool has_sseu;
-	struct intel_sseu sseu;
+	काष्ठा पूर्णांकel_sseu sseu;
 
 	u64 poll_oa_period;
-};
+पूर्ण;
 
-struct i915_oa_config_bo {
-	struct llist_node node;
+काष्ठा i915_oa_config_bo अणु
+	काष्ठा llist_node node;
 
-	struct i915_oa_config *oa_config;
-	struct i915_vma *vma;
-};
+	काष्ठा i915_oa_config *oa_config;
+	काष्ठा i915_vma *vma;
+पूर्ण;
 
-static struct ctl_table_header *sysctl_header;
+अटल काष्ठा ctl_table_header *sysctl_header;
 
-static enum hrtimer_restart oa_poll_check_timer_cb(struct hrtimer *hrtimer);
+अटल क्रमागत hrसमयr_restart oa_poll_check_समयr_cb(काष्ठा hrसमयr *hrसमयr);
 
-void i915_oa_config_release(struct kref *ref)
-{
-	struct i915_oa_config *oa_config =
+व्योम i915_oa_config_release(काष्ठा kref *ref)
+अणु
+	काष्ठा i915_oa_config *oa_config =
 		container_of(ref, typeof(*oa_config), ref);
 
-	kfree(oa_config->flex_regs);
-	kfree(oa_config->b_counter_regs);
-	kfree(oa_config->mux_regs);
+	kमुक्त(oa_config->flex_regs);
+	kमुक्त(oa_config->b_counter_regs);
+	kमुक्त(oa_config->mux_regs);
 
-	kfree_rcu(oa_config, rcu);
-}
+	kमुक्त_rcu(oa_config, rcu);
+पूर्ण
 
-struct i915_oa_config *
-i915_perf_get_oa_config(struct i915_perf *perf, int metrics_set)
-{
-	struct i915_oa_config *oa_config;
+काष्ठा i915_oa_config *
+i915_perf_get_oa_config(काष्ठा i915_perf *perf, पूर्णांक metrics_set)
+अणु
+	काष्ठा i915_oa_config *oa_config;
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	oa_config = idr_find(&perf->metrics_idr, metrics_set);
-	if (oa_config)
+	अगर (oa_config)
 		oa_config = i915_oa_config_get(oa_config);
-	rcu_read_unlock();
+	rcu_पढ़ो_unlock();
 
-	return oa_config;
-}
+	वापस oa_config;
+पूर्ण
 
-static void free_oa_config_bo(struct i915_oa_config_bo *oa_bo)
-{
+अटल व्योम मुक्त_oa_config_bo(काष्ठा i915_oa_config_bo *oa_bo)
+अणु
 	i915_oa_config_put(oa_bo->oa_config);
 	i915_vma_put(oa_bo->vma);
-	kfree(oa_bo);
-}
+	kमुक्त(oa_bo);
+पूर्ण
 
-static u32 gen12_oa_hw_tail_read(struct i915_perf_stream *stream)
-{
-	struct intel_uncore *uncore = stream->uncore;
+अटल u32 gen12_oa_hw_tail_पढ़ो(काष्ठा i915_perf_stream *stream)
+अणु
+	काष्ठा पूर्णांकel_uncore *uncore = stream->uncore;
 
-	return intel_uncore_read(uncore, GEN12_OAG_OATAILPTR) &
+	वापस पूर्णांकel_uncore_पढ़ो(uncore, GEN12_OAG_OATAILPTR) &
 	       GEN12_OAG_OATAILPTR_MASK;
-}
+पूर्ण
 
-static u32 gen8_oa_hw_tail_read(struct i915_perf_stream *stream)
-{
-	struct intel_uncore *uncore = stream->uncore;
+अटल u32 gen8_oa_hw_tail_पढ़ो(काष्ठा i915_perf_stream *stream)
+अणु
+	काष्ठा पूर्णांकel_uncore *uncore = stream->uncore;
 
-	return intel_uncore_read(uncore, GEN8_OATAILPTR) & GEN8_OATAILPTR_MASK;
-}
+	वापस पूर्णांकel_uncore_पढ़ो(uncore, GEN8_OATAILPTR) & GEN8_OATAILPTR_MASK;
+पूर्ण
 
-static u32 gen7_oa_hw_tail_read(struct i915_perf_stream *stream)
-{
-	struct intel_uncore *uncore = stream->uncore;
-	u32 oastatus1 = intel_uncore_read(uncore, GEN7_OASTATUS1);
+अटल u32 gen7_oa_hw_tail_पढ़ो(काष्ठा i915_perf_stream *stream)
+अणु
+	काष्ठा पूर्णांकel_uncore *uncore = stream->uncore;
+	u32 oastatus1 = पूर्णांकel_uncore_पढ़ो(uncore, GEN7_OASTATUS1);
 
-	return oastatus1 & GEN7_OASTATUS1_TAIL_MASK;
-}
+	वापस oastatus1 & GEN7_OASTATUS1_TAIL_MASK;
+पूर्ण
 
 /**
- * oa_buffer_check_unlocked - check for data and update tail ptr state
+ * oa_buffer_check_unlocked - check क्रम data and update tail ptr state
  * @stream: i915 stream instance
  *
- * This is either called via fops (for blocking reads in user ctx) or the poll
- * check hrtimer (atomic ctx) to check the OA buffer tail pointer and check
- * if there is data available for userspace to read.
+ * This is either called via fops (क्रम blocking पढ़ोs in user ctx) or the poll
+ * check hrसमयr (atomic ctx) to check the OA buffer tail poपूर्णांकer and check
+ * अगर there is data available क्रम userspace to पढ़ो.
  *
- * This function is central to providing a workaround for the OA unit tail
- * pointer having a race with respect to what data is visible to the CPU.
- * It is responsible for reading tail pointers from the hardware and giving
- * the pointers time to 'age' before they are made available for reading.
- * (See description of OA_TAIL_MARGIN_NSEC above for further details.)
+ * This function is central to providing a workaround क्रम the OA unit tail
+ * poपूर्णांकer having a race with respect to what data is visible to the CPU.
+ * It is responsible क्रम पढ़ोing tail poपूर्णांकers from the hardware and giving
+ * the poपूर्णांकers समय to 'age' beक्रमe they are made available क्रम पढ़ोing.
+ * (See description of OA_TAIL_MARGIN_NSEC above क्रम further details.)
  *
- * Besides returning true when there is data available to read() this function
- * also updates the tail, aging_tail and aging_timestamp in the oa_buffer
+ * Besides वापसing true when there is data available to पढ़ो() this function
+ * also updates the tail, aging_tail and aging_बारtamp in the oa_buffer
  * object.
  *
- * Note: It's safe to read OA config state here unlocked, assuming that this is
- * only called while the stream is enabled, while the global OA configuration
- * can't be modified.
+ * Note: It's safe to पढ़ो OA config state here unlocked, assuming that this is
+ * only called जबतक the stream is enabled, जबतक the global OA configuration
+ * can't be modअगरied.
  *
- * Returns: %true if the OA buffer contains data, else %false
+ * Returns: %true अगर the OA buffer contains data, अन्यथा %false
  */
-static bool oa_buffer_check_unlocked(struct i915_perf_stream *stream)
-{
+अटल bool oa_buffer_check_unlocked(काष्ठा i915_perf_stream *stream)
+अणु
 	u32 gtt_offset = i915_ggtt_offset(stream->oa_buffer.vma);
-	int report_size = stream->oa_buffer.format_size;
-	unsigned long flags;
+	पूर्णांक report_size = stream->oa_buffer.क्रमmat_size;
+	अचिन्हित दीर्घ flags;
 	bool pollin;
 	u32 hw_tail;
 	u64 now;
 
-	/* We have to consider the (unlikely) possibility that read() errors
+	/* We have to consider the (unlikely) possibility that पढ़ो() errors
 	 * could result in an OA buffer reset which might reset the head and
 	 * tail state.
 	 */
 	spin_lock_irqsave(&stream->oa_buffer.ptr_lock, flags);
 
-	hw_tail = stream->perf->ops.oa_hw_tail_read(stream);
+	hw_tail = stream->perf->ops.oa_hw_tail_पढ़ो(stream);
 
-	/* The tail pointer increases in 64 byte increments,
+	/* The tail poपूर्णांकer increases in 64 byte increments,
 	 * not in report_size steps...
 	 */
 	hw_tail &= ~(report_size - 1);
 
-	now = ktime_get_mono_fast_ns();
+	now = kसमय_get_mono_fast_ns();
 
-	if (hw_tail == stream->oa_buffer.aging_tail &&
-	    (now - stream->oa_buffer.aging_timestamp) > OA_TAIL_MARGIN_NSEC) {
+	अगर (hw_tail == stream->oa_buffer.aging_tail &&
+	    (now - stream->oa_buffer.aging_बारtamp) > OA_TAIL_MARGIN_NSEC) अणु
 		/* If the HW tail hasn't move since the last check and the HW
-		 * tail has been aging for long enough, declare it the new
+		 * tail has been aging क्रम दीर्घ enough, declare it the new
 		 * tail.
 		 */
 		stream->oa_buffer.tail = stream->oa_buffer.aging_tail;
-	} else {
+	पूर्ण अन्यथा अणु
 		u32 head, tail, aged_tail;
 
 		/* NB: The head we observe here might effectively be a little
-		 * out of date. If a read() is in progress, the head could be
+		 * out of date. If a पढ़ो() is in progress, the head could be
 		 * anywhere between this head and stream->oa_buffer.tail.
 		 */
 		head = stream->oa_buffer.head - gtt_offset;
@@ -498,136 +499,136 @@ static bool oa_buffer_check_unlocked(struct i915_perf_stream *stream)
 		tail = hw_tail;
 
 		/* Walk the stream backward until we find a report with dword 0
-		 * & 1 not at 0. Since the circular buffer pointers progress by
+		 * & 1 not at 0. Since the circular buffer poपूर्णांकers progress by
 		 * increments of 64 bytes and that reports can be up to 256
-		 * bytes long, we can't tell whether a report has fully landed
-		 * in memory before the first 2 dwords of the following report
+		 * bytes दीर्घ, we can't tell whether a report has fully landed
+		 * in memory beक्रमe the first 2 dwords of the following report
 		 * have effectively landed.
 		 *
-		 * This is assuming that the writes of the OA unit land in
+		 * This is assuming that the ग_लिखोs of the OA unit land in
 		 * memory in the order they were written to.
-		 * If not : (╯°□°）╯︵ ┻━┻
+		 * If not : (ै/तओैँतओoञ	ै/oचग ैझैैझ
 		 */
-		while (OA_TAKEN(tail, aged_tail) >= report_size) {
-			u32 *report32 = (void *)(stream->oa_buffer.vaddr + tail);
+		जबतक (OA_TAKEN(tail, aged_tail) >= report_size) अणु
+			u32 *report32 = (व्योम *)(stream->oa_buffer.vaddr + tail);
 
-			if (report32[0] != 0 || report32[1] != 0)
-				break;
+			अगर (report32[0] != 0 || report32[1] != 0)
+				अवरोध;
 
 			tail = (tail - report_size) & (OA_BUFFER_SIZE - 1);
-		}
+		पूर्ण
 
-		if (OA_TAKEN(hw_tail, tail) > report_size &&
-		    __ratelimit(&stream->perf->tail_pointer_race))
+		अगर (OA_TAKEN(hw_tail, tail) > report_size &&
+		    __ratelimit(&stream->perf->tail_poपूर्णांकer_race))
 			DRM_NOTE("unlanded report(s) head=0x%x "
 				 "tail=0x%x hw_tail=0x%x\n",
 				 head, tail, hw_tail);
 
 		stream->oa_buffer.tail = gtt_offset + tail;
 		stream->oa_buffer.aging_tail = gtt_offset + hw_tail;
-		stream->oa_buffer.aging_timestamp = now;
-	}
+		stream->oa_buffer.aging_बारtamp = now;
+	पूर्ण
 
 	pollin = OA_TAKEN(stream->oa_buffer.tail - gtt_offset,
 			  stream->oa_buffer.head - gtt_offset) >= report_size;
 
 	spin_unlock_irqrestore(&stream->oa_buffer.ptr_lock, flags);
 
-	return pollin;
-}
+	वापस pollin;
+पूर्ण
 
 /**
- * append_oa_status - Appends a status record to a userspace read() buffer.
- * @stream: An i915-perf stream opened for OA metrics
+ * append_oa_status - Appends a status record to a userspace पढ़ो() buffer.
+ * @stream: An i915-perf stream खोलोed क्रम OA metrics
  * @buf: destination buffer given by userspace
- * @count: the number of bytes userspace wants to read
- * @offset: (inout): the current position for writing into @buf
+ * @count: the number of bytes userspace wants to पढ़ो
+ * @offset: (inout): the current position क्रम writing पूर्णांकo @buf
  * @type: The kind of status to report to userspace
  *
  * Writes a status record (such as `DRM_I915_PERF_RECORD_OA_REPORT_LOST`)
- * into the userspace read() buffer.
+ * पूर्णांकo the userspace पढ़ो() buffer.
  *
  * The @buf @offset will only be updated on success.
  *
  * Returns: 0 on success, negative error code on failure.
  */
-static int append_oa_status(struct i915_perf_stream *stream,
-			    char __user *buf,
-			    size_t count,
-			    size_t *offset,
-			    enum drm_i915_perf_record_type type)
-{
-	struct drm_i915_perf_record_header header = { type, 0, sizeof(header) };
+अटल पूर्णांक append_oa_status(काष्ठा i915_perf_stream *stream,
+			    अक्षर __user *buf,
+			    माप_प्रकार count,
+			    माप_प्रकार *offset,
+			    क्रमागत drm_i915_perf_record_type type)
+अणु
+	काष्ठा drm_i915_perf_record_header header = अणु type, 0, माप(header) पूर्ण;
 
-	if ((count - *offset) < header.size)
-		return -ENOSPC;
+	अगर ((count - *offset) < header.size)
+		वापस -ENOSPC;
 
-	if (copy_to_user(buf + *offset, &header, sizeof(header)))
-		return -EFAULT;
+	अगर (copy_to_user(buf + *offset, &header, माप(header)))
+		वापस -EFAULT;
 
 	(*offset) += header.size;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * append_oa_sample - Copies single OA report into userspace read() buffer.
- * @stream: An i915-perf stream opened for OA metrics
+ * append_oa_sample - Copies single OA report पूर्णांकo userspace पढ़ो() buffer.
+ * @stream: An i915-perf stream खोलोed क्रम OA metrics
  * @buf: destination buffer given by userspace
- * @count: the number of bytes userspace wants to read
- * @offset: (inout): the current position for writing into @buf
+ * @count: the number of bytes userspace wants to पढ़ो
+ * @offset: (inout): the current position क्रम writing पूर्णांकo @buf
  * @report: A single OA report to (optionally) include as part of the sample
  *
  * The contents of a sample are configured through `DRM_I915_PERF_PROP_SAMPLE_*`
- * properties when opening a stream, tracked as `stream->sample_flags`. This
+ * properties when खोलोing a stream, tracked as `stream->sample_flags`. This
  * function copies the requested components of a single sample to the given
- * read() @buf.
+ * पढ़ो() @buf.
  *
  * The @buf @offset will only be updated on success.
  *
  * Returns: 0 on success, negative error code on failure.
  */
-static int append_oa_sample(struct i915_perf_stream *stream,
-			    char __user *buf,
-			    size_t count,
-			    size_t *offset,
-			    const u8 *report)
-{
-	int report_size = stream->oa_buffer.format_size;
-	struct drm_i915_perf_record_header header;
+अटल पूर्णांक append_oa_sample(काष्ठा i915_perf_stream *stream,
+			    अक्षर __user *buf,
+			    माप_प्रकार count,
+			    माप_प्रकार *offset,
+			    स्थिर u8 *report)
+अणु
+	पूर्णांक report_size = stream->oa_buffer.क्रमmat_size;
+	काष्ठा drm_i915_perf_record_header header;
 
 	header.type = DRM_I915_PERF_RECORD_SAMPLE;
 	header.pad = 0;
 	header.size = stream->sample_size;
 
-	if ((count - *offset) < header.size)
-		return -ENOSPC;
+	अगर ((count - *offset) < header.size)
+		वापस -ENOSPC;
 
 	buf += *offset;
-	if (copy_to_user(buf, &header, sizeof(header)))
-		return -EFAULT;
-	buf += sizeof(header);
+	अगर (copy_to_user(buf, &header, माप(header)))
+		वापस -EFAULT;
+	buf += माप(header);
 
-	if (copy_to_user(buf, report, report_size))
-		return -EFAULT;
+	अगर (copy_to_user(buf, report, report_size))
+		वापस -EFAULT;
 
 	(*offset) += header.size;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * gen8_append_oa_reports - Copies all buffered OA reports into
- *			    userspace read() buffer.
- * @stream: An i915-perf stream opened for OA metrics
+ * gen8_append_oa_reports - Copies all buffered OA reports पूर्णांकo
+ *			    userspace पढ़ो() buffer.
+ * @stream: An i915-perf stream खोलोed क्रम OA metrics
  * @buf: destination buffer given by userspace
- * @count: the number of bytes userspace wants to read
- * @offset: (inout): the current position for writing into @buf
+ * @count: the number of bytes userspace wants to पढ़ो
+ * @offset: (inout): the current position क्रम writing पूर्णांकo @buf
  *
- * Notably any error condition resulting in a short read (-%ENOSPC or
- * -%EFAULT) will be returned even though one or more records may
- * have been successfully copied. In this case it's up to the caller
- * to decide if the error should be squashed before returning to
+ * Notably any error condition resulting in a लघु पढ़ो (-%ENOSPC or
+ * -%EFAULT) will be वापसed even though one or more records may
+ * have been successfully copied. In this हाल it's up to the caller
+ * to decide अगर the error should be squashed beक्रमe वापसing to
  * userspace.
  *
  * Note: reports are consumed from the head, and appended to the
@@ -637,24 +638,24 @@ static int append_oa_sample(struct i915_perf_stream *stream,
  *
  * Returns: 0 on success, negative error code on failure.
  */
-static int gen8_append_oa_reports(struct i915_perf_stream *stream,
-				  char __user *buf,
-				  size_t count,
-				  size_t *offset)
-{
-	struct intel_uncore *uncore = stream->uncore;
-	int report_size = stream->oa_buffer.format_size;
+अटल पूर्णांक gen8_append_oa_reports(काष्ठा i915_perf_stream *stream,
+				  अक्षर __user *buf,
+				  माप_प्रकार count,
+				  माप_प्रकार *offset)
+अणु
+	काष्ठा पूर्णांकel_uncore *uncore = stream->uncore;
+	पूर्णांक report_size = stream->oa_buffer.क्रमmat_size;
 	u8 *oa_buf_base = stream->oa_buffer.vaddr;
 	u32 gtt_offset = i915_ggtt_offset(stream->oa_buffer.vma);
 	u32 mask = (OA_BUFFER_SIZE - 1);
-	size_t start_offset = *offset;
-	unsigned long flags;
+	माप_प्रकार start_offset = *offset;
+	अचिन्हित दीर्घ flags;
 	u32 head, tail;
 	u32 taken;
-	int ret = 0;
+	पूर्णांक ret = 0;
 
-	if (drm_WARN_ON(&uncore->i915->drm, !stream->enabled))
-		return -EIO;
+	अगर (drm_WARN_ON(&uncore->i915->drm, !stream->enabled))
+		वापस -EIO;
 
 	spin_lock_irqsave(&stream->oa_buffer.ptr_lock, flags);
 
@@ -664,37 +665,37 @@ static int gen8_append_oa_reports(struct i915_perf_stream *stream,
 	spin_unlock_irqrestore(&stream->oa_buffer.ptr_lock, flags);
 
 	/*
-	 * NB: oa_buffer.head/tail include the gtt_offset which we don't want
-	 * while indexing relative to oa_buf_base.
+	 * NB: oa_buffer.head/tail include the gtt_offset which we करोn't want
+	 * जबतक indexing relative to oa_buf_base.
 	 */
 	head -= gtt_offset;
 	tail -= gtt_offset;
 
 	/*
-	 * An out of bounds or misaligned head or tail pointer implies a driver
-	 * bug since we validate + align the tail pointers we read from the
-	 * hardware and we are in full control of the head pointer which should
+	 * An out of bounds or misaligned head or tail poपूर्णांकer implies a driver
+	 * bug since we validate + align the tail poपूर्णांकers we पढ़ो from the
+	 * hardware and we are in full control of the head poपूर्णांकer which should
 	 * only be incremented by multiples of the report size (notably also
-	 * all a power of two).
+	 * all a घातer of two).
 	 */
-	if (drm_WARN_ONCE(&uncore->i915->drm,
+	अगर (drm_WARN_ONCE(&uncore->i915->drm,
 			  head > OA_BUFFER_SIZE || head % report_size ||
 			  tail > OA_BUFFER_SIZE || tail % report_size,
 			  "Inconsistent OA buffer pointers: head = %u, tail = %u\n",
 			  head, tail))
-		return -EIO;
+		वापस -EIO;
 
 
-	for (/* none */;
+	क्रम (/* none */;
 	     (taken = OA_TAKEN(tail, head));
-	     head = (head + report_size) & mask) {
+	     head = (head + report_size) & mask) अणु
 		u8 *report = oa_buf_base + head;
-		u32 *report32 = (void *)report;
+		u32 *report32 = (व्योम *)report;
 		u32 ctx_id;
 		u32 reason;
 
 		/*
-		 * All the report sizes factor neatly into the buffer
+		 * All the report sizes factor neatly पूर्णांकo the buffer
 		 * size so we never expect to see a report split
 		 * between the beginning and end of the buffer.
 		 *
@@ -702,20 +703,20 @@ static int gen8_append_oa_reports(struct i915_perf_stream *stream,
 		 * here would imply a driver bug that would result
 		 * in an overrun.
 		 */
-		if (drm_WARN_ON(&uncore->i915->drm,
-				(OA_BUFFER_SIZE - head) < report_size)) {
+		अगर (drm_WARN_ON(&uncore->i915->drm,
+				(OA_BUFFER_SIZE - head) < report_size)) अणु
 			drm_err(&uncore->i915->drm,
 				"Spurious OA head ptr: non-integral report offset\n");
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		/*
-		 * The reason field includes flags identifying what
-		 * triggered this specific report (mostly timer
-		 * triggered or e.g. due to a context switch).
+		 * The reason field includes flags identअगरying what
+		 * triggered this specअगरic report (mostly समयr
+		 * triggered or e.g. due to a context चयन).
 		 *
 		 * This field is never expected to be zero so we can
-		 * check that the report isn't invalid before copying
+		 * check that the report isn't invalid beक्रमe copying
 		 * it to userspace...
 		 */
 		reason = ((report32[0] >> OAREPORT_REASON_SHIFT) &
@@ -723,72 +724,72 @@ static int gen8_append_oa_reports(struct i915_perf_stream *stream,
 			   OAREPORT_REASON_MASK_EXTENDED :
 			   OAREPORT_REASON_MASK));
 
-		ctx_id = report32[2] & stream->specific_ctx_id_mask;
+		ctx_id = report32[2] & stream->specअगरic_ctx_id_mask;
 
 		/*
-		 * Squash whatever is in the CTX_ID field if it's marked as
-		 * invalid to be sure we avoid false-positive, single-context
+		 * Squash whatever is in the CTX_ID field अगर it's marked as
+		 * invalid to be sure we aव्योम false-positive, single-context
 		 * filtering below...
 		 *
-		 * Note: that we don't clear the valid_ctx_bit so userspace can
+		 * Note: that we करोn't clear the valid_ctx_bit so userspace can
 		 * understand that the ID has been squashed by the kernel.
 		 */
-		if (!(report32[0] & stream->perf->gen8_valid_ctx_bit) &&
+		अगर (!(report32[0] & stream->perf->gen8_valid_ctx_bit) &&
 		    INTEL_GEN(stream->perf->i915) <= 11)
 			ctx_id = report32[2] = INVALID_CTX_ID;
 
 		/*
-		 * NB: For Gen 8 the OA unit no longer supports clock gating
-		 * off for a specific context and the kernel can't securely
-		 * stop the counters from updating as system-wide / global
+		 * NB: For Gen 8 the OA unit no दीर्घer supports घड़ी gating
+		 * off क्रम a specअगरic context and the kernel can't securely
+		 * stop the counters from updating as प्रणाली-wide / global
 		 * values.
 		 *
 		 * Automatic reports now include a context ID so reports can be
 		 * filtered on the cpu but it's not worth trying to
-		 * automatically subtract/hide counter progress for other
-		 * contexts while filtering since we can't stop userspace
+		 * स्वतःmatically subtract/hide counter progress क्रम other
+		 * contexts जबतक filtering since we can't stop userspace
 		 * issuing MI_REPORT_PERF_COUNT commands which would still
 		 * provide a side-band view of the real values.
 		 *
-		 * To allow userspace (such as Mesa/GL_INTEL_performance_query)
-		 * to normalize counters for a single filtered context then it
-		 * needs be forwarded bookend context-switch reports so that it
-		 * can track switches in between MI_REPORT_PERF_COUNT commands
+		 * To allow userspace (such as Mesa/GL_INTEL_perक्रमmance_query)
+		 * to normalize counters क्रम a single filtered context then it
+		 * needs be क्रमwarded bookend context-चयन reports so that it
+		 * can track चयनes in between MI_REPORT_PERF_COUNT commands
 		 * and can itself subtract/ignore the progress of counters
 		 * associated with other contexts. Note that the hardware
-		 * automatically triggers reports when switching to a new
+		 * स्वतःmatically triggers reports when चयनing to a new
 		 * context which are tagged with the ID of the newly active
-		 * context. To avoid the complexity (and likely fragility) of
-		 * reading ahead while parsing reports to try and minimize
-		 * forwarding redundant context switch reports (i.e. between
-		 * other, unrelated contexts) we simply elect to forward them
+		 * context. To aव्योम the complनिकासy (and likely fragility) of
+		 * पढ़ोing ahead जबतक parsing reports to try and minimize
+		 * क्रमwarding redundant context चयन reports (i.e. between
+		 * other, unrelated contexts) we simply elect to क्रमward them
 		 * all.
 		 *
-		 * We don't rely solely on the reason field to identify context
-		 * switches since it's not-uncommon for periodic samples to
-		 * identify a switch before any 'context switch' report.
+		 * We करोn't rely solely on the reason field to identअगरy context
+		 * चयनes since it's not-uncommon क्रम periodic samples to
+		 * identअगरy a चयन beक्रमe any 'context switch' report.
 		 */
-		if (!stream->perf->exclusive_stream->ctx ||
-		    stream->specific_ctx_id == ctx_id ||
-		    stream->oa_buffer.last_ctx_id == stream->specific_ctx_id ||
-		    reason & OAREPORT_REASON_CTX_SWITCH) {
+		अगर (!stream->perf->exclusive_stream->ctx ||
+		    stream->specअगरic_ctx_id == ctx_id ||
+		    stream->oa_buffer.last_ctx_id == stream->specअगरic_ctx_id ||
+		    reason & OAREPORT_REASON_CTX_SWITCH) अणु
 
 			/*
-			 * While filtering for a single context we avoid
+			 * While filtering क्रम a single context we aव्योम
 			 * leaking the IDs of other contexts.
 			 */
-			if (stream->perf->exclusive_stream->ctx &&
-			    stream->specific_ctx_id != ctx_id) {
+			अगर (stream->perf->exclusive_stream->ctx &&
+			    stream->specअगरic_ctx_id != ctx_id) अणु
 				report32[2] = INVALID_CTX_ID;
-			}
+			पूर्ण
 
 			ret = append_oa_sample(stream, buf, count, offset,
 					       report);
-			if (ret)
-				break;
+			अगर (ret)
+				अवरोध;
 
 			stream->oa_buffer.last_ctx_id = ctx_id;
-		}
+		पूर्ण
 
 		/*
 		 * Clear out the first 2 dword as a mean to detect unlanded
@@ -796,9 +797,9 @@ static int gen8_append_oa_reports(struct i915_perf_stream *stream,
 		 */
 		report32[0] = 0;
 		report32[1] = 0;
-	}
+	पूर्ण
 
-	if (start_offset != *offset) {
+	अगर (start_offset != *offset) अणु
 		i915_reg_t oaheadptr;
 
 		oaheadptr = IS_GEN(stream->perf->i915, 12) ?
@@ -807,77 +808,77 @@ static int gen8_append_oa_reports(struct i915_perf_stream *stream,
 		spin_lock_irqsave(&stream->oa_buffer.ptr_lock, flags);
 
 		/*
-		 * We removed the gtt_offset for the copy loop above, indexing
+		 * We हटाओd the gtt_offset क्रम the copy loop above, indexing
 		 * relative to oa_buf_base so put back here...
 		 */
 		head += gtt_offset;
-		intel_uncore_write(uncore, oaheadptr,
+		पूर्णांकel_uncore_ग_लिखो(uncore, oaheadptr,
 				   head & GEN12_OAG_OAHEADPTR_MASK);
 		stream->oa_buffer.head = head;
 
 		spin_unlock_irqrestore(&stream->oa_buffer.ptr_lock, flags);
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * gen8_oa_read - copy status records then buffered OA reports
- * @stream: An i915-perf stream opened for OA metrics
+ * gen8_oa_पढ़ो - copy status records then buffered OA reports
+ * @stream: An i915-perf stream खोलोed क्रम OA metrics
  * @buf: destination buffer given by userspace
- * @count: the number of bytes userspace wants to read
- * @offset: (inout): the current position for writing into @buf
+ * @count: the number of bytes userspace wants to पढ़ो
+ * @offset: (inout): the current position क्रम writing पूर्णांकo @buf
  *
- * Checks OA unit status registers and if necessary appends corresponding
- * status records for userspace (such as for a buffer full condition) and then
+ * Checks OA unit status रेजिस्टरs and अगर necessary appends corresponding
+ * status records क्रम userspace (such as क्रम a buffer full condition) and then
  * initiate appending any buffered OA reports.
  *
- * Updates @offset according to the number of bytes successfully copied into
+ * Updates @offset according to the number of bytes successfully copied पूर्णांकo
  * the userspace buffer.
  *
  * NB: some data may be successfully copied to the userspace buffer
- * even if an error is returned, and this is reflected in the
+ * even अगर an error is वापसed, and this is reflected in the
  * updated @offset.
  *
  * Returns: zero on success or a negative error code
  */
-static int gen8_oa_read(struct i915_perf_stream *stream,
-			char __user *buf,
-			size_t count,
-			size_t *offset)
-{
-	struct intel_uncore *uncore = stream->uncore;
+अटल पूर्णांक gen8_oa_पढ़ो(काष्ठा i915_perf_stream *stream,
+			अक्षर __user *buf,
+			माप_प्रकार count,
+			माप_प्रकार *offset)
+अणु
+	काष्ठा पूर्णांकel_uncore *uncore = stream->uncore;
 	u32 oastatus;
 	i915_reg_t oastatus_reg;
-	int ret;
+	पूर्णांक ret;
 
-	if (drm_WARN_ON(&uncore->i915->drm, !stream->oa_buffer.vaddr))
-		return -EIO;
+	अगर (drm_WARN_ON(&uncore->i915->drm, !stream->oa_buffer.vaddr))
+		वापस -EIO;
 
 	oastatus_reg = IS_GEN(stream->perf->i915, 12) ?
 		       GEN12_OAG_OASTATUS : GEN8_OASTATUS;
 
-	oastatus = intel_uncore_read(uncore, oastatus_reg);
+	oastatus = पूर्णांकel_uncore_पढ़ो(uncore, oastatus_reg);
 
 	/*
-	 * We treat OABUFFER_OVERFLOW as a significant error:
+	 * We treat OABUFFER_OVERFLOW as a signअगरicant error:
 	 *
 	 * Although theoretically we could handle this more gracefully
-	 * sometimes, some Gens don't correctly suppress certain
-	 * automatically triggered reports in this condition and so we
+	 * someबार, some Gens करोn't correctly suppress certain
+	 * स्वतःmatically triggered reports in this condition and so we
 	 * have to assume that old reports are now being trampled
 	 * over.
 	 *
-	 * Considering how we don't currently give userspace control
+	 * Considering how we करोn't currently give userspace control
 	 * over the OA buffer size and always configure a large 16MB
-	 * buffer, then a buffer overflow does anyway likely indicate
+	 * buffer, then a buffer overflow करोes anyway likely indicate
 	 * that something has gone quite badly wrong.
 	 */
-	if (oastatus & GEN8_OASTATUS_OABUFFER_OVERFLOW) {
+	अगर (oastatus & GEN8_OASTATUS_OABUFFER_OVERFLOW) अणु
 		ret = append_oa_status(stream, buf, count, offset,
 				       DRM_I915_PERF_RECORD_OA_BUFFER_LOST);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 
 		DRM_DEBUG("OA buffer overflow (exponent = %d): force restart\n",
 			  stream->period_exponent);
@@ -887,40 +888,40 @@ static int gen8_oa_read(struct i915_perf_stream *stream,
 
 		/*
 		 * Note: .oa_enable() is expected to re-init the oabuffer and
-		 * reset GEN8_OASTATUS for us
+		 * reset GEN8_OASTATUS क्रम us
 		 */
-		oastatus = intel_uncore_read(uncore, oastatus_reg);
-	}
+		oastatus = पूर्णांकel_uncore_पढ़ो(uncore, oastatus_reg);
+	पूर्ण
 
-	if (oastatus & GEN8_OASTATUS_REPORT_LOST) {
+	अगर (oastatus & GEN8_OASTATUS_REPORT_LOST) अणु
 		ret = append_oa_status(stream, buf, count, offset,
 				       DRM_I915_PERF_RECORD_OA_REPORT_LOST);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 
-		intel_uncore_rmw(uncore, oastatus_reg,
+		पूर्णांकel_uncore_rmw(uncore, oastatus_reg,
 				 GEN8_OASTATUS_COUNTER_OVERFLOW |
 				 GEN8_OASTATUS_REPORT_LOST,
 				 IS_GEN_RANGE(uncore->i915, 8, 11) ?
 				 (GEN8_OASTATUS_HEAD_POINTER_WRAP |
 				  GEN8_OASTATUS_TAIL_POINTER_WRAP) : 0);
-	}
+	पूर्ण
 
-	return gen8_append_oa_reports(stream, buf, count, offset);
-}
+	वापस gen8_append_oa_reports(stream, buf, count, offset);
+पूर्ण
 
 /**
- * gen7_append_oa_reports - Copies all buffered OA reports into
- *			    userspace read() buffer.
- * @stream: An i915-perf stream opened for OA metrics
+ * gen7_append_oa_reports - Copies all buffered OA reports पूर्णांकo
+ *			    userspace पढ़ो() buffer.
+ * @stream: An i915-perf stream खोलोed क्रम OA metrics
  * @buf: destination buffer given by userspace
- * @count: the number of bytes userspace wants to read
- * @offset: (inout): the current position for writing into @buf
+ * @count: the number of bytes userspace wants to पढ़ो
+ * @offset: (inout): the current position क्रम writing पूर्णांकo @buf
  *
- * Notably any error condition resulting in a short read (-%ENOSPC or
- * -%EFAULT) will be returned even though one or more records may
- * have been successfully copied. In this case it's up to the caller
- * to decide if the error should be squashed before returning to
+ * Notably any error condition resulting in a लघु पढ़ो (-%ENOSPC or
+ * -%EFAULT) will be वापसed even though one or more records may
+ * have been successfully copied. In this हाल it's up to the caller
+ * to decide अगर the error should be squashed beक्रमe वापसing to
  * userspace.
  *
  * Note: reports are consumed from the head, and appended to the
@@ -930,24 +931,24 @@ static int gen8_oa_read(struct i915_perf_stream *stream,
  *
  * Returns: 0 on success, negative error code on failure.
  */
-static int gen7_append_oa_reports(struct i915_perf_stream *stream,
-				  char __user *buf,
-				  size_t count,
-				  size_t *offset)
-{
-	struct intel_uncore *uncore = stream->uncore;
-	int report_size = stream->oa_buffer.format_size;
+अटल पूर्णांक gen7_append_oa_reports(काष्ठा i915_perf_stream *stream,
+				  अक्षर __user *buf,
+				  माप_प्रकार count,
+				  माप_प्रकार *offset)
+अणु
+	काष्ठा पूर्णांकel_uncore *uncore = stream->uncore;
+	पूर्णांक report_size = stream->oa_buffer.क्रमmat_size;
 	u8 *oa_buf_base = stream->oa_buffer.vaddr;
 	u32 gtt_offset = i915_ggtt_offset(stream->oa_buffer.vma);
 	u32 mask = (OA_BUFFER_SIZE - 1);
-	size_t start_offset = *offset;
-	unsigned long flags;
+	माप_प्रकार start_offset = *offset;
+	अचिन्हित दीर्घ flags;
 	u32 head, tail;
 	u32 taken;
-	int ret = 0;
+	पूर्णांक ret = 0;
 
-	if (drm_WARN_ON(&uncore->i915->drm, !stream->enabled))
-		return -EIO;
+	अगर (drm_WARN_ON(&uncore->i915->drm, !stream->enabled))
+		वापस -EIO;
 
 	spin_lock_irqsave(&stream->oa_buffer.ptr_lock, flags);
 
@@ -956,33 +957,33 @@ static int gen7_append_oa_reports(struct i915_perf_stream *stream,
 
 	spin_unlock_irqrestore(&stream->oa_buffer.ptr_lock, flags);
 
-	/* NB: oa_buffer.head/tail include the gtt_offset which we don't want
-	 * while indexing relative to oa_buf_base.
+	/* NB: oa_buffer.head/tail include the gtt_offset which we करोn't want
+	 * जबतक indexing relative to oa_buf_base.
 	 */
 	head -= gtt_offset;
 	tail -= gtt_offset;
 
-	/* An out of bounds or misaligned head or tail pointer implies a driver
-	 * bug since we validate + align the tail pointers we read from the
-	 * hardware and we are in full control of the head pointer which should
+	/* An out of bounds or misaligned head or tail poपूर्णांकer implies a driver
+	 * bug since we validate + align the tail poपूर्णांकers we पढ़ो from the
+	 * hardware and we are in full control of the head poपूर्णांकer which should
 	 * only be incremented by multiples of the report size (notably also
-	 * all a power of two).
+	 * all a घातer of two).
 	 */
-	if (drm_WARN_ONCE(&uncore->i915->drm,
+	अगर (drm_WARN_ONCE(&uncore->i915->drm,
 			  head > OA_BUFFER_SIZE || head % report_size ||
 			  tail > OA_BUFFER_SIZE || tail % report_size,
 			  "Inconsistent OA buffer pointers: head = %u, tail = %u\n",
 			  head, tail))
-		return -EIO;
+		वापस -EIO;
 
 
-	for (/* none */;
+	क्रम (/* none */;
 	     (taken = OA_TAKEN(tail, head));
-	     head = (head + report_size) & mask) {
+	     head = (head + report_size) & mask) अणु
 		u8 *report = oa_buf_base + head;
-		u32 *report32 = (void *)report;
+		u32 *report32 = (व्योम *)report;
 
-		/* All the report sizes factor neatly into the buffer
+		/* All the report sizes factor neatly पूर्णांकo the buffer
 		 * size so we never expect to see a report split
 		 * between the beginning and end of the buffer.
 		 *
@@ -990,95 +991,95 @@ static int gen7_append_oa_reports(struct i915_perf_stream *stream,
 		 * here would imply a driver bug that would result
 		 * in an overrun.
 		 */
-		if (drm_WARN_ON(&uncore->i915->drm,
-				(OA_BUFFER_SIZE - head) < report_size)) {
+		अगर (drm_WARN_ON(&uncore->i915->drm,
+				(OA_BUFFER_SIZE - head) < report_size)) अणु
 			drm_err(&uncore->i915->drm,
 				"Spurious OA head ptr: non-integral report offset\n");
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		/* The report-ID field for periodic samples includes
-		 * some undocumented flags related to what triggered
+		/* The report-ID field क्रम periodic samples includes
+		 * some unकरोcumented flags related to what triggered
 		 * the report and is never expected to be zero so we
-		 * can check that the report isn't invalid before
+		 * can check that the report isn't invalid beक्रमe
 		 * copying it to userspace...
 		 */
-		if (report32[0] == 0) {
-			if (__ratelimit(&stream->perf->spurious_report_rs))
+		अगर (report32[0] == 0) अणु
+			अगर (__ratelimit(&stream->perf->spurious_report_rs))
 				DRM_NOTE("Skipping spurious, invalid OA report\n");
-			continue;
-		}
+			जारी;
+		पूर्ण
 
 		ret = append_oa_sample(stream, buf, count, offset, report);
-		if (ret)
-			break;
+		अगर (ret)
+			अवरोध;
 
 		/* Clear out the first 2 dwords as a mean to detect unlanded
 		 * reports.
 		 */
 		report32[0] = 0;
 		report32[1] = 0;
-	}
+	पूर्ण
 
-	if (start_offset != *offset) {
+	अगर (start_offset != *offset) अणु
 		spin_lock_irqsave(&stream->oa_buffer.ptr_lock, flags);
 
-		/* We removed the gtt_offset for the copy loop above, indexing
+		/* We हटाओd the gtt_offset क्रम the copy loop above, indexing
 		 * relative to oa_buf_base so put back here...
 		 */
 		head += gtt_offset;
 
-		intel_uncore_write(uncore, GEN7_OASTATUS2,
+		पूर्णांकel_uncore_ग_लिखो(uncore, GEN7_OASTATUS2,
 				   (head & GEN7_OASTATUS2_HEAD_MASK) |
 				   GEN7_OASTATUS2_MEM_SELECT_GGTT);
 		stream->oa_buffer.head = head;
 
 		spin_unlock_irqrestore(&stream->oa_buffer.ptr_lock, flags);
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * gen7_oa_read - copy status records then buffered OA reports
- * @stream: An i915-perf stream opened for OA metrics
+ * gen7_oa_पढ़ो - copy status records then buffered OA reports
+ * @stream: An i915-perf stream खोलोed क्रम OA metrics
  * @buf: destination buffer given by userspace
- * @count: the number of bytes userspace wants to read
- * @offset: (inout): the current position for writing into @buf
+ * @count: the number of bytes userspace wants to पढ़ो
+ * @offset: (inout): the current position क्रम writing पूर्णांकo @buf
  *
- * Checks Gen 7 specific OA unit status registers and if necessary appends
- * corresponding status records for userspace (such as for a buffer full
+ * Checks Gen 7 specअगरic OA unit status रेजिस्टरs and अगर necessary appends
+ * corresponding status records क्रम userspace (such as क्रम a buffer full
  * condition) and then initiate appending any buffered OA reports.
  *
- * Updates @offset according to the number of bytes successfully copied into
+ * Updates @offset according to the number of bytes successfully copied पूर्णांकo
  * the userspace buffer.
  *
  * Returns: zero on success or a negative error code
  */
-static int gen7_oa_read(struct i915_perf_stream *stream,
-			char __user *buf,
-			size_t count,
-			size_t *offset)
-{
-	struct intel_uncore *uncore = stream->uncore;
+अटल पूर्णांक gen7_oa_पढ़ो(काष्ठा i915_perf_stream *stream,
+			अक्षर __user *buf,
+			माप_प्रकार count,
+			माप_प्रकार *offset)
+अणु
+	काष्ठा पूर्णांकel_uncore *uncore = stream->uncore;
 	u32 oastatus1;
-	int ret;
+	पूर्णांक ret;
 
-	if (drm_WARN_ON(&uncore->i915->drm, !stream->oa_buffer.vaddr))
-		return -EIO;
+	अगर (drm_WARN_ON(&uncore->i915->drm, !stream->oa_buffer.vaddr))
+		वापस -EIO;
 
-	oastatus1 = intel_uncore_read(uncore, GEN7_OASTATUS1);
+	oastatus1 = पूर्णांकel_uncore_पढ़ो(uncore, GEN7_OASTATUS1);
 
-	/* XXX: On Haswell we don't have a safe way to clear oastatus1
-	 * bits while the OA unit is enabled (while the tail pointer
+	/* XXX: On Haswell we करोn't have a safe way to clear oastatus1
+	 * bits जबतक the OA unit is enabled (जबतक the tail poपूर्णांकer
 	 * may be updated asynchronously) so we ignore status bits
-	 * that have already been reported to userspace.
+	 * that have alपढ़ोy been reported to userspace.
 	 */
 	oastatus1 &= ~stream->perf->gen7_latched_oastatus1;
 
-	/* We treat OABUFFER_OVERFLOW as a significant error:
+	/* We treat OABUFFER_OVERFLOW as a signअगरicant error:
 	 *
-	 * - The status can be interpreted to mean that the buffer is
+	 * - The status can be पूर्णांकerpreted to mean that the buffer is
 	 *   currently full (with a higher precedence than OA_TAKEN()
 	 *   which will start to report a near-empty buffer after an
 	 *   overflow) but it's awkward that we can't clear the status
@@ -1086,21 +1087,21 @@ static int gen7_oa_read(struct i915_perf_stream *stream,
 	 *   the state again.
 	 *
 	 * - Since it also implies the HW has started overwriting old
-	 *   reports it may also affect our sanity checks for invalid
+	 *   reports it may also affect our sanity checks क्रम invalid
 	 *   reports when copying to userspace that assume new reports
 	 *   are being written to cleared memory.
 	 *
-	 * - In the future we may want to introduce a flight recorder
-	 *   mode where the driver will automatically maintain a safe
-	 *   guard band between head/tail, avoiding this overflow
-	 *   condition, but we avoid the added driver complexity for
+	 * - In the future we may want to पूर्णांकroduce a flight recorder
+	 *   mode where the driver will स्वतःmatically मुख्यtain a safe
+	 *   guard band between head/tail, aव्योमing this overflow
+	 *   condition, but we aव्योम the added driver complनिकासy क्रम
 	 *   now.
 	 */
-	if (unlikely(oastatus1 & GEN7_OASTATUS1_OABUFFER_OVERFLOW)) {
+	अगर (unlikely(oastatus1 & GEN7_OASTATUS1_OABUFFER_OVERFLOW)) अणु
 		ret = append_oa_status(stream, buf, count, offset,
 				       DRM_I915_PERF_RECORD_OA_BUFFER_LOST);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 
 		DRM_DEBUG("OA buffer overflow (exponent = %d): force restart\n",
 			  stream->period_exponent);
@@ -1108,365 +1109,365 @@ static int gen7_oa_read(struct i915_perf_stream *stream,
 		stream->perf->ops.oa_disable(stream);
 		stream->perf->ops.oa_enable(stream);
 
-		oastatus1 = intel_uncore_read(uncore, GEN7_OASTATUS1);
-	}
+		oastatus1 = पूर्णांकel_uncore_पढ़ो(uncore, GEN7_OASTATUS1);
+	पूर्ण
 
-	if (unlikely(oastatus1 & GEN7_OASTATUS1_REPORT_LOST)) {
+	अगर (unlikely(oastatus1 & GEN7_OASTATUS1_REPORT_LOST)) अणु
 		ret = append_oa_status(stream, buf, count, offset,
 				       DRM_I915_PERF_RECORD_OA_REPORT_LOST);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 		stream->perf->gen7_latched_oastatus1 |=
 			GEN7_OASTATUS1_REPORT_LOST;
-	}
+	पूर्ण
 
-	return gen7_append_oa_reports(stream, buf, count, offset);
-}
+	वापस gen7_append_oa_reports(stream, buf, count, offset);
+पूर्ण
 
 /**
- * i915_oa_wait_unlocked - handles blocking IO until OA data available
- * @stream: An i915-perf stream opened for OA metrics
+ * i915_oa_रुको_unlocked - handles blocking IO until OA data available
+ * @stream: An i915-perf stream खोलोed क्रम OA metrics
  *
- * Called when userspace tries to read() from a blocking stream FD opened
- * for OA metrics. It waits until the hrtimer callback finds a non-empty
+ * Called when userspace tries to पढ़ो() from a blocking stream FD खोलोed
+ * क्रम OA metrics. It रुकोs until the hrसमयr callback finds a non-empty
  * OA buffer and wakes us.
  *
- * Note: it's acceptable to have this return with some false positives
- * since any subsequent read handling will return -EAGAIN if there isn't
- * really data ready for userspace yet.
+ * Note: it's acceptable to have this वापस with some false positives
+ * since any subsequent पढ़ो handling will वापस -EAGAIN अगर there isn't
+ * really data पढ़ोy क्रम userspace yet.
  *
  * Returns: zero on success or a negative error code
  */
-static int i915_oa_wait_unlocked(struct i915_perf_stream *stream)
-{
-	/* We would wait indefinitely if periodic sampling is not enabled */
-	if (!stream->periodic)
-		return -EIO;
+अटल पूर्णांक i915_oa_रुको_unlocked(काष्ठा i915_perf_stream *stream)
+अणु
+	/* We would रुको indefinitely अगर periodic sampling is not enabled */
+	अगर (!stream->periodic)
+		वापस -EIO;
 
-	return wait_event_interruptible(stream->poll_wq,
+	वापस रुको_event_पूर्णांकerruptible(stream->poll_wq,
 					oa_buffer_check_unlocked(stream));
-}
+पूर्ण
 
 /**
- * i915_oa_poll_wait - call poll_wait() for an OA stream poll()
- * @stream: An i915-perf stream opened for OA metrics
+ * i915_oa_poll_रुको - call poll_रुको() क्रम an OA stream poll()
+ * @stream: An i915-perf stream खोलोed क्रम OA metrics
  * @file: An i915 perf stream file
- * @wait: poll() state table
+ * @रुको: poll() state table
  *
- * For handling userspace polling on an i915 perf stream opened for OA metrics,
- * this starts a poll_wait with the wait queue that our hrtimer callback wakes
- * when it sees data ready to read in the circular OA buffer.
+ * For handling userspace polling on an i915 perf stream खोलोed क्रम OA metrics,
+ * this starts a poll_रुको with the रुको queue that our hrसमयr callback wakes
+ * when it sees data पढ़ोy to पढ़ो in the circular OA buffer.
  */
-static void i915_oa_poll_wait(struct i915_perf_stream *stream,
-			      struct file *file,
-			      poll_table *wait)
-{
-	poll_wait(file, &stream->poll_wq, wait);
-}
+अटल व्योम i915_oa_poll_रुको(काष्ठा i915_perf_stream *stream,
+			      काष्ठा file *file,
+			      poll_table *रुको)
+अणु
+	poll_रुको(file, &stream->poll_wq, रुको);
+पूर्ण
 
 /**
- * i915_oa_read - just calls through to &i915_oa_ops->read
- * @stream: An i915-perf stream opened for OA metrics
+ * i915_oa_पढ़ो - just calls through to &i915_oa_ops->पढ़ो
+ * @stream: An i915-perf stream खोलोed क्रम OA metrics
  * @buf: destination buffer given by userspace
- * @count: the number of bytes userspace wants to read
- * @offset: (inout): the current position for writing into @buf
+ * @count: the number of bytes userspace wants to पढ़ो
+ * @offset: (inout): the current position क्रम writing पूर्णांकo @buf
  *
- * Updates @offset according to the number of bytes successfully copied into
+ * Updates @offset according to the number of bytes successfully copied पूर्णांकo
  * the userspace buffer.
  *
  * Returns: zero on success or a negative error code
  */
-static int i915_oa_read(struct i915_perf_stream *stream,
-			char __user *buf,
-			size_t count,
-			size_t *offset)
-{
-	return stream->perf->ops.read(stream, buf, count, offset);
-}
+अटल पूर्णांक i915_oa_पढ़ो(काष्ठा i915_perf_stream *stream,
+			अक्षर __user *buf,
+			माप_प्रकार count,
+			माप_प्रकार *offset)
+अणु
+	वापस stream->perf->ops.पढ़ो(stream, buf, count, offset);
+पूर्ण
 
-static struct intel_context *oa_pin_context(struct i915_perf_stream *stream)
-{
-	struct i915_gem_engines_iter it;
-	struct i915_gem_context *ctx = stream->ctx;
-	struct intel_context *ce;
-	struct i915_gem_ww_ctx ww;
-	int err = -ENODEV;
+अटल काष्ठा पूर्णांकel_context *oa_pin_context(काष्ठा i915_perf_stream *stream)
+अणु
+	काष्ठा i915_gem_engines_iter it;
+	काष्ठा i915_gem_context *ctx = stream->ctx;
+	काष्ठा पूर्णांकel_context *ce;
+	काष्ठा i915_gem_ww_ctx ww;
+	पूर्णांक err = -ENODEV;
 
-	for_each_gem_engine(ce, i915_gem_context_lock_engines(ctx), it) {
-		if (ce->engine != stream->engine) /* first match! */
-			continue;
+	क्रम_each_gem_engine(ce, i915_gem_context_lock_engines(ctx), it) अणु
+		अगर (ce->engine != stream->engine) /* first match! */
+			जारी;
 
 		err = 0;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 	i915_gem_context_unlock_engines(ctx);
 
-	if (err)
-		return ERR_PTR(err);
+	अगर (err)
+		वापस ERR_PTR(err);
 
 	i915_gem_ww_ctx_init(&ww, true);
 retry:
 	/*
 	 * As the ID is the gtt offset of the context's vma we
-	 * pin the vma to ensure the ID remains fixed.
+	 * pin the vma to ensure the ID reमुख्यs fixed.
 	 */
-	err = intel_context_pin_ww(ce, &ww);
-	if (err == -EDEADLK) {
+	err = पूर्णांकel_context_pin_ww(ce, &ww);
+	अगर (err == -EDEADLK) अणु
 		err = i915_gem_ww_ctx_backoff(&ww);
-		if (!err)
-			goto retry;
-	}
+		अगर (!err)
+			जाओ retry;
+	पूर्ण
 	i915_gem_ww_ctx_fini(&ww);
 
-	if (err)
-		return ERR_PTR(err);
+	अगर (err)
+		वापस ERR_PTR(err);
 
 	stream->pinned_ctx = ce;
-	return stream->pinned_ctx;
-}
+	वापस stream->pinned_ctx;
+पूर्ण
 
 /**
  * oa_get_render_ctx_id - determine and hold ctx hw id
- * @stream: An i915-perf stream opened for OA metrics
+ * @stream: An i915-perf stream खोलोed क्रम OA metrics
  *
- * Determine the render context hw id, and ensure it remains fixed for the
- * lifetime of the stream. This ensures that we don't have to worry about
+ * Determine the render context hw id, and ensure it reमुख्यs fixed क्रम the
+ * lअगरeसमय of the stream. This ensures that we करोn't have to worry about
  * updating the context ID in OACONTROL on the fly.
  *
  * Returns: zero on success or a negative error code
  */
-static int oa_get_render_ctx_id(struct i915_perf_stream *stream)
-{
-	struct intel_context *ce;
+अटल पूर्णांक oa_get_render_ctx_id(काष्ठा i915_perf_stream *stream)
+अणु
+	काष्ठा पूर्णांकel_context *ce;
 
 	ce = oa_pin_context(stream);
-	if (IS_ERR(ce))
-		return PTR_ERR(ce);
+	अगर (IS_ERR(ce))
+		वापस PTR_ERR(ce);
 
-	switch (INTEL_GEN(ce->engine->i915)) {
-	case 7: {
+	चयन (INTEL_GEN(ce->engine->i915)) अणु
+	हाल 7: अणु
 		/*
-		 * On Haswell we don't do any post processing of the reports
-		 * and don't need to use the mask.
+		 * On Haswell we करोn't करो any post processing of the reports
+		 * and करोn't need to use the mask.
 		 */
-		stream->specific_ctx_id = i915_ggtt_offset(ce->state);
-		stream->specific_ctx_id_mask = 0;
-		break;
-	}
+		stream->specअगरic_ctx_id = i915_ggtt_offset(ce->state);
+		stream->specअगरic_ctx_id_mask = 0;
+		अवरोध;
+	पूर्ण
 
-	case 8:
-	case 9:
-	case 10:
-		if (intel_engine_in_execlists_submission_mode(ce->engine)) {
-			stream->specific_ctx_id_mask =
+	हाल 8:
+	हाल 9:
+	हाल 10:
+		अगर (पूर्णांकel_engine_in_execlists_submission_mode(ce->engine)) अणु
+			stream->specअगरic_ctx_id_mask =
 				(1U << GEN8_CTX_ID_WIDTH) - 1;
-			stream->specific_ctx_id = stream->specific_ctx_id_mask;
-		} else {
+			stream->specअगरic_ctx_id = stream->specअगरic_ctx_id_mask;
+		पूर्ण अन्यथा अणु
 			/*
-			 * When using GuC, the context descriptor we write in
-			 * i915 is read by GuC and rewritten before it's
-			 * actually written into the hardware. The LRCA is
-			 * what is put into the context id field of the
+			 * When using GuC, the context descriptor we ग_लिखो in
+			 * i915 is पढ़ो by GuC and rewritten beक्रमe it's
+			 * actually written पूर्णांकo the hardware. The LRCA is
+			 * what is put पूर्णांकo the context id field of the
 			 * context descriptor by GuC. Because it's aligned to
 			 * a page, the lower 12bits are always at 0 and
 			 * dropped by GuC. They won't be part of the context
 			 * ID in the OA reports, so squash those lower bits.
 			 */
-			stream->specific_ctx_id = ce->lrc.lrca >> 12;
+			stream->specअगरic_ctx_id = ce->lrc.lrca >> 12;
 
 			/*
-			 * GuC uses the top bit to signal proxy submission, so
+			 * GuC uses the top bit to संकेत proxy submission, so
 			 * ignore that bit.
 			 */
-			stream->specific_ctx_id_mask =
+			stream->specअगरic_ctx_id_mask =
 				(1U << (GEN8_CTX_ID_WIDTH - 1)) - 1;
-		}
-		break;
+		पूर्ण
+		अवरोध;
 
-	case 11:
-	case 12: {
-		stream->specific_ctx_id_mask =
+	हाल 11:
+	हाल 12: अणु
+		stream->specअगरic_ctx_id_mask =
 			((1U << GEN11_SW_CTX_ID_WIDTH) - 1) << (GEN11_SW_CTX_ID_SHIFT - 32);
 		/*
 		 * Pick an unused context id
 		 * 0 - BITS_PER_LONG are used by other contexts
 		 * GEN12_MAX_CONTEXT_HW_ID (0x7ff) is used by idle context
 		 */
-		stream->specific_ctx_id = (GEN12_MAX_CONTEXT_HW_ID - 1) << (GEN11_SW_CTX_ID_SHIFT - 32);
-		break;
-	}
+		stream->specअगरic_ctx_id = (GEN12_MAX_CONTEXT_HW_ID - 1) << (GEN11_SW_CTX_ID_SHIFT - 32);
+		अवरोध;
+	पूर्ण
 
-	default:
+	शेष:
 		MISSING_CASE(INTEL_GEN(ce->engine->i915));
-	}
+	पूर्ण
 
-	ce->tag = stream->specific_ctx_id;
+	ce->tag = stream->specअगरic_ctx_id;
 
 	drm_dbg(&stream->perf->i915->drm,
 		"filtering on ctx_id=0x%x ctx_id_mask=0x%x\n",
-		stream->specific_ctx_id,
-		stream->specific_ctx_id_mask);
+		stream->specअगरic_ctx_id,
+		stream->specअगरic_ctx_id_mask);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * oa_put_render_ctx_id - counterpart to oa_get_render_ctx_id releases hold
- * @stream: An i915-perf stream opened for OA metrics
+ * @stream: An i915-perf stream खोलोed क्रम OA metrics
  *
- * In case anything needed doing to ensure the context HW ID would remain valid
- * for the lifetime of the stream, then that can be undone here.
+ * In हाल anything needed करोing to ensure the context HW ID would reमुख्य valid
+ * क्रम the lअगरeसमय of the stream, then that can be unकरोne here.
  */
-static void oa_put_render_ctx_id(struct i915_perf_stream *stream)
-{
-	struct intel_context *ce;
+अटल व्योम oa_put_render_ctx_id(काष्ठा i915_perf_stream *stream)
+अणु
+	काष्ठा पूर्णांकel_context *ce;
 
 	ce = fetch_and_zero(&stream->pinned_ctx);
-	if (ce) {
+	अगर (ce) अणु
 		ce->tag = 0; /* recomputed on next submission after parking */
-		intel_context_unpin(ce);
-	}
+		पूर्णांकel_context_unpin(ce);
+	पूर्ण
 
-	stream->specific_ctx_id = INVALID_CTX_ID;
-	stream->specific_ctx_id_mask = 0;
-}
+	stream->specअगरic_ctx_id = INVALID_CTX_ID;
+	stream->specअगरic_ctx_id_mask = 0;
+पूर्ण
 
-static void
-free_oa_buffer(struct i915_perf_stream *stream)
-{
+अटल व्योम
+मुक्त_oa_buffer(काष्ठा i915_perf_stream *stream)
+अणु
 	i915_vma_unpin_and_release(&stream->oa_buffer.vma,
 				   I915_VMA_RELEASE_MAP);
 
-	stream->oa_buffer.vaddr = NULL;
-}
+	stream->oa_buffer.vaddr = शून्य;
+पूर्ण
 
-static void
-free_oa_configs(struct i915_perf_stream *stream)
-{
-	struct i915_oa_config_bo *oa_bo, *tmp;
+अटल व्योम
+मुक्त_oa_configs(काष्ठा i915_perf_stream *stream)
+अणु
+	काष्ठा i915_oa_config_bo *oa_bo, *पंचांगp;
 
 	i915_oa_config_put(stream->oa_config);
-	llist_for_each_entry_safe(oa_bo, tmp, stream->oa_config_bos.first, node)
-		free_oa_config_bo(oa_bo);
-}
+	llist_क्रम_each_entry_safe(oa_bo, पंचांगp, stream->oa_config_bos.first, node)
+		मुक्त_oa_config_bo(oa_bo);
+पूर्ण
 
-static void
-free_noa_wait(struct i915_perf_stream *stream)
-{
-	i915_vma_unpin_and_release(&stream->noa_wait, 0);
-}
+अटल व्योम
+मुक्त_noa_रुको(काष्ठा i915_perf_stream *stream)
+अणु
+	i915_vma_unpin_and_release(&stream->noa_रुको, 0);
+पूर्ण
 
-static void i915_oa_stream_destroy(struct i915_perf_stream *stream)
-{
-	struct i915_perf *perf = stream->perf;
+अटल व्योम i915_oa_stream_destroy(काष्ठा i915_perf_stream *stream)
+अणु
+	काष्ठा i915_perf *perf = stream->perf;
 
 	BUG_ON(stream != perf->exclusive_stream);
 
 	/*
-	 * Unset exclusive_stream first, it will be checked while disabling
+	 * Unset exclusive_stream first, it will be checked जबतक disabling
 	 * the metric set on gen8+.
 	 *
 	 * See i915_oa_init_reg_state() and lrc_configure_all_contexts()
 	 */
-	WRITE_ONCE(perf->exclusive_stream, NULL);
+	WRITE_ONCE(perf->exclusive_stream, शून्य);
 	perf->ops.disable_metric_set(stream);
 
-	free_oa_buffer(stream);
+	मुक्त_oa_buffer(stream);
 
-	intel_uncore_forcewake_put(stream->uncore, FORCEWAKE_ALL);
-	intel_engine_pm_put(stream->engine);
+	पूर्णांकel_uncore_क्रमcewake_put(stream->uncore, FORCEWAKE_ALL);
+	पूर्णांकel_engine_pm_put(stream->engine);
 
-	if (stream->ctx)
+	अगर (stream->ctx)
 		oa_put_render_ctx_id(stream);
 
-	free_oa_configs(stream);
-	free_noa_wait(stream);
+	मुक्त_oa_configs(stream);
+	मुक्त_noa_रुको(stream);
 
-	if (perf->spurious_report_rs.missed) {
+	अगर (perf->spurious_report_rs.missed) अणु
 		DRM_NOTE("%d spurious OA report notices suppressed due to ratelimiting\n",
 			 perf->spurious_report_rs.missed);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void gen7_init_oa_buffer(struct i915_perf_stream *stream)
-{
-	struct intel_uncore *uncore = stream->uncore;
+अटल व्योम gen7_init_oa_buffer(काष्ठा i915_perf_stream *stream)
+अणु
+	काष्ठा पूर्णांकel_uncore *uncore = stream->uncore;
 	u32 gtt_offset = i915_ggtt_offset(stream->oa_buffer.vma);
-	unsigned long flags;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&stream->oa_buffer.ptr_lock, flags);
 
 	/* Pre-DevBDW: OABUFFER must be set with counters off,
-	 * before OASTATUS1, but after OASTATUS2
+	 * beक्रमe OASTATUS1, but after OASTATUS2
 	 */
-	intel_uncore_write(uncore, GEN7_OASTATUS2, /* head */
+	पूर्णांकel_uncore_ग_लिखो(uncore, GEN7_OASTATUS2, /* head */
 			   gtt_offset | GEN7_OASTATUS2_MEM_SELECT_GGTT);
 	stream->oa_buffer.head = gtt_offset;
 
-	intel_uncore_write(uncore, GEN7_OABUFFER, gtt_offset);
+	पूर्णांकel_uncore_ग_लिखो(uncore, GEN7_OABUFFER, gtt_offset);
 
-	intel_uncore_write(uncore, GEN7_OASTATUS1, /* tail */
+	पूर्णांकel_uncore_ग_लिखो(uncore, GEN7_OASTATUS1, /* tail */
 			   gtt_offset | OABUFFER_SIZE_16M);
 
-	/* Mark that we need updated tail pointers to read from... */
+	/* Mark that we need updated tail poपूर्णांकers to पढ़ो from... */
 	stream->oa_buffer.aging_tail = INVALID_TAIL_PTR;
 	stream->oa_buffer.tail = gtt_offset;
 
 	spin_unlock_irqrestore(&stream->oa_buffer.ptr_lock, flags);
 
 	/* On Haswell we have to track which OASTATUS1 flags we've
-	 * already seen since they can't be cleared while periodic
+	 * alपढ़ोy seen since they can't be cleared जबतक periodic
 	 * sampling is enabled.
 	 */
 	stream->perf->gen7_latched_oastatus1 = 0;
 
 	/* NB: although the OA buffer will initially be allocated
-	 * zeroed via shmfs (and so this memset is redundant when
+	 * zeroed via shmfs (and so this स_रखो is redundant when
 	 * first allocating), we may re-init the OA buffer, either
 	 * when re-enabling a stream or in error/reset paths.
 	 *
-	 * The reason we clear the buffer for each re-init is for the
+	 * The reason we clear the buffer क्रम each re-init is क्रम the
 	 * sanity check in gen7_append_oa_reports() that looks at the
 	 * report-id field to make sure it's non-zero which relies on
 	 * the assumption that new reports are being written to zeroed
 	 * memory...
 	 */
-	memset(stream->oa_buffer.vaddr, 0, OA_BUFFER_SIZE);
-}
+	स_रखो(stream->oa_buffer.vaddr, 0, OA_BUFFER_SIZE);
+पूर्ण
 
-static void gen8_init_oa_buffer(struct i915_perf_stream *stream)
-{
-	struct intel_uncore *uncore = stream->uncore;
+अटल व्योम gen8_init_oa_buffer(काष्ठा i915_perf_stream *stream)
+अणु
+	काष्ठा पूर्णांकel_uncore *uncore = stream->uncore;
 	u32 gtt_offset = i915_ggtt_offset(stream->oa_buffer.vma);
-	unsigned long flags;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&stream->oa_buffer.ptr_lock, flags);
 
-	intel_uncore_write(uncore, GEN8_OASTATUS, 0);
-	intel_uncore_write(uncore, GEN8_OAHEADPTR, gtt_offset);
+	पूर्णांकel_uncore_ग_लिखो(uncore, GEN8_OASTATUS, 0);
+	पूर्णांकel_uncore_ग_लिखो(uncore, GEN8_OAHEADPTR, gtt_offset);
 	stream->oa_buffer.head = gtt_offset;
 
-	intel_uncore_write(uncore, GEN8_OABUFFER_UDW, 0);
+	पूर्णांकel_uncore_ग_लिखो(uncore, GEN8_OABUFFER_UDW, 0);
 
 	/*
 	 * PRM says:
 	 *
-	 *  "This MMIO must be set before the OATAILPTR
-	 *  register and after the OAHEADPTR register. This is
+	 *  "This MMIO must be set beक्रमe the OATAILPTR
+	 *  रेजिस्टर and after the OAHEADPTR रेजिस्टर. This is
 	 *  to enable proper functionality of the overflow
 	 *  bit."
 	 */
-	intel_uncore_write(uncore, GEN8_OABUFFER, gtt_offset |
+	पूर्णांकel_uncore_ग_लिखो(uncore, GEN8_OABUFFER, gtt_offset |
 		   OABUFFER_SIZE_16M | GEN8_OABUFFER_MEM_SELECT_GGTT);
-	intel_uncore_write(uncore, GEN8_OATAILPTR, gtt_offset & GEN8_OATAILPTR_MASK);
+	पूर्णांकel_uncore_ग_लिखो(uncore, GEN8_OATAILPTR, gtt_offset & GEN8_OATAILPTR_MASK);
 
-	/* Mark that we need updated tail pointers to read from... */
+	/* Mark that we need updated tail poपूर्णांकers to पढ़ो from... */
 	stream->oa_buffer.aging_tail = INVALID_TAIL_PTR;
 	stream->oa_buffer.tail = gtt_offset;
 
 	/*
-	 * Reset state used to recognise context switches, affecting which
-	 * reports we will forward to userspace while filtering for a single
+	 * Reset state used to recognise context चयनes, affecting which
+	 * reports we will क्रमward to userspace जबतक filtering क्रम a single
 	 * context.
 	 */
 	stream->oa_buffer.last_ctx_id = INVALID_CTX_ID;
@@ -1475,52 +1476,52 @@ static void gen8_init_oa_buffer(struct i915_perf_stream *stream)
 
 	/*
 	 * NB: although the OA buffer will initially be allocated
-	 * zeroed via shmfs (and so this memset is redundant when
+	 * zeroed via shmfs (and so this स_रखो is redundant when
 	 * first allocating), we may re-init the OA buffer, either
 	 * when re-enabling a stream or in error/reset paths.
 	 *
-	 * The reason we clear the buffer for each re-init is for the
+	 * The reason we clear the buffer क्रम each re-init is क्रम the
 	 * sanity check in gen8_append_oa_reports() that looks at the
 	 * reason field to make sure it's non-zero which relies on
 	 * the assumption that new reports are being written to zeroed
 	 * memory...
 	 */
-	memset(stream->oa_buffer.vaddr, 0, OA_BUFFER_SIZE);
-}
+	स_रखो(stream->oa_buffer.vaddr, 0, OA_BUFFER_SIZE);
+पूर्ण
 
-static void gen12_init_oa_buffer(struct i915_perf_stream *stream)
-{
-	struct intel_uncore *uncore = stream->uncore;
+अटल व्योम gen12_init_oa_buffer(काष्ठा i915_perf_stream *stream)
+अणु
+	काष्ठा पूर्णांकel_uncore *uncore = stream->uncore;
 	u32 gtt_offset = i915_ggtt_offset(stream->oa_buffer.vma);
-	unsigned long flags;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&stream->oa_buffer.ptr_lock, flags);
 
-	intel_uncore_write(uncore, GEN12_OAG_OASTATUS, 0);
-	intel_uncore_write(uncore, GEN12_OAG_OAHEADPTR,
+	पूर्णांकel_uncore_ग_लिखो(uncore, GEN12_OAG_OASTATUS, 0);
+	पूर्णांकel_uncore_ग_लिखो(uncore, GEN12_OAG_OAHEADPTR,
 			   gtt_offset & GEN12_OAG_OAHEADPTR_MASK);
 	stream->oa_buffer.head = gtt_offset;
 
 	/*
 	 * PRM says:
 	 *
-	 *  "This MMIO must be set before the OATAILPTR
-	 *  register and after the OAHEADPTR register. This is
+	 *  "This MMIO must be set beक्रमe the OATAILPTR
+	 *  रेजिस्टर and after the OAHEADPTR रेजिस्टर. This is
 	 *  to enable proper functionality of the overflow
 	 *  bit."
 	 */
-	intel_uncore_write(uncore, GEN12_OAG_OABUFFER, gtt_offset |
+	पूर्णांकel_uncore_ग_लिखो(uncore, GEN12_OAG_OABUFFER, gtt_offset |
 			   OABUFFER_SIZE_16M | GEN8_OABUFFER_MEM_SELECT_GGTT);
-	intel_uncore_write(uncore, GEN12_OAG_OATAILPTR,
+	पूर्णांकel_uncore_ग_लिखो(uncore, GEN12_OAG_OATAILPTR,
 			   gtt_offset & GEN12_OAG_OATAILPTR_MASK);
 
-	/* Mark that we need updated tail pointers to read from... */
+	/* Mark that we need updated tail poपूर्णांकers to पढ़ो from... */
 	stream->oa_buffer.aging_tail = INVALID_TAIL_PTR;
 	stream->oa_buffer.tail = gtt_offset;
 
 	/*
-	 * Reset state used to recognise context switches, affecting which
-	 * reports we will forward to userspace while filtering for a single
+	 * Reset state used to recognise context चयनes, affecting which
+	 * reports we will क्रमward to userspace जबतक filtering क्रम a single
 	 * context.
 	 */
 	stream->oa_buffer.last_ctx_id = INVALID_CTX_ID;
@@ -1529,57 +1530,57 @@ static void gen12_init_oa_buffer(struct i915_perf_stream *stream)
 
 	/*
 	 * NB: although the OA buffer will initially be allocated
-	 * zeroed via shmfs (and so this memset is redundant when
+	 * zeroed via shmfs (and so this स_रखो is redundant when
 	 * first allocating), we may re-init the OA buffer, either
 	 * when re-enabling a stream or in error/reset paths.
 	 *
-	 * The reason we clear the buffer for each re-init is for the
+	 * The reason we clear the buffer क्रम each re-init is क्रम the
 	 * sanity check in gen8_append_oa_reports() that looks at the
 	 * reason field to make sure it's non-zero which relies on
 	 * the assumption that new reports are being written to zeroed
 	 * memory...
 	 */
-	memset(stream->oa_buffer.vaddr, 0,
+	स_रखो(stream->oa_buffer.vaddr, 0,
 	       stream->oa_buffer.vma->size);
-}
+पूर्ण
 
-static int alloc_oa_buffer(struct i915_perf_stream *stream)
-{
-	struct drm_i915_private *i915 = stream->perf->i915;
-	struct drm_i915_gem_object *bo;
-	struct i915_vma *vma;
-	int ret;
+अटल पूर्णांक alloc_oa_buffer(काष्ठा i915_perf_stream *stream)
+अणु
+	काष्ठा drm_i915_निजी *i915 = stream->perf->i915;
+	काष्ठा drm_i915_gem_object *bo;
+	काष्ठा i915_vma *vma;
+	पूर्णांक ret;
 
-	if (drm_WARN_ON(&i915->drm, stream->oa_buffer.vma))
-		return -ENODEV;
+	अगर (drm_WARN_ON(&i915->drm, stream->oa_buffer.vma))
+		वापस -ENODEV;
 
 	BUILD_BUG_ON_NOT_POWER_OF_2(OA_BUFFER_SIZE);
 	BUILD_BUG_ON(OA_BUFFER_SIZE < SZ_128K || OA_BUFFER_SIZE > SZ_16M);
 
 	bo = i915_gem_object_create_shmem(stream->perf->i915, OA_BUFFER_SIZE);
-	if (IS_ERR(bo)) {
+	अगर (IS_ERR(bo)) अणु
 		drm_err(&i915->drm, "Failed to allocate OA buffer\n");
-		return PTR_ERR(bo);
-	}
+		वापस PTR_ERR(bo);
+	पूर्ण
 
 	i915_gem_object_set_cache_coherency(bo, I915_CACHE_LLC);
 
 	/* PreHSW required 512K alignment, HSW requires 16M */
-	vma = i915_gem_object_ggtt_pin(bo, NULL, 0, SZ_16M, 0);
-	if (IS_ERR(vma)) {
+	vma = i915_gem_object_ggtt_pin(bo, शून्य, 0, SZ_16M, 0);
+	अगर (IS_ERR(vma)) अणु
 		ret = PTR_ERR(vma);
-		goto err_unref;
-	}
+		जाओ err_unref;
+	पूर्ण
 	stream->oa_buffer.vma = vma;
 
 	stream->oa_buffer.vaddr =
 		i915_gem_object_pin_map_unlocked(bo, I915_MAP_WB);
-	if (IS_ERR(stream->oa_buffer.vaddr)) {
+	अगर (IS_ERR(stream->oa_buffer.vaddr)) अणु
 		ret = PTR_ERR(stream->oa_buffer.vaddr);
-		goto err_unpin;
-	}
+		जाओ err_unpin;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 err_unpin:
 	__i915_vma_unpin(vma);
@@ -1587,103 +1588,103 @@ err_unpin:
 err_unref:
 	i915_gem_object_put(bo);
 
-	stream->oa_buffer.vaddr = NULL;
-	stream->oa_buffer.vma = NULL;
+	stream->oa_buffer.vaddr = शून्य;
+	stream->oa_buffer.vma = शून्य;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static u32 *save_restore_register(struct i915_perf_stream *stream, u32 *cs,
+अटल u32 *save_restore_रेजिस्टर(काष्ठा i915_perf_stream *stream, u32 *cs,
 				  bool save, i915_reg_t reg, u32 offset,
 				  u32 dword_count)
-{
+अणु
 	u32 cmd;
 	u32 d;
 
 	cmd = save ? MI_STORE_REGISTER_MEM : MI_LOAD_REGISTER_MEM;
 	cmd |= MI_SRM_LRM_GLOBAL_GTT;
-	if (INTEL_GEN(stream->perf->i915) >= 8)
+	अगर (INTEL_GEN(stream->perf->i915) >= 8)
 		cmd++;
 
-	for (d = 0; d < dword_count; d++) {
+	क्रम (d = 0; d < dword_count; d++) अणु
 		*cs++ = cmd;
 		*cs++ = i915_mmio_reg_offset(reg) + 4 * d;
-		*cs++ = intel_gt_scratch_offset(stream->engine->gt,
+		*cs++ = पूर्णांकel_gt_scratch_offset(stream->engine->gt,
 						offset) + 4 * d;
 		*cs++ = 0;
-	}
+	पूर्ण
 
-	return cs;
-}
+	वापस cs;
+पूर्ण
 
-static int alloc_noa_wait(struct i915_perf_stream *stream)
-{
-	struct drm_i915_private *i915 = stream->perf->i915;
-	struct drm_i915_gem_object *bo;
-	struct i915_vma *vma;
-	const u64 delay_ticks = 0xffffffffffffffff -
-		intel_gt_ns_to_clock_interval(stream->perf->i915->ggtt.vm.gt,
-					      atomic64_read(&stream->perf->noa_programming_delay));
-	const u32 base = stream->engine->mmio_base;
-#define CS_GPR(x) GEN8_RING_CS_GPR(base, x)
+अटल पूर्णांक alloc_noa_रुको(काष्ठा i915_perf_stream *stream)
+अणु
+	काष्ठा drm_i915_निजी *i915 = stream->perf->i915;
+	काष्ठा drm_i915_gem_object *bo;
+	काष्ठा i915_vma *vma;
+	स्थिर u64 delay_ticks = 0xffffffffffffffff -
+		पूर्णांकel_gt_ns_to_घड़ी_पूर्णांकerval(stream->perf->i915->ggtt.vm.gt,
+					      atomic64_पढ़ो(&stream->perf->noa_programming_delay));
+	स्थिर u32 base = stream->engine->mmio_base;
+#घोषणा CS_GPR(x) GEN8_RING_CS_GPR(base, x)
 	u32 *batch, *ts0, *cs, *jump;
-	struct i915_gem_ww_ctx ww;
-	int ret, i;
-	enum {
+	काष्ठा i915_gem_ww_ctx ww;
+	पूर्णांक ret, i;
+	क्रमागत अणु
 		START_TS,
 		NOW_TS,
 		DELTA_TS,
 		JUMP_PREDICATE,
 		DELTA_TARGET,
 		N_CS_GPR
-	};
+	पूर्ण;
 
-	bo = i915_gem_object_create_internal(i915, 4096);
-	if (IS_ERR(bo)) {
+	bo = i915_gem_object_create_पूर्णांकernal(i915, 4096);
+	अगर (IS_ERR(bo)) अणु
 		drm_err(&i915->drm,
 			"Failed to allocate NOA wait batchbuffer\n");
-		return PTR_ERR(bo);
-	}
+		वापस PTR_ERR(bo);
+	पूर्ण
 
 	i915_gem_ww_ctx_init(&ww, true);
 retry:
 	ret = i915_gem_object_lock(bo, &ww);
-	if (ret)
-		goto out_ww;
+	अगर (ret)
+		जाओ out_ww;
 
 	/*
-	 * We pin in GGTT because we jump into this buffer now because
+	 * We pin in GGTT because we jump पूर्णांकo this buffer now because
 	 * multiple OA config BOs will have a jump to this address and it
-	 * needs to be fixed during the lifetime of the i915/perf stream.
+	 * needs to be fixed during the lअगरeसमय of the i915/perf stream.
 	 */
-	vma = i915_gem_object_ggtt_pin_ww(bo, &ww, NULL, 0, 0, PIN_HIGH);
-	if (IS_ERR(vma)) {
+	vma = i915_gem_object_ggtt_pin_ww(bo, &ww, शून्य, 0, 0, PIN_HIGH);
+	अगर (IS_ERR(vma)) अणु
 		ret = PTR_ERR(vma);
-		goto out_ww;
-	}
+		जाओ out_ww;
+	पूर्ण
 
 	batch = cs = i915_gem_object_pin_map(bo, I915_MAP_WB);
-	if (IS_ERR(batch)) {
+	अगर (IS_ERR(batch)) अणु
 		ret = PTR_ERR(batch);
-		goto err_unpin;
-	}
+		जाओ err_unpin;
+	पूर्ण
 
-	/* Save registers. */
-	for (i = 0; i < N_CS_GPR; i++)
-		cs = save_restore_register(
+	/* Save रेजिस्टरs. */
+	क्रम (i = 0; i < N_CS_GPR; i++)
+		cs = save_restore_रेजिस्टर(
 			stream, cs, true /* save */, CS_GPR(i),
 			INTEL_GT_SCRATCH_FIELD_PERF_CS_GPR + 8 * i, 2);
-	cs = save_restore_register(
+	cs = save_restore_रेजिस्टर(
 		stream, cs, true /* save */, MI_PREDICATE_RESULT_1,
 		INTEL_GT_SCRATCH_FIELD_PERF_PREDICATE_RESULT_1, 1);
 
-	/* First timestamp snapshot location. */
+	/* First बारtamp snapshot location. */
 	ts0 = cs;
 
 	/*
-	 * Initial snapshot of the timestamp register to implement the wait.
+	 * Initial snapshot of the बारtamp रेजिस्टर to implement the रुको.
 	 * We work with 32b values, so clear out the top 32b bits of the
-	 * register because the ALU works 64bits.
+	 * रेजिस्टर because the ALU works 64bits.
 	 */
 	*cs++ = MI_LOAD_REGISTER_IMM(1);
 	*cs++ = i915_mmio_reg_offset(CS_GPR(START_TS)) + 4;
@@ -1693,14 +1694,14 @@ retry:
 	*cs++ = i915_mmio_reg_offset(CS_GPR(START_TS));
 
 	/*
-	 * This is the location we're going to jump back into until the
-	 * required amount of time has passed.
+	 * This is the location we're going to jump back पूर्णांकo until the
+	 * required amount of समय has passed.
 	 */
 	jump = cs;
 
 	/*
-	 * Take another snapshot of the timestamp register. Take care to clear
-	 * up the top 32bits of CS_GPR(1) as we're using it for other
+	 * Take another snapshot of the बारtamp रेजिस्टर. Take care to clear
+	 * up the top 32bits of CS_GPR(1) as we're using it क्रम other
 	 * operations below.
 	 */
 	*cs++ = MI_LOAD_REGISTER_IMM(1);
@@ -1711,7 +1712,7 @@ retry:
 	*cs++ = i915_mmio_reg_offset(CS_GPR(NOW_TS));
 
 	/*
-	 * Do a diff between the 2 timestamps and store the result back into
+	 * Do a dअगरf between the 2 बारtamps and store the result back पूर्णांकo
 	 * CS_GPR(1).
 	 */
 	*cs++ = MI_MATH(5);
@@ -1722,15 +1723,15 @@ retry:
 	*cs++ = MI_MATH_STORE(MI_MATH_REG(JUMP_PREDICATE), MI_MATH_REG_CF);
 
 	/*
-	 * Transfer the carry flag (set to 1 if ts1 < ts0, meaning the
-	 * timestamp have rolled over the 32bits) into the predicate register
-	 * to be used for the predicated jump.
+	 * Transfer the carry flag (set to 1 अगर ts1 < ts0, meaning the
+	 * बारtamp have rolled over the 32bits) पूर्णांकo the predicate रेजिस्टर
+	 * to be used क्रम the predicated jump.
 	 */
 	*cs++ = MI_LOAD_REGISTER_REG | (3 - 2);
 	*cs++ = i915_mmio_reg_offset(CS_GPR(JUMP_PREDICATE));
 	*cs++ = i915_mmio_reg_offset(MI_PREDICATE_RESULT_1);
 
-	/* Restart from the beginning if we had timestamps roll over. */
+	/* Restart from the beginning अगर we had बारtamps roll over. */
 	*cs++ = (INTEL_GEN(i915) < 8 ?
 		 MI_BATCH_BUFFER_START :
 		 MI_BATCH_BUFFER_START_GEN8) |
@@ -1739,11 +1740,11 @@ retry:
 	*cs++ = 0;
 
 	/*
-	 * Now add the diff between to previous timestamps and add it to :
+	 * Now add the dअगरf between to previous बारtamps and add it to :
 	 *      (((1 * << 64) - 1) - delay_ns)
 	 *
-	 * When the Carry Flag contains 1 this means the elapsed time is
-	 * longer than the expected delay, and we can exit the wait loop.
+	 * When the Carry Flag contains 1 this means the elapsed समय is
+	 * दीर्घer than the expected delay, and we can निकास the रुको loop.
 	 */
 	*cs++ = MI_LOAD_REGISTER_IMM(2);
 	*cs++ = i915_mmio_reg_offset(CS_GPR(DELTA_TARGET));
@@ -1760,7 +1761,7 @@ retry:
 	*cs++ = MI_ARB_CHECK;
 
 	/*
-	 * Transfer the result into the predicate register to be used for the
+	 * Transfer the result पूर्णांकo the predicate रेजिस्टर to be used क्रम the
 	 * predicated jump.
 	 */
 	*cs++ = MI_LOAD_REGISTER_REG | (3 - 2);
@@ -1775,127 +1776,127 @@ retry:
 	*cs++ = i915_ggtt_offset(vma) + (jump - batch) * 4;
 	*cs++ = 0;
 
-	/* Restore registers. */
-	for (i = 0; i < N_CS_GPR; i++)
-		cs = save_restore_register(
+	/* Restore रेजिस्टरs. */
+	क्रम (i = 0; i < N_CS_GPR; i++)
+		cs = save_restore_रेजिस्टर(
 			stream, cs, false /* restore */, CS_GPR(i),
 			INTEL_GT_SCRATCH_FIELD_PERF_CS_GPR + 8 * i, 2);
-	cs = save_restore_register(
+	cs = save_restore_रेजिस्टर(
 		stream, cs, false /* restore */, MI_PREDICATE_RESULT_1,
 		INTEL_GT_SCRATCH_FIELD_PERF_PREDICATE_RESULT_1, 1);
 
-	/* And return to the ring. */
+	/* And वापस to the ring. */
 	*cs++ = MI_BATCH_BUFFER_END;
 
-	GEM_BUG_ON(cs - batch > PAGE_SIZE / sizeof(*batch));
+	GEM_BUG_ON(cs - batch > PAGE_SIZE / माप(*batch));
 
 	i915_gem_object_flush_map(bo);
 	__i915_gem_object_release_map(bo);
 
-	stream->noa_wait = vma;
-	goto out_ww;
+	stream->noa_रुको = vma;
+	जाओ out_ww;
 
 err_unpin:
 	i915_vma_unpin_and_release(&vma, 0);
 out_ww:
-	if (ret == -EDEADLK) {
+	अगर (ret == -EDEADLK) अणु
 		ret = i915_gem_ww_ctx_backoff(&ww);
-		if (!ret)
-			goto retry;
-	}
+		अगर (!ret)
+			जाओ retry;
+	पूर्ण
 	i915_gem_ww_ctx_fini(&ww);
-	if (ret)
+	अगर (ret)
 		i915_gem_object_put(bo);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static u32 *write_cs_mi_lri(u32 *cs,
-			    const struct i915_oa_reg *reg_data,
+अटल u32 *ग_लिखो_cs_mi_lri(u32 *cs,
+			    स्थिर काष्ठा i915_oa_reg *reg_data,
 			    u32 n_regs)
-{
+अणु
 	u32 i;
 
-	for (i = 0; i < n_regs; i++) {
-		if ((i % MI_LOAD_REGISTER_IMM_MAX_REGS) == 0) {
+	क्रम (i = 0; i < n_regs; i++) अणु
+		अगर ((i % MI_LOAD_REGISTER_IMM_MAX_REGS) == 0) अणु
 			u32 n_lri = min_t(u32,
 					  n_regs - i,
 					  MI_LOAD_REGISTER_IMM_MAX_REGS);
 
 			*cs++ = MI_LOAD_REGISTER_IMM(n_lri);
-		}
+		पूर्ण
 		*cs++ = i915_mmio_reg_offset(reg_data[i].addr);
 		*cs++ = reg_data[i].value;
-	}
+	पूर्ण
 
-	return cs;
-}
+	वापस cs;
+पूर्ण
 
-static int num_lri_dwords(int num_regs)
-{
-	int count = 0;
+अटल पूर्णांक num_lri_dwords(पूर्णांक num_regs)
+अणु
+	पूर्णांक count = 0;
 
-	if (num_regs > 0) {
+	अगर (num_regs > 0) अणु
 		count += DIV_ROUND_UP(num_regs, MI_LOAD_REGISTER_IMM_MAX_REGS);
 		count += num_regs * 2;
-	}
+	पूर्ण
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static struct i915_oa_config_bo *
-alloc_oa_config_buffer(struct i915_perf_stream *stream,
-		       struct i915_oa_config *oa_config)
-{
-	struct drm_i915_gem_object *obj;
-	struct i915_oa_config_bo *oa_bo;
-	struct i915_gem_ww_ctx ww;
-	size_t config_length = 0;
+अटल काष्ठा i915_oa_config_bo *
+alloc_oa_config_buffer(काष्ठा i915_perf_stream *stream,
+		       काष्ठा i915_oa_config *oa_config)
+अणु
+	काष्ठा drm_i915_gem_object *obj;
+	काष्ठा i915_oa_config_bo *oa_bo;
+	काष्ठा i915_gem_ww_ctx ww;
+	माप_प्रकार config_length = 0;
 	u32 *cs;
-	int err;
+	पूर्णांक err;
 
-	oa_bo = kzalloc(sizeof(*oa_bo), GFP_KERNEL);
-	if (!oa_bo)
-		return ERR_PTR(-ENOMEM);
+	oa_bo = kzalloc(माप(*oa_bo), GFP_KERNEL);
+	अगर (!oa_bo)
+		वापस ERR_PTR(-ENOMEM);
 
 	config_length += num_lri_dwords(oa_config->mux_regs_len);
 	config_length += num_lri_dwords(oa_config->b_counter_regs_len);
 	config_length += num_lri_dwords(oa_config->flex_regs_len);
 	config_length += 3; /* MI_BATCH_BUFFER_START */
-	config_length = ALIGN(sizeof(u32) * config_length, I915_GTT_PAGE_SIZE);
+	config_length = ALIGN(माप(u32) * config_length, I915_GTT_PAGE_SIZE);
 
 	obj = i915_gem_object_create_shmem(stream->perf->i915, config_length);
-	if (IS_ERR(obj)) {
+	अगर (IS_ERR(obj)) अणु
 		err = PTR_ERR(obj);
-		goto err_free;
-	}
+		जाओ err_मुक्त;
+	पूर्ण
 
 	i915_gem_ww_ctx_init(&ww, true);
 retry:
 	err = i915_gem_object_lock(obj, &ww);
-	if (err)
-		goto out_ww;
+	अगर (err)
+		जाओ out_ww;
 
 	cs = i915_gem_object_pin_map(obj, I915_MAP_WB);
-	if (IS_ERR(cs)) {
+	अगर (IS_ERR(cs)) अणु
 		err = PTR_ERR(cs);
-		goto out_ww;
-	}
+		जाओ out_ww;
+	पूर्ण
 
-	cs = write_cs_mi_lri(cs,
+	cs = ग_लिखो_cs_mi_lri(cs,
 			     oa_config->mux_regs,
 			     oa_config->mux_regs_len);
-	cs = write_cs_mi_lri(cs,
+	cs = ग_लिखो_cs_mi_lri(cs,
 			     oa_config->b_counter_regs,
 			     oa_config->b_counter_regs_len);
-	cs = write_cs_mi_lri(cs,
+	cs = ग_लिखो_cs_mi_lri(cs,
 			     oa_config->flex_regs,
 			     oa_config->flex_regs_len);
 
-	/* Jump into the active wait. */
+	/* Jump पूर्णांकo the active रुको. */
 	*cs++ = (INTEL_GEN(stream->perf->i915) < 8 ?
 		 MI_BATCH_BUFFER_START :
 		 MI_BATCH_BUFFER_START_GEN8);
-	*cs++ = i915_ggtt_offset(stream->noa_wait);
+	*cs++ = i915_ggtt_offset(stream->noa_रुको);
 	*cs++ = 0;
 
 	i915_gem_object_flush_map(obj);
@@ -1903,210 +1904,210 @@ retry:
 
 	oa_bo->vma = i915_vma_instance(obj,
 				       &stream->engine->gt->ggtt->vm,
-				       NULL);
-	if (IS_ERR(oa_bo->vma)) {
+				       शून्य);
+	अगर (IS_ERR(oa_bo->vma)) अणु
 		err = PTR_ERR(oa_bo->vma);
-		goto out_ww;
-	}
+		जाओ out_ww;
+	पूर्ण
 
 	oa_bo->oa_config = i915_oa_config_get(oa_config);
 	llist_add(&oa_bo->node, &stream->oa_config_bos);
 
 out_ww:
-	if (err == -EDEADLK) {
+	अगर (err == -EDEADLK) अणु
 		err = i915_gem_ww_ctx_backoff(&ww);
-		if (!err)
-			goto retry;
-	}
+		अगर (!err)
+			जाओ retry;
+	पूर्ण
 	i915_gem_ww_ctx_fini(&ww);
 
-	if (err)
+	अगर (err)
 		i915_gem_object_put(obj);
-err_free:
-	if (err) {
-		kfree(oa_bo);
-		return ERR_PTR(err);
-	}
-	return oa_bo;
-}
+err_मुक्त:
+	अगर (err) अणु
+		kमुक्त(oa_bo);
+		वापस ERR_PTR(err);
+	पूर्ण
+	वापस oa_bo;
+पूर्ण
 
-static struct i915_vma *
-get_oa_vma(struct i915_perf_stream *stream, struct i915_oa_config *oa_config)
-{
-	struct i915_oa_config_bo *oa_bo;
+अटल काष्ठा i915_vma *
+get_oa_vma(काष्ठा i915_perf_stream *stream, काष्ठा i915_oa_config *oa_config)
+अणु
+	काष्ठा i915_oa_config_bo *oa_bo;
 
 	/*
-	 * Look for the buffer in the already allocated BOs attached
+	 * Look क्रम the buffer in the alपढ़ोy allocated BOs attached
 	 * to the stream.
 	 */
-	llist_for_each_entry(oa_bo, stream->oa_config_bos.first, node) {
-		if (oa_bo->oa_config == oa_config &&
-		    memcmp(oa_bo->oa_config->uuid,
+	llist_क्रम_each_entry(oa_bo, stream->oa_config_bos.first, node) अणु
+		अगर (oa_bo->oa_config == oa_config &&
+		    स_भेद(oa_bo->oa_config->uuid,
 			   oa_config->uuid,
-			   sizeof(oa_config->uuid)) == 0)
-			goto out;
-	}
+			   माप(oa_config->uuid)) == 0)
+			जाओ out;
+	पूर्ण
 
 	oa_bo = alloc_oa_config_buffer(stream, oa_config);
-	if (IS_ERR(oa_bo))
-		return ERR_CAST(oa_bo);
+	अगर (IS_ERR(oa_bo))
+		वापस ERR_CAST(oa_bo);
 
 out:
-	return i915_vma_get(oa_bo->vma);
-}
+	वापस i915_vma_get(oa_bo->vma);
+पूर्ण
 
-static int
-emit_oa_config(struct i915_perf_stream *stream,
-	       struct i915_oa_config *oa_config,
-	       struct intel_context *ce,
-	       struct i915_active *active)
-{
-	struct i915_request *rq;
-	struct i915_vma *vma;
-	struct i915_gem_ww_ctx ww;
-	int err;
+अटल पूर्णांक
+emit_oa_config(काष्ठा i915_perf_stream *stream,
+	       काष्ठा i915_oa_config *oa_config,
+	       काष्ठा पूर्णांकel_context *ce,
+	       काष्ठा i915_active *active)
+अणु
+	काष्ठा i915_request *rq;
+	काष्ठा i915_vma *vma;
+	काष्ठा i915_gem_ww_ctx ww;
+	पूर्णांक err;
 
 	vma = get_oa_vma(stream, oa_config);
-	if (IS_ERR(vma))
-		return PTR_ERR(vma);
+	अगर (IS_ERR(vma))
+		वापस PTR_ERR(vma);
 
 	i915_gem_ww_ctx_init(&ww, true);
 retry:
 	err = i915_gem_object_lock(vma->obj, &ww);
-	if (err)
-		goto err;
+	अगर (err)
+		जाओ err;
 
 	err = i915_vma_pin_ww(vma, &ww, 0, 0, PIN_GLOBAL | PIN_HIGH);
-	if (err)
-		goto err;
+	अगर (err)
+		जाओ err;
 
-	intel_engine_pm_get(ce->engine);
+	पूर्णांकel_engine_pm_get(ce->engine);
 	rq = i915_request_create(ce);
-	intel_engine_pm_put(ce->engine);
-	if (IS_ERR(rq)) {
+	पूर्णांकel_engine_pm_put(ce->engine);
+	अगर (IS_ERR(rq)) अणु
 		err = PTR_ERR(rq);
-		goto err_vma_unpin;
-	}
+		जाओ err_vma_unpin;
+	पूर्ण
 
-	if (!IS_ERR_OR_NULL(active)) {
-		/* After all individual context modifications */
-		err = i915_request_await_active(rq, active,
+	अगर (!IS_ERR_OR_शून्य(active)) अणु
+		/* After all inभागidual context modअगरications */
+		err = i915_request_aरुको_active(rq, active,
 						I915_ACTIVE_AWAIT_ACTIVE);
-		if (err)
-			goto err_add_request;
+		अगर (err)
+			जाओ err_add_request;
 
 		err = i915_active_add_request(active, rq);
-		if (err)
-			goto err_add_request;
-	}
+		अगर (err)
+			जाओ err_add_request;
+	पूर्ण
 
-	err = i915_request_await_object(rq, vma->obj, 0);
-	if (!err)
+	err = i915_request_aरुको_object(rq, vma->obj, 0);
+	अगर (!err)
 		err = i915_vma_move_to_active(vma, rq, 0);
-	if (err)
-		goto err_add_request;
+	अगर (err)
+		जाओ err_add_request;
 
 	err = rq->engine->emit_bb_start(rq,
 					vma->node.start, 0,
 					I915_DISPATCH_SECURE);
-	if (err)
-		goto err_add_request;
+	अगर (err)
+		जाओ err_add_request;
 
 err_add_request:
 	i915_request_add(rq);
 err_vma_unpin:
 	i915_vma_unpin(vma);
 err:
-	if (err == -EDEADLK) {
+	अगर (err == -EDEADLK) अणु
 		err = i915_gem_ww_ctx_backoff(&ww);
-		if (!err)
-			goto retry;
-	}
+		अगर (!err)
+			जाओ retry;
+	पूर्ण
 
 	i915_gem_ww_ctx_fini(&ww);
 	i915_vma_put(vma);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static struct intel_context *oa_context(struct i915_perf_stream *stream)
-{
-	return stream->pinned_ctx ?: stream->engine->kernel_context;
-}
+अटल काष्ठा पूर्णांकel_context *oa_context(काष्ठा i915_perf_stream *stream)
+अणु
+	वापस stream->pinned_ctx ?: stream->engine->kernel_context;
+पूर्ण
 
-static int
-hsw_enable_metric_set(struct i915_perf_stream *stream,
-		      struct i915_active *active)
-{
-	struct intel_uncore *uncore = stream->uncore;
+अटल पूर्णांक
+hsw_enable_metric_set(काष्ठा i915_perf_stream *stream,
+		      काष्ठा i915_active *active)
+अणु
+	काष्ठा पूर्णांकel_uncore *uncore = stream->uncore;
 
 	/*
 	 * PRM:
 	 *
-	 * OA unit is using “crclk” for its functionality. When trunk
-	 * level clock gating takes place, OA clock would be gated,
-	 * unable to count the events from non-render clock domain.
-	 * Render clock gating must be disabled when OA is enabled to
-	 * count the events from non-render domain. Unit level clock
-	 * gating for RCS should also be disabled.
+	 * OA unit is using ै crclkै  क्रम its functionality. When trunk
+	 * level घड़ी gating takes place, OA घड़ी would be gated,
+	 * unable to count the events from non-render घड़ी करोमुख्य.
+	 * Render घड़ी gating must be disabled when OA is enabled to
+	 * count the events from non-render करोमुख्य. Unit level घड़ी
+	 * gating क्रम RCS should also be disabled.
 	 */
-	intel_uncore_rmw(uncore, GEN7_MISCCPCTL,
+	पूर्णांकel_uncore_rmw(uncore, GEN7_MISCCPCTL,
 			 GEN7_DOP_CLOCK_GATE_ENABLE, 0);
-	intel_uncore_rmw(uncore, GEN6_UCGCTL1,
+	पूर्णांकel_uncore_rmw(uncore, GEN6_UCGCTL1,
 			 0, GEN6_CSUNIT_CLOCK_GATE_DISABLE);
 
-	return emit_oa_config(stream,
+	वापस emit_oa_config(stream,
 			      stream->oa_config, oa_context(stream),
 			      active);
-}
+पूर्ण
 
-static void hsw_disable_metric_set(struct i915_perf_stream *stream)
-{
-	struct intel_uncore *uncore = stream->uncore;
+अटल व्योम hsw_disable_metric_set(काष्ठा i915_perf_stream *stream)
+अणु
+	काष्ठा पूर्णांकel_uncore *uncore = stream->uncore;
 
-	intel_uncore_rmw(uncore, GEN6_UCGCTL1,
+	पूर्णांकel_uncore_rmw(uncore, GEN6_UCGCTL1,
 			 GEN6_CSUNIT_CLOCK_GATE_DISABLE, 0);
-	intel_uncore_rmw(uncore, GEN7_MISCCPCTL,
+	पूर्णांकel_uncore_rmw(uncore, GEN7_MISCCPCTL,
 			 0, GEN7_DOP_CLOCK_GATE_ENABLE);
 
-	intel_uncore_rmw(uncore, GDT_CHICKEN_BITS, GT_NOA_ENABLE, 0);
-}
+	पूर्णांकel_uncore_rmw(uncore, GDT_CHICKEN_BITS, GT_NOA_ENABLE, 0);
+पूर्ण
 
-static u32 oa_config_flex_reg(const struct i915_oa_config *oa_config,
+अटल u32 oa_config_flex_reg(स्थिर काष्ठा i915_oa_config *oa_config,
 			      i915_reg_t reg)
-{
+अणु
 	u32 mmio = i915_mmio_reg_offset(reg);
-	int i;
+	पूर्णांक i;
 
 	/*
-	 * This arbitrary default will select the 'EU FPU0 Pipeline
+	 * This arbitrary शेष will select the 'EU FPU0 Pipeline
 	 * Active' event. In the future it's anticipated that there
 	 * will be an explicit 'No Event' we can select, but not yet...
 	 */
-	if (!oa_config)
-		return 0;
+	अगर (!oa_config)
+		वापस 0;
 
-	for (i = 0; i < oa_config->flex_regs_len; i++) {
-		if (i915_mmio_reg_offset(oa_config->flex_regs[i].addr) == mmio)
-			return oa_config->flex_regs[i].value;
-	}
+	क्रम (i = 0; i < oa_config->flex_regs_len; i++) अणु
+		अगर (i915_mmio_reg_offset(oa_config->flex_regs[i].addr) == mmio)
+			वापस oa_config->flex_regs[i].value;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 /*
- * NB: It must always remain pointer safe to run this even if the OA unit
+ * NB: It must always reमुख्य poपूर्णांकer safe to run this even अगर the OA unit
  * has been disabled.
  *
- * It's fine to put out-of-date values into these per-context registers
- * in the case that the OA unit has been disabled.
+ * It's fine to put out-of-date values पूर्णांकo these per-context रेजिस्टरs
+ * in the हाल that the OA unit has been disabled.
  */
-static void
-gen8_update_reg_state_unlocked(const struct intel_context *ce,
-			       const struct i915_perf_stream *stream)
-{
+अटल व्योम
+gen8_update_reg_state_unlocked(स्थिर काष्ठा पूर्णांकel_context *ce,
+			       स्थिर काष्ठा i915_perf_stream *stream)
+अणु
 	u32 ctx_oactxctrl = stream->perf->ctx_oactxctrl_offset;
 	u32 ctx_flexeu0 = stream->perf->ctx_flexeu0_offset;
-	/* The MMIO offsets for Flex EU registers aren't contiguous */
-	i915_reg_t flex_regs[] = {
+	/* The MMIO offsets क्रम Flex EU रेजिस्टरs aren't contiguous */
+	i915_reg_t flex_regs[] = अणु
 		EU_PERF_CNTL0,
 		EU_PERF_CNTL1,
 		EU_PERF_CNTL2,
@@ -2114,432 +2115,432 @@ gen8_update_reg_state_unlocked(const struct intel_context *ce,
 		EU_PERF_CNTL4,
 		EU_PERF_CNTL5,
 		EU_PERF_CNTL6,
-	};
+	पूर्ण;
 	u32 *reg_state = ce->lrc_reg_state;
-	int i;
+	पूर्णांक i;
 
 	reg_state[ctx_oactxctrl + 1] =
 		(stream->period_exponent << GEN8_OA_TIMER_PERIOD_SHIFT) |
 		(stream->periodic ? GEN8_OA_TIMER_ENABLE : 0) |
 		GEN8_OA_COUNTER_RESUME;
 
-	for (i = 0; i < ARRAY_SIZE(flex_regs); i++)
+	क्रम (i = 0; i < ARRAY_SIZE(flex_regs); i++)
 		reg_state[ctx_flexeu0 + i * 2 + 1] =
 			oa_config_flex_reg(stream->oa_config, flex_regs[i]);
-}
+पूर्ण
 
-struct flex {
+काष्ठा flex अणु
 	i915_reg_t reg;
 	u32 offset;
 	u32 value;
-};
+पूर्ण;
 
-static int
-gen8_store_flex(struct i915_request *rq,
-		struct intel_context *ce,
-		const struct flex *flex, unsigned int count)
-{
+अटल पूर्णांक
+gen8_store_flex(काष्ठा i915_request *rq,
+		काष्ठा पूर्णांकel_context *ce,
+		स्थिर काष्ठा flex *flex, अचिन्हित पूर्णांक count)
+अणु
 	u32 offset;
 	u32 *cs;
 
-	cs = intel_ring_begin(rq, 4 * count);
-	if (IS_ERR(cs))
-		return PTR_ERR(cs);
+	cs = पूर्णांकel_ring_begin(rq, 4 * count);
+	अगर (IS_ERR(cs))
+		वापस PTR_ERR(cs);
 
 	offset = i915_ggtt_offset(ce->state) + LRC_STATE_OFFSET;
-	do {
+	करो अणु
 		*cs++ = MI_STORE_DWORD_IMM_GEN4 | MI_USE_GGTT;
-		*cs++ = offset + flex->offset * sizeof(u32);
+		*cs++ = offset + flex->offset * माप(u32);
 		*cs++ = 0;
 		*cs++ = flex->value;
-	} while (flex++, --count);
+	पूर्ण जबतक (flex++, --count);
 
-	intel_ring_advance(rq, cs);
+	पूर्णांकel_ring_advance(rq, cs);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-gen8_load_flex(struct i915_request *rq,
-	       struct intel_context *ce,
-	       const struct flex *flex, unsigned int count)
-{
+अटल पूर्णांक
+gen8_load_flex(काष्ठा i915_request *rq,
+	       काष्ठा पूर्णांकel_context *ce,
+	       स्थिर काष्ठा flex *flex, अचिन्हित पूर्णांक count)
+अणु
 	u32 *cs;
 
 	GEM_BUG_ON(!count || count > 63);
 
-	cs = intel_ring_begin(rq, 2 * count + 2);
-	if (IS_ERR(cs))
-		return PTR_ERR(cs);
+	cs = पूर्णांकel_ring_begin(rq, 2 * count + 2);
+	अगर (IS_ERR(cs))
+		वापस PTR_ERR(cs);
 
 	*cs++ = MI_LOAD_REGISTER_IMM(count);
-	do {
+	करो अणु
 		*cs++ = i915_mmio_reg_offset(flex->reg);
 		*cs++ = flex->value;
-	} while (flex++, --count);
+	पूर्ण जबतक (flex++, --count);
 	*cs++ = MI_NOOP;
 
-	intel_ring_advance(rq, cs);
+	पूर्णांकel_ring_advance(rq, cs);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int gen8_modify_context(struct intel_context *ce,
-			       const struct flex *flex, unsigned int count)
-{
-	struct i915_request *rq;
-	int err;
+अटल पूर्णांक gen8_modअगरy_context(काष्ठा पूर्णांकel_context *ce,
+			       स्थिर काष्ठा flex *flex, अचिन्हित पूर्णांक count)
+अणु
+	काष्ठा i915_request *rq;
+	पूर्णांक err;
 
-	rq = intel_engine_create_kernel_request(ce->engine);
-	if (IS_ERR(rq))
-		return PTR_ERR(rq);
+	rq = पूर्णांकel_engine_create_kernel_request(ce->engine);
+	अगर (IS_ERR(rq))
+		वापस PTR_ERR(rq);
 
 	/* Serialise with the remote context */
-	err = intel_context_prepare_remote_request(ce, rq);
-	if (err == 0)
+	err = पूर्णांकel_context_prepare_remote_request(ce, rq);
+	अगर (err == 0)
 		err = gen8_store_flex(rq, ce, flex, count);
 
 	i915_request_add(rq);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int
-gen8_modify_self(struct intel_context *ce,
-		 const struct flex *flex, unsigned int count,
-		 struct i915_active *active)
-{
-	struct i915_request *rq;
-	int err;
+अटल पूर्णांक
+gen8_modअगरy_self(काष्ठा पूर्णांकel_context *ce,
+		 स्थिर काष्ठा flex *flex, अचिन्हित पूर्णांक count,
+		 काष्ठा i915_active *active)
+अणु
+	काष्ठा i915_request *rq;
+	पूर्णांक err;
 
-	intel_engine_pm_get(ce->engine);
+	पूर्णांकel_engine_pm_get(ce->engine);
 	rq = i915_request_create(ce);
-	intel_engine_pm_put(ce->engine);
-	if (IS_ERR(rq))
-		return PTR_ERR(rq);
+	पूर्णांकel_engine_pm_put(ce->engine);
+	अगर (IS_ERR(rq))
+		वापस PTR_ERR(rq);
 
-	if (!IS_ERR_OR_NULL(active)) {
+	अगर (!IS_ERR_OR_शून्य(active)) अणु
 		err = i915_active_add_request(active, rq);
-		if (err)
-			goto err_add_request;
-	}
+		अगर (err)
+			जाओ err_add_request;
+	पूर्ण
 
 	err = gen8_load_flex(rq, ce, flex, count);
-	if (err)
-		goto err_add_request;
+	अगर (err)
+		जाओ err_add_request;
 
 err_add_request:
 	i915_request_add(rq);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int gen8_configure_context(struct i915_gem_context *ctx,
-				  struct flex *flex, unsigned int count)
-{
-	struct i915_gem_engines_iter it;
-	struct intel_context *ce;
-	int err = 0;
+अटल पूर्णांक gen8_configure_context(काष्ठा i915_gem_context *ctx,
+				  काष्ठा flex *flex, अचिन्हित पूर्णांक count)
+अणु
+	काष्ठा i915_gem_engines_iter it;
+	काष्ठा पूर्णांकel_context *ce;
+	पूर्णांक err = 0;
 
-	for_each_gem_engine(ce, i915_gem_context_lock_engines(ctx), it) {
+	क्रम_each_gem_engine(ce, i915_gem_context_lock_engines(ctx), it) अणु
 		GEM_BUG_ON(ce == ce->engine->kernel_context);
 
-		if (ce->engine->class != RENDER_CLASS)
-			continue;
+		अगर (ce->engine->class != RENDER_CLASS)
+			जारी;
 
 		/* Otherwise OA settings will be set upon first use */
-		if (!intel_context_pin_if_active(ce))
-			continue;
+		अगर (!पूर्णांकel_context_pin_अगर_active(ce))
+			जारी;
 
-		flex->value = intel_sseu_make_rpcs(ce->engine->gt, &ce->sseu);
-		err = gen8_modify_context(ce, flex, count);
+		flex->value = पूर्णांकel_sseu_make_rpcs(ce->engine->gt, &ce->sseu);
+		err = gen8_modअगरy_context(ce, flex, count);
 
-		intel_context_unpin(ce);
-		if (err)
-			break;
-	}
+		पूर्णांकel_context_unpin(ce);
+		अगर (err)
+			अवरोध;
+	पूर्ण
 	i915_gem_context_unlock_engines(ctx);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int gen12_configure_oar_context(struct i915_perf_stream *stream,
-				       struct i915_active *active)
-{
-	int err;
-	struct intel_context *ce = stream->pinned_ctx;
-	u32 format = stream->oa_buffer.format;
-	struct flex regs_context[] = {
-		{
+अटल पूर्णांक gen12_configure_oar_context(काष्ठा i915_perf_stream *stream,
+				       काष्ठा i915_active *active)
+अणु
+	पूर्णांक err;
+	काष्ठा पूर्णांकel_context *ce = stream->pinned_ctx;
+	u32 क्रमmat = stream->oa_buffer.क्रमmat;
+	काष्ठा flex regs_context[] = अणु
+		अणु
 			GEN8_OACTXCONTROL,
 			stream->perf->ctx_oactxctrl_offset + 1,
 			active ? GEN8_OA_COUNTER_RESUME : 0,
-		},
-	};
+		पूर्ण,
+	पूर्ण;
 	/* Offsets in regs_lri are not used since this configuration is only
-	 * applied using LRI. Initialize the correct offsets for posterity.
+	 * applied using LRI. Initialize the correct offsets क्रम posterity.
 	 */
-#define GEN12_OAR_OACONTROL_OFFSET 0x5B0
-	struct flex regs_lri[] = {
-		{
+#घोषणा GEN12_OAR_OACONTROL_OFFSET 0x5B0
+	काष्ठा flex regs_lri[] = अणु
+		अणु
 			GEN12_OAR_OACONTROL,
 			GEN12_OAR_OACONTROL_OFFSET + 1,
-			(format << GEN12_OAR_OACONTROL_COUNTER_FORMAT_SHIFT) |
+			(क्रमmat << GEN12_OAR_OACONTROL_COUNTER_FORMAT_SHIFT) |
 			(active ? GEN12_OAR_OACONTROL_COUNTER_ENABLE : 0)
-		},
-		{
+		पूर्ण,
+		अणु
 			RING_CONTEXT_CONTROL(ce->engine->mmio_base),
 			CTX_CONTEXT_CONTROL,
 			_MASKED_FIELD(GEN12_CTX_CTRL_OAR_CONTEXT_ENABLE,
 				      active ?
 				      GEN12_CTX_CTRL_OAR_CONTEXT_ENABLE :
 				      0)
-		},
-	};
+		पूर्ण,
+	पूर्ण;
 
-	/* Modify the context image of pinned context with regs_context*/
-	err = intel_context_lock_pinned(ce);
-	if (err)
-		return err;
+	/* Modअगरy the context image of pinned context with regs_context*/
+	err = पूर्णांकel_context_lock_pinned(ce);
+	अगर (err)
+		वापस err;
 
-	err = gen8_modify_context(ce, regs_context, ARRAY_SIZE(regs_context));
-	intel_context_unlock_pinned(ce);
-	if (err)
-		return err;
+	err = gen8_modअगरy_context(ce, regs_context, ARRAY_SIZE(regs_context));
+	पूर्णांकel_context_unlock_pinned(ce);
+	अगर (err)
+		वापस err;
 
 	/* Apply regs_lri using LRI with pinned context */
-	return gen8_modify_self(ce, regs_lri, ARRAY_SIZE(regs_lri), active);
-}
+	वापस gen8_modअगरy_self(ce, regs_lri, ARRAY_SIZE(regs_lri), active);
+पूर्ण
 
 /*
  * Manages updating the per-context aspects of the OA stream
  * configuration across all contexts.
  *
  * The awkward consideration here is that OACTXCONTROL controls the
- * exponent for periodic sampling which is primarily used for system
+ * exponent क्रम periodic sampling which is primarily used क्रम प्रणाली
  * wide profiling where we'd like a consistent sampling period even in
- * the face of context switches.
+ * the face of context चयनes.
  *
- * Our approach of updating the register state context (as opposed to
+ * Our approach of updating the रेजिस्टर state context (as opposed to
  * say using a workaround batch buffer) ensures that the hardware
- * won't automatically reload an out-of-date timer exponent even
- * transiently before a WA BB could be parsed.
+ * won't स्वतःmatically reload an out-of-date समयr exponent even
+ * transiently beक्रमe a WA BB could be parsed.
  *
  * This function needs to:
  * - Ensure the currently running context's per-context OA state is
  *   updated
  * - Ensure that all existing contexts will have the correct per-context
- *   OA state if they are scheduled for use.
+ *   OA state अगर they are scheduled क्रम use.
  * - Ensure any new contexts will be initialized with the correct
  *   per-context OA state.
  *
  * Note: it's only the RCS/Render context that has any OA state.
- * Note: the first flex register passed must always be R_PWR_CLK_STATE
+ * Note: the first flex रेजिस्टर passed must always be R_PWR_CLK_STATE
  */
-static int
-oa_configure_all_contexts(struct i915_perf_stream *stream,
-			  struct flex *regs,
-			  size_t num_regs,
-			  struct i915_active *active)
-{
-	struct drm_i915_private *i915 = stream->perf->i915;
-	struct intel_engine_cs *engine;
-	struct i915_gem_context *ctx, *cn;
-	int err;
+अटल पूर्णांक
+oa_configure_all_contexts(काष्ठा i915_perf_stream *stream,
+			  काष्ठा flex *regs,
+			  माप_प्रकार num_regs,
+			  काष्ठा i915_active *active)
+अणु
+	काष्ठा drm_i915_निजी *i915 = stream->perf->i915;
+	काष्ठा पूर्णांकel_engine_cs *engine;
+	काष्ठा i915_gem_context *ctx, *cn;
+	पूर्णांक err;
 
-	lockdep_assert_held(&stream->perf->lock);
+	lockdep_निश्चित_held(&stream->perf->lock);
 
 	/*
-	 * The OA register config is setup through the context image. This image
-	 * might be written to by the GPU on context switch (in particular on
+	 * The OA रेजिस्टर config is setup through the context image. This image
+	 * might be written to by the GPU on context चयन (in particular on
 	 * lite-restore). This means we can't safely update a context's image,
-	 * if this context is scheduled/submitted to run on the GPU.
+	 * अगर this context is scheduled/submitted to run on the GPU.
 	 *
-	 * We could emit the OA register config through the batch buffer but
-	 * this might leave small interval of time where the OA unit is
+	 * We could emit the OA रेजिस्टर config through the batch buffer but
+	 * this might leave small पूर्णांकerval of समय where the OA unit is
 	 * configured at an invalid sampling period.
 	 *
 	 * Note that since we emit all requests from a single ring, there
 	 * is still an implicit global barrier here that may cause a high
-	 * priority context to wait for an otherwise independent low priority
-	 * context. Contexts idle at the time of reconfiguration are not
+	 * priority context to रुको क्रम an otherwise independent low priority
+	 * context. Contexts idle at the समय of reconfiguration are not
 	 * trapped behind the barrier.
 	 */
 	spin_lock(&i915->gem.contexts.lock);
-	list_for_each_entry_safe(ctx, cn, &i915->gem.contexts.list, link) {
-		if (!kref_get_unless_zero(&ctx->ref))
-			continue;
+	list_क्रम_each_entry_safe(ctx, cn, &i915->gem.contexts.list, link) अणु
+		अगर (!kref_get_unless_zero(&ctx->ref))
+			जारी;
 
 		spin_unlock(&i915->gem.contexts.lock);
 
 		err = gen8_configure_context(ctx, regs, num_regs);
-		if (err) {
+		अगर (err) अणु
 			i915_gem_context_put(ctx);
-			return err;
-		}
+			वापस err;
+		पूर्ण
 
 		spin_lock(&i915->gem.contexts.lock);
 		list_safe_reset_next(ctx, cn, link);
 		i915_gem_context_put(ctx);
-	}
+	पूर्ण
 	spin_unlock(&i915->gem.contexts.lock);
 
 	/*
-	 * After updating all other contexts, we need to modify ourselves.
-	 * If we don't modify the kernel_context, we do not get events while
+	 * After updating all other contexts, we need to modअगरy ourselves.
+	 * If we करोn't modअगरy the kernel_context, we करो not get events जबतक
 	 * idle.
 	 */
-	for_each_uabi_engine(engine, i915) {
-		struct intel_context *ce = engine->kernel_context;
+	क्रम_each_uabi_engine(engine, i915) अणु
+		काष्ठा पूर्णांकel_context *ce = engine->kernel_context;
 
-		if (engine->class != RENDER_CLASS)
-			continue;
+		अगर (engine->class != RENDER_CLASS)
+			जारी;
 
-		regs[0].value = intel_sseu_make_rpcs(engine->gt, &ce->sseu);
+		regs[0].value = पूर्णांकel_sseu_make_rpcs(engine->gt, &ce->sseu);
 
-		err = gen8_modify_self(ce, regs, num_regs, active);
-		if (err)
-			return err;
-	}
+		err = gen8_modअगरy_self(ce, regs, num_regs, active);
+		अगर (err)
+			वापस err;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-gen12_configure_all_contexts(struct i915_perf_stream *stream,
-			     const struct i915_oa_config *oa_config,
-			     struct i915_active *active)
-{
-	struct flex regs[] = {
-		{
+अटल पूर्णांक
+gen12_configure_all_contexts(काष्ठा i915_perf_stream *stream,
+			     स्थिर काष्ठा i915_oa_config *oa_config,
+			     काष्ठा i915_active *active)
+अणु
+	काष्ठा flex regs[] = अणु
+		अणु
 			GEN8_R_PWR_CLK_STATE,
 			CTX_R_PWR_CLK_STATE,
-		},
-	};
+		पूर्ण,
+	पूर्ण;
 
-	return oa_configure_all_contexts(stream,
+	वापस oa_configure_all_contexts(stream,
 					 regs, ARRAY_SIZE(regs),
 					 active);
-}
+पूर्ण
 
-static int
-lrc_configure_all_contexts(struct i915_perf_stream *stream,
-			   const struct i915_oa_config *oa_config,
-			   struct i915_active *active)
-{
-	/* The MMIO offsets for Flex EU registers aren't contiguous */
-	const u32 ctx_flexeu0 = stream->perf->ctx_flexeu0_offset;
-#define ctx_flexeuN(N) (ctx_flexeu0 + 2 * (N) + 1)
-	struct flex regs[] = {
-		{
+अटल पूर्णांक
+lrc_configure_all_contexts(काष्ठा i915_perf_stream *stream,
+			   स्थिर काष्ठा i915_oa_config *oa_config,
+			   काष्ठा i915_active *active)
+अणु
+	/* The MMIO offsets क्रम Flex EU रेजिस्टरs aren't contiguous */
+	स्थिर u32 ctx_flexeu0 = stream->perf->ctx_flexeu0_offset;
+#घोषणा ctx_flexeuN(N) (ctx_flexeu0 + 2 * (N) + 1)
+	काष्ठा flex regs[] = अणु
+		अणु
 			GEN8_R_PWR_CLK_STATE,
 			CTX_R_PWR_CLK_STATE,
-		},
-		{
+		पूर्ण,
+		अणु
 			GEN8_OACTXCONTROL,
 			stream->perf->ctx_oactxctrl_offset + 1,
-		},
-		{ EU_PERF_CNTL0, ctx_flexeuN(0) },
-		{ EU_PERF_CNTL1, ctx_flexeuN(1) },
-		{ EU_PERF_CNTL2, ctx_flexeuN(2) },
-		{ EU_PERF_CNTL3, ctx_flexeuN(3) },
-		{ EU_PERF_CNTL4, ctx_flexeuN(4) },
-		{ EU_PERF_CNTL5, ctx_flexeuN(5) },
-		{ EU_PERF_CNTL6, ctx_flexeuN(6) },
-	};
-#undef ctx_flexeuN
-	int i;
+		पूर्ण,
+		अणु EU_PERF_CNTL0, ctx_flexeuN(0) पूर्ण,
+		अणु EU_PERF_CNTL1, ctx_flexeuN(1) पूर्ण,
+		अणु EU_PERF_CNTL2, ctx_flexeuN(2) पूर्ण,
+		अणु EU_PERF_CNTL3, ctx_flexeuN(3) पूर्ण,
+		अणु EU_PERF_CNTL4, ctx_flexeuN(4) पूर्ण,
+		अणु EU_PERF_CNTL5, ctx_flexeuN(5) पूर्ण,
+		अणु EU_PERF_CNTL6, ctx_flexeuN(6) पूर्ण,
+	पूर्ण;
+#अघोषित ctx_flexeuN
+	पूर्णांक i;
 
 	regs[1].value =
 		(stream->period_exponent << GEN8_OA_TIMER_PERIOD_SHIFT) |
 		(stream->periodic ? GEN8_OA_TIMER_ENABLE : 0) |
 		GEN8_OA_COUNTER_RESUME;
 
-	for (i = 2; i < ARRAY_SIZE(regs); i++)
+	क्रम (i = 2; i < ARRAY_SIZE(regs); i++)
 		regs[i].value = oa_config_flex_reg(oa_config, regs[i].reg);
 
-	return oa_configure_all_contexts(stream,
+	वापस oa_configure_all_contexts(stream,
 					 regs, ARRAY_SIZE(regs),
 					 active);
-}
+पूर्ण
 
-static int
-gen8_enable_metric_set(struct i915_perf_stream *stream,
-		       struct i915_active *active)
-{
-	struct intel_uncore *uncore = stream->uncore;
-	struct i915_oa_config *oa_config = stream->oa_config;
-	int ret;
+अटल पूर्णांक
+gen8_enable_metric_set(काष्ठा i915_perf_stream *stream,
+		       काष्ठा i915_active *active)
+अणु
+	काष्ठा पूर्णांकel_uncore *uncore = stream->uncore;
+	काष्ठा i915_oa_config *oa_config = stream->oa_config;
+	पूर्णांक ret;
 
 	/*
-	 * We disable slice/unslice clock ratio change reports on SKL since
+	 * We disable slice/unslice घड़ी ratio change reports on SKL since
 	 * they are too noisy. The HW generates a lot of redundant reports
 	 * where the ratio hasn't really changed causing a lot of redundant
 	 * work to processes and increasing the chances we'll hit buffer
 	 * overruns.
 	 *
-	 * Although we don't currently use the 'disable overrun' OABUFFER
-	 * feature it's worth noting that clock ratio reports have to be
-	 * disabled before considering to use that feature since the HW doesn't
+	 * Although we करोn't currently use the 'disable overrun' OABUFFER
+	 * feature it's worth noting that घड़ी ratio reports have to be
+	 * disabled beक्रमe considering to use that feature since the HW करोesn't
 	 * correctly block these reports.
 	 *
 	 * Currently none of the high-level metrics we have depend on knowing
 	 * this ratio to normalize.
 	 *
-	 * Note: This register is not power context saved and restored, but
-	 * that's OK considering that we disable RC6 while the OA unit is
+	 * Note: This रेजिस्टर is not घातer context saved and restored, but
+	 * that's OK considering that we disable RC6 जबतक the OA unit is
 	 * enabled.
 	 *
 	 * The _INCLUDE_CLK_RATIO bit allows the slice/unslice frequency to
-	 * be read back from automatically triggered reports, as part of the
+	 * be पढ़ो back from स्वतःmatically triggered reports, as part of the
 	 * RPT_ID field.
 	 */
-	if (IS_GEN_RANGE(stream->perf->i915, 9, 11)) {
-		intel_uncore_write(uncore, GEN8_OA_DEBUG,
+	अगर (IS_GEN_RANGE(stream->perf->i915, 9, 11)) अणु
+		पूर्णांकel_uncore_ग_लिखो(uncore, GEN8_OA_DEBUG,
 				   _MASKED_BIT_ENABLE(GEN9_OA_DEBUG_DISABLE_CLK_RATIO_REPORTS |
 						      GEN9_OA_DEBUG_INCLUDE_CLK_RATIO));
-	}
+	पूर्ण
 
 	/*
 	 * Update all contexts prior writing the mux configurations as we need
-	 * to make sure all slices/subslices are ON before writing to NOA
-	 * registers.
+	 * to make sure all slices/subslices are ON beक्रमe writing to NOA
+	 * रेजिस्टरs.
 	 */
 	ret = lrc_configure_all_contexts(stream, oa_config, active);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	return emit_oa_config(stream,
+	वापस emit_oa_config(stream,
 			      stream->oa_config, oa_context(stream),
 			      active);
-}
+पूर्ण
 
-static u32 oag_report_ctx_switches(const struct i915_perf_stream *stream)
-{
-	return _MASKED_FIELD(GEN12_OAG_OA_DEBUG_DISABLE_CTX_SWITCH_REPORTS,
+अटल u32 oag_report_ctx_चयनes(स्थिर काष्ठा i915_perf_stream *stream)
+अणु
+	वापस _MASKED_FIELD(GEN12_OAG_OA_DEBUG_DISABLE_CTX_SWITCH_REPORTS,
 			     (stream->sample_flags & SAMPLE_OA_REPORT) ?
 			     0 : GEN12_OAG_OA_DEBUG_DISABLE_CTX_SWITCH_REPORTS);
-}
+पूर्ण
 
-static int
-gen12_enable_metric_set(struct i915_perf_stream *stream,
-			struct i915_active *active)
-{
-	struct intel_uncore *uncore = stream->uncore;
-	struct i915_oa_config *oa_config = stream->oa_config;
+अटल पूर्णांक
+gen12_enable_metric_set(काष्ठा i915_perf_stream *stream,
+			काष्ठा i915_active *active)
+अणु
+	काष्ठा पूर्णांकel_uncore *uncore = stream->uncore;
+	काष्ठा i915_oa_config *oa_config = stream->oa_config;
 	bool periodic = stream->periodic;
 	u32 period_exponent = stream->period_exponent;
-	int ret;
+	पूर्णांक ret;
 
-	intel_uncore_write(uncore, GEN12_OAG_OA_DEBUG,
+	पूर्णांकel_uncore_ग_लिखो(uncore, GEN12_OAG_OA_DEBUG,
 			   /* Disable clk ratio reports, like previous Gens. */
 			   _MASKED_BIT_ENABLE(GEN12_OAG_OA_DEBUG_DISABLE_CLK_RATIO_REPORTS |
 					      GEN12_OAG_OA_DEBUG_INCLUDE_CLK_RATIO) |
 			   /*
-			    * If the user didn't require OA reports, instruct
-			    * the hardware not to emit ctx switch reports.
+			    * If the user didn't require OA reports, inकाष्ठा
+			    * the hardware not to emit ctx चयन reports.
 			    */
-			   oag_report_ctx_switches(stream));
+			   oag_report_ctx_चयनes(stream));
 
-	intel_uncore_write(uncore, GEN12_OAG_OAGLBCTXCTRL, periodic ?
+	पूर्णांकel_uncore_ग_लिखो(uncore, GEN12_OAG_OAGLBCTXCTRL, periodic ?
 			   (GEN12_OAG_OAGLBCTXCTRL_COUNTER_RESUME |
 			    GEN12_OAG_OAGLBCTXCTRL_TIMER_ENABLE |
 			    (period_exponent << GEN12_OAG_OAGLBCTXCTRL_TIMER_PERIOD_SHIFT))
@@ -2547,410 +2548,410 @@ gen12_enable_metric_set(struct i915_perf_stream *stream,
 
 	/*
 	 * Update all contexts prior writing the mux configurations as we need
-	 * to make sure all slices/subslices are ON before writing to NOA
-	 * registers.
+	 * to make sure all slices/subslices are ON beक्रमe writing to NOA
+	 * रेजिस्टरs.
 	 */
 	ret = gen12_configure_all_contexts(stream, oa_config, active);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	/*
-	 * For Gen12, performance counters are context
-	 * saved/restored. Only enable it for the context that
+	 * For Gen12, perक्रमmance counters are context
+	 * saved/restored. Only enable it क्रम the context that
 	 * requested this.
 	 */
-	if (stream->ctx) {
+	अगर (stream->ctx) अणु
 		ret = gen12_configure_oar_context(stream, active);
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	return emit_oa_config(stream,
+	वापस emit_oa_config(stream,
 			      stream->oa_config, oa_context(stream),
 			      active);
-}
+पूर्ण
 
-static void gen8_disable_metric_set(struct i915_perf_stream *stream)
-{
-	struct intel_uncore *uncore = stream->uncore;
-
-	/* Reset all contexts' slices/subslices configurations. */
-	lrc_configure_all_contexts(stream, NULL, NULL);
-
-	intel_uncore_rmw(uncore, GDT_CHICKEN_BITS, GT_NOA_ENABLE, 0);
-}
-
-static void gen10_disable_metric_set(struct i915_perf_stream *stream)
-{
-	struct intel_uncore *uncore = stream->uncore;
+अटल व्योम gen8_disable_metric_set(काष्ठा i915_perf_stream *stream)
+अणु
+	काष्ठा पूर्णांकel_uncore *uncore = stream->uncore;
 
 	/* Reset all contexts' slices/subslices configurations. */
-	lrc_configure_all_contexts(stream, NULL, NULL);
+	lrc_configure_all_contexts(stream, शून्य, शून्य);
 
-	/* Make sure we disable noa to save power. */
-	intel_uncore_rmw(uncore, RPM_CONFIG1, GEN10_GT_NOA_ENABLE, 0);
-}
+	पूर्णांकel_uncore_rmw(uncore, GDT_CHICKEN_BITS, GT_NOA_ENABLE, 0);
+पूर्ण
 
-static void gen12_disable_metric_set(struct i915_perf_stream *stream)
-{
-	struct intel_uncore *uncore = stream->uncore;
+अटल व्योम gen10_disable_metric_set(काष्ठा i915_perf_stream *stream)
+अणु
+	काष्ठा पूर्णांकel_uncore *uncore = stream->uncore;
 
 	/* Reset all contexts' slices/subslices configurations. */
-	gen12_configure_all_contexts(stream, NULL, NULL);
+	lrc_configure_all_contexts(stream, शून्य, शून्य);
+
+	/* Make sure we disable noa to save घातer. */
+	पूर्णांकel_uncore_rmw(uncore, RPM_CONFIG1, GEN10_GT_NOA_ENABLE, 0);
+पूर्ण
+
+अटल व्योम gen12_disable_metric_set(काष्ठा i915_perf_stream *stream)
+अणु
+	काष्ठा पूर्णांकel_uncore *uncore = stream->uncore;
+
+	/* Reset all contexts' slices/subslices configurations. */
+	gen12_configure_all_contexts(stream, शून्य, शून्य);
 
 	/* disable the context save/restore or OAR counters */
-	if (stream->ctx)
-		gen12_configure_oar_context(stream, NULL);
+	अगर (stream->ctx)
+		gen12_configure_oar_context(stream, शून्य);
 
-	/* Make sure we disable noa to save power. */
-	intel_uncore_rmw(uncore, RPM_CONFIG1, GEN10_GT_NOA_ENABLE, 0);
-}
+	/* Make sure we disable noa to save घातer. */
+	पूर्णांकel_uncore_rmw(uncore, RPM_CONFIG1, GEN10_GT_NOA_ENABLE, 0);
+पूर्ण
 
-static void gen7_oa_enable(struct i915_perf_stream *stream)
-{
-	struct intel_uncore *uncore = stream->uncore;
-	struct i915_gem_context *ctx = stream->ctx;
-	u32 ctx_id = stream->specific_ctx_id;
+अटल व्योम gen7_oa_enable(काष्ठा i915_perf_stream *stream)
+अणु
+	काष्ठा पूर्णांकel_uncore *uncore = stream->uncore;
+	काष्ठा i915_gem_context *ctx = stream->ctx;
+	u32 ctx_id = stream->specअगरic_ctx_id;
 	bool periodic = stream->periodic;
 	u32 period_exponent = stream->period_exponent;
-	u32 report_format = stream->oa_buffer.format;
+	u32 report_क्रमmat = stream->oa_buffer.क्रमmat;
 
 	/*
-	 * Reset buf pointers so we don't forward reports from before now.
+	 * Reset buf poपूर्णांकers so we करोn't क्रमward reports from beक्रमe now.
 	 *
-	 * Think carefully if considering trying to avoid this, since it
+	 * Think carefully अगर considering trying to aव्योम this, since it
 	 * also ensures status flags and the buffer itself are cleared
-	 * in error paths, and we have checks for invalid reports based
+	 * in error paths, and we have checks क्रम invalid reports based
 	 * on the assumption that certain fields are written to zeroed
-	 * memory which this helps maintains.
+	 * memory which this helps मुख्यtains.
 	 */
 	gen7_init_oa_buffer(stream);
 
-	intel_uncore_write(uncore, GEN7_OACONTROL,
+	पूर्णांकel_uncore_ग_लिखो(uncore, GEN7_OACONTROL,
 			   (ctx_id & GEN7_OACONTROL_CTX_MASK) |
 			   (period_exponent <<
 			    GEN7_OACONTROL_TIMER_PERIOD_SHIFT) |
 			   (periodic ? GEN7_OACONTROL_TIMER_ENABLE : 0) |
-			   (report_format << GEN7_OACONTROL_FORMAT_SHIFT) |
+			   (report_क्रमmat << GEN7_OACONTROL_FORMAT_SHIFT) |
 			   (ctx ? GEN7_OACONTROL_PER_CTX_ENABLE : 0) |
 			   GEN7_OACONTROL_ENABLE);
-}
+पूर्ण
 
-static void gen8_oa_enable(struct i915_perf_stream *stream)
-{
-	struct intel_uncore *uncore = stream->uncore;
-	u32 report_format = stream->oa_buffer.format;
+अटल व्योम gen8_oa_enable(काष्ठा i915_perf_stream *stream)
+अणु
+	काष्ठा पूर्णांकel_uncore *uncore = stream->uncore;
+	u32 report_क्रमmat = stream->oa_buffer.क्रमmat;
 
 	/*
-	 * Reset buf pointers so we don't forward reports from before now.
+	 * Reset buf poपूर्णांकers so we करोn't क्रमward reports from beक्रमe now.
 	 *
-	 * Think carefully if considering trying to avoid this, since it
+	 * Think carefully अगर considering trying to aव्योम this, since it
 	 * also ensures status flags and the buffer itself are cleared
-	 * in error paths, and we have checks for invalid reports based
+	 * in error paths, and we have checks क्रम invalid reports based
 	 * on the assumption that certain fields are written to zeroed
-	 * memory which this helps maintains.
+	 * memory which this helps मुख्यtains.
 	 */
 	gen8_init_oa_buffer(stream);
 
 	/*
-	 * Note: we don't rely on the hardware to perform single context
+	 * Note: we करोn't rely on the hardware to perक्रमm single context
 	 * filtering and instead filter on the cpu based on the context-id
 	 * field of reports
 	 */
-	intel_uncore_write(uncore, GEN8_OACONTROL,
-			   (report_format << GEN8_OA_REPORT_FORMAT_SHIFT) |
+	पूर्णांकel_uncore_ग_लिखो(uncore, GEN8_OACONTROL,
+			   (report_क्रमmat << GEN8_OA_REPORT_FORMAT_SHIFT) |
 			   GEN8_OA_COUNTER_ENABLE);
-}
+पूर्ण
 
-static void gen12_oa_enable(struct i915_perf_stream *stream)
-{
-	struct intel_uncore *uncore = stream->uncore;
-	u32 report_format = stream->oa_buffer.format;
+अटल व्योम gen12_oa_enable(काष्ठा i915_perf_stream *stream)
+अणु
+	काष्ठा पूर्णांकel_uncore *uncore = stream->uncore;
+	u32 report_क्रमmat = stream->oa_buffer.क्रमmat;
 
 	/*
-	 * If we don't want OA reports from the OA buffer, then we don't even
+	 * If we करोn't want OA reports from the OA buffer, then we don't even
 	 * need to program the OAG unit.
 	 */
-	if (!(stream->sample_flags & SAMPLE_OA_REPORT))
-		return;
+	अगर (!(stream->sample_flags & SAMPLE_OA_REPORT))
+		वापस;
 
 	gen12_init_oa_buffer(stream);
 
-	intel_uncore_write(uncore, GEN12_OAG_OACONTROL,
-			   (report_format << GEN12_OAG_OACONTROL_OA_COUNTER_FORMAT_SHIFT) |
+	पूर्णांकel_uncore_ग_लिखो(uncore, GEN12_OAG_OACONTROL,
+			   (report_क्रमmat << GEN12_OAG_OACONTROL_OA_COUNTER_FORMAT_SHIFT) |
 			   GEN12_OAG_OACONTROL_OA_COUNTER_ENABLE);
-}
+पूर्ण
 
 /**
- * i915_oa_stream_enable - handle `I915_PERF_IOCTL_ENABLE` for OA stream
- * @stream: An i915 perf stream opened for OA metrics
+ * i915_oa_stream_enable - handle `I915_PERF_IOCTL_ENABLE` क्रम OA stream
+ * @stream: An i915 perf stream खोलोed क्रम OA metrics
  *
  * [Re]enables hardware periodic sampling according to the period configured
- * when opening the stream. This also starts a hrtimer that will periodically
- * check for data in the circular OA buffer for notifying userspace (e.g.
- * during a read() or poll()).
+ * when खोलोing the stream. This also starts a hrसमयr that will periodically
+ * check क्रम data in the circular OA buffer क्रम notअगरying userspace (e.g.
+ * during a पढ़ो() or poll()).
  */
-static void i915_oa_stream_enable(struct i915_perf_stream *stream)
-{
+अटल व्योम i915_oa_stream_enable(काष्ठा i915_perf_stream *stream)
+अणु
 	stream->pollin = false;
 
 	stream->perf->ops.oa_enable(stream);
 
-	if (stream->sample_flags & SAMPLE_OA_REPORT)
-		hrtimer_start(&stream->poll_check_timer,
-			      ns_to_ktime(stream->poll_oa_period),
+	अगर (stream->sample_flags & SAMPLE_OA_REPORT)
+		hrसमयr_start(&stream->poll_check_समयr,
+			      ns_to_kसमय(stream->poll_oa_period),
 			      HRTIMER_MODE_REL_PINNED);
-}
+पूर्ण
 
-static void gen7_oa_disable(struct i915_perf_stream *stream)
-{
-	struct intel_uncore *uncore = stream->uncore;
+अटल व्योम gen7_oa_disable(काष्ठा i915_perf_stream *stream)
+अणु
+	काष्ठा पूर्णांकel_uncore *uncore = stream->uncore;
 
-	intel_uncore_write(uncore, GEN7_OACONTROL, 0);
-	if (intel_wait_for_register(uncore,
+	पूर्णांकel_uncore_ग_लिखो(uncore, GEN7_OACONTROL, 0);
+	अगर (पूर्णांकel_रुको_क्रम_रेजिस्टर(uncore,
 				    GEN7_OACONTROL, GEN7_OACONTROL_ENABLE, 0,
 				    50))
 		drm_err(&stream->perf->i915->drm,
 			"wait for OA to be disabled timed out\n");
-}
+पूर्ण
 
-static void gen8_oa_disable(struct i915_perf_stream *stream)
-{
-	struct intel_uncore *uncore = stream->uncore;
+अटल व्योम gen8_oa_disable(काष्ठा i915_perf_stream *stream)
+अणु
+	काष्ठा पूर्णांकel_uncore *uncore = stream->uncore;
 
-	intel_uncore_write(uncore, GEN8_OACONTROL, 0);
-	if (intel_wait_for_register(uncore,
+	पूर्णांकel_uncore_ग_लिखो(uncore, GEN8_OACONTROL, 0);
+	अगर (पूर्णांकel_रुको_क्रम_रेजिस्टर(uncore,
 				    GEN8_OACONTROL, GEN8_OA_COUNTER_ENABLE, 0,
 				    50))
 		drm_err(&stream->perf->i915->drm,
 			"wait for OA to be disabled timed out\n");
-}
+पूर्ण
 
-static void gen12_oa_disable(struct i915_perf_stream *stream)
-{
-	struct intel_uncore *uncore = stream->uncore;
+अटल व्योम gen12_oa_disable(काष्ठा i915_perf_stream *stream)
+अणु
+	काष्ठा पूर्णांकel_uncore *uncore = stream->uncore;
 
-	intel_uncore_write(uncore, GEN12_OAG_OACONTROL, 0);
-	if (intel_wait_for_register(uncore,
+	पूर्णांकel_uncore_ग_लिखो(uncore, GEN12_OAG_OACONTROL, 0);
+	अगर (पूर्णांकel_रुको_क्रम_रेजिस्टर(uncore,
 				    GEN12_OAG_OACONTROL,
 				    GEN12_OAG_OACONTROL_OA_COUNTER_ENABLE, 0,
 				    50))
 		drm_err(&stream->perf->i915->drm,
 			"wait for OA to be disabled timed out\n");
 
-	intel_uncore_write(uncore, GEN12_OA_TLB_INV_CR, 1);
-	if (intel_wait_for_register(uncore,
+	पूर्णांकel_uncore_ग_लिखो(uncore, GEN12_OA_TLB_INV_CR, 1);
+	अगर (पूर्णांकel_रुको_क्रम_रेजिस्टर(uncore,
 				    GEN12_OA_TLB_INV_CR,
 				    1, 0,
 				    50))
 		drm_err(&stream->perf->i915->drm,
 			"wait for OA tlb invalidate timed out\n");
-}
+पूर्ण
 
 /**
- * i915_oa_stream_disable - handle `I915_PERF_IOCTL_DISABLE` for OA stream
- * @stream: An i915 perf stream opened for OA metrics
+ * i915_oa_stream_disable - handle `I915_PERF_IOCTL_DISABLE` क्रम OA stream
+ * @stream: An i915 perf stream खोलोed क्रम OA metrics
  *
- * Stops the OA unit from periodically writing counter reports into the
- * circular OA buffer. This also stops the hrtimer that periodically checks for
- * data in the circular OA buffer, for notifying userspace.
+ * Stops the OA unit from periodically writing counter reports पूर्णांकo the
+ * circular OA buffer. This also stops the hrसमयr that periodically checks क्रम
+ * data in the circular OA buffer, क्रम notअगरying userspace.
  */
-static void i915_oa_stream_disable(struct i915_perf_stream *stream)
-{
+अटल व्योम i915_oa_stream_disable(काष्ठा i915_perf_stream *stream)
+अणु
 	stream->perf->ops.oa_disable(stream);
 
-	if (stream->sample_flags & SAMPLE_OA_REPORT)
-		hrtimer_cancel(&stream->poll_check_timer);
-}
+	अगर (stream->sample_flags & SAMPLE_OA_REPORT)
+		hrसमयr_cancel(&stream->poll_check_समयr);
+पूर्ण
 
-static const struct i915_perf_stream_ops i915_oa_stream_ops = {
+अटल स्थिर काष्ठा i915_perf_stream_ops i915_oa_stream_ops = अणु
 	.destroy = i915_oa_stream_destroy,
 	.enable = i915_oa_stream_enable,
 	.disable = i915_oa_stream_disable,
-	.wait_unlocked = i915_oa_wait_unlocked,
-	.poll_wait = i915_oa_poll_wait,
-	.read = i915_oa_read,
-};
+	.रुको_unlocked = i915_oa_रुको_unlocked,
+	.poll_रुको = i915_oa_poll_रुको,
+	.पढ़ो = i915_oa_पढ़ो,
+पूर्ण;
 
-static int i915_perf_stream_enable_sync(struct i915_perf_stream *stream)
-{
-	struct i915_active *active;
-	int err;
+अटल पूर्णांक i915_perf_stream_enable_sync(काष्ठा i915_perf_stream *stream)
+अणु
+	काष्ठा i915_active *active;
+	पूर्णांक err;
 
 	active = i915_active_create();
-	if (!active)
-		return -ENOMEM;
+	अगर (!active)
+		वापस -ENOMEM;
 
 	err = stream->perf->ops.enable_metric_set(stream, active);
-	if (err == 0)
-		__i915_active_wait(active, TASK_UNINTERRUPTIBLE);
+	अगर (err == 0)
+		__i915_active_रुको(active, TASK_UNINTERRUPTIBLE);
 
 	i915_active_put(active);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void
-get_default_sseu_config(struct intel_sseu *out_sseu,
-			struct intel_engine_cs *engine)
-{
-	const struct sseu_dev_info *devinfo_sseu = &engine->gt->info.sseu;
+अटल व्योम
+get_शेष_sseu_config(काष्ठा पूर्णांकel_sseu *out_sseu,
+			काष्ठा पूर्णांकel_engine_cs *engine)
+अणु
+	स्थिर काष्ठा sseu_dev_info *devinfo_sseu = &engine->gt->info.sseu;
 
-	*out_sseu = intel_sseu_from_device_info(devinfo_sseu);
+	*out_sseu = पूर्णांकel_sseu_from_device_info(devinfo_sseu);
 
-	if (IS_GEN(engine->i915, 11)) {
+	अगर (IS_GEN(engine->i915, 11)) अणु
 		/*
-		 * We only need subslice count so it doesn't matter which ones
+		 * We only need subslice count so it करोesn't matter which ones
 		 * we select - just turn off low bits in the amount of half of
 		 * all available subslices per slice.
 		 */
 		out_sseu->subslice_mask =
 			~(~0 << (hweight8(out_sseu->subslice_mask) / 2));
 		out_sseu->slice_mask = 0x1;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int
-get_sseu_config(struct intel_sseu *out_sseu,
-		struct intel_engine_cs *engine,
-		const struct drm_i915_gem_context_param_sseu *drm_sseu)
-{
-	if (drm_sseu->engine.engine_class != engine->uabi_class ||
+अटल पूर्णांक
+get_sseu_config(काष्ठा पूर्णांकel_sseu *out_sseu,
+		काष्ठा पूर्णांकel_engine_cs *engine,
+		स्थिर काष्ठा drm_i915_gem_context_param_sseu *drm_sseu)
+अणु
+	अगर (drm_sseu->engine.engine_class != engine->uabi_class ||
 	    drm_sseu->engine.engine_instance != engine->uabi_instance)
-		return -EINVAL;
+		वापस -EINVAL;
 
-	return i915_gem_user_to_context_sseu(engine->gt, drm_sseu, out_sseu);
-}
+	वापस i915_gem_user_to_context_sseu(engine->gt, drm_sseu, out_sseu);
+पूर्ण
 
 /**
- * i915_oa_stream_init - validate combined props for OA stream and init
+ * i915_oa_stream_init - validate combined props क्रम OA stream and init
  * @stream: An i915 perf stream
- * @param: The open parameters passed to `DRM_I915_PERF_OPEN`
- * @props: The property state that configures stream (individually validated)
+ * @param: The खोलो parameters passed to `DRM_I915_PERF_OPEN`
+ * @props: The property state that configures stream (inभागidually validated)
  *
- * While read_properties_unlocked() validates properties in isolation it
- * doesn't ensure that the combination necessarily makes sense.
+ * While पढ़ो_properties_unlocked() validates properties in isolation it
+ * करोesn't ensure that the combination necessarily makes sense.
  *
- * At this point it has been determined that userspace wants a stream of
+ * At this poपूर्णांक it has been determined that userspace wants a stream of
  * OA metrics, but still we need to further validate the combined
  * properties are OK.
  *
- * If the configuration makes sense then we can allocate memory for
+ * If the configuration makes sense then we can allocate memory क्रम
  * a circular OA buffer and apply the requested metric set configuration.
  *
  * Returns: zero on success or a negative error code.
  */
-static int i915_oa_stream_init(struct i915_perf_stream *stream,
-			       struct drm_i915_perf_open_param *param,
-			       struct perf_open_properties *props)
-{
-	struct drm_i915_private *i915 = stream->perf->i915;
-	struct i915_perf *perf = stream->perf;
-	int format_size;
-	int ret;
+अटल पूर्णांक i915_oa_stream_init(काष्ठा i915_perf_stream *stream,
+			       काष्ठा drm_i915_perf_खोलो_param *param,
+			       काष्ठा perf_खोलो_properties *props)
+अणु
+	काष्ठा drm_i915_निजी *i915 = stream->perf->i915;
+	काष्ठा i915_perf *perf = stream->perf;
+	पूर्णांक क्रमmat_size;
+	पूर्णांक ret;
 
-	if (!props->engine) {
+	अगर (!props->engine) अणु
 		DRM_DEBUG("OA engine not specified\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	/*
-	 * If the sysfs metrics/ directory wasn't registered for some
-	 * reason then don't let userspace try their luck with config
+	 * If the sysfs metrics/ directory wasn't रेजिस्टरed क्रम some
+	 * reason then करोn't let userspace try their luck with config
 	 * IDs
 	 */
-	if (!perf->metrics_kobj) {
+	अगर (!perf->metrics_kobj) अणु
 		DRM_DEBUG("OA metrics weren't advertised via sysfs\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (!(props->sample_flags & SAMPLE_OA_REPORT) &&
-	    (INTEL_GEN(perf->i915) < 12 || !stream->ctx)) {
+	अगर (!(props->sample_flags & SAMPLE_OA_REPORT) &&
+	    (INTEL_GEN(perf->i915) < 12 || !stream->ctx)) अणु
 		DRM_DEBUG("Only OA report sampling supported\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (!perf->ops.enable_metric_set) {
+	अगर (!perf->ops.enable_metric_set) अणु
 		DRM_DEBUG("OA unit not supported\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
 	/*
-	 * To avoid the complexity of having to accurately filter
+	 * To aव्योम the complनिकासy of having to accurately filter
 	 * counter reports and marshal to the appropriate client
 	 * we currently only allow exclusive access
 	 */
-	if (perf->exclusive_stream) {
+	अगर (perf->exclusive_stream) अणु
 		DRM_DEBUG("OA unit already in use\n");
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 
-	if (!props->oa_format) {
+	अगर (!props->oa_क्रमmat) अणु
 		DRM_DEBUG("OA report format not specified\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	stream->engine = props->engine;
 	stream->uncore = stream->engine->gt->uncore;
 
-	stream->sample_size = sizeof(struct drm_i915_perf_record_header);
+	stream->sample_size = माप(काष्ठा drm_i915_perf_record_header);
 
-	format_size = perf->oa_formats[props->oa_format].size;
+	क्रमmat_size = perf->oa_क्रमmats[props->oa_क्रमmat].size;
 
 	stream->sample_flags = props->sample_flags;
-	stream->sample_size += format_size;
+	stream->sample_size += क्रमmat_size;
 
-	stream->oa_buffer.format_size = format_size;
-	if (drm_WARN_ON(&i915->drm, stream->oa_buffer.format_size == 0))
-		return -EINVAL;
+	stream->oa_buffer.क्रमmat_size = क्रमmat_size;
+	अगर (drm_WARN_ON(&i915->drm, stream->oa_buffer.क्रमmat_size == 0))
+		वापस -EINVAL;
 
 	stream->hold_preemption = props->hold_preemption;
 
-	stream->oa_buffer.format =
-		perf->oa_formats[props->oa_format].format;
+	stream->oa_buffer.क्रमmat =
+		perf->oa_क्रमmats[props->oa_क्रमmat].क्रमmat;
 
 	stream->periodic = props->oa_periodic;
-	if (stream->periodic)
+	अगर (stream->periodic)
 		stream->period_exponent = props->oa_period_exponent;
 
-	if (stream->ctx) {
+	अगर (stream->ctx) अणु
 		ret = oa_get_render_ctx_id(stream);
-		if (ret) {
+		अगर (ret) अणु
 			DRM_DEBUG("Invalid context id to filter with\n");
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
-	ret = alloc_noa_wait(stream);
-	if (ret) {
+	ret = alloc_noa_रुको(stream);
+	अगर (ret) अणु
 		DRM_DEBUG("Unable to allocate NOA wait batch buffer\n");
-		goto err_noa_wait_alloc;
-	}
+		जाओ err_noa_रुको_alloc;
+	पूर्ण
 
 	stream->oa_config = i915_perf_get_oa_config(perf, props->metrics_set);
-	if (!stream->oa_config) {
+	अगर (!stream->oa_config) अणु
 		DRM_DEBUG("Invalid OA config id=%i\n", props->metrics_set);
 		ret = -EINVAL;
-		goto err_config;
-	}
+		जाओ err_config;
+	पूर्ण
 
-	/* PRM - observability performance counters:
+	/* PRM - observability perक्रमmance counters:
 	 *
-	 *   OACONTROL, performance counter enable, note:
+	 *   OACONTROL, perक्रमmance counter enable, note:
 	 *
 	 *   "When this bit is set, in order to have coherent counts,
-	 *   RC6 power state and trunk clock gating must be disabled.
-	 *   This can be achieved by programming MMIO registers as
+	 *   RC6 घातer state and trunk घड़ी gating must be disabled.
+	 *   This can be achieved by programming MMIO रेजिस्टरs as
 	 *   0xA094=0 and 0xA090[31]=1"
 	 *
-	 *   In our case we are expecting that taking pm + FORCEWAKE
+	 *   In our हाल we are expecting that taking pm + FORCEWAKE
 	 *   references will effectively disable RC6.
 	 */
-	intel_engine_pm_get(stream->engine);
-	intel_uncore_forcewake_get(stream->uncore, FORCEWAKE_ALL);
+	पूर्णांकel_engine_pm_get(stream->engine);
+	पूर्णांकel_uncore_क्रमcewake_get(stream->uncore, FORCEWAKE_ALL);
 
 	ret = alloc_oa_buffer(stream);
-	if (ret)
-		goto err_oa_buf_alloc;
+	अगर (ret)
+		जाओ err_oa_buf_alloc;
 
 	stream->ops = &i915_oa_stream_ops;
 
@@ -2958,298 +2959,298 @@ static int i915_oa_stream_init(struct i915_perf_stream *stream,
 	WRITE_ONCE(perf->exclusive_stream, stream);
 
 	ret = i915_perf_stream_enable_sync(stream);
-	if (ret) {
+	अगर (ret) अणु
 		DRM_DEBUG("Unable to enable metric set\n");
-		goto err_enable;
-	}
+		जाओ err_enable;
+	पूर्ण
 
 	DRM_DEBUG("opening stream oa config uuid=%s\n",
 		  stream->oa_config->uuid);
 
-	hrtimer_init(&stream->poll_check_timer,
+	hrसमयr_init(&stream->poll_check_समयr,
 		     CLOCK_MONOTONIC, HRTIMER_MODE_REL);
-	stream->poll_check_timer.function = oa_poll_check_timer_cb;
-	init_waitqueue_head(&stream->poll_wq);
+	stream->poll_check_समयr.function = oa_poll_check_समयr_cb;
+	init_रुकोqueue_head(&stream->poll_wq);
 	spin_lock_init(&stream->oa_buffer.ptr_lock);
 
-	return 0;
+	वापस 0;
 
 err_enable:
-	WRITE_ONCE(perf->exclusive_stream, NULL);
+	WRITE_ONCE(perf->exclusive_stream, शून्य);
 	perf->ops.disable_metric_set(stream);
 
-	free_oa_buffer(stream);
+	मुक्त_oa_buffer(stream);
 
 err_oa_buf_alloc:
-	free_oa_configs(stream);
+	मुक्त_oa_configs(stream);
 
-	intel_uncore_forcewake_put(stream->uncore, FORCEWAKE_ALL);
-	intel_engine_pm_put(stream->engine);
+	पूर्णांकel_uncore_क्रमcewake_put(stream->uncore, FORCEWAKE_ALL);
+	पूर्णांकel_engine_pm_put(stream->engine);
 
 err_config:
-	free_noa_wait(stream);
+	मुक्त_noa_रुको(stream);
 
-err_noa_wait_alloc:
-	if (stream->ctx)
+err_noa_रुको_alloc:
+	अगर (stream->ctx)
 		oa_put_render_ctx_id(stream);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-void i915_oa_init_reg_state(const struct intel_context *ce,
-			    const struct intel_engine_cs *engine)
-{
-	struct i915_perf_stream *stream;
+व्योम i915_oa_init_reg_state(स्थिर काष्ठा पूर्णांकel_context *ce,
+			    स्थिर काष्ठा पूर्णांकel_engine_cs *engine)
+अणु
+	काष्ठा i915_perf_stream *stream;
 
-	if (engine->class != RENDER_CLASS)
-		return;
+	अगर (engine->class != RENDER_CLASS)
+		वापस;
 
 	/* perf.exclusive_stream serialised by lrc_configure_all_contexts() */
 	stream = READ_ONCE(engine->i915->perf.exclusive_stream);
-	if (stream && INTEL_GEN(stream->perf->i915) < 12)
+	अगर (stream && INTEL_GEN(stream->perf->i915) < 12)
 		gen8_update_reg_state_unlocked(ce, stream);
-}
+पूर्ण
 
 /**
- * i915_perf_read - handles read() FOP for i915 perf stream FDs
+ * i915_perf_पढ़ो - handles पढ़ो() FOP क्रम i915 perf stream FDs
  * @file: An i915 perf stream file
  * @buf: destination buffer given by userspace
- * @count: the number of bytes userspace wants to read
+ * @count: the number of bytes userspace wants to पढ़ो
  * @ppos: (inout) file seek position (unused)
  *
- * The entry point for handling a read() on a stream file descriptor from
- * userspace. Most of the work is left to the i915_perf_read_locked() and
- * &i915_perf_stream_ops->read but to save having stream implementations (of
- * which we might have multiple later) we handle blocking read here.
+ * The entry poपूर्णांक क्रम handling a पढ़ो() on a stream file descriptor from
+ * userspace. Most of the work is left to the i915_perf_पढ़ो_locked() and
+ * &i915_perf_stream_ops->पढ़ो but to save having stream implementations (of
+ * which we might have multiple later) we handle blocking पढ़ो here.
  *
- * We can also consistently treat trying to read from a disabled stream
+ * We can also consistently treat trying to पढ़ो from a disabled stream
  * as an IO error so implementations can assume the stream is enabled
- * while reading.
+ * जबतक पढ़ोing.
  *
  * Returns: The number of bytes copied or a negative error code on failure.
  */
-static ssize_t i915_perf_read(struct file *file,
-			      char __user *buf,
-			      size_t count,
+अटल sमाप_प्रकार i915_perf_पढ़ो(काष्ठा file *file,
+			      अक्षर __user *buf,
+			      माप_प्रकार count,
 			      loff_t *ppos)
-{
-	struct i915_perf_stream *stream = file->private_data;
-	struct i915_perf *perf = stream->perf;
-	size_t offset = 0;
-	int ret;
+अणु
+	काष्ठा i915_perf_stream *stream = file->निजी_data;
+	काष्ठा i915_perf *perf = stream->perf;
+	माप_प्रकार offset = 0;
+	पूर्णांक ret;
 
-	/* To ensure it's handled consistently we simply treat all reads of a
+	/* To ensure it's handled consistently we simply treat all पढ़ोs of a
 	 * disabled stream as an error. In particular it might otherwise lead
-	 * to a deadlock for blocking file descriptors...
+	 * to a deadlock क्रम blocking file descriptors...
 	 */
-	if (!stream->enabled || !(stream->sample_flags & SAMPLE_OA_REPORT))
-		return -EIO;
+	अगर (!stream->enabled || !(stream->sample_flags & SAMPLE_OA_REPORT))
+		वापस -EIO;
 
-	if (!(file->f_flags & O_NONBLOCK)) {
+	अगर (!(file->f_flags & O_NONBLOCK)) अणु
 		/* There's the small chance of false positives from
-		 * stream->ops->wait_unlocked.
+		 * stream->ops->रुको_unlocked.
 		 *
-		 * E.g. with single context filtering since we only wait until
-		 * oabuffer has >= 1 report we don't immediately know whether
-		 * any reports really belong to the current context
+		 * E.g. with single context filtering since we only रुको until
+		 * oabuffer has >= 1 report we करोn't immediately know whether
+		 * any reports really beदीर्घ to the current context
 		 */
-		do {
-			ret = stream->ops->wait_unlocked(stream);
-			if (ret)
-				return ret;
+		करो अणु
+			ret = stream->ops->रुको_unlocked(stream);
+			अगर (ret)
+				वापस ret;
 
 			mutex_lock(&perf->lock);
-			ret = stream->ops->read(stream, buf, count, &offset);
+			ret = stream->ops->पढ़ो(stream, buf, count, &offset);
 			mutex_unlock(&perf->lock);
-		} while (!offset && !ret);
-	} else {
+		पूर्ण जबतक (!offset && !ret);
+	पूर्ण अन्यथा अणु
 		mutex_lock(&perf->lock);
-		ret = stream->ops->read(stream, buf, count, &offset);
+		ret = stream->ops->पढ़ो(stream, buf, count, &offset);
 		mutex_unlock(&perf->lock);
-	}
+	पूर्ण
 
-	/* We allow the poll checking to sometimes report false positive EPOLLIN
-	 * events where we might actually report EAGAIN on read() if there's
-	 * not really any data available. In this situation though we don't
+	/* We allow the poll checking to someबार report false positive EPOLLIN
+	 * events where we might actually report EAGAIN on पढ़ो() अगर there's
+	 * not really any data available. In this situation though we करोn't
 	 * want to enter a busy loop between poll() reporting a EPOLLIN event
-	 * and read() returning -EAGAIN. Clearing the oa.pollin state here
-	 * effectively ensures we back off until the next hrtimer callback
-	 * before reporting another EPOLLIN event.
-	 * The exception to this is if ops->read() returned -ENOSPC which means
+	 * and पढ़ो() वापसing -EAGAIN. Clearing the oa.pollin state here
+	 * effectively ensures we back off until the next hrसमयr callback
+	 * beक्रमe reporting another EPOLLIN event.
+	 * The exception to this is अगर ops->पढ़ो() वापसed -ENOSPC which means
 	 * that more OA data is available than could fit in the user provided
-	 * buffer. In this case we want the next poll() call to not block.
+	 * buffer. In this हाल we want the next poll() call to not block.
 	 */
-	if (ret != -ENOSPC)
+	अगर (ret != -ENOSPC)
 		stream->pollin = false;
 
-	/* Possible values for ret are 0, -EFAULT, -ENOSPC, -EIO, ... */
-	return offset ?: (ret ?: -EAGAIN);
-}
+	/* Possible values क्रम ret are 0, -EFAULT, -ENOSPC, -EIO, ... */
+	वापस offset ?: (ret ?: -EAGAIN);
+पूर्ण
 
-static enum hrtimer_restart oa_poll_check_timer_cb(struct hrtimer *hrtimer)
-{
-	struct i915_perf_stream *stream =
-		container_of(hrtimer, typeof(*stream), poll_check_timer);
+अटल क्रमागत hrसमयr_restart oa_poll_check_समयr_cb(काष्ठा hrसमयr *hrसमयr)
+अणु
+	काष्ठा i915_perf_stream *stream =
+		container_of(hrसमयr, typeof(*stream), poll_check_समयr);
 
-	if (oa_buffer_check_unlocked(stream)) {
+	अगर (oa_buffer_check_unlocked(stream)) अणु
 		stream->pollin = true;
 		wake_up(&stream->poll_wq);
-	}
+	पूर्ण
 
-	hrtimer_forward_now(hrtimer,
-			    ns_to_ktime(stream->poll_oa_period));
+	hrसमयr_क्रमward_now(hrसमयr,
+			    ns_to_kसमय(stream->poll_oa_period));
 
-	return HRTIMER_RESTART;
-}
+	वापस HRTIMER_RESTART;
+पूर्ण
 
 /**
- * i915_perf_poll_locked - poll_wait() with a suitable wait queue for stream
+ * i915_perf_poll_locked - poll_रुको() with a suitable रुको queue क्रम stream
  * @stream: An i915 perf stream
  * @file: An i915 perf stream file
- * @wait: poll() state table
+ * @रुको: poll() state table
  *
  * For handling userspace polling on an i915 perf stream, this calls through to
- * &i915_perf_stream_ops->poll_wait to call poll_wait() with a wait queue that
- * will be woken for new stream data.
+ * &i915_perf_stream_ops->poll_रुको to call poll_रुको() with a रुको queue that
+ * will be woken क्रम new stream data.
  *
  * Note: The &perf->lock mutex has been taken to serialize
  * with any non-file-operation driver hooks.
  *
- * Returns: any poll events that are ready without sleeping
+ * Returns: any poll events that are पढ़ोy without sleeping
  */
-static __poll_t i915_perf_poll_locked(struct i915_perf_stream *stream,
-				      struct file *file,
-				      poll_table *wait)
-{
+अटल __poll_t i915_perf_poll_locked(काष्ठा i915_perf_stream *stream,
+				      काष्ठा file *file,
+				      poll_table *रुको)
+अणु
 	__poll_t events = 0;
 
-	stream->ops->poll_wait(stream, file, wait);
+	stream->ops->poll_रुको(stream, file, रुको);
 
-	/* Note: we don't explicitly check whether there's something to read
-	 * here since this path may be very hot depending on what else
-	 * userspace is polling, or on the timeout in use. We rely solely on
-	 * the hrtimer/oa_poll_check_timer_cb to notify us when there are
-	 * samples to read.
+	/* Note: we करोn't explicitly check whether there's something to पढ़ो
+	 * here since this path may be very hot depending on what अन्यथा
+	 * userspace is polling, or on the समयout in use. We rely solely on
+	 * the hrसमयr/oa_poll_check_समयr_cb to notअगरy us when there are
+	 * samples to पढ़ो.
 	 */
-	if (stream->pollin)
+	अगर (stream->pollin)
 		events |= EPOLLIN;
 
-	return events;
-}
+	वापस events;
+पूर्ण
 
 /**
- * i915_perf_poll - call poll_wait() with a suitable wait queue for stream
+ * i915_perf_poll - call poll_रुको() with a suitable रुको queue क्रम stream
  * @file: An i915 perf stream file
- * @wait: poll() state table
+ * @रुको: poll() state table
  *
  * For handling userspace polling on an i915 perf stream, this ensures
- * poll_wait() gets called with a wait queue that will be woken for new stream
+ * poll_रुको() माला_लो called with a रुको queue that will be woken क्रम new stream
  * data.
  *
  * Note: Implementation deferred to i915_perf_poll_locked()
  *
- * Returns: any poll events that are ready without sleeping
+ * Returns: any poll events that are पढ़ोy without sleeping
  */
-static __poll_t i915_perf_poll(struct file *file, poll_table *wait)
-{
-	struct i915_perf_stream *stream = file->private_data;
-	struct i915_perf *perf = stream->perf;
+अटल __poll_t i915_perf_poll(काष्ठा file *file, poll_table *रुको)
+अणु
+	काष्ठा i915_perf_stream *stream = file->निजी_data;
+	काष्ठा i915_perf *perf = stream->perf;
 	__poll_t ret;
 
 	mutex_lock(&perf->lock);
-	ret = i915_perf_poll_locked(stream, file, wait);
+	ret = i915_perf_poll_locked(stream, file, रुको);
 	mutex_unlock(&perf->lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
  * i915_perf_enable_locked - handle `I915_PERF_IOCTL_ENABLE` ioctl
  * @stream: A disabled i915 perf stream
  *
- * [Re]enables the associated capture of data for this stream.
+ * [Re]enables the associated capture of data क्रम this stream.
  *
- * If a stream was previously enabled then there's currently no intention
+ * If a stream was previously enabled then there's currently no पूर्णांकention
  * to provide userspace any guarantee about the preservation of previously
  * buffered data.
  */
-static void i915_perf_enable_locked(struct i915_perf_stream *stream)
-{
-	if (stream->enabled)
-		return;
+अटल व्योम i915_perf_enable_locked(काष्ठा i915_perf_stream *stream)
+अणु
+	अगर (stream->enabled)
+		वापस;
 
 	/* Allow stream->ops->enable() to refer to this */
 	stream->enabled = true;
 
-	if (stream->ops->enable)
+	अगर (stream->ops->enable)
 		stream->ops->enable(stream);
 
-	if (stream->hold_preemption)
-		intel_context_set_nopreempt(stream->pinned_ctx);
-}
+	अगर (stream->hold_preemption)
+		पूर्णांकel_context_set_nopreempt(stream->pinned_ctx);
+पूर्ण
 
 /**
  * i915_perf_disable_locked - handle `I915_PERF_IOCTL_DISABLE` ioctl
  * @stream: An enabled i915 perf stream
  *
- * Disables the associated capture of data for this stream.
+ * Disables the associated capture of data क्रम this stream.
  *
- * The intention is that disabling an re-enabling a stream will ideally be
- * cheaper than destroying and re-opening a stream with the same configuration,
- * though there are no formal guarantees about what state or buffered data
+ * The पूर्णांकention is that disabling an re-enabling a stream will ideally be
+ * cheaper than destroying and re-खोलोing a stream with the same configuration,
+ * though there are no क्रमmal guarantees about what state or buffered data
  * must be retained between disabling and re-enabling a stream.
  *
- * Note: while a stream is disabled it's considered an error for userspace
- * to attempt to read from the stream (-EIO).
+ * Note: जबतक a stream is disabled it's considered an error क्रम userspace
+ * to attempt to पढ़ो from the stream (-EIO).
  */
-static void i915_perf_disable_locked(struct i915_perf_stream *stream)
-{
-	if (!stream->enabled)
-		return;
+अटल व्योम i915_perf_disable_locked(काष्ठा i915_perf_stream *stream)
+अणु
+	अगर (!stream->enabled)
+		वापस;
 
 	/* Allow stream->ops->disable() to refer to this */
 	stream->enabled = false;
 
-	if (stream->hold_preemption)
-		intel_context_clear_nopreempt(stream->pinned_ctx);
+	अगर (stream->hold_preemption)
+		पूर्णांकel_context_clear_nopreempt(stream->pinned_ctx);
 
-	if (stream->ops->disable)
+	अगर (stream->ops->disable)
 		stream->ops->disable(stream);
-}
+पूर्ण
 
-static long i915_perf_config_locked(struct i915_perf_stream *stream,
-				    unsigned long metrics_set)
-{
-	struct i915_oa_config *config;
-	long ret = stream->oa_config->id;
+अटल दीर्घ i915_perf_config_locked(काष्ठा i915_perf_stream *stream,
+				    अचिन्हित दीर्घ metrics_set)
+अणु
+	काष्ठा i915_oa_config *config;
+	दीर्घ ret = stream->oa_config->id;
 
 	config = i915_perf_get_oa_config(stream->perf, metrics_set);
-	if (!config)
-		return -EINVAL;
+	अगर (!config)
+		वापस -EINVAL;
 
-	if (config != stream->oa_config) {
-		int err;
+	अगर (config != stream->oa_config) अणु
+		पूर्णांक err;
 
 		/*
-		 * If OA is bound to a specific context, emit the
-		 * reconfiguration inline from that context. The update
+		 * If OA is bound to a specअगरic context, emit the
+		 * reconfiguration अंतरभूत from that context. The update
 		 * will then be ordered with respect to submission on that
 		 * context.
 		 *
 		 * When set globally, we use a low priority kernel context,
 		 * so it will effectively take effect when idle.
 		 */
-		err = emit_oa_config(stream, config, oa_context(stream), NULL);
-		if (!err)
+		err = emit_oa_config(stream, config, oa_context(stream), शून्य);
+		अगर (!err)
 			config = xchg(&stream->oa_config, config);
-		else
+		अन्यथा
 			ret = err;
-	}
+	पूर्ण
 
 	i915_oa_config_put(config);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
  * i915_perf_ioctl_locked - support ioctl() usage with i915 perf stream FDs
@@ -3260,26 +3261,26 @@ static long i915_perf_config_locked(struct i915_perf_stream *stream,
  * Note: The &perf->lock mutex has been taken to serialize
  * with any non-file-operation driver hooks.
  *
- * Returns: zero on success or a negative error code. Returns -EINVAL for
+ * Returns: zero on success or a negative error code. Returns -EINVAL क्रम
  * an unknown ioctl request.
  */
-static long i915_perf_ioctl_locked(struct i915_perf_stream *stream,
-				   unsigned int cmd,
-				   unsigned long arg)
-{
-	switch (cmd) {
-	case I915_PERF_IOCTL_ENABLE:
+अटल दीर्घ i915_perf_ioctl_locked(काष्ठा i915_perf_stream *stream,
+				   अचिन्हित पूर्णांक cmd,
+				   अचिन्हित दीर्घ arg)
+अणु
+	चयन (cmd) अणु
+	हाल I915_PERF_IOCTL_ENABLE:
 		i915_perf_enable_locked(stream);
-		return 0;
-	case I915_PERF_IOCTL_DISABLE:
+		वापस 0;
+	हाल I915_PERF_IOCTL_DISABLE:
 		i915_perf_disable_locked(stream);
-		return 0;
-	case I915_PERF_IOCTL_CONFIG:
-		return i915_perf_config_locked(stream, arg);
-	}
+		वापस 0;
+	हाल I915_PERF_IOCTL_CONFIG:
+		वापस i915_perf_config_locked(stream, arg);
+	पूर्ण
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
 /**
  * i915_perf_ioctl - support ioctl() usage with i915 perf stream FDs
@@ -3289,23 +3290,23 @@ static long i915_perf_ioctl_locked(struct i915_perf_stream *stream,
  *
  * Implementation deferred to i915_perf_ioctl_locked().
  *
- * Returns: zero on success or a negative error code. Returns -EINVAL for
+ * Returns: zero on success or a negative error code. Returns -EINVAL क्रम
  * an unknown ioctl request.
  */
-static long i915_perf_ioctl(struct file *file,
-			    unsigned int cmd,
-			    unsigned long arg)
-{
-	struct i915_perf_stream *stream = file->private_data;
-	struct i915_perf *perf = stream->perf;
-	long ret;
+अटल दीर्घ i915_perf_ioctl(काष्ठा file *file,
+			    अचिन्हित पूर्णांक cmd,
+			    अचिन्हित दीर्घ arg)
+अणु
+	काष्ठा i915_perf_stream *stream = file->निजी_data;
+	काष्ठा i915_perf *perf = stream->perf;
+	दीर्घ ret;
 
 	mutex_lock(&perf->lock);
 	ret = i915_perf_ioctl_locked(stream, cmd, arg);
 	mutex_unlock(&perf->lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
  * i915_perf_destroy_locked - destroy an i915 perf stream
@@ -3317,35 +3318,35 @@ static long i915_perf_ioctl(struct file *file,
  * Note: The &perf->lock mutex has been taken to serialize
  * with any non-file-operation driver hooks.
  */
-static void i915_perf_destroy_locked(struct i915_perf_stream *stream)
-{
-	if (stream->enabled)
+अटल व्योम i915_perf_destroy_locked(काष्ठा i915_perf_stream *stream)
+अणु
+	अगर (stream->enabled)
 		i915_perf_disable_locked(stream);
 
-	if (stream->ops->destroy)
+	अगर (stream->ops->destroy)
 		stream->ops->destroy(stream);
 
-	if (stream->ctx)
+	अगर (stream->ctx)
 		i915_gem_context_put(stream->ctx);
 
-	kfree(stream);
-}
+	kमुक्त(stream);
+पूर्ण
 
 /**
- * i915_perf_release - handles userspace close() of a stream file
+ * i915_perf_release - handles userspace बंद() of a stream file
  * @inode: anonymous inode associated with file
  * @file: An i915 perf stream file
  *
- * Cleans up any resources associated with an open i915 perf stream file.
+ * Cleans up any resources associated with an खोलो i915 perf stream file.
  *
- * NB: close() can't really fail from the userspace point of view.
+ * NB: बंद() can't really fail from the userspace poपूर्णांक of view.
  *
  * Returns: zero on success or a negative error code.
  */
-static int i915_perf_release(struct inode *inode, struct file *file)
-{
-	struct i915_perf_stream *stream = file->private_data;
-	struct i915_perf *perf = stream->perf;
+अटल पूर्णांक i915_perf_release(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	काष्ठा i915_perf_stream *stream = file->निजी_data;
+	काष्ठा i915_perf *perf = stream->perf;
 
 	mutex_lock(&perf->lock);
 	i915_perf_destroy_locked(stream);
@@ -3354,163 +3355,163 @@ static int i915_perf_release(struct inode *inode, struct file *file)
 	/* Release the reference the perf stream kept on the driver. */
 	drm_dev_put(&perf->i915->drm);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
-static const struct file_operations fops = {
+अटल स्थिर काष्ठा file_operations fops = अणु
 	.owner		= THIS_MODULE,
 	.llseek		= no_llseek,
 	.release	= i915_perf_release,
 	.poll		= i915_perf_poll,
-	.read		= i915_perf_read,
+	.पढ़ो		= i915_perf_पढ़ो,
 	.unlocked_ioctl	= i915_perf_ioctl,
 	/* Our ioctl have no arguments, so it's safe to use the same function
 	 * to handle 32bits compatibility.
 	 */
 	.compat_ioctl   = i915_perf_ioctl,
-};
+पूर्ण;
 
 
 /**
- * i915_perf_open_ioctl_locked - DRM ioctl() for userspace to open a stream FD
+ * i915_perf_खोलो_ioctl_locked - DRM ioctl() क्रम userspace to खोलो a stream FD
  * @perf: i915 perf instance
- * @param: The open parameters passed to 'DRM_I915_PERF_OPEN`
- * @props: individually validated u64 property value pairs
+ * @param: The खोलो parameters passed to 'DRM_I915_PERF_OPEN`
+ * @props: inभागidually validated u64 property value pairs
  * @file: drm file
  *
- * See i915_perf_ioctl_open() for interface details.
+ * See i915_perf_ioctl_खोलो() क्रम पूर्णांकerface details.
  *
  * Implements further stream config validation and stream initialization on
- * behalf of i915_perf_open_ioctl() with the &perf->lock mutex
+ * behalf of i915_perf_खोलो_ioctl() with the &perf->lock mutex
  * taken to serialize with any non-file-operation driver hooks.
  *
- * Note: at this point the @props have only been validated in isolation and
+ * Note: at this poपूर्णांक the @props have only been validated in isolation and
  * it's still necessary to validate that the combination of properties makes
  * sense.
  *
- * In the case where userspace is interested in OA unit metrics then further
+ * In the हाल where userspace is पूर्णांकerested in OA unit metrics then further
  * config validation and stream initialization details will be handled by
  * i915_oa_stream_init(). The code here should only validate config state that
  * will be relevant to all stream types / backends.
  *
  * Returns: zero on success or a negative error code.
  */
-static int
-i915_perf_open_ioctl_locked(struct i915_perf *perf,
-			    struct drm_i915_perf_open_param *param,
-			    struct perf_open_properties *props,
-			    struct drm_file *file)
-{
-	struct i915_gem_context *specific_ctx = NULL;
-	struct i915_perf_stream *stream = NULL;
-	unsigned long f_flags = 0;
+अटल पूर्णांक
+i915_perf_खोलो_ioctl_locked(काष्ठा i915_perf *perf,
+			    काष्ठा drm_i915_perf_खोलो_param *param,
+			    काष्ठा perf_खोलो_properties *props,
+			    काष्ठा drm_file *file)
+अणु
+	काष्ठा i915_gem_context *specअगरic_ctx = शून्य;
+	काष्ठा i915_perf_stream *stream = शून्य;
+	अचिन्हित दीर्घ f_flags = 0;
 	bool privileged_op = true;
-	int stream_fd;
-	int ret;
+	पूर्णांक stream_fd;
+	पूर्णांक ret;
 
-	if (props->single_context) {
+	अगर (props->single_context) अणु
 		u32 ctx_handle = props->ctx_handle;
-		struct drm_i915_file_private *file_priv = file->driver_priv;
+		काष्ठा drm_i915_file_निजी *file_priv = file->driver_priv;
 
-		specific_ctx = i915_gem_context_lookup(file_priv, ctx_handle);
-		if (!specific_ctx) {
+		specअगरic_ctx = i915_gem_context_lookup(file_priv, ctx_handle);
+		अगर (!specअगरic_ctx) अणु
 			DRM_DEBUG("Failed to look up context with ID %u for opening perf stream\n",
 				  ctx_handle);
 			ret = -ENOENT;
-			goto err;
-		}
-	}
+			जाओ err;
+		पूर्ण
+	पूर्ण
 
 	/*
-	 * On Haswell the OA unit supports clock gating off for a specific
-	 * context and in this mode there's no visibility of metrics for the
-	 * rest of the system, which we consider acceptable for a
+	 * On Haswell the OA unit supports घड़ी gating off क्रम a specअगरic
+	 * context and in this mode there's no visibility of metrics क्रम the
+	 * rest of the प्रणाली, which we consider acceptable क्रम a
 	 * non-privileged client.
 	 *
-	 * For Gen8->11 the OA unit no longer supports clock gating off for a
-	 * specific context and the kernel can't securely stop the counters
-	 * from updating as system-wide / global values. Even though we can
+	 * For Gen8->11 the OA unit no दीर्घer supports घड़ी gating off क्रम a
+	 * specअगरic context and the kernel can't securely stop the counters
+	 * from updating as प्रणाली-wide / global values. Even though we can
 	 * filter reports based on the included context ID we can't block
 	 * clients from seeing the raw / global counter values via
 	 * MI_REPORT_PERF_COUNT commands and so consider it a privileged op to
-	 * enable the OA unit by default.
+	 * enable the OA unit by शेष.
 	 *
 	 * For Gen12+ we gain a new OAR unit that only monitors the RCS on a
-	 * per context basis. So we can relax requirements there if the user
-	 * doesn't request global stream access (i.e. query based sampling
+	 * per context basis. So we can relax requirements there अगर the user
+	 * करोesn't request global stream access (i.e. query based sampling
 	 * using MI_RECORD_PERF_COUNT.
 	 */
-	if (IS_HASWELL(perf->i915) && specific_ctx)
+	अगर (IS_HASWELL(perf->i915) && specअगरic_ctx)
 		privileged_op = false;
-	else if (IS_GEN(perf->i915, 12) && specific_ctx &&
+	अन्यथा अगर (IS_GEN(perf->i915, 12) && specअगरic_ctx &&
 		 (props->sample_flags & SAMPLE_OA_REPORT) == 0)
 		privileged_op = false;
 
-	if (props->hold_preemption) {
-		if (!props->single_context) {
+	अगर (props->hold_preemption) अणु
+		अगर (!props->single_context) अणु
 			DRM_DEBUG("preemption disable with no context\n");
 			ret = -EINVAL;
-			goto err;
-		}
+			जाओ err;
+		पूर्ण
 		privileged_op = true;
-	}
+	पूर्ण
 
 	/*
-	 * Asking for SSEU configuration is a priviliged operation.
+	 * Asking क्रम SSEU configuration is a priviliged operation.
 	 */
-	if (props->has_sseu)
+	अगर (props->has_sseu)
 		privileged_op = true;
-	else
-		get_default_sseu_config(&props->sseu, props->engine);
+	अन्यथा
+		get_शेष_sseu_config(&props->sseu, props->engine);
 
 	/* Similar to perf's kernel.perf_paranoid_cpu sysctl option
 	 * we check a dev.i915.perf_stream_paranoid sysctl option
-	 * to determine if it's ok to access system wide OA counters
+	 * to determine अगर it's ok to access प्रणाली wide OA counters
 	 * without CAP_PERFMON or CAP_SYS_ADMIN privileges.
 	 */
-	if (privileged_op &&
-	    i915_perf_stream_paranoid && !perfmon_capable()) {
+	अगर (privileged_op &&
+	    i915_perf_stream_paranoid && !perfmon_capable()) अणु
 		DRM_DEBUG("Insufficient privileges to open i915 perf stream\n");
 		ret = -EACCES;
-		goto err_ctx;
-	}
+		जाओ err_ctx;
+	पूर्ण
 
-	stream = kzalloc(sizeof(*stream), GFP_KERNEL);
-	if (!stream) {
+	stream = kzalloc(माप(*stream), GFP_KERNEL);
+	अगर (!stream) अणु
 		ret = -ENOMEM;
-		goto err_ctx;
-	}
+		जाओ err_ctx;
+	पूर्ण
 
 	stream->perf = perf;
-	stream->ctx = specific_ctx;
+	stream->ctx = specअगरic_ctx;
 	stream->poll_oa_period = props->poll_oa_period;
 
 	ret = i915_oa_stream_init(stream, param, props);
-	if (ret)
-		goto err_alloc;
+	अगर (ret)
+		जाओ err_alloc;
 
-	/* we avoid simply assigning stream->sample_flags = props->sample_flags
+	/* we aव्योम simply assigning stream->sample_flags = props->sample_flags
 	 * to have _stream_init check the combination of sample flags more
-	 * thoroughly, but still this is the expected result at this point.
+	 * thoroughly, but still this is the expected result at this poपूर्णांक.
 	 */
-	if (WARN_ON(stream->sample_flags != props->sample_flags)) {
+	अगर (WARN_ON(stream->sample_flags != props->sample_flags)) अणु
 		ret = -ENODEV;
-		goto err_flags;
-	}
+		जाओ err_flags;
+	पूर्ण
 
-	if (param->flags & I915_PERF_FLAG_FD_CLOEXEC)
+	अगर (param->flags & I915_PERF_FLAG_FD_CLOEXEC)
 		f_flags |= O_CLOEXEC;
-	if (param->flags & I915_PERF_FLAG_FD_NONBLOCK)
+	अगर (param->flags & I915_PERF_FLAG_FD_NONBLOCK)
 		f_flags |= O_NONBLOCK;
 
 	stream_fd = anon_inode_getfd("[i915_perf]", &fops, stream, f_flags);
-	if (stream_fd < 0) {
+	अगर (stream_fd < 0) अणु
 		ret = stream_fd;
-		goto err_flags;
-	}
+		जाओ err_flags;
+	पूर्ण
 
-	if (!(param->flags & I915_PERF_FLAG_DISABLED))
+	अगर (!(param->flags & I915_PERF_FLAG_DISABLED))
 		i915_perf_enable_locked(stream);
 
 	/* Take a reference on the driver that will be kept with stream_fd
@@ -3518,291 +3519,291 @@ i915_perf_open_ioctl_locked(struct i915_perf *perf,
 	 */
 	drm_dev_get(&perf->i915->drm);
 
-	return stream_fd;
+	वापस stream_fd;
 
 err_flags:
-	if (stream->ops->destroy)
+	अगर (stream->ops->destroy)
 		stream->ops->destroy(stream);
 err_alloc:
-	kfree(stream);
+	kमुक्त(stream);
 err_ctx:
-	if (specific_ctx)
-		i915_gem_context_put(specific_ctx);
+	अगर (specअगरic_ctx)
+		i915_gem_context_put(specअगरic_ctx);
 err:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static u64 oa_exponent_to_ns(struct i915_perf *perf, int exponent)
-{
-	return intel_gt_clock_interval_to_ns(perf->i915->ggtt.vm.gt,
+अटल u64 oa_exponent_to_ns(काष्ठा i915_perf *perf, पूर्णांक exponent)
+अणु
+	वापस पूर्णांकel_gt_घड़ी_पूर्णांकerval_to_ns(perf->i915->ggtt.vm.gt,
 					     2ULL << exponent);
-}
+पूर्ण
 
-static __always_inline bool
-oa_format_valid(struct i915_perf *perf, enum drm_i915_oa_format format)
-{
-	return test_bit(format, perf->format_mask);
-}
+अटल __always_अंतरभूत bool
+oa_क्रमmat_valid(काष्ठा i915_perf *perf, क्रमागत drm_i915_oa_क्रमmat क्रमmat)
+अणु
+	वापस test_bit(क्रमmat, perf->क्रमmat_mask);
+पूर्ण
 
-static __always_inline void
-oa_format_add(struct i915_perf *perf, enum drm_i915_oa_format format)
-{
-	__set_bit(format, perf->format_mask);
-}
+अटल __always_अंतरभूत व्योम
+oa_क्रमmat_add(काष्ठा i915_perf *perf, क्रमागत drm_i915_oa_क्रमmat क्रमmat)
+अणु
+	__set_bit(क्रमmat, perf->क्रमmat_mask);
+पूर्ण
 
 /**
- * read_properties_unlocked - validate + copy userspace stream open properties
+ * पढ़ो_properties_unlocked - validate + copy userspace stream खोलो properties
  * @perf: i915 perf instance
  * @uprops: The array of u64 key value pairs given by userspace
  * @n_props: The number of key value pairs expected in @uprops
- * @props: The stream configuration built up while validating properties
+ * @props: The stream configuration built up जबतक validating properties
  *
- * Note this function only validates properties in isolation it doesn't
+ * Note this function only validates properties in isolation it करोesn't
  * validate that the combination of properties makes sense or that all
- * properties necessary for a particular kind of stream have been set.
+ * properties necessary क्रम a particular kind of stream have been set.
  *
- * Note that there currently aren't any ordering requirements for properties so
+ * Note that there currently aren't any ordering requirements क्रम properties so
  * we shouldn't validate or assume anything about ordering here. This doesn't
  * rule out defining new properties with ordering requirements in the future.
  */
-static int read_properties_unlocked(struct i915_perf *perf,
+अटल पूर्णांक पढ़ो_properties_unlocked(काष्ठा i915_perf *perf,
 				    u64 __user *uprops,
 				    u32 n_props,
-				    struct perf_open_properties *props)
-{
+				    काष्ठा perf_खोलो_properties *props)
+अणु
 	u64 __user *uprop = uprops;
 	u32 i;
-	int ret;
+	पूर्णांक ret;
 
-	memset(props, 0, sizeof(struct perf_open_properties));
+	स_रखो(props, 0, माप(काष्ठा perf_खोलो_properties));
 	props->poll_oa_period = DEFAULT_POLL_PERIOD_NS;
 
-	if (!n_props) {
+	अगर (!n_props) अणु
 		DRM_DEBUG("No i915 perf properties given\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	/* At the moment we only support using i915-perf on the RCS. */
-	props->engine = intel_engine_lookup_user(perf->i915,
+	props->engine = पूर्णांकel_engine_lookup_user(perf->i915,
 						 I915_ENGINE_CLASS_RENDER,
 						 0);
-	if (!props->engine) {
+	अगर (!props->engine) अणु
 		DRM_DEBUG("No RENDER-capable engines\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	/* Considering that ID = 0 is reserved and assuming that we don't
-	 * (currently) expect any configurations to ever specify duplicate
-	 * values for a particular property ID then the last _PROP_MAX value is
+	/* Considering that ID = 0 is reserved and assuming that we करोn't
+	 * (currently) expect any configurations to ever specअगरy duplicate
+	 * values क्रम a particular property ID then the last _PROP_MAX value is
 	 * one greater than the maximum number of properties we expect to get
 	 * from userspace.
 	 */
-	if (n_props >= DRM_I915_PERF_PROP_MAX) {
+	अगर (n_props >= DRM_I915_PERF_PROP_MAX) अणु
 		DRM_DEBUG("More i915 perf properties specified than exist\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	for (i = 0; i < n_props; i++) {
+	क्रम (i = 0; i < n_props; i++) अणु
 		u64 oa_period, oa_freq_hz;
 		u64 id, value;
 
 		ret = get_user(id, uprop);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 
 		ret = get_user(value, uprop + 1);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 
-		if (id == 0 || id >= DRM_I915_PERF_PROP_MAX) {
+		अगर (id == 0 || id >= DRM_I915_PERF_PROP_MAX) अणु
 			DRM_DEBUG("Unknown i915 perf property ID\n");
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
-		switch ((enum drm_i915_perf_property_id)id) {
-		case DRM_I915_PERF_PROP_CTX_HANDLE:
+		चयन ((क्रमागत drm_i915_perf_property_id)id) अणु
+		हाल DRM_I915_PERF_PROP_CTX_HANDLE:
 			props->single_context = 1;
 			props->ctx_handle = value;
-			break;
-		case DRM_I915_PERF_PROP_SAMPLE_OA:
-			if (value)
+			अवरोध;
+		हाल DRM_I915_PERF_PROP_SAMPLE_OA:
+			अगर (value)
 				props->sample_flags |= SAMPLE_OA_REPORT;
-			break;
-		case DRM_I915_PERF_PROP_OA_METRICS_SET:
-			if (value == 0) {
+			अवरोध;
+		हाल DRM_I915_PERF_PROP_OA_METRICS_SET:
+			अगर (value == 0) अणु
 				DRM_DEBUG("Unknown OA metric set ID\n");
-				return -EINVAL;
-			}
+				वापस -EINVAL;
+			पूर्ण
 			props->metrics_set = value;
-			break;
-		case DRM_I915_PERF_PROP_OA_FORMAT:
-			if (value == 0 || value >= I915_OA_FORMAT_MAX) {
+			अवरोध;
+		हाल DRM_I915_PERF_PROP_OA_FORMAT:
+			अगर (value == 0 || value >= I915_OA_FORMAT_MAX) अणु
 				DRM_DEBUG("Out-of-range OA report format %llu\n",
 					  value);
-				return -EINVAL;
-			}
-			if (!oa_format_valid(perf, value)) {
+				वापस -EINVAL;
+			पूर्ण
+			अगर (!oa_क्रमmat_valid(perf, value)) अणु
 				DRM_DEBUG("Unsupported OA report format %llu\n",
 					  value);
-				return -EINVAL;
-			}
-			props->oa_format = value;
-			break;
-		case DRM_I915_PERF_PROP_OA_EXPONENT:
-			if (value > OA_EXPONENT_MAX) {
+				वापस -EINVAL;
+			पूर्ण
+			props->oa_क्रमmat = value;
+			अवरोध;
+		हाल DRM_I915_PERF_PROP_OA_EXPONENT:
+			अगर (value > OA_EXPONENT_MAX) अणु
 				DRM_DEBUG("OA timer exponent too high (> %u)\n",
 					 OA_EXPONENT_MAX);
-				return -EINVAL;
-			}
+				वापस -EINVAL;
+			पूर्ण
 
 			/* Theoretically we can program the OA unit to sample
-			 * e.g. every 160ns for HSW, 167ns for BDW/SKL or 104ns
-			 * for BXT. We don't allow such high sampling
-			 * frequencies by default unless root.
+			 * e.g. every 160ns क्रम HSW, 167ns क्रम BDW/SKL or 104ns
+			 * क्रम BXT. We करोn't allow such high sampling
+			 * frequencies by शेष unless root.
 			 */
 
-			BUILD_BUG_ON(sizeof(oa_period) != 8);
+			BUILD_BUG_ON(माप(oa_period) != 8);
 			oa_period = oa_exponent_to_ns(perf, value);
 
 			/* This check is primarily to ensure that oa_period <=
-			 * UINT32_MAX (before passing to do_div which only
+			 * UINT32_MAX (beक्रमe passing to करो_भाग which only
 			 * accepts a u32 denominator), but we can also skip
 			 * checking anything < 1Hz which implicitly can't be
-			 * limited via an integer oa_max_sample_rate.
+			 * limited via an पूर्णांकeger oa_max_sample_rate.
 			 */
-			if (oa_period <= NSEC_PER_SEC) {
-				u64 tmp = NSEC_PER_SEC;
-				do_div(tmp, oa_period);
-				oa_freq_hz = tmp;
-			} else
+			अगर (oa_period <= NSEC_PER_SEC) अणु
+				u64 पंचांगp = NSEC_PER_SEC;
+				करो_भाग(पंचांगp, oa_period);
+				oa_freq_hz = पंचांगp;
+			पूर्ण अन्यथा
 				oa_freq_hz = 0;
 
-			if (oa_freq_hz > i915_oa_max_sample_rate && !perfmon_capable()) {
+			अगर (oa_freq_hz > i915_oa_max_sample_rate && !perfmon_capable()) अणु
 				DRM_DEBUG("OA exponent would exceed the max sampling frequency (sysctl dev.i915.oa_max_sample_rate) %uHz without CAP_PERFMON or CAP_SYS_ADMIN privileges\n",
 					  i915_oa_max_sample_rate);
-				return -EACCES;
-			}
+				वापस -EACCES;
+			पूर्ण
 
 			props->oa_periodic = true;
 			props->oa_period_exponent = value;
-			break;
-		case DRM_I915_PERF_PROP_HOLD_PREEMPTION:
+			अवरोध;
+		हाल DRM_I915_PERF_PROP_HOLD_PREEMPTION:
 			props->hold_preemption = !!value;
-			break;
-		case DRM_I915_PERF_PROP_GLOBAL_SSEU: {
-			struct drm_i915_gem_context_param_sseu user_sseu;
+			अवरोध;
+		हाल DRM_I915_PERF_PROP_GLOBAL_SSEU: अणु
+			काष्ठा drm_i915_gem_context_param_sseu user_sseu;
 
-			if (copy_from_user(&user_sseu,
+			अगर (copy_from_user(&user_sseu,
 					   u64_to_user_ptr(value),
-					   sizeof(user_sseu))) {
+					   माप(user_sseu))) अणु
 				DRM_DEBUG("Unable to copy global sseu parameter\n");
-				return -EFAULT;
-			}
+				वापस -EFAULT;
+			पूर्ण
 
 			ret = get_sseu_config(&props->sseu, props->engine, &user_sseu);
-			if (ret) {
+			अगर (ret) अणु
 				DRM_DEBUG("Invalid SSEU configuration\n");
-				return ret;
-			}
+				वापस ret;
+			पूर्ण
 			props->has_sseu = true;
-			break;
-		}
-		case DRM_I915_PERF_PROP_POLL_OA_PERIOD:
-			if (value < 100000 /* 100us */) {
+			अवरोध;
+		पूर्ण
+		हाल DRM_I915_PERF_PROP_POLL_OA_PERIOD:
+			अगर (value < 100000 /* 100us */) अणु
 				DRM_DEBUG("OA availability timer too small (%lluns < 100us)\n",
 					  value);
-				return -EINVAL;
-			}
+				वापस -EINVAL;
+			पूर्ण
 			props->poll_oa_period = value;
-			break;
-		case DRM_I915_PERF_PROP_MAX:
+			अवरोध;
+		हाल DRM_I915_PERF_PROP_MAX:
 			MISSING_CASE(id);
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
 		uprop += 2;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * i915_perf_open_ioctl - DRM ioctl() for userspace to open a stream FD
+ * i915_perf_खोलो_ioctl - DRM ioctl() क्रम userspace to खोलो a stream FD
  * @dev: drm device
  * @data: ioctl data copied from userspace (unvalidated)
  * @file: drm file
  *
- * Validates the stream open parameters given by userspace including flags
+ * Validates the stream खोलो parameters given by userspace including flags
  * and an array of u64 key, value pair properties.
  *
  * Very little is assumed up front about the nature of the stream being
- * opened (for instance we don't assume it's for periodic OA unit metrics). An
- * i915-perf stream is expected to be a suitable interface for other forms of
+ * खोलोed (क्रम instance we करोn't assume it's क्रम periodic OA unit metrics). An
+ * i915-perf stream is expected to be a suitable पूर्णांकerface क्रम other क्रमms of
  * buffered data written by the GPU besides periodic OA metrics.
  *
  * Note we copy the properties from userspace outside of the i915 perf
- * mutex to avoid an awkward lockdep with mmap_lock.
+ * mutex to aव्योम an awkward lockdep with mmap_lock.
  *
  * Most of the implementation details are handled by
- * i915_perf_open_ioctl_locked() after taking the &perf->lock
- * mutex for serializing with any non-file-operation driver hooks.
+ * i915_perf_खोलो_ioctl_locked() after taking the &perf->lock
+ * mutex क्रम serializing with any non-file-operation driver hooks.
  *
- * Return: A newly opened i915 Perf stream file descriptor or negative
+ * Return: A newly खोलोed i915 Perf stream file descriptor or negative
  * error code on failure.
  */
-int i915_perf_open_ioctl(struct drm_device *dev, void *data,
-			 struct drm_file *file)
-{
-	struct i915_perf *perf = &to_i915(dev)->perf;
-	struct drm_i915_perf_open_param *param = data;
-	struct perf_open_properties props;
-	u32 known_open_flags;
-	int ret;
+पूर्णांक i915_perf_खोलो_ioctl(काष्ठा drm_device *dev, व्योम *data,
+			 काष्ठा drm_file *file)
+अणु
+	काष्ठा i915_perf *perf = &to_i915(dev)->perf;
+	काष्ठा drm_i915_perf_खोलो_param *param = data;
+	काष्ठा perf_खोलो_properties props;
+	u32 known_खोलो_flags;
+	पूर्णांक ret;
 
-	if (!perf->i915) {
+	अगर (!perf->i915) अणु
 		DRM_DEBUG("i915 perf interface not available for this system\n");
-		return -ENOTSUPP;
-	}
+		वापस -ENOTSUPP;
+	पूर्ण
 
-	known_open_flags = I915_PERF_FLAG_FD_CLOEXEC |
+	known_खोलो_flags = I915_PERF_FLAG_FD_CLOEXEC |
 			   I915_PERF_FLAG_FD_NONBLOCK |
 			   I915_PERF_FLAG_DISABLED;
-	if (param->flags & ~known_open_flags) {
+	अगर (param->flags & ~known_खोलो_flags) अणु
 		DRM_DEBUG("Unknown drm_i915_perf_open_param flag\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	ret = read_properties_unlocked(perf,
+	ret = पढ़ो_properties_unlocked(perf,
 				       u64_to_user_ptr(param->properties_ptr),
 				       param->num_properties,
 				       &props);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	mutex_lock(&perf->lock);
-	ret = i915_perf_open_ioctl_locked(perf, param, &props, file);
+	ret = i915_perf_खोलो_ioctl_locked(perf, param, &props, file);
 	mutex_unlock(&perf->lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * i915_perf_register - exposes i915-perf to userspace
+ * i915_perf_रेजिस्टर - exposes i915-perf to userspace
  * @i915: i915 device instance
  *
  * In particular OA metric sets are advertised under a sysfs metrics/
- * directory allowing userspace to enumerate valid IDs that can be
- * used to open an i915-perf stream.
+ * directory allowing userspace to क्रमागतerate valid IDs that can be
+ * used to खोलो an i915-perf stream.
  */
-void i915_perf_register(struct drm_i915_private *i915)
-{
-	struct i915_perf *perf = &i915->perf;
+व्योम i915_perf_रेजिस्टर(काष्ठा drm_i915_निजी *i915)
+अणु
+	काष्ठा i915_perf *perf = &i915->perf;
 
-	if (!perf->i915)
-		return;
+	अगर (!perf->i915)
+		वापस;
 
 	/* To be sure we're synchronized with an attempted
-	 * i915_perf_open_ioctl(); considering that we register after
+	 * i915_perf_खोलो_ioctl(); considering that we रेजिस्टर after
 	 * being exposed to userspace.
 	 */
 	mutex_lock(&perf->lock);
@@ -3812,31 +3813,31 @@ void i915_perf_register(struct drm_i915_private *i915)
 				       &i915->drm.primary->kdev->kobj);
 
 	mutex_unlock(&perf->lock);
-}
+पूर्ण
 
 /**
- * i915_perf_unregister - hide i915-perf from userspace
+ * i915_perf_unरेजिस्टर - hide i915-perf from userspace
  * @i915: i915 device instance
  *
- * i915-perf state cleanup is split up into an 'unregister' and
- * 'deinit' phase where the interface is first hidden from
- * userspace by i915_perf_unregister() before cleaning up
- * remaining state in i915_perf_fini().
+ * i915-perf state cleanup is split up पूर्णांकo an 'unregister' and
+ * 'deinit' phase where the पूर्णांकerface is first hidden from
+ * userspace by i915_perf_unरेजिस्टर() beक्रमe cleaning up
+ * reमुख्यing state in i915_perf_fini().
  */
-void i915_perf_unregister(struct drm_i915_private *i915)
-{
-	struct i915_perf *perf = &i915->perf;
+व्योम i915_perf_unरेजिस्टर(काष्ठा drm_i915_निजी *i915)
+अणु
+	काष्ठा i915_perf *perf = &i915->perf;
 
-	if (!perf->metrics_kobj)
-		return;
+	अगर (!perf->metrics_kobj)
+		वापस;
 
 	kobject_put(perf->metrics_kobj);
-	perf->metrics_kobj = NULL;
-}
+	perf->metrics_kobj = शून्य;
+पूर्ण
 
-static bool gen8_is_valid_flex_addr(struct i915_perf *perf, u32 addr)
-{
-	static const i915_reg_t flex_eu_regs[] = {
+अटल bool gen8_is_valid_flex_addr(काष्ठा i915_perf *perf, u32 addr)
+अणु
+	अटल स्थिर i915_reg_t flex_eu_regs[] = अणु
 		EU_PERF_CNTL0,
 		EU_PERF_CNTL1,
 		EU_PERF_CNTL2,
@@ -3844,254 +3845,254 @@ static bool gen8_is_valid_flex_addr(struct i915_perf *perf, u32 addr)
 		EU_PERF_CNTL4,
 		EU_PERF_CNTL5,
 		EU_PERF_CNTL6,
-	};
-	int i;
+	पूर्ण;
+	पूर्णांक i;
 
-	for (i = 0; i < ARRAY_SIZE(flex_eu_regs); i++) {
-		if (i915_mmio_reg_offset(flex_eu_regs[i]) == addr)
-			return true;
-	}
-	return false;
-}
+	क्रम (i = 0; i < ARRAY_SIZE(flex_eu_regs); i++) अणु
+		अगर (i915_mmio_reg_offset(flex_eu_regs[i]) == addr)
+			वापस true;
+	पूर्ण
+	वापस false;
+पूर्ण
 
-#define ADDR_IN_RANGE(addr, start, end) \
+#घोषणा ADDR_IN_RANGE(addr, start, end) \
 	((addr) >= (start) && \
 	 (addr) <= (end))
 
-#define REG_IN_RANGE(addr, start, end) \
+#घोषणा REG_IN_RANGE(addr, start, end) \
 	((addr) >= i915_mmio_reg_offset(start) && \
 	 (addr) <= i915_mmio_reg_offset(end))
 
-#define REG_EQUAL(addr, mmio) \
+#घोषणा REG_EQUAL(addr, mmio) \
 	((addr) == i915_mmio_reg_offset(mmio))
 
-static bool gen7_is_valid_b_counter_addr(struct i915_perf *perf, u32 addr)
-{
-	return REG_IN_RANGE(addr, OASTARTTRIG1, OASTARTTRIG8) ||
+अटल bool gen7_is_valid_b_counter_addr(काष्ठा i915_perf *perf, u32 addr)
+अणु
+	वापस REG_IN_RANGE(addr, OASTARTTRIG1, OASTARTTRIG8) ||
 	       REG_IN_RANGE(addr, OAREPORTTRIG1, OAREPORTTRIG8) ||
 	       REG_IN_RANGE(addr, OACEC0_0, OACEC7_1);
-}
+पूर्ण
 
-static bool gen7_is_valid_mux_addr(struct i915_perf *perf, u32 addr)
-{
-	return REG_EQUAL(addr, HALF_SLICE_CHICKEN2) ||
+अटल bool gen7_is_valid_mux_addr(काष्ठा i915_perf *perf, u32 addr)
+अणु
+	वापस REG_EQUAL(addr, HALF_SLICE_CHICKEN2) ||
 	       REG_IN_RANGE(addr, MICRO_BP0_0, NOA_WRITE) ||
 	       REG_IN_RANGE(addr, OA_PERFCNT1_LO, OA_PERFCNT2_HI) ||
 	       REG_IN_RANGE(addr, OA_PERFMATRIX_LO, OA_PERFMATRIX_HI);
-}
+पूर्ण
 
-static bool gen8_is_valid_mux_addr(struct i915_perf *perf, u32 addr)
-{
-	return gen7_is_valid_mux_addr(perf, addr) ||
+अटल bool gen8_is_valid_mux_addr(काष्ठा i915_perf *perf, u32 addr)
+अणु
+	वापस gen7_is_valid_mux_addr(perf, addr) ||
 	       REG_EQUAL(addr, WAIT_FOR_RC6_EXIT) ||
 	       REG_IN_RANGE(addr, RPM_CONFIG0, NOA_CONFIG(8));
-}
+पूर्ण
 
-static bool gen10_is_valid_mux_addr(struct i915_perf *perf, u32 addr)
-{
-	return gen8_is_valid_mux_addr(perf, addr) ||
+अटल bool gen10_is_valid_mux_addr(काष्ठा i915_perf *perf, u32 addr)
+अणु
+	वापस gen8_is_valid_mux_addr(perf, addr) ||
 	       REG_EQUAL(addr, GEN10_NOA_WRITE_HIGH) ||
 	       REG_IN_RANGE(addr, OA_PERFCNT3_LO, OA_PERFCNT4_HI);
-}
+पूर्ण
 
-static bool hsw_is_valid_mux_addr(struct i915_perf *perf, u32 addr)
-{
-	return gen7_is_valid_mux_addr(perf, addr) ||
+अटल bool hsw_is_valid_mux_addr(काष्ठा i915_perf *perf, u32 addr)
+अणु
+	वापस gen7_is_valid_mux_addr(perf, addr) ||
 	       ADDR_IN_RANGE(addr, 0x25100, 0x2FF90) ||
 	       REG_IN_RANGE(addr, HSW_MBVID2_NOA0, HSW_MBVID2_NOA9) ||
 	       REG_EQUAL(addr, HSW_MBVID2_MISR0);
-}
+पूर्ण
 
-static bool chv_is_valid_mux_addr(struct i915_perf *perf, u32 addr)
-{
-	return gen7_is_valid_mux_addr(perf, addr) ||
+अटल bool chv_is_valid_mux_addr(काष्ठा i915_perf *perf, u32 addr)
+अणु
+	वापस gen7_is_valid_mux_addr(perf, addr) ||
 	       ADDR_IN_RANGE(addr, 0x182300, 0x1823A4);
-}
+पूर्ण
 
-static bool gen12_is_valid_b_counter_addr(struct i915_perf *perf, u32 addr)
-{
-	return REG_IN_RANGE(addr, GEN12_OAG_OASTARTTRIG1, GEN12_OAG_OASTARTTRIG8) ||
+अटल bool gen12_is_valid_b_counter_addr(काष्ठा i915_perf *perf, u32 addr)
+अणु
+	वापस REG_IN_RANGE(addr, GEN12_OAG_OASTARTTRIG1, GEN12_OAG_OASTARTTRIG8) ||
 	       REG_IN_RANGE(addr, GEN12_OAG_OAREPORTTRIG1, GEN12_OAG_OAREPORTTRIG8) ||
 	       REG_IN_RANGE(addr, GEN12_OAG_CEC0_0, GEN12_OAG_CEC7_1) ||
 	       REG_IN_RANGE(addr, GEN12_OAG_SCEC0_0, GEN12_OAG_SCEC7_1) ||
 	       REG_EQUAL(addr, GEN12_OAA_DBG_REG) ||
 	       REG_EQUAL(addr, GEN12_OAG_OA_PESS) ||
 	       REG_EQUAL(addr, GEN12_OAG_SPCTR_CNF);
-}
+पूर्ण
 
-static bool gen12_is_valid_mux_addr(struct i915_perf *perf, u32 addr)
-{
-	return REG_EQUAL(addr, NOA_WRITE) ||
+अटल bool gen12_is_valid_mux_addr(काष्ठा i915_perf *perf, u32 addr)
+अणु
+	वापस REG_EQUAL(addr, NOA_WRITE) ||
 	       REG_EQUAL(addr, GEN10_NOA_WRITE_HIGH) ||
 	       REG_EQUAL(addr, GDT_CHICKEN_BITS) ||
 	       REG_EQUAL(addr, WAIT_FOR_RC6_EXIT) ||
 	       REG_EQUAL(addr, RPM_CONFIG0) ||
 	       REG_EQUAL(addr, RPM_CONFIG1) ||
 	       REG_IN_RANGE(addr, NOA_CONFIG(0), NOA_CONFIG(8));
-}
+पूर्ण
 
-static u32 mask_reg_value(u32 reg, u32 val)
-{
+अटल u32 mask_reg_value(u32 reg, u32 val)
+अणु
 	/* HALF_SLICE_CHICKEN2 is programmed with a the
 	 * WaDisableSTUnitPowerOptimization workaround. Make sure the value
-	 * programmed by userspace doesn't change this.
+	 * programmed by userspace करोesn't change this.
 	 */
-	if (REG_EQUAL(reg, HALF_SLICE_CHICKEN2))
+	अगर (REG_EQUAL(reg, HALF_SLICE_CHICKEN2))
 		val = val & ~_MASKED_BIT_ENABLE(GEN8_ST_PO_DISABLE);
 
 	/* WAIT_FOR_RC6_EXIT has only one bit fullfilling the function
 	 * indicated by its name and a bunch of selection fields used by OA
 	 * configs.
 	 */
-	if (REG_EQUAL(reg, WAIT_FOR_RC6_EXIT))
+	अगर (REG_EQUAL(reg, WAIT_FOR_RC6_EXIT))
 		val = val & ~_MASKED_BIT_ENABLE(HSW_WAIT_FOR_RC6_EXIT_ENABLE);
 
-	return val;
-}
+	वापस val;
+पूर्ण
 
-static struct i915_oa_reg *alloc_oa_regs(struct i915_perf *perf,
-					 bool (*is_valid)(struct i915_perf *perf, u32 addr),
+अटल काष्ठा i915_oa_reg *alloc_oa_regs(काष्ठा i915_perf *perf,
+					 bool (*is_valid)(काष्ठा i915_perf *perf, u32 addr),
 					 u32 __user *regs,
 					 u32 n_regs)
-{
-	struct i915_oa_reg *oa_regs;
-	int err;
+अणु
+	काष्ठा i915_oa_reg *oa_regs;
+	पूर्णांक err;
 	u32 i;
 
-	if (!n_regs)
-		return NULL;
+	अगर (!n_regs)
+		वापस शून्य;
 
-	/* No is_valid function means we're not allowing any register to be programmed. */
+	/* No is_valid function means we're not allowing any रेजिस्टर to be programmed. */
 	GEM_BUG_ON(!is_valid);
-	if (!is_valid)
-		return ERR_PTR(-EINVAL);
+	अगर (!is_valid)
+		वापस ERR_PTR(-EINVAL);
 
-	oa_regs = kmalloc_array(n_regs, sizeof(*oa_regs), GFP_KERNEL);
-	if (!oa_regs)
-		return ERR_PTR(-ENOMEM);
+	oa_regs = kदो_स्मृति_array(n_regs, माप(*oa_regs), GFP_KERNEL);
+	अगर (!oa_regs)
+		वापस ERR_PTR(-ENOMEM);
 
-	for (i = 0; i < n_regs; i++) {
+	क्रम (i = 0; i < n_regs; i++) अणु
 		u32 addr, value;
 
 		err = get_user(addr, regs);
-		if (err)
-			goto addr_err;
+		अगर (err)
+			जाओ addr_err;
 
-		if (!is_valid(perf, addr)) {
+		अगर (!is_valid(perf, addr)) अणु
 			DRM_DEBUG("Invalid oa_reg address: %X\n", addr);
 			err = -EINVAL;
-			goto addr_err;
-		}
+			जाओ addr_err;
+		पूर्ण
 
 		err = get_user(value, regs + 1);
-		if (err)
-			goto addr_err;
+		अगर (err)
+			जाओ addr_err;
 
 		oa_regs[i].addr = _MMIO(addr);
 		oa_regs[i].value = mask_reg_value(addr, value);
 
 		regs += 2;
-	}
+	पूर्ण
 
-	return oa_regs;
+	वापस oa_regs;
 
 addr_err:
-	kfree(oa_regs);
-	return ERR_PTR(err);
-}
+	kमुक्त(oa_regs);
+	वापस ERR_PTR(err);
+पूर्ण
 
-static ssize_t show_dynamic_id(struct device *dev,
-			       struct device_attribute *attr,
-			       char *buf)
-{
-	struct i915_oa_config *oa_config =
+अटल sमाप_प्रकार show_dynamic_id(काष्ठा device *dev,
+			       काष्ठा device_attribute *attr,
+			       अक्षर *buf)
+अणु
+	काष्ठा i915_oa_config *oa_config =
 		container_of(attr, typeof(*oa_config), sysfs_metric_id);
 
-	return sprintf(buf, "%d\n", oa_config->id);
-}
+	वापस प्र_लिखो(buf, "%d\n", oa_config->id);
+पूर्ण
 
-static int create_dynamic_oa_sysfs_entry(struct i915_perf *perf,
-					 struct i915_oa_config *oa_config)
-{
+अटल पूर्णांक create_dynamic_oa_sysfs_entry(काष्ठा i915_perf *perf,
+					 काष्ठा i915_oa_config *oa_config)
+अणु
 	sysfs_attr_init(&oa_config->sysfs_metric_id.attr);
 	oa_config->sysfs_metric_id.attr.name = "id";
 	oa_config->sysfs_metric_id.attr.mode = S_IRUGO;
 	oa_config->sysfs_metric_id.show = show_dynamic_id;
-	oa_config->sysfs_metric_id.store = NULL;
+	oa_config->sysfs_metric_id.store = शून्य;
 
 	oa_config->attrs[0] = &oa_config->sysfs_metric_id.attr;
-	oa_config->attrs[1] = NULL;
+	oa_config->attrs[1] = शून्य;
 
 	oa_config->sysfs_metric.name = oa_config->uuid;
 	oa_config->sysfs_metric.attrs = oa_config->attrs;
 
-	return sysfs_create_group(perf->metrics_kobj,
+	वापस sysfs_create_group(perf->metrics_kobj,
 				  &oa_config->sysfs_metric);
-}
+पूर्ण
 
 /**
- * i915_perf_add_config_ioctl - DRM ioctl() for userspace to add a new OA config
+ * i915_perf_add_config_ioctl - DRM ioctl() क्रम userspace to add a new OA config
  * @dev: drm device
- * @data: ioctl data (pointer to struct drm_i915_perf_oa_config) copied from
+ * @data: ioctl data (poपूर्णांकer to काष्ठा drm_i915_perf_oa_config) copied from
  *        userspace (unvalidated)
  * @file: drm file
  *
- * Validates the submitted OA register to be saved into a new OA config that
- * can then be used for programming the OA unit and its NOA network.
+ * Validates the submitted OA रेजिस्टर to be saved पूर्णांकo a new OA config that
+ * can then be used क्रम programming the OA unit and its NOA network.
  *
- * Returns: A new allocated config number to be used with the perf open ioctl
+ * Returns: A new allocated config number to be used with the perf खोलो ioctl
  * or a negative error code on failure.
  */
-int i915_perf_add_config_ioctl(struct drm_device *dev, void *data,
-			       struct drm_file *file)
-{
-	struct i915_perf *perf = &to_i915(dev)->perf;
-	struct drm_i915_perf_oa_config *args = data;
-	struct i915_oa_config *oa_config, *tmp;
-	struct i915_oa_reg *regs;
-	int err, id;
+पूर्णांक i915_perf_add_config_ioctl(काष्ठा drm_device *dev, व्योम *data,
+			       काष्ठा drm_file *file)
+अणु
+	काष्ठा i915_perf *perf = &to_i915(dev)->perf;
+	काष्ठा drm_i915_perf_oa_config *args = data;
+	काष्ठा i915_oa_config *oa_config, *पंचांगp;
+	काष्ठा i915_oa_reg *regs;
+	पूर्णांक err, id;
 
-	if (!perf->i915) {
+	अगर (!perf->i915) अणु
 		DRM_DEBUG("i915 perf interface not available for this system\n");
-		return -ENOTSUPP;
-	}
+		वापस -ENOTSUPP;
+	पूर्ण
 
-	if (!perf->metrics_kobj) {
+	अगर (!perf->metrics_kobj) अणु
 		DRM_DEBUG("OA metrics weren't advertised via sysfs\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (i915_perf_stream_paranoid && !perfmon_capable()) {
+	अगर (i915_perf_stream_paranoid && !perfmon_capable()) अणु
 		DRM_DEBUG("Insufficient privileges to add i915 OA config\n");
-		return -EACCES;
-	}
+		वापस -EACCES;
+	पूर्ण
 
-	if ((!args->mux_regs_ptr || !args->n_mux_regs) &&
+	अगर ((!args->mux_regs_ptr || !args->n_mux_regs) &&
 	    (!args->boolean_regs_ptr || !args->n_boolean_regs) &&
-	    (!args->flex_regs_ptr || !args->n_flex_regs)) {
+	    (!args->flex_regs_ptr || !args->n_flex_regs)) अणु
 		DRM_DEBUG("No OA registers given\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	oa_config = kzalloc(sizeof(*oa_config), GFP_KERNEL);
-	if (!oa_config) {
+	oa_config = kzalloc(माप(*oa_config), GFP_KERNEL);
+	अगर (!oa_config) अणु
 		DRM_DEBUG("Failed to allocate memory for the OA config\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	oa_config->perf = perf;
 	kref_init(&oa_config->ref);
 
-	if (!uuid_is_valid(args->uuid)) {
+	अगर (!uuid_is_valid(args->uuid)) अणु
 		DRM_DEBUG("Invalid uuid format for OA config\n");
 		err = -EINVAL;
-		goto reg_err;
-	}
+		जाओ reg_err;
+	पूर्ण
 
-	/* Last character in oa_config->uuid will be 0 because oa_config is
+	/* Last अक्षरacter in oa_config->uuid will be 0 because oa_config is
 	 * kzalloc.
 	 */
-	memcpy(oa_config->uuid, args->uuid, sizeof(args->uuid));
+	स_नकल(oa_config->uuid, args->uuid, माप(args->uuid));
 
 	oa_config->mux_regs_len = args->n_mux_regs;
 	regs = alloc_oa_regs(perf,
@@ -4099,11 +4100,11 @@ int i915_perf_add_config_ioctl(struct drm_device *dev, void *data,
 			     u64_to_user_ptr(args->mux_regs_ptr),
 			     args->n_mux_regs);
 
-	if (IS_ERR(regs)) {
+	अगर (IS_ERR(regs)) अणु
 		DRM_DEBUG("Failed to create OA config for mux_regs\n");
 		err = PTR_ERR(regs);
-		goto reg_err;
-	}
+		जाओ reg_err;
+	पूर्ण
 	oa_config->mux_regs = regs;
 
 	oa_config->b_counter_regs_len = args->n_boolean_regs;
@@ -4112,123 +4113,123 @@ int i915_perf_add_config_ioctl(struct drm_device *dev, void *data,
 			     u64_to_user_ptr(args->boolean_regs_ptr),
 			     args->n_boolean_regs);
 
-	if (IS_ERR(regs)) {
+	अगर (IS_ERR(regs)) अणु
 		DRM_DEBUG("Failed to create OA config for b_counter_regs\n");
 		err = PTR_ERR(regs);
-		goto reg_err;
-	}
+		जाओ reg_err;
+	पूर्ण
 	oa_config->b_counter_regs = regs;
 
-	if (INTEL_GEN(perf->i915) < 8) {
-		if (args->n_flex_regs != 0) {
+	अगर (INTEL_GEN(perf->i915) < 8) अणु
+		अगर (args->n_flex_regs != 0) अणु
 			err = -EINVAL;
-			goto reg_err;
-		}
-	} else {
+			जाओ reg_err;
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		oa_config->flex_regs_len = args->n_flex_regs;
 		regs = alloc_oa_regs(perf,
 				     perf->ops.is_valid_flex_reg,
 				     u64_to_user_ptr(args->flex_regs_ptr),
 				     args->n_flex_regs);
 
-		if (IS_ERR(regs)) {
+		अगर (IS_ERR(regs)) अणु
 			DRM_DEBUG("Failed to create OA config for flex_regs\n");
 			err = PTR_ERR(regs);
-			goto reg_err;
-		}
+			जाओ reg_err;
+		पूर्ण
 		oa_config->flex_regs = regs;
-	}
+	पूर्ण
 
-	err = mutex_lock_interruptible(&perf->metrics_lock);
-	if (err)
-		goto reg_err;
+	err = mutex_lock_पूर्णांकerruptible(&perf->metrics_lock);
+	अगर (err)
+		जाओ reg_err;
 
 	/* We shouldn't have too many configs, so this iteration shouldn't be
 	 * too costly.
 	 */
-	idr_for_each_entry(&perf->metrics_idr, tmp, id) {
-		if (!strcmp(tmp->uuid, oa_config->uuid)) {
+	idr_क्रम_each_entry(&perf->metrics_idr, पंचांगp, id) अणु
+		अगर (!म_भेद(पंचांगp->uuid, oa_config->uuid)) अणु
 			DRM_DEBUG("OA config already exists with this uuid\n");
 			err = -EADDRINUSE;
-			goto sysfs_err;
-		}
-	}
+			जाओ sysfs_err;
+		पूर्ण
+	पूर्ण
 
 	err = create_dynamic_oa_sysfs_entry(perf, oa_config);
-	if (err) {
+	अगर (err) अणु
 		DRM_DEBUG("Failed to create sysfs entry for OA config\n");
-		goto sysfs_err;
-	}
+		जाओ sysfs_err;
+	पूर्ण
 
-	/* Config id 0 is invalid, id 1 for kernel stored test config. */
+	/* Config id 0 is invalid, id 1 क्रम kernel stored test config. */
 	oa_config->id = idr_alloc(&perf->metrics_idr,
 				  oa_config, 2,
 				  0, GFP_KERNEL);
-	if (oa_config->id < 0) {
+	अगर (oa_config->id < 0) अणु
 		DRM_DEBUG("Failed to create sysfs entry for OA config\n");
 		err = oa_config->id;
-		goto sysfs_err;
-	}
+		जाओ sysfs_err;
+	पूर्ण
 
 	mutex_unlock(&perf->metrics_lock);
 
 	DRM_DEBUG("Added config %s id=%i\n", oa_config->uuid, oa_config->id);
 
-	return oa_config->id;
+	वापस oa_config->id;
 
 sysfs_err:
 	mutex_unlock(&perf->metrics_lock);
 reg_err:
 	i915_oa_config_put(oa_config);
 	DRM_DEBUG("Failed to add new OA config\n");
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /**
- * i915_perf_remove_config_ioctl - DRM ioctl() for userspace to remove an OA config
+ * i915_perf_हटाओ_config_ioctl - DRM ioctl() क्रम userspace to हटाओ an OA config
  * @dev: drm device
- * @data: ioctl data (pointer to u64 integer) copied from userspace
+ * @data: ioctl data (poपूर्णांकer to u64 पूर्णांकeger) copied from userspace
  * @file: drm file
  *
- * Configs can be removed while being used, the will stop appearing in sysfs
- * and their content will be freed when the stream using the config is closed.
+ * Configs can be हटाओd जबतक being used, the will stop appearing in sysfs
+ * and their content will be मुक्तd when the stream using the config is बंदd.
  *
  * Returns: 0 on success or a negative error code on failure.
  */
-int i915_perf_remove_config_ioctl(struct drm_device *dev, void *data,
-				  struct drm_file *file)
-{
-	struct i915_perf *perf = &to_i915(dev)->perf;
+पूर्णांक i915_perf_हटाओ_config_ioctl(काष्ठा drm_device *dev, व्योम *data,
+				  काष्ठा drm_file *file)
+अणु
+	काष्ठा i915_perf *perf = &to_i915(dev)->perf;
 	u64 *arg = data;
-	struct i915_oa_config *oa_config;
-	int ret;
+	काष्ठा i915_oa_config *oa_config;
+	पूर्णांक ret;
 
-	if (!perf->i915) {
+	अगर (!perf->i915) अणु
 		DRM_DEBUG("i915 perf interface not available for this system\n");
-		return -ENOTSUPP;
-	}
+		वापस -ENOTSUPP;
+	पूर्ण
 
-	if (i915_perf_stream_paranoid && !perfmon_capable()) {
+	अगर (i915_perf_stream_paranoid && !perfmon_capable()) अणु
 		DRM_DEBUG("Insufficient privileges to remove i915 OA config\n");
-		return -EACCES;
-	}
+		वापस -EACCES;
+	पूर्ण
 
-	ret = mutex_lock_interruptible(&perf->metrics_lock);
-	if (ret)
-		return ret;
+	ret = mutex_lock_पूर्णांकerruptible(&perf->metrics_lock);
+	अगर (ret)
+		वापस ret;
 
 	oa_config = idr_find(&perf->metrics_idr, *arg);
-	if (!oa_config) {
+	अगर (!oa_config) अणु
 		DRM_DEBUG("Failed to remove unknown OA config\n");
 		ret = -ENOENT;
-		goto err_unlock;
-	}
+		जाओ err_unlock;
+	पूर्ण
 
 	GEM_BUG_ON(*arg != oa_config->id);
 
-	sysfs_remove_group(perf->metrics_kobj, &oa_config->sysfs_metric);
+	sysfs_हटाओ_group(perf->metrics_kobj, &oa_config->sysfs_metric);
 
-	idr_remove(&perf->metrics_idr, *arg);
+	idr_हटाओ(&perf->metrics_idr, *arg);
 
 	mutex_unlock(&perf->metrics_lock);
 
@@ -4236,98 +4237,98 @@ int i915_perf_remove_config_ioctl(struct drm_device *dev, void *data,
 
 	i915_oa_config_put(oa_config);
 
-	return 0;
+	वापस 0;
 
 err_unlock:
 	mutex_unlock(&perf->metrics_lock);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static struct ctl_table oa_table[] = {
-	{
+अटल काष्ठा ctl_table oa_table[] = अणु
+	अणु
 	 .procname = "perf_stream_paranoid",
 	 .data = &i915_perf_stream_paranoid,
-	 .maxlen = sizeof(i915_perf_stream_paranoid),
+	 .maxlen = माप(i915_perf_stream_paranoid),
 	 .mode = 0644,
-	 .proc_handler = proc_dointvec_minmax,
+	 .proc_handler = proc_करोपूर्णांकvec_minmax,
 	 .extra1 = SYSCTL_ZERO,
 	 .extra2 = SYSCTL_ONE,
-	 },
-	{
+	 पूर्ण,
+	अणु
 	 .procname = "oa_max_sample_rate",
 	 .data = &i915_oa_max_sample_rate,
-	 .maxlen = sizeof(i915_oa_max_sample_rate),
+	 .maxlen = माप(i915_oa_max_sample_rate),
 	 .mode = 0644,
-	 .proc_handler = proc_dointvec_minmax,
+	 .proc_handler = proc_करोपूर्णांकvec_minmax,
 	 .extra1 = SYSCTL_ZERO,
 	 .extra2 = &oa_sample_rate_hard_limit,
-	 },
-	{}
-};
+	 पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
-static struct ctl_table i915_root[] = {
-	{
+अटल काष्ठा ctl_table i915_root[] = अणु
+	अणु
 	 .procname = "i915",
 	 .maxlen = 0,
 	 .mode = 0555,
 	 .child = oa_table,
-	 },
-	{}
-};
+	 पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
-static struct ctl_table dev_root[] = {
-	{
+अटल काष्ठा ctl_table dev_root[] = अणु
+	अणु
 	 .procname = "dev",
 	 .maxlen = 0,
 	 .mode = 0555,
 	 .child = i915_root,
-	 },
-	{}
-};
+	 पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
-static void oa_init_supported_formats(struct i915_perf *perf)
-{
-	struct drm_i915_private *i915 = perf->i915;
-	enum intel_platform platform = INTEL_INFO(i915)->platform;
+अटल व्योम oa_init_supported_क्रमmats(काष्ठा i915_perf *perf)
+अणु
+	काष्ठा drm_i915_निजी *i915 = perf->i915;
+	क्रमागत पूर्णांकel_platक्रमm platक्रमm = INTEL_INFO(i915)->platक्रमm;
 
-	switch (platform) {
-	case INTEL_HASWELL:
-		oa_format_add(perf, I915_OA_FORMAT_A13);
-		oa_format_add(perf, I915_OA_FORMAT_A13);
-		oa_format_add(perf, I915_OA_FORMAT_A29);
-		oa_format_add(perf, I915_OA_FORMAT_A13_B8_C8);
-		oa_format_add(perf, I915_OA_FORMAT_B4_C8);
-		oa_format_add(perf, I915_OA_FORMAT_A45_B8_C8);
-		oa_format_add(perf, I915_OA_FORMAT_B4_C8_A16);
-		oa_format_add(perf, I915_OA_FORMAT_C4_B8);
-		break;
+	चयन (platक्रमm) अणु
+	हाल INTEL_HASWELL:
+		oa_क्रमmat_add(perf, I915_OA_FORMAT_A13);
+		oa_क्रमmat_add(perf, I915_OA_FORMAT_A13);
+		oa_क्रमmat_add(perf, I915_OA_FORMAT_A29);
+		oa_क्रमmat_add(perf, I915_OA_FORMAT_A13_B8_C8);
+		oa_क्रमmat_add(perf, I915_OA_FORMAT_B4_C8);
+		oa_क्रमmat_add(perf, I915_OA_FORMAT_A45_B8_C8);
+		oa_क्रमmat_add(perf, I915_OA_FORMAT_B4_C8_A16);
+		oa_क्रमmat_add(perf, I915_OA_FORMAT_C4_B8);
+		अवरोध;
 
-	case INTEL_BROADWELL:
-	case INTEL_CHERRYVIEW:
-	case INTEL_SKYLAKE:
-	case INTEL_BROXTON:
-	case INTEL_KABYLAKE:
-	case INTEL_GEMINILAKE:
-	case INTEL_COFFEELAKE:
-	case INTEL_COMETLAKE:
-	case INTEL_CANNONLAKE:
-	case INTEL_ICELAKE:
-	case INTEL_ELKHARTLAKE:
-	case INTEL_JASPERLAKE:
-	case INTEL_TIGERLAKE:
-	case INTEL_ROCKETLAKE:
-	case INTEL_DG1:
-	case INTEL_ALDERLAKE_S:
-		oa_format_add(perf, I915_OA_FORMAT_A12);
-		oa_format_add(perf, I915_OA_FORMAT_A12_B8_C8);
-		oa_format_add(perf, I915_OA_FORMAT_A32u40_A4u32_B8_C8);
-		oa_format_add(perf, I915_OA_FORMAT_C4_B8);
-		break;
+	हाल INTEL_BROADWELL:
+	हाल INTEL_CHERRYVIEW:
+	हाल INTEL_SKYLAKE:
+	हाल INTEL_BROXTON:
+	हाल INTEL_KABYLAKE:
+	हाल INTEL_GEMINILAKE:
+	हाल INTEL_COFFEELAKE:
+	हाल INTEL_COMETLAKE:
+	हाल INTEL_CANNONLAKE:
+	हाल INTEL_ICELAKE:
+	हाल INTEL_ELKHARTLAKE:
+	हाल INTEL_JASPERLAKE:
+	हाल INTEL_TIGERLAKE:
+	हाल INTEL_ROCKETLAKE:
+	हाल INTEL_DG1:
+	हाल INTEL_ALDERLAKE_S:
+		oa_क्रमmat_add(perf, I915_OA_FORMAT_A12);
+		oa_क्रमmat_add(perf, I915_OA_FORMAT_A12_B8_C8);
+		oa_क्रमmat_add(perf, I915_OA_FORMAT_A32u40_A4u32_B8_C8);
+		oa_क्रमmat_add(perf, I915_OA_FORMAT_C4_B8);
+		अवरोध;
 
-	default:
-		MISSING_CASE(platform);
-	}
-}
+	शेष:
+		MISSING_CASE(platक्रमm);
+	पूर्ण
+पूर्ण
 
 /**
  * i915_perf_init - initialize i915-perf state on module bind
@@ -4335,36 +4336,36 @@ static void oa_init_supported_formats(struct i915_perf *perf)
  *
  * Initializes i915-perf state without exposing anything to userspace.
  *
- * Note: i915-perf initialization is split into an 'init' and 'register'
- * phase with the i915_perf_register() exposing state to userspace.
+ * Note: i915-perf initialization is split पूर्णांकo an 'init' and 'register'
+ * phase with the i915_perf_रेजिस्टर() exposing state to userspace.
  */
-void i915_perf_init(struct drm_i915_private *i915)
-{
-	struct i915_perf *perf = &i915->perf;
+व्योम i915_perf_init(काष्ठा drm_i915_निजी *i915)
+अणु
+	काष्ठा i915_perf *perf = &i915->perf;
 
-	/* XXX const struct i915_perf_ops! */
+	/* XXX स्थिर काष्ठा i915_perf_ops! */
 
-	perf->oa_formats = oa_formats;
-	if (IS_HASWELL(i915)) {
+	perf->oa_क्रमmats = oa_क्रमmats;
+	अगर (IS_HASWELL(i915)) अणु
 		perf->ops.is_valid_b_counter_reg = gen7_is_valid_b_counter_addr;
 		perf->ops.is_valid_mux_reg = hsw_is_valid_mux_addr;
-		perf->ops.is_valid_flex_reg = NULL;
+		perf->ops.is_valid_flex_reg = शून्य;
 		perf->ops.enable_metric_set = hsw_enable_metric_set;
 		perf->ops.disable_metric_set = hsw_disable_metric_set;
 		perf->ops.oa_enable = gen7_oa_enable;
 		perf->ops.oa_disable = gen7_oa_disable;
-		perf->ops.read = gen7_oa_read;
-		perf->ops.oa_hw_tail_read = gen7_oa_hw_tail_read;
-	} else if (HAS_LOGICAL_RING_CONTEXTS(i915)) {
+		perf->ops.पढ़ो = gen7_oa_पढ़ो;
+		perf->ops.oa_hw_tail_पढ़ो = gen7_oa_hw_tail_पढ़ो;
+	पूर्ण अन्यथा अगर (HAS_LOGICAL_RING_CONTEXTS(i915)) अणु
 		/* Note: that although we could theoretically also support the
 		 * legacy ringbuffer mode on BDW (and earlier iterations of
-		 * this driver, before upstreaming did this) it didn't seem
-		 * worth the complexity to maintain now that BDW+ enable
-		 * execlist mode by default.
+		 * this driver, beक्रमe upstreaming did this) it didn't seem
+		 * worth the complनिकासy to मुख्यtain now that BDW+ enable
+		 * execlist mode by शेष.
 		 */
-		perf->ops.read = gen8_oa_read;
+		perf->ops.पढ़ो = gen8_oa_पढ़ो;
 
-		if (IS_GEN_RANGE(i915, 8, 9)) {
+		अगर (IS_GEN_RANGE(i915, 8, 9)) अणु
 			perf->ops.is_valid_b_counter_reg =
 				gen7_is_valid_b_counter_addr;
 			perf->ops.is_valid_mux_reg =
@@ -4372,29 +4373,29 @@ void i915_perf_init(struct drm_i915_private *i915)
 			perf->ops.is_valid_flex_reg =
 				gen8_is_valid_flex_addr;
 
-			if (IS_CHERRYVIEW(i915)) {
+			अगर (IS_CHERRYVIEW(i915)) अणु
 				perf->ops.is_valid_mux_reg =
 					chv_is_valid_mux_addr;
-			}
+			पूर्ण
 
 			perf->ops.oa_enable = gen8_oa_enable;
 			perf->ops.oa_disable = gen8_oa_disable;
 			perf->ops.enable_metric_set = gen8_enable_metric_set;
 			perf->ops.disable_metric_set = gen8_disable_metric_set;
-			perf->ops.oa_hw_tail_read = gen8_oa_hw_tail_read;
+			perf->ops.oa_hw_tail_पढ़ो = gen8_oa_hw_tail_पढ़ो;
 
-			if (IS_GEN(i915, 8)) {
+			अगर (IS_GEN(i915, 8)) अणु
 				perf->ctx_oactxctrl_offset = 0x120;
 				perf->ctx_flexeu0_offset = 0x2ce;
 
 				perf->gen8_valid_ctx_bit = BIT(25);
-			} else {
+			पूर्ण अन्यथा अणु
 				perf->ctx_oactxctrl_offset = 0x128;
 				perf->ctx_flexeu0_offset = 0x3de;
 
 				perf->gen8_valid_ctx_bit = BIT(16);
-			}
-		} else if (IS_GEN_RANGE(i915, 10, 11)) {
+			पूर्ण
+		पूर्ण अन्यथा अगर (IS_GEN_RANGE(i915, 10, 11)) अणु
 			perf->ops.is_valid_b_counter_reg =
 				gen7_is_valid_b_counter_addr;
 			perf->ops.is_valid_mux_reg =
@@ -4406,17 +4407,17 @@ void i915_perf_init(struct drm_i915_private *i915)
 			perf->ops.oa_disable = gen8_oa_disable;
 			perf->ops.enable_metric_set = gen8_enable_metric_set;
 			perf->ops.disable_metric_set = gen10_disable_metric_set;
-			perf->ops.oa_hw_tail_read = gen8_oa_hw_tail_read;
+			perf->ops.oa_hw_tail_पढ़ो = gen8_oa_hw_tail_पढ़ो;
 
-			if (IS_GEN(i915, 10)) {
+			अगर (IS_GEN(i915, 10)) अणु
 				perf->ctx_oactxctrl_offset = 0x128;
 				perf->ctx_flexeu0_offset = 0x3de;
-			} else {
+			पूर्ण अन्यथा अणु
 				perf->ctx_oactxctrl_offset = 0x124;
 				perf->ctx_flexeu0_offset = 0x78e;
-			}
+			पूर्ण
 			perf->gen8_valid_ctx_bit = BIT(16);
-		} else if (IS_GEN(i915, 12)) {
+		पूर्ण अन्यथा अगर (IS_GEN(i915, 12)) अणु
 			perf->ops.is_valid_b_counter_reg =
 				gen12_is_valid_b_counter_addr;
 			perf->ops.is_valid_mux_reg =
@@ -4428,43 +4429,43 @@ void i915_perf_init(struct drm_i915_private *i915)
 			perf->ops.oa_disable = gen12_oa_disable;
 			perf->ops.enable_metric_set = gen12_enable_metric_set;
 			perf->ops.disable_metric_set = gen12_disable_metric_set;
-			perf->ops.oa_hw_tail_read = gen12_oa_hw_tail_read;
+			perf->ops.oa_hw_tail_पढ़ो = gen12_oa_hw_tail_पढ़ो;
 
 			perf->ctx_flexeu0_offset = 0;
 			perf->ctx_oactxctrl_offset = 0x144;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (perf->ops.enable_metric_set) {
+	अगर (perf->ops.enable_metric_set) अणु
 		mutex_init(&perf->lock);
 
 		/* Choose a representative limit */
-		oa_sample_rate_hard_limit = i915->gt.clock_frequency / 2;
+		oa_sample_rate_hard_limit = i915->gt.घड़ी_frequency / 2;
 
 		mutex_init(&perf->metrics_lock);
 		idr_init_base(&perf->metrics_idr, 1);
 
 		/* We set up some ratelimit state to potentially throttle any
-		 * _NOTES about spurious, invalid OA reports which we don't
-		 * forward to userspace.
+		 * _NOTES about spurious, invalid OA reports which we करोn't
+		 * क्रमward to userspace.
 		 *
-		 * We print a _NOTE about any throttling when closing the
-		 * stream instead of waiting until driver _fini which no one
+		 * We prपूर्णांक a _NOTE about any throttling when closing the
+		 * stream instead of रुकोing until driver _fini which no one
 		 * would ever see.
 		 *
-		 * Using the same limiting factors as printk_ratelimit()
+		 * Using the same limiting factors as prपूर्णांकk_ratelimit()
 		 */
 		ratelimit_state_init(&perf->spurious_report_rs, 5 * HZ, 10);
-		/* Since we use a DRM_NOTE for spurious reports it would be
-		 * inconsistent to let __ratelimit() automatically print a
-		 * warning for throttling.
+		/* Since we use a DRM_NOTE क्रम spurious reports it would be
+		 * inconsistent to let __ratelimit() स्वतःmatically prपूर्णांक a
+		 * warning क्रम throttling.
 		 */
 		ratelimit_set_flags(&perf->spurious_report_rs,
 				    RATELIMIT_MSG_ON_RELEASE);
 
-		ratelimit_state_init(&perf->tail_pointer_race,
+		ratelimit_state_init(&perf->tail_poपूर्णांकer_race,
 				     5 * HZ, 10);
-		ratelimit_set_flags(&perf->tail_pointer_race,
+		ratelimit_set_flags(&perf->tail_poपूर्णांकer_race,
 				    RATELIMIT_MSG_ON_RELEASE);
 
 		atomic64_set(&perf->noa_programming_delay,
@@ -4472,74 +4473,74 @@ void i915_perf_init(struct drm_i915_private *i915)
 
 		perf->i915 = i915;
 
-		oa_init_supported_formats(perf);
-	}
-}
+		oa_init_supported_क्रमmats(perf);
+	पूर्ण
+पूर्ण
 
-static int destroy_config(int id, void *p, void *data)
-{
+अटल पूर्णांक destroy_config(पूर्णांक id, व्योम *p, व्योम *data)
+अणु
 	i915_oa_config_put(p);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void i915_perf_sysctl_register(void)
-{
-	sysctl_header = register_sysctl_table(dev_root);
-}
+व्योम i915_perf_sysctl_रेजिस्टर(व्योम)
+अणु
+	sysctl_header = रेजिस्टर_sysctl_table(dev_root);
+पूर्ण
 
-void i915_perf_sysctl_unregister(void)
-{
-	unregister_sysctl_table(sysctl_header);
-}
+व्योम i915_perf_sysctl_unरेजिस्टर(व्योम)
+अणु
+	unरेजिस्टर_sysctl_table(sysctl_header);
+पूर्ण
 
 /**
  * i915_perf_fini - Counter part to i915_perf_init()
  * @i915: i915 device instance
  */
-void i915_perf_fini(struct drm_i915_private *i915)
-{
-	struct i915_perf *perf = &i915->perf;
+व्योम i915_perf_fini(काष्ठा drm_i915_निजी *i915)
+अणु
+	काष्ठा i915_perf *perf = &i915->perf;
 
-	if (!perf->i915)
-		return;
+	अगर (!perf->i915)
+		वापस;
 
-	idr_for_each(&perf->metrics_idr, destroy_config, perf);
+	idr_क्रम_each(&perf->metrics_idr, destroy_config, perf);
 	idr_destroy(&perf->metrics_idr);
 
-	memset(&perf->ops, 0, sizeof(perf->ops));
-	perf->i915 = NULL;
-}
+	स_रखो(&perf->ops, 0, माप(perf->ops));
+	perf->i915 = शून्य;
+पूर्ण
 
 /**
- * i915_perf_ioctl_version - Version of the i915-perf subsystem
+ * i915_perf_ioctl_version - Version of the i915-perf subप्रणाली
  *
  * This version number is used by userspace to detect available features.
  */
-int i915_perf_ioctl_version(void)
-{
+पूर्णांक i915_perf_ioctl_version(व्योम)
+अणु
 	/*
 	 * 1: Initial version
 	 *   I915_PERF_IOCTL_ENABLE
 	 *   I915_PERF_IOCTL_DISABLE
 	 *
-	 * 2: Added runtime modification of OA config.
+	 * 2: Added runसमय modअगरication of OA config.
 	 *   I915_PERF_IOCTL_CONFIG
 	 *
 	 * 3: Add DRM_I915_PERF_PROP_HOLD_PREEMPTION parameter to hold
-	 *    preemption on a particular context so that performance data is
+	 *    preemption on a particular context so that perक्रमmance data is
 	 *    accessible from a delta of MI_RPC reports without looking at the
 	 *    OA buffer.
 	 *
 	 * 4: Add DRM_I915_PERF_PROP_ALLOWED_SSEU to limit what contexts can
-	 *    be run for the duration of the performance recording based on
+	 *    be run क्रम the duration of the perक्रमmance recording based on
 	 *    their SSEU configuration.
 	 *
 	 * 5: Add DRM_I915_PERF_PROP_POLL_OA_PERIOD parameter that controls the
-	 *    interval for the hrtimer used to check for OA data.
+	 *    पूर्णांकerval क्रम the hrसमयr used to check क्रम OA data.
 	 */
-	return 5;
-}
+	वापस 5;
+पूर्ण
 
-#if IS_ENABLED(CONFIG_DRM_I915_SELFTEST)
-#include "selftests/i915_perf.c"
-#endif
+#अगर IS_ENABLED(CONFIG_DRM_I915_SELFTEST)
+#समावेश "selftests/i915_perf.c"
+#पूर्ण_अगर

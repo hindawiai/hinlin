@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Copyright (C) 2016 IBM Corporation
  *
@@ -6,154 +7,154 @@
  *      Nayna Jain <nayna@linux.vnet.ibm.com>
  *
  * Access to TPM 2.0 event log as written by Firmware.
- * It assumes that writer of event log has followed TCG Specification
- * for Family "2.0" and written the event data in little endian.
- * With that, it doesn't need any endian conversion for structure
+ * It assumes that ग_लिखोr of event log has followed TCG Specअगरication
+ * क्रम Family "2.0" and written the event data in little endian.
+ * With that, it करोesn't need any endian conversion क्रम काष्ठाure
  * content.
  */
 
-#include <linux/seq_file.h>
-#include <linux/fs.h>
-#include <linux/security.h>
-#include <linux/module.h>
-#include <linux/slab.h>
-#include <linux/tpm_eventlog.h>
+#समावेश <linux/seq_file.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/security.h>
+#समावेश <linux/module.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/tpm_eventlog.h>
 
-#include "../tpm.h"
-#include "common.h"
+#समावेश "../tpm.h"
+#समावेश "common.h"
 
 /*
  * calc_tpm2_event_size() - calculate the event size, where event
  * is an entry in the TPM 2.0 event log. The event is of type Crypto
- * Agile Log Entry Format as defined in TCG EFI Protocol Specification
+ * Agile Log Entry Format as defined in TCG EFI Protocol Specअगरication
  * Family "2.0".
 
  * @event: event whose size is to be calculated.
  * @event_header: the first event in the event log.
  *
- * Returns size of the event. If it is an invalid event, returns 0.
+ * Returns size of the event. If it is an invalid event, वापसs 0.
  */
-static size_t calc_tpm2_event_size(struct tcg_pcr_event2_head *event,
-				   struct tcg_pcr_event *event_header)
-{
-	return __calc_tpm2_event_size(event, event_header, false);
-}
+अटल माप_प्रकार calc_tpm2_event_size(काष्ठा tcg_pcr_event2_head *event,
+				   काष्ठा tcg_pcr_event *event_header)
+अणु
+	वापस __calc_tpm2_event_size(event, event_header, false);
+पूर्ण
 
-static void *tpm2_bios_measurements_start(struct seq_file *m, loff_t *pos)
-{
-	struct tpm_chip *chip = m->private;
-	struct tpm_bios_log *log = &chip->log;
-	void *addr = log->bios_event_log;
-	void *limit = log->bios_event_log_end;
-	struct tcg_pcr_event *event_header;
-	struct tcg_pcr_event2_head *event;
-	size_t size;
-	int i;
+अटल व्योम *tpm2_bios_measurements_start(काष्ठा seq_file *m, loff_t *pos)
+अणु
+	काष्ठा tpm_chip *chip = m->निजी;
+	काष्ठा tpm_bios_log *log = &chip->log;
+	व्योम *addr = log->bios_event_log;
+	व्योम *limit = log->bios_event_log_end;
+	काष्ठा tcg_pcr_event *event_header;
+	काष्ठा tcg_pcr_event2_head *event;
+	माप_प्रकार size;
+	पूर्णांक i;
 
 	event_header = addr;
-	size = struct_size(event_header, event, event_header->event_size);
+	size = काष्ठा_size(event_header, event, event_header->event_size);
 
-	if (*pos == 0) {
-		if (addr + size < limit) {
-			if ((event_header->event_type == 0) &&
+	अगर (*pos == 0) अणु
+		अगर (addr + size < limit) अणु
+			अगर ((event_header->event_type == 0) &&
 			    (event_header->event_size == 0))
-				return NULL;
-			return SEQ_START_TOKEN;
-		}
-	}
+				वापस शून्य;
+			वापस SEQ_START_TOKEN;
+		पूर्ण
+	पूर्ण
 
-	if (*pos > 0) {
+	अगर (*pos > 0) अणु
 		addr += size;
 		event = addr;
 		size = calc_tpm2_event_size(event, event_header);
-		if ((addr + size >=  limit) || (size == 0))
-			return NULL;
-	}
+		अगर ((addr + size >=  limit) || (size == 0))
+			वापस शून्य;
+	पूर्ण
 
-	for (i = 0; i < (*pos - 1); i++) {
+	क्रम (i = 0; i < (*pos - 1); i++) अणु
 		event = addr;
 		size = calc_tpm2_event_size(event, event_header);
 
-		if ((addr + size >= limit) || (size == 0))
-			return NULL;
+		अगर ((addr + size >= limit) || (size == 0))
+			वापस शून्य;
 		addr += size;
-	}
+	पूर्ण
 
-	return addr;
-}
+	वापस addr;
+पूर्ण
 
-static void *tpm2_bios_measurements_next(struct seq_file *m, void *v,
+अटल व्योम *tpm2_bios_measurements_next(काष्ठा seq_file *m, व्योम *v,
 					 loff_t *pos)
-{
-	struct tcg_pcr_event *event_header;
-	struct tcg_pcr_event2_head *event;
-	struct tpm_chip *chip = m->private;
-	struct tpm_bios_log *log = &chip->log;
-	void *limit = log->bios_event_log_end;
-	size_t event_size;
-	void *marker;
+अणु
+	काष्ठा tcg_pcr_event *event_header;
+	काष्ठा tcg_pcr_event2_head *event;
+	काष्ठा tpm_chip *chip = m->निजी;
+	काष्ठा tpm_bios_log *log = &chip->log;
+	व्योम *limit = log->bios_event_log_end;
+	माप_प्रकार event_size;
+	व्योम *marker;
 
 	(*pos)++;
 	event_header = log->bios_event_log;
 
-	if (v == SEQ_START_TOKEN) {
-		event_size = struct_size(event_header, event,
+	अगर (v == SEQ_START_TOKEN) अणु
+		event_size = काष्ठा_size(event_header, event,
 					 event_header->event_size);
 		marker = event_header;
-	} else {
+	पूर्ण अन्यथा अणु
 		event = v;
 		event_size = calc_tpm2_event_size(event, event_header);
-		if (event_size == 0)
-			return NULL;
+		अगर (event_size == 0)
+			वापस शून्य;
 		marker = event;
-	}
+	पूर्ण
 
 	marker = marker + event_size;
-	if (marker >= limit)
-		return NULL;
+	अगर (marker >= limit)
+		वापस शून्य;
 	v = marker;
 	event = v;
 
 	event_size = calc_tpm2_event_size(event, event_header);
-	if (((v + event_size) >= limit) || (event_size == 0))
-		return NULL;
+	अगर (((v + event_size) >= limit) || (event_size == 0))
+		वापस शून्य;
 
-	return v;
-}
+	वापस v;
+पूर्ण
 
-static void tpm2_bios_measurements_stop(struct seq_file *m, void *v)
-{
-}
+अटल व्योम tpm2_bios_measurements_stop(काष्ठा seq_file *m, व्योम *v)
+अणु
+पूर्ण
 
-static int tpm2_binary_bios_measurements_show(struct seq_file *m, void *v)
-{
-	struct tpm_chip *chip = m->private;
-	struct tpm_bios_log *log = &chip->log;
-	struct tcg_pcr_event *event_header = log->bios_event_log;
-	struct tcg_pcr_event2_head *event = v;
-	void *temp_ptr;
-	size_t size;
+अटल पूर्णांक tpm2_binary_bios_measurements_show(काष्ठा seq_file *m, व्योम *v)
+अणु
+	काष्ठा tpm_chip *chip = m->निजी;
+	काष्ठा tpm_bios_log *log = &chip->log;
+	काष्ठा tcg_pcr_event *event_header = log->bios_event_log;
+	काष्ठा tcg_pcr_event2_head *event = v;
+	व्योम *temp_ptr;
+	माप_प्रकार size;
 
-	if (v == SEQ_START_TOKEN) {
-		size = struct_size(event_header, event,
+	अगर (v == SEQ_START_TOKEN) अणु
+		size = काष्ठा_size(event_header, event,
 				   event_header->event_size);
 		temp_ptr = event_header;
 
-		if (size > 0)
-			seq_write(m, temp_ptr, size);
-	} else {
+		अगर (size > 0)
+			seq_ग_लिखो(m, temp_ptr, size);
+	पूर्ण अन्यथा अणु
 		size = calc_tpm2_event_size(event, event_header);
 		temp_ptr = event;
-		if (size > 0)
-			seq_write(m, temp_ptr, size);
-	}
+		अगर (size > 0)
+			seq_ग_लिखो(m, temp_ptr, size);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-const struct seq_operations tpm2_binary_b_measurements_seqops = {
+स्थिर काष्ठा seq_operations tpm2_binary_b_measurements_seqops = अणु
 	.start = tpm2_bios_measurements_start,
 	.next = tpm2_bios_measurements_next,
 	.stop = tpm2_bios_measurements_stop,
 	.show = tpm2_binary_bios_measurements_show,
-};
+पूर्ण;

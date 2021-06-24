@@ -1,74 +1,75 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * arch/sh/kernel/smp.c
  *
- * SMP support for the SuperH processors.
+ * SMP support क्रम the SuperH processors.
  *
  * Copyright (C) 2002 - 2010 Paul Mundt
  * Copyright (C) 2006 - 2007 Akio Idehara
  */
-#include <linux/err.h>
-#include <linux/cache.h>
-#include <linux/cpumask.h>
-#include <linux/delay.h>
-#include <linux/init.h>
-#include <linux/spinlock.h>
-#include <linux/mm.h>
-#include <linux/module.h>
-#include <linux/cpu.h>
-#include <linux/interrupt.h>
-#include <linux/sched/mm.h>
-#include <linux/sched/hotplug.h>
-#include <linux/atomic.h>
-#include <linux/clockchips.h>
-#include <asm/processor.h>
-#include <asm/mmu_context.h>
-#include <asm/smp.h>
-#include <asm/cacheflush.h>
-#include <asm/sections.h>
-#include <asm/setup.h>
+#समावेश <linux/err.h>
+#समावेश <linux/cache.h>
+#समावेश <linux/cpumask.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/init.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/module.h>
+#समावेश <linux/cpu.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/sched/mm.h>
+#समावेश <linux/sched/hotplug.h>
+#समावेश <linux/atomic.h>
+#समावेश <linux/घड़ीchips.h>
+#समावेश <यंत्र/processor.h>
+#समावेश <यंत्र/mmu_context.h>
+#समावेश <यंत्र/smp.h>
+#समावेश <यंत्र/cacheflush.h>
+#समावेश <यंत्र/sections.h>
+#समावेश <यंत्र/setup.h>
 
-int __cpu_number_map[NR_CPUS];		/* Map physical to logical */
-int __cpu_logical_map[NR_CPUS];		/* Map logical to physical */
+पूर्णांक __cpu_number_map[NR_CPUS];		/* Map physical to logical */
+पूर्णांक __cpu_logical_map[NR_CPUS];		/* Map logical to physical */
 
-struct plat_smp_ops *mp_ops = NULL;
+काष्ठा plat_smp_ops *mp_ops = शून्य;
 
 /* State of each CPU */
-DEFINE_PER_CPU(int, cpu_state) = { 0 };
+DEFINE_PER_CPU(पूर्णांक, cpu_state) = अणु 0 पूर्ण;
 
-void register_smp_ops(struct plat_smp_ops *ops)
-{
-	if (mp_ops)
-		printk(KERN_WARNING "Overriding previously set SMP ops\n");
+व्योम रेजिस्टर_smp_ops(काष्ठा plat_smp_ops *ops)
+अणु
+	अगर (mp_ops)
+		prपूर्णांकk(KERN_WARNING "Overriding previously set SMP ops\n");
 
 	mp_ops = ops;
-}
+पूर्ण
 
-static inline void smp_store_cpu_info(unsigned int cpu)
-{
-	struct sh_cpuinfo *c = cpu_data + cpu;
+अटल अंतरभूत व्योम smp_store_cpu_info(अचिन्हित पूर्णांक cpu)
+अणु
+	काष्ठा sh_cpuinfo *c = cpu_data + cpu;
 
-	memcpy(c, &boot_cpu_data, sizeof(struct sh_cpuinfo));
+	स_नकल(c, &boot_cpu_data, माप(काष्ठा sh_cpuinfo));
 
-	c->loops_per_jiffy = loops_per_jiffy;
-}
+	c->loops_per_jअगरfy = loops_per_jअगरfy;
+पूर्ण
 
-void __init smp_prepare_cpus(unsigned int max_cpus)
-{
-	unsigned int cpu = smp_processor_id();
+व्योम __init smp_prepare_cpus(अचिन्हित पूर्णांक max_cpus)
+अणु
+	अचिन्हित पूर्णांक cpu = smp_processor_id();
 
 	init_new_context(current, &init_mm);
-	current_thread_info()->cpu = cpu;
+	current_thपढ़ो_info()->cpu = cpu;
 	mp_ops->prepare_cpus(max_cpus);
 
-#ifndef CONFIG_HOTPLUG_CPU
+#अगर_अघोषित CONFIG_HOTPLUG_CPU
 	init_cpu_present(cpu_possible_mask);
-#endif
-}
+#पूर्ण_अगर
+पूर्ण
 
-void __init smp_prepare_boot_cpu(void)
-{
-	unsigned int cpu = smp_processor_id();
+व्योम __init smp_prepare_boot_cpu(व्योम)
+अणु
+	अचिन्हित पूर्णांक cpu = smp_processor_id();
 
 	__cpu_number_map[0] = cpu;
 	__cpu_logical_map[0] = cpu;
@@ -77,60 +78,60 @@ void __init smp_prepare_boot_cpu(void)
 	set_cpu_possible(cpu, true);
 
 	per_cpu(cpu_state, cpu) = CPU_ONLINE;
-}
+पूर्ण
 
-#ifdef CONFIG_HOTPLUG_CPU
-void native_cpu_die(unsigned int cpu)
-{
-	unsigned int i;
+#अगर_घोषित CONFIG_HOTPLUG_CPU
+व्योम native_cpu_die(अचिन्हित पूर्णांक cpu)
+अणु
+	अचिन्हित पूर्णांक i;
 
-	for (i = 0; i < 10; i++) {
+	क्रम (i = 0; i < 10; i++) अणु
 		smp_rmb();
-		if (per_cpu(cpu_state, cpu) == CPU_DEAD) {
-			if (system_state == SYSTEM_RUNNING)
+		अगर (per_cpu(cpu_state, cpu) == CPU_DEAD) अणु
+			अगर (प्रणाली_state == SYSTEM_RUNNING)
 				pr_info("CPU %u is now offline\n", cpu);
 
-			return;
-		}
+			वापस;
+		पूर्ण
 
 		msleep(100);
-	}
+	पूर्ण
 
 	pr_err("CPU %u didn't die...\n", cpu);
-}
+पूर्ण
 
-int native_cpu_disable(unsigned int cpu)
-{
-	return cpu == 0 ? -EPERM : 0;
-}
+पूर्णांक native_cpu_disable(अचिन्हित पूर्णांक cpu)
+अणु
+	वापस cpu == 0 ? -EPERM : 0;
+पूर्ण
 
-void play_dead_common(void)
-{
-	idle_task_exit();
-	irq_ctx_exit(raw_smp_processor_id());
+व्योम play_dead_common(व्योम)
+अणु
+	idle_task_निकास();
+	irq_ctx_निकास(raw_smp_processor_id());
 	mb();
 
-	__this_cpu_write(cpu_state, CPU_DEAD);
+	__this_cpu_ग_लिखो(cpu_state, CPU_DEAD);
 	local_irq_disable();
-}
+पूर्ण
 
-void native_play_dead(void)
-{
+व्योम native_play_dead(व्योम)
+अणु
 	play_dead_common();
-}
+पूर्ण
 
-int __cpu_disable(void)
-{
-	unsigned int cpu = smp_processor_id();
-	int ret;
+पूर्णांक __cpu_disable(व्योम)
+अणु
+	अचिन्हित पूर्णांक cpu = smp_processor_id();
+	पूर्णांक ret;
 
 	ret = mp_ops->cpu_disable(cpu);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	/*
-	 * Take this CPU offline.  Once we clear this, we can't return,
-	 * and we must not schedule until we're ready to give up the cpu.
+	 * Take this CPU offline.  Once we clear this, we can't वापस,
+	 * and we must not schedule until we're पढ़ोy to give up the cpu.
 	 */
 	set_cpu_online(cpu, false);
 
@@ -140,55 +141,55 @@ int __cpu_disable(void)
 	migrate_irqs();
 
 	/*
-	 * Flush user cache and TLB mappings, and then remove this CPU
+	 * Flush user cache and TLB mappings, and then हटाओ this CPU
 	 * from the vm mask set of all processes.
 	 */
 	flush_cache_all();
-#ifdef CONFIG_MMU
+#अगर_घोषित CONFIG_MMU
 	local_flush_tlb_all();
-#endif
+#पूर्ण_अगर
 
 	clear_tasks_mm_cpumask(cpu);
 
-	return 0;
-}
-#else /* ... !CONFIG_HOTPLUG_CPU */
-int native_cpu_disable(unsigned int cpu)
-{
-	return -ENOSYS;
-}
+	वापस 0;
+पूर्ण
+#अन्यथा /* ... !CONFIG_HOTPLUG_CPU */
+पूर्णांक native_cpu_disable(अचिन्हित पूर्णांक cpu)
+अणु
+	वापस -ENOSYS;
+पूर्ण
 
-void native_cpu_die(unsigned int cpu)
-{
+व्योम native_cpu_die(अचिन्हित पूर्णांक cpu)
+अणु
 	/* We said "no" in __cpu_disable */
 	BUG();
-}
+पूर्ण
 
-void native_play_dead(void)
-{
+व्योम native_play_dead(व्योम)
+अणु
 	BUG();
-}
-#endif
+पूर्ण
+#पूर्ण_अगर
 
-asmlinkage void start_secondary(void)
-{
-	unsigned int cpu = smp_processor_id();
-	struct mm_struct *mm = &init_mm;
+यंत्रlinkage व्योम start_secondary(व्योम)
+अणु
+	अचिन्हित पूर्णांक cpu = smp_processor_id();
+	काष्ठा mm_काष्ठा *mm = &init_mm;
 
 	enable_mmu();
 	mmgrab(mm);
 	mmget(mm);
 	current->active_mm = mm;
-#ifdef CONFIG_MMU
+#अगर_घोषित CONFIG_MMU
 	enter_lazy_tlb(mm, current);
 	local_flush_tlb_all();
-#endif
+#पूर्ण_अगर
 
 	per_cpu_trap_init();
 
 	preempt_disable();
 
-	notify_cpu_starting(cpu);
+	notअगरy_cpu_starting(cpu);
 
 	local_irq_enable();
 
@@ -200,274 +201,274 @@ asmlinkage void start_secondary(void)
 	per_cpu(cpu_state, cpu) = CPU_ONLINE;
 
 	cpu_startup_entry(CPUHP_AP_ONLINE_IDLE);
-}
+पूर्ण
 
-extern struct {
-	unsigned long sp;
-	unsigned long bss_start;
-	unsigned long bss_end;
-	void *start_kernel_fn;
-	void *cpu_init_fn;
-	void *thread_info;
-} stack_start;
+बाह्य काष्ठा अणु
+	अचिन्हित दीर्घ sp;
+	अचिन्हित दीर्घ bss_start;
+	अचिन्हित दीर्घ bss_end;
+	व्योम *start_kernel_fn;
+	व्योम *cpu_init_fn;
+	व्योम *thपढ़ो_info;
+पूर्ण stack_start;
 
-int __cpu_up(unsigned int cpu, struct task_struct *tsk)
-{
-	unsigned long timeout;
+पूर्णांक __cpu_up(अचिन्हित पूर्णांक cpu, काष्ठा task_काष्ठा *tsk)
+अणु
+	अचिन्हित दीर्घ समयout;
 
 	per_cpu(cpu_state, cpu) = CPU_UP_PREPARE;
 
-	/* Fill in data in head.S for secondary cpus */
-	stack_start.sp = tsk->thread.sp;
-	stack_start.thread_info = tsk->stack;
-	stack_start.bss_start = 0; /* don't clear bss for secondary cpus */
+	/* Fill in data in head.S क्रम secondary cpus */
+	stack_start.sp = tsk->thपढ़ो.sp;
+	stack_start.thपढ़ो_info = tsk->stack;
+	stack_start.bss_start = 0; /* करोn't clear bss क्रम secondary cpus */
 	stack_start.start_kernel_fn = start_secondary;
 
-	flush_icache_range((unsigned long)&stack_start,
-			   (unsigned long)&stack_start + sizeof(stack_start));
+	flush_icache_range((अचिन्हित दीर्घ)&stack_start,
+			   (अचिन्हित दीर्घ)&stack_start + माप(stack_start));
 	wmb();
 
-	mp_ops->start_cpu(cpu, (unsigned long)_stext);
+	mp_ops->start_cpu(cpu, (अचिन्हित दीर्घ)_stext);
 
-	timeout = jiffies + HZ;
-	while (time_before(jiffies, timeout)) {
-		if (cpu_online(cpu))
-			break;
+	समयout = jअगरfies + HZ;
+	जबतक (समय_beक्रमe(jअगरfies, समयout)) अणु
+		अगर (cpu_online(cpu))
+			अवरोध;
 
 		udelay(10);
 		barrier();
-	}
+	पूर्ण
 
-	if (cpu_online(cpu))
-		return 0;
+	अगर (cpu_online(cpu))
+		वापस 0;
 
-	return -ENOENT;
-}
+	वापस -ENOENT;
+पूर्ण
 
-void __init smp_cpus_done(unsigned int max_cpus)
-{
-	unsigned long bogosum = 0;
-	int cpu;
+व्योम __init smp_cpus_करोne(अचिन्हित पूर्णांक max_cpus)
+अणु
+	अचिन्हित दीर्घ bogosum = 0;
+	पूर्णांक cpu;
 
-	for_each_online_cpu(cpu)
-		bogosum += cpu_data[cpu].loops_per_jiffy;
+	क्रम_each_online_cpu(cpu)
+		bogosum += cpu_data[cpu].loops_per_jअगरfy;
 
-	printk(KERN_INFO "SMP: Total of %d processors activated "
+	prपूर्णांकk(KERN_INFO "SMP: Total of %d processors activated "
 	       "(%lu.%02lu BogoMIPS).\n", num_online_cpus(),
 	       bogosum / (500000/HZ),
 	       (bogosum / (5000/HZ)) % 100);
-}
+पूर्ण
 
-void smp_send_reschedule(int cpu)
-{
+व्योम smp_send_reschedule(पूर्णांक cpu)
+अणु
 	mp_ops->send_ipi(cpu, SMP_MSG_RESCHEDULE);
-}
+पूर्ण
 
-void smp_send_stop(void)
-{
+व्योम smp_send_stop(व्योम)
+अणु
 	smp_call_function(stop_this_cpu, 0, 0);
-}
+पूर्ण
 
-void arch_send_call_function_ipi_mask(const struct cpumask *mask)
-{
-	int cpu;
+व्योम arch_send_call_function_ipi_mask(स्थिर काष्ठा cpumask *mask)
+अणु
+	पूर्णांक cpu;
 
-	for_each_cpu(cpu, mask)
+	क्रम_each_cpu(cpu, mask)
 		mp_ops->send_ipi(cpu, SMP_MSG_FUNCTION);
-}
+पूर्ण
 
-void arch_send_call_function_single_ipi(int cpu)
-{
+व्योम arch_send_call_function_single_ipi(पूर्णांक cpu)
+अणु
 	mp_ops->send_ipi(cpu, SMP_MSG_FUNCTION_SINGLE);
-}
+पूर्ण
 
-#ifdef CONFIG_GENERIC_CLOCKEVENTS_BROADCAST
-void tick_broadcast(const struct cpumask *mask)
-{
-	int cpu;
+#अगर_घोषित CONFIG_GENERIC_CLOCKEVENTS_BROADCAST
+व्योम tick_broadcast(स्थिर काष्ठा cpumask *mask)
+अणु
+	पूर्णांक cpu;
 
-	for_each_cpu(cpu, mask)
+	क्रम_each_cpu(cpu, mask)
 		mp_ops->send_ipi(cpu, SMP_MSG_TIMER);
-}
+पूर्ण
 
-static void ipi_timer(void)
-{
+अटल व्योम ipi_समयr(व्योम)
+अणु
 	irq_enter();
 	tick_receive_broadcast();
-	irq_exit();
-}
-#endif
+	irq_निकास();
+पूर्ण
+#पूर्ण_अगर
 
-void smp_message_recv(unsigned int msg)
-{
-	switch (msg) {
-	case SMP_MSG_FUNCTION:
-		generic_smp_call_function_interrupt();
-		break;
-	case SMP_MSG_RESCHEDULE:
+व्योम smp_message_recv(अचिन्हित पूर्णांक msg)
+अणु
+	चयन (msg) अणु
+	हाल SMP_MSG_FUNCTION:
+		generic_smp_call_function_पूर्णांकerrupt();
+		अवरोध;
+	हाल SMP_MSG_RESCHEDULE:
 		scheduler_ipi();
-		break;
-	case SMP_MSG_FUNCTION_SINGLE:
-		generic_smp_call_function_single_interrupt();
-		break;
-#ifdef CONFIG_GENERIC_CLOCKEVENTS_BROADCAST
-	case SMP_MSG_TIMER:
-		ipi_timer();
-		break;
-#endif
-	default:
-		printk(KERN_WARNING "SMP %d: %s(): unknown IPI %d\n",
+		अवरोध;
+	हाल SMP_MSG_FUNCTION_SINGLE:
+		generic_smp_call_function_single_पूर्णांकerrupt();
+		अवरोध;
+#अगर_घोषित CONFIG_GENERIC_CLOCKEVENTS_BROADCAST
+	हाल SMP_MSG_TIMER:
+		ipi_समयr();
+		अवरोध;
+#पूर्ण_अगर
+	शेष:
+		prपूर्णांकk(KERN_WARNING "SMP %d: %s(): unknown IPI %d\n",
 		       smp_processor_id(), __func__, msg);
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
 /* Not really SMP stuff ... */
-int setup_profiling_timer(unsigned int multiplier)
-{
-	return 0;
-}
+पूर्णांक setup_profiling_समयr(अचिन्हित पूर्णांक multiplier)
+अणु
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_MMU
+#अगर_घोषित CONFIG_MMU
 
-static void flush_tlb_all_ipi(void *info)
-{
+अटल व्योम flush_tlb_all_ipi(व्योम *info)
+अणु
 	local_flush_tlb_all();
-}
+पूर्ण
 
-void flush_tlb_all(void)
-{
+व्योम flush_tlb_all(व्योम)
+अणु
 	on_each_cpu(flush_tlb_all_ipi, 0, 1);
-}
+पूर्ण
 
-static void flush_tlb_mm_ipi(void *mm)
-{
-	local_flush_tlb_mm((struct mm_struct *)mm);
-}
+अटल व्योम flush_tlb_mm_ipi(व्योम *mm)
+अणु
+	local_flush_tlb_mm((काष्ठा mm_काष्ठा *)mm);
+पूर्ण
 
 /*
  * The following tlb flush calls are invoked when old translations are
- * being torn down, or pte attributes are changing. For single threaded
+ * being torn करोwn, or pte attributes are changing. For single thपढ़ोed
  * address spaces, a new context is obtained on the current cpu, and tlb
- * context on other cpus are invalidated to force a new context allocation
- * at switch_mm time, should the mm ever be used on other cpus. For
- * multithreaded address spaces, intercpu interrupts have to be sent.
- * Another case where intercpu interrupts are required is when the target
- * mm might be active on another cpu (eg debuggers doing the flushes on
+ * context on other cpus are invalidated to क्रमce a new context allocation
+ * at चयन_mm समय, should the mm ever be used on other cpus. For
+ * multithपढ़ोed address spaces, पूर्णांकercpu पूर्णांकerrupts have to be sent.
+ * Another हाल where पूर्णांकercpu पूर्णांकerrupts are required is when the target
+ * mm might be active on another cpu (eg debuggers करोing the flushes on
  * behalf of debugees, kswapd stealing pages from another process etc).
  * Kanoj 07/00.
  */
-void flush_tlb_mm(struct mm_struct *mm)
-{
+व्योम flush_tlb_mm(काष्ठा mm_काष्ठा *mm)
+अणु
 	preempt_disable();
 
-	if ((atomic_read(&mm->mm_users) != 1) || (current->mm != mm)) {
-		smp_call_function(flush_tlb_mm_ipi, (void *)mm, 1);
-	} else {
-		int i;
-		for_each_online_cpu(i)
-			if (smp_processor_id() != i)
+	अगर ((atomic_पढ़ो(&mm->mm_users) != 1) || (current->mm != mm)) अणु
+		smp_call_function(flush_tlb_mm_ipi, (व्योम *)mm, 1);
+	पूर्ण अन्यथा अणु
+		पूर्णांक i;
+		क्रम_each_online_cpu(i)
+			अगर (smp_processor_id() != i)
 				cpu_context(i, mm) = 0;
-	}
+	पूर्ण
 	local_flush_tlb_mm(mm);
 
 	preempt_enable();
-}
+पूर्ण
 
-struct flush_tlb_data {
-	struct vm_area_struct *vma;
-	unsigned long addr1;
-	unsigned long addr2;
-};
+काष्ठा flush_tlb_data अणु
+	काष्ठा vm_area_काष्ठा *vma;
+	अचिन्हित दीर्घ addr1;
+	अचिन्हित दीर्घ addr2;
+पूर्ण;
 
-static void flush_tlb_range_ipi(void *info)
-{
-	struct flush_tlb_data *fd = (struct flush_tlb_data *)info;
+अटल व्योम flush_tlb_range_ipi(व्योम *info)
+अणु
+	काष्ठा flush_tlb_data *fd = (काष्ठा flush_tlb_data *)info;
 
 	local_flush_tlb_range(fd->vma, fd->addr1, fd->addr2);
-}
+पूर्ण
 
-void flush_tlb_range(struct vm_area_struct *vma,
-		     unsigned long start, unsigned long end)
-{
-	struct mm_struct *mm = vma->vm_mm;
+व्योम flush_tlb_range(काष्ठा vm_area_काष्ठा *vma,
+		     अचिन्हित दीर्घ start, अचिन्हित दीर्घ end)
+अणु
+	काष्ठा mm_काष्ठा *mm = vma->vm_mm;
 
 	preempt_disable();
-	if ((atomic_read(&mm->mm_users) != 1) || (current->mm != mm)) {
-		struct flush_tlb_data fd;
+	अगर ((atomic_पढ़ो(&mm->mm_users) != 1) || (current->mm != mm)) अणु
+		काष्ठा flush_tlb_data fd;
 
 		fd.vma = vma;
 		fd.addr1 = start;
 		fd.addr2 = end;
-		smp_call_function(flush_tlb_range_ipi, (void *)&fd, 1);
-	} else {
-		int i;
-		for_each_online_cpu(i)
-			if (smp_processor_id() != i)
+		smp_call_function(flush_tlb_range_ipi, (व्योम *)&fd, 1);
+	पूर्ण अन्यथा अणु
+		पूर्णांक i;
+		क्रम_each_online_cpu(i)
+			अगर (smp_processor_id() != i)
 				cpu_context(i, mm) = 0;
-	}
+	पूर्ण
 	local_flush_tlb_range(vma, start, end);
 	preempt_enable();
-}
+पूर्ण
 
-static void flush_tlb_kernel_range_ipi(void *info)
-{
-	struct flush_tlb_data *fd = (struct flush_tlb_data *)info;
+अटल व्योम flush_tlb_kernel_range_ipi(व्योम *info)
+अणु
+	काष्ठा flush_tlb_data *fd = (काष्ठा flush_tlb_data *)info;
 
 	local_flush_tlb_kernel_range(fd->addr1, fd->addr2);
-}
+पूर्ण
 
-void flush_tlb_kernel_range(unsigned long start, unsigned long end)
-{
-	struct flush_tlb_data fd;
+व्योम flush_tlb_kernel_range(अचिन्हित दीर्घ start, अचिन्हित दीर्घ end)
+अणु
+	काष्ठा flush_tlb_data fd;
 
 	fd.addr1 = start;
 	fd.addr2 = end;
-	on_each_cpu(flush_tlb_kernel_range_ipi, (void *)&fd, 1);
-}
+	on_each_cpu(flush_tlb_kernel_range_ipi, (व्योम *)&fd, 1);
+पूर्ण
 
-static void flush_tlb_page_ipi(void *info)
-{
-	struct flush_tlb_data *fd = (struct flush_tlb_data *)info;
+अटल व्योम flush_tlb_page_ipi(व्योम *info)
+अणु
+	काष्ठा flush_tlb_data *fd = (काष्ठा flush_tlb_data *)info;
 
 	local_flush_tlb_page(fd->vma, fd->addr1);
-}
+पूर्ण
 
-void flush_tlb_page(struct vm_area_struct *vma, unsigned long page)
-{
+व्योम flush_tlb_page(काष्ठा vm_area_काष्ठा *vma, अचिन्हित दीर्घ page)
+अणु
 	preempt_disable();
-	if ((atomic_read(&vma->vm_mm->mm_users) != 1) ||
-	    (current->mm != vma->vm_mm)) {
-		struct flush_tlb_data fd;
+	अगर ((atomic_पढ़ो(&vma->vm_mm->mm_users) != 1) ||
+	    (current->mm != vma->vm_mm)) अणु
+		काष्ठा flush_tlb_data fd;
 
 		fd.vma = vma;
 		fd.addr1 = page;
-		smp_call_function(flush_tlb_page_ipi, (void *)&fd, 1);
-	} else {
-		int i;
-		for_each_online_cpu(i)
-			if (smp_processor_id() != i)
+		smp_call_function(flush_tlb_page_ipi, (व्योम *)&fd, 1);
+	पूर्ण अन्यथा अणु
+		पूर्णांक i;
+		क्रम_each_online_cpu(i)
+			अगर (smp_processor_id() != i)
 				cpu_context(i, vma->vm_mm) = 0;
-	}
+	पूर्ण
 	local_flush_tlb_page(vma, page);
 	preempt_enable();
-}
+पूर्ण
 
-static void flush_tlb_one_ipi(void *info)
-{
-	struct flush_tlb_data *fd = (struct flush_tlb_data *)info;
+अटल व्योम flush_tlb_one_ipi(व्योम *info)
+अणु
+	काष्ठा flush_tlb_data *fd = (काष्ठा flush_tlb_data *)info;
 	local_flush_tlb_one(fd->addr1, fd->addr2);
-}
+पूर्ण
 
-void flush_tlb_one(unsigned long asid, unsigned long vaddr)
-{
-	struct flush_tlb_data fd;
+व्योम flush_tlb_one(अचिन्हित दीर्घ asid, अचिन्हित दीर्घ vaddr)
+अणु
+	काष्ठा flush_tlb_data fd;
 
 	fd.addr1 = asid;
 	fd.addr2 = vaddr;
 
-	smp_call_function(flush_tlb_one_ipi, (void *)&fd, 1);
+	smp_call_function(flush_tlb_one_ipi, (व्योम *)&fd, 1);
 	local_flush_tlb_one(asid, vaddr);
-}
+पूर्ण
 
-#endif
+#पूर्ण_अगर

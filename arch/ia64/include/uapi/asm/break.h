@@ -1,23 +1,24 @@
-/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
-#ifndef _ASM_IA64_BREAK_H
-#define _ASM_IA64_BREAK_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
+#अगर_अघोषित _ASM_IA64_BREAK_H
+#घोषणा _ASM_IA64_BREAK_H
 
 /*
- * IA-64 Linux break numbers.
+ * IA-64 Linux अवरोध numbers.
  *
  * Copyright (C) 1999 Hewlett-Packard Co
  * Copyright (C) 1999 David Mosberger-Tang <davidm@hpl.hp.com>
  */
 
 /*
- * OS-specific debug break numbers:
+ * OS-specअगरic debug अवरोध numbers:
  */
-#define __IA64_BREAK_KDB		0x80100
-#define __IA64_BREAK_KPROBE		0x81000 /* .. 0x81fff */
+#घोषणा __IA64_BREAK_KDB		0x80100
+#घोषणा __IA64_BREAK_KPROBE		0x81000 /* .. 0x81fff */
 
 /*
- * OS-specific break numbers:
+ * OS-specअगरic अवरोध numbers:
  */
-#define __IA64_BREAK_SYSCALL		0x100000
+#घोषणा __IA64_BREAK_SYSCALL		0x100000
 
-#endif /* _ASM_IA64_BREAK_H */
+#पूर्ण_अगर /* _ASM_IA64_BREAK_H */

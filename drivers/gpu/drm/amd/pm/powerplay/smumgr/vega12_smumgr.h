@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2017 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -20,38 +21,38 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  *
  */
-#ifndef _VEGA12_SMUMANAGER_H_
-#define _VEGA12_SMUMANAGER_H_
+#अगर_अघोषित _VEGA12_SMUMANAGER_H_
+#घोषणा _VEGA12_SMUMANAGER_H_
 
-#include "hwmgr.h"
-#include "vega12/smu9_driver_if.h"
-#include "vega12_hwmgr.h"
+#समावेश "hwmgr.h"
+#समावेश "vega12/smu9_driver_if.h"
+#समावेश "vega12_hwmgr.h"
 
-struct smu_table_entry {
-	uint32_t version;
-	uint32_t size;
-	uint64_t mc_addr;
-	void *table;
-	struct amdgpu_bo *handle;
-};
+काष्ठा smu_table_entry अणु
+	uपूर्णांक32_t version;
+	uपूर्णांक32_t size;
+	uपूर्णांक64_t mc_addr;
+	व्योम *table;
+	काष्ठा amdgpu_bo *handle;
+पूर्ण;
 
-struct smu_table_array {
-	struct smu_table_entry entry[TABLE_COUNT];
-};
+काष्ठा smu_table_array अणु
+	काष्ठा smu_table_entry entry[TABLE_COUNT];
+पूर्ण;
 
-struct vega12_smumgr {
-	struct smu_table_array            smu_tables;
-};
+काष्ठा vega12_smumgr अणु
+	काष्ठा smu_table_array            smu_tables;
+पूर्ण;
 
-#define SMU_FEATURES_LOW_MASK        0x00000000FFFFFFFF
-#define SMU_FEATURES_LOW_SHIFT       0
-#define SMU_FEATURES_HIGH_MASK       0xFFFFFFFF00000000
-#define SMU_FEATURES_HIGH_SHIFT      32
+#घोषणा SMU_FEATURES_LOW_MASK        0x00000000FFFFFFFF
+#घोषणा SMU_FEATURES_LOW_SHIFT       0
+#घोषणा SMU_FEATURES_HIGH_MASK       0xFFFFFFFF00000000
+#घोषणा SMU_FEATURES_HIGH_SHIFT      32
 
-int vega12_enable_smc_features(struct pp_hwmgr *hwmgr,
-		bool enable, uint64_t feature_mask);
-int vega12_get_enabled_smc_features(struct pp_hwmgr *hwmgr,
-		uint64_t *features_enabled);
+पूर्णांक vega12_enable_smc_features(काष्ठा pp_hwmgr *hwmgr,
+		bool enable, uपूर्णांक64_t feature_mask);
+पूर्णांक vega12_get_enabled_smc_features(काष्ठा pp_hwmgr *hwmgr,
+		uपूर्णांक64_t *features_enabled);
 
-#endif
+#पूर्ण_अगर
 

@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2017 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -23,44 +24,44 @@
  *
  */
 
-#ifndef __DISPLAY_RQ_DLG_CALC_H__
-#define __DISPLAY_RQ_DLG_CALC_H__
+#अगर_अघोषित __DISPLAY_RQ_DLG_CALC_H__
+#घोषणा __DISPLAY_RQ_DLG_CALC_H__
 
-struct display_mode_lib;
+काष्ठा display_mode_lib;
 
-#include "display_rq_dlg_helpers.h"
+#समावेश "display_rq_dlg_helpers.h"
 
-void dml1_extract_rq_regs(
-		struct display_mode_lib *mode_lib,
-		struct _vcs_dpi_display_rq_regs_st *rq_regs,
-		const struct _vcs_dpi_display_rq_params_st rq_param);
+व्योम dml1_extract_rq_regs(
+		काष्ठा display_mode_lib *mode_lib,
+		काष्ठा _vcs_dpi_display_rq_regs_st *rq_regs,
+		स्थिर काष्ठा _vcs_dpi_display_rq_params_st rq_param);
 /* Function: dml_rq_dlg_get_rq_params
- *  Calculate requestor related parameters that register definition agnostic
- *  (i.e. this layer does try to separate real values from register definition)
+ *  Calculate requestor related parameters that रेजिस्टर definition agnostic
+ *  (i.e. this layer करोes try to separate real values from रेजिस्टर definition)
  * Input:
  *  pipe_src_param - pipe source configuration (e.g. vp, pitch, etc.)
  * Output:
  *  rq_param - values that can be used to setup RQ (e.g. swath_height, plane1_addr, etc.)
  */
-void dml1_rq_dlg_get_rq_params(
-		struct display_mode_lib *mode_lib,
-		struct _vcs_dpi_display_rq_params_st *rq_param,
-		const struct _vcs_dpi_display_pipe_source_params_st pipe_src_param);
+व्योम dml1_rq_dlg_get_rq_params(
+		काष्ठा display_mode_lib *mode_lib,
+		काष्ठा _vcs_dpi_display_rq_params_st *rq_param,
+		स्थिर काष्ठा _vcs_dpi_display_pipe_source_params_st pipe_src_param);
 
 
 /* Function: dml_rq_dlg_get_dlg_params
  *  Calculate deadline related parameters
  */
-void dml1_rq_dlg_get_dlg_params(
-		struct display_mode_lib *mode_lib,
-		struct _vcs_dpi_display_dlg_regs_st *dlg_regs,
-		struct _vcs_dpi_display_ttu_regs_st *ttu_regs,
-		const struct _vcs_dpi_display_rq_dlg_params_st rq_dlg_param,
-		const struct _vcs_dpi_display_dlg_sys_params_st dlg_sys_param,
-		const struct _vcs_dpi_display_e2e_pipe_params_st e2e_pipe_param,
-		const bool cstate_en,
-		const bool pstate_en,
-		const bool vm_en,
-		const bool iflip_en);
+व्योम dml1_rq_dlg_get_dlg_params(
+		काष्ठा display_mode_lib *mode_lib,
+		काष्ठा _vcs_dpi_display_dlg_regs_st *dlg_regs,
+		काष्ठा _vcs_dpi_display_ttu_regs_st *ttu_regs,
+		स्थिर काष्ठा _vcs_dpi_display_rq_dlg_params_st rq_dlg_param,
+		स्थिर काष्ठा _vcs_dpi_display_dlg_sys_params_st dlg_sys_param,
+		स्थिर काष्ठा _vcs_dpi_display_e2e_pipe_params_st e2e_pipe_param,
+		स्थिर bool cstate_en,
+		स्थिर bool pstate_en,
+		स्थिर bool vm_en,
+		स्थिर bool अगरlip_en);
 
-#endif
+#पूर्ण_अगर

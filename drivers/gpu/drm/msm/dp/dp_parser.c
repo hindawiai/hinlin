@@ -1,293 +1,294 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (c) 2012-2020, The Linux Foundation. All rights reserved.
  */
 
-#include <linux/of_gpio.h>
-#include <linux/phy/phy.h>
+#समावेश <linux/of_gpपन.स>
+#समावेश <linux/phy/phy.h>
 
-#include <drm/drm_print.h>
+#समावेश <drm/drm_prपूर्णांक.h>
 
-#include "dp_parser.h"
-#include "dp_reg.h"
+#समावेश "dp_parser.h"
+#समावेश "dp_reg.h"
 
-static const struct dp_regulator_cfg sdm845_dp_reg_cfg = {
+अटल स्थिर काष्ठा dp_regulator_cfg sdm845_dp_reg_cfg = अणु
 	.num = 2,
-	.regs = {
-		{"vdda-1p2", 21800, 4 },	/* 1.2 V */
-		{"vdda-0p9", 36000, 32 },	/* 0.9 V */
-	},
-};
+	.regs = अणु
+		अणु"vdda-1p2", 21800, 4 पूर्ण,	/* 1.2 V */
+		अणु"vdda-0p9", 36000, 32 पूर्ण,	/* 0.9 V */
+	पूर्ण,
+पूर्ण;
 
-static int msm_dss_ioremap(struct platform_device *pdev,
-				struct dss_io_data *io_data)
-{
-	struct resource *res = NULL;
+अटल पूर्णांक msm_dss_ioremap(काष्ठा platक्रमm_device *pdev,
+				काष्ठा dss_io_data *io_data)
+अणु
+	काष्ठा resource *res = शून्य;
 
-	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
-	if (!res) {
+	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
+	अगर (!res) अणु
 		DRM_ERROR("%pS->%s: msm_dss_get_res failed\n",
-			__builtin_return_address(0), __func__);
-		return -ENODEV;
-	}
+			__builtin_वापस_address(0), __func__);
+		वापस -ENODEV;
+	पूर्ण
 
 	io_data->len = (u32)resource_size(res);
 	io_data->base = ioremap(res->start, io_data->len);
-	if (!io_data->base) {
+	अगर (!io_data->base) अणु
 		DRM_ERROR("%pS->%s: ioremap failed\n",
-			__builtin_return_address(0), __func__);
-		return -EIO;
-	}
+			__builtin_वापस_address(0), __func__);
+		वापस -EIO;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void msm_dss_iounmap(struct dss_io_data *io_data)
-{
-	if (io_data->base) {
+अटल व्योम msm_dss_iounmap(काष्ठा dss_io_data *io_data)
+अणु
+	अगर (io_data->base) अणु
 		iounmap(io_data->base);
-		io_data->base = NULL;
-	}
+		io_data->base = शून्य;
+	पूर्ण
 	io_data->len = 0;
-}
+पूर्ण
 
-static void dp_parser_unmap_io_resources(struct dp_parser *parser)
-{
-	struct dp_io *io = &parser->io;
+अटल व्योम dp_parser_unmap_io_resources(काष्ठा dp_parser *parser)
+अणु
+	काष्ठा dp_io *io = &parser->io;
 
 	msm_dss_iounmap(&io->dp_controller);
-}
+पूर्ण
 
-static int dp_parser_ctrl_res(struct dp_parser *parser)
-{
-	int rc = 0;
-	struct platform_device *pdev = parser->pdev;
-	struct dp_io *io = &parser->io;
+अटल पूर्णांक dp_parser_ctrl_res(काष्ठा dp_parser *parser)
+अणु
+	पूर्णांक rc = 0;
+	काष्ठा platक्रमm_device *pdev = parser->pdev;
+	काष्ठा dp_io *io = &parser->io;
 
 	rc = msm_dss_ioremap(pdev, &io->dp_controller);
-	if (rc) {
+	अगर (rc) अणु
 		DRM_ERROR("unable to remap dp io resources, rc=%d\n", rc);
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
 	io->phy = devm_phy_get(&pdev->dev, "dp");
-	if (IS_ERR(io->phy)) {
+	अगर (IS_ERR(io->phy)) अणु
 		rc = PTR_ERR(io->phy);
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 err:
 	dp_parser_unmap_io_resources(parser);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int dp_parser_misc(struct dp_parser *parser)
-{
-	struct device_node *of_node = parser->pdev->dev.of_node;
-	int len = 0;
-	const char *data_lane_property = "data-lanes";
+अटल पूर्णांक dp_parser_misc(काष्ठा dp_parser *parser)
+अणु
+	काष्ठा device_node *of_node = parser->pdev->dev.of_node;
+	पूर्णांक len = 0;
+	स्थिर अक्षर *data_lane_property = "data-lanes";
 
 	len = of_property_count_elems_of_size(of_node,
-			 data_lane_property, sizeof(u32));
-	if (len < 0) {
+			 data_lane_property, माप(u32));
+	अगर (len < 0) अणु
 		DRM_WARN("Invalid property %s, default max DP lanes = %d\n",
 				data_lane_property, DP_MAX_NUM_DP_LANES);
 		len = DP_MAX_NUM_DP_LANES;
-	}
+	पूर्ण
 
 	parser->max_dp_lanes = len;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static inline bool dp_parser_check_prefix(const char *clk_prefix,
-						const char *clk_name)
-{
-	return !strncmp(clk_prefix, clk_name, strlen(clk_prefix));
-}
+अटल अंतरभूत bool dp_parser_check_prefix(स्थिर अक्षर *clk_prefix,
+						स्थिर अक्षर *clk_name)
+अणु
+	वापस !म_भेदन(clk_prefix, clk_name, म_माप(clk_prefix));
+पूर्ण
 
-static int dp_parser_init_clk_data(struct dp_parser *parser)
-{
-	int num_clk, i, rc;
-	int core_clk_count = 0, ctrl_clk_count = 0, stream_clk_count = 0;
-	const char *clk_name;
-	struct device *dev = &parser->pdev->dev;
-	struct dss_module_power *core_power = &parser->mp[DP_CORE_PM];
-	struct dss_module_power *ctrl_power = &parser->mp[DP_CTRL_PM];
-	struct dss_module_power *stream_power = &parser->mp[DP_STREAM_PM];
+अटल पूर्णांक dp_parser_init_clk_data(काष्ठा dp_parser *parser)
+अणु
+	पूर्णांक num_clk, i, rc;
+	पूर्णांक core_clk_count = 0, ctrl_clk_count = 0, stream_clk_count = 0;
+	स्थिर अक्षर *clk_name;
+	काष्ठा device *dev = &parser->pdev->dev;
+	काष्ठा dss_module_घातer *core_घातer = &parser->mp[DP_CORE_PM];
+	काष्ठा dss_module_घातer *ctrl_घातer = &parser->mp[DP_CTRL_PM];
+	काष्ठा dss_module_घातer *stream_घातer = &parser->mp[DP_STREAM_PM];
 
 	num_clk = of_property_count_strings(dev->of_node, "clock-names");
-	if (num_clk <= 0) {
+	अगर (num_clk <= 0) अणु
 		DRM_ERROR("no clocks are defined\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	for (i = 0; i < num_clk; i++) {
-		rc = of_property_read_string_index(dev->of_node,
+	क्रम (i = 0; i < num_clk; i++) अणु
+		rc = of_property_पढ़ो_string_index(dev->of_node,
 				"clock-names", i, &clk_name);
-		if (rc < 0)
-			return rc;
+		अगर (rc < 0)
+			वापस rc;
 
-		if (dp_parser_check_prefix("core", clk_name))
+		अगर (dp_parser_check_prefix("core", clk_name))
 			core_clk_count++;
 
-		if (dp_parser_check_prefix("ctrl", clk_name))
+		अगर (dp_parser_check_prefix("ctrl", clk_name))
 			ctrl_clk_count++;
 
-		if (dp_parser_check_prefix("stream", clk_name))
+		अगर (dp_parser_check_prefix("stream", clk_name))
 			stream_clk_count++;
-	}
+	पूर्ण
 
-	/* Initialize the CORE power module */
-	if (core_clk_count == 0) {
+	/* Initialize the CORE घातer module */
+	अगर (core_clk_count == 0) अणु
 		DRM_ERROR("no core clocks are defined\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	core_power->num_clk = core_clk_count;
-	core_power->clk_config = devm_kzalloc(dev,
-			sizeof(struct dss_clk) * core_power->num_clk,
+	core_घातer->num_clk = core_clk_count;
+	core_घातer->clk_config = devm_kzalloc(dev,
+			माप(काष्ठा dss_clk) * core_घातer->num_clk,
 			GFP_KERNEL);
-	if (!core_power->clk_config)
-		return -EINVAL;
+	अगर (!core_घातer->clk_config)
+		वापस -EINVAL;
 
-	/* Initialize the CTRL power module */
-	if (ctrl_clk_count == 0) {
+	/* Initialize the CTRL घातer module */
+	अगर (ctrl_clk_count == 0) अणु
 		DRM_ERROR("no ctrl clocks are defined\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	ctrl_power->num_clk = ctrl_clk_count;
-	ctrl_power->clk_config = devm_kzalloc(dev,
-			sizeof(struct dss_clk) * ctrl_power->num_clk,
+	ctrl_घातer->num_clk = ctrl_clk_count;
+	ctrl_घातer->clk_config = devm_kzalloc(dev,
+			माप(काष्ठा dss_clk) * ctrl_घातer->num_clk,
 			GFP_KERNEL);
-	if (!ctrl_power->clk_config) {
-		ctrl_power->num_clk = 0;
-		return -EINVAL;
-	}
+	अगर (!ctrl_घातer->clk_config) अणु
+		ctrl_घातer->num_clk = 0;
+		वापस -EINVAL;
+	पूर्ण
 
-	/* Initialize the STREAM power module */
-	if (stream_clk_count == 0) {
+	/* Initialize the STREAM घातer module */
+	अगर (stream_clk_count == 0) अणु
 		DRM_ERROR("no stream (pixel) clocks are defined\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	stream_power->num_clk = stream_clk_count;
-	stream_power->clk_config = devm_kzalloc(dev,
-			sizeof(struct dss_clk) * stream_power->num_clk,
+	stream_घातer->num_clk = stream_clk_count;
+	stream_घातer->clk_config = devm_kzalloc(dev,
+			माप(काष्ठा dss_clk) * stream_घातer->num_clk,
 			GFP_KERNEL);
-	if (!stream_power->clk_config) {
-		stream_power->num_clk = 0;
-		return -EINVAL;
-	}
+	अगर (!stream_घातer->clk_config) अणु
+		stream_घातer->num_clk = 0;
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int dp_parser_clock(struct dp_parser *parser)
-{
-	int rc = 0, i = 0;
-	int num_clk = 0;
-	int core_clk_index = 0, ctrl_clk_index = 0, stream_clk_index = 0;
-	int core_clk_count = 0, ctrl_clk_count = 0, stream_clk_count = 0;
-	const char *clk_name;
-	struct device *dev = &parser->pdev->dev;
-	struct dss_module_power *core_power = &parser->mp[DP_CORE_PM];
-	struct dss_module_power *ctrl_power = &parser->mp[DP_CTRL_PM];
-	struct dss_module_power *stream_power = &parser->mp[DP_STREAM_PM];
+अटल पूर्णांक dp_parser_घड़ी(काष्ठा dp_parser *parser)
+अणु
+	पूर्णांक rc = 0, i = 0;
+	पूर्णांक num_clk = 0;
+	पूर्णांक core_clk_index = 0, ctrl_clk_index = 0, stream_clk_index = 0;
+	पूर्णांक core_clk_count = 0, ctrl_clk_count = 0, stream_clk_count = 0;
+	स्थिर अक्षर *clk_name;
+	काष्ठा device *dev = &parser->pdev->dev;
+	काष्ठा dss_module_घातer *core_घातer = &parser->mp[DP_CORE_PM];
+	काष्ठा dss_module_घातer *ctrl_घातer = &parser->mp[DP_CTRL_PM];
+	काष्ठा dss_module_घातer *stream_घातer = &parser->mp[DP_STREAM_PM];
 
 	rc =  dp_parser_init_clk_data(parser);
-	if (rc) {
+	अगर (rc) अणु
 		DRM_ERROR("failed to initialize power data %d\n", rc);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	core_clk_count = core_power->num_clk;
-	ctrl_clk_count = ctrl_power->num_clk;
-	stream_clk_count = stream_power->num_clk;
+	core_clk_count = core_घातer->num_clk;
+	ctrl_clk_count = ctrl_घातer->num_clk;
+	stream_clk_count = stream_घातer->num_clk;
 
 	num_clk = core_clk_count + ctrl_clk_count + stream_clk_count;
 
-	for (i = 0; i < num_clk; i++) {
-		rc = of_property_read_string_index(dev->of_node, "clock-names",
+	क्रम (i = 0; i < num_clk; i++) अणु
+		rc = of_property_पढ़ो_string_index(dev->of_node, "clock-names",
 				i, &clk_name);
-		if (rc) {
+		अगर (rc) अणु
 			DRM_ERROR("error reading clock-names %d\n", rc);
-			return rc;
-		}
-		if (dp_parser_check_prefix("core", clk_name) &&
-				core_clk_index < core_clk_count) {
-			struct dss_clk *clk =
-				&core_power->clk_config[core_clk_index];
-			strlcpy(clk->clk_name, clk_name, sizeof(clk->clk_name));
+			वापस rc;
+		पूर्ण
+		अगर (dp_parser_check_prefix("core", clk_name) &&
+				core_clk_index < core_clk_count) अणु
+			काष्ठा dss_clk *clk =
+				&core_घातer->clk_config[core_clk_index];
+			strlcpy(clk->clk_name, clk_name, माप(clk->clk_name));
 			clk->type = DSS_CLK_AHB;
 			core_clk_index++;
-		} else if (dp_parser_check_prefix("stream", clk_name) &&
-				stream_clk_index < stream_clk_count) {
-			struct dss_clk *clk =
-				&stream_power->clk_config[stream_clk_index];
-			strlcpy(clk->clk_name, clk_name, sizeof(clk->clk_name));
+		पूर्ण अन्यथा अगर (dp_parser_check_prefix("stream", clk_name) &&
+				stream_clk_index < stream_clk_count) अणु
+			काष्ठा dss_clk *clk =
+				&stream_घातer->clk_config[stream_clk_index];
+			strlcpy(clk->clk_name, clk_name, माप(clk->clk_name));
 			clk->type = DSS_CLK_PCLK;
 			stream_clk_index++;
-		} else if (dp_parser_check_prefix("ctrl", clk_name) &&
-			   ctrl_clk_index < ctrl_clk_count) {
-			struct dss_clk *clk =
-				&ctrl_power->clk_config[ctrl_clk_index];
-			strlcpy(clk->clk_name, clk_name, sizeof(clk->clk_name));
+		पूर्ण अन्यथा अगर (dp_parser_check_prefix("ctrl", clk_name) &&
+			   ctrl_clk_index < ctrl_clk_count) अणु
+			काष्ठा dss_clk *clk =
+				&ctrl_घातer->clk_config[ctrl_clk_index];
+			strlcpy(clk->clk_name, clk_name, माप(clk->clk_name));
 			ctrl_clk_index++;
-			if (dp_parser_check_prefix("ctrl_link", clk_name) ||
+			अगर (dp_parser_check_prefix("ctrl_link", clk_name) ||
 			    dp_parser_check_prefix("stream_pixel", clk_name))
 				clk->type = DSS_CLK_PCLK;
-			else
+			अन्यथा
 				clk->type = DSS_CLK_AHB;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	DRM_DEBUG_DP("clock parsing successful\n");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int dp_parser_parse(struct dp_parser *parser)
-{
-	int rc = 0;
+अटल पूर्णांक dp_parser_parse(काष्ठा dp_parser *parser)
+अणु
+	पूर्णांक rc = 0;
 
-	if (!parser) {
+	अगर (!parser) अणु
 		DRM_ERROR("invalid input\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	rc = dp_parser_ctrl_res(parser);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
 	rc = dp_parser_misc(parser);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
-	rc = dp_parser_clock(parser);
-	if (rc)
-		return rc;
+	rc = dp_parser_घड़ी(parser);
+	अगर (rc)
+		वापस rc;
 
-	/* Map the corresponding regulator information according to
-	 * version. Currently, since we only have one supported platform,
+	/* Map the corresponding regulator inक्रमmation according to
+	 * version. Currently, since we only have one supported platक्रमm,
 	 * mapping the regulator directly.
 	 */
 	parser->regulator_cfg = &sdm845_dp_reg_cfg;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-struct dp_parser *dp_parser_get(struct platform_device *pdev)
-{
-	struct dp_parser *parser;
+काष्ठा dp_parser *dp_parser_get(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा dp_parser *parser;
 
-	parser = devm_kzalloc(&pdev->dev, sizeof(*parser), GFP_KERNEL);
-	if (!parser)
-		return ERR_PTR(-ENOMEM);
+	parser = devm_kzalloc(&pdev->dev, माप(*parser), GFP_KERNEL);
+	अगर (!parser)
+		वापस ERR_PTR(-ENOMEM);
 
 	parser->parse = dp_parser_parse;
 	parser->pdev = pdev;
 
-	return parser;
-}
+	वापस parser;
+पूर्ण

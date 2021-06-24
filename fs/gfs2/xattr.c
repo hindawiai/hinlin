@@ -1,220 +1,221 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (C) Sistina Software, Inc.  1997-2003 All rights reserved.
  * Copyright (C) 2004-2006 Red Hat, Inc.  All rights reserved.
  */
 
-#include <linux/slab.h>
-#include <linux/spinlock.h>
-#include <linux/completion.h>
-#include <linux/buffer_head.h>
-#include <linux/xattr.h>
-#include <linux/gfs2_ondisk.h>
-#include <linux/posix_acl_xattr.h>
-#include <linux/uaccess.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/completion.h>
+#समावेश <linux/buffer_head.h>
+#समावेश <linux/xattr.h>
+#समावेश <linux/gfs2_ondisk.h>
+#समावेश <linux/posix_acl_xattr.h>
+#समावेश <linux/uaccess.h>
 
-#include "gfs2.h"
-#include "incore.h"
-#include "acl.h"
-#include "xattr.h"
-#include "glock.h"
-#include "inode.h"
-#include "meta_io.h"
-#include "quota.h"
-#include "rgrp.h"
-#include "super.h"
-#include "trans.h"
-#include "util.h"
+#समावेश "gfs2.h"
+#समावेश "incore.h"
+#समावेश "acl.h"
+#समावेश "xattr.h"
+#समावेश "glock.h"
+#समावेश "inode.h"
+#समावेश "meta_io.h"
+#समावेश "quota.h"
+#समावेश "rgrp.h"
+#समावेश "super.h"
+#समावेश "trans.h"
+#समावेश "util.h"
 
 /*
- * ea_calc_size - returns the actual number of bytes the request will take up
+ * ea_calc_size - वापसs the actual number of bytes the request will take up
  *                (not counting any unstuffed data blocks)
  *
- * Returns: 1 if the EA should be stuffed
+ * Returns: 1 अगर the EA should be stuffed
  */
 
-static int ea_calc_size(struct gfs2_sbd *sdp, unsigned int nsize, size_t dsize,
-			unsigned int *size)
-{
-	unsigned int jbsize = sdp->sd_jbsize;
+अटल पूर्णांक ea_calc_size(काष्ठा gfs2_sbd *sdp, अचिन्हित पूर्णांक nsize, माप_प्रकार dsize,
+			अचिन्हित पूर्णांक *size)
+अणु
+	अचिन्हित पूर्णांक jbsize = sdp->sd_jbsize;
 
 	/* Stuffed */
-	*size = ALIGN(sizeof(struct gfs2_ea_header) + nsize + dsize, 8);
+	*size = ALIGN(माप(काष्ठा gfs2_ea_header) + nsize + dsize, 8);
 
-	if (*size <= jbsize)
-		return 1;
+	अगर (*size <= jbsize)
+		वापस 1;
 
 	/* Unstuffed */
-	*size = ALIGN(sizeof(struct gfs2_ea_header) + nsize +
-		      (sizeof(__be64) * DIV_ROUND_UP(dsize, jbsize)), 8);
+	*size = ALIGN(माप(काष्ठा gfs2_ea_header) + nsize +
+		      (माप(__be64) * DIV_ROUND_UP(dsize, jbsize)), 8);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ea_check_size(struct gfs2_sbd *sdp, unsigned int nsize, size_t dsize)
-{
-	unsigned int size;
+अटल पूर्णांक ea_check_size(काष्ठा gfs2_sbd *sdp, अचिन्हित पूर्णांक nsize, माप_प्रकार dsize)
+अणु
+	अचिन्हित पूर्णांक size;
 
-	if (dsize > GFS2_EA_MAX_DATA_LEN)
-		return -ERANGE;
+	अगर (dsize > GFS2_EA_MAX_DATA_LEN)
+		वापस -दुस्फल;
 
 	ea_calc_size(sdp, nsize, dsize, &size);
 
 	/* This can only happen with 512 byte blocks */
-	if (size > sdp->sd_jbsize)
-		return -ERANGE;
+	अगर (size > sdp->sd_jbsize)
+		वापस -दुस्फल;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static bool gfs2_eatype_valid(struct gfs2_sbd *sdp, u8 type)
-{
-	switch(sdp->sd_sb.sb_fs_format) {
-	case GFS2_FS_FORMAT_MAX:
-		return true;
+अटल bool gfs2_eatype_valid(काष्ठा gfs2_sbd *sdp, u8 type)
+अणु
+	चयन(sdp->sd_sb.sb_fs_क्रमmat) अणु
+	हाल GFS2_FS_FORMAT_MAX:
+		वापस true;
 
-	case GFS2_FS_FORMAT_MIN:
-		return type <= GFS2_EATYPE_SECURITY;
+	हाल GFS2_FS_FORMAT_MIN:
+		वापस type <= GFS2_EATYPE_SECURITY;
 
-	default:
-		return false;
-	}
-}
+	शेष:
+		वापस false;
+	पूर्ण
+पूर्ण
 
-typedef int (*ea_call_t) (struct gfs2_inode *ip, struct buffer_head *bh,
-			  struct gfs2_ea_header *ea,
-			  struct gfs2_ea_header *prev, void *private);
+प्रकार पूर्णांक (*ea_call_t) (काष्ठा gfs2_inode *ip, काष्ठा buffer_head *bh,
+			  काष्ठा gfs2_ea_header *ea,
+			  काष्ठा gfs2_ea_header *prev, व्योम *निजी);
 
-static int ea_foreach_i(struct gfs2_inode *ip, struct buffer_head *bh,
-			ea_call_t ea_call, void *data)
-{
-	struct gfs2_sbd *sdp = GFS2_SB(&ip->i_inode);
-	struct gfs2_ea_header *ea, *prev = NULL;
-	int error = 0;
+अटल पूर्णांक ea_क्रमeach_i(काष्ठा gfs2_inode *ip, काष्ठा buffer_head *bh,
+			ea_call_t ea_call, व्योम *data)
+अणु
+	काष्ठा gfs2_sbd *sdp = GFS2_SB(&ip->i_inode);
+	काष्ठा gfs2_ea_header *ea, *prev = शून्य;
+	पूर्णांक error = 0;
 
-	if (gfs2_metatype_check(GFS2_SB(&ip->i_inode), bh, GFS2_METATYPE_EA))
-		return -EIO;
+	अगर (gfs2_metatype_check(GFS2_SB(&ip->i_inode), bh, GFS2_METATYPE_EA))
+		वापस -EIO;
 
-	for (ea = GFS2_EA_BH2FIRST(bh);; prev = ea, ea = GFS2_EA2NEXT(ea)) {
-		if (!GFS2_EA_REC_LEN(ea))
-			goto fail;
-		if (!(bh->b_data <= (char *)ea && (char *)GFS2_EA2NEXT(ea) <=
+	क्रम (ea = GFS2_EA_BH2FIRST(bh);; prev = ea, ea = GFS2_EA2NEXT(ea)) अणु
+		अगर (!GFS2_EA_REC_LEN(ea))
+			जाओ fail;
+		अगर (!(bh->b_data <= (अक्षर *)ea && (अक्षर *)GFS2_EA2NEXT(ea) <=
 						  bh->b_data + bh->b_size))
-			goto fail;
-		if (!gfs2_eatype_valid(sdp, ea->ea_type))
-			goto fail;
+			जाओ fail;
+		अगर (!gfs2_eatype_valid(sdp, ea->ea_type))
+			जाओ fail;
 		error = ea_call(ip, bh, ea, prev, data);
-		if (error)
-			return error;
+		अगर (error)
+			वापस error;
 
-		if (GFS2_EA_IS_LAST(ea)) {
-			if ((char *)GFS2_EA2NEXT(ea) !=
+		अगर (GFS2_EA_IS_LAST(ea)) अणु
+			अगर ((अक्षर *)GFS2_EA2NEXT(ea) !=
 			    bh->b_data + bh->b_size)
-				goto fail;
-			break;
-		}
-	}
+				जाओ fail;
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	return error;
+	वापस error;
 
 fail:
 	gfs2_consist_inode(ip);
-	return -EIO;
-}
+	वापस -EIO;
+पूर्ण
 
-static int ea_foreach(struct gfs2_inode *ip, ea_call_t ea_call, void *data)
-{
-	struct buffer_head *bh, *eabh;
+अटल पूर्णांक ea_क्रमeach(काष्ठा gfs2_inode *ip, ea_call_t ea_call, व्योम *data)
+अणु
+	काष्ठा buffer_head *bh, *eabh;
 	__be64 *eablk, *end;
-	int error;
+	पूर्णांक error;
 
-	error = gfs2_meta_read(ip->i_gl, ip->i_eattr, DIO_WAIT, 0, &bh);
-	if (error)
-		return error;
+	error = gfs2_meta_पढ़ो(ip->i_gl, ip->i_eattr, DIO_WAIT, 0, &bh);
+	अगर (error)
+		वापस error;
 
-	if (!(ip->i_diskflags & GFS2_DIF_EA_INDIRECT)) {
-		error = ea_foreach_i(ip, bh, ea_call, data);
-		goto out;
-	}
+	अगर (!(ip->i_diskflags & GFS2_DIF_EA_INसूचीECT)) अणु
+		error = ea_क्रमeach_i(ip, bh, ea_call, data);
+		जाओ out;
+	पूर्ण
 
-	if (gfs2_metatype_check(GFS2_SB(&ip->i_inode), bh, GFS2_METATYPE_IN)) {
+	अगर (gfs2_metatype_check(GFS2_SB(&ip->i_inode), bh, GFS2_METATYPE_IN)) अणु
 		error = -EIO;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	eablk = (__be64 *)(bh->b_data + sizeof(struct gfs2_meta_header));
+	eablk = (__be64 *)(bh->b_data + माप(काष्ठा gfs2_meta_header));
 	end = eablk + GFS2_SB(&ip->i_inode)->sd_inptrs;
 
-	for (; eablk < end; eablk++) {
+	क्रम (; eablk < end; eablk++) अणु
 		u64 bn;
 
-		if (!*eablk)
-			break;
+		अगर (!*eablk)
+			अवरोध;
 		bn = be64_to_cpu(*eablk);
 
-		error = gfs2_meta_read(ip->i_gl, bn, DIO_WAIT, 0, &eabh);
-		if (error)
-			break;
-		error = ea_foreach_i(ip, eabh, ea_call, data);
-		brelse(eabh);
-		if (error)
-			break;
-	}
+		error = gfs2_meta_पढ़ो(ip->i_gl, bn, DIO_WAIT, 0, &eabh);
+		अगर (error)
+			अवरोध;
+		error = ea_क्रमeach_i(ip, eabh, ea_call, data);
+		brअन्यथा(eabh);
+		अगर (error)
+			अवरोध;
+	पूर्ण
 out:
-	brelse(bh);
-	return error;
-}
+	brअन्यथा(bh);
+	वापस error;
+पूर्ण
 
-struct ea_find {
-	int type;
-	const char *name;
-	size_t namel;
-	struct gfs2_ea_location *ef_el;
-};
+काष्ठा ea_find अणु
+	पूर्णांक type;
+	स्थिर अक्षर *name;
+	माप_प्रकार namel;
+	काष्ठा gfs2_ea_location *ef_el;
+पूर्ण;
 
-static int ea_find_i(struct gfs2_inode *ip, struct buffer_head *bh,
-		     struct gfs2_ea_header *ea, struct gfs2_ea_header *prev,
-		     void *private)
-{
-	struct ea_find *ef = private;
+अटल पूर्णांक ea_find_i(काष्ठा gfs2_inode *ip, काष्ठा buffer_head *bh,
+		     काष्ठा gfs2_ea_header *ea, काष्ठा gfs2_ea_header *prev,
+		     व्योम *निजी)
+अणु
+	काष्ठा ea_find *ef = निजी;
 
-	if (ea->ea_type == GFS2_EATYPE_UNUSED)
-		return 0;
+	अगर (ea->ea_type == GFS2_EATYPE_UNUSED)
+		वापस 0;
 
-	if (ea->ea_type == ef->type) {
-		if (ea->ea_name_len == ef->namel &&
-		    !memcmp(GFS2_EA2NAME(ea), ef->name, ea->ea_name_len)) {
-			struct gfs2_ea_location *el = ef->ef_el;
+	अगर (ea->ea_type == ef->type) अणु
+		अगर (ea->ea_name_len == ef->namel &&
+		    !स_भेद(GFS2_EA2NAME(ea), ef->name, ea->ea_name_len)) अणु
+			काष्ठा gfs2_ea_location *el = ef->ef_el;
 			get_bh(bh);
 			el->el_bh = bh;
 			el->el_ea = ea;
 			el->el_prev = prev;
-			return 1;
-		}
-	}
+			वापस 1;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int gfs2_ea_find(struct gfs2_inode *ip, int type, const char *name,
-			struct gfs2_ea_location *el)
-{
-	struct ea_find ef;
-	int error;
+अटल पूर्णांक gfs2_ea_find(काष्ठा gfs2_inode *ip, पूर्णांक type, स्थिर अक्षर *name,
+			काष्ठा gfs2_ea_location *el)
+अणु
+	काष्ठा ea_find ef;
+	पूर्णांक error;
 
 	ef.type = type;
 	ef.name = name;
-	ef.namel = strlen(name);
+	ef.namel = म_माप(name);
 	ef.ef_el = el;
 
-	memset(el, 0, sizeof(struct gfs2_ea_location));
+	स_रखो(el, 0, माप(काष्ठा gfs2_ea_location));
 
-	error = ea_foreach(ip, ea_find_i, &ef);
-	if (error > 0)
-		return 0;
+	error = ea_क्रमeach(ip, ea_find_i, &ef);
+	अगर (error > 0)
+		वापस 0;
 
-	return error;
-}
+	वापस error;
+पूर्ण
 
 /*
  * ea_dealloc_unstuffed
@@ -223,430 +224,430 @@ static int gfs2_ea_find(struct gfs2_inode *ip, int type, const char *name,
  * allocated from the same RG.  But watch, this may not always
  * be true.
  *
- * Returns: errno
+ * Returns: त्रुटि_सं
  */
 
-static int ea_dealloc_unstuffed(struct gfs2_inode *ip, struct buffer_head *bh,
-				struct gfs2_ea_header *ea,
-				struct gfs2_ea_header *prev, void *private)
-{
-	int *leave = private;
-	struct gfs2_sbd *sdp = GFS2_SB(&ip->i_inode);
-	struct gfs2_rgrpd *rgd;
-	struct gfs2_holder rg_gh;
+अटल पूर्णांक ea_dealloc_unstuffed(काष्ठा gfs2_inode *ip, काष्ठा buffer_head *bh,
+				काष्ठा gfs2_ea_header *ea,
+				काष्ठा gfs2_ea_header *prev, व्योम *निजी)
+अणु
+	पूर्णांक *leave = निजी;
+	काष्ठा gfs2_sbd *sdp = GFS2_SB(&ip->i_inode);
+	काष्ठा gfs2_rgrpd *rgd;
+	काष्ठा gfs2_holder rg_gh;
 	__be64 *dataptrs;
 	u64 bn = 0;
 	u64 bstart = 0;
-	unsigned int blen = 0;
-	unsigned int blks = 0;
-	unsigned int x;
-	int error;
+	अचिन्हित पूर्णांक blen = 0;
+	अचिन्हित पूर्णांक blks = 0;
+	अचिन्हित पूर्णांक x;
+	पूर्णांक error;
 
 	error = gfs2_rindex_update(sdp);
-	if (error)
-		return error;
+	अगर (error)
+		वापस error;
 
-	if (GFS2_EA_IS_STUFFED(ea))
-		return 0;
+	अगर (GFS2_EA_IS_STUFFED(ea))
+		वापस 0;
 
 	dataptrs = GFS2_EA2DATAPTRS(ea);
-	for (x = 0; x < ea->ea_num_ptrs; x++, dataptrs++) {
-		if (*dataptrs) {
+	क्रम (x = 0; x < ea->ea_num_ptrs; x++, dataptrs++) अणु
+		अगर (*dataptrs) अणु
 			blks++;
 			bn = be64_to_cpu(*dataptrs);
-		}
-	}
-	if (!blks)
-		return 0;
+		पूर्ण
+	पूर्ण
+	अगर (!blks)
+		वापस 0;
 
 	rgd = gfs2_blk2rgrpd(sdp, bn, 1);
-	if (!rgd) {
+	अगर (!rgd) अणु
 		gfs2_consist_inode(ip);
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
 	error = gfs2_glock_nq_init(rgd->rd_gl, LM_ST_EXCLUSIVE,
 				   LM_FLAG_NODE_SCOPE, &rg_gh);
-	if (error)
-		return error;
+	अगर (error)
+		वापस error;
 
 	error = gfs2_trans_begin(sdp, rgd->rd_length + RES_DINODE +
 				 RES_EATTR + RES_STATFS + RES_QUOTA, blks);
-	if (error)
-		goto out_gunlock;
+	अगर (error)
+		जाओ out_gunlock;
 
 	gfs2_trans_add_meta(ip->i_gl, bh);
 
 	dataptrs = GFS2_EA2DATAPTRS(ea);
-	for (x = 0; x < ea->ea_num_ptrs; x++, dataptrs++) {
-		if (!*dataptrs)
-			break;
+	क्रम (x = 0; x < ea->ea_num_ptrs; x++, dataptrs++) अणु
+		अगर (!*dataptrs)
+			अवरोध;
 		bn = be64_to_cpu(*dataptrs);
 
-		if (bstart + blen == bn)
+		अगर (bstart + blen == bn)
 			blen++;
-		else {
-			if (bstart)
-				gfs2_free_meta(ip, rgd, bstart, blen);
+		अन्यथा अणु
+			अगर (bstart)
+				gfs2_मुक्त_meta(ip, rgd, bstart, blen);
 			bstart = bn;
 			blen = 1;
-		}
+		पूर्ण
 
 		*dataptrs = 0;
 		gfs2_add_inode_blocks(&ip->i_inode, -1);
-	}
-	if (bstart)
-		gfs2_free_meta(ip, rgd, bstart, blen);
+	पूर्ण
+	अगर (bstart)
+		gfs2_मुक्त_meta(ip, rgd, bstart, blen);
 
-	if (prev && !leave) {
+	अगर (prev && !leave) अणु
 		u32 len;
 
 		len = GFS2_EA_REC_LEN(prev) + GFS2_EA_REC_LEN(ea);
 		prev->ea_rec_len = cpu_to_be32(len);
 
-		if (GFS2_EA_IS_LAST(ea))
+		अगर (GFS2_EA_IS_LAST(ea))
 			prev->ea_flags |= GFS2_EAFLAG_LAST;
-	} else {
+	पूर्ण अन्यथा अणु
 		ea->ea_type = GFS2_EATYPE_UNUSED;
 		ea->ea_num_ptrs = 0;
-	}
+	पूर्ण
 
-	ip->i_inode.i_ctime = current_time(&ip->i_inode);
-	__mark_inode_dirty(&ip->i_inode, I_DIRTY_DATASYNC);
+	ip->i_inode.i_स_समय = current_समय(&ip->i_inode);
+	__mark_inode_dirty(&ip->i_inode, I_सूचीTY_DATASYNC);
 
 	gfs2_trans_end(sdp);
 
 out_gunlock:
 	gfs2_glock_dq_uninit(&rg_gh);
-	return error;
-}
+	वापस error;
+पूर्ण
 
-static int ea_remove_unstuffed(struct gfs2_inode *ip, struct buffer_head *bh,
-			       struct gfs2_ea_header *ea,
-			       struct gfs2_ea_header *prev, int leave)
-{
-	int error;
+अटल पूर्णांक ea_हटाओ_unstuffed(काष्ठा gfs2_inode *ip, काष्ठा buffer_head *bh,
+			       काष्ठा gfs2_ea_header *ea,
+			       काष्ठा gfs2_ea_header *prev, पूर्णांक leave)
+अणु
+	पूर्णांक error;
 
 	error = gfs2_rindex_update(GFS2_SB(&ip->i_inode));
-	if (error)
-		return error;
+	अगर (error)
+		वापस error;
 
 	error = gfs2_quota_hold(ip, NO_UID_QUOTA_CHANGE, NO_GID_QUOTA_CHANGE);
-	if (error)
-		goto out_alloc;
+	अगर (error)
+		जाओ out_alloc;
 
-	error = ea_dealloc_unstuffed(ip, bh, ea, prev, (leave) ? &error : NULL);
+	error = ea_dealloc_unstuffed(ip, bh, ea, prev, (leave) ? &error : शून्य);
 
 	gfs2_quota_unhold(ip);
 out_alloc:
-	return error;
-}
+	वापस error;
+पूर्ण
 
-struct ea_list {
-	struct gfs2_ea_request *ei_er;
-	unsigned int ei_size;
-};
+काष्ठा ea_list अणु
+	काष्ठा gfs2_ea_request *ei_er;
+	अचिन्हित पूर्णांक ei_size;
+पूर्ण;
 
-static int ea_list_i(struct gfs2_inode *ip, struct buffer_head *bh,
-		     struct gfs2_ea_header *ea, struct gfs2_ea_header *prev,
-		     void *private)
-{
-	struct gfs2_sbd *sdp = GFS2_SB(&ip->i_inode);
-	struct ea_list *ei = private;
-	struct gfs2_ea_request *er = ei->ei_er;
-	unsigned int ea_size;
-	char *prefix;
-	unsigned int l;
+अटल पूर्णांक ea_list_i(काष्ठा gfs2_inode *ip, काष्ठा buffer_head *bh,
+		     काष्ठा gfs2_ea_header *ea, काष्ठा gfs2_ea_header *prev,
+		     व्योम *निजी)
+अणु
+	काष्ठा gfs2_sbd *sdp = GFS2_SB(&ip->i_inode);
+	काष्ठा ea_list *ei = निजी;
+	काष्ठा gfs2_ea_request *er = ei->ei_er;
+	अचिन्हित पूर्णांक ea_size;
+	अक्षर *prefix;
+	अचिन्हित पूर्णांक l;
 
-	if (ea->ea_type == GFS2_EATYPE_UNUSED)
-		return 0;
+	अगर (ea->ea_type == GFS2_EATYPE_UNUSED)
+		वापस 0;
 
 	BUG_ON(ea->ea_type > GFS2_EATYPE_SECURITY &&
-	       sdp->sd_sb.sb_fs_format == GFS2_FS_FORMAT_MIN);
-	switch (ea->ea_type) {
-	case GFS2_EATYPE_USR:
+	       sdp->sd_sb.sb_fs_क्रमmat == GFS2_FS_FORMAT_MIN);
+	चयन (ea->ea_type) अणु
+	हाल GFS2_EATYPE_USR:
 		prefix = "user.";
 		l = 5;
-		break;
-	case GFS2_EATYPE_SYS:
+		अवरोध;
+	हाल GFS2_EATYPE_SYS:
 		prefix = "system.";
 		l = 7;
-		break;
-	case GFS2_EATYPE_SECURITY:
+		अवरोध;
+	हाल GFS2_EATYPE_SECURITY:
 		prefix = "security.";
 		l = 9;
-		break;
-	case GFS2_EATYPE_TRUSTED:
+		अवरोध;
+	हाल GFS2_EATYPE_TRUSTED:
 		prefix = "trusted.";
 		l = 8;
-		break;
-	default:
-		return 0;
-	}
+		अवरोध;
+	शेष:
+		वापस 0;
+	पूर्ण
 
 	ea_size = l + ea->ea_name_len + 1;
-	if (er->er_data_len) {
-		if (ei->ei_size + ea_size > er->er_data_len)
-			return -ERANGE;
+	अगर (er->er_data_len) अणु
+		अगर (ei->ei_size + ea_size > er->er_data_len)
+			वापस -दुस्फल;
 
-		memcpy(er->er_data + ei->ei_size, prefix, l);
-		memcpy(er->er_data + ei->ei_size + l, GFS2_EA2NAME(ea),
+		स_नकल(er->er_data + ei->ei_size, prefix, l);
+		स_नकल(er->er_data + ei->ei_size + l, GFS2_EA2NAME(ea),
 		       ea->ea_name_len);
 		er->er_data[ei->ei_size + ea_size - 1] = 0;
-	}
+	पूर्ण
 
 	ei->ei_size += ea_size;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * gfs2_listxattr - List gfs2 extended attributes
- * @dentry: The dentry whose inode we are interested in
- * @buffer: The buffer to write the results
+ * @dentry: The dentry whose inode we are पूर्णांकerested in
+ * @buffer: The buffer to ग_लिखो the results
  * @size: The size of the buffer
  *
- * Returns: actual size of data on success, -errno on error
+ * Returns: actual size of data on success, -त्रुटि_सं on error
  */
 
-ssize_t gfs2_listxattr(struct dentry *dentry, char *buffer, size_t size)
-{
-	struct gfs2_inode *ip = GFS2_I(d_inode(dentry));
-	struct gfs2_ea_request er;
-	struct gfs2_holder i_gh;
-	int error;
+sमाप_प्रकार gfs2_listxattr(काष्ठा dentry *dentry, अक्षर *buffer, माप_प्रकार size)
+अणु
+	काष्ठा gfs2_inode *ip = GFS2_I(d_inode(dentry));
+	काष्ठा gfs2_ea_request er;
+	काष्ठा gfs2_holder i_gh;
+	पूर्णांक error;
 
-	memset(&er, 0, sizeof(struct gfs2_ea_request));
-	if (size) {
+	स_रखो(&er, 0, माप(काष्ठा gfs2_ea_request));
+	अगर (size) अणु
 		er.er_data = buffer;
 		er.er_data_len = size;
-	}
+	पूर्ण
 
 	error = gfs2_glock_nq_init(ip->i_gl, LM_ST_SHARED, LM_FLAG_ANY, &i_gh);
-	if (error)
-		return error;
+	अगर (error)
+		वापस error;
 
-	if (ip->i_eattr) {
-		struct ea_list ei = { .ei_er = &er, .ei_size = 0 };
+	अगर (ip->i_eattr) अणु
+		काष्ठा ea_list ei = अणु .ei_er = &er, .ei_size = 0 पूर्ण;
 
-		error = ea_foreach(ip, ea_list_i, &ei);
-		if (!error)
+		error = ea_क्रमeach(ip, ea_list_i, &ei);
+		अगर (!error)
 			error = ei.ei_size;
-	}
+	पूर्ण
 
 	gfs2_glock_dq_uninit(&i_gh);
 
-	return error;
-}
+	वापस error;
+पूर्ण
 
 /**
  * gfs2_iter_unstuffed - copies the unstuffed xattr data to/from the
  *                       request buffer
  * @ip: The GFS2 inode
- * @ea: The extended attribute header structure
+ * @ea: The extended attribute header काष्ठाure
  * @din: The data to be copied in
- * @dout: The data to be copied out (one of din,dout will be NULL)
+ * @करोut: The data to be copied out (one of din,करोut will be शून्य)
  *
- * Returns: errno
+ * Returns: त्रुटि_सं
  */
 
-static int gfs2_iter_unstuffed(struct gfs2_inode *ip, struct gfs2_ea_header *ea,
-			       const char *din, char *dout)
-{
-	struct gfs2_sbd *sdp = GFS2_SB(&ip->i_inode);
-	struct buffer_head **bh;
-	unsigned int amount = GFS2_EA_DATA_LEN(ea);
-	unsigned int nptrs = DIV_ROUND_UP(amount, sdp->sd_jbsize);
+अटल पूर्णांक gfs2_iter_unstuffed(काष्ठा gfs2_inode *ip, काष्ठा gfs2_ea_header *ea,
+			       स्थिर अक्षर *din, अक्षर *करोut)
+अणु
+	काष्ठा gfs2_sbd *sdp = GFS2_SB(&ip->i_inode);
+	काष्ठा buffer_head **bh;
+	अचिन्हित पूर्णांक amount = GFS2_EA_DATA_LEN(ea);
+	अचिन्हित पूर्णांक nptrs = DIV_ROUND_UP(amount, sdp->sd_jbsize);
 	__be64 *dataptrs = GFS2_EA2DATAPTRS(ea);
-	unsigned int x;
-	int error = 0;
-	unsigned char *pos;
-	unsigned cp_size;
+	अचिन्हित पूर्णांक x;
+	पूर्णांक error = 0;
+	अचिन्हित अक्षर *pos;
+	अचिन्हित cp_size;
 
-	bh = kcalloc(nptrs, sizeof(struct buffer_head *), GFP_NOFS);
-	if (!bh)
-		return -ENOMEM;
+	bh = kसुस्मृति(nptrs, माप(काष्ठा buffer_head *), GFP_NOFS);
+	अगर (!bh)
+		वापस -ENOMEM;
 
-	for (x = 0; x < nptrs; x++) {
-		error = gfs2_meta_read(ip->i_gl, be64_to_cpu(*dataptrs), 0, 0,
+	क्रम (x = 0; x < nptrs; x++) अणु
+		error = gfs2_meta_पढ़ो(ip->i_gl, be64_to_cpu(*dataptrs), 0, 0,
 				       bh + x);
-		if (error) {
-			while (x--)
-				brelse(bh[x]);
-			goto out;
-		}
+		अगर (error) अणु
+			जबतक (x--)
+				brअन्यथा(bh[x]);
+			जाओ out;
+		पूर्ण
 		dataptrs++;
-	}
+	पूर्ण
 
-	for (x = 0; x < nptrs; x++) {
-		error = gfs2_meta_wait(sdp, bh[x]);
-		if (error) {
-			for (; x < nptrs; x++)
-				brelse(bh[x]);
-			goto out;
-		}
-		if (gfs2_metatype_check(sdp, bh[x], GFS2_METATYPE_ED)) {
-			for (; x < nptrs; x++)
-				brelse(bh[x]);
+	क्रम (x = 0; x < nptrs; x++) अणु
+		error = gfs2_meta_रुको(sdp, bh[x]);
+		अगर (error) अणु
+			क्रम (; x < nptrs; x++)
+				brअन्यथा(bh[x]);
+			जाओ out;
+		पूर्ण
+		अगर (gfs2_metatype_check(sdp, bh[x], GFS2_METATYPE_ED)) अणु
+			क्रम (; x < nptrs; x++)
+				brअन्यथा(bh[x]);
 			error = -EIO;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
-		pos = bh[x]->b_data + sizeof(struct gfs2_meta_header);
+		pos = bh[x]->b_data + माप(काष्ठा gfs2_meta_header);
 		cp_size = (sdp->sd_jbsize > amount) ? amount : sdp->sd_jbsize;
 
-		if (dout) {
-			memcpy(dout, pos, cp_size);
-			dout += sdp->sd_jbsize;
-		}
+		अगर (करोut) अणु
+			स_नकल(करोut, pos, cp_size);
+			करोut += sdp->sd_jbsize;
+		पूर्ण
 
-		if (din) {
+		अगर (din) अणु
 			gfs2_trans_add_meta(ip->i_gl, bh[x]);
-			memcpy(pos, din, cp_size);
+			स_नकल(pos, din, cp_size);
 			din += sdp->sd_jbsize;
-		}
+		पूर्ण
 
 		amount -= sdp->sd_jbsize;
-		brelse(bh[x]);
-	}
+		brअन्यथा(bh[x]);
+	पूर्ण
 
 out:
-	kfree(bh);
-	return error;
-}
+	kमुक्त(bh);
+	वापस error;
+पूर्ण
 
-static int gfs2_ea_get_copy(struct gfs2_inode *ip, struct gfs2_ea_location *el,
-			    char *data, size_t size)
-{
-	int ret;
-	size_t len = GFS2_EA_DATA_LEN(el->el_ea);
-	if (len > size)
-		return -ERANGE;
+अटल पूर्णांक gfs2_ea_get_copy(काष्ठा gfs2_inode *ip, काष्ठा gfs2_ea_location *el,
+			    अक्षर *data, माप_प्रकार size)
+अणु
+	पूर्णांक ret;
+	माप_प्रकार len = GFS2_EA_DATA_LEN(el->el_ea);
+	अगर (len > size)
+		वापस -दुस्फल;
 
-	if (GFS2_EA_IS_STUFFED(el->el_ea)) {
-		memcpy(data, GFS2_EA2DATA(el->el_ea), len);
-		return len;
-	}
-	ret = gfs2_iter_unstuffed(ip, el->el_ea, NULL, data);
-	if (ret < 0)
-		return ret;
-	return len;
-}
+	अगर (GFS2_EA_IS_STUFFED(el->el_ea)) अणु
+		स_नकल(data, GFS2_EA2DATA(el->el_ea), len);
+		वापस len;
+	पूर्ण
+	ret = gfs2_iter_unstuffed(ip, el->el_ea, शून्य, data);
+	अगर (ret < 0)
+		वापस ret;
+	वापस len;
+पूर्ण
 
-int gfs2_xattr_acl_get(struct gfs2_inode *ip, const char *name, char **ppdata)
-{
-	struct gfs2_ea_location el;
-	int error;
-	int len;
-	char *data;
+पूर्णांक gfs2_xattr_acl_get(काष्ठा gfs2_inode *ip, स्थिर अक्षर *name, अक्षर **ppdata)
+अणु
+	काष्ठा gfs2_ea_location el;
+	पूर्णांक error;
+	पूर्णांक len;
+	अक्षर *data;
 
 	error = gfs2_ea_find(ip, GFS2_EATYPE_SYS, name, &el);
-	if (error)
-		return error;
-	if (!el.el_ea)
-		goto out;
-	if (!GFS2_EA_DATA_LEN(el.el_ea))
-		goto out;
+	अगर (error)
+		वापस error;
+	अगर (!el.el_ea)
+		जाओ out;
+	अगर (!GFS2_EA_DATA_LEN(el.el_ea))
+		जाओ out;
 
 	len = GFS2_EA_DATA_LEN(el.el_ea);
-	data = kmalloc(len, GFP_NOFS);
+	data = kदो_स्मृति(len, GFP_NOFS);
 	error = -ENOMEM;
-	if (data == NULL)
-		goto out;
+	अगर (data == शून्य)
+		जाओ out;
 
 	error = gfs2_ea_get_copy(ip, &el, data, len);
-	if (error < 0)
-		kfree(data);
-	else
+	अगर (error < 0)
+		kमुक्त(data);
+	अन्यथा
 		*ppdata = data;
 out:
-	brelse(el.el_bh);
-	return error;
-}
+	brअन्यथा(el.el_bh);
+	वापस error;
+पूर्ण
 
 /**
  * __gfs2_xattr_get - Get a GFS2 extended attribute
  * @inode: The inode
  * @name: The name of the extended attribute
- * @buffer: The buffer to write the result into
+ * @buffer: The buffer to ग_लिखो the result पूर्णांकo
  * @size: The size of the buffer
  * @type: The type of extended attribute
  *
- * Returns: actual size of data on success, -errno on error
+ * Returns: actual size of data on success, -त्रुटि_सं on error
  */
-static int __gfs2_xattr_get(struct inode *inode, const char *name,
-			    void *buffer, size_t size, int type)
-{
-	struct gfs2_inode *ip = GFS2_I(inode);
-	struct gfs2_ea_location el;
-	int error;
+अटल पूर्णांक __gfs2_xattr_get(काष्ठा inode *inode, स्थिर अक्षर *name,
+			    व्योम *buffer, माप_प्रकार size, पूर्णांक type)
+अणु
+	काष्ठा gfs2_inode *ip = GFS2_I(inode);
+	काष्ठा gfs2_ea_location el;
+	पूर्णांक error;
 
-	if (!ip->i_eattr)
-		return -ENODATA;
-	if (strlen(name) > GFS2_EA_MAX_NAME_LEN)
-		return -EINVAL;
+	अगर (!ip->i_eattr)
+		वापस -ENODATA;
+	अगर (म_माप(name) > GFS2_EA_MAX_NAME_LEN)
+		वापस -EINVAL;
 
 	error = gfs2_ea_find(ip, type, name, &el);
-	if (error)
-		return error;
-	if (!el.el_ea)
-		return -ENODATA;
-	if (size)
+	अगर (error)
+		वापस error;
+	अगर (!el.el_ea)
+		वापस -ENODATA;
+	अगर (size)
 		error = gfs2_ea_get_copy(ip, &el, buffer, size);
-	else
+	अन्यथा
 		error = GFS2_EA_DATA_LEN(el.el_ea);
-	brelse(el.el_bh);
+	brअन्यथा(el.el_bh);
 
-	return error;
-}
+	वापस error;
+पूर्ण
 
-static int gfs2_xattr_get(const struct xattr_handler *handler,
-			  struct dentry *unused, struct inode *inode,
-			  const char *name, void *buffer, size_t size)
-{
-	struct gfs2_inode *ip = GFS2_I(inode);
-	struct gfs2_holder gh;
-	int ret;
+अटल पूर्णांक gfs2_xattr_get(स्थिर काष्ठा xattr_handler *handler,
+			  काष्ठा dentry *unused, काष्ठा inode *inode,
+			  स्थिर अक्षर *name, व्योम *buffer, माप_प्रकार size)
+अणु
+	काष्ठा gfs2_inode *ip = GFS2_I(inode);
+	काष्ठा gfs2_holder gh;
+	पूर्णांक ret;
 
 	/* During lookup, SELinux calls this function with the glock locked. */
 
-	if (!gfs2_glock_is_locked_by_me(ip->i_gl)) {
+	अगर (!gfs2_glock_is_locked_by_me(ip->i_gl)) अणु
 		ret = gfs2_glock_nq_init(ip->i_gl, LM_ST_SHARED, LM_FLAG_ANY, &gh);
-		if (ret)
-			return ret;
-	} else {
+		अगर (ret)
+			वापस ret;
+	पूर्ण अन्यथा अणु
 		gfs2_holder_mark_uninitialized(&gh);
-	}
+	पूर्ण
 	ret = __gfs2_xattr_get(inode, name, buffer, size, handler->flags);
-	if (gfs2_holder_initialized(&gh))
+	अगर (gfs2_holder_initialized(&gh))
 		gfs2_glock_dq_uninit(&gh);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * ea_alloc_blk - allocates a new block for extended attributes.
- * @ip: A pointer to the inode that's getting extended attributes
- * @bhp: Pointer to pointer to a struct buffer_head
+ * ea_alloc_blk - allocates a new block क्रम extended attributes.
+ * @ip: A poपूर्णांकer to the inode that's getting extended attributes
+ * @bhp: Poपूर्णांकer to poपूर्णांकer to a काष्ठा buffer_head
  *
- * Returns: errno
+ * Returns: त्रुटि_सं
  */
 
-static int ea_alloc_blk(struct gfs2_inode *ip, struct buffer_head **bhp)
-{
-	struct gfs2_sbd *sdp = GFS2_SB(&ip->i_inode);
-	struct gfs2_ea_header *ea;
-	unsigned int n = 1;
+अटल पूर्णांक ea_alloc_blk(काष्ठा gfs2_inode *ip, काष्ठा buffer_head **bhp)
+अणु
+	काष्ठा gfs2_sbd *sdp = GFS2_SB(&ip->i_inode);
+	काष्ठा gfs2_ea_header *ea;
+	अचिन्हित पूर्णांक n = 1;
 	u64 block;
-	int error;
+	पूर्णांक error;
 
-	error = gfs2_alloc_blocks(ip, &block, &n, 0, NULL);
-	if (error)
-		return error;
-	gfs2_trans_remove_revoke(sdp, block, 1);
+	error = gfs2_alloc_blocks(ip, &block, &n, 0, शून्य);
+	अगर (error)
+		वापस error;
+	gfs2_trans_हटाओ_revoke(sdp, block, 1);
 	*bhp = gfs2_meta_new(ip->i_gl, block);
 	gfs2_trans_add_meta(ip->i_gl, *bhp);
 	gfs2_metatype_set(*bhp, GFS2_METATYPE_EA, GFS2_FORMAT_EA);
-	gfs2_buffer_clear_tail(*bhp, sizeof(struct gfs2_meta_header));
+	gfs2_buffer_clear_tail(*bhp, माप(काष्ठा gfs2_meta_header));
 
 	ea = GFS2_EA_BH2FIRST(*bhp);
 	ea->ea_rec_len = cpu_to_be32(sdp->sd_jbsize);
@@ -656,55 +657,55 @@ static int ea_alloc_blk(struct gfs2_inode *ip, struct buffer_head **bhp)
 
 	gfs2_add_inode_blocks(&ip->i_inode, 1);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * ea_write - writes the request info to an ea, creating new blocks if
+ * ea_ग_लिखो - ग_लिखोs the request info to an ea, creating new blocks अगर
  *            necessary
- * @ip: inode that is being modified
+ * @ip: inode that is being modअगरied
  * @ea: the location of the new ea in a block
- * @er: the write request
+ * @er: the ग_लिखो request
  *
- * Note: does not update ea_rec_len or the GFS2_EAFLAG_LAST bin of ea_flags
+ * Note: करोes not update ea_rec_len or the GFS2_EAFLAG_LAST bin of ea_flags
  *
- * returns : errno
+ * वापसs : त्रुटि_सं
  */
 
-static int ea_write(struct gfs2_inode *ip, struct gfs2_ea_header *ea,
-		    struct gfs2_ea_request *er)
-{
-	struct gfs2_sbd *sdp = GFS2_SB(&ip->i_inode);
-	int error;
+अटल पूर्णांक ea_ग_लिखो(काष्ठा gfs2_inode *ip, काष्ठा gfs2_ea_header *ea,
+		    काष्ठा gfs2_ea_request *er)
+अणु
+	काष्ठा gfs2_sbd *sdp = GFS2_SB(&ip->i_inode);
+	पूर्णांक error;
 
 	ea->ea_data_len = cpu_to_be32(er->er_data_len);
 	ea->ea_name_len = er->er_name_len;
 	ea->ea_type = er->er_type;
 	ea->__pad = 0;
 
-	memcpy(GFS2_EA2NAME(ea), er->er_name, er->er_name_len);
+	स_नकल(GFS2_EA2NAME(ea), er->er_name, er->er_name_len);
 
-	if (GFS2_EAREQ_SIZE_STUFFED(er) <= sdp->sd_jbsize) {
+	अगर (GFS2_EAREQ_SIZE_STUFFED(er) <= sdp->sd_jbsize) अणु
 		ea->ea_num_ptrs = 0;
-		memcpy(GFS2_EA2DATA(ea), er->er_data, er->er_data_len);
-	} else {
+		स_नकल(GFS2_EA2DATA(ea), er->er_data, er->er_data_len);
+	पूर्ण अन्यथा अणु
 		__be64 *dataptr = GFS2_EA2DATAPTRS(ea);
-		const char *data = er->er_data;
-		unsigned int data_len = er->er_data_len;
-		unsigned int copy;
-		unsigned int x;
+		स्थिर अक्षर *data = er->er_data;
+		अचिन्हित पूर्णांक data_len = er->er_data_len;
+		अचिन्हित पूर्णांक copy;
+		अचिन्हित पूर्णांक x;
 
 		ea->ea_num_ptrs = DIV_ROUND_UP(er->er_data_len, sdp->sd_jbsize);
-		for (x = 0; x < ea->ea_num_ptrs; x++) {
-			struct buffer_head *bh;
+		क्रम (x = 0; x < ea->ea_num_ptrs; x++) अणु
+			काष्ठा buffer_head *bh;
 			u64 block;
-			int mh_size = sizeof(struct gfs2_meta_header);
-			unsigned int n = 1;
+			पूर्णांक mh_size = माप(काष्ठा gfs2_meta_header);
+			अचिन्हित पूर्णांक n = 1;
 
-			error = gfs2_alloc_blocks(ip, &block, &n, 0, NULL);
-			if (error)
-				return error;
-			gfs2_trans_remove_revoke(sdp, block, 1);
+			error = gfs2_alloc_blocks(ip, &block, &n, 0, शून्य);
+			अगर (error)
+				वापस error;
+			gfs2_trans_हटाओ_revoke(sdp, block, 1);
 			bh = gfs2_meta_new(ip->i_gl, block);
 			gfs2_trans_add_meta(ip->i_gl, bh);
 			gfs2_metatype_set(bh, GFS2_METATYPE_ED, GFS2_FORMAT_ED);
@@ -713,58 +714,58 @@ static int ea_write(struct gfs2_inode *ip, struct gfs2_ea_header *ea,
 
 			copy = data_len > sdp->sd_jbsize ? sdp->sd_jbsize :
 							   data_len;
-			memcpy(bh->b_data + mh_size, data, copy);
-			if (copy < sdp->sd_jbsize)
-				memset(bh->b_data + mh_size + copy, 0,
+			स_नकल(bh->b_data + mh_size, data, copy);
+			अगर (copy < sdp->sd_jbsize)
+				स_रखो(bh->b_data + mh_size + copy, 0,
 				       sdp->sd_jbsize - copy);
 
 			*dataptr++ = cpu_to_be64(bh->b_blocknr);
 			data += copy;
 			data_len -= copy;
 
-			brelse(bh);
-		}
+			brअन्यथा(bh);
+		पूर्ण
 
-		gfs2_assert_withdraw(sdp, !data_len);
-	}
+		gfs2_निश्चित_withdraw(sdp, !data_len);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-typedef int (*ea_skeleton_call_t) (struct gfs2_inode *ip,
-				   struct gfs2_ea_request *er, void *private);
+प्रकार पूर्णांक (*ea_skeleton_call_t) (काष्ठा gfs2_inode *ip,
+				   काष्ठा gfs2_ea_request *er, व्योम *निजी);
 
-static int ea_alloc_skeleton(struct gfs2_inode *ip, struct gfs2_ea_request *er,
-			     unsigned int blks,
-			     ea_skeleton_call_t skeleton_call, void *private)
-{
-	struct gfs2_alloc_parms ap = { .target = blks };
-	int error;
+अटल पूर्णांक ea_alloc_skeleton(काष्ठा gfs2_inode *ip, काष्ठा gfs2_ea_request *er,
+			     अचिन्हित पूर्णांक blks,
+			     ea_skeleton_call_t skeleton_call, व्योम *निजी)
+अणु
+	काष्ठा gfs2_alloc_parms ap = अणु .target = blks पूर्ण;
+	पूर्णांक error;
 
 	error = gfs2_rindex_update(GFS2_SB(&ip->i_inode));
-	if (error)
-		return error;
+	अगर (error)
+		वापस error;
 
 	error = gfs2_quota_lock_check(ip, &ap);
-	if (error)
-		return error;
+	अगर (error)
+		वापस error;
 
 	error = gfs2_inplace_reserve(ip, &ap);
-	if (error)
-		goto out_gunlock_q;
+	अगर (error)
+		जाओ out_gunlock_q;
 
 	error = gfs2_trans_begin(GFS2_SB(&ip->i_inode),
 				 blks + gfs2_rg_blocks(ip, blks) +
 				 RES_DINODE + RES_STATFS + RES_QUOTA, 0);
-	if (error)
-		goto out_ipres;
+	अगर (error)
+		जाओ out_ipres;
 
-	error = skeleton_call(ip, er, private);
-	if (error)
-		goto out_end_trans;
+	error = skeleton_call(ip, er, निजी);
+	अगर (error)
+		जाओ out_end_trans;
 
-	ip->i_inode.i_ctime = current_time(&ip->i_inode);
-	__mark_inode_dirty(&ip->i_inode, I_DIRTY_DATASYNC);
+	ip->i_inode.i_स_समय = current_समय(&ip->i_inode);
+	__mark_inode_dirty(&ip->i_inode, I_सूचीTY_DATASYNC);
 
 out_end_trans:
 	gfs2_trans_end(GFS2_SB(&ip->i_inode));
@@ -772,58 +773,58 @@ out_ipres:
 	gfs2_inplace_release(ip);
 out_gunlock_q:
 	gfs2_quota_unlock(ip);
-	return error;
-}
+	वापस error;
+पूर्ण
 
-static int ea_init_i(struct gfs2_inode *ip, struct gfs2_ea_request *er,
-		     void *private)
-{
-	struct buffer_head *bh;
-	int error;
+अटल पूर्णांक ea_init_i(काष्ठा gfs2_inode *ip, काष्ठा gfs2_ea_request *er,
+		     व्योम *निजी)
+अणु
+	काष्ठा buffer_head *bh;
+	पूर्णांक error;
 
 	error = ea_alloc_blk(ip, &bh);
-	if (error)
-		return error;
+	अगर (error)
+		वापस error;
 
 	ip->i_eattr = bh->b_blocknr;
-	error = ea_write(ip, GFS2_EA_BH2FIRST(bh), er);
+	error = ea_ग_लिखो(ip, GFS2_EA_BH2FIRST(bh), er);
 
-	brelse(bh);
+	brअन्यथा(bh);
 
-	return error;
-}
+	वापस error;
+पूर्ण
 
 /*
  * ea_init - initializes a new eattr block
  *
- * Returns: errno
+ * Returns: त्रुटि_सं
  */
-static int ea_init(struct gfs2_inode *ip, int type, const char *name,
-		   const void *data, size_t size)
-{
-	struct gfs2_ea_request er;
-	unsigned int jbsize = GFS2_SB(&ip->i_inode)->sd_jbsize;
-	unsigned int blks = 1;
+अटल पूर्णांक ea_init(काष्ठा gfs2_inode *ip, पूर्णांक type, स्थिर अक्षर *name,
+		   स्थिर व्योम *data, माप_प्रकार size)
+अणु
+	काष्ठा gfs2_ea_request er;
+	अचिन्हित पूर्णांक jbsize = GFS2_SB(&ip->i_inode)->sd_jbsize;
+	अचिन्हित पूर्णांक blks = 1;
 
 	er.er_type = type;
 	er.er_name = name;
-	er.er_name_len = strlen(name);
-	er.er_data = (void *)data;
+	er.er_name_len = म_माप(name);
+	er.er_data = (व्योम *)data;
 	er.er_data_len = size;
 
-	if (GFS2_EAREQ_SIZE_STUFFED(&er) > jbsize)
+	अगर (GFS2_EAREQ_SIZE_STUFFED(&er) > jbsize)
 		blks += DIV_ROUND_UP(er.er_data_len, jbsize);
 
-	return ea_alloc_skeleton(ip, &er, blks, ea_init_i, NULL);
-}
+	वापस ea_alloc_skeleton(ip, &er, blks, ea_init_i, शून्य);
+पूर्ण
 
-static struct gfs2_ea_header *ea_split_ea(struct gfs2_ea_header *ea)
-{
+अटल काष्ठा gfs2_ea_header *ea_split_ea(काष्ठा gfs2_ea_header *ea)
+अणु
 	u32 ea_size = GFS2_EA_SIZE(ea);
-	struct gfs2_ea_header *new = (struct gfs2_ea_header *)((char *)ea +
+	काष्ठा gfs2_ea_header *new = (काष्ठा gfs2_ea_header *)((अक्षर *)ea +
 				     ea_size);
 	u32 new_size = GFS2_EA_REC_LEN(ea) - ea_size;
-	int last = ea->ea_flags & GFS2_EAFLAG_LAST;
+	पूर्णांक last = ea->ea_flags & GFS2_EAFLAG_LAST;
 
 	ea->ea_rec_len = cpu_to_be32(ea_size);
 	ea->ea_flags ^= last;
@@ -831,124 +832,124 @@ static struct gfs2_ea_header *ea_split_ea(struct gfs2_ea_header *ea)
 	new->ea_rec_len = cpu_to_be32(new_size);
 	new->ea_flags = last;
 
-	return new;
-}
+	वापस new;
+पूर्ण
 
-static void ea_set_remove_stuffed(struct gfs2_inode *ip,
-				  struct gfs2_ea_location *el)
-{
-	struct gfs2_ea_header *ea = el->el_ea;
-	struct gfs2_ea_header *prev = el->el_prev;
+अटल व्योम ea_set_हटाओ_stuffed(काष्ठा gfs2_inode *ip,
+				  काष्ठा gfs2_ea_location *el)
+अणु
+	काष्ठा gfs2_ea_header *ea = el->el_ea;
+	काष्ठा gfs2_ea_header *prev = el->el_prev;
 	u32 len;
 
 	gfs2_trans_add_meta(ip->i_gl, el->el_bh);
 
-	if (!prev || !GFS2_EA_IS_STUFFED(ea)) {
+	अगर (!prev || !GFS2_EA_IS_STUFFED(ea)) अणु
 		ea->ea_type = GFS2_EATYPE_UNUSED;
-		return;
-	} else if (GFS2_EA2NEXT(prev) != ea) {
+		वापस;
+	पूर्ण अन्यथा अगर (GFS2_EA2NEXT(prev) != ea) अणु
 		prev = GFS2_EA2NEXT(prev);
-		gfs2_assert_withdraw(GFS2_SB(&ip->i_inode), GFS2_EA2NEXT(prev) == ea);
-	}
+		gfs2_निश्चित_withdraw(GFS2_SB(&ip->i_inode), GFS2_EA2NEXT(prev) == ea);
+	पूर्ण
 
 	len = GFS2_EA_REC_LEN(prev) + GFS2_EA_REC_LEN(ea);
 	prev->ea_rec_len = cpu_to_be32(len);
 
-	if (GFS2_EA_IS_LAST(ea))
+	अगर (GFS2_EA_IS_LAST(ea))
 		prev->ea_flags |= GFS2_EAFLAG_LAST;
-}
+पूर्ण
 
-struct ea_set {
-	int ea_split;
+काष्ठा ea_set अणु
+	पूर्णांक ea_split;
 
-	struct gfs2_ea_request *es_er;
-	struct gfs2_ea_location *es_el;
+	काष्ठा gfs2_ea_request *es_er;
+	काष्ठा gfs2_ea_location *es_el;
 
-	struct buffer_head *es_bh;
-	struct gfs2_ea_header *es_ea;
-};
+	काष्ठा buffer_head *es_bh;
+	काष्ठा gfs2_ea_header *es_ea;
+पूर्ण;
 
-static int ea_set_simple_noalloc(struct gfs2_inode *ip, struct buffer_head *bh,
-				 struct gfs2_ea_header *ea, struct ea_set *es)
-{
-	struct gfs2_ea_request *er = es->es_er;
-	int error;
+अटल पूर्णांक ea_set_simple_noalloc(काष्ठा gfs2_inode *ip, काष्ठा buffer_head *bh,
+				 काष्ठा gfs2_ea_header *ea, काष्ठा ea_set *es)
+अणु
+	काष्ठा gfs2_ea_request *er = es->es_er;
+	पूर्णांक error;
 
 	error = gfs2_trans_begin(GFS2_SB(&ip->i_inode), RES_DINODE + 2 * RES_EATTR, 0);
-	if (error)
-		return error;
+	अगर (error)
+		वापस error;
 
 	gfs2_trans_add_meta(ip->i_gl, bh);
 
-	if (es->ea_split)
+	अगर (es->ea_split)
 		ea = ea_split_ea(ea);
 
-	ea_write(ip, ea, er);
+	ea_ग_लिखो(ip, ea, er);
 
-	if (es->es_el)
-		ea_set_remove_stuffed(ip, es->es_el);
+	अगर (es->es_el)
+		ea_set_हटाओ_stuffed(ip, es->es_el);
 
-	ip->i_inode.i_ctime = current_time(&ip->i_inode);
-	__mark_inode_dirty(&ip->i_inode, I_DIRTY_DATASYNC);
+	ip->i_inode.i_स_समय = current_समय(&ip->i_inode);
+	__mark_inode_dirty(&ip->i_inode, I_सूचीTY_DATASYNC);
 
 	gfs2_trans_end(GFS2_SB(&ip->i_inode));
-	return error;
-}
+	वापस error;
+पूर्ण
 
-static int ea_set_simple_alloc(struct gfs2_inode *ip,
-			       struct gfs2_ea_request *er, void *private)
-{
-	struct ea_set *es = private;
-	struct gfs2_ea_header *ea = es->es_ea;
-	int error;
+अटल पूर्णांक ea_set_simple_alloc(काष्ठा gfs2_inode *ip,
+			       काष्ठा gfs2_ea_request *er, व्योम *निजी)
+अणु
+	काष्ठा ea_set *es = निजी;
+	काष्ठा gfs2_ea_header *ea = es->es_ea;
+	पूर्णांक error;
 
 	gfs2_trans_add_meta(ip->i_gl, es->es_bh);
 
-	if (es->ea_split)
+	अगर (es->ea_split)
 		ea = ea_split_ea(ea);
 
-	error = ea_write(ip, ea, er);
-	if (error)
-		return error;
+	error = ea_ग_लिखो(ip, ea, er);
+	अगर (error)
+		वापस error;
 
-	if (es->es_el)
-		ea_set_remove_stuffed(ip, es->es_el);
+	अगर (es->es_el)
+		ea_set_हटाओ_stuffed(ip, es->es_el);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ea_set_simple(struct gfs2_inode *ip, struct buffer_head *bh,
-			 struct gfs2_ea_header *ea, struct gfs2_ea_header *prev,
-			 void *private)
-{
-	struct ea_set *es = private;
-	unsigned int size;
-	int stuffed;
-	int error;
+अटल पूर्णांक ea_set_simple(काष्ठा gfs2_inode *ip, काष्ठा buffer_head *bh,
+			 काष्ठा gfs2_ea_header *ea, काष्ठा gfs2_ea_header *prev,
+			 व्योम *निजी)
+अणु
+	काष्ठा ea_set *es = निजी;
+	अचिन्हित पूर्णांक size;
+	पूर्णांक stuffed;
+	पूर्णांक error;
 
 	stuffed = ea_calc_size(GFS2_SB(&ip->i_inode), es->es_er->er_name_len,
 			       es->es_er->er_data_len, &size);
 
-	if (ea->ea_type == GFS2_EATYPE_UNUSED) {
-		if (GFS2_EA_REC_LEN(ea) < size)
-			return 0;
-		if (!GFS2_EA_IS_STUFFED(ea)) {
-			error = ea_remove_unstuffed(ip, bh, ea, prev, 1);
-			if (error)
-				return error;
-		}
+	अगर (ea->ea_type == GFS2_EATYPE_UNUSED) अणु
+		अगर (GFS2_EA_REC_LEN(ea) < size)
+			वापस 0;
+		अगर (!GFS2_EA_IS_STUFFED(ea)) अणु
+			error = ea_हटाओ_unstuffed(ip, bh, ea, prev, 1);
+			अगर (error)
+				वापस error;
+		पूर्ण
 		es->ea_split = 0;
-	} else if (GFS2_EA_REC_LEN(ea) - GFS2_EA_SIZE(ea) >= size)
+	पूर्ण अन्यथा अगर (GFS2_EA_REC_LEN(ea) - GFS2_EA_SIZE(ea) >= size)
 		es->ea_split = 1;
-	else
-		return 0;
+	अन्यथा
+		वापस 0;
 
-	if (stuffed) {
+	अगर (stuffed) अणु
 		error = ea_set_simple_noalloc(ip, bh, ea, es);
-		if (error)
-			return error;
-	} else {
-		unsigned int blks;
+		अगर (error)
+			वापस error;
+	पूर्ण अन्यथा अणु
+		अचिन्हित पूर्णांक blks;
 
 		es->es_bh = bh;
 		es->es_ea = ea;
@@ -957,55 +958,55 @@ static int ea_set_simple(struct gfs2_inode *ip, struct buffer_head *bh,
 
 		error = ea_alloc_skeleton(ip, es->es_er, blks,
 					  ea_set_simple_alloc, es);
-		if (error)
-			return error;
-	}
+		अगर (error)
+			वापस error;
+	पूर्ण
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-static int ea_set_block(struct gfs2_inode *ip, struct gfs2_ea_request *er,
-			void *private)
-{
-	struct gfs2_sbd *sdp = GFS2_SB(&ip->i_inode);
-	struct buffer_head *indbh, *newbh;
+अटल पूर्णांक ea_set_block(काष्ठा gfs2_inode *ip, काष्ठा gfs2_ea_request *er,
+			व्योम *निजी)
+अणु
+	काष्ठा gfs2_sbd *sdp = GFS2_SB(&ip->i_inode);
+	काष्ठा buffer_head *indbh, *newbh;
 	__be64 *eablk;
-	int error;
-	int mh_size = sizeof(struct gfs2_meta_header);
+	पूर्णांक error;
+	पूर्णांक mh_size = माप(काष्ठा gfs2_meta_header);
 
-	if (ip->i_diskflags & GFS2_DIF_EA_INDIRECT) {
+	अगर (ip->i_diskflags & GFS2_DIF_EA_INसूचीECT) अणु
 		__be64 *end;
 
-		error = gfs2_meta_read(ip->i_gl, ip->i_eattr, DIO_WAIT, 0,
+		error = gfs2_meta_पढ़ो(ip->i_gl, ip->i_eattr, DIO_WAIT, 0,
 				       &indbh);
-		if (error)
-			return error;
+		अगर (error)
+			वापस error;
 
-		if (gfs2_metatype_check(sdp, indbh, GFS2_METATYPE_IN)) {
+		अगर (gfs2_metatype_check(sdp, indbh, GFS2_METATYPE_IN)) अणु
 			error = -EIO;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
 		eablk = (__be64 *)(indbh->b_data + mh_size);
 		end = eablk + sdp->sd_inptrs;
 
-		for (; eablk < end; eablk++)
-			if (!*eablk)
-				break;
+		क्रम (; eablk < end; eablk++)
+			अगर (!*eablk)
+				अवरोध;
 
-		if (eablk == end) {
+		अगर (eablk == end) अणु
 			error = -ENOSPC;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
 		gfs2_trans_add_meta(ip->i_gl, indbh);
-	} else {
+	पूर्ण अन्यथा अणु
 		u64 blk;
-		unsigned int n = 1;
-		error = gfs2_alloc_blocks(ip, &blk, &n, 0, NULL);
-		if (error)
-			return error;
-		gfs2_trans_remove_revoke(sdp, blk, 1);
+		अचिन्हित पूर्णांक n = 1;
+		error = gfs2_alloc_blocks(ip, &blk, &n, 0, शून्य);
+		अगर (error)
+			वापस error;
+		gfs2_trans_हटाओ_revoke(sdp, blk, 1);
 		indbh = gfs2_meta_new(ip->i_gl, blk);
 		gfs2_trans_add_meta(ip->i_gl, indbh);
 		gfs2_metatype_set(indbh, GFS2_METATYPE_IN, GFS2_FORMAT_IN);
@@ -1014,483 +1015,483 @@ static int ea_set_block(struct gfs2_inode *ip, struct gfs2_ea_request *er,
 		eablk = (__be64 *)(indbh->b_data + mh_size);
 		*eablk = cpu_to_be64(ip->i_eattr);
 		ip->i_eattr = blk;
-		ip->i_diskflags |= GFS2_DIF_EA_INDIRECT;
+		ip->i_diskflags |= GFS2_DIF_EA_INसूचीECT;
 		gfs2_add_inode_blocks(&ip->i_inode, 1);
 
 		eablk++;
-	}
+	पूर्ण
 
 	error = ea_alloc_blk(ip, &newbh);
-	if (error)
-		goto out;
+	अगर (error)
+		जाओ out;
 
 	*eablk = cpu_to_be64((u64)newbh->b_blocknr);
-	error = ea_write(ip, GFS2_EA_BH2FIRST(newbh), er);
-	brelse(newbh);
-	if (error)
-		goto out;
+	error = ea_ग_लिखो(ip, GFS2_EA_BH2FIRST(newbh), er);
+	brअन्यथा(newbh);
+	अगर (error)
+		जाओ out;
 
-	if (private)
-		ea_set_remove_stuffed(ip, private);
+	अगर (निजी)
+		ea_set_हटाओ_stuffed(ip, निजी);
 
 out:
-	brelse(indbh);
-	return error;
-}
+	brअन्यथा(indbh);
+	वापस error;
+पूर्ण
 
-static int ea_set_i(struct gfs2_inode *ip, int type, const char *name,
-		    const void *value, size_t size, struct gfs2_ea_location *el)
-{
-	struct gfs2_ea_request er;
-	struct ea_set es;
-	unsigned int blks = 2;
-	int error;
+अटल पूर्णांक ea_set_i(काष्ठा gfs2_inode *ip, पूर्णांक type, स्थिर अक्षर *name,
+		    स्थिर व्योम *value, माप_प्रकार size, काष्ठा gfs2_ea_location *el)
+अणु
+	काष्ठा gfs2_ea_request er;
+	काष्ठा ea_set es;
+	अचिन्हित पूर्णांक blks = 2;
+	पूर्णांक error;
 
 	er.er_type = type;
 	er.er_name = name;
-	er.er_data = (void *)value;
-	er.er_name_len = strlen(name);
+	er.er_data = (व्योम *)value;
+	er.er_name_len = म_माप(name);
 	er.er_data_len = size;
 
-	memset(&es, 0, sizeof(struct ea_set));
+	स_रखो(&es, 0, माप(काष्ठा ea_set));
 	es.es_er = &er;
 	es.es_el = el;
 
-	error = ea_foreach(ip, ea_set_simple, &es);
-	if (error > 0)
-		return 0;
-	if (error)
-		return error;
+	error = ea_क्रमeach(ip, ea_set_simple, &es);
+	अगर (error > 0)
+		वापस 0;
+	अगर (error)
+		वापस error;
 
-	if (!(ip->i_diskflags & GFS2_DIF_EA_INDIRECT))
+	अगर (!(ip->i_diskflags & GFS2_DIF_EA_INसूचीECT))
 		blks++;
-	if (GFS2_EAREQ_SIZE_STUFFED(&er) > GFS2_SB(&ip->i_inode)->sd_jbsize)
+	अगर (GFS2_EAREQ_SIZE_STUFFED(&er) > GFS2_SB(&ip->i_inode)->sd_jbsize)
 		blks += DIV_ROUND_UP(er.er_data_len, GFS2_SB(&ip->i_inode)->sd_jbsize);
 
-	return ea_alloc_skeleton(ip, &er, blks, ea_set_block, el);
-}
+	वापस ea_alloc_skeleton(ip, &er, blks, ea_set_block, el);
+पूर्ण
 
-static int ea_set_remove_unstuffed(struct gfs2_inode *ip,
-				   struct gfs2_ea_location *el)
-{
-	if (el->el_prev && GFS2_EA2NEXT(el->el_prev) != el->el_ea) {
+अटल पूर्णांक ea_set_हटाओ_unstuffed(काष्ठा gfs2_inode *ip,
+				   काष्ठा gfs2_ea_location *el)
+अणु
+	अगर (el->el_prev && GFS2_EA2NEXT(el->el_prev) != el->el_ea) अणु
 		el->el_prev = GFS2_EA2NEXT(el->el_prev);
-		gfs2_assert_withdraw(GFS2_SB(&ip->i_inode),
+		gfs2_निश्चित_withdraw(GFS2_SB(&ip->i_inode),
 				     GFS2_EA2NEXT(el->el_prev) == el->el_ea);
-	}
+	पूर्ण
 
-	return ea_remove_unstuffed(ip, el->el_bh, el->el_ea, el->el_prev, 0);
-}
+	वापस ea_हटाओ_unstuffed(ip, el->el_bh, el->el_ea, el->el_prev, 0);
+पूर्ण
 
-static int ea_remove_stuffed(struct gfs2_inode *ip, struct gfs2_ea_location *el)
-{
-	struct gfs2_ea_header *ea = el->el_ea;
-	struct gfs2_ea_header *prev = el->el_prev;
-	int error;
+अटल पूर्णांक ea_हटाओ_stuffed(काष्ठा gfs2_inode *ip, काष्ठा gfs2_ea_location *el)
+अणु
+	काष्ठा gfs2_ea_header *ea = el->el_ea;
+	काष्ठा gfs2_ea_header *prev = el->el_prev;
+	पूर्णांक error;
 
 	error = gfs2_trans_begin(GFS2_SB(&ip->i_inode), RES_DINODE + RES_EATTR, 0);
-	if (error)
-		return error;
+	अगर (error)
+		वापस error;
 
 	gfs2_trans_add_meta(ip->i_gl, el->el_bh);
 
-	if (prev) {
+	अगर (prev) अणु
 		u32 len;
 
 		len = GFS2_EA_REC_LEN(prev) + GFS2_EA_REC_LEN(ea);
 		prev->ea_rec_len = cpu_to_be32(len);
 
-		if (GFS2_EA_IS_LAST(ea))
+		अगर (GFS2_EA_IS_LAST(ea))
 			prev->ea_flags |= GFS2_EAFLAG_LAST;
-	} else {
+	पूर्ण अन्यथा अणु
 		ea->ea_type = GFS2_EATYPE_UNUSED;
-	}
+	पूर्ण
 
-	ip->i_inode.i_ctime = current_time(&ip->i_inode);
-	__mark_inode_dirty(&ip->i_inode, I_DIRTY_DATASYNC);
+	ip->i_inode.i_स_समय = current_समय(&ip->i_inode);
+	__mark_inode_dirty(&ip->i_inode, I_सूचीTY_DATASYNC);
 
 	gfs2_trans_end(GFS2_SB(&ip->i_inode));
 
-	return error;
-}
+	वापस error;
+पूर्ण
 
 /**
- * gfs2_xattr_remove - Remove a GFS2 extended attribute
+ * gfs2_xattr_हटाओ - Remove a GFS2 extended attribute
  * @ip: The inode
  * @type: The type of the extended attribute
  * @name: The name of the extended attribute
  *
  * This is not called directly by the VFS since we use the (common)
- * scheme of making a "set with NULL data" mean a remove request. Note
- * that this is different from a set with zero length data.
+ * scheme of making a "set with NULL data" mean a हटाओ request. Note
+ * that this is dअगरferent from a set with zero length data.
  *
- * Returns: 0, or errno on failure
+ * Returns: 0, or त्रुटि_सं on failure
  */
 
-static int gfs2_xattr_remove(struct gfs2_inode *ip, int type, const char *name)
-{
-	struct gfs2_ea_location el;
-	int error;
+अटल पूर्णांक gfs2_xattr_हटाओ(काष्ठा gfs2_inode *ip, पूर्णांक type, स्थिर अक्षर *name)
+अणु
+	काष्ठा gfs2_ea_location el;
+	पूर्णांक error;
 
-	if (!ip->i_eattr)
-		return -ENODATA;
+	अगर (!ip->i_eattr)
+		वापस -ENODATA;
 
 	error = gfs2_ea_find(ip, type, name, &el);
-	if (error)
-		return error;
-	if (!el.el_ea)
-		return -ENODATA;
+	अगर (error)
+		वापस error;
+	अगर (!el.el_ea)
+		वापस -ENODATA;
 
-	if (GFS2_EA_IS_STUFFED(el.el_ea))
-		error = ea_remove_stuffed(ip, &el);
-	else
-		error = ea_remove_unstuffed(ip, el.el_bh, el.el_ea, el.el_prev, 0);
+	अगर (GFS2_EA_IS_STUFFED(el.el_ea))
+		error = ea_हटाओ_stuffed(ip, &el);
+	अन्यथा
+		error = ea_हटाओ_unstuffed(ip, el.el_bh, el.el_ea, el.el_prev, 0);
 
-	brelse(el.el_bh);
+	brअन्यथा(el.el_bh);
 
-	return error;
-}
+	वापस error;
+पूर्ण
 
 /**
- * __gfs2_xattr_set - Set (or remove) a GFS2 extended attribute
+ * __gfs2_xattr_set - Set (or हटाओ) a GFS2 extended attribute
  * @inode: The inode
  * @name: The name of the extended attribute
- * @value: The value of the extended attribute (NULL for remove)
+ * @value: The value of the extended attribute (शून्य क्रम हटाओ)
  * @size: The size of the @value argument
  * @flags: Create or Replace
  * @type: The type of the extended attribute
  *
- * See gfs2_xattr_remove() for details of the removal of xattrs.
+ * See gfs2_xattr_हटाओ() क्रम details of the removal of xattrs.
  *
- * Returns: 0 or errno on failure
+ * Returns: 0 or त्रुटि_सं on failure
  */
 
-int __gfs2_xattr_set(struct inode *inode, const char *name,
-		   const void *value, size_t size, int flags, int type)
-{
-	struct gfs2_inode *ip = GFS2_I(inode);
-	struct gfs2_sbd *sdp = GFS2_SB(inode);
-	struct gfs2_ea_location el;
-	unsigned int namel = strlen(name);
-	int error;
+पूर्णांक __gfs2_xattr_set(काष्ठा inode *inode, स्थिर अक्षर *name,
+		   स्थिर व्योम *value, माप_प्रकार size, पूर्णांक flags, पूर्णांक type)
+अणु
+	काष्ठा gfs2_inode *ip = GFS2_I(inode);
+	काष्ठा gfs2_sbd *sdp = GFS2_SB(inode);
+	काष्ठा gfs2_ea_location el;
+	अचिन्हित पूर्णांक namel = म_माप(name);
+	पूर्णांक error;
 
-	if (IS_IMMUTABLE(inode) || IS_APPEND(inode))
-		return -EPERM;
-	if (namel > GFS2_EA_MAX_NAME_LEN)
-		return -ERANGE;
+	अगर (IS_IMMUTABLE(inode) || IS_APPEND(inode))
+		वापस -EPERM;
+	अगर (namel > GFS2_EA_MAX_NAME_LEN)
+		वापस -दुस्फल;
 
-	if (value == NULL) {
-		error = gfs2_xattr_remove(ip, type, name);
-		if (error == -ENODATA && !(flags & XATTR_REPLACE))
+	अगर (value == शून्य) अणु
+		error = gfs2_xattr_हटाओ(ip, type, name);
+		अगर (error == -ENODATA && !(flags & XATTR_REPLACE))
 			error = 0;
-		return error;
-	}
+		वापस error;
+	पूर्ण
 
-	if (ea_check_size(sdp, namel, size))
-		return -ERANGE;
+	अगर (ea_check_size(sdp, namel, size))
+		वापस -दुस्फल;
 
-	if (!ip->i_eattr) {
-		if (flags & XATTR_REPLACE)
-			return -ENODATA;
-		return ea_init(ip, type, name, value, size);
-	}
+	अगर (!ip->i_eattr) अणु
+		अगर (flags & XATTR_REPLACE)
+			वापस -ENODATA;
+		वापस ea_init(ip, type, name, value, size);
+	पूर्ण
 
 	error = gfs2_ea_find(ip, type, name, &el);
-	if (error)
-		return error;
+	अगर (error)
+		वापस error;
 
-	if (el.el_ea) {
-		if (ip->i_diskflags & GFS2_DIF_APPENDONLY) {
-			brelse(el.el_bh);
-			return -EPERM;
-		}
+	अगर (el.el_ea) अणु
+		अगर (ip->i_diskflags & GFS2_DIF_APPENDONLY) अणु
+			brअन्यथा(el.el_bh);
+			वापस -EPERM;
+		पूर्ण
 
 		error = -EEXIST;
-		if (!(flags & XATTR_CREATE)) {
-			int unstuffed = !GFS2_EA_IS_STUFFED(el.el_ea);
+		अगर (!(flags & XATTR_CREATE)) अणु
+			पूर्णांक unstuffed = !GFS2_EA_IS_STUFFED(el.el_ea);
 			error = ea_set_i(ip, type, name, value, size, &el);
-			if (!error && unstuffed)
-				ea_set_remove_unstuffed(ip, &el);
-		}
+			अगर (!error && unstuffed)
+				ea_set_हटाओ_unstuffed(ip, &el);
+		पूर्ण
 
-		brelse(el.el_bh);
-		return error;
-	}
+		brअन्यथा(el.el_bh);
+		वापस error;
+	पूर्ण
 
 	error = -ENODATA;
-	if (!(flags & XATTR_REPLACE))
-		error = ea_set_i(ip, type, name, value, size, NULL);
+	अगर (!(flags & XATTR_REPLACE))
+		error = ea_set_i(ip, type, name, value, size, शून्य);
 
-	return error;
-}
+	वापस error;
+पूर्ण
 
-static int gfs2_xattr_set(const struct xattr_handler *handler,
-			  struct user_namespace *mnt_userns,
-			  struct dentry *unused, struct inode *inode,
-			  const char *name, const void *value,
-			  size_t size, int flags)
-{
-	struct gfs2_inode *ip = GFS2_I(inode);
-	struct gfs2_holder gh;
-	int ret;
+अटल पूर्णांक gfs2_xattr_set(स्थिर काष्ठा xattr_handler *handler,
+			  काष्ठा user_namespace *mnt_userns,
+			  काष्ठा dentry *unused, काष्ठा inode *inode,
+			  स्थिर अक्षर *name, स्थिर व्योम *value,
+			  माप_प्रकार size, पूर्णांक flags)
+अणु
+	काष्ठा gfs2_inode *ip = GFS2_I(inode);
+	काष्ठा gfs2_holder gh;
+	पूर्णांक ret;
 
 	ret = gfs2_qa_get(ip);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	/* May be called from gfs_setattr with the glock locked. */
 
-	if (!gfs2_glock_is_locked_by_me(ip->i_gl)) {
+	अगर (!gfs2_glock_is_locked_by_me(ip->i_gl)) अणु
 		ret = gfs2_glock_nq_init(ip->i_gl, LM_ST_EXCLUSIVE, 0, &gh);
-		if (ret)
-			goto out;
-	} else {
-		if (WARN_ON_ONCE(ip->i_gl->gl_state != LM_ST_EXCLUSIVE)) {
+		अगर (ret)
+			जाओ out;
+	पूर्ण अन्यथा अणु
+		अगर (WARN_ON_ONCE(ip->i_gl->gl_state != LM_ST_EXCLUSIVE)) अणु
 			ret = -EIO;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 		gfs2_holder_mark_uninitialized(&gh);
-	}
+	पूर्ण
 	ret = __gfs2_xattr_set(inode, name, value, size, flags, handler->flags);
-	if (gfs2_holder_initialized(&gh))
+	अगर (gfs2_holder_initialized(&gh))
 		gfs2_glock_dq_uninit(&gh);
 out:
 	gfs2_qa_put(ip);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int ea_dealloc_indirect(struct gfs2_inode *ip)
-{
-	struct gfs2_sbd *sdp = GFS2_SB(&ip->i_inode);
-	struct gfs2_rgrp_list rlist;
-	struct gfs2_rgrpd *rgd;
-	struct buffer_head *indbh, *dibh;
+अटल पूर्णांक ea_dealloc_indirect(काष्ठा gfs2_inode *ip)
+अणु
+	काष्ठा gfs2_sbd *sdp = GFS2_SB(&ip->i_inode);
+	काष्ठा gfs2_rgrp_list rlist;
+	काष्ठा gfs2_rgrpd *rgd;
+	काष्ठा buffer_head *indbh, *dibh;
 	__be64 *eablk, *end;
-	unsigned int rg_blocks = 0;
+	अचिन्हित पूर्णांक rg_blocks = 0;
 	u64 bstart = 0;
-	unsigned int blen = 0;
-	unsigned int blks = 0;
-	unsigned int x;
-	int error;
+	अचिन्हित पूर्णांक blen = 0;
+	अचिन्हित पूर्णांक blks = 0;
+	अचिन्हित पूर्णांक x;
+	पूर्णांक error;
 
 	error = gfs2_rindex_update(sdp);
-	if (error)
-		return error;
+	अगर (error)
+		वापस error;
 
-	memset(&rlist, 0, sizeof(struct gfs2_rgrp_list));
+	स_रखो(&rlist, 0, माप(काष्ठा gfs2_rgrp_list));
 
-	error = gfs2_meta_read(ip->i_gl, ip->i_eattr, DIO_WAIT, 0, &indbh);
-	if (error)
-		return error;
+	error = gfs2_meta_पढ़ो(ip->i_gl, ip->i_eattr, DIO_WAIT, 0, &indbh);
+	अगर (error)
+		वापस error;
 
-	if (gfs2_metatype_check(sdp, indbh, GFS2_METATYPE_IN)) {
+	अगर (gfs2_metatype_check(sdp, indbh, GFS2_METATYPE_IN)) अणु
 		error = -EIO;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	eablk = (__be64 *)(indbh->b_data + sizeof(struct gfs2_meta_header));
+	eablk = (__be64 *)(indbh->b_data + माप(काष्ठा gfs2_meta_header));
 	end = eablk + sdp->sd_inptrs;
 
-	for (; eablk < end; eablk++) {
+	क्रम (; eablk < end; eablk++) अणु
 		u64 bn;
 
-		if (!*eablk)
-			break;
+		अगर (!*eablk)
+			अवरोध;
 		bn = be64_to_cpu(*eablk);
 
-		if (bstart + blen == bn)
+		अगर (bstart + blen == bn)
 			blen++;
-		else {
-			if (bstart)
+		अन्यथा अणु
+			अगर (bstart)
 				gfs2_rlist_add(ip, &rlist, bstart);
 			bstart = bn;
 			blen = 1;
-		}
+		पूर्ण
 		blks++;
-	}
-	if (bstart)
+	पूर्ण
+	अगर (bstart)
 		gfs2_rlist_add(ip, &rlist, bstart);
-	else
-		goto out;
+	अन्यथा
+		जाओ out;
 
 	gfs2_rlist_alloc(&rlist);
 
-	for (x = 0; x < rlist.rl_rgrps; x++) {
+	क्रम (x = 0; x < rlist.rl_rgrps; x++) अणु
 		rgd = gfs2_glock2rgrp(rlist.rl_ghs[x].gh_gl);
 		rg_blocks += rgd->rd_length;
-	}
+	पूर्ण
 
 	error = gfs2_glock_nq_m(rlist.rl_rgrps, rlist.rl_ghs);
-	if (error)
-		goto out_rlist_free;
+	अगर (error)
+		जाओ out_rlist_मुक्त;
 
-	error = gfs2_trans_begin(sdp, rg_blocks + RES_DINODE + RES_INDIRECT +
+	error = gfs2_trans_begin(sdp, rg_blocks + RES_DINODE + RES_INसूचीECT +
 				 RES_STATFS + RES_QUOTA, blks);
-	if (error)
-		goto out_gunlock;
+	अगर (error)
+		जाओ out_gunlock;
 
 	gfs2_trans_add_meta(ip->i_gl, indbh);
 
-	eablk = (__be64 *)(indbh->b_data + sizeof(struct gfs2_meta_header));
+	eablk = (__be64 *)(indbh->b_data + माप(काष्ठा gfs2_meta_header));
 	bstart = 0;
-	rgd = NULL;
+	rgd = शून्य;
 	blen = 0;
 
-	for (; eablk < end; eablk++) {
+	क्रम (; eablk < end; eablk++) अणु
 		u64 bn;
 
-		if (!*eablk)
-			break;
+		अगर (!*eablk)
+			अवरोध;
 		bn = be64_to_cpu(*eablk);
 
-		if (bstart + blen == bn)
+		अगर (bstart + blen == bn)
 			blen++;
-		else {
-			if (bstart)
-				gfs2_free_meta(ip, rgd, bstart, blen);
+		अन्यथा अणु
+			अगर (bstart)
+				gfs2_मुक्त_meta(ip, rgd, bstart, blen);
 			bstart = bn;
 			rgd = gfs2_blk2rgrpd(sdp, bstart, true);
 			blen = 1;
-		}
+		पूर्ण
 
 		*eablk = 0;
 		gfs2_add_inode_blocks(&ip->i_inode, -1);
-	}
-	if (bstart)
-		gfs2_free_meta(ip, rgd, bstart, blen);
+	पूर्ण
+	अगर (bstart)
+		gfs2_मुक्त_meta(ip, rgd, bstart, blen);
 
-	ip->i_diskflags &= ~GFS2_DIF_EA_INDIRECT;
+	ip->i_diskflags &= ~GFS2_DIF_EA_INसूचीECT;
 
 	error = gfs2_meta_inode_buffer(ip, &dibh);
-	if (!error) {
+	अगर (!error) अणु
 		gfs2_trans_add_meta(ip->i_gl, dibh);
 		gfs2_dinode_out(ip, dibh->b_data);
-		brelse(dibh);
-	}
+		brअन्यथा(dibh);
+	पूर्ण
 
 	gfs2_trans_end(sdp);
 
 out_gunlock:
 	gfs2_glock_dq_m(rlist.rl_rgrps, rlist.rl_ghs);
-out_rlist_free:
-	gfs2_rlist_free(&rlist);
+out_rlist_मुक्त:
+	gfs2_rlist_मुक्त(&rlist);
 out:
-	brelse(indbh);
-	return error;
-}
+	brअन्यथा(indbh);
+	वापस error;
+पूर्ण
 
-static int ea_dealloc_block(struct gfs2_inode *ip)
-{
-	struct gfs2_sbd *sdp = GFS2_SB(&ip->i_inode);
-	struct gfs2_rgrpd *rgd;
-	struct buffer_head *dibh;
-	struct gfs2_holder gh;
-	int error;
+अटल पूर्णांक ea_dealloc_block(काष्ठा gfs2_inode *ip)
+अणु
+	काष्ठा gfs2_sbd *sdp = GFS2_SB(&ip->i_inode);
+	काष्ठा gfs2_rgrpd *rgd;
+	काष्ठा buffer_head *dibh;
+	काष्ठा gfs2_holder gh;
+	पूर्णांक error;
 
 	error = gfs2_rindex_update(sdp);
-	if (error)
-		return error;
+	अगर (error)
+		वापस error;
 
 	rgd = gfs2_blk2rgrpd(sdp, ip->i_eattr, 1);
-	if (!rgd) {
+	अगर (!rgd) अणु
 		gfs2_consist_inode(ip);
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
 	error = gfs2_glock_nq_init(rgd->rd_gl, LM_ST_EXCLUSIVE,
 				   LM_FLAG_NODE_SCOPE, &gh);
-	if (error)
-		return error;
+	अगर (error)
+		वापस error;
 
 	error = gfs2_trans_begin(sdp, RES_RG_BIT + RES_DINODE + RES_STATFS +
 				 RES_QUOTA, 1);
-	if (error)
-		goto out_gunlock;
+	अगर (error)
+		जाओ out_gunlock;
 
-	gfs2_free_meta(ip, rgd, ip->i_eattr, 1);
+	gfs2_मुक्त_meta(ip, rgd, ip->i_eattr, 1);
 
 	ip->i_eattr = 0;
 	gfs2_add_inode_blocks(&ip->i_inode, -1);
 
 	error = gfs2_meta_inode_buffer(ip, &dibh);
-	if (!error) {
+	अगर (!error) अणु
 		gfs2_trans_add_meta(ip->i_gl, dibh);
 		gfs2_dinode_out(ip, dibh->b_data);
-		brelse(dibh);
-	}
+		brअन्यथा(dibh);
+	पूर्ण
 
 	gfs2_trans_end(sdp);
 
 out_gunlock:
 	gfs2_glock_dq_uninit(&gh);
-	return error;
-}
+	वापस error;
+पूर्ण
 
 /**
- * gfs2_ea_dealloc - deallocate the extended attribute fork
+ * gfs2_ea_dealloc - deallocate the extended attribute विभाजन
  * @ip: the inode
  *
- * Returns: errno
+ * Returns: त्रुटि_सं
  */
 
-int gfs2_ea_dealloc(struct gfs2_inode *ip)
-{
-	int error;
+पूर्णांक gfs2_ea_dealloc(काष्ठा gfs2_inode *ip)
+अणु
+	पूर्णांक error;
 
 	error = gfs2_rindex_update(GFS2_SB(&ip->i_inode));
-	if (error)
-		return error;
+	अगर (error)
+		वापस error;
 
 	error = gfs2_quota_hold(ip, NO_UID_QUOTA_CHANGE, NO_GID_QUOTA_CHANGE);
-	if (error)
-		return error;
+	अगर (error)
+		वापस error;
 
-	error = ea_foreach(ip, ea_dealloc_unstuffed, NULL);
-	if (error)
-		goto out_quota;
+	error = ea_क्रमeach(ip, ea_dealloc_unstuffed, शून्य);
+	अगर (error)
+		जाओ out_quota;
 
-	if (ip->i_diskflags & GFS2_DIF_EA_INDIRECT) {
+	अगर (ip->i_diskflags & GFS2_DIF_EA_INसूचीECT) अणु
 		error = ea_dealloc_indirect(ip);
-		if (error)
-			goto out_quota;
-	}
+		अगर (error)
+			जाओ out_quota;
+	पूर्ण
 
 	error = ea_dealloc_block(ip);
 
 out_quota:
 	gfs2_quota_unhold(ip);
-	return error;
-}
+	वापस error;
+पूर्ण
 
-static const struct xattr_handler gfs2_xattr_user_handler = {
+अटल स्थिर काष्ठा xattr_handler gfs2_xattr_user_handler = अणु
 	.prefix = XATTR_USER_PREFIX,
 	.flags  = GFS2_EATYPE_USR,
 	.get    = gfs2_xattr_get,
 	.set    = gfs2_xattr_set,
-};
+पूर्ण;
 
-static const struct xattr_handler gfs2_xattr_security_handler = {
+अटल स्थिर काष्ठा xattr_handler gfs2_xattr_security_handler = अणु
 	.prefix = XATTR_SECURITY_PREFIX,
 	.flags  = GFS2_EATYPE_SECURITY,
 	.get    = gfs2_xattr_get,
 	.set    = gfs2_xattr_set,
-};
+पूर्ण;
 
-static bool
-gfs2_xattr_trusted_list(struct dentry *dentry)
-{
-	return capable(CAP_SYS_ADMIN);
-}
+अटल bool
+gfs2_xattr_trusted_list(काष्ठा dentry *dentry)
+अणु
+	वापस capable(CAP_SYS_ADMIN);
+पूर्ण
 
-static const struct xattr_handler gfs2_xattr_trusted_handler = {
+अटल स्थिर काष्ठा xattr_handler gfs2_xattr_trusted_handler = अणु
 	.prefix = XATTR_TRUSTED_PREFIX,
 	.flags  = GFS2_EATYPE_TRUSTED,
 	.list	= gfs2_xattr_trusted_list,
 	.get    = gfs2_xattr_get,
 	.set    = gfs2_xattr_set,
-};
+पूर्ण;
 
-const struct xattr_handler *gfs2_xattr_handlers_max[] = {
+स्थिर काष्ठा xattr_handler *gfs2_xattr_handlers_max[] = अणु
 	/* GFS2_FS_FORMAT_MAX */
 	&gfs2_xattr_trusted_handler,
 
@@ -1498,8 +1499,8 @@ const struct xattr_handler *gfs2_xattr_handlers_max[] = {
 	&gfs2_xattr_user_handler,
 	&gfs2_xattr_security_handler,
 	&posix_acl_access_xattr_handler,
-	&posix_acl_default_xattr_handler,
-	NULL,
-};
+	&posix_acl_शेष_xattr_handler,
+	शून्य,
+पूर्ण;
 
-const struct xattr_handler **gfs2_xattr_handlers_min = gfs2_xattr_handlers_max + 1;
+स्थिर काष्ठा xattr_handler **gfs2_xattr_handlers_min = gfs2_xattr_handlers_max + 1;

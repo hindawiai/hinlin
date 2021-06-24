@@ -1,42 +1,43 @@
-/* SPDX-License-Identifier: MIT */
-#ifndef __NOUVEAU_DEBUGFS_H__
-#define __NOUVEAU_DEBUGFS_H__
+<शैली गुरु>
+/* SPDX-License-Identअगरier: MIT */
+#अगर_अघोषित __NOUVEAU_DEBUGFS_H__
+#घोषणा __NOUVEAU_DEBUGFS_H__
 
-#include <drm/drm_debugfs.h>
+#समावेश <drm/drm_debugfs.h>
 
-#if defined(CONFIG_DEBUG_FS)
+#अगर defined(CONFIG_DEBUG_FS)
 
-#include "nouveau_drv.h"
+#समावेश "nouveau_drv.h"
 
-struct nouveau_debugfs {
-	struct nvif_object ctrl;
-};
+काष्ठा nouveau_debugfs अणु
+	काष्ठा nvअगर_object ctrl;
+पूर्ण;
 
-static inline struct nouveau_debugfs *
-nouveau_debugfs(struct drm_device *dev)
-{
-	return nouveau_drm(dev)->debugfs;
-}
+अटल अंतरभूत काष्ठा nouveau_debugfs *
+nouveau_debugfs(काष्ठा drm_device *dev)
+अणु
+	वापस nouveau_drm(dev)->debugfs;
+पूर्ण
 
-extern void  nouveau_drm_debugfs_init(struct drm_minor *);
-extern int  nouveau_debugfs_init(struct nouveau_drm *);
-extern void nouveau_debugfs_fini(struct nouveau_drm *);
-#else
-static inline void
-nouveau_drm_debugfs_init(struct drm_minor *minor)
-{}
+बाह्य व्योम  nouveau_drm_debugfs_init(काष्ठा drm_minor *);
+बाह्य पूर्णांक  nouveau_debugfs_init(काष्ठा nouveau_drm *);
+बाह्य व्योम nouveau_debugfs_fini(काष्ठा nouveau_drm *);
+#अन्यथा
+अटल अंतरभूत व्योम
+nouveau_drm_debugfs_init(काष्ठा drm_minor *minor)
+अणुपूर्ण
 
-static inline int
-nouveau_debugfs_init(struct nouveau_drm *drm)
-{
-	return 0;
-}
+अटल अंतरभूत पूर्णांक
+nouveau_debugfs_init(काष्ठा nouveau_drm *drm)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline void
-nouveau_debugfs_fini(struct nouveau_drm *drm)
-{
-}
+अटल अंतरभूत व्योम
+nouveau_debugfs_fini(काष्ठा nouveau_drm *drm)
+अणु
+पूर्ण
 
-#endif
+#पूर्ण_अगर
 
-#endif
+#पूर्ण_अगर

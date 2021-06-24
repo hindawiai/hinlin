@@ -1,17 +1,18 @@
-/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
 /*
-** asm/setup.h -- Definition of the Linux/m68k setup information
+** यंत्र/setup.h -- Definition of the Linux/m68k setup inक्रमmation
 **
 ** Copyright 1992 by Greg Harp
 **
 ** This file is subject to the terms and conditions of the GNU General Public
-** License.  See the file COPYING in the main directory of this archive
-** for more details.
+** License.  See the file COPYING in the मुख्य directory of this archive
+** क्रम more details.
 */
 
-#ifndef _UAPI_M68K_SETUP_H
-#define _UAPI_M68K_SETUP_H
+#अगर_अघोषित _UAPI_M68K_SETUP_H
+#घोषणा _UAPI_M68K_SETUP_H
 
-#define COMMAND_LINE_SIZE 256
+#घोषणा COMMAND_LINE_SIZE 256
 
-#endif /* _UAPI_M68K_SETUP_H */
+#पूर्ण_अगर /* _UAPI_M68K_SETUP_H */

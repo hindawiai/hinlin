@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * Hardware definitions for Palm LifeDrive
+ * Hardware definitions क्रम Palm LअगरeDrive
  *
  * Author:     Marek Vasut <marek.vasut@gmail.com>
  *
@@ -10,41 +11,41 @@
  * (find more info at www.hackndev.com)
  */
 
-#include <linux/platform_device.h>
-#include <linux/delay.h>
-#include <linux/irq.h>
-#include <linux/gpio_keys.h>
-#include <linux/input.h>
-#include <linux/pda_power.h>
-#include <linux/pwm_backlight.h>
-#include <linux/gpio.h>
-#include <linux/wm97xx.h>
-#include <linux/power_supply.h>
-#include <linux/mtd/mtd.h>
-#include <linux/mtd/partitions.h>
-#include <linux/mtd/physmap.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/irq.h>
+#समावेश <linux/gpio_keys.h>
+#समावेश <linux/input.h>
+#समावेश <linux/pda_घातer.h>
+#समावेश <linux/pwm_backlight.h>
+#समावेश <linux/gpपन.स>
+#समावेश <linux/wm97xx.h>
+#समावेश <linux/घातer_supply.h>
+#समावेश <linux/mtd/mtd.h>
+#समावेश <linux/mtd/partitions.h>
+#समावेश <linux/mtd/physmap.h>
 
-#include <asm/mach-types.h>
-#include <asm/mach/arch.h>
-#include <asm/mach/map.h>
+#समावेश <यंत्र/mach-types.h>
+#समावेश <यंत्र/mach/arch.h>
+#समावेश <यंत्र/mach/map.h>
 
-#include "pxa27x.h"
-#include <mach/audio.h>
-#include <mach/palmld.h>
-#include <linux/platform_data/mmc-pxamci.h>
-#include <linux/platform_data/video-pxafb.h>
-#include <linux/platform_data/irda-pxaficp.h>
-#include <linux/platform_data/keypad-pxa27x.h>
-#include <linux/platform_data/asoc-palm27x.h>
-#include "palm27x.h"
+#समावेश "pxa27x.h"
+#समावेश <mach/audपन.स>
+#समावेश <mach/palmld.h>
+#समावेश <linux/platक्रमm_data/mmc-pxamci.h>
+#समावेश <linux/platक्रमm_data/video-pxafb.h>
+#समावेश <linux/platक्रमm_data/irda-pxaficp.h>
+#समावेश <linux/platक्रमm_data/keypad-pxa27x.h>
+#समावेश <linux/platक्रमm_data/asoc-palm27x.h>
+#समावेश "palm27x.h"
 
-#include "generic.h"
-#include "devices.h"
+#समावेश "generic.h"
+#समावेश "devices.h"
 
 /******************************************************************************
  * Pin configuration
  ******************************************************************************/
-static unsigned long palmld_pin_config[] __initdata = {
+अटल अचिन्हित दीर्घ palmld_pin_config[] __initdata = अणु
 	/* MMC */
 	GPIO32_MMC_CLK,
 	GPIO92_MMC_DAT_0,
@@ -53,8 +54,8 @@ static unsigned long palmld_pin_config[] __initdata = {
 	GPIO111_MMC_DAT_3,
 	GPIO112_MMC_CMD,
 	GPIO14_GPIO,	/* SD detect */
-	GPIO114_GPIO,	/* SD power */
-	GPIO116_GPIO,	/* SD r/o switch */
+	GPIO114_GPIO,	/* SD घातer */
+	GPIO116_GPIO,	/* SD r/o चयन */
 
 	/* AC97 */
 	GPIO28_AC97_BITCLK,
@@ -86,8 +87,8 @@ static unsigned long palmld_pin_config[] __initdata = {
 
 	/* GPIO KEYS */
 	GPIO10_GPIO,	/* hotsync button */
-	GPIO12_GPIO,	/* power switch */
-	GPIO15_GPIO,	/* lock switch */
+	GPIO12_GPIO,	/* घातer चयन */
+	GPIO15_GPIO,	/* lock चयन */
 
 	/* LEDs */
 	GPIO52_GPIO,	/* green led */
@@ -104,9 +105,9 @@ static unsigned long palmld_pin_config[] __initdata = {
 	GPIO55_nPREG,
 	GPIO56_nPWAIT,
 	GPIO57_nIOIS16,
-	GPIO36_GPIO,	/* wifi power */
-	GPIO38_GPIO,	/* wifi ready */
-	GPIO81_GPIO,	/* wifi reset */
+	GPIO36_GPIO,	/* wअगरi घातer */
+	GPIO38_GPIO,	/* wअगरi पढ़ोy */
+	GPIO81_GPIO,	/* wअगरi reset */
 
 	/* FFUART */
 	GPIO34_FFUART_RXD,
@@ -114,62 +115,62 @@ static unsigned long palmld_pin_config[] __initdata = {
 
 	/* HDD */
 	GPIO98_GPIO,	/* HDD reset */
-	GPIO115_GPIO,	/* HDD power */
+	GPIO115_GPIO,	/* HDD घातer */
 
 	/* MISC */
 	GPIO13_GPIO,	/* earphone detect */
-};
+पूर्ण;
 
 /******************************************************************************
  * NOR Flash
  ******************************************************************************/
-#if defined(CONFIG_MTD_PHYSMAP) || defined(CONFIG_MTD_PHYSMAP_MODULE)
-static struct mtd_partition palmld_partitions[] = {
-	{
+#अगर defined(CONFIG_MTD_PHYSMAP) || defined(CONFIG_MTD_PHYSMAP_MODULE)
+अटल काष्ठा mtd_partition palmld_partitions[] = अणु
+	अणु
 		.name		= "Flash",
 		.offset		= 0x00000000,
 		.size		= MTDPART_SIZ_FULL,
 		.mask_flags	= 0
-	}
-};
+	पूर्ण
+पूर्ण;
 
-static struct physmap_flash_data palmld_flash_data[] = {
-	{
+अटल काष्ठा physmap_flash_data palmld_flash_data[] = अणु
+	अणु
 		.width		= 2,			/* bankwidth in bytes */
 		.parts		= palmld_partitions,
 		.nr_parts	= ARRAY_SIZE(palmld_partitions)
-	}
-};
+	पूर्ण
+पूर्ण;
 
-static struct resource palmld_flash_resource = {
+अटल काष्ठा resource palmld_flash_resource = अणु
 	.start	= PXA_CS0_PHYS,
 	.end	= PXA_CS0_PHYS + SZ_4M - 1,
 	.flags	= IORESOURCE_MEM,
-};
+पूर्ण;
 
-static struct platform_device palmld_flash = {
+अटल काष्ठा platक्रमm_device palmld_flash = अणु
 	.name		= "physmap-flash",
 	.id		= 0,
 	.resource	= &palmld_flash_resource,
 	.num_resources	= 1,
-	.dev 		= {
-		.platform_data = palmld_flash_data,
-	},
-};
+	.dev 		= अणु
+		.platक्रमm_data = palmld_flash_data,
+	पूर्ण,
+पूर्ण;
 
-static void __init palmld_nor_init(void)
-{
-	platform_device_register(&palmld_flash);
-}
-#else
-static inline void palmld_nor_init(void) {}
-#endif
+अटल व्योम __init palmld_nor_init(व्योम)
+अणु
+	platक्रमm_device_रेजिस्टर(&palmld_flash);
+पूर्ण
+#अन्यथा
+अटल अंतरभूत व्योम palmld_nor_init(व्योम) अणुपूर्ण
+#पूर्ण_अगर
 
 /******************************************************************************
  * GPIO keyboard
  ******************************************************************************/
-#if defined(CONFIG_KEYBOARD_PXA27x) || defined(CONFIG_KEYBOARD_PXA27x_MODULE)
-static const unsigned int palmld_matrix_keys[] = {
+#अगर defined(CONFIG_KEYBOARD_PXA27x) || defined(CONFIG_KEYBOARD_PXA27x_MODULE)
+अटल स्थिर अचिन्हित पूर्णांक palmld_matrix_keys[] = अणु
 	KEY(0, 1, KEY_F2),
 	KEY(0, 2, KEY_UP),
 
@@ -184,169 +185,169 @@ static const unsigned int palmld_matrix_keys[] = {
 	KEY(3, 0, KEY_F6),
 	KEY(3, 1, KEY_ENTER),
 	KEY(3, 2, KEY_LEFT),
-};
+पूर्ण;
 
-static struct matrix_keymap_data palmld_matrix_keymap_data = {
+अटल काष्ठा matrix_keymap_data palmld_matrix_keymap_data = अणु
 	.keymap			= palmld_matrix_keys,
 	.keymap_size		= ARRAY_SIZE(palmld_matrix_keys),
-};
+पूर्ण;
 
-static struct pxa27x_keypad_platform_data palmld_keypad_platform_data = {
+अटल काष्ठा pxa27x_keypad_platक्रमm_data palmld_keypad_platक्रमm_data = अणु
 	.matrix_key_rows	= 4,
 	.matrix_key_cols	= 3,
 	.matrix_keymap_data	= &palmld_matrix_keymap_data,
 
-	.debounce_interval	= 30,
-};
+	.debounce_पूर्णांकerval	= 30,
+पूर्ण;
 
-static void __init palmld_kpc_init(void)
-{
-	pxa_set_keypad_info(&palmld_keypad_platform_data);
-}
-#else
-static inline void palmld_kpc_init(void) {}
-#endif
+अटल व्योम __init palmld_kpc_init(व्योम)
+अणु
+	pxa_set_keypad_info(&palmld_keypad_platक्रमm_data);
+पूर्ण
+#अन्यथा
+अटल अंतरभूत व्योम palmld_kpc_init(व्योम) अणुपूर्ण
+#पूर्ण_अगर
 
 /******************************************************************************
  * GPIO keys
  ******************************************************************************/
-#if defined(CONFIG_KEYBOARD_GPIO) || defined(CONFIG_KEYBOARD_GPIO_MODULE)
-static struct gpio_keys_button palmld_pxa_buttons[] = {
-	{KEY_F8, GPIO_NR_PALMLD_HOTSYNC_BUTTON_N, 1, "HotSync Button" },
-	{KEY_F9, GPIO_NR_PALMLD_LOCK_SWITCH, 0, "Lock Switch" },
-	{KEY_POWER, GPIO_NR_PALMLD_POWER_SWITCH, 0, "Power Switch" },
-};
+#अगर defined(CONFIG_KEYBOARD_GPIO) || defined(CONFIG_KEYBOARD_GPIO_MODULE)
+अटल काष्ठा gpio_keys_button palmld_pxa_buttons[] = अणु
+	अणुKEY_F8, GPIO_NR_PALMLD_HOTSYNC_BUTTON_N, 1, "HotSync Button" पूर्ण,
+	अणुKEY_F9, GPIO_NR_PALMLD_LOCK_SWITCH, 0, "Lock Switch" पूर्ण,
+	अणुKEY_POWER, GPIO_NR_PALMLD_POWER_SWITCH, 0, "Power Switch" पूर्ण,
+पूर्ण;
 
-static struct gpio_keys_platform_data palmld_pxa_keys_data = {
+अटल काष्ठा gpio_keys_platक्रमm_data palmld_pxa_keys_data = अणु
 	.buttons	= palmld_pxa_buttons,
 	.nbuttons	= ARRAY_SIZE(palmld_pxa_buttons),
-};
+पूर्ण;
 
-static struct platform_device palmld_pxa_keys = {
+अटल काष्ठा platक्रमm_device palmld_pxa_keys = अणु
 	.name	= "gpio-keys",
 	.id	= -1,
-	.dev	= {
-		.platform_data = &palmld_pxa_keys_data,
-	},
-};
+	.dev	= अणु
+		.platक्रमm_data = &palmld_pxa_keys_data,
+	पूर्ण,
+पूर्ण;
 
-static void __init palmld_keys_init(void)
-{
-	platform_device_register(&palmld_pxa_keys);
-}
-#else
-static inline void palmld_keys_init(void) {}
-#endif
+अटल व्योम __init palmld_keys_init(व्योम)
+अणु
+	platक्रमm_device_रेजिस्टर(&palmld_pxa_keys);
+पूर्ण
+#अन्यथा
+अटल अंतरभूत व्योम palmld_keys_init(व्योम) अणुपूर्ण
+#पूर्ण_अगर
 
 /******************************************************************************
  * LEDs
  ******************************************************************************/
-#if defined(CONFIG_LEDS_GPIO) || defined(CONFIG_LEDS_GPIO_MODULE)
-struct gpio_led gpio_leds[] = {
-{
+#अगर defined(CONFIG_LEDS_GPIO) || defined(CONFIG_LEDS_GPIO_MODULE)
+काष्ठा gpio_led gpio_leds[] = अणु
+अणु
 	.name			= "palmld:green:led",
-	.default_trigger	= "none",
+	.शेष_trigger	= "none",
 	.gpio			= GPIO_NR_PALMLD_LED_GREEN,
-}, {
+पूर्ण, अणु
 	.name			= "palmld:amber:led",
-	.default_trigger	= "none",
+	.शेष_trigger	= "none",
 	.gpio			= GPIO_NR_PALMLD_LED_AMBER,
-},
-};
+पूर्ण,
+पूर्ण;
 
-static struct gpio_led_platform_data gpio_led_info = {
+अटल काष्ठा gpio_led_platक्रमm_data gpio_led_info = अणु
 	.leds		= gpio_leds,
 	.num_leds	= ARRAY_SIZE(gpio_leds),
-};
+पूर्ण;
 
-static struct platform_device palmld_leds = {
+अटल काष्ठा platक्रमm_device palmld_leds = अणु
 	.name	= "leds-gpio",
 	.id	= -1,
-	.dev	= {
-		.platform_data	= &gpio_led_info,
-	}
-};
+	.dev	= अणु
+		.platक्रमm_data	= &gpio_led_info,
+	पूर्ण
+पूर्ण;
 
-static void __init palmld_leds_init(void)
-{
-	platform_device_register(&palmld_leds);
-}
-#else
-static inline void palmld_leds_init(void) {}
-#endif
+अटल व्योम __init palmld_leds_init(व्योम)
+अणु
+	platक्रमm_device_रेजिस्टर(&palmld_leds);
+पूर्ण
+#अन्यथा
+अटल अंतरभूत व्योम palmld_leds_init(व्योम) अणुपूर्ण
+#पूर्ण_अगर
 
 /******************************************************************************
  * HDD
  ******************************************************************************/
-#if defined(CONFIG_PATA_PALMLD) || defined(CONFIG_PATA_PALMLD_MODULE)
-static struct platform_device palmld_ide_device = {
+#अगर defined(CONFIG_PATA_PALMLD) || defined(CONFIG_PATA_PALMLD_MODULE)
+अटल काष्ठा platक्रमm_device palmld_ide_device = अणु
 	.name	= "pata_palmld",
 	.id	= -1,
-};
+पूर्ण;
 
-static struct gpiod_lookup_table palmld_ide_gpio_table = {
+अटल काष्ठा gpiod_lookup_table palmld_ide_gpio_table = अणु
 	.dev_id = "pata_palmld",
-	.table = {
+	.table = अणु
 		GPIO_LOOKUP("gpio-pxa", GPIO_NR_PALMLD_IDE_PWEN,
 			    "power", GPIO_ACTIVE_HIGH),
 		GPIO_LOOKUP("gpio-pxa", GPIO_NR_PALMLD_IDE_RESET,
 			    "reset", GPIO_ACTIVE_LOW),
-		{ },
-	},
-};
+		अणु पूर्ण,
+	पूर्ण,
+पूर्ण;
 
-static void __init palmld_ide_init(void)
-{
+अटल व्योम __init palmld_ide_init(व्योम)
+अणु
 	gpiod_add_lookup_table(&palmld_ide_gpio_table);
-	platform_device_register(&palmld_ide_device);
-}
-#else
-static inline void palmld_ide_init(void) {}
-#endif
+	platक्रमm_device_रेजिस्टर(&palmld_ide_device);
+पूर्ण
+#अन्यथा
+अटल अंतरभूत व्योम palmld_ide_init(व्योम) अणुपूर्ण
+#पूर्ण_अगर
 
 /******************************************************************************
  * Machine init
  ******************************************************************************/
-static struct map_desc palmld_io_desc[] __initdata = {
-{
-	.virtual	= PALMLD_IDE_VIRT,
+अटल काष्ठा map_desc palmld_io_desc[] __initdata = अणु
+अणु
+	.भव	= PALMLD_IDE_VIRT,
 	.pfn		= __phys_to_pfn(PALMLD_IDE_PHYS),
 	.length		= PALMLD_IDE_SIZE,
 	.type		= MT_DEVICE
-},
-{
-	.virtual	= PALMLD_USB_VIRT,
+पूर्ण,
+अणु
+	.भव	= PALMLD_USB_VIRT,
 	.pfn		= __phys_to_pfn(PALMLD_USB_PHYS),
 	.length		= PALMLD_USB_SIZE,
 	.type		= MT_DEVICE
-},
-};
+पूर्ण,
+पूर्ण;
 
-static void __init palmld_map_io(void)
-{
+अटल व्योम __init palmld_map_io(व्योम)
+अणु
 	pxa27x_map_io();
 	iotable_init(palmld_io_desc, ARRAY_SIZE(palmld_io_desc));
-}
+पूर्ण
 
-static struct gpiod_lookup_table palmld_mci_gpio_table = {
+अटल काष्ठा gpiod_lookup_table palmld_mci_gpio_table = अणु
 	.dev_id = "pxa2xx-mci.0",
-	.table = {
+	.table = अणु
 		GPIO_LOOKUP("gpio-pxa", GPIO_NR_PALMLD_SD_DETECT_N,
 			    "cd", GPIO_ACTIVE_LOW),
 		GPIO_LOOKUP("gpio-pxa", GPIO_NR_PALMLD_SD_READONLY,
 			    "wp", GPIO_ACTIVE_LOW),
 		GPIO_LOOKUP("gpio-pxa", GPIO_NR_PALMLD_SD_POWER,
 			    "power", GPIO_ACTIVE_HIGH),
-		{ },
-	},
-};
+		अणु पूर्ण,
+	पूर्ण,
+पूर्ण;
 
-static void __init palmld_init(void)
-{
+अटल व्योम __init palmld_init(व्योम)
+अणु
 	pxa2xx_mfp_config(ARRAY_AND_SIZE(palmld_pin_config));
-	pxa_set_ffuart_info(NULL);
-	pxa_set_btuart_info(NULL);
-	pxa_set_stuart_info(NULL);
+	pxa_set_ffuart_info(शून्य);
+	pxa_set_btuart_info(शून्य);
+	pxa_set_stuart_info(शून्य);
 
 	palm27x_mmc_init(&palmld_mci_gpio_table);
 	palm27x_pm_init(PALMLD_STR_BASE);
@@ -355,7 +356,7 @@ static void __init palmld_init(void)
 	palm27x_ac97_init(PALMLD_BAT_MIN_VOLTAGE, PALMLD_BAT_MAX_VOLTAGE,
 			GPIO_NR_PALMLD_EARPHONE_DETECT, 95);
 	palm27x_pwm_init(GPIO_NR_PALMLD_BL_POWER, GPIO_NR_PALMLD_LCD_POWER);
-	palm27x_power_init(GPIO_NR_PALMLD_POWER_DETECT,
+	palm27x_घातer_init(GPIO_NR_PALMLD_POWER_DETECT,
 			GPIO_NR_PALMLD_USB_DETECT_N);
 	palm27x_pmic_init();
 	palmld_kpc_init();
@@ -363,7 +364,7 @@ static void __init palmld_init(void)
 	palmld_nor_init();
 	palmld_leds_init();
 	palmld_ide_init();
-}
+पूर्ण
 
 MACHINE_START(PALMLD, "Palm LifeDrive")
 	.atag_offset	= 0x100,
@@ -371,7 +372,7 @@ MACHINE_START(PALMLD, "Palm LifeDrive")
 	.nr_irqs	= PXA_NR_IRQS,
 	.init_irq	= pxa27x_init_irq,
 	.handle_irq	= pxa27x_handle_irq,
-	.init_time	= pxa_timer_init,
+	.init_समय	= pxa_समयr_init,
 	.init_machine	= palmld_init,
 	.restart	= pxa_restart,
 MACHINE_END

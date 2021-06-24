@@ -1,5 +1,6 @@
-#include "core_reloc_types.h"
+<शैली गुरु>
+#समावेश "core_reloc_types.h"
 
-void f1(struct core_reloc_misc___a x) {}
-void f2(struct core_reloc_misc___b x) {}
-void f3(struct core_reloc_misc_extensible x) {}
+व्योम f1(काष्ठा core_reloc_misc___a x) अणुपूर्ण
+व्योम f2(काष्ठा core_reloc_misc___b x) अणुपूर्ण
+व्योम f3(काष्ठा core_reloc_misc_extensible x) अणुपूर्ण

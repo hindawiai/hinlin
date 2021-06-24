@@ -1,47 +1,48 @@
-#ifndef __NV50_KMS_ATOM_H__
-#define __NV50_KMS_ATOM_H__
-#define nv50_atom(p) container_of((p), struct nv50_atom, state)
-#include <drm/drm_atomic.h>
-#include "crc.h"
+<शैली गुरु>
+#अगर_अघोषित __NV50_KMS_ATOM_H__
+#घोषणा __NV50_KMS_ATOM_H__
+#घोषणा nv50_atom(p) container_of((p), काष्ठा nv50_atom, state)
+#समावेश <drm/drm_atomic.h>
+#समावेश "crc.h"
 
-struct nouveau_encoder;
+काष्ठा nouveau_encoder;
 
-struct nv50_atom {
-	struct drm_atomic_state state;
+काष्ठा nv50_atom अणु
+	काष्ठा drm_atomic_state state;
 
-	struct list_head outp;
+	काष्ठा list_head outp;
 	bool lock_core;
 	bool flush_disable;
-};
+पूर्ण;
 
-#define nv50_head_atom(p) container_of((p), struct nv50_head_atom, state)
+#घोषणा nv50_head_atom(p) container_of((p), काष्ठा nv50_head_atom, state)
 
-struct nv50_head_atom {
-	struct drm_crtc_state state;
+काष्ठा nv50_head_atom अणु
+	काष्ठा drm_crtc_state state;
 
-	struct {
+	काष्ठा अणु
 		u32 mask;
 		u32 owned;
 		u32 olut;
-	} wndw;
+	पूर्ण wndw;
 
-	struct {
+	काष्ठा अणु
 		u16 iW;
 		u16 iH;
 		u16 oW;
 		u16 oH;
-	} view;
+	पूर्ण view;
 
-	struct nv50_head_mode {
-		bool interlace;
-		u32 clock;
-		struct {
+	काष्ठा nv50_head_mode अणु
+		bool पूर्णांकerlace;
+		u32 घड़ी;
+		काष्ठा अणु
 			u16 active;
 			u16 synce;
 			u16 blanke;
 			u16 blanks;
-		} h;
-		struct {
+		पूर्ण h;
+		काष्ठा अणु
 			u32 active;
 			u16 synce;
 			u16 blanke;
@@ -49,10 +50,10 @@ struct nv50_head_atom {
 			u16 blank2s;
 			u16 blank2e;
 			u16 blankus;
-		} v;
-	} mode;
+		पूर्ण v;
+	पूर्ण mode;
 
-	struct {
+	काष्ठा अणु
 		bool visible;
 		u32 handle;
 		u64 offset:40;
@@ -61,14 +62,14 @@ struct nv50_head_atom {
 		u16 size:11;
 		u8 range:2;
 		u8 output_mode:2;
-		void (*load)(struct drm_color_lut *, int size, void __iomem *);
-	} olut;
+		व्योम (*load)(काष्ठा drm_color_lut *, पूर्णांक size, व्योम __iomem *);
+	पूर्ण olut;
 
-	struct {
+	काष्ठा अणु
 		bool visible;
 		u32 handle;
 		u64 offset:40;
-		u8  format;
+		u8  क्रमmat;
 		u8  kind:7;
 		u8  layout:1;
 		u8  blockh:4;
@@ -78,60 +79,60 @@ struct nv50_head_atom {
 		u16 y;
 		u16 w;
 		u16 h;
-	} core;
+	पूर्ण core;
 
-	struct {
+	काष्ठा अणु
 		bool visible;
 		u32 handle;
 		u64 offset:40;
 		u8  layout:2;
-		u8  format:8;
-	} curs;
+		u8  क्रमmat:8;
+	पूर्ण curs;
 
-	struct {
+	काष्ठा अणु
 		u8  depth;
 		u8  cpp;
 		u16 x;
 		u16 y;
 		u16 w;
 		u16 h;
-	} base;
+	पूर्ण base;
 
-	struct {
+	काष्ठा अणु
 		u8 cpp;
-	} ovly;
+	पूर्ण ovly;
 
-	struct {
+	काष्ठा अणु
 		bool enable:1;
 		u8 bits:2;
 		u8 mode:4;
-	} dither;
+	पूर्ण dither;
 
-	struct {
-		struct {
+	काष्ठा अणु
+		काष्ठा अणु
 			u16 cos:12;
 			u16 sin:12;
-		} sat;
-	} procamp;
+		पूर्ण sat;
+	पूर्ण procamp;
 
-	struct {
+	काष्ठा अणु
 		u8 nhsync:1;
 		u8 nvsync:1;
 		u8 depth:4;
 		u8 crc_raster:2;
 		u8 bpc;
-	} or;
+	पूर्ण or;
 
-	struct nv50_crc_atom crc;
+	काष्ठा nv50_crc_atom crc;
 
-	/* Currently only used for MST */
-	struct {
-		int pbn;
+	/* Currently only used क्रम MST */
+	काष्ठा अणु
+		पूर्णांक pbn;
 		u8 tu:6;
-	} dp;
+	पूर्ण dp;
 
-	union nv50_head_atom_mask {
-		struct {
+	जोड़ nv50_head_atom_mask अणु
+		काष्ठा अणु
 			bool olut:1;
 			bool core:1;
 			bool curs:1;
@@ -143,57 +144,57 @@ struct nv50_head_atom {
 			bool procamp:1;
 			bool crc:1;
 			bool or:1;
-		};
+		पूर्ण;
 		u16 mask;
-	} set, clr;
-};
+	पूर्ण set, clr;
+पूर्ण;
 
-static inline struct nv50_head_atom *
-nv50_head_atom_get(struct drm_atomic_state *state, struct drm_crtc *crtc)
-{
-	struct drm_crtc_state *statec = drm_atomic_get_crtc_state(state, crtc);
-	if (IS_ERR(statec))
-		return (void *)statec;
-	return nv50_head_atom(statec);
-}
+अटल अंतरभूत काष्ठा nv50_head_atom *
+nv50_head_atom_get(काष्ठा drm_atomic_state *state, काष्ठा drm_crtc *crtc)
+अणु
+	काष्ठा drm_crtc_state *statec = drm_atomic_get_crtc_state(state, crtc);
+	अगर (IS_ERR(statec))
+		वापस (व्योम *)statec;
+	वापस nv50_head_atom(statec);
+पूर्ण
 
-static inline struct drm_encoder *
-nv50_head_atom_get_encoder(struct nv50_head_atom *atom)
-{
-	struct drm_encoder *encoder = NULL;
+अटल अंतरभूत काष्ठा drm_encoder *
+nv50_head_atom_get_encoder(काष्ठा nv50_head_atom *atom)
+अणु
+	काष्ठा drm_encoder *encoder = शून्य;
 
 	/* We only ever have a single encoder */
-	drm_for_each_encoder_mask(encoder, atom->state.crtc->dev,
+	drm_क्रम_each_encoder_mask(encoder, atom->state.crtc->dev,
 				  atom->state.encoder_mask)
-		break;
+		अवरोध;
 
-	return encoder;
-}
+	वापस encoder;
+पूर्ण
 
-#define nv50_wndw_atom(p) container_of((p), struct nv50_wndw_atom, state)
+#घोषणा nv50_wndw_atom(p) container_of((p), काष्ठा nv50_wndw_atom, state)
 
-struct nv50_wndw_atom {
-	struct drm_plane_state state;
+काष्ठा nv50_wndw_atom अणु
+	काष्ठा drm_plane_state state;
 
-	struct drm_property_blob *ilut;
+	काष्ठा drm_property_blob *ilut;
 	bool visible;
 
-	struct {
+	काष्ठा अणु
 		u32  handle;
 		u16  offset:12;
 		bool awaken:1;
-	} ntfy;
+	पूर्ण ntfy;
 
-	struct {
+	काष्ठा अणु
 		u32 handle;
 		u16 offset:12;
 		u32 acquire;
 		u32 release;
-	} sema;
+	पूर्ण sema;
 
-	struct {
+	काष्ठा अणु
 		u32 handle;
-		struct {
+		काष्ठा अणु
 			u64 offset:40;
 			u8  buffer:1;
 			u8  enable:2;
@@ -201,22 +202,22 @@ struct nv50_wndw_atom {
 			u16 size:11;
 			u8  range:2;
 			u8  output_mode:2;
-			void (*load)(struct drm_color_lut *, int size,
-				     void __iomem *);
-		} i;
-	} xlut;
+			व्योम (*load)(काष्ठा drm_color_lut *, पूर्णांक size,
+				     व्योम __iomem *);
+		पूर्ण i;
+	पूर्ण xlut;
 
-	struct {
+	काष्ठा अणु
 		u32 matrix[12];
 		bool valid;
-	} csc;
+	पूर्ण csc;
 
-	struct {
+	काष्ठा अणु
 		u8  mode:2;
-		u8  interval:4;
+		u8  पूर्णांकerval:4;
 
 		u8  colorspace:2;
-		u8  format;
+		u8  क्रमmat;
 		u8  kind:7;
 		u8  layout:1;
 		u8  blockh:4;
@@ -227,41 +228,41 @@ struct nv50_wndw_atom {
 
 		u32 handle[6];
 		u64 offset[6];
-	} image;
+	पूर्ण image;
 
-	struct {
+	काष्ठा अणु
 		u16 sx;
 		u16 sy;
 		u16 sw;
 		u16 sh;
 		u16 dw;
 		u16 dh;
-	} scale;
+	पूर्ण scale;
 
-	struct {
+	काष्ठा अणु
 		u16 x;
 		u16 y;
-	} point;
+	पूर्ण poपूर्णांक;
 
-	struct {
+	काष्ठा अणु
 		u8 depth;
 		u8 k1;
 		u8 src_color:4;
 		u8 dst_color:4;
-	} blend;
+	पूर्ण blend;
 
-	union nv50_wndw_atom_mask {
-		struct {
+	जोड़ nv50_wndw_atom_mask अणु
+		काष्ठा अणु
 			bool ntfy:1;
 			bool sema:1;
 			bool xlut:1;
 			bool csc:1;
 			bool image:1;
 			bool scale:1;
-			bool point:1;
+			bool poपूर्णांक:1;
 			bool blend:1;
-		};
+		पूर्ण;
 		u8 mask;
-	} set, clr;
-};
-#endif
+	पूर्ण set, clr;
+पूर्ण;
+#पूर्ण_अगर

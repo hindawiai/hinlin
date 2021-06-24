@@ -1,206 +1,207 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Device Mapper Uevent Support (dm-uevent)
  *
  * Copyright IBM Corporation, 2007
  * 	Author: Mike Anderson <andmike@linux.vnet.ibm.com>
  */
-#include <linux/list.h>
-#include <linux/slab.h>
-#include <linux/kobject.h>
-#include <linux/dm-ioctl.h>
-#include <linux/export.h>
+#समावेश <linux/list.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/kobject.h>
+#समावेश <linux/dm-ioctl.h>
+#समावेश <linux/export.h>
 
-#include "dm.h"
-#include "dm-uevent.h"
+#समावेश "dm.h"
+#समावेश "dm-uevent.h"
 
-#define DM_MSG_PREFIX "uevent"
+#घोषणा DM_MSG_PREFIX "uevent"
 
-static const struct {
-	enum dm_uevent_type type;
-	enum kobject_action action;
-	char *name;
-} _dm_uevent_type_names[] = {
-	{DM_UEVENT_PATH_FAILED, KOBJ_CHANGE, "PATH_FAILED"},
-	{DM_UEVENT_PATH_REINSTATED, KOBJ_CHANGE, "PATH_REINSTATED"},
-};
+अटल स्थिर काष्ठा अणु
+	क्रमागत dm_uevent_type type;
+	क्रमागत kobject_action action;
+	अक्षर *name;
+पूर्ण _dm_uevent_type_names[] = अणु
+	अणुDM_UEVENT_PATH_FAILED, KOBJ_CHANGE, "PATH_FAILED"पूर्ण,
+	अणुDM_UEVENT_PATH_REINSTATED, KOBJ_CHANGE, "PATH_REINSTATED"पूर्ण,
+पूर्ण;
 
-static struct kmem_cache *_dm_event_cache;
+अटल काष्ठा kmem_cache *_dm_event_cache;
 
-struct dm_uevent {
-	struct mapped_device *md;
-	enum kobject_action action;
-	struct kobj_uevent_env ku_env;
-	struct list_head elist;
-	char name[DM_NAME_LEN];
-	char uuid[DM_UUID_LEN];
-};
+काष्ठा dm_uevent अणु
+	काष्ठा mapped_device *md;
+	क्रमागत kobject_action action;
+	काष्ठा kobj_uevent_env ku_env;
+	काष्ठा list_head elist;
+	अक्षर name[DM_NAME_LEN];
+	अक्षर uuid[DM_UUID_LEN];
+पूर्ण;
 
-static void dm_uevent_free(struct dm_uevent *event)
-{
-	kmem_cache_free(_dm_event_cache, event);
-}
+अटल व्योम dm_uevent_मुक्त(काष्ठा dm_uevent *event)
+अणु
+	kmem_cache_मुक्त(_dm_event_cache, event);
+पूर्ण
 
-static struct dm_uevent *dm_uevent_alloc(struct mapped_device *md)
-{
-	struct dm_uevent *event;
+अटल काष्ठा dm_uevent *dm_uevent_alloc(काष्ठा mapped_device *md)
+अणु
+	काष्ठा dm_uevent *event;
 
 	event = kmem_cache_zalloc(_dm_event_cache, GFP_ATOMIC);
-	if (!event)
-		return NULL;
+	अगर (!event)
+		वापस शून्य;
 
 	INIT_LIST_HEAD(&event->elist);
 	event->md = md;
 
-	return event;
-}
+	वापस event;
+पूर्ण
 
-static struct dm_uevent *dm_build_path_uevent(struct mapped_device *md,
-					      struct dm_target *ti,
-					      enum kobject_action action,
-					      const char *dm_action,
-					      const char *path,
-					      unsigned nr_valid_paths)
-{
-	struct dm_uevent *event;
+अटल काष्ठा dm_uevent *dm_build_path_uevent(काष्ठा mapped_device *md,
+					      काष्ठा dm_target *ti,
+					      क्रमागत kobject_action action,
+					      स्थिर अक्षर *dm_action,
+					      स्थिर अक्षर *path,
+					      अचिन्हित nr_valid_paths)
+अणु
+	काष्ठा dm_uevent *event;
 
 	event = dm_uevent_alloc(md);
-	if (!event) {
+	अगर (!event) अणु
 		DMERR("%s: dm_uevent_alloc() failed", __func__);
-		goto err_nomem;
-	}
+		जाओ err_nomem;
+	पूर्ण
 
 	event->action = action;
 
-	if (add_uevent_var(&event->ku_env, "DM_TARGET=%s", ti->type->name)) {
+	अगर (add_uevent_var(&event->ku_env, "DM_TARGET=%s", ti->type->name)) अणु
 		DMERR("%s: add_uevent_var() for DM_TARGET failed",
 		      __func__);
-		goto err_add;
-	}
+		जाओ err_add;
+	पूर्ण
 
-	if (add_uevent_var(&event->ku_env, "DM_ACTION=%s", dm_action)) {
+	अगर (add_uevent_var(&event->ku_env, "DM_ACTION=%s", dm_action)) अणु
 		DMERR("%s: add_uevent_var() for DM_ACTION failed",
 		      __func__);
-		goto err_add;
-	}
+		जाओ err_add;
+	पूर्ण
 
-	if (add_uevent_var(&event->ku_env, "DM_SEQNUM=%u",
-			   dm_next_uevent_seq(md))) {
+	अगर (add_uevent_var(&event->ku_env, "DM_SEQNUM=%u",
+			   dm_next_uevent_seq(md))) अणु
 		DMERR("%s: add_uevent_var() for DM_SEQNUM failed",
 		      __func__);
-		goto err_add;
-	}
+		जाओ err_add;
+	पूर्ण
 
-	if (add_uevent_var(&event->ku_env, "DM_PATH=%s", path)) {
+	अगर (add_uevent_var(&event->ku_env, "DM_PATH=%s", path)) अणु
 		DMERR("%s: add_uevent_var() for DM_PATH failed", __func__);
-		goto err_add;
-	}
+		जाओ err_add;
+	पूर्ण
 
-	if (add_uevent_var(&event->ku_env, "DM_NR_VALID_PATHS=%d",
-			   nr_valid_paths)) {
+	अगर (add_uevent_var(&event->ku_env, "DM_NR_VALID_PATHS=%d",
+			   nr_valid_paths)) अणु
 		DMERR("%s: add_uevent_var() for DM_NR_VALID_PATHS failed",
 		      __func__);
-		goto err_add;
-	}
+		जाओ err_add;
+	पूर्ण
 
-	return event;
+	वापस event;
 
 err_add:
-	dm_uevent_free(event);
+	dm_uevent_मुक्त(event);
 err_nomem:
-	return ERR_PTR(-ENOMEM);
-}
+	वापस ERR_PTR(-ENOMEM);
+पूर्ण
 
 /**
- * dm_send_uevents - send uevents for given list
+ * dm_send_uevents - send uevents क्रम given list
  *
  * @events:	list of events to send
  * @kobj:	kobject generating event
  *
  */
-void dm_send_uevents(struct list_head *events, struct kobject *kobj)
-{
-	int r;
-	struct dm_uevent *event, *next;
+व्योम dm_send_uevents(काष्ठा list_head *events, काष्ठा kobject *kobj)
+अणु
+	पूर्णांक r;
+	काष्ठा dm_uevent *event, *next;
 
-	list_for_each_entry_safe(event, next, events, elist) {
+	list_क्रम_each_entry_safe(event, next, events, elist) अणु
 		list_del_init(&event->elist);
 
 		/*
-		 * When a device is being removed this copy fails and we
+		 * When a device is being हटाओd this copy fails and we
 		 * discard these unsent events.
 		 */
-		if (dm_copy_name_and_uuid(event->md, event->name,
-					  event->uuid)) {
+		अगर (dm_copy_name_and_uuid(event->md, event->name,
+					  event->uuid)) अणु
 			DMINFO("%s: skipping sending uevent for lost device",
 			       __func__);
-			goto uevent_free;
-		}
+			जाओ uevent_मुक्त;
+		पूर्ण
 
-		if (add_uevent_var(&event->ku_env, "DM_NAME=%s", event->name)) {
+		अगर (add_uevent_var(&event->ku_env, "DM_NAME=%s", event->name)) अणु
 			DMERR("%s: add_uevent_var() for DM_NAME failed",
 			      __func__);
-			goto uevent_free;
-		}
+			जाओ uevent_मुक्त;
+		पूर्ण
 
-		if (add_uevent_var(&event->ku_env, "DM_UUID=%s", event->uuid)) {
+		अगर (add_uevent_var(&event->ku_env, "DM_UUID=%s", event->uuid)) अणु
 			DMERR("%s: add_uevent_var() for DM_UUID failed",
 			      __func__);
-			goto uevent_free;
-		}
+			जाओ uevent_मुक्त;
+		पूर्ण
 
 		r = kobject_uevent_env(kobj, event->action, event->ku_env.envp);
-		if (r)
+		अगर (r)
 			DMERR("%s: kobject_uevent_env failed", __func__);
-uevent_free:
-		dm_uevent_free(event);
-	}
-}
+uevent_मुक्त:
+		dm_uevent_मुक्त(event);
+	पूर्ण
+पूर्ण
 EXPORT_SYMBOL_GPL(dm_send_uevents);
 
 /**
  * dm_path_uevent - called to create a new path event and queue it
  *
- * @event_type:	path event type enum
- * @ti:			pointer to a dm_target
+ * @event_type:	path event type क्रमागत
+ * @ti:			poपूर्णांकer to a dm_target
  * @path:		string containing pathname
- * @nr_valid_paths:	number of valid paths remaining
+ * @nr_valid_paths:	number of valid paths reमुख्यing
  *
  */
-void dm_path_uevent(enum dm_uevent_type event_type, struct dm_target *ti,
-		   const char *path, unsigned nr_valid_paths)
-{
-	struct mapped_device *md = dm_table_get_md(ti->table);
-	struct dm_uevent *event;
+व्योम dm_path_uevent(क्रमागत dm_uevent_type event_type, काष्ठा dm_target *ti,
+		   स्थिर अक्षर *path, अचिन्हित nr_valid_paths)
+अणु
+	काष्ठा mapped_device *md = dm_table_get_md(ti->table);
+	काष्ठा dm_uevent *event;
 
-	if (event_type >= ARRAY_SIZE(_dm_uevent_type_names)) {
+	अगर (event_type >= ARRAY_SIZE(_dm_uevent_type_names)) अणु
 		DMERR("%s: Invalid event_type %d", __func__, event_type);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	event = dm_build_path_uevent(md, ti,
 				     _dm_uevent_type_names[event_type].action,
 				     _dm_uevent_type_names[event_type].name,
 				     path, nr_valid_paths);
-	if (IS_ERR(event))
-		return;
+	अगर (IS_ERR(event))
+		वापस;
 
 	dm_uevent_add(md, &event->elist);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(dm_path_uevent);
 
-int dm_uevent_init(void)
-{
+पूर्णांक dm_uevent_init(व्योम)
+अणु
 	_dm_event_cache = KMEM_CACHE(dm_uevent, 0);
-	if (!_dm_event_cache)
-		return -ENOMEM;
+	अगर (!_dm_event_cache)
+		वापस -ENOMEM;
 
 	DMINFO("version 1.0.3");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void dm_uevent_exit(void)
-{
+व्योम dm_uevent_निकास(व्योम)
+अणु
 	kmem_cache_destroy(_dm_event_cache);
-}
+पूर्ण

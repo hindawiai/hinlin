@@ -1,321 +1,322 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * ad2s1210.c support for the ADI Resolver to Digital Converters: AD2S1210
+ * ad2s1210.c support क्रम the ADI Resolver to Digital Converters: AD2S1210
  *
  * Copyright (c) 2010-2010 Analog Devices Inc.
  */
-#include <linux/types.h>
-#include <linux/mutex.h>
-#include <linux/device.h>
-#include <linux/spi/spi.h>
-#include <linux/slab.h>
-#include <linux/sysfs.h>
-#include <linux/delay.h>
-#include <linux/gpio/consumer.h>
-#include <linux/module.h>
+#समावेश <linux/types.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/device.h>
+#समावेश <linux/spi/spi.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/sysfs.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/gpio/consumer.h>
+#समावेश <linux/module.h>
 
-#include <linux/iio/iio.h>
-#include <linux/iio/sysfs.h>
+#समावेश <linux/iio/iपन.स>
+#समावेश <linux/iio/sysfs.h>
 
-#define DRV_NAME "ad2s1210"
+#घोषणा DRV_NAME "ad2s1210"
 
-#define AD2S1210_DEF_CONTROL		0x7E
+#घोषणा AD2S1210_DEF_CONTROL		0x7E
 
-#define AD2S1210_MSB_IS_HIGH		0x80
-#define AD2S1210_MSB_IS_LOW		0x7F
-#define AD2S1210_PHASE_LOCK_RANGE_44	0x20
-#define AD2S1210_ENABLE_HYSTERESIS	0x10
-#define AD2S1210_SET_ENRES1		0x08
-#define AD2S1210_SET_ENRES0		0x04
-#define AD2S1210_SET_RES1		0x02
-#define AD2S1210_SET_RES0		0x01
+#घोषणा AD2S1210_MSB_IS_HIGH		0x80
+#घोषणा AD2S1210_MSB_IS_LOW		0x7F
+#घोषणा AD2S1210_PHASE_LOCK_RANGE_44	0x20
+#घोषणा AD2S1210_ENABLE_HYSTERESIS	0x10
+#घोषणा AD2S1210_SET_ENRES1		0x08
+#घोषणा AD2S1210_SET_ENRES0		0x04
+#घोषणा AD2S1210_SET_RES1		0x02
+#घोषणा AD2S1210_SET_RES0		0x01
 
-#define AD2S1210_SET_RESOLUTION		(AD2S1210_SET_RES1 | AD2S1210_SET_RES0)
+#घोषणा AD2S1210_SET_RESOLUTION		(AD2S1210_SET_RES1 | AD2S1210_SET_RES0)
 
-#define AD2S1210_REG_POSITION		0x80
-#define AD2S1210_REG_VELOCITY		0x82
-#define AD2S1210_REG_LOS_THRD		0x88
-#define AD2S1210_REG_DOS_OVR_THRD	0x89
-#define AD2S1210_REG_DOS_MIS_THRD	0x8A
-#define AD2S1210_REG_DOS_RST_MAX_THRD	0x8B
-#define AD2S1210_REG_DOS_RST_MIN_THRD	0x8C
-#define AD2S1210_REG_LOT_HIGH_THRD	0x8D
-#define AD2S1210_REG_LOT_LOW_THRD	0x8E
-#define AD2S1210_REG_EXCIT_FREQ		0x91
-#define AD2S1210_REG_CONTROL		0x92
-#define AD2S1210_REG_SOFT_RESET		0xF0
-#define AD2S1210_REG_FAULT		0xFF
+#घोषणा AD2S1210_REG_POSITION		0x80
+#घोषणा AD2S1210_REG_VELOCITY		0x82
+#घोषणा AD2S1210_REG_LOS_THRD		0x88
+#घोषणा AD2S1210_REG_DOS_OVR_THRD	0x89
+#घोषणा AD2S1210_REG_DOS_MIS_THRD	0x8A
+#घोषणा AD2S1210_REG_DOS_RST_MAX_THRD	0x8B
+#घोषणा AD2S1210_REG_DOS_RST_MIN_THRD	0x8C
+#घोषणा AD2S1210_REG_LOT_HIGH_THRD	0x8D
+#घोषणा AD2S1210_REG_LOT_LOW_THRD	0x8E
+#घोषणा AD2S1210_REG_EXCIT_FREQ		0x91
+#घोषणा AD2S1210_REG_CONTROL		0x92
+#घोषणा AD2S1210_REG_SOFT_RESET		0xF0
+#घोषणा AD2S1210_REG_FAULT		0xFF
 
-#define AD2S1210_MIN_CLKIN	6144000
-#define AD2S1210_MAX_CLKIN	10240000
-#define AD2S1210_MIN_EXCIT	2000
-#define AD2S1210_MAX_EXCIT	20000
-#define AD2S1210_MIN_FCW	0x4
-#define AD2S1210_MAX_FCW	0x50
+#घोषणा AD2S1210_MIN_CLKIN	6144000
+#घोषणा AD2S1210_MAX_CLKIN	10240000
+#घोषणा AD2S1210_MIN_EXCIT	2000
+#घोषणा AD2S1210_MAX_EXCIT	20000
+#घोषणा AD2S1210_MIN_FCW	0x4
+#घोषणा AD2S1210_MAX_FCW	0x50
 
-#define AD2S1210_DEF_EXCIT	10000
+#घोषणा AD2S1210_DEF_EXCIT	10000
 
-enum ad2s1210_mode {
+क्रमागत ad2s1210_mode अणु
 	MOD_POS = 0,
 	MOD_VEL,
 	MOD_CONFIG,
 	MOD_RESERVED,
-};
+पूर्ण;
 
-enum ad2s1210_gpios {
+क्रमागत ad2s1210_gpios अणु
 	AD2S1210_SAMPLE,
 	AD2S1210_A0,
 	AD2S1210_A1,
 	AD2S1210_RES0,
 	AD2S1210_RES1,
-};
+पूर्ण;
 
-struct ad2s1210_gpio {
-	const char *name;
-	unsigned long flags;
-};
+काष्ठा ad2s1210_gpio अणु
+	स्थिर अक्षर *name;
+	अचिन्हित दीर्घ flags;
+पूर्ण;
 
-static const struct ad2s1210_gpio gpios[] = {
-	[AD2S1210_SAMPLE] = { .name = "adi,sample", .flags = GPIOD_OUT_LOW },
-	[AD2S1210_A0] = { .name = "adi,a0", .flags = GPIOD_OUT_LOW },
-	[AD2S1210_A1] = { .name = "adi,a1", .flags = GPIOD_OUT_LOW },
-	[AD2S1210_RES0] = { .name = "adi,res0", .flags = GPIOD_OUT_LOW },
-	[AD2S1210_RES1] = { .name = "adi,res1", .flags = GPIOD_OUT_LOW },
-};
+अटल स्थिर काष्ठा ad2s1210_gpio gpios[] = अणु
+	[AD2S1210_SAMPLE] = अणु .name = "adi,sample", .flags = GPIOD_OUT_LOW पूर्ण,
+	[AD2S1210_A0] = अणु .name = "adi,a0", .flags = GPIOD_OUT_LOW पूर्ण,
+	[AD2S1210_A1] = अणु .name = "adi,a1", .flags = GPIOD_OUT_LOW पूर्ण,
+	[AD2S1210_RES0] = अणु .name = "adi,res0", .flags = GPIOD_OUT_LOW पूर्ण,
+	[AD2S1210_RES1] = अणु .name = "adi,res1", .flags = GPIOD_OUT_LOW पूर्ण,
+पूर्ण;
 
-static const unsigned int ad2s1210_resolution_value[] = { 10, 12, 14, 16 };
+अटल स्थिर अचिन्हित पूर्णांक ad2s1210_resolution_value[] = अणु 10, 12, 14, 16 पूर्ण;
 
-struct ad2s1210_state {
-	struct mutex lock;
-	struct spi_device *sdev;
-	struct gpio_desc *gpios[5];
-	unsigned int fclkin;
-	unsigned int fexcit;
+काष्ठा ad2s1210_state अणु
+	काष्ठा mutex lock;
+	काष्ठा spi_device *sdev;
+	काष्ठा gpio_desc *gpios[5];
+	अचिन्हित पूर्णांक fclkin;
+	अचिन्हित पूर्णांक fexcit;
 	bool hysteresis;
 	u8 resolution;
-	enum ad2s1210_mode mode;
+	क्रमागत ad2s1210_mode mode;
 	u8 rx[2] ____cacheline_aligned;
 	u8 tx[2] ____cacheline_aligned;
-};
+पूर्ण;
 
-static const int ad2s1210_mode_vals[4][2] = {
-	[MOD_POS] = { 0, 0 },
-	[MOD_VEL] = { 0, 1 },
-	[MOD_CONFIG] = { 1, 0 },
-};
+अटल स्थिर पूर्णांक ad2s1210_mode_vals[4][2] = अणु
+	[MOD_POS] = अणु 0, 0 पूर्ण,
+	[MOD_VEL] = अणु 0, 1 पूर्ण,
+	[MOD_CONFIG] = अणु 1, 0 पूर्ण,
+पूर्ण;
 
-static inline void ad2s1210_set_mode(enum ad2s1210_mode mode,
-				     struct ad2s1210_state *st)
-{
+अटल अंतरभूत व्योम ad2s1210_set_mode(क्रमागत ad2s1210_mode mode,
+				     काष्ठा ad2s1210_state *st)
+अणु
 	gpiod_set_value(st->gpios[AD2S1210_A0], ad2s1210_mode_vals[mode][0]);
 	gpiod_set_value(st->gpios[AD2S1210_A1], ad2s1210_mode_vals[mode][1]);
 	st->mode = mode;
-}
+पूर्ण
 
-/* write 1 bytes (address or data) to the chip */
-static int ad2s1210_config_write(struct ad2s1210_state *st, u8 data)
-{
-	int ret;
+/* ग_लिखो 1 bytes (address or data) to the chip */
+अटल पूर्णांक ad2s1210_config_ग_लिखो(काष्ठा ad2s1210_state *st, u8 data)
+अणु
+	पूर्णांक ret;
 
 	ad2s1210_set_mode(MOD_CONFIG, st);
 	st->tx[0] = data;
-	ret = spi_write(st->sdev, st->tx, 1);
-	if (ret < 0)
-		return ret;
+	ret = spi_ग_लिखो(st->sdev, st->tx, 1);
+	अगर (ret < 0)
+		वापस ret;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* read value from one of the registers */
-static int ad2s1210_config_read(struct ad2s1210_state *st,
-				unsigned char address)
-{
-	struct spi_transfer xfers[] = {
-		{
+/* पढ़ो value from one of the रेजिस्टरs */
+अटल पूर्णांक ad2s1210_config_पढ़ो(काष्ठा ad2s1210_state *st,
+				अचिन्हित अक्षर address)
+अणु
+	काष्ठा spi_transfer xfers[] = अणु
+		अणु
 			.len = 1,
 			.rx_buf = &st->rx[0],
 			.tx_buf = &st->tx[0],
 			.cs_change = 1,
-		}, {
+		पूर्ण, अणु
 			.len = 1,
 			.rx_buf = &st->rx[1],
 			.tx_buf = &st->tx[1],
-		},
-	};
-	int ret = 0;
+		पूर्ण,
+	पूर्ण;
+	पूर्णांक ret = 0;
 
 	ad2s1210_set_mode(MOD_CONFIG, st);
 	st->tx[0] = address | AD2S1210_MSB_IS_HIGH;
 	st->tx[1] = AD2S1210_REG_FAULT;
 	ret = spi_sync_transfer(st->sdev, xfers, 2);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	return st->rx[1];
-}
+	वापस st->rx[1];
+पूर्ण
 
-static inline
-int ad2s1210_update_frequency_control_word(struct ad2s1210_state *st)
-{
-	int ret;
-	unsigned char fcw;
+अटल अंतरभूत
+पूर्णांक ad2s1210_update_frequency_control_word(काष्ठा ad2s1210_state *st)
+अणु
+	पूर्णांक ret;
+	अचिन्हित अक्षर fcw;
 
-	fcw = (unsigned char)(st->fexcit * (1 << 15) / st->fclkin);
-	if (fcw < AD2S1210_MIN_FCW || fcw > AD2S1210_MAX_FCW) {
+	fcw = (अचिन्हित अक्षर)(st->fexcit * (1 << 15) / st->fclkin);
+	अगर (fcw < AD2S1210_MIN_FCW || fcw > AD2S1210_MAX_FCW) अणु
 		dev_err(&st->sdev->dev, "ad2s1210: FCW out of range\n");
-		return -ERANGE;
-	}
+		वापस -दुस्फल;
+	पूर्ण
 
-	ret = ad2s1210_config_write(st, AD2S1210_REG_EXCIT_FREQ);
-	if (ret < 0)
-		return ret;
+	ret = ad2s1210_config_ग_लिखो(st, AD2S1210_REG_EXCIT_FREQ);
+	अगर (ret < 0)
+		वापस ret;
 
-	return ad2s1210_config_write(st, fcw);
-}
+	वापस ad2s1210_config_ग_लिखो(st, fcw);
+पूर्ण
 
-static const int ad2s1210_res_pins[4][2] = {
-	{ 0, 0 }, {0, 1}, {1, 0}, {1, 1}
-};
+अटल स्थिर पूर्णांक ad2s1210_res_pins[4][2] = अणु
+	अणु 0, 0 पूर्ण, अणु0, 1पूर्ण, अणु1, 0पूर्ण, अणु1, 1पूर्ण
+पूर्ण;
 
-static inline void ad2s1210_set_resolution_pin(struct ad2s1210_state *st)
-{
+अटल अंतरभूत व्योम ad2s1210_set_resolution_pin(काष्ठा ad2s1210_state *st)
+अणु
 	gpiod_set_value(st->gpios[AD2S1210_RES0],
 			ad2s1210_res_pins[(st->resolution - 10) / 2][0]);
 	gpiod_set_value(st->gpios[AD2S1210_RES1],
 			ad2s1210_res_pins[(st->resolution - 10) / 2][1]);
-}
+पूर्ण
 
-static inline int ad2s1210_soft_reset(struct ad2s1210_state *st)
-{
-	int ret;
+अटल अंतरभूत पूर्णांक ad2s1210_soft_reset(काष्ठा ad2s1210_state *st)
+अणु
+	पूर्णांक ret;
 
-	ret = ad2s1210_config_write(st, AD2S1210_REG_SOFT_RESET);
-	if (ret < 0)
-		return ret;
+	ret = ad2s1210_config_ग_लिखो(st, AD2S1210_REG_SOFT_RESET);
+	अगर (ret < 0)
+		वापस ret;
 
-	return ad2s1210_config_write(st, 0x0);
-}
+	वापस ad2s1210_config_ग_लिखो(st, 0x0);
+पूर्ण
 
-static ssize_t ad2s1210_show_fclkin(struct device *dev,
-				    struct device_attribute *attr,
-				    char *buf)
-{
-	struct ad2s1210_state *st = iio_priv(dev_to_iio_dev(dev));
+अटल sमाप_प्रकार ad2s1210_show_fclkin(काष्ठा device *dev,
+				    काष्ठा device_attribute *attr,
+				    अक्षर *buf)
+अणु
+	काष्ठा ad2s1210_state *st = iio_priv(dev_to_iio_dev(dev));
 
-	return sprintf(buf, "%u\n", st->fclkin);
-}
+	वापस प्र_लिखो(buf, "%u\n", st->fclkin);
+पूर्ण
 
-static ssize_t ad2s1210_store_fclkin(struct device *dev,
-				     struct device_attribute *attr,
-				     const char *buf,
-				     size_t len)
-{
-	struct ad2s1210_state *st = iio_priv(dev_to_iio_dev(dev));
-	unsigned int fclkin;
-	int ret;
+अटल sमाप_प्रकार ad2s1210_store_fclkin(काष्ठा device *dev,
+				     काष्ठा device_attribute *attr,
+				     स्थिर अक्षर *buf,
+				     माप_प्रकार len)
+अणु
+	काष्ठा ad2s1210_state *st = iio_priv(dev_to_iio_dev(dev));
+	अचिन्हित पूर्णांक fclkin;
+	पूर्णांक ret;
 
-	ret = kstrtouint(buf, 10, &fclkin);
-	if (ret)
-		return ret;
-	if (fclkin < AD2S1210_MIN_CLKIN || fclkin > AD2S1210_MAX_CLKIN) {
+	ret = kstrtouपूर्णांक(buf, 10, &fclkin);
+	अगर (ret)
+		वापस ret;
+	अगर (fclkin < AD2S1210_MIN_CLKIN || fclkin > AD2S1210_MAX_CLKIN) अणु
 		dev_err(dev, "ad2s1210: fclkin out of range\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	mutex_lock(&st->lock);
 	st->fclkin = fclkin;
 
 	ret = ad2s1210_update_frequency_control_word(st);
-	if (ret < 0)
-		goto error_ret;
+	अगर (ret < 0)
+		जाओ error_ret;
 	ret = ad2s1210_soft_reset(st);
 error_ret:
 	mutex_unlock(&st->lock);
 
-	return ret < 0 ? ret : len;
-}
+	वापस ret < 0 ? ret : len;
+पूर्ण
 
-static ssize_t ad2s1210_show_fexcit(struct device *dev,
-				    struct device_attribute *attr,
-				    char *buf)
-{
-	struct ad2s1210_state *st = iio_priv(dev_to_iio_dev(dev));
+अटल sमाप_प्रकार ad2s1210_show_fexcit(काष्ठा device *dev,
+				    काष्ठा device_attribute *attr,
+				    अक्षर *buf)
+अणु
+	काष्ठा ad2s1210_state *st = iio_priv(dev_to_iio_dev(dev));
 
-	return sprintf(buf, "%u\n", st->fexcit);
-}
+	वापस प्र_लिखो(buf, "%u\n", st->fexcit);
+पूर्ण
 
-static ssize_t ad2s1210_store_fexcit(struct device *dev,
-				     struct device_attribute *attr,
-				     const char *buf, size_t len)
-{
-	struct ad2s1210_state *st = iio_priv(dev_to_iio_dev(dev));
-	unsigned int fexcit;
-	int ret;
+अटल sमाप_प्रकार ad2s1210_store_fexcit(काष्ठा device *dev,
+				     काष्ठा device_attribute *attr,
+				     स्थिर अक्षर *buf, माप_प्रकार len)
+अणु
+	काष्ठा ad2s1210_state *st = iio_priv(dev_to_iio_dev(dev));
+	अचिन्हित पूर्णांक fexcit;
+	पूर्णांक ret;
 
-	ret = kstrtouint(buf, 10, &fexcit);
-	if (ret < 0)
-		return ret;
-	if (fexcit < AD2S1210_MIN_EXCIT || fexcit > AD2S1210_MAX_EXCIT) {
+	ret = kstrtouपूर्णांक(buf, 10, &fexcit);
+	अगर (ret < 0)
+		वापस ret;
+	अगर (fexcit < AD2S1210_MIN_EXCIT || fexcit > AD2S1210_MAX_EXCIT) अणु
 		dev_err(dev,
 			"ad2s1210: excitation frequency out of range\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 	mutex_lock(&st->lock);
 	st->fexcit = fexcit;
 	ret = ad2s1210_update_frequency_control_word(st);
-	if (ret < 0)
-		goto error_ret;
+	अगर (ret < 0)
+		जाओ error_ret;
 	ret = ad2s1210_soft_reset(st);
 error_ret:
 	mutex_unlock(&st->lock);
 
-	return ret < 0 ? ret : len;
-}
+	वापस ret < 0 ? ret : len;
+पूर्ण
 
-static ssize_t ad2s1210_show_control(struct device *dev,
-				     struct device_attribute *attr,
-				     char *buf)
-{
-	struct ad2s1210_state *st = iio_priv(dev_to_iio_dev(dev));
-	int ret;
+अटल sमाप_प्रकार ad2s1210_show_control(काष्ठा device *dev,
+				     काष्ठा device_attribute *attr,
+				     अक्षर *buf)
+अणु
+	काष्ठा ad2s1210_state *st = iio_priv(dev_to_iio_dev(dev));
+	पूर्णांक ret;
 
 	mutex_lock(&st->lock);
-	ret = ad2s1210_config_read(st, AD2S1210_REG_CONTROL);
+	ret = ad2s1210_config_पढ़ो(st, AD2S1210_REG_CONTROL);
 	mutex_unlock(&st->lock);
-	return ret < 0 ? ret : sprintf(buf, "0x%x\n", ret);
-}
+	वापस ret < 0 ? ret : प्र_लिखो(buf, "0x%x\n", ret);
+पूर्ण
 
-static ssize_t ad2s1210_store_control(struct device *dev,
-				      struct device_attribute *attr,
-				      const char *buf, size_t len)
-{
-	struct ad2s1210_state *st = iio_priv(dev_to_iio_dev(dev));
-	unsigned char udata;
-	unsigned char data;
-	int ret;
+अटल sमाप_प्रकार ad2s1210_store_control(काष्ठा device *dev,
+				      काष्ठा device_attribute *attr,
+				      स्थिर अक्षर *buf, माप_प्रकार len)
+अणु
+	काष्ठा ad2s1210_state *st = iio_priv(dev_to_iio_dev(dev));
+	अचिन्हित अक्षर udata;
+	अचिन्हित अक्षर data;
+	पूर्णांक ret;
 
 	ret = kstrtou8(buf, 16, &udata);
-	if (ret)
-		return -EINVAL;
+	अगर (ret)
+		वापस -EINVAL;
 
 	mutex_lock(&st->lock);
-	ret = ad2s1210_config_write(st, AD2S1210_REG_CONTROL);
-	if (ret < 0)
-		goto error_ret;
+	ret = ad2s1210_config_ग_लिखो(st, AD2S1210_REG_CONTROL);
+	अगर (ret < 0)
+		जाओ error_ret;
 	data = udata & AD2S1210_MSB_IS_LOW;
-	ret = ad2s1210_config_write(st, data);
-	if (ret < 0)
-		goto error_ret;
+	ret = ad2s1210_config_ग_लिखो(st, data);
+	अगर (ret < 0)
+		जाओ error_ret;
 
-	ret = ad2s1210_config_read(st, AD2S1210_REG_CONTROL);
-	if (ret < 0)
-		goto error_ret;
-	if (ret & AD2S1210_MSB_IS_HIGH) {
+	ret = ad2s1210_config_पढ़ो(st, AD2S1210_REG_CONTROL);
+	अगर (ret < 0)
+		जाओ error_ret;
+	अगर (ret & AD2S1210_MSB_IS_HIGH) अणु
 		ret = -EIO;
 		dev_err(dev,
 			"ad2s1210: write control register fail\n");
-		goto error_ret;
-	}
+		जाओ error_ret;
+	पूर्ण
 	st->resolution =
 		ad2s1210_resolution_value[data & AD2S1210_SET_RESOLUTION];
 	ad2s1210_set_resolution_pin(st);
@@ -324,147 +325,147 @@ static ssize_t ad2s1210_store_control(struct device *dev,
 
 error_ret:
 	mutex_unlock(&st->lock);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static ssize_t ad2s1210_show_resolution(struct device *dev,
-					struct device_attribute *attr,
-					char *buf)
-{
-	struct ad2s1210_state *st = iio_priv(dev_to_iio_dev(dev));
+अटल sमाप_प्रकार ad2s1210_show_resolution(काष्ठा device *dev,
+					काष्ठा device_attribute *attr,
+					अक्षर *buf)
+अणु
+	काष्ठा ad2s1210_state *st = iio_priv(dev_to_iio_dev(dev));
 
-	return sprintf(buf, "%d\n", st->resolution);
-}
+	वापस प्र_लिखो(buf, "%d\n", st->resolution);
+पूर्ण
 
-static ssize_t ad2s1210_store_resolution(struct device *dev,
-					 struct device_attribute *attr,
-					 const char *buf, size_t len)
-{
-	struct ad2s1210_state *st = iio_priv(dev_to_iio_dev(dev));
-	unsigned char data;
-	unsigned char udata;
-	int ret;
+अटल sमाप_प्रकार ad2s1210_store_resolution(काष्ठा device *dev,
+					 काष्ठा device_attribute *attr,
+					 स्थिर अक्षर *buf, माप_प्रकार len)
+अणु
+	काष्ठा ad2s1210_state *st = iio_priv(dev_to_iio_dev(dev));
+	अचिन्हित अक्षर data;
+	अचिन्हित अक्षर udata;
+	पूर्णांक ret;
 
 	ret = kstrtou8(buf, 10, &udata);
-	if (ret || udata < 10 || udata > 16) {
+	अगर (ret || udata < 10 || udata > 16) अणु
 		dev_err(dev, "ad2s1210: resolution out of range\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 	mutex_lock(&st->lock);
-	ret = ad2s1210_config_read(st, AD2S1210_REG_CONTROL);
-	if (ret < 0)
-		goto error_ret;
+	ret = ad2s1210_config_पढ़ो(st, AD2S1210_REG_CONTROL);
+	अगर (ret < 0)
+		जाओ error_ret;
 	data = ret;
 	data &= ~AD2S1210_SET_RESOLUTION;
 	data |= (udata - 10) >> 1;
-	ret = ad2s1210_config_write(st, AD2S1210_REG_CONTROL);
-	if (ret < 0)
-		goto error_ret;
-	ret = ad2s1210_config_write(st, data & AD2S1210_MSB_IS_LOW);
-	if (ret < 0)
-		goto error_ret;
-	ret = ad2s1210_config_read(st, AD2S1210_REG_CONTROL);
-	if (ret < 0)
-		goto error_ret;
+	ret = ad2s1210_config_ग_लिखो(st, AD2S1210_REG_CONTROL);
+	अगर (ret < 0)
+		जाओ error_ret;
+	ret = ad2s1210_config_ग_लिखो(st, data & AD2S1210_MSB_IS_LOW);
+	अगर (ret < 0)
+		जाओ error_ret;
+	ret = ad2s1210_config_पढ़ो(st, AD2S1210_REG_CONTROL);
+	अगर (ret < 0)
+		जाओ error_ret;
 	data = ret;
-	if (data & AD2S1210_MSB_IS_HIGH) {
+	अगर (data & AD2S1210_MSB_IS_HIGH) अणु
 		ret = -EIO;
 		dev_err(dev, "ad2s1210: setting resolution fail\n");
-		goto error_ret;
-	}
+		जाओ error_ret;
+	पूर्ण
 	st->resolution =
 		ad2s1210_resolution_value[data & AD2S1210_SET_RESOLUTION];
 	ad2s1210_set_resolution_pin(st);
 	ret = len;
 error_ret:
 	mutex_unlock(&st->lock);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-/* read the fault register since last sample */
-static ssize_t ad2s1210_show_fault(struct device *dev,
-				   struct device_attribute *attr, char *buf)
-{
-	struct ad2s1210_state *st = iio_priv(dev_to_iio_dev(dev));
-	int ret;
+/* पढ़ो the fault रेजिस्टर since last sample */
+अटल sमाप_प्रकार ad2s1210_show_fault(काष्ठा device *dev,
+				   काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा ad2s1210_state *st = iio_priv(dev_to_iio_dev(dev));
+	पूर्णांक ret;
 
 	mutex_lock(&st->lock);
-	ret = ad2s1210_config_read(st, AD2S1210_REG_FAULT);
+	ret = ad2s1210_config_पढ़ो(st, AD2S1210_REG_FAULT);
 	mutex_unlock(&st->lock);
 
-	return ret ? ret : sprintf(buf, "0x%x\n", ret);
-}
+	वापस ret ? ret : प्र_लिखो(buf, "0x%x\n", ret);
+पूर्ण
 
-static ssize_t ad2s1210_clear_fault(struct device *dev,
-				    struct device_attribute *attr,
-				    const char *buf,
-				    size_t len)
-{
-	struct ad2s1210_state *st = iio_priv(dev_to_iio_dev(dev));
-	int ret;
+अटल sमाप_प्रकार ad2s1210_clear_fault(काष्ठा device *dev,
+				    काष्ठा device_attribute *attr,
+				    स्थिर अक्षर *buf,
+				    माप_प्रकार len)
+अणु
+	काष्ठा ad2s1210_state *st = iio_priv(dev_to_iio_dev(dev));
+	पूर्णांक ret;
 
 	mutex_lock(&st->lock);
 	gpiod_set_value(st->gpios[AD2S1210_SAMPLE], 0);
 	/* delay (2 * tck + 20) nano seconds */
 	udelay(1);
 	gpiod_set_value(st->gpios[AD2S1210_SAMPLE], 1);
-	ret = ad2s1210_config_read(st, AD2S1210_REG_FAULT);
-	if (ret < 0)
-		goto error_ret;
+	ret = ad2s1210_config_पढ़ो(st, AD2S1210_REG_FAULT);
+	अगर (ret < 0)
+		जाओ error_ret;
 	gpiod_set_value(st->gpios[AD2S1210_SAMPLE], 0);
 	gpiod_set_value(st->gpios[AD2S1210_SAMPLE], 1);
 error_ret:
 	mutex_unlock(&st->lock);
 
-	return ret < 0 ? ret : len;
-}
+	वापस ret < 0 ? ret : len;
+पूर्ण
 
-static ssize_t ad2s1210_show_reg(struct device *dev,
-				 struct device_attribute *attr,
-				 char *buf)
-{
-	struct ad2s1210_state *st = iio_priv(dev_to_iio_dev(dev));
-	struct iio_dev_attr *iattr = to_iio_dev_attr(attr);
-	int ret;
+अटल sमाप_प्रकार ad2s1210_show_reg(काष्ठा device *dev,
+				 काष्ठा device_attribute *attr,
+				 अक्षर *buf)
+अणु
+	काष्ठा ad2s1210_state *st = iio_priv(dev_to_iio_dev(dev));
+	काष्ठा iio_dev_attr *iattr = to_iio_dev_attr(attr);
+	पूर्णांक ret;
 
 	mutex_lock(&st->lock);
-	ret = ad2s1210_config_read(st, iattr->address);
+	ret = ad2s1210_config_पढ़ो(st, iattr->address);
 	mutex_unlock(&st->lock);
 
-	return ret < 0 ? ret : sprintf(buf, "%d\n", ret);
-}
+	वापस ret < 0 ? ret : प्र_लिखो(buf, "%d\n", ret);
+पूर्ण
 
-static ssize_t ad2s1210_store_reg(struct device *dev,
-				  struct device_attribute *attr,
-				  const char *buf, size_t len)
-{
-	struct ad2s1210_state *st = iio_priv(dev_to_iio_dev(dev));
-	unsigned char data;
-	int ret;
-	struct iio_dev_attr *iattr = to_iio_dev_attr(attr);
+अटल sमाप_प्रकार ad2s1210_store_reg(काष्ठा device *dev,
+				  काष्ठा device_attribute *attr,
+				  स्थिर अक्षर *buf, माप_प्रकार len)
+अणु
+	काष्ठा ad2s1210_state *st = iio_priv(dev_to_iio_dev(dev));
+	अचिन्हित अक्षर data;
+	पूर्णांक ret;
+	काष्ठा iio_dev_attr *iattr = to_iio_dev_attr(attr);
 
 	ret = kstrtou8(buf, 10, &data);
-	if (ret)
-		return -EINVAL;
+	अगर (ret)
+		वापस -EINVAL;
 	mutex_lock(&st->lock);
-	ret = ad2s1210_config_write(st, iattr->address);
-	if (ret < 0)
-		goto error_ret;
-	ret = ad2s1210_config_write(st, data & AD2S1210_MSB_IS_LOW);
+	ret = ad2s1210_config_ग_लिखो(st, iattr->address);
+	अगर (ret < 0)
+		जाओ error_ret;
+	ret = ad2s1210_config_ग_लिखो(st, data & AD2S1210_MSB_IS_LOW);
 error_ret:
 	mutex_unlock(&st->lock);
-	return ret < 0 ? ret : len;
-}
+	वापस ret < 0 ? ret : len;
+पूर्ण
 
-static int ad2s1210_read_raw(struct iio_dev *indio_dev,
-			     struct iio_chan_spec const *chan,
-			     int *val,
-			     int *val2,
-			     long m)
-{
-	struct ad2s1210_state *st = iio_priv(indio_dev);
+अटल पूर्णांक ad2s1210_पढ़ो_raw(काष्ठा iio_dev *indio_dev,
+			     काष्ठा iio_chan_spec स्थिर *chan,
+			     पूर्णांक *val,
+			     पूर्णांक *val2,
+			     दीर्घ m)
+अणु
+	काष्ठा ad2s1210_state *st = iio_priv(indio_dev);
 	u16 negative;
-	int ret = 0;
+	पूर्णांक ret = 0;
 	u16 pos;
 	s16 vel;
 
@@ -473,194 +474,194 @@ static int ad2s1210_read_raw(struct iio_dev *indio_dev,
 	/* delay (6 * tck + 20) nano seconds */
 	udelay(1);
 
-	switch (chan->type) {
-	case IIO_ANGL:
+	चयन (chan->type) अणु
+	हाल IIO_ANGL:
 		ad2s1210_set_mode(MOD_POS, st);
-		break;
-	case IIO_ANGL_VEL:
+		अवरोध;
+	हाल IIO_ANGL_VEL:
 		ad2s1210_set_mode(MOD_VEL, st);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		ret = -EINVAL;
-		break;
-	}
-	if (ret < 0)
-		goto error_ret;
-	ret = spi_read(st->sdev, st->rx, 2);
-	if (ret < 0)
-		goto error_ret;
+		अवरोध;
+	पूर्ण
+	अगर (ret < 0)
+		जाओ error_ret;
+	ret = spi_पढ़ो(st->sdev, st->rx, 2);
+	अगर (ret < 0)
+		जाओ error_ret;
 
-	switch (chan->type) {
-	case IIO_ANGL:
+	चयन (chan->type) अणु
+	हाल IIO_ANGL:
 		pos = be16_to_cpup((__be16 *)st->rx);
-		if (st->hysteresis)
+		अगर (st->hysteresis)
 			pos >>= 16 - st->resolution;
 		*val = pos;
 		ret = IIO_VAL_INT;
-		break;
-	case IIO_ANGL_VEL:
+		अवरोध;
+	हाल IIO_ANGL_VEL:
 		negative = st->rx[0] & 0x80;
 		vel = be16_to_cpup((__be16 *)st->rx);
 		vel >>= 16 - st->resolution;
-		if (vel & 0x8000) {
+		अगर (vel & 0x8000) अणु
 			negative = (0xffff >> st->resolution) << st->resolution;
 			vel |= negative;
-		}
+		पूर्ण
 		*val = vel;
 		ret = IIO_VAL_INT;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		mutex_unlock(&st->lock);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 error_ret:
 	gpiod_set_value(st->gpios[AD2S1210_SAMPLE], 1);
 	/* delay (2 * tck + 20) nano seconds */
 	udelay(1);
 	mutex_unlock(&st->lock);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static IIO_DEVICE_ATTR(fclkin, 0644,
+अटल IIO_DEVICE_ATTR(fclkin, 0644,
 		       ad2s1210_show_fclkin, ad2s1210_store_fclkin, 0);
-static IIO_DEVICE_ATTR(fexcit, 0644,
+अटल IIO_DEVICE_ATTR(fexcit, 0644,
 		       ad2s1210_show_fexcit,	ad2s1210_store_fexcit, 0);
-static IIO_DEVICE_ATTR(control, 0644,
+अटल IIO_DEVICE_ATTR(control, 0644,
 		       ad2s1210_show_control, ad2s1210_store_control, 0);
-static IIO_DEVICE_ATTR(bits, 0644,
+अटल IIO_DEVICE_ATTR(bits, 0644,
 		       ad2s1210_show_resolution, ad2s1210_store_resolution, 0);
-static IIO_DEVICE_ATTR(fault, 0644,
+अटल IIO_DEVICE_ATTR(fault, 0644,
 		       ad2s1210_show_fault, ad2s1210_clear_fault, 0);
 
-static IIO_DEVICE_ATTR(los_thrd, 0644,
+अटल IIO_DEVICE_ATTR(los_thrd, 0644,
 		       ad2s1210_show_reg, ad2s1210_store_reg,
 		       AD2S1210_REG_LOS_THRD);
-static IIO_DEVICE_ATTR(dos_ovr_thrd, 0644,
+अटल IIO_DEVICE_ATTR(करोs_ovr_thrd, 0644,
 		       ad2s1210_show_reg, ad2s1210_store_reg,
 		       AD2S1210_REG_DOS_OVR_THRD);
-static IIO_DEVICE_ATTR(dos_mis_thrd, 0644,
+अटल IIO_DEVICE_ATTR(करोs_mis_thrd, 0644,
 		       ad2s1210_show_reg, ad2s1210_store_reg,
 		       AD2S1210_REG_DOS_MIS_THRD);
-static IIO_DEVICE_ATTR(dos_rst_max_thrd, 0644,
+अटल IIO_DEVICE_ATTR(करोs_rst_max_thrd, 0644,
 		       ad2s1210_show_reg, ad2s1210_store_reg,
 		       AD2S1210_REG_DOS_RST_MAX_THRD);
-static IIO_DEVICE_ATTR(dos_rst_min_thrd, 0644,
+अटल IIO_DEVICE_ATTR(करोs_rst_min_thrd, 0644,
 		       ad2s1210_show_reg, ad2s1210_store_reg,
 		       AD2S1210_REG_DOS_RST_MIN_THRD);
-static IIO_DEVICE_ATTR(lot_high_thrd, 0644,
+अटल IIO_DEVICE_ATTR(lot_high_thrd, 0644,
 		       ad2s1210_show_reg, ad2s1210_store_reg,
 		       AD2S1210_REG_LOT_HIGH_THRD);
-static IIO_DEVICE_ATTR(lot_low_thrd, 0644,
+अटल IIO_DEVICE_ATTR(lot_low_thrd, 0644,
 		       ad2s1210_show_reg, ad2s1210_store_reg,
 		       AD2S1210_REG_LOT_LOW_THRD);
 
-static const struct iio_chan_spec ad2s1210_channels[] = {
-	{
+अटल स्थिर काष्ठा iio_chan_spec ad2s1210_channels[] = अणु
+	अणु
 		.type = IIO_ANGL,
 		.indexed = 1,
 		.channel = 0,
 		.info_mask_separate = BIT(IIO_CHAN_INFO_RAW),
-	}, {
+	पूर्ण, अणु
 		.type = IIO_ANGL_VEL,
 		.indexed = 1,
 		.channel = 0,
 		.info_mask_separate = BIT(IIO_CHAN_INFO_RAW),
-	}
-};
+	पूर्ण
+पूर्ण;
 
-static struct attribute *ad2s1210_attributes[] = {
+अटल काष्ठा attribute *ad2s1210_attributes[] = अणु
 	&iio_dev_attr_fclkin.dev_attr.attr,
 	&iio_dev_attr_fexcit.dev_attr.attr,
 	&iio_dev_attr_control.dev_attr.attr,
 	&iio_dev_attr_bits.dev_attr.attr,
 	&iio_dev_attr_fault.dev_attr.attr,
 	&iio_dev_attr_los_thrd.dev_attr.attr,
-	&iio_dev_attr_dos_ovr_thrd.dev_attr.attr,
-	&iio_dev_attr_dos_mis_thrd.dev_attr.attr,
-	&iio_dev_attr_dos_rst_max_thrd.dev_attr.attr,
-	&iio_dev_attr_dos_rst_min_thrd.dev_attr.attr,
+	&iio_dev_attr_करोs_ovr_thrd.dev_attr.attr,
+	&iio_dev_attr_करोs_mis_thrd.dev_attr.attr,
+	&iio_dev_attr_करोs_rst_max_thrd.dev_attr.attr,
+	&iio_dev_attr_करोs_rst_min_thrd.dev_attr.attr,
 	&iio_dev_attr_lot_high_thrd.dev_attr.attr,
 	&iio_dev_attr_lot_low_thrd.dev_attr.attr,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-static const struct attribute_group ad2s1210_attribute_group = {
+अटल स्थिर काष्ठा attribute_group ad2s1210_attribute_group = अणु
 	.attrs = ad2s1210_attributes,
-};
+पूर्ण;
 
-static int ad2s1210_initial(struct ad2s1210_state *st)
-{
-	unsigned char data;
-	int ret;
+अटल पूर्णांक ad2s1210_initial(काष्ठा ad2s1210_state *st)
+अणु
+	अचिन्हित अक्षर data;
+	पूर्णांक ret;
 
 	mutex_lock(&st->lock);
 	ad2s1210_set_resolution_pin(st);
 
-	ret = ad2s1210_config_write(st, AD2S1210_REG_CONTROL);
-	if (ret < 0)
-		goto error_ret;
+	ret = ad2s1210_config_ग_लिखो(st, AD2S1210_REG_CONTROL);
+	अगर (ret < 0)
+		जाओ error_ret;
 	data = AD2S1210_DEF_CONTROL & ~(AD2S1210_SET_RESOLUTION);
 	data |= (st->resolution - 10) >> 1;
-	ret = ad2s1210_config_write(st, data);
-	if (ret < 0)
-		goto error_ret;
-	ret = ad2s1210_config_read(st, AD2S1210_REG_CONTROL);
-	if (ret < 0)
-		goto error_ret;
+	ret = ad2s1210_config_ग_लिखो(st, data);
+	अगर (ret < 0)
+		जाओ error_ret;
+	ret = ad2s1210_config_पढ़ो(st, AD2S1210_REG_CONTROL);
+	अगर (ret < 0)
+		जाओ error_ret;
 
-	if (ret & AD2S1210_MSB_IS_HIGH) {
+	अगर (ret & AD2S1210_MSB_IS_HIGH) अणु
 		ret = -EIO;
-		goto error_ret;
-	}
+		जाओ error_ret;
+	पूर्ण
 
 	ret = ad2s1210_update_frequency_control_word(st);
-	if (ret < 0)
-		goto error_ret;
+	अगर (ret < 0)
+		जाओ error_ret;
 	ret = ad2s1210_soft_reset(st);
 error_ret:
 	mutex_unlock(&st->lock);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const struct iio_info ad2s1210_info = {
-	.read_raw = ad2s1210_read_raw,
+अटल स्थिर काष्ठा iio_info ad2s1210_info = अणु
+	.पढ़ो_raw = ad2s1210_पढ़ो_raw,
 	.attrs = &ad2s1210_attribute_group,
-};
+पूर्ण;
 
-static int ad2s1210_setup_gpios(struct ad2s1210_state *st)
-{
-	struct spi_device *spi = st->sdev;
-	int i, ret;
+अटल पूर्णांक ad2s1210_setup_gpios(काष्ठा ad2s1210_state *st)
+अणु
+	काष्ठा spi_device *spi = st->sdev;
+	पूर्णांक i, ret;
 
-	for (i = 0; i < ARRAY_SIZE(gpios); i++) {
+	क्रम (i = 0; i < ARRAY_SIZE(gpios); i++) अणु
 		st->gpios[i] = devm_gpiod_get(&spi->dev, gpios[i].name,
 					      gpios[i].flags);
-		if (IS_ERR(st->gpios[i])) {
+		अगर (IS_ERR(st->gpios[i])) अणु
 			ret = PTR_ERR(st->gpios[i]);
 			dev_err(&spi->dev,
 				"ad2s1210: failed to request %s GPIO: %d\n",
 				gpios[i].name, ret);
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ad2s1210_probe(struct spi_device *spi)
-{
-	struct iio_dev *indio_dev;
-	struct ad2s1210_state *st;
-	int ret;
+अटल पूर्णांक ad2s1210_probe(काष्ठा spi_device *spi)
+अणु
+	काष्ठा iio_dev *indio_dev;
+	काष्ठा ad2s1210_state *st;
+	पूर्णांक ret;
 
-	indio_dev = devm_iio_device_alloc(&spi->dev, sizeof(*st));
-	if (!indio_dev)
-		return -ENOMEM;
+	indio_dev = devm_iio_device_alloc(&spi->dev, माप(*st));
+	अगर (!indio_dev)
+		वापस -ENOMEM;
 	st = iio_priv(indio_dev);
 	ret = ad2s1210_setup_gpios(st);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	spi_set_drvdata(spi, indio_dev);
 
@@ -672,43 +673,43 @@ static int ad2s1210_probe(struct spi_device *spi)
 	st->fexcit = AD2S1210_DEF_EXCIT;
 
 	indio_dev->info = &ad2s1210_info;
-	indio_dev->modes = INDIO_DIRECT_MODE;
+	indio_dev->modes = INDIO_सूचीECT_MODE;
 	indio_dev->channels = ad2s1210_channels;
 	indio_dev->num_channels = ARRAY_SIZE(ad2s1210_channels);
 	indio_dev->name = spi_get_device_id(spi)->name;
 
-	ret = devm_iio_device_register(&spi->dev, indio_dev);
-	if (ret)
-		return ret;
+	ret = devm_iio_device_रेजिस्टर(&spi->dev, indio_dev);
+	अगर (ret)
+		वापस ret;
 
 	st->fclkin = spi->max_speed_hz;
 	spi->mode = SPI_MODE_3;
 	spi_setup(spi);
 	ad2s1210_initial(st);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct of_device_id ad2s1210_of_match[] = {
-	{ .compatible = "adi,ad2s1210", },
-	{ }
-};
+अटल स्थिर काष्ठा of_device_id ad2s1210_of_match[] = अणु
+	अणु .compatible = "adi,ad2s1210", पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, ad2s1210_of_match);
 
-static const struct spi_device_id ad2s1210_id[] = {
-	{ "ad2s1210" },
-	{}
-};
+अटल स्थिर काष्ठा spi_device_id ad2s1210_id[] = अणु
+	अणु "ad2s1210" पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(spi, ad2s1210_id);
 
-static struct spi_driver ad2s1210_driver = {
-	.driver = {
+अटल काष्ठा spi_driver ad2s1210_driver = अणु
+	.driver = अणु
 		.name = DRV_NAME,
 		.of_match_table = of_match_ptr(ad2s1210_of_match),
-	},
+	पूर्ण,
 	.probe = ad2s1210_probe,
 	.id_table = ad2s1210_id,
-};
+पूर्ण;
 module_spi_driver(ad2s1210_driver);
 
 MODULE_AUTHOR("Graff Yang <graff.yang@gmail.com>");

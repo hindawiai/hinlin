@@ -1,136 +1,137 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 //
 // MediaTek ALSA SoC Audio DAI TDM Control
 //
 // Copyright (c) 2018 MediaTek Inc.
 // Author: KaiChieh Chuang <kaichieh.chuang@mediatek.com>
 
-#include <linux/regmap.h>
-#include <sound/pcm_params.h>
-#include "mt8183-afe-clk.h"
-#include "mt8183-afe-common.h"
-#include "mt8183-interconnection.h"
-#include "mt8183-reg.h"
+#समावेश <linux/regmap.h>
+#समावेश <sound/pcm_params.h>
+#समावेश "mt8183-afe-clk.h"
+#समावेश "mt8183-afe-common.h"
+#समावेश "mt8183-interconnection.h"
+#समावेश "mt8183-reg.h"
 
-struct mtk_afe_tdm_priv {
-	int bck_id;
-	int bck_rate;
-	int tdm_out_mode;
-	int bck_invert;
-	int lck_invert;
-	int mclk_id;
-	int mclk_multiple; /* according to sample rate */
-	int mclk_rate;
-	int mclk_apll;
-};
+काष्ठा mtk_afe_tdm_priv अणु
+	पूर्णांक bck_id;
+	पूर्णांक bck_rate;
+	पूर्णांक tdm_out_mode;
+	पूर्णांक bck_invert;
+	पूर्णांक lck_invert;
+	पूर्णांक mclk_id;
+	पूर्णांक mclk_multiple; /* according to sample rate */
+	पूर्णांक mclk_rate;
+	पूर्णांक mclk_apll;
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	TDM_OUT_I2S = 0,
 	TDM_OUT_TDM = 1,
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	TDM_BCK_NON_INV = 0,
 	TDM_BCK_INV = 1,
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	TDM_LCK_NON_INV = 0,
 	TDM_LCK_INV = 1,
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	TDM_WLEN_16_BIT = 1,
 	TDM_WLEN_32_BIT = 2,
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	TDM_CHANNEL_BCK_16 = 0,
 	TDM_CHANNEL_BCK_24 = 1,
 	TDM_CHANNEL_BCK_32 = 2,
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	TDM_CHANNEL_NUM_2 = 0,
 	TDM_CHANNEL_NUM_4 = 1,
 	TDM_CHANNEL_NUM_8 = 2,
-};
+पूर्ण;
 
-enum  {
+क्रमागत  अणु
 	TDM_CH_START_O30_O31 = 0,
 	TDM_CH_START_O32_O33,
 	TDM_CH_START_O34_O35,
 	TDM_CH_START_O36_O37,
 	TDM_CH_ZERO,
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	HDMI_BIT_WIDTH_16_BIT = 0,
 	HDMI_BIT_WIDTH_32_BIT = 1,
-};
+पूर्ण;
 
-static unsigned int get_hdmi_wlen(snd_pcm_format_t format)
-{
-	return snd_pcm_format_physical_width(format) <= 16 ?
+अटल अचिन्हित पूर्णांक get_hdmi_wlen(snd_pcm_क्रमmat_t क्रमmat)
+अणु
+	वापस snd_pcm_क्रमmat_physical_width(क्रमmat) <= 16 ?
 	       HDMI_BIT_WIDTH_16_BIT : HDMI_BIT_WIDTH_32_BIT;
-}
+पूर्ण
 
-static unsigned int get_tdm_wlen(snd_pcm_format_t format)
-{
-	return snd_pcm_format_physical_width(format) <= 16 ?
+अटल अचिन्हित पूर्णांक get_tdm_wlen(snd_pcm_क्रमmat_t क्रमmat)
+अणु
+	वापस snd_pcm_क्रमmat_physical_width(क्रमmat) <= 16 ?
 	       TDM_WLEN_16_BIT : TDM_WLEN_32_BIT;
-}
+पूर्ण
 
-static unsigned int get_tdm_channel_bck(snd_pcm_format_t format)
-{
-	return snd_pcm_format_physical_width(format) <= 16 ?
+अटल अचिन्हित पूर्णांक get_tdm_channel_bck(snd_pcm_क्रमmat_t क्रमmat)
+अणु
+	वापस snd_pcm_क्रमmat_physical_width(क्रमmat) <= 16 ?
 	       TDM_CHANNEL_BCK_16 : TDM_CHANNEL_BCK_32;
-}
+पूर्ण
 
-static unsigned int get_tdm_lrck_width(snd_pcm_format_t format)
-{
-	return snd_pcm_format_physical_width(format) - 1;
-}
+अटल अचिन्हित पूर्णांक get_tdm_lrck_width(snd_pcm_क्रमmat_t क्रमmat)
+अणु
+	वापस snd_pcm_क्रमmat_physical_width(क्रमmat) - 1;
+पूर्ण
 
-static unsigned int get_tdm_ch(unsigned int ch)
-{
-	switch (ch) {
-	case 1:
-	case 2:
-		return TDM_CHANNEL_NUM_2;
-	case 3:
-	case 4:
-		return TDM_CHANNEL_NUM_4;
-	case 5:
-	case 6:
-	case 7:
-	case 8:
-	default:
-		return TDM_CHANNEL_NUM_8;
-	}
-}
+अटल अचिन्हित पूर्णांक get_tdm_ch(अचिन्हित पूर्णांक ch)
+अणु
+	चयन (ch) अणु
+	हाल 1:
+	हाल 2:
+		वापस TDM_CHANNEL_NUM_2;
+	हाल 3:
+	हाल 4:
+		वापस TDM_CHANNEL_NUM_4;
+	हाल 5:
+	हाल 6:
+	हाल 7:
+	हाल 8:
+	शेष:
+		वापस TDM_CHANNEL_NUM_8;
+	पूर्ण
+पूर्ण
 
-static unsigned int get_tdm_ch_fixup(unsigned int channels)
-{
-	if (channels > 4)
-		return 8;
-	else if (channels > 2)
-		return 4;
-	else
-		return 2;
-}
+अटल अचिन्हित पूर्णांक get_tdm_ch_fixup(अचिन्हित पूर्णांक channels)
+अणु
+	अगर (channels > 4)
+		वापस 8;
+	अन्यथा अगर (channels > 2)
+		वापस 4;
+	अन्यथा
+		वापस 2;
+पूर्ण
 
-static unsigned int get_tdm_ch_per_sdata(unsigned int mode,
-					 unsigned int channels)
-{
-	if (mode == TDM_OUT_TDM)
-		return get_tdm_ch_fixup(channels);
-	else
-		return 2;
-}
+अटल अचिन्हित पूर्णांक get_tdm_ch_per_sdata(अचिन्हित पूर्णांक mode,
+					 अचिन्हित पूर्णांक channels)
+अणु
+	अगर (mode == TDM_OUT_TDM)
+		वापस get_tdm_ch_fixup(channels);
+	अन्यथा
+		वापस 2;
+पूर्ण
 
-/* interconnection */
-enum {
+/* पूर्णांकerconnection */
+क्रमागत अणु
 	HDMI_CONN_CH0 = 0,
 	HDMI_CONN_CH1,
 	HDMI_CONN_CH2,
@@ -139,14 +140,14 @@ enum {
 	HDMI_CONN_CH5,
 	HDMI_CONN_CH6,
 	HDMI_CONN_CH7,
-};
+पूर्ण;
 
-static const char *const hdmi_conn_mux_map[] = {
+अटल स्थिर अक्षर *स्थिर hdmi_conn_mux_map[] = अणु
 	"CH0", "CH1", "CH2", "CH3",
 	"CH4", "CH5", "CH6", "CH7",
-};
+पूर्ण;
 
-static int hdmi_conn_mux_map_value[] = {
+अटल पूर्णांक hdmi_conn_mux_map_value[] = अणु
 	HDMI_CONN_CH0,
 	HDMI_CONN_CH1,
 	HDMI_CONN_CH2,
@@ -155,148 +156,148 @@ static int hdmi_conn_mux_map_value[] = {
 	HDMI_CONN_CH5,
 	HDMI_CONN_CH6,
 	HDMI_CONN_CH7,
-};
+पूर्ण;
 
-static SOC_VALUE_ENUM_SINGLE_DECL(hdmi_ch0_mux_map_enum,
+अटल SOC_VALUE_ENUM_SINGLE_DECL(hdmi_ch0_mux_map_क्रमागत,
 				  AFE_HDMI_CONN0,
 				  HDMI_O_0_SFT,
 				  HDMI_O_0_MASK,
 				  hdmi_conn_mux_map,
 				  hdmi_conn_mux_map_value);
 
-static const struct snd_kcontrol_new hdmi_ch0_mux_control =
-	SOC_DAPM_ENUM("HDMI_CH0_MUX", hdmi_ch0_mux_map_enum);
+अटल स्थिर काष्ठा snd_kcontrol_new hdmi_ch0_mux_control =
+	SOC_DAPM_ENUM("HDMI_CH0_MUX", hdmi_ch0_mux_map_क्रमागत);
 
-static SOC_VALUE_ENUM_SINGLE_DECL(hdmi_ch1_mux_map_enum,
+अटल SOC_VALUE_ENUM_SINGLE_DECL(hdmi_ch1_mux_map_क्रमागत,
 				  AFE_HDMI_CONN0,
 				  HDMI_O_1_SFT,
 				  HDMI_O_1_MASK,
 				  hdmi_conn_mux_map,
 				  hdmi_conn_mux_map_value);
 
-static const struct snd_kcontrol_new hdmi_ch1_mux_control =
-	SOC_DAPM_ENUM("HDMI_CH1_MUX", hdmi_ch1_mux_map_enum);
+अटल स्थिर काष्ठा snd_kcontrol_new hdmi_ch1_mux_control =
+	SOC_DAPM_ENUM("HDMI_CH1_MUX", hdmi_ch1_mux_map_क्रमागत);
 
-static SOC_VALUE_ENUM_SINGLE_DECL(hdmi_ch2_mux_map_enum,
+अटल SOC_VALUE_ENUM_SINGLE_DECL(hdmi_ch2_mux_map_क्रमागत,
 				  AFE_HDMI_CONN0,
 				  HDMI_O_2_SFT,
 				  HDMI_O_2_MASK,
 				  hdmi_conn_mux_map,
 				  hdmi_conn_mux_map_value);
 
-static const struct snd_kcontrol_new hdmi_ch2_mux_control =
-	SOC_DAPM_ENUM("HDMI_CH2_MUX", hdmi_ch2_mux_map_enum);
+अटल स्थिर काष्ठा snd_kcontrol_new hdmi_ch2_mux_control =
+	SOC_DAPM_ENUM("HDMI_CH2_MUX", hdmi_ch2_mux_map_क्रमागत);
 
-static SOC_VALUE_ENUM_SINGLE_DECL(hdmi_ch3_mux_map_enum,
+अटल SOC_VALUE_ENUM_SINGLE_DECL(hdmi_ch3_mux_map_क्रमागत,
 				  AFE_HDMI_CONN0,
 				  HDMI_O_3_SFT,
 				  HDMI_O_3_MASK,
 				  hdmi_conn_mux_map,
 				  hdmi_conn_mux_map_value);
 
-static const struct snd_kcontrol_new hdmi_ch3_mux_control =
-	SOC_DAPM_ENUM("HDMI_CH3_MUX", hdmi_ch3_mux_map_enum);
+अटल स्थिर काष्ठा snd_kcontrol_new hdmi_ch3_mux_control =
+	SOC_DAPM_ENUM("HDMI_CH3_MUX", hdmi_ch3_mux_map_क्रमागत);
 
-static SOC_VALUE_ENUM_SINGLE_DECL(hdmi_ch4_mux_map_enum,
+अटल SOC_VALUE_ENUM_SINGLE_DECL(hdmi_ch4_mux_map_क्रमागत,
 				  AFE_HDMI_CONN0,
 				  HDMI_O_4_SFT,
 				  HDMI_O_4_MASK,
 				  hdmi_conn_mux_map,
 				  hdmi_conn_mux_map_value);
 
-static const struct snd_kcontrol_new hdmi_ch4_mux_control =
-	SOC_DAPM_ENUM("HDMI_CH4_MUX", hdmi_ch4_mux_map_enum);
+अटल स्थिर काष्ठा snd_kcontrol_new hdmi_ch4_mux_control =
+	SOC_DAPM_ENUM("HDMI_CH4_MUX", hdmi_ch4_mux_map_क्रमागत);
 
-static SOC_VALUE_ENUM_SINGLE_DECL(hdmi_ch5_mux_map_enum,
+अटल SOC_VALUE_ENUM_SINGLE_DECL(hdmi_ch5_mux_map_क्रमागत,
 				  AFE_HDMI_CONN0,
 				  HDMI_O_5_SFT,
 				  HDMI_O_5_MASK,
 				  hdmi_conn_mux_map,
 				  hdmi_conn_mux_map_value);
 
-static const struct snd_kcontrol_new hdmi_ch5_mux_control =
-	SOC_DAPM_ENUM("HDMI_CH5_MUX", hdmi_ch5_mux_map_enum);
+अटल स्थिर काष्ठा snd_kcontrol_new hdmi_ch5_mux_control =
+	SOC_DAPM_ENUM("HDMI_CH5_MUX", hdmi_ch5_mux_map_क्रमागत);
 
-static SOC_VALUE_ENUM_SINGLE_DECL(hdmi_ch6_mux_map_enum,
+अटल SOC_VALUE_ENUM_SINGLE_DECL(hdmi_ch6_mux_map_क्रमागत,
 				  AFE_HDMI_CONN0,
 				  HDMI_O_6_SFT,
 				  HDMI_O_6_MASK,
 				  hdmi_conn_mux_map,
 				  hdmi_conn_mux_map_value);
 
-static const struct snd_kcontrol_new hdmi_ch6_mux_control =
-	SOC_DAPM_ENUM("HDMI_CH6_MUX", hdmi_ch6_mux_map_enum);
+अटल स्थिर काष्ठा snd_kcontrol_new hdmi_ch6_mux_control =
+	SOC_DAPM_ENUM("HDMI_CH6_MUX", hdmi_ch6_mux_map_क्रमागत);
 
-static SOC_VALUE_ENUM_SINGLE_DECL(hdmi_ch7_mux_map_enum,
+अटल SOC_VALUE_ENUM_SINGLE_DECL(hdmi_ch7_mux_map_क्रमागत,
 				  AFE_HDMI_CONN0,
 				  HDMI_O_7_SFT,
 				  HDMI_O_7_MASK,
 				  hdmi_conn_mux_map,
 				  hdmi_conn_mux_map_value);
 
-static const struct snd_kcontrol_new hdmi_ch7_mux_control =
-	SOC_DAPM_ENUM("HDMI_CH7_MUX", hdmi_ch7_mux_map_enum);
+अटल स्थिर काष्ठा snd_kcontrol_new hdmi_ch7_mux_control =
+	SOC_DAPM_ENUM("HDMI_CH7_MUX", hdmi_ch7_mux_map_क्रमागत);
 
-enum {
+क्रमागत अणु
 	SUPPLY_SEQ_APLL,
 	SUPPLY_SEQ_TDM_MCK_EN,
 	SUPPLY_SEQ_TDM_BCK_EN,
-};
+पूर्ण;
 
-static int mtk_tdm_bck_en_event(struct snd_soc_dapm_widget *w,
-				struct snd_kcontrol *kcontrol,
-				int event)
-{
-	struct snd_soc_component *cmpnt = snd_soc_dapm_to_component(w->dapm);
-	struct mtk_base_afe *afe = snd_soc_component_get_drvdata(cmpnt);
-	struct mt8183_afe_private *afe_priv = afe->platform_priv;
-	struct mtk_afe_tdm_priv *tdm_priv = afe_priv->dai_priv[MT8183_DAI_TDM];
+अटल पूर्णांक mtk_tdm_bck_en_event(काष्ठा snd_soc_dapm_widget *w,
+				काष्ठा snd_kcontrol *kcontrol,
+				पूर्णांक event)
+अणु
+	काष्ठा snd_soc_component *cmpnt = snd_soc_dapm_to_component(w->dapm);
+	काष्ठा mtk_base_afe *afe = snd_soc_component_get_drvdata(cmpnt);
+	काष्ठा mt8183_afe_निजी *afe_priv = afe->platक्रमm_priv;
+	काष्ठा mtk_afe_tdm_priv *tdm_priv = afe_priv->dai_priv[MT8183_DAI_TDM];
 
 	dev_info(cmpnt->dev, "%s(), name %s, event 0x%x\n",
 		 __func__, w->name, event);
 
-	switch (event) {
-	case SND_SOC_DAPM_PRE_PMU:
+	चयन (event) अणु
+	हाल SND_SOC_DAPM_PRE_PMU:
 		mt8183_mck_enable(afe, tdm_priv->bck_id, tdm_priv->bck_rate);
-		break;
-	case SND_SOC_DAPM_POST_PMD:
+		अवरोध;
+	हाल SND_SOC_DAPM_POST_PMD:
 		mt8183_mck_disable(afe, tdm_priv->bck_id);
-		break;
-	default:
-		break;
-	}
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mtk_tdm_mck_en_event(struct snd_soc_dapm_widget *w,
-				struct snd_kcontrol *kcontrol,
-				int event)
-{
-	struct snd_soc_component *cmpnt = snd_soc_dapm_to_component(w->dapm);
-	struct mtk_base_afe *afe = snd_soc_component_get_drvdata(cmpnt);
-	struct mt8183_afe_private *afe_priv = afe->platform_priv;
-	struct mtk_afe_tdm_priv *tdm_priv = afe_priv->dai_priv[MT8183_DAI_TDM];
+अटल पूर्णांक mtk_tdm_mck_en_event(काष्ठा snd_soc_dapm_widget *w,
+				काष्ठा snd_kcontrol *kcontrol,
+				पूर्णांक event)
+अणु
+	काष्ठा snd_soc_component *cmpnt = snd_soc_dapm_to_component(w->dapm);
+	काष्ठा mtk_base_afe *afe = snd_soc_component_get_drvdata(cmpnt);
+	काष्ठा mt8183_afe_निजी *afe_priv = afe->platक्रमm_priv;
+	काष्ठा mtk_afe_tdm_priv *tdm_priv = afe_priv->dai_priv[MT8183_DAI_TDM];
 
 	dev_info(cmpnt->dev, "%s(), name %s, event 0x%x\n",
 		 __func__, w->name, event);
 
-	switch (event) {
-	case SND_SOC_DAPM_PRE_PMU:
+	चयन (event) अणु
+	हाल SND_SOC_DAPM_PRE_PMU:
 		mt8183_mck_enable(afe, tdm_priv->mclk_id, tdm_priv->mclk_rate);
-		break;
-	case SND_SOC_DAPM_POST_PMD:
+		अवरोध;
+	हाल SND_SOC_DAPM_POST_PMD:
 		tdm_priv->mclk_rate = 0;
 		mt8183_mck_disable(afe, tdm_priv->mclk_id);
-		break;
-	default:
-		break;
-	}
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct snd_soc_dapm_widget mtk_dai_tdm_widgets[] = {
+अटल स्थिर काष्ठा snd_soc_dapm_widget mtk_dai_tdm_widमाला_लो[] = अणु
 	SND_SOC_DAPM_MUX("HDMI_CH0_MUX", SND_SOC_NOPM, 0, 0,
 			 &hdmi_ch0_mux_control),
 	SND_SOC_DAPM_MUX("HDMI_CH1_MUX", SND_SOC_NOPM, 0, 0,
@@ -325,248 +326,248 @@ static const struct snd_soc_dapm_widget mtk_dai_tdm_widgets[] = {
 			      SND_SOC_NOPM, 0, 0,
 			      mtk_tdm_mck_en_event,
 			      SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMD),
-};
+पूर्ण;
 
-static int mtk_afe_tdm_apll_connect(struct snd_soc_dapm_widget *source,
-				    struct snd_soc_dapm_widget *sink)
-{
-	struct snd_soc_dapm_widget *w = sink;
-	struct snd_soc_component *cmpnt = snd_soc_dapm_to_component(w->dapm);
-	struct mtk_base_afe *afe = snd_soc_component_get_drvdata(cmpnt);
-	struct mt8183_afe_private *afe_priv = afe->platform_priv;
-	struct mtk_afe_tdm_priv *tdm_priv = afe_priv->dai_priv[MT8183_DAI_TDM];
-	int cur_apll;
+अटल पूर्णांक mtk_afe_tdm_apll_connect(काष्ठा snd_soc_dapm_widget *source,
+				    काष्ठा snd_soc_dapm_widget *sink)
+अणु
+	काष्ठा snd_soc_dapm_widget *w = sink;
+	काष्ठा snd_soc_component *cmpnt = snd_soc_dapm_to_component(w->dapm);
+	काष्ठा mtk_base_afe *afe = snd_soc_component_get_drvdata(cmpnt);
+	काष्ठा mt8183_afe_निजी *afe_priv = afe->platक्रमm_priv;
+	काष्ठा mtk_afe_tdm_priv *tdm_priv = afe_priv->dai_priv[MT8183_DAI_TDM];
+	पूर्णांक cur_apll;
 
 	/* which apll */
 	cur_apll = mt8183_get_apll_by_name(afe, source->name);
 
-	return (tdm_priv->mclk_apll == cur_apll) ? 1 : 0;
-}
+	वापस (tdm_priv->mclk_apll == cur_apll) ? 1 : 0;
+पूर्ण
 
-static const struct snd_soc_dapm_route mtk_dai_tdm_routes[] = {
-	{"HDMI_CH0_MUX", "CH0", "HDMI"},
-	{"HDMI_CH0_MUX", "CH1", "HDMI"},
-	{"HDMI_CH0_MUX", "CH2", "HDMI"},
-	{"HDMI_CH0_MUX", "CH3", "HDMI"},
-	{"HDMI_CH0_MUX", "CH4", "HDMI"},
-	{"HDMI_CH0_MUX", "CH5", "HDMI"},
-	{"HDMI_CH0_MUX", "CH6", "HDMI"},
-	{"HDMI_CH0_MUX", "CH7", "HDMI"},
+अटल स्थिर काष्ठा snd_soc_dapm_route mtk_dai_tdm_routes[] = अणु
+	अणु"HDMI_CH0_MUX", "CH0", "HDMI"पूर्ण,
+	अणु"HDMI_CH0_MUX", "CH1", "HDMI"पूर्ण,
+	अणु"HDMI_CH0_MUX", "CH2", "HDMI"पूर्ण,
+	अणु"HDMI_CH0_MUX", "CH3", "HDMI"पूर्ण,
+	अणु"HDMI_CH0_MUX", "CH4", "HDMI"पूर्ण,
+	अणु"HDMI_CH0_MUX", "CH5", "HDMI"पूर्ण,
+	अणु"HDMI_CH0_MUX", "CH6", "HDMI"पूर्ण,
+	अणु"HDMI_CH0_MUX", "CH7", "HDMI"पूर्ण,
 
-	{"HDMI_CH1_MUX", "CH0", "HDMI"},
-	{"HDMI_CH1_MUX", "CH1", "HDMI"},
-	{"HDMI_CH1_MUX", "CH2", "HDMI"},
-	{"HDMI_CH1_MUX", "CH3", "HDMI"},
-	{"HDMI_CH1_MUX", "CH4", "HDMI"},
-	{"HDMI_CH1_MUX", "CH5", "HDMI"},
-	{"HDMI_CH1_MUX", "CH6", "HDMI"},
-	{"HDMI_CH1_MUX", "CH7", "HDMI"},
+	अणु"HDMI_CH1_MUX", "CH0", "HDMI"पूर्ण,
+	अणु"HDMI_CH1_MUX", "CH1", "HDMI"पूर्ण,
+	अणु"HDMI_CH1_MUX", "CH2", "HDMI"पूर्ण,
+	अणु"HDMI_CH1_MUX", "CH3", "HDMI"पूर्ण,
+	अणु"HDMI_CH1_MUX", "CH4", "HDMI"पूर्ण,
+	अणु"HDMI_CH1_MUX", "CH5", "HDMI"पूर्ण,
+	अणु"HDMI_CH1_MUX", "CH6", "HDMI"पूर्ण,
+	अणु"HDMI_CH1_MUX", "CH7", "HDMI"पूर्ण,
 
-	{"HDMI_CH2_MUX", "CH0", "HDMI"},
-	{"HDMI_CH2_MUX", "CH1", "HDMI"},
-	{"HDMI_CH2_MUX", "CH2", "HDMI"},
-	{"HDMI_CH2_MUX", "CH3", "HDMI"},
-	{"HDMI_CH2_MUX", "CH4", "HDMI"},
-	{"HDMI_CH2_MUX", "CH5", "HDMI"},
-	{"HDMI_CH2_MUX", "CH6", "HDMI"},
-	{"HDMI_CH2_MUX", "CH7", "HDMI"},
+	अणु"HDMI_CH2_MUX", "CH0", "HDMI"पूर्ण,
+	अणु"HDMI_CH2_MUX", "CH1", "HDMI"पूर्ण,
+	अणु"HDMI_CH2_MUX", "CH2", "HDMI"पूर्ण,
+	अणु"HDMI_CH2_MUX", "CH3", "HDMI"पूर्ण,
+	अणु"HDMI_CH2_MUX", "CH4", "HDMI"पूर्ण,
+	अणु"HDMI_CH2_MUX", "CH5", "HDMI"पूर्ण,
+	अणु"HDMI_CH2_MUX", "CH6", "HDMI"पूर्ण,
+	अणु"HDMI_CH2_MUX", "CH7", "HDMI"पूर्ण,
 
-	{"HDMI_CH3_MUX", "CH0", "HDMI"},
-	{"HDMI_CH3_MUX", "CH1", "HDMI"},
-	{"HDMI_CH3_MUX", "CH2", "HDMI"},
-	{"HDMI_CH3_MUX", "CH3", "HDMI"},
-	{"HDMI_CH3_MUX", "CH4", "HDMI"},
-	{"HDMI_CH3_MUX", "CH5", "HDMI"},
-	{"HDMI_CH3_MUX", "CH6", "HDMI"},
-	{"HDMI_CH3_MUX", "CH7", "HDMI"},
+	अणु"HDMI_CH3_MUX", "CH0", "HDMI"पूर्ण,
+	अणु"HDMI_CH3_MUX", "CH1", "HDMI"पूर्ण,
+	अणु"HDMI_CH3_MUX", "CH2", "HDMI"पूर्ण,
+	अणु"HDMI_CH3_MUX", "CH3", "HDMI"पूर्ण,
+	अणु"HDMI_CH3_MUX", "CH4", "HDMI"पूर्ण,
+	अणु"HDMI_CH3_MUX", "CH5", "HDMI"पूर्ण,
+	अणु"HDMI_CH3_MUX", "CH6", "HDMI"पूर्ण,
+	अणु"HDMI_CH3_MUX", "CH7", "HDMI"पूर्ण,
 
-	{"HDMI_CH4_MUX", "CH0", "HDMI"},
-	{"HDMI_CH4_MUX", "CH1", "HDMI"},
-	{"HDMI_CH4_MUX", "CH2", "HDMI"},
-	{"HDMI_CH4_MUX", "CH3", "HDMI"},
-	{"HDMI_CH4_MUX", "CH4", "HDMI"},
-	{"HDMI_CH4_MUX", "CH5", "HDMI"},
-	{"HDMI_CH4_MUX", "CH6", "HDMI"},
-	{"HDMI_CH4_MUX", "CH7", "HDMI"},
+	अणु"HDMI_CH4_MUX", "CH0", "HDMI"पूर्ण,
+	अणु"HDMI_CH4_MUX", "CH1", "HDMI"पूर्ण,
+	अणु"HDMI_CH4_MUX", "CH2", "HDMI"पूर्ण,
+	अणु"HDMI_CH4_MUX", "CH3", "HDMI"पूर्ण,
+	अणु"HDMI_CH4_MUX", "CH4", "HDMI"पूर्ण,
+	अणु"HDMI_CH4_MUX", "CH5", "HDMI"पूर्ण,
+	अणु"HDMI_CH4_MUX", "CH6", "HDMI"पूर्ण,
+	अणु"HDMI_CH4_MUX", "CH7", "HDMI"पूर्ण,
 
-	{"HDMI_CH5_MUX", "CH0", "HDMI"},
-	{"HDMI_CH5_MUX", "CH1", "HDMI"},
-	{"HDMI_CH5_MUX", "CH2", "HDMI"},
-	{"HDMI_CH5_MUX", "CH3", "HDMI"},
-	{"HDMI_CH5_MUX", "CH4", "HDMI"},
-	{"HDMI_CH5_MUX", "CH5", "HDMI"},
-	{"HDMI_CH5_MUX", "CH6", "HDMI"},
-	{"HDMI_CH5_MUX", "CH7", "HDMI"},
+	अणु"HDMI_CH5_MUX", "CH0", "HDMI"पूर्ण,
+	अणु"HDMI_CH5_MUX", "CH1", "HDMI"पूर्ण,
+	अणु"HDMI_CH5_MUX", "CH2", "HDMI"पूर्ण,
+	अणु"HDMI_CH5_MUX", "CH3", "HDMI"पूर्ण,
+	अणु"HDMI_CH5_MUX", "CH4", "HDMI"पूर्ण,
+	अणु"HDMI_CH5_MUX", "CH5", "HDMI"पूर्ण,
+	अणु"HDMI_CH5_MUX", "CH6", "HDMI"पूर्ण,
+	अणु"HDMI_CH5_MUX", "CH7", "HDMI"पूर्ण,
 
-	{"HDMI_CH6_MUX", "CH0", "HDMI"},
-	{"HDMI_CH6_MUX", "CH1", "HDMI"},
-	{"HDMI_CH6_MUX", "CH2", "HDMI"},
-	{"HDMI_CH6_MUX", "CH3", "HDMI"},
-	{"HDMI_CH6_MUX", "CH4", "HDMI"},
-	{"HDMI_CH6_MUX", "CH5", "HDMI"},
-	{"HDMI_CH6_MUX", "CH6", "HDMI"},
-	{"HDMI_CH6_MUX", "CH7", "HDMI"},
+	अणु"HDMI_CH6_MUX", "CH0", "HDMI"पूर्ण,
+	अणु"HDMI_CH6_MUX", "CH1", "HDMI"पूर्ण,
+	अणु"HDMI_CH6_MUX", "CH2", "HDMI"पूर्ण,
+	अणु"HDMI_CH6_MUX", "CH3", "HDMI"पूर्ण,
+	अणु"HDMI_CH6_MUX", "CH4", "HDMI"पूर्ण,
+	अणु"HDMI_CH6_MUX", "CH5", "HDMI"पूर्ण,
+	अणु"HDMI_CH6_MUX", "CH6", "HDMI"पूर्ण,
+	अणु"HDMI_CH6_MUX", "CH7", "HDMI"पूर्ण,
 
-	{"HDMI_CH7_MUX", "CH0", "HDMI"},
-	{"HDMI_CH7_MUX", "CH1", "HDMI"},
-	{"HDMI_CH7_MUX", "CH2", "HDMI"},
-	{"HDMI_CH7_MUX", "CH3", "HDMI"},
-	{"HDMI_CH7_MUX", "CH4", "HDMI"},
-	{"HDMI_CH7_MUX", "CH5", "HDMI"},
-	{"HDMI_CH7_MUX", "CH6", "HDMI"},
-	{"HDMI_CH7_MUX", "CH7", "HDMI"},
+	अणु"HDMI_CH7_MUX", "CH0", "HDMI"पूर्ण,
+	अणु"HDMI_CH7_MUX", "CH1", "HDMI"पूर्ण,
+	अणु"HDMI_CH7_MUX", "CH2", "HDMI"पूर्ण,
+	अणु"HDMI_CH7_MUX", "CH3", "HDMI"पूर्ण,
+	अणु"HDMI_CH7_MUX", "CH4", "HDMI"पूर्ण,
+	अणु"HDMI_CH7_MUX", "CH5", "HDMI"पूर्ण,
+	अणु"HDMI_CH7_MUX", "CH6", "HDMI"पूर्ण,
+	अणु"HDMI_CH7_MUX", "CH7", "HDMI"पूर्ण,
 
-	{"TDM", NULL, "HDMI_CH0_MUX"},
-	{"TDM", NULL, "HDMI_CH1_MUX"},
-	{"TDM", NULL, "HDMI_CH2_MUX"},
-	{"TDM", NULL, "HDMI_CH3_MUX"},
-	{"TDM", NULL, "HDMI_CH4_MUX"},
-	{"TDM", NULL, "HDMI_CH5_MUX"},
-	{"TDM", NULL, "HDMI_CH6_MUX"},
-	{"TDM", NULL, "HDMI_CH7_MUX"},
+	अणु"TDM", शून्य, "HDMI_CH0_MUX"पूर्ण,
+	अणु"TDM", शून्य, "HDMI_CH1_MUX"पूर्ण,
+	अणु"TDM", शून्य, "HDMI_CH2_MUX"पूर्ण,
+	अणु"TDM", शून्य, "HDMI_CH3_MUX"पूर्ण,
+	अणु"TDM", शून्य, "HDMI_CH4_MUX"पूर्ण,
+	अणु"TDM", शून्य, "HDMI_CH5_MUX"पूर्ण,
+	अणु"TDM", शून्य, "HDMI_CH6_MUX"पूर्ण,
+	अणु"TDM", शून्य, "HDMI_CH7_MUX"पूर्ण,
 
-	{"TDM", NULL, "aud_tdm_clk"},
-	{"TDM", NULL, "TDM_BCK"},
-	{"TDM_BCK", NULL, "TDM_MCK"},
-	{"TDM_MCK", NULL, APLL1_W_NAME, mtk_afe_tdm_apll_connect},
-	{"TDM_MCK", NULL, APLL2_W_NAME, mtk_afe_tdm_apll_connect},
-};
+	अणु"TDM", शून्य, "aud_tdm_clk"पूर्ण,
+	अणु"TDM", शून्य, "TDM_BCK"पूर्ण,
+	अणु"TDM_BCK", शून्य, "TDM_MCK"पूर्ण,
+	अणु"TDM_MCK", शून्य, APLL1_W_NAME, mtk_afe_tdm_apll_connectपूर्ण,
+	अणु"TDM_MCK", शून्य, APLL2_W_NAME, mtk_afe_tdm_apll_connectपूर्ण,
+पूर्ण;
 
 /* dai ops */
-static int mtk_dai_tdm_cal_mclk(struct mtk_base_afe *afe,
-				struct mtk_afe_tdm_priv *tdm_priv,
-				int freq)
-{
-	int apll;
-	int apll_rate;
+अटल पूर्णांक mtk_dai_tdm_cal_mclk(काष्ठा mtk_base_afe *afe,
+				काष्ठा mtk_afe_tdm_priv *tdm_priv,
+				पूर्णांक freq)
+अणु
+	पूर्णांक apll;
+	पूर्णांक apll_rate;
 
 	apll = mt8183_get_apll_by_rate(afe, freq);
 	apll_rate = mt8183_get_apll_rate(afe, apll);
 
-	if (!freq || freq > apll_rate) {
+	अगर (!freq || freq > apll_rate) अणु
 		dev_warn(afe->dev,
 			 "%s(), freq(%d Hz) invalid\n", __func__, freq);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (apll_rate % freq != 0) {
+	अगर (apll_rate % freq != 0) अणु
 		dev_warn(afe->dev,
 			 "%s(), APLL cannot generate %d Hz", __func__, freq);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	tdm_priv->mclk_rate = freq;
 	tdm_priv->mclk_apll = apll;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mtk_dai_tdm_hw_params(struct snd_pcm_substream *substream,
-				 struct snd_pcm_hw_params *params,
-				 struct snd_soc_dai *dai)
-{
-	struct mtk_base_afe *afe = snd_soc_dai_get_drvdata(dai);
-	struct mt8183_afe_private *afe_priv = afe->platform_priv;
-	int tdm_id = dai->id;
-	struct mtk_afe_tdm_priv *tdm_priv = afe_priv->dai_priv[tdm_id];
-	unsigned int tdm_out_mode = tdm_priv->tdm_out_mode;
-	unsigned int rate = params_rate(params);
-	unsigned int channels = params_channels(params);
-	unsigned int out_channels_per_sdata =
+अटल पूर्णांक mtk_dai_tdm_hw_params(काष्ठा snd_pcm_substream *substream,
+				 काष्ठा snd_pcm_hw_params *params,
+				 काष्ठा snd_soc_dai *dai)
+अणु
+	काष्ठा mtk_base_afe *afe = snd_soc_dai_get_drvdata(dai);
+	काष्ठा mt8183_afe_निजी *afe_priv = afe->platक्रमm_priv;
+	पूर्णांक tdm_id = dai->id;
+	काष्ठा mtk_afe_tdm_priv *tdm_priv = afe_priv->dai_priv[tdm_id];
+	अचिन्हित पूर्णांक tdm_out_mode = tdm_priv->tdm_out_mode;
+	अचिन्हित पूर्णांक rate = params_rate(params);
+	अचिन्हित पूर्णांक channels = params_channels(params);
+	अचिन्हित पूर्णांक out_channels_per_sdata =
 		get_tdm_ch_per_sdata(tdm_out_mode, channels);
-	snd_pcm_format_t format = params_format(params);
-	unsigned int tdm_con = 0;
+	snd_pcm_क्रमmat_t क्रमmat = params_क्रमmat(params);
+	अचिन्हित पूर्णांक tdm_con = 0;
 
-	/* calculate mclk_rate, if not set explicitly */
-	if (!tdm_priv->mclk_rate) {
+	/* calculate mclk_rate, अगर not set explicitly */
+	अगर (!tdm_priv->mclk_rate) अणु
 		tdm_priv->mclk_rate = rate * tdm_priv->mclk_multiple;
 		mtk_dai_tdm_cal_mclk(afe,
 				     tdm_priv,
 				     tdm_priv->mclk_rate);
-	}
+	पूर्ण
 
 	/* calculate bck */
 	tdm_priv->bck_rate = rate *
 			     out_channels_per_sdata *
-			     snd_pcm_format_physical_width(format);
+			     snd_pcm_क्रमmat_physical_width(क्रमmat);
 
-	if (tdm_priv->bck_rate > tdm_priv->mclk_rate)
+	अगर (tdm_priv->bck_rate > tdm_priv->mclk_rate)
 		dev_warn(afe->dev, "%s(), bck_rate > mclk_rate rate", __func__);
 
-	if (tdm_priv->mclk_rate % tdm_priv->bck_rate != 0)
+	अगर (tdm_priv->mclk_rate % tdm_priv->bck_rate != 0)
 		dev_warn(afe->dev, "%s(), bck cannot generate", __func__);
 
 	dev_info(afe->dev, "%s(), id %d, rate %d, channels %d, format %d, mclk_rate %d, bck_rate %d\n",
 		 __func__,
-		 tdm_id, rate, channels, format,
+		 tdm_id, rate, channels, क्रमmat,
 		 tdm_priv->mclk_rate, tdm_priv->bck_rate);
 	dev_info(afe->dev, "%s(), out_channels_per_sdata = %d\n",
 		 __func__, out_channels_per_sdata);
 
 	/* set tdm */
-	if (tdm_priv->bck_invert)
+	अगर (tdm_priv->bck_invert)
 		regmap_update_bits(afe->regmap, AUDIO_TOP_CON3,
 				   BCK_INVERSE_MASK_SFT,
 				   0x1 << BCK_INVERSE_SFT);
 
-	if (tdm_priv->lck_invert)
+	अगर (tdm_priv->lck_invert)
 		tdm_con |= 1 << LRCK_INVERSE_SFT;
 
-	if (tdm_priv->tdm_out_mode == TDM_OUT_I2S) {
+	अगर (tdm_priv->tdm_out_mode == TDM_OUT_I2S) अणु
 		tdm_con |= 1 << DELAY_DATA_SFT;
-		tdm_con |= get_tdm_lrck_width(format) << LRCK_TDM_WIDTH_SFT;
-	} else if (tdm_priv->tdm_out_mode == TDM_OUT_TDM) {
+		tdm_con |= get_tdm_lrck_width(क्रमmat) << LRCK_TDM_WIDTH_SFT;
+	पूर्ण अन्यथा अगर (tdm_priv->tdm_out_mode == TDM_OUT_TDM) अणु
 		tdm_con |= 0 << DELAY_DATA_SFT;
 		tdm_con |= 0 << LRCK_TDM_WIDTH_SFT;
-	}
+	पूर्ण
 
 	tdm_con |= 1 << LEFT_ALIGN_SFT;
-	tdm_con |= get_tdm_wlen(format) << WLEN_SFT;
+	tdm_con |= get_tdm_wlen(क्रमmat) << WLEN_SFT;
 	tdm_con |= get_tdm_ch(out_channels_per_sdata) << CHANNEL_NUM_SFT;
-	tdm_con |= get_tdm_channel_bck(format) << CHANNEL_BCK_CYCLES_SFT;
-	regmap_write(afe->regmap, AFE_TDM_CON1, tdm_con);
+	tdm_con |= get_tdm_channel_bck(क्रमmat) << CHANNEL_BCK_CYCLES_SFT;
+	regmap_ग_लिखो(afe->regmap, AFE_TDM_CON1, tdm_con);
 
-	if (out_channels_per_sdata == 2) {
-		switch (channels) {
-		case 1:
-		case 2:
+	अगर (out_channels_per_sdata == 2) अणु
+		चयन (channels) अणु
+		हाल 1:
+		हाल 2:
 			tdm_con = TDM_CH_START_O30_O31 << ST_CH_PAIR_SOUT0_SFT;
 			tdm_con |= TDM_CH_ZERO << ST_CH_PAIR_SOUT1_SFT;
 			tdm_con |= TDM_CH_ZERO << ST_CH_PAIR_SOUT2_SFT;
 			tdm_con |= TDM_CH_ZERO << ST_CH_PAIR_SOUT3_SFT;
-			break;
-		case 3:
-		case 4:
+			अवरोध;
+		हाल 3:
+		हाल 4:
 			tdm_con = TDM_CH_START_O30_O31 << ST_CH_PAIR_SOUT0_SFT;
 			tdm_con |= TDM_CH_START_O32_O33 << ST_CH_PAIR_SOUT1_SFT;
 			tdm_con |= TDM_CH_ZERO << ST_CH_PAIR_SOUT2_SFT;
 			tdm_con |= TDM_CH_ZERO << ST_CH_PAIR_SOUT3_SFT;
-			break;
-		case 5:
-		case 6:
+			अवरोध;
+		हाल 5:
+		हाल 6:
 			tdm_con = TDM_CH_START_O30_O31 << ST_CH_PAIR_SOUT0_SFT;
 			tdm_con |= TDM_CH_START_O32_O33 << ST_CH_PAIR_SOUT1_SFT;
 			tdm_con |= TDM_CH_START_O34_O35 << ST_CH_PAIR_SOUT2_SFT;
 			tdm_con |= TDM_CH_ZERO << ST_CH_PAIR_SOUT3_SFT;
-			break;
-		case 7:
-		case 8:
+			अवरोध;
+		हाल 7:
+		हाल 8:
 			tdm_con = TDM_CH_START_O30_O31 << ST_CH_PAIR_SOUT0_SFT;
 			tdm_con |= TDM_CH_START_O32_O33 << ST_CH_PAIR_SOUT1_SFT;
 			tdm_con |= TDM_CH_START_O34_O35 << ST_CH_PAIR_SOUT2_SFT;
 			tdm_con |= TDM_CH_START_O36_O37 << ST_CH_PAIR_SOUT3_SFT;
-			break;
-		default:
+			अवरोध;
+		शेष:
 			tdm_con = 0;
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		tdm_con = TDM_CH_START_O30_O31 << ST_CH_PAIR_SOUT0_SFT;
 		tdm_con |= TDM_CH_ZERO << ST_CH_PAIR_SOUT1_SFT;
 		tdm_con |= TDM_CH_ZERO << ST_CH_PAIR_SOUT2_SFT;
 		tdm_con |= TDM_CH_ZERO << ST_CH_PAIR_SOUT3_SFT;
-	}
+	पूर्ण
 
-	regmap_write(afe->regmap, AFE_TDM_CON2, tdm_con);
+	regmap_ग_लिखो(afe->regmap, AFE_TDM_CON2, tdm_con);
 
 	regmap_update_bits(afe->regmap, AFE_HDMI_OUT_CON0,
 			   AFE_HDMI_OUT_CH_NUM_MASK_SFT,
@@ -574,19 +575,19 @@ static int mtk_dai_tdm_hw_params(struct snd_pcm_substream *substream,
 
 	regmap_update_bits(afe->regmap, AFE_HDMI_OUT_CON0,
 			   AFE_HDMI_OUT_BIT_WIDTH_MASK_SFT,
-			   get_hdmi_wlen(format) << AFE_HDMI_OUT_BIT_WIDTH_SFT);
-	return 0;
-}
+			   get_hdmi_wlen(क्रमmat) << AFE_HDMI_OUT_BIT_WIDTH_SFT);
+	वापस 0;
+पूर्ण
 
-static int mtk_dai_tdm_trigger(struct snd_pcm_substream *substream,
-			       int cmd,
-			       struct snd_soc_dai *dai)
-{
-	struct mtk_base_afe *afe = snd_soc_dai_get_drvdata(dai);
+अटल पूर्णांक mtk_dai_tdm_trigger(काष्ठा snd_pcm_substream *substream,
+			       पूर्णांक cmd,
+			       काष्ठा snd_soc_dai *dai)
+अणु
+	काष्ठा mtk_base_afe *afe = snd_soc_dai_get_drvdata(dai);
 
-	switch (cmd) {
-	case SNDRV_PCM_TRIGGER_START:
-	case SNDRV_PCM_TRIGGER_RESUME:
+	चयन (cmd) अणु
+	हाल SNDRV_PCM_TRIGGER_START:
+	हाल SNDRV_PCM_TRIGGER_RESUME:
 		/* enable Out control */
 		regmap_update_bits(afe->regmap, AFE_HDMI_OUT_CON0,
 				   AFE_HDMI_OUT_ON_MASK_SFT,
@@ -594,9 +595,9 @@ static int mtk_dai_tdm_trigger(struct snd_pcm_substream *substream,
 		/* enable tdm */
 		regmap_update_bits(afe->regmap, AFE_TDM_CON1,
 				   TDM_EN_MASK_SFT, 0x1 << TDM_EN_SFT);
-		break;
-	case SNDRV_PCM_TRIGGER_STOP:
-	case SNDRV_PCM_TRIGGER_SUSPEND:
+		अवरोध;
+	हाल SNDRV_PCM_TRIGGER_STOP:
+	हाल SNDRV_PCM_TRIGGER_SUSPEND:
 		/* disable tdm */
 		regmap_update_bits(afe->regmap, AFE_TDM_CON1,
 				   TDM_EN_MASK_SFT, 0);
@@ -604,145 +605,145 @@ static int mtk_dai_tdm_trigger(struct snd_pcm_substream *substream,
 		regmap_update_bits(afe->regmap, AFE_HDMI_OUT_CON0,
 				   AFE_HDMI_OUT_ON_MASK_SFT,
 				   0);
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mtk_dai_tdm_set_sysclk(struct snd_soc_dai *dai,
-				  int clk_id, unsigned int freq, int dir)
-{
-	struct mtk_base_afe *afe = dev_get_drvdata(dai->dev);
-	struct mt8183_afe_private *afe_priv = afe->platform_priv;
-	struct mtk_afe_tdm_priv *tdm_priv = afe_priv->dai_priv[dai->id];
+अटल पूर्णांक mtk_dai_tdm_set_sysclk(काष्ठा snd_soc_dai *dai,
+				  पूर्णांक clk_id, अचिन्हित पूर्णांक freq, पूर्णांक dir)
+अणु
+	काष्ठा mtk_base_afe *afe = dev_get_drvdata(dai->dev);
+	काष्ठा mt8183_afe_निजी *afe_priv = afe->platक्रमm_priv;
+	काष्ठा mtk_afe_tdm_priv *tdm_priv = afe_priv->dai_priv[dai->id];
 
-	if (!tdm_priv) {
+	अगर (!tdm_priv) अणु
 		dev_warn(afe->dev, "%s(), tdm_priv == NULL", __func__);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (dir != SND_SOC_CLOCK_OUT) {
+	अगर (dir != SND_SOC_CLOCK_OUT) अणु
 		dev_warn(afe->dev, "%s(), dir != SND_SOC_CLOCK_OUT", __func__);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	dev_info(afe->dev, "%s(), freq %d\n", __func__, freq);
 
-	return mtk_dai_tdm_cal_mclk(afe, tdm_priv, freq);
-}
+	वापस mtk_dai_tdm_cal_mclk(afe, tdm_priv, freq);
+पूर्ण
 
-static int mtk_dai_tdm_set_fmt(struct snd_soc_dai *dai, unsigned int fmt)
-{
-	struct mtk_base_afe *afe = dev_get_drvdata(dai->dev);
-	struct mt8183_afe_private *afe_priv = afe->platform_priv;
-	struct mtk_afe_tdm_priv *tdm_priv = afe_priv->dai_priv[dai->id];
+अटल पूर्णांक mtk_dai_tdm_set_fmt(काष्ठा snd_soc_dai *dai, अचिन्हित पूर्णांक fmt)
+अणु
+	काष्ठा mtk_base_afe *afe = dev_get_drvdata(dai->dev);
+	काष्ठा mt8183_afe_निजी *afe_priv = afe->platक्रमm_priv;
+	काष्ठा mtk_afe_tdm_priv *tdm_priv = afe_priv->dai_priv[dai->id];
 
-	if (!tdm_priv) {
+	अगर (!tdm_priv) अणु
 		dev_warn(afe->dev, "%s(), tdm_priv == NULL", __func__);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	/* DAI mode*/
-	switch (fmt & SND_SOC_DAIFMT_FORMAT_MASK) {
-	case SND_SOC_DAIFMT_I2S:
+	चयन (fmt & SND_SOC_DAIFMT_FORMAT_MASK) अणु
+	हाल SND_SOC_DAIFMT_I2S:
 		tdm_priv->tdm_out_mode = TDM_OUT_I2S;
-		break;
-	case SND_SOC_DAIFMT_DSP_A:
+		अवरोध;
+	हाल SND_SOC_DAIFMT_DSP_A:
 		tdm_priv->tdm_out_mode = TDM_OUT_TDM;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		tdm_priv->tdm_out_mode = TDM_OUT_I2S;
-	}
+	पूर्ण
 
-	/* DAI clock inversion*/
-	switch (fmt & SND_SOC_DAIFMT_INV_MASK) {
-	case SND_SOC_DAIFMT_NB_NF:
+	/* DAI घड़ी inversion*/
+	चयन (fmt & SND_SOC_DAIFMT_INV_MASK) अणु
+	हाल SND_SOC_DAIFMT_NB_NF:
 		tdm_priv->bck_invert = TDM_BCK_NON_INV;
 		tdm_priv->lck_invert = TDM_LCK_NON_INV;
-		break;
-	case SND_SOC_DAIFMT_NB_IF:
+		अवरोध;
+	हाल SND_SOC_DAIFMT_NB_IF:
 		tdm_priv->bck_invert = TDM_BCK_NON_INV;
 		tdm_priv->lck_invert = TDM_LCK_INV;
-		break;
-	case SND_SOC_DAIFMT_IB_NF:
+		अवरोध;
+	हाल SND_SOC_DAIFMT_IB_NF:
 		tdm_priv->bck_invert = TDM_BCK_INV;
 		tdm_priv->lck_invert = TDM_LCK_NON_INV;
-		break;
-	case SND_SOC_DAIFMT_IB_IF:
-	default:
+		अवरोध;
+	हाल SND_SOC_DAIFMT_IB_IF:
+	शेष:
 		tdm_priv->bck_invert = TDM_BCK_INV;
 		tdm_priv->lck_invert = TDM_LCK_INV;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct snd_soc_dai_ops mtk_dai_tdm_ops = {
+अटल स्थिर काष्ठा snd_soc_dai_ops mtk_dai_tdm_ops = अणु
 	.hw_params = mtk_dai_tdm_hw_params,
 	.trigger = mtk_dai_tdm_trigger,
 	.set_sysclk = mtk_dai_tdm_set_sysclk,
 	.set_fmt = mtk_dai_tdm_set_fmt,
-};
+पूर्ण;
 
 /* dai driver */
-#define MTK_TDM_RATES (SNDRV_PCM_RATE_8000_48000 |\
+#घोषणा MTK_TDM_RATES (SNDRV_PCM_RATE_8000_48000 |\
 		       SNDRV_PCM_RATE_88200 |\
 		       SNDRV_PCM_RATE_96000 |\
 		       SNDRV_PCM_RATE_176400 |\
 		       SNDRV_PCM_RATE_192000)
 
-#define MTK_TDM_FORMATS (SNDRV_PCM_FMTBIT_S16_LE |\
+#घोषणा MTK_TDM_FORMATS (SNDRV_PCM_FMTBIT_S16_LE |\
 			 SNDRV_PCM_FMTBIT_S24_LE |\
 			 SNDRV_PCM_FMTBIT_S32_LE)
 
-static struct snd_soc_dai_driver mtk_dai_tdm_driver[] = {
-	{
+अटल काष्ठा snd_soc_dai_driver mtk_dai_tdm_driver[] = अणु
+	अणु
 		.name = "TDM",
 		.id = MT8183_DAI_TDM,
-		.playback = {
+		.playback = अणु
 			.stream_name = "TDM",
 			.channels_min = 2,
 			.channels_max = 8,
 			.rates = MTK_TDM_RATES,
-			.formats = MTK_TDM_FORMATS,
-		},
+			.क्रमmats = MTK_TDM_FORMATS,
+		पूर्ण,
 		.ops = &mtk_dai_tdm_ops,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-int mt8183_dai_tdm_register(struct mtk_base_afe *afe)
-{
-	struct mt8183_afe_private *afe_priv = afe->platform_priv;
-	struct mtk_afe_tdm_priv *tdm_priv;
-	struct mtk_base_afe_dai *dai;
+पूर्णांक mt8183_dai_tdm_रेजिस्टर(काष्ठा mtk_base_afe *afe)
+अणु
+	काष्ठा mt8183_afe_निजी *afe_priv = afe->platक्रमm_priv;
+	काष्ठा mtk_afe_tdm_priv *tdm_priv;
+	काष्ठा mtk_base_afe_dai *dai;
 
-	dai = devm_kzalloc(afe->dev, sizeof(*dai), GFP_KERNEL);
-	if (!dai)
-		return -ENOMEM;
+	dai = devm_kzalloc(afe->dev, माप(*dai), GFP_KERNEL);
+	अगर (!dai)
+		वापस -ENOMEM;
 
 	list_add(&dai->list, &afe->sub_dais);
 
 	dai->dai_drivers = mtk_dai_tdm_driver;
 	dai->num_dai_drivers = ARRAY_SIZE(mtk_dai_tdm_driver);
 
-	dai->dapm_widgets = mtk_dai_tdm_widgets;
-	dai->num_dapm_widgets = ARRAY_SIZE(mtk_dai_tdm_widgets);
+	dai->dapm_widमाला_लो = mtk_dai_tdm_widमाला_लो;
+	dai->num_dapm_widमाला_लो = ARRAY_SIZE(mtk_dai_tdm_widमाला_लो);
 	dai->dapm_routes = mtk_dai_tdm_routes;
 	dai->num_dapm_routes = ARRAY_SIZE(mtk_dai_tdm_routes);
 
-	tdm_priv = devm_kzalloc(afe->dev, sizeof(struct mtk_afe_tdm_priv),
+	tdm_priv = devm_kzalloc(afe->dev, माप(काष्ठा mtk_afe_tdm_priv),
 				GFP_KERNEL);
-	if (!tdm_priv)
-		return -ENOMEM;
+	अगर (!tdm_priv)
+		वापस -ENOMEM;
 
 	tdm_priv->mclk_multiple = 128;
 	tdm_priv->bck_id = MT8183_I2S4_BCK;
 	tdm_priv->mclk_id = MT8183_I2S4_MCK;
 
 	afe_priv->dai_priv[MT8183_DAI_TDM] = tdm_priv;
-	return 0;
-}
+	वापस 0;
+पूर्ण

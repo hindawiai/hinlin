@@ -1,47 +1,48 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
- * Driver for Analog Devices ADV748X HDMI receiver with AFE
+ * Driver क्रम Analog Devices ADV748X HDMI receiver with AFE
  *
  * Copyright (C) 2017 Renesas Electronics Corp.
  *
  * Authors:
  *	Koji Matsuoka <koji.matsuoka.xm@renesas.com>
- *	Niklas Söderlund <niklas.soderlund@ragnatech.se>
+ *	Niklas Sथघderlund <niklas.soderlund@ragnatech.se>
  *	Kieran Bingham <kieran.bingham@ideasonboard.com>
  */
 
-#include <linux/delay.h>
-#include <linux/errno.h>
-#include <linux/i2c.h>
-#include <linux/module.h>
-#include <linux/mutex.h>
-#include <linux/of_graph.h>
-#include <linux/regmap.h>
-#include <linux/slab.h>
-#include <linux/v4l2-dv-timings.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/i2c.h>
+#समावेश <linux/module.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/of_graph.h>
+#समावेश <linux/regmap.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/v4l2-dv-timings.h>
 
-#include <media/v4l2-ctrls.h>
-#include <media/v4l2-device.h>
-#include <media/v4l2-dv-timings.h>
-#include <media/v4l2-fwnode.h>
-#include <media/v4l2-ioctl.h>
+#समावेश <media/v4l2-ctrls.h>
+#समावेश <media/v4l2-device.h>
+#समावेश <media/v4l2-dv-timings.h>
+#समावेश <media/v4l2-fwnode.h>
+#समावेश <media/v4l2-ioctl.h>
 
-#include "adv748x.h"
+#समावेश "adv748x.h"
 
 /* -----------------------------------------------------------------------------
  * Register manipulation
  */
 
-#define ADV748X_REGMAP_CONF(n) \
-{ \
+#घोषणा ADV748X_REGMAP_CONF(n) \
+अणु \
 	.name = n, \
 	.reg_bits = 8, \
 	.val_bits = 8, \
-	.max_register = 0xff, \
+	.max_रेजिस्टर = 0xff, \
 	.cache_type = REGCACHE_NONE, \
-}
+पूर्ण
 
-static const struct regmap_config adv748x_regmap_cnf[] = {
+अटल स्थिर काष्ठा regmap_config adv748x_regmap_cnf[] = अणु
 	ADV748X_REGMAP_CONF("io"),
 	ADV748X_REGMAP_CONF("dpll"),
 	ADV748X_REGMAP_CONF("cp"),
@@ -54,537 +55,537 @@ static const struct regmap_config adv748x_regmap_cnf[] = {
 	ADV748X_REGMAP_CONF("sdp"),
 	ADV748X_REGMAP_CONF("txa"),
 	ADV748X_REGMAP_CONF("txb"),
-};
+पूर्ण;
 
-static int adv748x_configure_regmap(struct adv748x_state *state, int region)
-{
-	int err;
+अटल पूर्णांक adv748x_configure_regmap(काष्ठा adv748x_state *state, पूर्णांक region)
+अणु
+	पूर्णांक err;
 
-	if (!state->i2c_clients[region])
-		return -ENODEV;
+	अगर (!state->i2c_clients[region])
+		वापस -ENODEV;
 
 	state->regmap[region] =
 		devm_regmap_init_i2c(state->i2c_clients[region],
 				     &adv748x_regmap_cnf[region]);
 
-	if (IS_ERR(state->regmap[region])) {
+	अगर (IS_ERR(state->regmap[region])) अणु
 		err = PTR_ERR(state->regmap[region]);
 		adv_err(state,
 			"Error initializing regmap %d with error %d\n",
 			region, err);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
-struct adv748x_register_map {
-	const char *name;
-	u8 default_addr;
-};
+	वापस 0;
+पूर्ण
+काष्ठा adv748x_रेजिस्टर_map अणु
+	स्थिर अक्षर *name;
+	u8 शेष_addr;
+पूर्ण;
 
-static const struct adv748x_register_map adv748x_default_addresses[] = {
-	[ADV748X_PAGE_IO] = { "main", 0x70 },
-	[ADV748X_PAGE_DPLL] = { "dpll", 0x26 },
-	[ADV748X_PAGE_CP] = { "cp", 0x22 },
-	[ADV748X_PAGE_HDMI] = { "hdmi", 0x34 },
-	[ADV748X_PAGE_EDID] = { "edid", 0x36 },
-	[ADV748X_PAGE_REPEATER] = { "repeater", 0x32 },
-	[ADV748X_PAGE_INFOFRAME] = { "infoframe", 0x31 },
-	[ADV748X_PAGE_CBUS] = { "cbus", 0x30 },
-	[ADV748X_PAGE_CEC] = { "cec", 0x41 },
-	[ADV748X_PAGE_SDP] = { "sdp", 0x79 },
-	[ADV748X_PAGE_TXB] = { "txb", 0x48 },
-	[ADV748X_PAGE_TXA] = { "txa", 0x4a },
-};
+अटल स्थिर काष्ठा adv748x_रेजिस्टर_map adv748x_शेष_addresses[] = अणु
+	[ADV748X_PAGE_IO] = अणु "main", 0x70 पूर्ण,
+	[ADV748X_PAGE_DPLL] = अणु "dpll", 0x26 पूर्ण,
+	[ADV748X_PAGE_CP] = अणु "cp", 0x22 पूर्ण,
+	[ADV748X_PAGE_HDMI] = अणु "hdmi", 0x34 पूर्ण,
+	[ADV748X_PAGE_EDID] = अणु "edid", 0x36 पूर्ण,
+	[ADV748X_PAGE_REPEATER] = अणु "repeater", 0x32 पूर्ण,
+	[ADV748X_PAGE_INFOFRAME] = अणु "infoframe", 0x31 पूर्ण,
+	[ADV748X_PAGE_CBUS] = अणु "cbus", 0x30 पूर्ण,
+	[ADV748X_PAGE_CEC] = अणु "cec", 0x41 पूर्ण,
+	[ADV748X_PAGE_SDP] = अणु "sdp", 0x79 पूर्ण,
+	[ADV748X_PAGE_TXB] = अणु "txb", 0x48 पूर्ण,
+	[ADV748X_PAGE_TXA] = अणु "txa", 0x4a पूर्ण,
+पूर्ण;
 
-static int adv748x_read_check(struct adv748x_state *state,
-			      int client_page, u8 reg)
-{
-	struct i2c_client *client = state->i2c_clients[client_page];
-	int err;
-	unsigned int val;
+अटल पूर्णांक adv748x_पढ़ो_check(काष्ठा adv748x_state *state,
+			      पूर्णांक client_page, u8 reg)
+अणु
+	काष्ठा i2c_client *client = state->i2c_clients[client_page];
+	पूर्णांक err;
+	अचिन्हित पूर्णांक val;
 
-	err = regmap_read(state->regmap[client_page], reg, &val);
+	err = regmap_पढ़ो(state->regmap[client_page], reg, &val);
 
-	if (err) {
+	अगर (err) अणु
 		adv_err(state, "error reading %02x, %02x\n",
 				client->addr, reg);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	return val;
-}
+	वापस val;
+पूर्ण
 
-int adv748x_read(struct adv748x_state *state, u8 page, u8 reg)
-{
-	return adv748x_read_check(state, page, reg);
-}
+पूर्णांक adv748x_पढ़ो(काष्ठा adv748x_state *state, u8 page, u8 reg)
+अणु
+	वापस adv748x_पढ़ो_check(state, page, reg);
+पूर्ण
 
-int adv748x_write(struct adv748x_state *state, u8 page, u8 reg, u8 value)
-{
-	return regmap_write(state->regmap[page], reg, value);
-}
+पूर्णांक adv748x_ग_लिखो(काष्ठा adv748x_state *state, u8 page, u8 reg, u8 value)
+अणु
+	वापस regmap_ग_लिखो(state->regmap[page], reg, value);
+पूर्ण
 
-static int adv748x_write_check(struct adv748x_state *state, u8 page, u8 reg,
-			       u8 value, int *error)
-{
-	if (*error)
-		return *error;
+अटल पूर्णांक adv748x_ग_लिखो_check(काष्ठा adv748x_state *state, u8 page, u8 reg,
+			       u8 value, पूर्णांक *error)
+अणु
+	अगर (*error)
+		वापस *error;
 
-	*error = adv748x_write(state, page, reg, value);
-	return *error;
-}
+	*error = adv748x_ग_लिखो(state, page, reg, value);
+	वापस *error;
+पूर्ण
 
-/* adv748x_write_block(): Write raw data with a maximum of I2C_SMBUS_BLOCK_MAX
- * size to one or more registers.
+/* adv748x_ग_लिखो_block(): Write raw data with a maximum of I2C_SMBUS_BLOCK_MAX
+ * size to one or more रेजिस्टरs.
  *
- * A value of zero will be returned on success, a negative errno will
- * be returned in error cases.
+ * A value of zero will be वापसed on success, a negative त्रुटि_सं will
+ * be वापसed in error हालs.
  */
-int adv748x_write_block(struct adv748x_state *state, int client_page,
-			unsigned int init_reg, const void *val,
-			size_t val_len)
-{
-	struct regmap *regmap = state->regmap[client_page];
+पूर्णांक adv748x_ग_लिखो_block(काष्ठा adv748x_state *state, पूर्णांक client_page,
+			अचिन्हित पूर्णांक init_reg, स्थिर व्योम *val,
+			माप_प्रकार val_len)
+अणु
+	काष्ठा regmap *regmap = state->regmap[client_page];
 
-	if (val_len > I2C_SMBUS_BLOCK_MAX)
+	अगर (val_len > I2C_SMBUS_BLOCK_MAX)
 		val_len = I2C_SMBUS_BLOCK_MAX;
 
-	return regmap_raw_write(regmap, init_reg, val, val_len);
-}
+	वापस regmap_raw_ग_लिखो(regmap, init_reg, val, val_len);
+पूर्ण
 
-static int adv748x_set_slave_addresses(struct adv748x_state *state)
-{
-	struct i2c_client *client;
-	unsigned int i;
+अटल पूर्णांक adv748x_set_slave_addresses(काष्ठा adv748x_state *state)
+अणु
+	काष्ठा i2c_client *client;
+	अचिन्हित पूर्णांक i;
 	u8 io_reg;
 
-	for (i = ADV748X_PAGE_DPLL; i < ADV748X_PAGE_MAX; ++i) {
+	क्रम (i = ADV748X_PAGE_DPLL; i < ADV748X_PAGE_MAX; ++i) अणु
 		io_reg = ADV748X_IO_SLAVE_ADDR_BASE + i;
 		client = state->i2c_clients[i];
 
-		io_write(state, io_reg, client->addr << 1);
-	}
+		io_ग_लिखो(state, io_reg, client->addr << 1);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void adv748x_unregister_clients(struct adv748x_state *state)
-{
-	unsigned int i;
+अटल व्योम adv748x_unरेजिस्टर_clients(काष्ठा adv748x_state *state)
+अणु
+	अचिन्हित पूर्णांक i;
 
-	for (i = 1; i < ARRAY_SIZE(state->i2c_clients); ++i)
-		i2c_unregister_device(state->i2c_clients[i]);
-}
+	क्रम (i = 1; i < ARRAY_SIZE(state->i2c_clients); ++i)
+		i2c_unरेजिस्टर_device(state->i2c_clients[i]);
+पूर्ण
 
-static int adv748x_initialise_clients(struct adv748x_state *state)
-{
-	unsigned int i;
-	int ret;
+अटल पूर्णांक adv748x_initialise_clients(काष्ठा adv748x_state *state)
+अणु
+	अचिन्हित पूर्णांक i;
+	पूर्णांक ret;
 
-	for (i = ADV748X_PAGE_DPLL; i < ADV748X_PAGE_MAX; ++i) {
+	क्रम (i = ADV748X_PAGE_DPLL; i < ADV748X_PAGE_MAX; ++i) अणु
 		state->i2c_clients[i] = i2c_new_ancillary_device(
 				state->client,
-				adv748x_default_addresses[i].name,
-				adv748x_default_addresses[i].default_addr);
+				adv748x_शेष_addresses[i].name,
+				adv748x_शेष_addresses[i].शेष_addr);
 
-		if (IS_ERR(state->i2c_clients[i])) {
+		अगर (IS_ERR(state->i2c_clients[i])) अणु
 			adv_err(state, "failed to create i2c client %u\n", i);
-			return PTR_ERR(state->i2c_clients[i]);
-		}
+			वापस PTR_ERR(state->i2c_clients[i]);
+		पूर्ण
 
 		ret = adv748x_configure_regmap(state, i);
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * struct adv748x_reg_value - Register write instruction
- * @page:		Regmap page identifier
- * @reg:		I2C register
- * @value:		value to write to @page at @reg
+ * काष्ठा adv748x_reg_value - Register ग_लिखो inकाष्ठाion
+ * @page:		Regmap page identअगरier
+ * @reg:		I2C रेजिस्टर
+ * @value:		value to ग_लिखो to @page at @reg
  */
-struct adv748x_reg_value {
+काष्ठा adv748x_reg_value अणु
 	u8 page;
 	u8 reg;
 	u8 value;
-};
+पूर्ण;
 
-static int adv748x_write_regs(struct adv748x_state *state,
-			      const struct adv748x_reg_value *regs)
-{
-	int ret;
+अटल पूर्णांक adv748x_ग_लिखो_regs(काष्ठा adv748x_state *state,
+			      स्थिर काष्ठा adv748x_reg_value *regs)
+अणु
+	पूर्णांक ret;
 
-	for (; regs->page != ADV748X_PAGE_EOR; regs++) {
-		ret = adv748x_write(state, regs->page, regs->reg, regs->value);
-		if (ret < 0) {
+	क्रम (; regs->page != ADV748X_PAGE_EOR; regs++) अणु
+		ret = adv748x_ग_लिखो(state, regs->page, regs->reg, regs->value);
+		अगर (ret < 0) अणु
 			adv_err(state, "Error regs page: 0x%02x reg: 0x%02x\n",
 				regs->page, regs->reg);
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* -----------------------------------------------------------------------------
  * TXA and TXB
  */
 
-static int adv748x_power_up_tx(struct adv748x_csi2 *tx)
-{
-	struct adv748x_state *state = tx->state;
+अटल पूर्णांक adv748x_घातer_up_tx(काष्ठा adv748x_csi2 *tx)
+अणु
+	काष्ठा adv748x_state *state = tx->state;
 	u8 page = is_txa(tx) ? ADV748X_PAGE_TXA : ADV748X_PAGE_TXB;
-	int ret = 0;
+	पूर्णांक ret = 0;
 
 	/* Enable n-lane MIPI */
-	adv748x_write_check(state, page, 0x00, 0x80 | tx->active_lanes, &ret);
+	adv748x_ग_लिखो_check(state, page, 0x00, 0x80 | tx->active_lanes, &ret);
 
 	/* Set Auto DPHY Timing */
-	adv748x_write_check(state, page, 0x00, 0xa0 | tx->active_lanes, &ret);
+	adv748x_ग_लिखो_check(state, page, 0x00, 0xa0 | tx->active_lanes, &ret);
 
 	/* ADI Required Write */
-	if (tx->src == &state->hdmi.sd) {
-		adv748x_write_check(state, page, 0xdb, 0x10, &ret);
-		adv748x_write_check(state, page, 0xd6, 0x07, &ret);
-	} else {
-		adv748x_write_check(state, page, 0xd2, 0x40, &ret);
-	}
+	अगर (tx->src == &state->hdmi.sd) अणु
+		adv748x_ग_लिखो_check(state, page, 0xdb, 0x10, &ret);
+		adv748x_ग_लिखो_check(state, page, 0xd6, 0x07, &ret);
+	पूर्ण अन्यथा अणु
+		adv748x_ग_लिखो_check(state, page, 0xd2, 0x40, &ret);
+	पूर्ण
 
-	adv748x_write_check(state, page, 0xc4, 0x0a, &ret);
-	adv748x_write_check(state, page, 0x71, 0x33, &ret);
-	adv748x_write_check(state, page, 0x72, 0x11, &ret);
+	adv748x_ग_लिखो_check(state, page, 0xc4, 0x0a, &ret);
+	adv748x_ग_लिखो_check(state, page, 0x71, 0x33, &ret);
+	adv748x_ग_लिखो_check(state, page, 0x72, 0x11, &ret);
 
 	/* i2c_dphy_pwdn - 1'b0 */
-	adv748x_write_check(state, page, 0xf0, 0x00, &ret);
+	adv748x_ग_लिखो_check(state, page, 0xf0, 0x00, &ret);
 
 	/* ADI Required Writes*/
-	adv748x_write_check(state, page, 0x31, 0x82, &ret);
-	adv748x_write_check(state, page, 0x1e, 0x40, &ret);
+	adv748x_ग_लिखो_check(state, page, 0x31, 0x82, &ret);
+	adv748x_ग_लिखो_check(state, page, 0x1e, 0x40, &ret);
 
 	/* i2c_mipi_pll_en - 1'b1 */
-	adv748x_write_check(state, page, 0xda, 0x01, &ret);
+	adv748x_ग_लिखो_check(state, page, 0xda, 0x01, &ret);
 	usleep_range(2000, 2500);
 
 	/* Power-up CSI-TX */
-	adv748x_write_check(state, page, 0x00, 0x20 | tx->active_lanes, &ret);
+	adv748x_ग_लिखो_check(state, page, 0x00, 0x20 | tx->active_lanes, &ret);
 	usleep_range(1000, 1500);
 
 	/* ADI Required Writes */
-	adv748x_write_check(state, page, 0xc1, 0x2b, &ret);
+	adv748x_ग_लिखो_check(state, page, 0xc1, 0x2b, &ret);
 	usleep_range(1000, 1500);
-	adv748x_write_check(state, page, 0x31, 0x80, &ret);
+	adv748x_ग_लिखो_check(state, page, 0x31, 0x80, &ret);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int adv748x_power_down_tx(struct adv748x_csi2 *tx)
-{
-	struct adv748x_state *state = tx->state;
+अटल पूर्णांक adv748x_घातer_करोwn_tx(काष्ठा adv748x_csi2 *tx)
+अणु
+	काष्ठा adv748x_state *state = tx->state;
 	u8 page = is_txa(tx) ? ADV748X_PAGE_TXA : ADV748X_PAGE_TXB;
-	int ret = 0;
+	पूर्णांक ret = 0;
 
 	/* ADI Required Writes */
-	adv748x_write_check(state, page, 0x31, 0x82, &ret);
-	adv748x_write_check(state, page, 0x1e, 0x00, &ret);
+	adv748x_ग_लिखो_check(state, page, 0x31, 0x82, &ret);
+	adv748x_ग_लिखो_check(state, page, 0x1e, 0x00, &ret);
 
 	/* Enable n-lane MIPI */
-	adv748x_write_check(state, page, 0x00, 0x80 | tx->active_lanes, &ret);
+	adv748x_ग_लिखो_check(state, page, 0x00, 0x80 | tx->active_lanes, &ret);
 
 	/* i2c_mipi_pll_en - 1'b1 */
-	adv748x_write_check(state, page, 0xda, 0x01, &ret);
+	adv748x_ग_लिखो_check(state, page, 0xda, 0x01, &ret);
 
 	/* ADI Required Write */
-	adv748x_write_check(state, page, 0xc1, 0x3b, &ret);
+	adv748x_ग_लिखो_check(state, page, 0xc1, 0x3b, &ret);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int adv748x_tx_power(struct adv748x_csi2 *tx, bool on)
-{
-	int val;
+पूर्णांक adv748x_tx_घातer(काष्ठा adv748x_csi2 *tx, bool on)
+अणु
+	पूर्णांक val;
 
-	if (!is_tx_enabled(tx))
-		return 0;
+	अगर (!is_tx_enabled(tx))
+		वापस 0;
 
-	val = tx_read(tx, ADV748X_CSI_FS_AS_LS);
-	if (val < 0)
-		return val;
+	val = tx_पढ़ो(tx, ADV748X_CSI_FS_AS_LS);
+	अगर (val < 0)
+		वापस val;
 
 	/*
-	 * This test against BIT(6) is not documented by the datasheet, but was
-	 * specified in the downstream driver.
-	 * Track with a WARN_ONCE to determine if it is ever set by HW.
+	 * This test against BIT(6) is not करोcumented by the datasheet, but was
+	 * specअगरied in the करोwnstream driver.
+	 * Track with a WARN_ONCE to determine अगर it is ever set by HW.
 	 */
 	WARN_ONCE((on && val & ADV748X_CSI_FS_AS_LS_UNKNOWN),
 			"Enabling with unknown bit set");
 
-	return on ? adv748x_power_up_tx(tx) : adv748x_power_down_tx(tx);
-}
+	वापस on ? adv748x_घातer_up_tx(tx) : adv748x_घातer_करोwn_tx(tx);
+पूर्ण
 
 /* -----------------------------------------------------------------------------
  * Media Operations
  */
-static int adv748x_link_setup(struct media_entity *entity,
-			      const struct media_pad *local,
-			      const struct media_pad *remote, u32 flags)
-{
-	struct v4l2_subdev *rsd = media_entity_to_v4l2_subdev(remote->entity);
-	struct v4l2_subdev *sd = media_entity_to_v4l2_subdev(entity);
-	struct adv748x_state *state = v4l2_get_subdevdata(sd);
-	struct adv748x_csi2 *tx = adv748x_sd_to_csi2(sd);
+अटल पूर्णांक adv748x_link_setup(काष्ठा media_entity *entity,
+			      स्थिर काष्ठा media_pad *local,
+			      स्थिर काष्ठा media_pad *remote, u32 flags)
+अणु
+	काष्ठा v4l2_subdev *rsd = media_entity_to_v4l2_subdev(remote->entity);
+	काष्ठा v4l2_subdev *sd = media_entity_to_v4l2_subdev(entity);
+	काष्ठा adv748x_state *state = v4l2_get_subdevdata(sd);
+	काष्ठा adv748x_csi2 *tx = adv748x_sd_to_csi2(sd);
 	bool enable = flags & MEDIA_LNK_FL_ENABLED;
 	u8 io10_mask = ADV748X_IO_10_CSI1_EN |
 		       ADV748X_IO_10_CSI4_EN |
 		       ADV748X_IO_10_CSI4_IN_SEL_AFE;
 	u8 io10 = 0;
 
-	/* Refuse to enable multiple links to the same TX at the same time. */
-	if (enable && tx->src)
-		return -EINVAL;
+	/* Refuse to enable multiple links to the same TX at the same समय. */
+	अगर (enable && tx->src)
+		वापस -EINVAL;
 
 	/* Set or clear the source (HDMI or AFE) and the current TX. */
-	if (rsd == &state->afe.sd)
-		state->afe.tx = enable ? tx : NULL;
-	else
-		state->hdmi.tx = enable ? tx : NULL;
+	अगर (rsd == &state->afe.sd)
+		state->afe.tx = enable ? tx : शून्य;
+	अन्यथा
+		state->hdmi.tx = enable ? tx : शून्य;
 
-	tx->src = enable ? rsd : NULL;
+	tx->src = enable ? rsd : शून्य;
 
-	if (state->afe.tx) {
+	अगर (state->afe.tx) अणु
 		/* AFE Requires TXA enabled, even when output to TXB */
 		io10 |= ADV748X_IO_10_CSI4_EN;
-		if (is_txa(tx)) {
+		अगर (is_txa(tx)) अणु
 			/*
 			 * Output from the SD-core (480i and 576i) from the TXA
-			 * interface requires reducing the number of enabled
+			 * पूर्णांकerface requires reducing the number of enabled
 			 * data lanes in order to guarantee a valid link
 			 * frequency.
 			 */
 			tx->active_lanes = min(tx->num_lanes, 2U);
 			io10 |= ADV748X_IO_10_CSI4_IN_SEL_AFE;
-		} else {
+		पूर्ण अन्यथा अणु
 			/* TXB has a single data lane, no need to adjust. */
 			io10 |= ADV748X_IO_10_CSI1_EN;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (state->hdmi.tx) {
+	अगर (state->hdmi.tx) अणु
 		/*
-		 * Restore the number of active lanes, in case we have gone
+		 * Restore the number of active lanes, in हाल we have gone
 		 * through an AFE->TXA streaming sessions.
 		 */
 		tx->active_lanes = tx->num_lanes;
 		io10 |= ADV748X_IO_10_CSI4_EN;
-	}
+	पूर्ण
 
-	return io_clrset(state, ADV748X_IO_10, io10_mask, io10);
-}
+	वापस io_clrset(state, ADV748X_IO_10, io10_mask, io10);
+पूर्ण
 
-static const struct media_entity_operations adv748x_tx_media_ops = {
+अटल स्थिर काष्ठा media_entity_operations adv748x_tx_media_ops = अणु
 	.link_setup	= adv748x_link_setup,
 	.link_validate	= v4l2_subdev_link_validate,
-};
+पूर्ण;
 
-static const struct media_entity_operations adv748x_media_ops = {
+अटल स्थिर काष्ठा media_entity_operations adv748x_media_ops = अणु
 	.link_validate = v4l2_subdev_link_validate,
-};
+पूर्ण;
 
 /* -----------------------------------------------------------------------------
  * HW setup
  */
 
-/* Initialize CP Core with RGB888 format. */
-static const struct adv748x_reg_value adv748x_init_hdmi[] = {
-	/* Disable chip powerdown & Enable HDMI Rx block */
-	{ADV748X_PAGE_IO, 0x00, 0x40},
+/* Initialize CP Core with RGB888 क्रमmat. */
+अटल स्थिर काष्ठा adv748x_reg_value adv748x_init_hdmi[] = अणु
+	/* Disable chip घातerकरोwn & Enable HDMI Rx block */
+	अणुADV748X_PAGE_IO, 0x00, 0x40पूर्ण,
 
-	{ADV748X_PAGE_REPEATER, 0x40, 0x83}, /* Enable HDCP 1.1 */
+	अणुADV748X_PAGE_REPEATER, 0x40, 0x83पूर्ण, /* Enable HDCP 1.1 */
 
-	{ADV748X_PAGE_HDMI, 0x00, 0x08},/* Foreground Channel = A */
-	{ADV748X_PAGE_HDMI, 0x98, 0xff},/* ADI Required Write */
-	{ADV748X_PAGE_HDMI, 0x99, 0xa3},/* ADI Required Write */
-	{ADV748X_PAGE_HDMI, 0x9a, 0x00},/* ADI Required Write */
-	{ADV748X_PAGE_HDMI, 0x9b, 0x0a},/* ADI Required Write */
-	{ADV748X_PAGE_HDMI, 0x9d, 0x40},/* ADI Required Write */
-	{ADV748X_PAGE_HDMI, 0xcb, 0x09},/* ADI Required Write */
-	{ADV748X_PAGE_HDMI, 0x3d, 0x10},/* ADI Required Write */
-	{ADV748X_PAGE_HDMI, 0x3e, 0x7b},/* ADI Required Write */
-	{ADV748X_PAGE_HDMI, 0x3f, 0x5e},/* ADI Required Write */
-	{ADV748X_PAGE_HDMI, 0x4e, 0xfe},/* ADI Required Write */
-	{ADV748X_PAGE_HDMI, 0x4f, 0x18},/* ADI Required Write */
-	{ADV748X_PAGE_HDMI, 0x57, 0xa3},/* ADI Required Write */
-	{ADV748X_PAGE_HDMI, 0x58, 0x04},/* ADI Required Write */
-	{ADV748X_PAGE_HDMI, 0x85, 0x10},/* ADI Required Write */
+	अणुADV748X_PAGE_HDMI, 0x00, 0x08पूर्ण,/* Foreground Channel = A */
+	अणुADV748X_PAGE_HDMI, 0x98, 0xffपूर्ण,/* ADI Required Write */
+	अणुADV748X_PAGE_HDMI, 0x99, 0xa3पूर्ण,/* ADI Required Write */
+	अणुADV748X_PAGE_HDMI, 0x9a, 0x00पूर्ण,/* ADI Required Write */
+	अणुADV748X_PAGE_HDMI, 0x9b, 0x0aपूर्ण,/* ADI Required Write */
+	अणुADV748X_PAGE_HDMI, 0x9d, 0x40पूर्ण,/* ADI Required Write */
+	अणुADV748X_PAGE_HDMI, 0xcb, 0x09पूर्ण,/* ADI Required Write */
+	अणुADV748X_PAGE_HDMI, 0x3d, 0x10पूर्ण,/* ADI Required Write */
+	अणुADV748X_PAGE_HDMI, 0x3e, 0x7bपूर्ण,/* ADI Required Write */
+	अणुADV748X_PAGE_HDMI, 0x3f, 0x5eपूर्ण,/* ADI Required Write */
+	अणुADV748X_PAGE_HDMI, 0x4e, 0xfeपूर्ण,/* ADI Required Write */
+	अणुADV748X_PAGE_HDMI, 0x4f, 0x18पूर्ण,/* ADI Required Write */
+	अणुADV748X_PAGE_HDMI, 0x57, 0xa3पूर्ण,/* ADI Required Write */
+	अणुADV748X_PAGE_HDMI, 0x58, 0x04पूर्ण,/* ADI Required Write */
+	अणुADV748X_PAGE_HDMI, 0x85, 0x10पूर्ण,/* ADI Required Write */
 
-	{ADV748X_PAGE_HDMI, 0x83, 0x00},/* Enable All Terminations */
-	{ADV748X_PAGE_HDMI, 0xa3, 0x01},/* ADI Required Write */
-	{ADV748X_PAGE_HDMI, 0xbe, 0x00},/* ADI Required Write */
+	अणुADV748X_PAGE_HDMI, 0x83, 0x00पूर्ण,/* Enable All Terminations */
+	अणुADV748X_PAGE_HDMI, 0xa3, 0x01पूर्ण,/* ADI Required Write */
+	अणुADV748X_PAGE_HDMI, 0xbe, 0x00पूर्ण,/* ADI Required Write */
 
-	{ADV748X_PAGE_HDMI, 0x6c, 0x01},/* HPA Manual Enable */
-	{ADV748X_PAGE_HDMI, 0xf8, 0x01},/* HPA Asserted */
-	{ADV748X_PAGE_HDMI, 0x0f, 0x00},/* Audio Mute Speed Set to Fastest */
+	अणुADV748X_PAGE_HDMI, 0x6c, 0x01पूर्ण,/* HPA Manual Enable */
+	अणुADV748X_PAGE_HDMI, 0xf8, 0x01पूर्ण,/* HPA Asserted */
+	अणुADV748X_PAGE_HDMI, 0x0f, 0x00पूर्ण,/* Audio Mute Speed Set to Fastest */
 	/* (Smallest Step Size) */
 
-	{ADV748X_PAGE_IO, 0x04, 0x02},	/* RGB Out of CP */
-	{ADV748X_PAGE_IO, 0x12, 0xf0},	/* CSC Depends on ip Packets, SDR 444 */
-	{ADV748X_PAGE_IO, 0x17, 0x80},	/* Luma & Chroma can reach 254d */
-	{ADV748X_PAGE_IO, 0x03, 0x86},	/* CP-Insert_AV_Code */
+	अणुADV748X_PAGE_IO, 0x04, 0x02पूर्ण,	/* RGB Out of CP */
+	अणुADV748X_PAGE_IO, 0x12, 0xf0पूर्ण,	/* CSC Depends on ip Packets, SDR 444 */
+	अणुADV748X_PAGE_IO, 0x17, 0x80पूर्ण,	/* Luma & Chroma can reach 254d */
+	अणुADV748X_PAGE_IO, 0x03, 0x86पूर्ण,	/* CP-Insert_AV_Code */
 
-	{ADV748X_PAGE_CP, 0x7c, 0x00},	/* ADI Required Write */
+	अणुADV748X_PAGE_CP, 0x7c, 0x00पूर्ण,	/* ADI Required Write */
 
-	{ADV748X_PAGE_IO, 0x0c, 0xe0},	/* Enable LLC_DLL & Double LLC Timing */
-	{ADV748X_PAGE_IO, 0x0e, 0xdd},	/* LLC/PIX/SPI PINS TRISTATED AUD */
+	अणुADV748X_PAGE_IO, 0x0c, 0xe0पूर्ण,	/* Enable LLC_DLL & Double LLC Timing */
+	अणुADV748X_PAGE_IO, 0x0e, 0xddपूर्ण,	/* LLC/PIX/SPI PINS TRISTATED AUD */
 
-	{ADV748X_PAGE_EOR, 0xff, 0xff}	/* End of register table */
-};
+	अणुADV748X_PAGE_EOR, 0xff, 0xffपूर्ण	/* End of रेजिस्टर table */
+पूर्ण;
 
-/* Initialize AFE core with YUV8 format. */
-static const struct adv748x_reg_value adv748x_init_afe[] = {
-	{ADV748X_PAGE_IO, 0x00, 0x30},	/* Disable chip powerdown Rx */
-	{ADV748X_PAGE_IO, 0xf2, 0x01},	/* Enable I2C Read Auto-Increment */
+/* Initialize AFE core with YUV8 क्रमmat. */
+अटल स्थिर काष्ठा adv748x_reg_value adv748x_init_afe[] = अणु
+	अणुADV748X_PAGE_IO, 0x00, 0x30पूर्ण,	/* Disable chip घातerकरोwn Rx */
+	अणुADV748X_PAGE_IO, 0xf2, 0x01पूर्ण,	/* Enable I2C Read Auto-Increment */
 
-	{ADV748X_PAGE_IO, 0x0e, 0xff},	/* LLC/PIX/AUD/SPI PINS TRISTATED */
+	अणुADV748X_PAGE_IO, 0x0e, 0xffपूर्ण,	/* LLC/PIX/AUD/SPI PINS TRISTATED */
 
-	{ADV748X_PAGE_SDP, 0x0f, 0x00},	/* Exit Power Down Mode */
-	{ADV748X_PAGE_SDP, 0x52, 0xcd},	/* ADI Required Write */
+	अणुADV748X_PAGE_SDP, 0x0f, 0x00पूर्ण,	/* Exit Power Down Mode */
+	अणुADV748X_PAGE_SDP, 0x52, 0xcdपूर्ण,	/* ADI Required Write */
 
-	{ADV748X_PAGE_SDP, 0x0e, 0x80},	/* ADI Required Write */
-	{ADV748X_PAGE_SDP, 0x9c, 0x00},	/* ADI Required Write */
-	{ADV748X_PAGE_SDP, 0x9c, 0xff},	/* ADI Required Write */
-	{ADV748X_PAGE_SDP, 0x0e, 0x00},	/* ADI Required Write */
+	अणुADV748X_PAGE_SDP, 0x0e, 0x80पूर्ण,	/* ADI Required Write */
+	अणुADV748X_PAGE_SDP, 0x9c, 0x00पूर्ण,	/* ADI Required Write */
+	अणुADV748X_PAGE_SDP, 0x9c, 0xffपूर्ण,	/* ADI Required Write */
+	अणुADV748X_PAGE_SDP, 0x0e, 0x00पूर्ण,	/* ADI Required Write */
 
-	/* ADI recommended writes for improved video quality */
-	{ADV748X_PAGE_SDP, 0x80, 0x51},	/* ADI Required Write */
-	{ADV748X_PAGE_SDP, 0x81, 0x51},	/* ADI Required Write */
-	{ADV748X_PAGE_SDP, 0x82, 0x68},	/* ADI Required Write */
+	/* ADI recommended ग_लिखोs क्रम improved video quality */
+	अणुADV748X_PAGE_SDP, 0x80, 0x51पूर्ण,	/* ADI Required Write */
+	अणुADV748X_PAGE_SDP, 0x81, 0x51पूर्ण,	/* ADI Required Write */
+	अणुADV748X_PAGE_SDP, 0x82, 0x68पूर्ण,	/* ADI Required Write */
 
-	{ADV748X_PAGE_SDP, 0x03, 0x42},	/* Tri-S Output , PwrDwn 656 pads */
-	{ADV748X_PAGE_SDP, 0x04, 0xb5},	/* ITU-R BT.656-4 compatible */
-	{ADV748X_PAGE_SDP, 0x13, 0x00},	/* ADI Required Write */
+	अणुADV748X_PAGE_SDP, 0x03, 0x42पूर्ण,	/* Tri-S Output , PwrDwn 656 pads */
+	अणुADV748X_PAGE_SDP, 0x04, 0xb5पूर्ण,	/* ITU-R BT.656-4 compatible */
+	अणुADV748X_PAGE_SDP, 0x13, 0x00पूर्ण,	/* ADI Required Write */
 
-	{ADV748X_PAGE_SDP, 0x17, 0x41},	/* Select SH1 */
-	{ADV748X_PAGE_SDP, 0x31, 0x12},	/* ADI Required Write */
-	{ADV748X_PAGE_SDP, 0xe6, 0x4f},  /* V bit end pos manually in NTSC */
+	अणुADV748X_PAGE_SDP, 0x17, 0x41पूर्ण,	/* Select SH1 */
+	अणुADV748X_PAGE_SDP, 0x31, 0x12पूर्ण,	/* ADI Required Write */
+	अणुADV748X_PAGE_SDP, 0xe6, 0x4fपूर्ण,  /* V bit end pos manually in NTSC */
 
-	{ADV748X_PAGE_EOR, 0xff, 0xff}	/* End of register table */
-};
+	अणुADV748X_PAGE_EOR, 0xff, 0xffपूर्ण	/* End of रेजिस्टर table */
+पूर्ण;
 
-static int adv748x_sw_reset(struct adv748x_state *state)
-{
-	int ret;
+अटल पूर्णांक adv748x_sw_reset(काष्ठा adv748x_state *state)
+अणु
+	पूर्णांक ret;
 
-	ret = io_write(state, ADV748X_IO_REG_FF, ADV748X_IO_REG_FF_MAIN_RESET);
-	if (ret)
-		return ret;
+	ret = io_ग_लिखो(state, ADV748X_IO_REG_FF, ADV748X_IO_REG_FF_MAIN_RESET);
+	अगर (ret)
+		वापस ret;
 
 	usleep_range(5000, 6000);
 
-	/* Disable CEC Wakeup from power-down mode */
+	/* Disable CEC Wakeup from घातer-करोwn mode */
 	ret = io_clrset(state, ADV748X_IO_REG_01, ADV748X_IO_REG_01_PWRDN_MASK,
 			ADV748X_IO_REG_01_PWRDNB);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	/* Enable I2C Read Auto-Increment for consecutive reads */
-	return io_write(state, ADV748X_IO_REG_F2,
+	/* Enable I2C Read Auto-Increment क्रम consecutive पढ़ोs */
+	वापस io_ग_लिखो(state, ADV748X_IO_REG_F2,
 			ADV748X_IO_REG_F2_READ_AUTO_INC);
-}
+पूर्ण
 
-static int adv748x_reset(struct adv748x_state *state)
-{
-	int ret;
+अटल पूर्णांक adv748x_reset(काष्ठा adv748x_state *state)
+अणु
+	पूर्णांक ret;
 	u8 regval = 0;
 
 	ret = adv748x_sw_reset(state);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	ret = adv748x_set_slave_addresses(state);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	/* Initialize CP and AFE cores. */
-	ret = adv748x_write_regs(state, adv748x_init_hdmi);
-	if (ret)
-		return ret;
+	ret = adv748x_ग_लिखो_regs(state, adv748x_init_hdmi);
+	अगर (ret)
+		वापस ret;
 
-	ret = adv748x_write_regs(state, adv748x_init_afe);
-	if (ret)
-		return ret;
+	ret = adv748x_ग_लिखो_regs(state, adv748x_init_afe);
+	अगर (ret)
+		वापस ret;
 
 	adv748x_afe_s_input(&state->afe, state->afe.input);
 
 	adv_dbg(state, "AFE Default input set to %d\n", state->afe.input);
 
 	/* Reset TXA and TXB */
-	adv748x_tx_power(&state->txa, 1);
-	adv748x_tx_power(&state->txa, 0);
-	adv748x_tx_power(&state->txb, 1);
-	adv748x_tx_power(&state->txb, 0);
+	adv748x_tx_घातer(&state->txa, 1);
+	adv748x_tx_घातer(&state->txa, 0);
+	adv748x_tx_घातer(&state->txb, 1);
+	adv748x_tx_घातer(&state->txb, 0);
 
-	/* Disable chip powerdown & Enable HDMI Rx block */
-	io_write(state, ADV748X_IO_PD, ADV748X_IO_PD_RX_EN);
+	/* Disable chip घातerकरोwn & Enable HDMI Rx block */
+	io_ग_लिखो(state, ADV748X_IO_PD, ADV748X_IO_PD_RX_EN);
 
 	/* Conditionally enable TXa and TXb. */
-	if (is_tx_enabled(&state->txa)) {
+	अगर (is_tx_enabled(&state->txa)) अणु
 		regval |= ADV748X_IO_10_CSI4_EN;
-		adv748x_csi2_set_virtual_channel(&state->txa, 0);
-	}
-	if (is_tx_enabled(&state->txb)) {
+		adv748x_csi2_set_भव_channel(&state->txa, 0);
+	पूर्ण
+	अगर (is_tx_enabled(&state->txb)) अणु
 		regval |= ADV748X_IO_10_CSI1_EN;
-		adv748x_csi2_set_virtual_channel(&state->txb, 0);
-	}
-	io_write(state, ADV748X_IO_10, regval);
+		adv748x_csi2_set_भव_channel(&state->txb, 0);
+	पूर्ण
+	io_ग_लिखो(state, ADV748X_IO_10, regval);
 
-	/* Use vid_std and v_freq as freerun resolution for CP */
+	/* Use vid_std and v_freq as मुक्तrun resolution क्रम CP */
 	cp_clrset(state, ADV748X_CP_CLMP_POS, ADV748X_CP_CLMP_POS_DIS_AUTO,
 					      ADV748X_CP_CLMP_POS_DIS_AUTO);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int adv748x_identify_chip(struct adv748x_state *state)
-{
-	int msb, lsb;
+अटल पूर्णांक adv748x_identअगरy_chip(काष्ठा adv748x_state *state)
+अणु
+	पूर्णांक msb, lsb;
 
-	lsb = io_read(state, ADV748X_IO_CHIP_REV_ID_1);
-	msb = io_read(state, ADV748X_IO_CHIP_REV_ID_2);
+	lsb = io_पढ़ो(state, ADV748X_IO_CHIP_REV_ID_1);
+	msb = io_पढ़ो(state, ADV748X_IO_CHIP_REV_ID_2);
 
-	if (lsb < 0 || msb < 0) {
+	अगर (lsb < 0 || msb < 0) अणु
 		adv_err(state, "Failed to read chip revision\n");
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
 	adv_info(state, "chip found @ 0x%02x revision %02x%02x\n",
 		 state->client->addr << 1, lsb, msb);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* -----------------------------------------------------------------------------
  * Suspend / Resume
  */
 
-static int __maybe_unused adv748x_resume_early(struct device *dev)
-{
-	struct i2c_client *client = to_i2c_client(dev);
-	struct adv748x_state *state = i2c_get_clientdata(client);
+अटल पूर्णांक __maybe_unused adv748x_resume_early(काष्ठा device *dev)
+अणु
+	काष्ठा i2c_client *client = to_i2c_client(dev);
+	काष्ठा adv748x_state *state = i2c_get_clientdata(client);
 
-	return adv748x_reset(state);
-}
+	वापस adv748x_reset(state);
+पूर्ण
 
 /* -----------------------------------------------------------------------------
  * i2c driver
  */
 
-void adv748x_subdev_init(struct v4l2_subdev *sd, struct adv748x_state *state,
-			 const struct v4l2_subdev_ops *ops, u32 function,
-			 const char *ident)
-{
+व्योम adv748x_subdev_init(काष्ठा v4l2_subdev *sd, काष्ठा adv748x_state *state,
+			 स्थिर काष्ठा v4l2_subdev_ops *ops, u32 function,
+			 स्थिर अक्षर *ident)
+अणु
 	v4l2_subdev_init(sd, ops);
 	sd->flags |= V4L2_SUBDEV_FL_HAS_DEVNODE;
 
@@ -595,7 +596,7 @@ void adv748x_subdev_init(struct v4l2_subdev *sd, struct adv748x_state *state,
 	v4l2_set_subdevdata(sd, state);
 
 	/* initialize name */
-	snprintf(sd->name, sizeof(sd->name), "%s %d-%04x %s",
+	snम_लिखो(sd->name, माप(sd->name), "%s %d-%04x %s",
 		state->dev->driver->name,
 		i2c_adapter_id(state->client->adapter),
 		state->client->addr, ident);
@@ -603,119 +604,119 @@ void adv748x_subdev_init(struct v4l2_subdev *sd, struct adv748x_state *state,
 	sd->entity.function = function;
 	sd->entity.ops = is_tx(adv748x_sd_to_csi2(sd)) ?
 			 &adv748x_tx_media_ops : &adv748x_media_ops;
-}
+पूर्ण
 
-static int adv748x_parse_csi2_lanes(struct adv748x_state *state,
-				    unsigned int port,
-				    struct device_node *ep)
-{
-	struct v4l2_fwnode_endpoint vep = { .bus_type = V4L2_MBUS_CSI2_DPHY };
-	unsigned int num_lanes;
-	int ret;
+अटल पूर्णांक adv748x_parse_csi2_lanes(काष्ठा adv748x_state *state,
+				    अचिन्हित पूर्णांक port,
+				    काष्ठा device_node *ep)
+अणु
+	काष्ठा v4l2_fwnode_endpoपूर्णांक vep = अणु .bus_type = V4L2_MBUS_CSI2_DPHY पूर्ण;
+	अचिन्हित पूर्णांक num_lanes;
+	पूर्णांक ret;
 
-	if (port != ADV748X_PORT_TXA && port != ADV748X_PORT_TXB)
-		return 0;
+	अगर (port != ADV748X_PORT_TXA && port != ADV748X_PORT_TXB)
+		वापस 0;
 
-	ret = v4l2_fwnode_endpoint_parse(of_fwnode_handle(ep), &vep);
-	if (ret)
-		return ret;
+	ret = v4l2_fwnode_endpoपूर्णांक_parse(of_fwnode_handle(ep), &vep);
+	अगर (ret)
+		वापस ret;
 
 	num_lanes = vep.bus.mipi_csi2.num_data_lanes;
 
-	if (vep.base.port == ADV748X_PORT_TXA) {
-		if (num_lanes != 1 && num_lanes != 2 && num_lanes != 4) {
+	अगर (vep.base.port == ADV748X_PORT_TXA) अणु
+		अगर (num_lanes != 1 && num_lanes != 2 && num_lanes != 4) अणु
 			adv_err(state, "TXA: Invalid number (%u) of lanes\n",
 				num_lanes);
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
 		state->txa.num_lanes = num_lanes;
 		state->txa.active_lanes = num_lanes;
 		adv_dbg(state, "TXA: using %u lanes\n", state->txa.num_lanes);
-	}
+	पूर्ण
 
-	if (vep.base.port == ADV748X_PORT_TXB) {
-		if (num_lanes != 1) {
+	अगर (vep.base.port == ADV748X_PORT_TXB) अणु
+		अगर (num_lanes != 1) अणु
 			adv_err(state, "TXB: Invalid number (%u) of lanes\n",
 				num_lanes);
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
 		state->txb.num_lanes = num_lanes;
 		state->txb.active_lanes = num_lanes;
 		adv_dbg(state, "TXB: using %u lanes\n", state->txb.num_lanes);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int adv748x_parse_dt(struct adv748x_state *state)
-{
-	struct device_node *ep_np = NULL;
-	struct of_endpoint ep;
+अटल पूर्णांक adv748x_parse_dt(काष्ठा adv748x_state *state)
+अणु
+	काष्ठा device_node *ep_np = शून्य;
+	काष्ठा of_endpoपूर्णांक ep;
 	bool out_found = false;
 	bool in_found = false;
-	int ret;
+	पूर्णांक ret;
 
-	for_each_endpoint_of_node(state->dev->of_node, ep_np) {
-		of_graph_parse_endpoint(ep_np, &ep);
+	क्रम_each_endpoपूर्णांक_of_node(state->dev->of_node, ep_np) अणु
+		of_graph_parse_endpoपूर्णांक(ep_np, &ep);
 		adv_info(state, "Endpoint %pOF on port %d", ep.local_node,
 			 ep.port);
 
-		if (ep.port >= ADV748X_PORT_MAX) {
+		अगर (ep.port >= ADV748X_PORT_MAX) अणु
 			adv_err(state, "Invalid endpoint %pOF on port %d",
 				ep.local_node, ep.port);
 
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		if (state->endpoints[ep.port]) {
+		अगर (state->endpoपूर्णांकs[ep.port]) अणु
 			adv_err(state,
 				"Multiple port endpoints are not supported");
-			continue;
-		}
+			जारी;
+		पूर्ण
 
 		of_node_get(ep_np);
-		state->endpoints[ep.port] = ep_np;
+		state->endpoपूर्णांकs[ep.port] = ep_np;
 
 		/*
-		 * At least one input endpoint and one output endpoint shall
+		 * At least one input endpoपूर्णांक and one output endpoपूर्णांक shall
 		 * be defined.
 		 */
-		if (ep.port < ADV748X_PORT_TXA)
+		अगर (ep.port < ADV748X_PORT_TXA)
 			in_found = true;
-		else
+		अन्यथा
 			out_found = true;
 
-		/* Store number of CSI-2 lanes used for TXA and TXB. */
+		/* Store number of CSI-2 lanes used क्रम TXA and TXB. */
 		ret = adv748x_parse_csi2_lanes(state, ep.port, ep_np);
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	return in_found && out_found ? 0 : -ENODEV;
-}
+	वापस in_found && out_found ? 0 : -ENODEV;
+पूर्ण
 
-static void adv748x_dt_cleanup(struct adv748x_state *state)
-{
-	unsigned int i;
+अटल व्योम adv748x_dt_cleanup(काष्ठा adv748x_state *state)
+अणु
+	अचिन्हित पूर्णांक i;
 
-	for (i = 0; i < ADV748X_PORT_MAX; i++)
-		of_node_put(state->endpoints[i]);
-}
+	क्रम (i = 0; i < ADV748X_PORT_MAX; i++)
+		of_node_put(state->endpoपूर्णांकs[i]);
+पूर्ण
 
-static int adv748x_probe(struct i2c_client *client)
-{
-	struct adv748x_state *state;
-	int ret;
+अटल पूर्णांक adv748x_probe(काष्ठा i2c_client *client)
+अणु
+	काष्ठा adv748x_state *state;
+	पूर्णांक ret;
 
-	/* Check if the adapter supports the needed features */
-	if (!i2c_check_functionality(client->adapter, I2C_FUNC_SMBUS_BYTE_DATA))
-		return -EIO;
+	/* Check अगर the adapter supports the needed features */
+	अगर (!i2c_check_functionality(client->adapter, I2C_FUNC_SMBUS_BYTE_DATA))
+		वापस -EIO;
 
-	state = devm_kzalloc(&client->dev, sizeof(*state), GFP_KERNEL);
-	if (!state)
-		return -ENOMEM;
+	state = devm_kzalloc(&client->dev, माप(*state), GFP_KERNEL);
+	अगर (!state)
+		वापस -ENOMEM;
 
 	mutex_init(&state->mutex);
 
@@ -726,7 +727,7 @@ static int adv748x_probe(struct i2c_client *client)
 
 	/*
 	 * We can not use container_of to get back to the state with two TXs;
-	 * Initialize the TXs's fields unconditionally on the endpoint
+	 * Initialize the TXs's fields unconditionally on the endpoपूर्णांक
 	 * presence to access them later.
 	 */
 	state->txa.state = state->txb.state = state;
@@ -735,69 +736,69 @@ static int adv748x_probe(struct i2c_client *client)
 	state->txa.port = ADV748X_PORT_TXA;
 	state->txb.port = ADV748X_PORT_TXB;
 
-	/* Discover and process ports declared by the Device tree endpoints */
+	/* Discover and process ports declared by the Device tree endpoपूर्णांकs */
 	ret = adv748x_parse_dt(state);
-	if (ret) {
+	अगर (ret) अणु
 		adv_err(state, "Failed to parse device tree");
-		goto err_free_mutex;
-	}
+		जाओ err_मुक्त_mutex;
+	पूर्ण
 
 	/* Configure IO Regmap region */
 	ret = adv748x_configure_regmap(state, ADV748X_PAGE_IO);
-	if (ret) {
+	अगर (ret) अणु
 		adv_err(state, "Error configuring IO regmap region");
-		goto err_cleanup_dt;
-	}
+		जाओ err_cleanup_dt;
+	पूर्ण
 
-	ret = adv748x_identify_chip(state);
-	if (ret) {
+	ret = adv748x_identअगरy_chip(state);
+	अगर (ret) अणु
 		adv_err(state, "Failed to identify chip");
-		goto err_cleanup_dt;
-	}
+		जाओ err_cleanup_dt;
+	पूर्ण
 
-	/* Configure remaining pages as I2C clients with regmap access */
+	/* Configure reमुख्यing pages as I2C clients with regmap access */
 	ret = adv748x_initialise_clients(state);
-	if (ret) {
+	अगर (ret) अणु
 		adv_err(state, "Failed to setup client regmap pages");
-		goto err_cleanup_clients;
-	}
+		जाओ err_cleanup_clients;
+	पूर्ण
 
-	/* SW reset ADV748X to its default values */
+	/* SW reset ADV748X to its शेष values */
 	ret = adv748x_reset(state);
-	if (ret) {
+	अगर (ret) अणु
 		adv_err(state, "Failed to reset hardware");
-		goto err_cleanup_clients;
-	}
+		जाओ err_cleanup_clients;
+	पूर्ण
 
 	/* Initialise HDMI */
 	ret = adv748x_hdmi_init(&state->hdmi);
-	if (ret) {
+	अगर (ret) अणु
 		adv_err(state, "Failed to probe HDMI");
-		goto err_cleanup_clients;
-	}
+		जाओ err_cleanup_clients;
+	पूर्ण
 
 	/* Initialise AFE */
 	ret = adv748x_afe_init(&state->afe);
-	if (ret) {
+	अगर (ret) अणु
 		adv_err(state, "Failed to probe AFE");
-		goto err_cleanup_hdmi;
-	}
+		जाओ err_cleanup_hdmi;
+	पूर्ण
 
 	/* Initialise TXA */
 	ret = adv748x_csi2_init(state, &state->txa);
-	if (ret) {
+	अगर (ret) अणु
 		adv_err(state, "Failed to probe TXA");
-		goto err_cleanup_afe;
-	}
+		जाओ err_cleanup_afe;
+	पूर्ण
 
 	/* Initialise TXB */
 	ret = adv748x_csi2_init(state, &state->txb);
-	if (ret) {
+	अगर (ret) अणु
 		adv_err(state, "Failed to probe TXB");
-		goto err_cleanup_txa;
-	}
+		जाओ err_cleanup_txa;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 err_cleanup_txa:
 	adv748x_csi2_cleanup(&state->txa);
@@ -806,18 +807,18 @@ err_cleanup_afe:
 err_cleanup_hdmi:
 	adv748x_hdmi_cleanup(&state->hdmi);
 err_cleanup_clients:
-	adv748x_unregister_clients(state);
+	adv748x_unरेजिस्टर_clients(state);
 err_cleanup_dt:
 	adv748x_dt_cleanup(state);
-err_free_mutex:
+err_मुक्त_mutex:
 	mutex_destroy(&state->mutex);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int adv748x_remove(struct i2c_client *client)
-{
-	struct adv748x_state *state = i2c_get_clientdata(client);
+अटल पूर्णांक adv748x_हटाओ(काष्ठा i2c_client *client)
+अणु
+	काष्ठा adv748x_state *state = i2c_get_clientdata(client);
 
 	adv748x_afe_cleanup(&state->afe);
 	adv748x_hdmi_cleanup(&state->hdmi);
@@ -825,33 +826,33 @@ static int adv748x_remove(struct i2c_client *client)
 	adv748x_csi2_cleanup(&state->txa);
 	adv748x_csi2_cleanup(&state->txb);
 
-	adv748x_unregister_clients(state);
+	adv748x_unरेजिस्टर_clients(state);
 	adv748x_dt_cleanup(state);
 	mutex_destroy(&state->mutex);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct of_device_id adv748x_of_table[] = {
-	{ .compatible = "adi,adv7481", },
-	{ .compatible = "adi,adv7482", },
-	{ }
-};
+अटल स्थिर काष्ठा of_device_id adv748x_of_table[] = अणु
+	अणु .compatible = "adi,adv7481", पूर्ण,
+	अणु .compatible = "adi,adv7482", पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, adv748x_of_table);
 
-static const struct dev_pm_ops adv748x_pm_ops = {
-	SET_LATE_SYSTEM_SLEEP_PM_OPS(NULL, adv748x_resume_early)
-};
+अटल स्थिर काष्ठा dev_pm_ops adv748x_pm_ops = अणु
+	SET_LATE_SYSTEM_SLEEP_PM_OPS(शून्य, adv748x_resume_early)
+पूर्ण;
 
-static struct i2c_driver adv748x_driver = {
-	.driver = {
+अटल काष्ठा i2c_driver adv748x_driver = अणु
+	.driver = अणु
 		.name = "adv748x",
 		.of_match_table = adv748x_of_table,
 		.pm = &adv748x_pm_ops,
-	},
+	पूर्ण,
 	.probe_new = adv748x_probe,
-	.remove = adv748x_remove,
-};
+	.हटाओ = adv748x_हटाओ,
+पूर्ण;
 
 module_i2c_driver(adv748x_driver);
 

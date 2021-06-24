@@ -1,125 +1,126 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <linux/ceph/ceph_debug.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <linux/ceph/ceph_debug.h>
 
-#include <linux/fs.h>
-#include <linux/wait.h>
-#include <linux/slab.h>
-#include <linux/gfp.h>
-#include <linux/sched.h>
-#include <linux/debugfs.h>
-#include <linux/seq_file.h>
-#include <linux/ratelimit.h>
-#include <linux/bits.h>
-#include <linux/ktime.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/रुको.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/gfp.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/debugfs.h>
+#समावेश <linux/seq_file.h>
+#समावेश <linux/ratelimit.h>
+#समावेश <linux/bits.h>
+#समावेश <linux/kसमय.स>
 
-#include "super.h"
-#include "mds_client.h"
+#समावेश "super.h"
+#समावेश "mds_client.h"
 
-#include <linux/ceph/ceph_features.h>
-#include <linux/ceph/messenger.h>
-#include <linux/ceph/decode.h>
-#include <linux/ceph/pagelist.h>
-#include <linux/ceph/auth.h>
-#include <linux/ceph/debugfs.h>
+#समावेश <linux/ceph/ceph_features.h>
+#समावेश <linux/ceph/messenger.h>
+#समावेश <linux/ceph/decode.h>
+#समावेश <linux/ceph/pagelist.h>
+#समावेश <linux/ceph/auth.h>
+#समावेश <linux/ceph/debugfs.h>
 
-#define RECONNECT_MAX_SIZE (INT_MAX - PAGE_SIZE)
+#घोषणा RECONNECT_MAX_SIZE (पूर्णांक_उच्च - PAGE_SIZE)
 
 /*
- * A cluster of MDS (metadata server) daemons is responsible for
- * managing the file system namespace (the directory hierarchy and
- * inodes) and for coordinating shared access to storage.  Metadata is
+ * A cluster of MDS (metadata server) daemons is responsible क्रम
+ * managing the file प्रणाली namespace (the directory hierarchy and
+ * inodes) and क्रम coordinating shared access to storage.  Metadata is
  * partitioning hierarchically across a number of servers, and that
- * partition varies over time as the cluster adjusts the distribution
+ * partition varies over समय as the cluster adjusts the distribution
  * in order to balance load.
  *
  * The MDS client is primarily responsible to managing synchronous
- * metadata requests for operations like open, unlink, and so forth.
+ * metadata requests क्रम operations like खोलो, unlink, and so क्रमth.
  * If there is a MDS failure, we find out about it when we (possibly
  * request and) receive a new MDS map, and can resubmit affected
  * requests.
  *
  * For the most part, though, we take advantage of a lossless
- * communications channel to the MDS, and do not need to worry about
+ * communications channel to the MDS, and करो not need to worry about
  * timing out or resubmitting requests.
  *
- * We maintain a stateful "session" with each MDS we interact with.
+ * We मुख्यtain a stateful "session" with each MDS we पूर्णांकeract with.
  * Within each session, we sent periodic heartbeat messages to ensure
- * any capabilities or leases we have been issues remain valid.  If
- * the session times out and goes stale, our leases and capabilities
- * are no longer valid.
+ * any capabilities or leases we have been issues reमुख्य valid.  If
+ * the session बार out and goes stale, our leases and capabilities
+ * are no दीर्घer valid.
  */
 
-struct ceph_reconnect_state {
-	struct ceph_mds_session *session;
-	int nr_caps, nr_realms;
-	struct ceph_pagelist *pagelist;
-	unsigned msg_version;
+काष्ठा ceph_reconnect_state अणु
+	काष्ठा ceph_mds_session *session;
+	पूर्णांक nr_caps, nr_realms;
+	काष्ठा ceph_pagelist *pagelist;
+	अचिन्हित msg_version;
 	bool allow_multi;
-};
+पूर्ण;
 
-static void __wake_requests(struct ceph_mds_client *mdsc,
-			    struct list_head *head);
-static void ceph_cap_release_work(struct work_struct *work);
-static void ceph_cap_reclaim_work(struct work_struct *work);
+अटल व्योम __wake_requests(काष्ठा ceph_mds_client *mdsc,
+			    काष्ठा list_head *head);
+अटल व्योम ceph_cap_release_work(काष्ठा work_काष्ठा *work);
+अटल व्योम ceph_cap_reclaim_work(काष्ठा work_काष्ठा *work);
 
-static const struct ceph_connection_operations mds_con_ops;
+अटल स्थिर काष्ठा ceph_connection_operations mds_con_ops;
 
 
 /*
  * mds reply parsing
  */
 
-static int parse_reply_info_quota(void **p, void *end,
-				  struct ceph_mds_reply_info_in *info)
-{
-	u8 struct_v, struct_compat;
-	u32 struct_len;
+अटल पूर्णांक parse_reply_info_quota(व्योम **p, व्योम *end,
+				  काष्ठा ceph_mds_reply_info_in *info)
+अणु
+	u8 काष्ठा_v, काष्ठा_compat;
+	u32 काष्ठा_len;
 
-	ceph_decode_8_safe(p, end, struct_v, bad);
-	ceph_decode_8_safe(p, end, struct_compat, bad);
-	/* struct_v is expected to be >= 1. we only
-	 * understand encoding with struct_compat == 1. */
-	if (!struct_v || struct_compat != 1)
-		goto bad;
-	ceph_decode_32_safe(p, end, struct_len, bad);
-	ceph_decode_need(p, end, struct_len, bad);
-	end = *p + struct_len;
+	ceph_decode_8_safe(p, end, काष्ठा_v, bad);
+	ceph_decode_8_safe(p, end, काष्ठा_compat, bad);
+	/* काष्ठा_v is expected to be >= 1. we only
+	 * understand encoding with काष्ठा_compat == 1. */
+	अगर (!काष्ठा_v || काष्ठा_compat != 1)
+		जाओ bad;
+	ceph_decode_32_safe(p, end, काष्ठा_len, bad);
+	ceph_decode_need(p, end, काष्ठा_len, bad);
+	end = *p + काष्ठा_len;
 	ceph_decode_64_safe(p, end, info->max_bytes, bad);
 	ceph_decode_64_safe(p, end, info->max_files, bad);
 	*p = end;
-	return 0;
+	वापस 0;
 bad:
-	return -EIO;
-}
+	वापस -EIO;
+पूर्ण
 
 /*
- * parse individual inode info
+ * parse inभागidual inode info
  */
-static int parse_reply_info_in(void **p, void *end,
-			       struct ceph_mds_reply_info_in *info,
+अटल पूर्णांक parse_reply_info_in(व्योम **p, व्योम *end,
+			       काष्ठा ceph_mds_reply_info_in *info,
 			       u64 features)
-{
-	int err = 0;
-	u8 struct_v = 0;
+अणु
+	पूर्णांक err = 0;
+	u8 काष्ठा_v = 0;
 
-	if (features == (u64)-1) {
-		u32 struct_len;
-		u8 struct_compat;
-		ceph_decode_8_safe(p, end, struct_v, bad);
-		ceph_decode_8_safe(p, end, struct_compat, bad);
-		/* struct_v is expected to be >= 1. we only understand
-		 * encoding with struct_compat == 1. */
-		if (!struct_v || struct_compat != 1)
-			goto bad;
-		ceph_decode_32_safe(p, end, struct_len, bad);
-		ceph_decode_need(p, end, struct_len, bad);
-		end = *p + struct_len;
-	}
+	अगर (features == (u64)-1) अणु
+		u32 काष्ठा_len;
+		u8 काष्ठा_compat;
+		ceph_decode_8_safe(p, end, काष्ठा_v, bad);
+		ceph_decode_8_safe(p, end, काष्ठा_compat, bad);
+		/* काष्ठा_v is expected to be >= 1. we only understand
+		 * encoding with काष्ठा_compat == 1. */
+		अगर (!काष्ठा_v || काष्ठा_compat != 1)
+			जाओ bad;
+		ceph_decode_32_safe(p, end, काष्ठा_len, bad);
+		ceph_decode_need(p, end, काष्ठा_len, bad);
+		end = *p + काष्ठा_len;
+	पूर्ण
 
-	ceph_decode_need(p, end, sizeof(struct ceph_mds_reply_inode), bad);
+	ceph_decode_need(p, end, माप(काष्ठा ceph_mds_reply_inode), bad);
 	info->in = *p;
-	*p += sizeof(struct ceph_mds_reply_inode) +
-		sizeof(*info->in->fragtree.splits) *
+	*p += माप(काष्ठा ceph_mds_reply_inode) +
+		माप(*info->in->fragtree.splits) *
 		le32_to_cpu(info->in->fragtree.nsplits);
 
 	ceph_decode_32_safe(p, end, info->symlink_len, bad);
@@ -128,184 +129,184 @@ static int parse_reply_info_in(void **p, void *end,
 	*p += info->symlink_len;
 
 	ceph_decode_copy_safe(p, end, &info->dir_layout,
-			      sizeof(info->dir_layout), bad);
+			      माप(info->dir_layout), bad);
 	ceph_decode_32_safe(p, end, info->xattr_len, bad);
 	ceph_decode_need(p, end, info->xattr_len, bad);
 	info->xattr_data = *p;
 	*p += info->xattr_len;
 
-	if (features == (u64)-1) {
-		/* inline data */
-		ceph_decode_64_safe(p, end, info->inline_version, bad);
-		ceph_decode_32_safe(p, end, info->inline_len, bad);
-		ceph_decode_need(p, end, info->inline_len, bad);
-		info->inline_data = *p;
-		*p += info->inline_len;
+	अगर (features == (u64)-1) अणु
+		/* अंतरभूत data */
+		ceph_decode_64_safe(p, end, info->अंतरभूत_version, bad);
+		ceph_decode_32_safe(p, end, info->अंतरभूत_len, bad);
+		ceph_decode_need(p, end, info->अंतरभूत_len, bad);
+		info->अंतरभूत_data = *p;
+		*p += info->अंतरभूत_len;
 		/* quota */
 		err = parse_reply_info_quota(p, end, info);
-		if (err < 0)
-			goto out_bad;
+		अगर (err < 0)
+			जाओ out_bad;
 		/* pool namespace */
 		ceph_decode_32_safe(p, end, info->pool_ns_len, bad);
-		if (info->pool_ns_len > 0) {
+		अगर (info->pool_ns_len > 0) अणु
 			ceph_decode_need(p, end, info->pool_ns_len, bad);
 			info->pool_ns_data = *p;
 			*p += info->pool_ns_len;
-		}
+		पूर्ण
 
-		/* btime */
-		ceph_decode_need(p, end, sizeof(info->btime), bad);
-		ceph_decode_copy(p, &info->btime, sizeof(info->btime));
+		/* bसमय */
+		ceph_decode_need(p, end, माप(info->bसमय), bad);
+		ceph_decode_copy(p, &info->bसमय, माप(info->bसमय));
 
 		/* change attribute */
 		ceph_decode_64_safe(p, end, info->change_attr, bad);
 
 		/* dir pin */
-		if (struct_v >= 2) {
+		अगर (काष्ठा_v >= 2) अणु
 			ceph_decode_32_safe(p, end, info->dir_pin, bad);
-		} else {
+		पूर्ण अन्यथा अणु
 			info->dir_pin = -ENODATA;
-		}
+		पूर्ण
 
-		/* snapshot birth time, remains zero for v<=2 */
-		if (struct_v >= 3) {
-			ceph_decode_need(p, end, sizeof(info->snap_btime), bad);
-			ceph_decode_copy(p, &info->snap_btime,
-					 sizeof(info->snap_btime));
-		} else {
-			memset(&info->snap_btime, 0, sizeof(info->snap_btime));
-		}
+		/* snapshot birth समय, reमुख्यs zero क्रम v<=2 */
+		अगर (काष्ठा_v >= 3) अणु
+			ceph_decode_need(p, end, माप(info->snap_bसमय), bad);
+			ceph_decode_copy(p, &info->snap_bसमय,
+					 माप(info->snap_bसमय));
+		पूर्ण अन्यथा अणु
+			स_रखो(&info->snap_bसमय, 0, माप(info->snap_bसमय));
+		पूर्ण
 
-		/* snapshot count, remains zero for v<=3 */
-		if (struct_v >= 4) {
+		/* snapshot count, reमुख्यs zero क्रम v<=3 */
+		अगर (काष्ठा_v >= 4) अणु
 			ceph_decode_64_safe(p, end, info->rsnaps, bad);
-		} else {
+		पूर्ण अन्यथा अणु
 			info->rsnaps = 0;
-		}
+		पूर्ण
 
 		*p = end;
-	} else {
-		if (features & CEPH_FEATURE_MDS_INLINE_DATA) {
-			ceph_decode_64_safe(p, end, info->inline_version, bad);
-			ceph_decode_32_safe(p, end, info->inline_len, bad);
-			ceph_decode_need(p, end, info->inline_len, bad);
-			info->inline_data = *p;
-			*p += info->inline_len;
-		} else
-			info->inline_version = CEPH_INLINE_NONE;
+	पूर्ण अन्यथा अणु
+		अगर (features & CEPH_FEATURE_MDS_INLINE_DATA) अणु
+			ceph_decode_64_safe(p, end, info->अंतरभूत_version, bad);
+			ceph_decode_32_safe(p, end, info->अंतरभूत_len, bad);
+			ceph_decode_need(p, end, info->अंतरभूत_len, bad);
+			info->अंतरभूत_data = *p;
+			*p += info->अंतरभूत_len;
+		पूर्ण अन्यथा
+			info->अंतरभूत_version = CEPH_INLINE_NONE;
 
-		if (features & CEPH_FEATURE_MDS_QUOTA) {
+		अगर (features & CEPH_FEATURE_MDS_QUOTA) अणु
 			err = parse_reply_info_quota(p, end, info);
-			if (err < 0)
-				goto out_bad;
-		} else {
+			अगर (err < 0)
+				जाओ out_bad;
+		पूर्ण अन्यथा अणु
 			info->max_bytes = 0;
 			info->max_files = 0;
-		}
+		पूर्ण
 
 		info->pool_ns_len = 0;
-		info->pool_ns_data = NULL;
-		if (features & CEPH_FEATURE_FS_FILE_LAYOUT_V2) {
+		info->pool_ns_data = शून्य;
+		अगर (features & CEPH_FEATURE_FS_खाता_LAYOUT_V2) अणु
 			ceph_decode_32_safe(p, end, info->pool_ns_len, bad);
-			if (info->pool_ns_len > 0) {
+			अगर (info->pool_ns_len > 0) अणु
 				ceph_decode_need(p, end, info->pool_ns_len, bad);
 				info->pool_ns_data = *p;
 				*p += info->pool_ns_len;
-			}
-		}
+			पूर्ण
+		पूर्ण
 
-		if (features & CEPH_FEATURE_FS_BTIME) {
-			ceph_decode_need(p, end, sizeof(info->btime), bad);
-			ceph_decode_copy(p, &info->btime, sizeof(info->btime));
+		अगर (features & CEPH_FEATURE_FS_BTIME) अणु
+			ceph_decode_need(p, end, माप(info->bसमय), bad);
+			ceph_decode_copy(p, &info->bसमय, माप(info->bसमय));
 			ceph_decode_64_safe(p, end, info->change_attr, bad);
-		}
+		पूर्ण
 
 		info->dir_pin = -ENODATA;
-		/* info->snap_btime and info->rsnaps remain zero */
-	}
-	return 0;
+		/* info->snap_bसमय and info->rsnaps reमुख्य zero */
+	पूर्ण
+	वापस 0;
 bad:
 	err = -EIO;
 out_bad:
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int parse_reply_info_dir(void **p, void *end,
-				struct ceph_mds_reply_dirfrag **dirfrag,
+अटल पूर्णांक parse_reply_info_dir(व्योम **p, व्योम *end,
+				काष्ठा ceph_mds_reply_dirfrag **dirfrag,
 				u64 features)
-{
-	if (features == (u64)-1) {
-		u8 struct_v, struct_compat;
-		u32 struct_len;
-		ceph_decode_8_safe(p, end, struct_v, bad);
-		ceph_decode_8_safe(p, end, struct_compat, bad);
-		/* struct_v is expected to be >= 1. we only understand
-		 * encoding whose struct_compat == 1. */
-		if (!struct_v || struct_compat != 1)
-			goto bad;
-		ceph_decode_32_safe(p, end, struct_len, bad);
-		ceph_decode_need(p, end, struct_len, bad);
-		end = *p + struct_len;
-	}
+अणु
+	अगर (features == (u64)-1) अणु
+		u8 काष्ठा_v, काष्ठा_compat;
+		u32 काष्ठा_len;
+		ceph_decode_8_safe(p, end, काष्ठा_v, bad);
+		ceph_decode_8_safe(p, end, काष्ठा_compat, bad);
+		/* काष्ठा_v is expected to be >= 1. we only understand
+		 * encoding whose काष्ठा_compat == 1. */
+		अगर (!काष्ठा_v || काष्ठा_compat != 1)
+			जाओ bad;
+		ceph_decode_32_safe(p, end, काष्ठा_len, bad);
+		ceph_decode_need(p, end, काष्ठा_len, bad);
+		end = *p + काष्ठा_len;
+	पूर्ण
 
-	ceph_decode_need(p, end, sizeof(**dirfrag), bad);
+	ceph_decode_need(p, end, माप(**dirfrag), bad);
 	*dirfrag = *p;
-	*p += sizeof(**dirfrag) + sizeof(u32) * le32_to_cpu((*dirfrag)->ndist);
-	if (unlikely(*p > end))
-		goto bad;
-	if (features == (u64)-1)
+	*p += माप(**dirfrag) + माप(u32) * le32_to_cpu((*dirfrag)->ndist);
+	अगर (unlikely(*p > end))
+		जाओ bad;
+	अगर (features == (u64)-1)
 		*p = end;
-	return 0;
+	वापस 0;
 bad:
-	return -EIO;
-}
+	वापस -EIO;
+पूर्ण
 
-static int parse_reply_info_lease(void **p, void *end,
-				  struct ceph_mds_reply_lease **lease,
+अटल पूर्णांक parse_reply_info_lease(व्योम **p, व्योम *end,
+				  काष्ठा ceph_mds_reply_lease **lease,
 				  u64 features)
-{
-	if (features == (u64)-1) {
-		u8 struct_v, struct_compat;
-		u32 struct_len;
-		ceph_decode_8_safe(p, end, struct_v, bad);
-		ceph_decode_8_safe(p, end, struct_compat, bad);
-		/* struct_v is expected to be >= 1. we only understand
-		 * encoding whose struct_compat == 1. */
-		if (!struct_v || struct_compat != 1)
-			goto bad;
-		ceph_decode_32_safe(p, end, struct_len, bad);
-		ceph_decode_need(p, end, struct_len, bad);
-		end = *p + struct_len;
-	}
+अणु
+	अगर (features == (u64)-1) अणु
+		u8 काष्ठा_v, काष्ठा_compat;
+		u32 काष्ठा_len;
+		ceph_decode_8_safe(p, end, काष्ठा_v, bad);
+		ceph_decode_8_safe(p, end, काष्ठा_compat, bad);
+		/* काष्ठा_v is expected to be >= 1. we only understand
+		 * encoding whose काष्ठा_compat == 1. */
+		अगर (!काष्ठा_v || काष्ठा_compat != 1)
+			जाओ bad;
+		ceph_decode_32_safe(p, end, काष्ठा_len, bad);
+		ceph_decode_need(p, end, काष्ठा_len, bad);
+		end = *p + काष्ठा_len;
+	पूर्ण
 
-	ceph_decode_need(p, end, sizeof(**lease), bad);
+	ceph_decode_need(p, end, माप(**lease), bad);
 	*lease = *p;
-	*p += sizeof(**lease);
-	if (features == (u64)-1)
+	*p += माप(**lease);
+	अगर (features == (u64)-1)
 		*p = end;
-	return 0;
+	वापस 0;
 bad:
-	return -EIO;
-}
+	वापस -EIO;
+पूर्ण
 
 /*
  * parse a normal reply, which may contain a (dir+)dentry and/or a
  * target inode.
  */
-static int parse_reply_info_trace(void **p, void *end,
-				  struct ceph_mds_reply_info_parsed *info,
+अटल पूर्णांक parse_reply_info_trace(व्योम **p, व्योम *end,
+				  काष्ठा ceph_mds_reply_info_parsed *info,
 				  u64 features)
-{
-	int err;
+अणु
+	पूर्णांक err;
 
-	if (info->head->is_dentry) {
+	अगर (info->head->is_dentry) अणु
 		err = parse_reply_info_in(p, end, &info->diri, features);
-		if (err < 0)
-			goto out_bad;
+		अगर (err < 0)
+			जाओ out_bad;
 
 		err = parse_reply_info_dir(p, end, &info->dirfrag, features);
-		if (err < 0)
-			goto out_bad;
+		अगर (err < 0)
+			जाओ out_bad;
 
 		ceph_decode_32_safe(p, end, info->dname_len, bad);
 		ceph_decode_need(p, end, info->dname_len, bad);
@@ -313,298 +314,298 @@ static int parse_reply_info_trace(void **p, void *end,
 		*p += info->dname_len;
 
 		err = parse_reply_info_lease(p, end, &info->dlease, features);
-		if (err < 0)
-			goto out_bad;
-	}
+		अगर (err < 0)
+			जाओ out_bad;
+	पूर्ण
 
-	if (info->head->is_target) {
+	अगर (info->head->is_target) अणु
 		err = parse_reply_info_in(p, end, &info->targeti, features);
-		if (err < 0)
-			goto out_bad;
-	}
+		अगर (err < 0)
+			जाओ out_bad;
+	पूर्ण
 
-	if (unlikely(*p != end))
-		goto bad;
-	return 0;
+	अगर (unlikely(*p != end))
+		जाओ bad;
+	वापस 0;
 
 bad:
 	err = -EIO;
 out_bad:
 	pr_err("problem parsing mds trace %d\n", err);
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /*
- * parse readdir results
+ * parse सूची_पढ़ो results
  */
-static int parse_reply_info_readdir(void **p, void *end,
-				struct ceph_mds_reply_info_parsed *info,
+अटल पूर्णांक parse_reply_info_सूची_पढ़ो(व्योम **p, व्योम *end,
+				काष्ठा ceph_mds_reply_info_parsed *info,
 				u64 features)
-{
+अणु
 	u32 num, i = 0;
-	int err;
+	पूर्णांक err;
 
 	err = parse_reply_info_dir(p, end, &info->dir_dir, features);
-	if (err < 0)
-		goto out_bad;
+	अगर (err < 0)
+		जाओ out_bad;
 
-	ceph_decode_need(p, end, sizeof(num) + 2, bad);
+	ceph_decode_need(p, end, माप(num) + 2, bad);
 	num = ceph_decode_32(p);
-	{
+	अणु
 		u16 flags = ceph_decode_16(p);
-		info->dir_end = !!(flags & CEPH_READDIR_FRAG_END);
-		info->dir_complete = !!(flags & CEPH_READDIR_FRAG_COMPLETE);
-		info->hash_order = !!(flags & CEPH_READDIR_HASH_ORDER);
-		info->offset_hash = !!(flags & CEPH_READDIR_OFFSET_HASH);
-	}
-	if (num == 0)
-		goto done;
+		info->dir_end = !!(flags & CEPH_READसूची_FRAG_END);
+		info->dir_complete = !!(flags & CEPH_READसूची_FRAG_COMPLETE);
+		info->hash_order = !!(flags & CEPH_READसूची_HASH_ORDER);
+		info->offset_hash = !!(flags & CEPH_READसूची_OFFSET_HASH);
+	पूर्ण
+	अगर (num == 0)
+		जाओ करोne;
 
 	BUG_ON(!info->dir_entries);
-	if ((unsigned long)(info->dir_entries + num) >
-	    (unsigned long)info->dir_entries + info->dir_buf_size) {
+	अगर ((अचिन्हित दीर्घ)(info->dir_entries + num) >
+	    (अचिन्हित दीर्घ)info->dir_entries + info->dir_buf_size) अणु
 		pr_err("dir contents are larger than expected\n");
 		WARN_ON(1);
-		goto bad;
-	}
+		जाओ bad;
+	पूर्ण
 
 	info->dir_nr = num;
-	while (num) {
-		struct ceph_mds_reply_dir_entry *rde = info->dir_entries + i;
+	जबतक (num) अणु
+		काष्ठा ceph_mds_reply_dir_entry *rde = info->dir_entries + i;
 		/* dentry */
 		ceph_decode_32_safe(p, end, rde->name_len, bad);
 		ceph_decode_need(p, end, rde->name_len, bad);
 		rde->name = *p;
 		*p += rde->name_len;
-		dout("parsed dir dname '%.*s'\n", rde->name_len, rde->name);
+		करोut("parsed dir dname '%.*s'\n", rde->name_len, rde->name);
 
 		/* dentry lease */
 		err = parse_reply_info_lease(p, end, &rde->lease, features);
-		if (err)
-			goto out_bad;
+		अगर (err)
+			जाओ out_bad;
 		/* inode */
 		err = parse_reply_info_in(p, end, &rde->inode, features);
-		if (err < 0)
-			goto out_bad;
-		/* ceph_readdir_prepopulate() will update it */
+		अगर (err < 0)
+			जाओ out_bad;
+		/* ceph_सूची_पढ़ो_prepopulate() will update it */
 		rde->offset = 0;
 		i++;
 		num--;
-	}
+	पूर्ण
 
-done:
+करोne:
 	/* Skip over any unrecognized fields */
 	*p = end;
-	return 0;
+	वापस 0;
 
 bad:
 	err = -EIO;
 out_bad:
 	pr_err("problem parsing dir contents %d\n", err);
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /*
  * parse fcntl F_GETLK results
  */
-static int parse_reply_info_filelock(void **p, void *end,
-				     struct ceph_mds_reply_info_parsed *info,
+अटल पूर्णांक parse_reply_info_filelock(व्योम **p, व्योम *end,
+				     काष्ठा ceph_mds_reply_info_parsed *info,
 				     u64 features)
-{
-	if (*p + sizeof(*info->filelock_reply) > end)
-		goto bad;
+अणु
+	अगर (*p + माप(*info->filelock_reply) > end)
+		जाओ bad;
 
 	info->filelock_reply = *p;
 
 	/* Skip over any unrecognized fields */
 	*p = end;
-	return 0;
+	वापस 0;
 bad:
-	return -EIO;
-}
+	वापस -EIO;
+पूर्ण
 
 
-#if BITS_PER_LONG == 64
+#अगर BITS_PER_LONG == 64
 
-#define DELEGATED_INO_AVAILABLE		xa_mk_value(1)
+#घोषणा DELEGATED_INO_AVAILABLE		xa_mk_value(1)
 
-static int ceph_parse_deleg_inos(void **p, void *end,
-				 struct ceph_mds_session *s)
-{
+अटल पूर्णांक ceph_parse_deleg_inos(व्योम **p, व्योम *end,
+				 काष्ठा ceph_mds_session *s)
+अणु
 	u32 sets;
 
 	ceph_decode_32_safe(p, end, sets, bad);
-	dout("got %u sets of delegated inodes\n", sets);
-	while (sets--) {
+	करोut("got %u sets of delegated inodes\n", sets);
+	जबतक (sets--) अणु
 		u64 start, len, ino;
 
 		ceph_decode_64_safe(p, end, start, bad);
 		ceph_decode_64_safe(p, end, len, bad);
 
-		/* Don't accept a delegation of system inodes */
-		if (start < CEPH_INO_SYSTEM_BASE) {
+		/* Don't accept a delegation of प्रणाली inodes */
+		अगर (start < CEPH_INO_SYSTEM_BASE) अणु
 			pr_warn_ratelimited("ceph: ignoring reserved inode range delegation (start=0x%llx len=0x%llx)\n",
 					start, len);
-			continue;
-		}
-		while (len--) {
-			int err = xa_insert(&s->s_delegated_inos, ino = start++,
+			जारी;
+		पूर्ण
+		जबतक (len--) अणु
+			पूर्णांक err = xa_insert(&s->s_delegated_inos, ino = start++,
 					    DELEGATED_INO_AVAILABLE,
 					    GFP_KERNEL);
-			if (!err) {
-				dout("added delegated inode 0x%llx\n",
+			अगर (!err) अणु
+				करोut("added delegated inode 0x%llx\n",
 				     start - 1);
-			} else if (err == -EBUSY) {
+			पूर्ण अन्यथा अगर (err == -EBUSY) अणु
 				pr_warn("ceph: MDS delegated inode 0x%llx more than once.\n",
 					start - 1);
-			} else {
-				return err;
-			}
-		}
-	}
-	return 0;
+			पूर्ण अन्यथा अणु
+				वापस err;
+			पूर्ण
+		पूर्ण
+	पूर्ण
+	वापस 0;
 bad:
-	return -EIO;
-}
+	वापस -EIO;
+पूर्ण
 
-u64 ceph_get_deleg_ino(struct ceph_mds_session *s)
-{
-	unsigned long ino;
-	void *val;
+u64 ceph_get_deleg_ino(काष्ठा ceph_mds_session *s)
+अणु
+	अचिन्हित दीर्घ ino;
+	व्योम *val;
 
-	xa_for_each(&s->s_delegated_inos, ino, val) {
+	xa_क्रम_each(&s->s_delegated_inos, ino, val) अणु
 		val = xa_erase(&s->s_delegated_inos, ino);
-		if (val == DELEGATED_INO_AVAILABLE)
-			return ino;
-	}
-	return 0;
-}
+		अगर (val == DELEGATED_INO_AVAILABLE)
+			वापस ino;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-int ceph_restore_deleg_ino(struct ceph_mds_session *s, u64 ino)
-{
-	return xa_insert(&s->s_delegated_inos, ino, DELEGATED_INO_AVAILABLE,
+पूर्णांक ceph_restore_deleg_ino(काष्ठा ceph_mds_session *s, u64 ino)
+अणु
+	वापस xa_insert(&s->s_delegated_inos, ino, DELEGATED_INO_AVAILABLE,
 			 GFP_KERNEL);
-}
-#else /* BITS_PER_LONG == 64 */
+पूर्ण
+#अन्यथा /* BITS_PER_LONG == 64 */
 /*
  * FIXME: xarrays can't handle 64-bit indexes on a 32-bit arch. For now, just
- * ignore delegated_inos on 32 bit arch. Maybe eventually add xarrays for top
+ * ignore delegated_inos on 32 bit arch. Maybe eventually add xarrays क्रम top
  * and bottom words?
  */
-static int ceph_parse_deleg_inos(void **p, void *end,
-				 struct ceph_mds_session *s)
-{
+अटल पूर्णांक ceph_parse_deleg_inos(व्योम **p, व्योम *end,
+				 काष्ठा ceph_mds_session *s)
+अणु
 	u32 sets;
 
 	ceph_decode_32_safe(p, end, sets, bad);
-	if (sets)
-		ceph_decode_skip_n(p, end, sets * 2 * sizeof(__le64), bad);
-	return 0;
+	अगर (sets)
+		ceph_decode_skip_n(p, end, sets * 2 * माप(__le64), bad);
+	वापस 0;
 bad:
-	return -EIO;
-}
+	वापस -EIO;
+पूर्ण
 
-u64 ceph_get_deleg_ino(struct ceph_mds_session *s)
-{
-	return 0;
-}
+u64 ceph_get_deleg_ino(काष्ठा ceph_mds_session *s)
+अणु
+	वापस 0;
+पूर्ण
 
-int ceph_restore_deleg_ino(struct ceph_mds_session *s, u64 ino)
-{
-	return 0;
-}
-#endif /* BITS_PER_LONG == 64 */
+पूर्णांक ceph_restore_deleg_ino(काष्ठा ceph_mds_session *s, u64 ino)
+अणु
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर /* BITS_PER_LONG == 64 */
 
 /*
  * parse create results
  */
-static int parse_reply_info_create(void **p, void *end,
-				  struct ceph_mds_reply_info_parsed *info,
-				  u64 features, struct ceph_mds_session *s)
-{
-	int ret;
+अटल पूर्णांक parse_reply_info_create(व्योम **p, व्योम *end,
+				  काष्ठा ceph_mds_reply_info_parsed *info,
+				  u64 features, काष्ठा ceph_mds_session *s)
+अणु
+	पूर्णांक ret;
 
-	if (features == (u64)-1 ||
-	    (features & CEPH_FEATURE_REPLY_CREATE_INODE)) {
-		if (*p == end) {
-			/* Malformed reply? */
+	अगर (features == (u64)-1 ||
+	    (features & CEPH_FEATURE_REPLY_CREATE_INODE)) अणु
+		अगर (*p == end) अणु
+			/* Malक्रमmed reply? */
 			info->has_create_ino = false;
-		} else if (test_bit(CEPHFS_FEATURE_DELEG_INO, &s->s_features)) {
+		पूर्ण अन्यथा अगर (test_bit(CEPHFS_FEATURE_DELEG_INO, &s->s_features)) अणु
 			info->has_create_ino = true;
-			/* struct_v, struct_compat, and len */
-			ceph_decode_skip_n(p, end, 2 + sizeof(u32), bad);
+			/* काष्ठा_v, काष्ठा_compat, and len */
+			ceph_decode_skip_n(p, end, 2 + माप(u32), bad);
 			ceph_decode_64_safe(p, end, info->ino, bad);
 			ret = ceph_parse_deleg_inos(p, end, s);
-			if (ret)
-				return ret;
-		} else {
+			अगर (ret)
+				वापस ret;
+		पूर्ण अन्यथा अणु
 			/* legacy */
 			ceph_decode_64_safe(p, end, info->ino, bad);
 			info->has_create_ino = true;
-		}
-	} else {
-		if (*p != end)
-			goto bad;
-	}
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		अगर (*p != end)
+			जाओ bad;
+	पूर्ण
 
 	/* Skip over any unrecognized fields */
 	*p = end;
-	return 0;
+	वापस 0;
 bad:
-	return -EIO;
-}
+	वापस -EIO;
+पूर्ण
 
 /*
  * parse extra results
  */
-static int parse_reply_info_extra(void **p, void *end,
-				  struct ceph_mds_reply_info_parsed *info,
-				  u64 features, struct ceph_mds_session *s)
-{
+अटल पूर्णांक parse_reply_info_extra(व्योम **p, व्योम *end,
+				  काष्ठा ceph_mds_reply_info_parsed *info,
+				  u64 features, काष्ठा ceph_mds_session *s)
+अणु
 	u32 op = le32_to_cpu(info->head->op);
 
-	if (op == CEPH_MDS_OP_GETFILELOCK)
-		return parse_reply_info_filelock(p, end, info, features);
-	else if (op == CEPH_MDS_OP_READDIR || op == CEPH_MDS_OP_LSSNAP)
-		return parse_reply_info_readdir(p, end, info, features);
-	else if (op == CEPH_MDS_OP_CREATE)
-		return parse_reply_info_create(p, end, info, features, s);
-	else
-		return -EIO;
-}
+	अगर (op == CEPH_MDS_OP_GETखाताLOCK)
+		वापस parse_reply_info_filelock(p, end, info, features);
+	अन्यथा अगर (op == CEPH_MDS_OP_READसूची || op == CEPH_MDS_OP_LSSNAP)
+		वापस parse_reply_info_सूची_पढ़ो(p, end, info, features);
+	अन्यथा अगर (op == CEPH_MDS_OP_CREATE)
+		वापस parse_reply_info_create(p, end, info, features, s);
+	अन्यथा
+		वापस -EIO;
+पूर्ण
 
 /*
  * parse entire mds reply
  */
-static int parse_reply_info(struct ceph_mds_session *s, struct ceph_msg *msg,
-			    struct ceph_mds_reply_info_parsed *info,
+अटल पूर्णांक parse_reply_info(काष्ठा ceph_mds_session *s, काष्ठा ceph_msg *msg,
+			    काष्ठा ceph_mds_reply_info_parsed *info,
 			    u64 features)
-{
-	void *p, *end;
+अणु
+	व्योम *p, *end;
 	u32 len;
-	int err;
+	पूर्णांक err;
 
 	info->head = msg->front.iov_base;
-	p = msg->front.iov_base + sizeof(struct ceph_mds_reply_head);
-	end = p + msg->front.iov_len - sizeof(struct ceph_mds_reply_head);
+	p = msg->front.iov_base + माप(काष्ठा ceph_mds_reply_head);
+	end = p + msg->front.iov_len - माप(काष्ठा ceph_mds_reply_head);
 
 	/* trace */
 	ceph_decode_32_safe(&p, end, len, bad);
-	if (len > 0) {
+	अगर (len > 0) अणु
 		ceph_decode_need(&p, end, len, bad);
 		err = parse_reply_info_trace(&p, p+len, info, features);
-		if (err < 0)
-			goto out_bad;
-	}
+		अगर (err < 0)
+			जाओ out_bad;
+	पूर्ण
 
 	/* extra */
 	ceph_decode_32_safe(&p, end, len, bad);
-	if (len > 0) {
+	अगर (len > 0) अणु
 		ceph_decode_need(&p, end, len, bad);
 		err = parse_reply_info_extra(&p, p+len, info, features, s);
-		if (err < 0)
-			goto out_bad;
-	}
+		अगर (err < 0)
+			जाओ out_bad;
+	पूर्ण
 
 	/* snap blob */
 	ceph_decode_32_safe(&p, end, len, bad);
@@ -612,131 +613,131 @@ static int parse_reply_info(struct ceph_mds_session *s, struct ceph_msg *msg,
 	info->snapblob = p;
 	p += len;
 
-	if (p != end)
-		goto bad;
-	return 0;
+	अगर (p != end)
+		जाओ bad;
+	वापस 0;
 
 bad:
 	err = -EIO;
 out_bad:
 	pr_err("mds parse_reply err %d\n", err);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void destroy_reply_info(struct ceph_mds_reply_info_parsed *info)
-{
-	if (!info->dir_entries)
-		return;
-	free_pages((unsigned long)info->dir_entries, get_order(info->dir_buf_size));
-}
+अटल व्योम destroy_reply_info(काष्ठा ceph_mds_reply_info_parsed *info)
+अणु
+	अगर (!info->dir_entries)
+		वापस;
+	मुक्त_pages((अचिन्हित दीर्घ)info->dir_entries, get_order(info->dir_buf_size));
+पूर्ण
 
 
 /*
  * sessions
  */
-const char *ceph_session_state_name(int s)
-{
-	switch (s) {
-	case CEPH_MDS_SESSION_NEW: return "new";
-	case CEPH_MDS_SESSION_OPENING: return "opening";
-	case CEPH_MDS_SESSION_OPEN: return "open";
-	case CEPH_MDS_SESSION_HUNG: return "hung";
-	case CEPH_MDS_SESSION_CLOSING: return "closing";
-	case CEPH_MDS_SESSION_CLOSED: return "closed";
-	case CEPH_MDS_SESSION_RESTARTING: return "restarting";
-	case CEPH_MDS_SESSION_RECONNECTING: return "reconnecting";
-	case CEPH_MDS_SESSION_REJECTED: return "rejected";
-	default: return "???";
-	}
-}
+स्थिर अक्षर *ceph_session_state_name(पूर्णांक s)
+अणु
+	चयन (s) अणु
+	हाल CEPH_MDS_SESSION_NEW: वापस "new";
+	हाल CEPH_MDS_SESSION_OPENING: वापस "opening";
+	हाल CEPH_MDS_SESSION_OPEN: वापस "open";
+	हाल CEPH_MDS_SESSION_HUNG: वापस "hung";
+	हाल CEPH_MDS_SESSION_CLOSING: वापस "closing";
+	हाल CEPH_MDS_SESSION_CLOSED: वापस "closed";
+	हाल CEPH_MDS_SESSION_RESTARTING: वापस "restarting";
+	हाल CEPH_MDS_SESSION_RECONNECTING: वापस "reconnecting";
+	हाल CEPH_MDS_SESSION_REJECTED: वापस "rejected";
+	शेष: वापस "???";
+	पूर्ण
+पूर्ण
 
-struct ceph_mds_session *ceph_get_mds_session(struct ceph_mds_session *s)
-{
-	if (refcount_inc_not_zero(&s->s_ref)) {
-		dout("mdsc get_session %p %d -> %d\n", s,
-		     refcount_read(&s->s_ref)-1, refcount_read(&s->s_ref));
-		return s;
-	} else {
-		dout("mdsc get_session %p 0 -- FAIL\n", s);
-		return NULL;
-	}
-}
+काष्ठा ceph_mds_session *ceph_get_mds_session(काष्ठा ceph_mds_session *s)
+अणु
+	अगर (refcount_inc_not_zero(&s->s_ref)) अणु
+		करोut("mdsc get_session %p %d -> %d\n", s,
+		     refcount_पढ़ो(&s->s_ref)-1, refcount_पढ़ो(&s->s_ref));
+		वापस s;
+	पूर्ण अन्यथा अणु
+		करोut("mdsc get_session %p 0 -- FAIL\n", s);
+		वापस शून्य;
+	पूर्ण
+पूर्ण
 
-void ceph_put_mds_session(struct ceph_mds_session *s)
-{
-	dout("mdsc put_session %p %d -> %d\n", s,
-	     refcount_read(&s->s_ref), refcount_read(&s->s_ref)-1);
-	if (refcount_dec_and_test(&s->s_ref)) {
-		if (s->s_auth.authorizer)
+व्योम ceph_put_mds_session(काष्ठा ceph_mds_session *s)
+अणु
+	करोut("mdsc put_session %p %d -> %d\n", s,
+	     refcount_पढ़ो(&s->s_ref), refcount_पढ़ो(&s->s_ref)-1);
+	अगर (refcount_dec_and_test(&s->s_ref)) अणु
+		अगर (s->s_auth.authorizer)
 			ceph_auth_destroy_authorizer(s->s_auth.authorizer);
 		WARN_ON(mutex_is_locked(&s->s_mutex));
 		xa_destroy(&s->s_delegated_inos);
-		kfree(s);
-	}
-}
+		kमुक्त(s);
+	पूर्ण
+पूर्ण
 
 /*
  * called under mdsc->mutex
  */
-struct ceph_mds_session *__ceph_lookup_mds_session(struct ceph_mds_client *mdsc,
-						   int mds)
-{
-	if (mds >= mdsc->max_sessions || !mdsc->sessions[mds])
-		return NULL;
-	return ceph_get_mds_session(mdsc->sessions[mds]);
-}
+काष्ठा ceph_mds_session *__ceph_lookup_mds_session(काष्ठा ceph_mds_client *mdsc,
+						   पूर्णांक mds)
+अणु
+	अगर (mds >= mdsc->max_sessions || !mdsc->sessions[mds])
+		वापस शून्य;
+	वापस ceph_get_mds_session(mdsc->sessions[mds]);
+पूर्ण
 
-static bool __have_session(struct ceph_mds_client *mdsc, int mds)
-{
-	if (mds >= mdsc->max_sessions || !mdsc->sessions[mds])
-		return false;
-	else
-		return true;
-}
+अटल bool __have_session(काष्ठा ceph_mds_client *mdsc, पूर्णांक mds)
+अणु
+	अगर (mds >= mdsc->max_sessions || !mdsc->sessions[mds])
+		वापस false;
+	अन्यथा
+		वापस true;
+पूर्ण
 
-static int __verify_registered_session(struct ceph_mds_client *mdsc,
-				       struct ceph_mds_session *s)
-{
-	if (s->s_mds >= mdsc->max_sessions ||
+अटल पूर्णांक __verअगरy_रेजिस्टरed_session(काष्ठा ceph_mds_client *mdsc,
+				       काष्ठा ceph_mds_session *s)
+अणु
+	अगर (s->s_mds >= mdsc->max_sessions ||
 	    mdsc->sessions[s->s_mds] != s)
-		return -ENOENT;
-	return 0;
-}
+		वापस -ENOENT;
+	वापस 0;
+पूर्ण
 
 /*
- * create+register a new session for given mds.
+ * create+रेजिस्टर a new session क्रम given mds.
  * called under mdsc->mutex.
  */
-static struct ceph_mds_session *register_session(struct ceph_mds_client *mdsc,
-						 int mds)
-{
-	struct ceph_mds_session *s;
+अटल काष्ठा ceph_mds_session *रेजिस्टर_session(काष्ठा ceph_mds_client *mdsc,
+						 पूर्णांक mds)
+अणु
+	काष्ठा ceph_mds_session *s;
 
-	if (mds >= mdsc->mdsmap->possible_max_rank)
-		return ERR_PTR(-EINVAL);
+	अगर (mds >= mdsc->mdsmap->possible_max_rank)
+		वापस ERR_PTR(-EINVAL);
 
-	s = kzalloc(sizeof(*s), GFP_NOFS);
-	if (!s)
-		return ERR_PTR(-ENOMEM);
+	s = kzalloc(माप(*s), GFP_NOFS);
+	अगर (!s)
+		वापस ERR_PTR(-ENOMEM);
 
-	if (mds >= mdsc->max_sessions) {
-		int newmax = 1 << get_count_order(mds + 1);
-		struct ceph_mds_session **sa;
+	अगर (mds >= mdsc->max_sessions) अणु
+		पूर्णांक newmax = 1 << get_count_order(mds + 1);
+		काष्ठा ceph_mds_session **sa;
 
-		dout("%s: realloc to %d\n", __func__, newmax);
-		sa = kcalloc(newmax, sizeof(void *), GFP_NOFS);
-		if (!sa)
-			goto fail_realloc;
-		if (mdsc->sessions) {
-			memcpy(sa, mdsc->sessions,
-			       mdsc->max_sessions * sizeof(void *));
-			kfree(mdsc->sessions);
-		}
+		करोut("%s: realloc to %d\n", __func__, newmax);
+		sa = kसुस्मृति(newmax, माप(व्योम *), GFP_NOFS);
+		अगर (!sa)
+			जाओ fail_पुनः_स्मृति;
+		अगर (mdsc->sessions) अणु
+			स_नकल(sa, mdsc->sessions,
+			       mdsc->max_sessions * माप(व्योम *));
+			kमुक्त(mdsc->sessions);
+		पूर्ण
 		mdsc->sessions = sa;
 		mdsc->max_sessions = newmax;
-	}
+	पूर्ण
 
-	dout("%s: mds%d\n", __func__, mds);
+	करोut("%s: mds%d\n", __func__, mds);
 	s->s_mdsc = mdsc;
 	s->s_mds = mds;
 	s->s_state = CEPH_MDS_SESSION_NEW;
@@ -748,7 +749,7 @@ static struct ceph_mds_session *register_session(struct ceph_mds_client *mdsc,
 
 	spin_lock_init(&s->s_gen_ttl_lock);
 	s->s_cap_gen = 1;
-	s->s_cap_ttl = jiffies - 1;
+	s->s_cap_ttl = jअगरfies - 1;
 
 	spin_lock_init(&s->s_cap_lock);
 	s->s_renew_requested = 0;
@@ -756,12 +757,12 @@ static struct ceph_mds_session *register_session(struct ceph_mds_client *mdsc,
 	INIT_LIST_HEAD(&s->s_caps);
 	s->s_nr_caps = 0;
 	refcount_set(&s->s_ref, 1);
-	INIT_LIST_HEAD(&s->s_waiting);
+	INIT_LIST_HEAD(&s->s_रुकोing);
 	INIT_LIST_HEAD(&s->s_unsafe);
 	xa_init(&s->s_delegated_inos);
 	s->s_num_cap_releases = 0;
 	s->s_cap_reconnect = 0;
-	s->s_cap_iterator = NULL;
+	s->s_cap_iterator = शून्य;
 	INIT_LIST_HEAD(&s->s_cap_releases);
 	INIT_WORK(&s->s_cap_release_work, ceph_cap_release_work);
 
@@ -772,533 +773,533 @@ static struct ceph_mds_session *register_session(struct ceph_mds_client *mdsc,
 	atomic_inc(&mdsc->num_sessions);
 	refcount_inc(&s->s_ref);  /* one ref to sessions[], one to caller */
 
-	ceph_con_open(&s->s_con, CEPH_ENTITY_TYPE_MDS, mds,
+	ceph_con_खोलो(&s->s_con, CEPH_ENTITY_TYPE_MDS, mds,
 		      ceph_mdsmap_get_addr(mdsc->mdsmap, mds));
 
-	return s;
+	वापस s;
 
-fail_realloc:
-	kfree(s);
-	return ERR_PTR(-ENOMEM);
-}
+fail_पुनः_स्मृति:
+	kमुक्त(s);
+	वापस ERR_PTR(-ENOMEM);
+पूर्ण
 
 /*
  * called under mdsc->mutex
  */
-static void __unregister_session(struct ceph_mds_client *mdsc,
-			       struct ceph_mds_session *s)
-{
-	dout("__unregister_session mds%d %p\n", s->s_mds, s);
+अटल व्योम __unरेजिस्टर_session(काष्ठा ceph_mds_client *mdsc,
+			       काष्ठा ceph_mds_session *s)
+अणु
+	करोut("__unregister_session mds%d %p\n", s->s_mds, s);
 	BUG_ON(mdsc->sessions[s->s_mds] != s);
-	mdsc->sessions[s->s_mds] = NULL;
-	ceph_con_close(&s->s_con);
+	mdsc->sessions[s->s_mds] = शून्य;
+	ceph_con_बंद(&s->s_con);
 	ceph_put_mds_session(s);
 	atomic_dec(&mdsc->num_sessions);
-}
+पूर्ण
 
 /*
  * drop session refs in request.
  *
  * should be last request ref, or hold mdsc->mutex
  */
-static void put_request_session(struct ceph_mds_request *req)
-{
-	if (req->r_session) {
+अटल व्योम put_request_session(काष्ठा ceph_mds_request *req)
+अणु
+	अगर (req->r_session) अणु
 		ceph_put_mds_session(req->r_session);
-		req->r_session = NULL;
-	}
-}
+		req->r_session = शून्य;
+	पूर्ण
+पूर्ण
 
-void ceph_mdsc_release_request(struct kref *kref)
-{
-	struct ceph_mds_request *req = container_of(kref,
-						    struct ceph_mds_request,
+व्योम ceph_mdsc_release_request(काष्ठा kref *kref)
+अणु
+	काष्ठा ceph_mds_request *req = container_of(kref,
+						    काष्ठा ceph_mds_request,
 						    r_kref);
 	ceph_mdsc_release_dir_caps_no_check(req);
 	destroy_reply_info(&req->r_reply_info);
-	if (req->r_request)
+	अगर (req->r_request)
 		ceph_msg_put(req->r_request);
-	if (req->r_reply)
+	अगर (req->r_reply)
 		ceph_msg_put(req->r_reply);
-	if (req->r_inode) {
+	अगर (req->r_inode) अणु
 		ceph_put_cap_refs(ceph_inode(req->r_inode), CEPH_CAP_PIN);
-		/* avoid calling iput_final() in mds dispatch threads */
+		/* aव्योम calling iput_final() in mds dispatch thपढ़ोs */
 		ceph_async_iput(req->r_inode);
-	}
-	if (req->r_parent) {
+	पूर्ण
+	अगर (req->r_parent) अणु
 		ceph_put_cap_refs(ceph_inode(req->r_parent), CEPH_CAP_PIN);
 		ceph_async_iput(req->r_parent);
-	}
+	पूर्ण
 	ceph_async_iput(req->r_target_inode);
-	if (req->r_dentry)
+	अगर (req->r_dentry)
 		dput(req->r_dentry);
-	if (req->r_old_dentry)
+	अगर (req->r_old_dentry)
 		dput(req->r_old_dentry);
-	if (req->r_old_dentry_dir) {
+	अगर (req->r_old_dentry_dir) अणु
 		/*
-		 * track (and drop pins for) r_old_dentry_dir
+		 * track (and drop pins क्रम) r_old_dentry_dir
 		 * separately, since r_old_dentry's d_parent may have
 		 * changed between the dir mutex being dropped and
-		 * this request being freed.
+		 * this request being मुक्तd.
 		 */
 		ceph_put_cap_refs(ceph_inode(req->r_old_dentry_dir),
 				  CEPH_CAP_PIN);
 		ceph_async_iput(req->r_old_dentry_dir);
-	}
-	kfree(req->r_path1);
-	kfree(req->r_path2);
+	पूर्ण
+	kमुक्त(req->r_path1);
+	kमुक्त(req->r_path2);
 	put_cred(req->r_cred);
-	if (req->r_pagelist)
+	अगर (req->r_pagelist)
 		ceph_pagelist_release(req->r_pagelist);
 	put_request_session(req);
 	ceph_unreserve_caps(req->r_mdsc, &req->r_caps_reservation);
-	WARN_ON_ONCE(!list_empty(&req->r_wait));
-	kmem_cache_free(ceph_mds_request_cachep, req);
-}
+	WARN_ON_ONCE(!list_empty(&req->r_रुको));
+	kmem_cache_मुक्त(ceph_mds_request_cachep, req);
+पूर्ण
 
-DEFINE_RB_FUNCS(request, struct ceph_mds_request, r_tid, r_node)
+DEFINE_RB_FUNCS(request, काष्ठा ceph_mds_request, r_tid, r_node)
 
 /*
- * lookup session, bump ref if found.
+ * lookup session, bump ref अगर found.
  *
  * called under mdsc->mutex.
  */
-static struct ceph_mds_request *
-lookup_get_request(struct ceph_mds_client *mdsc, u64 tid)
-{
-	struct ceph_mds_request *req;
+अटल काष्ठा ceph_mds_request *
+lookup_get_request(काष्ठा ceph_mds_client *mdsc, u64 tid)
+अणु
+	काष्ठा ceph_mds_request *req;
 
 	req = lookup_request(&mdsc->request_tree, tid);
-	if (req)
+	अगर (req)
 		ceph_mdsc_get_request(req);
 
-	return req;
-}
+	वापस req;
+पूर्ण
 
 /*
  * Register an in-flight request, and assign a tid.  Link to directory
- * are modifying (if any).
+ * are modअगरying (अगर any).
  *
  * Called under mdsc->mutex.
  */
-static void __register_request(struct ceph_mds_client *mdsc,
-			       struct ceph_mds_request *req,
-			       struct inode *dir)
-{
-	int ret = 0;
+अटल व्योम __रेजिस्टर_request(काष्ठा ceph_mds_client *mdsc,
+			       काष्ठा ceph_mds_request *req,
+			       काष्ठा inode *dir)
+अणु
+	पूर्णांक ret = 0;
 
 	req->r_tid = ++mdsc->last_tid;
-	if (req->r_num_caps) {
+	अगर (req->r_num_caps) अणु
 		ret = ceph_reserve_caps(mdsc, &req->r_caps_reservation,
 					req->r_num_caps);
-		if (ret < 0) {
+		अगर (ret < 0) अणु
 			pr_err("__register_request %p "
 			       "failed to reserve caps: %d\n", req, ret);
-			/* set req->r_err to fail early from __do_request */
+			/* set req->r_err to fail early from __करो_request */
 			req->r_err = ret;
-			return;
-		}
-	}
-	dout("__register_request %p tid %lld\n", req, req->r_tid);
+			वापस;
+		पूर्ण
+	पूर्ण
+	करोut("__register_request %p tid %lld\n", req, req->r_tid);
 	ceph_mdsc_get_request(req);
 	insert_request(&mdsc->request_tree, req);
 
 	req->r_cred = get_current_cred();
 
-	if (mdsc->oldest_tid == 0 && req->r_op != CEPH_MDS_OP_SETFILELOCK)
+	अगर (mdsc->oldest_tid == 0 && req->r_op != CEPH_MDS_OP_SETखाताLOCK)
 		mdsc->oldest_tid = req->r_tid;
 
-	if (dir) {
-		struct ceph_inode_info *ci = ceph_inode(dir);
+	अगर (dir) अणु
+		काष्ठा ceph_inode_info *ci = ceph_inode(dir);
 
 		ihold(dir);
 		req->r_unsafe_dir = dir;
 		spin_lock(&ci->i_unsafe_lock);
 		list_add_tail(&req->r_unsafe_dir_item, &ci->i_unsafe_dirops);
 		spin_unlock(&ci->i_unsafe_lock);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void __unregister_request(struct ceph_mds_client *mdsc,
-				 struct ceph_mds_request *req)
-{
-	dout("__unregister_request %p tid %lld\n", req, req->r_tid);
+अटल व्योम __unरेजिस्टर_request(काष्ठा ceph_mds_client *mdsc,
+				 काष्ठा ceph_mds_request *req)
+अणु
+	करोut("__unregister_request %p tid %lld\n", req, req->r_tid);
 
-	/* Never leave an unregistered request on an unsafe list! */
+	/* Never leave an unरेजिस्टरed request on an unsafe list! */
 	list_del_init(&req->r_unsafe_item);
 
-	if (req->r_tid == mdsc->oldest_tid) {
-		struct rb_node *p = rb_next(&req->r_node);
+	अगर (req->r_tid == mdsc->oldest_tid) अणु
+		काष्ठा rb_node *p = rb_next(&req->r_node);
 		mdsc->oldest_tid = 0;
-		while (p) {
-			struct ceph_mds_request *next_req =
-				rb_entry(p, struct ceph_mds_request, r_node);
-			if (next_req->r_op != CEPH_MDS_OP_SETFILELOCK) {
+		जबतक (p) अणु
+			काष्ठा ceph_mds_request *next_req =
+				rb_entry(p, काष्ठा ceph_mds_request, r_node);
+			अगर (next_req->r_op != CEPH_MDS_OP_SETखाताLOCK) अणु
 				mdsc->oldest_tid = next_req->r_tid;
-				break;
-			}
+				अवरोध;
+			पूर्ण
 			p = rb_next(p);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	erase_request(&mdsc->request_tree, req);
 
-	if (req->r_unsafe_dir) {
-		struct ceph_inode_info *ci = ceph_inode(req->r_unsafe_dir);
+	अगर (req->r_unsafe_dir) अणु
+		काष्ठा ceph_inode_info *ci = ceph_inode(req->r_unsafe_dir);
 		spin_lock(&ci->i_unsafe_lock);
 		list_del_init(&req->r_unsafe_dir_item);
 		spin_unlock(&ci->i_unsafe_lock);
-	}
-	if (req->r_target_inode &&
-	    test_bit(CEPH_MDS_R_GOT_UNSAFE, &req->r_req_flags)) {
-		struct ceph_inode_info *ci = ceph_inode(req->r_target_inode);
+	पूर्ण
+	अगर (req->r_target_inode &&
+	    test_bit(CEPH_MDS_R_GOT_UNSAFE, &req->r_req_flags)) अणु
+		काष्ठा ceph_inode_info *ci = ceph_inode(req->r_target_inode);
 		spin_lock(&ci->i_unsafe_lock);
 		list_del_init(&req->r_unsafe_target_item);
 		spin_unlock(&ci->i_unsafe_lock);
-	}
+	पूर्ण
 
-	if (req->r_unsafe_dir) {
-		/* avoid calling iput_final() in mds dispatch threads */
+	अगर (req->r_unsafe_dir) अणु
+		/* aव्योम calling iput_final() in mds dispatch thपढ़ोs */
 		ceph_async_iput(req->r_unsafe_dir);
-		req->r_unsafe_dir = NULL;
-	}
+		req->r_unsafe_dir = शून्य;
+	पूर्ण
 
 	complete_all(&req->r_safe_completion);
 
 	ceph_mdsc_put_request(req);
-}
+पूर्ण
 
 /*
  * Walk back up the dentry tree until we hit a dentry representing a
- * non-snapshot inode. We do this using the rcu_read_lock (which must be held
+ * non-snapshot inode. We करो this using the rcu_पढ़ो_lock (which must be held
  * when calling this) to ensure that the objects won't disappear while we're
  * working with them. Once we hit a candidate dentry, we attempt to take a
- * reference to it, and return that as the result.
+ * reference to it, and वापस that as the result.
  */
-static struct inode *get_nonsnap_parent(struct dentry *dentry)
-{
-	struct inode *inode = NULL;
+अटल काष्ठा inode *get_nonsnap_parent(काष्ठा dentry *dentry)
+अणु
+	काष्ठा inode *inode = शून्य;
 
-	while (dentry && !IS_ROOT(dentry)) {
+	जबतक (dentry && !IS_ROOT(dentry)) अणु
 		inode = d_inode_rcu(dentry);
-		if (!inode || ceph_snap(inode) == CEPH_NOSNAP)
-			break;
+		अगर (!inode || ceph_snap(inode) == CEPH_NOSNAP)
+			अवरोध;
 		dentry = dentry->d_parent;
-	}
-	if (inode)
+	पूर्ण
+	अगर (inode)
 		inode = igrab(inode);
-	return inode;
-}
+	वापस inode;
+पूर्ण
 
 /*
- * Choose mds to send request to next.  If there is a hint set in the
- * request (e.g., due to a prior forward hint from the mds), use that.
- * Otherwise, consult frag tree and/or caps to identify the
- * appropriate mds.  If all else fails, choose randomly.
+ * Choose mds to send request to next.  If there is a hपूर्णांक set in the
+ * request (e.g., due to a prior क्रमward hपूर्णांक from the mds), use that.
+ * Otherwise, consult frag tree and/or caps to identअगरy the
+ * appropriate mds.  If all अन्यथा fails, choose अक्रमomly.
  *
  * Called under mdsc->mutex.
  */
-static int __choose_mds(struct ceph_mds_client *mdsc,
-			struct ceph_mds_request *req,
-			bool *random)
-{
-	struct inode *inode;
-	struct ceph_inode_info *ci;
-	struct ceph_cap *cap;
-	int mode = req->r_direct_mode;
-	int mds = -1;
+अटल पूर्णांक __choose_mds(काष्ठा ceph_mds_client *mdsc,
+			काष्ठा ceph_mds_request *req,
+			bool *अक्रमom)
+अणु
+	काष्ठा inode *inode;
+	काष्ठा ceph_inode_info *ci;
+	काष्ठा ceph_cap *cap;
+	पूर्णांक mode = req->r_direct_mode;
+	पूर्णांक mds = -1;
 	u32 hash = req->r_direct_hash;
-	bool is_hash = test_bit(CEPH_MDS_R_DIRECT_IS_HASH, &req->r_req_flags);
+	bool is_hash = test_bit(CEPH_MDS_R_सूचीECT_IS_HASH, &req->r_req_flags);
 
-	if (random)
-		*random = false;
+	अगर (अक्रमom)
+		*अक्रमom = false;
 
 	/*
-	 * is there a specific mds we should try?  ignore hint if we have
+	 * is there a specअगरic mds we should try?  ignore hपूर्णांक अगर we have
 	 * no session and the mds is not up (active or recovering).
 	 */
-	if (req->r_resend_mds >= 0 &&
+	अगर (req->r_resend_mds >= 0 &&
 	    (__have_session(mdsc, req->r_resend_mds) ||
-	     ceph_mdsmap_get_state(mdsc->mdsmap, req->r_resend_mds) > 0)) {
-		dout("%s using resend_mds mds%d\n", __func__,
+	     ceph_mdsmap_get_state(mdsc->mdsmap, req->r_resend_mds) > 0)) अणु
+		करोut("%s using resend_mds mds%d\n", __func__,
 		     req->r_resend_mds);
-		return req->r_resend_mds;
-	}
+		वापस req->r_resend_mds;
+	पूर्ण
 
-	if (mode == USE_RANDOM_MDS)
-		goto random;
+	अगर (mode == USE_RANDOM_MDS)
+		जाओ अक्रमom;
 
-	inode = NULL;
-	if (req->r_inode) {
-		if (ceph_snap(req->r_inode) != CEPH_SNAPDIR) {
+	inode = शून्य;
+	अगर (req->r_inode) अणु
+		अगर (ceph_snap(req->r_inode) != CEPH_SNAPसूची) अणु
 			inode = req->r_inode;
 			ihold(inode);
-		} else {
-			/* req->r_dentry is non-null for LSSNAP request */
-			rcu_read_lock();
+		पूर्ण अन्यथा अणु
+			/* req->r_dentry is non-null क्रम LSSNAP request */
+			rcu_पढ़ो_lock();
 			inode = get_nonsnap_parent(req->r_dentry);
-			rcu_read_unlock();
-			dout("%s using snapdir's parent %p\n", __func__, inode);
-		}
-	} else if (req->r_dentry) {
-		/* ignore race with rename; old or new d_parent is okay */
-		struct dentry *parent;
-		struct inode *dir;
+			rcu_पढ़ो_unlock();
+			करोut("%s using snapdir's parent %p\n", __func__, inode);
+		पूर्ण
+	पूर्ण अन्यथा अगर (req->r_dentry) अणु
+		/* ignore race with नाम; old or new d_parent is okay */
+		काष्ठा dentry *parent;
+		काष्ठा inode *dir;
 
-		rcu_read_lock();
+		rcu_पढ़ो_lock();
 		parent = READ_ONCE(req->r_dentry->d_parent);
 		dir = req->r_parent ? : d_inode_rcu(parent);
 
-		if (!dir || dir->i_sb != mdsc->fsc->sb) {
+		अगर (!dir || dir->i_sb != mdsc->fsc->sb) अणु
 			/*  not this fs or parent went negative */
 			inode = d_inode(req->r_dentry);
-			if (inode)
+			अगर (inode)
 				ihold(inode);
-		} else if (ceph_snap(dir) != CEPH_NOSNAP) {
-			/* direct snapped/virtual snapdir requests
+		पूर्ण अन्यथा अगर (ceph_snap(dir) != CEPH_NOSNAP) अणु
+			/* direct snapped/भव snapdir requests
 			 * based on parent dir inode */
 			inode = get_nonsnap_parent(parent);
-			dout("%s using nonsnap parent %p\n", __func__, inode);
-		} else {
+			करोut("%s using nonsnap parent %p\n", __func__, inode);
+		पूर्ण अन्यथा अणु
 			/* dentry target */
 			inode = d_inode(req->r_dentry);
-			if (!inode || mode == USE_AUTH_MDS) {
+			अगर (!inode || mode == USE_AUTH_MDS) अणु
 				/* dir + name */
 				inode = igrab(dir);
 				hash = ceph_dentry_hash(dir, req->r_dentry);
 				is_hash = true;
-			} else {
+			पूर्ण अन्यथा अणु
 				ihold(inode);
-			}
-		}
-		rcu_read_unlock();
-	}
+			पूर्ण
+		पूर्ण
+		rcu_पढ़ो_unlock();
+	पूर्ण
 
-	dout("%s %p is_hash=%d (0x%x) mode %d\n", __func__, inode, (int)is_hash,
+	करोut("%s %p is_hash=%d (0x%x) mode %d\n", __func__, inode, (पूर्णांक)is_hash,
 	     hash, mode);
-	if (!inode)
-		goto random;
+	अगर (!inode)
+		जाओ अक्रमom;
 	ci = ceph_inode(inode);
 
-	if (is_hash && S_ISDIR(inode->i_mode)) {
-		struct ceph_inode_frag frag;
-		int found;
+	अगर (is_hash && S_ISसूची(inode->i_mode)) अणु
+		काष्ठा ceph_inode_frag frag;
+		पूर्णांक found;
 
 		ceph_choose_frag(ci, hash, &frag, &found);
-		if (found) {
-			if (mode == USE_ANY_MDS && frag.ndist > 0) {
+		अगर (found) अणु
+			अगर (mode == USE_ANY_MDS && frag.ndist > 0) अणु
 				u8 r;
 
-				/* choose a random replica */
-				get_random_bytes(&r, 1);
+				/* choose a अक्रमom replica */
+				get_अक्रमom_bytes(&r, 1);
 				r %= frag.ndist;
 				mds = frag.dist[r];
-				dout("%s %p %llx.%llx frag %u mds%d (%d/%d)\n",
+				करोut("%s %p %llx.%llx frag %u mds%d (%d/%d)\n",
 				     __func__, inode, ceph_vinop(inode),
-				     frag.frag, mds, (int)r, frag.ndist);
-				if (ceph_mdsmap_get_state(mdsc->mdsmap, mds) >=
+				     frag.frag, mds, (पूर्णांक)r, frag.ndist);
+				अगर (ceph_mdsmap_get_state(mdsc->mdsmap, mds) >=
 				    CEPH_MDS_STATE_ACTIVE &&
 				    !ceph_mdsmap_is_laggy(mdsc->mdsmap, mds))
-					goto out;
-			}
+					जाओ out;
+			पूर्ण
 
 			/* since this file/dir wasn't known to be
-			 * replicated, then we want to look for the
+			 * replicated, then we want to look क्रम the
 			 * authoritative mds. */
-			if (frag.mds >= 0) {
+			अगर (frag.mds >= 0) अणु
 				/* choose auth mds */
 				mds = frag.mds;
-				dout("%s %p %llx.%llx frag %u mds%d (auth)\n",
+				करोut("%s %p %llx.%llx frag %u mds%d (auth)\n",
 				     __func__, inode, ceph_vinop(inode),
 				     frag.frag, mds);
-				if (ceph_mdsmap_get_state(mdsc->mdsmap, mds) >=
-				    CEPH_MDS_STATE_ACTIVE) {
-					if (!ceph_mdsmap_is_laggy(mdsc->mdsmap,
+				अगर (ceph_mdsmap_get_state(mdsc->mdsmap, mds) >=
+				    CEPH_MDS_STATE_ACTIVE) अणु
+					अगर (!ceph_mdsmap_is_laggy(mdsc->mdsmap,
 								  mds))
-						goto out;
-				}
-			}
+						जाओ out;
+				पूर्ण
+			पूर्ण
 			mode = USE_AUTH_MDS;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	spin_lock(&ci->i_ceph_lock);
-	cap = NULL;
-	if (mode == USE_AUTH_MDS)
+	cap = शून्य;
+	अगर (mode == USE_AUTH_MDS)
 		cap = ci->i_auth_cap;
-	if (!cap && !RB_EMPTY_ROOT(&ci->i_caps))
-		cap = rb_entry(rb_first(&ci->i_caps), struct ceph_cap, ci_node);
-	if (!cap) {
+	अगर (!cap && !RB_EMPTY_ROOT(&ci->i_caps))
+		cap = rb_entry(rb_first(&ci->i_caps), काष्ठा ceph_cap, ci_node);
+	अगर (!cap) अणु
 		spin_unlock(&ci->i_ceph_lock);
 		ceph_async_iput(inode);
-		goto random;
-	}
+		जाओ अक्रमom;
+	पूर्ण
 	mds = cap->session->s_mds;
-	dout("%s %p %llx.%llx mds%d (%scap %p)\n", __func__,
+	करोut("%s %p %llx.%llx mds%d (%scap %p)\n", __func__,
 	     inode, ceph_vinop(inode), mds,
 	     cap == ci->i_auth_cap ? "auth " : "", cap);
 	spin_unlock(&ci->i_ceph_lock);
 out:
-	/* avoid calling iput_final() while holding mdsc->mutex or
-	 * in mds dispatch threads */
+	/* aव्योम calling iput_final() जबतक holding mdsc->mutex or
+	 * in mds dispatch thपढ़ोs */
 	ceph_async_iput(inode);
-	return mds;
+	वापस mds;
 
-random:
-	if (random)
-		*random = true;
+अक्रमom:
+	अगर (अक्रमom)
+		*अक्रमom = true;
 
-	mds = ceph_mdsmap_get_random_mds(mdsc->mdsmap);
-	dout("%s chose random mds%d\n", __func__, mds);
-	return mds;
-}
+	mds = ceph_mdsmap_get_अक्रमom_mds(mdsc->mdsmap);
+	करोut("%s chose random mds%d\n", __func__, mds);
+	वापस mds;
+पूर्ण
 
 
 /*
  * session messages
  */
-static struct ceph_msg *create_session_msg(u32 op, u64 seq)
-{
-	struct ceph_msg *msg;
-	struct ceph_mds_session_head *h;
+अटल काष्ठा ceph_msg *create_session_msg(u32 op, u64 seq)
+अणु
+	काष्ठा ceph_msg *msg;
+	काष्ठा ceph_mds_session_head *h;
 
-	msg = ceph_msg_new(CEPH_MSG_CLIENT_SESSION, sizeof(*h), GFP_NOFS,
+	msg = ceph_msg_new(CEPH_MSG_CLIENT_SESSION, माप(*h), GFP_NOFS,
 			   false);
-	if (!msg) {
+	अगर (!msg) अणु
 		pr_err("create_session_msg ENOMEM creating msg\n");
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 	h = msg->front.iov_base;
 	h->op = cpu_to_le32(op);
 	h->seq = cpu_to_le64(seq);
 
-	return msg;
-}
+	वापस msg;
+पूर्ण
 
-static const unsigned char feature_bits[] = CEPHFS_FEATURES_CLIENT_SUPPORTED;
-#define FEATURE_BYTES(c) (DIV_ROUND_UP((size_t)feature_bits[c - 1] + 1, 64) * 8)
-static int encode_supported_features(void **p, void *end)
-{
-	static const size_t count = ARRAY_SIZE(feature_bits);
+अटल स्थिर अचिन्हित अक्षर feature_bits[] = CEPHFS_FEATURES_CLIENT_SUPPORTED;
+#घोषणा FEATURE_BYTES(c) (DIV_ROUND_UP((माप_प्रकार)feature_bits[c - 1] + 1, 64) * 8)
+अटल पूर्णांक encode_supported_features(व्योम **p, व्योम *end)
+अणु
+	अटल स्थिर माप_प्रकार count = ARRAY_SIZE(feature_bits);
 
-	if (count > 0) {
-		size_t i;
-		size_t size = FEATURE_BYTES(count);
+	अगर (count > 0) अणु
+		माप_प्रकार i;
+		माप_प्रकार size = FEATURE_BYTES(count);
 
-		if (WARN_ON_ONCE(*p + 4 + size > end))
-			return -ERANGE;
+		अगर (WARN_ON_ONCE(*p + 4 + size > end))
+			वापस -दुस्फल;
 
 		ceph_encode_32(p, size);
-		memset(*p, 0, size);
-		for (i = 0; i < count; i++)
-			((unsigned char*)(*p))[i / 8] |= BIT(feature_bits[i] % 8);
+		स_रखो(*p, 0, size);
+		क्रम (i = 0; i < count; i++)
+			((अचिन्हित अक्षर*)(*p))[i / 8] |= BIT(feature_bits[i] % 8);
 		*p += size;
-	} else {
-		if (WARN_ON_ONCE(*p + 4 > end))
-			return -ERANGE;
+	पूर्ण अन्यथा अणु
+		अगर (WARN_ON_ONCE(*p + 4 > end))
+			वापस -दुस्फल;
 
 		ceph_encode_32(p, 0);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const unsigned char metric_bits[] = CEPHFS_METRIC_SPEC_CLIENT_SUPPORTED;
-#define METRIC_BYTES(cnt) (DIV_ROUND_UP((size_t)metric_bits[cnt - 1] + 1, 64) * 8)
-static int encode_metric_spec(void **p, void *end)
-{
-	static const size_t count = ARRAY_SIZE(metric_bits);
+अटल स्थिर अचिन्हित अक्षर metric_bits[] = CEPHFS_METRIC_SPEC_CLIENT_SUPPORTED;
+#घोषणा METRIC_BYTES(cnt) (DIV_ROUND_UP((माप_प्रकार)metric_bits[cnt - 1] + 1, 64) * 8)
+अटल पूर्णांक encode_metric_spec(व्योम **p, व्योम *end)
+अणु
+	अटल स्थिर माप_प्रकार count = ARRAY_SIZE(metric_bits);
 
 	/* header */
-	if (WARN_ON_ONCE(*p + 2 > end))
-		return -ERANGE;
+	अगर (WARN_ON_ONCE(*p + 2 > end))
+		वापस -दुस्फल;
 
 	ceph_encode_8(p, 1); /* version */
 	ceph_encode_8(p, 1); /* compat */
 
-	if (count > 0) {
-		size_t i;
-		size_t size = METRIC_BYTES(count);
+	अगर (count > 0) अणु
+		माप_प्रकार i;
+		माप_प्रकार size = METRIC_BYTES(count);
 
-		if (WARN_ON_ONCE(*p + 4 + 4 + size > end))
-			return -ERANGE;
+		अगर (WARN_ON_ONCE(*p + 4 + 4 + size > end))
+			वापस -दुस्फल;
 
 		/* metric spec info length */
 		ceph_encode_32(p, 4 + size);
 
 		/* metric spec */
 		ceph_encode_32(p, size);
-		memset(*p, 0, size);
-		for (i = 0; i < count; i++)
-			((unsigned char *)(*p))[i / 8] |= BIT(metric_bits[i] % 8);
+		स_रखो(*p, 0, size);
+		क्रम (i = 0; i < count; i++)
+			((अचिन्हित अक्षर *)(*p))[i / 8] |= BIT(metric_bits[i] % 8);
 		*p += size;
-	} else {
-		if (WARN_ON_ONCE(*p + 4 + 4 > end))
-			return -ERANGE;
+	पूर्ण अन्यथा अणु
+		अगर (WARN_ON_ONCE(*p + 4 + 4 > end))
+			वापस -दुस्फल;
 
 		/* metric spec info length */
 		ceph_encode_32(p, 4);
 		/* metric spec */
 		ceph_encode_32(p, 0);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * session message, specialization for CEPH_SESSION_REQUEST_OPEN
+ * session message, specialization क्रम CEPH_SESSION_REQUEST_OPEN
  * to include additional client metadata fields.
  */
-static struct ceph_msg *create_session_open_msg(struct ceph_mds_client *mdsc, u64 seq)
-{
-	struct ceph_msg *msg;
-	struct ceph_mds_session_head *h;
-	int i;
-	int extra_bytes = 0;
-	int metadata_key_count = 0;
-	struct ceph_options *opt = mdsc->fsc->client->options;
-	struct ceph_mount_options *fsopt = mdsc->fsc->mount_options;
-	size_t size, count;
-	void *p, *end;
-	int ret;
+अटल काष्ठा ceph_msg *create_session_खोलो_msg(काष्ठा ceph_mds_client *mdsc, u64 seq)
+अणु
+	काष्ठा ceph_msg *msg;
+	काष्ठा ceph_mds_session_head *h;
+	पूर्णांक i;
+	पूर्णांक extra_bytes = 0;
+	पूर्णांक metadata_key_count = 0;
+	काष्ठा ceph_options *opt = mdsc->fsc->client->options;
+	काष्ठा ceph_mount_options *fsopt = mdsc->fsc->mount_options;
+	माप_प्रकार size, count;
+	व्योम *p, *end;
+	पूर्णांक ret;
 
-	const char* metadata[][2] = {
-		{"hostname", mdsc->nodename},
-		{"kernel_version", init_utsname()->release},
-		{"entity_id", opt->name ? : ""},
-		{"root", fsopt->server_path ? : "/"},
-		{NULL, NULL}
-	};
+	स्थिर अक्षर* metadata[][2] = अणु
+		अणु"hostname", mdsc->nodenameपूर्ण,
+		अणु"kernel_version", init_utsname()->releaseपूर्ण,
+		अणु"entity_id", opt->name ? : ""पूर्ण,
+		अणु"root", fsopt->server_path ? : "/"पूर्ण,
+		अणुशून्य, शून्यपूर्ण
+	पूर्ण;
 
 	/* Calculate serialized length of metadata */
 	extra_bytes = 4;  /* map length */
-	for (i = 0; metadata[i][0]; ++i) {
-		extra_bytes += 8 + strlen(metadata[i][0]) +
-			strlen(metadata[i][1]);
+	क्रम (i = 0; metadata[i][0]; ++i) अणु
+		extra_bytes += 8 + म_माप(metadata[i][0]) +
+			म_माप(metadata[i][1]);
 		metadata_key_count++;
-	}
+	पूर्ण
 
 	/* supported feature */
 	size = 0;
 	count = ARRAY_SIZE(feature_bits);
-	if (count > 0)
+	अगर (count > 0)
 		size = FEATURE_BYTES(count);
 	extra_bytes += 4 + size;
 
 	/* metric spec */
 	size = 0;
 	count = ARRAY_SIZE(metric_bits);
-	if (count > 0)
+	अगर (count > 0)
 		size = METRIC_BYTES(count);
 	extra_bytes += 2 + 4 + 4 + size;
 
 	/* Allocate the message */
-	msg = ceph_msg_new(CEPH_MSG_CLIENT_SESSION, sizeof(*h) + extra_bytes,
+	msg = ceph_msg_new(CEPH_MSG_CLIENT_SESSION, माप(*h) + extra_bytes,
 			   GFP_NOFS, false);
-	if (!msg) {
+	अगर (!msg) अणु
 		pr_err("create_session_msg ENOMEM creating msg\n");
-		return ERR_PTR(-ENOMEM);
-	}
+		वापस ERR_PTR(-ENOMEM);
+	पूर्ण
 	p = msg->front.iov_base;
 	end = p + msg->front.iov_len;
 
@@ -1307,323 +1308,323 @@ static struct ceph_msg *create_session_open_msg(struct ceph_mds_client *mdsc, u6
 	h->seq = cpu_to_le64(seq);
 
 	/*
-	 * Serialize client metadata into waiting buffer space, using
-	 * the format that userspace expects for map<string, string>
+	 * Serialize client metadata पूर्णांकo रुकोing buffer space, using
+	 * the क्रमmat that userspace expects क्रम map<string, string>
 	 *
 	 * ClientSession messages with metadata are v4
 	 */
 	msg->hdr.version = cpu_to_le16(4);
 	msg->hdr.compat_version = cpu_to_le16(1);
 
-	/* The write pointer, following the session_head structure */
-	p += sizeof(*h);
+	/* The ग_लिखो poपूर्णांकer, following the session_head काष्ठाure */
+	p += माप(*h);
 
 	/* Number of entries in the map */
 	ceph_encode_32(&p, metadata_key_count);
 
-	/* Two length-prefixed strings for each entry in the map */
-	for (i = 0; metadata[i][0]; ++i) {
-		size_t const key_len = strlen(metadata[i][0]);
-		size_t const val_len = strlen(metadata[i][1]);
+	/* Two length-prefixed strings क्रम each entry in the map */
+	क्रम (i = 0; metadata[i][0]; ++i) अणु
+		माप_प्रकार स्थिर key_len = म_माप(metadata[i][0]);
+		माप_प्रकार स्थिर val_len = म_माप(metadata[i][1]);
 
 		ceph_encode_32(&p, key_len);
-		memcpy(p, metadata[i][0], key_len);
+		स_नकल(p, metadata[i][0], key_len);
 		p += key_len;
 		ceph_encode_32(&p, val_len);
-		memcpy(p, metadata[i][1], val_len);
+		स_नकल(p, metadata[i][1], val_len);
 		p += val_len;
-	}
+	पूर्ण
 
 	ret = encode_supported_features(&p, end);
-	if (ret) {
+	अगर (ret) अणु
 		pr_err("encode_supported_features failed!\n");
 		ceph_msg_put(msg);
-		return ERR_PTR(ret);
-	}
+		वापस ERR_PTR(ret);
+	पूर्ण
 
 	ret = encode_metric_spec(&p, end);
-	if (ret) {
+	अगर (ret) अणु
 		pr_err("encode_metric_spec failed!\n");
 		ceph_msg_put(msg);
-		return ERR_PTR(ret);
-	}
+		वापस ERR_PTR(ret);
+	पूर्ण
 
 	msg->front.iov_len = p - msg->front.iov_base;
 	msg->hdr.front_len = cpu_to_le32(msg->front.iov_len);
 
-	return msg;
-}
+	वापस msg;
+पूर्ण
 
 /*
- * send session open request.
+ * send session खोलो request.
  *
  * called under mdsc->mutex
  */
-static int __open_session(struct ceph_mds_client *mdsc,
-			  struct ceph_mds_session *session)
-{
-	struct ceph_msg *msg;
-	int mstate;
-	int mds = session->s_mds;
+अटल पूर्णांक __खोलो_session(काष्ठा ceph_mds_client *mdsc,
+			  काष्ठा ceph_mds_session *session)
+अणु
+	काष्ठा ceph_msg *msg;
+	पूर्णांक mstate;
+	पूर्णांक mds = session->s_mds;
 
-	/* wait for mds to go active? */
+	/* रुको क्रम mds to go active? */
 	mstate = ceph_mdsmap_get_state(mdsc->mdsmap, mds);
-	dout("open_session to mds%d (%s)\n", mds,
+	करोut("open_session to mds%d (%s)\n", mds,
 	     ceph_mds_state_name(mstate));
 	session->s_state = CEPH_MDS_SESSION_OPENING;
-	session->s_renew_requested = jiffies;
+	session->s_renew_requested = jअगरfies;
 
 	/* send connect message */
-	msg = create_session_open_msg(mdsc, session->s_seq);
-	if (IS_ERR(msg))
-		return PTR_ERR(msg);
+	msg = create_session_खोलो_msg(mdsc, session->s_seq);
+	अगर (IS_ERR(msg))
+		वापस PTR_ERR(msg);
 	ceph_con_send(&session->s_con, msg);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * open sessions for any export targets for the given mds
+ * खोलो sessions क्रम any export tarमाला_लो क्रम the given mds
  *
  * called under mdsc->mutex
  */
-static struct ceph_mds_session *
-__open_export_target_session(struct ceph_mds_client *mdsc, int target)
-{
-	struct ceph_mds_session *session;
-	int ret;
+अटल काष्ठा ceph_mds_session *
+__खोलो_export_target_session(काष्ठा ceph_mds_client *mdsc, पूर्णांक target)
+अणु
+	काष्ठा ceph_mds_session *session;
+	पूर्णांक ret;
 
 	session = __ceph_lookup_mds_session(mdsc, target);
-	if (!session) {
-		session = register_session(mdsc, target);
-		if (IS_ERR(session))
-			return session;
-	}
-	if (session->s_state == CEPH_MDS_SESSION_NEW ||
-	    session->s_state == CEPH_MDS_SESSION_CLOSING) {
-		ret = __open_session(mdsc, session);
-		if (ret)
-			return ERR_PTR(ret);
-	}
+	अगर (!session) अणु
+		session = रेजिस्टर_session(mdsc, target);
+		अगर (IS_ERR(session))
+			वापस session;
+	पूर्ण
+	अगर (session->s_state == CEPH_MDS_SESSION_NEW ||
+	    session->s_state == CEPH_MDS_SESSION_CLOSING) अणु
+		ret = __खोलो_session(mdsc, session);
+		अगर (ret)
+			वापस ERR_PTR(ret);
+	पूर्ण
 
-	return session;
-}
+	वापस session;
+पूर्ण
 
-struct ceph_mds_session *
-ceph_mdsc_open_export_target_session(struct ceph_mds_client *mdsc, int target)
-{
-	struct ceph_mds_session *session;
+काष्ठा ceph_mds_session *
+ceph_mdsc_खोलो_export_target_session(काष्ठा ceph_mds_client *mdsc, पूर्णांक target)
+अणु
+	काष्ठा ceph_mds_session *session;
 
-	dout("open_export_target_session to mds%d\n", target);
+	करोut("open_export_target_session to mds%d\n", target);
 
 	mutex_lock(&mdsc->mutex);
-	session = __open_export_target_session(mdsc, target);
+	session = __खोलो_export_target_session(mdsc, target);
 	mutex_unlock(&mdsc->mutex);
 
-	return session;
-}
+	वापस session;
+पूर्ण
 
-static void __open_export_target_sessions(struct ceph_mds_client *mdsc,
-					  struct ceph_mds_session *session)
-{
-	struct ceph_mds_info *mi;
-	struct ceph_mds_session *ts;
-	int i, mds = session->s_mds;
+अटल व्योम __खोलो_export_target_sessions(काष्ठा ceph_mds_client *mdsc,
+					  काष्ठा ceph_mds_session *session)
+अणु
+	काष्ठा ceph_mds_info *mi;
+	काष्ठा ceph_mds_session *ts;
+	पूर्णांक i, mds = session->s_mds;
 
-	if (mds >= mdsc->mdsmap->possible_max_rank)
-		return;
+	अगर (mds >= mdsc->mdsmap->possible_max_rank)
+		वापस;
 
 	mi = &mdsc->mdsmap->m_info[mds];
-	dout("open_export_target_sessions for mds%d (%d targets)\n",
-	     session->s_mds, mi->num_export_targets);
+	करोut("open_export_target_sessions for mds%d (%d targets)\n",
+	     session->s_mds, mi->num_export_tarमाला_लो);
 
-	for (i = 0; i < mi->num_export_targets; i++) {
-		ts = __open_export_target_session(mdsc, mi->export_targets[i]);
-		if (!IS_ERR(ts))
+	क्रम (i = 0; i < mi->num_export_tarमाला_लो; i++) अणु
+		ts = __खोलो_export_target_session(mdsc, mi->export_tarमाला_लो[i]);
+		अगर (!IS_ERR(ts))
 			ceph_put_mds_session(ts);
-	}
-}
+	पूर्ण
+पूर्ण
 
-void ceph_mdsc_open_export_target_sessions(struct ceph_mds_client *mdsc,
-					   struct ceph_mds_session *session)
-{
+व्योम ceph_mdsc_खोलो_export_target_sessions(काष्ठा ceph_mds_client *mdsc,
+					   काष्ठा ceph_mds_session *session)
+अणु
 	mutex_lock(&mdsc->mutex);
-	__open_export_target_sessions(mdsc, session);
+	__खोलो_export_target_sessions(mdsc, session);
 	mutex_unlock(&mdsc->mutex);
-}
+पूर्ण
 
 /*
  * session caps
  */
 
-static void detach_cap_releases(struct ceph_mds_session *session,
-				struct list_head *target)
-{
-	lockdep_assert_held(&session->s_cap_lock);
+अटल व्योम detach_cap_releases(काष्ठा ceph_mds_session *session,
+				काष्ठा list_head *target)
+अणु
+	lockdep_निश्चित_held(&session->s_cap_lock);
 
 	list_splice_init(&session->s_cap_releases, target);
 	session->s_num_cap_releases = 0;
-	dout("dispose_cap_releases mds%d\n", session->s_mds);
-}
+	करोut("dispose_cap_releases mds%d\n", session->s_mds);
+पूर्ण
 
-static void dispose_cap_releases(struct ceph_mds_client *mdsc,
-				 struct list_head *dispose)
-{
-	while (!list_empty(dispose)) {
-		struct ceph_cap *cap;
+अटल व्योम dispose_cap_releases(काष्ठा ceph_mds_client *mdsc,
+				 काष्ठा list_head *dispose)
+अणु
+	जबतक (!list_empty(dispose)) अणु
+		काष्ठा ceph_cap *cap;
 		/* zero out the in-progress message */
-		cap = list_first_entry(dispose, struct ceph_cap, session_caps);
+		cap = list_first_entry(dispose, काष्ठा ceph_cap, session_caps);
 		list_del(&cap->session_caps);
 		ceph_put_cap(mdsc, cap);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void cleanup_session_requests(struct ceph_mds_client *mdsc,
-				     struct ceph_mds_session *session)
-{
-	struct ceph_mds_request *req;
-	struct rb_node *p;
-	struct ceph_inode_info *ci;
+अटल व्योम cleanup_session_requests(काष्ठा ceph_mds_client *mdsc,
+				     काष्ठा ceph_mds_session *session)
+अणु
+	काष्ठा ceph_mds_request *req;
+	काष्ठा rb_node *p;
+	काष्ठा ceph_inode_info *ci;
 
-	dout("cleanup_session_requests mds%d\n", session->s_mds);
+	करोut("cleanup_session_requests mds%d\n", session->s_mds);
 	mutex_lock(&mdsc->mutex);
-	while (!list_empty(&session->s_unsafe)) {
+	जबतक (!list_empty(&session->s_unsafe)) अणु
 		req = list_first_entry(&session->s_unsafe,
-				       struct ceph_mds_request, r_unsafe_item);
+				       काष्ठा ceph_mds_request, r_unsafe_item);
 		pr_warn_ratelimited(" dropping unsafe request %llu\n",
 				    req->r_tid);
-		if (req->r_target_inode) {
+		अगर (req->r_target_inode) अणु
 			/* dropping unsafe change of inode's attributes */
 			ci = ceph_inode(req->r_target_inode);
 			errseq_set(&ci->i_meta_err, -EIO);
-		}
-		if (req->r_unsafe_dir) {
+		पूर्ण
+		अगर (req->r_unsafe_dir) अणु
 			/* dropping unsafe directory operation */
 			ci = ceph_inode(req->r_unsafe_dir);
 			errseq_set(&ci->i_meta_err, -EIO);
-		}
-		__unregister_request(mdsc, req);
-	}
+		पूर्ण
+		__unरेजिस्टर_request(mdsc, req);
+	पूर्ण
 	/* zero r_attempts, so kick_requests() will re-send requests */
 	p = rb_first(&mdsc->request_tree);
-	while (p) {
-		req = rb_entry(p, struct ceph_mds_request, r_node);
+	जबतक (p) अणु
+		req = rb_entry(p, काष्ठा ceph_mds_request, r_node);
 		p = rb_next(p);
-		if (req->r_session &&
+		अगर (req->r_session &&
 		    req->r_session->s_mds == session->s_mds)
 			req->r_attempts = 0;
-	}
+	पूर्ण
 	mutex_unlock(&mdsc->mutex);
-}
+पूर्ण
 
 /*
  * Helper to safely iterate over all caps associated with a session, with
- * special care taken to handle a racing __ceph_remove_cap().
+ * special care taken to handle a racing __ceph_हटाओ_cap().
  *
  * Caller must hold session s_mutex.
  */
-int ceph_iterate_session_caps(struct ceph_mds_session *session,
-			      int (*cb)(struct inode *, struct ceph_cap *,
-					void *), void *arg)
-{
-	struct list_head *p;
-	struct ceph_cap *cap;
-	struct inode *inode, *last_inode = NULL;
-	struct ceph_cap *old_cap = NULL;
-	int ret;
+पूर्णांक ceph_iterate_session_caps(काष्ठा ceph_mds_session *session,
+			      पूर्णांक (*cb)(काष्ठा inode *, काष्ठा ceph_cap *,
+					व्योम *), व्योम *arg)
+अणु
+	काष्ठा list_head *p;
+	काष्ठा ceph_cap *cap;
+	काष्ठा inode *inode, *last_inode = शून्य;
+	काष्ठा ceph_cap *old_cap = शून्य;
+	पूर्णांक ret;
 
-	dout("iterate_session_caps %p mds%d\n", session, session->s_mds);
+	करोut("iterate_session_caps %p mds%d\n", session, session->s_mds);
 	spin_lock(&session->s_cap_lock);
 	p = session->s_caps.next;
-	while (p != &session->s_caps) {
-		cap = list_entry(p, struct ceph_cap, session_caps);
+	जबतक (p != &session->s_caps) अणु
+		cap = list_entry(p, काष्ठा ceph_cap, session_caps);
 		inode = igrab(&cap->ci->vfs_inode);
-		if (!inode) {
+		अगर (!inode) अणु
 			p = p->next;
-			continue;
-		}
+			जारी;
+		पूर्ण
 		session->s_cap_iterator = cap;
 		spin_unlock(&session->s_cap_lock);
 
-		if (last_inode) {
-			/* avoid calling iput_final() while holding
-			 * s_mutex or in mds dispatch threads */
+		अगर (last_inode) अणु
+			/* aव्योम calling iput_final() जबतक holding
+			 * s_mutex or in mds dispatch thपढ़ोs */
 			ceph_async_iput(last_inode);
-			last_inode = NULL;
-		}
-		if (old_cap) {
+			last_inode = शून्य;
+		पूर्ण
+		अगर (old_cap) अणु
 			ceph_put_cap(session->s_mdsc, old_cap);
-			old_cap = NULL;
-		}
+			old_cap = शून्य;
+		पूर्ण
 
 		ret = cb(inode, cap, arg);
 		last_inode = inode;
 
 		spin_lock(&session->s_cap_lock);
 		p = p->next;
-		if (!cap->ci) {
-			dout("iterate_session_caps  finishing cap %p removal\n",
+		अगर (!cap->ci) अणु
+			करोut("iterate_session_caps  finishing cap %p removal\n",
 			     cap);
 			BUG_ON(cap->session != session);
-			cap->session = NULL;
+			cap->session = शून्य;
 			list_del_init(&cap->session_caps);
 			session->s_nr_caps--;
 			atomic64_dec(&session->s_mdsc->metric.total_caps);
-			if (cap->queue_release)
+			अगर (cap->queue_release)
 				__ceph_queue_cap_release(session, cap);
-			else
+			अन्यथा
 				old_cap = cap;  /* put_cap it w/o locks held */
-		}
-		if (ret < 0)
-			goto out;
-	}
+		पूर्ण
+		अगर (ret < 0)
+			जाओ out;
+	पूर्ण
 	ret = 0;
 out:
-	session->s_cap_iterator = NULL;
+	session->s_cap_iterator = शून्य;
 	spin_unlock(&session->s_cap_lock);
 
 	ceph_async_iput(last_inode);
-	if (old_cap)
+	अगर (old_cap)
 		ceph_put_cap(session->s_mdsc, old_cap);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int remove_session_caps_cb(struct inode *inode, struct ceph_cap *cap,
-				  void *arg)
-{
-	struct ceph_fs_client *fsc = (struct ceph_fs_client *)arg;
-	struct ceph_inode_info *ci = ceph_inode(inode);
-	LIST_HEAD(to_remove);
+अटल पूर्णांक हटाओ_session_caps_cb(काष्ठा inode *inode, काष्ठा ceph_cap *cap,
+				  व्योम *arg)
+अणु
+	काष्ठा ceph_fs_client *fsc = (काष्ठा ceph_fs_client *)arg;
+	काष्ठा ceph_inode_info *ci = ceph_inode(inode);
+	LIST_HEAD(to_हटाओ);
 	bool dirty_dropped = false;
 	bool invalidate = false;
 
-	dout("removing cap %p, ci is %p, inode is %p\n",
+	करोut("removing cap %p, ci is %p, inode is %p\n",
 	     cap, ci, &ci->vfs_inode);
 	spin_lock(&ci->i_ceph_lock);
-	__ceph_remove_cap(cap, false);
-	if (!ci->i_auth_cap) {
-		struct ceph_cap_flush *cf;
-		struct ceph_mds_client *mdsc = fsc->mdsc;
+	__ceph_हटाओ_cap(cap, false);
+	अगर (!ci->i_auth_cap) अणु
+		काष्ठा ceph_cap_flush *cf;
+		काष्ठा ceph_mds_client *mdsc = fsc->mdsc;
 
-		if (READ_ONCE(fsc->mount_state) >= CEPH_MOUNT_SHUTDOWN) {
-			if (inode->i_data.nrpages > 0)
+		अगर (READ_ONCE(fsc->mount_state) >= CEPH_MOUNT_SHUTDOWN) अणु
+			अगर (inode->i_data.nrpages > 0)
 				invalidate = true;
-			if (ci->i_wrbuffer_ref > 0)
+			अगर (ci->i_wrbuffer_ref > 0)
 				mapping_set_error(&inode->i_data, -EIO);
-		}
+		पूर्ण
 
-		while (!list_empty(&ci->i_cap_flush_list)) {
+		जबतक (!list_empty(&ci->i_cap_flush_list)) अणु
 			cf = list_first_entry(&ci->i_cap_flush_list,
-					      struct ceph_cap_flush, i_list);
-			list_move(&cf->i_list, &to_remove);
-		}
+					      काष्ठा ceph_cap_flush, i_list);
+			list_move(&cf->i_list, &to_हटाओ);
+		पूर्ण
 
 		spin_lock(&mdsc->cap_dirty_lock);
 
-		list_for_each_entry(cf, &to_remove, i_list)
+		list_क्रम_each_entry(cf, &to_हटाओ, i_list)
 			list_del(&cf->g_list);
 
-		if (!list_empty(&ci->i_dirty_item)) {
+		अगर (!list_empty(&ci->i_dirty_item)) अणु
 			pr_warn_ratelimited(
 				" dropping dirty %s state for %p %lld\n",
 				ceph_cap_string(ci->i_dirty_caps),
@@ -1631,8 +1632,8 @@ static int remove_session_caps_cb(struct inode *inode, struct ceph_cap *cap,
 			ci->i_dirty_caps = 0;
 			list_del_init(&ci->i_dirty_item);
 			dirty_dropped = true;
-		}
-		if (!list_empty(&ci->i_flushing_item)) {
+		पूर्ण
+		अगर (!list_empty(&ci->i_flushing_item)) अणु
 			pr_warn_ratelimited(
 				" dropping dirty+flushing %s state for %p %lld\n",
 				ceph_cap_string(ci->i_flushing_caps),
@@ -1641,92 +1642,92 @@ static int remove_session_caps_cb(struct inode *inode, struct ceph_cap *cap,
 			list_del_init(&ci->i_flushing_item);
 			mdsc->num_cap_flushing--;
 			dirty_dropped = true;
-		}
+		पूर्ण
 		spin_unlock(&mdsc->cap_dirty_lock);
 
-		if (dirty_dropped) {
+		अगर (dirty_dropped) अणु
 			errseq_set(&ci->i_meta_err, -EIO);
 
-			if (ci->i_wrbuffer_ref_head == 0 &&
+			अगर (ci->i_wrbuffer_ref_head == 0 &&
 			    ci->i_wr_ref == 0 &&
 			    ci->i_dirty_caps == 0 &&
-			    ci->i_flushing_caps == 0) {
+			    ci->i_flushing_caps == 0) अणु
 				ceph_put_snap_context(ci->i_head_snapc);
-				ci->i_head_snapc = NULL;
-			}
-		}
+				ci->i_head_snapc = शून्य;
+			पूर्ण
+		पूर्ण
 
-		if (atomic_read(&ci->i_filelock_ref) > 0) {
-			/* make further file lock syscall return -EIO */
-			ci->i_ceph_flags |= CEPH_I_ERROR_FILELOCK;
+		अगर (atomic_पढ़ो(&ci->i_filelock_ref) > 0) अणु
+			/* make further file lock syscall वापस -EIO */
+			ci->i_ceph_flags |= CEPH_I_ERROR_खाताLOCK;
 			pr_warn_ratelimited(" dropping file locks for %p %lld\n",
 					    inode, ceph_ino(inode));
-		}
+		पूर्ण
 
-		if (!ci->i_dirty_caps && ci->i_prealloc_cap_flush) {
-			list_add(&ci->i_prealloc_cap_flush->i_list, &to_remove);
-			ci->i_prealloc_cap_flush = NULL;
-		}
-	}
+		अगर (!ci->i_dirty_caps && ci->i_pपुनः_स्मृति_cap_flush) अणु
+			list_add(&ci->i_pपुनः_स्मृति_cap_flush->i_list, &to_हटाओ);
+			ci->i_pपुनः_स्मृति_cap_flush = शून्य;
+		पूर्ण
+	पूर्ण
 	spin_unlock(&ci->i_ceph_lock);
-	while (!list_empty(&to_remove)) {
-		struct ceph_cap_flush *cf;
-		cf = list_first_entry(&to_remove,
-				      struct ceph_cap_flush, i_list);
+	जबतक (!list_empty(&to_हटाओ)) अणु
+		काष्ठा ceph_cap_flush *cf;
+		cf = list_first_entry(&to_हटाओ,
+				      काष्ठा ceph_cap_flush, i_list);
 		list_del(&cf->i_list);
-		ceph_free_cap_flush(cf);
-	}
+		ceph_मुक्त_cap_flush(cf);
+	पूर्ण
 
 	wake_up_all(&ci->i_cap_wq);
-	if (invalidate)
+	अगर (invalidate)
 		ceph_queue_invalidate(inode);
-	if (dirty_dropped)
+	अगर (dirty_dropped)
 		iput(inode);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * caller must hold session s_mutex
  */
-static void remove_session_caps(struct ceph_mds_session *session)
-{
-	struct ceph_fs_client *fsc = session->s_mdsc->fsc;
-	struct super_block *sb = fsc->sb;
+अटल व्योम हटाओ_session_caps(काष्ठा ceph_mds_session *session)
+अणु
+	काष्ठा ceph_fs_client *fsc = session->s_mdsc->fsc;
+	काष्ठा super_block *sb = fsc->sb;
 	LIST_HEAD(dispose);
 
-	dout("remove_session_caps on %p\n", session);
-	ceph_iterate_session_caps(session, remove_session_caps_cb, fsc);
+	करोut("remove_session_caps on %p\n", session);
+	ceph_iterate_session_caps(session, हटाओ_session_caps_cb, fsc);
 
 	wake_up_all(&fsc->mdsc->cap_flushing_wq);
 
 	spin_lock(&session->s_cap_lock);
-	if (session->s_nr_caps > 0) {
-		struct inode *inode;
-		struct ceph_cap *cap, *prev = NULL;
-		struct ceph_vino vino;
+	अगर (session->s_nr_caps > 0) अणु
+		काष्ठा inode *inode;
+		काष्ठा ceph_cap *cap, *prev = शून्य;
+		काष्ठा ceph_vino vino;
 		/*
 		 * iterate_session_caps() skips inodes that are being
-		 * deleted, we need to wait until deletions are complete.
-		 * __wait_on_freeing_inode() is designed for the job,
+		 * deleted, we need to रुको until deletions are complete.
+		 * __रुको_on_मुक्तing_inode() is deचिन्हित क्रम the job,
 		 * but it is not exported, so use lookup inode function
 		 * to access it.
 		 */
-		while (!list_empty(&session->s_caps)) {
+		जबतक (!list_empty(&session->s_caps)) अणु
 			cap = list_entry(session->s_caps.next,
-					 struct ceph_cap, session_caps);
-			if (cap == prev)
-				break;
+					 काष्ठा ceph_cap, session_caps);
+			अगर (cap == prev)
+				अवरोध;
 			prev = cap;
 			vino = cap->ci->i_vino;
 			spin_unlock(&session->s_cap_lock);
 
 			inode = ceph_find_inode(sb, vino);
-			 /* avoid calling iput_final() while holding s_mutex */
+			 /* aव्योम calling iput_final() जबतक holding s_mutex */
 			ceph_async_iput(inode);
 
 			spin_lock(&session->s_cap_lock);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	// drop cap expires and unlock s_cap_lock
 	detach_cap_releases(session, &dispose);
@@ -1735,100 +1736,100 @@ static void remove_session_caps(struct ceph_mds_session *session)
 	BUG_ON(!list_empty(&session->s_cap_flushing));
 	spin_unlock(&session->s_cap_lock);
 	dispose_cap_releases(session->s_mdsc, &dispose);
-}
+पूर्ण
 
-enum {
+क्रमागत अणु
 	RECONNECT,
 	RENEWCAPS,
 	FORCE_RO,
-};
+पूर्ण;
 
 /*
- * wake up any threads waiting on this session's caps.  if the cap is
- * old (didn't get renewed on the client reconnect), remove it now.
+ * wake up any thपढ़ोs रुकोing on this session's caps.  अगर the cap is
+ * old (didn't get renewed on the client reconnect), हटाओ it now.
  *
  * caller must hold s_mutex.
  */
-static int wake_up_session_cb(struct inode *inode, struct ceph_cap *cap,
-			      void *arg)
-{
-	struct ceph_inode_info *ci = ceph_inode(inode);
-	unsigned long ev = (unsigned long)arg;
+अटल पूर्णांक wake_up_session_cb(काष्ठा inode *inode, काष्ठा ceph_cap *cap,
+			      व्योम *arg)
+अणु
+	काष्ठा ceph_inode_info *ci = ceph_inode(inode);
+	अचिन्हित दीर्घ ev = (अचिन्हित दीर्घ)arg;
 
-	if (ev == RECONNECT) {
+	अगर (ev == RECONNECT) अणु
 		spin_lock(&ci->i_ceph_lock);
 		ci->i_wanted_max_size = 0;
 		ci->i_requested_max_size = 0;
 		spin_unlock(&ci->i_ceph_lock);
-	} else if (ev == RENEWCAPS) {
-		if (cap->cap_gen < cap->session->s_cap_gen) {
+	पूर्ण अन्यथा अगर (ev == RENEWCAPS) अणु
+		अगर (cap->cap_gen < cap->session->s_cap_gen) अणु
 			/* mds did not re-issue stale cap */
 			spin_lock(&ci->i_ceph_lock);
 			cap->issued = cap->implemented = CEPH_CAP_PIN;
 			spin_unlock(&ci->i_ceph_lock);
-		}
-	} else if (ev == FORCE_RO) {
-	}
+		पूर्ण
+	पूर्ण अन्यथा अगर (ev == FORCE_RO) अणु
+	पूर्ण
 	wake_up_all(&ci->i_cap_wq);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void wake_up_session_caps(struct ceph_mds_session *session, int ev)
-{
-	dout("wake_up_session_caps %p mds%d\n", session, session->s_mds);
+अटल व्योम wake_up_session_caps(काष्ठा ceph_mds_session *session, पूर्णांक ev)
+अणु
+	करोut("wake_up_session_caps %p mds%d\n", session, session->s_mds);
 	ceph_iterate_session_caps(session, wake_up_session_cb,
-				  (void *)(unsigned long)ev);
-}
+				  (व्योम *)(अचिन्हित दीर्घ)ev);
+पूर्ण
 
 /*
  * Send periodic message to MDS renewing all currently held caps.  The
- * ack will reset the expiration for all caps from this session.
+ * ack will reset the expiration क्रम all caps from this session.
  *
  * caller holds s_mutex
  */
-static int send_renew_caps(struct ceph_mds_client *mdsc,
-			   struct ceph_mds_session *session)
-{
-	struct ceph_msg *msg;
-	int state;
+अटल पूर्णांक send_renew_caps(काष्ठा ceph_mds_client *mdsc,
+			   काष्ठा ceph_mds_session *session)
+अणु
+	काष्ठा ceph_msg *msg;
+	पूर्णांक state;
 
-	if (time_after_eq(jiffies, session->s_cap_ttl) &&
-	    time_after_eq(session->s_cap_ttl, session->s_renew_requested))
+	अगर (समय_after_eq(jअगरfies, session->s_cap_ttl) &&
+	    समय_after_eq(session->s_cap_ttl, session->s_renew_requested))
 		pr_info("mds%d caps stale\n", session->s_mds);
-	session->s_renew_requested = jiffies;
+	session->s_renew_requested = jअगरfies;
 
-	/* do not try to renew caps until a recovering mds has reconnected
+	/* करो not try to renew caps until a recovering mds has reconnected
 	 * with its clients. */
 	state = ceph_mdsmap_get_state(mdsc->mdsmap, session->s_mds);
-	if (state < CEPH_MDS_STATE_RECONNECT) {
-		dout("send_renew_caps ignoring mds%d (%s)\n",
+	अगर (state < CEPH_MDS_STATE_RECONNECT) अणु
+		करोut("send_renew_caps ignoring mds%d (%s)\n",
 		     session->s_mds, ceph_mds_state_name(state));
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	dout("send_renew_caps to mds%d (%s)\n", session->s_mds,
+	करोut("send_renew_caps to mds%d (%s)\n", session->s_mds,
 		ceph_mds_state_name(state));
 	msg = create_session_msg(CEPH_SESSION_REQUEST_RENEWCAPS,
 				 ++session->s_renew_seq);
-	if (!msg)
-		return -ENOMEM;
+	अगर (!msg)
+		वापस -ENOMEM;
 	ceph_con_send(&session->s_con, msg);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int send_flushmsg_ack(struct ceph_mds_client *mdsc,
-			     struct ceph_mds_session *session, u64 seq)
-{
-	struct ceph_msg *msg;
+अटल पूर्णांक send_flushmsg_ack(काष्ठा ceph_mds_client *mdsc,
+			     काष्ठा ceph_mds_session *session, u64 seq)
+अणु
+	काष्ठा ceph_msg *msg;
 
-	dout("send_flushmsg_ack to mds%d (%s)s seq %lld\n",
+	करोut("send_flushmsg_ack to mds%d (%s)s seq %lld\n",
 	     session->s_mds, ceph_session_state_name(session->s_state), seq);
 	msg = create_session_msg(CEPH_SESSION_FLUSHMSG_ACK, seq);
-	if (!msg)
-		return -ENOMEM;
+	अगर (!msg)
+		वापस -ENOMEM;
 	ceph_con_send(&session->s_con, msg);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
 /*
@@ -1836,105 +1837,105 @@ static int send_flushmsg_ack(struct ceph_mds_client *mdsc,
  *
  * Called under session->s_mutex
  */
-static void renewed_caps(struct ceph_mds_client *mdsc,
-			 struct ceph_mds_session *session, int is_renew)
-{
-	int was_stale;
-	int wake = 0;
+अटल व्योम renewed_caps(काष्ठा ceph_mds_client *mdsc,
+			 काष्ठा ceph_mds_session *session, पूर्णांक is_renew)
+अणु
+	पूर्णांक was_stale;
+	पूर्णांक wake = 0;
 
 	spin_lock(&session->s_cap_lock);
-	was_stale = is_renew && time_after_eq(jiffies, session->s_cap_ttl);
+	was_stale = is_renew && समय_after_eq(jअगरfies, session->s_cap_ttl);
 
 	session->s_cap_ttl = session->s_renew_requested +
-		mdsc->mdsmap->m_session_timeout*HZ;
+		mdsc->mdsmap->m_session_समयout*HZ;
 
-	if (was_stale) {
-		if (time_before(jiffies, session->s_cap_ttl)) {
+	अगर (was_stale) अणु
+		अगर (समय_beक्रमe(jअगरfies, session->s_cap_ttl)) अणु
 			pr_info("mds%d caps renewed\n", session->s_mds);
 			wake = 1;
-		} else {
+		पूर्ण अन्यथा अणु
 			pr_info("mds%d caps still stale\n", session->s_mds);
-		}
-	}
-	dout("renewed_caps mds%d ttl now %lu, was %s, now %s\n",
+		पूर्ण
+	पूर्ण
+	करोut("renewed_caps mds%d ttl now %lu, was %s, now %s\n",
 	     session->s_mds, session->s_cap_ttl, was_stale ? "stale" : "fresh",
-	     time_before(jiffies, session->s_cap_ttl) ? "stale" : "fresh");
+	     समय_beक्रमe(jअगरfies, session->s_cap_ttl) ? "stale" : "fresh");
 	spin_unlock(&session->s_cap_lock);
 
-	if (wake)
+	अगर (wake)
 		wake_up_session_caps(session, RENEWCAPS);
-}
+पूर्ण
 
 /*
- * send a session close request
+ * send a session बंद request
  */
-static int request_close_session(struct ceph_mds_session *session)
-{
-	struct ceph_msg *msg;
+अटल पूर्णांक request_बंद_session(काष्ठा ceph_mds_session *session)
+अणु
+	काष्ठा ceph_msg *msg;
 
-	dout("request_close_session mds%d state %s seq %lld\n",
+	करोut("request_close_session mds%d state %s seq %lld\n",
 	     session->s_mds, ceph_session_state_name(session->s_state),
 	     session->s_seq);
 	msg = create_session_msg(CEPH_SESSION_REQUEST_CLOSE, session->s_seq);
-	if (!msg)
-		return -ENOMEM;
+	अगर (!msg)
+		वापस -ENOMEM;
 	ceph_con_send(&session->s_con, msg);
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
 /*
  * Called with s_mutex held.
  */
-static int __close_session(struct ceph_mds_client *mdsc,
-			 struct ceph_mds_session *session)
-{
-	if (session->s_state >= CEPH_MDS_SESSION_CLOSING)
-		return 0;
+अटल पूर्णांक __बंद_session(काष्ठा ceph_mds_client *mdsc,
+			 काष्ठा ceph_mds_session *session)
+अणु
+	अगर (session->s_state >= CEPH_MDS_SESSION_CLOSING)
+		वापस 0;
 	session->s_state = CEPH_MDS_SESSION_CLOSING;
-	return request_close_session(session);
-}
+	वापस request_बंद_session(session);
+पूर्ण
 
-static bool drop_negative_children(struct dentry *dentry)
-{
-	struct dentry *child;
+अटल bool drop_negative_children(काष्ठा dentry *dentry)
+अणु
+	काष्ठा dentry *child;
 	bool all_negative = true;
 
-	if (!d_is_dir(dentry))
-		goto out;
+	अगर (!d_is_dir(dentry))
+		जाओ out;
 
 	spin_lock(&dentry->d_lock);
-	list_for_each_entry(child, &dentry->d_subdirs, d_child) {
-		if (d_really_is_positive(child)) {
+	list_क्रम_each_entry(child, &dentry->d_subdirs, d_child) अणु
+		अगर (d_really_is_positive(child)) अणु
 			all_negative = false;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 	spin_unlock(&dentry->d_lock);
 
-	if (all_negative)
+	अगर (all_negative)
 		shrink_dcache_parent(dentry);
 out:
-	return all_negative;
-}
+	वापस all_negative;
+पूर्ण
 
 /*
  * Trim old(er) caps.
  *
- * Because we can't cache an inode without one or more caps, we do
- * this indirectly: if a cap is unused, we prune its aliases, at which
- * point the inode will hopefully get dropped to.
+ * Because we can't cache an inode without one or more caps, we करो
+ * this indirectly: अगर a cap is unused, we prune its aliases, at which
+ * poपूर्णांक the inode will hopefully get dropped to.
  *
  * Yes, this is a bit sloppy.  Our only real goal here is to respond to
  * memory pressure from the MDS, though, so it needn't be perfect.
  */
-static int trim_caps_cb(struct inode *inode, struct ceph_cap *cap, void *arg)
-{
-	int *remaining = arg;
-	struct ceph_inode_info *ci = ceph_inode(inode);
-	int used, wanted, oissued, mine;
+अटल पूर्णांक trim_caps_cb(काष्ठा inode *inode, काष्ठा ceph_cap *cap, व्योम *arg)
+अणु
+	पूर्णांक *reमुख्यing = arg;
+	काष्ठा ceph_inode_info *ci = ceph_inode(inode);
+	पूर्णांक used, wanted, oissued, mine;
 
-	if (*remaining <= 0)
-		return -1;
+	अगर (*reमुख्यing <= 0)
+		वापस -1;
 
 	spin_lock(&ci->i_ceph_lock);
 	mine = cap->issued | cap->implemented;
@@ -1942,162 +1943,162 @@ static int trim_caps_cb(struct inode *inode, struct ceph_cap *cap, void *arg)
 	wanted = __ceph_caps_file_wanted(ci);
 	oissued = __ceph_caps_issued_other(ci, cap);
 
-	dout("trim_caps_cb %p cap %p mine %s oissued %s used %s wanted %s\n",
+	करोut("trim_caps_cb %p cap %p mine %s oissued %s used %s wanted %s\n",
 	     inode, cap, ceph_cap_string(mine), ceph_cap_string(oissued),
 	     ceph_cap_string(used), ceph_cap_string(wanted));
-	if (cap == ci->i_auth_cap) {
-		if (ci->i_dirty_caps || ci->i_flushing_caps ||
+	अगर (cap == ci->i_auth_cap) अणु
+		अगर (ci->i_dirty_caps || ci->i_flushing_caps ||
 		    !list_empty(&ci->i_cap_snaps))
-			goto out;
-		if ((used | wanted) & CEPH_CAP_ANY_WR)
-			goto out;
+			जाओ out;
+		अगर ((used | wanted) & CEPH_CAP_ANY_WR)
+			जाओ out;
 		/* Note: it's possible that i_filelock_ref becomes non-zero
-		 * after dropping auth caps. It doesn't hurt because reply
+		 * after dropping auth caps. It करोesn't hurt because reply
 		 * of lock mds request will re-add auth caps. */
-		if (atomic_read(&ci->i_filelock_ref) > 0)
-			goto out;
-	}
-	/* The inode has cached pages, but it's no longer used.
+		अगर (atomic_पढ़ो(&ci->i_filelock_ref) > 0)
+			जाओ out;
+	पूर्ण
+	/* The inode has cached pages, but it's no दीर्घer used.
 	 * we can safely drop it */
-	if (S_ISREG(inode->i_mode) &&
-	    wanted == 0 && used == CEPH_CAP_FILE_CACHE &&
-	    !(oissued & CEPH_CAP_FILE_CACHE)) {
+	अगर (S_ISREG(inode->i_mode) &&
+	    wanted == 0 && used == CEPH_CAP_खाता_CACHE &&
+	    !(oissued & CEPH_CAP_खाता_CACHE)) अणु
 	  used = 0;
 	  oissued = 0;
-	}
-	if ((used | wanted) & ~oissued & mine)
-		goto out;   /* we need these caps */
+	पूर्ण
+	अगर ((used | wanted) & ~oissued & mine)
+		जाओ out;   /* we need these caps */
 
-	if (oissued) {
-		/* we aren't the only cap.. just remove us */
-		__ceph_remove_cap(cap, true);
-		(*remaining)--;
-	} else {
-		struct dentry *dentry;
+	अगर (oissued) अणु
+		/* we aren't the only cap.. just हटाओ us */
+		__ceph_हटाओ_cap(cap, true);
+		(*reमुख्यing)--;
+	पूर्ण अन्यथा अणु
+		काष्ठा dentry *dentry;
 		/* try dropping referring dentries */
 		spin_unlock(&ci->i_ceph_lock);
 		dentry = d_find_any_alias(inode);
-		if (dentry && drop_negative_children(dentry)) {
-			int count;
+		अगर (dentry && drop_negative_children(dentry)) अणु
+			पूर्णांक count;
 			dput(dentry);
 			d_prune_aliases(inode);
-			count = atomic_read(&inode->i_count);
-			if (count == 1)
-				(*remaining)--;
-			dout("trim_caps_cb %p cap %p pruned, count now %d\n",
+			count = atomic_पढ़ो(&inode->i_count);
+			अगर (count == 1)
+				(*reमुख्यing)--;
+			करोut("trim_caps_cb %p cap %p pruned, count now %d\n",
 			     inode, cap, count);
-		} else {
+		पूर्ण अन्यथा अणु
 			dput(dentry);
-		}
-		return 0;
-	}
+		पूर्ण
+		वापस 0;
+	पूर्ण
 
 out:
 	spin_unlock(&ci->i_ceph_lock);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * Trim session cap count down to some max number.
+ * Trim session cap count करोwn to some max number.
  */
-int ceph_trim_caps(struct ceph_mds_client *mdsc,
-		   struct ceph_mds_session *session,
-		   int max_caps)
-{
-	int trim_caps = session->s_nr_caps - max_caps;
+पूर्णांक ceph_trim_caps(काष्ठा ceph_mds_client *mdsc,
+		   काष्ठा ceph_mds_session *session,
+		   पूर्णांक max_caps)
+अणु
+	पूर्णांक trim_caps = session->s_nr_caps - max_caps;
 
-	dout("trim_caps mds%d start: %d / %d, trim %d\n",
+	करोut("trim_caps mds%d start: %d / %d, trim %d\n",
 	     session->s_mds, session->s_nr_caps, max_caps, trim_caps);
-	if (trim_caps > 0) {
-		int remaining = trim_caps;
+	अगर (trim_caps > 0) अणु
+		पूर्णांक reमुख्यing = trim_caps;
 
-		ceph_iterate_session_caps(session, trim_caps_cb, &remaining);
-		dout("trim_caps mds%d done: %d / %d, trimmed %d\n",
+		ceph_iterate_session_caps(session, trim_caps_cb, &reमुख्यing);
+		करोut("trim_caps mds%d done: %d / %d, trimmed %d\n",
 		     session->s_mds, session->s_nr_caps, max_caps,
-			trim_caps - remaining);
-	}
+			trim_caps - reमुख्यing);
+	पूर्ण
 
 	ceph_flush_cap_releases(mdsc, session);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int check_caps_flush(struct ceph_mds_client *mdsc,
+अटल पूर्णांक check_caps_flush(काष्ठा ceph_mds_client *mdsc,
 			    u64 want_flush_tid)
-{
-	int ret = 1;
+अणु
+	पूर्णांक ret = 1;
 
 	spin_lock(&mdsc->cap_dirty_lock);
-	if (!list_empty(&mdsc->cap_flush_list)) {
-		struct ceph_cap_flush *cf =
+	अगर (!list_empty(&mdsc->cap_flush_list)) अणु
+		काष्ठा ceph_cap_flush *cf =
 			list_first_entry(&mdsc->cap_flush_list,
-					 struct ceph_cap_flush, g_list);
-		if (cf->tid <= want_flush_tid) {
-			dout("check_caps_flush still flushing tid "
+					 काष्ठा ceph_cap_flush, g_list);
+		अगर (cf->tid <= want_flush_tid) अणु
+			करोut("check_caps_flush still flushing tid "
 			     "%llu <= %llu\n", cf->tid, want_flush_tid);
 			ret = 0;
-		}
-	}
+		पूर्ण
+	पूर्ण
 	spin_unlock(&mdsc->cap_dirty_lock);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
  * flush all dirty inode data to disk.
  *
- * returns true if we've flushed through want_flush_tid
+ * वापसs true अगर we've flushed through want_flush_tid
  */
-static void wait_caps_flush(struct ceph_mds_client *mdsc,
+अटल व्योम रुको_caps_flush(काष्ठा ceph_mds_client *mdsc,
 			    u64 want_flush_tid)
-{
-	dout("check_caps_flush want %llu\n", want_flush_tid);
+अणु
+	करोut("check_caps_flush want %llu\n", want_flush_tid);
 
-	wait_event(mdsc->cap_flushing_wq,
+	रुको_event(mdsc->cap_flushing_wq,
 		   check_caps_flush(mdsc, want_flush_tid));
 
-	dout("check_caps_flush ok, flushed thru %llu\n", want_flush_tid);
-}
+	करोut("check_caps_flush ok, flushed thru %llu\n", want_flush_tid);
+पूर्ण
 
 /*
  * called under s_mutex
  */
-static void ceph_send_cap_releases(struct ceph_mds_client *mdsc,
-				   struct ceph_mds_session *session)
-{
-	struct ceph_msg *msg = NULL;
-	struct ceph_mds_cap_release *head;
-	struct ceph_mds_cap_item *item;
-	struct ceph_osd_client *osdc = &mdsc->fsc->client->osdc;
-	struct ceph_cap *cap;
-	LIST_HEAD(tmp_list);
-	int num_cap_releases;
+अटल व्योम ceph_send_cap_releases(काष्ठा ceph_mds_client *mdsc,
+				   काष्ठा ceph_mds_session *session)
+अणु
+	काष्ठा ceph_msg *msg = शून्य;
+	काष्ठा ceph_mds_cap_release *head;
+	काष्ठा ceph_mds_cap_item *item;
+	काष्ठा ceph_osd_client *osdc = &mdsc->fsc->client->osdc;
+	काष्ठा ceph_cap *cap;
+	LIST_HEAD(पंचांगp_list);
+	पूर्णांक num_cap_releases;
 	__le32	barrier, *cap_barrier;
 
-	down_read(&osdc->lock);
+	करोwn_पढ़ो(&osdc->lock);
 	barrier = cpu_to_le32(osdc->epoch_barrier);
-	up_read(&osdc->lock);
+	up_पढ़ो(&osdc->lock);
 
 	spin_lock(&session->s_cap_lock);
 again:
-	list_splice_init(&session->s_cap_releases, &tmp_list);
+	list_splice_init(&session->s_cap_releases, &पंचांगp_list);
 	num_cap_releases = session->s_num_cap_releases;
 	session->s_num_cap_releases = 0;
 	spin_unlock(&session->s_cap_lock);
 
-	while (!list_empty(&tmp_list)) {
-		if (!msg) {
+	जबतक (!list_empty(&पंचांगp_list)) अणु
+		अगर (!msg) अणु
 			msg = ceph_msg_new(CEPH_MSG_CLIENT_CAPRELEASE,
 					PAGE_SIZE, GFP_NOFS, false);
-			if (!msg)
-				goto out_err;
+			अगर (!msg)
+				जाओ out_err;
 			head = msg->front.iov_base;
 			head->num = cpu_to_le32(0);
-			msg->front.iov_len = sizeof(*head);
+			msg->front.iov_len = माप(*head);
 
 			msg->hdr.version = cpu_to_le16(2);
 			msg->hdr.compat_version = cpu_to_le16(1);
-		}
+		पूर्ण
 
-		cap = list_first_entry(&tmp_list, struct ceph_cap,
+		cap = list_first_entry(&पंचांगp_list, काष्ठा ceph_cap,
 					session_caps);
 		list_del(&cap->session_caps);
 		num_cap_releases--;
@@ -2110,463 +2111,463 @@ again:
 		item->cap_id = cpu_to_le64(cap->cap_id);
 		item->migrate_seq = cpu_to_le32(cap->mseq);
 		item->seq = cpu_to_le32(cap->issue_seq);
-		msg->front.iov_len += sizeof(*item);
+		msg->front.iov_len += माप(*item);
 
 		ceph_put_cap(mdsc, cap);
 
-		if (le32_to_cpu(head->num) == CEPH_CAPS_PER_RELEASE) {
+		अगर (le32_to_cpu(head->num) == CEPH_CAPS_PER_RELEASE) अणु
 			// Append cap_barrier field
 			cap_barrier = msg->front.iov_base + msg->front.iov_len;
 			*cap_barrier = barrier;
-			msg->front.iov_len += sizeof(*cap_barrier);
+			msg->front.iov_len += माप(*cap_barrier);
 
 			msg->hdr.front_len = cpu_to_le32(msg->front.iov_len);
-			dout("send_cap_releases mds%d %p\n", session->s_mds, msg);
+			करोut("send_cap_releases mds%d %p\n", session->s_mds, msg);
 			ceph_con_send(&session->s_con, msg);
-			msg = NULL;
-		}
-	}
+			msg = शून्य;
+		पूर्ण
+	पूर्ण
 
 	BUG_ON(num_cap_releases != 0);
 
 	spin_lock(&session->s_cap_lock);
-	if (!list_empty(&session->s_cap_releases))
-		goto again;
+	अगर (!list_empty(&session->s_cap_releases))
+		जाओ again;
 	spin_unlock(&session->s_cap_lock);
 
-	if (msg) {
+	अगर (msg) अणु
 		// Append cap_barrier field
 		cap_barrier = msg->front.iov_base + msg->front.iov_len;
 		*cap_barrier = barrier;
-		msg->front.iov_len += sizeof(*cap_barrier);
+		msg->front.iov_len += माप(*cap_barrier);
 
 		msg->hdr.front_len = cpu_to_le32(msg->front.iov_len);
-		dout("send_cap_releases mds%d %p\n", session->s_mds, msg);
+		करोut("send_cap_releases mds%d %p\n", session->s_mds, msg);
 		ceph_con_send(&session->s_con, msg);
-	}
-	return;
+	पूर्ण
+	वापस;
 out_err:
 	pr_err("send_cap_releases mds%d, failed to allocate message\n",
 		session->s_mds);
 	spin_lock(&session->s_cap_lock);
-	list_splice(&tmp_list, &session->s_cap_releases);
+	list_splice(&पंचांगp_list, &session->s_cap_releases);
 	session->s_num_cap_releases += num_cap_releases;
 	spin_unlock(&session->s_cap_lock);
-}
+पूर्ण
 
-static void ceph_cap_release_work(struct work_struct *work)
-{
-	struct ceph_mds_session *session =
-		container_of(work, struct ceph_mds_session, s_cap_release_work);
+अटल व्योम ceph_cap_release_work(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा ceph_mds_session *session =
+		container_of(work, काष्ठा ceph_mds_session, s_cap_release_work);
 
 	mutex_lock(&session->s_mutex);
-	if (session->s_state == CEPH_MDS_SESSION_OPEN ||
+	अगर (session->s_state == CEPH_MDS_SESSION_OPEN ||
 	    session->s_state == CEPH_MDS_SESSION_HUNG)
 		ceph_send_cap_releases(session->s_mdsc, session);
 	mutex_unlock(&session->s_mutex);
 	ceph_put_mds_session(session);
-}
+पूर्ण
 
-void ceph_flush_cap_releases(struct ceph_mds_client *mdsc,
-		             struct ceph_mds_session *session)
-{
-	if (mdsc->stopping)
-		return;
+व्योम ceph_flush_cap_releases(काष्ठा ceph_mds_client *mdsc,
+		             काष्ठा ceph_mds_session *session)
+अणु
+	अगर (mdsc->stopping)
+		वापस;
 
 	ceph_get_mds_session(session);
-	if (queue_work(mdsc->fsc->cap_wq,
-		       &session->s_cap_release_work)) {
-		dout("cap release work queued\n");
-	} else {
+	अगर (queue_work(mdsc->fsc->cap_wq,
+		       &session->s_cap_release_work)) अणु
+		करोut("cap release work queued\n");
+	पूर्ण अन्यथा अणु
 		ceph_put_mds_session(session);
-		dout("failed to queue cap release work\n");
-	}
-}
+		करोut("failed to queue cap release work\n");
+	पूर्ण
+पूर्ण
 
 /*
  * caller holds session->s_cap_lock
  */
-void __ceph_queue_cap_release(struct ceph_mds_session *session,
-			      struct ceph_cap *cap)
-{
+व्योम __ceph_queue_cap_release(काष्ठा ceph_mds_session *session,
+			      काष्ठा ceph_cap *cap)
+अणु
 	list_add_tail(&cap->session_caps, &session->s_cap_releases);
 	session->s_num_cap_releases++;
 
-	if (!(session->s_num_cap_releases % CEPH_CAPS_PER_RELEASE))
+	अगर (!(session->s_num_cap_releases % CEPH_CAPS_PER_RELEASE))
 		ceph_flush_cap_releases(session->s_mdsc, session);
-}
+पूर्ण
 
-static void ceph_cap_reclaim_work(struct work_struct *work)
-{
-	struct ceph_mds_client *mdsc =
-		container_of(work, struct ceph_mds_client, cap_reclaim_work);
-	int ret = ceph_trim_dentries(mdsc);
-	if (ret == -EAGAIN)
+अटल व्योम ceph_cap_reclaim_work(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा ceph_mds_client *mdsc =
+		container_of(work, काष्ठा ceph_mds_client, cap_reclaim_work);
+	पूर्णांक ret = ceph_trim_dentries(mdsc);
+	अगर (ret == -EAGAIN)
 		ceph_queue_cap_reclaim_work(mdsc);
-}
+पूर्ण
 
-void ceph_queue_cap_reclaim_work(struct ceph_mds_client *mdsc)
-{
-	if (mdsc->stopping)
-		return;
+व्योम ceph_queue_cap_reclaim_work(काष्ठा ceph_mds_client *mdsc)
+अणु
+	अगर (mdsc->stopping)
+		वापस;
 
-        if (queue_work(mdsc->fsc->cap_wq, &mdsc->cap_reclaim_work)) {
-                dout("caps reclaim work queued\n");
-        } else {
-                dout("failed to queue caps release work\n");
-        }
-}
+        अगर (queue_work(mdsc->fsc->cap_wq, &mdsc->cap_reclaim_work)) अणु
+                करोut("caps reclaim work queued\n");
+        पूर्ण अन्यथा अणु
+                करोut("failed to queue caps release work\n");
+        पूर्ण
+पूर्ण
 
-void ceph_reclaim_caps_nr(struct ceph_mds_client *mdsc, int nr)
-{
-	int val;
-	if (!nr)
-		return;
-	val = atomic_add_return(nr, &mdsc->cap_reclaim_pending);
-	if ((val % CEPH_CAPS_PER_RELEASE) < nr) {
+व्योम ceph_reclaim_caps_nr(काष्ठा ceph_mds_client *mdsc, पूर्णांक nr)
+अणु
+	पूर्णांक val;
+	अगर (!nr)
+		वापस;
+	val = atomic_add_वापस(nr, &mdsc->cap_reclaim_pending);
+	अगर ((val % CEPH_CAPS_PER_RELEASE) < nr) अणु
 		atomic_set(&mdsc->cap_reclaim_pending, 0);
 		ceph_queue_cap_reclaim_work(mdsc);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
  * requests
  */
 
-int ceph_alloc_readdir_reply_buffer(struct ceph_mds_request *req,
-				    struct inode *dir)
-{
-	struct ceph_inode_info *ci = ceph_inode(dir);
-	struct ceph_mds_reply_info_parsed *rinfo = &req->r_reply_info;
-	struct ceph_mount_options *opt = req->r_mdsc->fsc->mount_options;
-	size_t size = sizeof(struct ceph_mds_reply_dir_entry);
-	unsigned int num_entries;
-	int order;
+पूर्णांक ceph_alloc_सूची_पढ़ो_reply_buffer(काष्ठा ceph_mds_request *req,
+				    काष्ठा inode *dir)
+अणु
+	काष्ठा ceph_inode_info *ci = ceph_inode(dir);
+	काष्ठा ceph_mds_reply_info_parsed *rinfo = &req->r_reply_info;
+	काष्ठा ceph_mount_options *opt = req->r_mdsc->fsc->mount_options;
+	माप_प्रकार size = माप(काष्ठा ceph_mds_reply_dir_entry);
+	अचिन्हित पूर्णांक num_entries;
+	पूर्णांक order;
 
 	spin_lock(&ci->i_ceph_lock);
 	num_entries = ci->i_files + ci->i_subdirs;
 	spin_unlock(&ci->i_ceph_lock);
 	num_entries = max(num_entries, 1U);
-	num_entries = min(num_entries, opt->max_readdir);
+	num_entries = min(num_entries, opt->max_सूची_पढ़ो);
 
 	order = get_order(size * num_entries);
-	while (order >= 0) {
-		rinfo->dir_entries = (void*)__get_free_pages(GFP_KERNEL |
+	जबतक (order >= 0) अणु
+		rinfo->dir_entries = (व्योम*)__get_मुक्त_pages(GFP_KERNEL |
 							     __GFP_NOWARN,
 							     order);
-		if (rinfo->dir_entries)
-			break;
+		अगर (rinfo->dir_entries)
+			अवरोध;
 		order--;
-	}
-	if (!rinfo->dir_entries)
-		return -ENOMEM;
+	पूर्ण
+	अगर (!rinfo->dir_entries)
+		वापस -ENOMEM;
 
 	num_entries = (PAGE_SIZE << order) / size;
-	num_entries = min(num_entries, opt->max_readdir);
+	num_entries = min(num_entries, opt->max_सूची_पढ़ो);
 
 	rinfo->dir_buf_size = PAGE_SIZE << order;
 	req->r_num_caps = num_entries + 1;
-	req->r_args.readdir.max_entries = cpu_to_le32(num_entries);
-	req->r_args.readdir.max_bytes = cpu_to_le32(opt->max_readdir_bytes);
-	return 0;
-}
+	req->r_args.सूची_पढ़ो.max_entries = cpu_to_le32(num_entries);
+	req->r_args.सूची_पढ़ो.max_bytes = cpu_to_le32(opt->max_सूची_पढ़ो_bytes);
+	वापस 0;
+पूर्ण
 
 /*
  * Create an mds request.
  */
-struct ceph_mds_request *
-ceph_mdsc_create_request(struct ceph_mds_client *mdsc, int op, int mode)
-{
-	struct ceph_mds_request *req;
+काष्ठा ceph_mds_request *
+ceph_mdsc_create_request(काष्ठा ceph_mds_client *mdsc, पूर्णांक op, पूर्णांक mode)
+अणु
+	काष्ठा ceph_mds_request *req;
 
 	req = kmem_cache_zalloc(ceph_mds_request_cachep, GFP_NOFS);
-	if (!req)
-		return ERR_PTR(-ENOMEM);
+	अगर (!req)
+		वापस ERR_PTR(-ENOMEM);
 
 	mutex_init(&req->r_fill_mutex);
 	req->r_mdsc = mdsc;
-	req->r_started = jiffies;
-	req->r_start_latency = ktime_get();
+	req->r_started = jअगरfies;
+	req->r_start_latency = kसमय_get();
 	req->r_resend_mds = -1;
 	INIT_LIST_HEAD(&req->r_unsafe_dir_item);
 	INIT_LIST_HEAD(&req->r_unsafe_target_item);
-	req->r_fmode = -1;
+	req->r_भ_शेषe = -1;
 	kref_init(&req->r_kref);
 	RB_CLEAR_NODE(&req->r_node);
-	INIT_LIST_HEAD(&req->r_wait);
+	INIT_LIST_HEAD(&req->r_रुको);
 	init_completion(&req->r_completion);
 	init_completion(&req->r_safe_completion);
 	INIT_LIST_HEAD(&req->r_unsafe_item);
 
-	ktime_get_coarse_real_ts64(&req->r_stamp);
+	kसमय_get_coarse_real_ts64(&req->r_stamp);
 
 	req->r_op = op;
 	req->r_direct_mode = mode;
-	return req;
-}
+	वापस req;
+पूर्ण
 
 /*
- * return oldest (lowest) request, tid in request tree, 0 if none.
+ * वापस oldest (lowest) request, tid in request tree, 0 अगर none.
  *
  * called under mdsc->mutex.
  */
-static struct ceph_mds_request *__get_oldest_req(struct ceph_mds_client *mdsc)
-{
-	if (RB_EMPTY_ROOT(&mdsc->request_tree))
-		return NULL;
-	return rb_entry(rb_first(&mdsc->request_tree),
-			struct ceph_mds_request, r_node);
-}
+अटल काष्ठा ceph_mds_request *__get_oldest_req(काष्ठा ceph_mds_client *mdsc)
+अणु
+	अगर (RB_EMPTY_ROOT(&mdsc->request_tree))
+		वापस शून्य;
+	वापस rb_entry(rb_first(&mdsc->request_tree),
+			काष्ठा ceph_mds_request, r_node);
+पूर्ण
 
-static inline  u64 __get_oldest_tid(struct ceph_mds_client *mdsc)
-{
-	return mdsc->oldest_tid;
-}
+अटल अंतरभूत  u64 __get_oldest_tid(काष्ठा ceph_mds_client *mdsc)
+अणु
+	वापस mdsc->oldest_tid;
+पूर्ण
 
 /*
- * Build a dentry's path.  Allocate on heap; caller must kfree.  Based
- * on build_path_from_dentry in fs/cifs/dir.c.
+ * Build a dentry's path.  Allocate on heap; caller must kमुक्त.  Based
+ * on build_path_from_dentry in fs/cअगरs/dir.c.
  *
  * If @stop_on_nosnap, generate path relative to the first non-snapped
  * inode.
  *
- * Encode hidden .snap dirs as a double /, i.e.
+ * Encode hidden .snap dirs as a द्विगुन /, i.e.
  *   foo/.snap/bar -> foo//bar
  */
-char *ceph_mdsc_build_path(struct dentry *dentry, int *plen, u64 *pbase,
-			   int stop_on_nosnap)
-{
-	struct dentry *temp;
-	char *path;
-	int pos;
-	unsigned seq;
+अक्षर *ceph_mdsc_build_path(काष्ठा dentry *dentry, पूर्णांक *plen, u64 *pbase,
+			   पूर्णांक stop_on_nosnap)
+अणु
+	काष्ठा dentry *temp;
+	अक्षर *path;
+	पूर्णांक pos;
+	अचिन्हित seq;
 	u64 base;
 
-	if (!dentry)
-		return ERR_PTR(-EINVAL);
+	अगर (!dentry)
+		वापस ERR_PTR(-EINVAL);
 
 	path = __getname();
-	if (!path)
-		return ERR_PTR(-ENOMEM);
+	अगर (!path)
+		वापस ERR_PTR(-ENOMEM);
 retry:
 	pos = PATH_MAX - 1;
 	path[pos] = '\0';
 
-	seq = read_seqbegin(&rename_lock);
-	rcu_read_lock();
+	seq = पढ़ो_seqbegin(&नाम_lock);
+	rcu_पढ़ो_lock();
 	temp = dentry;
-	for (;;) {
-		struct inode *inode;
+	क्रम (;;) अणु
+		काष्ठा inode *inode;
 
 		spin_lock(&temp->d_lock);
 		inode = d_inode(temp);
-		if (inode && ceph_snap(inode) == CEPH_SNAPDIR) {
-			dout("build_path path+%d: %p SNAPDIR\n",
+		अगर (inode && ceph_snap(inode) == CEPH_SNAPसूची) अणु
+			करोut("build_path path+%d: %p SNAPDIR\n",
 			     pos, temp);
-		} else if (stop_on_nosnap && inode && dentry != temp &&
-			   ceph_snap(inode) == CEPH_NOSNAP) {
+		पूर्ण अन्यथा अगर (stop_on_nosnap && inode && dentry != temp &&
+			   ceph_snap(inode) == CEPH_NOSNAP) अणु
 			spin_unlock(&temp->d_lock);
 			pos++; /* get rid of any prepended '/' */
-			break;
-		} else {
+			अवरोध;
+		पूर्ण अन्यथा अणु
 			pos -= temp->d_name.len;
-			if (pos < 0) {
+			अगर (pos < 0) अणु
 				spin_unlock(&temp->d_lock);
-				break;
-			}
-			memcpy(path + pos, temp->d_name.name, temp->d_name.len);
-		}
+				अवरोध;
+			पूर्ण
+			स_नकल(path + pos, temp->d_name.name, temp->d_name.len);
+		पूर्ण
 		spin_unlock(&temp->d_lock);
 		temp = READ_ONCE(temp->d_parent);
 
 		/* Are we at the root? */
-		if (IS_ROOT(temp))
-			break;
+		अगर (IS_ROOT(temp))
+			अवरोध;
 
 		/* Are we out of buffer? */
-		if (--pos < 0)
-			break;
+		अगर (--pos < 0)
+			अवरोध;
 
 		path[pos] = '/';
-	}
+	पूर्ण
 	base = ceph_ino(d_inode(temp));
-	rcu_read_unlock();
+	rcu_पढ़ो_unlock();
 
-	if (read_seqretry(&rename_lock, seq))
-		goto retry;
+	अगर (पढ़ो_seqretry(&नाम_lock, seq))
+		जाओ retry;
 
-	if (pos < 0) {
+	अगर (pos < 0) अणु
 		/*
-		 * A rename didn't occur, but somehow we didn't end up where
+		 * A नाम didn't occur, but somehow we didn't end up where
 		 * we thought we would. Throw a warning and try again.
 		 */
 		pr_warn("build_path did not end path lookup where "
 			"expected, pos is %d\n", pos);
-		goto retry;
-	}
+		जाओ retry;
+	पूर्ण
 
 	*pbase = base;
 	*plen = PATH_MAX - 1 - pos;
-	dout("build_path on %p %d built %llx '%.*s'\n",
+	करोut("build_path on %p %d built %llx '%.*s'\n",
 	     dentry, d_count(dentry), base, *plen, path + pos);
-	return path + pos;
-}
+	वापस path + pos;
+पूर्ण
 
-static int build_dentry_path(struct dentry *dentry, struct inode *dir,
-			     const char **ppath, int *ppathlen, u64 *pino,
-			     bool *pfreepath, bool parent_locked)
-{
-	char *path;
+अटल पूर्णांक build_dentry_path(काष्ठा dentry *dentry, काष्ठा inode *dir,
+			     स्थिर अक्षर **ppath, पूर्णांक *ppathlen, u64 *pino,
+			     bool *pमुक्तpath, bool parent_locked)
+अणु
+	अक्षर *path;
 
-	rcu_read_lock();
-	if (!dir)
+	rcu_पढ़ो_lock();
+	अगर (!dir)
 		dir = d_inode_rcu(dentry->d_parent);
-	if (dir && parent_locked && ceph_snap(dir) == CEPH_NOSNAP) {
+	अगर (dir && parent_locked && ceph_snap(dir) == CEPH_NOSNAP) अणु
 		*pino = ceph_ino(dir);
-		rcu_read_unlock();
+		rcu_पढ़ो_unlock();
 		*ppath = dentry->d_name.name;
 		*ppathlen = dentry->d_name.len;
-		return 0;
-	}
-	rcu_read_unlock();
+		वापस 0;
+	पूर्ण
+	rcu_पढ़ो_unlock();
 	path = ceph_mdsc_build_path(dentry, ppathlen, pino, 1);
-	if (IS_ERR(path))
-		return PTR_ERR(path);
+	अगर (IS_ERR(path))
+		वापस PTR_ERR(path);
 	*ppath = path;
-	*pfreepath = true;
-	return 0;
-}
+	*pमुक्तpath = true;
+	वापस 0;
+पूर्ण
 
-static int build_inode_path(struct inode *inode,
-			    const char **ppath, int *ppathlen, u64 *pino,
-			    bool *pfreepath)
-{
-	struct dentry *dentry;
-	char *path;
+अटल पूर्णांक build_inode_path(काष्ठा inode *inode,
+			    स्थिर अक्षर **ppath, पूर्णांक *ppathlen, u64 *pino,
+			    bool *pमुक्तpath)
+अणु
+	काष्ठा dentry *dentry;
+	अक्षर *path;
 
-	if (ceph_snap(inode) == CEPH_NOSNAP) {
+	अगर (ceph_snap(inode) == CEPH_NOSNAP) अणु
 		*pino = ceph_ino(inode);
 		*ppathlen = 0;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 	dentry = d_find_alias(inode);
 	path = ceph_mdsc_build_path(dentry, ppathlen, pino, 1);
 	dput(dentry);
-	if (IS_ERR(path))
-		return PTR_ERR(path);
+	अगर (IS_ERR(path))
+		वापस PTR_ERR(path);
 	*ppath = path;
-	*pfreepath = true;
-	return 0;
-}
+	*pमुक्तpath = true;
+	वापस 0;
+पूर्ण
 
 /*
- * request arguments may be specified via an inode *, a dentry *, or
+ * request arguments may be specअगरied via an inode *, a dentry *, or
  * an explicit ino+path.
  */
-static int set_request_path_attr(struct inode *rinode, struct dentry *rdentry,
-				  struct inode *rdiri, const char *rpath,
-				  u64 rino, const char **ppath, int *pathlen,
-				  u64 *ino, bool *freepath, bool parent_locked)
-{
-	int r = 0;
+अटल पूर्णांक set_request_path_attr(काष्ठा inode *rinode, काष्ठा dentry *rdentry,
+				  काष्ठा inode *rdiri, स्थिर अक्षर *rpath,
+				  u64 rino, स्थिर अक्षर **ppath, पूर्णांक *pathlen,
+				  u64 *ino, bool *मुक्तpath, bool parent_locked)
+अणु
+	पूर्णांक r = 0;
 
-	if (rinode) {
-		r = build_inode_path(rinode, ppath, pathlen, ino, freepath);
-		dout(" inode %p %llx.%llx\n", rinode, ceph_ino(rinode),
+	अगर (rinode) अणु
+		r = build_inode_path(rinode, ppath, pathlen, ino, मुक्तpath);
+		करोut(" inode %p %llx.%llx\n", rinode, ceph_ino(rinode),
 		     ceph_snap(rinode));
-	} else if (rdentry) {
+	पूर्ण अन्यथा अगर (rdentry) अणु
 		r = build_dentry_path(rdentry, rdiri, ppath, pathlen, ino,
-					freepath, parent_locked);
-		dout(" dentry %p %llx/%.*s\n", rdentry, *ino, *pathlen,
+					मुक्तpath, parent_locked);
+		करोut(" dentry %p %llx/%.*s\n", rdentry, *ino, *pathlen,
 		     *ppath);
-	} else if (rpath || rino) {
+	पूर्ण अन्यथा अगर (rpath || rino) अणु
 		*ino = rino;
 		*ppath = rpath;
-		*pathlen = rpath ? strlen(rpath) : 0;
-		dout(" path %.*s\n", *pathlen, rpath);
-	}
+		*pathlen = rpath ? म_माप(rpath) : 0;
+		करोut(" path %.*s\n", *pathlen, rpath);
+	पूर्ण
 
-	return r;
-}
+	वापस r;
+पूर्ण
 
-static void encode_timestamp_and_gids(void **p,
-				      const struct ceph_mds_request *req)
-{
-	struct ceph_timespec ts;
-	int i;
+अटल व्योम encode_बारtamp_and_gids(व्योम **p,
+				      स्थिर काष्ठा ceph_mds_request *req)
+अणु
+	काष्ठा ceph_बारpec ts;
+	पूर्णांक i;
 
-	ceph_encode_timespec64(&ts, &req->r_stamp);
-	ceph_encode_copy(p, &ts, sizeof(ts));
+	ceph_encode_बारpec64(&ts, &req->r_stamp);
+	ceph_encode_copy(p, &ts, माप(ts));
 
 	/* gid_list */
 	ceph_encode_32(p, req->r_cred->group_info->ngroups);
-	for (i = 0; i < req->r_cred->group_info->ngroups; i++)
+	क्रम (i = 0; i < req->r_cred->group_info->ngroups; i++)
 		ceph_encode_64(p, from_kgid(&init_user_ns,
 					    req->r_cred->group_info->gid[i]));
-}
+पूर्ण
 
 /*
  * called under mdsc->mutex
  */
-static struct ceph_msg *create_request_message(struct ceph_mds_session *session,
-					       struct ceph_mds_request *req,
+अटल काष्ठा ceph_msg *create_request_message(काष्ठा ceph_mds_session *session,
+					       काष्ठा ceph_mds_request *req,
 					       bool drop_cap_releases)
-{
-	int mds = session->s_mds;
-	struct ceph_mds_client *mdsc = session->s_mdsc;
-	struct ceph_msg *msg;
-	struct ceph_mds_request_head_old *head;
-	const char *path1 = NULL;
-	const char *path2 = NULL;
+अणु
+	पूर्णांक mds = session->s_mds;
+	काष्ठा ceph_mds_client *mdsc = session->s_mdsc;
+	काष्ठा ceph_msg *msg;
+	काष्ठा ceph_mds_request_head_old *head;
+	स्थिर अक्षर *path1 = शून्य;
+	स्थिर अक्षर *path2 = शून्य;
 	u64 ino1 = 0, ino2 = 0;
-	int pathlen1 = 0, pathlen2 = 0;
-	bool freepath1 = false, freepath2 = false;
-	int len;
+	पूर्णांक pathlen1 = 0, pathlen2 = 0;
+	bool मुक्तpath1 = false, मुक्तpath2 = false;
+	पूर्णांक len;
 	u16 releases;
-	void *p, *end;
-	int ret;
+	व्योम *p, *end;
+	पूर्णांक ret;
 	bool legacy = !(session->s_con.peer_features & CEPH_FEATURE_FS_BTIME);
 
 	ret = set_request_path_attr(req->r_inode, req->r_dentry,
 			      req->r_parent, req->r_path1, req->r_ino1.ino,
-			      &path1, &pathlen1, &ino1, &freepath1,
+			      &path1, &pathlen1, &ino1, &मुक्तpath1,
 			      test_bit(CEPH_MDS_R_PARENT_LOCKED,
 					&req->r_req_flags));
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		msg = ERR_PTR(ret);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	/* If r_old_dentry is set, then assume that its parent is locked */
-	ret = set_request_path_attr(NULL, req->r_old_dentry,
+	ret = set_request_path_attr(शून्य, req->r_old_dentry,
 			      req->r_old_dentry_dir,
 			      req->r_path2, req->r_ino2.ino,
-			      &path2, &pathlen2, &ino2, &freepath2, true);
-	if (ret < 0) {
+			      &path2, &pathlen2, &ino2, &मुक्तpath2, true);
+	अगर (ret < 0) अणु
 		msg = ERR_PTR(ret);
-		goto out_free1;
-	}
+		जाओ out_मुक्त1;
+	पूर्ण
 
-	len = legacy ? sizeof(*head) : sizeof(struct ceph_mds_request_head);
-	len += pathlen1 + pathlen2 + 2*(1 + sizeof(u32) + sizeof(u64)) +
-		sizeof(struct ceph_timespec);
-	len += sizeof(u32) + (sizeof(u64) * req->r_cred->group_info->ngroups);
+	len = legacy ? माप(*head) : माप(काष्ठा ceph_mds_request_head);
+	len += pathlen1 + pathlen2 + 2*(1 + माप(u32) + माप(u64)) +
+		माप(काष्ठा ceph_बारpec);
+	len += माप(u32) + (माप(u64) * req->r_cred->group_info->ngroups);
 
-	/* calculate (max) length for cap releases */
-	len += sizeof(struct ceph_mds_request_release) *
+	/* calculate (max) length क्रम cap releases */
+	len += माप(काष्ठा ceph_mds_request_release) *
 		(!!req->r_inode_drop + !!req->r_dentry_drop +
 		 !!req->r_old_inode_drop + !!req->r_old_dentry_drop);
 
-	if (req->r_dentry_drop)
+	अगर (req->r_dentry_drop)
 		len += pathlen1;
-	if (req->r_old_dentry_drop)
+	अगर (req->r_old_dentry_drop)
 		len += pathlen2;
 
 	msg = ceph_msg_new2(CEPH_MSG_CLIENT_REQUEST, len, 1, GFP_NOFS, false);
-	if (!msg) {
+	अगर (!msg) अणु
 		msg = ERR_PTR(-ENOMEM);
-		goto out_free2;
-	}
+		जाओ out_मुक्त2;
+	पूर्ण
 
 	msg->hdr.tid = cpu_to_le64(req->r_tid);
 
@@ -2574,18 +2575,18 @@ static struct ceph_msg *create_request_message(struct ceph_mds_session *session,
 	 * The old ceph_mds_request_head didn't contain a version field, and
 	 * one was added when we moved the message version from 3->4.
 	 */
-	if (legacy) {
+	अगर (legacy) अणु
 		msg->hdr.version = cpu_to_le16(3);
 		head = msg->front.iov_base;
-		p = msg->front.iov_base + sizeof(*head);
-	} else {
-		struct ceph_mds_request_head *new_head = msg->front.iov_base;
+		p = msg->front.iov_base + माप(*head);
+	पूर्ण अन्यथा अणु
+		काष्ठा ceph_mds_request_head *new_head = msg->front.iov_base;
 
 		msg->hdr.version = cpu_to_le16(4);
 		new_head->version = cpu_to_le16(CEPH_MDS_REQUEST_HEAD_VERSION);
-		head = (struct ceph_mds_request_head_old *)&new_head->oldest_client_tid;
-		p = msg->front.iov_base + sizeof(*new_head);
-	}
+		head = (काष्ठा ceph_mds_request_head_old *)&new_head->oldest_client_tid;
+		p = msg->front.iov_base + माप(*new_head);
+	पूर्ण
 
 	end = msg->front.iov_base + msg->front.iov_len;
 
@@ -2601,127 +2602,127 @@ static struct ceph_msg *create_request_message(struct ceph_mds_session *session,
 	ceph_encode_filepath(&p, end, ino1, path1);
 	ceph_encode_filepath(&p, end, ino2, path2);
 
-	/* make note of release offset, in case we need to replay */
+	/* make note of release offset, in हाल we need to replay */
 	req->r_request_release_offset = p - msg->front.iov_base;
 
 	/* cap releases */
 	releases = 0;
-	if (req->r_inode_drop)
+	अगर (req->r_inode_drop)
 		releases += ceph_encode_inode_release(&p,
 		      req->r_inode ? req->r_inode : d_inode(req->r_dentry),
 		      mds, req->r_inode_drop, req->r_inode_unless,
-		      req->r_op == CEPH_MDS_OP_READDIR);
-	if (req->r_dentry_drop)
+		      req->r_op == CEPH_MDS_OP_READसूची);
+	अगर (req->r_dentry_drop)
 		releases += ceph_encode_dentry_release(&p, req->r_dentry,
 				req->r_parent, mds, req->r_dentry_drop,
 				req->r_dentry_unless);
-	if (req->r_old_dentry_drop)
+	अगर (req->r_old_dentry_drop)
 		releases += ceph_encode_dentry_release(&p, req->r_old_dentry,
 				req->r_old_dentry_dir, mds,
 				req->r_old_dentry_drop,
 				req->r_old_dentry_unless);
-	if (req->r_old_inode_drop)
+	अगर (req->r_old_inode_drop)
 		releases += ceph_encode_inode_release(&p,
 		      d_inode(req->r_old_dentry),
 		      mds, req->r_old_inode_drop, req->r_old_inode_unless, 0);
 
-	if (drop_cap_releases) {
+	अगर (drop_cap_releases) अणु
 		releases = 0;
 		p = msg->front.iov_base + req->r_request_release_offset;
-	}
+	पूर्ण
 
 	head->num_releases = cpu_to_le16(releases);
 
-	encode_timestamp_and_gids(&p, req);
+	encode_बारtamp_and_gids(&p, req);
 
-	if (WARN_ON_ONCE(p > end)) {
+	अगर (WARN_ON_ONCE(p > end)) अणु
 		ceph_msg_put(msg);
-		msg = ERR_PTR(-ERANGE);
-		goto out_free2;
-	}
+		msg = ERR_PTR(-दुस्फल);
+		जाओ out_मुक्त2;
+	पूर्ण
 
 	msg->front.iov_len = p - msg->front.iov_base;
 	msg->hdr.front_len = cpu_to_le32(msg->front.iov_len);
 
-	if (req->r_pagelist) {
-		struct ceph_pagelist *pagelist = req->r_pagelist;
+	अगर (req->r_pagelist) अणु
+		काष्ठा ceph_pagelist *pagelist = req->r_pagelist;
 		ceph_msg_data_add_pagelist(msg, pagelist);
 		msg->hdr.data_len = cpu_to_le32(pagelist->length);
-	} else {
+	पूर्ण अन्यथा अणु
 		msg->hdr.data_len = 0;
-	}
+	पूर्ण
 
 	msg->hdr.data_off = cpu_to_le16(0);
 
-out_free2:
-	if (freepath2)
-		ceph_mdsc_free_path((char *)path2, pathlen2);
-out_free1:
-	if (freepath1)
-		ceph_mdsc_free_path((char *)path1, pathlen1);
+out_मुक्त2:
+	अगर (मुक्तpath2)
+		ceph_mdsc_मुक्त_path((अक्षर *)path2, pathlen2);
+out_मुक्त1:
+	अगर (मुक्तpath1)
+		ceph_mdsc_मुक्त_path((अक्षर *)path1, pathlen1);
 out:
-	return msg;
-}
+	वापस msg;
+पूर्ण
 
 /*
- * called under mdsc->mutex if error, under no mutex if
+ * called under mdsc->mutex अगर error, under no mutex अगर
  * success.
  */
-static void complete_request(struct ceph_mds_client *mdsc,
-			     struct ceph_mds_request *req)
-{
-	req->r_end_latency = ktime_get();
+अटल व्योम complete_request(काष्ठा ceph_mds_client *mdsc,
+			     काष्ठा ceph_mds_request *req)
+अणु
+	req->r_end_latency = kसमय_get();
 
-	if (req->r_callback)
+	अगर (req->r_callback)
 		req->r_callback(mdsc, req);
 	complete_all(&req->r_completion);
-}
+पूर्ण
 
-static struct ceph_mds_request_head_old *
-find_old_request_head(void *p, u64 features)
-{
+अटल काष्ठा ceph_mds_request_head_old *
+find_old_request_head(व्योम *p, u64 features)
+अणु
 	bool legacy = !(features & CEPH_FEATURE_FS_BTIME);
-	struct ceph_mds_request_head *new_head;
+	काष्ठा ceph_mds_request_head *new_head;
 
-	if (legacy)
-		return (struct ceph_mds_request_head_old *)p;
-	new_head = (struct ceph_mds_request_head *)p;
-	return (struct ceph_mds_request_head_old *)&new_head->oldest_client_tid;
-}
+	अगर (legacy)
+		वापस (काष्ठा ceph_mds_request_head_old *)p;
+	new_head = (काष्ठा ceph_mds_request_head *)p;
+	वापस (काष्ठा ceph_mds_request_head_old *)&new_head->oldest_client_tid;
+पूर्ण
 
 /*
  * called under mdsc->mutex
  */
-static int __prepare_send_request(struct ceph_mds_session *session,
-				  struct ceph_mds_request *req,
+अटल पूर्णांक __prepare_send_request(काष्ठा ceph_mds_session *session,
+				  काष्ठा ceph_mds_request *req,
 				  bool drop_cap_releases)
-{
-	int mds = session->s_mds;
-	struct ceph_mds_client *mdsc = session->s_mdsc;
-	struct ceph_mds_request_head_old *rhead;
-	struct ceph_msg *msg;
-	int flags = 0;
+अणु
+	पूर्णांक mds = session->s_mds;
+	काष्ठा ceph_mds_client *mdsc = session->s_mdsc;
+	काष्ठा ceph_mds_request_head_old *rhead;
+	काष्ठा ceph_msg *msg;
+	पूर्णांक flags = 0;
 
 	req->r_attempts++;
-	if (req->r_inode) {
-		struct ceph_cap *cap =
-			ceph_get_cap_for_mds(ceph_inode(req->r_inode), mds);
+	अगर (req->r_inode) अणु
+		काष्ठा ceph_cap *cap =
+			ceph_get_cap_क्रम_mds(ceph_inode(req->r_inode), mds);
 
-		if (cap)
+		अगर (cap)
 			req->r_sent_on_mseq = cap->mseq;
-		else
+		अन्यथा
 			req->r_sent_on_mseq = -1;
-	}
-	dout("prepare_send_request %p tid %lld %s (attempt %d)\n", req,
+	पूर्ण
+	करोut("prepare_send_request %p tid %lld %s (attempt %d)\n", req,
 	     req->r_tid, ceph_mds_op_name(req->r_op), req->r_attempts);
 
-	if (test_bit(CEPH_MDS_R_GOT_UNSAFE, &req->r_req_flags)) {
-		void *p;
+	अगर (test_bit(CEPH_MDS_R_GOT_UNSAFE, &req->r_req_flags)) अणु
+		व्योम *p;
 
 		/*
 		 * Replay.  Do not regenerate message (and rebuild
 		 * paths, etc.); just use the original message.
-		 * Rebuilding paths will break for renames because
+		 * Rebuilding paths will अवरोध क्रम नामs because
 		 * d_move mangles the src name.
 		 */
 		msg = req->r_request;
@@ -2732,327 +2733,327 @@ static int __prepare_send_request(struct ceph_mds_session *session,
 		flags |= CEPH_MDS_FLAG_REPLAY;
 		rhead->flags = cpu_to_le32(flags);
 
-		if (req->r_target_inode)
+		अगर (req->r_target_inode)
 			rhead->ino = cpu_to_le64(ceph_ino(req->r_target_inode));
 
 		rhead->num_retry = req->r_attempts - 1;
 
-		/* remove cap/dentry releases from message */
+		/* हटाओ cap/dentry releases from message */
 		rhead->num_releases = 0;
 
 		p = msg->front.iov_base + req->r_request_release_offset;
-		encode_timestamp_and_gids(&p, req);
+		encode_बारtamp_and_gids(&p, req);
 
 		msg->front.iov_len = p - msg->front.iov_base;
 		msg->hdr.front_len = cpu_to_le32(msg->front.iov_len);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	if (req->r_request) {
+	अगर (req->r_request) अणु
 		ceph_msg_put(req->r_request);
-		req->r_request = NULL;
-	}
+		req->r_request = शून्य;
+	पूर्ण
 	msg = create_request_message(session, req, drop_cap_releases);
-	if (IS_ERR(msg)) {
+	अगर (IS_ERR(msg)) अणु
 		req->r_err = PTR_ERR(msg);
-		return PTR_ERR(msg);
-	}
+		वापस PTR_ERR(msg);
+	पूर्ण
 	req->r_request = msg;
 
 	rhead = find_old_request_head(msg->front.iov_base,
 				      session->s_con.peer_features);
 	rhead->oldest_client_tid = cpu_to_le64(__get_oldest_tid(mdsc));
-	if (test_bit(CEPH_MDS_R_GOT_UNSAFE, &req->r_req_flags))
+	अगर (test_bit(CEPH_MDS_R_GOT_UNSAFE, &req->r_req_flags))
 		flags |= CEPH_MDS_FLAG_REPLAY;
-	if (test_bit(CEPH_MDS_R_ASYNC, &req->r_req_flags))
+	अगर (test_bit(CEPH_MDS_R_ASYNC, &req->r_req_flags))
 		flags |= CEPH_MDS_FLAG_ASYNC;
-	if (req->r_parent)
+	अगर (req->r_parent)
 		flags |= CEPH_MDS_FLAG_WANT_DENTRY;
 	rhead->flags = cpu_to_le32(flags);
 	rhead->num_fwd = req->r_num_fwd;
 	rhead->num_retry = req->r_attempts - 1;
 
-	dout(" r_parent = %p\n", req->r_parent);
-	return 0;
-}
+	करोut(" r_parent = %p\n", req->r_parent);
+	वापस 0;
+पूर्ण
 
 /*
  * called under mdsc->mutex
  */
-static int __send_request(struct ceph_mds_session *session,
-			  struct ceph_mds_request *req,
+अटल पूर्णांक __send_request(काष्ठा ceph_mds_session *session,
+			  काष्ठा ceph_mds_request *req,
 			  bool drop_cap_releases)
-{
-	int err;
+अणु
+	पूर्णांक err;
 
 	err = __prepare_send_request(session, req, drop_cap_releases);
-	if (!err) {
+	अगर (!err) अणु
 		ceph_msg_get(req->r_request);
 		ceph_con_send(&session->s_con, req->r_request);
-	}
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /*
- * send request, or put it on the appropriate wait list.
+ * send request, or put it on the appropriate रुको list.
  */
-static void __do_request(struct ceph_mds_client *mdsc,
-			struct ceph_mds_request *req)
-{
-	struct ceph_mds_session *session = NULL;
-	int mds = -1;
-	int err = 0;
-	bool random;
+अटल व्योम __करो_request(काष्ठा ceph_mds_client *mdsc,
+			काष्ठा ceph_mds_request *req)
+अणु
+	काष्ठा ceph_mds_session *session = शून्य;
+	पूर्णांक mds = -1;
+	पूर्णांक err = 0;
+	bool अक्रमom;
 
-	if (req->r_err || test_bit(CEPH_MDS_R_GOT_RESULT, &req->r_req_flags)) {
-		if (test_bit(CEPH_MDS_R_ABORTED, &req->r_req_flags))
-			__unregister_request(mdsc, req);
-		return;
-	}
+	अगर (req->r_err || test_bit(CEPH_MDS_R_GOT_RESULT, &req->r_req_flags)) अणु
+		अगर (test_bit(CEPH_MDS_R_ABORTED, &req->r_req_flags))
+			__unरेजिस्टर_request(mdsc, req);
+		वापस;
+	पूर्ण
 
-	if (req->r_timeout &&
-	    time_after_eq(jiffies, req->r_started + req->r_timeout)) {
-		dout("do_request timed out\n");
+	अगर (req->r_समयout &&
+	    समय_after_eq(jअगरfies, req->r_started + req->r_समयout)) अणु
+		करोut("do_request timed out\n");
 		err = -ETIMEDOUT;
-		goto finish;
-	}
-	if (READ_ONCE(mdsc->fsc->mount_state) == CEPH_MOUNT_SHUTDOWN) {
-		dout("do_request forced umount\n");
+		जाओ finish;
+	पूर्ण
+	अगर (READ_ONCE(mdsc->fsc->mount_state) == CEPH_MOUNT_SHUTDOWN) अणु
+		करोut("do_request forced umount\n");
 		err = -EIO;
-		goto finish;
-	}
-	if (READ_ONCE(mdsc->fsc->mount_state) == CEPH_MOUNT_MOUNTING) {
-		if (mdsc->mdsmap_err) {
+		जाओ finish;
+	पूर्ण
+	अगर (READ_ONCE(mdsc->fsc->mount_state) == CEPH_MOUNT_MOUNTING) अणु
+		अगर (mdsc->mdsmap_err) अणु
 			err = mdsc->mdsmap_err;
-			dout("do_request mdsmap err %d\n", err);
-			goto finish;
-		}
-		if (mdsc->mdsmap->m_epoch == 0) {
-			dout("do_request no mdsmap, waiting for map\n");
-			list_add(&req->r_wait, &mdsc->waiting_for_map);
-			return;
-		}
-		if (!(mdsc->fsc->mount_options->flags &
+			करोut("do_request mdsmap err %d\n", err);
+			जाओ finish;
+		पूर्ण
+		अगर (mdsc->mdsmap->m_epoch == 0) अणु
+			करोut("do_request no mdsmap, waiting for map\n");
+			list_add(&req->r_रुको, &mdsc->रुकोing_क्रम_map);
+			वापस;
+		पूर्ण
+		अगर (!(mdsc->fsc->mount_options->flags &
 		      CEPH_MOUNT_OPT_MOUNTWAIT) &&
-		    !ceph_mdsmap_is_cluster_available(mdsc->mdsmap)) {
+		    !ceph_mdsmap_is_cluster_available(mdsc->mdsmap)) अणु
 			err = -EHOSTUNREACH;
-			goto finish;
-		}
-	}
+			जाओ finish;
+		पूर्ण
+	पूर्ण
 
 	put_request_session(req);
 
-	mds = __choose_mds(mdsc, req, &random);
-	if (mds < 0 ||
-	    ceph_mdsmap_get_state(mdsc->mdsmap, mds) < CEPH_MDS_STATE_ACTIVE) {
-		if (test_bit(CEPH_MDS_R_ASYNC, &req->r_req_flags)) {
+	mds = __choose_mds(mdsc, req, &अक्रमom);
+	अगर (mds < 0 ||
+	    ceph_mdsmap_get_state(mdsc->mdsmap, mds) < CEPH_MDS_STATE_ACTIVE) अणु
+		अगर (test_bit(CEPH_MDS_R_ASYNC, &req->r_req_flags)) अणु
 			err = -EJUKEBOX;
-			goto finish;
-		}
-		dout("do_request no mds or not active, waiting for map\n");
-		list_add(&req->r_wait, &mdsc->waiting_for_map);
-		return;
-	}
+			जाओ finish;
+		पूर्ण
+		करोut("do_request no mds or not active, waiting for map\n");
+		list_add(&req->r_रुको, &mdsc->रुकोing_क्रम_map);
+		वापस;
+	पूर्ण
 
-	/* get, open session */
+	/* get, खोलो session */
 	session = __ceph_lookup_mds_session(mdsc, mds);
-	if (!session) {
-		session = register_session(mdsc, mds);
-		if (IS_ERR(session)) {
+	अगर (!session) अणु
+		session = रेजिस्टर_session(mdsc, mds);
+		अगर (IS_ERR(session)) अणु
 			err = PTR_ERR(session);
-			goto finish;
-		}
-	}
+			जाओ finish;
+		पूर्ण
+	पूर्ण
 	req->r_session = ceph_get_mds_session(session);
 
-	dout("do_request mds%d session %p state %s\n", mds, session,
+	करोut("do_request mds%d session %p state %s\n", mds, session,
 	     ceph_session_state_name(session->s_state));
-	if (session->s_state != CEPH_MDS_SESSION_OPEN &&
-	    session->s_state != CEPH_MDS_SESSION_HUNG) {
+	अगर (session->s_state != CEPH_MDS_SESSION_OPEN &&
+	    session->s_state != CEPH_MDS_SESSION_HUNG) अणु
 		/*
 		 * We cannot queue async requests since the caps and delegated
-		 * inodes are bound to the session. Just return -EJUKEBOX and
-		 * let the caller retry a sync request in that case.
+		 * inodes are bound to the session. Just वापस -EJUKEBOX and
+		 * let the caller retry a sync request in that हाल.
 		 */
-		if (test_bit(CEPH_MDS_R_ASYNC, &req->r_req_flags)) {
+		अगर (test_bit(CEPH_MDS_R_ASYNC, &req->r_req_flags)) अणु
 			err = -EJUKEBOX;
-			goto out_session;
-		}
+			जाओ out_session;
+		पूर्ण
 
 		/*
-		 * If the session has been REJECTED, then return a hard error,
+		 * If the session has been REJECTED, then वापस a hard error,
 		 * unless it's a CLEANRECOVER mount, in which case we'll queue
 		 * it to the mdsc queue.
 		 */
-		if (session->s_state == CEPH_MDS_SESSION_REJECTED) {
-			if (ceph_test_mount_opt(mdsc->fsc, CLEANRECOVER))
-				list_add(&req->r_wait, &mdsc->waiting_for_map);
-			else
+		अगर (session->s_state == CEPH_MDS_SESSION_REJECTED) अणु
+			अगर (ceph_test_mount_opt(mdsc->fsc, CLEANRECOVER))
+				list_add(&req->r_रुको, &mdsc->रुकोing_क्रम_map);
+			अन्यथा
 				err = -EACCES;
-			goto out_session;
-		}
+			जाओ out_session;
+		पूर्ण
 
-		if (session->s_state == CEPH_MDS_SESSION_NEW ||
-		    session->s_state == CEPH_MDS_SESSION_CLOSING) {
-			err = __open_session(mdsc, session);
-			if (err)
-				goto out_session;
+		अगर (session->s_state == CEPH_MDS_SESSION_NEW ||
+		    session->s_state == CEPH_MDS_SESSION_CLOSING) अणु
+			err = __खोलो_session(mdsc, session);
+			अगर (err)
+				जाओ out_session;
 			/* retry the same mds later */
-			if (random)
+			अगर (अक्रमom)
 				req->r_resend_mds = mds;
-		}
-		list_add(&req->r_wait, &session->s_waiting);
-		goto out_session;
-	}
+		पूर्ण
+		list_add(&req->r_रुको, &session->s_रुकोing);
+		जाओ out_session;
+	पूर्ण
 
 	/* send request */
-	req->r_resend_mds = -1;   /* forget any previous mds hint */
+	req->r_resend_mds = -1;   /* क्रमget any previous mds hपूर्णांक */
 
-	if (req->r_request_started == 0)   /* note request start time */
-		req->r_request_started = jiffies;
+	अगर (req->r_request_started == 0)   /* note request start समय */
+		req->r_request_started = jअगरfies;
 
 	err = __send_request(session, req, false);
 
 out_session:
 	ceph_put_mds_session(session);
 finish:
-	if (err) {
-		dout("__do_request early error %d\n", err);
+	अगर (err) अणु
+		करोut("__do_request early error %d\n", err);
 		req->r_err = err;
 		complete_request(mdsc, req);
-		__unregister_request(mdsc, req);
-	}
-	return;
-}
+		__unरेजिस्टर_request(mdsc, req);
+	पूर्ण
+	वापस;
+पूर्ण
 
 /*
  * called under mdsc->mutex
  */
-static void __wake_requests(struct ceph_mds_client *mdsc,
-			    struct list_head *head)
-{
-	struct ceph_mds_request *req;
-	LIST_HEAD(tmp_list);
+अटल व्योम __wake_requests(काष्ठा ceph_mds_client *mdsc,
+			    काष्ठा list_head *head)
+अणु
+	काष्ठा ceph_mds_request *req;
+	LIST_HEAD(पंचांगp_list);
 
-	list_splice_init(head, &tmp_list);
+	list_splice_init(head, &पंचांगp_list);
 
-	while (!list_empty(&tmp_list)) {
-		req = list_entry(tmp_list.next,
-				 struct ceph_mds_request, r_wait);
-		list_del_init(&req->r_wait);
-		dout(" wake request %p tid %llu\n", req, req->r_tid);
-		__do_request(mdsc, req);
-	}
-}
+	जबतक (!list_empty(&पंचांगp_list)) अणु
+		req = list_entry(पंचांगp_list.next,
+				 काष्ठा ceph_mds_request, r_रुको);
+		list_del_init(&req->r_रुको);
+		करोut(" wake request %p tid %llu\n", req, req->r_tid);
+		__करो_request(mdsc, req);
+	पूर्ण
+पूर्ण
 
 /*
- * Wake up threads with requests pending for @mds, so that they can
- * resubmit their requests to a possibly different mds.
+ * Wake up thपढ़ोs with requests pending क्रम @mds, so that they can
+ * resubmit their requests to a possibly dअगरferent mds.
  */
-static void kick_requests(struct ceph_mds_client *mdsc, int mds)
-{
-	struct ceph_mds_request *req;
-	struct rb_node *p = rb_first(&mdsc->request_tree);
+अटल व्योम kick_requests(काष्ठा ceph_mds_client *mdsc, पूर्णांक mds)
+अणु
+	काष्ठा ceph_mds_request *req;
+	काष्ठा rb_node *p = rb_first(&mdsc->request_tree);
 
-	dout("kick_requests mds%d\n", mds);
-	while (p) {
-		req = rb_entry(p, struct ceph_mds_request, r_node);
+	करोut("kick_requests mds%d\n", mds);
+	जबतक (p) अणु
+		req = rb_entry(p, काष्ठा ceph_mds_request, r_node);
 		p = rb_next(p);
-		if (test_bit(CEPH_MDS_R_GOT_UNSAFE, &req->r_req_flags))
-			continue;
-		if (req->r_attempts > 0)
-			continue; /* only new requests */
-		if (req->r_session &&
-		    req->r_session->s_mds == mds) {
-			dout(" kicking tid %llu\n", req->r_tid);
-			list_del_init(&req->r_wait);
-			__do_request(mdsc, req);
-		}
-	}
-}
+		अगर (test_bit(CEPH_MDS_R_GOT_UNSAFE, &req->r_req_flags))
+			जारी;
+		अगर (req->r_attempts > 0)
+			जारी; /* only new requests */
+		अगर (req->r_session &&
+		    req->r_session->s_mds == mds) अणु
+			करोut(" kicking tid %llu\n", req->r_tid);
+			list_del_init(&req->r_रुको);
+			__करो_request(mdsc, req);
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-int ceph_mdsc_submit_request(struct ceph_mds_client *mdsc, struct inode *dir,
-			      struct ceph_mds_request *req)
-{
-	int err = 0;
+पूर्णांक ceph_mdsc_submit_request(काष्ठा ceph_mds_client *mdsc, काष्ठा inode *dir,
+			      काष्ठा ceph_mds_request *req)
+अणु
+	पूर्णांक err = 0;
 
-	/* take CAP_PIN refs for r_inode, r_parent, r_old_dentry */
-	if (req->r_inode)
+	/* take CAP_PIN refs क्रम r_inode, r_parent, r_old_dentry */
+	अगर (req->r_inode)
 		ceph_get_cap_refs(ceph_inode(req->r_inode), CEPH_CAP_PIN);
-	if (req->r_parent) {
-		struct ceph_inode_info *ci = ceph_inode(req->r_parent);
-		int fmode = (req->r_op & CEPH_MDS_OP_WRITE) ?
-			    CEPH_FILE_MODE_WR : CEPH_FILE_MODE_RD;
+	अगर (req->r_parent) अणु
+		काष्ठा ceph_inode_info *ci = ceph_inode(req->r_parent);
+		पूर्णांक भ_शेषe = (req->r_op & CEPH_MDS_OP_WRITE) ?
+			    CEPH_खाता_MODE_WR : CEPH_खाता_MODE_RD;
 		spin_lock(&ci->i_ceph_lock);
 		ceph_take_cap_refs(ci, CEPH_CAP_PIN, false);
-		__ceph_touch_fmode(ci, mdsc, fmode);
+		__ceph_touch_भ_शेषe(ci, mdsc, भ_शेषe);
 		spin_unlock(&ci->i_ceph_lock);
 		ihold(req->r_parent);
-	}
-	if (req->r_old_dentry_dir)
+	पूर्ण
+	अगर (req->r_old_dentry_dir)
 		ceph_get_cap_refs(ceph_inode(req->r_old_dentry_dir),
 				  CEPH_CAP_PIN);
 
-	if (req->r_inode) {
-		err = ceph_wait_on_async_create(req->r_inode);
-		if (err) {
-			dout("%s: wait for async create returned: %d\n",
+	अगर (req->r_inode) अणु
+		err = ceph_रुको_on_async_create(req->r_inode);
+		अगर (err) अणु
+			करोut("%s: wait for async create returned: %d\n",
 			     __func__, err);
-			return err;
-		}
-	}
+			वापस err;
+		पूर्ण
+	पूर्ण
 
-	if (!err && req->r_old_inode) {
-		err = ceph_wait_on_async_create(req->r_old_inode);
-		if (err) {
-			dout("%s: wait for async create returned: %d\n",
+	अगर (!err && req->r_old_inode) अणु
+		err = ceph_रुको_on_async_create(req->r_old_inode);
+		अगर (err) अणु
+			करोut("%s: wait for async create returned: %d\n",
 			     __func__, err);
-			return err;
-		}
-	}
+			वापस err;
+		पूर्ण
+	पूर्ण
 
-	dout("submit_request on %p for inode %p\n", req, dir);
+	करोut("submit_request on %p for inode %p\n", req, dir);
 	mutex_lock(&mdsc->mutex);
-	__register_request(mdsc, req, dir);
-	__do_request(mdsc, req);
+	__रेजिस्टर_request(mdsc, req, dir);
+	__करो_request(mdsc, req);
 	err = req->r_err;
 	mutex_unlock(&mdsc->mutex);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int ceph_mdsc_wait_request(struct ceph_mds_client *mdsc,
-				  struct ceph_mds_request *req)
-{
-	int err;
+अटल पूर्णांक ceph_mdsc_रुको_request(काष्ठा ceph_mds_client *mdsc,
+				  काष्ठा ceph_mds_request *req)
+अणु
+	पूर्णांक err;
 
-	/* wait */
-	dout("do_request waiting\n");
-	if (!req->r_timeout && req->r_wait_for_completion) {
-		err = req->r_wait_for_completion(mdsc, req);
-	} else {
-		long timeleft = wait_for_completion_killable_timeout(
+	/* रुको */
+	करोut("do_request waiting\n");
+	अगर (!req->r_समयout && req->r_रुको_क्रम_completion) अणु
+		err = req->r_रुको_क्रम_completion(mdsc, req);
+	पूर्ण अन्यथा अणु
+		दीर्घ समयleft = रुको_क्रम_completion_समाप्तable_समयout(
 					&req->r_completion,
-					ceph_timeout_jiffies(req->r_timeout));
-		if (timeleft > 0)
+					ceph_समयout_jअगरfies(req->r_समयout));
+		अगर (समयleft > 0)
 			err = 0;
-		else if (!timeleft)
-			err = -ETIMEDOUT;  /* timed out */
-		else
-			err = timeleft;  /* killed */
-	}
-	dout("do_request waited, got %d\n", err);
+		अन्यथा अगर (!समयleft)
+			err = -ETIMEDOUT;  /* समयd out */
+		अन्यथा
+			err = समयleft;  /* समाप्तed */
+	पूर्ण
+	करोut("do_request waited, got %d\n", err);
 	mutex_lock(&mdsc->mutex);
 
-	/* only abort if we didn't race with a real reply */
-	if (test_bit(CEPH_MDS_R_GOT_RESULT, &req->r_req_flags)) {
+	/* only पात अगर we didn't race with a real reply */
+	अगर (test_bit(CEPH_MDS_R_GOT_RESULT, &req->r_req_flags)) अणु
 		err = le32_to_cpu(req->r_reply_info.head->result);
-	} else if (err < 0) {
-		dout("aborted request %lld with %d\n", req->r_tid, err);
+	पूर्ण अन्यथा अगर (err < 0) अणु
+		करोut("aborted request %lld with %d\n", req->r_tid, err);
 
 		/*
 		 * ensure we aren't running concurrently with
-		 * ceph_fill_trace or ceph_readdir_prepopulate, which
+		 * ceph_fill_trace or ceph_सूची_पढ़ो_prepopulate, which
 		 * rely on locks (dir mutex) held by our caller.
 		 */
 		mutex_lock(&req->r_fill_mutex);
@@ -3060,56 +3061,56 @@ static int ceph_mdsc_wait_request(struct ceph_mds_client *mdsc,
 		set_bit(CEPH_MDS_R_ABORTED, &req->r_req_flags);
 		mutex_unlock(&req->r_fill_mutex);
 
-		if (req->r_parent &&
+		अगर (req->r_parent &&
 		    (req->r_op & CEPH_MDS_OP_WRITE))
 			ceph_invalidate_dir_request(req);
-	} else {
+	पूर्ण अन्यथा अणु
 		err = req->r_err;
-	}
+	पूर्ण
 
 	mutex_unlock(&mdsc->mutex);
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /*
- * Synchrously perform an mds request.  Take care of all of the
- * session setup, forwarding, retry details.
+ * Synchrously perक्रमm an mds request.  Take care of all of the
+ * session setup, क्रमwarding, retry details.
  */
-int ceph_mdsc_do_request(struct ceph_mds_client *mdsc,
-			 struct inode *dir,
-			 struct ceph_mds_request *req)
-{
-	int err;
+पूर्णांक ceph_mdsc_करो_request(काष्ठा ceph_mds_client *mdsc,
+			 काष्ठा inode *dir,
+			 काष्ठा ceph_mds_request *req)
+अणु
+	पूर्णांक err;
 
-	dout("do_request on %p\n", req);
+	करोut("do_request on %p\n", req);
 
 	/* issue */
 	err = ceph_mdsc_submit_request(mdsc, dir, req);
-	if (!err)
-		err = ceph_mdsc_wait_request(mdsc, req);
-	dout("do_request %p done, result %d\n", req, err);
-	return err;
-}
+	अगर (!err)
+		err = ceph_mdsc_रुको_request(mdsc, req);
+	करोut("do_request %p done, result %d\n", req, err);
+	वापस err;
+पूर्ण
 
 /*
- * Invalidate dir's completeness, dentry lease state on an aborted MDS
+ * Invalidate dir's completeness, dentry lease state on an पातed MDS
  * namespace request.
  */
-void ceph_invalidate_dir_request(struct ceph_mds_request *req)
-{
-	struct inode *dir = req->r_parent;
-	struct inode *old_dir = req->r_old_dentry_dir;
+व्योम ceph_invalidate_dir_request(काष्ठा ceph_mds_request *req)
+अणु
+	काष्ठा inode *dir = req->r_parent;
+	काष्ठा inode *old_dir = req->r_old_dentry_dir;
 
-	dout("invalidate_dir_request %p %p (complete, lease(s))\n", dir, old_dir);
+	करोut("invalidate_dir_request %p %p (complete, lease(s))\n", dir, old_dir);
 
 	ceph_dir_clear_complete(dir);
-	if (old_dir)
+	अगर (old_dir)
 		ceph_dir_clear_complete(old_dir);
-	if (req->r_dentry)
+	अगर (req->r_dentry)
 		ceph_invalidate_dentry_lease(req->r_dentry);
-	if (req->r_old_dentry)
+	अगर (req->r_old_dentry)
 		ceph_invalidate_dentry_lease(req->r_old_dentry);
-}
+पूर्ण
 
 /*
  * Handle mds reply.
@@ -3118,201 +3119,201 @@ void ceph_invalidate_dir_request(struct ceph_mds_request *req)
  * This preserves the logical ordering of replies, capabilities, etc., sent
  * by the MDS as they are applied to our local cache.
  */
-static void handle_reply(struct ceph_mds_session *session, struct ceph_msg *msg)
-{
-	struct ceph_mds_client *mdsc = session->s_mdsc;
-	struct ceph_mds_request *req;
-	struct ceph_mds_reply_head *head = msg->front.iov_base;
-	struct ceph_mds_reply_info_parsed *rinfo;  /* parsed reply info */
-	struct ceph_snap_realm *realm;
+अटल व्योम handle_reply(काष्ठा ceph_mds_session *session, काष्ठा ceph_msg *msg)
+अणु
+	काष्ठा ceph_mds_client *mdsc = session->s_mdsc;
+	काष्ठा ceph_mds_request *req;
+	काष्ठा ceph_mds_reply_head *head = msg->front.iov_base;
+	काष्ठा ceph_mds_reply_info_parsed *rinfo;  /* parsed reply info */
+	काष्ठा ceph_snap_realm *realm;
 	u64 tid;
-	int err, result;
-	int mds = session->s_mds;
+	पूर्णांक err, result;
+	पूर्णांक mds = session->s_mds;
 
-	if (msg->front.iov_len < sizeof(*head)) {
+	अगर (msg->front.iov_len < माप(*head)) अणु
 		pr_err("mdsc_handle_reply got corrupt (short) reply\n");
 		ceph_msg_dump(msg);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/* get request, session */
 	tid = le64_to_cpu(msg->hdr.tid);
 	mutex_lock(&mdsc->mutex);
 	req = lookup_get_request(mdsc, tid);
-	if (!req) {
-		dout("handle_reply on unknown tid %llu\n", tid);
+	अगर (!req) अणु
+		करोut("handle_reply on unknown tid %llu\n", tid);
 		mutex_unlock(&mdsc->mutex);
-		return;
-	}
-	dout("handle_reply %p\n", req);
+		वापस;
+	पूर्ण
+	करोut("handle_reply %p\n", req);
 
 	/* correct session? */
-	if (req->r_session != session) {
+	अगर (req->r_session != session) अणु
 		pr_err("mdsc_handle_reply got %llu on session mds%d"
 		       " not mds%d\n", tid, session->s_mds,
 		       req->r_session ? req->r_session->s_mds : -1);
 		mutex_unlock(&mdsc->mutex);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	/* dup? */
-	if ((test_bit(CEPH_MDS_R_GOT_UNSAFE, &req->r_req_flags) && !head->safe) ||
-	    (test_bit(CEPH_MDS_R_GOT_SAFE, &req->r_req_flags) && head->safe)) {
+	अगर ((test_bit(CEPH_MDS_R_GOT_UNSAFE, &req->r_req_flags) && !head->safe) ||
+	    (test_bit(CEPH_MDS_R_GOT_SAFE, &req->r_req_flags) && head->safe)) अणु
 		pr_warn("got a dup %s reply on %llu from mds%d\n",
 			   head->safe ? "safe" : "unsafe", tid, mds);
 		mutex_unlock(&mdsc->mutex);
-		goto out;
-	}
-	if (test_bit(CEPH_MDS_R_GOT_SAFE, &req->r_req_flags)) {
+		जाओ out;
+	पूर्ण
+	अगर (test_bit(CEPH_MDS_R_GOT_SAFE, &req->r_req_flags)) अणु
 		pr_warn("got unsafe after safe on %llu from mds%d\n",
 			   tid, mds);
 		mutex_unlock(&mdsc->mutex);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	result = le32_to_cpu(head->result);
 
 	/*
 	 * Handle an ESTALE
-	 * if we're not talking to the authority, send to them
-	 * if the authority has changed while we weren't looking,
+	 * अगर we're not talking to the authority, send to them
+	 * अगर the authority has changed जबतक we weren't looking,
 	 * send to new authority
-	 * Otherwise we just have to return an ESTALE
+	 * Otherwise we just have to वापस an ESTALE
 	 */
-	if (result == -ESTALE) {
-		dout("got ESTALE on request %llu\n", req->r_tid);
+	अगर (result == -ESTALE) अणु
+		करोut("got ESTALE on request %llu\n", req->r_tid);
 		req->r_resend_mds = -1;
-		if (req->r_direct_mode != USE_AUTH_MDS) {
-			dout("not using auth, setting for that now\n");
+		अगर (req->r_direct_mode != USE_AUTH_MDS) अणु
+			करोut("not using auth, setting for that now\n");
 			req->r_direct_mode = USE_AUTH_MDS;
-			__do_request(mdsc, req);
+			__करो_request(mdsc, req);
 			mutex_unlock(&mdsc->mutex);
-			goto out;
-		} else  {
-			int mds = __choose_mds(mdsc, req, NULL);
-			if (mds >= 0 && mds != req->r_session->s_mds) {
-				dout("but auth changed, so resending\n");
-				__do_request(mdsc, req);
+			जाओ out;
+		पूर्ण अन्यथा  अणु
+			पूर्णांक mds = __choose_mds(mdsc, req, शून्य);
+			अगर (mds >= 0 && mds != req->r_session->s_mds) अणु
+				करोut("but auth changed, so resending\n");
+				__करो_request(mdsc, req);
 				mutex_unlock(&mdsc->mutex);
-				goto out;
-			}
-		}
-		dout("have to return ESTALE on request %llu\n", req->r_tid);
-	}
+				जाओ out;
+			पूर्ण
+		पूर्ण
+		करोut("have to return ESTALE on request %llu\n", req->r_tid);
+	पूर्ण
 
 
-	if (head->safe) {
+	अगर (head->safe) अणु
 		set_bit(CEPH_MDS_R_GOT_SAFE, &req->r_req_flags);
-		__unregister_request(mdsc, req);
+		__unरेजिस्टर_request(mdsc, req);
 
 		/* last request during umount? */
-		if (mdsc->stopping && !__get_oldest_req(mdsc))
-			complete_all(&mdsc->safe_umount_waiters);
+		अगर (mdsc->stopping && !__get_oldest_req(mdsc))
+			complete_all(&mdsc->safe_umount_रुकोers);
 
-		if (test_bit(CEPH_MDS_R_GOT_UNSAFE, &req->r_req_flags)) {
+		अगर (test_bit(CEPH_MDS_R_GOT_UNSAFE, &req->r_req_flags)) अणु
 			/*
-			 * We already handled the unsafe response, now do the
+			 * We alपढ़ोy handled the unsafe response, now करो the
 			 * cleanup.  No need to examine the response; the MDS
-			 * doesn't include any result info in the safe
-			 * response.  And even if it did, there is nothing
-			 * useful we could do with a revised return value.
+			 * करोesn't include any result info in the safe
+			 * response.  And even अगर it did, there is nothing
+			 * useful we could करो with a revised वापस value.
 			 */
-			dout("got safe reply %llu, mds%d\n", tid, mds);
+			करोut("got safe reply %llu, mds%d\n", tid, mds);
 
 			mutex_unlock(&mdsc->mutex);
-			goto out;
-		}
-	} else {
+			जाओ out;
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		set_bit(CEPH_MDS_R_GOT_UNSAFE, &req->r_req_flags);
 		list_add_tail(&req->r_unsafe_item, &req->r_session->s_unsafe);
-	}
+	पूर्ण
 
-	dout("handle_reply tid %lld result %d\n", tid, result);
+	करोut("handle_reply tid %lld result %d\n", tid, result);
 	rinfo = &req->r_reply_info;
-	if (test_bit(CEPHFS_FEATURE_REPLY_ENCODING, &session->s_features))
+	अगर (test_bit(CEPHFS_FEATURE_REPLY_ENCODING, &session->s_features))
 		err = parse_reply_info(session, msg, rinfo, (u64)-1);
-	else
+	अन्यथा
 		err = parse_reply_info(session, msg, rinfo, session->s_con.peer_features);
 	mutex_unlock(&mdsc->mutex);
 
-	/* Must find target inode outside of mutexes to avoid deadlocks */
-	if ((err >= 0) && rinfo->head->is_target) {
-		struct inode *in;
-		struct ceph_vino tvino = {
+	/* Must find target inode outside of mutexes to aव्योम deadlocks */
+	अगर ((err >= 0) && rinfo->head->is_target) अणु
+		काष्ठा inode *in;
+		काष्ठा ceph_vino tvino = अणु
 			.ino  = le64_to_cpu(rinfo->targeti.in->ino),
 			.snap = le64_to_cpu(rinfo->targeti.in->snapid)
-		};
+		पूर्ण;
 
 		in = ceph_get_inode(mdsc->fsc->sb, tvino);
-		if (IS_ERR(in)) {
+		अगर (IS_ERR(in)) अणु
 			err = PTR_ERR(in);
 			mutex_lock(&session->s_mutex);
-			goto out_err;
-		}
+			जाओ out_err;
+		पूर्ण
 		req->r_target_inode = in;
-	}
+	पूर्ण
 
 	mutex_lock(&session->s_mutex);
-	if (err < 0) {
+	अगर (err < 0) अणु
 		pr_err("mdsc_handle_reply got corrupt reply mds%d(tid:%lld)\n", mds, tid);
 		ceph_msg_dump(msg);
-		goto out_err;
-	}
+		जाओ out_err;
+	पूर्ण
 
 	/* snap trace */
-	realm = NULL;
-	if (rinfo->snapblob_len) {
-		down_write(&mdsc->snap_rwsem);
+	realm = शून्य;
+	अगर (rinfo->snapblob_len) अणु
+		करोwn_ग_लिखो(&mdsc->snap_rwsem);
 		ceph_update_snap_trace(mdsc, rinfo->snapblob,
 				rinfo->snapblob + rinfo->snapblob_len,
 				le32_to_cpu(head->op) == CEPH_MDS_OP_RMSNAP,
 				&realm);
-		downgrade_write(&mdsc->snap_rwsem);
-	} else {
-		down_read(&mdsc->snap_rwsem);
-	}
+		करोwngrade_ग_लिखो(&mdsc->snap_rwsem);
+	पूर्ण अन्यथा अणु
+		करोwn_पढ़ो(&mdsc->snap_rwsem);
+	पूर्ण
 
-	/* insert trace into our cache */
+	/* insert trace पूर्णांकo our cache */
 	mutex_lock(&req->r_fill_mutex);
 	current->journal_info = req;
 	err = ceph_fill_trace(mdsc->fsc->sb, req);
-	if (err == 0) {
-		if (result == 0 && (req->r_op == CEPH_MDS_OP_READDIR ||
+	अगर (err == 0) अणु
+		अगर (result == 0 && (req->r_op == CEPH_MDS_OP_READसूची ||
 				    req->r_op == CEPH_MDS_OP_LSSNAP))
-			ceph_readdir_prepopulate(req, req->r_session);
-	}
-	current->journal_info = NULL;
+			ceph_सूची_पढ़ो_prepopulate(req, req->r_session);
+	पूर्ण
+	current->journal_info = शून्य;
 	mutex_unlock(&req->r_fill_mutex);
 
-	up_read(&mdsc->snap_rwsem);
-	if (realm)
+	up_पढ़ो(&mdsc->snap_rwsem);
+	अगर (realm)
 		ceph_put_snap_realm(mdsc, realm);
 
-	if (err == 0) {
-		if (req->r_target_inode &&
-		    test_bit(CEPH_MDS_R_GOT_UNSAFE, &req->r_req_flags)) {
-			struct ceph_inode_info *ci =
+	अगर (err == 0) अणु
+		अगर (req->r_target_inode &&
+		    test_bit(CEPH_MDS_R_GOT_UNSAFE, &req->r_req_flags)) अणु
+			काष्ठा ceph_inode_info *ci =
 				ceph_inode(req->r_target_inode);
 			spin_lock(&ci->i_unsafe_lock);
 			list_add_tail(&req->r_unsafe_target_item,
 				      &ci->i_unsafe_iops);
 			spin_unlock(&ci->i_unsafe_lock);
-		}
+		पूर्ण
 
 		ceph_unreserve_caps(mdsc, &req->r_caps_reservation);
-	}
+	पूर्ण
 out_err:
 	mutex_lock(&mdsc->mutex);
-	if (!test_bit(CEPH_MDS_R_ABORTED, &req->r_req_flags)) {
-		if (err) {
+	अगर (!test_bit(CEPH_MDS_R_ABORTED, &req->r_req_flags)) अणु
+		अगर (err) अणु
 			req->r_err = err;
-		} else {
+		पूर्ण अन्यथा अणु
 			req->r_reply =  ceph_msg_get(msg);
 			set_bit(CEPH_MDS_R_GOT_RESULT, &req->r_req_flags);
-		}
-	} else {
-		dout("reply arrived after request %lld was aborted\n", tid);
-	}
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		करोut("reply arrived after request %lld was aborted\n", tid);
+	पूर्ण
 	mutex_unlock(&mdsc->mutex);
 
 	mutex_unlock(&session->s_mutex);
@@ -3324,75 +3325,75 @@ out_err:
 				     req->r_end_latency, err);
 out:
 	ceph_mdsc_put_request(req);
-	return;
-}
+	वापस;
+पूर्ण
 
 
 
 /*
- * handle mds notification that our request has been forwarded.
+ * handle mds notअगरication that our request has been क्रमwarded.
  */
-static void handle_forward(struct ceph_mds_client *mdsc,
-			   struct ceph_mds_session *session,
-			   struct ceph_msg *msg)
-{
-	struct ceph_mds_request *req;
+अटल व्योम handle_क्रमward(काष्ठा ceph_mds_client *mdsc,
+			   काष्ठा ceph_mds_session *session,
+			   काष्ठा ceph_msg *msg)
+अणु
+	काष्ठा ceph_mds_request *req;
 	u64 tid = le64_to_cpu(msg->hdr.tid);
 	u32 next_mds;
 	u32 fwd_seq;
-	int err = -EINVAL;
-	void *p = msg->front.iov_base;
-	void *end = p + msg->front.iov_len;
+	पूर्णांक err = -EINVAL;
+	व्योम *p = msg->front.iov_base;
+	व्योम *end = p + msg->front.iov_len;
 
-	ceph_decode_need(&p, end, 2*sizeof(u32), bad);
+	ceph_decode_need(&p, end, 2*माप(u32), bad);
 	next_mds = ceph_decode_32(&p);
 	fwd_seq = ceph_decode_32(&p);
 
 	mutex_lock(&mdsc->mutex);
 	req = lookup_get_request(mdsc, tid);
-	if (!req) {
-		dout("forward tid %llu to mds%d - req dne\n", tid, next_mds);
-		goto out;  /* dup reply? */
-	}
+	अगर (!req) अणु
+		करोut("forward tid %llu to mds%d - req dne\n", tid, next_mds);
+		जाओ out;  /* dup reply? */
+	पूर्ण
 
-	if (test_bit(CEPH_MDS_R_ABORTED, &req->r_req_flags)) {
-		dout("forward tid %llu aborted, unregistering\n", tid);
-		__unregister_request(mdsc, req);
-	} else if (fwd_seq <= req->r_num_fwd) {
-		dout("forward tid %llu to mds%d - old seq %d <= %d\n",
+	अगर (test_bit(CEPH_MDS_R_ABORTED, &req->r_req_flags)) अणु
+		करोut("forward tid %llu aborted, unregistering\n", tid);
+		__unरेजिस्टर_request(mdsc, req);
+	पूर्ण अन्यथा अगर (fwd_seq <= req->r_num_fwd) अणु
+		करोut("forward tid %llu to mds%d - old seq %d <= %d\n",
 		     tid, next_mds, req->r_num_fwd, fwd_seq);
-	} else {
-		/* resend. forward race not possible; mds would drop */
-		dout("forward tid %llu to mds%d (we resend)\n", tid, next_mds);
+	पूर्ण अन्यथा अणु
+		/* resend. क्रमward race not possible; mds would drop */
+		करोut("forward tid %llu to mds%d (we resend)\n", tid, next_mds);
 		BUG_ON(req->r_err);
 		BUG_ON(test_bit(CEPH_MDS_R_GOT_RESULT, &req->r_req_flags));
 		req->r_attempts = 0;
 		req->r_num_fwd = fwd_seq;
 		req->r_resend_mds = next_mds;
 		put_request_session(req);
-		__do_request(mdsc, req);
-	}
+		__करो_request(mdsc, req);
+	पूर्ण
 	ceph_mdsc_put_request(req);
 out:
 	mutex_unlock(&mdsc->mutex);
-	return;
+	वापस;
 
 bad:
 	pr_err("mdsc_handle_forward decode error err=%d\n", err);
-}
+पूर्ण
 
-static int __decode_session_metadata(void **p, void *end,
+अटल पूर्णांक __decode_session_metadata(व्योम **p, व्योम *end,
 				     bool *blocklisted)
-{
+अणु
 	/* map<string,string> */
 	u32 n;
 	bool err_str;
 	ceph_decode_32_safe(p, end, n, bad);
-	while (n-- > 0) {
+	जबतक (n-- > 0) अणु
 		u32 len;
 		ceph_decode_32_safe(p, end, len, bad);
 		ceph_decode_need(p, end, len, bad);
-		err_str = !strncmp(*p, "error_string", len);
+		err_str = !म_भेदन(*p, "error_string", len);
 		*p += len;
 		ceph_decode_32_safe(p, end, len, bad);
 		ceph_decode_need(p, end, len, bad);
@@ -3400,199 +3401,199 @@ static int __decode_session_metadata(void **p, void *end,
 		 * Match "blocklisted (blacklisted)" from newer MDSes,
 		 * or "blacklisted" from older MDSes.
 		 */
-		if (err_str && strnstr(*p, "blacklisted", len))
+		अगर (err_str && strnstr(*p, "blacklisted", len))
 			*blocklisted = true;
 		*p += len;
-	}
-	return 0;
+	पूर्ण
+	वापस 0;
 bad:
-	return -1;
-}
+	वापस -1;
+पूर्ण
 
 /*
  * handle a mds session control message
  */
-static void handle_session(struct ceph_mds_session *session,
-			   struct ceph_msg *msg)
-{
-	struct ceph_mds_client *mdsc = session->s_mdsc;
-	int mds = session->s_mds;
-	int msg_version = le16_to_cpu(msg->hdr.version);
-	void *p = msg->front.iov_base;
-	void *end = p + msg->front.iov_len;
-	struct ceph_mds_session_head *h;
+अटल व्योम handle_session(काष्ठा ceph_mds_session *session,
+			   काष्ठा ceph_msg *msg)
+अणु
+	काष्ठा ceph_mds_client *mdsc = session->s_mdsc;
+	पूर्णांक mds = session->s_mds;
+	पूर्णांक msg_version = le16_to_cpu(msg->hdr.version);
+	व्योम *p = msg->front.iov_base;
+	व्योम *end = p + msg->front.iov_len;
+	काष्ठा ceph_mds_session_head *h;
 	u32 op;
 	u64 seq, features = 0;
-	int wake = 0;
+	पूर्णांक wake = 0;
 	bool blocklisted = false;
 
 	/* decode */
-	ceph_decode_need(&p, end, sizeof(*h), bad);
+	ceph_decode_need(&p, end, माप(*h), bad);
 	h = p;
-	p += sizeof(*h);
+	p += माप(*h);
 
 	op = le32_to_cpu(h->op);
 	seq = le64_to_cpu(h->seq);
 
-	if (msg_version >= 3) {
+	अगर (msg_version >= 3) अणु
 		u32 len;
 		/* version >= 2, metadata */
-		if (__decode_session_metadata(&p, end, &blocklisted) < 0)
-			goto bad;
+		अगर (__decode_session_metadata(&p, end, &blocklisted) < 0)
+			जाओ bad;
 		/* version >= 3, feature bits */
 		ceph_decode_32_safe(&p, end, len, bad);
-		if (len) {
+		अगर (len) अणु
 			ceph_decode_64_safe(&p, end, features, bad);
-			p += len - sizeof(features);
-		}
-	}
+			p += len - माप(features);
+		पूर्ण
+	पूर्ण
 
 	mutex_lock(&mdsc->mutex);
-	if (op == CEPH_SESSION_CLOSE) {
+	अगर (op == CEPH_SESSION_CLOSE) अणु
 		ceph_get_mds_session(session);
-		__unregister_session(mdsc, session);
-	}
+		__unरेजिस्टर_session(mdsc, session);
+	पूर्ण
 	/* FIXME: this ttl calculation is generous */
-	session->s_ttl = jiffies + HZ*mdsc->mdsmap->m_session_autoclose;
+	session->s_ttl = jअगरfies + HZ*mdsc->mdsmap->m_session_स्वतःबंद;
 	mutex_unlock(&mdsc->mutex);
 
 	mutex_lock(&session->s_mutex);
 
-	dout("handle_session mds%d %s %p state %s seq %llu\n",
+	करोut("handle_session mds%d %s %p state %s seq %llu\n",
 	     mds, ceph_session_op_name(op), session,
 	     ceph_session_state_name(session->s_state), seq);
 
-	if (session->s_state == CEPH_MDS_SESSION_HUNG) {
+	अगर (session->s_state == CEPH_MDS_SESSION_HUNG) अणु
 		session->s_state = CEPH_MDS_SESSION_OPEN;
 		pr_info("mds%d came back\n", session->s_mds);
-	}
+	पूर्ण
 
-	switch (op) {
-	case CEPH_SESSION_OPEN:
-		if (session->s_state == CEPH_MDS_SESSION_RECONNECTING)
+	चयन (op) अणु
+	हाल CEPH_SESSION_OPEN:
+		अगर (session->s_state == CEPH_MDS_SESSION_RECONNECTING)
 			pr_info("mds%d reconnect success\n", session->s_mds);
 		session->s_state = CEPH_MDS_SESSION_OPEN;
 		session->s_features = features;
 		renewed_caps(mdsc, session, 0);
-		if (test_bit(CEPHFS_FEATURE_METRIC_COLLECT, &session->s_features))
+		अगर (test_bit(CEPHFS_FEATURE_METRIC_COLLECT, &session->s_features))
 			metric_schedule_delayed(&mdsc->metric);
 		wake = 1;
-		if (mdsc->stopping)
-			__close_session(mdsc, session);
-		break;
+		अगर (mdsc->stopping)
+			__बंद_session(mdsc, session);
+		अवरोध;
 
-	case CEPH_SESSION_RENEWCAPS:
-		if (session->s_renew_seq == seq)
+	हाल CEPH_SESSION_RENEWCAPS:
+		अगर (session->s_renew_seq == seq)
 			renewed_caps(mdsc, session, 1);
-		break;
+		अवरोध;
 
-	case CEPH_SESSION_CLOSE:
-		if (session->s_state == CEPH_MDS_SESSION_RECONNECTING)
+	हाल CEPH_SESSION_CLOSE:
+		अगर (session->s_state == CEPH_MDS_SESSION_RECONNECTING)
 			pr_info("mds%d reconnect denied\n", session->s_mds);
 		session->s_state = CEPH_MDS_SESSION_CLOSED;
 		cleanup_session_requests(mdsc, session);
-		remove_session_caps(session);
-		wake = 2; /* for good measure */
-		wake_up_all(&mdsc->session_close_wq);
-		break;
+		हटाओ_session_caps(session);
+		wake = 2; /* क्रम good measure */
+		wake_up_all(&mdsc->session_बंद_wq);
+		अवरोध;
 
-	case CEPH_SESSION_STALE:
+	हाल CEPH_SESSION_STALE:
 		pr_info("mds%d caps went stale, renewing\n",
 			session->s_mds);
 		spin_lock(&session->s_gen_ttl_lock);
 		session->s_cap_gen++;
-		session->s_cap_ttl = jiffies - 1;
+		session->s_cap_ttl = jअगरfies - 1;
 		spin_unlock(&session->s_gen_ttl_lock);
 		send_renew_caps(mdsc, session);
-		break;
+		अवरोध;
 
-	case CEPH_SESSION_RECALL_STATE:
+	हाल CEPH_SESSION_RECALL_STATE:
 		ceph_trim_caps(mdsc, session, le32_to_cpu(h->max_caps));
-		break;
+		अवरोध;
 
-	case CEPH_SESSION_FLUSHMSG:
+	हाल CEPH_SESSION_FLUSHMSG:
 		send_flushmsg_ack(mdsc, session, seq);
-		break;
+		अवरोध;
 
-	case CEPH_SESSION_FORCE_RO:
-		dout("force_session_readonly %p\n", session);
+	हाल CEPH_SESSION_FORCE_RO:
+		करोut("force_session_readonly %p\n", session);
 		spin_lock(&session->s_cap_lock);
-		session->s_readonly = true;
+		session->s_पढ़ोonly = true;
 		spin_unlock(&session->s_cap_lock);
 		wake_up_session_caps(session, FORCE_RO);
-		break;
+		अवरोध;
 
-	case CEPH_SESSION_REJECT:
+	हाल CEPH_SESSION_REJECT:
 		WARN_ON(session->s_state != CEPH_MDS_SESSION_OPENING);
 		pr_info("mds%d rejected session\n", session->s_mds);
 		session->s_state = CEPH_MDS_SESSION_REJECTED;
 		cleanup_session_requests(mdsc, session);
-		remove_session_caps(session);
-		if (blocklisted)
+		हटाओ_session_caps(session);
+		अगर (blocklisted)
 			mdsc->fsc->blocklisted = true;
-		wake = 2; /* for good measure */
-		break;
+		wake = 2; /* क्रम good measure */
+		अवरोध;
 
-	default:
+	शेष:
 		pr_err("mdsc_handle_session bad op %d mds%d\n", op, mds);
 		WARN_ON(1);
-	}
+	पूर्ण
 
 	mutex_unlock(&session->s_mutex);
-	if (wake) {
+	अगर (wake) अणु
 		mutex_lock(&mdsc->mutex);
-		__wake_requests(mdsc, &session->s_waiting);
-		if (wake == 2)
+		__wake_requests(mdsc, &session->s_रुकोing);
+		अगर (wake == 2)
 			kick_requests(mdsc, mds);
 		mutex_unlock(&mdsc->mutex);
-	}
-	if (op == CEPH_SESSION_CLOSE)
+	पूर्ण
+	अगर (op == CEPH_SESSION_CLOSE)
 		ceph_put_mds_session(session);
-	return;
+	वापस;
 
 bad:
 	pr_err("mdsc_handle_session corrupt message mds%d len %d\n", mds,
-	       (int)msg->front.iov_len);
+	       (पूर्णांक)msg->front.iov_len);
 	ceph_msg_dump(msg);
-	return;
-}
+	वापस;
+पूर्ण
 
-void ceph_mdsc_release_dir_caps(struct ceph_mds_request *req)
-{
-	int dcaps;
+व्योम ceph_mdsc_release_dir_caps(काष्ठा ceph_mds_request *req)
+अणु
+	पूर्णांक dcaps;
 
 	dcaps = xchg(&req->r_dir_caps, 0);
-	if (dcaps) {
-		dout("releasing r_dir_caps=%s\n", ceph_cap_string(dcaps));
+	अगर (dcaps) अणु
+		करोut("releasing r_dir_caps=%s\n", ceph_cap_string(dcaps));
 		ceph_put_cap_refs(ceph_inode(req->r_parent), dcaps);
-	}
-}
+	पूर्ण
+पूर्ण
 
-void ceph_mdsc_release_dir_caps_no_check(struct ceph_mds_request *req)
-{
-	int dcaps;
+व्योम ceph_mdsc_release_dir_caps_no_check(काष्ठा ceph_mds_request *req)
+अणु
+	पूर्णांक dcaps;
 
 	dcaps = xchg(&req->r_dir_caps, 0);
-	if (dcaps) {
-		dout("releasing r_dir_caps=%s\n", ceph_cap_string(dcaps));
+	अगर (dcaps) अणु
+		करोut("releasing r_dir_caps=%s\n", ceph_cap_string(dcaps));
 		ceph_put_cap_refs_no_check_caps(ceph_inode(req->r_parent),
 						dcaps);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
  * called under session->mutex.
  */
-static void replay_unsafe_requests(struct ceph_mds_client *mdsc,
-				   struct ceph_mds_session *session)
-{
-	struct ceph_mds_request *req, *nreq;
-	struct rb_node *p;
+अटल व्योम replay_unsafe_requests(काष्ठा ceph_mds_client *mdsc,
+				   काष्ठा ceph_mds_session *session)
+अणु
+	काष्ठा ceph_mds_request *req, *nreq;
+	काष्ठा rb_node *p;
 
-	dout("replay_unsafe_requests mds%d\n", session->s_mds);
+	करोut("replay_unsafe_requests mds%d\n", session->s_mds);
 
 	mutex_lock(&mdsc->mutex);
-	list_for_each_entry_safe(req, nreq, &session->s_unsafe, r_unsafe_item)
+	list_क्रम_each_entry_safe(req, nreq, &session->s_unsafe, r_unsafe_item)
 		__send_request(session, req, true);
 
 	/*
@@ -3600,78 +3601,78 @@ static void replay_unsafe_requests(struct ceph_mds_client *mdsc,
 	 * can process completed request in clientreplay stage.
 	 */
 	p = rb_first(&mdsc->request_tree);
-	while (p) {
-		req = rb_entry(p, struct ceph_mds_request, r_node);
+	जबतक (p) अणु
+		req = rb_entry(p, काष्ठा ceph_mds_request, r_node);
 		p = rb_next(p);
-		if (test_bit(CEPH_MDS_R_GOT_UNSAFE, &req->r_req_flags))
-			continue;
-		if (req->r_attempts == 0)
-			continue; /* only old requests */
-		if (!req->r_session)
-			continue;
-		if (req->r_session->s_mds != session->s_mds)
-			continue;
+		अगर (test_bit(CEPH_MDS_R_GOT_UNSAFE, &req->r_req_flags))
+			जारी;
+		अगर (req->r_attempts == 0)
+			जारी; /* only old requests */
+		अगर (!req->r_session)
+			जारी;
+		अगर (req->r_session->s_mds != session->s_mds)
+			जारी;
 
 		ceph_mdsc_release_dir_caps_no_check(req);
 
 		__send_request(session, req, true);
-	}
+	पूर्ण
 	mutex_unlock(&mdsc->mutex);
-}
+पूर्ण
 
-static int send_reconnect_partial(struct ceph_reconnect_state *recon_state)
-{
-	struct ceph_msg *reply;
-	struct ceph_pagelist *_pagelist;
-	struct page *page;
+अटल पूर्णांक send_reconnect_partial(काष्ठा ceph_reconnect_state *recon_state)
+अणु
+	काष्ठा ceph_msg *reply;
+	काष्ठा ceph_pagelist *_pagelist;
+	काष्ठा page *page;
 	__le32 *addr;
-	int err = -ENOMEM;
+	पूर्णांक err = -ENOMEM;
 
-	if (!recon_state->allow_multi)
-		return -ENOSPC;
+	अगर (!recon_state->allow_multi)
+		वापस -ENOSPC;
 
 	/* can't handle message that contains both caps and realm */
 	BUG_ON(!recon_state->nr_caps == !recon_state->nr_realms);
 
 	/* pre-allocate new pagelist */
 	_pagelist = ceph_pagelist_alloc(GFP_NOFS);
-	if (!_pagelist)
-		return -ENOMEM;
+	अगर (!_pagelist)
+		वापस -ENOMEM;
 
 	reply = ceph_msg_new2(CEPH_MSG_CLIENT_RECONNECT, 0, 1, GFP_NOFS, false);
-	if (!reply)
-		goto fail_msg;
+	अगर (!reply)
+		जाओ fail_msg;
 
-	/* placeholder for nr_caps */
+	/* placeholder क्रम nr_caps */
 	err = ceph_pagelist_encode_32(_pagelist, 0);
-	if (err < 0)
-		goto fail;
+	अगर (err < 0)
+		जाओ fail;
 
-	if (recon_state->nr_caps) {
+	अगर (recon_state->nr_caps) अणु
 		/* currently encoding caps */
 		err = ceph_pagelist_encode_32(recon_state->pagelist, 0);
-		if (err)
-			goto fail;
-	} else {
-		/* placeholder for nr_realms (currently encoding relams) */
+		अगर (err)
+			जाओ fail;
+	पूर्ण अन्यथा अणु
+		/* placeholder क्रम nr_realms (currently encoding relams) */
 		err = ceph_pagelist_encode_32(_pagelist, 0);
-		if (err < 0)
-			goto fail;
-	}
+		अगर (err < 0)
+			जाओ fail;
+	पूर्ण
 
 	err = ceph_pagelist_encode_8(recon_state->pagelist, 1);
-	if (err)
-		goto fail;
+	अगर (err)
+		जाओ fail;
 
-	page = list_first_entry(&recon_state->pagelist->head, struct page, lru);
+	page = list_first_entry(&recon_state->pagelist->head, काष्ठा page, lru);
 	addr = kmap_atomic(page);
-	if (recon_state->nr_caps) {
+	अगर (recon_state->nr_caps) अणु
 		/* currently encoding caps */
 		*addr = cpu_to_le32(recon_state->nr_caps);
-	} else {
+	पूर्ण अन्यथा अणु
 		/* currently encoding relams */
 		*(addr + 1) = cpu_to_le32(recon_state->nr_realms);
-	}
+	पूर्ण
 	kunmap_atomic(addr);
 
 	reply->hdr.version = cpu_to_le16(5);
@@ -3687,85 +3688,85 @@ static int send_reconnect_partial(struct ceph_reconnect_state *recon_state)
 	recon_state->nr_caps = 0;
 	recon_state->nr_realms = 0;
 	recon_state->msg_version = 5;
-	return 0;
+	वापस 0;
 fail:
 	ceph_msg_put(reply);
 fail_msg:
 	ceph_pagelist_release(_pagelist);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static struct dentry* d_find_primary(struct inode *inode)
-{
-	struct dentry *alias, *dn = NULL;
+अटल काष्ठा dentry* d_find_primary(काष्ठा inode *inode)
+अणु
+	काष्ठा dentry *alias, *dn = शून्य;
 
-	if (hlist_empty(&inode->i_dentry))
-		return NULL;
+	अगर (hlist_empty(&inode->i_dentry))
+		वापस शून्य;
 
 	spin_lock(&inode->i_lock);
-	if (hlist_empty(&inode->i_dentry))
-		goto out_unlock;
+	अगर (hlist_empty(&inode->i_dentry))
+		जाओ out_unlock;
 
-	if (S_ISDIR(inode->i_mode)) {
-		alias = hlist_entry(inode->i_dentry.first, struct dentry, d_u.d_alias);
-		if (!IS_ROOT(alias))
+	अगर (S_ISसूची(inode->i_mode)) अणु
+		alias = hlist_entry(inode->i_dentry.first, काष्ठा dentry, d_u.d_alias);
+		अगर (!IS_ROOT(alias))
 			dn = dget(alias);
-		goto out_unlock;
-	}
+		जाओ out_unlock;
+	पूर्ण
 
-	hlist_for_each_entry(alias, &inode->i_dentry, d_u.d_alias) {
+	hlist_क्रम_each_entry(alias, &inode->i_dentry, d_u.d_alias) अणु
 		spin_lock(&alias->d_lock);
-		if (!d_unhashed(alias) &&
-		    (ceph_dentry(alias)->flags & CEPH_DENTRY_PRIMARY_LINK)) {
+		अगर (!d_unhashed(alias) &&
+		    (ceph_dentry(alias)->flags & CEPH_DENTRY_PRIMARY_LINK)) अणु
 			dn = dget_dlock(alias);
-		}
+		पूर्ण
 		spin_unlock(&alias->d_lock);
-		if (dn)
-			break;
-	}
+		अगर (dn)
+			अवरोध;
+	पूर्ण
 out_unlock:
 	spin_unlock(&inode->i_lock);
-	return dn;
-}
+	वापस dn;
+पूर्ण
 
 /*
- * Encode information about a cap for a reconnect with the MDS.
+ * Encode inक्रमmation about a cap क्रम a reconnect with the MDS.
  */
-static int reconnect_caps_cb(struct inode *inode, struct ceph_cap *cap,
-			  void *arg)
-{
-	union {
-		struct ceph_mds_cap_reconnect v2;
-		struct ceph_mds_cap_reconnect_v1 v1;
-	} rec;
-	struct ceph_inode_info *ci = cap->ci;
-	struct ceph_reconnect_state *recon_state = arg;
-	struct ceph_pagelist *pagelist = recon_state->pagelist;
-	struct dentry *dentry;
-	char *path;
-	int pathlen, err;
+अटल पूर्णांक reconnect_caps_cb(काष्ठा inode *inode, काष्ठा ceph_cap *cap,
+			  व्योम *arg)
+अणु
+	जोड़ अणु
+		काष्ठा ceph_mds_cap_reconnect v2;
+		काष्ठा ceph_mds_cap_reconnect_v1 v1;
+	पूर्ण rec;
+	काष्ठा ceph_inode_info *ci = cap->ci;
+	काष्ठा ceph_reconnect_state *recon_state = arg;
+	काष्ठा ceph_pagelist *pagelist = recon_state->pagelist;
+	काष्ठा dentry *dentry;
+	अक्षर *path;
+	पूर्णांक pathlen, err;
 	u64 pathbase;
 	u64 snap_follows;
 
-	dout(" adding %p ino %llx.%llx cap %p %lld %s\n",
+	करोut(" adding %p ino %llx.%llx cap %p %lld %s\n",
 	     inode, ceph_vinop(inode), cap, cap->cap_id,
 	     ceph_cap_string(cap->issued));
 
 	dentry = d_find_primary(inode);
-	if (dentry) {
+	अगर (dentry) अणु
 		/* set pathbase to parent dir when msg_version >= 2 */
 		path = ceph_mdsc_build_path(dentry, &pathlen, &pathbase,
 					    recon_state->msg_version >= 2);
 		dput(dentry);
-		if (IS_ERR(path)) {
+		अगर (IS_ERR(path)) अणु
 			err = PTR_ERR(path);
-			goto out_err;
-		}
-	} else {
-		path = NULL;
+			जाओ out_err;
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		path = शून्य;
 		pathlen = 0;
 		pathbase = 0;
-	}
+	पूर्ण
 
 	spin_lock(&ci->i_ceph_lock);
 	cap->seq = 0;        /* reset cap seq */
@@ -3774,201 +3775,201 @@ static int reconnect_caps_cb(struct inode *inode, struct ceph_cap *cap,
 	cap->cap_gen = cap->session->s_cap_gen;
 
 	/* These are lost when the session goes away */
-	if (S_ISDIR(inode->i_mode)) {
-		if (cap->issued & CEPH_CAP_DIR_CREATE) {
+	अगर (S_ISसूची(inode->i_mode)) अणु
+		अगर (cap->issued & CEPH_CAP_सूची_CREATE) अणु
 			ceph_put_string(rcu_dereference_raw(ci->i_cached_layout.pool_ns));
-			memset(&ci->i_cached_layout, 0, sizeof(ci->i_cached_layout));
-		}
-		cap->issued &= ~CEPH_CAP_ANY_DIR_OPS;
-	}
+			स_रखो(&ci->i_cached_layout, 0, माप(ci->i_cached_layout));
+		पूर्ण
+		cap->issued &= ~CEPH_CAP_ANY_सूची_OPS;
+	पूर्ण
 
-	if (recon_state->msg_version >= 2) {
+	अगर (recon_state->msg_version >= 2) अणु
 		rec.v2.cap_id = cpu_to_le64(cap->cap_id);
 		rec.v2.wanted = cpu_to_le32(__ceph_caps_wanted(ci));
 		rec.v2.issued = cpu_to_le32(cap->issued);
 		rec.v2.snaprealm = cpu_to_le64(ci->i_snap_realm->ino);
 		rec.v2.pathbase = cpu_to_le64(pathbase);
-		rec.v2.flock_len = (__force __le32)
-			((ci->i_ceph_flags & CEPH_I_ERROR_FILELOCK) ? 0 : 1);
-	} else {
+		rec.v2.flock_len = (__क्रमce __le32)
+			((ci->i_ceph_flags & CEPH_I_ERROR_खाताLOCK) ? 0 : 1);
+	पूर्ण अन्यथा अणु
 		rec.v1.cap_id = cpu_to_le64(cap->cap_id);
 		rec.v1.wanted = cpu_to_le32(__ceph_caps_wanted(ci));
 		rec.v1.issued = cpu_to_le32(cap->issued);
-		rec.v1.size = cpu_to_le64(i_size_read(inode));
-		ceph_encode_timespec64(&rec.v1.mtime, &inode->i_mtime);
-		ceph_encode_timespec64(&rec.v1.atime, &inode->i_atime);
+		rec.v1.size = cpu_to_le64(i_size_पढ़ो(inode));
+		ceph_encode_बारpec64(&rec.v1.mसमय, &inode->i_mसमय);
+		ceph_encode_बारpec64(&rec.v1.aसमय, &inode->i_aसमय);
 		rec.v1.snaprealm = cpu_to_le64(ci->i_snap_realm->ino);
 		rec.v1.pathbase = cpu_to_le64(pathbase);
-	}
+	पूर्ण
 
-	if (list_empty(&ci->i_cap_snaps)) {
+	अगर (list_empty(&ci->i_cap_snaps)) अणु
 		snap_follows = ci->i_head_snapc ? ci->i_head_snapc->seq : 0;
-	} else {
-		struct ceph_cap_snap *capsnap =
+	पूर्ण अन्यथा अणु
+		काष्ठा ceph_cap_snap *capsnap =
 			list_first_entry(&ci->i_cap_snaps,
-					 struct ceph_cap_snap, ci_item);
+					 काष्ठा ceph_cap_snap, ci_item);
 		snap_follows = capsnap->follows;
-	}
+	पूर्ण
 	spin_unlock(&ci->i_ceph_lock);
 
-	if (recon_state->msg_version >= 2) {
-		int num_fcntl_locks, num_flock_locks;
-		struct ceph_filelock *flocks = NULL;
-		size_t struct_len, total_len = sizeof(u64);
-		u8 struct_v = 0;
+	अगर (recon_state->msg_version >= 2) अणु
+		पूर्णांक num_fcntl_locks, num_flock_locks;
+		काष्ठा ceph_filelock *flocks = शून्य;
+		माप_प्रकार काष्ठा_len, total_len = माप(u64);
+		u8 काष्ठा_v = 0;
 
 encode_again:
-		if (rec.v2.flock_len) {
+		अगर (rec.v2.flock_len) अणु
 			ceph_count_locks(inode, &num_fcntl_locks, &num_flock_locks);
-		} else {
+		पूर्ण अन्यथा अणु
 			num_fcntl_locks = 0;
 			num_flock_locks = 0;
-		}
-		if (num_fcntl_locks + num_flock_locks > 0) {
-			flocks = kmalloc_array(num_fcntl_locks + num_flock_locks,
-					       sizeof(struct ceph_filelock),
+		पूर्ण
+		अगर (num_fcntl_locks + num_flock_locks > 0) अणु
+			flocks = kदो_स्मृति_array(num_fcntl_locks + num_flock_locks,
+					       माप(काष्ठा ceph_filelock),
 					       GFP_NOFS);
-			if (!flocks) {
+			अगर (!flocks) अणु
 				err = -ENOMEM;
-				goto out_err;
-			}
+				जाओ out_err;
+			पूर्ण
 			err = ceph_encode_locks_to_buffer(inode, flocks,
 							  num_fcntl_locks,
 							  num_flock_locks);
-			if (err) {
-				kfree(flocks);
-				flocks = NULL;
-				if (err == -ENOSPC)
-					goto encode_again;
-				goto out_err;
-			}
-		} else {
-			kfree(flocks);
-			flocks = NULL;
-		}
+			अगर (err) अणु
+				kमुक्त(flocks);
+				flocks = शून्य;
+				अगर (err == -ENOSPC)
+					जाओ encode_again;
+				जाओ out_err;
+			पूर्ण
+		पूर्ण अन्यथा अणु
+			kमुक्त(flocks);
+			flocks = शून्य;
+		पूर्ण
 
-		if (recon_state->msg_version >= 3) {
-			/* version, compat_version and struct_len */
-			total_len += 2 * sizeof(u8) + sizeof(u32);
-			struct_v = 2;
-		}
+		अगर (recon_state->msg_version >= 3) अणु
+			/* version, compat_version and काष्ठा_len */
+			total_len += 2 * माप(u8) + माप(u32);
+			काष्ठा_v = 2;
+		पूर्ण
 		/*
 		 * number of encoded locks is stable, so copy to pagelist
 		 */
-		struct_len = 2 * sizeof(u32) +
+		काष्ठा_len = 2 * माप(u32) +
 			    (num_fcntl_locks + num_flock_locks) *
-			    sizeof(struct ceph_filelock);
-		rec.v2.flock_len = cpu_to_le32(struct_len);
+			    माप(काष्ठा ceph_filelock);
+		rec.v2.flock_len = cpu_to_le32(काष्ठा_len);
 
-		struct_len += sizeof(u32) + pathlen + sizeof(rec.v2);
+		काष्ठा_len += माप(u32) + pathlen + माप(rec.v2);
 
-		if (struct_v >= 2)
-			struct_len += sizeof(u64); /* snap_follows */
+		अगर (काष्ठा_v >= 2)
+			काष्ठा_len += माप(u64); /* snap_follows */
 
-		total_len += struct_len;
+		total_len += काष्ठा_len;
 
-		if (pagelist->length + total_len > RECONNECT_MAX_SIZE) {
+		अगर (pagelist->length + total_len > RECONNECT_MAX_SIZE) अणु
 			err = send_reconnect_partial(recon_state);
-			if (err)
-				goto out_freeflocks;
+			अगर (err)
+				जाओ out_मुक्तflocks;
 			pagelist = recon_state->pagelist;
-		}
+		पूर्ण
 
 		err = ceph_pagelist_reserve(pagelist, total_len);
-		if (err)
-			goto out_freeflocks;
+		अगर (err)
+			जाओ out_मुक्तflocks;
 
 		ceph_pagelist_encode_64(pagelist, ceph_ino(inode));
-		if (recon_state->msg_version >= 3) {
-			ceph_pagelist_encode_8(pagelist, struct_v);
+		अगर (recon_state->msg_version >= 3) अणु
+			ceph_pagelist_encode_8(pagelist, काष्ठा_v);
 			ceph_pagelist_encode_8(pagelist, 1);
-			ceph_pagelist_encode_32(pagelist, struct_len);
-		}
+			ceph_pagelist_encode_32(pagelist, काष्ठा_len);
+		पूर्ण
 		ceph_pagelist_encode_string(pagelist, path, pathlen);
-		ceph_pagelist_append(pagelist, &rec, sizeof(rec.v2));
+		ceph_pagelist_append(pagelist, &rec, माप(rec.v2));
 		ceph_locks_to_pagelist(flocks, pagelist,
 				       num_fcntl_locks, num_flock_locks);
-		if (struct_v >= 2)
+		अगर (काष्ठा_v >= 2)
 			ceph_pagelist_encode_64(pagelist, snap_follows);
-out_freeflocks:
-		kfree(flocks);
-	} else {
+out_मुक्तflocks:
+		kमुक्त(flocks);
+	पूर्ण अन्यथा अणु
 		err = ceph_pagelist_reserve(pagelist,
-					    sizeof(u64) + sizeof(u32) +
-					    pathlen + sizeof(rec.v1));
-		if (err)
-			goto out_err;
+					    माप(u64) + माप(u32) +
+					    pathlen + माप(rec.v1));
+		अगर (err)
+			जाओ out_err;
 
 		ceph_pagelist_encode_64(pagelist, ceph_ino(inode));
 		ceph_pagelist_encode_string(pagelist, path, pathlen);
-		ceph_pagelist_append(pagelist, &rec, sizeof(rec.v1));
-	}
+		ceph_pagelist_append(pagelist, &rec, माप(rec.v1));
+	पूर्ण
 
 out_err:
-	ceph_mdsc_free_path(path, pathlen);
-	if (!err)
+	ceph_mdsc_मुक्त_path(path, pathlen);
+	अगर (!err)
 		recon_state->nr_caps++;
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int encode_snap_realms(struct ceph_mds_client *mdsc,
-			      struct ceph_reconnect_state *recon_state)
-{
-	struct rb_node *p;
-	struct ceph_pagelist *pagelist = recon_state->pagelist;
-	int err = 0;
+अटल पूर्णांक encode_snap_realms(काष्ठा ceph_mds_client *mdsc,
+			      काष्ठा ceph_reconnect_state *recon_state)
+अणु
+	काष्ठा rb_node *p;
+	काष्ठा ceph_pagelist *pagelist = recon_state->pagelist;
+	पूर्णांक err = 0;
 
-	if (recon_state->msg_version >= 4) {
+	अगर (recon_state->msg_version >= 4) अणु
 		err = ceph_pagelist_encode_32(pagelist, mdsc->num_snap_realms);
-		if (err < 0)
-			goto fail;
-	}
+		अगर (err < 0)
+			जाओ fail;
+	पूर्ण
 
 	/*
 	 * snaprealms.  we provide mds with the ino, seq (version), and
-	 * parent for all of our realms.  If the mds has any newer info,
+	 * parent क्रम all of our realms.  If the mds has any newer info,
 	 * it will tell us.
 	 */
-	for (p = rb_first(&mdsc->snap_realms); p; p = rb_next(p)) {
-		struct ceph_snap_realm *realm =
-		       rb_entry(p, struct ceph_snap_realm, node);
-		struct ceph_mds_snaprealm_reconnect sr_rec;
+	क्रम (p = rb_first(&mdsc->snap_realms); p; p = rb_next(p)) अणु
+		काष्ठा ceph_snap_realm *realm =
+		       rb_entry(p, काष्ठा ceph_snap_realm, node);
+		काष्ठा ceph_mds_snaprealm_reconnect sr_rec;
 
-		if (recon_state->msg_version >= 4) {
-			size_t need = sizeof(u8) * 2 + sizeof(u32) +
-				      sizeof(sr_rec);
+		अगर (recon_state->msg_version >= 4) अणु
+			माप_प्रकार need = माप(u8) * 2 + माप(u32) +
+				      माप(sr_rec);
 
-			if (pagelist->length + need > RECONNECT_MAX_SIZE) {
+			अगर (pagelist->length + need > RECONNECT_MAX_SIZE) अणु
 				err = send_reconnect_partial(recon_state);
-				if (err)
-					goto fail;
+				अगर (err)
+					जाओ fail;
 				pagelist = recon_state->pagelist;
-			}
+			पूर्ण
 
 			err = ceph_pagelist_reserve(pagelist, need);
-			if (err)
-				goto fail;
+			अगर (err)
+				जाओ fail;
 
 			ceph_pagelist_encode_8(pagelist, 1);
 			ceph_pagelist_encode_8(pagelist, 1);
-			ceph_pagelist_encode_32(pagelist, sizeof(sr_rec));
-		}
+			ceph_pagelist_encode_32(pagelist, माप(sr_rec));
+		पूर्ण
 
-		dout(" adding snap realm %llx seq %lld parent %llx\n",
+		करोut(" adding snap realm %llx seq %lld parent %llx\n",
 		     realm->ino, realm->seq, realm->parent_ino);
 		sr_rec.ino = cpu_to_le64(realm->ino);
 		sr_rec.seq = cpu_to_le64(realm->seq);
 		sr_rec.parent = cpu_to_le64(realm->parent_ino);
 
-		err = ceph_pagelist_append(pagelist, &sr_rec, sizeof(sr_rec));
-		if (err)
-			goto fail;
+		err = ceph_pagelist_append(pagelist, &sr_rec, माप(sr_rec));
+		अगर (err)
+			जाओ fail;
 
 		recon_state->nr_realms++;
-	}
+	पूर्ण
 fail:
-	return err;
-}
+	वापस err;
+पूर्ण
 
 
 /*
@@ -3981,26 +3982,26 @@ fail:
  *
  * This is a relatively heavyweight operation, but it's rare.
  */
-static void send_mds_reconnect(struct ceph_mds_client *mdsc,
-			       struct ceph_mds_session *session)
-{
-	struct ceph_msg *reply;
-	int mds = session->s_mds;
-	int err = -ENOMEM;
-	struct ceph_reconnect_state recon_state = {
+अटल व्योम send_mds_reconnect(काष्ठा ceph_mds_client *mdsc,
+			       काष्ठा ceph_mds_session *session)
+अणु
+	काष्ठा ceph_msg *reply;
+	पूर्णांक mds = session->s_mds;
+	पूर्णांक err = -ENOMEM;
+	काष्ठा ceph_reconnect_state recon_state = अणु
 		.session = session,
-	};
+	पूर्ण;
 	LIST_HEAD(dispose);
 
 	pr_info("mds%d reconnect start\n", mds);
 
 	recon_state.pagelist = ceph_pagelist_alloc(GFP_NOFS);
-	if (!recon_state.pagelist)
-		goto fail_nopagelist;
+	अगर (!recon_state.pagelist)
+		जाओ fail_nopagelist;
 
 	reply = ceph_msg_new2(CEPH_MSG_CLIENT_RECONNECT, 0, 1, GFP_NOFS, false);
-	if (!reply)
-		goto fail_nomsg;
+	अगर (!reply)
+		जाओ fail_nomsg;
 
 	xa_destroy(&session->s_delegated_inos);
 
@@ -4008,7 +4009,7 @@ static void send_mds_reconnect(struct ceph_mds_client *mdsc,
 	session->s_state = CEPH_MDS_SESSION_RECONNECTING;
 	session->s_seq = 0;
 
-	dout("session %p state %s\n", session,
+	करोut("session %p state %s\n", session,
 	     ceph_session_state_name(session->s_state));
 
 	spin_lock(&session->s_gen_ttl_lock);
@@ -4016,12 +4017,12 @@ static void send_mds_reconnect(struct ceph_mds_client *mdsc,
 	spin_unlock(&session->s_gen_ttl_lock);
 
 	spin_lock(&session->s_cap_lock);
-	/* don't know if session is readonly */
-	session->s_readonly = 0;
+	/* करोn't know अगर session is पढ़ोonly */
+	session->s_पढ़ोonly = 0;
 	/*
-	 * notify __ceph_remove_cap() that we are composing cap reconnect.
-	 * If a cap get released before being added to the cap reconnect,
-	 * __ceph_remove_cap() should skip queuing cap release.
+	 * notअगरy __ceph_हटाओ_cap() that we are composing cap reconnect.
+	 * If a cap get released beक्रमe being added to the cap reconnect,
+	 * __ceph_हटाओ_cap() should skip queuing cap release.
 	 */
 	session->s_cap_reconnect = 1;
 	/* drop old cap expires; we're about to reestablish that state */
@@ -4029,12 +4030,12 @@ static void send_mds_reconnect(struct ceph_mds_client *mdsc,
 	spin_unlock(&session->s_cap_lock);
 	dispose_cap_releases(mdsc, &dispose);
 
-	/* trim unused caps to reduce MDS's cache rejoin time */
-	if (mdsc->fsc->sb->s_root)
+	/* trim unused caps to reduce MDS's cache rejoin समय */
+	अगर (mdsc->fsc->sb->s_root)
 		shrink_dcache_parent(mdsc->fsc->sb->s_root);
 
-	ceph_con_close(&session->s_con);
-	ceph_con_open(&session->s_con,
+	ceph_con_बंद(&session->s_con);
+	ceph_con_खोलो(&session->s_con,
 		      CEPH_ENTITY_TYPE_MDS, mds,
 		      ceph_mdsmap_get_addr(mdsc->mdsmap, mds));
 
@@ -4043,21 +4044,21 @@ static void send_mds_reconnect(struct ceph_mds_client *mdsc,
 
 	ceph_early_kick_flushing_caps(mdsc, session);
 
-	down_read(&mdsc->snap_rwsem);
+	करोwn_पढ़ो(&mdsc->snap_rwsem);
 
-	/* placeholder for nr_caps */
+	/* placeholder क्रम nr_caps */
 	err = ceph_pagelist_encode_32(recon_state.pagelist, 0);
-	if (err)
-		goto fail;
+	अगर (err)
+		जाओ fail;
 
-	if (test_bit(CEPHFS_FEATURE_MULTI_RECONNECT, &session->s_features)) {
+	अगर (test_bit(CEPHFS_FEATURE_MULTI_RECONNECT, &session->s_features)) अणु
 		recon_state.msg_version = 3;
 		recon_state.allow_multi = true;
-	} else if (session->s_con.peer_features & CEPH_FEATURE_MDSENC) {
+	पूर्ण अन्यथा अगर (session->s_con.peer_features & CEPH_FEATURE_MDSENC) अणु
 		recon_state.msg_version = 3;
-	} else {
+	पूर्ण अन्यथा अणु
 		recon_state.msg_version = 2;
-	}
+	पूर्ण
 	/* trsaverse this session's caps */
 	err = ceph_iterate_session_caps(session, reconnect_caps_cb, &recon_state);
 
@@ -4065,62 +4066,62 @@ static void send_mds_reconnect(struct ceph_mds_client *mdsc,
 	session->s_cap_reconnect = 0;
 	spin_unlock(&session->s_cap_lock);
 
-	if (err < 0)
-		goto fail;
+	अगर (err < 0)
+		जाओ fail;
 
-	/* check if all realms can be encoded into current message */
-	if (mdsc->num_snap_realms) {
-		size_t total_len =
+	/* check अगर all realms can be encoded पूर्णांकo current message */
+	अगर (mdsc->num_snap_realms) अणु
+		माप_प्रकार total_len =
 			recon_state.pagelist->length +
 			mdsc->num_snap_realms *
-			sizeof(struct ceph_mds_snaprealm_reconnect);
-		if (recon_state.msg_version >= 4) {
+			माप(काष्ठा ceph_mds_snaprealm_reconnect);
+		अगर (recon_state.msg_version >= 4) अणु
 			/* number of realms */
-			total_len += sizeof(u32);
-			/* version, compat_version and struct_len */
+			total_len += माप(u32);
+			/* version, compat_version and काष्ठा_len */
 			total_len += mdsc->num_snap_realms *
-				     (2 * sizeof(u8) + sizeof(u32));
-		}
-		if (total_len > RECONNECT_MAX_SIZE) {
-			if (!recon_state.allow_multi) {
+				     (2 * माप(u8) + माप(u32));
+		पूर्ण
+		अगर (total_len > RECONNECT_MAX_SIZE) अणु
+			अगर (!recon_state.allow_multi) अणु
 				err = -ENOSPC;
-				goto fail;
-			}
-			if (recon_state.nr_caps) {
+				जाओ fail;
+			पूर्ण
+			अगर (recon_state.nr_caps) अणु
 				err = send_reconnect_partial(&recon_state);
-				if (err)
-					goto fail;
-			}
+				अगर (err)
+					जाओ fail;
+			पूर्ण
 			recon_state.msg_version = 5;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	err = encode_snap_realms(mdsc, &recon_state);
-	if (err < 0)
-		goto fail;
+	अगर (err < 0)
+		जाओ fail;
 
-	if (recon_state.msg_version >= 5) {
+	अगर (recon_state.msg_version >= 5) अणु
 		err = ceph_pagelist_encode_8(recon_state.pagelist, 0);
-		if (err < 0)
-			goto fail;
-	}
+		अगर (err < 0)
+			जाओ fail;
+	पूर्ण
 
-	if (recon_state.nr_caps || recon_state.nr_realms) {
-		struct page *page =
+	अगर (recon_state.nr_caps || recon_state.nr_realms) अणु
+		काष्ठा page *page =
 			list_first_entry(&recon_state.pagelist->head,
-					struct page, lru);
+					काष्ठा page, lru);
 		__le32 *addr = kmap_atomic(page);
-		if (recon_state.nr_caps) {
+		अगर (recon_state.nr_caps) अणु
 			WARN_ON(recon_state.nr_realms != mdsc->num_snap_realms);
 			*addr = cpu_to_le32(recon_state.nr_caps);
-		} else if (recon_state.msg_version >= 4) {
+		पूर्ण अन्यथा अगर (recon_state.msg_version >= 4) अणु
 			*(addr + 1) = cpu_to_le32(recon_state.nr_realms);
-		}
+		पूर्ण
 		kunmap_atomic(addr);
-	}
+	पूर्ण
 
 	reply->hdr.version = cpu_to_le16(recon_state.msg_version);
-	if (recon_state.msg_version >= 4)
+	अगर (recon_state.msg_version >= 4)
 		reply->hdr.compat_version = cpu_to_le16(4);
 
 	reply->hdr.data_len = cpu_to_le32(recon_state.pagelist->length);
@@ -4131,23 +4132,23 @@ static void send_mds_reconnect(struct ceph_mds_client *mdsc,
 	mutex_unlock(&session->s_mutex);
 
 	mutex_lock(&mdsc->mutex);
-	__wake_requests(mdsc, &session->s_waiting);
+	__wake_requests(mdsc, &session->s_रुकोing);
 	mutex_unlock(&mdsc->mutex);
 
-	up_read(&mdsc->snap_rwsem);
+	up_पढ़ो(&mdsc->snap_rwsem);
 	ceph_pagelist_release(recon_state.pagelist);
-	return;
+	वापस;
 
 fail:
 	ceph_msg_put(reply);
-	up_read(&mdsc->snap_rwsem);
+	up_पढ़ो(&mdsc->snap_rwsem);
 	mutex_unlock(&session->s_mutex);
 fail_nomsg:
 	ceph_pagelist_release(recon_state.pagelist);
 fail_nopagelist:
 	pr_err("error %d preparing reconnect for mds%d\n", err, mds);
-	return;
-}
+	वापस;
+पूर्ण
 
 
 /*
@@ -4156,80 +4157,80 @@ fail_nopagelist:
  *
  * called under mdsc->mutex.
  */
-static void check_new_map(struct ceph_mds_client *mdsc,
-			  struct ceph_mdsmap *newmap,
-			  struct ceph_mdsmap *oldmap)
-{
-	int i;
-	int oldstate, newstate;
-	struct ceph_mds_session *s;
+अटल व्योम check_new_map(काष्ठा ceph_mds_client *mdsc,
+			  काष्ठा ceph_mdsmap *newmap,
+			  काष्ठा ceph_mdsmap *oldmap)
+अणु
+	पूर्णांक i;
+	पूर्णांक oldstate, newstate;
+	काष्ठा ceph_mds_session *s;
 
-	dout("check_new_map new %u old %u\n",
+	करोut("check_new_map new %u old %u\n",
 	     newmap->m_epoch, oldmap->m_epoch);
 
-	for (i = 0; i < oldmap->possible_max_rank && i < mdsc->max_sessions; i++) {
-		if (!mdsc->sessions[i])
-			continue;
+	क्रम (i = 0; i < oldmap->possible_max_rank && i < mdsc->max_sessions; i++) अणु
+		अगर (!mdsc->sessions[i])
+			जारी;
 		s = mdsc->sessions[i];
 		oldstate = ceph_mdsmap_get_state(oldmap, i);
 		newstate = ceph_mdsmap_get_state(newmap, i);
 
-		dout("check_new_map mds%d state %s%s -> %s%s (session %s)\n",
+		करोut("check_new_map mds%d state %s%s -> %s%s (session %s)\n",
 		     i, ceph_mds_state_name(oldstate),
 		     ceph_mdsmap_is_laggy(oldmap, i) ? " (laggy)" : "",
 		     ceph_mds_state_name(newstate),
 		     ceph_mdsmap_is_laggy(newmap, i) ? " (laggy)" : "",
 		     ceph_session_state_name(s->s_state));
 
-		if (i >= newmap->possible_max_rank) {
-			/* force close session for stopped mds */
+		अगर (i >= newmap->possible_max_rank) अणु
+			/* क्रमce बंद session क्रम stopped mds */
 			ceph_get_mds_session(s);
-			__unregister_session(mdsc, s);
-			__wake_requests(mdsc, &s->s_waiting);
+			__unरेजिस्टर_session(mdsc, s);
+			__wake_requests(mdsc, &s->s_रुकोing);
 			mutex_unlock(&mdsc->mutex);
 
 			mutex_lock(&s->s_mutex);
 			cleanup_session_requests(mdsc, s);
-			remove_session_caps(s);
+			हटाओ_session_caps(s);
 			mutex_unlock(&s->s_mutex);
 
 			ceph_put_mds_session(s);
 
 			mutex_lock(&mdsc->mutex);
 			kick_requests(mdsc, i);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		if (memcmp(ceph_mdsmap_get_addr(oldmap, i),
+		अगर (स_भेद(ceph_mdsmap_get_addr(oldmap, i),
 			   ceph_mdsmap_get_addr(newmap, i),
-			   sizeof(struct ceph_entity_addr))) {
-			/* just close it */
+			   माप(काष्ठा ceph_entity_addr))) अणु
+			/* just बंद it */
 			mutex_unlock(&mdsc->mutex);
 			mutex_lock(&s->s_mutex);
 			mutex_lock(&mdsc->mutex);
-			ceph_con_close(&s->s_con);
+			ceph_con_बंद(&s->s_con);
 			mutex_unlock(&s->s_mutex);
 			s->s_state = CEPH_MDS_SESSION_RESTARTING;
-		} else if (oldstate == newstate) {
-			continue;  /* nothing new with this mds */
-		}
+		पूर्ण अन्यथा अगर (oldstate == newstate) अणु
+			जारी;  /* nothing new with this mds */
+		पूर्ण
 
 		/*
 		 * send reconnect?
 		 */
-		if (s->s_state == CEPH_MDS_SESSION_RESTARTING &&
-		    newstate >= CEPH_MDS_STATE_RECONNECT) {
+		अगर (s->s_state == CEPH_MDS_SESSION_RESTARTING &&
+		    newstate >= CEPH_MDS_STATE_RECONNECT) अणु
 			mutex_unlock(&mdsc->mutex);
 			send_mds_reconnect(mdsc, s);
 			mutex_lock(&mdsc->mutex);
-		}
+		पूर्ण
 
 		/*
 		 * kick request on any mds that has gone active.
 		 */
-		if (oldstate < CEPH_MDS_STATE_ACTIVE &&
-		    newstate >= CEPH_MDS_STATE_ACTIVE) {
-			if (oldstate != CEPH_MDS_STATE_CREATING &&
+		अगर (oldstate < CEPH_MDS_STATE_ACTIVE &&
+		    newstate >= CEPH_MDS_STATE_ACTIVE) अणु
+			अगर (oldstate != CEPH_MDS_STATE_CREATING &&
 			    oldstate != CEPH_MDS_STATE_STARTING)
 				pr_info("mds%d recovery completed\n", s->s_mds);
 			kick_requests(mdsc, i);
@@ -4239,24 +4240,24 @@ static void check_new_map(struct ceph_mds_client *mdsc,
 			ceph_kick_flushing_caps(mdsc, s);
 			mutex_unlock(&s->s_mutex);
 			wake_up_session_caps(s, RECONNECT);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	for (i = 0; i < newmap->possible_max_rank && i < mdsc->max_sessions; i++) {
+	क्रम (i = 0; i < newmap->possible_max_rank && i < mdsc->max_sessions; i++) अणु
 		s = mdsc->sessions[i];
-		if (!s)
-			continue;
-		if (!ceph_mdsmap_is_laggy(newmap, i))
-			continue;
-		if (s->s_state == CEPH_MDS_SESSION_OPEN ||
+		अगर (!s)
+			जारी;
+		अगर (!ceph_mdsmap_is_laggy(newmap, i))
+			जारी;
+		अगर (s->s_state == CEPH_MDS_SESSION_OPEN ||
 		    s->s_state == CEPH_MDS_SESSION_HUNG ||
-		    s->s_state == CEPH_MDS_SESSION_CLOSING) {
-			dout(" connecting to export targets of laggy mds%d\n",
+		    s->s_state == CEPH_MDS_SESSION_CLOSING) अणु
+			करोut(" connecting to export targets of laggy mds%d\n",
 			     i);
-			__open_export_target_sessions(mdsc, s);
-		}
-	}
-}
+			__खोलो_export_target_sessions(mdsc, s);
+		पूर्ण
+	पूर्ण
+पूर्ण
 
 
 
@@ -4267,102 +4268,102 @@ static void check_new_map(struct ceph_mds_client *mdsc,
 /*
  * caller must hold session s_mutex, dentry->d_lock
  */
-void __ceph_mdsc_drop_dentry_lease(struct dentry *dentry)
-{
-	struct ceph_dentry_info *di = ceph_dentry(dentry);
+व्योम __ceph_mdsc_drop_dentry_lease(काष्ठा dentry *dentry)
+अणु
+	काष्ठा ceph_dentry_info *di = ceph_dentry(dentry);
 
 	ceph_put_mds_session(di->lease_session);
-	di->lease_session = NULL;
-}
+	di->lease_session = शून्य;
+पूर्ण
 
-static void handle_lease(struct ceph_mds_client *mdsc,
-			 struct ceph_mds_session *session,
-			 struct ceph_msg *msg)
-{
-	struct super_block *sb = mdsc->fsc->sb;
-	struct inode *inode;
-	struct dentry *parent, *dentry;
-	struct ceph_dentry_info *di;
-	int mds = session->s_mds;
-	struct ceph_mds_lease *h = msg->front.iov_base;
+अटल व्योम handle_lease(काष्ठा ceph_mds_client *mdsc,
+			 काष्ठा ceph_mds_session *session,
+			 काष्ठा ceph_msg *msg)
+अणु
+	काष्ठा super_block *sb = mdsc->fsc->sb;
+	काष्ठा inode *inode;
+	काष्ठा dentry *parent, *dentry;
+	काष्ठा ceph_dentry_info *di;
+	पूर्णांक mds = session->s_mds;
+	काष्ठा ceph_mds_lease *h = msg->front.iov_base;
 	u32 seq;
-	struct ceph_vino vino;
-	struct qstr dname;
-	int release = 0;
+	काष्ठा ceph_vino vino;
+	काष्ठा qstr dname;
+	पूर्णांक release = 0;
 
-	dout("handle_lease from mds%d\n", mds);
+	करोut("handle_lease from mds%d\n", mds);
 
 	/* decode */
-	if (msg->front.iov_len < sizeof(*h) + sizeof(u32))
-		goto bad;
+	अगर (msg->front.iov_len < माप(*h) + माप(u32))
+		जाओ bad;
 	vino.ino = le64_to_cpu(h->ino);
 	vino.snap = CEPH_NOSNAP;
 	seq = le32_to_cpu(h->seq);
 	dname.len = get_unaligned_le32(h + 1);
-	if (msg->front.iov_len < sizeof(*h) + sizeof(u32) + dname.len)
-		goto bad;
-	dname.name = (void *)(h + 1) + sizeof(u32);
+	अगर (msg->front.iov_len < माप(*h) + माप(u32) + dname.len)
+		जाओ bad;
+	dname.name = (व्योम *)(h + 1) + माप(u32);
 
 	/* lookup inode */
 	inode = ceph_find_inode(sb, vino);
-	dout("handle_lease %s, ino %llx %p %.*s\n",
+	करोut("handle_lease %s, ino %llx %p %.*s\n",
 	     ceph_lease_op_name(h->action), vino.ino, inode,
 	     dname.len, dname.name);
 
 	mutex_lock(&session->s_mutex);
 	inc_session_sequence(session);
 
-	if (!inode) {
-		dout("handle_lease no inode %llx\n", vino.ino);
-		goto release;
-	}
+	अगर (!inode) अणु
+		करोut("handle_lease no inode %llx\n", vino.ino);
+		जाओ release;
+	पूर्ण
 
 	/* dentry */
 	parent = d_find_alias(inode);
-	if (!parent) {
-		dout("no parent dentry on inode %p\n", inode);
+	अगर (!parent) अणु
+		करोut("no parent dentry on inode %p\n", inode);
 		WARN_ON(1);
-		goto release;  /* hrm... */
-	}
+		जाओ release;  /* hrm... */
+	पूर्ण
 	dname.hash = full_name_hash(parent, dname.name, dname.len);
 	dentry = d_lookup(parent, &dname);
 	dput(parent);
-	if (!dentry)
-		goto release;
+	अगर (!dentry)
+		जाओ release;
 
 	spin_lock(&dentry->d_lock);
 	di = ceph_dentry(dentry);
-	switch (h->action) {
-	case CEPH_MDS_LEASE_REVOKE:
-		if (di->lease_session == session) {
-			if (ceph_seq_cmp(di->lease_seq, seq) > 0)
+	चयन (h->action) अणु
+	हाल CEPH_MDS_LEASE_REVOKE:
+		अगर (di->lease_session == session) अणु
+			अगर (ceph_seq_cmp(di->lease_seq, seq) > 0)
 				h->seq = cpu_to_le32(di->lease_seq);
 			__ceph_mdsc_drop_dentry_lease(dentry);
-		}
+		पूर्ण
 		release = 1;
-		break;
+		अवरोध;
 
-	case CEPH_MDS_LEASE_RENEW:
-		if (di->lease_session == session &&
+	हाल CEPH_MDS_LEASE_RENEW:
+		अगर (di->lease_session == session &&
 		    di->lease_gen == session->s_cap_gen &&
 		    di->lease_renew_from &&
-		    di->lease_renew_after == 0) {
-			unsigned long duration =
-				msecs_to_jiffies(le32_to_cpu(h->duration_ms));
+		    di->lease_renew_after == 0) अणु
+			अचिन्हित दीर्घ duration =
+				msecs_to_jअगरfies(le32_to_cpu(h->duration_ms));
 
 			di->lease_seq = seq;
-			di->time = di->lease_renew_from + duration;
+			di->समय = di->lease_renew_from + duration;
 			di->lease_renew_after = di->lease_renew_from +
 				(duration >> 1);
 			di->lease_renew_from = 0;
-		}
-		break;
-	}
+		पूर्ण
+		अवरोध;
+	पूर्ण
 	spin_unlock(&dentry->d_lock);
 	dput(dentry);
 
-	if (!release)
-		goto out;
+	अगर (!release)
+		जाओ out;
 
 release:
 	/* let's just reuse the same message */
@@ -4372,30 +4373,30 @@ release:
 
 out:
 	mutex_unlock(&session->s_mutex);
-	/* avoid calling iput_final() in mds dispatch threads */
+	/* aव्योम calling iput_final() in mds dispatch thपढ़ोs */
 	ceph_async_iput(inode);
-	return;
+	वापस;
 
 bad:
 	pr_err("corrupt lease message\n");
 	ceph_msg_dump(msg);
-}
+पूर्ण
 
-void ceph_mdsc_lease_send_msg(struct ceph_mds_session *session,
-			      struct dentry *dentry, char action,
+व्योम ceph_mdsc_lease_send_msg(काष्ठा ceph_mds_session *session,
+			      काष्ठा dentry *dentry, अक्षर action,
 			      u32 seq)
-{
-	struct ceph_msg *msg;
-	struct ceph_mds_lease *lease;
-	struct inode *dir;
-	int len = sizeof(*lease) + sizeof(u32) + NAME_MAX;
+अणु
+	काष्ठा ceph_msg *msg;
+	काष्ठा ceph_mds_lease *lease;
+	काष्ठा inode *dir;
+	पूर्णांक len = माप(*lease) + माप(u32) + NAME_MAX;
 
-	dout("lease_send_msg identry %p %s to mds%d\n",
+	करोut("lease_send_msg identry %p %s to mds%d\n",
 	     dentry, ceph_lease_op_name(action), session->s_mds);
 
 	msg = ceph_msg_new(CEPH_MSG_CLIENT_LEASE, len, GFP_NOFS, false);
-	if (!msg)
-		return;
+	अगर (!msg)
+		वापस;
 	lease = msg->front.iov_base;
 	lease->action = action;
 	lease->seq = cpu_to_le32(seq);
@@ -4406,155 +4407,155 @@ void ceph_mdsc_lease_send_msg(struct ceph_mds_session *session,
 	lease->first = lease->last = cpu_to_le64(ceph_snap(dir));
 
 	put_unaligned_le32(dentry->d_name.len, lease + 1);
-	memcpy((void *)(lease + 1) + 4,
+	स_नकल((व्योम *)(lease + 1) + 4,
 	       dentry->d_name.name, dentry->d_name.len);
 	spin_unlock(&dentry->d_lock);
 	/*
-	 * if this is a preemptive lease RELEASE, no need to
+	 * अगर this is a preemptive lease RELEASE, no need to
 	 * flush request stream, since the actual request will
 	 * soon follow.
 	 */
 	msg->more_to_follow = (action == CEPH_MDS_LEASE_RELEASE);
 
 	ceph_con_send(&session->s_con, msg);
-}
+पूर्ण
 
 /*
- * lock unlock sessions, to wait ongoing session activities
+ * lock unlock sessions, to रुको ongoing session activities
  */
-static void lock_unlock_sessions(struct ceph_mds_client *mdsc)
-{
-	int i;
+अटल व्योम lock_unlock_sessions(काष्ठा ceph_mds_client *mdsc)
+अणु
+	पूर्णांक i;
 
 	mutex_lock(&mdsc->mutex);
-	for (i = 0; i < mdsc->max_sessions; i++) {
-		struct ceph_mds_session *s = __ceph_lookup_mds_session(mdsc, i);
-		if (!s)
-			continue;
+	क्रम (i = 0; i < mdsc->max_sessions; i++) अणु
+		काष्ठा ceph_mds_session *s = __ceph_lookup_mds_session(mdsc, i);
+		अगर (!s)
+			जारी;
 		mutex_unlock(&mdsc->mutex);
 		mutex_lock(&s->s_mutex);
 		mutex_unlock(&s->s_mutex);
 		ceph_put_mds_session(s);
 		mutex_lock(&mdsc->mutex);
-	}
+	पूर्ण
 	mutex_unlock(&mdsc->mutex);
-}
+पूर्ण
 
-static void maybe_recover_session(struct ceph_mds_client *mdsc)
-{
-	struct ceph_fs_client *fsc = mdsc->fsc;
+अटल व्योम maybe_recover_session(काष्ठा ceph_mds_client *mdsc)
+अणु
+	काष्ठा ceph_fs_client *fsc = mdsc->fsc;
 
-	if (!ceph_test_mount_opt(fsc, CLEANRECOVER))
-		return;
+	अगर (!ceph_test_mount_opt(fsc, CLEANRECOVER))
+		वापस;
 
-	if (READ_ONCE(fsc->mount_state) != CEPH_MOUNT_MOUNTED)
-		return;
+	अगर (READ_ONCE(fsc->mount_state) != CEPH_MOUNT_MOUNTED)
+		वापस;
 
-	if (!READ_ONCE(fsc->blocklisted))
-		return;
+	अगर (!READ_ONCE(fsc->blocklisted))
+		वापस;
 
 	pr_info("auto reconnect after blocklisted\n");
-	ceph_force_reconnect(fsc->sb);
-}
+	ceph_क्रमce_reconnect(fsc->sb);
+पूर्ण
 
-bool check_session_state(struct ceph_mds_session *s)
-{
-	switch (s->s_state) {
-	case CEPH_MDS_SESSION_OPEN:
-		if (s->s_ttl && time_after(jiffies, s->s_ttl)) {
+bool check_session_state(काष्ठा ceph_mds_session *s)
+अणु
+	चयन (s->s_state) अणु
+	हाल CEPH_MDS_SESSION_OPEN:
+		अगर (s->s_ttl && समय_after(jअगरfies, s->s_ttl)) अणु
 			s->s_state = CEPH_MDS_SESSION_HUNG;
 			pr_info("mds%d hung\n", s->s_mds);
-		}
-		break;
-	case CEPH_MDS_SESSION_CLOSING:
+		पूर्ण
+		अवरोध;
+	हाल CEPH_MDS_SESSION_CLOSING:
 		/* Should never reach this when we're unmounting */
 		WARN_ON_ONCE(true);
 		fallthrough;
-	case CEPH_MDS_SESSION_NEW:
-	case CEPH_MDS_SESSION_RESTARTING:
-	case CEPH_MDS_SESSION_CLOSED:
-	case CEPH_MDS_SESSION_REJECTED:
-		return false;
-	}
+	हाल CEPH_MDS_SESSION_NEW:
+	हाल CEPH_MDS_SESSION_RESTARTING:
+	हाल CEPH_MDS_SESSION_CLOSED:
+	हाल CEPH_MDS_SESSION_REJECTED:
+		वापस false;
+	पूर्ण
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
 /*
- * If the sequence is incremented while we're waiting on a REQUEST_CLOSE reply,
+ * If the sequence is incremented जबतक we're रुकोing on a REQUEST_CLOSE reply,
  * then we need to retransmit that request.
  */
-void inc_session_sequence(struct ceph_mds_session *s)
-{
-	lockdep_assert_held(&s->s_mutex);
+व्योम inc_session_sequence(काष्ठा ceph_mds_session *s)
+अणु
+	lockdep_निश्चित_held(&s->s_mutex);
 
 	s->s_seq++;
 
-	if (s->s_state == CEPH_MDS_SESSION_CLOSING) {
-		int ret;
+	अगर (s->s_state == CEPH_MDS_SESSION_CLOSING) अणु
+		पूर्णांक ret;
 
-		dout("resending session close request for mds%d\n", s->s_mds);
-		ret = request_close_session(s);
-		if (ret < 0)
+		करोut("resending session close request for mds%d\n", s->s_mds);
+		ret = request_बंद_session(s);
+		अगर (ret < 0)
 			pr_err("unable to close session to mds%d: %d\n",
 			       s->s_mds, ret);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
  * delayed work -- periodically trim expired leases, renew caps with mds
  */
-static void schedule_delayed(struct ceph_mds_client *mdsc)
-{
-	int delay = 5;
-	unsigned hz = round_jiffies_relative(HZ * delay);
+अटल व्योम schedule_delayed(काष्ठा ceph_mds_client *mdsc)
+अणु
+	पूर्णांक delay = 5;
+	अचिन्हित hz = round_jअगरfies_relative(HZ * delay);
 	schedule_delayed_work(&mdsc->delayed_work, hz);
-}
+पूर्ण
 
-static void delayed_work(struct work_struct *work)
-{
-	int i;
-	struct ceph_mds_client *mdsc =
-		container_of(work, struct ceph_mds_client, delayed_work.work);
-	int renew_interval;
-	int renew_caps;
+अटल व्योम delayed_work(काष्ठा work_काष्ठा *work)
+अणु
+	पूर्णांक i;
+	काष्ठा ceph_mds_client *mdsc =
+		container_of(work, काष्ठा ceph_mds_client, delayed_work.work);
+	पूर्णांक renew_पूर्णांकerval;
+	पूर्णांक renew_caps;
 
-	dout("mdsc delayed_work\n");
+	करोut("mdsc delayed_work\n");
 
-	if (mdsc->stopping)
-		return;
+	अगर (mdsc->stopping)
+		वापस;
 
 	mutex_lock(&mdsc->mutex);
-	renew_interval = mdsc->mdsmap->m_session_timeout >> 2;
-	renew_caps = time_after_eq(jiffies, HZ*renew_interval +
+	renew_पूर्णांकerval = mdsc->mdsmap->m_session_समयout >> 2;
+	renew_caps = समय_after_eq(jअगरfies, HZ*renew_पूर्णांकerval +
 				   mdsc->last_renew_caps);
-	if (renew_caps)
-		mdsc->last_renew_caps = jiffies;
+	अगर (renew_caps)
+		mdsc->last_renew_caps = jअगरfies;
 
-	for (i = 0; i < mdsc->max_sessions; i++) {
-		struct ceph_mds_session *s = __ceph_lookup_mds_session(mdsc, i);
-		if (!s)
-			continue;
+	क्रम (i = 0; i < mdsc->max_sessions; i++) अणु
+		काष्ठा ceph_mds_session *s = __ceph_lookup_mds_session(mdsc, i);
+		अगर (!s)
+			जारी;
 
-		if (!check_session_state(s)) {
+		अगर (!check_session_state(s)) अणु
 			ceph_put_mds_session(s);
-			continue;
-		}
+			जारी;
+		पूर्ण
 		mutex_unlock(&mdsc->mutex);
 
 		mutex_lock(&s->s_mutex);
-		if (renew_caps)
+		अगर (renew_caps)
 			send_renew_caps(mdsc, s);
-		else
+		अन्यथा
 			ceph_con_keepalive(&s->s_con);
-		if (s->s_state == CEPH_MDS_SESSION_OPEN ||
+		अगर (s->s_state == CEPH_MDS_SESSION_OPEN ||
 		    s->s_state == CEPH_MDS_SESSION_HUNG)
 			ceph_send_cap_releases(mdsc, s);
 		mutex_unlock(&s->s_mutex);
 		ceph_put_mds_session(s);
 
 		mutex_lock(&mdsc->mutex);
-	}
+	पूर्ण
 	mutex_unlock(&mdsc->mutex);
 
 	ceph_check_delayed_caps(mdsc);
@@ -4566,29 +4567,29 @@ static void delayed_work(struct work_struct *work)
 	maybe_recover_session(mdsc);
 
 	schedule_delayed(mdsc);
-}
+पूर्ण
 
-int ceph_mdsc_init(struct ceph_fs_client *fsc)
+पूर्णांक ceph_mdsc_init(काष्ठा ceph_fs_client *fsc)
 
-{
-	struct ceph_mds_client *mdsc;
-	int err;
+अणु
+	काष्ठा ceph_mds_client *mdsc;
+	पूर्णांक err;
 
-	mdsc = kzalloc(sizeof(struct ceph_mds_client), GFP_NOFS);
-	if (!mdsc)
-		return -ENOMEM;
+	mdsc = kzalloc(माप(काष्ठा ceph_mds_client), GFP_NOFS);
+	अगर (!mdsc)
+		वापस -ENOMEM;
 	mdsc->fsc = fsc;
 	mutex_init(&mdsc->mutex);
-	mdsc->mdsmap = kzalloc(sizeof(*mdsc->mdsmap), GFP_NOFS);
-	if (!mdsc->mdsmap) {
+	mdsc->mdsmap = kzalloc(माप(*mdsc->mdsmap), GFP_NOFS);
+	अगर (!mdsc->mdsmap) अणु
 		err = -ENOMEM;
-		goto err_mdsc;
-	}
+		जाओ err_mdsc;
+	पूर्ण
 
-	init_completion(&mdsc->safe_umount_waiters);
-	init_waitqueue_head(&mdsc->session_close_wq);
-	INIT_LIST_HEAD(&mdsc->waiting_for_map);
-	mdsc->sessions = NULL;
+	init_completion(&mdsc->safe_umount_रुकोers);
+	init_रुकोqueue_head(&mdsc->session_बंद_wq);
+	INIT_LIST_HEAD(&mdsc->रुकोing_क्रम_map);
+	mdsc->sessions = शून्य;
 	atomic_set(&mdsc->num_sessions, 0);
 	mdsc->max_sessions = 0;
 	mdsc->stopping = 0;
@@ -4605,9 +4606,9 @@ int ceph_mdsc_init(struct ceph_fs_client *fsc)
 	mdsc->oldest_tid = 0;
 	mdsc->request_tree = RB_ROOT;
 	INIT_DELAYED_WORK(&mdsc->delayed_work, delayed_work);
-	mdsc->last_renew_caps = jiffies;
+	mdsc->last_renew_caps = jअगरfies;
 	INIT_LIST_HEAD(&mdsc->cap_delay_list);
-	INIT_LIST_HEAD(&mdsc->cap_wait_list);
+	INIT_LIST_HEAD(&mdsc->cap_रुको_list);
 	spin_lock_init(&mdsc->cap_delay_lock);
 	INIT_LIST_HEAD(&mdsc->snap_flush_list);
 	spin_lock_init(&mdsc->snap_flush_lock);
@@ -4616,12 +4617,12 @@ int ceph_mdsc_init(struct ceph_fs_client *fsc)
 	INIT_LIST_HEAD(&mdsc->cap_dirty_migrating);
 	mdsc->num_cap_flushing = 0;
 	spin_lock_init(&mdsc->cap_dirty_lock);
-	init_waitqueue_head(&mdsc->cap_flushing_wq);
+	init_रुकोqueue_head(&mdsc->cap_flushing_wq);
 	INIT_WORK(&mdsc->cap_reclaim_work, ceph_cap_reclaim_work);
 	atomic_set(&mdsc->cap_reclaim_pending, 0);
 	err = ceph_metric_init(&mdsc->metric);
-	if (err)
-		goto err_mdsmap;
+	अगर (err)
+		जाओ err_mdsmap;
 
 	spin_lock_init(&mdsc->dentry_list_lock);
 	INIT_LIST_HEAD(&mdsc->dentry_leases);
@@ -4638,124 +4639,124 @@ int ceph_mdsc_init(struct ceph_fs_client *fsc)
 	mdsc->pool_perm_tree = RB_ROOT;
 
 	strscpy(mdsc->nodename, utsname()->nodename,
-		sizeof(mdsc->nodename));
+		माप(mdsc->nodename));
 
 	fsc->mdsc = mdsc;
-	return 0;
+	वापस 0;
 
 err_mdsmap:
-	kfree(mdsc->mdsmap);
+	kमुक्त(mdsc->mdsmap);
 err_mdsc:
-	kfree(mdsc);
-	return err;
-}
+	kमुक्त(mdsc);
+	वापस err;
+पूर्ण
 
 /*
- * Wait for safe replies on open mds requests.  If we time out, drop
- * all requests from the tree to avoid dangling dentry refs.
+ * Wait क्रम safe replies on खोलो mds requests.  If we समय out, drop
+ * all requests from the tree to aव्योम dangling dentry refs.
  */
-static void wait_requests(struct ceph_mds_client *mdsc)
-{
-	struct ceph_options *opts = mdsc->fsc->client->options;
-	struct ceph_mds_request *req;
+अटल व्योम रुको_requests(काष्ठा ceph_mds_client *mdsc)
+अणु
+	काष्ठा ceph_options *opts = mdsc->fsc->client->options;
+	काष्ठा ceph_mds_request *req;
 
 	mutex_lock(&mdsc->mutex);
-	if (__get_oldest_req(mdsc)) {
+	अगर (__get_oldest_req(mdsc)) अणु
 		mutex_unlock(&mdsc->mutex);
 
-		dout("wait_requests waiting for requests\n");
-		wait_for_completion_timeout(&mdsc->safe_umount_waiters,
-				    ceph_timeout_jiffies(opts->mount_timeout));
+		करोut("wait_requests waiting for requests\n");
+		रुको_क्रम_completion_समयout(&mdsc->safe_umount_रुकोers,
+				    ceph_समयout_jअगरfies(opts->mount_समयout));
 
-		/* tear down remaining requests */
+		/* tear करोwn reमुख्यing requests */
 		mutex_lock(&mdsc->mutex);
-		while ((req = __get_oldest_req(mdsc))) {
-			dout("wait_requests timed out on tid %llu\n",
+		जबतक ((req = __get_oldest_req(mdsc))) अणु
+			करोut("wait_requests timed out on tid %llu\n",
 			     req->r_tid);
-			list_del_init(&req->r_wait);
-			__unregister_request(mdsc, req);
-		}
-	}
+			list_del_init(&req->r_रुको);
+			__unरेजिस्टर_request(mdsc, req);
+		पूर्ण
+	पूर्ण
 	mutex_unlock(&mdsc->mutex);
-	dout("wait_requests done\n");
-}
+	करोut("wait_requests done\n");
+पूर्ण
 
 /*
- * called before mount is ro, and before dentries are torn down.
- * (hmm, does this still race with new lookups?)
+ * called beक्रमe mount is ro, and beक्रमe dentries are torn करोwn.
+ * (hmm, करोes this still race with new lookups?)
  */
-void ceph_mdsc_pre_umount(struct ceph_mds_client *mdsc)
-{
-	dout("pre_umount\n");
+व्योम ceph_mdsc_pre_umount(काष्ठा ceph_mds_client *mdsc)
+अणु
+	करोut("pre_umount\n");
 	mdsc->stopping = 1;
 
 	lock_unlock_sessions(mdsc);
 	ceph_flush_dirty_caps(mdsc);
-	wait_requests(mdsc);
+	रुको_requests(mdsc);
 
 	/*
-	 * wait for reply handlers to drop their request refs and
+	 * रुको क्रम reply handlers to drop their request refs and
 	 * their inode/dcache refs
 	 */
 	ceph_msgr_flush();
 
 	ceph_cleanup_quotarealms_inodes(mdsc);
-}
+पूर्ण
 
 /*
- * wait for all write mds requests to flush.
+ * रुको क्रम all ग_लिखो mds requests to flush.
  */
-static void wait_unsafe_requests(struct ceph_mds_client *mdsc, u64 want_tid)
-{
-	struct ceph_mds_request *req = NULL, *nextreq;
-	struct rb_node *n;
+अटल व्योम रुको_unsafe_requests(काष्ठा ceph_mds_client *mdsc, u64 want_tid)
+अणु
+	काष्ठा ceph_mds_request *req = शून्य, *nextreq;
+	काष्ठा rb_node *n;
 
 	mutex_lock(&mdsc->mutex);
-	dout("wait_unsafe_requests want %lld\n", want_tid);
+	करोut("wait_unsafe_requests want %lld\n", want_tid);
 restart:
 	req = __get_oldest_req(mdsc);
-	while (req && req->r_tid <= want_tid) {
+	जबतक (req && req->r_tid <= want_tid) अणु
 		/* find next request */
 		n = rb_next(&req->r_node);
-		if (n)
-			nextreq = rb_entry(n, struct ceph_mds_request, r_node);
-		else
-			nextreq = NULL;
-		if (req->r_op != CEPH_MDS_OP_SETFILELOCK &&
-		    (req->r_op & CEPH_MDS_OP_WRITE)) {
-			/* write op */
+		अगर (n)
+			nextreq = rb_entry(n, काष्ठा ceph_mds_request, r_node);
+		अन्यथा
+			nextreq = शून्य;
+		अगर (req->r_op != CEPH_MDS_OP_SETखाताLOCK &&
+		    (req->r_op & CEPH_MDS_OP_WRITE)) अणु
+			/* ग_लिखो op */
 			ceph_mdsc_get_request(req);
-			if (nextreq)
+			अगर (nextreq)
 				ceph_mdsc_get_request(nextreq);
 			mutex_unlock(&mdsc->mutex);
-			dout("wait_unsafe_requests  wait on %llu (want %llu)\n",
+			करोut("wait_unsafe_requests  wait on %llu (want %llu)\n",
 			     req->r_tid, want_tid);
-			wait_for_completion(&req->r_safe_completion);
+			रुको_क्रम_completion(&req->r_safe_completion);
 			mutex_lock(&mdsc->mutex);
 			ceph_mdsc_put_request(req);
-			if (!nextreq)
-				break;  /* next dne before, so we're done! */
-			if (RB_EMPTY_NODE(&nextreq->r_node)) {
-				/* next request was removed from tree */
+			अगर (!nextreq)
+				अवरोध;  /* next dne beक्रमe, so we're करोne! */
+			अगर (RB_EMPTY_NODE(&nextreq->r_node)) अणु
+				/* next request was हटाओd from tree */
 				ceph_mdsc_put_request(nextreq);
-				goto restart;
-			}
+				जाओ restart;
+			पूर्ण
 			ceph_mdsc_put_request(nextreq);  /* won't go away */
-		}
+		पूर्ण
 		req = nextreq;
-	}
+	पूर्ण
 	mutex_unlock(&mdsc->mutex);
-	dout("wait_unsafe_requests done\n");
-}
+	करोut("wait_unsafe_requests done\n");
+पूर्ण
 
-void ceph_mdsc_sync(struct ceph_mds_client *mdsc)
-{
+व्योम ceph_mdsc_sync(काष्ठा ceph_mds_client *mdsc)
+अणु
 	u64 want_tid, want_flush;
 
-	if (READ_ONCE(mdsc->fsc->mount_state) >= CEPH_MOUNT_SHUTDOWN)
-		return;
+	अगर (READ_ONCE(mdsc->fsc->mount_state) >= CEPH_MOUNT_SHUTDOWN)
+		वापस;
 
-	dout("sync\n");
+	करोut("sync\n");
 	mutex_lock(&mdsc->mutex);
 	want_tid = mdsc->last_tid;
 	mutex_unlock(&mdsc->mutex);
@@ -4763,78 +4764,78 @@ void ceph_mdsc_sync(struct ceph_mds_client *mdsc)
 	ceph_flush_dirty_caps(mdsc);
 	spin_lock(&mdsc->cap_dirty_lock);
 	want_flush = mdsc->last_cap_flush_tid;
-	if (!list_empty(&mdsc->cap_flush_list)) {
-		struct ceph_cap_flush *cf =
+	अगर (!list_empty(&mdsc->cap_flush_list)) अणु
+		काष्ठा ceph_cap_flush *cf =
 			list_last_entry(&mdsc->cap_flush_list,
-					struct ceph_cap_flush, g_list);
+					काष्ठा ceph_cap_flush, g_list);
 		cf->wake = true;
-	}
+	पूर्ण
 	spin_unlock(&mdsc->cap_dirty_lock);
 
-	dout("sync want tid %lld flush_seq %lld\n",
+	करोut("sync want tid %lld flush_seq %lld\n",
 	     want_tid, want_flush);
 
-	wait_unsafe_requests(mdsc, want_tid);
-	wait_caps_flush(mdsc, want_flush);
-}
+	रुको_unsafe_requests(mdsc, want_tid);
+	रुको_caps_flush(mdsc, want_flush);
+पूर्ण
 
 /*
- * true if all sessions are closed, or we force unmount
+ * true अगर all sessions are बंदd, or we क्रमce unmount
  */
-static bool done_closing_sessions(struct ceph_mds_client *mdsc, int skipped)
-{
-	if (READ_ONCE(mdsc->fsc->mount_state) == CEPH_MOUNT_SHUTDOWN)
-		return true;
-	return atomic_read(&mdsc->num_sessions) <= skipped;
-}
+अटल bool करोne_closing_sessions(काष्ठा ceph_mds_client *mdsc, पूर्णांक skipped)
+अणु
+	अगर (READ_ONCE(mdsc->fsc->mount_state) == CEPH_MOUNT_SHUTDOWN)
+		वापस true;
+	वापस atomic_पढ़ो(&mdsc->num_sessions) <= skipped;
+पूर्ण
 
 /*
  * called after sb is ro.
  */
-void ceph_mdsc_close_sessions(struct ceph_mds_client *mdsc)
-{
-	struct ceph_options *opts = mdsc->fsc->client->options;
-	struct ceph_mds_session *session;
-	int i;
-	int skipped = 0;
+व्योम ceph_mdsc_बंद_sessions(काष्ठा ceph_mds_client *mdsc)
+अणु
+	काष्ठा ceph_options *opts = mdsc->fsc->client->options;
+	काष्ठा ceph_mds_session *session;
+	पूर्णांक i;
+	पूर्णांक skipped = 0;
 
-	dout("close_sessions\n");
+	करोut("close_sessions\n");
 
-	/* close sessions */
+	/* बंद sessions */
 	mutex_lock(&mdsc->mutex);
-	for (i = 0; i < mdsc->max_sessions; i++) {
+	क्रम (i = 0; i < mdsc->max_sessions; i++) अणु
 		session = __ceph_lookup_mds_session(mdsc, i);
-		if (!session)
-			continue;
+		अगर (!session)
+			जारी;
 		mutex_unlock(&mdsc->mutex);
 		mutex_lock(&session->s_mutex);
-		if (__close_session(mdsc, session) <= 0)
+		अगर (__बंद_session(mdsc, session) <= 0)
 			skipped++;
 		mutex_unlock(&session->s_mutex);
 		ceph_put_mds_session(session);
 		mutex_lock(&mdsc->mutex);
-	}
+	पूर्ण
 	mutex_unlock(&mdsc->mutex);
 
-	dout("waiting for sessions to close\n");
-	wait_event_timeout(mdsc->session_close_wq,
-			   done_closing_sessions(mdsc, skipped),
-			   ceph_timeout_jiffies(opts->mount_timeout));
+	करोut("waiting for sessions to close\n");
+	रुको_event_समयout(mdsc->session_बंद_wq,
+			   करोne_closing_sessions(mdsc, skipped),
+			   ceph_समयout_jअगरfies(opts->mount_समयout));
 
-	/* tear down remaining sessions */
+	/* tear करोwn reमुख्यing sessions */
 	mutex_lock(&mdsc->mutex);
-	for (i = 0; i < mdsc->max_sessions; i++) {
-		if (mdsc->sessions[i]) {
+	क्रम (i = 0; i < mdsc->max_sessions; i++) अणु
+		अगर (mdsc->sessions[i]) अणु
 			session = ceph_get_mds_session(mdsc->sessions[i]);
-			__unregister_session(mdsc, session);
+			__unरेजिस्टर_session(mdsc, session);
 			mutex_unlock(&mdsc->mutex);
 			mutex_lock(&session->s_mutex);
-			remove_session_caps(session);
+			हटाओ_session_caps(session);
 			mutex_unlock(&session->s_mutex);
 			ceph_put_mds_session(session);
 			mutex_lock(&mdsc->mutex);
-		}
-	}
+		पूर्ण
+	पूर्ण
 	WARN_ON(!list_empty(&mdsc->cap_delay_list));
 	mutex_unlock(&mdsc->mutex);
 
@@ -4842,50 +4843,50 @@ void ceph_mdsc_close_sessions(struct ceph_mds_client *mdsc)
 	ceph_cleanup_empty_realms(mdsc);
 
 	cancel_work_sync(&mdsc->cap_reclaim_work);
-	cancel_delayed_work_sync(&mdsc->delayed_work); /* cancel timer */
+	cancel_delayed_work_sync(&mdsc->delayed_work); /* cancel समयr */
 
-	dout("stopped\n");
-}
+	करोut("stopped\n");
+पूर्ण
 
-void ceph_mdsc_force_umount(struct ceph_mds_client *mdsc)
-{
-	struct ceph_mds_session *session;
-	int mds;
+व्योम ceph_mdsc_क्रमce_umount(काष्ठा ceph_mds_client *mdsc)
+अणु
+	काष्ठा ceph_mds_session *session;
+	पूर्णांक mds;
 
-	dout("force umount\n");
+	करोut("force umount\n");
 
 	mutex_lock(&mdsc->mutex);
-	for (mds = 0; mds < mdsc->max_sessions; mds++) {
+	क्रम (mds = 0; mds < mdsc->max_sessions; mds++) अणु
 		session = __ceph_lookup_mds_session(mdsc, mds);
-		if (!session)
-			continue;
+		अगर (!session)
+			जारी;
 
-		if (session->s_state == CEPH_MDS_SESSION_REJECTED)
-			__unregister_session(mdsc, session);
-		__wake_requests(mdsc, &session->s_waiting);
+		अगर (session->s_state == CEPH_MDS_SESSION_REJECTED)
+			__unरेजिस्टर_session(mdsc, session);
+		__wake_requests(mdsc, &session->s_रुकोing);
 		mutex_unlock(&mdsc->mutex);
 
 		mutex_lock(&session->s_mutex);
-		__close_session(mdsc, session);
-		if (session->s_state == CEPH_MDS_SESSION_CLOSING) {
+		__बंद_session(mdsc, session);
+		अगर (session->s_state == CEPH_MDS_SESSION_CLOSING) अणु
 			cleanup_session_requests(mdsc, session);
-			remove_session_caps(session);
-		}
+			हटाओ_session_caps(session);
+		पूर्ण
 		mutex_unlock(&session->s_mutex);
 		ceph_put_mds_session(session);
 
 		mutex_lock(&mdsc->mutex);
 		kick_requests(mdsc, mds);
-	}
-	__wake_requests(mdsc, &mdsc->waiting_for_map);
+	पूर्ण
+	__wake_requests(mdsc, &mdsc->रुकोing_क्रम_map);
 	mutex_unlock(&mdsc->mutex);
-}
+पूर्ण
 
-static void ceph_mdsc_stop(struct ceph_mds_client *mdsc)
-{
-	dout("stop\n");
+अटल व्योम ceph_mdsc_stop(काष्ठा ceph_mds_client *mdsc)
+अणु
+	करोut("stop\n");
 	/*
-	 * Make sure the delayed work stopped before releasing
+	 * Make sure the delayed work stopped beक्रमe releasing
 	 * the resources.
 	 *
 	 * Because the cancel_delayed_work_sync() will only
@@ -4894,20 +4895,20 @@ static void ceph_mdsc_stop(struct ceph_mds_client *mdsc)
 	 */
 	flush_delayed_work(&mdsc->delayed_work);
 
-	if (mdsc->mdsmap)
+	अगर (mdsc->mdsmap)
 		ceph_mdsmap_destroy(mdsc->mdsmap);
-	kfree(mdsc->sessions);
+	kमुक्त(mdsc->sessions);
 	ceph_caps_finalize(mdsc);
 	ceph_pool_perm_destroy(mdsc);
-}
+पूर्ण
 
-void ceph_mdsc_destroy(struct ceph_fs_client *fsc)
-{
-	struct ceph_mds_client *mdsc = fsc->mdsc;
-	dout("mdsc_destroy %p\n", mdsc);
+व्योम ceph_mdsc_destroy(काष्ठा ceph_fs_client *fsc)
+अणु
+	काष्ठा ceph_mds_client *mdsc = fsc->mdsc;
+	करोut("mdsc_destroy %p\n", mdsc);
 
-	if (!mdsc)
-		return;
+	अगर (!mdsc)
+		वापस;
 
 	/* flush out any connection work with references to us */
 	ceph_msgr_flush();
@@ -4917,37 +4918,37 @@ void ceph_mdsc_destroy(struct ceph_fs_client *fsc)
 	ceph_metric_destroy(&mdsc->metric);
 
 	flush_delayed_work(&mdsc->metric.delayed_work);
-	fsc->mdsc = NULL;
-	kfree(mdsc);
-	dout("mdsc_destroy %p done\n", mdsc);
-}
+	fsc->mdsc = शून्य;
+	kमुक्त(mdsc);
+	करोut("mdsc_destroy %p done\n", mdsc);
+पूर्ण
 
-void ceph_mdsc_handle_fsmap(struct ceph_mds_client *mdsc, struct ceph_msg *msg)
-{
-	struct ceph_fs_client *fsc = mdsc->fsc;
-	const char *mds_namespace = fsc->mount_options->mds_namespace;
-	void *p = msg->front.iov_base;
-	void *end = p + msg->front.iov_len;
+व्योम ceph_mdsc_handle_fsmap(काष्ठा ceph_mds_client *mdsc, काष्ठा ceph_msg *msg)
+अणु
+	काष्ठा ceph_fs_client *fsc = mdsc->fsc;
+	स्थिर अक्षर *mds_namespace = fsc->mount_options->mds_namespace;
+	व्योम *p = msg->front.iov_base;
+	व्योम *end = p + msg->front.iov_len;
 	u32 epoch;
 	u32 num_fs;
 	u32 mount_fscid = (u32)-1;
-	int err = -EINVAL;
+	पूर्णांक err = -EINVAL;
 
-	ceph_decode_need(&p, end, sizeof(u32), bad);
+	ceph_decode_need(&p, end, माप(u32), bad);
 	epoch = ceph_decode_32(&p);
 
-	dout("handle_fsmap epoch %u\n", epoch);
+	करोut("handle_fsmap epoch %u\n", epoch);
 
-	/* struct_v, struct_cv, map_len, epoch, legacy_client_fscid */
-	ceph_decode_skip_n(&p, end, 2 + sizeof(u32) * 3, bad);
+	/* काष्ठा_v, काष्ठा_cv, map_len, epoch, legacy_client_fscid */
+	ceph_decode_skip_n(&p, end, 2 + माप(u32) * 3, bad);
 
 	ceph_decode_32_safe(&p, end, num_fs, bad);
-	while (num_fs-- > 0) {
-		void *info_p, *info_end;
+	जबतक (num_fs-- > 0) अणु
+		व्योम *info_p, *info_end;
 		u32 info_len;
 		u32 fscid, namelen;
 
-		ceph_decode_need(&p, end, 2 + sizeof(u32), bad);
+		ceph_decode_need(&p, end, 2 + माप(u32), bad);
 		p += 2;		// info_v, info_cv
 		info_len = ceph_decode_32(&p);
 		ceph_decode_need(&p, end, info_len, bad);
@@ -4955,353 +4956,353 @@ void ceph_mdsc_handle_fsmap(struct ceph_mds_client *mdsc, struct ceph_msg *msg)
 		info_end = p + info_len;
 		p = info_end;
 
-		ceph_decode_need(&info_p, info_end, sizeof(u32) * 2, bad);
+		ceph_decode_need(&info_p, info_end, माप(u32) * 2, bad);
 		fscid = ceph_decode_32(&info_p);
 		namelen = ceph_decode_32(&info_p);
 		ceph_decode_need(&info_p, info_end, namelen, bad);
 
-		if (mds_namespace &&
-		    strlen(mds_namespace) == namelen &&
-		    !strncmp(mds_namespace, (char *)info_p, namelen)) {
+		अगर (mds_namespace &&
+		    म_माप(mds_namespace) == namelen &&
+		    !म_भेदन(mds_namespace, (अक्षर *)info_p, namelen)) अणु
 			mount_fscid = fscid;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
 	ceph_monc_got_map(&fsc->client->monc, CEPH_SUB_FSMAP, epoch);
-	if (mount_fscid != (u32)-1) {
+	अगर (mount_fscid != (u32)-1) अणु
 		fsc->client->monc.fs_cluster_id = mount_fscid;
 		ceph_monc_want_map(&fsc->client->monc, CEPH_SUB_MDSMAP,
 				   0, true);
 		ceph_monc_renew_subs(&fsc->client->monc);
-	} else {
+	पूर्ण अन्यथा अणु
 		err = -ENOENT;
-		goto err_out;
-	}
-	return;
+		जाओ err_out;
+	पूर्ण
+	वापस;
 
 bad:
 	pr_err("error decoding fsmap\n");
 err_out:
 	mutex_lock(&mdsc->mutex);
 	mdsc->mdsmap_err = err;
-	__wake_requests(mdsc, &mdsc->waiting_for_map);
+	__wake_requests(mdsc, &mdsc->रुकोing_क्रम_map);
 	mutex_unlock(&mdsc->mutex);
-}
+पूर्ण
 
 /*
  * handle mds map update.
  */
-void ceph_mdsc_handle_mdsmap(struct ceph_mds_client *mdsc, struct ceph_msg *msg)
-{
+व्योम ceph_mdsc_handle_mdsmap(काष्ठा ceph_mds_client *mdsc, काष्ठा ceph_msg *msg)
+अणु
 	u32 epoch;
 	u32 maplen;
-	void *p = msg->front.iov_base;
-	void *end = p + msg->front.iov_len;
-	struct ceph_mdsmap *newmap, *oldmap;
-	struct ceph_fsid fsid;
-	int err = -EINVAL;
+	व्योम *p = msg->front.iov_base;
+	व्योम *end = p + msg->front.iov_len;
+	काष्ठा ceph_mdsmap *newmap, *oldmap;
+	काष्ठा ceph_fsid fsid;
+	पूर्णांक err = -EINVAL;
 
-	ceph_decode_need(&p, end, sizeof(fsid)+2*sizeof(u32), bad);
-	ceph_decode_copy(&p, &fsid, sizeof(fsid));
-	if (ceph_check_fsid(mdsc->fsc->client, &fsid) < 0)
-		return;
+	ceph_decode_need(&p, end, माप(fsid)+2*माप(u32), bad);
+	ceph_decode_copy(&p, &fsid, माप(fsid));
+	अगर (ceph_check_fsid(mdsc->fsc->client, &fsid) < 0)
+		वापस;
 	epoch = ceph_decode_32(&p);
 	maplen = ceph_decode_32(&p);
-	dout("handle_map epoch %u len %d\n", epoch, (int)maplen);
+	करोut("handle_map epoch %u len %d\n", epoch, (पूर्णांक)maplen);
 
-	/* do we need it? */
+	/* करो we need it? */
 	mutex_lock(&mdsc->mutex);
-	if (mdsc->mdsmap && epoch <= mdsc->mdsmap->m_epoch) {
-		dout("handle_map epoch %u <= our %u\n",
+	अगर (mdsc->mdsmap && epoch <= mdsc->mdsmap->m_epoch) अणु
+		करोut("handle_map epoch %u <= our %u\n",
 		     epoch, mdsc->mdsmap->m_epoch);
 		mutex_unlock(&mdsc->mutex);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	newmap = ceph_mdsmap_decode(&p, end, ceph_msgr2(mdsc->fsc->client));
-	if (IS_ERR(newmap)) {
+	अगर (IS_ERR(newmap)) अणु
 		err = PTR_ERR(newmap);
-		goto bad_unlock;
-	}
+		जाओ bad_unlock;
+	पूर्ण
 
-	/* swap into place */
-	if (mdsc->mdsmap) {
+	/* swap पूर्णांकo place */
+	अगर (mdsc->mdsmap) अणु
 		oldmap = mdsc->mdsmap;
 		mdsc->mdsmap = newmap;
 		check_new_map(mdsc, newmap, oldmap);
 		ceph_mdsmap_destroy(oldmap);
-	} else {
+	पूर्ण अन्यथा अणु
 		mdsc->mdsmap = newmap;  /* first mds map */
-	}
+	पूर्ण
 	mdsc->fsc->max_file_size = min((loff_t)mdsc->mdsmap->m_max_file_size,
-					MAX_LFS_FILESIZE);
+					MAX_LFS_खाताSIZE);
 
-	__wake_requests(mdsc, &mdsc->waiting_for_map);
+	__wake_requests(mdsc, &mdsc->रुकोing_क्रम_map);
 	ceph_monc_got_map(&mdsc->fsc->client->monc, CEPH_SUB_MDSMAP,
 			  mdsc->mdsmap->m_epoch);
 
 	mutex_unlock(&mdsc->mutex);
 	schedule_delayed(mdsc);
-	return;
+	वापस;
 
 bad_unlock:
 	mutex_unlock(&mdsc->mutex);
 bad:
 	pr_err("error decoding mdsmap %d\n", err);
-	return;
-}
+	वापस;
+पूर्ण
 
-static struct ceph_connection *mds_get_con(struct ceph_connection *con)
-{
-	struct ceph_mds_session *s = con->private;
+अटल काष्ठा ceph_connection *mds_get_con(काष्ठा ceph_connection *con)
+अणु
+	काष्ठा ceph_mds_session *s = con->निजी;
 
-	if (ceph_get_mds_session(s))
-		return con;
-	return NULL;
-}
+	अगर (ceph_get_mds_session(s))
+		वापस con;
+	वापस शून्य;
+पूर्ण
 
-static void mds_put_con(struct ceph_connection *con)
-{
-	struct ceph_mds_session *s = con->private;
+अटल व्योम mds_put_con(काष्ठा ceph_connection *con)
+अणु
+	काष्ठा ceph_mds_session *s = con->निजी;
 
 	ceph_put_mds_session(s);
-}
+पूर्ण
 
 /*
- * if the client is unresponsive for long enough, the mds will kill
+ * अगर the client is unresponsive क्रम दीर्घ enough, the mds will समाप्त
  * the session entirely.
  */
-static void mds_peer_reset(struct ceph_connection *con)
-{
-	struct ceph_mds_session *s = con->private;
-	struct ceph_mds_client *mdsc = s->s_mdsc;
+अटल व्योम mds_peer_reset(काष्ठा ceph_connection *con)
+अणु
+	काष्ठा ceph_mds_session *s = con->निजी;
+	काष्ठा ceph_mds_client *mdsc = s->s_mdsc;
 
 	pr_warn("mds%d closed our session\n", s->s_mds);
 	send_mds_reconnect(mdsc, s);
-}
+पूर्ण
 
-static void mds_dispatch(struct ceph_connection *con, struct ceph_msg *msg)
-{
-	struct ceph_mds_session *s = con->private;
-	struct ceph_mds_client *mdsc = s->s_mdsc;
-	int type = le16_to_cpu(msg->hdr.type);
+अटल व्योम mds_dispatch(काष्ठा ceph_connection *con, काष्ठा ceph_msg *msg)
+अणु
+	काष्ठा ceph_mds_session *s = con->निजी;
+	काष्ठा ceph_mds_client *mdsc = s->s_mdsc;
+	पूर्णांक type = le16_to_cpu(msg->hdr.type);
 
 	mutex_lock(&mdsc->mutex);
-	if (__verify_registered_session(mdsc, s) < 0) {
+	अगर (__verअगरy_रेजिस्टरed_session(mdsc, s) < 0) अणु
 		mutex_unlock(&mdsc->mutex);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 	mutex_unlock(&mdsc->mutex);
 
-	switch (type) {
-	case CEPH_MSG_MDS_MAP:
+	चयन (type) अणु
+	हाल CEPH_MSG_MDS_MAP:
 		ceph_mdsc_handle_mdsmap(mdsc, msg);
-		break;
-	case CEPH_MSG_FS_MAP_USER:
+		अवरोध;
+	हाल CEPH_MSG_FS_MAP_USER:
 		ceph_mdsc_handle_fsmap(mdsc, msg);
-		break;
-	case CEPH_MSG_CLIENT_SESSION:
+		अवरोध;
+	हाल CEPH_MSG_CLIENT_SESSION:
 		handle_session(s, msg);
-		break;
-	case CEPH_MSG_CLIENT_REPLY:
+		अवरोध;
+	हाल CEPH_MSG_CLIENT_REPLY:
 		handle_reply(s, msg);
-		break;
-	case CEPH_MSG_CLIENT_REQUEST_FORWARD:
-		handle_forward(mdsc, s, msg);
-		break;
-	case CEPH_MSG_CLIENT_CAPS:
+		अवरोध;
+	हाल CEPH_MSG_CLIENT_REQUEST_FORWARD:
+		handle_क्रमward(mdsc, s, msg);
+		अवरोध;
+	हाल CEPH_MSG_CLIENT_CAPS:
 		ceph_handle_caps(s, msg);
-		break;
-	case CEPH_MSG_CLIENT_SNAP:
+		अवरोध;
+	हाल CEPH_MSG_CLIENT_SNAP:
 		ceph_handle_snap(mdsc, s, msg);
-		break;
-	case CEPH_MSG_CLIENT_LEASE:
+		अवरोध;
+	हाल CEPH_MSG_CLIENT_LEASE:
 		handle_lease(mdsc, s, msg);
-		break;
-	case CEPH_MSG_CLIENT_QUOTA:
+		अवरोध;
+	हाल CEPH_MSG_CLIENT_QUOTA:
 		ceph_handle_quota(mdsc, s, msg);
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		pr_err("received unknown message type %d %s\n", type,
 		       ceph_msg_type_name(type));
-	}
+	पूर्ण
 out:
 	ceph_msg_put(msg);
-}
+पूर्ण
 
 /*
  * authentication
  */
 
 /*
- * Note: returned pointer is the address of a structure that's
- * managed separately.  Caller must *not* attempt to free it.
+ * Note: वापसed poपूर्णांकer is the address of a काष्ठाure that's
+ * managed separately.  Caller must *not* attempt to मुक्त it.
  */
-static struct ceph_auth_handshake *
-mds_get_authorizer(struct ceph_connection *con, int *proto, int force_new)
-{
-	struct ceph_mds_session *s = con->private;
-	struct ceph_mds_client *mdsc = s->s_mdsc;
-	struct ceph_auth_client *ac = mdsc->fsc->client->monc.auth;
-	struct ceph_auth_handshake *auth = &s->s_auth;
-	int ret;
+अटल काष्ठा ceph_auth_handshake *
+mds_get_authorizer(काष्ठा ceph_connection *con, पूर्णांक *proto, पूर्णांक क्रमce_new)
+अणु
+	काष्ठा ceph_mds_session *s = con->निजी;
+	काष्ठा ceph_mds_client *mdsc = s->s_mdsc;
+	काष्ठा ceph_auth_client *ac = mdsc->fsc->client->monc.auth;
+	काष्ठा ceph_auth_handshake *auth = &s->s_auth;
+	पूर्णांक ret;
 
 	ret = __ceph_auth_get_authorizer(ac, auth, CEPH_ENTITY_TYPE_MDS,
-					 force_new, proto, NULL, NULL);
-	if (ret)
-		return ERR_PTR(ret);
+					 क्रमce_new, proto, शून्य, शून्य);
+	अगर (ret)
+		वापस ERR_PTR(ret);
 
-	return auth;
-}
+	वापस auth;
+पूर्ण
 
-static int mds_add_authorizer_challenge(struct ceph_connection *con,
-				    void *challenge_buf, int challenge_buf_len)
-{
-	struct ceph_mds_session *s = con->private;
-	struct ceph_mds_client *mdsc = s->s_mdsc;
-	struct ceph_auth_client *ac = mdsc->fsc->client->monc.auth;
+अटल पूर्णांक mds_add_authorizer_challenge(काष्ठा ceph_connection *con,
+				    व्योम *challenge_buf, पूर्णांक challenge_buf_len)
+अणु
+	काष्ठा ceph_mds_session *s = con->निजी;
+	काष्ठा ceph_mds_client *mdsc = s->s_mdsc;
+	काष्ठा ceph_auth_client *ac = mdsc->fsc->client->monc.auth;
 
-	return ceph_auth_add_authorizer_challenge(ac, s->s_auth.authorizer,
+	वापस ceph_auth_add_authorizer_challenge(ac, s->s_auth.authorizer,
 					    challenge_buf, challenge_buf_len);
-}
+पूर्ण
 
-static int mds_verify_authorizer_reply(struct ceph_connection *con)
-{
-	struct ceph_mds_session *s = con->private;
-	struct ceph_mds_client *mdsc = s->s_mdsc;
-	struct ceph_auth_client *ac = mdsc->fsc->client->monc.auth;
-	struct ceph_auth_handshake *auth = &s->s_auth;
+अटल पूर्णांक mds_verअगरy_authorizer_reply(काष्ठा ceph_connection *con)
+अणु
+	काष्ठा ceph_mds_session *s = con->निजी;
+	काष्ठा ceph_mds_client *mdsc = s->s_mdsc;
+	काष्ठा ceph_auth_client *ac = mdsc->fsc->client->monc.auth;
+	काष्ठा ceph_auth_handshake *auth = &s->s_auth;
 
-	return ceph_auth_verify_authorizer_reply(ac, auth->authorizer,
+	वापस ceph_auth_verअगरy_authorizer_reply(ac, auth->authorizer,
 		auth->authorizer_reply_buf, auth->authorizer_reply_buf_len,
-		NULL, NULL, NULL, NULL);
-}
+		शून्य, शून्य, शून्य, शून्य);
+पूर्ण
 
-static int mds_invalidate_authorizer(struct ceph_connection *con)
-{
-	struct ceph_mds_session *s = con->private;
-	struct ceph_mds_client *mdsc = s->s_mdsc;
-	struct ceph_auth_client *ac = mdsc->fsc->client->monc.auth;
+अटल पूर्णांक mds_invalidate_authorizer(काष्ठा ceph_connection *con)
+अणु
+	काष्ठा ceph_mds_session *s = con->निजी;
+	काष्ठा ceph_mds_client *mdsc = s->s_mdsc;
+	काष्ठा ceph_auth_client *ac = mdsc->fsc->client->monc.auth;
 
 	ceph_auth_invalidate_authorizer(ac, CEPH_ENTITY_TYPE_MDS);
 
-	return ceph_monc_validate_auth(&mdsc->fsc->client->monc);
-}
+	वापस ceph_monc_validate_auth(&mdsc->fsc->client->monc);
+पूर्ण
 
-static int mds_get_auth_request(struct ceph_connection *con,
-				void *buf, int *buf_len,
-				void **authorizer, int *authorizer_len)
-{
-	struct ceph_mds_session *s = con->private;
-	struct ceph_auth_client *ac = s->s_mdsc->fsc->client->monc.auth;
-	struct ceph_auth_handshake *auth = &s->s_auth;
-	int ret;
+अटल पूर्णांक mds_get_auth_request(काष्ठा ceph_connection *con,
+				व्योम *buf, पूर्णांक *buf_len,
+				व्योम **authorizer, पूर्णांक *authorizer_len)
+अणु
+	काष्ठा ceph_mds_session *s = con->निजी;
+	काष्ठा ceph_auth_client *ac = s->s_mdsc->fsc->client->monc.auth;
+	काष्ठा ceph_auth_handshake *auth = &s->s_auth;
+	पूर्णांक ret;
 
 	ret = ceph_auth_get_authorizer(ac, auth, CEPH_ENTITY_TYPE_MDS,
 				       buf, buf_len);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	*authorizer = auth->authorizer_buf;
 	*authorizer_len = auth->authorizer_buf_len;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mds_handle_auth_reply_more(struct ceph_connection *con,
-				      void *reply, int reply_len,
-				      void *buf, int *buf_len,
-				      void **authorizer, int *authorizer_len)
-{
-	struct ceph_mds_session *s = con->private;
-	struct ceph_auth_client *ac = s->s_mdsc->fsc->client->monc.auth;
-	struct ceph_auth_handshake *auth = &s->s_auth;
-	int ret;
+अटल पूर्णांक mds_handle_auth_reply_more(काष्ठा ceph_connection *con,
+				      व्योम *reply, पूर्णांक reply_len,
+				      व्योम *buf, पूर्णांक *buf_len,
+				      व्योम **authorizer, पूर्णांक *authorizer_len)
+अणु
+	काष्ठा ceph_mds_session *s = con->निजी;
+	काष्ठा ceph_auth_client *ac = s->s_mdsc->fsc->client->monc.auth;
+	काष्ठा ceph_auth_handshake *auth = &s->s_auth;
+	पूर्णांक ret;
 
 	ret = ceph_auth_handle_svc_reply_more(ac, auth, reply, reply_len,
 					      buf, buf_len);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	*authorizer = auth->authorizer_buf;
 	*authorizer_len = auth->authorizer_buf_len;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mds_handle_auth_done(struct ceph_connection *con,
-				u64 global_id, void *reply, int reply_len,
-				u8 *session_key, int *session_key_len,
-				u8 *con_secret, int *con_secret_len)
-{
-	struct ceph_mds_session *s = con->private;
-	struct ceph_auth_client *ac = s->s_mdsc->fsc->client->monc.auth;
-	struct ceph_auth_handshake *auth = &s->s_auth;
+अटल पूर्णांक mds_handle_auth_करोne(काष्ठा ceph_connection *con,
+				u64 global_id, व्योम *reply, पूर्णांक reply_len,
+				u8 *session_key, पूर्णांक *session_key_len,
+				u8 *con_secret, पूर्णांक *con_secret_len)
+अणु
+	काष्ठा ceph_mds_session *s = con->निजी;
+	काष्ठा ceph_auth_client *ac = s->s_mdsc->fsc->client->monc.auth;
+	काष्ठा ceph_auth_handshake *auth = &s->s_auth;
 
-	return ceph_auth_handle_svc_reply_done(ac, auth, reply, reply_len,
+	वापस ceph_auth_handle_svc_reply_करोne(ac, auth, reply, reply_len,
 					       session_key, session_key_len,
 					       con_secret, con_secret_len);
-}
+पूर्ण
 
-static int mds_handle_auth_bad_method(struct ceph_connection *con,
-				      int used_proto, int result,
-				      const int *allowed_protos, int proto_cnt,
-				      const int *allowed_modes, int mode_cnt)
-{
-	struct ceph_mds_session *s = con->private;
-	struct ceph_mon_client *monc = &s->s_mdsc->fsc->client->monc;
-	int ret;
+अटल पूर्णांक mds_handle_auth_bad_method(काष्ठा ceph_connection *con,
+				      पूर्णांक used_proto, पूर्णांक result,
+				      स्थिर पूर्णांक *allowed_protos, पूर्णांक proto_cnt,
+				      स्थिर पूर्णांक *allowed_modes, पूर्णांक mode_cnt)
+अणु
+	काष्ठा ceph_mds_session *s = con->निजी;
+	काष्ठा ceph_mon_client *monc = &s->s_mdsc->fsc->client->monc;
+	पूर्णांक ret;
 
-	if (ceph_auth_handle_bad_authorizer(monc->auth, CEPH_ENTITY_TYPE_MDS,
+	अगर (ceph_auth_handle_bad_authorizer(monc->auth, CEPH_ENTITY_TYPE_MDS,
 					    used_proto, result,
 					    allowed_protos, proto_cnt,
-					    allowed_modes, mode_cnt)) {
+					    allowed_modes, mode_cnt)) अणु
 		ret = ceph_monc_validate_auth(monc);
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	return -EACCES;
-}
+	वापस -EACCES;
+पूर्ण
 
-static struct ceph_msg *mds_alloc_msg(struct ceph_connection *con,
-				struct ceph_msg_header *hdr, int *skip)
-{
-	struct ceph_msg *msg;
-	int type = (int) le16_to_cpu(hdr->type);
-	int front_len = (int) le32_to_cpu(hdr->front_len);
+अटल काष्ठा ceph_msg *mds_alloc_msg(काष्ठा ceph_connection *con,
+				काष्ठा ceph_msg_header *hdr, पूर्णांक *skip)
+अणु
+	काष्ठा ceph_msg *msg;
+	पूर्णांक type = (पूर्णांक) le16_to_cpu(hdr->type);
+	पूर्णांक front_len = (पूर्णांक) le32_to_cpu(hdr->front_len);
 
-	if (con->in_msg)
-		return con->in_msg;
+	अगर (con->in_msg)
+		वापस con->in_msg;
 
 	*skip = 0;
 	msg = ceph_msg_new(type, front_len, GFP_NOFS, false);
-	if (!msg) {
+	अगर (!msg) अणु
 		pr_err("unable to allocate msg type %d len %d\n",
 		       type, front_len);
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
-	return msg;
-}
+	वापस msg;
+पूर्ण
 
-static int mds_sign_message(struct ceph_msg *msg)
-{
-       struct ceph_mds_session *s = msg->con->private;
-       struct ceph_auth_handshake *auth = &s->s_auth;
+अटल पूर्णांक mds_sign_message(काष्ठा ceph_msg *msg)
+अणु
+       काष्ठा ceph_mds_session *s = msg->con->निजी;
+       काष्ठा ceph_auth_handshake *auth = &s->s_auth;
 
-       return ceph_auth_sign_message(auth, msg);
-}
+       वापस ceph_auth_sign_message(auth, msg);
+पूर्ण
 
-static int mds_check_message_signature(struct ceph_msg *msg)
-{
-       struct ceph_mds_session *s = msg->con->private;
-       struct ceph_auth_handshake *auth = &s->s_auth;
+अटल पूर्णांक mds_check_message_signature(काष्ठा ceph_msg *msg)
+अणु
+       काष्ठा ceph_mds_session *s = msg->con->निजी;
+       काष्ठा ceph_auth_handshake *auth = &s->s_auth;
 
-       return ceph_auth_check_message_signature(auth, msg);
-}
+       वापस ceph_auth_check_message_signature(auth, msg);
+पूर्ण
 
-static const struct ceph_connection_operations mds_con_ops = {
+अटल स्थिर काष्ठा ceph_connection_operations mds_con_ops = अणु
 	.get = mds_get_con,
 	.put = mds_put_con,
 	.alloc_msg = mds_alloc_msg,
@@ -5309,14 +5310,14 @@ static const struct ceph_connection_operations mds_con_ops = {
 	.peer_reset = mds_peer_reset,
 	.get_authorizer = mds_get_authorizer,
 	.add_authorizer_challenge = mds_add_authorizer_challenge,
-	.verify_authorizer_reply = mds_verify_authorizer_reply,
+	.verअगरy_authorizer_reply = mds_verअगरy_authorizer_reply,
 	.invalidate_authorizer = mds_invalidate_authorizer,
 	.sign_message = mds_sign_message,
 	.check_message_signature = mds_check_message_signature,
 	.get_auth_request = mds_get_auth_request,
 	.handle_auth_reply_more = mds_handle_auth_reply_more,
-	.handle_auth_done = mds_handle_auth_done,
+	.handle_auth_करोne = mds_handle_auth_करोne,
 	.handle_auth_bad_method = mds_handle_auth_bad_method,
-};
+पूर्ण;
 
 /* eof */

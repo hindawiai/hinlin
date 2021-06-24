@@ -1,67 +1,68 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * This file is part of the Emulex Linux Device Driver for Enterprise iSCSI
+ * This file is part of the Emulex Linux Device Driver क्रम Enterprise iSCSI
  * Host Bus Adapters. Refer to the README file included with this package
- * for driver version and adapter compatibility.
+ * क्रम driver version and adapter compatibility.
  *
  * Copyright (c) 2018 Broadcom. All Rights Reserved.
  * The term "Broadcom" refers to Broadcom Inc. and/or its subsidiaries.
  *
- * Contact Information:
+ * Contact Inक्रमmation:
  * linux-drivers@broadcom.com
  */
 
-#include <scsi/libiscsi.h>
-#include <scsi/scsi_transport_iscsi.h>
-#include <scsi/scsi_transport.h>
-#include <scsi/scsi_cmnd.h>
-#include <scsi/scsi_device.h>
-#include <scsi/scsi_host.h>
-#include <scsi/scsi_netlink.h>
-#include <net/netlink.h>
-#include <scsi/scsi.h>
+#समावेश <scsi/libiscsi.h>
+#समावेश <scsi/scsi_transport_iscsi.h>
+#समावेश <scsi/scsi_transport.h>
+#समावेश <scsi/scsi_cmnd.h>
+#समावेश <scsi/scsi_device.h>
+#समावेश <scsi/scsi_host.h>
+#समावेश <scsi/scsi_netlink.h>
+#समावेश <net/netlink.h>
+#समावेश <scsi/scsi.h>
 
-#include "be_iscsi.h"
+#समावेश "be_iscsi.h"
 
-extern struct iscsi_transport beiscsi_iscsi_transport;
+बाह्य काष्ठा iscsi_transport beiscsi_iscsi_transport;
 
 /**
  * beiscsi_session_create - creates a new iscsi session
- * @ep: pointer to iscsi ep
+ * @ep: poपूर्णांकer to iscsi ep
  * @cmds_max: max commands supported
  * @qdepth: max queue depth supported
  * @initial_cmdsn: initial iscsi CMDSN
  */
-struct iscsi_cls_session *beiscsi_session_create(struct iscsi_endpoint *ep,
+काष्ठा iscsi_cls_session *beiscsi_session_create(काष्ठा iscsi_endpoपूर्णांक *ep,
 						 u16 cmds_max,
 						 u16 qdepth,
 						 u32 initial_cmdsn)
-{
-	struct Scsi_Host *shost;
-	struct beiscsi_endpoint *beiscsi_ep;
-	struct iscsi_cls_session *cls_session;
-	struct beiscsi_hba *phba;
-	struct iscsi_session *sess;
-	struct beiscsi_session *beiscsi_sess;
-	struct beiscsi_io_task *io_task;
+अणु
+	काष्ठा Scsi_Host *shost;
+	काष्ठा beiscsi_endpoपूर्णांक *beiscsi_ep;
+	काष्ठा iscsi_cls_session *cls_session;
+	काष्ठा beiscsi_hba *phba;
+	काष्ठा iscsi_session *sess;
+	काष्ठा beiscsi_session *beiscsi_sess;
+	काष्ठा beiscsi_io_task *io_task;
 
 
-	if (!ep) {
+	अगर (!ep) अणु
 		pr_err("beiscsi_session_create: invalid ep\n");
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 	beiscsi_ep = ep->dd_data;
 	phba = beiscsi_ep->phba;
 
-	if (!beiscsi_hba_is_online(phba)) {
+	अगर (!beiscsi_hba_is_online(phba)) अणु
 		beiscsi_log(phba, KERN_INFO, BEISCSI_LOG_CONFIG,
 			    "BS_%d : HBA in error 0x%lx\n", phba->state);
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
 	beiscsi_log(phba, KERN_INFO, BEISCSI_LOG_CONFIG,
 		    "BS_%d : In beiscsi_session_create\n");
-	if (cmds_max > beiscsi_ep->phba->params.wrbs_per_cxn) {
+	अगर (cmds_max > beiscsi_ep->phba->params.wrbs_per_cxn) अणु
 		beiscsi_log(phba, KERN_ERR, BEISCSI_LOG_CONFIG,
 			    "BS_%d : Cannot handle %d cmds."
 			    "Max cmds per session supported is %d. Using %d."
@@ -70,56 +71,56 @@ struct iscsi_cls_session *beiscsi_session_create(struct iscsi_endpoint *ep,
 			    beiscsi_ep->phba->params.wrbs_per_cxn);
 
 		cmds_max = beiscsi_ep->phba->params.wrbs_per_cxn;
-	}
+	पूर्ण
 
 	shost = phba->shost;
 	cls_session = iscsi_session_setup(&beiscsi_iscsi_transport,
 					  shost, cmds_max,
-					  sizeof(*beiscsi_sess),
-					  sizeof(*io_task),
+					  माप(*beiscsi_sess),
+					  माप(*io_task),
 					  initial_cmdsn, ISCSI_MAX_TARGET);
-	if (!cls_session)
-		return NULL;
+	अगर (!cls_session)
+		वापस शून्य;
 	sess = cls_session->dd_data;
 	beiscsi_sess = sess->dd_data;
 	beiscsi_sess->bhs_pool =  dma_pool_create("beiscsi_bhs_pool",
 						   &phba->pcidev->dev,
-						   sizeof(struct be_cmd_bhs),
+						   माप(काष्ठा be_cmd_bhs),
 						   64, 0);
-	if (!beiscsi_sess->bhs_pool)
-		goto destroy_sess;
+	अगर (!beiscsi_sess->bhs_pool)
+		जाओ destroy_sess;
 
-	return cls_session;
+	वापस cls_session;
 destroy_sess:
-	iscsi_session_teardown(cls_session);
-	return NULL;
-}
+	iscsi_session_tearकरोwn(cls_session);
+	वापस शून्य;
+पूर्ण
 
 /**
  * beiscsi_session_destroy - destroys iscsi session
- * @cls_session:	pointer to iscsi cls session
+ * @cls_session:	poपूर्णांकer to iscsi cls session
  *
  * Destroys iSCSI session instance and releases
- * resources allocated for it.
+ * resources allocated क्रम it.
  */
-void beiscsi_session_destroy(struct iscsi_cls_session *cls_session)
-{
-	struct iscsi_session *sess = cls_session->dd_data;
-	struct beiscsi_session *beiscsi_sess = sess->dd_data;
+व्योम beiscsi_session_destroy(काष्ठा iscsi_cls_session *cls_session)
+अणु
+	काष्ठा iscsi_session *sess = cls_session->dd_data;
+	काष्ठा beiscsi_session *beiscsi_sess = sess->dd_data;
 
-	printk(KERN_INFO "In beiscsi_session_destroy\n");
+	prपूर्णांकk(KERN_INFO "In beiscsi_session_destroy\n");
 	dma_pool_destroy(beiscsi_sess->bhs_pool);
-	iscsi_session_teardown(cls_session);
-}
+	iscsi_session_tearकरोwn(cls_session);
+पूर्ण
 
 /**
  * beiscsi_session_fail(): Closing session with appropriate error
  * @cls_session: ptr to session
  **/
-void beiscsi_session_fail(struct iscsi_cls_session *cls_session)
-{
+व्योम beiscsi_session_fail(काष्ठा iscsi_cls_session *cls_session)
+अणु
 	iscsi_session_failure(cls_session->dd_data, ISCSI_ERR_CONN_FAILED);
-}
+पूर्ण
 
 
 /**
@@ -127,16 +128,16 @@ void beiscsi_session_fail(struct iscsi_cls_session *cls_session)
  * @cls_session: ptr to iscsi_cls_session
  * @cid: iscsi cid
  */
-struct iscsi_cls_conn *
-beiscsi_conn_create(struct iscsi_cls_session *cls_session, u32 cid)
-{
-	struct beiscsi_hba *phba;
-	struct Scsi_Host *shost;
-	struct iscsi_cls_conn *cls_conn;
-	struct beiscsi_conn *beiscsi_conn;
-	struct iscsi_conn *conn;
-	struct iscsi_session *sess;
-	struct beiscsi_session *beiscsi_sess;
+काष्ठा iscsi_cls_conn *
+beiscsi_conn_create(काष्ठा iscsi_cls_session *cls_session, u32 cid)
+अणु
+	काष्ठा beiscsi_hba *phba;
+	काष्ठा Scsi_Host *shost;
+	काष्ठा iscsi_cls_conn *cls_conn;
+	काष्ठा beiscsi_conn *beiscsi_conn;
+	काष्ठा iscsi_conn *conn;
+	काष्ठा iscsi_session *sess;
+	काष्ठा beiscsi_session *beiscsi_sess;
 
 	shost = iscsi_session_to_shost(cls_session);
 	phba = iscsi_host_priv(shost);
@@ -145,682 +146,682 @@ beiscsi_conn_create(struct iscsi_cls_session *cls_session, u32 cid)
 		    "BS_%d : In beiscsi_conn_create ,cid"
 		    "from iscsi layer=%d\n", cid);
 
-	cls_conn = iscsi_conn_setup(cls_session, sizeof(*beiscsi_conn), cid);
-	if (!cls_conn)
-		return NULL;
+	cls_conn = iscsi_conn_setup(cls_session, माप(*beiscsi_conn), cid);
+	अगर (!cls_conn)
+		वापस शून्य;
 
 	conn = cls_conn->dd_data;
 	beiscsi_conn = conn->dd_data;
-	beiscsi_conn->ep = NULL;
+	beiscsi_conn->ep = शून्य;
 	beiscsi_conn->phba = phba;
 	beiscsi_conn->conn = conn;
 	sess = cls_session->dd_data;
 	beiscsi_sess = sess->dd_data;
 	beiscsi_conn->beiscsi_sess = beiscsi_sess;
-	return cls_conn;
-}
+	वापस cls_conn;
+पूर्ण
 
 /**
  * beiscsi_conn_bind - Binds iscsi session/connection with TCP connection
- * @cls_session: pointer to iscsi cls session
- * @cls_conn: pointer to iscsi cls conn
+ * @cls_session: poपूर्णांकer to iscsi cls session
+ * @cls_conn: poपूर्णांकer to iscsi cls conn
  * @transport_fd: EP handle(64 bit)
- * @is_leading: indicate if this is the session leading connection (MCS)
+ * @is_leading: indicate अगर this is the session leading connection (MCS)
  *
  * This function binds the TCP Conn with iSCSI Connection and Session.
  */
-int beiscsi_conn_bind(struct iscsi_cls_session *cls_session,
-		      struct iscsi_cls_conn *cls_conn,
-		      u64 transport_fd, int is_leading)
-{
-	struct iscsi_conn *conn = cls_conn->dd_data;
-	struct beiscsi_conn *beiscsi_conn = conn->dd_data;
-	struct Scsi_Host *shost = iscsi_session_to_shost(cls_session);
-	struct beiscsi_hba *phba = iscsi_host_priv(shost);
-	struct hwi_controller *phwi_ctrlr = phba->phwi_ctrlr;
-	struct hwi_wrb_context *pwrb_context;
-	struct beiscsi_endpoint *beiscsi_ep;
-	struct iscsi_endpoint *ep;
-	uint16_t cri_index;
+पूर्णांक beiscsi_conn_bind(काष्ठा iscsi_cls_session *cls_session,
+		      काष्ठा iscsi_cls_conn *cls_conn,
+		      u64 transport_fd, पूर्णांक is_leading)
+अणु
+	काष्ठा iscsi_conn *conn = cls_conn->dd_data;
+	काष्ठा beiscsi_conn *beiscsi_conn = conn->dd_data;
+	काष्ठा Scsi_Host *shost = iscsi_session_to_shost(cls_session);
+	काष्ठा beiscsi_hba *phba = iscsi_host_priv(shost);
+	काष्ठा hwi_controller *phwi_ctrlr = phba->phwi_ctrlr;
+	काष्ठा hwi_wrb_context *pwrb_context;
+	काष्ठा beiscsi_endpoपूर्णांक *beiscsi_ep;
+	काष्ठा iscsi_endpoपूर्णांक *ep;
+	uपूर्णांक16_t cri_index;
 
-	ep = iscsi_lookup_endpoint(transport_fd);
-	if (!ep)
-		return -EINVAL;
+	ep = iscsi_lookup_endpoपूर्णांक(transport_fd);
+	अगर (!ep)
+		वापस -EINVAL;
 
 	beiscsi_ep = ep->dd_data;
 
-	if (iscsi_conn_bind(cls_session, cls_conn, is_leading))
-		return -EINVAL;
+	अगर (iscsi_conn_bind(cls_session, cls_conn, is_leading))
+		वापस -EINVAL;
 
-	if (beiscsi_ep->phba != phba) {
+	अगर (beiscsi_ep->phba != phba) अणु
 		beiscsi_log(phba, KERN_ERR, BEISCSI_LOG_CONFIG,
 			    "BS_%d : beiscsi_ep->hba=%p not equal to phba=%p\n",
 			    beiscsi_ep->phba, phba);
 
-		return -EEXIST;
-	}
+		वापस -EEXIST;
+	पूर्ण
 	cri_index = BE_GET_CRI_FROM_CID(beiscsi_ep->ep_cid);
-	if (phba->conn_table[cri_index]) {
-		if (beiscsi_conn != phba->conn_table[cri_index] ||
-		    beiscsi_ep != phba->conn_table[cri_index]->ep) {
+	अगर (phba->conn_table[cri_index]) अणु
+		अगर (beiscsi_conn != phba->conn_table[cri_index] ||
+		    beiscsi_ep != phba->conn_table[cri_index]->ep) अणु
 			__beiscsi_log(phba, KERN_ERR,
 				      "BS_%d : conn_table not empty at %u: cid %u conn %p:%p\n",
 				      cri_index,
 				      beiscsi_ep->ep_cid,
 				      beiscsi_conn,
 				      phba->conn_table[cri_index]);
-			return -EINVAL;
-		}
-	}
+			वापस -EINVAL;
+		पूर्ण
+	पूर्ण
 
 	beiscsi_conn->beiscsi_conn_cid = beiscsi_ep->ep_cid;
 	beiscsi_conn->ep = beiscsi_ep;
 	beiscsi_ep->conn = beiscsi_conn;
 	/**
 	 * Each connection is associated with a WRBQ kept in wrb_context.
-	 * Store doorbell offset for transmit path.
+	 * Store करोorbell offset क्रम transmit path.
 	 */
 	pwrb_context = &phwi_ctrlr->wrb_context[cri_index];
-	beiscsi_conn->doorbell_offset = pwrb_context->doorbell_offset;
+	beiscsi_conn->करोorbell_offset = pwrb_context->करोorbell_offset;
 	beiscsi_log(phba, KERN_INFO, BEISCSI_LOG_CONFIG,
 		    "BS_%d : cid %d phba->conn_table[%u]=%p\n",
 		    beiscsi_ep->ep_cid, cri_index, beiscsi_conn);
 	phba->conn_table[cri_index] = beiscsi_conn;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int beiscsi_iface_create_ipv4(struct beiscsi_hba *phba)
-{
-	if (phba->ipv4_iface)
-		return 0;
+अटल पूर्णांक beiscsi_अगरace_create_ipv4(काष्ठा beiscsi_hba *phba)
+अणु
+	अगर (phba->ipv4_अगरace)
+		वापस 0;
 
-	phba->ipv4_iface = iscsi_create_iface(phba->shost,
+	phba->ipv4_अगरace = iscsi_create_अगरace(phba->shost,
 					      &beiscsi_iscsi_transport,
 					      ISCSI_IFACE_TYPE_IPV4,
 					      0, 0);
-	if (!phba->ipv4_iface) {
+	अगर (!phba->ipv4_अगरace) अणु
 		beiscsi_log(phba, KERN_ERR, BEISCSI_LOG_CONFIG,
 			    "BS_%d : Could not "
 			    "create default IPv4 address.\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int beiscsi_iface_create_ipv6(struct beiscsi_hba *phba)
-{
-	if (phba->ipv6_iface)
-		return 0;
+अटल पूर्णांक beiscsi_अगरace_create_ipv6(काष्ठा beiscsi_hba *phba)
+अणु
+	अगर (phba->ipv6_अगरace)
+		वापस 0;
 
-	phba->ipv6_iface = iscsi_create_iface(phba->shost,
+	phba->ipv6_अगरace = iscsi_create_अगरace(phba->shost,
 					      &beiscsi_iscsi_transport,
 					      ISCSI_IFACE_TYPE_IPV6,
 					      0, 0);
-	if (!phba->ipv6_iface) {
+	अगर (!phba->ipv6_अगरace) अणु
 		beiscsi_log(phba, KERN_ERR, BEISCSI_LOG_CONFIG,
 			    "BS_%d : Could not "
 			    "create default IPv6 address.\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void beiscsi_iface_create_default(struct beiscsi_hba *phba)
-{
-	struct be_cmd_get_if_info_resp *if_info;
+व्योम beiscsi_अगरace_create_शेष(काष्ठा beiscsi_hba *phba)
+अणु
+	काष्ठा be_cmd_get_अगर_info_resp *अगर_info;
 
-	if (!beiscsi_if_get_info(phba, BEISCSI_IP_TYPE_V4, &if_info)) {
-		beiscsi_iface_create_ipv4(phba);
-		kfree(if_info);
-	}
+	अगर (!beiscsi_अगर_get_info(phba, BEISCSI_IP_TYPE_V4, &अगर_info)) अणु
+		beiscsi_अगरace_create_ipv4(phba);
+		kमुक्त(अगर_info);
+	पूर्ण
 
-	if (!beiscsi_if_get_info(phba, BEISCSI_IP_TYPE_V6, &if_info)) {
-		beiscsi_iface_create_ipv6(phba);
-		kfree(if_info);
-	}
-}
+	अगर (!beiscsi_अगर_get_info(phba, BEISCSI_IP_TYPE_V6, &अगर_info)) अणु
+		beiscsi_अगरace_create_ipv6(phba);
+		kमुक्त(अगर_info);
+	पूर्ण
+पूर्ण
 
-void beiscsi_iface_destroy_default(struct beiscsi_hba *phba)
-{
-	if (phba->ipv6_iface) {
-		iscsi_destroy_iface(phba->ipv6_iface);
-		phba->ipv6_iface = NULL;
-	}
-	if (phba->ipv4_iface) {
-		iscsi_destroy_iface(phba->ipv4_iface);
-		phba->ipv4_iface = NULL;
-	}
-}
+व्योम beiscsi_अगरace_destroy_शेष(काष्ठा beiscsi_hba *phba)
+अणु
+	अगर (phba->ipv6_अगरace) अणु
+		iscsi_destroy_अगरace(phba->ipv6_अगरace);
+		phba->ipv6_अगरace = शून्य;
+	पूर्ण
+	अगर (phba->ipv4_अगरace) अणु
+		iscsi_destroy_अगरace(phba->ipv4_अगरace);
+		phba->ipv4_अगरace = शून्य;
+	पूर्ण
+पूर्ण
 
 /**
- * beiscsi_iface_config_vlan()- Set the VLAN TAG
- * @shost: Scsi Host for the driver instance
- * @iface_param: Interface paramters
+ * beiscsi_अगरace_config_vlan()- Set the VLAN TAG
+ * @shost: Scsi Host क्रम the driver instance
+ * @अगरace_param: Interface paramters
  *
- * Set the VLAN TAG for the adapter or disable
+ * Set the VLAN TAG क्रम the adapter or disable
  * the VLAN config
  *
- * returns
+ * वापसs
  *	Success: 0
  *	Failure: Non-Zero Value
  **/
-static int
-beiscsi_iface_config_vlan(struct Scsi_Host *shost,
-			  struct iscsi_iface_param_info *iface_param)
-{
-	struct beiscsi_hba *phba = iscsi_host_priv(shost);
-	int ret = -EPERM;
+अटल पूर्णांक
+beiscsi_अगरace_config_vlan(काष्ठा Scsi_Host *shost,
+			  काष्ठा iscsi_अगरace_param_info *अगरace_param)
+अणु
+	काष्ठा beiscsi_hba *phba = iscsi_host_priv(shost);
+	पूर्णांक ret = -EPERM;
 
-	switch (iface_param->param) {
-	case ISCSI_NET_PARAM_VLAN_ENABLED:
+	चयन (अगरace_param->param) अणु
+	हाल ISCSI_NET_PARAM_VLAN_ENABLED:
 		ret = 0;
-		if (iface_param->value[0] != ISCSI_VLAN_ENABLE)
-			ret = beiscsi_if_set_vlan(phba, BEISCSI_VLAN_DISABLE);
-		break;
-	case ISCSI_NET_PARAM_VLAN_TAG:
-		ret = beiscsi_if_set_vlan(phba,
-					  *((uint16_t *)iface_param->value));
-		break;
-	}
-	return ret;
-}
+		अगर (अगरace_param->value[0] != ISCSI_VLAN_ENABLE)
+			ret = beiscsi_अगर_set_vlan(phba, BEISCSI_VLAN_DISABLE);
+		अवरोध;
+	हाल ISCSI_NET_PARAM_VLAN_TAG:
+		ret = beiscsi_अगर_set_vlan(phba,
+					  *((uपूर्णांक16_t *)अगरace_param->value));
+		अवरोध;
+	पूर्ण
+	वापस ret;
+पूर्ण
 
 
-static int
-beiscsi_iface_config_ipv4(struct Scsi_Host *shost,
-			  struct iscsi_iface_param_info *info,
-			  void *data, uint32_t dt_len)
-{
-	struct beiscsi_hba *phba = iscsi_host_priv(shost);
-	u8 *ip = NULL, *subnet = NULL, *gw;
-	struct nlattr *nla;
-	int ret = -EPERM;
+अटल पूर्णांक
+beiscsi_अगरace_config_ipv4(काष्ठा Scsi_Host *shost,
+			  काष्ठा iscsi_अगरace_param_info *info,
+			  व्योम *data, uपूर्णांक32_t dt_len)
+अणु
+	काष्ठा beiscsi_hba *phba = iscsi_host_priv(shost);
+	u8 *ip = शून्य, *subnet = शून्य, *gw;
+	काष्ठा nlattr *nla;
+	पूर्णांक ret = -EPERM;
 
 	/* Check the param */
-	switch (info->param) {
-	case ISCSI_NET_PARAM_IFACE_ENABLE:
-		if (info->value[0] == ISCSI_IFACE_ENABLE)
-			ret = beiscsi_iface_create_ipv4(phba);
-		else {
-			iscsi_destroy_iface(phba->ipv4_iface);
-			phba->ipv4_iface = NULL;
-		}
-		break;
-	case ISCSI_NET_PARAM_IPV4_GW:
+	चयन (info->param) अणु
+	हाल ISCSI_NET_PARAM_IFACE_ENABLE:
+		अगर (info->value[0] == ISCSI_IFACE_ENABLE)
+			ret = beiscsi_अगरace_create_ipv4(phba);
+		अन्यथा अणु
+			iscsi_destroy_अगरace(phba->ipv4_अगरace);
+			phba->ipv4_अगरace = शून्य;
+		पूर्ण
+		अवरोध;
+	हाल ISCSI_NET_PARAM_IPV4_GW:
 		gw = info->value;
-		ret = beiscsi_if_set_gw(phba, BEISCSI_IP_TYPE_V4, gw);
-		break;
-	case ISCSI_NET_PARAM_IPV4_BOOTPROTO:
-		if (info->value[0] == ISCSI_BOOTPROTO_DHCP)
-			ret = beiscsi_if_en_dhcp(phba, BEISCSI_IP_TYPE_V4);
-		else if (info->value[0] == ISCSI_BOOTPROTO_STATIC)
+		ret = beiscsi_अगर_set_gw(phba, BEISCSI_IP_TYPE_V4, gw);
+		अवरोध;
+	हाल ISCSI_NET_PARAM_IPV4_BOOTPROTO:
+		अगर (info->value[0] == ISCSI_BOOTPROTO_DHCP)
+			ret = beiscsi_अगर_en_dhcp(phba, BEISCSI_IP_TYPE_V4);
+		अन्यथा अगर (info->value[0] == ISCSI_BOOTPROTO_STATIC)
 			/* release DHCP IP address */
-			ret = beiscsi_if_en_static(phba, BEISCSI_IP_TYPE_V4,
-						   NULL, NULL);
-		else
+			ret = beiscsi_अगर_en_अटल(phba, BEISCSI_IP_TYPE_V4,
+						   शून्य, शून्य);
+		अन्यथा
 			beiscsi_log(phba, KERN_ERR, BEISCSI_LOG_CONFIG,
 				    "BS_%d : Invalid BOOTPROTO: %d\n",
 				    info->value[0]);
-		break;
-	case ISCSI_NET_PARAM_IPV4_ADDR:
+		अवरोध;
+	हाल ISCSI_NET_PARAM_IPV4_ADDR:
 		ip = info->value;
 		nla = nla_find(data, dt_len, ISCSI_NET_PARAM_IPV4_SUBNET);
-		if (nla) {
+		अगर (nla) अणु
 			info = nla_data(nla);
 			subnet = info->value;
-		}
-		ret = beiscsi_if_en_static(phba, BEISCSI_IP_TYPE_V4,
+		पूर्ण
+		ret = beiscsi_अगर_en_अटल(phba, BEISCSI_IP_TYPE_V4,
 					   ip, subnet);
-		break;
-	case ISCSI_NET_PARAM_IPV4_SUBNET:
+		अवरोध;
+	हाल ISCSI_NET_PARAM_IPV4_SUBNET:
 		/*
 		 * OPCODE_COMMON_ISCSI_NTWK_MODIFY_IP_ADDR ioctl needs IP
-		 * and subnet both. Find IP to be applied for this subnet.
+		 * and subnet both. Find IP to be applied क्रम this subnet.
 		 */
 		subnet = info->value;
 		nla = nla_find(data, dt_len, ISCSI_NET_PARAM_IPV4_ADDR);
-		if (nla) {
+		अगर (nla) अणु
 			info = nla_data(nla);
 			ip = info->value;
-		}
-		ret = beiscsi_if_en_static(phba, BEISCSI_IP_TYPE_V4,
+		पूर्ण
+		ret = beiscsi_अगर_en_अटल(phba, BEISCSI_IP_TYPE_V4,
 					   ip, subnet);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int
-beiscsi_iface_config_ipv6(struct Scsi_Host *shost,
-			  struct iscsi_iface_param_info *iface_param,
-			  void *data, uint32_t dt_len)
-{
-	struct beiscsi_hba *phba = iscsi_host_priv(shost);
-	int ret = -EPERM;
+अटल पूर्णांक
+beiscsi_अगरace_config_ipv6(काष्ठा Scsi_Host *shost,
+			  काष्ठा iscsi_अगरace_param_info *अगरace_param,
+			  व्योम *data, uपूर्णांक32_t dt_len)
+अणु
+	काष्ठा beiscsi_hba *phba = iscsi_host_priv(shost);
+	पूर्णांक ret = -EPERM;
 
-	switch (iface_param->param) {
-	case ISCSI_NET_PARAM_IFACE_ENABLE:
-		if (iface_param->value[0] == ISCSI_IFACE_ENABLE)
-			ret = beiscsi_iface_create_ipv6(phba);
-		else {
-			iscsi_destroy_iface(phba->ipv6_iface);
-			phba->ipv6_iface = NULL;
-		}
-		break;
-	case ISCSI_NET_PARAM_IPV6_ADDR:
-		ret = beiscsi_if_en_static(phba, BEISCSI_IP_TYPE_V6,
-					   iface_param->value, NULL);
-		break;
-	}
+	चयन (अगरace_param->param) अणु
+	हाल ISCSI_NET_PARAM_IFACE_ENABLE:
+		अगर (अगरace_param->value[0] == ISCSI_IFACE_ENABLE)
+			ret = beiscsi_अगरace_create_ipv6(phba);
+		अन्यथा अणु
+			iscsi_destroy_अगरace(phba->ipv6_अगरace);
+			phba->ipv6_अगरace = शून्य;
+		पूर्ण
+		अवरोध;
+	हाल ISCSI_NET_PARAM_IPV6_ADDR:
+		ret = beiscsi_अगर_en_अटल(phba, BEISCSI_IP_TYPE_V6,
+					   अगरace_param->value, शून्य);
+		अवरोध;
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int beiscsi_iface_set_param(struct Scsi_Host *shost,
-			    void *data, uint32_t dt_len)
-{
-	struct iscsi_iface_param_info *iface_param = NULL;
-	struct beiscsi_hba *phba = iscsi_host_priv(shost);
-	struct nlattr *attrib;
-	uint32_t rm_len = dt_len;
-	int ret;
+पूर्णांक beiscsi_अगरace_set_param(काष्ठा Scsi_Host *shost,
+			    व्योम *data, uपूर्णांक32_t dt_len)
+अणु
+	काष्ठा iscsi_अगरace_param_info *अगरace_param = शून्य;
+	काष्ठा beiscsi_hba *phba = iscsi_host_priv(shost);
+	काष्ठा nlattr *attrib;
+	uपूर्णांक32_t rm_len = dt_len;
+	पूर्णांक ret;
 
-	if (!beiscsi_hba_is_online(phba)) {
+	अगर (!beiscsi_hba_is_online(phba)) अणु
 		beiscsi_log(phba, KERN_INFO, BEISCSI_LOG_CONFIG,
 			    "BS_%d : HBA in error 0x%lx\n", phba->state);
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 
-	/* update interface_handle */
-	ret = beiscsi_if_get_handle(phba);
-	if (ret) {
+	/* update पूर्णांकerface_handle */
+	ret = beiscsi_अगर_get_handle(phba);
+	अगर (ret) अणु
 		beiscsi_log(phba, KERN_ERR, BEISCSI_LOG_CONFIG,
 			    "BS_%d : Getting Interface Handle Failed\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	nla_for_each_attr(attrib, data, dt_len, rm_len) {
-		iface_param = nla_data(attrib);
+	nla_क्रम_each_attr(attrib, data, dt_len, rm_len) अणु
+		अगरace_param = nla_data(attrib);
 
-		if (iface_param->param_type != ISCSI_NET_PARAM)
-			continue;
+		अगर (अगरace_param->param_type != ISCSI_NET_PARAM)
+			जारी;
 
 		/*
-		 * BE2ISCSI only supports 1 interface
+		 * BE2ISCSI only supports 1 पूर्णांकerface
 		 */
-		if (iface_param->iface_num) {
+		अगर (अगरace_param->अगरace_num) अणु
 			beiscsi_log(phba, KERN_ERR, BEISCSI_LOG_CONFIG,
 				    "BS_%d : Invalid iface_num %d."
 				    "Only iface_num 0 is supported.\n",
-				    iface_param->iface_num);
+				    अगरace_param->अगरace_num);
 
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
 		beiscsi_log(phba, KERN_INFO, BEISCSI_LOG_CONFIG,
 			    "BS_%d : %s.0 set param %d",
-			    (iface_param->iface_type == ISCSI_IFACE_TYPE_IPV4) ?
-			    "ipv4" : "ipv6", iface_param->param);
+			    (अगरace_param->अगरace_type == ISCSI_IFACE_TYPE_IPV4) ?
+			    "ipv4" : "ipv6", अगरace_param->param);
 
 		ret = -EPERM;
-		switch (iface_param->param) {
-		case ISCSI_NET_PARAM_VLAN_ENABLED:
-		case ISCSI_NET_PARAM_VLAN_TAG:
-			ret = beiscsi_iface_config_vlan(shost, iface_param);
-			break;
-		default:
-			switch (iface_param->iface_type) {
-			case ISCSI_IFACE_TYPE_IPV4:
-				ret = beiscsi_iface_config_ipv4(shost,
-								iface_param,
+		चयन (अगरace_param->param) अणु
+		हाल ISCSI_NET_PARAM_VLAN_ENABLED:
+		हाल ISCSI_NET_PARAM_VLAN_TAG:
+			ret = beiscsi_अगरace_config_vlan(shost, अगरace_param);
+			अवरोध;
+		शेष:
+			चयन (अगरace_param->अगरace_type) अणु
+			हाल ISCSI_IFACE_TYPE_IPV4:
+				ret = beiscsi_अगरace_config_ipv4(shost,
+								अगरace_param,
 								data, dt_len);
-				break;
-			case ISCSI_IFACE_TYPE_IPV6:
-				ret = beiscsi_iface_config_ipv6(shost,
-								iface_param,
+				अवरोध;
+			हाल ISCSI_IFACE_TYPE_IPV6:
+				ret = beiscsi_अगरace_config_ipv6(shost,
+								अगरace_param,
 								data, dt_len);
-				break;
-			}
-		}
+				अवरोध;
+			पूर्ण
+		पूर्ण
 
-		if (ret == -EPERM) {
+		अगर (ret == -EPERM) अणु
 			__beiscsi_log(phba, KERN_ERR,
 				      "BS_%d : %s.0 set param %d not permitted",
-				      (iface_param->iface_type ==
+				      (अगरace_param->अगरace_type ==
 				       ISCSI_IFACE_TYPE_IPV4) ? "ipv4" : "ipv6",
-				      iface_param->param);
+				      अगरace_param->param);
 			ret = 0;
-		}
-		if (ret)
-			break;
-	}
+		पूर्ण
+		अगर (ret)
+			अवरोध;
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int __beiscsi_iface_get_param(struct beiscsi_hba *phba,
-				     struct iscsi_iface *iface,
-				     int param, char *buf)
-{
-	struct be_cmd_get_if_info_resp *if_info;
-	int len, ip_type = BEISCSI_IP_TYPE_V4;
+अटल पूर्णांक __beiscsi_अगरace_get_param(काष्ठा beiscsi_hba *phba,
+				     काष्ठा iscsi_अगरace *अगरace,
+				     पूर्णांक param, अक्षर *buf)
+अणु
+	काष्ठा be_cmd_get_अगर_info_resp *अगर_info;
+	पूर्णांक len, ip_type = BEISCSI_IP_TYPE_V4;
 
-	if (iface->iface_type == ISCSI_IFACE_TYPE_IPV6)
+	अगर (अगरace->अगरace_type == ISCSI_IFACE_TYPE_IPV6)
 		ip_type = BEISCSI_IP_TYPE_V6;
 
-	len = beiscsi_if_get_info(phba, ip_type, &if_info);
-	if (len)
-		return len;
+	len = beiscsi_अगर_get_info(phba, ip_type, &अगर_info);
+	अगर (len)
+		वापस len;
 
-	switch (param) {
-	case ISCSI_NET_PARAM_IPV4_ADDR:
-		len = sprintf(buf, "%pI4\n", if_info->ip_addr.addr);
-		break;
-	case ISCSI_NET_PARAM_IPV6_ADDR:
-		len = sprintf(buf, "%pI6\n", if_info->ip_addr.addr);
-		break;
-	case ISCSI_NET_PARAM_IPV4_BOOTPROTO:
-		if (!if_info->dhcp_state)
-			len = sprintf(buf, "static\n");
-		else
-			len = sprintf(buf, "dhcp\n");
-		break;
-	case ISCSI_NET_PARAM_IPV4_SUBNET:
-		len = sprintf(buf, "%pI4\n", if_info->ip_addr.subnet_mask);
-		break;
-	case ISCSI_NET_PARAM_VLAN_ENABLED:
-		len = sprintf(buf, "%s\n",
-			      (if_info->vlan_priority == BEISCSI_VLAN_DISABLE) ?
+	चयन (param) अणु
+	हाल ISCSI_NET_PARAM_IPV4_ADDR:
+		len = प्र_लिखो(buf, "%pI4\n", अगर_info->ip_addr.addr);
+		अवरोध;
+	हाल ISCSI_NET_PARAM_IPV6_ADDR:
+		len = प्र_लिखो(buf, "%pI6\n", अगर_info->ip_addr.addr);
+		अवरोध;
+	हाल ISCSI_NET_PARAM_IPV4_BOOTPROTO:
+		अगर (!अगर_info->dhcp_state)
+			len = प्र_लिखो(buf, "static\n");
+		अन्यथा
+			len = प्र_लिखो(buf, "dhcp\n");
+		अवरोध;
+	हाल ISCSI_NET_PARAM_IPV4_SUBNET:
+		len = प्र_लिखो(buf, "%pI4\n", अगर_info->ip_addr.subnet_mask);
+		अवरोध;
+	हाल ISCSI_NET_PARAM_VLAN_ENABLED:
+		len = प्र_लिखो(buf, "%s\n",
+			      (अगर_info->vlan_priority == BEISCSI_VLAN_DISABLE) ?
 			      "disable" : "enable");
-		break;
-	case ISCSI_NET_PARAM_VLAN_ID:
-		if (if_info->vlan_priority == BEISCSI_VLAN_DISABLE)
+		अवरोध;
+	हाल ISCSI_NET_PARAM_VLAN_ID:
+		अगर (अगर_info->vlan_priority == BEISCSI_VLAN_DISABLE)
 			len = -EINVAL;
-		else
-			len = sprintf(buf, "%d\n",
-				      (if_info->vlan_priority &
+		अन्यथा
+			len = प्र_लिखो(buf, "%d\n",
+				      (अगर_info->vlan_priority &
 				       ISCSI_MAX_VLAN_ID));
-		break;
-	case ISCSI_NET_PARAM_VLAN_PRIORITY:
-		if (if_info->vlan_priority == BEISCSI_VLAN_DISABLE)
+		अवरोध;
+	हाल ISCSI_NET_PARAM_VLAN_PRIORITY:
+		अगर (अगर_info->vlan_priority == BEISCSI_VLAN_DISABLE)
 			len = -EINVAL;
-		else
-			len = sprintf(buf, "%d\n",
-				      ((if_info->vlan_priority >> 13) &
+		अन्यथा
+			len = प्र_लिखो(buf, "%d\n",
+				      ((अगर_info->vlan_priority >> 13) &
 				       ISCSI_MAX_VLAN_PRIORITY));
-		break;
-	default:
+		अवरोध;
+	शेष:
 		WARN_ON(1);
-	}
+	पूर्ण
 
-	kfree(if_info);
-	return len;
-}
+	kमुक्त(अगर_info);
+	वापस len;
+पूर्ण
 
-int beiscsi_iface_get_param(struct iscsi_iface *iface,
-			    enum iscsi_param_type param_type,
-			    int param, char *buf)
-{
-	struct Scsi_Host *shost = iscsi_iface_to_shost(iface);
-	struct beiscsi_hba *phba = iscsi_host_priv(shost);
-	struct be_cmd_get_def_gateway_resp gateway;
-	int len = -EPERM;
+पूर्णांक beiscsi_अगरace_get_param(काष्ठा iscsi_अगरace *अगरace,
+			    क्रमागत iscsi_param_type param_type,
+			    पूर्णांक param, अक्षर *buf)
+अणु
+	काष्ठा Scsi_Host *shost = iscsi_अगरace_to_shost(अगरace);
+	काष्ठा beiscsi_hba *phba = iscsi_host_priv(shost);
+	काष्ठा be_cmd_get_def_gateway_resp gateway;
+	पूर्णांक len = -EPERM;
 
-	if (param_type != ISCSI_NET_PARAM)
-		return 0;
-	if (!beiscsi_hba_is_online(phba)) {
+	अगर (param_type != ISCSI_NET_PARAM)
+		वापस 0;
+	अगर (!beiscsi_hba_is_online(phba)) अणु
 		beiscsi_log(phba, KERN_INFO, BEISCSI_LOG_CONFIG,
 			    "BS_%d : HBA in error 0x%lx\n", phba->state);
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 
-	switch (param) {
-	case ISCSI_NET_PARAM_IPV4_ADDR:
-	case ISCSI_NET_PARAM_IPV4_SUBNET:
-	case ISCSI_NET_PARAM_IPV4_BOOTPROTO:
-	case ISCSI_NET_PARAM_IPV6_ADDR:
-	case ISCSI_NET_PARAM_VLAN_ENABLED:
-	case ISCSI_NET_PARAM_VLAN_ID:
-	case ISCSI_NET_PARAM_VLAN_PRIORITY:
-		len = __beiscsi_iface_get_param(phba, iface, param, buf);
-		break;
-	case ISCSI_NET_PARAM_IFACE_ENABLE:
-		if (iface->iface_type == ISCSI_IFACE_TYPE_IPV4)
-			len = sprintf(buf, "%s\n",
-				      phba->ipv4_iface ? "enable" : "disable");
-		else if (iface->iface_type == ISCSI_IFACE_TYPE_IPV6)
-			len = sprintf(buf, "%s\n",
-				      phba->ipv6_iface ? "enable" : "disable");
-		break;
-	case ISCSI_NET_PARAM_IPV4_GW:
-		memset(&gateway, 0, sizeof(gateway));
-		len = beiscsi_if_get_gw(phba, BEISCSI_IP_TYPE_V4, &gateway);
-		if (!len)
-			len = sprintf(buf, "%pI4\n", &gateway.ip_addr.addr);
-		break;
-	}
+	चयन (param) अणु
+	हाल ISCSI_NET_PARAM_IPV4_ADDR:
+	हाल ISCSI_NET_PARAM_IPV4_SUBNET:
+	हाल ISCSI_NET_PARAM_IPV4_BOOTPROTO:
+	हाल ISCSI_NET_PARAM_IPV6_ADDR:
+	हाल ISCSI_NET_PARAM_VLAN_ENABLED:
+	हाल ISCSI_NET_PARAM_VLAN_ID:
+	हाल ISCSI_NET_PARAM_VLAN_PRIORITY:
+		len = __beiscsi_अगरace_get_param(phba, अगरace, param, buf);
+		अवरोध;
+	हाल ISCSI_NET_PARAM_IFACE_ENABLE:
+		अगर (अगरace->अगरace_type == ISCSI_IFACE_TYPE_IPV4)
+			len = प्र_लिखो(buf, "%s\n",
+				      phba->ipv4_अगरace ? "enable" : "disable");
+		अन्यथा अगर (अगरace->अगरace_type == ISCSI_IFACE_TYPE_IPV6)
+			len = प्र_लिखो(buf, "%s\n",
+				      phba->ipv6_अगरace ? "enable" : "disable");
+		अवरोध;
+	हाल ISCSI_NET_PARAM_IPV4_GW:
+		स_रखो(&gateway, 0, माप(gateway));
+		len = beiscsi_अगर_get_gw(phba, BEISCSI_IP_TYPE_V4, &gateway);
+		अगर (!len)
+			len = प्र_लिखो(buf, "%pI4\n", &gateway.ip_addr.addr);
+		अवरोध;
+	पूर्ण
 
-	return len;
-}
+	वापस len;
+पूर्ण
 
 /**
  * beiscsi_ep_get_param - get the iscsi parameter
- * @ep: pointer to iscsi ep
- * @param: parameter type identifier
- * @buf: buffer pointer
+ * @ep: poपूर्णांकer to iscsi ep
+ * @param: parameter type identअगरier
+ * @buf: buffer poपूर्णांकer
  *
- * returns iscsi parameter
+ * वापसs iscsi parameter
  */
-int beiscsi_ep_get_param(struct iscsi_endpoint *ep,
-			   enum iscsi_param param, char *buf)
-{
-	struct beiscsi_endpoint *beiscsi_ep = ep->dd_data;
-	int len;
+पूर्णांक beiscsi_ep_get_param(काष्ठा iscsi_endpoपूर्णांक *ep,
+			   क्रमागत iscsi_param param, अक्षर *buf)
+अणु
+	काष्ठा beiscsi_endpoपूर्णांक *beiscsi_ep = ep->dd_data;
+	पूर्णांक len;
 
 	beiscsi_log(beiscsi_ep->phba, KERN_INFO,
 		    BEISCSI_LOG_CONFIG,
 		    "BS_%d : In beiscsi_ep_get_param,"
 		    " param= %d\n", param);
 
-	switch (param) {
-	case ISCSI_PARAM_CONN_PORT:
-		len = sprintf(buf, "%hu\n", beiscsi_ep->dst_tcpport);
-		break;
-	case ISCSI_PARAM_CONN_ADDRESS:
-		if (beiscsi_ep->ip_type == BEISCSI_IP_TYPE_V4)
-			len = sprintf(buf, "%pI4\n", &beiscsi_ep->dst_addr);
-		else
-			len = sprintf(buf, "%pI6\n", &beiscsi_ep->dst6_addr);
-		break;
-	default:
+	चयन (param) अणु
+	हाल ISCSI_PARAM_CONN_PORT:
+		len = प्र_लिखो(buf, "%hu\n", beiscsi_ep->dst_tcpport);
+		अवरोध;
+	हाल ISCSI_PARAM_CONN_ADDRESS:
+		अगर (beiscsi_ep->ip_type == BEISCSI_IP_TYPE_V4)
+			len = प्र_लिखो(buf, "%pI4\n", &beiscsi_ep->dst_addr);
+		अन्यथा
+			len = प्र_लिखो(buf, "%pI6\n", &beiscsi_ep->dst6_addr);
+		अवरोध;
+	शेष:
 		len = -EPERM;
-	}
-	return len;
-}
+	पूर्ण
+	वापस len;
+पूर्ण
 
-int beiscsi_set_param(struct iscsi_cls_conn *cls_conn,
-		      enum iscsi_param param, char *buf, int buflen)
-{
-	struct iscsi_conn *conn = cls_conn->dd_data;
-	struct iscsi_session *session = conn->session;
-	struct beiscsi_hba *phba = NULL;
-	int ret;
+पूर्णांक beiscsi_set_param(काष्ठा iscsi_cls_conn *cls_conn,
+		      क्रमागत iscsi_param param, अक्षर *buf, पूर्णांक buflen)
+अणु
+	काष्ठा iscsi_conn *conn = cls_conn->dd_data;
+	काष्ठा iscsi_session *session = conn->session;
+	काष्ठा beiscsi_hba *phba = शून्य;
+	पूर्णांक ret;
 
-	phba = ((struct beiscsi_conn *)conn->dd_data)->phba;
+	phba = ((काष्ठा beiscsi_conn *)conn->dd_data)->phba;
 	beiscsi_log(phba, KERN_INFO, BEISCSI_LOG_CONFIG,
 		    "BS_%d : In beiscsi_conn_set_param,"
 		    " param= %d\n", param);
 
 	ret = iscsi_set_param(cls_conn, param, buf, buflen);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 	/*
 	 * If userspace tried to set the value to higher than we can
 	 * support override here.
 	 */
-	switch (param) {
-	case ISCSI_PARAM_FIRST_BURST:
-		if (session->first_burst > 8192)
+	चयन (param) अणु
+	हाल ISCSI_PARAM_FIRST_BURST:
+		अगर (session->first_burst > 8192)
 			session->first_burst = 8192;
-		break;
-	case ISCSI_PARAM_MAX_RECV_DLENGTH:
-		if (conn->max_recv_dlength > 65536)
+		अवरोध;
+	हाल ISCSI_PARAM_MAX_RECV_DLENGTH:
+		अगर (conn->max_recv_dlength > 65536)
 			conn->max_recv_dlength = 65536;
-		break;
-	case ISCSI_PARAM_MAX_BURST:
-		if (session->max_burst > 262144)
+		अवरोध;
+	हाल ISCSI_PARAM_MAX_BURST:
+		अगर (session->max_burst > 262144)
 			session->max_burst = 262144;
-		break;
-	case ISCSI_PARAM_MAX_XMIT_DLENGTH:
-		if (conn->max_xmit_dlength > 65536)
+		अवरोध;
+	हाल ISCSI_PARAM_MAX_XMIT_DLENGTH:
+		अगर (conn->max_xmit_dlength > 65536)
 			conn->max_xmit_dlength = 65536;
 		fallthrough;
-	default:
-		return 0;
-	}
+	शेष:
+		वापस 0;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * beiscsi_get_port_state - Get the Port State
- * @shost : pointer to scsi_host structure
+ * @shost : poपूर्णांकer to scsi_host काष्ठाure
  *
  */
-static void beiscsi_get_port_state(struct Scsi_Host *shost)
-{
-	struct beiscsi_hba *phba = iscsi_host_priv(shost);
-	struct iscsi_cls_host *ihost = shost->shost_data;
+अटल व्योम beiscsi_get_port_state(काष्ठा Scsi_Host *shost)
+अणु
+	काष्ठा beiscsi_hba *phba = iscsi_host_priv(shost);
+	काष्ठा iscsi_cls_host *ihost = shost->shost_data;
 
 	ihost->port_state = test_bit(BEISCSI_HBA_LINK_UP, &phba->state) ?
 		ISCSI_PORT_STATE_UP : ISCSI_PORT_STATE_DOWN;
-}
+पूर्ण
 
 /**
  * beiscsi_get_port_speed  - Get the Port Speed from Adapter
- * @shost : pointer to scsi_host structure
+ * @shost : poपूर्णांकer to scsi_host काष्ठाure
  *
  */
-static void beiscsi_get_port_speed(struct Scsi_Host *shost)
-{
-	struct beiscsi_hba *phba = iscsi_host_priv(shost);
-	struct iscsi_cls_host *ihost = shost->shost_data;
+अटल व्योम beiscsi_get_port_speed(काष्ठा Scsi_Host *shost)
+अणु
+	काष्ठा beiscsi_hba *phba = iscsi_host_priv(shost);
+	काष्ठा iscsi_cls_host *ihost = shost->shost_data;
 
-	switch (phba->port_speed) {
-	case BE2ISCSI_LINK_SPEED_10MBPS:
+	चयन (phba->port_speed) अणु
+	हाल BE2ISCSI_LINK_SPEED_10MBPS:
 		ihost->port_speed = ISCSI_PORT_SPEED_10MBPS;
-		break;
-	case BE2ISCSI_LINK_SPEED_100MBPS:
+		अवरोध;
+	हाल BE2ISCSI_LINK_SPEED_100MBPS:
 		ihost->port_speed = ISCSI_PORT_SPEED_100MBPS;
-		break;
-	case BE2ISCSI_LINK_SPEED_1GBPS:
+		अवरोध;
+	हाल BE2ISCSI_LINK_SPEED_1GBPS:
 		ihost->port_speed = ISCSI_PORT_SPEED_1GBPS;
-		break;
-	case BE2ISCSI_LINK_SPEED_10GBPS:
+		अवरोध;
+	हाल BE2ISCSI_LINK_SPEED_10GBPS:
 		ihost->port_speed = ISCSI_PORT_SPEED_10GBPS;
-		break;
-	case BE2ISCSI_LINK_SPEED_25GBPS:
+		अवरोध;
+	हाल BE2ISCSI_LINK_SPEED_25GBPS:
 		ihost->port_speed = ISCSI_PORT_SPEED_25GBPS;
-		break;
-	case BE2ISCSI_LINK_SPEED_40GBPS:
+		अवरोध;
+	हाल BE2ISCSI_LINK_SPEED_40GBPS:
 		ihost->port_speed = ISCSI_PORT_SPEED_40GBPS;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		ihost->port_speed = ISCSI_PORT_SPEED_UNKNOWN;
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
  * beiscsi_get_host_param - get the iscsi parameter
- * @shost: pointer to scsi_host structure
- * @param: parameter type identifier
- * @buf: buffer pointer
+ * @shost: poपूर्णांकer to scsi_host काष्ठाure
+ * @param: parameter type identअगरier
+ * @buf: buffer poपूर्णांकer
  *
  */
-int beiscsi_get_host_param(struct Scsi_Host *shost,
-			   enum iscsi_host_param param, char *buf)
-{
-	struct beiscsi_hba *phba = iscsi_host_priv(shost);
-	int status = 0;
+पूर्णांक beiscsi_get_host_param(काष्ठा Scsi_Host *shost,
+			   क्रमागत iscsi_host_param param, अक्षर *buf)
+अणु
+	काष्ठा beiscsi_hba *phba = iscsi_host_priv(shost);
+	पूर्णांक status = 0;
 
-	if (!beiscsi_hba_is_online(phba)) {
+	अगर (!beiscsi_hba_is_online(phba)) अणु
 		beiscsi_log(phba, KERN_INFO, BEISCSI_LOG_CONFIG,
 			    "BS_%d : HBA in error 0x%lx\n", phba->state);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 	beiscsi_log(phba, KERN_INFO, BEISCSI_LOG_CONFIG,
 		    "BS_%d : In beiscsi_get_host_param, param = %d\n", param);
 
-	switch (param) {
-	case ISCSI_HOST_PARAM_HWADDRESS:
+	चयन (param) अणु
+	हाल ISCSI_HOST_PARAM_HWADDRESS:
 		status = beiscsi_get_macaddr(buf, phba);
-		if (status < 0) {
+		अगर (status < 0) अणु
 			beiscsi_log(phba, KERN_ERR, BEISCSI_LOG_CONFIG,
 				    "BS_%d : beiscsi_get_macaddr Failed\n");
-			return 0;
-		}
-		break;
-	case ISCSI_HOST_PARAM_INITIATOR_NAME:
+			वापस 0;
+		पूर्ण
+		अवरोध;
+	हाल ISCSI_HOST_PARAM_INITIATOR_NAME:
 		/* try fetching user configured name first */
 		status = beiscsi_get_initiator_name(phba, buf, true);
-		if (status < 0) {
+		अगर (status < 0) अणु
 			status = beiscsi_get_initiator_name(phba, buf, false);
-			if (status < 0) {
+			अगर (status < 0) अणु
 				beiscsi_log(phba, KERN_ERR, BEISCSI_LOG_CONFIG,
 					    "BS_%d : Retrieving Initiator Name Failed\n");
 				status = 0;
-			}
-		}
-		break;
-	case ISCSI_HOST_PARAM_PORT_STATE:
+			पूर्ण
+		पूर्ण
+		अवरोध;
+	हाल ISCSI_HOST_PARAM_PORT_STATE:
 		beiscsi_get_port_state(shost);
-		status = sprintf(buf, "%s\n", iscsi_get_port_state_name(shost));
-		break;
-	case ISCSI_HOST_PARAM_PORT_SPEED:
+		status = प्र_लिखो(buf, "%s\n", iscsi_get_port_state_name(shost));
+		अवरोध;
+	हाल ISCSI_HOST_PARAM_PORT_SPEED:
 		beiscsi_get_port_speed(shost);
-		status = sprintf(buf, "%s\n", iscsi_get_port_speed_name(shost));
-		break;
-	default:
-		return iscsi_host_get_param(shost, param, buf);
-	}
-	return status;
-}
+		status = प्र_लिखो(buf, "%s\n", iscsi_get_port_speed_name(shost));
+		अवरोध;
+	शेष:
+		वापस iscsi_host_get_param(shost, param, buf);
+	पूर्ण
+	वापस status;
+पूर्ण
 
-int beiscsi_get_macaddr(char *buf, struct beiscsi_hba *phba)
-{
-	struct be_cmd_get_nic_conf_resp resp;
-	int rc;
+पूर्णांक beiscsi_get_macaddr(अक्षर *buf, काष्ठा beiscsi_hba *phba)
+अणु
+	काष्ठा be_cmd_get_nic_conf_resp resp;
+	पूर्णांक rc;
 
-	if (phba->mac_addr_set)
-		return sysfs_format_mac(buf, phba->mac_address, ETH_ALEN);
+	अगर (phba->mac_addr_set)
+		वापस sysfs_क्रमmat_mac(buf, phba->mac_address, ETH_ALEN);
 
-	memset(&resp, 0, sizeof(resp));
+	स_रखो(&resp, 0, माप(resp));
 	rc = mgmt_get_nic_conf(phba, &resp);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
 	phba->mac_addr_set = true;
-	memcpy(phba->mac_address, resp.mac_address, ETH_ALEN);
-	return sysfs_format_mac(buf, phba->mac_address, ETH_ALEN);
-}
+	स_नकल(phba->mac_address, resp.mac_address, ETH_ALEN);
+	वापस sysfs_क्रमmat_mac(buf, phba->mac_address, ETH_ALEN);
+पूर्ण
 
 /**
  * beiscsi_conn_get_stats - get the iscsi stats
- * @cls_conn: pointer to iscsi cls conn
- * @stats: pointer to iscsi_stats structure
+ * @cls_conn: poपूर्णांकer to iscsi cls conn
+ * @stats: poपूर्णांकer to iscsi_stats काष्ठाure
  *
- * returns iscsi stats
+ * वापसs iscsi stats
  */
-void beiscsi_conn_get_stats(struct iscsi_cls_conn *cls_conn,
-			    struct iscsi_stats *stats)
-{
-	struct iscsi_conn *conn = cls_conn->dd_data;
-	struct beiscsi_hba *phba = NULL;
+व्योम beiscsi_conn_get_stats(काष्ठा iscsi_cls_conn *cls_conn,
+			    काष्ठा iscsi_stats *stats)
+अणु
+	काष्ठा iscsi_conn *conn = cls_conn->dd_data;
+	काष्ठा beiscsi_hba *phba = शून्य;
 
-	phba = ((struct beiscsi_conn *)conn->dd_data)->phba;
+	phba = ((काष्ठा beiscsi_conn *)conn->dd_data)->phba;
 	beiscsi_log(phba, KERN_INFO, BEISCSI_LOG_CONFIG,
 		    "BS_%d : In beiscsi_conn_get_stats\n");
 
@@ -830,105 +831,105 @@ void beiscsi_conn_get_stats(struct iscsi_cls_conn *cls_conn,
 	stats->scsirsp_pdus = conn->scsirsp_pdus_cnt;
 	stats->scsicmd_pdus = conn->scsicmd_pdus_cnt;
 	stats->datain_pdus = conn->datain_pdus_cnt;
-	stats->tmfrsp_pdus = conn->tmfrsp_pdus_cnt;
-	stats->tmfcmd_pdus = conn->tmfcmd_pdus_cnt;
+	stats->पंचांगfrsp_pdus = conn->पंचांगfrsp_pdus_cnt;
+	stats->पंचांगfcmd_pdus = conn->पंचांगfcmd_pdus_cnt;
 	stats->r2t_pdus = conn->r2t_pdus_cnt;
 	stats->digest_err = 0;
-	stats->timeout_err = 0;
+	stats->समयout_err = 0;
 	stats->custom_length = 1;
-	strcpy(stats->custom[0].desc, "eh_abort_cnt");
-	stats->custom[0].value = conn->eh_abort_cnt;
-}
+	म_नकल(stats->custom[0].desc, "eh_abort_cnt");
+	stats->custom[0].value = conn->eh_पात_cnt;
+पूर्ण
 
 /**
- * beiscsi_set_params_for_offld - get the parameters for offload
- * @beiscsi_conn: pointer to beiscsi_conn
- * @params: pointer to offload_params structure
+ * beiscsi_set_params_क्रम_offld - get the parameters क्रम offload
+ * @beiscsi_conn: poपूर्णांकer to beiscsi_conn
+ * @params: poपूर्णांकer to offload_params काष्ठाure
  */
-static void  beiscsi_set_params_for_offld(struct beiscsi_conn *beiscsi_conn,
-					  struct beiscsi_offload_params *params)
-{
-	struct iscsi_conn *conn = beiscsi_conn->conn;
-	struct iscsi_session *session = conn->session;
+अटल व्योम  beiscsi_set_params_क्रम_offld(काष्ठा beiscsi_conn *beiscsi_conn,
+					  काष्ठा beiscsi_offload_params *params)
+अणु
+	काष्ठा iscsi_conn *conn = beiscsi_conn->conn;
+	काष्ठा iscsi_session *session = conn->session;
 
-	AMAP_SET_BITS(struct amap_beiscsi_offload_params, max_burst_length,
+	AMAP_SET_BITS(काष्ठा amap_beiscsi_offload_params, max_burst_length,
 		      params, session->max_burst);
-	AMAP_SET_BITS(struct amap_beiscsi_offload_params,
+	AMAP_SET_BITS(काष्ठा amap_beiscsi_offload_params,
 		      max_send_data_segment_length, params,
 		      conn->max_xmit_dlength);
-	AMAP_SET_BITS(struct amap_beiscsi_offload_params, first_burst_length,
+	AMAP_SET_BITS(काष्ठा amap_beiscsi_offload_params, first_burst_length,
 		      params, session->first_burst);
-	AMAP_SET_BITS(struct amap_beiscsi_offload_params, erl, params,
+	AMAP_SET_BITS(काष्ठा amap_beiscsi_offload_params, erl, params,
 		      session->erl);
-	AMAP_SET_BITS(struct amap_beiscsi_offload_params, dde, params,
+	AMAP_SET_BITS(काष्ठा amap_beiscsi_offload_params, dde, params,
 		      conn->datadgst_en);
-	AMAP_SET_BITS(struct amap_beiscsi_offload_params, hde, params,
+	AMAP_SET_BITS(काष्ठा amap_beiscsi_offload_params, hde, params,
 		      conn->hdrdgst_en);
-	AMAP_SET_BITS(struct amap_beiscsi_offload_params, ir2t, params,
+	AMAP_SET_BITS(काष्ठा amap_beiscsi_offload_params, ir2t, params,
 		      session->initial_r2t_en);
-	AMAP_SET_BITS(struct amap_beiscsi_offload_params, imd, params,
+	AMAP_SET_BITS(काष्ठा amap_beiscsi_offload_params, imd, params,
 		      session->imm_data_en);
-	AMAP_SET_BITS(struct amap_beiscsi_offload_params,
+	AMAP_SET_BITS(काष्ठा amap_beiscsi_offload_params,
 		      data_seq_inorder, params,
 		      session->dataseq_inorder_en);
-	AMAP_SET_BITS(struct amap_beiscsi_offload_params,
+	AMAP_SET_BITS(काष्ठा amap_beiscsi_offload_params,
 		      pdu_seq_inorder, params,
 		      session->pdu_inorder_en);
-	AMAP_SET_BITS(struct amap_beiscsi_offload_params, max_r2t, params,
+	AMAP_SET_BITS(काष्ठा amap_beiscsi_offload_params, max_r2t, params,
 		      session->max_r2t);
-	AMAP_SET_BITS(struct amap_beiscsi_offload_params, exp_statsn, params,
+	AMAP_SET_BITS(काष्ठा amap_beiscsi_offload_params, exp_statsn, params,
 		      (conn->exp_statsn - 1));
-	AMAP_SET_BITS(struct amap_beiscsi_offload_params,
+	AMAP_SET_BITS(काष्ठा amap_beiscsi_offload_params,
 		      max_recv_data_segment_length, params,
 		      conn->max_recv_dlength);
 
-}
+पूर्ण
 
 /**
  * beiscsi_conn_start - offload of session to chip
- * @cls_conn: pointer to beiscsi_conn
+ * @cls_conn: poपूर्णांकer to beiscsi_conn
  */
-int beiscsi_conn_start(struct iscsi_cls_conn *cls_conn)
-{
-	struct iscsi_conn *conn = cls_conn->dd_data;
-	struct beiscsi_conn *beiscsi_conn = conn->dd_data;
-	struct beiscsi_endpoint *beiscsi_ep;
-	struct beiscsi_offload_params params;
-	struct beiscsi_hba *phba;
+पूर्णांक beiscsi_conn_start(काष्ठा iscsi_cls_conn *cls_conn)
+अणु
+	काष्ठा iscsi_conn *conn = cls_conn->dd_data;
+	काष्ठा beiscsi_conn *beiscsi_conn = conn->dd_data;
+	काष्ठा beiscsi_endpoपूर्णांक *beiscsi_ep;
+	काष्ठा beiscsi_offload_params params;
+	काष्ठा beiscsi_hba *phba;
 
-	phba = ((struct beiscsi_conn *)conn->dd_data)->phba;
+	phba = ((काष्ठा beiscsi_conn *)conn->dd_data)->phba;
 
-	if (!beiscsi_hba_is_online(phba)) {
+	अगर (!beiscsi_hba_is_online(phba)) अणु
 		beiscsi_log(phba, KERN_INFO, BEISCSI_LOG_CONFIG,
 			    "BS_%d : HBA in error 0x%lx\n", phba->state);
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 	beiscsi_log(beiscsi_conn->phba, KERN_INFO, BEISCSI_LOG_CONFIG,
 		    "BS_%d : In beiscsi_conn_start\n");
 
-	memset(&params, 0, sizeof(struct beiscsi_offload_params));
+	स_रखो(&params, 0, माप(काष्ठा beiscsi_offload_params));
 	beiscsi_ep = beiscsi_conn->ep;
-	if (!beiscsi_ep)
+	अगर (!beiscsi_ep)
 		beiscsi_log(beiscsi_conn->phba, KERN_ERR,
 			    BEISCSI_LOG_CONFIG,
 			    "BS_%d : In beiscsi_conn_start , no beiscsi_ep\n");
 
 	beiscsi_conn->login_in_progress = 0;
-	beiscsi_set_params_for_offld(beiscsi_conn, &params);
+	beiscsi_set_params_क्रम_offld(beiscsi_conn, &params);
 	beiscsi_offload_connection(beiscsi_conn, &params);
 	iscsi_conn_start(cls_conn);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * beiscsi_get_cid - Allocate a cid
  * @phba: The phba instance
  */
-static int beiscsi_get_cid(struct beiscsi_hba *phba)
-{
-	uint16_t cid_avlbl_ulp0, cid_avlbl_ulp1;
-	unsigned short cid, cid_from_ulp;
-	struct ulp_cid_info *cid_info;
+अटल पूर्णांक beiscsi_get_cid(काष्ठा beiscsi_hba *phba)
+अणु
+	uपूर्णांक16_t cid_avlbl_ulp0, cid_avlbl_ulp1;
+	अचिन्हित लघु cid, cid_from_ulp;
+	काष्ठा ulp_cid_info *cid_info;
 
 	/* Find the ULP which has more CID available */
 	cid_avlbl_ulp0 = (phba->cid_array_info[BEISCSI_ULP0]) ?
@@ -939,40 +940,40 @@ static int beiscsi_get_cid(struct beiscsi_hba *phba)
 			BEISCSI_ULP0 : BEISCSI_ULP1;
 	/**
 	 * If iSCSI protocol is loaded only on ULP 0, and when cid_avlbl_ulp
-	 * is ZERO for both, ULP 1 is returned.
-	 * Check if ULP is loaded before getting new CID.
+	 * is ZERO क्रम both, ULP 1 is वापसed.
+	 * Check अगर ULP is loaded beक्रमe getting new CID.
 	 */
-	if (!test_bit(cid_from_ulp, (void *)&phba->fw_config.ulp_supported))
-		return BE_INVALID_CID;
+	अगर (!test_bit(cid_from_ulp, (व्योम *)&phba->fw_config.ulp_supported))
+		वापस BE_INVALID_CID;
 
 	cid_info = phba->cid_array_info[cid_from_ulp];
 	cid = cid_info->cid_array[cid_info->cid_alloc];
-	if (!cid_info->avlbl_cids || cid == BE_INVALID_CID) {
+	अगर (!cid_info->avlbl_cids || cid == BE_INVALID_CID) अणु
 		__beiscsi_log(phba, KERN_ERR,
 				"BS_%d : failed to get cid: available %u:%u\n",
-				cid_info->avlbl_cids, cid_info->cid_free);
-		return BE_INVALID_CID;
-	}
+				cid_info->avlbl_cids, cid_info->cid_मुक्त);
+		वापस BE_INVALID_CID;
+	पूर्ण
 	/* empty the slot */
 	cid_info->cid_array[cid_info->cid_alloc++] = BE_INVALID_CID;
-	if (cid_info->cid_alloc == BEISCSI_GET_CID_COUNT(phba, cid_from_ulp))
+	अगर (cid_info->cid_alloc == BEISCSI_GET_CID_COUNT(phba, cid_from_ulp))
 		cid_info->cid_alloc = 0;
 	cid_info->avlbl_cids--;
-	return cid;
-}
+	वापस cid;
+पूर्ण
 
 /**
  * beiscsi_put_cid - Free the cid
- * @phba: The phba for which the cid is being freed
- * @cid: The cid to free
+ * @phba: The phba क्रम which the cid is being मुक्तd
+ * @cid: The cid to मुक्त
  */
-static void beiscsi_put_cid(struct beiscsi_hba *phba, unsigned short cid)
-{
-	uint16_t cri_index = BE_GET_CRI_FROM_CID(cid);
-	struct hwi_wrb_context *pwrb_context;
-	struct hwi_controller *phwi_ctrlr;
-	struct ulp_cid_info *cid_info;
-	uint16_t cid_post_ulp;
+अटल व्योम beiscsi_put_cid(काष्ठा beiscsi_hba *phba, अचिन्हित लघु cid)
+अणु
+	uपूर्णांक16_t cri_index = BE_GET_CRI_FROM_CID(cid);
+	काष्ठा hwi_wrb_context *pwrb_context;
+	काष्ठा hwi_controller *phwi_ctrlr;
+	काष्ठा ulp_cid_info *cid_info;
+	uपूर्णांक16_t cid_post_ulp;
 
 	phwi_ctrlr = phba->phwi_ctrlr;
 	pwrb_context = &phwi_ctrlr->wrb_context[cri_index];
@@ -980,82 +981,82 @@ static void beiscsi_put_cid(struct beiscsi_hba *phba, unsigned short cid)
 
 	cid_info = phba->cid_array_info[cid_post_ulp];
 	/* fill only in empty slot */
-	if (cid_info->cid_array[cid_info->cid_free] != BE_INVALID_CID) {
+	अगर (cid_info->cid_array[cid_info->cid_मुक्त] != BE_INVALID_CID) अणु
 		__beiscsi_log(phba, KERN_ERR,
 			      "BS_%d : failed to put cid %u: available %u:%u\n",
-			      cid, cid_info->avlbl_cids, cid_info->cid_free);
-		return;
-	}
-	cid_info->cid_array[cid_info->cid_free++] = cid;
-	if (cid_info->cid_free == BEISCSI_GET_CID_COUNT(phba, cid_post_ulp))
-		cid_info->cid_free = 0;
+			      cid, cid_info->avlbl_cids, cid_info->cid_मुक्त);
+		वापस;
+	पूर्ण
+	cid_info->cid_array[cid_info->cid_मुक्त++] = cid;
+	अगर (cid_info->cid_मुक्त == BEISCSI_GET_CID_COUNT(phba, cid_post_ulp))
+		cid_info->cid_मुक्त = 0;
 	cid_info->avlbl_cids++;
-}
+पूर्ण
 
 /**
- * beiscsi_free_ep - free endpoint
- * @beiscsi_ep: pointer to device endpoint struct
+ * beiscsi_मुक्त_ep - मुक्त endpoपूर्णांक
+ * @beiscsi_ep: poपूर्णांकer to device endpoपूर्णांक काष्ठा
  */
-static void beiscsi_free_ep(struct beiscsi_endpoint *beiscsi_ep)
-{
-	struct beiscsi_hba *phba = beiscsi_ep->phba;
-	struct beiscsi_conn *beiscsi_conn;
+अटल व्योम beiscsi_मुक्त_ep(काष्ठा beiscsi_endpoपूर्णांक *beiscsi_ep)
+अणु
+	काष्ठा beiscsi_hba *phba = beiscsi_ep->phba;
+	काष्ठा beiscsi_conn *beiscsi_conn;
 
 	beiscsi_put_cid(phba, beiscsi_ep->ep_cid);
-	beiscsi_ep->phba = NULL;
-	/* clear this to track freeing in beiscsi_ep_disconnect */
-	phba->ep_array[BE_GET_CRI_FROM_CID(beiscsi_ep->ep_cid)] = NULL;
+	beiscsi_ep->phba = शून्य;
+	/* clear this to track मुक्तing in beiscsi_ep_disconnect */
+	phba->ep_array[BE_GET_CRI_FROM_CID(beiscsi_ep->ep_cid)] = शून्य;
 
 	/**
-	 * Check if any connection resource allocated by driver
-	 * is to be freed.This case occurs when target redirection
-	 * or connection retry is done.
+	 * Check अगर any connection resource allocated by driver
+	 * is to be मुक्तd.This हाल occurs when target redirection
+	 * or connection retry is करोne.
 	 **/
-	if (!beiscsi_ep->conn)
-		return;
+	अगर (!beiscsi_ep->conn)
+		वापस;
 
 	beiscsi_conn = beiscsi_ep->conn;
 	/**
 	 * Break ep->conn link here so that completions after
 	 * this are ignored.
 	 */
-	beiscsi_ep->conn = NULL;
-	if (beiscsi_conn->login_in_progress) {
-		beiscsi_free_mgmt_task_handles(beiscsi_conn,
+	beiscsi_ep->conn = शून्य;
+	अगर (beiscsi_conn->login_in_progress) अणु
+		beiscsi_मुक्त_mgmt_task_handles(beiscsi_conn,
 					       beiscsi_conn->task);
 		beiscsi_conn->login_in_progress = 0;
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
- * beiscsi_open_conn - Ask FW to open a TCP connection
- * @ep: pointer to device endpoint struct
+ * beiscsi_खोलो_conn - Ask FW to खोलो a TCP connection
+ * @ep: poपूर्णांकer to device endpoपूर्णांक काष्ठा
  * @src_addr: The source IP address
  * @dst_addr: The Destination  IP address
  * @non_blocking: blocking or non-blocking call
  *
- * Asks the FW to open a TCP connection
+ * Asks the FW to खोलो a TCP connection
  */
-static int beiscsi_open_conn(struct iscsi_endpoint *ep,
-			     struct sockaddr *src_addr,
-			     struct sockaddr *dst_addr, int non_blocking)
-{
-	struct beiscsi_endpoint *beiscsi_ep = ep->dd_data;
-	struct beiscsi_hba *phba = beiscsi_ep->phba;
-	struct tcp_connect_and_offload_out *ptcpcnct_out;
-	struct be_dma_mem nonemb_cmd;
-	unsigned int tag, req_memsize;
-	int ret = -ENOMEM;
+अटल पूर्णांक beiscsi_खोलो_conn(काष्ठा iscsi_endpoपूर्णांक *ep,
+			     काष्ठा sockaddr *src_addr,
+			     काष्ठा sockaddr *dst_addr, पूर्णांक non_blocking)
+अणु
+	काष्ठा beiscsi_endpoपूर्णांक *beiscsi_ep = ep->dd_data;
+	काष्ठा beiscsi_hba *phba = beiscsi_ep->phba;
+	काष्ठा tcp_connect_and_offload_out *ptcpcnct_out;
+	काष्ठा be_dma_mem nonemb_cmd;
+	अचिन्हित पूर्णांक tag, req_memsize;
+	पूर्णांक ret = -ENOMEM;
 
 	beiscsi_log(phba, KERN_INFO, BEISCSI_LOG_CONFIG,
 		    "BS_%d : In beiscsi_open_conn\n");
 
 	beiscsi_ep->ep_cid = beiscsi_get_cid(phba);
-	if (beiscsi_ep->ep_cid == BE_INVALID_CID) {
+	अगर (beiscsi_ep->ep_cid == BE_INVALID_CID) अणु
 		beiscsi_log(phba, KERN_ERR, BEISCSI_LOG_CONFIG,
 			    "BS_%d : No free cid available\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	beiscsi_log(phba, KERN_INFO, BEISCSI_LOG_CONFIG,
 		    "BS_%d : In beiscsi_open_conn, ep_cid=%d\n",
@@ -1066,236 +1067,236 @@ static int beiscsi_open_conn(struct iscsi_endpoint *ep,
 
 	beiscsi_ep->cid_vld = 0;
 
-	if (is_chip_be2_be3r(phba))
-		req_memsize = sizeof(struct tcp_connect_and_offload_in);
-	else
-		req_memsize = sizeof(struct tcp_connect_and_offload_in_v1);
+	अगर (is_chip_be2_be3r(phba))
+		req_memsize = माप(काष्ठा tcp_connect_and_offload_in);
+	अन्यथा
+		req_memsize = माप(काष्ठा tcp_connect_and_offload_in_v1);
 
 	nonemb_cmd.va = dma_alloc_coherent(&phba->ctrl.pdev->dev,
 				req_memsize,
 				&nonemb_cmd.dma, GFP_KERNEL);
-	if (nonemb_cmd.va == NULL) {
+	अगर (nonemb_cmd.va == शून्य) अणु
 
 		beiscsi_log(phba, KERN_ERR, BEISCSI_LOG_CONFIG,
 			    "BS_%d : Failed to allocate memory for"
 			    " mgmt_open_connection\n");
 
-		beiscsi_free_ep(beiscsi_ep);
-		return -ENOMEM;
-	}
+		beiscsi_मुक्त_ep(beiscsi_ep);
+		वापस -ENOMEM;
+	पूर्ण
 	nonemb_cmd.size = req_memsize;
-	memset(nonemb_cmd.va, 0, nonemb_cmd.size);
-	tag = mgmt_open_connection(phba, dst_addr, beiscsi_ep, &nonemb_cmd);
-	if (!tag) {
+	स_रखो(nonemb_cmd.va, 0, nonemb_cmd.size);
+	tag = mgmt_खोलो_connection(phba, dst_addr, beiscsi_ep, &nonemb_cmd);
+	अगर (!tag) अणु
 		beiscsi_log(phba, KERN_ERR, BEISCSI_LOG_CONFIG,
 			    "BS_%d : mgmt_open_connection Failed for cid=%d\n",
 			    beiscsi_ep->ep_cid);
 
-		dma_free_coherent(&phba->ctrl.pdev->dev, nonemb_cmd.size,
+		dma_मुक्त_coherent(&phba->ctrl.pdev->dev, nonemb_cmd.size,
 				    nonemb_cmd.va, nonemb_cmd.dma);
-		beiscsi_free_ep(beiscsi_ep);
-		return -EAGAIN;
-	}
+		beiscsi_मुक्त_ep(beiscsi_ep);
+		वापस -EAGAIN;
+	पूर्ण
 
-	ret = beiscsi_mccq_compl_wait(phba, tag, NULL, &nonemb_cmd);
-	if (ret) {
+	ret = beiscsi_mccq_compl_रुको(phba, tag, शून्य, &nonemb_cmd);
+	अगर (ret) अणु
 		beiscsi_log(phba, KERN_ERR,
 			    BEISCSI_LOG_CONFIG | BEISCSI_LOG_MBOX,
 			    "BS_%d : mgmt_open_connection Failed");
 
-		if (ret != -EBUSY)
-			dma_free_coherent(&phba->ctrl.pdev->dev,
+		अगर (ret != -EBUSY)
+			dma_मुक्त_coherent(&phba->ctrl.pdev->dev,
 					nonemb_cmd.size, nonemb_cmd.va,
 					nonemb_cmd.dma);
 
-		beiscsi_free_ep(beiscsi_ep);
-		return ret;
-	}
+		beiscsi_मुक्त_ep(beiscsi_ep);
+		वापस ret;
+	पूर्ण
 
-	ptcpcnct_out = (struct tcp_connect_and_offload_out *)nonemb_cmd.va;
+	ptcpcnct_out = (काष्ठा tcp_connect_and_offload_out *)nonemb_cmd.va;
 	beiscsi_ep = ep->dd_data;
 	beiscsi_ep->fw_handle = ptcpcnct_out->connection_handle;
 	beiscsi_ep->cid_vld = 1;
 	beiscsi_log(phba, KERN_INFO, BEISCSI_LOG_CONFIG,
 		    "BS_%d : mgmt_open_connection Success\n");
 
-	dma_free_coherent(&phba->ctrl.pdev->dev, nonemb_cmd.size,
+	dma_मुक्त_coherent(&phba->ctrl.pdev->dev, nonemb_cmd.size,
 			    nonemb_cmd.va, nonemb_cmd.dma);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * beiscsi_ep_connect - Ask chip to create TCP Conn
- * @shost: Pointer to scsi_host structure
+ * @shost: Poपूर्णांकer to scsi_host काष्ठाure
  * @dst_addr: The IP address of Target
  * @non_blocking: blocking or non-blocking call
  *
  * This routines first asks chip to create a connection and then allocates an EP
  */
-struct iscsi_endpoint *
-beiscsi_ep_connect(struct Scsi_Host *shost, struct sockaddr *dst_addr,
-		   int non_blocking)
-{
-	struct beiscsi_hba *phba;
-	struct beiscsi_endpoint *beiscsi_ep;
-	struct iscsi_endpoint *ep;
-	int ret;
+काष्ठा iscsi_endpoपूर्णांक *
+beiscsi_ep_connect(काष्ठा Scsi_Host *shost, काष्ठा sockaddr *dst_addr,
+		   पूर्णांक non_blocking)
+अणु
+	काष्ठा beiscsi_hba *phba;
+	काष्ठा beiscsi_endpoपूर्णांक *beiscsi_ep;
+	काष्ठा iscsi_endpoपूर्णांक *ep;
+	पूर्णांक ret;
 
-	if (!shost) {
+	अगर (!shost) अणु
 		ret = -ENXIO;
 		pr_err("beiscsi_ep_connect shost is NULL\n");
-		return ERR_PTR(ret);
-	}
+		वापस ERR_PTR(ret);
+	पूर्ण
 
 	phba = iscsi_host_priv(shost);
-	if (!beiscsi_hba_is_online(phba)) {
+	अगर (!beiscsi_hba_is_online(phba)) अणु
 		ret = -EIO;
 		beiscsi_log(phba, KERN_INFO, BEISCSI_LOG_CONFIG,
 			    "BS_%d : HBA in error 0x%lx\n", phba->state);
-		return ERR_PTR(ret);
-	}
-	if (!test_bit(BEISCSI_HBA_LINK_UP, &phba->state)) {
+		वापस ERR_PTR(ret);
+	पूर्ण
+	अगर (!test_bit(BEISCSI_HBA_LINK_UP, &phba->state)) अणु
 		ret = -EBUSY;
 		beiscsi_log(phba, KERN_WARNING, BEISCSI_LOG_CONFIG,
 			    "BS_%d : The Adapter Port state is Down!!!\n");
-		return ERR_PTR(ret);
-	}
+		वापस ERR_PTR(ret);
+	पूर्ण
 
-	ep = iscsi_create_endpoint(sizeof(struct beiscsi_endpoint));
-	if (!ep) {
+	ep = iscsi_create_endpoपूर्णांक(माप(काष्ठा beiscsi_endpoपूर्णांक));
+	अगर (!ep) अणु
 		ret = -ENOMEM;
-		return ERR_PTR(ret);
-	}
+		वापस ERR_PTR(ret);
+	पूर्ण
 
 	beiscsi_ep = ep->dd_data;
 	beiscsi_ep->phba = phba;
-	beiscsi_ep->openiscsi_ep = ep;
-	ret = beiscsi_open_conn(ep, NULL, dst_addr, non_blocking);
-	if (ret) {
+	beiscsi_ep->खोलोiscsi_ep = ep;
+	ret = beiscsi_खोलो_conn(ep, शून्य, dst_addr, non_blocking);
+	अगर (ret) अणु
 		beiscsi_log(phba, KERN_ERR, BEISCSI_LOG_CONFIG,
 			    "BS_%d : Failed in beiscsi_open_conn\n");
-		goto free_ep;
-	}
+		जाओ मुक्त_ep;
+	पूर्ण
 
-	return ep;
+	वापस ep;
 
-free_ep:
-	iscsi_destroy_endpoint(ep);
-	return ERR_PTR(ret);
-}
+मुक्त_ep:
+	iscsi_destroy_endpoपूर्णांक(ep);
+	वापस ERR_PTR(ret);
+पूर्ण
 
 /**
- * beiscsi_ep_poll - Poll to see if connection is established
- * @ep:	endpoint to be used
- * @timeout_ms: timeout specified in millisecs
+ * beiscsi_ep_poll - Poll to see अगर connection is established
+ * @ep:	endpoपूर्णांक to be used
+ * @समयout_ms: समयout specअगरied in millisecs
  *
- * Poll to see if TCP connection established
+ * Poll to see अगर TCP connection established
  */
-int beiscsi_ep_poll(struct iscsi_endpoint *ep, int timeout_ms)
-{
-	struct beiscsi_endpoint *beiscsi_ep = ep->dd_data;
+पूर्णांक beiscsi_ep_poll(काष्ठा iscsi_endpoपूर्णांक *ep, पूर्णांक समयout_ms)
+अणु
+	काष्ठा beiscsi_endpoपूर्णांक *beiscsi_ep = ep->dd_data;
 
 	beiscsi_log(beiscsi_ep->phba, KERN_INFO, BEISCSI_LOG_CONFIG,
 		    "BS_%d : In  beiscsi_ep_poll\n");
 
-	if (beiscsi_ep->cid_vld == 1)
-		return 1;
-	else
-		return 0;
-}
+	अगर (beiscsi_ep->cid_vld == 1)
+		वापस 1;
+	अन्यथा
+		वापस 0;
+पूर्ण
 
 /**
  * beiscsi_flush_cq()- Flush the CQ created.
- * @phba: ptr device priv structure.
+ * @phba: ptr device priv काष्ठाure.
  *
- * Before the connection resource are freed flush
+ * Beक्रमe the connection resource are मुक्तd flush
  * all the CQ enteries
  **/
-static void beiscsi_flush_cq(struct beiscsi_hba *phba)
-{
-	uint16_t i;
-	struct be_eq_obj *pbe_eq;
-	struct hwi_controller *phwi_ctrlr;
-	struct hwi_context_memory *phwi_context;
+अटल व्योम beiscsi_flush_cq(काष्ठा beiscsi_hba *phba)
+अणु
+	uपूर्णांक16_t i;
+	काष्ठा be_eq_obj *pbe_eq;
+	काष्ठा hwi_controller *phwi_ctrlr;
+	काष्ठा hwi_context_memory *phwi_context;
 
 	phwi_ctrlr = phba->phwi_ctrlr;
 	phwi_context = phwi_ctrlr->phwi_ctxt;
 
-	for (i = 0; i < phba->num_cpus; i++) {
+	क्रम (i = 0; i < phba->num_cpus; i++) अणु
 		pbe_eq = &phwi_context->be_eq[i];
 		irq_poll_disable(&pbe_eq->iopoll);
 		beiscsi_process_cq(pbe_eq, BE2_MAX_NUM_CQ_PROC);
 		irq_poll_enable(&pbe_eq->iopoll);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
- * beiscsi_conn_close - Invalidate and upload connection
- * @beiscsi_ep: pointer to device endpoint struct
+ * beiscsi_conn_बंद - Invalidate and upload connection
+ * @beiscsi_ep: poपूर्णांकer to device endpoपूर्णांक काष्ठा
  *
  * Returns 0 on success,  -1 on failure.
  */
-static int beiscsi_conn_close(struct beiscsi_endpoint *beiscsi_ep)
-{
-	struct beiscsi_hba *phba = beiscsi_ep->phba;
-	unsigned int tag, attempts;
-	int ret;
+अटल पूर्णांक beiscsi_conn_बंद(काष्ठा beiscsi_endpoपूर्णांक *beiscsi_ep)
+अणु
+	काष्ठा beiscsi_hba *phba = beiscsi_ep->phba;
+	अचिन्हित पूर्णांक tag, attempts;
+	पूर्णांक ret;
 
 	/**
 	 * Without successfully invalidating and uploading connection
 	 * driver can't reuse the CID so attempt more than once.
 	 */
 	attempts = 0;
-	while (attempts++ < 3) {
+	जबतक (attempts++ < 3) अणु
 		tag = beiscsi_invalidate_cxn(phba, beiscsi_ep);
-		if (tag) {
-			ret = beiscsi_mccq_compl_wait(phba, tag, NULL, NULL);
-			if (!ret)
-				break;
+		अगर (tag) अणु
+			ret = beiscsi_mccq_compl_रुको(phba, tag, शून्य, शून्य);
+			अगर (!ret)
+				अवरोध;
 			beiscsi_log(phba, KERN_INFO, BEISCSI_LOG_CONFIG,
 				    "BS_%d : invalidate conn failed cid %d\n",
 				    beiscsi_ep->ep_cid);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	/* wait for all completions to arrive, then process them */
+	/* रुको क्रम all completions to arrive, then process them */
 	msleep(250);
 	/* flush CQ entries */
 	beiscsi_flush_cq(phba);
 
-	if (attempts > 3)
-		return -1;
+	अगर (attempts > 3)
+		वापस -1;
 
 	attempts = 0;
-	while (attempts++ < 3) {
+	जबतक (attempts++ < 3) अणु
 		tag = beiscsi_upload_cxn(phba, beiscsi_ep);
-		if (tag) {
-			ret = beiscsi_mccq_compl_wait(phba, tag, NULL, NULL);
-			if (!ret)
-				break;
+		अगर (tag) अणु
+			ret = beiscsi_mccq_compl_रुको(phba, tag, शून्य, शून्य);
+			अगर (!ret)
+				अवरोध;
 			beiscsi_log(phba, KERN_INFO, BEISCSI_LOG_CONFIG,
 				    "BS_%d : upload conn failed cid %d\n",
 				    beiscsi_ep->ep_cid);
-		}
-	}
-	if (attempts > 3)
-		return -1;
+		पूर्ण
+	पूर्ण
+	अगर (attempts > 3)
+		वापस -1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * beiscsi_ep_disconnect - Tears down the TCP connection
- * @ep:	endpoint to be used
+ * beiscsi_ep_disconnect - Tears करोwn the TCP connection
+ * @ep:	endpoपूर्णांक to be used
  *
- * Tears down the TCP connection
+ * Tears करोwn the TCP connection
  */
-void beiscsi_ep_disconnect(struct iscsi_endpoint *ep)
-{
-	struct beiscsi_endpoint *beiscsi_ep;
-	struct beiscsi_conn *beiscsi_conn;
-	struct beiscsi_hba *phba;
-	uint16_t cri_index;
+व्योम beiscsi_ep_disconnect(काष्ठा iscsi_endpoपूर्णांक *ep)
+अणु
+	काष्ठा beiscsi_endpoपूर्णांक *beiscsi_ep;
+	काष्ठा beiscsi_conn *beiscsi_conn;
+	काष्ठा beiscsi_hba *phba;
+	uपूर्णांक16_t cri_index;
 
 	beiscsi_ep = ep->dd_data;
 	phba = beiscsi_ep->phba;
@@ -1304,107 +1305,107 @@ void beiscsi_ep_disconnect(struct iscsi_endpoint *ep)
 		    beiscsi_ep->ep_cid);
 
 	cri_index = BE_GET_CRI_FROM_CID(beiscsi_ep->ep_cid);
-	if (!phba->ep_array[cri_index]) {
+	अगर (!phba->ep_array[cri_index]) अणु
 		__beiscsi_log(phba, KERN_ERR,
 			      "BS_%d : ep_array at %u cid %u empty\n",
 			      cri_index,
 			      beiscsi_ep->ep_cid);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (beiscsi_ep->conn) {
+	अगर (beiscsi_ep->conn) अणु
 		beiscsi_conn = beiscsi_ep->conn;
 		iscsi_suspend_queue(beiscsi_conn->conn);
-	}
+	पूर्ण
 
-	if (!beiscsi_hba_is_online(phba)) {
+	अगर (!beiscsi_hba_is_online(phba)) अणु
 		beiscsi_log(phba, KERN_INFO, BEISCSI_LOG_CONFIG,
 			    "BS_%d : HBA in error 0x%lx\n", phba->state);
-	} else {
+	पूर्ण अन्यथा अणु
 		/**
-		 * Make CID available even if close fails.
-		 * If not freed, FW might fail open using the CID.
+		 * Make CID available even अगर बंद fails.
+		 * If not मुक्तd, FW might fail खोलो using the CID.
 		 */
-		if (beiscsi_conn_close(beiscsi_ep) < 0)
+		अगर (beiscsi_conn_बंद(beiscsi_ep) < 0)
 			__beiscsi_log(phba, KERN_ERR,
 				      "BS_%d : close conn failed cid %d\n",
 				      beiscsi_ep->ep_cid);
-	}
+	पूर्ण
 
-	beiscsi_free_ep(beiscsi_ep);
-	if (!phba->conn_table[cri_index])
+	beiscsi_मुक्त_ep(beiscsi_ep);
+	अगर (!phba->conn_table[cri_index])
 		__beiscsi_log(phba, KERN_ERR,
 			      "BS_%d : conn_table empty at %u: cid %u\n",
 			      cri_index, beiscsi_ep->ep_cid);
-	phba->conn_table[cri_index] = NULL;
-	iscsi_destroy_endpoint(beiscsi_ep->openiscsi_ep);
-}
+	phba->conn_table[cri_index] = शून्य;
+	iscsi_destroy_endpoपूर्णांक(beiscsi_ep->खोलोiscsi_ep);
+पूर्ण
 
-umode_t beiscsi_attr_is_visible(int param_type, int param)
-{
-	switch (param_type) {
-	case ISCSI_NET_PARAM:
-		switch (param) {
-		case ISCSI_NET_PARAM_IFACE_ENABLE:
-		case ISCSI_NET_PARAM_IPV4_ADDR:
-		case ISCSI_NET_PARAM_IPV4_SUBNET:
-		case ISCSI_NET_PARAM_IPV4_BOOTPROTO:
-		case ISCSI_NET_PARAM_IPV4_GW:
-		case ISCSI_NET_PARAM_IPV6_ADDR:
-		case ISCSI_NET_PARAM_VLAN_ID:
-		case ISCSI_NET_PARAM_VLAN_PRIORITY:
-		case ISCSI_NET_PARAM_VLAN_ENABLED:
-			return S_IRUGO;
-		default:
-			return 0;
-		}
-	case ISCSI_HOST_PARAM:
-		switch (param) {
-		case ISCSI_HOST_PARAM_HWADDRESS:
-		case ISCSI_HOST_PARAM_INITIATOR_NAME:
-		case ISCSI_HOST_PARAM_PORT_STATE:
-		case ISCSI_HOST_PARAM_PORT_SPEED:
-			return S_IRUGO;
-		default:
-			return 0;
-		}
-	case ISCSI_PARAM:
-		switch (param) {
-		case ISCSI_PARAM_MAX_RECV_DLENGTH:
-		case ISCSI_PARAM_MAX_XMIT_DLENGTH:
-		case ISCSI_PARAM_HDRDGST_EN:
-		case ISCSI_PARAM_DATADGST_EN:
-		case ISCSI_PARAM_CONN_ADDRESS:
-		case ISCSI_PARAM_CONN_PORT:
-		case ISCSI_PARAM_EXP_STATSN:
-		case ISCSI_PARAM_PERSISTENT_ADDRESS:
-		case ISCSI_PARAM_PERSISTENT_PORT:
-		case ISCSI_PARAM_PING_TMO:
-		case ISCSI_PARAM_RECV_TMO:
-		case ISCSI_PARAM_INITIAL_R2T_EN:
-		case ISCSI_PARAM_MAX_R2T:
-		case ISCSI_PARAM_IMM_DATA_EN:
-		case ISCSI_PARAM_FIRST_BURST:
-		case ISCSI_PARAM_MAX_BURST:
-		case ISCSI_PARAM_PDU_INORDER_EN:
-		case ISCSI_PARAM_DATASEQ_INORDER_EN:
-		case ISCSI_PARAM_ERL:
-		case ISCSI_PARAM_TARGET_NAME:
-		case ISCSI_PARAM_TPGT:
-		case ISCSI_PARAM_USERNAME:
-		case ISCSI_PARAM_PASSWORD:
-		case ISCSI_PARAM_USERNAME_IN:
-		case ISCSI_PARAM_PASSWORD_IN:
-		case ISCSI_PARAM_FAST_ABORT:
-		case ISCSI_PARAM_ABORT_TMO:
-		case ISCSI_PARAM_LU_RESET_TMO:
-		case ISCSI_PARAM_IFACE_NAME:
-		case ISCSI_PARAM_INITIATOR_NAME:
-			return S_IRUGO;
-		default:
-			return 0;
-		}
-	}
+umode_t beiscsi_attr_is_visible(पूर्णांक param_type, पूर्णांक param)
+अणु
+	चयन (param_type) अणु
+	हाल ISCSI_NET_PARAM:
+		चयन (param) अणु
+		हाल ISCSI_NET_PARAM_IFACE_ENABLE:
+		हाल ISCSI_NET_PARAM_IPV4_ADDR:
+		हाल ISCSI_NET_PARAM_IPV4_SUBNET:
+		हाल ISCSI_NET_PARAM_IPV4_BOOTPROTO:
+		हाल ISCSI_NET_PARAM_IPV4_GW:
+		हाल ISCSI_NET_PARAM_IPV6_ADDR:
+		हाल ISCSI_NET_PARAM_VLAN_ID:
+		हाल ISCSI_NET_PARAM_VLAN_PRIORITY:
+		हाल ISCSI_NET_PARAM_VLAN_ENABLED:
+			वापस S_IRUGO;
+		शेष:
+			वापस 0;
+		पूर्ण
+	हाल ISCSI_HOST_PARAM:
+		चयन (param) अणु
+		हाल ISCSI_HOST_PARAM_HWADDRESS:
+		हाल ISCSI_HOST_PARAM_INITIATOR_NAME:
+		हाल ISCSI_HOST_PARAM_PORT_STATE:
+		हाल ISCSI_HOST_PARAM_PORT_SPEED:
+			वापस S_IRUGO;
+		शेष:
+			वापस 0;
+		पूर्ण
+	हाल ISCSI_PARAM:
+		चयन (param) अणु
+		हाल ISCSI_PARAM_MAX_RECV_DLENGTH:
+		हाल ISCSI_PARAM_MAX_XMIT_DLENGTH:
+		हाल ISCSI_PARAM_HDRDGST_EN:
+		हाल ISCSI_PARAM_DATADGST_EN:
+		हाल ISCSI_PARAM_CONN_ADDRESS:
+		हाल ISCSI_PARAM_CONN_PORT:
+		हाल ISCSI_PARAM_EXP_STATSN:
+		हाल ISCSI_PARAM_PERSISTENT_ADDRESS:
+		हाल ISCSI_PARAM_PERSISTENT_PORT:
+		हाल ISCSI_PARAM_PING_TMO:
+		हाल ISCSI_PARAM_RECV_TMO:
+		हाल ISCSI_PARAM_INITIAL_R2T_EN:
+		हाल ISCSI_PARAM_MAX_R2T:
+		हाल ISCSI_PARAM_IMM_DATA_EN:
+		हाल ISCSI_PARAM_FIRST_BURST:
+		हाल ISCSI_PARAM_MAX_BURST:
+		हाल ISCSI_PARAM_PDU_INORDER_EN:
+		हाल ISCSI_PARAM_DATASEQ_INORDER_EN:
+		हाल ISCSI_PARAM_ERL:
+		हाल ISCSI_PARAM_TARGET_NAME:
+		हाल ISCSI_PARAM_TPGT:
+		हाल ISCSI_PARAM_USERNAME:
+		हाल ISCSI_PARAM_PASSWORD:
+		हाल ISCSI_PARAM_USERNAME_IN:
+		हाल ISCSI_PARAM_PASSWORD_IN:
+		हाल ISCSI_PARAM_FAST_ABORT:
+		हाल ISCSI_PARAM_ABORT_TMO:
+		हाल ISCSI_PARAM_LU_RESET_TMO:
+		हाल ISCSI_PARAM_IFACE_NAME:
+		हाल ISCSI_PARAM_INITIATOR_NAME:
+			वापस S_IRUGO;
+		शेष:
+			वापस 0;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

@@ -1,9 +1,10 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
-#ifndef RTL8180_SA2400_H
-#define RTL8180_SA2400_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
+#अगर_अघोषित RTL8180_SA2400_H
+#घोषणा RTL8180_SA2400_H
 
 /*
- * Radio tuning for Philips SA2400 on RTL8180
+ * Radio tuning क्रम Philips SA2400 on RTL8180
  *
  * Copyright 2007 Andrea Merello <andrea.merello@gmail.com>
  *
@@ -13,21 +14,21 @@
  * I want to thanks the Authors of such projects and the Ndiswrapper
  * project Authors.
  *
- * A special Big Thanks also is for all people who donated me cards,
+ * A special Big Thanks also is क्रम all people who करोnated me cards,
  * making possible the creation of the original rtl8180 driver
  * from which this code is derived!
  */
 
-#define SA2400_ANTENNA 0x91
-#define SA2400_DIG_ANAPARAM_PWR1_ON 0x8
-#define SA2400_ANA_ANAPARAM_PWR1_ON 0x28
-#define SA2400_ANAPARAM_PWR0_ON 0x3
+#घोषणा SA2400_ANTENNA 0x91
+#घोषणा SA2400_DIG_ANAPARAM_PWR1_ON 0x8
+#घोषणा SA2400_ANA_ANAPARAM_PWR1_ON 0x28
+#घोषणा SA2400_ANAPARAM_PWR0_ON 0x3
 
 /* RX sensitivity in dbm */
-#define SA2400_MAX_SENS 85
+#घोषणा SA2400_MAX_SENS 85
 
-#define SA2400_REG4_FIRDAC_SHIFT 7
+#घोषणा SA2400_REG4_FIRDAC_SHIFT 7
 
-extern const struct rtl818x_rf_ops sa2400_rf_ops;
+बाह्य स्थिर काष्ठा rtl818x_rf_ops sa2400_rf_ops;
 
-#endif /* RTL8180_SA2400_H */
+#पूर्ण_अगर /* RTL8180_SA2400_H */

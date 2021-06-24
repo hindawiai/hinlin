@@ -1,24 +1,25 @@
-/* SPDX-License-Identifier: GPL-2.0 OR Apache-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 OR Apache-2.0 */
 /*
- * include/linux/ashmem.h
+ * include/linux/ashस्मृति.स
  *
  * Copyright 2008 Google Inc.
  * Author: Robert Love
  */
 
-#ifndef _LINUX_ASHMEM_H
-#define _LINUX_ASHMEM_H
+#अगर_अघोषित _LINUX_ASHMEM_H
+#घोषणा _LINUX_ASHMEM_H
 
-#include <linux/limits.h>
-#include <linux/ioctl.h>
-#include <linux/compat.h>
+#समावेश <linux/सीमा.स>
+#समावेश <linux/ioctl.h>
+#समावेश <linux/compat.h>
 
-#include "uapi/ashmem.h"
+#समावेश "uapi/ashmem.h"
 
-/* support of 32bit userspace on 64bit platforms */
-#ifdef CONFIG_COMPAT
-#define COMPAT_ASHMEM_SET_SIZE		_IOW(__ASHMEMIOC, 3, compat_size_t)
-#define COMPAT_ASHMEM_SET_PROT_MASK	_IOW(__ASHMEMIOC, 5, unsigned int)
-#endif
+/* support of 32bit userspace on 64bit platक्रमms */
+#अगर_घोषित CONFIG_COMPAT
+#घोषणा COMPAT_ASHMEM_SET_SIZE		_IOW(__ASHMEMIOC, 3, compat_माप_प्रकार)
+#घोषणा COMPAT_ASHMEM_SET_PROT_MASK	_IOW(__ASHMEMIOC, 5, अचिन्हित पूर्णांक)
+#पूर्ण_अगर
 
-#endif	/* _LINUX_ASHMEM_H */
+#पूर्ण_अगर	/* _LINUX_ASHMEM_H */

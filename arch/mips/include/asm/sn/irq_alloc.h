@@ -1,11 +1,12 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __ASM_SN_IRQ_ALLOC_H
-#define __ASM_SN_IRQ_ALLOC_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __ASM_SN_IRQ_ALLOC_H
+#घोषणा __ASM_SN_IRQ_ALLOC_H
 
-struct irq_alloc_info {
-	void *ctrl;
+काष्ठा irq_alloc_info अणु
+	व्योम *ctrl;
 	nasid_t nasid;
-	int pin;
-};
+	पूर्णांक pin;
+पूर्ण;
 
-#endif /* __ASM_SN_IRQ_ALLOC_H */
+#पूर्ण_अगर /* __ASM_SN_IRQ_ALLOC_H */

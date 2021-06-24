@@ -1,228 +1,229 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * Handling of a single switch port
+ * Handling of a single चयन port
  *
  * Copyright (c) 2017 Savoir-faire Linux Inc.
  *	Vivien Didelot <vivien.didelot@savoirfairelinux.com>
  */
 
-#include <linux/if_bridge.h>
-#include <linux/notifier.h>
-#include <linux/of_mdio.h>
-#include <linux/of_net.h>
+#समावेश <linux/अगर_bridge.h>
+#समावेश <linux/notअगरier.h>
+#समावेश <linux/of_mdपन.स>
+#समावेश <linux/of_net.h>
 
-#include "dsa_priv.h"
+#समावेश "dsa_priv.h"
 
 /**
- * dsa_port_notify - Notify the switching fabric of changes to a port
+ * dsa_port_notअगरy - Notअगरy the चयनing fabric of changes to a port
  * @dp: port on which change occurred
  * @e: event, must be of type DSA_NOTIFIER_*
- * @v: event-specific value.
+ * @v: event-specअगरic value.
  *
- * Notify all switches in the DSA tree that this port's switch belongs to,
- * including this switch itself, of an event. Allows the other switches to
- * reconfigure themselves for cross-chip operations. Can also be used to
+ * Notअगरy all चयनes in the DSA tree that this port's चयन beदीर्घs to,
+ * including this चयन itself, of an event. Allows the other चयनes to
+ * reconfigure themselves क्रम cross-chip operations. Can also be used to
  * reconfigure ports without net_devices (CPU ports, DSA links) whenever
  * a user port's state changes.
  */
-static int dsa_port_notify(const struct dsa_port *dp, unsigned long e, void *v)
-{
-	return dsa_tree_notify(dp->ds->dst, e, v);
-}
+अटल पूर्णांक dsa_port_notअगरy(स्थिर काष्ठा dsa_port *dp, अचिन्हित दीर्घ e, व्योम *v)
+अणु
+	वापस dsa_tree_notअगरy(dp->ds->dst, e, v);
+पूर्ण
 
-int dsa_port_set_state(struct dsa_port *dp, u8 state)
-{
-	struct dsa_switch *ds = dp->ds;
-	int port = dp->index;
+पूर्णांक dsa_port_set_state(काष्ठा dsa_port *dp, u8 state)
+अणु
+	काष्ठा dsa_चयन *ds = dp->ds;
+	पूर्णांक port = dp->index;
 
-	if (!ds->ops->port_stp_state_set)
-		return -EOPNOTSUPP;
+	अगर (!ds->ops->port_stp_state_set)
+		वापस -EOPNOTSUPP;
 
 	ds->ops->port_stp_state_set(ds, port, state);
 
-	if (ds->ops->port_fast_age) {
-		/* Fast age FDB entries or flush appropriate forwarding database
-		 * for the given port, if we are moving it from Learning or
+	अगर (ds->ops->port_fast_age) अणु
+		/* Fast age FDB entries or flush appropriate क्रमwarding database
+		 * क्रम the given port, अगर we are moving it from Learning or
 		 * Forwarding state, to Disabled or Blocking or Listening state.
 		 */
 
-		if ((dp->stp_state == BR_STATE_LEARNING ||
+		अगर ((dp->stp_state == BR_STATE_LEARNING ||
 		     dp->stp_state == BR_STATE_FORWARDING) &&
 		    (state == BR_STATE_DISABLED ||
 		     state == BR_STATE_BLOCKING ||
 		     state == BR_STATE_LISTENING))
 			ds->ops->port_fast_age(ds, port);
-	}
+	पूर्ण
 
 	dp->stp_state = state;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void dsa_port_set_state_now(struct dsa_port *dp, u8 state)
-{
-	int err;
+अटल व्योम dsa_port_set_state_now(काष्ठा dsa_port *dp, u8 state)
+अणु
+	पूर्णांक err;
 
 	err = dsa_port_set_state(dp, state);
-	if (err)
+	अगर (err)
 		pr_err("DSA: failed to set STP state %u (%d)\n", state, err);
-}
+पूर्ण
 
-int dsa_port_enable_rt(struct dsa_port *dp, struct phy_device *phy)
-{
-	struct dsa_switch *ds = dp->ds;
-	int port = dp->index;
-	int err;
+पूर्णांक dsa_port_enable_rt(काष्ठा dsa_port *dp, काष्ठा phy_device *phy)
+अणु
+	काष्ठा dsa_चयन *ds = dp->ds;
+	पूर्णांक port = dp->index;
+	पूर्णांक err;
 
-	if (ds->ops->port_enable) {
+	अगर (ds->ops->port_enable) अणु
 		err = ds->ops->port_enable(ds, port, phy);
-		if (err)
-			return err;
-	}
+		अगर (err)
+			वापस err;
+	पूर्ण
 
-	if (!dp->bridge_dev)
+	अगर (!dp->bridge_dev)
 		dsa_port_set_state_now(dp, BR_STATE_FORWARDING);
 
-	if (dp->pl)
+	अगर (dp->pl)
 		phylink_start(dp->pl);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int dsa_port_enable(struct dsa_port *dp, struct phy_device *phy)
-{
-	int err;
+पूर्णांक dsa_port_enable(काष्ठा dsa_port *dp, काष्ठा phy_device *phy)
+अणु
+	पूर्णांक err;
 
 	rtnl_lock();
 	err = dsa_port_enable_rt(dp, phy);
 	rtnl_unlock();
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-void dsa_port_disable_rt(struct dsa_port *dp)
-{
-	struct dsa_switch *ds = dp->ds;
-	int port = dp->index;
+व्योम dsa_port_disable_rt(काष्ठा dsa_port *dp)
+अणु
+	काष्ठा dsa_चयन *ds = dp->ds;
+	पूर्णांक port = dp->index;
 
-	if (dp->pl)
+	अगर (dp->pl)
 		phylink_stop(dp->pl);
 
-	if (!dp->bridge_dev)
+	अगर (!dp->bridge_dev)
 		dsa_port_set_state_now(dp, BR_STATE_DISABLED);
 
-	if (ds->ops->port_disable)
+	अगर (ds->ops->port_disable)
 		ds->ops->port_disable(ds, port);
-}
+पूर्ण
 
-void dsa_port_disable(struct dsa_port *dp)
-{
+व्योम dsa_port_disable(काष्ठा dsa_port *dp)
+अणु
 	rtnl_lock();
 	dsa_port_disable_rt(dp);
 	rtnl_unlock();
-}
+पूर्ण
 
-static int dsa_port_inherit_brport_flags(struct dsa_port *dp,
-					 struct netlink_ext_ack *extack)
-{
-	const unsigned long mask = BR_LEARNING | BR_FLOOD | BR_MCAST_FLOOD |
+अटल पूर्णांक dsa_port_inherit_brport_flags(काष्ठा dsa_port *dp,
+					 काष्ठा netlink_ext_ack *extack)
+अणु
+	स्थिर अचिन्हित दीर्घ mask = BR_LEARNING | BR_FLOOD | BR_MCAST_FLOOD |
 				   BR_BCAST_FLOOD;
-	struct net_device *brport_dev = dsa_port_to_bridge_port(dp);
-	int flag, err;
+	काष्ठा net_device *brport_dev = dsa_port_to_bridge_port(dp);
+	पूर्णांक flag, err;
 
-	for_each_set_bit(flag, &mask, 32) {
-		struct switchdev_brport_flags flags = {0};
+	क्रम_each_set_bit(flag, &mask, 32) अणु
+		काष्ठा चयनdev_brport_flags flags = अणु0पूर्ण;
 
 		flags.mask = BIT(flag);
 
-		if (br_port_flag_is_set(brport_dev, BIT(flag)))
+		अगर (br_port_flag_is_set(brport_dev, BIT(flag)))
 			flags.val = BIT(flag);
 
 		err = dsa_port_bridge_flags(dp, flags, extack);
-		if (err && err != -EOPNOTSUPP)
-			return err;
-	}
+		अगर (err && err != -EOPNOTSUPP)
+			वापस err;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void dsa_port_clear_brport_flags(struct dsa_port *dp)
-{
-	const unsigned long val = BR_FLOOD | BR_MCAST_FLOOD | BR_BCAST_FLOOD;
-	const unsigned long mask = BR_LEARNING | BR_FLOOD | BR_MCAST_FLOOD |
+अटल व्योम dsa_port_clear_brport_flags(काष्ठा dsa_port *dp)
+अणु
+	स्थिर अचिन्हित दीर्घ val = BR_FLOOD | BR_MCAST_FLOOD | BR_BCAST_FLOOD;
+	स्थिर अचिन्हित दीर्घ mask = BR_LEARNING | BR_FLOOD | BR_MCAST_FLOOD |
 				   BR_BCAST_FLOOD;
-	int flag, err;
+	पूर्णांक flag, err;
 
-	for_each_set_bit(flag, &mask, 32) {
-		struct switchdev_brport_flags flags = {0};
+	क्रम_each_set_bit(flag, &mask, 32) अणु
+		काष्ठा चयनdev_brport_flags flags = अणु0पूर्ण;
 
 		flags.mask = BIT(flag);
 		flags.val = val & BIT(flag);
 
-		err = dsa_port_bridge_flags(dp, flags, NULL);
-		if (err && err != -EOPNOTSUPP)
+		err = dsa_port_bridge_flags(dp, flags, शून्य);
+		अगर (err && err != -EOPNOTSUPP)
 			dev_err(dp->ds->dev,
 				"failed to clear bridge port flag %lu: %pe\n",
 				flags.val, ERR_PTR(err));
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int dsa_port_switchdev_sync(struct dsa_port *dp,
-				   struct netlink_ext_ack *extack)
-{
-	struct net_device *brport_dev = dsa_port_to_bridge_port(dp);
-	struct net_device *br = dp->bridge_dev;
-	int err;
+अटल पूर्णांक dsa_port_चयनdev_sync(काष्ठा dsa_port *dp,
+				   काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा net_device *brport_dev = dsa_port_to_bridge_port(dp);
+	काष्ठा net_device *br = dp->bridge_dev;
+	पूर्णांक err;
 
 	err = dsa_port_inherit_brport_flags(dp, extack);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	err = dsa_port_set_state(dp, br_port_get_stp_state(brport_dev));
-	if (err && err != -EOPNOTSUPP)
-		return err;
+	अगर (err && err != -EOPNOTSUPP)
+		वापस err;
 
 	err = dsa_port_vlan_filtering(dp, br_vlan_enabled(br), extack);
-	if (err && err != -EOPNOTSUPP)
-		return err;
+	अगर (err && err != -EOPNOTSUPP)
+		वापस err;
 
 	err = dsa_port_mrouter(dp->cpu_dp, br_multicast_router(br), extack);
-	if (err && err != -EOPNOTSUPP)
-		return err;
+	अगर (err && err != -EOPNOTSUPP)
+		वापस err;
 
-	err = dsa_port_ageing_time(dp, br_get_ageing_time(br));
-	if (err && err != -EOPNOTSUPP)
-		return err;
+	err = dsa_port_ageing_समय(dp, br_get_ageing_समय(br));
+	अगर (err && err != -EOPNOTSUPP)
+		वापस err;
 
 	err = br_mdb_replay(br, brport_dev,
-			    &dsa_slave_switchdev_blocking_notifier,
+			    &dsa_slave_चयनdev_blocking_notअगरier,
 			    extack);
-	if (err && err != -EOPNOTSUPP)
-		return err;
+	अगर (err && err != -EOPNOTSUPP)
+		वापस err;
 
-	err = br_fdb_replay(br, brport_dev, &dsa_slave_switchdev_notifier);
-	if (err && err != -EOPNOTSUPP)
-		return err;
+	err = br_fdb_replay(br, brport_dev, &dsa_slave_चयनdev_notअगरier);
+	अगर (err && err != -EOPNOTSUPP)
+		वापस err;
 
 	err = br_vlan_replay(br, brport_dev,
-			     &dsa_slave_switchdev_blocking_notifier,
+			     &dsa_slave_चयनdev_blocking_notअगरier,
 			     extack);
-	if (err && err != -EOPNOTSUPP)
-		return err;
+	अगर (err && err != -EOPNOTSUPP)
+		वापस err;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void dsa_port_switchdev_unsync(struct dsa_port *dp)
-{
-	/* Configure the port for standalone mode (no address learning,
+अटल व्योम dsa_port_चयनdev_unsync(काष्ठा dsa_port *dp)
+अणु
+	/* Configure the port क्रम standalone mode (no address learning,
 	 * flood everything).
 	 * The bridge only emits SWITCHDEV_ATTR_ID_PORT_BRIDGE_FLAGS events
 	 * when the user requests it through netlink or sysfs, but not
-	 * automatically at port join or leave, so we need to handle resetting
+	 * स्वतःmatically at port join or leave, so we need to handle resetting
 	 * the brport flags ourselves. But we even prefer it that way, because
-	 * otherwise, some setups might never get the notification they need,
-	 * for example, when a port leaves a LAG that offloads the bridge,
+	 * otherwise, some setups might never get the notअगरication they need,
+	 * क्रम example, when a port leaves a LAG that offloads the bridge,
 	 * it becomes standalone, but as far as the bridge is concerned, no
 	 * port ever left.
 	 */
@@ -233,703 +234,703 @@ static void dsa_port_switchdev_unsync(struct dsa_port *dp)
 	 */
 	dsa_port_set_state_now(dp, BR_STATE_FORWARDING);
 
-	/* VLAN filtering is handled by dsa_switch_bridge_leave */
+	/* VLAN filtering is handled by dsa_चयन_bridge_leave */
 
-	/* Some drivers treat the notification for having a local multicast
+	/* Some drivers treat the notअगरication क्रम having a local multicast
 	 * router by allowing multicast to be flooded to the CPU, so we should
 	 * allow this in standalone mode too.
 	 */
-	dsa_port_mrouter(dp->cpu_dp, true, NULL);
+	dsa_port_mrouter(dp->cpu_dp, true, शून्य);
 
-	/* Ageing time may be global to the switch chip, so don't change it
+	/* Ageing समय may be global to the चयन chip, so करोn't change it
 	 * here because we have no good reason (or value) to change it to.
 	 */
-}
+पूर्ण
 
-int dsa_port_bridge_join(struct dsa_port *dp, struct net_device *br,
-			 struct netlink_ext_ack *extack)
-{
-	struct dsa_notifier_bridge_info info = {
+पूर्णांक dsa_port_bridge_join(काष्ठा dsa_port *dp, काष्ठा net_device *br,
+			 काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा dsa_notअगरier_bridge_info info = अणु
 		.tree_index = dp->ds->dst->index,
 		.sw_index = dp->ds->index,
 		.port = dp->index,
 		.br = br,
-	};
-	int err;
+	पूर्ण;
+	पूर्णांक err;
 
-	/* Here the interface is already bridged. Reflect the current
+	/* Here the पूर्णांकerface is alपढ़ोy bridged. Reflect the current
 	 * configuration so that drivers can program their chips accordingly.
 	 */
 	dp->bridge_dev = br;
 
 	err = dsa_broadcast(DSA_NOTIFIER_BRIDGE_JOIN, &info);
-	if (err)
-		goto out_rollback;
+	अगर (err)
+		जाओ out_rollback;
 
-	err = dsa_port_switchdev_sync(dp, extack);
-	if (err)
-		goto out_rollback_unbridge;
+	err = dsa_port_चयनdev_sync(dp, extack);
+	अगर (err)
+		जाओ out_rollback_unbridge;
 
-	return 0;
+	वापस 0;
 
 out_rollback_unbridge:
 	dsa_broadcast(DSA_NOTIFIER_BRIDGE_LEAVE, &info);
 out_rollback:
-	dp->bridge_dev = NULL;
-	return err;
-}
+	dp->bridge_dev = शून्य;
+	वापस err;
+पूर्ण
 
-void dsa_port_bridge_leave(struct dsa_port *dp, struct net_device *br)
-{
-	struct dsa_notifier_bridge_info info = {
+व्योम dsa_port_bridge_leave(काष्ठा dsa_port *dp, काष्ठा net_device *br)
+अणु
+	काष्ठा dsa_notअगरier_bridge_info info = अणु
 		.tree_index = dp->ds->dst->index,
 		.sw_index = dp->ds->index,
 		.port = dp->index,
 		.br = br,
-	};
-	int err;
+	पूर्ण;
+	पूर्णांक err;
 
-	/* Here the port is already unbridged. Reflect the current configuration
+	/* Here the port is alपढ़ोy unbridged. Reflect the current configuration
 	 * so that drivers can program their chips accordingly.
 	 */
-	dp->bridge_dev = NULL;
+	dp->bridge_dev = शून्य;
 
 	err = dsa_broadcast(DSA_NOTIFIER_BRIDGE_LEAVE, &info);
-	if (err)
+	अगर (err)
 		pr_err("DSA: failed to notify DSA_NOTIFIER_BRIDGE_LEAVE\n");
 
-	dsa_port_switchdev_unsync(dp);
-}
+	dsa_port_चयनdev_unsync(dp);
+पूर्ण
 
-int dsa_port_lag_change(struct dsa_port *dp,
-			struct netdev_lag_lower_state_info *linfo)
-{
-	struct dsa_notifier_lag_info info = {
+पूर्णांक dsa_port_lag_change(काष्ठा dsa_port *dp,
+			काष्ठा netdev_lag_lower_state_info *linfo)
+अणु
+	काष्ठा dsa_notअगरier_lag_info info = अणु
 		.sw_index = dp->ds->index,
 		.port = dp->index,
-	};
+	पूर्ण;
 	bool tx_enabled;
 
-	if (!dp->lag_dev)
-		return 0;
+	अगर (!dp->lag_dev)
+		वापस 0;
 
-	/* On statically configured aggregates (e.g. loadbalance
-	 * without LACP) ports will always be tx_enabled, even if the
-	 * link is down. Thus we require both link_up and tx_enabled
+	/* On अटलally configured aggregates (e.g. loadbalance
+	 * without LACP) ports will always be tx_enabled, even अगर the
+	 * link is करोwn. Thus we require both link_up and tx_enabled
 	 * in order to include it in the tx set.
 	 */
 	tx_enabled = linfo->link_up && linfo->tx_enabled;
 
-	if (tx_enabled == dp->lag_tx_enabled)
-		return 0;
+	अगर (tx_enabled == dp->lag_tx_enabled)
+		वापस 0;
 
 	dp->lag_tx_enabled = tx_enabled;
 
-	return dsa_port_notify(dp, DSA_NOTIFIER_LAG_CHANGE, &info);
-}
+	वापस dsa_port_notअगरy(dp, DSA_NOTIFIER_LAG_CHANGE, &info);
+पूर्ण
 
-int dsa_port_lag_join(struct dsa_port *dp, struct net_device *lag,
-		      struct netdev_lag_upper_info *uinfo,
-		      struct netlink_ext_ack *extack)
-{
-	struct dsa_notifier_lag_info info = {
+पूर्णांक dsa_port_lag_join(काष्ठा dsa_port *dp, काष्ठा net_device *lag,
+		      काष्ठा netdev_lag_upper_info *uinfo,
+		      काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा dsa_notअगरier_lag_info info = अणु
 		.sw_index = dp->ds->index,
 		.port = dp->index,
 		.lag = lag,
 		.info = uinfo,
-	};
-	struct net_device *bridge_dev;
-	int err;
+	पूर्ण;
+	काष्ठा net_device *bridge_dev;
+	पूर्णांक err;
 
 	dsa_lag_map(dp->ds->dst, lag);
 	dp->lag_dev = lag;
 
-	err = dsa_port_notify(dp, DSA_NOTIFIER_LAG_JOIN, &info);
-	if (err)
-		goto err_lag_join;
+	err = dsa_port_notअगरy(dp, DSA_NOTIFIER_LAG_JOIN, &info);
+	अगर (err)
+		जाओ err_lag_join;
 
 	bridge_dev = netdev_master_upper_dev_get(lag);
-	if (!bridge_dev || !netif_is_bridge_master(bridge_dev))
-		return 0;
+	अगर (!bridge_dev || !netअगर_is_bridge_master(bridge_dev))
+		वापस 0;
 
 	err = dsa_port_bridge_join(dp, bridge_dev, extack);
-	if (err)
-		goto err_bridge_join;
+	अगर (err)
+		जाओ err_bridge_join;
 
-	return 0;
+	वापस 0;
 
 err_bridge_join:
-	dsa_port_notify(dp, DSA_NOTIFIER_LAG_LEAVE, &info);
+	dsa_port_notअगरy(dp, DSA_NOTIFIER_LAG_LEAVE, &info);
 err_lag_join:
-	dp->lag_dev = NULL;
+	dp->lag_dev = शून्य;
 	dsa_lag_unmap(dp->ds->dst, lag);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-void dsa_port_lag_leave(struct dsa_port *dp, struct net_device *lag)
-{
-	struct dsa_notifier_lag_info info = {
+व्योम dsa_port_lag_leave(काष्ठा dsa_port *dp, काष्ठा net_device *lag)
+अणु
+	काष्ठा dsa_notअगरier_lag_info info = अणु
 		.sw_index = dp->ds->index,
 		.port = dp->index,
 		.lag = lag,
-	};
-	int err;
+	पूर्ण;
+	पूर्णांक err;
 
-	if (!dp->lag_dev)
-		return;
+	अगर (!dp->lag_dev)
+		वापस;
 
 	/* Port might have been part of a LAG that in turn was
 	 * attached to a bridge.
 	 */
-	if (dp->bridge_dev)
+	अगर (dp->bridge_dev)
 		dsa_port_bridge_leave(dp, dp->bridge_dev);
 
 	dp->lag_tx_enabled = false;
-	dp->lag_dev = NULL;
+	dp->lag_dev = शून्य;
 
-	err = dsa_port_notify(dp, DSA_NOTIFIER_LAG_LEAVE, &info);
-	if (err)
+	err = dsa_port_notअगरy(dp, DSA_NOTIFIER_LAG_LEAVE, &info);
+	अगर (err)
 		pr_err("DSA: failed to notify DSA_NOTIFIER_LAG_LEAVE: %d\n",
 		       err);
 
 	dsa_lag_unmap(dp->ds->dst, lag);
-}
+पूर्ण
 
-/* Must be called under rcu_read_lock() */
-static bool dsa_port_can_apply_vlan_filtering(struct dsa_port *dp,
+/* Must be called under rcu_पढ़ो_lock() */
+अटल bool dsa_port_can_apply_vlan_filtering(काष्ठा dsa_port *dp,
 					      bool vlan_filtering,
-					      struct netlink_ext_ack *extack)
-{
-	struct dsa_switch *ds = dp->ds;
-	int err, i;
+					      काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा dsa_चयन *ds = dp->ds;
+	पूर्णांक err, i;
 
 	/* VLAN awareness was off, so the question is "can we turn it on".
-	 * We may have had 8021q uppers, those need to go. Make sure we don't
+	 * We may have had 8021q uppers, those need to go. Make sure we करोn't
 	 * enter an inconsistent state: deny changing the VLAN awareness state
-	 * as long as we have 8021q uppers.
+	 * as दीर्घ as we have 8021q uppers.
 	 */
-	if (vlan_filtering && dsa_is_user_port(ds, dp->index)) {
-		struct net_device *upper_dev, *slave = dp->slave;
-		struct net_device *br = dp->bridge_dev;
-		struct list_head *iter;
+	अगर (vlan_filtering && dsa_is_user_port(ds, dp->index)) अणु
+		काष्ठा net_device *upper_dev, *slave = dp->slave;
+		काष्ठा net_device *br = dp->bridge_dev;
+		काष्ठा list_head *iter;
 
-		netdev_for_each_upper_dev_rcu(slave, upper_dev, iter) {
-			struct bridge_vlan_info br_info;
+		netdev_क्रम_each_upper_dev_rcu(slave, upper_dev, iter) अणु
+			काष्ठा bridge_vlan_info br_info;
 			u16 vid;
 
-			if (!is_vlan_dev(upper_dev))
-				continue;
+			अगर (!is_vlan_dev(upper_dev))
+				जारी;
 
 			vid = vlan_dev_vlan_id(upper_dev);
 
-			/* br_vlan_get_info() returns -EINVAL or -ENOENT if the
-			 * device, respectively the VID is not found, returning
-			 * 0 means success, which is a failure for us here.
+			/* br_vlan_get_info() वापसs -EINVAL or -ENOENT अगर the
+			 * device, respectively the VID is not found, वापसing
+			 * 0 means success, which is a failure क्रम us here.
 			 */
 			err = br_vlan_get_info(br, vid, &br_info);
-			if (err == 0) {
+			अगर (err == 0) अणु
 				NL_SET_ERR_MSG_MOD(extack,
 						   "Must first remove VLAN uppers having VIDs also present in bridge");
-				return false;
-			}
-		}
-	}
+				वापस false;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	if (!ds->vlan_filtering_is_global)
-		return true;
+	अगर (!ds->vlan_filtering_is_global)
+		वापस true;
 
-	/* For cases where enabling/disabling VLAN awareness is global to the
-	 * switch, we need to handle the case where multiple bridges span
-	 * different ports of the same switch device and one of them has a
-	 * different setting than what is being requested.
+	/* For हालs where enabling/disabling VLAN awareness is global to the
+	 * चयन, we need to handle the हाल where multiple bridges span
+	 * dअगरferent ports of the same चयन device and one of them has a
+	 * dअगरferent setting than what is being requested.
 	 */
-	for (i = 0; i < ds->num_ports; i++) {
-		struct net_device *other_bridge;
+	क्रम (i = 0; i < ds->num_ports; i++) अणु
+		काष्ठा net_device *other_bridge;
 
 		other_bridge = dsa_to_port(ds, i)->bridge_dev;
-		if (!other_bridge)
-			continue;
+		अगर (!other_bridge)
+			जारी;
 		/* If it's the same bridge, it also has same
 		 * vlan_filtering setting => no need to check
 		 */
-		if (other_bridge == dp->bridge_dev)
-			continue;
-		if (br_vlan_enabled(other_bridge) != vlan_filtering) {
+		अगर (other_bridge == dp->bridge_dev)
+			जारी;
+		अगर (br_vlan_enabled(other_bridge) != vlan_filtering) अणु
 			NL_SET_ERR_MSG_MOD(extack,
 					   "VLAN filtering is a global setting");
-			return false;
-		}
-	}
-	return true;
-}
+			वापस false;
+		पूर्ण
+	पूर्ण
+	वापस true;
+पूर्ण
 
-int dsa_port_vlan_filtering(struct dsa_port *dp, bool vlan_filtering,
-			    struct netlink_ext_ack *extack)
-{
-	struct dsa_switch *ds = dp->ds;
+पूर्णांक dsa_port_vlan_filtering(काष्ठा dsa_port *dp, bool vlan_filtering,
+			    काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा dsa_चयन *ds = dp->ds;
 	bool apply;
-	int err;
+	पूर्णांक err;
 
-	if (!ds->ops->port_vlan_filtering)
-		return -EOPNOTSUPP;
+	अगर (!ds->ops->port_vlan_filtering)
+		वापस -EOPNOTSUPP;
 
-	/* We are called from dsa_slave_switchdev_blocking_event(),
-	 * which is not under rcu_read_lock(), unlike
-	 * dsa_slave_switchdev_event().
+	/* We are called from dsa_slave_चयनdev_blocking_event(),
+	 * which is not under rcu_पढ़ो_lock(), unlike
+	 * dsa_slave_चयनdev_event().
 	 */
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	apply = dsa_port_can_apply_vlan_filtering(dp, vlan_filtering, extack);
-	rcu_read_unlock();
-	if (!apply)
-		return -EINVAL;
+	rcu_पढ़ो_unlock();
+	अगर (!apply)
+		वापस -EINVAL;
 
-	if (dsa_port_is_vlan_filtering(dp) == vlan_filtering)
-		return 0;
+	अगर (dsa_port_is_vlan_filtering(dp) == vlan_filtering)
+		वापस 0;
 
 	err = ds->ops->port_vlan_filtering(ds, dp->index, vlan_filtering,
 					   extack);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	if (ds->vlan_filtering_is_global)
+	अगर (ds->vlan_filtering_is_global)
 		ds->vlan_filtering = vlan_filtering;
-	else
+	अन्यथा
 		dp->vlan_filtering = vlan_filtering;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* This enforces legacy behavior for switch drivers which assume they can't
+/* This enक्रमces legacy behavior क्रम चयन drivers which assume they can't
  * receive VLAN configuration when enslaved to a bridge with vlan_filtering=0
  */
-bool dsa_port_skip_vlan_configuration(struct dsa_port *dp)
-{
-	struct dsa_switch *ds = dp->ds;
+bool dsa_port_skip_vlan_configuration(काष्ठा dsa_port *dp)
+अणु
+	काष्ठा dsa_चयन *ds = dp->ds;
 
-	if (!dp->bridge_dev)
-		return false;
+	अगर (!dp->bridge_dev)
+		वापस false;
 
-	return (!ds->configure_vlan_while_not_filtering &&
+	वापस (!ds->configure_vlan_जबतक_not_filtering &&
 		!br_vlan_enabled(dp->bridge_dev));
-}
+पूर्ण
 
-int dsa_port_ageing_time(struct dsa_port *dp, clock_t ageing_clock)
-{
-	unsigned long ageing_jiffies = clock_t_to_jiffies(ageing_clock);
-	unsigned int ageing_time = jiffies_to_msecs(ageing_jiffies);
-	struct dsa_notifier_ageing_time_info info;
-	int err;
+पूर्णांक dsa_port_ageing_समय(काष्ठा dsa_port *dp, घड़ी_प्रकार ageing_घड़ी)
+अणु
+	अचिन्हित दीर्घ ageing_jअगरfies = घड़ी_प्रकार_to_jअगरfies(ageing_घड़ी);
+	अचिन्हित पूर्णांक ageing_समय = jअगरfies_to_msecs(ageing_jअगरfies);
+	काष्ठा dsa_notअगरier_ageing_समय_info info;
+	पूर्णांक err;
 
-	info.ageing_time = ageing_time;
+	info.ageing_समय = ageing_समय;
 
-	err = dsa_port_notify(dp, DSA_NOTIFIER_AGEING_TIME, &info);
-	if (err)
-		return err;
+	err = dsa_port_notअगरy(dp, DSA_NOTIFIER_AGEING_TIME, &info);
+	अगर (err)
+		वापस err;
 
-	dp->ageing_time = ageing_time;
+	dp->ageing_समय = ageing_समय;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int dsa_port_pre_bridge_flags(const struct dsa_port *dp,
-			      struct switchdev_brport_flags flags,
-			      struct netlink_ext_ack *extack)
-{
-	struct dsa_switch *ds = dp->ds;
+पूर्णांक dsa_port_pre_bridge_flags(स्थिर काष्ठा dsa_port *dp,
+			      काष्ठा चयनdev_brport_flags flags,
+			      काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा dsa_चयन *ds = dp->ds;
 
-	if (!ds->ops->port_pre_bridge_flags)
-		return -EINVAL;
+	अगर (!ds->ops->port_pre_bridge_flags)
+		वापस -EINVAL;
 
-	return ds->ops->port_pre_bridge_flags(ds, dp->index, flags, extack);
-}
+	वापस ds->ops->port_pre_bridge_flags(ds, dp->index, flags, extack);
+पूर्ण
 
-int dsa_port_bridge_flags(const struct dsa_port *dp,
-			  struct switchdev_brport_flags flags,
-			  struct netlink_ext_ack *extack)
-{
-	struct dsa_switch *ds = dp->ds;
+पूर्णांक dsa_port_bridge_flags(स्थिर काष्ठा dsa_port *dp,
+			  काष्ठा चयनdev_brport_flags flags,
+			  काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा dsa_चयन *ds = dp->ds;
 
-	if (!ds->ops->port_bridge_flags)
-		return -EOPNOTSUPP;
+	अगर (!ds->ops->port_bridge_flags)
+		वापस -EOPNOTSUPP;
 
-	return ds->ops->port_bridge_flags(ds, dp->index, flags, extack);
-}
+	वापस ds->ops->port_bridge_flags(ds, dp->index, flags, extack);
+पूर्ण
 
-int dsa_port_mrouter(struct dsa_port *dp, bool mrouter,
-		     struct netlink_ext_ack *extack)
-{
-	struct dsa_switch *ds = dp->ds;
+पूर्णांक dsa_port_mrouter(काष्ठा dsa_port *dp, bool mrouter,
+		     काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा dsa_चयन *ds = dp->ds;
 
-	if (!ds->ops->port_set_mrouter)
-		return -EOPNOTSUPP;
+	अगर (!ds->ops->port_set_mrouter)
+		वापस -EOPNOTSUPP;
 
-	return ds->ops->port_set_mrouter(ds, dp->index, mrouter, extack);
-}
+	वापस ds->ops->port_set_mrouter(ds, dp->index, mrouter, extack);
+पूर्ण
 
-int dsa_port_mtu_change(struct dsa_port *dp, int new_mtu,
+पूर्णांक dsa_port_mtu_change(काष्ठा dsa_port *dp, पूर्णांक new_mtu,
 			bool propagate_upstream)
-{
-	struct dsa_notifier_mtu_info info = {
+अणु
+	काष्ठा dsa_notअगरier_mtu_info info = अणु
 		.sw_index = dp->ds->index,
 		.propagate_upstream = propagate_upstream,
 		.port = dp->index,
 		.mtu = new_mtu,
-	};
+	पूर्ण;
 
-	return dsa_port_notify(dp, DSA_NOTIFIER_MTU, &info);
-}
+	वापस dsa_port_notअगरy(dp, DSA_NOTIFIER_MTU, &info);
+पूर्ण
 
-int dsa_port_fdb_add(struct dsa_port *dp, const unsigned char *addr,
+पूर्णांक dsa_port_fdb_add(काष्ठा dsa_port *dp, स्थिर अचिन्हित अक्षर *addr,
 		     u16 vid)
-{
-	struct dsa_notifier_fdb_info info = {
+अणु
+	काष्ठा dsa_notअगरier_fdb_info info = अणु
 		.sw_index = dp->ds->index,
 		.port = dp->index,
 		.addr = addr,
 		.vid = vid,
-	};
+	पूर्ण;
 
-	return dsa_port_notify(dp, DSA_NOTIFIER_FDB_ADD, &info);
-}
+	वापस dsa_port_notअगरy(dp, DSA_NOTIFIER_FDB_ADD, &info);
+पूर्ण
 
-int dsa_port_fdb_del(struct dsa_port *dp, const unsigned char *addr,
+पूर्णांक dsa_port_fdb_del(काष्ठा dsa_port *dp, स्थिर अचिन्हित अक्षर *addr,
 		     u16 vid)
-{
-	struct dsa_notifier_fdb_info info = {
+अणु
+	काष्ठा dsa_notअगरier_fdb_info info = अणु
 		.sw_index = dp->ds->index,
 		.port = dp->index,
 		.addr = addr,
 		.vid = vid,
 
-	};
+	पूर्ण;
 
-	return dsa_port_notify(dp, DSA_NOTIFIER_FDB_DEL, &info);
-}
+	वापस dsa_port_notअगरy(dp, DSA_NOTIFIER_FDB_DEL, &info);
+पूर्ण
 
-int dsa_port_fdb_dump(struct dsa_port *dp, dsa_fdb_dump_cb_t *cb, void *data)
-{
-	struct dsa_switch *ds = dp->ds;
-	int port = dp->index;
+पूर्णांक dsa_port_fdb_dump(काष्ठा dsa_port *dp, dsa_fdb_dump_cb_t *cb, व्योम *data)
+अणु
+	काष्ठा dsa_चयन *ds = dp->ds;
+	पूर्णांक port = dp->index;
 
-	if (!ds->ops->port_fdb_dump)
-		return -EOPNOTSUPP;
+	अगर (!ds->ops->port_fdb_dump)
+		वापस -EOPNOTSUPP;
 
-	return ds->ops->port_fdb_dump(ds, port, cb, data);
-}
+	वापस ds->ops->port_fdb_dump(ds, port, cb, data);
+पूर्ण
 
-int dsa_port_mdb_add(const struct dsa_port *dp,
-		     const struct switchdev_obj_port_mdb *mdb)
-{
-	struct dsa_notifier_mdb_info info = {
+पूर्णांक dsa_port_mdb_add(स्थिर काष्ठा dsa_port *dp,
+		     स्थिर काष्ठा चयनdev_obj_port_mdb *mdb)
+अणु
+	काष्ठा dsa_notअगरier_mdb_info info = अणु
 		.sw_index = dp->ds->index,
 		.port = dp->index,
 		.mdb = mdb,
-	};
+	पूर्ण;
 
-	return dsa_port_notify(dp, DSA_NOTIFIER_MDB_ADD, &info);
-}
+	वापस dsa_port_notअगरy(dp, DSA_NOTIFIER_MDB_ADD, &info);
+पूर्ण
 
-int dsa_port_mdb_del(const struct dsa_port *dp,
-		     const struct switchdev_obj_port_mdb *mdb)
-{
-	struct dsa_notifier_mdb_info info = {
+पूर्णांक dsa_port_mdb_del(स्थिर काष्ठा dsa_port *dp,
+		     स्थिर काष्ठा चयनdev_obj_port_mdb *mdb)
+अणु
+	काष्ठा dsa_notअगरier_mdb_info info = अणु
 		.sw_index = dp->ds->index,
 		.port = dp->index,
 		.mdb = mdb,
-	};
+	पूर्ण;
 
-	return dsa_port_notify(dp, DSA_NOTIFIER_MDB_DEL, &info);
-}
+	वापस dsa_port_notअगरy(dp, DSA_NOTIFIER_MDB_DEL, &info);
+पूर्ण
 
-int dsa_port_vlan_add(struct dsa_port *dp,
-		      const struct switchdev_obj_port_vlan *vlan,
-		      struct netlink_ext_ack *extack)
-{
-	struct dsa_notifier_vlan_info info = {
+पूर्णांक dsa_port_vlan_add(काष्ठा dsa_port *dp,
+		      स्थिर काष्ठा चयनdev_obj_port_vlan *vlan,
+		      काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा dsa_notअगरier_vlan_info info = अणु
 		.sw_index = dp->ds->index,
 		.port = dp->index,
 		.vlan = vlan,
 		.extack = extack,
-	};
+	पूर्ण;
 
-	return dsa_port_notify(dp, DSA_NOTIFIER_VLAN_ADD, &info);
-}
+	वापस dsa_port_notअगरy(dp, DSA_NOTIFIER_VLAN_ADD, &info);
+पूर्ण
 
-int dsa_port_vlan_del(struct dsa_port *dp,
-		      const struct switchdev_obj_port_vlan *vlan)
-{
-	struct dsa_notifier_vlan_info info = {
+पूर्णांक dsa_port_vlan_del(काष्ठा dsa_port *dp,
+		      स्थिर काष्ठा चयनdev_obj_port_vlan *vlan)
+अणु
+	काष्ठा dsa_notअगरier_vlan_info info = अणु
 		.sw_index = dp->ds->index,
 		.port = dp->index,
 		.vlan = vlan,
-	};
+	पूर्ण;
 
-	return dsa_port_notify(dp, DSA_NOTIFIER_VLAN_DEL, &info);
-}
+	वापस dsa_port_notअगरy(dp, DSA_NOTIFIER_VLAN_DEL, &info);
+पूर्ण
 
-int dsa_port_mrp_add(const struct dsa_port *dp,
-		     const struct switchdev_obj_mrp *mrp)
-{
-	struct dsa_notifier_mrp_info info = {
+पूर्णांक dsa_port_mrp_add(स्थिर काष्ठा dsa_port *dp,
+		     स्थिर काष्ठा चयनdev_obj_mrp *mrp)
+अणु
+	काष्ठा dsa_notअगरier_mrp_info info = अणु
 		.sw_index = dp->ds->index,
 		.port = dp->index,
 		.mrp = mrp,
-	};
+	पूर्ण;
 
-	return dsa_port_notify(dp, DSA_NOTIFIER_MRP_ADD, &info);
-}
+	वापस dsa_port_notअगरy(dp, DSA_NOTIFIER_MRP_ADD, &info);
+पूर्ण
 
-int dsa_port_mrp_del(const struct dsa_port *dp,
-		     const struct switchdev_obj_mrp *mrp)
-{
-	struct dsa_notifier_mrp_info info = {
+पूर्णांक dsa_port_mrp_del(स्थिर काष्ठा dsa_port *dp,
+		     स्थिर काष्ठा चयनdev_obj_mrp *mrp)
+अणु
+	काष्ठा dsa_notअगरier_mrp_info info = अणु
 		.sw_index = dp->ds->index,
 		.port = dp->index,
 		.mrp = mrp,
-	};
+	पूर्ण;
 
-	return dsa_port_notify(dp, DSA_NOTIFIER_MRP_DEL, &info);
-}
+	वापस dsa_port_notअगरy(dp, DSA_NOTIFIER_MRP_DEL, &info);
+पूर्ण
 
-int dsa_port_mrp_add_ring_role(const struct dsa_port *dp,
-			       const struct switchdev_obj_ring_role_mrp *mrp)
-{
-	struct dsa_notifier_mrp_ring_role_info info = {
+पूर्णांक dsa_port_mrp_add_ring_role(स्थिर काष्ठा dsa_port *dp,
+			       स्थिर काष्ठा चयनdev_obj_ring_role_mrp *mrp)
+अणु
+	काष्ठा dsa_notअगरier_mrp_ring_role_info info = अणु
 		.sw_index = dp->ds->index,
 		.port = dp->index,
 		.mrp = mrp,
-	};
+	पूर्ण;
 
-	return dsa_port_notify(dp, DSA_NOTIFIER_MRP_ADD_RING_ROLE, &info);
-}
+	वापस dsa_port_notअगरy(dp, DSA_NOTIFIER_MRP_ADD_RING_ROLE, &info);
+पूर्ण
 
-int dsa_port_mrp_del_ring_role(const struct dsa_port *dp,
-			       const struct switchdev_obj_ring_role_mrp *mrp)
-{
-	struct dsa_notifier_mrp_ring_role_info info = {
+पूर्णांक dsa_port_mrp_del_ring_role(स्थिर काष्ठा dsa_port *dp,
+			       स्थिर काष्ठा चयनdev_obj_ring_role_mrp *mrp)
+अणु
+	काष्ठा dsa_notअगरier_mrp_ring_role_info info = अणु
 		.sw_index = dp->ds->index,
 		.port = dp->index,
 		.mrp = mrp,
-	};
+	पूर्ण;
 
-	return dsa_port_notify(dp, DSA_NOTIFIER_MRP_DEL_RING_ROLE, &info);
-}
+	वापस dsa_port_notअगरy(dp, DSA_NOTIFIER_MRP_DEL_RING_ROLE, &info);
+पूर्ण
 
-void dsa_port_set_tag_protocol(struct dsa_port *cpu_dp,
-			       const struct dsa_device_ops *tag_ops)
-{
+व्योम dsa_port_set_tag_protocol(काष्ठा dsa_port *cpu_dp,
+			       स्थिर काष्ठा dsa_device_ops *tag_ops)
+अणु
 	cpu_dp->filter = tag_ops->filter;
 	cpu_dp->rcv = tag_ops->rcv;
 	cpu_dp->tag_ops = tag_ops;
-}
+पूर्ण
 
-static struct phy_device *dsa_port_get_phy_device(struct dsa_port *dp)
-{
-	struct device_node *phy_dn;
-	struct phy_device *phydev;
+अटल काष्ठा phy_device *dsa_port_get_phy_device(काष्ठा dsa_port *dp)
+अणु
+	काष्ठा device_node *phy_dn;
+	काष्ठा phy_device *phydev;
 
 	phy_dn = of_parse_phandle(dp->dn, "phy-handle", 0);
-	if (!phy_dn)
-		return NULL;
+	अगर (!phy_dn)
+		वापस शून्य;
 
 	phydev = of_phy_find_device(phy_dn);
-	if (!phydev) {
+	अगर (!phydev) अणु
 		of_node_put(phy_dn);
-		return ERR_PTR(-EPROBE_DEFER);
-	}
+		वापस ERR_PTR(-EPROBE_DEFER);
+	पूर्ण
 
 	of_node_put(phy_dn);
-	return phydev;
-}
+	वापस phydev;
+पूर्ण
 
-static void dsa_port_phylink_validate(struct phylink_config *config,
-				      unsigned long *supported,
-				      struct phylink_link_state *state)
-{
-	struct dsa_port *dp = container_of(config, struct dsa_port, pl_config);
-	struct dsa_switch *ds = dp->ds;
+अटल व्योम dsa_port_phylink_validate(काष्ठा phylink_config *config,
+				      अचिन्हित दीर्घ *supported,
+				      काष्ठा phylink_link_state *state)
+अणु
+	काष्ठा dsa_port *dp = container_of(config, काष्ठा dsa_port, pl_config);
+	काष्ठा dsa_चयन *ds = dp->ds;
 
-	if (!ds->ops->phylink_validate)
-		return;
+	अगर (!ds->ops->phylink_validate)
+		वापस;
 
 	ds->ops->phylink_validate(ds, dp->index, supported, state);
-}
+पूर्ण
 
-static void dsa_port_phylink_mac_pcs_get_state(struct phylink_config *config,
-					       struct phylink_link_state *state)
-{
-	struct dsa_port *dp = container_of(config, struct dsa_port, pl_config);
-	struct dsa_switch *ds = dp->ds;
-	int err;
+अटल व्योम dsa_port_phylink_mac_pcs_get_state(काष्ठा phylink_config *config,
+					       काष्ठा phylink_link_state *state)
+अणु
+	काष्ठा dsa_port *dp = container_of(config, काष्ठा dsa_port, pl_config);
+	काष्ठा dsa_चयन *ds = dp->ds;
+	पूर्णांक err;
 
-	/* Only called for inband modes */
-	if (!ds->ops->phylink_mac_link_state) {
+	/* Only called क्रम inband modes */
+	अगर (!ds->ops->phylink_mac_link_state) अणु
 		state->link = 0;
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	err = ds->ops->phylink_mac_link_state(ds, dp->index, state);
-	if (err < 0) {
+	अगर (err < 0) अणु
 		dev_err(ds->dev, "p%d: phylink_mac_link_state() failed: %d\n",
 			dp->index, err);
 		state->link = 0;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void dsa_port_phylink_mac_config(struct phylink_config *config,
-					unsigned int mode,
-					const struct phylink_link_state *state)
-{
-	struct dsa_port *dp = container_of(config, struct dsa_port, pl_config);
-	struct dsa_switch *ds = dp->ds;
+अटल व्योम dsa_port_phylink_mac_config(काष्ठा phylink_config *config,
+					अचिन्हित पूर्णांक mode,
+					स्थिर काष्ठा phylink_link_state *state)
+अणु
+	काष्ठा dsa_port *dp = container_of(config, काष्ठा dsa_port, pl_config);
+	काष्ठा dsa_चयन *ds = dp->ds;
 
-	if (!ds->ops->phylink_mac_config)
-		return;
+	अगर (!ds->ops->phylink_mac_config)
+		वापस;
 
 	ds->ops->phylink_mac_config(ds, dp->index, mode, state);
-}
+पूर्ण
 
-static void dsa_port_phylink_mac_an_restart(struct phylink_config *config)
-{
-	struct dsa_port *dp = container_of(config, struct dsa_port, pl_config);
-	struct dsa_switch *ds = dp->ds;
+अटल व्योम dsa_port_phylink_mac_an_restart(काष्ठा phylink_config *config)
+अणु
+	काष्ठा dsa_port *dp = container_of(config, काष्ठा dsa_port, pl_config);
+	काष्ठा dsa_चयन *ds = dp->ds;
 
-	if (!ds->ops->phylink_mac_an_restart)
-		return;
+	अगर (!ds->ops->phylink_mac_an_restart)
+		वापस;
 
 	ds->ops->phylink_mac_an_restart(ds, dp->index);
-}
+पूर्ण
 
-static void dsa_port_phylink_mac_link_down(struct phylink_config *config,
-					   unsigned int mode,
-					   phy_interface_t interface)
-{
-	struct dsa_port *dp = container_of(config, struct dsa_port, pl_config);
-	struct phy_device *phydev = NULL;
-	struct dsa_switch *ds = dp->ds;
+अटल व्योम dsa_port_phylink_mac_link_करोwn(काष्ठा phylink_config *config,
+					   अचिन्हित पूर्णांक mode,
+					   phy_पूर्णांकerface_t पूर्णांकerface)
+अणु
+	काष्ठा dsa_port *dp = container_of(config, काष्ठा dsa_port, pl_config);
+	काष्ठा phy_device *phydev = शून्य;
+	काष्ठा dsa_चयन *ds = dp->ds;
 
-	if (dsa_is_user_port(ds, dp->index))
+	अगर (dsa_is_user_port(ds, dp->index))
 		phydev = dp->slave->phydev;
 
-	if (!ds->ops->phylink_mac_link_down) {
-		if (ds->ops->adjust_link && phydev)
+	अगर (!ds->ops->phylink_mac_link_करोwn) अणु
+		अगर (ds->ops->adjust_link && phydev)
 			ds->ops->adjust_link(ds, dp->index, phydev);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	ds->ops->phylink_mac_link_down(ds, dp->index, mode, interface);
-}
+	ds->ops->phylink_mac_link_करोwn(ds, dp->index, mode, पूर्णांकerface);
+पूर्ण
 
-static void dsa_port_phylink_mac_link_up(struct phylink_config *config,
-					 struct phy_device *phydev,
-					 unsigned int mode,
-					 phy_interface_t interface,
-					 int speed, int duplex,
-					 bool tx_pause, bool rx_pause)
-{
-	struct dsa_port *dp = container_of(config, struct dsa_port, pl_config);
-	struct dsa_switch *ds = dp->ds;
+अटल व्योम dsa_port_phylink_mac_link_up(काष्ठा phylink_config *config,
+					 काष्ठा phy_device *phydev,
+					 अचिन्हित पूर्णांक mode,
+					 phy_पूर्णांकerface_t पूर्णांकerface,
+					 पूर्णांक speed, पूर्णांक duplex,
+					 bool tx_छोड़ो, bool rx_छोड़ो)
+अणु
+	काष्ठा dsa_port *dp = container_of(config, काष्ठा dsa_port, pl_config);
+	काष्ठा dsa_चयन *ds = dp->ds;
 
-	if (!ds->ops->phylink_mac_link_up) {
-		if (ds->ops->adjust_link && phydev)
+	अगर (!ds->ops->phylink_mac_link_up) अणु
+		अगर (ds->ops->adjust_link && phydev)
 			ds->ops->adjust_link(ds, dp->index, phydev);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	ds->ops->phylink_mac_link_up(ds, dp->index, mode, interface, phydev,
-				     speed, duplex, tx_pause, rx_pause);
-}
+	ds->ops->phylink_mac_link_up(ds, dp->index, mode, पूर्णांकerface, phydev,
+				     speed, duplex, tx_छोड़ो, rx_छोड़ो);
+पूर्ण
 
-const struct phylink_mac_ops dsa_port_phylink_mac_ops = {
+स्थिर काष्ठा phylink_mac_ops dsa_port_phylink_mac_ops = अणु
 	.validate = dsa_port_phylink_validate,
 	.mac_pcs_get_state = dsa_port_phylink_mac_pcs_get_state,
 	.mac_config = dsa_port_phylink_mac_config,
 	.mac_an_restart = dsa_port_phylink_mac_an_restart,
-	.mac_link_down = dsa_port_phylink_mac_link_down,
+	.mac_link_करोwn = dsa_port_phylink_mac_link_करोwn,
 	.mac_link_up = dsa_port_phylink_mac_link_up,
-};
+पूर्ण;
 
-static int dsa_port_setup_phy_of(struct dsa_port *dp, bool enable)
-{
-	struct dsa_switch *ds = dp->ds;
-	struct phy_device *phydev;
-	int port = dp->index;
-	int err = 0;
+अटल पूर्णांक dsa_port_setup_phy_of(काष्ठा dsa_port *dp, bool enable)
+अणु
+	काष्ठा dsa_चयन *ds = dp->ds;
+	काष्ठा phy_device *phydev;
+	पूर्णांक port = dp->index;
+	पूर्णांक err = 0;
 
 	phydev = dsa_port_get_phy_device(dp);
-	if (!phydev)
-		return 0;
+	अगर (!phydev)
+		वापस 0;
 
-	if (IS_ERR(phydev))
-		return PTR_ERR(phydev);
+	अगर (IS_ERR(phydev))
+		वापस PTR_ERR(phydev);
 
-	if (enable) {
+	अगर (enable) अणु
 		err = genphy_resume(phydev);
-		if (err < 0)
-			goto err_put_dev;
+		अगर (err < 0)
+			जाओ err_put_dev;
 
-		err = genphy_read_status(phydev);
-		if (err < 0)
-			goto err_put_dev;
-	} else {
+		err = genphy_पढ़ो_status(phydev);
+		अगर (err < 0)
+			जाओ err_put_dev;
+	पूर्ण अन्यथा अणु
 		err = genphy_suspend(phydev);
-		if (err < 0)
-			goto err_put_dev;
-	}
+		अगर (err < 0)
+			जाओ err_put_dev;
+	पूर्ण
 
-	if (ds->ops->adjust_link)
+	अगर (ds->ops->adjust_link)
 		ds->ops->adjust_link(ds, port, phydev);
 
 	dev_dbg(ds->dev, "enabled port's phy: %s", phydev_name(phydev));
 
 err_put_dev:
 	put_device(&phydev->mdio.dev);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int dsa_port_fixed_link_register_of(struct dsa_port *dp)
-{
-	struct device_node *dn = dp->dn;
-	struct dsa_switch *ds = dp->ds;
-	struct phy_device *phydev;
-	int port = dp->index;
-	phy_interface_t mode;
-	int err;
+अटल पूर्णांक dsa_port_fixed_link_रेजिस्टर_of(काष्ठा dsa_port *dp)
+अणु
+	काष्ठा device_node *dn = dp->dn;
+	काष्ठा dsa_चयन *ds = dp->ds;
+	काष्ठा phy_device *phydev;
+	पूर्णांक port = dp->index;
+	phy_पूर्णांकerface_t mode;
+	पूर्णांक err;
 
-	err = of_phy_register_fixed_link(dn);
-	if (err) {
+	err = of_phy_रेजिस्टर_fixed_link(dn);
+	अगर (err) अणु
 		dev_err(ds->dev,
 			"failed to register the fixed PHY of port %d\n",
 			port);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
 	phydev = of_phy_find_device(dn);
 
 	err = of_get_phy_mode(dn, &mode);
-	if (err)
+	अगर (err)
 		mode = PHY_INTERFACE_MODE_NA;
-	phydev->interface = mode;
+	phydev->पूर्णांकerface = mode;
 
-	genphy_read_status(phydev);
+	genphy_पढ़ो_status(phydev);
 
-	if (ds->ops->adjust_link)
+	अगर (ds->ops->adjust_link)
 		ds->ops->adjust_link(ds, port, phydev);
 
 	put_device(&phydev->mdio.dev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int dsa_port_phylink_register(struct dsa_port *dp)
-{
-	struct dsa_switch *ds = dp->ds;
-	struct device_node *port_dn = dp->dn;
-	phy_interface_t mode;
-	int err;
+अटल पूर्णांक dsa_port_phylink_रेजिस्टर(काष्ठा dsa_port *dp)
+अणु
+	काष्ठा dsa_चयन *ds = dp->ds;
+	काष्ठा device_node *port_dn = dp->dn;
+	phy_पूर्णांकerface_t mode;
+	पूर्णांक err;
 
 	err = of_get_phy_mode(port_dn, &mode);
-	if (err)
+	अगर (err)
 		mode = PHY_INTERFACE_MODE_NA;
 
 	dp->pl_config.dev = ds->dev;
@@ -938,156 +939,156 @@ static int dsa_port_phylink_register(struct dsa_port *dp)
 
 	dp->pl = phylink_create(&dp->pl_config, of_fwnode_handle(port_dn),
 				mode, &dsa_port_phylink_mac_ops);
-	if (IS_ERR(dp->pl)) {
+	अगर (IS_ERR(dp->pl)) अणु
 		pr_err("error creating PHYLINK: %ld\n", PTR_ERR(dp->pl));
-		return PTR_ERR(dp->pl);
-	}
+		वापस PTR_ERR(dp->pl);
+	पूर्ण
 
 	err = phylink_of_phy_connect(dp->pl, port_dn, 0);
-	if (err && err != -ENODEV) {
+	अगर (err && err != -ENODEV) अणु
 		pr_err("could not attach to PHY: %d\n", err);
-		goto err_phy_connect;
-	}
+		जाओ err_phy_connect;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 err_phy_connect:
 	phylink_destroy(dp->pl);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-int dsa_port_link_register_of(struct dsa_port *dp)
-{
-	struct dsa_switch *ds = dp->ds;
-	struct device_node *phy_np;
-	int port = dp->index;
+पूर्णांक dsa_port_link_रेजिस्टर_of(काष्ठा dsa_port *dp)
+अणु
+	काष्ठा dsa_चयन *ds = dp->ds;
+	काष्ठा device_node *phy_np;
+	पूर्णांक port = dp->index;
 
-	if (!ds->ops->adjust_link) {
+	अगर (!ds->ops->adjust_link) अणु
 		phy_np = of_parse_phandle(dp->dn, "phy-handle", 0);
-		if (of_phy_is_fixed_link(dp->dn) || phy_np) {
-			if (ds->ops->phylink_mac_link_down)
-				ds->ops->phylink_mac_link_down(ds, port,
+		अगर (of_phy_is_fixed_link(dp->dn) || phy_np) अणु
+			अगर (ds->ops->phylink_mac_link_करोwn)
+				ds->ops->phylink_mac_link_करोwn(ds, port,
 					MLO_AN_FIXED, PHY_INTERFACE_MODE_NA);
-			return dsa_port_phylink_register(dp);
-		}
-		return 0;
-	}
+			वापस dsa_port_phylink_रेजिस्टर(dp);
+		पूर्ण
+		वापस 0;
+	पूर्ण
 
 	dev_warn(ds->dev,
 		 "Using legacy PHYLIB callbacks. Please migrate to PHYLINK!\n");
 
-	if (of_phy_is_fixed_link(dp->dn))
-		return dsa_port_fixed_link_register_of(dp);
-	else
-		return dsa_port_setup_phy_of(dp, true);
-}
+	अगर (of_phy_is_fixed_link(dp->dn))
+		वापस dsa_port_fixed_link_रेजिस्टर_of(dp);
+	अन्यथा
+		वापस dsa_port_setup_phy_of(dp, true);
+पूर्ण
 
-void dsa_port_link_unregister_of(struct dsa_port *dp)
-{
-	struct dsa_switch *ds = dp->ds;
+व्योम dsa_port_link_unरेजिस्टर_of(काष्ठा dsa_port *dp)
+अणु
+	काष्ठा dsa_चयन *ds = dp->ds;
 
-	if (!ds->ops->adjust_link && dp->pl) {
+	अगर (!ds->ops->adjust_link && dp->pl) अणु
 		rtnl_lock();
 		phylink_disconnect_phy(dp->pl);
 		rtnl_unlock();
 		phylink_destroy(dp->pl);
-		dp->pl = NULL;
-		return;
-	}
+		dp->pl = शून्य;
+		वापस;
+	पूर्ण
 
-	if (of_phy_is_fixed_link(dp->dn))
-		of_phy_deregister_fixed_link(dp->dn);
-	else
+	अगर (of_phy_is_fixed_link(dp->dn))
+		of_phy_deरेजिस्टर_fixed_link(dp->dn);
+	अन्यथा
 		dsa_port_setup_phy_of(dp, false);
-}
+पूर्ण
 
-int dsa_port_get_phy_strings(struct dsa_port *dp, uint8_t *data)
-{
-	struct phy_device *phydev;
-	int ret = -EOPNOTSUPP;
+पूर्णांक dsa_port_get_phy_strings(काष्ठा dsa_port *dp, uपूर्णांक8_t *data)
+अणु
+	काष्ठा phy_device *phydev;
+	पूर्णांक ret = -EOPNOTSUPP;
 
-	if (of_phy_is_fixed_link(dp->dn))
-		return ret;
+	अगर (of_phy_is_fixed_link(dp->dn))
+		वापस ret;
 
 	phydev = dsa_port_get_phy_device(dp);
-	if (IS_ERR_OR_NULL(phydev))
-		return ret;
+	अगर (IS_ERR_OR_शून्य(phydev))
+		वापस ret;
 
 	ret = phy_ethtool_get_strings(phydev, data);
 	put_device(&phydev->mdio.dev);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(dsa_port_get_phy_strings);
 
-int dsa_port_get_ethtool_phy_stats(struct dsa_port *dp, uint64_t *data)
-{
-	struct phy_device *phydev;
-	int ret = -EOPNOTSUPP;
+पूर्णांक dsa_port_get_ethtool_phy_stats(काष्ठा dsa_port *dp, uपूर्णांक64_t *data)
+अणु
+	काष्ठा phy_device *phydev;
+	पूर्णांक ret = -EOPNOTSUPP;
 
-	if (of_phy_is_fixed_link(dp->dn))
-		return ret;
+	अगर (of_phy_is_fixed_link(dp->dn))
+		वापस ret;
 
 	phydev = dsa_port_get_phy_device(dp);
-	if (IS_ERR_OR_NULL(phydev))
-		return ret;
+	अगर (IS_ERR_OR_शून्य(phydev))
+		वापस ret;
 
-	ret = phy_ethtool_get_stats(phydev, NULL, data);
+	ret = phy_ethtool_get_stats(phydev, शून्य, data);
 	put_device(&phydev->mdio.dev);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(dsa_port_get_ethtool_phy_stats);
 
-int dsa_port_get_phy_sset_count(struct dsa_port *dp)
-{
-	struct phy_device *phydev;
-	int ret = -EOPNOTSUPP;
+पूर्णांक dsa_port_get_phy_sset_count(काष्ठा dsa_port *dp)
+अणु
+	काष्ठा phy_device *phydev;
+	पूर्णांक ret = -EOPNOTSUPP;
 
-	if (of_phy_is_fixed_link(dp->dn))
-		return ret;
+	अगर (of_phy_is_fixed_link(dp->dn))
+		वापस ret;
 
 	phydev = dsa_port_get_phy_device(dp);
-	if (IS_ERR_OR_NULL(phydev))
-		return ret;
+	अगर (IS_ERR_OR_शून्य(phydev))
+		वापस ret;
 
 	ret = phy_ethtool_get_sset_count(phydev);
 	put_device(&phydev->mdio.dev);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(dsa_port_get_phy_sset_count);
 
-int dsa_port_hsr_join(struct dsa_port *dp, struct net_device *hsr)
-{
-	struct dsa_notifier_hsr_info info = {
+पूर्णांक dsa_port_hsr_join(काष्ठा dsa_port *dp, काष्ठा net_device *hsr)
+अणु
+	काष्ठा dsa_notअगरier_hsr_info info = अणु
 		.sw_index = dp->ds->index,
 		.port = dp->index,
 		.hsr = hsr,
-	};
-	int err;
+	पूर्ण;
+	पूर्णांक err;
 
 	dp->hsr_dev = hsr;
 
-	err = dsa_port_notify(dp, DSA_NOTIFIER_HSR_JOIN, &info);
-	if (err)
-		dp->hsr_dev = NULL;
+	err = dsa_port_notअगरy(dp, DSA_NOTIFIER_HSR_JOIN, &info);
+	अगर (err)
+		dp->hsr_dev = शून्य;
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-void dsa_port_hsr_leave(struct dsa_port *dp, struct net_device *hsr)
-{
-	struct dsa_notifier_hsr_info info = {
+व्योम dsa_port_hsr_leave(काष्ठा dsa_port *dp, काष्ठा net_device *hsr)
+अणु
+	काष्ठा dsa_notअगरier_hsr_info info = अणु
 		.sw_index = dp->ds->index,
 		.port = dp->index,
 		.hsr = hsr,
-	};
-	int err;
+	पूर्ण;
+	पूर्णांक err;
 
-	dp->hsr_dev = NULL;
+	dp->hsr_dev = शून्य;
 
-	err = dsa_port_notify(dp, DSA_NOTIFIER_HSR_LEAVE, &info);
-	if (err)
+	err = dsa_port_notअगरy(dp, DSA_NOTIFIER_HSR_LEAVE, &info);
+	अगर (err)
 		pr_err("DSA: failed to notify DSA_NOTIFIER_HSR_LEAVE\n");
-}
+पूर्ण

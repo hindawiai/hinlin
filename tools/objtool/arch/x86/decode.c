@@ -1,81 +1,82 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Copyright (C) 2015 Josh Poimboeuf <jpoimboe@redhat.com>
  */
 
-#include <stdio.h>
-#include <stdlib.h>
+#समावेश <मानकपन.स>
+#समावेश <मानककोष.स>
 
-#define unlikely(cond) (cond)
-#include <asm/insn.h>
-#include "../../../arch/x86/lib/inat.c"
-#include "../../../arch/x86/lib/insn.c"
+#घोषणा unlikely(cond) (cond)
+#समावेश <यंत्र/insn.h>
+#समावेश "../../../arch/x86/lib/inat.c"
+#समावेश "../../../arch/x86/lib/insn.c"
 
-#define CONFIG_64BIT 1
-#include <asm/nops.h>
+#घोषणा CONFIG_64BIT 1
+#समावेश <यंत्र/nops.h>
 
-#include <asm/orc_types.h>
-#include <objtool/check.h>
-#include <objtool/elf.h>
-#include <objtool/arch.h>
-#include <objtool/warn.h>
-#include <objtool/endianness.h>
-#include <arch/elf.h>
+#समावेश <यंत्र/orc_types.h>
+#समावेश <objtool/check.h>
+#समावेश <objtool/elf.h>
+#समावेश <objtool/arch.h>
+#समावेश <objtool/warn.h>
+#समावेश <objtool/endianness.h>
+#समावेश <arch/elf.h>
 
-static int is_x86_64(const struct elf *elf)
-{
-	switch (elf->ehdr.e_machine) {
-	case EM_X86_64:
-		return 1;
-	case EM_386:
-		return 0;
-	default:
+अटल पूर्णांक is_x86_64(स्थिर काष्ठा elf *elf)
+अणु
+	चयन (elf->ehdr.e_machine) अणु
+	हाल EM_X86_64:
+		वापस 1;
+	हाल EM_386:
+		वापस 0;
+	शेष:
 		WARN("unexpected ELF machine type %d", elf->ehdr.e_machine);
-		return -1;
-	}
-}
+		वापस -1;
+	पूर्ण
+पूर्ण
 
-bool arch_callee_saved_reg(unsigned char reg)
-{
-	switch (reg) {
-	case CFI_BP:
-	case CFI_BX:
-	case CFI_R12:
-	case CFI_R13:
-	case CFI_R14:
-	case CFI_R15:
-		return true;
+bool arch_callee_saved_reg(अचिन्हित अक्षर reg)
+अणु
+	चयन (reg) अणु
+	हाल CFI_BP:
+	हाल CFI_BX:
+	हाल CFI_R12:
+	हाल CFI_R13:
+	हाल CFI_R14:
+	हाल CFI_R15:
+		वापस true;
 
-	case CFI_AX:
-	case CFI_CX:
-	case CFI_DX:
-	case CFI_SI:
-	case CFI_DI:
-	case CFI_SP:
-	case CFI_R8:
-	case CFI_R9:
-	case CFI_R10:
-	case CFI_R11:
-	case CFI_RA:
-	default:
-		return false;
-	}
-}
+	हाल CFI_AX:
+	हाल CFI_CX:
+	हाल CFI_DX:
+	हाल CFI_SI:
+	हाल CFI_DI:
+	हाल CFI_SP:
+	हाल CFI_R8:
+	हाल CFI_R9:
+	हाल CFI_R10:
+	हाल CFI_R11:
+	हाल CFI_RA:
+	शेष:
+		वापस false;
+	पूर्ण
+पूर्ण
 
-unsigned long arch_dest_reloc_offset(int addend)
-{
-	return addend + 4;
-}
+अचिन्हित दीर्घ arch_dest_reloc_offset(पूर्णांक addend)
+अणु
+	वापस addend + 4;
+पूर्ण
 
-unsigned long arch_jump_destination(struct instruction *insn)
-{
-	return insn->offset + insn->len + insn->immediate;
-}
+अचिन्हित दीर्घ arch_jump_destination(काष्ठा inकाष्ठाion *insn)
+अणु
+	वापस insn->offset + insn->len + insn->immediate;
+पूर्ण
 
-#define ADD_OP(op) \
-	if (!(op = calloc(1, sizeof(*op)))) \
-		return -1; \
-	else for (list_add_tail(&op->list, ops_list); op; op = NULL)
+#घोषणा ADD_OP(op) \
+	अगर (!(op = सुस्मृति(1, माप(*op)))) \
+		वापस -1; \
+	अन्यथा क्रम (list_add_tail(&op->list, ops_list); op; op = शून्य)
 
 /*
  * Helpers to decode ModRM/SIB:
@@ -89,129 +90,129 @@ unsigned long arch_jump_destination(struct instruction *insn)
  * 11 |                   r/ m               |
  */
 
-#define mod_is_mem()	(modrm_mod != 3)
-#define mod_is_reg()	(modrm_mod == 3)
+#घोषणा mod_is_mem()	(modrm_mod != 3)
+#घोषणा mod_is_reg()	(modrm_mod == 3)
 
-#define is_RIP()   ((modrm_rm & 7) == CFI_BP && modrm_mod == 0)
-#define have_SIB() ((modrm_rm & 7) == CFI_SP && mod_is_mem())
+#घोषणा is_RIP()   ((modrm_rm & 7) == CFI_BP && modrm_mod == 0)
+#घोषणा have_SIB() ((modrm_rm & 7) == CFI_SP && mod_is_mem())
 
-#define rm_is(reg) (have_SIB() ? \
+#घोषणा rm_is(reg) (have_SIB() ? \
 		    sib_base == (reg) && sib_index == CFI_SP : \
 		    modrm_rm == (reg))
 
-#define rm_is_mem(reg)	(mod_is_mem() && !is_RIP() && rm_is(reg))
-#define rm_is_reg(reg)	(mod_is_reg() && modrm_rm == (reg))
+#घोषणा rm_is_mem(reg)	(mod_is_mem() && !is_RIP() && rm_is(reg))
+#घोषणा rm_is_reg(reg)	(mod_is_reg() && modrm_rm == (reg))
 
-int arch_decode_instruction(const struct elf *elf, const struct section *sec,
-			    unsigned long offset, unsigned int maxlen,
-			    unsigned int *len, enum insn_type *type,
-			    unsigned long *immediate,
-			    struct list_head *ops_list)
-{
-	struct insn insn;
-	int x86_64, ret;
-	unsigned char op1, op2,
+पूर्णांक arch_decode_inकाष्ठाion(स्थिर काष्ठा elf *elf, स्थिर काष्ठा section *sec,
+			    अचिन्हित दीर्घ offset, अचिन्हित पूर्णांक maxlen,
+			    अचिन्हित पूर्णांक *len, क्रमागत insn_type *type,
+			    अचिन्हित दीर्घ *immediate,
+			    काष्ठा list_head *ops_list)
+अणु
+	काष्ठा insn insn;
+	पूर्णांक x86_64, ret;
+	अचिन्हित अक्षर op1, op2,
 		      rex = 0, rex_b = 0, rex_r = 0, rex_w = 0, rex_x = 0,
 		      modrm = 0, modrm_mod = 0, modrm_rm = 0, modrm_reg = 0,
 		      sib = 0, /* sib_scale = 0, */ sib_index = 0, sib_base = 0;
-	struct stack_op *op = NULL;
-	struct symbol *sym;
+	काष्ठा stack_op *op = शून्य;
+	काष्ठा symbol *sym;
 	u64 imm;
 
 	x86_64 = is_x86_64(elf);
-	if (x86_64 == -1)
-		return -1;
+	अगर (x86_64 == -1)
+		वापस -1;
 
 	ret = insn_decode(&insn, sec->data->d_buf + offset, maxlen,
 			  x86_64 ? INSN_MODE_64 : INSN_MODE_32);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		WARN("can't decode instruction at %s:0x%lx", sec->name, offset);
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
 	*len = insn.length;
 	*type = INSN_OTHER;
 
-	if (insn.vex_prefix.nbytes)
-		return 0;
+	अगर (insn.vex_prefix.nbytes)
+		वापस 0;
 
 	op1 = insn.opcode.bytes[0];
 	op2 = insn.opcode.bytes[1];
 
-	if (insn.rex_prefix.nbytes) {
+	अगर (insn.rex_prefix.nbytes) अणु
 		rex = insn.rex_prefix.bytes[0];
 		rex_w = X86_REX_W(rex) >> 3;
 		rex_r = X86_REX_R(rex) >> 2;
 		rex_x = X86_REX_X(rex) >> 1;
 		rex_b = X86_REX_B(rex);
-	}
+	पूर्ण
 
-	if (insn.modrm.nbytes) {
+	अगर (insn.modrm.nbytes) अणु
 		modrm = insn.modrm.bytes[0];
 		modrm_mod = X86_MODRM_MOD(modrm);
 		modrm_reg = X86_MODRM_REG(modrm) + 8*rex_r;
 		modrm_rm  = X86_MODRM_RM(modrm)  + 8*rex_b;
-	}
+	पूर्ण
 
-	if (insn.sib.nbytes) {
+	अगर (insn.sib.nbytes) अणु
 		sib = insn.sib.bytes[0];
 		/* sib_scale = X86_SIB_SCALE(sib); */
 		sib_index = X86_SIB_INDEX(sib) + 8*rex_x;
 		sib_base  = X86_SIB_BASE(sib)  + 8*rex_b;
-	}
+	पूर्ण
 
-	switch (op1) {
+	चयन (op1) अणु
 
-	case 0x1:
-	case 0x29:
-		if (rex_w && rm_is_reg(CFI_SP)) {
+	हाल 0x1:
+	हाल 0x29:
+		अगर (rex_w && rm_is_reg(CFI_SP)) अणु
 
 			/* add/sub reg, %rsp */
-			ADD_OP(op) {
+			ADD_OP(op) अणु
 				op->src.type = OP_SRC_ADD;
 				op->src.reg = modrm_reg;
 				op->dest.type = OP_DEST_REG;
 				op->dest.reg = CFI_SP;
-			}
-		}
-		break;
+			पूर्ण
+		पूर्ण
+		अवरोध;
 
-	case 0x50 ... 0x57:
+	हाल 0x50 ... 0x57:
 
 		/* push reg */
-		ADD_OP(op) {
+		ADD_OP(op) अणु
 			op->src.type = OP_SRC_REG;
 			op->src.reg = (op1 & 0x7) + 8*rex_b;
 			op->dest.type = OP_DEST_PUSH;
-		}
+		पूर्ण
 
-		break;
+		अवरोध;
 
-	case 0x58 ... 0x5f:
+	हाल 0x58 ... 0x5f:
 
 		/* pop reg */
-		ADD_OP(op) {
+		ADD_OP(op) अणु
 			op->src.type = OP_SRC_POP;
 			op->dest.type = OP_DEST_REG;
 			op->dest.reg = (op1 & 0x7) + 8*rex_b;
-		}
+		पूर्ण
 
-		break;
+		अवरोध;
 
-	case 0x68:
-	case 0x6a:
+	हाल 0x68:
+	हाल 0x6a:
 		/* push immediate */
-		ADD_OP(op) {
+		ADD_OP(op) अणु
 			op->src.type = OP_SRC_CONST;
 			op->dest.type = OP_DEST_PUSH;
-		}
-		break;
+		पूर्ण
+		अवरोध;
 
-	case 0x70 ... 0x7f:
+	हाल 0x70 ... 0x7f:
 		*type = INSN_JUMP_CONDITIONAL;
-		break;
+		अवरोध;
 
-	case 0x80 ... 0x83:
+	हाल 0x80 ... 0x83:
 		/*
 		 * 1000 00sw : mod OP r/m : immediate
 		 *
@@ -225,290 +226,290 @@ int arch_decode_instruction(const struct elf *elf, const struct section *sec,
 		 */
 
 		/* 64bit only */
-		if (!rex_w)
-			break;
+		अगर (!rex_w)
+			अवरोध;
 
 		/* %rsp target only */
-		if (!rm_is_reg(CFI_SP))
-			break;
+		अगर (!rm_is_reg(CFI_SP))
+			अवरोध;
 
 		imm = insn.immediate.value;
-		if (op1 & 2) { /* sign extend */
-			if (op1 & 1) { /* imm32 */
+		अगर (op1 & 2) अणु /* sign extend */
+			अगर (op1 & 1) अणु /* imm32 */
 				imm <<= 32;
 				imm = (s64)imm >> 32;
-			} else { /* imm8 */
+			पूर्ण अन्यथा अणु /* imm8 */
 				imm <<= 56;
 				imm = (s64)imm >> 56;
-			}
-		}
+			पूर्ण
+		पूर्ण
 
-		switch (modrm_reg & 7) {
-		case 5:
+		चयन (modrm_reg & 7) अणु
+		हाल 5:
 			imm = -imm;
 			/* fallthrough */
-		case 0:
+		हाल 0:
 			/* add/sub imm, %rsp */
-			ADD_OP(op) {
+			ADD_OP(op) अणु
 				op->src.type = OP_SRC_ADD;
 				op->src.reg = CFI_SP;
 				op->src.offset = imm;
 				op->dest.type = OP_DEST_REG;
 				op->dest.reg = CFI_SP;
-			}
-			break;
+			पूर्ण
+			अवरोध;
 
-		case 4:
+		हाल 4:
 			/* and imm, %rsp */
-			ADD_OP(op) {
+			ADD_OP(op) अणु
 				op->src.type = OP_SRC_AND;
 				op->src.reg = CFI_SP;
 				op->src.offset = insn.immediate.value;
 				op->dest.type = OP_DEST_REG;
 				op->dest.reg = CFI_SP;
-			}
-			break;
+			पूर्ण
+			अवरोध;
 
-		default:
+		शेष:
 			/* WARN ? */
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		break;
+		अवरोध;
 
-	case 0x89:
-		if (!rex_w)
-			break;
+	हाल 0x89:
+		अगर (!rex_w)
+			अवरोध;
 
-		if (modrm_reg == CFI_SP) {
+		अगर (modrm_reg == CFI_SP) अणु
 
-			if (mod_is_reg()) {
+			अगर (mod_is_reg()) अणु
 				/* mov %rsp, reg */
-				ADD_OP(op) {
+				ADD_OP(op) अणु
 					op->src.type = OP_SRC_REG;
 					op->src.reg = CFI_SP;
 					op->dest.type = OP_DEST_REG;
 					op->dest.reg = modrm_rm;
-				}
-				break;
+				पूर्ण
+				अवरोध;
 
-			} else {
+			पूर्ण अन्यथा अणु
 				/* skip RIP relative displacement */
-				if (is_RIP())
-					break;
+				अगर (is_RIP())
+					अवरोध;
 
 				/* skip nontrivial SIB */
-				if (have_SIB()) {
+				अगर (have_SIB()) अणु
 					modrm_rm = sib_base;
-					if (sib_index != CFI_SP)
-						break;
-				}
+					अगर (sib_index != CFI_SP)
+						अवरोध;
+				पूर्ण
 
 				/* mov %rsp, disp(%reg) */
-				ADD_OP(op) {
+				ADD_OP(op) अणु
 					op->src.type = OP_SRC_REG;
 					op->src.reg = CFI_SP;
-					op->dest.type = OP_DEST_REG_INDIRECT;
+					op->dest.type = OP_DEST_REG_INसूचीECT;
 					op->dest.reg = modrm_rm;
 					op->dest.offset = insn.displacement.value;
-				}
-				break;
-			}
+				पूर्ण
+				अवरोध;
+			पूर्ण
 
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		if (rm_is_reg(CFI_SP)) {
+		अगर (rm_is_reg(CFI_SP)) अणु
 
 			/* mov reg, %rsp */
-			ADD_OP(op) {
+			ADD_OP(op) अणु
 				op->src.type = OP_SRC_REG;
 				op->src.reg = modrm_reg;
 				op->dest.type = OP_DEST_REG;
 				op->dest.reg = CFI_SP;
-			}
-			break;
-		}
+			पूर्ण
+			अवरोध;
+		पूर्ण
 
 		/* fallthrough */
-	case 0x88:
-		if (!rex_w)
-			break;
+	हाल 0x88:
+		अगर (!rex_w)
+			अवरोध;
 
-		if (rm_is_mem(CFI_BP)) {
+		अगर (rm_is_mem(CFI_BP)) अणु
 
 			/* mov reg, disp(%rbp) */
-			ADD_OP(op) {
+			ADD_OP(op) अणु
 				op->src.type = OP_SRC_REG;
 				op->src.reg = modrm_reg;
-				op->dest.type = OP_DEST_REG_INDIRECT;
+				op->dest.type = OP_DEST_REG_INसूचीECT;
 				op->dest.reg = CFI_BP;
 				op->dest.offset = insn.displacement.value;
-			}
-			break;
-		}
+			पूर्ण
+			अवरोध;
+		पूर्ण
 
-		if (rm_is_mem(CFI_SP)) {
+		अगर (rm_is_mem(CFI_SP)) अणु
 
 			/* mov reg, disp(%rsp) */
-			ADD_OP(op) {
+			ADD_OP(op) अणु
 				op->src.type = OP_SRC_REG;
 				op->src.reg = modrm_reg;
-				op->dest.type = OP_DEST_REG_INDIRECT;
+				op->dest.type = OP_DEST_REG_INसूचीECT;
 				op->dest.reg = CFI_SP;
 				op->dest.offset = insn.displacement.value;
-			}
-			break;
-		}
+			पूर्ण
+			अवरोध;
+		पूर्ण
 
-		break;
+		अवरोध;
 
-	case 0x8b:
-		if (!rex_w)
-			break;
+	हाल 0x8b:
+		अगर (!rex_w)
+			अवरोध;
 
-		if (rm_is_mem(CFI_BP)) {
+		अगर (rm_is_mem(CFI_BP)) अणु
 
 			/* mov disp(%rbp), reg */
-			ADD_OP(op) {
-				op->src.type = OP_SRC_REG_INDIRECT;
+			ADD_OP(op) अणु
+				op->src.type = OP_SRC_REG_INसूचीECT;
 				op->src.reg = CFI_BP;
 				op->src.offset = insn.displacement.value;
 				op->dest.type = OP_DEST_REG;
 				op->dest.reg = modrm_reg;
-			}
-			break;
-		}
+			पूर्ण
+			अवरोध;
+		पूर्ण
 
-		if (rm_is_mem(CFI_SP)) {
+		अगर (rm_is_mem(CFI_SP)) अणु
 
 			/* mov disp(%rsp), reg */
-			ADD_OP(op) {
-				op->src.type = OP_SRC_REG_INDIRECT;
+			ADD_OP(op) अणु
+				op->src.type = OP_SRC_REG_INसूचीECT;
 				op->src.reg = CFI_SP;
 				op->src.offset = insn.displacement.value;
 				op->dest.type = OP_DEST_REG;
 				op->dest.reg = modrm_reg;
-			}
-			break;
-		}
+			पूर्ण
+			अवरोध;
+		पूर्ण
 
-		break;
+		अवरोध;
 
-	case 0x8d:
-		if (mod_is_reg()) {
+	हाल 0x8d:
+		अगर (mod_is_reg()) अणु
 			WARN("invalid LEA encoding at %s:0x%lx", sec->name, offset);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		/* skip non 64bit ops */
-		if (!rex_w)
-			break;
+		अगर (!rex_w)
+			अवरोध;
 
 		/* skip RIP relative displacement */
-		if (is_RIP())
-			break;
+		अगर (is_RIP())
+			अवरोध;
 
 		/* skip nontrivial SIB */
-		if (have_SIB()) {
+		अगर (have_SIB()) अणु
 			modrm_rm = sib_base;
-			if (sib_index != CFI_SP)
-				break;
-		}
+			अगर (sib_index != CFI_SP)
+				अवरोध;
+		पूर्ण
 
 		/* lea disp(%src), %dst */
-		ADD_OP(op) {
+		ADD_OP(op) अणु
 			op->src.offset = insn.displacement.value;
-			if (!op->src.offset) {
+			अगर (!op->src.offset) अणु
 				/* lea (%src), %dst */
 				op->src.type = OP_SRC_REG;
-			} else {
+			पूर्ण अन्यथा अणु
 				/* lea disp(%src), %dst */
 				op->src.type = OP_SRC_ADD;
-			}
+			पूर्ण
 			op->src.reg = modrm_rm;
 			op->dest.type = OP_DEST_REG;
 			op->dest.reg = modrm_reg;
-		}
-		break;
+		पूर्ण
+		अवरोध;
 
-	case 0x8f:
+	हाल 0x8f:
 		/* pop to mem */
-		ADD_OP(op) {
+		ADD_OP(op) अणु
 			op->src.type = OP_SRC_POP;
 			op->dest.type = OP_DEST_MEM;
-		}
-		break;
+		पूर्ण
+		अवरोध;
 
-	case 0x90:
+	हाल 0x90:
 		*type = INSN_NOP;
-		break;
+		अवरोध;
 
-	case 0x9c:
+	हाल 0x9c:
 		/* pushf */
-		ADD_OP(op) {
+		ADD_OP(op) अणु
 			op->src.type = OP_SRC_CONST;
 			op->dest.type = OP_DEST_PUSHF;
-		}
-		break;
+		पूर्ण
+		अवरोध;
 
-	case 0x9d:
+	हाल 0x9d:
 		/* popf */
-		ADD_OP(op) {
+		ADD_OP(op) अणु
 			op->src.type = OP_SRC_POPF;
 			op->dest.type = OP_DEST_MEM;
-		}
-		break;
+		पूर्ण
+		अवरोध;
 
-	case 0x0f:
+	हाल 0x0f:
 
-		if (op2 == 0x01) {
+		अगर (op2 == 0x01) अणु
 
-			if (modrm == 0xca)
+			अगर (modrm == 0xca)
 				*type = INSN_CLAC;
-			else if (modrm == 0xcb)
+			अन्यथा अगर (modrm == 0xcb)
 				*type = INSN_STAC;
 
-		} else if (op2 >= 0x80 && op2 <= 0x8f) {
+		पूर्ण अन्यथा अगर (op2 >= 0x80 && op2 <= 0x8f) अणु
 
 			*type = INSN_JUMP_CONDITIONAL;
 
-		} else if (op2 == 0x05 || op2 == 0x07 || op2 == 0x34 ||
-			   op2 == 0x35) {
+		पूर्ण अन्यथा अगर (op2 == 0x05 || op2 == 0x07 || op2 == 0x34 ||
+			   op2 == 0x35) अणु
 
 			/* sysenter, sysret */
 			*type = INSN_CONTEXT_SWITCH;
 
-		} else if (op2 == 0x0b || op2 == 0xb9) {
+		पूर्ण अन्यथा अगर (op2 == 0x0b || op2 == 0xb9) अणु
 
 			/* ud2 */
 			*type = INSN_BUG;
 
-		} else if (op2 == 0x0d || op2 == 0x1f) {
+		पूर्ण अन्यथा अगर (op2 == 0x0d || op2 == 0x1f) अणु
 
 			/* nopl/nopw */
 			*type = INSN_NOP;
 
-		} else if (op2 == 0xa0 || op2 == 0xa8) {
+		पूर्ण अन्यथा अगर (op2 == 0xa0 || op2 == 0xa8) अणु
 
 			/* push fs/gs */
-			ADD_OP(op) {
+			ADD_OP(op) अणु
 				op->src.type = OP_SRC_CONST;
 				op->dest.type = OP_DEST_PUSH;
-			}
+			पूर्ण
 
-		} else if (op2 == 0xa1 || op2 == 0xa9) {
+		पूर्ण अन्यथा अगर (op2 == 0xa1 || op2 == 0xa9) अणु
 
 			/* pop fs/gs */
-			ADD_OP(op) {
+			ADD_OP(op) अणु
 				op->src.type = OP_SRC_POP;
 				op->dest.type = OP_DEST_MEM;
-			}
-		}
+			पूर्ण
+		पूर्ण
 
-		break;
+		अवरोध;
 
-	case 0xc9:
+	हाल 0xc9:
 		/*
 		 * leave
 		 *
@@ -516,306 +517,306 @@ int arch_decode_instruction(const struct elf *elf, const struct section *sec,
 		 * mov bp, sp
 		 * pop bp
 		 */
-		ADD_OP(op) {
+		ADD_OP(op) अणु
 			op->src.type = OP_SRC_REG;
 			op->src.reg = CFI_BP;
 			op->dest.type = OP_DEST_REG;
 			op->dest.reg = CFI_SP;
-		}
-		ADD_OP(op) {
+		पूर्ण
+		ADD_OP(op) अणु
 			op->src.type = OP_SRC_POP;
 			op->dest.type = OP_DEST_REG;
 			op->dest.reg = CFI_BP;
-		}
-		break;
+		पूर्ण
+		अवरोध;
 
-	case 0xe3:
+	हाल 0xe3:
 		/* jecxz/jrcxz */
 		*type = INSN_JUMP_CONDITIONAL;
-		break;
+		अवरोध;
 
-	case 0xe9:
-	case 0xeb:
+	हाल 0xe9:
+	हाल 0xeb:
 		*type = INSN_JUMP_UNCONDITIONAL;
-		break;
+		अवरोध;
 
-	case 0xc2:
-	case 0xc3:
+	हाल 0xc2:
+	हाल 0xc3:
 		*type = INSN_RETURN;
-		break;
+		अवरोध;
 
-	case 0xcf: /* iret */
+	हाल 0xcf: /* iret */
 		/*
 		 * Handle sync_core(), which has an IRET to self.
 		 * All other IRET are in STT_NONE entry code.
 		 */
 		sym = find_symbol_containing(sec, offset);
-		if (sym && sym->type == STT_FUNC) {
-			ADD_OP(op) {
+		अगर (sym && sym->type == STT_FUNC) अणु
+			ADD_OP(op) अणु
 				/* add $40, %rsp */
 				op->src.type = OP_SRC_ADD;
 				op->src.reg = CFI_SP;
 				op->src.offset = 5*8;
 				op->dest.type = OP_DEST_REG;
 				op->dest.reg = CFI_SP;
-			}
-			break;
-		}
+			पूर्ण
+			अवरोध;
+		पूर्ण
 
 		/* fallthrough */
 
-	case 0xca: /* retf */
-	case 0xcb: /* retf */
+	हाल 0xca: /* retf */
+	हाल 0xcb: /* retf */
 		*type = INSN_CONTEXT_SWITCH;
-		break;
+		अवरोध;
 
-	case 0xe8:
+	हाल 0xe8:
 		*type = INSN_CALL;
 		/*
 		 * For the impact on the stack, a CALL behaves like
-		 * a PUSH of an immediate value (the return address).
+		 * a PUSH of an immediate value (the वापस address).
 		 */
-		ADD_OP(op) {
+		ADD_OP(op) अणु
 			op->src.type = OP_SRC_CONST;
 			op->dest.type = OP_DEST_PUSH;
-		}
-		break;
+		पूर्ण
+		अवरोध;
 
-	case 0xfc:
+	हाल 0xfc:
 		*type = INSN_CLD;
-		break;
+		अवरोध;
 
-	case 0xfd:
+	हाल 0xfd:
 		*type = INSN_STD;
-		break;
+		अवरोध;
 
-	case 0xff:
-		if (modrm_reg == 2 || modrm_reg == 3)
+	हाल 0xff:
+		अगर (modrm_reg == 2 || modrm_reg == 3)
 
 			*type = INSN_CALL_DYNAMIC;
 
-		else if (modrm_reg == 4)
+		अन्यथा अगर (modrm_reg == 4)
 
 			*type = INSN_JUMP_DYNAMIC;
 
-		else if (modrm_reg == 5)
+		अन्यथा अगर (modrm_reg == 5)
 
 			/* jmpf */
 			*type = INSN_CONTEXT_SWITCH;
 
-		else if (modrm_reg == 6) {
+		अन्यथा अगर (modrm_reg == 6) अणु
 
 			/* push from mem */
-			ADD_OP(op) {
+			ADD_OP(op) अणु
 				op->src.type = OP_SRC_CONST;
 				op->dest.type = OP_DEST_PUSH;
-			}
-		}
+			पूर्ण
+		पूर्ण
 
-		break;
+		अवरोध;
 
-	default:
-		break;
-	}
+	शेष:
+		अवरोध;
+	पूर्ण
 
 	*immediate = insn.immediate.nbytes ? insn.immediate.value : 0;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void arch_initial_func_cfi_state(struct cfi_init_state *state)
-{
-	int i;
+व्योम arch_initial_func_cfi_state(काष्ठा cfi_init_state *state)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < CFI_NUM_REGS; i++) {
+	क्रम (i = 0; i < CFI_NUM_REGS; i++) अणु
 		state->regs[i].base = CFI_UNDEFINED;
 		state->regs[i].offset = 0;
-	}
+	पूर्ण
 
 	/* initial CFA (call frame address) */
 	state->cfa.base = CFI_SP;
 	state->cfa.offset = 8;
 
-	/* initial RA (return address) */
+	/* initial RA (वापस address) */
 	state->regs[CFI_RA].base = CFI_CFA;
 	state->regs[CFI_RA].offset = -8;
-}
+पूर्ण
 
-const char *arch_nop_insn(int len)
-{
-	static const char nops[5][5] = {
-		{ BYTES_NOP1 },
-		{ BYTES_NOP2 },
-		{ BYTES_NOP3 },
-		{ BYTES_NOP4 },
-		{ BYTES_NOP5 },
-	};
+स्थिर अक्षर *arch_nop_insn(पूर्णांक len)
+अणु
+	अटल स्थिर अक्षर nops[5][5] = अणु
+		अणु BYTES_NOP1 पूर्ण,
+		अणु BYTES_NOP2 पूर्ण,
+		अणु BYTES_NOP3 पूर्ण,
+		अणु BYTES_NOP4 पूर्ण,
+		अणु BYTES_NOP5 पूर्ण,
+	पूर्ण;
 
-	if (len < 1 || len > 5) {
+	अगर (len < 1 || len > 5) अणु
 		WARN("invalid NOP size: %d\n", len);
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
-	return nops[len-1];
-}
+	वापस nops[len-1];
+पूर्ण
 
-/* asm/alternative.h ? */
+/* यंत्र/alternative.h ? */
 
-#define ALTINSTR_FLAG_INV	(1 << 15)
-#define ALT_NOT(feat)		((feat) | ALTINSTR_FLAG_INV)
+#घोषणा ALTINSTR_FLAG_INV	(1 << 15)
+#घोषणा ALT_NOT(feat)		((feat) | ALTINSTR_FLAG_INV)
 
-struct alt_instr {
-	s32 instr_offset;	/* original instruction */
-	s32 repl_offset;	/* offset to replacement instruction */
-	u16 cpuid;		/* cpuid bit set for replacement */
-	u8  instrlen;		/* length of original instruction */
-	u8  replacementlen;	/* length of new instruction */
-} __packed;
+काष्ठा alt_instr अणु
+	s32 instr_offset;	/* original inकाष्ठाion */
+	s32 repl_offset;	/* offset to replacement inकाष्ठाion */
+	u16 cpuid;		/* cpuid bit set क्रम replacement */
+	u8  inम_माप;		/* length of original inकाष्ठाion */
+	u8  replacementlen;	/* length of new inकाष्ठाion */
+पूर्ण __packed;
 
-static int elf_add_alternative(struct elf *elf,
-			       struct instruction *orig, struct symbol *sym,
-			       int cpuid, u8 orig_len, u8 repl_len)
-{
-	const int size = sizeof(struct alt_instr);
-	struct alt_instr *alt;
-	struct section *sec;
+अटल पूर्णांक elf_add_alternative(काष्ठा elf *elf,
+			       काष्ठा inकाष्ठाion *orig, काष्ठा symbol *sym,
+			       पूर्णांक cpuid, u8 orig_len, u8 repl_len)
+अणु
+	स्थिर पूर्णांक size = माप(काष्ठा alt_instr);
+	काष्ठा alt_instr *alt;
+	काष्ठा section *sec;
 	Elf_Scn *s;
 
 	sec = find_section_by_name(elf, ".altinstructions");
-	if (!sec) {
+	अगर (!sec) अणु
 		sec = elf_create_section(elf, ".altinstructions",
 					 SHF_WRITE, size, 0);
 
-		if (!sec) {
+		अगर (!sec) अणु
 			WARN_ELF("elf_create_section");
-			return -1;
-		}
-	}
+			वापस -1;
+		पूर्ण
+	पूर्ण
 
-	s = elf_getscn(elf->elf, sec->idx);
-	if (!s) {
+	s = elf_माला_लोcn(elf->elf, sec->idx);
+	अगर (!s) अणु
 		WARN_ELF("elf_getscn");
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
 	sec->data = elf_newdata(s);
-	if (!sec->data) {
+	अगर (!sec->data) अणु
 		WARN_ELF("elf_newdata");
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
 	sec->data->d_size = size;
 	sec->data->d_align = 1;
 
-	alt = sec->data->d_buf = malloc(size);
-	if (!sec->data->d_buf) {
-		perror("malloc");
-		return -1;
-	}
-	memset(sec->data->d_buf, 0, size);
+	alt = sec->data->d_buf = दो_स्मृति(size);
+	अगर (!sec->data->d_buf) अणु
+		लिखो_त्रुटि("malloc");
+		वापस -1;
+	पूर्ण
+	स_रखो(sec->data->d_buf, 0, size);
 
-	if (elf_add_reloc_to_insn(elf, sec, sec->sh.sh_size,
-				  R_X86_64_PC32, orig->sec, orig->offset)) {
+	अगर (elf_add_reloc_to_insn(elf, sec, sec->sh.sh_size,
+				  R_X86_64_PC32, orig->sec, orig->offset)) अणु
 		WARN("elf_create_reloc: alt_instr::instr_offset");
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
-	if (elf_add_reloc(elf, sec, sec->sh.sh_size + 4,
-			  R_X86_64_PC32, sym, 0)) {
+	अगर (elf_add_reloc(elf, sec, sec->sh.sh_size + 4,
+			  R_X86_64_PC32, sym, 0)) अणु
 		WARN("elf_create_reloc: alt_instr::repl_offset");
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
-	alt->cpuid = bswap_if_needed(cpuid);
-	alt->instrlen = orig_len;
+	alt->cpuid = bswap_अगर_needed(cpuid);
+	alt->inम_माप = orig_len;
 	alt->replacementlen = repl_len;
 
 	sec->sh.sh_size += size;
 	sec->changed = true;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#define X86_FEATURE_RETPOLINE                ( 7*32+12)
+#घोषणा X86_FEATURE_RETPOLINE                ( 7*32+12)
 
-int arch_rewrite_retpolines(struct objtool_file *file)
-{
-	struct instruction *insn;
-	struct reloc *reloc;
-	struct symbol *sym;
-	char name[32] = "";
+पूर्णांक arch_reग_लिखो_retpolines(काष्ठा objtool_file *file)
+अणु
+	काष्ठा inकाष्ठाion *insn;
+	काष्ठा reloc *reloc;
+	काष्ठा symbol *sym;
+	अक्षर name[32] = "";
 
-	list_for_each_entry(insn, &file->retpoline_call_list, call_node) {
+	list_क्रम_each_entry(insn, &file->retpoline_call_list, call_node) अणु
 
-		if (insn->type != INSN_JUMP_DYNAMIC &&
+		अगर (insn->type != INSN_JUMP_DYNAMIC &&
 		    insn->type != INSN_CALL_DYNAMIC)
-			continue;
+			जारी;
 
-		if (!strcmp(insn->sec->name, ".text.__x86.indirect_thunk"))
-			continue;
+		अगर (!म_भेद(insn->sec->name, ".text.__x86.indirect_thunk"))
+			जारी;
 
 		reloc = insn->reloc;
 
-		sprintf(name, "__x86_indirect_alt_%s_%s",
+		प्र_लिखो(name, "__x86_indirect_alt_%s_%s",
 			insn->type == INSN_JUMP_DYNAMIC ? "jmp" : "call",
 			reloc->sym->name + 21);
 
 		sym = find_symbol_by_name(file->elf, name);
-		if (!sym) {
+		अगर (!sym) अणु
 			sym = elf_create_undef_symbol(file->elf, name);
-			if (!sym) {
+			अगर (!sym) अणु
 				WARN("elf_create_undef_symbol");
-				return -1;
-			}
-		}
+				वापस -1;
+			पूर्ण
+		पूर्ण
 
-		if (elf_add_alternative(file->elf, insn, sym,
-					ALT_NOT(X86_FEATURE_RETPOLINE), 5, 5)) {
+		अगर (elf_add_alternative(file->elf, insn, sym,
+					ALT_NOT(X86_FEATURE_RETPOLINE), 5, 5)) अणु
 			WARN("elf_add_alternative");
-			return -1;
-		}
-	}
+			वापस -1;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int arch_decode_hint_reg(struct instruction *insn, u8 sp_reg)
-{
-	struct cfi_reg *cfa = &insn->cfi.cfa;
+पूर्णांक arch_decode_hपूर्णांक_reg(काष्ठा inकाष्ठाion *insn, u8 sp_reg)
+अणु
+	काष्ठा cfi_reg *cfa = &insn->cfi.cfa;
 
-	switch (sp_reg) {
-	case ORC_REG_UNDEFINED:
+	चयन (sp_reg) अणु
+	हाल ORC_REG_UNDEFINED:
 		cfa->base = CFI_UNDEFINED;
-		break;
-	case ORC_REG_SP:
+		अवरोध;
+	हाल ORC_REG_SP:
 		cfa->base = CFI_SP;
-		break;
-	case ORC_REG_BP:
+		अवरोध;
+	हाल ORC_REG_BP:
 		cfa->base = CFI_BP;
-		break;
-	case ORC_REG_SP_INDIRECT:
-		cfa->base = CFI_SP_INDIRECT;
-		break;
-	case ORC_REG_R10:
+		अवरोध;
+	हाल ORC_REG_SP_INसूचीECT:
+		cfa->base = CFI_SP_INसूचीECT;
+		अवरोध;
+	हाल ORC_REG_R10:
 		cfa->base = CFI_R10;
-		break;
-	case ORC_REG_R13:
+		अवरोध;
+	हाल ORC_REG_R13:
 		cfa->base = CFI_R13;
-		break;
-	case ORC_REG_DI:
+		अवरोध;
+	हाल ORC_REG_DI:
 		cfa->base = CFI_DI;
-		break;
-	case ORC_REG_DX:
+		अवरोध;
+	हाल ORC_REG_DX:
 		cfa->base = CFI_DX;
-		break;
-	default:
-		return -1;
-	}
+		अवरोध;
+	शेष:
+		वापस -1;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-bool arch_is_retpoline(struct symbol *sym)
-{
-	return !strncmp(sym->name, "__x86_indirect_", 15);
-}
+bool arch_is_retpoline(काष्ठा symbol *sym)
+अणु
+	वापस !म_भेदन(sym->name, "__x86_indirect_", 15);
+पूर्ण

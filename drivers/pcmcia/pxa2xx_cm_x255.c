@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * linux/drivers/pcmcia/pxa/pxa_cm_x255.c
  *
@@ -6,119 +7,119 @@
  * Mike Rapoport <mike@compulab.co.il>
  */
 
-#include <linux/platform_device.h>
-#include <linux/irq.h>
-#include <linux/delay.h>
-#include <linux/gpio.h>
-#include <linux/export.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/irq.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/gpपन.स>
+#समावेश <linux/export.h>
 
-#include "soc_common.h"
+#समावेश "soc_common.h"
 
-#define GPIO_PCMCIA_SKTSEL	(54)
-#define GPIO_PCMCIA_S0_CD_VALID	(16)
-#define GPIO_PCMCIA_S1_CD_VALID	(17)
-#define GPIO_PCMCIA_S0_RDYINT	(6)
-#define GPIO_PCMCIA_S1_RDYINT	(8)
-#define GPIO_PCMCIA_RESET	(9)
+#घोषणा GPIO_PCMCIA_SKTSEL	(54)
+#घोषणा GPIO_PCMCIA_S0_CD_VALID	(16)
+#घोषणा GPIO_PCMCIA_S1_CD_VALID	(17)
+#घोषणा GPIO_PCMCIA_S0_RDYINT	(6)
+#घोषणा GPIO_PCMCIA_S1_RDYINT	(8)
+#घोषणा GPIO_PCMCIA_RESET	(9)
 
-static int cmx255_pcmcia_hw_init(struct soc_pcmcia_socket *skt)
-{
-	int ret = gpio_request(GPIO_PCMCIA_RESET, "PCCard reset");
-	if (ret)
-		return ret;
+अटल पूर्णांक cmx255_pcmcia_hw_init(काष्ठा soc_pcmcia_socket *skt)
+अणु
+	पूर्णांक ret = gpio_request(GPIO_PCMCIA_RESET, "PCCard reset");
+	अगर (ret)
+		वापस ret;
 	gpio_direction_output(GPIO_PCMCIA_RESET, 0);
 
-	if (skt->nr == 0) {
+	अगर (skt->nr == 0) अणु
 		skt->stat[SOC_STAT_CD].gpio = GPIO_PCMCIA_S0_CD_VALID;
 		skt->stat[SOC_STAT_CD].name = "PCMCIA0 CD";
 		skt->stat[SOC_STAT_RDY].gpio = GPIO_PCMCIA_S0_RDYINT;
 		skt->stat[SOC_STAT_RDY].name = "PCMCIA0 RDY";
-	} else {
+	पूर्ण अन्यथा अणु
 		skt->stat[SOC_STAT_CD].gpio = GPIO_PCMCIA_S1_CD_VALID;
 		skt->stat[SOC_STAT_CD].name = "PCMCIA1 CD";
 		skt->stat[SOC_STAT_RDY].gpio = GPIO_PCMCIA_S1_RDYINT;
 		skt->stat[SOC_STAT_RDY].name = "PCMCIA1 RDY";
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void cmx255_pcmcia_shutdown(struct soc_pcmcia_socket *skt)
-{
-	gpio_free(GPIO_PCMCIA_RESET);
-}
+अटल व्योम cmx255_pcmcia_shutकरोwn(काष्ठा soc_pcmcia_socket *skt)
+अणु
+	gpio_मुक्त(GPIO_PCMCIA_RESET);
+पूर्ण
 
 
-static void cmx255_pcmcia_socket_state(struct soc_pcmcia_socket *skt,
-				       struct pcmcia_state *state)
-{
+अटल व्योम cmx255_pcmcia_socket_state(काष्ठा soc_pcmcia_socket *skt,
+				       काष्ठा pcmcia_state *state)
+अणु
 	state->vs_3v  = 0;
 	state->vs_Xv  = 0;
-}
+पूर्ण
 
 
-static int cmx255_pcmcia_configure_socket(struct soc_pcmcia_socket *skt,
-					  const socket_state_t *state)
-{
-	switch (skt->nr) {
-	case 0:
-		if (state->flags & SS_RESET) {
+अटल पूर्णांक cmx255_pcmcia_configure_socket(काष्ठा soc_pcmcia_socket *skt,
+					  स्थिर socket_state_t *state)
+अणु
+	चयन (skt->nr) अणु
+	हाल 0:
+		अगर (state->flags & SS_RESET) अणु
 			gpio_set_value(GPIO_PCMCIA_SKTSEL, 0);
 			udelay(1);
 			gpio_set_value(GPIO_PCMCIA_RESET, 1);
 			udelay(10);
 			gpio_set_value(GPIO_PCMCIA_RESET, 0);
-		}
-		break;
-	case 1:
-		if (state->flags & SS_RESET) {
+		पूर्ण
+		अवरोध;
+	हाल 1:
+		अगर (state->flags & SS_RESET) अणु
 			gpio_set_value(GPIO_PCMCIA_SKTSEL, 1);
 			udelay(1);
 			gpio_set_value(GPIO_PCMCIA_RESET, 1);
 			udelay(10);
 			gpio_set_value(GPIO_PCMCIA_RESET, 0);
-		}
-		break;
-	}
+		पूर्ण
+		अवरोध;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct pcmcia_low_level cmx255_pcmcia_ops __initdata = {
+अटल काष्ठा pcmcia_low_level cmx255_pcmcia_ops __initdata = अणु
 	.owner			= THIS_MODULE,
 	.hw_init		= cmx255_pcmcia_hw_init,
-	.hw_shutdown		= cmx255_pcmcia_shutdown,
+	.hw_shutकरोwn		= cmx255_pcmcia_shutकरोwn,
 	.socket_state		= cmx255_pcmcia_socket_state,
 	.configure_socket	= cmx255_pcmcia_configure_socket,
 	.nr			= 1,
-};
+पूर्ण;
 
-static struct platform_device *cmx255_pcmcia_device;
+अटल काष्ठा platक्रमm_device *cmx255_pcmcia_device;
 
-int __init cmx255_pcmcia_init(void)
-{
-	int ret;
+पूर्णांक __init cmx255_pcmcia_init(व्योम)
+अणु
+	पूर्णांक ret;
 
-	cmx255_pcmcia_device = platform_device_alloc("pxa2xx-pcmcia", -1);
+	cmx255_pcmcia_device = platक्रमm_device_alloc("pxa2xx-pcmcia", -1);
 
-	if (!cmx255_pcmcia_device)
-		return -ENOMEM;
+	अगर (!cmx255_pcmcia_device)
+		वापस -ENOMEM;
 
-	ret = platform_device_add_data(cmx255_pcmcia_device, &cmx255_pcmcia_ops,
-				       sizeof(cmx255_pcmcia_ops));
+	ret = platक्रमm_device_add_data(cmx255_pcmcia_device, &cmx255_pcmcia_ops,
+				       माप(cmx255_pcmcia_ops));
 
-	if (ret == 0) {
-		printk(KERN_INFO "Registering cm-x255 PCMCIA interface.\n");
-		ret = platform_device_add(cmx255_pcmcia_device);
-	}
+	अगर (ret == 0) अणु
+		prपूर्णांकk(KERN_INFO "Registering cm-x255 PCMCIA interface.\n");
+		ret = platक्रमm_device_add(cmx255_pcmcia_device);
+	पूर्ण
 
-	if (ret)
-		platform_device_put(cmx255_pcmcia_device);
+	अगर (ret)
+		platक्रमm_device_put(cmx255_pcmcia_device);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-void __exit cmx255_pcmcia_exit(void)
-{
-	platform_device_unregister(cmx255_pcmcia_device);
-}
+व्योम __निकास cmx255_pcmcia_निकास(व्योम)
+अणु
+	platक्रमm_device_unरेजिस्टर(cmx255_pcmcia_device);
+पूर्ण

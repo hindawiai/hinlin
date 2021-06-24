@@ -1,269 +1,270 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * kernel/ksysfs.c - sysfs attributes in /sys/kernel, which
- * 		     are not related to any other subsystem
+ * 		     are not related to any other subप्रणाली
  *
  * Copyright (C) 2004 Kay Sievers <kay.sievers@vrfy.org>
  */
 
-#include <linux/kobject.h>
-#include <linux/string.h>
-#include <linux/sysfs.h>
-#include <linux/export.h>
-#include <linux/init.h>
-#include <linux/kexec.h>
-#include <linux/profile.h>
-#include <linux/stat.h>
-#include <linux/sched.h>
-#include <linux/capability.h>
-#include <linux/compiler.h>
+#समावेश <linux/kobject.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/sysfs.h>
+#समावेश <linux/export.h>
+#समावेश <linux/init.h>
+#समावेश <linux/kexec.h>
+#समावेश <linux/profile.h>
+#समावेश <linux/स्थिति.स>
+#समावेश <linux/sched.h>
+#समावेश <linux/capability.h>
+#समावेश <linux/compiler.h>
 
-#include <linux/rcupdate.h>	/* rcu_expedited and rcu_normal */
+#समावेश <linux/rcupdate.h>	/* rcu_expedited and rcu_normal */
 
-#define KERNEL_ATTR_RO(_name) \
-static struct kobj_attribute _name##_attr = __ATTR_RO(_name)
+#घोषणा KERNEL_ATTR_RO(_name) \
+अटल काष्ठा kobj_attribute _name##_attr = __ATTR_RO(_name)
 
-#define KERNEL_ATTR_RW(_name) \
-static struct kobj_attribute _name##_attr = \
+#घोषणा KERNEL_ATTR_RW(_name) \
+अटल काष्ठा kobj_attribute _name##_attr = \
 	__ATTR(_name, 0644, _name##_show, _name##_store)
 
 /* current uevent sequence number */
-static ssize_t uevent_seqnum_show(struct kobject *kobj,
-				  struct kobj_attribute *attr, char *buf)
-{
-	return sprintf(buf, "%llu\n", (unsigned long long)uevent_seqnum);
-}
+अटल sमाप_प्रकार uevent_seqnum_show(काष्ठा kobject *kobj,
+				  काष्ठा kobj_attribute *attr, अक्षर *buf)
+अणु
+	वापस प्र_लिखो(buf, "%llu\n", (अचिन्हित दीर्घ दीर्घ)uevent_seqnum);
+पूर्ण
 KERNEL_ATTR_RO(uevent_seqnum);
 
-#ifdef CONFIG_UEVENT_HELPER
+#अगर_घोषित CONFIG_UEVENT_HELPER
 /* uevent helper program, used during early boot */
-static ssize_t uevent_helper_show(struct kobject *kobj,
-				  struct kobj_attribute *attr, char *buf)
-{
-	return sprintf(buf, "%s\n", uevent_helper);
-}
-static ssize_t uevent_helper_store(struct kobject *kobj,
-				   struct kobj_attribute *attr,
-				   const char *buf, size_t count)
-{
-	if (count+1 > UEVENT_HELPER_PATH_LEN)
-		return -ENOENT;
-	memcpy(uevent_helper, buf, count);
+अटल sमाप_प्रकार uevent_helper_show(काष्ठा kobject *kobj,
+				  काष्ठा kobj_attribute *attr, अक्षर *buf)
+अणु
+	वापस प्र_लिखो(buf, "%s\n", uevent_helper);
+पूर्ण
+अटल sमाप_प्रकार uevent_helper_store(काष्ठा kobject *kobj,
+				   काष्ठा kobj_attribute *attr,
+				   स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	अगर (count+1 > UEVENT_HELPER_PATH_LEN)
+		वापस -ENOENT;
+	स_नकल(uevent_helper, buf, count);
 	uevent_helper[count] = '\0';
-	if (count && uevent_helper[count-1] == '\n')
+	अगर (count && uevent_helper[count-1] == '\n')
 		uevent_helper[count-1] = '\0';
-	return count;
-}
+	वापस count;
+पूर्ण
 KERNEL_ATTR_RW(uevent_helper);
-#endif
+#पूर्ण_अगर
 
-#ifdef CONFIG_PROFILING
-static ssize_t profiling_show(struct kobject *kobj,
-				  struct kobj_attribute *attr, char *buf)
-{
-	return sprintf(buf, "%d\n", prof_on);
-}
-static ssize_t profiling_store(struct kobject *kobj,
-				   struct kobj_attribute *attr,
-				   const char *buf, size_t count)
-{
-	int ret;
+#अगर_घोषित CONFIG_PROFILING
+अटल sमाप_प्रकार profiling_show(काष्ठा kobject *kobj,
+				  काष्ठा kobj_attribute *attr, अक्षर *buf)
+अणु
+	वापस प्र_लिखो(buf, "%d\n", prof_on);
+पूर्ण
+अटल sमाप_प्रकार profiling_store(काष्ठा kobject *kobj,
+				   काष्ठा kobj_attribute *attr,
+				   स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	पूर्णांक ret;
 
-	if (prof_on)
-		return -EEXIST;
+	अगर (prof_on)
+		वापस -EEXIST;
 	/*
-	 * This eventually calls into get_option() which
-	 * has a ton of callers and is not const.  It is
+	 * This eventually calls पूर्णांकo get_option() which
+	 * has a ton of callers and is not स्थिर.  It is
 	 * easiest to cast it away here.
 	 */
-	profile_setup((char *)buf);
+	profile_setup((अक्षर *)buf);
 	ret = profile_init();
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 	ret = create_proc_profile();
-	if (ret)
-		return ret;
-	return count;
-}
+	अगर (ret)
+		वापस ret;
+	वापस count;
+पूर्ण
 KERNEL_ATTR_RW(profiling);
-#endif
+#पूर्ण_अगर
 
-#ifdef CONFIG_KEXEC_CORE
-static ssize_t kexec_loaded_show(struct kobject *kobj,
-				 struct kobj_attribute *attr, char *buf)
-{
-	return sprintf(buf, "%d\n", !!kexec_image);
-}
+#अगर_घोषित CONFIG_KEXEC_CORE
+अटल sमाप_प्रकार kexec_loaded_show(काष्ठा kobject *kobj,
+				 काष्ठा kobj_attribute *attr, अक्षर *buf)
+अणु
+	वापस प्र_लिखो(buf, "%d\n", !!kexec_image);
+पूर्ण
 KERNEL_ATTR_RO(kexec_loaded);
 
-static ssize_t kexec_crash_loaded_show(struct kobject *kobj,
-				       struct kobj_attribute *attr, char *buf)
-{
-	return sprintf(buf, "%d\n", kexec_crash_loaded());
-}
+अटल sमाप_प्रकार kexec_crash_loaded_show(काष्ठा kobject *kobj,
+				       काष्ठा kobj_attribute *attr, अक्षर *buf)
+अणु
+	वापस प्र_लिखो(buf, "%d\n", kexec_crash_loaded());
+पूर्ण
 KERNEL_ATTR_RO(kexec_crash_loaded);
 
-static ssize_t kexec_crash_size_show(struct kobject *kobj,
-				       struct kobj_attribute *attr, char *buf)
-{
-	return sprintf(buf, "%zu\n", crash_get_memory_size());
-}
-static ssize_t kexec_crash_size_store(struct kobject *kobj,
-				   struct kobj_attribute *attr,
-				   const char *buf, size_t count)
-{
-	unsigned long cnt;
-	int ret;
+अटल sमाप_प्रकार kexec_crash_size_show(काष्ठा kobject *kobj,
+				       काष्ठा kobj_attribute *attr, अक्षर *buf)
+अणु
+	वापस प्र_लिखो(buf, "%zu\n", crash_get_memory_size());
+पूर्ण
+अटल sमाप_प्रकार kexec_crash_size_store(काष्ठा kobject *kobj,
+				   काष्ठा kobj_attribute *attr,
+				   स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	अचिन्हित दीर्घ cnt;
+	पूर्णांक ret;
 
-	if (kstrtoul(buf, 0, &cnt))
-		return -EINVAL;
+	अगर (kम_से_अदीर्घ(buf, 0, &cnt))
+		वापस -EINVAL;
 
 	ret = crash_shrink_memory(cnt);
-	return ret < 0 ? ret : count;
-}
+	वापस ret < 0 ? ret : count;
+पूर्ण
 KERNEL_ATTR_RW(kexec_crash_size);
 
-#endif /* CONFIG_KEXEC_CORE */
+#पूर्ण_अगर /* CONFIG_KEXEC_CORE */
 
-#ifdef CONFIG_CRASH_CORE
+#अगर_घोषित CONFIG_CRASH_CORE
 
-static ssize_t vmcoreinfo_show(struct kobject *kobj,
-			       struct kobj_attribute *attr, char *buf)
-{
+अटल sमाप_प्रकार vmcoreinfo_show(काष्ठा kobject *kobj,
+			       काष्ठा kobj_attribute *attr, अक्षर *buf)
+अणु
 	phys_addr_t vmcore_base = paddr_vmcoreinfo_note();
-	return sprintf(buf, "%pa %x\n", &vmcore_base,
-			(unsigned int)VMCOREINFO_NOTE_SIZE);
-}
+	वापस प्र_लिखो(buf, "%pa %x\n", &vmcore_base,
+			(अचिन्हित पूर्णांक)VMCOREINFO_NOTE_SIZE);
+पूर्ण
 KERNEL_ATTR_RO(vmcoreinfo);
 
-#endif /* CONFIG_CRASH_CORE */
+#पूर्ण_अगर /* CONFIG_CRASH_CORE */
 
 /* whether file capabilities are enabled */
-static ssize_t fscaps_show(struct kobject *kobj,
-				  struct kobj_attribute *attr, char *buf)
-{
-	return sprintf(buf, "%d\n", file_caps_enabled);
-}
+अटल sमाप_प्रकार fscaps_show(काष्ठा kobject *kobj,
+				  काष्ठा kobj_attribute *attr, अक्षर *buf)
+अणु
+	वापस प्र_लिखो(buf, "%d\n", file_caps_enabled);
+पूर्ण
 KERNEL_ATTR_RO(fscaps);
 
-#ifndef CONFIG_TINY_RCU
-int rcu_expedited;
-static ssize_t rcu_expedited_show(struct kobject *kobj,
-				  struct kobj_attribute *attr, char *buf)
-{
-	return sprintf(buf, "%d\n", READ_ONCE(rcu_expedited));
-}
-static ssize_t rcu_expedited_store(struct kobject *kobj,
-				   struct kobj_attribute *attr,
-				   const char *buf, size_t count)
-{
-	if (kstrtoint(buf, 0, &rcu_expedited))
-		return -EINVAL;
+#अगर_अघोषित CONFIG_TINY_RCU
+पूर्णांक rcu_expedited;
+अटल sमाप_प्रकार rcu_expedited_show(काष्ठा kobject *kobj,
+				  काष्ठा kobj_attribute *attr, अक्षर *buf)
+अणु
+	वापस प्र_लिखो(buf, "%d\n", READ_ONCE(rcu_expedited));
+पूर्ण
+अटल sमाप_प्रकार rcu_expedited_store(काष्ठा kobject *kobj,
+				   काष्ठा kobj_attribute *attr,
+				   स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	अगर (kstrtoपूर्णांक(buf, 0, &rcu_expedited))
+		वापस -EINVAL;
 
-	return count;
-}
+	वापस count;
+पूर्ण
 KERNEL_ATTR_RW(rcu_expedited);
 
-int rcu_normal;
-static ssize_t rcu_normal_show(struct kobject *kobj,
-			       struct kobj_attribute *attr, char *buf)
-{
-	return sprintf(buf, "%d\n", READ_ONCE(rcu_normal));
-}
-static ssize_t rcu_normal_store(struct kobject *kobj,
-				struct kobj_attribute *attr,
-				const char *buf, size_t count)
-{
-	if (kstrtoint(buf, 0, &rcu_normal))
-		return -EINVAL;
+पूर्णांक rcu_normal;
+अटल sमाप_प्रकार rcu_normal_show(काष्ठा kobject *kobj,
+			       काष्ठा kobj_attribute *attr, अक्षर *buf)
+अणु
+	वापस प्र_लिखो(buf, "%d\n", READ_ONCE(rcu_normal));
+पूर्ण
+अटल sमाप_प्रकार rcu_normal_store(काष्ठा kobject *kobj,
+				काष्ठा kobj_attribute *attr,
+				स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	अगर (kstrtoपूर्णांक(buf, 0, &rcu_normal))
+		वापस -EINVAL;
 
-	return count;
-}
+	वापस count;
+पूर्ण
 KERNEL_ATTR_RW(rcu_normal);
-#endif /* #ifndef CONFIG_TINY_RCU */
+#पूर्ण_अगर /* #अगर_अघोषित CONFIG_TINY_RCU */
 
 /*
  * Make /sys/kernel/notes give the raw contents of our kernel .notes section.
  */
-extern const void __start_notes __weak;
-extern const void __stop_notes __weak;
-#define	notes_size (&__stop_notes - &__start_notes)
+बाह्य स्थिर व्योम __start_notes __weak;
+बाह्य स्थिर व्योम __stop_notes __weak;
+#घोषणा	notes_size (&__stop_notes - &__start_notes)
 
-static ssize_t notes_read(struct file *filp, struct kobject *kobj,
-			  struct bin_attribute *bin_attr,
-			  char *buf, loff_t off, size_t count)
-{
-	memcpy(buf, &__start_notes + off, count);
-	return count;
-}
+अटल sमाप_प्रकार notes_पढ़ो(काष्ठा file *filp, काष्ठा kobject *kobj,
+			  काष्ठा bin_attribute *bin_attr,
+			  अक्षर *buf, loff_t off, माप_प्रकार count)
+अणु
+	स_नकल(buf, &__start_notes + off, count);
+	वापस count;
+पूर्ण
 
-static struct bin_attribute notes_attr __ro_after_init  = {
-	.attr = {
+अटल काष्ठा bin_attribute notes_attr __ro_after_init  = अणु
+	.attr = अणु
 		.name = "notes",
 		.mode = S_IRUGO,
-	},
-	.read = &notes_read,
-};
+	पूर्ण,
+	.पढ़ो = &notes_पढ़ो,
+पूर्ण;
 
-struct kobject *kernel_kobj;
+काष्ठा kobject *kernel_kobj;
 EXPORT_SYMBOL_GPL(kernel_kobj);
 
-static struct attribute * kernel_attrs[] = {
+अटल काष्ठा attribute * kernel_attrs[] = अणु
 	&fscaps_attr.attr,
 	&uevent_seqnum_attr.attr,
-#ifdef CONFIG_UEVENT_HELPER
+#अगर_घोषित CONFIG_UEVENT_HELPER
 	&uevent_helper_attr.attr,
-#endif
-#ifdef CONFIG_PROFILING
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_PROFILING
 	&profiling_attr.attr,
-#endif
-#ifdef CONFIG_KEXEC_CORE
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_KEXEC_CORE
 	&kexec_loaded_attr.attr,
 	&kexec_crash_loaded_attr.attr,
 	&kexec_crash_size_attr.attr,
-#endif
-#ifdef CONFIG_CRASH_CORE
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_CRASH_CORE
 	&vmcoreinfo_attr.attr,
-#endif
-#ifndef CONFIG_TINY_RCU
+#पूर्ण_अगर
+#अगर_अघोषित CONFIG_TINY_RCU
 	&rcu_expedited_attr.attr,
 	&rcu_normal_attr.attr,
-#endif
-	NULL
-};
+#पूर्ण_अगर
+	शून्य
+पूर्ण;
 
-static const struct attribute_group kernel_attr_group = {
+अटल स्थिर काष्ठा attribute_group kernel_attr_group = अणु
 	.attrs = kernel_attrs,
-};
+पूर्ण;
 
-static int __init ksysfs_init(void)
-{
-	int error;
+अटल पूर्णांक __init ksysfs_init(व्योम)
+अणु
+	पूर्णांक error;
 
-	kernel_kobj = kobject_create_and_add("kernel", NULL);
-	if (!kernel_kobj) {
+	kernel_kobj = kobject_create_and_add("kernel", शून्य);
+	अगर (!kernel_kobj) अणु
 		error = -ENOMEM;
-		goto exit;
-	}
+		जाओ निकास;
+	पूर्ण
 	error = sysfs_create_group(kernel_kobj, &kernel_attr_group);
-	if (error)
-		goto kset_exit;
+	अगर (error)
+		जाओ kset_निकास;
 
-	if (notes_size > 0) {
+	अगर (notes_size > 0) अणु
 		notes_attr.size = notes_size;
 		error = sysfs_create_bin_file(kernel_kobj, &notes_attr);
-		if (error)
-			goto group_exit;
-	}
+		अगर (error)
+			जाओ group_निकास;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
-group_exit:
-	sysfs_remove_group(kernel_kobj, &kernel_attr_group);
-kset_exit:
+group_निकास:
+	sysfs_हटाओ_group(kernel_kobj, &kernel_attr_group);
+kset_निकास:
 	kobject_put(kernel_kobj);
-exit:
-	return error;
-}
+निकास:
+	वापस error;
+पूर्ण
 
 core_initcall(ksysfs_init);

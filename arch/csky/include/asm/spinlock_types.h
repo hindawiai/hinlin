@@ -1,27 +1,28 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 
-#ifndef __ASM_CSKY_SPINLOCK_TYPES_H
-#define __ASM_CSKY_SPINLOCK_TYPES_H
+#अगर_अघोषित __ASM_CSKY_SPINLOCK_TYPES_H
+#घोषणा __ASM_CSKY_SPINLOCK_TYPES_H
 
-#ifndef __LINUX_SPINLOCK_TYPES_H
+#अगर_अघोषित __LINUX_SPINLOCK_TYPES_H
 # error "please don't include this file directly"
-#endif
+#पूर्ण_अगर
 
-#define TICKET_NEXT	16
+#घोषणा TICKET_NEXT	16
 
-typedef struct {
-	union {
+प्रकार काष्ठा अणु
+	जोड़ अणु
 		u32 lock;
-		struct __raw_tickets {
+		काष्ठा __raw_tickets अणु
 			/* little endian */
 			u16 owner;
 			u16 next;
-		} tickets;
-	};
-} arch_spinlock_t;
+		पूर्ण tickets;
+	पूर्ण;
+पूर्ण arch_spinlock_t;
 
-#define __ARCH_SPIN_LOCK_UNLOCKED	{ { 0 } }
+#घोषणा __ARCH_SPIN_LOCK_UNLOCKED	अणु अणु 0 पूर्ण पूर्ण
 
-#include <asm-generic/qrwlock_types.h>
+#समावेश <यंत्र-generic/qrwlock_types.h>
 
-#endif /* __ASM_CSKY_SPINLOCK_TYPES_H */
+#पूर्ण_अगर /* __ASM_CSKY_SPINLOCK_TYPES_H */

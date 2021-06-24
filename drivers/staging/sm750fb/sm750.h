@@ -1,70 +1,71 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef LYNXDRV_H_
-#define LYNXDRV_H_
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित LYNXDRV_H_
+#घोषणा LYNXDRV_H_
 
-#define FB_ACCEL_SMI 0xab
+#घोषणा FB_ACCEL_SMI 0xab
 
-#define MHZ(x) ((x) * 1000000)
+#घोषणा MHZ(x) ((x) * 1000000)
 
-#define DEFAULT_SM750_CHIP_CLOCK	290
-#define DEFAULT_SM750LE_CHIP_CLOCK	333
-#ifndef SM750LE_REVISION_ID
-#define SM750LE_REVISION_ID ((unsigned char)0xfe)
-#endif
+#घोषणा DEFAULT_SM750_CHIP_CLOCK	290
+#घोषणा DEFAULT_SM750LE_CHIP_CLOCK	333
+#अगर_अघोषित SM750LE_REVISION_ID
+#घोषणा SM750LE_REVISION_ID ((अचिन्हित अक्षर)0xfe)
+#पूर्ण_अगर
 
-enum sm750_pnltype {
+क्रमागत sm750_pnltype अणु
 	sm750_24TFT = 0,	/* 24bit tft */
 	sm750_dualTFT = 2,	/* dual 18 bit tft */
-	sm750_doubleTFT = 1,	/* 36 bit double pixel tft */
-};
+	sm750_द्विगुनTFT = 1,	/* 36 bit द्विगुन pixel tft */
+पूर्ण;
 
 /* vga channel is not concerned  */
-enum sm750_dataflow {
+क्रमागत sm750_dataflow अणु
 	sm750_simul_pri,	/* primary => all head */
 	sm750_simul_sec,	/* secondary => all head */
 	sm750_dual_normal,	/* primary => panel head and secondary => crt */
 	sm750_dual_swap,	/* primary => crt head and secondary => panel */
-};
+पूर्ण;
 
-enum sm750_channel {
+क्रमागत sm750_channel अणु
 	sm750_primary = 0,
-	/* enum value equal to the register filed data */
+	/* क्रमागत value equal to the रेजिस्टर filed data */
 	sm750_secondary = 1,
-};
+पूर्ण;
 
-enum sm750_path {
+क्रमागत sm750_path अणु
 	sm750_panel = 1,
 	sm750_crt = 2,
 	sm750_pnc = 3,	/* panel and crt */
-};
+पूर्ण;
 
-struct init_status {
-	ushort powerMode;
-	/* below three clocks are in unit of MHZ*/
-	ushort chip_clk;
-	ushort mem_clk;
-	ushort master_clk;
-	ushort setAllEngOff;
-	ushort resetMemory;
-};
+काष्ठा init_status अणु
+	uलघु घातerMode;
+	/* below three घड़ीs are in unit of MHZ*/
+	uलघु chip_clk;
+	uलघु mem_clk;
+	uलघु master_clk;
+	uलघु setAllEngOff;
+	uलघु resetMemory;
+पूर्ण;
 
-struct lynx_accel {
-	/* base virtual address of DPR registers */
-	volatile unsigned char __iomem *dprBase;
-	/* base virtual address of de data port */
-	volatile unsigned char __iomem *dpPortBase;
+काष्ठा lynx_accel अणु
+	/* base भव address of DPR रेजिस्टरs */
+	अस्थिर अचिन्हित अक्षर __iomem *dprBase;
+	/* base भव address of de data port */
+	अस्थिर अचिन्हित अक्षर __iomem *dpPortBase;
 
-	/* function pointers */
-	void (*de_init)(struct lynx_accel *accel);
+	/* function poपूर्णांकers */
+	व्योम (*de_init)(काष्ठा lynx_accel *accel);
 
-	int (*de_wait)(void);/* see if hardware ready to work */
+	पूर्णांक (*de_रुको)(व्योम);/* see अगर hardware पढ़ोy to work */
 
-	int (*de_fillrect)(struct lynx_accel *accel,
+	पूर्णांक (*de_fillrect)(काष्ठा lynx_accel *accel,
 			   u32 base, u32 pitch, u32 bpp,
 			   u32 x, u32 y, u32 width, u32 height,
 			   u32 color, u32 rop);
 
-	int (*de_copyarea)(struct lynx_accel *accel,
+	पूर्णांक (*de_copyarea)(काष्ठा lynx_accel *accel,
 			   u32 s_base, u32 s_pitch,
 			   u32 sx, u32 sy,
 			   u32 d_base, u32 d_pitch,
@@ -72,40 +73,40 @@ struct lynx_accel {
 			   u32 width, u32 height,
 			   u32 rop2);
 
-	int (*de_imageblit)(struct lynx_accel *accel, const char *p_srcbuf,
+	पूर्णांक (*de_imageblit)(काष्ठा lynx_accel *accel, स्थिर अक्षर *p_srcbuf,
 			    u32 src_delta, u32 start_bit, u32 d_base, u32 d_pitch,
 			    u32 byte_per_pixel, u32 dx, u32 dy, u32 width,
 			    u32 height, u32 f_color, u32 b_color, u32 rop2);
 
-};
+पूर्ण;
 
-struct sm750_dev {
+काष्ठा sm750_dev अणु
 	/* common members */
 	u16 devid;
 	u8 revid;
-	struct pci_dev *pdev;
-	struct fb_info *fbinfo[2];
-	struct lynx_accel accel;
-	int accel_off;
-	int fb_count;
-	int mtrr_off;
-	struct{
-		int vram;
-	} mtrr;
+	काष्ठा pci_dev *pdev;
+	काष्ठा fb_info *fbinfo[2];
+	काष्ठा lynx_accel accel;
+	पूर्णांक accel_off;
+	पूर्णांक fb_count;
+	पूर्णांक mtrr_off;
+	काष्ठाअणु
+		पूर्णांक vram;
+	पूर्ण mtrr;
 	/* all smi graphic adaptor got below attributes */
-	unsigned long vidmem_start;
-	unsigned long vidreg_start;
+	अचिन्हित दीर्घ vidmem_start;
+	अचिन्हित दीर्घ vidreg_start;
 	__u32 vidmem_size;
 	__u32 vidreg_size;
-	void __iomem *pvReg;
-	unsigned char __iomem *pvMem;
+	व्योम __iomem *pvReg;
+	अचिन्हित अक्षर __iomem *pvMem;
 	/* locks*/
 	spinlock_t slock;
 
-	struct init_status initParm;
-	enum sm750_pnltype pnltype;
-	enum sm750_dataflow dataflow;
-	int nocrt;
+	काष्ठा init_status initParm;
+	क्रमागत sm750_pnltype pnltype;
+	क्रमागत sm750_dataflow dataflow;
+	पूर्णांक nocrt;
 
 	/*
 	 * 0: no hardware cursor
@@ -113,108 +114,108 @@ struct sm750_dev {
 	 * 2: secondary crtc hw cursor enabled
 	 * 3: both ctrc hw cursor enabled
 	 */
-	int hwCursor;
-};
+	पूर्णांक hwCursor;
+पूर्ण;
 
-struct lynx_cursor {
+काष्ठा lynx_cursor अणु
 	/* cursor width ,height and size */
-	int w;
-	int h;
-	int size;
+	पूर्णांक w;
+	पूर्णांक h;
+	पूर्णांक size;
 	/* hardware limitation */
-	int maxW;
-	int maxH;
-	/* base virtual address and offset  of cursor image */
-	char __iomem *vstart;
-	int offset;
+	पूर्णांक maxW;
+	पूर्णांक maxH;
+	/* base भव address and offset  of cursor image */
+	अक्षर __iomem *vstart;
+	पूर्णांक offset;
 	/* mmio addr of hw cursor */
-	volatile char __iomem *mmio;
-};
+	अस्थिर अक्षर __iomem *mmio;
+पूर्ण;
 
-struct lynxfb_crtc {
-	unsigned char __iomem *vCursor; /* virtual address of cursor */
-	unsigned char __iomem *vScreen; /* virtual address of on_screen */
-	int oCursor; /* cursor address offset in vidmem */
-	int oScreen; /* onscreen address offset in vidmem */
-	int channel;/* which channel this crtc stands for*/
-	resource_size_t vidmem_size;/* this view's video memory max size */
+काष्ठा lynxfb_crtc अणु
+	अचिन्हित अक्षर __iomem *vCursor; /* भव address of cursor */
+	अचिन्हित अक्षर __iomem *vScreen; /* भव address of on_screen */
+	पूर्णांक oCursor; /* cursor address offset in vidmem */
+	पूर्णांक oScreen; /* onscreen address offset in vidmem */
+	पूर्णांक channel;/* which channel this crtc stands क्रम*/
+	resource_माप_प्रकार vidmem_size;/* this view's video memory max size */
 
-	/* below attributes belong to info->fix, their value depends on specific adaptor*/
-	u16 line_pad;/* padding information:0,1,2,4,8,16,... */
+	/* below attributes beदीर्घ to info->fix, their value depends on specअगरic adaptor*/
+	u16 line_pad;/* padding inक्रमmation:0,1,2,4,8,16,... */
 	u16 xpanstep;
 	u16 ypanstep;
 	u16 ywrapstep;
 
-	void *priv;
+	व्योम *priv;
 
-	/* cursor information */
-	struct lynx_cursor cursor;
-};
+	/* cursor inक्रमmation */
+	काष्ठा lynx_cursor cursor;
+पूर्ण;
 
-struct lynxfb_output {
-	int dpms;
-	int paths;
+काष्ठा lynxfb_output अणु
+	पूर्णांक dpms;
+	पूर्णांक paths;
 	/*
-	 * which paths(s) this output stands for,for sm750:
-	 * paths=1:means output for panel paths
-	 * paths=2:means output for crt paths
-	 * paths=3:means output for both panel and crt paths
+	 * which paths(s) this output stands क्रम,क्रम sm750:
+	 * paths=1:means output क्रम panel paths
+	 * paths=2:means output क्रम crt paths
+	 * paths=3:means output क्रम both panel and crt paths
 	 */
 
-	int *channel;
+	पूर्णांक *channel;
 	/*
-	 * which channel these outputs linked with,for sm750:
+	 * which channel these outमाला_दो linked with,क्रम sm750:
 	 * *channel=0 means primary channel
 	 * *channel=1 means secondary channel
 	 * output->channel ==> &crtc->channel
 	 */
-	void *priv;
+	व्योम *priv;
 
-	int (*proc_setBLANK)(struct lynxfb_output *output, int blank);
-};
+	पूर्णांक (*proc_setBLANK)(काष्ठा lynxfb_output *output, पूर्णांक blank);
+पूर्ण;
 
-struct lynxfb_par {
-	/* either 0 or 1 for dual head adaptor,0 is the older one registered */
-	int index;
-	unsigned int pseudo_palette[256];
-	struct lynxfb_crtc crtc;
-	struct lynxfb_output output;
-	struct fb_info *info;
-	struct sm750_dev *dev;
-};
+काष्ठा lynxfb_par अणु
+	/* either 0 or 1 क्रम dual head adaptor,0 is the older one रेजिस्टरed */
+	पूर्णांक index;
+	अचिन्हित पूर्णांक pseuकरो_palette[256];
+	काष्ठा lynxfb_crtc crtc;
+	काष्ठा lynxfb_output output;
+	काष्ठा fb_info *info;
+	काष्ठा sm750_dev *dev;
+पूर्ण;
 
-static inline unsigned long ps_to_hz(unsigned int psvalue)
-{
-	unsigned long long numerator = 1000 * 1000 * 1000 * 1000ULL;
+अटल अंतरभूत अचिन्हित दीर्घ ps_to_hz(अचिन्हित पूर्णांक psvalue)
+अणु
+	अचिन्हित दीर्घ दीर्घ numerator = 1000 * 1000 * 1000 * 1000ULL;
 	/* 10^12 / picosecond period gives frequency in Hz */
-	do_div(numerator, psvalue);
-	return (unsigned long)numerator;
-}
+	करो_भाग(numerator, psvalue);
+	वापस (अचिन्हित दीर्घ)numerator;
+पूर्ण
 
-int hw_sm750_map(struct sm750_dev *sm750_dev, struct pci_dev *pdev);
-int hw_sm750_inithw(struct sm750_dev *sm750_dev, struct pci_dev *pdev);
-void hw_sm750_initAccel(struct sm750_dev *sm750_dev);
-int hw_sm750_deWait(void);
-int hw_sm750le_deWait(void);
+पूर्णांक hw_sm750_map(काष्ठा sm750_dev *sm750_dev, काष्ठा pci_dev *pdev);
+पूर्णांक hw_sm750_inithw(काष्ठा sm750_dev *sm750_dev, काष्ठा pci_dev *pdev);
+व्योम hw_sm750_initAccel(काष्ठा sm750_dev *sm750_dev);
+पूर्णांक hw_sm750_deWait(व्योम);
+पूर्णांक hw_sm750le_deWait(व्योम);
 
-int hw_sm750_output_setMode(struct lynxfb_output *output,
-			    struct fb_var_screeninfo *var,
-			    struct fb_fix_screeninfo *fix);
+पूर्णांक hw_sm750_output_setMode(काष्ठा lynxfb_output *output,
+			    काष्ठा fb_var_screeninfo *var,
+			    काष्ठा fb_fix_screeninfo *fix);
 
-int hw_sm750_crtc_checkMode(struct lynxfb_crtc *crtc,
-			    struct fb_var_screeninfo *var);
+पूर्णांक hw_sm750_crtc_checkMode(काष्ठा lynxfb_crtc *crtc,
+			    काष्ठा fb_var_screeninfo *var);
 
-int hw_sm750_crtc_setMode(struct lynxfb_crtc *crtc,
-			  struct fb_var_screeninfo *var,
-			  struct fb_fix_screeninfo *fix);
+पूर्णांक hw_sm750_crtc_setMode(काष्ठा lynxfb_crtc *crtc,
+			  काष्ठा fb_var_screeninfo *var,
+			  काष्ठा fb_fix_screeninfo *fix);
 
-int hw_sm750_setColReg(struct lynxfb_crtc *crtc, ushort index,
-		       ushort red, ushort green, ushort blue);
+पूर्णांक hw_sm750_setColReg(काष्ठा lynxfb_crtc *crtc, uलघु index,
+		       uलघु red, uलघु green, uलघु blue);
 
-int hw_sm750_setBLANK(struct lynxfb_output *output, int blank);
-int hw_sm750le_setBLANK(struct lynxfb_output *output, int blank);
-int hw_sm750_pan_display(struct lynxfb_crtc *crtc,
-			 const struct fb_var_screeninfo *var,
-			 const struct fb_info *info);
+पूर्णांक hw_sm750_setBLANK(काष्ठा lynxfb_output *output, पूर्णांक blank);
+पूर्णांक hw_sm750le_setBLANK(काष्ठा lynxfb_output *output, पूर्णांक blank);
+पूर्णांक hw_sm750_pan_display(काष्ठा lynxfb_crtc *crtc,
+			 स्थिर काष्ठा fb_var_screeninfo *var,
+			 स्थिर काष्ठा fb_info *info);
 
-#endif
+#पूर्ण_अगर

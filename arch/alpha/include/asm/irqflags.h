@@ -1,68 +1,69 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __ALPHA_IRQFLAGS_H
-#define __ALPHA_IRQFLAGS_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __ALPHA_IRQFLAGS_H
+#घोषणा __ALPHA_IRQFLAGS_H
 
-#include <asm/pal.h>
+#समावेश <यंत्र/pal.h>
 
-#define IPL_MIN		0
-#define IPL_SW0		1
-#define IPL_SW1		2
-#define IPL_DEV0	3
-#define IPL_DEV1	4
-#define IPL_TIMER	5
-#define IPL_PERF	6
-#define IPL_POWERFAIL	6
-#define IPL_MCHECK	7
-#define IPL_MAX		7
+#घोषणा IPL_MIN		0
+#घोषणा IPL_SW0		1
+#घोषणा IPL_SW1		2
+#घोषणा IPL_DEV0	3
+#घोषणा IPL_DEV1	4
+#घोषणा IPL_TIMER	5
+#घोषणा IPL_PERF	6
+#घोषणा IPL_POWERFAIL	6
+#घोषणा IPL_MCHECK	7
+#घोषणा IPL_MAX		7
 
-#ifdef CONFIG_ALPHA_BROKEN_IRQ_MASK
-#undef IPL_MIN
-#define IPL_MIN		__min_ipl
-extern int __min_ipl;
-#endif
+#अगर_घोषित CONFIG_ALPHA_BROKEN_IRQ_MASK
+#अघोषित IPL_MIN
+#घोषणा IPL_MIN		__min_ipl
+बाह्य पूर्णांक __min_ipl;
+#पूर्ण_अगर
 
-#define getipl()		(rdps() & 7)
-#define setipl(ipl)		((void) swpipl(ipl))
+#घोषणा getipl()		(rdps() & 7)
+#घोषणा setipl(ipl)		((व्योम) swpipl(ipl))
 
-static inline unsigned long arch_local_save_flags(void)
-{
-	return rdps();
-}
+अटल अंतरभूत अचिन्हित दीर्घ arch_local_save_flags(व्योम)
+अणु
+	वापस rdps();
+पूर्ण
 
-static inline void arch_local_irq_disable(void)
-{
+अटल अंतरभूत व्योम arch_local_irq_disable(व्योम)
+अणु
 	setipl(IPL_MAX);
 	barrier();
-}
+पूर्ण
 
-static inline unsigned long arch_local_irq_save(void)
-{
-	unsigned long flags = swpipl(IPL_MAX);
+अटल अंतरभूत अचिन्हित दीर्घ arch_local_irq_save(व्योम)
+अणु
+	अचिन्हित दीर्घ flags = swpipl(IPL_MAX);
 	barrier();
-	return flags;
-}
+	वापस flags;
+पूर्ण
 
-static inline void arch_local_irq_enable(void)
-{
+अटल अंतरभूत व्योम arch_local_irq_enable(व्योम)
+अणु
 	barrier();
 	setipl(IPL_MIN);
-}
+पूर्ण
 
-static inline void arch_local_irq_restore(unsigned long flags)
-{
+अटल अंतरभूत व्योम arch_local_irq_restore(अचिन्हित दीर्घ flags)
+अणु
 	barrier();
 	setipl(flags);
 	barrier();
-}
+पूर्ण
 
-static inline bool arch_irqs_disabled_flags(unsigned long flags)
-{
-	return flags == IPL_MAX;
-}
+अटल अंतरभूत bool arch_irqs_disabled_flags(अचिन्हित दीर्घ flags)
+अणु
+	वापस flags == IPL_MAX;
+पूर्ण
 
-static inline bool arch_irqs_disabled(void)
-{
-	return arch_irqs_disabled_flags(getipl());
-}
+अटल अंतरभूत bool arch_irqs_disabled(व्योम)
+अणु
+	वापस arch_irqs_disabled_flags(getipl());
+पूर्ण
 
-#endif /* __ALPHA_IRQFLAGS_H */
+#पूर्ण_अगर /* __ALPHA_IRQFLAGS_H */

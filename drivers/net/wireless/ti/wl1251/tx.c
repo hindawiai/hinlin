@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * This file is part of wl1251
  *
@@ -6,23 +7,23 @@
  * Copyright (C) 2008 Nokia Corporation
  */
 
-#include <linux/kernel.h>
-#include <linux/module.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
 
-#include "wl1251.h"
-#include "reg.h"
-#include "tx.h"
-#include "ps.h"
-#include "io.h"
-#include "event.h"
+#समावेश "wl1251.h"
+#समावेश "reg.h"
+#समावेश "tx.h"
+#समावेश "ps.h"
+#समावेश "io.h"
+#समावेश "event.h"
 
-static bool wl1251_tx_double_buffer_busy(struct wl1251 *wl, u32 data_out_count)
-{
-	int used, data_in_count;
+अटल bool wl1251_tx_द्विगुन_buffer_busy(काष्ठा wl1251 *wl, u32 data_out_count)
+अणु
+	पूर्णांक used, data_in_count;
 
 	data_in_count = wl->data_in_count;
 
-	if (data_in_count < data_out_count)
+	अगर (data_in_count < data_out_count)
 		/* data_in_count has wrapped */
 		data_in_count += TX_STATUS_DATA_OUT_COUNT_MASK + 1;
 
@@ -31,44 +32,44 @@ static bool wl1251_tx_double_buffer_busy(struct wl1251 *wl, u32 data_out_count)
 	WARN_ON(used < 0);
 	WARN_ON(used > DP_TX_PACKET_RING_CHUNK_NUM);
 
-	if (used >= DP_TX_PACKET_RING_CHUNK_NUM)
-		return true;
-	else
-		return false;
-}
+	अगर (used >= DP_TX_PACKET_RING_CHUNK_NUM)
+		वापस true;
+	अन्यथा
+		वापस false;
+पूर्ण
 
-static int wl1251_tx_path_status(struct wl1251 *wl)
-{
+अटल पूर्णांक wl1251_tx_path_status(काष्ठा wl1251 *wl)
+अणु
 	u32 status, addr, data_out_count;
 	bool busy;
 
 	addr = wl->data_path->tx_control_addr;
-	status = wl1251_mem_read32(wl, addr);
+	status = wl1251_mem_पढ़ो32(wl, addr);
 	data_out_count = status & TX_STATUS_DATA_OUT_COUNT_MASK;
-	busy = wl1251_tx_double_buffer_busy(wl, data_out_count);
+	busy = wl1251_tx_द्विगुन_buffer_busy(wl, data_out_count);
 
-	if (busy)
-		return -EBUSY;
+	अगर (busy)
+		वापस -EBUSY;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int wl1251_tx_id(struct wl1251 *wl, struct sk_buff *skb)
-{
-	int i;
+अटल पूर्णांक wl1251_tx_id(काष्ठा wl1251 *wl, काष्ठा sk_buff *skb)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < FW_TX_CMPLT_BLOCK_SIZE; i++)
-		if (wl->tx_frames[i] == NULL) {
+	क्रम (i = 0; i < FW_TX_CMPLT_BLOCK_SIZE; i++)
+		अगर (wl->tx_frames[i] == शून्य) अणु
 			wl->tx_frames[i] = skb;
-			return i;
-		}
+			वापस i;
+		पूर्ण
 
-	return -EBUSY;
-}
+	वापस -EBUSY;
+पूर्ण
 
-static void wl1251_tx_control(struct tx_double_buffer_desc *tx_hdr,
-			      struct ieee80211_tx_info *control, u16 fc)
-{
+अटल व्योम wl1251_tx_control(काष्ठा tx_द्विगुन_buffer_desc *tx_hdr,
+			      काष्ठा ieee80211_tx_info *control, u16 fc)
+अणु
 	*(u16 *)&tx_hdr->control = 0;
 
 	tx_hdr->control.rate_policy = 0;
@@ -76,30 +77,30 @@ static void wl1251_tx_control(struct tx_double_buffer_desc *tx_hdr,
 	/* 802.11 packets */
 	tx_hdr->control.packet_type = 0;
 
-	/* Also disable retry and ACK policy for injected packets */
-	if ((control->flags & IEEE80211_TX_CTL_NO_ACK) ||
-	    (control->flags & IEEE80211_TX_CTL_INJECTED)) {
+	/* Also disable retry and ACK policy क्रम injected packets */
+	अगर ((control->flags & IEEE80211_TX_CTL_NO_ACK) ||
+	    (control->flags & IEEE80211_TX_CTL_INJECTED)) अणु
 		tx_hdr->control.rate_policy = 1;
 		tx_hdr->control.ack_policy = 1;
-	}
+	पूर्ण
 
 	tx_hdr->control.tx_complete = 1;
 
-	if ((fc & IEEE80211_FTYPE_DATA) &&
+	अगर ((fc & IEEE80211_FTYPE_DATA) &&
 	    ((fc & IEEE80211_STYPE_QOS_DATA) ||
-	     (fc & IEEE80211_STYPE_QOS_NULLFUNC)))
+	     (fc & IEEE80211_STYPE_QOS_शून्यFUNC)))
 		tx_hdr->control.qos = 1;
-}
+पूर्ण
 
-/* RSN + MIC = 8 + 8 = 16 bytes (worst case - AES). */
-#define MAX_MSDU_SECURITY_LENGTH      16
-#define MAX_MPDU_SECURITY_LENGTH      16
-#define WLAN_QOS_HDR_LEN              26
-#define MAX_MPDU_HEADER_AND_SECURITY  (MAX_MPDU_SECURITY_LENGTH + \
+/* RSN + MIC = 8 + 8 = 16 bytes (worst हाल - AES). */
+#घोषणा MAX_MSDU_SECURITY_LENGTH      16
+#घोषणा MAX_MPDU_SECURITY_LENGTH      16
+#घोषणा WLAN_QOS_HDR_LEN              26
+#घोषणा MAX_MPDU_HEADER_AND_SECURITY  (MAX_MPDU_SECURITY_LENGTH + \
 				       WLAN_QOS_HDR_LEN)
-#define HW_BLOCK_SIZE                 252
-static void wl1251_tx_frag_block_num(struct tx_double_buffer_desc *tx_hdr)
-{
+#घोषणा HW_BLOCK_SIZE                 252
+अटल व्योम wl1251_tx_frag_block_num(काष्ठा tx_द्विगुन_buffer_desc *tx_hdr)
+अणु
 	u16 payload_len, frag_threshold, mem_blocks;
 	u16 num_mpdus, mem_blocks_per_frag;
 
@@ -108,7 +109,7 @@ static void wl1251_tx_frag_block_num(struct tx_double_buffer_desc *tx_hdr)
 
 	payload_len = le16_to_cpu(tx_hdr->length) + MAX_MSDU_SECURITY_LENGTH;
 
-	if (payload_len > frag_threshold) {
+	अगर (payload_len > frag_threshold) अणु
 		mem_blocks_per_frag =
 			((frag_threshold + MAX_MPDU_HEADER_AND_SECURITY) /
 			 HW_BLOCK_SIZE) + 1;
@@ -117,42 +118,42 @@ static void wl1251_tx_frag_block_num(struct tx_double_buffer_desc *tx_hdr)
 		payload_len -= num_mpdus * frag_threshold;
 		num_mpdus++;
 
-	} else {
+	पूर्ण अन्यथा अणु
 		mem_blocks_per_frag = 0;
 		mem_blocks = 0;
 		num_mpdus = 1;
-	}
+	पूर्ण
 
 	mem_blocks += (payload_len / HW_BLOCK_SIZE) + 1;
 
-	if (num_mpdus > 1)
+	अगर (num_mpdus > 1)
 		mem_blocks += min(num_mpdus, mem_blocks_per_frag);
 
 	tx_hdr->num_mem_blocks = mem_blocks;
-}
+पूर्ण
 
-static int wl1251_tx_fill_hdr(struct wl1251 *wl, struct sk_buff *skb,
-			      struct ieee80211_tx_info *control)
-{
-	struct tx_double_buffer_desc *tx_hdr;
-	struct ieee80211_rate *rate;
-	int id;
+अटल पूर्णांक wl1251_tx_fill_hdr(काष्ठा wl1251 *wl, काष्ठा sk_buff *skb,
+			      काष्ठा ieee80211_tx_info *control)
+अणु
+	काष्ठा tx_द्विगुन_buffer_desc *tx_hdr;
+	काष्ठा ieee80211_rate *rate;
+	पूर्णांक id;
 	u16 fc;
 
-	if (!skb)
-		return -EINVAL;
+	अगर (!skb)
+		वापस -EINVAL;
 
 	id = wl1251_tx_id(wl, skb);
-	if (id < 0)
-		return id;
+	अगर (id < 0)
+		वापस id;
 
 	fc = *(u16 *)skb->data;
-	tx_hdr = skb_push(skb, sizeof(*tx_hdr));
+	tx_hdr = skb_push(skb, माप(*tx_hdr));
 
-	tx_hdr->length = cpu_to_le16(skb->len - sizeof(*tx_hdr));
+	tx_hdr->length = cpu_to_le16(skb->len - माप(*tx_hdr));
 	rate = ieee80211_get_tx_rate(wl->hw, control);
 	tx_hdr->rate = cpu_to_le16(rate->hw_value);
-	tx_hdr->expiry_time = cpu_to_le32(1 << 16);
+	tx_hdr->expiry_समय = cpu_to_le32(1 << 16);
 	tx_hdr->id = id;
 
 	tx_hdr->xmit_queue = wl1251_tx_get_queue(skb_get_queue_mapping(skb));
@@ -160,255 +161,255 @@ static int wl1251_tx_fill_hdr(struct wl1251 *wl, struct sk_buff *skb,
 	wl1251_tx_control(tx_hdr, control, fc);
 	wl1251_tx_frag_block_num(tx_hdr);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* We copy the packet to the target */
-static int wl1251_tx_send_packet(struct wl1251 *wl, struct sk_buff *skb,
-				 struct ieee80211_tx_info *control)
-{
-	struct tx_double_buffer_desc *tx_hdr;
-	int len;
+अटल पूर्णांक wl1251_tx_send_packet(काष्ठा wl1251 *wl, काष्ठा sk_buff *skb,
+				 काष्ठा ieee80211_tx_info *control)
+अणु
+	काष्ठा tx_द्विगुन_buffer_desc *tx_hdr;
+	पूर्णांक len;
 	u32 addr;
 
-	if (!skb)
-		return -EINVAL;
+	अगर (!skb)
+		वापस -EINVAL;
 
-	tx_hdr = (struct tx_double_buffer_desc *) skb->data;
+	tx_hdr = (काष्ठा tx_द्विगुन_buffer_desc *) skb->data;
 
-	if (control->control.hw_key &&
-	    control->control.hw_key->cipher == WLAN_CIPHER_SUITE_TKIP) {
-		int hdrlen;
+	अगर (control->control.hw_key &&
+	    control->control.hw_key->cipher == WLAN_CIPHER_SUITE_TKIP) अणु
+		पूर्णांक hdrlen;
 		__le16 fc;
 		u16 length;
 		u8 *pos;
 
-		fc = *(__le16 *)(skb->data + sizeof(*tx_hdr));
+		fc = *(__le16 *)(skb->data + माप(*tx_hdr));
 		length = le16_to_cpu(tx_hdr->length) + WL1251_TKIP_IV_SPACE;
 		tx_hdr->length = cpu_to_le16(length);
 
 		hdrlen = ieee80211_hdrlen(fc);
 
 		pos = skb_push(skb, WL1251_TKIP_IV_SPACE);
-		memmove(pos, pos + WL1251_TKIP_IV_SPACE,
-			sizeof(*tx_hdr) + hdrlen);
-	}
+		स_हटाओ(pos, pos + WL1251_TKIP_IV_SPACE,
+			माप(*tx_hdr) + hdrlen);
+	पूर्ण
 
-	/* Revisit. This is a workaround for getting non-aligned packets.
+	/* Revisit. This is a workaround क्रम getting non-aligned packets.
 	   This happens at least with EAPOL packets from the user space.
 	   Our DMA requires packets to be aligned on a 4-byte boundary.
 	*/
-	if (unlikely((long)skb->data & 0x03)) {
-		int offset = (4 - (long)skb->data) & 0x03;
+	अगर (unlikely((दीर्घ)skb->data & 0x03)) अणु
+		पूर्णांक offset = (4 - (दीर्घ)skb->data) & 0x03;
 		wl1251_debug(DEBUG_TX, "skb offset %d", offset);
 
 		/* check whether the current skb can be used */
-		if (skb_cloned(skb) || (skb_tailroom(skb) < offset)) {
-			struct sk_buff *newskb = skb_copy_expand(skb, 0, 3,
+		अगर (skb_cloned(skb) || (skb_tailroom(skb) < offset)) अणु
+			काष्ठा sk_buff *newskb = skb_copy_expand(skb, 0, 3,
 								 GFP_KERNEL);
 
-			if (unlikely(newskb == NULL))
-				return -EINVAL;
+			अगर (unlikely(newskb == शून्य))
+				वापस -EINVAL;
 
-			tx_hdr = (struct tx_double_buffer_desc *) newskb->data;
+			tx_hdr = (काष्ठा tx_द्विगुन_buffer_desc *) newskb->data;
 
-			dev_kfree_skb_any(skb);
+			dev_kमुक्त_skb_any(skb);
 			wl->tx_frames[tx_hdr->id] = skb = newskb;
 
-			offset = (4 - (long)skb->data) & 0x03;
+			offset = (4 - (दीर्घ)skb->data) & 0x03;
 			wl1251_debug(DEBUG_TX, "new skb offset %d", offset);
-		}
+		पूर्ण
 
 		/* align the buffer on a 4-byte boundary */
-		if (offset) {
-			unsigned char *src = skb->data;
+		अगर (offset) अणु
+			अचिन्हित अक्षर *src = skb->data;
 			skb_reserve(skb, offset);
-			memmove(skb->data, src, skb->len);
-			tx_hdr = (struct tx_double_buffer_desc *) skb->data;
-		}
-	}
+			स_हटाओ(skb->data, src, skb->len);
+			tx_hdr = (काष्ठा tx_द्विगुन_buffer_desc *) skb->data;
+		पूर्ण
+	पूर्ण
 
-	/* Our skb->data at this point includes the HW header */
+	/* Our skb->data at this poपूर्णांक includes the HW header */
 	len = WL1251_TX_ALIGN(skb->len);
 
-	if (wl->data_in_count & 0x1)
+	अगर (wl->data_in_count & 0x1)
 		addr = wl->data_path->tx_packet_ring_addr +
 			wl->data_path->tx_packet_ring_chunk_size;
-	else
+	अन्यथा
 		addr = wl->data_path->tx_packet_ring_addr;
 
-	wl1251_mem_write(wl, addr, skb->data, len);
+	wl1251_mem_ग_लिखो(wl, addr, skb->data, len);
 
 	wl1251_debug(DEBUG_TX, "tx id %u skb 0x%p payload %u rate 0x%x "
 		     "queue %d", tx_hdr->id, skb, tx_hdr->length,
 		     tx_hdr->rate, tx_hdr->xmit_queue);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void wl1251_tx_trigger(struct wl1251 *wl)
-{
+अटल व्योम wl1251_tx_trigger(काष्ठा wl1251 *wl)
+अणु
 	u32 data, addr;
 
-	if (wl->data_in_count & 0x1) {
+	अगर (wl->data_in_count & 0x1) अणु
 		addr = ACX_REG_INTERRUPT_TRIG_H;
 		data = INTR_TRIG_TX_PROC1;
-	} else {
+	पूर्ण अन्यथा अणु
 		addr = ACX_REG_INTERRUPT_TRIG;
 		data = INTR_TRIG_TX_PROC0;
-	}
+	पूर्ण
 
-	wl1251_reg_write32(wl, addr, data);
+	wl1251_reg_ग_लिखो32(wl, addr, data);
 
 	/* Bumping data in */
 	wl->data_in_count = (wl->data_in_count + 1) &
 		TX_STATUS_DATA_OUT_COUNT_MASK;
-}
+पूर्ण
 
-static void enable_tx_for_packet_injection(struct wl1251 *wl)
-{
-	int ret;
+अटल व्योम enable_tx_क्रम_packet_injection(काष्ठा wl1251 *wl)
+अणु
+	पूर्णांक ret;
 
 	ret = wl1251_cmd_join(wl, BSS_TYPE_STA_BSS, wl->channel,
-			      wl->beacon_int, wl->dtim_period);
-	if (ret < 0) {
+			      wl->beacon_पूर्णांक, wl->dtim_period);
+	अगर (ret < 0) अणु
 		wl1251_warning("join failed");
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	ret = wl1251_event_wait(wl, JOIN_EVENT_COMPLETE_ID, 100);
-	if (ret < 0) {
+	ret = wl1251_event_रुको(wl, JOIN_EVENT_COMPLETE_ID, 100);
+	अगर (ret < 0) अणु
 		wl1251_warning("join timeout");
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	wl->joined = true;
-}
+पूर्ण
 
 /* caller must hold wl->mutex */
-static int wl1251_tx_frame(struct wl1251 *wl, struct sk_buff *skb)
-{
-	struct ieee80211_tx_info *info;
-	int ret = 0;
+अटल पूर्णांक wl1251_tx_frame(काष्ठा wl1251 *wl, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा ieee80211_tx_info *info;
+	पूर्णांक ret = 0;
 	u8 idx;
 
 	info = IEEE80211_SKB_CB(skb);
 
-	if (info->control.hw_key) {
-		if (unlikely(wl->monitor_present))
-			return -EINVAL;
+	अगर (info->control.hw_key) अणु
+		अगर (unlikely(wl->monitor_present))
+			वापस -EINVAL;
 
 		idx = info->control.hw_key->hw_key_idx;
-		if (unlikely(wl->default_key != idx)) {
-			ret = wl1251_acx_default_key(wl, idx);
-			if (ret < 0)
-				return ret;
-		}
-	}
+		अगर (unlikely(wl->शेष_key != idx)) अणु
+			ret = wl1251_acx_शेष_key(wl, idx);
+			अगर (ret < 0)
+				वापस ret;
+		पूर्ण
+	पूर्ण
 
-	/* Enable tx path in monitor mode for packet injection */
-	if ((wl->vif == NULL) && !wl->joined)
-		enable_tx_for_packet_injection(wl);
+	/* Enable tx path in monitor mode क्रम packet injection */
+	अगर ((wl->vअगर == शून्य) && !wl->joined)
+		enable_tx_क्रम_packet_injection(wl);
 
 	ret = wl1251_tx_path_status(wl);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	ret = wl1251_tx_fill_hdr(wl, skb, info);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	ret = wl1251_tx_send_packet(wl, skb, info);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	wl1251_tx_trigger(wl);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-void wl1251_tx_work(struct work_struct *work)
-{
-	struct wl1251 *wl = container_of(work, struct wl1251, tx_work);
-	struct sk_buff *skb;
+व्योम wl1251_tx_work(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा wl1251 *wl = container_of(work, काष्ठा wl1251, tx_work);
+	काष्ठा sk_buff *skb;
 	bool woken_up = false;
-	int ret;
+	पूर्णांक ret;
 
 	mutex_lock(&wl->mutex);
 
-	if (unlikely(wl->state == WL1251_STATE_OFF))
-		goto out;
+	अगर (unlikely(wl->state == WL1251_STATE_OFF))
+		जाओ out;
 
-	while ((skb = skb_dequeue(&wl->tx_queue))) {
-		if (!woken_up) {
+	जबतक ((skb = skb_dequeue(&wl->tx_queue))) अणु
+		अगर (!woken_up) अणु
 			ret = wl1251_ps_elp_wakeup(wl);
-			if (ret < 0)
-				goto out;
+			अगर (ret < 0)
+				जाओ out;
 			woken_up = true;
-		}
+		पूर्ण
 
 		ret = wl1251_tx_frame(wl, skb);
-		if (ret == -EBUSY) {
+		अगर (ret == -EBUSY) अणु
 			skb_queue_head(&wl->tx_queue, skb);
-			goto out;
-		} else if (ret < 0) {
-			dev_kfree_skb(skb);
-			goto out;
-		}
-	}
+			जाओ out;
+		पूर्ण अन्यथा अगर (ret < 0) अणु
+			dev_kमुक्त_skb(skb);
+			जाओ out;
+		पूर्ण
+	पूर्ण
 
 out:
-	if (woken_up)
+	अगर (woken_up)
 		wl1251_ps_elp_sleep(wl);
 
 	mutex_unlock(&wl->mutex);
-}
+पूर्ण
 
-static const char *wl1251_tx_parse_status(u8 status)
-{
-	/* 8 bit status field, one character per bit plus null */
-	static char buf[9];
-	int i = 0;
+अटल स्थिर अक्षर *wl1251_tx_parse_status(u8 status)
+अणु
+	/* 8 bit status field, one अक्षरacter per bit plus null */
+	अटल अक्षर buf[9];
+	पूर्णांक i = 0;
 
-	memset(buf, 0, sizeof(buf));
+	स_रखो(buf, 0, माप(buf));
 
-	if (status & TX_DMA_ERROR)
+	अगर (status & TX_DMA_ERROR)
 		buf[i++] = 'm';
-	if (status & TX_DISABLED)
+	अगर (status & TX_DISABLED)
 		buf[i++] = 'd';
-	if (status & TX_RETRY_EXCEEDED)
+	अगर (status & TX_RETRY_EXCEEDED)
 		buf[i++] = 'r';
-	if (status & TX_TIMEOUT)
+	अगर (status & TX_TIMEOUT)
 		buf[i++] = 't';
-	if (status & TX_KEY_NOT_FOUND)
+	अगर (status & TX_KEY_NOT_FOUND)
 		buf[i++] = 'k';
-	if (status & TX_ENCRYPT_FAIL)
+	अगर (status & TX_ENCRYPT_FAIL)
 		buf[i++] = 'e';
-	if (status & TX_UNAVAILABLE_PRIORITY)
+	अगर (status & TX_UNAVAILABLE_PRIORITY)
 		buf[i++] = 'p';
 
 	/* bit 0 is unused apparently */
 
-	return buf;
-}
+	वापस buf;
+पूर्ण
 
-static void wl1251_tx_packet_cb(struct wl1251 *wl,
-				struct tx_result *result)
-{
-	struct ieee80211_tx_info *info;
-	struct sk_buff *skb;
-	int hdrlen;
+अटल व्योम wl1251_tx_packet_cb(काष्ठा wl1251 *wl,
+				काष्ठा tx_result *result)
+अणु
+	काष्ठा ieee80211_tx_info *info;
+	काष्ठा sk_buff *skb;
+	पूर्णांक hdrlen;
 	u8 *frame;
 
 	skb = wl->tx_frames[result->id];
-	if (skb == NULL) {
+	अगर (skb == शून्य) अणु
 		wl1251_error("SKB for packet %d is NULL", result->id);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	info = IEEE80211_SKB_CB(skb);
 
-	if (!(info->flags & IEEE80211_TX_CTL_NO_ACK) &&
+	अगर (!(info->flags & IEEE80211_TX_CTL_NO_ACK) &&
 	    !(info->flags & IEEE80211_TX_CTL_INJECTED) &&
 	    (result->status == TX_SUCCESS))
 		info->flags |= IEEE80211_TX_STAT_ACK;
@@ -417,16 +418,16 @@ static void wl1251_tx_packet_cb(struct wl1251 *wl,
 	wl->stats.retry_count += result->ack_failures;
 
 	/*
-	 * We have to remove our private TX header before pushing
+	 * We have to हटाओ our निजी TX header beक्रमe pushing
 	 * the skb back to mac80211.
 	 */
-	frame = skb_pull(skb, sizeof(struct tx_double_buffer_desc));
-	if (info->control.hw_key &&
-	    info->control.hw_key->cipher == WLAN_CIPHER_SUITE_TKIP) {
+	frame = skb_pull(skb, माप(काष्ठा tx_द्विगुन_buffer_desc));
+	अगर (info->control.hw_key &&
+	    info->control.hw_key->cipher == WLAN_CIPHER_SUITE_TKIP) अणु
 		hdrlen = ieee80211_get_hdrlen_from_skb(skb);
-		memmove(frame + WL1251_TKIP_IV_SPACE, frame, hdrlen);
+		स_हटाओ(frame + WL1251_TKIP_IV_SPACE, frame, hdrlen);
 		skb_pull(skb, WL1251_TKIP_IV_SPACE);
-	}
+	पूर्ण
 
 	wl1251_debug(DEBUG_TX, "tx status id %u skb 0x%p failures %u rate 0x%x"
 		     " status 0x%x (%s)",
@@ -436,141 +437,141 @@ static void wl1251_tx_packet_cb(struct wl1251 *wl,
 
 	ieee80211_tx_status(wl->hw, skb);
 
-	wl->tx_frames[result->id] = NULL;
-}
+	wl->tx_frames[result->id] = शून्य;
+पूर्ण
 
-/* Called upon reception of a TX complete interrupt */
-void wl1251_tx_complete(struct wl1251 *wl)
-{
-	int i, result_index, num_complete = 0, queue_len;
-	struct tx_result result[FW_TX_CMPLT_BLOCK_SIZE], *result_ptr;
-	unsigned long flags;
+/* Called upon reception of a TX complete पूर्णांकerrupt */
+व्योम wl1251_tx_complete(काष्ठा wl1251 *wl)
+अणु
+	पूर्णांक i, result_index, num_complete = 0, queue_len;
+	काष्ठा tx_result result[FW_TX_CMPLT_BLOCK_SIZE], *result_ptr;
+	अचिन्हित दीर्घ flags;
 
-	if (unlikely(wl->state != WL1251_STATE_ON))
-		return;
+	अगर (unlikely(wl->state != WL1251_STATE_ON))
+		वापस;
 
-	/* First we read the result */
-	wl1251_mem_read(wl, wl->data_path->tx_complete_addr,
-			    result, sizeof(result));
+	/* First we पढ़ो the result */
+	wl1251_mem_पढ़ो(wl, wl->data_path->tx_complete_addr,
+			    result, माप(result));
 
 	result_index = wl->next_tx_complete;
 
-	for (i = 0; i < ARRAY_SIZE(result); i++) {
+	क्रम (i = 0; i < ARRAY_SIZE(result); i++) अणु
 		result_ptr = &result[result_index];
 
-		if (result_ptr->done_1 == 1 &&
-		    result_ptr->done_2 == 1) {
+		अगर (result_ptr->करोne_1 == 1 &&
+		    result_ptr->करोne_2 == 1) अणु
 			wl1251_tx_packet_cb(wl, result_ptr);
 
-			result_ptr->done_1 = 0;
-			result_ptr->done_2 = 0;
+			result_ptr->करोne_1 = 0;
+			result_ptr->करोne_2 = 0;
 
 			result_index = (result_index + 1) &
 				(FW_TX_CMPLT_BLOCK_SIZE - 1);
 			num_complete++;
-		} else {
-			break;
-		}
-	}
+		पूर्ण अन्यथा अणु
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
 	queue_len = skb_queue_len(&wl->tx_queue);
 
-	if ((num_complete > 0) && (queue_len > 0)) {
+	अगर ((num_complete > 0) && (queue_len > 0)) अणु
 		/* firmware buffer has space, reschedule tx_work */
 		wl1251_debug(DEBUG_TX, "tx_complete: reschedule tx_work");
 		ieee80211_queue_work(wl->hw, &wl->tx_work);
-	}
+	पूर्ण
 
-	if (wl->tx_queue_stopped &&
-	    queue_len <= WL1251_TX_QUEUE_LOW_WATERMARK) {
+	अगर (wl->tx_queue_stopped &&
+	    queue_len <= WL1251_TX_QUEUE_LOW_WATERMARK) अणु
 		/* tx_queue has space, restart queues */
 		wl1251_debug(DEBUG_TX, "tx_complete: waking queues");
 		spin_lock_irqsave(&wl->wl_lock, flags);
 		ieee80211_wake_queues(wl->hw);
 		wl->tx_queue_stopped = false;
 		spin_unlock_irqrestore(&wl->wl_lock, flags);
-	}
+	पूर्ण
 
 	/* Every completed frame needs to be acknowledged */
-	if (num_complete) {
+	अगर (num_complete) अणु
 		/*
 		 * If we've wrapped, we have to clear
 		 * the results in 2 steps.
 		 */
-		if (result_index > wl->next_tx_complete) {
-			/* Only 1 write is needed */
-			wl1251_mem_write(wl,
+		अगर (result_index > wl->next_tx_complete) अणु
+			/* Only 1 ग_लिखो is needed */
+			wl1251_mem_ग_लिखो(wl,
 					 wl->data_path->tx_complete_addr +
 					 (wl->next_tx_complete *
-					  sizeof(struct tx_result)),
+					  माप(काष्ठा tx_result)),
 					 &result[wl->next_tx_complete],
 					 num_complete *
-					 sizeof(struct tx_result));
+					 माप(काष्ठा tx_result));
 
 
-		} else if (result_index < wl->next_tx_complete) {
-			/* 2 writes are needed */
-			wl1251_mem_write(wl,
+		पूर्ण अन्यथा अगर (result_index < wl->next_tx_complete) अणु
+			/* 2 ग_लिखोs are needed */
+			wl1251_mem_ग_लिखो(wl,
 					 wl->data_path->tx_complete_addr +
 					 (wl->next_tx_complete *
-					  sizeof(struct tx_result)),
+					  माप(काष्ठा tx_result)),
 					 &result[wl->next_tx_complete],
 					 (FW_TX_CMPLT_BLOCK_SIZE -
 					  wl->next_tx_complete) *
-					 sizeof(struct tx_result));
+					 माप(काष्ठा tx_result));
 
-			wl1251_mem_write(wl,
+			wl1251_mem_ग_लिखो(wl,
 					 wl->data_path->tx_complete_addr,
 					 result,
 					 (num_complete -
 					  FW_TX_CMPLT_BLOCK_SIZE +
 					  wl->next_tx_complete) *
-					 sizeof(struct tx_result));
+					 माप(काष्ठा tx_result));
 
-		} else {
-			/* We have to write the whole array */
-			wl1251_mem_write(wl,
+		पूर्ण अन्यथा अणु
+			/* We have to ग_लिखो the whole array */
+			wl1251_mem_ग_लिखो(wl,
 					 wl->data_path->tx_complete_addr,
 					 result,
 					 FW_TX_CMPLT_BLOCK_SIZE *
-					 sizeof(struct tx_result));
-		}
+					 माप(काष्ठा tx_result));
+		पूर्ण
 
-	}
+	पूर्ण
 
 	wl->next_tx_complete = result_index;
-}
+पूर्ण
 
 /* caller must hold wl->mutex */
-void wl1251_tx_flush(struct wl1251 *wl)
-{
-	int i;
-	struct sk_buff *skb;
-	struct ieee80211_tx_info *info;
+व्योम wl1251_tx_flush(काष्ठा wl1251 *wl)
+अणु
+	पूर्णांक i;
+	काष्ठा sk_buff *skb;
+	काष्ठा ieee80211_tx_info *info;
 
 	/* TX failure */
 /* 	control->flags = 0; FIXME */
 
-	while ((skb = skb_dequeue(&wl->tx_queue))) {
+	जबतक ((skb = skb_dequeue(&wl->tx_queue))) अणु
 		info = IEEE80211_SKB_CB(skb);
 
 		wl1251_debug(DEBUG_TX, "flushing skb 0x%p", skb);
 
-		if (!(info->flags & IEEE80211_TX_CTL_REQ_TX_STATUS))
-				continue;
+		अगर (!(info->flags & IEEE80211_TX_CTL_REQ_TX_STATUS))
+				जारी;
 
 		ieee80211_tx_status(wl->hw, skb);
-	}
+	पूर्ण
 
-	for (i = 0; i < FW_TX_CMPLT_BLOCK_SIZE; i++)
-		if (wl->tx_frames[i] != NULL) {
+	क्रम (i = 0; i < FW_TX_CMPLT_BLOCK_SIZE; i++)
+		अगर (wl->tx_frames[i] != शून्य) अणु
 			skb = wl->tx_frames[i];
 			info = IEEE80211_SKB_CB(skb);
 
-			if (!(info->flags & IEEE80211_TX_CTL_REQ_TX_STATUS))
-				continue;
+			अगर (!(info->flags & IEEE80211_TX_CTL_REQ_TX_STATUS))
+				जारी;
 
 			ieee80211_tx_status(wl->hw, skb);
-			wl->tx_frames[i] = NULL;
-		}
-}
+			wl->tx_frames[i] = शून्य;
+		पूर्ण
+पूर्ण

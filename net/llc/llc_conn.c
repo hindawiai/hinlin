@@ -1,50 +1,51 @@
+<शैली गुरु>
 /*
- * llc_conn.c - Driver routines for connection component.
+ * llc_conn.c - Driver routines क्रम connection component.
  *
  * Copyright (c) 1997 by Procom Technology, Inc.
- *		 2001-2003 by Arnaldo Carvalho de Melo <acme@conectiva.com.br>
+ *		 2001-2003 by Arnalकरो Carvalho de Melo <acme@conectiva.com.br>
  *
- * This program can be redistributed or modified under the terms of the
+ * This program can be redistributed or modअगरied under the terms of the
  * GNU General Public License as published by the Free Software Foundation.
  * This program is distributed without any warranty or implied warranty
- * of merchantability or fitness for a particular purpose.
+ * of merchantability or fitness क्रम a particular purpose.
  *
- * See the GNU General Public License for more details.
+ * See the GNU General Public License क्रम more details.
  */
 
-#include <linux/init.h>
-#include <linux/slab.h>
-#include <net/llc_sap.h>
-#include <net/llc_conn.h>
-#include <net/sock.h>
-#include <net/tcp_states.h>
-#include <net/llc_c_ev.h>
-#include <net/llc_c_ac.h>
-#include <net/llc_c_st.h>
-#include <net/llc_pdu.h>
+#समावेश <linux/init.h>
+#समावेश <linux/slab.h>
+#समावेश <net/llc_sap.h>
+#समावेश <net/llc_conn.h>
+#समावेश <net/sock.h>
+#समावेश <net/tcp_states.h>
+#समावेश <net/llc_c_ev.h>
+#समावेश <net/llc_c_ac.h>
+#समावेश <net/llc_c_st.h>
+#समावेश <net/llc_pdu.h>
 
-#if 0
-#define dprintk(args...) printk(KERN_DEBUG args)
-#else
-#define dprintk(args...)
-#endif
+#अगर 0
+#घोषणा dprपूर्णांकk(args...) prपूर्णांकk(KERN_DEBUG args)
+#अन्यथा
+#घोषणा dprपूर्णांकk(args...)
+#पूर्ण_अगर
 
-static int llc_find_offset(int state, int ev_type);
-static void llc_conn_send_pdus(struct sock *sk);
-static int llc_conn_service(struct sock *sk, struct sk_buff *skb);
-static int llc_exec_conn_trans_actions(struct sock *sk,
-				       struct llc_conn_state_trans *trans,
-				       struct sk_buff *ev);
-static struct llc_conn_state_trans *llc_qualify_conn_ev(struct sock *sk,
-							struct sk_buff *skb);
+अटल पूर्णांक llc_find_offset(पूर्णांक state, पूर्णांक ev_type);
+अटल व्योम llc_conn_send_pdus(काष्ठा sock *sk);
+अटल पूर्णांक llc_conn_service(काष्ठा sock *sk, काष्ठा sk_buff *skb);
+अटल पूर्णांक llc_exec_conn_trans_actions(काष्ठा sock *sk,
+				       काष्ठा llc_conn_state_trans *trans,
+				       काष्ठा sk_buff *ev);
+अटल काष्ठा llc_conn_state_trans *llc_qualअगरy_conn_ev(काष्ठा sock *sk,
+							काष्ठा sk_buff *skb);
 
 /* Offset table on connection states transition diagram */
-static int llc_offset_table[NBR_CONN_STATES][NBR_CONN_EV];
+अटल पूर्णांक llc_offset_table[NBR_CONN_STATES][NBR_CONN_EV];
 
-int sysctl_llc2_ack_timeout = LLC2_ACK_TIME * HZ;
-int sysctl_llc2_p_timeout = LLC2_P_TIME * HZ;
-int sysctl_llc2_rej_timeout = LLC2_REJ_TIME * HZ;
-int sysctl_llc2_busy_timeout = LLC2_BUSY_TIME * HZ;
+पूर्णांक sysctl_llc2_ack_समयout = LLC2_ACK_TIME * HZ;
+पूर्णांक sysctl_llc2_p_समयout = LLC2_P_TIME * HZ;
+पूर्णांक sysctl_llc2_rej_समयout = LLC2_REJ_TIME * HZ;
+पूर्णांक sysctl_llc2_busy_समयout = LLC2_BUSY_TIME * HZ;
 
 /**
  *	llc_conn_state_process - sends event to connection state machine
@@ -53,133 +54,133 @@ int sysctl_llc2_busy_timeout = LLC2_BUSY_TIME * HZ;
  *
  *	Sends an event to connection state machine. After processing event
  *	(executing it's actions and changing state), upper layer will be
- *	indicated or confirmed, if needed. Returns 0 for success, 1 for
- *	failure. The socket lock has to be held before calling this function.
+ *	indicated or confirmed, अगर needed. Returns 0 क्रम success, 1 क्रम
+ *	failure. The socket lock has to be held beक्रमe calling this function.
  *
  *	This function always consumes a reference to the skb.
  */
-int llc_conn_state_process(struct sock *sk, struct sk_buff *skb)
-{
-	int rc;
-	struct llc_sock *llc = llc_sk(skb->sk);
-	struct llc_conn_state_ev *ev = llc_conn_ev(skb);
+पूर्णांक llc_conn_state_process(काष्ठा sock *sk, काष्ठा sk_buff *skb)
+अणु
+	पूर्णांक rc;
+	काष्ठा llc_sock *llc = llc_sk(skb->sk);
+	काष्ठा llc_conn_state_ev *ev = llc_conn_ev(skb);
 
 	ev->ind_prim = ev->cfm_prim = 0;
 	/*
 	 * Send event to state machine
 	 */
 	rc = llc_conn_service(skb->sk, skb);
-	if (unlikely(rc != 0)) {
-		printk(KERN_ERR "%s: llc_conn_service failed\n", __func__);
-		goto out_skb_put;
-	}
+	अगर (unlikely(rc != 0)) अणु
+		prपूर्णांकk(KERN_ERR "%s: llc_conn_service failed\n", __func__);
+		जाओ out_skb_put;
+	पूर्ण
 
-	switch (ev->ind_prim) {
-	case LLC_DATA_PRIM:
+	चयन (ev->ind_prim) अणु
+	हाल LLC_DATA_PRIM:
 		skb_get(skb);
 		llc_save_primitive(sk, skb, LLC_DATA_PRIM);
-		if (unlikely(sock_queue_rcv_skb(sk, skb))) {
+		अगर (unlikely(sock_queue_rcv_skb(sk, skb))) अणु
 			/*
 			 * shouldn't happen
 			 */
-			printk(KERN_ERR "%s: sock_queue_rcv_skb failed!\n",
+			prपूर्णांकk(KERN_ERR "%s: sock_queue_rcv_skb failed!\n",
 			       __func__);
-			kfree_skb(skb);
-		}
-		break;
-	case LLC_CONN_PRIM:
+			kमुक्त_skb(skb);
+		पूर्ण
+		अवरोध;
+	हाल LLC_CONN_PRIM:
 		/*
 		 * Can't be sock_queue_rcv_skb, because we have to leave the
-		 * skb->sk pointing to the newly created struct sock in
+		 * skb->sk poपूर्णांकing to the newly created काष्ठा sock in
 		 * llc_conn_handler. -acme
 		 */
 		skb_get(skb);
 		skb_queue_tail(&sk->sk_receive_queue, skb);
 		sk->sk_state_change(sk);
-		break;
-	case LLC_DISC_PRIM:
+		अवरोध;
+	हाल LLC_DISC_PRIM:
 		sock_hold(sk);
-		if (sk->sk_type == SOCK_STREAM &&
-		    sk->sk_state == TCP_ESTABLISHED) {
-			sk->sk_shutdown       = SHUTDOWN_MASK;
+		अगर (sk->sk_type == SOCK_STREAM &&
+		    sk->sk_state == TCP_ESTABLISHED) अणु
+			sk->sk_shutकरोwn       = SHUTDOWN_MASK;
 			sk->sk_socket->state  = SS_UNCONNECTED;
 			sk->sk_state          = TCP_CLOSE;
-			if (!sock_flag(sk, SOCK_DEAD)) {
+			अगर (!sock_flag(sk, SOCK_DEAD)) अणु
 				sock_set_flag(sk, SOCK_DEAD);
 				sk->sk_state_change(sk);
-			}
-		}
+			पूर्ण
+		पूर्ण
 		sock_put(sk);
-		break;
-	case LLC_RESET_PRIM:
+		अवरोध;
+	हाल LLC_RESET_PRIM:
 		/*
 		 * FIXME:
-		 * RESET is not being notified to upper layers for now
+		 * RESET is not being notअगरied to upper layers क्रम now
 		 */
-		printk(KERN_INFO "%s: received a reset ind!\n", __func__);
-		break;
-	default:
-		if (ev->ind_prim)
-			printk(KERN_INFO "%s: received unknown %d prim!\n",
+		prपूर्णांकk(KERN_INFO "%s: received a reset ind!\n", __func__);
+		अवरोध;
+	शेष:
+		अगर (ev->ind_prim)
+			prपूर्णांकk(KERN_INFO "%s: received unknown %d prim!\n",
 				__func__, ev->ind_prim);
 		/* No indication */
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	switch (ev->cfm_prim) {
-	case LLC_DATA_PRIM:
-		if (!llc_data_accept_state(llc->state))
-			sk->sk_write_space(sk);
-		else
+	चयन (ev->cfm_prim) अणु
+	हाल LLC_DATA_PRIM:
+		अगर (!llc_data_accept_state(llc->state))
+			sk->sk_ग_लिखो_space(sk);
+		अन्यथा
 			rc = llc->failed_data_req = 1;
-		break;
-	case LLC_CONN_PRIM:
-		if (sk->sk_type == SOCK_STREAM &&
-		    sk->sk_state == TCP_SYN_SENT) {
-			if (ev->status) {
+		अवरोध;
+	हाल LLC_CONN_PRIM:
+		अगर (sk->sk_type == SOCK_STREAM &&
+		    sk->sk_state == TCP_SYN_SENT) अणु
+			अगर (ev->status) अणु
 				sk->sk_socket->state = SS_UNCONNECTED;
 				sk->sk_state         = TCP_CLOSE;
-			} else {
+			पूर्ण अन्यथा अणु
 				sk->sk_socket->state = SS_CONNECTED;
 				sk->sk_state         = TCP_ESTABLISHED;
-			}
+			पूर्ण
 			sk->sk_state_change(sk);
-		}
-		break;
-	case LLC_DISC_PRIM:
+		पूर्ण
+		अवरोध;
+	हाल LLC_DISC_PRIM:
 		sock_hold(sk);
-		if (sk->sk_type == SOCK_STREAM && sk->sk_state == TCP_CLOSING) {
+		अगर (sk->sk_type == SOCK_STREAM && sk->sk_state == TCP_CLOSING) अणु
 			sk->sk_socket->state = SS_UNCONNECTED;
 			sk->sk_state         = TCP_CLOSE;
 			sk->sk_state_change(sk);
-		}
+		पूर्ण
 		sock_put(sk);
-		break;
-	case LLC_RESET_PRIM:
+		अवरोध;
+	हाल LLC_RESET_PRIM:
 		/*
 		 * FIXME:
-		 * RESET is not being notified to upper layers for now
+		 * RESET is not being notअगरied to upper layers क्रम now
 		 */
-		printk(KERN_INFO "%s: received a reset conf!\n", __func__);
-		break;
-	default:
-		if (ev->cfm_prim)
-			printk(KERN_INFO "%s: received unknown %d prim!\n",
+		prपूर्णांकk(KERN_INFO "%s: received a reset conf!\n", __func__);
+		अवरोध;
+	शेष:
+		अगर (ev->cfm_prim)
+			prपूर्णांकk(KERN_INFO "%s: received unknown %d prim!\n",
 					__func__, ev->cfm_prim);
 		/* No confirmation */
-		break;
-	}
+		अवरोध;
+	पूर्ण
 out_skb_put:
-	kfree_skb(skb);
-	return rc;
-}
+	kमुक्त_skb(skb);
+	वापस rc;
+पूर्ण
 
-void llc_conn_send_pdu(struct sock *sk, struct sk_buff *skb)
-{
+व्योम llc_conn_send_pdu(काष्ठा sock *sk, काष्ठा sk_buff *skb)
+अणु
 	/* queue PDU to send to MAC layer */
-	skb_queue_tail(&sk->sk_write_queue, skb);
+	skb_queue_tail(&sk->sk_ग_लिखो_queue, skb);
 	llc_conn_send_pdus(sk);
-}
+पूर्ण
 
 /**
  *	llc_conn_rtn_pdu - sends received data pdu to upper layer
@@ -188,14 +189,14 @@ void llc_conn_send_pdu(struct sock *sk, struct sk_buff *skb)
  *
  *	Sends received data pdu to upper layer (by using indicate function).
  *	Prepares service parameters (prim and prim_data). calling indication
- *	function will be done in llc_conn_state_process.
+ *	function will be करोne in llc_conn_state_process.
  */
-void llc_conn_rtn_pdu(struct sock *sk, struct sk_buff *skb)
-{
-	struct llc_conn_state_ev *ev = llc_conn_ev(skb);
+व्योम llc_conn_rtn_pdu(काष्ठा sock *sk, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा llc_conn_state_ev *ev = llc_conn_ev(skb);
 
 	ev->ind_prim = LLC_DATA_PRIM;
-}
+पूर्ण
 
 /**
  *	llc_conn_resend_i_pdu_as_cmd - resend all all unacknowledged I PDUs
@@ -204,41 +205,41 @@ void llc_conn_rtn_pdu(struct sock *sk, struct sk_buff *skb)
  *	@first_p_bit: p_bit value of first pdu
  *
  *	Resend all unacknowledged I PDUs, starting with the NR; send first as
- *	command PDU with P bit equal first_p_bit; if more than one send
+ *	command PDU with P bit equal first_p_bit; अगर more than one send
  *	subsequent as command PDUs with P bit equal zero (0).
  */
-void llc_conn_resend_i_pdu_as_cmd(struct sock *sk, u8 nr, u8 first_p_bit)
-{
-	struct sk_buff *skb;
-	struct llc_pdu_sn *pdu;
+व्योम llc_conn_resend_i_pdu_as_cmd(काष्ठा sock *sk, u8 nr, u8 first_p_bit)
+अणु
+	काष्ठा sk_buff *skb;
+	काष्ठा llc_pdu_sn *pdu;
 	u16 nbr_unack_pdus;
-	struct llc_sock *llc;
+	काष्ठा llc_sock *llc;
 	u8 howmany_resend = 0;
 
-	llc_conn_remove_acked_pdus(sk, nr, &nbr_unack_pdus);
-	if (!nbr_unack_pdus)
-		goto out;
+	llc_conn_हटाओ_acked_pdus(sk, nr, &nbr_unack_pdus);
+	अगर (!nbr_unack_pdus)
+		जाओ out;
 	/*
-	 * Process unack PDUs only if unack queue is not empty; remove
+	 * Process unack PDUs only अगर unack queue is not empty; हटाओ
 	 * appropriate PDUs, fix them up, and put them on mac_pdu_q.
 	 */
 	llc = llc_sk(sk);
 
-	while ((skb = skb_dequeue(&llc->pdu_unack_q)) != NULL) {
+	जबतक ((skb = skb_dequeue(&llc->pdu_unack_q)) != शून्य) अणु
 		pdu = llc_pdu_sn_hdr(skb);
 		llc_pdu_set_cmd_rsp(skb, LLC_PDU_CMD);
 		llc_pdu_set_pf_bit(skb, first_p_bit);
-		skb_queue_tail(&sk->sk_write_queue, skb);
+		skb_queue_tail(&sk->sk_ग_लिखो_queue, skb);
 		first_p_bit = 0;
 		llc->vS = LLC_I_GET_NS(pdu);
 		howmany_resend++;
-	}
-	if (howmany_resend > 0)
+	पूर्ण
+	अगर (howmany_resend > 0)
 		llc->vS = (llc->vS + 1) % LLC_2_SEQ_NBR_MODULO;
 	/* any PDUs to re-send are queued up; start sending to MAC */
 	llc_conn_send_pdus(sk);
 out:;
-}
+पूर्ण
 
 /**
  *	llc_conn_resend_i_pdu_as_rsp - Resend all unacknowledged I PDUs
@@ -247,102 +248,102 @@ out:;
  *	@first_f_bit: f_bit value of first pdu.
  *
  *	Resend all unacknowledged I PDUs, starting with the NR; send first as
- *	response PDU with F bit equal first_f_bit; if more than one send
+ *	response PDU with F bit equal first_f_bit; अगर more than one send
  *	subsequent as response PDUs with F bit equal zero (0).
  */
-void llc_conn_resend_i_pdu_as_rsp(struct sock *sk, u8 nr, u8 first_f_bit)
-{
-	struct sk_buff *skb;
+व्योम llc_conn_resend_i_pdu_as_rsp(काष्ठा sock *sk, u8 nr, u8 first_f_bit)
+अणु
+	काष्ठा sk_buff *skb;
 	u16 nbr_unack_pdus;
-	struct llc_sock *llc = llc_sk(sk);
+	काष्ठा llc_sock *llc = llc_sk(sk);
 	u8 howmany_resend = 0;
 
-	llc_conn_remove_acked_pdus(sk, nr, &nbr_unack_pdus);
-	if (!nbr_unack_pdus)
-		goto out;
+	llc_conn_हटाओ_acked_pdus(sk, nr, &nbr_unack_pdus);
+	अगर (!nbr_unack_pdus)
+		जाओ out;
 	/*
-	 * Process unack PDUs only if unack queue is not empty; remove
+	 * Process unack PDUs only अगर unack queue is not empty; हटाओ
 	 * appropriate PDUs, fix them up, and put them on mac_pdu_q
 	 */
-	while ((skb = skb_dequeue(&llc->pdu_unack_q)) != NULL) {
-		struct llc_pdu_sn *pdu = llc_pdu_sn_hdr(skb);
+	जबतक ((skb = skb_dequeue(&llc->pdu_unack_q)) != शून्य) अणु
+		काष्ठा llc_pdu_sn *pdu = llc_pdu_sn_hdr(skb);
 
 		llc_pdu_set_cmd_rsp(skb, LLC_PDU_RSP);
 		llc_pdu_set_pf_bit(skb, first_f_bit);
-		skb_queue_tail(&sk->sk_write_queue, skb);
+		skb_queue_tail(&sk->sk_ग_लिखो_queue, skb);
 		first_f_bit = 0;
 		llc->vS = LLC_I_GET_NS(pdu);
 		howmany_resend++;
-	}
-	if (howmany_resend > 0)
+	पूर्ण
+	अगर (howmany_resend > 0)
 		llc->vS = (llc->vS + 1) % LLC_2_SEQ_NBR_MODULO;
 	/* any PDUs to re-send are queued up; start sending to MAC */
 	llc_conn_send_pdus(sk);
 out:;
-}
+पूर्ण
 
 /**
- *	llc_conn_remove_acked_pdus - Removes acknowledged pdus from tx queue
+ *	llc_conn_हटाओ_acked_pdus - Removes acknowledged pdus from tx queue
  *	@sk: active connection
  *	@nr: NR
  *	@how_many_unacked: size of pdu_unack_q after removing acked pdus
  *
  *	Removes acknowledged pdus from transmit queue (pdu_unack_q). Returns
- *	the number of pdus that removed from queue.
+ *	the number of pdus that हटाओd from queue.
  */
-int llc_conn_remove_acked_pdus(struct sock *sk, u8 nr, u16 *how_many_unacked)
-{
-	int pdu_pos, i;
-	struct sk_buff *skb;
-	struct llc_pdu_sn *pdu;
-	int nbr_acked = 0;
-	struct llc_sock *llc = llc_sk(sk);
-	int q_len = skb_queue_len(&llc->pdu_unack_q);
+पूर्णांक llc_conn_हटाओ_acked_pdus(काष्ठा sock *sk, u8 nr, u16 *how_many_unacked)
+अणु
+	पूर्णांक pdu_pos, i;
+	काष्ठा sk_buff *skb;
+	काष्ठा llc_pdu_sn *pdu;
+	पूर्णांक nbr_acked = 0;
+	काष्ठा llc_sock *llc = llc_sk(sk);
+	पूर्णांक q_len = skb_queue_len(&llc->pdu_unack_q);
 
-	if (!q_len)
-		goto out;
+	अगर (!q_len)
+		जाओ out;
 	skb = skb_peek(&llc->pdu_unack_q);
 	pdu = llc_pdu_sn_hdr(skb);
 
 	/* finding position of last acked pdu in queue */
-	pdu_pos = ((int)LLC_2_SEQ_NBR_MODULO + (int)nr -
-			(int)LLC_I_GET_NS(pdu)) % LLC_2_SEQ_NBR_MODULO;
+	pdu_pos = ((पूर्णांक)LLC_2_SEQ_NBR_MODULO + (पूर्णांक)nr -
+			(पूर्णांक)LLC_I_GET_NS(pdu)) % LLC_2_SEQ_NBR_MODULO;
 
-	for (i = 0; i < pdu_pos && i < q_len; i++) {
+	क्रम (i = 0; i < pdu_pos && i < q_len; i++) अणु
 		skb = skb_dequeue(&llc->pdu_unack_q);
-		kfree_skb(skb);
+		kमुक्त_skb(skb);
 		nbr_acked++;
-	}
+	पूर्ण
 out:
 	*how_many_unacked = skb_queue_len(&llc->pdu_unack_q);
-	return nbr_acked;
-}
+	वापस nbr_acked;
+पूर्ण
 
 /**
  *	llc_conn_send_pdus - Sends queued PDUs
  *	@sk: active connection
  *
- *	Sends queued pdus to MAC layer for transmission.
+ *	Sends queued pdus to MAC layer क्रम transmission.
  */
-static void llc_conn_send_pdus(struct sock *sk)
-{
-	struct sk_buff *skb;
+अटल व्योम llc_conn_send_pdus(काष्ठा sock *sk)
+अणु
+	काष्ठा sk_buff *skb;
 
-	while ((skb = skb_dequeue(&sk->sk_write_queue)) != NULL) {
-		struct llc_pdu_sn *pdu = llc_pdu_sn_hdr(skb);
+	जबतक ((skb = skb_dequeue(&sk->sk_ग_लिखो_queue)) != शून्य) अणु
+		काष्ठा llc_pdu_sn *pdu = llc_pdu_sn_hdr(skb);
 
-		if (LLC_PDU_TYPE_IS_I(pdu) &&
-		    !(skb->dev->flags & IFF_LOOPBACK)) {
-			struct sk_buff *skb2 = skb_clone(skb, GFP_ATOMIC);
+		अगर (LLC_PDU_TYPE_IS_I(pdu) &&
+		    !(skb->dev->flags & IFF_LOOPBACK)) अणु
+			काष्ठा sk_buff *skb2 = skb_clone(skb, GFP_ATOMIC);
 
 			skb_queue_tail(&llc_sk(sk)->pdu_unack_q, skb);
-			if (!skb2)
-				break;
+			अगर (!skb2)
+				अवरोध;
 			skb = skb2;
-		}
+		पूर्ण
 		dev_queue_xmit(skb);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
  *	llc_conn_service - finds transition and changes state of connection
@@ -351,286 +352,286 @@ static void llc_conn_send_pdus(struct sock *sk)
  *
  *	This function finds transition that matches with happened event, then
  *	executes related actions and finally changes state of connection.
- *	Returns 0 for success, 1 for failure.
+ *	Returns 0 क्रम success, 1 क्रम failure.
  */
-static int llc_conn_service(struct sock *sk, struct sk_buff *skb)
-{
-	int rc = 1;
-	struct llc_sock *llc = llc_sk(sk);
-	struct llc_conn_state_trans *trans;
+अटल पूर्णांक llc_conn_service(काष्ठा sock *sk, काष्ठा sk_buff *skb)
+अणु
+	पूर्णांक rc = 1;
+	काष्ठा llc_sock *llc = llc_sk(sk);
+	काष्ठा llc_conn_state_trans *trans;
 
-	if (llc->state > NBR_CONN_STATES)
-		goto out;
+	अगर (llc->state > NBR_CONN_STATES)
+		जाओ out;
 	rc = 0;
-	trans = llc_qualify_conn_ev(sk, skb);
-	if (trans) {
+	trans = llc_qualअगरy_conn_ev(sk, skb);
+	अगर (trans) अणु
 		rc = llc_exec_conn_trans_actions(sk, trans, skb);
-		if (!rc && trans->next_state != NO_STATE_CHANGE) {
+		अगर (!rc && trans->next_state != NO_STATE_CHANGE) अणु
 			llc->state = trans->next_state;
-			if (!llc_data_accept_state(llc->state))
+			अगर (!llc_data_accept_state(llc->state))
 				sk->sk_state_change(sk);
-		}
-	}
+		पूर्ण
+	पूर्ण
 out:
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
 /**
- *	llc_qualify_conn_ev - finds transition for event
+ *	llc_qualअगरy_conn_ev - finds transition क्रम event
  *	@sk: connection
  *	@skb: happened event
  *
  *	This function finds transition that matches with happened event.
- *	Returns pointer to found transition on success, %NULL otherwise.
+ *	Returns poपूर्णांकer to found transition on success, %शून्य otherwise.
  */
-static struct llc_conn_state_trans *llc_qualify_conn_ev(struct sock *sk,
-							struct sk_buff *skb)
-{
-	struct llc_conn_state_trans **next_trans;
-	const llc_conn_ev_qfyr_t *next_qualifier;
-	struct llc_conn_state_ev *ev = llc_conn_ev(skb);
-	struct llc_sock *llc = llc_sk(sk);
-	struct llc_conn_state *curr_state =
+अटल काष्ठा llc_conn_state_trans *llc_qualअगरy_conn_ev(काष्ठा sock *sk,
+							काष्ठा sk_buff *skb)
+अणु
+	काष्ठा llc_conn_state_trans **next_trans;
+	स्थिर llc_conn_ev_qfyr_t *next_qualअगरier;
+	काष्ठा llc_conn_state_ev *ev = llc_conn_ev(skb);
+	काष्ठा llc_sock *llc = llc_sk(sk);
+	काष्ठा llc_conn_state *curr_state =
 					&llc_conn_state_table[llc->state - 1];
 
-	/* search thru events for this state until
+	/* search thru events क्रम this state until
 	 * list exhausted or until no more
 	 */
-	for (next_trans = curr_state->transitions +
+	क्रम (next_trans = curr_state->transitions +
 		llc_find_offset(llc->state - 1, ev->type);
-	     (*next_trans)->ev; next_trans++) {
-		if (!((*next_trans)->ev)(sk, skb)) {
+	     (*next_trans)->ev; next_trans++) अणु
+		अगर (!((*next_trans)->ev)(sk, skb)) अणु
 			/* got POSSIBLE event match; the event may require
-			 * qualification based on the values of a number of
-			 * state flags; if all qualifications are met (i.e.,
-			 * if all qualifying functions return success, or 0,
-			 * then this is THE event we're looking for
+			 * qualअगरication based on the values of a number of
+			 * state flags; अगर all qualअगरications are met (i.e.,
+			 * अगर all qualअगरying functions वापस success, or 0,
+			 * then this is THE event we're looking क्रम
 			 */
-			for (next_qualifier = (*next_trans)->ev_qualifiers;
-			     next_qualifier && *next_qualifier &&
-			     !(*next_qualifier)(sk, skb); next_qualifier++)
+			क्रम (next_qualअगरier = (*next_trans)->ev_qualअगरiers;
+			     next_qualअगरier && *next_qualअगरier &&
+			     !(*next_qualअगरier)(sk, skb); next_qualअगरier++)
 				/* nothing */;
-			if (!next_qualifier || !*next_qualifier)
-				/* all qualifiers executed successfully; this is
-				 * our transition; return it so we can perform
+			अगर (!next_qualअगरier || !*next_qualअगरier)
+				/* all qualअगरiers executed successfully; this is
+				 * our transition; वापस it so we can perक्रमm
 				 * the associated actions & change the state
 				 */
-				return *next_trans;
-		}
-	}
-	return NULL;
-}
+				वापस *next_trans;
+		पूर्ण
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
 /**
  *	llc_exec_conn_trans_actions - executes related actions
  *	@sk: connection
- *	@trans: transition that it's actions must be performed
+ *	@trans: transition that it's actions must be perक्रमmed
  *	@skb: event
  *
- *	Executes actions that is related to happened event. Returns 0 for
+ *	Executes actions that is related to happened event. Returns 0 क्रम
  *	success, 1 to indicate failure of at least one action.
  */
-static int llc_exec_conn_trans_actions(struct sock *sk,
-				       struct llc_conn_state_trans *trans,
-				       struct sk_buff *skb)
-{
-	int rc = 0;
-	const llc_conn_action_t *next_action;
+अटल पूर्णांक llc_exec_conn_trans_actions(काष्ठा sock *sk,
+				       काष्ठा llc_conn_state_trans *trans,
+				       काष्ठा sk_buff *skb)
+अणु
+	पूर्णांक rc = 0;
+	स्थिर llc_conn_action_t *next_action;
 
-	for (next_action = trans->ev_actions;
-	     next_action && *next_action; next_action++) {
-		int rc2 = (*next_action)(sk, skb);
+	क्रम (next_action = trans->ev_actions;
+	     next_action && *next_action; next_action++) अणु
+		पूर्णांक rc2 = (*next_action)(sk, skb);
 
-		if (rc2 == 2) {
+		अगर (rc2 == 2) अणु
 			rc = rc2;
-			break;
-		} else if (rc2)
+			अवरोध;
+		पूर्ण अन्यथा अगर (rc2)
 			rc = 1;
-	}
-	return rc;
-}
+	पूर्ण
+	वापस rc;
+पूर्ण
 
-static inline bool llc_estab_match(const struct llc_sap *sap,
-				   const struct llc_addr *daddr,
-				   const struct llc_addr *laddr,
-				   const struct sock *sk)
-{
-	struct llc_sock *llc = llc_sk(sk);
+अटल अंतरभूत bool llc_estab_match(स्थिर काष्ठा llc_sap *sap,
+				   स्थिर काष्ठा llc_addr *daddr,
+				   स्थिर काष्ठा llc_addr *laddr,
+				   स्थिर काष्ठा sock *sk)
+अणु
+	काष्ठा llc_sock *llc = llc_sk(sk);
 
-	return llc->laddr.lsap == laddr->lsap &&
+	वापस llc->laddr.lsap == laddr->lsap &&
 		llc->daddr.lsap == daddr->lsap &&
 		ether_addr_equal(llc->laddr.mac, laddr->mac) &&
 		ether_addr_equal(llc->daddr.mac, daddr->mac);
-}
+पूर्ण
 
 /**
- *	__llc_lookup_established - Finds connection for the remote/local sap/mac
+ *	__llc_lookup_established - Finds connection क्रम the remote/local sap/mac
  *	@sap: SAP
  *	@daddr: address of remote LLC (MAC + SAP)
  *	@laddr: address of local LLC (MAC + SAP)
  *
  *	Search connection list of the SAP and finds connection using the remote
- *	mac, remote sap, local mac, and local sap. Returns pointer for
- *	connection found, %NULL otherwise.
+ *	mac, remote sap, local mac, and local sap. Returns poपूर्णांकer क्रम
+ *	connection found, %शून्य otherwise.
  *	Caller has to make sure local_bh is disabled.
  */
-static struct sock *__llc_lookup_established(struct llc_sap *sap,
-					     struct llc_addr *daddr,
-					     struct llc_addr *laddr)
-{
-	struct sock *rc;
-	struct hlist_nulls_node *node;
-	int slot = llc_sk_laddr_hashfn(sap, laddr);
-	struct hlist_nulls_head *laddr_hb = &sap->sk_laddr_hash[slot];
+अटल काष्ठा sock *__llc_lookup_established(काष्ठा llc_sap *sap,
+					     काष्ठा llc_addr *daddr,
+					     काष्ठा llc_addr *laddr)
+अणु
+	काष्ठा sock *rc;
+	काष्ठा hlist_nulls_node *node;
+	पूर्णांक slot = llc_sk_laddr_hashfn(sap, laddr);
+	काष्ठा hlist_nulls_head *laddr_hb = &sap->sk_laddr_hash[slot];
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 again:
-	sk_nulls_for_each_rcu(rc, node, laddr_hb) {
-		if (llc_estab_match(sap, daddr, laddr, rc)) {
+	sk_nulls_क्रम_each_rcu(rc, node, laddr_hb) अणु
+		अगर (llc_estab_match(sap, daddr, laddr, rc)) अणु
 			/* Extra checks required by SLAB_TYPESAFE_BY_RCU */
-			if (unlikely(!refcount_inc_not_zero(&rc->sk_refcnt)))
-				goto again;
-			if (unlikely(llc_sk(rc)->sap != sap ||
-				     !llc_estab_match(sap, daddr, laddr, rc))) {
+			अगर (unlikely(!refcount_inc_not_zero(&rc->sk_refcnt)))
+				जाओ again;
+			अगर (unlikely(llc_sk(rc)->sap != sap ||
+				     !llc_estab_match(sap, daddr, laddr, rc))) अणु
 				sock_put(rc);
-				continue;
-			}
-			goto found;
-		}
-	}
-	rc = NULL;
+				जारी;
+			पूर्ण
+			जाओ found;
+		पूर्ण
+	पूर्ण
+	rc = शून्य;
 	/*
-	 * if the nulls value we got at the end of this lookup is
+	 * अगर the nulls value we got at the end of this lookup is
 	 * not the expected one, we must restart lookup.
 	 * We probably met an item that was moved to another chain.
 	 */
-	if (unlikely(get_nulls_value(node) != slot))
-		goto again;
+	अगर (unlikely(get_nulls_value(node) != slot))
+		जाओ again;
 found:
-	rcu_read_unlock();
-	return rc;
-}
+	rcu_पढ़ो_unlock();
+	वापस rc;
+पूर्ण
 
-struct sock *llc_lookup_established(struct llc_sap *sap,
-				    struct llc_addr *daddr,
-				    struct llc_addr *laddr)
-{
-	struct sock *sk;
+काष्ठा sock *llc_lookup_established(काष्ठा llc_sap *sap,
+				    काष्ठा llc_addr *daddr,
+				    काष्ठा llc_addr *laddr)
+अणु
+	काष्ठा sock *sk;
 
 	local_bh_disable();
 	sk = __llc_lookup_established(sap, daddr, laddr);
 	local_bh_enable();
-	return sk;
-}
+	वापस sk;
+पूर्ण
 
-static inline bool llc_listener_match(const struct llc_sap *sap,
-				      const struct llc_addr *laddr,
-				      const struct sock *sk)
-{
-	struct llc_sock *llc = llc_sk(sk);
+अटल अंतरभूत bool llc_listener_match(स्थिर काष्ठा llc_sap *sap,
+				      स्थिर काष्ठा llc_addr *laddr,
+				      स्थिर काष्ठा sock *sk)
+अणु
+	काष्ठा llc_sock *llc = llc_sk(sk);
 
-	return sk->sk_type == SOCK_STREAM && sk->sk_state == TCP_LISTEN &&
+	वापस sk->sk_type == SOCK_STREAM && sk->sk_state == TCP_LISTEN &&
 		llc->laddr.lsap == laddr->lsap &&
 		ether_addr_equal(llc->laddr.mac, laddr->mac);
-}
+पूर्ण
 
-static struct sock *__llc_lookup_listener(struct llc_sap *sap,
-					  struct llc_addr *laddr)
-{
-	struct sock *rc;
-	struct hlist_nulls_node *node;
-	int slot = llc_sk_laddr_hashfn(sap, laddr);
-	struct hlist_nulls_head *laddr_hb = &sap->sk_laddr_hash[slot];
+अटल काष्ठा sock *__llc_lookup_listener(काष्ठा llc_sap *sap,
+					  काष्ठा llc_addr *laddr)
+अणु
+	काष्ठा sock *rc;
+	काष्ठा hlist_nulls_node *node;
+	पूर्णांक slot = llc_sk_laddr_hashfn(sap, laddr);
+	काष्ठा hlist_nulls_head *laddr_hb = &sap->sk_laddr_hash[slot];
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 again:
-	sk_nulls_for_each_rcu(rc, node, laddr_hb) {
-		if (llc_listener_match(sap, laddr, rc)) {
+	sk_nulls_क्रम_each_rcu(rc, node, laddr_hb) अणु
+		अगर (llc_listener_match(sap, laddr, rc)) अणु
 			/* Extra checks required by SLAB_TYPESAFE_BY_RCU */
-			if (unlikely(!refcount_inc_not_zero(&rc->sk_refcnt)))
-				goto again;
-			if (unlikely(llc_sk(rc)->sap != sap ||
-				     !llc_listener_match(sap, laddr, rc))) {
+			अगर (unlikely(!refcount_inc_not_zero(&rc->sk_refcnt)))
+				जाओ again;
+			अगर (unlikely(llc_sk(rc)->sap != sap ||
+				     !llc_listener_match(sap, laddr, rc))) अणु
 				sock_put(rc);
-				continue;
-			}
-			goto found;
-		}
-	}
-	rc = NULL;
+				जारी;
+			पूर्ण
+			जाओ found;
+		पूर्ण
+	पूर्ण
+	rc = शून्य;
 	/*
-	 * if the nulls value we got at the end of this lookup is
+	 * अगर the nulls value we got at the end of this lookup is
 	 * not the expected one, we must restart lookup.
 	 * We probably met an item that was moved to another chain.
 	 */
-	if (unlikely(get_nulls_value(node) != slot))
-		goto again;
+	अगर (unlikely(get_nulls_value(node) != slot))
+		जाओ again;
 found:
-	rcu_read_unlock();
-	return rc;
-}
+	rcu_पढ़ो_unlock();
+	वापस rc;
+पूर्ण
 
 /**
- *	llc_lookup_listener - Finds listener for local MAC + SAP
+ *	llc_lookup_listener - Finds listener क्रम local MAC + SAP
  *	@sap: SAP
  *	@laddr: address of local LLC (MAC + SAP)
  *
  *	Search connection list of the SAP and finds connection listening on
- *	local mac, and local sap. Returns pointer for parent socket found,
- *	%NULL otherwise.
+ *	local mac, and local sap. Returns poपूर्णांकer क्रम parent socket found,
+ *	%शून्य otherwise.
  *	Caller has to make sure local_bh is disabled.
  */
-static struct sock *llc_lookup_listener(struct llc_sap *sap,
-					struct llc_addr *laddr)
-{
-	static struct llc_addr null_addr;
-	struct sock *rc = __llc_lookup_listener(sap, laddr);
+अटल काष्ठा sock *llc_lookup_listener(काष्ठा llc_sap *sap,
+					काष्ठा llc_addr *laddr)
+अणु
+	अटल काष्ठा llc_addr null_addr;
+	काष्ठा sock *rc = __llc_lookup_listener(sap, laddr);
 
-	if (!rc)
+	अगर (!rc)
 		rc = __llc_lookup_listener(sap, &null_addr);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static struct sock *__llc_lookup(struct llc_sap *sap,
-				 struct llc_addr *daddr,
-				 struct llc_addr *laddr)
-{
-	struct sock *sk = __llc_lookup_established(sap, daddr, laddr);
+अटल काष्ठा sock *__llc_lookup(काष्ठा llc_sap *sap,
+				 काष्ठा llc_addr *daddr,
+				 काष्ठा llc_addr *laddr)
+अणु
+	काष्ठा sock *sk = __llc_lookup_established(sap, daddr, laddr);
 
-	return sk ? : llc_lookup_listener(sap, laddr);
-}
+	वापस sk ? : llc_lookup_listener(sap, laddr);
+पूर्ण
 
 /**
- *	llc_data_accept_state - designates if in this state data can be sent.
+ *	llc_data_accept_state - designates अगर in this state data can be sent.
  *	@state: state of connection.
  *
- *	Returns 0 if data can be sent, 1 otherwise.
+ *	Returns 0 अगर data can be sent, 1 otherwise.
  */
 u8 llc_data_accept_state(u8 state)
-{
-	return state != LLC_CONN_STATE_NORMAL && state != LLC_CONN_STATE_BUSY &&
+अणु
+	वापस state != LLC_CONN_STATE_NORMAL && state != LLC_CONN_STATE_BUSY &&
 	       state != LLC_CONN_STATE_REJ;
-}
+पूर्ण
 
 /**
- *	llc_find_next_offset - finds offset for next category of transitions
+ *	llc_find_next_offset - finds offset क्रम next category of transitions
  *	@state: state table.
  *	@offset: start offset.
  *
  *	Finds offset of next category of transitions in transition table.
  *	Returns the start index of next category.
  */
-static u16 __init llc_find_next_offset(struct llc_conn_state *state, u16 offset)
-{
+अटल u16 __init llc_find_next_offset(काष्ठा llc_conn_state *state, u16 offset)
+अणु
 	u16 cnt = 0;
-	struct llc_conn_state_trans **next_trans;
+	काष्ठा llc_conn_state_trans **next_trans;
 
-	for (next_trans = state->transitions + offset;
+	क्रम (next_trans = state->transitions + offset;
 	     (*next_trans)->ev; next_trans++)
 		++cnt;
-	return cnt;
-}
+	वापस cnt;
+पूर्ण
 
 /**
  *	llc_build_offset_table - builds offset table of connection
@@ -638,21 +639,21 @@ static u16 __init llc_find_next_offset(struct llc_conn_state *state, u16 offset)
  *	Fills offset table of connection state transition table
  *	(llc_offset_table).
  */
-void __init llc_build_offset_table(void)
-{
-	struct llc_conn_state *curr_state;
-	int state, ev_type, next_offset;
+व्योम __init llc_build_offset_table(व्योम)
+अणु
+	काष्ठा llc_conn_state *curr_state;
+	पूर्णांक state, ev_type, next_offset;
 
-	for (state = 0; state < NBR_CONN_STATES; state++) {
+	क्रम (state = 0; state < NBR_CONN_STATES; state++) अणु
 		curr_state = &llc_conn_state_table[state];
 		next_offset = 0;
-		for (ev_type = 0; ev_type < NBR_CONN_EV; ev_type++) {
+		क्रम (ev_type = 0; ev_type < NBR_CONN_EV; ev_type++) अणु
 			llc_offset_table[state][ev_type] = next_offset;
 			next_offset += llc_find_next_offset(curr_state,
 							    next_offset) + 1;
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
 /**
  *	llc_find_offset - finds start offset of category of transitions
@@ -662,27 +663,27 @@ void __init llc_build_offset_table(void)
  *	Finds start offset of desired category of transitions. Returns the
  *	desired start offset.
  */
-static int llc_find_offset(int state, int ev_type)
-{
-	int rc = 0;
-	/* at this stage, llc_offset_table[..][2] is not important. it is for
-	 * init_pf_cycle and I don't know what is it.
+अटल पूर्णांक llc_find_offset(पूर्णांक state, पूर्णांक ev_type)
+अणु
+	पूर्णांक rc = 0;
+	/* at this stage, llc_offset_table[..][2] is not important. it is क्रम
+	 * init_pf_cycle and I करोn't know what is it.
 	 */
-	switch (ev_type) {
-	case LLC_CONN_EV_TYPE_PRIM:
-		rc = llc_offset_table[state][0]; break;
-	case LLC_CONN_EV_TYPE_PDU:
-		rc = llc_offset_table[state][4]; break;
-	case LLC_CONN_EV_TYPE_SIMPLE:
-		rc = llc_offset_table[state][1]; break;
-	case LLC_CONN_EV_TYPE_P_TMR:
-	case LLC_CONN_EV_TYPE_ACK_TMR:
-	case LLC_CONN_EV_TYPE_REJ_TMR:
-	case LLC_CONN_EV_TYPE_BUSY_TMR:
-		rc = llc_offset_table[state][3]; break;
-	}
-	return rc;
-}
+	चयन (ev_type) अणु
+	हाल LLC_CONN_EV_TYPE_PRIM:
+		rc = llc_offset_table[state][0]; अवरोध;
+	हाल LLC_CONN_EV_TYPE_PDU:
+		rc = llc_offset_table[state][4]; अवरोध;
+	हाल LLC_CONN_EV_TYPE_SIMPLE:
+		rc = llc_offset_table[state][1]; अवरोध;
+	हाल LLC_CONN_EV_TYPE_P_TMR:
+	हाल LLC_CONN_EV_TYPE_ACK_TMR:
+	हाल LLC_CONN_EV_TYPE_REJ_TMR:
+	हाल LLC_CONN_EV_TYPE_BUSY_TMR:
+		rc = llc_offset_table[state][3]; अवरोध;
+	पूर्ण
+	वापस rc;
+पूर्ण
 
 /**
  *	llc_sap_add_socket - adds a socket to a SAP
@@ -691,11 +692,11 @@ static int llc_find_offset(int state, int ev_type)
  *
  *	This function adds a socket to the hash tables of a SAP.
  */
-void llc_sap_add_socket(struct llc_sap *sap, struct sock *sk)
-{
-	struct llc_sock *llc = llc_sk(sk);
-	struct hlist_head *dev_hb = llc_sk_dev_hash(sap, llc->dev->ifindex);
-	struct hlist_nulls_head *laddr_hb = llc_sk_laddr_hash(sap, &llc->laddr);
+व्योम llc_sap_add_socket(काष्ठा llc_sap *sap, काष्ठा sock *sk)
+अणु
+	काष्ठा llc_sock *llc = llc_sk(sk);
+	काष्ठा hlist_head *dev_hb = llc_sk_dev_hash(sap, llc->dev->अगरindex);
+	काष्ठा hlist_nulls_head *laddr_hb = llc_sk_laddr_hash(sap, &llc->laddr);
 
 	llc_sap_hold(sap);
 	llc_sk(sk)->sap = sap;
@@ -706,19 +707,19 @@ void llc_sap_add_socket(struct llc_sap *sap, struct sock *sk)
 	sk_nulls_add_node_rcu(sk, laddr_hb);
 	hlist_add_head(&llc->dev_hash_node, dev_hb);
 	spin_unlock_bh(&sap->sk_lock);
-}
+पूर्ण
 
 /**
- *	llc_sap_remove_socket - removes a socket from SAP
+ *	llc_sap_हटाओ_socket - हटाओs a socket from SAP
  *	@sap: SAP
  *	@sk: socket
  *
- *	This function removes a connection from the hash tables of a SAP if
+ *	This function हटाओs a connection from the hash tables of a SAP अगर
  *	the connection was in this list.
  */
-void llc_sap_remove_socket(struct llc_sap *sap, struct sock *sk)
-{
-	struct llc_sock *llc = llc_sk(sk);
+व्योम llc_sap_हटाओ_socket(काष्ठा llc_sap *sap, काष्ठा sock *sk)
+अणु
+	काष्ठा llc_sock *llc = llc_sk(sk);
 
 	spin_lock_bh(&sap->sk_lock);
 	sk_nulls_del_node_init_rcu(sk);
@@ -726,50 +727,50 @@ void llc_sap_remove_socket(struct llc_sap *sap, struct sock *sk)
 	sap->sk_count--;
 	spin_unlock_bh(&sap->sk_lock);
 	llc_sap_put(sap);
-}
+पूर्ण
 
 /**
  *	llc_conn_rcv - sends received pdus to the connection state machine
- *	@sk: current connection structure.
+ *	@sk: current connection काष्ठाure.
  *	@skb: received frame.
  *
  *	Sends received pdus to the connection state machine.
  */
-static int llc_conn_rcv(struct sock *sk, struct sk_buff *skb)
-{
-	struct llc_conn_state_ev *ev = llc_conn_ev(skb);
+अटल पूर्णांक llc_conn_rcv(काष्ठा sock *sk, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा llc_conn_state_ev *ev = llc_conn_ev(skb);
 
 	ev->type   = LLC_CONN_EV_TYPE_PDU;
 	ev->reason = 0;
-	return llc_conn_state_process(sk, skb);
-}
+	वापस llc_conn_state_process(sk, skb);
+पूर्ण
 
-static struct sock *llc_create_incoming_sock(struct sock *sk,
-					     struct net_device *dev,
-					     struct llc_addr *saddr,
-					     struct llc_addr *daddr)
-{
-	struct sock *newsk = llc_sk_alloc(sock_net(sk), sk->sk_family, GFP_ATOMIC,
+अटल काष्ठा sock *llc_create_incoming_sock(काष्ठा sock *sk,
+					     काष्ठा net_device *dev,
+					     काष्ठा llc_addr *saddr,
+					     काष्ठा llc_addr *daddr)
+अणु
+	काष्ठा sock *newsk = llc_sk_alloc(sock_net(sk), sk->sk_family, GFP_ATOMIC,
 					  sk->sk_prot, 0);
-	struct llc_sock *newllc, *llc = llc_sk(sk);
+	काष्ठा llc_sock *newllc, *llc = llc_sk(sk);
 
-	if (!newsk)
-		goto out;
+	अगर (!newsk)
+		जाओ out;
 	newllc = llc_sk(newsk);
-	memcpy(&newllc->laddr, daddr, sizeof(newllc->laddr));
-	memcpy(&newllc->daddr, saddr, sizeof(newllc->daddr));
+	स_नकल(&newllc->laddr, daddr, माप(newllc->laddr));
+	स_नकल(&newllc->daddr, saddr, माप(newllc->daddr));
 	newllc->dev = dev;
 	dev_hold(dev);
 	llc_sap_add_socket(llc->sap, newsk);
 	llc_sap_hold(llc->sap);
 out:
-	return newsk;
-}
+	वापस newsk;
+पूर्ण
 
-void llc_conn_handler(struct llc_sap *sap, struct sk_buff *skb)
-{
-	struct llc_addr saddr, daddr;
-	struct sock *sk;
+व्योम llc_conn_handler(काष्ठा llc_sap *sap, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा llc_addr saddr, daddr;
+	काष्ठा sock *sk;
 
 	llc_pdu_decode_sa(skb, saddr.mac);
 	llc_pdu_decode_ssap(skb, &saddr.lsap);
@@ -777,27 +778,27 @@ void llc_conn_handler(struct llc_sap *sap, struct sk_buff *skb)
 	llc_pdu_decode_dsap(skb, &daddr.lsap);
 
 	sk = __llc_lookup(sap, &saddr, &daddr);
-	if (!sk)
-		goto drop;
+	अगर (!sk)
+		जाओ drop;
 
 	bh_lock_sock(sk);
 	/*
-	 * This has to be done here and not at the upper layer ->accept
+	 * This has to be करोne here and not at the upper layer ->accept
 	 * method because of the way the PROCOM state machine works:
-	 * it needs to set several state variables (see, for instance,
+	 * it needs to set several state variables (see, क्रम instance,
 	 * llc_adm_actions_2 in net/llc/llc_c_st.c) and send a packet to
 	 * the originator of the new connection, and this state has to be
-	 * in the newly created struct sock private area. -acme
+	 * in the newly created काष्ठा sock निजी area. -acme
 	 */
-	if (unlikely(sk->sk_state == TCP_LISTEN)) {
-		struct sock *newsk = llc_create_incoming_sock(sk, skb->dev,
+	अगर (unlikely(sk->sk_state == TCP_LISTEN)) अणु
+		काष्ठा sock *newsk = llc_create_incoming_sock(sk, skb->dev,
 							      &saddr, &daddr);
-		if (!newsk)
-			goto drop_unlock;
+		अगर (!newsk)
+			जाओ drop_unlock;
 		skb_set_owner_r(skb, newsk);
-	} else {
+	पूर्ण अन्यथा अणु
 		/*
-		 * Can't be skb_set_owner_r, this will be done at the
+		 * Can't be skb_set_owner_r, this will be करोne at the
 		 * llc_conn_state_process function, later on, when we will use
 		 * skb_queue_rcv_skb to send it to upper layers, this is
 		 * another trick required to cope with how the PROCOM state
@@ -806,95 +807,95 @@ void llc_conn_handler(struct llc_sap *sap, struct sk_buff *skb)
 		skb_orphan(skb);
 		sock_hold(sk);
 		skb->sk = sk;
-		skb->destructor = sock_efree;
-	}
-	if (!sock_owned_by_user(sk))
+		skb->deकाष्ठाor = sock_eमुक्त;
+	पूर्ण
+	अगर (!sock_owned_by_user(sk))
 		llc_conn_rcv(sk, skb);
-	else {
-		dprintk("%s: adding to backlog...\n", __func__);
+	अन्यथा अणु
+		dprपूर्णांकk("%s: adding to backlog...\n", __func__);
 		llc_set_backlog_type(skb, LLC_PACKET);
-		if (sk_add_backlog(sk, skb, READ_ONCE(sk->sk_rcvbuf)))
-			goto drop_unlock;
-	}
+		अगर (sk_add_backlog(sk, skb, READ_ONCE(sk->sk_rcvbuf)))
+			जाओ drop_unlock;
+	पूर्ण
 out:
 	bh_unlock_sock(sk);
 	sock_put(sk);
-	return;
+	वापस;
 drop:
-	kfree_skb(skb);
-	return;
+	kमुक्त_skb(skb);
+	वापस;
 drop_unlock:
-	kfree_skb(skb);
-	goto out;
-}
+	kमुक्त_skb(skb);
+	जाओ out;
+पूर्ण
 
-#undef LLC_REFCNT_DEBUG
-#ifdef LLC_REFCNT_DEBUG
-static atomic_t llc_sock_nr;
-#endif
+#अघोषित LLC_REFCNT_DEBUG
+#अगर_घोषित LLC_REFCNT_DEBUG
+अटल atomic_t llc_sock_nr;
+#पूर्ण_अगर
 
 /**
- *	llc_backlog_rcv - Processes rx frames and expired timers.
+ *	llc_backlog_rcv - Processes rx frames and expired समयrs.
  *	@sk: LLC sock (p8022 connection)
  *	@skb: queued rx frame or event
  *
- *	This function processes frames that has received and timers that has
+ *	This function processes frames that has received and समयrs that has
  *	expired during sending an I pdu (refer to data_req_handler).  frames
- *	queue by llc_rcv function (llc_mac.c) and timers queue by timer
+ *	queue by llc_rcv function (llc_mac.c) and समयrs queue by समयr
  *	callback functions(llc_c_ac.c).
  */
-static int llc_backlog_rcv(struct sock *sk, struct sk_buff *skb)
-{
-	int rc = 0;
-	struct llc_sock *llc = llc_sk(sk);
+अटल पूर्णांक llc_backlog_rcv(काष्ठा sock *sk, काष्ठा sk_buff *skb)
+अणु
+	पूर्णांक rc = 0;
+	काष्ठा llc_sock *llc = llc_sk(sk);
 
-	if (likely(llc_backlog_type(skb) == LLC_PACKET)) {
-		if (likely(llc->state > 1)) /* not closed */
+	अगर (likely(llc_backlog_type(skb) == LLC_PACKET)) अणु
+		अगर (likely(llc->state > 1)) /* not बंदd */
 			rc = llc_conn_rcv(sk, skb);
-		else
-			goto out_kfree_skb;
-	} else if (llc_backlog_type(skb) == LLC_EVENT) {
-		/* timer expiration event */
-		if (likely(llc->state > 1))  /* not closed */
+		अन्यथा
+			जाओ out_kमुक्त_skb;
+	पूर्ण अन्यथा अगर (llc_backlog_type(skb) == LLC_EVENT) अणु
+		/* समयr expiration event */
+		अगर (likely(llc->state > 1))  /* not बंदd */
 			rc = llc_conn_state_process(sk, skb);
-		else
-			goto out_kfree_skb;
-	} else {
-		printk(KERN_ERR "%s: invalid skb in backlog\n", __func__);
-		goto out_kfree_skb;
-	}
+		अन्यथा
+			जाओ out_kमुक्त_skb;
+	पूर्ण अन्यथा अणु
+		prपूर्णांकk(KERN_ERR "%s: invalid skb in backlog\n", __func__);
+		जाओ out_kमुक्त_skb;
+	पूर्ण
 out:
-	return rc;
-out_kfree_skb:
-	kfree_skb(skb);
-	goto out;
-}
+	वापस rc;
+out_kमुक्त_skb:
+	kमुक्त_skb(skb);
+	जाओ out;
+पूर्ण
 
 /**
- *     llc_sk_init - Initializes a socket with default llc values.
+ *     llc_sk_init - Initializes a socket with शेष llc values.
  *     @sk: socket to initialize.
  *
- *     Initializes a socket with default llc values.
+ *     Initializes a socket with शेष llc values.
  */
-static void llc_sk_init(struct sock *sk)
-{
-	struct llc_sock *llc = llc_sk(sk);
+अटल व्योम llc_sk_init(काष्ठा sock *sk)
+अणु
+	काष्ठा llc_sock *llc = llc_sk(sk);
 
 	llc->state    = LLC_CONN_STATE_ADM;
 	llc->inc_cntr = llc->dec_cntr = 2;
 	llc->dec_step = llc->connect_step = 1;
 
-	timer_setup(&llc->ack_timer.timer, llc_conn_ack_tmr_cb, 0);
-	llc->ack_timer.expire	      = sysctl_llc2_ack_timeout;
+	समयr_setup(&llc->ack_समयr.समयr, llc_conn_ack_पंचांगr_cb, 0);
+	llc->ack_समयr.expire	      = sysctl_llc2_ack_समयout;
 
-	timer_setup(&llc->pf_cycle_timer.timer, llc_conn_pf_cycle_tmr_cb, 0);
-	llc->pf_cycle_timer.expire	   = sysctl_llc2_p_timeout;
+	समयr_setup(&llc->pf_cycle_समयr.समयr, llc_conn_pf_cycle_पंचांगr_cb, 0);
+	llc->pf_cycle_समयr.expire	   = sysctl_llc2_p_समयout;
 
-	timer_setup(&llc->rej_sent_timer.timer, llc_conn_rej_tmr_cb, 0);
-	llc->rej_sent_timer.expire	   = sysctl_llc2_rej_timeout;
+	समयr_setup(&llc->rej_sent_समयr.समयr, llc_conn_rej_पंचांगr_cb, 0);
+	llc->rej_sent_समयr.expire	   = sysctl_llc2_rej_समयout;
 
-	timer_setup(&llc->busy_state_timer.timer, llc_conn_busy_tmr_cb, 0);
-	llc->busy_state_timer.expire	     = sysctl_llc2_busy_timeout;
+	समयr_setup(&llc->busy_state_समयr.समयr, llc_conn_busy_पंचांगr_cb, 0);
+	llc->busy_state_समयr.expire	     = sysctl_llc2_busy_समयout;
 
 	llc->n2 = 2;   /* max retransmit */
 	llc->k  = 2;   /* tx win size, will adjust dynam */
@@ -902,105 +903,105 @@ static void llc_sk_init(struct sock *sk)
 			* tx_win of remote LLC) */
 	skb_queue_head_init(&llc->pdu_unack_q);
 	sk->sk_backlog_rcv = llc_backlog_rcv;
-}
+पूर्ण
 
 /**
  *	llc_sk_alloc - Allocates LLC sock
  *	@net: network namespace
  *	@family: upper layer protocol family
- *	@priority: for allocation (%GFP_KERNEL, %GFP_ATOMIC, etc)
- *	@prot: struct proto associated with this new sock instance
+ *	@priority: क्रम allocation (%GFP_KERNEL, %GFP_ATOMIC, etc)
+ *	@prot: काष्ठा proto associated with this new sock instance
  *	@kern: is this to be a kernel socket?
  *
  *	Allocates a LLC sock and initializes it. Returns the new LLC sock
- *	or %NULL if there's no memory available for one
+ *	or %शून्य अगर there's no memory available क्रम one
  */
-struct sock *llc_sk_alloc(struct net *net, int family, gfp_t priority, struct proto *prot, int kern)
-{
-	struct sock *sk = sk_alloc(net, family, priority, prot, kern);
+काष्ठा sock *llc_sk_alloc(काष्ठा net *net, पूर्णांक family, gfp_t priority, काष्ठा proto *prot, पूर्णांक kern)
+अणु
+	काष्ठा sock *sk = sk_alloc(net, family, priority, prot, kern);
 
-	if (!sk)
-		goto out;
+	अगर (!sk)
+		जाओ out;
 	llc_sk_init(sk);
-	sock_init_data(NULL, sk);
-#ifdef LLC_REFCNT_DEBUG
+	sock_init_data(शून्य, sk);
+#अगर_घोषित LLC_REFCNT_DEBUG
 	atomic_inc(&llc_sock_nr);
-	printk(KERN_DEBUG "LLC socket %p created in %s, now we have %d alive\n", sk,
-		__func__, atomic_read(&llc_sock_nr));
-#endif
+	prपूर्णांकk(KERN_DEBUG "LLC socket %p created in %s, now we have %d alive\n", sk,
+		__func__, atomic_पढ़ो(&llc_sock_nr));
+#पूर्ण_अगर
 out:
-	return sk;
-}
+	वापस sk;
+पूर्ण
 
-void llc_sk_stop_all_timers(struct sock *sk, bool sync)
-{
-	struct llc_sock *llc = llc_sk(sk);
+व्योम llc_sk_stop_all_समयrs(काष्ठा sock *sk, bool sync)
+अणु
+	काष्ठा llc_sock *llc = llc_sk(sk);
 
-	if (sync) {
-		del_timer_sync(&llc->pf_cycle_timer.timer);
-		del_timer_sync(&llc->ack_timer.timer);
-		del_timer_sync(&llc->rej_sent_timer.timer);
-		del_timer_sync(&llc->busy_state_timer.timer);
-	} else {
-		del_timer(&llc->pf_cycle_timer.timer);
-		del_timer(&llc->ack_timer.timer);
-		del_timer(&llc->rej_sent_timer.timer);
-		del_timer(&llc->busy_state_timer.timer);
-	}
+	अगर (sync) अणु
+		del_समयr_sync(&llc->pf_cycle_समयr.समयr);
+		del_समयr_sync(&llc->ack_समयr.समयr);
+		del_समयr_sync(&llc->rej_sent_समयr.समयr);
+		del_समयr_sync(&llc->busy_state_समयr.समयr);
+	पूर्ण अन्यथा अणु
+		del_समयr(&llc->pf_cycle_समयr.समयr);
+		del_समयr(&llc->ack_समयr.समयr);
+		del_समयr(&llc->rej_sent_समयr.समयr);
+		del_समयr(&llc->busy_state_समयr.समयr);
+	पूर्ण
 
 	llc->ack_must_be_send = 0;
 	llc->ack_pf = 0;
-}
+पूर्ण
 
 /**
- *	llc_sk_free - Frees a LLC socket
- *	@sk: - socket to free
+ *	llc_sk_मुक्त - Frees a LLC socket
+ *	@sk: - socket to मुक्त
  *
  *	Frees a LLC socket
  */
-void llc_sk_free(struct sock *sk)
-{
-	struct llc_sock *llc = llc_sk(sk);
+व्योम llc_sk_मुक्त(काष्ठा sock *sk)
+अणु
+	काष्ठा llc_sock *llc = llc_sk(sk);
 
 	llc->state = LLC_CONN_OUT_OF_SVC;
-	/* Stop all (possibly) running timers */
-	llc_sk_stop_all_timers(sk, true);
-#ifdef DEBUG_LLC_CONN_ALLOC
-	printk(KERN_INFO "%s: unackq=%d, txq=%d\n", __func__,
+	/* Stop all (possibly) running समयrs */
+	llc_sk_stop_all_समयrs(sk, true);
+#अगर_घोषित DEBUG_LLC_CONN_ALLOC
+	prपूर्णांकk(KERN_INFO "%s: unackq=%d, txq=%d\n", __func__,
 		skb_queue_len(&llc->pdu_unack_q),
-		skb_queue_len(&sk->sk_write_queue));
-#endif
+		skb_queue_len(&sk->sk_ग_लिखो_queue));
+#पूर्ण_अगर
 	skb_queue_purge(&sk->sk_receive_queue);
-	skb_queue_purge(&sk->sk_write_queue);
+	skb_queue_purge(&sk->sk_ग_लिखो_queue);
 	skb_queue_purge(&llc->pdu_unack_q);
-#ifdef LLC_REFCNT_DEBUG
-	if (refcount_read(&sk->sk_refcnt) != 1) {
-		printk(KERN_DEBUG "Destruction of LLC sock %p delayed in %s, cnt=%d\n",
-			sk, __func__, refcount_read(&sk->sk_refcnt));
-		printk(KERN_DEBUG "%d LLC sockets are still alive\n",
-			atomic_read(&llc_sock_nr));
-	} else {
+#अगर_घोषित LLC_REFCNT_DEBUG
+	अगर (refcount_पढ़ो(&sk->sk_refcnt) != 1) अणु
+		prपूर्णांकk(KERN_DEBUG "Destruction of LLC sock %p delayed in %s, cnt=%d\n",
+			sk, __func__, refcount_पढ़ो(&sk->sk_refcnt));
+		prपूर्णांकk(KERN_DEBUG "%d LLC sockets are still alive\n",
+			atomic_पढ़ो(&llc_sock_nr));
+	पूर्ण अन्यथा अणु
 		atomic_dec(&llc_sock_nr);
-		printk(KERN_DEBUG "LLC socket %p released in %s, %d are still alive\n", sk,
-			__func__, atomic_read(&llc_sock_nr));
-	}
-#endif
+		prपूर्णांकk(KERN_DEBUG "LLC socket %p released in %s, %d are still alive\n", sk,
+			__func__, atomic_पढ़ो(&llc_sock_nr));
+	पूर्ण
+#पूर्ण_अगर
 	sock_put(sk);
-}
+पूर्ण
 
 /**
  *	llc_sk_reset - resets a connection
  *	@sk: LLC socket to reset
  *
- *	Resets a connection to the out of service state. Stops its timers
- *	and frees any frames in the queues of the connection.
+ *	Resets a connection to the out of service state. Stops its समयrs
+ *	and मुक्तs any frames in the queues of the connection.
  */
-void llc_sk_reset(struct sock *sk)
-{
-	struct llc_sock *llc = llc_sk(sk);
+व्योम llc_sk_reset(काष्ठा sock *sk)
+अणु
+	काष्ठा llc_sock *llc = llc_sk(sk);
 
-	llc_conn_ac_stop_all_timers(sk, NULL);
-	skb_queue_purge(&sk->sk_write_queue);
+	llc_conn_ac_stop_all_समयrs(sk, शून्य);
+	skb_queue_purge(&sk->sk_ग_लिखो_queue);
 	skb_queue_purge(&llc->pdu_unack_q);
 	llc->remote_busy_flag	= 0;
 	llc->cause_flag		= 0;
@@ -1017,4 +1018,4 @@ void llc_sk_reset(struct sock *sk)
 	llc->X			= 0;
 	llc->failed_data_req	= 0 ;
 	llc->last_nr		= 0;
-}
+पूर्ण

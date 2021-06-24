@@ -1,31 +1,32 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
  * Copyright (C) Collabora, Ltd.
  *
  * Based on GSPCA and CODA drivers:
- * Copyright (C) Jean-Francois Moine (http://moinejf.free.fr)
+ * Copyright (C) Jean-Francois Moine (http://moinejf.मुक्त.fr)
  * Copyright (C) 2014 Philipp Zabel, Pengutronix
  */
-#include <linux/dma-mapping.h>
-#include <linux/kernel.h>
-#include <linux/string.h>
-#include "hantro_jpeg.h"
-#include "hantro.h"
+#समावेश <linux/dma-mapping.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/माला.स>
+#समावेश "hantro_jpeg.h"
+#समावेश "hantro.h"
 
-#define LUMA_QUANT_OFF		7
-#define CHROMA_QUANT_OFF	72
-#define HEIGHT_OFF		141
-#define WIDTH_OFF		143
+#घोषणा LUMA_QUANT_OFF		7
+#घोषणा CHROMA_QUANT_OFF	72
+#घोषणा HEIGHT_OFF		141
+#घोषणा WIDTH_OFF		143
 
-#define HUFF_LUMA_DC_OFF	160
-#define HUFF_LUMA_AC_OFF	193
-#define HUFF_CHROMA_DC_OFF	376
-#define HUFF_CHROMA_AC_OFF	409
+#घोषणा HUFF_LUMA_DC_OFF	160
+#घोषणा HUFF_LUMA_AC_OFF	193
+#घोषणा HUFF_CHROMA_DC_OFF	376
+#घोषणा HUFF_CHROMA_AC_OFF	409
 
 /* Default tables from JPEG ITU-T.81
  * (ISO/IEC 10918-1) Annex K, tables K.1 and K.2
  */
-static const unsigned char luma_q_table[] = {
+अटल स्थिर अचिन्हित अक्षर luma_q_table[] = अणु
 	0x10, 0x0b, 0x0a, 0x10, 0x18, 0x28, 0x33, 0x3d,
 	0x0c, 0x0c, 0x0e, 0x13, 0x1a, 0x3a, 0x3c, 0x37,
 	0x0e, 0x0d, 0x10, 0x18, 0x28, 0x39, 0x45, 0x38,
@@ -34,11 +35,11 @@ static const unsigned char luma_q_table[] = {
 	0x18, 0x23, 0x37, 0x40, 0x51, 0x68, 0x71, 0x5c,
 	0x31, 0x40, 0x4e, 0x57, 0x67, 0x79, 0x78, 0x65,
 	0x48, 0x5c, 0x5f, 0x62, 0x70, 0x64, 0x67, 0x63
-};
+पूर्ण;
 
-static unsigned char luma_q_table_reordered[ARRAY_SIZE(luma_q_table)];
+अटल अचिन्हित अक्षर luma_q_table_reordered[ARRAY_SIZE(luma_q_table)];
 
-static const unsigned char chroma_q_table[] = {
+अटल स्थिर अचिन्हित अक्षर chroma_q_table[] = अणु
 	0x11, 0x12, 0x18, 0x2f, 0x63, 0x63, 0x63, 0x63,
 	0x12, 0x15, 0x1a, 0x42, 0x63, 0x63, 0x63, 0x63,
 	0x18, 0x1a, 0x38, 0x63, 0x63, 0x63, 0x63, 0x63,
@@ -47,11 +48,11 @@ static const unsigned char chroma_q_table[] = {
 	0x63, 0x63, 0x63, 0x63, 0x63, 0x63, 0x63, 0x63,
 	0x63, 0x63, 0x63, 0x63, 0x63, 0x63, 0x63, 0x63,
 	0x63, 0x63, 0x63, 0x63, 0x63, 0x63, 0x63, 0x63
-};
+पूर्ण;
 
-static unsigned char chroma_q_table_reordered[ARRAY_SIZE(chroma_q_table)];
+अटल अचिन्हित अक्षर chroma_q_table_reordered[ARRAY_SIZE(chroma_q_table)];
 
-static const unsigned char zigzag[64] = {
+अटल स्थिर अचिन्हित अक्षर zigzag[64] = अणु
 	 0,  1,  8, 16,  9,  2,  3, 10,
 	17, 24, 32, 25, 18, 11,  4,  5,
 	12, 19, 26, 33, 40, 48, 41, 34,
@@ -60,9 +61,9 @@ static const unsigned char zigzag[64] = {
 	29, 22, 15, 23, 30, 37, 44, 51,
 	58, 59, 52, 45, 38, 31, 39, 46,
 	53, 60, 61, 54, 47, 55, 62, 63
-};
+पूर्ण;
 
-static const u32 hw_reorder[64] = {
+अटल स्थिर u32 hw_reorder[64] = अणु
 	 0,  8, 16, 24,  1,  9, 17, 25,
 	32, 40, 48, 56, 33, 41, 49, 57,
 	 2, 10, 18, 26,  3, 11, 19, 27,
@@ -71,24 +72,24 @@ static const u32 hw_reorder[64] = {
 	36, 44, 52, 60, 37, 45, 53, 61,
 	 6, 14, 22, 30,  7, 15, 23, 31,
 	38, 46, 54, 62, 39, 47, 55, 63
-};
+पूर्ण;
 
 /* Huffman tables are shared with CODA */
-static const unsigned char luma_dc_table[] = {
+अटल स्थिर अचिन्हित अक्षर luma_dc_table[] = अणु
 	0x00, 0x01, 0x05, 0x01, 0x01, 0x01, 0x01, 0x01,
 	0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
 	0x08, 0x09, 0x0a, 0x0b,
-};
+पूर्ण;
 
-static const unsigned char chroma_dc_table[] = {
+अटल स्थिर अचिन्हित अक्षर chroma_dc_table[] = अणु
 	0x00, 0x03, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01,
 	0x01, 0x01, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
 	0x08, 0x09, 0x0a, 0x0b,
-};
+पूर्ण;
 
-static const unsigned char luma_ac_table[] = {
+अटल स्थिर अचिन्हित अक्षर luma_ac_table[] = अणु
 	0x00, 0x02, 0x01, 0x03, 0x03, 0x02, 0x04, 0x03,
 	0x05, 0x05, 0x04, 0x04, 0x00, 0x00, 0x01, 0x7d,
 	0x01, 0x02, 0x03, 0x00, 0x04, 0x11, 0x05, 0x12,
@@ -112,9 +113,9 @@ static const unsigned char luma_ac_table[] = {
 	0xe3, 0xe4, 0xe5, 0xe6, 0xe7, 0xe8, 0xe9, 0xea,
 	0xf1, 0xf2, 0xf3, 0xf4, 0xf5, 0xf6, 0xf7, 0xf8,
 	0xf9, 0xfa,
-};
+पूर्ण;
 
-static const unsigned char chroma_ac_table[] = {
+अटल स्थिर अचिन्हित अक्षर chroma_ac_table[] = अणु
 	0x00, 0x02, 0x01, 0x02, 0x04, 0x04, 0x03, 0x04,
 	0x07, 0x05, 0x04, 0x04, 0x00, 0x01, 0x02, 0x77,
 	0x00, 0x01, 0x02, 0x03, 0x11, 0x04, 0x05, 0x21,
@@ -138,13 +139,13 @@ static const unsigned char chroma_ac_table[] = {
 	0xe2, 0xe3, 0xe4, 0xe5, 0xe6, 0xe7, 0xe8, 0xe9,
 	0xea, 0xf2, 0xf3, 0xf4, 0xf5, 0xf6, 0xf7, 0xf8,
 	0xf9, 0xfa,
-};
+पूर्ण;
 
-/* For simplicity, we keep a pre-formatted JPEG header,
+/* For simplicity, we keep a pre-क्रमmatted JPEG header,
  * and we'll use fixed offsets to change the width, height
  * quantization tables, etc.
  */
-static const unsigned char hantro_jpeg_header[JPEG_HEADER_SIZE] = {
+अटल स्थिर अचिन्हित अक्षर hantro_jpeg_header[JPEG_HEADER_SIZE] = अणु
 	/* SOI */
 	0xff, 0xd8,
 
@@ -249,45 +250,45 @@ static const unsigned char hantro_jpeg_header[JPEG_HEADER_SIZE] = {
 	/* SOS */
 	0xff, 0xda, 0x00, 0x0c, 0x03, 0x01, 0x00, 0x02,
 	0x11, 0x03, 0x11, 0x00, 0x3f, 0x00,
-};
+पूर्ण;
 
-static unsigned char jpeg_scale_qp(const unsigned char qp, int scale)
-{
-	unsigned int temp;
+अटल अचिन्हित अक्षर jpeg_scale_qp(स्थिर अचिन्हित अक्षर qp, पूर्णांक scale)
+अणु
+	अचिन्हित पूर्णांक temp;
 
-	temp = DIV_ROUND_CLOSEST((unsigned int)qp * scale, 100);
-	if (temp <= 0)
+	temp = DIV_ROUND_CLOSEST((अचिन्हित पूर्णांक)qp * scale, 100);
+	अगर (temp <= 0)
 		temp = 1;
-	if (temp > 255)
+	अगर (temp > 255)
 		temp = 255;
 
-	return (unsigned char)temp;
-}
+	वापस (अचिन्हित अक्षर)temp;
+पूर्ण
 
-static void
-jpeg_scale_quant_table(unsigned char *file_q_tab,
-		       unsigned char *reordered_q_tab,
-		       const unsigned char *tab, int scale)
-{
-	int i;
+अटल व्योम
+jpeg_scale_quant_table(अचिन्हित अक्षर *file_q_tab,
+		       अचिन्हित अक्षर *reordered_q_tab,
+		       स्थिर अचिन्हित अक्षर *tab, पूर्णांक scale)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < 64; i++) {
+	क्रम (i = 0; i < 64; i++) अणु
 		file_q_tab[i] = jpeg_scale_qp(tab[zigzag[i]], scale);
 		reordered_q_tab[i] = jpeg_scale_qp(tab[hw_reorder[i]], scale);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void jpeg_set_quality(unsigned char *buffer, int quality)
-{
-	int scale;
+अटल व्योम jpeg_set_quality(अचिन्हित अक्षर *buffer, पूर्णांक quality)
+अणु
+	पूर्णांक scale;
 
 	/*
 	 * Non-linear scaling factor:
 	 * [5,50] -> [1000..100], [51,100] -> [98..0]
 	 */
-	if (quality < 50)
+	अगर (quality < 50)
 		scale = 5000 / quality;
-	else
+	अन्यथा
 		scale = 200 - 2 * quality;
 
 	jpeg_scale_quant_table(buffer + LUMA_QUANT_OFF,
@@ -296,39 +297,39 @@ static void jpeg_set_quality(unsigned char *buffer, int quality)
 	jpeg_scale_quant_table(buffer + CHROMA_QUANT_OFF,
 			       chroma_q_table_reordered,
 			       chroma_q_table, scale);
-}
+पूर्ण
 
-unsigned char *hantro_jpeg_get_qtable(int index)
-{
-	if (index == 0)
-		return luma_q_table_reordered;
-	return chroma_q_table_reordered;
-}
+अचिन्हित अक्षर *hantro_jpeg_get_qtable(पूर्णांक index)
+अणु
+	अगर (index == 0)
+		वापस luma_q_table_reordered;
+	वापस chroma_q_table_reordered;
+पूर्ण
 
-void hantro_jpeg_header_assemble(struct hantro_jpeg_ctx *ctx)
-{
-	char *buf = ctx->buffer;
+व्योम hantro_jpeg_header_assemble(काष्ठा hantro_jpeg_ctx *ctx)
+अणु
+	अक्षर *buf = ctx->buffer;
 
-	memcpy(buf, hantro_jpeg_header,
-	       sizeof(hantro_jpeg_header));
+	स_नकल(buf, hantro_jpeg_header,
+	       माप(hantro_jpeg_header));
 
 	buf[HEIGHT_OFF + 0] = ctx->height >> 8;
 	buf[HEIGHT_OFF + 1] = ctx->height;
 	buf[WIDTH_OFF + 0] = ctx->width >> 8;
 	buf[WIDTH_OFF + 1] = ctx->width;
 
-	memcpy(buf + HUFF_LUMA_DC_OFF, luma_dc_table, sizeof(luma_dc_table));
-	memcpy(buf + HUFF_LUMA_AC_OFF, luma_ac_table, sizeof(luma_ac_table));
-	memcpy(buf + HUFF_CHROMA_DC_OFF, chroma_dc_table,
-	       sizeof(chroma_dc_table));
-	memcpy(buf + HUFF_CHROMA_AC_OFF, chroma_ac_table,
-	       sizeof(chroma_ac_table));
+	स_नकल(buf + HUFF_LUMA_DC_OFF, luma_dc_table, माप(luma_dc_table));
+	स_नकल(buf + HUFF_LUMA_AC_OFF, luma_ac_table, माप(luma_ac_table));
+	स_नकल(buf + HUFF_CHROMA_DC_OFF, chroma_dc_table,
+	       माप(chroma_dc_table));
+	स_नकल(buf + HUFF_CHROMA_AC_OFF, chroma_ac_table,
+	       माप(chroma_ac_table));
 
 	jpeg_set_quality(buf, ctx->quality);
-}
+पूर्ण
 
-int hantro_jpeg_enc_init(struct hantro_ctx *ctx)
-{
+पूर्णांक hantro_jpeg_enc_init(काष्ठा hantro_ctx *ctx)
+अणु
 	ctx->jpeg_enc.bounce_buffer.size =
 		ctx->dst_fmt.plane_fmt[0].sizeimage -
 		ctx->vpu_dst_fmt->header_size;
@@ -339,17 +340,17 @@ int hantro_jpeg_enc_init(struct hantro_ctx *ctx)
 				&ctx->jpeg_enc.bounce_buffer.dma,
 				GFP_KERNEL,
 				DMA_ATTR_ALLOC_SINGLE_PAGES);
-	if (!ctx->jpeg_enc.bounce_buffer.cpu)
-		return -ENOMEM;
+	अगर (!ctx->jpeg_enc.bounce_buffer.cpu)
+		वापस -ENOMEM;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void hantro_jpeg_enc_exit(struct hantro_ctx *ctx)
-{
-	dma_free_attrs(ctx->dev->dev,
+व्योम hantro_jpeg_enc_निकास(काष्ठा hantro_ctx *ctx)
+अणु
+	dma_मुक्त_attrs(ctx->dev->dev,
 		       ctx->jpeg_enc.bounce_buffer.size,
 		       ctx->jpeg_enc.bounce_buffer.cpu,
 		       ctx->jpeg_enc.bounce_buffer.dma,
 		       DMA_ATTR_ALLOC_SINGLE_PAGES);
-}
+पूर्ण

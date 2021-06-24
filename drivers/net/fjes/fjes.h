@@ -1,78 +1,79 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  *  FUJITSU Extended Socket Network Device driver
  *  Copyright (c) 2015 FUJITSU LIMITED
  */
 
-#ifndef FJES_H_
-#define FJES_H_
+#अगर_अघोषित FJES_H_
+#घोषणा FJES_H_
 
-#include <linux/acpi.h>
+#समावेश <linux/acpi.h>
 
-#include "fjes_hw.h"
+#समावेश "fjes_hw.h"
 
-#define FJES_ACPI_SYMBOL	"Extended Socket"
-#define FJES_MAX_QUEUES		1
-#define FJES_TX_RETRY_INTERVAL	(20 * HZ)
-#define FJES_TX_RETRY_TIMEOUT	(100)
-#define FJES_TX_TX_STALL_TIMEOUT	(FJES_TX_RETRY_INTERVAL / 2)
-#define FJES_OPEN_ZONE_UPDATE_WAIT	(300) /* msec */
-#define FJES_IRQ_WATCH_DELAY	(HZ)
+#घोषणा FJES_ACPI_SYMBOL	"Extended Socket"
+#घोषणा FJES_MAX_QUEUES		1
+#घोषणा FJES_TX_RETRY_INTERVAL	(20 * HZ)
+#घोषणा FJES_TX_RETRY_TIMEOUT	(100)
+#घोषणा FJES_TX_TX_STALL_TIMEOUT	(FJES_TX_RETRY_INTERVAL / 2)
+#घोषणा FJES_OPEN_ZONE_UPDATE_WAIT	(300) /* msec */
+#घोषणा FJES_IRQ_WATCH_DELAY	(HZ)
 
-/* board specific private data structure */
-struct fjes_adapter {
-	struct net_device *netdev;
-	struct platform_device *plat_dev;
+/* board specअगरic निजी data काष्ठाure */
+काष्ठा fjes_adapter अणु
+	काष्ठा net_device *netdev;
+	काष्ठा platक्रमm_device *plat_dev;
 
-	struct napi_struct napi;
-	struct rtnl_link_stats64 stats64;
+	काष्ठा napi_काष्ठा napi;
+	काष्ठा rtnl_link_stats64 stats64;
 
-	unsigned int tx_retry_count;
-	unsigned long tx_start_jiffies;
-	unsigned long rx_last_jiffies;
+	अचिन्हित पूर्णांक tx_retry_count;
+	अचिन्हित दीर्घ tx_start_jअगरfies;
+	अचिन्हित दीर्घ rx_last_jअगरfies;
 	bool unset_rx_last;
 
-	struct work_struct force_close_task;
-	bool force_reset;
-	bool open_guard;
+	काष्ठा work_काष्ठा क्रमce_बंद_task;
+	bool क्रमce_reset;
+	bool खोलो_guard;
 
-	bool irq_registered;
+	bool irq_रेजिस्टरed;
 
-	struct workqueue_struct *txrx_wq;
-	struct workqueue_struct *control_wq;
+	काष्ठा workqueue_काष्ठा *txrx_wq;
+	काष्ठा workqueue_काष्ठा *control_wq;
 
-	struct work_struct tx_stall_task;
-	struct work_struct raise_intr_rxdata_task;
+	काष्ठा work_काष्ठा tx_stall_task;
+	काष्ठा work_काष्ठा उठाओ_पूर्णांकr_rxdata_task;
 
-	struct work_struct unshare_watch_task;
-	unsigned long unshare_watch_bitmask;
+	काष्ठा work_काष्ठा unshare_watch_task;
+	अचिन्हित दीर्घ unshare_watch_biपंचांगask;
 
-	struct delayed_work interrupt_watch_task;
-	bool interrupt_watch_enable;
+	काष्ठा delayed_work पूर्णांकerrupt_watch_task;
+	bool पूर्णांकerrupt_watch_enable;
 
-	struct fjes_hw hw;
+	काष्ठा fjes_hw hw;
 
-#ifdef CONFIG_DEBUG_FS
-	struct dentry *dbg_adapter;
-#endif
-};
+#अगर_घोषित CONFIG_DEBUG_FS
+	काष्ठा dentry *dbg_adapter;
+#पूर्ण_अगर
+पूर्ण;
 
-extern char fjes_driver_name[];
-extern char fjes_driver_version[];
-extern const u32 fjes_support_mtu[];
+बाह्य अक्षर fjes_driver_name[];
+बाह्य अक्षर fjes_driver_version[];
+बाह्य स्थिर u32 fjes_support_mtu[];
 
-void fjes_set_ethtool_ops(struct net_device *);
+व्योम fjes_set_ethtool_ops(काष्ठा net_device *);
 
-#ifdef CONFIG_DEBUG_FS
-void fjes_dbg_adapter_init(struct fjes_adapter *adapter);
-void fjes_dbg_adapter_exit(struct fjes_adapter *adapter);
-void fjes_dbg_init(void);
-void fjes_dbg_exit(void);
-#else
-static inline void fjes_dbg_adapter_init(struct fjes_adapter *adapter) {}
-static inline void fjes_dbg_adapter_exit(struct fjes_adapter *adapter) {}
-static inline void fjes_dbg_init(void) {}
-static inline void fjes_dbg_exit(void) {}
-#endif /* CONFIG_DEBUG_FS */
+#अगर_घोषित CONFIG_DEBUG_FS
+व्योम fjes_dbg_adapter_init(काष्ठा fjes_adapter *adapter);
+व्योम fjes_dbg_adapter_निकास(काष्ठा fjes_adapter *adapter);
+व्योम fjes_dbg_init(व्योम);
+व्योम fjes_dbg_निकास(व्योम);
+#अन्यथा
+अटल अंतरभूत व्योम fjes_dbg_adapter_init(काष्ठा fjes_adapter *adapter) अणुपूर्ण
+अटल अंतरभूत व्योम fjes_dbg_adapter_निकास(काष्ठा fjes_adapter *adapter) अणुपूर्ण
+अटल अंतरभूत व्योम fjes_dbg_init(व्योम) अणुपूर्ण
+अटल अंतरभूत व्योम fjes_dbg_निकास(व्योम) अणुपूर्ण
+#पूर्ण_अगर /* CONFIG_DEBUG_FS */
 
-#endif /* FJES_H_ */
+#पूर्ण_अगर /* FJES_H_ */

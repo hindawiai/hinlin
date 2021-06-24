@@ -1,10 +1,11 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
  * mach-davinci/nand.h
  *
- * Copyright © 2006 Texas Instruments.
+ * Copyright तऊ 2006 Texas Instruments.
  *
- * Ported to 2.6.23 Copyright © 2008 by
+ * Ported to 2.6.23 Copyright तऊ 2008 by
  *   Sander Huijsen <Shuijsen@optelecom-nkf.com>
  *   Troy Kisky <troy.kisky@boundarydevices.com>
  *   Dirk Behme <Dirk.Behme@gmail.com>
@@ -12,77 +13,77 @@
  * --------------------------------------------------------------------------
  */
 
-#ifndef __ARCH_ARM_DAVINCI_NAND_H
-#define __ARCH_ARM_DAVINCI_NAND_H
+#अगर_अघोषित __ARCH_ARM_DAVINCI_न_अंकD_H
+#घोषणा __ARCH_ARM_DAVINCI_न_अंकD_H
 
-#include <linux/mtd/rawnand.h>
+#समावेश <linux/mtd/rawnand.h>
 
-#define NANDFCR_OFFSET		0x60
-#define NANDFSR_OFFSET		0x64
-#define NANDF1ECC_OFFSET	0x70
+#घोषणा न_अंकDFCR_OFFSET		0x60
+#घोषणा न_अंकDFSR_OFFSET		0x64
+#घोषणा न_अंकDF1ECC_OFFSET	0x70
 
-/* 4-bit ECC syndrome registers */
-#define NAND_4BIT_ECC_LOAD_OFFSET	0xbc
-#define NAND_4BIT_ECC1_OFFSET		0xc0
-#define NAND_4BIT_ECC2_OFFSET		0xc4
-#define NAND_4BIT_ECC3_OFFSET		0xc8
-#define NAND_4BIT_ECC4_OFFSET		0xcc
-#define NAND_ERR_ADD1_OFFSET		0xd0
-#define NAND_ERR_ADD2_OFFSET		0xd4
-#define NAND_ERR_ERRVAL1_OFFSET		0xd8
-#define NAND_ERR_ERRVAL2_OFFSET		0xdc
+/* 4-bit ECC syndrome रेजिस्टरs */
+#घोषणा न_अंकD_4BIT_ECC_LOAD_OFFSET	0xbc
+#घोषणा न_अंकD_4BIT_ECC1_OFFSET		0xc0
+#घोषणा न_अंकD_4BIT_ECC2_OFFSET		0xc4
+#घोषणा न_अंकD_4BIT_ECC3_OFFSET		0xc8
+#घोषणा न_अंकD_4BIT_ECC4_OFFSET		0xcc
+#घोषणा न_अंकD_ERR_ADD1_OFFSET		0xd0
+#घोषणा न_अंकD_ERR_ADD2_OFFSET		0xd4
+#घोषणा न_अंकD_ERR_ERRVAL1_OFFSET		0xd8
+#घोषणा न_अंकD_ERR_ERRVAL2_OFFSET		0xdc
 
-/* NOTE:  boards don't need to use these address bits
- * for ALE/CLE unless they support booting from NAND.
- * They're used unless platform data overrides them.
+/* NOTE:  boards करोn't need to use these address bits
+ * क्रम ALE/CLE unless they support booting from न_अंकD.
+ * They're used unless platक्रमm data overrides them.
  */
-#define	MASK_ALE		0x08
-#define	MASK_CLE		0x10
+#घोषणा	MASK_ALE		0x08
+#घोषणा	MASK_CLE		0x10
 
-struct davinci_nand_pdata {		/* platform_data */
-	uint32_t		mask_ale;
-	uint32_t		mask_cle;
+काष्ठा davinci_nand_pdata अणु		/* platक्रमm_data */
+	uपूर्णांक32_t		mask_ale;
+	uपूर्णांक32_t		mask_cle;
 
 	/*
 	 * 0-indexed chip-select number of the asynchronous
-	 * interface to which the NAND device has been connected.
+	 * पूर्णांकerface to which the न_अंकD device has been connected.
 	 *
-	 * So, if you have NAND connected to CS3 of DA850, you
-	 * will pass '1' here. Since the asynchronous interface
+	 * So, अगर you have न_अंकD connected to CS3 of DA850, you
+	 * will pass '1' here. Since the asynchronous पूर्णांकerface
 	 * on DA850 starts from CS2.
 	 */
-	uint32_t		core_chipsel;
+	uपूर्णांक32_t		core_chipsel;
 
-	/* for packages using two chipselects */
-	uint32_t		mask_chipsel;
+	/* क्रम packages using two chipselects */
+	uपूर्णांक32_t		mask_chipsel;
 
-	/* board's default static partition info */
-	struct mtd_partition	*parts;
-	unsigned		nr_parts;
+	/* board's शेष अटल partition info */
+	काष्ठा mtd_partition	*parts;
+	अचिन्हित		nr_parts;
 
-	/* none  == NAND_ECC_ENGINE_TYPE_NONE (strongly *not* advised!!)
-	 * soft  == NAND_ECC_ENGINE_TYPE_SOFT
-	 * else  == NAND_ECC_ENGINE_TYPE_ON_HOST, according to ecc_bits
+	/* none  == न_अंकD_ECC_ENGINE_TYPE_NONE (strongly *not* advised!!)
+	 * soft  == न_अंकD_ECC_ENGINE_TYPE_SOFT
+	 * अन्यथा  == न_अंकD_ECC_ENGINE_TYPE_ON_HOST, according to ecc_bits
 	 *
 	 * All DaVinci-family chips support 1-bit hardware ECC.
 	 * Newer ones also support 4-bit ECC, but are awkward
 	 * using it with large page chips.
 	 */
-	enum nand_ecc_engine_type engine_type;
-	enum nand_ecc_placement ecc_placement;
+	क्रमागत nand_ecc_engine_type engine_type;
+	क्रमागत nand_ecc_placement ecc_placement;
 	u8			ecc_bits;
 
-	/* e.g. NAND_BUSWIDTH_16 */
-	unsigned		options;
-	/* e.g. NAND_BBT_USE_FLASH */
-	unsigned		bbt_options;
+	/* e.g. न_अंकD_BUSWIDTH_16 */
+	अचिन्हित		options;
+	/* e.g. न_अंकD_BBT_USE_FLASH */
+	अचिन्हित		bbt_options;
 
 	/* Main and mirror bbt descriptor overrides */
-	struct nand_bbt_descr	*bbt_td;
-	struct nand_bbt_descr	*bbt_md;
+	काष्ठा nand_bbt_descr	*bbt_td;
+	काष्ठा nand_bbt_descr	*bbt_md;
 
 	/* Access timings */
-	struct davinci_aemif_timing	*timing;
-};
+	काष्ठा davinci_aemअगर_timing	*timing;
+पूर्ण;
 
-#endif	/* __ARCH_ARM_DAVINCI_NAND_H */
+#पूर्ण_अगर	/* __ARCH_ARM_DAVINCI_न_अंकD_H */

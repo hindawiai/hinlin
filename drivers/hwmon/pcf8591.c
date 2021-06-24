@@ -1,24 +1,25 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Copyright (C) 2001-2004 Aurelien Jarno <aurelien@aurel32.net>
  * Ported to Linux 2.6 by Aurelien Jarno <aurelien@aurel32.net> with
  * the help of Jean Delvare <jdelvare@suse.de>
  */
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include <linux/module.h>
-#include <linux/init.h>
-#include <linux/slab.h>
-#include <linux/i2c.h>
-#include <linux/mutex.h>
-#include <linux/err.h>
-#include <linux/hwmon.h>
+#समावेश <linux/module.h>
+#समावेश <linux/init.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/err.h>
+#समावेश <linux/hwmon.h>
 
 /* Insmod parameters */
 
-static int input_mode;
-module_param(input_mode, int, 0);
+अटल पूर्णांक input_mode;
+module_param(input_mode, पूर्णांक, 0);
 MODULE_PARM_DESC(input_mode,
 	"Analog input mode:\n"
 	" 0 = four single ended inputs\n"
@@ -32,20 +33,20 @@ MODULE_PARM_DESC(input_mode,
  *   |  0 |AOEF|   AIP   |  0 |AINC|  AICH   |
  */
 
-/* Analog Output Enable Flag (analog output active if 1) */
-#define PCF8591_CONTROL_AOEF		0x40
+/* Analog Output Enable Flag (analog output active अगर 1) */
+#घोषणा PCF8591_CONTROL_AOEF		0x40
 
 /*
  * Analog Input Programming
- * 0x00 = four single ended inputs
- * 0x10 = three differential inputs
- * 0x20 = single ended and differential mixed
- * 0x30 = two differential inputs
+ * 0x00 = four single ended inमाला_दो
+ * 0x10 = three dअगरferential inमाला_दो
+ * 0x20 = single ended and dअगरferential mixed
+ * 0x30 = two dअगरferential inमाला_दो
  */
-#define PCF8591_CONTROL_AIP_MASK	0x30
+#घोषणा PCF8591_CONTROL_AIP_MASK	0x30
 
-/* Autoincrement Flag (switch on if 1) */
-#define PCF8591_CONTROL_AINC		0x04
+/* Autoincrement Flag (चयन on अगर 1) */
+#घोषणा PCF8591_CONTROL_AINC		0x04
 
 /*
  * Channel selection
@@ -54,140 +55,140 @@ MODULE_PARM_DESC(input_mode,
  * 0x02 = channel 2
  * 0x03 = channel 3
  */
-#define PCF8591_CONTROL_AICH_MASK	0x03
+#घोषणा PCF8591_CONTROL_AICH_MASK	0x03
 
 /* Initial values */
-#define PCF8591_INIT_CONTROL	((input_mode << 4) | PCF8591_CONTROL_AOEF)
-#define PCF8591_INIT_AOUT	0	/* DAC out = 0 */
+#घोषणा PCF8591_INIT_CONTROL	((input_mode << 4) | PCF8591_CONTROL_AOEF)
+#घोषणा PCF8591_INIT_AOUT	0	/* DAC out = 0 */
 
 /* Conversions */
-#define REG_TO_SIGNED(reg)	(((reg) & 0x80) ? ((reg) - 256) : (reg))
+#घोषणा REG_TO_SIGNED(reg)	(((reg) & 0x80) ? ((reg) - 256) : (reg))
 
-struct pcf8591_data {
-	struct device *hwmon_dev;
-	struct mutex update_lock;
+काष्ठा pcf8591_data अणु
+	काष्ठा device *hwmon_dev;
+	काष्ठा mutex update_lock;
 
 	u8 control;
 	u8 aout;
-};
+पूर्ण;
 
-static void pcf8591_init_client(struct i2c_client *client);
-static int pcf8591_read_channel(struct device *dev, int channel);
+अटल व्योम pcf8591_init_client(काष्ठा i2c_client *client);
+अटल पूर्णांक pcf8591_पढ़ो_channel(काष्ठा device *dev, पूर्णांक channel);
 
 /* following are the sysfs callback functions */
-#define show_in_channel(channel)					\
-static ssize_t show_in##channel##_input(struct device *dev,		\
-					struct device_attribute *attr,	\
-					char *buf)			\
-{									\
-	return sprintf(buf, "%d\n", pcf8591_read_channel(dev, channel));\
-}									\
-static DEVICE_ATTR(in##channel##_input, S_IRUGO,			\
-		   show_in##channel##_input, NULL);
+#घोषणा show_in_channel(channel)					\
+अटल sमाप_प्रकार show_in##channel##_input(काष्ठा device *dev,		\
+					काष्ठा device_attribute *attr,	\
+					अक्षर *buf)			\
+अणु									\
+	वापस प्र_लिखो(buf, "%d\n", pcf8591_पढ़ो_channel(dev, channel));\
+पूर्ण									\
+अटल DEVICE_ATTR(in##channel##_input, S_IRUGO,			\
+		   show_in##channel##_input, शून्य);
 
 show_in_channel(0);
 show_in_channel(1);
 show_in_channel(2);
 show_in_channel(3);
 
-static ssize_t out0_output_show(struct device *dev,
-				struct device_attribute *attr, char *buf)
-{
-	struct pcf8591_data *data = i2c_get_clientdata(to_i2c_client(dev));
-	return sprintf(buf, "%d\n", data->aout * 10);
-}
+अटल sमाप_प्रकार out0_output_show(काष्ठा device *dev,
+				काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा pcf8591_data *data = i2c_get_clientdata(to_i2c_client(dev));
+	वापस प्र_लिखो(buf, "%d\n", data->aout * 10);
+पूर्ण
 
-static ssize_t out0_output_store(struct device *dev,
-				 struct device_attribute *attr,
-				 const char *buf, size_t count)
-{
-	unsigned long val;
-	struct i2c_client *client = to_i2c_client(dev);
-	struct pcf8591_data *data = i2c_get_clientdata(client);
-	int err;
+अटल sमाप_प्रकार out0_output_store(काष्ठा device *dev,
+				 काष्ठा device_attribute *attr,
+				 स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	अचिन्हित दीर्घ val;
+	काष्ठा i2c_client *client = to_i2c_client(dev);
+	काष्ठा pcf8591_data *data = i2c_get_clientdata(client);
+	पूर्णांक err;
 
-	err = kstrtoul(buf, 10, &val);
-	if (err)
-		return err;
+	err = kम_से_अदीर्घ(buf, 10, &val);
+	अगर (err)
+		वापस err;
 
 	val /= 10;
-	if (val > 255)
-		return -EINVAL;
+	अगर (val > 255)
+		वापस -EINVAL;
 
 	data->aout = val;
-	i2c_smbus_write_byte_data(client, data->control, data->aout);
-	return count;
-}
+	i2c_smbus_ग_लिखो_byte_data(client, data->control, data->aout);
+	वापस count;
+पूर्ण
 
-static DEVICE_ATTR_RW(out0_output);
+अटल DEVICE_ATTR_RW(out0_output);
 
-static ssize_t out0_enable_show(struct device *dev,
-				struct device_attribute *attr, char *buf)
-{
-	struct pcf8591_data *data = i2c_get_clientdata(to_i2c_client(dev));
-	return sprintf(buf, "%u\n", !(!(data->control & PCF8591_CONTROL_AOEF)));
-}
+अटल sमाप_प्रकार out0_enable_show(काष्ठा device *dev,
+				काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा pcf8591_data *data = i2c_get_clientdata(to_i2c_client(dev));
+	वापस प्र_लिखो(buf, "%u\n", !(!(data->control & PCF8591_CONTROL_AOEF)));
+पूर्ण
 
-static ssize_t out0_enable_store(struct device *dev,
-				 struct device_attribute *attr,
-				 const char *buf, size_t count)
-{
-	struct i2c_client *client = to_i2c_client(dev);
-	struct pcf8591_data *data = i2c_get_clientdata(client);
-	unsigned long val;
-	int err;
+अटल sमाप_प्रकार out0_enable_store(काष्ठा device *dev,
+				 काष्ठा device_attribute *attr,
+				 स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	काष्ठा i2c_client *client = to_i2c_client(dev);
+	काष्ठा pcf8591_data *data = i2c_get_clientdata(client);
+	अचिन्हित दीर्घ val;
+	पूर्णांक err;
 
-	err = kstrtoul(buf, 10, &val);
-	if (err)
-		return err;
+	err = kम_से_अदीर्घ(buf, 10, &val);
+	अगर (err)
+		वापस err;
 
 	mutex_lock(&data->update_lock);
-	if (val)
+	अगर (val)
 		data->control |= PCF8591_CONTROL_AOEF;
-	else
+	अन्यथा
 		data->control &= ~PCF8591_CONTROL_AOEF;
-	i2c_smbus_write_byte(client, data->control);
+	i2c_smbus_ग_लिखो_byte(client, data->control);
 	mutex_unlock(&data->update_lock);
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static DEVICE_ATTR_RW(out0_enable);
+अटल DEVICE_ATTR_RW(out0_enable);
 
-static struct attribute *pcf8591_attributes[] = {
+अटल काष्ठा attribute *pcf8591_attributes[] = अणु
 	&dev_attr_out0_enable.attr,
 	&dev_attr_out0_output.attr,
 	&dev_attr_in0_input.attr,
 	&dev_attr_in1_input.attr,
-	NULL
-};
+	शून्य
+पूर्ण;
 
-static const struct attribute_group pcf8591_attr_group = {
+अटल स्थिर काष्ठा attribute_group pcf8591_attr_group = अणु
 	.attrs = pcf8591_attributes,
-};
+पूर्ण;
 
-static struct attribute *pcf8591_attributes_opt[] = {
+अटल काष्ठा attribute *pcf8591_attributes_opt[] = अणु
 	&dev_attr_in2_input.attr,
 	&dev_attr_in3_input.attr,
-	NULL
-};
+	शून्य
+पूर्ण;
 
-static const struct attribute_group pcf8591_attr_group_opt = {
+अटल स्थिर काष्ठा attribute_group pcf8591_attr_group_opt = अणु
 	.attrs = pcf8591_attributes_opt,
-};
+पूर्ण;
 
 /*
  * Real code
  */
 
-static int pcf8591_probe(struct i2c_client *client)
-{
-	struct pcf8591_data *data;
-	int err;
+अटल पूर्णांक pcf8591_probe(काष्ठा i2c_client *client)
+अणु
+	काष्ठा pcf8591_data *data;
+	पूर्णांक err;
 
-	data = devm_kzalloc(&client->dev, sizeof(struct pcf8591_data),
+	data = devm_kzalloc(&client->dev, माप(काष्ठा pcf8591_data),
 			    GFP_KERNEL);
-	if (!data)
-		return -ENOMEM;
+	अगर (!data)
+		वापस -ENOMEM;
 
 	i2c_set_clientdata(client, data);
 	mutex_init(&data->update_lock);
@@ -197,125 +198,125 @@ static int pcf8591_probe(struct i2c_client *client)
 
 	/* Register sysfs hooks */
 	err = sysfs_create_group(&client->dev.kobj, &pcf8591_attr_group);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	/* Register input2 if not in "two differential inputs" mode */
-	if (input_mode != 3) {
+	/* Register input2 अगर not in "two differential inputs" mode */
+	अगर (input_mode != 3) अणु
 		err = device_create_file(&client->dev, &dev_attr_in2_input);
-		if (err)
-			goto exit_sysfs_remove;
-	}
+		अगर (err)
+			जाओ निकास_sysfs_हटाओ;
+	पूर्ण
 
 	/* Register input3 only in "four single ended inputs" mode */
-	if (input_mode == 0) {
+	अगर (input_mode == 0) अणु
 		err = device_create_file(&client->dev, &dev_attr_in3_input);
-		if (err)
-			goto exit_sysfs_remove;
-	}
+		अगर (err)
+			जाओ निकास_sysfs_हटाओ;
+	पूर्ण
 
-	data->hwmon_dev = hwmon_device_register(&client->dev);
-	if (IS_ERR(data->hwmon_dev)) {
+	data->hwmon_dev = hwmon_device_रेजिस्टर(&client->dev);
+	अगर (IS_ERR(data->hwmon_dev)) अणु
 		err = PTR_ERR(data->hwmon_dev);
-		goto exit_sysfs_remove;
-	}
+		जाओ निकास_sysfs_हटाओ;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
-exit_sysfs_remove:
-	sysfs_remove_group(&client->dev.kobj, &pcf8591_attr_group_opt);
-	sysfs_remove_group(&client->dev.kobj, &pcf8591_attr_group);
-	return err;
-}
+निकास_sysfs_हटाओ:
+	sysfs_हटाओ_group(&client->dev.kobj, &pcf8591_attr_group_opt);
+	sysfs_हटाओ_group(&client->dev.kobj, &pcf8591_attr_group);
+	वापस err;
+पूर्ण
 
-static int pcf8591_remove(struct i2c_client *client)
-{
-	struct pcf8591_data *data = i2c_get_clientdata(client);
+अटल पूर्णांक pcf8591_हटाओ(काष्ठा i2c_client *client)
+अणु
+	काष्ठा pcf8591_data *data = i2c_get_clientdata(client);
 
-	hwmon_device_unregister(data->hwmon_dev);
-	sysfs_remove_group(&client->dev.kobj, &pcf8591_attr_group_opt);
-	sysfs_remove_group(&client->dev.kobj, &pcf8591_attr_group);
-	return 0;
-}
+	hwmon_device_unरेजिस्टर(data->hwmon_dev);
+	sysfs_हटाओ_group(&client->dev.kobj, &pcf8591_attr_group_opt);
+	sysfs_हटाओ_group(&client->dev.kobj, &pcf8591_attr_group);
+	वापस 0;
+पूर्ण
 
 /* Called when we have found a new PCF8591. */
-static void pcf8591_init_client(struct i2c_client *client)
-{
-	struct pcf8591_data *data = i2c_get_clientdata(client);
+अटल व्योम pcf8591_init_client(काष्ठा i2c_client *client)
+अणु
+	काष्ठा pcf8591_data *data = i2c_get_clientdata(client);
 	data->control = PCF8591_INIT_CONTROL;
 	data->aout = PCF8591_INIT_AOUT;
 
-	i2c_smbus_write_byte_data(client, data->control, data->aout);
+	i2c_smbus_ग_लिखो_byte_data(client, data->control, data->aout);
 
 	/*
 	 * The first byte transmitted contains the conversion code of the
-	 * previous read cycle. FLUSH IT!
+	 * previous पढ़ो cycle. FLUSH IT!
 	 */
-	i2c_smbus_read_byte(client);
-}
+	i2c_smbus_पढ़ो_byte(client);
+पूर्ण
 
-static int pcf8591_read_channel(struct device *dev, int channel)
-{
+अटल पूर्णांक pcf8591_पढ़ो_channel(काष्ठा device *dev, पूर्णांक channel)
+अणु
 	u8 value;
-	struct i2c_client *client = to_i2c_client(dev);
-	struct pcf8591_data *data = i2c_get_clientdata(client);
+	काष्ठा i2c_client *client = to_i2c_client(dev);
+	काष्ठा pcf8591_data *data = i2c_get_clientdata(client);
 
 	mutex_lock(&data->update_lock);
 
-	if ((data->control & PCF8591_CONTROL_AICH_MASK) != channel) {
+	अगर ((data->control & PCF8591_CONTROL_AICH_MASK) != channel) अणु
 		data->control = (data->control & ~PCF8591_CONTROL_AICH_MASK)
 			      | channel;
-		i2c_smbus_write_byte(client, data->control);
+		i2c_smbus_ग_लिखो_byte(client, data->control);
 
 		/*
 		 * The first byte transmitted contains the conversion code of
-		 * the previous read cycle. FLUSH IT!
+		 * the previous पढ़ो cycle. FLUSH IT!
 		 */
-		i2c_smbus_read_byte(client);
-	}
-	value = i2c_smbus_read_byte(client);
+		i2c_smbus_पढ़ो_byte(client);
+	पूर्ण
+	value = i2c_smbus_पढ़ो_byte(client);
 
 	mutex_unlock(&data->update_lock);
 
-	if ((channel == 2 && input_mode == 2) ||
+	अगर ((channel == 2 && input_mode == 2) ||
 	    (channel != 3 && (input_mode == 1 || input_mode == 3)))
-		return 10 * REG_TO_SIGNED(value);
-	else
-		return 10 * value;
-}
+		वापस 10 * REG_TO_SIGNED(value);
+	अन्यथा
+		वापस 10 * value;
+पूर्ण
 
-static const struct i2c_device_id pcf8591_id[] = {
-	{ "pcf8591", 0 },
-	{ }
-};
+अटल स्थिर काष्ठा i2c_device_id pcf8591_id[] = अणु
+	अणु "pcf8591", 0 पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(i2c, pcf8591_id);
 
-static struct i2c_driver pcf8591_driver = {
-	.driver = {
+अटल काष्ठा i2c_driver pcf8591_driver = अणु
+	.driver = अणु
 		.name	= "pcf8591",
-	},
+	पूर्ण,
 	.probe_new	= pcf8591_probe,
-	.remove		= pcf8591_remove,
+	.हटाओ		= pcf8591_हटाओ,
 	.id_table	= pcf8591_id,
-};
+पूर्ण;
 
-static int __init pcf8591_init(void)
-{
-	if (input_mode < 0 || input_mode > 3) {
+अटल पूर्णांक __init pcf8591_init(व्योम)
+अणु
+	अगर (input_mode < 0 || input_mode > 3) अणु
 		pr_warn("invalid input_mode (%d)\n", input_mode);
 		input_mode = 0;
-	}
-	return i2c_add_driver(&pcf8591_driver);
-}
+	पूर्ण
+	वापस i2c_add_driver(&pcf8591_driver);
+पूर्ण
 
-static void __exit pcf8591_exit(void)
-{
+अटल व्योम __निकास pcf8591_निकास(व्योम)
+अणु
 	i2c_del_driver(&pcf8591_driver);
-}
+पूर्ण
 
 MODULE_AUTHOR("Aurelien Jarno <aurelien@aurel32.net>");
 MODULE_DESCRIPTION("PCF8591 driver");
 MODULE_LICENSE("GPL");
 
 module_init(pcf8591_init);
-module_exit(pcf8591_exit);
+module_निकास(pcf8591_निकास);

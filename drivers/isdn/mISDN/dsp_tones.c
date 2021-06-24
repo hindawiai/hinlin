@@ -1,5 +1,6 @@
+<शैली गुरु>
 /*
- * Audio support data for ISDN4Linux.
+ * Audio support data क्रम ISDN4Linux.
  *
  * Copyright Andreas Eversberg (jolly@eversberg.eu)
  *
@@ -8,31 +9,31 @@
  *
  */
 
-#include <linux/gfp.h>
-#include <linux/mISDNif.h>
-#include <linux/mISDNdsp.h>
-#include "core.h"
-#include "dsp.h"
+#समावेश <linux/gfp.h>
+#समावेश <linux/mISDNअगर.h>
+#समावेश <linux/mISDNdsp.h>
+#समावेश "core.h"
+#समावेश "dsp.h"
 
 
-#define DATA_S sample_silence
-#define SIZE_S (&sizeof_silence)
-#define DATA_GA sample_german_all
-#define SIZE_GA (&sizeof_german_all)
-#define DATA_GO sample_german_old
-#define SIZE_GO (&sizeof_german_old)
-#define DATA_DT sample_american_dialtone
-#define SIZE_DT (&sizeof_american_dialtone)
-#define DATA_RI sample_american_ringing
-#define SIZE_RI (&sizeof_american_ringing)
-#define DATA_BU sample_american_busy
-#define SIZE_BU (&sizeof_american_busy)
-#define DATA_S1 sample_special1
-#define SIZE_S1 (&sizeof_special1)
-#define DATA_S2 sample_special2
-#define SIZE_S2 (&sizeof_special2)
-#define DATA_S3 sample_special3
-#define SIZE_S3 (&sizeof_special3)
+#घोषणा DATA_S sample_silence
+#घोषणा SIZE_S (&माप_silence)
+#घोषणा DATA_GA sample_german_all
+#घोषणा SIZE_GA (&माप_german_all)
+#घोषणा DATA_GO sample_german_old
+#घोषणा SIZE_GO (&माप_german_old)
+#घोषणा DATA_DT sample_american_dialtone
+#घोषणा SIZE_DT (&माप_american_dialtone)
+#घोषणा DATA_RI sample_american_ringing
+#घोषणा SIZE_RI (&माप_american_ringing)
+#घोषणा DATA_BU sample_american_busy
+#घोषणा SIZE_BU (&माप_american_busy)
+#घोषणा DATA_S1 sample_special1
+#घोषणा SIZE_S1 (&माप_special1)
+#घोषणा DATA_S2 sample_special2
+#घोषणा SIZE_S2 (&माप_special2)
+#घोषणा DATA_S3 sample_special3
+#घोषणा SIZE_S3 (&माप_special3)
 
 /***************/
 /* tones loops */
@@ -41,7 +42,7 @@
 /* all tones are alaw encoded */
 /* the last sample+1 is in phase with the first sample. the error is low */
 
-static u8 sample_german_all[] = {
+अटल u8 sample_german_all[] = अणु
 	0x80, 0xab, 0x81, 0x6d, 0xfd, 0xdd, 0x5d, 0x9d,
 	0x4d, 0xd1, 0x89, 0x88, 0xd0, 0x4c, 0x9c, 0x5c,
 	0xdc, 0xfc, 0x6c,
@@ -54,10 +55,10 @@ static u8 sample_german_all[] = {
 	0x80, 0xab, 0x81, 0x6d, 0xfd, 0xdd, 0x5d, 0x9d,
 	0x4d, 0xd1, 0x89, 0x88, 0xd0, 0x4c, 0x9c, 0x5c,
 	0xdc, 0xfc, 0x6c,
-};
-static u32 sizeof_german_all = sizeof(sample_german_all);
+पूर्ण;
+अटल u32 माप_german_all = माप(sample_german_all);
 
-static u8 sample_german_old[] = {
+अटल u8 sample_german_old[] = अणु
 	0xec, 0x68, 0xe1, 0x6d, 0x6d, 0x91, 0x51, 0xed,
 	0x6d, 0x01, 0x1e, 0x10, 0x0c, 0x90, 0x60, 0x70,
 	0x8c,
@@ -70,10 +71,10 @@ static u8 sample_german_old[] = {
 	0xec, 0x68, 0xe1, 0x6d, 0x6d, 0x91, 0x51, 0xed,
 	0x6d, 0x01, 0x1e, 0x10, 0x0c, 0x90, 0x60, 0x70,
 	0x8c,
-};
-static u32 sizeof_german_old = sizeof(sample_german_old);
+पूर्ण;
+अटल u32 माप_german_old = माप(sample_german_old);
 
-static u8 sample_american_dialtone[] = {
+अटल u8 sample_american_dialtone[] = अणु
 	0x2a, 0x18, 0x90, 0x6c, 0x4c, 0xbc, 0x4c, 0x6c,
 	0x10, 0x58, 0x32, 0xb9, 0x31, 0x2d, 0x8d, 0x0d,
 	0x8d, 0x2d, 0x31, 0x99, 0x0f, 0x28, 0x60, 0xf0,
@@ -86,10 +87,10 @@ static u8 sample_american_dialtone[] = {
 	0x98, 0x30, 0x2c, 0x8c, 0x0c, 0x8c, 0x2c, 0x30,
 	0xb8, 0x33, 0x59, 0x11, 0x6d, 0x4d, 0xbd, 0x4d,
 	0x6d, 0x91, 0x19,
-};
-static u32 sizeof_american_dialtone = sizeof(sample_american_dialtone);
+पूर्ण;
+अटल u32 माप_american_dialtone = माप(sample_american_dialtone);
 
-static u8 sample_american_ringing[] = {
+अटल u8 sample_american_ringing[] = अणु
 	0x2a, 0xe0, 0xac, 0x0c, 0xbc, 0x4c, 0x8c, 0x90,
 	0x48, 0xc7, 0xc1, 0xed, 0xcd, 0x4d, 0xcd, 0xed,
 	0xc1, 0xb7, 0x08, 0x30, 0xec, 0xcc, 0xcc, 0x8c,
@@ -111,10 +112,10 @@ static u8 sample_american_ringing[] = {
 	0xcd, 0xed, 0x31, 0x09, 0xb6, 0xc0, 0xec, 0xcc,
 	0x4c, 0xcc, 0xec, 0xc0, 0xc6, 0x49, 0x91, 0x8d,
 	0x4d, 0xbd, 0x0d, 0xad, 0xe1,
-};
-static u32 sizeof_american_ringing = sizeof(sample_american_ringing);
+पूर्ण;
+अटल u32 माप_american_ringing = माप(sample_american_ringing);
 
-static u8 sample_american_busy[] = {
+अटल u8 sample_american_busy[] = अणु
 	0x2a, 0x00, 0x6c, 0x4c, 0x4c, 0x6c, 0xb0, 0x66,
 	0x99, 0x11, 0x6d, 0x8d, 0x2d, 0x41, 0xd7, 0x96,
 	0x60, 0xf0, 0x70, 0x40, 0x58, 0xf6, 0x53, 0x57,
@@ -130,10 +131,10 @@ static u8 sample_american_busy[] = {
 	0x59, 0x41, 0x71, 0xf1, 0x61, 0x97, 0xd6, 0x40,
 	0x2c, 0x8c, 0x6c, 0x10, 0x98, 0x67, 0xb1, 0x6d,
 	0x4d, 0x4d, 0x6d, 0x01,
-};
-static u32 sizeof_american_busy = sizeof(sample_american_busy);
+पूर्ण;
+अटल u32 माप_american_busy = माप(sample_american_busy);
 
-static u8 sample_special1[] = {
+अटल u8 sample_special1[] = अणु
 	0x2a, 0x2c, 0xbc, 0x6c, 0xd6, 0x71, 0xbd, 0x0d,
 	0xd9, 0x80, 0xcc, 0x4c, 0x40, 0x39, 0x0d, 0xbd,
 	0x11, 0x86, 0xec, 0xbc, 0xec, 0x0e, 0x51, 0xbd,
@@ -142,10 +143,10 @@ static u8 sample_special1[] = {
 	0xbd, 0xed, 0x87, 0x10, 0xbc, 0x0c, 0x38, 0x41,
 	0x4d, 0xcd, 0x81, 0xd8, 0x0c, 0xbc, 0x70, 0xd7,
 	0x6d, 0xbd, 0x2d,
-};
-static u32 sizeof_special1 = sizeof(sample_special1);
+पूर्ण;
+अटल u32 माप_special1 = माप(sample_special1);
 
-static u8 sample_special2[] = {
+अटल u8 sample_special2[] = अणु
 	0x2a, 0xcc, 0x8c, 0xd7, 0x4d, 0x2d, 0x18, 0xbc,
 	0x10, 0xc1, 0xbd, 0xc1, 0x10, 0xbc, 0x18, 0x2d,
 	0x4d, 0xd7, 0x8c, 0xcc, 0x2a, 0xcd, 0x8d, 0xd6,
@@ -156,10 +157,10 @@ static u8 sample_special2[] = {
 	0x4d, 0xd7, 0x8c, 0xcc, 0x2a, 0xcd, 0x8d, 0xd6,
 	0x4c, 0x2c, 0x19, 0xbd, 0x11, 0xc0, 0xbc, 0xc0,
 	0x11, 0xbd, 0x19, 0x2c, 0x4c, 0xd6, 0x8d, 0xcd,
-};
-static u32 sizeof_special2 = sizeof(sample_special2);
+पूर्ण;
+अटल u32 माप_special2 = माप(sample_special2);
 
-static u8 sample_special3[] = {
+अटल u8 sample_special3[] = अणु
 	0x2a, 0xbc, 0x18, 0xcd, 0x11, 0x2c, 0x8c, 0xc1,
 	0x4d, 0xd6, 0xbc, 0xd6, 0x4d, 0xc1, 0x8c, 0x2c,
 	0x11, 0xcd, 0x18, 0xbc, 0x2a, 0xbd, 0x19, 0xcc,
@@ -170,10 +171,10 @@ static u8 sample_special3[] = {
 	0x11, 0xcd, 0x18, 0xbc, 0x2a, 0xbd, 0x19, 0xcc,
 	0x10, 0x2d, 0x8d, 0xc0, 0x4c, 0xd7, 0xbd, 0xd7,
 	0x4c, 0xc0, 0x8d, 0x2d, 0x10, 0xcc, 0x19, 0xbd,
-};
-static u32 sizeof_special3 = sizeof(sample_special3);
+पूर्ण;
+अटल u32 माप_special3 = माप(sample_special3);
 
-static u8 sample_silence[] = {
+अटल u8 sample_silence[] = अणु
 	0x2a, 0x2a, 0x2a, 0x2a, 0x2a, 0x2a, 0x2a, 0x2a,
 	0x2a, 0x2a, 0x2a, 0x2a, 0x2a, 0x2a, 0x2a, 0x2a,
 	0x2a, 0x2a, 0x2a, 0x2a, 0x2a, 0x2a, 0x2a, 0x2a,
@@ -186,174 +187,174 @@ static u8 sample_silence[] = {
 	0x2a, 0x2a, 0x2a, 0x2a, 0x2a, 0x2a, 0x2a, 0x2a,
 	0x2a, 0x2a, 0x2a, 0x2a, 0x2a, 0x2a, 0x2a, 0x2a,
 	0x2a, 0x2a, 0x2a, 0x2a, 0x2a, 0x2a, 0x2a, 0x2a,
-};
-static u32 sizeof_silence = sizeof(sample_silence);
+पूर्ण;
+अटल u32 माप_silence = माप(sample_silence);
 
-struct tones_samples {
+काष्ठा tones_samples अणु
 	u32 *len;
 	u8 *data;
-};
-static struct
-tones_samples samples[] = {
-	{&sizeof_german_all, sample_german_all},
-	{&sizeof_german_old, sample_german_old},
-	{&sizeof_american_dialtone, sample_american_dialtone},
-	{&sizeof_american_ringing, sample_american_ringing},
-	{&sizeof_american_busy, sample_american_busy},
-	{&sizeof_special1, sample_special1},
-	{&sizeof_special2, sample_special2},
-	{&sizeof_special3, sample_special3},
-	{NULL, NULL},
-};
+पूर्ण;
+अटल काष्ठा
+tones_samples samples[] = अणु
+	अणु&माप_german_all, sample_german_allपूर्ण,
+	अणु&माप_german_old, sample_german_oldपूर्ण,
+	अणु&माप_american_dialtone, sample_american_dialtoneपूर्ण,
+	अणु&माप_american_ringing, sample_american_ringingपूर्ण,
+	अणु&माप_american_busy, sample_american_busyपूर्ण,
+	अणु&माप_special1, sample_special1पूर्ण,
+	अणु&माप_special2, sample_special2पूर्ण,
+	अणु&माप_special3, sample_special3पूर्ण,
+	अणुशून्य, शून्यपूर्ण,
+पूर्ण;
 
 /***********************************
  * generate ulaw from alaw samples *
  ***********************************/
 
-void
-dsp_audio_generate_ulaw_samples(void)
-{
-	int i, j;
+व्योम
+dsp_audio_generate_ulaw_samples(व्योम)
+अणु
+	पूर्णांक i, j;
 
 	i = 0;
-	while (samples[i].len) {
+	जबतक (samples[i].len) अणु
 		j = 0;
-		while (j < (*samples[i].len)) {
+		जबतक (j < (*samples[i].len)) अणु
 			samples[i].data[j] =
 				dsp_audio_alaw_to_ulaw[samples[i].data[j]];
 			j++;
-		}
+		पूर्ण
 		i++;
-	}
-}
+	पूर्ण
+पूर्ण
 
 
 /****************************
  * tone sequence definition *
  ****************************/
 
-static struct pattern {
-	int tone;
+अटल काष्ठा pattern अणु
+	पूर्णांक tone;
 	u8 *data[10];
 	u32 *siz[10];
 	u32 seq[10];
-} pattern[] = {
-	{TONE_GERMAN_DIALTONE,
-	 {DATA_GA, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL},
-	 {SIZE_GA, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL},
-	 {1900, 0, 0, 0, 0, 0, 0, 0, 0, 0} },
+पूर्ण pattern[] = अणु
+	अणुTONE_GERMAN_DIALTONE,
+	 अणुDATA_GA, शून्य, शून्य, शून्य, शून्य, शून्य, शून्य, शून्य, शून्य, शून्यपूर्ण,
+	 अणुSIZE_GA, शून्य, शून्य, शून्य, शून्य, शून्य, शून्य, शून्य, शून्य, शून्यपूर्ण,
+	 अणु1900, 0, 0, 0, 0, 0, 0, 0, 0, 0पूर्ण पूर्ण,
 
-	{TONE_GERMAN_OLDDIALTONE,
-	 {DATA_GO, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL},
-	 {SIZE_GO, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL},
-	 {1998, 0, 0, 0, 0, 0, 0, 0, 0, 0} },
+	अणुTONE_GERMAN_OLDDIALTONE,
+	 अणुDATA_GO, शून्य, शून्य, शून्य, शून्य, शून्य, शून्य, शून्य, शून्य, शून्यपूर्ण,
+	 अणुSIZE_GO, शून्य, शून्य, शून्य, शून्य, शून्य, शून्य, शून्य, शून्य, शून्यपूर्ण,
+	 अणु1998, 0, 0, 0, 0, 0, 0, 0, 0, 0पूर्ण पूर्ण,
 
-	{TONE_AMERICAN_DIALTONE,
-	 {DATA_DT, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL},
-	 {SIZE_DT, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL},
-	 {8000, 0, 0, 0, 0, 0, 0, 0, 0, 0} },
+	अणुTONE_AMERICAN_DIALTONE,
+	 अणुDATA_DT, शून्य, शून्य, शून्य, शून्य, शून्य, शून्य, शून्य, शून्य, शून्यपूर्ण,
+	 अणुSIZE_DT, शून्य, शून्य, शून्य, शून्य, शून्य, शून्य, शून्य, शून्य, शून्यपूर्ण,
+	 अणु8000, 0, 0, 0, 0, 0, 0, 0, 0, 0पूर्ण पूर्ण,
 
-	{TONE_GERMAN_DIALPBX,
-	 {DATA_GA, DATA_S, DATA_GA, DATA_S, DATA_GA, DATA_S, NULL, NULL, NULL,
-	  NULL},
-	 {SIZE_GA, SIZE_S, SIZE_GA, SIZE_S, SIZE_GA, SIZE_S, NULL, NULL, NULL,
-	  NULL},
-	 {2000, 2000, 2000, 2000, 2000, 12000, 0, 0, 0, 0} },
+	अणुTONE_GERMAN_DIALPBX,
+	 अणुDATA_GA, DATA_S, DATA_GA, DATA_S, DATA_GA, DATA_S, शून्य, शून्य, शून्य,
+	  शून्यपूर्ण,
+	 अणुSIZE_GA, SIZE_S, SIZE_GA, SIZE_S, SIZE_GA, SIZE_S, शून्य, शून्य, शून्य,
+	  शून्यपूर्ण,
+	 अणु2000, 2000, 2000, 2000, 2000, 12000, 0, 0, 0, 0पूर्ण पूर्ण,
 
-	{TONE_GERMAN_OLDDIALPBX,
-	 {DATA_GO, DATA_S, DATA_GO, DATA_S, DATA_GO, DATA_S, NULL, NULL, NULL,
-	  NULL},
-	 {SIZE_GO, SIZE_S, SIZE_GO, SIZE_S, SIZE_GO, SIZE_S, NULL, NULL, NULL,
-	  NULL},
-	 {2000, 2000, 2000, 2000, 2000, 12000, 0, 0, 0, 0} },
+	अणुTONE_GERMAN_OLDDIALPBX,
+	 अणुDATA_GO, DATA_S, DATA_GO, DATA_S, DATA_GO, DATA_S, शून्य, शून्य, शून्य,
+	  शून्यपूर्ण,
+	 अणुSIZE_GO, SIZE_S, SIZE_GO, SIZE_S, SIZE_GO, SIZE_S, शून्य, शून्य, शून्य,
+	  शून्यपूर्ण,
+	 अणु2000, 2000, 2000, 2000, 2000, 12000, 0, 0, 0, 0पूर्ण पूर्ण,
 
-	{TONE_AMERICAN_DIALPBX,
-	 {DATA_DT, DATA_S, DATA_DT, DATA_S, DATA_DT, DATA_S, NULL, NULL, NULL,
-	  NULL},
-	 {SIZE_DT, SIZE_S, SIZE_DT, SIZE_S, SIZE_DT, SIZE_S, NULL, NULL, NULL,
-	  NULL},
-	 {2000, 2000, 2000, 2000, 2000, 12000, 0, 0, 0, 0} },
+	अणुTONE_AMERICAN_DIALPBX,
+	 अणुDATA_DT, DATA_S, DATA_DT, DATA_S, DATA_DT, DATA_S, शून्य, शून्य, शून्य,
+	  शून्यपूर्ण,
+	 अणुSIZE_DT, SIZE_S, SIZE_DT, SIZE_S, SIZE_DT, SIZE_S, शून्य, शून्य, शून्य,
+	  शून्यपूर्ण,
+	 अणु2000, 2000, 2000, 2000, 2000, 12000, 0, 0, 0, 0पूर्ण पूर्ण,
 
-	{TONE_GERMAN_RINGING,
-	 {DATA_GA, DATA_S, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL},
-	 {SIZE_GA, SIZE_S, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL},
-	 {8000, 32000, 0, 0, 0, 0, 0, 0, 0, 0} },
+	अणुTONE_GERMAN_RINGING,
+	 अणुDATA_GA, DATA_S, शून्य, शून्य, शून्य, शून्य, शून्य, शून्य, शून्य, शून्यपूर्ण,
+	 अणुSIZE_GA, SIZE_S, शून्य, शून्य, शून्य, शून्य, शून्य, शून्य, शून्य, शून्यपूर्ण,
+	 अणु8000, 32000, 0, 0, 0, 0, 0, 0, 0, 0पूर्ण पूर्ण,
 
-	{TONE_GERMAN_OLDRINGING,
-	 {DATA_GO, DATA_S, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL},
-	 {SIZE_GO, SIZE_S, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL},
-	 {8000, 40000, 0, 0, 0, 0, 0, 0, 0, 0} },
+	अणुTONE_GERMAN_OLDRINGING,
+	 अणुDATA_GO, DATA_S, शून्य, शून्य, शून्य, शून्य, शून्य, शून्य, शून्य, शून्यपूर्ण,
+	 अणुSIZE_GO, SIZE_S, शून्य, शून्य, शून्य, शून्य, शून्य, शून्य, शून्य, शून्यपूर्ण,
+	 अणु8000, 40000, 0, 0, 0, 0, 0, 0, 0, 0पूर्ण पूर्ण,
 
-	{TONE_AMERICAN_RINGING,
-	 {DATA_RI, DATA_S, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL},
-	 {SIZE_RI, SIZE_S, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL},
-	 {8000, 32000, 0, 0, 0, 0, 0, 0, 0, 0} },
+	अणुTONE_AMERICAN_RINGING,
+	 अणुDATA_RI, DATA_S, शून्य, शून्य, शून्य, शून्य, शून्य, शून्य, शून्य, शून्यपूर्ण,
+	 अणुSIZE_RI, SIZE_S, शून्य, शून्य, शून्य, शून्य, शून्य, शून्य, शून्य, शून्यपूर्ण,
+	 अणु8000, 32000, 0, 0, 0, 0, 0, 0, 0, 0पूर्ण पूर्ण,
 
-	{TONE_GERMAN_RINGPBX,
-	 {DATA_GA, DATA_S, DATA_GA, DATA_S, NULL, NULL, NULL, NULL, NULL, NULL},
-	 {SIZE_GA, SIZE_S, SIZE_GA, SIZE_S, NULL, NULL, NULL, NULL, NULL, NULL},
-	 {4000, 4000, 4000, 28000, 0, 0, 0, 0, 0, 0} },
+	अणुTONE_GERMAN_RINGPBX,
+	 अणुDATA_GA, DATA_S, DATA_GA, DATA_S, शून्य, शून्य, शून्य, शून्य, शून्य, शून्यपूर्ण,
+	 अणुSIZE_GA, SIZE_S, SIZE_GA, SIZE_S, शून्य, शून्य, शून्य, शून्य, शून्य, शून्यपूर्ण,
+	 अणु4000, 4000, 4000, 28000, 0, 0, 0, 0, 0, 0पूर्ण पूर्ण,
 
-	{TONE_GERMAN_OLDRINGPBX,
-	 {DATA_GO, DATA_S, DATA_GO, DATA_S, NULL, NULL, NULL, NULL, NULL, NULL},
-	 {SIZE_GO, SIZE_S, SIZE_GO, SIZE_S, NULL, NULL, NULL, NULL, NULL, NULL},
-	 {4000, 4000, 4000, 28000, 0, 0, 0, 0, 0, 0} },
+	अणुTONE_GERMAN_OLDRINGPBX,
+	 अणुDATA_GO, DATA_S, DATA_GO, DATA_S, शून्य, शून्य, शून्य, शून्य, शून्य, शून्यपूर्ण,
+	 अणुSIZE_GO, SIZE_S, SIZE_GO, SIZE_S, शून्य, शून्य, शून्य, शून्य, शून्य, शून्यपूर्ण,
+	 अणु4000, 4000, 4000, 28000, 0, 0, 0, 0, 0, 0पूर्ण पूर्ण,
 
-	{TONE_AMERICAN_RINGPBX,
-	 {DATA_RI, DATA_S, DATA_RI, DATA_S, NULL, NULL, NULL, NULL, NULL, NULL},
-	 {SIZE_RI, SIZE_S, SIZE_RI, SIZE_S, NULL, NULL, NULL, NULL, NULL, NULL},
-	 {4000, 4000, 4000, 28000, 0, 0, 0, 0, 0, 0} },
+	अणुTONE_AMERICAN_RINGPBX,
+	 अणुDATA_RI, DATA_S, DATA_RI, DATA_S, शून्य, शून्य, शून्य, शून्य, शून्य, शून्यपूर्ण,
+	 अणुSIZE_RI, SIZE_S, SIZE_RI, SIZE_S, शून्य, शून्य, शून्य, शून्य, शून्य, शून्यपूर्ण,
+	 अणु4000, 4000, 4000, 28000, 0, 0, 0, 0, 0, 0पूर्ण पूर्ण,
 
-	{TONE_GERMAN_BUSY,
-	 {DATA_GA, DATA_S, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL},
-	 {SIZE_GA, SIZE_S, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL},
-	 {4000, 4000, 0, 0, 0, 0, 0, 0, 0, 0} },
+	अणुTONE_GERMAN_BUSY,
+	 अणुDATA_GA, DATA_S, शून्य, शून्य, शून्य, शून्य, शून्य, शून्य, शून्य, शून्यपूर्ण,
+	 अणुSIZE_GA, SIZE_S, शून्य, शून्य, शून्य, शून्य, शून्य, शून्य, शून्य, शून्यपूर्ण,
+	 अणु4000, 4000, 0, 0, 0, 0, 0, 0, 0, 0पूर्ण पूर्ण,
 
-	{TONE_GERMAN_OLDBUSY,
-	 {DATA_GO, DATA_S, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL},
-	 {SIZE_GO, SIZE_S, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL},
-	 {1000, 5000, 0, 0, 0, 0, 0, 0, 0, 0} },
+	अणुTONE_GERMAN_OLDBUSY,
+	 अणुDATA_GO, DATA_S, शून्य, शून्य, शून्य, शून्य, शून्य, शून्य, शून्य, शून्यपूर्ण,
+	 अणुSIZE_GO, SIZE_S, शून्य, शून्य, शून्य, शून्य, शून्य, शून्य, शून्य, शून्यपूर्ण,
+	 अणु1000, 5000, 0, 0, 0, 0, 0, 0, 0, 0पूर्ण पूर्ण,
 
-	{TONE_AMERICAN_BUSY,
-	 {DATA_BU, DATA_S, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL},
-	 {SIZE_BU, SIZE_S, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL},
-	 {4000, 4000, 0, 0, 0, 0, 0, 0, 0, 0} },
+	अणुTONE_AMERICAN_BUSY,
+	 अणुDATA_BU, DATA_S, शून्य, शून्य, शून्य, शून्य, शून्य, शून्य, शून्य, शून्यपूर्ण,
+	 अणुSIZE_BU, SIZE_S, शून्य, शून्य, शून्य, शून्य, शून्य, शून्य, शून्य, शून्यपूर्ण,
+	 अणु4000, 4000, 0, 0, 0, 0, 0, 0, 0, 0पूर्ण पूर्ण,
 
-	{TONE_GERMAN_HANGUP,
-	 {DATA_GA, DATA_S, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL},
-	 {SIZE_GA, SIZE_S, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL},
-	 {4000, 4000, 0, 0, 0, 0, 0, 0, 0, 0} },
+	अणुTONE_GERMAN_HANGUP,
+	 अणुDATA_GA, DATA_S, शून्य, शून्य, शून्य, शून्य, शून्य, शून्य, शून्य, शून्यपूर्ण,
+	 अणुSIZE_GA, SIZE_S, शून्य, शून्य, शून्य, शून्य, शून्य, शून्य, शून्य, शून्यपूर्ण,
+	 अणु4000, 4000, 0, 0, 0, 0, 0, 0, 0, 0पूर्ण पूर्ण,
 
-	{TONE_GERMAN_OLDHANGUP,
-	 {DATA_GO, DATA_S, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL},
-	 {SIZE_GO, SIZE_S, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL},
-	 {1000, 5000, 0, 0, 0, 0, 0, 0, 0, 0} },
+	अणुTONE_GERMAN_OLDHANGUP,
+	 अणुDATA_GO, DATA_S, शून्य, शून्य, शून्य, शून्य, शून्य, शून्य, शून्य, शून्यपूर्ण,
+	 अणुSIZE_GO, SIZE_S, शून्य, शून्य, शून्य, शून्य, शून्य, शून्य, शून्य, शून्यपूर्ण,
+	 अणु1000, 5000, 0, 0, 0, 0, 0, 0, 0, 0पूर्ण पूर्ण,
 
-	{TONE_AMERICAN_HANGUP,
-	 {DATA_DT, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL},
-	 {SIZE_DT, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL},
-	 {8000, 0, 0, 0, 0, 0, 0, 0, 0, 0} },
+	अणुTONE_AMERICAN_HANGUP,
+	 अणुDATA_DT, शून्य, शून्य, शून्य, शून्य, शून्य, शून्य, शून्य, शून्य, शून्यपूर्ण,
+	 अणुSIZE_DT, शून्य, शून्य, शून्य, शून्य, शून्य, शून्य, शून्य, शून्य, शून्यपूर्ण,
+	 अणु8000, 0, 0, 0, 0, 0, 0, 0, 0, 0पूर्ण पूर्ण,
 
-	{TONE_SPECIAL_INFO,
-	 {DATA_S1, DATA_S2, DATA_S3, DATA_S, NULL, NULL, NULL, NULL, NULL, NULL},
-	 {SIZE_S1, SIZE_S2, SIZE_S3, SIZE_S, NULL, NULL, NULL, NULL, NULL, NULL},
-	 {2666, 2666, 2666, 8002, 0, 0, 0, 0, 0, 0} },
+	अणुTONE_SPECIAL_INFO,
+	 अणुDATA_S1, DATA_S2, DATA_S3, DATA_S, शून्य, शून्य, शून्य, शून्य, शून्य, शून्यपूर्ण,
+	 अणुSIZE_S1, SIZE_S2, SIZE_S3, SIZE_S, शून्य, शून्य, शून्य, शून्य, शून्य, शून्यपूर्ण,
+	 अणु2666, 2666, 2666, 8002, 0, 0, 0, 0, 0, 0पूर्ण पूर्ण,
 
-	{TONE_GERMAN_GASSENBESETZT,
-	 {DATA_GA, DATA_S, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL},
-	 {SIZE_GA, SIZE_S, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL},
-	 {2000, 2000, 0, 0, 0, 0, 0, 0, 0, 0} },
+	अणुTONE_GERMAN_GASSENBESETZT,
+	 अणुDATA_GA, DATA_S, शून्य, शून्य, शून्य, शून्य, शून्य, शून्य, शून्य, शून्यपूर्ण,
+	 अणुSIZE_GA, SIZE_S, शून्य, शून्य, शून्य, शून्य, शून्य, शून्य, शून्य, शून्यपूर्ण,
+	 अणु2000, 2000, 0, 0, 0, 0, 0, 0, 0, 0पूर्ण पूर्ण,
 
-	{TONE_GERMAN_AUFSCHALTTON,
-	 {DATA_GO, DATA_S, DATA_GO, DATA_S, NULL, NULL, NULL, NULL, NULL, NULL},
-	 {SIZE_GO, SIZE_S, SIZE_GO, SIZE_S, NULL, NULL, NULL, NULL, NULL, NULL},
-	 {1000, 5000, 1000, 17000, 0, 0, 0, 0, 0, 0} },
+	अणुTONE_GERMAN_AUFSCHALTTON,
+	 अणुDATA_GO, DATA_S, DATA_GO, DATA_S, शून्य, शून्य, शून्य, शून्य, शून्य, शून्यपूर्ण,
+	 अणुSIZE_GO, SIZE_S, SIZE_GO, SIZE_S, शून्य, शून्य, शून्य, शून्य, शून्य, शून्यपूर्ण,
+	 अणु1000, 5000, 1000, 17000, 0, 0, 0, 0, 0, 0पूर्ण पूर्ण,
 
-	{0,
-	 {NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL},
-	 {NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL},
-	 {0, 0, 0, 0, 0, 0, 0, 0, 0, 0} },
-};
+	अणु0,
+	 अणुशून्य, शून्य, शून्य, शून्य, शून्य, शून्य, शून्य, शून्य, शून्य, शून्यपूर्ण,
+	 अणुशून्य, शून्य, शून्य, शून्य, शून्य, शून्य, शून्य, शून्य, शून्य, शून्यपूर्ण,
+	 अणु0, 0, 0, 0, 0, 0, 0, 0, 0, 0पूर्ण पूर्ण,
+पूर्ण;
 
 /******************
  * copy tone data *
@@ -361,126 +362,126 @@ static struct pattern {
 
 /* an sk_buff is generated from the number of samples needed.
  * the count will be changed and may begin from 0 each pattern period.
- * the clue is to precalculate the pointers and legths to use only one
- * memcpy per function call, or two memcpy if the tone sequence changes.
+ * the clue is to precalculate the poपूर्णांकers and legths to use only one
+ * स_नकल per function call, or two स_नकल अगर the tone sequence changes.
  *
  * pattern - the type of the pattern
  * count - the sample from the beginning of the pattern (phase)
  * len - the number of bytes
  *
- * return - the sk_buff with the sample
+ * वापस - the sk_buff with the sample
  *
- * if tones has finished (e.g. knocking tone), dsp->tones is turned off
+ * अगर tones has finished (e.g. knocking tone), dsp->tones is turned off
  */
-void dsp_tone_copy(struct dsp *dsp, u8 *data, int len)
-{
-	int index, count, start, num;
-	struct pattern *pat;
-	struct dsp_tone *tone = &dsp->tone;
+व्योम dsp_tone_copy(काष्ठा dsp *dsp, u8 *data, पूर्णांक len)
+अणु
+	पूर्णांक index, count, start, num;
+	काष्ठा pattern *pat;
+	काष्ठा dsp_tone *tone = &dsp->tone;
 
-	/* if we have no tone, we copy silence */
-	if (!tone->tone) {
-		memset(data, dsp_silence, len);
-		return;
-	}
+	/* अगर we have no tone, we copy silence */
+	अगर (!tone->tone) अणु
+		स_रखो(data, dsp_silence, len);
+		वापस;
+	पूर्ण
 
 	/* process pattern */
-	pat = (struct pattern *)tone->pattern;
-	/* points to the current pattern */
+	pat = (काष्ठा pattern *)tone->pattern;
+	/* poपूर्णांकs to the current pattern */
 	index = tone->index; /* gives current sequence index */
 	count = tone->count; /* gives current sample */
 
 	/* copy sample */
-	while (len) {
+	जबतक (len) अणु
 		/* find sample to start with */
-		while (42) {
+		जबतक (42) अणु
 			/* wrap around */
-			if (!pat->seq[index]) {
+			अगर (!pat->seq[index]) अणु
 				count = 0;
 				index = 0;
-			}
-			/* check if we are currently playing this tone */
-			if (count < pat->seq[index])
-				break;
-			if (dsp_debug & DEBUG_DSP_TONE)
-				printk(KERN_DEBUG "%s: reaching next sequence "
+			पूर्ण
+			/* check अगर we are currently playing this tone */
+			अगर (count < pat->seq[index])
+				अवरोध;
+			अगर (dsp_debug & DEBUG_DSP_TONE)
+				prपूर्णांकk(KERN_DEBUG "%s: reaching next sequence "
 				       "(index=%d)\n", __func__, index);
 			count -= pat->seq[index];
 			index++;
-		}
+		पूर्ण
 		/* calculate start and number of samples */
 		start = count % (*(pat->siz[index]));
 		num = len;
-		if (num + count > pat->seq[index])
+		अगर (num + count > pat->seq[index])
 			num = pat->seq[index] - count;
-		if (num + start > (*(pat->siz[index])))
+		अगर (num + start > (*(pat->siz[index])))
 			num = (*(pat->siz[index])) - start;
 		/* copy memory */
-		memcpy(data, pat->data[index] + start, num);
+		स_नकल(data, pat->data[index] + start, num);
 		/* reduce length */
 		data += num;
 		count += num;
 		len -= num;
-	}
+	पूर्ण
 	tone->index = index;
 	tone->count = count;
 
-	/* return sk_buff */
-	return;
-}
+	/* वापस sk_buff */
+	वापस;
+पूर्ण
 
 
 /*******************************
  * send HW message to hfc card *
  *******************************/
 
-static void
-dsp_tone_hw_message(struct dsp *dsp, u8 *sample, int len)
-{
-	struct sk_buff *nskb;
+अटल व्योम
+dsp_tone_hw_message(काष्ठा dsp *dsp, u8 *sample, पूर्णांक len)
+अणु
+	काष्ठा sk_buff *nskb;
 
-	/* unlocking is not required, because we don't expect a response */
+	/* unlocking is not required, because we करोn't expect a response */
 	nskb = _alloc_mISDN_skb(PH_CONTROL_REQ,
 				(len) ? HFC_SPL_LOOP_ON : HFC_SPL_LOOP_OFF, len, sample,
 				GFP_ATOMIC);
-	if (nskb) {
-		if (dsp->ch.peer) {
-			if (dsp->ch.recv(dsp->ch.peer, nskb))
-				dev_kfree_skb(nskb);
-		} else
-			dev_kfree_skb(nskb);
-	}
-}
+	अगर (nskb) अणु
+		अगर (dsp->ch.peer) अणु
+			अगर (dsp->ch.recv(dsp->ch.peer, nskb))
+				dev_kमुक्त_skb(nskb);
+		पूर्ण अन्यथा
+			dev_kमुक्त_skb(nskb);
+	पूर्ण
+पूर्ण
 
 
 /*****************
- * timer expires *
+ * समयr expires *
  *****************/
-void
-dsp_tone_timeout(struct timer_list *t)
-{
-	struct dsp *dsp = from_timer(dsp, t, tone.tl);
-	struct dsp_tone *tone = &dsp->tone;
-	struct pattern *pat = (struct pattern *)tone->pattern;
-	int index = tone->index;
+व्योम
+dsp_tone_समयout(काष्ठा समयr_list *t)
+अणु
+	काष्ठा dsp *dsp = from_समयr(dsp, t, tone.tl);
+	काष्ठा dsp_tone *tone = &dsp->tone;
+	काष्ठा pattern *pat = (काष्ठा pattern *)tone->pattern;
+	पूर्णांक index = tone->index;
 
-	if (!tone->tone)
-		return;
+	अगर (!tone->tone)
+		वापस;
 
 	index++;
-	if (!pat->seq[index])
+	अगर (!pat->seq[index])
 		index = 0;
 	tone->index = index;
 
 	/* set next tone */
-	if (pat->data[index] == DATA_S)
-		dsp_tone_hw_message(dsp, NULL, 0);
-	else
+	अगर (pat->data[index] == DATA_S)
+		dsp_tone_hw_message(dsp, शून्य, 0);
+	अन्यथा
 		dsp_tone_hw_message(dsp, pat->data[index], *(pat->siz[index]));
-	/* set timer */
-	tone->tl.expires = jiffies + (pat->seq[index] * HZ) / 8000;
-	add_timer(&tone->tl);
-}
+	/* set समयr */
+	tone->tl.expires = jअगरfies + (pat->seq[index] * HZ) / 8000;
+	add_समयr(&tone->tl);
+पूर्ण
 
 
 /********************
@@ -488,63 +489,63 @@ dsp_tone_timeout(struct timer_list *t)
  ********************/
 
 /*
- * tones are relaized by streaming or by special loop commands if supported
+ * tones are relaized by streaming or by special loop commands अगर supported
  * by hardware. when hardware is used, the patterns will be controlled by
- * timers.
+ * समयrs.
  */
-int
-dsp_tone(struct dsp *dsp, int tone)
-{
-	struct pattern *pat;
-	int i;
-	struct dsp_tone *tonet = &dsp->tone;
+पूर्णांक
+dsp_tone(काष्ठा dsp *dsp, पूर्णांक tone)
+अणु
+	काष्ठा pattern *pat;
+	पूर्णांक i;
+	काष्ठा dsp_tone *tonet = &dsp->tone;
 
 	tonet->software = 0;
 	tonet->hardware = 0;
 
 	/* we turn off the tone */
-	if (!tone) {
-		if (dsp->features.hfc_loops && timer_pending(&tonet->tl))
-			del_timer(&tonet->tl);
-		if (dsp->features.hfc_loops)
-			dsp_tone_hw_message(dsp, NULL, 0);
+	अगर (!tone) अणु
+		अगर (dsp->features.hfc_loops && समयr_pending(&tonet->tl))
+			del_समयr(&tonet->tl);
+		अगर (dsp->features.hfc_loops)
+			dsp_tone_hw_message(dsp, शून्य, 0);
 		tonet->tone = 0;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	pat = NULL;
+	pat = शून्य;
 	i = 0;
-	while (pattern[i].tone) {
-		if (pattern[i].tone == tone) {
+	जबतक (pattern[i].tone) अणु
+		अगर (pattern[i].tone == tone) अणु
 			pat = &pattern[i];
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		i++;
-	}
-	if (!pat) {
-		printk(KERN_WARNING "dsp: given tone 0x%x is invalid\n", tone);
-		return -EINVAL;
-	}
-	if (dsp_debug & DEBUG_DSP_TONE)
-		printk(KERN_DEBUG "%s: now starting tone %d (index=%d)\n",
+	पूर्ण
+	अगर (!pat) अणु
+		prपूर्णांकk(KERN_WARNING "dsp: given tone 0x%x is invalid\n", tone);
+		वापस -EINVAL;
+	पूर्ण
+	अगर (dsp_debug & DEBUG_DSP_TONE)
+		prपूर्णांकk(KERN_DEBUG "%s: now starting tone %d (index=%d)\n",
 		       __func__, tone, 0);
 	tonet->tone = tone;
 	tonet->pattern = pat;
 	tonet->index = 0;
 	tonet->count = 0;
 
-	if (dsp->features.hfc_loops) {
+	अगर (dsp->features.hfc_loops) अणु
 		tonet->hardware = 1;
 		/* set first tone */
 		dsp_tone_hw_message(dsp, pat->data[0], *(pat->siz[0]));
-		/* set timer */
-		if (timer_pending(&tonet->tl))
-			del_timer(&tonet->tl);
-		tonet->tl.expires = jiffies + (pat->seq[0] * HZ) / 8000;
-		add_timer(&tonet->tl);
-	} else {
+		/* set समयr */
+		अगर (समयr_pending(&tonet->tl))
+			del_समयr(&tonet->tl);
+		tonet->tl.expires = jअगरfies + (pat->seq[0] * HZ) / 8000;
+		add_समयr(&tonet->tl);
+	पूर्ण अन्यथा अणु
 		tonet->software = 1;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

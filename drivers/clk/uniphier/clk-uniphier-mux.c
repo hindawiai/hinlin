@@ -1,70 +1,71 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Copyright (C) 2016 Socionext Inc.
  *   Author: Masahiro Yamada <yamada.masahiro@socionext.com>
  */
 
-#include <linux/clk-provider.h>
-#include <linux/device.h>
-#include <linux/regmap.h>
+#समावेश <linux/clk-provider.h>
+#समावेश <linux/device.h>
+#समावेश <linux/regmap.h>
 
-#include "clk-uniphier.h"
+#समावेश "clk-uniphier.h"
 
-struct uniphier_clk_mux {
-	struct clk_hw hw;
-	struct regmap *regmap;
-	unsigned int reg;
-	const unsigned int *masks;
-	const unsigned int *vals;
-};
+काष्ठा uniphier_clk_mux अणु
+	काष्ठा clk_hw hw;
+	काष्ठा regmap *regmap;
+	अचिन्हित पूर्णांक reg;
+	स्थिर अचिन्हित पूर्णांक *masks;
+	स्थिर अचिन्हित पूर्णांक *vals;
+पूर्ण;
 
-#define to_uniphier_clk_mux(_hw) container_of(_hw, struct uniphier_clk_mux, hw)
+#घोषणा to_uniphier_clk_mux(_hw) container_of(_hw, काष्ठा uniphier_clk_mux, hw)
 
-static int uniphier_clk_mux_set_parent(struct clk_hw *hw, u8 index)
-{
-	struct uniphier_clk_mux *mux = to_uniphier_clk_mux(hw);
+अटल पूर्णांक uniphier_clk_mux_set_parent(काष्ठा clk_hw *hw, u8 index)
+अणु
+	काष्ठा uniphier_clk_mux *mux = to_uniphier_clk_mux(hw);
 
-	return regmap_write_bits(mux->regmap, mux->reg, mux->masks[index],
+	वापस regmap_ग_लिखो_bits(mux->regmap, mux->reg, mux->masks[index],
 				 mux->vals[index]);
-}
+पूर्ण
 
-static u8 uniphier_clk_mux_get_parent(struct clk_hw *hw)
-{
-	struct uniphier_clk_mux *mux = to_uniphier_clk_mux(hw);
-	unsigned int num_parents = clk_hw_get_num_parents(hw);
-	int ret;
-	unsigned int val;
-	unsigned int i;
+अटल u8 uniphier_clk_mux_get_parent(काष्ठा clk_hw *hw)
+अणु
+	काष्ठा uniphier_clk_mux *mux = to_uniphier_clk_mux(hw);
+	अचिन्हित पूर्णांक num_parents = clk_hw_get_num_parents(hw);
+	पूर्णांक ret;
+	अचिन्हित पूर्णांक val;
+	अचिन्हित पूर्णांक i;
 
-	ret = regmap_read(mux->regmap, mux->reg, &val);
-	if (ret)
-		return ret;
+	ret = regmap_पढ़ो(mux->regmap, mux->reg, &val);
+	अगर (ret)
+		वापस ret;
 
-	for (i = 0; i < num_parents; i++)
-		if ((mux->masks[i] & val) == mux->vals[i])
-			return i;
+	क्रम (i = 0; i < num_parents; i++)
+		अगर ((mux->masks[i] & val) == mux->vals[i])
+			वापस i;
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static const struct clk_ops uniphier_clk_mux_ops = {
+अटल स्थिर काष्ठा clk_ops uniphier_clk_mux_ops = अणु
 	.determine_rate = __clk_mux_determine_rate,
 	.set_parent = uniphier_clk_mux_set_parent,
 	.get_parent = uniphier_clk_mux_get_parent,
-};
+पूर्ण;
 
-struct clk_hw *uniphier_clk_register_mux(struct device *dev,
-					 struct regmap *regmap,
-					 const char *name,
-				const struct uniphier_clk_mux_data *data)
-{
-	struct uniphier_clk_mux *mux;
-	struct clk_init_data init;
-	int ret;
+काष्ठा clk_hw *uniphier_clk_रेजिस्टर_mux(काष्ठा device *dev,
+					 काष्ठा regmap *regmap,
+					 स्थिर अक्षर *name,
+				स्थिर काष्ठा uniphier_clk_mux_data *data)
+अणु
+	काष्ठा uniphier_clk_mux *mux;
+	काष्ठा clk_init_data init;
+	पूर्णांक ret;
 
-	mux = devm_kzalloc(dev, sizeof(*mux), GFP_KERNEL);
-	if (!mux)
-		return ERR_PTR(-ENOMEM);
+	mux = devm_kzalloc(dev, माप(*mux), GFP_KERNEL);
+	अगर (!mux)
+		वापस ERR_PTR(-ENOMEM);
 
 	init.name = name;
 	init.ops = &uniphier_clk_mux_ops;
@@ -78,9 +79,9 @@ struct clk_hw *uniphier_clk_register_mux(struct device *dev,
 	mux->vals = data->vals;
 	mux->hw.init = &init;
 
-	ret = devm_clk_hw_register(dev, &mux->hw);
-	if (ret)
-		return ERR_PTR(ret);
+	ret = devm_clk_hw_रेजिस्टर(dev, &mux->hw);
+	अगर (ret)
+		वापस ERR_PTR(ret);
 
-	return &mux->hw;
-}
+	वापस &mux->hw;
+पूर्ण

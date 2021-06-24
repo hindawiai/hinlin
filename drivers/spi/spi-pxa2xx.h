@@ -1,45 +1,46 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
- * Copyright (C) 2005 Stephen Street / StreetFire Sound Labs
+ * Copyright (C) 2005 Stephen Street / StreetFire Sound Lअसल
  * Copyright (C) 2013, Intel Corporation
  */
 
-#ifndef SPI_PXA2XX_H
-#define SPI_PXA2XX_H
+#अगर_अघोषित SPI_PXA2XX_H
+#घोषणा SPI_PXA2XX_H
 
-#include <linux/atomic.h>
-#include <linux/dmaengine.h>
-#include <linux/errno.h>
-#include <linux/io.h>
-#include <linux/interrupt.h>
-#include <linux/platform_device.h>
-#include <linux/pxa2xx_ssp.h>
-#include <linux/scatterlist.h>
-#include <linux/sizes.h>
-#include <linux/spi/spi.h>
-#include <linux/spi/pxa2xx_spi.h>
+#समावेश <linux/atomic.h>
+#समावेश <linux/dmaengine.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/पन.स>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/pxa2xx_ssp.h>
+#समावेश <linux/scatterlist.h>
+#समावेश <linux/sizes.h>
+#समावेश <linux/spi/spi.h>
+#समावेश <linux/spi/pxa2xx_spi.h>
 
-struct driver_data {
+काष्ठा driver_data अणु
 	/* Driver model hookup */
-	struct platform_device *pdev;
+	काष्ठा platक्रमm_device *pdev;
 
 	/* SSP Info */
-	struct ssp_device *ssp;
+	काष्ठा ssp_device *ssp;
 
 	/* SPI framework hookup */
-	enum pxa_ssp_type ssp_type;
-	struct spi_controller *controller;
+	क्रमागत pxa_ssp_type ssp_type;
+	काष्ठा spi_controller *controller;
 
 	/* PXA hookup */
-	struct pxa2xx_spi_controller *controller_info;
+	काष्ठा pxa2xx_spi_controller *controller_info;
 
-	/* SSP register addresses */
-	void __iomem *ioaddr;
+	/* SSP रेजिस्टर addresses */
+	व्योम __iomem *ioaddr;
 	phys_addr_t ssdr_physical;
 
 	/* SSP masks*/
 	u32 dma_cr1;
-	u32 int_cr1;
+	u32 पूर्णांक_cr1;
 	u32 clear_sr;
 	u32 mask_sr;
 
@@ -47,29 +48,29 @@ struct driver_data {
 	atomic_t dma_running;
 
 	/* Current transfer state info */
-	void *tx;
-	void *tx_end;
-	void *rx;
-	void *rx_end;
+	व्योम *tx;
+	व्योम *tx_end;
+	व्योम *rx;
+	व्योम *rx_end;
 	u8 n_bytes;
-	int (*write)(struct driver_data *drv_data);
-	int (*read)(struct driver_data *drv_data);
-	irqreturn_t (*transfer_handler)(struct driver_data *drv_data);
-	void (*cs_control)(u32 command);
+	पूर्णांक (*ग_लिखो)(काष्ठा driver_data *drv_data);
+	पूर्णांक (*पढ़ो)(काष्ठा driver_data *drv_data);
+	irqवापस_t (*transfer_handler)(काष्ठा driver_data *drv_data);
+	व्योम (*cs_control)(u32 command);
 
-	void __iomem *lpss_base;
+	व्योम __iomem *lpss_base;
 
-	/* GPIOs for chip selects */
-	struct gpio_desc **cs_gpiods;
+	/* GPIOs क्रम chip selects */
+	काष्ठा gpio_desc **cs_gpiods;
 
-	/* Optional slave FIFO ready signal */
-	struct gpio_desc *gpiod_ready;
-};
+	/* Optional slave FIFO पढ़ोy संकेत */
+	काष्ठा gpio_desc *gpiod_पढ़ोy;
+पूर्ण;
 
-struct chip_data {
+काष्ठा chip_data अणु
 	u32 cr1;
 	u32 dds_rate;
-	u32 timeout;
+	u32 समयout;
 	u8 n_bytes;
 	u32 dma_burst_size;
 	u32 threshold;
@@ -77,67 +78,67 @@ struct chip_data {
 	u16 lpss_rx_threshold;
 	u16 lpss_tx_threshold;
 	u8 enable_dma;
-	union {
-		struct gpio_desc *gpiod_cs;
-		unsigned int frm;
-	};
-	int gpio_cs_inverted;
-	int (*write)(struct driver_data *drv_data);
-	int (*read)(struct driver_data *drv_data);
-	void (*cs_control)(u32 command);
-};
+	जोड़ अणु
+		काष्ठा gpio_desc *gpiod_cs;
+		अचिन्हित पूर्णांक frm;
+	पूर्ण;
+	पूर्णांक gpio_cs_inverted;
+	पूर्णांक (*ग_लिखो)(काष्ठा driver_data *drv_data);
+	पूर्णांक (*पढ़ो)(काष्ठा driver_data *drv_data);
+	व्योम (*cs_control)(u32 command);
+पूर्ण;
 
-static inline u32 pxa2xx_spi_read(const struct driver_data *drv_data,
-				  unsigned reg)
-{
-	return __raw_readl(drv_data->ioaddr + reg);
-}
+अटल अंतरभूत u32 pxa2xx_spi_पढ़ो(स्थिर काष्ठा driver_data *drv_data,
+				  अचिन्हित reg)
+अणु
+	वापस __raw_पढ़ोl(drv_data->ioaddr + reg);
+पूर्ण
 
-static  inline void pxa2xx_spi_write(const struct driver_data *drv_data,
-				     unsigned reg, u32 val)
-{
-	__raw_writel(val, drv_data->ioaddr + reg);
-}
+अटल  अंतरभूत व्योम pxa2xx_spi_ग_लिखो(स्थिर काष्ठा driver_data *drv_data,
+				     अचिन्हित reg, u32 val)
+अणु
+	__raw_ग_लिखोl(val, drv_data->ioaddr + reg);
+पूर्ण
 
-#define DMA_ALIGNMENT		8
+#घोषणा DMA_ALIGNMENT		8
 
-static inline int pxa25x_ssp_comp(struct driver_data *drv_data)
-{
-	switch (drv_data->ssp_type) {
-	case PXA25x_SSP:
-	case CE4100_SSP:
-	case QUARK_X1000_SSP:
-		return 1;
-	default:
-		return 0;
-	}
-}
+अटल अंतरभूत पूर्णांक pxa25x_ssp_comp(काष्ठा driver_data *drv_data)
+अणु
+	चयन (drv_data->ssp_type) अणु
+	हाल PXA25x_SSP:
+	हाल CE4100_SSP:
+	हाल QUARK_X1000_SSP:
+		वापस 1;
+	शेष:
+		वापस 0;
+	पूर्ण
+पूर्ण
 
-static inline void write_SSSR_CS(struct driver_data *drv_data, u32 val)
-{
-	if (drv_data->ssp_type == CE4100_SSP ||
+अटल अंतरभूत व्योम ग_लिखो_SSSR_CS(काष्ठा driver_data *drv_data, u32 val)
+अणु
+	अगर (drv_data->ssp_type == CE4100_SSP ||
 	    drv_data->ssp_type == QUARK_X1000_SSP)
-		val |= pxa2xx_spi_read(drv_data, SSSR) & SSSR_ALT_FRM_MASK;
+		val |= pxa2xx_spi_पढ़ो(drv_data, SSSR) & SSSR_ALT_FRM_MASK;
 
-	pxa2xx_spi_write(drv_data, SSSR, val);
-}
+	pxa2xx_spi_ग_लिखो(drv_data, SSSR, val);
+पूर्ण
 
-extern int pxa2xx_spi_flush(struct driver_data *drv_data);
+बाह्य पूर्णांक pxa2xx_spi_flush(काष्ठा driver_data *drv_data);
 
-#define MAX_DMA_LEN		SZ_64K
-#define DEFAULT_DMA_CR1		(SSCR1_TSRE | SSCR1_RSRE | SSCR1_TRAIL)
+#घोषणा MAX_DMA_LEN		SZ_64K
+#घोषणा DEFAULT_DMA_CR1		(SSCR1_TSRE | SSCR1_RSRE | SSCR1_TRAIL)
 
-extern irqreturn_t pxa2xx_spi_dma_transfer(struct driver_data *drv_data);
-extern int pxa2xx_spi_dma_prepare(struct driver_data *drv_data,
-				  struct spi_transfer *xfer);
-extern void pxa2xx_spi_dma_start(struct driver_data *drv_data);
-extern void pxa2xx_spi_dma_stop(struct driver_data *drv_data);
-extern int pxa2xx_spi_dma_setup(struct driver_data *drv_data);
-extern void pxa2xx_spi_dma_release(struct driver_data *drv_data);
-extern int pxa2xx_spi_set_dma_burst_and_threshold(struct chip_data *chip,
-						  struct spi_device *spi,
+बाह्य irqवापस_t pxa2xx_spi_dma_transfer(काष्ठा driver_data *drv_data);
+बाह्य पूर्णांक pxa2xx_spi_dma_prepare(काष्ठा driver_data *drv_data,
+				  काष्ठा spi_transfer *xfer);
+बाह्य व्योम pxa2xx_spi_dma_start(काष्ठा driver_data *drv_data);
+बाह्य व्योम pxa2xx_spi_dma_stop(काष्ठा driver_data *drv_data);
+बाह्य पूर्णांक pxa2xx_spi_dma_setup(काष्ठा driver_data *drv_data);
+बाह्य व्योम pxa2xx_spi_dma_release(काष्ठा driver_data *drv_data);
+बाह्य पूर्णांक pxa2xx_spi_set_dma_burst_and_threshold(काष्ठा chip_data *chip,
+						  काष्ठा spi_device *spi,
 						  u8 bits_per_word,
 						  u32 *burst_code,
 						  u32 *threshold);
 
-#endif /* SPI_PXA2XX_H */
+#पूर्ण_अगर /* SPI_PXA2XX_H */

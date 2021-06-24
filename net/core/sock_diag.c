@@ -1,339 +1,340 @@
+<शैली गुरु>
 /* License: GPL */
 
-#include <linux/mutex.h>
-#include <linux/socket.h>
-#include <linux/skbuff.h>
-#include <net/netlink.h>
-#include <net/net_namespace.h>
-#include <linux/module.h>
-#include <net/sock.h>
-#include <linux/kernel.h>
-#include <linux/tcp.h>
-#include <linux/workqueue.h>
-#include <linux/nospec.h>
-#include <linux/cookie.h>
-#include <linux/inet_diag.h>
-#include <linux/sock_diag.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/socket.h>
+#समावेश <linux/skbuff.h>
+#समावेश <net/netlink.h>
+#समावेश <net/net_namespace.h>
+#समावेश <linux/module.h>
+#समावेश <net/sock.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/tcp.h>
+#समावेश <linux/workqueue.h>
+#समावेश <linux/nospec.h>
+#समावेश <linux/cookie.h>
+#समावेश <linux/inet_diag.h>
+#समावेश <linux/sock_diag.h>
 
-static const struct sock_diag_handler *sock_diag_handlers[AF_MAX];
-static int (*inet_rcv_compat)(struct sk_buff *skb, struct nlmsghdr *nlh);
-static DEFINE_MUTEX(sock_diag_table_mutex);
-static struct workqueue_struct *broadcast_wq;
+अटल स्थिर काष्ठा sock_diag_handler *sock_diag_handlers[AF_MAX];
+अटल पूर्णांक (*inet_rcv_compat)(काष्ठा sk_buff *skb, काष्ठा nlmsghdr *nlh);
+अटल DEFINE_MUTEX(sock_diag_table_mutex);
+अटल काष्ठा workqueue_काष्ठा *broadcast_wq;
 
 DEFINE_COOKIE(sock_cookie);
 
-u64 __sock_gen_cookie(struct sock *sk)
-{
-	while (1) {
-		u64 res = atomic64_read(&sk->sk_cookie);
+u64 __sock_gen_cookie(काष्ठा sock *sk)
+अणु
+	जबतक (1) अणु
+		u64 res = atomic64_पढ़ो(&sk->sk_cookie);
 
-		if (res)
-			return res;
+		अगर (res)
+			वापस res;
 		res = gen_cookie_next(&sock_cookie);
 		atomic64_cmpxchg(&sk->sk_cookie, 0, res);
-	}
-}
+	पूर्ण
+पूर्ण
 
-int sock_diag_check_cookie(struct sock *sk, const __u32 *cookie)
-{
+पूर्णांक sock_diag_check_cookie(काष्ठा sock *sk, स्थिर __u32 *cookie)
+अणु
 	u64 res;
 
-	if (cookie[0] == INET_DIAG_NOCOOKIE && cookie[1] == INET_DIAG_NOCOOKIE)
-		return 0;
+	अगर (cookie[0] == INET_DIAG_NOCOOKIE && cookie[1] == INET_DIAG_NOCOOKIE)
+		वापस 0;
 
 	res = sock_gen_cookie(sk);
-	if ((u32)res != cookie[0] || (u32)(res >> 32) != cookie[1])
-		return -ESTALE;
+	अगर ((u32)res != cookie[0] || (u32)(res >> 32) != cookie[1])
+		वापस -ESTALE;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(sock_diag_check_cookie);
 
-void sock_diag_save_cookie(struct sock *sk, __u32 *cookie)
-{
+व्योम sock_diag_save_cookie(काष्ठा sock *sk, __u32 *cookie)
+अणु
 	u64 res = sock_gen_cookie(sk);
 
 	cookie[0] = (u32)res;
 	cookie[1] = (u32)(res >> 32);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(sock_diag_save_cookie);
 
-int sock_diag_put_meminfo(struct sock *sk, struct sk_buff *skb, int attrtype)
-{
+पूर्णांक sock_diag_put_meminfo(काष्ठा sock *sk, काष्ठा sk_buff *skb, पूर्णांक attrtype)
+अणु
 	u32 mem[SK_MEMINFO_VARS];
 
 	sk_get_meminfo(sk, mem);
 
-	return nla_put(skb, attrtype, sizeof(mem), &mem);
-}
+	वापस nla_put(skb, attrtype, माप(mem), &mem);
+पूर्ण
 EXPORT_SYMBOL_GPL(sock_diag_put_meminfo);
 
-int sock_diag_put_filterinfo(bool may_report_filterinfo, struct sock *sk,
-			     struct sk_buff *skb, int attrtype)
-{
-	struct sock_fprog_kern *fprog;
-	struct sk_filter *filter;
-	struct nlattr *attr;
-	unsigned int flen;
-	int err = 0;
+पूर्णांक sock_diag_put_filterinfo(bool may_report_filterinfo, काष्ठा sock *sk,
+			     काष्ठा sk_buff *skb, पूर्णांक attrtype)
+अणु
+	काष्ठा sock_fprog_kern *fprog;
+	काष्ठा sk_filter *filter;
+	काष्ठा nlattr *attr;
+	अचिन्हित पूर्णांक flen;
+	पूर्णांक err = 0;
 
-	if (!may_report_filterinfo) {
+	अगर (!may_report_filterinfo) अणु
 		nla_reserve(skb, attrtype, 0);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	filter = rcu_dereference(sk->sk_filter);
-	if (!filter)
-		goto out;
+	अगर (!filter)
+		जाओ out;
 
 	fprog = filter->prog->orig_prog;
-	if (!fprog)
-		goto out;
+	अगर (!fprog)
+		जाओ out;
 
 	flen = bpf_classic_proglen(fprog);
 
 	attr = nla_reserve(skb, attrtype, flen);
-	if (attr == NULL) {
+	अगर (attr == शून्य) अणु
 		err = -EMSGSIZE;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	memcpy(nla_data(attr), fprog->filter, flen);
+	स_नकल(nla_data(attr), fprog->filter, flen);
 out:
-	rcu_read_unlock();
-	return err;
-}
+	rcu_पढ़ो_unlock();
+	वापस err;
+पूर्ण
 EXPORT_SYMBOL(sock_diag_put_filterinfo);
 
-struct broadcast_sk {
-	struct sock *sk;
-	struct work_struct work;
-};
+काष्ठा broadcast_sk अणु
+	काष्ठा sock *sk;
+	काष्ठा work_काष्ठा work;
+पूर्ण;
 
-static size_t sock_diag_nlmsg_size(void)
-{
-	return NLMSG_ALIGN(sizeof(struct inet_diag_msg)
-	       + nla_total_size(sizeof(u8)) /* INET_DIAG_PROTOCOL */
-	       + nla_total_size_64bit(sizeof(struct tcp_info))); /* INET_DIAG_INFO */
-}
+अटल माप_प्रकार sock_diag_nlmsg_size(व्योम)
+अणु
+	वापस NLMSG_ALIGN(माप(काष्ठा inet_diag_msg)
+	       + nla_total_size(माप(u8)) /* INET_DIAG_PROTOCOL */
+	       + nla_total_size_64bit(माप(काष्ठा tcp_info))); /* INET_DIAG_INFO */
+पूर्ण
 
-static void sock_diag_broadcast_destroy_work(struct work_struct *work)
-{
-	struct broadcast_sk *bsk =
-		container_of(work, struct broadcast_sk, work);
-	struct sock *sk = bsk->sk;
-	const struct sock_diag_handler *hndl;
-	struct sk_buff *skb;
-	const enum sknetlink_groups group = sock_diag_destroy_group(sk);
-	int err = -1;
+अटल व्योम sock_diag_broadcast_destroy_work(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा broadcast_sk *bsk =
+		container_of(work, काष्ठा broadcast_sk, work);
+	काष्ठा sock *sk = bsk->sk;
+	स्थिर काष्ठा sock_diag_handler *hndl;
+	काष्ठा sk_buff *skb;
+	स्थिर क्रमागत sknetlink_groups group = sock_diag_destroy_group(sk);
+	पूर्णांक err = -1;
 
 	WARN_ON(group == SKNLGRP_NONE);
 
 	skb = nlmsg_new(sock_diag_nlmsg_size(), GFP_KERNEL);
-	if (!skb)
-		goto out;
+	अगर (!skb)
+		जाओ out;
 
 	mutex_lock(&sock_diag_table_mutex);
 	hndl = sock_diag_handlers[sk->sk_family];
-	if (hndl && hndl->get_info)
+	अगर (hndl && hndl->get_info)
 		err = hndl->get_info(skb, sk);
 	mutex_unlock(&sock_diag_table_mutex);
 
-	if (!err)
+	अगर (!err)
 		nlmsg_multicast(sock_net(sk)->diag_nlsk, skb, 0, group,
 				GFP_KERNEL);
-	else
-		kfree_skb(skb);
+	अन्यथा
+		kमुक्त_skb(skb);
 out:
-	sk_destruct(sk);
-	kfree(bsk);
-}
+	sk_deकाष्ठा(sk);
+	kमुक्त(bsk);
+पूर्ण
 
-void sock_diag_broadcast_destroy(struct sock *sk)
-{
-	/* Note, this function is often called from an interrupt context. */
-	struct broadcast_sk *bsk =
-		kmalloc(sizeof(struct broadcast_sk), GFP_ATOMIC);
-	if (!bsk)
-		return sk_destruct(sk);
+व्योम sock_diag_broadcast_destroy(काष्ठा sock *sk)
+अणु
+	/* Note, this function is often called from an पूर्णांकerrupt context. */
+	काष्ठा broadcast_sk *bsk =
+		kदो_स्मृति(माप(काष्ठा broadcast_sk), GFP_ATOMIC);
+	अगर (!bsk)
+		वापस sk_deकाष्ठा(sk);
 	bsk->sk = sk;
 	INIT_WORK(&bsk->work, sock_diag_broadcast_destroy_work);
 	queue_work(broadcast_wq, &bsk->work);
-}
+पूर्ण
 
-void sock_diag_register_inet_compat(int (*fn)(struct sk_buff *skb, struct nlmsghdr *nlh))
-{
+व्योम sock_diag_रेजिस्टर_inet_compat(पूर्णांक (*fn)(काष्ठा sk_buff *skb, काष्ठा nlmsghdr *nlh))
+अणु
 	mutex_lock(&sock_diag_table_mutex);
 	inet_rcv_compat = fn;
 	mutex_unlock(&sock_diag_table_mutex);
-}
-EXPORT_SYMBOL_GPL(sock_diag_register_inet_compat);
+पूर्ण
+EXPORT_SYMBOL_GPL(sock_diag_रेजिस्टर_inet_compat);
 
-void sock_diag_unregister_inet_compat(int (*fn)(struct sk_buff *skb, struct nlmsghdr *nlh))
-{
+व्योम sock_diag_unरेजिस्टर_inet_compat(पूर्णांक (*fn)(काष्ठा sk_buff *skb, काष्ठा nlmsghdr *nlh))
+अणु
 	mutex_lock(&sock_diag_table_mutex);
-	inet_rcv_compat = NULL;
+	inet_rcv_compat = शून्य;
 	mutex_unlock(&sock_diag_table_mutex);
-}
-EXPORT_SYMBOL_GPL(sock_diag_unregister_inet_compat);
+पूर्ण
+EXPORT_SYMBOL_GPL(sock_diag_unरेजिस्टर_inet_compat);
 
-int sock_diag_register(const struct sock_diag_handler *hndl)
-{
-	int err = 0;
+पूर्णांक sock_diag_रेजिस्टर(स्थिर काष्ठा sock_diag_handler *hndl)
+अणु
+	पूर्णांक err = 0;
 
-	if (hndl->family >= AF_MAX)
-		return -EINVAL;
+	अगर (hndl->family >= AF_MAX)
+		वापस -EINVAL;
 
 	mutex_lock(&sock_diag_table_mutex);
-	if (sock_diag_handlers[hndl->family])
+	अगर (sock_diag_handlers[hndl->family])
 		err = -EBUSY;
-	else
+	अन्यथा
 		sock_diag_handlers[hndl->family] = hndl;
 	mutex_unlock(&sock_diag_table_mutex);
 
-	return err;
-}
-EXPORT_SYMBOL_GPL(sock_diag_register);
+	वापस err;
+पूर्ण
+EXPORT_SYMBOL_GPL(sock_diag_रेजिस्टर);
 
-void sock_diag_unregister(const struct sock_diag_handler *hnld)
-{
-	int family = hnld->family;
+व्योम sock_diag_unरेजिस्टर(स्थिर काष्ठा sock_diag_handler *hnld)
+अणु
+	पूर्णांक family = hnld->family;
 
-	if (family >= AF_MAX)
-		return;
+	अगर (family >= AF_MAX)
+		वापस;
 
 	mutex_lock(&sock_diag_table_mutex);
 	BUG_ON(sock_diag_handlers[family] != hnld);
-	sock_diag_handlers[family] = NULL;
+	sock_diag_handlers[family] = शून्य;
 	mutex_unlock(&sock_diag_table_mutex);
-}
-EXPORT_SYMBOL_GPL(sock_diag_unregister);
+पूर्ण
+EXPORT_SYMBOL_GPL(sock_diag_unरेजिस्टर);
 
-static int __sock_diag_cmd(struct sk_buff *skb, struct nlmsghdr *nlh)
-{
-	int err;
-	struct sock_diag_req *req = nlmsg_data(nlh);
-	const struct sock_diag_handler *hndl;
+अटल पूर्णांक __sock_diag_cmd(काष्ठा sk_buff *skb, काष्ठा nlmsghdr *nlh)
+अणु
+	पूर्णांक err;
+	काष्ठा sock_diag_req *req = nlmsg_data(nlh);
+	स्थिर काष्ठा sock_diag_handler *hndl;
 
-	if (nlmsg_len(nlh) < sizeof(*req))
-		return -EINVAL;
+	अगर (nlmsg_len(nlh) < माप(*req))
+		वापस -EINVAL;
 
-	if (req->sdiag_family >= AF_MAX)
-		return -EINVAL;
+	अगर (req->sdiag_family >= AF_MAX)
+		वापस -EINVAL;
 	req->sdiag_family = array_index_nospec(req->sdiag_family, AF_MAX);
 
-	if (sock_diag_handlers[req->sdiag_family] == NULL)
+	अगर (sock_diag_handlers[req->sdiag_family] == शून्य)
 		sock_load_diag_module(req->sdiag_family, 0);
 
 	mutex_lock(&sock_diag_table_mutex);
 	hndl = sock_diag_handlers[req->sdiag_family];
-	if (hndl == NULL)
+	अगर (hndl == शून्य)
 		err = -ENOENT;
-	else if (nlh->nlmsg_type == SOCK_DIAG_BY_FAMILY)
+	अन्यथा अगर (nlh->nlmsg_type == SOCK_DIAG_BY_FAMILY)
 		err = hndl->dump(skb, nlh);
-	else if (nlh->nlmsg_type == SOCK_DESTROY && hndl->destroy)
+	अन्यथा अगर (nlh->nlmsg_type == SOCK_DESTROY && hndl->destroy)
 		err = hndl->destroy(skb, nlh);
-	else
+	अन्यथा
 		err = -EOPNOTSUPP;
 	mutex_unlock(&sock_diag_table_mutex);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int sock_diag_rcv_msg(struct sk_buff *skb, struct nlmsghdr *nlh,
-			     struct netlink_ext_ack *extack)
-{
-	int ret;
+अटल पूर्णांक sock_diag_rcv_msg(काष्ठा sk_buff *skb, काष्ठा nlmsghdr *nlh,
+			     काष्ठा netlink_ext_ack *extack)
+अणु
+	पूर्णांक ret;
 
-	switch (nlh->nlmsg_type) {
-	case TCPDIAG_GETSOCK:
-	case DCCPDIAG_GETSOCK:
-		if (inet_rcv_compat == NULL)
+	चयन (nlh->nlmsg_type) अणु
+	हाल TCPDIAG_GETSOCK:
+	हाल DCCPDIAG_GETSOCK:
+		अगर (inet_rcv_compat == शून्य)
 			sock_load_diag_module(AF_INET, 0);
 
 		mutex_lock(&sock_diag_table_mutex);
-		if (inet_rcv_compat != NULL)
+		अगर (inet_rcv_compat != शून्य)
 			ret = inet_rcv_compat(skb, nlh);
-		else
+		अन्यथा
 			ret = -EOPNOTSUPP;
 		mutex_unlock(&sock_diag_table_mutex);
 
-		return ret;
-	case SOCK_DIAG_BY_FAMILY:
-	case SOCK_DESTROY:
-		return __sock_diag_cmd(skb, nlh);
-	default:
-		return -EINVAL;
-	}
-}
+		वापस ret;
+	हाल SOCK_DIAG_BY_FAMILY:
+	हाल SOCK_DESTROY:
+		वापस __sock_diag_cmd(skb, nlh);
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+पूर्ण
 
-static DEFINE_MUTEX(sock_diag_mutex);
+अटल DEFINE_MUTEX(sock_diag_mutex);
 
-static void sock_diag_rcv(struct sk_buff *skb)
-{
+अटल व्योम sock_diag_rcv(काष्ठा sk_buff *skb)
+अणु
 	mutex_lock(&sock_diag_mutex);
 	netlink_rcv_skb(skb, &sock_diag_rcv_msg);
 	mutex_unlock(&sock_diag_mutex);
-}
+पूर्ण
 
-static int sock_diag_bind(struct net *net, int group)
-{
-	switch (group) {
-	case SKNLGRP_INET_TCP_DESTROY:
-	case SKNLGRP_INET_UDP_DESTROY:
-		if (!sock_diag_handlers[AF_INET])
+अटल पूर्णांक sock_diag_bind(काष्ठा net *net, पूर्णांक group)
+अणु
+	चयन (group) अणु
+	हाल SKNLGRP_INET_TCP_DESTROY:
+	हाल SKNLGRP_INET_UDP_DESTROY:
+		अगर (!sock_diag_handlers[AF_INET])
 			sock_load_diag_module(AF_INET, 0);
-		break;
-	case SKNLGRP_INET6_TCP_DESTROY:
-	case SKNLGRP_INET6_UDP_DESTROY:
-		if (!sock_diag_handlers[AF_INET6])
+		अवरोध;
+	हाल SKNLGRP_INET6_TCP_DESTROY:
+	हाल SKNLGRP_INET6_UDP_DESTROY:
+		अगर (!sock_diag_handlers[AF_INET6])
 			sock_load_diag_module(AF_INET6, 0);
-		break;
-	}
-	return 0;
-}
+		अवरोध;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-int sock_diag_destroy(struct sock *sk, int err)
-{
-	if (!ns_capable(sock_net(sk)->user_ns, CAP_NET_ADMIN))
-		return -EPERM;
+पूर्णांक sock_diag_destroy(काष्ठा sock *sk, पूर्णांक err)
+अणु
+	अगर (!ns_capable(sock_net(sk)->user_ns, CAP_NET_ADMIN))
+		वापस -EPERM;
 
-	if (!sk->sk_prot->diag_destroy)
-		return -EOPNOTSUPP;
+	अगर (!sk->sk_prot->diag_destroy)
+		वापस -EOPNOTSUPP;
 
-	return sk->sk_prot->diag_destroy(sk, err);
-}
+	वापस sk->sk_prot->diag_destroy(sk, err);
+पूर्ण
 EXPORT_SYMBOL_GPL(sock_diag_destroy);
 
-static int __net_init diag_net_init(struct net *net)
-{
-	struct netlink_kernel_cfg cfg = {
+अटल पूर्णांक __net_init diag_net_init(काष्ठा net *net)
+अणु
+	काष्ठा netlink_kernel_cfg cfg = अणु
 		.groups	= SKNLGRP_MAX,
 		.input	= sock_diag_rcv,
 		.bind	= sock_diag_bind,
 		.flags	= NL_CFG_F_NONROOT_RECV,
-	};
+	पूर्ण;
 
 	net->diag_nlsk = netlink_kernel_create(net, NETLINK_SOCK_DIAG, &cfg);
-	return net->diag_nlsk == NULL ? -ENOMEM : 0;
-}
+	वापस net->diag_nlsk == शून्य ? -ENOMEM : 0;
+पूर्ण
 
-static void __net_exit diag_net_exit(struct net *net)
-{
+अटल व्योम __net_निकास diag_net_निकास(काष्ठा net *net)
+अणु
 	netlink_kernel_release(net->diag_nlsk);
-	net->diag_nlsk = NULL;
-}
+	net->diag_nlsk = शून्य;
+पूर्ण
 
-static struct pernet_operations diag_net_ops = {
+अटल काष्ठा pernet_operations diag_net_ops = अणु
 	.init = diag_net_init,
-	.exit = diag_net_exit,
-};
+	.निकास = diag_net_निकास,
+पूर्ण;
 
-static int __init sock_diag_init(void)
-{
+अटल पूर्णांक __init sock_diag_init(व्योम)
+अणु
 	broadcast_wq = alloc_workqueue("sock_diag_events", 0, 0);
 	BUG_ON(!broadcast_wq);
-	return register_pernet_subsys(&diag_net_ops);
-}
+	वापस रेजिस्टर_pernet_subsys(&diag_net_ops);
+पूर्ण
 device_initcall(sock_diag_init);

@@ -1,40 +1,41 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /* scm.c - Socket level control messages processing.
  *
  * Author:	Alexey Kuznetsov, <kuznet@ms2.inr.ac.ru>
  *              Alignment and value checking mods by Craig Metz
  */
 
-#include <linux/module.h>
-#include <linux/signal.h>
-#include <linux/capability.h>
-#include <linux/errno.h>
-#include <linux/sched.h>
-#include <linux/sched/user.h>
-#include <linux/mm.h>
-#include <linux/kernel.h>
-#include <linux/stat.h>
-#include <linux/socket.h>
-#include <linux/file.h>
-#include <linux/fcntl.h>
-#include <linux/net.h>
-#include <linux/interrupt.h>
-#include <linux/netdevice.h>
-#include <linux/security.h>
-#include <linux/pid_namespace.h>
-#include <linux/pid.h>
-#include <linux/nsproxy.h>
-#include <linux/slab.h>
-#include <linux/errqueue.h>
+#समावेश <linux/module.h>
+#समावेश <linux/संकेत.स>
+#समावेश <linux/capability.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/sched.h>
+#समावेश <linux/sched/user.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/स्थिति.स>
+#समावेश <linux/socket.h>
+#समावेश <linux/file.h>
+#समावेश <linux/fcntl.h>
+#समावेश <linux/net.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/security.h>
+#समावेश <linux/pid_namespace.h>
+#समावेश <linux/pid.h>
+#समावेश <linux/nsproxy.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/errqueue.h>
 
-#include <linux/uaccess.h>
+#समावेश <linux/uaccess.h>
 
-#include <net/protocol.h>
-#include <linux/skbuff.h>
-#include <net/sock.h>
-#include <net/compat.h>
-#include <net/scm.h>
-#include <net/cls_cgroup.h>
+#समावेश <net/protocol.h>
+#समावेश <linux/skbuff.h>
+#समावेश <net/sock.h>
+#समावेश <net/compat.h>
+#समावेश <net/scm.h>
+#समावेश <net/cls_cgroup.h>
 
 
 /*
@@ -42,326 +43,326 @@
  *	setu(g)id.
  */
 
-static __inline__ int scm_check_creds(struct ucred *creds)
-{
-	const struct cred *cred = current_cred();
+अटल __अंतरभूत__ पूर्णांक scm_check_creds(काष्ठा ucred *creds)
+अणु
+	स्थिर काष्ठा cred *cred = current_cred();
 	kuid_t uid = make_kuid(cred->user_ns, creds->uid);
 	kgid_t gid = make_kgid(cred->user_ns, creds->gid);
 
-	if (!uid_valid(uid) || !gid_valid(gid))
-		return -EINVAL;
+	अगर (!uid_valid(uid) || !gid_valid(gid))
+		वापस -EINVAL;
 
-	if ((creds->pid == task_tgid_vnr(current) ||
+	अगर ((creds->pid == task_tgid_vnr(current) ||
 	     ns_capable(task_active_pid_ns(current)->user_ns, CAP_SYS_ADMIN)) &&
 	    ((uid_eq(uid, cred->uid)   || uid_eq(uid, cred->euid) ||
 	      uid_eq(uid, cred->suid)) || ns_capable(cred->user_ns, CAP_SETUID)) &&
 	    ((gid_eq(gid, cred->gid)   || gid_eq(gid, cred->egid) ||
-	      gid_eq(gid, cred->sgid)) || ns_capable(cred->user_ns, CAP_SETGID))) {
-	       return 0;
-	}
-	return -EPERM;
-}
+	      gid_eq(gid, cred->sgid)) || ns_capable(cred->user_ns, CAP_SETGID))) अणु
+	       वापस 0;
+	पूर्ण
+	वापस -EPERM;
+पूर्ण
 
-static int scm_fp_copy(struct cmsghdr *cmsg, struct scm_fp_list **fplp)
-{
-	int *fdp = (int*)CMSG_DATA(cmsg);
-	struct scm_fp_list *fpl = *fplp;
-	struct file **fpp;
-	int i, num;
+अटल पूर्णांक scm_fp_copy(काष्ठा cmsghdr *cmsg, काष्ठा scm_fp_list **fplp)
+अणु
+	पूर्णांक *fdp = (पूर्णांक*)CMSG_DATA(cmsg);
+	काष्ठा scm_fp_list *fpl = *fplp;
+	काष्ठा file **fpp;
+	पूर्णांक i, num;
 
-	num = (cmsg->cmsg_len - sizeof(struct cmsghdr))/sizeof(int);
+	num = (cmsg->cmsg_len - माप(काष्ठा cmsghdr))/माप(पूर्णांक);
 
-	if (num <= 0)
-		return 0;
+	अगर (num <= 0)
+		वापस 0;
 
-	if (num > SCM_MAX_FD)
-		return -EINVAL;
+	अगर (num > SCM_MAX_FD)
+		वापस -EINVAL;
 
-	if (!fpl)
-	{
-		fpl = kmalloc(sizeof(struct scm_fp_list), GFP_KERNEL);
-		if (!fpl)
-			return -ENOMEM;
+	अगर (!fpl)
+	अणु
+		fpl = kदो_स्मृति(माप(काष्ठा scm_fp_list), GFP_KERNEL);
+		अगर (!fpl)
+			वापस -ENOMEM;
 		*fplp = fpl;
 		fpl->count = 0;
 		fpl->max = SCM_MAX_FD;
-		fpl->user = NULL;
-	}
+		fpl->user = शून्य;
+	पूर्ण
 	fpp = &fpl->fp[fpl->count];
 
-	if (fpl->count + num > fpl->max)
-		return -EINVAL;
+	अगर (fpl->count + num > fpl->max)
+		वापस -EINVAL;
 
 	/*
-	 *	Verify the descriptors and increment the usage count.
+	 *	Verअगरy the descriptors and increment the usage count.
 	 */
 
-	for (i=0; i< num; i++)
-	{
-		int fd = fdp[i];
-		struct file *file;
+	क्रम (i=0; i< num; i++)
+	अणु
+		पूर्णांक fd = fdp[i];
+		काष्ठा file *file;
 
-		if (fd < 0 || !(file = fget_raw(fd)))
-			return -EBADF;
+		अगर (fd < 0 || !(file = fget_raw(fd)))
+			वापस -EBADF;
 		*fpp++ = file;
 		fpl->count++;
-	}
+	पूर्ण
 
-	if (!fpl->user)
+	अगर (!fpl->user)
 		fpl->user = get_uid(current_user());
 
-	return num;
-}
+	वापस num;
+पूर्ण
 
-void __scm_destroy(struct scm_cookie *scm)
-{
-	struct scm_fp_list *fpl = scm->fp;
-	int i;
+व्योम __scm_destroy(काष्ठा scm_cookie *scm)
+अणु
+	काष्ठा scm_fp_list *fpl = scm->fp;
+	पूर्णांक i;
 
-	if (fpl) {
-		scm->fp = NULL;
-		for (i=fpl->count-1; i>=0; i--)
+	अगर (fpl) अणु
+		scm->fp = शून्य;
+		क्रम (i=fpl->count-1; i>=0; i--)
 			fput(fpl->fp[i]);
-		free_uid(fpl->user);
-		kfree(fpl);
-	}
-}
+		मुक्त_uid(fpl->user);
+		kमुक्त(fpl);
+	पूर्ण
+पूर्ण
 EXPORT_SYMBOL(__scm_destroy);
 
-int __scm_send(struct socket *sock, struct msghdr *msg, struct scm_cookie *p)
-{
-	struct cmsghdr *cmsg;
-	int err;
+पूर्णांक __scm_send(काष्ठा socket *sock, काष्ठा msghdr *msg, काष्ठा scm_cookie *p)
+अणु
+	काष्ठा cmsghdr *cmsg;
+	पूर्णांक err;
 
-	for_each_cmsghdr(cmsg, msg) {
+	क्रम_each_cmsghdr(cmsg, msg) अणु
 		err = -EINVAL;
 
-		/* Verify that cmsg_len is at least sizeof(struct cmsghdr) */
+		/* Verअगरy that cmsg_len is at least माप(काष्ठा cmsghdr) */
 		/* The first check was omitted in <= 2.2.5. The reasoning was
-		   that parser checks cmsg_len in any case, so that
+		   that parser checks cmsg_len in any हाल, so that
 		   additional check would be work duplication.
-		   But if cmsg_level is not SOL_SOCKET, we do not check
-		   for too short ancillary data object at all! Oops.
+		   But अगर cmsg_level is not SOL_SOCKET, we करो not check
+		   क्रम too लघु ancillary data object at all! Oops.
 		   OK, let's add it...
 		 */
-		if (!CMSG_OK(msg, cmsg))
-			goto error;
+		अगर (!CMSG_OK(msg, cmsg))
+			जाओ error;
 
-		if (cmsg->cmsg_level != SOL_SOCKET)
-			continue;
+		अगर (cmsg->cmsg_level != SOL_SOCKET)
+			जारी;
 
-		switch (cmsg->cmsg_type)
-		{
-		case SCM_RIGHTS:
-			if (!sock->ops || sock->ops->family != PF_UNIX)
-				goto error;
+		चयन (cmsg->cmsg_type)
+		अणु
+		हाल SCM_RIGHTS:
+			अगर (!sock->ops || sock->ops->family != PF_UNIX)
+				जाओ error;
 			err=scm_fp_copy(cmsg, &p->fp);
-			if (err<0)
-				goto error;
-			break;
-		case SCM_CREDENTIALS:
-		{
-			struct ucred creds;
+			अगर (err<0)
+				जाओ error;
+			अवरोध;
+		हाल SCM_CREDENTIALS:
+		अणु
+			काष्ठा ucred creds;
 			kuid_t uid;
 			kgid_t gid;
-			if (cmsg->cmsg_len != CMSG_LEN(sizeof(struct ucred)))
-				goto error;
-			memcpy(&creds, CMSG_DATA(cmsg), sizeof(struct ucred));
+			अगर (cmsg->cmsg_len != CMSG_LEN(माप(काष्ठा ucred)))
+				जाओ error;
+			स_नकल(&creds, CMSG_DATA(cmsg), माप(काष्ठा ucred));
 			err = scm_check_creds(&creds);
-			if (err)
-				goto error;
+			अगर (err)
+				जाओ error;
 
 			p->creds.pid = creds.pid;
-			if (!p->pid || pid_vnr(p->pid) != creds.pid) {
-				struct pid *pid;
+			अगर (!p->pid || pid_vnr(p->pid) != creds.pid) अणु
+				काष्ठा pid *pid;
 				err = -ESRCH;
 				pid = find_get_pid(creds.pid);
-				if (!pid)
-					goto error;
+				अगर (!pid)
+					जाओ error;
 				put_pid(p->pid);
 				p->pid = pid;
-			}
+			पूर्ण
 
 			err = -EINVAL;
 			uid = make_kuid(current_user_ns(), creds.uid);
 			gid = make_kgid(current_user_ns(), creds.gid);
-			if (!uid_valid(uid) || !gid_valid(gid))
-				goto error;
+			अगर (!uid_valid(uid) || !gid_valid(gid))
+				जाओ error;
 
 			p->creds.uid = uid;
 			p->creds.gid = gid;
-			break;
-		}
-		default:
-			goto error;
-		}
-	}
+			अवरोध;
+		पूर्ण
+		शेष:
+			जाओ error;
+		पूर्ण
+	पूर्ण
 
-	if (p->fp && !p->fp->count)
-	{
-		kfree(p->fp);
-		p->fp = NULL;
-	}
-	return 0;
+	अगर (p->fp && !p->fp->count)
+	अणु
+		kमुक्त(p->fp);
+		p->fp = शून्य;
+	पूर्ण
+	वापस 0;
 
 error:
 	scm_destroy(p);
-	return err;
-}
+	वापस err;
+पूर्ण
 EXPORT_SYMBOL(__scm_send);
 
-int put_cmsg(struct msghdr * msg, int level, int type, int len, void *data)
-{
-	int cmlen = CMSG_LEN(len);
+पूर्णांक put_cmsg(काष्ठा msghdr * msg, पूर्णांक level, पूर्णांक type, पूर्णांक len, व्योम *data)
+अणु
+	पूर्णांक cmlen = CMSG_LEN(len);
 
-	if (msg->msg_flags & MSG_CMSG_COMPAT)
-		return put_cmsg_compat(msg, level, type, len, data);
+	अगर (msg->msg_flags & MSG_CMSG_COMPAT)
+		वापस put_cmsg_compat(msg, level, type, len, data);
 
-	if (!msg->msg_control || msg->msg_controllen < sizeof(struct cmsghdr)) {
+	अगर (!msg->msg_control || msg->msg_controllen < माप(काष्ठा cmsghdr)) अणु
 		msg->msg_flags |= MSG_CTRUNC;
-		return 0; /* XXX: return error? check spec. */
-	}
-	if (msg->msg_controllen < cmlen) {
+		वापस 0; /* XXX: वापस error? check spec. */
+	पूर्ण
+	अगर (msg->msg_controllen < cmlen) अणु
 		msg->msg_flags |= MSG_CTRUNC;
 		cmlen = msg->msg_controllen;
-	}
+	पूर्ण
 
-	if (msg->msg_control_is_user) {
-		struct cmsghdr __user *cm = msg->msg_control_user;
+	अगर (msg->msg_control_is_user) अणु
+		काष्ठा cmsghdr __user *cm = msg->msg_control_user;
 
-		if (!user_write_access_begin(cm, cmlen))
-			goto efault;
+		अगर (!user_ग_लिखो_access_begin(cm, cmlen))
+			जाओ efault;
 
 		unsafe_put_user(cmlen, &cm->cmsg_len, efault_end);
 		unsafe_put_user(level, &cm->cmsg_level, efault_end);
 		unsafe_put_user(type, &cm->cmsg_type, efault_end);
 		unsafe_copy_to_user(CMSG_USER_DATA(cm), data,
-				    cmlen - sizeof(*cm), efault_end);
-		user_write_access_end();
-	} else {
-		struct cmsghdr *cm = msg->msg_control;
+				    cmlen - माप(*cm), efault_end);
+		user_ग_लिखो_access_end();
+	पूर्ण अन्यथा अणु
+		काष्ठा cmsghdr *cm = msg->msg_control;
 
 		cm->cmsg_level = level;
 		cm->cmsg_type = type;
 		cm->cmsg_len = cmlen;
-		memcpy(CMSG_DATA(cm), data, cmlen - sizeof(*cm));
-	}
+		स_नकल(CMSG_DATA(cm), data, cmlen - माप(*cm));
+	पूर्ण
 
 	cmlen = min(CMSG_SPACE(len), msg->msg_controllen);
 	msg->msg_control += cmlen;
 	msg->msg_controllen -= cmlen;
-	return 0;
+	वापस 0;
 
 efault_end:
-	user_write_access_end();
+	user_ग_लिखो_access_end();
 efault:
-	return -EFAULT;
-}
+	वापस -EFAULT;
+पूर्ण
 EXPORT_SYMBOL(put_cmsg);
 
-void put_cmsg_scm_timestamping64(struct msghdr *msg, struct scm_timestamping_internal *tss_internal)
-{
-	struct scm_timestamping64 tss;
-	int i;
+व्योम put_cmsg_scm_बारtamping64(काष्ठा msghdr *msg, काष्ठा scm_बारtamping_पूर्णांकernal *tss_पूर्णांकernal)
+अणु
+	काष्ठा scm_बारtamping64 tss;
+	पूर्णांक i;
 
-	for (i = 0; i < ARRAY_SIZE(tss.ts); i++) {
-		tss.ts[i].tv_sec = tss_internal->ts[i].tv_sec;
-		tss.ts[i].tv_nsec = tss_internal->ts[i].tv_nsec;
-	}
+	क्रम (i = 0; i < ARRAY_SIZE(tss.ts); i++) अणु
+		tss.ts[i].tv_sec = tss_पूर्णांकernal->ts[i].tv_sec;
+		tss.ts[i].tv_nsec = tss_पूर्णांकernal->ts[i].tv_nsec;
+	पूर्ण
 
-	put_cmsg(msg, SOL_SOCKET, SO_TIMESTAMPING_NEW, sizeof(tss), &tss);
-}
-EXPORT_SYMBOL(put_cmsg_scm_timestamping64);
+	put_cmsg(msg, SOL_SOCKET, SO_TIMESTAMPING_NEW, माप(tss), &tss);
+पूर्ण
+EXPORT_SYMBOL(put_cmsg_scm_बारtamping64);
 
-void put_cmsg_scm_timestamping(struct msghdr *msg, struct scm_timestamping_internal *tss_internal)
-{
-	struct scm_timestamping tss;
-	int i;
+व्योम put_cmsg_scm_बारtamping(काष्ठा msghdr *msg, काष्ठा scm_बारtamping_पूर्णांकernal *tss_पूर्णांकernal)
+अणु
+	काष्ठा scm_बारtamping tss;
+	पूर्णांक i;
 
-	for (i = 0; i < ARRAY_SIZE(tss.ts); i++) {
-		tss.ts[i].tv_sec = tss_internal->ts[i].tv_sec;
-		tss.ts[i].tv_nsec = tss_internal->ts[i].tv_nsec;
-	}
+	क्रम (i = 0; i < ARRAY_SIZE(tss.ts); i++) अणु
+		tss.ts[i].tv_sec = tss_पूर्णांकernal->ts[i].tv_sec;
+		tss.ts[i].tv_nsec = tss_पूर्णांकernal->ts[i].tv_nsec;
+	पूर्ण
 
-	put_cmsg(msg, SOL_SOCKET, SO_TIMESTAMPING_OLD, sizeof(tss), &tss);
-}
-EXPORT_SYMBOL(put_cmsg_scm_timestamping);
+	put_cmsg(msg, SOL_SOCKET, SO_TIMESTAMPING_OLD, माप(tss), &tss);
+पूर्ण
+EXPORT_SYMBOL(put_cmsg_scm_बारtamping);
 
-static int scm_max_fds(struct msghdr *msg)
-{
-	if (msg->msg_controllen <= sizeof(struct cmsghdr))
-		return 0;
-	return (msg->msg_controllen - sizeof(struct cmsghdr)) / sizeof(int);
-}
+अटल पूर्णांक scm_max_fds(काष्ठा msghdr *msg)
+अणु
+	अगर (msg->msg_controllen <= माप(काष्ठा cmsghdr))
+		वापस 0;
+	वापस (msg->msg_controllen - माप(काष्ठा cmsghdr)) / माप(पूर्णांक);
+पूर्ण
 
-void scm_detach_fds(struct msghdr *msg, struct scm_cookie *scm)
-{
-	struct cmsghdr __user *cm =
-		(__force struct cmsghdr __user *)msg->msg_control;
-	unsigned int o_flags = (msg->msg_flags & MSG_CMSG_CLOEXEC) ? O_CLOEXEC : 0;
-	int fdmax = min_t(int, scm_max_fds(msg), scm->fp->count);
-	int __user *cmsg_data = CMSG_USER_DATA(cm);
-	int err = 0, i;
+व्योम scm_detach_fds(काष्ठा msghdr *msg, काष्ठा scm_cookie *scm)
+अणु
+	काष्ठा cmsghdr __user *cm =
+		(__क्रमce काष्ठा cmsghdr __user *)msg->msg_control;
+	अचिन्हित पूर्णांक o_flags = (msg->msg_flags & MSG_CMSG_CLOEXEC) ? O_CLOEXEC : 0;
+	पूर्णांक fdmax = min_t(पूर्णांक, scm_max_fds(msg), scm->fp->count);
+	पूर्णांक __user *cmsg_data = CMSG_USER_DATA(cm);
+	पूर्णांक err = 0, i;
 
-	/* no use for FD passing from kernel space callers */
-	if (WARN_ON_ONCE(!msg->msg_control_is_user))
-		return;
+	/* no use क्रम FD passing from kernel space callers */
+	अगर (WARN_ON_ONCE(!msg->msg_control_is_user))
+		वापस;
 
-	if (msg->msg_flags & MSG_CMSG_COMPAT) {
+	अगर (msg->msg_flags & MSG_CMSG_COMPAT) अणु
 		scm_detach_fds_compat(msg, scm);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	for (i = 0; i < fdmax; i++) {
+	क्रम (i = 0; i < fdmax; i++) अणु
 		err = receive_fd_user(scm->fp->fp[i], cmsg_data + i, o_flags);
-		if (err < 0)
-			break;
-	}
+		अगर (err < 0)
+			अवरोध;
+	पूर्ण
 
-	if (i > 0) {
-		int cmlen = CMSG_LEN(i * sizeof(int));
+	अगर (i > 0) अणु
+		पूर्णांक cmlen = CMSG_LEN(i * माप(पूर्णांक));
 
 		err = put_user(SOL_SOCKET, &cm->cmsg_level);
-		if (!err)
+		अगर (!err)
 			err = put_user(SCM_RIGHTS, &cm->cmsg_type);
-		if (!err)
+		अगर (!err)
 			err = put_user(cmlen, &cm->cmsg_len);
-		if (!err) {
-			cmlen = CMSG_SPACE(i * sizeof(int));
-			if (msg->msg_controllen < cmlen)
+		अगर (!err) अणु
+			cmlen = CMSG_SPACE(i * माप(पूर्णांक));
+			अगर (msg->msg_controllen < cmlen)
 				cmlen = msg->msg_controllen;
 			msg->msg_control += cmlen;
 			msg->msg_controllen -= cmlen;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (i < scm->fp->count || (scm->fp->count && fdmax <= 0))
+	अगर (i < scm->fp->count || (scm->fp->count && fdmax <= 0))
 		msg->msg_flags |= MSG_CTRUNC;
 
 	/*
 	 * All of the files that fit in the message have had their usage counts
-	 * incremented, so we just free the list.
+	 * incremented, so we just मुक्त the list.
 	 */
 	__scm_destroy(scm);
-}
+पूर्ण
 EXPORT_SYMBOL(scm_detach_fds);
 
-struct scm_fp_list *scm_fp_dup(struct scm_fp_list *fpl)
-{
-	struct scm_fp_list *new_fpl;
-	int i;
+काष्ठा scm_fp_list *scm_fp_dup(काष्ठा scm_fp_list *fpl)
+अणु
+	काष्ठा scm_fp_list *new_fpl;
+	पूर्णांक i;
 
-	if (!fpl)
-		return NULL;
+	अगर (!fpl)
+		वापस शून्य;
 
-	new_fpl = kmemdup(fpl, offsetof(struct scm_fp_list, fp[fpl->count]),
+	new_fpl = kmemdup(fpl, दुरत्व(काष्ठा scm_fp_list, fp[fpl->count]),
 			  GFP_KERNEL);
-	if (new_fpl) {
-		for (i = 0; i < fpl->count; i++)
+	अगर (new_fpl) अणु
+		क्रम (i = 0; i < fpl->count; i++)
 			get_file(fpl->fp[i]);
 		new_fpl->max = new_fpl->count;
 		new_fpl->user = get_uid(fpl->user);
-	}
-	return new_fpl;
-}
+	पूर्ण
+	वापस new_fpl;
+पूर्ण
 EXPORT_SYMBOL(scm_fp_dup);

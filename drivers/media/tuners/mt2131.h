@@ -1,35 +1,36 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
- *  Driver for Microtune MT2131 "QAM/8VSB single chip tuner"
+ *  Driver क्रम Microtune MT2131 "QAM/8VSB single chip tuner"
  *
  *  Copyright (c) 2006 Steven Toth <stoth@linuxtv.org>
  */
 
-#ifndef __MT2131_H__
-#define __MT2131_H__
+#अगर_अघोषित __MT2131_H__
+#घोषणा __MT2131_H__
 
-struct dvb_frontend;
-struct i2c_adapter;
+काष्ठा dvb_frontend;
+काष्ठा i2c_adapter;
 
-struct mt2131_config {
+काष्ठा mt2131_config अणु
 	u8 i2c_address;
-	u8 clock_out; /* 0 = off, 1 = CLK/4, 2 = CLK/2, 3 = CLK/1 */
-};
+	u8 घड़ी_out; /* 0 = off, 1 = CLK/4, 2 = CLK/2, 3 = CLK/1 */
+पूर्ण;
 
-#if IS_REACHABLE(CONFIG_MEDIA_TUNER_MT2131)
-extern struct dvb_frontend* mt2131_attach(struct dvb_frontend *fe,
-					  struct i2c_adapter *i2c,
-					  struct mt2131_config *cfg,
-					  u16 if1);
-#else
-static inline struct dvb_frontend* mt2131_attach(struct dvb_frontend *fe,
-						 struct i2c_adapter *i2c,
-						 struct mt2131_config *cfg,
-						 u16 if1)
-{
-	printk(KERN_WARNING "%s: driver disabled by Kconfig\n", __func__);
-	return NULL;
-}
-#endif /* CONFIG_MEDIA_TUNER_MT2131 */
+#अगर IS_REACHABLE(CONFIG_MEDIA_TUNER_MT2131)
+बाह्य काष्ठा dvb_frontend* mt2131_attach(काष्ठा dvb_frontend *fe,
+					  काष्ठा i2c_adapter *i2c,
+					  काष्ठा mt2131_config *cfg,
+					  u16 अगर1);
+#अन्यथा
+अटल अंतरभूत काष्ठा dvb_frontend* mt2131_attach(काष्ठा dvb_frontend *fe,
+						 काष्ठा i2c_adapter *i2c,
+						 काष्ठा mt2131_config *cfg,
+						 u16 अगर1)
+अणु
+	prपूर्णांकk(KERN_WARNING "%s: driver disabled by Kconfig\n", __func__);
+	वापस शून्य;
+पूर्ण
+#पूर्ण_अगर /* CONFIG_MEDIA_TUNER_MT2131 */
 
-#endif /* __MT2131_H__ */
+#पूर्ण_अगर /* __MT2131_H__ */

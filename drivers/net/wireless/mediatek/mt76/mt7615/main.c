@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: ISC
+<शैली गुरु>
+// SPDX-License-Identअगरier: ISC
 /* Copyright (C) 2019 MediaTek Inc.
  *
  * Author: Roy Luo <royluo@google.com>
@@ -7,307 +8,307 @@
  *         Lorenzo Bianconi <lorenzo@kernel.org>
  */
 
-#include <linux/etherdevice.h>
-#include <linux/module.h>
-#include "mt7615.h"
-#include "mcu.h"
+#समावेश <linux/etherdevice.h>
+#समावेश <linux/module.h>
+#समावेश "mt7615.h"
+#समावेश "mcu.h"
 
-static bool mt7615_dev_running(struct mt7615_dev *dev)
-{
-	struct mt7615_phy *phy;
+अटल bool mt7615_dev_running(काष्ठा mt7615_dev *dev)
+अणु
+	काष्ठा mt7615_phy *phy;
 
-	if (test_bit(MT76_STATE_RUNNING, &dev->mphy.state))
-		return true;
+	अगर (test_bit(MT76_STATE_RUNNING, &dev->mphy.state))
+		वापस true;
 
 	phy = mt7615_ext_phy(dev);
 
-	return phy && test_bit(MT76_STATE_RUNNING, &phy->mt76->state);
-}
+	वापस phy && test_bit(MT76_STATE_RUNNING, &phy->mt76->state);
+पूर्ण
 
-static int mt7615_start(struct ieee80211_hw *hw)
-{
-	struct mt7615_dev *dev = mt7615_hw_dev(hw);
-	struct mt7615_phy *phy = mt7615_hw_phy(hw);
+अटल पूर्णांक mt7615_start(काष्ठा ieee80211_hw *hw)
+अणु
+	काष्ठा mt7615_dev *dev = mt7615_hw_dev(hw);
+	काष्ठा mt7615_phy *phy = mt7615_hw_phy(hw);
 	bool running;
-	int ret;
+	पूर्णांक ret;
 
-	if (!mt7615_wait_for_mcu_init(dev))
-		return -EIO;
+	अगर (!mt7615_रुको_क्रम_mcu_init(dev))
+		वापस -EIO;
 
 	mt7615_mutex_acquire(dev);
 
 	running = mt7615_dev_running(dev);
 
-	if (!running) {
+	अगर (!running) अणु
 		ret = mt7615_mcu_set_pm(dev, 0, 0);
-		if (ret)
-			goto out;
+		अगर (ret)
+			जाओ out;
 
 		ret = mt76_connac_mcu_set_mac_enable(&dev->mt76, 0, true, false);
-		if (ret)
-			goto out;
+		अगर (ret)
+			जाओ out;
 
 		mt7615_mac_enable_nf(dev, 0);
-	}
+	पूर्ण
 
-	if (phy != &dev->phy) {
+	अगर (phy != &dev->phy) अणु
 		ret = mt7615_mcu_set_pm(dev, 1, 0);
-		if (ret)
-			goto out;
+		अगर (ret)
+			जाओ out;
 
 		ret = mt76_connac_mcu_set_mac_enable(&dev->mt76, 1, true, false);
-		if (ret)
-			goto out;
+		अगर (ret)
+			जाओ out;
 
 		mt7615_mac_enable_nf(dev, 1);
-	}
+	पूर्ण
 
-	if (mt7615_firmware_offload(dev)) {
-		ret = mt76_connac_mcu_set_channel_domain(phy->mt76);
-		if (ret)
-			goto out;
+	अगर (mt7615_firmware_offload(dev)) अणु
+		ret = mt76_connac_mcu_set_channel_करोमुख्य(phy->mt76);
+		अगर (ret)
+			जाओ out;
 
-		ret = mt76_connac_mcu_set_rate_txpower(phy->mt76);
-		if (ret)
-			goto out;
-	}
+		ret = mt76_connac_mcu_set_rate_txघातer(phy->mt76);
+		अगर (ret)
+			जाओ out;
+	पूर्ण
 
 	ret = mt7615_mcu_set_chan_info(phy, MCU_EXT_CMD_SET_RX_PATH);
-	if (ret)
-		goto out;
+	अगर (ret)
+		जाओ out;
 
 	set_bit(MT76_STATE_RUNNING, &phy->mt76->state);
 
 	ieee80211_queue_delayed_work(hw, &phy->mt76->mac_work,
 				     MT7615_WATCHDOG_TIME);
 
-	if (!running)
+	अगर (!running)
 		mt7615_mac_reset_counters(dev);
 
 out:
 	mt7615_mutex_release(dev);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void mt7615_stop(struct ieee80211_hw *hw)
-{
-	struct mt7615_dev *dev = mt7615_hw_dev(hw);
-	struct mt7615_phy *phy = mt7615_hw_phy(hw);
+अटल व्योम mt7615_stop(काष्ठा ieee80211_hw *hw)
+अणु
+	काष्ठा mt7615_dev *dev = mt7615_hw_dev(hw);
+	काष्ठा mt7615_phy *phy = mt7615_hw_phy(hw);
 
 	cancel_delayed_work_sync(&phy->mt76->mac_work);
-	del_timer_sync(&phy->roc_timer);
+	del_समयr_sync(&phy->roc_समयr);
 	cancel_work_sync(&phy->roc_work);
 
 	cancel_delayed_work_sync(&dev->pm.ps_work);
 	cancel_work_sync(&dev->pm.wake_work);
 
-	mt76_connac_free_pending_tx_skbs(&dev->pm, NULL);
+	mt76_connac_मुक्त_pending_tx_skbs(&dev->pm, शून्य);
 
 	mt7615_mutex_acquire(dev);
 
-	mt76_testmode_reset(phy->mt76, true);
+	mt76_tesपंचांगode_reset(phy->mt76, true);
 
 	clear_bit(MT76_STATE_RUNNING, &phy->mt76->state);
 	cancel_delayed_work_sync(&phy->scan_work);
 
-	if (phy != &dev->phy) {
+	अगर (phy != &dev->phy) अणु
 		mt7615_mcu_set_pm(dev, 1, 1);
 		mt76_connac_mcu_set_mac_enable(&dev->mt76, 1, false, false);
-	}
+	पूर्ण
 
-	if (!mt7615_dev_running(dev)) {
+	अगर (!mt7615_dev_running(dev)) अणु
 		mt7615_mcu_set_pm(dev, 0, 1);
 		mt76_connac_mcu_set_mac_enable(&dev->mt76, 0, false, false);
-	}
+	पूर्ण
 
 	mt7615_mutex_release(dev);
-}
+पूर्ण
 
-static inline int get_free_idx(u32 mask, u8 start, u8 end)
-{
-	return ffs(~mask & GENMASK(end, start));
-}
+अटल अंतरभूत पूर्णांक get_मुक्त_idx(u32 mask, u8 start, u8 end)
+अणु
+	वापस ffs(~mask & GENMASK(end, start));
+पूर्ण
 
-static int get_omac_idx(enum nl80211_iftype type, u64 mask)
-{
-	int i;
+अटल पूर्णांक get_omac_idx(क्रमागत nl80211_अगरtype type, u64 mask)
+अणु
+	पूर्णांक i;
 
-	switch (type) {
-	case NL80211_IFTYPE_MESH_POINT:
-	case NL80211_IFTYPE_ADHOC:
-	case NL80211_IFTYPE_STATION:
+	चयन (type) अणु
+	हाल NL80211_IFTYPE_MESH_POINT:
+	हाल NL80211_IFTYPE_ADHOC:
+	हाल NL80211_IFTYPE_STATION:
 		/* prefer hw bssid slot 1-3 */
-		i = get_free_idx(mask, HW_BSSID_1, HW_BSSID_3);
-		if (i)
-			return i - 1;
+		i = get_मुक्त_idx(mask, HW_BSSID_1, HW_BSSID_3);
+		अगर (i)
+			वापस i - 1;
 
-		if (type != NL80211_IFTYPE_STATION)
-			break;
+		अगर (type != NL80211_IFTYPE_STATION)
+			अवरोध;
 
-		/* next, try to find a free repeater entry for the sta */
-		i = get_free_idx(mask >> REPEATER_BSSID_START, 0,
+		/* next, try to find a मुक्त repeater entry क्रम the sta */
+		i = get_मुक्त_idx(mask >> REPEATER_BSSID_START, 0,
 				 REPEATER_BSSID_MAX - REPEATER_BSSID_START);
-		if (i)
-			return i + 32 - 1;
+		अगर (i)
+			वापस i + 32 - 1;
 
-		i = get_free_idx(mask, EXT_BSSID_1, EXT_BSSID_MAX);
-		if (i)
-			return i - 1;
+		i = get_मुक्त_idx(mask, EXT_BSSID_1, EXT_BSSID_MAX);
+		अगर (i)
+			वापस i - 1;
 
-		if (~mask & BIT(HW_BSSID_0))
-			return HW_BSSID_0;
+		अगर (~mask & BIT(HW_BSSID_0))
+			वापस HW_BSSID_0;
 
-		break;
-	case NL80211_IFTYPE_MONITOR:
-	case NL80211_IFTYPE_AP:
+		अवरोध;
+	हाल NL80211_IFTYPE_MONITOR:
+	हाल NL80211_IFTYPE_AP:
 		/* ap uses hw bssid 0 and ext bssid */
-		if (~mask & BIT(HW_BSSID_0))
-			return HW_BSSID_0;
+		अगर (~mask & BIT(HW_BSSID_0))
+			वापस HW_BSSID_0;
 
-		i = get_free_idx(mask, EXT_BSSID_1, EXT_BSSID_MAX);
-		if (i)
-			return i - 1;
+		i = get_मुक्त_idx(mask, EXT_BSSID_1, EXT_BSSID_MAX);
+		अगर (i)
+			वापस i - 1;
 
-		break;
-	default:
+		अवरोध;
+	शेष:
 		WARN_ON(1);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return -1;
-}
+	वापस -1;
+पूर्ण
 
-static int mt7615_add_interface(struct ieee80211_hw *hw,
-				struct ieee80211_vif *vif)
-{
-	struct mt7615_vif *mvif = (struct mt7615_vif *)vif->drv_priv;
-	struct mt7615_dev *dev = mt7615_hw_dev(hw);
-	struct mt7615_phy *phy = mt7615_hw_phy(hw);
-	struct mt76_txq *mtxq;
+अटल पूर्णांक mt7615_add_पूर्णांकerface(काष्ठा ieee80211_hw *hw,
+				काष्ठा ieee80211_vअगर *vअगर)
+अणु
+	काष्ठा mt7615_vअगर *mvअगर = (काष्ठा mt7615_vअगर *)vअगर->drv_priv;
+	काष्ठा mt7615_dev *dev = mt7615_hw_dev(hw);
+	काष्ठा mt7615_phy *phy = mt7615_hw_phy(hw);
+	काष्ठा mt76_txq *mtxq;
 	bool ext_phy = phy != &dev->phy;
-	int idx, ret = 0;
+	पूर्णांक idx, ret = 0;
 
 	mt7615_mutex_acquire(dev);
 
-	mt76_testmode_reset(phy->mt76, true);
+	mt76_tesपंचांगode_reset(phy->mt76, true);
 
-	if (vif->type == NL80211_IFTYPE_MONITOR &&
-	    is_zero_ether_addr(vif->addr))
-		phy->monitor_vif = vif;
+	अगर (vअगर->type == NL80211_IFTYPE_MONITOR &&
+	    is_zero_ether_addr(vअगर->addr))
+		phy->monitor_vअगर = vअगर;
 
-	mvif->mt76.idx = ffs(~dev->mt76.vif_mask) - 1;
-	if (mvif->mt76.idx >= MT7615_MAX_INTERFACES) {
+	mvअगर->mt76.idx = ffs(~dev->mt76.vअगर_mask) - 1;
+	अगर (mvअगर->mt76.idx >= MT7615_MAX_INTERFACES) अणु
 		ret = -ENOSPC;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	idx = get_omac_idx(vif->type, dev->omac_mask);
-	if (idx < 0) {
+	idx = get_omac_idx(vअगर->type, dev->omac_mask);
+	अगर (idx < 0) अणु
 		ret = -ENOSPC;
-		goto out;
-	}
-	mvif->mt76.omac_idx = idx;
+		जाओ out;
+	पूर्ण
+	mvअगर->mt76.omac_idx = idx;
 
-	mvif->mt76.band_idx = ext_phy;
-	if (mt7615_ext_phy(dev))
-		mvif->mt76.wmm_idx = ext_phy * (MT7615_MAX_WMM_SETS / 2) +
-				mvif->mt76.idx % (MT7615_MAX_WMM_SETS / 2);
-	else
-		mvif->mt76.wmm_idx = mvif->mt76.idx % MT7615_MAX_WMM_SETS;
+	mvअगर->mt76.band_idx = ext_phy;
+	अगर (mt7615_ext_phy(dev))
+		mvअगर->mt76.wmm_idx = ext_phy * (MT7615_MAX_WMM_SETS / 2) +
+				mvअगर->mt76.idx % (MT7615_MAX_WMM_SETS / 2);
+	अन्यथा
+		mvअगर->mt76.wmm_idx = mvअगर->mt76.idx % MT7615_MAX_WMM_SETS;
 
-	dev->mt76.vif_mask |= BIT(mvif->mt76.idx);
-	dev->omac_mask |= BIT_ULL(mvif->mt76.omac_idx);
-	phy->omac_mask |= BIT_ULL(mvif->mt76.omac_idx);
+	dev->mt76.vअगर_mask |= BIT(mvअगर->mt76.idx);
+	dev->omac_mask |= BIT_ULL(mvअगर->mt76.omac_idx);
+	phy->omac_mask |= BIT_ULL(mvअगर->mt76.omac_idx);
 
 	ret = mt7615_mcu_set_dbdc(dev);
-	if (ret)
-		goto out;
+	अगर (ret)
+		जाओ out;
 
-	idx = MT7615_WTBL_RESERVED - mvif->mt76.idx;
+	idx = MT7615_WTBL_RESERVED - mvअगर->mt76.idx;
 
-	INIT_LIST_HEAD(&mvif->sta.poll_list);
-	mvif->sta.wcid.idx = idx;
-	mvif->sta.wcid.ext_phy = mvif->mt76.band_idx;
-	mvif->sta.wcid.hw_key_idx = -1;
+	INIT_LIST_HEAD(&mvअगर->sta.poll_list);
+	mvअगर->sta.wcid.idx = idx;
+	mvअगर->sta.wcid.ext_phy = mvअगर->mt76.band_idx;
+	mvअगर->sta.wcid.hw_key_idx = -1;
 	mt7615_mac_wtbl_update(dev, idx,
 			       MT_WTBL_UPDATE_ADM_COUNT_CLEAR);
 
-	rcu_assign_pointer(dev->mt76.wcid[idx], &mvif->sta.wcid);
-	if (vif->txq) {
-		mtxq = (struct mt76_txq *)vif->txq->drv_priv;
-		mtxq->wcid = &mvif->sta.wcid;
-	}
+	rcu_assign_poपूर्णांकer(dev->mt76.wcid[idx], &mvअगर->sta.wcid);
+	अगर (vअगर->txq) अणु
+		mtxq = (काष्ठा mt76_txq *)vअगर->txq->drv_priv;
+		mtxq->wcid = &mvअगर->sta.wcid;
+	पूर्ण
 
-	ret = mt7615_mcu_add_dev_info(phy, vif, true);
-	if (ret)
-		goto out;
+	ret = mt7615_mcu_add_dev_info(phy, vअगर, true);
+	अगर (ret)
+		जाओ out;
 out:
 	mt7615_mutex_release(dev);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void mt7615_remove_interface(struct ieee80211_hw *hw,
-				    struct ieee80211_vif *vif)
-{
-	struct mt7615_vif *mvif = (struct mt7615_vif *)vif->drv_priv;
-	struct mt7615_sta *msta = &mvif->sta;
-	struct mt7615_dev *dev = mt7615_hw_dev(hw);
-	struct mt7615_phy *phy = mt7615_hw_phy(hw);
-	int idx = msta->wcid.idx;
+अटल व्योम mt7615_हटाओ_पूर्णांकerface(काष्ठा ieee80211_hw *hw,
+				    काष्ठा ieee80211_vअगर *vअगर)
+अणु
+	काष्ठा mt7615_vअगर *mvअगर = (काष्ठा mt7615_vअगर *)vअगर->drv_priv;
+	काष्ठा mt7615_sta *msta = &mvअगर->sta;
+	काष्ठा mt7615_dev *dev = mt7615_hw_dev(hw);
+	काष्ठा mt7615_phy *phy = mt7615_hw_phy(hw);
+	पूर्णांक idx = msta->wcid.idx;
 
 	mt7615_mutex_acquire(dev);
 
-	mt7615_mcu_add_bss_info(phy, vif, NULL, false);
-	mt7615_mcu_sta_add(phy, vif, NULL, false);
+	mt7615_mcu_add_bss_info(phy, vअगर, शून्य, false);
+	mt7615_mcu_sta_add(phy, vअगर, शून्य, false);
 
-	mt76_testmode_reset(phy->mt76, true);
-	if (vif == phy->monitor_vif)
-	    phy->monitor_vif = NULL;
+	mt76_tesपंचांगode_reset(phy->mt76, true);
+	अगर (vअगर == phy->monitor_vअगर)
+	    phy->monitor_vअगर = शून्य;
 
-	mt76_connac_free_pending_tx_skbs(&dev->pm, &msta->wcid);
+	mt76_connac_मुक्त_pending_tx_skbs(&dev->pm, &msta->wcid);
 
-	mt7615_mcu_add_dev_info(phy, vif, false);
+	mt7615_mcu_add_dev_info(phy, vअगर, false);
 
-	rcu_assign_pointer(dev->mt76.wcid[idx], NULL);
+	rcu_assign_poपूर्णांकer(dev->mt76.wcid[idx], शून्य);
 
-	dev->mt76.vif_mask &= ~BIT(mvif->mt76.idx);
-	dev->omac_mask &= ~BIT_ULL(mvif->mt76.omac_idx);
-	phy->omac_mask &= ~BIT_ULL(mvif->mt76.omac_idx);
+	dev->mt76.vअगर_mask &= ~BIT(mvअगर->mt76.idx);
+	dev->omac_mask &= ~BIT_ULL(mvअगर->mt76.omac_idx);
+	phy->omac_mask &= ~BIT_ULL(mvअगर->mt76.omac_idx);
 
 	mt7615_mutex_release(dev);
 
 	spin_lock_bh(&dev->sta_poll_lock);
-	if (!list_empty(&msta->poll_list))
+	अगर (!list_empty(&msta->poll_list))
 		list_del_init(&msta->poll_list);
 	spin_unlock_bh(&dev->sta_poll_lock);
-}
+पूर्ण
 
-static void mt7615_init_dfs_state(struct mt7615_phy *phy)
-{
-	struct mt76_phy *mphy = phy->mt76;
-	struct ieee80211_hw *hw = mphy->hw;
-	struct cfg80211_chan_def *chandef = &hw->conf.chandef;
+अटल व्योम mt7615_init_dfs_state(काष्ठा mt7615_phy *phy)
+अणु
+	काष्ठा mt76_phy *mphy = phy->mt76;
+	काष्ठा ieee80211_hw *hw = mphy->hw;
+	काष्ठा cfg80211_chan_def *chandef = &hw->conf.chandef;
 
-	if (hw->conf.flags & IEEE80211_CONF_OFFCHANNEL)
-		return;
+	अगर (hw->conf.flags & IEEE80211_CONF_OFFCHANNEL)
+		वापस;
 
-	if (!(chandef->chan->flags & IEEE80211_CHAN_RADAR))
-		return;
+	अगर (!(chandef->chan->flags & IEEE80211_CHAN_RADAR))
+		वापस;
 
-	if (mphy->chandef.chan->center_freq == chandef->chan->center_freq &&
+	अगर (mphy->chandef.chan->center_freq == chandef->chan->center_freq &&
 	    mphy->chandef.width == chandef->width)
-		return;
+		वापस;
 
 	phy->dfs_state = -1;
-}
+पूर्ण
 
-int mt7615_set_channel(struct mt7615_phy *phy)
-{
-	struct mt7615_dev *dev = phy->dev;
+पूर्णांक mt7615_set_channel(काष्ठा mt7615_phy *phy)
+अणु
+	काष्ठा mt7615_dev *dev = phy->dev;
 	bool ext_phy = phy != &dev->phy;
-	int ret;
+	पूर्णांक ret;
 
 	cancel_delayed_work_sync(&phy->mt76->mac_work);
 
@@ -318,29 +319,29 @@ int mt7615_set_channel(struct mt7615_phy *phy)
 	mt7615_init_dfs_state(phy);
 	mt76_set_channel(phy->mt76);
 
-	if (is_mt7615(&dev->mt76) && dev->flash_eeprom) {
+	अगर (is_mt7615(&dev->mt76) && dev->flash_eeprom) अणु
 		ret = mt7615_mcu_apply_rx_dcoc(phy);
-		if (ret)
-			goto out;
+		अगर (ret)
+			जाओ out;
 
 		ret = mt7615_mcu_apply_tx_dpd(phy);
-		if (ret)
-			goto out;
-	}
+		अगर (ret)
+			जाओ out;
+	पूर्ण
 
 	ret = mt7615_mcu_set_chan_info(phy, MCU_EXT_CMD_CHANNEL_SWITCH);
-	if (ret)
-		goto out;
+	अगर (ret)
+		जाओ out;
 
 	mt7615_mac_set_timing(phy);
 	ret = mt7615_dfs_init_radar_detector(phy);
-	if (ret)
-		goto out;
+	अगर (ret)
+		जाओ out;
 
 	mt7615_mac_cca_stats_reset(phy);
 	ret = mt7615_mcu_set_sku_en(phy, true);
-	if (ret)
-		goto out;
+	अगर (ret)
+		जाओ out;
 
 	mt7615_mac_reset_counters(dev);
 	phy->noise = 0;
@@ -352,143 +353,143 @@ out:
 	mt7615_mutex_release(dev);
 
 	mt76_worker_schedule(&dev->mt76.tx_worker);
-	if (!mt76_testmode_enabled(phy->mt76))
+	अगर (!mt76_tesपंचांगode_enabled(phy->mt76))
 		ieee80211_queue_delayed_work(phy->mt76->hw,
 					     &phy->mt76->mac_work,
 					     MT7615_WATCHDOG_TIME);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int mt7615_set_key(struct ieee80211_hw *hw, enum set_key_cmd cmd,
-			  struct ieee80211_vif *vif, struct ieee80211_sta *sta,
-			  struct ieee80211_key_conf *key)
-{
-	struct mt7615_dev *dev = mt7615_hw_dev(hw);
-	struct mt7615_vif *mvif = (struct mt7615_vif *)vif->drv_priv;
-	struct mt7615_sta *msta = sta ? (struct mt7615_sta *)sta->drv_priv :
-				  &mvif->sta;
-	struct mt76_wcid *wcid = &msta->wcid;
-	int idx = key->keyidx, err = 0;
+अटल पूर्णांक mt7615_set_key(काष्ठा ieee80211_hw *hw, क्रमागत set_key_cmd cmd,
+			  काष्ठा ieee80211_vअगर *vअगर, काष्ठा ieee80211_sta *sta,
+			  काष्ठा ieee80211_key_conf *key)
+अणु
+	काष्ठा mt7615_dev *dev = mt7615_hw_dev(hw);
+	काष्ठा mt7615_vअगर *mvअगर = (काष्ठा mt7615_vअगर *)vअगर->drv_priv;
+	काष्ठा mt7615_sta *msta = sta ? (काष्ठा mt7615_sta *)sta->drv_priv :
+				  &mvअगर->sta;
+	काष्ठा mt76_wcid *wcid = &msta->wcid;
+	पूर्णांक idx = key->keyidx, err = 0;
 	u8 *wcid_keyidx = &wcid->hw_key_idx;
 
-	/* The hardware does not support per-STA RX GTK, fallback
-	 * to software mode for these.
+	/* The hardware करोes not support per-STA RX GTK, fallback
+	 * to software mode क्रम these.
 	 */
-	if ((vif->type == NL80211_IFTYPE_ADHOC ||
-	     vif->type == NL80211_IFTYPE_MESH_POINT) &&
+	अगर ((vअगर->type == NL80211_IFTYPE_ADHOC ||
+	     vअगर->type == NL80211_IFTYPE_MESH_POINT) &&
 	    (key->cipher == WLAN_CIPHER_SUITE_TKIP ||
 	     key->cipher == WLAN_CIPHER_SUITE_CCMP) &&
 	    !(key->flags & IEEE80211_KEY_FLAG_PAIRWISE))
-		return -EOPNOTSUPP;
+		वापस -EOPNOTSUPP;
 
-	/* fall back to sw encryption for unsupported ciphers */
-	switch (key->cipher) {
-	case WLAN_CIPHER_SUITE_AES_CMAC:
+	/* fall back to sw encryption क्रम unsupported ciphers */
+	चयन (key->cipher) अणु
+	हाल WLAN_CIPHER_SUITE_AES_CMAC:
 		wcid_keyidx = &wcid->hw_key_idx2;
 		key->flags |= IEEE80211_KEY_FLAG_GENERATE_MMIE;
-		break;
-	case WLAN_CIPHER_SUITE_TKIP:
-	case WLAN_CIPHER_SUITE_CCMP:
-	case WLAN_CIPHER_SUITE_CCMP_256:
-	case WLAN_CIPHER_SUITE_GCMP:
-	case WLAN_CIPHER_SUITE_GCMP_256:
-	case WLAN_CIPHER_SUITE_SMS4:
-		break;
-	case WLAN_CIPHER_SUITE_WEP40:
-	case WLAN_CIPHER_SUITE_WEP104:
-	default:
-		return -EOPNOTSUPP;
-	}
+		अवरोध;
+	हाल WLAN_CIPHER_SUITE_TKIP:
+	हाल WLAN_CIPHER_SUITE_CCMP:
+	हाल WLAN_CIPHER_SUITE_CCMP_256:
+	हाल WLAN_CIPHER_SUITE_GCMP:
+	हाल WLAN_CIPHER_SUITE_GCMP_256:
+	हाल WLAN_CIPHER_SUITE_SMS4:
+		अवरोध;
+	हाल WLAN_CIPHER_SUITE_WEP40:
+	हाल WLAN_CIPHER_SUITE_WEP104:
+	शेष:
+		वापस -EOPNOTSUPP;
+	पूर्ण
 
 	mt7615_mutex_acquire(dev);
 
-	if (cmd == SET_KEY)
+	अगर (cmd == SET_KEY)
 		*wcid_keyidx = idx;
-	else if (idx == *wcid_keyidx)
+	अन्यथा अगर (idx == *wcid_keyidx)
 		*wcid_keyidx = -1;
-	else
-		goto out;
+	अन्यथा
+		जाओ out;
 
 	mt76_wcid_key_setup(&dev->mt76, wcid,
-			    cmd == SET_KEY ? key : NULL);
+			    cmd == SET_KEY ? key : शून्य);
 
-	if (mt76_is_mmio(&dev->mt76))
+	अगर (mt76_is_mmio(&dev->mt76))
 		err = mt7615_mac_wtbl_set_key(dev, wcid, key, cmd);
-	else
+	अन्यथा
 		err = __mt7615_mac_wtbl_set_key(dev, wcid, key, cmd);
 
 out:
 	mt7615_mutex_release(dev);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int mt7615_config(struct ieee80211_hw *hw, u32 changed)
-{
-	struct mt7615_dev *dev = mt7615_hw_dev(hw);
-	struct mt7615_phy *phy = mt7615_hw_phy(hw);
+अटल पूर्णांक mt7615_config(काष्ठा ieee80211_hw *hw, u32 changed)
+अणु
+	काष्ठा mt7615_dev *dev = mt7615_hw_dev(hw);
+	काष्ठा mt7615_phy *phy = mt7615_hw_phy(hw);
 	bool band = phy != &dev->phy;
-	int ret = 0;
+	पूर्णांक ret = 0;
 
-	if (changed & (IEEE80211_CONF_CHANGE_CHANNEL |
-		       IEEE80211_CONF_CHANGE_POWER)) {
-#ifdef CONFIG_NL80211_TESTMODE
-		if (phy->mt76->test.state != MT76_TM_STATE_OFF) {
+	अगर (changed & (IEEE80211_CONF_CHANGE_CHANNEL |
+		       IEEE80211_CONF_CHANGE_POWER)) अणु
+#अगर_घोषित CONFIG_NL80211_TESTMODE
+		अगर (phy->mt76->test.state != MT76_TM_STATE_OFF) अणु
 			mt7615_mutex_acquire(dev);
-			mt76_testmode_reset(phy->mt76, false);
+			mt76_tesपंचांगode_reset(phy->mt76, false);
 			mt7615_mutex_release(dev);
-		}
-#endif
+		पूर्ण
+#पूर्ण_अगर
 		ieee80211_stop_queues(hw);
 		ret = mt7615_set_channel(phy);
 		ieee80211_wake_queues(hw);
-	}
+	पूर्ण
 
 	mt7615_mutex_acquire(dev);
 
-	if (changed & IEEE80211_CONF_CHANGE_MONITOR) {
-		mt76_testmode_reset(phy->mt76, true);
+	अगर (changed & IEEE80211_CONF_CHANGE_MONITOR) अणु
+		mt76_tesपंचांगode_reset(phy->mt76, true);
 
-		if (!(hw->conf.flags & IEEE80211_CONF_MONITOR))
+		अगर (!(hw->conf.flags & IEEE80211_CONF_MONITOR))
 			phy->rxfilter |= MT_WF_RFCR_DROP_OTHER_UC;
-		else
+		अन्यथा
 			phy->rxfilter &= ~MT_WF_RFCR_DROP_OTHER_UC;
 
 		mt76_wr(dev, MT_WF_RFCR(band), phy->rxfilter);
-	}
+	पूर्ण
 
 	mt7615_mutex_release(dev);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int
-mt7615_conf_tx(struct ieee80211_hw *hw, struct ieee80211_vif *vif, u16 queue,
-	       const struct ieee80211_tx_queue_params *params)
-{
-	struct mt76_vif *mvif = (struct mt76_vif *)vif->drv_priv;
-	struct mt7615_dev *dev = mt7615_hw_dev(hw);
-	int err;
+अटल पूर्णांक
+mt7615_conf_tx(काष्ठा ieee80211_hw *hw, काष्ठा ieee80211_vअगर *vअगर, u16 queue,
+	       स्थिर काष्ठा ieee80211_tx_queue_params *params)
+अणु
+	काष्ठा mt76_vअगर *mvअगर = (काष्ठा mt76_vअगर *)vअगर->drv_priv;
+	काष्ठा mt7615_dev *dev = mt7615_hw_dev(hw);
+	पूर्णांक err;
 
 	mt7615_mutex_acquire(dev);
 
 	queue = mt7615_lmac_mapping(dev, queue);
-	queue += mvif->wmm_idx * MT7615_MAX_WMM_SETS;
+	queue += mvअगर->wmm_idx * MT7615_MAX_WMM_SETS;
 	err = mt7615_mcu_set_wmm(dev, queue, params);
 
 	mt7615_mutex_release(dev);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void mt7615_configure_filter(struct ieee80211_hw *hw,
-				    unsigned int changed_flags,
-				    unsigned int *total_flags,
+अटल व्योम mt7615_configure_filter(काष्ठा ieee80211_hw *hw,
+				    अचिन्हित पूर्णांक changed_flags,
+				    अचिन्हित पूर्णांक *total_flags,
 				    u64 multicast)
-{
-	struct mt7615_dev *dev = mt7615_hw_dev(hw);
-	struct mt7615_phy *phy = mt7615_hw_phy(hw);
+अणु
+	काष्ठा mt7615_dev *dev = mt7615_hw_dev(hw);
+	काष्ठा mt7615_phy *phy = mt7615_hw_phy(hw);
 	bool band = phy != &dev->phy;
 
 	u32 ctl_flags = MT_WF_RFCR1_DROP_ACK |
@@ -500,12 +501,12 @@ static void mt7615_configure_filter(struct ieee80211_hw *hw,
 
 	mt7615_mutex_acquire(dev);
 
-#define MT76_FILTER(_flag, _hw) do { \
+#घोषणा MT76_FILTER(_flag, _hw) करो अणु \
 		flags |= *total_flags & FIF_##_flag;			\
 		phy->rxfilter &= ~(_hw);				\
-		if (!mt76_testmode_enabled(phy->mt76))			\
+		अगर (!mt76_tesपंचांगode_enabled(phy->mt76))			\
 			phy->rxfilter |= !(flags & FIF_##_flag) * (_hw);\
-	} while (0)
+	पूर्ण जबतक (0)
 
 	phy->rxfilter &= ~(MT_WF_RFCR_DROP_OTHER_BSS |
 			   MT_WF_RFCR_DROP_FRAME_REPORT |
@@ -518,7 +519,7 @@ static void mt7615_configure_filter(struct ieee80211_hw *hw,
 			   MT_WF_RFCR_DROP_UNWANTED_CTL |
 			   MT_WF_RFCR_DROP_STBC_MULTI);
 
-	if (phy->n_beacon_vif || !mt7615_firmware_offload(dev))
+	अगर (phy->n_beacon_vअगर || !mt7615_firmware_offload(dev))
 		phy->rxfilter &= ~MT_WF_RFCR_DROP_OTHER_BEACON;
 
 	MT76_FILTER(OTHER_BSS, MT_WF_RFCR_DROP_OTHER_TIM |
@@ -535,345 +536,345 @@ static void mt7615_configure_filter(struct ieee80211_hw *hw,
 	*total_flags = flags;
 	mt76_wr(dev, MT_WF_RFCR(band), phy->rxfilter);
 
-	if (*total_flags & FIF_CONTROL)
+	अगर (*total_flags & FIF_CONTROL)
 		mt76_clear(dev, MT_WF_RFCR1(band), ctl_flags);
-	else
+	अन्यथा
 		mt76_set(dev, MT_WF_RFCR1(band), ctl_flags);
 
 	mt7615_mutex_release(dev);
-}
+पूर्ण
 
-static void mt7615_bss_info_changed(struct ieee80211_hw *hw,
-				    struct ieee80211_vif *vif,
-				    struct ieee80211_bss_conf *info,
+अटल व्योम mt7615_bss_info_changed(काष्ठा ieee80211_hw *hw,
+				    काष्ठा ieee80211_vअगर *vअगर,
+				    काष्ठा ieee80211_bss_conf *info,
 				    u32 changed)
-{
-	struct mt7615_dev *dev = mt7615_hw_dev(hw);
-	struct mt7615_phy *phy = mt7615_hw_phy(hw);
+अणु
+	काष्ठा mt7615_dev *dev = mt7615_hw_dev(hw);
+	काष्ठा mt7615_phy *phy = mt7615_hw_phy(hw);
 
 	mt7615_mutex_acquire(dev);
 
-	if (changed & BSS_CHANGED_ERP_SLOT) {
-		int slottime = info->use_short_slot ? 9 : 20;
+	अगर (changed & BSS_CHANGED_ERP_SLOT) अणु
+		पूर्णांक slotसमय = info->use_लघु_slot ? 9 : 20;
 
-		if (slottime != phy->slottime) {
-			phy->slottime = slottime;
+		अगर (slotसमय != phy->slotसमय) अणु
+			phy->slotसमय = slotसमय;
 			mt7615_mac_set_timing(phy);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (changed & BSS_CHANGED_BEACON_ENABLED && info->enable_beacon) {
-		mt7615_mcu_add_bss_info(phy, vif, NULL, true);
-		mt7615_mcu_sta_add(phy, vif, NULL, true);
+	अगर (changed & BSS_CHANGED_BEACON_ENABLED && info->enable_beacon) अणु
+		mt7615_mcu_add_bss_info(phy, vअगर, शून्य, true);
+		mt7615_mcu_sta_add(phy, vअगर, शून्य, true);
 
-		if (vif->p2p)
-			mt7615_mcu_set_p2p_oppps(hw, vif);
-	}
+		अगर (vअगर->p2p)
+			mt7615_mcu_set_p2p_oppps(hw, vअगर);
+	पूर्ण
 
-	if (changed & (BSS_CHANGED_BEACON |
+	अगर (changed & (BSS_CHANGED_BEACON |
 		       BSS_CHANGED_BEACON_ENABLED))
-		mt7615_mcu_add_beacon(dev, hw, vif, info->enable_beacon);
+		mt7615_mcu_add_beacon(dev, hw, vअगर, info->enable_beacon);
 
-	if (changed & BSS_CHANGED_PS)
-		mt76_connac_mcu_set_vif_ps(&dev->mt76, vif);
+	अगर (changed & BSS_CHANGED_PS)
+		mt76_connac_mcu_set_vअगर_ps(&dev->mt76, vअगर);
 
-	if ((changed & BSS_CHANGED_ARP_FILTER) &&
-	    mt7615_firmware_offload(dev)) {
-		struct mt7615_vif *mvif = (struct mt7615_vif *)vif->drv_priv;
+	अगर ((changed & BSS_CHANGED_ARP_FILTER) &&
+	    mt7615_firmware_offload(dev)) अणु
+		काष्ठा mt7615_vअगर *mvअगर = (काष्ठा mt7615_vअगर *)vअगर->drv_priv;
 
-		mt76_connac_mcu_update_arp_filter(&dev->mt76, &mvif->mt76,
+		mt76_connac_mcu_update_arp_filter(&dev->mt76, &mvअगर->mt76,
 						  info);
-	}
+	पूर्ण
 
-	if (changed & BSS_CHANGED_ASSOC)
-		mt7615_mac_set_beacon_filter(phy, vif, info->assoc);
+	अगर (changed & BSS_CHANGED_ASSOC)
+		mt7615_mac_set_beacon_filter(phy, vअगर, info->assoc);
 
 	mt7615_mutex_release(dev);
-}
+पूर्ण
 
-static void
-mt7615_channel_switch_beacon(struct ieee80211_hw *hw,
-			     struct ieee80211_vif *vif,
-			     struct cfg80211_chan_def *chandef)
-{
-	struct mt7615_dev *dev = mt7615_hw_dev(hw);
+अटल व्योम
+mt7615_channel_चयन_beacon(काष्ठा ieee80211_hw *hw,
+			     काष्ठा ieee80211_vअगर *vअगर,
+			     काष्ठा cfg80211_chan_def *chandef)
+अणु
+	काष्ठा mt7615_dev *dev = mt7615_hw_dev(hw);
 
 	mt7615_mutex_acquire(dev);
-	mt7615_mcu_add_beacon(dev, hw, vif, true);
+	mt7615_mcu_add_beacon(dev, hw, vअगर, true);
 	mt7615_mutex_release(dev);
-}
+पूर्ण
 
-int mt7615_mac_sta_add(struct mt76_dev *mdev, struct ieee80211_vif *vif,
-		       struct ieee80211_sta *sta)
-{
-	struct mt7615_dev *dev = container_of(mdev, struct mt7615_dev, mt76);
-	struct mt7615_sta *msta = (struct mt7615_sta *)sta->drv_priv;
-	struct mt7615_vif *mvif = (struct mt7615_vif *)vif->drv_priv;
-	struct mt7615_phy *phy;
-	int idx, err;
+पूर्णांक mt7615_mac_sta_add(काष्ठा mt76_dev *mdev, काष्ठा ieee80211_vअगर *vअगर,
+		       काष्ठा ieee80211_sta *sta)
+अणु
+	काष्ठा mt7615_dev *dev = container_of(mdev, काष्ठा mt7615_dev, mt76);
+	काष्ठा mt7615_sta *msta = (काष्ठा mt7615_sta *)sta->drv_priv;
+	काष्ठा mt7615_vअगर *mvअगर = (काष्ठा mt7615_vअगर *)vअगर->drv_priv;
+	काष्ठा mt7615_phy *phy;
+	पूर्णांक idx, err;
 
 	idx = mt76_wcid_alloc(dev->mt76.wcid_mask, MT7615_WTBL_STA - 1);
-	if (idx < 0)
-		return -ENOSPC;
+	अगर (idx < 0)
+		वापस -ENOSPC;
 
 	INIT_LIST_HEAD(&msta->poll_list);
-	msta->vif = mvif;
+	msta->vअगर = mvअगर;
 	msta->wcid.sta = 1;
 	msta->wcid.idx = idx;
-	msta->wcid.ext_phy = mvif->mt76.band_idx;
+	msta->wcid.ext_phy = mvअगर->mt76.band_idx;
 
-	phy = mvif->mt76.band_idx ? mt7615_ext_phy(dev) : &dev->phy;
+	phy = mvअगर->mt76.band_idx ? mt7615_ext_phy(dev) : &dev->phy;
 	err = mt76_connac_pm_wake(phy->mt76, &dev->pm);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	if (vif->type == NL80211_IFTYPE_STATION && !sta->tdls) {
-		err = mt7615_mcu_add_bss_info(phy, vif, sta, true);
-		if (err)
-			return err;
-	}
+	अगर (vअगर->type == NL80211_IFTYPE_STATION && !sta->tdls) अणु
+		err = mt7615_mcu_add_bss_info(phy, vअगर, sta, true);
+		अगर (err)
+			वापस err;
+	पूर्ण
 
 	mt7615_mac_wtbl_update(dev, idx,
 			       MT_WTBL_UPDATE_ADM_COUNT_CLEAR);
-	err = mt7615_mcu_sta_add(&dev->phy, vif, sta, true);
-	if (err)
-		return err;
+	err = mt7615_mcu_sta_add(&dev->phy, vअगर, sta, true);
+	अगर (err)
+		वापस err;
 
-	mt76_connac_power_save_sched(phy->mt76, &dev->pm);
+	mt76_connac_घातer_save_sched(phy->mt76, &dev->pm);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 EXPORT_SYMBOL_GPL(mt7615_mac_sta_add);
 
-void mt7615_mac_sta_remove(struct mt76_dev *mdev, struct ieee80211_vif *vif,
-			   struct ieee80211_sta *sta)
-{
-	struct mt7615_dev *dev = container_of(mdev, struct mt7615_dev, mt76);
-	struct mt7615_sta *msta = (struct mt7615_sta *)sta->drv_priv;
-	struct mt7615_vif *mvif = (struct mt7615_vif *)vif->drv_priv;
-	struct mt7615_phy *phy;
+व्योम mt7615_mac_sta_हटाओ(काष्ठा mt76_dev *mdev, काष्ठा ieee80211_vअगर *vअगर,
+			   काष्ठा ieee80211_sta *sta)
+अणु
+	काष्ठा mt7615_dev *dev = container_of(mdev, काष्ठा mt7615_dev, mt76);
+	काष्ठा mt7615_sta *msta = (काष्ठा mt7615_sta *)sta->drv_priv;
+	काष्ठा mt7615_vअगर *mvअगर = (काष्ठा mt7615_vअगर *)vअगर->drv_priv;
+	काष्ठा mt7615_phy *phy;
 
-	mt76_connac_free_pending_tx_skbs(&dev->pm, &msta->wcid);
+	mt76_connac_मुक्त_pending_tx_skbs(&dev->pm, &msta->wcid);
 
-	phy = mvif->mt76.band_idx ? mt7615_ext_phy(dev) : &dev->phy;
+	phy = mvअगर->mt76.band_idx ? mt7615_ext_phy(dev) : &dev->phy;
 	mt76_connac_pm_wake(phy->mt76, &dev->pm);
 
-	mt7615_mcu_sta_add(&dev->phy, vif, sta, false);
+	mt7615_mcu_sta_add(&dev->phy, vअगर, sta, false);
 	mt7615_mac_wtbl_update(dev, msta->wcid.idx,
 			       MT_WTBL_UPDATE_ADM_COUNT_CLEAR);
-	if (vif->type == NL80211_IFTYPE_STATION && !sta->tdls)
-		mt7615_mcu_add_bss_info(phy, vif, sta, false);
+	अगर (vअगर->type == NL80211_IFTYPE_STATION && !sta->tdls)
+		mt7615_mcu_add_bss_info(phy, vअगर, sta, false);
 
 	spin_lock_bh(&dev->sta_poll_lock);
-	if (!list_empty(&msta->poll_list))
+	अगर (!list_empty(&msta->poll_list))
 		list_del_init(&msta->poll_list);
 	spin_unlock_bh(&dev->sta_poll_lock);
 
-	mt76_connac_power_save_sched(phy->mt76, &dev->pm);
-}
-EXPORT_SYMBOL_GPL(mt7615_mac_sta_remove);
+	mt76_connac_घातer_save_sched(phy->mt76, &dev->pm);
+पूर्ण
+EXPORT_SYMBOL_GPL(mt7615_mac_sta_हटाओ);
 
-static void mt7615_sta_rate_tbl_update(struct ieee80211_hw *hw,
-				       struct ieee80211_vif *vif,
-				       struct ieee80211_sta *sta)
-{
-	struct mt7615_dev *dev = mt7615_hw_dev(hw);
-	struct mt7615_phy *phy = mt7615_hw_phy(hw);
-	struct mt7615_sta *msta = (struct mt7615_sta *)sta->drv_priv;
-	struct ieee80211_sta_rates *sta_rates = rcu_dereference(sta->rates);
-	int i;
+अटल व्योम mt7615_sta_rate_tbl_update(काष्ठा ieee80211_hw *hw,
+				       काष्ठा ieee80211_vअगर *vअगर,
+				       काष्ठा ieee80211_sta *sta)
+अणु
+	काष्ठा mt7615_dev *dev = mt7615_hw_dev(hw);
+	काष्ठा mt7615_phy *phy = mt7615_hw_phy(hw);
+	काष्ठा mt7615_sta *msta = (काष्ठा mt7615_sta *)sta->drv_priv;
+	काष्ठा ieee80211_sta_rates *sta_rates = rcu_dereference(sta->rates);
+	पूर्णांक i;
 
 	spin_lock_bh(&dev->mt76.lock);
-	for (i = 0; i < ARRAY_SIZE(msta->rates); i++) {
+	क्रम (i = 0; i < ARRAY_SIZE(msta->rates); i++) अणु
 		msta->rates[i].idx = sta_rates->rate[i].idx;
 		msta->rates[i].count = sta_rates->rate[i].count;
 		msta->rates[i].flags = sta_rates->rate[i].flags;
 
-		if (msta->rates[i].idx < 0 || !msta->rates[i].count)
-			break;
-	}
+		अगर (msta->rates[i].idx < 0 || !msta->rates[i].count)
+			अवरोध;
+	पूर्ण
 	msta->n_rates = i;
-	if (mt76_connac_pm_ref(phy->mt76, &dev->pm)) {
-		mt7615_mac_set_rates(phy, msta, NULL, msta->rates);
+	अगर (mt76_connac_pm_ref(phy->mt76, &dev->pm)) अणु
+		mt7615_mac_set_rates(phy, msta, शून्य, msta->rates);
 		mt76_connac_pm_unref(&dev->pm);
-	}
+	पूर्ण
 	spin_unlock_bh(&dev->mt76.lock);
-}
+पूर्ण
 
-void mt7615_tx_worker(struct mt76_worker *w)
-{
-	struct mt7615_dev *dev = container_of(w, struct mt7615_dev,
+व्योम mt7615_tx_worker(काष्ठा mt76_worker *w)
+अणु
+	काष्ठा mt7615_dev *dev = container_of(w, काष्ठा mt7615_dev,
 					      mt76.tx_worker);
 
-	if (!mt76_connac_pm_ref(&dev->mphy, &dev->pm)) {
+	अगर (!mt76_connac_pm_ref(&dev->mphy, &dev->pm)) अणु
 		queue_work(dev->mt76.wq, &dev->pm.wake_work);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	mt76_tx_worker_run(&dev->mt76);
 	mt76_connac_pm_unref(&dev->pm);
-}
+पूर्ण
 
-static void mt7615_tx(struct ieee80211_hw *hw,
-		      struct ieee80211_tx_control *control,
-		      struct sk_buff *skb)
-{
-	struct mt7615_dev *dev = mt7615_hw_dev(hw);
-	struct mt76_phy *mphy = hw->priv;
-	struct ieee80211_tx_info *info = IEEE80211_SKB_CB(skb);
-	struct ieee80211_vif *vif = info->control.vif;
-	struct mt76_wcid *wcid = &dev->mt76.global_wcid;
-	struct mt7615_sta *msta = NULL;
-	int qid;
+अटल व्योम mt7615_tx(काष्ठा ieee80211_hw *hw,
+		      काष्ठा ieee80211_tx_control *control,
+		      काष्ठा sk_buff *skb)
+अणु
+	काष्ठा mt7615_dev *dev = mt7615_hw_dev(hw);
+	काष्ठा mt76_phy *mphy = hw->priv;
+	काष्ठा ieee80211_tx_info *info = IEEE80211_SKB_CB(skb);
+	काष्ठा ieee80211_vअगर *vअगर = info->control.vअगर;
+	काष्ठा mt76_wcid *wcid = &dev->mt76.global_wcid;
+	काष्ठा mt7615_sta *msta = शून्य;
+	पूर्णांक qid;
 
-	if (control->sta) {
-		msta = (struct mt7615_sta *)control->sta->drv_priv;
+	अगर (control->sta) अणु
+		msta = (काष्ठा mt7615_sta *)control->sta->drv_priv;
 		wcid = &msta->wcid;
-	}
+	पूर्ण
 
-	if (vif && !control->sta) {
-		struct mt7615_vif *mvif;
+	अगर (vअगर && !control->sta) अणु
+		काष्ठा mt7615_vअगर *mvअगर;
 
-		mvif = (struct mt7615_vif *)vif->drv_priv;
-		msta = &mvif->sta;
+		mvअगर = (काष्ठा mt7615_vअगर *)vअगर->drv_priv;
+		msta = &mvअगर->sta;
 		wcid = &msta->wcid;
-	}
+	पूर्ण
 
-	if (mt76_connac_pm_ref(mphy, &dev->pm)) {
+	अगर (mt76_connac_pm_ref(mphy, &dev->pm)) अणु
 		mt76_tx(mphy, control->sta, wcid, skb);
 		mt76_connac_pm_unref(&dev->pm);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	qid = skb_get_queue_mapping(skb);
-	if (qid >= MT_TXQ_PSD) {
+	अगर (qid >= MT_TXQ_PSD) अणु
 		qid = IEEE80211_AC_BE;
 		skb_set_queue_mapping(skb, qid);
-	}
+	पूर्ण
 
 	mt76_connac_pm_queue_skb(hw, &dev->pm, wcid, skb);
-}
+पूर्ण
 
-static int mt7615_set_rts_threshold(struct ieee80211_hw *hw, u32 val)
-{
-	struct mt7615_dev *dev = mt7615_hw_dev(hw);
-	struct mt7615_phy *phy = mt7615_hw_phy(hw);
-	int err, band = phy != &dev->phy;
+अटल पूर्णांक mt7615_set_rts_threshold(काष्ठा ieee80211_hw *hw, u32 val)
+अणु
+	काष्ठा mt7615_dev *dev = mt7615_hw_dev(hw);
+	काष्ठा mt7615_phy *phy = mt7615_hw_phy(hw);
+	पूर्णांक err, band = phy != &dev->phy;
 
 	mt7615_mutex_acquire(dev);
 	err = mt76_connac_mcu_set_rts_thresh(&dev->mt76, val, band);
 	mt7615_mutex_release(dev);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int
-mt7615_ampdu_action(struct ieee80211_hw *hw, struct ieee80211_vif *vif,
-		    struct ieee80211_ampdu_params *params)
-{
-	enum ieee80211_ampdu_mlme_action action = params->action;
-	struct mt7615_dev *dev = mt7615_hw_dev(hw);
-	struct ieee80211_sta *sta = params->sta;
-	struct ieee80211_txq *txq = sta->txq[params->tid];
-	struct mt7615_sta *msta = (struct mt7615_sta *)sta->drv_priv;
+अटल पूर्णांक
+mt7615_ampdu_action(काष्ठा ieee80211_hw *hw, काष्ठा ieee80211_vअगर *vअगर,
+		    काष्ठा ieee80211_ampdu_params *params)
+अणु
+	क्रमागत ieee80211_ampdu_mlme_action action = params->action;
+	काष्ठा mt7615_dev *dev = mt7615_hw_dev(hw);
+	काष्ठा ieee80211_sta *sta = params->sta;
+	काष्ठा ieee80211_txq *txq = sta->txq[params->tid];
+	काष्ठा mt7615_sta *msta = (काष्ठा mt7615_sta *)sta->drv_priv;
 	u16 tid = params->tid;
 	u16 ssn = params->ssn;
-	struct mt76_txq *mtxq;
-	int ret = 0;
+	काष्ठा mt76_txq *mtxq;
+	पूर्णांक ret = 0;
 
-	if (!txq)
-		return -EINVAL;
+	अगर (!txq)
+		वापस -EINVAL;
 
-	mtxq = (struct mt76_txq *)txq->drv_priv;
+	mtxq = (काष्ठा mt76_txq *)txq->drv_priv;
 
 	mt7615_mutex_acquire(dev);
 
-	switch (action) {
-	case IEEE80211_AMPDU_RX_START:
+	चयन (action) अणु
+	हाल IEEE80211_AMPDU_RX_START:
 		mt76_rx_aggr_start(&dev->mt76, &msta->wcid, tid, ssn,
 				   params->buf_size);
 		ret = mt7615_mcu_add_rx_ba(dev, params, true);
-		break;
-	case IEEE80211_AMPDU_RX_STOP:
+		अवरोध;
+	हाल IEEE80211_AMPDU_RX_STOP:
 		mt76_rx_aggr_stop(&dev->mt76, &msta->wcid, tid);
 		ret = mt7615_mcu_add_rx_ba(dev, params, false);
-		break;
-	case IEEE80211_AMPDU_TX_OPERATIONAL:
+		अवरोध;
+	हाल IEEE80211_AMPDU_TX_OPERATIONAL:
 		mtxq->aggr = true;
 		mtxq->send_bar = false;
 		ret = mt7615_mcu_add_tx_ba(dev, params, true);
 		ssn = mt7615_mac_get_sta_tid_sn(dev, msta->wcid.idx, tid);
-		ieee80211_send_bar(vif, sta->addr, tid,
+		ieee80211_send_bar(vअगर, sta->addr, tid,
 				   IEEE80211_SN_TO_SEQ(ssn));
-		break;
-	case IEEE80211_AMPDU_TX_STOP_FLUSH:
-	case IEEE80211_AMPDU_TX_STOP_FLUSH_CONT:
+		अवरोध;
+	हाल IEEE80211_AMPDU_TX_STOP_FLUSH:
+	हाल IEEE80211_AMPDU_TX_STOP_FLUSH_CONT:
 		mtxq->aggr = false;
 		ret = mt7615_mcu_add_tx_ba(dev, params, false);
-		break;
-	case IEEE80211_AMPDU_TX_START:
+		अवरोध;
+	हाल IEEE80211_AMPDU_TX_START:
 		ssn = mt7615_mac_get_sta_tid_sn(dev, msta->wcid.idx, tid);
 		params->ssn = ssn;
 		ret = IEEE80211_AMPDU_TX_START_IMMEDIATE;
-		break;
-	case IEEE80211_AMPDU_TX_STOP_CONT:
+		अवरोध;
+	हाल IEEE80211_AMPDU_TX_STOP_CONT:
 		mtxq->aggr = false;
 		ret = mt7615_mcu_add_tx_ba(dev, params, false);
-		ieee80211_stop_tx_ba_cb_irqsafe(vif, sta->addr, tid);
-		break;
-	}
+		ieee80211_stop_tx_ba_cb_irqsafe(vअगर, sta->addr, tid);
+		अवरोध;
+	पूर्ण
 	mt7615_mutex_release(dev);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int
-mt7615_sta_add(struct ieee80211_hw *hw, struct ieee80211_vif *vif,
-	       struct ieee80211_sta *sta)
-{
-    return mt76_sta_state(hw, vif, sta, IEEE80211_STA_NOTEXIST,
+अटल पूर्णांक
+mt7615_sta_add(काष्ठा ieee80211_hw *hw, काष्ठा ieee80211_vअगर *vअगर,
+	       काष्ठा ieee80211_sta *sta)
+अणु
+    वापस mt76_sta_state(hw, vअगर, sta, IEEE80211_STA_NOTEXIST,
 			  IEEE80211_STA_NONE);
-}
+पूर्ण
 
-static int
-mt7615_sta_remove(struct ieee80211_hw *hw, struct ieee80211_vif *vif,
-		  struct ieee80211_sta *sta)
-{
-    return mt76_sta_state(hw, vif, sta, IEEE80211_STA_NONE,
+अटल पूर्णांक
+mt7615_sta_हटाओ(काष्ठा ieee80211_hw *hw, काष्ठा ieee80211_vअगर *vअगर,
+		  काष्ठा ieee80211_sta *sta)
+अणु
+    वापस mt76_sta_state(hw, vअगर, sta, IEEE80211_STA_NONE,
 			  IEEE80211_STA_NOTEXIST);
-}
+पूर्ण
 
-static int
-mt7615_get_stats(struct ieee80211_hw *hw,
-		 struct ieee80211_low_level_stats *stats)
-{
-	struct mt7615_phy *phy = mt7615_hw_phy(hw);
-	struct mib_stats *mib = &phy->mib;
+अटल पूर्णांक
+mt7615_get_stats(काष्ठा ieee80211_hw *hw,
+		 काष्ठा ieee80211_low_level_stats *stats)
+अणु
+	काष्ठा mt7615_phy *phy = mt7615_hw_phy(hw);
+	काष्ठा mib_stats *mib = &phy->mib;
 
 	mt7615_mutex_acquire(phy->dev);
 
-	stats->dot11RTSSuccessCount = mib->rts_cnt;
-	stats->dot11RTSFailureCount = mib->rts_retries_cnt;
-	stats->dot11FCSErrorCount = mib->fcs_err_cnt;
-	stats->dot11ACKFailureCount = mib->ack_fail_cnt;
+	stats->करोt11RTSSuccessCount = mib->rts_cnt;
+	stats->करोt11RTSFailureCount = mib->rts_retries_cnt;
+	stats->करोt11FCSErrorCount = mib->fcs_err_cnt;
+	stats->करोt11ACKFailureCount = mib->ack_fail_cnt;
 
-	memset(mib, 0, sizeof(*mib));
+	स_रखो(mib, 0, माप(*mib));
 
 	mt7615_mutex_release(phy->dev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static u64
-mt7615_get_tsf(struct ieee80211_hw *hw, struct ieee80211_vif *vif)
-{
-	struct mt7615_vif *mvif = (struct mt7615_vif *)vif->drv_priv;
-	struct mt7615_dev *dev = mt7615_hw_dev(hw);
-	union {
+अटल u64
+mt7615_get_tsf(काष्ठा ieee80211_hw *hw, काष्ठा ieee80211_vअगर *vअगर)
+अणु
+	काष्ठा mt7615_vअगर *mvअगर = (काष्ठा mt7615_vअगर *)vअगर->drv_priv;
+	काष्ठा mt7615_dev *dev = mt7615_hw_dev(hw);
+	जोड़ अणु
 		u64 t64;
 		u32 t32[2];
-	} tsf;
-	u16 idx = mvif->mt76.omac_idx;
+	पूर्ण tsf;
+	u16 idx = mvअगर->mt76.omac_idx;
 	u32 reg;
 
 	idx = idx > HW_BSSID_MAX ? HW_BSSID_0 : idx;
@@ -881,26 +882,26 @@ mt7615_get_tsf(struct ieee80211_hw *hw, struct ieee80211_vif *vif)
 
 	mt7615_mutex_acquire(dev);
 
-	mt76_set(dev, reg, MT_LPON_TCR_MODE); /* TSF read */
+	mt76_set(dev, reg, MT_LPON_TCR_MODE); /* TSF पढ़ो */
 	tsf.t32[0] = mt76_rr(dev, MT_LPON_UTTR0);
 	tsf.t32[1] = mt76_rr(dev, MT_LPON_UTTR1);
 
 	mt7615_mutex_release(dev);
 
-	return tsf.t64;
-}
+	वापस tsf.t64;
+पूर्ण
 
-static void
-mt7615_set_tsf(struct ieee80211_hw *hw, struct ieee80211_vif *vif,
-	       u64 timestamp)
-{
-	struct mt7615_vif *mvif = (struct mt7615_vif *)vif->drv_priv;
-	struct mt7615_dev *dev = mt7615_hw_dev(hw);
-	union {
+अटल व्योम
+mt7615_set_tsf(काष्ठा ieee80211_hw *hw, काष्ठा ieee80211_vअगर *vअगर,
+	       u64 बारtamp)
+अणु
+	काष्ठा mt7615_vअगर *mvअगर = (काष्ठा mt7615_vअगर *)vअगर->drv_priv;
+	काष्ठा mt7615_dev *dev = mt7615_hw_dev(hw);
+	जोड़ अणु
 		u64 t64;
 		u32 t32[2];
-	} tsf = { .t64 = timestamp, };
-	u16 idx = mvif->mt76.omac_idx;
+	पूर्ण tsf = अणु .t64 = बारtamp, पूर्ण;
+	u16 idx = mvअगर->mt76.omac_idx;
 	u32 reg;
 
 	idx = idx > HW_BSSID_MAX ? HW_BSSID_0 : idx;
@@ -910,271 +911,271 @@ mt7615_set_tsf(struct ieee80211_hw *hw, struct ieee80211_vif *vif,
 
 	mt76_wr(dev, MT_LPON_UTTR0, tsf.t32[0]);
 	mt76_wr(dev, MT_LPON_UTTR1, tsf.t32[1]);
-	/* TSF software overwrite */
+	/* TSF software overग_लिखो */
 	mt76_set(dev, reg, MT_LPON_TCR_WRITE);
 
 	mt7615_mutex_release(dev);
-}
+पूर्ण
 
-static void
-mt7615_set_coverage_class(struct ieee80211_hw *hw, s16 coverage_class)
-{
-	struct mt7615_phy *phy = mt7615_hw_phy(hw);
-	struct mt7615_dev *dev = phy->dev;
+अटल व्योम
+mt7615_set_coverage_class(काष्ठा ieee80211_hw *hw, s16 coverage_class)
+अणु
+	काष्ठा mt7615_phy *phy = mt7615_hw_phy(hw);
+	काष्ठा mt7615_dev *dev = phy->dev;
 
 	mt7615_mutex_acquire(dev);
 	phy->coverage_class = max_t(s16, coverage_class, 0);
 	mt7615_mac_set_timing(phy);
 	mt7615_mutex_release(dev);
-}
+पूर्ण
 
-static int
-mt7615_set_antenna(struct ieee80211_hw *hw, u32 tx_ant, u32 rx_ant)
-{
-	struct mt7615_dev *dev = mt7615_hw_dev(hw);
-	struct mt7615_phy *phy = mt7615_hw_phy(hw);
-	int max_nss = hweight8(hw->wiphy->available_antennas_tx);
+अटल पूर्णांक
+mt7615_set_antenna(काष्ठा ieee80211_hw *hw, u32 tx_ant, u32 rx_ant)
+अणु
+	काष्ठा mt7615_dev *dev = mt7615_hw_dev(hw);
+	काष्ठा mt7615_phy *phy = mt7615_hw_phy(hw);
+	पूर्णांक max_nss = hweight8(hw->wiphy->available_antennas_tx);
 	bool ext_phy = phy != &dev->phy;
 
-	if (!tx_ant || tx_ant != rx_ant || ffs(tx_ant) > max_nss)
-		return -EINVAL;
+	अगर (!tx_ant || tx_ant != rx_ant || ffs(tx_ant) > max_nss)
+		वापस -EINVAL;
 
-	if ((BIT(hweight8(tx_ant)) - 1) != tx_ant)
+	अगर ((BIT(hweight8(tx_ant)) - 1) != tx_ant)
 		tx_ant = BIT(ffs(tx_ant) - 1) - 1;
 
 	mt7615_mutex_acquire(dev);
 
 	phy->mt76->antenna_mask = tx_ant;
-	if (ext_phy) {
-		if (dev->chainmask == 0xf)
+	अगर (ext_phy) अणु
+		अगर (dev->chainmask == 0xf)
 			tx_ant <<= 2;
-		else
+		अन्यथा
 			tx_ant <<= 1;
-	}
+	पूर्ण
 	phy->mt76->chainmask = tx_ant;
 
 	mt76_set_stream_caps(phy->mt76, true);
 
 	mt7615_mutex_release(dev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void mt7615_roc_iter(void *priv, u8 *mac,
-			    struct ieee80211_vif *vif)
-{
-	struct mt7615_phy *phy = priv;
+अटल व्योम mt7615_roc_iter(व्योम *priv, u8 *mac,
+			    काष्ठा ieee80211_vअगर *vअगर)
+अणु
+	काष्ठा mt7615_phy *phy = priv;
 
-	mt7615_mcu_set_roc(phy, vif, NULL, 0);
-}
+	mt7615_mcu_set_roc(phy, vअगर, शून्य, 0);
+पूर्ण
 
-void mt7615_roc_work(struct work_struct *work)
-{
-	struct mt7615_phy *phy;
+व्योम mt7615_roc_work(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा mt7615_phy *phy;
 
-	phy = (struct mt7615_phy *)container_of(work, struct mt7615_phy,
+	phy = (काष्ठा mt7615_phy *)container_of(work, काष्ठा mt7615_phy,
 						roc_work);
 
-	if (!test_and_clear_bit(MT76_STATE_ROC, &phy->mt76->state))
-		return;
+	अगर (!test_and_clear_bit(MT76_STATE_ROC, &phy->mt76->state))
+		वापस;
 
 	mt7615_mutex_acquire(phy->dev);
-	ieee80211_iterate_active_interfaces(phy->mt76->hw,
+	ieee80211_iterate_active_पूर्णांकerfaces(phy->mt76->hw,
 					    IEEE80211_IFACE_ITER_RESUME_ALL,
 					    mt7615_roc_iter, phy);
 	mt7615_mutex_release(phy->dev);
-	ieee80211_remain_on_channel_expired(phy->mt76->hw);
-}
+	ieee80211_reमुख्य_on_channel_expired(phy->mt76->hw);
+पूर्ण
 
-void mt7615_roc_timer(struct timer_list *timer)
-{
-	struct mt7615_phy *phy = from_timer(phy, timer, roc_timer);
+व्योम mt7615_roc_समयr(काष्ठा समयr_list *समयr)
+अणु
+	काष्ठा mt7615_phy *phy = from_समयr(phy, समयr, roc_समयr);
 
 	ieee80211_queue_work(phy->mt76->hw, &phy->roc_work);
-}
+पूर्ण
 
-void mt7615_scan_work(struct work_struct *work)
-{
-	struct mt7615_phy *phy;
+व्योम mt7615_scan_work(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा mt7615_phy *phy;
 
-	phy = (struct mt7615_phy *)container_of(work, struct mt7615_phy,
+	phy = (काष्ठा mt7615_phy *)container_of(work, काष्ठा mt7615_phy,
 						scan_work.work);
 
-	while (true) {
-		struct mt7615_mcu_rxd *rxd;
-		struct sk_buff *skb;
+	जबतक (true) अणु
+		काष्ठा mt7615_mcu_rxd *rxd;
+		काष्ठा sk_buff *skb;
 
 		spin_lock_bh(&phy->dev->mt76.lock);
 		skb = __skb_dequeue(&phy->scan_event_list);
 		spin_unlock_bh(&phy->dev->mt76.lock);
 
-		if (!skb)
-			break;
+		अगर (!skb)
+			अवरोध;
 
-		rxd = (struct mt7615_mcu_rxd *)skb->data;
-		if (rxd->eid == MCU_EVENT_SCHED_SCAN_DONE) {
+		rxd = (काष्ठा mt7615_mcu_rxd *)skb->data;
+		अगर (rxd->eid == MCU_EVENT_SCHED_SCAN_DONE) अणु
 			ieee80211_sched_scan_results(phy->mt76->hw);
-		} else if (test_and_clear_bit(MT76_HW_SCANNING,
-					      &phy->mt76->state)) {
-			struct cfg80211_scan_info info = {
-				.aborted = false,
-			};
+		पूर्ण अन्यथा अगर (test_and_clear_bit(MT76_HW_SCANNING,
+					      &phy->mt76->state)) अणु
+			काष्ठा cfg80211_scan_info info = अणु
+				.पातed = false,
+			पूर्ण;
 
 			ieee80211_scan_completed(phy->mt76->hw, &info);
-		}
-		dev_kfree_skb(skb);
-	}
-}
+		पूर्ण
+		dev_kमुक्त_skb(skb);
+	पूर्ण
+पूर्ण
 
-static int
-mt7615_hw_scan(struct ieee80211_hw *hw, struct ieee80211_vif *vif,
-	       struct ieee80211_scan_request *req)
-{
-	struct mt7615_dev *dev = mt7615_hw_dev(hw);
-	struct mt76_phy *mphy = hw->priv;
-	int err;
+अटल पूर्णांक
+mt7615_hw_scan(काष्ठा ieee80211_hw *hw, काष्ठा ieee80211_vअगर *vअगर,
+	       काष्ठा ieee80211_scan_request *req)
+अणु
+	काष्ठा mt7615_dev *dev = mt7615_hw_dev(hw);
+	काष्ठा mt76_phy *mphy = hw->priv;
+	पूर्णांक err;
 
 	/* fall-back to sw-scan */
-	if (!mt7615_firmware_offload(dev))
-		return 1;
+	अगर (!mt7615_firmware_offload(dev))
+		वापस 1;
 
 	mt7615_mutex_acquire(dev);
-	err = mt76_connac_mcu_hw_scan(mphy, vif, req);
+	err = mt76_connac_mcu_hw_scan(mphy, vअगर, req);
 	mt7615_mutex_release(dev);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void
-mt7615_cancel_hw_scan(struct ieee80211_hw *hw, struct ieee80211_vif *vif)
-{
-	struct mt7615_dev *dev = mt7615_hw_dev(hw);
-	struct mt76_phy *mphy = hw->priv;
+अटल व्योम
+mt7615_cancel_hw_scan(काष्ठा ieee80211_hw *hw, काष्ठा ieee80211_vअगर *vअगर)
+अणु
+	काष्ठा mt7615_dev *dev = mt7615_hw_dev(hw);
+	काष्ठा mt76_phy *mphy = hw->priv;
 
 	mt7615_mutex_acquire(dev);
-	mt76_connac_mcu_cancel_hw_scan(mphy, vif);
+	mt76_connac_mcu_cancel_hw_scan(mphy, vअगर);
 	mt7615_mutex_release(dev);
-}
+पूर्ण
 
-static int
-mt7615_start_sched_scan(struct ieee80211_hw *hw, struct ieee80211_vif *vif,
-			struct cfg80211_sched_scan_request *req,
-			struct ieee80211_scan_ies *ies)
-{
-	struct mt7615_dev *dev = mt7615_hw_dev(hw);
-	struct mt76_phy *mphy = hw->priv;
-	int err;
+अटल पूर्णांक
+mt7615_start_sched_scan(काष्ठा ieee80211_hw *hw, काष्ठा ieee80211_vअगर *vअगर,
+			काष्ठा cfg80211_sched_scan_request *req,
+			काष्ठा ieee80211_scan_ies *ies)
+अणु
+	काष्ठा mt7615_dev *dev = mt7615_hw_dev(hw);
+	काष्ठा mt76_phy *mphy = hw->priv;
+	पूर्णांक err;
 
-	if (!mt7615_firmware_offload(dev))
-		return -EOPNOTSUPP;
+	अगर (!mt7615_firmware_offload(dev))
+		वापस -EOPNOTSUPP;
 
 	mt7615_mutex_acquire(dev);
 
-	err = mt76_connac_mcu_sched_scan_req(mphy, vif, req);
-	if (err < 0)
-		goto out;
+	err = mt76_connac_mcu_sched_scan_req(mphy, vअगर, req);
+	अगर (err < 0)
+		जाओ out;
 
-	err = mt76_connac_mcu_sched_scan_enable(mphy, vif, true);
+	err = mt76_connac_mcu_sched_scan_enable(mphy, vअगर, true);
 out:
 	mt7615_mutex_release(dev);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int
-mt7615_stop_sched_scan(struct ieee80211_hw *hw, struct ieee80211_vif *vif)
-{
-	struct mt7615_dev *dev = mt7615_hw_dev(hw);
-	struct mt76_phy *mphy = hw->priv;
-	int err;
+अटल पूर्णांक
+mt7615_stop_sched_scan(काष्ठा ieee80211_hw *hw, काष्ठा ieee80211_vअगर *vअगर)
+अणु
+	काष्ठा mt7615_dev *dev = mt7615_hw_dev(hw);
+	काष्ठा mt76_phy *mphy = hw->priv;
+	पूर्णांक err;
 
-	if (!mt7615_firmware_offload(dev))
-		return -EOPNOTSUPP;
+	अगर (!mt7615_firmware_offload(dev))
+		वापस -EOPNOTSUPP;
 
 	mt7615_mutex_acquire(dev);
-	err = mt76_connac_mcu_sched_scan_enable(mphy, vif, false);
+	err = mt76_connac_mcu_sched_scan_enable(mphy, vअगर, false);
 	mt7615_mutex_release(dev);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int mt7615_remain_on_channel(struct ieee80211_hw *hw,
-				    struct ieee80211_vif *vif,
-				    struct ieee80211_channel *chan,
-				    int duration,
-				    enum ieee80211_roc_type type)
-{
-	struct mt7615_phy *phy = mt7615_hw_phy(hw);
-	int err;
+अटल पूर्णांक mt7615_reमुख्य_on_channel(काष्ठा ieee80211_hw *hw,
+				    काष्ठा ieee80211_vअगर *vअगर,
+				    काष्ठा ieee80211_channel *chan,
+				    पूर्णांक duration,
+				    क्रमागत ieee80211_roc_type type)
+अणु
+	काष्ठा mt7615_phy *phy = mt7615_hw_phy(hw);
+	पूर्णांक err;
 
-	if (test_and_set_bit(MT76_STATE_ROC, &phy->mt76->state))
-		return 0;
+	अगर (test_and_set_bit(MT76_STATE_ROC, &phy->mt76->state))
+		वापस 0;
 
 	mt7615_mutex_acquire(phy->dev);
 
-	err = mt7615_mcu_set_roc(phy, vif, chan, duration);
-	if (err < 0) {
+	err = mt7615_mcu_set_roc(phy, vअगर, chan, duration);
+	अगर (err < 0) अणु
 		clear_bit(MT76_STATE_ROC, &phy->mt76->state);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (!wait_event_timeout(phy->roc_wait, phy->roc_grant, HZ)) {
-		mt7615_mcu_set_roc(phy, vif, NULL, 0);
+	अगर (!रुको_event_समयout(phy->roc_रुको, phy->roc_grant, HZ)) अणु
+		mt7615_mcu_set_roc(phy, vअगर, शून्य, 0);
 		clear_bit(MT76_STATE_ROC, &phy->mt76->state);
 		err = -ETIMEDOUT;
-	}
+	पूर्ण
 
 out:
 	mt7615_mutex_release(phy->dev);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int mt7615_cancel_remain_on_channel(struct ieee80211_hw *hw,
-					   struct ieee80211_vif *vif)
-{
-	struct mt7615_phy *phy = mt7615_hw_phy(hw);
-	int err;
+अटल पूर्णांक mt7615_cancel_reमुख्य_on_channel(काष्ठा ieee80211_hw *hw,
+					   काष्ठा ieee80211_vअगर *vअगर)
+अणु
+	काष्ठा mt7615_phy *phy = mt7615_hw_phy(hw);
+	पूर्णांक err;
 
-	if (!test_and_clear_bit(MT76_STATE_ROC, &phy->mt76->state))
-		return 0;
+	अगर (!test_and_clear_bit(MT76_STATE_ROC, &phy->mt76->state))
+		वापस 0;
 
-	del_timer_sync(&phy->roc_timer);
+	del_समयr_sync(&phy->roc_समयr);
 	cancel_work_sync(&phy->roc_work);
 
 	mt7615_mutex_acquire(phy->dev);
-	err = mt7615_mcu_set_roc(phy, vif, NULL, 0);
+	err = mt7615_mcu_set_roc(phy, vअगर, शून्य, 0);
 	mt7615_mutex_release(phy->dev);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void mt7615_sta_set_decap_offload(struct ieee80211_hw *hw,
-				 struct ieee80211_vif *vif,
-				 struct ieee80211_sta *sta,
+अटल व्योम mt7615_sta_set_decap_offload(काष्ठा ieee80211_hw *hw,
+				 काष्ठा ieee80211_vअगर *vअगर,
+				 काष्ठा ieee80211_sta *sta,
 				 bool enabled)
-{
-	struct mt7615_dev *dev = mt7615_hw_dev(hw);
-	struct mt7615_sta *msta = (struct mt7615_sta *)sta->drv_priv;
+अणु
+	काष्ठा mt7615_dev *dev = mt7615_hw_dev(hw);
+	काष्ठा mt7615_sta *msta = (काष्ठा mt7615_sta *)sta->drv_priv;
 
-	if (enabled)
+	अगर (enabled)
 		set_bit(MT_WCID_FLAG_HDR_TRANS, &msta->wcid.flags);
-	else
+	अन्यथा
 		clear_bit(MT_WCID_FLAG_HDR_TRANS, &msta->wcid.flags);
 
-	mt7615_mcu_sta_update_hdr_trans(dev, vif, sta);
-}
+	mt7615_mcu_sta_update_hdr_trans(dev, vअगर, sta);
+पूर्ण
 
-#ifdef CONFIG_PM
-static int mt7615_suspend(struct ieee80211_hw *hw,
-			  struct cfg80211_wowlan *wowlan)
-{
-	struct mt7615_phy *phy = mt7615_hw_phy(hw);
-	struct mt7615_dev *dev = mt7615_hw_dev(hw);
-	int err = 0;
+#अगर_घोषित CONFIG_PM
+अटल पूर्णांक mt7615_suspend(काष्ठा ieee80211_hw *hw,
+			  काष्ठा cfg80211_wowlan *wowlan)
+अणु
+	काष्ठा mt7615_phy *phy = mt7615_hw_phy(hw);
+	काष्ठा mt7615_dev *dev = mt7615_hw_dev(hw);
+	पूर्णांक err = 0;
 
 	cancel_delayed_work_sync(&dev->pm.ps_work);
-	mt76_connac_free_pending_tx_skbs(&dev->pm, NULL);
+	mt76_connac_मुक्त_pending_tx_skbs(&dev->pm, शून्य);
 
 	mt7615_mutex_acquire(dev);
 
@@ -1183,23 +1184,23 @@ static int mt7615_suspend(struct ieee80211_hw *hw,
 	cancel_delayed_work_sync(&phy->mt76->mac_work);
 
 	set_bit(MT76_STATE_SUSPEND, &phy->mt76->state);
-	ieee80211_iterate_active_interfaces(hw,
+	ieee80211_iterate_active_पूर्णांकerfaces(hw,
 					    IEEE80211_IFACE_ITER_RESUME_ALL,
 					    mt76_connac_mcu_set_suspend_iter,
 					    phy->mt76);
 
-	if (!mt7615_dev_running(dev))
-		err = mt76_connac_mcu_set_hif_suspend(&dev->mt76, true);
+	अगर (!mt7615_dev_running(dev))
+		err = mt76_connac_mcu_set_hअगर_suspend(&dev->mt76, true);
 
 	mt7615_mutex_release(dev);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int mt7615_resume(struct ieee80211_hw *hw)
-{
-	struct mt7615_phy *phy = mt7615_hw_phy(hw);
-	struct mt7615_dev *dev = mt7615_hw_dev(hw);
+अटल पूर्णांक mt7615_resume(काष्ठा ieee80211_hw *hw)
+अणु
+	काष्ठा mt7615_phy *phy = mt7615_hw_phy(hw);
+	काष्ठा mt7615_dev *dev = mt7615_hw_dev(hw);
 	bool running;
 
 	mt7615_mutex_acquire(dev);
@@ -1207,18 +1208,18 @@ static int mt7615_resume(struct ieee80211_hw *hw)
 	running = mt7615_dev_running(dev);
 	set_bit(MT76_STATE_RUNNING, &phy->mt76->state);
 
-	if (!running) {
-		int err;
+	अगर (!running) अणु
+		पूर्णांक err;
 
-		err = mt76_connac_mcu_set_hif_suspend(&dev->mt76, false);
-		if (err < 0) {
+		err = mt76_connac_mcu_set_hअगर_suspend(&dev->mt76, false);
+		अगर (err < 0) अणु
 			mt7615_mutex_release(dev);
-			return err;
-		}
-	}
+			वापस err;
+		पूर्ण
+	पूर्ण
 
 	clear_bit(MT76_STATE_SUSPEND, &phy->mt76->state);
-	ieee80211_iterate_active_interfaces(hw,
+	ieee80211_iterate_active_पूर्णांकerfaces(hw,
 					    IEEE80211_IFACE_ITER_RESUME_ALL,
 					    mt76_connac_mcu_set_suspend_iter,
 					    phy->mt76);
@@ -1228,42 +1229,42 @@ static int mt7615_resume(struct ieee80211_hw *hw)
 
 	mt7615_mutex_release(dev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void mt7615_set_wakeup(struct ieee80211_hw *hw, bool enabled)
-{
-	struct mt7615_dev *dev = mt7615_hw_dev(hw);
-	struct mt76_dev *mdev = &dev->mt76;
+अटल व्योम mt7615_set_wakeup(काष्ठा ieee80211_hw *hw, bool enabled)
+अणु
+	काष्ठा mt7615_dev *dev = mt7615_hw_dev(hw);
+	काष्ठा mt76_dev *mdev = &dev->mt76;
 
 	device_set_wakeup_enable(mdev->dev, enabled);
-}
+पूर्ण
 
-static void mt7615_set_rekey_data(struct ieee80211_hw *hw,
-				  struct ieee80211_vif *vif,
-				  struct cfg80211_gtk_rekey_data *data)
-{
-	struct mt7615_dev *dev = mt7615_hw_dev(hw);
+अटल व्योम mt7615_set_rekey_data(काष्ठा ieee80211_hw *hw,
+				  काष्ठा ieee80211_vअगर *vअगर,
+				  काष्ठा cfg80211_gtk_rekey_data *data)
+अणु
+	काष्ठा mt7615_dev *dev = mt7615_hw_dev(hw);
 
 	mt7615_mutex_acquire(dev);
-	mt76_connac_mcu_update_gtk_rekey(hw, vif, data);
+	mt76_connac_mcu_update_gtk_rekey(hw, vअगर, data);
 	mt7615_mutex_release(dev);
-}
-#endif /* CONFIG_PM */
+पूर्ण
+#पूर्ण_अगर /* CONFIG_PM */
 
-const struct ieee80211_ops mt7615_ops = {
+स्थिर काष्ठा ieee80211_ops mt7615_ops = अणु
 	.tx = mt7615_tx,
 	.start = mt7615_start,
 	.stop = mt7615_stop,
-	.add_interface = mt7615_add_interface,
-	.remove_interface = mt7615_remove_interface,
+	.add_पूर्णांकerface = mt7615_add_पूर्णांकerface,
+	.हटाओ_पूर्णांकerface = mt7615_हटाओ_पूर्णांकerface,
 	.config = mt7615_config,
 	.conf_tx = mt7615_conf_tx,
 	.configure_filter = mt7615_configure_filter,
 	.bss_info_changed = mt7615_bss_info_changed,
 	.sta_add = mt7615_sta_add,
-	.sta_remove = mt7615_sta_remove,
-	.sta_pre_rcu_remove = mt76_sta_pre_rcu_remove,
+	.sta_हटाओ = mt7615_sta_हटाओ,
+	.sta_pre_rcu_हटाओ = mt76_sta_pre_rcu_हटाओ,
 	.set_key = mt7615_set_key,
 	.sta_set_decap_offload = mt7615_sta_set_decap_offload,
 	.ampdu_action = mt7615_ampdu_action,
@@ -1273,8 +1274,8 @@ const struct ieee80211_ops mt7615_ops = {
 	.sw_scan_start = mt76_sw_scan,
 	.sw_scan_complete = mt76_sw_scan_complete,
 	.release_buffered_frames = mt76_release_buffered_frames,
-	.get_txpower = mt76_get_txpower,
-	.channel_switch_beacon = mt7615_channel_switch_beacon,
+	.get_txघातer = mt76_get_txघातer,
+	.channel_चयन_beacon = mt7615_channel_चयन_beacon,
 	.get_stats = mt7615_get_stats,
 	.get_tsf = mt7615_get_tsf,
 	.set_tsf = mt7615_set_tsf,
@@ -1286,17 +1287,17 @@ const struct ieee80211_ops mt7615_ops = {
 	.cancel_hw_scan = mt7615_cancel_hw_scan,
 	.sched_scan_start = mt7615_start_sched_scan,
 	.sched_scan_stop = mt7615_stop_sched_scan,
-	.remain_on_channel = mt7615_remain_on_channel,
-	.cancel_remain_on_channel = mt7615_cancel_remain_on_channel,
-	CFG80211_TESTMODE_CMD(mt76_testmode_cmd)
-	CFG80211_TESTMODE_DUMP(mt76_testmode_dump)
-#ifdef CONFIG_PM
+	.reमुख्य_on_channel = mt7615_reमुख्य_on_channel,
+	.cancel_reमुख्य_on_channel = mt7615_cancel_reमुख्य_on_channel,
+	CFG80211_TESTMODE_CMD(mt76_tesपंचांगode_cmd)
+	CFG80211_TESTMODE_DUMP(mt76_tesपंचांगode_dump)
+#अगर_घोषित CONFIG_PM
 	.suspend = mt7615_suspend,
 	.resume = mt7615_resume,
 	.set_wakeup = mt7615_set_wakeup,
 	.set_rekey_data = mt7615_set_rekey_data,
-#endif /* CONFIG_PM */
-};
+#पूर्ण_अगर /* CONFIG_PM */
+पूर्ण;
 EXPORT_SYMBOL_GPL(mt7615_ops);
 
 MODULE_LICENSE("Dual BSD/GPL");

@@ -1,75 +1,76 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Clause 45 PHY support
  */
-#include <linux/ethtool.h>
-#include <linux/export.h>
-#include <linux/mdio.h>
-#include <linux/mii.h>
-#include <linux/phy.h>
+#समावेश <linux/ethtool.h>
+#समावेश <linux/export.h>
+#समावेश <linux/mdपन.स>
+#समावेश <linux/mii.h>
+#समावेश <linux/phy.h>
 
 /**
- * genphy_c45_pma_can_sleep - checks if the PMA have sleep support
- * @phydev: target phy_device struct
+ * genphy_c45_pma_can_sleep - checks अगर the PMA have sleep support
+ * @phydev: target phy_device काष्ठा
  */
-static bool genphy_c45_pma_can_sleep(struct phy_device *phydev)
-{
-	int stat1;
+अटल bool genphy_c45_pma_can_sleep(काष्ठा phy_device *phydev)
+अणु
+	पूर्णांक stat1;
 
-	stat1 = phy_read_mmd(phydev, MDIO_MMD_PMAPMD, MDIO_STAT1);
-	if (stat1 < 0)
-		return false;
+	stat1 = phy_पढ़ो_mmd(phydev, MDIO_MMD_PMAPMD, MDIO_STAT1);
+	अगर (stat1 < 0)
+		वापस false;
 
-	return !!(stat1 & MDIO_STAT1_LPOWERABLE);
-}
+	वापस !!(stat1 & MDIO_STAT1_LPOWERABLE);
+पूर्ण
 
 /**
  * genphy_c45_pma_resume - wakes up the PMA module
- * @phydev: target phy_device struct
+ * @phydev: target phy_device काष्ठा
  */
-int genphy_c45_pma_resume(struct phy_device *phydev)
-{
-	if (!genphy_c45_pma_can_sleep(phydev))
-		return -EOPNOTSUPP;
+पूर्णांक genphy_c45_pma_resume(काष्ठा phy_device *phydev)
+अणु
+	अगर (!genphy_c45_pma_can_sleep(phydev))
+		वापस -EOPNOTSUPP;
 
-	return phy_clear_bits_mmd(phydev, MDIO_MMD_PMAPMD, MDIO_CTRL1,
+	वापस phy_clear_bits_mmd(phydev, MDIO_MMD_PMAPMD, MDIO_CTRL1,
 				  MDIO_CTRL1_LPOWER);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(genphy_c45_pma_resume);
 
 /**
  * genphy_c45_pma_suspend - suspends the PMA module
- * @phydev: target phy_device struct
+ * @phydev: target phy_device काष्ठा
  */
-int genphy_c45_pma_suspend(struct phy_device *phydev)
-{
-	if (!genphy_c45_pma_can_sleep(phydev))
-		return -EOPNOTSUPP;
+पूर्णांक genphy_c45_pma_suspend(काष्ठा phy_device *phydev)
+अणु
+	अगर (!genphy_c45_pma_can_sleep(phydev))
+		वापस -EOPNOTSUPP;
 
-	return phy_set_bits_mmd(phydev, MDIO_MMD_PMAPMD, MDIO_CTRL1,
+	वापस phy_set_bits_mmd(phydev, MDIO_MMD_PMAPMD, MDIO_CTRL1,
 				MDIO_CTRL1_LPOWER);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(genphy_c45_pma_suspend);
 
 /**
- * genphy_c45_pma_setup_forced - configures a forced speed
- * @phydev: target phy_device struct
+ * genphy_c45_pma_setup_क्रमced - configures a क्रमced speed
+ * @phydev: target phy_device काष्ठा
  */
-int genphy_c45_pma_setup_forced(struct phy_device *phydev)
-{
-	int ctrl1, ctrl2, ret;
+पूर्णांक genphy_c45_pma_setup_क्रमced(काष्ठा phy_device *phydev)
+अणु
+	पूर्णांक ctrl1, ctrl2, ret;
 
 	/* Half duplex is not supported */
-	if (phydev->duplex != DUPLEX_FULL)
-		return -EINVAL;
+	अगर (phydev->duplex != DUPLEX_FULL)
+		वापस -EINVAL;
 
-	ctrl1 = phy_read_mmd(phydev, MDIO_MMD_PMAPMD, MDIO_CTRL1);
-	if (ctrl1 < 0)
-		return ctrl1;
+	ctrl1 = phy_पढ़ो_mmd(phydev, MDIO_MMD_PMAPMD, MDIO_CTRL1);
+	अगर (ctrl1 < 0)
+		वापस ctrl1;
 
-	ctrl2 = phy_read_mmd(phydev, MDIO_MMD_PMAPMD, MDIO_CTRL2);
-	if (ctrl2 < 0)
-		return ctrl2;
+	ctrl2 = phy_पढ़ो_mmd(phydev, MDIO_MMD_PMAPMD, MDIO_CTRL2);
+	अगर (ctrl2 < 0)
+		वापस ctrl2;
 
 	ctrl1 &= ~MDIO_CTRL1_SPEEDSEL;
 	/*
@@ -78,62 +79,62 @@ int genphy_c45_pma_setup_forced(struct phy_device *phydev)
 	 */
 	ctrl2 &= ~(MDIO_PMA_CTRL2_TYPE | 0x30);
 
-	switch (phydev->speed) {
-	case SPEED_10:
+	चयन (phydev->speed) अणु
+	हाल SPEED_10:
 		ctrl2 |= MDIO_PMA_CTRL2_10BT;
-		break;
-	case SPEED_100:
+		अवरोध;
+	हाल SPEED_100:
 		ctrl1 |= MDIO_PMA_CTRL1_SPEED100;
 		ctrl2 |= MDIO_PMA_CTRL2_100BTX;
-		break;
-	case SPEED_1000:
+		अवरोध;
+	हाल SPEED_1000:
 		ctrl1 |= MDIO_PMA_CTRL1_SPEED1000;
 		/* Assume 1000base-T */
 		ctrl2 |= MDIO_PMA_CTRL2_1000BT;
-		break;
-	case SPEED_2500:
+		अवरोध;
+	हाल SPEED_2500:
 		ctrl1 |= MDIO_CTRL1_SPEED2_5G;
 		/* Assume 2.5Gbase-T */
 		ctrl2 |= MDIO_PMA_CTRL2_2_5GBT;
-		break;
-	case SPEED_5000:
+		अवरोध;
+	हाल SPEED_5000:
 		ctrl1 |= MDIO_CTRL1_SPEED5G;
 		/* Assume 5Gbase-T */
 		ctrl2 |= MDIO_PMA_CTRL2_5GBT;
-		break;
-	case SPEED_10000:
+		अवरोध;
+	हाल SPEED_10000:
 		ctrl1 |= MDIO_CTRL1_SPEED10G;
 		/* Assume 10Gbase-T */
 		ctrl2 |= MDIO_PMA_CTRL2_10GBT;
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	ret = phy_write_mmd(phydev, MDIO_MMD_PMAPMD, MDIO_CTRL1, ctrl1);
-	if (ret < 0)
-		return ret;
+	ret = phy_ग_लिखो_mmd(phydev, MDIO_MMD_PMAPMD, MDIO_CTRL1, ctrl1);
+	अगर (ret < 0)
+		वापस ret;
 
-	ret = phy_write_mmd(phydev, MDIO_MMD_PMAPMD, MDIO_CTRL2, ctrl2);
-	if (ret < 0)
-		return ret;
+	ret = phy_ग_लिखो_mmd(phydev, MDIO_MMD_PMAPMD, MDIO_CTRL2, ctrl2);
+	अगर (ret < 0)
+		वापस ret;
 
-	return genphy_c45_an_disable_aneg(phydev);
-}
-EXPORT_SYMBOL_GPL(genphy_c45_pma_setup_forced);
+	वापस genphy_c45_an_disable_aneg(phydev);
+पूर्ण
+EXPORT_SYMBOL_GPL(genphy_c45_pma_setup_क्रमced);
 
 /**
- * genphy_c45_an_config_aneg - configure advertisement registers
- * @phydev: target phy_device struct
+ * genphy_c45_an_config_aneg - configure advertisement रेजिस्टरs
+ * @phydev: target phy_device काष्ठा
  *
- * Configure advertisement registers based on modes set in phydev->advertising
+ * Configure advertisement रेजिस्टरs based on modes set in phydev->advertising
  *
- * Returns negative errno code on failure, 0 if advertisement didn't change,
- * or 1 if advertised modes changed.
+ * Returns negative त्रुटि_सं code on failure, 0 अगर advertisement didn't change,
+ * or 1 अगर advertised modes changed.
  */
-int genphy_c45_an_config_aneg(struct phy_device *phydev)
-{
-	int changed, ret;
+पूर्णांक genphy_c45_an_config_aneg(काष्ठा phy_device *phydev)
+अणु
+	पूर्णांक changed, ret;
 	u32 adv;
 
 	linkmode_and(phydev->advertising, phydev->advertising,
@@ -143,328 +144,328 @@ int genphy_c45_an_config_aneg(struct phy_device *phydev)
 
 	adv = linkmode_adv_to_mii_adv_t(phydev->advertising);
 
-	ret = phy_modify_mmd_changed(phydev, MDIO_MMD_AN, MDIO_AN_ADVERTISE,
+	ret = phy_modअगरy_mmd_changed(phydev, MDIO_MMD_AN, MDIO_AN_ADVERTISE,
 				     ADVERTISE_ALL | ADVERTISE_100BASE4 |
 				     ADVERTISE_PAUSE_CAP | ADVERTISE_PAUSE_ASYM,
 				     adv);
-	if (ret < 0)
-		return ret;
-	if (ret > 0)
+	अगर (ret < 0)
+		वापस ret;
+	अगर (ret > 0)
 		changed = 1;
 
 	adv = linkmode_adv_to_mii_10gbt_adv_t(phydev->advertising);
 
-	ret = phy_modify_mmd_changed(phydev, MDIO_MMD_AN, MDIO_AN_10GBT_CTRL,
+	ret = phy_modअगरy_mmd_changed(phydev, MDIO_MMD_AN, MDIO_AN_10GBT_CTRL,
 				     MDIO_AN_10GBT_CTRL_ADV10G |
 				     MDIO_AN_10GBT_CTRL_ADV5G |
 				     MDIO_AN_10GBT_CTRL_ADV2_5G, adv);
-	if (ret < 0)
-		return ret;
-	if (ret > 0)
+	अगर (ret < 0)
+		वापस ret;
+	अगर (ret > 0)
 		changed = 1;
 
-	return changed;
-}
+	वापस changed;
+पूर्ण
 EXPORT_SYMBOL_GPL(genphy_c45_an_config_aneg);
 
 /**
- * genphy_c45_an_disable_aneg - disable auto-negotiation
- * @phydev: target phy_device struct
+ * genphy_c45_an_disable_aneg - disable स्वतः-negotiation
+ * @phydev: target phy_device काष्ठा
  *
- * Disable auto-negotiation in the Clause 45 PHY. The link parameters
- * parameters are controlled through the PMA/PMD MMD registers.
+ * Disable स्वतः-negotiation in the Clause 45 PHY. The link parameters
+ * parameters are controlled through the PMA/PMD MMD रेजिस्टरs.
  *
- * Returns zero on success, negative errno code on failure.
+ * Returns zero on success, negative त्रुटि_सं code on failure.
  */
-int genphy_c45_an_disable_aneg(struct phy_device *phydev)
-{
+पूर्णांक genphy_c45_an_disable_aneg(काष्ठा phy_device *phydev)
+अणु
 
-	return phy_clear_bits_mmd(phydev, MDIO_MMD_AN, MDIO_CTRL1,
+	वापस phy_clear_bits_mmd(phydev, MDIO_MMD_AN, MDIO_CTRL1,
 				  MDIO_AN_CTRL1_ENABLE | MDIO_AN_CTRL1_RESTART);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(genphy_c45_an_disable_aneg);
 
 /**
- * genphy_c45_restart_aneg - Enable and restart auto-negotiation
- * @phydev: target phy_device struct
+ * genphy_c45_restart_aneg - Enable and restart स्वतः-negotiation
+ * @phydev: target phy_device काष्ठा
  *
- * This assumes that the auto-negotiation MMD is present.
+ * This assumes that the स्वतः-negotiation MMD is present.
  *
- * Enable and restart auto-negotiation.
+ * Enable and restart स्वतः-negotiation.
  */
-int genphy_c45_restart_aneg(struct phy_device *phydev)
-{
-	return phy_set_bits_mmd(phydev, MDIO_MMD_AN, MDIO_CTRL1,
+पूर्णांक genphy_c45_restart_aneg(काष्ठा phy_device *phydev)
+अणु
+	वापस phy_set_bits_mmd(phydev, MDIO_MMD_AN, MDIO_CTRL1,
 				MDIO_AN_CTRL1_ENABLE | MDIO_AN_CTRL1_RESTART);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(genphy_c45_restart_aneg);
 
 /**
- * genphy_c45_check_and_restart_aneg - Enable and restart auto-negotiation
- * @phydev: target phy_device struct
+ * genphy_c45_check_and_restart_aneg - Enable and restart स्वतः-negotiation
+ * @phydev: target phy_device काष्ठा
  * @restart: whether aneg restart is requested
  *
- * This assumes that the auto-negotiation MMD is present.
+ * This assumes that the स्वतः-negotiation MMD is present.
  *
- * Check, and restart auto-negotiation if needed.
+ * Check, and restart स्वतः-negotiation अगर needed.
  */
-int genphy_c45_check_and_restart_aneg(struct phy_device *phydev, bool restart)
-{
-	int ret;
+पूर्णांक genphy_c45_check_and_restart_aneg(काष्ठा phy_device *phydev, bool restart)
+अणु
+	पूर्णांक ret;
 
-	if (!restart) {
-		/* Configure and restart aneg if it wasn't set before */
-		ret = phy_read_mmd(phydev, MDIO_MMD_AN, MDIO_CTRL1);
-		if (ret < 0)
-			return ret;
+	अगर (!restart) अणु
+		/* Configure and restart aneg अगर it wasn't set beक्रमe */
+		ret = phy_पढ़ो_mmd(phydev, MDIO_MMD_AN, MDIO_CTRL1);
+		अगर (ret < 0)
+			वापस ret;
 
-		if (!(ret & MDIO_AN_CTRL1_ENABLE))
+		अगर (!(ret & MDIO_AN_CTRL1_ENABLE))
 			restart = true;
-	}
+	पूर्ण
 
-	if (restart)
-		return genphy_c45_restart_aneg(phydev);
+	अगर (restart)
+		वापस genphy_c45_restart_aneg(phydev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(genphy_c45_check_and_restart_aneg);
 
 /**
- * genphy_c45_aneg_done - return auto-negotiation complete status
- * @phydev: target phy_device struct
+ * genphy_c45_aneg_करोne - वापस स्वतः-negotiation complete status
+ * @phydev: target phy_device काष्ठा
  *
- * This assumes that the auto-negotiation MMD is present.
+ * This assumes that the स्वतः-negotiation MMD is present.
  *
- * Reads the status register from the auto-negotiation MMD, returning:
- * - positive if auto-negotiation is complete
- * - negative errno code on error
+ * Reads the status रेजिस्टर from the स्वतः-negotiation MMD, वापसing:
+ * - positive अगर स्वतः-negotiation is complete
+ * - negative त्रुटि_सं code on error
  * - zero otherwise
  */
-int genphy_c45_aneg_done(struct phy_device *phydev)
-{
-	int val = phy_read_mmd(phydev, MDIO_MMD_AN, MDIO_STAT1);
+पूर्णांक genphy_c45_aneg_करोne(काष्ठा phy_device *phydev)
+अणु
+	पूर्णांक val = phy_पढ़ो_mmd(phydev, MDIO_MMD_AN, MDIO_STAT1);
 
-	return val < 0 ? val : val & MDIO_AN_STAT1_COMPLETE ? 1 : 0;
-}
-EXPORT_SYMBOL_GPL(genphy_c45_aneg_done);
+	वापस val < 0 ? val : val & MDIO_AN_STAT1_COMPLETE ? 1 : 0;
+पूर्ण
+EXPORT_SYMBOL_GPL(genphy_c45_aneg_करोne);
 
 /**
- * genphy_c45_read_link - read the overall link status from the MMDs
- * @phydev: target phy_device struct
+ * genphy_c45_पढ़ो_link - पढ़ो the overall link status from the MMDs
+ * @phydev: target phy_device काष्ठा
  *
- * Read the link status from the specified MMDs, and if they all indicate
+ * Read the link status from the specअगरied MMDs, and अगर they all indicate
  * that the link is up, set phydev->link to 1.  If an error is encountered,
- * a negative errno will be returned, otherwise zero.
+ * a negative त्रुटि_सं will be वापसed, otherwise zero.
  */
-int genphy_c45_read_link(struct phy_device *phydev)
-{
+पूर्णांक genphy_c45_पढ़ो_link(काष्ठा phy_device *phydev)
+अणु
 	u32 mmd_mask = MDIO_DEVS_PMAPMD;
-	int val, devad;
+	पूर्णांक val, devad;
 	bool link = true;
 
-	if (phydev->c45_ids.mmds_present & MDIO_DEVS_AN) {
-		val = phy_read_mmd(phydev, MDIO_MMD_AN, MDIO_CTRL1);
-		if (val < 0)
-			return val;
+	अगर (phydev->c45_ids.mmds_present & MDIO_DEVS_AN) अणु
+		val = phy_पढ़ो_mmd(phydev, MDIO_MMD_AN, MDIO_CTRL1);
+		अगर (val < 0)
+			वापस val;
 
-		/* Autoneg is being started, therefore disregard current
-		 * link status and report link as down.
+		/* Autoneg is being started, thereक्रमe disregard current
+		 * link status and report link as करोwn.
 		 */
-		if (val & MDIO_AN_CTRL1_RESTART) {
+		अगर (val & MDIO_AN_CTRL1_RESTART) अणु
 			phydev->link = 0;
-			return 0;
-		}
-	}
+			वापस 0;
+		पूर्ण
+	पूर्ण
 
-	while (mmd_mask && link) {
+	जबतक (mmd_mask && link) अणु
 		devad = __ffs(mmd_mask);
 		mmd_mask &= ~BIT(devad);
 
 		/* The link state is latched low so that momentary link
-		 * drops can be detected. Do not double-read the status
-		 * in polling mode to detect such short link drops except
-		 * the link was already down.
+		 * drops can be detected. Do not द्विगुन-पढ़ो the status
+		 * in polling mode to detect such लघु link drops except
+		 * the link was alपढ़ोy करोwn.
 		 */
-		if (!phy_polling_mode(phydev) || !phydev->link) {
-			val = phy_read_mmd(phydev, devad, MDIO_STAT1);
-			if (val < 0)
-				return val;
-			else if (val & MDIO_STAT1_LSTATUS)
-				continue;
-		}
+		अगर (!phy_polling_mode(phydev) || !phydev->link) अणु
+			val = phy_पढ़ो_mmd(phydev, devad, MDIO_STAT1);
+			अगर (val < 0)
+				वापस val;
+			अन्यथा अगर (val & MDIO_STAT1_LSTATUS)
+				जारी;
+		पूर्ण
 
-		val = phy_read_mmd(phydev, devad, MDIO_STAT1);
-		if (val < 0)
-			return val;
+		val = phy_पढ़ो_mmd(phydev, devad, MDIO_STAT1);
+		अगर (val < 0)
+			वापस val;
 
-		if (!(val & MDIO_STAT1_LSTATUS))
+		अगर (!(val & MDIO_STAT1_LSTATUS))
 			link = false;
-	}
+	पूर्ण
 
 	phydev->link = link;
 
-	return 0;
-}
-EXPORT_SYMBOL_GPL(genphy_c45_read_link);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL_GPL(genphy_c45_पढ़ो_link);
 
 /**
- * genphy_c45_read_lpa - read the link partner advertisement and pause
- * @phydev: target phy_device struct
+ * genphy_c45_पढ़ो_lpa - पढ़ो the link partner advertisement and छोड़ो
+ * @phydev: target phy_device काष्ठा
  *
- * Read the Clause 45 defined base (7.19) and 10G (7.33) status registers,
- * filling in the link partner advertisement, pause and asym_pause members
- * in @phydev.  This assumes that the auto-negotiation MMD is present, and
+ * Read the Clause 45 defined base (7.19) and 10G (7.33) status रेजिस्टरs,
+ * filling in the link partner advertisement, छोड़ो and asym_छोड़ो members
+ * in @phydev.  This assumes that the स्वतः-negotiation MMD is present, and
  * the backplane bit (7.48.0) is clear.  Clause 45 PHY drivers are expected
- * to fill in the remainder of the link partner advert from vendor registers.
+ * to fill in the reमुख्यder of the link partner advert from venकरोr रेजिस्टरs.
  */
-int genphy_c45_read_lpa(struct phy_device *phydev)
-{
-	int val;
+पूर्णांक genphy_c45_पढ़ो_lpa(काष्ठा phy_device *phydev)
+अणु
+	पूर्णांक val;
 
-	val = phy_read_mmd(phydev, MDIO_MMD_AN, MDIO_STAT1);
-	if (val < 0)
-		return val;
+	val = phy_पढ़ो_mmd(phydev, MDIO_MMD_AN, MDIO_STAT1);
+	अगर (val < 0)
+		वापस val;
 
-	if (!(val & MDIO_AN_STAT1_COMPLETE)) {
+	अगर (!(val & MDIO_AN_STAT1_COMPLETE)) अणु
 		linkmode_clear_bit(ETHTOOL_LINK_MODE_Autoneg_BIT,
 				   phydev->lp_advertising);
 		mii_10gbt_stat_mod_linkmode_lpa_t(phydev->lp_advertising, 0);
 		mii_adv_mod_linkmode_adv_t(phydev->lp_advertising, 0);
-		phydev->pause = 0;
-		phydev->asym_pause = 0;
+		phydev->छोड़ो = 0;
+		phydev->asym_छोड़ो = 0;
 
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	linkmode_mod_bit(ETHTOOL_LINK_MODE_Autoneg_BIT, phydev->lp_advertising,
 			 val & MDIO_AN_STAT1_LPABLE);
 
 	/* Read the link partner's base page advertisement */
-	val = phy_read_mmd(phydev, MDIO_MMD_AN, MDIO_AN_LPA);
-	if (val < 0)
-		return val;
+	val = phy_पढ़ो_mmd(phydev, MDIO_MMD_AN, MDIO_AN_LPA);
+	अगर (val < 0)
+		वापस val;
 
 	mii_adv_mod_linkmode_adv_t(phydev->lp_advertising, val);
-	phydev->pause = val & LPA_PAUSE_CAP ? 1 : 0;
-	phydev->asym_pause = val & LPA_PAUSE_ASYM ? 1 : 0;
+	phydev->छोड़ो = val & LPA_PAUSE_CAP ? 1 : 0;
+	phydev->asym_छोड़ो = val & LPA_PAUSE_ASYM ? 1 : 0;
 
 	/* Read the link partner's 10G advertisement */
-	val = phy_read_mmd(phydev, MDIO_MMD_AN, MDIO_AN_10GBT_STAT);
-	if (val < 0)
-		return val;
+	val = phy_पढ़ो_mmd(phydev, MDIO_MMD_AN, MDIO_AN_10GBT_STAT);
+	अगर (val < 0)
+		वापस val;
 
 	mii_10gbt_stat_mod_linkmode_lpa_t(phydev->lp_advertising, val);
 
-	return 0;
-}
-EXPORT_SYMBOL_GPL(genphy_c45_read_lpa);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL_GPL(genphy_c45_पढ़ो_lpa);
 
 /**
- * genphy_c45_read_pma - read link speed etc from PMA
- * @phydev: target phy_device struct
+ * genphy_c45_पढ़ो_pma - पढ़ो link speed etc from PMA
+ * @phydev: target phy_device काष्ठा
  */
-int genphy_c45_read_pma(struct phy_device *phydev)
-{
-	int val;
+पूर्णांक genphy_c45_पढ़ो_pma(काष्ठा phy_device *phydev)
+अणु
+	पूर्णांक val;
 
 	linkmode_zero(phydev->lp_advertising);
 
-	val = phy_read_mmd(phydev, MDIO_MMD_PMAPMD, MDIO_CTRL1);
-	if (val < 0)
-		return val;
+	val = phy_पढ़ो_mmd(phydev, MDIO_MMD_PMAPMD, MDIO_CTRL1);
+	अगर (val < 0)
+		वापस val;
 
-	switch (val & MDIO_CTRL1_SPEEDSEL) {
-	case 0:
+	चयन (val & MDIO_CTRL1_SPEEDSEL) अणु
+	हाल 0:
 		phydev->speed = SPEED_10;
-		break;
-	case MDIO_PMA_CTRL1_SPEED100:
+		अवरोध;
+	हाल MDIO_PMA_CTRL1_SPEED100:
 		phydev->speed = SPEED_100;
-		break;
-	case MDIO_PMA_CTRL1_SPEED1000:
+		अवरोध;
+	हाल MDIO_PMA_CTRL1_SPEED1000:
 		phydev->speed = SPEED_1000;
-		break;
-	case MDIO_CTRL1_SPEED2_5G:
+		अवरोध;
+	हाल MDIO_CTRL1_SPEED2_5G:
 		phydev->speed = SPEED_2500;
-		break;
-	case MDIO_CTRL1_SPEED5G:
+		अवरोध;
+	हाल MDIO_CTRL1_SPEED5G:
 		phydev->speed = SPEED_5000;
-		break;
-	case MDIO_CTRL1_SPEED10G:
+		अवरोध;
+	हाल MDIO_CTRL1_SPEED10G:
 		phydev->speed = SPEED_10000;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		phydev->speed = SPEED_UNKNOWN;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	phydev->duplex = DUPLEX_FULL;
 
-	return 0;
-}
-EXPORT_SYMBOL_GPL(genphy_c45_read_pma);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL_GPL(genphy_c45_पढ़ो_pma);
 
 /**
- * genphy_c45_read_mdix - read mdix status from PMA
- * @phydev: target phy_device struct
+ * genphy_c45_पढ़ो_mdix - पढ़ो mdix status from PMA
+ * @phydev: target phy_device काष्ठा
  */
-int genphy_c45_read_mdix(struct phy_device *phydev)
-{
-	int val;
+पूर्णांक genphy_c45_पढ़ो_mdix(काष्ठा phy_device *phydev)
+अणु
+	पूर्णांक val;
 
-	if (phydev->speed == SPEED_10000) {
-		val = phy_read_mmd(phydev, MDIO_MMD_PMAPMD,
+	अगर (phydev->speed == SPEED_10000) अणु
+		val = phy_पढ़ो_mmd(phydev, MDIO_MMD_PMAPMD,
 				   MDIO_PMA_10GBT_SWAPPOL);
-		if (val < 0)
-			return val;
+		अगर (val < 0)
+			वापस val;
 
-		switch (val) {
-		case MDIO_PMA_10GBT_SWAPPOL_ABNX | MDIO_PMA_10GBT_SWAPPOL_CDNX:
+		चयन (val) अणु
+		हाल MDIO_PMA_10GBT_SWAPPOL_ABNX | MDIO_PMA_10GBT_SWAPPOL_CDNX:
 			phydev->mdix = ETH_TP_MDI;
-			break;
+			अवरोध;
 
-		case 0:
+		हाल 0:
 			phydev->mdix = ETH_TP_MDI_X;
-			break;
+			अवरोध;
 
-		default:
+		शेष:
 			phydev->mdix = ETH_TP_MDI_INVALID;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
-EXPORT_SYMBOL_GPL(genphy_c45_read_mdix);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL_GPL(genphy_c45_पढ़ो_mdix);
 
 /**
- * genphy_c45_pma_read_abilities - read supported link modes from PMA
- * @phydev: target phy_device struct
+ * genphy_c45_pma_पढ़ो_abilities - पढ़ो supported link modes from PMA
+ * @phydev: target phy_device काष्ठा
  *
- * Read the supported link modes from the PMA Status 2 (1.8) register. If bit
+ * Read the supported link modes from the PMA Status 2 (1.8) रेजिस्टर. If bit
  * 1.8.9 is set, the list of supported modes is build using the values in the
- * PMA Extended Abilities (1.11) register, indicating 1000BASET an 10G related
+ * PMA Extended Abilities (1.11) रेजिस्टर, indicating 1000BASET an 10G related
  * modes. If bit 1.11.14 is set, then the list is also extended with the modes
- * in the 2.5G/5G PMA Extended register (1.21), indicating if 2.5GBASET and
+ * in the 2.5G/5G PMA Extended रेजिस्टर (1.21), indicating अगर 2.5GBASET and
  * 5GBASET are supported.
  */
-int genphy_c45_pma_read_abilities(struct phy_device *phydev)
-{
-	int val;
+पूर्णांक genphy_c45_pma_पढ़ो_abilities(काष्ठा phy_device *phydev)
+अणु
+	पूर्णांक val;
 
 	linkmode_clear_bit(ETHTOOL_LINK_MODE_Autoneg_BIT, phydev->supported);
-	if (phydev->c45_ids.mmds_present & MDIO_DEVS_AN) {
-		val = phy_read_mmd(phydev, MDIO_MMD_AN, MDIO_STAT1);
-		if (val < 0)
-			return val;
+	अगर (phydev->c45_ids.mmds_present & MDIO_DEVS_AN) अणु
+		val = phy_पढ़ो_mmd(phydev, MDIO_MMD_AN, MDIO_STAT1);
+		अगर (val < 0)
+			वापस val;
 
-		if (val & MDIO_AN_STAT1_ABLE)
+		अगर (val & MDIO_AN_STAT1_ABLE)
 			linkmode_set_bit(ETHTOOL_LINK_MODE_Autoneg_BIT,
 					 phydev->supported);
-	}
+	पूर्ण
 
-	val = phy_read_mmd(phydev, MDIO_MMD_PMAPMD, MDIO_STAT2);
-	if (val < 0)
-		return val;
+	val = phy_पढ़ो_mmd(phydev, MDIO_MMD_PMAPMD, MDIO_STAT2);
+	अगर (val < 0)
+		वापस val;
 
 	linkmode_mod_bit(ETHTOOL_LINK_MODE_10000baseSR_Full_BIT,
 			 phydev->supported,
@@ -478,10 +479,10 @@ int genphy_c45_pma_read_abilities(struct phy_device *phydev)
 			 phydev->supported,
 			 val & MDIO_PMA_STAT2_10GBER);
 
-	if (val & MDIO_PMA_STAT2_EXTABLE) {
-		val = phy_read_mmd(phydev, MDIO_MMD_PMAPMD, MDIO_PMA_EXTABLE);
-		if (val < 0)
-			return val;
+	अगर (val & MDIO_PMA_STAT2_EXTABLE) अणु
+		val = phy_पढ़ो_mmd(phydev, MDIO_MMD_PMAPMD, MDIO_PMA_EXTABLE);
+		अगर (val < 0)
+			वापस val;
 
 		linkmode_mod_bit(ETHTOOL_LINK_MODE_10000baseLRM_Full_BIT,
 				 phydev->supported,
@@ -516,11 +517,11 @@ int genphy_c45_pma_read_abilities(struct phy_device *phydev)
 				 phydev->supported,
 				 val & MDIO_PMA_EXTABLE_10BT);
 
-		if (val & MDIO_PMA_EXTABLE_NBT) {
-			val = phy_read_mmd(phydev, MDIO_MMD_PMAPMD,
+		अगर (val & MDIO_PMA_EXTABLE_NBT) अणु
+			val = phy_पढ़ो_mmd(phydev, MDIO_MMD_PMAPMD,
 					   MDIO_PMA_NG_EXTABLE);
-			if (val < 0)
-				return val;
+			अगर (val < 0)
+				वापस val;
 
 			linkmode_mod_bit(ETHTOOL_LINK_MODE_2500baseT_Full_BIT,
 					 phydev->supported,
@@ -529,91 +530,91 @@ int genphy_c45_pma_read_abilities(struct phy_device *phydev)
 			linkmode_mod_bit(ETHTOOL_LINK_MODE_5000baseT_Full_BIT,
 					 phydev->supported,
 					 val & MDIO_PMA_NG_EXTABLE_5GBT);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
-EXPORT_SYMBOL_GPL(genphy_c45_pma_read_abilities);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL_GPL(genphy_c45_pma_पढ़ो_abilities);
 
 /**
- * genphy_c45_read_status - read PHY status
- * @phydev: target phy_device struct
+ * genphy_c45_पढ़ो_status - पढ़ो PHY status
+ * @phydev: target phy_device काष्ठा
  *
  * Reads status from PHY and sets phy_device members accordingly.
  */
-int genphy_c45_read_status(struct phy_device *phydev)
-{
-	int ret;
+पूर्णांक genphy_c45_पढ़ो_status(काष्ठा phy_device *phydev)
+अणु
+	पूर्णांक ret;
 
-	ret = genphy_c45_read_link(phydev);
-	if (ret)
-		return ret;
+	ret = genphy_c45_पढ़ो_link(phydev);
+	अगर (ret)
+		वापस ret;
 
 	phydev->speed = SPEED_UNKNOWN;
 	phydev->duplex = DUPLEX_UNKNOWN;
-	phydev->pause = 0;
-	phydev->asym_pause = 0;
+	phydev->छोड़ो = 0;
+	phydev->asym_छोड़ो = 0;
 
-	if (phydev->autoneg == AUTONEG_ENABLE) {
-		ret = genphy_c45_read_lpa(phydev);
-		if (ret)
-			return ret;
+	अगर (phydev->स्वतःneg == AUTONEG_ENABLE) अणु
+		ret = genphy_c45_पढ़ो_lpa(phydev);
+		अगर (ret)
+			वापस ret;
 
 		phy_resolve_aneg_linkmode(phydev);
-	} else {
-		ret = genphy_c45_read_pma(phydev);
-	}
+	पूर्ण अन्यथा अणु
+		ret = genphy_c45_पढ़ो_pma(phydev);
+	पूर्ण
 
-	return ret;
-}
-EXPORT_SYMBOL_GPL(genphy_c45_read_status);
+	वापस ret;
+पूर्ण
+EXPORT_SYMBOL_GPL(genphy_c45_पढ़ो_status);
 
 /**
- * genphy_c45_config_aneg - restart auto-negotiation or forced setup
- * @phydev: target phy_device struct
+ * genphy_c45_config_aneg - restart स्वतः-negotiation or क्रमced setup
+ * @phydev: target phy_device काष्ठा
  *
- * Description: If auto-negotiation is enabled, we configure the
- *   advertising, and then restart auto-negotiation.  If it is not
- *   enabled, then we force a configuration.
+ * Description: If स्वतः-negotiation is enabled, we configure the
+ *   advertising, and then restart स्वतः-negotiation.  If it is not
+ *   enabled, then we क्रमce a configuration.
  */
-int genphy_c45_config_aneg(struct phy_device *phydev)
-{
+पूर्णांक genphy_c45_config_aneg(काष्ठा phy_device *phydev)
+अणु
 	bool changed = false;
-	int ret;
+	पूर्णांक ret;
 
-	if (phydev->autoneg == AUTONEG_DISABLE)
-		return genphy_c45_pma_setup_forced(phydev);
+	अगर (phydev->स्वतःneg == AUTONEG_DISABLE)
+		वापस genphy_c45_pma_setup_क्रमced(phydev);
 
 	ret = genphy_c45_an_config_aneg(phydev);
-	if (ret < 0)
-		return ret;
-	if (ret > 0)
+	अगर (ret < 0)
+		वापस ret;
+	अगर (ret > 0)
 		changed = true;
 
-	return genphy_c45_check_and_restart_aneg(phydev, changed);
-}
+	वापस genphy_c45_check_and_restart_aneg(phydev, changed);
+पूर्ण
 EXPORT_SYMBOL_GPL(genphy_c45_config_aneg);
 
 /* The gen10g_* functions are the old Clause 45 stub */
 
-int gen10g_config_aneg(struct phy_device *phydev)
-{
-	return 0;
-}
+पूर्णांक gen10g_config_aneg(काष्ठा phy_device *phydev)
+अणु
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(gen10g_config_aneg);
 
-int genphy_c45_loopback(struct phy_device *phydev, bool enable)
-{
-	return phy_modify_mmd(phydev, MDIO_MMD_PCS, MDIO_CTRL1,
+पूर्णांक genphy_c45_loopback(काष्ठा phy_device *phydev, bool enable)
+अणु
+	वापस phy_modअगरy_mmd(phydev, MDIO_MMD_PCS, MDIO_CTRL1,
 			      MDIO_PCS_CTRL1_LOOPBACK,
 			      enable ? MDIO_PCS_CTRL1_LOOPBACK : 0);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(genphy_c45_loopback);
 
-struct phy_driver genphy_c45_driver = {
+काष्ठा phy_driver genphy_c45_driver = अणु
 	.phy_id         = 0xffffffff,
 	.phy_id_mask    = 0xffffffff,
 	.name           = "Generic Clause 45 PHY",
-	.read_status    = genphy_c45_read_status,
-};
+	.पढ़ो_status    = genphy_c45_पढ़ो_status,
+पूर्ण;

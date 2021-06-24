@@ -1,49 +1,50 @@
-/* SPDX-License-Identifier: GPL-2.0+ */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0+ */
 /*
  * comedi_pcmcia.h
- * header file for Comedi PCMCIA drivers
+ * header file क्रम Comedi PCMCIA drivers
  *
  * COMEDI - Linux Control and Measurement Device Interface
  * Copyright (C) 1997-2000 David A. Schleef <ds@schleef.org>
  */
 
-#ifndef _COMEDI_PCMCIA_H
-#define _COMEDI_PCMCIA_H
+#अगर_अघोषित _COMEDI_PCMCIA_H
+#घोषणा _COMEDI_PCMCIA_H
 
-#include <pcmcia/cistpl.h>
-#include <pcmcia/ds.h>
+#समावेश <pcmcia/cistpl.h>
+#समावेश <pcmcia/ds.h>
 
-#include "comedidev.h"
+#समावेश "comedidev.h"
 
-struct pcmcia_device *comedi_to_pcmcia_dev(struct comedi_device *dev);
+काष्ठा pcmcia_device *comedi_to_pcmcia_dev(काष्ठा comedi_device *dev);
 
-int comedi_pcmcia_enable(struct comedi_device *dev,
-			 int (*conf_check)(struct pcmcia_device *p_dev,
-					   void *priv_data));
-void comedi_pcmcia_disable(struct comedi_device *dev);
+पूर्णांक comedi_pcmcia_enable(काष्ठा comedi_device *dev,
+			 पूर्णांक (*conf_check)(काष्ठा pcmcia_device *p_dev,
+					   व्योम *priv_data));
+व्योम comedi_pcmcia_disable(काष्ठा comedi_device *dev);
 
-int comedi_pcmcia_auto_config(struct pcmcia_device *link,
-			      struct comedi_driver *driver);
-void comedi_pcmcia_auto_unconfig(struct pcmcia_device *link);
+पूर्णांक comedi_pcmcia_स्वतः_config(काष्ठा pcmcia_device *link,
+			      काष्ठा comedi_driver *driver);
+व्योम comedi_pcmcia_स्वतः_unconfig(काष्ठा pcmcia_device *link);
 
-int comedi_pcmcia_driver_register(struct comedi_driver *comedi_driver,
-				  struct pcmcia_driver *pcmcia_driver);
-void comedi_pcmcia_driver_unregister(struct comedi_driver *comedi_driver,
-				     struct pcmcia_driver *pcmcia_driver);
+पूर्णांक comedi_pcmcia_driver_रेजिस्टर(काष्ठा comedi_driver *comedi_driver,
+				  काष्ठा pcmcia_driver *pcmcia_driver);
+व्योम comedi_pcmcia_driver_unरेजिस्टर(काष्ठा comedi_driver *comedi_driver,
+				     काष्ठा pcmcia_driver *pcmcia_driver);
 
 /**
- * module_comedi_pcmcia_driver() - Helper macro for registering a comedi
+ * module_comedi_pcmcia_driver() - Helper macro क्रम रेजिस्टरing a comedi
  * PCMCIA driver
- * @__comedi_driver: comedi_driver struct
- * @__pcmcia_driver: pcmcia_driver struct
+ * @__comedi_driver: comedi_driver काष्ठा
+ * @__pcmcia_driver: pcmcia_driver काष्ठा
  *
- * Helper macro for comedi PCMCIA drivers which do not do anything special
- * in module init/exit. This eliminates a lot of boilerplate. Each
+ * Helper macro क्रम comedi PCMCIA drivers which करो not करो anything special
+ * in module init/निकास. This eliminates a lot of boilerplate. Each
  * module may only use this macro once, and calling it replaces
- * module_init() and module_exit()
+ * module_init() and module_निकास()
  */
-#define module_comedi_pcmcia_driver(__comedi_driver, __pcmcia_driver) \
-	module_driver(__comedi_driver, comedi_pcmcia_driver_register, \
-			comedi_pcmcia_driver_unregister, &(__pcmcia_driver))
+#घोषणा module_comedi_pcmcia_driver(__comedi_driver, __pcmcia_driver) \
+	module_driver(__comedi_driver, comedi_pcmcia_driver_रेजिस्टर, \
+			comedi_pcmcia_driver_unरेजिस्टर, &(__pcmcia_driver))
 
-#endif /* _COMEDI_PCMCIA_H */
+#पूर्ण_अगर /* _COMEDI_PCMCIA_H */

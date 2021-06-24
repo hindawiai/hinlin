@@ -1,87 +1,88 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Sample kobject implementation
  *
- * Copyright (C) 2004-2007 Greg Kroah-Hartman <greg@kroah.com>
+ * Copyright (C) 2004-2007 Greg Kroah-Harपंचांगan <greg@kroah.com>
  * Copyright (C) 2007 Novell Inc.
  */
-#include <linux/kobject.h>
-#include <linux/string.h>
-#include <linux/sysfs.h>
-#include <linux/module.h>
-#include <linux/init.h>
+#समावेश <linux/kobject.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/sysfs.h>
+#समावेश <linux/module.h>
+#समावेश <linux/init.h>
 
 /*
  * This module shows how to create a simple subdirectory in sysfs called
  * /sys/kernel/kobject-example  In that directory, 3 files are created:
- * "foo", "baz", and "bar".  If an integer is written to these files, it can be
- * later read out of it.
+ * "foo", "baz", and "bar".  If an पूर्णांकeger is written to these files, it can be
+ * later पढ़ो out of it.
  */
 
-static int foo;
-static int baz;
-static int bar;
+अटल पूर्णांक foo;
+अटल पूर्णांक baz;
+अटल पूर्णांक bar;
 
 /*
- * The "foo" file where a static variable is read from and written to.
+ * The "foo" file where a अटल variable is पढ़ो from and written to.
  */
-static ssize_t foo_show(struct kobject *kobj, struct kobj_attribute *attr,
-			char *buf)
-{
-	return sprintf(buf, "%d\n", foo);
-}
+अटल sमाप_प्रकार foo_show(काष्ठा kobject *kobj, काष्ठा kobj_attribute *attr,
+			अक्षर *buf)
+अणु
+	वापस प्र_लिखो(buf, "%d\n", foo);
+पूर्ण
 
-static ssize_t foo_store(struct kobject *kobj, struct kobj_attribute *attr,
-			 const char *buf, size_t count)
-{
-	int ret;
+अटल sमाप_प्रकार foo_store(काष्ठा kobject *kobj, काष्ठा kobj_attribute *attr,
+			 स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	पूर्णांक ret;
 
-	ret = kstrtoint(buf, 10, &foo);
-	if (ret < 0)
-		return ret;
+	ret = kstrtoपूर्णांक(buf, 10, &foo);
+	अगर (ret < 0)
+		वापस ret;
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
 /* Sysfs attributes cannot be world-writable. */
-static struct kobj_attribute foo_attribute =
+अटल काष्ठा kobj_attribute foo_attribute =
 	__ATTR(foo, 0664, foo_show, foo_store);
 
 /*
  * More complex function where we determine which variable is being accessed by
- * looking at the attribute for the "baz" and "bar" files.
+ * looking at the attribute क्रम the "baz" and "bar" files.
  */
-static ssize_t b_show(struct kobject *kobj, struct kobj_attribute *attr,
-		      char *buf)
-{
-	int var;
+अटल sमाप_प्रकार b_show(काष्ठा kobject *kobj, काष्ठा kobj_attribute *attr,
+		      अक्षर *buf)
+अणु
+	पूर्णांक var;
 
-	if (strcmp(attr->attr.name, "baz") == 0)
+	अगर (म_भेद(attr->attr.name, "baz") == 0)
 		var = baz;
-	else
+	अन्यथा
 		var = bar;
-	return sprintf(buf, "%d\n", var);
-}
+	वापस प्र_लिखो(buf, "%d\n", var);
+पूर्ण
 
-static ssize_t b_store(struct kobject *kobj, struct kobj_attribute *attr,
-		       const char *buf, size_t count)
-{
-	int var, ret;
+अटल sमाप_प्रकार b_store(काष्ठा kobject *kobj, काष्ठा kobj_attribute *attr,
+		       स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	पूर्णांक var, ret;
 
-	ret = kstrtoint(buf, 10, &var);
-	if (ret < 0)
-		return ret;
+	ret = kstrtoपूर्णांक(buf, 10, &var);
+	अगर (ret < 0)
+		वापस ret;
 
-	if (strcmp(attr->attr.name, "baz") == 0)
+	अगर (म_भेद(attr->attr.name, "baz") == 0)
 		baz = var;
-	else
+	अन्यथा
 		bar = var;
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static struct kobj_attribute baz_attribute =
+अटल काष्ठा kobj_attribute baz_attribute =
 	__ATTR(baz, 0664, b_show, b_store);
-static struct kobj_attribute bar_attribute =
+अटल काष्ठा kobj_attribute bar_attribute =
 	__ATTR(bar, 0664, b_show, b_store);
 
 
@@ -89,56 +90,56 @@ static struct kobj_attribute bar_attribute =
  * Create a group of attributes so that we can create and destroy them all
  * at once.
  */
-static struct attribute *attrs[] = {
+अटल काष्ठा attribute *attrs[] = अणु
 	&foo_attribute.attr,
 	&baz_attribute.attr,
 	&bar_attribute.attr,
-	NULL,	/* need to NULL terminate the list of attributes */
-};
+	शून्य,	/* need to शून्य terminate the list of attributes */
+पूर्ण;
 
 /*
  * An unnamed attribute group will put all of the attributes directly in
- * the kobject directory.  If we specify a name, a subdirectory will be
- * created for the attributes with the directory being the name of the
+ * the kobject directory.  If we specअगरy a name, a subdirectory will be
+ * created क्रम the attributes with the directory being the name of the
  * attribute group.
  */
-static struct attribute_group attr_group = {
+अटल काष्ठा attribute_group attr_group = अणु
 	.attrs = attrs,
-};
+पूर्ण;
 
-static struct kobject *example_kobj;
+अटल काष्ठा kobject *example_kobj;
 
-static int __init example_init(void)
-{
-	int retval;
+अटल पूर्णांक __init example_init(व्योम)
+अणु
+	पूर्णांक retval;
 
 	/*
 	 * Create a simple kobject with the name of "kobject_example",
 	 * located under /sys/kernel/
 	 *
 	 * As this is a simple directory, no uevent will be sent to
-	 * userspace.  That is why this function should not be used for
+	 * userspace.  That is why this function should not be used क्रम
 	 * any type of dynamic kobjects, where the name and number are
-	 * not known ahead of time.
+	 * not known ahead of समय.
 	 */
 	example_kobj = kobject_create_and_add("kobject_example", kernel_kobj);
-	if (!example_kobj)
-		return -ENOMEM;
+	अगर (!example_kobj)
+		वापस -ENOMEM;
 
 	/* Create the files associated with this kobject */
 	retval = sysfs_create_group(example_kobj, &attr_group);
-	if (retval)
+	अगर (retval)
 		kobject_put(example_kobj);
 
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
-static void __exit example_exit(void)
-{
+अटल व्योम __निकास example_निकास(व्योम)
+अणु
 	kobject_put(example_kobj);
-}
+पूर्ण
 
 module_init(example_init);
-module_exit(example_exit);
+module_निकास(example_निकास);
 MODULE_LICENSE("GPL v2");
 MODULE_AUTHOR("Greg Kroah-Hartman <greg@kroah.com>");

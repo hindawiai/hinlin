@@ -1,16 +1,17 @@
+<शैली गुरु>
 /*
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the main directory of this archive
- * for more details.
+ * License.  See the file "COPYING" in the मुख्य directory of this archive
+ * क्रम more details.
  *
  * Copyright (C) 2009, Wind River Systems Inc
  * Implemented by fredrik.markstrom@gmail.com and ivarholmqvist@gmail.com
  */
 
-#include <linux/export.h>
-#include <linux/uaccess.h>
+#समावेश <linux/export.h>
+#समावेश <linux/uaccess.h>
 
-asm(".global	raw_copy_from_user\n"
+यंत्र(".global	raw_copy_from_user\n"
 	"   .type raw_copy_from_user, @function\n"
 	"raw_copy_from_user:\n"
 	"   movi  r2,7\n"
@@ -67,7 +68,7 @@ asm(".global	raw_copy_from_user\n"
 	);
 EXPORT_SYMBOL(raw_copy_from_user);
 
-asm(
+यंत्र(
 	"   .global raw_copy_to_user\n"
 	"   .type raw_copy_to_user, @function\n"
 	"raw_copy_to_user:\n"
@@ -78,11 +79,11 @@ asm(
 	"   andi  r2,r2,3\n"
 	"   movi  r7,3\n"
 	"   beq   r2,zero,4f\n"
-	/* Bail if we try to copy zero bytes  */
+	/* Bail अगर we try to copy zero bytes  */
 	"1: addi  r6,r6,-1\n"
 	"   movi  r2,-1\n"
 	"   beq   r6,r2,3f\n"
-	/* Copy byte by byte for small copies and if src^dst != 0 */
+	/* Copy byte by byte क्रम small copies and अगर src^dst != 0 */
 	"   mov   r7,r2\n"
 	"2: ldbu  r2,0(r5)\n"
 	"   addi  r5,r5,1\n"
@@ -98,7 +99,7 @@ asm(
 	"4: andi  r2,r4,1\n"
 	"   cmpeq r2,r2,zero\n"
 	"   beq   r2,zero,7f\n"
-	/* If 'to' is not divideable by four copy halfwords */
+	/* If 'to' is not भागideable by four copy halfwords */
 	"5: andi  r2,r3,2\n"
 	"   beq   r2,zero,6f\n"
 	"   ldhu  r2,0(r5)\n"
@@ -114,7 +115,7 @@ asm(
 	"   addi  r6,r6,-4\n"
 	"   addi  r3,r3,4\n"
 	"   br    6b\n"
-	/* Copy remaining bytes */
+	/* Copy reमुख्यing bytes */
 	"7: ldbu  r2,0(r5)\n"
 	"   addi  r5,r5,1\n"
 	"   addi  r3,r4,1\n"

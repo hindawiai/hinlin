@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  *  Copyright (C) 1994 Linus Torvalds
  *
@@ -6,24 +7,24 @@
  *  General FPU state handling cleanups
  *	Gareth Hughes <gareth@valinux.com>, May 2000
  */
-#include <asm/fpu/internal.h>
-#include <asm/fpu/regset.h>
-#include <asm/fpu/signal.h>
-#include <asm/fpu/types.h>
-#include <asm/traps.h>
-#include <asm/irq_regs.h>
+#समावेश <यंत्र/fpu/पूर्णांकernal.h>
+#समावेश <यंत्र/fpu/regset.h>
+#समावेश <यंत्र/fpu/संकेत.स>
+#समावेश <यंत्र/fpu/types.h>
+#समावेश <यंत्र/traps.h>
+#समावेश <यंत्र/irq_regs.h>
 
-#include <linux/hardirq.h>
-#include <linux/pkeys.h>
+#समावेश <linux/hardirq.h>
+#समावेश <linux/pkeys.h>
 
-#define CREATE_TRACE_POINTS
-#include <asm/trace/fpu.h>
+#घोषणा CREATE_TRACE_POINTS
+#समावेश <यंत्र/trace/fpu.h>
 
 /*
  * Represents the initial FPU state. It's mostly (but not completely) zeroes,
- * depending on the FPU hardware format:
+ * depending on the FPU hardware क्रमmat:
  */
-union fpregs_state init_fpstate __read_mostly;
+जोड़ fpregs_state init_fpstate __पढ़ो_mostly;
 
 /*
  * Track whether the kernel is using the FPU state
@@ -32,474 +33,474 @@ union fpregs_state init_fpstate __read_mostly;
  * This flag is used:
  *
  *   - by IRQ context code to potentially use the FPU
- *     if it's unused.
+ *     अगर it's unused.
  *
  *   - to debug kernel_fpu_begin()/end() correctness
  */
-static DEFINE_PER_CPU(bool, in_kernel_fpu);
+अटल DEFINE_PER_CPU(bool, in_kernel_fpu);
 
 /*
  * Track which context is using the FPU on the CPU:
  */
-DEFINE_PER_CPU(struct fpu *, fpu_fpregs_owner_ctx);
+DEFINE_PER_CPU(काष्ठा fpu *, fpu_fpregs_owner_ctx);
 
-static bool kernel_fpu_disabled(void)
-{
-	return this_cpu_read(in_kernel_fpu);
-}
+अटल bool kernel_fpu_disabled(व्योम)
+अणु
+	वापस this_cpu_पढ़ो(in_kernel_fpu);
+पूर्ण
 
-static bool interrupted_kernel_fpu_idle(void)
-{
-	return !kernel_fpu_disabled();
-}
+अटल bool पूर्णांकerrupted_kernel_fpu_idle(व्योम)
+अणु
+	वापस !kernel_fpu_disabled();
+पूर्ण
 
 /*
  * Were we in user mode (or vm86 mode) when we were
- * interrupted?
+ * पूर्णांकerrupted?
  *
- * Doing kernel_fpu_begin/end() is ok if we are running
- * in an interrupt context from user mode - we'll just
+ * Doing kernel_fpu_begin/end() is ok अगर we are running
+ * in an पूर्णांकerrupt context from user mode - we'll just
  * save the FPU state as required.
  */
-static bool interrupted_user_mode(void)
-{
-	struct pt_regs *regs = get_irq_regs();
-	return regs && user_mode(regs);
-}
+अटल bool पूर्णांकerrupted_user_mode(व्योम)
+अणु
+	काष्ठा pt_regs *regs = get_irq_regs();
+	वापस regs && user_mode(regs);
+पूर्ण
 
 /*
  * Can we use the FPU in kernel mode with the
  * whole "kernel_fpu_begin/end()" sequence?
  *
  * It's always ok in process context (ie "not interrupt")
- * but it is sometimes ok even from an irq.
+ * but it is someबार ok even from an irq.
  */
-bool irq_fpu_usable(void)
-{
-	return !in_interrupt() ||
-		interrupted_user_mode() ||
-		interrupted_kernel_fpu_idle();
-}
+bool irq_fpu_usable(व्योम)
+अणु
+	वापस !in_पूर्णांकerrupt() ||
+		पूर्णांकerrupted_user_mode() ||
+		पूर्णांकerrupted_kernel_fpu_idle();
+पूर्ण
 EXPORT_SYMBOL(irq_fpu_usable);
 
 /*
  * These must be called with preempt disabled. Returns
- * 'true' if the FPU state is still intact and we can
- * keep registers active.
+ * 'true' अगर the FPU state is still पूर्णांकact and we can
+ * keep रेजिस्टरs active.
  *
- * The legacy FNSAVE instruction cleared all FPU state
- * unconditionally, so registers are essentially destroyed.
- * Modern FPU state can be kept in registers, if there are
+ * The legacy FNSAVE inकाष्ठाion cleared all FPU state
+ * unconditionally, so रेजिस्टरs are essentially destroyed.
+ * Modern FPU state can be kept in रेजिस्टरs, अगर there are
  * no pending FP exceptions.
  */
-int copy_fpregs_to_fpstate(struct fpu *fpu)
-{
-	if (likely(use_xsave())) {
+पूर्णांक copy_fpregs_to_fpstate(काष्ठा fpu *fpu)
+अणु
+	अगर (likely(use_xsave())) अणु
 		copy_xregs_to_kernel(&fpu->state.xsave);
 
 		/*
 		 * AVX512 state is tracked here because its use is
-		 * known to slow the max clock speed of the core.
+		 * known to slow the max घड़ी speed of the core.
 		 */
-		if (fpu->state.xsave.header.xfeatures & XFEATURE_MASK_AVX512)
-			fpu->avx512_timestamp = jiffies;
-		return 1;
-	}
+		अगर (fpu->state.xsave.header.xfeatures & XFEATURE_MASK_AVX512)
+			fpu->avx512_बारtamp = jअगरfies;
+		वापस 1;
+	पूर्ण
 
-	if (likely(use_fxsr())) {
+	अगर (likely(use_fxsr())) अणु
 		copy_fxregs_to_kernel(fpu);
-		return 1;
-	}
+		वापस 1;
+	पूर्ण
 
 	/*
-	 * Legacy FPU register saving, FNSAVE always clears FPU registers,
+	 * Legacy FPU रेजिस्टर saving, FNSAVE always clears FPU रेजिस्टरs,
 	 * so we have to mark them inactive:
 	 */
-	asm volatile("fnsave %[fp]; fwait" : [fp] "=m" (fpu->state.fsave));
+	यंत्र अस्थिर("fnsave %[fp]; fwait" : [fp] "=m" (fpu->state.fsave));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(copy_fpregs_to_fpstate);
 
-void kernel_fpu_begin_mask(unsigned int kfpu_mask)
-{
+व्योम kernel_fpu_begin_mask(अचिन्हित पूर्णांक kfpu_mask)
+अणु
 	preempt_disable();
 
 	WARN_ON_FPU(!irq_fpu_usable());
-	WARN_ON_FPU(this_cpu_read(in_kernel_fpu));
+	WARN_ON_FPU(this_cpu_पढ़ो(in_kernel_fpu));
 
-	this_cpu_write(in_kernel_fpu, true);
+	this_cpu_ग_लिखो(in_kernel_fpu, true);
 
-	if (!(current->flags & PF_KTHREAD) &&
-	    !test_thread_flag(TIF_NEED_FPU_LOAD)) {
-		set_thread_flag(TIF_NEED_FPU_LOAD);
+	अगर (!(current->flags & PF_KTHREAD) &&
+	    !test_thपढ़ो_flag(TIF_NEED_FPU_LOAD)) अणु
+		set_thपढ़ो_flag(TIF_NEED_FPU_LOAD);
 		/*
-		 * Ignore return value -- we don't care if reg state
+		 * Ignore वापस value -- we करोn't care अगर reg state
 		 * is clobbered.
 		 */
-		copy_fpregs_to_fpstate(&current->thread.fpu);
-	}
+		copy_fpregs_to_fpstate(&current->thपढ़ो.fpu);
+	पूर्ण
 	__cpu_invalidate_fpregs_state();
 
-	/* Put sane initial values into the control registers. */
-	if (likely(kfpu_mask & KFPU_MXCSR) && boot_cpu_has(X86_FEATURE_XMM))
+	/* Put sane initial values पूर्णांकo the control रेजिस्टरs. */
+	अगर (likely(kfpu_mask & KFPU_MXCSR) && boot_cpu_has(X86_FEATURE_XMM))
 		ldmxcsr(MXCSR_DEFAULT);
 
-	if (unlikely(kfpu_mask & KFPU_387) && boot_cpu_has(X86_FEATURE_FPU))
-		asm volatile ("fninit");
-}
+	अगर (unlikely(kfpu_mask & KFPU_387) && boot_cpu_has(X86_FEATURE_FPU))
+		यंत्र अस्थिर ("fninit");
+पूर्ण
 EXPORT_SYMBOL_GPL(kernel_fpu_begin_mask);
 
-void kernel_fpu_end(void)
-{
-	WARN_ON_FPU(!this_cpu_read(in_kernel_fpu));
+व्योम kernel_fpu_end(व्योम)
+अणु
+	WARN_ON_FPU(!this_cpu_पढ़ो(in_kernel_fpu));
 
-	this_cpu_write(in_kernel_fpu, false);
+	this_cpu_ग_लिखो(in_kernel_fpu, false);
 	preempt_enable();
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(kernel_fpu_end);
 
 /*
- * Save the FPU state (mark it for reload if necessary):
+ * Save the FPU state (mark it क्रम reload अगर necessary):
  *
- * This only ever gets called for the current task.
+ * This only ever माला_लो called क्रम the current task.
  */
-void fpu__save(struct fpu *fpu)
-{
-	WARN_ON_FPU(fpu != &current->thread.fpu);
+व्योम fpu__save(काष्ठा fpu *fpu)
+अणु
+	WARN_ON_FPU(fpu != &current->thपढ़ो.fpu);
 
 	fpregs_lock();
-	trace_x86_fpu_before_save(fpu);
+	trace_x86_fpu_beक्रमe_save(fpu);
 
-	if (!test_thread_flag(TIF_NEED_FPU_LOAD)) {
-		if (!copy_fpregs_to_fpstate(fpu)) {
+	अगर (!test_thपढ़ो_flag(TIF_NEED_FPU_LOAD)) अणु
+		अगर (!copy_fpregs_to_fpstate(fpu)) अणु
 			copy_kernel_to_fpregs(&fpu->state);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	trace_x86_fpu_after_save(fpu);
 	fpregs_unlock();
-}
+पूर्ण
 
 /*
  * Legacy x87 fpstate state init:
  */
-static inline void fpstate_init_fstate(struct fregs_state *fp)
-{
+अटल अंतरभूत व्योम fpstate_init_ख_स्थितिe(काष्ठा fregs_state *fp)
+अणु
 	fp->cwd = 0xffff037fu;
 	fp->swd = 0xffff0000u;
 	fp->twd = 0xffffffffu;
 	fp->fos = 0xffff0000u;
-}
+पूर्ण
 
-void fpstate_init(union fpregs_state *state)
-{
-	if (!static_cpu_has(X86_FEATURE_FPU)) {
+व्योम fpstate_init(जोड़ fpregs_state *state)
+अणु
+	अगर (!अटल_cpu_has(X86_FEATURE_FPU)) अणु
 		fpstate_init_soft(&state->soft);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	memset(state, 0, fpu_kernel_xstate_size);
+	स_रखो(state, 0, fpu_kernel_xstate_size);
 
-	if (static_cpu_has(X86_FEATURE_XSAVES))
+	अगर (अटल_cpu_has(X86_FEATURE_XSAVES))
 		fpstate_init_xstate(&state->xsave);
-	if (static_cpu_has(X86_FEATURE_FXSR))
+	अगर (अटल_cpu_has(X86_FEATURE_FXSR))
 		fpstate_init_fxstate(&state->fxsave);
-	else
-		fpstate_init_fstate(&state->fsave);
-}
+	अन्यथा
+		fpstate_init_ख_स्थितिe(&state->fsave);
+पूर्ण
 EXPORT_SYMBOL_GPL(fpstate_init);
 
-int fpu__copy(struct task_struct *dst, struct task_struct *src)
-{
-	struct fpu *dst_fpu = &dst->thread.fpu;
-	struct fpu *src_fpu = &src->thread.fpu;
+पूर्णांक fpu__copy(काष्ठा task_काष्ठा *dst, काष्ठा task_काष्ठा *src)
+अणु
+	काष्ठा fpu *dst_fpu = &dst->thपढ़ो.fpu;
+	काष्ठा fpu *src_fpu = &src->thपढ़ो.fpu;
 
 	dst_fpu->last_cpu = -1;
 
-	if (!static_cpu_has(X86_FEATURE_FPU))
-		return 0;
+	अगर (!अटल_cpu_has(X86_FEATURE_FPU))
+		वापस 0;
 
-	WARN_ON_FPU(src_fpu != &current->thread.fpu);
+	WARN_ON_FPU(src_fpu != &current->thपढ़ो.fpu);
 
 	/*
 	 * Don't let 'init optimized' areas of the XSAVE area
-	 * leak into the child task:
+	 * leak पूर्णांकo the child task:
 	 */
-	memset(&dst_fpu->state.xsave, 0, fpu_kernel_xstate_size);
+	स_रखो(&dst_fpu->state.xsave, 0, fpu_kernel_xstate_size);
 
 	/*
-	 * If the FPU registers are not current just memcpy() the state.
-	 * Otherwise save current FPU registers directly into the child's FPU
+	 * If the FPU रेजिस्टरs are not current just स_नकल() the state.
+	 * Otherwise save current FPU रेजिस्टरs directly पूर्णांकo the child's FPU
 	 * context, without any memory-to-memory copying.
 	 *
-	 * ( The function 'fails' in the FNSAVE case, which destroys
-	 *   register contents so we have to load them back. )
+	 * ( The function 'fails' in the FNSAVE हाल, which destroys
+	 *   रेजिस्टर contents so we have to load them back. )
 	 */
 	fpregs_lock();
-	if (test_thread_flag(TIF_NEED_FPU_LOAD))
-		memcpy(&dst_fpu->state, &src_fpu->state, fpu_kernel_xstate_size);
+	अगर (test_thपढ़ो_flag(TIF_NEED_FPU_LOAD))
+		स_नकल(&dst_fpu->state, &src_fpu->state, fpu_kernel_xstate_size);
 
-	else if (!copy_fpregs_to_fpstate(dst_fpu))
+	अन्यथा अगर (!copy_fpregs_to_fpstate(dst_fpu))
 		copy_kernel_to_fpregs(&dst_fpu->state);
 
 	fpregs_unlock();
 
-	set_tsk_thread_flag(dst, TIF_NEED_FPU_LOAD);
+	set_tsk_thपढ़ो_flag(dst, TIF_NEED_FPU_LOAD);
 
 	trace_x86_fpu_copy_src(src_fpu);
 	trace_x86_fpu_copy_dst(dst_fpu);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * Activate the current task's in-memory FPU context,
- * if it has not been used before:
+ * अगर it has not been used beक्रमe:
  */
-static void fpu__initialize(struct fpu *fpu)
-{
-	WARN_ON_FPU(fpu != &current->thread.fpu);
+अटल व्योम fpu__initialize(काष्ठा fpu *fpu)
+अणु
+	WARN_ON_FPU(fpu != &current->thपढ़ो.fpu);
 
-	set_thread_flag(TIF_NEED_FPU_LOAD);
+	set_thपढ़ो_flag(TIF_NEED_FPU_LOAD);
 	fpstate_init(&fpu->state);
 	trace_x86_fpu_init_state(fpu);
-}
+पूर्ण
 
 /*
- * This function must be called before we read a task's fpstate.
+ * This function must be called beक्रमe we पढ़ो a task's fpstate.
  *
- * There's two cases where this gets called:
+ * There's two हालs where this माला_लो called:
  *
- * - for the current task (when coredumping), in which case we have
- *   to save the latest FPU registers into the fpstate,
+ * - क्रम the current task (when coredumping), in which हाल we have
+ *   to save the latest FPU रेजिस्टरs पूर्णांकo the fpstate,
  *
- * - or it's called for stopped tasks (ptrace), in which case the
- *   registers were already saved by the context-switch code when
+ * - or it's called क्रम stopped tasks (ptrace), in which हाल the
+ *   रेजिस्टरs were alपढ़ोy saved by the context-चयन code when
  *   the task scheduled out.
  *
- * If the task has used the FPU before then save it.
+ * If the task has used the FPU beक्रमe then save it.
  */
-void fpu__prepare_read(struct fpu *fpu)
-{
-	if (fpu == &current->thread.fpu)
+व्योम fpu__prepare_पढ़ो(काष्ठा fpu *fpu)
+अणु
+	अगर (fpu == &current->thपढ़ो.fpu)
 		fpu__save(fpu);
-}
+पूर्ण
 
 /*
- * This function must be called before we write a task's fpstate.
+ * This function must be called beक्रमe we ग_लिखो a task's fpstate.
  *
- * Invalidate any cached FPU registers.
+ * Invalidate any cached FPU रेजिस्टरs.
  *
- * After this function call, after registers in the fpstate are
- * modified and the child task has woken up, the child task will
- * restore the modified FPU state from the modified context. If we
- * didn't clear its cached status here then the cached in-registers
- * state pending on its former CPU could be restored, corrupting
- * the modifications.
+ * After this function call, after रेजिस्टरs in the fpstate are
+ * modअगरied and the child task has woken up, the child task will
+ * restore the modअगरied FPU state from the modअगरied context. If we
+ * didn't clear its cached status here then the cached in-रेजिस्टरs
+ * state pending on its क्रमmer CPU could be restored, corrupting
+ * the modअगरications.
  */
-void fpu__prepare_write(struct fpu *fpu)
-{
+व्योम fpu__prepare_ग_लिखो(काष्ठा fpu *fpu)
+अणु
 	/*
-	 * Only stopped child tasks can be used to modify the FPU
+	 * Only stopped child tasks can be used to modअगरy the FPU
 	 * state in the fpstate buffer:
 	 */
-	WARN_ON_FPU(fpu == &current->thread.fpu);
+	WARN_ON_FPU(fpu == &current->thपढ़ो.fpu);
 
 	/* Invalidate any cached state: */
 	__fpu_invalidate_fpregs_state(fpu);
-}
+पूर्ण
 
 /*
  * Drops current FPU state: deactivates the fpregs and
  * the fpstate. NOTE: it still leaves previous contents
- * in the fpregs in the eager-FPU case.
+ * in the fpregs in the eager-FPU हाल.
  *
- * This function can be used in cases where we know that
+ * This function can be used in हालs where we know that
  * a state-restore is coming: either an explicit one,
  * or a reschedule.
  */
-void fpu__drop(struct fpu *fpu)
-{
+व्योम fpu__drop(काष्ठा fpu *fpu)
+अणु
 	preempt_disable();
 
-	if (fpu == &current->thread.fpu) {
+	अगर (fpu == &current->thपढ़ो.fpu) अणु
 		/* Ignore delayed exceptions from user space */
-		asm volatile("1: fwait\n"
+		यंत्र अस्थिर("1: fwait\n"
 			     "2:\n"
 			     _ASM_EXTABLE(1b, 2b));
 		fpregs_deactivate(fpu);
-	}
+	पूर्ण
 
 	trace_x86_fpu_dropped(fpu);
 
 	preempt_enable();
-}
+पूर्ण
 
 /*
- * Clear FPU registers by setting them up from the init fpstate.
- * Caller must do fpregs_[un]lock() around it.
+ * Clear FPU रेजिस्टरs by setting them up from the init fpstate.
+ * Caller must करो fpregs_[un]lock() around it.
  */
-static inline void copy_init_fpstate_to_fpregs(u64 features_mask)
-{
-	if (use_xsave())
+अटल अंतरभूत व्योम copy_init_fpstate_to_fpregs(u64 features_mask)
+अणु
+	अगर (use_xsave())
 		copy_kernel_to_xregs(&init_fpstate.xsave, features_mask);
-	else if (static_cpu_has(X86_FEATURE_FXSR))
+	अन्यथा अगर (अटल_cpu_has(X86_FEATURE_FXSR))
 		copy_kernel_to_fxregs(&init_fpstate.fxsave);
-	else
+	अन्यथा
 		copy_kernel_to_fregs(&init_fpstate.fsave);
 
-	if (boot_cpu_has(X86_FEATURE_OSPKE))
+	अगर (boot_cpu_has(X86_FEATURE_OSPKE))
 		copy_init_pkru_to_fpregs();
-}
+पूर्ण
 
 /*
  * Clear the FPU state back to init state.
  *
- * Called by sys_execve(), by the signal handler code and by various
+ * Called by sys_execve(), by the संकेत handler code and by various
  * error paths.
  */
-static void fpu__clear(struct fpu *fpu, bool user_only)
-{
-	WARN_ON_FPU(fpu != &current->thread.fpu);
+अटल व्योम fpu__clear(काष्ठा fpu *fpu, bool user_only)
+अणु
+	WARN_ON_FPU(fpu != &current->thपढ़ो.fpu);
 
-	if (!static_cpu_has(X86_FEATURE_FPU)) {
+	अगर (!अटल_cpu_has(X86_FEATURE_FPU)) अणु
 		fpu__drop(fpu);
 		fpu__initialize(fpu);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	fpregs_lock();
 
-	if (user_only) {
-		if (!fpregs_state_valid(fpu, smp_processor_id()) &&
+	अगर (user_only) अणु
+		अगर (!fpregs_state_valid(fpu, smp_processor_id()) &&
 		    xfeatures_mask_supervisor())
 			copy_kernel_to_xregs(&fpu->state.xsave,
 					     xfeatures_mask_supervisor());
 		copy_init_fpstate_to_fpregs(xfeatures_mask_user());
-	} else {
+	पूर्ण अन्यथा अणु
 		copy_init_fpstate_to_fpregs(xfeatures_mask_all);
-	}
+	पूर्ण
 
 	fpregs_mark_activate();
 	fpregs_unlock();
-}
+पूर्ण
 
-void fpu__clear_user_states(struct fpu *fpu)
-{
+व्योम fpu__clear_user_states(काष्ठा fpu *fpu)
+अणु
 	fpu__clear(fpu, true);
-}
+पूर्ण
 
-void fpu__clear_all(struct fpu *fpu)
-{
+व्योम fpu__clear_all(काष्ठा fpu *fpu)
+अणु
 	fpu__clear(fpu, false);
-}
+पूर्ण
 
 /*
- * Load FPU context before returning to userspace.
+ * Load FPU context beक्रमe वापसing to userspace.
  */
-void switch_fpu_return(void)
-{
-	if (!static_cpu_has(X86_FEATURE_FPU))
-		return;
+व्योम चयन_fpu_वापस(व्योम)
+अणु
+	अगर (!अटल_cpu_has(X86_FEATURE_FPU))
+		वापस;
 
 	__fpregs_load_activate();
-}
-EXPORT_SYMBOL_GPL(switch_fpu_return);
+पूर्ण
+EXPORT_SYMBOL_GPL(चयन_fpu_वापस);
 
-#ifdef CONFIG_X86_DEBUG_FPU
+#अगर_घोषित CONFIG_X86_DEBUG_FPU
 /*
  * If current FPU state according to its tracking (loaded FPU context on this
  * CPU) is not valid then we must have TIF_NEED_FPU_LOAD set so the context is
- * loaded on return to userland.
+ * loaded on वापस to userland.
  */
-void fpregs_assert_state_consistent(void)
-{
-	struct fpu *fpu = &current->thread.fpu;
+व्योम fpregs_निश्चित_state_consistent(व्योम)
+अणु
+	काष्ठा fpu *fpu = &current->thपढ़ो.fpu;
 
-	if (test_thread_flag(TIF_NEED_FPU_LOAD))
-		return;
+	अगर (test_thपढ़ो_flag(TIF_NEED_FPU_LOAD))
+		वापस;
 
 	WARN_ON_FPU(!fpregs_state_valid(fpu, smp_processor_id()));
-}
-EXPORT_SYMBOL_GPL(fpregs_assert_state_consistent);
-#endif
+पूर्ण
+EXPORT_SYMBOL_GPL(fpregs_निश्चित_state_consistent);
+#पूर्ण_अगर
 
-void fpregs_mark_activate(void)
-{
-	struct fpu *fpu = &current->thread.fpu;
+व्योम fpregs_mark_activate(व्योम)
+अणु
+	काष्ठा fpu *fpu = &current->thपढ़ो.fpu;
 
 	fpregs_activate(fpu);
 	fpu->last_cpu = smp_processor_id();
-	clear_thread_flag(TIF_NEED_FPU_LOAD);
-}
+	clear_thपढ़ो_flag(TIF_NEED_FPU_LOAD);
+पूर्ण
 EXPORT_SYMBOL_GPL(fpregs_mark_activate);
 
 /*
  * x87 math exception handling:
  */
 
-int fpu__exception_code(struct fpu *fpu, int trap_nr)
-{
-	int err;
+पूर्णांक fpu__exception_code(काष्ठा fpu *fpu, पूर्णांक trap_nr)
+अणु
+	पूर्णांक err;
 
-	if (trap_nr == X86_TRAP_MF) {
-		unsigned short cwd, swd;
+	अगर (trap_nr == X86_TRAP_MF) अणु
+		अचिन्हित लघु cwd, swd;
 		/*
 		 * (~cwd & swd) will mask out exceptions that are not set to unmasked
 		 * status.  0x3f is the exception bits in these regs, 0x200 is the
-		 * C1 reg you need in case of a stack fault, 0x040 is the stack
-		 * fault bit.  We should only be taking one exception at a time,
-		 * so if this combination doesn't produce any single exception,
+		 * C1 reg you need in हाल of a stack fault, 0x040 is the stack
+		 * fault bit.  We should only be taking one exception at a समय,
+		 * so अगर this combination करोesn't produce any single exception,
 		 * then we have a bad program that isn't synchronizing its FPU usage
 		 * and it will suffer the consequences since we won't be able to
 		 * fully reproduce the context of the exception.
 		 */
-		if (boot_cpu_has(X86_FEATURE_FXSR)) {
+		अगर (boot_cpu_has(X86_FEATURE_FXSR)) अणु
 			cwd = fpu->state.fxsave.cwd;
 			swd = fpu->state.fxsave.swd;
-		} else {
-			cwd = (unsigned short)fpu->state.fsave.cwd;
-			swd = (unsigned short)fpu->state.fsave.swd;
-		}
+		पूर्ण अन्यथा अणु
+			cwd = (अचिन्हित लघु)fpu->state.fsave.cwd;
+			swd = (अचिन्हित लघु)fpu->state.fsave.swd;
+		पूर्ण
 
 		err = swd & ~cwd;
-	} else {
+	पूर्ण अन्यथा अणु
 		/*
-		 * The SIMD FPU exceptions are handled a little differently, as there
-		 * is only a single status/control register.  Thus, to determine which
+		 * The SIMD FPU exceptions are handled a little dअगरferently, as there
+		 * is only a single status/control रेजिस्टर.  Thus, to determine which
 		 * unmasked exception was caught we must mask the exception mask bits
 		 * at 0x1f80, and then use these to mask the exception bits at 0x3f.
 		 */
-		unsigned short mxcsr = MXCSR_DEFAULT;
+		अचिन्हित लघु mxcsr = MXCSR_DEFAULT;
 
-		if (boot_cpu_has(X86_FEATURE_XMM))
+		अगर (boot_cpu_has(X86_FEATURE_XMM))
 			mxcsr = fpu->state.fxsave.mxcsr;
 
 		err = ~(mxcsr >> 7) & mxcsr;
-	}
+	पूर्ण
 
-	if (err & 0x001) {	/* Invalid op */
+	अगर (err & 0x001) अणु	/* Invalid op */
 		/*
 		 * swd & 0x240 == 0x040: Stack Underflow
 		 * swd & 0x240 == 0x240: Stack Overflow
-		 * User must clear the SF bit (0x40) if set
+		 * User must clear the SF bit (0x40) अगर set
 		 */
-		return FPE_FLTINV;
-	} else if (err & 0x004) { /* Divide by Zero */
-		return FPE_FLTDIV;
-	} else if (err & 0x008) { /* Overflow */
-		return FPE_FLTOVF;
-	} else if (err & 0x012) { /* Denormal, Underflow */
-		return FPE_FLTUND;
-	} else if (err & 0x020) { /* Precision */
-		return FPE_FLTRES;
-	}
+		वापस FPE_FLTINV;
+	पूर्ण अन्यथा अगर (err & 0x004) अणु /* Divide by Zero */
+		वापस FPE_FLTDIV;
+	पूर्ण अन्यथा अगर (err & 0x008) अणु /* Overflow */
+		वापस FPE_FLTOVF;
+	पूर्ण अन्यथा अगर (err & 0x012) अणु /* Denormal, Underflow */
+		वापस FPE_FLTUND;
+	पूर्ण अन्यथा अगर (err & 0x020) अणु /* Precision */
+		वापस FPE_FLTRES;
+	पूर्ण
 
 	/*
 	 * If we're using IRQ 13, or supposedly even some trap
 	 * X86_TRAP_MF implementations, it's possible
 	 * we get a spurious trap, which is not an error.
 	 */
-	return 0;
-}
+	वापस 0;
+पूर्ण

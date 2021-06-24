@@ -1,19 +1,20 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __VDSO_LIMITS_H
-#define __VDSO_LIMITS_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __VDSO_LIMITS_H
+#घोषणा __VDSO_LIMITS_H
 
-#define USHRT_MAX	((unsigned short)~0U)
-#define SHRT_MAX	((short)(USHRT_MAX >> 1))
-#define SHRT_MIN	((short)(-SHRT_MAX - 1))
-#define INT_MAX		((int)(~0U >> 1))
-#define INT_MIN		(-INT_MAX - 1)
-#define UINT_MAX	(~0U)
-#define LONG_MAX	((long)(~0UL >> 1))
-#define LONG_MIN	(-LONG_MAX - 1)
-#define ULONG_MAX	(~0UL)
-#define LLONG_MAX	((long long)(~0ULL >> 1))
-#define LLONG_MIN	(-LLONG_MAX - 1)
-#define ULLONG_MAX	(~0ULL)
-#define UINTPTR_MAX	ULONG_MAX
+#घोषणा अच_लघु_उच्च	((अचिन्हित लघु)~0U)
+#घोषणा लघु_उच्च	((लघु)(अच_लघु_उच्च >> 1))
+#घोषणा लघु_न्यून	((लघु)(-लघु_उच्च - 1))
+#घोषणा पूर्णांक_उच्च		((पूर्णांक)(~0U >> 1))
+#घोषणा पूर्णांक_न्यून		(-पूर्णांक_उच्च - 1)
+#घोषणा अच_पूर्णांक_उच्च	(~0U)
+#घोषणा दीर्घ_उच्च	((दीर्घ)(~0UL >> 1))
+#घोषणा दीर्घ_न्यून	(-दीर्घ_उच्च - 1)
+#घोषणा अच_दीर्घ_उच्च	(~0UL)
+#घोषणा Lदीर्घ_उच्च	((दीर्घ दीर्घ)(~0ULL >> 1))
+#घोषणा Lदीर्घ_न्यून	(-Lदीर्घ_उच्च - 1)
+#घोषणा ULदीर्घ_उच्च	(~0ULL)
+#घोषणा UINTPTR_MAX	अच_दीर्घ_उच्च
 
-#endif /* __VDSO_LIMITS_H */
+#पूर्ण_अगर /* __VDSO_LIMITS_H */

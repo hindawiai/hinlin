@@ -1,66 +1,67 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
  * Copyright 2018, Michael Ellerman, IBM Corp.
  *
  * Test that an out-of-bounds branch to counter behaves as expected.
  */
 
-#include <setjmp.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <sys/mman.h>
-#include <sys/types.h>
-#include <sys/wait.h>
-#include <ucontext.h>
-#include <unistd.h>
+#समावेश <समलाँघ.स>
+#समावेश <मानकपन.स>
+#समावेश <मानककोष.स>
+#समावेश <माला.स>
+#समावेश <sys/mman.h>
+#समावेश <sys/types.h>
+#समावेश <sys/रुको.h>
+#समावेश <ucontext.h>
+#समावेश <unistd.h>
 
-#include "utils.h"
+#समावेश "utils.h"
 
 
-#define BAD_NIP	0x788c545a18000000ull
+#घोषणा BAD_NIP	0x788c545a18000000ull
 
-static struct pt_regs signal_regs;
-static jmp_buf setjmp_env;
+अटल काष्ठा pt_regs संकेत_regs;
+अटल लाँघ_बफ बनाओ_लाँघ_env;
 
-static void save_regs(ucontext_t *ctxt)
-{
-	struct pt_regs *regs = ctxt->uc_mcontext.regs;
+अटल व्योम save_regs(ucontext_t *ctxt)
+अणु
+	काष्ठा pt_regs *regs = ctxt->uc_mcontext.regs;
 
-	memcpy(&signal_regs, regs, sizeof(signal_regs));
-}
+	स_नकल(&संकेत_regs, regs, माप(संकेत_regs));
+पूर्ण
 
-static void segv_handler(int signum, siginfo_t *info, void *ctxt_v)
-{
+अटल व्योम segv_handler(पूर्णांक signum, siginfo_t *info, व्योम *ctxt_v)
+अणु
 	save_regs(ctxt_v);
-	longjmp(setjmp_env, 1);
-}
+	दीर्घ_लाँघ(बनाओ_लाँघ_env, 1);
+पूर्ण
 
-static void usr2_handler(int signum, siginfo_t *info, void *ctxt_v)
-{
+अटल व्योम usr2_handler(पूर्णांक signum, siginfo_t *info, व्योम *ctxt_v)
+अणु
 	save_regs(ctxt_v);
-}
+पूर्ण
 
-static int ok(void)
-{
-	printf("Everything is OK in here.\n");
-	return 0;
-}
+अटल पूर्णांक ok(व्योम)
+अणु
+	म_लिखो("Everything is OK in here.\n");
+	वापस 0;
+पूर्ण
 
-#define REG_POISON	0x5a5a
-#define POISONED_REG(n)	((((unsigned long)REG_POISON) << 48) | ((n) << 32) | \
-			 (((unsigned long)REG_POISON) << 16) | (n))
+#घोषणा REG_POISON	0x5a5a
+#घोषणा POISONED_REG(n)	((((अचिन्हित दीर्घ)REG_POISON) << 48) | ((n) << 32) | \
+			 (((अचिन्हित दीर्घ)REG_POISON) << 16) | (n))
 
-static inline void poison_regs(void)
-{
-	#define POISON_REG(n)	\
-	  "lis  " __stringify(n) "," __stringify(REG_POISON) ";" \
-	  "addi " __stringify(n) "," __stringify(n) "," __stringify(n) ";" \
-	  "sldi " __stringify(n) "," __stringify(n) ", 32 ;" \
-	  "oris " __stringify(n) "," __stringify(n) "," __stringify(REG_POISON) ";" \
-	  "addi " __stringify(n) "," __stringify(n) "," __stringify(n) ";"
+अटल अंतरभूत व्योम poison_regs(व्योम)
+अणु
+	#घोषणा POISON_REG(n)	\
+	  "lis  " __stringअगरy(n) "," __stringअगरy(REG_POISON) ";" \
+	  "addi " __stringअगरy(n) "," __stringअगरy(n) "," __stringअगरy(n) ";" \
+	  "sldi " __stringअगरy(n) "," __stringअगरy(n) ", 32 ;" \
+	  "oris " __stringअगरy(n) "," __stringअगरy(n) "," __stringअगरy(REG_POISON) ";" \
+	  "addi " __stringअगरy(n) "," __stringअगरy(n) "," __stringअगरy(n) ";"
 
-	asm (POISON_REG(15)
+	यंत्र (POISON_REG(15)
 	     POISON_REG(16)
 	     POISON_REG(17)
 	     POISON_REG(18)
@@ -75,96 +76,96 @@ static inline void poison_regs(void)
 	     POISON_REG(27)
 	     POISON_REG(28)
 	     POISON_REG(29)
-	     : // inputs
-	     : // outputs
+	     : // inमाला_दो
+	     : // outमाला_दो
 	     : "15", "16", "17", "18", "19", "20", "21", "22", "23", "24", "25",
 	       "26", "27", "28", "29"
 	);
-	#undef POISON_REG
-}
+	#अघोषित POISON_REG
+पूर्ण
 
-static int check_regs(void)
-{
-	unsigned long i;
+अटल पूर्णांक check_regs(व्योम)
+अणु
+	अचिन्हित दीर्घ i;
 
-	for (i = 15; i <= 29; i++)
-		FAIL_IF(signal_regs.gpr[i] != POISONED_REG(i));
+	क्रम (i = 15; i <= 29; i++)
+		FAIL_IF(संकेत_regs.gpr[i] != POISONED_REG(i));
 
-	printf("Regs OK\n");
-	return 0;
-}
+	म_लिखो("Regs OK\n");
+	वापस 0;
+पूर्ण
 
-static void dump_regs(void)
-{
-	for (int i = 0; i < 32; i += 4) {
-		printf("r%02d 0x%016lx  r%02d 0x%016lx  " \
+अटल व्योम dump_regs(व्योम)
+अणु
+	क्रम (पूर्णांक i = 0; i < 32; i += 4) अणु
+		म_लिखो("r%02d 0x%016lx  r%02d 0x%016lx  " \
 		       "r%02d 0x%016lx  r%02d 0x%016lx\n",
-		       i, signal_regs.gpr[i],
-		       i+1, signal_regs.gpr[i+1],
-		       i+2, signal_regs.gpr[i+2],
-		       i+3, signal_regs.gpr[i+3]);
-	}
-}
+		       i, संकेत_regs.gpr[i],
+		       i+1, संकेत_regs.gpr[i+1],
+		       i+2, संकेत_regs.gpr[i+2],
+		       i+3, संकेत_regs.gpr[i+3]);
+	पूर्ण
+पूर्ण
 
-#ifdef _CALL_AIXDESC
-struct opd {
-	unsigned long ip;
-	unsigned long toc;
-	unsigned long env;
-};
-static struct opd bad_opd = {
+#अगर_घोषित _CALL_AIXDESC
+काष्ठा opd अणु
+	अचिन्हित दीर्घ ip;
+	अचिन्हित दीर्घ toc;
+	अचिन्हित दीर्घ env;
+पूर्ण;
+अटल काष्ठा opd bad_opd = अणु
 	.ip = BAD_NIP,
-};
-#define BAD_FUNC (&bad_opd)
-#else
-#define BAD_FUNC BAD_NIP
-#endif
+पूर्ण;
+#घोषणा BAD_FUNC (&bad_opd)
+#अन्यथा
+#घोषणा BAD_FUNC BAD_NIP
+#पूर्ण_अगर
 
-int test_wild_bctr(void)
-{
-	int (*func_ptr)(void);
-	struct sigaction segv = {
+पूर्णांक test_wild_bctr(व्योम)
+अणु
+	पूर्णांक (*func_ptr)(व्योम);
+	काष्ठा sigaction segv = अणु
 		.sa_sigaction = segv_handler,
 		.sa_flags = SA_SIGINFO
-	};
-	struct sigaction usr2 = {
+	पूर्ण;
+	काष्ठा sigaction usr2 = अणु
 		.sa_sigaction = usr2_handler,
 		.sa_flags = SA_SIGINFO
-	};
+	पूर्ण;
 
-	FAIL_IF(sigaction(SIGSEGV, &segv, NULL));
-	FAIL_IF(sigaction(SIGUSR2, &usr2, NULL));
+	FAIL_IF(sigaction(संक_अंश, &segv, शून्य));
+	FAIL_IF(sigaction(SIGUSR2, &usr2, शून्य));
 
-	bzero(&signal_regs, sizeof(signal_regs));
+	bzero(&संकेत_regs, माप(संकेत_regs));
 
-	if (setjmp(setjmp_env) == 0) {
+	अगर (बनाओ_लाँघ(बनाओ_लाँघ_env) == 0) अणु
 		func_ptr = ok;
 		func_ptr();
 
-		kill(getpid(), SIGUSR2);
-		printf("Regs before:\n");
+		समाप्त(getpid(), SIGUSR2);
+		म_लिखो("Regs before:\n");
 		dump_regs();
-		bzero(&signal_regs, sizeof(signal_regs));
+		bzero(&संकेत_regs, माप(संकेत_regs));
 
 		poison_regs();
 
-		func_ptr = (int (*)(void))BAD_FUNC;
+		func_ptr = (पूर्णांक (*)(व्योम))BAD_FUNC;
 		func_ptr();
 
 		FAIL_IF(1); /* we didn't segv? */
-	}
+	पूर्ण
 
-	FAIL_IF(signal_regs.nip != BAD_NIP);
+	FAIL_IF(संकेत_regs.nip != BAD_NIP);
 
-	printf("All good - took SEGV as expected branching to 0x%llx\n", BAD_NIP);
+	म_लिखो("All good - took SEGV as expected branching to 0x%llx\n", BAD_NIP);
 
 	dump_regs();
 	FAIL_IF(check_regs());
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int main(void)
-{
-	return test_harness(test_wild_bctr, "wild_bctr");
-}
+पूर्णांक मुख्य(व्योम)
+अणु
+	वापस test_harness(test_wild_bctr, "wild_bctr");
+पूर्ण

@@ -1,28 +1,29 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- * iommu trace points
+ * iommu trace poपूर्णांकs
  *
  * Copyright (C) 2013 Shuah Khan <shuah.kh@samsung.com>
  *
  */
-#undef TRACE_SYSTEM
-#define TRACE_SYSTEM iommu
+#अघोषित TRACE_SYSTEM
+#घोषणा TRACE_SYSTEM iommu
 
-#if !defined(_TRACE_IOMMU_H) || defined(TRACE_HEADER_MULTI_READ)
-#define _TRACE_IOMMU_H
+#अगर !defined(_TRACE_IOMMU_H) || defined(TRACE_HEADER_MULTI_READ)
+#घोषणा _TRACE_IOMMU_H
 
-#include <linux/tracepoint.h>
+#समावेश <linux/tracepoपूर्णांक.h>
 
-struct device;
+काष्ठा device;
 
 DECLARE_EVENT_CLASS(iommu_group_event,
 
-	TP_PROTO(int group_id, struct device *dev),
+	TP_PROTO(पूर्णांक group_id, काष्ठा device *dev),
 
 	TP_ARGS(group_id, dev),
 
 	TP_STRUCT__entry(
-		__field(int, gid)
+		__field(पूर्णांक, gid)
 		__string(device, dev_name(dev))
 	),
 
@@ -31,29 +32,29 @@ DECLARE_EVENT_CLASS(iommu_group_event,
 		__assign_str(device, dev_name(dev));
 	),
 
-	TP_printk("IOMMU: groupID=%d device=%s",
+	TP_prपूर्णांकk("IOMMU: groupID=%d device=%s",
 			__entry->gid, __get_str(device)
 	)
 );
 
 DEFINE_EVENT(iommu_group_event, add_device_to_group,
 
-	TP_PROTO(int group_id, struct device *dev),
+	TP_PROTO(पूर्णांक group_id, काष्ठा device *dev),
 
 	TP_ARGS(group_id, dev)
 
 );
 
-DEFINE_EVENT(iommu_group_event, remove_device_from_group,
+DEFINE_EVENT(iommu_group_event, हटाओ_device_from_group,
 
-	TP_PROTO(int group_id, struct device *dev),
+	TP_PROTO(पूर्णांक group_id, काष्ठा device *dev),
 
 	TP_ARGS(group_id, dev)
 );
 
 DECLARE_EVENT_CLASS(iommu_device_event,
 
-	TP_PROTO(struct device *dev),
+	TP_PROTO(काष्ठा device *dev),
 
 	TP_ARGS(dev),
 
@@ -65,34 +66,34 @@ DECLARE_EVENT_CLASS(iommu_device_event,
 		__assign_str(device, dev_name(dev));
 	),
 
-	TP_printk("IOMMU: device=%s", __get_str(device)
+	TP_prपूर्णांकk("IOMMU: device=%s", __get_str(device)
 	)
 );
 
-DEFINE_EVENT(iommu_device_event, attach_device_to_domain,
+DEFINE_EVENT(iommu_device_event, attach_device_to_करोमुख्य,
 
-	TP_PROTO(struct device *dev),
+	TP_PROTO(काष्ठा device *dev),
 
 	TP_ARGS(dev)
 );
 
-DEFINE_EVENT(iommu_device_event, detach_device_from_domain,
+DEFINE_EVENT(iommu_device_event, detach_device_from_करोमुख्य,
 
-	TP_PROTO(struct device *dev),
+	TP_PROTO(काष्ठा device *dev),
 
 	TP_ARGS(dev)
 );
 
 TRACE_EVENT(map,
 
-	TP_PROTO(unsigned long iova, phys_addr_t paddr, size_t size),
+	TP_PROTO(अचिन्हित दीर्घ iova, phys_addr_t paddr, माप_प्रकार size),
 
 	TP_ARGS(iova, paddr, size),
 
 	TP_STRUCT__entry(
 		__field(u64, iova)
 		__field(u64, paddr)
-		__field(size_t, size)
+		__field(माप_प्रकार, size)
 	),
 
 	TP_fast_assign(
@@ -101,21 +102,21 @@ TRACE_EVENT(map,
 		__entry->size = size;
 	),
 
-	TP_printk("IOMMU: iova=0x%016llx paddr=0x%016llx size=%zu",
+	TP_prपूर्णांकk("IOMMU: iova=0x%016llx paddr=0x%016llx size=%zu",
 			__entry->iova, __entry->paddr, __entry->size
 	)
 );
 
 TRACE_EVENT(unmap,
 
-	TP_PROTO(unsigned long iova, size_t size, size_t unmapped_size),
+	TP_PROTO(अचिन्हित दीर्घ iova, माप_प्रकार size, माप_प्रकार unmapped_size),
 
 	TP_ARGS(iova, size, unmapped_size),
 
 	TP_STRUCT__entry(
 		__field(u64, iova)
-		__field(size_t, size)
-		__field(size_t, unmapped_size)
+		__field(माप_प्रकार, size)
+		__field(माप_प्रकार, unmapped_size)
 	),
 
 	TP_fast_assign(
@@ -124,14 +125,14 @@ TRACE_EVENT(unmap,
 		__entry->unmapped_size = unmapped_size;
 	),
 
-	TP_printk("IOMMU: iova=0x%016llx size=%zu unmapped_size=%zu",
+	TP_prपूर्णांकk("IOMMU: iova=0x%016llx size=%zu unmapped_size=%zu",
 			__entry->iova, __entry->size, __entry->unmapped_size
 	)
 );
 
 DECLARE_EVENT_CLASS(iommu_error,
 
-	TP_PROTO(struct device *dev, unsigned long iova, int flags),
+	TP_PROTO(काष्ठा device *dev, अचिन्हित दीर्घ iova, पूर्णांक flags),
 
 	TP_ARGS(dev, iova, flags),
 
@@ -139,7 +140,7 @@ DECLARE_EVENT_CLASS(iommu_error,
 		__string(device, dev_name(dev))
 		__string(driver, dev_driver_string(dev))
 		__field(u64, iova)
-		__field(int, flags)
+		__field(पूर्णांक, flags)
 	),
 
 	TP_fast_assign(
@@ -149,7 +150,7 @@ DECLARE_EVENT_CLASS(iommu_error,
 		__entry->flags = flags;
 	),
 
-	TP_printk("IOMMU:%s %s iova=0x%016llx flags=0x%04x",
+	TP_prपूर्णांकk("IOMMU:%s %s iova=0x%016llx flags=0x%04x",
 			__get_str(driver), __get_str(device),
 			__entry->iova, __entry->flags
 	)
@@ -157,11 +158,11 @@ DECLARE_EVENT_CLASS(iommu_error,
 
 DEFINE_EVENT(iommu_error, io_page_fault,
 
-	TP_PROTO(struct device *dev, unsigned long iova, int flags),
+	TP_PROTO(काष्ठा device *dev, अचिन्हित दीर्घ iova, पूर्णांक flags),
 
 	TP_ARGS(dev, iova, flags)
 );
-#endif /* _TRACE_IOMMU_H */
+#पूर्ण_अगर /* _TRACE_IOMMU_H */
 
 /* This part must be outside protection */
-#include <trace/define_trace.h>
+#समावेश <trace/define_trace.h>

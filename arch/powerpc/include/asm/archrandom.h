@@ -1,49 +1,50 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _ASM_POWERPC_ARCHRANDOM_H
-#define _ASM_POWERPC_ARCHRANDOM_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _ASM_POWERPC_ARCHRANDOM_H
+#घोषणा _ASM_POWERPC_ARCHRANDOM_H
 
-#ifdef CONFIG_ARCH_RANDOM
+#अगर_घोषित CONFIG_ARCH_RANDOM
 
-#include <asm/machdep.h>
+#समावेश <यंत्र/machdep.h>
 
-static inline bool __must_check arch_get_random_long(unsigned long *v)
-{
-	return false;
-}
+अटल अंतरभूत bool __must_check arch_get_अक्रमom_दीर्घ(अचिन्हित दीर्घ *v)
+अणु
+	वापस false;
+पूर्ण
 
-static inline bool __must_check arch_get_random_int(unsigned int *v)
-{
-	return false;
-}
+अटल अंतरभूत bool __must_check arch_get_अक्रमom_पूर्णांक(अचिन्हित पूर्णांक *v)
+अणु
+	वापस false;
+पूर्ण
 
-static inline bool __must_check arch_get_random_seed_long(unsigned long *v)
-{
-	if (ppc_md.get_random_seed)
-		return ppc_md.get_random_seed(v);
+अटल अंतरभूत bool __must_check arch_get_अक्रमom_seed_दीर्घ(अचिन्हित दीर्घ *v)
+अणु
+	अगर (ppc_md.get_अक्रमom_seed)
+		वापस ppc_md.get_अक्रमom_seed(v);
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static inline bool __must_check arch_get_random_seed_int(unsigned int *v)
-{
-	unsigned long val;
+अटल अंतरभूत bool __must_check arch_get_अक्रमom_seed_पूर्णांक(अचिन्हित पूर्णांक *v)
+अणु
+	अचिन्हित दीर्घ val;
 	bool rc;
 
-	rc = arch_get_random_seed_long(&val);
-	if (rc)
+	rc = arch_get_अक्रमom_seed_दीर्घ(&val);
+	अगर (rc)
 		*v = val;
 
-	return rc;
-}
-#endif /* CONFIG_ARCH_RANDOM */
+	वापस rc;
+पूर्ण
+#पूर्ण_अगर /* CONFIG_ARCH_RANDOM */
 
-#ifdef CONFIG_PPC_POWERNV
-int powernv_hwrng_present(void);
-int powernv_get_random_long(unsigned long *v);
-int powernv_get_random_real_mode(unsigned long *v);
-#else
-static inline int powernv_hwrng_present(void) { return 0; }
-static inline int powernv_get_random_real_mode(unsigned long *v) { return 0; }
-#endif
+#अगर_घोषित CONFIG_PPC_POWERNV
+पूर्णांक घातernv_hwrng_present(व्योम);
+पूर्णांक घातernv_get_अक्रमom_दीर्घ(अचिन्हित दीर्घ *v);
+पूर्णांक घातernv_get_अक्रमom_real_mode(अचिन्हित दीर्घ *v);
+#अन्यथा
+अटल अंतरभूत पूर्णांक घातernv_hwrng_present(व्योम) अणु वापस 0; पूर्ण
+अटल अंतरभूत पूर्णांक घातernv_get_अक्रमom_real_mode(अचिन्हित दीर्घ *v) अणु वापस 0; पूर्ण
+#पूर्ण_अगर
 
-#endif /* _ASM_POWERPC_ARCHRANDOM_H */
+#पूर्ण_अगर /* _ASM_POWERPC_ARCHRANDOM_H */

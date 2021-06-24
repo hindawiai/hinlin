@@ -1,73 +1,74 @@
-/* SPDX-License-Identifier: GPL-2.0 OR MIT */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 OR MIT */
 /*
  * Copyright (C) 2015-2019 Jason A. Donenfeld <Jason@zx2c4.com>. All Rights Reserved.
  */
 
-#ifndef CURVE25519_H
-#define CURVE25519_H
+#अगर_अघोषित CURVE25519_H
+#घोषणा CURVE25519_H
 
-#include <crypto/algapi.h> // For crypto_memneq.
-#include <linux/types.h>
-#include <linux/random.h>
+#समावेश <crypto/algapi.h> // For crypto_memneq.
+#समावेश <linux/types.h>
+#समावेश <linux/अक्रमom.h>
 
-enum curve25519_lengths {
+क्रमागत curve25519_lengths अणु
 	CURVE25519_KEY_SIZE = 32
-};
+पूर्ण;
 
-extern const u8 curve25519_null_point[];
-extern const u8 curve25519_base_point[];
+बाह्य स्थिर u8 curve25519_null_poपूर्णांक[];
+बाह्य स्थिर u8 curve25519_base_poपूर्णांक[];
 
-void curve25519_generic(u8 out[CURVE25519_KEY_SIZE],
-			const u8 scalar[CURVE25519_KEY_SIZE],
-			const u8 point[CURVE25519_KEY_SIZE]);
+व्योम curve25519_generic(u8 out[CURVE25519_KEY_SIZE],
+			स्थिर u8 scalar[CURVE25519_KEY_SIZE],
+			स्थिर u8 poपूर्णांक[CURVE25519_KEY_SIZE]);
 
-void curve25519_arch(u8 out[CURVE25519_KEY_SIZE],
-		     const u8 scalar[CURVE25519_KEY_SIZE],
-		     const u8 point[CURVE25519_KEY_SIZE]);
+व्योम curve25519_arch(u8 out[CURVE25519_KEY_SIZE],
+		     स्थिर u8 scalar[CURVE25519_KEY_SIZE],
+		     स्थिर u8 poपूर्णांक[CURVE25519_KEY_SIZE]);
 
-void curve25519_base_arch(u8 pub[CURVE25519_KEY_SIZE],
-			  const u8 secret[CURVE25519_KEY_SIZE]);
+व्योम curve25519_base_arch(u8 pub[CURVE25519_KEY_SIZE],
+			  स्थिर u8 secret[CURVE25519_KEY_SIZE]);
 
-bool curve25519_selftest(void);
+bool curve25519_selftest(व्योम);
 
-static inline
-bool __must_check curve25519(u8 mypublic[CURVE25519_KEY_SIZE],
-			     const u8 secret[CURVE25519_KEY_SIZE],
-			     const u8 basepoint[CURVE25519_KEY_SIZE])
-{
-	if (IS_ENABLED(CONFIG_CRYPTO_ARCH_HAVE_LIB_CURVE25519))
-		curve25519_arch(mypublic, secret, basepoint);
-	else
-		curve25519_generic(mypublic, secret, basepoint);
-	return crypto_memneq(mypublic, curve25519_null_point,
+अटल अंतरभूत
+bool __must_check curve25519(u8 myखुला[CURVE25519_KEY_SIZE],
+			     स्थिर u8 secret[CURVE25519_KEY_SIZE],
+			     स्थिर u8 basepoपूर्णांक[CURVE25519_KEY_SIZE])
+अणु
+	अगर (IS_ENABLED(CONFIG_CRYPTO_ARCH_HAVE_LIB_CURVE25519))
+		curve25519_arch(myखुला, secret, basepoपूर्णांक);
+	अन्यथा
+		curve25519_generic(myखुला, secret, basepoपूर्णांक);
+	वापस crypto_memneq(myखुला, curve25519_null_poपूर्णांक,
 			     CURVE25519_KEY_SIZE);
-}
+पूर्ण
 
-static inline bool
-__must_check curve25519_generate_public(u8 pub[CURVE25519_KEY_SIZE],
-					const u8 secret[CURVE25519_KEY_SIZE])
-{
-	if (unlikely(!crypto_memneq(secret, curve25519_null_point,
+अटल अंतरभूत bool
+__must_check curve25519_generate_खुला(u8 pub[CURVE25519_KEY_SIZE],
+					स्थिर u8 secret[CURVE25519_KEY_SIZE])
+अणु
+	अगर (unlikely(!crypto_memneq(secret, curve25519_null_poपूर्णांक,
 				    CURVE25519_KEY_SIZE)))
-		return false;
+		वापस false;
 
-	if (IS_ENABLED(CONFIG_CRYPTO_ARCH_HAVE_LIB_CURVE25519))
+	अगर (IS_ENABLED(CONFIG_CRYPTO_ARCH_HAVE_LIB_CURVE25519))
 		curve25519_base_arch(pub, secret);
-	else
-		curve25519_generic(pub, secret, curve25519_base_point);
-	return crypto_memneq(pub, curve25519_null_point, CURVE25519_KEY_SIZE);
-}
+	अन्यथा
+		curve25519_generic(pub, secret, curve25519_base_poपूर्णांक);
+	वापस crypto_memneq(pub, curve25519_null_poपूर्णांक, CURVE25519_KEY_SIZE);
+पूर्ण
 
-static inline void curve25519_clamp_secret(u8 secret[CURVE25519_KEY_SIZE])
-{
+अटल अंतरभूत व्योम curve25519_clamp_secret(u8 secret[CURVE25519_KEY_SIZE])
+अणु
 	secret[0] &= 248;
 	secret[31] = (secret[31] & 127) | 64;
-}
+पूर्ण
 
-static inline void curve25519_generate_secret(u8 secret[CURVE25519_KEY_SIZE])
-{
-	get_random_bytes_wait(secret, CURVE25519_KEY_SIZE);
+अटल अंतरभूत व्योम curve25519_generate_secret(u8 secret[CURVE25519_KEY_SIZE])
+अणु
+	get_अक्रमom_bytes_रुको(secret, CURVE25519_KEY_SIZE);
 	curve25519_clamp_secret(secret);
-}
+पूर्ण
 
-#endif /* CURVE25519_H */
+#पूर्ण_अगर /* CURVE25519_H */

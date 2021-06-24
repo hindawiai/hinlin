@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 
 /*
  * Infrared Toy and IR Droid RC core driver
@@ -6,89 +7,89 @@
  * Copyright (C) 2020 Sean Young <sean@mess.org>
 
  * This driver is based on the lirc driver which can be found here:
- * https://sourceforge.net/p/lirc/git/ci/master/tree/plugins/irtoy.c
+ * https://sourceक्रमge.net/p/lirc/git/ci/master/tree/plugins/irtoy.c
  * Copyright (C) 2011 Peter Kooiman <pkooiman@gmail.com>
  */
 
-#include <asm/unaligned.h>
-#include <linux/completion.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/usb.h>
-#include <linux/slab.h>
-#include <linux/usb/input.h>
+#समावेश <यंत्र/unaligned.h>
+#समावेश <linux/completion.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/usb.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/usb/input.h>
 
-#include <media/rc-core.h>
+#समावेश <media/rc-core.h>
 
-static const u8 COMMAND_VERSION[] = { 'v' };
-// End transmit and repeat reset command so we exit sump mode
-static const u8 COMMAND_RESET[] = { 0xff, 0xff, 0, 0, 0, 0, 0 };
-static const u8 COMMAND_SMODE_ENTER[] = { 's' };
-static const u8 COMMAND_TXSTART[] = { 0x26, 0x24, 0x25, 0x03 };
+अटल स्थिर u8 COMMAND_VERSION[] = अणु 'v' पूर्ण;
+// End transmit and repeat reset command so we निकास sump mode
+अटल स्थिर u8 COMMAND_RESET[] = अणु 0xff, 0xff, 0, 0, 0, 0, 0 पूर्ण;
+अटल स्थिर u8 COMMAND_SMODE_ENTER[] = अणु 's' पूर्ण;
+अटल स्थिर u8 COMMAND_TXSTART[] = अणु 0x26, 0x24, 0x25, 0x03 पूर्ण;
 
-#define REPLY_XMITCOUNT 't'
-#define REPLY_XMITSUCCESS 'C'
-#define REPLY_VERSION 'V'
-#define REPLY_SAMPLEMODEPROTO 'S'
+#घोषणा REPLY_XMITCOUNT 't'
+#घोषणा REPLY_XMITSUCCESS 'C'
+#घोषणा REPLY_VERSION 'V'
+#घोषणा REPLY_SAMPLEMODEPROTO 'S'
 
-#define TIMEOUT 500
+#घोषणा TIMEOUT 500
 
-#define LEN_XMITRES 3
-#define LEN_VERSION 4
-#define LEN_SAMPLEMODEPROTO 3
+#घोषणा LEN_XMITRES 3
+#घोषणा LEN_VERSION 4
+#घोषणा LEN_SAMPLEMODEPROTO 3
 
-#define MIN_FW_VERSION 20
-#define UNIT_US 21
-#define MAX_TIMEOUT_US (UNIT_US * U16_MAX)
+#घोषणा MIN_FW_VERSION 20
+#घोषणा UNIT_US 21
+#घोषणा MAX_TIMEOUT_US (UNIT_US * U16_MAX)
 
-#define MAX_PACKET 64
+#घोषणा MAX_PACKET 64
 
-enum state {
+क्रमागत state अणु
 	STATE_IRDATA,
 	STATE_RESET,
 	STATE_COMMAND,
 	STATE_TX,
-};
+पूर्ण;
 
-struct irtoy {
-	struct device *dev;
-	struct usb_device *usbdev;
+काष्ठा irtoy अणु
+	काष्ठा device *dev;
+	काष्ठा usb_device *usbdev;
 
-	struct rc_dev *rc;
-	struct urb *urb_in, *urb_out;
+	काष्ठा rc_dev *rc;
+	काष्ठा urb *urb_in, *urb_out;
 
 	u8 *in;
 	u8 *out;
-	struct completion command_done;
+	काष्ठा completion command_करोne;
 
 	bool pulse;
-	enum state state;
+	क्रमागत state state;
 
-	void *tx_buf;
-	uint tx_len;
+	व्योम *tx_buf;
+	uपूर्णांक tx_len;
 
-	uint emitted;
-	uint hw_version;
-	uint sw_version;
-	uint proto_version;
+	uपूर्णांक emitted;
+	uपूर्णांक hw_version;
+	uपूर्णांक sw_version;
+	uपूर्णांक proto_version;
 
-	char phys[64];
-};
+	अक्षर phys[64];
+पूर्ण;
 
-static void irtoy_response(struct irtoy *irtoy, u32 len)
-{
-	switch (irtoy->state) {
-	case STATE_COMMAND:
-		if (len == LEN_VERSION && irtoy->in[0] == REPLY_VERSION) {
-			uint version;
+अटल व्योम irtoy_response(काष्ठा irtoy *irtoy, u32 len)
+अणु
+	चयन (irtoy->state) अणु
+	हाल STATE_COMMAND:
+		अगर (len == LEN_VERSION && irtoy->in[0] == REPLY_VERSION) अणु
+			uपूर्णांक version;
 
 			irtoy->in[LEN_VERSION] = 0;
 
-			if (kstrtouint(irtoy->in + 1, 10, &version)) {
+			अगर (kstrtouपूर्णांक(irtoy->in + 1, 10, &version)) अणु
 				dev_err(irtoy->dev, "invalid version %*phN. Please make sure you are using firmware v20 or higher",
 					LEN_VERSION, irtoy->in);
-				break;
-			}
+				अवरोध;
+			पूर्ण
 
 			dev_dbg(irtoy->dev, "version %s\n", irtoy->in);
 
@@ -96,218 +97,218 @@ static void irtoy_response(struct irtoy *irtoy, u32 len)
 			irtoy->sw_version = version % 100;
 
 			irtoy->state = STATE_IRDATA;
-			complete(&irtoy->command_done);
-		} else if (len == LEN_SAMPLEMODEPROTO &&
-			   irtoy->in[0] == REPLY_SAMPLEMODEPROTO) {
-			uint version;
+			complete(&irtoy->command_करोne);
+		पूर्ण अन्यथा अगर (len == LEN_SAMPLEMODEPROTO &&
+			   irtoy->in[0] == REPLY_SAMPLEMODEPROTO) अणु
+			uपूर्णांक version;
 
 			irtoy->in[LEN_SAMPLEMODEPROTO] = 0;
 
-			if (kstrtouint(irtoy->in + 1, 10, &version)) {
+			अगर (kstrtouपूर्णांक(irtoy->in + 1, 10, &version)) अणु
 				dev_err(irtoy->dev, "invalid sample mode response %*phN",
 					LEN_SAMPLEMODEPROTO, irtoy->in);
-				return;
-			}
+				वापस;
+			पूर्ण
 
 			dev_dbg(irtoy->dev, "protocol %s\n", irtoy->in);
 
 			irtoy->proto_version = version;
 
 			irtoy->state = STATE_IRDATA;
-			complete(&irtoy->command_done);
-		} else {
+			complete(&irtoy->command_करोne);
+		पूर्ण अन्यथा अणु
 			dev_err(irtoy->dev, "unexpected response to command: %*phN\n",
 				len, irtoy->in);
-		}
-		break;
-	case STATE_IRDATA: {
-		struct ir_raw_event rawir = { .pulse = irtoy->pulse };
+		पूर्ण
+		अवरोध;
+	हाल STATE_IRDATA: अणु
+		काष्ठा ir_raw_event rawir = अणु .pulse = irtoy->pulse पूर्ण;
 		__be16 *in = (__be16 *)irtoy->in;
-		int i;
+		पूर्णांक i;
 
-		for (i = 0; i < len / sizeof(__be16); i++) {
+		क्रम (i = 0; i < len / माप(__be16); i++) अणु
 			u16 v = be16_to_cpu(in[i]);
 
-			if (v == 0xffff) {
+			अगर (v == 0xffff) अणु
 				rawir.pulse = false;
-			} else {
+			पूर्ण अन्यथा अणु
 				rawir.duration = v * UNIT_US;
-				ir_raw_event_store_with_timeout(irtoy->rc,
+				ir_raw_event_store_with_समयout(irtoy->rc,
 								&rawir);
-			}
+			पूर्ण
 
 			rawir.pulse = !rawir.pulse;
-		}
+		पूर्ण
 
 		irtoy->pulse = rawir.pulse;
 
 		ir_raw_event_handle(irtoy->rc);
-		break;
-	}
-	case STATE_TX:
-		if (irtoy->tx_len == 0) {
-			if (len == LEN_XMITRES &&
-			    irtoy->in[0] == REPLY_XMITCOUNT) {
+		अवरोध;
+	पूर्ण
+	हाल STATE_TX:
+		अगर (irtoy->tx_len == 0) अणु
+			अगर (len == LEN_XMITRES &&
+			    irtoy->in[0] == REPLY_XMITCOUNT) अणु
 				u16 emitted = get_unaligned_be16(irtoy->in + 1);
 
 				dev_dbg(irtoy->dev, "emitted:%u\n", emitted);
 
 				irtoy->emitted = emitted;
-			} else if (len == 1 &&
-				   irtoy->in[0] == REPLY_XMITSUCCESS) {
+			पूर्ण अन्यथा अगर (len == 1 &&
+				   irtoy->in[0] == REPLY_XMITSUCCESS) अणु
 				irtoy->state = STATE_IRDATA;
-				complete(&irtoy->command_done);
-			}
-		} else {
+				complete(&irtoy->command_करोne);
+			पूर्ण
+		पूर्ण अन्यथा अणु
 			// send next part of tx buffer
-			uint space = irtoy->in[0];
-			uint buf_len;
-			int err;
+			uपूर्णांक space = irtoy->in[0];
+			uपूर्णांक buf_len;
+			पूर्णांक err;
 
-			if (len != 1 || space > MAX_PACKET || space == 0) {
+			अगर (len != 1 || space > MAX_PACKET || space == 0) अणु
 				dev_err(irtoy->dev, "packet length expected: %*phN\n",
 					len, irtoy->in);
 				irtoy->state = STATE_IRDATA;
-				complete(&irtoy->command_done);
-				break;
-			}
+				complete(&irtoy->command_करोne);
+				अवरोध;
+			पूर्ण
 
 			buf_len = min(space, irtoy->tx_len);
 
 			dev_dbg(irtoy->dev, "remaining:%u sending:%u\n",
 				irtoy->tx_len, buf_len);
 
-			memcpy(irtoy->out, irtoy->tx_buf, buf_len);
+			स_नकल(irtoy->out, irtoy->tx_buf, buf_len);
 			irtoy->urb_out->transfer_buffer_length = buf_len;
 			err = usb_submit_urb(irtoy->urb_out, GFP_ATOMIC);
-			if (err != 0) {
+			अगर (err != 0) अणु
 				dev_err(irtoy->dev, "fail to submit tx buf urb: %d\n",
 					err);
 				irtoy->state = STATE_IRDATA;
-				complete(&irtoy->command_done);
-				break;
-			}
+				complete(&irtoy->command_करोne);
+				अवरोध;
+			पूर्ण
 
 			irtoy->tx_buf += buf_len;
 			irtoy->tx_len -= buf_len;
-		}
-		break;
-	case STATE_RESET:
+		पूर्ण
+		अवरोध;
+	हाल STATE_RESET:
 		dev_err(irtoy->dev, "unexpected response to reset: %*phN\n",
 			len, irtoy->in);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void irtoy_out_callback(struct urb *urb)
-{
-	struct irtoy *irtoy = urb->context;
+अटल व्योम irtoy_out_callback(काष्ठा urb *urb)
+अणु
+	काष्ठा irtoy *irtoy = urb->context;
 
-	if (urb->status == 0) {
-		if (irtoy->state == STATE_RESET)
-			complete(&irtoy->command_done);
-	} else {
+	अगर (urb->status == 0) अणु
+		अगर (irtoy->state == STATE_RESET)
+			complete(&irtoy->command_करोne);
+	पूर्ण अन्यथा अणु
 		dev_warn(irtoy->dev, "out urb status: %d\n", urb->status);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void irtoy_in_callback(struct urb *urb)
-{
-	struct irtoy *irtoy = urb->context;
-	int ret;
+अटल व्योम irtoy_in_callback(काष्ठा urb *urb)
+अणु
+	काष्ठा irtoy *irtoy = urb->context;
+	पूर्णांक ret;
 
-	if (urb->status == 0)
+	अगर (urb->status == 0)
 		irtoy_response(irtoy, urb->actual_length);
-	else
+	अन्यथा
 		dev_dbg(irtoy->dev, "in urb status: %d\n", urb->status);
 
 	ret = usb_submit_urb(urb, GFP_ATOMIC);
-	if (ret && ret != -ENODEV)
+	अगर (ret && ret != -ENODEV)
 		dev_warn(irtoy->dev, "failed to resubmit urb: %d\n", ret);
-}
+पूर्ण
 
-static int irtoy_command(struct irtoy *irtoy, const u8 *cmd, int cmd_len,
-			 enum state state)
-{
-	int err;
+अटल पूर्णांक irtoy_command(काष्ठा irtoy *irtoy, स्थिर u8 *cmd, पूर्णांक cmd_len,
+			 क्रमागत state state)
+अणु
+	पूर्णांक err;
 
-	init_completion(&irtoy->command_done);
+	init_completion(&irtoy->command_करोne);
 
 	irtoy->state = state;
 
-	memcpy(irtoy->out, cmd, cmd_len);
+	स_नकल(irtoy->out, cmd, cmd_len);
 	irtoy->urb_out->transfer_buffer_length = cmd_len;
 
 	err = usb_submit_urb(irtoy->urb_out, GFP_KERNEL);
-	if (err != 0)
-		return err;
+	अगर (err != 0)
+		वापस err;
 
-	if (!wait_for_completion_timeout(&irtoy->command_done,
-					 msecs_to_jiffies(TIMEOUT))) {
-		usb_kill_urb(irtoy->urb_out);
-		return -ETIMEDOUT;
-	}
+	अगर (!रुको_क्रम_completion_समयout(&irtoy->command_करोne,
+					 msecs_to_jअगरfies(TIMEOUT))) अणु
+		usb_समाप्त_urb(irtoy->urb_out);
+		वापस -ETIMEDOUT;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int irtoy_setup(struct irtoy *irtoy)
-{
-	int err;
+अटल पूर्णांक irtoy_setup(काष्ठा irtoy *irtoy)
+अणु
+	पूर्णांक err;
 
-	err = irtoy_command(irtoy, COMMAND_RESET, sizeof(COMMAND_RESET),
+	err = irtoy_command(irtoy, COMMAND_RESET, माप(COMMAND_RESET),
 			    STATE_RESET);
-	if (err != 0) {
+	अगर (err != 0) अणु
 		dev_err(irtoy->dev, "could not write reset command: %d\n",
 			err);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
 	usleep_range(50, 50);
 
 	// get version
-	err = irtoy_command(irtoy, COMMAND_VERSION, sizeof(COMMAND_VERSION),
+	err = irtoy_command(irtoy, COMMAND_VERSION, माप(COMMAND_VERSION),
 			    STATE_COMMAND);
-	if (err) {
+	अगर (err) अणु
 		dev_err(irtoy->dev, "could not write version command: %d\n",
 			err);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
 	// enter sample mode
 	err = irtoy_command(irtoy, COMMAND_SMODE_ENTER,
-			    sizeof(COMMAND_SMODE_ENTER), STATE_COMMAND);
-	if (err)
+			    माप(COMMAND_SMODE_ENTER), STATE_COMMAND);
+	अगर (err)
 		dev_err(irtoy->dev, "could not write sample command: %d\n",
 			err);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /*
  * When sending IR, it is imperative that we send the IR data as quickly
- * as possible to the device, so it does not run out of IR data and
- * introduce gaps. Allocate the buffer here, and then feed the data from
+ * as possible to the device, so it करोes not run out of IR data and
+ * पूर्णांकroduce gaps. Allocate the buffer here, and then feed the data from
  * the urb callback handler.
  */
-static int irtoy_tx(struct rc_dev *rc, uint *txbuf, uint count)
-{
-	struct irtoy *irtoy = rc->priv;
-	unsigned int i, size;
+अटल पूर्णांक irtoy_tx(काष्ठा rc_dev *rc, uपूर्णांक *txbuf, uपूर्णांक count)
+अणु
+	काष्ठा irtoy *irtoy = rc->priv;
+	अचिन्हित पूर्णांक i, size;
 	__be16 *buf;
-	int err;
+	पूर्णांक err;
 
-	size = sizeof(u16) * (count + 1);
-	buf = kmalloc(size, GFP_KERNEL);
-	if (!buf)
-		return -ENOMEM;
+	size = माप(u16) * (count + 1);
+	buf = kदो_स्मृति(size, GFP_KERNEL);
+	अगर (!buf)
+		वापस -ENOMEM;
 
-	for (i = 0; i < count; i++) {
+	क्रम (i = 0; i < count; i++) अणु
 		u16 v = DIV_ROUND_CLOSEST(txbuf[i], UNIT_US);
 
-		if (!v)
+		अगर (!v)
 			v = 1;
 		buf[i] = cpu_to_be16(v);
-	}
+	पूर्ण
 
 	buf[count] = cpu_to_be16(0xffff);
 
@@ -315,192 +316,192 @@ static int irtoy_tx(struct rc_dev *rc, uint *txbuf, uint count)
 	irtoy->tx_len = size;
 	irtoy->emitted = 0;
 
-	err = irtoy_command(irtoy, COMMAND_TXSTART, sizeof(COMMAND_TXSTART),
+	err = irtoy_command(irtoy, COMMAND_TXSTART, माप(COMMAND_TXSTART),
 			    STATE_TX);
-	kfree(buf);
+	kमुक्त(buf);
 
-	if (err) {
+	अगर (err) अणु
 		dev_err(irtoy->dev, "failed to send tx start command: %d\n",
 			err);
 		// not sure what state the device is in, reset it
 		irtoy_setup(irtoy);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	if (size != irtoy->emitted) {
+	अगर (size != irtoy->emitted) अणु
 		dev_err(irtoy->dev, "expected %u emitted, got %u\n", size,
 			irtoy->emitted);
 		// not sure what state the device is in, reset it
 		irtoy_setup(irtoy);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static int irtoy_probe(struct usb_interface *intf,
-		       const struct usb_device_id *id)
-{
-	struct usb_host_interface *idesc = intf->cur_altsetting;
-	struct usb_device *usbdev = interface_to_usbdev(intf);
-	struct usb_endpoint_descriptor *ep_in = NULL;
-	struct usb_endpoint_descriptor *ep_out = NULL;
-	struct usb_endpoint_descriptor *ep = NULL;
-	struct irtoy *irtoy;
-	struct rc_dev *rc;
-	struct urb *urb;
-	int i, pipe, err = -ENOMEM;
+अटल पूर्णांक irtoy_probe(काष्ठा usb_पूर्णांकerface *पूर्णांकf,
+		       स्थिर काष्ठा usb_device_id *id)
+अणु
+	काष्ठा usb_host_पूर्णांकerface *idesc = पूर्णांकf->cur_altsetting;
+	काष्ठा usb_device *usbdev = पूर्णांकerface_to_usbdev(पूर्णांकf);
+	काष्ठा usb_endpoपूर्णांक_descriptor *ep_in = शून्य;
+	काष्ठा usb_endpoपूर्णांक_descriptor *ep_out = शून्य;
+	काष्ठा usb_endpoपूर्णांक_descriptor *ep = शून्य;
+	काष्ठा irtoy *irtoy;
+	काष्ठा rc_dev *rc;
+	काष्ठा urb *urb;
+	पूर्णांक i, pipe, err = -ENOMEM;
 
-	for (i = 0; i < idesc->desc.bNumEndpoints; i++) {
-		ep = &idesc->endpoint[i].desc;
+	क्रम (i = 0; i < idesc->desc.bNumEndpoपूर्णांकs; i++) अणु
+		ep = &idesc->endpoपूर्णांक[i].desc;
 
-		if (!ep_in && usb_endpoint_is_bulk_in(ep) &&
-		    usb_endpoint_maxp(ep) == MAX_PACKET)
+		अगर (!ep_in && usb_endpoपूर्णांक_is_bulk_in(ep) &&
+		    usb_endpoपूर्णांक_maxp(ep) == MAX_PACKET)
 			ep_in = ep;
 
-		if (!ep_out && usb_endpoint_is_bulk_out(ep) &&
-		    usb_endpoint_maxp(ep) == MAX_PACKET)
+		अगर (!ep_out && usb_endpoपूर्णांक_is_bulk_out(ep) &&
+		    usb_endpoपूर्णांक_maxp(ep) == MAX_PACKET)
 			ep_out = ep;
-	}
+	पूर्ण
 
-	if (!ep_in || !ep_out) {
-		dev_err(&intf->dev, "required endpoints not found\n");
-		return -ENODEV;
-	}
+	अगर (!ep_in || !ep_out) अणु
+		dev_err(&पूर्णांकf->dev, "required endpoints not found\n");
+		वापस -ENODEV;
+	पूर्ण
 
-	irtoy = kzalloc(sizeof(*irtoy), GFP_KERNEL);
-	if (!irtoy)
-		return -ENOMEM;
+	irtoy = kzalloc(माप(*irtoy), GFP_KERNEL);
+	अगर (!irtoy)
+		वापस -ENOMEM;
 
-	irtoy->in = kmalloc(MAX_PACKET,  GFP_KERNEL);
-	if (!irtoy->in)
-		goto free_irtoy;
+	irtoy->in = kदो_स्मृति(MAX_PACKET,  GFP_KERNEL);
+	अगर (!irtoy->in)
+		जाओ मुक्त_irtoy;
 
-	irtoy->out = kmalloc(MAX_PACKET,  GFP_KERNEL);
-	if (!irtoy->out)
-		goto free_irtoy;
+	irtoy->out = kदो_स्मृति(MAX_PACKET,  GFP_KERNEL);
+	अगर (!irtoy->out)
+		जाओ मुक्त_irtoy;
 
 	rc = rc_allocate_device(RC_DRIVER_IR_RAW);
-	if (!rc)
-		goto free_irtoy;
+	अगर (!rc)
+		जाओ मुक्त_irtoy;
 
 	urb = usb_alloc_urb(0, GFP_KERNEL);
-	if (!urb)
-		goto free_rcdev;
+	अगर (!urb)
+		जाओ मुक्त_rcdev;
 
-	pipe = usb_rcvbulkpipe(usbdev, ep_in->bEndpointAddress);
+	pipe = usb_rcvbulkpipe(usbdev, ep_in->bEndpoपूर्णांकAddress);
 	usb_fill_bulk_urb(urb, usbdev, pipe, irtoy->in, MAX_PACKET,
 			  irtoy_in_callback, irtoy);
 	irtoy->urb_in = urb;
 
 	urb = usb_alloc_urb(0, GFP_KERNEL);
-	if (!urb)
-		goto free_rcdev;
+	अगर (!urb)
+		जाओ मुक्त_rcdev;
 
-	pipe = usb_sndbulkpipe(usbdev, ep_out->bEndpointAddress);
+	pipe = usb_sndbulkpipe(usbdev, ep_out->bEndpoपूर्णांकAddress);
 	usb_fill_bulk_urb(urb, usbdev, pipe, irtoy->out, MAX_PACKET,
 			  irtoy_out_callback, irtoy);
 
-	irtoy->dev = &intf->dev;
+	irtoy->dev = &पूर्णांकf->dev;
 	irtoy->usbdev = usbdev;
 	irtoy->rc = rc;
 	irtoy->urb_out = urb;
 	irtoy->pulse = true;
 
 	err = usb_submit_urb(irtoy->urb_in, GFP_KERNEL);
-	if (err != 0) {
+	अगर (err != 0) अणु
 		dev_err(irtoy->dev, "fail to submit in urb: %d\n", err);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
 	err = irtoy_setup(irtoy);
-	if (err)
-		goto free_rcdev;
+	अगर (err)
+		जाओ मुक्त_rcdev;
 
 	dev_info(irtoy->dev, "version: hardware %u, firmware %u, protocol %u",
 		 irtoy->hw_version, irtoy->sw_version, irtoy->proto_version);
 
-	if (irtoy->sw_version < MIN_FW_VERSION) {
+	अगर (irtoy->sw_version < MIN_FW_VERSION) अणु
 		dev_err(irtoy->dev, "need firmware V%02u or higher",
 			MIN_FW_VERSION);
 		err = -ENODEV;
-		goto free_rcdev;
-	}
+		जाओ मुक्त_rcdev;
+	पूर्ण
 
-	usb_make_path(usbdev, irtoy->phys, sizeof(irtoy->phys));
+	usb_make_path(usbdev, irtoy->phys, माप(irtoy->phys));
 
 	rc->device_name = "Infrared Toy";
 	rc->driver_name = KBUILD_MODNAME;
 	rc->input_phys = irtoy->phys;
 	usb_to_input_id(usbdev, &rc->input_id);
-	rc->dev.parent = &intf->dev;
+	rc->dev.parent = &पूर्णांकf->dev;
 	rc->priv = irtoy;
 	rc->tx_ir = irtoy_tx;
 	rc->allowed_protocols = RC_PROTO_BIT_ALL_IR_DECODER;
 	rc->map_name = RC_MAP_RC6_MCE;
 	rc->rx_resolution = UNIT_US;
-	rc->timeout = IR_DEFAULT_TIMEOUT;
+	rc->समयout = IR_DEFAULT_TIMEOUT;
 
 	/*
-	 * end of transmission is detected by absence of a usb packet
+	 * end of transmission is detected by असलence of a usb packet
 	 * with more pulse/spaces. However, each usb packet sent can
 	 * contain 32 pulse/spaces, which can be quite lengthy, so there
 	 * can be a delay between usb packets. For example with nec there is a
 	 * 17ms gap between packets.
 	 *
-	 * So, make timeout a largish minimum which works with most protocols.
+	 * So, make समयout a largish minimum which works with most protocols.
 	 */
-	rc->min_timeout = MS_TO_US(40);
-	rc->max_timeout = MAX_TIMEOUT_US;
+	rc->min_समयout = MS_TO_US(40);
+	rc->max_समयout = MAX_TIMEOUT_US;
 
-	err = rc_register_device(rc);
-	if (err)
-		goto free_rcdev;
+	err = rc_रेजिस्टर_device(rc);
+	अगर (err)
+		जाओ मुक्त_rcdev;
 
-	usb_set_intfdata(intf, irtoy);
+	usb_set_पूर्णांकfdata(पूर्णांकf, irtoy);
 
-	return 0;
+	वापस 0;
 
-free_rcdev:
-	usb_kill_urb(irtoy->urb_out);
-	usb_free_urb(irtoy->urb_out);
-	usb_kill_urb(irtoy->urb_in);
-	usb_free_urb(irtoy->urb_in);
-	rc_free_device(rc);
-free_irtoy:
-	kfree(irtoy->in);
-	kfree(irtoy->out);
-	kfree(irtoy);
-	return err;
-}
+मुक्त_rcdev:
+	usb_समाप्त_urb(irtoy->urb_out);
+	usb_मुक्त_urb(irtoy->urb_out);
+	usb_समाप्त_urb(irtoy->urb_in);
+	usb_मुक्त_urb(irtoy->urb_in);
+	rc_मुक्त_device(rc);
+मुक्त_irtoy:
+	kमुक्त(irtoy->in);
+	kमुक्त(irtoy->out);
+	kमुक्त(irtoy);
+	वापस err;
+पूर्ण
 
-static void irtoy_disconnect(struct usb_interface *intf)
-{
-	struct irtoy *ir = usb_get_intfdata(intf);
+अटल व्योम irtoy_disconnect(काष्ठा usb_पूर्णांकerface *पूर्णांकf)
+अणु
+	काष्ठा irtoy *ir = usb_get_पूर्णांकfdata(पूर्णांकf);
 
-	rc_unregister_device(ir->rc);
-	usb_set_intfdata(intf, NULL);
-	usb_kill_urb(ir->urb_out);
-	usb_free_urb(ir->urb_out);
-	usb_kill_urb(ir->urb_in);
-	usb_free_urb(ir->urb_in);
-	kfree(ir->in);
-	kfree(ir->out);
-	kfree(ir);
-}
+	rc_unरेजिस्टर_device(ir->rc);
+	usb_set_पूर्णांकfdata(पूर्णांकf, शून्य);
+	usb_समाप्त_urb(ir->urb_out);
+	usb_मुक्त_urb(ir->urb_out);
+	usb_समाप्त_urb(ir->urb_in);
+	usb_मुक्त_urb(ir->urb_in);
+	kमुक्त(ir->in);
+	kमुक्त(ir->out);
+	kमुक्त(ir);
+पूर्ण
 
-static const struct usb_device_id irtoy_table[] = {
-	{ USB_DEVICE_INTERFACE_CLASS(0x04d8, 0xfd08, USB_CLASS_CDC_DATA) },
-	{ USB_DEVICE_INTERFACE_CLASS(0x04d8, 0xf58b, USB_CLASS_CDC_DATA) },
-	{ }
-};
+अटल स्थिर काष्ठा usb_device_id irtoy_table[] = अणु
+	अणु USB_DEVICE_INTERFACE_CLASS(0x04d8, 0xfd08, USB_CLASS_CDC_DATA) पूर्ण,
+	अणु USB_DEVICE_INTERFACE_CLASS(0x04d8, 0xf58b, USB_CLASS_CDC_DATA) पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 
-static struct usb_driver irtoy_driver = {
+अटल काष्ठा usb_driver irtoy_driver = अणु
 	.name = KBUILD_MODNAME,
 	.probe = irtoy_probe,
 	.disconnect = irtoy_disconnect,
 	.id_table = irtoy_table,
-};
+पूर्ण;
 
 module_usb_driver(irtoy_driver);
 

@@ -1,3 +1,4 @@
+<शैली गुरु>
 /***********************license start************************************
  * Copyright (c) 2003-2017 Cavium, Inc.
  * All rights reserved.
@@ -7,23 +8,23 @@
  * This file is provided under the terms of the Cavium License (see below)
  * or under the terms of GNU General Public License, Version 2, as
  * published by the Free Software Foundation. When using or redistributing
- * this file, you may do so under either license.
+ * this file, you may करो so under either license.
  *
- * Cavium License:  Redistribution and use in source and binary forms, with
- * or without modification, are permitted provided that the following
+ * Cavium License:  Redistribution and use in source and binary क्रमms, with
+ * or without modअगरication, are permitted provided that the following
  * conditions are met:
  *
  *  * Redistributions of source code must retain the above copyright
  *    notice, this list of conditions and the following disclaimer.
  *
- *  * Redistributions in binary form must reproduce the above
+ *  * Redistributions in binary क्रमm must reproduce the above
  *    copyright notice, this list of conditions and the following
- *    disclaimer in the documentation and/or other materials provided
+ *    disclaimer in the करोcumentation and/or other materials provided
  *    with the distribution.
  *
  *  * Neither the name of Cavium Inc. nor the names of its contributors may be
- *    used to endorse or promote products derived from this software without
- *    specific prior written permission.
+ *    used to enकरोrse or promote products derived from this software without
+ *    specअगरic prior written permission.
  *
  * This Software, including technical data, may be subject to U.S. export
  * control laws, including the U.S. Export Administration Act and its
@@ -43,20 +44,20 @@
  * WITH YOU.
  ***********************license end**************************************/
 
-#ifndef __ZIP_INFLATE_H__
-#define __ZIP_INFLATE_H__
+#अगर_अघोषित __ZIP_INFLATE_H__
+#घोषणा __ZIP_INFLATE_H__
 
 /**
  * zip_inflate - API to offload inflate operation to hardware
- * @zip_ops: Pointer to zip operation structure
- * @s:       Pointer to the structure representing zip state
- * @zip_dev: Pointer to the structure representing zip device
+ * @zip_ops: Poपूर्णांकer to zip operation काष्ठाure
+ * @s:       Poपूर्णांकer to the काष्ठाure representing zip state
+ * @zip_dev: Poपूर्णांकer to the काष्ठाure representing zip device
  *
  * This function prepares the zip inflate command and submits it to the zip
- * engine for processing.
+ * engine क्रम processing.
  *
- * Return: 0 if successful or error code
+ * Return: 0 अगर successful or error code
  */
-int zip_inflate(struct zip_operation *zip_ops, struct zip_state *s,
-		struct zip_device *zip_dev);
-#endif
+पूर्णांक zip_inflate(काष्ठा zip_operation *zip_ops, काष्ठा zip_state *s,
+		काष्ठा zip_device *zip_dev);
+#पूर्ण_अगर

@@ -1,125 +1,126 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /******************************************************************************
  *
  * Copyright(c) 2007 - 2013 Realtek Corporation. All rights reserved.
  *
  ******************************************************************************/
-#ifndef __OSDEP_LINUX_SERVICE_H_
-#define __OSDEP_LINUX_SERVICE_H_
+#अगर_अघोषित __OSDEP_LINUX_SERVICE_H_
+#घोषणा __OSDEP_LINUX_SERVICE_H_
 
-	#include <linux/spinlock.h>
-	#include <linux/compiler.h>
-	#include <linux/kernel.h>
-	#include <linux/errno.h>
-	#include <linux/init.h>
-	#include <linux/slab.h>
-	#include <linux/module.h>
-	#include <linux/kref.h>
+	#समावेश <linux/spinlock.h>
+	#समावेश <linux/compiler.h>
+	#समावेश <linux/kernel.h>
+	#समावेश <linux/त्रुटिसं.स>
+	#समावेश <linux/init.h>
+	#समावेश <linux/slab.h>
+	#समावेश <linux/module.h>
+	#समावेश <linux/kref.h>
 	/* include <linux/smp_lock.h> */
-	#include <linux/netdevice.h>
-	#include <linux/skbuff.h>
-	#include <linux/uaccess.h>
-	#include <asm/byteorder.h>
-	#include <linux/atomic.h>
-	#include <linux/io.h>
-	#include <linux/sem.h>
-	#include <linux/sched.h>
-	#include <linux/etherdevice.h>
-	#include <linux/wireless.h>
-	#include <net/iw_handler.h>
-	#include <linux/if_arp.h>
-	#include <linux/rtnetlink.h>
-	#include <linux/delay.h>
-	#include <linux/interrupt.h>	/*  for struct tasklet_struct */
-	#include <linux/ip.h>
-	#include <linux/kthread.h>
-	#include <linux/list.h>
-	#include <linux/vmalloc.h>
+	#समावेश <linux/netdevice.h>
+	#समावेश <linux/skbuff.h>
+	#समावेश <linux/uaccess.h>
+	#समावेश <यंत्र/byteorder.h>
+	#समावेश <linux/atomic.h>
+	#समावेश <linux/पन.स>
+	#समावेश <linux/sem.h>
+	#समावेश <linux/sched.h>
+	#समावेश <linux/etherdevice.h>
+	#समावेश <linux/wireless.h>
+	#समावेश <net/iw_handler.h>
+	#समावेश <linux/अगर_arp.h>
+	#समावेश <linux/rtnetlink.h>
+	#समावेश <linux/delay.h>
+	#समावेश <linux/पूर्णांकerrupt.h>	/*  क्रम काष्ठा tasklet_काष्ठा */
+	#समावेश <linux/ip.h>
+	#समावेश <linux/kthपढ़ो.h>
+	#समावेश <linux/list.h>
+	#समावेश <linux/vदो_स्मृति.h>
 
-/* 	#include <linux/ieee80211.h> */
-        #include <net/ieee80211_radiotap.h>
-	#include <net/cfg80211.h>
+/* 	#समावेश <linux/ieee80211.h> */
+        #समावेश <net/ieee80211_radiotap.h>
+	#समावेश <net/cfg80211.h>
 
-	struct	__queue	{
-		struct	list_head	queue;
+	काष्ठा	__queue	अणु
+		काष्ठा	list_head	queue;
 		spinlock_t	lock;
-	};
+	पूर्ण;
 
-	#define thread_exit() complete_and_exit(NULL, 0)
+	#घोषणा thपढ़ो_निकास() complete_and_निकास(शून्य, 0)
 
-static inline struct list_head *get_next(struct list_head	*list)
-{
-	return list->next;
-}
+अटल अंतरभूत काष्ठा list_head *get_next(काष्ठा list_head	*list)
+अणु
+	वापस list->next;
+पूर्ण
 
-static inline struct list_head	*get_list_head(struct __queue	*queue)
-{
-	return (&(queue->queue));
-}
+अटल अंतरभूत काष्ठा list_head	*get_list_head(काष्ठा __queue	*queue)
+अणु
+	वापस (&(queue->queue));
+पूर्ण
 
-static inline void _set_timer(struct timer_list *ptimer, u32 delay_time)
-{
-	mod_timer(ptimer, (jiffies + (delay_time * HZ / 1000)));
-}
+अटल अंतरभूत व्योम _set_समयr(काष्ठा समयr_list *pसमयr, u32 delay_समय)
+अणु
+	mod_समयr(pसमयr, (jअगरfies + (delay_समय * HZ / 1000)));
+पूर्ण
 
-static inline void _init_workitem(struct work_struct *pwork, void *pfunc, void *cntx)
-{
+अटल अंतरभूत व्योम _init_workitem(काष्ठा work_काष्ठा *pwork, व्योम *pfunc, व्योम *cntx)
+अणु
 	INIT_WORK(pwork, pfunc);
-}
+पूर्ण
 
-static inline void _set_workitem(struct work_struct *pwork)
-{
+अटल अंतरभूत व्योम _set_workitem(काष्ठा work_काष्ठा *pwork)
+अणु
 	schedule_work(pwork);
-}
+पूर्ण
 
-static inline void _cancel_workitem_sync(struct work_struct *pwork)
-{
+अटल अंतरभूत व्योम _cancel_workitem_sync(काष्ठा work_काष्ठा *pwork)
+अणु
 	cancel_work_sync(pwork);
-}
+पूर्ण
 
-static inline int rtw_netif_queue_stopped(struct net_device *pnetdev)
-{
-	return (netif_tx_queue_stopped(netdev_get_tx_queue(pnetdev, 0)) &&
-		netif_tx_queue_stopped(netdev_get_tx_queue(pnetdev, 1)) &&
-		netif_tx_queue_stopped(netdev_get_tx_queue(pnetdev, 2)) &&
-		netif_tx_queue_stopped(netdev_get_tx_queue(pnetdev, 3)));
-}
+अटल अंतरभूत पूर्णांक rtw_netअगर_queue_stopped(काष्ठा net_device *pnetdev)
+अणु
+	वापस (netअगर_tx_queue_stopped(netdev_get_tx_queue(pnetdev, 0)) &&
+		netअगर_tx_queue_stopped(netdev_get_tx_queue(pnetdev, 1)) &&
+		netअगर_tx_queue_stopped(netdev_get_tx_queue(pnetdev, 2)) &&
+		netअगर_tx_queue_stopped(netdev_get_tx_queue(pnetdev, 3)));
+पूर्ण
 
-static inline void rtw_netif_wake_queue(struct net_device *pnetdev)
-{
-	netif_tx_wake_all_queues(pnetdev);
-}
+अटल अंतरभूत व्योम rtw_netअगर_wake_queue(काष्ठा net_device *pnetdev)
+अणु
+	netअगर_tx_wake_all_queues(pnetdev);
+पूर्ण
 
-static inline void rtw_netif_start_queue(struct net_device *pnetdev)
-{
-	netif_tx_start_all_queues(pnetdev);
-}
+अटल अंतरभूत व्योम rtw_netअगर_start_queue(काष्ठा net_device *pnetdev)
+अणु
+	netअगर_tx_start_all_queues(pnetdev);
+पूर्ण
 
-static inline void rtw_netif_stop_queue(struct net_device *pnetdev)
-{
-	netif_tx_stop_all_queues(pnetdev);
-}
+अटल अंतरभूत व्योम rtw_netअगर_stop_queue(काष्ठा net_device *pnetdev)
+अणु
+	netअगर_tx_stop_all_queues(pnetdev);
+पूर्ण
 
-#define rtw_signal_process(pid, sig) kill_pid(find_vpid((pid)), (sig), 1)
+#घोषणा rtw_संकेत_process(pid, sig) समाप्त_pid(find_vpid((pid)), (sig), 1)
 
-#define NDEV_ARG(ndev) ndev->name
-#define ADPT_ARG(adapter) adapter->pnetdev->name
-#define FUNC_NDEV_FMT "%s(%s)"
-#define FUNC_NDEV_ARG(ndev) __func__, ndev->name
-#define FUNC_ADPT_FMT "%s(%s)"
-#define FUNC_ADPT_ARG(adapter) __func__, adapter->pnetdev->name
+#घोषणा NDEV_ARG(ndev) ndev->name
+#घोषणा ADPT_ARG(adapter) adapter->pnetdev->name
+#घोषणा FUNC_NDEV_FMT "%s(%s)"
+#घोषणा FUNC_NDEV_ARG(ndev) __func__, ndev->name
+#घोषणा FUNC_ADPT_FMT "%s(%s)"
+#घोषणा FUNC_ADPT_ARG(adapter) __func__, adapter->pnetdev->name
 
-struct rtw_netdev_priv_indicator {
-	void *priv;
-	u32 sizeof_priv;
-};
+काष्ठा rtw_netdev_priv_indicator अणु
+	व्योम *priv;
+	u32 माप_priv;
+पूर्ण;
 
-static inline struct adapter *rtw_netdev_priv(struct net_device *netdev)
-{
-	return ((struct rtw_netdev_priv_indicator *)netdev_priv(netdev))->priv;
-}
+अटल अंतरभूत काष्ठा adapter *rtw_netdev_priv(काष्ठा net_device *netdev)
+अणु
+	वापस ((काष्ठा rtw_netdev_priv_indicator *)netdev_priv(netdev))->priv;
+पूर्ण
 
-struct net_device *rtw_alloc_etherdev_with_old_priv(int sizeof_priv, void *old_priv);
-extern struct net_device *rtw_alloc_etherdev(int sizeof_priv);
+काष्ठा net_device *rtw_alloc_etherdev_with_old_priv(पूर्णांक माप_priv, व्योम *old_priv);
+बाह्य काष्ठा net_device *rtw_alloc_etherdev(पूर्णांक माप_priv);
 
-#endif
+#पूर्ण_अगर

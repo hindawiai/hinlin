@@ -1,166 +1,167 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /****************************************************************************
- * Driver for Solarflare network controllers and boards
+ * Driver क्रम Solarflare network controllers and boards
  * Copyright 2018 Solarflare Communications Inc.
  * Copyright 2019-2020 Xilinx Inc.
  *
- * This program is free software; you can redistribute it and/or modify it
+ * This program is मुक्त software; you can redistribute it and/or modअगरy it
  * under the terms of the GNU General Public License version 2 as published
  * by the Free Software Foundation, incorporated herein by reference.
  */
-#include "net_driver.h"
-#include "mcdi_port_common.h"
-#include "mcdi_functions.h"
-#include "efx_common.h"
-#include "efx_channels.h"
-#include "tx_common.h"
-#include "ef100_netdev.h"
-#include "ef100_ethtool.h"
-#include "nic_common.h"
-#include "ef100_nic.h"
-#include "ef100_tx.h"
-#include "ef100_regs.h"
-#include "mcdi_filters.h"
-#include "rx_common.h"
+#समावेश "net_driver.h"
+#समावेश "mcdi_port_common.h"
+#समावेश "mcdi_functions.h"
+#समावेश "efx_common.h"
+#समावेश "efx_channels.h"
+#समावेश "tx_common.h"
+#समावेश "ef100_netdev.h"
+#समावेश "ef100_ethtool.h"
+#समावेश "nic_common.h"
+#समावेश "ef100_nic.h"
+#समावेश "ef100_tx.h"
+#समावेश "ef100_regs.h"
+#समावेश "mcdi_filters.h"
+#समावेश "rx_common.h"
 
-static void ef100_update_name(struct efx_nic *efx)
-{
-	strcpy(efx->name, efx->net_dev->name);
-}
+अटल व्योम ef100_update_name(काष्ठा efx_nic *efx)
+अणु
+	म_नकल(efx->name, efx->net_dev->name);
+पूर्ण
 
-static int ef100_alloc_vis(struct efx_nic *efx, unsigned int *allocated_vis)
-{
+अटल पूर्णांक ef100_alloc_vis(काष्ठा efx_nic *efx, अचिन्हित पूर्णांक *allocated_vis)
+अणु
 	/* EF100 uses a single TXQ per channel, as all checksum offloading
-	 * is configured in the TX descriptor, and there is no TX Pacer for
+	 * is configured in the TX descriptor, and there is no TX Pacer क्रम
 	 * HIGHPRI queues.
 	 */
-	unsigned int tx_vis = efx->n_tx_channels + efx->n_extra_tx_channels;
-	unsigned int rx_vis = efx->n_rx_channels;
-	unsigned int min_vis, max_vis;
+	अचिन्हित पूर्णांक tx_vis = efx->n_tx_channels + efx->n_extra_tx_channels;
+	अचिन्हित पूर्णांक rx_vis = efx->n_rx_channels;
+	अचिन्हित पूर्णांक min_vis, max_vis;
 
 	EFX_WARN_ON_PARANOID(efx->tx_queues_per_channel != 1);
 
 	tx_vis += efx->n_xdp_channels * efx->xdp_tx_per_channel;
 
 	max_vis = max(rx_vis, tx_vis);
-	/* Currently don't handle resource starvation and only accept
+	/* Currently करोn't handle resource starvation and only accept
 	 * our maximum needs and no less.
 	 */
 	min_vis = max_vis;
 
-	return efx_mcdi_alloc_vis(efx, min_vis, max_vis,
-				  NULL, allocated_vis);
-}
+	वापस efx_mcdi_alloc_vis(efx, min_vis, max_vis,
+				  शून्य, allocated_vis);
+पूर्ण
 
-static int ef100_remap_bar(struct efx_nic *efx, int max_vis)
-{
-	unsigned int uc_mem_map_size;
-	void __iomem *membase;
+अटल पूर्णांक ef100_remap_bar(काष्ठा efx_nic *efx, पूर्णांक max_vis)
+अणु
+	अचिन्हित पूर्णांक uc_mem_map_size;
+	व्योम __iomem *membase;
 
 	efx->max_vis = max_vis;
 	uc_mem_map_size = PAGE_ALIGN(max_vis * efx->vi_stride);
 
 	/* Extend the original UC mapping of the memory BAR */
 	membase = ioremap(efx->membase_phys, uc_mem_map_size);
-	if (!membase) {
-		netif_err(efx, probe, efx->net_dev,
+	अगर (!membase) अणु
+		netअगर_err(efx, probe, efx->net_dev,
 			  "could not extend memory BAR to %x\n",
 			  uc_mem_map_size);
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 	iounmap(efx->membase);
 	efx->membase = membase;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* Context: process, rtnl_lock() held.
- * Note that the kernel will ignore our return code; this method
- * should really be a void.
+ * Note that the kernel will ignore our वापस code; this method
+ * should really be a व्योम.
  */
-static int ef100_net_stop(struct net_device *net_dev)
-{
-	struct efx_nic *efx = netdev_priv(net_dev);
+अटल पूर्णांक ef100_net_stop(काष्ठा net_device *net_dev)
+अणु
+	काष्ठा efx_nic *efx = netdev_priv(net_dev);
 
-	netif_dbg(efx, ifdown, efx->net_dev, "closing on CPU %d\n",
+	netअगर_dbg(efx, अगरकरोwn, efx->net_dev, "closing on CPU %d\n",
 		  raw_smp_processor_id());
 
-	netif_stop_queue(net_dev);
+	netअगर_stop_queue(net_dev);
 	efx_stop_all(efx);
 	efx_mcdi_mac_fini_stats(efx);
-	efx_disable_interrupts(efx);
-	efx_clear_interrupt_affinity(efx);
-	efx_nic_fini_interrupt(efx);
-	efx_remove_filters(efx);
+	efx_disable_पूर्णांकerrupts(efx);
+	efx_clear_पूर्णांकerrupt_affinity(efx);
+	efx_nic_fini_पूर्णांकerrupt(efx);
+	efx_हटाओ_filters(efx);
 	efx_fini_napi(efx);
-	efx_remove_channels(efx);
-	efx_mcdi_free_vis(efx);
-	efx_remove_interrupts(efx);
+	efx_हटाओ_channels(efx);
+	efx_mcdi_मुक्त_vis(efx);
+	efx_हटाओ_पूर्णांकerrupts(efx);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* Context: process, rtnl_lock() held. */
-static int ef100_net_open(struct net_device *net_dev)
-{
-	struct efx_nic *efx = netdev_priv(net_dev);
-	unsigned int allocated_vis;
-	int rc;
+अटल पूर्णांक ef100_net_खोलो(काष्ठा net_device *net_dev)
+अणु
+	काष्ठा efx_nic *efx = netdev_priv(net_dev);
+	अचिन्हित पूर्णांक allocated_vis;
+	पूर्णांक rc;
 
 	ef100_update_name(efx);
-	netif_dbg(efx, ifup, net_dev, "opening device on CPU %d\n",
+	netअगर_dbg(efx, अगरup, net_dev, "opening device on CPU %d\n",
 		  raw_smp_processor_id());
 
 	rc = efx_check_disabled(efx);
-	if (rc)
-		goto fail;
+	अगर (rc)
+		जाओ fail;
 
-	rc = efx_probe_interrupts(efx);
-	if (rc)
-		goto fail;
+	rc = efx_probe_पूर्णांकerrupts(efx);
+	अगर (rc)
+		जाओ fail;
 
 	rc = efx_set_channels(efx);
-	if (rc)
-		goto fail;
+	अगर (rc)
+		जाओ fail;
 
-	rc = efx_mcdi_free_vis(efx);
-	if (rc)
-		goto fail;
+	rc = efx_mcdi_मुक्त_vis(efx);
+	अगर (rc)
+		जाओ fail;
 
 	rc = ef100_alloc_vis(efx, &allocated_vis);
-	if (rc)
-		goto fail;
+	अगर (rc)
+		जाओ fail;
 
 	rc = efx_probe_channels(efx);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
 	rc = ef100_remap_bar(efx, allocated_vis);
-	if (rc)
-		goto fail;
+	अगर (rc)
+		जाओ fail;
 
 	efx_init_napi(efx);
 
 	rc = efx_probe_filters(efx);
-	if (rc)
-		goto fail;
+	अगर (rc)
+		जाओ fail;
 
-	rc = efx_nic_init_interrupt(efx);
-	if (rc)
-		goto fail;
-	efx_set_interrupt_affinity(efx);
+	rc = efx_nic_init_पूर्णांकerrupt(efx);
+	अगर (rc)
+		जाओ fail;
+	efx_set_पूर्णांकerrupt_affinity(efx);
 
-	rc = efx_enable_interrupts(efx);
-	if (rc)
-		goto fail;
+	rc = efx_enable_पूर्णांकerrupts(efx);
+	अगर (rc)
+		जाओ fail;
 
-	/* in case the MC rebooted while we were stopped, consume the change
+	/* in हाल the MC rebooted जबतक we were stopped, consume the change
 	 * to the warm reboot count
 	 */
-	(void) efx_mcdi_poll_reboot(efx);
+	(व्योम) efx_mcdi_poll_reboot(efx);
 
 	rc = efx_mcdi_mac_init_stats(efx);
-	if (rc)
-		goto fail;
+	अगर (rc)
+		जाओ fail;
 
 	efx_start_all(efx);
 
@@ -168,89 +169,89 @@ static int ef100_net_open(struct net_device *net_dev)
 	 * to poll now because we could have missed a change
 	 */
 	mutex_lock(&efx->mac_lock);
-	if (efx_mcdi_phy_poll(efx))
+	अगर (efx_mcdi_phy_poll(efx))
 		efx_link_status_changed(efx);
 	mutex_unlock(&efx->mac_lock);
 
-	return 0;
+	वापस 0;
 
 fail:
 	ef100_net_stop(net_dev);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
 /* Initiate a packet transmission.  We use one channel per CPU
  * (sharing when we have more CPUs than channels).
  *
  * Context: non-blocking.
- * Note that returning anything other than NETDEV_TX_OK will cause the
- * OS to free the skb.
+ * Note that वापसing anything other than NETDEV_TX_OK will cause the
+ * OS to मुक्त the skb.
  */
-static netdev_tx_t ef100_hard_start_xmit(struct sk_buff *skb,
-					 struct net_device *net_dev)
-{
-	struct efx_nic *efx = netdev_priv(net_dev);
-	struct efx_tx_queue *tx_queue;
-	struct efx_channel *channel;
-	int rc;
+अटल netdev_tx_t ef100_hard_start_xmit(काष्ठा sk_buff *skb,
+					 काष्ठा net_device *net_dev)
+अणु
+	काष्ठा efx_nic *efx = netdev_priv(net_dev);
+	काष्ठा efx_tx_queue *tx_queue;
+	काष्ठा efx_channel *channel;
+	पूर्णांक rc;
 
 	channel = efx_get_tx_channel(efx, skb_get_queue_mapping(skb));
-	netif_vdbg(efx, tx_queued, efx->net_dev,
+	netअगर_vdbg(efx, tx_queued, efx->net_dev,
 		   "%s len %d data %d channel %d\n", __func__,
 		   skb->len, skb->data_len, channel->channel);
-	if (!efx->n_channels || !efx->n_tx_channels || !channel) {
-		netif_stop_queue(net_dev);
-		goto err;
-	}
+	अगर (!efx->n_channels || !efx->n_tx_channels || !channel) अणु
+		netअगर_stop_queue(net_dev);
+		जाओ err;
+	पूर्ण
 
 	tx_queue = &channel->tx_queue[0];
 	rc = ef100_enqueue_skb(tx_queue, skb);
-	if (rc == 0)
-		return NETDEV_TX_OK;
+	अगर (rc == 0)
+		वापस NETDEV_TX_OK;
 
 err:
 	net_dev->stats.tx_dropped++;
-	return NETDEV_TX_OK;
-}
+	वापस NETDEV_TX_OK;
+पूर्ण
 
-static const struct net_device_ops ef100_netdev_ops = {
-	.ndo_open               = ef100_net_open,
-	.ndo_stop               = ef100_net_stop,
-	.ndo_start_xmit         = ef100_hard_start_xmit,
-	.ndo_tx_timeout         = efx_watchdog,
-	.ndo_get_stats64        = efx_net_stats,
-	.ndo_change_mtu         = efx_change_mtu,
-	.ndo_validate_addr      = eth_validate_addr,
-	.ndo_set_mac_address    = efx_set_mac_address,
-	.ndo_set_rx_mode        = efx_set_rx_mode, /* Lookout */
-	.ndo_set_features       = efx_set_features,
-	.ndo_get_phys_port_id   = efx_get_phys_port_id,
-	.ndo_get_phys_port_name = efx_get_phys_port_name,
-#ifdef CONFIG_RFS_ACCEL
-	.ndo_rx_flow_steer      = efx_filter_rfs,
-#endif
-};
+अटल स्थिर काष्ठा net_device_ops ef100_netdev_ops = अणु
+	.nकरो_खोलो               = ef100_net_खोलो,
+	.nकरो_stop               = ef100_net_stop,
+	.nकरो_start_xmit         = ef100_hard_start_xmit,
+	.nकरो_tx_समयout         = efx_watchकरोg,
+	.nकरो_get_stats64        = efx_net_stats,
+	.nकरो_change_mtu         = efx_change_mtu,
+	.nकरो_validate_addr      = eth_validate_addr,
+	.nकरो_set_mac_address    = efx_set_mac_address,
+	.nकरो_set_rx_mode        = efx_set_rx_mode, /* Lookout */
+	.nकरो_set_features       = efx_set_features,
+	.nकरो_get_phys_port_id   = efx_get_phys_port_id,
+	.nकरो_get_phys_port_name = efx_get_phys_port_name,
+#अगर_घोषित CONFIG_RFS_ACCEL
+	.nकरो_rx_flow_steer      = efx_filter_rfs,
+#पूर्ण_अगर
+पूर्ण;
 
 /*	Netdev registration
  */
-int ef100_netdev_event(struct notifier_block *this,
-		       unsigned long event, void *ptr)
-{
-	struct efx_nic *efx = container_of(this, struct efx_nic, netdev_notifier);
-	struct net_device *net_dev = netdev_notifier_info_to_dev(ptr);
+पूर्णांक ef100_netdev_event(काष्ठा notअगरier_block *this,
+		       अचिन्हित दीर्घ event, व्योम *ptr)
+अणु
+	काष्ठा efx_nic *efx = container_of(this, काष्ठा efx_nic, netdev_notअगरier);
+	काष्ठा net_device *net_dev = netdev_notअगरier_info_to_dev(ptr);
 
-	if (netdev_priv(net_dev) == efx && event == NETDEV_CHANGENAME)
+	अगर (netdev_priv(net_dev) == efx && event == NETDEV_CHANGENAME)
 		ef100_update_name(efx);
 
-	return NOTIFY_DONE;
-}
+	वापस NOTIFY_DONE;
+पूर्ण
 
-int ef100_register_netdev(struct efx_nic *efx)
-{
-	struct net_device *net_dev = efx->net_dev;
-	int rc;
+पूर्णांक ef100_रेजिस्टर_netdev(काष्ठा efx_nic *efx)
+अणु
+	काष्ठा net_device *net_dev = efx->net_dev;
+	पूर्णांक rc;
 
-	net_dev->watchdog_timeo = 5 * HZ;
+	net_dev->watchकरोg_समयo = 5 * HZ;
 	net_dev->irq = efx->pci_dev->irq;
 	net_dev->netdev_ops = &ef100_netdev_ops;
 	net_dev->min_mtu = EFX_MIN_MTU;
@@ -260,34 +261,34 @@ int ef100_register_netdev(struct efx_nic *efx)
 	rtnl_lock();
 
 	rc = dev_alloc_name(net_dev, net_dev->name);
-	if (rc < 0)
-		goto fail_locked;
+	अगर (rc < 0)
+		जाओ fail_locked;
 	ef100_update_name(efx);
 
-	rc = register_netdevice(net_dev);
-	if (rc)
-		goto fail_locked;
+	rc = रेजिस्टर_netdevice(net_dev);
+	अगर (rc)
+		जाओ fail_locked;
 
 	/* Always start with carrier off; PHY events will detect the link */
-	netif_carrier_off(net_dev);
+	netअगर_carrier_off(net_dev);
 
 	efx->state = STATE_READY;
 	rtnl_unlock();
 	efx_init_mcdi_logging(efx);
 
-	return 0;
+	वापस 0;
 
 fail_locked:
 	rtnl_unlock();
-	netif_err(efx, drv, efx->net_dev, "could not register net dev\n");
-	return rc;
-}
+	netअगर_err(efx, drv, efx->net_dev, "could not register net dev\n");
+	वापस rc;
+पूर्ण
 
-void ef100_unregister_netdev(struct efx_nic *efx)
-{
-	if (efx_dev_registered(efx)) {
+व्योम ef100_unरेजिस्टर_netdev(काष्ठा efx_nic *efx)
+अणु
+	अगर (efx_dev_रेजिस्टरed(efx)) अणु
 		efx_fini_mcdi_logging(efx);
 		efx->state = STATE_UNINIT;
-		unregister_netdev(efx->net_dev);
-	}
-}
+		unरेजिस्टर_netdev(efx->net_dev);
+	पूर्ण
+पूर्ण

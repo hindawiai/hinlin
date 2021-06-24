@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2012 Red Hat Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -21,113 +22,113 @@
  *
  * Authors: Ben Skeggs
  */
-#include "nv50.h"
-#include "channv50.h"
+#समावेश "nv50.h"
+#समावेश "channv50.h"
 
-static void
-g84_fifo_uevent_fini(struct nvkm_fifo *fifo)
-{
-	struct nvkm_device *device = fifo->engine.subdev.device;
+अटल व्योम
+g84_fअगरo_uevent_fini(काष्ठा nvkm_fअगरo *fअगरo)
+अणु
+	काष्ठा nvkm_device *device = fअगरo->engine.subdev.device;
 	nvkm_mask(device, 0x002140, 0x40000000, 0x00000000);
-}
+पूर्ण
 
-static void
-g84_fifo_uevent_init(struct nvkm_fifo *fifo)
-{
-	struct nvkm_device *device = fifo->engine.subdev.device;
+अटल व्योम
+g84_fअगरo_uevent_init(काष्ठा nvkm_fअगरo *fअगरo)
+अणु
+	काष्ठा nvkm_device *device = fअगरo->engine.subdev.device;
 	nvkm_mask(device, 0x002140, 0x40000000, 0x40000000);
-}
+पूर्ण
 
-static struct nvkm_engine *
-g84_fifo_id_engine(struct nvkm_fifo *fifo, int engi)
-{
-	struct nvkm_device *device = fifo->engine.subdev.device;
-	struct nvkm_engine *engine;
-	enum nvkm_subdev_type type;
+अटल काष्ठा nvkm_engine *
+g84_fअगरo_id_engine(काष्ठा nvkm_fअगरo *fअगरo, पूर्णांक engi)
+अणु
+	काष्ठा nvkm_device *device = fअगरo->engine.subdev.device;
+	काष्ठा nvkm_engine *engine;
+	क्रमागत nvkm_subdev_type type;
 
-	switch (engi) {
-	case G84_FIFO_ENGN_SW    : type = NVKM_ENGINE_SW; break;
-	case G84_FIFO_ENGN_GR    : type = NVKM_ENGINE_GR; break;
-	case G84_FIFO_ENGN_MPEG  :
-		if ((engine = nvkm_device_engine(device, NVKM_ENGINE_MSPPP, 0)))
-			return engine;
+	चयन (engi) अणु
+	हाल G84_FIFO_ENGN_SW    : type = NVKM_ENGINE_SW; अवरोध;
+	हाल G84_FIFO_ENGN_GR    : type = NVKM_ENGINE_GR; अवरोध;
+	हाल G84_FIFO_ENGN_MPEG  :
+		अगर ((engine = nvkm_device_engine(device, NVKM_ENGINE_MSPPP, 0)))
+			वापस engine;
 		type = NVKM_ENGINE_MPEG;
-		break;
-	case G84_FIFO_ENGN_ME    :
-		if ((engine = nvkm_device_engine(device, NVKM_ENGINE_CE, 0)))
-			return engine;
+		अवरोध;
+	हाल G84_FIFO_ENGN_ME    :
+		अगर ((engine = nvkm_device_engine(device, NVKM_ENGINE_CE, 0)))
+			वापस engine;
 		type = NVKM_ENGINE_ME;
-		break;
-	case G84_FIFO_ENGN_VP    :
-		if ((engine = nvkm_device_engine(device, NVKM_ENGINE_MSPDEC, 0)))
-			return engine;
+		अवरोध;
+	हाल G84_FIFO_ENGN_VP    :
+		अगर ((engine = nvkm_device_engine(device, NVKM_ENGINE_MSPDEC, 0)))
+			वापस engine;
 		type = NVKM_ENGINE_VP;
-		break;
-	case G84_FIFO_ENGN_CIPHER:
-		if ((engine = nvkm_device_engine(device, NVKM_ENGINE_VIC, 0)))
-			return engine;
-		if ((engine = nvkm_device_engine(device, NVKM_ENGINE_SEC, 0)))
-			return engine;
+		अवरोध;
+	हाल G84_FIFO_ENGN_CIPHER:
+		अगर ((engine = nvkm_device_engine(device, NVKM_ENGINE_VIC, 0)))
+			वापस engine;
+		अगर ((engine = nvkm_device_engine(device, NVKM_ENGINE_SEC, 0)))
+			वापस engine;
 		type = NVKM_ENGINE_CIPHER;
-		break;
-	case G84_FIFO_ENGN_BSP   :
-		if ((engine = nvkm_device_engine(device, NVKM_ENGINE_MSVLD, 0)))
-			return engine;
+		अवरोध;
+	हाल G84_FIFO_ENGN_BSP   :
+		अगर ((engine = nvkm_device_engine(device, NVKM_ENGINE_MSVLD, 0)))
+			वापस engine;
 		type = NVKM_ENGINE_BSP;
-		break;
-	case G84_FIFO_ENGN_DMA   : type = NVKM_ENGINE_DMAOBJ; break;
-	default:
+		अवरोध;
+	हाल G84_FIFO_ENGN_DMA   : type = NVKM_ENGINE_DMAOBJ; अवरोध;
+	शेष:
 		WARN_ON(1);
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
-	return nvkm_device_engine(fifo->engine.subdev.device, type, 0);
-}
+	वापस nvkm_device_engine(fअगरo->engine.subdev.device, type, 0);
+पूर्ण
 
-static int
-g84_fifo_engine_id(struct nvkm_fifo *base, struct nvkm_engine *engine)
-{
-	switch (engine->subdev.type) {
-	case NVKM_ENGINE_SW    : return G84_FIFO_ENGN_SW;
-	case NVKM_ENGINE_GR    : return G84_FIFO_ENGN_GR;
-	case NVKM_ENGINE_MPEG  :
-	case NVKM_ENGINE_MSPPP : return G84_FIFO_ENGN_MPEG;
-	case NVKM_ENGINE_CE    : return G84_FIFO_ENGN_CE0;
-	case NVKM_ENGINE_VP    :
-	case NVKM_ENGINE_MSPDEC: return G84_FIFO_ENGN_VP;
-	case NVKM_ENGINE_CIPHER:
-	case NVKM_ENGINE_SEC   : return G84_FIFO_ENGN_CIPHER;
-	case NVKM_ENGINE_BSP   :
-	case NVKM_ENGINE_MSVLD : return G84_FIFO_ENGN_BSP;
-	case NVKM_ENGINE_DMAOBJ: return G84_FIFO_ENGN_DMA;
-	default:
+अटल पूर्णांक
+g84_fअगरo_engine_id(काष्ठा nvkm_fअगरo *base, काष्ठा nvkm_engine *engine)
+अणु
+	चयन (engine->subdev.type) अणु
+	हाल NVKM_ENGINE_SW    : वापस G84_FIFO_ENGN_SW;
+	हाल NVKM_ENGINE_GR    : वापस G84_FIFO_ENGN_GR;
+	हाल NVKM_ENGINE_MPEG  :
+	हाल NVKM_ENGINE_MSPPP : वापस G84_FIFO_ENGN_MPEG;
+	हाल NVKM_ENGINE_CE    : वापस G84_FIFO_ENGN_CE0;
+	हाल NVKM_ENGINE_VP    :
+	हाल NVKM_ENGINE_MSPDEC: वापस G84_FIFO_ENGN_VP;
+	हाल NVKM_ENGINE_CIPHER:
+	हाल NVKM_ENGINE_SEC   : वापस G84_FIFO_ENGN_CIPHER;
+	हाल NVKM_ENGINE_BSP   :
+	हाल NVKM_ENGINE_MSVLD : वापस G84_FIFO_ENGN_BSP;
+	हाल NVKM_ENGINE_DMAOBJ: वापस G84_FIFO_ENGN_DMA;
+	शेष:
 		WARN_ON(1);
-		return -1;
-	}
-}
+		वापस -1;
+	पूर्ण
+पूर्ण
 
-static const struct nvkm_fifo_func
-g84_fifo = {
-	.dtor = nv50_fifo_dtor,
-	.oneinit = nv50_fifo_oneinit,
-	.init = nv50_fifo_init,
-	.intr = nv04_fifo_intr,
-	.engine_id = g84_fifo_engine_id,
-	.id_engine = g84_fifo_id_engine,
-	.pause = nv04_fifo_pause,
-	.start = nv04_fifo_start,
-	.uevent_init = g84_fifo_uevent_init,
-	.uevent_fini = g84_fifo_uevent_fini,
-	.chan = {
-		&g84_fifo_dma_oclass,
-		&g84_fifo_gpfifo_oclass,
-		NULL
-	},
-};
+अटल स्थिर काष्ठा nvkm_fअगरo_func
+g84_fअगरo = अणु
+	.dtor = nv50_fअगरo_dtor,
+	.oneinit = nv50_fअगरo_oneinit,
+	.init = nv50_fअगरo_init,
+	.पूर्णांकr = nv04_fअगरo_पूर्णांकr,
+	.engine_id = g84_fअगरo_engine_id,
+	.id_engine = g84_fअगरo_id_engine,
+	.छोड़ो = nv04_fअगरo_छोड़ो,
+	.start = nv04_fअगरo_start,
+	.uevent_init = g84_fअगरo_uevent_init,
+	.uevent_fini = g84_fअगरo_uevent_fini,
+	.chan = अणु
+		&g84_fअगरo_dma_oclass,
+		&g84_fअगरo_gpfअगरo_oclass,
+		शून्य
+	पूर्ण,
+पूर्ण;
 
-int
-g84_fifo_new(struct nvkm_device *device, enum nvkm_subdev_type type, int inst,
-	     struct nvkm_fifo **pfifo)
-{
-	return nv50_fifo_new_(&g84_fifo, device, type, inst, pfifo);
-}
+पूर्णांक
+g84_fअगरo_new(काष्ठा nvkm_device *device, क्रमागत nvkm_subdev_type type, पूर्णांक inst,
+	     काष्ठा nvkm_fअगरo **pfअगरo)
+अणु
+	वापस nv50_fअगरo_new_(&g84_fअगरo, device, type, inst, pfअगरo);
+पूर्ण

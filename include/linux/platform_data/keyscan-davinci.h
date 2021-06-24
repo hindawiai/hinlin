@@ -1,29 +1,30 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
  * Copyright (C) 2009 Texas Instruments, Inc
  *
  * Author: Miguel Aguilar <miguel.aguilar@ridgerun.com>
  */
 
-#ifndef DAVINCI_KEYSCAN_H
-#define DAVINCI_KEYSCAN_H
+#अगर_अघोषित DAVINCI_KEYSCAN_H
+#घोषणा DAVINCI_KEYSCAN_H
 
-#include <linux/io.h>
+#समावेश <linux/पन.स>
 
-enum davinci_matrix_types {
+क्रमागत davinci_matrix_types अणु
 	DAVINCI_KEYSCAN_MATRIX_4X4,
 	DAVINCI_KEYSCAN_MATRIX_5X3,
-};
+पूर्ण;
 
-struct davinci_ks_platform_data {
-	int		(*device_enable)(struct device *dev);
-	unsigned short	*keymap;
+काष्ठा davinci_ks_platक्रमm_data अणु
+	पूर्णांक		(*device_enable)(काष्ठा device *dev);
+	अचिन्हित लघु	*keymap;
 	u32		keymapsize;
 	u8		rep:1;
 	u8		strobe;
-	u8		interval;
+	u8		पूर्णांकerval;
 	u8		matrix_type;
-};
+पूर्ण;
 
-#endif
+#पूर्ण_अगर
 

@@ -1,9 +1,10 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /************************************************************
  * EFI GUID Partition Table handling
  *
  * http://www.uefi.org/specs/
- * http://www.intel.com/technology/efi/
+ * http://www.पूर्णांकel.com/technology/efi/
  *
  * efi.[ch] by Matt Domsch <Matt_Domsch@dell.com>
  *   Copyright 2000,2001,2002,2004 Dell Inc.
@@ -15,17 +16,17 @@
  * - detect hybrid MBRs, tighter pMBR checking & cleanups.
  *
  * Mon Nov 09 2004 Matt Domsch <Matt_Domsch@dell.com>
- * - test for valid PMBR and valid PGPT before ever reading
+ * - test क्रम valid PMBR and valid PGPT beक्रमe ever पढ़ोing
  *   AGPT, allow override with 'gpt' kernel command line option.
- * - check for first/last_usable_lba outside of size of disk
+ * - check क्रम first/last_usable_lba outside of size of disk
  *
  * Tue  Mar 26 2002 Matt Domsch <Matt_Domsch@dell.com>
  * - Ported to 2.5.7-pre1 and 2.5.7-dj2
- * - Applied patch to avoid fault in alternate header handling
+ * - Applied patch to aव्योम fault in alternate header handling
  * - cleaned up find_valid_gpt
- * - On-disk structure and copy in memory is *always* LE now - 
+ * - On-disk काष्ठाure and copy in memory is *always* LE now - 
  *   swab fields as needed
- * - remove print_gpt_header()
+ * - हटाओ prपूर्णांक_gpt_header()
  * - only use first max_p partition entries, to keep the kernel minor number
  *   and partition numbers tied.
  *
@@ -37,9 +38,9 @@
  *
  * Thu Dec 6 2001 Matt Domsch <Matt_Domsch@dell.com>
  * - Added compare_gpts().
- * - moved le_efi_guid_to_cpus() back into this file.  GPT is the only
+ * - moved le_efi_guid_to_cpus() back पूर्णांकo this file.  GPT is the only
  *   thing that keeps EFI GUIDs on disk.
- * - Changed gpt structure names and members to be simpler and more Linux-like.
+ * - Changed gpt काष्ठाure names and members to be simpler and more Linux-like.
  * 
  * Wed Oct 17 2001 Matt Domsch <Matt_Domsch@dell.com>
  * - Removed CONFIG_DEVFS_VOLUMES_UUID code entirely per Martin Wilck
@@ -48,24 +49,24 @@
  * - Changed function comments to DocBook style per Andreas Dilger suggestion.
  *
  * Mon Oct 08 2001 Matt Domsch <Matt_Domsch@dell.com>
- * - Change read_lba() to use the page cache per Al Viro's work.
- * - print u64s properly on all architectures
- * - fixed debug_printk(), now Dprintk()
+ * - Change पढ़ो_lba() to use the page cache per Al Viro's work.
+ * - prपूर्णांक u64s properly on all architectures
+ * - fixed debug_prपूर्णांकk(), now Dprपूर्णांकk()
  *
  * Mon Oct 01 2001 Matt Domsch <Matt_Domsch@dell.com>
  * - Style cleanups
- * - made most functions static
+ * - made most functions अटल
  * - Endianness addition
- * - remove test for second alternate header, as it's not per spec,
- *   and is unnecessary.  There's now a method to read/write the last
+ * - हटाओ test क्रम second alternate header, as it's not per spec,
+ *   and is unnecessary.  There's now a method to पढ़ो/ग_लिखो the last
  *   sector of an odd-sized disk from user space.  No tools have ever
  *   been released which used this code, so it's effectively dead.
- * - Per Asit Mallick of Intel, added a test for a valid PMBR.
+ * - Per Asit Mallick of Intel, added a test क्रम a valid PMBR.
  * - Added kernel command line option 'gpt' to override valid PMBR test.
  *
  * Wed Jun  6 2001 Martin Wilck <Martin.Wilck@Fujitsu-Siemens.com>
- * - added devfs volume UUID support (/dev/volumes/uuids) for
- *   mounting file systems by the partition GUID. 
+ * - added devfs volume UUID support (/dev/volumes/uuids) क्रम
+ *   mounting file प्रणालीs by the partition GUID. 
  *
  * Tue Dec  5 2000 Matt Domsch <Matt_Domsch@dell.com>
  * - Moved crc32() to linux/lib, added efi_crc32().
@@ -75,33 +76,33 @@
  *   non-license-restricted version.
  *
  * Wed Oct 25 2000 Matt Domsch <Matt_Domsch@dell.com>
- * - Fixed the last_lba() call to return the proper last block
+ * - Fixed the last_lba() call to वापस the proper last block
  *
  * Thu Oct 12 2000 Matt Domsch <Matt_Domsch@dell.com>
- * - Thanks to Andries Brouwer for his debugging assistance.
+ * - Thanks to Andries Brouwer क्रम his debugging assistance.
  * - Code works, detects all the partitions.
  *
  ************************************************************/
-#include <linux/kernel.h>
-#include <linux/crc32.h>
-#include <linux/ctype.h>
-#include <linux/math64.h>
-#include <linux/slab.h>
-#include "check.h"
-#include "efi.h"
+#समावेश <linux/kernel.h>
+#समावेश <linux/crc32.h>
+#समावेश <linux/प्रकार.स>
+#समावेश <linux/math64.h>
+#समावेश <linux/slab.h>
+#समावेश "check.h"
+#समावेश "efi.h"
 
 /* This allows a kernel command line option 'gpt' to override
- * the test for invalid PMBR.  Not __initdata because reloading
+ * the test क्रम invalid PMBR.  Not __initdata because reloading
  * the partition tables happens after init too.
  */
-static int force_gpt;
-static int __init
-force_gpt_fn(char *str)
-{
-	force_gpt = 1;
-	return 1;
-}
-__setup("gpt", force_gpt_fn);
+अटल पूर्णांक क्रमce_gpt;
+अटल पूर्णांक __init
+क्रमce_gpt_fn(अक्षर *str)
+अणु
+	क्रमce_gpt = 1;
+	वापस 1;
+पूर्ण
+__setup("gpt", क्रमce_gpt_fn);
 
 
 /**
@@ -109,94 +110,94 @@ __setup("gpt", force_gpt_fn);
  * @buf: buffer to calculate crc32 of
  * @len: length of buf
  *
- * Description: Returns EFI-style CRC32 value for @buf
+ * Description: Returns EFI-style CRC32 value क्रम @buf
  * 
  * This function uses the little endian Ethernet polynomial
  * but seeds the function with ~0, and xor's with ~0 at the end.
- * Note, the EFI Specification, v1.02, has a reference to
+ * Note, the EFI Specअगरication, v1.02, has a reference to
  * Dr. Dobbs Journal, May 1994 (actually it's in May 1992).
  */
-static inline u32
-efi_crc32(const void *buf, unsigned long len)
-{
-	return (crc32(~0L, buf, len) ^ ~0L);
-}
+अटल अंतरभूत u32
+efi_crc32(स्थिर व्योम *buf, अचिन्हित दीर्घ len)
+अणु
+	वापस (crc32(~0L, buf, len) ^ ~0L);
+पूर्ण
 
 /**
- * last_lba(): return number of last logical block of device
+ * last_lba(): वापस number of last logical block of device
  * @bdev: block device
  * 
  * Description: Returns last LBA value on success, 0 on error.
  * This is stored (by sd and ide-geometry) in
- *  the part[0] entry for this disk, and is the number of
+ *  the part[0] entry क्रम this disk, and is the number of
  *  physical sectors available on the disk.
  */
-static u64 last_lba(struct block_device *bdev)
-{
-	if (!bdev || !bdev->bd_inode)
-		return 0;
-	return div_u64(bdev->bd_inode->i_size,
+अटल u64 last_lba(काष्ठा block_device *bdev)
+अणु
+	अगर (!bdev || !bdev->bd_inode)
+		वापस 0;
+	वापस भाग_u64(bdev->bd_inode->i_size,
 		       bdev_logical_block_size(bdev)) - 1ULL;
-}
+पूर्ण
 
-static inline int pmbr_part_valid(gpt_mbr_record *part)
-{
-	if (part->os_type != EFI_PMBR_OSTYPE_EFI_GPT)
-		goto invalid;
+अटल अंतरभूत पूर्णांक pmbr_part_valid(gpt_mbr_record *part)
+अणु
+	अगर (part->os_type != EFI_PMBR_OSTYPE_EFI_GPT)
+		जाओ invalid;
 
 	/* set to 0x00000001 (i.e., the LBA of the GPT Partition Header) */
-	if (le32_to_cpu(part->starting_lba) != GPT_PRIMARY_PARTITION_TABLE_LBA)
-		goto invalid;
+	अगर (le32_to_cpu(part->starting_lba) != GPT_PRIMARY_PARTITION_TABLE_LBA)
+		जाओ invalid;
 
-	return GPT_MBR_PROTECTIVE;
+	वापस GPT_MBR_PROTECTIVE;
 invalid:
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * is_pmbr_valid(): test Protective MBR for validity
- * @mbr: pointer to a legacy mbr structure
+ * is_pmbr_valid(): test Protective MBR क्रम validity
+ * @mbr: poपूर्णांकer to a legacy mbr काष्ठाure
  * @total_sectors: amount of sectors in the device
  *
- * Description: Checks for a valid protective or hybrid
+ * Description: Checks क्रम a valid protective or hybrid
  * master boot record (MBR). The validity of a pMBR depends
  * on all of the following properties:
  *  1) MSDOS signature is in the last two bytes of the MBR
  *  2) One partition of type 0xEE is found
  *
  * In addition, a hybrid MBR will have up to three additional
- * primary partitions, which point to the same space that's
+ * primary partitions, which poपूर्णांक to the same space that's
  * marked out by up to three GPT partitions.
  *
  * Returns 0 upon invalid MBR, or GPT_MBR_PROTECTIVE or
  * GPT_MBR_HYBRID depending on the device layout.
  */
-static int is_pmbr_valid(legacy_mbr *mbr, sector_t total_sectors)
-{
-	uint32_t sz = 0;
-	int i, part = 0, ret = 0; /* invalid by default */
+अटल पूर्णांक is_pmbr_valid(legacy_mbr *mbr, sector_t total_sectors)
+अणु
+	uपूर्णांक32_t sz = 0;
+	पूर्णांक i, part = 0, ret = 0; /* invalid by शेष */
 
-	if (!mbr || le16_to_cpu(mbr->signature) != MSDOS_MBR_SIGNATURE)
-		goto done;
+	अगर (!mbr || le16_to_cpu(mbr->signature) != MSDOS_MBR_SIGNATURE)
+		जाओ करोne;
 
-	for (i = 0; i < 4; i++) {
+	क्रम (i = 0; i < 4; i++) अणु
 		ret = pmbr_part_valid(&mbr->partition_record[i]);
-		if (ret == GPT_MBR_PROTECTIVE) {
+		अगर (ret == GPT_MBR_PROTECTIVE) अणु
 			part = i;
 			/*
 			 * Ok, we at least know that there's a protective MBR,
-			 * now check if there are other partition types for
+			 * now check अगर there are other partition types क्रम
 			 * hybrid MBR.
 			 */
-			goto check_hybrid;
-		}
-	}
+			जाओ check_hybrid;
+		पूर्ण
+	पूर्ण
 
-	if (ret != GPT_MBR_PROTECTIVE)
-		goto done;
+	अगर (ret != GPT_MBR_PROTECTIVE)
+		जाओ करोne;
 check_hybrid:
-	for (i = 0; i < 4; i++)
-		if ((mbr->partition_record[i].os_type !=
+	क्रम (i = 0; i < 4; i++)
+		अगर ((mbr->partition_record[i].os_type !=
 			EFI_PMBR_OSTYPE_EFI_GPT) &&
 		    (mbr->partition_record[i].os_type != 0x00))
 			ret = GPT_MBR_HYBRID;
@@ -208,527 +209,527 @@ check_hybrid:
 	 * the size to the maximum 32-bit limitation, disregarding
 	 * the disk size.
 	 *
-	 * Hybrid MBRs do not necessarily comply with this.
+	 * Hybrid MBRs करो not necessarily comply with this.
 	 *
 	 * Consider a bad value here to be a warning to support dd'ing
 	 * an image from a smaller disk to a larger disk.
 	 */
-	if (ret == GPT_MBR_PROTECTIVE) {
+	अगर (ret == GPT_MBR_PROTECTIVE) अणु
 		sz = le32_to_cpu(mbr->partition_record[part].size_in_lba);
-		if (sz != (uint32_t) total_sectors - 1 && sz != 0xFFFFFFFF)
+		अगर (sz != (uपूर्णांक32_t) total_sectors - 1 && sz != 0xFFFFFFFF)
 			pr_debug("GPT: mbr size in lba (%u) different than whole disk (%u).\n",
-				 sz, min_t(uint32_t,
+				 sz, min_t(uपूर्णांक32_t,
 					   total_sectors - 1, 0xFFFFFFFF));
-	}
-done:
-	return ret;
-}
+	पूर्ण
+करोne:
+	वापस ret;
+पूर्ण
 
 /**
- * read_lba(): Read bytes from disk, starting at given LBA
+ * पढ़ो_lba(): Read bytes from disk, starting at given LBA
  * @state: disk parsed partitions
  * @lba: the Logical Block Address of the partition table
  * @buffer: destination buffer
- * @count: bytes to read
+ * @count: bytes to पढ़ो
  *
- * Description: Reads @count bytes from @state->bdev into @buffer.
- * Returns number of bytes read on success, 0 on error.
+ * Description: Reads @count bytes from @state->bdev पूर्णांकo @buffer.
+ * Returns number of bytes पढ़ो on success, 0 on error.
  */
-static size_t read_lba(struct parsed_partitions *state,
-		       u64 lba, u8 *buffer, size_t count)
-{
-	size_t totalreadcount = 0;
-	struct block_device *bdev = state->bdev;
+अटल माप_प्रकार पढ़ो_lba(काष्ठा parsed_partitions *state,
+		       u64 lba, u8 *buffer, माप_प्रकार count)
+अणु
+	माप_प्रकार totalपढ़ोcount = 0;
+	काष्ठा block_device *bdev = state->bdev;
 	sector_t n = lba * (bdev_logical_block_size(bdev) / 512);
 
-	if (!buffer || lba > last_lba(bdev))
-                return 0;
+	अगर (!buffer || lba > last_lba(bdev))
+                वापस 0;
 
-	while (count) {
-		int copied = 512;
+	जबतक (count) अणु
+		पूर्णांक copied = 512;
 		Sector sect;
-		unsigned char *data = read_part_sector(state, n++, &sect);
-		if (!data)
-			break;
-		if (copied > count)
+		अचिन्हित अक्षर *data = पढ़ो_part_sector(state, n++, &sect);
+		अगर (!data)
+			अवरोध;
+		अगर (copied > count)
 			copied = count;
-		memcpy(buffer, data, copied);
+		स_नकल(buffer, data, copied);
 		put_dev_sector(sect);
 		buffer += copied;
-		totalreadcount +=copied;
+		totalपढ़ोcount +=copied;
 		count -= copied;
-	}
-	return totalreadcount;
-}
+	पूर्ण
+	वापस totalपढ़ोcount;
+पूर्ण
 
 /**
- * alloc_read_gpt_entries(): reads partition entries from disk
+ * alloc_पढ़ो_gpt_entries(): पढ़ोs partition entries from disk
  * @state: disk parsed partitions
  * @gpt: GPT header
  * 
- * Description: Returns ptes on success,  NULL on error.
- * Allocates space for PTEs based on information found in @gpt.
- * Notes: remember to free pte when you're done!
+ * Description: Returns ptes on success,  शून्य on error.
+ * Allocates space क्रम PTEs based on inक्रमmation found in @gpt.
+ * Notes: remember to मुक्त pte when you're करोne!
  */
-static gpt_entry *alloc_read_gpt_entries(struct parsed_partitions *state,
+अटल gpt_entry *alloc_पढ़ो_gpt_entries(काष्ठा parsed_partitions *state,
 					 gpt_header *gpt)
-{
-	size_t count;
+अणु
+	माप_प्रकार count;
 	gpt_entry *pte;
 
-	if (!gpt)
-		return NULL;
+	अगर (!gpt)
+		वापस शून्य;
 
-	count = (size_t)le32_to_cpu(gpt->num_partition_entries) *
-                le32_to_cpu(gpt->sizeof_partition_entry);
-	if (!count)
-		return NULL;
-	pte = kmalloc(count, GFP_KERNEL);
-	if (!pte)
-		return NULL;
+	count = (माप_प्रकार)le32_to_cpu(gpt->num_partition_entries) *
+                le32_to_cpu(gpt->माप_partition_entry);
+	अगर (!count)
+		वापस शून्य;
+	pte = kदो_स्मृति(count, GFP_KERNEL);
+	अगर (!pte)
+		वापस शून्य;
 
-	if (read_lba(state, le64_to_cpu(gpt->partition_entry_lba),
-			(u8 *) pte, count) < count) {
-		kfree(pte);
-                pte=NULL;
-		return NULL;
-	}
-	return pte;
-}
+	अगर (पढ़ो_lba(state, le64_to_cpu(gpt->partition_entry_lba),
+			(u8 *) pte, count) < count) अणु
+		kमुक्त(pte);
+                pte=शून्य;
+		वापस शून्य;
+	पूर्ण
+	वापस pte;
+पूर्ण
 
 /**
- * alloc_read_gpt_header(): Allocates GPT header, reads into it from disk
+ * alloc_पढ़ो_gpt_header(): Allocates GPT header, पढ़ोs पूर्णांकo it from disk
  * @state: disk parsed partitions
  * @lba: the Logical Block Address of the partition table
  * 
- * Description: returns GPT header on success, NULL on error.   Allocates
+ * Description: वापसs GPT header on success, शून्य on error.   Allocates
  * and fills a GPT header starting at @ from @state->bdev.
- * Note: remember to free gpt when finished with it.
+ * Note: remember to मुक्त gpt when finished with it.
  */
-static gpt_header *alloc_read_gpt_header(struct parsed_partitions *state,
+अटल gpt_header *alloc_पढ़ो_gpt_header(काष्ठा parsed_partitions *state,
 					 u64 lba)
-{
+अणु
 	gpt_header *gpt;
-	unsigned ssz = bdev_logical_block_size(state->bdev);
+	अचिन्हित ssz = bdev_logical_block_size(state->bdev);
 
-	gpt = kmalloc(ssz, GFP_KERNEL);
-	if (!gpt)
-		return NULL;
+	gpt = kदो_स्मृति(ssz, GFP_KERNEL);
+	अगर (!gpt)
+		वापस शून्य;
 
-	if (read_lba(state, lba, (u8 *) gpt, ssz) < ssz) {
-		kfree(gpt);
-                gpt=NULL;
-		return NULL;
-	}
+	अगर (पढ़ो_lba(state, lba, (u8 *) gpt, ssz) < ssz) अणु
+		kमुक्त(gpt);
+                gpt=शून्य;
+		वापस शून्य;
+	पूर्ण
 
-	return gpt;
-}
+	वापस gpt;
+पूर्ण
 
 /**
- * is_gpt_valid() - tests one GPT header and PTEs for validity
+ * is_gpt_valid() - tests one GPT header and PTEs क्रम validity
  * @state: disk parsed partitions
  * @lba: logical block address of the GPT header to test
- * @gpt: GPT header ptr, filled on return.
- * @ptes: PTEs ptr, filled on return.
+ * @gpt: GPT header ptr, filled on वापस.
+ * @ptes: PTEs ptr, filled on वापस.
  *
- * Description: returns 1 if valid,  0 on error.
- * If valid, returns pointers to newly allocated GPT header and PTEs.
+ * Description: वापसs 1 अगर valid,  0 on error.
+ * If valid, वापसs poपूर्णांकers to newly allocated GPT header and PTEs.
  */
-static int is_gpt_valid(struct parsed_partitions *state, u64 lba,
+अटल पूर्णांक is_gpt_valid(काष्ठा parsed_partitions *state, u64 lba,
 			gpt_header **gpt, gpt_entry **ptes)
-{
+अणु
 	u32 crc, origcrc;
 	u64 lastlba, pt_size;
 
-	if (!ptes)
-		return 0;
-	if (!(*gpt = alloc_read_gpt_header(state, lba)))
-		return 0;
+	अगर (!ptes)
+		वापस 0;
+	अगर (!(*gpt = alloc_पढ़ो_gpt_header(state, lba)))
+		वापस 0;
 
 	/* Check the GUID Partition Table signature */
-	if (le64_to_cpu((*gpt)->signature) != GPT_HEADER_SIGNATURE) {
+	अगर (le64_to_cpu((*gpt)->signature) != GPT_HEADER_SIGNATURE) अणु
 		pr_debug("GUID Partition Table Header signature is wrong:"
 			 "%lld != %lld\n",
-			 (unsigned long long)le64_to_cpu((*gpt)->signature),
-			 (unsigned long long)GPT_HEADER_SIGNATURE);
-		goto fail;
-	}
+			 (अचिन्हित दीर्घ दीर्घ)le64_to_cpu((*gpt)->signature),
+			 (अचिन्हित दीर्घ दीर्घ)GPT_HEADER_SIGNATURE);
+		जाओ fail;
+	पूर्ण
 
 	/* Check the GUID Partition Table header size is too big */
-	if (le32_to_cpu((*gpt)->header_size) >
-			bdev_logical_block_size(state->bdev)) {
+	अगर (le32_to_cpu((*gpt)->header_size) >
+			bdev_logical_block_size(state->bdev)) अणु
 		pr_debug("GUID Partition Table Header size is too large: %u > %u\n",
 			le32_to_cpu((*gpt)->header_size),
 			bdev_logical_block_size(state->bdev));
-		goto fail;
-	}
+		जाओ fail;
+	पूर्ण
 
 	/* Check the GUID Partition Table header size is too small */
-	if (le32_to_cpu((*gpt)->header_size) < sizeof(gpt_header)) {
+	अगर (le32_to_cpu((*gpt)->header_size) < माप(gpt_header)) अणु
 		pr_debug("GUID Partition Table Header size is too small: %u < %zu\n",
 			le32_to_cpu((*gpt)->header_size),
-			sizeof(gpt_header));
-		goto fail;
-	}
+			माप(gpt_header));
+		जाओ fail;
+	पूर्ण
 
 	/* Check the GUID Partition Table CRC */
 	origcrc = le32_to_cpu((*gpt)->header_crc32);
 	(*gpt)->header_crc32 = 0;
-	crc = efi_crc32((const unsigned char *) (*gpt), le32_to_cpu((*gpt)->header_size));
+	crc = efi_crc32((स्थिर अचिन्हित अक्षर *) (*gpt), le32_to_cpu((*gpt)->header_size));
 
-	if (crc != origcrc) {
+	अगर (crc != origcrc) अणु
 		pr_debug("GUID Partition Table Header CRC is wrong: %x != %x\n",
 			 crc, origcrc);
-		goto fail;
-	}
+		जाओ fail;
+	पूर्ण
 	(*gpt)->header_crc32 = cpu_to_le32(origcrc);
 
-	/* Check that the my_lba entry points to the LBA that contains
+	/* Check that the my_lba entry poपूर्णांकs to the LBA that contains
 	 * the GUID Partition Table */
-	if (le64_to_cpu((*gpt)->my_lba) != lba) {
+	अगर (le64_to_cpu((*gpt)->my_lba) != lba) अणु
 		pr_debug("GPT my_lba incorrect: %lld != %lld\n",
-			 (unsigned long long)le64_to_cpu((*gpt)->my_lba),
-			 (unsigned long long)lba);
-		goto fail;
-	}
+			 (अचिन्हित दीर्घ दीर्घ)le64_to_cpu((*gpt)->my_lba),
+			 (अचिन्हित दीर्घ दीर्घ)lba);
+		जाओ fail;
+	पूर्ण
 
 	/* Check the first_usable_lba and last_usable_lba are
 	 * within the disk.
 	 */
 	lastlba = last_lba(state->bdev);
-	if (le64_to_cpu((*gpt)->first_usable_lba) > lastlba) {
+	अगर (le64_to_cpu((*gpt)->first_usable_lba) > lastlba) अणु
 		pr_debug("GPT: first_usable_lba incorrect: %lld > %lld\n",
-			 (unsigned long long)le64_to_cpu((*gpt)->first_usable_lba),
-			 (unsigned long long)lastlba);
-		goto fail;
-	}
-	if (le64_to_cpu((*gpt)->last_usable_lba) > lastlba) {
+			 (अचिन्हित दीर्घ दीर्घ)le64_to_cpu((*gpt)->first_usable_lba),
+			 (अचिन्हित दीर्घ दीर्घ)lastlba);
+		जाओ fail;
+	पूर्ण
+	अगर (le64_to_cpu((*gpt)->last_usable_lba) > lastlba) अणु
 		pr_debug("GPT: last_usable_lba incorrect: %lld > %lld\n",
-			 (unsigned long long)le64_to_cpu((*gpt)->last_usable_lba),
-			 (unsigned long long)lastlba);
-		goto fail;
-	}
-	if (le64_to_cpu((*gpt)->last_usable_lba) < le64_to_cpu((*gpt)->first_usable_lba)) {
+			 (अचिन्हित दीर्घ दीर्घ)le64_to_cpu((*gpt)->last_usable_lba),
+			 (अचिन्हित दीर्घ दीर्घ)lastlba);
+		जाओ fail;
+	पूर्ण
+	अगर (le64_to_cpu((*gpt)->last_usable_lba) < le64_to_cpu((*gpt)->first_usable_lba)) अणु
 		pr_debug("GPT: last_usable_lba incorrect: %lld > %lld\n",
-			 (unsigned long long)le64_to_cpu((*gpt)->last_usable_lba),
-			 (unsigned long long)le64_to_cpu((*gpt)->first_usable_lba));
-		goto fail;
-	}
-	/* Check that sizeof_partition_entry has the correct value */
-	if (le32_to_cpu((*gpt)->sizeof_partition_entry) != sizeof(gpt_entry)) {
+			 (अचिन्हित दीर्घ दीर्घ)le64_to_cpu((*gpt)->last_usable_lba),
+			 (अचिन्हित दीर्घ दीर्घ)le64_to_cpu((*gpt)->first_usable_lba));
+		जाओ fail;
+	पूर्ण
+	/* Check that माप_partition_entry has the correct value */
+	अगर (le32_to_cpu((*gpt)->माप_partition_entry) != माप(gpt_entry)) अणु
 		pr_debug("GUID Partition Entry Size check failed.\n");
-		goto fail;
-	}
+		जाओ fail;
+	पूर्ण
 
 	/* Sanity check partition table size */
 	pt_size = (u64)le32_to_cpu((*gpt)->num_partition_entries) *
-		le32_to_cpu((*gpt)->sizeof_partition_entry);
-	if (pt_size > KMALLOC_MAX_SIZE) {
+		le32_to_cpu((*gpt)->माप_partition_entry);
+	अगर (pt_size > KMALLOC_MAX_SIZE) अणु
 		pr_debug("GUID Partition Table is too large: %llu > %lu bytes\n",
-			 (unsigned long long)pt_size, KMALLOC_MAX_SIZE);
-		goto fail;
-	}
+			 (अचिन्हित दीर्घ दीर्घ)pt_size, KMALLOC_MAX_SIZE);
+		जाओ fail;
+	पूर्ण
 
-	if (!(*ptes = alloc_read_gpt_entries(state, *gpt)))
-		goto fail;
+	अगर (!(*ptes = alloc_पढ़ो_gpt_entries(state, *gpt)))
+		जाओ fail;
 
 	/* Check the GUID Partition Entry Array CRC */
-	crc = efi_crc32((const unsigned char *) (*ptes), pt_size);
+	crc = efi_crc32((स्थिर अचिन्हित अक्षर *) (*ptes), pt_size);
 
-	if (crc != le32_to_cpu((*gpt)->partition_entry_array_crc32)) {
+	अगर (crc != le32_to_cpu((*gpt)->partition_entry_array_crc32)) अणु
 		pr_debug("GUID Partition Entry Array CRC check failed.\n");
-		goto fail_ptes;
-	}
+		जाओ fail_ptes;
+	पूर्ण
 
 	/* We're done, all's well */
-	return 1;
+	वापस 1;
 
  fail_ptes:
-	kfree(*ptes);
-	*ptes = NULL;
+	kमुक्त(*ptes);
+	*ptes = शून्य;
  fail:
-	kfree(*gpt);
-	*gpt = NULL;
-	return 0;
-}
+	kमुक्त(*gpt);
+	*gpt = शून्य;
+	वापस 0;
+पूर्ण
 
 /**
- * is_pte_valid() - tests one PTE for validity
+ * is_pte_valid() - tests one PTE क्रम validity
  * @pte:pte to check
  * @lastlba: last lba of the disk
  *
- * Description: returns 1 if valid,  0 on error.
+ * Description: वापसs 1 अगर valid,  0 on error.
  */
-static inline int
-is_pte_valid(const gpt_entry *pte, const u64 lastlba)
-{
-	if ((!efi_guidcmp(pte->partition_type_guid, NULL_GUID)) ||
+अटल अंतरभूत पूर्णांक
+is_pte_valid(स्थिर gpt_entry *pte, स्थिर u64 lastlba)
+अणु
+	अगर ((!efi_guidcmp(pte->partition_type_guid, शून्य_GUID)) ||
 	    le64_to_cpu(pte->starting_lba) > lastlba         ||
 	    le64_to_cpu(pte->ending_lba)   > lastlba)
-		return 0;
-	return 1;
-}
+		वापस 0;
+	वापस 1;
+पूर्ण
 
 /**
- * compare_gpts() - Search disk for valid GPT headers and PTEs
+ * compare_gpts() - Search disk क्रम valid GPT headers and PTEs
  * @pgpt: primary GPT header
  * @agpt: alternate GPT header
  * @lastlba: last LBA number
  *
  * Description: Returns nothing.  Sanity checks pgpt and agpt fields
- * and prints warnings on discrepancies.
+ * and prपूर्णांकs warnings on discrepancies.
  * 
  */
-static void
+अटल व्योम
 compare_gpts(gpt_header *pgpt, gpt_header *agpt, u64 lastlba)
-{
-	int error_found = 0;
-	if (!pgpt || !agpt)
-		return;
-	if (le64_to_cpu(pgpt->my_lba) != le64_to_cpu(agpt->alternate_lba)) {
+अणु
+	पूर्णांक error_found = 0;
+	अगर (!pgpt || !agpt)
+		वापस;
+	अगर (le64_to_cpu(pgpt->my_lba) != le64_to_cpu(agpt->alternate_lba)) अणु
 		pr_warn("GPT:Primary header LBA != Alt. header alternate_lba\n");
 		pr_warn("GPT:%lld != %lld\n",
-		       (unsigned long long)le64_to_cpu(pgpt->my_lba),
-                       (unsigned long long)le64_to_cpu(agpt->alternate_lba));
+		       (अचिन्हित दीर्घ दीर्घ)le64_to_cpu(pgpt->my_lba),
+                       (अचिन्हित दीर्घ दीर्घ)le64_to_cpu(agpt->alternate_lba));
 		error_found++;
-	}
-	if (le64_to_cpu(pgpt->alternate_lba) != le64_to_cpu(agpt->my_lba)) {
+	पूर्ण
+	अगर (le64_to_cpu(pgpt->alternate_lba) != le64_to_cpu(agpt->my_lba)) अणु
 		pr_warn("GPT:Primary header alternate_lba != Alt. header my_lba\n");
 		pr_warn("GPT:%lld != %lld\n",
-		       (unsigned long long)le64_to_cpu(pgpt->alternate_lba),
-                       (unsigned long long)le64_to_cpu(agpt->my_lba));
+		       (अचिन्हित दीर्घ दीर्घ)le64_to_cpu(pgpt->alternate_lba),
+                       (अचिन्हित दीर्घ दीर्घ)le64_to_cpu(agpt->my_lba));
 		error_found++;
-	}
-	if (le64_to_cpu(pgpt->first_usable_lba) !=
-            le64_to_cpu(agpt->first_usable_lba)) {
+	पूर्ण
+	अगर (le64_to_cpu(pgpt->first_usable_lba) !=
+            le64_to_cpu(agpt->first_usable_lba)) अणु
 		pr_warn("GPT:first_usable_lbas don't match.\n");
 		pr_warn("GPT:%lld != %lld\n",
-		       (unsigned long long)le64_to_cpu(pgpt->first_usable_lba),
-                       (unsigned long long)le64_to_cpu(agpt->first_usable_lba));
+		       (अचिन्हित दीर्घ दीर्घ)le64_to_cpu(pgpt->first_usable_lba),
+                       (अचिन्हित दीर्घ दीर्घ)le64_to_cpu(agpt->first_usable_lba));
 		error_found++;
-	}
-	if (le64_to_cpu(pgpt->last_usable_lba) !=
-            le64_to_cpu(agpt->last_usable_lba)) {
+	पूर्ण
+	अगर (le64_to_cpu(pgpt->last_usable_lba) !=
+            le64_to_cpu(agpt->last_usable_lba)) अणु
 		pr_warn("GPT:last_usable_lbas don't match.\n");
 		pr_warn("GPT:%lld != %lld\n",
-		       (unsigned long long)le64_to_cpu(pgpt->last_usable_lba),
-                       (unsigned long long)le64_to_cpu(agpt->last_usable_lba));
+		       (अचिन्हित दीर्घ दीर्घ)le64_to_cpu(pgpt->last_usable_lba),
+                       (अचिन्हित दीर्घ दीर्घ)le64_to_cpu(agpt->last_usable_lba));
 		error_found++;
-	}
-	if (efi_guidcmp(pgpt->disk_guid, agpt->disk_guid)) {
+	पूर्ण
+	अगर (efi_guidcmp(pgpt->disk_guid, agpt->disk_guid)) अणु
 		pr_warn("GPT:disk_guids don't match.\n");
 		error_found++;
-	}
-	if (le32_to_cpu(pgpt->num_partition_entries) !=
-            le32_to_cpu(agpt->num_partition_entries)) {
+	पूर्ण
+	अगर (le32_to_cpu(pgpt->num_partition_entries) !=
+            le32_to_cpu(agpt->num_partition_entries)) अणु
 		pr_warn("GPT:num_partition_entries don't match: "
 		       "0x%x != 0x%x\n",
 		       le32_to_cpu(pgpt->num_partition_entries),
 		       le32_to_cpu(agpt->num_partition_entries));
 		error_found++;
-	}
-	if (le32_to_cpu(pgpt->sizeof_partition_entry) !=
-            le32_to_cpu(agpt->sizeof_partition_entry)) {
+	पूर्ण
+	अगर (le32_to_cpu(pgpt->माप_partition_entry) !=
+            le32_to_cpu(agpt->माप_partition_entry)) अणु
 		pr_warn("GPT:sizeof_partition_entry values don't match: "
 		       "0x%x != 0x%x\n",
-                       le32_to_cpu(pgpt->sizeof_partition_entry),
-		       le32_to_cpu(agpt->sizeof_partition_entry));
+                       le32_to_cpu(pgpt->माप_partition_entry),
+		       le32_to_cpu(agpt->माप_partition_entry));
 		error_found++;
-	}
-	if (le32_to_cpu(pgpt->partition_entry_array_crc32) !=
-            le32_to_cpu(agpt->partition_entry_array_crc32)) {
+	पूर्ण
+	अगर (le32_to_cpu(pgpt->partition_entry_array_crc32) !=
+            le32_to_cpu(agpt->partition_entry_array_crc32)) अणु
 		pr_warn("GPT:partition_entry_array_crc32 values don't match: "
 		       "0x%x != 0x%x\n",
                        le32_to_cpu(pgpt->partition_entry_array_crc32),
 		       le32_to_cpu(agpt->partition_entry_array_crc32));
 		error_found++;
-	}
-	if (le64_to_cpu(pgpt->alternate_lba) != lastlba) {
+	पूर्ण
+	अगर (le64_to_cpu(pgpt->alternate_lba) != lastlba) अणु
 		pr_warn("GPT:Primary header thinks Alt. header is not at the end of the disk.\n");
 		pr_warn("GPT:%lld != %lld\n",
-			(unsigned long long)le64_to_cpu(pgpt->alternate_lba),
-			(unsigned long long)lastlba);
+			(अचिन्हित दीर्घ दीर्घ)le64_to_cpu(pgpt->alternate_lba),
+			(अचिन्हित दीर्घ दीर्घ)lastlba);
 		error_found++;
-	}
+	पूर्ण
 
-	if (le64_to_cpu(agpt->my_lba) != lastlba) {
+	अगर (le64_to_cpu(agpt->my_lba) != lastlba) अणु
 		pr_warn("GPT:Alternate GPT header not at the end of the disk.\n");
 		pr_warn("GPT:%lld != %lld\n",
-			(unsigned long long)le64_to_cpu(agpt->my_lba),
-			(unsigned long long)lastlba);
+			(अचिन्हित दीर्घ दीर्घ)le64_to_cpu(agpt->my_lba),
+			(अचिन्हित दीर्घ दीर्घ)lastlba);
 		error_found++;
-	}
+	पूर्ण
 
-	if (error_found)
+	अगर (error_found)
 		pr_warn("GPT: Use GNU Parted to correct GPT errors.\n");
-	return;
-}
+	वापस;
+पूर्ण
 
 /**
- * find_valid_gpt() - Search disk for valid GPT headers and PTEs
+ * find_valid_gpt() - Search disk क्रम valid GPT headers and PTEs
  * @state: disk parsed partitions
- * @gpt: GPT header ptr, filled on return.
- * @ptes: PTEs ptr, filled on return.
+ * @gpt: GPT header ptr, filled on वापस.
+ * @ptes: PTEs ptr, filled on वापस.
  *
- * Description: Returns 1 if valid, 0 on error.
- * If valid, returns pointers to newly allocated GPT header and PTEs.
+ * Description: Returns 1 अगर valid, 0 on error.
+ * If valid, वापसs poपूर्णांकers to newly allocated GPT header and PTEs.
  * Validity depends on PMBR being valid (or being overridden by the
  * 'gpt' kernel command line option) and finding either the Primary
  * GPT header and PTEs valid, or the Alternate GPT header and PTEs
  * valid.  If the Primary GPT header is not valid, the Alternate GPT header
  * is not checked unless the 'gpt' kernel command line option is passed.
- * This protects against devices which misreport their size, and forces
+ * This protects against devices which misreport their size, and क्रमces
  * the user to decide to use the Alternate GPT.
  */
-static int find_valid_gpt(struct parsed_partitions *state, gpt_header **gpt,
+अटल पूर्णांक find_valid_gpt(काष्ठा parsed_partitions *state, gpt_header **gpt,
 			  gpt_entry **ptes)
-{
-	int good_pgpt = 0, good_agpt = 0, good_pmbr = 0;
-	gpt_header *pgpt = NULL, *agpt = NULL;
-	gpt_entry *pptes = NULL, *aptes = NULL;
+अणु
+	पूर्णांक good_pgpt = 0, good_agpt = 0, good_pmbr = 0;
+	gpt_header *pgpt = शून्य, *agpt = शून्य;
+	gpt_entry *pptes = शून्य, *aptes = शून्य;
 	legacy_mbr *legacymbr;
-	sector_t total_sectors = i_size_read(state->bdev->bd_inode) >> 9;
+	sector_t total_sectors = i_size_पढ़ो(state->bdev->bd_inode) >> 9;
 	u64 lastlba;
 
-	if (!ptes)
-		return 0;
+	अगर (!ptes)
+		वापस 0;
 
 	lastlba = last_lba(state->bdev);
-        if (!force_gpt) {
+        अगर (!क्रमce_gpt) अणु
 		/* This will be added to the EFI Spec. per Intel after v1.02. */
-		legacymbr = kzalloc(sizeof(*legacymbr), GFP_KERNEL);
-		if (!legacymbr)
-			goto fail;
+		legacymbr = kzalloc(माप(*legacymbr), GFP_KERNEL);
+		अगर (!legacymbr)
+			जाओ fail;
 
-		read_lba(state, 0, (u8 *)legacymbr, sizeof(*legacymbr));
+		पढ़ो_lba(state, 0, (u8 *)legacymbr, माप(*legacymbr));
 		good_pmbr = is_pmbr_valid(legacymbr, total_sectors);
-		kfree(legacymbr);
+		kमुक्त(legacymbr);
 
-		if (!good_pmbr)
-			goto fail;
+		अगर (!good_pmbr)
+			जाओ fail;
 
 		pr_debug("Device has a %s MBR\n",
 			 good_pmbr == GPT_MBR_PROTECTIVE ?
 						"protective" : "hybrid");
-	}
+	पूर्ण
 
 	good_pgpt = is_gpt_valid(state, GPT_PRIMARY_PARTITION_TABLE_LBA,
 				 &pgpt, &pptes);
-        if (good_pgpt)
+        अगर (good_pgpt)
 		good_agpt = is_gpt_valid(state,
 					 le64_to_cpu(pgpt->alternate_lba),
 					 &agpt, &aptes);
-        if (!good_agpt && force_gpt)
+        अगर (!good_agpt && क्रमce_gpt)
                 good_agpt = is_gpt_valid(state, lastlba, &agpt, &aptes);
 
-        /* The obviously unsuccessful case */
-        if (!good_pgpt && !good_agpt)
-                goto fail;
+        /* The obviously unsuccessful हाल */
+        अगर (!good_pgpt && !good_agpt)
+                जाओ fail;
 
         compare_gpts(pgpt, agpt, lastlba);
 
-        /* The good cases */
-        if (good_pgpt) {
+        /* The good हालs */
+        अगर (good_pgpt) अणु
                 *gpt  = pgpt;
                 *ptes = pptes;
-                kfree(agpt);
-                kfree(aptes);
-		if (!good_agpt)
+                kमुक्त(agpt);
+                kमुक्त(aptes);
+		अगर (!good_agpt)
                         pr_warn("Alternate GPT is invalid, using primary GPT.\n");
-                return 1;
-        }
-        else if (good_agpt) {
+                वापस 1;
+        पूर्ण
+        अन्यथा अगर (good_agpt) अणु
                 *gpt  = agpt;
                 *ptes = aptes;
-                kfree(pgpt);
-                kfree(pptes);
+                kमुक्त(pgpt);
+                kमुक्त(pptes);
 		pr_warn("Primary GPT is invalid, using alternate GPT.\n");
-                return 1;
-        }
+                वापस 1;
+        पूर्ण
 
  fail:
-        kfree(pgpt);
-        kfree(agpt);
-        kfree(pptes);
-        kfree(aptes);
-        *gpt = NULL;
-        *ptes = NULL;
-        return 0;
-}
+        kमुक्त(pgpt);
+        kमुक्त(agpt);
+        kमुक्त(pptes);
+        kमुक्त(aptes);
+        *gpt = शून्य;
+        *ptes = शून्य;
+        वापस 0;
+पूर्ण
 
 /**
- * utf16_le_to_7bit(): Naively converts a UTF-16LE string to 7-bit ASCII characters
+ * utf16_le_to_7bit(): Naively converts a UTF-16LE string to 7-bit ASCII अक्षरacters
  * @in: input UTF-16LE string
  * @size: size of the input string
- * @out: output string ptr, should be capable to store @size+1 characters
+ * @out: output string ptr, should be capable to store @size+1 अक्षरacters
  *
  * Description: Converts @size UTF16-LE symbols from @in string to 7-bit
- * ASCII characters and stores them to @out. Adds trailing zero to @out array.
+ * ASCII अक्षरacters and stores them to @out. Adds trailing zero to @out array.
  */
-static void utf16_le_to_7bit(const __le16 *in, unsigned int size, u8 *out)
-{
-	unsigned int i = 0;
+अटल व्योम utf16_le_to_7bit(स्थिर __le16 *in, अचिन्हित पूर्णांक size, u8 *out)
+अणु
+	अचिन्हित पूर्णांक i = 0;
 
 	out[size] = 0;
 
-	while (i < size) {
+	जबतक (i < size) अणु
 		u8 c = le16_to_cpu(in[i]) & 0xff;
 
-		if (c && !isprint(c))
+		अगर (c && !है_छाप(c))
 			c = '!';
 		out[i] = c;
 		i++;
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
- * efi_partition - scan for GPT partitions
+ * efi_partition - scan क्रम GPT partitions
  * @state: disk parsed partitions
  *
- * Description: called from check.c, if the disk contains GPT
+ * Description: called from check.c, अगर the disk contains GPT
  * partitions, sets up partition entries in the kernel.
  *
  * If the first block on the disk is a legacy MBR,
- * it will get handled by msdos_partition().
+ * it will get handled by msकरोs_partition().
  * If it's a Protective MBR, we'll handle it here.
  *
- * We do not create a Linux partition for GPT, but
- * only for the actual data partitions.
+ * We करो not create a Linux partition क्रम GPT, but
+ * only क्रम the actual data partitions.
  * Returns:
- * -1 if unable to read the partition table
- *  0 if this isn't our partition table
- *  1 if successful
+ * -1 अगर unable to पढ़ो the partition table
+ *  0 अगर this isn't our partition table
+ *  1 अगर successful
  *
  */
-int efi_partition(struct parsed_partitions *state)
-{
-	gpt_header *gpt = NULL;
-	gpt_entry *ptes = NULL;
+पूर्णांक efi_partition(काष्ठा parsed_partitions *state)
+अणु
+	gpt_header *gpt = शून्य;
+	gpt_entry *ptes = शून्य;
 	u32 i;
-	unsigned ssz = bdev_logical_block_size(state->bdev) / 512;
+	अचिन्हित ssz = bdev_logical_block_size(state->bdev) / 512;
 
-	if (!find_valid_gpt(state, &gpt, &ptes) || !gpt || !ptes) {
-		kfree(gpt);
-		kfree(ptes);
-		return 0;
-	}
+	अगर (!find_valid_gpt(state, &gpt, &ptes) || !gpt || !ptes) अणु
+		kमुक्त(gpt);
+		kमुक्त(ptes);
+		वापस 0;
+	पूर्ण
 
 	pr_debug("GUID Partition Table is valid!  Yea!\n");
 
-	for (i = 0; i < le32_to_cpu(gpt->num_partition_entries) && i < state->limit-1; i++) {
-		struct partition_meta_info *info;
-		unsigned label_max;
+	क्रम (i = 0; i < le32_to_cpu(gpt->num_partition_entries) && i < state->limit-1; i++) अणु
+		काष्ठा partition_meta_info *info;
+		अचिन्हित label_max;
 		u64 start = le64_to_cpu(ptes[i].starting_lba);
 		u64 size = le64_to_cpu(ptes[i].ending_lba) -
 			   le64_to_cpu(ptes[i].starting_lba) + 1ULL;
 
-		if (!is_pte_valid(&ptes[i], last_lba(state->bdev)))
-			continue;
+		अगर (!is_pte_valid(&ptes[i], last_lba(state->bdev)))
+			जारी;
 
 		put_partition(state, i+1, start * ssz, size * ssz);
 
 		/* If this is a RAID volume, tell md */
-		if (!efi_guidcmp(ptes[i].partition_type_guid, PARTITION_LINUX_RAID_GUID))
+		अगर (!efi_guidcmp(ptes[i].partition_type_guid, PARTITION_LINUX_RAID_GUID))
 			state->parts[i + 1].flags = ADDPART_FLAG_RAID;
 
 		info = &state->parts[i + 1].info;
@@ -739,9 +740,9 @@ int efi_partition(struct parsed_partitions *state)
 				ARRAY_SIZE(ptes[i].partition_name));
 		utf16_le_to_7bit(ptes[i].partition_name, label_max, info->volname);
 		state->parts[i + 1].has_info = true;
-	}
-	kfree(ptes);
-	kfree(gpt);
+	पूर्ण
+	kमुक्त(ptes);
+	kमुक्त(gpt);
 	strlcat(state->pp_buf, "\n", PAGE_SIZE);
-	return 1;
-}
+	वापस 1;
+पूर्ण

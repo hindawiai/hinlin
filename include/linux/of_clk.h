@@ -1,33 +1,34 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- * OF clock helpers
+ * OF घड़ी helpers
  */
 
-#ifndef __LINUX_OF_CLK_H
-#define __LINUX_OF_CLK_H
+#अगर_अघोषित __LINUX_OF_CLK_H
+#घोषणा __LINUX_OF_CLK_H
 
-struct device_node;
-struct of_device_id;
+काष्ठा device_node;
+काष्ठा of_device_id;
 
-#if defined(CONFIG_COMMON_CLK) && defined(CONFIG_OF)
+#अगर defined(CONFIG_COMMON_CLK) && defined(CONFIG_OF)
 
-unsigned int of_clk_get_parent_count(const struct device_node *np);
-const char *of_clk_get_parent_name(const struct device_node *np, int index);
-void of_clk_init(const struct of_device_id *matches);
+अचिन्हित पूर्णांक of_clk_get_parent_count(स्थिर काष्ठा device_node *np);
+स्थिर अक्षर *of_clk_get_parent_name(स्थिर काष्ठा device_node *np, पूर्णांक index);
+व्योम of_clk_init(स्थिर काष्ठा of_device_id *matches);
 
-#else /* !CONFIG_COMMON_CLK || !CONFIG_OF */
+#अन्यथा /* !CONFIG_COMMON_CLK || !CONFIG_OF */
 
-static inline unsigned int of_clk_get_parent_count(const struct device_node *np)
-{
-	return 0;
-}
-static inline const char *of_clk_get_parent_name(const struct device_node *np,
-						 int index)
-{
-	return NULL;
-}
-static inline void of_clk_init(const struct of_device_id *matches) {}
+अटल अंतरभूत अचिन्हित पूर्णांक of_clk_get_parent_count(स्थिर काष्ठा device_node *np)
+अणु
+	वापस 0;
+पूर्ण
+अटल अंतरभूत स्थिर अक्षर *of_clk_get_parent_name(स्थिर काष्ठा device_node *np,
+						 पूर्णांक index)
+अणु
+	वापस शून्य;
+पूर्ण
+अटल अंतरभूत व्योम of_clk_init(स्थिर काष्ठा of_device_id *matches) अणुपूर्ण
 
-#endif /* !CONFIG_COMMON_CLK || !CONFIG_OF */
+#पूर्ण_अगर /* !CONFIG_COMMON_CLK || !CONFIG_OF */
 
-#endif /* __LINUX_OF_CLK_H */
+#पूर्ण_अगर /* __LINUX_OF_CLK_H */

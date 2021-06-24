@@ -1,8 +1,9 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * INET		An implementation of the TCP/IP protocol suite for the LINUX
- *		operating system.  INET is implemented using the  BSD Socket
- *		interface as the means of communication with the user level.
+ * INET		An implementation of the TCP/IP protocol suite क्रम the LINUX
+ *		operating प्रणाली.  INET is implemented using the  BSD Socket
+ *		पूर्णांकerface as the means of communication with the user level.
  *
  *		Ethernet-type device handling.
  *
@@ -22,45 +23,45 @@
  *				  minor other things.
  *		Tegge		: Arp bug fixes.
  *		Florian		: Removed many unnecessary functions, code cleanup
- *				  and changes for new arp and skbuff.
- *		Alan Cox	: Redid header building to reflect new format.
+ *				  and changes क्रम new arp and skbuff.
+ *		Alan Cox	: Redid header building to reflect new क्रमmat.
  *		Alan Cox	: ARP only when compiled with CONFIG_INET
  *		Greg Page	: 802.2 and SNAP stuff.
- *		Alan Cox	: MAC layer pointers/new format.
- *		Paul Gortmaker	: eth_copy_and_sum shouldn't csum padding.
- *		Alan Cox	: Protect against forwarding explosions with
+ *		Alan Cox	: MAC layer poपूर्णांकers/new क्रमmat.
+ *		Paul Gorपंचांगaker	: eth_copy_and_sum shouldn't csum padding.
+ *		Alan Cox	: Protect against क्रमwarding explosions with
  *				  older network drivers and IFF_ALLMULTI.
  *	Christer Weinigel	: Better rebuild header message.
- *             Andrew Morton    : 26Feb01: kill ether_setup() - use netdev_boot_setup().
+ *             Andrew Morton    : 26Feb01: समाप्त ether_setup() - use netdev_boot_setup().
  */
-#include <linux/module.h>
-#include <linux/types.h>
-#include <linux/kernel.h>
-#include <linux/string.h>
-#include <linux/mm.h>
-#include <linux/socket.h>
-#include <linux/in.h>
-#include <linux/inet.h>
-#include <linux/ip.h>
-#include <linux/netdevice.h>
-#include <linux/nvmem-consumer.h>
-#include <linux/etherdevice.h>
-#include <linux/skbuff.h>
-#include <linux/errno.h>
-#include <linux/init.h>
-#include <linux/if_ether.h>
-#include <linux/of_net.h>
-#include <linux/pci.h>
-#include <net/dst.h>
-#include <net/arp.h>
-#include <net/sock.h>
-#include <net/ipv6.h>
-#include <net/ip.h>
-#include <net/dsa.h>
-#include <net/flow_dissector.h>
-#include <net/gro.h>
-#include <linux/uaccess.h>
-#include <net/pkt_sched.h>
+#समावेश <linux/module.h>
+#समावेश <linux/types.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/mm.h>
+#समावेश <linux/socket.h>
+#समावेश <linux/in.h>
+#समावेश <linux/inet.h>
+#समावेश <linux/ip.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/nvmem-consumer.h>
+#समावेश <linux/etherdevice.h>
+#समावेश <linux/skbuff.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/init.h>
+#समावेश <linux/अगर_ether.h>
+#समावेश <linux/of_net.h>
+#समावेश <linux/pci.h>
+#समावेश <net/dst.h>
+#समावेश <net/arp.h>
+#समावेश <net/sock.h>
+#समावेश <net/ipv6.h>
+#समावेश <net/ip.h>
+#समावेश <net/dsa.h>
+#समावेश <net/flow_dissector.h>
+#समावेश <net/gro.h>
+#समावेश <linux/uaccess.h>
+#समावेश <net/pkt_sched.h>
 
 __setup("ether=", netdev_boot_setup);
 
@@ -69,79 +70,79 @@ __setup("ether=", netdev_boot_setup);
  * @skb:	buffer to alter
  * @dev:	source device
  * @type:	Ethernet type field
- * @daddr: destination address (NULL leave destination address)
- * @saddr: source address (NULL use device source address)
+ * @daddr: destination address (शून्य leave destination address)
+ * @saddr: source address (शून्य use device source address)
  * @len:   packet length (<= skb->len)
  *
  *
  * Set the protocol type. For a packet of type ETH_P_802_3/2 we put the length
  * in here instead.
  */
-int eth_header(struct sk_buff *skb, struct net_device *dev,
-	       unsigned short type,
-	       const void *daddr, const void *saddr, unsigned int len)
-{
-	struct ethhdr *eth = skb_push(skb, ETH_HLEN);
+पूर्णांक eth_header(काष्ठा sk_buff *skb, काष्ठा net_device *dev,
+	       अचिन्हित लघु type,
+	       स्थिर व्योम *daddr, स्थिर व्योम *saddr, अचिन्हित पूर्णांक len)
+अणु
+	काष्ठा ethhdr *eth = skb_push(skb, ETH_HLEN);
 
-	if (type != ETH_P_802_3 && type != ETH_P_802_2)
+	अगर (type != ETH_P_802_3 && type != ETH_P_802_2)
 		eth->h_proto = htons(type);
-	else
+	अन्यथा
 		eth->h_proto = htons(len);
 
 	/*
 	 *      Set the source hardware address.
 	 */
 
-	if (!saddr)
+	अगर (!saddr)
 		saddr = dev->dev_addr;
-	memcpy(eth->h_source, saddr, ETH_ALEN);
+	स_नकल(eth->h_source, saddr, ETH_ALEN);
 
-	if (daddr) {
-		memcpy(eth->h_dest, daddr, ETH_ALEN);
-		return ETH_HLEN;
-	}
+	अगर (daddr) अणु
+		स_नकल(eth->h_dest, daddr, ETH_ALEN);
+		वापस ETH_HLEN;
+	पूर्ण
 
 	/*
 	 *      Anyway, the loopback-device should never use this function...
 	 */
 
-	if (dev->flags & (IFF_LOOPBACK | IFF_NOARP)) {
+	अगर (dev->flags & (IFF_LOOPBACK | IFF_NOARP)) अणु
 		eth_zero_addr(eth->h_dest);
-		return ETH_HLEN;
-	}
+		वापस ETH_HLEN;
+	पूर्ण
 
-	return -ETH_HLEN;
-}
+	वापस -ETH_HLEN;
+पूर्ण
 EXPORT_SYMBOL(eth_header);
 
 /**
- * eth_get_headlen - determine the length of header for an ethernet frame
- * @dev: pointer to network device
- * @data: pointer to start of frame
+ * eth_get_headlen - determine the length of header क्रम an ethernet frame
+ * @dev: poपूर्णांकer to network device
+ * @data: poपूर्णांकer to start of frame
  * @len: total length of frame
  *
- * Make a best effort attempt to pull the length for all of the headers for
+ * Make a best efक्रमt attempt to pull the length क्रम all of the headers क्रम
  * a given frame in a linear buffer.
  */
-u32 eth_get_headlen(const struct net_device *dev, const void *data, u32 len)
-{
-	const unsigned int flags = FLOW_DISSECTOR_F_PARSE_1ST_FRAG;
-	const struct ethhdr *eth = (const struct ethhdr *)data;
-	struct flow_keys_basic keys;
+u32 eth_get_headlen(स्थिर काष्ठा net_device *dev, स्थिर व्योम *data, u32 len)
+अणु
+	स्थिर अचिन्हित पूर्णांक flags = FLOW_DISSECTOR_F_PARSE_1ST_FRAG;
+	स्थिर काष्ठा ethhdr *eth = (स्थिर काष्ठा ethhdr *)data;
+	काष्ठा flow_keys_basic keys;
 
 	/* this should never happen, but better safe than sorry */
-	if (unlikely(len < sizeof(*eth)))
-		return len;
+	अगर (unlikely(len < माप(*eth)))
+		वापस len;
 
-	/* parse any remaining L2/L3 headers, check for L4 */
-	if (!skb_flow_dissect_flow_keys_basic(dev_net(dev), NULL, &keys, data,
-					      eth->h_proto, sizeof(*eth),
+	/* parse any reमुख्यing L2/L3 headers, check क्रम L4 */
+	अगर (!skb_flow_dissect_flow_keys_basic(dev_net(dev), शून्य, &keys, data,
+					      eth->h_proto, माप(*eth),
 					      len, flags))
-		return max_t(u32, keys.control.thoff, sizeof(*eth));
+		वापस max_t(u32, keys.control.thoff, माप(*eth));
 
-	/* parse for any L4 headers */
-	return min_t(u32, __skb_get_poff(NULL, data, &keys, len), len);
-}
+	/* parse क्रम any L4 headers */
+	वापस min_t(u32, __skb_get_poff(शून्य, data, &keys, len), len);
+पूर्ण
 EXPORT_SYMBOL(eth_get_headlen);
 
 /**
@@ -150,64 +151,64 @@ EXPORT_SYMBOL(eth_get_headlen);
  * @dev: receiving network device
  *
  * The rule here is that we
- * assume 802.3 if the type field is short enough to be a length.
- * This is normal practice and works for any 'now in use' protocol.
+ * assume 802.3 अगर the type field is लघु enough to be a length.
+ * This is normal practice and works क्रम any 'now in use' protocol.
  */
-__be16 eth_type_trans(struct sk_buff *skb, struct net_device *dev)
-{
-	unsigned short _service_access_point;
-	const unsigned short *sap;
-	const struct ethhdr *eth;
+__be16 eth_type_trans(काष्ठा sk_buff *skb, काष्ठा net_device *dev)
+अणु
+	अचिन्हित लघु _service_access_poपूर्णांक;
+	स्थिर अचिन्हित लघु *sap;
+	स्थिर काष्ठा ethhdr *eth;
 
 	skb->dev = dev;
 	skb_reset_mac_header(skb);
 
-	eth = (struct ethhdr *)skb->data;
-	skb_pull_inline(skb, ETH_HLEN);
+	eth = (काष्ठा ethhdr *)skb->data;
+	skb_pull_अंतरभूत(skb, ETH_HLEN);
 
-	if (unlikely(!ether_addr_equal_64bits(eth->h_dest,
-					      dev->dev_addr))) {
-		if (unlikely(is_multicast_ether_addr_64bits(eth->h_dest))) {
-			if (ether_addr_equal_64bits(eth->h_dest, dev->broadcast))
+	अगर (unlikely(!ether_addr_equal_64bits(eth->h_dest,
+					      dev->dev_addr))) अणु
+		अगर (unlikely(is_multicast_ether_addr_64bits(eth->h_dest))) अणु
+			अगर (ether_addr_equal_64bits(eth->h_dest, dev->broadcast))
 				skb->pkt_type = PACKET_BROADCAST;
-			else
+			अन्यथा
 				skb->pkt_type = PACKET_MULTICAST;
-		} else {
+		पूर्ण अन्यथा अणु
 			skb->pkt_type = PACKET_OTHERHOST;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	/*
-	 * Some variants of DSA tagging don't have an ethertype field
+	 * Some variants of DSA tagging करोn't have an ethertype field
 	 * at all, so we check here whether one of those tagging
-	 * variants has been configured on the receiving interface,
-	 * and if so, set skb->protocol without looking at the packet.
+	 * variants has been configured on the receiving पूर्णांकerface,
+	 * and अगर so, set skb->protocol without looking at the packet.
 	 * The DSA tagging protocol may be able to decode some but not all
-	 * traffic (for example only for management). In that case give it the
+	 * traffic (क्रम example only क्रम management). In that हाल give it the
 	 * option to filter the packets from which it can decode source port
-	 * information.
+	 * inक्रमmation.
 	 */
-	if (unlikely(netdev_uses_dsa(dev)) && dsa_can_decode(skb, dev))
-		return htons(ETH_P_XDSA);
+	अगर (unlikely(netdev_uses_dsa(dev)) && dsa_can_decode(skb, dev))
+		वापस htons(ETH_P_XDSA);
 
-	if (likely(eth_proto_is_802_3(eth->h_proto)))
-		return eth->h_proto;
+	अगर (likely(eth_proto_is_802_3(eth->h_proto)))
+		वापस eth->h_proto;
 
 	/*
-	 *      This is a magic hack to spot IPX packets. Older Novell breaks
+	 *      This is a magic hack to spot IPX packets. Older Novell अवरोधs
 	 *      the protocol design and runs IPX over 802.3 without an 802.2 LLC
-	 *      layer. We look for FFFF which isn't a used 802.2 SSAP/DSAP. This
-	 *      won't work for fault tolerant netware but does for the rest.
+	 *      layer. We look क्रम FFFF which isn't a used 802.2 SSAP/DSAP. This
+	 *      won't work क्रम fault tolerant netware but करोes क्रम the rest.
 	 */
-	sap = skb_header_pointer(skb, 0, sizeof(*sap), &_service_access_point);
-	if (sap && *sap == 0xFFFF)
-		return htons(ETH_P_802_3);
+	sap = skb_header_poपूर्णांकer(skb, 0, माप(*sap), &_service_access_poपूर्णांक);
+	अगर (sap && *sap == 0xFFFF)
+		वापस htons(ETH_P_802_3);
 
 	/*
 	 *      Real 802.2 LLC
 	 */
-	return htons(ETH_P_802_2);
-}
+	वापस htons(ETH_P_802_2);
+पूर्ण
 EXPORT_SYMBOL(eth_type_trans);
 
 /**
@@ -215,12 +216,12 @@ EXPORT_SYMBOL(eth_type_trans);
  * @skb: packet to extract header from
  * @haddr: destination buffer
  */
-int eth_header_parse(const struct sk_buff *skb, unsigned char *haddr)
-{
-	const struct ethhdr *eth = eth_hdr(skb);
-	memcpy(haddr, eth->h_source, ETH_ALEN);
-	return ETH_ALEN;
-}
+पूर्णांक eth_header_parse(स्थिर काष्ठा sk_buff *skb, अचिन्हित अक्षर *haddr)
+अणु
+	स्थिर काष्ठा ethhdr *eth = eth_hdr(skb);
+	स_नकल(haddr, eth->h_source, ETH_ALEN);
+	वापस ETH_ALEN;
+पूर्ण
 EXPORT_SYMBOL(eth_header_parse);
 
 /**
@@ -229,30 +230,30 @@ EXPORT_SYMBOL(eth_header_parse);
  * @hh: destination cache entry
  * @type: Ethernet type field
  *
- * Create an Ethernet header template from the neighbour.
+ * Create an Ethernet header ढाँचा from the neighbour.
  */
-int eth_header_cache(const struct neighbour *neigh, struct hh_cache *hh, __be16 type)
-{
-	struct ethhdr *eth;
-	const struct net_device *dev = neigh->dev;
+पूर्णांक eth_header_cache(स्थिर काष्ठा neighbour *neigh, काष्ठा hh_cache *hh, __be16 type)
+अणु
+	काष्ठा ethhdr *eth;
+	स्थिर काष्ठा net_device *dev = neigh->dev;
 
-	eth = (struct ethhdr *)
-	    (((u8 *) hh->hh_data) + (HH_DATA_OFF(sizeof(*eth))));
+	eth = (काष्ठा ethhdr *)
+	    (((u8 *) hh->hh_data) + (HH_DATA_OFF(माप(*eth))));
 
-	if (type == htons(ETH_P_802_3))
-		return -1;
+	अगर (type == htons(ETH_P_802_3))
+		वापस -1;
 
 	eth->h_proto = type;
-	memcpy(eth->h_source, dev->dev_addr, ETH_ALEN);
-	memcpy(eth->h_dest, neigh->ha, ETH_ALEN);
+	स_नकल(eth->h_source, dev->dev_addr, ETH_ALEN);
+	स_नकल(eth->h_dest, neigh->ha, ETH_ALEN);
 
 	/* Pairs with READ_ONCE() in neigh_resolve_output(),
 	 * neigh_hh_output() and neigh_update_hhs().
 	 */
 	smp_store_release(&hh->hh_len, ETH_HLEN);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(eth_header_cache);
 
 /**
@@ -261,44 +262,44 @@ EXPORT_SYMBOL(eth_header_cache);
  * @dev: network device
  * @haddr: new hardware address
  *
- * Called by Address Resolution module to notify changes in address.
+ * Called by Address Resolution module to notअगरy changes in address.
  */
-void eth_header_cache_update(struct hh_cache *hh,
-			     const struct net_device *dev,
-			     const unsigned char *haddr)
-{
-	memcpy(((u8 *) hh->hh_data) + HH_DATA_OFF(sizeof(struct ethhdr)),
+व्योम eth_header_cache_update(काष्ठा hh_cache *hh,
+			     स्थिर काष्ठा net_device *dev,
+			     स्थिर अचिन्हित अक्षर *haddr)
+अणु
+	स_नकल(((u8 *) hh->hh_data) + HH_DATA_OFF(माप(काष्ठा ethhdr)),
 	       haddr, ETH_ALEN);
-}
+पूर्ण
 EXPORT_SYMBOL(eth_header_cache_update);
 
 /**
  * eth_header_parse_protocol - extract protocol from L2 header
  * @skb: packet to extract protocol from
  */
-__be16 eth_header_parse_protocol(const struct sk_buff *skb)
-{
-	const struct ethhdr *eth = eth_hdr(skb);
+__be16 eth_header_parse_protocol(स्थिर काष्ठा sk_buff *skb)
+अणु
+	स्थिर काष्ठा ethhdr *eth = eth_hdr(skb);
 
-	return eth->h_proto;
-}
+	वापस eth->h_proto;
+पूर्ण
 EXPORT_SYMBOL(eth_header_parse_protocol);
 
 /**
- * eth_prepare_mac_addr_change - prepare for mac change
+ * eth_prepare_mac_addr_change - prepare क्रम mac change
  * @dev: network device
  * @p: socket address
  */
-int eth_prepare_mac_addr_change(struct net_device *dev, void *p)
-{
-	struct sockaddr *addr = p;
+पूर्णांक eth_prepare_mac_addr_change(काष्ठा net_device *dev, व्योम *p)
+अणु
+	काष्ठा sockaddr *addr = p;
 
-	if (!(dev->priv_flags & IFF_LIVE_ADDR_CHANGE) && netif_running(dev))
-		return -EBUSY;
-	if (!is_valid_ether_addr(addr->sa_data))
-		return -EADDRNOTAVAIL;
-	return 0;
-}
+	अगर (!(dev->priv_flags & IFF_LIVE_ADDR_CHANGE) && netअगर_running(dev))
+		वापस -EBUSY;
+	अगर (!is_valid_ether_addr(addr->sa_data))
+		वापस -EADDRNOTAVAIL;
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(eth_prepare_mac_addr_change);
 
 /**
@@ -306,12 +307,12 @@ EXPORT_SYMBOL(eth_prepare_mac_addr_change);
  * @dev: network device
  * @p: socket address
  */
-void eth_commit_mac_addr_change(struct net_device *dev, void *p)
-{
-	struct sockaddr *addr = p;
+व्योम eth_commit_mac_addr_change(काष्ठा net_device *dev, व्योम *p)
+अणु
+	काष्ठा sockaddr *addr = p;
 
-	memcpy(dev->dev_addr, addr->sa_data, ETH_ALEN);
-}
+	स_नकल(dev->dev_addr, addr->sa_data, ETH_ALEN);
+पूर्ण
 EXPORT_SYMBOL(eth_commit_mac_addr_change);
 
 /**
@@ -321,46 +322,46 @@ EXPORT_SYMBOL(eth_commit_mac_addr_change);
  *
  * Change hardware address of device.
  *
- * This doesn't change hardware matching, so needs to be overridden
- * for most real devices.
+ * This करोesn't change hardware matching, so needs to be overridden
+ * क्रम most real devices.
  */
-int eth_mac_addr(struct net_device *dev, void *p)
-{
-	int ret;
+पूर्णांक eth_mac_addr(काष्ठा net_device *dev, व्योम *p)
+अणु
+	पूर्णांक ret;
 
 	ret = eth_prepare_mac_addr_change(dev, p);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 	eth_commit_mac_addr_change(dev, p);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(eth_mac_addr);
 
-int eth_validate_addr(struct net_device *dev)
-{
-	if (!is_valid_ether_addr(dev->dev_addr))
-		return -EADDRNOTAVAIL;
+पूर्णांक eth_validate_addr(काष्ठा net_device *dev)
+अणु
+	अगर (!is_valid_ether_addr(dev->dev_addr))
+		वापस -EADDRNOTAVAIL;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(eth_validate_addr);
 
-const struct header_ops eth_header_ops ____cacheline_aligned = {
+स्थिर काष्ठा header_ops eth_header_ops ____cacheline_aligned = अणु
 	.create		= eth_header,
 	.parse		= eth_header_parse,
 	.cache		= eth_header_cache,
 	.cache_update	= eth_header_cache_update,
 	.parse_protocol	= eth_header_parse_protocol,
-};
+पूर्ण;
 
 /**
  * ether_setup - setup Ethernet network device
  * @dev: network device
  *
- * Fill in the fields of the device structure with Ethernet-generic values.
+ * Fill in the fields of the device काष्ठाure with Ethernet-generic values.
  */
-void ether_setup(struct net_device *dev)
-{
+व्योम ether_setup(काष्ठा net_device *dev)
+अणु
 	dev->header_ops		= &eth_header_ops;
 	dev->type		= ARPHRD_ETHER;
 	dev->hard_header_len 	= ETH_HLEN;
@@ -375,158 +376,158 @@ void ether_setup(struct net_device *dev)
 
 	eth_broadcast_addr(dev->broadcast);
 
-}
+पूर्ण
 EXPORT_SYMBOL(ether_setup);
 
 /**
  * alloc_etherdev_mqs - Allocates and sets up an Ethernet device
- * @sizeof_priv: Size of additional driver-private structure to be allocated
- *	for this Ethernet device
+ * @माप_priv: Size of additional driver-निजी काष्ठाure to be allocated
+ *	क्रम this Ethernet device
  * @txqs: The number of TX queues this device has.
  * @rxqs: The number of RX queues this device has.
  *
- * Fill in the fields of the device structure with Ethernet-generic
- * values. Basically does everything except registering the device.
+ * Fill in the fields of the device काष्ठाure with Ethernet-generic
+ * values. Basically करोes everything except रेजिस्टरing the device.
  *
- * Constructs a new net device, complete with a private data area of
- * size (sizeof_priv).  A 32-byte (not bit) alignment is enforced for
- * this private data area.
+ * Conकाष्ठाs a new net device, complete with a निजी data area of
+ * size (माप_priv).  A 32-byte (not bit) alignment is enक्रमced क्रम
+ * this निजी data area.
  */
 
-struct net_device *alloc_etherdev_mqs(int sizeof_priv, unsigned int txqs,
-				      unsigned int rxqs)
-{
-	return alloc_netdev_mqs(sizeof_priv, "eth%d", NET_NAME_UNKNOWN,
+काष्ठा net_device *alloc_etherdev_mqs(पूर्णांक माप_priv, अचिन्हित पूर्णांक txqs,
+				      अचिन्हित पूर्णांक rxqs)
+अणु
+	वापस alloc_netdev_mqs(माप_priv, "eth%d", NET_NAME_UNKNOWN,
 				ether_setup, txqs, rxqs);
-}
+पूर्ण
 EXPORT_SYMBOL(alloc_etherdev_mqs);
 
-ssize_t sysfs_format_mac(char *buf, const unsigned char *addr, int len)
-{
-	return scnprintf(buf, PAGE_SIZE, "%*phC\n", len, addr);
-}
-EXPORT_SYMBOL(sysfs_format_mac);
+sमाप_प्रकार sysfs_क्रमmat_mac(अक्षर *buf, स्थिर अचिन्हित अक्षर *addr, पूर्णांक len)
+अणु
+	वापस scnम_लिखो(buf, PAGE_SIZE, "%*phC\n", len, addr);
+पूर्ण
+EXPORT_SYMBOL(sysfs_क्रमmat_mac);
 
-struct sk_buff *eth_gro_receive(struct list_head *head, struct sk_buff *skb)
-{
-	const struct packet_offload *ptype;
-	unsigned int hlen, off_eth;
-	struct sk_buff *pp = NULL;
-	struct ethhdr *eh, *eh2;
-	struct sk_buff *p;
+काष्ठा sk_buff *eth_gro_receive(काष्ठा list_head *head, काष्ठा sk_buff *skb)
+अणु
+	स्थिर काष्ठा packet_offload *ptype;
+	अचिन्हित पूर्णांक hlen, off_eth;
+	काष्ठा sk_buff *pp = शून्य;
+	काष्ठा ethhdr *eh, *eh2;
+	काष्ठा sk_buff *p;
 	__be16 type;
-	int flush = 1;
+	पूर्णांक flush = 1;
 
 	off_eth = skb_gro_offset(skb);
-	hlen = off_eth + sizeof(*eh);
+	hlen = off_eth + माप(*eh);
 	eh = skb_gro_header_fast(skb, off_eth);
-	if (skb_gro_header_hard(skb, hlen)) {
+	अगर (skb_gro_header_hard(skb, hlen)) अणु
 		eh = skb_gro_header_slow(skb, hlen, off_eth);
-		if (unlikely(!eh))
-			goto out;
-	}
+		अगर (unlikely(!eh))
+			जाओ out;
+	पूर्ण
 
 	flush = 0;
 
-	list_for_each_entry(p, head, list) {
-		if (!NAPI_GRO_CB(p)->same_flow)
-			continue;
+	list_क्रम_each_entry(p, head, list) अणु
+		अगर (!NAPI_GRO_CB(p)->same_flow)
+			जारी;
 
-		eh2 = (struct ethhdr *)(p->data + off_eth);
-		if (compare_ether_header(eh, eh2)) {
+		eh2 = (काष्ठा ethhdr *)(p->data + off_eth);
+		अगर (compare_ether_header(eh, eh2)) अणु
 			NAPI_GRO_CB(p)->same_flow = 0;
-			continue;
-		}
-	}
+			जारी;
+		पूर्ण
+	पूर्ण
 
 	type = eh->h_proto;
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	ptype = gro_find_receive_by_type(type);
-	if (ptype == NULL) {
+	अगर (ptype == शून्य) अणु
 		flush = 1;
-		goto out_unlock;
-	}
+		जाओ out_unlock;
+	पूर्ण
 
-	skb_gro_pull(skb, sizeof(*eh));
-	skb_gro_postpull_rcsum(skb, eh, sizeof(*eh));
+	skb_gro_pull(skb, माप(*eh));
+	skb_gro_postpull_rcsum(skb, eh, माप(*eh));
 
 	pp = indirect_call_gro_receive_inet(ptype->callbacks.gro_receive,
 					    ipv6_gro_receive, inet_gro_receive,
 					    head, skb);
 
 out_unlock:
-	rcu_read_unlock();
+	rcu_पढ़ो_unlock();
 out:
 	skb_gro_flush_final(skb, pp, flush);
 
-	return pp;
-}
+	वापस pp;
+पूर्ण
 EXPORT_SYMBOL(eth_gro_receive);
 
-int eth_gro_complete(struct sk_buff *skb, int nhoff)
-{
-	struct ethhdr *eh = (struct ethhdr *)(skb->data + nhoff);
+पूर्णांक eth_gro_complete(काष्ठा sk_buff *skb, पूर्णांक nhoff)
+अणु
+	काष्ठा ethhdr *eh = (काष्ठा ethhdr *)(skb->data + nhoff);
 	__be16 type = eh->h_proto;
-	struct packet_offload *ptype;
-	int err = -ENOSYS;
+	काष्ठा packet_offload *ptype;
+	पूर्णांक err = -ENOSYS;
 
-	if (skb->encapsulation)
+	अगर (skb->encapsulation)
 		skb_set_inner_mac_header(skb, nhoff);
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	ptype = gro_find_complete_by_type(type);
-	if (ptype != NULL)
-		err = INDIRECT_CALL_INET(ptype->callbacks.gro_complete,
+	अगर (ptype != शून्य)
+		err = INसूचीECT_CALL_INET(ptype->callbacks.gro_complete,
 					 ipv6_gro_complete, inet_gro_complete,
-					 skb, nhoff + sizeof(*eh));
+					 skb, nhoff + माप(*eh));
 
-	rcu_read_unlock();
-	return err;
-}
+	rcu_पढ़ो_unlock();
+	वापस err;
+पूर्ण
 EXPORT_SYMBOL(eth_gro_complete);
 
-static struct packet_offload eth_packet_offload __read_mostly = {
+अटल काष्ठा packet_offload eth_packet_offload __पढ़ो_mostly = अणु
 	.type = cpu_to_be16(ETH_P_TEB),
 	.priority = 10,
-	.callbacks = {
+	.callbacks = अणु
 		.gro_receive = eth_gro_receive,
 		.gro_complete = eth_gro_complete,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static int __init eth_offload_init(void)
-{
+अटल पूर्णांक __init eth_offload_init(व्योम)
+अणु
 	dev_add_offload(&eth_packet_offload);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 fs_initcall(eth_offload_init);
 
-unsigned char * __weak arch_get_platform_mac_address(void)
-{
-	return NULL;
-}
+अचिन्हित अक्षर * __weak arch_get_platक्रमm_mac_address(व्योम)
+अणु
+	वापस शून्य;
+पूर्ण
 
-int eth_platform_get_mac_address(struct device *dev, u8 *mac_addr)
-{
-	unsigned char *addr;
-	int ret;
+पूर्णांक eth_platक्रमm_get_mac_address(काष्ठा device *dev, u8 *mac_addr)
+अणु
+	अचिन्हित अक्षर *addr;
+	पूर्णांक ret;
 
 	ret = of_get_mac_address(dev->of_node, mac_addr);
-	if (!ret)
-		return 0;
+	अगर (!ret)
+		वापस 0;
 
-	addr = arch_get_platform_mac_address();
-	if (!addr)
-		return -ENODEV;
+	addr = arch_get_platक्रमm_mac_address();
+	अगर (!addr)
+		वापस -ENODEV;
 
 	ether_addr_copy(mac_addr, addr);
 
-	return 0;
-}
-EXPORT_SYMBOL(eth_platform_get_mac_address);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL(eth_platक्रमm_get_mac_address);
 
 /**
  * nvmem_get_mac_address - Obtain the MAC address from an nvmem cell named
@@ -537,30 +538,30 @@ EXPORT_SYMBOL(eth_platform_get_mac_address);
  *
  * Returns 0 on success or a negative error number on failure.
  */
-int nvmem_get_mac_address(struct device *dev, void *addrbuf)
-{
-	struct nvmem_cell *cell;
-	const void *mac;
-	size_t len;
+पूर्णांक nvmem_get_mac_address(काष्ठा device *dev, व्योम *addrbuf)
+अणु
+	काष्ठा nvmem_cell *cell;
+	स्थिर व्योम *mac;
+	माप_प्रकार len;
 
 	cell = nvmem_cell_get(dev, "mac-address");
-	if (IS_ERR(cell))
-		return PTR_ERR(cell);
+	अगर (IS_ERR(cell))
+		वापस PTR_ERR(cell);
 
-	mac = nvmem_cell_read(cell, &len);
+	mac = nvmem_cell_पढ़ो(cell, &len);
 	nvmem_cell_put(cell);
 
-	if (IS_ERR(mac))
-		return PTR_ERR(mac);
+	अगर (IS_ERR(mac))
+		वापस PTR_ERR(mac);
 
-	if (len != ETH_ALEN || !is_valid_ether_addr(mac)) {
-		kfree(mac);
-		return -EINVAL;
-	}
+	अगर (len != ETH_ALEN || !is_valid_ether_addr(mac)) अणु
+		kमुक्त(mac);
+		वापस -EINVAL;
+	पूर्ण
 
 	ether_addr_copy(addrbuf, mac);
-	kfree(mac);
+	kमुक्त(mac);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(nvmem_get_mac_address);

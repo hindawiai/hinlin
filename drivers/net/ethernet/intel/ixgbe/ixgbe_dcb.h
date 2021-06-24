@@ -1,65 +1,66 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /* Copyright(c) 1999 - 2018 Intel Corporation. */
 
-#ifndef _DCB_CONFIG_H_
-#define _DCB_CONFIG_H_
+#अगर_अघोषित _DCB_CONFIG_H_
+#घोषणा _DCB_CONFIG_H_
 
-#include <linux/dcbnl.h>
-#include "ixgbe_type.h"
+#समावेश <linux/dcbnl.h>
+#समावेश "ixgbe_type.h"
 
-/* DCB data structures */
+/* DCB data काष्ठाures */
 
-#define IXGBE_MAX_PACKET_BUFFERS 8
-#define MAX_USER_PRIORITY        8
-#define MAX_BW_GROUP             8
-#define BW_PERCENT               100
+#घोषणा IXGBE_MAX_PACKET_BUFFERS 8
+#घोषणा MAX_USER_PRIORITY        8
+#घोषणा MAX_BW_GROUP             8
+#घोषणा BW_PERCENT               100
 
-#define DCB_TX_CONFIG            0
-#define DCB_RX_CONFIG            1
+#घोषणा DCB_TX_CONFIG            0
+#घोषणा DCB_RX_CONFIG            1
 
 /* DCB error Codes */
-#define DCB_SUCCESS              0
-#define DCB_ERR_CONFIG           -1
-#define DCB_ERR_PARAM            -2
+#घोषणा DCB_SUCCESS              0
+#घोषणा DCB_ERR_CONFIG           -1
+#घोषणा DCB_ERR_PARAM            -2
 
 /* Transmit and receive Errors */
 /* Error in bandwidth group allocation */
-#define DCB_ERR_BW_GROUP        -3
+#घोषणा DCB_ERR_BW_GROUP        -3
 /* Error in traffic class bandwidth allocation */
-#define DCB_ERR_TC_BW           -4
+#घोषणा DCB_ERR_TC_BW           -4
 /* Traffic class has both link strict and group strict enabled */
-#define DCB_ERR_LS_GS           -5
+#घोषणा DCB_ERR_LS_GS           -5
 /* Link strict traffic class has non zero bandwidth */
-#define DCB_ERR_LS_BW_NONZERO   -6
+#घोषणा DCB_ERR_LS_BW_NONZERO   -6
 /* Link strict bandwidth group has non zero bandwidth */
-#define DCB_ERR_LS_BWG_NONZERO  -7
+#घोषणा DCB_ERR_LS_BWG_NONZERO  -7
 /*  Traffic class has zero bandwidth */
-#define DCB_ERR_TC_BW_ZERO      -8
+#घोषणा DCB_ERR_TC_BW_ZERO      -8
 
-#define DCB_NOT_IMPLEMENTED      0x7FFFFFFF
+#घोषणा DCB_NOT_IMPLEMENTED      0x7FFFFFFF
 
-struct dcb_pfc_tc_debug {
+काष्ठा dcb_pfc_tc_debug अणु
 	u8  tc;
-	u8  pause_status;
-	u64 pause_quanta;
-};
+	u8  छोड़ो_status;
+	u64 छोड़ो_quanta;
+पूर्ण;
 
-enum strict_prio_type {
+क्रमागत strict_prio_type अणु
 	prio_none = 0,
 	prio_group,
 	prio_link
-};
+पूर्ण;
 
 /* DCB capability definitions */
-#define IXGBE_DCB_PG_SUPPORT        0x00000001
-#define IXGBE_DCB_PFC_SUPPORT       0x00000002
-#define IXGBE_DCB_BCN_SUPPORT       0x00000004
-#define IXGBE_DCB_UP2TC_SUPPORT     0x00000008
-#define IXGBE_DCB_GSP_SUPPORT       0x00000010
+#घोषणा IXGBE_DCB_PG_SUPPORT        0x00000001
+#घोषणा IXGBE_DCB_PFC_SUPPORT       0x00000002
+#घोषणा IXGBE_DCB_BCN_SUPPORT       0x00000004
+#घोषणा IXGBE_DCB_UP2TC_SUPPORT     0x00000008
+#घोषणा IXGBE_DCB_GSP_SUPPORT       0x00000010
 
-#define IXGBE_DCB_8_TC_SUPPORT      0x80
+#घोषणा IXGBE_DCB_8_TC_SUPPORT      0x80
 
-struct dcb_support {
+काष्ठा dcb_support अणु
 	/* DCB capabilities */
 	u32 capabilities;
 
@@ -68,79 +69,79 @@ struct dcb_support {
 	 */
 	u8  traffic_classes;
 	u8  pfc_traffic_classes;
-};
+पूर्ण;
 
 /* Traffic class bandwidth allocation per direction */
-struct tc_bw_alloc {
+काष्ठा tc_bw_alloc अणु
 	u8 bwg_id;		  /* Bandwidth Group (BWG) ID */
 	u8 bwg_percent;		  /* % of BWG's bandwidth */
 	u8 link_percent;	  /* % of link bandwidth */
-	u8 up_to_tc_bitmap;	  /* User Priority to Traffic Class mapping */
+	u8 up_to_tc_biपंचांगap;	  /* User Priority to Traffic Class mapping */
 	u16 data_credits_refill;  /* Credit refill amount in 64B granularity */
-	u16 data_credits_max;	  /* Max credits for a configured packet buffer
+	u16 data_credits_max;	  /* Max credits क्रम a configured packet buffer
 				   * in 64B granularity.*/
-	enum strict_prio_type prio_type; /* Link or Group Strict Priority */
-};
+	क्रमागत strict_prio_type prio_type; /* Link or Group Strict Priority */
+पूर्ण;
 
-enum dcb_pfc_type {
+क्रमागत dcb_pfc_type अणु
 	pfc_disabled = 0,
 	pfc_enabled_full,
 	pfc_enabled_tx,
 	pfc_enabled_rx
-};
+पूर्ण;
 
 /* Traffic class configuration */
-struct tc_configuration {
-	struct tc_bw_alloc path[2]; /* One each for Tx/Rx */
-	enum dcb_pfc_type  dcb_pfc; /* Class based flow control setting */
+काष्ठा tc_configuration अणु
+	काष्ठा tc_bw_alloc path[2]; /* One each क्रम Tx/Rx */
+	क्रमागत dcb_pfc_type  dcb_pfc; /* Class based flow control setting */
 
 	u16 desc_credits_max; /* For Tx Descriptor arbitration */
 	u8 tc; /* Traffic class (TC) */
-};
+पूर्ण;
 
-struct dcb_num_tcs {
+काष्ठा dcb_num_tcs अणु
 	u8 pg_tcs;
 	u8 pfc_tcs;
-};
+पूर्ण;
 
-struct ixgbe_dcb_config {
-	struct dcb_support support;
-	struct dcb_num_tcs num_tcs;
-	struct tc_configuration tc_config[MAX_TRAFFIC_CLASS];
-	u8     bw_percentage[2][MAX_BW_GROUP]; /* One each for Tx/Rx */
+काष्ठा ixgbe_dcb_config अणु
+	काष्ठा dcb_support support;
+	काष्ठा dcb_num_tcs num_tcs;
+	काष्ठा tc_configuration tc_config[MAX_TRAFFIC_CLASS];
+	u8     bw_percentage[2][MAX_BW_GROUP]; /* One each क्रम Tx/Rx */
 	bool   pfc_mode_enable;
 
-	u32  dcb_cfg_version; /* Not used...OS-specific? */
+	u32  dcb_cfg_version; /* Not used...OS-specअगरic? */
 	u32  link_speed; /* For bandwidth allocation validation purpose */
-};
+पूर्ण;
 
 /* DCB driver APIs */
-void ixgbe_dcb_unpack_pfc(struct ixgbe_dcb_config *cfg, u8 *pfc_en);
-void ixgbe_dcb_unpack_refill(struct ixgbe_dcb_config *, int, u16 *);
-void ixgbe_dcb_unpack_max(struct ixgbe_dcb_config *, u16 *);
-void ixgbe_dcb_unpack_bwgid(struct ixgbe_dcb_config *, int, u8 *);
-void ixgbe_dcb_unpack_prio(struct ixgbe_dcb_config *, int, u8 *);
-void ixgbe_dcb_unpack_map(struct ixgbe_dcb_config *, int, u8 *);
-u8 ixgbe_dcb_get_tc_from_up(struct ixgbe_dcb_config *, int, u8);
+व्योम ixgbe_dcb_unpack_pfc(काष्ठा ixgbe_dcb_config *cfg, u8 *pfc_en);
+व्योम ixgbe_dcb_unpack_refill(काष्ठा ixgbe_dcb_config *, पूर्णांक, u16 *);
+व्योम ixgbe_dcb_unpack_max(काष्ठा ixgbe_dcb_config *, u16 *);
+व्योम ixgbe_dcb_unpack_bwgid(काष्ठा ixgbe_dcb_config *, पूर्णांक, u8 *);
+व्योम ixgbe_dcb_unpack_prio(काष्ठा ixgbe_dcb_config *, पूर्णांक, u8 *);
+व्योम ixgbe_dcb_unpack_map(काष्ठा ixgbe_dcb_config *, पूर्णांक, u8 *);
+u8 ixgbe_dcb_get_tc_from_up(काष्ठा ixgbe_dcb_config *, पूर्णांक, u8);
 
 /* DCB credits calculation */
-s32 ixgbe_dcb_calculate_tc_credits(struct ixgbe_hw *,
-				   struct ixgbe_dcb_config *, int, u8);
+s32 ixgbe_dcb_calculate_tc_credits(काष्ठा ixgbe_hw *,
+				   काष्ठा ixgbe_dcb_config *, पूर्णांक, u8);
 
 /* DCB hw initialization */
-s32 ixgbe_dcb_hw_ets(struct ixgbe_hw *hw, struct ieee_ets *ets, int max);
-s32 ixgbe_dcb_hw_ets_config(struct ixgbe_hw *hw, u16 *refill, u16 *max,
+s32 ixgbe_dcb_hw_ets(काष्ठा ixgbe_hw *hw, काष्ठा ieee_ets *ets, पूर्णांक max);
+s32 ixgbe_dcb_hw_ets_config(काष्ठा ixgbe_hw *hw, u16 *refill, u16 *max,
 			    u8 *bwg_id, u8 *prio_type, u8 *tc_prio);
-s32 ixgbe_dcb_hw_pfc_config(struct ixgbe_hw *hw, u8 pfc_en, u8 *tc_prio);
-s32 ixgbe_dcb_hw_config(struct ixgbe_hw *, struct ixgbe_dcb_config *);
+s32 ixgbe_dcb_hw_pfc_config(काष्ठा ixgbe_hw *hw, u8 pfc_en, u8 *tc_prio);
+s32 ixgbe_dcb_hw_config(काष्ठा ixgbe_hw *, काष्ठा ixgbe_dcb_config *);
 
-void ixgbe_dcb_read_rtrup2tc(struct ixgbe_hw *hw, u8 *map);
+व्योम ixgbe_dcb_पढ़ो_rtrup2tc(काष्ठा ixgbe_hw *hw, u8 *map);
 
-/* DCB definitions for credit calculation */
-#define DCB_CREDIT_QUANTUM	64   /* DCB Quantum */
-#define MAX_CREDIT_REFILL       511  /* 0x1FF * 64B = 32704B */
-#define DCB_MAX_TSO_SIZE        (32*1024) /* MAX TSO packet size supported in DCB mode */
-#define MINIMUM_CREDIT_FOR_TSO  (DCB_MAX_TSO_SIZE/64 + 1) /* 513 for 32KB TSO packet */
-#define MAX_CREDIT              4095 /* Maximum credit supported: 256KB * 1204 / 64B */
+/* DCB definitions क्रम credit calculation */
+#घोषणा DCB_CREDIT_QUANTUM	64   /* DCB Quantum */
+#घोषणा MAX_CREDIT_REFILL       511  /* 0x1FF * 64B = 32704B */
+#घोषणा DCB_MAX_TSO_SIZE        (32*1024) /* MAX TSO packet size supported in DCB mode */
+#घोषणा MINIMUM_CREDIT_FOR_TSO  (DCB_MAX_TSO_SIZE/64 + 1) /* 513 क्रम 32KB TSO packet */
+#घोषणा MAX_CREDIT              4095 /* Maximum credit supported: 256KB * 1204 / 64B */
 
-#endif /* _DCB_CONFIG_H */
+#पूर्ण_अगर /* _DCB_CONFIG_H */

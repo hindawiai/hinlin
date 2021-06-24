@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2012-16 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -23,34 +24,34 @@
  *
  */
 
-#include "dce_transform.h"
-#include "reg_helper.h"
-#include "opp.h"
-#include "basics/conversion.h"
-#include "dc.h"
+#समावेश "dce_transform.h"
+#समावेश "reg_helper.h"
+#समावेश "opp.h"
+#समावेश "basics/conversion.h"
+#समावेश "dc.h"
 
-#define REG(reg) \
+#घोषणा REG(reg) \
 	(xfm_dce->regs->reg)
 
-#undef FN
-#define FN(reg_name, field_name) \
-	xfm_dce->xfm_shift->field_name, xfm_dce->xfm_mask->field_name
+#अघोषित FN
+#घोषणा FN(reg_name, field_name) \
+	xfm_dce->xfm_shअगरt->field_name, xfm_dce->xfm_mask->field_name
 
-#define CTX \
+#घोषणा CTX \
 	xfm_dce->base.ctx
-#define DC_LOGGER \
+#घोषणा DC_LOGGER \
 	xfm_dce->base.ctx->logger
 
-#define IDENTITY_RATIO(ratio) (dc_fixpt_u2d19(ratio) == (1 << 19))
-#define GAMUT_MATRIX_SIZE 12
-#define SCL_PHASES 16
+#घोषणा IDENTITY_RATIO(ratio) (dc_fixpt_u2d19(ratio) == (1 << 19))
+#घोषणा GAMUT_MATRIX_SIZE 12
+#घोषणा SCL_PHASES 16
 
-enum dcp_out_trunc_round_mode {
+क्रमागत dcp_out_trunc_round_mode अणु
 	DCP_OUT_TRUNC_ROUND_MODE_TRUNCATE,
 	DCP_OUT_TRUNC_ROUND_MODE_ROUND
-};
+पूर्ण;
 
-enum dcp_out_trunc_round_depth {
+क्रमागत dcp_out_trunc_round_depth अणु
 	DCP_OUT_TRUNC_ROUND_DEPTH_14BIT,
 	DCP_OUT_TRUNC_ROUND_DEPTH_13BIT,
 	DCP_OUT_TRUNC_ROUND_DEPTH_12BIT,
@@ -58,143 +59,143 @@ enum dcp_out_trunc_round_depth {
 	DCP_OUT_TRUNC_ROUND_DEPTH_10BIT,
 	DCP_OUT_TRUNC_ROUND_DEPTH_9BIT,
 	DCP_OUT_TRUNC_ROUND_DEPTH_8BIT
-};
+पूर्ण;
 
-/*  defines the various methods of bit reduction available for use */
-enum dcp_bit_depth_reduction_mode {
+/*  defines the various methods of bit reduction available क्रम use */
+क्रमागत dcp_bit_depth_reduction_mode अणु
 	DCP_BIT_DEPTH_REDUCTION_MODE_DITHER,
 	DCP_BIT_DEPTH_REDUCTION_MODE_ROUND,
 	DCP_BIT_DEPTH_REDUCTION_MODE_TRUNCATE,
 	DCP_BIT_DEPTH_REDUCTION_MODE_DISABLED,
 	DCP_BIT_DEPTH_REDUCTION_MODE_INVALID
-};
+पूर्ण;
 
-enum dcp_spatial_dither_mode {
+क्रमागत dcp_spatial_dither_mode अणु
 	DCP_SPATIAL_DITHER_MODE_AAAA,
 	DCP_SPATIAL_DITHER_MODE_A_AA_A,
 	DCP_SPATIAL_DITHER_MODE_AABBAABB,
 	DCP_SPATIAL_DITHER_MODE_AABBCCAABBCC,
 	DCP_SPATIAL_DITHER_MODE_INVALID
-};
+पूर्ण;
 
-enum dcp_spatial_dither_depth {
+क्रमागत dcp_spatial_dither_depth अणु
 	DCP_SPATIAL_DITHER_DEPTH_30BPP,
 	DCP_SPATIAL_DITHER_DEPTH_24BPP
-};
+पूर्ण;
 
-enum csc_color_mode {
+क्रमागत csc_color_mode अणु
 	/* 00 - BITS2:0 Bypass */
 	CSC_COLOR_MODE_GRAPHICS_BYPASS,
 	/* 01 - hard coded coefficient TV RGB */
 	CSC_COLOR_MODE_GRAPHICS_PREDEFINED,
 	/* 04 - programmable OUTPUT CSC coefficient */
 	CSC_COLOR_MODE_GRAPHICS_OUTPUT_CSC,
-};
+पूर्ण;
 
-enum grph_color_adjust_option {
+क्रमागत grph_color_adjust_option अणु
 	GRPH_COLOR_MATRIX_HW_DEFAULT = 1,
 	GRPH_COLOR_MATRIX_SW
-};
+पूर्ण;
 
-static const struct out_csc_color_matrix global_color_matrix[] = {
-{ COLOR_SPACE_SRGB,
-	{ 0x2000, 0, 0, 0, 0, 0x2000, 0, 0, 0, 0, 0x2000, 0} },
-{ COLOR_SPACE_SRGB_LIMITED,
-	{ 0x1B60, 0, 0, 0x200, 0, 0x1B60, 0, 0x200, 0, 0, 0x1B60, 0x200} },
-{ COLOR_SPACE_YCBCR601,
-	{ 0xE00, 0xF447, 0xFDB9, 0x1000, 0x82F, 0x1012, 0x31F, 0x200, 0xFB47,
-		0xF6B9, 0xE00, 0x1000} },
-{ COLOR_SPACE_YCBCR709, { 0xE00, 0xF349, 0xFEB7, 0x1000, 0x5D2, 0x1394, 0x1FA,
-	0x200, 0xFCCB, 0xF535, 0xE00, 0x1000} },
+अटल स्थिर काष्ठा out_csc_color_matrix global_color_matrix[] = अणु
+अणु COLOR_SPACE_SRGB,
+	अणु 0x2000, 0, 0, 0, 0, 0x2000, 0, 0, 0, 0, 0x2000, 0पूर्ण पूर्ण,
+अणु COLOR_SPACE_SRGB_LIMITED,
+	अणु 0x1B60, 0, 0, 0x200, 0, 0x1B60, 0, 0x200, 0, 0, 0x1B60, 0x200पूर्ण पूर्ण,
+अणु COLOR_SPACE_YCBCR601,
+	अणु 0xE00, 0xF447, 0xFDB9, 0x1000, 0x82F, 0x1012, 0x31F, 0x200, 0xFB47,
+		0xF6B9, 0xE00, 0x1000पूर्ण पूर्ण,
+अणु COLOR_SPACE_YCBCR709, अणु 0xE00, 0xF349, 0xFEB7, 0x1000, 0x5D2, 0x1394, 0x1FA,
+	0x200, 0xFCCB, 0xF535, 0xE00, 0x1000पूर्ण पूर्ण,
 /* TODO: correct values below */
-{ COLOR_SPACE_YCBCR601_LIMITED, { 0xE00, 0xF447, 0xFDB9, 0x1000, 0x991,
-	0x12C9, 0x3A6, 0x200, 0xFB47, 0xF6B9, 0xE00, 0x1000} },
-{ COLOR_SPACE_YCBCR709_LIMITED, { 0xE00, 0xF349, 0xFEB7, 0x1000, 0x6CE, 0x16E3,
-	0x24F, 0x200, 0xFCCB, 0xF535, 0xE00, 0x1000} }
-};
+अणु COLOR_SPACE_YCBCR601_LIMITED, अणु 0xE00, 0xF447, 0xFDB9, 0x1000, 0x991,
+	0x12C9, 0x3A6, 0x200, 0xFB47, 0xF6B9, 0xE00, 0x1000पूर्ण पूर्ण,
+अणु COLOR_SPACE_YCBCR709_LIMITED, अणु 0xE00, 0xF349, 0xFEB7, 0x1000, 0x6CE, 0x16E3,
+	0x24F, 0x200, 0xFCCB, 0xF535, 0xE00, 0x1000पूर्ण पूर्ण
+पूर्ण;
 
-static bool setup_scaling_configuration(
-	struct dce_transform *xfm_dce,
-	const struct scaler_data *data)
-{
+अटल bool setup_scaling_configuration(
+	काष्ठा dce_transक्रमm *xfm_dce,
+	स्थिर काष्ठा scaler_data *data)
+अणु
 	REG_SET(SCL_BYPASS_CONTROL, 0, SCL_BYPASS_MODE, 0);
 
-	if (data->taps.h_taps + data->taps.v_taps <= 2) {
+	अगर (data->taps.h_taps + data->taps.v_taps <= 2) अणु
 		/* Set bypass */
-		if (xfm_dce->xfm_mask->SCL_PSCL_EN != 0)
+		अगर (xfm_dce->xfm_mask->SCL_PSCL_EN != 0)
 			REG_UPDATE_2(SCL_MODE, SCL_MODE, 0, SCL_PSCL_EN, 0);
-		else
+		अन्यथा
 			REG_UPDATE(SCL_MODE, SCL_MODE, 0);
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
 	REG_SET_2(SCL_TAP_CONTROL, 0,
 			SCL_H_NUM_OF_TAPS, data->taps.h_taps - 1,
 			SCL_V_NUM_OF_TAPS, data->taps.v_taps - 1);
 
-	if (data->format <= PIXEL_FORMAT_GRPH_END)
+	अगर (data->क्रमmat <= PIXEL_FORMAT_GRPH_END)
 		REG_UPDATE(SCL_MODE, SCL_MODE, 1);
-	else
+	अन्यथा
 		REG_UPDATE(SCL_MODE, SCL_MODE, 2);
 
-	if (xfm_dce->xfm_mask->SCL_PSCL_EN != 0)
+	अगर (xfm_dce->xfm_mask->SCL_PSCL_EN != 0)
 		REG_UPDATE(SCL_MODE, SCL_PSCL_EN, 1);
 
 	/* 1 - Replace out of bound pixels with edge */
 	REG_SET(SCL_CONTROL, 0, SCL_BOUNDARY_MODE, 1);
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-#if defined(CONFIG_DRM_AMD_DC_SI)
-static bool dce60_setup_scaling_configuration(
-	struct dce_transform *xfm_dce,
-	const struct scaler_data *data)
-{
+#अगर defined(CONFIG_DRM_AMD_DC_SI)
+अटल bool dce60_setup_scaling_configuration(
+	काष्ठा dce_transक्रमm *xfm_dce,
+	स्थिर काष्ठा scaler_data *data)
+अणु
 	REG_SET(SCL_BYPASS_CONTROL, 0, SCL_BYPASS_MODE, 0);
 
-	if (data->taps.h_taps + data->taps.v_taps <= 2) {
+	अगर (data->taps.h_taps + data->taps.v_taps <= 2) अणु
 		/* Set bypass */
 
-		/* DCE6 has no SCL_MODE register, skip scale mode programming */
+		/* DCE6 has no SCL_MODE रेजिस्टर, skip scale mode programming */
 
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
 	REG_SET_2(SCL_TAP_CONTROL, 0,
 			SCL_H_NUM_OF_TAPS, data->taps.h_taps - 1,
 			SCL_V_NUM_OF_TAPS, data->taps.v_taps - 1);
 
-	/* DCE6 has no SCL_MODE register, skip scale mode programming */
+	/* DCE6 has no SCL_MODE रेजिस्टर, skip scale mode programming */
 
 	/* DCE6 has no SCL_BOUNDARY_MODE bit, skip replace out of bound pixels */
 
-	return true;
-}
-#endif
+	वापस true;
+पूर्ण
+#पूर्ण_अगर
 
-static void program_overscan(
-		struct dce_transform *xfm_dce,
-		const struct scaler_data *data)
-{
-	int overscan_right = data->h_active
+अटल व्योम program_overscan(
+		काष्ठा dce_transक्रमm *xfm_dce,
+		स्थिर काष्ठा scaler_data *data)
+अणु
+	पूर्णांक overscan_right = data->h_active
 			- data->recout.x - data->recout.width;
-	int overscan_bottom = data->v_active
+	पूर्णांक overscan_bottom = data->v_active
 			- data->recout.y - data->recout.height;
 
-	if (xfm_dce->base.ctx->dc->debug.visual_confirm != VISUAL_CONFIRM_DISABLE) {
+	अगर (xfm_dce->base.ctx->dc->debug.visual_confirm != VISUAL_CONFIRM_DISABLE) अणु
 		overscan_bottom += 2;
 		overscan_right += 2;
-	}
+	पूर्ण
 
-	if (overscan_right < 0) {
+	अगर (overscan_right < 0) अणु
 		BREAK_TO_DEBUGGER();
 		overscan_right = 0;
-	}
-	if (overscan_bottom < 0) {
+	पूर्ण
+	अगर (overscan_bottom < 0) अणु
 		BREAK_TO_DEBUGGER();
 		overscan_bottom = 0;
-	}
+	पूर्ण
 
 	REG_SET_2(EXT_OVERSCAN_LEFT_RIGHT, 0,
 			EXT_OVERSCAN_LEFT, data->recout.x,
@@ -202,67 +203,67 @@ static void program_overscan(
 	REG_SET_2(EXT_OVERSCAN_TOP_BOTTOM, 0,
 			EXT_OVERSCAN_TOP, data->recout.y,
 			EXT_OVERSCAN_BOTTOM, overscan_bottom);
-}
+पूर्ण
 
-static void program_multi_taps_filter(
-	struct dce_transform *xfm_dce,
-	int taps,
-	const uint16_t *coeffs,
-	enum ram_filter_type filter_type)
-{
-	int phase, pair;
-	int array_idx = 0;
-	int taps_pairs = (taps + 1) / 2;
-	int phases_to_program = SCL_PHASES / 2 + 1;
+अटल व्योम program_multi_taps_filter(
+	काष्ठा dce_transक्रमm *xfm_dce,
+	पूर्णांक taps,
+	स्थिर uपूर्णांक16_t *coeffs,
+	क्रमागत ram_filter_type filter_type)
+अणु
+	पूर्णांक phase, pair;
+	पूर्णांक array_idx = 0;
+	पूर्णांक taps_pairs = (taps + 1) / 2;
+	पूर्णांक phases_to_program = SCL_PHASES / 2 + 1;
 
-	uint32_t power_ctl = 0;
+	uपूर्णांक32_t घातer_ctl = 0;
 
-	if (!coeffs)
-		return;
+	अगर (!coeffs)
+		वापस;
 
-	/*We need to disable power gating on coeff memory to do programming*/
-	if (REG(DCFE_MEM_PWR_CTRL)) {
-		power_ctl = REG_READ(DCFE_MEM_PWR_CTRL);
-		REG_SET(DCFE_MEM_PWR_CTRL, power_ctl, SCL_COEFF_MEM_PWR_DIS, 1);
+	/*We need to disable घातer gating on coeff memory to करो programming*/
+	अगर (REG(DCFE_MEM_PWR_CTRL)) अणु
+		घातer_ctl = REG_READ(DCFE_MEM_PWR_CTRL);
+		REG_SET(DCFE_MEM_PWR_CTRL, घातer_ctl, SCL_COEFF_MEM_PWR_DIS, 1);
 
 		REG_WAIT(DCFE_MEM_PWR_STATUS, SCL_COEFF_MEM_PWR_STATE, 0, 1, 10);
-	}
-	for (phase = 0; phase < phases_to_program; phase++) {
+	पूर्ण
+	क्रम (phase = 0; phase < phases_to_program; phase++) अणु
 		/*we always program N/2 + 1 phases, total phases N, but N/2-1 are just mirror
-		phase 0 is unique and phase N/2 is unique if N is even*/
-		for (pair = 0; pair < taps_pairs; pair++) {
-			uint16_t odd_coeff = 0;
-			uint16_t even_coeff = coeffs[array_idx];
+		phase 0 is unique and phase N/2 is unique अगर N is even*/
+		क्रम (pair = 0; pair < taps_pairs; pair++) अणु
+			uपूर्णांक16_t odd_coeff = 0;
+			uपूर्णांक16_t even_coeff = coeffs[array_idx];
 
 			REG_SET_3(SCL_COEF_RAM_SELECT, 0,
 					SCL_C_RAM_FILTER_TYPE, filter_type,
 					SCL_C_RAM_PHASE, phase,
 					SCL_C_RAM_TAP_PAIR_IDX, pair);
 
-			if (taps % 2 && pair == taps_pairs - 1)
+			अगर (taps % 2 && pair == taps_pairs - 1)
 				array_idx++;
-			else {
+			अन्यथा अणु
 				odd_coeff = coeffs[array_idx + 1];
 				array_idx += 2;
-			}
+			पूर्ण
 
 			REG_SET_4(SCL_COEF_RAM_TAP_DATA, 0,
 					SCL_C_RAM_EVEN_TAP_COEF_EN, 1,
 					SCL_C_RAM_EVEN_TAP_COEF, even_coeff,
 					SCL_C_RAM_ODD_TAP_COEF_EN, 1,
 					SCL_C_RAM_ODD_TAP_COEF, odd_coeff);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	/*We need to restore power gating on coeff memory to initial state*/
-	if (REG(DCFE_MEM_PWR_CTRL))
-		REG_WRITE(DCFE_MEM_PWR_CTRL, power_ctl);
-}
+	/*We need to restore घातer gating on coeff memory to initial state*/
+	अगर (REG(DCFE_MEM_PWR_CTRL))
+		REG_WRITE(DCFE_MEM_PWR_CTRL, घातer_ctl);
+पूर्ण
 
-static void program_viewport(
-	struct dce_transform *xfm_dce,
-	const struct rect *view_port)
-{
+अटल व्योम program_viewport(
+	काष्ठा dce_transक्रमm *xfm_dce,
+	स्थिर काष्ठा rect *view_port)
+अणु
 	REG_SET_2(VIEWPORT_START, 0,
 			VIEWPORT_X_START, view_port->x,
 			VIEWPORT_Y_START, view_port->y);
@@ -272,147 +273,147 @@ static void program_viewport(
 			VIEWPORT_WIDTH, view_port->width);
 
 	/* TODO: add stereo support */
-}
+पूर्ण
 
-static void calculate_inits(
-	struct dce_transform *xfm_dce,
-	const struct scaler_data *data,
-	struct scl_ratios_inits *inits)
-{
-	struct fixed31_32 h_init;
-	struct fixed31_32 v_init;
+अटल व्योम calculate_inits(
+	काष्ठा dce_transक्रमm *xfm_dce,
+	स्थिर काष्ठा scaler_data *data,
+	काष्ठा scl_ratios_inits *inits)
+अणु
+	काष्ठा fixed31_32 h_init;
+	काष्ठा fixed31_32 v_init;
 
-	inits->h_int_scale_ratio =
+	inits->h_पूर्णांक_scale_ratio =
 		dc_fixpt_u2d19(data->ratios.horz) << 5;
-	inits->v_int_scale_ratio =
+	inits->v_पूर्णांक_scale_ratio =
 		dc_fixpt_u2d19(data->ratios.vert) << 5;
 
 	h_init =
-		dc_fixpt_div_int(
+		dc_fixpt_भाग_पूर्णांक(
 			dc_fixpt_add(
 				data->ratios.horz,
-				dc_fixpt_from_int(data->taps.h_taps + 1)),
+				dc_fixpt_from_पूर्णांक(data->taps.h_taps + 1)),
 				2);
-	inits->h_init.integer = dc_fixpt_floor(h_init);
+	inits->h_init.पूर्णांकeger = dc_fixpt_न्यूनमान(h_init);
 	inits->h_init.fraction = dc_fixpt_u0d19(h_init) << 5;
 
 	v_init =
-		dc_fixpt_div_int(
+		dc_fixpt_भाग_पूर्णांक(
 			dc_fixpt_add(
 				data->ratios.vert,
-				dc_fixpt_from_int(data->taps.v_taps + 1)),
+				dc_fixpt_from_पूर्णांक(data->taps.v_taps + 1)),
 				2);
-	inits->v_init.integer = dc_fixpt_floor(v_init);
+	inits->v_init.पूर्णांकeger = dc_fixpt_न्यूनमान(v_init);
 	inits->v_init.fraction = dc_fixpt_u0d19(v_init) << 5;
-}
+पूर्ण
 
-#if defined(CONFIG_DRM_AMD_DC_SI)
-static void dce60_calculate_inits(
-	struct dce_transform *xfm_dce,
-	const struct scaler_data *data,
-	struct sclh_ratios_inits *inits)
-{
-	struct fixed31_32 v_init;
+#अगर defined(CONFIG_DRM_AMD_DC_SI)
+अटल व्योम dce60_calculate_inits(
+	काष्ठा dce_transक्रमm *xfm_dce,
+	स्थिर काष्ठा scaler_data *data,
+	काष्ठा sclh_ratios_inits *inits)
+अणु
+	काष्ठा fixed31_32 v_init;
 
-	inits->h_int_scale_ratio =
+	inits->h_पूर्णांक_scale_ratio =
 		dc_fixpt_u2d19(data->ratios.horz) << 5;
-	inits->v_int_scale_ratio =
+	inits->v_पूर्णांक_scale_ratio =
 		dc_fixpt_u2d19(data->ratios.vert) << 5;
 
 	/* DCE6 h_init_luma setting inspired by DCE110 */
-	inits->h_init_luma.integer = 1;
+	inits->h_init_luma.पूर्णांकeger = 1;
 
 	/* DCE6 h_init_chroma setting inspired by DCE110 */
-	inits->h_init_chroma.integer = 1;
+	inits->h_init_chroma.पूर्णांकeger = 1;
 
 	v_init =
-		dc_fixpt_div_int(
+		dc_fixpt_भाग_पूर्णांक(
 			dc_fixpt_add(
 				data->ratios.vert,
-				dc_fixpt_from_int(data->taps.v_taps + 1)),
+				dc_fixpt_from_पूर्णांक(data->taps.v_taps + 1)),
 				2);
-	inits->v_init.integer = dc_fixpt_floor(v_init);
+	inits->v_init.पूर्णांकeger = dc_fixpt_न्यूनमान(v_init);
 	inits->v_init.fraction = dc_fixpt_u0d19(v_init) << 5;
-}
-#endif
+पूर्ण
+#पूर्ण_अगर
 
-static void program_scl_ratios_inits(
-	struct dce_transform *xfm_dce,
-	struct scl_ratios_inits *inits)
-{
+अटल व्योम program_scl_ratios_inits(
+	काष्ठा dce_transक्रमm *xfm_dce,
+	काष्ठा scl_ratios_inits *inits)
+अणु
 
 	REG_SET(SCL_HORZ_FILTER_SCALE_RATIO, 0,
-			SCL_H_SCALE_RATIO, inits->h_int_scale_ratio);
+			SCL_H_SCALE_RATIO, inits->h_पूर्णांक_scale_ratio);
 
 	REG_SET(SCL_VERT_FILTER_SCALE_RATIO, 0,
-			SCL_V_SCALE_RATIO, inits->v_int_scale_ratio);
+			SCL_V_SCALE_RATIO, inits->v_पूर्णांक_scale_ratio);
 
 	REG_SET_2(SCL_HORZ_FILTER_INIT, 0,
-			SCL_H_INIT_INT, inits->h_init.integer,
+			SCL_H_INIT_INT, inits->h_init.पूर्णांकeger,
 			SCL_H_INIT_FRAC, inits->h_init.fraction);
 
 	REG_SET_2(SCL_VERT_FILTER_INIT, 0,
-			SCL_V_INIT_INT, inits->v_init.integer,
+			SCL_V_INIT_INT, inits->v_init.पूर्णांकeger,
 			SCL_V_INIT_FRAC, inits->v_init.fraction);
 
 	REG_WRITE(SCL_AUTOMATIC_MODE_CONTROL, 0);
-}
+पूर्ण
 
-#if defined(CONFIG_DRM_AMD_DC_SI)
-static void dce60_program_scl_ratios_inits(
-	struct dce_transform *xfm_dce,
-	struct sclh_ratios_inits *inits)
-{
+#अगर defined(CONFIG_DRM_AMD_DC_SI)
+अटल व्योम dce60_program_scl_ratios_inits(
+	काष्ठा dce_transक्रमm *xfm_dce,
+	काष्ठा sclh_ratios_inits *inits)
+अणु
 
 	REG_SET(SCL_HORZ_FILTER_SCALE_RATIO, 0,
-			SCL_H_SCALE_RATIO, inits->h_int_scale_ratio);
+			SCL_H_SCALE_RATIO, inits->h_पूर्णांक_scale_ratio);
 
 	REG_SET(SCL_VERT_FILTER_SCALE_RATIO, 0,
-			SCL_V_SCALE_RATIO, inits->v_int_scale_ratio);
+			SCL_V_SCALE_RATIO, inits->v_पूर्णांक_scale_ratio);
 
-	/* DCE6 has SCL_HORZ_FILTER_INIT_RGB_LUMA register */
+	/* DCE6 has SCL_HORZ_FILTER_INIT_RGB_LUMA रेजिस्टर */
 	REG_SET_2(SCL_HORZ_FILTER_INIT_RGB_LUMA, 0,
-			SCL_H_INIT_INT_RGB_Y, inits->h_init_luma.integer,
+			SCL_H_INIT_INT_RGB_Y, inits->h_init_luma.पूर्णांकeger,
 			SCL_H_INIT_FRAC_RGB_Y, inits->h_init_luma.fraction);
 
-	/* DCE6 has SCL_HORZ_FILTER_INIT_CHROMA register */
+	/* DCE6 has SCL_HORZ_FILTER_INIT_CHROMA रेजिस्टर */
 	REG_SET_2(SCL_HORZ_FILTER_INIT_CHROMA, 0,
-			SCL_H_INIT_INT_CBCR, inits->h_init_chroma.integer,
+			SCL_H_INIT_INT_CBCR, inits->h_init_chroma.पूर्णांकeger,
 			SCL_H_INIT_FRAC_CBCR, inits->h_init_chroma.fraction);
 
 	REG_SET_2(SCL_VERT_FILTER_INIT, 0,
-			SCL_V_INIT_INT, inits->v_init.integer,
+			SCL_V_INIT_INT, inits->v_init.पूर्णांकeger,
 			SCL_V_INIT_FRAC, inits->v_init.fraction);
 
 	REG_WRITE(SCL_AUTOMATIC_MODE_CONTROL, 0);
-}
-#endif
+पूर्ण
+#पूर्ण_अगर
 
-static const uint16_t *get_filter_coeffs_16p(int taps, struct fixed31_32 ratio)
-{
-	if (taps == 4)
-		return get_filter_4tap_16p(ratio);
-	else if (taps == 3)
-		return get_filter_3tap_16p(ratio);
-	else if (taps == 2)
-		return get_filter_2tap_16p();
-	else if (taps == 1)
-		return NULL;
-	else {
+अटल स्थिर uपूर्णांक16_t *get_filter_coeffs_16p(पूर्णांक taps, काष्ठा fixed31_32 ratio)
+अणु
+	अगर (taps == 4)
+		वापस get_filter_4tap_16p(ratio);
+	अन्यथा अगर (taps == 3)
+		वापस get_filter_3tap_16p(ratio);
+	अन्यथा अगर (taps == 2)
+		वापस get_filter_2tap_16p();
+	अन्यथा अगर (taps == 1)
+		वापस शून्य;
+	अन्यथा अणु
 		/* should never happen, bug */
 		BREAK_TO_DEBUGGER();
-		return NULL;
-	}
-}
+		वापस शून्य;
+	पूर्ण
+पूर्ण
 
-static void dce_transform_set_scaler(
-	struct transform *xfm,
-	const struct scaler_data *data)
-{
-	struct dce_transform *xfm_dce = TO_DCE_TRANSFORM(xfm);
+अटल व्योम dce_transक्रमm_set_scaler(
+	काष्ठा transक्रमm *xfm,
+	स्थिर काष्ठा scaler_data *data)
+अणु
+	काष्ठा dce_transक्रमm *xfm_dce = TO_DCE_TRANSFORM(xfm);
 	bool is_scaling_required;
 	bool filter_updated = false;
-	const uint16_t *coeffs_v, *coeffs_h;
+	स्थिर uपूर्णांक16_t *coeffs_v, *coeffs_h;
 
 	/*Use all three pieces of memory always*/
 	REG_SET_2(LB_MEMORY_CTRL, 0,
@@ -428,9 +429,9 @@ static void dce_transform_set_scaler(
 	/* 2. Program taps and configuration */
 	is_scaling_required = setup_scaling_configuration(xfm_dce, data);
 
-	if (is_scaling_required) {
+	अगर (is_scaling_required) अणु
 		/* 3. Calculate and program ratio, filter initialization */
-		struct scl_ratios_inits inits = { 0 };
+		काष्ठा scl_ratios_inits inits = अणु 0 पूर्ण;
 
 		calculate_inits(xfm_dce, data, &inits);
 
@@ -439,9 +440,9 @@ static void dce_transform_set_scaler(
 		coeffs_v = get_filter_coeffs_16p(data->taps.v_taps, data->ratios.vert);
 		coeffs_h = get_filter_coeffs_16p(data->taps.h_taps, data->ratios.horz);
 
-		if (coeffs_v != xfm_dce->filter_v || coeffs_h != xfm_dce->filter_h) {
+		अगर (coeffs_v != xfm_dce->filter_v || coeffs_h != xfm_dce->filter_h) अणु
 			/* 4. Program vertical filters */
-			if (xfm_dce->filter_v == NULL)
+			अगर (xfm_dce->filter_v == शून्य)
 				REG_SET(SCL_VERT_FILTER_CONTROL, 0,
 						SCL_V_2TAP_HARDCODE_COEF_EN, 0);
 			program_multi_taps_filter(
@@ -456,7 +457,7 @@ static void dce_transform_set_scaler(
 					FILTER_TYPE_ALPHA_VERTICAL);
 
 			/* 5. Program horizontal filters */
-			if (xfm_dce->filter_h == NULL)
+			अगर (xfm_dce->filter_h == शून्य)
 				REG_SET(SCL_HORZ_FILTER_CONTROL, 0,
 						SCL_H_2TAP_HARDCODE_COEF_EN, 0);
 			program_multi_taps_filter(
@@ -473,27 +474,27 @@ static void dce_transform_set_scaler(
 			xfm_dce->filter_v = coeffs_v;
 			xfm_dce->filter_h = coeffs_h;
 			filter_updated = true;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	/* 6. Program the viewport */
 	program_viewport(xfm_dce, &data->viewport);
 
 	/* 7. Set bit to flip to new coefficient memory */
-	if (filter_updated)
+	अगर (filter_updated)
 		REG_UPDATE(SCL_UPDATE, SCL_COEF_UPDATE_COMPLETE, 1);
 
 	REG_UPDATE(LB_DATA_FORMAT, ALPHA_EN, data->lb_params.alpha_en);
-}
+पूर्ण
 
-#if defined(CONFIG_DRM_AMD_DC_SI)
-static void dce60_transform_set_scaler(
-	struct transform *xfm,
-	const struct scaler_data *data)
-{
-	struct dce_transform *xfm_dce = TO_DCE_TRANSFORM(xfm);
+#अगर defined(CONFIG_DRM_AMD_DC_SI)
+अटल व्योम dce60_transक्रमm_set_scaler(
+	काष्ठा transक्रमm *xfm,
+	स्थिर काष्ठा scaler_data *data)
+अणु
+	काष्ठा dce_transक्रमm *xfm_dce = TO_DCE_TRANSFORM(xfm);
 	bool is_scaling_required;
-	const uint16_t *coeffs_v, *coeffs_h;
+	स्थिर uपूर्णांक16_t *coeffs_v, *coeffs_h;
 
 	/*Use whole line buffer memory always*/
 	REG_SET(DC_LB_MEMORY_SPLIT, 0,
@@ -511,22 +512,22 @@ static void dce60_transform_set_scaler(
 	/* 2. Program taps and configuration */
 	is_scaling_required = dce60_setup_scaling_configuration(xfm_dce, data);
 
-	if (is_scaling_required) {
+	अगर (is_scaling_required) अणु
 		/* 3. Calculate and program ratio, DCE6 filter initialization */
-		struct sclh_ratios_inits inits = { 0 };
+		काष्ठा sclh_ratios_inits inits = अणु 0 पूर्ण;
 
-		/* DCE6 has specific calculate_inits() function */
+		/* DCE6 has specअगरic calculate_inits() function */
 		dce60_calculate_inits(xfm_dce, data, &inits);
 
-		/* DCE6 has specific program_scl_ratios_inits() function */
+		/* DCE6 has specअगरic program_scl_ratios_inits() function */
 		dce60_program_scl_ratios_inits(xfm_dce, &inits);
 
 		coeffs_v = get_filter_coeffs_16p(data->taps.v_taps, data->ratios.vert);
 		coeffs_h = get_filter_coeffs_16p(data->taps.h_taps, data->ratios.horz);
 
-		if (coeffs_v != xfm_dce->filter_v || coeffs_h != xfm_dce->filter_h) {
+		अगर (coeffs_v != xfm_dce->filter_v || coeffs_h != xfm_dce->filter_h) अणु
 			/* 4. Program vertical filters */
-			if (xfm_dce->filter_v == NULL)
+			अगर (xfm_dce->filter_v == शून्य)
 				REG_SET(SCL_VERT_FILTER_CONTROL, 0,
 						SCL_V_2TAP_HARDCODE_COEF_EN, 0);
 			program_multi_taps_filter(
@@ -541,7 +542,7 @@ static void dce60_transform_set_scaler(
 					FILTER_TYPE_ALPHA_VERTICAL);
 
 			/* 5. Program horizontal filters */
-			if (xfm_dce->filter_h == NULL)
+			अगर (xfm_dce->filter_h == शून्य)
 				REG_SET(SCL_HORZ_FILTER_CONTROL, 0,
 						SCL_H_2TAP_HARDCODE_COEF_EN, 0);
 			program_multi_taps_filter(
@@ -557,17 +558,17 @@ static void dce60_transform_set_scaler(
 
 			xfm_dce->filter_v = coeffs_v;
 			xfm_dce->filter_h = coeffs_h;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	/* 6. Program the viewport */
 	program_viewport(xfm_dce, &data->viewport);
 
 	/* DCE6 has no SCL_COEF_UPDATE_COMPLETE bit to flip to new coefficient memory */
 
-	/* DCE6 DATA_FORMAT register does not support ALPHA_EN */
-}
-#endif
+	/* DCE6 DATA_FORMAT रेजिस्टर करोes not support ALPHA_EN */
+पूर्ण
+#पूर्ण_अगर
 
 /*****************************************************************************
  * set_clamp
@@ -578,38 +579,38 @@ static void dce60_transform_set_scaler(
  *     Programs clamp according to panel bit depth.
  *
  *******************************************************************************/
-static void set_clamp(
-	struct dce_transform *xfm_dce,
-	enum dc_color_depth depth)
-{
-	int clamp_max = 0;
+अटल व्योम set_clamp(
+	काष्ठा dce_transक्रमm *xfm_dce,
+	क्रमागत dc_color_depth depth)
+अणु
+	पूर्णांक clamp_max = 0;
 
 	/* At the clamp block the data will be MSB aligned, so we set the max
 	 * clamp accordingly.
-	 * For example, the max value for 6 bits MSB aligned (14 bit bus) would
+	 * For example, the max value क्रम 6 bits MSB aligned (14 bit bus) would
 	 * be "11 1111 0000 0000" in binary, so 0x3F00.
 	 */
-	switch (depth) {
-	case COLOR_DEPTH_666:
+	चयन (depth) अणु
+	हाल COLOR_DEPTH_666:
 		/* 6bit MSB aligned on 14 bit bus '11 1111 0000 0000' */
 		clamp_max = 0x3F00;
-		break;
-	case COLOR_DEPTH_888:
+		अवरोध;
+	हाल COLOR_DEPTH_888:
 		/* 8bit MSB aligned on 14 bit bus '11 1111 1100 0000' */
 		clamp_max = 0x3FC0;
-		break;
-	case COLOR_DEPTH_101010:
+		अवरोध;
+	हाल COLOR_DEPTH_101010:
 		/* 10bit MSB aligned on 14 bit bus '11 1111 1111 0000' */
 		clamp_max = 0x3FF0;
-		break;
-	case COLOR_DEPTH_121212:
+		अवरोध;
+	हाल COLOR_DEPTH_121212:
 		/* 12bit MSB aligned on 14 bit bus '11 1111 1111 1100' */
 		clamp_max = 0x3FFC;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		clamp_max = 0x3FC0;
 		BREAK_TO_DEBUGGER(); /* Invalid clamp bit depth */
-	}
+	पूर्ण
 	REG_SET_2(OUT_CLAMP_CONTROL_B_CB, 0,
 			OUT_CLAMP_MIN_B_CB, 0,
 			OUT_CLAMP_MAX_B_CB, clamp_max);
@@ -621,7 +622,7 @@ static void set_clamp(
 	REG_SET_2(OUT_CLAMP_CONTROL_R_CR, 0,
 			OUT_CLAMP_MIN_R_CR, 0,
 			OUT_CLAMP_MAX_R_CR, clamp_max);
-}
+पूर्ण
 
 /*******************************************************************************
  * set_round
@@ -655,58 +656,58 @@ static void set_clamp(
       15 - round to u0.13
 
  ******************************************************************************/
-static void set_round(
-	struct dce_transform *xfm_dce,
-	enum dcp_out_trunc_round_mode mode,
-	enum dcp_out_trunc_round_depth depth)
-{
-	int depth_bits = 0;
-	int mode_bit = 0;
+अटल व्योम set_round(
+	काष्ठा dce_transक्रमm *xfm_dce,
+	क्रमागत dcp_out_trunc_round_mode mode,
+	क्रमागत dcp_out_trunc_round_depth depth)
+अणु
+	पूर्णांक depth_bits = 0;
+	पूर्णांक mode_bit = 0;
 
 	/*  set up bit depth */
-	switch (depth) {
-	case DCP_OUT_TRUNC_ROUND_DEPTH_14BIT:
+	चयन (depth) अणु
+	हाल DCP_OUT_TRUNC_ROUND_DEPTH_14BIT:
 		depth_bits = 6;
-		break;
-	case DCP_OUT_TRUNC_ROUND_DEPTH_13BIT:
+		अवरोध;
+	हाल DCP_OUT_TRUNC_ROUND_DEPTH_13BIT:
 		depth_bits = 7;
-		break;
-	case DCP_OUT_TRUNC_ROUND_DEPTH_12BIT:
+		अवरोध;
+	हाल DCP_OUT_TRUNC_ROUND_DEPTH_12BIT:
 		depth_bits = 0;
-		break;
-	case DCP_OUT_TRUNC_ROUND_DEPTH_11BIT:
+		अवरोध;
+	हाल DCP_OUT_TRUNC_ROUND_DEPTH_11BIT:
 		depth_bits = 1;
-		break;
-	case DCP_OUT_TRUNC_ROUND_DEPTH_10BIT:
+		अवरोध;
+	हाल DCP_OUT_TRUNC_ROUND_DEPTH_10BIT:
 		depth_bits = 2;
-		break;
-	case DCP_OUT_TRUNC_ROUND_DEPTH_9BIT:
+		अवरोध;
+	हाल DCP_OUT_TRUNC_ROUND_DEPTH_9BIT:
 		depth_bits = 3;
-		break;
-	case DCP_OUT_TRUNC_ROUND_DEPTH_8BIT:
+		अवरोध;
+	हाल DCP_OUT_TRUNC_ROUND_DEPTH_8BIT:
 		depth_bits = 4;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		depth_bits = 4;
 		BREAK_TO_DEBUGGER(); /* Invalid dcp_out_trunc_round_depth */
-	}
+	पूर्ण
 
 	/*  set up round or truncate */
-	switch (mode) {
-	case DCP_OUT_TRUNC_ROUND_MODE_TRUNCATE:
+	चयन (mode) अणु
+	हाल DCP_OUT_TRUNC_ROUND_MODE_TRUNCATE:
 		mode_bit = 0;
-		break;
-	case DCP_OUT_TRUNC_ROUND_MODE_ROUND:
+		अवरोध;
+	हाल DCP_OUT_TRUNC_ROUND_MODE_ROUND:
 		mode_bit = 1;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		BREAK_TO_DEBUGGER(); /* Invalid dcp_out_trunc_round_mode */
-	}
+	पूर्ण
 
 	depth_bits |= mode_bit << 3;
 
 	REG_SET(OUT_ROUND_CONTROL, 0, OUT_ROUND_TRUNC_MODE, depth_bits);
-}
+पूर्ण
 
 /*****************************************************************************
  * set_dither
@@ -717,81 +718,81 @@ static void set_round(
  * @param [in] dither_enable        : enable dither
  * @param [in] dither_mode           : dither mode to set
  * @param [in] dither_depth          : bit depth to dither to
- * @param [in] frame_random_enable    : enable frame random
- * @param [in] rgb_random_enable      : enable rgb random
- * @param [in] highpass_random_enable : enable highpass random
+ * @param [in] frame_अक्रमom_enable    : enable frame अक्रमom
+ * @param [in] rgb_अक्रमom_enable      : enable rgb अक्रमom
+ * @param [in] highpass_अक्रमom_enable : enable highpass अक्रमom
  *
  ******************************************************************************/
 
-static void set_dither(
-	struct dce_transform *xfm_dce,
+अटल व्योम set_dither(
+	काष्ठा dce_transक्रमm *xfm_dce,
 	bool dither_enable,
-	enum dcp_spatial_dither_mode dither_mode,
-	enum dcp_spatial_dither_depth dither_depth,
-	bool frame_random_enable,
-	bool rgb_random_enable,
-	bool highpass_random_enable)
-{
-	int dither_depth_bits = 0;
-	int dither_mode_bits = 0;
+	क्रमागत dcp_spatial_dither_mode dither_mode,
+	क्रमागत dcp_spatial_dither_depth dither_depth,
+	bool frame_अक्रमom_enable,
+	bool rgb_अक्रमom_enable,
+	bool highpass_अक्रमom_enable)
+अणु
+	पूर्णांक dither_depth_bits = 0;
+	पूर्णांक dither_mode_bits = 0;
 
-	switch (dither_mode) {
-	case DCP_SPATIAL_DITHER_MODE_AAAA:
+	चयन (dither_mode) अणु
+	हाल DCP_SPATIAL_DITHER_MODE_AAAA:
 		dither_mode_bits = 0;
-		break;
-	case DCP_SPATIAL_DITHER_MODE_A_AA_A:
+		अवरोध;
+	हाल DCP_SPATIAL_DITHER_MODE_A_AA_A:
 		dither_mode_bits = 1;
-		break;
-	case DCP_SPATIAL_DITHER_MODE_AABBAABB:
+		अवरोध;
+	हाल DCP_SPATIAL_DITHER_MODE_AABBAABB:
 		dither_mode_bits = 2;
-		break;
-	case DCP_SPATIAL_DITHER_MODE_AABBCCAABBCC:
+		अवरोध;
+	हाल DCP_SPATIAL_DITHER_MODE_AABBCCAABBCC:
 		dither_mode_bits = 3;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		/* Invalid dcp_spatial_dither_mode */
 		BREAK_TO_DEBUGGER();
-	}
+	पूर्ण
 
-	switch (dither_depth) {
-	case DCP_SPATIAL_DITHER_DEPTH_30BPP:
+	चयन (dither_depth) अणु
+	हाल DCP_SPATIAL_DITHER_DEPTH_30BPP:
 		dither_depth_bits = 0;
-		break;
-	case DCP_SPATIAL_DITHER_DEPTH_24BPP:
+		अवरोध;
+	हाल DCP_SPATIAL_DITHER_DEPTH_24BPP:
 		dither_depth_bits = 1;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		/* Invalid dcp_spatial_dither_depth */
 		BREAK_TO_DEBUGGER();
-	}
+	पूर्ण
 
-	/*  write the register */
+	/*  ग_लिखो the रेजिस्टर */
 	REG_SET_6(DCP_SPATIAL_DITHER_CNTL, 0,
 			DCP_SPATIAL_DITHER_EN, dither_enable,
 			DCP_SPATIAL_DITHER_MODE, dither_mode_bits,
 			DCP_SPATIAL_DITHER_DEPTH, dither_depth_bits,
-			DCP_FRAME_RANDOM_ENABLE, frame_random_enable,
-			DCP_RGB_RANDOM_ENABLE, rgb_random_enable,
-			DCP_HIGHPASS_RANDOM_ENABLE, highpass_random_enable);
-}
+			DCP_FRAME_RANDOM_ENABLE, frame_अक्रमom_enable,
+			DCP_RGB_RANDOM_ENABLE, rgb_अक्रमom_enable,
+			DCP_HIGHPASS_RANDOM_ENABLE, highpass_अक्रमom_enable);
+पूर्ण
 
 /*****************************************************************************
- * dce_transform_bit_depth_reduction_program
+ * dce_transक्रमm_bit_depth_reduction_program
  *
  * @brief
- *     Programs the DCP bit depth reduction registers (Clamp, Round/Truncate,
- *      Dither) for dce
+ *     Programs the DCP bit depth reduction रेजिस्टरs (Clamp, Round/Truncate,
+ *      Dither) क्रम dce
  *
  * @param depth : bit depth to set the clamp to (should match denorm)
  *
  ******************************************************************************/
-static void program_bit_depth_reduction(
-	struct dce_transform *xfm_dce,
-	enum dc_color_depth depth,
-	const struct bit_depth_reduction_params *bit_depth_params)
-{
-	enum dcp_out_trunc_round_depth trunc_round_depth;
-	enum dcp_out_trunc_round_mode trunc_mode;
+अटल व्योम program_bit_depth_reduction(
+	काष्ठा dce_transक्रमm *xfm_dce,
+	क्रमागत dc_color_depth depth,
+	स्थिर काष्ठा bit_depth_reduction_params *bit_depth_params)
+अणु
+	क्रमागत dcp_out_trunc_round_depth trunc_round_depth;
+	क्रमागत dcp_out_trunc_round_mode trunc_mode;
 	bool spatial_dither_enable;
 
 	ASSERT(depth < COLOR_DEPTH_121212); /* Invalid clamp bit depth */
@@ -801,27 +802,27 @@ static void program_bit_depth_reduction(
 	trunc_round_depth = DCP_OUT_TRUNC_ROUND_DEPTH_12BIT;
 	trunc_mode = DCP_OUT_TRUNC_ROUND_MODE_TRUNCATE;
 
-	if (bit_depth_params->flags.TRUNCATE_ENABLED) {
-		/* Don't enable dithering if truncation is enabled */
+	अगर (bit_depth_params->flags.TRUNCATE_ENABLED) अणु
+		/* Don't enable dithering अगर truncation is enabled */
 		spatial_dither_enable = false;
 		trunc_mode = bit_depth_params->flags.TRUNCATE_MODE ?
 			     DCP_OUT_TRUNC_ROUND_MODE_ROUND :
 			     DCP_OUT_TRUNC_ROUND_MODE_TRUNCATE;
 
-		if (bit_depth_params->flags.TRUNCATE_DEPTH == 0 ||
+		अगर (bit_depth_params->flags.TRUNCATE_DEPTH == 0 ||
 		    bit_depth_params->flags.TRUNCATE_DEPTH == 1)
 			trunc_round_depth = DCP_OUT_TRUNC_ROUND_DEPTH_8BIT;
-		else if (bit_depth_params->flags.TRUNCATE_DEPTH == 2)
+		अन्यथा अगर (bit_depth_params->flags.TRUNCATE_DEPTH == 2)
 			trunc_round_depth = DCP_OUT_TRUNC_ROUND_DEPTH_10BIT;
-		else {
+		अन्यथा अणु
 			/*
 			 * Invalid truncate/round depth. Setting here to 12bit
-			 * to prevent use-before-initialize errors.
+			 * to prevent use-beक्रमe-initialize errors.
 			 */
 			trunc_round_depth = DCP_OUT_TRUNC_ROUND_DEPTH_12BIT;
 			BREAK_TO_DEBUGGER();
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	set_clamp(xfm_dce, depth);
 	set_round(xfm_dce, trunc_mode, trunc_round_depth);
@@ -832,26 +833,26 @@ static void program_bit_depth_reduction(
 		   bit_depth_params->flags.FRAME_RANDOM,
 		   bit_depth_params->flags.RGB_RANDOM,
 		   bit_depth_params->flags.HIGHPASS_RANDOM);
-}
+पूर्ण
 
-#if defined(CONFIG_DRM_AMD_DC_SI)
+#अगर defined(CONFIG_DRM_AMD_DC_SI)
 /*****************************************************************************
- * dce60_transform_bit_depth_reduction program
+ * dce60_transक्रमm_bit_depth_reduction program
  *
  * @brief
- *     Programs the DCP bit depth reduction registers (Clamp, Round/Truncate,
- *      Dither) for dce
+ *     Programs the DCP bit depth reduction रेजिस्टरs (Clamp, Round/Truncate,
+ *      Dither) क्रम dce
  *
  * @param depth : bit depth to set the clamp to (should match denorm)
  *
  ******************************************************************************/
-static void dce60_program_bit_depth_reduction(
-	struct dce_transform *xfm_dce,
-	enum dc_color_depth depth,
-	const struct bit_depth_reduction_params *bit_depth_params)
-{
-	enum dcp_out_trunc_round_depth trunc_round_depth;
-	enum dcp_out_trunc_round_mode trunc_mode;
+अटल व्योम dce60_program_bit_depth_reduction(
+	काष्ठा dce_transक्रमm *xfm_dce,
+	क्रमागत dc_color_depth depth,
+	स्थिर काष्ठा bit_depth_reduction_params *bit_depth_params)
+अणु
+	क्रमागत dcp_out_trunc_round_depth trunc_round_depth;
+	क्रमागत dcp_out_trunc_round_mode trunc_mode;
 	bool spatial_dither_enable;
 
 	ASSERT(depth < COLOR_DEPTH_121212); /* Invalid clamp bit depth */
@@ -861,29 +862,29 @@ static void dce60_program_bit_depth_reduction(
 	trunc_round_depth = DCP_OUT_TRUNC_ROUND_DEPTH_12BIT;
 	trunc_mode = DCP_OUT_TRUNC_ROUND_MODE_TRUNCATE;
 
-	if (bit_depth_params->flags.TRUNCATE_ENABLED) {
-		/* Don't enable dithering if truncation is enabled */
+	अगर (bit_depth_params->flags.TRUNCATE_ENABLED) अणु
+		/* Don't enable dithering अगर truncation is enabled */
 		spatial_dither_enable = false;
 		trunc_mode = bit_depth_params->flags.TRUNCATE_MODE ?
 			     DCP_OUT_TRUNC_ROUND_MODE_ROUND :
 			     DCP_OUT_TRUNC_ROUND_MODE_TRUNCATE;
 
-		if (bit_depth_params->flags.TRUNCATE_DEPTH == 0 ||
+		अगर (bit_depth_params->flags.TRUNCATE_DEPTH == 0 ||
 		    bit_depth_params->flags.TRUNCATE_DEPTH == 1)
 			trunc_round_depth = DCP_OUT_TRUNC_ROUND_DEPTH_8BIT;
-		else if (bit_depth_params->flags.TRUNCATE_DEPTH == 2)
+		अन्यथा अगर (bit_depth_params->flags.TRUNCATE_DEPTH == 2)
 			trunc_round_depth = DCP_OUT_TRUNC_ROUND_DEPTH_10BIT;
-		else {
+		अन्यथा अणु
 			/*
 			 * Invalid truncate/round depth. Setting here to 12bit
-			 * to prevent use-before-initialize errors.
+			 * to prevent use-beक्रमe-initialize errors.
 			 */
 			trunc_round_depth = DCP_OUT_TRUNC_ROUND_DEPTH_12BIT;
 			BREAK_TO_DEBUGGER();
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	/* DCE6 has no OUT_CLAMP_CONTROL_* registers - set_clamp() is skipped */
+	/* DCE6 has no OUT_CLAMP_CONTROL_* रेजिस्टरs - set_clamp() is skipped */
 	set_round(xfm_dce, trunc_mode, trunc_round_depth);
 	set_dither(xfm_dce,
 		   spatial_dither_enable,
@@ -892,45 +893,45 @@ static void dce60_program_bit_depth_reduction(
 		   bit_depth_params->flags.FRAME_RANDOM,
 		   bit_depth_params->flags.RGB_RANDOM,
 		   bit_depth_params->flags.HIGHPASS_RANDOM);
-}
-#endif
+पूर्ण
+#पूर्ण_अगर
 
-static int dce_transform_get_max_num_of_supported_lines(
-	struct dce_transform *xfm_dce,
-	enum lb_pixel_depth depth,
-	int pixel_width)
-{
-	int pixels_per_entries = 0;
-	int max_pixels_supports = 0;
+अटल पूर्णांक dce_transक्रमm_get_max_num_of_supported_lines(
+	काष्ठा dce_transक्रमm *xfm_dce,
+	क्रमागत lb_pixel_depth depth,
+	पूर्णांक pixel_width)
+अणु
+	पूर्णांक pixels_per_entries = 0;
+	पूर्णांक max_pixels_supports = 0;
 
 	ASSERT(pixel_width);
 
-	/* Find number of pixels that can fit into a single LB entry and
-	 * take floor of the value since we cannot store a single pixel
+	/* Find number of pixels that can fit पूर्णांकo a single LB entry and
+	 * take न्यूनमान of the value since we cannot store a single pixel
 	 * across multiple entries. */
-	switch (depth) {
-	case LB_PIXEL_DEPTH_18BPP:
+	चयन (depth) अणु
+	हाल LB_PIXEL_DEPTH_18BPP:
 		pixels_per_entries = xfm_dce->lb_bits_per_entry / 18;
-		break;
+		अवरोध;
 
-	case LB_PIXEL_DEPTH_24BPP:
+	हाल LB_PIXEL_DEPTH_24BPP:
 		pixels_per_entries = xfm_dce->lb_bits_per_entry / 24;
-		break;
+		अवरोध;
 
-	case LB_PIXEL_DEPTH_30BPP:
+	हाल LB_PIXEL_DEPTH_30BPP:
 		pixels_per_entries = xfm_dce->lb_bits_per_entry / 30;
-		break;
+		अवरोध;
 
-	case LB_PIXEL_DEPTH_36BPP:
+	हाल LB_PIXEL_DEPTH_36BPP:
 		pixels_per_entries = xfm_dce->lb_bits_per_entry / 36;
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		DC_LOG_WARNING("%s: Invalid LB pixel depth",
 			__func__);
 		BREAK_TO_DEBUGGER();
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	ASSERT(pixels_per_entries);
 
@@ -938,80 +939,80 @@ static int dce_transform_get_max_num_of_supported_lines(
 			pixels_per_entries *
 			xfm_dce->lb_memory_size;
 
-	return (max_pixels_supports / pixel_width);
-}
+	वापस (max_pixels_supports / pixel_width);
+पूर्ण
 
-static void set_denormalization(
-	struct dce_transform *xfm_dce,
-	enum dc_color_depth depth)
-{
-	int denorm_mode = 0;
+अटल व्योम set_denormalization(
+	काष्ठा dce_transक्रमm *xfm_dce,
+	क्रमागत dc_color_depth depth)
+अणु
+	पूर्णांक denorm_mode = 0;
 
-	switch (depth) {
-	case COLOR_DEPTH_666:
-		/* 63/64 for 6 bit output color depth */
+	चयन (depth) अणु
+	हाल COLOR_DEPTH_666:
+		/* 63/64 क्रम 6 bit output color depth */
 		denorm_mode = 1;
-		break;
-	case COLOR_DEPTH_888:
-		/* Unity for 8 bit output color depth
-		 * because prescale is disabled by default */
+		अवरोध;
+	हाल COLOR_DEPTH_888:
+		/* Unity क्रम 8 bit output color depth
+		 * because prescale is disabled by शेष */
 		denorm_mode = 0;
-		break;
-	case COLOR_DEPTH_101010:
-		/* 1023/1024 for 10 bit output color depth */
+		अवरोध;
+	हाल COLOR_DEPTH_101010:
+		/* 1023/1024 क्रम 10 bit output color depth */
 		denorm_mode = 3;
-		break;
-	case COLOR_DEPTH_121212:
-		/* 4095/4096 for 12 bit output color depth */
+		अवरोध;
+	हाल COLOR_DEPTH_121212:
+		/* 4095/4096 क्रम 12 bit output color depth */
 		denorm_mode = 5;
-		break;
-	case COLOR_DEPTH_141414:
-	case COLOR_DEPTH_161616:
-	default:
-		/* not valid used case! */
-		break;
-	}
+		अवरोध;
+	हाल COLOR_DEPTH_141414:
+	हाल COLOR_DEPTH_161616:
+	शेष:
+		/* not valid used हाल! */
+		अवरोध;
+	पूर्ण
 
 	REG_SET(DENORM_CONTROL, 0, DENORM_MODE, denorm_mode);
-}
+पूर्ण
 
-static void dce_transform_set_pixel_storage_depth(
-	struct transform *xfm,
-	enum lb_pixel_depth depth,
-	const struct bit_depth_reduction_params *bit_depth_params)
-{
-	struct dce_transform *xfm_dce = TO_DCE_TRANSFORM(xfm);
-	int pixel_depth, expan_mode;
-	enum dc_color_depth color_depth;
+अटल व्योम dce_transक्रमm_set_pixel_storage_depth(
+	काष्ठा transक्रमm *xfm,
+	क्रमागत lb_pixel_depth depth,
+	स्थिर काष्ठा bit_depth_reduction_params *bit_depth_params)
+अणु
+	काष्ठा dce_transक्रमm *xfm_dce = TO_DCE_TRANSFORM(xfm);
+	पूर्णांक pixel_depth, expan_mode;
+	क्रमागत dc_color_depth color_depth;
 
-	switch (depth) {
-	case LB_PIXEL_DEPTH_18BPP:
+	चयन (depth) अणु
+	हाल LB_PIXEL_DEPTH_18BPP:
 		color_depth = COLOR_DEPTH_666;
 		pixel_depth = 2;
 		expan_mode  = 1;
-		break;
-	case LB_PIXEL_DEPTH_24BPP:
+		अवरोध;
+	हाल LB_PIXEL_DEPTH_24BPP:
 		color_depth = COLOR_DEPTH_888;
 		pixel_depth = 1;
 		expan_mode  = 1;
-		break;
-	case LB_PIXEL_DEPTH_30BPP:
+		अवरोध;
+	हाल LB_PIXEL_DEPTH_30BPP:
 		color_depth = COLOR_DEPTH_101010;
 		pixel_depth = 0;
 		expan_mode  = 1;
-		break;
-	case LB_PIXEL_DEPTH_36BPP:
+		अवरोध;
+	हाल LB_PIXEL_DEPTH_36BPP:
 		color_depth = COLOR_DEPTH_121212;
 		pixel_depth = 3;
 		expan_mode  = 0;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		color_depth = COLOR_DEPTH_101010;
 		pixel_depth = 0;
 		expan_mode  = 1;
 		BREAK_TO_DEBUGGER();
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	set_denormalization(xfm_dce, color_depth);
 	program_bit_depth_reduction(xfm_dce, color_depth, bit_depth_params);
@@ -1020,61 +1021,61 @@ static void dce_transform_set_pixel_storage_depth(
 			PIXEL_DEPTH, pixel_depth,
 			PIXEL_EXPAN_MODE, expan_mode);
 
-	if (!(xfm_dce->lb_pixel_depth_supported & depth)) {
+	अगर (!(xfm_dce->lb_pixel_depth_supported & depth)) अणु
 		/*we should use unsupported capabilities
 		 *  unless it is required by w/a*/
 		DC_LOG_WARNING("%s: Capability not supported",
 			__func__);
-	}
-}
+	पूर्ण
+पूर्ण
 
-#if defined(CONFIG_DRM_AMD_DC_SI)
-static void dce60_transform_set_pixel_storage_depth(
-	struct transform *xfm,
-	enum lb_pixel_depth depth,
-	const struct bit_depth_reduction_params *bit_depth_params)
-{
-	struct dce_transform *xfm_dce = TO_DCE_TRANSFORM(xfm);
-	enum dc_color_depth color_depth;
+#अगर defined(CONFIG_DRM_AMD_DC_SI)
+अटल व्योम dce60_transक्रमm_set_pixel_storage_depth(
+	काष्ठा transक्रमm *xfm,
+	क्रमागत lb_pixel_depth depth,
+	स्थिर काष्ठा bit_depth_reduction_params *bit_depth_params)
+अणु
+	काष्ठा dce_transक्रमm *xfm_dce = TO_DCE_TRANSFORM(xfm);
+	क्रमागत dc_color_depth color_depth;
 
-	switch (depth) {
-	case LB_PIXEL_DEPTH_18BPP:
+	चयन (depth) अणु
+	हाल LB_PIXEL_DEPTH_18BPP:
 		color_depth = COLOR_DEPTH_666;
-		break;
-	case LB_PIXEL_DEPTH_24BPP:
+		अवरोध;
+	हाल LB_PIXEL_DEPTH_24BPP:
 		color_depth = COLOR_DEPTH_888;
-		break;
-	case LB_PIXEL_DEPTH_30BPP:
+		अवरोध;
+	हाल LB_PIXEL_DEPTH_30BPP:
 		color_depth = COLOR_DEPTH_101010;
-		break;
-	case LB_PIXEL_DEPTH_36BPP:
+		अवरोध;
+	हाल LB_PIXEL_DEPTH_36BPP:
 		color_depth = COLOR_DEPTH_121212;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		color_depth = COLOR_DEPTH_101010;
 		BREAK_TO_DEBUGGER();
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	set_denormalization(xfm_dce, color_depth);
 	dce60_program_bit_depth_reduction(xfm_dce, color_depth, bit_depth_params);
 
-	/* DATA_FORMAT in DCE6 does not have PIXEL_DEPTH and PIXEL_EXPAN_MODE masks */
+	/* DATA_FORMAT in DCE6 करोes not have PIXEL_DEPTH and PIXEL_EXPAN_MODE masks */
 
-	if (!(xfm_dce->lb_pixel_depth_supported & depth)) {
+	अगर (!(xfm_dce->lb_pixel_depth_supported & depth)) अणु
 		/*we should use unsupported capabilities
 		 *  unless it is required by w/a*/
 		DC_LOG_WARNING("%s: Capability not supported",
 			__func__);
-	}
-}
-#endif
+	पूर्ण
+पूर्ण
+#पूर्ण_अगर
 
-static void program_gamut_remap(
-	struct dce_transform *xfm_dce,
-	const uint16_t *reg_val)
-{
-	if (reg_val) {
+अटल व्योम program_gamut_remap(
+	काष्ठा dce_transक्रमm *xfm_dce,
+	स्थिर uपूर्णांक16_t *reg_val)
+अणु
+	अगर (reg_val) अणु
 		REG_SET_2(GAMUT_REMAP_C11_C12, 0,
 				GAMUT_REMAP_C11, reg_val[0],
 				GAMUT_REMAP_C12, reg_val[1]);
@@ -1095,100 +1096,100 @@ static void program_gamut_remap(
 				GAMUT_REMAP_C34, reg_val[11]);
 
 		REG_SET(GAMUT_REMAP_CONTROL, 0, GRPH_GAMUT_REMAP_MODE, 1);
-	} else
+	पूर्ण अन्यथा
 		REG_SET(GAMUT_REMAP_CONTROL, 0, GRPH_GAMUT_REMAP_MODE, 0);
 
-}
+पूर्ण
 
 /*
  *****************************************************************************
- *  Function: dal_transform_wide_gamut_set_gamut_remap
+ *  Function: dal_transक्रमm_wide_gamut_set_gamut_remap
  *
- *  @param [in] const struct xfm_grph_csc_adjustment *adjust
+ *  @param [in] स्थिर काष्ठा xfm_grph_csc_adjusपंचांगent *adjust
  *
- *  @return
- *     void
+ *  @वापस
+ *     व्योम
  *
- *  @note calculate and apply color temperature adjustment to in Rgb color space
+ *  @note calculate and apply color temperature adjusपंचांगent to in Rgb color space
  *
  *  @see
  *
  *****************************************************************************
  */
-static void dce_transform_set_gamut_remap(
-	struct transform *xfm,
-	const struct xfm_grph_csc_adjustment *adjust)
-{
-	struct dce_transform *xfm_dce = TO_DCE_TRANSFORM(xfm);
-	int i = 0;
+अटल व्योम dce_transक्रमm_set_gamut_remap(
+	काष्ठा transक्रमm *xfm,
+	स्थिर काष्ठा xfm_grph_csc_adjusपंचांगent *adjust)
+अणु
+	काष्ठा dce_transक्रमm *xfm_dce = TO_DCE_TRANSFORM(xfm);
+	पूर्णांक i = 0;
 
-	if (adjust->gamut_adjust_type != GRAPHICS_GAMUT_ADJUST_TYPE_SW)
-		/* Bypass if type is bypass or hw */
-		program_gamut_remap(xfm_dce, NULL);
-	else {
-		struct fixed31_32 arr_matrix[GAMUT_MATRIX_SIZE];
-		uint16_t arr_reg_val[GAMUT_MATRIX_SIZE];
+	अगर (adjust->gamut_adjust_type != GRAPHICS_GAMUT_ADJUST_TYPE_SW)
+		/* Bypass अगर type is bypass or hw */
+		program_gamut_remap(xfm_dce, शून्य);
+	अन्यथा अणु
+		काष्ठा fixed31_32 arr_matrix[GAMUT_MATRIX_SIZE];
+		uपूर्णांक16_t arr_reg_val[GAMUT_MATRIX_SIZE];
 
-		for (i = 0; i < GAMUT_MATRIX_SIZE; i++)
+		क्रम (i = 0; i < GAMUT_MATRIX_SIZE; i++)
 			arr_matrix[i] = adjust->temperature_matrix[i];
 
-		convert_float_matrix(
+		convert_भग्न_matrix(
 			arr_reg_val, arr_matrix, GAMUT_MATRIX_SIZE);
 
 		program_gamut_remap(xfm_dce, arr_reg_val);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static uint32_t decide_taps(struct fixed31_32 ratio, uint32_t in_taps, bool chroma)
-{
-	uint32_t taps;
+अटल uपूर्णांक32_t decide_taps(काष्ठा fixed31_32 ratio, uपूर्णांक32_t in_taps, bool chroma)
+अणु
+	uपूर्णांक32_t taps;
 
-	if (IDENTITY_RATIO(ratio)) {
-		return 1;
-	} else if (in_taps != 0) {
+	अगर (IDENTITY_RATIO(ratio)) अणु
+		वापस 1;
+	पूर्ण अन्यथा अगर (in_taps != 0) अणु
 		taps = in_taps;
-	} else {
+	पूर्ण अन्यथा अणु
 		taps = 4;
-	}
+	पूर्ण
 
-	if (chroma) {
+	अगर (chroma) अणु
 		taps /= 2;
-		if (taps < 2)
+		अगर (taps < 2)
 			taps = 2;
-	}
+	पूर्ण
 
-	return taps;
-}
+	वापस taps;
+पूर्ण
 
 
-bool dce_transform_get_optimal_number_of_taps(
-	struct transform *xfm,
-	struct scaler_data *scl_data,
-	const struct scaling_taps *in_taps)
-{
-	struct dce_transform *xfm_dce = TO_DCE_TRANSFORM(xfm);
-	int pixel_width = scl_data->viewport.width;
-	int max_num_of_lines;
+bool dce_transक्रमm_get_optimal_number_of_taps(
+	काष्ठा transक्रमm *xfm,
+	काष्ठा scaler_data *scl_data,
+	स्थिर काष्ठा scaling_taps *in_taps)
+अणु
+	काष्ठा dce_transक्रमm *xfm_dce = TO_DCE_TRANSFORM(xfm);
+	पूर्णांक pixel_width = scl_data->viewport.width;
+	पूर्णांक max_num_of_lines;
 
-	if (xfm_dce->prescaler_on &&
+	अगर (xfm_dce->prescaler_on &&
 			(scl_data->viewport.width > scl_data->recout.width))
 		pixel_width = scl_data->recout.width;
 
-	max_num_of_lines = dce_transform_get_max_num_of_supported_lines(
+	max_num_of_lines = dce_transक्रमm_get_max_num_of_supported_lines(
 		xfm_dce,
 		scl_data->lb_params.depth,
 		pixel_width);
 
-	/* Fail if in_taps are impossible */
-	if (in_taps->v_taps >= max_num_of_lines)
-		return false;
+	/* Fail अगर in_taps are impossible */
+	अगर (in_taps->v_taps >= max_num_of_lines)
+		वापस false;
 
 	/*
 	 * Set taps according to this policy (in this order)
-	 * - Use 1 for no scaling
+	 * - Use 1 क्रम no scaling
 	 * - Use input taps
 	 * - Use 4 and reduce as required by line buffer size
-	 * - Decide chroma taps if chroma is scaled
+	 * - Decide chroma taps अगर chroma is scaled
 	 *
 	 * Ignore input chroma taps. Decide based on non-chroma
 	 */
@@ -1197,161 +1198,161 @@ bool dce_transform_get_optimal_number_of_taps(
 	scl_data->taps.h_taps_c = decide_taps(scl_data->ratios.horz_c, in_taps->h_taps, true);
 	scl_data->taps.v_taps_c = decide_taps(scl_data->ratios.vert_c, in_taps->v_taps, true);
 
-	if (!IDENTITY_RATIO(scl_data->ratios.vert)) {
-		/* reduce v_taps if needed but ensure we have at least two */
-		if (in_taps->v_taps == 0
+	अगर (!IDENTITY_RATIO(scl_data->ratios.vert)) अणु
+		/* reduce v_taps अगर needed but ensure we have at least two */
+		अगर (in_taps->v_taps == 0
 				&& max_num_of_lines <= scl_data->taps.v_taps
-				&& scl_data->taps.v_taps > 1) {
+				&& scl_data->taps.v_taps > 1) अणु
 			scl_data->taps.v_taps = max_num_of_lines - 1;
-		}
+		पूर्ण
 
-		if (scl_data->taps.v_taps <= 1)
-			return false;
-	}
+		अगर (scl_data->taps.v_taps <= 1)
+			वापस false;
+	पूर्ण
 
-	if (!IDENTITY_RATIO(scl_data->ratios.vert_c)) {
-		/* reduce chroma v_taps if needed but ensure we have at least two */
-		if (max_num_of_lines <= scl_data->taps.v_taps_c && scl_data->taps.v_taps_c > 1) {
+	अगर (!IDENTITY_RATIO(scl_data->ratios.vert_c)) अणु
+		/* reduce chroma v_taps अगर needed but ensure we have at least two */
+		अगर (max_num_of_lines <= scl_data->taps.v_taps_c && scl_data->taps.v_taps_c > 1) अणु
 			scl_data->taps.v_taps_c = max_num_of_lines - 1;
-		}
+		पूर्ण
 
-		if (scl_data->taps.v_taps_c <= 1)
-			return false;
-	}
+		अगर (scl_data->taps.v_taps_c <= 1)
+			वापस false;
+	पूर्ण
 
 	/* we've got valid taps */
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static void dce_transform_reset(struct transform *xfm)
-{
-	struct dce_transform *xfm_dce = TO_DCE_TRANSFORM(xfm);
+अटल व्योम dce_transक्रमm_reset(काष्ठा transक्रमm *xfm)
+अणु
+	काष्ठा dce_transक्रमm *xfm_dce = TO_DCE_TRANSFORM(xfm);
 
-	xfm_dce->filter_h = NULL;
-	xfm_dce->filter_v = NULL;
-}
+	xfm_dce->filter_h = शून्य;
+	xfm_dce->filter_v = शून्य;
+पूर्ण
 
-static void program_color_matrix(
-	struct dce_transform *xfm_dce,
-	const struct out_csc_color_matrix *tbl_entry,
-	enum grph_color_adjust_option options)
-{
-	{
+अटल व्योम program_color_matrix(
+	काष्ठा dce_transक्रमm *xfm_dce,
+	स्थिर काष्ठा out_csc_color_matrix *tbl_entry,
+	क्रमागत grph_color_adjust_option options)
+अणु
+	अणु
 		REG_SET_2(OUTPUT_CSC_C11_C12, 0,
 			OUTPUT_CSC_C11, tbl_entry->regval[0],
 			OUTPUT_CSC_C12, tbl_entry->regval[1]);
-	}
-	{
+	पूर्ण
+	अणु
 		REG_SET_2(OUTPUT_CSC_C13_C14, 0,
 			OUTPUT_CSC_C11, tbl_entry->regval[2],
 			OUTPUT_CSC_C12, tbl_entry->regval[3]);
-	}
-	{
+	पूर्ण
+	अणु
 		REG_SET_2(OUTPUT_CSC_C21_C22, 0,
 			OUTPUT_CSC_C11, tbl_entry->regval[4],
 			OUTPUT_CSC_C12, tbl_entry->regval[5]);
-	}
-	{
+	पूर्ण
+	अणु
 		REG_SET_2(OUTPUT_CSC_C23_C24, 0,
 			OUTPUT_CSC_C11, tbl_entry->regval[6],
 			OUTPUT_CSC_C12, tbl_entry->regval[7]);
-	}
-	{
+	पूर्ण
+	अणु
 		REG_SET_2(OUTPUT_CSC_C31_C32, 0,
 			OUTPUT_CSC_C11, tbl_entry->regval[8],
 			OUTPUT_CSC_C12, tbl_entry->regval[9]);
-	}
-	{
+	पूर्ण
+	अणु
 		REG_SET_2(OUTPUT_CSC_C33_C34, 0,
 			OUTPUT_CSC_C11, tbl_entry->regval[10],
 			OUTPUT_CSC_C12, tbl_entry->regval[11]);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static bool configure_graphics_mode(
-	struct dce_transform *xfm_dce,
-	enum csc_color_mode config,
-	enum graphics_csc_adjust_type csc_adjust_type,
-	enum dc_color_space color_space)
-{
+अटल bool configure_graphics_mode(
+	काष्ठा dce_transक्रमm *xfm_dce,
+	क्रमागत csc_color_mode config,
+	क्रमागत graphics_csc_adjust_type csc_adjust_type,
+	क्रमागत dc_color_space color_space)
+अणु
 	REG_SET(OUTPUT_CSC_CONTROL, 0,
 		OUTPUT_CSC_GRPH_MODE, 0);
 
-	if (csc_adjust_type == GRAPHICS_CSC_ADJUST_TYPE_SW) {
-		if (config == CSC_COLOR_MODE_GRAPHICS_OUTPUT_CSC) {
+	अगर (csc_adjust_type == GRAPHICS_CSC_ADJUST_TYPE_SW) अणु
+		अगर (config == CSC_COLOR_MODE_GRAPHICS_OUTPUT_CSC) अणु
 			REG_SET(OUTPUT_CSC_CONTROL, 0,
 				OUTPUT_CSC_GRPH_MODE, 4);
-		} else {
+		पूर्ण अन्यथा अणु
 
-			switch (color_space) {
-			case COLOR_SPACE_SRGB:
+			चयन (color_space) अणु
+			हाल COLOR_SPACE_SRGB:
 				/* by pass */
 				REG_SET(OUTPUT_CSC_CONTROL, 0,
 					OUTPUT_CSC_GRPH_MODE, 0);
-				break;
-			case COLOR_SPACE_SRGB_LIMITED:
+				अवरोध;
+			हाल COLOR_SPACE_SRGB_LIMITED:
 				/* TV RGB */
 				REG_SET(OUTPUT_CSC_CONTROL, 0,
 					OUTPUT_CSC_GRPH_MODE, 1);
-				break;
-			case COLOR_SPACE_YCBCR601:
-			case COLOR_SPACE_YCBCR601_LIMITED:
+				अवरोध;
+			हाल COLOR_SPACE_YCBCR601:
+			हाल COLOR_SPACE_YCBCR601_LIMITED:
 				/* YCbCr601 */
 				REG_SET(OUTPUT_CSC_CONTROL, 0,
 					OUTPUT_CSC_GRPH_MODE, 2);
-				break;
-			case COLOR_SPACE_YCBCR709:
-			case COLOR_SPACE_YCBCR709_LIMITED:
+				अवरोध;
+			हाल COLOR_SPACE_YCBCR709:
+			हाल COLOR_SPACE_YCBCR709_LIMITED:
 				/* YCbCr709 */
 				REG_SET(OUTPUT_CSC_CONTROL, 0,
 					OUTPUT_CSC_GRPH_MODE, 3);
-				break;
-			default:
-				return false;
-			}
-		}
-	} else if (csc_adjust_type == GRAPHICS_CSC_ADJUST_TYPE_HW) {
-		switch (color_space) {
-		case COLOR_SPACE_SRGB:
+				अवरोध;
+			शेष:
+				वापस false;
+			पूर्ण
+		पूर्ण
+	पूर्ण अन्यथा अगर (csc_adjust_type == GRAPHICS_CSC_ADJUST_TYPE_HW) अणु
+		चयन (color_space) अणु
+		हाल COLOR_SPACE_SRGB:
 			/* by pass */
 			REG_SET(OUTPUT_CSC_CONTROL, 0,
 				OUTPUT_CSC_GRPH_MODE, 0);
-			break;
-		case COLOR_SPACE_SRGB_LIMITED:
+			अवरोध;
+		हाल COLOR_SPACE_SRGB_LIMITED:
 			/* TV RGB */
 			REG_SET(OUTPUT_CSC_CONTROL, 0,
 				OUTPUT_CSC_GRPH_MODE, 1);
-			break;
-		case COLOR_SPACE_YCBCR601:
-		case COLOR_SPACE_YCBCR601_LIMITED:
+			अवरोध;
+		हाल COLOR_SPACE_YCBCR601:
+		हाल COLOR_SPACE_YCBCR601_LIMITED:
 			/* YCbCr601 */
 			REG_SET(OUTPUT_CSC_CONTROL, 0,
 				OUTPUT_CSC_GRPH_MODE, 2);
-			break;
-		case COLOR_SPACE_YCBCR709:
-		case COLOR_SPACE_YCBCR709_LIMITED:
+			अवरोध;
+		हाल COLOR_SPACE_YCBCR709:
+		हाल COLOR_SPACE_YCBCR709_LIMITED:
 			 /* YCbCr709 */
 			REG_SET(OUTPUT_CSC_CONTROL, 0,
 				OUTPUT_CSC_GRPH_MODE, 3);
-			break;
-		default:
-			return false;
-		}
+			अवरोध;
+		शेष:
+			वापस false;
+		पूर्ण
 
-	} else
+	पूर्ण अन्यथा
 		/* by pass */
 		REG_SET(OUTPUT_CSC_CONTROL, 0,
 			OUTPUT_CSC_GRPH_MODE, 0);
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-void dce110_opp_set_csc_adjustment(
-	struct transform *xfm,
-	const struct out_csc_color_matrix *tbl_entry)
-{
-	struct dce_transform *xfm_dce = TO_DCE_TRANSFORM(xfm);
-	enum csc_color_mode config =
+व्योम dce110_opp_set_csc_adjusपंचांगent(
+	काष्ठा transक्रमm *xfm,
+	स्थिर काष्ठा out_csc_color_matrix *tbl_entry)
+अणु
+	काष्ठा dce_transक्रमm *xfm_dce = TO_DCE_TRANSFORM(xfm);
+	क्रमागत csc_color_mode config =
 			CSC_COLOR_MODE_GRAPHICS_OUTPUT_CSC;
 
 	program_color_matrix(
@@ -1360,95 +1361,95 @@ void dce110_opp_set_csc_adjustment(
 	/*  We did everything ,now program DxOUTPUT_CSC_CONTROL */
 	configure_graphics_mode(xfm_dce, config, GRAPHICS_CSC_ADJUST_TYPE_SW,
 			tbl_entry->color_space);
-}
+पूर्ण
 
-void dce110_opp_set_csc_default(
-	struct transform *xfm,
-	const struct default_adjustment *default_adjust)
-{
-	struct dce_transform *xfm_dce = TO_DCE_TRANSFORM(xfm);
-	enum csc_color_mode config =
+व्योम dce110_opp_set_csc_शेष(
+	काष्ठा transक्रमm *xfm,
+	स्थिर काष्ठा शेष_adjusपंचांगent *शेष_adjust)
+अणु
+	काष्ठा dce_transक्रमm *xfm_dce = TO_DCE_TRANSFORM(xfm);
+	क्रमागत csc_color_mode config =
 			CSC_COLOR_MODE_GRAPHICS_PREDEFINED;
 
-	if (default_adjust->force_hw_default == false) {
-		const struct out_csc_color_matrix *elm;
+	अगर (शेष_adjust->क्रमce_hw_शेष == false) अणु
+		स्थिर काष्ठा out_csc_color_matrix *elm;
 		/* currently parameter not in use */
-		enum grph_color_adjust_option option =
+		क्रमागत grph_color_adjust_option option =
 			GRPH_COLOR_MATRIX_HW_DEFAULT;
-		uint32_t i;
+		uपूर्णांक32_t i;
 		/*
-		 * HW default false we program locally defined matrix
-		 * HW default true  we use predefined hw matrix and we
-		 * do not need to program matrix
-		 * OEM wants the HW default via runtime parameter.
+		 * HW शेष false we program locally defined matrix
+		 * HW शेष true  we use predefined hw matrix and we
+		 * करो not need to program matrix
+		 * OEM wants the HW शेष via runसमय parameter.
 		 */
 		option = GRPH_COLOR_MATRIX_SW;
 
-		for (i = 0; i < ARRAY_SIZE(global_color_matrix); ++i) {
+		क्रम (i = 0; i < ARRAY_SIZE(global_color_matrix); ++i) अणु
 			elm = &global_color_matrix[i];
-			if (elm->color_space != default_adjust->out_color_space)
-				continue;
-			/* program the matrix with default values from this
+			अगर (elm->color_space != शेष_adjust->out_color_space)
+				जारी;
+			/* program the matrix with शेष values from this
 			 * file */
 			program_color_matrix(xfm_dce, elm, option);
 			config = CSC_COLOR_MODE_GRAPHICS_OUTPUT_CSC;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
 	/* configure the what we programmed :
 	 * 1. Default values from this file
-	 * 2. Use hardware default from ROM_A and we do not need to program
+	 * 2. Use hardware शेष from ROM_A and we करो not need to program
 	 * matrix */
 
 	configure_graphics_mode(xfm_dce, config,
-		default_adjust->csc_adjust_type,
-		default_adjust->out_color_space);
-}
+		शेष_adjust->csc_adjust_type,
+		शेष_adjust->out_color_space);
+पूर्ण
 
-static void program_pwl(struct dce_transform *xfm_dce,
-			const struct pwl_params *params)
-{
-	int retval;
-	uint8_t max_tries = 10;
-	uint8_t counter = 0;
-	uint32_t i = 0;
-	const struct pwl_result_data *rgb = params->rgb_resulted;
+अटल व्योम program_pwl(काष्ठा dce_transक्रमm *xfm_dce,
+			स्थिर काष्ठा pwl_params *params)
+अणु
+	पूर्णांक retval;
+	uपूर्णांक8_t max_tries = 10;
+	uपूर्णांक8_t counter = 0;
+	uपूर्णांक32_t i = 0;
+	स्थिर काष्ठा pwl_result_data *rgb = params->rgb_resulted;
 
 	/* Power on LUT memory */
-	if (REG(DCFE_MEM_PWR_CTRL))
+	अगर (REG(DCFE_MEM_PWR_CTRL))
 		REG_UPDATE(DCFE_MEM_PWR_CTRL,
 			   DCP_REGAMMA_MEM_PWR_DIS, 1);
-	else
+	अन्यथा
 		REG_UPDATE(DCFE_MEM_LIGHT_SLEEP_CNTL,
 			   REGAMMA_LUT_LIGHT_SLEEP_DIS, 1);
 
-	while (counter < max_tries) {
-		if (REG(DCFE_MEM_PWR_STATUS)) {
+	जबतक (counter < max_tries) अणु
+		अगर (REG(DCFE_MEM_PWR_STATUS)) अणु
 			REG_GET(DCFE_MEM_PWR_STATUS,
 				DCP_REGAMMA_MEM_PWR_STATE,
 				&retval);
 
-			if (retval == 0)
-				break;
+			अगर (retval == 0)
+				अवरोध;
 			++counter;
-		} else {
+		पूर्ण अन्यथा अणु
 			REG_GET(DCFE_MEM_LIGHT_SLEEP_CNTL,
 				REGAMMA_LUT_MEM_PWR_STATE,
 				&retval);
 
-			if (retval == 0)
-				break;
+			अगर (retval == 0)
+				अवरोध;
 			++counter;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (counter == max_tries) {
+	अगर (counter == max_tries) अणु
 		DC_LOG_WARNING("%s: regamma lut was not powered on "
 				"in a timely manner,"
 				" programming still proceeds\n",
 				__func__);
-	}
+	पूर्ण
 
 	REG_UPDATE(REGAMMA_LUT_WRITE_EN_MASK,
 		   REGAMMA_LUT_WRITE_EN_MASK, 7);
@@ -1456,7 +1457,7 @@ static void program_pwl(struct dce_transform *xfm_dce,
 	REG_WRITE(REGAMMA_LUT_INDEX, 0);
 
 	/* Program REGAMMA_LUT_DATA */
-	while (i != params->hw_points_num) {
+	जबतक (i != params->hw_poपूर्णांकs_num) अणु
 
 		REG_WRITE(REGAMMA_LUT_DATA, rgb->red_reg);
 		REG_WRITE(REGAMMA_LUT_DATA, rgb->green_reg);
@@ -1467,37 +1468,37 @@ static void program_pwl(struct dce_transform *xfm_dce,
 
 		++rgb;
 		++i;
-	}
+	पूर्ण
 
-	/*  we are done with DCP LUT memory; re-enable low power mode */
-	if (REG(DCFE_MEM_PWR_CTRL))
+	/*  we are करोne with DCP LUT memory; re-enable low घातer mode */
+	अगर (REG(DCFE_MEM_PWR_CTRL))
 		REG_UPDATE(DCFE_MEM_PWR_CTRL,
 			   DCP_REGAMMA_MEM_PWR_DIS, 0);
-	else
+	अन्यथा
 		REG_UPDATE(DCFE_MEM_LIGHT_SLEEP_CNTL,
 			   REGAMMA_LUT_LIGHT_SLEEP_DIS, 0);
-}
+पूर्ण
 
-static void regamma_config_regions_and_segments(struct dce_transform *xfm_dce,
-						const struct pwl_params *params)
-{
-	const struct gamma_curve *curve;
+अटल व्योम regamma_config_regions_and_segments(काष्ठा dce_transक्रमm *xfm_dce,
+						स्थिर काष्ठा pwl_params *params)
+अणु
+	स्थिर काष्ठा gamma_curve *curve;
 
 	REG_SET_2(REGAMMA_CNTLA_START_CNTL, 0,
-		  REGAMMA_CNTLA_EXP_REGION_START, params->arr_points[0].custom_float_x,
+		  REGAMMA_CNTLA_EXP_REGION_START, params->arr_poपूर्णांकs[0].custom_भग्न_x,
 		  REGAMMA_CNTLA_EXP_REGION_START_SEGMENT, 0);
 
 	REG_SET(REGAMMA_CNTLA_SLOPE_CNTL, 0,
-		REGAMMA_CNTLA_EXP_REGION_LINEAR_SLOPE, params->arr_points[0].custom_float_slope);
+		REGAMMA_CNTLA_EXP_REGION_LINEAR_SLOPE, params->arr_poपूर्णांकs[0].custom_भग्न_slope);
 
 	REG_SET(REGAMMA_CNTLA_END_CNTL1, 0,
-		REGAMMA_CNTLA_EXP_REGION_END, params->arr_points[1].custom_float_x);
+		REGAMMA_CNTLA_EXP_REGION_END, params->arr_poपूर्णांकs[1].custom_भग्न_x);
 
 	REG_SET_2(REGAMMA_CNTLA_END_CNTL2, 0,
-		  REGAMMA_CNTLA_EXP_REGION_END_BASE, params->arr_points[1].custom_float_y,
-		  REGAMMA_CNTLA_EXP_REGION_END_SLOPE, params->arr_points[1].custom_float_slope);
+		  REGAMMA_CNTLA_EXP_REGION_END_BASE, params->arr_poपूर्णांकs[1].custom_भग्न_y,
+		  REGAMMA_CNTLA_EXP_REGION_END_SLOPE, params->arr_poपूर्णांकs[1].custom_भग्न_slope);
 
-	curve = params->arr_curve_points;
+	curve = params->arr_curve_poपूर्णांकs;
 
 	REG_SET_4(REGAMMA_CNTLA_REGION_0_1, 0,
 		  REGAMMA_CNTLA_EXP_REGION0_LUT_OFFSET, curve[0].offset,
@@ -1553,94 +1554,94 @@ static void regamma_config_regions_and_segments(struct dce_transform *xfm_dce,
 		  REGAMMA_CNTLA_EXP_REGION0_NUM_SEGMENTS, curve[0].segments_num,
 		  REGAMMA_CNTLA_EXP_REGION1_LUT_OFFSET, curve[1].offset,
 		  REGAMMA_CNTLA_EXP_REGION1_NUM_SEGMENTS, curve[1].segments_num);
-}
+पूर्ण
 
 
 
-void dce110_opp_program_regamma_pwl(struct transform *xfm,
-				    const struct pwl_params *params)
-{
-	struct dce_transform *xfm_dce = TO_DCE_TRANSFORM(xfm);
+व्योम dce110_opp_program_regamma_pwl(काष्ठा transक्रमm *xfm,
+				    स्थिर काष्ठा pwl_params *params)
+अणु
+	काष्ठा dce_transक्रमm *xfm_dce = TO_DCE_TRANSFORM(xfm);
 
 	/* Setup regions */
 	regamma_config_regions_and_segments(xfm_dce, params);
 
 	/* Program PWL */
 	program_pwl(xfm_dce, params);
-}
+पूर्ण
 
-void dce110_opp_power_on_regamma_lut(struct transform *xfm,
-				     bool power_on)
-{
-	struct dce_transform *xfm_dce = TO_DCE_TRANSFORM(xfm);
+व्योम dce110_opp_घातer_on_regamma_lut(काष्ठा transक्रमm *xfm,
+				     bool घातer_on)
+अणु
+	काष्ठा dce_transक्रमm *xfm_dce = TO_DCE_TRANSFORM(xfm);
 
-	if (REG(DCFE_MEM_PWR_CTRL))
+	अगर (REG(DCFE_MEM_PWR_CTRL))
 		REG_UPDATE_2(DCFE_MEM_PWR_CTRL,
-			     DCP_REGAMMA_MEM_PWR_DIS, power_on,
-			     DCP_LUT_MEM_PWR_DIS, power_on);
-	else
+			     DCP_REGAMMA_MEM_PWR_DIS, घातer_on,
+			     DCP_LUT_MEM_PWR_DIS, घातer_on);
+	अन्यथा
 		REG_UPDATE_2(DCFE_MEM_LIGHT_SLEEP_CNTL,
-			    REGAMMA_LUT_LIGHT_SLEEP_DIS, power_on,
-			    DCP_LUT_LIGHT_SLEEP_DIS, power_on);
+			    REGAMMA_LUT_LIGHT_SLEEP_DIS, घातer_on,
+			    DCP_LUT_LIGHT_SLEEP_DIS, घातer_on);
 
-}
+पूर्ण
 
-void dce110_opp_set_regamma_mode(struct transform *xfm,
-				 enum opp_regamma mode)
-{
-	struct dce_transform *xfm_dce = TO_DCE_TRANSFORM(xfm);
+व्योम dce110_opp_set_regamma_mode(काष्ठा transक्रमm *xfm,
+				 क्रमागत opp_regamma mode)
+अणु
+	काष्ठा dce_transक्रमm *xfm_dce = TO_DCE_TRANSFORM(xfm);
 
 	REG_SET(REGAMMA_CONTROL, 0,
 		GRPH_REGAMMA_MODE, mode);
-}
+पूर्ण
 
-static const struct transform_funcs dce_transform_funcs = {
-	.transform_reset = dce_transform_reset,
-	.transform_set_scaler = dce_transform_set_scaler,
-	.transform_set_gamut_remap = dce_transform_set_gamut_remap,
-	.opp_set_csc_adjustment = dce110_opp_set_csc_adjustment,
-	.opp_set_csc_default = dce110_opp_set_csc_default,
-	.opp_power_on_regamma_lut = dce110_opp_power_on_regamma_lut,
+अटल स्थिर काष्ठा transक्रमm_funcs dce_transक्रमm_funcs = अणु
+	.transक्रमm_reset = dce_transक्रमm_reset,
+	.transक्रमm_set_scaler = dce_transक्रमm_set_scaler,
+	.transक्रमm_set_gamut_remap = dce_transक्रमm_set_gamut_remap,
+	.opp_set_csc_adjusपंचांगent = dce110_opp_set_csc_adjusपंचांगent,
+	.opp_set_csc_शेष = dce110_opp_set_csc_शेष,
+	.opp_घातer_on_regamma_lut = dce110_opp_घातer_on_regamma_lut,
 	.opp_program_regamma_pwl = dce110_opp_program_regamma_pwl,
 	.opp_set_regamma_mode = dce110_opp_set_regamma_mode,
-	.transform_set_pixel_storage_depth = dce_transform_set_pixel_storage_depth,
-	.transform_get_optimal_number_of_taps = dce_transform_get_optimal_number_of_taps
-};
+	.transक्रमm_set_pixel_storage_depth = dce_transक्रमm_set_pixel_storage_depth,
+	.transक्रमm_get_optimal_number_of_taps = dce_transक्रमm_get_optimal_number_of_taps
+पूर्ण;
 
-#if defined(CONFIG_DRM_AMD_DC_SI)
-static const struct transform_funcs dce60_transform_funcs = {
-	.transform_reset = dce_transform_reset,
-	.transform_set_scaler = dce60_transform_set_scaler,
-	.transform_set_gamut_remap = dce_transform_set_gamut_remap,
-	.opp_set_csc_adjustment = dce110_opp_set_csc_adjustment,
-	.opp_set_csc_default = dce110_opp_set_csc_default,
-	.opp_power_on_regamma_lut = dce110_opp_power_on_regamma_lut,
+#अगर defined(CONFIG_DRM_AMD_DC_SI)
+अटल स्थिर काष्ठा transक्रमm_funcs dce60_transक्रमm_funcs = अणु
+	.transक्रमm_reset = dce_transक्रमm_reset,
+	.transक्रमm_set_scaler = dce60_transक्रमm_set_scaler,
+	.transक्रमm_set_gamut_remap = dce_transक्रमm_set_gamut_remap,
+	.opp_set_csc_adjusपंचांगent = dce110_opp_set_csc_adjusपंचांगent,
+	.opp_set_csc_शेष = dce110_opp_set_csc_शेष,
+	.opp_घातer_on_regamma_lut = dce110_opp_घातer_on_regamma_lut,
 	.opp_program_regamma_pwl = dce110_opp_program_regamma_pwl,
 	.opp_set_regamma_mode = dce110_opp_set_regamma_mode,
-	.transform_set_pixel_storage_depth = dce60_transform_set_pixel_storage_depth,
-	.transform_get_optimal_number_of_taps = dce_transform_get_optimal_number_of_taps
-};
-#endif
+	.transक्रमm_set_pixel_storage_depth = dce60_transक्रमm_set_pixel_storage_depth,
+	.transक्रमm_get_optimal_number_of_taps = dce_transक्रमm_get_optimal_number_of_taps
+पूर्ण;
+#पूर्ण_अगर
 
 /*****************************************/
-/* Constructor, Destructor               */
+/* Conकाष्ठाor, Deकाष्ठाor               */
 /*****************************************/
 
-void dce_transform_construct(
-	struct dce_transform *xfm_dce,
-	struct dc_context *ctx,
-	uint32_t inst,
-	const struct dce_transform_registers *regs,
-	const struct dce_transform_shift *xfm_shift,
-	const struct dce_transform_mask *xfm_mask)
-{
+व्योम dce_transक्रमm_स्थिरruct(
+	काष्ठा dce_transक्रमm *xfm_dce,
+	काष्ठा dc_context *ctx,
+	uपूर्णांक32_t inst,
+	स्थिर काष्ठा dce_transक्रमm_रेजिस्टरs *regs,
+	स्थिर काष्ठा dce_transक्रमm_shअगरt *xfm_shअगरt,
+	स्थिर काष्ठा dce_transक्रमm_mask *xfm_mask)
+अणु
 	xfm_dce->base.ctx = ctx;
 
 	xfm_dce->base.inst = inst;
-	xfm_dce->base.funcs = &dce_transform_funcs;
+	xfm_dce->base.funcs = &dce_transक्रमm_funcs;
 
 	xfm_dce->regs = regs;
-	xfm_dce->xfm_shift = xfm_shift;
+	xfm_dce->xfm_shअगरt = xfm_shअगरt;
 	xfm_dce->xfm_mask = xfm_mask;
 
 	xfm_dce->prescaler_on = true;
@@ -1651,24 +1652,24 @@ void dce_transform_construct(
 
 	xfm_dce->lb_bits_per_entry = LB_BITS_PER_ENTRY;
 	xfm_dce->lb_memory_size = LB_TOTAL_NUMBER_OF_ENTRIES; /*0x6B0*/
-}
+पूर्ण
 
-#if defined(CONFIG_DRM_AMD_DC_SI)
-void dce60_transform_construct(
-	struct dce_transform *xfm_dce,
-	struct dc_context *ctx,
-	uint32_t inst,
-	const struct dce_transform_registers *regs,
-	const struct dce_transform_shift *xfm_shift,
-	const struct dce_transform_mask *xfm_mask)
-{
+#अगर defined(CONFIG_DRM_AMD_DC_SI)
+व्योम dce60_transक्रमm_स्थिरruct(
+	काष्ठा dce_transक्रमm *xfm_dce,
+	काष्ठा dc_context *ctx,
+	uपूर्णांक32_t inst,
+	स्थिर काष्ठा dce_transक्रमm_रेजिस्टरs *regs,
+	स्थिर काष्ठा dce_transक्रमm_shअगरt *xfm_shअगरt,
+	स्थिर काष्ठा dce_transक्रमm_mask *xfm_mask)
+अणु
 	xfm_dce->base.ctx = ctx;
 
 	xfm_dce->base.inst = inst;
-	xfm_dce->base.funcs = &dce60_transform_funcs;
+	xfm_dce->base.funcs = &dce60_transक्रमm_funcs;
 
 	xfm_dce->regs = regs;
-	xfm_dce->xfm_shift = xfm_shift;
+	xfm_dce->xfm_shअगरt = xfm_shअगरt;
 	xfm_dce->xfm_mask = xfm_mask;
 
 	xfm_dce->prescaler_on = true;
@@ -1679,5 +1680,5 @@ void dce60_transform_construct(
 
 	xfm_dce->lb_bits_per_entry = LB_BITS_PER_ENTRY;
 	xfm_dce->lb_memory_size = LB_TOTAL_NUMBER_OF_ENTRIES; /*0x6B0*/
-}
-#endif
+पूर्ण
+#पूर्ण_अगर

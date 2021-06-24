@@ -1,21 +1,22 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * Pistachio SoC clock controllers
+ * Pistachio SoC घड़ी controllers
  *
  * Copyright (C) 2014 Google, Inc.
  */
 
-#include <linux/clk-provider.h>
-#include <linux/init.h>
-#include <linux/io.h>
-#include <linux/kernel.h>
-#include <linux/of.h>
+#समावेश <linux/clk-provider.h>
+#समावेश <linux/init.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/kernel.h>
+#समावेश <linux/of.h>
 
-#include <dt-bindings/clock/pistachio-clk.h>
+#समावेश <dt-bindings/घड़ी/pistachio-clk.h>
 
-#include "clk.h"
+#समावेश "clk.h"
 
-static struct pistachio_gate pistachio_gates[] __initdata = {
+अटल काष्ठा pistachio_gate pistachio_gates[] __initdata = अणु
 	GATE(CLK_MIPS, "mips", "mips_div", 0x104, 0),
 	GATE(CLK_AUDIO_IN, "audio_in", "audio_clk_in_gate", 0x104, 1),
 	GATE(CLK_AUDIO, "audio", "audio_div", 0x104, 2),
@@ -46,14 +47,14 @@ static struct pistachio_gate pistachio_gates[] __initdata = {
 	GATE(CLK_BT_DIV4, "bt_div4", "bt_div4_div", 0x104, 26),
 	GATE(CLK_BT_DIV8, "bt_div8", "bt_div8_div", 0x104, 27),
 	GATE(CLK_BT_1MHZ, "bt_1mhz", "bt_1mhz_div", 0x104, 28),
-};
+पूर्ण;
 
-static struct pistachio_fixed_factor pistachio_ffs[] __initdata = {
+अटल काष्ठा pistachio_fixed_factor pistachio_ffs[] __initdata = अणु
 	FIXED_FACTOR(CLK_WIFI_DIV4, "wifi_div4", "wifi_pll", 4),
 	FIXED_FACTOR(CLK_WIFI_DIV8, "wifi_div8", "wifi_pll", 8),
-};
+पूर्ण;
 
-static struct pistachio_div pistachio_divs[] __initdata = {
+अटल काष्ठा pistachio_भाग pistachio_भागs[] __initdata = अणु
 	DIV(CLK_MIPS_INTERNAL_DIV, "mips_internal_div", "mips_pll_mux",
 	    0x204, 2),
 	DIV(CLK_MIPS_DIV, "mips_div", "mips_internal_div", 0x208, 8),
@@ -100,27 +101,27 @@ static struct pistachio_div pistachio_divs[] __initdata = {
 	DIV(CLK_BT_1MHZ_INTERNAL_DIV, "bt_1mhz_internal_div", "bt_pll_mux",
 	    0x278, 3),
 	DIV(CLK_BT_1MHZ_DIV, "bt_1mhz_div", "bt_1mhz_internal_div", 0x27c, 10),
-};
+पूर्ण;
 
-PNAME(mux_xtal_audio_refclk) = { "xtal", "audio_clk_in_gate" };
-PNAME(mux_xtal_mips) = { "xtal", "mips_pll" };
-PNAME(mux_xtal_audio) = { "xtal", "audio_pll", "audio_in" };
-PNAME(mux_audio_debug) = { "audio_pll_mux", "debug_mux" };
-PNAME(mux_xtal_rpu_v) = { "xtal", "rpu_v_pll" };
-PNAME(mux_xtal_rpu_l) = { "xtal", "rpu_l_pll" };
-PNAME(mux_rpu_l_mips) = { "rpu_l_pll_mux", "mips_pll_mux" };
-PNAME(mux_xtal_wifi) = { "xtal", "wifi_pll" };
-PNAME(mux_xtal_wifi_div4) = { "xtal", "wifi_div4" };
-PNAME(mux_xtal_wifi_div8) = { "xtal", "wifi_div8" };
-PNAME(mux_wifi_div4_rpu_l) = { "wifi_pll_gate", "wifi_div4_mux",
-			       "rpu_l_pll_mux" };
-PNAME(mux_xtal_sys) = { "xtal", "sys_pll" };
-PNAME(mux_sys_enet) = { "sys_internal_div", "enet_in" };
-PNAME(mux_audio_sys) = { "audio_pll_mux", "sys_internal_div" };
-PNAME(mux_sys_bt) = { "sys_internal_div", "bt_pll_mux" };
-PNAME(mux_xtal_bt) = { "xtal", "bt_pll" };
+PNAME(mux_xtal_audio_refclk) = अणु "xtal", "audio_clk_in_gate" पूर्ण;
+PNAME(mux_xtal_mips) = अणु "xtal", "mips_pll" पूर्ण;
+PNAME(mux_xtal_audio) = अणु "xtal", "audio_pll", "audio_in" पूर्ण;
+PNAME(mux_audio_debug) = अणु "audio_pll_mux", "debug_mux" पूर्ण;
+PNAME(mux_xtal_rpu_v) = अणु "xtal", "rpu_v_pll" पूर्ण;
+PNAME(mux_xtal_rpu_l) = अणु "xtal", "rpu_l_pll" पूर्ण;
+PNAME(mux_rpu_l_mips) = अणु "rpu_l_pll_mux", "mips_pll_mux" पूर्ण;
+PNAME(mux_xtal_wअगरi) = अणु "xtal", "wifi_pll" पूर्ण;
+PNAME(mux_xtal_wअगरi_भाग4) = अणु "xtal", "wifi_div4" पूर्ण;
+PNAME(mux_xtal_wअगरi_भाग8) = अणु "xtal", "wifi_div8" पूर्ण;
+PNAME(mux_wअगरi_भाग4_rpu_l) = अणु "wifi_pll_gate", "wifi_div4_mux",
+			       "rpu_l_pll_mux" पूर्ण;
+PNAME(mux_xtal_sys) = अणु "xtal", "sys_pll" पूर्ण;
+PNAME(mux_sys_enet) = अणु "sys_internal_div", "enet_in" पूर्ण;
+PNAME(mux_audio_sys) = अणु "audio_pll_mux", "sys_internal_div" पूर्ण;
+PNAME(mux_sys_bt) = अणु "sys_internal_div", "bt_pll_mux" पूर्ण;
+PNAME(mux_xtal_bt) = अणु "xtal", "bt_pll" पूर्ण;
 
-static struct pistachio_mux pistachio_muxes[] __initdata = {
+अटल काष्ठा pistachio_mux pistachio_muxes[] __initdata = अणु
 	MUX(CLK_AUDIO_REF_MUX, "audio_refclk_mux", mux_xtal_audio_refclk,
 	    0x200, 0),
 	MUX(CLK_MIPS_PLL_MUX, "mips_pll_mux", mux_xtal_mips, 0x200, 1),
@@ -129,18 +130,18 @@ static struct pistachio_mux pistachio_muxes[] __initdata = {
 	MUX(CLK_RPU_V_PLL_MUX, "rpu_v_pll_mux", mux_xtal_rpu_v, 0x200, 5),
 	MUX(CLK_RPU_L_PLL_MUX, "rpu_l_pll_mux", mux_xtal_rpu_l, 0x200, 6),
 	MUX(CLK_RPU_L_MUX, "rpu_l_mux", mux_rpu_l_mips, 0x200, 7),
-	MUX(CLK_WIFI_PLL_MUX, "wifi_pll_mux", mux_xtal_wifi, 0x200, 8),
-	MUX(CLK_WIFI_DIV4_MUX, "wifi_div4_mux", mux_xtal_wifi_div4, 0x200, 9),
-	MUX(CLK_WIFI_DIV8_MUX, "wifi_div8_mux", mux_xtal_wifi_div8, 0x200, 10),
-	MUX(CLK_RPU_CORE_MUX, "rpu_core_mux", mux_wifi_div4_rpu_l, 0x200, 11),
+	MUX(CLK_WIFI_PLL_MUX, "wifi_pll_mux", mux_xtal_wअगरi, 0x200, 8),
+	MUX(CLK_WIFI_DIV4_MUX, "wifi_div4_mux", mux_xtal_wअगरi_भाग4, 0x200, 9),
+	MUX(CLK_WIFI_DIV8_MUX, "wifi_div8_mux", mux_xtal_wअगरi_भाग8, 0x200, 10),
+	MUX(CLK_RPU_CORE_MUX, "rpu_core_mux", mux_wअगरi_भाग4_rpu_l, 0x200, 11),
 	MUX(CLK_SYS_PLL_MUX, "sys_pll_mux", mux_xtal_sys, 0x200, 13),
 	MUX(CLK_ENET_MUX, "enet_mux", mux_sys_enet, 0x200, 14),
 	MUX(CLK_EVENT_TIMER_MUX, "event_timer_mux", mux_audio_sys, 0x200, 15),
 	MUX(CLK_SD_HOST_MUX, "sd_host_mux", mux_sys_bt, 0x200, 16),
 	MUX(CLK_BT_PLL_MUX, "bt_pll_mux", mux_xtal_bt, 0x200, 17),
-};
+पूर्ण;
 
-static struct pistachio_pll pistachio_plls[] __initdata = {
+अटल काष्ठा pistachio_pll pistachio_plls[] __initdata = अणु
 	PLL_FIXED(CLK_MIPS_PLL, "mips_pll", "xtal", PLL_GF40LP_LAINT, 0x0),
 	PLL_FIXED(CLK_AUDIO_PLL, "audio_pll", "audio_refclk_mux",
 		  PLL_GF40LP_FRAC, 0xc),
@@ -149,59 +150,59 @@ static struct pistachio_pll pistachio_plls[] __initdata = {
 	PLL_FIXED(CLK_SYS_PLL, "sys_pll", "xtal", PLL_GF40LP_FRAC, 0x38),
 	PLL_FIXED(CLK_WIFI_PLL, "wifi_pll", "xtal", PLL_GF40LP_FRAC, 0x4c),
 	PLL_FIXED(CLK_BT_PLL, "bt_pll", "xtal", PLL_GF40LP_LAINT, 0x60),
-};
+पूर्ण;
 
-PNAME(mux_debug) = { "mips_pll_mux", "rpu_v_pll_mux",
+PNAME(mux_debug) = अणु "mips_pll_mux", "rpu_v_pll_mux",
 		     "rpu_l_pll_mux", "sys_pll_mux",
-		     "wifi_pll_mux", "bt_pll_mux" };
-static u32 mux_debug_idx[] = { 0x0, 0x1, 0x2, 0x4, 0x8, 0x10 };
+		     "wifi_pll_mux", "bt_pll_mux" पूर्ण;
+अटल u32 mux_debug_idx[] = अणु 0x0, 0x1, 0x2, 0x4, 0x8, 0x10 पूर्ण;
 
-static unsigned int pistachio_critical_clks_core[] __initdata = {
+अटल अचिन्हित पूर्णांक pistachio_critical_clks_core[] __initdata = अणु
 	CLK_MIPS
-};
+पूर्ण;
 
-static unsigned int pistachio_critical_clks_sys[] __initdata = {
+अटल अचिन्हित पूर्णांक pistachio_critical_clks_sys[] __initdata = अणु
 	PERIPH_CLK_SYS,
 	PERIPH_CLK_SYS_BUS,
 	PERIPH_CLK_DDR,
 	PERIPH_CLK_ROM,
-};
+पूर्ण;
 
-static void __init pistachio_clk_init(struct device_node *np)
-{
-	struct pistachio_clk_provider *p;
-	struct clk *debug_clk;
+अटल व्योम __init pistachio_clk_init(काष्ठा device_node *np)
+अणु
+	काष्ठा pistachio_clk_provider *p;
+	काष्ठा clk *debug_clk;
 
 	p = pistachio_clk_alloc_provider(np, CLK_NR_CLKS);
-	if (!p)
-		return;
+	अगर (!p)
+		वापस;
 
-	pistachio_clk_register_pll(p, pistachio_plls,
+	pistachio_clk_रेजिस्टर_pll(p, pistachio_plls,
 				   ARRAY_SIZE(pistachio_plls));
-	pistachio_clk_register_mux(p, pistachio_muxes,
+	pistachio_clk_रेजिस्टर_mux(p, pistachio_muxes,
 				   ARRAY_SIZE(pistachio_muxes));
-	pistachio_clk_register_div(p, pistachio_divs,
-				   ARRAY_SIZE(pistachio_divs));
-	pistachio_clk_register_fixed_factor(p, pistachio_ffs,
+	pistachio_clk_रेजिस्टर_भाग(p, pistachio_भागs,
+				   ARRAY_SIZE(pistachio_भागs));
+	pistachio_clk_रेजिस्टर_fixed_factor(p, pistachio_ffs,
 					    ARRAY_SIZE(pistachio_ffs));
-	pistachio_clk_register_gate(p, pistachio_gates,
+	pistachio_clk_रेजिस्टर_gate(p, pistachio_gates,
 				    ARRAY_SIZE(pistachio_gates));
 
-	debug_clk = clk_register_mux_table(NULL, "debug_mux", mux_debug,
+	debug_clk = clk_रेजिस्टर_mux_table(शून्य, "debug_mux", mux_debug,
 					   ARRAY_SIZE(mux_debug),
 					   CLK_SET_RATE_NO_REPARENT,
 					   p->base + 0x200, 18, 0x1f, 0,
-					   mux_debug_idx, NULL);
+					   mux_debug_idx, शून्य);
 	p->clk_data.clks[CLK_DEBUG_MUX] = debug_clk;
 
-	pistachio_clk_register_provider(p);
+	pistachio_clk_रेजिस्टर_provider(p);
 
-	pistachio_clk_force_enable(p, pistachio_critical_clks_core,
+	pistachio_clk_क्रमce_enable(p, pistachio_critical_clks_core,
 				   ARRAY_SIZE(pistachio_critical_clks_core));
-}
+पूर्ण
 CLK_OF_DECLARE(pistachio_clk, "img,pistachio-clk", pistachio_clk_init);
 
-static struct pistachio_gate pistachio_periph_gates[] __initdata = {
+अटल काष्ठा pistachio_gate pistachio_periph_gates[] __initdata = अणु
 	GATE(PERIPH_CLK_SYS, "sys", "periph_sys", 0x100, 0),
 	GATE(PERIPH_CLK_SYS_BUS, "bus_sys", "periph_sys", 0x100, 1),
 	GATE(PERIPH_CLK_DDR, "ddr", "periph_sys", 0x100, 2),
@@ -218,9 +219,9 @@ static struct pistachio_gate pistachio_periph_gates[] __initdata = {
 	GATE(PERIPH_CLK_I2C1, "i2c1", "i2c1_div", 0x100, 11),
 	GATE(PERIPH_CLK_I2C2, "i2c2", "i2c2_div", 0x100, 12),
 	GATE(PERIPH_CLK_I2C3, "i2c3", "i2c3_div", 0x100, 13),
-};
+पूर्ण;
 
-static struct pistachio_div pistachio_periph_divs[] __initdata = {
+अटल काष्ठा pistachio_भाग pistachio_periph_भागs[] __initdata = अणु
 	DIV(PERIPH_CLK_ROM_DIV, "rom_div", "periph_sys", 0x10c, 7),
 	DIV(PERIPH_CLK_COUNTER_FAST_DIV, "counter_fast_div", "periph_sys",
 	    0x110, 7),
@@ -248,30 +249,30 @@ static struct pistachio_div pistachio_periph_divs[] __initdata = {
 	DIV(PERIPH_CLK_I2C2_DIV, "i2c2_div", "i2c2_pre_div", 0x150, 7),
 	DIV(PERIPH_CLK_I2C3_PRE_DIV, "i2c3_pre_div", "periph_sys", 0x154, 7),
 	DIV(PERIPH_CLK_I2C3_DIV, "i2c3_div", "i2c3_pre_div", 0x158, 7),
-};
+पूर्ण;
 
-static void __init pistachio_clk_periph_init(struct device_node *np)
-{
-	struct pistachio_clk_provider *p;
+अटल व्योम __init pistachio_clk_periph_init(काष्ठा device_node *np)
+अणु
+	काष्ठा pistachio_clk_provider *p;
 
 	p = pistachio_clk_alloc_provider(np, PERIPH_CLK_NR_CLKS);
-	if (!p)
-		return;
+	अगर (!p)
+		वापस;
 
-	pistachio_clk_register_div(p, pistachio_periph_divs,
-				   ARRAY_SIZE(pistachio_periph_divs));
-	pistachio_clk_register_gate(p, pistachio_periph_gates,
+	pistachio_clk_रेजिस्टर_भाग(p, pistachio_periph_भागs,
+				   ARRAY_SIZE(pistachio_periph_भागs));
+	pistachio_clk_रेजिस्टर_gate(p, pistachio_periph_gates,
 				    ARRAY_SIZE(pistachio_periph_gates));
 
-	pistachio_clk_register_provider(p);
+	pistachio_clk_रेजिस्टर_provider(p);
 
-	pistachio_clk_force_enable(p, pistachio_critical_clks_sys,
+	pistachio_clk_क्रमce_enable(p, pistachio_critical_clks_sys,
 				   ARRAY_SIZE(pistachio_critical_clks_sys));
-}
+पूर्ण
 CLK_OF_DECLARE(pistachio_clk_periph, "img,pistachio-clk-periph",
 	       pistachio_clk_periph_init);
 
-static struct pistachio_gate pistachio_sys_gates[] __initdata = {
+अटल काष्ठा pistachio_gate pistachio_sys_gates[] __initdata = अणु
 	GATE(SYS_CLK_I2C0, "i2c0_sys", "sys", 0x8, 0),
 	GATE(SYS_CLK_I2C1, "i2c1_sys", "sys", 0x8, 1),
 	GATE(SYS_CLK_I2C2, "i2c2_sys", "sys", 0x8, 2),
@@ -295,41 +296,41 @@ static struct pistachio_gate pistachio_sys_gates[] __initdata = {
 	GATE(SYS_CLK_SPDIF_IN, "spdif_in_sys", "sys", 0x8, 25),
 	GATE(SYS_CLK_EVENT_TIMER, "event_timer_sys", "sys", 0x8, 26),
 	GATE(SYS_CLK_HASH, "hash_sys", "sys", 0x8, 27),
-};
+पूर्ण;
 
-static void __init pistachio_cr_periph_init(struct device_node *np)
-{
-	struct pistachio_clk_provider *p;
+अटल व्योम __init pistachio_cr_periph_init(काष्ठा device_node *np)
+अणु
+	काष्ठा pistachio_clk_provider *p;
 
 	p = pistachio_clk_alloc_provider(np, SYS_CLK_NR_CLKS);
-	if (!p)
-		return;
+	अगर (!p)
+		वापस;
 
-	pistachio_clk_register_gate(p, pistachio_sys_gates,
+	pistachio_clk_रेजिस्टर_gate(p, pistachio_sys_gates,
 				    ARRAY_SIZE(pistachio_sys_gates));
 
-	pistachio_clk_register_provider(p);
-}
+	pistachio_clk_रेजिस्टर_provider(p);
+पूर्ण
 CLK_OF_DECLARE(pistachio_cr_periph, "img,pistachio-cr-periph",
 	       pistachio_cr_periph_init);
 
-static struct pistachio_gate pistachio_ext_gates[] __initdata = {
+अटल काष्ठा pistachio_gate pistachio_ext_gates[] __initdata = अणु
 	GATE(EXT_CLK_ENET_IN, "enet_clk_in_gate", "enet_clk_in", 0x58, 5),
 	GATE(EXT_CLK_AUDIO_IN, "audio_clk_in_gate", "audio_clk_in", 0x58, 8)
-};
+पूर्ण;
 
-static void __init pistachio_cr_top_init(struct device_node *np)
-{
-	struct pistachio_clk_provider *p;
+अटल व्योम __init pistachio_cr_top_init(काष्ठा device_node *np)
+अणु
+	काष्ठा pistachio_clk_provider *p;
 
 	p = pistachio_clk_alloc_provider(np, EXT_CLK_NR_CLKS);
-	if (!p)
-		return;
+	अगर (!p)
+		वापस;
 
-	pistachio_clk_register_gate(p, pistachio_ext_gates,
+	pistachio_clk_रेजिस्टर_gate(p, pistachio_ext_gates,
 				    ARRAY_SIZE(pistachio_ext_gates));
 
-	pistachio_clk_register_provider(p);
-}
+	pistachio_clk_रेजिस्टर_provider(p);
+पूर्ण
 CLK_OF_DECLARE(pistachio_cr_top, "img,pistachio-cr-top",
 	       pistachio_cr_top_init);

@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * Pinctrl driver for Rockchip RK805 PMIC
+ * Pinctrl driver क्रम Rockchip RK805 PMIC
  *
  * Copyright (c) 2017, Fuzhou Rockchip Electronics Co., Ltd
  *
@@ -9,201 +10,201 @@
  * Based on the pinctrl-as3722 driver
  */
 
-#include <linux/gpio/driver.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/mfd/rk808.h>
-#include <linux/of.h>
-#include <linux/of_device.h>
-#include <linux/platform_device.h>
-#include <linux/pinctrl/consumer.h>
-#include <linux/pinctrl/machine.h>
-#include <linux/pinctrl/pinctrl.h>
-#include <linux/pinctrl/pinconf-generic.h>
-#include <linux/pinctrl/pinconf.h>
-#include <linux/pinctrl/pinmux.h>
-#include <linux/pm.h>
-#include <linux/slab.h>
+#समावेश <linux/gpio/driver.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/mfd/rk808.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/pinctrl/consumer.h>
+#समावेश <linux/pinctrl/machine.h>
+#समावेश <linux/pinctrl/pinctrl.h>
+#समावेश <linux/pinctrl/pinconf-generic.h>
+#समावेश <linux/pinctrl/pinconf.h>
+#समावेश <linux/pinctrl/pinmux.h>
+#समावेश <linux/pm.h>
+#समावेश <linux/slab.h>
 
-#include "core.h"
-#include "pinconf.h"
-#include "pinctrl-utils.h"
+#समावेश "core.h"
+#समावेश "pinconf.h"
+#समावेश "pinctrl-utils.h"
 
-struct rk805_pin_function {
-	const char *name;
-	const char *const *groups;
-	unsigned int ngroups;
-	int mux_option;
-};
+काष्ठा rk805_pin_function अणु
+	स्थिर अक्षर *name;
+	स्थिर अक्षर *स्थिर *groups;
+	अचिन्हित पूर्णांक ngroups;
+	पूर्णांक mux_option;
+पूर्ण;
 
-struct rk805_pin_group {
-	const char *name;
-	const unsigned int pins[1];
-	unsigned int npins;
-};
+काष्ठा rk805_pin_group अणु
+	स्थिर अक्षर *name;
+	स्थिर अचिन्हित पूर्णांक pins[1];
+	अचिन्हित पूर्णांक npins;
+पूर्ण;
 
 /*
- * @reg: gpio setting register;
+ * @reg: gpio setting रेजिस्टर;
  * @fun_mask: functions select mask value, when set is gpio;
  * @dir_mask: input or output mask value, when set is output, otherwise input;
  * @val_mask: gpio set value, when set is level high, otherwise low;
  *
- * Different PMIC has different pin features, belowing 3 mask members are not
- * all necessary for every PMIC. For example, RK805 has 2 pins that can be used
+ * Dअगरferent PMIC has dअगरferent pin features, belowing 3 mask members are not
+ * all necessary क्रम every PMIC. For example, RK805 has 2 pins that can be used
  * as output only GPIOs, so func_mask and dir_mask are not needed. RK816 has 1
  * pin that can be used as TS/GPIO, so fun_mask, dir_mask and val_mask are all
  * necessary.
  */
-struct rk805_pin_config {
+काष्ठा rk805_pin_config अणु
 	u8 reg;
 	u8 fun_msk;
 	u8 dir_msk;
 	u8 val_msk;
-};
+पूर्ण;
 
-struct rk805_pctrl_info {
-	struct rk808 *rk808;
-	struct device *dev;
-	struct pinctrl_dev *pctl;
-	struct gpio_chip gpio_chip;
-	struct pinctrl_desc pinctrl_desc;
-	const struct rk805_pin_function *functions;
-	unsigned int num_functions;
-	const struct rk805_pin_group *groups;
-	int num_pin_groups;
-	const struct pinctrl_pin_desc *pins;
-	unsigned int num_pins;
-	const struct rk805_pin_config *pin_cfg;
-};
+काष्ठा rk805_pctrl_info अणु
+	काष्ठा rk808 *rk808;
+	काष्ठा device *dev;
+	काष्ठा pinctrl_dev *pctl;
+	काष्ठा gpio_chip gpio_chip;
+	काष्ठा pinctrl_desc pinctrl_desc;
+	स्थिर काष्ठा rk805_pin_function *functions;
+	अचिन्हित पूर्णांक num_functions;
+	स्थिर काष्ठा rk805_pin_group *groups;
+	पूर्णांक num_pin_groups;
+	स्थिर काष्ठा pinctrl_pin_desc *pins;
+	अचिन्हित पूर्णांक num_pins;
+	स्थिर काष्ठा rk805_pin_config *pin_cfg;
+पूर्ण;
 
-enum rk805_pinmux_option {
+क्रमागत rk805_pinmux_option अणु
 	RK805_PINMUX_GPIO,
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	RK805_GPIO0,
 	RK805_GPIO1,
-};
+पूर्ण;
 
-static const char *const rk805_gpio_groups[] = {
+अटल स्थिर अक्षर *स्थिर rk805_gpio_groups[] = अणु
 	"gpio0",
 	"gpio1",
-};
+पूर्ण;
 
 /* RK805: 2 output only GPIOs */
-static const struct pinctrl_pin_desc rk805_pins_desc[] = {
+अटल स्थिर काष्ठा pinctrl_pin_desc rk805_pins_desc[] = अणु
 	PINCTRL_PIN(RK805_GPIO0, "gpio0"),
 	PINCTRL_PIN(RK805_GPIO1, "gpio1"),
-};
+पूर्ण;
 
-static const struct rk805_pin_function rk805_pin_functions[] = {
-	{
+अटल स्थिर काष्ठा rk805_pin_function rk805_pin_functions[] = अणु
+	अणु
 		.name = "gpio",
 		.groups = rk805_gpio_groups,
 		.ngroups = ARRAY_SIZE(rk805_gpio_groups),
 		.mux_option = RK805_PINMUX_GPIO,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static const struct rk805_pin_group rk805_pin_groups[] = {
-	{
+अटल स्थिर काष्ठा rk805_pin_group rk805_pin_groups[] = अणु
+	अणु
 		.name = "gpio0",
-		.pins = { RK805_GPIO0 },
+		.pins = अणु RK805_GPIO0 पूर्ण,
 		.npins = 1,
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "gpio1",
-		.pins = { RK805_GPIO1 },
+		.pins = अणु RK805_GPIO1 पूर्ण,
 		.npins = 1,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-#define RK805_GPIO0_VAL_MSK	BIT(0)
-#define RK805_GPIO1_VAL_MSK	BIT(1)
+#घोषणा RK805_GPIO0_VAL_MSK	BIT(0)
+#घोषणा RK805_GPIO1_VAL_MSK	BIT(1)
 
-static const struct rk805_pin_config rk805_gpio_cfgs[] = {
-	{
+अटल स्थिर काष्ठा rk805_pin_config rk805_gpio_cfgs[] = अणु
+	अणु
 		.reg = RK805_OUT_REG,
 		.val_msk = RK805_GPIO0_VAL_MSK,
-	},
-	{
+	पूर्ण,
+	अणु
 		.reg = RK805_OUT_REG,
 		.val_msk = RK805_GPIO1_VAL_MSK,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
 /* generic gpio chip */
-static int rk805_gpio_get(struct gpio_chip *chip, unsigned int offset)
-{
-	struct rk805_pctrl_info *pci = gpiochip_get_data(chip);
-	int ret, val;
+अटल पूर्णांक rk805_gpio_get(काष्ठा gpio_chip *chip, अचिन्हित पूर्णांक offset)
+अणु
+	काष्ठा rk805_pctrl_info *pci = gpiochip_get_data(chip);
+	पूर्णांक ret, val;
 
-	ret = regmap_read(pci->rk808->regmap, pci->pin_cfg[offset].reg, &val);
-	if (ret) {
+	ret = regmap_पढ़ो(pci->rk808->regmap, pci->pin_cfg[offset].reg, &val);
+	अगर (ret) अणु
 		dev_err(pci->dev, "get gpio%d value failed\n", offset);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return !!(val & pci->pin_cfg[offset].val_msk);
-}
+	वापस !!(val & pci->pin_cfg[offset].val_msk);
+पूर्ण
 
-static void rk805_gpio_set(struct gpio_chip *chip,
-			   unsigned int offset,
-			   int value)
-{
-	struct rk805_pctrl_info *pci = gpiochip_get_data(chip);
-	int ret;
+अटल व्योम rk805_gpio_set(काष्ठा gpio_chip *chip,
+			   अचिन्हित पूर्णांक offset,
+			   पूर्णांक value)
+अणु
+	काष्ठा rk805_pctrl_info *pci = gpiochip_get_data(chip);
+	पूर्णांक ret;
 
 	ret = regmap_update_bits(pci->rk808->regmap,
 				 pci->pin_cfg[offset].reg,
 				 pci->pin_cfg[offset].val_msk,
 				 value ? pci->pin_cfg[offset].val_msk : 0);
-	if (ret)
+	अगर (ret)
 		dev_err(pci->dev, "set gpio%d value %d failed\n",
 			offset, value);
-}
+पूर्ण
 
-static int rk805_gpio_direction_input(struct gpio_chip *chip,
-				      unsigned int offset)
-{
-	return pinctrl_gpio_direction_input(chip->base + offset);
-}
+अटल पूर्णांक rk805_gpio_direction_input(काष्ठा gpio_chip *chip,
+				      अचिन्हित पूर्णांक offset)
+अणु
+	वापस pinctrl_gpio_direction_input(chip->base + offset);
+पूर्ण
 
-static int rk805_gpio_direction_output(struct gpio_chip *chip,
-				       unsigned int offset, int value)
-{
+अटल पूर्णांक rk805_gpio_direction_output(काष्ठा gpio_chip *chip,
+				       अचिन्हित पूर्णांक offset, पूर्णांक value)
+अणु
 	rk805_gpio_set(chip, offset, value);
-	return pinctrl_gpio_direction_output(chip->base + offset);
-}
+	वापस pinctrl_gpio_direction_output(chip->base + offset);
+पूर्ण
 
-static int rk805_gpio_get_direction(struct gpio_chip *chip, unsigned int offset)
-{
-	struct rk805_pctrl_info *pci = gpiochip_get_data(chip);
-	unsigned int val;
-	int ret;
+अटल पूर्णांक rk805_gpio_get_direction(काष्ठा gpio_chip *chip, अचिन्हित पूर्णांक offset)
+अणु
+	काष्ठा rk805_pctrl_info *pci = gpiochip_get_data(chip);
+	अचिन्हित पूर्णांक val;
+	पूर्णांक ret;
 
-	/* default output*/
-	if (!pci->pin_cfg[offset].dir_msk)
-		return GPIO_LINE_DIRECTION_OUT;
+	/* शेष output*/
+	अगर (!pci->pin_cfg[offset].dir_msk)
+		वापस GPIO_LINE_सूचीECTION_OUT;
 
-	ret = regmap_read(pci->rk808->regmap,
+	ret = regmap_पढ़ो(pci->rk808->regmap,
 			  pci->pin_cfg[offset].reg,
 			  &val);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(pci->dev, "get gpio%d direction failed\n", offset);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	if (val & pci->pin_cfg[offset].dir_msk)
-		return GPIO_LINE_DIRECTION_OUT;
+	अगर (val & pci->pin_cfg[offset].dir_msk)
+		वापस GPIO_LINE_सूचीECTION_OUT;
 
-	return GPIO_LINE_DIRECTION_IN;
-}
+	वापस GPIO_LINE_सूचीECTION_IN;
+पूर्ण
 
-static const struct gpio_chip rk805_gpio_chip = {
+अटल स्थिर काष्ठा gpio_chip rk805_gpio_chip = अणु
 	.label			= "rk805-gpio",
 	.request		= gpiochip_generic_request,
-	.free			= gpiochip_generic_free,
+	.मुक्त			= gpiochip_generic_मुक्त,
 	.get_direction		= rk805_gpio_get_direction,
 	.get			= rk805_gpio_get,
 	.set			= rk805_gpio_set,
@@ -212,217 +213,217 @@ static const struct gpio_chip rk805_gpio_chip = {
 	.can_sleep		= true,
 	.base			= -1,
 	.owner			= THIS_MODULE,
-};
+पूर्ण;
 
 /* generic pinctrl */
-static int rk805_pinctrl_get_groups_count(struct pinctrl_dev *pctldev)
-{
-	struct rk805_pctrl_info *pci = pinctrl_dev_get_drvdata(pctldev);
+अटल पूर्णांक rk805_pinctrl_get_groups_count(काष्ठा pinctrl_dev *pctldev)
+अणु
+	काष्ठा rk805_pctrl_info *pci = pinctrl_dev_get_drvdata(pctldev);
 
-	return pci->num_pin_groups;
-}
+	वापस pci->num_pin_groups;
+पूर्ण
 
-static const char *rk805_pinctrl_get_group_name(struct pinctrl_dev *pctldev,
-						unsigned int group)
-{
-	struct rk805_pctrl_info *pci = pinctrl_dev_get_drvdata(pctldev);
+अटल स्थिर अक्षर *rk805_pinctrl_get_group_name(काष्ठा pinctrl_dev *pctldev,
+						अचिन्हित पूर्णांक group)
+अणु
+	काष्ठा rk805_pctrl_info *pci = pinctrl_dev_get_drvdata(pctldev);
 
-	return pci->groups[group].name;
-}
+	वापस pci->groups[group].name;
+पूर्ण
 
-static int rk805_pinctrl_get_group_pins(struct pinctrl_dev *pctldev,
-					unsigned int group,
-					const unsigned int **pins,
-					unsigned int *num_pins)
-{
-	struct rk805_pctrl_info *pci = pinctrl_dev_get_drvdata(pctldev);
+अटल पूर्णांक rk805_pinctrl_get_group_pins(काष्ठा pinctrl_dev *pctldev,
+					अचिन्हित पूर्णांक group,
+					स्थिर अचिन्हित पूर्णांक **pins,
+					अचिन्हित पूर्णांक *num_pins)
+अणु
+	काष्ठा rk805_pctrl_info *pci = pinctrl_dev_get_drvdata(pctldev);
 
 	*pins = pci->groups[group].pins;
 	*num_pins = pci->groups[group].npins;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct pinctrl_ops rk805_pinctrl_ops = {
+अटल स्थिर काष्ठा pinctrl_ops rk805_pinctrl_ops = अणु
 	.get_groups_count = rk805_pinctrl_get_groups_count,
 	.get_group_name = rk805_pinctrl_get_group_name,
 	.get_group_pins = rk805_pinctrl_get_group_pins,
 	.dt_node_to_map = pinconf_generic_dt_node_to_map_pin,
-	.dt_free_map = pinctrl_utils_free_map,
-};
+	.dt_मुक्त_map = pinctrl_utils_मुक्त_map,
+पूर्ण;
 
-static int rk805_pinctrl_get_funcs_count(struct pinctrl_dev *pctldev)
-{
-	struct rk805_pctrl_info *pci = pinctrl_dev_get_drvdata(pctldev);
+अटल पूर्णांक rk805_pinctrl_get_funcs_count(काष्ठा pinctrl_dev *pctldev)
+अणु
+	काष्ठा rk805_pctrl_info *pci = pinctrl_dev_get_drvdata(pctldev);
 
-	return pci->num_functions;
-}
+	वापस pci->num_functions;
+पूर्ण
 
-static const char *rk805_pinctrl_get_func_name(struct pinctrl_dev *pctldev,
-					       unsigned int function)
-{
-	struct rk805_pctrl_info *pci = pinctrl_dev_get_drvdata(pctldev);
+अटल स्थिर अक्षर *rk805_pinctrl_get_func_name(काष्ठा pinctrl_dev *pctldev,
+					       अचिन्हित पूर्णांक function)
+अणु
+	काष्ठा rk805_pctrl_info *pci = pinctrl_dev_get_drvdata(pctldev);
 
-	return pci->functions[function].name;
-}
+	वापस pci->functions[function].name;
+पूर्ण
 
-static int rk805_pinctrl_get_func_groups(struct pinctrl_dev *pctldev,
-					 unsigned int function,
-					 const char *const **groups,
-					 unsigned int *const num_groups)
-{
-	struct rk805_pctrl_info *pci = pinctrl_dev_get_drvdata(pctldev);
+अटल पूर्णांक rk805_pinctrl_get_func_groups(काष्ठा pinctrl_dev *pctldev,
+					 अचिन्हित पूर्णांक function,
+					 स्थिर अक्षर *स्थिर **groups,
+					 अचिन्हित पूर्णांक *स्थिर num_groups)
+अणु
+	काष्ठा rk805_pctrl_info *pci = pinctrl_dev_get_drvdata(pctldev);
 
 	*groups = pci->functions[function].groups;
 	*num_groups = pci->functions[function].ngroups;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int _rk805_pinctrl_set_mux(struct pinctrl_dev *pctldev,
-				  unsigned int offset,
-				  int mux)
-{
-	struct rk805_pctrl_info *pci = pinctrl_dev_get_drvdata(pctldev);
-	int ret;
+अटल पूर्णांक _rk805_pinctrl_set_mux(काष्ठा pinctrl_dev *pctldev,
+				  अचिन्हित पूर्णांक offset,
+				  पूर्णांक mux)
+अणु
+	काष्ठा rk805_pctrl_info *pci = pinctrl_dev_get_drvdata(pctldev);
+	पूर्णांक ret;
 
-	if (!pci->pin_cfg[offset].fun_msk)
-		return 0;
+	अगर (!pci->pin_cfg[offset].fun_msk)
+		वापस 0;
 
-	if (mux == RK805_PINMUX_GPIO) {
+	अगर (mux == RK805_PINMUX_GPIO) अणु
 		ret = regmap_update_bits(pci->rk808->regmap,
 					 pci->pin_cfg[offset].reg,
 					 pci->pin_cfg[offset].fun_msk,
 					 pci->pin_cfg[offset].fun_msk);
-		if (ret) {
+		अगर (ret) अणु
 			dev_err(pci->dev, "set gpio%d GPIO failed\n", offset);
-			return ret;
-		}
-	} else {
+			वापस ret;
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		dev_err(pci->dev, "Couldn't find function mux %d\n", mux);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int rk805_pinctrl_set_mux(struct pinctrl_dev *pctldev,
-				 unsigned int function,
-				 unsigned int group)
-{
-	struct rk805_pctrl_info *pci = pinctrl_dev_get_drvdata(pctldev);
-	int mux = pci->functions[function].mux_option;
-	int offset = group;
+अटल पूर्णांक rk805_pinctrl_set_mux(काष्ठा pinctrl_dev *pctldev,
+				 अचिन्हित पूर्णांक function,
+				 अचिन्हित पूर्णांक group)
+अणु
+	काष्ठा rk805_pctrl_info *pci = pinctrl_dev_get_drvdata(pctldev);
+	पूर्णांक mux = pci->functions[function].mux_option;
+	पूर्णांक offset = group;
 
-	return _rk805_pinctrl_set_mux(pctldev, offset, mux);
-}
+	वापस _rk805_pinctrl_set_mux(pctldev, offset, mux);
+पूर्ण
 
-static int rk805_pmx_gpio_set_direction(struct pinctrl_dev *pctldev,
-					struct pinctrl_gpio_range *range,
-					unsigned int offset, bool input)
-{
-	struct rk805_pctrl_info *pci = pinctrl_dev_get_drvdata(pctldev);
-	int ret;
+अटल पूर्णांक rk805_pmx_gpio_set_direction(काष्ठा pinctrl_dev *pctldev,
+					काष्ठा pinctrl_gpio_range *range,
+					अचिन्हित पूर्णांक offset, bool input)
+अणु
+	काष्ठा rk805_pctrl_info *pci = pinctrl_dev_get_drvdata(pctldev);
+	पूर्णांक ret;
 
-	/* switch to gpio function */
+	/* चयन to gpio function */
 	ret = _rk805_pinctrl_set_mux(pctldev, offset, RK805_PINMUX_GPIO);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(pci->dev, "set gpio%d mux failed\n", offset);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	/* set direction */
-	if (!pci->pin_cfg[offset].dir_msk)
-		return 0;
+	अगर (!pci->pin_cfg[offset].dir_msk)
+		वापस 0;
 
 	ret = regmap_update_bits(pci->rk808->regmap,
 				 pci->pin_cfg[offset].reg,
 				 pci->pin_cfg[offset].dir_msk,
 				 input ? 0 : pci->pin_cfg[offset].dir_msk);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(pci->dev, "set gpio%d direction failed\n", offset);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const struct pinmux_ops rk805_pinmux_ops = {
+अटल स्थिर काष्ठा pinmux_ops rk805_pinmux_ops = अणु
 	.get_functions_count	= rk805_pinctrl_get_funcs_count,
 	.get_function_name	= rk805_pinctrl_get_func_name,
 	.get_function_groups	= rk805_pinctrl_get_func_groups,
 	.set_mux		= rk805_pinctrl_set_mux,
 	.gpio_set_direction	= rk805_pmx_gpio_set_direction,
-};
+पूर्ण;
 
-static int rk805_pinconf_get(struct pinctrl_dev *pctldev,
-			     unsigned int pin, unsigned long *config)
-{
-	struct rk805_pctrl_info *pci = pinctrl_dev_get_drvdata(pctldev);
-	enum pin_config_param param = pinconf_to_config_param(*config);
+अटल पूर्णांक rk805_pinconf_get(काष्ठा pinctrl_dev *pctldev,
+			     अचिन्हित पूर्णांक pin, अचिन्हित दीर्घ *config)
+अणु
+	काष्ठा rk805_pctrl_info *pci = pinctrl_dev_get_drvdata(pctldev);
+	क्रमागत pin_config_param param = pinconf_to_config_param(*config);
 	u32 arg = 0;
 
-	switch (param) {
-	case PIN_CONFIG_OUTPUT:
+	चयन (param) अणु
+	हाल PIN_CONFIG_OUTPUT:
 		arg = rk805_gpio_get(&pci->gpio_chip, pin);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		dev_err(pci->dev, "Properties not supported\n");
-		return -ENOTSUPP;
-	}
+		वापस -ENOTSUPP;
+	पूर्ण
 
 	*config = pinconf_to_config_packed(param, (u16)arg);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int rk805_pinconf_set(struct pinctrl_dev *pctldev,
-			     unsigned int pin, unsigned long *configs,
-			     unsigned int num_configs)
-{
-	struct rk805_pctrl_info *pci = pinctrl_dev_get_drvdata(pctldev);
-	enum pin_config_param param;
+अटल पूर्णांक rk805_pinconf_set(काष्ठा pinctrl_dev *pctldev,
+			     अचिन्हित पूर्णांक pin, अचिन्हित दीर्घ *configs,
+			     अचिन्हित पूर्णांक num_configs)
+अणु
+	काष्ठा rk805_pctrl_info *pci = pinctrl_dev_get_drvdata(pctldev);
+	क्रमागत pin_config_param param;
 	u32 i, arg = 0;
 
-	for (i = 0; i < num_configs; i++) {
+	क्रम (i = 0; i < num_configs; i++) अणु
 		param = pinconf_to_config_param(configs[i]);
 		arg = pinconf_to_config_argument(configs[i]);
 
-		switch (param) {
-		case PIN_CONFIG_OUTPUT:
+		चयन (param) अणु
+		हाल PIN_CONFIG_OUTPUT:
 			rk805_gpio_set(&pci->gpio_chip, pin, arg);
-			rk805_pmx_gpio_set_direction(pctldev, NULL, pin, false);
-			break;
-		default:
+			rk805_pmx_gpio_set_direction(pctldev, शून्य, pin, false);
+			अवरोध;
+		शेष:
 			dev_err(pci->dev, "Properties not supported\n");
-			return -ENOTSUPP;
-		}
-	}
+			वापस -ENOTSUPP;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct pinconf_ops rk805_pinconf_ops = {
+अटल स्थिर काष्ठा pinconf_ops rk805_pinconf_ops = अणु
 	.pin_config_get = rk805_pinconf_get,
 	.pin_config_set = rk805_pinconf_set,
-};
+पूर्ण;
 
-static const struct pinctrl_desc rk805_pinctrl_desc = {
+अटल स्थिर काष्ठा pinctrl_desc rk805_pinctrl_desc = अणु
 	.name = "rk805-pinctrl",
 	.pctlops = &rk805_pinctrl_ops,
 	.pmxops = &rk805_pinmux_ops,
 	.confops = &rk805_pinconf_ops,
 	.owner = THIS_MODULE,
-};
+पूर्ण;
 
-static int rk805_pinctrl_probe(struct platform_device *pdev)
-{
-	struct rk805_pctrl_info *pci;
-	int ret;
+अटल पूर्णांक rk805_pinctrl_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा rk805_pctrl_info *pci;
+	पूर्णांक ret;
 
-	pci = devm_kzalloc(&pdev->dev, sizeof(*pci), GFP_KERNEL);
-	if (!pci)
-		return -ENOMEM;
+	pci = devm_kzalloc(&pdev->dev, माप(*pci), GFP_KERNEL);
+	अगर (!pci)
+		वापस -ENOMEM;
 
 	pci->dev = &pdev->dev;
 	pci->dev->of_node = pdev->dev.parent->of_node;
@@ -433,10 +434,10 @@ static int rk805_pinctrl_probe(struct platform_device *pdev)
 	pci->gpio_chip.parent = &pdev->dev;
 	pci->gpio_chip.of_node = pdev->dev.parent->of_node;
 
-	platform_set_drvdata(pdev, pci);
+	platक्रमm_set_drvdata(pdev, pci);
 
-	switch (pci->rk808->variant) {
-	case RK805_ID:
+	चयन (pci->rk808->variant) अणु
+	हाल RK805_ID:
 		pci->pins = rk805_pins_desc;
 		pci->num_pins = ARRAY_SIZE(rk805_pins_desc);
 		pci->functions = rk805_pin_functions;
@@ -447,45 +448,45 @@ static int rk805_pinctrl_probe(struct platform_device *pdev)
 		pci->pinctrl_desc.npins = ARRAY_SIZE(rk805_pins_desc);
 		pci->pin_cfg = rk805_gpio_cfgs;
 		pci->gpio_chip.ngpio = ARRAY_SIZE(rk805_gpio_cfgs);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		dev_err(&pdev->dev, "unsupported RK805 ID %lu\n",
 			pci->rk808->variant);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	/* Add gpio chip */
 	ret = devm_gpiochip_add_data(&pdev->dev, &pci->gpio_chip, pci);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(&pdev->dev, "Couldn't add gpiochip\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	/* Add pinctrl */
-	pci->pctl = devm_pinctrl_register(&pdev->dev, &pci->pinctrl_desc, pci);
-	if (IS_ERR(pci->pctl)) {
+	pci->pctl = devm_pinctrl_रेजिस्टर(&pdev->dev, &pci->pinctrl_desc, pci);
+	अगर (IS_ERR(pci->pctl)) अणु
 		dev_err(&pdev->dev, "Couldn't add pinctrl\n");
-		return PTR_ERR(pci->pctl);
-	}
+		वापस PTR_ERR(pci->pctl);
+	पूर्ण
 
 	/* Add pin range */
 	ret = gpiochip_add_pin_range(&pci->gpio_chip, dev_name(&pdev->dev),
 				     0, 0, pci->gpio_chip.ngpio);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(&pdev->dev, "Couldn't add gpiochip pin range\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct platform_driver rk805_pinctrl_driver = {
+अटल काष्ठा platक्रमm_driver rk805_pinctrl_driver = अणु
 	.probe = rk805_pinctrl_probe,
-	.driver = {
+	.driver = अणु
 		.name = "rk805-pinctrl",
-	},
-};
-module_platform_driver(rk805_pinctrl_driver);
+	पूर्ण,
+पूर्ण;
+module_platक्रमm_driver(rk805_pinctrl_driver);
 
 MODULE_DESCRIPTION("RK805 pin control and GPIO driver");
 MODULE_AUTHOR("Joseph Chen <chenjh@rock-chips.com>");

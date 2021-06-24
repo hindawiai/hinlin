@@ -1,7 +1,8 @@
-#ifndef _TOOLS_LINUX_EXPORT_H_
-#define _TOOLS_LINUX_EXPORT_H_
+<शैली गुरु>
+#अगर_अघोषित _TOOLS_LINUX_EXPORT_H_
+#घोषणा _TOOLS_LINUX_EXPORT_H_
 
-#define EXPORT_SYMBOL(sym)
-#define EXPORT_SYMBOL_GPL(sym)
+#घोषणा EXPORT_SYMBOL(sym)
+#घोषणा EXPORT_SYMBOL_GPL(sym)
 
-#endif
+#पूर्ण_अगर

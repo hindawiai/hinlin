@@ -1,141 +1,142 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * Filesystem-level keyring for fscrypt
+ * Fileप्रणाली-level keyring क्रम fscrypt
  *
  * Copyright 2019 Google LLC
  */
 
 /*
  * This file implements management of fscrypt master keys in the
- * filesystem-level keyring, including the ioctls:
+ * fileप्रणाली-level keyring, including the ioctls:
  *
  * - FS_IOC_ADD_ENCRYPTION_KEY
  * - FS_IOC_REMOVE_ENCRYPTION_KEY
  * - FS_IOC_REMOVE_ENCRYPTION_KEY_ALL_USERS
  * - FS_IOC_GET_ENCRYPTION_KEY_STATUS
  *
- * See the "User API" section of Documentation/filesystems/fscrypt.rst for more
- * information about these ioctls.
+ * See the "User API" section of Documentation/fileप्रणालीs/fscrypt.rst क्रम more
+ * inक्रमmation about these ioctls.
  */
 
-#include <crypto/skcipher.h>
-#include <linux/key-type.h>
-#include <linux/random.h>
-#include <linux/seq_file.h>
+#समावेश <crypto/skcipher.h>
+#समावेश <linux/key-type.h>
+#समावेश <linux/अक्रमom.h>
+#समावेश <linux/seq_file.h>
 
-#include "fscrypt_private.h"
+#समावेश "fscrypt_private.h"
 
-static void wipe_master_key_secret(struct fscrypt_master_key_secret *secret)
-{
+अटल व्योम wipe_master_key_secret(काष्ठा fscrypt_master_key_secret *secret)
+अणु
 	fscrypt_destroy_hkdf(&secret->hkdf);
-	memzero_explicit(secret, sizeof(*secret));
-}
+	memzero_explicit(secret, माप(*secret));
+पूर्ण
 
-static void move_master_key_secret(struct fscrypt_master_key_secret *dst,
-				   struct fscrypt_master_key_secret *src)
-{
-	memcpy(dst, src, sizeof(*dst));
-	memzero_explicit(src, sizeof(*src));
-}
+अटल व्योम move_master_key_secret(काष्ठा fscrypt_master_key_secret *dst,
+				   काष्ठा fscrypt_master_key_secret *src)
+अणु
+	स_नकल(dst, src, माप(*dst));
+	memzero_explicit(src, माप(*src));
+पूर्ण
 
-static void free_master_key(struct fscrypt_master_key *mk)
-{
-	size_t i;
+अटल व्योम मुक्त_master_key(काष्ठा fscrypt_master_key *mk)
+अणु
+	माप_प्रकार i;
 
 	wipe_master_key_secret(&mk->mk_secret);
 
-	for (i = 0; i <= FSCRYPT_MODE_MAX; i++) {
+	क्रम (i = 0; i <= FSCRYPT_MODE_MAX; i++) अणु
 		fscrypt_destroy_prepared_key(&mk->mk_direct_keys[i]);
 		fscrypt_destroy_prepared_key(&mk->mk_iv_ino_lblk_64_keys[i]);
 		fscrypt_destroy_prepared_key(&mk->mk_iv_ino_lblk_32_keys[i]);
-	}
+	पूर्ण
 
 	key_put(mk->mk_users);
-	kfree_sensitive(mk);
-}
+	kमुक्त_sensitive(mk);
+पूर्ण
 
-static inline bool valid_key_spec(const struct fscrypt_key_specifier *spec)
-{
-	if (spec->__reserved)
-		return false;
-	return master_key_spec_len(spec) != 0;
-}
+अटल अंतरभूत bool valid_key_spec(स्थिर काष्ठा fscrypt_key_specअगरier *spec)
+अणु
+	अगर (spec->__reserved)
+		वापस false;
+	वापस master_key_spec_len(spec) != 0;
+पूर्ण
 
-static int fscrypt_key_instantiate(struct key *key,
-				   struct key_preparsed_payload *prep)
-{
-	key->payload.data[0] = (struct fscrypt_master_key *)prep->data;
-	return 0;
-}
+अटल पूर्णांक fscrypt_key_instantiate(काष्ठा key *key,
+				   काष्ठा key_preparsed_payload *prep)
+अणु
+	key->payload.data[0] = (काष्ठा fscrypt_master_key *)prep->data;
+	वापस 0;
+पूर्ण
 
-static void fscrypt_key_destroy(struct key *key)
-{
-	free_master_key(key->payload.data[0]);
-}
+अटल व्योम fscrypt_key_destroy(काष्ठा key *key)
+अणु
+	मुक्त_master_key(key->payload.data[0]);
+पूर्ण
 
-static void fscrypt_key_describe(const struct key *key, struct seq_file *m)
-{
-	seq_puts(m, key->description);
+अटल व्योम fscrypt_key_describe(स्थिर काष्ठा key *key, काष्ठा seq_file *m)
+अणु
+	seq_माला_दो(m, key->description);
 
-	if (key_is_positive(key)) {
-		const struct fscrypt_master_key *mk = key->payload.data[0];
+	अगर (key_is_positive(key)) अणु
+		स्थिर काष्ठा fscrypt_master_key *mk = key->payload.data[0];
 
-		if (!is_master_key_secret_present(&mk->mk_secret))
-			seq_puts(m, ": secret removed");
-	}
-}
+		अगर (!is_master_key_secret_present(&mk->mk_secret))
+			seq_माला_दो(m, ": secret removed");
+	पूर्ण
+पूर्ण
 
 /*
  * Type of key in ->s_master_keys.  Each key of this type represents a master
- * key which has been added to the filesystem.  Its payload is a
+ * key which has been added to the fileप्रणाली.  Its payload is a
  * 'struct fscrypt_master_key'.  The "." prefix in the key type name prevents
  * users from adding keys of this type via the keyrings syscalls rather than via
- * the intended method of FS_IOC_ADD_ENCRYPTION_KEY.
+ * the पूर्णांकended method of FS_IOC_ADD_ENCRYPTION_KEY.
  */
-static struct key_type key_type_fscrypt = {
+अटल काष्ठा key_type key_type_fscrypt = अणु
 	.name			= "._fscrypt",
 	.instantiate		= fscrypt_key_instantiate,
 	.destroy		= fscrypt_key_destroy,
 	.describe		= fscrypt_key_describe,
-};
+पूर्ण;
 
-static int fscrypt_user_key_instantiate(struct key *key,
-					struct key_preparsed_payload *prep)
-{
+अटल पूर्णांक fscrypt_user_key_instantiate(काष्ठा key *key,
+					काष्ठा key_preparsed_payload *prep)
+अणु
 	/*
-	 * We just charge FSCRYPT_MAX_KEY_SIZE bytes to the user's key quota for
+	 * We just अक्षरge FSCRYPT_MAX_KEY_SIZE bytes to the user's key quota क्रम
 	 * each key, regardless of the exact key size.  The amount of memory
 	 * actually used is greater than the size of the raw key anyway.
 	 */
-	return key_payload_reserve(key, FSCRYPT_MAX_KEY_SIZE);
-}
+	वापस key_payload_reserve(key, FSCRYPT_MAX_KEY_SIZE);
+पूर्ण
 
-static void fscrypt_user_key_describe(const struct key *key, struct seq_file *m)
-{
-	seq_puts(m, key->description);
-}
+अटल व्योम fscrypt_user_key_describe(स्थिर काष्ठा key *key, काष्ठा seq_file *m)
+अणु
+	seq_माला_दो(m, key->description);
+पूर्ण
 
 /*
  * Type of key in ->mk_users.  Each key of this type represents a particular
  * user who has added a particular master key.
  *
  * Note that the name of this key type really should be something like
- * ".fscrypt-user" instead of simply ".fscrypt".  But the shorter name is chosen
- * mainly for simplicity of presentation in /proc/keys when read by a non-root
+ * ".fscrypt-user" instead of simply ".fscrypt".  But the लघुer name is chosen
+ * मुख्यly क्रम simplicity of presentation in /proc/keys when पढ़ो by a non-root
  * user.  And it is expected to be rare that a key is actually added by multiple
  * users, since users should keep their encryption keys confidential.
  */
-static struct key_type key_type_fscrypt_user = {
+अटल काष्ठा key_type key_type_fscrypt_user = अणु
 	.name			= ".fscrypt",
 	.instantiate		= fscrypt_user_key_instantiate,
 	.describe		= fscrypt_user_key_describe,
-};
+पूर्ण;
 
 /* Search ->s_master_keys or ->mk_users */
-static struct key *search_fscrypt_keyring(struct key *keyring,
-					  struct key_type *type,
-					  const char *description)
-{
+अटल काष्ठा key *search_fscrypt_keyring(काष्ठा key *keyring,
+					  काष्ठा key_type *type,
+					  स्थिर अक्षर *description)
+अणु
 	/*
 	 * We need to mark the keyring reference as "possessed" so that we
 	 * acquire permission to search it, via the KEY_POS_SEARCH permission.
@@ -143,75 +144,75 @@ static struct key *search_fscrypt_keyring(struct key *keyring,
 	key_ref_t keyref = make_key_ref(keyring, true /* possessed */);
 
 	keyref = keyring_search(keyref, type, description, false);
-	if (IS_ERR(keyref)) {
-		if (PTR_ERR(keyref) == -EAGAIN || /* not found */
+	अगर (IS_ERR(keyref)) अणु
+		अगर (PTR_ERR(keyref) == -EAGAIN || /* not found */
 		    PTR_ERR(keyref) == -EKEYREVOKED) /* recently invalidated */
 			keyref = ERR_PTR(-ENOKEY);
-		return ERR_CAST(keyref);
-	}
-	return key_ref_to_ptr(keyref);
-}
+		वापस ERR_CAST(keyref);
+	पूर्ण
+	वापस key_ref_to_ptr(keyref);
+पूर्ण
 
-#define FSCRYPT_FS_KEYRING_DESCRIPTION_SIZE	\
-	(CONST_STRLEN("fscrypt-") + sizeof_field(struct super_block, s_id))
+#घोषणा FSCRYPT_FS_KEYRING_DESCRIPTION_SIZE	\
+	(CONST_STRLEN("fscrypt-") + माप_field(काष्ठा super_block, s_id))
 
-#define FSCRYPT_MK_DESCRIPTION_SIZE	(2 * FSCRYPT_KEY_IDENTIFIER_SIZE + 1)
+#घोषणा FSCRYPT_MK_DESCRIPTION_SIZE	(2 * FSCRYPT_KEY_IDENTIFIER_SIZE + 1)
 
-#define FSCRYPT_MK_USERS_DESCRIPTION_SIZE	\
+#घोषणा FSCRYPT_MK_USERS_DESCRIPTION_SIZE	\
 	(CONST_STRLEN("fscrypt-") + 2 * FSCRYPT_KEY_IDENTIFIER_SIZE + \
 	 CONST_STRLEN("-users") + 1)
 
-#define FSCRYPT_MK_USER_DESCRIPTION_SIZE	\
+#घोषणा FSCRYPT_MK_USER_DESCRIPTION_SIZE	\
 	(2 * FSCRYPT_KEY_IDENTIFIER_SIZE + CONST_STRLEN(".uid.") + 10 + 1)
 
-static void format_fs_keyring_description(
-			char description[FSCRYPT_FS_KEYRING_DESCRIPTION_SIZE],
-			const struct super_block *sb)
-{
-	sprintf(description, "fscrypt-%s", sb->s_id);
-}
+अटल व्योम क्रमmat_fs_keyring_description(
+			अक्षर description[FSCRYPT_FS_KEYRING_DESCRIPTION_SIZE],
+			स्थिर काष्ठा super_block *sb)
+अणु
+	प्र_लिखो(description, "fscrypt-%s", sb->s_id);
+पूर्ण
 
-static void format_mk_description(
-			char description[FSCRYPT_MK_DESCRIPTION_SIZE],
-			const struct fscrypt_key_specifier *mk_spec)
-{
-	sprintf(description, "%*phN",
+अटल व्योम क्रमmat_mk_description(
+			अक्षर description[FSCRYPT_MK_DESCRIPTION_SIZE],
+			स्थिर काष्ठा fscrypt_key_specअगरier *mk_spec)
+अणु
+	प्र_लिखो(description, "%*phN",
 		master_key_spec_len(mk_spec), (u8 *)&mk_spec->u);
-}
+पूर्ण
 
-static void format_mk_users_keyring_description(
-			char description[FSCRYPT_MK_USERS_DESCRIPTION_SIZE],
-			const u8 mk_identifier[FSCRYPT_KEY_IDENTIFIER_SIZE])
-{
-	sprintf(description, "fscrypt-%*phN-users",
-		FSCRYPT_KEY_IDENTIFIER_SIZE, mk_identifier);
-}
+अटल व्योम क्रमmat_mk_users_keyring_description(
+			अक्षर description[FSCRYPT_MK_USERS_DESCRIPTION_SIZE],
+			स्थिर u8 mk_identअगरier[FSCRYPT_KEY_IDENTIFIER_SIZE])
+अणु
+	प्र_लिखो(description, "fscrypt-%*phN-users",
+		FSCRYPT_KEY_IDENTIFIER_SIZE, mk_identअगरier);
+पूर्ण
 
-static void format_mk_user_description(
-			char description[FSCRYPT_MK_USER_DESCRIPTION_SIZE],
-			const u8 mk_identifier[FSCRYPT_KEY_IDENTIFIER_SIZE])
-{
+अटल व्योम क्रमmat_mk_user_description(
+			अक्षर description[FSCRYPT_MK_USER_DESCRIPTION_SIZE],
+			स्थिर u8 mk_identअगरier[FSCRYPT_KEY_IDENTIFIER_SIZE])
+अणु
 
-	sprintf(description, "%*phN.uid.%u", FSCRYPT_KEY_IDENTIFIER_SIZE,
-		mk_identifier, __kuid_val(current_fsuid()));
-}
+	प्र_लिखो(description, "%*phN.uid.%u", FSCRYPT_KEY_IDENTIFIER_SIZE,
+		mk_identअगरier, __kuid_val(current_fsuid()));
+पूर्ण
 
-/* Create ->s_master_keys if needed.  Synchronized by fscrypt_add_key_mutex. */
-static int allocate_filesystem_keyring(struct super_block *sb)
-{
-	char description[FSCRYPT_FS_KEYRING_DESCRIPTION_SIZE];
-	struct key *keyring;
+/* Create ->s_master_keys अगर needed.  Synchronized by fscrypt_add_key_mutex. */
+अटल पूर्णांक allocate_fileप्रणाली_keyring(काष्ठा super_block *sb)
+अणु
+	अक्षर description[FSCRYPT_FS_KEYRING_DESCRIPTION_SIZE];
+	काष्ठा key *keyring;
 
-	if (sb->s_master_keys)
-		return 0;
+	अगर (sb->s_master_keys)
+		वापस 0;
 
-	format_fs_keyring_description(description, sb);
+	क्रमmat_fs_keyring_description(description, sb);
 	keyring = keyring_alloc(description, GLOBAL_ROOT_UID, GLOBAL_ROOT_GID,
 				current_cred(), KEY_POS_SEARCH |
 				  KEY_USR_SEARCH | KEY_USR_READ | KEY_USR_VIEW,
-				KEY_ALLOC_NOT_IN_QUOTA, NULL, NULL);
-	if (IS_ERR(keyring))
-		return PTR_ERR(keyring);
+				KEY_ALLOC_NOT_IN_QUOTA, शून्य, शून्य);
+	अगर (IS_ERR(keyring))
+		वापस PTR_ERR(keyring);
 
 	/*
 	 * Pairs with the smp_load_acquire() in fscrypt_find_master_key().
@@ -219,130 +220,130 @@ static int allocate_filesystem_keyring(struct super_block *sb)
 	 * concurrent tasks can ACQUIRE it.
 	 */
 	smp_store_release(&sb->s_master_keys, keyring);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void fscrypt_sb_free(struct super_block *sb)
-{
+व्योम fscrypt_sb_मुक्त(काष्ठा super_block *sb)
+अणु
 	key_put(sb->s_master_keys);
-	sb->s_master_keys = NULL;
-}
+	sb->s_master_keys = शून्य;
+पूर्ण
 
 /*
- * Find the specified master key in ->s_master_keys.
- * Returns ERR_PTR(-ENOKEY) if not found.
+ * Find the specअगरied master key in ->s_master_keys.
+ * Returns ERR_PTR(-ENOKEY) अगर not found.
  */
-struct key *fscrypt_find_master_key(struct super_block *sb,
-				    const struct fscrypt_key_specifier *mk_spec)
-{
-	struct key *keyring;
-	char description[FSCRYPT_MK_DESCRIPTION_SIZE];
+काष्ठा key *fscrypt_find_master_key(काष्ठा super_block *sb,
+				    स्थिर काष्ठा fscrypt_key_specअगरier *mk_spec)
+अणु
+	काष्ठा key *keyring;
+	अक्षर description[FSCRYPT_MK_DESCRIPTION_SIZE];
 
 	/*
-	 * Pairs with the smp_store_release() in allocate_filesystem_keyring().
+	 * Pairs with the smp_store_release() in allocate_fileप्रणाली_keyring().
 	 * I.e., another task can publish ->s_master_keys concurrently,
 	 * executing a RELEASE barrier.  We need to use smp_load_acquire() here
 	 * to safely ACQUIRE the memory the other task published.
 	 */
 	keyring = smp_load_acquire(&sb->s_master_keys);
-	if (keyring == NULL)
-		return ERR_PTR(-ENOKEY); /* No keyring yet, so no keys yet. */
+	अगर (keyring == शून्य)
+		वापस ERR_PTR(-ENOKEY); /* No keyring yet, so no keys yet. */
 
-	format_mk_description(description, mk_spec);
-	return search_fscrypt_keyring(keyring, &key_type_fscrypt, description);
-}
+	क्रमmat_mk_description(description, mk_spec);
+	वापस search_fscrypt_keyring(keyring, &key_type_fscrypt, description);
+पूर्ण
 
-static int allocate_master_key_users_keyring(struct fscrypt_master_key *mk)
-{
-	char description[FSCRYPT_MK_USERS_DESCRIPTION_SIZE];
-	struct key *keyring;
+अटल पूर्णांक allocate_master_key_users_keyring(काष्ठा fscrypt_master_key *mk)
+अणु
+	अक्षर description[FSCRYPT_MK_USERS_DESCRIPTION_SIZE];
+	काष्ठा key *keyring;
 
-	format_mk_users_keyring_description(description,
-					    mk->mk_spec.u.identifier);
+	क्रमmat_mk_users_keyring_description(description,
+					    mk->mk_spec.u.identअगरier);
 	keyring = keyring_alloc(description, GLOBAL_ROOT_UID, GLOBAL_ROOT_GID,
 				current_cred(), KEY_POS_SEARCH |
 				  KEY_USR_SEARCH | KEY_USR_READ | KEY_USR_VIEW,
-				KEY_ALLOC_NOT_IN_QUOTA, NULL, NULL);
-	if (IS_ERR(keyring))
-		return PTR_ERR(keyring);
+				KEY_ALLOC_NOT_IN_QUOTA, शून्य, शून्य);
+	अगर (IS_ERR(keyring))
+		वापस PTR_ERR(keyring);
 
 	mk->mk_users = keyring;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * Find the current user's "key" in the master key's ->mk_users.
- * Returns ERR_PTR(-ENOKEY) if not found.
+ * Returns ERR_PTR(-ENOKEY) अगर not found.
  */
-static struct key *find_master_key_user(struct fscrypt_master_key *mk)
-{
-	char description[FSCRYPT_MK_USER_DESCRIPTION_SIZE];
+अटल काष्ठा key *find_master_key_user(काष्ठा fscrypt_master_key *mk)
+अणु
+	अक्षर description[FSCRYPT_MK_USER_DESCRIPTION_SIZE];
 
-	format_mk_user_description(description, mk->mk_spec.u.identifier);
-	return search_fscrypt_keyring(mk->mk_users, &key_type_fscrypt_user,
+	क्रमmat_mk_user_description(description, mk->mk_spec.u.identअगरier);
+	वापस search_fscrypt_keyring(mk->mk_users, &key_type_fscrypt_user,
 				      description);
-}
+पूर्ण
 
 /*
- * Give the current user a "key" in ->mk_users.  This charges the user's quota
+ * Give the current user a "key" in ->mk_users.  This अक्षरges the user's quota
  * and marks the master key as added by the current user, so that it cannot be
- * removed by another user with the key.  Either the master key's key->sem must
- * be held for write, or the master key must be still undergoing initialization.
+ * हटाओd by another user with the key.  Either the master key's key->sem must
+ * be held क्रम ग_लिखो, or the master key must be still undergoing initialization.
  */
-static int add_master_key_user(struct fscrypt_master_key *mk)
-{
-	char description[FSCRYPT_MK_USER_DESCRIPTION_SIZE];
-	struct key *mk_user;
-	int err;
+अटल पूर्णांक add_master_key_user(काष्ठा fscrypt_master_key *mk)
+अणु
+	अक्षर description[FSCRYPT_MK_USER_DESCRIPTION_SIZE];
+	काष्ठा key *mk_user;
+	पूर्णांक err;
 
-	format_mk_user_description(description, mk->mk_spec.u.identifier);
+	क्रमmat_mk_user_description(description, mk->mk_spec.u.identअगरier);
 	mk_user = key_alloc(&key_type_fscrypt_user, description,
 			    current_fsuid(), current_gid(), current_cred(),
-			    KEY_POS_SEARCH | KEY_USR_VIEW, 0, NULL);
-	if (IS_ERR(mk_user))
-		return PTR_ERR(mk_user);
+			    KEY_POS_SEARCH | KEY_USR_VIEW, 0, शून्य);
+	अगर (IS_ERR(mk_user))
+		वापस PTR_ERR(mk_user);
 
-	err = key_instantiate_and_link(mk_user, NULL, 0, mk->mk_users, NULL);
+	err = key_instantiate_and_link(mk_user, शून्य, 0, mk->mk_users, शून्य);
 	key_put(mk_user);
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /*
  * Remove the current user's "key" from ->mk_users.
- * The master key's key->sem must be held for write.
+ * The master key's key->sem must be held क्रम ग_लिखो.
  *
- * Returns 0 if removed, -ENOKEY if not found, or another -errno code.
+ * Returns 0 अगर हटाओd, -ENOKEY अगर not found, or another -त्रुटि_सं code.
  */
-static int remove_master_key_user(struct fscrypt_master_key *mk)
-{
-	struct key *mk_user;
-	int err;
+अटल पूर्णांक हटाओ_master_key_user(काष्ठा fscrypt_master_key *mk)
+अणु
+	काष्ठा key *mk_user;
+	पूर्णांक err;
 
 	mk_user = find_master_key_user(mk);
-	if (IS_ERR(mk_user))
-		return PTR_ERR(mk_user);
+	अगर (IS_ERR(mk_user))
+		वापस PTR_ERR(mk_user);
 	err = key_unlink(mk->mk_users, mk_user);
 	key_put(mk_user);
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /*
  * Allocate a new fscrypt_master_key which contains the given secret, set it as
  * the payload of a new 'struct key' of type fscrypt, and link the 'struct key'
- * into the given keyring.  Synchronized by fscrypt_add_key_mutex.
+ * पूर्णांकo the given keyring.  Synchronized by fscrypt_add_key_mutex.
  */
-static int add_new_master_key(struct fscrypt_master_key_secret *secret,
-			      const struct fscrypt_key_specifier *mk_spec,
-			      struct key *keyring)
-{
-	struct fscrypt_master_key *mk;
-	char description[FSCRYPT_MK_DESCRIPTION_SIZE];
-	struct key *key;
-	int err;
+अटल पूर्णांक add_new_master_key(काष्ठा fscrypt_master_key_secret *secret,
+			      स्थिर काष्ठा fscrypt_key_specअगरier *mk_spec,
+			      काष्ठा key *keyring)
+अणु
+	काष्ठा fscrypt_master_key *mk;
+	अक्षर description[FSCRYPT_MK_DESCRIPTION_SIZE];
+	काष्ठा key *key;
+	पूर्णांक err;
 
-	mk = kzalloc(sizeof(*mk), GFP_KERNEL);
-	if (!mk)
-		return -ENOMEM;
+	mk = kzalloc(माप(*mk), GFP_KERNEL);
+	अगर (!mk)
+		वापस -ENOMEM;
 
 	mk->mk_spec = *mk_spec;
 
@@ -352,446 +353,446 @@ static int add_new_master_key(struct fscrypt_master_key_secret *secret,
 	INIT_LIST_HEAD(&mk->mk_decrypted_inodes);
 	spin_lock_init(&mk->mk_decrypted_inodes_lock);
 
-	if (mk_spec->type == FSCRYPT_KEY_SPEC_TYPE_IDENTIFIER) {
+	अगर (mk_spec->type == FSCRYPT_KEY_SPEC_TYPE_IDENTIFIER) अणु
 		err = allocate_master_key_users_keyring(mk);
-		if (err)
-			goto out_free_mk;
+		अगर (err)
+			जाओ out_मुक्त_mk;
 		err = add_master_key_user(mk);
-		if (err)
-			goto out_free_mk;
-	}
+		अगर (err)
+			जाओ out_मुक्त_mk;
+	पूर्ण
 
 	/*
-	 * Note that we don't charge this key to anyone's quota, since when
-	 * ->mk_users is in use those keys are charged instead, and otherwise
+	 * Note that we करोn't charge this key to anyone's quota, since when
+	 * ->mk_users is in use those keys are अक्षरged instead, and otherwise
 	 * (when ->mk_users isn't in use) only root can add these keys.
 	 */
-	format_mk_description(description, mk_spec);
+	क्रमmat_mk_description(description, mk_spec);
 	key = key_alloc(&key_type_fscrypt, description,
 			GLOBAL_ROOT_UID, GLOBAL_ROOT_GID, current_cred(),
 			KEY_POS_SEARCH | KEY_USR_SEARCH | KEY_USR_VIEW,
-			KEY_ALLOC_NOT_IN_QUOTA, NULL);
-	if (IS_ERR(key)) {
+			KEY_ALLOC_NOT_IN_QUOTA, शून्य);
+	अगर (IS_ERR(key)) अणु
 		err = PTR_ERR(key);
-		goto out_free_mk;
-	}
-	err = key_instantiate_and_link(key, mk, sizeof(*mk), keyring, NULL);
+		जाओ out_मुक्त_mk;
+	पूर्ण
+	err = key_instantiate_and_link(key, mk, माप(*mk), keyring, शून्य);
 	key_put(key);
-	if (err)
-		goto out_free_mk;
+	अगर (err)
+		जाओ out_मुक्त_mk;
 
-	return 0;
+	वापस 0;
 
-out_free_mk:
-	free_master_key(mk);
-	return err;
-}
+out_मुक्त_mk:
+	मुक्त_master_key(mk);
+	वापस err;
+पूर्ण
 
-#define KEY_DEAD	1
+#घोषणा KEY_DEAD	1
 
-static int add_existing_master_key(struct fscrypt_master_key *mk,
-				   struct fscrypt_master_key_secret *secret)
-{
-	struct key *mk_user;
+अटल पूर्णांक add_existing_master_key(काष्ठा fscrypt_master_key *mk,
+				   काष्ठा fscrypt_master_key_secret *secret)
+अणु
+	काष्ठा key *mk_user;
 	bool rekey;
-	int err;
+	पूर्णांक err;
 
 	/*
-	 * If the current user is already in ->mk_users, then there's nothing to
-	 * do.  (Not applicable for v1 policy keys, which have NULL ->mk_users.)
+	 * If the current user is alपढ़ोy in ->mk_users, then there's nothing to
+	 * करो.  (Not applicable क्रम v1 policy keys, which have शून्य ->mk_users.)
 	 */
-	if (mk->mk_users) {
+	अगर (mk->mk_users) अणु
 		mk_user = find_master_key_user(mk);
-		if (mk_user != ERR_PTR(-ENOKEY)) {
-			if (IS_ERR(mk_user))
-				return PTR_ERR(mk_user);
+		अगर (mk_user != ERR_PTR(-ENOKEY)) अणु
+			अगर (IS_ERR(mk_user))
+				वापस PTR_ERR(mk_user);
 			key_put(mk_user);
-			return 0;
-		}
-	}
+			वापस 0;
+		पूर्ण
+	पूर्ण
 
 	/* If we'll be re-adding ->mk_secret, try to take the reference. */
 	rekey = !is_master_key_secret_present(&mk->mk_secret);
-	if (rekey && !refcount_inc_not_zero(&mk->mk_refcount))
-		return KEY_DEAD;
+	अगर (rekey && !refcount_inc_not_zero(&mk->mk_refcount))
+		वापस KEY_DEAD;
 
-	/* Add the current user to ->mk_users, if applicable. */
-	if (mk->mk_users) {
+	/* Add the current user to ->mk_users, अगर applicable. */
+	अगर (mk->mk_users) अणु
 		err = add_master_key_user(mk);
-		if (err) {
-			if (rekey && refcount_dec_and_test(&mk->mk_refcount))
-				return KEY_DEAD;
-			return err;
-		}
-	}
+		अगर (err) अणु
+			अगर (rekey && refcount_dec_and_test(&mk->mk_refcount))
+				वापस KEY_DEAD;
+			वापस err;
+		पूर्ण
+	पूर्ण
 
-	/* Re-add the secret if needed. */
-	if (rekey)
+	/* Re-add the secret अगर needed. */
+	अगर (rekey)
 		move_master_key_secret(&mk->mk_secret, secret);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int do_add_master_key(struct super_block *sb,
-			     struct fscrypt_master_key_secret *secret,
-			     const struct fscrypt_key_specifier *mk_spec)
-{
-	static DEFINE_MUTEX(fscrypt_add_key_mutex);
-	struct key *key;
-	int err;
+अटल पूर्णांक करो_add_master_key(काष्ठा super_block *sb,
+			     काष्ठा fscrypt_master_key_secret *secret,
+			     स्थिर काष्ठा fscrypt_key_specअगरier *mk_spec)
+अणु
+	अटल DEFINE_MUTEX(fscrypt_add_key_mutex);
+	काष्ठा key *key;
+	पूर्णांक err;
 
 	mutex_lock(&fscrypt_add_key_mutex); /* serialize find + link */
 retry:
 	key = fscrypt_find_master_key(sb, mk_spec);
-	if (IS_ERR(key)) {
+	अगर (IS_ERR(key)) अणु
 		err = PTR_ERR(key);
-		if (err != -ENOKEY)
-			goto out_unlock;
+		अगर (err != -ENOKEY)
+			जाओ out_unlock;
 		/* Didn't find the key in ->s_master_keys.  Add it. */
-		err = allocate_filesystem_keyring(sb);
-		if (err)
-			goto out_unlock;
+		err = allocate_fileप्रणाली_keyring(sb);
+		अगर (err)
+			जाओ out_unlock;
 		err = add_new_master_key(secret, mk_spec, sb->s_master_keys);
-	} else {
+	पूर्ण अन्यथा अणु
 		/*
-		 * Found the key in ->s_master_keys.  Re-add the secret if
-		 * needed, and add the user to ->mk_users if needed.
+		 * Found the key in ->s_master_keys.  Re-add the secret अगर
+		 * needed, and add the user to ->mk_users अगर needed.
 		 */
-		down_write(&key->sem);
+		करोwn_ग_लिखो(&key->sem);
 		err = add_existing_master_key(key->payload.data[0], secret);
-		up_write(&key->sem);
-		if (err == KEY_DEAD) {
-			/* Key being removed or needs to be removed */
+		up_ग_लिखो(&key->sem);
+		अगर (err == KEY_DEAD) अणु
+			/* Key being हटाओd or needs to be हटाओd */
 			key_invalidate(key);
 			key_put(key);
-			goto retry;
-		}
+			जाओ retry;
+		पूर्ण
 		key_put(key);
-	}
+	पूर्ण
 out_unlock:
 	mutex_unlock(&fscrypt_add_key_mutex);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int add_master_key(struct super_block *sb,
-			  struct fscrypt_master_key_secret *secret,
-			  struct fscrypt_key_specifier *key_spec)
-{
-	int err;
+अटल पूर्णांक add_master_key(काष्ठा super_block *sb,
+			  काष्ठा fscrypt_master_key_secret *secret,
+			  काष्ठा fscrypt_key_specअगरier *key_spec)
+अणु
+	पूर्णांक err;
 
-	if (key_spec->type == FSCRYPT_KEY_SPEC_TYPE_IDENTIFIER) {
+	अगर (key_spec->type == FSCRYPT_KEY_SPEC_TYPE_IDENTIFIER) अणु
 		err = fscrypt_init_hkdf(&secret->hkdf, secret->raw,
 					secret->size);
-		if (err)
-			return err;
+		अगर (err)
+			वापस err;
 
 		/*
 		 * Now that the HKDF context is initialized, the raw key is no
-		 * longer needed.
+		 * दीर्घer needed.
 		 */
 		memzero_explicit(secret->raw, secret->size);
 
-		/* Calculate the key identifier */
+		/* Calculate the key identअगरier */
 		err = fscrypt_hkdf_expand(&secret->hkdf,
-					  HKDF_CONTEXT_KEY_IDENTIFIER, NULL, 0,
-					  key_spec->u.identifier,
+					  HKDF_CONTEXT_KEY_IDENTIFIER, शून्य, 0,
+					  key_spec->u.identअगरier,
 					  FSCRYPT_KEY_IDENTIFIER_SIZE);
-		if (err)
-			return err;
-	}
-	return do_add_master_key(sb, secret, key_spec);
-}
+		अगर (err)
+			वापस err;
+	पूर्ण
+	वापस करो_add_master_key(sb, secret, key_spec);
+पूर्ण
 
-static int fscrypt_provisioning_key_preparse(struct key_preparsed_payload *prep)
-{
-	const struct fscrypt_provisioning_key_payload *payload = prep->data;
+अटल पूर्णांक fscrypt_provisioning_key_preparse(काष्ठा key_preparsed_payload *prep)
+अणु
+	स्थिर काष्ठा fscrypt_provisioning_key_payload *payload = prep->data;
 
-	if (prep->datalen < sizeof(*payload) + FSCRYPT_MIN_KEY_SIZE ||
-	    prep->datalen > sizeof(*payload) + FSCRYPT_MAX_KEY_SIZE)
-		return -EINVAL;
+	अगर (prep->datalen < माप(*payload) + FSCRYPT_MIN_KEY_SIZE ||
+	    prep->datalen > माप(*payload) + FSCRYPT_MAX_KEY_SIZE)
+		वापस -EINVAL;
 
-	if (payload->type != FSCRYPT_KEY_SPEC_TYPE_DESCRIPTOR &&
+	अगर (payload->type != FSCRYPT_KEY_SPEC_TYPE_DESCRIPTOR &&
 	    payload->type != FSCRYPT_KEY_SPEC_TYPE_IDENTIFIER)
-		return -EINVAL;
+		वापस -EINVAL;
 
-	if (payload->__reserved)
-		return -EINVAL;
+	अगर (payload->__reserved)
+		वापस -EINVAL;
 
 	prep->payload.data[0] = kmemdup(payload, prep->datalen, GFP_KERNEL);
-	if (!prep->payload.data[0])
-		return -ENOMEM;
+	अगर (!prep->payload.data[0])
+		वापस -ENOMEM;
 
 	prep->quotalen = prep->datalen;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void fscrypt_provisioning_key_free_preparse(
-					struct key_preparsed_payload *prep)
-{
-	kfree_sensitive(prep->payload.data[0]);
-}
+अटल व्योम fscrypt_provisioning_key_मुक्त_preparse(
+					काष्ठा key_preparsed_payload *prep)
+अणु
+	kमुक्त_sensitive(prep->payload.data[0]);
+पूर्ण
 
-static void fscrypt_provisioning_key_describe(const struct key *key,
-					      struct seq_file *m)
-{
-	seq_puts(m, key->description);
-	if (key_is_positive(key)) {
-		const struct fscrypt_provisioning_key_payload *payload =
+अटल व्योम fscrypt_provisioning_key_describe(स्थिर काष्ठा key *key,
+					      काष्ठा seq_file *m)
+अणु
+	seq_माला_दो(m, key->description);
+	अगर (key_is_positive(key)) अणु
+		स्थिर काष्ठा fscrypt_provisioning_key_payload *payload =
 			key->payload.data[0];
 
-		seq_printf(m, ": %u [%u]", key->datalen, payload->type);
-	}
-}
+		seq_म_लिखो(m, ": %u [%u]", key->datalen, payload->type);
+	पूर्ण
+पूर्ण
 
-static void fscrypt_provisioning_key_destroy(struct key *key)
-{
-	kfree_sensitive(key->payload.data[0]);
-}
+अटल व्योम fscrypt_provisioning_key_destroy(काष्ठा key *key)
+अणु
+	kमुक्त_sensitive(key->payload.data[0]);
+पूर्ण
 
-static struct key_type key_type_fscrypt_provisioning = {
+अटल काष्ठा key_type key_type_fscrypt_provisioning = अणु
 	.name			= "fscrypt-provisioning",
 	.preparse		= fscrypt_provisioning_key_preparse,
-	.free_preparse		= fscrypt_provisioning_key_free_preparse,
+	.मुक्त_preparse		= fscrypt_provisioning_key_मुक्त_preparse,
 	.instantiate		= generic_key_instantiate,
 	.describe		= fscrypt_provisioning_key_describe,
 	.destroy		= fscrypt_provisioning_key_destroy,
-};
+पूर्ण;
 
 /*
- * Retrieve the raw key from the Linux keyring key specified by 'key_id', and
- * store it into 'secret'.
+ * Retrieve the raw key from the Linux keyring key specअगरied by 'key_id', and
+ * store it पूर्णांकo 'secret'.
  *
  * The key must be of type "fscrypt-provisioning" and must have the field
  * fscrypt_provisioning_key_payload::type set to 'type', indicating that it's
- * only usable with fscrypt with the particular KDF version identified by
+ * only usable with fscrypt with the particular KDF version identअगरied by
  * 'type'.  We don't use the "logon" key type because there's no way to
  * completely restrict the use of such keys; they can be used by any kernel API
- * that accepts "logon" keys and doesn't require a specific service prefix.
+ * that accepts "logon" keys and करोesn't require a specअगरic service prefix.
  *
- * The ability to specify the key via Linux keyring key is intended for cases
- * where userspace needs to re-add keys after the filesystem is unmounted and
+ * The ability to specअगरy the key via Linux keyring key is पूर्णांकended क्रम हालs
+ * where userspace needs to re-add keys after the fileप्रणाली is unmounted and
  * re-mounted.  Most users should just provide the raw key directly instead.
  */
-static int get_keyring_key(u32 key_id, u32 type,
-			   struct fscrypt_master_key_secret *secret)
-{
+अटल पूर्णांक get_keyring_key(u32 key_id, u32 type,
+			   काष्ठा fscrypt_master_key_secret *secret)
+अणु
 	key_ref_t ref;
-	struct key *key;
-	const struct fscrypt_provisioning_key_payload *payload;
-	int err;
+	काष्ठा key *key;
+	स्थिर काष्ठा fscrypt_provisioning_key_payload *payload;
+	पूर्णांक err;
 
 	ref = lookup_user_key(key_id, 0, KEY_NEED_SEARCH);
-	if (IS_ERR(ref))
-		return PTR_ERR(ref);
+	अगर (IS_ERR(ref))
+		वापस PTR_ERR(ref);
 	key = key_ref_to_ptr(ref);
 
-	if (key->type != &key_type_fscrypt_provisioning)
-		goto bad_key;
+	अगर (key->type != &key_type_fscrypt_provisioning)
+		जाओ bad_key;
 	payload = key->payload.data[0];
 
 	/* Don't allow fscrypt v1 keys to be used as v2 keys and vice versa. */
-	if (payload->type != type)
-		goto bad_key;
+	अगर (payload->type != type)
+		जाओ bad_key;
 
-	secret->size = key->datalen - sizeof(*payload);
-	memcpy(secret->raw, payload->raw, secret->size);
+	secret->size = key->datalen - माप(*payload);
+	स_नकल(secret->raw, payload->raw, secret->size);
 	err = 0;
-	goto out_put;
+	जाओ out_put;
 
 bad_key:
 	err = -EKEYREJECTED;
 out_put:
 	key_ref_put(ref);
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /*
- * Add a master encryption key to the filesystem, causing all files which were
+ * Add a master encryption key to the fileप्रणाली, causing all files which were
  * encrypted with it to appear "unlocked" (decrypted) when accessed.
  *
- * When adding a key for use by v1 encryption policies, this ioctl is
+ * When adding a key क्रम use by v1 encryption policies, this ioctl is
  * privileged, and userspace must provide the 'key_descriptor'.
  *
- * When adding a key for use by v2+ encryption policies, this ioctl is
+ * When adding a key क्रम use by v2+ encryption policies, this ioctl is
  * unprivileged.  This is needed, in general, to allow non-root users to use
  * encryption without encountering the visibility problems of process-subscribed
- * keyrings and the inability to properly remove keys.  This works by having
- * each key identified by its cryptographically secure hash --- the
+ * keyrings and the inability to properly हटाओ keys.  This works by having
+ * each key identअगरied by its cryptographically secure hash --- the
  * 'key_identifier'.  The cryptographic hash ensures that a malicious user
- * cannot add the wrong key for a given identifier.  Furthermore, each added key
- * is charged to the appropriate user's quota for the keyrings service, which
- * prevents a malicious user from adding too many keys.  Finally, we forbid a
- * user from removing a key while other users have added it too, which prevents
+ * cannot add the wrong key क्रम a given identअगरier.  Furthermore, each added key
+ * is अक्षरged to the appropriate user's quota क्रम the keyrings service, which
+ * prevents a malicious user from adding too many keys.  Finally, we क्रमbid a
+ * user from removing a key जबतक other users have added it too, which prevents
  * a user who knows another user's key from causing a denial-of-service by
- * removing it at an inopportune time.  (We tolerate that a user who knows a key
+ * removing it at an inopportune समय.  (We tolerate that a user who knows a key
  * can prevent other users from removing it.)
  *
  * For more details, see the "FS_IOC_ADD_ENCRYPTION_KEY" section of
- * Documentation/filesystems/fscrypt.rst.
+ * Documentation/fileप्रणालीs/fscrypt.rst.
  */
-int fscrypt_ioctl_add_key(struct file *filp, void __user *_uarg)
-{
-	struct super_block *sb = file_inode(filp)->i_sb;
-	struct fscrypt_add_key_arg __user *uarg = _uarg;
-	struct fscrypt_add_key_arg arg;
-	struct fscrypt_master_key_secret secret;
-	int err;
+पूर्णांक fscrypt_ioctl_add_key(काष्ठा file *filp, व्योम __user *_uarg)
+अणु
+	काष्ठा super_block *sb = file_inode(filp)->i_sb;
+	काष्ठा fscrypt_add_key_arg __user *uarg = _uarg;
+	काष्ठा fscrypt_add_key_arg arg;
+	काष्ठा fscrypt_master_key_secret secret;
+	पूर्णांक err;
 
-	if (copy_from_user(&arg, uarg, sizeof(arg)))
-		return -EFAULT;
+	अगर (copy_from_user(&arg, uarg, माप(arg)))
+		वापस -EFAULT;
 
-	if (!valid_key_spec(&arg.key_spec))
-		return -EINVAL;
+	अगर (!valid_key_spec(&arg.key_spec))
+		वापस -EINVAL;
 
-	if (memchr_inv(arg.__reserved, 0, sizeof(arg.__reserved)))
-		return -EINVAL;
+	अगर (स_प्रथम_inv(arg.__reserved, 0, माप(arg.__reserved)))
+		वापस -EINVAL;
 
 	/*
-	 * Only root can add keys that are identified by an arbitrary descriptor
+	 * Only root can add keys that are identअगरied by an arbitrary descriptor
 	 * rather than by a cryptographic hash --- since otherwise a malicious
 	 * user could add the wrong key.
 	 */
-	if (arg.key_spec.type == FSCRYPT_KEY_SPEC_TYPE_DESCRIPTOR &&
+	अगर (arg.key_spec.type == FSCRYPT_KEY_SPEC_TYPE_DESCRIPTOR &&
 	    !capable(CAP_SYS_ADMIN))
-		return -EACCES;
+		वापस -EACCES;
 
-	memset(&secret, 0, sizeof(secret));
-	if (arg.key_id) {
-		if (arg.raw_size != 0)
-			return -EINVAL;
+	स_रखो(&secret, 0, माप(secret));
+	अगर (arg.key_id) अणु
+		अगर (arg.raw_size != 0)
+			वापस -EINVAL;
 		err = get_keyring_key(arg.key_id, arg.key_spec.type, &secret);
-		if (err)
-			goto out_wipe_secret;
-	} else {
-		if (arg.raw_size < FSCRYPT_MIN_KEY_SIZE ||
+		अगर (err)
+			जाओ out_wipe_secret;
+	पूर्ण अन्यथा अणु
+		अगर (arg.raw_size < FSCRYPT_MIN_KEY_SIZE ||
 		    arg.raw_size > FSCRYPT_MAX_KEY_SIZE)
-			return -EINVAL;
+			वापस -EINVAL;
 		secret.size = arg.raw_size;
 		err = -EFAULT;
-		if (copy_from_user(secret.raw, uarg->raw, secret.size))
-			goto out_wipe_secret;
-	}
+		अगर (copy_from_user(secret.raw, uarg->raw, secret.size))
+			जाओ out_wipe_secret;
+	पूर्ण
 
 	err = add_master_key(sb, &secret, &arg.key_spec);
-	if (err)
-		goto out_wipe_secret;
+	अगर (err)
+		जाओ out_wipe_secret;
 
-	/* Return the key identifier to userspace, if applicable */
+	/* Return the key identअगरier to userspace, अगर applicable */
 	err = -EFAULT;
-	if (arg.key_spec.type == FSCRYPT_KEY_SPEC_TYPE_IDENTIFIER &&
-	    copy_to_user(uarg->key_spec.u.identifier, arg.key_spec.u.identifier,
+	अगर (arg.key_spec.type == FSCRYPT_KEY_SPEC_TYPE_IDENTIFIER &&
+	    copy_to_user(uarg->key_spec.u.identअगरier, arg.key_spec.u.identअगरier,
 			 FSCRYPT_KEY_IDENTIFIER_SIZE))
-		goto out_wipe_secret;
+		जाओ out_wipe_secret;
 	err = 0;
 out_wipe_secret:
 	wipe_master_key_secret(&secret);
-	return err;
-}
+	वापस err;
+पूर्ण
 EXPORT_SYMBOL_GPL(fscrypt_ioctl_add_key);
 
 /*
- * Add the key for '-o test_dummy_encryption' to the filesystem keyring.
+ * Add the key क्रम '-o test_dummy_encryption' to the fileप्रणाली keyring.
  *
- * Use a per-boot random key to prevent people from misusing this option.
+ * Use a per-boot अक्रमom key to prevent people from misusing this option.
  */
-int fscrypt_add_test_dummy_key(struct super_block *sb,
-			       struct fscrypt_key_specifier *key_spec)
-{
-	static u8 test_key[FSCRYPT_MAX_KEY_SIZE];
-	struct fscrypt_master_key_secret secret;
-	int err;
+पूर्णांक fscrypt_add_test_dummy_key(काष्ठा super_block *sb,
+			       काष्ठा fscrypt_key_specअगरier *key_spec)
+अणु
+	अटल u8 test_key[FSCRYPT_MAX_KEY_SIZE];
+	काष्ठा fscrypt_master_key_secret secret;
+	पूर्णांक err;
 
-	get_random_once(test_key, FSCRYPT_MAX_KEY_SIZE);
+	get_अक्रमom_once(test_key, FSCRYPT_MAX_KEY_SIZE);
 
-	memset(&secret, 0, sizeof(secret));
+	स_रखो(&secret, 0, माप(secret));
 	secret.size = FSCRYPT_MAX_KEY_SIZE;
-	memcpy(secret.raw, test_key, FSCRYPT_MAX_KEY_SIZE);
+	स_नकल(secret.raw, test_key, FSCRYPT_MAX_KEY_SIZE);
 
 	err = add_master_key(sb, &secret, key_spec);
 	wipe_master_key_secret(&secret);
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /*
- * Verify that the current user has added a master key with the given identifier
- * (returns -ENOKEY if not).  This is needed to prevent a user from encrypting
+ * Verअगरy that the current user has added a master key with the given identअगरier
+ * (वापसs -ENOKEY अगर not).  This is needed to prevent a user from encrypting
  * their files using some other user's key which they don't actually know.
  * Cryptographically this isn't much of a problem, but the semantics of this
- * would be a bit weird, so it's best to just forbid it.
+ * would be a bit weird, so it's best to just क्रमbid it.
  *
- * The system administrator (CAP_FOWNER) can override this, which should be
- * enough for any use cases where encryption policies are being set using keys
- * that were chosen ahead of time but aren't available at the moment.
+ * The प्रणाली administrator (CAP_FOWNER) can override this, which should be
+ * enough क्रम any use हालs where encryption policies are being set using keys
+ * that were chosen ahead of समय but aren't available at the moment.
  *
- * Note that the key may have already removed by the time this returns, but
- * that's okay; we just care whether the key was there at some point.
+ * Note that the key may have alपढ़ोy हटाओd by the समय this वापसs, but
+ * that's okay; we just care whether the key was there at some poपूर्णांक.
  *
- * Return: 0 if the key is added, -ENOKEY if it isn't, or another -errno code
+ * Return: 0 अगर the key is added, -ENOKEY अगर it isn't, or another -त्रुटि_सं code
  */
-int fscrypt_verify_key_added(struct super_block *sb,
-			     const u8 identifier[FSCRYPT_KEY_IDENTIFIER_SIZE])
-{
-	struct fscrypt_key_specifier mk_spec;
-	struct key *key, *mk_user;
-	struct fscrypt_master_key *mk;
-	int err;
+पूर्णांक fscrypt_verअगरy_key_added(काष्ठा super_block *sb,
+			     स्थिर u8 identअगरier[FSCRYPT_KEY_IDENTIFIER_SIZE])
+अणु
+	काष्ठा fscrypt_key_specअगरier mk_spec;
+	काष्ठा key *key, *mk_user;
+	काष्ठा fscrypt_master_key *mk;
+	पूर्णांक err;
 
 	mk_spec.type = FSCRYPT_KEY_SPEC_TYPE_IDENTIFIER;
-	memcpy(mk_spec.u.identifier, identifier, FSCRYPT_KEY_IDENTIFIER_SIZE);
+	स_नकल(mk_spec.u.identअगरier, identअगरier, FSCRYPT_KEY_IDENTIFIER_SIZE);
 
 	key = fscrypt_find_master_key(sb, &mk_spec);
-	if (IS_ERR(key)) {
+	अगर (IS_ERR(key)) अणु
 		err = PTR_ERR(key);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 	mk = key->payload.data[0];
 	mk_user = find_master_key_user(mk);
-	if (IS_ERR(mk_user)) {
+	अगर (IS_ERR(mk_user)) अणु
 		err = PTR_ERR(mk_user);
-	} else {
+	पूर्ण अन्यथा अणु
 		key_put(mk_user);
 		err = 0;
-	}
+	पूर्ण
 	key_put(key);
 out:
-	if (err == -ENOKEY && capable(CAP_FOWNER))
+	अगर (err == -ENOKEY && capable(CAP_FOWNER))
 		err = 0;
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /*
  * Try to evict the inode's dentries from the dentry cache.  If the inode is a
  * directory, then it can have at most one dentry; however, that dentry may be
  * pinned by child dentries, so first try to evict the children too.
  */
-static void shrink_dcache_inode(struct inode *inode)
-{
-	struct dentry *dentry;
+अटल व्योम shrink_dcache_inode(काष्ठा inode *inode)
+अणु
+	काष्ठा dentry *dentry;
 
-	if (S_ISDIR(inode->i_mode)) {
+	अगर (S_ISसूची(inode->i_mode)) अणु
 		dentry = d_find_any_alias(inode);
-		if (dentry) {
+		अगर (dentry) अणु
 			shrink_dcache_parent(dentry);
 			dput(dentry);
-		}
-	}
+		पूर्ण
+	पूर्ण
 	d_prune_aliases(inode);
-}
+पूर्ण
 
-static void evict_dentries_for_decrypted_inodes(struct fscrypt_master_key *mk)
-{
-	struct fscrypt_info *ci;
-	struct inode *inode;
-	struct inode *toput_inode = NULL;
+अटल व्योम evict_dentries_क्रम_decrypted_inodes(काष्ठा fscrypt_master_key *mk)
+अणु
+	काष्ठा fscrypt_info *ci;
+	काष्ठा inode *inode;
+	काष्ठा inode *toput_inode = शून्य;
 
 	spin_lock(&mk->mk_decrypted_inodes_lock);
 
-	list_for_each_entry(ci, &mk->mk_decrypted_inodes, ci_master_key_link) {
+	list_क्रम_each_entry(ci, &mk->mk_decrypted_inodes, ci_master_key_link) अणु
 		inode = ci->ci_inode;
 		spin_lock(&inode->i_lock);
-		if (inode->i_state & (I_FREEING | I_WILL_FREE | I_NEW)) {
+		अगर (inode->i_state & (I_FREEING | I_WILL_FREE | I_NEW)) अणु
 			spin_unlock(&inode->i_lock);
-			continue;
-		}
+			जारी;
+		पूर्ण
 		__iget(inode);
 		spin_unlock(&inode->i_lock);
 		spin_unlock(&mk->mk_decrypted_inodes_lock);
@@ -801,98 +802,98 @@ static void evict_dentries_for_decrypted_inodes(struct fscrypt_master_key *mk)
 		toput_inode = inode;
 
 		spin_lock(&mk->mk_decrypted_inodes_lock);
-	}
+	पूर्ण
 
 	spin_unlock(&mk->mk_decrypted_inodes_lock);
 	iput(toput_inode);
-}
+पूर्ण
 
-static int check_for_busy_inodes(struct super_block *sb,
-				 struct fscrypt_master_key *mk)
-{
-	struct list_head *pos;
-	size_t busy_count = 0;
-	unsigned long ino;
-	char ino_str[50] = "";
+अटल पूर्णांक check_क्रम_busy_inodes(काष्ठा super_block *sb,
+				 काष्ठा fscrypt_master_key *mk)
+अणु
+	काष्ठा list_head *pos;
+	माप_प्रकार busy_count = 0;
+	अचिन्हित दीर्घ ino;
+	अक्षर ino_str[50] = "";
 
 	spin_lock(&mk->mk_decrypted_inodes_lock);
 
-	list_for_each(pos, &mk->mk_decrypted_inodes)
+	list_क्रम_each(pos, &mk->mk_decrypted_inodes)
 		busy_count++;
 
-	if (busy_count == 0) {
+	अगर (busy_count == 0) अणु
 		spin_unlock(&mk->mk_decrypted_inodes_lock);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	{
-		/* select an example file to show for debugging purposes */
-		struct inode *inode =
+	अणु
+		/* select an example file to show क्रम debugging purposes */
+		काष्ठा inode *inode =
 			list_first_entry(&mk->mk_decrypted_inodes,
-					 struct fscrypt_info,
+					 काष्ठा fscrypt_info,
 					 ci_master_key_link)->ci_inode;
 		ino = inode->i_ino;
-	}
+	पूर्ण
 	spin_unlock(&mk->mk_decrypted_inodes_lock);
 
 	/* If the inode is currently being created, ino may still be 0. */
-	if (ino)
-		snprintf(ino_str, sizeof(ino_str), ", including ino %lu", ino);
+	अगर (ino)
+		snम_लिखो(ino_str, माप(ino_str), ", including ino %lu", ino);
 
-	fscrypt_warn(NULL,
+	fscrypt_warn(शून्य,
 		     "%s: %zu inode(s) still busy after removing key with %s %*phN%s",
 		     sb->s_id, busy_count, master_key_spec_type(&mk->mk_spec),
 		     master_key_spec_len(&mk->mk_spec), (u8 *)&mk->mk_spec.u,
 		     ino_str);
-	return -EBUSY;
-}
+	वापस -EBUSY;
+पूर्ण
 
-static int try_to_lock_encrypted_files(struct super_block *sb,
-				       struct fscrypt_master_key *mk)
-{
-	int err1;
-	int err2;
+अटल पूर्णांक try_to_lock_encrypted_files(काष्ठा super_block *sb,
+				       काष्ठा fscrypt_master_key *mk)
+अणु
+	पूर्णांक err1;
+	पूर्णांक err2;
 
 	/*
-	 * An inode can't be evicted while it is dirty or has dirty pages.
+	 * An inode can't be evicted जबतक it is dirty or has dirty pages.
 	 * Thus, we first have to clean the inodes in ->mk_decrypted_inodes.
 	 *
-	 * Just do it the easy way: call sync_filesystem().  It's overkill, but
+	 * Just करो it the easy way: call sync_fileप्रणाली().  It's overसमाप्त, but
 	 * it works, and it's more important to minimize the amount of caches we
 	 * drop than the amount of data we sync.  Also, unprivileged users can
-	 * already call sync_filesystem() via sys_syncfs() or sys_sync().
+	 * alपढ़ोy call sync_fileप्रणाली() via sys_syncfs() or sys_sync().
 	 */
-	down_read(&sb->s_umount);
-	err1 = sync_filesystem(sb);
-	up_read(&sb->s_umount);
+	करोwn_पढ़ो(&sb->s_umount);
+	err1 = sync_fileप्रणाली(sb);
+	up_पढ़ो(&sb->s_umount);
 	/* If a sync error occurs, still try to evict as much as possible. */
 
 	/*
 	 * Inodes are pinned by their dentries, so we have to evict their
-	 * dentries.  shrink_dcache_sb() would suffice, but would be overkill
-	 * and inappropriate for use by unprivileged users.  So instead go
+	 * dentries.  shrink_dcache_sb() would suffice, but would be overसमाप्त
+	 * and inappropriate क्रम use by unprivileged users.  So instead go
 	 * through the inodes' alias lists and try to evict each dentry.
 	 */
-	evict_dentries_for_decrypted_inodes(mk);
+	evict_dentries_क्रम_decrypted_inodes(mk);
 
 	/*
-	 * evict_dentries_for_decrypted_inodes() already iput() each inode in
-	 * the list; any inodes for which that dropped the last reference will
+	 * evict_dentries_क्रम_decrypted_inodes() alपढ़ोy iput() each inode in
+	 * the list; any inodes क्रम which that dropped the last reference will
 	 * have been evicted due to fscrypt_drop_inode() detecting the key
 	 * removal and telling the VFS to evict the inode.  So to finish, we
 	 * just need to check whether any inodes couldn't be evicted.
 	 */
-	err2 = check_for_busy_inodes(sb, mk);
+	err2 = check_क्रम_busy_inodes(sb, mk);
 
-	return err1 ?: err2;
-}
+	वापस err1 ?: err2;
+पूर्ण
 
 /*
- * Try to remove an fscrypt master encryption key.
+ * Try to हटाओ an fscrypt master encryption key.
  *
- * FS_IOC_REMOVE_ENCRYPTION_KEY (all_users=false) removes the current user's
- * claim to the key, then removes the key itself if no other users have claims.
- * FS_IOC_REMOVE_ENCRYPTION_KEY_ALL_USERS (all_users=true) always removes the
+ * FS_IOC_REMOVE_ENCRYPTION_KEY (all_users=false) हटाओs the current user's
+ * claim to the key, then हटाओs the key itself अगर no other users have claims.
+ * FS_IOC_REMOVE_ENCRYPTION_KEY_ALL_USERS (all_users=true) always हटाओs the
  * key itself.
  *
  * To "remove the key itself", first we wipe the actual master key secret, so
@@ -900,232 +901,232 @@ static int try_to_lock_encrypted_files(struct super_block *sb,
  * inodes that had been unlocked with the key.
  *
  * If all inodes were evicted, then we unlink the fscrypt_master_key from the
- * keyring.  Otherwise it remains in the keyring in the "incompletely removed"
- * state (without the actual secret key) where it tracks the list of remaining
+ * keyring.  Otherwise it reमुख्यs in the keyring in the "incompletely removed"
+ * state (without the actual secret key) where it tracks the list of reमुख्यing
  * inodes.  Userspace can execute the ioctl again later to retry eviction, or
  * alternatively can re-add the secret key again.
  *
  * For more details, see the "Removing keys" section of
- * Documentation/filesystems/fscrypt.rst.
+ * Documentation/fileप्रणालीs/fscrypt.rst.
  */
-static int do_remove_key(struct file *filp, void __user *_uarg, bool all_users)
-{
-	struct super_block *sb = file_inode(filp)->i_sb;
-	struct fscrypt_remove_key_arg __user *uarg = _uarg;
-	struct fscrypt_remove_key_arg arg;
-	struct key *key;
-	struct fscrypt_master_key *mk;
+अटल पूर्णांक करो_हटाओ_key(काष्ठा file *filp, व्योम __user *_uarg, bool all_users)
+अणु
+	काष्ठा super_block *sb = file_inode(filp)->i_sb;
+	काष्ठा fscrypt_हटाओ_key_arg __user *uarg = _uarg;
+	काष्ठा fscrypt_हटाओ_key_arg arg;
+	काष्ठा key *key;
+	काष्ठा fscrypt_master_key *mk;
 	u32 status_flags = 0;
-	int err;
+	पूर्णांक err;
 	bool dead;
 
-	if (copy_from_user(&arg, uarg, sizeof(arg)))
-		return -EFAULT;
+	अगर (copy_from_user(&arg, uarg, माप(arg)))
+		वापस -EFAULT;
 
-	if (!valid_key_spec(&arg.key_spec))
-		return -EINVAL;
+	अगर (!valid_key_spec(&arg.key_spec))
+		वापस -EINVAL;
 
-	if (memchr_inv(arg.__reserved, 0, sizeof(arg.__reserved)))
-		return -EINVAL;
+	अगर (स_प्रथम_inv(arg.__reserved, 0, माप(arg.__reserved)))
+		वापस -EINVAL;
 
 	/*
-	 * Only root can add and remove keys that are identified by an arbitrary
+	 * Only root can add and हटाओ keys that are identअगरied by an arbitrary
 	 * descriptor rather than by a cryptographic hash.
 	 */
-	if (arg.key_spec.type == FSCRYPT_KEY_SPEC_TYPE_DESCRIPTOR &&
+	अगर (arg.key_spec.type == FSCRYPT_KEY_SPEC_TYPE_DESCRIPTOR &&
 	    !capable(CAP_SYS_ADMIN))
-		return -EACCES;
+		वापस -EACCES;
 
-	/* Find the key being removed. */
+	/* Find the key being हटाओd. */
 	key = fscrypt_find_master_key(sb, &arg.key_spec);
-	if (IS_ERR(key))
-		return PTR_ERR(key);
+	अगर (IS_ERR(key))
+		वापस PTR_ERR(key);
 	mk = key->payload.data[0];
 
-	down_write(&key->sem);
+	करोwn_ग_लिखो(&key->sem);
 
-	/* If relevant, remove current user's (or all users) claim to the key */
-	if (mk->mk_users && mk->mk_users->keys.nr_leaves_on_tree != 0) {
-		if (all_users)
+	/* If relevant, हटाओ current user's (or all users) claim to the key */
+	अगर (mk->mk_users && mk->mk_users->keys.nr_leaves_on_tree != 0) अणु
+		अगर (all_users)
 			err = keyring_clear(mk->mk_users);
-		else
-			err = remove_master_key_user(mk);
-		if (err) {
-			up_write(&key->sem);
-			goto out_put_key;
-		}
-		if (mk->mk_users->keys.nr_leaves_on_tree != 0) {
+		अन्यथा
+			err = हटाओ_master_key_user(mk);
+		अगर (err) अणु
+			up_ग_लिखो(&key->sem);
+			जाओ out_put_key;
+		पूर्ण
+		अगर (mk->mk_users->keys.nr_leaves_on_tree != 0) अणु
 			/*
-			 * Other users have still added the key too.  We removed
+			 * Other users have still added the key too.  We हटाओd
 			 * the current user's claim to the key, but we still
-			 * can't remove the key itself.
+			 * can't हटाओ the key itself.
 			 */
 			status_flags |=
 				FSCRYPT_KEY_REMOVAL_STATUS_FLAG_OTHER_USERS;
 			err = 0;
-			up_write(&key->sem);
-			goto out_put_key;
-		}
-	}
+			up_ग_लिखो(&key->sem);
+			जाओ out_put_key;
+		पूर्ण
+	पूर्ण
 
-	/* No user claims remaining.  Go ahead and wipe the secret. */
+	/* No user claims reमुख्यing.  Go ahead and wipe the secret. */
 	dead = false;
-	if (is_master_key_secret_present(&mk->mk_secret)) {
+	अगर (is_master_key_secret_present(&mk->mk_secret)) अणु
 		wipe_master_key_secret(&mk->mk_secret);
 		dead = refcount_dec_and_test(&mk->mk_refcount);
-	}
-	up_write(&key->sem);
-	if (dead) {
+	पूर्ण
+	up_ग_लिखो(&key->sem);
+	अगर (dead) अणु
 		/*
 		 * No inodes reference the key, and we wiped the secret, so the
-		 * key object is free to be removed from the keyring.
+		 * key object is मुक्त to be हटाओd from the keyring.
 		 */
 		key_invalidate(key);
 		err = 0;
-	} else {
+	पूर्ण अन्यथा अणु
 		/* Some inodes still reference this key; try to evict them. */
 		err = try_to_lock_encrypted_files(sb, mk);
-		if (err == -EBUSY) {
+		अगर (err == -EBUSY) अणु
 			status_flags |=
-				FSCRYPT_KEY_REMOVAL_STATUS_FLAG_FILES_BUSY;
+				FSCRYPT_KEY_REMOVAL_STATUS_FLAG_खाताS_BUSY;
 			err = 0;
-		}
-	}
+		पूर्ण
+	पूर्ण
 	/*
-	 * We return 0 if we successfully did something: removed a claim to the
+	 * We वापस 0 अगर we successfully did something: हटाओd a claim to the
 	 * key, wiped the secret, or tried locking the files again.  Users need
-	 * to check the informational status flags if they care whether the key
-	 * has been fully removed including all files locked.
+	 * to check the inक्रमmational status flags अगर they care whether the key
+	 * has been fully हटाओd including all files locked.
 	 */
 out_put_key:
 	key_put(key);
-	if (err == 0)
+	अगर (err == 0)
 		err = put_user(status_flags, &uarg->removal_status_flags);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-int fscrypt_ioctl_remove_key(struct file *filp, void __user *uarg)
-{
-	return do_remove_key(filp, uarg, false);
-}
-EXPORT_SYMBOL_GPL(fscrypt_ioctl_remove_key);
+पूर्णांक fscrypt_ioctl_हटाओ_key(काष्ठा file *filp, व्योम __user *uarg)
+अणु
+	वापस करो_हटाओ_key(filp, uarg, false);
+पूर्ण
+EXPORT_SYMBOL_GPL(fscrypt_ioctl_हटाओ_key);
 
-int fscrypt_ioctl_remove_key_all_users(struct file *filp, void __user *uarg)
-{
-	if (!capable(CAP_SYS_ADMIN))
-		return -EACCES;
-	return do_remove_key(filp, uarg, true);
-}
-EXPORT_SYMBOL_GPL(fscrypt_ioctl_remove_key_all_users);
+पूर्णांक fscrypt_ioctl_हटाओ_key_all_users(काष्ठा file *filp, व्योम __user *uarg)
+अणु
+	अगर (!capable(CAP_SYS_ADMIN))
+		वापस -EACCES;
+	वापस करो_हटाओ_key(filp, uarg, true);
+पूर्ण
+EXPORT_SYMBOL_GPL(fscrypt_ioctl_हटाओ_key_all_users);
 
 /*
  * Retrieve the status of an fscrypt master encryption key.
  *
- * We set ->status to indicate whether the key is absent, present, or
- * incompletely removed.  "Incompletely removed" means that the master key
- * secret has been removed, but some files which had been unlocked with it are
+ * We set ->status to indicate whether the key is असलent, present, or
+ * incompletely हटाओd.  "Incompletely removed" means that the master key
+ * secret has been हटाओd, but some files which had been unlocked with it are
  * still in use.  This field allows applications to easily determine the state
- * of an encrypted directory without using a hack such as trying to open a
+ * of an encrypted directory without using a hack such as trying to खोलो a
  * regular file in it (which can confuse the "incompletely removed" state with
- * absent or present).
+ * असलent or present).
  *
- * In addition, for v2 policy keys we allow applications to determine, via
+ * In addition, क्रम v2 policy keys we allow applications to determine, via
  * ->status_flags and ->user_count, whether the key has been added by the
  * current user, by other users, or by both.  Most applications should not need
- * this, since ordinarily only one user should know a given key.  However, if a
+ * this, since ordinarily only one user should know a given key.  However, अगर a
  * secret key is shared by multiple users, applications may wish to add an
- * already-present key to prevent other users from removing it.  This ioctl can
- * be used to check whether that really is the case before the work is done to
- * add the key --- which might e.g. require prompting the user for a passphrase.
+ * alपढ़ोy-present key to prevent other users from removing it.  This ioctl can
+ * be used to check whether that really is the हाल beक्रमe the work is करोne to
+ * add the key --- which might e.g. require prompting the user क्रम a passphrase.
  *
  * For more details, see the "FS_IOC_GET_ENCRYPTION_KEY_STATUS" section of
- * Documentation/filesystems/fscrypt.rst.
+ * Documentation/fileप्रणालीs/fscrypt.rst.
  */
-int fscrypt_ioctl_get_key_status(struct file *filp, void __user *uarg)
-{
-	struct super_block *sb = file_inode(filp)->i_sb;
-	struct fscrypt_get_key_status_arg arg;
-	struct key *key;
-	struct fscrypt_master_key *mk;
-	int err;
+पूर्णांक fscrypt_ioctl_get_key_status(काष्ठा file *filp, व्योम __user *uarg)
+अणु
+	काष्ठा super_block *sb = file_inode(filp)->i_sb;
+	काष्ठा fscrypt_get_key_status_arg arg;
+	काष्ठा key *key;
+	काष्ठा fscrypt_master_key *mk;
+	पूर्णांक err;
 
-	if (copy_from_user(&arg, uarg, sizeof(arg)))
-		return -EFAULT;
+	अगर (copy_from_user(&arg, uarg, माप(arg)))
+		वापस -EFAULT;
 
-	if (!valid_key_spec(&arg.key_spec))
-		return -EINVAL;
+	अगर (!valid_key_spec(&arg.key_spec))
+		वापस -EINVAL;
 
-	if (memchr_inv(arg.__reserved, 0, sizeof(arg.__reserved)))
-		return -EINVAL;
+	अगर (स_प्रथम_inv(arg.__reserved, 0, माप(arg.__reserved)))
+		वापस -EINVAL;
 
 	arg.status_flags = 0;
 	arg.user_count = 0;
-	memset(arg.__out_reserved, 0, sizeof(arg.__out_reserved));
+	स_रखो(arg.__out_reserved, 0, माप(arg.__out_reserved));
 
 	key = fscrypt_find_master_key(sb, &arg.key_spec);
-	if (IS_ERR(key)) {
-		if (key != ERR_PTR(-ENOKEY))
-			return PTR_ERR(key);
+	अगर (IS_ERR(key)) अणु
+		अगर (key != ERR_PTR(-ENOKEY))
+			वापस PTR_ERR(key);
 		arg.status = FSCRYPT_KEY_STATUS_ABSENT;
 		err = 0;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 	mk = key->payload.data[0];
-	down_read(&key->sem);
+	करोwn_पढ़ो(&key->sem);
 
-	if (!is_master_key_secret_present(&mk->mk_secret)) {
+	अगर (!is_master_key_secret_present(&mk->mk_secret)) अणु
 		arg.status = FSCRYPT_KEY_STATUS_INCOMPLETELY_REMOVED;
 		err = 0;
-		goto out_release_key;
-	}
+		जाओ out_release_key;
+	पूर्ण
 
 	arg.status = FSCRYPT_KEY_STATUS_PRESENT;
-	if (mk->mk_users) {
-		struct key *mk_user;
+	अगर (mk->mk_users) अणु
+		काष्ठा key *mk_user;
 
 		arg.user_count = mk->mk_users->keys.nr_leaves_on_tree;
 		mk_user = find_master_key_user(mk);
-		if (!IS_ERR(mk_user)) {
+		अगर (!IS_ERR(mk_user)) अणु
 			arg.status_flags |=
 				FSCRYPT_KEY_STATUS_FLAG_ADDED_BY_SELF;
 			key_put(mk_user);
-		} else if (mk_user != ERR_PTR(-ENOKEY)) {
+		पूर्ण अन्यथा अगर (mk_user != ERR_PTR(-ENOKEY)) अणु
 			err = PTR_ERR(mk_user);
-			goto out_release_key;
-		}
-	}
+			जाओ out_release_key;
+		पूर्ण
+	पूर्ण
 	err = 0;
 out_release_key:
-	up_read(&key->sem);
+	up_पढ़ो(&key->sem);
 	key_put(key);
 out:
-	if (!err && copy_to_user(uarg, &arg, sizeof(arg)))
+	अगर (!err && copy_to_user(uarg, &arg, माप(arg)))
 		err = -EFAULT;
-	return err;
-}
+	वापस err;
+पूर्ण
 EXPORT_SYMBOL_GPL(fscrypt_ioctl_get_key_status);
 
-int __init fscrypt_init_keyring(void)
-{
-	int err;
+पूर्णांक __init fscrypt_init_keyring(व्योम)
+अणु
+	पूर्णांक err;
 
-	err = register_key_type(&key_type_fscrypt);
-	if (err)
-		return err;
+	err = रेजिस्टर_key_type(&key_type_fscrypt);
+	अगर (err)
+		वापस err;
 
-	err = register_key_type(&key_type_fscrypt_user);
-	if (err)
-		goto err_unregister_fscrypt;
+	err = रेजिस्टर_key_type(&key_type_fscrypt_user);
+	अगर (err)
+		जाओ err_unरेजिस्टर_fscrypt;
 
-	err = register_key_type(&key_type_fscrypt_provisioning);
-	if (err)
-		goto err_unregister_fscrypt_user;
+	err = रेजिस्टर_key_type(&key_type_fscrypt_provisioning);
+	अगर (err)
+		जाओ err_unरेजिस्टर_fscrypt_user;
 
-	return 0;
+	वापस 0;
 
-err_unregister_fscrypt_user:
-	unregister_key_type(&key_type_fscrypt_user);
-err_unregister_fscrypt:
-	unregister_key_type(&key_type_fscrypt);
-	return err;
-}
+err_unरेजिस्टर_fscrypt_user:
+	unरेजिस्टर_key_type(&key_type_fscrypt_user);
+err_unरेजिस्टर_fscrypt:
+	unरेजिस्टर_key_type(&key_type_fscrypt);
+	वापस err;
+पूर्ण

@@ -1,101 +1,102 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
- *  Bluetooth support for Realtek devices
+ *  Bluetooth support क्रम Realtek devices
  *
  *  Copyright (C) 2015 Endless Mobile, Inc.
  */
 
-#define RTL_FRAG_LEN 252
+#घोषणा RTL_FRAG_LEN 252
 
-#define rtl_dev_err(dev, fmt, ...) bt_dev_err(dev, "RTL: " fmt, ##__VA_ARGS__)
-#define rtl_dev_warn(dev, fmt, ...) bt_dev_warn(dev, "RTL: " fmt, ##__VA_ARGS__)
-#define rtl_dev_info(dev, fmt, ...) bt_dev_info(dev, "RTL: " fmt, ##__VA_ARGS__)
-#define rtl_dev_dbg(dev, fmt, ...) bt_dev_dbg(dev, "RTL: " fmt, ##__VA_ARGS__)
+#घोषणा rtl_dev_err(dev, fmt, ...) bt_dev_err(dev, "RTL: " fmt, ##__VA_ARGS__)
+#घोषणा rtl_dev_warn(dev, fmt, ...) bt_dev_warn(dev, "RTL: " fmt, ##__VA_ARGS__)
+#घोषणा rtl_dev_info(dev, fmt, ...) bt_dev_info(dev, "RTL: " fmt, ##__VA_ARGS__)
+#घोषणा rtl_dev_dbg(dev, fmt, ...) bt_dev_dbg(dev, "RTL: " fmt, ##__VA_ARGS__)
 
-struct btrtl_device_info;
+काष्ठा btrtl_device_info;
 
-struct rtl_download_cmd {
+काष्ठा rtl_करोwnload_cmd अणु
 	__u8 index;
 	__u8 data[RTL_FRAG_LEN];
-} __packed;
+पूर्ण __packed;
 
-struct rtl_download_response {
+काष्ठा rtl_करोwnload_response अणु
 	__u8 status;
 	__u8 index;
-} __packed;
+पूर्ण __packed;
 
-struct rtl_rom_version_evt {
+काष्ठा rtl_rom_version_evt अणु
 	__u8 status;
 	__u8 version;
-} __packed;
+पूर्ण __packed;
 
-struct rtl_epatch_header {
+काष्ठा rtl_epatch_header अणु
 	__u8 signature[8];
 	__le32 fw_version;
 	__le16 num_patches;
-} __packed;
+पूर्ण __packed;
 
-struct rtl_vendor_config_entry {
+काष्ठा rtl_venकरोr_config_entry अणु
 	__le16 offset;
 	__u8 len;
 	__u8 data[];
-} __packed;
+पूर्ण __packed;
 
-struct rtl_vendor_config {
+काष्ठा rtl_venकरोr_config अणु
 	__le32 signature;
 	__le16 total_len;
-	struct rtl_vendor_config_entry entry[];
-} __packed;
+	काष्ठा rtl_venकरोr_config_entry entry[];
+पूर्ण __packed;
 
-#if IS_ENABLED(CONFIG_BT_RTL)
+#अगर IS_ENABLED(CONFIG_BT_RTL)
 
-struct btrtl_device_info *btrtl_initialize(struct hci_dev *hdev,
-					   const char *postfix);
-void btrtl_free(struct btrtl_device_info *btrtl_dev);
-int btrtl_download_firmware(struct hci_dev *hdev,
-			    struct btrtl_device_info *btrtl_dev);
-int btrtl_setup_realtek(struct hci_dev *hdev);
-int btrtl_shutdown_realtek(struct hci_dev *hdev);
-int btrtl_get_uart_settings(struct hci_dev *hdev,
-			    struct btrtl_device_info *btrtl_dev,
-			    unsigned int *controller_baudrate,
+काष्ठा btrtl_device_info *btrtl_initialize(काष्ठा hci_dev *hdev,
+					   स्थिर अक्षर *postfix);
+व्योम btrtl_मुक्त(काष्ठा btrtl_device_info *btrtl_dev);
+पूर्णांक btrtl_करोwnload_firmware(काष्ठा hci_dev *hdev,
+			    काष्ठा btrtl_device_info *btrtl_dev);
+पूर्णांक btrtl_setup_realtek(काष्ठा hci_dev *hdev);
+पूर्णांक btrtl_shutकरोwn_realtek(काष्ठा hci_dev *hdev);
+पूर्णांक btrtl_get_uart_settings(काष्ठा hci_dev *hdev,
+			    काष्ठा btrtl_device_info *btrtl_dev,
+			    अचिन्हित पूर्णांक *controller_baudrate,
 			    u32 *device_baudrate, bool *flow_control);
 
-#else
+#अन्यथा
 
-static inline struct btrtl_device_info *btrtl_initialize(struct hci_dev *hdev,
-							 const char *postfix)
-{
-	return ERR_PTR(-EOPNOTSUPP);
-}
+अटल अंतरभूत काष्ठा btrtl_device_info *btrtl_initialize(काष्ठा hci_dev *hdev,
+							 स्थिर अक्षर *postfix)
+अणु
+	वापस ERR_PTR(-EOPNOTSUPP);
+पूर्ण
 
-static inline void btrtl_free(struct btrtl_device_info *btrtl_dev)
-{
-}
+अटल अंतरभूत व्योम btrtl_मुक्त(काष्ठा btrtl_device_info *btrtl_dev)
+अणु
+पूर्ण
 
-static inline int btrtl_download_firmware(struct hci_dev *hdev,
-					  struct btrtl_device_info *btrtl_dev)
-{
-	return -EOPNOTSUPP;
-}
+अटल अंतरभूत पूर्णांक btrtl_करोwnload_firmware(काष्ठा hci_dev *hdev,
+					  काष्ठा btrtl_device_info *btrtl_dev)
+अणु
+	वापस -EOPNOTSUPP;
+पूर्ण
 
-static inline int btrtl_setup_realtek(struct hci_dev *hdev)
-{
-	return -EOPNOTSUPP;
-}
+अटल अंतरभूत पूर्णांक btrtl_setup_realtek(काष्ठा hci_dev *hdev)
+अणु
+	वापस -EOPNOTSUPP;
+पूर्ण
 
-static inline int btrtl_shutdown_realtek(struct hci_dev *hdev)
-{
-	return -EOPNOTSUPP;
-}
+अटल अंतरभूत पूर्णांक btrtl_shutकरोwn_realtek(काष्ठा hci_dev *hdev)
+अणु
+	वापस -EOPNOTSUPP;
+पूर्ण
 
-static inline int btrtl_get_uart_settings(struct hci_dev *hdev,
-					  struct btrtl_device_info *btrtl_dev,
-					  unsigned int *controller_baudrate,
+अटल अंतरभूत पूर्णांक btrtl_get_uart_settings(काष्ठा hci_dev *hdev,
+					  काष्ठा btrtl_device_info *btrtl_dev,
+					  अचिन्हित पूर्णांक *controller_baudrate,
 					  u32 *device_baudrate,
 					  bool *flow_control)
-{
-	return -ENOENT;
-}
+अणु
+	वापस -ENOENT;
+पूर्ण
 
-#endif
+#पूर्ण_अगर

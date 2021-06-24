@@ -1,498 +1,499 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * trace_events_trigger - trace event triggers
  *
- * Copyright (C) 2013 Tom Zanussi <tom.zanussi@linux.intel.com>
+ * Copyright (C) 2013 Tom Zanussi <tom.zanussi@linux.पूर्णांकel.com>
  */
 
-#include <linux/security.h>
-#include <linux/module.h>
-#include <linux/ctype.h>
-#include <linux/mutex.h>
-#include <linux/slab.h>
-#include <linux/rculist.h>
+#समावेश <linux/security.h>
+#समावेश <linux/module.h>
+#समावेश <linux/प्रकार.स>
+#समावेश <linux/mutex.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/rculist.h>
 
-#include "trace.h"
+#समावेश "trace.h"
 
-static LIST_HEAD(trigger_commands);
-static DEFINE_MUTEX(trigger_cmd_mutex);
+अटल LIST_HEAD(trigger_commands);
+अटल DEFINE_MUTEX(trigger_cmd_mutex);
 
-void trigger_data_free(struct event_trigger_data *data)
-{
-	if (data->cmd_ops->set_filter)
-		data->cmd_ops->set_filter(NULL, data, NULL);
+व्योम trigger_data_मुक्त(काष्ठा event_trigger_data *data)
+अणु
+	अगर (data->cmd_ops->set_filter)
+		data->cmd_ops->set_filter(शून्य, data, शून्य);
 
-	/* make sure current triggers exit before free */
-	tracepoint_synchronize_unregister();
+	/* make sure current triggers निकास beक्रमe मुक्त */
+	tracepoपूर्णांक_synchronize_unरेजिस्टर();
 
-	kfree(data);
-}
+	kमुक्त(data);
+पूर्ण
 
 /**
  * event_triggers_call - Call triggers associated with a trace event
  * @file: The trace_event_file associated with the event
- * @rec: The trace entry for the event, NULL for unconditional invocation
+ * @rec: The trace entry क्रम the event, शून्य क्रम unconditional invocation
  *
  * For each trigger associated with an event, invoke the trigger
- * function registered with the associated trigger command.  If rec is
- * non-NULL, it means that the trigger requires further processing and
- * shouldn't be unconditionally invoked.  If rec is non-NULL and the
+ * function रेजिस्टरed with the associated trigger command.  If rec is
+ * non-शून्य, it means that the trigger requires further processing and
+ * shouldn't be unconditionally invoked.  If rec is non-शून्य and the
  * trigger has a filter associated with it, rec will checked against
- * the filter and if the record matches the trigger will be invoked.
+ * the filter and अगर the record matches the trigger will be invoked.
  * If the trigger is a 'post_trigger', meaning it shouldn't be invoked
- * in any case until the current event is written, the trigger
+ * in any हाल until the current event is written, the trigger
  * function isn't invoked but the bit associated with the deferred
- * trigger is set in the return value.
+ * trigger is set in the वापस value.
  *
- * Returns an enum event_trigger_type value containing a set bit for
- * any trigger that should be deferred, ETT_NONE if nothing to defer.
+ * Returns an क्रमागत event_trigger_type value containing a set bit क्रम
+ * any trigger that should be deferred, ETT_NONE अगर nothing to defer.
  *
- * Called from tracepoint handlers (with rcu_read_lock_sched() held).
+ * Called from tracepoपूर्णांक handlers (with rcu_पढ़ो_lock_sched() held).
  *
- * Return: an enum event_trigger_type value containing a set bit for
- * any trigger that should be deferred, ETT_NONE if nothing to defer.
+ * Return: an क्रमागत event_trigger_type value containing a set bit क्रम
+ * any trigger that should be deferred, ETT_NONE अगर nothing to defer.
  */
-enum event_trigger_type
-event_triggers_call(struct trace_event_file *file,
-		    struct trace_buffer *buffer, void *rec,
-		    struct ring_buffer_event *event)
-{
-	struct event_trigger_data *data;
-	enum event_trigger_type tt = ETT_NONE;
-	struct event_filter *filter;
+क्रमागत event_trigger_type
+event_triggers_call(काष्ठा trace_event_file *file,
+		    काष्ठा trace_buffer *buffer, व्योम *rec,
+		    काष्ठा ring_buffer_event *event)
+अणु
+	काष्ठा event_trigger_data *data;
+	क्रमागत event_trigger_type tt = ETT_NONE;
+	काष्ठा event_filter *filter;
 
-	if (list_empty(&file->triggers))
-		return tt;
+	अगर (list_empty(&file->triggers))
+		वापस tt;
 
-	list_for_each_entry_rcu(data, &file->triggers, list) {
-		if (data->paused)
-			continue;
-		if (!rec) {
+	list_क्रम_each_entry_rcu(data, &file->triggers, list) अणु
+		अगर (data->छोड़ोd)
+			जारी;
+		अगर (!rec) अणु
 			data->ops->func(data, buffer, rec, event);
-			continue;
-		}
+			जारी;
+		पूर्ण
 		filter = rcu_dereference_sched(data->filter);
-		if (filter && !filter_match_preds(filter, rec))
-			continue;
-		if (event_command_post_trigger(data->cmd_ops)) {
+		अगर (filter && !filter_match_preds(filter, rec))
+			जारी;
+		अगर (event_command_post_trigger(data->cmd_ops)) अणु
 			tt |= data->cmd_ops->trigger_type;
-			continue;
-		}
+			जारी;
+		पूर्ण
 		data->ops->func(data, buffer, rec, event);
-	}
-	return tt;
-}
+	पूर्ण
+	वापस tt;
+पूर्ण
 EXPORT_SYMBOL_GPL(event_triggers_call);
 
 /**
- * event_triggers_post_call - Call 'post_triggers' for a trace event
+ * event_triggers_post_call - Call 'post_triggers' क्रम a trace event
  * @file: The trace_event_file associated with the event
- * @tt: enum event_trigger_type containing a set bit for each trigger to invoke
+ * @tt: क्रमागत event_trigger_type containing a set bit क्रम each trigger to invoke
  *
  * For each trigger associated with an event, invoke the trigger
- * function registered with the associated trigger command, if the
- * corresponding bit is set in the tt enum passed into this function.
- * See @event_triggers_call for details on how those bits are set.
+ * function रेजिस्टरed with the associated trigger command, अगर the
+ * corresponding bit is set in the tt क्रमागत passed पूर्णांकo this function.
+ * See @event_triggers_call क्रम details on how those bits are set.
  *
- * Called from tracepoint handlers (with rcu_read_lock_sched() held).
+ * Called from tracepoपूर्णांक handlers (with rcu_पढ़ो_lock_sched() held).
  */
-void
-event_triggers_post_call(struct trace_event_file *file,
-			 enum event_trigger_type tt)
-{
-	struct event_trigger_data *data;
+व्योम
+event_triggers_post_call(काष्ठा trace_event_file *file,
+			 क्रमागत event_trigger_type tt)
+अणु
+	काष्ठा event_trigger_data *data;
 
-	list_for_each_entry_rcu(data, &file->triggers, list) {
-		if (data->paused)
-			continue;
-		if (data->cmd_ops->trigger_type & tt)
-			data->ops->func(data, NULL, NULL, NULL);
-	}
-}
+	list_क्रम_each_entry_rcu(data, &file->triggers, list) अणु
+		अगर (data->छोड़ोd)
+			जारी;
+		अगर (data->cmd_ops->trigger_type & tt)
+			data->ops->func(data, शून्य, शून्य, शून्य);
+	पूर्ण
+पूर्ण
 EXPORT_SYMBOL_GPL(event_triggers_post_call);
 
-#define SHOW_AVAILABLE_TRIGGERS	(void *)(1UL)
+#घोषणा SHOW_AVAILABLE_TRIGGERS	(व्योम *)(1UL)
 
-static void *trigger_next(struct seq_file *m, void *t, loff_t *pos)
-{
-	struct trace_event_file *event_file = event_file_data(m->private);
+अटल व्योम *trigger_next(काष्ठा seq_file *m, व्योम *t, loff_t *pos)
+अणु
+	काष्ठा trace_event_file *event_file = event_file_data(m->निजी);
 
-	if (t == SHOW_AVAILABLE_TRIGGERS) {
+	अगर (t == SHOW_AVAILABLE_TRIGGERS) अणु
 		(*pos)++;
-		return NULL;
-	}
-	return seq_list_next(t, &event_file->triggers, pos);
-}
+		वापस शून्य;
+	पूर्ण
+	वापस seq_list_next(t, &event_file->triggers, pos);
+पूर्ण
 
-static void *trigger_start(struct seq_file *m, loff_t *pos)
-{
-	struct trace_event_file *event_file;
+अटल व्योम *trigger_start(काष्ठा seq_file *m, loff_t *pos)
+अणु
+	काष्ठा trace_event_file *event_file;
 
-	/* ->stop() is called even if ->start() fails */
+	/* ->stop() is called even अगर ->start() fails */
 	mutex_lock(&event_mutex);
-	event_file = event_file_data(m->private);
-	if (unlikely(!event_file))
-		return ERR_PTR(-ENODEV);
+	event_file = event_file_data(m->निजी);
+	अगर (unlikely(!event_file))
+		वापस ERR_PTR(-ENODEV);
 
-	if (list_empty(&event_file->triggers))
-		return *pos == 0 ? SHOW_AVAILABLE_TRIGGERS : NULL;
+	अगर (list_empty(&event_file->triggers))
+		वापस *pos == 0 ? SHOW_AVAILABLE_TRIGGERS : शून्य;
 
-	return seq_list_start(&event_file->triggers, *pos);
-}
+	वापस seq_list_start(&event_file->triggers, *pos);
+पूर्ण
 
-static void trigger_stop(struct seq_file *m, void *t)
-{
+अटल व्योम trigger_stop(काष्ठा seq_file *m, व्योम *t)
+अणु
 	mutex_unlock(&event_mutex);
-}
+पूर्ण
 
-static int trigger_show(struct seq_file *m, void *v)
-{
-	struct event_trigger_data *data;
-	struct event_command *p;
+अटल पूर्णांक trigger_show(काष्ठा seq_file *m, व्योम *v)
+अणु
+	काष्ठा event_trigger_data *data;
+	काष्ठा event_command *p;
 
-	if (v == SHOW_AVAILABLE_TRIGGERS) {
-		seq_puts(m, "# Available triggers:\n");
-		seq_putc(m, '#');
+	अगर (v == SHOW_AVAILABLE_TRIGGERS) अणु
+		seq_माला_दो(m, "# Available triggers:\n");
+		seq_अ_दो(m, '#');
 		mutex_lock(&trigger_cmd_mutex);
-		list_for_each_entry_reverse(p, &trigger_commands, list)
-			seq_printf(m, " %s", p->name);
-		seq_putc(m, '\n');
+		list_क्रम_each_entry_reverse(p, &trigger_commands, list)
+			seq_म_लिखो(m, " %s", p->name);
+		seq_अ_दो(m, '\n');
 		mutex_unlock(&trigger_cmd_mutex);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	data = list_entry(v, struct event_trigger_data, list);
-	data->ops->print(m, data->ops, data);
+	data = list_entry(v, काष्ठा event_trigger_data, list);
+	data->ops->prपूर्णांक(m, data->ops, data);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct seq_operations event_triggers_seq_ops = {
+अटल स्थिर काष्ठा seq_operations event_triggers_seq_ops = अणु
 	.start = trigger_start,
 	.next = trigger_next,
 	.stop = trigger_stop,
 	.show = trigger_show,
-};
+पूर्ण;
 
-static int event_trigger_regex_open(struct inode *inode, struct file *file)
-{
-	int ret;
+अटल पूर्णांक event_trigger_regex_खोलो(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	पूर्णांक ret;
 
-	ret = security_locked_down(LOCKDOWN_TRACEFS);
-	if (ret)
-		return ret;
+	ret = security_locked_करोwn(LOCKDOWN_TRACEFS);
+	अगर (ret)
+		वापस ret;
 
 	mutex_lock(&event_mutex);
 
-	if (unlikely(!event_file_data(file))) {
+	अगर (unlikely(!event_file_data(file))) अणु
 		mutex_unlock(&event_mutex);
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	if ((file->f_mode & FMODE_WRITE) &&
-	    (file->f_flags & O_TRUNC)) {
-		struct trace_event_file *event_file;
-		struct event_command *p;
+	अगर ((file->f_mode & FMODE_WRITE) &&
+	    (file->f_flags & O_TRUNC)) अणु
+		काष्ठा trace_event_file *event_file;
+		काष्ठा event_command *p;
 
 		event_file = event_file_data(file);
 
-		list_for_each_entry(p, &trigger_commands, list) {
-			if (p->unreg_all)
+		list_क्रम_each_entry(p, &trigger_commands, list) अणु
+			अगर (p->unreg_all)
 				p->unreg_all(event_file);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (file->f_mode & FMODE_READ) {
-		ret = seq_open(file, &event_triggers_seq_ops);
-		if (!ret) {
-			struct seq_file *m = file->private_data;
-			m->private = file;
-		}
-	}
+	अगर (file->f_mode & FMODE_READ) अणु
+		ret = seq_खोलो(file, &event_triggers_seq_ops);
+		अगर (!ret) अणु
+			काष्ठा seq_file *m = file->निजी_data;
+			m->निजी = file;
+		पूर्ण
+	पूर्ण
 
 	mutex_unlock(&event_mutex);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int trigger_process_regex(struct trace_event_file *file, char *buff)
-{
-	char *command, *next;
-	struct event_command *p;
-	int ret = -EINVAL;
+पूर्णांक trigger_process_regex(काष्ठा trace_event_file *file, अक्षर *buff)
+अणु
+	अक्षर *command, *next;
+	काष्ठा event_command *p;
+	पूर्णांक ret = -EINVAL;
 
 	next = buff = skip_spaces(buff);
 	command = strsep(&next, ": \t");
-	if (next) {
+	अगर (next) अणु
 		next = skip_spaces(next);
-		if (!*next)
-			next = NULL;
-	}
+		अगर (!*next)
+			next = शून्य;
+	पूर्ण
 	command = (command[0] != '!') ? command : command + 1;
 
 	mutex_lock(&trigger_cmd_mutex);
-	list_for_each_entry(p, &trigger_commands, list) {
-		if (strcmp(p->name, command) == 0) {
+	list_क्रम_each_entry(p, &trigger_commands, list) अणु
+		अगर (म_भेद(p->name, command) == 0) अणु
 			ret = p->func(p, file, buff, command, next);
-			goto out_unlock;
-		}
-	}
+			जाओ out_unlock;
+		पूर्ण
+	पूर्ण
  out_unlock:
 	mutex_unlock(&trigger_cmd_mutex);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static ssize_t event_trigger_regex_write(struct file *file,
-					 const char __user *ubuf,
-					 size_t cnt, loff_t *ppos)
-{
-	struct trace_event_file *event_file;
-	ssize_t ret;
-	char *buf;
+अटल sमाप_प्रकार event_trigger_regex_ग_लिखो(काष्ठा file *file,
+					 स्थिर अक्षर __user *ubuf,
+					 माप_प्रकार cnt, loff_t *ppos)
+अणु
+	काष्ठा trace_event_file *event_file;
+	sमाप_प्रकार ret;
+	अक्षर *buf;
 
-	if (!cnt)
-		return 0;
+	अगर (!cnt)
+		वापस 0;
 
-	if (cnt >= PAGE_SIZE)
-		return -EINVAL;
+	अगर (cnt >= PAGE_SIZE)
+		वापस -EINVAL;
 
 	buf = memdup_user_nul(ubuf, cnt);
-	if (IS_ERR(buf))
-		return PTR_ERR(buf);
+	अगर (IS_ERR(buf))
+		वापस PTR_ERR(buf);
 
 	strim(buf);
 
 	mutex_lock(&event_mutex);
 	event_file = event_file_data(file);
-	if (unlikely(!event_file)) {
+	अगर (unlikely(!event_file)) अणु
 		mutex_unlock(&event_mutex);
-		kfree(buf);
-		return -ENODEV;
-	}
+		kमुक्त(buf);
+		वापस -ENODEV;
+	पूर्ण
 	ret = trigger_process_regex(event_file, buf);
 	mutex_unlock(&event_mutex);
 
-	kfree(buf);
-	if (ret < 0)
-		goto out;
+	kमुक्त(buf);
+	अगर (ret < 0)
+		जाओ out;
 
 	*ppos += cnt;
 	ret = cnt;
  out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int event_trigger_regex_release(struct inode *inode, struct file *file)
-{
+अटल पूर्णांक event_trigger_regex_release(काष्ठा inode *inode, काष्ठा file *file)
+अणु
 	mutex_lock(&event_mutex);
 
-	if (file->f_mode & FMODE_READ)
+	अगर (file->f_mode & FMODE_READ)
 		seq_release(inode, file);
 
 	mutex_unlock(&event_mutex);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static ssize_t
-event_trigger_write(struct file *filp, const char __user *ubuf,
-		    size_t cnt, loff_t *ppos)
-{
-	return event_trigger_regex_write(filp, ubuf, cnt, ppos);
-}
+अटल sमाप_प्रकार
+event_trigger_ग_लिखो(काष्ठा file *filp, स्थिर अक्षर __user *ubuf,
+		    माप_प्रकार cnt, loff_t *ppos)
+अणु
+	वापस event_trigger_regex_ग_लिखो(filp, ubuf, cnt, ppos);
+पूर्ण
 
-static int
-event_trigger_open(struct inode *inode, struct file *filp)
-{
-	/* Checks for tracefs lockdown */
-	return event_trigger_regex_open(inode, filp);
-}
+अटल पूर्णांक
+event_trigger_खोलो(काष्ठा inode *inode, काष्ठा file *filp)
+अणु
+	/* Checks क्रम tracefs lockकरोwn */
+	वापस event_trigger_regex_खोलो(inode, filp);
+पूर्ण
 
-static int
-event_trigger_release(struct inode *inode, struct file *file)
-{
-	return event_trigger_regex_release(inode, file);
-}
+अटल पूर्णांक
+event_trigger_release(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	वापस event_trigger_regex_release(inode, file);
+पूर्ण
 
-const struct file_operations event_trigger_fops = {
-	.open = event_trigger_open,
-	.read = seq_read,
-	.write = event_trigger_write,
+स्थिर काष्ठा file_operations event_trigger_fops = अणु
+	.खोलो = event_trigger_खोलो,
+	.पढ़ो = seq_पढ़ो,
+	.ग_लिखो = event_trigger_ग_लिखो,
 	.llseek = tracing_lseek,
 	.release = event_trigger_release,
-};
+पूर्ण;
 
 /*
- * Currently we only register event commands from __init, so mark this
+ * Currently we only रेजिस्टर event commands from __init, so mark this
  * __init too.
  */
-__init int register_event_command(struct event_command *cmd)
-{
-	struct event_command *p;
-	int ret = 0;
+__init पूर्णांक रेजिस्टर_event_command(काष्ठा event_command *cmd)
+अणु
+	काष्ठा event_command *p;
+	पूर्णांक ret = 0;
 
 	mutex_lock(&trigger_cmd_mutex);
-	list_for_each_entry(p, &trigger_commands, list) {
-		if (strcmp(cmd->name, p->name) == 0) {
+	list_क्रम_each_entry(p, &trigger_commands, list) अणु
+		अगर (म_भेद(cmd->name, p->name) == 0) अणु
 			ret = -EBUSY;
-			goto out_unlock;
-		}
-	}
+			जाओ out_unlock;
+		पूर्ण
+	पूर्ण
 	list_add(&cmd->list, &trigger_commands);
  out_unlock:
 	mutex_unlock(&trigger_cmd_mutex);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
- * Currently we only unregister event commands from __init, so mark
+ * Currently we only unरेजिस्टर event commands from __init, so mark
  * this __init too.
  */
-__init int unregister_event_command(struct event_command *cmd)
-{
-	struct event_command *p, *n;
-	int ret = -ENODEV;
+__init पूर्णांक unरेजिस्टर_event_command(काष्ठा event_command *cmd)
+अणु
+	काष्ठा event_command *p, *n;
+	पूर्णांक ret = -ENODEV;
 
 	mutex_lock(&trigger_cmd_mutex);
-	list_for_each_entry_safe(p, n, &trigger_commands, list) {
-		if (strcmp(cmd->name, p->name) == 0) {
+	list_क्रम_each_entry_safe(p, n, &trigger_commands, list) अणु
+		अगर (म_भेद(cmd->name, p->name) == 0) अणु
 			ret = 0;
 			list_del_init(&p->list);
-			goto out_unlock;
-		}
-	}
+			जाओ out_unlock;
+		पूर्ण
+	पूर्ण
  out_unlock:
 	mutex_unlock(&trigger_cmd_mutex);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * event_trigger_print - Generic event_trigger_ops @print implementation
+ * event_trigger_prपूर्णांक - Generic event_trigger_ops @prपूर्णांक implementation
  * @name: The name of the event trigger
- * @m: The seq_file being printed to
- * @data: Trigger-specific data
- * @filter_str: filter_str to print, if present
+ * @m: The seq_file being prपूर्णांकed to
+ * @data: Trigger-specअगरic data
+ * @filter_str: filter_str to prपूर्णांक, अगर present
  *
- * Common implementation for event triggers to print themselves.
+ * Common implementation क्रम event triggers to prपूर्णांक themselves.
  *
  * Usually wrapped by a function that simply sets the @name of the
  * trigger command and then invokes this.
  *
- * Return: 0 on success, errno otherwise
+ * Return: 0 on success, त्रुटि_सं otherwise
  */
-static int
-event_trigger_print(const char *name, struct seq_file *m,
-		    void *data, char *filter_str)
-{
-	long count = (long)data;
+अटल पूर्णांक
+event_trigger_prपूर्णांक(स्थिर अक्षर *name, काष्ठा seq_file *m,
+		    व्योम *data, अक्षर *filter_str)
+अणु
+	दीर्घ count = (दीर्घ)data;
 
-	seq_puts(m, name);
+	seq_माला_दो(m, name);
 
-	if (count == -1)
-		seq_puts(m, ":unlimited");
-	else
-		seq_printf(m, ":count=%ld", count);
+	अगर (count == -1)
+		seq_माला_दो(m, ":unlimited");
+	अन्यथा
+		seq_म_लिखो(m, ":count=%ld", count);
 
-	if (filter_str)
-		seq_printf(m, " if %s\n", filter_str);
-	else
-		seq_putc(m, '\n');
+	अगर (filter_str)
+		seq_म_लिखो(m, " if %s\n", filter_str);
+	अन्यथा
+		seq_अ_दो(m, '\n');
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * event_trigger_init - Generic event_trigger_ops @init implementation
  * @ops: The trigger ops associated with the trigger
- * @data: Trigger-specific data
+ * @data: Trigger-specअगरic data
  *
  * Common implementation of event trigger initialization.
  *
  * Usually used directly as the @init method in event trigger
  * implementations.
  *
- * Return: 0 on success, errno otherwise
+ * Return: 0 on success, त्रुटि_सं otherwise
  */
-int event_trigger_init(struct event_trigger_ops *ops,
-		       struct event_trigger_data *data)
-{
+पूर्णांक event_trigger_init(काष्ठा event_trigger_ops *ops,
+		       काष्ठा event_trigger_data *data)
+अणु
 	data->ref++;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * event_trigger_free - Generic event_trigger_ops @free implementation
+ * event_trigger_मुक्त - Generic event_trigger_ops @मुक्त implementation
  * @ops: The trigger ops associated with the trigger
- * @data: Trigger-specific data
+ * @data: Trigger-specअगरic data
  *
  * Common implementation of event trigger de-initialization.
  *
- * Usually used directly as the @free method in event trigger
+ * Usually used directly as the @मुक्त method in event trigger
  * implementations.
  */
-static void
-event_trigger_free(struct event_trigger_ops *ops,
-		   struct event_trigger_data *data)
-{
-	if (WARN_ON_ONCE(data->ref <= 0))
-		return;
+अटल व्योम
+event_trigger_मुक्त(काष्ठा event_trigger_ops *ops,
+		   काष्ठा event_trigger_data *data)
+अणु
+	अगर (WARN_ON_ONCE(data->ref <= 0))
+		वापस;
 
 	data->ref--;
-	if (!data->ref)
-		trigger_data_free(data);
-}
+	अगर (!data->ref)
+		trigger_data_मुक्त(data);
+पूर्ण
 
-int trace_event_trigger_enable_disable(struct trace_event_file *file,
-				       int trigger_enable)
-{
-	int ret = 0;
+पूर्णांक trace_event_trigger_enable_disable(काष्ठा trace_event_file *file,
+				       पूर्णांक trigger_enable)
+अणु
+	पूर्णांक ret = 0;
 
-	if (trigger_enable) {
-		if (atomic_inc_return(&file->tm_ref) > 1)
-			return ret;
-		set_bit(EVENT_FILE_FL_TRIGGER_MODE_BIT, &file->flags);
+	अगर (trigger_enable) अणु
+		अगर (atomic_inc_वापस(&file->पंचांग_ref) > 1)
+			वापस ret;
+		set_bit(EVENT_खाता_FL_TRIGGER_MODE_BIT, &file->flags);
 		ret = trace_event_enable_disable(file, 1, 1);
-	} else {
-		if (atomic_dec_return(&file->tm_ref) > 0)
-			return ret;
-		clear_bit(EVENT_FILE_FL_TRIGGER_MODE_BIT, &file->flags);
+	पूर्ण अन्यथा अणु
+		अगर (atomic_dec_वापस(&file->पंचांग_ref) > 0)
+			वापस ret;
+		clear_bit(EVENT_खाता_FL_TRIGGER_MODE_BIT, &file->flags);
 		ret = trace_event_enable_disable(file, 0, 1);
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
  * clear_event_triggers - Clear all triggers associated with a trace array
  * @tr: The trace array to clear
  *
- * For each trigger, the triggering event has its tm_ref decremented
+ * For each trigger, the triggering event has its पंचांग_ref decremented
  * via trace_event_trigger_enable_disable(), and any associated event
- * (in the case of enable/disable_event triggers) will have its sm_ref
- * decremented via free()->trace_event_enable_disable().  That
+ * (in the हाल of enable/disable_event triggers) will have its sm_ref
+ * decremented via मुक्त()->trace_event_enable_disable().  That
  * combination effectively reverses the soft-mode/trigger state added
  * by trigger registration.
  *
  * Must be called with event_mutex held.
  */
-void
-clear_event_triggers(struct trace_array *tr)
-{
-	struct trace_event_file *file;
+व्योम
+clear_event_triggers(काष्ठा trace_array *tr)
+अणु
+	काष्ठा trace_event_file *file;
 
-	list_for_each_entry(file, &tr->events, list) {
-		struct event_trigger_data *data, *n;
-		list_for_each_entry_safe(data, n, &file->triggers, list) {
+	list_क्रम_each_entry(file, &tr->events, list) अणु
+		काष्ठा event_trigger_data *data, *n;
+		list_क्रम_each_entry_safe(data, n, &file->triggers, list) अणु
 			trace_event_trigger_enable_disable(file, 0);
 			list_del_rcu(&data->list);
-			if (data->ops->free)
-				data->ops->free(data->ops, data);
-		}
-	}
-}
+			अगर (data->ops->मुक्त)
+				data->ops->मुक्त(data->ops, data);
+		पूर्ण
+	पूर्ण
+पूर्ण
 
 /**
  * update_cond_flag - Set or reset the TRIGGER_COND bit
@@ -504,674 +505,674 @@ clear_event_triggers(struct trace_array *tr)
  * its TRIGGER_COND bit set, otherwise the TRIGGER_COND bit should be
  * cleared.
  */
-void update_cond_flag(struct trace_event_file *file)
-{
-	struct event_trigger_data *data;
+व्योम update_cond_flag(काष्ठा trace_event_file *file)
+अणु
+	काष्ठा event_trigger_data *data;
 	bool set_cond = false;
 
-	lockdep_assert_held(&event_mutex);
+	lockdep_निश्चित_held(&event_mutex);
 
-	list_for_each_entry(data, &file->triggers, list) {
-		if (data->filter || event_command_post_trigger(data->cmd_ops) ||
-		    event_command_needs_rec(data->cmd_ops)) {
+	list_क्रम_each_entry(data, &file->triggers, list) अणु
+		अगर (data->filter || event_command_post_trigger(data->cmd_ops) ||
+		    event_command_needs_rec(data->cmd_ops)) अणु
 			set_cond = true;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	if (set_cond)
-		set_bit(EVENT_FILE_FL_TRIGGER_COND_BIT, &file->flags);
-	else
-		clear_bit(EVENT_FILE_FL_TRIGGER_COND_BIT, &file->flags);
-}
+	अगर (set_cond)
+		set_bit(EVENT_खाता_FL_TRIGGER_COND_BIT, &file->flags);
+	अन्यथा
+		clear_bit(EVENT_खाता_FL_TRIGGER_COND_BIT, &file->flags);
+पूर्ण
 
 /**
- * register_trigger - Generic event_command @reg implementation
- * @glob: The raw string used to register the trigger
+ * रेजिस्टर_trigger - Generic event_command @reg implementation
+ * @glob: The raw string used to रेजिस्टर the trigger
  * @ops: The trigger ops associated with the trigger
- * @data: Trigger-specific data to associate with the trigger
+ * @data: Trigger-specअगरic data to associate with the trigger
  * @file: The trace_event_file associated with the event
  *
- * Common implementation for event trigger registration.
+ * Common implementation क्रम event trigger registration.
  *
  * Usually used directly as the @reg method in event command
  * implementations.
  *
- * Return: 0 on success, errno otherwise
+ * Return: 0 on success, त्रुटि_सं otherwise
  */
-static int register_trigger(char *glob, struct event_trigger_ops *ops,
-			    struct event_trigger_data *data,
-			    struct trace_event_file *file)
-{
-	struct event_trigger_data *test;
-	int ret = 0;
+अटल पूर्णांक रेजिस्टर_trigger(अक्षर *glob, काष्ठा event_trigger_ops *ops,
+			    काष्ठा event_trigger_data *data,
+			    काष्ठा trace_event_file *file)
+अणु
+	काष्ठा event_trigger_data *test;
+	पूर्णांक ret = 0;
 
-	lockdep_assert_held(&event_mutex);
+	lockdep_निश्चित_held(&event_mutex);
 
-	list_for_each_entry(test, &file->triggers, list) {
-		if (test->cmd_ops->trigger_type == data->cmd_ops->trigger_type) {
+	list_क्रम_each_entry(test, &file->triggers, list) अणु
+		अगर (test->cmd_ops->trigger_type == data->cmd_ops->trigger_type) अणु
 			ret = -EEXIST;
-			goto out;
-		}
-	}
+			जाओ out;
+		पूर्ण
+	पूर्ण
 
-	if (data->ops->init) {
+	अगर (data->ops->init) अणु
 		ret = data->ops->init(data->ops, data);
-		if (ret < 0)
-			goto out;
-	}
+		अगर (ret < 0)
+			जाओ out;
+	पूर्ण
 
 	list_add_rcu(&data->list, &file->triggers);
 	ret++;
 
 	update_cond_flag(file);
-	if (trace_event_trigger_enable_disable(file, 1) < 0) {
+	अगर (trace_event_trigger_enable_disable(file, 1) < 0) अणु
 		list_del_rcu(&data->list);
 		update_cond_flag(file);
 		ret--;
-	}
+	पूर्ण
 out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * unregister_trigger - Generic event_command @unreg implementation
- * @glob: The raw string used to register the trigger
+ * unरेजिस्टर_trigger - Generic event_command @unreg implementation
+ * @glob: The raw string used to रेजिस्टर the trigger
  * @ops: The trigger ops associated with the trigger
- * @test: Trigger-specific data used to find the trigger to remove
+ * @test: Trigger-specअगरic data used to find the trigger to हटाओ
  * @file: The trace_event_file associated with the event
  *
- * Common implementation for event trigger unregistration.
+ * Common implementation क्रम event trigger unregistration.
  *
  * Usually used directly as the @unreg method in event command
  * implementations.
  */
-static void unregister_trigger(char *glob, struct event_trigger_ops *ops,
-			       struct event_trigger_data *test,
-			       struct trace_event_file *file)
-{
-	struct event_trigger_data *data;
-	bool unregistered = false;
+अटल व्योम unरेजिस्टर_trigger(अक्षर *glob, काष्ठा event_trigger_ops *ops,
+			       काष्ठा event_trigger_data *test,
+			       काष्ठा trace_event_file *file)
+अणु
+	काष्ठा event_trigger_data *data;
+	bool unरेजिस्टरed = false;
 
-	lockdep_assert_held(&event_mutex);
+	lockdep_निश्चित_held(&event_mutex);
 
-	list_for_each_entry(data, &file->triggers, list) {
-		if (data->cmd_ops->trigger_type == test->cmd_ops->trigger_type) {
-			unregistered = true;
+	list_क्रम_each_entry(data, &file->triggers, list) अणु
+		अगर (data->cmd_ops->trigger_type == test->cmd_ops->trigger_type) अणु
+			unरेजिस्टरed = true;
 			list_del_rcu(&data->list);
 			trace_event_trigger_enable_disable(file, 0);
 			update_cond_flag(file);
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	if (unregistered && data->ops->free)
-		data->ops->free(data->ops, data);
-}
+	अगर (unरेजिस्टरed && data->ops->मुक्त)
+		data->ops->मुक्त(data->ops, data);
+पूर्ण
 
 /**
  * event_trigger_callback - Generic event_command @func implementation
- * @cmd_ops: The command ops, used for trigger registration
+ * @cmd_ops: The command ops, used क्रम trigger registration
  * @file: The trace_event_file associated with the event
- * @glob: The raw string used to register the trigger
- * @cmd: The cmd portion of the string used to register the trigger
- * @param: The params portion of the string used to register the trigger
+ * @glob: The raw string used to रेजिस्टर the trigger
+ * @cmd: The cmd portion of the string used to रेजिस्टर the trigger
+ * @param: The params portion of the string used to रेजिस्टर the trigger
  *
- * Common implementation for event command parsing and trigger
+ * Common implementation क्रम event command parsing and trigger
  * instantiation.
  *
  * Usually used directly as the @func method in event command
  * implementations.
  *
- * Return: 0 on success, errno otherwise
+ * Return: 0 on success, त्रुटि_सं otherwise
  */
-static int
-event_trigger_callback(struct event_command *cmd_ops,
-		       struct trace_event_file *file,
-		       char *glob, char *cmd, char *param)
-{
-	struct event_trigger_data *trigger_data;
-	struct event_trigger_ops *trigger_ops;
-	char *trigger = NULL;
-	char *number;
-	int ret;
+अटल पूर्णांक
+event_trigger_callback(काष्ठा event_command *cmd_ops,
+		       काष्ठा trace_event_file *file,
+		       अक्षर *glob, अक्षर *cmd, अक्षर *param)
+अणु
+	काष्ठा event_trigger_data *trigger_data;
+	काष्ठा event_trigger_ops *trigger_ops;
+	अक्षर *trigger = शून्य;
+	अक्षर *number;
+	पूर्णांक ret;
 
-	/* separate the trigger from the filter (t:n [if filter]) */
-	if (param && isdigit(param[0])) {
+	/* separate the trigger from the filter (t:n [अगर filter]) */
+	अगर (param && है_अंक(param[0])) अणु
 		trigger = strsep(&param, " \t");
-		if (param) {
+		अगर (param) अणु
 			param = skip_spaces(param);
-			if (!*param)
-				param = NULL;
-		}
-	}
+			अगर (!*param)
+				param = शून्य;
+		पूर्ण
+	पूर्ण
 
 	trigger_ops = cmd_ops->get_trigger_ops(cmd, trigger);
 
 	ret = -ENOMEM;
-	trigger_data = kzalloc(sizeof(*trigger_data), GFP_KERNEL);
-	if (!trigger_data)
-		goto out;
+	trigger_data = kzalloc(माप(*trigger_data), GFP_KERNEL);
+	अगर (!trigger_data)
+		जाओ out;
 
 	trigger_data->count = -1;
 	trigger_data->ops = trigger_ops;
 	trigger_data->cmd_ops = cmd_ops;
-	trigger_data->private_data = file;
+	trigger_data->निजी_data = file;
 	INIT_LIST_HEAD(&trigger_data->list);
 	INIT_LIST_HEAD(&trigger_data->named_list);
 
-	if (glob[0] == '!') {
+	अगर (glob[0] == '!') अणु
 		cmd_ops->unreg(glob+1, trigger_ops, trigger_data, file);
-		kfree(trigger_data);
+		kमुक्त(trigger_data);
 		ret = 0;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (trigger) {
+	अगर (trigger) अणु
 		number = strsep(&trigger, ":");
 
 		ret = -EINVAL;
-		if (!strlen(number))
-			goto out_free;
+		अगर (!म_माप(number))
+			जाओ out_मुक्त;
 
 		/*
-		 * We use the callback data field (which is a pointer)
+		 * We use the callback data field (which is a poपूर्णांकer)
 		 * as our counter.
 		 */
-		ret = kstrtoul(number, 0, &trigger_data->count);
-		if (ret)
-			goto out_free;
-	}
+		ret = kम_से_अदीर्घ(number, 0, &trigger_data->count);
+		अगर (ret)
+			जाओ out_मुक्त;
+	पूर्ण
 
-	if (!param) /* if param is non-empty, it's supposed to be a filter */
-		goto out_reg;
+	अगर (!param) /* अगर param is non-empty, it's supposed to be a filter */
+		जाओ out_reg;
 
-	if (!cmd_ops->set_filter)
-		goto out_reg;
+	अगर (!cmd_ops->set_filter)
+		जाओ out_reg;
 
 	ret = cmd_ops->set_filter(param, trigger_data, file);
-	if (ret < 0)
-		goto out_free;
+	अगर (ret < 0)
+		जाओ out_मुक्त;
 
  out_reg:
-	/* Up the trigger_data count to make sure reg doesn't free it on failure */
+	/* Up the trigger_data count to make sure reg करोesn't मुक्त it on failure */
 	event_trigger_init(trigger_ops, trigger_data);
 	ret = cmd_ops->reg(glob, trigger_ops, trigger_data, file);
 	/*
-	 * The above returns on success the # of functions enabled,
-	 * but if it didn't find any functions it returns zero.
+	 * The above वापसs on success the # of functions enabled,
+	 * but अगर it didn't find any functions it वापसs zero.
 	 * Consider no functions a failure too.
 	 */
-	if (!ret) {
+	अगर (!ret) अणु
 		cmd_ops->unreg(glob, trigger_ops, trigger_data, file);
 		ret = -ENOENT;
-	} else if (ret > 0)
+	पूर्ण अन्यथा अगर (ret > 0)
 		ret = 0;
 
-	/* Down the counter of trigger_data or free it if not used anymore */
-	event_trigger_free(trigger_ops, trigger_data);
+	/* Down the counter of trigger_data or मुक्त it अगर not used anymore */
+	event_trigger_मुक्त(trigger_ops, trigger_data);
  out:
-	return ret;
+	वापस ret;
 
- out_free:
-	if (cmd_ops->set_filter)
-		cmd_ops->set_filter(NULL, trigger_data, NULL);
-	kfree(trigger_data);
-	goto out;
-}
+ out_मुक्त:
+	अगर (cmd_ops->set_filter)
+		cmd_ops->set_filter(शून्य, trigger_data, शून्य);
+	kमुक्त(trigger_data);
+	जाओ out;
+पूर्ण
 
 /**
  * set_trigger_filter - Generic event_command @set_filter implementation
- * @filter_str: The filter string for the trigger, NULL to remove filter
- * @trigger_data: Trigger-specific data
+ * @filter_str: The filter string क्रम the trigger, शून्य to हटाओ filter
+ * @trigger_data: Trigger-specअगरic data
  * @file: The trace_event_file associated with the event
  *
- * Common implementation for event command filter parsing and filter
+ * Common implementation क्रम event command filter parsing and filter
  * instantiation.
  *
  * Usually used directly as the @set_filter method in event command
  * implementations.
  *
- * Also used to remove a filter (if filter_str = NULL).
+ * Also used to हटाओ a filter (अगर filter_str = शून्य).
  *
- * Return: 0 on success, errno otherwise
+ * Return: 0 on success, त्रुटि_सं otherwise
  */
-int set_trigger_filter(char *filter_str,
-		       struct event_trigger_data *trigger_data,
-		       struct trace_event_file *file)
-{
-	struct event_trigger_data *data = trigger_data;
-	struct event_filter *filter = NULL, *tmp;
-	int ret = -EINVAL;
-	char *s;
+पूर्णांक set_trigger_filter(अक्षर *filter_str,
+		       काष्ठा event_trigger_data *trigger_data,
+		       काष्ठा trace_event_file *file)
+अणु
+	काष्ठा event_trigger_data *data = trigger_data;
+	काष्ठा event_filter *filter = शून्य, *पंचांगp;
+	पूर्णांक ret = -EINVAL;
+	अक्षर *s;
 
-	if (!filter_str) /* clear the current filter */
-		goto assign;
+	अगर (!filter_str) /* clear the current filter */
+		जाओ assign;
 
 	s = strsep(&filter_str, " \t");
 
-	if (!strlen(s) || strcmp(s, "if") != 0)
-		goto out;
+	अगर (!म_माप(s) || म_भेद(s, "if") != 0)
+		जाओ out;
 
-	if (!filter_str)
-		goto out;
+	अगर (!filter_str)
+		जाओ out;
 
-	/* The filter is for the 'trigger' event, not the triggered event */
+	/* The filter is क्रम the 'trigger' event, not the triggered event */
 	ret = create_event_filter(file->tr, file->event_call,
 				  filter_str, false, &filter);
 	/*
-	 * If create_event_filter() fails, filter still needs to be freed.
-	 * Which the calling code will do with data->filter.
+	 * If create_event_filter() fails, filter still needs to be मुक्तd.
+	 * Which the calling code will करो with data->filter.
 	 */
  assign:
-	tmp = rcu_access_pointer(data->filter);
+	पंचांगp = rcu_access_poपूर्णांकer(data->filter);
 
-	rcu_assign_pointer(data->filter, filter);
+	rcu_assign_poपूर्णांकer(data->filter, filter);
 
-	if (tmp) {
-		/* Make sure the call is done with the filter */
-		tracepoint_synchronize_unregister();
-		free_event_filter(tmp);
-	}
+	अगर (पंचांगp) अणु
+		/* Make sure the call is करोne with the filter */
+		tracepoपूर्णांक_synchronize_unरेजिस्टर();
+		मुक्त_event_filter(पंचांगp);
+	पूर्ण
 
-	kfree(data->filter_str);
-	data->filter_str = NULL;
+	kमुक्त(data->filter_str);
+	data->filter_str = शून्य;
 
-	if (filter_str) {
+	अगर (filter_str) अणु
 		data->filter_str = kstrdup(filter_str, GFP_KERNEL);
-		if (!data->filter_str) {
-			free_event_filter(rcu_access_pointer(data->filter));
-			data->filter = NULL;
+		अगर (!data->filter_str) अणु
+			मुक्त_event_filter(rcu_access_poपूर्णांकer(data->filter));
+			data->filter = शून्य;
 			ret = -ENOMEM;
-		}
-	}
+		पूर्ण
+	पूर्ण
  out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static LIST_HEAD(named_triggers);
+अटल LIST_HEAD(named_triggers);
 
 /**
  * find_named_trigger - Find the common named trigger associated with @name
- * @name: The name of the set of named triggers to find the common data for
+ * @name: The name of the set of named triggers to find the common data क्रम
  *
  * Named triggers are sets of triggers that share a common set of
- * trigger data.  The first named trigger registered with a given name
+ * trigger data.  The first named trigger रेजिस्टरed with a given name
  * owns the common trigger data that the others subsequently
- * registered with the same name will reference.  This function
- * returns the common trigger data associated with that first
- * registered instance.
+ * रेजिस्टरed with the same name will reference.  This function
+ * वापसs the common trigger data associated with that first
+ * रेजिस्टरed instance.
  *
- * Return: the common trigger data for the given named trigger on
- * success, NULL otherwise.
+ * Return: the common trigger data क्रम the given named trigger on
+ * success, शून्य otherwise.
  */
-struct event_trigger_data *find_named_trigger(const char *name)
-{
-	struct event_trigger_data *data;
+काष्ठा event_trigger_data *find_named_trigger(स्थिर अक्षर *name)
+अणु
+	काष्ठा event_trigger_data *data;
 
-	if (!name)
-		return NULL;
+	अगर (!name)
+		वापस शून्य;
 
-	list_for_each_entry(data, &named_triggers, named_list) {
-		if (data->named_data)
-			continue;
-		if (strcmp(data->name, name) == 0)
-			return data;
-	}
+	list_क्रम_each_entry(data, &named_triggers, named_list) अणु
+		अगर (data->named_data)
+			जारी;
+		अगर (म_भेद(data->name, name) == 0)
+			वापस data;
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
 /**
- * is_named_trigger - determine if a given trigger is a named trigger
+ * is_named_trigger - determine अगर a given trigger is a named trigger
  * @test: The trigger data to test
  *
- * Return: true if 'test' is a named trigger, false otherwise.
+ * Return: true अगर 'test' is a named trigger, false otherwise.
  */
-bool is_named_trigger(struct event_trigger_data *test)
-{
-	struct event_trigger_data *data;
+bool is_named_trigger(काष्ठा event_trigger_data *test)
+अणु
+	काष्ठा event_trigger_data *data;
 
-	list_for_each_entry(data, &named_triggers, named_list) {
-		if (test == data)
-			return true;
-	}
+	list_क्रम_each_entry(data, &named_triggers, named_list) अणु
+		अगर (test == data)
+			वापस true;
+	पूर्ण
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
 /**
  * save_named_trigger - save the trigger in the named trigger list
  * @name: The name of the named trigger set
  * @data: The trigger data to save
  *
- * Return: 0 if successful, negative error otherwise.
+ * Return: 0 अगर successful, negative error otherwise.
  */
-int save_named_trigger(const char *name, struct event_trigger_data *data)
-{
+पूर्णांक save_named_trigger(स्थिर अक्षर *name, काष्ठा event_trigger_data *data)
+अणु
 	data->name = kstrdup(name, GFP_KERNEL);
-	if (!data->name)
-		return -ENOMEM;
+	अगर (!data->name)
+		वापस -ENOMEM;
 
 	list_add(&data->named_list, &named_triggers);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * del_named_trigger - delete a trigger from the named trigger list
  * @data: The trigger data to delete
  */
-void del_named_trigger(struct event_trigger_data *data)
-{
-	kfree(data->name);
-	data->name = NULL;
+व्योम del_named_trigger(काष्ठा event_trigger_data *data)
+अणु
+	kमुक्त(data->name);
+	data->name = शून्य;
 
 	list_del(&data->named_list);
-}
+पूर्ण
 
-static void __pause_named_trigger(struct event_trigger_data *data, bool pause)
-{
-	struct event_trigger_data *test;
+अटल व्योम __छोड़ो_named_trigger(काष्ठा event_trigger_data *data, bool छोड़ो)
+अणु
+	काष्ठा event_trigger_data *test;
 
-	list_for_each_entry(test, &named_triggers, named_list) {
-		if (strcmp(test->name, data->name) == 0) {
-			if (pause) {
-				test->paused_tmp = test->paused;
-				test->paused = true;
-			} else {
-				test->paused = test->paused_tmp;
-			}
-		}
-	}
-}
+	list_क्रम_each_entry(test, &named_triggers, named_list) अणु
+		अगर (म_भेद(test->name, data->name) == 0) अणु
+			अगर (छोड़ो) अणु
+				test->छोड़ोd_पंचांगp = test->छोड़ोd;
+				test->छोड़ोd = true;
+			पूर्ण अन्यथा अणु
+				test->छोड़ोd = test->छोड़ोd_पंचांगp;
+			पूर्ण
+		पूर्ण
+	पूर्ण
+पूर्ण
 
 /**
- * pause_named_trigger - Pause all named triggers with the same name
- * @data: The trigger data of a named trigger to pause
+ * छोड़ो_named_trigger - Pause all named triggers with the same name
+ * @data: The trigger data of a named trigger to छोड़ो
  *
- * Pauses a named trigger along with all other triggers having the
+ * Pauses a named trigger aदीर्घ with all other triggers having the
  * same name.  Because named triggers share a common set of data,
  * pausing only one is meaningless, so pausing one named trigger needs
- * to pause all triggers with the same name.
+ * to छोड़ो all triggers with the same name.
  */
-void pause_named_trigger(struct event_trigger_data *data)
-{
-	__pause_named_trigger(data, true);
-}
+व्योम छोड़ो_named_trigger(काष्ठा event_trigger_data *data)
+अणु
+	__छोड़ो_named_trigger(data, true);
+पूर्ण
 
 /**
- * unpause_named_trigger - Un-pause all named triggers with the same name
- * @data: The trigger data of a named trigger to unpause
+ * unछोड़ो_named_trigger - Un-छोड़ो all named triggers with the same name
+ * @data: The trigger data of a named trigger to unछोड़ो
  *
- * Un-pauses a named trigger along with all other triggers having the
+ * Un-छोड़ोs a named trigger aदीर्घ with all other triggers having the
  * same name.  Because named triggers share a common set of data,
  * unpausing only one is meaningless, so unpausing one named trigger
- * needs to unpause all triggers with the same name.
+ * needs to unछोड़ो all triggers with the same name.
  */
-void unpause_named_trigger(struct event_trigger_data *data)
-{
-	__pause_named_trigger(data, false);
-}
+व्योम unछोड़ो_named_trigger(काष्ठा event_trigger_data *data)
+अणु
+	__छोड़ो_named_trigger(data, false);
+पूर्ण
 
 /**
  * set_named_trigger_data - Associate common named trigger data
- * @data: The trigger data of a named trigger to unpause
+ * @data: The trigger data of a named trigger to unछोड़ो
  *
  * Named triggers are sets of triggers that share a common set of
- * trigger data.  The first named trigger registered with a given name
+ * trigger data.  The first named trigger रेजिस्टरed with a given name
  * owns the common trigger data that the others subsequently
- * registered with the same name will reference.  This function
+ * रेजिस्टरed with the same name will reference.  This function
  * associates the common trigger data from the first trigger with the
  * given trigger.
  */
-void set_named_trigger_data(struct event_trigger_data *data,
-			    struct event_trigger_data *named_data)
-{
+व्योम set_named_trigger_data(काष्ठा event_trigger_data *data,
+			    काष्ठा event_trigger_data *named_data)
+अणु
 	data->named_data = named_data;
-}
+पूर्ण
 
-struct event_trigger_data *
-get_named_trigger_data(struct event_trigger_data *data)
-{
-	return data->named_data;
-}
+काष्ठा event_trigger_data *
+get_named_trigger_data(काष्ठा event_trigger_data *data)
+अणु
+	वापस data->named_data;
+पूर्ण
 
-static void
-traceon_trigger(struct event_trigger_data *data,
-		struct trace_buffer *buffer, void *rec,
-		struct ring_buffer_event *event)
-{
-	if (tracing_is_on())
-		return;
+अटल व्योम
+traceon_trigger(काष्ठा event_trigger_data *data,
+		काष्ठा trace_buffer *buffer, व्योम *rec,
+		काष्ठा ring_buffer_event *event)
+अणु
+	अगर (tracing_is_on())
+		वापस;
 
 	tracing_on();
-}
+पूर्ण
 
-static void
-traceon_count_trigger(struct event_trigger_data *data,
-		      struct trace_buffer *buffer, void *rec,
-		      struct ring_buffer_event *event)
-{
-	if (tracing_is_on())
-		return;
+अटल व्योम
+traceon_count_trigger(काष्ठा event_trigger_data *data,
+		      काष्ठा trace_buffer *buffer, व्योम *rec,
+		      काष्ठा ring_buffer_event *event)
+अणु
+	अगर (tracing_is_on())
+		वापस;
 
-	if (!data->count)
-		return;
+	अगर (!data->count)
+		वापस;
 
-	if (data->count != -1)
+	अगर (data->count != -1)
 		(data->count)--;
 
 	tracing_on();
-}
+पूर्ण
 
-static void
-traceoff_trigger(struct event_trigger_data *data,
-		 struct trace_buffer *buffer, void *rec,
-		 struct ring_buffer_event *event)
-{
-	if (!tracing_is_on())
-		return;
+अटल व्योम
+traceoff_trigger(काष्ठा event_trigger_data *data,
+		 काष्ठा trace_buffer *buffer, व्योम *rec,
+		 काष्ठा ring_buffer_event *event)
+अणु
+	अगर (!tracing_is_on())
+		वापस;
 
 	tracing_off();
-}
+पूर्ण
 
-static void
-traceoff_count_trigger(struct event_trigger_data *data,
-		       struct trace_buffer *buffer, void *rec,
-		       struct ring_buffer_event *event)
-{
-	if (!tracing_is_on())
-		return;
+अटल व्योम
+traceoff_count_trigger(काष्ठा event_trigger_data *data,
+		       काष्ठा trace_buffer *buffer, व्योम *rec,
+		       काष्ठा ring_buffer_event *event)
+अणु
+	अगर (!tracing_is_on())
+		वापस;
 
-	if (!data->count)
-		return;
+	अगर (!data->count)
+		वापस;
 
-	if (data->count != -1)
+	अगर (data->count != -1)
 		(data->count)--;
 
 	tracing_off();
-}
+पूर्ण
 
-static int
-traceon_trigger_print(struct seq_file *m, struct event_trigger_ops *ops,
-		      struct event_trigger_data *data)
-{
-	return event_trigger_print("traceon", m, (void *)data->count,
+अटल पूर्णांक
+traceon_trigger_prपूर्णांक(काष्ठा seq_file *m, काष्ठा event_trigger_ops *ops,
+		      काष्ठा event_trigger_data *data)
+अणु
+	वापस event_trigger_prपूर्णांक("traceon", m, (व्योम *)data->count,
 				   data->filter_str);
-}
+पूर्ण
 
-static int
-traceoff_trigger_print(struct seq_file *m, struct event_trigger_ops *ops,
-		       struct event_trigger_data *data)
-{
-	return event_trigger_print("traceoff", m, (void *)data->count,
+अटल पूर्णांक
+traceoff_trigger_prपूर्णांक(काष्ठा seq_file *m, काष्ठा event_trigger_ops *ops,
+		       काष्ठा event_trigger_data *data)
+अणु
+	वापस event_trigger_prपूर्णांक("traceoff", m, (व्योम *)data->count,
 				   data->filter_str);
-}
+पूर्ण
 
-static struct event_trigger_ops traceon_trigger_ops = {
+अटल काष्ठा event_trigger_ops traceon_trigger_ops = अणु
 	.func			= traceon_trigger,
-	.print			= traceon_trigger_print,
+	.prपूर्णांक			= traceon_trigger_prपूर्णांक,
 	.init			= event_trigger_init,
-	.free			= event_trigger_free,
-};
+	.मुक्त			= event_trigger_मुक्त,
+पूर्ण;
 
-static struct event_trigger_ops traceon_count_trigger_ops = {
+अटल काष्ठा event_trigger_ops traceon_count_trigger_ops = अणु
 	.func			= traceon_count_trigger,
-	.print			= traceon_trigger_print,
+	.prपूर्णांक			= traceon_trigger_prपूर्णांक,
 	.init			= event_trigger_init,
-	.free			= event_trigger_free,
-};
+	.मुक्त			= event_trigger_मुक्त,
+पूर्ण;
 
-static struct event_trigger_ops traceoff_trigger_ops = {
+अटल काष्ठा event_trigger_ops traceoff_trigger_ops = अणु
 	.func			= traceoff_trigger,
-	.print			= traceoff_trigger_print,
+	.prपूर्णांक			= traceoff_trigger_prपूर्णांक,
 	.init			= event_trigger_init,
-	.free			= event_trigger_free,
-};
+	.मुक्त			= event_trigger_मुक्त,
+पूर्ण;
 
-static struct event_trigger_ops traceoff_count_trigger_ops = {
+अटल काष्ठा event_trigger_ops traceoff_count_trigger_ops = अणु
 	.func			= traceoff_count_trigger,
-	.print			= traceoff_trigger_print,
+	.prपूर्णांक			= traceoff_trigger_prपूर्णांक,
 	.init			= event_trigger_init,
-	.free			= event_trigger_free,
-};
+	.मुक्त			= event_trigger_मुक्त,
+पूर्ण;
 
-static struct event_trigger_ops *
-onoff_get_trigger_ops(char *cmd, char *param)
-{
-	struct event_trigger_ops *ops;
+अटल काष्ठा event_trigger_ops *
+onoff_get_trigger_ops(अक्षर *cmd, अक्षर *param)
+अणु
+	काष्ठा event_trigger_ops *ops;
 
-	/* we register both traceon and traceoff to this callback */
-	if (strcmp(cmd, "traceon") == 0)
+	/* we रेजिस्टर both traceon and traceoff to this callback */
+	अगर (म_भेद(cmd, "traceon") == 0)
 		ops = param ? &traceon_count_trigger_ops :
 			&traceon_trigger_ops;
-	else
+	अन्यथा
 		ops = param ? &traceoff_count_trigger_ops :
 			&traceoff_trigger_ops;
 
-	return ops;
-}
+	वापस ops;
+पूर्ण
 
-static struct event_command trigger_traceon_cmd = {
+अटल काष्ठा event_command trigger_traceon_cmd = अणु
 	.name			= "traceon",
 	.trigger_type		= ETT_TRACE_ONOFF,
 	.func			= event_trigger_callback,
-	.reg			= register_trigger,
-	.unreg			= unregister_trigger,
+	.reg			= रेजिस्टर_trigger,
+	.unreg			= unरेजिस्टर_trigger,
 	.get_trigger_ops	= onoff_get_trigger_ops,
 	.set_filter		= set_trigger_filter,
-};
+पूर्ण;
 
-static struct event_command trigger_traceoff_cmd = {
+अटल काष्ठा event_command trigger_traceoff_cmd = अणु
 	.name			= "traceoff",
 	.trigger_type		= ETT_TRACE_ONOFF,
 	.flags			= EVENT_CMD_FL_POST_TRIGGER,
 	.func			= event_trigger_callback,
-	.reg			= register_trigger,
-	.unreg			= unregister_trigger,
+	.reg			= रेजिस्टर_trigger,
+	.unreg			= unरेजिस्टर_trigger,
 	.get_trigger_ops	= onoff_get_trigger_ops,
 	.set_filter		= set_trigger_filter,
-};
+पूर्ण;
 
-#ifdef CONFIG_TRACER_SNAPSHOT
-static void
-snapshot_trigger(struct event_trigger_data *data,
-		 struct trace_buffer *buffer, void *rec,
-		 struct ring_buffer_event *event)
-{
-	struct trace_event_file *file = data->private_data;
+#अगर_घोषित CONFIG_TRACER_SNAPSHOT
+अटल व्योम
+snapshot_trigger(काष्ठा event_trigger_data *data,
+		 काष्ठा trace_buffer *buffer, व्योम *rec,
+		 काष्ठा ring_buffer_event *event)
+अणु
+	काष्ठा trace_event_file *file = data->निजी_data;
 
-	if (file)
+	अगर (file)
 		tracing_snapshot_instance(file->tr);
-	else
+	अन्यथा
 		tracing_snapshot();
-}
+पूर्ण
 
-static void
-snapshot_count_trigger(struct event_trigger_data *data,
-		       struct trace_buffer *buffer, void *rec,
-		       struct ring_buffer_event *event)
-{
-	if (!data->count)
-		return;
+अटल व्योम
+snapshot_count_trigger(काष्ठा event_trigger_data *data,
+		       काष्ठा trace_buffer *buffer, व्योम *rec,
+		       काष्ठा ring_buffer_event *event)
+अणु
+	अगर (!data->count)
+		वापस;
 
-	if (data->count != -1)
+	अगर (data->count != -1)
 		(data->count)--;
 
 	snapshot_trigger(data, buffer, rec, event);
-}
+पूर्ण
 
-static int
-register_snapshot_trigger(char *glob, struct event_trigger_ops *ops,
-			  struct event_trigger_data *data,
-			  struct trace_event_file *file)
-{
-	if (tracing_alloc_snapshot_instance(file->tr) != 0)
-		return 0;
+अटल पूर्णांक
+रेजिस्टर_snapshot_trigger(अक्षर *glob, काष्ठा event_trigger_ops *ops,
+			  काष्ठा event_trigger_data *data,
+			  काष्ठा trace_event_file *file)
+अणु
+	अगर (tracing_alloc_snapshot_instance(file->tr) != 0)
+		वापस 0;
 
-	return register_trigger(glob, ops, data, file);
-}
+	वापस रेजिस्टर_trigger(glob, ops, data, file);
+पूर्ण
 
-static int
-snapshot_trigger_print(struct seq_file *m, struct event_trigger_ops *ops,
-		       struct event_trigger_data *data)
-{
-	return event_trigger_print("snapshot", m, (void *)data->count,
+अटल पूर्णांक
+snapshot_trigger_prपूर्णांक(काष्ठा seq_file *m, काष्ठा event_trigger_ops *ops,
+		       काष्ठा event_trigger_data *data)
+अणु
+	वापस event_trigger_prपूर्णांक("snapshot", m, (व्योम *)data->count,
 				   data->filter_str);
-}
+पूर्ण
 
-static struct event_trigger_ops snapshot_trigger_ops = {
+अटल काष्ठा event_trigger_ops snapshot_trigger_ops = अणु
 	.func			= snapshot_trigger,
-	.print			= snapshot_trigger_print,
+	.prपूर्णांक			= snapshot_trigger_prपूर्णांक,
 	.init			= event_trigger_init,
-	.free			= event_trigger_free,
-};
+	.मुक्त			= event_trigger_मुक्त,
+पूर्ण;
 
-static struct event_trigger_ops snapshot_count_trigger_ops = {
+अटल काष्ठा event_trigger_ops snapshot_count_trigger_ops = अणु
 	.func			= snapshot_count_trigger,
-	.print			= snapshot_trigger_print,
+	.prपूर्णांक			= snapshot_trigger_prपूर्णांक,
 	.init			= event_trigger_init,
-	.free			= event_trigger_free,
-};
+	.मुक्त			= event_trigger_मुक्त,
+पूर्ण;
 
-static struct event_trigger_ops *
-snapshot_get_trigger_ops(char *cmd, char *param)
-{
-	return param ? &snapshot_count_trigger_ops : &snapshot_trigger_ops;
-}
+अटल काष्ठा event_trigger_ops *
+snapshot_get_trigger_ops(अक्षर *cmd, अक्षर *param)
+अणु
+	वापस param ? &snapshot_count_trigger_ops : &snapshot_trigger_ops;
+पूर्ण
 
-static struct event_command trigger_snapshot_cmd = {
+अटल काष्ठा event_command trigger_snapshot_cmd = अणु
 	.name			= "snapshot",
 	.trigger_type		= ETT_SNAPSHOT,
 	.func			= event_trigger_callback,
-	.reg			= register_snapshot_trigger,
-	.unreg			= unregister_trigger,
+	.reg			= रेजिस्टर_snapshot_trigger,
+	.unreg			= unरेजिस्टर_trigger,
 	.get_trigger_ops	= snapshot_get_trigger_ops,
 	.set_filter		= set_trigger_filter,
-};
+पूर्ण;
 
-static __init int register_trigger_snapshot_cmd(void)
-{
-	int ret;
+अटल __init पूर्णांक रेजिस्टर_trigger_snapshot_cmd(व्योम)
+अणु
+	पूर्णांक ret;
 
-	ret = register_event_command(&trigger_snapshot_cmd);
+	ret = रेजिस्टर_event_command(&trigger_snapshot_cmd);
 	WARN_ON(ret < 0);
 
-	return ret;
-}
-#else
-static __init int register_trigger_snapshot_cmd(void) { return 0; }
-#endif /* CONFIG_TRACER_SNAPSHOT */
+	वापस ret;
+पूर्ण
+#अन्यथा
+अटल __init पूर्णांक रेजिस्टर_trigger_snapshot_cmd(व्योम) अणु वापस 0; पूर्ण
+#पूर्ण_अगर /* CONFIG_TRACER_SNAPSHOT */
 
-#ifdef CONFIG_STACKTRACE
-#ifdef CONFIG_UNWINDER_ORC
+#अगर_घोषित CONFIG_STACKTRACE
+#अगर_घोषित CONFIG_UNWINDER_ORC
 /* Skip 2:
  *   event_triggers_post_call()
  *   trace_event_raw_event_xxx()
  */
 # define STACK_SKIP 2
-#else
+#अन्यथा
 /*
  * Skip 4:
  *   stacktrace_trigger()
@@ -1179,501 +1180,501 @@ static __init int register_trigger_snapshot_cmd(void) { return 0; }
  *   trace_event_buffer_commit()
  *   trace_event_raw_event_xxx()
  */
-#define STACK_SKIP 4
-#endif
+#घोषणा STACK_SKIP 4
+#पूर्ण_अगर
 
-static void
-stacktrace_trigger(struct event_trigger_data *data,
-		   struct trace_buffer *buffer,  void *rec,
-		   struct ring_buffer_event *event)
-{
+अटल व्योम
+stacktrace_trigger(काष्ठा event_trigger_data *data,
+		   काष्ठा trace_buffer *buffer,  व्योम *rec,
+		   काष्ठा ring_buffer_event *event)
+अणु
 	trace_dump_stack(STACK_SKIP);
-}
+पूर्ण
 
-static void
-stacktrace_count_trigger(struct event_trigger_data *data,
-			 struct trace_buffer *buffer, void *rec,
-			 struct ring_buffer_event *event)
-{
-	if (!data->count)
-		return;
+अटल व्योम
+stacktrace_count_trigger(काष्ठा event_trigger_data *data,
+			 काष्ठा trace_buffer *buffer, व्योम *rec,
+			 काष्ठा ring_buffer_event *event)
+अणु
+	अगर (!data->count)
+		वापस;
 
-	if (data->count != -1)
+	अगर (data->count != -1)
 		(data->count)--;
 
 	stacktrace_trigger(data, buffer, rec, event);
-}
+पूर्ण
 
-static int
-stacktrace_trigger_print(struct seq_file *m, struct event_trigger_ops *ops,
-			 struct event_trigger_data *data)
-{
-	return event_trigger_print("stacktrace", m, (void *)data->count,
+अटल पूर्णांक
+stacktrace_trigger_prपूर्णांक(काष्ठा seq_file *m, काष्ठा event_trigger_ops *ops,
+			 काष्ठा event_trigger_data *data)
+अणु
+	वापस event_trigger_prपूर्णांक("stacktrace", m, (व्योम *)data->count,
 				   data->filter_str);
-}
+पूर्ण
 
-static struct event_trigger_ops stacktrace_trigger_ops = {
+अटल काष्ठा event_trigger_ops stacktrace_trigger_ops = अणु
 	.func			= stacktrace_trigger,
-	.print			= stacktrace_trigger_print,
+	.prपूर्णांक			= stacktrace_trigger_prपूर्णांक,
 	.init			= event_trigger_init,
-	.free			= event_trigger_free,
-};
+	.मुक्त			= event_trigger_मुक्त,
+पूर्ण;
 
-static struct event_trigger_ops stacktrace_count_trigger_ops = {
+अटल काष्ठा event_trigger_ops stacktrace_count_trigger_ops = अणु
 	.func			= stacktrace_count_trigger,
-	.print			= stacktrace_trigger_print,
+	.prपूर्णांक			= stacktrace_trigger_prपूर्णांक,
 	.init			= event_trigger_init,
-	.free			= event_trigger_free,
-};
+	.मुक्त			= event_trigger_मुक्त,
+पूर्ण;
 
-static struct event_trigger_ops *
-stacktrace_get_trigger_ops(char *cmd, char *param)
-{
-	return param ? &stacktrace_count_trigger_ops : &stacktrace_trigger_ops;
-}
+अटल काष्ठा event_trigger_ops *
+stacktrace_get_trigger_ops(अक्षर *cmd, अक्षर *param)
+अणु
+	वापस param ? &stacktrace_count_trigger_ops : &stacktrace_trigger_ops;
+पूर्ण
 
-static struct event_command trigger_stacktrace_cmd = {
+अटल काष्ठा event_command trigger_stacktrace_cmd = अणु
 	.name			= "stacktrace",
 	.trigger_type		= ETT_STACKTRACE,
 	.flags			= EVENT_CMD_FL_POST_TRIGGER,
 	.func			= event_trigger_callback,
-	.reg			= register_trigger,
-	.unreg			= unregister_trigger,
+	.reg			= रेजिस्टर_trigger,
+	.unreg			= unरेजिस्टर_trigger,
 	.get_trigger_ops	= stacktrace_get_trigger_ops,
 	.set_filter		= set_trigger_filter,
-};
+पूर्ण;
 
-static __init int register_trigger_stacktrace_cmd(void)
-{
-	int ret;
+अटल __init पूर्णांक रेजिस्टर_trigger_stacktrace_cmd(व्योम)
+अणु
+	पूर्णांक ret;
 
-	ret = register_event_command(&trigger_stacktrace_cmd);
+	ret = रेजिस्टर_event_command(&trigger_stacktrace_cmd);
 	WARN_ON(ret < 0);
 
-	return ret;
-}
-#else
-static __init int register_trigger_stacktrace_cmd(void) { return 0; }
-#endif /* CONFIG_STACKTRACE */
+	वापस ret;
+पूर्ण
+#अन्यथा
+अटल __init पूर्णांक रेजिस्टर_trigger_stacktrace_cmd(व्योम) अणु वापस 0; पूर्ण
+#पूर्ण_अगर /* CONFIG_STACKTRACE */
 
-static __init void unregister_trigger_traceon_traceoff_cmds(void)
-{
-	unregister_event_command(&trigger_traceon_cmd);
-	unregister_event_command(&trigger_traceoff_cmd);
-}
+अटल __init व्योम unरेजिस्टर_trigger_traceon_traceoff_cmds(व्योम)
+अणु
+	unरेजिस्टर_event_command(&trigger_traceon_cmd);
+	unरेजिस्टर_event_command(&trigger_traceoff_cmd);
+पूर्ण
 
-static void
-event_enable_trigger(struct event_trigger_data *data,
-		     struct trace_buffer *buffer,  void *rec,
-		     struct ring_buffer_event *event)
-{
-	struct enable_trigger_data *enable_data = data->private_data;
+अटल व्योम
+event_enable_trigger(काष्ठा event_trigger_data *data,
+		     काष्ठा trace_buffer *buffer,  व्योम *rec,
+		     काष्ठा ring_buffer_event *event)
+अणु
+	काष्ठा enable_trigger_data *enable_data = data->निजी_data;
 
-	if (enable_data->enable)
-		clear_bit(EVENT_FILE_FL_SOFT_DISABLED_BIT, &enable_data->file->flags);
-	else
-		set_bit(EVENT_FILE_FL_SOFT_DISABLED_BIT, &enable_data->file->flags);
-}
+	अगर (enable_data->enable)
+		clear_bit(EVENT_खाता_FL_SOFT_DISABLED_BIT, &enable_data->file->flags);
+	अन्यथा
+		set_bit(EVENT_खाता_FL_SOFT_DISABLED_BIT, &enable_data->file->flags);
+पूर्ण
 
-static void
-event_enable_count_trigger(struct event_trigger_data *data,
-			   struct trace_buffer *buffer,  void *rec,
-			   struct ring_buffer_event *event)
-{
-	struct enable_trigger_data *enable_data = data->private_data;
+अटल व्योम
+event_enable_count_trigger(काष्ठा event_trigger_data *data,
+			   काष्ठा trace_buffer *buffer,  व्योम *rec,
+			   काष्ठा ring_buffer_event *event)
+अणु
+	काष्ठा enable_trigger_data *enable_data = data->निजी_data;
 
-	if (!data->count)
-		return;
+	अगर (!data->count)
+		वापस;
 
-	/* Skip if the event is in a state we want to switch to */
-	if (enable_data->enable == !(enable_data->file->flags & EVENT_FILE_FL_SOFT_DISABLED))
-		return;
+	/* Skip अगर the event is in a state we want to चयन to */
+	अगर (enable_data->enable == !(enable_data->file->flags & EVENT_खाता_FL_SOFT_DISABLED))
+		वापस;
 
-	if (data->count != -1)
+	अगर (data->count != -1)
 		(data->count)--;
 
 	event_enable_trigger(data, buffer, rec, event);
-}
+पूर्ण
 
-int event_enable_trigger_print(struct seq_file *m,
-			       struct event_trigger_ops *ops,
-			       struct event_trigger_data *data)
-{
-	struct enable_trigger_data *enable_data = data->private_data;
+पूर्णांक event_enable_trigger_prपूर्णांक(काष्ठा seq_file *m,
+			       काष्ठा event_trigger_ops *ops,
+			       काष्ठा event_trigger_data *data)
+अणु
+	काष्ठा enable_trigger_data *enable_data = data->निजी_data;
 
-	seq_printf(m, "%s:%s:%s",
+	seq_म_लिखो(m, "%s:%s:%s",
 		   enable_data->hist ?
 		   (enable_data->enable ? ENABLE_HIST_STR : DISABLE_HIST_STR) :
 		   (enable_data->enable ? ENABLE_EVENT_STR : DISABLE_EVENT_STR),
-		   enable_data->file->event_call->class->system,
+		   enable_data->file->event_call->class->प्रणाली,
 		   trace_event_name(enable_data->file->event_call));
 
-	if (data->count == -1)
-		seq_puts(m, ":unlimited");
-	else
-		seq_printf(m, ":count=%ld", data->count);
+	अगर (data->count == -1)
+		seq_माला_दो(m, ":unlimited");
+	अन्यथा
+		seq_म_लिखो(m, ":count=%ld", data->count);
 
-	if (data->filter_str)
-		seq_printf(m, " if %s\n", data->filter_str);
-	else
-		seq_putc(m, '\n');
+	अगर (data->filter_str)
+		seq_म_लिखो(m, " if %s\n", data->filter_str);
+	अन्यथा
+		seq_अ_दो(m, '\n');
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void event_enable_trigger_free(struct event_trigger_ops *ops,
-			       struct event_trigger_data *data)
-{
-	struct enable_trigger_data *enable_data = data->private_data;
+व्योम event_enable_trigger_मुक्त(काष्ठा event_trigger_ops *ops,
+			       काष्ठा event_trigger_data *data)
+अणु
+	काष्ठा enable_trigger_data *enable_data = data->निजी_data;
 
-	if (WARN_ON_ONCE(data->ref <= 0))
-		return;
+	अगर (WARN_ON_ONCE(data->ref <= 0))
+		वापस;
 
 	data->ref--;
-	if (!data->ref) {
+	अगर (!data->ref) अणु
 		/* Remove the SOFT_MODE flag */
 		trace_event_enable_disable(enable_data->file, 0, 1);
 		module_put(enable_data->file->event_call->mod);
-		trigger_data_free(data);
-		kfree(enable_data);
-	}
-}
+		trigger_data_मुक्त(data);
+		kमुक्त(enable_data);
+	पूर्ण
+पूर्ण
 
-static struct event_trigger_ops event_enable_trigger_ops = {
+अटल काष्ठा event_trigger_ops event_enable_trigger_ops = अणु
 	.func			= event_enable_trigger,
-	.print			= event_enable_trigger_print,
+	.prपूर्णांक			= event_enable_trigger_prपूर्णांक,
 	.init			= event_trigger_init,
-	.free			= event_enable_trigger_free,
-};
+	.मुक्त			= event_enable_trigger_मुक्त,
+पूर्ण;
 
-static struct event_trigger_ops event_enable_count_trigger_ops = {
+अटल काष्ठा event_trigger_ops event_enable_count_trigger_ops = अणु
 	.func			= event_enable_count_trigger,
-	.print			= event_enable_trigger_print,
+	.prपूर्णांक			= event_enable_trigger_prपूर्णांक,
 	.init			= event_trigger_init,
-	.free			= event_enable_trigger_free,
-};
+	.मुक्त			= event_enable_trigger_मुक्त,
+पूर्ण;
 
-static struct event_trigger_ops event_disable_trigger_ops = {
+अटल काष्ठा event_trigger_ops event_disable_trigger_ops = अणु
 	.func			= event_enable_trigger,
-	.print			= event_enable_trigger_print,
+	.prपूर्णांक			= event_enable_trigger_prपूर्णांक,
 	.init			= event_trigger_init,
-	.free			= event_enable_trigger_free,
-};
+	.मुक्त			= event_enable_trigger_मुक्त,
+पूर्ण;
 
-static struct event_trigger_ops event_disable_count_trigger_ops = {
+अटल काष्ठा event_trigger_ops event_disable_count_trigger_ops = अणु
 	.func			= event_enable_count_trigger,
-	.print			= event_enable_trigger_print,
+	.prपूर्णांक			= event_enable_trigger_prपूर्णांक,
 	.init			= event_trigger_init,
-	.free			= event_enable_trigger_free,
-};
+	.मुक्त			= event_enable_trigger_मुक्त,
+पूर्ण;
 
-int event_enable_trigger_func(struct event_command *cmd_ops,
-			      struct trace_event_file *file,
-			      char *glob, char *cmd, char *param)
-{
-	struct trace_event_file *event_enable_file;
-	struct enable_trigger_data *enable_data;
-	struct event_trigger_data *trigger_data;
-	struct event_trigger_ops *trigger_ops;
-	struct trace_array *tr = file->tr;
-	const char *system;
-	const char *event;
+पूर्णांक event_enable_trigger_func(काष्ठा event_command *cmd_ops,
+			      काष्ठा trace_event_file *file,
+			      अक्षर *glob, अक्षर *cmd, अक्षर *param)
+अणु
+	काष्ठा trace_event_file *event_enable_file;
+	काष्ठा enable_trigger_data *enable_data;
+	काष्ठा event_trigger_data *trigger_data;
+	काष्ठा event_trigger_ops *trigger_ops;
+	काष्ठा trace_array *tr = file->tr;
+	स्थिर अक्षर *प्रणाली;
+	स्थिर अक्षर *event;
 	bool hist = false;
-	char *trigger;
-	char *number;
+	अक्षर *trigger;
+	अक्षर *number;
 	bool enable;
-	int ret;
+	पूर्णांक ret;
 
-	if (!param)
-		return -EINVAL;
+	अगर (!param)
+		वापस -EINVAL;
 
-	/* separate the trigger from the filter (s:e:n [if filter]) */
+	/* separate the trigger from the filter (s:e:n [अगर filter]) */
 	trigger = strsep(&param, " \t");
-	if (!trigger)
-		return -EINVAL;
-	if (param) {
+	अगर (!trigger)
+		वापस -EINVAL;
+	अगर (param) अणु
 		param = skip_spaces(param);
-		if (!*param)
-			param = NULL;
-	}
+		अगर (!*param)
+			param = शून्य;
+	पूर्ण
 
-	system = strsep(&trigger, ":");
-	if (!trigger)
-		return -EINVAL;
+	प्रणाली = strsep(&trigger, ":");
+	अगर (!trigger)
+		वापस -EINVAL;
 
 	event = strsep(&trigger, ":");
 
 	ret = -EINVAL;
-	event_enable_file = find_event_file(tr, system, event);
-	if (!event_enable_file)
-		goto out;
+	event_enable_file = find_event_file(tr, प्रणाली, event);
+	अगर (!event_enable_file)
+		जाओ out;
 
-#ifdef CONFIG_HIST_TRIGGERS
-	hist = ((strcmp(cmd, ENABLE_HIST_STR) == 0) ||
-		(strcmp(cmd, DISABLE_HIST_STR) == 0));
+#अगर_घोषित CONFIG_HIST_TRIGGERS
+	hist = ((म_भेद(cmd, ENABLE_HIST_STR) == 0) ||
+		(म_भेद(cmd, DISABLE_HIST_STR) == 0));
 
-	enable = ((strcmp(cmd, ENABLE_EVENT_STR) == 0) ||
-		  (strcmp(cmd, ENABLE_HIST_STR) == 0));
-#else
-	enable = strcmp(cmd, ENABLE_EVENT_STR) == 0;
-#endif
+	enable = ((म_भेद(cmd, ENABLE_EVENT_STR) == 0) ||
+		  (म_भेद(cmd, ENABLE_HIST_STR) == 0));
+#अन्यथा
+	enable = म_भेद(cmd, ENABLE_EVENT_STR) == 0;
+#पूर्ण_अगर
 	trigger_ops = cmd_ops->get_trigger_ops(cmd, trigger);
 
 	ret = -ENOMEM;
-	trigger_data = kzalloc(sizeof(*trigger_data), GFP_KERNEL);
-	if (!trigger_data)
-		goto out;
+	trigger_data = kzalloc(माप(*trigger_data), GFP_KERNEL);
+	अगर (!trigger_data)
+		जाओ out;
 
-	enable_data = kzalloc(sizeof(*enable_data), GFP_KERNEL);
-	if (!enable_data) {
-		kfree(trigger_data);
-		goto out;
-	}
+	enable_data = kzalloc(माप(*enable_data), GFP_KERNEL);
+	अगर (!enable_data) अणु
+		kमुक्त(trigger_data);
+		जाओ out;
+	पूर्ण
 
 	trigger_data->count = -1;
 	trigger_data->ops = trigger_ops;
 	trigger_data->cmd_ops = cmd_ops;
 	INIT_LIST_HEAD(&trigger_data->list);
-	RCU_INIT_POINTER(trigger_data->filter, NULL);
+	RCU_INIT_POINTER(trigger_data->filter, शून्य);
 
 	enable_data->hist = hist;
 	enable_data->enable = enable;
 	enable_data->file = event_enable_file;
-	trigger_data->private_data = enable_data;
+	trigger_data->निजी_data = enable_data;
 
-	if (glob[0] == '!') {
+	अगर (glob[0] == '!') अणु
 		cmd_ops->unreg(glob+1, trigger_ops, trigger_data, file);
-		kfree(trigger_data);
-		kfree(enable_data);
+		kमुक्त(trigger_data);
+		kमुक्त(enable_data);
 		ret = 0;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	/* Up the trigger_data count to make sure nothing frees it on failure */
+	/* Up the trigger_data count to make sure nothing मुक्तs it on failure */
 	event_trigger_init(trigger_ops, trigger_data);
 
-	if (trigger) {
+	अगर (trigger) अणु
 		number = strsep(&trigger, ":");
 
 		ret = -EINVAL;
-		if (!strlen(number))
-			goto out_free;
+		अगर (!म_माप(number))
+			जाओ out_मुक्त;
 
 		/*
-		 * We use the callback data field (which is a pointer)
+		 * We use the callback data field (which is a poपूर्णांकer)
 		 * as our counter.
 		 */
-		ret = kstrtoul(number, 0, &trigger_data->count);
-		if (ret)
-			goto out_free;
-	}
+		ret = kम_से_अदीर्घ(number, 0, &trigger_data->count);
+		अगर (ret)
+			जाओ out_मुक्त;
+	पूर्ण
 
-	if (!param) /* if param is non-empty, it's supposed to be a filter */
-		goto out_reg;
+	अगर (!param) /* अगर param is non-empty, it's supposed to be a filter */
+		जाओ out_reg;
 
-	if (!cmd_ops->set_filter)
-		goto out_reg;
+	अगर (!cmd_ops->set_filter)
+		जाओ out_reg;
 
 	ret = cmd_ops->set_filter(param, trigger_data, file);
-	if (ret < 0)
-		goto out_free;
+	अगर (ret < 0)
+		जाओ out_मुक्त;
 
  out_reg:
-	/* Don't let event modules unload while probe registered */
+	/* Don't let event modules unload जबतक probe रेजिस्टरed */
 	ret = try_module_get(event_enable_file->event_call->mod);
-	if (!ret) {
+	अगर (!ret) अणु
 		ret = -EBUSY;
-		goto out_free;
-	}
+		जाओ out_मुक्त;
+	पूर्ण
 
 	ret = trace_event_enable_disable(event_enable_file, 1, 1);
-	if (ret < 0)
-		goto out_put;
+	अगर (ret < 0)
+		जाओ out_put;
 	ret = cmd_ops->reg(glob, trigger_ops, trigger_data, file);
 	/*
-	 * The above returns on success the # of functions enabled,
-	 * but if it didn't find any functions it returns zero.
+	 * The above वापसs on success the # of functions enabled,
+	 * but अगर it didn't find any functions it वापसs zero.
 	 * Consider no functions a failure too.
 	 */
-	if (!ret) {
+	अगर (!ret) अणु
 		ret = -ENOENT;
-		goto out_disable;
-	} else if (ret < 0)
-		goto out_disable;
-	/* Just return zero, not the number of enabled functions */
+		जाओ out_disable;
+	पूर्ण अन्यथा अगर (ret < 0)
+		जाओ out_disable;
+	/* Just वापस zero, not the number of enabled functions */
 	ret = 0;
-	event_trigger_free(trigger_ops, trigger_data);
+	event_trigger_मुक्त(trigger_ops, trigger_data);
  out:
-	return ret;
+	वापस ret;
 
  out_disable:
 	trace_event_enable_disable(event_enable_file, 0, 1);
  out_put:
 	module_put(event_enable_file->event_call->mod);
- out_free:
-	if (cmd_ops->set_filter)
-		cmd_ops->set_filter(NULL, trigger_data, NULL);
-	event_trigger_free(trigger_ops, trigger_data);
-	kfree(enable_data);
-	goto out;
-}
+ out_मुक्त:
+	अगर (cmd_ops->set_filter)
+		cmd_ops->set_filter(शून्य, trigger_data, शून्य);
+	event_trigger_मुक्त(trigger_ops, trigger_data);
+	kमुक्त(enable_data);
+	जाओ out;
+पूर्ण
 
-int event_enable_register_trigger(char *glob,
-				  struct event_trigger_ops *ops,
-				  struct event_trigger_data *data,
-				  struct trace_event_file *file)
-{
-	struct enable_trigger_data *enable_data = data->private_data;
-	struct enable_trigger_data *test_enable_data;
-	struct event_trigger_data *test;
-	int ret = 0;
+पूर्णांक event_enable_रेजिस्टर_trigger(अक्षर *glob,
+				  काष्ठा event_trigger_ops *ops,
+				  काष्ठा event_trigger_data *data,
+				  काष्ठा trace_event_file *file)
+अणु
+	काष्ठा enable_trigger_data *enable_data = data->निजी_data;
+	काष्ठा enable_trigger_data *test_enable_data;
+	काष्ठा event_trigger_data *test;
+	पूर्णांक ret = 0;
 
-	lockdep_assert_held(&event_mutex);
+	lockdep_निश्चित_held(&event_mutex);
 
-	list_for_each_entry(test, &file->triggers, list) {
-		test_enable_data = test->private_data;
-		if (test_enable_data &&
+	list_क्रम_each_entry(test, &file->triggers, list) अणु
+		test_enable_data = test->निजी_data;
+		अगर (test_enable_data &&
 		    (test->cmd_ops->trigger_type ==
 		     data->cmd_ops->trigger_type) &&
-		    (test_enable_data->file == enable_data->file)) {
+		    (test_enable_data->file == enable_data->file)) अणु
 			ret = -EEXIST;
-			goto out;
-		}
-	}
+			जाओ out;
+		पूर्ण
+	पूर्ण
 
-	if (data->ops->init) {
+	अगर (data->ops->init) अणु
 		ret = data->ops->init(data->ops, data);
-		if (ret < 0)
-			goto out;
-	}
+		अगर (ret < 0)
+			जाओ out;
+	पूर्ण
 
 	list_add_rcu(&data->list, &file->triggers);
 	ret++;
 
 	update_cond_flag(file);
-	if (trace_event_trigger_enable_disable(file, 1) < 0) {
+	अगर (trace_event_trigger_enable_disable(file, 1) < 0) अणु
 		list_del_rcu(&data->list);
 		update_cond_flag(file);
 		ret--;
-	}
+	पूर्ण
 out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-void event_enable_unregister_trigger(char *glob,
-				     struct event_trigger_ops *ops,
-				     struct event_trigger_data *test,
-				     struct trace_event_file *file)
-{
-	struct enable_trigger_data *test_enable_data = test->private_data;
-	struct enable_trigger_data *enable_data;
-	struct event_trigger_data *data;
-	bool unregistered = false;
+व्योम event_enable_unरेजिस्टर_trigger(अक्षर *glob,
+				     काष्ठा event_trigger_ops *ops,
+				     काष्ठा event_trigger_data *test,
+				     काष्ठा trace_event_file *file)
+अणु
+	काष्ठा enable_trigger_data *test_enable_data = test->निजी_data;
+	काष्ठा enable_trigger_data *enable_data;
+	काष्ठा event_trigger_data *data;
+	bool unरेजिस्टरed = false;
 
-	lockdep_assert_held(&event_mutex);
+	lockdep_निश्चित_held(&event_mutex);
 
-	list_for_each_entry(data, &file->triggers, list) {
-		enable_data = data->private_data;
-		if (enable_data &&
+	list_क्रम_each_entry(data, &file->triggers, list) अणु
+		enable_data = data->निजी_data;
+		अगर (enable_data &&
 		    (data->cmd_ops->trigger_type ==
 		     test->cmd_ops->trigger_type) &&
-		    (enable_data->file == test_enable_data->file)) {
-			unregistered = true;
+		    (enable_data->file == test_enable_data->file)) अणु
+			unरेजिस्टरed = true;
 			list_del_rcu(&data->list);
 			trace_event_trigger_enable_disable(file, 0);
 			update_cond_flag(file);
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	if (unregistered && data->ops->free)
-		data->ops->free(data->ops, data);
-}
+	अगर (unरेजिस्टरed && data->ops->मुक्त)
+		data->ops->मुक्त(data->ops, data);
+पूर्ण
 
-static struct event_trigger_ops *
-event_enable_get_trigger_ops(char *cmd, char *param)
-{
-	struct event_trigger_ops *ops;
+अटल काष्ठा event_trigger_ops *
+event_enable_get_trigger_ops(अक्षर *cmd, अक्षर *param)
+अणु
+	काष्ठा event_trigger_ops *ops;
 	bool enable;
 
-#ifdef CONFIG_HIST_TRIGGERS
-	enable = ((strcmp(cmd, ENABLE_EVENT_STR) == 0) ||
-		  (strcmp(cmd, ENABLE_HIST_STR) == 0));
-#else
-	enable = strcmp(cmd, ENABLE_EVENT_STR) == 0;
-#endif
-	if (enable)
+#अगर_घोषित CONFIG_HIST_TRIGGERS
+	enable = ((म_भेद(cmd, ENABLE_EVENT_STR) == 0) ||
+		  (म_भेद(cmd, ENABLE_HIST_STR) == 0));
+#अन्यथा
+	enable = म_भेद(cmd, ENABLE_EVENT_STR) == 0;
+#पूर्ण_अगर
+	अगर (enable)
 		ops = param ? &event_enable_count_trigger_ops :
 			&event_enable_trigger_ops;
-	else
+	अन्यथा
 		ops = param ? &event_disable_count_trigger_ops :
 			&event_disable_trigger_ops;
 
-	return ops;
-}
+	वापस ops;
+पूर्ण
 
-static struct event_command trigger_enable_cmd = {
+अटल काष्ठा event_command trigger_enable_cmd = अणु
 	.name			= ENABLE_EVENT_STR,
 	.trigger_type		= ETT_EVENT_ENABLE,
 	.func			= event_enable_trigger_func,
-	.reg			= event_enable_register_trigger,
-	.unreg			= event_enable_unregister_trigger,
+	.reg			= event_enable_रेजिस्टर_trigger,
+	.unreg			= event_enable_unरेजिस्टर_trigger,
 	.get_trigger_ops	= event_enable_get_trigger_ops,
 	.set_filter		= set_trigger_filter,
-};
+पूर्ण;
 
-static struct event_command trigger_disable_cmd = {
+अटल काष्ठा event_command trigger_disable_cmd = अणु
 	.name			= DISABLE_EVENT_STR,
 	.trigger_type		= ETT_EVENT_ENABLE,
 	.func			= event_enable_trigger_func,
-	.reg			= event_enable_register_trigger,
-	.unreg			= event_enable_unregister_trigger,
+	.reg			= event_enable_रेजिस्टर_trigger,
+	.unreg			= event_enable_unरेजिस्टर_trigger,
 	.get_trigger_ops	= event_enable_get_trigger_ops,
 	.set_filter		= set_trigger_filter,
-};
+पूर्ण;
 
-static __init void unregister_trigger_enable_disable_cmds(void)
-{
-	unregister_event_command(&trigger_enable_cmd);
-	unregister_event_command(&trigger_disable_cmd);
-}
+अटल __init व्योम unरेजिस्टर_trigger_enable_disable_cmds(व्योम)
+अणु
+	unरेजिस्टर_event_command(&trigger_enable_cmd);
+	unरेजिस्टर_event_command(&trigger_disable_cmd);
+पूर्ण
 
-static __init int register_trigger_enable_disable_cmds(void)
-{
-	int ret;
+अटल __init पूर्णांक रेजिस्टर_trigger_enable_disable_cmds(व्योम)
+अणु
+	पूर्णांक ret;
 
-	ret = register_event_command(&trigger_enable_cmd);
-	if (WARN_ON(ret < 0))
-		return ret;
-	ret = register_event_command(&trigger_disable_cmd);
-	if (WARN_ON(ret < 0))
-		unregister_trigger_enable_disable_cmds();
+	ret = रेजिस्टर_event_command(&trigger_enable_cmd);
+	अगर (WARN_ON(ret < 0))
+		वापस ret;
+	ret = रेजिस्टर_event_command(&trigger_disable_cmd);
+	अगर (WARN_ON(ret < 0))
+		unरेजिस्टर_trigger_enable_disable_cmds();
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static __init int register_trigger_traceon_traceoff_cmds(void)
-{
-	int ret;
+अटल __init पूर्णांक रेजिस्टर_trigger_traceon_traceoff_cmds(व्योम)
+अणु
+	पूर्णांक ret;
 
-	ret = register_event_command(&trigger_traceon_cmd);
-	if (WARN_ON(ret < 0))
-		return ret;
-	ret = register_event_command(&trigger_traceoff_cmd);
-	if (WARN_ON(ret < 0))
-		unregister_trigger_traceon_traceoff_cmds();
+	ret = रेजिस्टर_event_command(&trigger_traceon_cmd);
+	अगर (WARN_ON(ret < 0))
+		वापस ret;
+	ret = रेजिस्टर_event_command(&trigger_traceoff_cmd);
+	अगर (WARN_ON(ret < 0))
+		unरेजिस्टर_trigger_traceon_traceoff_cmds();
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-__init int register_trigger_cmds(void)
-{
-	register_trigger_traceon_traceoff_cmds();
-	register_trigger_snapshot_cmd();
-	register_trigger_stacktrace_cmd();
-	register_trigger_enable_disable_cmds();
-	register_trigger_hist_enable_disable_cmds();
-	register_trigger_hist_cmd();
+__init पूर्णांक रेजिस्टर_trigger_cmds(व्योम)
+अणु
+	रेजिस्टर_trigger_traceon_traceoff_cmds();
+	रेजिस्टर_trigger_snapshot_cmd();
+	रेजिस्टर_trigger_stacktrace_cmd();
+	रेजिस्टर_trigger_enable_disable_cmds();
+	रेजिस्टर_trigger_hist_enable_disable_cmds();
+	रेजिस्टर_trigger_hist_cmd();
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

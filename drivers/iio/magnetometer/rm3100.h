@@ -1,17 +1,18 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * Copyright (C) 2018 Song Qiang <songqiang1304521@gmail.com>
  */
 
-#ifndef RM3100_CORE_H
-#define RM3100_CORE_H
+#अगर_अघोषित RM3100_CORE_H
+#घोषणा RM3100_CORE_H
 
-#include <linux/regmap.h>
+#समावेश <linux/regmap.h>
 
-extern const struct regmap_access_table rm3100_readable_table;
-extern const struct regmap_access_table rm3100_writable_table;
-extern const struct regmap_access_table rm3100_volatile_table;
+बाह्य स्थिर काष्ठा regmap_access_table rm3100_पढ़ोable_table;
+बाह्य स्थिर काष्ठा regmap_access_table rm3100_writable_table;
+बाह्य स्थिर काष्ठा regmap_access_table rm3100_अस्थिर_table;
 
-int rm3100_common_probe(struct device *dev, struct regmap *regmap, int irq);
+पूर्णांक rm3100_common_probe(काष्ठा device *dev, काष्ठा regmap *regmap, पूर्णांक irq);
 
-#endif /* RM3100_CORE_H */
+#पूर्ण_अगर /* RM3100_CORE_H */

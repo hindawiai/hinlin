@@ -1,63 +1,64 @@
-{
+<शैली गुरु>
+अणु
 	"runtime/jit: tail_call within bounds, prog once",
-	.insns = {
+	.insns = अणु
 	BPF_MOV64_IMM(BPF_REG_3, 0),
 	BPF_LD_MAP_FD(BPF_REG_2, 0),
 	BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0, BPF_FUNC_tail_call),
 	BPF_MOV64_IMM(BPF_REG_0, 1),
 	BPF_EXIT_INSN(),
-	},
-	.fixup_prog1 = { 1 },
+	पूर्ण,
+	.fixup_prog1 = अणु 1 पूर्ण,
 	.result = ACCEPT,
 	.retval = 42,
-},
-{
+पूर्ण,
+अणु
 	"runtime/jit: tail_call within bounds, prog loop",
-	.insns = {
+	.insns = अणु
 	BPF_MOV64_IMM(BPF_REG_3, 1),
 	BPF_LD_MAP_FD(BPF_REG_2, 0),
 	BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0, BPF_FUNC_tail_call),
 	BPF_MOV64_IMM(BPF_REG_0, 1),
 	BPF_EXIT_INSN(),
-	},
-	.fixup_prog1 = { 1 },
+	पूर्ण,
+	.fixup_prog1 = अणु 1 पूर्ण,
 	.result = ACCEPT,
 	.retval = 41,
-},
-{
+पूर्ण,
+अणु
 	"runtime/jit: tail_call within bounds, no prog",
-	.insns = {
+	.insns = अणु
 	BPF_MOV64_IMM(BPF_REG_3, 3),
 	BPF_LD_MAP_FD(BPF_REG_2, 0),
 	BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0, BPF_FUNC_tail_call),
 	BPF_MOV64_IMM(BPF_REG_0, 1),
 	BPF_EXIT_INSN(),
-	},
-	.fixup_prog1 = { 1 },
+	पूर्ण,
+	.fixup_prog1 = अणु 1 पूर्ण,
 	.result = ACCEPT,
 	.retval = 1,
-},
-{
+पूर्ण,
+अणु
 	"runtime/jit: tail_call within bounds, key 2",
-	.insns = {
+	.insns = अणु
 	BPF_MOV64_IMM(BPF_REG_3, 2),
 	BPF_LD_MAP_FD(BPF_REG_2, 0),
 	BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0, BPF_FUNC_tail_call),
 	BPF_MOV64_IMM(BPF_REG_0, 1),
 	BPF_EXIT_INSN(),
-	},
-	.fixup_prog1 = { 1 },
+	पूर्ण,
+	.fixup_prog1 = अणु 1 पूर्ण,
 	.result = ACCEPT,
 	.retval = 24,
-},
-{
+पूर्ण,
+अणु
 	"runtime/jit: tail_call within bounds, key 2 / key 2, first branch",
-	.insns = {
+	.insns = अणु
 	BPF_MOV64_IMM(BPF_REG_0, 13),
 	BPF_STX_MEM(BPF_B, BPF_REG_1, BPF_REG_0,
-		    offsetof(struct __sk_buff, cb[0])),
+		    दुरत्व(काष्ठा __sk_buff, cb[0])),
 	BPF_LDX_MEM(BPF_B, BPF_REG_0, BPF_REG_1,
-		    offsetof(struct __sk_buff, cb[0])),
+		    दुरत्व(काष्ठा __sk_buff, cb[0])),
 	BPF_JMP_IMM(BPF_JEQ, BPF_REG_0, 13, 4),
 	BPF_MOV64_IMM(BPF_REG_3, 2),
 	BPF_LD_MAP_FD(BPF_REG_2, 0),
@@ -67,19 +68,19 @@
 	BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0, BPF_FUNC_tail_call),
 	BPF_MOV64_IMM(BPF_REG_0, 1),
 	BPF_EXIT_INSN(),
-	},
-	.fixup_prog1 = { 5, 9 },
+	पूर्ण,
+	.fixup_prog1 = अणु 5, 9 पूर्ण,
 	.result = ACCEPT,
 	.retval = 24,
-},
-{
+पूर्ण,
+अणु
 	"runtime/jit: tail_call within bounds, key 2 / key 2, second branch",
-	.insns = {
+	.insns = अणु
 	BPF_MOV64_IMM(BPF_REG_0, 14),
 	BPF_STX_MEM(BPF_B, BPF_REG_1, BPF_REG_0,
-		    offsetof(struct __sk_buff, cb[0])),
+		    दुरत्व(काष्ठा __sk_buff, cb[0])),
 	BPF_LDX_MEM(BPF_B, BPF_REG_0, BPF_REG_1,
-		    offsetof(struct __sk_buff, cb[0])),
+		    दुरत्व(काष्ठा __sk_buff, cb[0])),
 	BPF_JMP_IMM(BPF_JEQ, BPF_REG_0, 13, 4),
 	BPF_MOV64_IMM(BPF_REG_3, 2),
 	BPF_LD_MAP_FD(BPF_REG_2, 0),
@@ -89,19 +90,19 @@
 	BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0, BPF_FUNC_tail_call),
 	BPF_MOV64_IMM(BPF_REG_0, 1),
 	BPF_EXIT_INSN(),
-	},
-	.fixup_prog1 = { 5, 9 },
+	पूर्ण,
+	.fixup_prog1 = अणु 5, 9 पूर्ण,
 	.result = ACCEPT,
 	.retval = 24,
-},
-{
+पूर्ण,
+अणु
 	"runtime/jit: tail_call within bounds, key 0 / key 2, first branch",
-	.insns = {
+	.insns = अणु
 	BPF_MOV64_IMM(BPF_REG_0, 13),
 	BPF_STX_MEM(BPF_B, BPF_REG_1, BPF_REG_0,
-		    offsetof(struct __sk_buff, cb[0])),
+		    दुरत्व(काष्ठा __sk_buff, cb[0])),
 	BPF_LDX_MEM(BPF_B, BPF_REG_0, BPF_REG_1,
-		    offsetof(struct __sk_buff, cb[0])),
+		    दुरत्व(काष्ठा __sk_buff, cb[0])),
 	BPF_JMP_IMM(BPF_JEQ, BPF_REG_0, 13, 4),
 	BPF_MOV64_IMM(BPF_REG_3, 0),
 	BPF_LD_MAP_FD(BPF_REG_2, 0),
@@ -111,19 +112,19 @@
 	BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0, BPF_FUNC_tail_call),
 	BPF_MOV64_IMM(BPF_REG_0, 1),
 	BPF_EXIT_INSN(),
-	},
-	.fixup_prog1 = { 5, 9 },
+	पूर्ण,
+	.fixup_prog1 = अणु 5, 9 पूर्ण,
 	.result = ACCEPT,
 	.retval = 24,
-},
-{
+पूर्ण,
+अणु
 	"runtime/jit: tail_call within bounds, key 0 / key 2, second branch",
-	.insns = {
+	.insns = अणु
 	BPF_MOV64_IMM(BPF_REG_0, 14),
 	BPF_STX_MEM(BPF_B, BPF_REG_1, BPF_REG_0,
-		    offsetof(struct __sk_buff, cb[0])),
+		    दुरत्व(काष्ठा __sk_buff, cb[0])),
 	BPF_LDX_MEM(BPF_B, BPF_REG_0, BPF_REG_1,
-		    offsetof(struct __sk_buff, cb[0])),
+		    दुरत्व(काष्ठा __sk_buff, cb[0])),
 	BPF_JMP_IMM(BPF_JEQ, BPF_REG_0, 13, 4),
 	BPF_MOV64_IMM(BPF_REG_3, 0),
 	BPF_LD_MAP_FD(BPF_REG_2, 0),
@@ -133,19 +134,19 @@
 	BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0, BPF_FUNC_tail_call),
 	BPF_MOV64_IMM(BPF_REG_0, 1),
 	BPF_EXIT_INSN(),
-	},
-	.fixup_prog1 = { 5, 9 },
+	पूर्ण,
+	.fixup_prog1 = अणु 5, 9 पूर्ण,
 	.result = ACCEPT,
 	.retval = 42,
-},
-{
+पूर्ण,
+अणु
 	"runtime/jit: tail_call within bounds, different maps, first branch",
-	.insns = {
+	.insns = अणु
 	BPF_MOV64_IMM(BPF_REG_0, 13),
 	BPF_STX_MEM(BPF_B, BPF_REG_1, BPF_REG_0,
-		    offsetof(struct __sk_buff, cb[0])),
+		    दुरत्व(काष्ठा __sk_buff, cb[0])),
 	BPF_LDX_MEM(BPF_B, BPF_REG_0, BPF_REG_1,
-		    offsetof(struct __sk_buff, cb[0])),
+		    दुरत्व(काष्ठा __sk_buff, cb[0])),
 	BPF_JMP_IMM(BPF_JEQ, BPF_REG_0, 13, 4),
 	BPF_MOV64_IMM(BPF_REG_3, 0),
 	BPF_LD_MAP_FD(BPF_REG_2, 0),
@@ -155,22 +156,22 @@
 	BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0, BPF_FUNC_tail_call),
 	BPF_MOV64_IMM(BPF_REG_0, 1),
 	BPF_EXIT_INSN(),
-	},
-	.fixup_prog1 = { 5 },
-	.fixup_prog2 = { 9 },
+	पूर्ण,
+	.fixup_prog1 = अणु 5 पूर्ण,
+	.fixup_prog2 = अणु 9 पूर्ण,
 	.result_unpriv = REJECT,
 	.errstr_unpriv = "tail_call abusing map_ptr",
 	.result = ACCEPT,
 	.retval = 1,
-},
-{
+पूर्ण,
+अणु
 	"runtime/jit: tail_call within bounds, different maps, second branch",
-	.insns = {
+	.insns = अणु
 	BPF_MOV64_IMM(BPF_REG_0, 14),
 	BPF_STX_MEM(BPF_B, BPF_REG_1, BPF_REG_0,
-		    offsetof(struct __sk_buff, cb[0])),
+		    दुरत्व(काष्ठा __sk_buff, cb[0])),
 	BPF_LDX_MEM(BPF_B, BPF_REG_0, BPF_REG_1,
-		    offsetof(struct __sk_buff, cb[0])),
+		    दुरत्व(काष्ठा __sk_buff, cb[0])),
 	BPF_JMP_IMM(BPF_JEQ, BPF_REG_0, 13, 4),
 	BPF_MOV64_IMM(BPF_REG_3, 0),
 	BPF_LD_MAP_FD(BPF_REG_2, 0),
@@ -180,52 +181,52 @@
 	BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0, BPF_FUNC_tail_call),
 	BPF_MOV64_IMM(BPF_REG_0, 1),
 	BPF_EXIT_INSN(),
-	},
-	.fixup_prog1 = { 5 },
-	.fixup_prog2 = { 9 },
+	पूर्ण,
+	.fixup_prog1 = अणु 5 पूर्ण,
+	.fixup_prog2 = अणु 9 पूर्ण,
 	.result_unpriv = REJECT,
 	.errstr_unpriv = "tail_call abusing map_ptr",
 	.result = ACCEPT,
 	.retval = 42,
-},
-{
+पूर्ण,
+अणु
 	"runtime/jit: tail_call out of bounds",
-	.insns = {
+	.insns = अणु
 	BPF_MOV64_IMM(BPF_REG_3, 256),
 	BPF_LD_MAP_FD(BPF_REG_2, 0),
 	BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0, BPF_FUNC_tail_call),
 	BPF_MOV64_IMM(BPF_REG_0, 2),
 	BPF_EXIT_INSN(),
-	},
-	.fixup_prog1 = { 1 },
+	पूर्ण,
+	.fixup_prog1 = अणु 1 पूर्ण,
 	.result = ACCEPT,
 	.retval = 2,
-},
-{
+पूर्ण,
+अणु
 	"runtime/jit: pass negative index to tail_call",
-	.insns = {
+	.insns = अणु
 	BPF_MOV64_IMM(BPF_REG_3, -1),
 	BPF_LD_MAP_FD(BPF_REG_2, 0),
 	BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0, BPF_FUNC_tail_call),
 	BPF_MOV64_IMM(BPF_REG_0, 2),
 	BPF_EXIT_INSN(),
-	},
-	.fixup_prog1 = { 1 },
+	पूर्ण,
+	.fixup_prog1 = अणु 1 पूर्ण,
 	.result = ACCEPT,
 	.retval = 2,
-},
-{
+पूर्ण,
+अणु
 	"runtime/jit: pass > 32bit index to tail_call",
-	.insns = {
+	.insns = अणु
 	BPF_LD_IMM64(BPF_REG_3, 0x100000000ULL),
 	BPF_LD_MAP_FD(BPF_REG_2, 0),
 	BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0, BPF_FUNC_tail_call),
 	BPF_MOV64_IMM(BPF_REG_0, 2),
 	BPF_EXIT_INSN(),
-	},
-	.fixup_prog1 = { 2 },
+	पूर्ण,
+	.fixup_prog1 = अणु 2 पूर्ण,
 	.result = ACCEPT,
 	.retval = 42,
-	/* Verifier rewrite for unpriv skips tail call here. */
+	/* Verअगरier reग_लिखो क्रम unpriv skips tail call here. */
 	.retval_unpriv = 2,
-},
+पूर्ण,

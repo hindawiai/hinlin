@@ -1,154 +1,155 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /******************************************************************************
 
     AudioScience HPI driver
     Copyright (C) 1997-2011  AudioScience Inc. <support@audioscience.com>
 
 
-HPI Operating System Specific macros for Linux Kernel driver
+HPI Operating System Specअगरic macros क्रम Linux Kernel driver
 
 (C) Copyright AudioScience Inc. 1997-2003
 ******************************************************************************/
-#ifndef _HPIOS_H_
-#define _HPIOS_H_
+#अगर_अघोषित _HPIOS_H_
+#घोषणा _HPIOS_H_
 
-#undef HPI_OS_LINUX_KERNEL
-#define HPI_OS_LINUX_KERNEL
+#अघोषित HPI_OS_LINUX_KERNEL
+#घोषणा HPI_OS_LINUX_KERNEL
 
-#define HPI_OS_DEFINED
-#define HPI_BUILD_KERNEL_MODE
+#घोषणा HPI_OS_DEFINED
+#घोषणा HPI_BUILD_KERNEL_MODE
 
-#include <linux/io.h>
-#include <linux/ioctl.h>
-#include <linux/kernel.h>
-#include <linux/string.h>
-#include <linux/device.h>
-#include <linux/firmware.h>
-#include <linux/interrupt.h>
-#include <linux/pci.h>
-#include <linux/mutex.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/ioctl.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/device.h>
+#समावेश <linux/firmware.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/mutex.h>
 
-#define HPI_NO_OS_FILE_OPS
+#घोषणा HPI_NO_OS_खाता_OPS
 
 /** Details of a memory area allocated with  pci_alloc_consistent
-Need all info for parameters to pci_free_consistent
+Need all info क्रम parameters to pci_मुक्त_consistent
 */
-struct consistent_dma_area {
-	struct device *pdev;
+काष्ठा consistent_dma_area अणु
+	काष्ठा device *pdev;
 	/* looks like dma-mapping dma_devres ?! */
-	size_t size;
-	void *vaddr;
+	माप_प्रकार size;
+	व्योम *vaddr;
 	dma_addr_t dma_handle;
-};
+पूर्ण;
 
-static inline u16 hpios_locked_mem_get_phys_addr(struct consistent_dma_area
+अटल अंतरभूत u16 hpios_locked_mem_get_phys_addr(काष्ठा consistent_dma_area
 	*locked_mem_handle, u32 *p_physical_addr)
-{
+अणु
 	*p_physical_addr = locked_mem_handle->dma_handle;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static inline u16 hpios_locked_mem_get_virt_addr(struct consistent_dma_area
-	*locked_mem_handle, void **pp_virtual_addr)
-{
-	*pp_virtual_addr = locked_mem_handle->vaddr;
-	return 0;
-}
+अटल अंतरभूत u16 hpios_locked_mem_get_virt_addr(काष्ठा consistent_dma_area
+	*locked_mem_handle, व्योम **pp_भव_addr)
+अणु
+	*pp_भव_addr = locked_mem_handle->vaddr;
+	वापस 0;
+पूर्ण
 
-static inline u16 hpios_locked_mem_valid(struct consistent_dma_area
+अटल अंतरभूत u16 hpios_locked_mem_valid(काष्ठा consistent_dma_area
 	*locked_mem_handle)
-{
-	return locked_mem_handle->size != 0;
-}
+अणु
+	वापस locked_mem_handle->size != 0;
+पूर्ण
 
-struct hpi_ioctl_linux {
-	void __user *phm;
-	void __user *phr;
-};
+काष्ठा hpi_ioctl_linux अणु
+	व्योम __user *phm;
+	व्योम __user *phr;
+पूर्ण;
 
-/* Conflict?: H is already used by a number of drivers hid, bluetooth hci,
+/* Conflict?: H is alपढ़ोy used by a number of drivers hid, bluetooth hci,
    and some sound drivers sb16, hdsp, emu10k. AFAIK 0xFC is unused command
 */
-#define HPI_IOCTL_LINUX _IOWR('H', 0xFC, struct hpi_ioctl_linux)
+#घोषणा HPI_IOCTL_LINUX _IOWR('H', 0xFC, काष्ठा hpi_ioctl_linux)
 
-#define HPI_DEBUG_FLAG_ERROR   KERN_ERR
-#define HPI_DEBUG_FLAG_WARNING KERN_WARNING
-#define HPI_DEBUG_FLAG_NOTICE  KERN_NOTICE
-#define HPI_DEBUG_FLAG_INFO    KERN_INFO
-#define HPI_DEBUG_FLAG_DEBUG   KERN_DEBUG
-#define HPI_DEBUG_FLAG_VERBOSE KERN_DEBUG	/* kernel has no verbose */
+#घोषणा HPI_DEBUG_FLAG_ERROR   KERN_ERR
+#घोषणा HPI_DEBUG_FLAG_WARNING KERN_WARNING
+#घोषणा HPI_DEBUG_FLAG_NOTICE  KERN_NOTICE
+#घोषणा HPI_DEBUG_FLAG_INFO    KERN_INFO
+#घोषणा HPI_DEBUG_FLAG_DEBUG   KERN_DEBUG
+#घोषणा HPI_DEBUG_FLAG_VERBOSE KERN_DEBUG	/* kernel has no verbose */
 
-#include <linux/spinlock.h>
+#समावेश <linux/spinlock.h>
 
-#define HPI_LOCKING
+#घोषणा HPI_LOCKING
 
-struct hpios_spinlock {
+काष्ठा hpios_spinlock अणु
 	spinlock_t lock;	/* SEE hpios_spinlock */
-	int lock_context;
-};
+	पूर्णांक lock_context;
+पूर्ण;
 
-/* The reason for all this evilness is that ALSA calls some of a drivers
- * operators in atomic context, and some not.  But all our functions channel
- * through the HPI_Message conduit, so we can't handle the different context
+/* The reason क्रम all this evilness is that ALSA calls some of a drivers
+ * चालकs in atomic context, and some not.  But all our functions channel
+ * through the HPI_Message conduit, so we can't handle the dअगरferent context
  * per function
  */
-#define IN_LOCK_BH 1
-#define IN_LOCK_IRQ 0
-static inline void cond_lock(struct hpios_spinlock *l)
-{
-	if (irqs_disabled()) {
+#घोषणा IN_LOCK_BH 1
+#घोषणा IN_LOCK_IRQ 0
+अटल अंतरभूत व्योम cond_lock(काष्ठा hpios_spinlock *l)
+अणु
+	अगर (irqs_disabled()) अणु
 		/* NO bh or isr can execute on this processor,
-		   so ordinary lock will do
+		   so ordinary lock will करो
 		 */
 		spin_lock(&((l)->lock));
 		l->lock_context = IN_LOCK_IRQ;
-	} else {
+	पूर्ण अन्यथा अणु
 		spin_lock_bh(&((l)->lock));
 		l->lock_context = IN_LOCK_BH;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static inline void cond_unlock(struct hpios_spinlock *l)
-{
-	if (l->lock_context == IN_LOCK_BH)
+अटल अंतरभूत व्योम cond_unlock(काष्ठा hpios_spinlock *l)
+अणु
+	अगर (l->lock_context == IN_LOCK_BH)
 		spin_unlock_bh(&((l)->lock));
-	else
+	अन्यथा
 		spin_unlock(&((l)->lock));
-}
+पूर्ण
 
-#define hpios_msgxlock_init(obj)      spin_lock_init(&(obj)->lock)
-#define hpios_msgxlock_lock(obj)   cond_lock(obj)
-#define hpios_msgxlock_unlock(obj) cond_unlock(obj)
+#घोषणा hpios_msgxlock_init(obj)      spin_lock_init(&(obj)->lock)
+#घोषणा hpios_msgxlock_lock(obj)   cond_lock(obj)
+#घोषणा hpios_msgxlock_unlock(obj) cond_unlock(obj)
 
-#define hpios_dsplock_init(obj)       spin_lock_init(&(obj)->dsp_lock.lock)
-#define hpios_dsplock_lock(obj)    cond_lock(&(obj)->dsp_lock)
-#define hpios_dsplock_unlock(obj)  cond_unlock(&(obj)->dsp_lock)
+#घोषणा hpios_dsplock_init(obj)       spin_lock_init(&(obj)->dsp_lock.lock)
+#घोषणा hpios_dsplock_lock(obj)    cond_lock(&(obj)->dsp_lock)
+#घोषणा hpios_dsplock_unlock(obj)  cond_unlock(&(obj)->dsp_lock)
 
-#ifdef CONFIG_SND_DEBUG
-#define HPI_BUILD_DEBUG
-#endif
+#अगर_घोषित CONFIG_SND_DEBUG
+#घोषणा HPI_BUILD_DEBUG
+#पूर्ण_अगर
 
-#define HPI_ALIST_LOCKING
-#define hpios_alistlock_init(obj)    spin_lock_init(&((obj)->list_lock.lock))
-#define hpios_alistlock_lock(obj) spin_lock(&((obj)->list_lock.lock))
-#define hpios_alistlock_unlock(obj) spin_unlock(&((obj)->list_lock.lock))
+#घोषणा HPI_ALIST_LOCKING
+#घोषणा hpios_alistlock_init(obj)    spin_lock_init(&((obj)->list_lock.lock))
+#घोषणा hpios_alistlock_lock(obj) spin_lock(&((obj)->list_lock.lock))
+#घोषणा hpios_alistlock_unlock(obj) spin_unlock(&((obj)->list_lock.lock))
 
-struct snd_card;
+काष्ठा snd_card;
 
-/** pci drvdata points to an instance of this struct */
-struct hpi_adapter {
-	struct hpi_adapter_obj *adapter;
-	struct snd_card *snd_card;
+/** pci drvdata poपूर्णांकs to an instance of this काष्ठा */
+काष्ठा hpi_adapter अणु
+	काष्ठा hpi_adapter_obj *adapter;
+	काष्ठा snd_card *snd_card;
 
-	int irq;
-	int interrupt_mode;
-	void (*interrupt_callback) (struct hpi_adapter *);
+	पूर्णांक irq;
+	पूर्णांक पूर्णांकerrupt_mode;
+	व्योम (*पूर्णांकerrupt_callback) (काष्ठा hpi_adapter *);
 
-	/* mutex prevents contention for one card
+	/* mutex prevents contention क्रम one card
 	   between multiple user programs (via ioctl) */
-	struct mutex mutex;
-	char *p_buffer;
-	size_t buffer_size;
-};
+	काष्ठा mutex mutex;
+	अक्षर *p_buffer;
+	माप_प्रकार buffer_size;
+पूर्ण;
 
-#endif
+#पूर्ण_अगर

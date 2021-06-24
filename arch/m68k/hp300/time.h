@@ -1,1 +1,2 @@
-extern void hp300_sched_init(void);
+<शैली गुरु>
+बाह्य व्योम hp300_sched_init(व्योम);

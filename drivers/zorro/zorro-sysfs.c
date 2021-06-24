@@ -1,75 +1,76 @@
+<शैली गुरु>
 /*
- *  File Attributes for Zorro Devices
+ *  File Attributes क्रम Zorro Devices
  *
  *  Copyright (C) 2003 Geert Uytterhoeven
  *
  *  Loosely based on drivers/pci/pci-sysfs.c
  *
  *  This file is subject to the terms and conditions of the GNU General Public
- *  License.  See the file COPYING in the main directory of this archive
- *  for more details.
+ *  License.  See the file COPYING in the मुख्य directory of this archive
+ *  क्रम more details.
  */
 
 
-#include <linux/kernel.h>
-#include <linux/zorro.h>
-#include <linux/stat.h>
-#include <linux/string.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/zorro.h>
+#समावेश <linux/स्थिति.स>
+#समावेश <linux/माला.स>
 
-#include <asm/byteorder.h>
+#समावेश <यंत्र/byteorder.h>
 
-#include "zorro.h"
+#समावेश "zorro.h"
 
 
 /* show configuration fields */
-#define zorro_config_attr(name, field, format_string)			\
-static ssize_t name##_show(struct device *dev,				\
-			   struct device_attribute *attr, char *buf)	\
-{									\
-	struct zorro_dev *z;						\
+#घोषणा zorro_config_attr(name, field, क्रमmat_string)			\
+अटल sमाप_प्रकार name##_show(काष्ठा device *dev,				\
+			   काष्ठा device_attribute *attr, अक्षर *buf)	\
+अणु									\
+	काष्ठा zorro_dev *z;						\
 									\
 	z = to_zorro_dev(dev);						\
-	return sprintf(buf, format_string, z->field);			\
-}									\
-static DEVICE_ATTR_RO(name);
+	वापस प्र_लिखो(buf, क्रमmat_string, z->field);			\
+पूर्ण									\
+अटल DEVICE_ATTR_RO(name);
 
 zorro_config_attr(id, id, "0x%08x\n");
 zorro_config_attr(type, rom.er_Type, "0x%02x\n");
 zorro_config_attr(slotaddr, slotaddr, "0x%04x\n");
 zorro_config_attr(slotsize, slotsize, "0x%04x\n");
 
-static ssize_t serial_show(struct device *dev, struct device_attribute *attr,
-			   char *buf)
-{
-	struct zorro_dev *z;
+अटल sमाप_प्रकार serial_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
+			   अक्षर *buf)
+अणु
+	काष्ठा zorro_dev *z;
 
 	z = to_zorro_dev(dev);
-	return sprintf(buf, "0x%08x\n", be32_to_cpu(z->rom.er_SerialNumber));
-}
-static DEVICE_ATTR_RO(serial);
+	वापस प्र_लिखो(buf, "0x%08x\n", be32_to_cpu(z->rom.er_SerialNumber));
+पूर्ण
+अटल DEVICE_ATTR_RO(serial);
 
-static ssize_t resource_show(struct device *dev, struct device_attribute *attr,
-			     char *buf)
-{
-	struct zorro_dev *z = to_zorro_dev(dev);
+अटल sमाप_प्रकार resource_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
+			     अक्षर *buf)
+अणु
+	काष्ठा zorro_dev *z = to_zorro_dev(dev);
 
-	return sprintf(buf, "0x%08lx 0x%08lx 0x%08lx\n",
-		       (unsigned long)zorro_resource_start(z),
-		       (unsigned long)zorro_resource_end(z),
+	वापस प्र_लिखो(buf, "0x%08lx 0x%08lx 0x%08lx\n",
+		       (अचिन्हित दीर्घ)zorro_resource_start(z),
+		       (अचिन्हित दीर्घ)zorro_resource_end(z),
 		       zorro_resource_flags(z));
-}
-static DEVICE_ATTR_RO(resource);
+पूर्ण
+अटल DEVICE_ATTR_RO(resource);
 
-static ssize_t modalias_show(struct device *dev, struct device_attribute *attr,
-			     char *buf)
-{
-	struct zorro_dev *z = to_zorro_dev(dev);
+अटल sमाप_प्रकार modalias_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
+			     अक्षर *buf)
+अणु
+	काष्ठा zorro_dev *z = to_zorro_dev(dev);
 
-	return sprintf(buf, ZORRO_DEVICE_MODALIAS_FMT "\n", z->id);
-}
-static DEVICE_ATTR_RO(modalias);
+	वापस प्र_लिखो(buf, ZORRO_DEVICE_MODALIAS_FMT "\n", z->id);
+पूर्ण
+अटल DEVICE_ATTR_RO(modalias);
 
-static struct attribute *zorro_device_attrs[] = {
+अटल काष्ठा attribute *zorro_device_attrs[] = अणु
 	&dev_attr_id.attr,
 	&dev_attr_type.attr,
 	&dev_attr_serial.attr,
@@ -77,47 +78,47 @@ static struct attribute *zorro_device_attrs[] = {
 	&dev_attr_slotsize.attr,
 	&dev_attr_resource.attr,
 	&dev_attr_modalias.attr,
-	NULL
-};
+	शून्य
+पूर्ण;
 
-static ssize_t zorro_read_config(struct file *filp, struct kobject *kobj,
-				 struct bin_attribute *bin_attr,
-				 char *buf, loff_t off, size_t count)
-{
-	struct zorro_dev *z = to_zorro_dev(kobj_to_dev(kobj));
-	struct ConfigDev cd;
+अटल sमाप_प्रकार zorro_पढ़ो_config(काष्ठा file *filp, काष्ठा kobject *kobj,
+				 काष्ठा bin_attribute *bin_attr,
+				 अक्षर *buf, loff_t off, माप_प्रकार count)
+अणु
+	काष्ठा zorro_dev *z = to_zorro_dev(kobj_to_dev(kobj));
+	काष्ठा ConfigDev cd;
 
-	/* Construct a ConfigDev */
-	memset(&cd, 0, sizeof(cd));
+	/* Conकाष्ठा a ConfigDev */
+	स_रखो(&cd, 0, माप(cd));
 	cd.cd_Rom = z->rom;
 	cd.cd_SlotAddr = cpu_to_be16(z->slotaddr);
 	cd.cd_SlotSize = cpu_to_be16(z->slotsize);
 	cd.cd_BoardAddr = cpu_to_be32(zorro_resource_start(z));
 	cd.cd_BoardSize = cpu_to_be32(zorro_resource_len(z));
 
-	return memory_read_from_buffer(buf, count, &off, &cd, sizeof(cd));
-}
+	वापस memory_पढ़ो_from_buffer(buf, count, &off, &cd, माप(cd));
+पूर्ण
 
-static struct bin_attribute zorro_config_attr = {
-	.attr =	{
+अटल काष्ठा bin_attribute zorro_config_attr = अणु
+	.attr =	अणु
 		.name = "config",
 		.mode = S_IRUGO,
-	},
-	.size = sizeof(struct ConfigDev),
-	.read = zorro_read_config,
-};
+	पूर्ण,
+	.size = माप(काष्ठा ConfigDev),
+	.पढ़ो = zorro_पढ़ो_config,
+पूर्ण;
 
-static struct bin_attribute *zorro_device_bin_attrs[] = {
+अटल काष्ठा bin_attribute *zorro_device_bin_attrs[] = अणु
 	&zorro_config_attr,
-	NULL
-};
+	शून्य
+पूर्ण;
 
-static const struct attribute_group zorro_device_attr_group = {
+अटल स्थिर काष्ठा attribute_group zorro_device_attr_group = अणु
 	.attrs		= zorro_device_attrs,
 	.bin_attrs	= zorro_device_bin_attrs,
-};
+पूर्ण;
 
-const struct attribute_group *zorro_device_attribute_groups[] = {
+स्थिर काष्ठा attribute_group *zorro_device_attribute_groups[] = अणु
 	&zorro_device_attr_group,
-	NULL
-};
+	शून्य
+पूर्ण;

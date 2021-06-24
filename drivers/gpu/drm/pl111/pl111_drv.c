@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * (C) COPYRIGHT 2012-2013 ARM Limited. All rights reserved.
  *
@@ -13,78 +14,78 @@
  * DOC: ARM PrimeCell PL110 and PL111 CLCD Driver
  *
  * The PL110/PL111 is a simple LCD controller that can support TFT
- * and STN displays. This driver exposes a standard KMS interface
- * for them.
+ * and STN displays. This driver exposes a standard KMS पूर्णांकerface
+ * क्रम them.
  *
- * The driver currently doesn't expose the cursor.  The DRM API for
- * cursors requires support for 64x64 ARGB8888 cursor images, while
+ * The driver currently करोesn't expose the cursor.  The DRM API क्रम
+ * cursors requires support क्रम 64x64 ARGB8888 cursor images, जबतक
  * the hardware can only support 64x64 monochrome with masking
  * cursors.  While one could imagine trying to hack something together
  * to look at the ARGB8888 and program reasonable in monochrome, we
- * just don't expose the cursor at all instead, and leave cursor
+ * just करोn't expose the cursor at all instead, and leave cursor
  * support to the application software cursor layer.
  *
  * TODO:
  *
- * - Fix race between setting plane base address and getting IRQ for
+ * - Fix race between setting plane base address and getting IRQ क्रम
  *   vsync firing the pageflip completion.
  *
  * - Read back hardware state at boot to skip reprogramming the
- *   hardware when doing a no-op modeset.
+ *   hardware when करोing a no-op modeset.
  *
- * - Use the CLKSEL bit to support switching between the two external
- *   clock parents.
+ * - Use the CLKSEL bit to support चयनing between the two बाह्यal
+ *   घड़ी parents.
  */
 
-#include <linux/amba/bus.h>
-#include <linux/dma-buf.h>
-#include <linux/module.h>
-#include <linux/of.h>
-#include <linux/of_graph.h>
-#include <linux/of_reserved_mem.h>
-#include <linux/shmem_fs.h>
-#include <linux/slab.h>
-#include <linux/version.h>
+#समावेश <linux/amba/bus.h>
+#समावेश <linux/dma-buf.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_graph.h>
+#समावेश <linux/of_reserved_स्मृति.स>
+#समावेश <linux/shmem_fs.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/version.h>
 
-#include <drm/drm_atomic_helper.h>
-#include <drm/drm_bridge.h>
-#include <drm/drm_drv.h>
-#include <drm/drm_fb_cma_helper.h>
-#include <drm/drm_fb_helper.h>
-#include <drm/drm_gem_cma_helper.h>
-#include <drm/drm_gem_framebuffer_helper.h>
-#include <drm/drm_of.h>
-#include <drm/drm_panel.h>
-#include <drm/drm_probe_helper.h>
-#include <drm/drm_vblank.h>
+#समावेश <drm/drm_atomic_helper.h>
+#समावेश <drm/drm_bridge.h>
+#समावेश <drm/drm_drv.h>
+#समावेश <drm/drm_fb_cma_helper.h>
+#समावेश <drm/drm_fb_helper.h>
+#समावेश <drm/drm_gem_cma_helper.h>
+#समावेश <drm/drm_gem_framebuffer_helper.h>
+#समावेश <drm/drm_of.h>
+#समावेश <drm/drm_panel.h>
+#समावेश <drm/drm_probe_helper.h>
+#समावेश <drm/drm_vblank.h>
 
-#include "pl111_drm.h"
-#include "pl111_versatile.h"
-#include "pl111_nomadik.h"
+#समावेश "pl111_drm.h"
+#समावेश "pl111_versatile.h"
+#समावेश "pl111_nomadik.h"
 
-#define DRIVER_DESC      "DRM module for PL111"
+#घोषणा DRIVER_DESC      "DRM module for PL111"
 
-static const struct drm_mode_config_funcs mode_config_funcs = {
+अटल स्थिर काष्ठा drm_mode_config_funcs mode_config_funcs = अणु
 	.fb_create = drm_gem_fb_create,
 	.atomic_check = drm_atomic_helper_check,
 	.atomic_commit = drm_atomic_helper_commit,
-};
+पूर्ण;
 
-static int pl111_modeset_init(struct drm_device *dev)
-{
-	struct drm_mode_config *mode_config;
-	struct pl111_drm_dev_private *priv = dev->dev_private;
-	struct device_node *np = dev->dev->of_node;
-	struct device_node *remote;
-	struct drm_panel *panel = NULL;
-	struct drm_bridge *bridge = NULL;
+अटल पूर्णांक pl111_modeset_init(काष्ठा drm_device *dev)
+अणु
+	काष्ठा drm_mode_config *mode_config;
+	काष्ठा pl111_drm_dev_निजी *priv = dev->dev_निजी;
+	काष्ठा device_node *np = dev->dev->of_node;
+	काष्ठा device_node *remote;
+	काष्ठा drm_panel *panel = शून्य;
+	काष्ठा drm_bridge *bridge = शून्य;
 	bool defer = false;
-	int ret;
-	int i;
+	पूर्णांक ret;
+	पूर्णांक i;
 
 	ret = drmm_mode_config_init(dev);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	mode_config = &dev->mode_config;
 	mode_config->funcs = &mode_config_funcs;
@@ -94,129 +95,129 @@ static int pl111_modeset_init(struct drm_device *dev)
 	mode_config->max_height = 768;
 
 	i = 0;
-	for_each_endpoint_of_node(np, remote) {
-		struct drm_panel *tmp_panel;
-		struct drm_bridge *tmp_bridge;
+	क्रम_each_endpoपूर्णांक_of_node(np, remote) अणु
+		काष्ठा drm_panel *पंचांगp_panel;
+		काष्ठा drm_bridge *पंचांगp_bridge;
 
 		dev_dbg(dev->dev, "checking endpoint %d\n", i);
 
 		ret = drm_of_find_panel_or_bridge(dev->dev->of_node,
 						  0, i,
-						  &tmp_panel,
-						  &tmp_bridge);
-		if (ret) {
-			if (ret == -EPROBE_DEFER) {
+						  &पंचांगp_panel,
+						  &पंचांगp_bridge);
+		अगर (ret) अणु
+			अगर (ret == -EPROBE_DEFER) अणु
 				/*
 				 * Something deferred, but that is often just
 				 * another way of saying -ENODEV, but let's
-				 * cast a vote for later deferral.
+				 * cast a vote क्रम later deferral.
 				 */
 				defer = true;
-			} else if (ret != -ENODEV) {
-				/* Continue, maybe something else is working */
+			पूर्ण अन्यथा अगर (ret != -ENODEV) अणु
+				/* Continue, maybe something अन्यथा is working */
 				dev_err(dev->dev,
 					"endpoint %d returns %d\n", i, ret);
-			}
-		}
+			पूर्ण
+		पूर्ण
 
-		if (tmp_panel) {
+		अगर (पंचांगp_panel) अणु
 			dev_info(dev->dev,
 				 "found panel on endpoint %d\n", i);
-			panel = tmp_panel;
-		}
-		if (tmp_bridge) {
+			panel = पंचांगp_panel;
+		पूर्ण
+		अगर (पंचांगp_bridge) अणु
 			dev_info(dev->dev,
 				 "found bridge on endpoint %d\n", i);
-			bridge = tmp_bridge;
-		}
+			bridge = पंचांगp_bridge;
+		पूर्ण
 
 		i++;
-	}
+	पूर्ण
 
 	/*
 	 * If we can't find neither panel nor bridge on any of the
-	 * endpoints, and any of them retured -EPROBE_DEFER, then
+	 * endpoपूर्णांकs, and any of them retured -EPROBE_DEFER, then
 	 * let's defer this driver too.
 	 */
-	if ((!panel && !bridge) && defer)
-		return -EPROBE_DEFER;
+	अगर ((!panel && !bridge) && defer)
+		वापस -EPROBE_DEFER;
 
-	if (panel) {
+	अगर (panel) अणु
 		bridge = drm_panel_bridge_add_typed(panel,
 						    DRM_MODE_CONNECTOR_Unknown);
-		if (IS_ERR(bridge)) {
+		अगर (IS_ERR(bridge)) अणु
 			ret = PTR_ERR(bridge);
-			goto finish;
-		}
-	} else if (bridge) {
+			जाओ finish;
+		पूर्ण
+	पूर्ण अन्यथा अगर (bridge) अणु
 		dev_info(dev->dev, "Using non-panel bridge\n");
-	} else {
+	पूर्ण अन्यथा अणु
 		dev_err(dev->dev, "No bridge, exiting\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
 	priv->bridge = bridge;
-	if (panel) {
+	अगर (panel) अणु
 		priv->panel = panel;
 		priv->connector = drm_panel_bridge_connector(bridge);
-	}
+	पूर्ण
 
 	ret = pl111_display_init(dev);
-	if (ret != 0) {
+	अगर (ret != 0) अणु
 		dev_err(dev->dev, "Failed to init display\n");
-		goto out_bridge;
-	}
+		जाओ out_bridge;
+	पूर्ण
 
 	ret = drm_simple_display_pipe_attach_bridge(&priv->pipe,
 						    bridge);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	if (!priv->variant->broken_vblank) {
+	अगर (!priv->variant->broken_vblank) अणु
 		ret = drm_vblank_init(dev, 1);
-		if (ret != 0) {
+		अगर (ret != 0) अणु
 			dev_err(dev->dev, "Failed to init vblank\n");
-			goto out_bridge;
-		}
-	}
+			जाओ out_bridge;
+		पूर्ण
+	पूर्ण
 
 	drm_mode_config_reset(dev);
 
 	drm_kms_helper_poll_init(dev);
 
-	goto finish;
+	जाओ finish;
 
 out_bridge:
-	if (panel)
-		drm_panel_bridge_remove(bridge);
+	अगर (panel)
+		drm_panel_bridge_हटाओ(bridge);
 finish:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static struct drm_gem_object *
-pl111_gem_import_sg_table(struct drm_device *dev,
-			  struct dma_buf_attachment *attach,
-			  struct sg_table *sgt)
-{
-	struct pl111_drm_dev_private *priv = dev->dev_private;
+अटल काष्ठा drm_gem_object *
+pl111_gem_import_sg_table(काष्ठा drm_device *dev,
+			  काष्ठा dma_buf_attachment *attach,
+			  काष्ठा sg_table *sgt)
+अणु
+	काष्ठा pl111_drm_dev_निजी *priv = dev->dev_निजी;
 
 	/*
-	 * When using device-specific reserved memory we can't import
+	 * When using device-specअगरic reserved memory we can't import
 	 * DMA buffers: those are passed by reference in any global
-	 * memory and we can only handle a specific range of memory.
+	 * memory and we can only handle a specअगरic range of memory.
 	 */
-	if (priv->use_device_memory)
-		return ERR_PTR(-EINVAL);
+	अगर (priv->use_device_memory)
+		वापस ERR_PTR(-EINVAL);
 
-	return drm_gem_cma_prime_import_sg_table(dev, attach, sgt);
-}
+	वापस drm_gem_cma_prime_import_sg_table(dev, attach, sgt);
+पूर्ण
 
 DEFINE_DRM_GEM_CMA_FOPS(drm_fops);
 
-static const struct drm_driver pl111_drm_driver = {
+अटल स्थिर काष्ठा drm_driver pl111_drm_driver = अणु
 	.driver_features =
 		DRIVER_MODESET | DRIVER_GEM | DRIVER_ATOMIC,
-	.ioctls = NULL,
+	.ioctls = शून्य,
 	.fops = &drm_fops,
 	.name = "pl111",
 	.desc = DRIVER_DESC,
@@ -230,113 +231,113 @@ static const struct drm_driver pl111_drm_driver = {
 	.gem_prime_import_sg_table = pl111_gem_import_sg_table,
 	.gem_prime_mmap = drm_gem_prime_mmap,
 
-#if defined(CONFIG_DEBUG_FS)
+#अगर defined(CONFIG_DEBUG_FS)
 	.debugfs_init = pl111_debugfs_init,
-#endif
-};
+#पूर्ण_अगर
+पूर्ण;
 
-static int pl111_amba_probe(struct amba_device *amba_dev,
-			    const struct amba_id *id)
-{
-	struct device *dev = &amba_dev->dev;
-	struct pl111_drm_dev_private *priv;
-	const struct pl111_variant_data *variant = id->data;
-	struct drm_device *drm;
-	int ret;
+अटल पूर्णांक pl111_amba_probe(काष्ठा amba_device *amba_dev,
+			    स्थिर काष्ठा amba_id *id)
+अणु
+	काष्ठा device *dev = &amba_dev->dev;
+	काष्ठा pl111_drm_dev_निजी *priv;
+	स्थिर काष्ठा pl111_variant_data *variant = id->data;
+	काष्ठा drm_device *drm;
+	पूर्णांक ret;
 
-	priv = devm_kzalloc(dev, sizeof(*priv), GFP_KERNEL);
-	if (!priv)
-		return -ENOMEM;
+	priv = devm_kzalloc(dev, माप(*priv), GFP_KERNEL);
+	अगर (!priv)
+		वापस -ENOMEM;
 
 	drm = drm_dev_alloc(&pl111_drm_driver, dev);
-	if (IS_ERR(drm))
-		return PTR_ERR(drm);
+	अगर (IS_ERR(drm))
+		वापस PTR_ERR(drm);
 	amba_set_drvdata(amba_dev, drm);
 	priv->drm = drm;
-	drm->dev_private = priv;
+	drm->dev_निजी = priv;
 	priv->variant = variant;
 
 	ret = of_reserved_mem_device_init(dev);
-	if (!ret) {
+	अगर (!ret) अणु
 		dev_info(dev, "using device-specific reserved memory\n");
 		priv->use_device_memory = true;
-	}
+	पूर्ण
 
-	if (of_property_read_u32(dev->of_node, "max-memory-bandwidth",
-				 &priv->memory_bw)) {
+	अगर (of_property_पढ़ो_u32(dev->of_node, "max-memory-bandwidth",
+				 &priv->memory_bw)) अणु
 		dev_info(dev, "no max memory bandwidth specified, assume unlimited\n");
 		priv->memory_bw = 0;
-	}
+	पूर्ण
 
-	/* The two main variants swap this register */
-	if (variant->is_pl110 || variant->is_lcdc) {
+	/* The two मुख्य variants swap this रेजिस्टर */
+	अगर (variant->is_pl110 || variant->is_lcdc) अणु
 		priv->ienb = CLCD_PL110_IENB;
 		priv->ctrl = CLCD_PL110_CNTL;
-	} else {
+	पूर्ण अन्यथा अणु
 		priv->ienb = CLCD_PL111_IENB;
 		priv->ctrl = CLCD_PL111_CNTL;
-	}
+	पूर्ण
 
 	priv->regs = devm_ioremap_resource(dev, &amba_dev->res);
-	if (IS_ERR(priv->regs)) {
+	अगर (IS_ERR(priv->regs)) अणु
 		dev_err(dev, "%s failed mmio\n", __func__);
 		ret = PTR_ERR(priv->regs);
-		goto dev_put;
-	}
+		जाओ dev_put;
+	पूर्ण
 
 	/* This may override some variant settings */
 	ret = pl111_versatile_init(dev, priv);
-	if (ret)
-		goto dev_put;
+	अगर (ret)
+		जाओ dev_put;
 
 	pl111_nomadik_init(dev);
 
-	/* turn off interrupts before requesting the irq */
-	writel(0, priv->regs + priv->ienb);
+	/* turn off पूर्णांकerrupts beक्रमe requesting the irq */
+	ग_लिखोl(0, priv->regs + priv->ienb);
 
 	ret = devm_request_irq(dev, amba_dev->irq[0], pl111_irq, 0,
 			       variant->name, priv);
-	if (ret != 0) {
+	अगर (ret != 0) अणु
 		dev_err(dev, "%s failed irq %d\n", __func__, ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	ret = pl111_modeset_init(drm);
-	if (ret != 0)
-		goto dev_put;
+	अगर (ret != 0)
+		जाओ dev_put;
 
-	ret = drm_dev_register(drm, 0);
-	if (ret < 0)
-		goto dev_put;
+	ret = drm_dev_रेजिस्टर(drm, 0);
+	अगर (ret < 0)
+		जाओ dev_put;
 
 	drm_fbdev_generic_setup(drm, priv->variant->fb_bpp);
 
-	return 0;
+	वापस 0;
 
 dev_put:
 	drm_dev_put(drm);
 	of_reserved_mem_device_release(dev);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void pl111_amba_remove(struct amba_device *amba_dev)
-{
-	struct device *dev = &amba_dev->dev;
-	struct drm_device *drm = amba_get_drvdata(amba_dev);
-	struct pl111_drm_dev_private *priv = drm->dev_private;
+अटल व्योम pl111_amba_हटाओ(काष्ठा amba_device *amba_dev)
+अणु
+	काष्ठा device *dev = &amba_dev->dev;
+	काष्ठा drm_device *drm = amba_get_drvdata(amba_dev);
+	काष्ठा pl111_drm_dev_निजी *priv = drm->dev_निजी;
 
-	drm_dev_unregister(drm);
-	if (priv->panel)
-		drm_panel_bridge_remove(priv->bridge);
+	drm_dev_unरेजिस्टर(drm);
+	अगर (priv->panel)
+		drm_panel_bridge_हटाओ(priv->bridge);
 	drm_dev_put(drm);
 	of_reserved_mem_device_release(dev);
-}
+पूर्ण
 
 /*
- * This early variant lacks the 565 and 444 pixel formats.
+ * This early variant lacks the 565 and 444 pixel क्रमmats.
  */
-static const u32 pl110_pixel_formats[] = {
+अटल स्थिर u32 pl110_pixel_क्रमmats[] = अणु
 	DRM_FORMAT_ABGR8888,
 	DRM_FORMAT_XBGR8888,
 	DRM_FORMAT_ARGB8888,
@@ -345,18 +346,18 @@ static const u32 pl110_pixel_formats[] = {
 	DRM_FORMAT_XBGR1555,
 	DRM_FORMAT_ARGB1555,
 	DRM_FORMAT_XRGB1555,
-};
+पूर्ण;
 
-static const struct pl111_variant_data pl110_variant = {
+अटल स्थिर काष्ठा pl111_variant_data pl110_variant = अणु
 	.name = "PL110",
 	.is_pl110 = true,
-	.formats = pl110_pixel_formats,
-	.nformats = ARRAY_SIZE(pl110_pixel_formats),
+	.क्रमmats = pl110_pixel_क्रमmats,
+	.nक्रमmats = ARRAY_SIZE(pl110_pixel_क्रमmats),
 	.fb_bpp = 16,
-};
+पूर्ण;
 
 /* RealView, Versatile Express etc use this modern variant */
-static const u32 pl111_pixel_formats[] = {
+अटल स्थिर u32 pl111_pixel_क्रमmats[] = अणु
 	DRM_FORMAT_ABGR8888,
 	DRM_FORMAT_XBGR8888,
 	DRM_FORMAT_ARGB8888,
@@ -371,16 +372,16 @@ static const u32 pl111_pixel_formats[] = {
 	DRM_FORMAT_XBGR4444,
 	DRM_FORMAT_ARGB4444,
 	DRM_FORMAT_XRGB4444,
-};
+पूर्ण;
 
-static const struct pl111_variant_data pl111_variant = {
+अटल स्थिर काष्ठा pl111_variant_data pl111_variant = अणु
 	.name = "PL111",
-	.formats = pl111_pixel_formats,
-	.nformats = ARRAY_SIZE(pl111_pixel_formats),
+	.क्रमmats = pl111_pixel_क्रमmats,
+	.nक्रमmats = ARRAY_SIZE(pl111_pixel_क्रमmats),
 	.fb_bpp = 32,
-};
+पूर्ण;
 
-static const u32 pl110_nomadik_pixel_formats[] = {
+अटल स्थिर u32 pl110_nomadik_pixel_क्रमmats[] = अणु
 	DRM_FORMAT_RGB888,
 	DRM_FORMAT_BGR888,
 	DRM_FORMAT_ABGR8888,
@@ -397,50 +398,50 @@ static const u32 pl110_nomadik_pixel_formats[] = {
 	DRM_FORMAT_XBGR4444,
 	DRM_FORMAT_ARGB4444,
 	DRM_FORMAT_XRGB4444,
-};
+पूर्ण;
 
-static const struct pl111_variant_data pl110_nomadik_variant = {
+अटल स्थिर काष्ठा pl111_variant_data pl110_nomadik_variant = अणु
 	.name = "LCDC (PL110 Nomadik)",
-	.formats = pl110_nomadik_pixel_formats,
-	.nformats = ARRAY_SIZE(pl110_nomadik_pixel_formats),
+	.क्रमmats = pl110_nomadik_pixel_क्रमmats,
+	.nक्रमmats = ARRAY_SIZE(pl110_nomadik_pixel_क्रमmats),
 	.is_lcdc = true,
-	.st_bitmux_control = true,
+	.st_biपंचांगux_control = true,
 	.broken_vblank = true,
 	.fb_bpp = 16,
-};
+पूर्ण;
 
-static const struct amba_id pl111_id_table[] = {
-	{
+अटल स्थिर काष्ठा amba_id pl111_id_table[] = अणु
+	अणु
 		.id = 0x00041110,
 		.mask = 0x000fffff,
-		.data = (void *)&pl110_variant,
-	},
-	{
+		.data = (व्योम *)&pl110_variant,
+	पूर्ण,
+	अणु
 		.id = 0x00180110,
 		.mask = 0x00fffffe,
-		.data = (void *)&pl110_nomadik_variant,
-	},
-	{
+		.data = (व्योम *)&pl110_nomadik_variant,
+	पूर्ण,
+	अणु
 		.id = 0x00041111,
 		.mask = 0x000fffff,
-		.data = (void *)&pl111_variant,
-	},
-	{0, 0},
-};
+		.data = (व्योम *)&pl111_variant,
+	पूर्ण,
+	अणु0, 0पूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(amba, pl111_id_table);
 
-static struct amba_driver pl111_amba_driver __maybe_unused = {
-	.drv = {
+अटल काष्ठा amba_driver pl111_amba_driver __maybe_unused = अणु
+	.drv = अणु
 		.name = "drm-clcd-pl111",
-	},
+	पूर्ण,
 	.probe = pl111_amba_probe,
-	.remove = pl111_amba_remove,
+	.हटाओ = pl111_amba_हटाओ,
 	.id_table = pl111_id_table,
-};
+पूर्ण;
 
-#ifdef CONFIG_ARM_AMBA
+#अगर_घोषित CONFIG_ARM_AMBA
 module_amba_driver(pl111_amba_driver);
-#endif
+#पूर्ण_अगर
 
 MODULE_DESCRIPTION(DRIVER_DESC);
 MODULE_AUTHOR("ARM Ltd.");

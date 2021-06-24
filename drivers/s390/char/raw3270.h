@@ -1,283 +1,284 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * IBM/3270 Driver
  *
  * Author(s):
- *   Original 3270 Code for 2.4 written by Richard Hitt (UTS Global)
- *   Rewritten for 2.5 by Martin Schwidefsky <schwidefsky@de.ibm.com>
+ *   Original 3270 Code क्रम 2.4 written by Riअक्षरd Hitt (UTS Global)
+ *   Rewritten क्रम 2.5 by Martin Schwidefsky <schwidefsky@de.ibm.com>
  *     Copyright IBM Corp. 2003, 2009
  */
 
-#include <asm/idals.h>
-#include <asm/ioctl.h>
+#समावेश <यंत्र/idals.h>
+#समावेश <यंत्र/ioctl.h>
 
-/* ioctls for fullscreen 3270 */
-#define TUBICMD		_IO('3', 3)	/* set ccw command for fs reads. */
-#define TUBOCMD		_IO('3', 4)	/* set ccw command for fs writes. */
-#define TUBGETI		_IO('3', 7)	/* get ccw command for fs reads. */
-#define TUBGETO		_IO('3', 8)	/* get ccw command for fs writes. */
-#define TUBSETMOD	_IO('3',12)	/* FIXME: what does it do ?*/
-#define TUBGETMOD	_IO('3',13)	/* FIXME: what does it do ?*/
+/* ioctls क्रम fullscreen 3270 */
+#घोषणा TUBICMD		_IO('3', 3)	/* set ccw command क्रम fs पढ़ोs. */
+#घोषणा TUBOCMD		_IO('3', 4)	/* set ccw command क्रम fs ग_लिखोs. */
+#घोषणा TUBGETI		_IO('3', 7)	/* get ccw command क्रम fs पढ़ोs. */
+#घोषणा TUBGETO		_IO('3', 8)	/* get ccw command क्रम fs ग_लिखोs. */
+#घोषणा TUBSETMOD	_IO('3',12)	/* FIXME: what करोes it करो ?*/
+#घोषणा TUBGETMOD	_IO('3',13)	/* FIXME: what करोes it करो ?*/
 
 /* Local Channel Commands */
-#define TC_WRITE	0x01		/* Write */
-#define TC_RDBUF	0x02		/* Read Buffer */
-#define TC_EWRITE	0x05		/* Erase write */
-#define TC_READMOD	0x06		/* Read modified */
-#define TC_EWRITEA	0x0d		/* Erase write alternate */
-#define TC_WRITESF	0x11		/* Write structured field */
+#घोषणा TC_WRITE	0x01		/* Write */
+#घोषणा TC_RDBUF	0x02		/* Read Buffer */
+#घोषणा TC_EWRITE	0x05		/* Erase ग_लिखो */
+#घोषणा TC_READMOD	0x06		/* Read modअगरied */
+#घोषणा TC_EWRITEA	0x0d		/* Erase ग_लिखो alternate */
+#घोषणा TC_WRITESF	0x11		/* Write काष्ठाured field */
 
 /* Buffer Control Orders */
-#define TO_SF		0x1d		/* Start field */
-#define TO_SBA		0x11		/* Set buffer address */
-#define TO_IC		0x13		/* Insert cursor */
-#define TO_PT		0x05		/* Program tab */
-#define TO_RA		0x3c		/* Repeat to address */
-#define TO_SFE		0x29		/* Start field extended */
-#define TO_EUA		0x12		/* Erase unprotected to address */
-#define TO_MF		0x2c		/* Modify field */
-#define TO_SA		0x28		/* Set attribute */
+#घोषणा TO_SF		0x1d		/* Start field */
+#घोषणा TO_SBA		0x11		/* Set buffer address */
+#घोषणा TO_IC		0x13		/* Insert cursor */
+#घोषणा TO_PT		0x05		/* Program tab */
+#घोषणा TO_RA		0x3c		/* Repeat to address */
+#घोषणा TO_SFE		0x29		/* Start field extended */
+#घोषणा TO_EUA		0x12		/* Erase unरक्षित to address */
+#घोषणा TO_MF		0x2c		/* Modअगरy field */
+#घोषणा TO_SA		0x28		/* Set attribute */
 
 /* Field Attribute Bytes */
-#define TF_INPUT	0x40		/* Visible input */
-#define TF_INPUTN	0x4c		/* Invisible input */
-#define TF_INMDT	0xc1		/* Visible, Set-MDT */
-#define TF_LOG		0x60
+#घोषणा TF_INPUT	0x40		/* Visible input */
+#घोषणा TF_INPUTN	0x4c		/* Invisible input */
+#घोषणा TF_INMDT	0xc1		/* Visible, Set-MDT */
+#घोषणा TF_LOG		0x60
 
 /* Character Attribute Bytes */
-#define TAT_RESET	0x00
-#define TAT_FIELD	0xc0
-#define TAT_EXTHI	0x41
-#define TAT_COLOR	0x42
-#define TAT_CHARS	0x43
-#define TAT_TRANS	0x46
+#घोषणा TAT_RESET	0x00
+#घोषणा TAT_FIELD	0xc0
+#घोषणा TAT_EXTHI	0x41
+#घोषणा TAT_COLOR	0x42
+#घोषणा TAT_CHARS	0x43
+#घोषणा TAT_TRANS	0x46
 
 /* Extended-Highlighting Bytes */
-#define TAX_RESET	0x00
-#define TAX_BLINK	0xf1
-#define TAX_REVER	0xf2
-#define TAX_UNDER	0xf4
+#घोषणा TAX_RESET	0x00
+#घोषणा TAX_BLINK	0xf1
+#घोषणा TAX_REVER	0xf2
+#घोषणा TAX_UNDER	0xf4
 
 /* Reset value */
-#define TAR_RESET	0x00
+#घोषणा TAR_RESET	0x00
 
 /* Color values */
-#define TAC_RESET	0x00
-#define TAC_BLUE	0xf1
-#define TAC_RED		0xf2
-#define TAC_PINK	0xf3
-#define TAC_GREEN	0xf4
-#define TAC_TURQ	0xf5
-#define TAC_YELLOW	0xf6
-#define TAC_WHITE	0xf7
-#define TAC_DEFAULT	0x00
+#घोषणा TAC_RESET	0x00
+#घोषणा TAC_BLUE	0xf1
+#घोषणा TAC_RED		0xf2
+#घोषणा TAC_PINK	0xf3
+#घोषणा TAC_GREEN	0xf4
+#घोषणा TAC_TURQ	0xf5
+#घोषणा TAC_YELLOW	0xf6
+#घोषणा TAC_WHITE	0xf7
+#घोषणा TAC_DEFAULT	0x00
 
 /* Write Control Characters */
-#define TW_NONE		0x40		/* No particular action */
-#define TW_KR		0xc2		/* Keyboard restore */
-#define TW_PLUSALARM	0x04		/* Add this bit for alarm */
+#घोषणा TW_NONE		0x40		/* No particular action */
+#घोषणा TW_KR		0xc2		/* Keyboard restore */
+#घोषणा TW_PLUSALARM	0x04		/* Add this bit क्रम alarm */
 
-#define RAW3270_FIRSTMINOR	1	/* First minor number */
-#define RAW3270_MAXDEVS		255	/* Max number of 3270 devices */
+#घोषणा RAW3270_FIRSTMINOR	1	/* First minor number */
+#घोषणा RAW3270_MAXDEVS		255	/* Max number of 3270 devices */
 
 /* For TUBGETMOD and TUBSETMOD. Should include. */
-struct raw3270_iocb {
-	short model;
-	short line_cnt;
-	short col_cnt;
-	short pf_cnt;
-	short re_cnt;
-	short map;
-};
+काष्ठा raw3270_iocb अणु
+	लघु model;
+	लघु line_cnt;
+	लघु col_cnt;
+	लघु pf_cnt;
+	लघु re_cnt;
+	लघु map;
+पूर्ण;
 
-struct raw3270;
-struct raw3270_view;
-extern struct class *class3270;
+काष्ठा raw3270;
+काष्ठा raw3270_view;
+बाह्य काष्ठा class *class3270;
 
 /* 3270 CCW request */
-struct raw3270_request {
-	struct list_head list;		/* list head for request queueing. */
-	struct raw3270_view *view;	/* view of this request */
-	struct ccw1 ccw;		/* single ccw. */
-	void *buffer;			/* output buffer. */
-	size_t size;			/* size of output buffer. */
-	int rescnt;			/* residual count from devstat. */
-	int rc;				/* return code for this request. */
+काष्ठा raw3270_request अणु
+	काष्ठा list_head list;		/* list head क्रम request queueing. */
+	काष्ठा raw3270_view *view;	/* view of this request */
+	काष्ठा ccw1 ccw;		/* single ccw. */
+	व्योम *buffer;			/* output buffer. */
+	माप_प्रकार size;			/* size of output buffer. */
+	पूर्णांक rescnt;			/* residual count from devstat. */
+	पूर्णांक rc;				/* वापस code क्रम this request. */
 
-	/* Callback for delivering final status. */
-	void (*callback)(struct raw3270_request *, void *);
-	void *callback_data;
-};
+	/* Callback क्रम delivering final status. */
+	व्योम (*callback)(काष्ठा raw3270_request *, व्योम *);
+	व्योम *callback_data;
+पूर्ण;
 
-struct raw3270_request *raw3270_request_alloc(size_t size);
-void raw3270_request_free(struct raw3270_request *);
-void raw3270_request_reset(struct raw3270_request *);
-void raw3270_request_set_cmd(struct raw3270_request *, u8 cmd);
-int  raw3270_request_add_data(struct raw3270_request *, void *, size_t);
-void raw3270_request_set_data(struct raw3270_request *, void *, size_t);
-void raw3270_request_set_idal(struct raw3270_request *, struct idal_buffer *);
+काष्ठा raw3270_request *raw3270_request_alloc(माप_प्रकार size);
+व्योम raw3270_request_मुक्त(काष्ठा raw3270_request *);
+व्योम raw3270_request_reset(काष्ठा raw3270_request *);
+व्योम raw3270_request_set_cmd(काष्ठा raw3270_request *, u8 cmd);
+पूर्णांक  raw3270_request_add_data(काष्ठा raw3270_request *, व्योम *, माप_प्रकार);
+व्योम raw3270_request_set_data(काष्ठा raw3270_request *, व्योम *, माप_प्रकार);
+व्योम raw3270_request_set_idal(काष्ठा raw3270_request *, काष्ठा idal_buffer *);
 
-static inline int
-raw3270_request_final(struct raw3270_request *rq)
-{
-	return list_empty(&rq->list);
-}
+अटल अंतरभूत पूर्णांक
+raw3270_request_final(काष्ठा raw3270_request *rq)
+अणु
+	वापस list_empty(&rq->list);
+पूर्ण
 
-void raw3270_buffer_address(struct raw3270 *, char *, unsigned short);
+व्योम raw3270_buffer_address(काष्ठा raw3270 *, अक्षर *, अचिन्हित लघु);
 
 /*
  * Functions of a 3270 view.
  */
-struct raw3270_fn {
-	int  (*activate)(struct raw3270_view *);
-	void (*deactivate)(struct raw3270_view *);
-	void (*intv)(struct raw3270_view *,
-		     struct raw3270_request *, struct irb *);
-	void (*release)(struct raw3270_view *);
-	void (*free)(struct raw3270_view *);
-	void (*resize)(struct raw3270_view *, int, int, int);
-};
+काष्ठा raw3270_fn अणु
+	पूर्णांक  (*activate)(काष्ठा raw3270_view *);
+	व्योम (*deactivate)(काष्ठा raw3270_view *);
+	व्योम (*पूर्णांकv)(काष्ठा raw3270_view *,
+		     काष्ठा raw3270_request *, काष्ठा irb *);
+	व्योम (*release)(काष्ठा raw3270_view *);
+	व्योम (*मुक्त)(काष्ठा raw3270_view *);
+	व्योम (*resize)(काष्ठा raw3270_view *, पूर्णांक, पूर्णांक, पूर्णांक);
+पूर्ण;
 
 /*
- * View structure chaining. The raw3270_view structure is meant to
- * be embedded at the start of the real view data structure, e.g.:
- *   struct example {
- *     struct raw3270_view view;
+ * View काष्ठाure chaining. The raw3270_view काष्ठाure is meant to
+ * be embedded at the start of the real view data काष्ठाure, e.g.:
+ *   काष्ठा example अणु
+ *     काष्ठा raw3270_view view;
  *     ...
- *   };
+ *   पूर्ण;
  */
-struct raw3270_view {
-	struct list_head list;
+काष्ठा raw3270_view अणु
+	काष्ठा list_head list;
 	spinlock_t lock;
-#define RAW3270_VIEW_LOCK_IRQ	0
-#define RAW3270_VIEW_LOCK_BH	1
+#घोषणा RAW3270_VIEW_LOCK_IRQ	0
+#घोषणा RAW3270_VIEW_LOCK_BH	1
 	atomic_t ref_count;
-	struct raw3270 *dev;
-	struct raw3270_fn *fn;
-	unsigned int model;
-	unsigned int rows, cols;	/* # of rows & colums of the view */
-	unsigned char *ascebc;		/* ascii -> ebcdic table */
-};
+	काष्ठा raw3270 *dev;
+	काष्ठा raw3270_fn *fn;
+	अचिन्हित पूर्णांक model;
+	अचिन्हित पूर्णांक rows, cols;	/* # of rows & colums of the view */
+	अचिन्हित अक्षर *ascebc;		/* ascii -> ebcdic table */
+पूर्ण;
 
-int raw3270_add_view(struct raw3270_view *, struct raw3270_fn *, int, int);
-int raw3270_activate_view(struct raw3270_view *);
-void raw3270_del_view(struct raw3270_view *);
-void raw3270_deactivate_view(struct raw3270_view *);
-struct raw3270_view *raw3270_find_view(struct raw3270_fn *, int);
-int raw3270_start(struct raw3270_view *, struct raw3270_request *);
-int raw3270_start_locked(struct raw3270_view *, struct raw3270_request *);
-int raw3270_start_irq(struct raw3270_view *, struct raw3270_request *);
-int raw3270_reset(struct raw3270_view *);
-struct raw3270_view *raw3270_view(struct raw3270_view *);
-int raw3270_view_active(struct raw3270_view *);
+पूर्णांक raw3270_add_view(काष्ठा raw3270_view *, काष्ठा raw3270_fn *, पूर्णांक, पूर्णांक);
+पूर्णांक raw3270_activate_view(काष्ठा raw3270_view *);
+व्योम raw3270_del_view(काष्ठा raw3270_view *);
+व्योम raw3270_deactivate_view(काष्ठा raw3270_view *);
+काष्ठा raw3270_view *raw3270_find_view(काष्ठा raw3270_fn *, पूर्णांक);
+पूर्णांक raw3270_start(काष्ठा raw3270_view *, काष्ठा raw3270_request *);
+पूर्णांक raw3270_start_locked(काष्ठा raw3270_view *, काष्ठा raw3270_request *);
+पूर्णांक raw3270_start_irq(काष्ठा raw3270_view *, काष्ठा raw3270_request *);
+पूर्णांक raw3270_reset(काष्ठा raw3270_view *);
+काष्ठा raw3270_view *raw3270_view(काष्ठा raw3270_view *);
+पूर्णांक raw3270_view_active(काष्ठा raw3270_view *);
 
-/* Reference count inliner for view structures. */
-static inline void
-raw3270_get_view(struct raw3270_view *view)
-{
+/* Reference count अंतरभूतr क्रम view काष्ठाures. */
+अटल अंतरभूत व्योम
+raw3270_get_view(काष्ठा raw3270_view *view)
+अणु
 	atomic_inc(&view->ref_count);
-}
+पूर्ण
 
-extern wait_queue_head_t raw3270_wait_queue;
+बाह्य रुको_queue_head_t raw3270_रुको_queue;
 
-static inline void
-raw3270_put_view(struct raw3270_view *view)
-{
-	if (atomic_dec_return(&view->ref_count) == 0)
-		wake_up(&raw3270_wait_queue);
-}
+अटल अंतरभूत व्योम
+raw3270_put_view(काष्ठा raw3270_view *view)
+अणु
+	अगर (atomic_dec_वापस(&view->ref_count) == 0)
+		wake_up(&raw3270_रुको_queue);
+पूर्ण
 
-struct raw3270 *raw3270_setup_console(void);
-void raw3270_wait_cons_dev(struct raw3270 *);
+काष्ठा raw3270 *raw3270_setup_console(व्योम);
+व्योम raw3270_रुको_cons_dev(काष्ठा raw3270 *);
 
-/* Notifier for device addition/removal */
-struct raw3270_notifier {
-	struct list_head list;
-	void (*create)(int minor);
-	void (*destroy)(int minor);
-};
+/* Notअगरier क्रम device addition/removal */
+काष्ठा raw3270_notअगरier अणु
+	काष्ठा list_head list;
+	व्योम (*create)(पूर्णांक minor);
+	व्योम (*destroy)(पूर्णांक minor);
+पूर्ण;
 
-int raw3270_register_notifier(struct raw3270_notifier *);
-void raw3270_unregister_notifier(struct raw3270_notifier *);
+पूर्णांक raw3270_रेजिस्टर_notअगरier(काष्ठा raw3270_notअगरier *);
+व्योम raw3270_unरेजिस्टर_notअगरier(काष्ठा raw3270_notअगरier *);
 
 /*
- * Little memory allocator for string objects. 
+ * Little memory allocator क्रम string objects. 
  */
-struct string
-{
-	struct list_head list;
-	struct list_head update;
-	unsigned long size;
-	unsigned long len;
-	char string[];
-} __attribute__ ((aligned(8)));
+काष्ठा string
+अणु
+	काष्ठा list_head list;
+	काष्ठा list_head update;
+	अचिन्हित दीर्घ size;
+	अचिन्हित दीर्घ len;
+	अक्षर string[];
+पूर्ण __attribute__ ((aligned(8)));
 
-static inline struct string *
-alloc_string(struct list_head *free_list, unsigned long len)
-{
-	struct string *cs, *tmp;
-	unsigned long size;
+अटल अंतरभूत काष्ठा string *
+alloc_string(काष्ठा list_head *मुक्त_list, अचिन्हित दीर्घ len)
+अणु
+	काष्ठा string *cs, *पंचांगp;
+	अचिन्हित दीर्घ size;
 
 	size = (len + 7L) & -8L;
-	list_for_each_entry(cs, free_list, list) {
-		if (cs->size < size)
-			continue;
-		if (cs->size > size + sizeof(struct string)) {
-			char *endaddr = (char *) (cs + 1) + cs->size;
-			tmp = (struct string *) (endaddr - size) - 1;
-			tmp->size = size;
-			cs->size -= size + sizeof(struct string);
-			cs = tmp;
-		} else
+	list_क्रम_each_entry(cs, मुक्त_list, list) अणु
+		अगर (cs->size < size)
+			जारी;
+		अगर (cs->size > size + माप(काष्ठा string)) अणु
+			अक्षर *endaddr = (अक्षर *) (cs + 1) + cs->size;
+			पंचांगp = (काष्ठा string *) (endaddr - size) - 1;
+			पंचांगp->size = size;
+			cs->size -= size + माप(काष्ठा string);
+			cs = पंचांगp;
+		पूर्ण अन्यथा
 			list_del(&cs->list);
 		cs->len = len;
 		INIT_LIST_HEAD(&cs->list);
 		INIT_LIST_HEAD(&cs->update);
-		return cs;
-	}
-	return NULL;
-}
+		वापस cs;
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
-static inline unsigned long
-free_string(struct list_head *free_list, struct string *cs)
-{
-	struct string *tmp;
-	struct list_head *p, *left;
+अटल अंतरभूत अचिन्हित दीर्घ
+मुक्त_string(काष्ठा list_head *मुक्त_list, काष्ठा string *cs)
+अणु
+	काष्ठा string *पंचांगp;
+	काष्ठा list_head *p, *left;
 
-	/* Find out the left neighbour in free memory list. */
-	left = free_list;
-	list_for_each(p, free_list) {
-		if (list_entry(p, struct string, list) > cs)
-			break;
+	/* Find out the left neighbour in मुक्त memory list. */
+	left = मुक्त_list;
+	list_क्रम_each(p, मुक्त_list) अणु
+		अगर (list_entry(p, काष्ठा string, list) > cs)
+			अवरोध;
 		left = p;
-	}
+	पूर्ण
 	/* Try to merge with right neighbour = next element from left. */
-	if (left->next != free_list) {
-		tmp = list_entry(left->next, struct string, list);
-		if ((char *) (cs + 1) + cs->size == (char *) tmp) {
-			list_del(&tmp->list);
-			cs->size += tmp->size + sizeof(struct string);
-		}
-	}
+	अगर (left->next != मुक्त_list) अणु
+		पंचांगp = list_entry(left->next, काष्ठा string, list);
+		अगर ((अक्षर *) (cs + 1) + cs->size == (अक्षर *) पंचांगp) अणु
+			list_del(&पंचांगp->list);
+			cs->size += पंचांगp->size + माप(काष्ठा string);
+		पूर्ण
+	पूर्ण
 	/* Try to merge with left neighbour. */
-	if (left != free_list) {
-		tmp = list_entry(left, struct string, list);
-		if ((char *) (tmp + 1) + tmp->size == (char *) cs) {
-			tmp->size += cs->size + sizeof(struct string);
-			return tmp->size;
-		}
-	}
+	अगर (left != मुक्त_list) अणु
+		पंचांगp = list_entry(left, काष्ठा string, list);
+		अगर ((अक्षर *) (पंचांगp + 1) + पंचांगp->size == (अक्षर *) cs) अणु
+			पंचांगp->size += cs->size + माप(काष्ठा string);
+			वापस पंचांगp->size;
+		पूर्ण
+	पूर्ण
 	__list_add(&cs->list, left, left->next);
-	return cs->size;
-}
+	वापस cs->size;
+पूर्ण
 
-static inline void
-add_string_memory(struct list_head *free_list, void *mem, unsigned long size)
-{
-	struct string *cs;
+अटल अंतरभूत व्योम
+add_string_memory(काष्ठा list_head *मुक्त_list, व्योम *mem, अचिन्हित दीर्घ size)
+अणु
+	काष्ठा string *cs;
 
-	cs = (struct string *) mem;
-	cs->size = size - sizeof(struct string);
-	free_string(free_list, cs);
-}
+	cs = (काष्ठा string *) mem;
+	cs->size = size - माप(काष्ठा string);
+	मुक्त_string(मुक्त_list, cs);
+पूर्ण
 

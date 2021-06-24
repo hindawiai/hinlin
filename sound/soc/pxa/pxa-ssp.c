@@ -1,353 +1,354 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * pxa-ssp.c  --  ALSA Soc Audio Layer
  *
  * Copyright 2005,2008 Wolfson Microelectronics PLC.
  * Author: Liam Girdwood
- *         Mark Brown <broonie@opensource.wolfsonmicro.com>
+ *         Mark Brown <broonie@खोलोsource.wolfsonmicro.com>
  *
  * TODO:
- *  o Test network mode for > 16bit sample size
+ *  o Test network mode क्रम > 16bit sample size
  */
 
-#include <linux/init.h>
-#include <linux/module.h>
-#include <linux/slab.h>
-#include <linux/platform_device.h>
-#include <linux/clk.h>
-#include <linux/io.h>
-#include <linux/pxa2xx_ssp.h>
-#include <linux/of.h>
-#include <linux/dmaengine.h>
+#समावेश <linux/init.h>
+#समावेश <linux/module.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/pxa2xx_ssp.h>
+#समावेश <linux/of.h>
+#समावेश <linux/dmaengine.h>
 
-#include <asm/irq.h>
+#समावेश <यंत्र/irq.h>
 
-#include <sound/core.h>
-#include <sound/pcm.h>
-#include <sound/initval.h>
-#include <sound/pcm_params.h>
-#include <sound/soc.h>
-#include <sound/pxa2xx-lib.h>
-#include <sound/dmaengine_pcm.h>
+#समावेश <sound/core.h>
+#समावेश <sound/pcm.h>
+#समावेश <sound/initval.h>
+#समावेश <sound/pcm_params.h>
+#समावेश <sound/soc.h>
+#समावेश <sound/pxa2xx-lib.h>
+#समावेश <sound/dmaengine_pcm.h>
 
-#include "pxa-ssp.h"
+#समावेश "pxa-ssp.h"
 
 /*
- * SSP audio private data
+ * SSP audio निजी data
  */
-struct ssp_priv {
-	struct ssp_device *ssp;
-	struct clk *extclk;
-	unsigned long ssp_clk;
-	unsigned int sysclk;
-	unsigned int dai_fmt;
-	unsigned int configured_dai_fmt;
-#ifdef CONFIG_PM
-	uint32_t	cr0;
-	uint32_t	cr1;
-	uint32_t	to;
-	uint32_t	psp;
-#endif
-};
+काष्ठा ssp_priv अणु
+	काष्ठा ssp_device *ssp;
+	काष्ठा clk *extclk;
+	अचिन्हित दीर्घ ssp_clk;
+	अचिन्हित पूर्णांक sysclk;
+	अचिन्हित पूर्णांक dai_fmt;
+	अचिन्हित पूर्णांक configured_dai_fmt;
+#अगर_घोषित CONFIG_PM
+	uपूर्णांक32_t	cr0;
+	uपूर्णांक32_t	cr1;
+	uपूर्णांक32_t	to;
+	uपूर्णांक32_t	psp;
+#पूर्ण_अगर
+पूर्ण;
 
-static void dump_registers(struct ssp_device *ssp)
-{
+अटल व्योम dump_रेजिस्टरs(काष्ठा ssp_device *ssp)
+अणु
 	dev_dbg(ssp->dev, "SSCR0 0x%08x SSCR1 0x%08x SSTO 0x%08x\n",
-		 pxa_ssp_read_reg(ssp, SSCR0), pxa_ssp_read_reg(ssp, SSCR1),
-		 pxa_ssp_read_reg(ssp, SSTO));
+		 pxa_ssp_पढ़ो_reg(ssp, SSCR0), pxa_ssp_पढ़ो_reg(ssp, SSCR1),
+		 pxa_ssp_पढ़ो_reg(ssp, SSTO));
 
 	dev_dbg(ssp->dev, "SSPSP 0x%08x SSSR 0x%08x SSACD 0x%08x\n",
-		 pxa_ssp_read_reg(ssp, SSPSP), pxa_ssp_read_reg(ssp, SSSR),
-		 pxa_ssp_read_reg(ssp, SSACD));
-}
+		 pxa_ssp_पढ़ो_reg(ssp, SSPSP), pxa_ssp_पढ़ो_reg(ssp, SSSR),
+		 pxa_ssp_पढ़ो_reg(ssp, SSACD));
+पूर्ण
 
-static void pxa_ssp_enable(struct ssp_device *ssp)
-{
-	uint32_t sscr0;
+अटल व्योम pxa_ssp_enable(काष्ठा ssp_device *ssp)
+अणु
+	uपूर्णांक32_t sscr0;
 
-	sscr0 = __raw_readl(ssp->mmio_base + SSCR0) | SSCR0_SSE;
-	__raw_writel(sscr0, ssp->mmio_base + SSCR0);
-}
+	sscr0 = __raw_पढ़ोl(ssp->mmio_base + SSCR0) | SSCR0_SSE;
+	__raw_ग_लिखोl(sscr0, ssp->mmio_base + SSCR0);
+पूर्ण
 
-static void pxa_ssp_disable(struct ssp_device *ssp)
-{
-	uint32_t sscr0;
+अटल व्योम pxa_ssp_disable(काष्ठा ssp_device *ssp)
+अणु
+	uपूर्णांक32_t sscr0;
 
-	sscr0 = __raw_readl(ssp->mmio_base + SSCR0) & ~SSCR0_SSE;
-	__raw_writel(sscr0, ssp->mmio_base + SSCR0);
-}
+	sscr0 = __raw_पढ़ोl(ssp->mmio_base + SSCR0) & ~SSCR0_SSE;
+	__raw_ग_लिखोl(sscr0, ssp->mmio_base + SSCR0);
+पूर्ण
 
-static void pxa_ssp_set_dma_params(struct ssp_device *ssp, int width4,
-			int out, struct snd_dmaengine_dai_dma_data *dma)
-{
+अटल व्योम pxa_ssp_set_dma_params(काष्ठा ssp_device *ssp, पूर्णांक width4,
+			पूर्णांक out, काष्ठा snd_dmaengine_dai_dma_data *dma)
+अणु
 	dma->addr_width = width4 ? DMA_SLAVE_BUSWIDTH_4_BYTES :
 				   DMA_SLAVE_BUSWIDTH_2_BYTES;
 	dma->maxburst = 16;
 	dma->addr = ssp->phys_base + SSDR;
-}
+पूर्ण
 
-static int pxa_ssp_startup(struct snd_pcm_substream *substream,
-			   struct snd_soc_dai *cpu_dai)
-{
-	struct ssp_priv *priv = snd_soc_dai_get_drvdata(cpu_dai);
-	struct ssp_device *ssp = priv->ssp;
-	struct snd_dmaengine_dai_dma_data *dma;
-	int ret = 0;
+अटल पूर्णांक pxa_ssp_startup(काष्ठा snd_pcm_substream *substream,
+			   काष्ठा snd_soc_dai *cpu_dai)
+अणु
+	काष्ठा ssp_priv *priv = snd_soc_dai_get_drvdata(cpu_dai);
+	काष्ठा ssp_device *ssp = priv->ssp;
+	काष्ठा snd_dmaengine_dai_dma_data *dma;
+	पूर्णांक ret = 0;
 
-	if (!snd_soc_dai_active(cpu_dai)) {
+	अगर (!snd_soc_dai_active(cpu_dai)) अणु
 		clk_prepare_enable(ssp->clk);
 		pxa_ssp_disable(ssp);
-	}
+	पूर्ण
 
 	clk_prepare_enable(priv->extclk);
 
-	dma = kzalloc(sizeof(struct snd_dmaengine_dai_dma_data), GFP_KERNEL);
-	if (!dma)
-		return -ENOMEM;
+	dma = kzalloc(माप(काष्ठा snd_dmaengine_dai_dma_data), GFP_KERNEL);
+	अगर (!dma)
+		वापस -ENOMEM;
 	dma->chan_name = substream->stream == SNDRV_PCM_STREAM_PLAYBACK ?
 		"tx" : "rx";
 
 	snd_soc_dai_set_dma_data(cpu_dai, substream, dma);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void pxa_ssp_shutdown(struct snd_pcm_substream *substream,
-			     struct snd_soc_dai *cpu_dai)
-{
-	struct ssp_priv *priv = snd_soc_dai_get_drvdata(cpu_dai);
-	struct ssp_device *ssp = priv->ssp;
+अटल व्योम pxa_ssp_shutकरोwn(काष्ठा snd_pcm_substream *substream,
+			     काष्ठा snd_soc_dai *cpu_dai)
+अणु
+	काष्ठा ssp_priv *priv = snd_soc_dai_get_drvdata(cpu_dai);
+	काष्ठा ssp_device *ssp = priv->ssp;
 
-	if (!snd_soc_dai_active(cpu_dai)) {
+	अगर (!snd_soc_dai_active(cpu_dai)) अणु
 		pxa_ssp_disable(ssp);
 		clk_disable_unprepare(ssp->clk);
-	}
+	पूर्ण
 
 	clk_disable_unprepare(priv->extclk);
 
-	kfree(snd_soc_dai_get_dma_data(cpu_dai, substream));
-	snd_soc_dai_set_dma_data(cpu_dai, substream, NULL);
-}
+	kमुक्त(snd_soc_dai_get_dma_data(cpu_dai, substream));
+	snd_soc_dai_set_dma_data(cpu_dai, substream, शून्य);
+पूर्ण
 
-#ifdef CONFIG_PM
+#अगर_घोषित CONFIG_PM
 
-static int pxa_ssp_suspend(struct snd_soc_component *component)
-{
-	struct ssp_priv *priv = snd_soc_component_get_drvdata(component);
-	struct ssp_device *ssp = priv->ssp;
+अटल पूर्णांक pxa_ssp_suspend(काष्ठा snd_soc_component *component)
+अणु
+	काष्ठा ssp_priv *priv = snd_soc_component_get_drvdata(component);
+	काष्ठा ssp_device *ssp = priv->ssp;
 
-	if (!snd_soc_component_active(component))
+	अगर (!snd_soc_component_active(component))
 		clk_prepare_enable(ssp->clk);
 
-	priv->cr0 = __raw_readl(ssp->mmio_base + SSCR0);
-	priv->cr1 = __raw_readl(ssp->mmio_base + SSCR1);
-	priv->to  = __raw_readl(ssp->mmio_base + SSTO);
-	priv->psp = __raw_readl(ssp->mmio_base + SSPSP);
+	priv->cr0 = __raw_पढ़ोl(ssp->mmio_base + SSCR0);
+	priv->cr1 = __raw_पढ़ोl(ssp->mmio_base + SSCR1);
+	priv->to  = __raw_पढ़ोl(ssp->mmio_base + SSTO);
+	priv->psp = __raw_पढ़ोl(ssp->mmio_base + SSPSP);
 
 	pxa_ssp_disable(ssp);
 	clk_disable_unprepare(ssp->clk);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int pxa_ssp_resume(struct snd_soc_component *component)
-{
-	struct ssp_priv *priv = snd_soc_component_get_drvdata(component);
-	struct ssp_device *ssp = priv->ssp;
-	uint32_t sssr = SSSR_ROR | SSSR_TUR | SSSR_BCE;
+अटल पूर्णांक pxa_ssp_resume(काष्ठा snd_soc_component *component)
+अणु
+	काष्ठा ssp_priv *priv = snd_soc_component_get_drvdata(component);
+	काष्ठा ssp_device *ssp = priv->ssp;
+	uपूर्णांक32_t sssr = SSSR_ROR | SSSR_TUR | SSSR_BCE;
 
 	clk_prepare_enable(ssp->clk);
 
-	__raw_writel(sssr, ssp->mmio_base + SSSR);
-	__raw_writel(priv->cr0 & ~SSCR0_SSE, ssp->mmio_base + SSCR0);
-	__raw_writel(priv->cr1, ssp->mmio_base + SSCR1);
-	__raw_writel(priv->to,  ssp->mmio_base + SSTO);
-	__raw_writel(priv->psp, ssp->mmio_base + SSPSP);
+	__raw_ग_लिखोl(sssr, ssp->mmio_base + SSSR);
+	__raw_ग_लिखोl(priv->cr0 & ~SSCR0_SSE, ssp->mmio_base + SSCR0);
+	__raw_ग_लिखोl(priv->cr1, ssp->mmio_base + SSCR1);
+	__raw_ग_लिखोl(priv->to,  ssp->mmio_base + SSTO);
+	__raw_ग_लिखोl(priv->psp, ssp->mmio_base + SSPSP);
 
-	if (snd_soc_component_active(component))
+	अगर (snd_soc_component_active(component))
 		pxa_ssp_enable(ssp);
-	else
+	अन्यथा
 		clk_disable_unprepare(ssp->clk);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#else
-#define pxa_ssp_suspend	NULL
-#define pxa_ssp_resume	NULL
-#endif
+#अन्यथा
+#घोषणा pxa_ssp_suspend	शून्य
+#घोषणा pxa_ssp_resume	शून्य
+#पूर्ण_अगर
 
 /*
- * ssp_set_clkdiv - set SSP clock divider
- * @div: serial clock rate divider
+ * ssp_set_clkभाग - set SSP घड़ी भागider
+ * @भाग: serial घड़ी rate भागider
  */
-static void pxa_ssp_set_scr(struct ssp_device *ssp, u32 div)
-{
-	u32 sscr0 = pxa_ssp_read_reg(ssp, SSCR0);
+अटल व्योम pxa_ssp_set_scr(काष्ठा ssp_device *ssp, u32 भाग)
+अणु
+	u32 sscr0 = pxa_ssp_पढ़ो_reg(ssp, SSCR0);
 
-	if (ssp->type == PXA25x_SSP) {
+	अगर (ssp->type == PXA25x_SSP) अणु
 		sscr0 &= ~0x0000ff00;
-		sscr0 |= ((div - 2)/2) << 8; /* 2..512 */
-	} else {
+		sscr0 |= ((भाग - 2)/2) << 8; /* 2..512 */
+	पूर्ण अन्यथा अणु
 		sscr0 &= ~0x000fff00;
-		sscr0 |= (div - 1) << 8;     /* 1..4096 */
-	}
-	pxa_ssp_write_reg(ssp, SSCR0, sscr0);
-}
+		sscr0 |= (भाग - 1) << 8;     /* 1..4096 */
+	पूर्ण
+	pxa_ssp_ग_लिखो_reg(ssp, SSCR0, sscr0);
+पूर्ण
 
 /*
  * Set the SSP ports SYSCLK.
  */
-static int pxa_ssp_set_dai_sysclk(struct snd_soc_dai *cpu_dai,
-	int clk_id, unsigned int freq, int dir)
-{
-	struct ssp_priv *priv = snd_soc_dai_get_drvdata(cpu_dai);
-	struct ssp_device *ssp = priv->ssp;
+अटल पूर्णांक pxa_ssp_set_dai_sysclk(काष्ठा snd_soc_dai *cpu_dai,
+	पूर्णांक clk_id, अचिन्हित पूर्णांक freq, पूर्णांक dir)
+अणु
+	काष्ठा ssp_priv *priv = snd_soc_dai_get_drvdata(cpu_dai);
+	काष्ठा ssp_device *ssp = priv->ssp;
 
-	u32 sscr0 = pxa_ssp_read_reg(ssp, SSCR0) &
+	u32 sscr0 = pxa_ssp_पढ़ो_reg(ssp, SSCR0) &
 		~(SSCR0_ECS | SSCR0_NCS | SSCR0_MOD | SSCR0_ACS);
 
-	if (priv->extclk) {
-		int ret;
+	अगर (priv->extclk) अणु
+		पूर्णांक ret;
 
 		/*
-		 * For DT based boards, if an extclk is given, use it
+		 * For DT based boards, अगर an extclk is given, use it
 		 * here and configure PXA_SSP_CLK_EXT.
 		 */
 
 		ret = clk_set_rate(priv->extclk, freq);
-		if (ret < 0)
-			return ret;
+		अगर (ret < 0)
+			वापस ret;
 
 		clk_id = PXA_SSP_CLK_EXT;
-	}
+	पूर्ण
 
 	dev_dbg(ssp->dev,
 		"pxa_ssp_set_dai_sysclk id: %d, clk_id %d, freq %u\n",
 		cpu_dai->id, clk_id, freq);
 
-	switch (clk_id) {
-	case PXA_SSP_CLK_NET_PLL:
+	चयन (clk_id) अणु
+	हाल PXA_SSP_CLK_NET_PLL:
 		sscr0 |= SSCR0_MOD;
-		break;
-	case PXA_SSP_CLK_PLL:
+		अवरोध;
+	हाल PXA_SSP_CLK_PLL:
 		/* Internal PLL is fixed */
-		if (ssp->type == PXA25x_SSP)
+		अगर (ssp->type == PXA25x_SSP)
 			priv->sysclk = 1843200;
-		else
+		अन्यथा
 			priv->sysclk = 13000000;
-		break;
-	case PXA_SSP_CLK_EXT:
+		अवरोध;
+	हाल PXA_SSP_CLK_EXT:
 		priv->sysclk = freq;
 		sscr0 |= SSCR0_ECS;
-		break;
-	case PXA_SSP_CLK_NET:
+		अवरोध;
+	हाल PXA_SSP_CLK_NET:
 		priv->sysclk = freq;
 		sscr0 |= SSCR0_NCS | SSCR0_MOD;
-		break;
-	case PXA_SSP_CLK_AUDIO:
+		अवरोध;
+	हाल PXA_SSP_CLK_AUDIO:
 		priv->sysclk = 0;
 		pxa_ssp_set_scr(ssp, 1);
 		sscr0 |= SSCR0_ACS;
-		break;
-	default:
-		return -ENODEV;
-	}
+		अवरोध;
+	शेष:
+		वापस -ENODEV;
+	पूर्ण
 
-	/* The SSP clock must be disabled when changing SSP clock mode
-	 * on PXA2xx.  On PXA3xx it must be enabled when doing so. */
-	if (ssp->type != PXA3xx_SSP)
+	/* The SSP घड़ी must be disabled when changing SSP घड़ी mode
+	 * on PXA2xx.  On PXA3xx it must be enabled when करोing so. */
+	अगर (ssp->type != PXA3xx_SSP)
 		clk_disable_unprepare(ssp->clk);
-	pxa_ssp_write_reg(ssp, SSCR0, sscr0);
-	if (ssp->type != PXA3xx_SSP)
+	pxa_ssp_ग_लिखो_reg(ssp, SSCR0, sscr0);
+	अगर (ssp->type != PXA3xx_SSP)
 		clk_prepare_enable(ssp->clk);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * Configure the PLL frequency pxa27x and (afaik - pxa320 only)
  */
-static int pxa_ssp_set_pll(struct ssp_priv *priv, unsigned int freq)
-{
-	struct ssp_device *ssp = priv->ssp;
-	u32 ssacd = pxa_ssp_read_reg(ssp, SSACD) & ~0x70;
+अटल पूर्णांक pxa_ssp_set_pll(काष्ठा ssp_priv *priv, अचिन्हित पूर्णांक freq)
+अणु
+	काष्ठा ssp_device *ssp = priv->ssp;
+	u32 ssacd = pxa_ssp_पढ़ो_reg(ssp, SSACD) & ~0x70;
 
-	if (ssp->type == PXA3xx_SSP)
-		pxa_ssp_write_reg(ssp, SSACDD, 0);
+	अगर (ssp->type == PXA3xx_SSP)
+		pxa_ssp_ग_लिखो_reg(ssp, SSACDD, 0);
 
-	switch (freq) {
-	case 5622000:
-		break;
-	case 11345000:
+	चयन (freq) अणु
+	हाल 5622000:
+		अवरोध;
+	हाल 11345000:
 		ssacd |= (0x1 << 4);
-		break;
-	case 12235000:
+		अवरोध;
+	हाल 12235000:
 		ssacd |= (0x2 << 4);
-		break;
-	case 14857000:
+		अवरोध;
+	हाल 14857000:
 		ssacd |= (0x3 << 4);
-		break;
-	case 32842000:
+		अवरोध;
+	हाल 32842000:
 		ssacd |= (0x4 << 4);
-		break;
-	case 48000000:
+		अवरोध;
+	हाल 48000000:
 		ssacd |= (0x5 << 4);
-		break;
-	case 0:
+		अवरोध;
+	हाल 0:
 		/* Disable */
-		break;
+		अवरोध;
 
-	default:
-		/* PXA3xx has a clock ditherer which can be used to generate
-		 * a wider range of frequencies - calculate a value for it.
+	शेष:
+		/* PXA3xx has a घड़ी ditherer which can be used to generate
+		 * a wider range of frequencies - calculate a value क्रम it.
 		 */
-		if (ssp->type == PXA3xx_SSP) {
+		अगर (ssp->type == PXA3xx_SSP) अणु
 			u32 val;
-			u64 tmp = 19968;
+			u64 पंचांगp = 19968;
 
-			tmp *= 1000000;
-			do_div(tmp, freq);
-			val = tmp;
+			पंचांगp *= 1000000;
+			करो_भाग(पंचांगp, freq);
+			val = पंचांगp;
 
 			val = (val << 16) | 64;
-			pxa_ssp_write_reg(ssp, SSACDD, val);
+			pxa_ssp_ग_लिखो_reg(ssp, SSACDD, val);
 
 			ssacd |= (0x6 << 4);
 
 			dev_dbg(ssp->dev,
 				"Using SSACDD %x to supply %uHz\n",
 				val, freq);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	pxa_ssp_write_reg(ssp, SSACD, ssacd);
+	pxa_ssp_ग_लिखो_reg(ssp, SSACD, ssacd);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * Set the active slots in TDM/Network mode
  */
-static int pxa_ssp_set_dai_tdm_slot(struct snd_soc_dai *cpu_dai,
-	unsigned int tx_mask, unsigned int rx_mask, int slots, int slot_width)
-{
-	struct ssp_priv *priv = snd_soc_dai_get_drvdata(cpu_dai);
-	struct ssp_device *ssp = priv->ssp;
+अटल पूर्णांक pxa_ssp_set_dai_tdm_slot(काष्ठा snd_soc_dai *cpu_dai,
+	अचिन्हित पूर्णांक tx_mask, अचिन्हित पूर्णांक rx_mask, पूर्णांक slots, पूर्णांक slot_width)
+अणु
+	काष्ठा ssp_priv *priv = snd_soc_dai_get_drvdata(cpu_dai);
+	काष्ठा ssp_device *ssp = priv->ssp;
 	u32 sscr0;
 
-	sscr0 = pxa_ssp_read_reg(ssp, SSCR0);
+	sscr0 = pxa_ssp_पढ़ो_reg(ssp, SSCR0);
 	sscr0 &= ~(SSCR0_MOD | SSCR0_SlotsPerFrm(8) | SSCR0_EDSS | SSCR0_DSS);
 
 	/* set slot width */
-	if (slot_width > 16)
+	अगर (slot_width > 16)
 		sscr0 |= SSCR0_EDSS | SSCR0_DataSize(slot_width - 16);
-	else
+	अन्यथा
 		sscr0 |= SSCR0_DataSize(slot_width);
 
-	if (slots > 1) {
+	अगर (slots > 1) अणु
 		/* enable network mode */
 		sscr0 |= SSCR0_MOD;
 
@@ -355,556 +356,556 @@ static int pxa_ssp_set_dai_tdm_slot(struct snd_soc_dai *cpu_dai,
 		sscr0 |= SSCR0_SlotsPerFrm(slots);
 
 		/* set active slot mask */
-		pxa_ssp_write_reg(ssp, SSTSA, tx_mask);
-		pxa_ssp_write_reg(ssp, SSRSA, rx_mask);
-	}
-	pxa_ssp_write_reg(ssp, SSCR0, sscr0);
+		pxa_ssp_ग_लिखो_reg(ssp, SSTSA, tx_mask);
+		pxa_ssp_ग_लिखो_reg(ssp, SSRSA, rx_mask);
+	पूर्ण
+	pxa_ssp_ग_लिखो_reg(ssp, SSCR0, sscr0);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * Tristate the SSP DAI lines
  */
-static int pxa_ssp_set_dai_tristate(struct snd_soc_dai *cpu_dai,
-	int tristate)
-{
-	struct ssp_priv *priv = snd_soc_dai_get_drvdata(cpu_dai);
-	struct ssp_device *ssp = priv->ssp;
+अटल पूर्णांक pxa_ssp_set_dai_tristate(काष्ठा snd_soc_dai *cpu_dai,
+	पूर्णांक tristate)
+अणु
+	काष्ठा ssp_priv *priv = snd_soc_dai_get_drvdata(cpu_dai);
+	काष्ठा ssp_device *ssp = priv->ssp;
 	u32 sscr1;
 
-	sscr1 = pxa_ssp_read_reg(ssp, SSCR1);
-	if (tristate)
+	sscr1 = pxa_ssp_पढ़ो_reg(ssp, SSCR1);
+	अगर (tristate)
 		sscr1 &= ~SSCR1_TTE;
-	else
+	अन्यथा
 		sscr1 |= SSCR1_TTE;
-	pxa_ssp_write_reg(ssp, SSCR1, sscr1);
+	pxa_ssp_ग_लिखो_reg(ssp, SSCR1, sscr1);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int pxa_ssp_set_dai_fmt(struct snd_soc_dai *cpu_dai,
-			       unsigned int fmt)
-{
-	struct ssp_priv *priv = snd_soc_dai_get_drvdata(cpu_dai);
+अटल पूर्णांक pxa_ssp_set_dai_fmt(काष्ठा snd_soc_dai *cpu_dai,
+			       अचिन्हित पूर्णांक fmt)
+अणु
+	काष्ठा ssp_priv *priv = snd_soc_dai_get_drvdata(cpu_dai);
 
-	switch (fmt & SND_SOC_DAIFMT_MASTER_MASK) {
-	case SND_SOC_DAIFMT_CBM_CFM:
-	case SND_SOC_DAIFMT_CBM_CFS:
-	case SND_SOC_DAIFMT_CBS_CFS:
-		break;
-	default:
-		return -EINVAL;
-	}
+	चयन (fmt & SND_SOC_DAIFMT_MASTER_MASK) अणु
+	हाल SND_SOC_DAIFMT_CBM_CFM:
+	हाल SND_SOC_DAIFMT_CBM_CFS:
+	हाल SND_SOC_DAIFMT_CBS_CFS:
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	switch (fmt & SND_SOC_DAIFMT_INV_MASK) {
-	case SND_SOC_DAIFMT_NB_NF:
-	case SND_SOC_DAIFMT_NB_IF:
-	case SND_SOC_DAIFMT_IB_IF:
-	case SND_SOC_DAIFMT_IB_NF:
-		break;
-	default:
-		return -EINVAL;
-	}
+	चयन (fmt & SND_SOC_DAIFMT_INV_MASK) अणु
+	हाल SND_SOC_DAIFMT_NB_NF:
+	हाल SND_SOC_DAIFMT_NB_IF:
+	हाल SND_SOC_DAIFMT_IB_IF:
+	हाल SND_SOC_DAIFMT_IB_NF:
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	switch (fmt & SND_SOC_DAIFMT_FORMAT_MASK) {
-	case SND_SOC_DAIFMT_I2S:
-	case SND_SOC_DAIFMT_DSP_A:
-	case SND_SOC_DAIFMT_DSP_B:
-		break;
+	चयन (fmt & SND_SOC_DAIFMT_FORMAT_MASK) अणु
+	हाल SND_SOC_DAIFMT_I2S:
+	हाल SND_SOC_DAIFMT_DSP_A:
+	हाल SND_SOC_DAIFMT_DSP_B:
+		अवरोध;
 
-	default:
-		return -EINVAL;
-	}
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
 	/* Settings will be applied in hw_params() */
 	priv->dai_fmt = fmt;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * Set up the SSP DAI format.
- * The SSP Port must be inactive before calling this function as the
- * physical interface format is changed.
+ * Set up the SSP DAI क्रमmat.
+ * The SSP Port must be inactive beक्रमe calling this function as the
+ * physical पूर्णांकerface क्रमmat is changed.
  */
-static int pxa_ssp_configure_dai_fmt(struct ssp_priv *priv)
-{
-	struct ssp_device *ssp = priv->ssp;
+अटल पूर्णांक pxa_ssp_configure_dai_fmt(काष्ठा ssp_priv *priv)
+अणु
+	काष्ठा ssp_device *ssp = priv->ssp;
 	u32 sscr0, sscr1, sspsp, scfr;
 
-	/* check if we need to change anything at all */
-	if (priv->configured_dai_fmt == priv->dai_fmt)
-		return 0;
+	/* check अगर we need to change anything at all */
+	अगर (priv->configured_dai_fmt == priv->dai_fmt)
+		वापस 0;
 
 	/* reset port settings */
-	sscr0 = pxa_ssp_read_reg(ssp, SSCR0) &
+	sscr0 = pxa_ssp_पढ़ो_reg(ssp, SSCR0) &
 		~(SSCR0_PSP | SSCR0_MOD);
-	sscr1 = pxa_ssp_read_reg(ssp, SSCR1) &
-		~(SSCR1_SCLKDIR | SSCR1_SFRMDIR | SSCR1_SCFR |
+	sscr1 = pxa_ssp_पढ़ो_reg(ssp, SSCR1) &
+		~(SSCR1_SCLKसूची | SSCR1_SFRMसूची | SSCR1_SCFR |
 		  SSCR1_RWOT | SSCR1_TRAIL | SSCR1_TFT | SSCR1_RFT);
-	sspsp = pxa_ssp_read_reg(ssp, SSPSP) &
+	sspsp = pxa_ssp_पढ़ो_reg(ssp, SSPSP) &
 		~(SSPSP_SFRMP | SSPSP_SCMODE(3));
 
 	sscr1 |= SSCR1_RxTresh(8) | SSCR1_TxTresh(7);
 
-	switch (priv->dai_fmt & SND_SOC_DAIFMT_MASTER_MASK) {
-	case SND_SOC_DAIFMT_CBM_CFM:
-		sscr1 |= SSCR1_SCLKDIR | SSCR1_SFRMDIR | SSCR1_SCFR;
-		break;
-	case SND_SOC_DAIFMT_CBM_CFS:
-		sscr1 |= SSCR1_SCLKDIR | SSCR1_SCFR;
-		break;
-	case SND_SOC_DAIFMT_CBS_CFS:
-		break;
-	default:
-		return -EINVAL;
-	}
+	चयन (priv->dai_fmt & SND_SOC_DAIFMT_MASTER_MASK) अणु
+	हाल SND_SOC_DAIFMT_CBM_CFM:
+		sscr1 |= SSCR1_SCLKसूची | SSCR1_SFRMसूची | SSCR1_SCFR;
+		अवरोध;
+	हाल SND_SOC_DAIFMT_CBM_CFS:
+		sscr1 |= SSCR1_SCLKसूची | SSCR1_SCFR;
+		अवरोध;
+	हाल SND_SOC_DAIFMT_CBS_CFS:
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	switch (priv->dai_fmt & SND_SOC_DAIFMT_INV_MASK) {
-	case SND_SOC_DAIFMT_NB_NF:
+	चयन (priv->dai_fmt & SND_SOC_DAIFMT_INV_MASK) अणु
+	हाल SND_SOC_DAIFMT_NB_NF:
 		sspsp |= SSPSP_SFRMP;
-		break;
-	case SND_SOC_DAIFMT_NB_IF:
-		break;
-	case SND_SOC_DAIFMT_IB_IF:
+		अवरोध;
+	हाल SND_SOC_DAIFMT_NB_IF:
+		अवरोध;
+	हाल SND_SOC_DAIFMT_IB_IF:
 		sspsp |= SSPSP_SCMODE(2);
-		break;
-	case SND_SOC_DAIFMT_IB_NF:
+		अवरोध;
+	हाल SND_SOC_DAIFMT_IB_NF:
 		sspsp |= SSPSP_SCMODE(2) | SSPSP_SFRMP;
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	switch (priv->dai_fmt & SND_SOC_DAIFMT_FORMAT_MASK) {
-	case SND_SOC_DAIFMT_I2S:
+	चयन (priv->dai_fmt & SND_SOC_DAIFMT_FORMAT_MASK) अणु
+	हाल SND_SOC_DAIFMT_I2S:
 		sscr0 |= SSCR0_PSP;
 		sscr1 |= SSCR1_RWOT | SSCR1_TRAIL;
 		/* See hw_params() */
-		break;
+		अवरोध;
 
-	case SND_SOC_DAIFMT_DSP_A:
+	हाल SND_SOC_DAIFMT_DSP_A:
 		sspsp |= SSPSP_FSRT;
 		fallthrough;
-	case SND_SOC_DAIFMT_DSP_B:
+	हाल SND_SOC_DAIFMT_DSP_B:
 		sscr0 |= SSCR0_MOD | SSCR0_PSP;
 		sscr1 |= SSCR1_TRAIL | SSCR1_RWOT;
-		break;
+		अवरोध;
 
-	default:
-		return -EINVAL;
-	}
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	pxa_ssp_write_reg(ssp, SSCR0, sscr0);
-	pxa_ssp_write_reg(ssp, SSCR1, sscr1);
-	pxa_ssp_write_reg(ssp, SSPSP, sspsp);
+	pxa_ssp_ग_लिखो_reg(ssp, SSCR0, sscr0);
+	pxa_ssp_ग_लिखो_reg(ssp, SSCR1, sscr1);
+	pxa_ssp_ग_लिखो_reg(ssp, SSPSP, sspsp);
 
-	switch (priv->dai_fmt & SND_SOC_DAIFMT_MASTER_MASK) {
-	case SND_SOC_DAIFMT_CBM_CFM:
-	case SND_SOC_DAIFMT_CBM_CFS:
-		scfr = pxa_ssp_read_reg(ssp, SSCR1) | SSCR1_SCFR;
-		pxa_ssp_write_reg(ssp, SSCR1, scfr);
+	चयन (priv->dai_fmt & SND_SOC_DAIFMT_MASTER_MASK) अणु
+	हाल SND_SOC_DAIFMT_CBM_CFM:
+	हाल SND_SOC_DAIFMT_CBM_CFS:
+		scfr = pxa_ssp_पढ़ो_reg(ssp, SSCR1) | SSCR1_SCFR;
+		pxa_ssp_ग_लिखो_reg(ssp, SSCR1, scfr);
 
-		while (pxa_ssp_read_reg(ssp, SSSR) & SSSR_BSY)
+		जबतक (pxa_ssp_पढ़ो_reg(ssp, SSSR) & SSSR_BSY)
 			cpu_relax();
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	dump_registers(ssp);
+	dump_रेजिस्टरs(ssp);
 
-	/* Since we are configuring the timings for the format by hand
+	/* Since we are configuring the timings क्रम the क्रमmat by hand
 	 * we have to defer some things until hw_params() where we
 	 * know parameters like the sample size.
 	 */
 	priv->configured_dai_fmt = priv->dai_fmt;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-struct pxa_ssp_clock_mode {
-	int rate;
-	int pll;
+काष्ठा pxa_ssp_घड़ी_mode अणु
+	पूर्णांक rate;
+	पूर्णांक pll;
 	u8 acds;
 	u8 scdb;
-};
+पूर्ण;
 
-static const struct pxa_ssp_clock_mode pxa_ssp_clock_modes[] = {
-	{ .rate =  8000, .pll = 32842000, .acds = SSACD_ACDS_32, .scdb = SSACD_SCDB_4X },
-	{ .rate = 11025, .pll =  5622000, .acds = SSACD_ACDS_4,  .scdb = SSACD_SCDB_4X },
-	{ .rate = 16000, .pll = 32842000, .acds = SSACD_ACDS_16, .scdb = SSACD_SCDB_4X },
-	{ .rate = 22050, .pll =  5622000, .acds = SSACD_ACDS_2,  .scdb = SSACD_SCDB_4X },
-	{ .rate = 44100, .pll = 11345000, .acds = SSACD_ACDS_2,  .scdb = SSACD_SCDB_4X },
-	{ .rate = 48000, .pll = 12235000, .acds = SSACD_ACDS_2,  .scdb = SSACD_SCDB_4X },
-	{ .rate = 96000, .pll = 12235000, .acds = SSACD_ACDS_4,  .scdb = SSACD_SCDB_1X },
-	{}
-};
+अटल स्थिर काष्ठा pxa_ssp_घड़ी_mode pxa_ssp_घड़ी_modes[] = अणु
+	अणु .rate =  8000, .pll = 32842000, .acds = SSACD_ACDS_32, .scdb = SSACD_SCDB_4X पूर्ण,
+	अणु .rate = 11025, .pll =  5622000, .acds = SSACD_ACDS_4,  .scdb = SSACD_SCDB_4X पूर्ण,
+	अणु .rate = 16000, .pll = 32842000, .acds = SSACD_ACDS_16, .scdb = SSACD_SCDB_4X पूर्ण,
+	अणु .rate = 22050, .pll =  5622000, .acds = SSACD_ACDS_2,  .scdb = SSACD_SCDB_4X पूर्ण,
+	अणु .rate = 44100, .pll = 11345000, .acds = SSACD_ACDS_2,  .scdb = SSACD_SCDB_4X पूर्ण,
+	अणु .rate = 48000, .pll = 12235000, .acds = SSACD_ACDS_2,  .scdb = SSACD_SCDB_4X पूर्ण,
+	अणु .rate = 96000, .pll = 12235000, .acds = SSACD_ACDS_4,  .scdb = SSACD_SCDB_1X पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
 /*
  * Set the SSP audio DMA parameters and sample size.
- * Can be called multiple times by oss emulation.
+ * Can be called multiple बार by oss emulation.
  */
-static int pxa_ssp_hw_params(struct snd_pcm_substream *substream,
-				struct snd_pcm_hw_params *params,
-				struct snd_soc_dai *cpu_dai)
-{
-	struct ssp_priv *priv = snd_soc_dai_get_drvdata(cpu_dai);
-	struct ssp_device *ssp = priv->ssp;
-	int chn = params_channels(params);
+अटल पूर्णांक pxa_ssp_hw_params(काष्ठा snd_pcm_substream *substream,
+				काष्ठा snd_pcm_hw_params *params,
+				काष्ठा snd_soc_dai *cpu_dai)
+अणु
+	काष्ठा ssp_priv *priv = snd_soc_dai_get_drvdata(cpu_dai);
+	काष्ठा ssp_device *ssp = priv->ssp;
+	पूर्णांक chn = params_channels(params);
 	u32 sscr0, sspsp;
-	int width = snd_pcm_format_physical_width(params_format(params));
-	int ttsa = pxa_ssp_read_reg(ssp, SSTSA) & 0xf;
-	struct snd_dmaengine_dai_dma_data *dma_data;
-	int rate = params_rate(params);
-	int bclk = rate * chn * (width / 8);
-	int ret;
+	पूर्णांक width = snd_pcm_क्रमmat_physical_width(params_क्रमmat(params));
+	पूर्णांक ttsa = pxa_ssp_पढ़ो_reg(ssp, SSTSA) & 0xf;
+	काष्ठा snd_dmaengine_dai_dma_data *dma_data;
+	पूर्णांक rate = params_rate(params);
+	पूर्णांक bclk = rate * chn * (width / 8);
+	पूर्णांक ret;
 
 	dma_data = snd_soc_dai_get_dma_data(cpu_dai, substream);
 
 	/* Network mode with one active slot (ttsa == 1) can be used
-	 * to force 16-bit frame width on the wire (for S16_LE), even
-	 * with two channels. Use 16-bit DMA transfers for this case.
+	 * to क्रमce 16-bit frame width on the wire (क्रम S16_LE), even
+	 * with two channels. Use 16-bit DMA transfers क्रम this हाल.
 	 */
 	pxa_ssp_set_dma_params(ssp,
 		((chn == 2) && (ttsa != 1)) || (width == 32),
 		substream->stream == SNDRV_PCM_STREAM_PLAYBACK, dma_data);
 
-	/* we can only change the settings if the port is not in use */
-	if (pxa_ssp_read_reg(ssp, SSCR0) & SSCR0_SSE)
-		return 0;
+	/* we can only change the settings अगर the port is not in use */
+	अगर (pxa_ssp_पढ़ो_reg(ssp, SSCR0) & SSCR0_SSE)
+		वापस 0;
 
 	ret = pxa_ssp_configure_dai_fmt(priv);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	/* clear selected SSP bits */
-	sscr0 = pxa_ssp_read_reg(ssp, SSCR0) & ~(SSCR0_DSS | SSCR0_EDSS);
+	sscr0 = pxa_ssp_पढ़ो_reg(ssp, SSCR0) & ~(SSCR0_DSS | SSCR0_EDSS);
 
 	/* bit size */
-	switch (params_format(params)) {
-	case SNDRV_PCM_FORMAT_S16_LE:
-		if (ssp->type == PXA3xx_SSP)
+	चयन (params_क्रमmat(params)) अणु
+	हाल SNDRV_PCM_FORMAT_S16_LE:
+		अगर (ssp->type == PXA3xx_SSP)
 			sscr0 |= SSCR0_FPCKE;
 		sscr0 |= SSCR0_DataSize(16);
-		break;
-	case SNDRV_PCM_FORMAT_S24_LE:
+		अवरोध;
+	हाल SNDRV_PCM_FORMAT_S24_LE:
 		sscr0 |= (SSCR0_EDSS | SSCR0_DataSize(8));
-		break;
-	case SNDRV_PCM_FORMAT_S32_LE:
+		अवरोध;
+	हाल SNDRV_PCM_FORMAT_S32_LE:
 		sscr0 |= (SSCR0_EDSS | SSCR0_DataSize(16));
-		break;
-	}
-	pxa_ssp_write_reg(ssp, SSCR0, sscr0);
+		अवरोध;
+	पूर्ण
+	pxa_ssp_ग_लिखो_reg(ssp, SSCR0, sscr0);
 
-	if (sscr0 & SSCR0_ACS) {
+	अगर (sscr0 & SSCR0_ACS) अणु
 		ret = pxa_ssp_set_pll(priv, bclk);
 
 		/*
 		 * If we were able to generate the bclk directly,
-		 * all is fine. Otherwise, look up the closest rate
-		 * from the table and also set the dividers.
+		 * all is fine. Otherwise, look up the बंदst rate
+		 * from the table and also set the भागiders.
 		 */
 
-		if (ret < 0) {
-			const struct pxa_ssp_clock_mode *m;
-			int ssacd, acds;
+		अगर (ret < 0) अणु
+			स्थिर काष्ठा pxa_ssp_घड़ी_mode *m;
+			पूर्णांक ssacd, acds;
 
-			for (m = pxa_ssp_clock_modes; m->rate; m++) {
-				if (m->rate == rate)
-					break;
-			}
+			क्रम (m = pxa_ssp_घड़ी_modes; m->rate; m++) अणु
+				अगर (m->rate == rate)
+					अवरोध;
+			पूर्ण
 
-			if (!m->rate)
-				return -EINVAL;
+			अगर (!m->rate)
+				वापस -EINVAL;
 
 			acds = m->acds;
 
-			/* The values in the table are for 16 bits */
-			if (width == 32)
+			/* The values in the table are क्रम 16 bits */
+			अगर (width == 32)
 				acds--;
 
 			ret = pxa_ssp_set_pll(priv, bclk);
-			if (ret < 0)
-				return ret;
+			अगर (ret < 0)
+				वापस ret;
 
-			ssacd = pxa_ssp_read_reg(ssp, SSACD);
+			ssacd = pxa_ssp_पढ़ो_reg(ssp, SSACD);
 			ssacd &= ~(SSACD_ACDS(7) | SSACD_SCDB_1X);
 			ssacd |= SSACD_ACDS(m->acds);
 			ssacd |= m->scdb;
-			pxa_ssp_write_reg(ssp, SSACD, ssacd);
-		}
-	} else if (sscr0 & SSCR0_ECS) {
+			pxa_ssp_ग_लिखो_reg(ssp, SSACD, ssacd);
+		पूर्ण
+	पूर्ण अन्यथा अगर (sscr0 & SSCR0_ECS) अणु
 		/*
-		 * For setups with external clocking, the PLL and its diviers
+		 * For setups with बाह्यal घड़ीing, the PLL and its भागiers
 		 * are not active. Instead, the SCR bits in SSCR0 can be used
-		 * to divide the clock.
+		 * to भागide the घड़ी.
 		 */
 		pxa_ssp_set_scr(ssp, bclk / rate);
-	}
+	पूर्ण
 
-	switch (priv->dai_fmt & SND_SOC_DAIFMT_FORMAT_MASK) {
-	case SND_SOC_DAIFMT_I2S:
-	       sspsp = pxa_ssp_read_reg(ssp, SSPSP);
+	चयन (priv->dai_fmt & SND_SOC_DAIFMT_FORMAT_MASK) अणु
+	हाल SND_SOC_DAIFMT_I2S:
+	       sspsp = pxa_ssp_पढ़ो_reg(ssp, SSPSP);
 
-		if (((priv->sysclk / bclk) == 64) && (width == 16)) {
-			/* This is a special case where the bitclk is 64fs
+		अगर (((priv->sysclk / bclk) == 64) && (width == 16)) अणु
+			/* This is a special हाल where the bitclk is 64fs
 			 * and we're not dealing with 2*32 bits of audio
 			 * samples.
 			 *
-			 * The SSP values used for that are all found out by
-			 * trying and failing a lot; some of the registers
-			 * needed for that mode are only available on PXA3xx.
+			 * The SSP values used क्रम that are all found out by
+			 * trying and failing a lot; some of the रेजिस्टरs
+			 * needed क्रम that mode are only available on PXA3xx.
 			 */
-			if (ssp->type != PXA3xx_SSP)
-				return -EINVAL;
+			अगर (ssp->type != PXA3xx_SSP)
+				वापस -EINVAL;
 
 			sspsp |= SSPSP_SFRMWDTH(width * 2);
 			sspsp |= SSPSP_SFRMDLY(width * 4);
 			sspsp |= SSPSP_EDMYSTOP(3);
 			sspsp |= SSPSP_DMYSTOP(3);
 			sspsp |= SSPSP_DMYSTRT(1);
-		} else {
+		पूर्ण अन्यथा अणु
 			/* The frame width is the width the LRCLK is
-			 * asserted for; the delay is expressed in
+			 * निश्चितed क्रम; the delay is expressed in
 			 * half cycle units.  We need the extra cycle
-			 * because the data starts clocking out one BCLK
+			 * because the data starts घड़ीing out one BCLK
 			 * after LRCLK changes polarity.
 			 */
 			sspsp |= SSPSP_SFRMWDTH(width + 1);
 			sspsp |= SSPSP_SFRMDLY((width + 1) * 2);
 			sspsp |= SSPSP_DMYSTRT(1);
-		}
+		पूर्ण
 
-		pxa_ssp_write_reg(ssp, SSPSP, sspsp);
-		break;
-	default:
-		break;
-	}
+		pxa_ssp_ग_लिखो_reg(ssp, SSPSP, sspsp);
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
 
 	/* When we use a network mode, we always require TDM slots
-	 * - complain loudly and fail if they've not been set up yet.
+	 * - complain loudly and fail अगर they've not been set up yet.
 	 */
-	if ((sscr0 & SSCR0_MOD) && !ttsa) {
+	अगर ((sscr0 & SSCR0_MOD) && !ttsa) अणु
 		dev_err(ssp->dev, "No TDM timeslot configured\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	dump_registers(ssp);
+	dump_रेजिस्टरs(ssp);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void pxa_ssp_set_running_bit(struct snd_pcm_substream *substream,
-				    struct ssp_device *ssp, int value)
-{
-	uint32_t sscr0 = pxa_ssp_read_reg(ssp, SSCR0);
-	uint32_t sscr1 = pxa_ssp_read_reg(ssp, SSCR1);
-	uint32_t sspsp = pxa_ssp_read_reg(ssp, SSPSP);
-	uint32_t sssr = pxa_ssp_read_reg(ssp, SSSR);
+अटल व्योम pxa_ssp_set_running_bit(काष्ठा snd_pcm_substream *substream,
+				    काष्ठा ssp_device *ssp, पूर्णांक value)
+अणु
+	uपूर्णांक32_t sscr0 = pxa_ssp_पढ़ो_reg(ssp, SSCR0);
+	uपूर्णांक32_t sscr1 = pxa_ssp_पढ़ो_reg(ssp, SSCR1);
+	uपूर्णांक32_t sspsp = pxa_ssp_पढ़ो_reg(ssp, SSPSP);
+	uपूर्णांक32_t sssr = pxa_ssp_पढ़ो_reg(ssp, SSSR);
 
-	if (value && (sscr0 & SSCR0_SSE))
-		pxa_ssp_write_reg(ssp, SSCR0, sscr0 & ~SSCR0_SSE);
+	अगर (value && (sscr0 & SSCR0_SSE))
+		pxa_ssp_ग_लिखो_reg(ssp, SSCR0, sscr0 & ~SSCR0_SSE);
 
-	if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK) {
-		if (value)
+	अगर (substream->stream == SNDRV_PCM_STREAM_PLAYBACK) अणु
+		अगर (value)
 			sscr1 |= SSCR1_TSRE;
-		else
+		अन्यथा
 			sscr1 &= ~SSCR1_TSRE;
-	} else {
-		if (value)
+	पूर्ण अन्यथा अणु
+		अगर (value)
 			sscr1 |= SSCR1_RSRE;
-		else
+		अन्यथा
 			sscr1 &= ~SSCR1_RSRE;
-	}
+	पूर्ण
 
-	pxa_ssp_write_reg(ssp, SSCR1, sscr1);
+	pxa_ssp_ग_लिखो_reg(ssp, SSCR1, sscr1);
 
-	if (value) {
-		pxa_ssp_write_reg(ssp, SSSR, sssr);
-		pxa_ssp_write_reg(ssp, SSPSP, sspsp);
-		pxa_ssp_write_reg(ssp, SSCR0, sscr0 | SSCR0_SSE);
-	}
-}
+	अगर (value) अणु
+		pxa_ssp_ग_लिखो_reg(ssp, SSSR, sssr);
+		pxa_ssp_ग_लिखो_reg(ssp, SSPSP, sspsp);
+		pxa_ssp_ग_लिखो_reg(ssp, SSCR0, sscr0 | SSCR0_SSE);
+	पूर्ण
+पूर्ण
 
-static int pxa_ssp_trigger(struct snd_pcm_substream *substream, int cmd,
-			   struct snd_soc_dai *cpu_dai)
-{
-	int ret = 0;
-	struct ssp_priv *priv = snd_soc_dai_get_drvdata(cpu_dai);
-	struct ssp_device *ssp = priv->ssp;
-	int val;
+अटल पूर्णांक pxa_ssp_trigger(काष्ठा snd_pcm_substream *substream, पूर्णांक cmd,
+			   काष्ठा snd_soc_dai *cpu_dai)
+अणु
+	पूर्णांक ret = 0;
+	काष्ठा ssp_priv *priv = snd_soc_dai_get_drvdata(cpu_dai);
+	काष्ठा ssp_device *ssp = priv->ssp;
+	पूर्णांक val;
 
-	switch (cmd) {
-	case SNDRV_PCM_TRIGGER_RESUME:
+	चयन (cmd) अणु
+	हाल SNDRV_PCM_TRIGGER_RESUME:
 		pxa_ssp_enable(ssp);
-		break;
-	case SNDRV_PCM_TRIGGER_PAUSE_RELEASE:
+		अवरोध;
+	हाल SNDRV_PCM_TRIGGER_PAUSE_RELEASE:
 		pxa_ssp_set_running_bit(substream, ssp, 1);
-		val = pxa_ssp_read_reg(ssp, SSSR);
-		pxa_ssp_write_reg(ssp, SSSR, val);
-		break;
-	case SNDRV_PCM_TRIGGER_START:
+		val = pxa_ssp_पढ़ो_reg(ssp, SSSR);
+		pxa_ssp_ग_लिखो_reg(ssp, SSSR, val);
+		अवरोध;
+	हाल SNDRV_PCM_TRIGGER_START:
 		pxa_ssp_set_running_bit(substream, ssp, 1);
-		break;
-	case SNDRV_PCM_TRIGGER_STOP:
+		अवरोध;
+	हाल SNDRV_PCM_TRIGGER_STOP:
 		pxa_ssp_set_running_bit(substream, ssp, 0);
-		break;
-	case SNDRV_PCM_TRIGGER_SUSPEND:
+		अवरोध;
+	हाल SNDRV_PCM_TRIGGER_SUSPEND:
 		pxa_ssp_disable(ssp);
-		break;
-	case SNDRV_PCM_TRIGGER_PAUSE_PUSH:
+		अवरोध;
+	हाल SNDRV_PCM_TRIGGER_PAUSE_PUSH:
 		pxa_ssp_set_running_bit(substream, ssp, 0);
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		ret = -EINVAL;
-	}
+	पूर्ण
 
-	dump_registers(ssp);
+	dump_रेजिस्टरs(ssp);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int pxa_ssp_probe(struct snd_soc_dai *dai)
-{
-	struct device *dev = dai->dev;
-	struct ssp_priv *priv;
-	int ret;
+अटल पूर्णांक pxa_ssp_probe(काष्ठा snd_soc_dai *dai)
+अणु
+	काष्ठा device *dev = dai->dev;
+	काष्ठा ssp_priv *priv;
+	पूर्णांक ret;
 
-	priv = kzalloc(sizeof(struct ssp_priv), GFP_KERNEL);
-	if (!priv)
-		return -ENOMEM;
+	priv = kzalloc(माप(काष्ठा ssp_priv), GFP_KERNEL);
+	अगर (!priv)
+		वापस -ENOMEM;
 
-	if (dev->of_node) {
-		struct device_node *ssp_handle;
+	अगर (dev->of_node) अणु
+		काष्ठा device_node *ssp_handle;
 
 		ssp_handle = of_parse_phandle(dev->of_node, "port", 0);
-		if (!ssp_handle) {
+		अगर (!ssp_handle) अणु
 			dev_err(dev, "unable to get 'port' phandle\n");
 			ret = -ENODEV;
-			goto err_priv;
-		}
+			जाओ err_priv;
+		पूर्ण
 
 		priv->ssp = pxa_ssp_request_of(ssp_handle, "SoC audio");
-		if (priv->ssp == NULL) {
+		अगर (priv->ssp == शून्य) अणु
 			ret = -ENODEV;
-			goto err_priv;
-		}
+			जाओ err_priv;
+		पूर्ण
 
 		priv->extclk = devm_clk_get(dev, "extclk");
-		if (IS_ERR(priv->extclk)) {
+		अगर (IS_ERR(priv->extclk)) अणु
 			ret = PTR_ERR(priv->extclk);
-			if (ret == -EPROBE_DEFER)
-				return ret;
+			अगर (ret == -EPROBE_DEFER)
+				वापस ret;
 
-			priv->extclk = NULL;
-		}
-	} else {
+			priv->extclk = शून्य;
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		priv->ssp = pxa_ssp_request(dai->id + 1, "SoC audio");
-		if (priv->ssp == NULL) {
+		अगर (priv->ssp == शून्य) अणु
 			ret = -ENODEV;
-			goto err_priv;
-		}
-	}
+			जाओ err_priv;
+		पूर्ण
+	पूर्ण
 
-	priv->dai_fmt = (unsigned int) -1;
+	priv->dai_fmt = (अचिन्हित पूर्णांक) -1;
 	snd_soc_dai_set_drvdata(dai, priv);
 
-	return 0;
+	वापस 0;
 
 err_priv:
-	kfree(priv);
-	return ret;
-}
+	kमुक्त(priv);
+	वापस ret;
+पूर्ण
 
-static int pxa_ssp_remove(struct snd_soc_dai *dai)
-{
-	struct ssp_priv *priv = snd_soc_dai_get_drvdata(dai);
+अटल पूर्णांक pxa_ssp_हटाओ(काष्ठा snd_soc_dai *dai)
+अणु
+	काष्ठा ssp_priv *priv = snd_soc_dai_get_drvdata(dai);
 
-	pxa_ssp_free(priv->ssp);
-	kfree(priv);
-	return 0;
-}
+	pxa_ssp_मुक्त(priv->ssp);
+	kमुक्त(priv);
+	वापस 0;
+पूर्ण
 
-#define PXA_SSP_RATES (SNDRV_PCM_RATE_8000 | SNDRV_PCM_RATE_11025 |\
+#घोषणा PXA_SSP_RATES (SNDRV_PCM_RATE_8000 | SNDRV_PCM_RATE_11025 |\
 			  SNDRV_PCM_RATE_16000 | SNDRV_PCM_RATE_22050 |	\
 			  SNDRV_PCM_RATE_32000 | SNDRV_PCM_RATE_44100 |	\
 			  SNDRV_PCM_RATE_48000 | SNDRV_PCM_RATE_64000 |	\
 			  SNDRV_PCM_RATE_88200 | SNDRV_PCM_RATE_96000)
 
-#define PXA_SSP_FORMATS (SNDRV_PCM_FMTBIT_S16_LE | SNDRV_PCM_FMTBIT_S32_LE)
+#घोषणा PXA_SSP_FORMATS (SNDRV_PCM_FMTBIT_S16_LE | SNDRV_PCM_FMTBIT_S32_LE)
 
-static const struct snd_soc_dai_ops pxa_ssp_dai_ops = {
+अटल स्थिर काष्ठा snd_soc_dai_ops pxa_ssp_dai_ops = अणु
 	.startup	= pxa_ssp_startup,
-	.shutdown	= pxa_ssp_shutdown,
+	.shutकरोwn	= pxa_ssp_shutकरोwn,
 	.trigger	= pxa_ssp_trigger,
 	.hw_params	= pxa_ssp_hw_params,
 	.set_sysclk	= pxa_ssp_set_dai_sysclk,
 	.set_fmt	= pxa_ssp_set_dai_fmt,
 	.set_tdm_slot	= pxa_ssp_set_dai_tdm_slot,
 	.set_tristate	= pxa_ssp_set_dai_tristate,
-};
+पूर्ण;
 
-static struct snd_soc_dai_driver pxa_ssp_dai = {
+अटल काष्ठा snd_soc_dai_driver pxa_ssp_dai = अणु
 		.probe = pxa_ssp_probe,
-		.remove = pxa_ssp_remove,
-		.playback = {
+		.हटाओ = pxa_ssp_हटाओ,
+		.playback = अणु
 			.channels_min = 1,
 			.channels_max = 8,
 			.rates = PXA_SSP_RATES,
-			.formats = PXA_SSP_FORMATS,
-		},
-		.capture = {
+			.क्रमmats = PXA_SSP_FORMATS,
+		पूर्ण,
+		.capture = अणु
 			 .channels_min = 1,
 			 .channels_max = 8,
 			.rates = PXA_SSP_RATES,
-			.formats = PXA_SSP_FORMATS,
-		 },
+			.क्रमmats = PXA_SSP_FORMATS,
+		 पूर्ण,
 		.ops = &pxa_ssp_dai_ops,
-};
+पूर्ण;
 
-static const struct snd_soc_component_driver pxa_ssp_component = {
+अटल स्थिर काष्ठा snd_soc_component_driver pxa_ssp_component = अणु
 	.name		= "pxa-ssp",
-	.pcm_construct	= pxa2xx_soc_pcm_new,
-	.pcm_destruct	= pxa2xx_soc_pcm_free,
-	.open		= pxa2xx_soc_pcm_open,
-	.close		= pxa2xx_soc_pcm_close,
+	.pcm_स्थिरruct	= pxa2xx_soc_pcm_new,
+	.pcm_deकाष्ठा	= pxa2xx_soc_pcm_मुक्त,
+	.खोलो		= pxa2xx_soc_pcm_खोलो,
+	.बंद		= pxa2xx_soc_pcm_बंद,
 	.hw_params	= pxa2xx_soc_pcm_hw_params,
-	.hw_free	= pxa2xx_soc_pcm_hw_free,
+	.hw_मुक्त	= pxa2xx_soc_pcm_hw_मुक्त,
 	.prepare	= pxa2xx_soc_pcm_prepare,
 	.trigger	= pxa2xx_soc_pcm_trigger,
-	.pointer	= pxa2xx_soc_pcm_pointer,
+	.poपूर्णांकer	= pxa2xx_soc_pcm_poपूर्णांकer,
 	.mmap		= pxa2xx_soc_pcm_mmap,
 	.suspend	= pxa_ssp_suspend,
 	.resume		= pxa_ssp_resume,
-};
+पूर्ण;
 
-#ifdef CONFIG_OF
-static const struct of_device_id pxa_ssp_of_ids[] = {
-	{ .compatible = "mrvl,pxa-ssp-dai" },
-	{}
-};
+#अगर_घोषित CONFIG_OF
+अटल स्थिर काष्ठा of_device_id pxa_ssp_of_ids[] = अणु
+	अणु .compatible = "mrvl,pxa-ssp-dai" पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, pxa_ssp_of_ids);
-#endif
+#पूर्ण_अगर
 
-static int asoc_ssp_probe(struct platform_device *pdev)
-{
-	return devm_snd_soc_register_component(&pdev->dev, &pxa_ssp_component,
+अटल पूर्णांक asoc_ssp_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	वापस devm_snd_soc_रेजिस्टर_component(&pdev->dev, &pxa_ssp_component,
 					       &pxa_ssp_dai, 1);
-}
+पूर्ण
 
-static struct platform_driver asoc_ssp_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver asoc_ssp_driver = अणु
+	.driver = अणु
 		.name = "pxa-ssp-dai",
 		.of_match_table = of_match_ptr(pxa_ssp_of_ids),
-	},
+	पूर्ण,
 
 	.probe = asoc_ssp_probe,
-};
+पूर्ण;
 
-module_platform_driver(asoc_ssp_driver);
+module_platक्रमm_driver(asoc_ssp_driver);
 
-/* Module information */
+/* Module inक्रमmation */
 MODULE_AUTHOR("Mark Brown <broonie@opensource.wolfsonmicro.com>");
 MODULE_DESCRIPTION("PXA SSP/PCM SoC Interface");
 MODULE_LICENSE("GPL");

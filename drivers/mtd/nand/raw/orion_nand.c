@@ -1,5 +1,6 @@
+<शैली गुरु>
 /*
- * NAND support for Marvell Orion SoC platforms
+ * न_अंकD support क्रम Marvell Orion SoC platक्रमms
  *
  * Tzachi Perelstein <tzachi@marvell.com>
  *
@@ -8,111 +9,111 @@
  * warranty of any kind, whether express or implied.
  */
 
-#include <linux/slab.h>
-#include <linux/module.h>
-#include <linux/platform_device.h>
-#include <linux/of.h>
-#include <linux/mtd/mtd.h>
-#include <linux/mtd/rawnand.h>
-#include <linux/mtd/partitions.h>
-#include <linux/clk.h>
-#include <linux/err.h>
-#include <linux/io.h>
-#include <linux/sizes.h>
-#include <linux/platform_data/mtd-orion_nand.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/module.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/of.h>
+#समावेश <linux/mtd/mtd.h>
+#समावेश <linux/mtd/rawnand.h>
+#समावेश <linux/mtd/partitions.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/err.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/sizes.h>
+#समावेश <linux/platक्रमm_data/mtd-orion_nand.h>
 
-struct orion_nand_info {
-	struct nand_controller controller;
-	struct nand_chip chip;
-	struct clk *clk;
-};
+काष्ठा orion_nand_info अणु
+	काष्ठा nand_controller controller;
+	काष्ठा nand_chip chip;
+	काष्ठा clk *clk;
+पूर्ण;
 
-static void orion_nand_cmd_ctrl(struct nand_chip *nc, int cmd,
-				unsigned int ctrl)
-{
-	struct orion_nand_data *board = nand_get_controller_data(nc);
+अटल व्योम orion_nand_cmd_ctrl(काष्ठा nand_chip *nc, पूर्णांक cmd,
+				अचिन्हित पूर्णांक ctrl)
+अणु
+	काष्ठा orion_nand_data *board = nand_get_controller_data(nc);
 	u32 offs;
 
-	if (cmd == NAND_CMD_NONE)
-		return;
+	अगर (cmd == न_अंकD_CMD_NONE)
+		वापस;
 
-	if (ctrl & NAND_CLE)
+	अगर (ctrl & न_अंकD_CLE)
 		offs = (1 << board->cle);
-	else if (ctrl & NAND_ALE)
+	अन्यथा अगर (ctrl & न_अंकD_ALE)
 		offs = (1 << board->ale);
-	else
-		return;
+	अन्यथा
+		वापस;
 
-	if (nc->options & NAND_BUSWIDTH_16)
+	अगर (nc->options & न_अंकD_BUSWIDTH_16)
 		offs <<= 1;
 
-	writeb(cmd, nc->legacy.IO_ADDR_W + offs);
-}
+	ग_लिखोb(cmd, nc->legacy.IO_ADDR_W + offs);
+पूर्ण
 
-static void orion_nand_read_buf(struct nand_chip *chip, uint8_t *buf, int len)
-{
-	void __iomem *io_base = chip->legacy.IO_ADDR_R;
-#if defined(__LINUX_ARM_ARCH__) && __LINUX_ARM_ARCH__ >= 5
-	uint64_t *buf64;
-#endif
-	int i = 0;
+अटल व्योम orion_nand_पढ़ो_buf(काष्ठा nand_chip *chip, uपूर्णांक8_t *buf, पूर्णांक len)
+अणु
+	व्योम __iomem *io_base = chip->legacy.IO_ADDR_R;
+#अगर defined(__LINUX_ARM_ARCH__) && __LINUX_ARM_ARCH__ >= 5
+	uपूर्णांक64_t *buf64;
+#पूर्ण_अगर
+	पूर्णांक i = 0;
 
-	while (len && (unsigned long)buf & 7) {
-		*buf++ = readb(io_base);
+	जबतक (len && (अचिन्हित दीर्घ)buf & 7) अणु
+		*buf++ = पढ़ोb(io_base);
 		len--;
-	}
-#if defined(__LINUX_ARM_ARCH__) && __LINUX_ARM_ARCH__ >= 5
-	buf64 = (uint64_t *)buf;
-	while (i < len/8) {
+	पूर्ण
+#अगर defined(__LINUX_ARM_ARCH__) && __LINUX_ARM_ARCH__ >= 5
+	buf64 = (uपूर्णांक64_t *)buf;
+	जबतक (i < len/8) अणु
 		/*
-		 * Since GCC has no proper constraint (PR 43518)
-		 * force x variable to r2/r3 registers as ldrd instruction
-		 * requires first register to be even.
+		 * Since GCC has no proper स्थिरraपूर्णांक (PR 43518)
+		 * क्रमce x variable to r2/r3 रेजिस्टरs as ldrd inकाष्ठाion
+		 * requires first रेजिस्टर to be even.
 		 */
-		register uint64_t x asm ("r2");
+		रेजिस्टर uपूर्णांक64_t x यंत्र ("r2");
 
-		asm volatile ("ldrd\t%0, [%1]" : "=&r" (x) : "r" (io_base));
+		यंत्र अस्थिर ("ldrd\t%0, [%1]" : "=&r" (x) : "r" (io_base));
 		buf64[i++] = x;
-	}
+	पूर्ण
 	i *= 8;
-#else
-	readsl(io_base, buf, len/4);
+#अन्यथा
+	पढ़ोsl(io_base, buf, len/4);
 	i = len / 4 * 4;
-#endif
-	while (i < len)
-		buf[i++] = readb(io_base);
-}
+#पूर्ण_अगर
+	जबतक (i < len)
+		buf[i++] = पढ़ोb(io_base);
+पूर्ण
 
-static int orion_nand_attach_chip(struct nand_chip *chip)
-{
-	chip->ecc.engine_type = NAND_ECC_ENGINE_TYPE_SOFT;
+अटल पूर्णांक orion_nand_attach_chip(काष्ठा nand_chip *chip)
+अणु
+	chip->ecc.engine_type = न_अंकD_ECC_ENGINE_TYPE_SOFT;
 
-	if (chip->ecc.algo == NAND_ECC_ALGO_UNKNOWN)
-		chip->ecc.algo = NAND_ECC_ALGO_HAMMING;
+	अगर (chip->ecc.algo == न_अंकD_ECC_ALGO_UNKNOWN)
+		chip->ecc.algo = न_अंकD_ECC_ALGO_HAMMING;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct nand_controller_ops orion_nand_ops = {
+अटल स्थिर काष्ठा nand_controller_ops orion_nand_ops = अणु
 	.attach_chip = orion_nand_attach_chip,
-};
+पूर्ण;
 
-static int __init orion_nand_probe(struct platform_device *pdev)
-{
-	struct orion_nand_info *info;
-	struct mtd_info *mtd;
-	struct nand_chip *nc;
-	struct orion_nand_data *board;
-	struct resource *res;
-	void __iomem *io_base;
-	int ret = 0;
+अटल पूर्णांक __init orion_nand_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा orion_nand_info *info;
+	काष्ठा mtd_info *mtd;
+	काष्ठा nand_chip *nc;
+	काष्ठा orion_nand_data *board;
+	काष्ठा resource *res;
+	व्योम __iomem *io_base;
+	पूर्णांक ret = 0;
 	u32 val = 0;
 
 	info = devm_kzalloc(&pdev->dev,
-			sizeof(struct orion_nand_info),
+			माप(काष्ठा orion_nand_info),
 			GFP_KERNEL);
-	if (!info)
-		return -ENOMEM;
+	अगर (!info)
+		वापस -ENOMEM;
 	nc = &info->chip;
 	mtd = nand_to_mtd(nc);
 
@@ -120,36 +121,36 @@ static int __init orion_nand_probe(struct platform_device *pdev)
 	info->controller.ops = &orion_nand_ops;
 	nc->controller = &info->controller;
 
-	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
 	io_base = devm_ioremap_resource(&pdev->dev, res);
 
-	if (IS_ERR(io_base))
-		return PTR_ERR(io_base);
+	अगर (IS_ERR(io_base))
+		वापस PTR_ERR(io_base);
 
-	if (pdev->dev.of_node) {
-		board = devm_kzalloc(&pdev->dev, sizeof(struct orion_nand_data),
+	अगर (pdev->dev.of_node) अणु
+		board = devm_kzalloc(&pdev->dev, माप(काष्ठा orion_nand_data),
 					GFP_KERNEL);
-		if (!board)
-			return -ENOMEM;
-		if (!of_property_read_u32(pdev->dev.of_node, "cle", &val))
+		अगर (!board)
+			वापस -ENOMEM;
+		अगर (!of_property_पढ़ो_u32(pdev->dev.of_node, "cle", &val))
 			board->cle = (u8)val;
-		else
+		अन्यथा
 			board->cle = 0;
-		if (!of_property_read_u32(pdev->dev.of_node, "ale", &val))
+		अगर (!of_property_पढ़ो_u32(pdev->dev.of_node, "ale", &val))
 			board->ale = (u8)val;
-		else
+		अन्यथा
 			board->ale = 1;
-		if (!of_property_read_u32(pdev->dev.of_node,
+		अगर (!of_property_पढ़ो_u32(pdev->dev.of_node,
 						"bank-width", &val))
 			board->width = (u8)val * 8;
-		else
+		अन्यथा
 			board->width = 8;
-		if (!of_property_read_u32(pdev->dev.of_node,
+		अगर (!of_property_पढ़ो_u32(pdev->dev.of_node,
 						"chip-delay", &val))
 			board->chip_delay = (u8)val;
-	} else {
+	पूर्ण अन्यथा अणु
 		board = dev_get_platdata(&pdev->dev);
-	}
+	पूर्ण
 
 	mtd->dev.parent = &pdev->dev;
 
@@ -157,90 +158,90 @@ static int __init orion_nand_probe(struct platform_device *pdev)
 	nand_set_flash_node(nc, pdev->dev.of_node);
 	nc->legacy.IO_ADDR_R = nc->legacy.IO_ADDR_W = io_base;
 	nc->legacy.cmd_ctrl = orion_nand_cmd_ctrl;
-	nc->legacy.read_buf = orion_nand_read_buf;
+	nc->legacy.पढ़ो_buf = orion_nand_पढ़ो_buf;
 
-	if (board->chip_delay)
+	अगर (board->chip_delay)
 		nc->legacy.chip_delay = board->chip_delay;
 
 	WARN(board->width > 16,
 		"%d bit bus width out of range",
 		board->width);
 
-	if (board->width == 16)
-		nc->options |= NAND_BUSWIDTH_16;
+	अगर (board->width == 16)
+		nc->options |= न_अंकD_BUSWIDTH_16;
 
-	platform_set_drvdata(pdev, info);
+	platक्रमm_set_drvdata(pdev, info);
 
-	/* Not all platforms can gate the clock, so it is not
-	   an error if the clock does not exists. */
-	info->clk = devm_clk_get(&pdev->dev, NULL);
-	if (IS_ERR(info->clk)) {
+	/* Not all platक्रमms can gate the घड़ी, so it is not
+	   an error अगर the घड़ी करोes not exists. */
+	info->clk = devm_clk_get(&pdev->dev, शून्य);
+	अगर (IS_ERR(info->clk)) अणु
 		ret = PTR_ERR(info->clk);
-		if (ret == -ENOENT) {
-			info->clk = NULL;
-		} else {
+		अगर (ret == -ENOENT) अणु
+			info->clk = शून्य;
+		पूर्ण अन्यथा अणु
 			dev_err(&pdev->dev, "failed to get clock!\n");
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
 	ret = clk_prepare_enable(info->clk);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&pdev->dev, "failed to prepare clock!\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	ret = nand_scan(nc, 1);
-	if (ret)
-		goto no_dev;
+	अगर (ret)
+		जाओ no_dev;
 
 	mtd->name = "orion_nand";
-	ret = mtd_device_register(mtd, board->parts, board->nr_parts);
-	if (ret) {
+	ret = mtd_device_रेजिस्टर(mtd, board->parts, board->nr_parts);
+	अगर (ret) अणु
 		nand_cleanup(nc);
-		goto no_dev;
-	}
+		जाओ no_dev;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 no_dev:
 	clk_disable_unprepare(info->clk);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int orion_nand_remove(struct platform_device *pdev)
-{
-	struct orion_nand_info *info = platform_get_drvdata(pdev);
-	struct nand_chip *chip = &info->chip;
-	int ret;
+अटल पूर्णांक orion_nand_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा orion_nand_info *info = platक्रमm_get_drvdata(pdev);
+	काष्ठा nand_chip *chip = &info->chip;
+	पूर्णांक ret;
 
-	ret = mtd_device_unregister(nand_to_mtd(chip));
+	ret = mtd_device_unरेजिस्टर(nand_to_mtd(chip));
 	WARN_ON(ret);
 
 	nand_cleanup(chip);
 
 	clk_disable_unprepare(info->clk);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_OF
-static const struct of_device_id orion_nand_of_match_table[] = {
-	{ .compatible = "marvell,orion-nand", },
-	{},
-};
+#अगर_घोषित CONFIG_OF
+अटल स्थिर काष्ठा of_device_id orion_nand_of_match_table[] = अणु
+	अणु .compatible = "marvell,orion-nand", पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, orion_nand_of_match_table);
-#endif
+#पूर्ण_अगर
 
-static struct platform_driver orion_nand_driver = {
-	.remove		= orion_nand_remove,
-	.driver		= {
+अटल काष्ठा platक्रमm_driver orion_nand_driver = अणु
+	.हटाओ		= orion_nand_हटाओ,
+	.driver		= अणु
 		.name	= "orion_nand",
 		.of_match_table = of_match_ptr(orion_nand_of_match_table),
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-module_platform_driver_probe(orion_nand_driver, orion_nand_probe);
+module_platक्रमm_driver_probe(orion_nand_driver, orion_nand_probe);
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Tzachi Perelstein");

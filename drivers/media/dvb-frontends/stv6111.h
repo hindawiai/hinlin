@@ -1,37 +1,38 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- * Driver for the ST STV6111 tuner
+ * Driver क्रम the ST STV6111 tuner
  *
  * Copyright (C) 2014 Digital Devices GmbH
  *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License
+ * This program is मुक्त software; you can redistribute it and/or
+ * modअगरy it under the terms of the GNU General Public License
  * version 2 only, as published by the Free Software Foundation.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU General Public License क्रम more details.
  */
 
-#ifndef _STV6111_H_
-#define _STV6111_H_
+#अगर_अघोषित _STV6111_H_
+#घोषणा _STV6111_H_
 
-#if IS_REACHABLE(CONFIG_DVB_STV6111)
+#अगर IS_REACHABLE(CONFIG_DVB_STV6111)
 
-struct dvb_frontend *stv6111_attach(struct dvb_frontend *fe,
-				    struct i2c_adapter *i2c, u8 adr);
+काष्ठा dvb_frontend *stv6111_attach(काष्ठा dvb_frontend *fe,
+				    काष्ठा i2c_adapter *i2c, u8 adr);
 
-#else
+#अन्यथा
 
-static inline struct dvb_frontend *stv6111_attach(struct dvb_frontend *fe,
-						  struct i2c_adapter *i2c,
+अटल अंतरभूत काष्ठा dvb_frontend *stv6111_attach(काष्ठा dvb_frontend *fe,
+						  काष्ठा i2c_adapter *i2c,
 						  u8 adr)
-{
+अणु
 	pr_warn("%s: Driver disabled by Kconfig\n", __func__);
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-#endif /* CONFIG_DVB_STV6111 */
+#पूर्ण_अगर /* CONFIG_DVB_STV6111 */
 
-#endif /* _STV6111_H_ */
+#पूर्ण_अगर /* _STV6111_H_ */

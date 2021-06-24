@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright (c) 2016, NVIDIA CORPORATION. All rights reserved.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -19,197 +20,197 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  */
-#include "priv.h"
+#समावेश "priv.h"
 
-#include <core/gpuobj.h>
-#include <core/memory.h>
-#include <subdev/timer.h>
+#समावेश <core/gpuobj.h>
+#समावेश <core/memory.h>
+#समावेश <subdev/समयr.h>
 
-void
-nvkm_falcon_v1_load_imem(struct nvkm_falcon *falcon, void *data, u32 start,
+व्योम
+nvkm_falcon_v1_load_imem(काष्ठा nvkm_falcon *falcon, व्योम *data, u32 start,
 			 u32 size, u16 tag, u8 port, bool secure)
-{
+अणु
 	u8 rem = size % 4;
 	u32 reg;
-	int i;
+	पूर्णांक i;
 
 	size -= rem;
 
 	reg = start | BIT(24) | (secure ? BIT(28) : 0);
 	nvkm_falcon_wr32(falcon, 0x180 + (port * 16), reg);
-	for (i = 0; i < size / 4; i++) {
-		/* write new tag every 256B */
-		if ((i & 0x3f) == 0)
+	क्रम (i = 0; i < size / 4; i++) अणु
+		/* ग_लिखो new tag every 256B */
+		अगर ((i & 0x3f) == 0)
 			nvkm_falcon_wr32(falcon, 0x188 + (port * 16), tag++);
 		nvkm_falcon_wr32(falcon, 0x184 + (port * 16), ((u32 *)data)[i]);
-	}
+	पूर्ण
 
 	/*
 	 * If size is not a multiple of 4, mask the last work to ensure garbage
-	 * does not get written
+	 * करोes not get written
 	 */
-	if (rem) {
+	अगर (rem) अणु
 		u32 extra = ((u32 *)data)[i];
 
-		/* write new tag every 256B */
-		if ((i & 0x3f) == 0)
+		/* ग_लिखो new tag every 256B */
+		अगर ((i & 0x3f) == 0)
 			nvkm_falcon_wr32(falcon, 0x188 + (port * 16), tag++);
 		nvkm_falcon_wr32(falcon, 0x184 + (port * 16),
 				 extra & (BIT(rem * 8) - 1));
 		++i;
-	}
+	पूर्ण
 
 	/* code must be padded to 0x40 words */
-	for (; i & 0x3f; i++)
+	क्रम (; i & 0x3f; i++)
 		nvkm_falcon_wr32(falcon, 0x184 + (port * 16), 0);
-}
+पूर्ण
 
-static void
-nvkm_falcon_v1_load_emem(struct nvkm_falcon *falcon, void *data, u32 start,
+अटल व्योम
+nvkm_falcon_v1_load_emem(काष्ठा nvkm_falcon *falcon, व्योम *data, u32 start,
 			 u32 size, u8 port)
-{
+अणु
 	u8 rem = size % 4;
-	int i;
+	पूर्णांक i;
 
 	size -= rem;
 
 	nvkm_falcon_wr32(falcon, 0xac0 + (port * 8), start | (0x1 << 24));
-	for (i = 0; i < size / 4; i++)
+	क्रम (i = 0; i < size / 4; i++)
 		nvkm_falcon_wr32(falcon, 0xac4 + (port * 8), ((u32 *)data)[i]);
 
 	/*
 	 * If size is not a multiple of 4, mask the last word to ensure garbage
-	 * does not get written
+	 * करोes not get written
 	 */
-	if (rem) {
+	अगर (rem) अणु
 		u32 extra = ((u32 *)data)[i];
 
 		nvkm_falcon_wr32(falcon, 0xac4 + (port * 8),
 				 extra & (BIT(rem * 8) - 1));
-	}
-}
+	पूर्ण
+पूर्ण
 
-void
-nvkm_falcon_v1_load_dmem(struct nvkm_falcon *falcon, void *data, u32 start,
+व्योम
+nvkm_falcon_v1_load_dmem(काष्ठा nvkm_falcon *falcon, व्योम *data, u32 start,
 			 u32 size, u8 port)
-{
-	const struct nvkm_falcon_func *func = falcon->func;
+अणु
+	स्थिर काष्ठा nvkm_falcon_func *func = falcon->func;
 	u8 rem = size % 4;
-	int i;
+	पूर्णांक i;
 
-	if (func->emem_addr && start >= func->emem_addr)
-		return nvkm_falcon_v1_load_emem(falcon, data,
+	अगर (func->emem_addr && start >= func->emem_addr)
+		वापस nvkm_falcon_v1_load_emem(falcon, data,
 						start - func->emem_addr, size,
 						port);
 
 	size -= rem;
 
 	nvkm_falcon_wr32(falcon, 0x1c0 + (port * 8), start | (0x1 << 24));
-	for (i = 0; i < size / 4; i++)
+	क्रम (i = 0; i < size / 4; i++)
 		nvkm_falcon_wr32(falcon, 0x1c4 + (port * 8), ((u32 *)data)[i]);
 
 	/*
 	 * If size is not a multiple of 4, mask the last word to ensure garbage
-	 * does not get written
+	 * करोes not get written
 	 */
-	if (rem) {
+	अगर (rem) अणु
 		u32 extra = ((u32 *)data)[i];
 
 		nvkm_falcon_wr32(falcon, 0x1c4 + (port * 8),
 				 extra & (BIT(rem * 8) - 1));
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void
-nvkm_falcon_v1_read_emem(struct nvkm_falcon *falcon, u32 start, u32 size,
-			 u8 port, void *data)
-{
+अटल व्योम
+nvkm_falcon_v1_पढ़ो_emem(काष्ठा nvkm_falcon *falcon, u32 start, u32 size,
+			 u8 port, व्योम *data)
+अणु
 	u8 rem = size % 4;
-	int i;
+	पूर्णांक i;
 
 	size -= rem;
 
 	nvkm_falcon_wr32(falcon, 0xac0 + (port * 8), start | (0x1 << 25));
-	for (i = 0; i < size / 4; i++)
+	क्रम (i = 0; i < size / 4; i++)
 		((u32 *)data)[i] = nvkm_falcon_rd32(falcon, 0xac4 + (port * 8));
 
 	/*
 	 * If size is not a multiple of 4, mask the last word to ensure garbage
-	 * does not get read
+	 * करोes not get पढ़ो
 	 */
-	if (rem) {
+	अगर (rem) अणु
 		u32 extra = nvkm_falcon_rd32(falcon, 0xac4 + (port * 8));
 
-		for (i = size; i < size + rem; i++) {
+		क्रम (i = size; i < size + rem; i++) अणु
 			((u8 *)data)[i] = (u8)(extra & 0xff);
 			extra >>= 8;
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-void
-nvkm_falcon_v1_read_dmem(struct nvkm_falcon *falcon, u32 start, u32 size,
-			 u8 port, void *data)
-{
-	const struct nvkm_falcon_func *func = falcon->func;
+व्योम
+nvkm_falcon_v1_पढ़ो_dmem(काष्ठा nvkm_falcon *falcon, u32 start, u32 size,
+			 u8 port, व्योम *data)
+अणु
+	स्थिर काष्ठा nvkm_falcon_func *func = falcon->func;
 	u8 rem = size % 4;
-	int i;
+	पूर्णांक i;
 
-	if (func->emem_addr && start >= func->emem_addr)
-		return nvkm_falcon_v1_read_emem(falcon, start - func->emem_addr,
+	अगर (func->emem_addr && start >= func->emem_addr)
+		वापस nvkm_falcon_v1_पढ़ो_emem(falcon, start - func->emem_addr,
 						size, port, data);
 
 	size -= rem;
 
 	nvkm_falcon_wr32(falcon, 0x1c0 + (port * 8), start | (0x1 << 25));
-	for (i = 0; i < size / 4; i++)
+	क्रम (i = 0; i < size / 4; i++)
 		((u32 *)data)[i] = nvkm_falcon_rd32(falcon, 0x1c4 + (port * 8));
 
 	/*
 	 * If size is not a multiple of 4, mask the last word to ensure garbage
-	 * does not get read
+	 * करोes not get पढ़ो
 	 */
-	if (rem) {
+	अगर (rem) अणु
 		u32 extra = nvkm_falcon_rd32(falcon, 0x1c4 + (port * 8));
 
-		for (i = size; i < size + rem; i++) {
+		क्रम (i = size; i < size + rem; i++) अणु
 			((u8 *)data)[i] = (u8)(extra & 0xff);
 			extra >>= 8;
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-void
-nvkm_falcon_v1_bind_context(struct nvkm_falcon *falcon, struct nvkm_memory *ctx)
-{
-	const u32 fbif = falcon->func->fbif;
+व्योम
+nvkm_falcon_v1_bind_context(काष्ठा nvkm_falcon *falcon, काष्ठा nvkm_memory *ctx)
+अणु
+	स्थिर u32 fbअगर = falcon->func->fbअगर;
 	u32 inst_loc;
 
 	/* disable instance block binding */
-	if (ctx == NULL) {
+	अगर (ctx == शून्य) अणु
 		nvkm_falcon_wr32(falcon, 0x10c, 0x0);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	nvkm_falcon_wr32(falcon, 0x10c, 0x1);
 
-	/* setup apertures - virtual */
-	nvkm_falcon_wr32(falcon, fbif + 4 * FALCON_DMAIDX_UCODE, 0x4);
-	nvkm_falcon_wr32(falcon, fbif + 4 * FALCON_DMAIDX_VIRT, 0x0);
+	/* setup apertures - भव */
+	nvkm_falcon_wr32(falcon, fbअगर + 4 * FALCON_DMAIDX_UCODE, 0x4);
+	nvkm_falcon_wr32(falcon, fbअगर + 4 * FALCON_DMAIDX_VIRT, 0x0);
 	/* setup apertures - physical */
-	nvkm_falcon_wr32(falcon, fbif + 4 * FALCON_DMAIDX_PHYS_VID, 0x4);
-	nvkm_falcon_wr32(falcon, fbif + 4 * FALCON_DMAIDX_PHYS_SYS_COH, 0x5);
-	nvkm_falcon_wr32(falcon, fbif + 4 * FALCON_DMAIDX_PHYS_SYS_NCOH, 0x6);
+	nvkm_falcon_wr32(falcon, fbअगर + 4 * FALCON_DMAIDX_PHYS_VID, 0x4);
+	nvkm_falcon_wr32(falcon, fbअगर + 4 * FALCON_DMAIDX_PHYS_SYS_COH, 0x5);
+	nvkm_falcon_wr32(falcon, fbअगर + 4 * FALCON_DMAIDX_PHYS_SYS_NCOH, 0x6);
 
 	/* Set context */
-	switch (nvkm_memory_target(ctx)) {
-	case NVKM_MEM_TARGET_VRAM: inst_loc = 0; break;
-	case NVKM_MEM_TARGET_HOST: inst_loc = 2; break;
-	case NVKM_MEM_TARGET_NCOH: inst_loc = 3; break;
-	default:
+	चयन (nvkm_memory_target(ctx)) अणु
+	हाल NVKM_MEM_TARGET_VRAM: inst_loc = 0; अवरोध;
+	हाल NVKM_MEM_TARGET_HOST: inst_loc = 2; अवरोध;
+	हाल NVKM_MEM_TARGET_NCOH: inst_loc = 3; अवरोध;
+	शेष:
 		WARN_ON(1);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/* Enable context */
 	nvkm_falcon_mask(falcon, 0x048, 0x1, 0x1);
@@ -219,118 +220,118 @@ nvkm_falcon_v1_bind_context(struct nvkm_falcon *falcon, struct nvkm_memory *ctx)
 
 	nvkm_falcon_mask(falcon, 0x090, 0x10000, 0x10000);
 	nvkm_falcon_mask(falcon, 0x0a4, 0x8, 0x8);
-}
+पूर्ण
 
-void
-nvkm_falcon_v1_set_start_addr(struct nvkm_falcon *falcon, u32 start_addr)
-{
+व्योम
+nvkm_falcon_v1_set_start_addr(काष्ठा nvkm_falcon *falcon, u32 start_addr)
+अणु
 	nvkm_falcon_wr32(falcon, 0x104, start_addr);
-}
+पूर्ण
 
-void
-nvkm_falcon_v1_start(struct nvkm_falcon *falcon)
-{
+व्योम
+nvkm_falcon_v1_start(काष्ठा nvkm_falcon *falcon)
+अणु
 	u32 reg = nvkm_falcon_rd32(falcon, 0x100);
 
-	if (reg & BIT(6))
+	अगर (reg & BIT(6))
 		nvkm_falcon_wr32(falcon, 0x130, 0x2);
-	else
+	अन्यथा
 		nvkm_falcon_wr32(falcon, 0x100, 0x2);
-}
+पूर्ण
 
-int
-nvkm_falcon_v1_wait_for_halt(struct nvkm_falcon *falcon, u32 ms)
-{
-	struct nvkm_device *device = falcon->owner->device;
-	int ret;
+पूर्णांक
+nvkm_falcon_v1_रुको_क्रम_halt(काष्ठा nvkm_falcon *falcon, u32 ms)
+अणु
+	काष्ठा nvkm_device *device = falcon->owner->device;
+	पूर्णांक ret;
 
-	ret = nvkm_wait_msec(device, ms, falcon->addr + 0x100, 0x10, 0x10);
-	if (ret < 0)
-		return ret;
+	ret = nvkm_रुको_msec(device, ms, falcon->addr + 0x100, 0x10, 0x10);
+	अगर (ret < 0)
+		वापस ret;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int
-nvkm_falcon_v1_clear_interrupt(struct nvkm_falcon *falcon, u32 mask)
-{
-	struct nvkm_device *device = falcon->owner->device;
-	int ret;
+पूर्णांक
+nvkm_falcon_v1_clear_पूर्णांकerrupt(काष्ठा nvkm_falcon *falcon, u32 mask)
+अणु
+	काष्ठा nvkm_device *device = falcon->owner->device;
+	पूर्णांक ret;
 
-	/* clear interrupt(s) */
+	/* clear पूर्णांकerrupt(s) */
 	nvkm_falcon_mask(falcon, 0x004, mask, mask);
-	/* wait until interrupts are cleared */
-	ret = nvkm_wait_msec(device, 10, falcon->addr + 0x008, mask, 0x0);
-	if (ret < 0)
-		return ret;
+	/* रुको until पूर्णांकerrupts are cleared */
+	ret = nvkm_रुको_msec(device, 10, falcon->addr + 0x008, mask, 0x0);
+	अगर (ret < 0)
+		वापस ret;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-falcon_v1_wait_idle(struct nvkm_falcon *falcon)
-{
-	struct nvkm_device *device = falcon->owner->device;
-	int ret;
+अटल पूर्णांक
+falcon_v1_रुको_idle(काष्ठा nvkm_falcon *falcon)
+अणु
+	काष्ठा nvkm_device *device = falcon->owner->device;
+	पूर्णांक ret;
 
-	ret = nvkm_wait_msec(device, 10, falcon->addr + 0x04c, 0xffff, 0x0);
-	if (ret < 0)
-		return ret;
+	ret = nvkm_रुको_msec(device, 10, falcon->addr + 0x04c, 0xffff, 0x0);
+	अगर (ret < 0)
+		वापस ret;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int
-nvkm_falcon_v1_enable(struct nvkm_falcon *falcon)
-{
-	struct nvkm_device *device = falcon->owner->device;
-	int ret;
+पूर्णांक
+nvkm_falcon_v1_enable(काष्ठा nvkm_falcon *falcon)
+अणु
+	काष्ठा nvkm_device *device = falcon->owner->device;
+	पूर्णांक ret;
 
-	ret = nvkm_wait_msec(device, 10, falcon->addr + 0x10c, 0x6, 0x0);
-	if (ret < 0) {
+	ret = nvkm_रुको_msec(device, 10, falcon->addr + 0x10c, 0x6, 0x0);
+	अगर (ret < 0) अणु
 		nvkm_error(falcon->user, "Falcon mem scrubbing timeout\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	ret = falcon_v1_wait_idle(falcon);
-	if (ret)
-		return ret;
+	ret = falcon_v1_रुको_idle(falcon);
+	अगर (ret)
+		वापस ret;
 
 	/* enable IRQs */
 	nvkm_falcon_wr32(falcon, 0x010, 0xff);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void
-nvkm_falcon_v1_disable(struct nvkm_falcon *falcon)
-{
-	/* disable IRQs and wait for any previous code to complete */
+व्योम
+nvkm_falcon_v1_disable(काष्ठा nvkm_falcon *falcon)
+अणु
+	/* disable IRQs and रुको क्रम any previous code to complete */
 	nvkm_falcon_wr32(falcon, 0x014, 0xff);
-	falcon_v1_wait_idle(falcon);
-}
+	falcon_v1_रुको_idle(falcon);
+पूर्ण
 
-static const struct nvkm_falcon_func
-nvkm_falcon_v1 = {
+अटल स्थिर काष्ठा nvkm_falcon_func
+nvkm_falcon_v1 = अणु
 	.load_imem = nvkm_falcon_v1_load_imem,
 	.load_dmem = nvkm_falcon_v1_load_dmem,
-	.read_dmem = nvkm_falcon_v1_read_dmem,
+	.पढ़ो_dmem = nvkm_falcon_v1_पढ़ो_dmem,
 	.bind_context = nvkm_falcon_v1_bind_context,
 	.start = nvkm_falcon_v1_start,
-	.wait_for_halt = nvkm_falcon_v1_wait_for_halt,
-	.clear_interrupt = nvkm_falcon_v1_clear_interrupt,
+	.रुको_क्रम_halt = nvkm_falcon_v1_रुको_क्रम_halt,
+	.clear_पूर्णांकerrupt = nvkm_falcon_v1_clear_पूर्णांकerrupt,
 	.enable = nvkm_falcon_v1_enable,
 	.disable = nvkm_falcon_v1_disable,
 	.set_start_addr = nvkm_falcon_v1_set_start_addr,
-};
+पूर्ण;
 
-int
-nvkm_falcon_v1_new(struct nvkm_subdev *owner, const char *name, u32 addr,
-		   struct nvkm_falcon **pfalcon)
-{
-	struct nvkm_falcon *falcon;
-	if (!(falcon = *pfalcon = kzalloc(sizeof(*falcon), GFP_KERNEL)))
-		return -ENOMEM;
+पूर्णांक
+nvkm_falcon_v1_new(काष्ठा nvkm_subdev *owner, स्थिर अक्षर *name, u32 addr,
+		   काष्ठा nvkm_falcon **pfalcon)
+अणु
+	काष्ठा nvkm_falcon *falcon;
+	अगर (!(falcon = *pfalcon = kzalloc(माप(*falcon), GFP_KERNEL)))
+		वापस -ENOMEM;
 	nvkm_falcon_ctor(&nvkm_falcon_v1, owner, name, addr, falcon);
-	return 0;
-}
+	वापस 0;
+पूर्ण

@@ -1,47 +1,48 @@
-// SPDX-License-Identifier: GPL-2.0
-#include "../util.h"
-#include "gtk.h"
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश "../util.h"
+#समावेश "gtk.h"
 
-#include <stdlib.h>
-#include <string.h>
-#include <linux/zalloc.h>
+#समावेश <मानककोष.स>
+#समावेश <माला.स>
+#समावेश <linux/zभाग.स>
 
-struct perf_gtk_context *pgctx;
+काष्ठा perf_gtk_context *pgctx;
 
-struct perf_gtk_context *perf_gtk__activate_context(GtkWidget *window)
-{
-	struct perf_gtk_context *ctx;
+काष्ठा perf_gtk_context *perf_gtk__activate_context(GtkWidget *winकरोw)
+अणु
+	काष्ठा perf_gtk_context *ctx;
 
-	ctx = malloc(sizeof(*pgctx));
-	if (ctx)
-		ctx->main_window = window;
+	ctx = दो_स्मृति(माप(*pgctx));
+	अगर (ctx)
+		ctx->मुख्य_winकरोw = winकरोw;
 
-	return ctx;
-}
+	वापस ctx;
+पूर्ण
 
-int perf_gtk__deactivate_context(struct perf_gtk_context **ctx)
-{
-	if (!perf_gtk__is_active_context(*ctx))
-		return -1;
+पूर्णांक perf_gtk__deactivate_context(काष्ठा perf_gtk_context **ctx)
+अणु
+	अगर (!perf_gtk__is_active_context(*ctx))
+		वापस -1;
 
-	zfree(ctx);
-	return 0;
-}
+	zमुक्त(ctx);
+	वापस 0;
+पूर्ण
 
-static int perf_gtk__error(const char *format, va_list args)
-{
-	char *msg;
+अटल पूर्णांक perf_gtk__error(स्थिर अक्षर *क्रमmat, बहु_सूची args)
+अणु
+	अक्षर *msg;
 	GtkWidget *dialog;
 
-	if (!perf_gtk__is_active_context(pgctx) ||
-	    vasprintf(&msg, format, args) < 0) {
-		fprintf(stderr, "Error:\n");
-		vfprintf(stderr, format, args);
-		fprintf(stderr, "\n");
-		return -1;
-	}
+	अगर (!perf_gtk__is_active_context(pgctx) ||
+	    vaप्र_लिखो(&msg, क्रमmat, args) < 0) अणु
+		ख_लिखो(मानक_त्रुटि, "Error:\n");
+		भख_लिखो(मानक_त्रुटि, क्रमmat, args);
+		ख_लिखो(मानक_त्रुटि, "\n");
+		वापस -1;
+	पूर्ण
 
-	dialog = gtk_message_dialog_new_with_markup(GTK_WINDOW(pgctx->main_window),
+	dialog = gtk_message_dialog_new_with_markup(GTK_WINDOW(pgctx->मुख्य_winकरोw),
 					GTK_DIALOG_DESTROY_WITH_PARENT,
 					GTK_MESSAGE_ERROR,
 					GTK_BUTTONS_CLOSE,
@@ -49,65 +50,65 @@ static int perf_gtk__error(const char *format, va_list args)
 	gtk_dialog_run(GTK_DIALOG(dialog));
 
 	gtk_widget_destroy(dialog);
-	free(msg);
-	return 0;
-}
+	मुक्त(msg);
+	वापस 0;
+पूर्ण
 
-#ifdef HAVE_GTK_INFO_BAR_SUPPORT
-static int perf_gtk__warning_info_bar(const char *format, va_list args)
-{
-	char *msg;
+#अगर_घोषित HAVE_GTK_INFO_BAR_SUPPORT
+अटल पूर्णांक perf_gtk__warning_info_bar(स्थिर अक्षर *क्रमmat, बहु_सूची args)
+अणु
+	अक्षर *msg;
 
-	if (!perf_gtk__is_active_context(pgctx) ||
-	    vasprintf(&msg, format, args) < 0) {
-		fprintf(stderr, "Warning:\n");
-		vfprintf(stderr, format, args);
-		fprintf(stderr, "\n");
-		return -1;
-	}
+	अगर (!perf_gtk__is_active_context(pgctx) ||
+	    vaप्र_लिखो(&msg, क्रमmat, args) < 0) अणु
+		ख_लिखो(मानक_त्रुटि, "Warning:\n");
+		भख_लिखो(मानक_त्रुटि, क्रमmat, args);
+		ख_लिखो(मानक_त्रुटि, "\n");
+		वापस -1;
+	पूर्ण
 
 	gtk_label_set_text(GTK_LABEL(pgctx->message_label), msg);
 	gtk_info_bar_set_message_type(GTK_INFO_BAR(pgctx->info_bar),
 				      GTK_MESSAGE_WARNING);
 	gtk_widget_show(pgctx->info_bar);
 
-	free(msg);
-	return 0;
-}
-#else
-static int perf_gtk__warning_statusbar(const char *format, va_list args)
-{
-	char *msg, *p;
+	मुक्त(msg);
+	वापस 0;
+पूर्ण
+#अन्यथा
+अटल पूर्णांक perf_gtk__warning_statusbar(स्थिर अक्षर *क्रमmat, बहु_सूची args)
+अणु
+	अक्षर *msg, *p;
 
-	if (!perf_gtk__is_active_context(pgctx) ||
-	    vasprintf(&msg, format, args) < 0) {
-		fprintf(stderr, "Warning:\n");
-		vfprintf(stderr, format, args);
-		fprintf(stderr, "\n");
-		return -1;
-	}
+	अगर (!perf_gtk__is_active_context(pgctx) ||
+	    vaप्र_लिखो(&msg, क्रमmat, args) < 0) अणु
+		ख_लिखो(मानक_त्रुटि, "Warning:\n");
+		भख_लिखो(मानक_त्रुटि, क्रमmat, args);
+		ख_लिखो(मानक_त्रुटि, "\n");
+		वापस -1;
+	पूर्ण
 
 	gtk_statusbar_pop(GTK_STATUSBAR(pgctx->statbar),
 			  pgctx->statbar_ctx_id);
 
 	/* Only first line can be displayed */
-	p = strchr(msg, '\n');
-	if (p)
+	p = म_अक्षर(msg, '\n');
+	अगर (p)
 		*p = '\0';
 
 	gtk_statusbar_push(GTK_STATUSBAR(pgctx->statbar),
 			   pgctx->statbar_ctx_id, msg);
 
-	free(msg);
-	return 0;
-}
-#endif
+	मुक्त(msg);
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
-struct perf_error_ops perf_gtk_eops = {
+काष्ठा perf_error_ops perf_gtk_eops = अणु
 	.error		= perf_gtk__error,
-#ifdef HAVE_GTK_INFO_BAR_SUPPORT
+#अगर_घोषित HAVE_GTK_INFO_BAR_SUPPORT
 	.warning	= perf_gtk__warning_info_bar,
-#else
+#अन्यथा
 	.warning	= perf_gtk__warning_statusbar,
-#endif
-};
+#पूर्ण_अगर
+पूर्ण;

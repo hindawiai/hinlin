@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2017 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -22,176 +23,176 @@
  * Authors: AMD
  *
  */
-#include "dm_services.h"
-#include "custom_float.h"
+#समावेश "dm_services.h"
+#समावेश "custom_float.h"
 
 
-static bool build_custom_float(
-	struct fixed31_32 value,
-	const struct custom_float_format *format,
+अटल bool build_custom_भग्न(
+	काष्ठा fixed31_32 value,
+	स्थिर काष्ठा custom_भग्न_क्रमmat *क्रमmat,
 	bool *negative,
-	uint32_t *mantissa,
-	uint32_t *exponenta)
-{
-	uint32_t exp_offset = (1 << (format->exponenta_bits - 1)) - 1;
+	uपूर्णांक32_t *mantissa,
+	uपूर्णांक32_t *exponenta)
+अणु
+	uपूर्णांक32_t exp_offset = (1 << (क्रमmat->exponenta_bits - 1)) - 1;
 
-	const struct fixed31_32 mantissa_constant_plus_max_fraction =
+	स्थिर काष्ठा fixed31_32 mantissa_स्थिरant_plus_max_fraction =
 		dc_fixpt_from_fraction(
-			(1LL << (format->mantissa_bits + 1)) - 1,
-			1LL << format->mantissa_bits);
+			(1LL << (क्रमmat->mantissa_bits + 1)) - 1,
+			1LL << क्रमmat->mantissa_bits);
 
-	struct fixed31_32 mantiss;
+	काष्ठा fixed31_32 mantiss;
 
-	if (dc_fixpt_eq(
+	अगर (dc_fixpt_eq(
 		value,
-		dc_fixpt_zero)) {
+		dc_fixpt_zero)) अणु
 		*negative = false;
 		*mantissa = 0;
 		*exponenta = 0;
-		return true;
-	}
+		वापस true;
+	पूर्ण
 
-	if (dc_fixpt_lt(
+	अगर (dc_fixpt_lt(
 		value,
-		dc_fixpt_zero)) {
-		*negative = format->sign;
+		dc_fixpt_zero)) अणु
+		*negative = क्रमmat->sign;
 		value = dc_fixpt_neg(value);
-	} else {
+	पूर्ण अन्यथा अणु
 		*negative = false;
-	}
+	पूर्ण
 
-	if (dc_fixpt_lt(
+	अगर (dc_fixpt_lt(
 		value,
-		dc_fixpt_one)) {
-		uint32_t i = 1;
+		dc_fixpt_one)) अणु
+		uपूर्णांक32_t i = 1;
 
-		do {
+		करो अणु
 			value = dc_fixpt_shl(value, 1);
 			++i;
-		} while (dc_fixpt_lt(
+		पूर्ण जबतक (dc_fixpt_lt(
 			value,
 			dc_fixpt_one));
 
 		--i;
 
-		if (exp_offset <= i) {
+		अगर (exp_offset <= i) अणु
 			*mantissa = 0;
 			*exponenta = 0;
-			return true;
-		}
+			वापस true;
+		पूर्ण
 
 		*exponenta = exp_offset - i;
-	} else if (dc_fixpt_le(
-		mantissa_constant_plus_max_fraction,
-		value)) {
-		uint32_t i = 1;
+	पूर्ण अन्यथा अगर (dc_fixpt_le(
+		mantissa_स्थिरant_plus_max_fraction,
+		value)) अणु
+		uपूर्णांक32_t i = 1;
 
-		do {
+		करो अणु
 			value = dc_fixpt_shr(value, 1);
 			++i;
-		} while (dc_fixpt_lt(
-			mantissa_constant_plus_max_fraction,
+		पूर्ण जबतक (dc_fixpt_lt(
+			mantissa_स्थिरant_plus_max_fraction,
 			value));
 
 		*exponenta = exp_offset + i - 1;
-	} else {
+	पूर्ण अन्यथा अणु
 		*exponenta = exp_offset;
-	}
+	पूर्ण
 
 	mantiss = dc_fixpt_sub(
 		value,
 		dc_fixpt_one);
 
-	if (dc_fixpt_lt(
+	अगर (dc_fixpt_lt(
 			mantiss,
 			dc_fixpt_zero) ||
 		dc_fixpt_lt(
 			dc_fixpt_one,
 			mantiss))
 		mantiss = dc_fixpt_zero;
-	else
+	अन्यथा
 		mantiss = dc_fixpt_shl(
 			mantiss,
-			format->mantissa_bits);
+			क्रमmat->mantissa_bits);
 
-	*mantissa = dc_fixpt_floor(mantiss);
+	*mantissa = dc_fixpt_न्यूनमान(mantiss);
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static bool setup_custom_float(
-	const struct custom_float_format *format,
+अटल bool setup_custom_भग्न(
+	स्थिर काष्ठा custom_भग्न_क्रमmat *क्रमmat,
 	bool negative,
-	uint32_t mantissa,
-	uint32_t exponenta,
-	uint32_t *result)
-{
-	uint32_t i = 0;
-	uint32_t j = 0;
+	uपूर्णांक32_t mantissa,
+	uपूर्णांक32_t exponenta,
+	uपूर्णांक32_t *result)
+अणु
+	uपूर्णांक32_t i = 0;
+	uपूर्णांक32_t j = 0;
 
-	uint32_t value = 0;
+	uपूर्णांक32_t value = 0;
 
-	/* verification code:
-	 * once calculation is ok we can remove it
+	/* verअगरication code:
+	 * once calculation is ok we can हटाओ it
 	 */
 
-	const uint32_t mantissa_mask =
-		(1 << (format->mantissa_bits + 1)) - 1;
+	स्थिर uपूर्णांक32_t mantissa_mask =
+		(1 << (क्रमmat->mantissa_bits + 1)) - 1;
 
-	const uint32_t exponenta_mask =
-		(1 << (format->exponenta_bits + 1)) - 1;
+	स्थिर uपूर्णांक32_t exponenta_mask =
+		(1 << (क्रमmat->exponenta_bits + 1)) - 1;
 
-	if (mantissa & ~mantissa_mask) {
+	अगर (mantissa & ~mantissa_mask) अणु
 		BREAK_TO_DEBUGGER();
 		mantissa = mantissa_mask;
-	}
+	पूर्ण
 
-	if (exponenta & ~exponenta_mask) {
+	अगर (exponenta & ~exponenta_mask) अणु
 		BREAK_TO_DEBUGGER();
 		exponenta = exponenta_mask;
-	}
+	पूर्ण
 
-	/* end of verification code */
+	/* end of verअगरication code */
 
-	while (i < format->mantissa_bits) {
-		uint32_t mask = 1 << i;
+	जबतक (i < क्रमmat->mantissa_bits) अणु
+		uपूर्णांक32_t mask = 1 << i;
 
-		if (mantissa & mask)
+		अगर (mantissa & mask)
 			value |= mask;
 
 		++i;
-	}
+	पूर्ण
 
-	while (j < format->exponenta_bits) {
-		uint32_t mask = 1 << j;
+	जबतक (j < क्रमmat->exponenta_bits) अणु
+		uपूर्णांक32_t mask = 1 << j;
 
-		if (exponenta & mask)
+		अगर (exponenta & mask)
 			value |= mask << i;
 
 		++j;
-	}
+	पूर्ण
 
-	if (negative && format->sign)
+	अगर (negative && क्रमmat->sign)
 		value |= 1 << (i + j);
 
 	*result = value;
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-bool convert_to_custom_float_format(
-	struct fixed31_32 value,
-	const struct custom_float_format *format,
-	uint32_t *result)
-{
-	uint32_t mantissa;
-	uint32_t exponenta;
+bool convert_to_custom_भग्न_क्रमmat(
+	काष्ठा fixed31_32 value,
+	स्थिर काष्ठा custom_भग्न_क्रमmat *क्रमmat,
+	uपूर्णांक32_t *result)
+अणु
+	uपूर्णांक32_t mantissa;
+	uपूर्णांक32_t exponenta;
 	bool negative;
 
-	return build_custom_float(
-		value, format, &negative, &mantissa, &exponenta) &&
-	setup_custom_float(
-		format, negative, mantissa, exponenta, result);
-}
+	वापस build_custom_भग्न(
+		value, क्रमmat, &negative, &mantissa, &exponenta) &&
+	setup_custom_भग्न(
+		क्रमmat, negative, mantissa, exponenta, result);
+पूर्ण
 
 

@@ -1,83 +1,84 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <मानकपन.स>
+#समावेश <मानककोष.स>
+#समावेश <माला.स>
 
-#include "helpline.h"
-#include "ui.h"
+#समावेश "helpline.h"
+#समावेश "ui.h"
 
-char ui_helpline__current[512];
+अक्षर ui_helpline__current[512];
 
-static void nop_helpline__pop(void)
-{
-}
+अटल व्योम nop_helpline__pop(व्योम)
+अणु
+पूर्ण
 
-static void nop_helpline__push(const char *msg __maybe_unused)
-{
-}
+अटल व्योम nop_helpline__push(स्थिर अक्षर *msg __maybe_unused)
+अणु
+पूर्ण
 
-static int nop_helpline__show(const char *fmt __maybe_unused,
-			       va_list ap __maybe_unused)
-{
-	return 0;
-}
+अटल पूर्णांक nop_helpline__show(स्थिर अक्षर *fmt __maybe_unused,
+			       बहु_सूची ap __maybe_unused)
+अणु
+	वापस 0;
+पूर्ण
 
-static struct ui_helpline default_helpline_fns = {
+अटल काष्ठा ui_helpline शेष_helpline_fns = अणु
 	.pop	= nop_helpline__pop,
 	.push	= nop_helpline__push,
 	.show	= nop_helpline__show,
-};
+पूर्ण;
 
-struct ui_helpline *helpline_fns = &default_helpline_fns;
+काष्ठा ui_helpline *helpline_fns = &शेष_helpline_fns;
 
-void ui_helpline__pop(void)
-{
+व्योम ui_helpline__pop(व्योम)
+अणु
 	helpline_fns->pop();
-}
+पूर्ण
 
-void ui_helpline__push(const char *msg)
-{
+व्योम ui_helpline__push(स्थिर अक्षर *msg)
+अणु
 	helpline_fns->push(msg);
-}
+पूर्ण
 
-void ui_helpline__vpush(const char *fmt, va_list ap)
-{
-	char *s;
+व्योम ui_helpline__vpush(स्थिर अक्षर *fmt, बहु_सूची ap)
+अणु
+	अक्षर *s;
 
-	if (vasprintf(&s, fmt, ap) < 0)
-		vfprintf(stderr, fmt, ap);
-	else {
+	अगर (vaप्र_लिखो(&s, fmt, ap) < 0)
+		भख_लिखो(मानक_त्रुटि, fmt, ap);
+	अन्यथा अणु
 		ui_helpline__push(s);
-		free(s);
-	}
-}
+		मुक्त(s);
+	पूर्ण
+पूर्ण
 
-void ui_helpline__fpush(const char *fmt, ...)
-{
-	va_list ap;
+व्योम ui_helpline__fpush(स्थिर अक्षर *fmt, ...)
+अणु
+	बहु_सूची ap;
 
-	va_start(ap, fmt);
+	बहु_शुरू(ap, fmt);
 	ui_helpline__vpush(fmt, ap);
-	va_end(ap);
-}
+	बहु_पूर्ण(ap);
+पूर्ण
 
-void ui_helpline__puts(const char *msg)
-{
+व्योम ui_helpline__माला_दो(स्थिर अक्षर *msg)
+अणु
 	ui_helpline__pop();
 	ui_helpline__push(msg);
-}
+पूर्ण
 
-int ui_helpline__vshow(const char *fmt, va_list ap)
-{
-	return helpline_fns->show(fmt, ap);
-}
+पूर्णांक ui_helpline__vshow(स्थिर अक्षर *fmt, बहु_सूची ap)
+अणु
+	वापस helpline_fns->show(fmt, ap);
+पूर्ण
 
-void ui_helpline__printf(const char *fmt, ...)
-{
-	va_list ap;
+व्योम ui_helpline__म_लिखो(स्थिर अक्षर *fmt, ...)
+अणु
+	बहु_सूची ap;
 
 	ui_helpline__pop();
-	va_start(ap, fmt);
+	बहु_शुरू(ap, fmt);
 	ui_helpline__vpush(fmt, ap);
-	va_end(ap);
-}
+	बहु_पूर्ण(ap);
+पूर्ण

@@ -1,110 +1,111 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 // Copyright (C) STMicroelectronics 2018
-// Author: Pascal Paillet <p.paillet@st.com> for STMicroelectronics.
+// Author: Pascal Paillet <p.paillet@st.com> क्रम STMicroelectronics.
 
-#include <linux/input.h>
-#include <linux/interrupt.h>
-#include <linux/mfd/stpmic1.h>
-#include <linux/module.h>
-#include <linux/of.h>
-#include <linux/platform_device.h>
-#include <linux/property.h>
-#include <linux/regmap.h>
+#समावेश <linux/input.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/mfd/stpmic1.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/property.h>
+#समावेश <linux/regmap.h>
 
 /**
- * struct stpmic1_onkey - OnKey data
- * @input_dev:		pointer to input device
+ * काष्ठा stpmic1_onkey - OnKey data
+ * @input_dev:		poपूर्णांकer to input device
  * @irq_falling:	irq that we are hooked on to
  * @irq_rising:		irq that we are hooked on to
  */
-struct stpmic1_onkey {
-	struct input_dev *input_dev;
-	int irq_falling;
-	int irq_rising;
-};
+काष्ठा stpmic1_onkey अणु
+	काष्ठा input_dev *input_dev;
+	पूर्णांक irq_falling;
+	पूर्णांक irq_rising;
+पूर्ण;
 
-static irqreturn_t onkey_falling_irq(int irq, void *ponkey)
-{
-	struct stpmic1_onkey *onkey = ponkey;
-	struct input_dev *input_dev = onkey->input_dev;
+अटल irqवापस_t onkey_falling_irq(पूर्णांक irq, व्योम *ponkey)
+अणु
+	काष्ठा stpmic1_onkey *onkey = ponkey;
+	काष्ठा input_dev *input_dev = onkey->input_dev;
 
 	input_report_key(input_dev, KEY_POWER, 1);
 	pm_wakeup_event(input_dev->dev.parent, 0);
 	input_sync(input_dev);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static irqreturn_t onkey_rising_irq(int irq, void *ponkey)
-{
-	struct stpmic1_onkey *onkey = ponkey;
-	struct input_dev *input_dev = onkey->input_dev;
+अटल irqवापस_t onkey_rising_irq(पूर्णांक irq, व्योम *ponkey)
+अणु
+	काष्ठा stpmic1_onkey *onkey = ponkey;
+	काष्ठा input_dev *input_dev = onkey->input_dev;
 
 	input_report_key(input_dev, KEY_POWER, 0);
 	pm_wakeup_event(input_dev->dev.parent, 0);
 	input_sync(input_dev);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static int stpmic1_onkey_probe(struct platform_device *pdev)
-{
-	struct stpmic1 *pmic = dev_get_drvdata(pdev->dev.parent);
-	struct device *dev = &pdev->dev;
-	struct input_dev *input_dev;
-	struct stpmic1_onkey *onkey;
-	unsigned int val, reg = 0;
-	int error;
+अटल पूर्णांक stpmic1_onkey_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा stpmic1 *pmic = dev_get_drvdata(pdev->dev.parent);
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा input_dev *input_dev;
+	काष्ठा stpmic1_onkey *onkey;
+	अचिन्हित पूर्णांक val, reg = 0;
+	पूर्णांक error;
 
-	onkey = devm_kzalloc(dev, sizeof(*onkey), GFP_KERNEL);
-	if (!onkey)
-		return -ENOMEM;
+	onkey = devm_kzalloc(dev, माप(*onkey), GFP_KERNEL);
+	अगर (!onkey)
+		वापस -ENOMEM;
 
-	onkey->irq_falling = platform_get_irq_byname(pdev, "onkey-falling");
-	if (onkey->irq_falling < 0)
-		return onkey->irq_falling;
+	onkey->irq_falling = platक्रमm_get_irq_byname(pdev, "onkey-falling");
+	अगर (onkey->irq_falling < 0)
+		वापस onkey->irq_falling;
 
-	onkey->irq_rising = platform_get_irq_byname(pdev, "onkey-rising");
-	if (onkey->irq_rising < 0)
-		return onkey->irq_rising;
+	onkey->irq_rising = platक्रमm_get_irq_byname(pdev, "onkey-rising");
+	अगर (onkey->irq_rising < 0)
+		वापस onkey->irq_rising;
 
-	if (!device_property_read_u32(dev, "power-off-time-sec", &val)) {
-		if (val > 0 && val <= 16) {
+	अगर (!device_property_पढ़ो_u32(dev, "power-off-time-sec", &val)) अणु
+		अगर (val > 0 && val <= 16) अणु
 			dev_dbg(dev, "power-off-time=%d seconds\n", val);
 			reg |= PONKEY_PWR_OFF;
 			reg |= ((16 - val) & PONKEY_TURNOFF_TIMER_MASK);
-		} else {
+		पूर्ण अन्यथा अणु
 			dev_err(dev, "power-off-time-sec out of range\n");
-			return -EINVAL;
-		}
-	}
+			वापस -EINVAL;
+		पूर्ण
+	पूर्ण
 
-	if (device_property_present(dev, "st,onkey-clear-cc-flag"))
+	अगर (device_property_present(dev, "st,onkey-clear-cc-flag"))
 		reg |= PONKEY_CC_FLAG_CLEAR;
 
 	error = regmap_update_bits(pmic->regmap, PKEY_TURNOFF_CR,
 				   PONKEY_TURNOFF_MASK, reg);
-	if (error) {
+	अगर (error) अणु
 		dev_err(dev, "PKEY_TURNOFF_CR write failed: %d\n", error);
-		return error;
-	}
+		वापस error;
+	पूर्ण
 
-	if (device_property_present(dev, "st,onkey-pu-inactive")) {
+	अगर (device_property_present(dev, "st,onkey-pu-inactive")) अणु
 		error = regmap_update_bits(pmic->regmap, PADS_PULL_CR,
 					   PONKEY_PU_INACTIVE,
 					   PONKEY_PU_INACTIVE);
-		if (error) {
+		अगर (error) अणु
 			dev_err(dev, "ONKEY Pads configuration failed: %d\n",
 				error);
-			return error;
-		}
-	}
+			वापस error;
+		पूर्ण
+	पूर्ण
 
 	input_dev = devm_input_allocate_device(dev);
-	if (!input_dev) {
+	अगर (!input_dev) अणु
 		dev_err(dev, "Can't allocate Pwr Onkey Input Device\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	input_dev->name = "pmic_onkey";
 	input_dev->phys = "pmic_onkey/input0";
@@ -113,79 +114,79 @@ static int stpmic1_onkey_probe(struct platform_device *pdev)
 
 	onkey->input_dev = input_dev;
 
-	/* interrupt is nested in a thread */
-	error = devm_request_threaded_irq(dev, onkey->irq_falling, NULL,
+	/* पूर्णांकerrupt is nested in a thपढ़ो */
+	error = devm_request_thपढ़ोed_irq(dev, onkey->irq_falling, शून्य,
 					  onkey_falling_irq, IRQF_ONESHOT,
 					  dev_name(dev), onkey);
-	if (error) {
+	अगर (error) अणु
 		dev_err(dev, "Can't get IRQ Onkey Falling: %d\n", error);
-		return error;
-	}
+		वापस error;
+	पूर्ण
 
-	error = devm_request_threaded_irq(dev, onkey->irq_rising, NULL,
+	error = devm_request_thपढ़ोed_irq(dev, onkey->irq_rising, शून्य,
 					  onkey_rising_irq, IRQF_ONESHOT,
 					  dev_name(dev), onkey);
-	if (error) {
+	अगर (error) अणु
 		dev_err(dev, "Can't get IRQ Onkey Rising: %d\n", error);
-		return error;
-	}
+		वापस error;
+	पूर्ण
 
-	error = input_register_device(input_dev);
-	if (error) {
+	error = input_रेजिस्टर_device(input_dev);
+	अगर (error) अणु
 		dev_err(dev, "Can't register power button: %d\n", error);
-		return error;
-	}
+		वापस error;
+	पूर्ण
 
-	platform_set_drvdata(pdev, onkey);
+	platक्रमm_set_drvdata(pdev, onkey);
 	device_init_wakeup(dev, true);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __maybe_unused stpmic1_onkey_suspend(struct device *dev)
-{
-	struct platform_device *pdev = to_platform_device(dev);
-	struct stpmic1_onkey *onkey = platform_get_drvdata(pdev);
+अटल पूर्णांक __maybe_unused stpmic1_onkey_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा platक्रमm_device *pdev = to_platक्रमm_device(dev);
+	काष्ठा stpmic1_onkey *onkey = platक्रमm_get_drvdata(pdev);
 
-	if (device_may_wakeup(dev)) {
+	अगर (device_may_wakeup(dev)) अणु
 		enable_irq_wake(onkey->irq_falling);
 		enable_irq_wake(onkey->irq_rising);
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int __maybe_unused stpmic1_onkey_resume(struct device *dev)
-{
-	struct platform_device *pdev = to_platform_device(dev);
-	struct stpmic1_onkey *onkey = platform_get_drvdata(pdev);
+अटल पूर्णांक __maybe_unused stpmic1_onkey_resume(काष्ठा device *dev)
+अणु
+	काष्ठा platक्रमm_device *pdev = to_platक्रमm_device(dev);
+	काष्ठा stpmic1_onkey *onkey = platक्रमm_get_drvdata(pdev);
 
-	if (device_may_wakeup(dev)) {
+	अगर (device_may_wakeup(dev)) अणु
 		disable_irq_wake(onkey->irq_falling);
 		disable_irq_wake(onkey->irq_rising);
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static SIMPLE_DEV_PM_OPS(stpmic1_onkey_pm,
+अटल SIMPLE_DEV_PM_OPS(stpmic1_onkey_pm,
 			 stpmic1_onkey_suspend,
 			 stpmic1_onkey_resume);
 
-static const struct of_device_id of_stpmic1_onkey_match[] = {
-	{ .compatible = "st,stpmic1-onkey" },
-	{ },
-};
+अटल स्थिर काष्ठा of_device_id of_stpmic1_onkey_match[] = अणु
+	अणु .compatible = "st,stpmic1-onkey" पूर्ण,
+	अणु पूर्ण,
+पूर्ण;
 
 MODULE_DEVICE_TABLE(of, of_stpmic1_onkey_match);
 
-static struct platform_driver stpmic1_onkey_driver = {
+अटल काष्ठा platक्रमm_driver stpmic1_onkey_driver = अणु
 	.probe	= stpmic1_onkey_probe,
-	.driver	= {
+	.driver	= अणु
 		.name	= "stpmic1_onkey",
 		.of_match_table = of_match_ptr(of_stpmic1_onkey_match),
 		.pm	= &stpmic1_onkey_pm,
-	},
-};
-module_platform_driver(stpmic1_onkey_driver);
+	पूर्ण,
+पूर्ण;
+module_platक्रमm_driver(stpmic1_onkey_driver);
 
 MODULE_DESCRIPTION("Onkey driver for STPMIC1");
 MODULE_AUTHOR("Pascal Paillet <p.paillet@st.com>");

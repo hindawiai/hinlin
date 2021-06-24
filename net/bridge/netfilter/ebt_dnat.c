@@ -1,84 +1,85 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  *  ebt_dnat
  *
  *	Authors:
- *	Bart De Schuymer <bdschuym@pandora.be>
+ *	Bart De Schuymer <bdschuym@panकरोra.be>
  *
  *  June, 2002
  *
  */
-#include <linux/module.h>
-#include <net/sock.h>
-#include "../br_private.h"
-#include <linux/netfilter.h>
-#include <linux/netfilter/x_tables.h>
-#include <linux/netfilter_bridge/ebtables.h>
-#include <linux/netfilter_bridge/ebt_nat.h>
+#समावेश <linux/module.h>
+#समावेश <net/sock.h>
+#समावेश "../br_private.h"
+#समावेश <linux/netfilter.h>
+#समावेश <linux/netfilter/x_tables.h>
+#समावेश <linux/netfilter_bridge/ebtables.h>
+#समावेश <linux/netfilter_bridge/ebt_nat.h>
 
-static unsigned int
-ebt_dnat_tg(struct sk_buff *skb, const struct xt_action_param *par)
-{
-	const struct ebt_nat_info *info = par->targinfo;
+अटल अचिन्हित पूर्णांक
+ebt_dnat_tg(काष्ठा sk_buff *skb, स्थिर काष्ठा xt_action_param *par)
+अणु
+	स्थिर काष्ठा ebt_nat_info *info = par->targinfo;
 
-	if (skb_ensure_writable(skb, 0))
-		return EBT_DROP;
+	अगर (skb_ensure_writable(skb, 0))
+		वापस EBT_DROP;
 
 	ether_addr_copy(eth_hdr(skb)->h_dest, info->mac);
 
-	if (is_multicast_ether_addr(info->mac)) {
-		if (is_broadcast_ether_addr(info->mac))
+	अगर (is_multicast_ether_addr(info->mac)) अणु
+		अगर (is_broadcast_ether_addr(info->mac))
 			skb->pkt_type = PACKET_BROADCAST;
-		else
+		अन्यथा
 			skb->pkt_type = PACKET_MULTICAST;
-	} else {
-		const struct net_device *dev;
+	पूर्ण अन्यथा अणु
+		स्थिर काष्ठा net_device *dev;
 
-		switch (xt_hooknum(par)) {
-		case NF_BR_BROUTING:
+		चयन (xt_hooknum(par)) अणु
+		हाल NF_BR_BROUTING:
 			dev = xt_in(par);
-			break;
-		case NF_BR_PRE_ROUTING:
+			अवरोध;
+		हाल NF_BR_PRE_ROUTING:
 			dev = br_port_get_rcu(xt_in(par))->br->dev;
-			break;
-		default:
-			dev = NULL;
-			break;
-		}
+			अवरोध;
+		शेष:
+			dev = शून्य;
+			अवरोध;
+		पूर्ण
 
-		if (!dev) /* NF_BR_LOCAL_OUT */
-			return info->target;
+		अगर (!dev) /* NF_BR_LOCAL_OUT */
+			वापस info->target;
 
-		if (ether_addr_equal(info->mac, dev->dev_addr))
+		अगर (ether_addr_equal(info->mac, dev->dev_addr))
 			skb->pkt_type = PACKET_HOST;
-		else
+		अन्यथा
 			skb->pkt_type = PACKET_OTHERHOST;
-	}
+	पूर्ण
 
-	return info->target;
-}
+	वापस info->target;
+पूर्ण
 
-static int ebt_dnat_tg_check(const struct xt_tgchk_param *par)
-{
-	const struct ebt_nat_info *info = par->targinfo;
-	unsigned int hook_mask;
+अटल पूर्णांक ebt_dnat_tg_check(स्थिर काष्ठा xt_tgchk_param *par)
+अणु
+	स्थिर काष्ठा ebt_nat_info *info = par->targinfo;
+	अचिन्हित पूर्णांक hook_mask;
 
-	if (BASE_CHAIN && info->target == EBT_RETURN)
-		return -EINVAL;
+	अगर (BASE_CHAIN && info->target == EBT_RETURN)
+		वापस -EINVAL;
 
 	hook_mask = par->hook_mask & ~(1 << NF_BR_NUMHOOKS);
-	if ((strcmp(par->table, "nat") != 0 ||
+	अगर ((म_भेद(par->table, "nat") != 0 ||
 	    (hook_mask & ~((1 << NF_BR_PRE_ROUTING) |
 	    (1 << NF_BR_LOCAL_OUT)))) &&
-	    (strcmp(par->table, "broute") != 0 ||
+	    (म_भेद(par->table, "broute") != 0 ||
 	    hook_mask & ~(1 << NF_BR_BROUTING)))
-		return -EINVAL;
-	if (ebt_invalid_target(info->target))
-		return -EINVAL;
-	return 0;
-}
+		वापस -EINVAL;
+	अगर (ebt_invalid_target(info->target))
+		वापस -EINVAL;
+	वापस 0;
+पूर्ण
 
-static struct xt_target ebt_dnat_tg_reg __read_mostly = {
+अटल काष्ठा xt_target ebt_dnat_tg_reg __पढ़ो_mostly = अणु
 	.name		= "dnat",
 	.revision	= 0,
 	.family		= NFPROTO_BRIDGE,
@@ -86,21 +87,21 @@ static struct xt_target ebt_dnat_tg_reg __read_mostly = {
 			  (1 << NF_BR_LOCAL_OUT) | (1 << NF_BR_BROUTING),
 	.target		= ebt_dnat_tg,
 	.checkentry	= ebt_dnat_tg_check,
-	.targetsize	= sizeof(struct ebt_nat_info),
+	.tarमाला_लोize	= माप(काष्ठा ebt_nat_info),
 	.me		= THIS_MODULE,
-};
+पूर्ण;
 
-static int __init ebt_dnat_init(void)
-{
-	return xt_register_target(&ebt_dnat_tg_reg);
-}
+अटल पूर्णांक __init ebt_dnat_init(व्योम)
+अणु
+	वापस xt_रेजिस्टर_target(&ebt_dnat_tg_reg);
+पूर्ण
 
-static void __exit ebt_dnat_fini(void)
-{
-	xt_unregister_target(&ebt_dnat_tg_reg);
-}
+अटल व्योम __निकास ebt_dnat_fini(व्योम)
+अणु
+	xt_unरेजिस्टर_target(&ebt_dnat_tg_reg);
+पूर्ण
 
 module_init(ebt_dnat_init);
-module_exit(ebt_dnat_fini);
+module_निकास(ebt_dnat_fini);
 MODULE_DESCRIPTION("Ebtables: Destination MAC address translation");
 MODULE_LICENSE("GPL");

@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (c) 2008-2009 Patrick McHardy <kaber@trash.net>
  * Copyright (c) 2012-2014 Pablo Neira Ayuso <pablo@netfilter.org>
@@ -6,312 +7,312 @@
  * Development of this code funded by Astaro AG (http://www.astaro.com/)
  */
 
-#include <linux/audit.h>
-#include <linux/kernel.h>
-#include <linux/init.h>
-#include <linux/module.h>
-#include <linux/netlink.h>
-#include <linux/netfilter.h>
-#include <linux/netfilter/nf_tables.h>
-#include <net/ipv6.h>
-#include <net/ip.h>
-#include <net/netfilter/nf_tables.h>
-#include <net/netfilter/nf_log.h>
-#include <linux/netdevice.h>
+#समावेश <linux/audit.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/init.h>
+#समावेश <linux/module.h>
+#समावेश <linux/netlink.h>
+#समावेश <linux/netfilter.h>
+#समावेश <linux/netfilter/nf_tables.h>
+#समावेश <net/ipv6.h>
+#समावेश <net/ip.h>
+#समावेश <net/netfilter/nf_tables.h>
+#समावेश <net/netfilter/nf_log.h>
+#समावेश <linux/netdevice.h>
 
-static const char *nft_log_null_prefix = "";
+अटल स्थिर अक्षर *nft_log_null_prefix = "";
 
-struct nft_log {
-	struct nf_loginfo	loginfo;
-	char			*prefix;
-};
+काष्ठा nft_log अणु
+	काष्ठा nf_loginfo	loginfo;
+	अक्षर			*prefix;
+पूर्ण;
 
-static bool audit_ip4(struct audit_buffer *ab, struct sk_buff *skb)
-{
-	struct iphdr _iph;
-	const struct iphdr *ih;
+अटल bool audit_ip4(काष्ठा audit_buffer *ab, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा iphdr _iph;
+	स्थिर काष्ठा iphdr *ih;
 
-	ih = skb_header_pointer(skb, skb_network_offset(skb), sizeof(_iph), &_iph);
-	if (!ih)
-		return false;
+	ih = skb_header_poपूर्णांकer(skb, skb_network_offset(skb), माप(_iph), &_iph);
+	अगर (!ih)
+		वापस false;
 
-	audit_log_format(ab, " saddr=%pI4 daddr=%pI4 proto=%hhu",
+	audit_log_क्रमmat(ab, " saddr=%pI4 daddr=%pI4 proto=%hhu",
 			 &ih->saddr, &ih->daddr, ih->protocol);
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static bool audit_ip6(struct audit_buffer *ab, struct sk_buff *skb)
-{
-	struct ipv6hdr _ip6h;
-	const struct ipv6hdr *ih;
+अटल bool audit_ip6(काष्ठा audit_buffer *ab, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा ipv6hdr _ip6h;
+	स्थिर काष्ठा ipv6hdr *ih;
 	u8 nexthdr;
 	__be16 frag_off;
 
-	ih = skb_header_pointer(skb, skb_network_offset(skb), sizeof(_ip6h), &_ip6h);
-	if (!ih)
-		return false;
+	ih = skb_header_poपूर्णांकer(skb, skb_network_offset(skb), माप(_ip6h), &_ip6h);
+	अगर (!ih)
+		वापस false;
 
 	nexthdr = ih->nexthdr;
-	ipv6_skip_exthdr(skb, skb_network_offset(skb) + sizeof(_ip6h), &nexthdr, &frag_off);
+	ipv6_skip_exthdr(skb, skb_network_offset(skb) + माप(_ip6h), &nexthdr, &frag_off);
 
-	audit_log_format(ab, " saddr=%pI6c daddr=%pI6c proto=%hhu",
+	audit_log_क्रमmat(ab, " saddr=%pI6c daddr=%pI6c proto=%hhu",
 			 &ih->saddr, &ih->daddr, nexthdr);
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static void nft_log_eval_audit(const struct nft_pktinfo *pkt)
-{
-	struct sk_buff *skb = pkt->skb;
-	struct audit_buffer *ab;
-	int fam = -1;
+अटल व्योम nft_log_eval_audit(स्थिर काष्ठा nft_pktinfo *pkt)
+अणु
+	काष्ठा sk_buff *skb = pkt->skb;
+	काष्ठा audit_buffer *ab;
+	पूर्णांक fam = -1;
 
-	if (!audit_enabled)
-		return;
+	अगर (!audit_enabled)
+		वापस;
 
-	ab = audit_log_start(NULL, GFP_ATOMIC, AUDIT_NETFILTER_PKT);
-	if (!ab)
-		return;
+	ab = audit_log_start(शून्य, GFP_ATOMIC, AUDIT_NETFILTER_PKT);
+	अगर (!ab)
+		वापस;
 
-	audit_log_format(ab, "mark=%#x", skb->mark);
+	audit_log_क्रमmat(ab, "mark=%#x", skb->mark);
 
-	switch (nft_pf(pkt)) {
-	case NFPROTO_BRIDGE:
-		switch (eth_hdr(skb)->h_proto) {
-		case htons(ETH_P_IP):
+	चयन (nft_pf(pkt)) अणु
+	हाल NFPROTO_BRIDGE:
+		चयन (eth_hdr(skb)->h_proto) अणु
+		हाल htons(ETH_P_IP):
 			fam = audit_ip4(ab, skb) ? NFPROTO_IPV4 : -1;
-			break;
-		case htons(ETH_P_IPV6):
+			अवरोध;
+		हाल htons(ETH_P_IPV6):
 			fam = audit_ip6(ab, skb) ? NFPROTO_IPV6 : -1;
-			break;
-		}
-		break;
-	case NFPROTO_IPV4:
+			अवरोध;
+		पूर्ण
+		अवरोध;
+	हाल NFPROTO_IPV4:
 		fam = audit_ip4(ab, skb) ? NFPROTO_IPV4 : -1;
-		break;
-	case NFPROTO_IPV6:
+		अवरोध;
+	हाल NFPROTO_IPV6:
 		fam = audit_ip6(ab, skb) ? NFPROTO_IPV6 : -1;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	if (fam == -1)
-		audit_log_format(ab, " saddr=? daddr=? proto=-1");
+	अगर (fam == -1)
+		audit_log_क्रमmat(ab, " saddr=? daddr=? proto=-1");
 
 	audit_log_end(ab);
-}
+पूर्ण
 
-static void nft_log_eval(const struct nft_expr *expr,
-			 struct nft_regs *regs,
-			 const struct nft_pktinfo *pkt)
-{
-	const struct nft_log *priv = nft_expr_priv(expr);
+अटल व्योम nft_log_eval(स्थिर काष्ठा nft_expr *expr,
+			 काष्ठा nft_regs *regs,
+			 स्थिर काष्ठा nft_pktinfo *pkt)
+अणु
+	स्थिर काष्ठा nft_log *priv = nft_expr_priv(expr);
 
-	if (priv->loginfo.type == NF_LOG_TYPE_LOG &&
-	    priv->loginfo.u.log.level == NFT_LOGLEVEL_AUDIT) {
+	अगर (priv->loginfo.type == NF_LOG_TYPE_LOG &&
+	    priv->loginfo.u.log.level == NFT_LOGLEVEL_AUDIT) अणु
 		nft_log_eval_audit(pkt);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	nf_log_packet(nft_net(pkt), nft_pf(pkt), nft_hook(pkt), pkt->skb,
 		      nft_in(pkt), nft_out(pkt), &priv->loginfo, "%s",
 		      priv->prefix);
-}
+पूर्ण
 
-static const struct nla_policy nft_log_policy[NFTA_LOG_MAX + 1] = {
-	[NFTA_LOG_GROUP]	= { .type = NLA_U16 },
-	[NFTA_LOG_PREFIX]	= { .type = NLA_STRING,
-				    .len = NF_LOG_PREFIXLEN - 1 },
-	[NFTA_LOG_SNAPLEN]	= { .type = NLA_U32 },
-	[NFTA_LOG_QTHRESHOLD]	= { .type = NLA_U16 },
-	[NFTA_LOG_LEVEL]	= { .type = NLA_U32 },
-	[NFTA_LOG_FLAGS]	= { .type = NLA_U32 },
-};
+अटल स्थिर काष्ठा nla_policy nft_log_policy[NFTA_LOG_MAX + 1] = अणु
+	[NFTA_LOG_GROUP]	= अणु .type = NLA_U16 पूर्ण,
+	[NFTA_LOG_PREFIX]	= अणु .type = NLA_STRING,
+				    .len = NF_LOG_PREFIXLEN - 1 पूर्ण,
+	[NFTA_LOG_SNAPLEN]	= अणु .type = NLA_U32 पूर्ण,
+	[NFTA_LOG_QTHRESHOLD]	= अणु .type = NLA_U16 पूर्ण,
+	[NFTA_LOG_LEVEL]	= अणु .type = NLA_U32 पूर्ण,
+	[NFTA_LOG_FLAGS]	= अणु .type = NLA_U32 पूर्ण,
+पूर्ण;
 
-static int nft_log_modprobe(struct net *net, enum nf_log_type t)
-{
-	switch (t) {
-	case NF_LOG_TYPE_LOG:
-		return nft_request_module(net, "%s", "nf_log_syslog");
-	case NF_LOG_TYPE_ULOG:
-		return nft_request_module(net, "%s", "nfnetlink_log");
-	case NF_LOG_TYPE_MAX:
-		break;
-	}
+अटल पूर्णांक nft_log_modprobe(काष्ठा net *net, क्रमागत nf_log_type t)
+अणु
+	चयन (t) अणु
+	हाल NF_LOG_TYPE_LOG:
+		वापस nft_request_module(net, "%s", "nf_log_syslog");
+	हाल NF_LOG_TYPE_ULOG:
+		वापस nft_request_module(net, "%s", "nfnetlink_log");
+	हाल NF_LOG_TYPE_MAX:
+		अवरोध;
+	पूर्ण
 
-	return -ENOENT;
-}
+	वापस -ENOENT;
+पूर्ण
 
-static int nft_log_init(const struct nft_ctx *ctx,
-			const struct nft_expr *expr,
-			const struct nlattr * const tb[])
-{
-	struct nft_log *priv = nft_expr_priv(expr);
-	struct nf_loginfo *li = &priv->loginfo;
-	const struct nlattr *nla;
-	int err;
+अटल पूर्णांक nft_log_init(स्थिर काष्ठा nft_ctx *ctx,
+			स्थिर काष्ठा nft_expr *expr,
+			स्थिर काष्ठा nlattr * स्थिर tb[])
+अणु
+	काष्ठा nft_log *priv = nft_expr_priv(expr);
+	काष्ठा nf_loginfo *li = &priv->loginfo;
+	स्थिर काष्ठा nlattr *nla;
+	पूर्णांक err;
 
 	li->type = NF_LOG_TYPE_LOG;
-	if (tb[NFTA_LOG_LEVEL] != NULL &&
-	    tb[NFTA_LOG_GROUP] != NULL)
-		return -EINVAL;
-	if (tb[NFTA_LOG_GROUP] != NULL) {
+	अगर (tb[NFTA_LOG_LEVEL] != शून्य &&
+	    tb[NFTA_LOG_GROUP] != शून्य)
+		वापस -EINVAL;
+	अगर (tb[NFTA_LOG_GROUP] != शून्य) अणु
 		li->type = NF_LOG_TYPE_ULOG;
-		if (tb[NFTA_LOG_FLAGS] != NULL)
-			return -EINVAL;
-	}
+		अगर (tb[NFTA_LOG_FLAGS] != शून्य)
+			वापस -EINVAL;
+	पूर्ण
 
 	nla = tb[NFTA_LOG_PREFIX];
-	if (nla != NULL) {
-		priv->prefix = kmalloc(nla_len(nla) + 1, GFP_KERNEL);
-		if (priv->prefix == NULL)
-			return -ENOMEM;
+	अगर (nla != शून्य) अणु
+		priv->prefix = kदो_स्मृति(nla_len(nla) + 1, GFP_KERNEL);
+		अगर (priv->prefix == शून्य)
+			वापस -ENOMEM;
 		nla_strscpy(priv->prefix, nla, nla_len(nla) + 1);
-	} else {
-		priv->prefix = (char *)nft_log_null_prefix;
-	}
+	पूर्ण अन्यथा अणु
+		priv->prefix = (अक्षर *)nft_log_null_prefix;
+	पूर्ण
 
-	switch (li->type) {
-	case NF_LOG_TYPE_LOG:
-		if (tb[NFTA_LOG_LEVEL] != NULL) {
+	चयन (li->type) अणु
+	हाल NF_LOG_TYPE_LOG:
+		अगर (tb[NFTA_LOG_LEVEL] != शून्य) अणु
 			li->u.log.level =
 				ntohl(nla_get_be32(tb[NFTA_LOG_LEVEL]));
-		} else {
+		पूर्ण अन्यथा अणु
 			li->u.log.level = NFT_LOGLEVEL_WARNING;
-		}
-		if (li->u.log.level > NFT_LOGLEVEL_AUDIT) {
+		पूर्ण
+		अगर (li->u.log.level > NFT_LOGLEVEL_AUDIT) अणु
 			err = -EINVAL;
-			goto err1;
-		}
+			जाओ err1;
+		पूर्ण
 
-		if (tb[NFTA_LOG_FLAGS] != NULL) {
+		अगर (tb[NFTA_LOG_FLAGS] != शून्य) अणु
 			li->u.log.logflags =
 				ntohl(nla_get_be32(tb[NFTA_LOG_FLAGS]));
-			if (li->u.log.logflags & ~NF_LOG_MASK) {
+			अगर (li->u.log.logflags & ~NF_LOG_MASK) अणु
 				err = -EINVAL;
-				goto err1;
-			}
-		}
-		break;
-	case NF_LOG_TYPE_ULOG:
+				जाओ err1;
+			पूर्ण
+		पूर्ण
+		अवरोध;
+	हाल NF_LOG_TYPE_ULOG:
 		li->u.ulog.group = ntohs(nla_get_be16(tb[NFTA_LOG_GROUP]));
-		if (tb[NFTA_LOG_SNAPLEN] != NULL) {
+		अगर (tb[NFTA_LOG_SNAPLEN] != शून्य) अणु
 			li->u.ulog.flags |= NF_LOG_F_COPY_LEN;
 			li->u.ulog.copy_len =
 				ntohl(nla_get_be32(tb[NFTA_LOG_SNAPLEN]));
-		}
-		if (tb[NFTA_LOG_QTHRESHOLD] != NULL) {
+		पूर्ण
+		अगर (tb[NFTA_LOG_QTHRESHOLD] != शून्य) अणु
 			li->u.ulog.qthreshold =
 				ntohs(nla_get_be16(tb[NFTA_LOG_QTHRESHOLD]));
-		}
-		break;
-	}
+		पूर्ण
+		अवरोध;
+	पूर्ण
 
-	if (li->u.log.level == NFT_LOGLEVEL_AUDIT)
-		return 0;
+	अगर (li->u.log.level == NFT_LOGLEVEL_AUDIT)
+		वापस 0;
 
 	err = nf_logger_find_get(ctx->family, li->type);
-	if (err < 0) {
-		if (nft_log_modprobe(ctx->net, li->type) == -EAGAIN)
+	अगर (err < 0) अणु
+		अगर (nft_log_modprobe(ctx->net, li->type) == -EAGAIN)
 			err = -EAGAIN;
 
-		goto err1;
-	}
+		जाओ err1;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 err1:
-	if (priv->prefix != nft_log_null_prefix)
-		kfree(priv->prefix);
-	return err;
-}
+	अगर (priv->prefix != nft_log_null_prefix)
+		kमुक्त(priv->prefix);
+	वापस err;
+पूर्ण
 
-static void nft_log_destroy(const struct nft_ctx *ctx,
-			    const struct nft_expr *expr)
-{
-	struct nft_log *priv = nft_expr_priv(expr);
-	struct nf_loginfo *li = &priv->loginfo;
+अटल व्योम nft_log_destroy(स्थिर काष्ठा nft_ctx *ctx,
+			    स्थिर काष्ठा nft_expr *expr)
+अणु
+	काष्ठा nft_log *priv = nft_expr_priv(expr);
+	काष्ठा nf_loginfo *li = &priv->loginfo;
 
-	if (priv->prefix != nft_log_null_prefix)
-		kfree(priv->prefix);
+	अगर (priv->prefix != nft_log_null_prefix)
+		kमुक्त(priv->prefix);
 
-	if (li->u.log.level == NFT_LOGLEVEL_AUDIT)
-		return;
+	अगर (li->u.log.level == NFT_LOGLEVEL_AUDIT)
+		वापस;
 
 	nf_logger_put(ctx->family, li->type);
-}
+पूर्ण
 
-static int nft_log_dump(struct sk_buff *skb, const struct nft_expr *expr)
-{
-	const struct nft_log *priv = nft_expr_priv(expr);
-	const struct nf_loginfo *li = &priv->loginfo;
+अटल पूर्णांक nft_log_dump(काष्ठा sk_buff *skb, स्थिर काष्ठा nft_expr *expr)
+अणु
+	स्थिर काष्ठा nft_log *priv = nft_expr_priv(expr);
+	स्थिर काष्ठा nf_loginfo *li = &priv->loginfo;
 
-	if (priv->prefix != nft_log_null_prefix)
-		if (nla_put_string(skb, NFTA_LOG_PREFIX, priv->prefix))
-			goto nla_put_failure;
-	switch (li->type) {
-	case NF_LOG_TYPE_LOG:
-		if (nla_put_be32(skb, NFTA_LOG_LEVEL, htonl(li->u.log.level)))
-			goto nla_put_failure;
+	अगर (priv->prefix != nft_log_null_prefix)
+		अगर (nla_put_string(skb, NFTA_LOG_PREFIX, priv->prefix))
+			जाओ nla_put_failure;
+	चयन (li->type) अणु
+	हाल NF_LOG_TYPE_LOG:
+		अगर (nla_put_be32(skb, NFTA_LOG_LEVEL, htonl(li->u.log.level)))
+			जाओ nla_put_failure;
 
-		if (li->u.log.logflags) {
-			if (nla_put_be32(skb, NFTA_LOG_FLAGS,
+		अगर (li->u.log.logflags) अणु
+			अगर (nla_put_be32(skb, NFTA_LOG_FLAGS,
 					 htonl(li->u.log.logflags)))
-				goto nla_put_failure;
-		}
-		break;
-	case NF_LOG_TYPE_ULOG:
-		if (nla_put_be16(skb, NFTA_LOG_GROUP, htons(li->u.ulog.group)))
-			goto nla_put_failure;
+				जाओ nla_put_failure;
+		पूर्ण
+		अवरोध;
+	हाल NF_LOG_TYPE_ULOG:
+		अगर (nla_put_be16(skb, NFTA_LOG_GROUP, htons(li->u.ulog.group)))
+			जाओ nla_put_failure;
 
-		if (li->u.ulog.flags & NF_LOG_F_COPY_LEN) {
-			if (nla_put_be32(skb, NFTA_LOG_SNAPLEN,
+		अगर (li->u.ulog.flags & NF_LOG_F_COPY_LEN) अणु
+			अगर (nla_put_be32(skb, NFTA_LOG_SNAPLEN,
 					 htonl(li->u.ulog.copy_len)))
-				goto nla_put_failure;
-		}
-		if (li->u.ulog.qthreshold) {
-			if (nla_put_be16(skb, NFTA_LOG_QTHRESHOLD,
+				जाओ nla_put_failure;
+		पूर्ण
+		अगर (li->u.ulog.qthreshold) अणु
+			अगर (nla_put_be16(skb, NFTA_LOG_QTHRESHOLD,
 					 htons(li->u.ulog.qthreshold)))
-				goto nla_put_failure;
-		}
-		break;
-	}
-	return 0;
+				जाओ nla_put_failure;
+		पूर्ण
+		अवरोध;
+	पूर्ण
+	वापस 0;
 
 nla_put_failure:
-	return -1;
-}
+	वापस -1;
+पूर्ण
 
-static struct nft_expr_type nft_log_type;
-static const struct nft_expr_ops nft_log_ops = {
+अटल काष्ठा nft_expr_type nft_log_type;
+अटल स्थिर काष्ठा nft_expr_ops nft_log_ops = अणु
 	.type		= &nft_log_type,
-	.size		= NFT_EXPR_SIZE(sizeof(struct nft_log)),
+	.size		= NFT_EXPR_SIZE(माप(काष्ठा nft_log)),
 	.eval		= nft_log_eval,
 	.init		= nft_log_init,
 	.destroy	= nft_log_destroy,
 	.dump		= nft_log_dump,
-};
+पूर्ण;
 
-static struct nft_expr_type nft_log_type __read_mostly = {
+अटल काष्ठा nft_expr_type nft_log_type __पढ़ो_mostly = अणु
 	.name		= "log",
 	.ops		= &nft_log_ops,
 	.policy		= nft_log_policy,
 	.maxattr	= NFTA_LOG_MAX,
 	.owner		= THIS_MODULE,
-};
+पूर्ण;
 
-static int __init nft_log_module_init(void)
-{
-	return nft_register_expr(&nft_log_type);
-}
+अटल पूर्णांक __init nft_log_module_init(व्योम)
+अणु
+	वापस nft_रेजिस्टर_expr(&nft_log_type);
+पूर्ण
 
-static void __exit nft_log_module_exit(void)
-{
-	nft_unregister_expr(&nft_log_type);
-}
+अटल व्योम __निकास nft_log_module_निकास(व्योम)
+अणु
+	nft_unरेजिस्टर_expr(&nft_log_type);
+पूर्ण
 
 module_init(nft_log_module_init);
-module_exit(nft_log_module_exit);
+module_निकास(nft_log_module_निकास);
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Patrick McHardy <kaber@trash.net>");

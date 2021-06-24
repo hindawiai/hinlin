@@ -1,101 +1,102 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Freescale MPL115A1 pressure/temperature sensor
  *
  * Copyright (c) 2016 Akinobu Mita <akinobu.mita@gmail.com>
  *
- * Datasheet: http://www.nxp.com/files/sensors/doc/data_sheet/MPL115A1.pdf
+ * Datasheet: http://www.nxp.com/files/sensors/करोc/data_sheet/MPL115A1.pdf
  */
 
-#include <linux/module.h>
-#include <linux/spi/spi.h>
+#समावेश <linux/module.h>
+#समावेश <linux/spi/spi.h>
 
-#include "mpl115.h"
+#समावेश "mpl115.h"
 
-#define MPL115_SPI_WRITE(address)	((address) << 1)
-#define MPL115_SPI_READ(address)	(0x80 | (address) << 1)
+#घोषणा MPL115_SPI_WRITE(address)	((address) << 1)
+#घोषणा MPL115_SPI_READ(address)	(0x80 | (address) << 1)
 
-struct mpl115_spi_buf {
+काष्ठा mpl115_spi_buf अणु
 	u8 tx[4];
 	u8 rx[4];
-};
+पूर्ण;
 
-static int mpl115_spi_init(struct device *dev)
-{
-	struct spi_device *spi = to_spi_device(dev);
-	struct mpl115_spi_buf *buf;
+अटल पूर्णांक mpl115_spi_init(काष्ठा device *dev)
+अणु
+	काष्ठा spi_device *spi = to_spi_device(dev);
+	काष्ठा mpl115_spi_buf *buf;
 
-	buf = devm_kzalloc(dev, sizeof(*buf), GFP_KERNEL);
-	if (!buf)
-		return -ENOMEM;
+	buf = devm_kzalloc(dev, माप(*buf), GFP_KERNEL);
+	अगर (!buf)
+		वापस -ENOMEM;
 
 	spi_set_drvdata(spi, buf);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mpl115_spi_read(struct device *dev, u8 address)
-{
-	struct spi_device *spi = to_spi_device(dev);
-	struct mpl115_spi_buf *buf = spi_get_drvdata(spi);
-	struct spi_transfer xfer = {
+अटल पूर्णांक mpl115_spi_पढ़ो(काष्ठा device *dev, u8 address)
+अणु
+	काष्ठा spi_device *spi = to_spi_device(dev);
+	काष्ठा mpl115_spi_buf *buf = spi_get_drvdata(spi);
+	काष्ठा spi_transfer xfer = अणु
 		.tx_buf = buf->tx,
 		.rx_buf = buf->rx,
 		.len = 4,
-	};
-	int ret;
+	पूर्ण;
+	पूर्णांक ret;
 
 	buf->tx[0] = MPL115_SPI_READ(address);
 	buf->tx[2] = MPL115_SPI_READ(address + 1);
 
 	ret = spi_sync_transfer(spi, &xfer, 1);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	return (buf->rx[1] << 8) | buf->rx[3];
-}
+	वापस (buf->rx[1] << 8) | buf->rx[3];
+पूर्ण
 
-static int mpl115_spi_write(struct device *dev, u8 address, u8 value)
-{
-	struct spi_device *spi = to_spi_device(dev);
-	struct mpl115_spi_buf *buf = spi_get_drvdata(spi);
-	struct spi_transfer xfer = {
+अटल पूर्णांक mpl115_spi_ग_लिखो(काष्ठा device *dev, u8 address, u8 value)
+अणु
+	काष्ठा spi_device *spi = to_spi_device(dev);
+	काष्ठा mpl115_spi_buf *buf = spi_get_drvdata(spi);
+	काष्ठा spi_transfer xfer = अणु
 		.tx_buf = buf->tx,
 		.len = 2,
-	};
+	पूर्ण;
 
 	buf->tx[0] = MPL115_SPI_WRITE(address);
 	buf->tx[1] = value;
 
-	return spi_sync_transfer(spi, &xfer, 1);
-}
+	वापस spi_sync_transfer(spi, &xfer, 1);
+पूर्ण
 
-static const struct mpl115_ops mpl115_spi_ops = {
+अटल स्थिर काष्ठा mpl115_ops mpl115_spi_ops = अणु
 	.init = mpl115_spi_init,
-	.read = mpl115_spi_read,
-	.write = mpl115_spi_write,
-};
+	.पढ़ो = mpl115_spi_पढ़ो,
+	.ग_लिखो = mpl115_spi_ग_लिखो,
+पूर्ण;
 
-static int mpl115_spi_probe(struct spi_device *spi)
-{
-	const struct spi_device_id *id = spi_get_device_id(spi);
+अटल पूर्णांक mpl115_spi_probe(काष्ठा spi_device *spi)
+अणु
+	स्थिर काष्ठा spi_device_id *id = spi_get_device_id(spi);
 
-	return mpl115_probe(&spi->dev, id->name, &mpl115_spi_ops);
-}
+	वापस mpl115_probe(&spi->dev, id->name, &mpl115_spi_ops);
+पूर्ण
 
-static const struct spi_device_id mpl115_spi_ids[] = {
-	{ "mpl115", 0 },
-	{}
-};
+अटल स्थिर काष्ठा spi_device_id mpl115_spi_ids[] = अणु
+	अणु "mpl115", 0 पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(spi, mpl115_spi_ids);
 
-static struct spi_driver mpl115_spi_driver = {
-	.driver = {
+अटल काष्ठा spi_driver mpl115_spi_driver = अणु
+	.driver = अणु
 		.name   = "mpl115",
-	},
+	पूर्ण,
 	.probe = mpl115_spi_probe,
 	.id_table = mpl115_spi_ids,
-};
+पूर्ण;
 module_spi_driver(mpl115_spi_driver);
 
 MODULE_AUTHOR("Akinobu Mita <akinobu.mita@gmail.com>");

@@ -1,41 +1,42 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * Copyright(c) 2016-20 Intel Corporation.
  */
 
-#ifndef MAIN_H
-#define MAIN_H
+#अगर_अघोषित MAIN_H
+#घोषणा MAIN_H
 
-struct encl_segment {
+काष्ठा encl_segment अणु
 	off_t offset;
-	size_t size;
-	unsigned int prot;
-	unsigned int flags;
-};
+	माप_प्रकार size;
+	अचिन्हित पूर्णांक prot;
+	अचिन्हित पूर्णांक flags;
+पूर्ण;
 
-struct encl {
-	int fd;
-	void *bin;
+काष्ठा encl अणु
+	पूर्णांक fd;
+	व्योम *bin;
 	off_t bin_size;
-	void *src;
-	size_t src_size;
-	size_t encl_size;
+	व्योम *src;
+	माप_प्रकार src_size;
+	माप_प्रकार encl_size;
 	off_t encl_base;
-	unsigned int nr_segments;
-	struct encl_segment *segment_tbl;
-	struct sgx_secs secs;
-	struct sgx_sigstruct sigstruct;
-};
+	अचिन्हित पूर्णांक nr_segments;
+	काष्ठा encl_segment *segment_tbl;
+	काष्ठा sgx_secs secs;
+	काष्ठा sgx_sigकाष्ठा sigकाष्ठा;
+पूर्ण;
 
-extern unsigned char sign_key[];
-extern unsigned char sign_key_end[];
+बाह्य अचिन्हित अक्षर sign_key[];
+बाह्य अचिन्हित अक्षर sign_key_end[];
 
-void encl_delete(struct encl *ctx);
-bool encl_load(const char *path, struct encl *encl);
-bool encl_measure(struct encl *encl);
-bool encl_build(struct encl *encl);
+व्योम encl_delete(काष्ठा encl *ctx);
+bool encl_load(स्थिर अक्षर *path, काष्ठा encl *encl);
+bool encl_measure(काष्ठा encl *encl);
+bool encl_build(काष्ठा encl *encl);
 
-int sgx_call_vdso(void *rdi, void *rsi, long rdx, u32 function, void *r8, void *r9,
-		  struct sgx_enclave_run *run);
+पूर्णांक sgx_call_vdso(व्योम *rdi, व्योम *rsi, दीर्घ rdx, u32 function, व्योम *r8, व्योम *r9,
+		  काष्ठा sgx_enclave_run *run);
 
-#endif /* MAIN_H */
+#पूर्ण_अगर /* MAIN_H */

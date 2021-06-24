@@ -1,420 +1,421 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Copyright(C) 2015 Linaro Limited. All rights reserved.
  * Author: Mathieu Poirier <mathieu.poirier@linaro.org>
  */
 
-#include <linux/pid_namespace.h>
-#include <linux/pm_runtime.h>
-#include <linux/sysfs.h>
-#include "coresight-etm.h"
-#include "coresight-priv.h"
+#समावेश <linux/pid_namespace.h>
+#समावेश <linux/pm_runसमय.स>
+#समावेश <linux/sysfs.h>
+#समावेश "coresight-etm.h"
+#समावेश "coresight-priv.h"
 
-static ssize_t nr_addr_cmp_show(struct device *dev,
-				struct device_attribute *attr, char *buf)
-{
-	unsigned long val;
-	struct etm_drvdata *drvdata = dev_get_drvdata(dev->parent);
+अटल sमाप_प्रकार nr_addr_cmp_show(काष्ठा device *dev,
+				काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	अचिन्हित दीर्घ val;
+	काष्ठा eपंचांग_drvdata *drvdata = dev_get_drvdata(dev->parent);
 
 	val = drvdata->nr_addr_cmp;
-	return sprintf(buf, "%#lx\n", val);
-}
-static DEVICE_ATTR_RO(nr_addr_cmp);
+	वापस प्र_लिखो(buf, "%#lx\n", val);
+पूर्ण
+अटल DEVICE_ATTR_RO(nr_addr_cmp);
 
-static ssize_t nr_cntr_show(struct device *dev,
-			    struct device_attribute *attr, char *buf)
-{	unsigned long val;
-	struct etm_drvdata *drvdata = dev_get_drvdata(dev->parent);
+अटल sमाप_प्रकार nr_cntr_show(काष्ठा device *dev,
+			    काष्ठा device_attribute *attr, अक्षर *buf)
+अणु	अचिन्हित दीर्घ val;
+	काष्ठा eपंचांग_drvdata *drvdata = dev_get_drvdata(dev->parent);
 
 	val = drvdata->nr_cntr;
-	return sprintf(buf, "%#lx\n", val);
-}
-static DEVICE_ATTR_RO(nr_cntr);
+	वापस प्र_लिखो(buf, "%#lx\n", val);
+पूर्ण
+अटल DEVICE_ATTR_RO(nr_cntr);
 
-static ssize_t nr_ctxid_cmp_show(struct device *dev,
-				 struct device_attribute *attr, char *buf)
-{
-	unsigned long val;
-	struct etm_drvdata *drvdata = dev_get_drvdata(dev->parent);
+अटल sमाप_प्रकार nr_ctxid_cmp_show(काष्ठा device *dev,
+				 काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	अचिन्हित दीर्घ val;
+	काष्ठा eपंचांग_drvdata *drvdata = dev_get_drvdata(dev->parent);
 
 	val = drvdata->nr_ctxid_cmp;
-	return sprintf(buf, "%#lx\n", val);
-}
-static DEVICE_ATTR_RO(nr_ctxid_cmp);
+	वापस प्र_लिखो(buf, "%#lx\n", val);
+पूर्ण
+अटल DEVICE_ATTR_RO(nr_ctxid_cmp);
 
-static ssize_t etmsr_show(struct device *dev,
-			  struct device_attribute *attr, char *buf)
-{
-	unsigned long flags, val;
-	struct etm_drvdata *drvdata = dev_get_drvdata(dev->parent);
+अटल sमाप_प्रकार eपंचांगsr_show(काष्ठा device *dev,
+			  काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	अचिन्हित दीर्घ flags, val;
+	काष्ठा eपंचांग_drvdata *drvdata = dev_get_drvdata(dev->parent);
 
-	pm_runtime_get_sync(dev->parent);
+	pm_runसमय_get_sync(dev->parent);
 	spin_lock_irqsave(&drvdata->spinlock, flags);
 	CS_UNLOCK(drvdata->base);
 
-	val = etm_readl(drvdata, ETMSR);
+	val = eपंचांग_पढ़ोl(drvdata, ETMSR);
 
 	CS_LOCK(drvdata->base);
 	spin_unlock_irqrestore(&drvdata->spinlock, flags);
-	pm_runtime_put(dev->parent);
+	pm_runसमय_put(dev->parent);
 
-	return sprintf(buf, "%#lx\n", val);
-}
-static DEVICE_ATTR_RO(etmsr);
+	वापस प्र_लिखो(buf, "%#lx\n", val);
+पूर्ण
+अटल DEVICE_ATTR_RO(eपंचांगsr);
 
-static ssize_t reset_store(struct device *dev,
-			   struct device_attribute *attr,
-			   const char *buf, size_t size)
-{
-	int i, ret;
-	unsigned long val;
-	struct etm_drvdata *drvdata = dev_get_drvdata(dev->parent);
-	struct etm_config *config = &drvdata->config;
+अटल sमाप_प्रकार reset_store(काष्ठा device *dev,
+			   काष्ठा device_attribute *attr,
+			   स्थिर अक्षर *buf, माप_प्रकार size)
+अणु
+	पूर्णांक i, ret;
+	अचिन्हित दीर्घ val;
+	काष्ठा eपंचांग_drvdata *drvdata = dev_get_drvdata(dev->parent);
+	काष्ठा eपंचांग_config *config = &drvdata->config;
 
-	ret = kstrtoul(buf, 16, &val);
-	if (ret)
-		return ret;
+	ret = kम_से_अदीर्घ(buf, 16, &val);
+	अगर (ret)
+		वापस ret;
 
-	if (val) {
+	अगर (val) अणु
 		spin_lock(&drvdata->spinlock);
-		memset(config, 0, sizeof(struct etm_config));
+		स_रखो(config, 0, माप(काष्ठा eपंचांग_config));
 		config->mode = ETM_MODE_EXCLUDE;
 		config->trigger_event = ETM_DEFAULT_EVENT_VAL;
-		for (i = 0; i < drvdata->nr_addr_cmp; i++) {
+		क्रम (i = 0; i < drvdata->nr_addr_cmp; i++) अणु
 			config->addr_type[i] = ETM_ADDR_TYPE_NONE;
-		}
+		पूर्ण
 
-		etm_set_default(config);
+		eपंचांग_set_शेष(config);
 		spin_unlock(&drvdata->spinlock);
-	}
+	पूर्ण
 
-	return size;
-}
-static DEVICE_ATTR_WO(reset);
+	वापस size;
+पूर्ण
+अटल DEVICE_ATTR_WO(reset);
 
-static ssize_t mode_show(struct device *dev,
-			 struct device_attribute *attr, char *buf)
-{
-	unsigned long val;
-	struct etm_drvdata *drvdata = dev_get_drvdata(dev->parent);
-	struct etm_config *config = &drvdata->config;
+अटल sमाप_प्रकार mode_show(काष्ठा device *dev,
+			 काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	अचिन्हित दीर्घ val;
+	काष्ठा eपंचांग_drvdata *drvdata = dev_get_drvdata(dev->parent);
+	काष्ठा eपंचांग_config *config = &drvdata->config;
 
 	val = config->mode;
-	return sprintf(buf, "%#lx\n", val);
-}
+	वापस प्र_लिखो(buf, "%#lx\n", val);
+पूर्ण
 
-static ssize_t mode_store(struct device *dev,
-			  struct device_attribute *attr,
-			  const char *buf, size_t size)
-{
-	int ret;
-	unsigned long val;
-	struct etm_drvdata *drvdata = dev_get_drvdata(dev->parent);
-	struct etm_config *config = &drvdata->config;
+अटल sमाप_प्रकार mode_store(काष्ठा device *dev,
+			  काष्ठा device_attribute *attr,
+			  स्थिर अक्षर *buf, माप_प्रकार size)
+अणु
+	पूर्णांक ret;
+	अचिन्हित दीर्घ val;
+	काष्ठा eपंचांग_drvdata *drvdata = dev_get_drvdata(dev->parent);
+	काष्ठा eपंचांग_config *config = &drvdata->config;
 
-	ret = kstrtoul(buf, 16, &val);
-	if (ret)
-		return ret;
+	ret = kम_से_अदीर्घ(buf, 16, &val);
+	अगर (ret)
+		वापस ret;
 
 	spin_lock(&drvdata->spinlock);
 	config->mode = val & ETM_MODE_ALL;
 
-	if (config->mode & ETM_MODE_EXCLUDE)
+	अगर (config->mode & ETM_MODE_EXCLUDE)
 		config->enable_ctrl1 |= ETMTECR1_INC_EXC;
-	else
+	अन्यथा
 		config->enable_ctrl1 &= ~ETMTECR1_INC_EXC;
 
-	if (config->mode & ETM_MODE_CYCACC)
+	अगर (config->mode & ETM_MODE_CYCACC)
 		config->ctrl |= ETMCR_CYC_ACC;
-	else
+	अन्यथा
 		config->ctrl &= ~ETMCR_CYC_ACC;
 
-	if (config->mode & ETM_MODE_STALL) {
-		if (!(drvdata->etmccr & ETMCCR_FIFOFULL)) {
+	अगर (config->mode & ETM_MODE_STALL) अणु
+		अगर (!(drvdata->eपंचांगccr & ETMCCR_FIFOFULL)) अणु
 			dev_warn(dev, "stall mode not supported\n");
 			ret = -EINVAL;
-			goto err_unlock;
-		}
+			जाओ err_unlock;
+		पूर्ण
 		config->ctrl |= ETMCR_STALL_MODE;
-	} else
+	पूर्ण अन्यथा
 		config->ctrl &= ~ETMCR_STALL_MODE;
 
-	if (config->mode & ETM_MODE_TIMESTAMP) {
-		if (!(drvdata->etmccer & ETMCCER_TIMESTAMP)) {
+	अगर (config->mode & ETM_MODE_TIMESTAMP) अणु
+		अगर (!(drvdata->eपंचांगccer & ETMCCER_TIMESTAMP)) अणु
 			dev_warn(dev, "timestamp not supported\n");
 			ret = -EINVAL;
-			goto err_unlock;
-		}
+			जाओ err_unlock;
+		पूर्ण
 		config->ctrl |= ETMCR_TIMESTAMP_EN;
-	} else
+	पूर्ण अन्यथा
 		config->ctrl &= ~ETMCR_TIMESTAMP_EN;
 
-	if (config->mode & ETM_MODE_CTXID)
+	अगर (config->mode & ETM_MODE_CTXID)
 		config->ctrl |= ETMCR_CTXID_SIZE;
-	else
+	अन्यथा
 		config->ctrl &= ~ETMCR_CTXID_SIZE;
 
-	if (config->mode & ETM_MODE_BBROAD)
+	अगर (config->mode & ETM_MODE_BBROAD)
 		config->ctrl |= ETMCR_BRANCH_BROADCAST;
-	else
+	अन्यथा
 		config->ctrl &= ~ETMCR_BRANCH_BROADCAST;
 
-	if (config->mode & ETM_MODE_RET_STACK)
+	अगर (config->mode & ETM_MODE_RET_STACK)
 		config->ctrl |= ETMCR_RETURN_STACK;
-	else
+	अन्यथा
 		config->ctrl &= ~ETMCR_RETURN_STACK;
 
-	if (config->mode & (ETM_MODE_EXCL_KERN | ETM_MODE_EXCL_USER))
-		etm_config_trace_mode(config);
+	अगर (config->mode & (ETM_MODE_EXCL_KERN | ETM_MODE_EXCL_USER))
+		eपंचांग_config_trace_mode(config);
 
 	spin_unlock(&drvdata->spinlock);
 
-	return size;
+	वापस size;
 
 err_unlock:
 	spin_unlock(&drvdata->spinlock);
-	return ret;
-}
-static DEVICE_ATTR_RW(mode);
+	वापस ret;
+पूर्ण
+अटल DEVICE_ATTR_RW(mode);
 
-static ssize_t trigger_event_show(struct device *dev,
-				  struct device_attribute *attr, char *buf)
-{
-	unsigned long val;
-	struct etm_drvdata *drvdata = dev_get_drvdata(dev->parent);
-	struct etm_config *config = &drvdata->config;
+अटल sमाप_प्रकार trigger_event_show(काष्ठा device *dev,
+				  काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	अचिन्हित दीर्घ val;
+	काष्ठा eपंचांग_drvdata *drvdata = dev_get_drvdata(dev->parent);
+	काष्ठा eपंचांग_config *config = &drvdata->config;
 
 	val = config->trigger_event;
-	return sprintf(buf, "%#lx\n", val);
-}
+	वापस प्र_लिखो(buf, "%#lx\n", val);
+पूर्ण
 
-static ssize_t trigger_event_store(struct device *dev,
-				   struct device_attribute *attr,
-				   const char *buf, size_t size)
-{
-	int ret;
-	unsigned long val;
-	struct etm_drvdata *drvdata = dev_get_drvdata(dev->parent);
-	struct etm_config *config = &drvdata->config;
+अटल sमाप_प्रकार trigger_event_store(काष्ठा device *dev,
+				   काष्ठा device_attribute *attr,
+				   स्थिर अक्षर *buf, माप_प्रकार size)
+अणु
+	पूर्णांक ret;
+	अचिन्हित दीर्घ val;
+	काष्ठा eपंचांग_drvdata *drvdata = dev_get_drvdata(dev->parent);
+	काष्ठा eपंचांग_config *config = &drvdata->config;
 
-	ret = kstrtoul(buf, 16, &val);
-	if (ret)
-		return ret;
+	ret = kम_से_अदीर्घ(buf, 16, &val);
+	अगर (ret)
+		वापस ret;
 
 	config->trigger_event = val & ETM_EVENT_MASK;
 
-	return size;
-}
-static DEVICE_ATTR_RW(trigger_event);
+	वापस size;
+पूर्ण
+अटल DEVICE_ATTR_RW(trigger_event);
 
-static ssize_t enable_event_show(struct device *dev,
-				 struct device_attribute *attr, char *buf)
-{
-	unsigned long val;
-	struct etm_drvdata *drvdata = dev_get_drvdata(dev->parent);
-	struct etm_config *config = &drvdata->config;
+अटल sमाप_प्रकार enable_event_show(काष्ठा device *dev,
+				 काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	अचिन्हित दीर्घ val;
+	काष्ठा eपंचांग_drvdata *drvdata = dev_get_drvdata(dev->parent);
+	काष्ठा eपंचांग_config *config = &drvdata->config;
 
 	val = config->enable_event;
-	return sprintf(buf, "%#lx\n", val);
-}
+	वापस प्र_लिखो(buf, "%#lx\n", val);
+पूर्ण
 
-static ssize_t enable_event_store(struct device *dev,
-				  struct device_attribute *attr,
-				  const char *buf, size_t size)
-{
-	int ret;
-	unsigned long val;
-	struct etm_drvdata *drvdata = dev_get_drvdata(dev->parent);
-	struct etm_config *config = &drvdata->config;
+अटल sमाप_प्रकार enable_event_store(काष्ठा device *dev,
+				  काष्ठा device_attribute *attr,
+				  स्थिर अक्षर *buf, माप_प्रकार size)
+अणु
+	पूर्णांक ret;
+	अचिन्हित दीर्घ val;
+	काष्ठा eपंचांग_drvdata *drvdata = dev_get_drvdata(dev->parent);
+	काष्ठा eपंचांग_config *config = &drvdata->config;
 
-	ret = kstrtoul(buf, 16, &val);
-	if (ret)
-		return ret;
+	ret = kम_से_अदीर्घ(buf, 16, &val);
+	अगर (ret)
+		वापस ret;
 
 	config->enable_event = val & ETM_EVENT_MASK;
 
-	return size;
-}
-static DEVICE_ATTR_RW(enable_event);
+	वापस size;
+पूर्ण
+अटल DEVICE_ATTR_RW(enable_event);
 
-static ssize_t fifofull_level_show(struct device *dev,
-				   struct device_attribute *attr, char *buf)
-{
-	unsigned long val;
-	struct etm_drvdata *drvdata = dev_get_drvdata(dev->parent);
-	struct etm_config *config = &drvdata->config;
+अटल sमाप_प्रकार fअगरofull_level_show(काष्ठा device *dev,
+				   काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	अचिन्हित दीर्घ val;
+	काष्ठा eपंचांग_drvdata *drvdata = dev_get_drvdata(dev->parent);
+	काष्ठा eपंचांग_config *config = &drvdata->config;
 
-	val = config->fifofull_level;
-	return sprintf(buf, "%#lx\n", val);
-}
+	val = config->fअगरofull_level;
+	वापस प्र_लिखो(buf, "%#lx\n", val);
+पूर्ण
 
-static ssize_t fifofull_level_store(struct device *dev,
-				    struct device_attribute *attr,
-				    const char *buf, size_t size)
-{
-	int ret;
-	unsigned long val;
-	struct etm_drvdata *drvdata = dev_get_drvdata(dev->parent);
-	struct etm_config *config = &drvdata->config;
+अटल sमाप_प्रकार fअगरofull_level_store(काष्ठा device *dev,
+				    काष्ठा device_attribute *attr,
+				    स्थिर अक्षर *buf, माप_प्रकार size)
+अणु
+	पूर्णांक ret;
+	अचिन्हित दीर्घ val;
+	काष्ठा eपंचांग_drvdata *drvdata = dev_get_drvdata(dev->parent);
+	काष्ठा eपंचांग_config *config = &drvdata->config;
 
-	ret = kstrtoul(buf, 16, &val);
-	if (ret)
-		return ret;
+	ret = kम_से_अदीर्घ(buf, 16, &val);
+	अगर (ret)
+		वापस ret;
 
-	config->fifofull_level = val;
+	config->fअगरofull_level = val;
 
-	return size;
-}
-static DEVICE_ATTR_RW(fifofull_level);
+	वापस size;
+पूर्ण
+अटल DEVICE_ATTR_RW(fअगरofull_level);
 
-static ssize_t addr_idx_show(struct device *dev,
-			     struct device_attribute *attr, char *buf)
-{
-	unsigned long val;
-	struct etm_drvdata *drvdata = dev_get_drvdata(dev->parent);
-	struct etm_config *config = &drvdata->config;
+अटल sमाप_प्रकार addr_idx_show(काष्ठा device *dev,
+			     काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	अचिन्हित दीर्घ val;
+	काष्ठा eपंचांग_drvdata *drvdata = dev_get_drvdata(dev->parent);
+	काष्ठा eपंचांग_config *config = &drvdata->config;
 
 	val = config->addr_idx;
-	return sprintf(buf, "%#lx\n", val);
-}
+	वापस प्र_लिखो(buf, "%#lx\n", val);
+पूर्ण
 
-static ssize_t addr_idx_store(struct device *dev,
-			      struct device_attribute *attr,
-			      const char *buf, size_t size)
-{
-	int ret;
-	unsigned long val;
-	struct etm_drvdata *drvdata = dev_get_drvdata(dev->parent);
-	struct etm_config *config = &drvdata->config;
+अटल sमाप_प्रकार addr_idx_store(काष्ठा device *dev,
+			      काष्ठा device_attribute *attr,
+			      स्थिर अक्षर *buf, माप_प्रकार size)
+अणु
+	पूर्णांक ret;
+	अचिन्हित दीर्घ val;
+	काष्ठा eपंचांग_drvdata *drvdata = dev_get_drvdata(dev->parent);
+	काष्ठा eपंचांग_config *config = &drvdata->config;
 
-	ret = kstrtoul(buf, 16, &val);
-	if (ret)
-		return ret;
+	ret = kम_से_अदीर्घ(buf, 16, &val);
+	अगर (ret)
+		वापस ret;
 
-	if (val >= drvdata->nr_addr_cmp)
-		return -EINVAL;
+	अगर (val >= drvdata->nr_addr_cmp)
+		वापस -EINVAL;
 
 	/*
-	 * Use spinlock to ensure index doesn't change while it gets
-	 * dereferenced multiple times within a spinlock block elsewhere.
+	 * Use spinlock to ensure index करोesn't change जबतक it माला_लो
+	 * dereferenced multiple बार within a spinlock block अन्यथाwhere.
 	 */
 	spin_lock(&drvdata->spinlock);
 	config->addr_idx = val;
 	spin_unlock(&drvdata->spinlock);
 
-	return size;
-}
-static DEVICE_ATTR_RW(addr_idx);
+	वापस size;
+पूर्ण
+अटल DEVICE_ATTR_RW(addr_idx);
 
-static ssize_t addr_single_show(struct device *dev,
-				struct device_attribute *attr, char *buf)
-{
+अटल sमाप_प्रकार addr_single_show(काष्ठा device *dev,
+				काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
 	u8 idx;
-	unsigned long val;
-	struct etm_drvdata *drvdata = dev_get_drvdata(dev->parent);
-	struct etm_config *config = &drvdata->config;
+	अचिन्हित दीर्घ val;
+	काष्ठा eपंचांग_drvdata *drvdata = dev_get_drvdata(dev->parent);
+	काष्ठा eपंचांग_config *config = &drvdata->config;
 
 	spin_lock(&drvdata->spinlock);
 	idx = config->addr_idx;
-	if (!(config->addr_type[idx] == ETM_ADDR_TYPE_NONE ||
-	      config->addr_type[idx] == ETM_ADDR_TYPE_SINGLE)) {
+	अगर (!(config->addr_type[idx] == ETM_ADDR_TYPE_NONE ||
+	      config->addr_type[idx] == ETM_ADDR_TYPE_SINGLE)) अणु
 		spin_unlock(&drvdata->spinlock);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	val = config->addr_val[idx];
 	spin_unlock(&drvdata->spinlock);
 
-	return sprintf(buf, "%#lx\n", val);
-}
+	वापस प्र_लिखो(buf, "%#lx\n", val);
+पूर्ण
 
-static ssize_t addr_single_store(struct device *dev,
-				 struct device_attribute *attr,
-				 const char *buf, size_t size)
-{
+अटल sमाप_प्रकार addr_single_store(काष्ठा device *dev,
+				 काष्ठा device_attribute *attr,
+				 स्थिर अक्षर *buf, माप_प्रकार size)
+अणु
 	u8 idx;
-	int ret;
-	unsigned long val;
-	struct etm_drvdata *drvdata = dev_get_drvdata(dev->parent);
-	struct etm_config *config = &drvdata->config;
+	पूर्णांक ret;
+	अचिन्हित दीर्घ val;
+	काष्ठा eपंचांग_drvdata *drvdata = dev_get_drvdata(dev->parent);
+	काष्ठा eपंचांग_config *config = &drvdata->config;
 
-	ret = kstrtoul(buf, 16, &val);
-	if (ret)
-		return ret;
+	ret = kम_से_अदीर्घ(buf, 16, &val);
+	अगर (ret)
+		वापस ret;
 
 	spin_lock(&drvdata->spinlock);
 	idx = config->addr_idx;
-	if (!(config->addr_type[idx] == ETM_ADDR_TYPE_NONE ||
-	      config->addr_type[idx] == ETM_ADDR_TYPE_SINGLE)) {
+	अगर (!(config->addr_type[idx] == ETM_ADDR_TYPE_NONE ||
+	      config->addr_type[idx] == ETM_ADDR_TYPE_SINGLE)) अणु
 		spin_unlock(&drvdata->spinlock);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	config->addr_val[idx] = val;
 	config->addr_type[idx] = ETM_ADDR_TYPE_SINGLE;
 	spin_unlock(&drvdata->spinlock);
 
-	return size;
-}
-static DEVICE_ATTR_RW(addr_single);
+	वापस size;
+पूर्ण
+अटल DEVICE_ATTR_RW(addr_single);
 
-static ssize_t addr_range_show(struct device *dev,
-			       struct device_attribute *attr, char *buf)
-{
+अटल sमाप_प्रकार addr_range_show(काष्ठा device *dev,
+			       काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
 	u8 idx;
-	unsigned long val1, val2;
-	struct etm_drvdata *drvdata = dev_get_drvdata(dev->parent);
-	struct etm_config *config = &drvdata->config;
+	अचिन्हित दीर्घ val1, val2;
+	काष्ठा eपंचांग_drvdata *drvdata = dev_get_drvdata(dev->parent);
+	काष्ठा eपंचांग_config *config = &drvdata->config;
 
 	spin_lock(&drvdata->spinlock);
 	idx = config->addr_idx;
-	if (idx % 2 != 0) {
+	अगर (idx % 2 != 0) अणु
 		spin_unlock(&drvdata->spinlock);
-		return -EPERM;
-	}
-	if (!((config->addr_type[idx] == ETM_ADDR_TYPE_NONE &&
+		वापस -EPERM;
+	पूर्ण
+	अगर (!((config->addr_type[idx] == ETM_ADDR_TYPE_NONE &&
 	       config->addr_type[idx + 1] == ETM_ADDR_TYPE_NONE) ||
 	      (config->addr_type[idx] == ETM_ADDR_TYPE_RANGE &&
-	       config->addr_type[idx + 1] == ETM_ADDR_TYPE_RANGE))) {
+	       config->addr_type[idx + 1] == ETM_ADDR_TYPE_RANGE))) अणु
 		spin_unlock(&drvdata->spinlock);
-		return -EPERM;
-	}
+		वापस -EPERM;
+	पूर्ण
 
 	val1 = config->addr_val[idx];
 	val2 = config->addr_val[idx + 1];
 	spin_unlock(&drvdata->spinlock);
 
-	return sprintf(buf, "%#lx %#lx\n", val1, val2);
-}
+	वापस प्र_लिखो(buf, "%#lx %#lx\n", val1, val2);
+पूर्ण
 
-static ssize_t addr_range_store(struct device *dev,
-			      struct device_attribute *attr,
-			      const char *buf, size_t size)
-{
+अटल sमाप_प्रकार addr_range_store(काष्ठा device *dev,
+			      काष्ठा device_attribute *attr,
+			      स्थिर अक्षर *buf, माप_प्रकार size)
+अणु
 	u8 idx;
-	unsigned long val1, val2;
-	struct etm_drvdata *drvdata = dev_get_drvdata(dev->parent);
-	struct etm_config *config = &drvdata->config;
+	अचिन्हित दीर्घ val1, val2;
+	काष्ठा eपंचांग_drvdata *drvdata = dev_get_drvdata(dev->parent);
+	काष्ठा eपंचांग_config *config = &drvdata->config;
 
-	if (sscanf(buf, "%lx %lx", &val1, &val2) != 2)
-		return -EINVAL;
+	अगर (माला_पूछो(buf, "%lx %lx", &val1, &val2) != 2)
+		वापस -EINVAL;
 	/* Lower address comparator cannot have a higher address value */
-	if (val1 > val2)
-		return -EINVAL;
+	अगर (val1 > val2)
+		वापस -EINVAL;
 
 	spin_lock(&drvdata->spinlock);
 	idx = config->addr_idx;
-	if (idx % 2 != 0) {
+	अगर (idx % 2 != 0) अणु
 		spin_unlock(&drvdata->spinlock);
-		return -EPERM;
-	}
-	if (!((config->addr_type[idx] == ETM_ADDR_TYPE_NONE &&
+		वापस -EPERM;
+	पूर्ण
+	अगर (!((config->addr_type[idx] == ETM_ADDR_TYPE_NONE &&
 	       config->addr_type[idx + 1] == ETM_ADDR_TYPE_NONE) ||
 	      (config->addr_type[idx] == ETM_ADDR_TYPE_RANGE &&
-	       config->addr_type[idx + 1] == ETM_ADDR_TYPE_RANGE))) {
+	       config->addr_type[idx + 1] == ETM_ADDR_TYPE_RANGE))) अणु
 		spin_unlock(&drvdata->spinlock);
-		return -EPERM;
-	}
+		वापस -EPERM;
+	पूर्ण
 
 	config->addr_val[idx] = val1;
 	config->addr_type[idx] = ETM_ADDR_TYPE_RANGE;
@@ -423,53 +424,53 @@ static ssize_t addr_range_store(struct device *dev,
 	config->enable_ctrl1 |= (1 << (idx/2));
 	spin_unlock(&drvdata->spinlock);
 
-	return size;
-}
-static DEVICE_ATTR_RW(addr_range);
+	वापस size;
+पूर्ण
+अटल DEVICE_ATTR_RW(addr_range);
 
-static ssize_t addr_start_show(struct device *dev,
-			       struct device_attribute *attr, char *buf)
-{
+अटल sमाप_प्रकार addr_start_show(काष्ठा device *dev,
+			       काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
 	u8 idx;
-	unsigned long val;
-	struct etm_drvdata *drvdata = dev_get_drvdata(dev->parent);
-	struct etm_config *config = &drvdata->config;
+	अचिन्हित दीर्घ val;
+	काष्ठा eपंचांग_drvdata *drvdata = dev_get_drvdata(dev->parent);
+	काष्ठा eपंचांग_config *config = &drvdata->config;
 
 	spin_lock(&drvdata->spinlock);
 	idx = config->addr_idx;
-	if (!(config->addr_type[idx] == ETM_ADDR_TYPE_NONE ||
-	      config->addr_type[idx] == ETM_ADDR_TYPE_START)) {
+	अगर (!(config->addr_type[idx] == ETM_ADDR_TYPE_NONE ||
+	      config->addr_type[idx] == ETM_ADDR_TYPE_START)) अणु
 		spin_unlock(&drvdata->spinlock);
-		return -EPERM;
-	}
+		वापस -EPERM;
+	पूर्ण
 
 	val = config->addr_val[idx];
 	spin_unlock(&drvdata->spinlock);
 
-	return sprintf(buf, "%#lx\n", val);
-}
+	वापस प्र_लिखो(buf, "%#lx\n", val);
+पूर्ण
 
-static ssize_t addr_start_store(struct device *dev,
-				struct device_attribute *attr,
-				const char *buf, size_t size)
-{
+अटल sमाप_प्रकार addr_start_store(काष्ठा device *dev,
+				काष्ठा device_attribute *attr,
+				स्थिर अक्षर *buf, माप_प्रकार size)
+अणु
 	u8 idx;
-	int ret;
-	unsigned long val;
-	struct etm_drvdata *drvdata = dev_get_drvdata(dev->parent);
-	struct etm_config *config = &drvdata->config;
+	पूर्णांक ret;
+	अचिन्हित दीर्घ val;
+	काष्ठा eपंचांग_drvdata *drvdata = dev_get_drvdata(dev->parent);
+	काष्ठा eपंचांग_config *config = &drvdata->config;
 
-	ret = kstrtoul(buf, 16, &val);
-	if (ret)
-		return ret;
+	ret = kम_से_अदीर्घ(buf, 16, &val);
+	अगर (ret)
+		वापस ret;
 
 	spin_lock(&drvdata->spinlock);
 	idx = config->addr_idx;
-	if (!(config->addr_type[idx] == ETM_ADDR_TYPE_NONE ||
-	      config->addr_type[idx] == ETM_ADDR_TYPE_START)) {
+	अगर (!(config->addr_type[idx] == ETM_ADDR_TYPE_NONE ||
+	      config->addr_type[idx] == ETM_ADDR_TYPE_START)) अणु
 		spin_unlock(&drvdata->spinlock);
-		return -EPERM;
-	}
+		वापस -EPERM;
+	पूर्ण
 
 	config->addr_val[idx] = val;
 	config->addr_type[idx] = ETM_ADDR_TYPE_START;
@@ -477,53 +478,53 @@ static ssize_t addr_start_store(struct device *dev,
 	config->enable_ctrl1 |= BIT(25);
 	spin_unlock(&drvdata->spinlock);
 
-	return size;
-}
-static DEVICE_ATTR_RW(addr_start);
+	वापस size;
+पूर्ण
+अटल DEVICE_ATTR_RW(addr_start);
 
-static ssize_t addr_stop_show(struct device *dev,
-			      struct device_attribute *attr, char *buf)
-{
+अटल sमाप_प्रकार addr_stop_show(काष्ठा device *dev,
+			      काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
 	u8 idx;
-	unsigned long val;
-	struct etm_drvdata *drvdata = dev_get_drvdata(dev->parent);
-	struct etm_config *config = &drvdata->config;
+	अचिन्हित दीर्घ val;
+	काष्ठा eपंचांग_drvdata *drvdata = dev_get_drvdata(dev->parent);
+	काष्ठा eपंचांग_config *config = &drvdata->config;
 
 	spin_lock(&drvdata->spinlock);
 	idx = config->addr_idx;
-	if (!(config->addr_type[idx] == ETM_ADDR_TYPE_NONE ||
-	      config->addr_type[idx] == ETM_ADDR_TYPE_STOP)) {
+	अगर (!(config->addr_type[idx] == ETM_ADDR_TYPE_NONE ||
+	      config->addr_type[idx] == ETM_ADDR_TYPE_STOP)) अणु
 		spin_unlock(&drvdata->spinlock);
-		return -EPERM;
-	}
+		वापस -EPERM;
+	पूर्ण
 
 	val = config->addr_val[idx];
 	spin_unlock(&drvdata->spinlock);
 
-	return sprintf(buf, "%#lx\n", val);
-}
+	वापस प्र_लिखो(buf, "%#lx\n", val);
+पूर्ण
 
-static ssize_t addr_stop_store(struct device *dev,
-			       struct device_attribute *attr,
-			       const char *buf, size_t size)
-{
+अटल sमाप_प्रकार addr_stop_store(काष्ठा device *dev,
+			       काष्ठा device_attribute *attr,
+			       स्थिर अक्षर *buf, माप_प्रकार size)
+अणु
 	u8 idx;
-	int ret;
-	unsigned long val;
-	struct etm_drvdata *drvdata = dev_get_drvdata(dev->parent);
-	struct etm_config *config = &drvdata->config;
+	पूर्णांक ret;
+	अचिन्हित दीर्घ val;
+	काष्ठा eपंचांग_drvdata *drvdata = dev_get_drvdata(dev->parent);
+	काष्ठा eपंचांग_config *config = &drvdata->config;
 
-	ret = kstrtoul(buf, 16, &val);
-	if (ret)
-		return ret;
+	ret = kम_से_अदीर्घ(buf, 16, &val);
+	अगर (ret)
+		वापस ret;
 
 	spin_lock(&drvdata->spinlock);
 	idx = config->addr_idx;
-	if (!(config->addr_type[idx] == ETM_ADDR_TYPE_NONE ||
-	      config->addr_type[idx] == ETM_ADDR_TYPE_STOP)) {
+	अगर (!(config->addr_type[idx] == ETM_ADDR_TYPE_NONE ||
+	      config->addr_type[idx] == ETM_ADDR_TYPE_STOP)) अणु
 		spin_unlock(&drvdata->spinlock);
-		return -EPERM;
-	}
+		वापस -EPERM;
+	पूर्ण
 
 	config->addr_val[idx] = val;
 	config->addr_type[idx] = ETM_ADDR_TYPE_STOP;
@@ -531,699 +532,699 @@ static ssize_t addr_stop_store(struct device *dev,
 	config->enable_ctrl1 |= ETMTECR1_START_STOP;
 	spin_unlock(&drvdata->spinlock);
 
-	return size;
-}
-static DEVICE_ATTR_RW(addr_stop);
+	वापस size;
+पूर्ण
+अटल DEVICE_ATTR_RW(addr_stop);
 
-static ssize_t addr_acctype_show(struct device *dev,
-				 struct device_attribute *attr, char *buf)
-{
-	unsigned long val;
-	struct etm_drvdata *drvdata = dev_get_drvdata(dev->parent);
-	struct etm_config *config = &drvdata->config;
+अटल sमाप_प्रकार addr_acctype_show(काष्ठा device *dev,
+				 काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	अचिन्हित दीर्घ val;
+	काष्ठा eपंचांग_drvdata *drvdata = dev_get_drvdata(dev->parent);
+	काष्ठा eपंचांग_config *config = &drvdata->config;
 
 	spin_lock(&drvdata->spinlock);
 	val = config->addr_acctype[config->addr_idx];
 	spin_unlock(&drvdata->spinlock);
 
-	return sprintf(buf, "%#lx\n", val);
-}
+	वापस प्र_लिखो(buf, "%#lx\n", val);
+पूर्ण
 
-static ssize_t addr_acctype_store(struct device *dev,
-				  struct device_attribute *attr,
-				  const char *buf, size_t size)
-{
-	int ret;
-	unsigned long val;
-	struct etm_drvdata *drvdata = dev_get_drvdata(dev->parent);
-	struct etm_config *config = &drvdata->config;
+अटल sमाप_प्रकार addr_acctype_store(काष्ठा device *dev,
+				  काष्ठा device_attribute *attr,
+				  स्थिर अक्षर *buf, माप_प्रकार size)
+अणु
+	पूर्णांक ret;
+	अचिन्हित दीर्घ val;
+	काष्ठा eपंचांग_drvdata *drvdata = dev_get_drvdata(dev->parent);
+	काष्ठा eपंचांग_config *config = &drvdata->config;
 
-	ret = kstrtoul(buf, 16, &val);
-	if (ret)
-		return ret;
+	ret = kम_से_अदीर्घ(buf, 16, &val);
+	अगर (ret)
+		वापस ret;
 
 	spin_lock(&drvdata->spinlock);
 	config->addr_acctype[config->addr_idx] = val;
 	spin_unlock(&drvdata->spinlock);
 
-	return size;
-}
-static DEVICE_ATTR_RW(addr_acctype);
+	वापस size;
+पूर्ण
+अटल DEVICE_ATTR_RW(addr_acctype);
 
-static ssize_t cntr_idx_show(struct device *dev,
-			     struct device_attribute *attr, char *buf)
-{
-	unsigned long val;
-	struct etm_drvdata *drvdata = dev_get_drvdata(dev->parent);
-	struct etm_config *config = &drvdata->config;
+अटल sमाप_प्रकार cntr_idx_show(काष्ठा device *dev,
+			     काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	अचिन्हित दीर्घ val;
+	काष्ठा eपंचांग_drvdata *drvdata = dev_get_drvdata(dev->parent);
+	काष्ठा eपंचांग_config *config = &drvdata->config;
 
 	val = config->cntr_idx;
-	return sprintf(buf, "%#lx\n", val);
-}
+	वापस प्र_लिखो(buf, "%#lx\n", val);
+पूर्ण
 
-static ssize_t cntr_idx_store(struct device *dev,
-			      struct device_attribute *attr,
-			      const char *buf, size_t size)
-{
-	int ret;
-	unsigned long val;
-	struct etm_drvdata *drvdata = dev_get_drvdata(dev->parent);
-	struct etm_config *config = &drvdata->config;
+अटल sमाप_प्रकार cntr_idx_store(काष्ठा device *dev,
+			      काष्ठा device_attribute *attr,
+			      स्थिर अक्षर *buf, माप_प्रकार size)
+अणु
+	पूर्णांक ret;
+	अचिन्हित दीर्घ val;
+	काष्ठा eपंचांग_drvdata *drvdata = dev_get_drvdata(dev->parent);
+	काष्ठा eपंचांग_config *config = &drvdata->config;
 
-	ret = kstrtoul(buf, 16, &val);
-	if (ret)
-		return ret;
+	ret = kम_से_अदीर्घ(buf, 16, &val);
+	अगर (ret)
+		वापस ret;
 
-	if (val >= drvdata->nr_cntr)
-		return -EINVAL;
+	अगर (val >= drvdata->nr_cntr)
+		वापस -EINVAL;
 	/*
-	 * Use spinlock to ensure index doesn't change while it gets
-	 * dereferenced multiple times within a spinlock block elsewhere.
+	 * Use spinlock to ensure index करोesn't change जबतक it माला_लो
+	 * dereferenced multiple बार within a spinlock block अन्यथाwhere.
 	 */
 	spin_lock(&drvdata->spinlock);
 	config->cntr_idx = val;
 	spin_unlock(&drvdata->spinlock);
 
-	return size;
-}
-static DEVICE_ATTR_RW(cntr_idx);
+	वापस size;
+पूर्ण
+अटल DEVICE_ATTR_RW(cntr_idx);
 
-static ssize_t cntr_rld_val_show(struct device *dev,
-				 struct device_attribute *attr, char *buf)
-{
-	unsigned long val;
-	struct etm_drvdata *drvdata = dev_get_drvdata(dev->parent);
-	struct etm_config *config = &drvdata->config;
+अटल sमाप_प्रकार cntr_rld_val_show(काष्ठा device *dev,
+				 काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	अचिन्हित दीर्घ val;
+	काष्ठा eपंचांग_drvdata *drvdata = dev_get_drvdata(dev->parent);
+	काष्ठा eपंचांग_config *config = &drvdata->config;
 
 	spin_lock(&drvdata->spinlock);
 	val = config->cntr_rld_val[config->cntr_idx];
 	spin_unlock(&drvdata->spinlock);
 
-	return sprintf(buf, "%#lx\n", val);
-}
+	वापस प्र_लिखो(buf, "%#lx\n", val);
+पूर्ण
 
-static ssize_t cntr_rld_val_store(struct device *dev,
-				  struct device_attribute *attr,
-				  const char *buf, size_t size)
-{
-	int ret;
-	unsigned long val;
-	struct etm_drvdata *drvdata = dev_get_drvdata(dev->parent);
-	struct etm_config *config = &drvdata->config;
+अटल sमाप_प्रकार cntr_rld_val_store(काष्ठा device *dev,
+				  काष्ठा device_attribute *attr,
+				  स्थिर अक्षर *buf, माप_प्रकार size)
+अणु
+	पूर्णांक ret;
+	अचिन्हित दीर्घ val;
+	काष्ठा eपंचांग_drvdata *drvdata = dev_get_drvdata(dev->parent);
+	काष्ठा eपंचांग_config *config = &drvdata->config;
 
-	ret = kstrtoul(buf, 16, &val);
-	if (ret)
-		return ret;
+	ret = kम_से_अदीर्घ(buf, 16, &val);
+	अगर (ret)
+		वापस ret;
 
 	spin_lock(&drvdata->spinlock);
 	config->cntr_rld_val[config->cntr_idx] = val;
 	spin_unlock(&drvdata->spinlock);
 
-	return size;
-}
-static DEVICE_ATTR_RW(cntr_rld_val);
+	वापस size;
+पूर्ण
+अटल DEVICE_ATTR_RW(cntr_rld_val);
 
-static ssize_t cntr_event_show(struct device *dev,
-			       struct device_attribute *attr, char *buf)
-{
-	unsigned long val;
-	struct etm_drvdata *drvdata = dev_get_drvdata(dev->parent);
-	struct etm_config *config = &drvdata->config;
+अटल sमाप_प्रकार cntr_event_show(काष्ठा device *dev,
+			       काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	अचिन्हित दीर्घ val;
+	काष्ठा eपंचांग_drvdata *drvdata = dev_get_drvdata(dev->parent);
+	काष्ठा eपंचांग_config *config = &drvdata->config;
 
 	spin_lock(&drvdata->spinlock);
 	val = config->cntr_event[config->cntr_idx];
 	spin_unlock(&drvdata->spinlock);
 
-	return sprintf(buf, "%#lx\n", val);
-}
+	वापस प्र_लिखो(buf, "%#lx\n", val);
+पूर्ण
 
-static ssize_t cntr_event_store(struct device *dev,
-				struct device_attribute *attr,
-				const char *buf, size_t size)
-{
-	int ret;
-	unsigned long val;
-	struct etm_drvdata *drvdata = dev_get_drvdata(dev->parent);
-	struct etm_config *config = &drvdata->config;
+अटल sमाप_प्रकार cntr_event_store(काष्ठा device *dev,
+				काष्ठा device_attribute *attr,
+				स्थिर अक्षर *buf, माप_प्रकार size)
+अणु
+	पूर्णांक ret;
+	अचिन्हित दीर्घ val;
+	काष्ठा eपंचांग_drvdata *drvdata = dev_get_drvdata(dev->parent);
+	काष्ठा eपंचांग_config *config = &drvdata->config;
 
-	ret = kstrtoul(buf, 16, &val);
-	if (ret)
-		return ret;
+	ret = kम_से_अदीर्घ(buf, 16, &val);
+	अगर (ret)
+		वापस ret;
 
 	spin_lock(&drvdata->spinlock);
 	config->cntr_event[config->cntr_idx] = val & ETM_EVENT_MASK;
 	spin_unlock(&drvdata->spinlock);
 
-	return size;
-}
-static DEVICE_ATTR_RW(cntr_event);
+	वापस size;
+पूर्ण
+अटल DEVICE_ATTR_RW(cntr_event);
 
-static ssize_t cntr_rld_event_show(struct device *dev,
-				   struct device_attribute *attr, char *buf)
-{
-	unsigned long val;
-	struct etm_drvdata *drvdata = dev_get_drvdata(dev->parent);
-	struct etm_config *config = &drvdata->config;
+अटल sमाप_प्रकार cntr_rld_event_show(काष्ठा device *dev,
+				   काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	अचिन्हित दीर्घ val;
+	काष्ठा eपंचांग_drvdata *drvdata = dev_get_drvdata(dev->parent);
+	काष्ठा eपंचांग_config *config = &drvdata->config;
 
 	spin_lock(&drvdata->spinlock);
 	val = config->cntr_rld_event[config->cntr_idx];
 	spin_unlock(&drvdata->spinlock);
 
-	return sprintf(buf, "%#lx\n", val);
-}
+	वापस प्र_लिखो(buf, "%#lx\n", val);
+पूर्ण
 
-static ssize_t cntr_rld_event_store(struct device *dev,
-				    struct device_attribute *attr,
-				    const char *buf, size_t size)
-{
-	int ret;
-	unsigned long val;
-	struct etm_drvdata *drvdata = dev_get_drvdata(dev->parent);
-	struct etm_config *config = &drvdata->config;
+अटल sमाप_प्रकार cntr_rld_event_store(काष्ठा device *dev,
+				    काष्ठा device_attribute *attr,
+				    स्थिर अक्षर *buf, माप_प्रकार size)
+अणु
+	पूर्णांक ret;
+	अचिन्हित दीर्घ val;
+	काष्ठा eपंचांग_drvdata *drvdata = dev_get_drvdata(dev->parent);
+	काष्ठा eपंचांग_config *config = &drvdata->config;
 
-	ret = kstrtoul(buf, 16, &val);
-	if (ret)
-		return ret;
+	ret = kम_से_अदीर्घ(buf, 16, &val);
+	अगर (ret)
+		वापस ret;
 
 	spin_lock(&drvdata->spinlock);
 	config->cntr_rld_event[config->cntr_idx] = val & ETM_EVENT_MASK;
 	spin_unlock(&drvdata->spinlock);
 
-	return size;
-}
-static DEVICE_ATTR_RW(cntr_rld_event);
+	वापस size;
+पूर्ण
+अटल DEVICE_ATTR_RW(cntr_rld_event);
 
-static ssize_t cntr_val_show(struct device *dev,
-			     struct device_attribute *attr, char *buf)
-{
-	int i, ret = 0;
+अटल sमाप_प्रकार cntr_val_show(काष्ठा device *dev,
+			     काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	पूर्णांक i, ret = 0;
 	u32 val;
-	struct etm_drvdata *drvdata = dev_get_drvdata(dev->parent);
-	struct etm_config *config = &drvdata->config;
+	काष्ठा eपंचांग_drvdata *drvdata = dev_get_drvdata(dev->parent);
+	काष्ठा eपंचांग_config *config = &drvdata->config;
 
-	if (!local_read(&drvdata->mode)) {
+	अगर (!local_पढ़ो(&drvdata->mode)) अणु
 		spin_lock(&drvdata->spinlock);
-		for (i = 0; i < drvdata->nr_cntr; i++)
-			ret += sprintf(buf, "counter %d: %x\n",
+		क्रम (i = 0; i < drvdata->nr_cntr; i++)
+			ret += प्र_लिखो(buf, "counter %d: %x\n",
 				       i, config->cntr_val[i]);
 		spin_unlock(&drvdata->spinlock);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	for (i = 0; i < drvdata->nr_cntr; i++) {
-		val = etm_readl(drvdata, ETMCNTVRn(i));
-		ret += sprintf(buf, "counter %d: %x\n", i, val);
-	}
+	क्रम (i = 0; i < drvdata->nr_cntr; i++) अणु
+		val = eपंचांग_पढ़ोl(drvdata, ETMCNTVRn(i));
+		ret += प्र_लिखो(buf, "counter %d: %x\n", i, val);
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static ssize_t cntr_val_store(struct device *dev,
-			      struct device_attribute *attr,
-			      const char *buf, size_t size)
-{
-	int ret;
-	unsigned long val;
-	struct etm_drvdata *drvdata = dev_get_drvdata(dev->parent);
-	struct etm_config *config = &drvdata->config;
+अटल sमाप_प्रकार cntr_val_store(काष्ठा device *dev,
+			      काष्ठा device_attribute *attr,
+			      स्थिर अक्षर *buf, माप_प्रकार size)
+अणु
+	पूर्णांक ret;
+	अचिन्हित दीर्घ val;
+	काष्ठा eपंचांग_drvdata *drvdata = dev_get_drvdata(dev->parent);
+	काष्ठा eपंचांग_config *config = &drvdata->config;
 
-	ret = kstrtoul(buf, 16, &val);
-	if (ret)
-		return ret;
+	ret = kम_से_अदीर्घ(buf, 16, &val);
+	अगर (ret)
+		वापस ret;
 
 	spin_lock(&drvdata->spinlock);
 	config->cntr_val[config->cntr_idx] = val;
 	spin_unlock(&drvdata->spinlock);
 
-	return size;
-}
-static DEVICE_ATTR_RW(cntr_val);
+	वापस size;
+पूर्ण
+अटल DEVICE_ATTR_RW(cntr_val);
 
-static ssize_t seq_12_event_show(struct device *dev,
-				 struct device_attribute *attr, char *buf)
-{
-	unsigned long val;
-	struct etm_drvdata *drvdata = dev_get_drvdata(dev->parent);
-	struct etm_config *config = &drvdata->config;
+अटल sमाप_प्रकार seq_12_event_show(काष्ठा device *dev,
+				 काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	अचिन्हित दीर्घ val;
+	काष्ठा eपंचांग_drvdata *drvdata = dev_get_drvdata(dev->parent);
+	काष्ठा eपंचांग_config *config = &drvdata->config;
 
 	val = config->seq_12_event;
-	return sprintf(buf, "%#lx\n", val);
-}
+	वापस प्र_लिखो(buf, "%#lx\n", val);
+पूर्ण
 
-static ssize_t seq_12_event_store(struct device *dev,
-				  struct device_attribute *attr,
-				  const char *buf, size_t size)
-{
-	int ret;
-	unsigned long val;
-	struct etm_drvdata *drvdata = dev_get_drvdata(dev->parent);
-	struct etm_config *config = &drvdata->config;
+अटल sमाप_प्रकार seq_12_event_store(काष्ठा device *dev,
+				  काष्ठा device_attribute *attr,
+				  स्थिर अक्षर *buf, माप_प्रकार size)
+अणु
+	पूर्णांक ret;
+	अचिन्हित दीर्घ val;
+	काष्ठा eपंचांग_drvdata *drvdata = dev_get_drvdata(dev->parent);
+	काष्ठा eपंचांग_config *config = &drvdata->config;
 
-	ret = kstrtoul(buf, 16, &val);
-	if (ret)
-		return ret;
+	ret = kम_से_अदीर्घ(buf, 16, &val);
+	अगर (ret)
+		वापस ret;
 
 	config->seq_12_event = val & ETM_EVENT_MASK;
-	return size;
-}
-static DEVICE_ATTR_RW(seq_12_event);
+	वापस size;
+पूर्ण
+अटल DEVICE_ATTR_RW(seq_12_event);
 
-static ssize_t seq_21_event_show(struct device *dev,
-				 struct device_attribute *attr, char *buf)
-{
-	unsigned long val;
-	struct etm_drvdata *drvdata = dev_get_drvdata(dev->parent);
-	struct etm_config *config = &drvdata->config;
+अटल sमाप_प्रकार seq_21_event_show(काष्ठा device *dev,
+				 काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	अचिन्हित दीर्घ val;
+	काष्ठा eपंचांग_drvdata *drvdata = dev_get_drvdata(dev->parent);
+	काष्ठा eपंचांग_config *config = &drvdata->config;
 
 	val = config->seq_21_event;
-	return sprintf(buf, "%#lx\n", val);
-}
+	वापस प्र_लिखो(buf, "%#lx\n", val);
+पूर्ण
 
-static ssize_t seq_21_event_store(struct device *dev,
-				  struct device_attribute *attr,
-				  const char *buf, size_t size)
-{
-	int ret;
-	unsigned long val;
-	struct etm_drvdata *drvdata = dev_get_drvdata(dev->parent);
-	struct etm_config *config = &drvdata->config;
+अटल sमाप_प्रकार seq_21_event_store(काष्ठा device *dev,
+				  काष्ठा device_attribute *attr,
+				  स्थिर अक्षर *buf, माप_प्रकार size)
+अणु
+	पूर्णांक ret;
+	अचिन्हित दीर्घ val;
+	काष्ठा eपंचांग_drvdata *drvdata = dev_get_drvdata(dev->parent);
+	काष्ठा eपंचांग_config *config = &drvdata->config;
 
-	ret = kstrtoul(buf, 16, &val);
-	if (ret)
-		return ret;
+	ret = kम_से_अदीर्घ(buf, 16, &val);
+	अगर (ret)
+		वापस ret;
 
 	config->seq_21_event = val & ETM_EVENT_MASK;
-	return size;
-}
-static DEVICE_ATTR_RW(seq_21_event);
+	वापस size;
+पूर्ण
+अटल DEVICE_ATTR_RW(seq_21_event);
 
-static ssize_t seq_23_event_show(struct device *dev,
-				 struct device_attribute *attr, char *buf)
-{
-	unsigned long val;
-	struct etm_drvdata *drvdata = dev_get_drvdata(dev->parent);
-	struct etm_config *config = &drvdata->config;
+अटल sमाप_प्रकार seq_23_event_show(काष्ठा device *dev,
+				 काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	अचिन्हित दीर्घ val;
+	काष्ठा eपंचांग_drvdata *drvdata = dev_get_drvdata(dev->parent);
+	काष्ठा eपंचांग_config *config = &drvdata->config;
 
 	val = config->seq_23_event;
-	return sprintf(buf, "%#lx\n", val);
-}
+	वापस प्र_लिखो(buf, "%#lx\n", val);
+पूर्ण
 
-static ssize_t seq_23_event_store(struct device *dev,
-				  struct device_attribute *attr,
-				  const char *buf, size_t size)
-{
-	int ret;
-	unsigned long val;
-	struct etm_drvdata *drvdata = dev_get_drvdata(dev->parent);
-	struct etm_config *config = &drvdata->config;
+अटल sमाप_प्रकार seq_23_event_store(काष्ठा device *dev,
+				  काष्ठा device_attribute *attr,
+				  स्थिर अक्षर *buf, माप_प्रकार size)
+अणु
+	पूर्णांक ret;
+	अचिन्हित दीर्घ val;
+	काष्ठा eपंचांग_drvdata *drvdata = dev_get_drvdata(dev->parent);
+	काष्ठा eपंचांग_config *config = &drvdata->config;
 
-	ret = kstrtoul(buf, 16, &val);
-	if (ret)
-		return ret;
+	ret = kम_से_अदीर्घ(buf, 16, &val);
+	अगर (ret)
+		वापस ret;
 
 	config->seq_23_event = val & ETM_EVENT_MASK;
-	return size;
-}
-static DEVICE_ATTR_RW(seq_23_event);
+	वापस size;
+पूर्ण
+अटल DEVICE_ATTR_RW(seq_23_event);
 
-static ssize_t seq_31_event_show(struct device *dev,
-				 struct device_attribute *attr, char *buf)
-{
-	unsigned long val;
-	struct etm_drvdata *drvdata = dev_get_drvdata(dev->parent);
-	struct etm_config *config = &drvdata->config;
+अटल sमाप_प्रकार seq_31_event_show(काष्ठा device *dev,
+				 काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	अचिन्हित दीर्घ val;
+	काष्ठा eपंचांग_drvdata *drvdata = dev_get_drvdata(dev->parent);
+	काष्ठा eपंचांग_config *config = &drvdata->config;
 
 	val = config->seq_31_event;
-	return sprintf(buf, "%#lx\n", val);
-}
+	वापस प्र_लिखो(buf, "%#lx\n", val);
+पूर्ण
 
-static ssize_t seq_31_event_store(struct device *dev,
-				  struct device_attribute *attr,
-				  const char *buf, size_t size)
-{
-	int ret;
-	unsigned long val;
-	struct etm_drvdata *drvdata = dev_get_drvdata(dev->parent);
-	struct etm_config *config = &drvdata->config;
+अटल sमाप_प्रकार seq_31_event_store(काष्ठा device *dev,
+				  काष्ठा device_attribute *attr,
+				  स्थिर अक्षर *buf, माप_प्रकार size)
+अणु
+	पूर्णांक ret;
+	अचिन्हित दीर्घ val;
+	काष्ठा eपंचांग_drvdata *drvdata = dev_get_drvdata(dev->parent);
+	काष्ठा eपंचांग_config *config = &drvdata->config;
 
-	ret = kstrtoul(buf, 16, &val);
-	if (ret)
-		return ret;
+	ret = kम_से_अदीर्घ(buf, 16, &val);
+	अगर (ret)
+		वापस ret;
 
 	config->seq_31_event = val & ETM_EVENT_MASK;
-	return size;
-}
-static DEVICE_ATTR_RW(seq_31_event);
+	वापस size;
+पूर्ण
+अटल DEVICE_ATTR_RW(seq_31_event);
 
-static ssize_t seq_32_event_show(struct device *dev,
-				 struct device_attribute *attr, char *buf)
-{
-	unsigned long val;
-	struct etm_drvdata *drvdata = dev_get_drvdata(dev->parent);
-	struct etm_config *config = &drvdata->config;
+अटल sमाप_प्रकार seq_32_event_show(काष्ठा device *dev,
+				 काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	अचिन्हित दीर्घ val;
+	काष्ठा eपंचांग_drvdata *drvdata = dev_get_drvdata(dev->parent);
+	काष्ठा eपंचांग_config *config = &drvdata->config;
 
 	val = config->seq_32_event;
-	return sprintf(buf, "%#lx\n", val);
-}
+	वापस प्र_लिखो(buf, "%#lx\n", val);
+पूर्ण
 
-static ssize_t seq_32_event_store(struct device *dev,
-				  struct device_attribute *attr,
-				  const char *buf, size_t size)
-{
-	int ret;
-	unsigned long val;
-	struct etm_drvdata *drvdata = dev_get_drvdata(dev->parent);
-	struct etm_config *config = &drvdata->config;
+अटल sमाप_प्रकार seq_32_event_store(काष्ठा device *dev,
+				  काष्ठा device_attribute *attr,
+				  स्थिर अक्षर *buf, माप_प्रकार size)
+अणु
+	पूर्णांक ret;
+	अचिन्हित दीर्घ val;
+	काष्ठा eपंचांग_drvdata *drvdata = dev_get_drvdata(dev->parent);
+	काष्ठा eपंचांग_config *config = &drvdata->config;
 
-	ret = kstrtoul(buf, 16, &val);
-	if (ret)
-		return ret;
+	ret = kम_से_अदीर्घ(buf, 16, &val);
+	अगर (ret)
+		वापस ret;
 
 	config->seq_32_event = val & ETM_EVENT_MASK;
-	return size;
-}
-static DEVICE_ATTR_RW(seq_32_event);
+	वापस size;
+पूर्ण
+अटल DEVICE_ATTR_RW(seq_32_event);
 
-static ssize_t seq_13_event_show(struct device *dev,
-				 struct device_attribute *attr, char *buf)
-{
-	unsigned long val;
-	struct etm_drvdata *drvdata = dev_get_drvdata(dev->parent);
-	struct etm_config *config = &drvdata->config;
+अटल sमाप_प्रकार seq_13_event_show(काष्ठा device *dev,
+				 काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	अचिन्हित दीर्घ val;
+	काष्ठा eपंचांग_drvdata *drvdata = dev_get_drvdata(dev->parent);
+	काष्ठा eपंचांग_config *config = &drvdata->config;
 
 	val = config->seq_13_event;
-	return sprintf(buf, "%#lx\n", val);
-}
+	वापस प्र_लिखो(buf, "%#lx\n", val);
+पूर्ण
 
-static ssize_t seq_13_event_store(struct device *dev,
-				  struct device_attribute *attr,
-				  const char *buf, size_t size)
-{
-	int ret;
-	unsigned long val;
-	struct etm_drvdata *drvdata = dev_get_drvdata(dev->parent);
-	struct etm_config *config = &drvdata->config;
+अटल sमाप_प्रकार seq_13_event_store(काष्ठा device *dev,
+				  काष्ठा device_attribute *attr,
+				  स्थिर अक्षर *buf, माप_प्रकार size)
+अणु
+	पूर्णांक ret;
+	अचिन्हित दीर्घ val;
+	काष्ठा eपंचांग_drvdata *drvdata = dev_get_drvdata(dev->parent);
+	काष्ठा eपंचांग_config *config = &drvdata->config;
 
-	ret = kstrtoul(buf, 16, &val);
-	if (ret)
-		return ret;
+	ret = kम_से_अदीर्घ(buf, 16, &val);
+	अगर (ret)
+		वापस ret;
 
 	config->seq_13_event = val & ETM_EVENT_MASK;
-	return size;
-}
-static DEVICE_ATTR_RW(seq_13_event);
+	वापस size;
+पूर्ण
+अटल DEVICE_ATTR_RW(seq_13_event);
 
-static ssize_t seq_curr_state_show(struct device *dev,
-				   struct device_attribute *attr, char *buf)
-{
-	unsigned long val, flags;
-	struct etm_drvdata *drvdata = dev_get_drvdata(dev->parent);
-	struct etm_config *config = &drvdata->config;
+अटल sमाप_प्रकार seq_curr_state_show(काष्ठा device *dev,
+				   काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	अचिन्हित दीर्घ val, flags;
+	काष्ठा eपंचांग_drvdata *drvdata = dev_get_drvdata(dev->parent);
+	काष्ठा eपंचांग_config *config = &drvdata->config;
 
-	if (!local_read(&drvdata->mode)) {
+	अगर (!local_पढ़ो(&drvdata->mode)) अणु
 		val = config->seq_curr_state;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	pm_runtime_get_sync(dev->parent);
+	pm_runसमय_get_sync(dev->parent);
 	spin_lock_irqsave(&drvdata->spinlock, flags);
 
 	CS_UNLOCK(drvdata->base);
-	val = (etm_readl(drvdata, ETMSQR) & ETM_SQR_MASK);
+	val = (eपंचांग_पढ़ोl(drvdata, ETMSQR) & ETM_SQR_MASK);
 	CS_LOCK(drvdata->base);
 
 	spin_unlock_irqrestore(&drvdata->spinlock, flags);
-	pm_runtime_put(dev->parent);
+	pm_runसमय_put(dev->parent);
 out:
-	return sprintf(buf, "%#lx\n", val);
-}
+	वापस प्र_लिखो(buf, "%#lx\n", val);
+पूर्ण
 
-static ssize_t seq_curr_state_store(struct device *dev,
-				    struct device_attribute *attr,
-				    const char *buf, size_t size)
-{
-	int ret;
-	unsigned long val;
-	struct etm_drvdata *drvdata = dev_get_drvdata(dev->parent);
-	struct etm_config *config = &drvdata->config;
+अटल sमाप_प्रकार seq_curr_state_store(काष्ठा device *dev,
+				    काष्ठा device_attribute *attr,
+				    स्थिर अक्षर *buf, माप_प्रकार size)
+अणु
+	पूर्णांक ret;
+	अचिन्हित दीर्घ val;
+	काष्ठा eपंचांग_drvdata *drvdata = dev_get_drvdata(dev->parent);
+	काष्ठा eपंचांग_config *config = &drvdata->config;
 
-	ret = kstrtoul(buf, 16, &val);
-	if (ret)
-		return ret;
+	ret = kम_से_अदीर्घ(buf, 16, &val);
+	अगर (ret)
+		वापस ret;
 
-	if (val > ETM_SEQ_STATE_MAX_VAL)
-		return -EINVAL;
+	अगर (val > ETM_SEQ_STATE_MAX_VAL)
+		वापस -EINVAL;
 
 	config->seq_curr_state = val;
 
-	return size;
-}
-static DEVICE_ATTR_RW(seq_curr_state);
+	वापस size;
+पूर्ण
+अटल DEVICE_ATTR_RW(seq_curr_state);
 
-static ssize_t ctxid_idx_show(struct device *dev,
-			      struct device_attribute *attr, char *buf)
-{
-	unsigned long val;
-	struct etm_drvdata *drvdata = dev_get_drvdata(dev->parent);
-	struct etm_config *config = &drvdata->config;
+अटल sमाप_प्रकार ctxid_idx_show(काष्ठा device *dev,
+			      काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	अचिन्हित दीर्घ val;
+	काष्ठा eपंचांग_drvdata *drvdata = dev_get_drvdata(dev->parent);
+	काष्ठा eपंचांग_config *config = &drvdata->config;
 
 	val = config->ctxid_idx;
-	return sprintf(buf, "%#lx\n", val);
-}
+	वापस प्र_लिखो(buf, "%#lx\n", val);
+पूर्ण
 
-static ssize_t ctxid_idx_store(struct device *dev,
-				struct device_attribute *attr,
-				const char *buf, size_t size)
-{
-	int ret;
-	unsigned long val;
-	struct etm_drvdata *drvdata = dev_get_drvdata(dev->parent);
-	struct etm_config *config = &drvdata->config;
+अटल sमाप_प्रकार ctxid_idx_store(काष्ठा device *dev,
+				काष्ठा device_attribute *attr,
+				स्थिर अक्षर *buf, माप_प्रकार size)
+अणु
+	पूर्णांक ret;
+	अचिन्हित दीर्घ val;
+	काष्ठा eपंचांग_drvdata *drvdata = dev_get_drvdata(dev->parent);
+	काष्ठा eपंचांग_config *config = &drvdata->config;
 
-	ret = kstrtoul(buf, 16, &val);
-	if (ret)
-		return ret;
+	ret = kम_से_अदीर्घ(buf, 16, &val);
+	अगर (ret)
+		वापस ret;
 
-	if (val >= drvdata->nr_ctxid_cmp)
-		return -EINVAL;
+	अगर (val >= drvdata->nr_ctxid_cmp)
+		वापस -EINVAL;
 
 	/*
-	 * Use spinlock to ensure index doesn't change while it gets
-	 * dereferenced multiple times within a spinlock block elsewhere.
+	 * Use spinlock to ensure index करोesn't change जबतक it माला_लो
+	 * dereferenced multiple बार within a spinlock block अन्यथाwhere.
 	 */
 	spin_lock(&drvdata->spinlock);
 	config->ctxid_idx = val;
 	spin_unlock(&drvdata->spinlock);
 
-	return size;
-}
-static DEVICE_ATTR_RW(ctxid_idx);
+	वापस size;
+पूर्ण
+अटल DEVICE_ATTR_RW(ctxid_idx);
 
-static ssize_t ctxid_pid_show(struct device *dev,
-			      struct device_attribute *attr, char *buf)
-{
-	unsigned long val;
-	struct etm_drvdata *drvdata = dev_get_drvdata(dev->parent);
-	struct etm_config *config = &drvdata->config;
+अटल sमाप_प्रकार ctxid_pid_show(काष्ठा device *dev,
+			      काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	अचिन्हित दीर्घ val;
+	काष्ठा eपंचांग_drvdata *drvdata = dev_get_drvdata(dev->parent);
+	काष्ठा eपंचांग_config *config = &drvdata->config;
 
 	/*
-	 * Don't use contextID tracing if coming from a PID namespace.  See
+	 * Don't use contextID tracing अगर coming from a PID namespace.  See
 	 * comment in ctxid_pid_store().
 	 */
-	if (task_active_pid_ns(current) != &init_pid_ns)
-		return -EINVAL;
+	अगर (task_active_pid_ns(current) != &init_pid_ns)
+		वापस -EINVAL;
 
 	spin_lock(&drvdata->spinlock);
 	val = config->ctxid_pid[config->ctxid_idx];
 	spin_unlock(&drvdata->spinlock);
 
-	return sprintf(buf, "%#lx\n", val);
-}
+	वापस प्र_लिखो(buf, "%#lx\n", val);
+पूर्ण
 
-static ssize_t ctxid_pid_store(struct device *dev,
-			       struct device_attribute *attr,
-			       const char *buf, size_t size)
-{
-	int ret;
-	unsigned long pid;
-	struct etm_drvdata *drvdata = dev_get_drvdata(dev->parent);
-	struct etm_config *config = &drvdata->config;
+अटल sमाप_प्रकार ctxid_pid_store(काष्ठा device *dev,
+			       काष्ठा device_attribute *attr,
+			       स्थिर अक्षर *buf, माप_प्रकार size)
+अणु
+	पूर्णांक ret;
+	अचिन्हित दीर्घ pid;
+	काष्ठा eपंचांग_drvdata *drvdata = dev_get_drvdata(dev->parent);
+	काष्ठा eपंचांग_config *config = &drvdata->config;
 
 	/*
 	 * When contextID tracing is enabled the tracers will insert the
-	 * value found in the contextID register in the trace stream.  But if
+	 * value found in the contextID रेजिस्टर in the trace stream.  But अगर
 	 * a process is in a namespace the PID of that process as seen from the
 	 * namespace won't be what the kernel sees, something that makes the
-	 * feature confusing and can potentially leak kernel only information.
-	 * As such refuse to use the feature if @current is not in the initial
+	 * feature confusing and can potentially leak kernel only inक्रमmation.
+	 * As such refuse to use the feature अगर @current is not in the initial
 	 * PID namespace.
 	 */
-	if (task_active_pid_ns(current) != &init_pid_ns)
-		return -EINVAL;
+	अगर (task_active_pid_ns(current) != &init_pid_ns)
+		वापस -EINVAL;
 
-	ret = kstrtoul(buf, 16, &pid);
-	if (ret)
-		return ret;
+	ret = kम_से_अदीर्घ(buf, 16, &pid);
+	अगर (ret)
+		वापस ret;
 
 	spin_lock(&drvdata->spinlock);
 	config->ctxid_pid[config->ctxid_idx] = pid;
 	spin_unlock(&drvdata->spinlock);
 
-	return size;
-}
-static DEVICE_ATTR_RW(ctxid_pid);
+	वापस size;
+पूर्ण
+अटल DEVICE_ATTR_RW(ctxid_pid);
 
-static ssize_t ctxid_mask_show(struct device *dev,
-			       struct device_attribute *attr, char *buf)
-{
-	unsigned long val;
-	struct etm_drvdata *drvdata = dev_get_drvdata(dev->parent);
-	struct etm_config *config = &drvdata->config;
+अटल sमाप_प्रकार ctxid_mask_show(काष्ठा device *dev,
+			       काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	अचिन्हित दीर्घ val;
+	काष्ठा eपंचांग_drvdata *drvdata = dev_get_drvdata(dev->parent);
+	काष्ठा eपंचांग_config *config = &drvdata->config;
 
 	/*
-	 * Don't use contextID tracing if coming from a PID namespace.  See
+	 * Don't use contextID tracing अगर coming from a PID namespace.  See
 	 * comment in ctxid_pid_store().
 	 */
-	if (task_active_pid_ns(current) != &init_pid_ns)
-		return -EINVAL;
+	अगर (task_active_pid_ns(current) != &init_pid_ns)
+		वापस -EINVAL;
 
 	val = config->ctxid_mask;
-	return sprintf(buf, "%#lx\n", val);
-}
+	वापस प्र_लिखो(buf, "%#lx\n", val);
+पूर्ण
 
-static ssize_t ctxid_mask_store(struct device *dev,
-				struct device_attribute *attr,
-				const char *buf, size_t size)
-{
-	int ret;
-	unsigned long val;
-	struct etm_drvdata *drvdata = dev_get_drvdata(dev->parent);
-	struct etm_config *config = &drvdata->config;
+अटल sमाप_प्रकार ctxid_mask_store(काष्ठा device *dev,
+				काष्ठा device_attribute *attr,
+				स्थिर अक्षर *buf, माप_प्रकार size)
+अणु
+	पूर्णांक ret;
+	अचिन्हित दीर्घ val;
+	काष्ठा eपंचांग_drvdata *drvdata = dev_get_drvdata(dev->parent);
+	काष्ठा eपंचांग_config *config = &drvdata->config;
 
 	/*
-	 * Don't use contextID tracing if coming from a PID namespace.  See
+	 * Don't use contextID tracing अगर coming from a PID namespace.  See
 	 * comment in ctxid_pid_store().
 	 */
-	if (task_active_pid_ns(current) != &init_pid_ns)
-		return -EINVAL;
+	अगर (task_active_pid_ns(current) != &init_pid_ns)
+		वापस -EINVAL;
 
-	ret = kstrtoul(buf, 16, &val);
-	if (ret)
-		return ret;
+	ret = kम_से_अदीर्घ(buf, 16, &val);
+	अगर (ret)
+		वापस ret;
 
 	config->ctxid_mask = val;
-	return size;
-}
-static DEVICE_ATTR_RW(ctxid_mask);
+	वापस size;
+पूर्ण
+अटल DEVICE_ATTR_RW(ctxid_mask);
 
-static ssize_t sync_freq_show(struct device *dev,
-			      struct device_attribute *attr, char *buf)
-{
-	unsigned long val;
-	struct etm_drvdata *drvdata = dev_get_drvdata(dev->parent);
-	struct etm_config *config = &drvdata->config;
+अटल sमाप_प्रकार sync_freq_show(काष्ठा device *dev,
+			      काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	अचिन्हित दीर्घ val;
+	काष्ठा eपंचांग_drvdata *drvdata = dev_get_drvdata(dev->parent);
+	काष्ठा eपंचांग_config *config = &drvdata->config;
 
 	val = config->sync_freq;
-	return sprintf(buf, "%#lx\n", val);
-}
+	वापस प्र_लिखो(buf, "%#lx\n", val);
+पूर्ण
 
-static ssize_t sync_freq_store(struct device *dev,
-			       struct device_attribute *attr,
-			       const char *buf, size_t size)
-{
-	int ret;
-	unsigned long val;
-	struct etm_drvdata *drvdata = dev_get_drvdata(dev->parent);
-	struct etm_config *config = &drvdata->config;
+अटल sमाप_प्रकार sync_freq_store(काष्ठा device *dev,
+			       काष्ठा device_attribute *attr,
+			       स्थिर अक्षर *buf, माप_प्रकार size)
+अणु
+	पूर्णांक ret;
+	अचिन्हित दीर्घ val;
+	काष्ठा eपंचांग_drvdata *drvdata = dev_get_drvdata(dev->parent);
+	काष्ठा eपंचांग_config *config = &drvdata->config;
 
-	ret = kstrtoul(buf, 16, &val);
-	if (ret)
-		return ret;
+	ret = kम_से_अदीर्घ(buf, 16, &val);
+	अगर (ret)
+		वापस ret;
 
 	config->sync_freq = val & ETM_SYNC_MASK;
-	return size;
-}
-static DEVICE_ATTR_RW(sync_freq);
+	वापस size;
+पूर्ण
+अटल DEVICE_ATTR_RW(sync_freq);
 
-static ssize_t timestamp_event_show(struct device *dev,
-				    struct device_attribute *attr, char *buf)
-{
-	unsigned long val;
-	struct etm_drvdata *drvdata = dev_get_drvdata(dev->parent);
-	struct etm_config *config = &drvdata->config;
+अटल sमाप_प्रकार बारtamp_event_show(काष्ठा device *dev,
+				    काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	अचिन्हित दीर्घ val;
+	काष्ठा eपंचांग_drvdata *drvdata = dev_get_drvdata(dev->parent);
+	काष्ठा eपंचांग_config *config = &drvdata->config;
 
-	val = config->timestamp_event;
-	return sprintf(buf, "%#lx\n", val);
-}
+	val = config->बारtamp_event;
+	वापस प्र_लिखो(buf, "%#lx\n", val);
+पूर्ण
 
-static ssize_t timestamp_event_store(struct device *dev,
-				     struct device_attribute *attr,
-				     const char *buf, size_t size)
-{
-	int ret;
-	unsigned long val;
-	struct etm_drvdata *drvdata = dev_get_drvdata(dev->parent);
-	struct etm_config *config = &drvdata->config;
+अटल sमाप_प्रकार बारtamp_event_store(काष्ठा device *dev,
+				     काष्ठा device_attribute *attr,
+				     स्थिर अक्षर *buf, माप_प्रकार size)
+अणु
+	पूर्णांक ret;
+	अचिन्हित दीर्घ val;
+	काष्ठा eपंचांग_drvdata *drvdata = dev_get_drvdata(dev->parent);
+	काष्ठा eपंचांग_config *config = &drvdata->config;
 
-	ret = kstrtoul(buf, 16, &val);
-	if (ret)
-		return ret;
+	ret = kम_से_अदीर्घ(buf, 16, &val);
+	अगर (ret)
+		वापस ret;
 
-	config->timestamp_event = val & ETM_EVENT_MASK;
-	return size;
-}
-static DEVICE_ATTR_RW(timestamp_event);
+	config->बारtamp_event = val & ETM_EVENT_MASK;
+	वापस size;
+पूर्ण
+अटल DEVICE_ATTR_RW(बारtamp_event);
 
-static ssize_t cpu_show(struct device *dev,
-			struct device_attribute *attr, char *buf)
-{
-	int val;
-	struct etm_drvdata *drvdata = dev_get_drvdata(dev->parent);
+अटल sमाप_प्रकार cpu_show(काष्ठा device *dev,
+			काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	पूर्णांक val;
+	काष्ठा eपंचांग_drvdata *drvdata = dev_get_drvdata(dev->parent);
 
 	val = drvdata->cpu;
-	return scnprintf(buf, PAGE_SIZE, "%d\n", val);
+	वापस scnम_लिखो(buf, PAGE_SIZE, "%d\n", val);
 
-}
-static DEVICE_ATTR_RO(cpu);
+पूर्ण
+अटल DEVICE_ATTR_RO(cpu);
 
-static ssize_t traceid_show(struct device *dev,
-			    struct device_attribute *attr, char *buf)
-{
-	unsigned long val;
-	struct etm_drvdata *drvdata = dev_get_drvdata(dev->parent);
+अटल sमाप_प्रकार traceid_show(काष्ठा device *dev,
+			    काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	अचिन्हित दीर्घ val;
+	काष्ठा eपंचांग_drvdata *drvdata = dev_get_drvdata(dev->parent);
 
-	val = etm_get_trace_id(drvdata);
+	val = eपंचांग_get_trace_id(drvdata);
 
-	return sprintf(buf, "%#lx\n", val);
-}
+	वापस प्र_लिखो(buf, "%#lx\n", val);
+पूर्ण
 
-static ssize_t traceid_store(struct device *dev,
-			     struct device_attribute *attr,
-			     const char *buf, size_t size)
-{
-	int ret;
-	unsigned long val;
-	struct etm_drvdata *drvdata = dev_get_drvdata(dev->parent);
+अटल sमाप_प्रकार traceid_store(काष्ठा device *dev,
+			     काष्ठा device_attribute *attr,
+			     स्थिर अक्षर *buf, माप_प्रकार size)
+अणु
+	पूर्णांक ret;
+	अचिन्हित दीर्घ val;
+	काष्ठा eपंचांग_drvdata *drvdata = dev_get_drvdata(dev->parent);
 
-	ret = kstrtoul(buf, 16, &val);
-	if (ret)
-		return ret;
+	ret = kम_से_अदीर्घ(buf, 16, &val);
+	अगर (ret)
+		वापस ret;
 
 	drvdata->traceid = val & ETM_TRACEID_MASK;
-	return size;
-}
-static DEVICE_ATTR_RW(traceid);
+	वापस size;
+पूर्ण
+अटल DEVICE_ATTR_RW(traceid);
 
-static struct attribute *coresight_etm_attrs[] = {
+अटल काष्ठा attribute *coresight_eपंचांग_attrs[] = अणु
 	&dev_attr_nr_addr_cmp.attr,
 	&dev_attr_nr_cntr.attr,
 	&dev_attr_nr_ctxid_cmp.attr,
-	&dev_attr_etmsr.attr,
+	&dev_attr_eपंचांगsr.attr,
 	&dev_attr_reset.attr,
 	&dev_attr_mode.attr,
 	&dev_attr_trigger_event.attr,
 	&dev_attr_enable_event.attr,
-	&dev_attr_fifofull_level.attr,
+	&dev_attr_fअगरofull_level.attr,
 	&dev_attr_addr_idx.attr,
 	&dev_attr_addr_single.attr,
 	&dev_attr_addr_range.attr,
@@ -1246,51 +1247,51 @@ static struct attribute *coresight_etm_attrs[] = {
 	&dev_attr_ctxid_pid.attr,
 	&dev_attr_ctxid_mask.attr,
 	&dev_attr_sync_freq.attr,
-	&dev_attr_timestamp_event.attr,
+	&dev_attr_बारtamp_event.attr,
 	&dev_attr_traceid.attr,
 	&dev_attr_cpu.attr,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-#define coresight_etm3x_reg(name, offset)			\
-	coresight_simple_reg32(struct etm_drvdata, name, offset)
+#घोषणा coresight_eपंचांग3x_reg(name, offset)			\
+	coresight_simple_reg32(काष्ठा eपंचांग_drvdata, name, offset)
 
-coresight_etm3x_reg(etmccr, ETMCCR);
-coresight_etm3x_reg(etmccer, ETMCCER);
-coresight_etm3x_reg(etmscr, ETMSCR);
-coresight_etm3x_reg(etmidr, ETMIDR);
-coresight_etm3x_reg(etmcr, ETMCR);
-coresight_etm3x_reg(etmtraceidr, ETMTRACEIDR);
-coresight_etm3x_reg(etmteevr, ETMTEEVR);
-coresight_etm3x_reg(etmtssvr, ETMTSSCR);
-coresight_etm3x_reg(etmtecr1, ETMTECR1);
-coresight_etm3x_reg(etmtecr2, ETMTECR2);
+coresight_eपंचांग3x_reg(eपंचांगccr, ETMCCR);
+coresight_eपंचांग3x_reg(eपंचांगccer, ETMCCER);
+coresight_eपंचांग3x_reg(eपंचांगscr, ETMSCR);
+coresight_eपंचांग3x_reg(eपंचांगidr, ETMIDR);
+coresight_eपंचांग3x_reg(eपंचांगcr, ETMCR);
+coresight_eपंचांग3x_reg(eपंचांगtraceidr, ETMTRACEIDR);
+coresight_eपंचांग3x_reg(eपंचांगteevr, ETMTEEVR);
+coresight_eपंचांग3x_reg(eपंचांगtssvr, ETMTSSCR);
+coresight_eपंचांग3x_reg(eपंचांगtecr1, ETMTECR1);
+coresight_eपंचांग3x_reg(eपंचांगtecr2, ETMTECR2);
 
-static struct attribute *coresight_etm_mgmt_attrs[] = {
-	&dev_attr_etmccr.attr,
-	&dev_attr_etmccer.attr,
-	&dev_attr_etmscr.attr,
-	&dev_attr_etmidr.attr,
-	&dev_attr_etmcr.attr,
-	&dev_attr_etmtraceidr.attr,
-	&dev_attr_etmteevr.attr,
-	&dev_attr_etmtssvr.attr,
-	&dev_attr_etmtecr1.attr,
-	&dev_attr_etmtecr2.attr,
-	NULL,
-};
+अटल काष्ठा attribute *coresight_eपंचांग_mgmt_attrs[] = अणु
+	&dev_attr_eपंचांगccr.attr,
+	&dev_attr_eपंचांगccer.attr,
+	&dev_attr_eपंचांगscr.attr,
+	&dev_attr_eपंचांगidr.attr,
+	&dev_attr_eपंचांगcr.attr,
+	&dev_attr_eपंचांगtraceidr.attr,
+	&dev_attr_eपंचांगteevr.attr,
+	&dev_attr_eपंचांगtssvr.attr,
+	&dev_attr_eपंचांगtecr1.attr,
+	&dev_attr_eपंचांगtecr2.attr,
+	शून्य,
+पूर्ण;
 
-static const struct attribute_group coresight_etm_group = {
-	.attrs = coresight_etm_attrs,
-};
+अटल स्थिर काष्ठा attribute_group coresight_eपंचांग_group = अणु
+	.attrs = coresight_eपंचांग_attrs,
+पूर्ण;
 
-static const struct attribute_group coresight_etm_mgmt_group = {
-	.attrs = coresight_etm_mgmt_attrs,
+अटल स्थिर काष्ठा attribute_group coresight_eपंचांग_mgmt_group = अणु
+	.attrs = coresight_eपंचांग_mgmt_attrs,
 	.name = "mgmt",
-};
+पूर्ण;
 
-const struct attribute_group *coresight_etm_groups[] = {
-	&coresight_etm_group,
-	&coresight_etm_mgmt_group,
-	NULL,
-};
+स्थिर काष्ठा attribute_group *coresight_eपंचांग_groups[] = अणु
+	&coresight_eपंचांग_group,
+	&coresight_eपंचांग_mgmt_group,
+	शून्य,
+पूर्ण;

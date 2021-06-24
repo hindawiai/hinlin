@@ -1,115 +1,116 @@
-/* SPDX-License-Identifier: ISC */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: ISC */
 /*
  * Copyright (c) 2005-2011 Atheros Communications Inc.
  * Copyright (c) 2011-2017 Qualcomm Atheros, Inc.
  * Copyright (c) 2018-2019, The Linux Foundation. All rights reserved.
  */
 
-#ifndef _CORE_H_
-#define _CORE_H_
+#अगर_अघोषित _CORE_H_
+#घोषणा _CORE_H_
 
-#include <linux/completion.h>
-#include <linux/if_ether.h>
-#include <linux/types.h>
-#include <linux/pci.h>
-#include <linux/uuid.h>
-#include <linux/time.h>
+#समावेश <linux/completion.h>
+#समावेश <linux/अगर_ether.h>
+#समावेश <linux/types.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/uuid.h>
+#समावेश <linux/समय.स>
 
-#include "htt.h"
-#include "htc.h"
-#include "hw.h"
-#include "targaddrs.h"
-#include "wmi.h"
-#include "../ath.h"
-#include "../regd.h"
-#include "../dfs_pattern_detector.h"
-#include "spectral.h"
-#include "thermal.h"
-#include "wow.h"
-#include "swap.h"
+#समावेश "htt.h"
+#समावेश "htc.h"
+#समावेश "hw.h"
+#समावेश "targaddrs.h"
+#समावेश "wmi.h"
+#समावेश "../ath.h"
+#समावेश "../regd.h"
+#समावेश "../dfs_pattern_detector.h"
+#समावेश "spectral.h"
+#समावेश "thermal.h"
+#समावेश "wow.h"
+#समावेश "swap.h"
 
-#define MS(_v, _f) (((_v) & _f##_MASK) >> _f##_LSB)
-#define SM(_v, _f) (((_v) << _f##_LSB) & _f##_MASK)
-#define WO(_f)      ((_f##_OFFSET) >> 2)
+#घोषणा MS(_v, _f) (((_v) & _f##_MASK) >> _f##_LSB)
+#घोषणा SM(_v, _f) (((_v) << _f##_LSB) & _f##_MASK)
+#घोषणा WO(_f)      ((_f##_OFFSET) >> 2)
 
-#define ATH10K_SCAN_ID 0
-#define ATH10K_SCAN_CHANNEL_SWITCH_WMI_EVT_OVERHEAD 10 /* msec */
-#define WMI_READY_TIMEOUT (5 * HZ)
-#define ATH10K_FLUSH_TIMEOUT_HZ (5 * HZ)
-#define ATH10K_CONNECTION_LOSS_HZ (3 * HZ)
-#define ATH10K_NUM_CHANS 41
-#define ATH10K_MAX_5G_CHAN 173
+#घोषणा ATH10K_SCAN_ID 0
+#घोषणा ATH10K_SCAN_CHANNEL_SWITCH_WMI_EVT_OVERHEAD 10 /* msec */
+#घोषणा WMI_READY_TIMEOUT (5 * HZ)
+#घोषणा ATH10K_FLUSH_TIMEOUT_HZ (5 * HZ)
+#घोषणा ATH10K_CONNECTION_LOSS_HZ (3 * HZ)
+#घोषणा ATH10K_NUM_CHANS 41
+#घोषणा ATH10K_MAX_5G_CHAN 173
 
-/* Antenna noise floor */
-#define ATH10K_DEFAULT_NOISE_FLOOR -95
+/* Antenna noise न्यूनमान */
+#घोषणा ATH10K_DEFAULT_NOISE_FLOOR -95
 
-#define ATH10K_INVALID_RSSI 128
+#घोषणा ATH10K_INVALID_RSSI 128
 
-#define ATH10K_MAX_NUM_MGMT_PENDING 128
+#घोषणा ATH10K_MAX_NUM_MGMT_PENDING 128
 
 /* number of failed packets (20 packets with 16 sw reties each) */
-#define ATH10K_KICKOUT_THRESHOLD (20 * 16)
+#घोषणा ATH10K_KICKOUT_THRESHOLD (20 * 16)
 
 /*
  * Use insanely high numbers to make sure that the firmware implementation
- * won't start, we have the same functionality already in hostapd. Unit
+ * won't start, we have the same functionality alपढ़ोy in hostapd. Unit
  * is seconds.
  */
-#define ATH10K_KEEPALIVE_MIN_IDLE 3747
-#define ATH10K_KEEPALIVE_MAX_IDLE 3895
-#define ATH10K_KEEPALIVE_MAX_UNRESPONSIVE 3900
+#घोषणा ATH10K_KEEPALIVE_MIN_IDLE 3747
+#घोषणा ATH10K_KEEPALIVE_MAX_IDLE 3895
+#घोषणा ATH10K_KEEPALIVE_MAX_UNRESPONSIVE 3900
 
 /* NAPI poll budget */
-#define ATH10K_NAPI_BUDGET      64
+#घोषणा ATH10K_NAPI_BUDGET      64
 
 /* SMBIOS type containing Board Data File Name Extension */
-#define ATH10K_SMBIOS_BDF_EXT_TYPE 0xF8
+#घोषणा ATH10K_SMBIOS_BDF_EXT_TYPE 0xF8
 
-/* SMBIOS type structure length (excluding strings-set) */
-#define ATH10K_SMBIOS_BDF_EXT_LENGTH 0x9
+/* SMBIOS type काष्ठाure length (excluding strings-set) */
+#घोषणा ATH10K_SMBIOS_BDF_EXT_LENGTH 0x9
 
-/* Offset pointing to Board Data File Name Extension */
-#define ATH10K_SMBIOS_BDF_EXT_OFFSET 0x8
+/* Offset poपूर्णांकing to Board Data File Name Extension */
+#घोषणा ATH10K_SMBIOS_BDF_EXT_OFFSET 0x8
 
 /* Board Data File Name Extension string length.
- * String format: BDF_<Customer ID>_<Extension>\0
+ * String क्रमmat: BDF_<Customer ID>_<Extension>\0
  */
-#define ATH10K_SMBIOS_BDF_EXT_STR_LENGTH 0x20
+#घोषणा ATH10K_SMBIOS_BDF_EXT_STR_LENGTH 0x20
 
 /* The magic used by QCA spec */
-#define ATH10K_SMBIOS_BDF_EXT_MAGIC "BDF_"
+#घोषणा ATH10K_SMBIOS_BDF_EXT_MAGIC "BDF_"
 
-/* Default Airtime weight multipler (Tuned for multiclient performance) */
-#define ATH10K_AIRTIME_WEIGHT_MULTIPLIER  4
+/* Default Airसमय weight multipler (Tuned क्रम multiclient perक्रमmance) */
+#घोषणा ATH10K_AIRTIME_WEIGHT_MULTIPLIER  4
 
-#define ATH10K_MAX_RETRY_COUNT 30
+#घोषणा ATH10K_MAX_RETRY_COUNT 30
 
-#define ATH10K_ITER_NORMAL_FLAGS (IEEE80211_IFACE_ITER_NORMAL | \
+#घोषणा ATH10K_ITER_NORMAL_FLAGS (IEEE80211_IFACE_ITER_NORMAL | \
 				  IEEE80211_IFACE_SKIP_SDATA_NOT_IN_DRIVER)
-#define ATH10K_ITER_RESUME_FLAGS (IEEE80211_IFACE_ITER_RESUME_ALL |\
+#घोषणा ATH10K_ITER_RESUME_FLAGS (IEEE80211_IFACE_ITER_RESUME_ALL |\
 				  IEEE80211_IFACE_SKIP_SDATA_NOT_IN_DRIVER)
 
-struct ath10k;
+काष्ठा ath10k;
 
-static inline const char *ath10k_bus_str(enum ath10k_bus bus)
-{
-	switch (bus) {
-	case ATH10K_BUS_PCI:
-		return "pci";
-	case ATH10K_BUS_AHB:
-		return "ahb";
-	case ATH10K_BUS_SDIO:
-		return "sdio";
-	case ATH10K_BUS_USB:
-		return "usb";
-	case ATH10K_BUS_SNOC:
-		return "snoc";
-	}
+अटल अंतरभूत स्थिर अक्षर *ath10k_bus_str(क्रमागत ath10k_bus bus)
+अणु
+	चयन (bus) अणु
+	हाल ATH10K_BUS_PCI:
+		वापस "pci";
+	हाल ATH10K_BUS_AHB:
+		वापस "ahb";
+	हाल ATH10K_BUS_SDIO:
+		वापस "sdio";
+	हाल ATH10K_BUS_USB:
+		वापस "usb";
+	हाल ATH10K_BUS_SNOC:
+		वापस "snoc";
+	पूर्ण
 
-	return "unknown";
-}
+	वापस "unknown";
+पूर्ण
 
-enum ath10k_skb_flags {
+क्रमागत ath10k_skb_flags अणु
 	ATH10K_SKB_F_NO_HWCRYPT = BIT(0),
 	ATH10K_SKB_F_DTIM_ZERO = BIT(1),
 	ATH10K_SKB_F_DELIVER_CAB = BIT(2),
@@ -117,121 +118,121 @@ enum ath10k_skb_flags {
 	ATH10K_SKB_F_QOS = BIT(4),
 	ATH10K_SKB_F_RAW_TX = BIT(5),
 	ATH10K_SKB_F_NOACK_TID = BIT(6),
-};
+पूर्ण;
 
-struct ath10k_skb_cb {
+काष्ठा ath10k_skb_cb अणु
 	dma_addr_t paddr;
 	u8 flags;
 	u8 eid;
 	u16 msdu_id;
-	u16 airtime_est;
-	struct ieee80211_vif *vif;
-	struct ieee80211_txq *txq;
+	u16 airसमय_est;
+	काष्ठा ieee80211_vअगर *vअगर;
+	काष्ठा ieee80211_txq *txq;
 	u32 ucast_cipher;
-} __packed;
+पूर्ण __packed;
 
-struct ath10k_skb_rxcb {
+काष्ठा ath10k_skb_rxcb अणु
 	dma_addr_t paddr;
-	struct hlist_node hlist;
+	काष्ठा hlist_node hlist;
 	u8 eid;
-};
+पूर्ण;
 
-static inline struct ath10k_skb_cb *ATH10K_SKB_CB(struct sk_buff *skb)
-{
-	BUILD_BUG_ON(sizeof(struct ath10k_skb_cb) >
+अटल अंतरभूत काष्ठा ath10k_skb_cb *ATH10K_SKB_CB(काष्ठा sk_buff *skb)
+अणु
+	BUILD_BUG_ON(माप(काष्ठा ath10k_skb_cb) >
 		     IEEE80211_TX_INFO_DRIVER_DATA_SIZE);
-	return (struct ath10k_skb_cb *)&IEEE80211_SKB_CB(skb)->driver_data;
-}
+	वापस (काष्ठा ath10k_skb_cb *)&IEEE80211_SKB_CB(skb)->driver_data;
+पूर्ण
 
-static inline struct ath10k_skb_rxcb *ATH10K_SKB_RXCB(struct sk_buff *skb)
-{
-	BUILD_BUG_ON(sizeof(struct ath10k_skb_rxcb) > sizeof(skb->cb));
-	return (struct ath10k_skb_rxcb *)skb->cb;
-}
+अटल अंतरभूत काष्ठा ath10k_skb_rxcb *ATH10K_SKB_RXCB(काष्ठा sk_buff *skb)
+अणु
+	BUILD_BUG_ON(माप(काष्ठा ath10k_skb_rxcb) > माप(skb->cb));
+	वापस (काष्ठा ath10k_skb_rxcb *)skb->cb;
+पूर्ण
 
-#define ATH10K_RXCB_SKB(rxcb) \
-		container_of((void *)rxcb, struct sk_buff, cb)
+#घोषणा ATH10K_RXCB_SKB(rxcb) \
+		container_of((व्योम *)rxcb, काष्ठा sk_buff, cb)
 
-static inline u32 host_interest_item_address(u32 item_offset)
-{
-	return QCA988X_HOST_INTEREST_ADDRESS + item_offset;
-}
+अटल अंतरभूत u32 host_पूर्णांकerest_item_address(u32 item_offset)
+अणु
+	वापस QCA988X_HOST_INTEREST_ADDRESS + item_offset;
+पूर्ण
 
-enum ath10k_phy_mode {
+क्रमागत ath10k_phy_mode अणु
 	ATH10K_PHY_MODE_LEGACY = 0,
 	ATH10K_PHY_MODE_HT = 1,
 	ATH10K_PHY_MODE_VHT = 2,
-};
+पूर्ण;
 
 /* Data rate 100KBPS based on IE Index */
-struct ath10k_index_ht_data_rate_type {
+काष्ठा ath10k_index_ht_data_rate_type अणु
 	u8   beacon_rate_index;
 	u16  supported_rate[4];
-};
+पूर्ण;
 
 /* Data rate 100KBPS based on IE Index */
-struct ath10k_index_vht_data_rate_type {
+काष्ठा ath10k_index_vht_data_rate_type अणु
 	u8   beacon_rate_index;
 	u16  supported_VHT80_rate[2];
 	u16  supported_VHT40_rate[2];
 	u16  supported_VHT20_rate[2];
-};
+पूर्ण;
 
-struct ath10k_bmi {
-	bool done_sent;
-};
+काष्ठा ath10k_bmi अणु
+	bool करोne_sent;
+पूर्ण;
 
-struct ath10k_mem_chunk {
-	void *vaddr;
+काष्ठा ath10k_mem_chunk अणु
+	व्योम *vaddr;
 	dma_addr_t paddr;
 	u32 len;
 	u32 req_id;
-};
+पूर्ण;
 
-struct ath10k_wmi {
-	enum ath10k_htc_ep_id eid;
-	struct completion service_ready;
-	struct completion unified_ready;
-	struct completion barrier;
-	struct completion radar_confirm;
-	wait_queue_head_t tx_credits_wq;
+काष्ठा ath10k_wmi अणु
+	क्रमागत ath10k_htc_ep_id eid;
+	काष्ठा completion service_पढ़ोy;
+	काष्ठा completion unअगरied_पढ़ोy;
+	काष्ठा completion barrier;
+	काष्ठा completion radar_confirm;
+	रुको_queue_head_t tx_credits_wq;
 	DECLARE_BITMAP(svc_map, WMI_SERVICE_MAX);
-	struct wmi_cmd_map *cmd;
-	struct wmi_vdev_param_map *vdev_param;
-	struct wmi_pdev_param_map *pdev_param;
-	struct wmi_peer_param_map *peer_param;
-	const struct wmi_ops *ops;
-	const struct wmi_peer_flags_map *peer_flags;
+	काष्ठा wmi_cmd_map *cmd;
+	काष्ठा wmi_vdev_param_map *vdev_param;
+	काष्ठा wmi_pdev_param_map *pdev_param;
+	काष्ठा wmi_peer_param_map *peer_param;
+	स्थिर काष्ठा wmi_ops *ops;
+	स्थिर काष्ठा wmi_peer_flags_map *peer_flags;
 
 	u32 mgmt_max_num_pending_tx;
 
 	/* Protected by data_lock */
-	struct idr mgmt_pending_tx;
+	काष्ठा idr mgmt_pending_tx;
 
 	u32 num_mem_chunks;
 	u32 rx_decap_mode;
-	struct ath10k_mem_chunk mem_chunks[WMI_MAX_MEM_REQS];
-};
+	काष्ठा ath10k_mem_chunk mem_chunks[WMI_MAX_MEM_REQS];
+पूर्ण;
 
-struct ath10k_fw_stats_peer {
-	struct list_head list;
+काष्ठा ath10k_fw_stats_peer अणु
+	काष्ठा list_head list;
 
 	u8 peer_macaddr[ETH_ALEN];
 	u32 peer_rssi;
 	u32 peer_tx_rate;
 	u32 peer_rx_rate; /* 10x only */
 	u64 rx_duration;
-};
+पूर्ण;
 
-struct ath10k_fw_extd_stats_peer {
-	struct list_head list;
+काष्ठा ath10k_fw_extd_stats_peer अणु
+	काष्ठा list_head list;
 
 	u8 peer_macaddr[ETH_ALEN];
 	u64 rx_duration;
-};
+पूर्ण;
 
-struct ath10k_fw_stats_vdev {
-	struct list_head list;
+काष्ठा ath10k_fw_stats_vdev अणु
+	काष्ठा list_head list;
 
 	u32 vdev_id;
 	u32 beacon_snr;
@@ -247,10 +248,10 @@ struct ath10k_fw_stats_vdev {
 	u32 num_tx_not_acked;
 	u32 tx_rate_history[10];
 	u32 beacon_rssi_history[10];
-};
+पूर्ण;
 
-struct ath10k_fw_stats_vdev_extd {
-	struct list_head list;
+काष्ठा ath10k_fw_stats_vdev_extd अणु
+	काष्ठा list_head list;
 
 	u32 vdev_id;
 	u32 ppdu_aggr_cnt;
@@ -261,32 +262,32 @@ struct ath10k_fw_stats_vdev_extd {
 	u32 mpdu_suc_retry;
 	u32 mpdu_suc_multitry;
 	u32 mpdu_fail_retry;
-	u32 tx_ftm_suc;
-	u32 tx_ftm_suc_retry;
-	u32 tx_ftm_fail;
-	u32 rx_ftmr_cnt;
-	u32 rx_ftmr_dup_cnt;
-	u32 rx_iftmr_cnt;
-	u32 rx_iftmr_dup_cnt;
-};
+	u32 tx_fपंचांग_suc;
+	u32 tx_fपंचांग_suc_retry;
+	u32 tx_fपंचांग_fail;
+	u32 rx_fपंचांगr_cnt;
+	u32 rx_fपंचांगr_dup_cnt;
+	u32 rx_अगरपंचांगr_cnt;
+	u32 rx_अगरपंचांगr_dup_cnt;
+पूर्ण;
 
-struct ath10k_fw_stats_pdev {
-	struct list_head list;
+काष्ठा ath10k_fw_stats_pdev अणु
+	काष्ठा list_head list;
 
 	/* PDEV stats */
-	s32 ch_noise_floor;
+	s32 ch_noise_न्यूनमान;
 	u32 tx_frame_count; /* Cycles spent transmitting frames */
 	u32 rx_frame_count; /* Cycles spent receiving frames */
-	u32 rx_clear_count; /* Total channel busy time, evidently */
-	u32 cycle_count; /* Total on-channel time */
+	u32 rx_clear_count; /* Total channel busy समय, evidently */
+	u32 cycle_count; /* Total on-channel समय */
 	u32 phy_err_count;
-	u32 chan_tx_power;
+	u32 chan_tx_घातer;
 	u32 ack_rx_bad;
 	u32 rts_bad;
 	u32 rts_good;
 	u32 fcs_bad;
 	u32 no_beacons;
-	u32 mib_int_count;
+	u32 mib_पूर्णांक_count;
 
 	/* PDEV TX stats */
 	s32 comp_queued;
@@ -295,12 +296,12 @@ struct ath10k_fw_stats_pdev {
 	s32 mpdu_enqued;
 	s32 wmm_drop;
 	s32 local_enqued;
-	s32 local_freed;
+	s32 local_मुक्तd;
 	s32 hw_queued;
 	s32 hw_reaped;
 	s32 underrun;
-	u32 hw_paused;
-	s32 tx_abort;
+	u32 hw_छोड़ोd;
+	s32 tx_पात;
 	s32 mpdus_requed;
 	u32 tx_ko;
 	u32 data_rc;
@@ -308,7 +309,7 @@ struct ath10k_fw_stats_pdev {
 	u32 sw_retry_failure;
 	u32 illgl_rate_phy_err;
 	u32 pdev_cont_xretry;
-	u32 pdev_tx_timeout;
+	u32 pdev_tx_समयout;
 	u32 pdev_resets;
 	u32 phy_underrun;
 	u32 txop_ovf;
@@ -339,123 +340,123 @@ struct ath10k_fw_stats_pdev {
 	s32 phy_err_drop;
 	s32 mpdu_errs;
 	s32 rx_ovfl_errs;
-};
+पूर्ण;
 
-struct ath10k_fw_stats {
+काष्ठा ath10k_fw_stats अणु
 	bool extended;
-	struct list_head pdevs;
-	struct list_head vdevs;
-	struct list_head peers;
-	struct list_head peers_extd;
-};
+	काष्ठा list_head pdevs;
+	काष्ठा list_head vdevs;
+	काष्ठा list_head peers;
+	काष्ठा list_head peers_extd;
+पूर्ण;
 
-#define ATH10K_TPC_TABLE_TYPE_FLAG	1
-#define ATH10K_TPC_PREAM_TABLE_END	0xFFFF
+#घोषणा ATH10K_TPC_TABLE_TYPE_FLAG	1
+#घोषणा ATH10K_TPC_PREAM_TABLE_END	0xFFFF
 
-struct ath10k_tpc_table {
+काष्ठा ath10k_tpc_table अणु
 	u32 pream_idx[WMI_TPC_RATE_MAX];
 	u8 rate_code[WMI_TPC_RATE_MAX];
-	char tpc_value[WMI_TPC_RATE_MAX][WMI_TPC_TX_N_CHAIN * WMI_TPC_BUF_SIZE];
-};
+	अक्षर tpc_value[WMI_TPC_RATE_MAX][WMI_TPC_TX_N_CHAIN * WMI_TPC_BUF_SIZE];
+पूर्ण;
 
-struct ath10k_tpc_stats {
-	u32 reg_domain;
+काष्ठा ath10k_tpc_stats अणु
+	u32 reg_करोमुख्य;
 	u32 chan_freq;
 	u32 phy_mode;
 	u32 twice_antenna_reduction;
-	u32 twice_max_rd_power;
+	u32 twice_max_rd_घातer;
 	s32 twice_antenna_gain;
-	u32 power_limit;
+	u32 घातer_limit;
 	u32 num_tx_chain;
 	u32 ctl;
 	u32 rate_max;
 	u8 flag[WMI_TPC_FLAG];
-	struct ath10k_tpc_table tpc_table[WMI_TPC_FLAG];
-};
+	काष्ठा ath10k_tpc_table tpc_table[WMI_TPC_FLAG];
+पूर्ण;
 
-struct ath10k_tpc_table_final {
+काष्ठा ath10k_tpc_table_final अणु
 	u32 pream_idx[WMI_TPC_FINAL_RATE_MAX];
 	u8 rate_code[WMI_TPC_FINAL_RATE_MAX];
-	char tpc_value[WMI_TPC_FINAL_RATE_MAX][WMI_TPC_TX_N_CHAIN * WMI_TPC_BUF_SIZE];
-};
+	अक्षर tpc_value[WMI_TPC_FINAL_RATE_MAX][WMI_TPC_TX_N_CHAIN * WMI_TPC_BUF_SIZE];
+पूर्ण;
 
-struct ath10k_tpc_stats_final {
-	u32 reg_domain;
+काष्ठा ath10k_tpc_stats_final अणु
+	u32 reg_करोमुख्य;
 	u32 chan_freq;
 	u32 phy_mode;
 	u32 twice_antenna_reduction;
-	u32 twice_max_rd_power;
+	u32 twice_max_rd_घातer;
 	s32 twice_antenna_gain;
-	u32 power_limit;
+	u32 घातer_limit;
 	u32 num_tx_chain;
 	u32 ctl;
 	u32 rate_max;
 	u8 flag[WMI_TPC_FLAG];
-	struct ath10k_tpc_table_final tpc_table_final[WMI_TPC_FLAG];
-};
+	काष्ठा ath10k_tpc_table_final tpc_table_final[WMI_TPC_FLAG];
+पूर्ण;
 
-struct ath10k_dfs_stats {
+काष्ठा ath10k_dfs_stats अणु
 	u32 phy_errors;
 	u32 pulses_total;
 	u32 pulses_detected;
 	u32 pulses_discarded;
 	u32 radar_detected;
-};
+पूर्ण;
 
-enum ath10k_radar_confirmation_state {
+क्रमागत ath10k_radar_confirmation_state अणु
 	ATH10K_RADAR_CONFIRMATION_IDLE = 0,
 	ATH10K_RADAR_CONFIRMATION_INPROGRESS,
 	ATH10K_RADAR_CONFIRMATION_STOPPED,
-};
+पूर्ण;
 
-struct ath10k_radar_found_info {
+काष्ठा ath10k_radar_found_info अणु
 	u32 pri_min;
 	u32 pri_max;
 	u32 width_min;
 	u32 width_max;
 	u32 sidx_min;
 	u32 sidx_max;
-};
+पूर्ण;
 
-#define ATH10K_MAX_NUM_PEER_IDS (1 << 11) /* htt rx_desc limit */
+#घोषणा ATH10K_MAX_NUM_PEER_IDS (1 << 11) /* htt rx_desc limit */
 
-struct ath10k_peer {
-	struct list_head list;
-	struct ieee80211_vif *vif;
-	struct ieee80211_sta *sta;
+काष्ठा ath10k_peer अणु
+	काष्ठा list_head list;
+	काष्ठा ieee80211_vअगर *vअगर;
+	काष्ठा ieee80211_sta *sta;
 
-	bool removed;
-	int vdev_id;
+	bool हटाओd;
+	पूर्णांक vdev_id;
 	u8 addr[ETH_ALEN];
 	DECLARE_BITMAP(peer_ids, ATH10K_MAX_NUM_PEER_IDS);
 
-	/* protected by ar->data_lock */
-	struct ieee80211_key_conf *keys[WMI_MAX_KEY_INDEX + 1];
-	union htt_rx_pn_t tids_last_pn[ATH10K_TXRX_NUM_EXT_TIDS];
+	/* रक्षित by ar->data_lock */
+	काष्ठा ieee80211_key_conf *keys[WMI_MAX_KEY_INDEX + 1];
+	जोड़ htt_rx_pn_t tids_last_pn[ATH10K_TXRX_NUM_EXT_TIDS];
 	bool tids_last_pn_valid[ATH10K_TXRX_NUM_EXT_TIDS];
-	union htt_rx_pn_t frag_tids_last_pn[ATH10K_TXRX_NUM_EXT_TIDS];
+	जोड़ htt_rx_pn_t frag_tids_last_pn[ATH10K_TXRX_NUM_EXT_TIDS];
 	u32 frag_tids_seq[ATH10K_TXRX_NUM_EXT_TIDS];
-	struct {
-		enum htt_security_types sec_type;
-		int pn_len;
-	} rx_pn[ATH10K_HTT_TXRX_PEER_SECURITY_MAX];
-};
+	काष्ठा अणु
+		क्रमागत htt_security_types sec_type;
+		पूर्णांक pn_len;
+	पूर्ण rx_pn[ATH10K_HTT_TXRX_PEER_SECURITY_MAX];
+पूर्ण;
 
-struct ath10k_txq {
-	struct list_head list;
-	unsigned long num_fw_queued;
-	unsigned long num_push_allowed;
-};
+काष्ठा ath10k_txq अणु
+	काष्ठा list_head list;
+	अचिन्हित दीर्घ num_fw_queued;
+	अचिन्हित दीर्घ num_push_allowed;
+पूर्ण;
 
-enum ath10k_pkt_rx_err {
+क्रमागत ath10k_pkt_rx_err अणु
 	ATH10K_PKT_RX_ERR_FCS,
 	ATH10K_PKT_RX_ERR_TKIP,
 	ATH10K_PKT_RX_ERR_CRYPT,
 	ATH10K_PKT_RX_ERR_PEER_IDX_INVAL,
 	ATH10K_PKT_RX_ERR_MAX,
-};
+पूर्ण;
 
-enum ath10k_ampdu_subfrm_num {
+क्रमागत ath10k_ampdu_subfrm_num अणु
 	ATH10K_AMPDU_SUBFRM_NUM_10,
 	ATH10K_AMPDU_SUBFRM_NUM_20,
 	ATH10K_AMPDU_SUBFRM_NUM_30,
@@ -464,43 +465,43 @@ enum ath10k_ampdu_subfrm_num {
 	ATH10K_AMPDU_SUBFRM_NUM_60,
 	ATH10K_AMPDU_SUBFRM_NUM_MORE,
 	ATH10K_AMPDU_SUBFRM_NUM_MAX,
-};
+पूर्ण;
 
-enum ath10k_amsdu_subfrm_num {
+क्रमागत ath10k_amsdu_subfrm_num अणु
 	ATH10K_AMSDU_SUBFRM_NUM_1,
 	ATH10K_AMSDU_SUBFRM_NUM_2,
 	ATH10K_AMSDU_SUBFRM_NUM_3,
 	ATH10K_AMSDU_SUBFRM_NUM_4,
 	ATH10K_AMSDU_SUBFRM_NUM_MORE,
 	ATH10K_AMSDU_SUBFRM_NUM_MAX,
-};
+पूर्ण;
 
-struct ath10k_sta_tid_stats {
-	unsigned long rx_pkt_from_fw;
-	unsigned long rx_pkt_unchained;
-	unsigned long rx_pkt_drop_chained;
-	unsigned long rx_pkt_drop_filter;
-	unsigned long rx_pkt_err[ATH10K_PKT_RX_ERR_MAX];
-	unsigned long rx_pkt_queued_for_mac;
-	unsigned long rx_pkt_ampdu[ATH10K_AMPDU_SUBFRM_NUM_MAX];
-	unsigned long rx_pkt_amsdu[ATH10K_AMSDU_SUBFRM_NUM_MAX];
-};
+काष्ठा ath10k_sta_tid_stats अणु
+	अचिन्हित दीर्घ rx_pkt_from_fw;
+	अचिन्हित दीर्घ rx_pkt_unchained;
+	अचिन्हित दीर्घ rx_pkt_drop_chained;
+	अचिन्हित दीर्घ rx_pkt_drop_filter;
+	अचिन्हित दीर्घ rx_pkt_err[ATH10K_PKT_RX_ERR_MAX];
+	अचिन्हित दीर्घ rx_pkt_queued_क्रम_mac;
+	अचिन्हित दीर्घ rx_pkt_ampdu[ATH10K_AMPDU_SUBFRM_NUM_MAX];
+	अचिन्हित दीर्घ rx_pkt_amsdu[ATH10K_AMSDU_SUBFRM_NUM_MAX];
+पूर्ण;
 
-enum ath10k_counter_type {
+क्रमागत ath10k_counter_type अणु
 	ATH10K_COUNTER_TYPE_BYTES,
 	ATH10K_COUNTER_TYPE_PKTS,
 	ATH10K_COUNTER_TYPE_MAX,
-};
+पूर्ण;
 
-enum ath10k_stats_type {
+क्रमागत ath10k_stats_type अणु
 	ATH10K_STATS_TYPE_SUCC,
 	ATH10K_STATS_TYPE_FAIL,
 	ATH10K_STATS_TYPE_RETRY,
 	ATH10K_STATS_TYPE_AMPDU,
 	ATH10K_STATS_TYPE_MAX,
-};
+पूर्ण;
 
-struct ath10k_htt_data_stats {
+काष्ठा ath10k_htt_data_stats अणु
 	u64 legacy[ATH10K_COUNTER_TYPE_MAX][ATH10K_LEGACY_NUM];
 	u64 ht[ATH10K_COUNTER_TYPE_MAX][ATH10K_HT_MCS_NUM];
 	u64 vht[ATH10K_COUNTER_TYPE_MAX][ATH10K_VHT_MCS_NUM];
@@ -508,28 +509,28 @@ struct ath10k_htt_data_stats {
 	u64 nss[ATH10K_COUNTER_TYPE_MAX][ATH10K_NSS_NUM];
 	u64 gi[ATH10K_COUNTER_TYPE_MAX][ATH10K_GI_NUM];
 	u64 rate_table[ATH10K_COUNTER_TYPE_MAX][ATH10K_RATE_TABLE_NUM];
-};
+पूर्ण;
 
-struct ath10k_htt_tx_stats {
-	struct ath10k_htt_data_stats stats[ATH10K_STATS_TYPE_MAX];
+काष्ठा ath10k_htt_tx_stats अणु
+	काष्ठा ath10k_htt_data_stats stats[ATH10K_STATS_TYPE_MAX];
 	u64 tx_duration;
 	u64 ba_fails;
 	u64 ack_fails;
-};
+पूर्ण;
 
-#define ATH10K_TID_MAX	8
+#घोषणा ATH10K_TID_MAX	8
 
-struct ath10k_sta {
-	struct ath10k_vif *arvif;
+काष्ठा ath10k_sta अणु
+	काष्ठा ath10k_vअगर *arvअगर;
 
-	/* the following are protected by ar->data_lock */
+	/* the following are रक्षित by ar->data_lock */
 	u32 changed; /* IEEE80211_RC_* */
 	u32 bw;
 	u32 nss;
 	u32 smps;
 	u16 peer_id;
-	struct rate_info txrate;
-	struct ieee80211_tx_info tx_info;
+	काष्ठा rate_info txrate;
+	काष्ठा ieee80211_tx_info tx_info;
 	u32 tx_retries;
 	u32 tx_failed;
 	u32 last_tx_bitrate;
@@ -538,56 +539,56 @@ struct ath10k_sta {
 	u32 rx_bitrate_kbps;
 	u32 tx_rate_code;
 	u32 tx_bitrate_kbps;
-	struct work_struct update_wk;
+	काष्ठा work_काष्ठा update_wk;
 	u64 rx_duration;
-	struct ath10k_htt_tx_stats *tx_stats;
+	काष्ठा ath10k_htt_tx_stats *tx_stats;
 	u32 ucast_cipher;
 
-#ifdef CONFIG_MAC80211_DEBUGFS
-	/* protected by conf_mutex */
+#अगर_घोषित CONFIG_MAC80211_DEBUGFS
+	/* रक्षित by conf_mutex */
 	bool aggr_mode;
 
 	/* Protected with ar->data_lock */
-	struct ath10k_sta_tid_stats tid_stats[IEEE80211_NUM_TIDS + 1];
-#endif
+	काष्ठा ath10k_sta_tid_stats tid_stats[IEEE80211_NUM_TIDS + 1];
+#पूर्ण_अगर
 	/* Protected with ar->data_lock */
 	u32 peer_ps_state;
-	struct work_struct tid_config_wk;
-	int noack[ATH10K_TID_MAX];
-	int retry_long[ATH10K_TID_MAX];
-	int ampdu[ATH10K_TID_MAX];
+	काष्ठा work_काष्ठा tid_config_wk;
+	पूर्णांक noack[ATH10K_TID_MAX];
+	पूर्णांक retry_दीर्घ[ATH10K_TID_MAX];
+	पूर्णांक ampdu[ATH10K_TID_MAX];
 	u8 rate_ctrl[ATH10K_TID_MAX];
 	u32 rate_code[ATH10K_TID_MAX];
-	int rtscts[ATH10K_TID_MAX];
-};
+	पूर्णांक rtscts[ATH10K_TID_MAX];
+पूर्ण;
 
-#define ATH10K_VDEV_SETUP_TIMEOUT_HZ	(5 * HZ)
-#define ATH10K_VDEV_DELETE_TIMEOUT_HZ	(5 * HZ)
+#घोषणा ATH10K_VDEV_SETUP_TIMEOUT_HZ	(5 * HZ)
+#घोषणा ATH10K_VDEV_DELETE_TIMEOUT_HZ	(5 * HZ)
 
-enum ath10k_beacon_state {
+क्रमागत ath10k_beacon_state अणु
 	ATH10K_BEACON_SCHEDULED = 0,
 	ATH10K_BEACON_SENDING,
 	ATH10K_BEACON_SENT,
-};
+पूर्ण;
 
-struct ath10k_vif {
-	struct list_head list;
+काष्ठा ath10k_vअगर अणु
+	काष्ठा list_head list;
 
 	u32 vdev_id;
 	u16 peer_id;
-	enum wmi_vdev_type vdev_type;
-	enum wmi_vdev_subtype vdev_subtype;
-	u32 beacon_interval;
+	क्रमागत wmi_vdev_type vdev_type;
+	क्रमागत wmi_vdev_subtype vdev_subtype;
+	u32 beacon_पूर्णांकerval;
 	u32 dtim_period;
-	struct sk_buff *beacon;
-	/* protected by data_lock */
-	enum ath10k_beacon_state beacon_state;
-	void *beacon_buf;
+	काष्ठा sk_buff *beacon;
+	/* रक्षित by data_lock */
+	क्रमागत ath10k_beacon_state beacon_state;
+	व्योम *beacon_buf;
 	dma_addr_t beacon_paddr;
-	unsigned long tx_paused; /* arbitrary values defined by target */
+	अचिन्हित दीर्घ tx_छोड़ोd; /* arbitrary values defined by target */
 
-	struct ath10k *ar;
-	struct ieee80211_vif *vif;
+	काष्ठा ath10k *ar;
+	काष्ठा ieee80211_vअगर *vअगर;
 
 	bool is_started;
 	bool is_up;
@@ -596,168 +597,168 @@ struct ath10k_vif {
 	u32 aid;
 	u8 bssid[ETH_ALEN];
 
-	struct ieee80211_key_conf *wep_keys[WMI_MAX_KEY_INDEX + 1];
+	काष्ठा ieee80211_key_conf *wep_keys[WMI_MAX_KEY_INDEX + 1];
 	s8 def_wep_key_idx;
 
 	u16 tx_seq_no;
 
-	union {
-		struct {
+	जोड़ अणु
+		काष्ठा अणु
 			u32 uapsd;
-		} sta;
-		struct {
+		पूर्ण sta;
+		काष्ठा अणु
 			/* 512 stations */
-			u8 tim_bitmap[64];
+			u8 tim_biपंचांगap[64];
 			u8 tim_len;
 			u32 ssid_len;
 			u8 ssid[IEEE80211_MAX_SSID_LEN];
 			bool hidden_ssid;
-			/* P2P_IE with NoA attribute for P2P_GO case */
+			/* P2P_IE with NoA attribute क्रम P2P_GO हाल */
 			u32 noa_len;
 			u8 *noa_data;
-		} ap;
-	} u;
+		पूर्ण ap;
+	पूर्ण u;
 
 	bool use_cts_prot;
 	bool nohwcrypt;
-	int num_legacy_stations;
-	int txpower;
-	bool ftm_responder;
-	struct wmi_wmm_params_all_arg wmm_params;
-	struct work_struct ap_csa_work;
-	struct delayed_work connection_loss_work;
-	struct cfg80211_bitrate_mask bitrate_mask;
+	पूर्णांक num_legacy_stations;
+	पूर्णांक txघातer;
+	bool fपंचांग_responder;
+	काष्ठा wmi_wmm_params_all_arg wmm_params;
+	काष्ठा work_काष्ठा ap_csa_work;
+	काष्ठा delayed_work connection_loss_work;
+	काष्ठा cfg80211_bitrate_mask bitrate_mask;
 
-	/* For setting VHT peer fixed rate, protected by conf_mutex */
-	int vht_num_rates;
+	/* For setting VHT peer fixed rate, रक्षित by conf_mutex */
+	पूर्णांक vht_num_rates;
 	u8 vht_pfr;
 	u32 tid_conf_changed[ATH10K_TID_MAX];
-	int noack[ATH10K_TID_MAX];
-	int retry_long[ATH10K_TID_MAX];
-	int ampdu[ATH10K_TID_MAX];
+	पूर्णांक noack[ATH10K_TID_MAX];
+	पूर्णांक retry_दीर्घ[ATH10K_TID_MAX];
+	पूर्णांक ampdu[ATH10K_TID_MAX];
 	u8 rate_ctrl[ATH10K_TID_MAX];
 	u32 rate_code[ATH10K_TID_MAX];
-	int rtscts[ATH10K_TID_MAX];
+	पूर्णांक rtscts[ATH10K_TID_MAX];
 	u32 tids_rst;
-};
+पूर्ण;
 
-struct ath10k_vif_iter {
+काष्ठा ath10k_vअगर_iter अणु
 	u32 vdev_id;
-	struct ath10k_vif *arvif;
-};
+	काष्ठा ath10k_vअगर *arvअगर;
+पूर्ण;
 
-/* Copy Engine register dump, protected by ce-lock */
-struct ath10k_ce_crash_data {
+/* Copy Engine रेजिस्टर dump, रक्षित by ce-lock */
+काष्ठा ath10k_ce_crash_data अणु
 	__le32 base_addr;
 	__le32 src_wr_idx;
 	__le32 src_r_idx;
 	__le32 dst_wr_idx;
 	__le32 dst_r_idx;
-};
+पूर्ण;
 
-struct ath10k_ce_crash_hdr {
+काष्ठा ath10k_ce_crash_hdr अणु
 	__le32 ce_count;
-	__le32 reserved[3]; /* for future use */
-	struct ath10k_ce_crash_data entries[];
-};
+	__le32 reserved[3]; /* क्रम future use */
+	काष्ठा ath10k_ce_crash_data entries[];
+पूर्ण;
 
-#define MAX_MEM_DUMP_TYPE	5
+#घोषणा MAX_MEM_DUMP_TYPE	5
 
-/* used for crash-dump storage, protected by data-lock */
-struct ath10k_fw_crash_data {
+/* used क्रम crash-dump storage, रक्षित by data-lock */
+काष्ठा ath10k_fw_crash_data अणु
 	guid_t guid;
-	struct timespec64 timestamp;
-	__le32 registers[REG_DUMP_COUNT_QCA988X];
-	struct ath10k_ce_crash_data ce_crash_data[CE_COUNT_MAX];
+	काष्ठा बारpec64 बारtamp;
+	__le32 रेजिस्टरs[REG_DUMP_COUNT_QCA988X];
+	काष्ठा ath10k_ce_crash_data ce_crash_data[CE_COUNT_MAX];
 
 	u8 *ramdump_buf;
-	size_t ramdump_buf_len;
-};
+	माप_प्रकार ramdump_buf_len;
+पूर्ण;
 
-struct ath10k_debug {
-	struct dentry *debugfs_phy;
+काष्ठा ath10k_debug अणु
+	काष्ठा dentry *debugfs_phy;
 
-	struct ath10k_fw_stats fw_stats;
-	struct completion fw_stats_complete;
-	bool fw_stats_done;
+	काष्ठा ath10k_fw_stats fw_stats;
+	काष्ठा completion fw_stats_complete;
+	bool fw_stats_करोne;
 
-	unsigned long htt_stats_mask;
-	unsigned long reset_htt_stats;
-	struct delayed_work htt_stats_dwork;
-	struct ath10k_dfs_stats dfs_stats;
-	struct ath_dfs_pool_stats dfs_pool_stats;
+	अचिन्हित दीर्घ htt_stats_mask;
+	अचिन्हित दीर्घ reset_htt_stats;
+	काष्ठा delayed_work htt_stats_dwork;
+	काष्ठा ath10k_dfs_stats dfs_stats;
+	काष्ठा ath_dfs_pool_stats dfs_pool_stats;
 
-	/* used for tpc-dump storage, protected by data-lock */
-	struct ath10k_tpc_stats *tpc_stats;
-	struct ath10k_tpc_stats_final *tpc_stats_final;
+	/* used क्रम tpc-dump storage, रक्षित by data-lock */
+	काष्ठा ath10k_tpc_stats *tpc_stats;
+	काष्ठा ath10k_tpc_stats_final *tpc_stats_final;
 
-	struct completion tpc_complete;
+	काष्ठा completion tpc_complete;
 
-	/* protected by conf_mutex */
+	/* रक्षित by conf_mutex */
 	u64 fw_dbglog_mask;
 	u32 fw_dbglog_level;
 	u32 reg_addr;
 	u32 nf_cal_period;
-	void *cal_data;
+	व्योम *cal_data;
 	u32 enable_extd_tx_stats;
 	u8 fw_dbglog_mode;
-};
+पूर्ण;
 
-enum ath10k_state {
+क्रमागत ath10k_state अणु
 	ATH10K_STATE_OFF = 0,
 	ATH10K_STATE_ON,
 
-	/* When doing firmware recovery the device is first powered down.
+	/* When करोing firmware recovery the device is first घातered करोwn.
 	 * mac80211 is supposed to call in to start() hook later on. It is
 	 * however possible that driver unloading and firmware crash overlap.
-	 * mac80211 can wait on conf_mutex in stop() while the device is
+	 * mac80211 can रुको on conf_mutex in stop() जबतक the device is
 	 * stopped in ath10k_core_restart() work holding conf_mutex. The state
 	 * RESTARTED means that the device is up and mac80211 has started hw
-	 * reconfiguration. Once mac80211 is done with the reconfiguration we
+	 * reconfiguration. Once mac80211 is करोne with the reconfiguration we
 	 * set the state to STATE_ON in reconfig_complete().
 	 */
 	ATH10K_STATE_RESTARTING,
 	ATH10K_STATE_RESTARTED,
 
-	/* The device has crashed while restarting hw. This state is like ON
+	/* The device has crashed जबतक restarting hw. This state is like ON
 	 * but commands are blocked in HTC and -ECOMM response is given. This
-	 * prevents completion timeouts and makes the driver more responsive to
+	 * prevents completion समयouts and makes the driver more responsive to
 	 * userspace commands. This is also prevents recursive recovery.
 	 */
 	ATH10K_STATE_WEDGED,
 
 	/* factory tests */
 	ATH10K_STATE_UTF,
-};
+पूर्ण;
 
-enum ath10k_firmware_mode {
-	/* the default mode, standard 802.11 functionality */
+क्रमागत ath10k_firmware_mode अणु
+	/* the शेष mode, standard 802.11 functionality */
 	ATH10K_FIRMWARE_MODE_NORMAL,
 
 	/* factory tests etc */
 	ATH10K_FIRMWARE_MODE_UTF,
-};
+पूर्ण;
 
-enum ath10k_fw_features {
-	/* wmi_mgmt_rx_hdr contains extra RSSI information */
+क्रमागत ath10k_fw_features अणु
+	/* wmi_mgmt_rx_hdr contains extra RSSI inक्रमmation */
 	ATH10K_FW_FEATURE_EXT_WMI_MGMT_RX = 0,
 
-	/* Firmware from 10X branch. Deprecated, don't use in new code. */
+	/* Firmware from 10X branch. Deprecated, करोn't use in new code. */
 	ATH10K_FW_FEATURE_WMI_10X = 1,
 
 	/* firmware support tx frame management over WMI, otherwise it's HTT */
 	ATH10K_FW_FEATURE_HAS_WMI_MGMT_TX = 2,
 
-	/* Firmware does not support P2P */
+	/* Firmware करोes not support P2P */
 	ATH10K_FW_FEATURE_NO_P2P = 3,
 
 	/* Firmware 10.2 feature bit. The ATH10K_FW_FEATURE_WMI_10X feature
-	 * bit is required to be set as well. Deprecated, don't use in new
+	 * bit is required to be set as well. Deprecated, करोn't use in new
 	 * code.
 	 */
 	ATH10K_FW_FEATURE_WMI_10_2 = 4,
 
-	/* Some firmware revisions lack proper multi-interface client powersave
+	/* Some firmware revisions lack proper multi-पूर्णांकerface client घातersave
 	 * implementation. Enabling PS could result in connection drops,
 	 * traffic stalls, etc.
 	 */
@@ -773,14 +774,14 @@ enum ath10k_fw_features {
 	ATH10K_FW_FEATURE_IGNORE_OTP_RESULT = 7,
 
 	/* Some firmware revisions pad 4th hw address to 4 byte boundary making
-	 * it 8 bytes long in Native Wifi Rx decap.
+	 * it 8 bytes दीर्घ in Native Wअगरi Rx decap.
 	 */
 	ATH10K_FW_FEATURE_NO_NWIFI_DECAP_4ADDR_PADDING = 8,
 
 	/* Firmware supports bypassing PLL setting on init. */
 	ATH10K_FW_FEATURE_SUPPORTS_SKIP_CLOCK_INIT = 9,
 
-	/* Raw mode support. If supported, FW supports receiving and trasmitting
+	/* Raw mode support. If supported, FW supports receiving and trयंत्रitting
 	 * frames in raw mode.
 	 */
 	ATH10K_FW_FEATURE_RAW_MODE_SUPPORT = 10,
@@ -795,7 +796,7 @@ enum ath10k_fw_features {
 	 * queue state with firmware and firmware generates fetch requests
 	 * telling host which queues to dequeue tx from.
 	 *
-	 * Primary function of this is improved MU-MIMO performance with
+	 * Primary function of this is improved MU-MIMO perक्रमmance with
 	 * multiple clients.
 	 */
 	ATH10K_FW_FEATURE_PEER_FLOW_CONTROL = 13,
@@ -807,25 +808,25 @@ enum ath10k_fw_features {
 	 */
 	ATH10K_FW_FEATURE_BTCOEX_PARAM = 14,
 
-	/* Unused flag and proven to be not working, enable this if you want
-	 * to experiment sending NULL func data frames in HTT TX
+	/* Unused flag and proven to be not working, enable this अगर you want
+	 * to experiment sending शून्य func data frames in HTT TX
 	 */
-	ATH10K_FW_FEATURE_SKIP_NULL_FUNC_WAR = 15,
+	ATH10K_FW_FEATURE_SKIP_शून्य_FUNC_WAR = 15,
 
 	/* Firmware allow other BSS mesh broadcast/multicast frames without
-	 * creating monitor interface. Appropriate rxfilters are programmed for
-	 * mesh vdev by firmware itself. This feature flags will be used for
-	 * not creating monitor vdev while configuring mesh node.
+	 * creating monitor पूर्णांकerface. Appropriate rxfilters are programmed क्रम
+	 * mesh vdev by firmware itself. This feature flags will be used क्रम
+	 * not creating monitor vdev जबतक configuring mesh node.
 	 */
 	ATH10K_FW_FEATURE_ALLOWS_MESH_BCAST = 16,
 
-	/* Firmware does not support power save in station mode. */
+	/* Firmware करोes not support घातer save in station mode. */
 	ATH10K_FW_FEATURE_NO_PS = 17,
 
 	/* Firmware allows management tx by reference instead of by value. */
 	ATH10K_FW_FEATURE_MGMT_TX_BY_REF = 18,
 
-	/* Firmware load is done externally, not by bmi */
+	/* Firmware load is करोne बाह्यally, not by bmi */
 	ATH10K_FW_FEATURE_NON_BMI = 19,
 
 	/* Firmware sends only one chan_info event per channel */
@@ -839,15 +840,15 @@ enum ath10k_fw_features {
 
 	/* keep last */
 	ATH10K_FW_FEATURE_COUNT,
-};
+पूर्ण;
 
-enum ath10k_dev_flags {
+क्रमागत ath10k_dev_flags अणु
 	/* Indicates that ath10k device is during CAC phase of DFS */
 	ATH10K_CAC_RUNNING,
 	ATH10K_FLAG_CORE_REGISTERED,
 
 	/* Device has crashed and needs to restart. This indicates any pending
-	 * waiters should immediately cancel instead of waiting for a time out.
+	 * रुकोers should immediately cancel instead of रुकोing क्रम a समय out.
 	 */
 	ATH10K_FLAG_CRASH_FLUSH,
 
@@ -869,115 +870,115 @@ enum ath10k_dev_flags {
 	/* Indicates that ath10k device is during recovery process and not complete */
 	ATH10K_FLAG_RESTARTING,
 
-	/* protected by conf_mutex */
+	/* रक्षित by conf_mutex */
 	ATH10K_FLAG_NAPI_ENABLED,
-};
+पूर्ण;
 
-enum ath10k_cal_mode {
-	ATH10K_CAL_MODE_FILE,
+क्रमागत ath10k_cal_mode अणु
+	ATH10K_CAL_MODE_खाता,
 	ATH10K_CAL_MODE_OTP,
 	ATH10K_CAL_MODE_DT,
-	ATH10K_PRE_CAL_MODE_FILE,
+	ATH10K_PRE_CAL_MODE_खाता,
 	ATH10K_PRE_CAL_MODE_DT,
 	ATH10K_CAL_MODE_EEPROM,
-};
+पूर्ण;
 
-enum ath10k_crypt_mode {
+क्रमागत ath10k_crypt_mode अणु
 	/* Only use hardware crypto engine */
 	ATH10K_CRYPT_MODE_HW,
 	/* Only use software crypto engine */
 	ATH10K_CRYPT_MODE_SW,
-};
+पूर्ण;
 
-static inline const char *ath10k_cal_mode_str(enum ath10k_cal_mode mode)
-{
-	switch (mode) {
-	case ATH10K_CAL_MODE_FILE:
-		return "file";
-	case ATH10K_CAL_MODE_OTP:
-		return "otp";
-	case ATH10K_CAL_MODE_DT:
-		return "dt";
-	case ATH10K_PRE_CAL_MODE_FILE:
-		return "pre-cal-file";
-	case ATH10K_PRE_CAL_MODE_DT:
-		return "pre-cal-dt";
-	case ATH10K_CAL_MODE_EEPROM:
-		return "eeprom";
-	}
+अटल अंतरभूत स्थिर अक्षर *ath10k_cal_mode_str(क्रमागत ath10k_cal_mode mode)
+अणु
+	चयन (mode) अणु
+	हाल ATH10K_CAL_MODE_खाता:
+		वापस "file";
+	हाल ATH10K_CAL_MODE_OTP:
+		वापस "otp";
+	हाल ATH10K_CAL_MODE_DT:
+		वापस "dt";
+	हाल ATH10K_PRE_CAL_MODE_खाता:
+		वापस "pre-cal-file";
+	हाल ATH10K_PRE_CAL_MODE_DT:
+		वापस "pre-cal-dt";
+	हाल ATH10K_CAL_MODE_EEPROM:
+		वापस "eeprom";
+	पूर्ण
 
-	return "unknown";
-}
+	वापस "unknown";
+पूर्ण
 
-enum ath10k_scan_state {
+क्रमागत ath10k_scan_state अणु
 	ATH10K_SCAN_IDLE,
 	ATH10K_SCAN_STARTING,
 	ATH10K_SCAN_RUNNING,
 	ATH10K_SCAN_ABORTING,
-};
+पूर्ण;
 
-static inline const char *ath10k_scan_state_str(enum ath10k_scan_state state)
-{
-	switch (state) {
-	case ATH10K_SCAN_IDLE:
-		return "idle";
-	case ATH10K_SCAN_STARTING:
-		return "starting";
-	case ATH10K_SCAN_RUNNING:
-		return "running";
-	case ATH10K_SCAN_ABORTING:
-		return "aborting";
-	}
+अटल अंतरभूत स्थिर अक्षर *ath10k_scan_state_str(क्रमागत ath10k_scan_state state)
+अणु
+	चयन (state) अणु
+	हाल ATH10K_SCAN_IDLE:
+		वापस "idle";
+	हाल ATH10K_SCAN_STARTING:
+		वापस "starting";
+	हाल ATH10K_SCAN_RUNNING:
+		वापस "running";
+	हाल ATH10K_SCAN_ABORTING:
+		वापस "aborting";
+	पूर्ण
 
-	return "unknown";
-}
+	वापस "unknown";
+पूर्ण
 
-enum ath10k_tx_pause_reason {
+क्रमागत ath10k_tx_छोड़ो_reason अणु
 	ATH10K_TX_PAUSE_Q_FULL,
 	ATH10K_TX_PAUSE_MAX,
-};
+पूर्ण;
 
-struct ath10k_fw_file {
-	const struct firmware *firmware;
+काष्ठा ath10k_fw_file अणु
+	स्थिर काष्ठा firmware *firmware;
 
-	char fw_version[ETHTOOL_FWVERS_LEN];
+	अक्षर fw_version[ETHTOOL_FWVERS_LEN];
 
 	DECLARE_BITMAP(fw_features, ATH10K_FW_FEATURE_COUNT);
 
-	enum ath10k_fw_wmi_op_version wmi_op_version;
-	enum ath10k_fw_htt_op_version htt_op_version;
+	क्रमागत ath10k_fw_wmi_op_version wmi_op_version;
+	क्रमागत ath10k_fw_htt_op_version htt_op_version;
 
-	const void *firmware_data;
-	size_t firmware_len;
+	स्थिर व्योम *firmware_data;
+	माप_प्रकार firmware_len;
 
-	const void *otp_data;
-	size_t otp_len;
+	स्थिर व्योम *otp_data;
+	माप_प्रकार otp_len;
 
-	const void *codeswap_data;
-	size_t codeswap_len;
+	स्थिर व्योम *codeswap_data;
+	माप_प्रकार codeswap_len;
 
-	/* The original idea of struct ath10k_fw_file was that it only
-	 * contains struct firmware and pointers to various parts (actual
+	/* The original idea of काष्ठा ath10k_fw_file was that it only
+	 * contains काष्ठा firmware and poपूर्णांकers to various parts (actual
 	 * firmware binary, otp, metadata etc) of the file. This seg_info
 	 * is actually created separate but as this is used similarly as
 	 * the other firmware components it's more convenient to have it
 	 * here.
 	 */
-	struct ath10k_swap_code_seg_info *firmware_swap_code_seg_info;
-};
+	काष्ठा ath10k_swap_code_seg_info *firmware_swap_code_seg_info;
+पूर्ण;
 
-struct ath10k_fw_components {
-	const struct firmware *board;
-	const void *board_data;
-	size_t board_len;
-	const struct firmware *ext_board;
-	const void *ext_board_data;
-	size_t ext_board_len;
+काष्ठा ath10k_fw_components अणु
+	स्थिर काष्ठा firmware *board;
+	स्थिर व्योम *board_data;
+	माप_प्रकार board_len;
+	स्थिर काष्ठा firmware *ext_board;
+	स्थिर व्योम *ext_board_data;
+	माप_प्रकार ext_board_len;
 
-	struct ath10k_fw_file fw_file;
-};
+	काष्ठा ath10k_fw_file fw_file;
+पूर्ण;
 
-struct ath10k_per_peer_tx_stats {
+काष्ठा ath10k_per_peer_tx_stats अणु
 	u32	succ_bytes;
 	u32	retry_bytes;
 	u32	failed_bytes;
@@ -990,33 +991,33 @@ struct ath10k_per_peer_tx_stats {
 	u16	duration;
 	u32	reserved1;
 	u32	reserved2;
-};
+पूर्ण;
 
-enum ath10k_dev_type {
+क्रमागत ath10k_dev_type अणु
 	ATH10K_DEV_TYPE_LL,
 	ATH10K_DEV_TYPE_HL,
-};
+पूर्ण;
 
-struct ath10k_bus_params {
+काष्ठा ath10k_bus_params अणु
 	u32 chip_id;
-	enum ath10k_dev_type dev_type;
+	क्रमागत ath10k_dev_type dev_type;
 	bool link_can_suspend;
 	bool hl_msdu_ids;
-};
+पूर्ण;
 
-struct ath10k {
-	struct ath_common ath_common;
-	struct ieee80211_hw *hw;
-	struct ieee80211_ops *ops;
-	struct device *dev;
-	struct msa_region {
+काष्ठा ath10k अणु
+	काष्ठा ath_common ath_common;
+	काष्ठा ieee80211_hw *hw;
+	काष्ठा ieee80211_ops *ops;
+	काष्ठा device *dev;
+	काष्ठा msa_region अणु
 		dma_addr_t paddr;
 		u32 mem_size;
-		void *vaddr;
-	} msa;
+		व्योम *vaddr;
+	पूर्ण msa;
 	u8 mac_addr[ETH_ALEN];
 
-	enum ath10k_hw_rev hw_rev;
+	क्रमागत ath10k_hw_rev hw_rev;
 	u16 dev_id;
 	u32 chip_id;
 	u32 target_version;
@@ -1026,15 +1027,15 @@ struct ath10k {
 	u16 fw_version_build;
 	u32 fw_stats_req_mask;
 	u32 phy_capability;
-	u32 hw_min_tx_power;
-	u32 hw_max_tx_power;
+	u32 hw_min_tx_घातer;
+	u32 hw_max_tx_घातer;
 	u32 hw_eeprom_rd;
 	u32 ht_cap_info;
 	u32 vht_cap_info;
 	u32 vht_supp_mcs;
 	u32 num_rf_chains;
 	u32 max_spatial_stream;
-	/* protected by conf_mutex */
+	/* रक्षित by conf_mutex */
 	u32 low_2ghz_chan;
 	u32 high_2ghz_chan;
 	u32 low_5ghz_chan;
@@ -1042,49 +1043,49 @@ struct ath10k {
 	bool ani_enabled;
 	u32 sys_cap_info;
 
-	/* protected by data_lock */
-	bool hw_rfkill_on;
+	/* रक्षित by data_lock */
+	bool hw_rfसमाप्त_on;
 
-	/* protected by conf_mutex */
+	/* रक्षित by conf_mutex */
 	u8 ps_state_enable;
 
 	bool nlo_enabled;
 	bool p2p;
 
-	struct {
-		enum ath10k_bus bus;
-		const struct ath10k_hif_ops *ops;
-	} hif;
+	काष्ठा अणु
+		क्रमागत ath10k_bus bus;
+		स्थिर काष्ठा ath10k_hअगर_ops *ops;
+	पूर्ण hअगर;
 
-	struct completion target_suspend;
-	struct completion driver_recovery;
+	काष्ठा completion target_suspend;
+	काष्ठा completion driver_recovery;
 
-	const struct ath10k_hw_regs *regs;
-	const struct ath10k_hw_ce_regs *hw_ce_regs;
-	const struct ath10k_hw_values *hw_values;
-	struct ath10k_bmi bmi;
-	struct ath10k_wmi wmi;
-	struct ath10k_htc htc;
-	struct ath10k_htt htt;
+	स्थिर काष्ठा ath10k_hw_regs *regs;
+	स्थिर काष्ठा ath10k_hw_ce_regs *hw_ce_regs;
+	स्थिर काष्ठा ath10k_hw_values *hw_values;
+	काष्ठा ath10k_bmi bmi;
+	काष्ठा ath10k_wmi wmi;
+	काष्ठा ath10k_htc htc;
+	काष्ठा ath10k_htt htt;
 
-	struct ath10k_hw_params hw_params;
+	काष्ठा ath10k_hw_params hw_params;
 
 	/* contains the firmware images used with ATH10K_FIRMWARE_MODE_NORMAL */
-	struct ath10k_fw_components normal_mode_fw;
+	काष्ठा ath10k_fw_components normal_mode_fw;
 
 	/* READ-ONLY images of the running firmware, which can be either
-	 * normal or UTF. Do not modify, release etc!
+	 * normal or UTF. Do not modअगरy, release etc!
 	 */
-	const struct ath10k_fw_components *running_fw;
+	स्थिर काष्ठा ath10k_fw_components *running_fw;
 
-	const struct firmware *pre_cal_file;
-	const struct firmware *cal_file;
+	स्थिर काष्ठा firmware *pre_cal_file;
+	स्थिर काष्ठा firmware *cal_file;
 
-	struct {
-		u32 vendor;
+	काष्ठा अणु
+		u32 venकरोr;
 		u32 device;
-		u32 subsystem_vendor;
-		u32 subsystem_device;
+		u32 subप्रणाली_venकरोr;
+		u32 subप्रणाली_device;
 
 		bool bmi_ids_valid;
 		bool qmi_ids_valid;
@@ -1095,247 +1096,247 @@ struct ath10k {
 		u8 bmi_chip_id;
 		bool ext_bid_supported;
 
-		char bdf_ext[ATH10K_SMBIOS_BDF_EXT_STR_LENGTH];
-	} id;
+		अक्षर bdf_ext[ATH10K_SMBIOS_BDF_EXT_STR_LENGTH];
+	पूर्ण id;
 
-	int fw_api;
-	int bd_api;
-	enum ath10k_cal_mode cal_mode;
+	पूर्णांक fw_api;
+	पूर्णांक bd_api;
+	क्रमागत ath10k_cal_mode cal_mode;
 
-	struct {
-		struct completion started;
-		struct completion completed;
-		struct completion on_channel;
-		struct delayed_work timeout;
-		enum ath10k_scan_state state;
+	काष्ठा अणु
+		काष्ठा completion started;
+		काष्ठा completion completed;
+		काष्ठा completion on_channel;
+		काष्ठा delayed_work समयout;
+		क्रमागत ath10k_scan_state state;
 		bool is_roc;
-		int vdev_id;
-		int roc_freq;
-		bool roc_notify;
-	} scan;
+		पूर्णांक vdev_id;
+		पूर्णांक roc_freq;
+		bool roc_notअगरy;
+	पूर्ण scan;
 
-	struct {
-		struct ieee80211_supported_band sbands[NUM_NL80211_BANDS];
-	} mac;
+	काष्ठा अणु
+		काष्ठा ieee80211_supported_band sbands[NUM_NL80211_BANDS];
+	पूर्ण mac;
 
-	/* should never be NULL; needed for regular htt rx */
-	struct ieee80211_channel *rx_channel;
+	/* should never be शून्य; needed क्रम regular htt rx */
+	काष्ठा ieee80211_channel *rx_channel;
 
-	/* valid during scan; needed for mgmt rx during scan */
-	struct ieee80211_channel *scan_channel;
+	/* valid during scan; needed क्रम mgmt rx during scan */
+	काष्ठा ieee80211_channel *scan_channel;
 
 	/* current operating channel definition */
-	struct cfg80211_chan_def chandef;
+	काष्ठा cfg80211_chan_def chandef;
 
 	/* currently configured operating channel in firmware */
-	struct ieee80211_channel *tgt_oper_chan;
+	काष्ठा ieee80211_channel *tgt_oper_chan;
 
-	unsigned long long free_vdev_map;
-	struct ath10k_vif *monitor_arvif;
+	अचिन्हित दीर्घ दीर्घ मुक्त_vdev_map;
+	काष्ठा ath10k_vअगर *monitor_arvअगर;
 	bool monitor;
-	int monitor_vdev_id;
+	पूर्णांक monitor_vdev_id;
 	bool monitor_started;
-	unsigned int filter_flags;
-	unsigned long dev_flags;
+	अचिन्हित पूर्णांक filter_flags;
+	अचिन्हित दीर्घ dev_flags;
 	bool dfs_block_radar_events;
 
-	/* protected by conf_mutex */
+	/* रक्षित by conf_mutex */
 	bool radar_enabled;
-	int num_started_vdevs;
+	पूर्णांक num_started_vdevs;
 
 	/* Protected by conf-mutex */
 	u8 cfg_tx_chainmask;
 	u8 cfg_rx_chainmask;
 
-	struct completion install_key_done;
+	काष्ठा completion install_key_करोne;
 
-	int last_wmi_vdev_start_status;
-	struct completion vdev_setup_done;
-	struct completion vdev_delete_done;
-	struct completion peer_stats_info_complete;
+	पूर्णांक last_wmi_vdev_start_status;
+	काष्ठा completion vdev_setup_करोne;
+	काष्ठा completion vdev_delete_करोne;
+	काष्ठा completion peer_stats_info_complete;
 
-	struct workqueue_struct *workqueue;
+	काष्ठा workqueue_काष्ठा *workqueue;
 	/* Auxiliary workqueue */
-	struct workqueue_struct *workqueue_aux;
-	struct workqueue_struct *workqueue_tx_complete;
+	काष्ठा workqueue_काष्ठा *workqueue_aux;
+	काष्ठा workqueue_काष्ठा *workqueue_tx_complete;
 	/* prevents concurrent FW reconfiguration */
-	struct mutex conf_mutex;
+	काष्ठा mutex conf_mutex;
 
 	/* protects coredump data */
-	struct mutex dump_mutex;
+	काष्ठा mutex dump_mutex;
 
-	/* protects shared structure data */
+	/* protects shared काष्ठाure data */
 	spinlock_t data_lock;
 
-	struct list_head arvifs;
-	struct list_head peers;
-	struct ath10k_peer *peer_map[ATH10K_MAX_NUM_PEER_IDS];
-	wait_queue_head_t peer_mapping_wq;
+	काष्ठा list_head arvअगरs;
+	काष्ठा list_head peers;
+	काष्ठा ath10k_peer *peer_map[ATH10K_MAX_NUM_PEER_IDS];
+	रुको_queue_head_t peer_mapping_wq;
 
-	/* protected by conf_mutex */
-	int num_peers;
-	int num_stations;
+	/* रक्षित by conf_mutex */
+	पूर्णांक num_peers;
+	पूर्णांक num_stations;
 
-	int max_num_peers;
-	int max_num_stations;
-	int max_num_vdevs;
-	int max_num_tdls_vdevs;
-	int num_active_peers;
-	int num_tids;
+	पूर्णांक max_num_peers;
+	पूर्णांक max_num_stations;
+	पूर्णांक max_num_vdevs;
+	पूर्णांक max_num_tdls_vdevs;
+	पूर्णांक num_active_peers;
+	पूर्णांक num_tids;
 
-	struct work_struct svc_rdy_work;
-	struct sk_buff *svc_rdy_skb;
+	काष्ठा work_काष्ठा svc_rdy_work;
+	काष्ठा sk_buff *svc_rdy_skb;
 
-	struct work_struct offchan_tx_work;
-	struct sk_buff_head offchan_tx_queue;
-	struct completion offchan_tx_completed;
-	struct sk_buff *offchan_tx_skb;
+	काष्ठा work_काष्ठा offchan_tx_work;
+	काष्ठा sk_buff_head offchan_tx_queue;
+	काष्ठा completion offchan_tx_completed;
+	काष्ठा sk_buff *offchan_tx_skb;
 
-	struct work_struct wmi_mgmt_tx_work;
-	struct sk_buff_head wmi_mgmt_tx_queue;
+	काष्ठा work_काष्ठा wmi_mgmt_tx_work;
+	काष्ठा sk_buff_head wmi_mgmt_tx_queue;
 
-	enum ath10k_state state;
+	क्रमागत ath10k_state state;
 
-	struct work_struct register_work;
-	struct work_struct restart_work;
-	struct work_struct bundle_tx_work;
-	struct work_struct tx_complete_work;
+	काष्ठा work_काष्ठा रेजिस्टर_work;
+	काष्ठा work_काष्ठा restart_work;
+	काष्ठा work_काष्ठा bundle_tx_work;
+	काष्ठा work_काष्ठा tx_complete_work;
 
-	/* cycle count is reported twice for each visited channel during scan.
-	 * access protected by data_lock
+	/* cycle count is reported twice क्रम each visited channel during scan.
+	 * access रक्षित by data_lock
 	 */
 	u32 survey_last_rx_clear_count;
 	u32 survey_last_cycle_count;
-	struct survey_info survey[ATH10K_NUM_CHANS];
+	काष्ठा survey_info survey[ATH10K_NUM_CHANS];
 
 	/* Channel info events are expected to come in pairs without and with
-	 * COMPLETE flag set respectively for each channel visit during scan.
+	 * COMPLETE flag set respectively क्रम each channel visit during scan.
 	 *
 	 * However there are deviations from this rule. This flag is used to
-	 * avoid reporting garbage data.
+	 * aव्योम reporting garbage data.
 	 */
 	bool ch_info_can_report_survey;
-	struct completion bss_survey_done;
+	काष्ठा completion bss_survey_करोne;
 
-	struct dfs_pattern_detector *dfs_detector;
+	काष्ठा dfs_pattern_detector *dfs_detector;
 
-	unsigned long tx_paused; /* see ATH10K_TX_PAUSE_ */
+	अचिन्हित दीर्घ tx_छोड़ोd; /* see ATH10K_TX_PAUSE_ */
 
-#ifdef CONFIG_ATH10K_DEBUGFS
-	struct ath10k_debug debug;
-	struct {
-		/* relay(fs) channel for spectral scan */
-		struct rchan *rfs_chan_spec_scan;
+#अगर_घोषित CONFIG_ATH10K_DEBUGFS
+	काष्ठा ath10k_debug debug;
+	काष्ठा अणु
+		/* relay(fs) channel क्रम spectral scan */
+		काष्ठा rchan *rfs_chan_spec_scan;
 
-		/* spectral_mode and spec_config are protected by conf_mutex */
-		enum ath10k_spectral_mode mode;
-		struct ath10k_spec_scan config;
-	} spectral;
-#endif
+		/* spectral_mode and spec_config are रक्षित by conf_mutex */
+		क्रमागत ath10k_spectral_mode mode;
+		काष्ठा ath10k_spec_scan config;
+	पूर्ण spectral;
+#पूर्ण_अगर
 
 	u32 pktlog_filter;
 
-#ifdef CONFIG_DEV_COREDUMP
-	struct {
-		struct ath10k_fw_crash_data *fw_crash_data;
-	} coredump;
-#endif
+#अगर_घोषित CONFIG_DEV_COREDUMP
+	काष्ठा अणु
+		काष्ठा ath10k_fw_crash_data *fw_crash_data;
+	पूर्ण coredump;
+#पूर्ण_अगर
 
-	struct {
-		/* protected by conf_mutex */
-		struct ath10k_fw_components utf_mode_fw;
+	काष्ठा अणु
+		/* रक्षित by conf_mutex */
+		काष्ठा ath10k_fw_components utf_mode_fw;
 
-		/* protected by data_lock */
+		/* रक्षित by data_lock */
 		bool utf_monitor;
-	} testmode;
+	पूर्ण tesपंचांगode;
 
-	struct {
-		/* protected by data_lock */
+	काष्ठा अणु
+		/* रक्षित by data_lock */
 		u32 rx_crc_err_drop;
 		u32 fw_crash_counter;
 		u32 fw_warm_reset_counter;
 		u32 fw_cold_reset_counter;
-	} stats;
+	पूर्ण stats;
 
-	struct ath10k_thermal thermal;
-	struct ath10k_wow wow;
-	struct ath10k_per_peer_tx_stats peer_tx_stats;
+	काष्ठा ath10k_thermal thermal;
+	काष्ठा ath10k_wow wow;
+	काष्ठा ath10k_per_peer_tx_stats peer_tx_stats;
 
 	/* NAPI */
-	struct net_device napi_dev;
-	struct napi_struct napi;
+	काष्ठा net_device napi_dev;
+	काष्ठा napi_काष्ठा napi;
 
-	struct work_struct set_coverage_class_work;
-	/* protected by conf_mutex */
-	struct {
-		/* writing also protected by data_lock */
+	काष्ठा work_काष्ठा set_coverage_class_work;
+	/* रक्षित by conf_mutex */
+	काष्ठा अणु
+		/* writing also रक्षित by data_lock */
 		s16 coverage_class;
 
 		u32 reg_phyclk;
-		u32 reg_slottime_conf;
-		u32 reg_slottime_orig;
-		u32 reg_ack_cts_timeout_conf;
-		u32 reg_ack_cts_timeout_orig;
-	} fw_coverage;
+		u32 reg_slotसमय_conf;
+		u32 reg_slotसमय_orig;
+		u32 reg_ack_cts_समयout_conf;
+		u32 reg_ack_cts_समयout_orig;
+	पूर्ण fw_coverage;
 
 	u32 ampdu_reference;
 
-	const u8 *wmi_key_cipher;
-	void *ce_priv;
+	स्थिर u8 *wmi_key_cipher;
+	व्योम *ce_priv;
 
 	u32 sta_tid_stats_mask;
 
-	/* protected by data_lock */
-	enum ath10k_radar_confirmation_state radar_conf_state;
-	struct ath10k_radar_found_info last_radar_info;
-	struct work_struct radar_confirmation_work;
-	struct ath10k_bus_params bus_param;
-	struct completion peer_delete_done;
+	/* रक्षित by data_lock */
+	क्रमागत ath10k_radar_confirmation_state radar_conf_state;
+	काष्ठा ath10k_radar_found_info last_radar_info;
+	काष्ठा work_काष्ठा radar_confirmation_work;
+	काष्ठा ath10k_bus_params bus_param;
+	काष्ठा completion peer_delete_करोne;
 
 	bool coex_support;
-	int coex_gpio_pin;
+	पूर्णांक coex_gpio_pin;
 
-	s32 tx_power_2g_limit;
-	s32 tx_power_5g_limit;
+	s32 tx_घातer_2g_limit;
+	s32 tx_घातer_5g_limit;
 
 	/* must be last */
-	u8 drv_priv[] __aligned(sizeof(void *));
-};
+	u8 drv_priv[] __aligned(माप(व्योम *));
+पूर्ण;
 
-static inline bool ath10k_peer_stats_enabled(struct ath10k *ar)
-{
-	if (test_bit(ATH10K_FLAG_PEER_STATS, &ar->dev_flags) &&
+अटल अंतरभूत bool ath10k_peer_stats_enabled(काष्ठा ath10k *ar)
+अणु
+	अगर (test_bit(ATH10K_FLAG_PEER_STATS, &ar->dev_flags) &&
 	    test_bit(WMI_SERVICE_PEER_STATS, ar->wmi.svc_map))
-		return true;
+		वापस true;
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-extern unsigned long ath10k_coredump_mask;
+बाह्य अचिन्हित दीर्घ ath10k_coredump_mask;
 
-void ath10k_core_napi_sync_disable(struct ath10k *ar);
-void ath10k_core_napi_enable(struct ath10k *ar);
-struct ath10k *ath10k_core_create(size_t priv_size, struct device *dev,
-				  enum ath10k_bus bus,
-				  enum ath10k_hw_rev hw_rev,
-				  const struct ath10k_hif_ops *hif_ops);
-void ath10k_core_destroy(struct ath10k *ar);
-void ath10k_core_get_fw_features_str(struct ath10k *ar,
-				     char *buf,
-				     size_t max_len);
-int ath10k_core_fetch_firmware_api_n(struct ath10k *ar, const char *name,
-				     struct ath10k_fw_file *fw_file);
+व्योम ath10k_core_napi_sync_disable(काष्ठा ath10k *ar);
+व्योम ath10k_core_napi_enable(काष्ठा ath10k *ar);
+काष्ठा ath10k *ath10k_core_create(माप_प्रकार priv_size, काष्ठा device *dev,
+				  क्रमागत ath10k_bus bus,
+				  क्रमागत ath10k_hw_rev hw_rev,
+				  स्थिर काष्ठा ath10k_hअगर_ops *hअगर_ops);
+व्योम ath10k_core_destroy(काष्ठा ath10k *ar);
+व्योम ath10k_core_get_fw_features_str(काष्ठा ath10k *ar,
+				     अक्षर *buf,
+				     माप_प्रकार max_len);
+पूर्णांक ath10k_core_fetch_firmware_api_n(काष्ठा ath10k *ar, स्थिर अक्षर *name,
+				     काष्ठा ath10k_fw_file *fw_file);
 
-int ath10k_core_start(struct ath10k *ar, enum ath10k_firmware_mode mode,
-		      const struct ath10k_fw_components *fw_components);
-int ath10k_wait_for_suspend(struct ath10k *ar, u32 suspend_opt);
-void ath10k_core_stop(struct ath10k *ar);
-void ath10k_core_start_recovery(struct ath10k *ar);
-int ath10k_core_register(struct ath10k *ar,
-			 const struct ath10k_bus_params *bus_params);
-void ath10k_core_unregister(struct ath10k *ar);
-int ath10k_core_fetch_board_file(struct ath10k *ar, int bd_ie_type);
-int ath10k_core_check_dt(struct ath10k *ar);
-void ath10k_core_free_board_files(struct ath10k *ar);
+पूर्णांक ath10k_core_start(काष्ठा ath10k *ar, क्रमागत ath10k_firmware_mode mode,
+		      स्थिर काष्ठा ath10k_fw_components *fw_components);
+पूर्णांक ath10k_रुको_क्रम_suspend(काष्ठा ath10k *ar, u32 suspend_opt);
+व्योम ath10k_core_stop(काष्ठा ath10k *ar);
+व्योम ath10k_core_start_recovery(काष्ठा ath10k *ar);
+पूर्णांक ath10k_core_रेजिस्टर(काष्ठा ath10k *ar,
+			 स्थिर काष्ठा ath10k_bus_params *bus_params);
+व्योम ath10k_core_unरेजिस्टर(काष्ठा ath10k *ar);
+पूर्णांक ath10k_core_fetch_board_file(काष्ठा ath10k *ar, पूर्णांक bd_ie_type);
+पूर्णांक ath10k_core_check_dt(काष्ठा ath10k *ar);
+व्योम ath10k_core_मुक्त_board_files(काष्ठा ath10k *ar);
 
-#endif /* _CORE_H_ */
+#पूर्ण_अगर /* _CORE_H_ */

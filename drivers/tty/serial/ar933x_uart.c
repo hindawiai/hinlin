@@ -1,295 +1,296 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  *  Atheros AR933X SoC built-in UART driver
  *
- *  Copyright (C) 2011 Gabor Juhos <juhosg@openwrt.org>
+ *  Copyright (C) 2011 Gabor Juhos <juhosg@खोलोwrt.org>
  *
- *  Based on drivers/char/serial.c, by Linus Torvalds, Theodore Ts'o.
+ *  Based on drivers/अक्षर/serial.c, by Linus Torvalds, Theoकरोre Ts'o.
  */
 
-#include <linux/module.h>
-#include <linux/ioport.h>
-#include <linux/init.h>
-#include <linux/console.h>
-#include <linux/sysrq.h>
-#include <linux/delay.h>
-#include <linux/gpio/consumer.h>
-#include <linux/platform_device.h>
-#include <linux/of.h>
-#include <linux/of_platform.h>
-#include <linux/tty.h>
-#include <linux/tty_flip.h>
-#include <linux/serial_core.h>
-#include <linux/serial.h>
-#include <linux/slab.h>
-#include <linux/io.h>
-#include <linux/irq.h>
-#include <linux/clk.h>
+#समावेश <linux/module.h>
+#समावेश <linux/ioport.h>
+#समावेश <linux/init.h>
+#समावेश <linux/console.h>
+#समावेश <linux/sysrq.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/gpio/consumer.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_platक्रमm.h>
+#समावेश <linux/tty.h>
+#समावेश <linux/tty_flip.h>
+#समावेश <linux/serial_core.h>
+#समावेश <linux/serial.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/irq.h>
+#समावेश <linux/clk.h>
 
-#include <asm/div64.h>
+#समावेश <यंत्र/भाग64.h>
 
-#include <asm/mach-ath79/ar933x_uart.h>
+#समावेश <यंत्र/mach-ath79/ar933x_uart.h>
 
-#include "serial_mctrl_gpio.h"
+#समावेश "serial_mctrl_gpio.h"
 
-#define DRIVER_NAME "ar933x-uart"
+#घोषणा DRIVER_NAME "ar933x-uart"
 
-#define AR933X_UART_MAX_SCALE	0xff
-#define AR933X_UART_MAX_STEP	0xffff
+#घोषणा AR933X_UART_MAX_SCALE	0xff
+#घोषणा AR933X_UART_MAX_STEP	0xffff
 
-#define AR933X_UART_MIN_BAUD	300
-#define AR933X_UART_MAX_BAUD	3000000
+#घोषणा AR933X_UART_MIN_BAUD	300
+#घोषणा AR933X_UART_MAX_BAUD	3000000
 
-#define AR933X_DUMMY_STATUS_RD	0x01
+#घोषणा AR933X_DUMMY_STATUS_RD	0x01
 
-static struct uart_driver ar933x_uart_driver;
+अटल काष्ठा uart_driver ar933x_uart_driver;
 
-struct ar933x_uart_port {
-	struct uart_port	port;
-	unsigned int		ier;	/* shadow Interrupt Enable Register */
-	unsigned int		min_baud;
-	unsigned int		max_baud;
-	struct clk		*clk;
-	struct mctrl_gpios	*gpios;
-	struct gpio_desc	*rts_gpiod;
-};
+काष्ठा ar933x_uart_port अणु
+	काष्ठा uart_port	port;
+	अचिन्हित पूर्णांक		ier;	/* shaकरोw Interrupt Enable Register */
+	अचिन्हित पूर्णांक		min_baud;
+	अचिन्हित पूर्णांक		max_baud;
+	काष्ठा clk		*clk;
+	काष्ठा mctrl_gpios	*gpios;
+	काष्ठा gpio_desc	*rts_gpiod;
+पूर्ण;
 
-static inline unsigned int ar933x_uart_read(struct ar933x_uart_port *up,
-					    int offset)
-{
-	return readl(up->port.membase + offset);
-}
+अटल अंतरभूत अचिन्हित पूर्णांक ar933x_uart_पढ़ो(काष्ठा ar933x_uart_port *up,
+					    पूर्णांक offset)
+अणु
+	वापस पढ़ोl(up->port.membase + offset);
+पूर्ण
 
-static inline void ar933x_uart_write(struct ar933x_uart_port *up,
-				     int offset, unsigned int value)
-{
-	writel(value, up->port.membase + offset);
-}
+अटल अंतरभूत व्योम ar933x_uart_ग_लिखो(काष्ठा ar933x_uart_port *up,
+				     पूर्णांक offset, अचिन्हित पूर्णांक value)
+अणु
+	ग_लिखोl(value, up->port.membase + offset);
+पूर्ण
 
-static inline void ar933x_uart_rmw(struct ar933x_uart_port *up,
-				  unsigned int offset,
-				  unsigned int mask,
-				  unsigned int val)
-{
-	unsigned int t;
+अटल अंतरभूत व्योम ar933x_uart_rmw(काष्ठा ar933x_uart_port *up,
+				  अचिन्हित पूर्णांक offset,
+				  अचिन्हित पूर्णांक mask,
+				  अचिन्हित पूर्णांक val)
+अणु
+	अचिन्हित पूर्णांक t;
 
-	t = ar933x_uart_read(up, offset);
+	t = ar933x_uart_पढ़ो(up, offset);
 	t &= ~mask;
 	t |= val;
-	ar933x_uart_write(up, offset, t);
-}
+	ar933x_uart_ग_लिखो(up, offset, t);
+पूर्ण
 
-static inline void ar933x_uart_rmw_set(struct ar933x_uart_port *up,
-				       unsigned int offset,
-				       unsigned int val)
-{
+अटल अंतरभूत व्योम ar933x_uart_rmw_set(काष्ठा ar933x_uart_port *up,
+				       अचिन्हित पूर्णांक offset,
+				       अचिन्हित पूर्णांक val)
+अणु
 	ar933x_uart_rmw(up, offset, 0, val);
-}
+पूर्ण
 
-static inline void ar933x_uart_rmw_clear(struct ar933x_uart_port *up,
-					 unsigned int offset,
-					 unsigned int val)
-{
+अटल अंतरभूत व्योम ar933x_uart_rmw_clear(काष्ठा ar933x_uart_port *up,
+					 अचिन्हित पूर्णांक offset,
+					 अचिन्हित पूर्णांक val)
+अणु
 	ar933x_uart_rmw(up, offset, val, 0);
-}
+पूर्ण
 
-static inline void ar933x_uart_start_tx_interrupt(struct ar933x_uart_port *up)
-{
+अटल अंतरभूत व्योम ar933x_uart_start_tx_पूर्णांकerrupt(काष्ठा ar933x_uart_port *up)
+अणु
 	up->ier |= AR933X_UART_INT_TX_EMPTY;
-	ar933x_uart_write(up, AR933X_UART_INT_EN_REG, up->ier);
-}
+	ar933x_uart_ग_लिखो(up, AR933X_UART_INT_EN_REG, up->ier);
+पूर्ण
 
-static inline void ar933x_uart_stop_tx_interrupt(struct ar933x_uart_port *up)
-{
+अटल अंतरभूत व्योम ar933x_uart_stop_tx_पूर्णांकerrupt(काष्ठा ar933x_uart_port *up)
+अणु
 	up->ier &= ~AR933X_UART_INT_TX_EMPTY;
-	ar933x_uart_write(up, AR933X_UART_INT_EN_REG, up->ier);
-}
+	ar933x_uart_ग_लिखो(up, AR933X_UART_INT_EN_REG, up->ier);
+पूर्ण
 
-static inline void ar933x_uart_start_rx_interrupt(struct ar933x_uart_port *up)
-{
+अटल अंतरभूत व्योम ar933x_uart_start_rx_पूर्णांकerrupt(काष्ठा ar933x_uart_port *up)
+अणु
 	up->ier |= AR933X_UART_INT_RX_VALID;
-	ar933x_uart_write(up, AR933X_UART_INT_EN_REG, up->ier);
-}
+	ar933x_uart_ग_लिखो(up, AR933X_UART_INT_EN_REG, up->ier);
+पूर्ण
 
-static inline void ar933x_uart_stop_rx_interrupt(struct ar933x_uart_port *up)
-{
+अटल अंतरभूत व्योम ar933x_uart_stop_rx_पूर्णांकerrupt(काष्ठा ar933x_uart_port *up)
+अणु
 	up->ier &= ~AR933X_UART_INT_RX_VALID;
-	ar933x_uart_write(up, AR933X_UART_INT_EN_REG, up->ier);
-}
+	ar933x_uart_ग_लिखो(up, AR933X_UART_INT_EN_REG, up->ier);
+पूर्ण
 
-static inline void ar933x_uart_putc(struct ar933x_uart_port *up, int ch)
-{
-	unsigned int rdata;
+अटल अंतरभूत व्योम ar933x_uart_अ_दो(काष्ठा ar933x_uart_port *up, पूर्णांक ch)
+अणु
+	अचिन्हित पूर्णांक rdata;
 
 	rdata = ch & AR933X_UART_DATA_TX_RX_MASK;
 	rdata |= AR933X_UART_DATA_TX_CSR;
-	ar933x_uart_write(up, AR933X_UART_DATA_REG, rdata);
-}
+	ar933x_uart_ग_लिखो(up, AR933X_UART_DATA_REG, rdata);
+पूर्ण
 
-static unsigned int ar933x_uart_tx_empty(struct uart_port *port)
-{
-	struct ar933x_uart_port *up =
-		container_of(port, struct ar933x_uart_port, port);
-	unsigned long flags;
-	unsigned int rdata;
+अटल अचिन्हित पूर्णांक ar933x_uart_tx_empty(काष्ठा uart_port *port)
+अणु
+	काष्ठा ar933x_uart_port *up =
+		container_of(port, काष्ठा ar933x_uart_port, port);
+	अचिन्हित दीर्घ flags;
+	अचिन्हित पूर्णांक rdata;
 
 	spin_lock_irqsave(&up->port.lock, flags);
-	rdata = ar933x_uart_read(up, AR933X_UART_DATA_REG);
+	rdata = ar933x_uart_पढ़ो(up, AR933X_UART_DATA_REG);
 	spin_unlock_irqrestore(&up->port.lock, flags);
 
-	return (rdata & AR933X_UART_DATA_TX_CSR) ? 0 : TIOCSER_TEMT;
-}
+	वापस (rdata & AR933X_UART_DATA_TX_CSR) ? 0 : TIOCSER_TEMT;
+पूर्ण
 
-static unsigned int ar933x_uart_get_mctrl(struct uart_port *port)
-{
-	struct ar933x_uart_port *up =
-		container_of(port, struct ar933x_uart_port, port);
-	int ret = TIOCM_CTS | TIOCM_DSR | TIOCM_CAR;
+अटल अचिन्हित पूर्णांक ar933x_uart_get_mctrl(काष्ठा uart_port *port)
+अणु
+	काष्ठा ar933x_uart_port *up =
+		container_of(port, काष्ठा ar933x_uart_port, port);
+	पूर्णांक ret = TIOCM_CTS | TIOCM_DSR | TIOCM_CAR;
 
 	mctrl_gpio_get(up->gpios, &ret);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void ar933x_uart_set_mctrl(struct uart_port *port, unsigned int mctrl)
-{
-	struct ar933x_uart_port *up =
-		container_of(port, struct ar933x_uart_port, port);
+अटल व्योम ar933x_uart_set_mctrl(काष्ठा uart_port *port, अचिन्हित पूर्णांक mctrl)
+अणु
+	काष्ठा ar933x_uart_port *up =
+		container_of(port, काष्ठा ar933x_uart_port, port);
 
 	mctrl_gpio_set(up->gpios, mctrl);
-}
+पूर्ण
 
-static void ar933x_uart_start_tx(struct uart_port *port)
-{
-	struct ar933x_uart_port *up =
-		container_of(port, struct ar933x_uart_port, port);
+अटल व्योम ar933x_uart_start_tx(काष्ठा uart_port *port)
+अणु
+	काष्ठा ar933x_uart_port *up =
+		container_of(port, काष्ठा ar933x_uart_port, port);
 
-	ar933x_uart_start_tx_interrupt(up);
-}
+	ar933x_uart_start_tx_पूर्णांकerrupt(up);
+पूर्ण
 
-static void ar933x_uart_wait_tx_complete(struct ar933x_uart_port *up)
-{
-	unsigned int status;
-	unsigned int timeout = 60000;
+अटल व्योम ar933x_uart_रुको_tx_complete(काष्ठा ar933x_uart_port *up)
+अणु
+	अचिन्हित पूर्णांक status;
+	अचिन्हित पूर्णांक समयout = 60000;
 
-	/* Wait up to 60ms for the character(s) to be sent. */
-	do {
-		status = ar933x_uart_read(up, AR933X_UART_CS_REG);
-		if (--timeout == 0)
-			break;
+	/* Wait up to 60ms क्रम the अक्षरacter(s) to be sent. */
+	करो अणु
+		status = ar933x_uart_पढ़ो(up, AR933X_UART_CS_REG);
+		अगर (--समयout == 0)
+			अवरोध;
 		udelay(1);
-	} while (status & AR933X_UART_CS_TX_BUSY);
+	पूर्ण जबतक (status & AR933X_UART_CS_TX_BUSY);
 
-	if (timeout == 0)
+	अगर (समयout == 0)
 		dev_err(up->port.dev, "waiting for TX timed out\n");
-}
+पूर्ण
 
-static void ar933x_uart_rx_flush(struct ar933x_uart_port *up)
-{
-	unsigned int status;
+अटल व्योम ar933x_uart_rx_flush(काष्ठा ar933x_uart_port *up)
+अणु
+	अचिन्हित पूर्णांक status;
 
-	/* clear RX_VALID interrupt */
-	ar933x_uart_write(up, AR933X_UART_INT_REG, AR933X_UART_INT_RX_VALID);
+	/* clear RX_VALID पूर्णांकerrupt */
+	ar933x_uart_ग_लिखो(up, AR933X_UART_INT_REG, AR933X_UART_INT_RX_VALID);
 
-	/* remove characters from the RX FIFO */
-	do {
-		ar933x_uart_write(up, AR933X_UART_DATA_REG, AR933X_UART_DATA_RX_CSR);
-		status = ar933x_uart_read(up, AR933X_UART_DATA_REG);
-	} while (status & AR933X_UART_DATA_RX_CSR);
-}
+	/* हटाओ अक्षरacters from the RX FIFO */
+	करो अणु
+		ar933x_uart_ग_लिखो(up, AR933X_UART_DATA_REG, AR933X_UART_DATA_RX_CSR);
+		status = ar933x_uart_पढ़ो(up, AR933X_UART_DATA_REG);
+	पूर्ण जबतक (status & AR933X_UART_DATA_RX_CSR);
+पूर्ण
 
-static void ar933x_uart_stop_tx(struct uart_port *port)
-{
-	struct ar933x_uart_port *up =
-		container_of(port, struct ar933x_uart_port, port);
+अटल व्योम ar933x_uart_stop_tx(काष्ठा uart_port *port)
+अणु
+	काष्ठा ar933x_uart_port *up =
+		container_of(port, काष्ठा ar933x_uart_port, port);
 
-	ar933x_uart_stop_tx_interrupt(up);
-}
+	ar933x_uart_stop_tx_पूर्णांकerrupt(up);
+पूर्ण
 
-static void ar933x_uart_stop_rx(struct uart_port *port)
-{
-	struct ar933x_uart_port *up =
-		container_of(port, struct ar933x_uart_port, port);
+अटल व्योम ar933x_uart_stop_rx(काष्ठा uart_port *port)
+अणु
+	काष्ठा ar933x_uart_port *up =
+		container_of(port, काष्ठा ar933x_uart_port, port);
 
-	ar933x_uart_stop_rx_interrupt(up);
-}
+	ar933x_uart_stop_rx_पूर्णांकerrupt(up);
+पूर्ण
 
-static void ar933x_uart_break_ctl(struct uart_port *port, int break_state)
-{
-	struct ar933x_uart_port *up =
-		container_of(port, struct ar933x_uart_port, port);
-	unsigned long flags;
+अटल व्योम ar933x_uart_अवरोध_ctl(काष्ठा uart_port *port, पूर्णांक अवरोध_state)
+अणु
+	काष्ठा ar933x_uart_port *up =
+		container_of(port, काष्ठा ar933x_uart_port, port);
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&up->port.lock, flags);
-	if (break_state == -1)
+	अगर (अवरोध_state == -1)
 		ar933x_uart_rmw_set(up, AR933X_UART_CS_REG,
 				    AR933X_UART_CS_TX_BREAK);
-	else
+	अन्यथा
 		ar933x_uart_rmw_clear(up, AR933X_UART_CS_REG,
 				      AR933X_UART_CS_TX_BREAK);
 	spin_unlock_irqrestore(&up->port.lock, flags);
-}
+पूर्ण
 
 /*
  * baudrate = (clk / (scale + 1)) * (step * (1 / 2^17))
  */
-static unsigned long ar933x_uart_get_baud(unsigned int clk,
-					  unsigned int scale,
-					  unsigned int step)
-{
+अटल अचिन्हित दीर्घ ar933x_uart_get_baud(अचिन्हित पूर्णांक clk,
+					  अचिन्हित पूर्णांक scale,
+					  अचिन्हित पूर्णांक step)
+अणु
 	u64 t;
-	u32 div;
+	u32 भाग;
 
-	div = (2 << 16) * (scale + 1);
+	भाग = (2 << 16) * (scale + 1);
 	t = clk;
 	t *= step;
-	t += (div / 2);
-	do_div(t, div);
+	t += (भाग / 2);
+	करो_भाग(t, भाग);
 
-	return t;
-}
+	वापस t;
+पूर्ण
 
-static void ar933x_uart_get_scale_step(unsigned int clk,
-				       unsigned int baud,
-				       unsigned int *scale,
-				       unsigned int *step)
-{
-	unsigned int tscale;
-	long min_diff;
+अटल व्योम ar933x_uart_get_scale_step(अचिन्हित पूर्णांक clk,
+				       अचिन्हित पूर्णांक baud,
+				       अचिन्हित पूर्णांक *scale,
+				       अचिन्हित पूर्णांक *step)
+अणु
+	अचिन्हित पूर्णांक tscale;
+	दीर्घ min_dअगरf;
 
 	*scale = 0;
 	*step = 0;
 
-	min_diff = baud;
-	for (tscale = 0; tscale < AR933X_UART_MAX_SCALE; tscale++) {
+	min_dअगरf = baud;
+	क्रम (tscale = 0; tscale < AR933X_UART_MAX_SCALE; tscale++) अणु
 		u64 tstep;
-		int diff;
+		पूर्णांक dअगरf;
 
 		tstep = baud * (tscale + 1);
 		tstep *= (2 << 16);
-		do_div(tstep, clk);
+		करो_भाग(tstep, clk);
 
-		if (tstep > AR933X_UART_MAX_STEP)
-			break;
+		अगर (tstep > AR933X_UART_MAX_STEP)
+			अवरोध;
 
-		diff = abs(ar933x_uart_get_baud(clk, tscale, tstep) - baud);
-		if (diff < min_diff) {
-			min_diff = diff;
+		dअगरf = असल(ar933x_uart_get_baud(clk, tscale, tstep) - baud);
+		अगर (dअगरf < min_dअगरf) अणु
+			min_dअगरf = dअगरf;
 			*scale = tscale;
 			*step = tstep;
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static void ar933x_uart_set_termios(struct uart_port *port,
-				    struct ktermios *new,
-				    struct ktermios *old)
-{
-	struct ar933x_uart_port *up =
-		container_of(port, struct ar933x_uart_port, port);
-	unsigned int cs;
-	unsigned long flags;
-	unsigned int baud, scale, step;
+अटल व्योम ar933x_uart_set_termios(काष्ठा uart_port *port,
+				    काष्ठा ktermios *new,
+				    काष्ठा ktermios *old)
+अणु
+	काष्ठा ar933x_uart_port *up =
+		container_of(port, काष्ठा ar933x_uart_port, port);
+	अचिन्हित पूर्णांक cs;
+	अचिन्हित दीर्घ flags;
+	अचिन्हित पूर्णांक baud, scale, step;
 
 	/* Only CS8 is supported */
 	new->c_cflag &= ~CSIZE;
@@ -299,14 +300,14 @@ static void ar933x_uart_set_termios(struct uart_port *port,
 	new->c_cflag &= ~CSTOPB;
 
 	cs = 0;
-	if (new->c_cflag & PARENB) {
-		if (!(new->c_cflag & PARODD))
+	अगर (new->c_cflag & PARENB) अणु
+		अगर (!(new->c_cflag & PARODD))
 			cs |= AR933X_UART_CS_PARITY_EVEN;
-		else
+		अन्यथा
 			cs |= AR933X_UART_CS_PARITY_ODD;
-	} else {
+	पूर्ण अन्यथा अणु
 		cs |= AR933X_UART_CS_PARITY_NONE;
-	}
+	पूर्ण
 
 	/* Mark/space parity is not supported */
 	new->c_cflag &= ~CMSPAR;
@@ -316,7 +317,7 @@ static void ar933x_uart_set_termios(struct uart_port *port,
 
 	/*
 	 * Ok, we're now changing the port state. Do it with
-	 * interrupts disabled.
+	 * पूर्णांकerrupts disabled.
 	 */
 	spin_lock_irqsave(&up->port.lock, flags);
 
@@ -324,26 +325,26 @@ static void ar933x_uart_set_termios(struct uart_port *port,
 	ar933x_uart_rmw_clear(up, AR933X_UART_CS_REG,
 		      AR933X_UART_CS_IF_MODE_M << AR933X_UART_CS_IF_MODE_S);
 
-	/* Update the per-port timeout. */
-	uart_update_timeout(port, new->c_cflag, baud);
+	/* Update the per-port समयout. */
+	uart_update_समयout(port, new->c_cflag, baud);
 
 	up->port.ignore_status_mask = 0;
 
-	/* ignore all characters if CREAD is not set */
-	if ((new->c_cflag & CREAD) == 0)
+	/* ignore all अक्षरacters अगर CREAD is not set */
+	अगर ((new->c_cflag & CREAD) == 0)
 		up->port.ignore_status_mask |= AR933X_DUMMY_STATUS_RD;
 
-	ar933x_uart_write(up, AR933X_UART_CLOCK_REG,
+	ar933x_uart_ग_लिखो(up, AR933X_UART_CLOCK_REG,
 			  scale << AR933X_UART_CLOCK_SCALE_S | step);
 
-	/* setup configuration register */
+	/* setup configuration रेजिस्टर */
 	ar933x_uart_rmw(up, AR933X_UART_CS_REG, AR933X_UART_CS_PARITY_M, cs);
 
-	/* enable host interrupt */
+	/* enable host पूर्णांकerrupt */
 	ar933x_uart_rmw_set(up, AR933X_UART_CS_REG,
 			    AR933X_UART_CS_HOST_INT_EN);
 
-	/* enable RX and TX ready overide */
+	/* enable RX and TX पढ़ोy overide */
 	ar933x_uart_rmw_set(up, AR933X_UART_CS_REG,
 		AR933X_UART_CS_TX_READY_ORIDE | AR933X_UART_CS_RX_READY_ORIDE);
 
@@ -354,415 +355,415 @@ static void ar933x_uart_set_termios(struct uart_port *port,
 
 	spin_unlock_irqrestore(&up->port.lock, flags);
 
-	if (tty_termios_baud_rate(new))
+	अगर (tty_termios_baud_rate(new))
 		tty_termios_encode_baud_rate(new, baud, baud);
-}
+पूर्ण
 
-static void ar933x_uart_rx_chars(struct ar933x_uart_port *up)
-{
-	struct tty_port *port = &up->port.state->port;
-	int max_count = 256;
+अटल व्योम ar933x_uart_rx_अक्षरs(काष्ठा ar933x_uart_port *up)
+अणु
+	काष्ठा tty_port *port = &up->port.state->port;
+	पूर्णांक max_count = 256;
 
-	do {
-		unsigned int rdata;
-		unsigned char ch;
+	करो अणु
+		अचिन्हित पूर्णांक rdata;
+		अचिन्हित अक्षर ch;
 
-		rdata = ar933x_uart_read(up, AR933X_UART_DATA_REG);
-		if ((rdata & AR933X_UART_DATA_RX_CSR) == 0)
-			break;
+		rdata = ar933x_uart_पढ़ो(up, AR933X_UART_DATA_REG);
+		अगर ((rdata & AR933X_UART_DATA_RX_CSR) == 0)
+			अवरोध;
 
-		/* remove the character from the FIFO */
-		ar933x_uart_write(up, AR933X_UART_DATA_REG,
+		/* हटाओ the अक्षरacter from the FIFO */
+		ar933x_uart_ग_लिखो(up, AR933X_UART_DATA_REG,
 				  AR933X_UART_DATA_RX_CSR);
 
 		up->port.icount.rx++;
 		ch = rdata & AR933X_UART_DATA_TX_RX_MASK;
 
-		if (uart_handle_sysrq_char(&up->port, ch))
-			continue;
+		अगर (uart_handle_sysrq_अक्षर(&up->port, ch))
+			जारी;
 
-		if ((up->port.ignore_status_mask & AR933X_DUMMY_STATUS_RD) == 0)
-			tty_insert_flip_char(port, ch, TTY_NORMAL);
-	} while (max_count-- > 0);
+		अगर ((up->port.ignore_status_mask & AR933X_DUMMY_STATUS_RD) == 0)
+			tty_insert_flip_अक्षर(port, ch, TTY_NORMAL);
+	पूर्ण जबतक (max_count-- > 0);
 
 	tty_flip_buffer_push(port);
-}
+पूर्ण
 
-static void ar933x_uart_tx_chars(struct ar933x_uart_port *up)
-{
-	struct circ_buf *xmit = &up->port.state->xmit;
-	struct serial_rs485 *rs485conf = &up->port.rs485;
-	int count;
+अटल व्योम ar933x_uart_tx_अक्षरs(काष्ठा ar933x_uart_port *up)
+अणु
+	काष्ठा circ_buf *xmit = &up->port.state->xmit;
+	काष्ठा serial_rs485 *rs485conf = &up->port.rs485;
+	पूर्णांक count;
 	bool half_duplex_send = false;
 
-	if (uart_tx_stopped(&up->port))
-		return;
+	अगर (uart_tx_stopped(&up->port))
+		वापस;
 
-	if ((rs485conf->flags & SER_RS485_ENABLED) &&
-	    (up->port.x_char || !uart_circ_empty(xmit))) {
-		ar933x_uart_stop_rx_interrupt(up);
+	अगर ((rs485conf->flags & SER_RS485_ENABLED) &&
+	    (up->port.x_अक्षर || !uart_circ_empty(xmit))) अणु
+		ar933x_uart_stop_rx_पूर्णांकerrupt(up);
 		gpiod_set_value(up->rts_gpiod, !!(rs485conf->flags & SER_RS485_RTS_ON_SEND));
 		half_duplex_send = true;
-	}
+	पूर्ण
 
-	count = up->port.fifosize;
-	do {
-		unsigned int rdata;
+	count = up->port.fअगरosize;
+	करो अणु
+		अचिन्हित पूर्णांक rdata;
 
-		rdata = ar933x_uart_read(up, AR933X_UART_DATA_REG);
-		if ((rdata & AR933X_UART_DATA_TX_CSR) == 0)
-			break;
+		rdata = ar933x_uart_पढ़ो(up, AR933X_UART_DATA_REG);
+		अगर ((rdata & AR933X_UART_DATA_TX_CSR) == 0)
+			अवरोध;
 
-		if (up->port.x_char) {
-			ar933x_uart_putc(up, up->port.x_char);
+		अगर (up->port.x_अक्षर) अणु
+			ar933x_uart_अ_दो(up, up->port.x_अक्षर);
 			up->port.icount.tx++;
-			up->port.x_char = 0;
-			continue;
-		}
+			up->port.x_अक्षर = 0;
+			जारी;
+		पूर्ण
 
-		if (uart_circ_empty(xmit))
-			break;
+		अगर (uart_circ_empty(xmit))
+			अवरोध;
 
-		ar933x_uart_putc(up, xmit->buf[xmit->tail]);
+		ar933x_uart_अ_दो(up, xmit->buf[xmit->tail]);
 
 		xmit->tail = (xmit->tail + 1) & (UART_XMIT_SIZE - 1);
 		up->port.icount.tx++;
-	} while (--count > 0);
+	पूर्ण जबतक (--count > 0);
 
-	if (uart_circ_chars_pending(xmit) < WAKEUP_CHARS)
-		uart_write_wakeup(&up->port);
+	अगर (uart_circ_अक्षरs_pending(xmit) < WAKEUP_CHARS)
+		uart_ग_लिखो_wakeup(&up->port);
 
-	if (!uart_circ_empty(xmit)) {
-		ar933x_uart_start_tx_interrupt(up);
-	} else if (half_duplex_send) {
-		ar933x_uart_wait_tx_complete(up);
+	अगर (!uart_circ_empty(xmit)) अणु
+		ar933x_uart_start_tx_पूर्णांकerrupt(up);
+	पूर्ण अन्यथा अगर (half_duplex_send) अणु
+		ar933x_uart_रुको_tx_complete(up);
 		ar933x_uart_rx_flush(up);
-		ar933x_uart_start_rx_interrupt(up);
+		ar933x_uart_start_rx_पूर्णांकerrupt(up);
 		gpiod_set_value(up->rts_gpiod, !!(rs485conf->flags & SER_RS485_RTS_AFTER_SEND));
-	}
-}
+	पूर्ण
+पूर्ण
 
-static irqreturn_t ar933x_uart_interrupt(int irq, void *dev_id)
-{
-	struct ar933x_uart_port *up = dev_id;
-	unsigned int status;
+अटल irqवापस_t ar933x_uart_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा ar933x_uart_port *up = dev_id;
+	अचिन्हित पूर्णांक status;
 
-	status = ar933x_uart_read(up, AR933X_UART_CS_REG);
-	if ((status & AR933X_UART_CS_HOST_INT) == 0)
-		return IRQ_NONE;
+	status = ar933x_uart_पढ़ो(up, AR933X_UART_CS_REG);
+	अगर ((status & AR933X_UART_CS_HOST_INT) == 0)
+		वापस IRQ_NONE;
 
 	spin_lock(&up->port.lock);
 
-	status = ar933x_uart_read(up, AR933X_UART_INT_REG);
-	status &= ar933x_uart_read(up, AR933X_UART_INT_EN_REG);
+	status = ar933x_uart_पढ़ो(up, AR933X_UART_INT_REG);
+	status &= ar933x_uart_पढ़ो(up, AR933X_UART_INT_EN_REG);
 
-	if (status & AR933X_UART_INT_RX_VALID) {
-		ar933x_uart_write(up, AR933X_UART_INT_REG,
+	अगर (status & AR933X_UART_INT_RX_VALID) अणु
+		ar933x_uart_ग_लिखो(up, AR933X_UART_INT_REG,
 				  AR933X_UART_INT_RX_VALID);
-		ar933x_uart_rx_chars(up);
-	}
+		ar933x_uart_rx_अक्षरs(up);
+	पूर्ण
 
-	if (status & AR933X_UART_INT_TX_EMPTY) {
-		ar933x_uart_write(up, AR933X_UART_INT_REG,
+	अगर (status & AR933X_UART_INT_TX_EMPTY) अणु
+		ar933x_uart_ग_लिखो(up, AR933X_UART_INT_REG,
 				  AR933X_UART_INT_TX_EMPTY);
-		ar933x_uart_stop_tx_interrupt(up);
-		ar933x_uart_tx_chars(up);
-	}
+		ar933x_uart_stop_tx_पूर्णांकerrupt(up);
+		ar933x_uart_tx_अक्षरs(up);
+	पूर्ण
 
 	spin_unlock(&up->port.lock);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static int ar933x_uart_startup(struct uart_port *port)
-{
-	struct ar933x_uart_port *up =
-		container_of(port, struct ar933x_uart_port, port);
-	unsigned long flags;
-	int ret;
+अटल पूर्णांक ar933x_uart_startup(काष्ठा uart_port *port)
+अणु
+	काष्ठा ar933x_uart_port *up =
+		container_of(port, काष्ठा ar933x_uart_port, port);
+	अचिन्हित दीर्घ flags;
+	पूर्णांक ret;
 
-	ret = request_irq(up->port.irq, ar933x_uart_interrupt,
+	ret = request_irq(up->port.irq, ar933x_uart_पूर्णांकerrupt,
 			  up->port.irqflags, dev_name(up->port.dev), up);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	spin_lock_irqsave(&up->port.lock, flags);
 
-	/* Enable HOST interrupts */
+	/* Enable HOST पूर्णांकerrupts */
 	ar933x_uart_rmw_set(up, AR933X_UART_CS_REG,
 			    AR933X_UART_CS_HOST_INT_EN);
 
-	/* enable RX and TX ready overide */
+	/* enable RX and TX पढ़ोy overide */
 	ar933x_uart_rmw_set(up, AR933X_UART_CS_REG,
 		AR933X_UART_CS_TX_READY_ORIDE | AR933X_UART_CS_RX_READY_ORIDE);
 
-	/* Enable RX interrupts */
-	ar933x_uart_start_rx_interrupt(up);
+	/* Enable RX पूर्णांकerrupts */
+	ar933x_uart_start_rx_पूर्णांकerrupt(up);
 
 	spin_unlock_irqrestore(&up->port.lock, flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void ar933x_uart_shutdown(struct uart_port *port)
-{
-	struct ar933x_uart_port *up =
-		container_of(port, struct ar933x_uart_port, port);
+अटल व्योम ar933x_uart_shutकरोwn(काष्ठा uart_port *port)
+अणु
+	काष्ठा ar933x_uart_port *up =
+		container_of(port, काष्ठा ar933x_uart_port, port);
 
-	/* Disable all interrupts */
+	/* Disable all पूर्णांकerrupts */
 	up->ier = 0;
-	ar933x_uart_write(up, AR933X_UART_INT_EN_REG, up->ier);
+	ar933x_uart_ग_लिखो(up, AR933X_UART_INT_EN_REG, up->ier);
 
-	/* Disable break condition */
+	/* Disable अवरोध condition */
 	ar933x_uart_rmw_clear(up, AR933X_UART_CS_REG,
 			      AR933X_UART_CS_TX_BREAK);
 
-	free_irq(up->port.irq, up);
-}
+	मुक्त_irq(up->port.irq, up);
+पूर्ण
 
-static const char *ar933x_uart_type(struct uart_port *port)
-{
-	return (port->type == PORT_AR933X) ? "AR933X UART" : NULL;
-}
+अटल स्थिर अक्षर *ar933x_uart_type(काष्ठा uart_port *port)
+अणु
+	वापस (port->type == PORT_AR933X) ? "AR933X UART" : शून्य;
+पूर्ण
 
-static void ar933x_uart_release_port(struct uart_port *port)
-{
+अटल व्योम ar933x_uart_release_port(काष्ठा uart_port *port)
+अणु
 	/* Nothing to release ... */
-}
+पूर्ण
 
-static int ar933x_uart_request_port(struct uart_port *port)
-{
+अटल पूर्णांक ar933x_uart_request_port(काष्ठा uart_port *port)
+अणु
 	/* UARTs always present */
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void ar933x_uart_config_port(struct uart_port *port, int flags)
-{
-	if (flags & UART_CONFIG_TYPE)
+अटल व्योम ar933x_uart_config_port(काष्ठा uart_port *port, पूर्णांक flags)
+अणु
+	अगर (flags & UART_CONFIG_TYPE)
 		port->type = PORT_AR933X;
-}
+पूर्ण
 
-static int ar933x_uart_verify_port(struct uart_port *port,
-				   struct serial_struct *ser)
-{
-	struct ar933x_uart_port *up =
-		container_of(port, struct ar933x_uart_port, port);
+अटल पूर्णांक ar933x_uart_verअगरy_port(काष्ठा uart_port *port,
+				   काष्ठा serial_काष्ठा *ser)
+अणु
+	काष्ठा ar933x_uart_port *up =
+		container_of(port, काष्ठा ar933x_uart_port, port);
 
-	if (ser->type != PORT_UNKNOWN &&
+	अगर (ser->type != PORT_UNKNOWN &&
 	    ser->type != PORT_AR933X)
-		return -EINVAL;
+		वापस -EINVAL;
 
-	if (ser->irq < 0 || ser->irq >= NR_IRQS)
-		return -EINVAL;
+	अगर (ser->irq < 0 || ser->irq >= NR_IRQS)
+		वापस -EINVAL;
 
-	if (ser->baud_base < up->min_baud ||
+	अगर (ser->baud_base < up->min_baud ||
 	    ser->baud_base > up->max_baud)
-		return -EINVAL;
+		वापस -EINVAL;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct uart_ops ar933x_uart_ops = {
+अटल स्थिर काष्ठा uart_ops ar933x_uart_ops = अणु
 	.tx_empty	= ar933x_uart_tx_empty,
 	.set_mctrl	= ar933x_uart_set_mctrl,
 	.get_mctrl	= ar933x_uart_get_mctrl,
 	.stop_tx	= ar933x_uart_stop_tx,
 	.start_tx	= ar933x_uart_start_tx,
 	.stop_rx	= ar933x_uart_stop_rx,
-	.break_ctl	= ar933x_uart_break_ctl,
+	.अवरोध_ctl	= ar933x_uart_अवरोध_ctl,
 	.startup	= ar933x_uart_startup,
-	.shutdown	= ar933x_uart_shutdown,
+	.shutकरोwn	= ar933x_uart_shutकरोwn,
 	.set_termios	= ar933x_uart_set_termios,
 	.type		= ar933x_uart_type,
 	.release_port	= ar933x_uart_release_port,
 	.request_port	= ar933x_uart_request_port,
 	.config_port	= ar933x_uart_config_port,
-	.verify_port	= ar933x_uart_verify_port,
-};
+	.verअगरy_port	= ar933x_uart_verअगरy_port,
+पूर्ण;
 
-static int ar933x_config_rs485(struct uart_port *port,
-				struct serial_rs485 *rs485conf)
-{
-	struct ar933x_uart_port *up =
-		container_of(port, struct ar933x_uart_port, port);
+अटल पूर्णांक ar933x_config_rs485(काष्ठा uart_port *port,
+				काष्ठा serial_rs485 *rs485conf)
+अणु
+	काष्ठा ar933x_uart_port *up =
+		container_of(port, काष्ठा ar933x_uart_port, port);
 
-	if ((rs485conf->flags & SER_RS485_ENABLED) &&
-	    !up->rts_gpiod) {
+	अगर ((rs485conf->flags & SER_RS485_ENABLED) &&
+	    !up->rts_gpiod) अणु
 		dev_err(port->dev, "RS485 needs rts-gpio\n");
-		return 1;
-	}
+		वापस 1;
+	पूर्ण
 	port->rs485 = *rs485conf;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_SERIAL_AR933X_CONSOLE
-static struct ar933x_uart_port *
+#अगर_घोषित CONFIG_SERIAL_AR933X_CONSOLE
+अटल काष्ठा ar933x_uart_port *
 ar933x_console_ports[CONFIG_SERIAL_AR933X_NR_UARTS];
 
-static void ar933x_uart_wait_xmitr(struct ar933x_uart_port *up)
-{
-	unsigned int status;
-	unsigned int timeout = 60000;
+अटल व्योम ar933x_uart_रुको_xmitr(काष्ठा ar933x_uart_port *up)
+अणु
+	अचिन्हित पूर्णांक status;
+	अचिन्हित पूर्णांक समयout = 60000;
 
-	/* Wait up to 60ms for the character(s) to be sent. */
-	do {
-		status = ar933x_uart_read(up, AR933X_UART_DATA_REG);
-		if (--timeout == 0)
-			break;
+	/* Wait up to 60ms क्रम the अक्षरacter(s) to be sent. */
+	करो अणु
+		status = ar933x_uart_पढ़ो(up, AR933X_UART_DATA_REG);
+		अगर (--समयout == 0)
+			अवरोध;
 		udelay(1);
-	} while ((status & AR933X_UART_DATA_TX_CSR) == 0);
-}
+	पूर्ण जबतक ((status & AR933X_UART_DATA_TX_CSR) == 0);
+पूर्ण
 
-static void ar933x_uart_console_putchar(struct uart_port *port, int ch)
-{
-	struct ar933x_uart_port *up =
-		container_of(port, struct ar933x_uart_port, port);
+अटल व्योम ar933x_uart_console_अक्षर_दो(काष्ठा uart_port *port, पूर्णांक ch)
+अणु
+	काष्ठा ar933x_uart_port *up =
+		container_of(port, काष्ठा ar933x_uart_port, port);
 
-	ar933x_uart_wait_xmitr(up);
-	ar933x_uart_putc(up, ch);
-}
+	ar933x_uart_रुको_xmitr(up);
+	ar933x_uart_अ_दो(up, ch);
+पूर्ण
 
-static void ar933x_uart_console_write(struct console *co, const char *s,
-				      unsigned int count)
-{
-	struct ar933x_uart_port *up = ar933x_console_ports[co->index];
-	unsigned long flags;
-	unsigned int int_en;
-	int locked = 1;
+अटल व्योम ar933x_uart_console_ग_लिखो(काष्ठा console *co, स्थिर अक्षर *s,
+				      अचिन्हित पूर्णांक count)
+अणु
+	काष्ठा ar933x_uart_port *up = ar933x_console_ports[co->index];
+	अचिन्हित दीर्घ flags;
+	अचिन्हित पूर्णांक पूर्णांक_en;
+	पूर्णांक locked = 1;
 
 	local_irq_save(flags);
 
-	if (up->port.sysrq)
+	अगर (up->port.sysrq)
 		locked = 0;
-	else if (oops_in_progress)
+	अन्यथा अगर (oops_in_progress)
 		locked = spin_trylock(&up->port.lock);
-	else
+	अन्यथा
 		spin_lock(&up->port.lock);
 
 	/*
-	 * First save the IER then disable the interrupts
+	 * First save the IER then disable the पूर्णांकerrupts
 	 */
-	int_en = ar933x_uart_read(up, AR933X_UART_INT_EN_REG);
-	ar933x_uart_write(up, AR933X_UART_INT_EN_REG, 0);
+	पूर्णांक_en = ar933x_uart_पढ़ो(up, AR933X_UART_INT_EN_REG);
+	ar933x_uart_ग_लिखो(up, AR933X_UART_INT_EN_REG, 0);
 
-	uart_console_write(&up->port, s, count, ar933x_uart_console_putchar);
+	uart_console_ग_लिखो(&up->port, s, count, ar933x_uart_console_अक्षर_दो);
 
 	/*
-	 * Finally, wait for transmitter to become empty
+	 * Finally, रुको क्रम transmitter to become empty
 	 * and restore the IER
 	 */
-	ar933x_uart_wait_xmitr(up);
-	ar933x_uart_write(up, AR933X_UART_INT_EN_REG, int_en);
+	ar933x_uart_रुको_xmitr(up);
+	ar933x_uart_ग_लिखो(up, AR933X_UART_INT_EN_REG, पूर्णांक_en);
 
-	ar933x_uart_write(up, AR933X_UART_INT_REG, AR933X_UART_INT_ALLINTS);
+	ar933x_uart_ग_लिखो(up, AR933X_UART_INT_REG, AR933X_UART_INT_ALLINTS);
 
-	if (locked)
+	अगर (locked)
 		spin_unlock(&up->port.lock);
 
 	local_irq_restore(flags);
-}
+पूर्ण
 
-static int ar933x_uart_console_setup(struct console *co, char *options)
-{
-	struct ar933x_uart_port *up;
-	int baud = 115200;
-	int bits = 8;
-	int parity = 'n';
-	int flow = 'n';
+अटल पूर्णांक ar933x_uart_console_setup(काष्ठा console *co, अक्षर *options)
+अणु
+	काष्ठा ar933x_uart_port *up;
+	पूर्णांक baud = 115200;
+	पूर्णांक bits = 8;
+	पूर्णांक parity = 'n';
+	पूर्णांक flow = 'n';
 
-	if (co->index < 0 || co->index >= CONFIG_SERIAL_AR933X_NR_UARTS)
-		return -EINVAL;
+	अगर (co->index < 0 || co->index >= CONFIG_SERIAL_AR933X_NR_UARTS)
+		वापस -EINVAL;
 
 	up = ar933x_console_ports[co->index];
-	if (!up)
-		return -ENODEV;
+	अगर (!up)
+		वापस -ENODEV;
 
-	if (options)
+	अगर (options)
 		uart_parse_options(options, &baud, &parity, &bits, &flow);
 
-	return uart_set_options(&up->port, co, baud, parity, bits, flow);
-}
+	वापस uart_set_options(&up->port, co, baud, parity, bits, flow);
+पूर्ण
 
-static struct console ar933x_uart_console = {
+अटल काष्ठा console ar933x_uart_console = अणु
 	.name		= "ttyATH",
-	.write		= ar933x_uart_console_write,
+	.ग_लिखो		= ar933x_uart_console_ग_लिखो,
 	.device		= uart_console_device,
 	.setup		= ar933x_uart_console_setup,
 	.flags		= CON_PRINTBUFFER,
 	.index		= -1,
 	.data		= &ar933x_uart_driver,
-};
-#endif /* CONFIG_SERIAL_AR933X_CONSOLE */
+पूर्ण;
+#पूर्ण_अगर /* CONFIG_SERIAL_AR933X_CONSOLE */
 
-static struct uart_driver ar933x_uart_driver = {
+अटल काष्ठा uart_driver ar933x_uart_driver = अणु
 	.owner		= THIS_MODULE,
 	.driver_name	= DRIVER_NAME,
 	.dev_name	= "ttyATH",
 	.nr		= CONFIG_SERIAL_AR933X_NR_UARTS,
-	.cons		= NULL, /* filled in runtime */
-};
+	.cons		= शून्य, /* filled in runसमय */
+पूर्ण;
 
-static int ar933x_uart_probe(struct platform_device *pdev)
-{
-	struct ar933x_uart_port *up;
-	struct uart_port *port;
-	struct resource *mem_res;
-	struct resource *irq_res;
-	struct device_node *np;
-	unsigned int baud;
-	int id;
-	int ret;
+अटल पूर्णांक ar933x_uart_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा ar933x_uart_port *up;
+	काष्ठा uart_port *port;
+	काष्ठा resource *mem_res;
+	काष्ठा resource *irq_res;
+	काष्ठा device_node *np;
+	अचिन्हित पूर्णांक baud;
+	पूर्णांक id;
+	पूर्णांक ret;
 
 	np = pdev->dev.of_node;
-	if (IS_ENABLED(CONFIG_OF) && np) {
+	अगर (IS_ENABLED(CONFIG_OF) && np) अणु
 		id = of_alias_get_id(np, "serial");
-		if (id < 0) {
+		अगर (id < 0) अणु
 			dev_err(&pdev->dev, "unable to get alias id, err=%d\n",
 				id);
-			return id;
-		}
-	} else {
+			वापस id;
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		id = pdev->id;
-		if (id == -1)
+		अगर (id == -1)
 			id = 0;
-	}
+	पूर्ण
 
-	if (id >= CONFIG_SERIAL_AR933X_NR_UARTS)
-		return -EINVAL;
+	अगर (id >= CONFIG_SERIAL_AR933X_NR_UARTS)
+		वापस -EINVAL;
 
-	irq_res = platform_get_resource(pdev, IORESOURCE_IRQ, 0);
-	if (!irq_res) {
+	irq_res = platक्रमm_get_resource(pdev, IORESOURCE_IRQ, 0);
+	अगर (!irq_res) अणु
 		dev_err(&pdev->dev, "no IRQ resource\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	up = devm_kzalloc(&pdev->dev, sizeof(struct ar933x_uart_port),
+	up = devm_kzalloc(&pdev->dev, माप(काष्ठा ar933x_uart_port),
 			  GFP_KERNEL);
-	if (!up)
-		return -ENOMEM;
+	अगर (!up)
+		वापस -ENOMEM;
 
 	up->clk = devm_clk_get(&pdev->dev, "uart");
-	if (IS_ERR(up->clk)) {
+	अगर (IS_ERR(up->clk)) अणु
 		dev_err(&pdev->dev, "unable to get UART clock\n");
-		return PTR_ERR(up->clk);
-	}
+		वापस PTR_ERR(up->clk);
+	पूर्ण
 
 	port = &up->port;
 
-	mem_res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+	mem_res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
 	port->membase = devm_ioremap_resource(&pdev->dev, mem_res);
-	if (IS_ERR(port->membase))
-		return PTR_ERR(port->membase);
+	अगर (IS_ERR(port->membase))
+		वापस PTR_ERR(port->membase);
 
 	ret = clk_prepare_enable(up->clk);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	port->uartclk = clk_get_rate(up->clk);
-	if (!port->uartclk) {
+	अगर (!port->uartclk) अणु
 		ret = -EINVAL;
-		goto err_disable_clk;
-	}
+		जाओ err_disable_clk;
+	पूर्ण
 
 	port->mapbase = mem_res->start;
 	port->line = id;
@@ -771,114 +772,114 @@ static int ar933x_uart_probe(struct platform_device *pdev)
 	port->type = PORT_AR933X;
 	port->iotype = UPIO_MEM32;
 
-	port->regshift = 2;
-	port->fifosize = AR933X_UART_FIFO_SIZE;
+	port->regshअगरt = 2;
+	port->fअगरosize = AR933X_UART_FIFO_SIZE;
 	port->ops = &ar933x_uart_ops;
 	port->rs485_config = ar933x_config_rs485;
 
 	baud = ar933x_uart_get_baud(port->uartclk, AR933X_UART_MAX_SCALE, 1);
-	up->min_baud = max_t(unsigned int, baud, AR933X_UART_MIN_BAUD);
+	up->min_baud = max_t(अचिन्हित पूर्णांक, baud, AR933X_UART_MIN_BAUD);
 
 	baud = ar933x_uart_get_baud(port->uartclk, 0, AR933X_UART_MAX_STEP);
-	up->max_baud = min_t(unsigned int, baud, AR933X_UART_MAX_BAUD);
+	up->max_baud = min_t(अचिन्हित पूर्णांक, baud, AR933X_UART_MAX_BAUD);
 
 	ret = uart_get_rs485_mode(port);
-	if (ret)
-		goto err_disable_clk;
+	अगर (ret)
+		जाओ err_disable_clk;
 
 	up->gpios = mctrl_gpio_init(port, 0);
-	if (IS_ERR(up->gpios) && PTR_ERR(up->gpios) != -ENOSYS) {
+	अगर (IS_ERR(up->gpios) && PTR_ERR(up->gpios) != -ENOSYS) अणु
 		ret = PTR_ERR(up->gpios);
-		goto err_disable_clk;
-	}
+		जाओ err_disable_clk;
+	पूर्ण
 
 	up->rts_gpiod = mctrl_gpio_to_gpiod(up->gpios, UART_GPIO_RTS);
 
-	if ((port->rs485.flags & SER_RS485_ENABLED) &&
-	    !up->rts_gpiod) {
+	अगर ((port->rs485.flags & SER_RS485_ENABLED) &&
+	    !up->rts_gpiod) अणु
 		dev_err(&pdev->dev, "lacking rts-gpio, disabling RS485\n");
 		port->rs485.flags &= ~SER_RS485_ENABLED;
-	}
+	पूर्ण
 
-#ifdef CONFIG_SERIAL_AR933X_CONSOLE
+#अगर_घोषित CONFIG_SERIAL_AR933X_CONSOLE
 	ar933x_console_ports[up->port.line] = up;
-#endif
+#पूर्ण_अगर
 
 	ret = uart_add_one_port(&ar933x_uart_driver, &up->port);
-	if (ret)
-		goto err_disable_clk;
+	अगर (ret)
+		जाओ err_disable_clk;
 
-	platform_set_drvdata(pdev, up);
-	return 0;
+	platक्रमm_set_drvdata(pdev, up);
+	वापस 0;
 
 err_disable_clk:
 	clk_disable_unprepare(up->clk);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int ar933x_uart_remove(struct platform_device *pdev)
-{
-	struct ar933x_uart_port *up;
+अटल पूर्णांक ar933x_uart_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा ar933x_uart_port *up;
 
-	up = platform_get_drvdata(pdev);
+	up = platक्रमm_get_drvdata(pdev);
 
-	if (up) {
-		uart_remove_one_port(&ar933x_uart_driver, &up->port);
+	अगर (up) अणु
+		uart_हटाओ_one_port(&ar933x_uart_driver, &up->port);
 		clk_disable_unprepare(up->clk);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_OF
-static const struct of_device_id ar933x_uart_of_ids[] = {
-	{ .compatible = "qca,ar9330-uart" },
-	{},
-};
+#अगर_घोषित CONFIG_OF
+अटल स्थिर काष्ठा of_device_id ar933x_uart_of_ids[] = अणु
+	अणु .compatible = "qca,ar9330-uart" पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, ar933x_uart_of_ids);
-#endif
+#पूर्ण_अगर
 
-static struct platform_driver ar933x_uart_platform_driver = {
+अटल काष्ठा platक्रमm_driver ar933x_uart_platक्रमm_driver = अणु
 	.probe		= ar933x_uart_probe,
-	.remove		= ar933x_uart_remove,
-	.driver		= {
+	.हटाओ		= ar933x_uart_हटाओ,
+	.driver		= अणु
 		.name		= DRIVER_NAME,
 		.of_match_table = of_match_ptr(ar933x_uart_of_ids),
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static int __init ar933x_uart_init(void)
-{
-	int ret;
+अटल पूर्णांक __init ar933x_uart_init(व्योम)
+अणु
+	पूर्णांक ret;
 
-#ifdef CONFIG_SERIAL_AR933X_CONSOLE
+#अगर_घोषित CONFIG_SERIAL_AR933X_CONSOLE
 	ar933x_uart_driver.cons = &ar933x_uart_console;
-#endif
+#पूर्ण_अगर
 
-	ret = uart_register_driver(&ar933x_uart_driver);
-	if (ret)
-		goto err_out;
+	ret = uart_रेजिस्टर_driver(&ar933x_uart_driver);
+	अगर (ret)
+		जाओ err_out;
 
-	ret = platform_driver_register(&ar933x_uart_platform_driver);
-	if (ret)
-		goto err_unregister_uart_driver;
+	ret = platक्रमm_driver_रेजिस्टर(&ar933x_uart_platक्रमm_driver);
+	अगर (ret)
+		जाओ err_unरेजिस्टर_uart_driver;
 
-	return 0;
+	वापस 0;
 
-err_unregister_uart_driver:
-	uart_unregister_driver(&ar933x_uart_driver);
+err_unरेजिस्टर_uart_driver:
+	uart_unरेजिस्टर_driver(&ar933x_uart_driver);
 err_out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void __exit ar933x_uart_exit(void)
-{
-	platform_driver_unregister(&ar933x_uart_platform_driver);
-	uart_unregister_driver(&ar933x_uart_driver);
-}
+अटल व्योम __निकास ar933x_uart_निकास(व्योम)
+अणु
+	platक्रमm_driver_unरेजिस्टर(&ar933x_uart_platक्रमm_driver);
+	uart_unरेजिस्टर_driver(&ar933x_uart_driver);
+पूर्ण
 
 module_init(ar933x_uart_init);
-module_exit(ar933x_uart_exit);
+module_निकास(ar933x_uart_निकास);
 
 MODULE_DESCRIPTION("Atheros AR933X UART driver");
 MODULE_AUTHOR("Gabor Juhos <juhosg@openwrt.org>");

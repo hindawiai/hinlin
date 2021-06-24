@@ -1,21 +1,22 @@
+<शैली गुरु>
 /*
  * LZ4 - Fast LZ compression algorithm
  * Copyright (C) 2011 - 2016, Yann Collet.
- * BSD 2 - Clause License (http://www.opensource.org/licenses/bsd - license.php)
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are
+ * BSD 2 - Clause License (http://www.खोलोsource.org/licenses/bsd - license.php)
+ * Redistribution and use in source and binary क्रमms, with or without
+ * modअगरication, are permitted provided that the following conditions are
  * met:
  *	* Redistributions of source code must retain the above copyright
  *	  notice, this list of conditions and the following disclaimer.
- *	* Redistributions in binary form must reproduce the above
+ *	* Redistributions in binary क्रमm must reproduce the above
  * copyright notice, this list of conditions and the following disclaimer
- * in the documentation and/or other materials provided with the
+ * in the करोcumentation and/or other materials provided with the
  * distribution.
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
  * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
  * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
  * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
- * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY सूचीECT, INसूचीECT, INCIDENTAL,
  * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
  * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
  * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
@@ -26,323 +27,323 @@
  *	- LZ4 homepage : http://www.lz4.org
  *	- LZ4 source repository : https://github.com/lz4/lz4
  *
- *	Changed for kernel usage by:
- *	Sven Schmidt <4sschmid@informatik.uni-hamburg.de>
+ *	Changed क्रम kernel usage by:
+ *	Sven Schmidt <4sschmid@inक्रमmatik.uni-hamburg.de>
  */
 
 /*-************************************
  *	Dependencies
  **************************************/
-#include <linux/lz4.h>
-#include "lz4defs.h"
-#include <linux/module.h>
-#include <linux/kernel.h>
-#include <asm/unaligned.h>
+#समावेश <linux/lz4.h>
+#समावेश "lz4defs.h"
+#समावेश <linux/module.h>
+#समावेश <linux/kernel.h>
+#समावेश <यंत्र/unaligned.h>
 
-static const int LZ4_minLength = (MFLIMIT + 1);
-static const int LZ4_64Klimit = ((64 * KB) + (MFLIMIT - 1));
+अटल स्थिर पूर्णांक LZ4_minLength = (MFLIMIT + 1);
+अटल स्थिर पूर्णांक LZ4_64Klimit = ((64 * KB) + (MFLIMIT - 1));
 
 /*-******************************
  *	Compression functions
  ********************************/
-static FORCE_INLINE U32 LZ4_hash4(
+अटल FORCE_INLINE U32 LZ4_hash4(
 	U32 sequence,
-	tableType_t const tableType)
-{
-	if (tableType == byU16)
-		return ((sequence * 2654435761U)
+	tableType_t स्थिर tableType)
+अणु
+	अगर (tableType == byU16)
+		वापस ((sequence * 2654435761U)
 			>> ((MINMATCH * 8) - (LZ4_HASHLOG + 1)));
-	else
-		return ((sequence * 2654435761U)
+	अन्यथा
+		वापस ((sequence * 2654435761U)
 			>> ((MINMATCH * 8) - LZ4_HASHLOG));
-}
+पूर्ण
 
-static FORCE_INLINE U32 LZ4_hash5(
+अटल FORCE_INLINE U32 LZ4_hash5(
 	U64 sequence,
-	tableType_t const tableType)
-{
-	const U32 hashLog = (tableType == byU16)
+	tableType_t स्थिर tableType)
+अणु
+	स्थिर U32 hashLog = (tableType == byU16)
 		? LZ4_HASHLOG + 1
 		: LZ4_HASHLOG;
 
-#if LZ4_LITTLE_ENDIAN
-	static const U64 prime5bytes = 889523592379ULL;
+#अगर LZ4_LITTLE_ENDIAN
+	अटल स्थिर U64 prime5bytes = 889523592379ULL;
 
-	return (U32)(((sequence << 24) * prime5bytes) >> (64 - hashLog));
-#else
-	static const U64 prime8bytes = 11400714785074694791ULL;
+	वापस (U32)(((sequence << 24) * prime5bytes) >> (64 - hashLog));
+#अन्यथा
+	अटल स्थिर U64 prime8bytes = 11400714785074694791ULL;
 
-	return (U32)(((sequence >> 24) * prime8bytes) >> (64 - hashLog));
-#endif
-}
+	वापस (U32)(((sequence >> 24) * prime8bytes) >> (64 - hashLog));
+#पूर्ण_अगर
+पूर्ण
 
-static FORCE_INLINE U32 LZ4_hashPosition(
-	const void *p,
-	tableType_t const tableType)
-{
-#if LZ4_ARCH64
-	if (tableType == byU32)
-		return LZ4_hash5(LZ4_read_ARCH(p), tableType);
-#endif
+अटल FORCE_INLINE U32 LZ4_hashPosition(
+	स्थिर व्योम *p,
+	tableType_t स्थिर tableType)
+अणु
+#अगर LZ4_ARCH64
+	अगर (tableType == byU32)
+		वापस LZ4_hash5(LZ4_पढ़ो_ARCH(p), tableType);
+#पूर्ण_अगर
 
-	return LZ4_hash4(LZ4_read32(p), tableType);
-}
+	वापस LZ4_hash4(LZ4_पढ़ो32(p), tableType);
+पूर्ण
 
-static void LZ4_putPositionOnHash(
-	const BYTE *p,
+अटल व्योम LZ4_putPositionOnHash(
+	स्थिर BYTE *p,
 	U32 h,
-	void *tableBase,
-	tableType_t const tableType,
-	const BYTE *srcBase)
-{
-	switch (tableType) {
-	case byPtr:
-	{
-		const BYTE **hashTable = (const BYTE **)tableBase;
+	व्योम *tableBase,
+	tableType_t स्थिर tableType,
+	स्थिर BYTE *srcBase)
+अणु
+	चयन (tableType) अणु
+	हाल byPtr:
+	अणु
+		स्थिर BYTE **hashTable = (स्थिर BYTE **)tableBase;
 
 		hashTable[h] = p;
-		return;
-	}
-	case byU32:
-	{
+		वापस;
+	पूर्ण
+	हाल byU32:
+	अणु
 		U32 *hashTable = (U32 *) tableBase;
 
 		hashTable[h] = (U32)(p - srcBase);
-		return;
-	}
-	case byU16:
-	{
+		वापस;
+	पूर्ण
+	हाल byU16:
+	अणु
 		U16 *hashTable = (U16 *) tableBase;
 
 		hashTable[h] = (U16)(p - srcBase);
-		return;
-	}
-	}
-}
+		वापस;
+	पूर्ण
+	पूर्ण
+पूर्ण
 
-static FORCE_INLINE void LZ4_putPosition(
-	const BYTE *p,
-	void *tableBase,
+अटल FORCE_INLINE व्योम LZ4_putPosition(
+	स्थिर BYTE *p,
+	व्योम *tableBase,
 	tableType_t tableType,
-	const BYTE *srcBase)
-{
-	U32 const h = LZ4_hashPosition(p, tableType);
+	स्थिर BYTE *srcBase)
+अणु
+	U32 स्थिर h = LZ4_hashPosition(p, tableType);
 
 	LZ4_putPositionOnHash(p, h, tableBase, tableType, srcBase);
-}
+पूर्ण
 
-static const BYTE *LZ4_getPositionOnHash(
+अटल स्थिर BYTE *LZ4_getPositionOnHash(
 	U32 h,
-	void *tableBase,
+	व्योम *tableBase,
 	tableType_t tableType,
-	const BYTE *srcBase)
-{
-	if (tableType == byPtr) {
-		const BYTE **hashTable = (const BYTE **) tableBase;
+	स्थिर BYTE *srcBase)
+अणु
+	अगर (tableType == byPtr) अणु
+		स्थिर BYTE **hashTable = (स्थिर BYTE **) tableBase;
 
-		return hashTable[h];
-	}
+		वापस hashTable[h];
+	पूर्ण
 
-	if (tableType == byU32) {
-		const U32 * const hashTable = (U32 *) tableBase;
+	अगर (tableType == byU32) अणु
+		स्थिर U32 * स्थिर hashTable = (U32 *) tableBase;
 
-		return hashTable[h] + srcBase;
-	}
+		वापस hashTable[h] + srcBase;
+	पूर्ण
 
-	{
-		/* default, to ensure a return */
-		const U16 * const hashTable = (U16 *) tableBase;
+	अणु
+		/* शेष, to ensure a वापस */
+		स्थिर U16 * स्थिर hashTable = (U16 *) tableBase;
 
-		return hashTable[h] + srcBase;
-	}
-}
+		वापस hashTable[h] + srcBase;
+	पूर्ण
+पूर्ण
 
-static FORCE_INLINE const BYTE *LZ4_getPosition(
-	const BYTE *p,
-	void *tableBase,
+अटल FORCE_INLINE स्थिर BYTE *LZ4_getPosition(
+	स्थिर BYTE *p,
+	व्योम *tableBase,
 	tableType_t tableType,
-	const BYTE *srcBase)
-{
-	U32 const h = LZ4_hashPosition(p, tableType);
+	स्थिर BYTE *srcBase)
+अणु
+	U32 स्थिर h = LZ4_hashPosition(p, tableType);
 
-	return LZ4_getPositionOnHash(h, tableBase, tableType, srcBase);
-}
+	वापस LZ4_getPositionOnHash(h, tableBase, tableType, srcBase);
+पूर्ण
 
 
 /*
  * LZ4_compress_generic() :
- * inlined, to ensure branches are decided at compilation time
+ * अंतरभूतd, to ensure branches are decided at compilation समय
  */
-static FORCE_INLINE int LZ4_compress_generic(
-	LZ4_stream_t_internal * const dictPtr,
-	const char * const source,
-	char * const dest,
-	const int inputSize,
-	const int maxOutputSize,
-	const limitedOutput_directive outputLimited,
-	const tableType_t tableType,
-	const dict_directive dict,
-	const dictIssue_directive dictIssue,
-	const U32 acceleration)
-{
-	const BYTE *ip = (const BYTE *) source;
-	const BYTE *base;
-	const BYTE *lowLimit;
-	const BYTE * const lowRefLimit = ip - dictPtr->dictSize;
-	const BYTE * const dictionary = dictPtr->dictionary;
-	const BYTE * const dictEnd = dictionary + dictPtr->dictSize;
-	const size_t dictDelta = dictEnd - (const BYTE *)source;
-	const BYTE *anchor = (const BYTE *) source;
-	const BYTE * const iend = ip + inputSize;
-	const BYTE * const mflimit = iend - MFLIMIT;
-	const BYTE * const matchlimit = iend - LASTLITERALS;
+अटल FORCE_INLINE पूर्णांक LZ4_compress_generic(
+	LZ4_stream_t_पूर्णांकernal * स्थिर dictPtr,
+	स्थिर अक्षर * स्थिर source,
+	अक्षर * स्थिर dest,
+	स्थिर पूर्णांक inputSize,
+	स्थिर पूर्णांक maxOutputSize,
+	स्थिर limitedOutput_directive outputLimited,
+	स्थिर tableType_t tableType,
+	स्थिर dict_directive dict,
+	स्थिर dictIssue_directive dictIssue,
+	स्थिर U32 acceleration)
+अणु
+	स्थिर BYTE *ip = (स्थिर BYTE *) source;
+	स्थिर BYTE *base;
+	स्थिर BYTE *lowLimit;
+	स्थिर BYTE * स्थिर lowRefLimit = ip - dictPtr->dictSize;
+	स्थिर BYTE * स्थिर dictionary = dictPtr->dictionary;
+	स्थिर BYTE * स्थिर dictEnd = dictionary + dictPtr->dictSize;
+	स्थिर माप_प्रकार dictDelta = dictEnd - (स्थिर BYTE *)source;
+	स्थिर BYTE *anchor = (स्थिर BYTE *) source;
+	स्थिर BYTE * स्थिर iend = ip + inputSize;
+	स्थिर BYTE * स्थिर mflimit = iend - MFLIMIT;
+	स्थिर BYTE * स्थिर matchlimit = iend - LASTLITERALS;
 
 	BYTE *op = (BYTE *) dest;
-	BYTE * const olimit = op + maxOutputSize;
+	BYTE * स्थिर olimit = op + maxOutputSize;
 
-	U32 forwardH;
-	size_t refDelta = 0;
+	U32 क्रमwardH;
+	माप_प्रकार refDelta = 0;
 
 	/* Init conditions */
-	if ((U32)inputSize > (U32)LZ4_MAX_INPUT_SIZE) {
+	अगर ((U32)inputSize > (U32)LZ4_MAX_INPUT_SIZE) अणु
 		/* Unsupported inputSize, too large (or negative) */
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	switch (dict) {
-	case noDict:
-	default:
-		base = (const BYTE *)source;
-		lowLimit = (const BYTE *)source;
-		break;
-	case withPrefix64k:
-		base = (const BYTE *)source - dictPtr->currentOffset;
-		lowLimit = (const BYTE *)source - dictPtr->dictSize;
-		break;
-	case usingExtDict:
-		base = (const BYTE *)source - dictPtr->currentOffset;
-		lowLimit = (const BYTE *)source;
-		break;
-	}
+	चयन (dict) अणु
+	हाल noDict:
+	शेष:
+		base = (स्थिर BYTE *)source;
+		lowLimit = (स्थिर BYTE *)source;
+		अवरोध;
+	हाल withPrefix64k:
+		base = (स्थिर BYTE *)source - dictPtr->currentOffset;
+		lowLimit = (स्थिर BYTE *)source - dictPtr->dictSize;
+		अवरोध;
+	हाल usingExtDict:
+		base = (स्थिर BYTE *)source - dictPtr->currentOffset;
+		lowLimit = (स्थिर BYTE *)source;
+		अवरोध;
+	पूर्ण
 
-	if ((tableType == byU16)
-		&& (inputSize >= LZ4_64Klimit)) {
+	अगर ((tableType == byU16)
+		&& (inputSize >= LZ4_64Klimit)) अणु
 		/* Size too large (not within 64K limit) */
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	if (inputSize < LZ4_minLength) {
+	अगर (inputSize < LZ4_minLength) अणु
 		/* Input too small, no compression (all literals) */
-		goto _last_literals;
-	}
+		जाओ _last_literals;
+	पूर्ण
 
 	/* First Byte */
 	LZ4_putPosition(ip, dictPtr->hashTable, tableType, base);
 	ip++;
-	forwardH = LZ4_hashPosition(ip, tableType);
+	क्रमwardH = LZ4_hashPosition(ip, tableType);
 
 	/* Main Loop */
-	for ( ; ; ) {
-		const BYTE *match;
+	क्रम ( ; ; ) अणु
+		स्थिर BYTE *match;
 		BYTE *token;
 
 		/* Find a match */
-		{
-			const BYTE *forwardIp = ip;
-			unsigned int step = 1;
-			unsigned int searchMatchNb = acceleration << LZ4_SKIPTRIGGER;
+		अणु
+			स्थिर BYTE *क्रमwardIp = ip;
+			अचिन्हित पूर्णांक step = 1;
+			अचिन्हित पूर्णांक searchMatchNb = acceleration << LZ4_SKIPTRIGGER;
 
-			do {
-				U32 const h = forwardH;
+			करो अणु
+				U32 स्थिर h = क्रमwardH;
 
-				ip = forwardIp;
-				forwardIp += step;
+				ip = क्रमwardIp;
+				क्रमwardIp += step;
 				step = (searchMatchNb++ >> LZ4_SKIPTRIGGER);
 
-				if (unlikely(forwardIp > mflimit))
-					goto _last_literals;
+				अगर (unlikely(क्रमwardIp > mflimit))
+					जाओ _last_literals;
 
 				match = LZ4_getPositionOnHash(h,
 					dictPtr->hashTable,
 					tableType, base);
 
-				if (dict == usingExtDict) {
-					if (match < (const BYTE *)source) {
+				अगर (dict == usingExtDict) अणु
+					अगर (match < (स्थिर BYTE *)source) अणु
 						refDelta = dictDelta;
 						lowLimit = dictionary;
-					} else {
+					पूर्ण अन्यथा अणु
 						refDelta = 0;
-						lowLimit = (const BYTE *)source;
-				}	 }
+						lowLimit = (स्थिर BYTE *)source;
+				पूर्ण	 पूर्ण
 
-				forwardH = LZ4_hashPosition(forwardIp,
+				क्रमwardH = LZ4_hashPosition(क्रमwardIp,
 					tableType);
 
 				LZ4_putPositionOnHash(ip, h, dictPtr->hashTable,
 					tableType, base);
-			} while (((dictIssue == dictSmall)
+			पूर्ण जबतक (((dictIssue == dictSmall)
 					? (match < lowRefLimit)
 					: 0)
 				|| ((tableType == byU16)
 					? 0
 					: (match + MAX_DISTANCE < ip))
-				|| (LZ4_read32(match + refDelta)
-					!= LZ4_read32(ip)));
-		}
+				|| (LZ4_पढ़ो32(match + refDelta)
+					!= LZ4_पढ़ो32(ip)));
+		पूर्ण
 
 		/* Catch up */
-		while (((ip > anchor) & (match + refDelta > lowLimit))
-				&& (unlikely(ip[-1] == match[refDelta - 1]))) {
+		जबतक (((ip > anchor) & (match + refDelta > lowLimit))
+				&& (unlikely(ip[-1] == match[refDelta - 1]))) अणु
 			ip--;
 			match--;
-		}
+		पूर्ण
 
 		/* Encode Literals */
-		{
-			unsigned const int litLength = (unsigned int)(ip - anchor);
+		अणु
+			अचिन्हित स्थिर पूर्णांक litLength = (अचिन्हित पूर्णांक)(ip - anchor);
 
 			token = op++;
 
-			if ((outputLimited) &&
+			अगर ((outputLimited) &&
 				/* Check output buffer overflow */
 				(unlikely(op + litLength +
 					(2 + 1 + LASTLITERALS) +
 					(litLength / 255) > olimit)))
-				return 0;
+				वापस 0;
 
-			if (litLength >= RUN_MASK) {
-				int len = (int)litLength - RUN_MASK;
+			अगर (litLength >= RUN_MASK) अणु
+				पूर्णांक len = (पूर्णांक)litLength - RUN_MASK;
 
 				*token = (RUN_MASK << ML_BITS);
 
-				for (; len >= 255; len -= 255)
+				क्रम (; len >= 255; len -= 255)
 					*op++ = 255;
 				*op++ = (BYTE)len;
-			} else
+			पूर्ण अन्यथा
 				*token = (BYTE)(litLength << ML_BITS);
 
 			/* Copy Literals */
 			LZ4_wildCopy(op, anchor, op + litLength);
 			op += litLength;
-		}
+		पूर्ण
 
 _next_match:
 		/* Encode Offset */
-		LZ4_writeLE16(op, (U16)(ip - match));
+		LZ4_ग_लिखोLE16(op, (U16)(ip - match));
 		op += 2;
 
 		/* Encode MatchLength */
-		{
-			unsigned int matchCode;
+		अणु
+			अचिन्हित पूर्णांक matchCode;
 
-			if ((dict == usingExtDict)
-				&& (lowLimit == dictionary)) {
-				const BYTE *limit;
+			अगर ((dict == usingExtDict)
+				&& (lowLimit == dictionary)) अणु
+				स्थिर BYTE *limit;
 
 				match += refDelta;
 				limit = ip + (dictEnd - match);
 
-				if (limit > matchlimit)
+				अगर (limit > matchlimit)
 					limit = matchlimit;
 
 				matchCode = LZ4_count(ip + MINMATCH,
@@ -350,49 +351,49 @@ _next_match:
 
 				ip += MINMATCH + matchCode;
 
-				if (ip == limit) {
-					unsigned const int more = LZ4_count(ip,
-						(const BYTE *)source,
+				अगर (ip == limit) अणु
+					अचिन्हित स्थिर पूर्णांक more = LZ4_count(ip,
+						(स्थिर BYTE *)source,
 						matchlimit);
 
 					matchCode += more;
 					ip += more;
-				}
-			} else {
+				पूर्ण
+			पूर्ण अन्यथा अणु
 				matchCode = LZ4_count(ip + MINMATCH,
 					match + MINMATCH, matchlimit);
 				ip += MINMATCH + matchCode;
-			}
+			पूर्ण
 
-			if (outputLimited &&
+			अगर (outputLimited &&
 				/* Check output buffer overflow */
 				(unlikely(op +
 					(1 + LASTLITERALS) +
 					(matchCode >> 8) > olimit)))
-				return 0;
+				वापस 0;
 
-			if (matchCode >= ML_MASK) {
+			अगर (matchCode >= ML_MASK) अणु
 				*token += ML_MASK;
 				matchCode -= ML_MASK;
-				LZ4_write32(op, 0xFFFFFFFF);
+				LZ4_ग_लिखो32(op, 0xFFFFFFFF);
 
-				while (matchCode >= 4 * 255) {
+				जबतक (matchCode >= 4 * 255) अणु
 					op += 4;
-					LZ4_write32(op, 0xFFFFFFFF);
+					LZ4_ग_लिखो32(op, 0xFFFFFFFF);
 					matchCode -= 4 * 255;
-				}
+				पूर्ण
 
 				op += matchCode / 255;
 				*op++ = (BYTE)(matchCode % 255);
-			} else
+			पूर्ण अन्यथा
 				*token += (BYTE)(matchCode);
-		}
+		पूर्ण
 
 		anchor = ip;
 
 		/* Test end of chunk */
-		if (ip > mflimit)
-			break;
+		अगर (ip > mflimit)
+			अवरोध;
 
 		/* Fill table */
 		LZ4_putPosition(ip - 2, dictPtr->hashTable, tableType, base);
@@ -401,271 +402,271 @@ _next_match:
 		match = LZ4_getPosition(ip, dictPtr->hashTable,
 			tableType, base);
 
-		if (dict == usingExtDict) {
-			if (match < (const BYTE *)source) {
+		अगर (dict == usingExtDict) अणु
+			अगर (match < (स्थिर BYTE *)source) अणु
 				refDelta = dictDelta;
 				lowLimit = dictionary;
-			} else {
+			पूर्ण अन्यथा अणु
 				refDelta = 0;
-				lowLimit = (const BYTE *)source;
-			}
-		}
+				lowLimit = (स्थिर BYTE *)source;
+			पूर्ण
+		पूर्ण
 
 		LZ4_putPosition(ip, dictPtr->hashTable, tableType, base);
 
-		if (((dictIssue == dictSmall) ? (match >= lowRefLimit) : 1)
+		अगर (((dictIssue == dictSmall) ? (match >= lowRefLimit) : 1)
 			&& (match + MAX_DISTANCE >= ip)
-			&& (LZ4_read32(match + refDelta) == LZ4_read32(ip))) {
+			&& (LZ4_पढ़ो32(match + refDelta) == LZ4_पढ़ो32(ip))) अणु
 			token = op++;
 			*token = 0;
-			goto _next_match;
-		}
+			जाओ _next_match;
+		पूर्ण
 
 		/* Prepare next loop */
-		forwardH = LZ4_hashPosition(++ip, tableType);
-	}
+		क्रमwardH = LZ4_hashPosition(++ip, tableType);
+	पूर्ण
 
 _last_literals:
 	/* Encode Last Literals */
-	{
-		size_t const lastRun = (size_t)(iend - anchor);
+	अणु
+		माप_प्रकार स्थिर lastRun = (माप_प्रकार)(iend - anchor);
 
-		if ((outputLimited) &&
+		अगर ((outputLimited) &&
 			/* Check output buffer overflow */
 			((op - (BYTE *)dest) + lastRun + 1 +
 			((lastRun + 255 - RUN_MASK) / 255) > (U32)maxOutputSize))
-			return 0;
+			वापस 0;
 
-		if (lastRun >= RUN_MASK) {
-			size_t accumulator = lastRun - RUN_MASK;
+		अगर (lastRun >= RUN_MASK) अणु
+			माप_प्रकार accumulator = lastRun - RUN_MASK;
 			*op++ = RUN_MASK << ML_BITS;
-			for (; accumulator >= 255; accumulator -= 255)
+			क्रम (; accumulator >= 255; accumulator -= 255)
 				*op++ = 255;
 			*op++ = (BYTE) accumulator;
-		} else {
+		पूर्ण अन्यथा अणु
 			*op++ = (BYTE)(lastRun << ML_BITS);
-		}
+		पूर्ण
 
-		LZ4_memcpy(op, anchor, lastRun);
+		LZ4_स_नकल(op, anchor, lastRun);
 
 		op += lastRun;
-	}
+	पूर्ण
 
 	/* End */
-	return (int) (((char *)op) - dest);
-}
+	वापस (पूर्णांक) (((अक्षर *)op) - dest);
+पूर्ण
 
-static int LZ4_compress_fast_extState(
-	void *state,
-	const char *source,
-	char *dest,
-	int inputSize,
-	int maxOutputSize,
-	int acceleration)
-{
-	LZ4_stream_t_internal *ctx = &((LZ4_stream_t *)state)->internal_donotuse;
-#if LZ4_ARCH64
-	const tableType_t tableType = byU32;
-#else
-	const tableType_t tableType = byPtr;
-#endif
+अटल पूर्णांक LZ4_compress_fast_extState(
+	व्योम *state,
+	स्थिर अक्षर *source,
+	अक्षर *dest,
+	पूर्णांक inputSize,
+	पूर्णांक maxOutputSize,
+	पूर्णांक acceleration)
+अणु
+	LZ4_stream_t_पूर्णांकernal *ctx = &((LZ4_stream_t *)state)->पूर्णांकernal_करोnotuse;
+#अगर LZ4_ARCH64
+	स्थिर tableType_t tableType = byU32;
+#अन्यथा
+	स्थिर tableType_t tableType = byPtr;
+#पूर्ण_अगर
 
 	LZ4_resetStream((LZ4_stream_t *)state);
 
-	if (acceleration < 1)
+	अगर (acceleration < 1)
 		acceleration = LZ4_ACCELERATION_DEFAULT;
 
-	if (maxOutputSize >= LZ4_COMPRESSBOUND(inputSize)) {
-		if (inputSize < LZ4_64Klimit)
-			return LZ4_compress_generic(ctx, source,
+	अगर (maxOutputSize >= LZ4_COMPRESSBOUND(inputSize)) अणु
+		अगर (inputSize < LZ4_64Klimit)
+			वापस LZ4_compress_generic(ctx, source,
 				dest, inputSize, 0,
 				noLimit, byU16, noDict,
 				noDictIssue, acceleration);
-		else
-			return LZ4_compress_generic(ctx, source,
+		अन्यथा
+			वापस LZ4_compress_generic(ctx, source,
 				dest, inputSize, 0,
 				noLimit, tableType, noDict,
 				noDictIssue, acceleration);
-	} else {
-		if (inputSize < LZ4_64Klimit)
-			return LZ4_compress_generic(ctx, source,
+	पूर्ण अन्यथा अणु
+		अगर (inputSize < LZ4_64Klimit)
+			वापस LZ4_compress_generic(ctx, source,
 				dest, inputSize,
 				maxOutputSize, limitedOutput, byU16, noDict,
 				noDictIssue, acceleration);
-		else
-			return LZ4_compress_generic(ctx, source,
+		अन्यथा
+			वापस LZ4_compress_generic(ctx, source,
 				dest, inputSize,
 				maxOutputSize, limitedOutput, tableType, noDict,
 				noDictIssue, acceleration);
-	}
-}
+	पूर्ण
+पूर्ण
 
-int LZ4_compress_fast(const char *source, char *dest, int inputSize,
-	int maxOutputSize, int acceleration, void *wrkmem)
-{
-	return LZ4_compress_fast_extState(wrkmem, source, dest, inputSize,
+पूर्णांक LZ4_compress_fast(स्थिर अक्षर *source, अक्षर *dest, पूर्णांक inputSize,
+	पूर्णांक maxOutputSize, पूर्णांक acceleration, व्योम *wrkmem)
+अणु
+	वापस LZ4_compress_fast_extState(wrkmem, source, dest, inputSize,
 		maxOutputSize, acceleration);
-}
+पूर्ण
 EXPORT_SYMBOL(LZ4_compress_fast);
 
-int LZ4_compress_default(const char *source, char *dest, int inputSize,
-	int maxOutputSize, void *wrkmem)
-{
-	return LZ4_compress_fast(source, dest, inputSize,
+पूर्णांक LZ4_compress_शेष(स्थिर अक्षर *source, अक्षर *dest, पूर्णांक inputSize,
+	पूर्णांक maxOutputSize, व्योम *wrkmem)
+अणु
+	वापस LZ4_compress_fast(source, dest, inputSize,
 		maxOutputSize, LZ4_ACCELERATION_DEFAULT, wrkmem);
-}
-EXPORT_SYMBOL(LZ4_compress_default);
+पूर्ण
+EXPORT_SYMBOL(LZ4_compress_शेष);
 
 /*-******************************
  *	*_destSize() variant
  ********************************/
-static int LZ4_compress_destSize_generic(
-	LZ4_stream_t_internal * const ctx,
-	const char * const src,
-	char * const dst,
-	int * const srcSizePtr,
-	const int targetDstSize,
-	const tableType_t tableType)
-{
-	const BYTE *ip = (const BYTE *) src;
-	const BYTE *base = (const BYTE *) src;
-	const BYTE *lowLimit = (const BYTE *) src;
-	const BYTE *anchor = ip;
-	const BYTE * const iend = ip + *srcSizePtr;
-	const BYTE * const mflimit = iend - MFLIMIT;
-	const BYTE * const matchlimit = iend - LASTLITERALS;
+अटल पूर्णांक LZ4_compress_destSize_generic(
+	LZ4_stream_t_पूर्णांकernal * स्थिर ctx,
+	स्थिर अक्षर * स्थिर src,
+	अक्षर * स्थिर dst,
+	पूर्णांक * स्थिर srcSizePtr,
+	स्थिर पूर्णांक targetDstSize,
+	स्थिर tableType_t tableType)
+अणु
+	स्थिर BYTE *ip = (स्थिर BYTE *) src;
+	स्थिर BYTE *base = (स्थिर BYTE *) src;
+	स्थिर BYTE *lowLimit = (स्थिर BYTE *) src;
+	स्थिर BYTE *anchor = ip;
+	स्थिर BYTE * स्थिर iend = ip + *srcSizePtr;
+	स्थिर BYTE * स्थिर mflimit = iend - MFLIMIT;
+	स्थिर BYTE * स्थिर matchlimit = iend - LASTLITERALS;
 
 	BYTE *op = (BYTE *) dst;
-	BYTE * const oend = op + targetDstSize;
-	BYTE * const oMaxLit = op + targetDstSize - 2 /* offset */
+	BYTE * स्थिर oend = op + targetDstSize;
+	BYTE * स्थिर oMaxLit = op + targetDstSize - 2 /* offset */
 		- 8 /* because 8 + MINMATCH == MFLIMIT */ - 1 /* token */;
-	BYTE * const oMaxMatch = op + targetDstSize
+	BYTE * स्थिर oMaxMatch = op + targetDstSize
 		- (LASTLITERALS + 1 /* token */);
-	BYTE * const oMaxSeq = oMaxLit - 1 /* token */;
+	BYTE * स्थिर oMaxSeq = oMaxLit - 1 /* token */;
 
-	U32 forwardH;
+	U32 क्रमwardH;
 
 	/* Init conditions */
 	/* Impossible to store anything */
-	if (targetDstSize < 1)
-		return 0;
+	अगर (targetDstSize < 1)
+		वापस 0;
 	/* Unsupported input size, too large (or negative) */
-	if ((U32)*srcSizePtr > (U32)LZ4_MAX_INPUT_SIZE)
-		return 0;
+	अगर ((U32)*srcSizePtr > (U32)LZ4_MAX_INPUT_SIZE)
+		वापस 0;
 	/* Size too large (not within 64K limit) */
-	if ((tableType == byU16) && (*srcSizePtr >= LZ4_64Klimit))
-		return 0;
+	अगर ((tableType == byU16) && (*srcSizePtr >= LZ4_64Klimit))
+		वापस 0;
 	/* Input too small, no compression (all literals) */
-	if (*srcSizePtr < LZ4_minLength)
-		goto _last_literals;
+	अगर (*srcSizePtr < LZ4_minLength)
+		जाओ _last_literals;
 
 	/* First Byte */
 	*srcSizePtr = 0;
 	LZ4_putPosition(ip, ctx->hashTable, tableType, base);
-	ip++; forwardH = LZ4_hashPosition(ip, tableType);
+	ip++; क्रमwardH = LZ4_hashPosition(ip, tableType);
 
 	/* Main Loop */
-	for ( ; ; ) {
-		const BYTE *match;
+	क्रम ( ; ; ) अणु
+		स्थिर BYTE *match;
 		BYTE *token;
 
 		/* Find a match */
-		{
-			const BYTE *forwardIp = ip;
-			unsigned int step = 1;
-			unsigned int searchMatchNb = 1 << LZ4_SKIPTRIGGER;
+		अणु
+			स्थिर BYTE *क्रमwardIp = ip;
+			अचिन्हित पूर्णांक step = 1;
+			अचिन्हित पूर्णांक searchMatchNb = 1 << LZ4_SKIPTRIGGER;
 
-			do {
-				U32 h = forwardH;
+			करो अणु
+				U32 h = क्रमwardH;
 
-				ip = forwardIp;
-				forwardIp += step;
+				ip = क्रमwardIp;
+				क्रमwardIp += step;
 				step = (searchMatchNb++ >> LZ4_SKIPTRIGGER);
 
-				if (unlikely(forwardIp > mflimit))
-					goto _last_literals;
+				अगर (unlikely(क्रमwardIp > mflimit))
+					जाओ _last_literals;
 
 				match = LZ4_getPositionOnHash(h, ctx->hashTable,
 					tableType, base);
-				forwardH = LZ4_hashPosition(forwardIp,
+				क्रमwardH = LZ4_hashPosition(क्रमwardIp,
 					tableType);
 				LZ4_putPositionOnHash(ip, h,
 					ctx->hashTable, tableType,
 					base);
 
-			} while (((tableType == byU16)
+			पूर्ण जबतक (((tableType == byU16)
 				? 0
 				: (match + MAX_DISTANCE < ip))
-				|| (LZ4_read32(match) != LZ4_read32(ip)));
-		}
+				|| (LZ4_पढ़ो32(match) != LZ4_पढ़ो32(ip)));
+		पूर्ण
 
 		/* Catch up */
-		while ((ip > anchor)
+		जबतक ((ip > anchor)
 			&& (match > lowLimit)
-			&& (unlikely(ip[-1] == match[-1]))) {
+			&& (unlikely(ip[-1] == match[-1]))) अणु
 			ip--;
 			match--;
-		}
+		पूर्ण
 
 		/* Encode Literal length */
-		{
-			unsigned int litLength = (unsigned int)(ip - anchor);
+		अणु
+			अचिन्हित पूर्णांक litLength = (अचिन्हित पूर्णांक)(ip - anchor);
 
 			token = op++;
-			if (op + ((litLength + 240) / 255)
-				+ litLength > oMaxLit) {
-				/* Not enough space for a last match */
+			अगर (op + ((litLength + 240) / 255)
+				+ litLength > oMaxLit) अणु
+				/* Not enough space क्रम a last match */
 				op--;
-				goto _last_literals;
-			}
-			if (litLength >= RUN_MASK) {
-				unsigned int len = litLength - RUN_MASK;
+				जाओ _last_literals;
+			पूर्ण
+			अगर (litLength >= RUN_MASK) अणु
+				अचिन्हित पूर्णांक len = litLength - RUN_MASK;
 				*token = (RUN_MASK<<ML_BITS);
-				for (; len >= 255; len -= 255)
+				क्रम (; len >= 255; len -= 255)
 					*op++ = 255;
 				*op++ = (BYTE)len;
-			} else
+			पूर्ण अन्यथा
 				*token = (BYTE)(litLength << ML_BITS);
 
 			/* Copy Literals */
 			LZ4_wildCopy(op, anchor, op + litLength);
 			op += litLength;
-		}
+		पूर्ण
 
 _next_match:
 		/* Encode Offset */
-		LZ4_writeLE16(op, (U16)(ip - match)); op += 2;
+		LZ4_ग_लिखोLE16(op, (U16)(ip - match)); op += 2;
 
 		/* Encode MatchLength */
-		{
-			size_t matchLength = LZ4_count(ip + MINMATCH,
+		अणु
+			माप_प्रकार matchLength = LZ4_count(ip + MINMATCH,
 			match + MINMATCH, matchlimit);
 
-			if (op + ((matchLength + 240)/255) > oMaxMatch) {
-				/* Match description too long : reduce it */
+			अगर (op + ((matchLength + 240)/255) > oMaxMatch) अणु
+				/* Match description too दीर्घ : reduce it */
 				matchLength = (15 - 1) + (oMaxMatch - op) * 255;
-			}
+			पूर्ण
 			ip += MINMATCH + matchLength;
 
-			if (matchLength >= ML_MASK) {
+			अगर (matchLength >= ML_MASK) अणु
 				*token += ML_MASK;
 				matchLength -= ML_MASK;
-				while (matchLength >= 255) {
+				जबतक (matchLength >= 255) अणु
 					matchLength -= 255;
 					*op++ = 255;
-				}
+				पूर्ण
 				*op++ = (BYTE)matchLength;
-			} else
+			पूर्ण अन्यथा
 				*token += (BYTE)(matchLength);
-		}
+		पूर्ण
 
 		anchor = ip;
 
 		/* Test end of block */
-		if (ip > mflimit)
-			break;
-		if (op > oMaxSeq)
-			break;
+		अगर (ip > mflimit)
+			अवरोध;
+		अगर (op > oMaxSeq)
+			अवरोध;
 
 		/* Fill table */
 		LZ4_putPosition(ip - 2, ctx->hashTable, tableType, base);
@@ -674,125 +675,125 @@ _next_match:
 		match = LZ4_getPosition(ip, ctx->hashTable, tableType, base);
 		LZ4_putPosition(ip, ctx->hashTable, tableType, base);
 
-		if ((match + MAX_DISTANCE >= ip)
-			&& (LZ4_read32(match) == LZ4_read32(ip))) {
+		अगर ((match + MAX_DISTANCE >= ip)
+			&& (LZ4_पढ़ो32(match) == LZ4_पढ़ो32(ip))) अणु
 			token = op++; *token = 0;
-			goto _next_match;
-		}
+			जाओ _next_match;
+		पूर्ण
 
 		/* Prepare next loop */
-		forwardH = LZ4_hashPosition(++ip, tableType);
-	}
+		क्रमwardH = LZ4_hashPosition(++ip, tableType);
+	पूर्ण
 
 _last_literals:
 	/* Encode Last Literals */
-	{
-		size_t lastRunSize = (size_t)(iend - anchor);
+	अणु
+		माप_प्रकार lastRunSize = (माप_प्रकार)(iend - anchor);
 
-		if (op + 1 /* token */
+		अगर (op + 1 /* token */
 			+ ((lastRunSize + 240) / 255) /* litLength */
-			+ lastRunSize /* literals */ > oend) {
+			+ lastRunSize /* literals */ > oend) अणु
 			/* adapt lastRunSize to fill 'dst' */
 			lastRunSize	= (oend - op) - 1;
 			lastRunSize -= (lastRunSize + 240) / 255;
-		}
+		पूर्ण
 		ip = anchor + lastRunSize;
 
-		if (lastRunSize >= RUN_MASK) {
-			size_t accumulator = lastRunSize - RUN_MASK;
+		अगर (lastRunSize >= RUN_MASK) अणु
+			माप_प्रकार accumulator = lastRunSize - RUN_MASK;
 
 			*op++ = RUN_MASK << ML_BITS;
-			for (; accumulator >= 255; accumulator -= 255)
+			क्रम (; accumulator >= 255; accumulator -= 255)
 				*op++ = 255;
 			*op++ = (BYTE) accumulator;
-		} else {
+		पूर्ण अन्यथा अणु
 			*op++ = (BYTE)(lastRunSize<<ML_BITS);
-		}
-		LZ4_memcpy(op, anchor, lastRunSize);
+		पूर्ण
+		LZ4_स_नकल(op, anchor, lastRunSize);
 		op += lastRunSize;
-	}
+	पूर्ण
 
 	/* End */
-	*srcSizePtr = (int) (((const char *)ip) - src);
-	return (int) (((char *)op) - dst);
-}
+	*srcSizePtr = (पूर्णांक) (((स्थिर अक्षर *)ip) - src);
+	वापस (पूर्णांक) (((अक्षर *)op) - dst);
+पूर्ण
 
-static int LZ4_compress_destSize_extState(
+अटल पूर्णांक LZ4_compress_destSize_extState(
 	LZ4_stream_t *state,
-	const char *src,
-	char *dst,
-	int *srcSizePtr,
-	int targetDstSize)
-{
-#if LZ4_ARCH64
-	const tableType_t tableType = byU32;
-#else
-	const tableType_t tableType = byPtr;
-#endif
+	स्थिर अक्षर *src,
+	अक्षर *dst,
+	पूर्णांक *srcSizePtr,
+	पूर्णांक targetDstSize)
+अणु
+#अगर LZ4_ARCH64
+	स्थिर tableType_t tableType = byU32;
+#अन्यथा
+	स्थिर tableType_t tableType = byPtr;
+#पूर्ण_अगर
 
 	LZ4_resetStream(state);
 
-	if (targetDstSize >= LZ4_COMPRESSBOUND(*srcSizePtr)) {
+	अगर (targetDstSize >= LZ4_COMPRESSBOUND(*srcSizePtr)) अणु
 		/* compression success is guaranteed */
-		return LZ4_compress_fast_extState(
+		वापस LZ4_compress_fast_extState(
 			state, src, dst, *srcSizePtr,
 			targetDstSize, 1);
-	} else {
-		if (*srcSizePtr < LZ4_64Klimit)
-			return LZ4_compress_destSize_generic(
-				&state->internal_donotuse,
+	पूर्ण अन्यथा अणु
+		अगर (*srcSizePtr < LZ4_64Klimit)
+			वापस LZ4_compress_destSize_generic(
+				&state->पूर्णांकernal_करोnotuse,
 				src, dst, srcSizePtr,
 				targetDstSize, byU16);
-		else
-			return LZ4_compress_destSize_generic(
-				&state->internal_donotuse,
+		अन्यथा
+			वापस LZ4_compress_destSize_generic(
+				&state->पूर्णांकernal_करोnotuse,
 				src, dst, srcSizePtr,
 				targetDstSize, tableType);
-	}
-}
+	पूर्ण
+पूर्ण
 
 
-int LZ4_compress_destSize(
-	const char *src,
-	char *dst,
-	int *srcSizePtr,
-	int targetDstSize,
-	void *wrkmem)
-{
-	return LZ4_compress_destSize_extState(wrkmem, src, dst, srcSizePtr,
+पूर्णांक LZ4_compress_destSize(
+	स्थिर अक्षर *src,
+	अक्षर *dst,
+	पूर्णांक *srcSizePtr,
+	पूर्णांक targetDstSize,
+	व्योम *wrkmem)
+अणु
+	वापस LZ4_compress_destSize_extState(wrkmem, src, dst, srcSizePtr,
 		targetDstSize);
-}
+पूर्ण
 EXPORT_SYMBOL(LZ4_compress_destSize);
 
 /*-******************************
  *	Streaming functions
  ********************************/
-void LZ4_resetStream(LZ4_stream_t *LZ4_stream)
-{
-	memset(LZ4_stream, 0, sizeof(LZ4_stream_t));
-}
+व्योम LZ4_resetStream(LZ4_stream_t *LZ4_stream)
+अणु
+	स_रखो(LZ4_stream, 0, माप(LZ4_stream_t));
+पूर्ण
 
-int LZ4_loadDict(LZ4_stream_t *LZ4_dict,
-	const char *dictionary, int dictSize)
-{
-	LZ4_stream_t_internal *dict = &LZ4_dict->internal_donotuse;
-	const BYTE *p = (const BYTE *)dictionary;
-	const BYTE * const dictEnd = p + dictSize;
-	const BYTE *base;
+पूर्णांक LZ4_loadDict(LZ4_stream_t *LZ4_dict,
+	स्थिर अक्षर *dictionary, पूर्णांक dictSize)
+अणु
+	LZ4_stream_t_पूर्णांकernal *dict = &LZ4_dict->पूर्णांकernal_करोnotuse;
+	स्थिर BYTE *p = (स्थिर BYTE *)dictionary;
+	स्थिर BYTE * स्थिर dictEnd = p + dictSize;
+	स्थिर BYTE *base;
 
-	if ((dict->initCheck)
-		|| (dict->currentOffset > 1 * GB)) {
-		/* Uninitialized structure, or reuse overflow */
+	अगर ((dict->initCheck)
+		|| (dict->currentOffset > 1 * GB)) अणु
+		/* Uninitialized काष्ठाure, or reuse overflow */
 		LZ4_resetStream(LZ4_dict);
-	}
+	पूर्ण
 
-	if (dictSize < (int)HASH_UNIT) {
-		dict->dictionary = NULL;
+	अगर (dictSize < (पूर्णांक)HASH_UNIT) अणु
+		dict->dictionary = शून्य;
 		dict->dictSize = 0;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	if ((dictEnd - p) > 64 * KB)
+	अगर ((dictEnd - p) > 64 * KB)
 		p = dictEnd - 64 * KB;
 	dict->currentOffset += 64 * KB;
 	base = p - dict->currentOffset;
@@ -800,141 +801,141 @@ int LZ4_loadDict(LZ4_stream_t *LZ4_dict,
 	dict->dictSize = (U32)(dictEnd - p);
 	dict->currentOffset += dict->dictSize;
 
-	while (p <= dictEnd - HASH_UNIT) {
+	जबतक (p <= dictEnd - HASH_UNIT) अणु
 		LZ4_putPosition(p, dict->hashTable, byU32, base);
 		p += 3;
-	}
+	पूर्ण
 
-	return dict->dictSize;
-}
+	वापस dict->dictSize;
+पूर्ण
 EXPORT_SYMBOL(LZ4_loadDict);
 
-static void LZ4_renormDictT(LZ4_stream_t_internal *LZ4_dict,
-	const BYTE *src)
-{
-	if ((LZ4_dict->currentOffset > 0x80000000) ||
-		((uptrval)LZ4_dict->currentOffset > (uptrval)src)) {
+अटल व्योम LZ4_renormDictT(LZ4_stream_t_पूर्णांकernal *LZ4_dict,
+	स्थिर BYTE *src)
+अणु
+	अगर ((LZ4_dict->currentOffset > 0x80000000) ||
+		((uptrval)LZ4_dict->currentOffset > (uptrval)src)) अणु
 		/* address space overflow */
 		/* rescale hash table */
-		U32 const delta = LZ4_dict->currentOffset - 64 * KB;
-		const BYTE *dictEnd = LZ4_dict->dictionary + LZ4_dict->dictSize;
-		int i;
+		U32 स्थिर delta = LZ4_dict->currentOffset - 64 * KB;
+		स्थिर BYTE *dictEnd = LZ4_dict->dictionary + LZ4_dict->dictSize;
+		पूर्णांक i;
 
-		for (i = 0; i < LZ4_HASH_SIZE_U32; i++) {
-			if (LZ4_dict->hashTable[i] < delta)
+		क्रम (i = 0; i < LZ4_HASH_SIZE_U32; i++) अणु
+			अगर (LZ4_dict->hashTable[i] < delta)
 				LZ4_dict->hashTable[i] = 0;
-			else
+			अन्यथा
 				LZ4_dict->hashTable[i] -= delta;
-		}
+		पूर्ण
 		LZ4_dict->currentOffset = 64 * KB;
-		if (LZ4_dict->dictSize > 64 * KB)
+		अगर (LZ4_dict->dictSize > 64 * KB)
 			LZ4_dict->dictSize = 64 * KB;
 		LZ4_dict->dictionary = dictEnd - LZ4_dict->dictSize;
-	}
-}
+	पूर्ण
+पूर्ण
 
-int LZ4_saveDict(LZ4_stream_t *LZ4_dict, char *safeBuffer, int dictSize)
-{
-	LZ4_stream_t_internal * const dict = &LZ4_dict->internal_donotuse;
-	const BYTE * const previousDictEnd = dict->dictionary + dict->dictSize;
+पूर्णांक LZ4_saveDict(LZ4_stream_t *LZ4_dict, अक्षर *safeBuffer, पूर्णांक dictSize)
+अणु
+	LZ4_stream_t_पूर्णांकernal * स्थिर dict = &LZ4_dict->पूर्णांकernal_करोnotuse;
+	स्थिर BYTE * स्थिर previousDictEnd = dict->dictionary + dict->dictSize;
 
-	if ((U32)dictSize > 64 * KB) {
+	अगर ((U32)dictSize > 64 * KB) अणु
 		/* useless to define a dictionary > 64 * KB */
 		dictSize = 64 * KB;
-	}
-	if ((U32)dictSize > dict->dictSize)
+	पूर्ण
+	अगर ((U32)dictSize > dict->dictSize)
 		dictSize = dict->dictSize;
 
-	memmove(safeBuffer, previousDictEnd - dictSize, dictSize);
+	स_हटाओ(safeBuffer, previousDictEnd - dictSize, dictSize);
 
-	dict->dictionary = (const BYTE *)safeBuffer;
+	dict->dictionary = (स्थिर BYTE *)safeBuffer;
 	dict->dictSize = (U32)dictSize;
 
-	return dictSize;
-}
+	वापस dictSize;
+पूर्ण
 EXPORT_SYMBOL(LZ4_saveDict);
 
-int LZ4_compress_fast_continue(LZ4_stream_t *LZ4_stream, const char *source,
-	char *dest, int inputSize, int maxOutputSize, int acceleration)
-{
-	LZ4_stream_t_internal *streamPtr = &LZ4_stream->internal_donotuse;
-	const BYTE * const dictEnd = streamPtr->dictionary
+पूर्णांक LZ4_compress_fast_जारी(LZ4_stream_t *LZ4_stream, स्थिर अक्षर *source,
+	अक्षर *dest, पूर्णांक inputSize, पूर्णांक maxOutputSize, पूर्णांक acceleration)
+अणु
+	LZ4_stream_t_पूर्णांकernal *streamPtr = &LZ4_stream->पूर्णांकernal_करोnotuse;
+	स्थिर BYTE * स्थिर dictEnd = streamPtr->dictionary
 		+ streamPtr->dictSize;
 
-	const BYTE *smallest = (const BYTE *) source;
+	स्थिर BYTE *smallest = (स्थिर BYTE *) source;
 
-	if (streamPtr->initCheck) {
-		/* Uninitialized structure detected */
-		return 0;
-	}
+	अगर (streamPtr->initCheck) अणु
+		/* Uninitialized काष्ठाure detected */
+		वापस 0;
+	पूर्ण
 
-	if ((streamPtr->dictSize > 0) && (smallest > dictEnd))
+	अगर ((streamPtr->dictSize > 0) && (smallest > dictEnd))
 		smallest = dictEnd;
 
 	LZ4_renormDictT(streamPtr, smallest);
 
-	if (acceleration < 1)
+	अगर (acceleration < 1)
 		acceleration = LZ4_ACCELERATION_DEFAULT;
 
 	/* Check overlapping input/dictionary space */
-	{
-		const BYTE *sourceEnd = (const BYTE *) source + inputSize;
+	अणु
+		स्थिर BYTE *sourceEnd = (स्थिर BYTE *) source + inputSize;
 
-		if ((sourceEnd > streamPtr->dictionary)
-			&& (sourceEnd < dictEnd)) {
+		अगर ((sourceEnd > streamPtr->dictionary)
+			&& (sourceEnd < dictEnd)) अणु
 			streamPtr->dictSize = (U32)(dictEnd - sourceEnd);
-			if (streamPtr->dictSize > 64 * KB)
+			अगर (streamPtr->dictSize > 64 * KB)
 				streamPtr->dictSize = 64 * KB;
-			if (streamPtr->dictSize < 4)
+			अगर (streamPtr->dictSize < 4)
 				streamPtr->dictSize = 0;
 			streamPtr->dictionary = dictEnd - streamPtr->dictSize;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	/* prefix mode : source data follows dictionary */
-	if (dictEnd == (const BYTE *)source) {
-		int result;
+	अगर (dictEnd == (स्थिर BYTE *)source) अणु
+		पूर्णांक result;
 
-		if ((streamPtr->dictSize < 64 * KB) &&
-			(streamPtr->dictSize < streamPtr->currentOffset)) {
+		अगर ((streamPtr->dictSize < 64 * KB) &&
+			(streamPtr->dictSize < streamPtr->currentOffset)) अणु
 			result = LZ4_compress_generic(
 				streamPtr, source, dest, inputSize,
 				maxOutputSize, limitedOutput, byU32,
 				withPrefix64k, dictSmall, acceleration);
-		} else {
+		पूर्ण अन्यथा अणु
 			result = LZ4_compress_generic(
 				streamPtr, source, dest, inputSize,
 				maxOutputSize, limitedOutput, byU32,
 				withPrefix64k, noDictIssue, acceleration);
-		}
+		पूर्ण
 		streamPtr->dictSize += (U32)inputSize;
 		streamPtr->currentOffset += (U32)inputSize;
-		return result;
-	}
+		वापस result;
+	पूर्ण
 
-	/* external dictionary mode */
-	{
-		int result;
+	/* बाह्यal dictionary mode */
+	अणु
+		पूर्णांक result;
 
-		if ((streamPtr->dictSize < 64 * KB) &&
-			(streamPtr->dictSize < streamPtr->currentOffset)) {
+		अगर ((streamPtr->dictSize < 64 * KB) &&
+			(streamPtr->dictSize < streamPtr->currentOffset)) अणु
 			result = LZ4_compress_generic(
 				streamPtr, source, dest, inputSize,
 				maxOutputSize, limitedOutput, byU32,
 				usingExtDict, dictSmall, acceleration);
-		} else {
+		पूर्ण अन्यथा अणु
 			result = LZ4_compress_generic(
 				streamPtr, source, dest, inputSize,
 				maxOutputSize, limitedOutput, byU32,
 				usingExtDict, noDictIssue, acceleration);
-		}
-		streamPtr->dictionary = (const BYTE *)source;
+		पूर्ण
+		streamPtr->dictionary = (स्थिर BYTE *)source;
 		streamPtr->dictSize = (U32)inputSize;
 		streamPtr->currentOffset += (U32)inputSize;
-		return result;
-	}
-}
-EXPORT_SYMBOL(LZ4_compress_fast_continue);
+		वापस result;
+	पूर्ण
+पूर्ण
+EXPORT_SYMBOL(LZ4_compress_fast_जारी);
 
 MODULE_LICENSE("Dual BSD/GPL");
 MODULE_DESCRIPTION("LZ4 compressor");

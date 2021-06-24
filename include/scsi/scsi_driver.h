@@ -1,34 +1,35 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _SCSI_SCSI_DRIVER_H
-#define _SCSI_SCSI_DRIVER_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _SCSI_SCSI_DRIVER_H
+#घोषणा _SCSI_SCSI_DRIVER_H
 
-#include <linux/blk_types.h>
-#include <linux/device.h>
+#समावेश <linux/blk_types.h>
+#समावेश <linux/device.h>
 
-struct module;
-struct request;
-struct scsi_cmnd;
-struct scsi_device;
+काष्ठा module;
+काष्ठा request;
+काष्ठा scsi_cmnd;
+काष्ठा scsi_device;
 
-struct scsi_driver {
-	struct device_driver	gendrv;
+काष्ठा scsi_driver अणु
+	काष्ठा device_driver	gendrv;
 
-	void (*rescan)(struct device *);
-	blk_status_t (*init_command)(struct scsi_cmnd *);
-	void (*uninit_command)(struct scsi_cmnd *);
-	int (*done)(struct scsi_cmnd *);
-	int (*eh_action)(struct scsi_cmnd *, int);
-	void (*eh_reset)(struct scsi_cmnd *);
-};
-#define to_scsi_driver(drv) \
-	container_of((drv), struct scsi_driver, gendrv)
+	व्योम (*rescan)(काष्ठा device *);
+	blk_status_t (*init_command)(काष्ठा scsi_cmnd *);
+	व्योम (*uninit_command)(काष्ठा scsi_cmnd *);
+	पूर्णांक (*करोne)(काष्ठा scsi_cmnd *);
+	पूर्णांक (*eh_action)(काष्ठा scsi_cmnd *, पूर्णांक);
+	व्योम (*eh_reset)(काष्ठा scsi_cmnd *);
+पूर्ण;
+#घोषणा to_scsi_driver(drv) \
+	container_of((drv), काष्ठा scsi_driver, gendrv)
 
-extern int scsi_register_driver(struct device_driver *);
-#define scsi_unregister_driver(drv) \
-	driver_unregister(drv);
+बाह्य पूर्णांक scsi_रेजिस्टर_driver(काष्ठा device_driver *);
+#घोषणा scsi_unरेजिस्टर_driver(drv) \
+	driver_unरेजिस्टर(drv);
 
-extern int scsi_register_interface(struct class_interface *);
-#define scsi_unregister_interface(intf) \
-	class_interface_unregister(intf)
+बाह्य पूर्णांक scsi_रेजिस्टर_पूर्णांकerface(काष्ठा class_पूर्णांकerface *);
+#घोषणा scsi_unरेजिस्टर_पूर्णांकerface(पूर्णांकf) \
+	class_पूर्णांकerface_unरेजिस्टर(पूर्णांकf)
 
-#endif /* _SCSI_SCSI_DRIVER_H */
+#पूर्ण_अगर /* _SCSI_SCSI_DRIVER_H */

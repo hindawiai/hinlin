@@ -1,10 +1,11 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  *	Adaptec AAC series RAID controller driver
  *	(c) Copyright 2001 Red Hat Inc.
  *
  * based on the old aacraid driver that is..
- * Adaptec aacraid device driver for Linux.
+ * Adaptec aacraid device driver क्रम Linux.
  *
  * Copyright (c) 2000-2010 Adaptec, Inc.
  *               2010-2015 PMC-Sierra, Inc. (aacraid@pmc-sierra.com)
@@ -13,51 +14,51 @@
  * Module Name:
  *   linit.c
  *
- * Abstract: Linux Driver entry module for Adaptec RAID Array Controller
+ * Abstract: Linux Driver entry module क्रम Adaptec RAID Array Controller
  */
 
 
-#include <linux/compat.h>
-#include <linux/blkdev.h>
-#include <linux/completion.h>
-#include <linux/init.h>
-#include <linux/interrupt.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/moduleparam.h>
-#include <linux/pci.h>
-#include <linux/aer.h>
-#include <linux/slab.h>
-#include <linux/mutex.h>
-#include <linux/spinlock.h>
-#include <linux/syscalls.h>
-#include <linux/delay.h>
-#include <linux/kthread.h>
-#include <linux/msdos_partition.h>
+#समावेश <linux/compat.h>
+#समावेश <linux/blkdev.h>
+#समावेश <linux/completion.h>
+#समावेश <linux/init.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/moduleparam.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/aer.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/syscalls.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/kthपढ़ो.h>
+#समावेश <linux/msकरोs_partition.h>
 
-#include <scsi/scsi.h>
-#include <scsi/scsi_cmnd.h>
-#include <scsi/scsi_device.h>
-#include <scsi/scsi_host.h>
-#include <scsi/scsi_tcq.h>
-#include <scsi/scsicam.h>
-#include <scsi/scsi_eh.h>
+#समावेश <scsi/scsi.h>
+#समावेश <scsi/scsi_cmnd.h>
+#समावेश <scsi/scsi_device.h>
+#समावेश <scsi/scsi_host.h>
+#समावेश <scsi/scsi_tcq.h>
+#समावेश <scsi/scsicam.h>
+#समावेश <scsi/scsi_eh.h>
 
-#include "aacraid.h"
+#समावेश "aacraid.h"
 
-#define AAC_DRIVER_VERSION		"1.2.1"
-#ifndef AAC_DRIVER_BRANCH
-#define AAC_DRIVER_BRANCH		""
-#endif
-#define AAC_DRIVERNAME			"aacraid"
+#घोषणा AAC_DRIVER_VERSION		"1.2.1"
+#अगर_अघोषित AAC_DRIVER_BRANCH
+#घोषणा AAC_DRIVER_BRANCH		""
+#पूर्ण_अगर
+#घोषणा AAC_DRIVERNAME			"aacraid"
 
-#ifdef AAC_DRIVER_BUILD
-#define _str(x) #x
-#define str(x) _str(x)
-#define AAC_DRIVER_FULL_VERSION	AAC_DRIVER_VERSION "[" str(AAC_DRIVER_BUILD) "]" AAC_DRIVER_BRANCH
-#else
-#define AAC_DRIVER_FULL_VERSION	AAC_DRIVER_VERSION AAC_DRIVER_BRANCH
-#endif
+#अगर_घोषित AAC_DRIVER_BUILD
+#घोषणा _str(x) #x
+#घोषणा str(x) _str(x)
+#घोषणा AAC_DRIVER_FULL_VERSION	AAC_DRIVER_VERSION "[" str(AAC_DRIVER_BUILD) "]" AAC_DRIVER_BRANCH
+#अन्यथा
+#घोषणा AAC_DRIVER_FULL_VERSION	AAC_DRIVER_VERSION AAC_DRIVER_BRANCH
+#पूर्ण_अगर
 
 MODULE_AUTHOR("Red Hat Inc and Adaptec");
 MODULE_DESCRIPTION("Dell PERC2, 2/Si, 3/Si, 3/Di, "
@@ -66,602 +67,602 @@ MODULE_DESCRIPTION("Dell PERC2, 2/Si, 3/Si, 3/Di, "
 MODULE_LICENSE("GPL");
 MODULE_VERSION(AAC_DRIVER_FULL_VERSION);
 
-static DEFINE_MUTEX(aac_mutex);
-static LIST_HEAD(aac_devices);
-static int aac_cfg_major = AAC_CHARDEV_UNREGISTERED;
-char aac_driver_version[] = AAC_DRIVER_FULL_VERSION;
+अटल DEFINE_MUTEX(aac_mutex);
+अटल LIST_HEAD(aac_devices);
+अटल पूर्णांक aac_cfg_major = AAC_CHARDEV_UNREGISTERED;
+अक्षर aac_driver_version[] = AAC_DRIVER_FULL_VERSION;
 
 /*
  * Because of the way Linux names scsi devices, the order in this table has
- * become important.  Check for on-board Raid first, add-in cards second.
+ * become important.  Check क्रम on-board Raid first, add-in cards second.
  *
- * Note: The last field is used to index into aac_drivers below.
+ * Note: The last field is used to index पूर्णांकo aac_drivers below.
  */
-static const struct pci_device_id aac_pci_tbl[] = {
-	{ 0x1028, 0x0001, 0x1028, 0x0001, 0, 0, 0 }, /* PERC 2/Si (Iguana/PERC2Si) */
-	{ 0x1028, 0x0002, 0x1028, 0x0002, 0, 0, 1 }, /* PERC 3/Di (Opal/PERC3Di) */
-	{ 0x1028, 0x0003, 0x1028, 0x0003, 0, 0, 2 }, /* PERC 3/Si (SlimFast/PERC3Si */
-	{ 0x1028, 0x0004, 0x1028, 0x00d0, 0, 0, 3 }, /* PERC 3/Di (Iguana FlipChip/PERC3DiF */
-	{ 0x1028, 0x0002, 0x1028, 0x00d1, 0, 0, 4 }, /* PERC 3/Di (Viper/PERC3DiV) */
-	{ 0x1028, 0x0002, 0x1028, 0x00d9, 0, 0, 5 }, /* PERC 3/Di (Lexus/PERC3DiL) */
-	{ 0x1028, 0x000a, 0x1028, 0x0106, 0, 0, 6 }, /* PERC 3/Di (Jaguar/PERC3DiJ) */
-	{ 0x1028, 0x000a, 0x1028, 0x011b, 0, 0, 7 }, /* PERC 3/Di (Dagger/PERC3DiD) */
-	{ 0x1028, 0x000a, 0x1028, 0x0121, 0, 0, 8 }, /* PERC 3/Di (Boxster/PERC3DiB) */
-	{ 0x9005, 0x0283, 0x9005, 0x0283, 0, 0, 9 }, /* catapult */
-	{ 0x9005, 0x0284, 0x9005, 0x0284, 0, 0, 10 }, /* tomcat */
-	{ 0x9005, 0x0285, 0x9005, 0x0286, 0, 0, 11 }, /* Adaptec 2120S (Crusader) */
-	{ 0x9005, 0x0285, 0x9005, 0x0285, 0, 0, 12 }, /* Adaptec 2200S (Vulcan) */
-	{ 0x9005, 0x0285, 0x9005, 0x0287, 0, 0, 13 }, /* Adaptec 2200S (Vulcan-2m) */
-	{ 0x9005, 0x0285, 0x17aa, 0x0286, 0, 0, 14 }, /* Legend S220 (Legend Crusader) */
-	{ 0x9005, 0x0285, 0x17aa, 0x0287, 0, 0, 15 }, /* Legend S230 (Legend Vulcan) */
+अटल स्थिर काष्ठा pci_device_id aac_pci_tbl[] = अणु
+	अणु 0x1028, 0x0001, 0x1028, 0x0001, 0, 0, 0 पूर्ण, /* PERC 2/Si (Iguana/PERC2Si) */
+	अणु 0x1028, 0x0002, 0x1028, 0x0002, 0, 0, 1 पूर्ण, /* PERC 3/Di (Opal/PERC3Di) */
+	अणु 0x1028, 0x0003, 0x1028, 0x0003, 0, 0, 2 पूर्ण, /* PERC 3/Si (SlimFast/PERC3Si */
+	अणु 0x1028, 0x0004, 0x1028, 0x00d0, 0, 0, 3 पूर्ण, /* PERC 3/Di (Iguana FlipChip/PERC3DiF */
+	अणु 0x1028, 0x0002, 0x1028, 0x00d1, 0, 0, 4 पूर्ण, /* PERC 3/Di (Viper/PERC3DiV) */
+	अणु 0x1028, 0x0002, 0x1028, 0x00d9, 0, 0, 5 पूर्ण, /* PERC 3/Di (Lexus/PERC3DiL) */
+	अणु 0x1028, 0x000a, 0x1028, 0x0106, 0, 0, 6 पूर्ण, /* PERC 3/Di (Jaguar/PERC3DiJ) */
+	अणु 0x1028, 0x000a, 0x1028, 0x011b, 0, 0, 7 पूर्ण, /* PERC 3/Di (Dagger/PERC3DiD) */
+	अणु 0x1028, 0x000a, 0x1028, 0x0121, 0, 0, 8 पूर्ण, /* PERC 3/Di (Boxster/PERC3DiB) */
+	अणु 0x9005, 0x0283, 0x9005, 0x0283, 0, 0, 9 पूर्ण, /* catapult */
+	अणु 0x9005, 0x0284, 0x9005, 0x0284, 0, 0, 10 पूर्ण, /* tomcat */
+	अणु 0x9005, 0x0285, 0x9005, 0x0286, 0, 0, 11 पूर्ण, /* Adaptec 2120S (Crusader) */
+	अणु 0x9005, 0x0285, 0x9005, 0x0285, 0, 0, 12 पूर्ण, /* Adaptec 2200S (Vulcan) */
+	अणु 0x9005, 0x0285, 0x9005, 0x0287, 0, 0, 13 पूर्ण, /* Adaptec 2200S (Vulcan-2m) */
+	अणु 0x9005, 0x0285, 0x17aa, 0x0286, 0, 0, 14 पूर्ण, /* Legend S220 (Legend Crusader) */
+	अणु 0x9005, 0x0285, 0x17aa, 0x0287, 0, 0, 15 पूर्ण, /* Legend S230 (Legend Vulcan) */
 
-	{ 0x9005, 0x0285, 0x9005, 0x0288, 0, 0, 16 }, /* Adaptec 3230S (Harrier) */
-	{ 0x9005, 0x0285, 0x9005, 0x0289, 0, 0, 17 }, /* Adaptec 3240S (Tornado) */
-	{ 0x9005, 0x0285, 0x9005, 0x028a, 0, 0, 18 }, /* ASR-2020ZCR SCSI PCI-X ZCR (Skyhawk) */
-	{ 0x9005, 0x0285, 0x9005, 0x028b, 0, 0, 19 }, /* ASR-2025ZCR SCSI SO-DIMM PCI-X ZCR (Terminator) */
-	{ 0x9005, 0x0286, 0x9005, 0x028c, 0, 0, 20 }, /* ASR-2230S + ASR-2230SLP PCI-X (Lancer) */
-	{ 0x9005, 0x0286, 0x9005, 0x028d, 0, 0, 21 }, /* ASR-2130S (Lancer) */
-	{ 0x9005, 0x0286, 0x9005, 0x029b, 0, 0, 22 }, /* AAR-2820SA (Intruder) */
-	{ 0x9005, 0x0286, 0x9005, 0x029c, 0, 0, 23 }, /* AAR-2620SA (Intruder) */
-	{ 0x9005, 0x0286, 0x9005, 0x029d, 0, 0, 24 }, /* AAR-2420SA (Intruder) */
-	{ 0x9005, 0x0286, 0x9005, 0x029e, 0, 0, 25 }, /* ICP9024RO (Lancer) */
-	{ 0x9005, 0x0286, 0x9005, 0x029f, 0, 0, 26 }, /* ICP9014RO (Lancer) */
-	{ 0x9005, 0x0286, 0x9005, 0x02a0, 0, 0, 27 }, /* ICP9047MA (Lancer) */
-	{ 0x9005, 0x0286, 0x9005, 0x02a1, 0, 0, 28 }, /* ICP9087MA (Lancer) */
-	{ 0x9005, 0x0286, 0x9005, 0x02a3, 0, 0, 29 }, /* ICP5445AU (Hurricane44) */
-	{ 0x9005, 0x0285, 0x9005, 0x02a4, 0, 0, 30 }, /* ICP9085LI (Marauder-X) */
-	{ 0x9005, 0x0285, 0x9005, 0x02a5, 0, 0, 31 }, /* ICP5085BR (Marauder-E) */
-	{ 0x9005, 0x0286, 0x9005, 0x02a6, 0, 0, 32 }, /* ICP9067MA (Intruder-6) */
-	{ 0x9005, 0x0287, 0x9005, 0x0800, 0, 0, 33 }, /* Themisto Jupiter Platform */
-	{ 0x9005, 0x0200, 0x9005, 0x0200, 0, 0, 33 }, /* Themisto Jupiter Platform */
-	{ 0x9005, 0x0286, 0x9005, 0x0800, 0, 0, 34 }, /* Callisto Jupiter Platform */
-	{ 0x9005, 0x0285, 0x9005, 0x028e, 0, 0, 35 }, /* ASR-2020SA SATA PCI-X ZCR (Skyhawk) */
-	{ 0x9005, 0x0285, 0x9005, 0x028f, 0, 0, 36 }, /* ASR-2025SA SATA SO-DIMM PCI-X ZCR (Terminator) */
-	{ 0x9005, 0x0285, 0x9005, 0x0290, 0, 0, 37 }, /* AAR-2410SA PCI SATA 4ch (Jaguar II) */
-	{ 0x9005, 0x0285, 0x1028, 0x0291, 0, 0, 38 }, /* CERC SATA RAID 2 PCI SATA 6ch (DellCorsair) */
-	{ 0x9005, 0x0285, 0x9005, 0x0292, 0, 0, 39 }, /* AAR-2810SA PCI SATA 8ch (Corsair-8) */
-	{ 0x9005, 0x0285, 0x9005, 0x0293, 0, 0, 40 }, /* AAR-21610SA PCI SATA 16ch (Corsair-16) */
-	{ 0x9005, 0x0285, 0x9005, 0x0294, 0, 0, 41 }, /* ESD SO-DIMM PCI-X SATA ZCR (Prowler) */
-	{ 0x9005, 0x0285, 0x103C, 0x3227, 0, 0, 42 }, /* AAR-2610SA PCI SATA 6ch */
-	{ 0x9005, 0x0285, 0x9005, 0x0296, 0, 0, 43 }, /* ASR-2240S (SabreExpress) */
-	{ 0x9005, 0x0285, 0x9005, 0x0297, 0, 0, 44 }, /* ASR-4005 */
-	{ 0x9005, 0x0285, 0x1014, 0x02F2, 0, 0, 45 }, /* IBM 8i (AvonPark) */
-	{ 0x9005, 0x0285, 0x1014, 0x0312, 0, 0, 45 }, /* IBM 8i (AvonPark Lite) */
-	{ 0x9005, 0x0286, 0x1014, 0x9580, 0, 0, 46 }, /* IBM 8k/8k-l8 (Aurora) */
-	{ 0x9005, 0x0286, 0x1014, 0x9540, 0, 0, 47 }, /* IBM 8k/8k-l4 (Aurora Lite) */
-	{ 0x9005, 0x0285, 0x9005, 0x0298, 0, 0, 48 }, /* ASR-4000 (BlackBird) */
-	{ 0x9005, 0x0285, 0x9005, 0x0299, 0, 0, 49 }, /* ASR-4800SAS (Marauder-X) */
-	{ 0x9005, 0x0285, 0x9005, 0x029a, 0, 0, 50 }, /* ASR-4805SAS (Marauder-E) */
-	{ 0x9005, 0x0286, 0x9005, 0x02a2, 0, 0, 51 }, /* ASR-3800 (Hurricane44) */
+	अणु 0x9005, 0x0285, 0x9005, 0x0288, 0, 0, 16 पूर्ण, /* Adaptec 3230S (Harrier) */
+	अणु 0x9005, 0x0285, 0x9005, 0x0289, 0, 0, 17 पूर्ण, /* Adaptec 3240S (Tornaकरो) */
+	अणु 0x9005, 0x0285, 0x9005, 0x028a, 0, 0, 18 पूर्ण, /* ASR-2020ZCR SCSI PCI-X ZCR (Skyhawk) */
+	अणु 0x9005, 0x0285, 0x9005, 0x028b, 0, 0, 19 पूर्ण, /* ASR-2025ZCR SCSI SO-DIMM PCI-X ZCR (Terminator) */
+	अणु 0x9005, 0x0286, 0x9005, 0x028c, 0, 0, 20 पूर्ण, /* ASR-2230S + ASR-2230SLP PCI-X (Lancer) */
+	अणु 0x9005, 0x0286, 0x9005, 0x028d, 0, 0, 21 पूर्ण, /* ASR-2130S (Lancer) */
+	अणु 0x9005, 0x0286, 0x9005, 0x029b, 0, 0, 22 पूर्ण, /* AAR-2820SA (Intruder) */
+	अणु 0x9005, 0x0286, 0x9005, 0x029c, 0, 0, 23 पूर्ण, /* AAR-2620SA (Intruder) */
+	अणु 0x9005, 0x0286, 0x9005, 0x029d, 0, 0, 24 पूर्ण, /* AAR-2420SA (Intruder) */
+	अणु 0x9005, 0x0286, 0x9005, 0x029e, 0, 0, 25 पूर्ण, /* ICP9024RO (Lancer) */
+	अणु 0x9005, 0x0286, 0x9005, 0x029f, 0, 0, 26 पूर्ण, /* ICP9014RO (Lancer) */
+	अणु 0x9005, 0x0286, 0x9005, 0x02a0, 0, 0, 27 पूर्ण, /* ICP9047MA (Lancer) */
+	अणु 0x9005, 0x0286, 0x9005, 0x02a1, 0, 0, 28 पूर्ण, /* ICP9087MA (Lancer) */
+	अणु 0x9005, 0x0286, 0x9005, 0x02a3, 0, 0, 29 पूर्ण, /* ICP5445AU (Hurricane44) */
+	अणु 0x9005, 0x0285, 0x9005, 0x02a4, 0, 0, 30 पूर्ण, /* ICP9085LI (Marauder-X) */
+	अणु 0x9005, 0x0285, 0x9005, 0x02a5, 0, 0, 31 पूर्ण, /* ICP5085BR (Marauder-E) */
+	अणु 0x9005, 0x0286, 0x9005, 0x02a6, 0, 0, 32 पूर्ण, /* ICP9067MA (Intruder-6) */
+	अणु 0x9005, 0x0287, 0x9005, 0x0800, 0, 0, 33 पूर्ण, /* Themisto Jupiter Platक्रमm */
+	अणु 0x9005, 0x0200, 0x9005, 0x0200, 0, 0, 33 पूर्ण, /* Themisto Jupiter Platक्रमm */
+	अणु 0x9005, 0x0286, 0x9005, 0x0800, 0, 0, 34 पूर्ण, /* Callisto Jupiter Platक्रमm */
+	अणु 0x9005, 0x0285, 0x9005, 0x028e, 0, 0, 35 पूर्ण, /* ASR-2020SA SATA PCI-X ZCR (Skyhawk) */
+	अणु 0x9005, 0x0285, 0x9005, 0x028f, 0, 0, 36 पूर्ण, /* ASR-2025SA SATA SO-DIMM PCI-X ZCR (Terminator) */
+	अणु 0x9005, 0x0285, 0x9005, 0x0290, 0, 0, 37 पूर्ण, /* AAR-2410SA PCI SATA 4ch (Jaguar II) */
+	अणु 0x9005, 0x0285, 0x1028, 0x0291, 0, 0, 38 पूर्ण, /* CERC SATA RAID 2 PCI SATA 6ch (DellCorsair) */
+	अणु 0x9005, 0x0285, 0x9005, 0x0292, 0, 0, 39 पूर्ण, /* AAR-2810SA PCI SATA 8ch (Corsair-8) */
+	अणु 0x9005, 0x0285, 0x9005, 0x0293, 0, 0, 40 पूर्ण, /* AAR-21610SA PCI SATA 16ch (Corsair-16) */
+	अणु 0x9005, 0x0285, 0x9005, 0x0294, 0, 0, 41 पूर्ण, /* ESD SO-DIMM PCI-X SATA ZCR (Prowler) */
+	अणु 0x9005, 0x0285, 0x103C, 0x3227, 0, 0, 42 पूर्ण, /* AAR-2610SA PCI SATA 6ch */
+	अणु 0x9005, 0x0285, 0x9005, 0x0296, 0, 0, 43 पूर्ण, /* ASR-2240S (SabreExpress) */
+	अणु 0x9005, 0x0285, 0x9005, 0x0297, 0, 0, 44 पूर्ण, /* ASR-4005 */
+	अणु 0x9005, 0x0285, 0x1014, 0x02F2, 0, 0, 45 पूर्ण, /* IBM 8i (AvonPark) */
+	अणु 0x9005, 0x0285, 0x1014, 0x0312, 0, 0, 45 पूर्ण, /* IBM 8i (AvonPark Lite) */
+	अणु 0x9005, 0x0286, 0x1014, 0x9580, 0, 0, 46 पूर्ण, /* IBM 8k/8k-l8 (Aurora) */
+	अणु 0x9005, 0x0286, 0x1014, 0x9540, 0, 0, 47 पूर्ण, /* IBM 8k/8k-l4 (Aurora Lite) */
+	अणु 0x9005, 0x0285, 0x9005, 0x0298, 0, 0, 48 पूर्ण, /* ASR-4000 (BlackBird) */
+	अणु 0x9005, 0x0285, 0x9005, 0x0299, 0, 0, 49 पूर्ण, /* ASR-4800SAS (Marauder-X) */
+	अणु 0x9005, 0x0285, 0x9005, 0x029a, 0, 0, 50 पूर्ण, /* ASR-4805SAS (Marauder-E) */
+	अणु 0x9005, 0x0286, 0x9005, 0x02a2, 0, 0, 51 पूर्ण, /* ASR-3800 (Hurricane44) */
 
-	{ 0x9005, 0x0285, 0x1028, 0x0287, 0, 0, 52 }, /* Perc 320/DC*/
-	{ 0x1011, 0x0046, 0x9005, 0x0365, 0, 0, 53 }, /* Adaptec 5400S (Mustang)*/
-	{ 0x1011, 0x0046, 0x9005, 0x0364, 0, 0, 54 }, /* Adaptec 5400S (Mustang)*/
-	{ 0x1011, 0x0046, 0x9005, 0x1364, 0, 0, 55 }, /* Dell PERC2/QC */
-	{ 0x1011, 0x0046, 0x103c, 0x10c2, 0, 0, 56 }, /* HP NetRAID-4M */
+	अणु 0x9005, 0x0285, 0x1028, 0x0287, 0, 0, 52 पूर्ण, /* Perc 320/DC*/
+	अणु 0x1011, 0x0046, 0x9005, 0x0365, 0, 0, 53 पूर्ण, /* Adaptec 5400S (Mustang)*/
+	अणु 0x1011, 0x0046, 0x9005, 0x0364, 0, 0, 54 पूर्ण, /* Adaptec 5400S (Mustang)*/
+	अणु 0x1011, 0x0046, 0x9005, 0x1364, 0, 0, 55 पूर्ण, /* Dell PERC2/QC */
+	अणु 0x1011, 0x0046, 0x103c, 0x10c2, 0, 0, 56 पूर्ण, /* HP NetRAID-4M */
 
-	{ 0x9005, 0x0285, 0x1028, PCI_ANY_ID, 0, 0, 57 }, /* Dell Catchall */
-	{ 0x9005, 0x0285, 0x17aa, PCI_ANY_ID, 0, 0, 58 }, /* Legend Catchall */
-	{ 0x9005, 0x0285, PCI_ANY_ID, PCI_ANY_ID, 0, 0, 59 }, /* Adaptec Catch All */
-	{ 0x9005, 0x0286, PCI_ANY_ID, PCI_ANY_ID, 0, 0, 60 }, /* Adaptec Rocket Catch All */
-	{ 0x9005, 0x0288, PCI_ANY_ID, PCI_ANY_ID, 0, 0, 61 }, /* Adaptec NEMER/ARK Catch All */
-	{ 0x9005, 0x028b, PCI_ANY_ID, PCI_ANY_ID, 0, 0, 62 }, /* Adaptec PMC Series 6 (Tupelo) */
-	{ 0x9005, 0x028c, PCI_ANY_ID, PCI_ANY_ID, 0, 0, 63 }, /* Adaptec PMC Series 7 (Denali) */
-	{ 0x9005, 0x028d, PCI_ANY_ID, PCI_ANY_ID, 0, 0, 64 }, /* Adaptec PMC Series 8 */
-	{ 0,}
-};
+	अणु 0x9005, 0x0285, 0x1028, PCI_ANY_ID, 0, 0, 57 पूर्ण, /* Dell Catchall */
+	अणु 0x9005, 0x0285, 0x17aa, PCI_ANY_ID, 0, 0, 58 पूर्ण, /* Legend Catchall */
+	अणु 0x9005, 0x0285, PCI_ANY_ID, PCI_ANY_ID, 0, 0, 59 पूर्ण, /* Adaptec Catch All */
+	अणु 0x9005, 0x0286, PCI_ANY_ID, PCI_ANY_ID, 0, 0, 60 पूर्ण, /* Adaptec Rocket Catch All */
+	अणु 0x9005, 0x0288, PCI_ANY_ID, PCI_ANY_ID, 0, 0, 61 पूर्ण, /* Adaptec NEMER/ARK Catch All */
+	अणु 0x9005, 0x028b, PCI_ANY_ID, PCI_ANY_ID, 0, 0, 62 पूर्ण, /* Adaptec PMC Series 6 (Tupelo) */
+	अणु 0x9005, 0x028c, PCI_ANY_ID, PCI_ANY_ID, 0, 0, 63 पूर्ण, /* Adaptec PMC Series 7 (Denali) */
+	अणु 0x9005, 0x028d, PCI_ANY_ID, PCI_ANY_ID, 0, 0, 64 पूर्ण, /* Adaptec PMC Series 8 */
+	अणु 0,पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(pci, aac_pci_tbl);
 
 /*
- * dmb - For now we add the number of channels to this structure.
+ * dmb - For now we add the number of channels to this काष्ठाure.
  * In the future we should add a fib that reports the number of channels
- * for the card.  At that time we can remove the channels from here
+ * क्रम the card.  At that समय we can हटाओ the channels from here
  */
-static struct aac_driver_ident aac_drivers[] = {
-	{ aac_rx_init, "percraid", "DELL    ", "PERCRAID        ", 2, AAC_QUIRK_31BIT | AAC_QUIRK_34SG | AAC_QUIRK_SCSI_32 }, /* PERC 2/Si (Iguana/PERC2Si) */
-	{ aac_rx_init, "percraid", "DELL    ", "PERCRAID        ", 2, AAC_QUIRK_31BIT | AAC_QUIRK_34SG | AAC_QUIRK_SCSI_32 }, /* PERC 3/Di (Opal/PERC3Di) */
-	{ aac_rx_init, "percraid", "DELL    ", "PERCRAID        ", 2, AAC_QUIRK_31BIT | AAC_QUIRK_34SG | AAC_QUIRK_SCSI_32 }, /* PERC 3/Si (SlimFast/PERC3Si */
-	{ aac_rx_init, "percraid", "DELL    ", "PERCRAID        ", 2, AAC_QUIRK_31BIT | AAC_QUIRK_34SG | AAC_QUIRK_SCSI_32 }, /* PERC 3/Di (Iguana FlipChip/PERC3DiF */
-	{ aac_rx_init, "percraid", "DELL    ", "PERCRAID        ", 2, AAC_QUIRK_31BIT | AAC_QUIRK_34SG | AAC_QUIRK_SCSI_32 }, /* PERC 3/Di (Viper/PERC3DiV) */
-	{ aac_rx_init, "percraid", "DELL    ", "PERCRAID        ", 2, AAC_QUIRK_31BIT | AAC_QUIRK_34SG | AAC_QUIRK_SCSI_32 }, /* PERC 3/Di (Lexus/PERC3DiL) */
-	{ aac_rx_init, "percraid", "DELL    ", "PERCRAID        ", 1, AAC_QUIRK_31BIT | AAC_QUIRK_34SG | AAC_QUIRK_SCSI_32 }, /* PERC 3/Di (Jaguar/PERC3DiJ) */
-	{ aac_rx_init, "percraid", "DELL    ", "PERCRAID        ", 2, AAC_QUIRK_31BIT | AAC_QUIRK_34SG | AAC_QUIRK_SCSI_32 }, /* PERC 3/Di (Dagger/PERC3DiD) */
-	{ aac_rx_init, "percraid", "DELL    ", "PERCRAID        ", 2, AAC_QUIRK_31BIT | AAC_QUIRK_34SG | AAC_QUIRK_SCSI_32 }, /* PERC 3/Di (Boxster/PERC3DiB) */
-	{ aac_rx_init, "aacraid",  "ADAPTEC ", "catapult        ", 2, AAC_QUIRK_31BIT | AAC_QUIRK_34SG | AAC_QUIRK_SCSI_32 }, /* catapult */
-	{ aac_rx_init, "aacraid",  "ADAPTEC ", "tomcat          ", 2, AAC_QUIRK_31BIT | AAC_QUIRK_34SG | AAC_QUIRK_SCSI_32 }, /* tomcat */
-	{ aac_rx_init, "aacraid",  "ADAPTEC ", "Adaptec 2120S   ", 1, AAC_QUIRK_31BIT | AAC_QUIRK_34SG },		      /* Adaptec 2120S (Crusader) */
-	{ aac_rx_init, "aacraid",  "ADAPTEC ", "Adaptec 2200S   ", 2, AAC_QUIRK_31BIT | AAC_QUIRK_34SG },		      /* Adaptec 2200S (Vulcan) */
-	{ aac_rx_init, "aacraid",  "ADAPTEC ", "Adaptec 2200S   ", 2, AAC_QUIRK_31BIT | AAC_QUIRK_34SG | AAC_QUIRK_SCSI_32 }, /* Adaptec 2200S (Vulcan-2m) */
-	{ aac_rx_init, "aacraid",  "Legend  ", "Legend S220     ", 1, AAC_QUIRK_31BIT | AAC_QUIRK_34SG | AAC_QUIRK_SCSI_32 }, /* Legend S220 (Legend Crusader) */
-	{ aac_rx_init, "aacraid",  "Legend  ", "Legend S230     ", 2, AAC_QUIRK_31BIT | AAC_QUIRK_34SG | AAC_QUIRK_SCSI_32 }, /* Legend S230 (Legend Vulcan) */
+अटल काष्ठा aac_driver_ident aac_drivers[] = अणु
+	अणु aac_rx_init, "percraid", "DELL    ", "PERCRAID        ", 2, AAC_QUIRK_31BIT | AAC_QUIRK_34SG | AAC_QUIRK_SCSI_32 पूर्ण, /* PERC 2/Si (Iguana/PERC2Si) */
+	अणु aac_rx_init, "percraid", "DELL    ", "PERCRAID        ", 2, AAC_QUIRK_31BIT | AAC_QUIRK_34SG | AAC_QUIRK_SCSI_32 पूर्ण, /* PERC 3/Di (Opal/PERC3Di) */
+	अणु aac_rx_init, "percraid", "DELL    ", "PERCRAID        ", 2, AAC_QUIRK_31BIT | AAC_QUIRK_34SG | AAC_QUIRK_SCSI_32 पूर्ण, /* PERC 3/Si (SlimFast/PERC3Si */
+	अणु aac_rx_init, "percraid", "DELL    ", "PERCRAID        ", 2, AAC_QUIRK_31BIT | AAC_QUIRK_34SG | AAC_QUIRK_SCSI_32 पूर्ण, /* PERC 3/Di (Iguana FlipChip/PERC3DiF */
+	अणु aac_rx_init, "percraid", "DELL    ", "PERCRAID        ", 2, AAC_QUIRK_31BIT | AAC_QUIRK_34SG | AAC_QUIRK_SCSI_32 पूर्ण, /* PERC 3/Di (Viper/PERC3DiV) */
+	अणु aac_rx_init, "percraid", "DELL    ", "PERCRAID        ", 2, AAC_QUIRK_31BIT | AAC_QUIRK_34SG | AAC_QUIRK_SCSI_32 पूर्ण, /* PERC 3/Di (Lexus/PERC3DiL) */
+	अणु aac_rx_init, "percraid", "DELL    ", "PERCRAID        ", 1, AAC_QUIRK_31BIT | AAC_QUIRK_34SG | AAC_QUIRK_SCSI_32 पूर्ण, /* PERC 3/Di (Jaguar/PERC3DiJ) */
+	अणु aac_rx_init, "percraid", "DELL    ", "PERCRAID        ", 2, AAC_QUIRK_31BIT | AAC_QUIRK_34SG | AAC_QUIRK_SCSI_32 पूर्ण, /* PERC 3/Di (Dagger/PERC3DiD) */
+	अणु aac_rx_init, "percraid", "DELL    ", "PERCRAID        ", 2, AAC_QUIRK_31BIT | AAC_QUIRK_34SG | AAC_QUIRK_SCSI_32 पूर्ण, /* PERC 3/Di (Boxster/PERC3DiB) */
+	अणु aac_rx_init, "aacraid",  "ADAPTEC ", "catapult        ", 2, AAC_QUIRK_31BIT | AAC_QUIRK_34SG | AAC_QUIRK_SCSI_32 पूर्ण, /* catapult */
+	अणु aac_rx_init, "aacraid",  "ADAPTEC ", "tomcat          ", 2, AAC_QUIRK_31BIT | AAC_QUIRK_34SG | AAC_QUIRK_SCSI_32 पूर्ण, /* tomcat */
+	अणु aac_rx_init, "aacraid",  "ADAPTEC ", "Adaptec 2120S   ", 1, AAC_QUIRK_31BIT | AAC_QUIRK_34SG पूर्ण,		      /* Adaptec 2120S (Crusader) */
+	अणु aac_rx_init, "aacraid",  "ADAPTEC ", "Adaptec 2200S   ", 2, AAC_QUIRK_31BIT | AAC_QUIRK_34SG पूर्ण,		      /* Adaptec 2200S (Vulcan) */
+	अणु aac_rx_init, "aacraid",  "ADAPTEC ", "Adaptec 2200S   ", 2, AAC_QUIRK_31BIT | AAC_QUIRK_34SG | AAC_QUIRK_SCSI_32 पूर्ण, /* Adaptec 2200S (Vulcan-2m) */
+	अणु aac_rx_init, "aacraid",  "Legend  ", "Legend S220     ", 1, AAC_QUIRK_31BIT | AAC_QUIRK_34SG | AAC_QUIRK_SCSI_32 पूर्ण, /* Legend S220 (Legend Crusader) */
+	अणु aac_rx_init, "aacraid",  "Legend  ", "Legend S230     ", 2, AAC_QUIRK_31BIT | AAC_QUIRK_34SG | AAC_QUIRK_SCSI_32 पूर्ण, /* Legend S230 (Legend Vulcan) */
 
-	{ aac_rx_init, "aacraid",  "ADAPTEC ", "Adaptec 3230S   ", 2 }, /* Adaptec 3230S (Harrier) */
-	{ aac_rx_init, "aacraid",  "ADAPTEC ", "Adaptec 3240S   ", 2 }, /* Adaptec 3240S (Tornado) */
-	{ aac_rx_init, "aacraid",  "ADAPTEC ", "ASR-2020ZCR     ", 2 }, /* ASR-2020ZCR SCSI PCI-X ZCR (Skyhawk) */
-	{ aac_rx_init, "aacraid",  "ADAPTEC ", "ASR-2025ZCR     ", 2 }, /* ASR-2025ZCR SCSI SO-DIMM PCI-X ZCR (Terminator) */
-	{ aac_rkt_init, "aacraid",  "ADAPTEC ", "ASR-2230S PCI-X ", 2 }, /* ASR-2230S + ASR-2230SLP PCI-X (Lancer) */
-	{ aac_rkt_init, "aacraid",  "ADAPTEC ", "ASR-2130S PCI-X ", 1 }, /* ASR-2130S (Lancer) */
-	{ aac_rkt_init, "aacraid",  "ADAPTEC ", "AAR-2820SA      ", 1 }, /* AAR-2820SA (Intruder) */
-	{ aac_rkt_init, "aacraid",  "ADAPTEC ", "AAR-2620SA      ", 1 }, /* AAR-2620SA (Intruder) */
-	{ aac_rkt_init, "aacraid",  "ADAPTEC ", "AAR-2420SA      ", 1 }, /* AAR-2420SA (Intruder) */
-	{ aac_rkt_init, "aacraid",  "ICP     ", "ICP9024RO       ", 2 }, /* ICP9024RO (Lancer) */
-	{ aac_rkt_init, "aacraid",  "ICP     ", "ICP9014RO       ", 1 }, /* ICP9014RO (Lancer) */
-	{ aac_rkt_init, "aacraid",  "ICP     ", "ICP9047MA       ", 1 }, /* ICP9047MA (Lancer) */
-	{ aac_rkt_init, "aacraid",  "ICP     ", "ICP9087MA       ", 1 }, /* ICP9087MA (Lancer) */
-	{ aac_rkt_init, "aacraid",  "ICP     ", "ICP5445AU       ", 1 }, /* ICP5445AU (Hurricane44) */
-	{ aac_rx_init, "aacraid",  "ICP     ", "ICP9085LI       ", 1 }, /* ICP9085LI (Marauder-X) */
-	{ aac_rx_init, "aacraid",  "ICP     ", "ICP5085BR       ", 1 }, /* ICP5085BR (Marauder-E) */
-	{ aac_rkt_init, "aacraid",  "ICP     ", "ICP9067MA       ", 1 }, /* ICP9067MA (Intruder-6) */
-	{ NULL        , "aacraid",  "ADAPTEC ", "Themisto        ", 0, AAC_QUIRK_SLAVE }, /* Jupiter Platform */
-	{ aac_rkt_init, "aacraid",  "ADAPTEC ", "Callisto        ", 2, AAC_QUIRK_MASTER }, /* Jupiter Platform */
-	{ aac_rx_init, "aacraid",  "ADAPTEC ", "ASR-2020SA       ", 1 }, /* ASR-2020SA SATA PCI-X ZCR (Skyhawk) */
-	{ aac_rx_init, "aacraid",  "ADAPTEC ", "ASR-2025SA       ", 1 }, /* ASR-2025SA SATA SO-DIMM PCI-X ZCR (Terminator) */
-	{ aac_rx_init, "aacraid",  "ADAPTEC ", "AAR-2410SA SATA ", 1, AAC_QUIRK_17SG }, /* AAR-2410SA PCI SATA 4ch (Jaguar II) */
-	{ aac_rx_init, "aacraid",  "DELL    ", "CERC SR2        ", 1, AAC_QUIRK_17SG }, /* CERC SATA RAID 2 PCI SATA 6ch (DellCorsair) */
-	{ aac_rx_init, "aacraid",  "ADAPTEC ", "AAR-2810SA SATA ", 1, AAC_QUIRK_17SG }, /* AAR-2810SA PCI SATA 8ch (Corsair-8) */
-	{ aac_rx_init, "aacraid",  "ADAPTEC ", "AAR-21610SA SATA", 1, AAC_QUIRK_17SG }, /* AAR-21610SA PCI SATA 16ch (Corsair-16) */
-	{ aac_rx_init, "aacraid",  "ADAPTEC ", "ASR-2026ZCR     ", 1 }, /* ESD SO-DIMM PCI-X SATA ZCR (Prowler) */
-	{ aac_rx_init, "aacraid",  "ADAPTEC ", "AAR-2610SA      ", 1 }, /* SATA 6Ch (Bearcat) */
-	{ aac_rx_init, "aacraid",  "ADAPTEC ", "ASR-2240S       ", 1 }, /* ASR-2240S (SabreExpress) */
-	{ aac_rx_init, "aacraid",  "ADAPTEC ", "ASR-4005        ", 1 }, /* ASR-4005 */
-	{ aac_rx_init, "ServeRAID","IBM     ", "ServeRAID 8i    ", 1 }, /* IBM 8i (AvonPark) */
-	{ aac_rkt_init, "ServeRAID","IBM     ", "ServeRAID 8k-l8 ", 1 }, /* IBM 8k/8k-l8 (Aurora) */
-	{ aac_rkt_init, "ServeRAID","IBM     ", "ServeRAID 8k-l4 ", 1 }, /* IBM 8k/8k-l4 (Aurora Lite) */
-	{ aac_rx_init, "aacraid",  "ADAPTEC ", "ASR-4000        ", 1 }, /* ASR-4000 (BlackBird & AvonPark) */
-	{ aac_rx_init, "aacraid",  "ADAPTEC ", "ASR-4800SAS     ", 1 }, /* ASR-4800SAS (Marauder-X) */
-	{ aac_rx_init, "aacraid",  "ADAPTEC ", "ASR-4805SAS     ", 1 }, /* ASR-4805SAS (Marauder-E) */
-	{ aac_rkt_init, "aacraid",  "ADAPTEC ", "ASR-3800        ", 1 }, /* ASR-3800 (Hurricane44) */
+	अणु aac_rx_init, "aacraid",  "ADAPTEC ", "Adaptec 3230S   ", 2 पूर्ण, /* Adaptec 3230S (Harrier) */
+	अणु aac_rx_init, "aacraid",  "ADAPTEC ", "Adaptec 3240S   ", 2 पूर्ण, /* Adaptec 3240S (Tornaकरो) */
+	अणु aac_rx_init, "aacraid",  "ADAPTEC ", "ASR-2020ZCR     ", 2 पूर्ण, /* ASR-2020ZCR SCSI PCI-X ZCR (Skyhawk) */
+	अणु aac_rx_init, "aacraid",  "ADAPTEC ", "ASR-2025ZCR     ", 2 पूर्ण, /* ASR-2025ZCR SCSI SO-DIMM PCI-X ZCR (Terminator) */
+	अणु aac_rkt_init, "aacraid",  "ADAPTEC ", "ASR-2230S PCI-X ", 2 पूर्ण, /* ASR-2230S + ASR-2230SLP PCI-X (Lancer) */
+	अणु aac_rkt_init, "aacraid",  "ADAPTEC ", "ASR-2130S PCI-X ", 1 पूर्ण, /* ASR-2130S (Lancer) */
+	अणु aac_rkt_init, "aacraid",  "ADAPTEC ", "AAR-2820SA      ", 1 पूर्ण, /* AAR-2820SA (Intruder) */
+	अणु aac_rkt_init, "aacraid",  "ADAPTEC ", "AAR-2620SA      ", 1 पूर्ण, /* AAR-2620SA (Intruder) */
+	अणु aac_rkt_init, "aacraid",  "ADAPTEC ", "AAR-2420SA      ", 1 पूर्ण, /* AAR-2420SA (Intruder) */
+	अणु aac_rkt_init, "aacraid",  "ICP     ", "ICP9024RO       ", 2 पूर्ण, /* ICP9024RO (Lancer) */
+	अणु aac_rkt_init, "aacraid",  "ICP     ", "ICP9014RO       ", 1 पूर्ण, /* ICP9014RO (Lancer) */
+	अणु aac_rkt_init, "aacraid",  "ICP     ", "ICP9047MA       ", 1 पूर्ण, /* ICP9047MA (Lancer) */
+	अणु aac_rkt_init, "aacraid",  "ICP     ", "ICP9087MA       ", 1 पूर्ण, /* ICP9087MA (Lancer) */
+	अणु aac_rkt_init, "aacraid",  "ICP     ", "ICP5445AU       ", 1 पूर्ण, /* ICP5445AU (Hurricane44) */
+	अणु aac_rx_init, "aacraid",  "ICP     ", "ICP9085LI       ", 1 पूर्ण, /* ICP9085LI (Marauder-X) */
+	अणु aac_rx_init, "aacraid",  "ICP     ", "ICP5085BR       ", 1 पूर्ण, /* ICP5085BR (Marauder-E) */
+	अणु aac_rkt_init, "aacraid",  "ICP     ", "ICP9067MA       ", 1 पूर्ण, /* ICP9067MA (Intruder-6) */
+	अणु शून्य        , "aacraid",  "ADAPTEC ", "Themisto        ", 0, AAC_QUIRK_SLAVE पूर्ण, /* Jupiter Platक्रमm */
+	अणु aac_rkt_init, "aacraid",  "ADAPTEC ", "Callisto        ", 2, AAC_QUIRK_MASTER पूर्ण, /* Jupiter Platक्रमm */
+	अणु aac_rx_init, "aacraid",  "ADAPTEC ", "ASR-2020SA       ", 1 पूर्ण, /* ASR-2020SA SATA PCI-X ZCR (Skyhawk) */
+	अणु aac_rx_init, "aacraid",  "ADAPTEC ", "ASR-2025SA       ", 1 पूर्ण, /* ASR-2025SA SATA SO-DIMM PCI-X ZCR (Terminator) */
+	अणु aac_rx_init, "aacraid",  "ADAPTEC ", "AAR-2410SA SATA ", 1, AAC_QUIRK_17SG पूर्ण, /* AAR-2410SA PCI SATA 4ch (Jaguar II) */
+	अणु aac_rx_init, "aacraid",  "DELL    ", "CERC SR2        ", 1, AAC_QUIRK_17SG पूर्ण, /* CERC SATA RAID 2 PCI SATA 6ch (DellCorsair) */
+	अणु aac_rx_init, "aacraid",  "ADAPTEC ", "AAR-2810SA SATA ", 1, AAC_QUIRK_17SG पूर्ण, /* AAR-2810SA PCI SATA 8ch (Corsair-8) */
+	अणु aac_rx_init, "aacraid",  "ADAPTEC ", "AAR-21610SA SATA", 1, AAC_QUIRK_17SG पूर्ण, /* AAR-21610SA PCI SATA 16ch (Corsair-16) */
+	अणु aac_rx_init, "aacraid",  "ADAPTEC ", "ASR-2026ZCR     ", 1 पूर्ण, /* ESD SO-DIMM PCI-X SATA ZCR (Prowler) */
+	अणु aac_rx_init, "aacraid",  "ADAPTEC ", "AAR-2610SA      ", 1 पूर्ण, /* SATA 6Ch (Bearcat) */
+	अणु aac_rx_init, "aacraid",  "ADAPTEC ", "ASR-2240S       ", 1 पूर्ण, /* ASR-2240S (SabreExpress) */
+	अणु aac_rx_init, "aacraid",  "ADAPTEC ", "ASR-4005        ", 1 पूर्ण, /* ASR-4005 */
+	अणु aac_rx_init, "ServeRAID","IBM     ", "ServeRAID 8i    ", 1 पूर्ण, /* IBM 8i (AvonPark) */
+	अणु aac_rkt_init, "ServeRAID","IBM     ", "ServeRAID 8k-l8 ", 1 पूर्ण, /* IBM 8k/8k-l8 (Aurora) */
+	अणु aac_rkt_init, "ServeRAID","IBM     ", "ServeRAID 8k-l4 ", 1 पूर्ण, /* IBM 8k/8k-l4 (Aurora Lite) */
+	अणु aac_rx_init, "aacraid",  "ADAPTEC ", "ASR-4000        ", 1 पूर्ण, /* ASR-4000 (BlackBird & AvonPark) */
+	अणु aac_rx_init, "aacraid",  "ADAPTEC ", "ASR-4800SAS     ", 1 पूर्ण, /* ASR-4800SAS (Marauder-X) */
+	अणु aac_rx_init, "aacraid",  "ADAPTEC ", "ASR-4805SAS     ", 1 पूर्ण, /* ASR-4805SAS (Marauder-E) */
+	अणु aac_rkt_init, "aacraid",  "ADAPTEC ", "ASR-3800        ", 1 पूर्ण, /* ASR-3800 (Hurricane44) */
 
-	{ aac_rx_init, "percraid", "DELL    ", "PERC 320/DC     ", 2, AAC_QUIRK_31BIT | AAC_QUIRK_34SG }, /* Perc 320/DC*/
-	{ aac_sa_init, "aacraid",  "ADAPTEC ", "Adaptec 5400S   ", 4, AAC_QUIRK_34SG }, /* Adaptec 5400S (Mustang)*/
-	{ aac_sa_init, "aacraid",  "ADAPTEC ", "AAC-364         ", 4, AAC_QUIRK_34SG }, /* Adaptec 5400S (Mustang)*/
-	{ aac_sa_init, "percraid", "DELL    ", "PERCRAID        ", 4, AAC_QUIRK_34SG }, /* Dell PERC2/QC */
-	{ aac_sa_init, "hpnraid",  "HP      ", "NetRAID         ", 4, AAC_QUIRK_34SG }, /* HP NetRAID-4M */
+	अणु aac_rx_init, "percraid", "DELL    ", "PERC 320/DC     ", 2, AAC_QUIRK_31BIT | AAC_QUIRK_34SG पूर्ण, /* Perc 320/DC*/
+	अणु aac_sa_init, "aacraid",  "ADAPTEC ", "Adaptec 5400S   ", 4, AAC_QUIRK_34SG पूर्ण, /* Adaptec 5400S (Mustang)*/
+	अणु aac_sa_init, "aacraid",  "ADAPTEC ", "AAC-364         ", 4, AAC_QUIRK_34SG पूर्ण, /* Adaptec 5400S (Mustang)*/
+	अणु aac_sa_init, "percraid", "DELL    ", "PERCRAID        ", 4, AAC_QUIRK_34SG पूर्ण, /* Dell PERC2/QC */
+	अणु aac_sa_init, "hpnraid",  "HP      ", "NetRAID         ", 4, AAC_QUIRK_34SG पूर्ण, /* HP NetRAID-4M */
 
-	{ aac_rx_init, "aacraid",  "DELL    ", "RAID            ", 2, AAC_QUIRK_31BIT | AAC_QUIRK_34SG | AAC_QUIRK_SCSI_32 }, /* Dell Catchall */
-	{ aac_rx_init, "aacraid",  "Legend  ", "RAID            ", 2, AAC_QUIRK_31BIT | AAC_QUIRK_34SG | AAC_QUIRK_SCSI_32 }, /* Legend Catchall */
-	{ aac_rx_init, "aacraid",  "ADAPTEC ", "RAID            ", 2 }, /* Adaptec Catch All */
-	{ aac_rkt_init, "aacraid", "ADAPTEC ", "RAID            ", 2 }, /* Adaptec Rocket Catch All */
-	{ aac_nark_init, "aacraid", "ADAPTEC ", "RAID           ", 2 }, /* Adaptec NEMER/ARK Catch All */
-	{ aac_src_init, "aacraid", "ADAPTEC ", "RAID            ", 2, AAC_QUIRK_SRC }, /* Adaptec PMC Series 6 (Tupelo) */
-	{ aac_srcv_init, "aacraid", "ADAPTEC ", "RAID            ", 2, AAC_QUIRK_SRC }, /* Adaptec PMC Series 7 (Denali) */
-	{ aac_srcv_init, "aacraid", "ADAPTEC ", "RAID            ", 2, AAC_QUIRK_SRC }, /* Adaptec PMC Series 8 */
-};
+	अणु aac_rx_init, "aacraid",  "DELL    ", "RAID            ", 2, AAC_QUIRK_31BIT | AAC_QUIRK_34SG | AAC_QUIRK_SCSI_32 पूर्ण, /* Dell Catchall */
+	अणु aac_rx_init, "aacraid",  "Legend  ", "RAID            ", 2, AAC_QUIRK_31BIT | AAC_QUIRK_34SG | AAC_QUIRK_SCSI_32 पूर्ण, /* Legend Catchall */
+	अणु aac_rx_init, "aacraid",  "ADAPTEC ", "RAID            ", 2 पूर्ण, /* Adaptec Catch All */
+	अणु aac_rkt_init, "aacraid", "ADAPTEC ", "RAID            ", 2 पूर्ण, /* Adaptec Rocket Catch All */
+	अणु aac_nark_init, "aacraid", "ADAPTEC ", "RAID           ", 2 पूर्ण, /* Adaptec NEMER/ARK Catch All */
+	अणु aac_src_init, "aacraid", "ADAPTEC ", "RAID            ", 2, AAC_QUIRK_SRC पूर्ण, /* Adaptec PMC Series 6 (Tupelo) */
+	अणु aac_srcv_init, "aacraid", "ADAPTEC ", "RAID            ", 2, AAC_QUIRK_SRC पूर्ण, /* Adaptec PMC Series 7 (Denali) */
+	अणु aac_srcv_init, "aacraid", "ADAPTEC ", "RAID            ", 2, AAC_QUIRK_SRC पूर्ण, /* Adaptec PMC Series 8 */
+पूर्ण;
 
 /**
  *	aac_queuecommand	-	queue a SCSI command
  *	@shost:		Scsi host to queue command on
  *	@cmd:		SCSI command to queue
  *
- *	Queues a command for execution by the associated Host Adapter.
+ *	Queues a command क्रम execution by the associated Host Adapter.
  *
- *	TODO: unify with aac_scsi_cmd().
+ *	TODO: unअगरy with aac_scsi_cmd().
  */
 
-static int aac_queuecommand(struct Scsi_Host *shost,
-			    struct scsi_cmnd *cmd)
-{
-	int r = 0;
+अटल पूर्णांक aac_queuecommand(काष्ठा Scsi_Host *shost,
+			    काष्ठा scsi_cmnd *cmd)
+अणु
+	पूर्णांक r = 0;
 	cmd->SCp.phase = AAC_OWNER_LOWLEVEL;
 	r = (aac_scsi_cmd(cmd) ? FAILED : 0);
-	return r;
-}
+	वापस r;
+पूर्ण
 
 /**
  *	aac_info		-	Returns the host adapter name
  *	@shost:		Scsi host to report on
  *
- *	Returns a static string describing the device in question
+ *	Returns a अटल string describing the device in question
  */
 
-static const char *aac_info(struct Scsi_Host *shost)
-{
-	struct aac_dev *dev = (struct aac_dev *)shost->hostdata;
-	return aac_drivers[dev->cardtype].name;
-}
+अटल स्थिर अक्षर *aac_info(काष्ठा Scsi_Host *shost)
+अणु
+	काष्ठा aac_dev *dev = (काष्ठा aac_dev *)shost->hostdata;
+	वापस aac_drivers[dev->cardtype].name;
+पूर्ण
 
 /**
  *	aac_get_driver_ident
- *	@devtype: index into lookup table
+ *	@devtype: index पूर्णांकo lookup table
  *
- *	Returns a pointer to the entry in the driver lookup table.
+ *	Returns a poपूर्णांकer to the entry in the driver lookup table.
  */
 
-struct aac_driver_ident* aac_get_driver_ident(int devtype)
-{
-	return &aac_drivers[devtype];
-}
+काष्ठा aac_driver_ident* aac_get_driver_ident(पूर्णांक devtype)
+अणु
+	वापस &aac_drivers[devtype];
+पूर्ण
 
 /**
- *	aac_biosparm	-	return BIOS parameters for disk
+ *	aac_biosparm	-	वापस BIOS parameters क्रम disk
  *	@sdev: The scsi device corresponding to the disk
  *	@bdev: the block device corresponding to the disk
  *	@capacity: the sector capacity of the disk
  *	@geom: geometry block to fill in
  *
- *	Return the Heads/Sectors/Cylinders BIOS Disk Parameters for Disk.
- *	The default disk geometry is 64 heads, 32 sectors, and the appropriate
- *	number of cylinders so as not to exceed drive capacity.  In order for
+ *	Return the Heads/Sectors/Cylinders BIOS Disk Parameters क्रम Disk.
+ *	The शेष disk geometry is 64 heads, 32 sectors, and the appropriate
+ *	number of cylinders so as not to exceed drive capacity.  In order क्रम
  *	disks equal to or larger than 1 GB to be addressable by the BIOS
  *	without exceeding the BIOS limitation of 1024 cylinders, Extended
  *	Translation should be enabled.   With Extended Translation enabled,
  *	drives between 1 GB inclusive and 2 GB exclusive are given a disk
  *	geometry of 128 heads and 32 sectors, and drives above 2 GB inclusive
- *	are given a disk geometry of 255 heads and 63 sectors.  However, if
- *	the BIOS detects that the Extended Translation setting does not match
+ *	are given a disk geometry of 255 heads and 63 sectors.  However, अगर
+ *	the BIOS detects that the Extended Translation setting करोes not match
  *	the geometry in the partition table, then the translation inferred
  *	from the partition table will be used by the BIOS, and a warning may
  *	be displayed.
  */
 
-static int aac_biosparm(struct scsi_device *sdev, struct block_device *bdev,
-			sector_t capacity, int *geom)
-{
-	struct diskparm *param = (struct diskparm *)geom;
-	unsigned char *buf;
+अटल पूर्णांक aac_biosparm(काष्ठा scsi_device *sdev, काष्ठा block_device *bdev,
+			sector_t capacity, पूर्णांक *geom)
+अणु
+	काष्ठा diskparm *param = (काष्ठा diskparm *)geom;
+	अचिन्हित अक्षर *buf;
 
-	dprintk((KERN_DEBUG "aac_biosparm.\n"));
+	dprपूर्णांकk((KERN_DEBUG "aac_biosparm.\n"));
 
 	/*
 	 *	Assuming extended translation is enabled - #REVISIT#
 	 */
-	if (capacity >= 2 * 1024 * 1024) { /* 1 GB in 512 byte sectors */
-		if(capacity >= 4 * 1024 * 1024) { /* 2 GB in 512 byte sectors */
+	अगर (capacity >= 2 * 1024 * 1024) अणु /* 1 GB in 512 byte sectors */
+		अगर(capacity >= 4 * 1024 * 1024) अणु /* 2 GB in 512 byte sectors */
 			param->heads = 255;
 			param->sectors = 63;
-		} else {
+		पूर्ण अन्यथा अणु
 			param->heads = 128;
 			param->sectors = 32;
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		param->heads = 64;
 		param->sectors = 32;
-	}
+	पूर्ण
 
 	param->cylinders = cap_to_cyls(capacity, param->heads * param->sectors);
 
 	/*
-	 *	Read the first 1024 bytes from the disk device, if the boot
-	 *	sector partition table is valid, search for a partition table
+	 *	Read the first 1024 bytes from the disk device, अगर the boot
+	 *	sector partition table is valid, search क्रम a partition table
 	 *	entry whose end_head matches one of the standard geometry
 	 *	translations ( 64/32, 128/32, 255/63 ).
 	 */
 	buf = scsi_bios_ptable(bdev);
-	if (!buf)
-		return 0;
-	if (*(__le16 *)(buf + 0x40) == cpu_to_le16(MSDOS_LABEL_MAGIC)) {
-		struct msdos_partition *first = (struct msdos_partition *)buf;
-		struct msdos_partition *entry = first;
-		int saved_cylinders = param->cylinders;
-		int num;
-		unsigned char end_head, end_sec;
+	अगर (!buf)
+		वापस 0;
+	अगर (*(__le16 *)(buf + 0x40) == cpu_to_le16(MSDOS_LABEL_MAGIC)) अणु
+		काष्ठा msकरोs_partition *first = (काष्ठा msकरोs_partition *)buf;
+		काष्ठा msकरोs_partition *entry = first;
+		पूर्णांक saved_cylinders = param->cylinders;
+		पूर्णांक num;
+		अचिन्हित अक्षर end_head, end_sec;
 
-		for(num = 0; num < 4; num++) {
+		क्रम(num = 0; num < 4; num++) अणु
 			end_head = entry->end_head;
 			end_sec = entry->end_sector & 0x3f;
 
-			if(end_head == 63) {
+			अगर(end_head == 63) अणु
 				param->heads = 64;
 				param->sectors = 32;
-				break;
-			} else if(end_head == 127) {
+				अवरोध;
+			पूर्ण अन्यथा अगर(end_head == 127) अणु
 				param->heads = 128;
 				param->sectors = 32;
-				break;
-			} else if(end_head == 254) {
+				अवरोध;
+			पूर्ण अन्यथा अगर(end_head == 254) अणु
 				param->heads = 255;
 				param->sectors = 63;
-				break;
-			}
+				अवरोध;
+			पूर्ण
 			entry++;
-		}
+		पूर्ण
 
-		if (num == 4) {
+		अगर (num == 4) अणु
 			end_head = first->end_head;
 			end_sec = first->end_sector & 0x3f;
-		}
+		पूर्ण
 
 		param->cylinders = cap_to_cyls(capacity, param->heads * param->sectors);
-		if (num < 4 && end_sec == param->sectors) {
-			if (param->cylinders != saved_cylinders) {
-				dprintk((KERN_DEBUG "Adopting geometry: heads=%d, sectors=%d from partition table %d.\n",
+		अगर (num < 4 && end_sec == param->sectors) अणु
+			अगर (param->cylinders != saved_cylinders) अणु
+				dprपूर्णांकk((KERN_DEBUG "Adopting geometry: heads=%d, sectors=%d from partition table %d.\n",
 					param->heads, param->sectors, num));
-			}
-		} else if (end_head > 0 || end_sec > 0) {
-			dprintk((KERN_DEBUG "Strange geometry: heads=%d, sectors=%d in partition table %d.\n",
+			पूर्ण
+		पूर्ण अन्यथा अगर (end_head > 0 || end_sec > 0) अणु
+			dprपूर्णांकk((KERN_DEBUG "Strange geometry: heads=%d, sectors=%d in partition table %d.\n",
 				end_head + 1, end_sec, num));
-			dprintk((KERN_DEBUG "Using geometry: heads=%d, sectors=%d.\n",
+			dprपूर्णांकk((KERN_DEBUG "Using geometry: heads=%d, sectors=%d.\n",
 					param->heads, param->sectors));
-		}
-	}
-	kfree(buf);
-	return 0;
-}
+		पूर्ण
+	पूर्ण
+	kमुक्त(buf);
+	वापस 0;
+पूर्ण
 
 /**
  *	aac_slave_configure		-	compute queue depths
  *	@sdev:	SCSI device we are considering
  *
- *	Selects queue depths for each target device based on the host adapter's
+ *	Selects queue depths क्रम each target device based on the host adapter's
  *	total capacity and the queue depth supported by the target device.
- *	A queue depth of one automatically disables tagged queueing.
+ *	A queue depth of one स्वतःmatically disables tagged queueing.
  */
 
-static int aac_slave_configure(struct scsi_device *sdev)
-{
-	struct aac_dev *aac = (struct aac_dev *)sdev->host->hostdata;
-	int chn, tid;
-	unsigned int depth = 0;
-	unsigned int set_timeout = 0;
-	int timeout = 0;
+अटल पूर्णांक aac_slave_configure(काष्ठा scsi_device *sdev)
+अणु
+	काष्ठा aac_dev *aac = (काष्ठा aac_dev *)sdev->host->hostdata;
+	पूर्णांक chn, tid;
+	अचिन्हित पूर्णांक depth = 0;
+	अचिन्हित पूर्णांक set_समयout = 0;
+	पूर्णांक समयout = 0;
 	bool set_qd_dev_type = false;
 	u8 devtype = 0;
 
 	chn = aac_logical_to_phys(sdev_channel(sdev));
 	tid = sdev_id(sdev);
-	if (chn < AAC_MAX_BUSES && tid < AAC_MAX_TARGETS && aac->sa_firmware) {
+	अगर (chn < AAC_MAX_BUSES && tid < AAC_MAX_TARGETS && aac->sa_firmware) अणु
 		devtype = aac->hba_map[chn][tid].devtype;
 
-		if (devtype == AAC_DEVTYPE_NATIVE_RAW) {
+		अगर (devtype == AAC_DEVTYPE_NATIVE_RAW) अणु
 			depth = aac->hba_map[chn][tid].qd_limit;
-			set_timeout = 1;
-			goto common_config;
-		}
-		if (devtype == AAC_DEVTYPE_ARC_RAW) {
+			set_समयout = 1;
+			जाओ common_config;
+		पूर्ण
+		अगर (devtype == AAC_DEVTYPE_ARC_RAW) अणु
 			set_qd_dev_type = true;
-			set_timeout = 1;
-			goto common_config;
-		}
-	}
+			set_समयout = 1;
+			जाओ common_config;
+		पूर्ण
+	पूर्ण
 
-	if (aac->jbod && (sdev->type == TYPE_DISK))
+	अगर (aac->jbod && (sdev->type == TYPE_DISK))
 		sdev->removable = 1;
 
-	if (sdev->type == TYPE_DISK
+	अगर (sdev->type == TYPE_DISK
 	 && sdev_channel(sdev) != CONTAINER_CHANNEL
 	 && (!aac->jbod || sdev->inq_periph_qual)
-	 && (!aac->raid_scsi_mode || (sdev_channel(sdev) != 2))) {
+	 && (!aac->raid_scsi_mode || (sdev_channel(sdev) != 2))) अणु
 
-		if (expose_physicals == 0)
-			return -ENXIO;
+		अगर (expose_physicals == 0)
+			वापस -ENXIO;
 
-		if (expose_physicals < 0)
+		अगर (expose_physicals < 0)
 			sdev->no_uld_attach = 1;
-	}
+	पूर्ण
 
-	if (sdev->tagged_supported
+	अगर (sdev->tagged_supported
 	 &&  sdev->type == TYPE_DISK
 	 &&  (!aac->raid_scsi_mode || (sdev_channel(sdev) != 2))
-	 && !sdev->no_uld_attach) {
+	 && !sdev->no_uld_attach) अणु
 
-		struct scsi_device * dev;
-		struct Scsi_Host *host = sdev->host;
-		unsigned num_lsu = 0;
-		unsigned num_one = 0;
-		unsigned cid;
+		काष्ठा scsi_device * dev;
+		काष्ठा Scsi_Host *host = sdev->host;
+		अचिन्हित num_lsu = 0;
+		अचिन्हित num_one = 0;
+		अचिन्हित cid;
 
-		set_timeout = 1;
+		set_समयout = 1;
 
-		for (cid = 0; cid < aac->maximum_num_containers; ++cid)
-			if (aac->fsa_dev[cid].valid)
+		क्रम (cid = 0; cid < aac->maximum_num_containers; ++cid)
+			अगर (aac->fsa_dev[cid].valid)
 				++num_lsu;
 
-		__shost_for_each_device(dev, host) {
-			if (dev->tagged_supported
+		__shost_क्रम_each_device(dev, host) अणु
+			अगर (dev->tagged_supported
 			 && dev->type == TYPE_DISK
 			 && (!aac->raid_scsi_mode || (sdev_channel(sdev) != 2))
-			 && !dev->no_uld_attach) {
-				if ((sdev_channel(dev) != CONTAINER_CHANNEL)
-				 || !aac->fsa_dev[sdev_id(dev)].valid) {
+			 && !dev->no_uld_attach) अणु
+				अगर ((sdev_channel(dev) != CONTAINER_CHANNEL)
+				 || !aac->fsa_dev[sdev_id(dev)].valid) अणु
 					++num_lsu;
-				}
-			} else {
+				पूर्ण
+			पूर्ण अन्यथा अणु
 				++num_one;
-			}
-		}
+			पूर्ण
+		पूर्ण
 
-		if (num_lsu == 0)
+		अगर (num_lsu == 0)
 			++num_lsu;
 
 		depth = (host->can_queue - num_one) / num_lsu;
 
-		if (sdev_channel(sdev) != NATIVE_CHANNEL)
-			goto common_config;
+		अगर (sdev_channel(sdev) != NATIVE_CHANNEL)
+			जाओ common_config;
 
 		set_qd_dev_type = true;
 
-	}
+	पूर्ण
 
 common_config:
 
 	/*
-	 * Check if SATA drive
+	 * Check अगर SATA drive
 	 */
-	if (set_qd_dev_type) {
-		if (strncmp(sdev->vendor, "ATA", 3) == 0)
+	अगर (set_qd_dev_type) अणु
+		अगर (म_भेदन(sdev->venकरोr, "ATA", 3) == 0)
 			depth = 32;
-		else
+		अन्यथा
 			depth = 64;
-	}
+	पूर्ण
 
 	/*
-	 * Firmware has an individual device recovery time typically
-	 * of 35 seconds, give us a margin. Thor devices can take longer in
-	 * error recovery, hence different value.
+	 * Firmware has an inभागidual device recovery समय typically
+	 * of 35 seconds, give us a margin. Thor devices can take दीर्घer in
+	 * error recovery, hence dअगरferent value.
 	 */
-	if (set_timeout) {
-		timeout = aac->sa_firmware ? AAC_SA_TIMEOUT : AAC_ARC_TIMEOUT;
-		blk_queue_rq_timeout(sdev->request_queue, timeout * HZ);
-	}
+	अगर (set_समयout) अणु
+		समयout = aac->sa_firmware ? AAC_SA_TIMEOUT : AAC_ARC_TIMEOUT;
+		blk_queue_rq_समयout(sdev->request_queue, समयout * HZ);
+	पूर्ण
 
-	if (depth > 256)
+	अगर (depth > 256)
 		depth = 256;
-	else if (depth < 1)
+	अन्यथा अगर (depth < 1)
 		depth = 1;
 
 	scsi_change_queue_depth(sdev, depth);
 
 	sdev->tagged_supported = 1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  *	aac_change_queue_depth		-	alter queue depths
  *	@sdev:	SCSI device we are considering
  *	@depth:	desired queue depth
  *
- *	Alters queue depths for target device based on the host adapter's
+ *	Alters queue depths क्रम target device based on the host adapter's
  *	total capacity and the queue depth supported by the target device.
  */
 
-static int aac_change_queue_depth(struct scsi_device *sdev, int depth)
-{
-	struct aac_dev *aac = (struct aac_dev *)(sdev->host->hostdata);
-	int chn, tid, is_native_device = 0;
+अटल पूर्णांक aac_change_queue_depth(काष्ठा scsi_device *sdev, पूर्णांक depth)
+अणु
+	काष्ठा aac_dev *aac = (काष्ठा aac_dev *)(sdev->host->hostdata);
+	पूर्णांक chn, tid, is_native_device = 0;
 
 	chn = aac_logical_to_phys(sdev_channel(sdev));
 	tid = sdev_id(sdev);
-	if (chn < AAC_MAX_BUSES && tid < AAC_MAX_TARGETS &&
+	अगर (chn < AAC_MAX_BUSES && tid < AAC_MAX_TARGETS &&
 		aac->hba_map[chn][tid].devtype == AAC_DEVTYPE_NATIVE_RAW)
 		is_native_device = 1;
 
-	if (sdev->tagged_supported && (sdev->type == TYPE_DISK) &&
-	    (sdev_channel(sdev) == CONTAINER_CHANNEL)) {
-		struct scsi_device * dev;
-		struct Scsi_Host *host = sdev->host;
-		unsigned num = 0;
+	अगर (sdev->tagged_supported && (sdev->type == TYPE_DISK) &&
+	    (sdev_channel(sdev) == CONTAINER_CHANNEL)) अणु
+		काष्ठा scsi_device * dev;
+		काष्ठा Scsi_Host *host = sdev->host;
+		अचिन्हित num = 0;
 
-		__shost_for_each_device(dev, host) {
-			if (dev->tagged_supported && (dev->type == TYPE_DISK) &&
+		__shost_क्रम_each_device(dev, host) अणु
+			अगर (dev->tagged_supported && (dev->type == TYPE_DISK) &&
 			    (sdev_channel(dev) == CONTAINER_CHANNEL))
 				++num;
 			++num;
-		}
-		if (num >= host->can_queue)
+		पूर्ण
+		अगर (num >= host->can_queue)
 			num = host->can_queue - 1;
-		if (depth > (host->can_queue - num))
+		अगर (depth > (host->can_queue - num))
 			depth = host->can_queue - num;
-		if (depth > 256)
+		अगर (depth > 256)
 			depth = 256;
-		else if (depth < 2)
+		अन्यथा अगर (depth < 2)
 			depth = 2;
-		return scsi_change_queue_depth(sdev, depth);
-	} else if (is_native_device) {
+		वापस scsi_change_queue_depth(sdev, depth);
+	पूर्ण अन्यथा अगर (is_native_device) अणु
 		scsi_change_queue_depth(sdev, aac->hba_map[chn][tid].qd_limit);
-	} else {
+	पूर्ण अन्यथा अणु
 		scsi_change_queue_depth(sdev, 1);
-	}
-	return sdev->queue_depth;
-}
+	पूर्ण
+	वापस sdev->queue_depth;
+पूर्ण
 
-static ssize_t aac_show_raid_level(struct device *dev, struct device_attribute *attr, char *buf)
-{
-	struct scsi_device *sdev = to_scsi_device(dev);
-	struct aac_dev *aac = (struct aac_dev *)(sdev->host->hostdata);
-	if (sdev_channel(sdev) != CONTAINER_CHANNEL)
-		return snprintf(buf, PAGE_SIZE, sdev->no_uld_attach
+अटल sमाप_प्रकार aac_show_raid_level(काष्ठा device *dev, काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा scsi_device *sdev = to_scsi_device(dev);
+	काष्ठा aac_dev *aac = (काष्ठा aac_dev *)(sdev->host->hostdata);
+	अगर (sdev_channel(sdev) != CONTAINER_CHANNEL)
+		वापस snम_लिखो(buf, PAGE_SIZE, sdev->no_uld_attach
 		  ? "Hidden\n" :
 		  ((aac->jbod && (sdev->type == TYPE_DISK)) ? "JBOD\n" : ""));
-	return snprintf(buf, PAGE_SIZE, "%s\n",
+	वापस snम_लिखो(buf, PAGE_SIZE, "%s\n",
 	  get_container_type(aac->fsa_dev[sdev_id(sdev)].type));
-}
+पूर्ण
 
-static struct device_attribute aac_raid_level_attr = {
-	.attr = {
+अटल काष्ठा device_attribute aac_raid_level_attr = अणु
+	.attr = अणु
 		.name = "level",
 		.mode = S_IRUGO,
-	},
+	पूर्ण,
 	.show = aac_show_raid_level
-};
+पूर्ण;
 
-static ssize_t aac_show_unique_id(struct device *dev,
-	     struct device_attribute *attr, char *buf)
-{
-	struct scsi_device *sdev = to_scsi_device(dev);
-	struct aac_dev *aac = (struct aac_dev *)(sdev->host->hostdata);
-	unsigned char sn[16];
+अटल sमाप_प्रकार aac_show_unique_id(काष्ठा device *dev,
+	     काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा scsi_device *sdev = to_scsi_device(dev);
+	काष्ठा aac_dev *aac = (काष्ठा aac_dev *)(sdev->host->hostdata);
+	अचिन्हित अक्षर sn[16];
 
-	memset(sn, 0, sizeof(sn));
+	स_रखो(sn, 0, माप(sn));
 
-	if (sdev_channel(sdev) == CONTAINER_CHANNEL)
-		memcpy(sn, aac->fsa_dev[sdev_id(sdev)].identifier, sizeof(sn));
+	अगर (sdev_channel(sdev) == CONTAINER_CHANNEL)
+		स_नकल(sn, aac->fsa_dev[sdev_id(sdev)].identअगरier, माप(sn));
 
-	return snprintf(buf, 16 * 2 + 2,
+	वापस snम_लिखो(buf, 16 * 2 + 2,
 		"%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X\n",
 		sn[0], sn[1], sn[2], sn[3],
 		sn[4], sn[5], sn[6], sn[7],
 		sn[8], sn[9], sn[10], sn[11],
 		sn[12], sn[13], sn[14], sn[15]);
-}
+पूर्ण
 
-static struct device_attribute aac_unique_id_attr = {
-	.attr = {
+अटल काष्ठा device_attribute aac_unique_id_attr = अणु
+	.attr = अणु
 		.name = "unique_id",
 		.mode = 0444,
-	},
+	पूर्ण,
 	.show = aac_show_unique_id
-};
+पूर्ण;
 
 
 
-static struct device_attribute *aac_dev_attrs[] = {
+अटल काष्ठा device_attribute *aac_dev_attrs[] = अणु
 	&aac_raid_level_attr,
 	&aac_unique_id_attr,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-static int aac_ioctl(struct scsi_device *sdev, unsigned int cmd,
-		     void __user *arg)
-{
-	int retval;
-	struct aac_dev *dev = (struct aac_dev *)sdev->host->hostdata;
-	if (!capable(CAP_SYS_RAWIO))
-		return -EPERM;
+अटल पूर्णांक aac_ioctl(काष्ठा scsi_device *sdev, अचिन्हित पूर्णांक cmd,
+		     व्योम __user *arg)
+अणु
+	पूर्णांक retval;
+	काष्ठा aac_dev *dev = (काष्ठा aac_dev *)sdev->host->hostdata;
+	अगर (!capable(CAP_SYS_RAWIO))
+		वापस -EPERM;
 	retval = aac_adapter_check_health(dev);
-	if (retval)
-		return -EBUSY;
-	return aac_do_ioctl(dev, cmd, arg);
-}
+	अगर (retval)
+		वापस -EBUSY;
+	वापस aac_करो_ioctl(dev, cmd, arg);
+पूर्ण
 
-struct fib_count_data {
-	int mlcnt;
-	int llcnt;
-	int ehcnt;
-	int fwcnt;
-	int krlcnt;
-};
+काष्ठा fib_count_data अणु
+	पूर्णांक mlcnt;
+	पूर्णांक llcnt;
+	पूर्णांक ehcnt;
+	पूर्णांक fwcnt;
+	पूर्णांक krlcnt;
+पूर्ण;
 
-static bool fib_count_iter(struct scsi_cmnd *scmnd, void *data, bool reserved)
-{
-	struct fib_count_data *fib_count = data;
+अटल bool fib_count_iter(काष्ठा scsi_cmnd *scmnd, व्योम *data, bool reserved)
+अणु
+	काष्ठा fib_count_data *fib_count = data;
 
-	switch (scmnd->SCp.phase) {
-	case AAC_OWNER_FIRMWARE:
+	चयन (scmnd->SCp.phase) अणु
+	हाल AAC_OWNER_FIRMWARE:
 		fib_count->fwcnt++;
-		break;
-	case AAC_OWNER_ERROR_HANDLER:
+		अवरोध;
+	हाल AAC_OWNER_ERROR_HANDLER:
 		fib_count->ehcnt++;
-		break;
-	case AAC_OWNER_LOWLEVEL:
+		अवरोध;
+	हाल AAC_OWNER_LOWLEVEL:
 		fib_count->llcnt++;
-		break;
-	case AAC_OWNER_MIDLEVEL:
+		अवरोध;
+	हाल AAC_OWNER_MIDLEVEL:
 		fib_count->mlcnt++;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		fib_count->krlcnt++;
-		break;
-	}
-	return true;
-}
+		अवरोध;
+	पूर्ण
+	वापस true;
+पूर्ण
 
-/* Called during SCSI EH, so we don't need to block requests */
-static int get_num_of_incomplete_fibs(struct aac_dev *aac)
-{
-	struct Scsi_Host *shost = aac->scsi_host_ptr;
-	struct device *ctrl_dev;
-	struct fib_count_data fcnt = { };
+/* Called during SCSI EH, so we करोn't need to block requests */
+अटल पूर्णांक get_num_of_incomplete_fibs(काष्ठा aac_dev *aac)
+अणु
+	काष्ठा Scsi_Host *shost = aac->scsi_host_ptr;
+	काष्ठा device *ctrl_dev;
+	काष्ठा fib_count_data fcnt = अणु पूर्ण;
 
 	scsi_host_busy_iter(shost, fib_count_iter, &fcnt);
 
@@ -673,393 +674,393 @@ static int get_num_of_incomplete_fibs(struct aac_dev *aac)
 	dev_info(ctrl_dev, "outstanding cmd: firmware-%d\n", fcnt.fwcnt);
 	dev_info(ctrl_dev, "outstanding cmd: kernel-%d\n", fcnt.krlcnt);
 
-	return fcnt.mlcnt + fcnt.llcnt + fcnt.ehcnt + fcnt.fwcnt;
-}
+	वापस fcnt.mlcnt + fcnt.llcnt + fcnt.ehcnt + fcnt.fwcnt;
+पूर्ण
 
-static int aac_eh_abort(struct scsi_cmnd* cmd)
-{
-	struct scsi_device * dev = cmd->device;
-	struct Scsi_Host * host = dev->host;
-	struct aac_dev * aac = (struct aac_dev *)host->hostdata;
-	int count, found;
+अटल पूर्णांक aac_eh_पात(काष्ठा scsi_cmnd* cmd)
+अणु
+	काष्ठा scsi_device * dev = cmd->device;
+	काष्ठा Scsi_Host * host = dev->host;
+	काष्ठा aac_dev * aac = (काष्ठा aac_dev *)host->hostdata;
+	पूर्णांक count, found;
 	u32 bus, cid;
-	int ret = FAILED;
+	पूर्णांक ret = FAILED;
 
-	if (aac_adapter_check_health(aac))
-		return ret;
+	अगर (aac_adapter_check_health(aac))
+		वापस ret;
 
 	bus = aac_logical_to_phys(scmd_channel(cmd));
 	cid = scmd_id(cmd);
-	if (aac->hba_map[bus][cid].devtype == AAC_DEVTYPE_NATIVE_RAW) {
-		struct fib *fib;
-		struct aac_hba_tm_req *tmf;
-		int status;
+	अगर (aac->hba_map[bus][cid].devtype == AAC_DEVTYPE_NATIVE_RAW) अणु
+		काष्ठा fib *fib;
+		काष्ठा aac_hba_पंचांग_req *पंचांगf;
+		पूर्णांक status;
 		u64 address;
 
 		pr_err("%s: Host adapter abort request (%d,%d,%d,%d)\n",
 		 AAC_DRIVERNAME,
-		 host->host_no, sdev_channel(dev), sdev_id(dev), (int)dev->lun);
+		 host->host_no, sdev_channel(dev), sdev_id(dev), (पूर्णांक)dev->lun);
 
 		found = 0;
-		for (count = 0; count < (host->can_queue + AAC_NUM_MGT_FIB); ++count) {
+		क्रम (count = 0; count < (host->can_queue + AAC_NUM_MGT_FIB); ++count) अणु
 			fib = &aac->fibs[count];
-			if (*(u8 *)fib->hw_fib_va != 0 &&
+			अगर (*(u8 *)fib->hw_fib_va != 0 &&
 				(fib->flags & FIB_CONTEXT_FLAG_NATIVE_HBA) &&
-				(fib->callback_data == cmd)) {
+				(fib->callback_data == cmd)) अणु
 				found = 1;
-				break;
-			}
-		}
-		if (!found)
-			return ret;
+				अवरोध;
+			पूर्ण
+		पूर्ण
+		अगर (!found)
+			वापस ret;
 
 		/* start a HBA_TMF_ABORT_TASK TMF request */
 		fib = aac_fib_alloc(aac);
-		if (!fib)
-			return ret;
+		अगर (!fib)
+			वापस ret;
 
-		tmf = (struct aac_hba_tm_req *)fib->hw_fib_va;
-		memset(tmf, 0, sizeof(*tmf));
-		tmf->tmf = HBA_TMF_ABORT_TASK;
-		tmf->it_nexus = aac->hba_map[bus][cid].rmw_nexus;
-		tmf->lun[1] = cmd->device->lun;
+		पंचांगf = (काष्ठा aac_hba_पंचांग_req *)fib->hw_fib_va;
+		स_रखो(पंचांगf, 0, माप(*पंचांगf));
+		पंचांगf->पंचांगf = HBA_TMF_ABORT_TASK;
+		पंचांगf->it_nexus = aac->hba_map[bus][cid].rmw_nexus;
+		पंचांगf->lun[1] = cmd->device->lun;
 
 		address = (u64)fib->hw_error_pa;
-		tmf->error_ptr_hi = cpu_to_le32((u32)(address >> 32));
-		tmf->error_ptr_lo = cpu_to_le32((u32)(address & 0xffffffff));
-		tmf->error_length = cpu_to_le32(FW_ERROR_BUFFER_SIZE);
+		पंचांगf->error_ptr_hi = cpu_to_le32((u32)(address >> 32));
+		पंचांगf->error_ptr_lo = cpu_to_le32((u32)(address & 0xffffffff));
+		पंचांगf->error_length = cpu_to_le32(FW_ERROR_BUFFER_SIZE);
 
-		fib->hbacmd_size = sizeof(*tmf);
+		fib->hbacmd_size = माप(*पंचांगf);
 		cmd->SCp.sent_command = 0;
 
 		status = aac_hba_send(HBA_IU_TYPE_SCSI_TM_REQ, fib,
 				  (fib_callback) aac_hba_callback,
-				  (void *) cmd);
-		if (status != -EINPROGRESS) {
+				  (व्योम *) cmd);
+		अगर (status != -EINPROGRESS) अणु
 			aac_fib_complete(fib);
-			aac_fib_free(fib);
-			return ret;
-		}
-		/* Wait up to 15 secs for completion */
-		for (count = 0; count < 15; ++count) {
-			if (cmd->SCp.sent_command) {
+			aac_fib_मुक्त(fib);
+			वापस ret;
+		पूर्ण
+		/* Wait up to 15 secs क्रम completion */
+		क्रम (count = 0; count < 15; ++count) अणु
+			अगर (cmd->SCp.sent_command) अणु
 				ret = SUCCESS;
-				break;
-			}
+				अवरोध;
+			पूर्ण
 			msleep(1000);
-		}
+		पूर्ण
 
-		if (ret != SUCCESS)
+		अगर (ret != SUCCESS)
 			pr_err("%s: Host adapter abort request timed out\n",
 			AAC_DRIVERNAME);
-	} else {
+	पूर्ण अन्यथा अणु
 		pr_err(
 			"%s: Host adapter abort request.\n"
 			"%s: Outstanding commands on (%d,%d,%d,%d):\n",
 			AAC_DRIVERNAME, AAC_DRIVERNAME,
 			host->host_no, sdev_channel(dev), sdev_id(dev),
-			(int)dev->lun);
-		switch (cmd->cmnd[0]) {
-		case SERVICE_ACTION_IN_16:
-			if (!(aac->raw_io_interface) ||
+			(पूर्णांक)dev->lun);
+		चयन (cmd->cmnd[0]) अणु
+		हाल SERVICE_ACTION_IN_16:
+			अगर (!(aac->raw_io_पूर्णांकerface) ||
 			    !(aac->raw_io_64) ||
 			    ((cmd->cmnd[1] & 0x1f) != SAI_READ_CAPACITY_16))
-				break;
+				अवरोध;
 			fallthrough;
-		case INQUIRY:
-		case READ_CAPACITY:
+		हाल INQUIRY:
+		हाल READ_CAPACITY:
 			/*
 			 * Mark associated FIB to not complete,
-			 * eh handler does this
+			 * eh handler करोes this
 			 */
-			for (count = 0;
+			क्रम (count = 0;
 				count < (host->can_queue + AAC_NUM_MGT_FIB);
-				++count) {
-				struct fib *fib = &aac->fibs[count];
+				++count) अणु
+				काष्ठा fib *fib = &aac->fibs[count];
 
-				if (fib->hw_fib_va->header.XferState &&
+				अगर (fib->hw_fib_va->header.XferState &&
 				(fib->flags & FIB_CONTEXT_FLAG) &&
-				(fib->callback_data == cmd)) {
+				(fib->callback_data == cmd)) अणु
 					fib->flags |=
 						FIB_CONTEXT_FLAG_TIMED_OUT;
 					cmd->SCp.phase =
 						AAC_OWNER_ERROR_HANDLER;
 					ret = SUCCESS;
-				}
-			}
-			break;
-		case TEST_UNIT_READY:
+				पूर्ण
+			पूर्ण
+			अवरोध;
+		हाल TEST_UNIT_READY:
 			/*
 			 * Mark associated FIB to not complete,
-			 * eh handler does this
+			 * eh handler करोes this
 			 */
-			for (count = 0;
+			क्रम (count = 0;
 				count < (host->can_queue + AAC_NUM_MGT_FIB);
-				++count) {
-				struct scsi_cmnd *command;
-				struct fib *fib = &aac->fibs[count];
+				++count) अणु
+				काष्ठा scsi_cmnd *command;
+				काष्ठा fib *fib = &aac->fibs[count];
 
 				command = fib->callback_data;
 
-				if ((fib->hw_fib_va->header.XferState &
+				अगर ((fib->hw_fib_va->header.XferState &
 					cpu_to_le32
 					(Async | NoResponseExpected)) &&
 					(fib->flags & FIB_CONTEXT_FLAG) &&
 					((command)) &&
-					(command->device == cmd->device)) {
+					(command->device == cmd->device)) अणु
 					fib->flags |=
 						FIB_CONTEXT_FLAG_TIMED_OUT;
 					command->SCp.phase =
 						AAC_OWNER_ERROR_HANDLER;
-					if (command == cmd)
+					अगर (command == cmd)
 						ret = SUCCESS;
-				}
-			}
-			break;
-		}
-	}
-	return ret;
-}
+				पूर्ण
+			पूर्ण
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static u8 aac_eh_tmf_lun_reset_fib(struct aac_hba_map_info *info,
-				   struct fib *fib, u64 tmf_lun)
-{
-	struct aac_hba_tm_req *tmf;
+अटल u8 aac_eh_पंचांगf_lun_reset_fib(काष्ठा aac_hba_map_info *info,
+				   काष्ठा fib *fib, u64 पंचांगf_lun)
+अणु
+	काष्ठा aac_hba_पंचांग_req *पंचांगf;
 	u64 address;
 
 	/* start a HBA_TMF_LUN_RESET TMF request */
-	tmf = (struct aac_hba_tm_req *)fib->hw_fib_va;
-	memset(tmf, 0, sizeof(*tmf));
-	tmf->tmf = HBA_TMF_LUN_RESET;
-	tmf->it_nexus = info->rmw_nexus;
-	int_to_scsilun(tmf_lun, (struct scsi_lun *)tmf->lun);
+	पंचांगf = (काष्ठा aac_hba_पंचांग_req *)fib->hw_fib_va;
+	स_रखो(पंचांगf, 0, माप(*पंचांगf));
+	पंचांगf->पंचांगf = HBA_TMF_LUN_RESET;
+	पंचांगf->it_nexus = info->rmw_nexus;
+	पूर्णांक_to_scsilun(पंचांगf_lun, (काष्ठा scsi_lun *)पंचांगf->lun);
 
 	address = (u64)fib->hw_error_pa;
-	tmf->error_ptr_hi = cpu_to_le32
+	पंचांगf->error_ptr_hi = cpu_to_le32
 		((u32)(address >> 32));
-	tmf->error_ptr_lo = cpu_to_le32
+	पंचांगf->error_ptr_lo = cpu_to_le32
 		((u32)(address & 0xffffffff));
-	tmf->error_length = cpu_to_le32(FW_ERROR_BUFFER_SIZE);
-	fib->hbacmd_size = sizeof(*tmf);
+	पंचांगf->error_length = cpu_to_le32(FW_ERROR_BUFFER_SIZE);
+	fib->hbacmd_size = माप(*पंचांगf);
 
-	return HBA_IU_TYPE_SCSI_TM_REQ;
-}
+	वापस HBA_IU_TYPE_SCSI_TM_REQ;
+पूर्ण
 
-static u8 aac_eh_tmf_hard_reset_fib(struct aac_hba_map_info *info,
-				    struct fib *fib)
-{
-	struct aac_hba_reset_req *rst;
+अटल u8 aac_eh_पंचांगf_hard_reset_fib(काष्ठा aac_hba_map_info *info,
+				    काष्ठा fib *fib)
+अणु
+	काष्ठा aac_hba_reset_req *rst;
 	u64 address;
 
-	/* already tried, start a hard reset now */
-	rst = (struct aac_hba_reset_req *)fib->hw_fib_va;
-	memset(rst, 0, sizeof(*rst));
+	/* alपढ़ोy tried, start a hard reset now */
+	rst = (काष्ठा aac_hba_reset_req *)fib->hw_fib_va;
+	स_रखो(rst, 0, माप(*rst));
 	rst->it_nexus = info->rmw_nexus;
 
 	address = (u64)fib->hw_error_pa;
 	rst->error_ptr_hi = cpu_to_le32((u32)(address >> 32));
 	rst->error_ptr_lo = cpu_to_le32((u32)(address & 0xffffffff));
 	rst->error_length = cpu_to_le32(FW_ERROR_BUFFER_SIZE);
-	fib->hbacmd_size = sizeof(*rst);
+	fib->hbacmd_size = माप(*rst);
 
-       return HBA_IU_TYPE_SATA_REQ;
-}
+       वापस HBA_IU_TYPE_SATA_REQ;
+पूर्ण
 
-static void aac_tmf_callback(void *context, struct fib *fibptr)
-{
-	struct aac_hba_resp *err =
-		&((struct aac_native_hba *)fibptr->hw_fib_va)->resp.err;
-	struct aac_hba_map_info *info = context;
-	int res;
+अटल व्योम aac_पंचांगf_callback(व्योम *context, काष्ठा fib *fibptr)
+अणु
+	काष्ठा aac_hba_resp *err =
+		&((काष्ठा aac_native_hba *)fibptr->hw_fib_va)->resp.err;
+	काष्ठा aac_hba_map_info *info = context;
+	पूर्णांक res;
 
-	switch (err->service_response) {
-	case HBA_RESP_SVCRES_TMF_REJECTED:
+	चयन (err->service_response) अणु
+	हाल HBA_RESP_SVCRES_TMF_REJECTED:
 		res = -1;
-		break;
-	case HBA_RESP_SVCRES_TMF_LUN_INVALID:
+		अवरोध;
+	हाल HBA_RESP_SVCRES_TMF_LUN_INVALID:
 		res = 0;
-		break;
-	case HBA_RESP_SVCRES_TMF_COMPLETE:
-	case HBA_RESP_SVCRES_TMF_SUCCEEDED:
+		अवरोध;
+	हाल HBA_RESP_SVCRES_TMF_COMPLETE:
+	हाल HBA_RESP_SVCRES_TMF_SUCCEEDED:
 		res = 0;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		res = -2;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 	aac_fib_complete(fibptr);
 
 	info->reset_state = res;
-}
+पूर्ण
 
 /*
  *	aac_eh_dev_reset	- Device reset command handling
  *	@scsi_cmd:	SCSI command block causing the reset
  *
  */
-static int aac_eh_dev_reset(struct scsi_cmnd *cmd)
-{
-	struct scsi_device * dev = cmd->device;
-	struct Scsi_Host * host = dev->host;
-	struct aac_dev * aac = (struct aac_dev *)host->hostdata;
-	struct aac_hba_map_info *info;
-	int count;
+अटल पूर्णांक aac_eh_dev_reset(काष्ठा scsi_cmnd *cmd)
+अणु
+	काष्ठा scsi_device * dev = cmd->device;
+	काष्ठा Scsi_Host * host = dev->host;
+	काष्ठा aac_dev * aac = (काष्ठा aac_dev *)host->hostdata;
+	काष्ठा aac_hba_map_info *info;
+	पूर्णांक count;
 	u32 bus, cid;
-	struct fib *fib;
-	int ret = FAILED;
-	int status;
+	काष्ठा fib *fib;
+	पूर्णांक ret = FAILED;
+	पूर्णांक status;
 	u8 command;
 
 	bus = aac_logical_to_phys(scmd_channel(cmd));
 	cid = scmd_id(cmd);
 
-	if (bus >= AAC_MAX_BUSES || cid >= AAC_MAX_TARGETS)
-		return FAILED;
+	अगर (bus >= AAC_MAX_BUSES || cid >= AAC_MAX_TARGETS)
+		वापस FAILED;
 
 	info = &aac->hba_map[bus][cid];
 
-	if (!(info->devtype == AAC_DEVTYPE_NATIVE_RAW &&
+	अगर (!(info->devtype == AAC_DEVTYPE_NATIVE_RAW &&
 	 !(info->reset_state > 0)))
-		return FAILED;
+		वापस FAILED;
 
 	pr_err("%s: Host device reset request. SCSI hang ?\n",
 	       AAC_DRIVERNAME);
 
 	fib = aac_fib_alloc(aac);
-	if (!fib)
-		return ret;
+	अगर (!fib)
+		वापस ret;
 
 	/* start a HBA_TMF_LUN_RESET TMF request */
-	command = aac_eh_tmf_lun_reset_fib(info, fib, dev->lun);
+	command = aac_eh_पंचांगf_lun_reset_fib(info, fib, dev->lun);
 
 	info->reset_state = 1;
 
 	status = aac_hba_send(command, fib,
-			      (fib_callback) aac_tmf_callback,
-			      (void *) info);
-	if (status != -EINPROGRESS) {
+			      (fib_callback) aac_पंचांगf_callback,
+			      (व्योम *) info);
+	अगर (status != -EINPROGRESS) अणु
 		info->reset_state = 0;
 		aac_fib_complete(fib);
-		aac_fib_free(fib);
-		return ret;
-	}
-	/* Wait up to 15 seconds for completion */
-	for (count = 0; count < 15; ++count) {
-		if (info->reset_state == 0) {
+		aac_fib_मुक्त(fib);
+		वापस ret;
+	पूर्ण
+	/* Wait up to 15 seconds क्रम completion */
+	क्रम (count = 0; count < 15; ++count) अणु
+		अगर (info->reset_state == 0) अणु
 			ret = info->reset_state == 0 ? SUCCESS : FAILED;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		msleep(1000);
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
  *	aac_eh_target_reset	- Target reset command handling
  *	@scsi_cmd:	SCSI command block causing the reset
  *
  */
-static int aac_eh_target_reset(struct scsi_cmnd *cmd)
-{
-	struct scsi_device * dev = cmd->device;
-	struct Scsi_Host * host = dev->host;
-	struct aac_dev * aac = (struct aac_dev *)host->hostdata;
-	struct aac_hba_map_info *info;
-	int count;
+अटल पूर्णांक aac_eh_target_reset(काष्ठा scsi_cmnd *cmd)
+अणु
+	काष्ठा scsi_device * dev = cmd->device;
+	काष्ठा Scsi_Host * host = dev->host;
+	काष्ठा aac_dev * aac = (काष्ठा aac_dev *)host->hostdata;
+	काष्ठा aac_hba_map_info *info;
+	पूर्णांक count;
 	u32 bus, cid;
-	int ret = FAILED;
-	struct fib *fib;
-	int status;
+	पूर्णांक ret = FAILED;
+	काष्ठा fib *fib;
+	पूर्णांक status;
 	u8 command;
 
 	bus = aac_logical_to_phys(scmd_channel(cmd));
 	cid = scmd_id(cmd);
 
-	if (bus >= AAC_MAX_BUSES || cid >= AAC_MAX_TARGETS)
-		return FAILED;
+	अगर (bus >= AAC_MAX_BUSES || cid >= AAC_MAX_TARGETS)
+		वापस FAILED;
 
 	info = &aac->hba_map[bus][cid];
 
-	if (!(info->devtype == AAC_DEVTYPE_NATIVE_RAW &&
+	अगर (!(info->devtype == AAC_DEVTYPE_NATIVE_RAW &&
 	 !(info->reset_state > 0)))
-		return FAILED;
+		वापस FAILED;
 
 	pr_err("%s: Host target reset request. SCSI hang ?\n",
 	       AAC_DRIVERNAME);
 
 	fib = aac_fib_alloc(aac);
-	if (!fib)
-		return ret;
+	अगर (!fib)
+		वापस ret;
 
 
-	/* already tried, start a hard reset now */
-	command = aac_eh_tmf_hard_reset_fib(info, fib);
+	/* alपढ़ोy tried, start a hard reset now */
+	command = aac_eh_पंचांगf_hard_reset_fib(info, fib);
 
 	info->reset_state = 2;
 
 	status = aac_hba_send(command, fib,
-			      (fib_callback) aac_tmf_callback,
-			      (void *) info);
+			      (fib_callback) aac_पंचांगf_callback,
+			      (व्योम *) info);
 
-	if (status != -EINPROGRESS) {
+	अगर (status != -EINPROGRESS) अणु
 		info->reset_state = 0;
 		aac_fib_complete(fib);
-		aac_fib_free(fib);
-		return ret;
-	}
+		aac_fib_मुक्त(fib);
+		वापस ret;
+	पूर्ण
 
-	/* Wait up to 15 seconds for completion */
-	for (count = 0; count < 15; ++count) {
-		if (info->reset_state <= 0) {
+	/* Wait up to 15 seconds क्रम completion */
+	क्रम (count = 0; count < 15; ++count) अणु
+		अगर (info->reset_state <= 0) अणु
 			ret = info->reset_state == 0 ? SUCCESS : FAILED;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		msleep(1000);
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
  *	aac_eh_bus_reset	- Bus reset command handling
  *	@scsi_cmd:	SCSI command block causing the reset
  *
  */
-static int aac_eh_bus_reset(struct scsi_cmnd* cmd)
-{
-	struct scsi_device * dev = cmd->device;
-	struct Scsi_Host * host = dev->host;
-	struct aac_dev * aac = (struct aac_dev *)host->hostdata;
-	int count;
+अटल पूर्णांक aac_eh_bus_reset(काष्ठा scsi_cmnd* cmd)
+अणु
+	काष्ठा scsi_device * dev = cmd->device;
+	काष्ठा Scsi_Host * host = dev->host;
+	काष्ठा aac_dev * aac = (काष्ठा aac_dev *)host->hostdata;
+	पूर्णांक count;
 	u32 cmd_bus;
-	int status = 0;
+	पूर्णांक status = 0;
 
 
 	cmd_bus = aac_logical_to_phys(scmd_channel(cmd));
-	/* Mark the assoc. FIB to not complete, eh handler does this */
-	for (count = 0; count < (host->can_queue + AAC_NUM_MGT_FIB); ++count) {
-		struct fib *fib = &aac->fibs[count];
+	/* Mark the assoc. FIB to not complete, eh handler करोes this */
+	क्रम (count = 0; count < (host->can_queue + AAC_NUM_MGT_FIB); ++count) अणु
+		काष्ठा fib *fib = &aac->fibs[count];
 
-		if (fib->hw_fib_va->header.XferState &&
+		अगर (fib->hw_fib_va->header.XferState &&
 		    (fib->flags & FIB_CONTEXT_FLAG) &&
-		    (fib->flags & FIB_CONTEXT_FLAG_SCSI_CMD)) {
-			struct aac_hba_map_info *info;
+		    (fib->flags & FIB_CONTEXT_FLAG_SCSI_CMD)) अणु
+			काष्ठा aac_hba_map_info *info;
 			u32 bus, cid;
 
-			cmd = (struct scsi_cmnd *)fib->callback_data;
+			cmd = (काष्ठा scsi_cmnd *)fib->callback_data;
 			bus = aac_logical_to_phys(scmd_channel(cmd));
-			if (bus != cmd_bus)
-				continue;
+			अगर (bus != cmd_bus)
+				जारी;
 			cid = scmd_id(cmd);
 			info = &aac->hba_map[bus][cid];
-			if (bus >= AAC_MAX_BUSES || cid >= AAC_MAX_TARGETS ||
-			    info->devtype != AAC_DEVTYPE_NATIVE_RAW) {
+			अगर (bus >= AAC_MAX_BUSES || cid >= AAC_MAX_TARGETS ||
+			    info->devtype != AAC_DEVTYPE_NATIVE_RAW) अणु
 				fib->flags |= FIB_CONTEXT_FLAG_EH_RESET;
 				cmd->SCp.phase = AAC_OWNER_ERROR_HANDLER;
-			}
-		}
-	}
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
 	pr_err("%s: Host bus reset request. SCSI hang ?\n", AAC_DRIVERNAME);
 
@@ -1067,96 +1068,96 @@ static int aac_eh_bus_reset(struct scsi_cmnd* cmd)
 	 * Check the health of the controller
 	 */
 	status = aac_adapter_check_health(aac);
-	if (status)
+	अगर (status)
 		dev_err(&aac->pdev->dev, "Adapter health - %d\n", status);
 
 	count = get_num_of_incomplete_fibs(aac);
-	return (count == 0) ? SUCCESS : FAILED;
-}
+	वापस (count == 0) ? SUCCESS : FAILED;
+पूर्ण
 
 /*
  *	aac_eh_host_reset	- Host reset command handling
  *	@scsi_cmd:	SCSI command block causing the reset
  *
  */
-static int aac_eh_host_reset(struct scsi_cmnd *cmd)
-{
-	struct scsi_device * dev = cmd->device;
-	struct Scsi_Host * host = dev->host;
-	struct aac_dev * aac = (struct aac_dev *)host->hostdata;
-	int ret = FAILED;
+अटल पूर्णांक aac_eh_host_reset(काष्ठा scsi_cmnd *cmd)
+अणु
+	काष्ठा scsi_device * dev = cmd->device;
+	काष्ठा Scsi_Host * host = dev->host;
+	काष्ठा aac_dev * aac = (काष्ठा aac_dev *)host->hostdata;
+	पूर्णांक ret = FAILED;
 	__le32 supported_options2 = 0;
 	bool is_mu_reset;
 	bool is_ignore_reset;
-	bool is_doorbell_reset;
+	bool is_करोorbell_reset;
 
 	/*
-	 * Check if reset is supported by the firmware
+	 * Check अगर reset is supported by the firmware
 	 */
 	supported_options2 = aac->supplement_adapter_info.supported_options2;
 	is_mu_reset = supported_options2 & AAC_OPTION_MU_RESET;
-	is_doorbell_reset = supported_options2 & AAC_OPTION_DOORBELL_RESET;
+	is_करोorbell_reset = supported_options2 & AAC_OPTION_DOORBELL_RESET;
 	is_ignore_reset = supported_options2 & AAC_OPTION_IGNORE_RESET;
 	/*
-	 * This adapter needs a blind reset, only do so for
-	 * Adapters that support a register, instead of a commanded,
+	 * This adapter needs a blind reset, only करो so क्रम
+	 * Adapters that support a रेजिस्टर, instead of a commanded,
 	 * reset.
 	 */
-	if ((is_mu_reset || is_doorbell_reset)
+	अगर ((is_mu_reset || is_करोorbell_reset)
 	 && aac_check_reset
-	 && (aac_check_reset != -1 || !is_ignore_reset)) {
-		/* Bypass wait for command quiesce */
-		if (aac_reset_adapter(aac, 2, IOP_HWSOFT_RESET) == 0)
+	 && (aac_check_reset != -1 || !is_ignore_reset)) अणु
+		/* Bypass रुको क्रम command quiesce */
+		अगर (aac_reset_adapter(aac, 2, IOP_HWSOFT_RESET) == 0)
 			ret = SUCCESS;
-	}
+	पूर्ण
 	/*
 	 * Reset EH state
 	 */
-	if (ret == SUCCESS) {
-		int bus, cid;
-		struct aac_hba_map_info *info;
+	अगर (ret == SUCCESS) अणु
+		पूर्णांक bus, cid;
+		काष्ठा aac_hba_map_info *info;
 
-		for (bus = 0; bus < AAC_MAX_BUSES; bus++) {
-			for (cid = 0; cid < AAC_MAX_TARGETS; cid++) {
+		क्रम (bus = 0; bus < AAC_MAX_BUSES; bus++) अणु
+			क्रम (cid = 0; cid < AAC_MAX_TARGETS; cid++) अणु
 				info = &aac->hba_map[bus][cid];
-				if (info->devtype == AAC_DEVTYPE_NATIVE_RAW)
+				अगर (info->devtype == AAC_DEVTYPE_NATIVE_RAW)
 					info->reset_state = 0;
-			}
-		}
-	}
-	return ret;
-}
+			पूर्ण
+		पूर्ण
+	पूर्ण
+	वापस ret;
+पूर्ण
 
 /**
- *	aac_cfg_open		-	open a configuration file
- *	@inode: inode being opened
+ *	aac_cfg_खोलो		-	खोलो a configuration file
+ *	@inode: inode being खोलोed
  *	@file: file handle attached
  *
- *	Called when the configuration device is opened. Does the needed
- *	set up on the handle and then returns
+ *	Called when the configuration device is खोलोed. Does the needed
+ *	set up on the handle and then वापसs
  *
  *	Bugs: This needs extending to check a given adapter is present
  *	so we can support hot plugging, and to ref count adapters.
  */
 
-static int aac_cfg_open(struct inode *inode, struct file *file)
-{
-	struct aac_dev *aac;
-	unsigned minor_number = iminor(inode);
-	int err = -ENODEV;
+अटल पूर्णांक aac_cfg_खोलो(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	काष्ठा aac_dev *aac;
+	अचिन्हित minor_number = iminor(inode);
+	पूर्णांक err = -ENODEV;
 
-	mutex_lock(&aac_mutex);  /* BKL pushdown: nothing else protects this list */
-	list_for_each_entry(aac, &aac_devices, entry) {
-		if (aac->id == minor_number) {
-			file->private_data = aac;
+	mutex_lock(&aac_mutex);  /* BKL pushकरोwn: nothing अन्यथा protects this list */
+	list_क्रम_each_entry(aac, &aac_devices, entry) अणु
+		अगर (aac->id == minor_number) अणु
+			file->निजी_data = aac;
 			err = 0;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 	mutex_unlock(&aac_mutex);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /**
  *	aac_cfg_ioctl		-	AAC configuration request
@@ -1165,286 +1166,286 @@ static int aac_cfg_open(struct inode *inode, struct file *file)
  *	@arg: argument
  *
  *	Handles a configuration ioctl. Currently this involves wrapping it
- *	up and feeding it into the nasty windowsalike glue layer.
+ *	up and feeding it पूर्णांकo the nasty winकरोwsalike glue layer.
  *
- *	Bugs: Needs locking against parallel ioctls lower down
+ *	Bugs: Needs locking against parallel ioctls lower करोwn
  *	Bugs: Needs to handle hot plugging
  */
 
-static long aac_cfg_ioctl(struct file *file,
-		unsigned int cmd, unsigned long arg)
-{
-	struct aac_dev *aac = (struct aac_dev *)file->private_data;
+अटल दीर्घ aac_cfg_ioctl(काष्ठा file *file,
+		अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
+अणु
+	काष्ठा aac_dev *aac = (काष्ठा aac_dev *)file->निजी_data;
 
-	if (!capable(CAP_SYS_RAWIO))
-		return -EPERM;
+	अगर (!capable(CAP_SYS_RAWIO))
+		वापस -EPERM;
 
-	return aac_do_ioctl(aac, cmd, (void __user *)arg);
-}
+	वापस aac_करो_ioctl(aac, cmd, (व्योम __user *)arg);
+पूर्ण
 
-static ssize_t aac_show_model(struct device *device,
-			      struct device_attribute *attr, char *buf)
-{
-	struct aac_dev *dev = (struct aac_dev*)class_to_shost(device)->hostdata;
-	int len;
+अटल sमाप_प्रकार aac_show_model(काष्ठा device *device,
+			      काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा aac_dev *dev = (काष्ठा aac_dev*)class_to_shost(device)->hostdata;
+	पूर्णांक len;
 
-	if (dev->supplement_adapter_info.adapter_type_text[0]) {
-		char *cp = dev->supplement_adapter_info.adapter_type_text;
-		while (*cp && *cp != ' ')
+	अगर (dev->supplement_adapter_info.adapter_type_text[0]) अणु
+		अक्षर *cp = dev->supplement_adapter_info.adapter_type_text;
+		जबतक (*cp && *cp != ' ')
 			++cp;
-		while (*cp == ' ')
+		जबतक (*cp == ' ')
 			++cp;
-		len = snprintf(buf, PAGE_SIZE, "%s\n", cp);
-	} else
-		len = snprintf(buf, PAGE_SIZE, "%s\n",
+		len = snम_लिखो(buf, PAGE_SIZE, "%s\n", cp);
+	पूर्ण अन्यथा
+		len = snम_लिखो(buf, PAGE_SIZE, "%s\n",
 		  aac_drivers[dev->cardtype].model);
-	return len;
-}
+	वापस len;
+पूर्ण
 
-static ssize_t aac_show_vendor(struct device *device,
-			       struct device_attribute *attr, char *buf)
-{
-	struct aac_dev *dev = (struct aac_dev*)class_to_shost(device)->hostdata;
-	struct aac_supplement_adapter_info *sup_adap_info;
-	int len;
+अटल sमाप_प्रकार aac_show_venकरोr(काष्ठा device *device,
+			       काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा aac_dev *dev = (काष्ठा aac_dev*)class_to_shost(device)->hostdata;
+	काष्ठा aac_supplement_adapter_info *sup_adap_info;
+	पूर्णांक len;
 
 	sup_adap_info = &dev->supplement_adapter_info;
-	if (sup_adap_info->adapter_type_text[0]) {
-		char *cp = sup_adap_info->adapter_type_text;
-		while (*cp && *cp != ' ')
+	अगर (sup_adap_info->adapter_type_text[0]) अणु
+		अक्षर *cp = sup_adap_info->adapter_type_text;
+		जबतक (*cp && *cp != ' ')
 			++cp;
-		len = snprintf(buf, PAGE_SIZE, "%.*s\n",
-			(int)(cp - (char *)sup_adap_info->adapter_type_text),
+		len = snम_लिखो(buf, PAGE_SIZE, "%.*s\n",
+			(पूर्णांक)(cp - (अक्षर *)sup_adap_info->adapter_type_text),
 					sup_adap_info->adapter_type_text);
-	} else
-		len = snprintf(buf, PAGE_SIZE, "%s\n",
+	पूर्ण अन्यथा
+		len = snम_लिखो(buf, PAGE_SIZE, "%s\n",
 			aac_drivers[dev->cardtype].vname);
-	return len;
-}
+	वापस len;
+पूर्ण
 
-static ssize_t aac_show_flags(struct device *cdev,
-			      struct device_attribute *attr, char *buf)
-{
-	int len = 0;
-	struct aac_dev *dev = (struct aac_dev*)class_to_shost(cdev)->hostdata;
+अटल sमाप_प्रकार aac_show_flags(काष्ठा device *cdev,
+			      काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	पूर्णांक len = 0;
+	काष्ठा aac_dev *dev = (काष्ठा aac_dev*)class_to_shost(cdev)->hostdata;
 
-	if (nblank(dprintk(x)))
-		len = snprintf(buf, PAGE_SIZE, "dprintk\n");
-#ifdef AAC_DETAILED_STATUS_INFO
-	len += scnprintf(buf + len, PAGE_SIZE - len,
+	अगर (nblank(dprपूर्णांकk(x)))
+		len = snम_लिखो(buf, PAGE_SIZE, "dprintk\n");
+#अगर_घोषित AAC_DETAILED_STATUS_INFO
+	len += scnम_लिखो(buf + len, PAGE_SIZE - len,
 			 "AAC_DETAILED_STATUS_INFO\n");
-#endif
-	if (dev->raw_io_interface && dev->raw_io_64)
-		len += scnprintf(buf + len, PAGE_SIZE - len,
+#पूर्ण_अगर
+	अगर (dev->raw_io_पूर्णांकerface && dev->raw_io_64)
+		len += scnम_लिखो(buf + len, PAGE_SIZE - len,
 				 "SAI_READ_CAPACITY_16\n");
-	if (dev->jbod)
-		len += scnprintf(buf + len, PAGE_SIZE - len,
+	अगर (dev->jbod)
+		len += scnम_लिखो(buf + len, PAGE_SIZE - len,
 				 "SUPPORTED_JBOD\n");
-	if (dev->supplement_adapter_info.supported_options2 &
+	अगर (dev->supplement_adapter_info.supported_options2 &
 		AAC_OPTION_POWER_MANAGEMENT)
-		len += scnprintf(buf + len, PAGE_SIZE - len,
+		len += scnम_लिखो(buf + len, PAGE_SIZE - len,
 				 "SUPPORTED_POWER_MANAGEMENT\n");
-	if (dev->msi)
-		len += scnprintf(buf + len, PAGE_SIZE - len, "PCI_HAS_MSI\n");
-	return len;
-}
+	अगर (dev->msi)
+		len += scnम_लिखो(buf + len, PAGE_SIZE - len, "PCI_HAS_MSI\n");
+	वापस len;
+पूर्ण
 
-static ssize_t aac_show_kernel_version(struct device *device,
-				       struct device_attribute *attr,
-				       char *buf)
-{
-	struct aac_dev *dev = (struct aac_dev*)class_to_shost(device)->hostdata;
-	int len, tmp;
+अटल sमाप_प्रकार aac_show_kernel_version(काष्ठा device *device,
+				       काष्ठा device_attribute *attr,
+				       अक्षर *buf)
+अणु
+	काष्ठा aac_dev *dev = (काष्ठा aac_dev*)class_to_shost(device)->hostdata;
+	पूर्णांक len, पंचांगp;
 
-	tmp = le32_to_cpu(dev->adapter_info.kernelrev);
-	len = snprintf(buf, PAGE_SIZE, "%d.%d-%d[%d]\n",
-	  tmp >> 24, (tmp >> 16) & 0xff, tmp & 0xff,
+	पंचांगp = le32_to_cpu(dev->adapter_info.kernelrev);
+	len = snम_लिखो(buf, PAGE_SIZE, "%d.%d-%d[%d]\n",
+	  पंचांगp >> 24, (पंचांगp >> 16) & 0xff, पंचांगp & 0xff,
 	  le32_to_cpu(dev->adapter_info.kernelbuild));
-	return len;
-}
+	वापस len;
+पूर्ण
 
-static ssize_t aac_show_monitor_version(struct device *device,
-					struct device_attribute *attr,
-					char *buf)
-{
-	struct aac_dev *dev = (struct aac_dev*)class_to_shost(device)->hostdata;
-	int len, tmp;
+अटल sमाप_प्रकार aac_show_monitor_version(काष्ठा device *device,
+					काष्ठा device_attribute *attr,
+					अक्षर *buf)
+अणु
+	काष्ठा aac_dev *dev = (काष्ठा aac_dev*)class_to_shost(device)->hostdata;
+	पूर्णांक len, पंचांगp;
 
-	tmp = le32_to_cpu(dev->adapter_info.monitorrev);
-	len = snprintf(buf, PAGE_SIZE, "%d.%d-%d[%d]\n",
-	  tmp >> 24, (tmp >> 16) & 0xff, tmp & 0xff,
+	पंचांगp = le32_to_cpu(dev->adapter_info.monitorrev);
+	len = snम_लिखो(buf, PAGE_SIZE, "%d.%d-%d[%d]\n",
+	  पंचांगp >> 24, (पंचांगp >> 16) & 0xff, पंचांगp & 0xff,
 	  le32_to_cpu(dev->adapter_info.monitorbuild));
-	return len;
-}
+	वापस len;
+पूर्ण
 
-static ssize_t aac_show_bios_version(struct device *device,
-				     struct device_attribute *attr,
-				     char *buf)
-{
-	struct aac_dev *dev = (struct aac_dev*)class_to_shost(device)->hostdata;
-	int len, tmp;
+अटल sमाप_प्रकार aac_show_bios_version(काष्ठा device *device,
+				     काष्ठा device_attribute *attr,
+				     अक्षर *buf)
+अणु
+	काष्ठा aac_dev *dev = (काष्ठा aac_dev*)class_to_shost(device)->hostdata;
+	पूर्णांक len, पंचांगp;
 
-	tmp = le32_to_cpu(dev->adapter_info.biosrev);
-	len = snprintf(buf, PAGE_SIZE, "%d.%d-%d[%d]\n",
-	  tmp >> 24, (tmp >> 16) & 0xff, tmp & 0xff,
+	पंचांगp = le32_to_cpu(dev->adapter_info.biosrev);
+	len = snम_लिखो(buf, PAGE_SIZE, "%d.%d-%d[%d]\n",
+	  पंचांगp >> 24, (पंचांगp >> 16) & 0xff, पंचांगp & 0xff,
 	  le32_to_cpu(dev->adapter_info.biosbuild));
-	return len;
-}
+	वापस len;
+पूर्ण
 
-static ssize_t aac_show_driver_version(struct device *device,
-					struct device_attribute *attr,
-					char *buf)
-{
-	return snprintf(buf, PAGE_SIZE, "%s\n", aac_driver_version);
-}
+अटल sमाप_प्रकार aac_show_driver_version(काष्ठा device *device,
+					काष्ठा device_attribute *attr,
+					अक्षर *buf)
+अणु
+	वापस snम_लिखो(buf, PAGE_SIZE, "%s\n", aac_driver_version);
+पूर्ण
 
-static ssize_t aac_show_serial_number(struct device *device,
-			       struct device_attribute *attr, char *buf)
-{
-	struct aac_dev *dev = (struct aac_dev*)class_to_shost(device)->hostdata;
-	int len = 0;
+अटल sमाप_प्रकार aac_show_serial_number(काष्ठा device *device,
+			       काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा aac_dev *dev = (काष्ठा aac_dev*)class_to_shost(device)->hostdata;
+	पूर्णांक len = 0;
 
-	if (le32_to_cpu(dev->adapter_info.serial[0]) != 0xBAD0)
-		len = snprintf(buf, 16, "%06X\n",
+	अगर (le32_to_cpu(dev->adapter_info.serial[0]) != 0xBAD0)
+		len = snम_लिखो(buf, 16, "%06X\n",
 		  le32_to_cpu(dev->adapter_info.serial[0]));
-	if (len &&
-	  !memcmp(&dev->supplement_adapter_info.mfg_pcba_serial_no[
-	    sizeof(dev->supplement_adapter_info.mfg_pcba_serial_no)-len],
+	अगर (len &&
+	  !स_भेद(&dev->supplement_adapter_info.mfg_pcba_serial_no[
+	    माप(dev->supplement_adapter_info.mfg_pcba_serial_no)-len],
 	  buf, len-1))
-		len = snprintf(buf, 16, "%.*s\n",
-		  (int)sizeof(dev->supplement_adapter_info.mfg_pcba_serial_no),
+		len = snम_लिखो(buf, 16, "%.*s\n",
+		  (पूर्णांक)माप(dev->supplement_adapter_info.mfg_pcba_serial_no),
 		  dev->supplement_adapter_info.mfg_pcba_serial_no);
 
-	return min(len, 16);
-}
+	वापस min(len, 16);
+पूर्ण
 
-static ssize_t aac_show_max_channel(struct device *device,
-				    struct device_attribute *attr, char *buf)
-{
-	return snprintf(buf, PAGE_SIZE, "%d\n",
+अटल sमाप_प्रकार aac_show_max_channel(काष्ठा device *device,
+				    काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	वापस snम_लिखो(buf, PAGE_SIZE, "%d\n",
 	  class_to_shost(device)->max_channel);
-}
+पूर्ण
 
-static ssize_t aac_show_max_id(struct device *device,
-			       struct device_attribute *attr, char *buf)
-{
-	return snprintf(buf, PAGE_SIZE, "%d\n",
+अटल sमाप_प्रकार aac_show_max_id(काष्ठा device *device,
+			       काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	वापस snम_लिखो(buf, PAGE_SIZE, "%d\n",
 	  class_to_shost(device)->max_id);
-}
+पूर्ण
 
-static ssize_t aac_store_reset_adapter(struct device *device,
-				       struct device_attribute *attr,
-				       const char *buf, size_t count)
-{
-	int retval = -EACCES;
+अटल sमाप_प्रकार aac_store_reset_adapter(काष्ठा device *device,
+				       काष्ठा device_attribute *attr,
+				       स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	पूर्णांक retval = -EACCES;
 
-	if (!capable(CAP_SYS_ADMIN))
-		return retval;
+	अगर (!capable(CAP_SYS_ADMIN))
+		वापस retval;
 
 	retval = aac_reset_adapter(shost_priv(class_to_shost(device)),
 					buf[0] == '!', IOP_HWSOFT_RESET);
-	if (retval >= 0)
+	अगर (retval >= 0)
 		retval = count;
 
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
-static ssize_t aac_show_reset_adapter(struct device *device,
-				      struct device_attribute *attr,
-				      char *buf)
-{
-	struct aac_dev *dev = (struct aac_dev*)class_to_shost(device)->hostdata;
-	int len, tmp;
+अटल sमाप_प्रकार aac_show_reset_adapter(काष्ठा device *device,
+				      काष्ठा device_attribute *attr,
+				      अक्षर *buf)
+अणु
+	काष्ठा aac_dev *dev = (काष्ठा aac_dev*)class_to_shost(device)->hostdata;
+	पूर्णांक len, पंचांगp;
 
-	tmp = aac_adapter_check_health(dev);
-	if ((tmp == 0) && dev->in_reset)
-		tmp = -EBUSY;
-	len = snprintf(buf, PAGE_SIZE, "0x%x\n", tmp);
-	return len;
-}
+	पंचांगp = aac_adapter_check_health(dev);
+	अगर ((पंचांगp == 0) && dev->in_reset)
+		पंचांगp = -EBUSY;
+	len = snम_लिखो(buf, PAGE_SIZE, "0x%x\n", पंचांगp);
+	वापस len;
+पूर्ण
 
-static struct device_attribute aac_model = {
-	.attr = {
+अटल काष्ठा device_attribute aac_model = अणु
+	.attr = अणु
 		.name = "model",
 		.mode = S_IRUGO,
-	},
+	पूर्ण,
 	.show = aac_show_model,
-};
-static struct device_attribute aac_vendor = {
-	.attr = {
+पूर्ण;
+अटल काष्ठा device_attribute aac_venकरोr = अणु
+	.attr = अणु
 		.name = "vendor",
 		.mode = S_IRUGO,
-	},
-	.show = aac_show_vendor,
-};
-static struct device_attribute aac_flags = {
-	.attr = {
+	पूर्ण,
+	.show = aac_show_venकरोr,
+पूर्ण;
+अटल काष्ठा device_attribute aac_flags = अणु
+	.attr = अणु
 		.name = "flags",
 		.mode = S_IRUGO,
-	},
+	पूर्ण,
 	.show = aac_show_flags,
-};
-static struct device_attribute aac_kernel_version = {
-	.attr = {
+पूर्ण;
+अटल काष्ठा device_attribute aac_kernel_version = अणु
+	.attr = अणु
 		.name = "hba_kernel_version",
 		.mode = S_IRUGO,
-	},
+	पूर्ण,
 	.show = aac_show_kernel_version,
-};
-static struct device_attribute aac_monitor_version = {
-	.attr = {
+पूर्ण;
+अटल काष्ठा device_attribute aac_monitor_version = अणु
+	.attr = अणु
 		.name = "hba_monitor_version",
 		.mode = S_IRUGO,
-	},
+	पूर्ण,
 	.show = aac_show_monitor_version,
-};
-static struct device_attribute aac_bios_version = {
-	.attr = {
+पूर्ण;
+अटल काष्ठा device_attribute aac_bios_version = अणु
+	.attr = अणु
 		.name = "hba_bios_version",
 		.mode = S_IRUGO,
-	},
+	पूर्ण,
 	.show = aac_show_bios_version,
-};
-static struct device_attribute aac_lld_version = {
-	.attr = {
+पूर्ण;
+अटल काष्ठा device_attribute aac_lld_version = अणु
+	.attr = अणु
 		.name = "driver_version",
 		.mode = 0444,
-	},
+	पूर्ण,
 	.show = aac_show_driver_version,
-};
-static struct device_attribute aac_serial_number = {
-	.attr = {
+पूर्ण;
+अटल काष्ठा device_attribute aac_serial_number = अणु
+	.attr = अणु
 		.name = "serial_number",
 		.mode = S_IRUGO,
-	},
+	पूर्ण,
 	.show = aac_show_serial_number,
-};
-static struct device_attribute aac_max_channel = {
-	.attr = {
+पूर्ण;
+अटल काष्ठा device_attribute aac_max_channel = अणु
+	.attr = अणु
 		.name = "max_channel",
 		.mode = S_IRUGO,
-	},
+	पूर्ण,
 	.show = aac_show_max_channel,
-};
-static struct device_attribute aac_max_id = {
-	.attr = {
+पूर्ण;
+अटल काष्ठा device_attribute aac_max_id = अणु
+	.attr = अणु
 		.name = "max_id",
 		.mode = S_IRUGO,
-	},
+	पूर्ण,
 	.show = aac_show_max_id,
-};
-static struct device_attribute aac_reset = {
-	.attr = {
+पूर्ण;
+अटल काष्ठा device_attribute aac_reset = अणु
+	.attr = अणु
 		.name = "reset_host",
 		.mode = S_IWUSR|S_IRUGO,
-	},
+	पूर्ण,
 	.store = aac_store_reset_adapter,
 	.show = aac_show_reset_adapter,
-};
+पूर्ण;
 
-static struct device_attribute *aac_attrs[] = {
+अटल काष्ठा device_attribute *aac_attrs[] = अणु
 	&aac_model,
-	&aac_vendor,
+	&aac_venकरोr,
 	&aac_flags,
 	&aac_kernel_version,
 	&aac_monitor_version,
@@ -1454,40 +1455,40 @@ static struct device_attribute *aac_attrs[] = {
 	&aac_max_channel,
 	&aac_max_id,
 	&aac_reset,
-	NULL
-};
+	शून्य
+पूर्ण;
 
-ssize_t aac_get_serial_number(struct device *device, char *buf)
-{
-	return aac_show_serial_number(device, &aac_serial_number, buf);
-}
+sमाप_प्रकार aac_get_serial_number(काष्ठा device *device, अक्षर *buf)
+अणु
+	वापस aac_show_serial_number(device, &aac_serial_number, buf);
+पूर्ण
 
-static const struct file_operations aac_cfg_fops = {
+अटल स्थिर काष्ठा file_operations aac_cfg_fops = अणु
 	.owner		= THIS_MODULE,
 	.unlocked_ioctl	= aac_cfg_ioctl,
-#ifdef CONFIG_COMPAT
+#अगर_घोषित CONFIG_COMPAT
 	.compat_ioctl   = aac_cfg_ioctl,
-#endif
-	.open		= aac_cfg_open,
+#पूर्ण_अगर
+	.खोलो		= aac_cfg_खोलो,
 	.llseek		= noop_llseek,
-};
+पूर्ण;
 
-static struct scsi_host_template aac_driver_template = {
+अटल काष्ठा scsi_host_ढाँचा aac_driver_ढाँचा = अणु
 	.module				= THIS_MODULE,
 	.name				= "AAC",
 	.proc_name			= AAC_DRIVERNAME,
 	.info				= aac_info,
 	.ioctl				= aac_ioctl,
-#ifdef CONFIG_COMPAT
+#अगर_घोषित CONFIG_COMPAT
 	.compat_ioctl			= aac_ioctl,
-#endif
+#पूर्ण_अगर
 	.queuecommand			= aac_queuecommand,
 	.bios_param			= aac_biosparm,
 	.shost_attrs			= aac_attrs,
 	.slave_configure		= aac_slave_configure,
 	.change_queue_depth		= aac_change_queue_depth,
 	.sdev_attrs			= aac_dev_attrs,
-	.eh_abort_handler		= aac_eh_abort,
+	.eh_पात_handler		= aac_eh_पात,
 	.eh_device_reset_handler	= aac_eh_dev_reset,
 	.eh_target_reset_handler	= aac_eh_target_reset,
 	.eh_bus_reset_handler		= aac_eh_bus_reset,
@@ -1496,172 +1497,172 @@ static struct scsi_host_template aac_driver_template = {
 	.this_id			= MAXIMUM_NUM_CONTAINERS,
 	.sg_tablesize			= 16,
 	.max_sectors			= 128,
-#if (AAC_NUM_IO_FIB > 256)
+#अगर (AAC_NUM_IO_FIB > 256)
 	.cmd_per_lun			= 256,
-#else
+#अन्यथा
 	.cmd_per_lun			= AAC_NUM_IO_FIB,
-#endif
+#पूर्ण_अगर
 	.emulated			= 1,
-	.no_write_same			= 1,
-};
+	.no_ग_लिखो_same			= 1,
+पूर्ण;
 
-static void __aac_shutdown(struct aac_dev * aac)
-{
-	int i;
+अटल व्योम __aac_shutकरोwn(काष्ठा aac_dev * aac)
+अणु
+	पूर्णांक i;
 
 	mutex_lock(&aac->ioctl_mutex);
-	aac->adapter_shutdown = 1;
+	aac->adapter_shutकरोwn = 1;
 	mutex_unlock(&aac->ioctl_mutex);
 
-	if (aac->aif_thread) {
-		int i;
+	अगर (aac->aअगर_thपढ़ो) अणु
+		पूर्णांक i;
 		/* Clear out events first */
-		for (i = 0; i < (aac->scsi_host_ptr->can_queue + AAC_NUM_MGT_FIB); i++) {
-			struct fib *fib = &aac->fibs[i];
-			if (!(fib->hw_fib_va->header.XferState & cpu_to_le32(NoResponseExpected | Async)) &&
+		क्रम (i = 0; i < (aac->scsi_host_ptr->can_queue + AAC_NUM_MGT_FIB); i++) अणु
+			काष्ठा fib *fib = &aac->fibs[i];
+			अगर (!(fib->hw_fib_va->header.XferState & cpu_to_le32(NoResponseExpected | Async)) &&
 			    (fib->hw_fib_va->header.XferState & cpu_to_le32(ResponseExpected)))
-				complete(&fib->event_wait);
-		}
-		kthread_stop(aac->thread);
-		aac->thread = NULL;
-	}
+				complete(&fib->event_रुको);
+		पूर्ण
+		kthपढ़ो_stop(aac->thपढ़ो);
+		aac->thपढ़ो = शून्य;
+	पूर्ण
 
-	aac_send_shutdown(aac);
+	aac_send_shutकरोwn(aac);
 
-	aac_adapter_disable_int(aac);
+	aac_adapter_disable_पूर्णांक(aac);
 
-	if (aac_is_src(aac)) {
-		if (aac->max_msix > 1) {
-			for (i = 0; i < aac->max_msix; i++) {
-				free_irq(pci_irq_vector(aac->pdev, i),
+	अगर (aac_is_src(aac)) अणु
+		अगर (aac->max_msix > 1) अणु
+			क्रम (i = 0; i < aac->max_msix; i++) अणु
+				मुक्त_irq(pci_irq_vector(aac->pdev, i),
 					 &(aac->aac_msix[i]));
-			}
-		} else {
-			free_irq(aac->pdev->irq,
+			पूर्ण
+		पूर्ण अन्यथा अणु
+			मुक्त_irq(aac->pdev->irq,
 				 &(aac->aac_msix[0]));
-		}
-	} else {
-		free_irq(aac->pdev->irq, aac);
-	}
-	if (aac->msi)
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		मुक्त_irq(aac->pdev->irq, aac);
+	पूर्ण
+	अगर (aac->msi)
 		pci_disable_msi(aac->pdev);
-	else if (aac->max_msix > 1)
+	अन्यथा अगर (aac->max_msix > 1)
 		pci_disable_msix(aac->pdev);
-}
-static void aac_init_char(void)
-{
-	aac_cfg_major = register_chrdev(0, "aac", &aac_cfg_fops);
-	if (aac_cfg_major < 0) {
+पूर्ण
+अटल व्योम aac_init_अक्षर(व्योम)
+अणु
+	aac_cfg_major = रेजिस्टर_chrdev(0, "aac", &aac_cfg_fops);
+	अगर (aac_cfg_major < 0) अणु
 		pr_err("aacraid: unable to register \"aac\" device.\n");
-	}
-}
+	पूर्ण
+पूर्ण
 
-void aac_reinit_aif(struct aac_dev *aac, unsigned int index)
-{
+व्योम aac_reinit_aअगर(काष्ठा aac_dev *aac, अचिन्हित पूर्णांक index)
+अणु
 	/*
 	 * Firmware may send a AIF messages very early and the Driver may have
-	 * ignored as it is not fully ready to process the messages. Send
-	 * AIF to firmware so that if there are any unprocessed events they
+	 * ignored as it is not fully पढ़ोy to process the messages. Send
+	 * AIF to firmware so that अगर there are any unprocessed events they
 	 * can be processed now.
 	 */
-	if (aac_drivers[index].quirks & AAC_QUIRK_SRC)
-		aac_intr_normal(aac, 0, 2, 0, NULL);
+	अगर (aac_drivers[index].quirks & AAC_QUIRK_SRC)
+		aac_पूर्णांकr_normal(aac, 0, 2, 0, शून्य);
 
-}
+पूर्ण
 
-static int aac_probe_one(struct pci_dev *pdev, const struct pci_device_id *id)
-{
-	unsigned index = id->driver_data;
-	struct Scsi_Host *shost;
-	struct aac_dev *aac;
-	struct list_head *insert = &aac_devices;
-	int error;
-	int unique_id = 0;
+अटल पूर्णांक aac_probe_one(काष्ठा pci_dev *pdev, स्थिर काष्ठा pci_device_id *id)
+अणु
+	अचिन्हित index = id->driver_data;
+	काष्ठा Scsi_Host *shost;
+	काष्ठा aac_dev *aac;
+	काष्ठा list_head *insert = &aac_devices;
+	पूर्णांक error;
+	पूर्णांक unique_id = 0;
 	u64 dmamask;
-	int mask_bits = 0;
-	extern int aac_sync_mode;
+	पूर्णांक mask_bits = 0;
+	बाह्य पूर्णांक aac_sync_mode;
 
 	/*
 	 * Only series 7 needs freset.
 	 */
-	if (pdev->device == PMC_DEVICE_S7)
+	अगर (pdev->device == PMC_DEVICE_S7)
 		pdev->needs_freset = 1;
 
-	list_for_each_entry(aac, &aac_devices, entry) {
-		if (aac->id > unique_id)
-			break;
+	list_क्रम_each_entry(aac, &aac_devices, entry) अणु
+		अगर (aac->id > unique_id)
+			अवरोध;
 		insert = &aac->entry;
 		unique_id++;
-	}
+	पूर्ण
 
 	pci_disable_link_state(pdev, PCIE_LINK_STATE_L0S | PCIE_LINK_STATE_L1 |
 			       PCIE_LINK_STATE_CLKPM);
 
 	error = pci_enable_device(pdev);
-	if (error)
-		goto out;
+	अगर (error)
+		जाओ out;
 
-	if (!(aac_drivers[index].quirks & AAC_QUIRK_SRC)) {
+	अगर (!(aac_drivers[index].quirks & AAC_QUIRK_SRC)) अणु
 		error = dma_set_mask(&pdev->dev, DMA_BIT_MASK(32));
-		if (error) {
+		अगर (error) अणु
 			dev_err(&pdev->dev, "PCI 32 BIT dma mask set failed");
-			goto out_disable_pdev;
-		}
-	}
+			जाओ out_disable_pdev;
+		पूर्ण
+	पूर्ण
 
 	/*
 	 * If the quirk31 bit is set, the adapter needs adapter
 	 * to driver communication memory to be allocated below 2gig
 	 */
-	if (aac_drivers[index].quirks & AAC_QUIRK_31BIT) {
+	अगर (aac_drivers[index].quirks & AAC_QUIRK_31BIT) अणु
 		dmamask = DMA_BIT_MASK(31);
 		mask_bits = 31;
-	} else {
+	पूर्ण अन्यथा अणु
 		dmamask = DMA_BIT_MASK(32);
 		mask_bits = 32;
-	}
+	पूर्ण
 
 	error = dma_set_coherent_mask(&pdev->dev, dmamask);
-	if (error) {
+	अगर (error) अणु
 		dev_err(&pdev->dev, "PCI %d B consistent dma mask set failed\n"
 				, mask_bits);
-		goto out_disable_pdev;
-	}
+		जाओ out_disable_pdev;
+	पूर्ण
 
 	pci_set_master(pdev);
 
-	shost = scsi_host_alloc(&aac_driver_template, sizeof(struct aac_dev));
-	if (!shost) {
+	shost = scsi_host_alloc(&aac_driver_ढाँचा, माप(काष्ठा aac_dev));
+	अगर (!shost) अणु
 		error = -ENOMEM;
-		goto out_disable_pdev;
-	}
+		जाओ out_disable_pdev;
+	पूर्ण
 
 	shost->irq = pdev->irq;
 	shost->unique_id = unique_id;
 	shost->max_cmd_len = 16;
 
-	if (aac_cfg_major == AAC_CHARDEV_NEEDS_REINIT)
-		aac_init_char();
+	अगर (aac_cfg_major == AAC_CHARDEV_NEEDS_REINIT)
+		aac_init_अक्षर();
 
-	aac = (struct aac_dev *)shost->hostdata;
+	aac = (काष्ठा aac_dev *)shost->hostdata;
 	aac->base_start = pci_resource_start(pdev, 0);
 	aac->scsi_host_ptr = shost;
 	aac->pdev = pdev;
-	aac->name = aac_driver_template.name;
+	aac->name = aac_driver_ढाँचा.name;
 	aac->id = shost->unique_id;
 	aac->cardtype = index;
 	INIT_LIST_HEAD(&aac->entry);
 
-	if (aac_reset_devices || reset_devices)
+	अगर (aac_reset_devices || reset_devices)
 		aac->init_reset = true;
 
-	aac->fibs = kcalloc(shost->can_queue + AAC_NUM_MGT_FIB,
-			    sizeof(struct fib),
+	aac->fibs = kसुस्मृति(shost->can_queue + AAC_NUM_MGT_FIB,
+			    माप(काष्ठा fib),
 			    GFP_KERNEL);
-	if (!aac->fibs) {
+	अगर (!aac->fibs) अणु
 		error = -ENOMEM;
-		goto out_free_host;
-	}
+		जाओ out_मुक्त_host;
+	पूर्ण
 
 	spin_lock_init(&aac->fib_lock);
 
@@ -1669,84 +1670,84 @@ static int aac_probe_one(struct pci_dev *pdev, const struct pci_device_id *id)
 	mutex_init(&aac->scan_mutex);
 
 	INIT_DELAYED_WORK(&aac->safw_rescan_work, aac_safw_rescan_worker);
-	INIT_DELAYED_WORK(&aac->src_reinit_aif_worker,
-				aac_src_reinit_aif_worker);
+	INIT_DELAYED_WORK(&aac->src_reinit_aअगर_worker,
+				aac_src_reinit_aअगर_worker);
 	/*
-	 *	Map in the registers from the adapter.
+	 *	Map in the रेजिस्टरs from the adapter.
 	 */
 	aac->base_size = AAC_MIN_FOOTPRINT_SIZE;
-	if ((*aac_drivers[index].init)(aac)) {
+	अगर ((*aac_drivers[index].init)(aac)) अणु
 		error = -ENODEV;
-		goto out_unmap;
-	}
+		जाओ out_unmap;
+	पूर्ण
 
-	if (aac->sync_mode) {
-		if (aac_sync_mode)
-			printk(KERN_INFO "%s%d: Sync. mode enforced "
+	अगर (aac->sync_mode) अणु
+		अगर (aac_sync_mode)
+			prपूर्णांकk(KERN_INFO "%s%d: Sync. mode enforced "
 				"by driver parameter. This will cause "
 				"a significant performance decrease!\n",
 				aac->name,
 				aac->id);
-		else
-			printk(KERN_INFO "%s%d: Async. mode not supported "
+		अन्यथा
+			prपूर्णांकk(KERN_INFO "%s%d: Async. mode not supported "
 				"by current driver, sync. mode enforced."
 				"\nPlease update driver to get full performance.\n",
 				aac->name,
 				aac->id);
-	}
+	पूर्ण
 
 	/*
-	 *	Start any kernel threads needed
+	 *	Start any kernel thपढ़ोs needed
 	 */
-	aac->thread = kthread_run(aac_command_thread, aac, AAC_DRIVERNAME);
-	if (IS_ERR(aac->thread)) {
-		printk(KERN_ERR "aacraid: Unable to create command thread.\n");
-		error = PTR_ERR(aac->thread);
-		aac->thread = NULL;
-		goto out_deinit;
-	}
+	aac->thपढ़ो = kthपढ़ो_run(aac_command_thपढ़ो, aac, AAC_DRIVERNAME);
+	अगर (IS_ERR(aac->thपढ़ो)) अणु
+		prपूर्णांकk(KERN_ERR "aacraid: Unable to create command thread.\n");
+		error = PTR_ERR(aac->thपढ़ो);
+		aac->thपढ़ो = शून्य;
+		जाओ out_deinit;
+	पूर्ण
 
 	aac->maximum_num_channels = aac_drivers[index].channels;
 	error = aac_get_adapter_info(aac);
-	if (error < 0)
-		goto out_deinit;
+	अगर (error < 0)
+		जाओ out_deinit;
 
 	/*
 	 * Lets override negotiations and drop the maximum SG limit to 34
 	 */
-	if ((aac_drivers[index].quirks & AAC_QUIRK_34SG) &&
-			(shost->sg_tablesize > 34)) {
+	अगर ((aac_drivers[index].quirks & AAC_QUIRK_34SG) &&
+			(shost->sg_tablesize > 34)) अणु
 		shost->sg_tablesize = 34;
 		shost->max_sectors = (shost->sg_tablesize * 8) + 112;
-	}
+	पूर्ण
 
-	if ((aac_drivers[index].quirks & AAC_QUIRK_17SG) &&
-			(shost->sg_tablesize > 17)) {
+	अगर ((aac_drivers[index].quirks & AAC_QUIRK_17SG) &&
+			(shost->sg_tablesize > 17)) अणु
 		shost->sg_tablesize = 17;
 		shost->max_sectors = (shost->sg_tablesize * 8) + 112;
-	}
+	पूर्ण
 
-	if (aac->adapter_info.options & AAC_OPT_NEW_COMM)
+	अगर (aac->adapter_info.options & AAC_OPT_NEW_COMM)
 		shost->max_segment_size = shost->max_sectors << 9;
-	else
+	अन्यथा
 		shost->max_segment_size = 65536;
 
 	/*
-	 * Firmware printf works only with older firmware.
+	 * Firmware म_लिखो works only with older firmware.
 	 */
-	if (aac_drivers[index].quirks & AAC_QUIRK_34SG)
-		aac->printf_enabled = 1;
-	else
-		aac->printf_enabled = 0;
+	अगर (aac_drivers[index].quirks & AAC_QUIRK_34SG)
+		aac->म_लिखो_enabled = 1;
+	अन्यथा
+		aac->म_लिखो_enabled = 0;
 
 	/*
-	 * max channel will be the physical channels plus 1 virtual channel
-	 * all containers are on the virtual channel 0 (CONTAINER_CHANNEL)
+	 * max channel will be the physical channels plus 1 भव channel
+	 * all containers are on the भव channel 0 (CONTAINER_CHANNEL)
 	 * physical channels are address by their actual physical number+1
 	 */
-	if (aac->nondasd_support || expose_physicals || aac->jbod)
+	अगर (aac->nondasd_support || expose_physicals || aac->jbod)
 		shost->max_channel = aac->maximum_num_channels;
-	else
+	अन्यथा
 		shost->max_channel = 0;
 
 	aac_get_config_status(aac, 0);
@@ -1754,18 +1755,18 @@ static int aac_probe_one(struct pci_dev *pdev, const struct pci_device_id *id)
 	list_add(&aac->entry, insert);
 
 	shost->max_id = aac->maximum_num_containers;
-	if (shost->max_id < aac->maximum_num_physicals)
+	अगर (shost->max_id < aac->maximum_num_physicals)
 		shost->max_id = aac->maximum_num_physicals;
-	if (shost->max_id < MAXIMUM_NUM_CONTAINERS)
+	अगर (shost->max_id < MAXIMUM_NUM_CONTAINERS)
 		shost->max_id = MAXIMUM_NUM_CONTAINERS;
-	else
+	अन्यथा
 		shost->this_id = shost->max_id;
 
-	if (!aac->sa_firmware && aac_drivers[index].quirks & AAC_QUIRK_SRC)
-		aac_intr_normal(aac, 0, 2, 0, NULL);
+	अगर (!aac->sa_firmware && aac_drivers[index].quirks & AAC_QUIRK_SRC)
+		aac_पूर्णांकr_normal(aac, 0, 2, 0, शून्य);
 
 	/*
-	 * dmb - we may need to move the setting of these parms somewhere else once
+	 * dmb - we may need to move the setting of these parms somewhere अन्यथा once
 	 * we get a fib that can report the actual numbers
 	 */
 	shost->max_lun = AAC_MAX_LUN;
@@ -1773,170 +1774,170 @@ static int aac_probe_one(struct pci_dev *pdev, const struct pci_device_id *id)
 	pci_set_drvdata(pdev, shost);
 
 	error = scsi_add_host(shost, &pdev->dev);
-	if (error)
-		goto out_deinit;
+	अगर (error)
+		जाओ out_deinit;
 
 	aac_scan_host(aac);
 
 	pci_enable_pcie_error_reporting(pdev);
 	pci_save_state(pdev);
 
-	return 0;
+	वापस 0;
 
  out_deinit:
-	__aac_shutdown(aac);
+	__aac_shutकरोwn(aac);
  out_unmap:
-	aac_fib_map_free(aac);
-	if (aac->comm_addr)
-		dma_free_coherent(&aac->pdev->dev, aac->comm_size,
+	aac_fib_map_मुक्त(aac);
+	अगर (aac->comm_addr)
+		dma_मुक्त_coherent(&aac->pdev->dev, aac->comm_size,
 				  aac->comm_addr, aac->comm_phys);
-	kfree(aac->queues);
+	kमुक्त(aac->queues);
 	aac_adapter_ioremap(aac, 0);
-	kfree(aac->fibs);
-	kfree(aac->fsa_dev);
- out_free_host:
+	kमुक्त(aac->fibs);
+	kमुक्त(aac->fsa_dev);
+ out_मुक्त_host:
 	scsi_host_put(shost);
  out_disable_pdev:
 	pci_disable_device(pdev);
  out:
-	return error;
-}
+	वापस error;
+पूर्ण
 
-static void aac_release_resources(struct aac_dev *aac)
-{
-	aac_adapter_disable_int(aac);
-	aac_free_irq(aac);
-}
+अटल व्योम aac_release_resources(काष्ठा aac_dev *aac)
+अणु
+	aac_adapter_disable_पूर्णांक(aac);
+	aac_मुक्त_irq(aac);
+पूर्ण
 
-static int aac_acquire_resources(struct aac_dev *dev)
-{
-	unsigned long status;
+अटल पूर्णांक aac_acquire_resources(काष्ठा aac_dev *dev)
+अणु
+	अचिन्हित दीर्घ status;
 	/*
-	 *	First clear out all interrupts.  Then enable the one's that we
+	 *	First clear out all पूर्णांकerrupts.  Then enable the one's that we
 	 *	can handle.
 	 */
-	while (!((status = src_readl(dev, MUnit.OMR)) & KERNEL_UP_AND_RUNNING)
+	जबतक (!((status = src_पढ़ोl(dev, MUnit.OMR)) & KERNEL_UP_AND_RUNNING)
 		|| status == 0xffffffff)
 			msleep(20);
 
-	aac_adapter_disable_int(dev);
-	aac_adapter_enable_int(dev);
+	aac_adapter_disable_पूर्णांक(dev);
+	aac_adapter_enable_पूर्णांक(dev);
 
 
-	if (aac_is_src(dev))
-		aac_define_int_mode(dev);
+	अगर (aac_is_src(dev))
+		aac_define_पूर्णांक_mode(dev);
 
-	if (dev->msi_enabled)
+	अगर (dev->msi_enabled)
 		aac_src_access_devreg(dev, AAC_ENABLE_MSIX);
 
-	if (aac_acquire_irq(dev))
-		goto error_iounmap;
+	अगर (aac_acquire_irq(dev))
+		जाओ error_iounmap;
 
-	aac_adapter_enable_int(dev);
+	aac_adapter_enable_पूर्णांक(dev);
 
 	/*max msix may change  after EEH
 	 * Re-assign vectors to fibs
 	 */
 	aac_fib_vector_assign(dev);
 
-	if (!dev->sync_mode) {
+	अगर (!dev->sync_mode) अणु
 		/* After EEH recovery or suspend resume, max_msix count
-		 * may change, therefore updating in init as well.
+		 * may change, thereक्रमe updating in init as well.
 		 */
 		dev->init->r7.no_of_msix_vectors = cpu_to_le32(dev->max_msix);
 		aac_adapter_start(dev);
-	}
-	return 0;
+	पूर्ण
+	वापस 0;
 
 error_iounmap:
-	return -1;
+	वापस -1;
 
-}
+पूर्ण
 
-static int __maybe_unused aac_suspend(struct device *dev)
-{
-	struct Scsi_Host *shost = dev_get_drvdata(dev);
-	struct aac_dev *aac = (struct aac_dev *)shost->hostdata;
+अटल पूर्णांक __maybe_unused aac_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा Scsi_Host *shost = dev_get_drvdata(dev);
+	काष्ठा aac_dev *aac = (काष्ठा aac_dev *)shost->hostdata;
 
 	scsi_host_block(shost);
 	aac_cancel_rescan_worker(aac);
-	aac_send_shutdown(aac);
+	aac_send_shutकरोwn(aac);
 
 	aac_release_resources(aac);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __maybe_unused aac_resume(struct device *dev)
-{
-	struct Scsi_Host *shost = dev_get_drvdata(dev);
-	struct aac_dev *aac = (struct aac_dev *)shost->hostdata;
+अटल पूर्णांक __maybe_unused aac_resume(काष्ठा device *dev)
+अणु
+	काष्ठा Scsi_Host *shost = dev_get_drvdata(dev);
+	काष्ठा aac_dev *aac = (काष्ठा aac_dev *)shost->hostdata;
 
-	if (aac_acquire_resources(aac))
-		goto fail_device;
+	अगर (aac_acquire_resources(aac))
+		जाओ fail_device;
 	/*
 	* reset this flag to unblock ioctl() as it was set at
-	* aac_send_shutdown() to block ioctls from upperlayer
+	* aac_send_shutकरोwn() to block ioctls from upperlayer
 	*/
-	aac->adapter_shutdown = 0;
+	aac->adapter_shutकरोwn = 0;
 	scsi_host_unblock(shost, SDEV_RUNNING);
 
-	return 0;
+	वापस 0;
 
 fail_device:
-	printk(KERN_INFO "%s%d: resume failed.\n", aac->name, aac->id);
+	prपूर्णांकk(KERN_INFO "%s%d: resume failed.\n", aac->name, aac->id);
 	scsi_host_put(shost);
-	return -ENODEV;
-}
+	वापस -ENODEV;
+पूर्ण
 
-static void aac_shutdown(struct pci_dev *dev)
-{
-	struct Scsi_Host *shost = pci_get_drvdata(dev);
+अटल व्योम aac_shutकरोwn(काष्ठा pci_dev *dev)
+अणु
+	काष्ठा Scsi_Host *shost = pci_get_drvdata(dev);
 
 	scsi_host_block(shost);
-	__aac_shutdown((struct aac_dev *)shost->hostdata);
-}
+	__aac_shutकरोwn((काष्ठा aac_dev *)shost->hostdata);
+पूर्ण
 
-static void aac_remove_one(struct pci_dev *pdev)
-{
-	struct Scsi_Host *shost = pci_get_drvdata(pdev);
-	struct aac_dev *aac = (struct aac_dev *)shost->hostdata;
+अटल व्योम aac_हटाओ_one(काष्ठा pci_dev *pdev)
+अणु
+	काष्ठा Scsi_Host *shost = pci_get_drvdata(pdev);
+	काष्ठा aac_dev *aac = (काष्ठा aac_dev *)shost->hostdata;
 
 	aac_cancel_rescan_worker(aac);
-	scsi_remove_host(shost);
+	scsi_हटाओ_host(shost);
 
-	__aac_shutdown(aac);
-	aac_fib_map_free(aac);
-	dma_free_coherent(&aac->pdev->dev, aac->comm_size, aac->comm_addr,
+	__aac_shutकरोwn(aac);
+	aac_fib_map_मुक्त(aac);
+	dma_मुक्त_coherent(&aac->pdev->dev, aac->comm_size, aac->comm_addr,
 			  aac->comm_phys);
-	kfree(aac->queues);
+	kमुक्त(aac->queues);
 
 	aac_adapter_ioremap(aac, 0);
 
-	kfree(aac->fibs);
-	kfree(aac->fsa_dev);
+	kमुक्त(aac->fibs);
+	kमुक्त(aac->fsa_dev);
 
 	list_del(&aac->entry);
 	scsi_host_put(shost);
 	pci_disable_device(pdev);
-	if (list_empty(&aac_devices)) {
-		unregister_chrdev(aac_cfg_major, "aac");
+	अगर (list_empty(&aac_devices)) अणु
+		unरेजिस्टर_chrdev(aac_cfg_major, "aac");
 		aac_cfg_major = AAC_CHARDEV_NEEDS_REINIT;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static pci_ers_result_t aac_pci_error_detected(struct pci_dev *pdev,
+अटल pci_ers_result_t aac_pci_error_detected(काष्ठा pci_dev *pdev,
 					pci_channel_state_t error)
-{
-	struct Scsi_Host *shost = pci_get_drvdata(pdev);
-	struct aac_dev *aac = shost_priv(shost);
+अणु
+	काष्ठा Scsi_Host *shost = pci_get_drvdata(pdev);
+	काष्ठा aac_dev *aac = shost_priv(shost);
 
 	dev_err(&pdev->dev, "aacraid: PCI error detected %x\n", error);
 
-	switch (error) {
-	case pci_channel_io_normal:
-		return PCI_ERS_RESULT_CAN_RECOVER;
-	case pci_channel_io_frozen:
+	चयन (error) अणु
+	हाल pci_channel_io_normal:
+		वापस PCI_ERS_RESULT_CAN_RECOVER;
+	हाल pci_channel_io_frozen:
 		aac->handle_pci_error = 1;
 
 		scsi_host_block(shost);
@@ -1947,65 +1948,65 @@ static pci_ers_result_t aac_pci_error_detected(struct pci_dev *pdev,
 		pci_disable_pcie_error_reporting(pdev);
 		aac_adapter_ioremap(aac, 0);
 
-		return PCI_ERS_RESULT_NEED_RESET;
-	case pci_channel_io_perm_failure:
+		वापस PCI_ERS_RESULT_NEED_RESET;
+	हाल pci_channel_io_perm_failure:
 		aac->handle_pci_error = 1;
 
 		scsi_host_complete_all_commands(shost, DID_NO_CONNECT);
-		return PCI_ERS_RESULT_DISCONNECT;
-	}
+		वापस PCI_ERS_RESULT_DISCONNECT;
+	पूर्ण
 
-	return PCI_ERS_RESULT_NEED_RESET;
-}
+	वापस PCI_ERS_RESULT_NEED_RESET;
+पूर्ण
 
-static pci_ers_result_t aac_pci_mmio_enabled(struct pci_dev *pdev)
-{
+अटल pci_ers_result_t aac_pci_mmio_enabled(काष्ठा pci_dev *pdev)
+अणु
 	dev_err(&pdev->dev, "aacraid: PCI error - mmio enabled\n");
-	return PCI_ERS_RESULT_NEED_RESET;
-}
+	वापस PCI_ERS_RESULT_NEED_RESET;
+पूर्ण
 
-static pci_ers_result_t aac_pci_slot_reset(struct pci_dev *pdev)
-{
+अटल pci_ers_result_t aac_pci_slot_reset(काष्ठा pci_dev *pdev)
+अणु
 	dev_err(&pdev->dev, "aacraid: PCI error - slot reset\n");
 	pci_restore_state(pdev);
-	if (pci_enable_device(pdev)) {
+	अगर (pci_enable_device(pdev)) अणु
 		dev_warn(&pdev->dev,
 			"aacraid: failed to enable slave\n");
-		goto fail_device;
-	}
+		जाओ fail_device;
+	पूर्ण
 
 	pci_set_master(pdev);
 
-	if (pci_enable_device_mem(pdev)) {
+	अगर (pci_enable_device_mem(pdev)) अणु
 		dev_err(&pdev->dev, "pci_enable_device_mem failed\n");
-		goto fail_device;
-	}
+		जाओ fail_device;
+	पूर्ण
 
-	return PCI_ERS_RESULT_RECOVERED;
+	वापस PCI_ERS_RESULT_RECOVERED;
 
 fail_device:
 	dev_err(&pdev->dev, "aacraid: PCI error - slot reset failed\n");
-	return PCI_ERS_RESULT_DISCONNECT;
-}
+	वापस PCI_ERS_RESULT_DISCONNECT;
+पूर्ण
 
 
-static void aac_pci_resume(struct pci_dev *pdev)
-{
-	struct Scsi_Host *shost = pci_get_drvdata(pdev);
-	struct aac_dev *aac = (struct aac_dev *)shost_priv(shost);
+अटल व्योम aac_pci_resume(काष्ठा pci_dev *pdev)
+अणु
+	काष्ठा Scsi_Host *shost = pci_get_drvdata(pdev);
+	काष्ठा aac_dev *aac = (काष्ठा aac_dev *)shost_priv(shost);
 
-	if (aac_adapter_ioremap(aac, aac->base_size)) {
+	अगर (aac_adapter_ioremap(aac, aac->base_size)) अणु
 
 		dev_err(&pdev->dev, "aacraid: ioremap failed\n");
 		/* remap failed, go back ... */
-		aac->comm_interface = AAC_COMM_PRODUCER;
-		if (aac_adapter_ioremap(aac, AAC_MIN_FOOTPRINT_SIZE)) {
+		aac->comm_पूर्णांकerface = AAC_COMM_PRODUCER;
+		अगर (aac_adapter_ioremap(aac, AAC_MIN_FOOTPRINT_SIZE)) अणु
 			dev_warn(&pdev->dev,
 				"aacraid: unable to map adapter.\n");
 
-			return;
-		}
-	}
+			वापस;
+		पूर्ण
+	पूर्ण
 
 	msleep(10000);
 
@@ -2013,9 +2014,9 @@ static void aac_pci_resume(struct pci_dev *pdev)
 
 	/*
 	 * reset this flag to unblock ioctl() as it was set
-	 * at aac_send_shutdown() to block ioctls from upperlayer
+	 * at aac_send_shutकरोwn() to block ioctls from upperlayer
 	 */
-	aac->adapter_shutdown = 0;
+	aac->adapter_shutकरोwn = 0;
 	aac->handle_pci_error = 0;
 
 	scsi_host_unblock(shost, SDEV_RUNNING);
@@ -2023,50 +2024,50 @@ static void aac_pci_resume(struct pci_dev *pdev)
 	pci_save_state(pdev);
 
 	dev_err(&pdev->dev, "aacraid: PCI error - resume\n");
-}
+पूर्ण
 
-static struct pci_error_handlers aac_pci_err_handler = {
+अटल काष्ठा pci_error_handlers aac_pci_err_handler = अणु
 	.error_detected		= aac_pci_error_detected,
 	.mmio_enabled		= aac_pci_mmio_enabled,
 	.slot_reset		= aac_pci_slot_reset,
 	.resume			= aac_pci_resume,
-};
+पूर्ण;
 
-static SIMPLE_DEV_PM_OPS(aac_pm_ops, aac_suspend, aac_resume);
+अटल SIMPLE_DEV_PM_OPS(aac_pm_ops, aac_suspend, aac_resume);
 
-static struct pci_driver aac_pci_driver = {
+अटल काष्ठा pci_driver aac_pci_driver = अणु
 	.name		= AAC_DRIVERNAME,
 	.id_table	= aac_pci_tbl,
 	.probe		= aac_probe_one,
-	.remove		= aac_remove_one,
+	.हटाओ		= aac_हटाओ_one,
 	.driver.pm      = &aac_pm_ops,
-	.shutdown	= aac_shutdown,
+	.shutकरोwn	= aac_shutकरोwn,
 	.err_handler    = &aac_pci_err_handler,
-};
+पूर्ण;
 
-static int __init aac_init(void)
-{
-	int error;
+अटल पूर्णांक __init aac_init(व्योम)
+अणु
+	पूर्णांक error;
 
-	printk(KERN_INFO "Adaptec %s driver %s\n",
+	prपूर्णांकk(KERN_INFO "Adaptec %s driver %s\n",
 	  AAC_DRIVERNAME, aac_driver_version);
 
-	error = pci_register_driver(&aac_pci_driver);
-	if (error < 0)
-		return error;
+	error = pci_रेजिस्टर_driver(&aac_pci_driver);
+	अगर (error < 0)
+		वापस error;
 
-	aac_init_char();
+	aac_init_अक्षर();
 
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void __exit aac_exit(void)
-{
-	if (aac_cfg_major > -1)
-		unregister_chrdev(aac_cfg_major, "aac");
-	pci_unregister_driver(&aac_pci_driver);
-}
+अटल व्योम __निकास aac_निकास(व्योम)
+अणु
+	अगर (aac_cfg_major > -1)
+		unरेजिस्टर_chrdev(aac_cfg_major, "aac");
+	pci_unरेजिस्टर_driver(&aac_pci_driver);
+पूर्ण
 
 module_init(aac_init);
-module_exit(aac_exit);
+module_निकास(aac_निकास);

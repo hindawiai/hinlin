@@ -1,67 +1,68 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef ASM_X86_CAMELLIA_H
-#define ASM_X86_CAMELLIA_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित ASM_X86_CAMELLIA_H
+#घोषणा ASM_X86_CAMELLIA_H
 
-#include <crypto/b128ops.h>
-#include <linux/crypto.h>
-#include <linux/kernel.h>
+#समावेश <crypto/b128ops.h>
+#समावेश <linux/crypto.h>
+#समावेश <linux/kernel.h>
 
-#define CAMELLIA_MIN_KEY_SIZE	16
-#define CAMELLIA_MAX_KEY_SIZE	32
-#define CAMELLIA_BLOCK_SIZE	16
-#define CAMELLIA_TABLE_BYTE_LEN	272
-#define CAMELLIA_PARALLEL_BLOCKS 2
+#घोषणा CAMELLIA_MIN_KEY_SIZE	16
+#घोषणा CAMELLIA_MAX_KEY_SIZE	32
+#घोषणा CAMELLIA_BLOCK_SIZE	16
+#घोषणा CAMELLIA_TABLE_BYTE_LEN	272
+#घोषणा CAMELLIA_PARALLEL_BLOCKS 2
 
-struct crypto_skcipher;
+काष्ठा crypto_skcipher;
 
-struct camellia_ctx {
-	u64 key_table[CAMELLIA_TABLE_BYTE_LEN / sizeof(u64)];
+काष्ठा camellia_ctx अणु
+	u64 key_table[CAMELLIA_TABLE_BYTE_LEN / माप(u64)];
 	u32 key_length;
-};
+पूर्ण;
 
-extern int __camellia_setkey(struct camellia_ctx *cctx,
-			     const unsigned char *key,
-			     unsigned int key_len);
+बाह्य पूर्णांक __camellia_setkey(काष्ठा camellia_ctx *cctx,
+			     स्थिर अचिन्हित अक्षर *key,
+			     अचिन्हित पूर्णांक key_len);
 
 /* regular block cipher functions */
-asmlinkage void __camellia_enc_blk(const void *ctx, u8 *dst, const u8 *src,
+यंत्रlinkage व्योम __camellia_enc_blk(स्थिर व्योम *ctx, u8 *dst, स्थिर u8 *src,
 				   bool xor);
-asmlinkage void camellia_dec_blk(const void *ctx, u8 *dst, const u8 *src);
+यंत्रlinkage व्योम camellia_dec_blk(स्थिर व्योम *ctx, u8 *dst, स्थिर u8 *src);
 
 /* 2-way parallel cipher functions */
-asmlinkage void __camellia_enc_blk_2way(const void *ctx, u8 *dst, const u8 *src,
+यंत्रlinkage व्योम __camellia_enc_blk_2way(स्थिर व्योम *ctx, u8 *dst, स्थिर u8 *src,
 					bool xor);
-asmlinkage void camellia_dec_blk_2way(const void *ctx, u8 *dst, const u8 *src);
+यंत्रlinkage व्योम camellia_dec_blk_2way(स्थिर व्योम *ctx, u8 *dst, स्थिर u8 *src);
 
 /* 16-way parallel cipher functions (avx/aes-ni) */
-asmlinkage void camellia_ecb_enc_16way(const void *ctx, u8 *dst, const u8 *src);
-asmlinkage void camellia_ecb_dec_16way(const void *ctx, u8 *dst, const u8 *src);
+यंत्रlinkage व्योम camellia_ecb_enc_16way(स्थिर व्योम *ctx, u8 *dst, स्थिर u8 *src);
+यंत्रlinkage व्योम camellia_ecb_dec_16way(स्थिर व्योम *ctx, u8 *dst, स्थिर u8 *src);
 
-asmlinkage void camellia_cbc_dec_16way(const void *ctx, u8 *dst, const u8 *src);
+यंत्रlinkage व्योम camellia_cbc_dec_16way(स्थिर व्योम *ctx, u8 *dst, स्थिर u8 *src);
 
-static inline void camellia_enc_blk(const void *ctx, u8 *dst, const u8 *src)
-{
+अटल अंतरभूत व्योम camellia_enc_blk(स्थिर व्योम *ctx, u8 *dst, स्थिर u8 *src)
+अणु
 	__camellia_enc_blk(ctx, dst, src, false);
-}
+पूर्ण
 
-static inline void camellia_enc_blk_xor(const void *ctx, u8 *dst, const u8 *src)
-{
+अटल अंतरभूत व्योम camellia_enc_blk_xor(स्थिर व्योम *ctx, u8 *dst, स्थिर u8 *src)
+अणु
 	__camellia_enc_blk(ctx, dst, src, true);
-}
+पूर्ण
 
-static inline void camellia_enc_blk_2way(const void *ctx, u8 *dst,
-					 const u8 *src)
-{
+अटल अंतरभूत व्योम camellia_enc_blk_2way(स्थिर व्योम *ctx, u8 *dst,
+					 स्थिर u8 *src)
+अणु
 	__camellia_enc_blk_2way(ctx, dst, src, false);
-}
+पूर्ण
 
-static inline void camellia_enc_blk_xor_2way(const void *ctx, u8 *dst,
-					     const u8 *src)
-{
+अटल अंतरभूत व्योम camellia_enc_blk_xor_2way(स्थिर व्योम *ctx, u8 *dst,
+					     स्थिर u8 *src)
+अणु
 	__camellia_enc_blk_2way(ctx, dst, src, true);
-}
+पूर्ण
 
 /* glue helpers */
-extern void camellia_decrypt_cbc_2way(const void *ctx, u8 *dst, const u8 *src);
+बाह्य व्योम camellia_decrypt_cbc_2way(स्थिर व्योम *ctx, u8 *dst, स्थिर u8 *src);
 
-#endif /* ASM_X86_CAMELLIA_H */
+#पूर्ण_अगर /* ASM_X86_CAMELLIA_H */

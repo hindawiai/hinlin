@@ -1,64 +1,65 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _XEN_XEN_H
-#define _XEN_XEN_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _XEN_XEN_H
+#घोषणा _XEN_XEN_H
 
-enum xen_domain_type {
+क्रमागत xen_करोमुख्य_type अणु
 	XEN_NATIVE,		/* running on bare hardware    */
-	XEN_PV_DOMAIN,		/* running in a PV domain      */
-	XEN_HVM_DOMAIN,		/* running in a Xen hvm domain */
-};
+	XEN_PV_DOMAIN,		/* running in a PV करोमुख्य      */
+	XEN_HVM_DOMAIN,		/* running in a Xen hvm करोमुख्य */
+पूर्ण;
 
-#ifdef CONFIG_XEN
-extern enum xen_domain_type xen_domain_type;
-#else
-#define xen_domain_type		XEN_NATIVE
-#endif
+#अगर_घोषित CONFIG_XEN
+बाह्य क्रमागत xen_करोमुख्य_type xen_करोमुख्य_type;
+#अन्यथा
+#घोषणा xen_करोमुख्य_type		XEN_NATIVE
+#पूर्ण_अगर
 
-#ifdef CONFIG_XEN_PVH
-extern bool xen_pvh;
-#else
-#define xen_pvh			0
-#endif
+#अगर_घोषित CONFIG_XEN_PVH
+बाह्य bool xen_pvh;
+#अन्यथा
+#घोषणा xen_pvh			0
+#पूर्ण_अगर
 
-#define xen_domain()		(xen_domain_type != XEN_NATIVE)
-#define xen_pv_domain()		(xen_domain_type == XEN_PV_DOMAIN)
-#define xen_hvm_domain()	(xen_domain_type == XEN_HVM_DOMAIN)
-#define xen_pvh_domain()	(xen_pvh)
+#घोषणा xen_करोमुख्य()		(xen_करोमुख्य_type != XEN_NATIVE)
+#घोषणा xen_pv_करोमुख्य()		(xen_करोमुख्य_type == XEN_PV_DOMAIN)
+#घोषणा xen_hvm_करोमुख्य()	(xen_करोमुख्य_type == XEN_HVM_DOMAIN)
+#घोषणा xen_pvh_करोमुख्य()	(xen_pvh)
 
-#include <linux/types.h>
+#समावेश <linux/types.h>
 
-extern uint32_t xen_start_flags;
+बाह्य uपूर्णांक32_t xen_start_flags;
 
-#include <xen/interface/hvm/start_info.h>
-extern struct hvm_start_info pvh_start_info;
+#समावेश <xen/पूर्णांकerface/hvm/start_info.h>
+बाह्य काष्ठा hvm_start_info pvh_start_info;
 
-#ifdef CONFIG_XEN_DOM0
-#include <xen/interface/xen.h>
-#include <asm/xen/hypervisor.h>
+#अगर_घोषित CONFIG_XEN_DOM0
+#समावेश <xen/पूर्णांकerface/xen.h>
+#समावेश <यंत्र/xen/hypervisor.h>
 
-#define xen_initial_domain()	(xen_domain() && \
+#घोषणा xen_initial_करोमुख्य()	(xen_करोमुख्य() && \
 				 (xen_start_flags & SIF_INITDOMAIN))
-#else  /* !CONFIG_XEN_DOM0 */
-#define xen_initial_domain()	(0)
-#endif	/* CONFIG_XEN_DOM0 */
+#अन्यथा  /* !CONFIG_XEN_DOM0 */
+#घोषणा xen_initial_करोमुख्य()	(0)
+#पूर्ण_अगर	/* CONFIG_XEN_DOM0 */
 
-struct bio_vec;
-struct page;
+काष्ठा bio_vec;
+काष्ठा page;
 
-bool xen_biovec_phys_mergeable(const struct bio_vec *vec1,
-		const struct page *page);
+bool xen_biovec_phys_mergeable(स्थिर काष्ठा bio_vec *vec1,
+		स्थिर काष्ठा page *page);
 
-#if defined(CONFIG_MEMORY_HOTPLUG) && defined(CONFIG_XEN_BALLOON)
-extern u64 xen_saved_max_mem_size;
-#endif
+#अगर defined(CONFIG_MEMORY_HOTPLUG) && defined(CONFIG_XEN_BALLOON)
+बाह्य u64 xen_saved_max_mem_size;
+#पूर्ण_अगर
 
-#ifdef CONFIG_XEN_UNPOPULATED_ALLOC
-int xen_alloc_unpopulated_pages(unsigned int nr_pages, struct page **pages);
-void xen_free_unpopulated_pages(unsigned int nr_pages, struct page **pages);
-#else
-#define xen_alloc_unpopulated_pages alloc_xenballooned_pages
-#define xen_free_unpopulated_pages free_xenballooned_pages
-#include <xen/balloon.h>
-#endif
+#अगर_घोषित CONFIG_XEN_UNPOPULATED_ALLOC
+पूर्णांक xen_alloc_unpopulated_pages(अचिन्हित पूर्णांक nr_pages, काष्ठा page **pages);
+व्योम xen_मुक्त_unpopulated_pages(अचिन्हित पूर्णांक nr_pages, काष्ठा page **pages);
+#अन्यथा
+#घोषणा xen_alloc_unpopulated_pages alloc_xenballooned_pages
+#घोषणा xen_मुक्त_unpopulated_pages मुक्त_xenballooned_pages
+#समावेश <xen/balloon.h>
+#पूर्ण_अगर
 
-#endif	/* _XEN_XEN_H */
+#पूर्ण_अगर	/* _XEN_XEN_H */

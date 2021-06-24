@@ -1,37 +1,38 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * Coredump functionality for Remoteproc framework.
+ * Coredump functionality क्रम Remoteproc framework.
  *
  * Copyright (c) 2020, The Linux Foundation. All rights reserved.
  */
 
-#include <linux/completion.h>
-#include <linux/devcoredump.h>
-#include <linux/device.h>
-#include <linux/kernel.h>
-#include <linux/remoteproc.h>
-#include "remoteproc_internal.h"
-#include "remoteproc_elf_helpers.h"
+#समावेश <linux/completion.h>
+#समावेश <linux/devcoredump.h>
+#समावेश <linux/device.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/remoteproc.h>
+#समावेश "remoteproc_internal.h"
+#समावेश "remoteproc_elf_helpers.h"
 
-struct rproc_coredump_state {
-	struct rproc *rproc;
-	void *header;
-	struct completion dump_done;
-};
+काष्ठा rproc_coredump_state अणु
+	काष्ठा rproc *rproc;
+	व्योम *header;
+	काष्ठा completion dump_करोne;
+पूर्ण;
 
 /**
  * rproc_coredump_cleanup() - clean up dump_segments list
  * @rproc: the remote processor handle
  */
-void rproc_coredump_cleanup(struct rproc *rproc)
-{
-	struct rproc_dump_segment *entry, *tmp;
+व्योम rproc_coredump_cleanup(काष्ठा rproc *rproc)
+अणु
+	काष्ठा rproc_dump_segment *entry, *पंचांगp;
 
-	list_for_each_entry_safe(entry, tmp, &rproc->dump_segments, node) {
+	list_क्रम_each_entry_safe(entry, पंचांगp, &rproc->dump_segments, node) अणु
 		list_del(&entry->node);
-		kfree(entry);
-	}
-}
+		kमुक्त(entry);
+	पूर्ण
+पूर्ण
 
 /**
  * rproc_coredump_add_segment() - add segment of device memory to coredump
@@ -39,26 +40,26 @@ void rproc_coredump_cleanup(struct rproc *rproc)
  * @da:		device address
  * @size:	size of segment
  *
- * Add device memory to the list of segments to be included in a coredump for
+ * Add device memory to the list of segments to be included in a coredump क्रम
  * the remoteproc.
  *
- * Return: 0 on success, negative errno on error.
+ * Return: 0 on success, negative त्रुटि_सं on error.
  */
-int rproc_coredump_add_segment(struct rproc *rproc, dma_addr_t da, size_t size)
-{
-	struct rproc_dump_segment *segment;
+पूर्णांक rproc_coredump_add_segment(काष्ठा rproc *rproc, dma_addr_t da, माप_प्रकार size)
+अणु
+	काष्ठा rproc_dump_segment *segment;
 
-	segment = kzalloc(sizeof(*segment), GFP_KERNEL);
-	if (!segment)
-		return -ENOMEM;
+	segment = kzalloc(माप(*segment), GFP_KERNEL);
+	अगर (!segment)
+		वापस -ENOMEM;
 
 	segment->da = da;
 	segment->size = size;
 
 	list_add_tail(&segment->node, &rproc->dump_segments);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(rproc_coredump_add_segment);
 
 /**
@@ -66,28 +67,28 @@ EXPORT_SYMBOL(rproc_coredump_add_segment);
  * @rproc:	handle of a remote processor
  * @da:		device address
  * @size:	size of segment
- * @dumpfn:	custom dump function called for each segment during coredump
- * @priv:	private data
+ * @dumpfn:	custom dump function called क्रम each segment during coredump
+ * @priv:	निजी data
  *
  * Add device memory to the list of segments to be included in the coredump
- * and associate the segment with the given custom dump function and private
+ * and associate the segment with the given custom dump function and निजी
  * data.
  *
- * Return: 0 on success, negative errno on error.
+ * Return: 0 on success, negative त्रुटि_सं on error.
  */
-int rproc_coredump_add_custom_segment(struct rproc *rproc,
-				      dma_addr_t da, size_t size,
-				      void (*dumpfn)(struct rproc *rproc,
-						     struct rproc_dump_segment *segment,
-						     void *dest, size_t offset,
-						     size_t size),
-				      void *priv)
-{
-	struct rproc_dump_segment *segment;
+पूर्णांक rproc_coredump_add_custom_segment(काष्ठा rproc *rproc,
+				      dma_addr_t da, माप_प्रकार size,
+				      व्योम (*dumpfn)(काष्ठा rproc *rproc,
+						     काष्ठा rproc_dump_segment *segment,
+						     व्योम *dest, माप_प्रकार offset,
+						     माप_प्रकार size),
+				      व्योम *priv)
+अणु
+	काष्ठा rproc_dump_segment *segment;
 
-	segment = kzalloc(sizeof(*segment), GFP_KERNEL);
-	if (!segment)
-		return -ENOMEM;
+	segment = kzalloc(माप(*segment), GFP_KERNEL);
+	अगर (!segment)
+		वापस -ENOMEM;
 
 	segment->da = da;
 	segment->size = size;
@@ -96,117 +97,117 @@ int rproc_coredump_add_custom_segment(struct rproc *rproc,
 
 	list_add_tail(&segment->node, &rproc->dump_segments);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(rproc_coredump_add_custom_segment);
 
 /**
- * rproc_coredump_set_elf_info() - set coredump elf information
+ * rproc_coredump_set_elf_info() - set coredump elf inक्रमmation
  * @rproc:	handle of a remote processor
- * @class:	elf class for coredump elf file
- * @machine:	elf machine for coredump elf file
+ * @class:	elf class क्रम coredump elf file
+ * @machine:	elf machine क्रम coredump elf file
  *
- * Set elf information which will be used for coredump elf file.
+ * Set elf inक्रमmation which will be used क्रम coredump elf file.
  *
- * Return: 0 on success, negative errno on error.
+ * Return: 0 on success, negative त्रुटि_सं on error.
  */
-int rproc_coredump_set_elf_info(struct rproc *rproc, u8 class, u16 machine)
-{
-	if (class != ELFCLASS64 && class != ELFCLASS32)
-		return -EINVAL;
+पूर्णांक rproc_coredump_set_elf_info(काष्ठा rproc *rproc, u8 class, u16 machine)
+अणु
+	अगर (class != ELFCLASS64 && class != ELFCLASS32)
+		वापस -EINVAL;
 
 	rproc->elf_class = class;
 	rproc->elf_machine = machine;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(rproc_coredump_set_elf_info);
 
-static void rproc_coredump_free(void *data)
-{
-	struct rproc_coredump_state *dump_state = data;
+अटल व्योम rproc_coredump_मुक्त(व्योम *data)
+अणु
+	काष्ठा rproc_coredump_state *dump_state = data;
 
-	vfree(dump_state->header);
-	complete(&dump_state->dump_done);
-}
+	vमुक्त(dump_state->header);
+	complete(&dump_state->dump_करोne);
+पूर्ण
 
-static void *rproc_coredump_find_segment(loff_t user_offset,
-					 struct list_head *segments,
-					 size_t *data_left)
-{
-	struct rproc_dump_segment *segment;
+अटल व्योम *rproc_coredump_find_segment(loff_t user_offset,
+					 काष्ठा list_head *segments,
+					 माप_प्रकार *data_left)
+अणु
+	काष्ठा rproc_dump_segment *segment;
 
-	list_for_each_entry(segment, segments, node) {
-		if (user_offset < segment->size) {
+	list_क्रम_each_entry(segment, segments, node) अणु
+		अगर (user_offset < segment->size) अणु
 			*data_left = segment->size - user_offset;
-			return segment;
-		}
+			वापस segment;
+		पूर्ण
 		user_offset -= segment->size;
-	}
+	पूर्ण
 
 	*data_left = 0;
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static void rproc_copy_segment(struct rproc *rproc, void *dest,
-			       struct rproc_dump_segment *segment,
-			       size_t offset, size_t size)
-{
-	void *ptr;
+अटल व्योम rproc_copy_segment(काष्ठा rproc *rproc, व्योम *dest,
+			       काष्ठा rproc_dump_segment *segment,
+			       माप_प्रकार offset, माप_प्रकार size)
+अणु
+	व्योम *ptr;
 	bool is_iomem;
 
-	if (segment->dump) {
+	अगर (segment->dump) अणु
 		segment->dump(rproc, segment, dest, offset, size);
-	} else {
+	पूर्ण अन्यथा अणु
 		ptr = rproc_da_to_va(rproc, segment->da + offset, size, &is_iomem);
-		if (!ptr) {
+		अगर (!ptr) अणु
 			dev_err(&rproc->dev,
 				"invalid copy request for segment %pad with offset %zu and size %zu)\n",
 				&segment->da, offset, size);
-			memset(dest, 0xff, size);
-		} else {
-			if (is_iomem)
-				memcpy_fromio(dest, ptr, size);
-			else
-				memcpy(dest, ptr, size);
-		}
-	}
-}
+			स_रखो(dest, 0xff, size);
+		पूर्ण अन्यथा अणु
+			अगर (is_iomem)
+				स_नकल_fromio(dest, ptr, size);
+			अन्यथा
+				स_नकल(dest, ptr, size);
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static ssize_t rproc_coredump_read(char *buffer, loff_t offset, size_t count,
-				   void *data, size_t header_sz)
-{
-	size_t seg_data, bytes_left = count;
-	ssize_t copy_sz;
-	struct rproc_dump_segment *seg;
-	struct rproc_coredump_state *dump_state = data;
-	struct rproc *rproc = dump_state->rproc;
-	void *elfcore = dump_state->header;
+अटल sमाप_प्रकार rproc_coredump_पढ़ो(अक्षर *buffer, loff_t offset, माप_प्रकार count,
+				   व्योम *data, माप_प्रकार header_sz)
+अणु
+	माप_प्रकार seg_data, bytes_left = count;
+	sमाप_प्रकार copy_sz;
+	काष्ठा rproc_dump_segment *seg;
+	काष्ठा rproc_coredump_state *dump_state = data;
+	काष्ठा rproc *rproc = dump_state->rproc;
+	व्योम *elfcore = dump_state->header;
 
-	/* Copy the vmalloc'ed header first. */
-	if (offset < header_sz) {
-		copy_sz = memory_read_from_buffer(buffer, count, &offset,
+	/* Copy the vदो_स्मृति'ed header first. */
+	अगर (offset < header_sz) अणु
+		copy_sz = memory_पढ़ो_from_buffer(buffer, count, &offset,
 						  elfcore, header_sz);
 
-		return copy_sz;
-	}
+		वापस copy_sz;
+	पूर्ण
 
 	/*
 	 * Find out the segment memory chunk to be copied based on offset.
-	 * Keep copying data until count bytes are read.
+	 * Keep copying data until count bytes are पढ़ो.
 	 */
-	while (bytes_left) {
+	जबतक (bytes_left) अणु
 		seg = rproc_coredump_find_segment(offset - header_sz,
 						  &rproc->dump_segments,
 						  &seg_data);
-		/* EOF check */
-		if (!seg) {
+		/* खातापूर्ण check */
+		अगर (!seg) अणु
 			dev_info(&rproc->dev, "Ramdump done, %lld bytes read",
 				 offset);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		copy_sz = min_t(size_t, bytes_left, seg_data);
+		copy_sz = min_t(माप_प्रकार, bytes_left, seg_data);
 
 		rproc_copy_segment(rproc, buffer, seg, seg->size - seg_data,
 				   copy_sz);
@@ -214,67 +215,67 @@ static ssize_t rproc_coredump_read(char *buffer, loff_t offset, size_t count,
 		offset += copy_sz;
 		buffer += copy_sz;
 		bytes_left -= copy_sz;
-	}
+	पूर्ण
 
-	return count - bytes_left;
-}
+	वापस count - bytes_left;
+पूर्ण
 
 /**
- * rproc_coredump() - perform coredump
+ * rproc_coredump() - perक्रमm coredump
  * @rproc:	rproc handle
  *
- * This function will generate an ELF header for the registered segments
+ * This function will generate an ELF header क्रम the रेजिस्टरed segments
  * and create a devcoredump device associated with rproc. Based on the
  * coredump configuration this function will directly copy the segments
  * from device memory to userspace or copy segments from device memory to
- * a separate buffer, which can then be read by userspace.
- * The first approach avoids using extra vmalloc memory. But it will stall
- * recovery flow until dump is read by userspace.
+ * a separate buffer, which can then be पढ़ो by userspace.
+ * The first approach aव्योमs using extra vदो_स्मृति memory. But it will stall
+ * recovery flow until dump is पढ़ो by userspace.
  */
-void rproc_coredump(struct rproc *rproc)
-{
-	struct rproc_dump_segment *segment;
-	void *phdr;
-	void *ehdr;
-	size_t data_size;
-	size_t offset;
-	void *data;
+व्योम rproc_coredump(काष्ठा rproc *rproc)
+अणु
+	काष्ठा rproc_dump_segment *segment;
+	व्योम *phdr;
+	व्योम *ehdr;
+	माप_प्रकार data_size;
+	माप_प्रकार offset;
+	व्योम *data;
 	u8 class = rproc->elf_class;
-	int phnum = 0;
-	struct rproc_coredump_state dump_state;
-	enum rproc_dump_mechanism dump_conf = rproc->dump_conf;
+	पूर्णांक phnum = 0;
+	काष्ठा rproc_coredump_state dump_state;
+	क्रमागत rproc_dump_mechanism dump_conf = rproc->dump_conf;
 
-	if (list_empty(&rproc->dump_segments) ||
+	अगर (list_empty(&rproc->dump_segments) ||
 	    dump_conf == RPROC_COREDUMP_DISABLED)
-		return;
+		वापस;
 
-	if (class == ELFCLASSNONE) {
+	अगर (class == ELFCLASSNONE) अणु
 		dev_err(&rproc->dev, "Elf class is not set\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	data_size = elf_size_of_hdr(class);
-	list_for_each_entry(segment, &rproc->dump_segments, node) {
+	list_क्रम_each_entry(segment, &rproc->dump_segments, node) अणु
 		/*
-		 * For default configuration buffer includes headers & segments.
-		 * For inline dump buffer just includes headers as segments are
-		 * directly read from device memory.
+		 * For शेष configuration buffer includes headers & segments.
+		 * For अंतरभूत dump buffer just includes headers as segments are
+		 * directly पढ़ो from device memory.
 		 */
 		data_size += elf_size_of_phdr(class);
-		if (dump_conf == RPROC_COREDUMP_ENABLED)
+		अगर (dump_conf == RPROC_COREDUMP_ENABLED)
 			data_size += segment->size;
 
 		phnum++;
-	}
+	पूर्ण
 
-	data = vmalloc(data_size);
-	if (!data)
-		return;
+	data = vदो_स्मृति(data_size);
+	अगर (!data)
+		वापस;
 
 	ehdr = data;
 
-	memset(ehdr, 0, elf_size_of_hdr(class));
-	/* e_ident field is common for both elf32 and elf64 */
+	स_रखो(ehdr, 0, elf_size_of_hdr(class));
+	/* e_ident field is common क्रम both elf32 and elf64 */
 	elf_hdr_init_ident(ehdr, class);
 
 	elf_hdr_set_e_type(class, ehdr, ET_CORE);
@@ -290,8 +291,8 @@ void rproc_coredump(struct rproc *rproc)
 	offset = elf_hdr_get_e_phoff(class, ehdr);
 	offset += elf_size_of_phdr(class) * elf_hdr_get_e_phnum(class, ehdr);
 
-	list_for_each_entry(segment, &rproc->dump_segments, node) {
-		memset(phdr, 0, elf_size_of_phdr(class));
+	list_क्रम_each_entry(segment, &rproc->dump_segments, node) अणु
+		स_रखो(phdr, 0, elf_size_of_phdr(class));
 		elf_phdr_set_p_type(class, phdr, PT_LOAD);
 		elf_phdr_set_p_offset(class, phdr, offset);
 		elf_phdr_set_p_vaddr(class, phdr, segment->da);
@@ -301,98 +302,98 @@ void rproc_coredump(struct rproc *rproc)
 		elf_phdr_set_p_flags(class, phdr, PF_R | PF_W | PF_X);
 		elf_phdr_set_p_align(class, phdr, 0);
 
-		if (dump_conf == RPROC_COREDUMP_ENABLED)
+		अगर (dump_conf == RPROC_COREDUMP_ENABLED)
 			rproc_copy_segment(rproc, data + offset, segment, 0,
 					   segment->size);
 
 		offset += elf_phdr_get_p_filesz(class, phdr);
 		phdr += elf_size_of_phdr(class);
-	}
-	if (dump_conf == RPROC_COREDUMP_ENABLED) {
+	पूर्ण
+	अगर (dump_conf == RPROC_COREDUMP_ENABLED) अणु
 		dev_coredumpv(&rproc->dev, data, data_size, GFP_KERNEL);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	/* Initialize the dump state struct to be used by rproc_coredump_read */
+	/* Initialize the dump state काष्ठा to be used by rproc_coredump_पढ़ो */
 	dump_state.rproc = rproc;
 	dump_state.header = data;
-	init_completion(&dump_state.dump_done);
+	init_completion(&dump_state.dump_करोne);
 
-	dev_coredumpm(&rproc->dev, NULL, &dump_state, data_size, GFP_KERNEL,
-		      rproc_coredump_read, rproc_coredump_free);
+	dev_coredumpm(&rproc->dev, शून्य, &dump_state, data_size, GFP_KERNEL,
+		      rproc_coredump_पढ़ो, rproc_coredump_मुक्त);
 
 	/*
-	 * Wait until the dump is read and free is called. Data is freed
-	 * by devcoredump framework automatically after 5 minutes.
+	 * Wait until the dump is पढ़ो and मुक्त is called. Data is मुक्तd
+	 * by devcoredump framework स्वतःmatically after 5 minutes.
 	 */
-	wait_for_completion(&dump_state.dump_done);
-}
+	रुको_क्रम_completion(&dump_state.dump_करोne);
+पूर्ण
 
 /**
- * rproc_coredump_using_sections() - perform coredump using section headers
+ * rproc_coredump_using_sections() - perक्रमm coredump using section headers
  * @rproc:	rproc handle
  *
- * This function will generate an ELF header for the registered sections of
+ * This function will generate an ELF header क्रम the रेजिस्टरed sections of
  * segments and create a devcoredump device associated with rproc. Based on
  * the coredump configuration this function will directly copy the segments
  * from device memory to userspace or copy segments from device memory to
- * a separate buffer, which can then be read by userspace.
- * The first approach avoids using extra vmalloc memory. But it will stall
- * recovery flow until dump is read by userspace.
+ * a separate buffer, which can then be पढ़ो by userspace.
+ * The first approach aव्योमs using extra vदो_स्मृति memory. But it will stall
+ * recovery flow until dump is पढ़ो by userspace.
  */
-void rproc_coredump_using_sections(struct rproc *rproc)
-{
-	struct rproc_dump_segment *segment;
-	void *shdr;
-	void *ehdr;
-	size_t data_size;
-	size_t strtbl_size = 0;
-	size_t strtbl_index = 1;
-	size_t offset;
-	void *data;
+व्योम rproc_coredump_using_sections(काष्ठा rproc *rproc)
+अणु
+	काष्ठा rproc_dump_segment *segment;
+	व्योम *shdr;
+	व्योम *ehdr;
+	माप_प्रकार data_size;
+	माप_प्रकार strtbl_size = 0;
+	माप_प्रकार strtbl_index = 1;
+	माप_प्रकार offset;
+	व्योम *data;
 	u8 class = rproc->elf_class;
-	int shnum;
-	struct rproc_coredump_state dump_state;
-	unsigned int dump_conf = rproc->dump_conf;
-	char *str_tbl = "STR_TBL";
+	पूर्णांक shnum;
+	काष्ठा rproc_coredump_state dump_state;
+	अचिन्हित पूर्णांक dump_conf = rproc->dump_conf;
+	अक्षर *str_tbl = "STR_TBL";
 
-	if (list_empty(&rproc->dump_segments) ||
+	अगर (list_empty(&rproc->dump_segments) ||
 	    dump_conf == RPROC_COREDUMP_DISABLED)
-		return;
+		वापस;
 
-	if (class == ELFCLASSNONE) {
+	अगर (class == ELFCLASSNONE) अणु
 		dev_err(&rproc->dev, "Elf class is not set\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/*
 	 * We allocate two extra section headers. The first one is null.
-	 * Second section header is for the string table. Also space is
-	 * allocated for string table.
+	 * Second section header is क्रम the string table. Also space is
+	 * allocated क्रम string table.
 	 */
 	data_size = elf_size_of_hdr(class) + 2 * elf_size_of_shdr(class);
 	shnum = 2;
 
-	/* the extra byte is for the null character at index 0 */
-	strtbl_size += strlen(str_tbl) + 2;
+	/* the extra byte is क्रम the null अक्षरacter at index 0 */
+	strtbl_size += म_माप(str_tbl) + 2;
 
-	list_for_each_entry(segment, &rproc->dump_segments, node) {
+	list_क्रम_each_entry(segment, &rproc->dump_segments, node) अणु
 		data_size += elf_size_of_shdr(class);
-		strtbl_size += strlen(segment->priv) + 1;
-		if (dump_conf == RPROC_COREDUMP_ENABLED)
+		strtbl_size += म_माप(segment->priv) + 1;
+		अगर (dump_conf == RPROC_COREDUMP_ENABLED)
 			data_size += segment->size;
 		shnum++;
-	}
+	पूर्ण
 
 	data_size += strtbl_size;
 
-	data = vmalloc(data_size);
-	if (!data)
-		return;
+	data = vदो_स्मृति(data_size);
+	अगर (!data)
+		वापस;
 
 	ehdr = data;
-	memset(ehdr, 0, elf_size_of_hdr(class));
-	/* e_ident field is common for both elf32 and elf64 */
+	स_रखो(ehdr, 0, elf_size_of_hdr(class));
+	/* e_ident field is common क्रम both elf32 and elf64 */
 	elf_hdr_init_ident(ehdr, class);
 
 	elf_hdr_set_e_type(class, ehdr, ET_CORE);
@@ -410,16 +411,16 @@ void rproc_coredump_using_sections(struct rproc *rproc)
 	 * Set the section header as null (SHN_UNDEF) and move to the next one.
 	 */
 	shdr = data + elf_hdr_get_e_shoff(class, ehdr);
-	memset(shdr, 0, elf_size_of_shdr(class));
+	स_रखो(shdr, 0, elf_size_of_shdr(class));
 	shdr += elf_size_of_shdr(class);
 
 	/* Initialize the string table. */
 	offset = elf_hdr_get_e_shoff(class, ehdr) +
 		 elf_size_of_shdr(class) * elf_hdr_get_e_shnum(class, ehdr);
-	memset(data + offset, 0, strtbl_size);
+	स_रखो(data + offset, 0, strtbl_size);
 
 	/* Fill in the string table section header. */
-	memset(shdr, 0, elf_size_of_shdr(class));
+	स_रखो(shdr, 0, elf_size_of_shdr(class));
 	elf_shdr_set_sh_type(class, shdr, SHT_STRTAB);
 	elf_shdr_set_sh_offset(class, shdr, offset);
 	elf_shdr_set_sh_size(class, shdr, strtbl_size);
@@ -429,8 +430,8 @@ void rproc_coredump_using_sections(struct rproc *rproc)
 	offset += elf_shdr_get_sh_size(class, shdr);
 	shdr += elf_size_of_shdr(class);
 
-	list_for_each_entry(segment, &rproc->dump_segments, node) {
-		memset(shdr, 0, elf_size_of_shdr(class));
+	list_क्रम_each_entry(segment, &rproc->dump_segments, node) अणु
+		स_रखो(shdr, 0, elf_size_of_shdr(class));
 		elf_shdr_set_sh_type(class, shdr, SHT_PROGBITS);
 		elf_shdr_set_sh_offset(class, shdr, offset);
 		elf_shdr_set_sh_addr(class, shdr, segment->da);
@@ -440,30 +441,30 @@ void rproc_coredump_using_sections(struct rproc *rproc)
 		elf_shdr_set_sh_name(class, shdr,
 				     elf_strtbl_add(segment->priv, ehdr, class, &strtbl_index));
 
-		/* No need to copy segments for inline dumps */
-		if (dump_conf == RPROC_COREDUMP_ENABLED)
+		/* No need to copy segments क्रम अंतरभूत dumps */
+		अगर (dump_conf == RPROC_COREDUMP_ENABLED)
 			rproc_copy_segment(rproc, data + offset, segment, 0,
 					   segment->size);
 		offset += elf_shdr_get_sh_size(class, shdr);
 		shdr += elf_size_of_shdr(class);
-	}
+	पूर्ण
 
-	if (dump_conf == RPROC_COREDUMP_ENABLED) {
+	अगर (dump_conf == RPROC_COREDUMP_ENABLED) अणु
 		dev_coredumpv(&rproc->dev, data, data_size, GFP_KERNEL);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	/* Initialize the dump state struct to be used by rproc_coredump_read */
+	/* Initialize the dump state काष्ठा to be used by rproc_coredump_पढ़ो */
 	dump_state.rproc = rproc;
 	dump_state.header = data;
-	init_completion(&dump_state.dump_done);
+	init_completion(&dump_state.dump_करोne);
 
-	dev_coredumpm(&rproc->dev, NULL, &dump_state, data_size, GFP_KERNEL,
-		      rproc_coredump_read, rproc_coredump_free);
+	dev_coredumpm(&rproc->dev, शून्य, &dump_state, data_size, GFP_KERNEL,
+		      rproc_coredump_पढ़ो, rproc_coredump_मुक्त);
 
-	/* Wait until the dump is read and free is called. Data is freed
-	 * by devcoredump framework automatically after 5 minutes.
+	/* Wait until the dump is पढ़ो and मुक्त is called. Data is मुक्तd
+	 * by devcoredump framework स्वतःmatically after 5 minutes.
 	 */
-	wait_for_completion(&dump_state.dump_done);
-}
+	रुको_क्रम_completion(&dump_state.dump_करोne);
+पूर्ण
 EXPORT_SYMBOL(rproc_coredump_using_sections);

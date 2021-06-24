@@ -1,29 +1,30 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * This file is part of wlcore
  *
  * Copyright (C) 2014 Texas Instruments. All rights reserved.
  */
 
-#ifndef __WLCORE_VENDOR_H__
-#define __WLCORE_VENDOR_H__
+#अगर_अघोषित __WLCORE_VENDOR_H__
+#घोषणा __WLCORE_VENDOR_H__
 
-#ifdef __KERNEL__
-void wlcore_set_vendor_commands(struct wiphy *wiphy);
-#endif
+#अगर_घोषित __KERNEL__
+व्योम wlcore_set_venकरोr_commands(काष्ठा wiphy *wiphy);
+#पूर्ण_अगर
 
-#define TI_OUI	0x080028
+#घोषणा TI_OUI	0x080028
 
-enum wlcore_vendor_commands {
+क्रमागत wlcore_venकरोr_commands अणु
 	WLCORE_VENDOR_CMD_SMART_CONFIG_START,
 	WLCORE_VENDOR_CMD_SMART_CONFIG_STOP,
 	WLCORE_VENDOR_CMD_SMART_CONFIG_SET_GROUP_KEY,
 
 	NUM_WLCORE_VENDOR_CMD,
 	MAX_WLCORE_VENDOR_CMD = NUM_WLCORE_VENDOR_CMD - 1
-};
+पूर्ण;
 
-enum wlcore_vendor_attributes {
+क्रमागत wlcore_venकरोr_attributes अणु
 	WLCORE_VENDOR_ATTR_FREQ,
 	WLCORE_VENDOR_ATTR_PSK,
 	WLCORE_VENDOR_ATTR_SSID,
@@ -32,11 +33,11 @@ enum wlcore_vendor_attributes {
 
 	NUM_WLCORE_VENDOR_ATTR,
 	MAX_WLCORE_VENDOR_ATTR = NUM_WLCORE_VENDOR_ATTR - 1
-};
+पूर्ण;
 
-enum wlcore_vendor_events {
+क्रमागत wlcore_venकरोr_events अणु
 	WLCORE_VENDOR_EVENT_SC_SYNC,
 	WLCORE_VENDOR_EVENT_SC_DECODE,
-};
+पूर्ण;
 
-#endif /* __WLCORE_VENDOR_H__ */
+#पूर्ण_अगर /* __WLCORE_VENDOR_H__ */

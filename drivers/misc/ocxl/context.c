@@ -1,28 +1,29 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 // Copyright 2017 IBM Corp.
-#include <linux/sched/mm.h>
-#include "trace.h"
-#include "ocxl_internal.h"
+#समावेश <linux/sched/mm.h>
+#समावेश "trace.h"
+#समावेश "ocxl_internal.h"
 
-int ocxl_context_alloc(struct ocxl_context **context, struct ocxl_afu *afu,
-		struct address_space *mapping)
-{
-	int pasid;
-	struct ocxl_context *ctx;
+पूर्णांक ocxl_context_alloc(काष्ठा ocxl_context **context, काष्ठा ocxl_afu *afu,
+		काष्ठा address_space *mapping)
+अणु
+	पूर्णांक pasid;
+	काष्ठा ocxl_context *ctx;
 
-	ctx = kzalloc(sizeof(*ctx), GFP_KERNEL);
-	if (!ctx)
-		return -ENOMEM;
+	ctx = kzalloc(माप(*ctx), GFP_KERNEL);
+	अगर (!ctx)
+		वापस -ENOMEM;
 
 	ctx->afu = afu;
 	mutex_lock(&afu->contexts_lock);
 	pasid = idr_alloc(&afu->contexts_idr, ctx, afu->pasid_base,
 			afu->pasid_base + afu->pasid_max, GFP_KERNEL);
-	if (pasid < 0) {
+	अगर (pasid < 0) अणु
 		mutex_unlock(&afu->contexts_lock);
-		kfree(ctx);
-		return pasid;
-	}
+		kमुक्त(ctx);
+		वापस pasid;
+	पूर्ण
 	afu->pasid_count++;
 	mutex_unlock(&afu->contexts_lock);
 
@@ -31,31 +32,31 @@ int ocxl_context_alloc(struct ocxl_context **context, struct ocxl_afu *afu,
 	mutex_init(&ctx->status_mutex);
 	ctx->mapping = mapping;
 	mutex_init(&ctx->mapping_lock);
-	init_waitqueue_head(&ctx->events_wq);
+	init_रुकोqueue_head(&ctx->events_wq);
 	mutex_init(&ctx->xsl_error_lock);
 	mutex_init(&ctx->irq_lock);
 	idr_init(&ctx->irq_idr);
 	ctx->tidr = 0;
 
 	/*
-	 * Keep a reference on the AFU to make sure it's valid for the
-	 * duration of the life of the context
+	 * Keep a reference on the AFU to make sure it's valid क्रम the
+	 * duration of the lअगरe of the context
 	 */
 	ocxl_afu_get(afu);
 	*context = ctx;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(ocxl_context_alloc);
 
 /*
- * Callback for when a translation fault triggers an error
- * data:	a pointer to the context which triggered the fault
+ * Callback क्रम when a translation fault triggers an error
+ * data:	a poपूर्णांकer to the context which triggered the fault
  * addr:	the address that triggered the error
- * dsisr:	the value of the PPC64 dsisr register
+ * dsisr:	the value of the PPC64 dsisr रेजिस्टर
  */
-static void xsl_fault_error(void *data, u64 addr, u64 dsisr)
-{
-	struct ocxl_context *ctx = (struct ocxl_context *) data;
+अटल व्योम xsl_fault_error(व्योम *data, u64 addr, u64 dsisr)
+अणु
+	काष्ठा ocxl_context *ctx = (काष्ठा ocxl_context *) data;
 
 	mutex_lock(&ctx->xsl_error_lock);
 	ctx->xsl_error.addr = addr;
@@ -64,67 +65,67 @@ static void xsl_fault_error(void *data, u64 addr, u64 dsisr)
 	mutex_unlock(&ctx->xsl_error_lock);
 
 	wake_up_all(&ctx->events_wq);
-}
+पूर्ण
 
-int ocxl_context_attach(struct ocxl_context *ctx, u64 amr, struct mm_struct *mm)
-{
-	int rc;
-	unsigned long pidr = 0;
-	struct pci_dev *dev;
+पूर्णांक ocxl_context_attach(काष्ठा ocxl_context *ctx, u64 amr, काष्ठा mm_काष्ठा *mm)
+अणु
+	पूर्णांक rc;
+	अचिन्हित दीर्घ pidr = 0;
+	काष्ठा pci_dev *dev;
 
 	// Locks both status & tidr
 	mutex_lock(&ctx->status_mutex);
-	if (ctx->status != OPENED) {
+	अगर (ctx->status != OPENED) अणु
 		rc = -EIO;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (mm)
+	अगर (mm)
 		pidr = mm->context.id;
 
 	dev = to_pci_dev(ctx->afu->fn->dev.parent);
 	rc = ocxl_link_add_pe(ctx->afu->fn->link, ctx->pasid, pidr, ctx->tidr,
 			      amr, pci_dev_id(dev), mm, xsl_fault_error, ctx);
-	if (rc)
-		goto out;
+	अगर (rc)
+		जाओ out;
 
 	ctx->status = ATTACHED;
 out:
 	mutex_unlock(&ctx->status_mutex);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 EXPORT_SYMBOL_GPL(ocxl_context_attach);
 
-static vm_fault_t map_afu_irq(struct vm_area_struct *vma, unsigned long address,
-		u64 offset, struct ocxl_context *ctx)
-{
+अटल vm_fault_t map_afu_irq(काष्ठा vm_area_काष्ठा *vma, अचिन्हित दीर्घ address,
+		u64 offset, काष्ठा ocxl_context *ctx)
+अणु
 	u64 trigger_addr;
-	int irq_id = ocxl_irq_offset_to_id(ctx, offset);
+	पूर्णांक irq_id = ocxl_irq_offset_to_id(ctx, offset);
 
 	trigger_addr = ocxl_afu_irq_get_addr(ctx, irq_id);
-	if (!trigger_addr)
-		return VM_FAULT_SIGBUS;
+	अगर (!trigger_addr)
+		वापस VM_FAULT_SIGBUS;
 
-	return vmf_insert_pfn(vma, address, trigger_addr >> PAGE_SHIFT);
-}
+	वापस vmf_insert_pfn(vma, address, trigger_addr >> PAGE_SHIFT);
+पूर्ण
 
-static vm_fault_t map_pp_mmio(struct vm_area_struct *vma, unsigned long address,
-		u64 offset, struct ocxl_context *ctx)
-{
+अटल vm_fault_t map_pp_mmio(काष्ठा vm_area_काष्ठा *vma, अचिन्हित दीर्घ address,
+		u64 offset, काष्ठा ocxl_context *ctx)
+अणु
 	u64 pp_mmio_addr;
-	int pasid_off;
+	पूर्णांक pasid_off;
 	vm_fault_t ret;
 
-	if (offset >= ctx->afu->config.pp_mmio_stride)
-		return VM_FAULT_SIGBUS;
+	अगर (offset >= ctx->afu->config.pp_mmio_stride)
+		वापस VM_FAULT_SIGBUS;
 
 	mutex_lock(&ctx->status_mutex);
-	if (ctx->status != ATTACHED) {
+	अगर (ctx->status != ATTACHED) अणु
 		mutex_unlock(&ctx->status_mutex);
 		pr_debug("%s: Context not attached, failing mmio mmap\n",
 			__func__);
-		return VM_FAULT_SIGBUS;
-	}
+		वापस VM_FAULT_SIGBUS;
+	पूर्ण
 
 	pasid_off = ctx->pasid - ctx->afu->pasid_base;
 	pp_mmio_addr = ctx->afu->pp_mmio_start +
@@ -133,13 +134,13 @@ static vm_fault_t map_pp_mmio(struct vm_area_struct *vma, unsigned long address,
 
 	ret = vmf_insert_pfn(vma, address, pp_mmio_addr >> PAGE_SHIFT);
 	mutex_unlock(&ctx->status_mutex);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static vm_fault_t ocxl_mmap_fault(struct vm_fault *vmf)
-{
-	struct vm_area_struct *vma = vmf->vma;
-	struct ocxl_context *ctx = vma->vm_file->private_data;
+अटल vm_fault_t ocxl_mmap_fault(काष्ठा vm_fault *vmf)
+अणु
+	काष्ठा vm_area_काष्ठा *vma = vmf->vma;
+	काष्ठा ocxl_context *ctx = vma->vm_file->निजी_data;
 	u64 offset;
 	vm_fault_t ret;
 
@@ -147,82 +148,82 @@ static vm_fault_t ocxl_mmap_fault(struct vm_fault *vmf)
 	pr_debug("%s: pasid %d address 0x%lx offset 0x%llx\n", __func__,
 		ctx->pasid, vmf->address, offset);
 
-	if (offset < ctx->afu->irq_base_offset)
+	अगर (offset < ctx->afu->irq_base_offset)
 		ret = map_pp_mmio(vma, vmf->address, offset, ctx);
-	else
+	अन्यथा
 		ret = map_afu_irq(vma, vmf->address, offset, ctx);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const struct vm_operations_struct ocxl_vmops = {
+अटल स्थिर काष्ठा vm_operations_काष्ठा ocxl_vmops = अणु
 	.fault = ocxl_mmap_fault,
-};
+पूर्ण;
 
-static int check_mmap_afu_irq(struct ocxl_context *ctx,
-			struct vm_area_struct *vma)
-{
-	int irq_id = ocxl_irq_offset_to_id(ctx, vma->vm_pgoff << PAGE_SHIFT);
+अटल पूर्णांक check_mmap_afu_irq(काष्ठा ocxl_context *ctx,
+			काष्ठा vm_area_काष्ठा *vma)
+अणु
+	पूर्णांक irq_id = ocxl_irq_offset_to_id(ctx, vma->vm_pgoff << PAGE_SHIFT);
 
 	/* only one page */
-	if (vma_pages(vma) != 1)
-		return -EINVAL;
+	अगर (vma_pages(vma) != 1)
+		वापस -EINVAL;
 
 	/* check offset validty */
-	if (!ocxl_afu_irq_get_addr(ctx, irq_id))
-		return -EINVAL;
+	अगर (!ocxl_afu_irq_get_addr(ctx, irq_id))
+		वापस -EINVAL;
 
 	/*
-	 * trigger page should only be accessible in write mode.
+	 * trigger page should only be accessible in ग_लिखो mode.
 	 *
 	 * It's a bit theoretical, as a page mmaped with only
-	 * PROT_WRITE is currently readable, but it doesn't hurt.
+	 * PROT_WRITE is currently पढ़ोable, but it करोesn't hurt.
 	 */
-	if ((vma->vm_flags & VM_READ) || (vma->vm_flags & VM_EXEC) ||
+	अगर ((vma->vm_flags & VM_READ) || (vma->vm_flags & VM_EXEC) ||
 		!(vma->vm_flags & VM_WRITE))
-		return -EINVAL;
+		वापस -EINVAL;
 	vma->vm_flags &= ~(VM_MAYREAD | VM_MAYEXEC);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int check_mmap_mmio(struct ocxl_context *ctx,
-			struct vm_area_struct *vma)
-{
-	if ((vma_pages(vma) + vma->vm_pgoff) >
+अटल पूर्णांक check_mmap_mmio(काष्ठा ocxl_context *ctx,
+			काष्ठा vm_area_काष्ठा *vma)
+अणु
+	अगर ((vma_pages(vma) + vma->vm_pgoff) >
 		(ctx->afu->config.pp_mmio_stride >> PAGE_SHIFT))
-		return -EINVAL;
-	return 0;
-}
+		वापस -EINVAL;
+	वापस 0;
+पूर्ण
 
-int ocxl_context_mmap(struct ocxl_context *ctx, struct vm_area_struct *vma)
-{
-	int rc;
+पूर्णांक ocxl_context_mmap(काष्ठा ocxl_context *ctx, काष्ठा vm_area_काष्ठा *vma)
+अणु
+	पूर्णांक rc;
 
-	if ((vma->vm_pgoff << PAGE_SHIFT) < ctx->afu->irq_base_offset)
+	अगर ((vma->vm_pgoff << PAGE_SHIFT) < ctx->afu->irq_base_offset)
 		rc = check_mmap_mmio(ctx, vma);
-	else
+	अन्यथा
 		rc = check_mmap_afu_irq(ctx, vma);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
 	vma->vm_flags |= VM_IO | VM_PFNMAP;
 	vma->vm_page_prot = pgprot_noncached(vma->vm_page_prot);
 	vma->vm_ops = &ocxl_vmops;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int ocxl_context_detach(struct ocxl_context *ctx)
-{
-	struct pci_dev *dev;
-	int afu_control_pos;
-	enum ocxl_context_status status;
-	int rc;
+पूर्णांक ocxl_context_detach(काष्ठा ocxl_context *ctx)
+अणु
+	काष्ठा pci_dev *dev;
+	पूर्णांक afu_control_pos;
+	क्रमागत ocxl_context_status status;
+	पूर्णांक rc;
 
 	mutex_lock(&ctx->status_mutex);
 	status = ctx->status;
 	ctx->status = CLOSED;
 	mutex_unlock(&ctx->status_mutex);
-	if (status != ATTACHED)
-		return 0;
+	अगर (status != ATTACHED)
+		वापस 0;
 
 	dev = to_pci_dev(ctx->afu->fn->dev.parent);
 	afu_control_pos = ctx->afu->config.dvsec_afu_control_pos;
@@ -231,66 +232,66 @@ int ocxl_context_detach(struct ocxl_context *ctx)
 	rc = ocxl_config_terminate_pasid(dev, afu_control_pos, ctx->pasid);
 	mutex_unlock(&ctx->afu->afu_control_lock);
 	trace_ocxl_terminate_pasid(ctx->pasid, rc);
-	if (rc) {
+	अगर (rc) अणु
 		/*
-		 * If we timeout waiting for the AFU to terminate the
+		 * If we समयout रुकोing क्रम the AFU to terminate the
 		 * pasid, then it's dangerous to clean up the Process
 		 * Element entry in the SPA, as it may be referenced
-		 * in the future by the AFU. In which case, we would
+		 * in the future by the AFU. In which हाल, we would
 		 * checkstop because of an invalid PE access (FIR
-		 * register 2, bit 42). So leave the PE
-		 * defined. Caller shouldn't free the context so that
-		 * PASID remains allocated.
+		 * रेजिस्टर 2, bit 42). So leave the PE
+		 * defined. Caller shouldn't मुक्त the context so that
+		 * PASID reमुख्यs allocated.
 		 *
 		 * A link reset will be required to cleanup the AFU
 		 * and the SPA.
 		 */
-		if (rc == -EBUSY)
-			return rc;
-	}
-	rc = ocxl_link_remove_pe(ctx->afu->fn->link, ctx->pasid);
-	if (rc) {
+		अगर (rc == -EBUSY)
+			वापस rc;
+	पूर्ण
+	rc = ocxl_link_हटाओ_pe(ctx->afu->fn->link, ctx->pasid);
+	अगर (rc) अणु
 		dev_warn(&dev->dev,
 			"Couldn't remove PE entry cleanly: %d\n", rc);
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(ocxl_context_detach);
 
-void ocxl_context_detach_all(struct ocxl_afu *afu)
-{
-	struct ocxl_context *ctx;
-	int tmp;
+व्योम ocxl_context_detach_all(काष्ठा ocxl_afu *afu)
+अणु
+	काष्ठा ocxl_context *ctx;
+	पूर्णांक पंचांगp;
 
 	mutex_lock(&afu->contexts_lock);
-	idr_for_each_entry(&afu->contexts_idr, ctx, tmp) {
+	idr_क्रम_each_entry(&afu->contexts_idr, ctx, पंचांगp) अणु
 		ocxl_context_detach(ctx);
 		/*
-		 * We are force detaching - remove any active mmio
-		 * mappings so userspace cannot interfere with the
-		 * card if it comes back.  Easiest way to exercise
+		 * We are क्रमce detaching - हटाओ any active mmio
+		 * mappings so userspace cannot पूर्णांकerfere with the
+		 * card अगर it comes back.  Easiest way to exercise
 		 * this is to unbind and rebind the driver via sysfs
-		 * while it is in use.
+		 * जबतक it is in use.
 		 */
 		mutex_lock(&ctx->mapping_lock);
-		if (ctx->mapping)
+		अगर (ctx->mapping)
 			unmap_mapping_range(ctx->mapping, 0, 0, 1);
 		mutex_unlock(&ctx->mapping_lock);
-	}
+	पूर्ण
 	mutex_unlock(&afu->contexts_lock);
-}
+पूर्ण
 
-void ocxl_context_free(struct ocxl_context *ctx)
-{
+व्योम ocxl_context_मुक्त(काष्ठा ocxl_context *ctx)
+अणु
 	mutex_lock(&ctx->afu->contexts_lock);
 	ctx->afu->pasid_count--;
-	idr_remove(&ctx->afu->contexts_idr, ctx->pasid);
+	idr_हटाओ(&ctx->afu->contexts_idr, ctx->pasid);
 	mutex_unlock(&ctx->afu->contexts_lock);
 
-	ocxl_afu_irq_free_all(ctx);
+	ocxl_afu_irq_मुक्त_all(ctx);
 	idr_destroy(&ctx->irq_idr);
 	/* reference to the AFU taken in ocxl_context_alloc() */
 	ocxl_afu_put(ctx->afu);
-	kfree(ctx);
-}
-EXPORT_SYMBOL_GPL(ocxl_context_free);
+	kमुक्त(ctx);
+पूर्ण
+EXPORT_SYMBOL_GPL(ocxl_context_मुक्त);

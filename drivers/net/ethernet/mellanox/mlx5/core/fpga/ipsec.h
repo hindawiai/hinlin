@@ -1,23 +1,24 @@
+<शैली गुरु>
 /*
  * Copyright (c) 2017 Mellanox Technologies. All rights reserved.
  *
  * This software is available to you under a choice of one of two
  * licenses.  You may choose to be licensed under the terms of the GNU
  * General Public License (GPL) Version 2, available from the file
- * COPYING in the main directory of this source tree, or the
+ * COPYING in the मुख्य directory of this source tree, or the
  * OpenIB.org BSD license below:
  *
- *     Redistribution and use in source and binary forms, with or
- *     without modification, are permitted provided that the following
+ *     Redistribution and use in source and binary क्रमms, with or
+ *     without modअगरication, are permitted provided that the following
  *     conditions are met:
  *
  *      - Redistributions of source code must retain the above
  *        copyright notice, this list of conditions and the following
  *        disclaimer.
  *
- *      - Redistributions in binary form must reproduce the above
+ *      - Redistributions in binary क्रमm must reproduce the above
  *        copyright notice, this list of conditions and the following
- *        disclaimer in the documentation and/or other materials
+ *        disclaimer in the करोcumentation and/or other materials
  *        provided with the distribution.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
@@ -31,32 +32,32 @@
  *
  */
 
-#ifndef __MLX5_FPGA_IPSEC_H__
-#define __MLX5_FPGA_IPSEC_H__
+#अगर_अघोषित __MLX5_FPGA_IPSEC_H__
+#घोषणा __MLX5_FPGA_IPSEC_H__
 
-#include "accel/ipsec.h"
-#include "fs_cmd.h"
+#समावेश "accel/ipsec.h"
+#समावेश "fs_cmd.h"
 
-#ifdef CONFIG_MLX5_FPGA_IPSEC
-const struct mlx5_accel_ipsec_ops *mlx5_fpga_ipsec_ops(struct mlx5_core_dev *mdev);
-u32 mlx5_fpga_ipsec_device_caps(struct mlx5_core_dev *mdev);
-const struct mlx5_flow_cmds *
-mlx5_fs_cmd_get_default_ipsec_fpga_cmds(enum fs_flow_table_type type);
-void mlx5_fpga_ipsec_build_fs_cmds(void);
-bool mlx5_fpga_is_ipsec_device(struct mlx5_core_dev *mdev);
-#else
-static inline
-const struct mlx5_accel_ipsec_ops *mlx5_fpga_ipsec_ops(struct mlx5_core_dev *mdev)
-{ return NULL; }
-static inline u32 mlx5_fpga_ipsec_device_caps(struct mlx5_core_dev *mdev) { return 0; }
-static inline const struct mlx5_flow_cmds *
-mlx5_fs_cmd_get_default_ipsec_fpga_cmds(enum fs_flow_table_type type)
-{
-	return mlx5_fs_cmd_get_default(type);
-}
+#अगर_घोषित CONFIG_MLX5_FPGA_IPSEC
+स्थिर काष्ठा mlx5_accel_ipsec_ops *mlx5_fpga_ipsec_ops(काष्ठा mlx5_core_dev *mdev);
+u32 mlx5_fpga_ipsec_device_caps(काष्ठा mlx5_core_dev *mdev);
+स्थिर काष्ठा mlx5_flow_cmds *
+mlx5_fs_cmd_get_शेष_ipsec_fpga_cmds(क्रमागत fs_flow_table_type type);
+व्योम mlx5_fpga_ipsec_build_fs_cmds(व्योम);
+bool mlx5_fpga_is_ipsec_device(काष्ठा mlx5_core_dev *mdev);
+#अन्यथा
+अटल अंतरभूत
+स्थिर काष्ठा mlx5_accel_ipsec_ops *mlx5_fpga_ipsec_ops(काष्ठा mlx5_core_dev *mdev)
+अणु वापस शून्य; पूर्ण
+अटल अंतरभूत u32 mlx5_fpga_ipsec_device_caps(काष्ठा mlx5_core_dev *mdev) अणु वापस 0; पूर्ण
+अटल अंतरभूत स्थिर काष्ठा mlx5_flow_cmds *
+mlx5_fs_cmd_get_शेष_ipsec_fpga_cmds(क्रमागत fs_flow_table_type type)
+अणु
+	वापस mlx5_fs_cmd_get_शेष(type);
+पूर्ण
 
-static inline void mlx5_fpga_ipsec_build_fs_cmds(void) {};
-static inline bool mlx5_fpga_is_ipsec_device(struct mlx5_core_dev *mdev) { return false; }
+अटल अंतरभूत व्योम mlx5_fpga_ipsec_build_fs_cmds(व्योम) अणुपूर्ण;
+अटल अंतरभूत bool mlx5_fpga_is_ipsec_device(काष्ठा mlx5_core_dev *mdev) अणु वापस false; पूर्ण
 
-#endif /* CONFIG_MLX5_FPGA_IPSEC */
-#endif	/* __MLX5_FPGA_IPSEC_H__ */
+#पूर्ण_अगर /* CONFIG_MLX5_FPGA_IPSEC */
+#पूर्ण_अगर	/* __MLX5_FPGA_IPSEC_H__ */

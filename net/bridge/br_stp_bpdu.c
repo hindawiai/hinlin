@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  *	Spanning tree protocol; BPDU handling
  *	Linux ethernet bridge
@@ -7,39 +8,39 @@
  *	Lennert Buytenhek		<buytenh@gnu.org>
  */
 
-#include <linux/kernel.h>
-#include <linux/netfilter_bridge.h>
-#include <linux/etherdevice.h>
-#include <linux/llc.h>
-#include <linux/slab.h>
-#include <linux/pkt_sched.h>
-#include <net/net_namespace.h>
-#include <net/llc.h>
-#include <net/llc_pdu.h>
-#include <net/stp.h>
-#include <asm/unaligned.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/netfilter_bridge.h>
+#समावेश <linux/etherdevice.h>
+#समावेश <linux/llc.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/pkt_sched.h>
+#समावेश <net/net_namespace.h>
+#समावेश <net/llc.h>
+#समावेश <net/llc_pdu.h>
+#समावेश <net/stp.h>
+#समावेश <यंत्र/unaligned.h>
 
-#include "br_private.h"
-#include "br_private_stp.h"
+#समावेश "br_private.h"
+#समावेश "br_private_stp.h"
 
-#define STP_HZ		256
+#घोषणा STP_HZ		256
 
-#define LLC_RESERVE sizeof(struct llc_pdu_un)
+#घोषणा LLC_RESERVE माप(काष्ठा llc_pdu_un)
 
-static int br_send_bpdu_finish(struct net *net, struct sock *sk,
-			       struct sk_buff *skb)
-{
-	return dev_queue_xmit(skb);
-}
+अटल पूर्णांक br_send_bpdu_finish(काष्ठा net *net, काष्ठा sock *sk,
+			       काष्ठा sk_buff *skb)
+अणु
+	वापस dev_queue_xmit(skb);
+पूर्ण
 
-static void br_send_bpdu(struct net_bridge_port *p,
-			 const unsigned char *data, int length)
-{
-	struct sk_buff *skb;
+अटल व्योम br_send_bpdu(काष्ठा net_bridge_port *p,
+			 स्थिर अचिन्हित अक्षर *data, पूर्णांक length)
+अणु
+	काष्ठा sk_buff *skb;
 
 	skb = dev_alloc_skb(length+LLC_RESERVE);
-	if (!skb)
-		return;
+	अगर (!skb)
+		वापस;
 
 	skb->dev = p->dev;
 	skb->protocol = htons(ETH_P_802_2);
@@ -57,31 +58,31 @@ static void br_send_bpdu(struct net_bridge_port *p,
 	skb_reset_mac_header(skb);
 
 	NF_HOOK(NFPROTO_BRIDGE, NF_BR_LOCAL_OUT,
-		dev_net(p->dev), NULL, skb, NULL, skb->dev,
+		dev_net(p->dev), शून्य, skb, शून्य, skb->dev,
 		br_send_bpdu_finish);
-}
+पूर्ण
 
-static inline void br_set_ticks(unsigned char *dest, int j)
-{
-	unsigned long ticks = (STP_HZ * j)/ HZ;
+अटल अंतरभूत व्योम br_set_ticks(अचिन्हित अक्षर *dest, पूर्णांक j)
+अणु
+	अचिन्हित दीर्घ ticks = (STP_HZ * j)/ HZ;
 
 	put_unaligned_be16(ticks, dest);
-}
+पूर्ण
 
-static inline int br_get_ticks(const unsigned char *src)
-{
-	unsigned long ticks = get_unaligned_be16(src);
+अटल अंतरभूत पूर्णांक br_get_ticks(स्थिर अचिन्हित अक्षर *src)
+अणु
+	अचिन्हित दीर्घ ticks = get_unaligned_be16(src);
 
-	return DIV_ROUND_UP(ticks * HZ, STP_HZ);
-}
+	वापस DIV_ROUND_UP(ticks * HZ, STP_HZ);
+पूर्ण
 
 /* called under bridge lock */
-void br_send_config_bpdu(struct net_bridge_port *p, struct br_config_bpdu *bpdu)
-{
-	unsigned char buf[35];
+व्योम br_send_config_bpdu(काष्ठा net_bridge_port *p, काष्ठा br_config_bpdu *bpdu)
+अणु
+	अचिन्हित अक्षर buf[35];
 
-	if (p->br->stp_enabled != BR_KERNEL_STP)
-		return;
+	अगर (p->br->stp_enabled != BR_KERNEL_STP)
+		वापस;
 
 	buf[0] = 0;
 	buf[1] = 0;
@@ -114,21 +115,21 @@ void br_send_config_bpdu(struct net_bridge_port *p, struct br_config_bpdu *bpdu)
 
 	br_set_ticks(buf+27, bpdu->message_age);
 	br_set_ticks(buf+29, bpdu->max_age);
-	br_set_ticks(buf+31, bpdu->hello_time);
-	br_set_ticks(buf+33, bpdu->forward_delay);
+	br_set_ticks(buf+31, bpdu->hello_समय);
+	br_set_ticks(buf+33, bpdu->क्रमward_delay);
 
 	br_send_bpdu(p, buf, 35);
 
 	p->stp_xstats.tx_bpdu++;
-}
+पूर्ण
 
 /* called under bridge lock */
-void br_send_tcn_bpdu(struct net_bridge_port *p)
-{
-	unsigned char buf[4];
+व्योम br_send_tcn_bpdu(काष्ठा net_bridge_port *p)
+अणु
+	अचिन्हित अक्षर buf[4];
 
-	if (p->br->stp_enabled != BR_KERNEL_STP)
-		return;
+	अगर (p->br->stp_enabled != BR_KERNEL_STP)
+		वापस;
 
 	buf[0] = 0;
 	buf[1] = 0;
@@ -137,61 +138,61 @@ void br_send_tcn_bpdu(struct net_bridge_port *p)
 	br_send_bpdu(p, buf, 4);
 
 	p->stp_xstats.tx_tcn++;
-}
+पूर्ण
 
 /*
  * Called from llc.
  *
- * NO locks, but rcu_read_lock
+ * NO locks, but rcu_पढ़ो_lock
  */
-void br_stp_rcv(const struct stp_proto *proto, struct sk_buff *skb,
-		struct net_device *dev)
-{
-	struct net_bridge_port *p;
-	struct net_bridge *br;
-	const unsigned char *buf;
+व्योम br_stp_rcv(स्थिर काष्ठा stp_proto *proto, काष्ठा sk_buff *skb,
+		काष्ठा net_device *dev)
+अणु
+	काष्ठा net_bridge_port *p;
+	काष्ठा net_bridge *br;
+	स्थिर अचिन्हित अक्षर *buf;
 
-	if (!pskb_may_pull(skb, 4))
-		goto err;
+	अगर (!pskb_may_pull(skb, 4))
+		जाओ err;
 
 	/* compare of protocol id and version */
 	buf = skb->data;
-	if (buf[0] != 0 || buf[1] != 0 || buf[2] != 0)
-		goto err;
+	अगर (buf[0] != 0 || buf[1] != 0 || buf[2] != 0)
+		जाओ err;
 
 	p = br_port_get_check_rcu(dev);
-	if (!p)
-		goto err;
+	अगर (!p)
+		जाओ err;
 
 	br = p->br;
 	spin_lock(&br->lock);
 
-	if (br->stp_enabled != BR_KERNEL_STP)
-		goto out;
+	अगर (br->stp_enabled != BR_KERNEL_STP)
+		जाओ out;
 
-	if (!(br->dev->flags & IFF_UP))
-		goto out;
+	अगर (!(br->dev->flags & IFF_UP))
+		जाओ out;
 
-	if (p->state == BR_STATE_DISABLED)
-		goto out;
+	अगर (p->state == BR_STATE_DISABLED)
+		जाओ out;
 
-	if (!ether_addr_equal(eth_hdr(skb)->h_dest, br->group_addr))
-		goto out;
+	अगर (!ether_addr_equal(eth_hdr(skb)->h_dest, br->group_addr))
+		जाओ out;
 
-	if (p->flags & BR_BPDU_GUARD) {
+	अगर (p->flags & BR_BPDU_GUARD) अणु
 		br_notice(br, "BPDU received on blocked port %u(%s)\n",
-			  (unsigned int) p->port_no, p->dev->name);
+			  (अचिन्हित पूर्णांक) p->port_no, p->dev->name);
 		br_stp_disable_port(p);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	buf = skb_pull(skb, 3);
 
-	if (buf[0] == BPDU_TYPE_CONFIG) {
-		struct br_config_bpdu bpdu;
+	अगर (buf[0] == BPDU_TYPE_CONFIG) अणु
+		काष्ठा br_config_bpdu bpdu;
 
-		if (!pskb_may_pull(skb, 32))
-			goto out;
+		अगर (!pskb_may_pull(skb, 32))
+			जाओ out;
 
 		buf = skb->data;
 		bpdu.topology_change = (buf[1] & 0x01) ? 1 : 0;
@@ -222,26 +223,26 @@ void br_stp_rcv(const struct stp_proto *proto, struct sk_buff *skb,
 
 		bpdu.message_age = br_get_ticks(buf+24);
 		bpdu.max_age = br_get_ticks(buf+26);
-		bpdu.hello_time = br_get_ticks(buf+28);
-		bpdu.forward_delay = br_get_ticks(buf+30);
+		bpdu.hello_समय = br_get_ticks(buf+28);
+		bpdu.क्रमward_delay = br_get_ticks(buf+30);
 
-		if (bpdu.message_age > bpdu.max_age) {
-			if (net_ratelimit())
+		अगर (bpdu.message_age > bpdu.max_age) अणु
+			अगर (net_ratelimit())
 				br_notice(p->br,
 					  "port %u config from %pM"
 					  " (message_age %ul > max_age %ul)\n",
 					  p->port_no,
 					  eth_hdr(skb)->h_source,
 					  bpdu.message_age, bpdu.max_age);
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
 		br_received_config_bpdu(p, &bpdu);
-	} else if (buf[0] == BPDU_TYPE_TCN) {
+	पूर्ण अन्यथा अगर (buf[0] == BPDU_TYPE_TCN) अणु
 		br_received_tcn_bpdu(p);
-	}
+	पूर्ण
  out:
 	spin_unlock(&br->lock);
  err:
-	kfree_skb(skb);
-}
+	kमुक्त_skb(skb);
+पूर्ण

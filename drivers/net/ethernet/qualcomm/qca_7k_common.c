@@ -1,16 +1,17 @@
+<शैली गुरु>
 /*
  *   Copyright (c) 2011, 2012, Atheros Communications Inc.
  *   Copyright (c) 2014, I2SE GmbH
  *
- *   Permission to use, copy, modify, and/or distribute this software
- *   for any purpose with or without fee is hereby granted, provided
+ *   Permission to use, copy, modअगरy, and/or distribute this software
+ *   क्रम any purpose with or without fee is hereby granted, provided
  *   that the above copyright notice and this permission notice appear
  *   in all copies.
  *
  *   THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL
  *   WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED
  *   WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
- *   THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR
+ *   THE AUTHOR BE LIABLE FOR ANY SPECIAL, सूचीECT, INसूचीECT, OR
  *   CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
  *   LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
  *   NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
@@ -18,22 +19,22 @@
  */
 
 /*   Atheros ethernet framing. Every Ethernet frame is surrounded
- *   by an atheros frame while transmitted over a serial channel;
+ *   by an atheros frame जबतक transmitted over a serial channel;
  */
 
-#include <linux/init.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
+#समावेश <linux/init.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
 
-#include "qca_7k_common.h"
+#समावेश "qca_7k_common.h"
 
 u16
 qcafrm_create_header(u8 *buf, u16 length)
-{
+अणु
 	__le16 len;
 
-	if (!buf)
-		return 0;
+	अगर (!buf)
+		वापस 0;
 
 	len = cpu_to_le16(length);
 
@@ -46,20 +47,20 @@ qcafrm_create_header(u8 *buf, u16 length)
 	buf[6] = 0;
 	buf[7] = 0;
 
-	return QCAFRM_HEADER_LEN;
-}
+	वापस QCAFRM_HEADER_LEN;
+पूर्ण
 EXPORT_SYMBOL_GPL(qcafrm_create_header);
 
 u16
 qcafrm_create_footer(u8 *buf)
-{
-	if (!buf)
-		return 0;
+अणु
+	अगर (!buf)
+		वापस 0;
 
 	buf[0] = 0x55;
 	buf[1] = 0x55;
-	return QCAFRM_FOOTER_LEN;
-}
+	वापस QCAFRM_FOOTER_LEN;
+पूर्ण
 EXPORT_SYMBOL_GPL(qcafrm_create_footer);
 
 /*   Gather received bytes and try to extract a full ethernet frame by
@@ -74,90 +75,90 @@ EXPORT_SYMBOL_GPL(qcafrm_create_footer);
  */
 
 s32
-qcafrm_fsm_decode(struct qcafrm_handle *handle, u8 *buf, u16 buf_len, u8 recv_byte)
-{
+qcafrm_fsm_decode(काष्ठा qcafrm_handle *handle, u8 *buf, u16 buf_len, u8 recv_byte)
+अणु
 	s32 ret = QCAFRM_GATHER;
 	u16 len;
 
-	switch (handle->state) {
-	case QCAFRM_HW_LEN0:
-	case QCAFRM_HW_LEN1:
-		/* by default, just go to next state */
+	चयन (handle->state) अणु
+	हाल QCAFRM_HW_LEN0:
+	हाल QCAFRM_HW_LEN1:
+		/* by शेष, just go to next state */
 		handle->state--;
 
-		if (recv_byte != 0x00) {
+		अगर (recv_byte != 0x00) अणु
 			/* first two bytes of length must be 0 */
 			handle->state = handle->init;
-		}
-		break;
-	case QCAFRM_HW_LEN2:
-	case QCAFRM_HW_LEN3:
+		पूर्ण
+		अवरोध;
+	हाल QCAFRM_HW_LEN2:
+	हाल QCAFRM_HW_LEN3:
 		handle->state--;
-		break;
+		अवरोध;
 	/* 4 bytes header pattern */
-	case QCAFRM_WAIT_AA1:
-	case QCAFRM_WAIT_AA2:
-	case QCAFRM_WAIT_AA3:
-	case QCAFRM_WAIT_AA4:
-		if (recv_byte != 0xAA) {
+	हाल QCAFRM_WAIT_AA1:
+	हाल QCAFRM_WAIT_AA2:
+	हाल QCAFRM_WAIT_AA3:
+	हाल QCAFRM_WAIT_AA4:
+		अगर (recv_byte != 0xAA) अणु
 			ret = QCAFRM_NOHEAD;
 			handle->state = handle->init;
-		} else {
+		पूर्ण अन्यथा अणु
 			handle->state--;
-		}
-		break;
+		पूर्ण
+		अवरोध;
 		/* 2 bytes length. */
-		/* Borrow offset field to hold length for now. */
-	case QCAFRM_WAIT_LEN_BYTE0:
+		/* Borrow offset field to hold length क्रम now. */
+	हाल QCAFRM_WAIT_LEN_BYTE0:
 		handle->offset = recv_byte;
 		handle->state = QCAFRM_WAIT_LEN_BYTE1;
-		break;
-	case QCAFRM_WAIT_LEN_BYTE1:
+		अवरोध;
+	हाल QCAFRM_WAIT_LEN_BYTE1:
 		handle->offset = handle->offset | (recv_byte << 8);
 		handle->state = QCAFRM_WAIT_RSVD_BYTE1;
-		break;
-	case QCAFRM_WAIT_RSVD_BYTE1:
+		अवरोध;
+	हाल QCAFRM_WAIT_RSVD_BYTE1:
 		handle->state = QCAFRM_WAIT_RSVD_BYTE2;
-		break;
-	case QCAFRM_WAIT_RSVD_BYTE2:
+		अवरोध;
+	हाल QCAFRM_WAIT_RSVD_BYTE2:
 		len = handle->offset;
-		if (len > buf_len || len < QCAFRM_MIN_LEN) {
+		अगर (len > buf_len || len < QCAFRM_MIN_LEN) अणु
 			ret = QCAFRM_INVLEN;
 			handle->state = handle->init;
-		} else {
-			handle->state = (enum qcafrm_state)(len + 1);
-			/* Remaining number of bytes. */
+		पूर्ण अन्यथा अणु
+			handle->state = (क्रमागत qcafrm_state)(len + 1);
+			/* Reमुख्यing number of bytes. */
 			handle->offset = 0;
-		}
-		break;
-	default:
+		पूर्ण
+		अवरोध;
+	शेष:
 		/* Receiving Ethernet frame itself. */
 		buf[handle->offset] = recv_byte;
 		handle->offset++;
 		handle->state--;
-		break;
-	case QCAFRM_WAIT_551:
-		if (recv_byte != 0x55) {
+		अवरोध;
+	हाल QCAFRM_WAIT_551:
+		अगर (recv_byte != 0x55) अणु
 			ret = QCAFRM_NOTAIL;
 			handle->state = handle->init;
-		} else {
+		पूर्ण अन्यथा अणु
 			handle->state = QCAFRM_WAIT_552;
-		}
-		break;
-	case QCAFRM_WAIT_552:
-		if (recv_byte != 0x55) {
+		पूर्ण
+		अवरोध;
+	हाल QCAFRM_WAIT_552:
+		अगर (recv_byte != 0x55) अणु
 			ret = QCAFRM_NOTAIL;
 			handle->state = handle->init;
-		} else {
+		पूर्ण अन्यथा अणु
 			ret = handle->offset;
 			/* Frame is fully received. */
 			handle->state = handle->init;
-		}
-		break;
-	}
+		पूर्ण
+		अवरोध;
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(qcafrm_fsm_decode);
 
 MODULE_DESCRIPTION("Qualcomm Atheros QCA7000 common");

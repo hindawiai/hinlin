@@ -1,22 +1,23 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * Copyright (C) 2018 Texas Instruments Incorporated - https://www.ti.com/
  * Author: Jyri Sarha <jsarha@ti.com>
  */
 
-#ifndef __TIDSS_DISPC_COEF_H__
-#define __TIDSS_DISPC_COEF_H__
+#अगर_अघोषित __TIDSS_DISPC_COEF_H__
+#घोषणा __TIDSS_DISPC_COEF_H__
 
-#include <linux/types.h>
+#समावेश <linux/types.h>
 
-struct tidss_scale_coefs {
+काष्ठा tidss_scale_coefs अणु
 	s16 c2[16];
 	s16 c1[16];
 	u16 c0[9];
-};
+पूर्ण;
 
-const struct tidss_scale_coefs *tidss_get_scale_coefs(struct device *dev,
+स्थिर काष्ठा tidss_scale_coefs *tidss_get_scale_coefs(काष्ठा device *dev,
 						      u32 firinc,
 						      bool five_taps);
 
-#endif
+#पूर्ण_अगर

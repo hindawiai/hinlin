@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * Trap handler helpers.
  *
@@ -6,13 +7,13 @@
  * Author: Marc Zyngier <maz@kernel.org>
  */
 
-#ifndef __ARM64_KVM_NVHE_TRAP_HANDLER_H__
-#define __ARM64_KVM_NVHE_TRAP_HANDLER_H__
+#अगर_अघोषित __ARM64_KVM_NVHE_TRAP_HANDLER_H__
+#घोषणा __ARM64_KVM_NVHE_TRAP_HANDLER_H__
 
-#include <asm/kvm_host.h>
+#समावेश <यंत्र/kvm_host.h>
 
-#define cpu_reg(ctxt, r)	(ctxt)->regs.regs[r]
-#define DECLARE_REG(type, name, ctxt, reg)	\
+#घोषणा cpu_reg(ctxt, r)	(ctxt)->regs.regs[r]
+#घोषणा DECLARE_REG(type, name, ctxt, reg)	\
 				type name = (type)cpu_reg(ctxt, (reg))
 
-#endif /* __ARM64_KVM_NVHE_TRAP_HANDLER_H__ */
+#पूर्ण_अगर /* __ARM64_KVM_NVHE_TRAP_HANDLER_H__ */

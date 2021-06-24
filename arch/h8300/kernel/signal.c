@@ -1,88 +1,89 @@
+<शैली गुरु>
 /*
- *  linux/arch/h8300/kernel/signal.c
+ *  linux/arch/h8300/kernel/संकेत.c
  *
  *  Copyright (C) 1991, 1992  Linus Torvalds
  *
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file COPYING in the main directory of this archive
- * for more details.
+ * License.  See the file COPYING in the मुख्य directory of this archive
+ * क्रम more details.
  */
 
 /*
- * uClinux H8/300 support by Yoshinori Sato <ysato@users.sourceforge.jp>
+ * uClinux H8/300 support by Yoshinori Sato <ysato@users.sourceक्रमge.jp>
  *                and David McCullough <davidm@snapgear.com>
  *
  * Based on
- * Linux/m68k by Hamish Macdonald
+ * Linux/m68k by Hamish Macकरोnald
  */
 
 /*
- * ++roman (07/09/96): implemented signal stacks (specially for tosemu on
- * Atari :-) Current limitation: Only one sigstack can be active at one time.
- * If a second signal with SA_ONSTACK set arrives while working on a sigstack,
- * SA_ONSTACK is ignored. This behaviour avoids lots of trouble with nested
- * signal handlers!
+ * ++roman (07/09/96): implemented संकेत stacks (specially क्रम tosemu on
+ * Atari :-) Current limitation: Only one sigstack can be active at one समय.
+ * If a second संकेत with SA_ONSTACK set arrives जबतक working on a sigstack,
+ * SA_ONSTACK is ignored. This behaviour aव्योमs lots of trouble with nested
+ * संकेत handlers!
  */
 
-#include <linux/sched.h>
-#include <linux/sched/task_stack.h>
-#include <linux/mm.h>
-#include <linux/kernel.h>
-#include <linux/signal.h>
-#include <linux/syscalls.h>
-#include <linux/errno.h>
-#include <linux/wait.h>
-#include <linux/ptrace.h>
-#include <linux/unistd.h>
-#include <linux/stddef.h>
-#include <linux/highuid.h>
-#include <linux/personality.h>
-#include <linux/tty.h>
-#include <linux/binfmts.h>
-#include <linux/tracehook.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/sched/task_stack.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/संकेत.स>
+#समावेश <linux/syscalls.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/रुको.h>
+#समावेश <linux/ptrace.h>
+#समावेश <linux/unistd.h>
+#समावेश <linux/मानकघोष.स>
+#समावेश <linux/highuid.h>
+#समावेश <linux/personality.h>
+#समावेश <linux/tty.h>
+#समावेश <linux/binfmts.h>
+#समावेश <linux/tracehook.h>
 
-#include <asm/setup.h>
-#include <linux/uaccess.h>
-#include <asm/traps.h>
-#include <asm/ucontext.h>
+#समावेश <यंत्र/setup.h>
+#समावेश <linux/uaccess.h>
+#समावेश <यंत्र/traps.h>
+#समावेश <यंत्र/ucontext.h>
 
 /*
- * Do a signal return; undo the signal stack.
+ * Do a संकेत वापस; unकरो the संकेत stack.
  *
- * Keep the return code on the stack quadword aligned!
+ * Keep the वापस code on the stack quadword aligned!
  * That makes the cache flush below easier.
  */
 
-struct rt_sigframe {
-	long dummy_er0;
-	long dummy_vector;
-#if defined(CONFIG_CPU_H8S)
-	short dummy_exr;
-#endif
-	long dummy_pc;
-	char *pretcode;
-	struct siginfo *pinfo;
-	void *puc;
-	unsigned char retcode[8];
-	struct siginfo info;
-	struct ucontext uc;
-	int sig;
-} __packed __aligned(2);
+काष्ठा rt_sigframe अणु
+	दीर्घ dummy_er0;
+	दीर्घ dummy_vector;
+#अगर defined(CONFIG_CPU_H8S)
+	लघु dummy_exr;
+#पूर्ण_अगर
+	दीर्घ dummy_pc;
+	अक्षर *pretcode;
+	काष्ठा siginfo *pinfo;
+	व्योम *puc;
+	अचिन्हित अक्षर retcode[8];
+	काष्ठा siginfo info;
+	काष्ठा ucontext uc;
+	पूर्णांक sig;
+पूर्ण __packed __aligned(2);
 
-static inline int
-restore_sigcontext(struct sigcontext *usc, int *pd0)
-{
-	struct pt_regs *regs = current_pt_regs();
-	int err = 0;
-	unsigned int ccr;
-	unsigned int usp;
-	unsigned int er0;
+अटल अंतरभूत पूर्णांक
+restore_sigcontext(काष्ठा sigcontext *usc, पूर्णांक *pd0)
+अणु
+	काष्ठा pt_regs *regs = current_pt_regs();
+	पूर्णांक err = 0;
+	अचिन्हित पूर्णांक ccr;
+	अचिन्हित पूर्णांक usp;
+	अचिन्हित पूर्णांक er0;
 
-	/* Always make any pending restarted system calls return -EINTR */
-	current->restart_block.fn = do_no_restart_syscall;
+	/* Always make any pending restarted प्रणाली calls वापस -EINTR */
+	current->restart_block.fn = करो_no_restart_syscall;
 
-	/* restore passed registers */
-#define COPY(r)  do { err |= get_user(regs->r, &usc->sc_##r); } while (0)
+	/* restore passed रेजिस्टरs */
+#घोषणा COPY(r)  करो अणु err |= get_user(regs->r, &usc->sc_##r); पूर्ण जबतक (0)
 	COPY(er1);
 	COPY(er2);
 	COPY(er3);
@@ -90,7 +91,7 @@ restore_sigcontext(struct sigcontext *usc, int *pd0)
 	COPY(pc);
 	ccr = regs->ccr & 0x10;
 	COPY(ccr);
-#undef COPY
+#अघोषित COPY
 	regs->ccr &= 0xef;
 	regs->ccr |= ccr;
 	regs->orig_er0 = -1;		/* disable syscall checks */
@@ -99,40 +100,40 @@ restore_sigcontext(struct sigcontext *usc, int *pd0)
 
 	err |= __get_user(er0, &usc->sc_er0);
 	*pd0 = er0;
-	return err;
-}
+	वापस err;
+पूर्ण
 
-asmlinkage int sys_rt_sigreturn(void)
-{
-	unsigned long usp = rdusp();
-	struct rt_sigframe *frame = (struct rt_sigframe *)(usp - 4);
+यंत्रlinkage पूर्णांक sys_rt_sigवापस(व्योम)
+अणु
+	अचिन्हित दीर्घ usp = rdusp();
+	काष्ठा rt_sigframe *frame = (काष्ठा rt_sigframe *)(usp - 4);
 	sigset_t set;
-	int er0;
+	पूर्णांक er0;
 
-	if (!access_ok(frame, sizeof(*frame)))
-		goto badframe;
-	if (__copy_from_user(&set, &frame->uc.uc_sigmask, sizeof(set)))
-		goto badframe;
+	अगर (!access_ok(frame, माप(*frame)))
+		जाओ badframe;
+	अगर (__copy_from_user(&set, &frame->uc.uc_sigmask, माप(set)))
+		जाओ badframe;
 
 	set_current_blocked(&set);
 
-	if (restore_sigcontext(&frame->uc.uc_mcontext, &er0))
-		goto badframe;
+	अगर (restore_sigcontext(&frame->uc.uc_mcontext, &er0))
+		जाओ badframe;
 
-	if (restore_altstack(&frame->uc.uc_stack))
-		goto badframe;
+	अगर (restore_altstack(&frame->uc.uc_stack))
+		जाओ badframe;
 
-	return er0;
+	वापस er0;
 
 badframe:
-	force_sig(SIGSEGV);
-	return 0;
-}
+	क्रमce_sig(संक_अंश);
+	वापस 0;
+पूर्ण
 
-static int setup_sigcontext(struct sigcontext __user *sc, struct pt_regs *regs,
-			     unsigned long mask)
-{
-	int err = 0;
+अटल पूर्णांक setup_sigcontext(काष्ठा sigcontext __user *sc, काष्ठा pt_regs *regs,
+			     अचिन्हित दीर्घ mask)
+अणु
+	पूर्णांक err = 0;
 
 	err |= __put_user(regs->er0, &sc->sc_er0);
 	err |= __put_user(regs->er1, &sc->sc_er1);
@@ -146,28 +147,28 @@ static int setup_sigcontext(struct sigcontext __user *sc, struct pt_regs *regs,
 	err |= __put_user(regs->ccr, &sc->sc_ccr);
 	err |= __put_user(mask,      &sc->sc_mask);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static inline void __user *
-get_sigframe(struct ksignal *ksig, struct pt_regs *regs, size_t frame_size)
-{
-	return (void __user *)((sigsp(rdusp(), ksig) - frame_size) & -8UL);
-}
+अटल अंतरभूत व्योम __user *
+get_sigframe(काष्ठा kसंकेत *ksig, काष्ठा pt_regs *regs, माप_प्रकार frame_size)
+अणु
+	वापस (व्योम __user *)((sigsp(rdusp(), ksig) - frame_size) & -8UL);
+पूर्ण
 
-static int setup_rt_frame(struct ksignal *ksig, sigset_t *set,
-			  struct pt_regs *regs)
-{
-	struct rt_sigframe *frame;
-	int err = 0;
-	unsigned char *ret;
+अटल पूर्णांक setup_rt_frame(काष्ठा kसंकेत *ksig, sigset_t *set,
+			  काष्ठा pt_regs *regs)
+अणु
+	काष्ठा rt_sigframe *frame;
+	पूर्णांक err = 0;
+	अचिन्हित अक्षर *ret;
 
-	frame = get_sigframe(ksig, regs, sizeof(*frame));
+	frame = get_sigframe(ksig, regs, माप(*frame));
 
-	if (!access_ok(frame, sizeof(*frame)))
-		return -EFAULT;
+	अगर (!access_ok(frame, माप(*frame)))
+		वापस -EFAULT;
 
-	if (ksig->ka.sa.sa_flags & SA_SIGINFO)
+	अगर (ksig->ka.sa.sa_flags & SA_SIGINFO)
 		err |= copy_siginfo_to_user(&frame->info, &ksig->info);
 
 	/* Create the ucontext.  */
@@ -175,113 +176,113 @@ static int setup_rt_frame(struct ksignal *ksig, sigset_t *set,
 	err |= __put_user(0, &frame->uc.uc_link);
 	err |= __save_altstack(&frame->uc.uc_stack, rdusp());
 	err |= setup_sigcontext(&frame->uc.uc_mcontext, regs, set->sig[0]);
-	err |= copy_to_user(&frame->uc.uc_sigmask, set, sizeof(*set));
-	if (err)
-		return -EFAULT;
+	err |= copy_to_user(&frame->uc.uc_sigmask, set, माप(*set));
+	अगर (err)
+		वापस -EFAULT;
 
-	/* Set up to return from userspace.  */
-	ret = (unsigned char *)&frame->retcode;
-	if (ksig->ka.sa.sa_flags & SA_RESTORER)
-		ret = (unsigned char *)(ksig->ka.sa.sa_restorer);
-	else {
-		/* sub.l er0,er0; mov.b #__NR_rt_sigreturn,r0l; trapa #0 */
-		err |= __put_user(0x1a80f800 + (__NR_rt_sigreturn & 0xff),
-				  (unsigned long *)(frame->retcode + 0));
+	/* Set up to वापस from userspace.  */
+	ret = (अचिन्हित अक्षर *)&frame->retcode;
+	अगर (ksig->ka.sa.sa_flags & SA_RESTORER)
+		ret = (अचिन्हित अक्षर *)(ksig->ka.sa.sa_restorer);
+	अन्यथा अणु
+		/* sub.l er0,er0; mov.b #__NR_rt_sigवापस,r0l; trapa #0 */
+		err |= __put_user(0x1a80f800 + (__NR_rt_sigवापस & 0xff),
+				  (अचिन्हित दीर्घ *)(frame->retcode + 0));
 		err |= __put_user(0x5700,
-				  (unsigned short *)(frame->retcode + 4));
-	}
+				  (अचिन्हित लघु *)(frame->retcode + 4));
+	पूर्ण
 	err |= __put_user(ret, &frame->pretcode);
 
-	if (err)
-		return -EFAULT;
+	अगर (err)
+		वापस -EFAULT;
 
-	/* Set up registers for signal handler */
-	regs->sp  = (unsigned long)frame;
-	regs->pc  = (unsigned long)ksig->ka.sa.sa_handler;
+	/* Set up रेजिस्टरs क्रम संकेत handler */
+	regs->sp  = (अचिन्हित दीर्घ)frame;
+	regs->pc  = (अचिन्हित दीर्घ)ksig->ka.sa.sa_handler;
 	regs->er0 = ksig->sig;
-	regs->er1 = (unsigned long)&(frame->info);
-	regs->er2 = (unsigned long)&frame->uc;
+	regs->er1 = (अचिन्हित दीर्घ)&(frame->info);
+	regs->er2 = (अचिन्हित दीर्घ)&frame->uc;
 	regs->er5 = current->mm->start_data;	/* GOT base */
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void
-handle_restart(struct pt_regs *regs, struct k_sigaction *ka)
-{
-	switch (regs->er0) {
-	case -ERESTARTNOHAND:
-		if (!ka)
-			goto do_restart;
+अटल व्योम
+handle_restart(काष्ठा pt_regs *regs, काष्ठा k_sigaction *ka)
+अणु
+	चयन (regs->er0) अणु
+	हाल -ERESTARTNOHAND:
+		अगर (!ka)
+			जाओ करो_restart;
 		regs->er0 = -EINTR;
-		break;
-	case -ERESTART_RESTARTBLOCK:
-		if (!ka) {
+		अवरोध;
+	हाल -ERESTART_RESTARTBLOCK:
+		अगर (!ka) अणु
 			regs->er0 = __NR_restart_syscall;
 			regs->pc -= 2;
-		} else
+		पूर्ण अन्यथा
 			regs->er0 = -EINTR;
-		break;
-	case -ERESTARTSYS:
-		if (!(ka->sa.sa_flags & SA_RESTART)) {
+		अवरोध;
+	हाल -ERESTARTSYS:
+		अगर (!(ka->sa.sa_flags & SA_RESTART)) अणु
 			regs->er0 = -EINTR;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		fallthrough;
-	case -ERESTARTNOINTR:
-do_restart:
+	हाल -ERESTARTNOINTR:
+करो_restart:
 		regs->er0 = regs->orig_er0;
 		regs->pc -= 2;
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
 /*
  * OK, we're invoking a handler
  */
-static void
-handle_signal(struct ksignal *ksig, struct pt_regs *regs)
-{
+अटल व्योम
+handle_संकेत(काष्ठा kसंकेत *ksig, काष्ठा pt_regs *regs)
+अणु
 	sigset_t *oldset = sigmask_to_save();
-	int ret;
-	/* are we from a system call? */
-	if (regs->orig_er0 >= 0)
+	पूर्णांक ret;
+	/* are we from a प्रणाली call? */
+	अगर (regs->orig_er0 >= 0)
 		handle_restart(regs, &ksig->ka);
 
 	ret = setup_rt_frame(ksig, oldset, regs);
 
-	signal_setup_done(ret, ksig, 0);
-}
+	संकेत_setup_करोne(ret, ksig, 0);
+पूर्ण
 
 /*
  * Note that 'init' is a special process: it doesn't get signals it doesn't
- * want to handle. Thus you cannot kill init even with a SIGKILL even by
+ * want to handle. Thus you cannot समाप्त init even with a SIGKILL even by
  * mistake.
  */
-static void do_signal(struct pt_regs *regs)
-{
-	struct ksignal ksig;
+अटल व्योम करो_संकेत(काष्ठा pt_regs *regs)
+अणु
+	काष्ठा kसंकेत ksig;
 
-	current->thread.esp0 = (unsigned long) regs;
+	current->thपढ़ो.esp0 = (अचिन्हित दीर्घ) regs;
 
-	if (get_signal(&ksig)) {
-		/* Whee!  Actually deliver the signal.  */
-		handle_signal(&ksig, regs);
-		return;
-	}
-	/* Did we come from a system call? */
-	if (regs->orig_er0 >= 0)
-		handle_restart(regs, NULL);
+	अगर (get_संकेत(&ksig)) अणु
+		/* Whee!  Actually deliver the संकेत.  */
+		handle_संकेत(&ksig, regs);
+		वापस;
+	पूर्ण
+	/* Did we come from a प्रणाली call? */
+	अगर (regs->orig_er0 >= 0)
+		handle_restart(regs, शून्य);
 
-	/* If there's no signal to deliver, we just restore the saved mask.  */
+	/* If there's no संकेत to deliver, we just restore the saved mask.  */
 	restore_saved_sigmask();
-}
+पूर्ण
 
-asmlinkage void do_notify_resume(struct pt_regs *regs, u32 thread_info_flags)
-{
-	if (thread_info_flags & (_TIF_SIGPENDING | _TIF_NOTIFY_SIGNAL))
-		do_signal(regs);
+यंत्रlinkage व्योम करो_notअगरy_resume(काष्ठा pt_regs *regs, u32 thपढ़ो_info_flags)
+अणु
+	अगर (thपढ़ो_info_flags & (_TIF_SIGPENDING | _TIF_NOTIFY_SIGNAL))
+		करो_संकेत(regs);
 
-	if (thread_info_flags & _TIF_NOTIFY_RESUME)
-		tracehook_notify_resume(regs);
-}
+	अगर (thपढ़ो_info_flags & _TIF_NOTIFY_RESUME)
+		tracehook_notअगरy_resume(regs);
+पूर्ण

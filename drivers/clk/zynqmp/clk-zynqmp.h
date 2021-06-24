@@ -1,16 +1,17 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  *  Copyright (C) 2016-2018 Xilinx
  */
 
-#ifndef __LINUX_CLK_ZYNQMP_H_
-#define __LINUX_CLK_ZYNQMP_H_
+#अगर_अघोषित __LINUX_CLK_ZYNQMP_H_
+#घोषणा __LINUX_CLK_ZYNQMP_H_
 
-#include <linux/spinlock.h>
+#समावेश <linux/spinlock.h>
 
-#include <linux/firmware/xlnx-zynqmp.h>
+#समावेश <linux/firmware/xlnx-zynqmp.h>
 
-enum topology_type {
+क्रमागत topology_type अणु
 	TYPE_INVALID,
 	TYPE_MUX,
 	TYPE_PLL,
@@ -18,46 +19,46 @@ enum topology_type {
 	TYPE_DIV1,
 	TYPE_DIV2,
 	TYPE_GATE,
-};
+पूर्ण;
 
 /**
- * struct clock_topology - Clock topology
+ * काष्ठा घड़ी_प्रकारopology - Clock topology
  * @type:	Type of topology
  * @flag:	Topology flags
- * @type_flag:	Topology type specific flag
+ * @type_flag:	Topology type specअगरic flag
  */
-struct clock_topology {
+काष्ठा घड़ी_प्रकारopology अणु
 	u32 type;
 	u32 flag;
 	u32 type_flag;
 	u8 custom_type_flag;
-};
+पूर्ण;
 
-struct clk_hw *zynqmp_clk_register_pll(const char *name, u32 clk_id,
-				       const char * const *parents,
+काष्ठा clk_hw *zynqmp_clk_रेजिस्टर_pll(स्थिर अक्षर *name, u32 clk_id,
+				       स्थिर अक्षर * स्थिर *parents,
 				       u8 num_parents,
-				       const struct clock_topology *nodes);
+				       स्थिर काष्ठा घड़ी_प्रकारopology *nodes);
 
-struct clk_hw *zynqmp_clk_register_gate(const char *name, u32 clk_id,
-					const char * const *parents,
+काष्ठा clk_hw *zynqmp_clk_रेजिस्टर_gate(स्थिर अक्षर *name, u32 clk_id,
+					स्थिर अक्षर * स्थिर *parents,
 					u8 num_parents,
-					const struct clock_topology *nodes);
+					स्थिर काष्ठा घड़ी_प्रकारopology *nodes);
 
-struct clk_hw *zynqmp_clk_register_divider(const char *name,
+काष्ठा clk_hw *zynqmp_clk_रेजिस्टर_भागider(स्थिर अक्षर *name,
 					   u32 clk_id,
-					   const char * const *parents,
+					   स्थिर अक्षर * स्थिर *parents,
 					   u8 num_parents,
-					   const struct clock_topology *nodes);
+					   स्थिर काष्ठा घड़ी_प्रकारopology *nodes);
 
-struct clk_hw *zynqmp_clk_register_mux(const char *name, u32 clk_id,
-				       const char * const *parents,
+काष्ठा clk_hw *zynqmp_clk_रेजिस्टर_mux(स्थिर अक्षर *name, u32 clk_id,
+				       स्थिर अक्षर * स्थिर *parents,
 				       u8 num_parents,
-				       const struct clock_topology *nodes);
+				       स्थिर काष्ठा घड़ी_प्रकारopology *nodes);
 
-struct clk_hw *zynqmp_clk_register_fixed_factor(const char *name,
+काष्ठा clk_hw *zynqmp_clk_रेजिस्टर_fixed_factor(स्थिर अक्षर *name,
 					u32 clk_id,
-					const char * const *parents,
+					स्थिर अक्षर * स्थिर *parents,
 					u8 num_parents,
-					const struct clock_topology *nodes);
+					स्थिर काष्ठा घड़ी_प्रकारopology *nodes);
 
-#endif
+#पूर्ण_अगर

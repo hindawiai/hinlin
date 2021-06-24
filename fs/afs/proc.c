@@ -1,167 +1,168 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
-/* /proc interface for AFS
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
+/* /proc पूर्णांकerface क्रम AFS
  *
  * Copyright (C) 2002 Red Hat, Inc. All Rights Reserved.
  * Written by David Howells (dhowells@redhat.com)
  */
 
-#include <linux/slab.h>
-#include <linux/module.h>
-#include <linux/proc_fs.h>
-#include <linux/seq_file.h>
-#include <linux/sched.h>
-#include <linux/uaccess.h>
-#include "internal.h"
+#समावेश <linux/slab.h>
+#समावेश <linux/module.h>
+#समावेश <linux/proc_fs.h>
+#समावेश <linux/seq_file.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/uaccess.h>
+#समावेश "internal.h"
 
-struct afs_vl_seq_net_private {
-	struct seq_net_private		seq;	/* Must be first */
-	struct afs_vlserver_list	*vllist;
-};
+काष्ठा afs_vl_seq_net_निजी अणु
+	काष्ठा seq_net_निजी		seq;	/* Must be first */
+	काष्ठा afs_vlserver_list	*vllist;
+पूर्ण;
 
-static inline struct afs_net *afs_seq2net(struct seq_file *m)
-{
-	return afs_net(seq_file_net(m));
-}
+अटल अंतरभूत काष्ठा afs_net *afs_seq2net(काष्ठा seq_file *m)
+अणु
+	वापस afs_net(seq_file_net(m));
+पूर्ण
 
-static inline struct afs_net *afs_seq2net_single(struct seq_file *m)
-{
-	return afs_net(seq_file_single_net(m));
-}
+अटल अंतरभूत काष्ठा afs_net *afs_seq2net_single(काष्ठा seq_file *m)
+अणु
+	वापस afs_net(seq_file_single_net(m));
+पूर्ण
 
 /*
  * Display the list of cells known to the namespace.
  */
-static int afs_proc_cells_show(struct seq_file *m, void *v)
-{
-	struct afs_vlserver_list *vllist;
-	struct afs_cell *cell;
+अटल पूर्णांक afs_proc_cells_show(काष्ठा seq_file *m, व्योम *v)
+अणु
+	काष्ठा afs_vlserver_list *vllist;
+	काष्ठा afs_cell *cell;
 
-	if (v == SEQ_START_TOKEN) {
+	अगर (v == SEQ_START_TOKEN) अणु
 		/* display header on line 1 */
-		seq_puts(m, "USE ACT    TTL SV ST NAME\n");
-		return 0;
-	}
+		seq_माला_दो(m, "USE ACT    TTL SV ST NAME\n");
+		वापस 0;
+	पूर्ण
 
-	cell = list_entry(v, struct afs_cell, proc_link);
+	cell = list_entry(v, काष्ठा afs_cell, proc_link);
 	vllist = rcu_dereference(cell->vl_servers);
 
 	/* display one cell per line on subsequent lines */
-	seq_printf(m, "%3u %3u %6lld %2u %2u %s\n",
-		   atomic_read(&cell->ref),
-		   atomic_read(&cell->active),
-		   cell->dns_expiry - ktime_get_real_seconds(),
+	seq_म_लिखो(m, "%3u %3u %6lld %2u %2u %s\n",
+		   atomic_पढ़ो(&cell->ref),
+		   atomic_पढ़ो(&cell->active),
+		   cell->dns_expiry - kसमय_get_real_seconds(),
 		   vllist ? vllist->nr_servers : 0,
 		   cell->state,
 		   cell->name);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void *afs_proc_cells_start(struct seq_file *m, loff_t *_pos)
+अटल व्योम *afs_proc_cells_start(काष्ठा seq_file *m, loff_t *_pos)
 	__acquires(rcu)
-{
-	rcu_read_lock();
-	return seq_hlist_start_head_rcu(&afs_seq2net(m)->proc_cells, *_pos);
-}
+अणु
+	rcu_पढ़ो_lock();
+	वापस seq_hlist_start_head_rcu(&afs_seq2net(m)->proc_cells, *_pos);
+पूर्ण
 
-static void *afs_proc_cells_next(struct seq_file *m, void *v, loff_t *pos)
-{
-	return seq_hlist_next_rcu(v, &afs_seq2net(m)->proc_cells, pos);
-}
+अटल व्योम *afs_proc_cells_next(काष्ठा seq_file *m, व्योम *v, loff_t *pos)
+अणु
+	वापस seq_hlist_next_rcu(v, &afs_seq2net(m)->proc_cells, pos);
+पूर्ण
 
-static void afs_proc_cells_stop(struct seq_file *m, void *v)
+अटल व्योम afs_proc_cells_stop(काष्ठा seq_file *m, व्योम *v)
 	__releases(rcu)
-{
-	rcu_read_unlock();
-}
+अणु
+	rcu_पढ़ो_unlock();
+पूर्ण
 
-static const struct seq_operations afs_proc_cells_ops = {
+अटल स्थिर काष्ठा seq_operations afs_proc_cells_ops = अणु
 	.start	= afs_proc_cells_start,
 	.next	= afs_proc_cells_next,
 	.stop	= afs_proc_cells_stop,
 	.show	= afs_proc_cells_show,
-};
+पूर्ण;
 
 /*
- * handle writes to /proc/fs/afs/cells
+ * handle ग_लिखोs to /proc/fs/afs/cells
  * - to add cells: echo "add <cellname> <IP>[:<IP>][:<IP>]"
  */
-static int afs_proc_cells_write(struct file *file, char *buf, size_t size)
-{
-	struct seq_file *m = file->private_data;
-	struct afs_net *net = afs_seq2net(m);
-	char *name, *args;
-	int ret;
+अटल पूर्णांक afs_proc_cells_ग_लिखो(काष्ठा file *file, अक्षर *buf, माप_प्रकार size)
+अणु
+	काष्ठा seq_file *m = file->निजी_data;
+	काष्ठा afs_net *net = afs_seq2net(m);
+	अक्षर *name, *args;
+	पूर्णांक ret;
 
 	/* trim to first NL */
-	name = memchr(buf, '\n', size);
-	if (name)
+	name = स_प्रथम(buf, '\n', size);
+	अगर (name)
 		*name = 0;
 
-	/* split into command, name and argslist */
-	name = strchr(buf, ' ');
-	if (!name)
-		goto inval;
-	do {
+	/* split पूर्णांकo command, name and argslist */
+	name = म_अक्षर(buf, ' ');
+	अगर (!name)
+		जाओ inval;
+	करो अणु
 		*name++ = 0;
-	} while(*name == ' ');
-	if (!*name)
-		goto inval;
+	पूर्ण जबतक(*name == ' ');
+	अगर (!*name)
+		जाओ inval;
 
-	args = strchr(name, ' ');
-	if (args) {
-		do {
+	args = म_अक्षर(name, ' ');
+	अगर (args) अणु
+		करो अणु
 			*args++ = 0;
-		} while(*args == ' ');
-		if (!*args)
-			goto inval;
-	}
+		पूर्ण जबतक(*args == ' ');
+		अगर (!*args)
+			जाओ inval;
+	पूर्ण
 
-	/* determine command to perform */
+	/* determine command to perक्रमm */
 	_debug("cmd=%s name=%s args=%s", buf, name, args);
 
-	if (strcmp(buf, "add") == 0) {
-		struct afs_cell *cell;
+	अगर (म_भेद(buf, "add") == 0) अणु
+		काष्ठा afs_cell *cell;
 
-		cell = afs_lookup_cell(net, name, strlen(name), args, true);
-		if (IS_ERR(cell)) {
+		cell = afs_lookup_cell(net, name, म_माप(name), args, true);
+		अगर (IS_ERR(cell)) अणु
 			ret = PTR_ERR(cell);
-			goto done;
-		}
+			जाओ करोne;
+		पूर्ण
 
-		if (test_and_set_bit(AFS_CELL_FL_NO_GC, &cell->flags))
+		अगर (test_and_set_bit(AFS_CELL_FL_NO_GC, &cell->flags))
 			afs_unuse_cell(net, cell, afs_cell_trace_unuse_no_pin);
-	} else {
-		goto inval;
-	}
+	पूर्ण अन्यथा अणु
+		जाओ inval;
+	पूर्ण
 
 	ret = 0;
 
-done:
+करोne:
 	_leave(" = %d", ret);
-	return ret;
+	वापस ret;
 
 inval:
 	ret = -EINVAL;
-	printk("kAFS: Invalid Command on /proc/fs/afs/cells file\n");
-	goto done;
-}
+	prपूर्णांकk("kAFS: Invalid Command on /proc/fs/afs/cells file\n");
+	जाओ करोne;
+पूर्ण
 
 /*
  * Display the name of the current workstation cell.
  */
-static int afs_proc_rootcell_show(struct seq_file *m, void *v)
-{
-	struct afs_cell *cell;
-	struct afs_net *net;
+अटल पूर्णांक afs_proc_rootcell_show(काष्ठा seq_file *m, व्योम *v)
+अणु
+	काष्ठा afs_cell *cell;
+	काष्ठा afs_net *net;
 
 	net = afs_seq2net_single(m);
-	down_read(&net->cells_lock);
+	करोwn_पढ़ो(&net->cells_lock);
 	cell = net->ws_cell;
-	if (cell)
-		seq_printf(m, "%s\n", cell->name);
-	up_read(&net->cells_lock);
-	return 0;
-}
+	अगर (cell)
+		seq_म_लिखो(m, "%s\n", cell->name);
+	up_पढ़ो(&net->cells_lock);
+	वापस 0;
+पूर्ण
 
 /*
  * Set the current workstation cell and optionally supply its list of volume
@@ -169,92 +170,92 @@ static int afs_proc_rootcell_show(struct seq_file *m, void *v)
  *
  *	echo "cell.name:192.168.231.14" >/proc/fs/afs/rootcell
  */
-static int afs_proc_rootcell_write(struct file *file, char *buf, size_t size)
-{
-	struct seq_file *m = file->private_data;
-	struct afs_net *net = afs_seq2net_single(m);
-	char *s;
-	int ret;
+अटल पूर्णांक afs_proc_rootcell_ग_लिखो(काष्ठा file *file, अक्षर *buf, माप_प्रकार size)
+अणु
+	काष्ठा seq_file *m = file->निजी_data;
+	काष्ठा afs_net *net = afs_seq2net_single(m);
+	अक्षर *s;
+	पूर्णांक ret;
 
 	ret = -EINVAL;
-	if (buf[0] == '.')
-		goto out;
-	if (memchr(buf, '/', size))
-		goto out;
+	अगर (buf[0] == '.')
+		जाओ out;
+	अगर (स_प्रथम(buf, '/', size))
+		जाओ out;
 
 	/* trim to first NL */
-	s = memchr(buf, '\n', size);
-	if (s)
+	s = स_प्रथम(buf, '\n', size);
+	अगर (s)
 		*s = 0;
 
-	/* determine command to perform */
+	/* determine command to perक्रमm */
 	_debug("rootcell=%s", buf);
 
 	ret = afs_cell_init(net, buf);
 
 out:
 	_leave(" = %d", ret);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const char afs_vol_types[3][3] = {
+अटल स्थिर अक्षर afs_vol_types[3][3] = अणु
 	[AFSVL_RWVOL]	= "RW",
 	[AFSVL_ROVOL]	= "RO",
 	[AFSVL_BACKVOL]	= "BK",
-};
+पूर्ण;
 
 /*
  * Display the list of volumes known to a cell.
  */
-static int afs_proc_cell_volumes_show(struct seq_file *m, void *v)
-{
-	struct afs_volume *vol = hlist_entry(v, struct afs_volume, proc_link);
+अटल पूर्णांक afs_proc_cell_volumes_show(काष्ठा seq_file *m, व्योम *v)
+अणु
+	काष्ठा afs_volume *vol = hlist_entry(v, काष्ठा afs_volume, proc_link);
 
 	/* Display header on line 1 */
-	if (v == SEQ_START_TOKEN) {
-		seq_puts(m, "USE VID      TY NAME\n");
-		return 0;
-	}
+	अगर (v == SEQ_START_TOKEN) अणु
+		seq_माला_दो(m, "USE VID      TY NAME\n");
+		वापस 0;
+	पूर्ण
 
-	seq_printf(m, "%3d %08llx %s %s\n",
-		   atomic_read(&vol->usage), vol->vid,
+	seq_म_लिखो(m, "%3d %08llx %s %s\n",
+		   atomic_पढ़ो(&vol->usage), vol->vid,
 		   afs_vol_types[vol->type],
 		   vol->name);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void *afs_proc_cell_volumes_start(struct seq_file *m, loff_t *_pos)
+अटल व्योम *afs_proc_cell_volumes_start(काष्ठा seq_file *m, loff_t *_pos)
 	__acquires(cell->proc_lock)
-{
-	struct afs_cell *cell = PDE_DATA(file_inode(m->file));
+अणु
+	काष्ठा afs_cell *cell = PDE_DATA(file_inode(m->file));
 
-	rcu_read_lock();
-	return seq_hlist_start_head_rcu(&cell->proc_volumes, *_pos);
-}
+	rcu_पढ़ो_lock();
+	वापस seq_hlist_start_head_rcu(&cell->proc_volumes, *_pos);
+पूर्ण
 
-static void *afs_proc_cell_volumes_next(struct seq_file *m, void *v,
+अटल व्योम *afs_proc_cell_volumes_next(काष्ठा seq_file *m, व्योम *v,
 					loff_t *_pos)
-{
-	struct afs_cell *cell = PDE_DATA(file_inode(m->file));
+अणु
+	काष्ठा afs_cell *cell = PDE_DATA(file_inode(m->file));
 
-	return seq_hlist_next_rcu(v, &cell->proc_volumes, _pos);
-}
+	वापस seq_hlist_next_rcu(v, &cell->proc_volumes, _pos);
+पूर्ण
 
-static void afs_proc_cell_volumes_stop(struct seq_file *m, void *v)
+अटल व्योम afs_proc_cell_volumes_stop(काष्ठा seq_file *m, व्योम *v)
 	__releases(cell->proc_lock)
-{
-	rcu_read_unlock();
-}
+अणु
+	rcu_पढ़ो_unlock();
+पूर्ण
 
-static const struct seq_operations afs_proc_cell_volumes_ops = {
+अटल स्थिर काष्ठा seq_operations afs_proc_cell_volumes_ops = अणु
 	.start	= afs_proc_cell_volumes_start,
 	.next	= afs_proc_cell_volumes_next,
 	.stop	= afs_proc_cell_volumes_stop,
 	.show	= afs_proc_cell_volumes_show,
-};
+पूर्ण;
 
-static const char *const dns_record_sources[NR__dns_record_source + 1] = {
+अटल स्थिर अक्षर *स्थिर dns_record_sources[NR__dns_record_source + 1] = अणु
 	[DNS_RECORD_UNAVAILABLE]	= "unav",
 	[DNS_RECORD_FROM_CONFIG]	= "cfg",
 	[DNS_RECORD_FROM_DNS_A]		= "A",
@@ -262,9 +263,9 @@ static const char *const dns_record_sources[NR__dns_record_source + 1] = {
 	[DNS_RECORD_FROM_DNS_SRV]	= "SRV",
 	[DNS_RECORD_FROM_NSS]		= "nss",
 	[NR__dns_record_source]		= "[weird]"
-};
+पूर्ण;
 
-static const char *const dns_lookup_statuses[NR__dns_lookup_status + 1] = {
+अटल स्थिर अक्षर *स्थिर dns_lookup_statuses[NR__dns_lookup_status + 1] = अणु
 	[DNS_LOOKUP_NOT_DONE]		= "no-lookup",
 	[DNS_LOOKUP_GOOD]		= "good",
 	[DNS_LOOKUP_GOOD_WITH_BAD]	= "good/bad",
@@ -274,432 +275,432 @@ static const char *const dns_lookup_statuses[NR__dns_lookup_status + 1] = {
 	[DNS_LOOKUP_GOT_TEMP_FAILURE]	= "temp-failure",
 	[DNS_LOOKUP_GOT_NS_FAILURE]	= "ns-failure",
 	[NR__dns_lookup_status]		= "[weird]"
-};
+पूर्ण;
 
 /*
- * Display the list of Volume Location servers we're using for a cell.
+ * Display the list of Volume Location servers we're using क्रम a cell.
  */
-static int afs_proc_cell_vlservers_show(struct seq_file *m, void *v)
-{
-	const struct afs_vl_seq_net_private *priv = m->private;
-	const struct afs_vlserver_list *vllist = priv->vllist;
-	const struct afs_vlserver_entry *entry;
-	const struct afs_vlserver *vlserver;
-	const struct afs_addr_list *alist;
-	int i;
+अटल पूर्णांक afs_proc_cell_vlservers_show(काष्ठा seq_file *m, व्योम *v)
+अणु
+	स्थिर काष्ठा afs_vl_seq_net_निजी *priv = m->निजी;
+	स्थिर काष्ठा afs_vlserver_list *vllist = priv->vllist;
+	स्थिर काष्ठा afs_vlserver_entry *entry;
+	स्थिर काष्ठा afs_vlserver *vlserver;
+	स्थिर काष्ठा afs_addr_list *alist;
+	पूर्णांक i;
 
-	if (v == SEQ_START_TOKEN) {
-		seq_printf(m, "# source %s, status %s\n",
+	अगर (v == SEQ_START_TOKEN) अणु
+		seq_म_लिखो(m, "# source %s, status %s\n",
 			   dns_record_sources[vllist ? vllist->source : 0],
 			   dns_lookup_statuses[vllist ? vllist->status : 0]);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	entry = v;
 	vlserver = entry->server;
 	alist = rcu_dereference(vlserver->addresses);
 
-	seq_printf(m, "%s [p=%hu w=%hu s=%s,%s]:\n",
+	seq_म_लिखो(m, "%s [p=%hu w=%hu s=%s,%s]:\n",
 		   vlserver->name, entry->priority, entry->weight,
 		   dns_record_sources[alist ? alist->source : entry->source],
 		   dns_lookup_statuses[alist ? alist->status : entry->status]);
-	if (alist) {
-		for (i = 0; i < alist->nr_addrs; i++)
-			seq_printf(m, " %c %pISpc\n",
+	अगर (alist) अणु
+		क्रम (i = 0; i < alist->nr_addrs; i++)
+			seq_म_लिखो(m, " %c %pISpc\n",
 				   alist->preferred == i ? '>' : '-',
 				   &alist->addrs[i].transport);
-	}
-	seq_printf(m, " info: fl=%lx rtt=%d\n", vlserver->flags, vlserver->rtt);
-	seq_printf(m, " probe: fl=%x e=%d ac=%d out=%d\n",
+	पूर्ण
+	seq_म_लिखो(m, " info: fl=%lx rtt=%d\n", vlserver->flags, vlserver->rtt);
+	seq_म_लिखो(m, " probe: fl=%x e=%d ac=%d out=%d\n",
 		   vlserver->probe.flags, vlserver->probe.error,
-		   vlserver->probe.abort_code,
-		   atomic_read(&vlserver->probe_outstanding));
-	return 0;
-}
+		   vlserver->probe.पात_code,
+		   atomic_पढ़ो(&vlserver->probe_outstanding));
+	वापस 0;
+पूर्ण
 
-static void *afs_proc_cell_vlservers_start(struct seq_file *m, loff_t *_pos)
+अटल व्योम *afs_proc_cell_vlservers_start(काष्ठा seq_file *m, loff_t *_pos)
 	__acquires(rcu)
-{
-	struct afs_vl_seq_net_private *priv = m->private;
-	struct afs_vlserver_list *vllist;
-	struct afs_cell *cell = PDE_DATA(file_inode(m->file));
+अणु
+	काष्ठा afs_vl_seq_net_निजी *priv = m->निजी;
+	काष्ठा afs_vlserver_list *vllist;
+	काष्ठा afs_cell *cell = PDE_DATA(file_inode(m->file));
 	loff_t pos = *_pos;
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 
 	vllist = rcu_dereference(cell->vl_servers);
 	priv->vllist = vllist;
 
-	if (pos < 0)
+	अगर (pos < 0)
 		*_pos = pos = 0;
-	if (pos == 0)
-		return SEQ_START_TOKEN;
+	अगर (pos == 0)
+		वापस SEQ_START_TOKEN;
 
-	if (pos - 1 >= vllist->nr_servers)
-		return NULL;
+	अगर (pos - 1 >= vllist->nr_servers)
+		वापस शून्य;
 
-	return &vllist->servers[pos - 1];
-}
+	वापस &vllist->servers[pos - 1];
+पूर्ण
 
-static void *afs_proc_cell_vlservers_next(struct seq_file *m, void *v,
+अटल व्योम *afs_proc_cell_vlservers_next(काष्ठा seq_file *m, व्योम *v,
 					  loff_t *_pos)
-{
-	struct afs_vl_seq_net_private *priv = m->private;
-	struct afs_vlserver_list *vllist = priv->vllist;
+अणु
+	काष्ठा afs_vl_seq_net_निजी *priv = m->निजी;
+	काष्ठा afs_vlserver_list *vllist = priv->vllist;
 	loff_t pos;
 
 	pos = *_pos;
 	pos++;
 	*_pos = pos;
-	if (!vllist || pos - 1 >= vllist->nr_servers)
-		return NULL;
+	अगर (!vllist || pos - 1 >= vllist->nr_servers)
+		वापस शून्य;
 
-	return &vllist->servers[pos - 1];
-}
+	वापस &vllist->servers[pos - 1];
+पूर्ण
 
-static void afs_proc_cell_vlservers_stop(struct seq_file *m, void *v)
+अटल व्योम afs_proc_cell_vlservers_stop(काष्ठा seq_file *m, व्योम *v)
 	__releases(rcu)
-{
-	rcu_read_unlock();
-}
+अणु
+	rcu_पढ़ो_unlock();
+पूर्ण
 
-static const struct seq_operations afs_proc_cell_vlservers_ops = {
+अटल स्थिर काष्ठा seq_operations afs_proc_cell_vlservers_ops = अणु
 	.start	= afs_proc_cell_vlservers_start,
 	.next	= afs_proc_cell_vlservers_next,
 	.stop	= afs_proc_cell_vlservers_stop,
 	.show	= afs_proc_cell_vlservers_show,
-};
+पूर्ण;
 
 /*
  * Display the list of fileservers we're using within a namespace.
  */
-static int afs_proc_servers_show(struct seq_file *m, void *v)
-{
-	struct afs_server *server;
-	struct afs_addr_list *alist;
-	int i;
+अटल पूर्णांक afs_proc_servers_show(काष्ठा seq_file *m, व्योम *v)
+अणु
+	काष्ठा afs_server *server;
+	काष्ठा afs_addr_list *alist;
+	पूर्णांक i;
 
-	if (v == SEQ_START_TOKEN) {
-		seq_puts(m, "UUID                                 REF ACT\n");
-		return 0;
-	}
+	अगर (v == SEQ_START_TOKEN) अणु
+		seq_माला_दो(m, "UUID                                 REF ACT\n");
+		वापस 0;
+	पूर्ण
 
-	server = list_entry(v, struct afs_server, proc_link);
+	server = list_entry(v, काष्ठा afs_server, proc_link);
 	alist = rcu_dereference(server->addresses);
-	seq_printf(m, "%pU %3d %3d\n",
+	seq_म_लिखो(m, "%pU %3d %3d\n",
 		   &server->uuid,
-		   atomic_read(&server->ref),
-		   atomic_read(&server->active));
-	seq_printf(m, "  - info: fl=%lx rtt=%u brk=%x\n",
-		   server->flags, server->rtt, server->cb_s_break);
-	seq_printf(m, "  - probe: last=%d out=%d\n",
-		   (int)(jiffies - server->probed_at) / HZ,
-		   atomic_read(&server->probe_outstanding));
-	seq_printf(m, "  - ALIST v=%u rsp=%lx f=%lx\n",
+		   atomic_पढ़ो(&server->ref),
+		   atomic_पढ़ो(&server->active));
+	seq_म_लिखो(m, "  - info: fl=%lx rtt=%u brk=%x\n",
+		   server->flags, server->rtt, server->cb_s_अवरोध);
+	seq_म_लिखो(m, "  - probe: last=%d out=%d\n",
+		   (पूर्णांक)(jअगरfies - server->probed_at) / HZ,
+		   atomic_पढ़ो(&server->probe_outstanding));
+	seq_म_लिखो(m, "  - ALIST v=%u rsp=%lx f=%lx\n",
 		   alist->version, alist->responded, alist->failed);
-	for (i = 0; i < alist->nr_addrs; i++)
-		seq_printf(m, "    [%x] %pISpc%s\n",
+	क्रम (i = 0; i < alist->nr_addrs; i++)
+		seq_म_लिखो(m, "    [%x] %pISpc%s\n",
 			   i, &alist->addrs[i].transport,
 			   alist->preferred == i ? "*" : "");
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void *afs_proc_servers_start(struct seq_file *m, loff_t *_pos)
+अटल व्योम *afs_proc_servers_start(काष्ठा seq_file *m, loff_t *_pos)
 	__acquires(rcu)
-{
-	rcu_read_lock();
-	return seq_hlist_start_head_rcu(&afs_seq2net(m)->fs_proc, *_pos);
-}
+अणु
+	rcu_पढ़ो_lock();
+	वापस seq_hlist_start_head_rcu(&afs_seq2net(m)->fs_proc, *_pos);
+पूर्ण
 
-static void *afs_proc_servers_next(struct seq_file *m, void *v, loff_t *_pos)
-{
-	return seq_hlist_next_rcu(v, &afs_seq2net(m)->fs_proc, _pos);
-}
+अटल व्योम *afs_proc_servers_next(काष्ठा seq_file *m, व्योम *v, loff_t *_pos)
+अणु
+	वापस seq_hlist_next_rcu(v, &afs_seq2net(m)->fs_proc, _pos);
+पूर्ण
 
-static void afs_proc_servers_stop(struct seq_file *m, void *v)
+अटल व्योम afs_proc_servers_stop(काष्ठा seq_file *m, व्योम *v)
 	__releases(rcu)
-{
-	rcu_read_unlock();
-}
+अणु
+	rcu_पढ़ो_unlock();
+पूर्ण
 
-static const struct seq_operations afs_proc_servers_ops = {
+अटल स्थिर काष्ठा seq_operations afs_proc_servers_ops = अणु
 	.start	= afs_proc_servers_start,
 	.next	= afs_proc_servers_next,
 	.stop	= afs_proc_servers_stop,
 	.show	= afs_proc_servers_show,
-};
+पूर्ण;
 
 /*
- * Display the list of strings that may be substituted for the @sys pathname
+ * Display the list of strings that may be substituted क्रम the @sys pathname
  * macro.
  */
-static int afs_proc_sysname_show(struct seq_file *m, void *v)
-{
-	struct afs_net *net = afs_seq2net(m);
-	struct afs_sysnames *sysnames = net->sysnames;
-	unsigned int i = (unsigned long)v - 1;
+अटल पूर्णांक afs_proc_sysname_show(काष्ठा seq_file *m, व्योम *v)
+अणु
+	काष्ठा afs_net *net = afs_seq2net(m);
+	काष्ठा afs_sysnames *sysnames = net->sysnames;
+	अचिन्हित पूर्णांक i = (अचिन्हित दीर्घ)v - 1;
 
-	if (i < sysnames->nr)
-		seq_printf(m, "%s\n", sysnames->subs[i]);
-	return 0;
-}
+	अगर (i < sysnames->nr)
+		seq_म_लिखो(m, "%s\n", sysnames->subs[i]);
+	वापस 0;
+पूर्ण
 
-static void *afs_proc_sysname_start(struct seq_file *m, loff_t *pos)
+अटल व्योम *afs_proc_sysname_start(काष्ठा seq_file *m, loff_t *pos)
 	__acquires(&net->sysnames_lock)
-{
-	struct afs_net *net = afs_seq2net(m);
-	struct afs_sysnames *names;
+अणु
+	काष्ठा afs_net *net = afs_seq2net(m);
+	काष्ठा afs_sysnames *names;
 
-	read_lock(&net->sysnames_lock);
+	पढ़ो_lock(&net->sysnames_lock);
 
 	names = net->sysnames;
-	if (*pos >= names->nr)
-		return NULL;
-	return (void *)(unsigned long)(*pos + 1);
-}
+	अगर (*pos >= names->nr)
+		वापस शून्य;
+	वापस (व्योम *)(अचिन्हित दीर्घ)(*pos + 1);
+पूर्ण
 
-static void *afs_proc_sysname_next(struct seq_file *m, void *v, loff_t *pos)
-{
-	struct afs_net *net = afs_seq2net(m);
-	struct afs_sysnames *names = net->sysnames;
+अटल व्योम *afs_proc_sysname_next(काष्ठा seq_file *m, व्योम *v, loff_t *pos)
+अणु
+	काष्ठा afs_net *net = afs_seq2net(m);
+	काष्ठा afs_sysnames *names = net->sysnames;
 
 	*pos += 1;
-	if (*pos >= names->nr)
-		return NULL;
-	return (void *)(unsigned long)(*pos + 1);
-}
+	अगर (*pos >= names->nr)
+		वापस शून्य;
+	वापस (व्योम *)(अचिन्हित दीर्घ)(*pos + 1);
+पूर्ण
 
-static void afs_proc_sysname_stop(struct seq_file *m, void *v)
+अटल व्योम afs_proc_sysname_stop(काष्ठा seq_file *m, व्योम *v)
 	__releases(&net->sysnames_lock)
-{
-	struct afs_net *net = afs_seq2net(m);
+अणु
+	काष्ठा afs_net *net = afs_seq2net(m);
 
-	read_unlock(&net->sysnames_lock);
-}
+	पढ़ो_unlock(&net->sysnames_lock);
+पूर्ण
 
-static const struct seq_operations afs_proc_sysname_ops = {
+अटल स्थिर काष्ठा seq_operations afs_proc_sysname_ops = अणु
 	.start	= afs_proc_sysname_start,
 	.next	= afs_proc_sysname_next,
 	.stop	= afs_proc_sysname_stop,
 	.show	= afs_proc_sysname_show,
-};
+पूर्ण;
 
 /*
  * Allow the @sys substitution to be configured.
  */
-static int afs_proc_sysname_write(struct file *file, char *buf, size_t size)
-{
-	struct afs_sysnames *sysnames, *kill;
-	struct seq_file *m = file->private_data;
-	struct afs_net *net = afs_seq2net(m);
-	char *s, *p, *sub;
-	int ret, len;
+अटल पूर्णांक afs_proc_sysname_ग_लिखो(काष्ठा file *file, अक्षर *buf, माप_प्रकार size)
+अणु
+	काष्ठा afs_sysnames *sysnames, *समाप्त;
+	काष्ठा seq_file *m = file->निजी_data;
+	काष्ठा afs_net *net = afs_seq2net(m);
+	अक्षर *s, *p, *sub;
+	पूर्णांक ret, len;
 
-	sysnames = kzalloc(sizeof(*sysnames), GFP_KERNEL);
-	if (!sysnames)
-		return -ENOMEM;
+	sysnames = kzalloc(माप(*sysnames), GFP_KERNEL);
+	अगर (!sysnames)
+		वापस -ENOMEM;
 	refcount_set(&sysnames->usage, 1);
-	kill = sysnames;
+	समाप्त = sysnames;
 
 	p = buf;
-	while ((s = strsep(&p, " \t\n"))) {
-		len = strlen(s);
-		if (len == 0)
-			continue;
+	जबतक ((s = strsep(&p, " \t\n"))) अणु
+		len = म_माप(s);
+		अगर (len == 0)
+			जारी;
 		ret = -ENAMETOOLONG;
-		if (len >= AFSNAMEMAX)
-			goto error;
+		अगर (len >= AFSNAMEMAX)
+			जाओ error;
 
-		if (len >= 4 &&
+		अगर (len >= 4 &&
 		    s[len - 4] == '@' &&
 		    s[len - 3] == 's' &&
 		    s[len - 2] == 'y' &&
 		    s[len - 1] == 's')
 			/* Protect against recursion */
-			goto invalid;
+			जाओ invalid;
 
-		if (s[0] == '.' &&
+		अगर (s[0] == '.' &&
 		    (len < 2 || (len == 2 && s[1] == '.')))
-			goto invalid;
+			जाओ invalid;
 
-		if (memchr(s, '/', len))
-			goto invalid;
+		अगर (स_प्रथम(s, '/', len))
+			जाओ invalid;
 
 		ret = -EFBIG;
-		if (sysnames->nr >= AFS_NR_SYSNAME)
-			goto out;
+		अगर (sysnames->nr >= AFS_NR_SYSNAME)
+			जाओ out;
 
-		if (strcmp(s, afs_init_sysname) == 0) {
-			sub = (char *)afs_init_sysname;
-		} else {
+		अगर (म_भेद(s, afs_init_sysname) == 0) अणु
+			sub = (अक्षर *)afs_init_sysname;
+		पूर्ण अन्यथा अणु
 			ret = -ENOMEM;
 			sub = kmemdup(s, len + 1, GFP_KERNEL);
-			if (!sub)
-				goto out;
-		}
+			अगर (!sub)
+				जाओ out;
+		पूर्ण
 
 		sysnames->subs[sysnames->nr] = sub;
 		sysnames->nr++;
-	}
+	पूर्ण
 
-	if (sysnames->nr == 0) {
+	अगर (sysnames->nr == 0) अणु
 		sysnames->subs[0] = sysnames->blank;
 		sysnames->nr++;
-	}
+	पूर्ण
 
-	write_lock(&net->sysnames_lock);
-	kill = net->sysnames;
+	ग_लिखो_lock(&net->sysnames_lock);
+	समाप्त = net->sysnames;
 	net->sysnames = sysnames;
-	write_unlock(&net->sysnames_lock);
+	ग_लिखो_unlock(&net->sysnames_lock);
 	ret = 0;
 out:
-	afs_put_sysnames(kill);
-	return ret;
+	afs_put_sysnames(समाप्त);
+	वापस ret;
 
 invalid:
 	ret = -EINVAL;
 error:
-	goto out;
-}
+	जाओ out;
+पूर्ण
 
-void afs_put_sysnames(struct afs_sysnames *sysnames)
-{
-	int i;
+व्योम afs_put_sysnames(काष्ठा afs_sysnames *sysnames)
+अणु
+	पूर्णांक i;
 
-	if (sysnames && refcount_dec_and_test(&sysnames->usage)) {
-		for (i = 0; i < sysnames->nr; i++)
-			if (sysnames->subs[i] != afs_init_sysname &&
+	अगर (sysnames && refcount_dec_and_test(&sysnames->usage)) अणु
+		क्रम (i = 0; i < sysnames->nr; i++)
+			अगर (sysnames->subs[i] != afs_init_sysname &&
 			    sysnames->subs[i] != sysnames->blank)
-				kfree(sysnames->subs[i]);
-		kfree(sysnames);
-	}
-}
+				kमुक्त(sysnames->subs[i]);
+		kमुक्त(sysnames);
+	पूर्ण
+पूर्ण
 
 /*
  * Display general per-net namespace statistics
  */
-static int afs_proc_stats_show(struct seq_file *m, void *v)
-{
-	struct afs_net *net = afs_seq2net_single(m);
+अटल पूर्णांक afs_proc_stats_show(काष्ठा seq_file *m, व्योम *v)
+अणु
+	काष्ठा afs_net *net = afs_seq2net_single(m);
 
-	seq_puts(m, "kAFS statistics\n");
+	seq_माला_दो(m, "kAFS statistics\n");
 
-	seq_printf(m, "dir-mgmt: look=%u reval=%u inval=%u relpg=%u\n",
-		   atomic_read(&net->n_lookup),
-		   atomic_read(&net->n_reval),
-		   atomic_read(&net->n_inval),
-		   atomic_read(&net->n_relpg));
+	seq_म_लिखो(m, "dir-mgmt: look=%u reval=%u inval=%u relpg=%u\n",
+		   atomic_पढ़ो(&net->n_lookup),
+		   atomic_पढ़ो(&net->n_reval),
+		   atomic_पढ़ो(&net->n_inval),
+		   atomic_पढ़ो(&net->n_relpg));
 
-	seq_printf(m, "dir-data: rdpg=%u\n",
-		   atomic_read(&net->n_read_dir));
+	seq_म_लिखो(m, "dir-data: rdpg=%u\n",
+		   atomic_पढ़ो(&net->n_पढ़ो_dir));
 
-	seq_printf(m, "dir-edit: cr=%u rm=%u\n",
-		   atomic_read(&net->n_dir_cr),
-		   atomic_read(&net->n_dir_rm));
+	seq_म_लिखो(m, "dir-edit: cr=%u rm=%u\n",
+		   atomic_पढ़ो(&net->n_dir_cr),
+		   atomic_पढ़ो(&net->n_dir_rm));
 
-	seq_printf(m, "file-rd : n=%u nb=%lu\n",
-		   atomic_read(&net->n_fetches),
-		   atomic_long_read(&net->n_fetch_bytes));
-	seq_printf(m, "file-wr : n=%u nb=%lu\n",
-		   atomic_read(&net->n_stores),
-		   atomic_long_read(&net->n_store_bytes));
-	return 0;
-}
+	seq_म_लिखो(m, "file-rd : n=%u nb=%lu\n",
+		   atomic_पढ़ो(&net->n_fetches),
+		   atomic_दीर्घ_पढ़ो(&net->n_fetch_bytes));
+	seq_म_लिखो(m, "file-wr : n=%u nb=%lu\n",
+		   atomic_पढ़ो(&net->n_stores),
+		   atomic_दीर्घ_पढ़ो(&net->n_store_bytes));
+	वापस 0;
+पूर्ण
 
 /*
  * initialise /proc/fs/afs/<cell>/
  */
-int afs_proc_cell_setup(struct afs_cell *cell)
-{
-	struct proc_dir_entry *dir;
-	struct afs_net *net = cell->net;
+पूर्णांक afs_proc_cell_setup(काष्ठा afs_cell *cell)
+अणु
+	काष्ठा proc_dir_entry *dir;
+	काष्ठा afs_net *net = cell->net;
 
 	_enter("%p{%s},%p", cell, cell->name, net->proc_afs);
 
-	dir = proc_net_mkdir(net->net, cell->name, net->proc_afs);
-	if (!dir)
-		goto error_dir;
+	dir = proc_net_सूची_गढ़ो(net->net, cell->name, net->proc_afs);
+	अगर (!dir)
+		जाओ error_dir;
 
-	if (!proc_create_net_data("vlservers", 0444, dir,
+	अगर (!proc_create_net_data("vlservers", 0444, dir,
 				  &afs_proc_cell_vlservers_ops,
-				  sizeof(struct afs_vl_seq_net_private),
+				  माप(काष्ठा afs_vl_seq_net_निजी),
 				  cell) ||
 	    !proc_create_net_data("volumes", 0444, dir,
 				  &afs_proc_cell_volumes_ops,
-				  sizeof(struct seq_net_private),
+				  माप(काष्ठा seq_net_निजी),
 				  cell))
-		goto error_tree;
+		जाओ error_tree;
 
 	_leave(" = 0");
-	return 0;
+	वापस 0;
 
 error_tree:
-	remove_proc_subtree(cell->name, net->proc_afs);
+	हटाओ_proc_subtree(cell->name, net->proc_afs);
 error_dir:
 	_leave(" = -ENOMEM");
-	return -ENOMEM;
-}
+	वापस -ENOMEM;
+पूर्ण
 
 /*
- * remove /proc/fs/afs/<cell>/
+ * हटाओ /proc/fs/afs/<cell>/
  */
-void afs_proc_cell_remove(struct afs_cell *cell)
-{
-	struct afs_net *net = cell->net;
+व्योम afs_proc_cell_हटाओ(काष्ठा afs_cell *cell)
+अणु
+	काष्ठा afs_net *net = cell->net;
 
 	_enter("");
-	remove_proc_subtree(cell->name, net->proc_afs);
+	हटाओ_proc_subtree(cell->name, net->proc_afs);
 	_leave("");
-}
+पूर्ण
 
 /*
  * initialise the /proc/fs/afs/ directory
  */
-int afs_proc_init(struct afs_net *net)
-{
-	struct proc_dir_entry *p;
+पूर्णांक afs_proc_init(काष्ठा afs_net *net)
+अणु
+	काष्ठा proc_dir_entry *p;
 
 	_enter("");
 
-	p = proc_net_mkdir(net->net, "afs", net->net->proc_net);
-	if (!p)
-		goto error_dir;
+	p = proc_net_सूची_गढ़ो(net->net, "afs", net->net->proc_net);
+	अगर (!p)
+		जाओ error_dir;
 
-	if (!proc_create_net_data_write("cells", 0644, p,
+	अगर (!proc_create_net_data_ग_लिखो("cells", 0644, p,
 					&afs_proc_cells_ops,
-					afs_proc_cells_write,
-					sizeof(struct seq_net_private),
-					NULL) ||
-	    !proc_create_net_single_write("rootcell", 0644, p,
+					afs_proc_cells_ग_लिखो,
+					माप(काष्ठा seq_net_निजी),
+					शून्य) ||
+	    !proc_create_net_single_ग_लिखो("rootcell", 0644, p,
 					  afs_proc_rootcell_show,
-					  afs_proc_rootcell_write,
-					  NULL) ||
+					  afs_proc_rootcell_ग_लिखो,
+					  शून्य) ||
 	    !proc_create_net("servers", 0444, p, &afs_proc_servers_ops,
-			     sizeof(struct seq_net_private)) ||
-	    !proc_create_net_single("stats", 0444, p, afs_proc_stats_show, NULL) ||
-	    !proc_create_net_data_write("sysname", 0644, p,
+			     माप(काष्ठा seq_net_निजी)) ||
+	    !proc_create_net_single("stats", 0444, p, afs_proc_stats_show, शून्य) ||
+	    !proc_create_net_data_ग_लिखो("sysname", 0644, p,
 					&afs_proc_sysname_ops,
-					afs_proc_sysname_write,
-					sizeof(struct seq_net_private),
-					NULL))
-		goto error_tree;
+					afs_proc_sysname_ग_लिखो,
+					माप(काष्ठा seq_net_निजी),
+					शून्य))
+		जाओ error_tree;
 
 	net->proc_afs = p;
 	_leave(" = 0");
-	return 0;
+	वापस 0;
 
 error_tree:
-	proc_remove(p);
+	proc_हटाओ(p);
 error_dir:
 	_leave(" = -ENOMEM");
-	return -ENOMEM;
-}
+	वापस -ENOMEM;
+पूर्ण
 
 /*
  * clean up the /proc/fs/afs/ directory
  */
-void afs_proc_cleanup(struct afs_net *net)
-{
-	proc_remove(net->proc_afs);
-	net->proc_afs = NULL;
-}
+व्योम afs_proc_cleanup(काष्ठा afs_net *net)
+अणु
+	proc_हटाओ(net->proc_afs);
+	net->proc_afs = शून्य;
+पूर्ण

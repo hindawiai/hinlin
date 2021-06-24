@@ -1,144 +1,145 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * OMAP2xxx DVFS virtual clock functions
+ * OMAP2xxx DVFS भव घड़ी functions
  *
  * Copyright (C) 2005-2008, 2012 Texas Instruments, Inc.
  * Copyright (C) 2004-2010 Nokia Corporation
  *
  * Contacts:
- * Richard Woodruff <r-woodruff2@ti.com>
+ * Riअक्षरd Woodruff <r-woodruff2@ti.com>
  * Paul Walmsley
  *
  * Based on earlier work by Tuukka Tikkanen, Tony Lindgren,
- * Gordon McNutt and RidgeRun, Inc.
+ * Gorकरोn McNutt and RidgeRun, Inc.
  *
  * XXX Some of this code should be replaceable by the upcoming OPP layer
  * code.  However, some notion of "rate set" is probably still necessary
- * for OMAP2xxx at least.  Rate sets should be generalized so they can be
- * used for any OMAP chip, not just OMAP2xxx.  In particular, Richard Woodruff
- * has in the past expressed a preference to use rate sets for OPP changes,
- * rather than dynamically recalculating the clock tree, so if someone wants
- * this badly enough to write the code to handle it, we should support it
+ * क्रम OMAP2xxx at least.  Rate sets should be generalized so they can be
+ * used क्रम any OMAP chip, not just OMAP2xxx.  In particular, Riअक्षरd Woodruff
+ * has in the past expressed a preference to use rate sets क्रम OPP changes,
+ * rather than dynamically recalculating the घड़ी tree, so अगर someone wants
+ * this badly enough to ग_लिखो the code to handle it, we should support it
  * as an option.
  */
-#undef DEBUG
+#अघोषित DEBUG
 
-#include <linux/kernel.h>
-#include <linux/errno.h>
-#include <linux/clk.h>
-#include <linux/io.h>
-#include <linux/cpufreq.h>
-#include <linux/slab.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/clk.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/cpufreq.h>
+#समावेश <linux/slab.h>
 
-#include "soc.h"
-#include "clock.h"
-#include "clock2xxx.h"
-#include "opp2xxx.h"
-#include "cm2xxx.h"
-#include "cm-regbits-24xx.h"
-#include "sdrc.h"
-#include "sram.h"
+#समावेश "soc.h"
+#समावेश "clock.h"
+#समावेश "clock2xxx.h"
+#समावेश "opp2xxx.h"
+#समावेश "cm2xxx.h"
+#समावेश "cm-regbits-24xx.h"
+#समावेश "sdrc.h"
+#समावेश "sram.h"
 
-const struct prcm_config *curr_prcm_set;
-const struct prcm_config *rate_table;
+स्थिर काष्ठा prcm_config *curr_prcm_set;
+स्थिर काष्ठा prcm_config *rate_table;
 
 /*
- * sys_ck_rate: the rate of the external high-frequency clock
- * oscillator on the board.  Set by the SoC-specific clock init code.
+ * sys_ck_rate: the rate of the बाह्यal high-frequency घड़ी
+ * oscillator on the board.  Set by the SoC-specअगरic घड़ी init code.
  * Once set during a boot, will not change.
  */
-static unsigned long sys_ck_rate;
+अटल अचिन्हित दीर्घ sys_ck_rate;
 
 /**
- * omap2_table_mpu_recalc - just return the MPU speed
- * @clk: virt_prcm_set struct clk
+ * omap2_table_mpu_recalc - just वापस the MPU speed
+ * @clk: virt_prcm_set काष्ठा clk
  *
  * Set virt_prcm_set's rate to the mpu_speed field of the current PRCM set.
  */
-unsigned long omap2_table_mpu_recalc(struct clk_hw *clk,
-				     unsigned long parent_rate)
-{
-	return curr_prcm_set->mpu_speed;
-}
+अचिन्हित दीर्घ omap2_table_mpu_recalc(काष्ठा clk_hw *clk,
+				     अचिन्हित दीर्घ parent_rate)
+अणु
+	वापस curr_prcm_set->mpu_speed;
+पूर्ण
 
 /*
- * Look for a rate equal or less than the target rate given a configuration set.
+ * Look क्रम a rate equal or less than the target rate given a configuration set.
  *
  * What's not entirely clear is "which" field represents the key field.
  * Some might argue L3-DDR, others ARM, others IVA. This code is simple and
  * just uses the ARM rates.
  */
-long omap2_round_to_table_rate(struct clk_hw *hw, unsigned long rate,
-			       unsigned long *parent_rate)
-{
-	const struct prcm_config *ptr;
-	long highest_rate;
+दीर्घ omap2_round_to_table_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
+			       अचिन्हित दीर्घ *parent_rate)
+अणु
+	स्थिर काष्ठा prcm_config *ptr;
+	दीर्घ highest_rate;
 
 	highest_rate = -EINVAL;
 
-	for (ptr = rate_table; ptr->mpu_speed; ptr++) {
-		if (!(ptr->flags & cpu_mask))
-			continue;
-		if (ptr->xtal_speed != sys_ck_rate)
-			continue;
+	क्रम (ptr = rate_table; ptr->mpu_speed; ptr++) अणु
+		अगर (!(ptr->flags & cpu_mask))
+			जारी;
+		अगर (ptr->xtal_speed != sys_ck_rate)
+			जारी;
 
 		highest_rate = ptr->mpu_speed;
 
 		/* Can check only after xtal frequency check */
-		if (ptr->mpu_speed <= rate)
-			break;
-	}
-	return highest_rate;
-}
+		अगर (ptr->mpu_speed <= rate)
+			अवरोध;
+	पूर्ण
+	वापस highest_rate;
+पूर्ण
 
-/* Sets basic clocks based on the specified rate */
-int omap2_select_table_rate(struct clk_hw *hw, unsigned long rate,
-			    unsigned long parent_rate)
-{
-	u32 cur_rate, done_rate, bypass = 0;
-	const struct prcm_config *prcm;
-	unsigned long found_speed = 0;
-	unsigned long flags;
+/* Sets basic घड़ीs based on the specअगरied rate */
+पूर्णांक omap2_select_table_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
+			    अचिन्हित दीर्घ parent_rate)
+अणु
+	u32 cur_rate, करोne_rate, bypass = 0;
+	स्थिर काष्ठा prcm_config *prcm;
+	अचिन्हित दीर्घ found_speed = 0;
+	अचिन्हित दीर्घ flags;
 
-	for (prcm = rate_table; prcm->mpu_speed; prcm++) {
-		if (!(prcm->flags & cpu_mask))
-			continue;
+	क्रम (prcm = rate_table; prcm->mpu_speed; prcm++) अणु
+		अगर (!(prcm->flags & cpu_mask))
+			जारी;
 
-		if (prcm->xtal_speed != sys_ck_rate)
-			continue;
+		अगर (prcm->xtal_speed != sys_ck_rate)
+			जारी;
 
-		if (prcm->mpu_speed <= rate) {
+		अगर (prcm->mpu_speed <= rate) अणु
 			found_speed = prcm->mpu_speed;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	if (!found_speed) {
-		printk(KERN_INFO "Could not set MPU rate to %luMHz\n",
+	अगर (!found_speed) अणु
+		prपूर्णांकk(KERN_INFO "Could not set MPU rate to %luMHz\n",
 		       rate / 1000000);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	curr_prcm_set = prcm;
 	cur_rate = omap2xxx_clk_get_core_rate();
 
-	if (prcm->dpll_speed == cur_rate / 2) {
+	अगर (prcm->dpll_speed == cur_rate / 2) अणु
 		omap2xxx_sdrc_reprogram(CORE_CLK_SRC_DPLL, 1);
-	} else if (prcm->dpll_speed == cur_rate * 2) {
+	पूर्ण अन्यथा अगर (prcm->dpll_speed == cur_rate * 2) अणु
 		omap2xxx_sdrc_reprogram(CORE_CLK_SRC_DPLL_X2, 1);
-	} else if (prcm->dpll_speed != cur_rate) {
+	पूर्ण अन्यथा अगर (prcm->dpll_speed != cur_rate) अणु
 		local_irq_save(flags);
 
-		if (prcm->dpll_speed == prcm->xtal_speed)
+		अगर (prcm->dpll_speed == prcm->xtal_speed)
 			bypass = 1;
 
-		if ((prcm->cm_clksel2_pll & OMAP24XX_CORE_CLK_SRC_MASK) ==
+		अगर ((prcm->cm_clksel2_pll & OMAP24XX_CORE_CLK_SRC_MASK) ==
 		    CORE_CLK_SRC_DPLL_X2)
-			done_rate = CORE_CLK_SRC_DPLL_X2;
-		else
-			done_rate = CORE_CLK_SRC_DPLL;
+			करोne_rate = CORE_CLK_SRC_DPLL_X2;
+		अन्यथा
+			करोne_rate = CORE_CLK_SRC_DPLL;
 
-		omap2xxx_cm_set_mod_dividers(prcm->cm_clksel_mpu,
+		omap2xxx_cm_set_mod_भागiders(prcm->cm_clksel_mpu,
 					     prcm->cm_clksel_dsp,
 					     prcm->cm_clksel_gfx,
 					     prcm->cm_clksel1_core,
@@ -151,91 +152,91 @@ int omap2_select_table_rate(struct clk_hw *hw, unsigned long rate,
 			       bypass);
 
 		omap2xxx_sdrc_init_params(omap2xxx_sdrc_dll_is_unlocked());
-		omap2xxx_sdrc_reprogram(done_rate, 0);
+		omap2xxx_sdrc_reprogram(करोne_rate, 0);
 
 		local_irq_restore(flags);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * omap2xxx_clkt_vps_check_bootloader_rate - determine which of the rate
  * table sets matches the current CORE DPLL hardware rate
  *
  * Check the MPU rate set by bootloader.  Sets the 'curr_prcm_set'
- * global to point to the active rate set when found; otherwise, sets
- * it to NULL.  No return value;
+ * global to poपूर्णांक to the active rate set when found; otherwise, sets
+ * it to शून्य.  No वापस value;
  */
-void omap2xxx_clkt_vps_check_bootloader_rates(void)
-{
-	const struct prcm_config *prcm = NULL;
-	unsigned long rate;
+व्योम omap2xxx_clkt_vps_check_bootloader_rates(व्योम)
+अणु
+	स्थिर काष्ठा prcm_config *prcm = शून्य;
+	अचिन्हित दीर्घ rate;
 
 	rate = omap2xxx_clk_get_core_rate();
-	for (prcm = rate_table; prcm->mpu_speed; prcm++) {
-		if (!(prcm->flags & cpu_mask))
-			continue;
-		if (prcm->xtal_speed != sys_ck_rate)
-			continue;
-		if (prcm->dpll_speed <= rate)
-			break;
-	}
+	क्रम (prcm = rate_table; prcm->mpu_speed; prcm++) अणु
+		अगर (!(prcm->flags & cpu_mask))
+			जारी;
+		अगर (prcm->xtal_speed != sys_ck_rate)
+			जारी;
+		अगर (prcm->dpll_speed <= rate)
+			अवरोध;
+	पूर्ण
 	curr_prcm_set = prcm;
-}
+पूर्ण
 
 /**
  * omap2xxx_clkt_vps_late_init - store a copy of the sys_ck rate
  *
- * Store a copy of the sys_ck rate for later use by the OMAP2xxx DVFS
- * code.  (The sys_ck rate does not -- or rather, must not -- change
- * during kernel runtime.)  Must be called after we have a valid
- * sys_ck rate, but before the virt_prcm_set clock rate is
- * recalculated.  No return value.
+ * Store a copy of the sys_ck rate क्रम later use by the OMAP2xxx DVFS
+ * code.  (The sys_ck rate करोes not -- or rather, must not -- change
+ * during kernel runसमय.)  Must be called after we have a valid
+ * sys_ck rate, but beक्रमe the virt_prcm_set घड़ी rate is
+ * recalculated.  No वापस value.
  */
-void omap2xxx_clkt_vps_late_init(void)
-{
-	struct clk *c;
+व्योम omap2xxx_clkt_vps_late_init(व्योम)
+अणु
+	काष्ठा clk *c;
 
-	c = clk_get(NULL, "sys_ck");
-	if (IS_ERR(c)) {
+	c = clk_get(शून्य, "sys_ck");
+	अगर (IS_ERR(c)) अणु
 		WARN(1, "could not locate sys_ck\n");
-	} else {
+	पूर्ण अन्यथा अणु
 		sys_ck_rate = clk_get_rate(c);
 		clk_put(c);
-	}
-}
+	पूर्ण
+पूर्ण
 
-#ifdef CONFIG_OF
-#include <linux/clk-provider.h>
-#include <linux/clkdev.h>
+#अगर_घोषित CONFIG_OF
+#समावेश <linux/clk-provider.h>
+#समावेश <linux/clkdev.h>
 
-static const struct clk_ops virt_prcm_set_ops = {
+अटल स्थिर काष्ठा clk_ops virt_prcm_set_ops = अणु
 	.recalc_rate	= &omap2_table_mpu_recalc,
 	.set_rate	= &omap2_select_table_rate,
 	.round_rate	= &omap2_round_to_table_rate,
-};
+पूर्ण;
 
 /**
- * omap2xxx_clkt_vps_init - initialize virt_prcm_set clock
+ * omap2xxx_clkt_vps_init - initialize virt_prcm_set घड़ी
  *
- * Does a manual init for the virtual prcm DVFS clock for OMAP2. This
- * function is called only from omap2 DT clock init, as the virtual
- * node is not modelled in the DT clock data.
+ * Does a manual init क्रम the भव prcm DVFS घड़ी क्रम OMAP2. This
+ * function is called only from omap2 DT घड़ी init, as the भव
+ * node is not modelled in the DT घड़ी data.
  */
-void omap2xxx_clkt_vps_init(void)
-{
-	struct clk_init_data init = { NULL };
-	struct clk_hw_omap *hw = NULL;
-	struct clk *clk;
-	const char *parent_name = "mpu_ck";
+व्योम omap2xxx_clkt_vps_init(व्योम)
+अणु
+	काष्ठा clk_init_data init = अणु शून्य पूर्ण;
+	काष्ठा clk_hw_omap *hw = शून्य;
+	काष्ठा clk *clk;
+	स्थिर अक्षर *parent_name = "mpu_ck";
 
 	omap2xxx_clkt_vps_late_init();
 	omap2xxx_clkt_vps_check_bootloader_rates();
 
-	hw = kzalloc(sizeof(*hw), GFP_KERNEL);
-	if (!hw)
-		return;
+	hw = kzalloc(माप(*hw), GFP_KERNEL);
+	अगर (!hw)
+		वापस;
 	init.name = "virt_prcm_set";
 	init.ops = &virt_prcm_set_ops;
 	init.parent_names = &parent_name;
@@ -243,13 +244,13 @@ void omap2xxx_clkt_vps_init(void)
 
 	hw->hw.init = &init;
 
-	clk = clk_register(NULL, &hw->hw);
-	if (IS_ERR(clk)) {
-		printk(KERN_ERR "Failed to register clock\n");
-		kfree(hw);
-		return;
-	}
+	clk = clk_रेजिस्टर(शून्य, &hw->hw);
+	अगर (IS_ERR(clk)) अणु
+		prपूर्णांकk(KERN_ERR "Failed to register clock\n");
+		kमुक्त(hw);
+		वापस;
+	पूर्ण
 
-	clkdev_create(clk, "cpufreq_ck", NULL);
-}
-#endif
+	clkdev_create(clk, "cpufreq_ck", शून्य);
+पूर्ण
+#पूर्ण_अगर

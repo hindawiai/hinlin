@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * linux/drivers/video/omap2/dss/dispc.c
  *
@@ -9,49 +10,49 @@
  * by Imre Deak.
  */
 
-#define DSS_SUBSYS_NAME "DISPC"
+#घोषणा DSS_SUBSYS_NAME "DISPC"
 
-#include <linux/kernel.h>
-#include <linux/dma-mapping.h>
-#include <linux/vmalloc.h>
-#include <linux/export.h>
-#include <linux/clk.h>
-#include <linux/io.h>
-#include <linux/jiffies.h>
-#include <linux/seq_file.h>
-#include <linux/delay.h>
-#include <linux/workqueue.h>
-#include <linux/hardirq.h>
-#include <linux/platform_device.h>
-#include <linux/pm_runtime.h>
-#include <linux/sizes.h>
-#include <linux/mfd/syscon.h>
-#include <linux/regmap.h>
-#include <linux/of.h>
-#include <linux/component.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/dma-mapping.h>
+#समावेश <linux/vदो_स्मृति.h>
+#समावेश <linux/export.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/jअगरfies.h>
+#समावेश <linux/seq_file.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/workqueue.h>
+#समावेश <linux/hardirq.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/pm_runसमय.स>
+#समावेश <linux/sizes.h>
+#समावेश <linux/mfd/syscon.h>
+#समावेश <linux/regmap.h>
+#समावेश <linux/of.h>
+#समावेश <linux/component.h>
 
-#include <video/omapfb_dss.h>
+#समावेश <video/omapfb_dss.h>
 
-#include "dss.h"
-#include "dss_features.h"
-#include "dispc.h"
+#समावेश "dss.h"
+#समावेश "dss_features.h"
+#समावेश "dispc.h"
 
 /* DISPC */
-#define DISPC_SZ_REGS			SZ_4K
+#घोषणा DISPC_SZ_REGS			SZ_4K
 
-enum omap_burst_size {
+क्रमागत omap_burst_size अणु
 	BURST_SIZE_X2 = 0,
 	BURST_SIZE_X4 = 1,
 	BURST_SIZE_X8 = 2,
-};
+पूर्ण;
 
-#define REG_GET(idx, start, end) \
-	FLD_GET(dispc_read_reg(idx), start, end)
+#घोषणा REG_GET(idx, start, end) \
+	FLD_GET(dispc_पढ़ो_reg(idx), start, end)
 
-#define REG_FLD_MOD(idx, val, start, end)				\
-	dispc_write_reg(idx, FLD_MOD(dispc_read_reg(idx), val, start, end))
+#घोषणा REG_FLD_MOD(idx, val, start, end)				\
+	dispc_ग_लिखो_reg(idx, FLD_MOD(dispc_पढ़ो_reg(idx), val, start, end))
 
-struct dispc_features {
+काष्ठा dispc_features अणु
 	u8 sw_start;
 	u8 fp_start;
 	u8 bp_start;
@@ -62,24 +63,24 @@ struct dispc_features {
 	u8 mgr_height_start;
 	u16 mgr_width_max;
 	u16 mgr_height_max;
-	unsigned long max_lcd_pclk;
-	unsigned long max_tv_pclk;
-	int (*calc_scaling) (unsigned long pclk, unsigned long lclk,
-		const struct omap_video_timings *mgr_timings,
+	अचिन्हित दीर्घ max_lcd_pclk;
+	अचिन्हित दीर्घ max_tv_pclk;
+	पूर्णांक (*calc_scaling) (अचिन्हित दीर्घ pclk, अचिन्हित दीर्घ lclk,
+		स्थिर काष्ठा omap_video_timings *mgr_timings,
 		u16 width, u16 height, u16 out_width, u16 out_height,
-		enum omap_color_mode color_mode, bool *five_taps,
-		int *x_predecim, int *y_predecim, int *decim_x, int *decim_y,
-		u16 pos_x, unsigned long *core_clk, bool mem_to_mem);
-	unsigned long (*calc_core_clk) (unsigned long pclk,
+		क्रमागत omap_color_mode color_mode, bool *five_taps,
+		पूर्णांक *x_predecim, पूर्णांक *y_predecim, पूर्णांक *decim_x, पूर्णांक *decim_y,
+		u16 pos_x, अचिन्हित दीर्घ *core_clk, bool mem_to_mem);
+	अचिन्हित दीर्घ (*calc_core_clk) (अचिन्हित दीर्घ pclk,
 		u16 width, u16 height, u16 out_width, u16 out_height,
 		bool mem_to_mem);
-	u8 num_fifos;
+	u8 num_fअगरos;
 
-	/* swap GFX & WB fifos */
-	bool gfx_fifo_workaround:1;
+	/* swap GFX & WB fअगरos */
+	bool gfx_fअगरo_workaround:1;
 
 	/* no DISPC_IRQ_FRAMEDONETV on this SoC */
-	bool no_framedone_tv:1;
+	bool no_frameकरोne_tv:1;
 
 	/* revert to the OMAP4 mechanism of DISPC Smart Standby operation */
 	bool mstandby_workaround:1;
@@ -92,53 +93,53 @@ struct dispc_features {
 	/* POL_FREQ has ALIGN bit */
 	bool supports_sync_align:1;
 
-	bool has_writeback:1;
-};
+	bool has_ग_लिखोback:1;
+पूर्ण;
 
-#define DISPC_MAX_NR_FIFOS 5
+#घोषणा DISPC_MAX_NR_FIFOS 5
 
-static struct {
-	struct platform_device *pdev;
-	void __iomem    *base;
+अटल काष्ठा अणु
+	काष्ठा platक्रमm_device *pdev;
+	व्योम __iomem    *base;
 
-	int irq;
+	पूर्णांक irq;
 	irq_handler_t user_handler;
-	void *user_data;
+	व्योम *user_data;
 
-	unsigned long core_clk_rate;
-	unsigned long tv_pclk_rate;
+	अचिन्हित दीर्घ core_clk_rate;
+	अचिन्हित दीर्घ tv_pclk_rate;
 
-	u32 fifo_size[DISPC_MAX_NR_FIFOS];
-	/* maps which plane is using a fifo. fifo-id -> plane-id */
-	int fifo_assignment[DISPC_MAX_NR_FIFOS];
+	u32 fअगरo_size[DISPC_MAX_NR_FIFOS];
+	/* maps which plane is using a fअगरo. fअगरo-id -> plane-id */
+	पूर्णांक fअगरo_assignment[DISPC_MAX_NR_FIFOS];
 
 	bool		ctx_valid;
-	u32		ctx[DISPC_SZ_REGS / sizeof(u32)];
+	u32		ctx[DISPC_SZ_REGS / माप(u32)];
 
-	const struct dispc_features *feat;
+	स्थिर काष्ठा dispc_features *feat;
 
 	bool is_enabled;
 
-	struct regmap *syscon_pol;
+	काष्ठा regmap *syscon_pol;
 	u32 syscon_pol_offset;
 
 	/* DISPC_CONTROL & DISPC_CONFIG lock*/
 	spinlock_t control_lock;
-} dispc;
+पूर्ण dispc;
 
-enum omap_color_component {
-	/* used for all color formats for OMAP3 and earlier
-	 * and for RGB and Y color component on OMAP4
+क्रमागत omap_color_component अणु
+	/* used क्रम all color क्रमmats क्रम OMAP3 and earlier
+	 * and क्रम RGB and Y color component on OMAP4
 	 */
 	DISPC_COLOR_COMPONENT_RGB_Y		= 1 << 0,
-	/* used for UV component for
+	/* used क्रम UV component क्रम
 	 * OMAP_DSS_COLOR_YUV2, OMAP_DSS_COLOR_UYVY, OMAP_DSS_COLOR_NV12
-	 * color formats on OMAP4
+	 * color क्रमmats on OMAP4
 	 */
 	DISPC_COLOR_COMPONENT_UV		= 1 << 1,
-};
+पूर्ण;
 
-enum mgr_reg_fields {
+क्रमागत mgr_reg_fields अणु
 	DISPC_MGR_FLD_ENABLE,
 	DISPC_MGR_FLD_STNTFT,
 	DISPC_MGR_FLD_GO,
@@ -148,145 +149,145 @@ enum mgr_reg_fields {
 	DISPC_MGR_FLD_TCKSELECTION,
 	DISPC_MGR_FLD_CPR,
 	DISPC_MGR_FLD_FIFOHANDCHECK,
-	/* used to maintain a count of the above fields */
+	/* used to मुख्यtain a count of the above fields */
 	DISPC_MGR_FLD_NUM,
-};
+पूर्ण;
 
-struct dispc_reg_field {
+काष्ठा dispc_reg_field अणु
 	u16 reg;
 	u8 high;
 	u8 low;
-};
+पूर्ण;
 
-static const struct {
-	const char *name;
+अटल स्थिर काष्ठा अणु
+	स्थिर अक्षर *name;
 	u32 vsync_irq;
-	u32 framedone_irq;
+	u32 frameकरोne_irq;
 	u32 sync_lost_irq;
-	struct dispc_reg_field reg_desc[DISPC_MGR_FLD_NUM];
-} mgr_desc[] = {
-	[OMAP_DSS_CHANNEL_LCD] = {
+	काष्ठा dispc_reg_field reg_desc[DISPC_MGR_FLD_NUM];
+पूर्ण mgr_desc[] = अणु
+	[OMAP_DSS_CHANNEL_LCD] = अणु
 		.name		= "LCD",
 		.vsync_irq	= DISPC_IRQ_VSYNC,
-		.framedone_irq	= DISPC_IRQ_FRAMEDONE,
+		.frameकरोne_irq	= DISPC_IRQ_FRAMEDONE,
 		.sync_lost_irq	= DISPC_IRQ_SYNC_LOST,
-		.reg_desc	= {
-			[DISPC_MGR_FLD_ENABLE]		= { DISPC_CONTROL,  0,  0 },
-			[DISPC_MGR_FLD_STNTFT]		= { DISPC_CONTROL,  3,  3 },
-			[DISPC_MGR_FLD_GO]		= { DISPC_CONTROL,  5,  5 },
-			[DISPC_MGR_FLD_TFTDATALINES]	= { DISPC_CONTROL,  9,  8 },
-			[DISPC_MGR_FLD_STALLMODE]	= { DISPC_CONTROL, 11, 11 },
-			[DISPC_MGR_FLD_TCKENABLE]	= { DISPC_CONFIG,  10, 10 },
-			[DISPC_MGR_FLD_TCKSELECTION]	= { DISPC_CONFIG,  11, 11 },
-			[DISPC_MGR_FLD_CPR]		= { DISPC_CONFIG,  15, 15 },
-			[DISPC_MGR_FLD_FIFOHANDCHECK]	= { DISPC_CONFIG,  16, 16 },
-		},
-	},
-	[OMAP_DSS_CHANNEL_DIGIT] = {
+		.reg_desc	= अणु
+			[DISPC_MGR_FLD_ENABLE]		= अणु DISPC_CONTROL,  0,  0 पूर्ण,
+			[DISPC_MGR_FLD_STNTFT]		= अणु DISPC_CONTROL,  3,  3 पूर्ण,
+			[DISPC_MGR_FLD_GO]		= अणु DISPC_CONTROL,  5,  5 पूर्ण,
+			[DISPC_MGR_FLD_TFTDATALINES]	= अणु DISPC_CONTROL,  9,  8 पूर्ण,
+			[DISPC_MGR_FLD_STALLMODE]	= अणु DISPC_CONTROL, 11, 11 पूर्ण,
+			[DISPC_MGR_FLD_TCKENABLE]	= अणु DISPC_CONFIG,  10, 10 पूर्ण,
+			[DISPC_MGR_FLD_TCKSELECTION]	= अणु DISPC_CONFIG,  11, 11 पूर्ण,
+			[DISPC_MGR_FLD_CPR]		= अणु DISPC_CONFIG,  15, 15 पूर्ण,
+			[DISPC_MGR_FLD_FIFOHANDCHECK]	= अणु DISPC_CONFIG,  16, 16 पूर्ण,
+		पूर्ण,
+	पूर्ण,
+	[OMAP_DSS_CHANNEL_DIGIT] = अणु
 		.name		= "DIGIT",
 		.vsync_irq	= DISPC_IRQ_EVSYNC_ODD | DISPC_IRQ_EVSYNC_EVEN,
-		.framedone_irq	= DISPC_IRQ_FRAMEDONETV,
+		.frameकरोne_irq	= DISPC_IRQ_FRAMEDONETV,
 		.sync_lost_irq	= DISPC_IRQ_SYNC_LOST_DIGIT,
-		.reg_desc	= {
-			[DISPC_MGR_FLD_ENABLE]		= { DISPC_CONTROL,  1,  1 },
-			[DISPC_MGR_FLD_STNTFT]		= { },
-			[DISPC_MGR_FLD_GO]		= { DISPC_CONTROL,  6,  6 },
-			[DISPC_MGR_FLD_TFTDATALINES]	= { },
-			[DISPC_MGR_FLD_STALLMODE]	= { },
-			[DISPC_MGR_FLD_TCKENABLE]	= { DISPC_CONFIG,  12, 12 },
-			[DISPC_MGR_FLD_TCKSELECTION]	= { DISPC_CONFIG,  13, 13 },
-			[DISPC_MGR_FLD_CPR]		= { },
-			[DISPC_MGR_FLD_FIFOHANDCHECK]	= { DISPC_CONFIG,  16, 16 },
-		},
-	},
-	[OMAP_DSS_CHANNEL_LCD2] = {
+		.reg_desc	= अणु
+			[DISPC_MGR_FLD_ENABLE]		= अणु DISPC_CONTROL,  1,  1 पूर्ण,
+			[DISPC_MGR_FLD_STNTFT]		= अणु पूर्ण,
+			[DISPC_MGR_FLD_GO]		= अणु DISPC_CONTROL,  6,  6 पूर्ण,
+			[DISPC_MGR_FLD_TFTDATALINES]	= अणु पूर्ण,
+			[DISPC_MGR_FLD_STALLMODE]	= अणु पूर्ण,
+			[DISPC_MGR_FLD_TCKENABLE]	= अणु DISPC_CONFIG,  12, 12 पूर्ण,
+			[DISPC_MGR_FLD_TCKSELECTION]	= अणु DISPC_CONFIG,  13, 13 पूर्ण,
+			[DISPC_MGR_FLD_CPR]		= अणु पूर्ण,
+			[DISPC_MGR_FLD_FIFOHANDCHECK]	= अणु DISPC_CONFIG,  16, 16 पूर्ण,
+		पूर्ण,
+	पूर्ण,
+	[OMAP_DSS_CHANNEL_LCD2] = अणु
 		.name		= "LCD2",
 		.vsync_irq	= DISPC_IRQ_VSYNC2,
-		.framedone_irq	= DISPC_IRQ_FRAMEDONE2,
+		.frameकरोne_irq	= DISPC_IRQ_FRAMEDONE2,
 		.sync_lost_irq	= DISPC_IRQ_SYNC_LOST2,
-		.reg_desc	= {
-			[DISPC_MGR_FLD_ENABLE]		= { DISPC_CONTROL2,  0,  0 },
-			[DISPC_MGR_FLD_STNTFT]		= { DISPC_CONTROL2,  3,  3 },
-			[DISPC_MGR_FLD_GO]		= { DISPC_CONTROL2,  5,  5 },
-			[DISPC_MGR_FLD_TFTDATALINES]	= { DISPC_CONTROL2,  9,  8 },
-			[DISPC_MGR_FLD_STALLMODE]	= { DISPC_CONTROL2, 11, 11 },
-			[DISPC_MGR_FLD_TCKENABLE]	= { DISPC_CONFIG2,  10, 10 },
-			[DISPC_MGR_FLD_TCKSELECTION]	= { DISPC_CONFIG2,  11, 11 },
-			[DISPC_MGR_FLD_CPR]		= { DISPC_CONFIG2,  15, 15 },
-			[DISPC_MGR_FLD_FIFOHANDCHECK]	= { DISPC_CONFIG2,  16, 16 },
-		},
-	},
-	[OMAP_DSS_CHANNEL_LCD3] = {
+		.reg_desc	= अणु
+			[DISPC_MGR_FLD_ENABLE]		= अणु DISPC_CONTROL2,  0,  0 पूर्ण,
+			[DISPC_MGR_FLD_STNTFT]		= अणु DISPC_CONTROL2,  3,  3 पूर्ण,
+			[DISPC_MGR_FLD_GO]		= अणु DISPC_CONTROL2,  5,  5 पूर्ण,
+			[DISPC_MGR_FLD_TFTDATALINES]	= अणु DISPC_CONTROL2,  9,  8 पूर्ण,
+			[DISPC_MGR_FLD_STALLMODE]	= अणु DISPC_CONTROL2, 11, 11 पूर्ण,
+			[DISPC_MGR_FLD_TCKENABLE]	= अणु DISPC_CONFIG2,  10, 10 पूर्ण,
+			[DISPC_MGR_FLD_TCKSELECTION]	= अणु DISPC_CONFIG2,  11, 11 पूर्ण,
+			[DISPC_MGR_FLD_CPR]		= अणु DISPC_CONFIG2,  15, 15 पूर्ण,
+			[DISPC_MGR_FLD_FIFOHANDCHECK]	= अणु DISPC_CONFIG2,  16, 16 पूर्ण,
+		पूर्ण,
+	पूर्ण,
+	[OMAP_DSS_CHANNEL_LCD3] = अणु
 		.name		= "LCD3",
 		.vsync_irq	= DISPC_IRQ_VSYNC3,
-		.framedone_irq	= DISPC_IRQ_FRAMEDONE3,
+		.frameकरोne_irq	= DISPC_IRQ_FRAMEDONE3,
 		.sync_lost_irq	= DISPC_IRQ_SYNC_LOST3,
-		.reg_desc	= {
-			[DISPC_MGR_FLD_ENABLE]		= { DISPC_CONTROL3,  0,  0 },
-			[DISPC_MGR_FLD_STNTFT]		= { DISPC_CONTROL3,  3,  3 },
-			[DISPC_MGR_FLD_GO]		= { DISPC_CONTROL3,  5,  5 },
-			[DISPC_MGR_FLD_TFTDATALINES]	= { DISPC_CONTROL3,  9,  8 },
-			[DISPC_MGR_FLD_STALLMODE]	= { DISPC_CONTROL3, 11, 11 },
-			[DISPC_MGR_FLD_TCKENABLE]	= { DISPC_CONFIG3,  10, 10 },
-			[DISPC_MGR_FLD_TCKSELECTION]	= { DISPC_CONFIG3,  11, 11 },
-			[DISPC_MGR_FLD_CPR]		= { DISPC_CONFIG3,  15, 15 },
-			[DISPC_MGR_FLD_FIFOHANDCHECK]	= { DISPC_CONFIG3,  16, 16 },
-		},
-	},
-};
+		.reg_desc	= अणु
+			[DISPC_MGR_FLD_ENABLE]		= अणु DISPC_CONTROL3,  0,  0 पूर्ण,
+			[DISPC_MGR_FLD_STNTFT]		= अणु DISPC_CONTROL3,  3,  3 पूर्ण,
+			[DISPC_MGR_FLD_GO]		= अणु DISPC_CONTROL3,  5,  5 पूर्ण,
+			[DISPC_MGR_FLD_TFTDATALINES]	= अणु DISPC_CONTROL3,  9,  8 पूर्ण,
+			[DISPC_MGR_FLD_STALLMODE]	= अणु DISPC_CONTROL3, 11, 11 पूर्ण,
+			[DISPC_MGR_FLD_TCKENABLE]	= अणु DISPC_CONFIG3,  10, 10 पूर्ण,
+			[DISPC_MGR_FLD_TCKSELECTION]	= अणु DISPC_CONFIG3,  11, 11 पूर्ण,
+			[DISPC_MGR_FLD_CPR]		= अणु DISPC_CONFIG3,  15, 15 पूर्ण,
+			[DISPC_MGR_FLD_FIFOHANDCHECK]	= अणु DISPC_CONFIG3,  16, 16 पूर्ण,
+		पूर्ण,
+	पूर्ण,
+पूर्ण;
 
-struct color_conv_coef {
-	int ry, rcr, rcb, gy, gcr, gcb, by, bcr, bcb;
-	int full_range;
-};
+काष्ठा color_conv_coef अणु
+	पूर्णांक ry, rcr, rcb, gy, gcr, gcb, by, bcr, bcb;
+	पूर्णांक full_range;
+पूर्ण;
 
-static unsigned long dispc_fclk_rate(void);
-static unsigned long dispc_core_clk_rate(void);
-static unsigned long dispc_mgr_lclk_rate(enum omap_channel channel);
-static unsigned long dispc_mgr_pclk_rate(enum omap_channel channel);
+अटल अचिन्हित दीर्घ dispc_fclk_rate(व्योम);
+अटल अचिन्हित दीर्घ dispc_core_clk_rate(व्योम);
+अटल अचिन्हित दीर्घ dispc_mgr_lclk_rate(क्रमागत omap_channel channel);
+अटल अचिन्हित दीर्घ dispc_mgr_pclk_rate(क्रमागत omap_channel channel);
 
-static unsigned long dispc_plane_pclk_rate(enum omap_plane plane);
-static unsigned long dispc_plane_lclk_rate(enum omap_plane plane);
+अटल अचिन्हित दीर्घ dispc_plane_pclk_rate(क्रमागत omap_plane plane);
+अटल अचिन्हित दीर्घ dispc_plane_lclk_rate(क्रमागत omap_plane plane);
 
-static inline void dispc_write_reg(const u16 idx, u32 val)
-{
-	__raw_writel(val, dispc.base + idx);
-}
+अटल अंतरभूत व्योम dispc_ग_लिखो_reg(स्थिर u16 idx, u32 val)
+अणु
+	__raw_ग_लिखोl(val, dispc.base + idx);
+पूर्ण
 
-static inline u32 dispc_read_reg(const u16 idx)
-{
-	return __raw_readl(dispc.base + idx);
-}
+अटल अंतरभूत u32 dispc_पढ़ो_reg(स्थिर u16 idx)
+अणु
+	वापस __raw_पढ़ोl(dispc.base + idx);
+पूर्ण
 
-static u32 mgr_fld_read(enum omap_channel channel, enum mgr_reg_fields regfld)
-{
-	const struct dispc_reg_field rfld = mgr_desc[channel].reg_desc[regfld];
-	return REG_GET(rfld.reg, rfld.high, rfld.low);
-}
+अटल u32 mgr_fld_पढ़ो(क्रमागत omap_channel channel, क्रमागत mgr_reg_fields regfld)
+अणु
+	स्थिर काष्ठा dispc_reg_field rfld = mgr_desc[channel].reg_desc[regfld];
+	वापस REG_GET(rfld.reg, rfld.high, rfld.low);
+पूर्ण
 
-static void mgr_fld_write(enum omap_channel channel,
-					enum mgr_reg_fields regfld, int val) {
-	const struct dispc_reg_field rfld = mgr_desc[channel].reg_desc[regfld];
-	const bool need_lock = rfld.reg == DISPC_CONTROL || rfld.reg == DISPC_CONFIG;
-	unsigned long flags;
+अटल व्योम mgr_fld_ग_लिखो(क्रमागत omap_channel channel,
+					क्रमागत mgr_reg_fields regfld, पूर्णांक val) अणु
+	स्थिर काष्ठा dispc_reg_field rfld = mgr_desc[channel].reg_desc[regfld];
+	स्थिर bool need_lock = rfld.reg == DISPC_CONTROL || rfld.reg == DISPC_CONFIG;
+	अचिन्हित दीर्घ flags;
 
-	if (need_lock)
+	अगर (need_lock)
 		spin_lock_irqsave(&dispc.control_lock, flags);
 
 	REG_FLD_MOD(rfld.reg, val, rfld.high, rfld.low);
 
-	if (need_lock)
+	अगर (need_lock)
 		spin_unlock_irqrestore(&dispc.control_lock, flags);
-}
+पूर्ण
 
-#define SR(reg) \
-	dispc.ctx[DISPC_##reg / sizeof(u32)] = dispc_read_reg(DISPC_##reg)
-#define RR(reg) \
-	dispc_write_reg(DISPC_##reg, dispc.ctx[DISPC_##reg / sizeof(u32)])
+#घोषणा SR(reg) \
+	dispc.ctx[DISPC_##reg / माप(u32)] = dispc_पढ़ो_reg(DISPC_##reg)
+#घोषणा RR(reg) \
+	dispc_ग_लिखो_reg(DISPC_##reg, dispc.ctx[DISPC_##reg / माप(u32)])
 
-static void dispc_save_context(void)
-{
-	int i, j;
+अटल व्योम dispc_save_context(व्योम)
+अणु
+	पूर्णांक i, j;
 
 	DSSDBG("dispc_save_context\n");
 
@@ -294,24 +295,24 @@ static void dispc_save_context(void)
 	SR(CONTROL);
 	SR(CONFIG);
 	SR(LINE_NUMBER);
-	if (dss_has_feature(FEAT_ALPHA_FIXED_ZORDER) ||
+	अगर (dss_has_feature(FEAT_ALPHA_FIXED_ZORDER) ||
 			dss_has_feature(FEAT_ALPHA_FREE_ZORDER))
 		SR(GLOBAL_ALPHA);
-	if (dss_has_feature(FEAT_MGR_LCD2)) {
+	अगर (dss_has_feature(FEAT_MGR_LCD2)) अणु
 		SR(CONTROL2);
 		SR(CONFIG2);
-	}
-	if (dss_has_feature(FEAT_MGR_LCD3)) {
+	पूर्ण
+	अगर (dss_has_feature(FEAT_MGR_LCD3)) अणु
 		SR(CONTROL3);
 		SR(CONFIG3);
-	}
+	पूर्ण
 
-	for (i = 0; i < dss_feat_get_num_mgrs(); i++) {
+	क्रम (i = 0; i < dss_feat_get_num_mgrs(); i++) अणु
 		SR(DEFAULT_COLOR(i));
 		SR(TRANS_COLOR(i));
 		SR(SIZE_MGR(i));
-		if (i == OMAP_DSS_CHANNEL_DIGIT)
-			continue;
+		अगर (i == OMAP_DSS_CHANNEL_DIGIT)
+			जारी;
 		SR(TIMING_H(i));
 		SR(TIMING_V(i));
 		SR(POL_FREQ(i));
@@ -321,14 +322,14 @@ static void dispc_save_context(void)
 		SR(DATA_CYCLE2(i));
 		SR(DATA_CYCLE3(i));
 
-		if (dss_has_feature(FEAT_CPR)) {
+		अगर (dss_has_feature(FEAT_CPR)) अणु
 			SR(CPR_COEF_R(i));
 			SR(CPR_COEF_G(i));
 			SR(CPR_COEF_B(i));
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	for (i = 0; i < dss_feat_get_num_ovls(); i++) {
+	क्रम (i = 0; i < dss_feat_get_num_ovls(); i++) अणु
 		SR(OVL_BA0(i));
 		SR(OVL_BA1(i));
 		SR(OVL_POSITION(i));
@@ -337,87 +338,87 @@ static void dispc_save_context(void)
 		SR(OVL_FIFO_THRESHOLD(i));
 		SR(OVL_ROW_INC(i));
 		SR(OVL_PIXEL_INC(i));
-		if (dss_has_feature(FEAT_PRELOAD))
+		अगर (dss_has_feature(FEAT_PRELOAD))
 			SR(OVL_PRELOAD(i));
-		if (i == OMAP_DSS_GFX) {
+		अगर (i == OMAP_DSS_GFX) अणु
 			SR(OVL_WINDOW_SKIP(i));
 			SR(OVL_TABLE_BA(i));
-			continue;
-		}
+			जारी;
+		पूर्ण
 		SR(OVL_FIR(i));
 		SR(OVL_PICTURE_SIZE(i));
 		SR(OVL_ACCU0(i));
 		SR(OVL_ACCU1(i));
 
-		for (j = 0; j < 8; j++)
+		क्रम (j = 0; j < 8; j++)
 			SR(OVL_FIR_COEF_H(i, j));
 
-		for (j = 0; j < 8; j++)
+		क्रम (j = 0; j < 8; j++)
 			SR(OVL_FIR_COEF_HV(i, j));
 
-		for (j = 0; j < 5; j++)
+		क्रम (j = 0; j < 5; j++)
 			SR(OVL_CONV_COEF(i, j));
 
-		if (dss_has_feature(FEAT_FIR_COEF_V)) {
-			for (j = 0; j < 8; j++)
+		अगर (dss_has_feature(FEAT_FIR_COEF_V)) अणु
+			क्रम (j = 0; j < 8; j++)
 				SR(OVL_FIR_COEF_V(i, j));
-		}
+		पूर्ण
 
-		if (dss_has_feature(FEAT_HANDLE_UV_SEPARATE)) {
+		अगर (dss_has_feature(FEAT_HANDLE_UV_SEPARATE)) अणु
 			SR(OVL_BA0_UV(i));
 			SR(OVL_BA1_UV(i));
 			SR(OVL_FIR2(i));
 			SR(OVL_ACCU2_0(i));
 			SR(OVL_ACCU2_1(i));
 
-			for (j = 0; j < 8; j++)
+			क्रम (j = 0; j < 8; j++)
 				SR(OVL_FIR_COEF_H2(i, j));
 
-			for (j = 0; j < 8; j++)
+			क्रम (j = 0; j < 8; j++)
 				SR(OVL_FIR_COEF_HV2(i, j));
 
-			for (j = 0; j < 8; j++)
+			क्रम (j = 0; j < 8; j++)
 				SR(OVL_FIR_COEF_V2(i, j));
-		}
-		if (dss_has_feature(FEAT_ATTR2))
+		पूर्ण
+		अगर (dss_has_feature(FEAT_ATTR2))
 			SR(OVL_ATTRIBUTES2(i));
-	}
+	पूर्ण
 
-	if (dss_has_feature(FEAT_CORE_CLK_DIV))
+	अगर (dss_has_feature(FEAT_CORE_CLK_DIV))
 		SR(DIVISOR);
 
 	dispc.ctx_valid = true;
 
 	DSSDBG("context saved\n");
-}
+पूर्ण
 
-static void dispc_restore_context(void)
-{
-	int i, j;
+अटल व्योम dispc_restore_context(व्योम)
+अणु
+	पूर्णांक i, j;
 
 	DSSDBG("dispc_restore_context\n");
 
-	if (!dispc.ctx_valid)
-		return;
+	अगर (!dispc.ctx_valid)
+		वापस;
 
 	/*RR(IRQENABLE);*/
 	/*RR(CONTROL);*/
 	RR(CONFIG);
 	RR(LINE_NUMBER);
-	if (dss_has_feature(FEAT_ALPHA_FIXED_ZORDER) ||
+	अगर (dss_has_feature(FEAT_ALPHA_FIXED_ZORDER) ||
 			dss_has_feature(FEAT_ALPHA_FREE_ZORDER))
 		RR(GLOBAL_ALPHA);
-	if (dss_has_feature(FEAT_MGR_LCD2))
+	अगर (dss_has_feature(FEAT_MGR_LCD2))
 		RR(CONFIG2);
-	if (dss_has_feature(FEAT_MGR_LCD3))
+	अगर (dss_has_feature(FEAT_MGR_LCD3))
 		RR(CONFIG3);
 
-	for (i = 0; i < dss_feat_get_num_mgrs(); i++) {
+	क्रम (i = 0; i < dss_feat_get_num_mgrs(); i++) अणु
 		RR(DEFAULT_COLOR(i));
 		RR(TRANS_COLOR(i));
 		RR(SIZE_MGR(i));
-		if (i == OMAP_DSS_CHANNEL_DIGIT)
-			continue;
+		अगर (i == OMAP_DSS_CHANNEL_DIGIT)
+			जारी;
 		RR(TIMING_H(i));
 		RR(TIMING_V(i));
 		RR(POL_FREQ(i));
@@ -427,14 +428,14 @@ static void dispc_restore_context(void)
 		RR(DATA_CYCLE2(i));
 		RR(DATA_CYCLE3(i));
 
-		if (dss_has_feature(FEAT_CPR)) {
+		अगर (dss_has_feature(FEAT_CPR)) अणु
 			RR(CPR_COEF_R(i));
 			RR(CPR_COEF_G(i));
 			RR(CPR_COEF_B(i));
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	for (i = 0; i < dss_feat_get_num_ovls(); i++) {
+	क्रम (i = 0; i < dss_feat_get_num_ovls(); i++) अणु
 		RR(OVL_BA0(i));
 		RR(OVL_BA1(i));
 		RR(OVL_POSITION(i));
@@ -443,188 +444,188 @@ static void dispc_restore_context(void)
 		RR(OVL_FIFO_THRESHOLD(i));
 		RR(OVL_ROW_INC(i));
 		RR(OVL_PIXEL_INC(i));
-		if (dss_has_feature(FEAT_PRELOAD))
+		अगर (dss_has_feature(FEAT_PRELOAD))
 			RR(OVL_PRELOAD(i));
-		if (i == OMAP_DSS_GFX) {
+		अगर (i == OMAP_DSS_GFX) अणु
 			RR(OVL_WINDOW_SKIP(i));
 			RR(OVL_TABLE_BA(i));
-			continue;
-		}
+			जारी;
+		पूर्ण
 		RR(OVL_FIR(i));
 		RR(OVL_PICTURE_SIZE(i));
 		RR(OVL_ACCU0(i));
 		RR(OVL_ACCU1(i));
 
-		for (j = 0; j < 8; j++)
+		क्रम (j = 0; j < 8; j++)
 			RR(OVL_FIR_COEF_H(i, j));
 
-		for (j = 0; j < 8; j++)
+		क्रम (j = 0; j < 8; j++)
 			RR(OVL_FIR_COEF_HV(i, j));
 
-		for (j = 0; j < 5; j++)
+		क्रम (j = 0; j < 5; j++)
 			RR(OVL_CONV_COEF(i, j));
 
-		if (dss_has_feature(FEAT_FIR_COEF_V)) {
-			for (j = 0; j < 8; j++)
+		अगर (dss_has_feature(FEAT_FIR_COEF_V)) अणु
+			क्रम (j = 0; j < 8; j++)
 				RR(OVL_FIR_COEF_V(i, j));
-		}
+		पूर्ण
 
-		if (dss_has_feature(FEAT_HANDLE_UV_SEPARATE)) {
+		अगर (dss_has_feature(FEAT_HANDLE_UV_SEPARATE)) अणु
 			RR(OVL_BA0_UV(i));
 			RR(OVL_BA1_UV(i));
 			RR(OVL_FIR2(i));
 			RR(OVL_ACCU2_0(i));
 			RR(OVL_ACCU2_1(i));
 
-			for (j = 0; j < 8; j++)
+			क्रम (j = 0; j < 8; j++)
 				RR(OVL_FIR_COEF_H2(i, j));
 
-			for (j = 0; j < 8; j++)
+			क्रम (j = 0; j < 8; j++)
 				RR(OVL_FIR_COEF_HV2(i, j));
 
-			for (j = 0; j < 8; j++)
+			क्रम (j = 0; j < 8; j++)
 				RR(OVL_FIR_COEF_V2(i, j));
-		}
-		if (dss_has_feature(FEAT_ATTR2))
+		पूर्ण
+		अगर (dss_has_feature(FEAT_ATTR2))
 			RR(OVL_ATTRIBUTES2(i));
-	}
+	पूर्ण
 
-	if (dss_has_feature(FEAT_CORE_CLK_DIV))
+	अगर (dss_has_feature(FEAT_CORE_CLK_DIV))
 		RR(DIVISOR);
 
 	/* enable last, because LCD & DIGIT enable are here */
 	RR(CONTROL);
-	if (dss_has_feature(FEAT_MGR_LCD2))
+	अगर (dss_has_feature(FEAT_MGR_LCD2))
 		RR(CONTROL2);
-	if (dss_has_feature(FEAT_MGR_LCD3))
+	अगर (dss_has_feature(FEAT_MGR_LCD3))
 		RR(CONTROL3);
-	/* clear spurious SYNC_LOST_DIGIT interrupts */
+	/* clear spurious SYNC_LOST_DIGIT पूर्णांकerrupts */
 	dispc_clear_irqstatus(DISPC_IRQ_SYNC_LOST_DIGIT);
 
 	/*
-	 * enable last so IRQs won't trigger before
+	 * enable last so IRQs won't trigger beक्रमe
 	 * the context is fully restored
 	 */
 	RR(IRQENABLE);
 
 	DSSDBG("context restored\n");
-}
+पूर्ण
 
-#undef SR
-#undef RR
+#अघोषित SR
+#अघोषित RR
 
-int dispc_runtime_get(void)
-{
-	int r;
+पूर्णांक dispc_runसमय_get(व्योम)
+अणु
+	पूर्णांक r;
 
 	DSSDBG("dispc_runtime_get\n");
 
-	r = pm_runtime_get_sync(&dispc.pdev->dev);
-	if (WARN_ON(r < 0)) {
-		pm_runtime_put_sync(&dispc.pdev->dev);
-		return r;
-	}
-	return 0;
-}
-EXPORT_SYMBOL(dispc_runtime_get);
+	r = pm_runसमय_get_sync(&dispc.pdev->dev);
+	अगर (WARN_ON(r < 0)) अणु
+		pm_runसमय_put_sync(&dispc.pdev->dev);
+		वापस r;
+	पूर्ण
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL(dispc_runसमय_get);
 
-void dispc_runtime_put(void)
-{
-	int r;
+व्योम dispc_runसमय_put(व्योम)
+अणु
+	पूर्णांक r;
 
 	DSSDBG("dispc_runtime_put\n");
 
-	r = pm_runtime_put_sync(&dispc.pdev->dev);
+	r = pm_runसमय_put_sync(&dispc.pdev->dev);
 	WARN_ON(r < 0 && r != -ENOSYS);
-}
-EXPORT_SYMBOL(dispc_runtime_put);
+पूर्ण
+EXPORT_SYMBOL(dispc_runसमय_put);
 
-u32 dispc_mgr_get_vsync_irq(enum omap_channel channel)
-{
-	return mgr_desc[channel].vsync_irq;
-}
+u32 dispc_mgr_get_vsync_irq(क्रमागत omap_channel channel)
+अणु
+	वापस mgr_desc[channel].vsync_irq;
+पूर्ण
 EXPORT_SYMBOL(dispc_mgr_get_vsync_irq);
 
-u32 dispc_mgr_get_framedone_irq(enum omap_channel channel)
-{
-	if (channel == OMAP_DSS_CHANNEL_DIGIT && dispc.feat->no_framedone_tv)
-		return 0;
+u32 dispc_mgr_get_frameकरोne_irq(क्रमागत omap_channel channel)
+अणु
+	अगर (channel == OMAP_DSS_CHANNEL_DIGIT && dispc.feat->no_frameकरोne_tv)
+		वापस 0;
 
-	return mgr_desc[channel].framedone_irq;
-}
-EXPORT_SYMBOL(dispc_mgr_get_framedone_irq);
+	वापस mgr_desc[channel].frameकरोne_irq;
+पूर्ण
+EXPORT_SYMBOL(dispc_mgr_get_frameकरोne_irq);
 
-u32 dispc_mgr_get_sync_lost_irq(enum omap_channel channel)
-{
-	return mgr_desc[channel].sync_lost_irq;
-}
+u32 dispc_mgr_get_sync_lost_irq(क्रमागत omap_channel channel)
+अणु
+	वापस mgr_desc[channel].sync_lost_irq;
+पूर्ण
 EXPORT_SYMBOL(dispc_mgr_get_sync_lost_irq);
 
-bool dispc_mgr_go_busy(enum omap_channel channel)
-{
-	return mgr_fld_read(channel, DISPC_MGR_FLD_GO) == 1;
-}
+bool dispc_mgr_go_busy(क्रमागत omap_channel channel)
+अणु
+	वापस mgr_fld_पढ़ो(channel, DISPC_MGR_FLD_GO) == 1;
+पूर्ण
 EXPORT_SYMBOL(dispc_mgr_go_busy);
 
-void dispc_mgr_go(enum omap_channel channel)
-{
+व्योम dispc_mgr_go(क्रमागत omap_channel channel)
+अणु
 	WARN_ON(!dispc_mgr_is_enabled(channel));
 	WARN_ON(dispc_mgr_go_busy(channel));
 
 	DSSDBG("GO %s\n", mgr_desc[channel].name);
 
-	mgr_fld_write(channel, DISPC_MGR_FLD_GO, 1);
-}
+	mgr_fld_ग_लिखो(channel, DISPC_MGR_FLD_GO, 1);
+पूर्ण
 EXPORT_SYMBOL(dispc_mgr_go);
 
-static void dispc_ovl_write_firh_reg(enum omap_plane plane, int reg, u32 value)
-{
-	dispc_write_reg(DISPC_OVL_FIR_COEF_H(plane, reg), value);
-}
+अटल व्योम dispc_ovl_ग_लिखो_firh_reg(क्रमागत omap_plane plane, पूर्णांक reg, u32 value)
+अणु
+	dispc_ग_लिखो_reg(DISPC_OVL_FIR_COEF_H(plane, reg), value);
+पूर्ण
 
-static void dispc_ovl_write_firhv_reg(enum omap_plane plane, int reg, u32 value)
-{
-	dispc_write_reg(DISPC_OVL_FIR_COEF_HV(plane, reg), value);
-}
+अटल व्योम dispc_ovl_ग_लिखो_firhv_reg(क्रमागत omap_plane plane, पूर्णांक reg, u32 value)
+अणु
+	dispc_ग_लिखो_reg(DISPC_OVL_FIR_COEF_HV(plane, reg), value);
+पूर्ण
 
-static void dispc_ovl_write_firv_reg(enum omap_plane plane, int reg, u32 value)
-{
-	dispc_write_reg(DISPC_OVL_FIR_COEF_V(plane, reg), value);
-}
+अटल व्योम dispc_ovl_ग_लिखो_firv_reg(क्रमागत omap_plane plane, पूर्णांक reg, u32 value)
+अणु
+	dispc_ग_लिखो_reg(DISPC_OVL_FIR_COEF_V(plane, reg), value);
+पूर्ण
 
-static void dispc_ovl_write_firh2_reg(enum omap_plane plane, int reg, u32 value)
-{
+अटल व्योम dispc_ovl_ग_लिखो_firh2_reg(क्रमागत omap_plane plane, पूर्णांक reg, u32 value)
+अणु
 	BUG_ON(plane == OMAP_DSS_GFX);
 
-	dispc_write_reg(DISPC_OVL_FIR_COEF_H2(plane, reg), value);
-}
+	dispc_ग_लिखो_reg(DISPC_OVL_FIR_COEF_H2(plane, reg), value);
+पूर्ण
 
-static void dispc_ovl_write_firhv2_reg(enum omap_plane plane, int reg,
+अटल व्योम dispc_ovl_ग_लिखो_firhv2_reg(क्रमागत omap_plane plane, पूर्णांक reg,
 		u32 value)
-{
+अणु
 	BUG_ON(plane == OMAP_DSS_GFX);
 
-	dispc_write_reg(DISPC_OVL_FIR_COEF_HV2(plane, reg), value);
-}
+	dispc_ग_लिखो_reg(DISPC_OVL_FIR_COEF_HV2(plane, reg), value);
+पूर्ण
 
-static void dispc_ovl_write_firv2_reg(enum omap_plane plane, int reg, u32 value)
-{
+अटल व्योम dispc_ovl_ग_लिखो_firv2_reg(क्रमागत omap_plane plane, पूर्णांक reg, u32 value)
+अणु
 	BUG_ON(plane == OMAP_DSS_GFX);
 
-	dispc_write_reg(DISPC_OVL_FIR_COEF_V2(plane, reg), value);
-}
+	dispc_ग_लिखो_reg(DISPC_OVL_FIR_COEF_V2(plane, reg), value);
+पूर्ण
 
-static void dispc_ovl_set_scale_coef(enum omap_plane plane, int fir_hinc,
-				int fir_vinc, int five_taps,
-				enum omap_color_component color_comp)
-{
-	const struct dispc_coef *h_coef, *v_coef;
-	int i;
+अटल व्योम dispc_ovl_set_scale_coef(क्रमागत omap_plane plane, पूर्णांक fir_hinc,
+				पूर्णांक fir_vinc, पूर्णांक five_taps,
+				क्रमागत omap_color_component color_comp)
+अणु
+	स्थिर काष्ठा dispc_coef *h_coef, *v_coef;
+	पूर्णांक i;
 
 	h_coef = dispc_ovl_get_scale_coef(fir_hinc, true);
 	v_coef = dispc_ovl_get_scale_coef(fir_vinc, five_taps);
 
-	for (i = 0; i < 8; i++) {
+	क्रम (i = 0; i < 8; i++) अणु
 		u32 h, hv;
 
 		h = FLD_VAL(h_coef[i].hc0_vc00, 7, 0)
@@ -636,430 +637,430 @@ static void dispc_ovl_set_scale_coef(enum omap_plane plane, int fir_hinc,
 			| FLD_VAL(v_coef[i].hc2_vc1, 23, 16)
 			| FLD_VAL(v_coef[i].hc3_vc2, 31, 24);
 
-		if (color_comp == DISPC_COLOR_COMPONENT_RGB_Y) {
-			dispc_ovl_write_firh_reg(plane, i, h);
-			dispc_ovl_write_firhv_reg(plane, i, hv);
-		} else {
-			dispc_ovl_write_firh2_reg(plane, i, h);
-			dispc_ovl_write_firhv2_reg(plane, i, hv);
-		}
+		अगर (color_comp == DISPC_COLOR_COMPONENT_RGB_Y) अणु
+			dispc_ovl_ग_लिखो_firh_reg(plane, i, h);
+			dispc_ovl_ग_लिखो_firhv_reg(plane, i, hv);
+		पूर्ण अन्यथा अणु
+			dispc_ovl_ग_लिखो_firh2_reg(plane, i, h);
+			dispc_ovl_ग_लिखो_firhv2_reg(plane, i, hv);
+		पूर्ण
 
-	}
+	पूर्ण
 
-	if (five_taps) {
-		for (i = 0; i < 8; i++) {
+	अगर (five_taps) अणु
+		क्रम (i = 0; i < 8; i++) अणु
 			u32 v;
 			v = FLD_VAL(v_coef[i].hc0_vc00, 7, 0)
 				| FLD_VAL(v_coef[i].hc4_vc22, 15, 8);
-			if (color_comp == DISPC_COLOR_COMPONENT_RGB_Y)
-				dispc_ovl_write_firv_reg(plane, i, v);
-			else
-				dispc_ovl_write_firv2_reg(plane, i, v);
-		}
-	}
-}
+			अगर (color_comp == DISPC_COLOR_COMPONENT_RGB_Y)
+				dispc_ovl_ग_लिखो_firv_reg(plane, i, v);
+			अन्यथा
+				dispc_ovl_ग_लिखो_firv2_reg(plane, i, v);
+		पूर्ण
+	पूर्ण
+पूर्ण
 
 
-static void dispc_ovl_write_color_conv_coef(enum omap_plane plane,
-		const struct color_conv_coef *ct)
-{
-#define CVAL(x, y) (FLD_VAL(x, 26, 16) | FLD_VAL(y, 10, 0))
+अटल व्योम dispc_ovl_ग_लिखो_color_conv_coef(क्रमागत omap_plane plane,
+		स्थिर काष्ठा color_conv_coef *ct)
+अणु
+#घोषणा CVAL(x, y) (FLD_VAL(x, 26, 16) | FLD_VAL(y, 10, 0))
 
-	dispc_write_reg(DISPC_OVL_CONV_COEF(plane, 0), CVAL(ct->rcr, ct->ry));
-	dispc_write_reg(DISPC_OVL_CONV_COEF(plane, 1), CVAL(ct->gy,  ct->rcb));
-	dispc_write_reg(DISPC_OVL_CONV_COEF(plane, 2), CVAL(ct->gcb, ct->gcr));
-	dispc_write_reg(DISPC_OVL_CONV_COEF(plane, 3), CVAL(ct->bcr, ct->by));
-	dispc_write_reg(DISPC_OVL_CONV_COEF(plane, 4), CVAL(0, ct->bcb));
+	dispc_ग_लिखो_reg(DISPC_OVL_CONV_COEF(plane, 0), CVAL(ct->rcr, ct->ry));
+	dispc_ग_लिखो_reg(DISPC_OVL_CONV_COEF(plane, 1), CVAL(ct->gy,  ct->rcb));
+	dispc_ग_लिखो_reg(DISPC_OVL_CONV_COEF(plane, 2), CVAL(ct->gcb, ct->gcr));
+	dispc_ग_लिखो_reg(DISPC_OVL_CONV_COEF(plane, 3), CVAL(ct->bcr, ct->by));
+	dispc_ग_लिखो_reg(DISPC_OVL_CONV_COEF(plane, 4), CVAL(0, ct->bcb));
 
 	REG_FLD_MOD(DISPC_OVL_ATTRIBUTES(plane), ct->full_range, 11, 11);
 
-#undef CVAL
-}
+#अघोषित CVAL
+पूर्ण
 
-static void dispc_setup_color_conv_coef(void)
-{
-	int i;
-	int num_ovl = dss_feat_get_num_ovls();
-	const struct color_conv_coef ctbl_bt601_5_ovl = {
+अटल व्योम dispc_setup_color_conv_coef(व्योम)
+अणु
+	पूर्णांक i;
+	पूर्णांक num_ovl = dss_feat_get_num_ovls();
+	स्थिर काष्ठा color_conv_coef ctbl_bt601_5_ovl = अणु
 		/* YUV -> RGB */
 		298, 409, 0, 298, -208, -100, 298, 0, 517, 0,
-	};
-	const struct color_conv_coef ctbl_bt601_5_wb = {
+	पूर्ण;
+	स्थिर काष्ठा color_conv_coef ctbl_bt601_5_wb = अणु
 		/* RGB -> YUV */
 		66, 129, 25, 112, -94, -18, -38, -74, 112, 0,
-	};
+	पूर्ण;
 
-	for (i = 1; i < num_ovl; i++)
-		dispc_ovl_write_color_conv_coef(i, &ctbl_bt601_5_ovl);
+	क्रम (i = 1; i < num_ovl; i++)
+		dispc_ovl_ग_लिखो_color_conv_coef(i, &ctbl_bt601_5_ovl);
 
-	if (dispc.feat->has_writeback)
-		dispc_ovl_write_color_conv_coef(OMAP_DSS_WB, &ctbl_bt601_5_wb);
-}
+	अगर (dispc.feat->has_ग_लिखोback)
+		dispc_ovl_ग_लिखो_color_conv_coef(OMAP_DSS_WB, &ctbl_bt601_5_wb);
+पूर्ण
 
-static void dispc_ovl_set_ba0(enum omap_plane plane, u32 paddr)
-{
-	dispc_write_reg(DISPC_OVL_BA0(plane), paddr);
-}
+अटल व्योम dispc_ovl_set_ba0(क्रमागत omap_plane plane, u32 paddr)
+अणु
+	dispc_ग_लिखो_reg(DISPC_OVL_BA0(plane), paddr);
+पूर्ण
 
-static void dispc_ovl_set_ba1(enum omap_plane plane, u32 paddr)
-{
-	dispc_write_reg(DISPC_OVL_BA1(plane), paddr);
-}
+अटल व्योम dispc_ovl_set_ba1(क्रमागत omap_plane plane, u32 paddr)
+अणु
+	dispc_ग_लिखो_reg(DISPC_OVL_BA1(plane), paddr);
+पूर्ण
 
-static void dispc_ovl_set_ba0_uv(enum omap_plane plane, u32 paddr)
-{
-	dispc_write_reg(DISPC_OVL_BA0_UV(plane), paddr);
-}
+अटल व्योम dispc_ovl_set_ba0_uv(क्रमागत omap_plane plane, u32 paddr)
+अणु
+	dispc_ग_लिखो_reg(DISPC_OVL_BA0_UV(plane), paddr);
+पूर्ण
 
-static void dispc_ovl_set_ba1_uv(enum omap_plane plane, u32 paddr)
-{
-	dispc_write_reg(DISPC_OVL_BA1_UV(plane), paddr);
-}
+अटल व्योम dispc_ovl_set_ba1_uv(क्रमागत omap_plane plane, u32 paddr)
+अणु
+	dispc_ग_लिखो_reg(DISPC_OVL_BA1_UV(plane), paddr);
+पूर्ण
 
-static void dispc_ovl_set_pos(enum omap_plane plane,
-		enum omap_overlay_caps caps, int x, int y)
-{
+अटल व्योम dispc_ovl_set_pos(क्रमागत omap_plane plane,
+		क्रमागत omap_overlay_caps caps, पूर्णांक x, पूर्णांक y)
+अणु
 	u32 val;
 
-	if ((caps & OMAP_DSS_OVL_CAP_POS) == 0)
-		return;
+	अगर ((caps & OMAP_DSS_OVL_CAP_POS) == 0)
+		वापस;
 
 	val = FLD_VAL(y, 26, 16) | FLD_VAL(x, 10, 0);
 
-	dispc_write_reg(DISPC_OVL_POSITION(plane), val);
-}
+	dispc_ग_लिखो_reg(DISPC_OVL_POSITION(plane), val);
+पूर्ण
 
-static void dispc_ovl_set_input_size(enum omap_plane plane, int width,
-		int height)
-{
+अटल व्योम dispc_ovl_set_input_size(क्रमागत omap_plane plane, पूर्णांक width,
+		पूर्णांक height)
+अणु
 	u32 val = FLD_VAL(height - 1, 26, 16) | FLD_VAL(width - 1, 10, 0);
 
-	if (plane == OMAP_DSS_GFX || plane == OMAP_DSS_WB)
-		dispc_write_reg(DISPC_OVL_SIZE(plane), val);
-	else
-		dispc_write_reg(DISPC_OVL_PICTURE_SIZE(plane), val);
-}
+	अगर (plane == OMAP_DSS_GFX || plane == OMAP_DSS_WB)
+		dispc_ग_लिखो_reg(DISPC_OVL_SIZE(plane), val);
+	अन्यथा
+		dispc_ग_लिखो_reg(DISPC_OVL_PICTURE_SIZE(plane), val);
+पूर्ण
 
-static void dispc_ovl_set_output_size(enum omap_plane plane, int width,
-		int height)
-{
+अटल व्योम dispc_ovl_set_output_size(क्रमागत omap_plane plane, पूर्णांक width,
+		पूर्णांक height)
+अणु
 	u32 val;
 
 	BUG_ON(plane == OMAP_DSS_GFX);
 
 	val = FLD_VAL(height - 1, 26, 16) | FLD_VAL(width - 1, 10, 0);
 
-	if (plane == OMAP_DSS_WB)
-		dispc_write_reg(DISPC_OVL_PICTURE_SIZE(plane), val);
-	else
-		dispc_write_reg(DISPC_OVL_SIZE(plane), val);
-}
+	अगर (plane == OMAP_DSS_WB)
+		dispc_ग_लिखो_reg(DISPC_OVL_PICTURE_SIZE(plane), val);
+	अन्यथा
+		dispc_ग_लिखो_reg(DISPC_OVL_SIZE(plane), val);
+पूर्ण
 
-static void dispc_ovl_set_zorder(enum omap_plane plane,
-		enum omap_overlay_caps caps, u8 zorder)
-{
-	if ((caps & OMAP_DSS_OVL_CAP_ZORDER) == 0)
-		return;
+अटल व्योम dispc_ovl_set_zorder(क्रमागत omap_plane plane,
+		क्रमागत omap_overlay_caps caps, u8 zorder)
+अणु
+	अगर ((caps & OMAP_DSS_OVL_CAP_ZORDER) == 0)
+		वापस;
 
 	REG_FLD_MOD(DISPC_OVL_ATTRIBUTES(plane), zorder, 27, 26);
-}
+पूर्ण
 
-static void dispc_ovl_enable_zorder_planes(void)
-{
-	int i;
+अटल व्योम dispc_ovl_enable_zorder_planes(व्योम)
+अणु
+	पूर्णांक i;
 
-	if (!dss_has_feature(FEAT_ALPHA_FREE_ZORDER))
-		return;
+	अगर (!dss_has_feature(FEAT_ALPHA_FREE_ZORDER))
+		वापस;
 
-	for (i = 0; i < dss_feat_get_num_ovls(); i++)
+	क्रम (i = 0; i < dss_feat_get_num_ovls(); i++)
 		REG_FLD_MOD(DISPC_OVL_ATTRIBUTES(i), 1, 25, 25);
-}
+पूर्ण
 
-static void dispc_ovl_set_pre_mult_alpha(enum omap_plane plane,
-		enum omap_overlay_caps caps, bool enable)
-{
-	if ((caps & OMAP_DSS_OVL_CAP_PRE_MULT_ALPHA) == 0)
-		return;
+अटल व्योम dispc_ovl_set_pre_mult_alpha(क्रमागत omap_plane plane,
+		क्रमागत omap_overlay_caps caps, bool enable)
+अणु
+	अगर ((caps & OMAP_DSS_OVL_CAP_PRE_MULT_ALPHA) == 0)
+		वापस;
 
 	REG_FLD_MOD(DISPC_OVL_ATTRIBUTES(plane), enable ? 1 : 0, 28, 28);
-}
+पूर्ण
 
-static void dispc_ovl_setup_global_alpha(enum omap_plane plane,
-		enum omap_overlay_caps caps, u8 global_alpha)
-{
-	static const unsigned shifts[] = { 0, 8, 16, 24, };
-	int shift;
+अटल व्योम dispc_ovl_setup_global_alpha(क्रमागत omap_plane plane,
+		क्रमागत omap_overlay_caps caps, u8 global_alpha)
+अणु
+	अटल स्थिर अचिन्हित shअगरts[] = अणु 0, 8, 16, 24, पूर्ण;
+	पूर्णांक shअगरt;
 
-	if ((caps & OMAP_DSS_OVL_CAP_GLOBAL_ALPHA) == 0)
-		return;
+	अगर ((caps & OMAP_DSS_OVL_CAP_GLOBAL_ALPHA) == 0)
+		वापस;
 
-	shift = shifts[plane];
-	REG_FLD_MOD(DISPC_GLOBAL_ALPHA, global_alpha, shift + 7, shift);
-}
+	shअगरt = shअगरts[plane];
+	REG_FLD_MOD(DISPC_GLOBAL_ALPHA, global_alpha, shअगरt + 7, shअगरt);
+पूर्ण
 
-static void dispc_ovl_set_pix_inc(enum omap_plane plane, s32 inc)
-{
-	dispc_write_reg(DISPC_OVL_PIXEL_INC(plane), inc);
-}
+अटल व्योम dispc_ovl_set_pix_inc(क्रमागत omap_plane plane, s32 inc)
+अणु
+	dispc_ग_लिखो_reg(DISPC_OVL_PIXEL_INC(plane), inc);
+पूर्ण
 
-static void dispc_ovl_set_row_inc(enum omap_plane plane, s32 inc)
-{
-	dispc_write_reg(DISPC_OVL_ROW_INC(plane), inc);
-}
+अटल व्योम dispc_ovl_set_row_inc(क्रमागत omap_plane plane, s32 inc)
+अणु
+	dispc_ग_लिखो_reg(DISPC_OVL_ROW_INC(plane), inc);
+पूर्ण
 
-static void dispc_ovl_set_color_mode(enum omap_plane plane,
-		enum omap_color_mode color_mode)
-{
+अटल व्योम dispc_ovl_set_color_mode(क्रमागत omap_plane plane,
+		क्रमागत omap_color_mode color_mode)
+अणु
 	u32 m = 0;
-	if (plane != OMAP_DSS_GFX) {
-		switch (color_mode) {
-		case OMAP_DSS_COLOR_NV12:
-			m = 0x0; break;
-		case OMAP_DSS_COLOR_RGBX16:
-			m = 0x1; break;
-		case OMAP_DSS_COLOR_RGBA16:
-			m = 0x2; break;
-		case OMAP_DSS_COLOR_RGB12U:
-			m = 0x4; break;
-		case OMAP_DSS_COLOR_ARGB16:
-			m = 0x5; break;
-		case OMAP_DSS_COLOR_RGB16:
-			m = 0x6; break;
-		case OMAP_DSS_COLOR_ARGB16_1555:
-			m = 0x7; break;
-		case OMAP_DSS_COLOR_RGB24U:
-			m = 0x8; break;
-		case OMAP_DSS_COLOR_RGB24P:
-			m = 0x9; break;
-		case OMAP_DSS_COLOR_YUV2:
-			m = 0xa; break;
-		case OMAP_DSS_COLOR_UYVY:
-			m = 0xb; break;
-		case OMAP_DSS_COLOR_ARGB32:
-			m = 0xc; break;
-		case OMAP_DSS_COLOR_RGBA32:
-			m = 0xd; break;
-		case OMAP_DSS_COLOR_RGBX32:
-			m = 0xe; break;
-		case OMAP_DSS_COLOR_XRGB16_1555:
-			m = 0xf; break;
-		default:
-			BUG(); return;
-		}
-	} else {
-		switch (color_mode) {
-		case OMAP_DSS_COLOR_CLUT1:
-			m = 0x0; break;
-		case OMAP_DSS_COLOR_CLUT2:
-			m = 0x1; break;
-		case OMAP_DSS_COLOR_CLUT4:
-			m = 0x2; break;
-		case OMAP_DSS_COLOR_CLUT8:
-			m = 0x3; break;
-		case OMAP_DSS_COLOR_RGB12U:
-			m = 0x4; break;
-		case OMAP_DSS_COLOR_ARGB16:
-			m = 0x5; break;
-		case OMAP_DSS_COLOR_RGB16:
-			m = 0x6; break;
-		case OMAP_DSS_COLOR_ARGB16_1555:
-			m = 0x7; break;
-		case OMAP_DSS_COLOR_RGB24U:
-			m = 0x8; break;
-		case OMAP_DSS_COLOR_RGB24P:
-			m = 0x9; break;
-		case OMAP_DSS_COLOR_RGBX16:
-			m = 0xa; break;
-		case OMAP_DSS_COLOR_RGBA16:
-			m = 0xb; break;
-		case OMAP_DSS_COLOR_ARGB32:
-			m = 0xc; break;
-		case OMAP_DSS_COLOR_RGBA32:
-			m = 0xd; break;
-		case OMAP_DSS_COLOR_RGBX32:
-			m = 0xe; break;
-		case OMAP_DSS_COLOR_XRGB16_1555:
-			m = 0xf; break;
-		default:
-			BUG(); return;
-		}
-	}
+	अगर (plane != OMAP_DSS_GFX) अणु
+		चयन (color_mode) अणु
+		हाल OMAP_DSS_COLOR_NV12:
+			m = 0x0; अवरोध;
+		हाल OMAP_DSS_COLOR_RGBX16:
+			m = 0x1; अवरोध;
+		हाल OMAP_DSS_COLOR_RGBA16:
+			m = 0x2; अवरोध;
+		हाल OMAP_DSS_COLOR_RGB12U:
+			m = 0x4; अवरोध;
+		हाल OMAP_DSS_COLOR_ARGB16:
+			m = 0x5; अवरोध;
+		हाल OMAP_DSS_COLOR_RGB16:
+			m = 0x6; अवरोध;
+		हाल OMAP_DSS_COLOR_ARGB16_1555:
+			m = 0x7; अवरोध;
+		हाल OMAP_DSS_COLOR_RGB24U:
+			m = 0x8; अवरोध;
+		हाल OMAP_DSS_COLOR_RGB24P:
+			m = 0x9; अवरोध;
+		हाल OMAP_DSS_COLOR_YUV2:
+			m = 0xa; अवरोध;
+		हाल OMAP_DSS_COLOR_UYVY:
+			m = 0xb; अवरोध;
+		हाल OMAP_DSS_COLOR_ARGB32:
+			m = 0xc; अवरोध;
+		हाल OMAP_DSS_COLOR_RGBA32:
+			m = 0xd; अवरोध;
+		हाल OMAP_DSS_COLOR_RGBX32:
+			m = 0xe; अवरोध;
+		हाल OMAP_DSS_COLOR_XRGB16_1555:
+			m = 0xf; अवरोध;
+		शेष:
+			BUG(); वापस;
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		चयन (color_mode) अणु
+		हाल OMAP_DSS_COLOR_CLUT1:
+			m = 0x0; अवरोध;
+		हाल OMAP_DSS_COLOR_CLUT2:
+			m = 0x1; अवरोध;
+		हाल OMAP_DSS_COLOR_CLUT4:
+			m = 0x2; अवरोध;
+		हाल OMAP_DSS_COLOR_CLUT8:
+			m = 0x3; अवरोध;
+		हाल OMAP_DSS_COLOR_RGB12U:
+			m = 0x4; अवरोध;
+		हाल OMAP_DSS_COLOR_ARGB16:
+			m = 0x5; अवरोध;
+		हाल OMAP_DSS_COLOR_RGB16:
+			m = 0x6; अवरोध;
+		हाल OMAP_DSS_COLOR_ARGB16_1555:
+			m = 0x7; अवरोध;
+		हाल OMAP_DSS_COLOR_RGB24U:
+			m = 0x8; अवरोध;
+		हाल OMAP_DSS_COLOR_RGB24P:
+			m = 0x9; अवरोध;
+		हाल OMAP_DSS_COLOR_RGBX16:
+			m = 0xa; अवरोध;
+		हाल OMAP_DSS_COLOR_RGBA16:
+			m = 0xb; अवरोध;
+		हाल OMAP_DSS_COLOR_ARGB32:
+			m = 0xc; अवरोध;
+		हाल OMAP_DSS_COLOR_RGBA32:
+			m = 0xd; अवरोध;
+		हाल OMAP_DSS_COLOR_RGBX32:
+			m = 0xe; अवरोध;
+		हाल OMAP_DSS_COLOR_XRGB16_1555:
+			m = 0xf; अवरोध;
+		शेष:
+			BUG(); वापस;
+		पूर्ण
+	पूर्ण
 
 	REG_FLD_MOD(DISPC_OVL_ATTRIBUTES(plane), m, 4, 1);
-}
+पूर्ण
 
-static void dispc_ovl_configure_burst_type(enum omap_plane plane,
-		enum omap_dss_rotation_type rotation_type)
-{
-	if (!dss_has_feature(FEAT_BURST_2D))
-		return;
+अटल व्योम dispc_ovl_configure_burst_type(क्रमागत omap_plane plane,
+		क्रमागत omap_dss_rotation_type rotation_type)
+अणु
+	अगर (!dss_has_feature(FEAT_BURST_2D))
+		वापस;
 
-	if (rotation_type == OMAP_DSS_ROT_TILER)
+	अगर (rotation_type == OMAP_DSS_ROT_TILER)
 		REG_FLD_MOD(DISPC_OVL_ATTRIBUTES(plane), 1, 29, 29);
-	else
+	अन्यथा
 		REG_FLD_MOD(DISPC_OVL_ATTRIBUTES(plane), 0, 29, 29);
-}
+पूर्ण
 
-void dispc_ovl_set_channel_out(enum omap_plane plane, enum omap_channel channel)
-{
-	int shift;
+व्योम dispc_ovl_set_channel_out(क्रमागत omap_plane plane, क्रमागत omap_channel channel)
+अणु
+	पूर्णांक shअगरt;
 	u32 val;
-	int chan = 0, chan2 = 0;
+	पूर्णांक chan = 0, chan2 = 0;
 
-	switch (plane) {
-	case OMAP_DSS_GFX:
-		shift = 8;
-		break;
-	case OMAP_DSS_VIDEO1:
-	case OMAP_DSS_VIDEO2:
-	case OMAP_DSS_VIDEO3:
-		shift = 16;
-		break;
-	default:
+	चयन (plane) अणु
+	हाल OMAP_DSS_GFX:
+		shअगरt = 8;
+		अवरोध;
+	हाल OMAP_DSS_VIDEO1:
+	हाल OMAP_DSS_VIDEO2:
+	हाल OMAP_DSS_VIDEO3:
+		shअगरt = 16;
+		अवरोध;
+	शेष:
 		BUG();
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	val = dispc_read_reg(DISPC_OVL_ATTRIBUTES(plane));
-	if (dss_has_feature(FEAT_MGR_LCD2)) {
-		switch (channel) {
-		case OMAP_DSS_CHANNEL_LCD:
+	val = dispc_पढ़ो_reg(DISPC_OVL_ATTRIBUTES(plane));
+	अगर (dss_has_feature(FEAT_MGR_LCD2)) अणु
+		चयन (channel) अणु
+		हाल OMAP_DSS_CHANNEL_LCD:
 			chan = 0;
 			chan2 = 0;
-			break;
-		case OMAP_DSS_CHANNEL_DIGIT:
+			अवरोध;
+		हाल OMAP_DSS_CHANNEL_DIGIT:
 			chan = 1;
 			chan2 = 0;
-			break;
-		case OMAP_DSS_CHANNEL_LCD2:
+			अवरोध;
+		हाल OMAP_DSS_CHANNEL_LCD2:
 			chan = 0;
 			chan2 = 1;
-			break;
-		case OMAP_DSS_CHANNEL_LCD3:
-			if (dss_has_feature(FEAT_MGR_LCD3)) {
+			अवरोध;
+		हाल OMAP_DSS_CHANNEL_LCD3:
+			अगर (dss_has_feature(FEAT_MGR_LCD3)) अणु
 				chan = 0;
 				chan2 = 2;
-			} else {
+			पूर्ण अन्यथा अणु
 				BUG();
-				return;
-			}
-			break;
-		case OMAP_DSS_CHANNEL_WB:
+				वापस;
+			पूर्ण
+			अवरोध;
+		हाल OMAP_DSS_CHANNEL_WB:
 			chan = 0;
 			chan2 = 3;
-			break;
-		default:
+			अवरोध;
+		शेष:
 			BUG();
-			return;
-		}
+			वापस;
+		पूर्ण
 
-		val = FLD_MOD(val, chan, shift, shift);
+		val = FLD_MOD(val, chan, shअगरt, shअगरt);
 		val = FLD_MOD(val, chan2, 31, 30);
-	} else {
-		val = FLD_MOD(val, channel, shift, shift);
-	}
-	dispc_write_reg(DISPC_OVL_ATTRIBUTES(plane), val);
-}
+	पूर्ण अन्यथा अणु
+		val = FLD_MOD(val, channel, shअगरt, shअगरt);
+	पूर्ण
+	dispc_ग_लिखो_reg(DISPC_OVL_ATTRIBUTES(plane), val);
+पूर्ण
 EXPORT_SYMBOL(dispc_ovl_set_channel_out);
 
-static enum omap_channel dispc_ovl_get_channel_out(enum omap_plane plane)
-{
-	int shift;
+अटल क्रमागत omap_channel dispc_ovl_get_channel_out(क्रमागत omap_plane plane)
+अणु
+	पूर्णांक shअगरt;
 	u32 val;
 
-	switch (plane) {
-	case OMAP_DSS_GFX:
-		shift = 8;
-		break;
-	case OMAP_DSS_VIDEO1:
-	case OMAP_DSS_VIDEO2:
-	case OMAP_DSS_VIDEO3:
-		shift = 16;
-		break;
-	default:
+	चयन (plane) अणु
+	हाल OMAP_DSS_GFX:
+		shअगरt = 8;
+		अवरोध;
+	हाल OMAP_DSS_VIDEO1:
+	हाल OMAP_DSS_VIDEO2:
+	हाल OMAP_DSS_VIDEO3:
+		shअगरt = 16;
+		अवरोध;
+	शेष:
 		BUG();
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	val = dispc_read_reg(DISPC_OVL_ATTRIBUTES(plane));
+	val = dispc_पढ़ो_reg(DISPC_OVL_ATTRIBUTES(plane));
 
-	if (FLD_GET(val, shift, shift) == 1)
-		return OMAP_DSS_CHANNEL_DIGIT;
+	अगर (FLD_GET(val, shअगरt, shअगरt) == 1)
+		वापस OMAP_DSS_CHANNEL_DIGIT;
 
-	if (!dss_has_feature(FEAT_MGR_LCD2))
-		return OMAP_DSS_CHANNEL_LCD;
+	अगर (!dss_has_feature(FEAT_MGR_LCD2))
+		वापस OMAP_DSS_CHANNEL_LCD;
 
-	switch (FLD_GET(val, 31, 30)) {
-	case 0:
-	default:
-		return OMAP_DSS_CHANNEL_LCD;
-	case 1:
-		return OMAP_DSS_CHANNEL_LCD2;
-	case 2:
-		return OMAP_DSS_CHANNEL_LCD3;
-	case 3:
-		return OMAP_DSS_CHANNEL_WB;
-	}
-}
+	चयन (FLD_GET(val, 31, 30)) अणु
+	हाल 0:
+	शेष:
+		वापस OMAP_DSS_CHANNEL_LCD;
+	हाल 1:
+		वापस OMAP_DSS_CHANNEL_LCD2;
+	हाल 2:
+		वापस OMAP_DSS_CHANNEL_LCD3;
+	हाल 3:
+		वापस OMAP_DSS_CHANNEL_WB;
+	पूर्ण
+पूर्ण
 
-static void dispc_ovl_set_burst_size(enum omap_plane plane,
-		enum omap_burst_size burst_size)
-{
-	static const unsigned shifts[] = { 6, 14, 14, 14, 14, };
-	int shift;
+अटल व्योम dispc_ovl_set_burst_size(क्रमागत omap_plane plane,
+		क्रमागत omap_burst_size burst_size)
+अणु
+	अटल स्थिर अचिन्हित shअगरts[] = अणु 6, 14, 14, 14, 14, पूर्ण;
+	पूर्णांक shअगरt;
 
-	shift = shifts[plane];
-	REG_FLD_MOD(DISPC_OVL_ATTRIBUTES(plane), burst_size, shift + 1, shift);
-}
+	shअगरt = shअगरts[plane];
+	REG_FLD_MOD(DISPC_OVL_ATTRIBUTES(plane), burst_size, shअगरt + 1, shअगरt);
+पूर्ण
 
-static void dispc_configure_burst_sizes(void)
-{
-	int i;
-	const int burst_size = BURST_SIZE_X8;
+अटल व्योम dispc_configure_burst_sizes(व्योम)
+अणु
+	पूर्णांक i;
+	स्थिर पूर्णांक burst_size = BURST_SIZE_X8;
 
 	/* Configure burst size always to maximum size */
-	for (i = 0; i < dss_feat_get_num_ovls(); ++i)
+	क्रम (i = 0; i < dss_feat_get_num_ovls(); ++i)
 		dispc_ovl_set_burst_size(i, burst_size);
-	if (dispc.feat->has_writeback)
+	अगर (dispc.feat->has_ग_लिखोback)
 		dispc_ovl_set_burst_size(OMAP_DSS_WB, burst_size);
-}
+पूर्ण
 
-static u32 dispc_ovl_get_burst_size(enum omap_plane plane)
-{
-	unsigned unit = dss_feat_get_burst_size_unit();
+अटल u32 dispc_ovl_get_burst_size(क्रमागत omap_plane plane)
+अणु
+	अचिन्हित unit = dss_feat_get_burst_size_unit();
 	/* burst multiplier is always x8 (see dispc_configure_burst_sizes()) */
-	return unit * 8;
-}
+	वापस unit * 8;
+पूर्ण
 
-void dispc_enable_gamma_table(bool enable)
-{
+व्योम dispc_enable_gamma_table(bool enable)
+अणु
 	/*
 	 * This is partially implemented to support only disabling of
 	 * the gamma table.
 	 */
-	if (enable) {
+	अगर (enable) अणु
 		DSSWARN("Gamma table enabling for TV not yet supported");
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	REG_FLD_MOD(DISPC_CONFIG, enable, 9, 9);
-}
+पूर्ण
 
-static void dispc_mgr_enable_cpr(enum omap_channel channel, bool enable)
-{
-	if (channel == OMAP_DSS_CHANNEL_DIGIT)
-		return;
+अटल व्योम dispc_mgr_enable_cpr(क्रमागत omap_channel channel, bool enable)
+अणु
+	अगर (channel == OMAP_DSS_CHANNEL_DIGIT)
+		वापस;
 
-	mgr_fld_write(channel, DISPC_MGR_FLD_CPR, enable);
-}
+	mgr_fld_ग_लिखो(channel, DISPC_MGR_FLD_CPR, enable);
+पूर्ण
 
-static void dispc_mgr_set_cpr_coef(enum omap_channel channel,
-		const struct omap_dss_cpr_coefs *coefs)
-{
+अटल व्योम dispc_mgr_set_cpr_coef(क्रमागत omap_channel channel,
+		स्थिर काष्ठा omap_dss_cpr_coefs *coefs)
+अणु
 	u32 coef_r, coef_g, coef_b;
 
-	if (!dss_mgr_is_lcd(channel))
-		return;
+	अगर (!dss_mgr_is_lcd(channel))
+		वापस;
 
 	coef_r = FLD_VAL(coefs->rr, 31, 22) | FLD_VAL(coefs->rg, 20, 11) |
 		FLD_VAL(coefs->rb, 9, 0);
@@ -1068,134 +1069,134 @@ static void dispc_mgr_set_cpr_coef(enum omap_channel channel,
 	coef_b = FLD_VAL(coefs->br, 31, 22) | FLD_VAL(coefs->bg, 20, 11) |
 		FLD_VAL(coefs->bb, 9, 0);
 
-	dispc_write_reg(DISPC_CPR_COEF_R(channel), coef_r);
-	dispc_write_reg(DISPC_CPR_COEF_G(channel), coef_g);
-	dispc_write_reg(DISPC_CPR_COEF_B(channel), coef_b);
-}
+	dispc_ग_लिखो_reg(DISPC_CPR_COEF_R(channel), coef_r);
+	dispc_ग_लिखो_reg(DISPC_CPR_COEF_G(channel), coef_g);
+	dispc_ग_लिखो_reg(DISPC_CPR_COEF_B(channel), coef_b);
+पूर्ण
 
-static void dispc_ovl_set_vid_color_conv(enum omap_plane plane, bool enable)
-{
+अटल व्योम dispc_ovl_set_vid_color_conv(क्रमागत omap_plane plane, bool enable)
+अणु
 	u32 val;
 
 	BUG_ON(plane == OMAP_DSS_GFX);
 
-	val = dispc_read_reg(DISPC_OVL_ATTRIBUTES(plane));
+	val = dispc_पढ़ो_reg(DISPC_OVL_ATTRIBUTES(plane));
 	val = FLD_MOD(val, enable, 9, 9);
-	dispc_write_reg(DISPC_OVL_ATTRIBUTES(plane), val);
-}
+	dispc_ग_लिखो_reg(DISPC_OVL_ATTRIBUTES(plane), val);
+पूर्ण
 
-static void dispc_ovl_enable_replication(enum omap_plane plane,
-		enum omap_overlay_caps caps, bool enable)
-{
-	static const unsigned shifts[] = { 5, 10, 10, 10 };
-	int shift;
+अटल व्योम dispc_ovl_enable_replication(क्रमागत omap_plane plane,
+		क्रमागत omap_overlay_caps caps, bool enable)
+अणु
+	अटल स्थिर अचिन्हित shअगरts[] = अणु 5, 10, 10, 10 पूर्ण;
+	पूर्णांक shअगरt;
 
-	if ((caps & OMAP_DSS_OVL_CAP_REPLICATION) == 0)
-		return;
+	अगर ((caps & OMAP_DSS_OVL_CAP_REPLICATION) == 0)
+		वापस;
 
-	shift = shifts[plane];
-	REG_FLD_MOD(DISPC_OVL_ATTRIBUTES(plane), enable, shift, shift);
-}
+	shअगरt = shअगरts[plane];
+	REG_FLD_MOD(DISPC_OVL_ATTRIBUTES(plane), enable, shअगरt, shअगरt);
+पूर्ण
 
-static void dispc_mgr_set_size(enum omap_channel channel, u16 width,
+अटल व्योम dispc_mgr_set_size(क्रमागत omap_channel channel, u16 width,
 		u16 height)
-{
+अणु
 	u32 val;
 
 	val = FLD_VAL(height - 1, dispc.feat->mgr_height_start, 16) |
 		FLD_VAL(width - 1, dispc.feat->mgr_width_start, 0);
 
-	dispc_write_reg(DISPC_SIZE_MGR(channel), val);
-}
+	dispc_ग_लिखो_reg(DISPC_SIZE_MGR(channel), val);
+पूर्ण
 
-static void dispc_init_fifos(void)
-{
+अटल व्योम dispc_init_fअगरos(व्योम)
+अणु
 	u32 size;
-	int fifo;
+	पूर्णांक fअगरo;
 	u8 start, end;
 	u32 unit;
-	int i;
+	पूर्णांक i;
 
 	unit = dss_feat_get_buffer_size_unit();
 
 	dss_feat_get_reg_field(FEAT_REG_FIFOSIZE, &start, &end);
 
-	for (fifo = 0; fifo < dispc.feat->num_fifos; ++fifo) {
-		size = REG_GET(DISPC_OVL_FIFO_SIZE_STATUS(fifo), start, end);
+	क्रम (fअगरo = 0; fअगरo < dispc.feat->num_fअगरos; ++fअगरo) अणु
+		size = REG_GET(DISPC_OVL_FIFO_SIZE_STATUS(fअगरo), start, end);
 		size *= unit;
-		dispc.fifo_size[fifo] = size;
+		dispc.fअगरo_size[fअगरo] = size;
 
 		/*
-		 * By default fifos are mapped directly to overlays, fifo 0 to
-		 * ovl 0, fifo 1 to ovl 1, etc.
+		 * By शेष fअगरos are mapped directly to overlays, fअगरo 0 to
+		 * ovl 0, fअगरo 1 to ovl 1, etc.
 		 */
-		dispc.fifo_assignment[fifo] = fifo;
-	}
+		dispc.fअगरo_assignment[fअगरo] = fअगरo;
+	पूर्ण
 
 	/*
-	 * The GFX fifo on OMAP4 is smaller than the other fifos. The small fifo
-	 * causes problems with certain use cases, like using the tiler in 2D
-	 * mode. The below hack swaps the fifos of GFX and WB planes, thus
-	 * giving GFX plane a larger fifo. WB but should work fine with a
-	 * smaller fifo.
+	 * The GFX fअगरo on OMAP4 is smaller than the other fअगरos. The small fअगरo
+	 * causes problems with certain use हालs, like using the tiler in 2D
+	 * mode. The below hack swaps the fअगरos of GFX and WB planes, thus
+	 * giving GFX plane a larger fअगरo. WB but should work fine with a
+	 * smaller fअगरo.
 	 */
-	if (dispc.feat->gfx_fifo_workaround) {
+	अगर (dispc.feat->gfx_fअगरo_workaround) अणु
 		u32 v;
 
-		v = dispc_read_reg(DISPC_GLOBAL_BUFFER);
+		v = dispc_पढ़ो_reg(DISPC_GLOBAL_BUFFER);
 
 		v = FLD_MOD(v, 4, 2, 0); /* GFX BUF top to WB */
 		v = FLD_MOD(v, 4, 5, 3); /* GFX BUF bottom to WB */
 		v = FLD_MOD(v, 0, 26, 24); /* WB BUF top to GFX */
 		v = FLD_MOD(v, 0, 29, 27); /* WB BUF bottom to GFX */
 
-		dispc_write_reg(DISPC_GLOBAL_BUFFER, v);
+		dispc_ग_लिखो_reg(DISPC_GLOBAL_BUFFER, v);
 
-		dispc.fifo_assignment[OMAP_DSS_GFX] = OMAP_DSS_WB;
-		dispc.fifo_assignment[OMAP_DSS_WB] = OMAP_DSS_GFX;
-	}
+		dispc.fअगरo_assignment[OMAP_DSS_GFX] = OMAP_DSS_WB;
+		dispc.fअगरo_assignment[OMAP_DSS_WB] = OMAP_DSS_GFX;
+	पूर्ण
 
 	/*
-	 * Setup default fifo thresholds.
+	 * Setup शेष fअगरo thresholds.
 	 */
-	for (i = 0; i < dss_feat_get_num_ovls(); ++i) {
+	क्रम (i = 0; i < dss_feat_get_num_ovls(); ++i) अणु
 		u32 low, high;
-		const bool use_fifomerge = false;
-		const bool manual_update = false;
+		स्थिर bool use_fअगरomerge = false;
+		स्थिर bool manual_update = false;
 
-		dispc_ovl_compute_fifo_thresholds(i, &low, &high,
-			use_fifomerge, manual_update);
+		dispc_ovl_compute_fअगरo_thresholds(i, &low, &high,
+			use_fअगरomerge, manual_update);
 
-		dispc_ovl_set_fifo_threshold(i, low, high);
-	}
+		dispc_ovl_set_fअगरo_threshold(i, low, high);
+	पूर्ण
 
-	if (dispc.feat->has_writeback) {
+	अगर (dispc.feat->has_ग_लिखोback) अणु
 		u32 low, high;
-		const bool use_fifomerge = false;
-		const bool manual_update = false;
+		स्थिर bool use_fअगरomerge = false;
+		स्थिर bool manual_update = false;
 
-		dispc_ovl_compute_fifo_thresholds(OMAP_DSS_WB, &low, &high,
-			use_fifomerge, manual_update);
+		dispc_ovl_compute_fअगरo_thresholds(OMAP_DSS_WB, &low, &high,
+			use_fअगरomerge, manual_update);
 
-		dispc_ovl_set_fifo_threshold(OMAP_DSS_WB, low, high);
-	}
-}
+		dispc_ovl_set_fअगरo_threshold(OMAP_DSS_WB, low, high);
+	पूर्ण
+पूर्ण
 
-static u32 dispc_ovl_get_fifo_size(enum omap_plane plane)
-{
-	int fifo;
+अटल u32 dispc_ovl_get_fअगरo_size(क्रमागत omap_plane plane)
+अणु
+	पूर्णांक fअगरo;
 	u32 size = 0;
 
-	for (fifo = 0; fifo < dispc.feat->num_fifos; ++fifo) {
-		if (dispc.fifo_assignment[fifo] == plane)
-			size += dispc.fifo_size[fifo];
-	}
+	क्रम (fअगरo = 0; fअगरo < dispc.feat->num_fअगरos; ++fअगरo) अणु
+		अगर (dispc.fअगरo_assignment[fअगरo] == plane)
+			size += dispc.fअगरo_size[fअगरo];
+	पूर्ण
 
-	return size;
-}
+	वापस size;
+पूर्ण
 
-void dispc_ovl_set_fifo_threshold(enum omap_plane plane, u32 low, u32 high)
-{
+व्योम dispc_ovl_set_fअगरo_threshold(क्रमागत omap_plane plane, u32 low, u32 high)
+अणु
 	u8 hi_start, hi_end, lo_start, lo_end;
 	u32 unit;
 
@@ -1218,117 +1219,117 @@ void dispc_ovl_set_fifo_threshold(enum omap_plane plane, u32 low, u32 high)
 				hi_start, hi_end) * unit,
 			low * unit, high * unit);
 
-	dispc_write_reg(DISPC_OVL_FIFO_THRESHOLD(plane),
+	dispc_ग_लिखो_reg(DISPC_OVL_FIFO_THRESHOLD(plane),
 			FLD_VAL(high, hi_start, hi_end) |
 			FLD_VAL(low, lo_start, lo_end));
 
 	/*
 	 * configure the preload to the pipeline's high threhold, if HT it's too
-	 * large for the preload field, set the threshold to the maximum value
-	 * that can be held by the preload register
+	 * large क्रम the preload field, set the threshold to the maximum value
+	 * that can be held by the preload रेजिस्टर
 	 */
-	if (dss_has_feature(FEAT_PRELOAD) && dispc.feat->set_max_preload &&
+	अगर (dss_has_feature(FEAT_PRELOAD) && dispc.feat->set_max_preload &&
 			plane != OMAP_DSS_WB)
-		dispc_write_reg(DISPC_OVL_PRELOAD(plane), min(high, 0xfffu));
-}
+		dispc_ग_लिखो_reg(DISPC_OVL_PRELOAD(plane), min(high, 0xfffu));
+पूर्ण
 
-void dispc_enable_fifomerge(bool enable)
-{
-	if (!dss_has_feature(FEAT_FIFO_MERGE)) {
+व्योम dispc_enable_fअगरomerge(bool enable)
+अणु
+	अगर (!dss_has_feature(FEAT_FIFO_MERGE)) अणु
 		WARN_ON(enable);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	DSSDBG("FIFO merge %s\n", enable ? "enabled" : "disabled");
 	REG_FLD_MOD(DISPC_CONFIG, enable ? 1 : 0, 14, 14);
-}
+पूर्ण
 
-void dispc_ovl_compute_fifo_thresholds(enum omap_plane plane,
-		u32 *fifo_low, u32 *fifo_high, bool use_fifomerge,
+व्योम dispc_ovl_compute_fअगरo_thresholds(क्रमागत omap_plane plane,
+		u32 *fअगरo_low, u32 *fअगरo_high, bool use_fअगरomerge,
 		bool manual_update)
-{
+अणु
 	/*
 	 * All sizes are in bytes. Both the buffer and burst are made of
-	 * buffer_units, and the fifo thresholds must be buffer_unit aligned.
+	 * buffer_units, and the fअगरo thresholds must be buffer_unit aligned.
 	 */
 
-	unsigned buf_unit = dss_feat_get_buffer_size_unit();
-	unsigned ovl_fifo_size, total_fifo_size, burst_size;
-	int i;
+	अचिन्हित buf_unit = dss_feat_get_buffer_size_unit();
+	अचिन्हित ovl_fअगरo_size, total_fअगरo_size, burst_size;
+	पूर्णांक i;
 
 	burst_size = dispc_ovl_get_burst_size(plane);
-	ovl_fifo_size = dispc_ovl_get_fifo_size(plane);
+	ovl_fअगरo_size = dispc_ovl_get_fअगरo_size(plane);
 
-	if (use_fifomerge) {
-		total_fifo_size = 0;
-		for (i = 0; i < dss_feat_get_num_ovls(); ++i)
-			total_fifo_size += dispc_ovl_get_fifo_size(i);
-	} else {
-		total_fifo_size = ovl_fifo_size;
-	}
+	अगर (use_fअगरomerge) अणु
+		total_fअगरo_size = 0;
+		क्रम (i = 0; i < dss_feat_get_num_ovls(); ++i)
+			total_fअगरo_size += dispc_ovl_get_fअगरo_size(i);
+	पूर्ण अन्यथा अणु
+		total_fअगरo_size = ovl_fअगरo_size;
+	पूर्ण
 
 	/*
-	 * We use the same low threshold for both fifomerge and non-fifomerge
-	 * cases, but for fifomerge we calculate the high threshold using the
-	 * combined fifo size
+	 * We use the same low threshold क्रम both fअगरomerge and non-fअगरomerge
+	 * हालs, but क्रम fअगरomerge we calculate the high threshold using the
+	 * combined fअगरo size
 	 */
 
-	if (manual_update && dss_has_feature(FEAT_OMAP3_DSI_FIFO_BUG)) {
-		*fifo_low = ovl_fifo_size - burst_size * 2;
-		*fifo_high = total_fifo_size - burst_size;
-	} else if (plane == OMAP_DSS_WB) {
+	अगर (manual_update && dss_has_feature(FEAT_OMAP3_DSI_FIFO_BUG)) अणु
+		*fअगरo_low = ovl_fअगरo_size - burst_size * 2;
+		*fअगरo_high = total_fअगरo_size - burst_size;
+	पूर्ण अन्यथा अगर (plane == OMAP_DSS_WB) अणु
 		/*
-		 * Most optimal configuration for writeback is to push out data
-		 * to the interconnect the moment writeback pushes enough pixels
-		 * in the FIFO to form a burst
+		 * Most optimal configuration क्रम ग_लिखोback is to push out data
+		 * to the पूर्णांकerconnect the moment ग_लिखोback pushes enough pixels
+		 * in the FIFO to क्रमm a burst
 		 */
-		*fifo_low = 0;
-		*fifo_high = burst_size;
-	} else {
-		*fifo_low = ovl_fifo_size - burst_size;
-		*fifo_high = total_fifo_size - buf_unit;
-	}
-}
+		*fअगरo_low = 0;
+		*fअगरo_high = burst_size;
+	पूर्ण अन्यथा अणु
+		*fअगरo_low = ovl_fअगरo_size - burst_size;
+		*fअगरo_high = total_fअगरo_size - buf_unit;
+	पूर्ण
+पूर्ण
 
-static void dispc_ovl_set_mflag(enum omap_plane plane, bool enable)
-{
-	int bit;
+अटल व्योम dispc_ovl_set_mflag(क्रमागत omap_plane plane, bool enable)
+अणु
+	पूर्णांक bit;
 
-	if (plane == OMAP_DSS_GFX)
+	अगर (plane == OMAP_DSS_GFX)
 		bit = 14;
-	else
+	अन्यथा
 		bit = 23;
 
 	REG_FLD_MOD(DISPC_OVL_ATTRIBUTES(plane), enable, bit, bit);
-}
+पूर्ण
 
-static void dispc_ovl_set_mflag_threshold(enum omap_plane plane,
-	int low, int high)
-{
-	dispc_write_reg(DISPC_OVL_MFLAG_THRESHOLD(plane),
+अटल व्योम dispc_ovl_set_mflag_threshold(क्रमागत omap_plane plane,
+	पूर्णांक low, पूर्णांक high)
+अणु
+	dispc_ग_लिखो_reg(DISPC_OVL_MFLAG_THRESHOLD(plane),
 		FLD_VAL(high, 31, 16) |	FLD_VAL(low, 15, 0));
-}
+पूर्ण
 
-static void dispc_init_mflag(void)
-{
-	int i;
+अटल व्योम dispc_init_mflag(व्योम)
+अणु
+	पूर्णांक i;
 
 	/*
-	 * HACK: NV12 color format and MFLAG seem to have problems working
+	 * HACK: NV12 color क्रमmat and MFLAG seem to have problems working
 	 * together: using two displays, and having an NV12 overlay on one of
 	 * the displays will cause underflows/synclosts when MFLAG_CTRL=2.
 	 * Changing MFLAG thresholds and PRELOAD to certain values seem to
-	 * remove the errors, but there doesn't seem to be a clear logic on
+	 * हटाओ the errors, but there करोesn't seem to be a clear logic on
 	 * which values work and which not.
 	 *
-	 * As a work-around, set force MFLAG to always on.
+	 * As a work-around, set क्रमce MFLAG to always on.
 	 */
-	dispc_write_reg(DISPC_GLOBAL_MFLAG_ATTRIBUTE,
-		(1 << 0) |	/* MFLAG_CTRL = force always on */
+	dispc_ग_लिखो_reg(DISPC_GLOBAL_MFLAG_ATTRIBUTE,
+		(1 << 0) |	/* MFLAG_CTRL = क्रमce always on */
 		(0 << 2));	/* MFLAG_START = disable */
 
-	for (i = 0; i < dss_feat_get_num_ovls(); ++i) {
-		u32 size = dispc_ovl_get_fifo_size(i);
+	क्रम (i = 0; i < dss_feat_get_num_ovls(); ++i) अणु
+		u32 size = dispc_ovl_get_fअगरo_size(i);
 		u32 unit = dss_feat_get_buffer_size_unit();
 		u32 low, high;
 
@@ -1336,18 +1337,18 @@ static void dispc_init_mflag(void)
 
 		/*
 		 * Simulation team suggests below thesholds:
-		 * HT = fifosize * 5 / 8;
-		 * LT = fifosize * 4 / 8;
+		 * HT = fअगरosize * 5 / 8;
+		 * LT = fअगरosize * 4 / 8;
 		 */
 
 		low = size * 4 / 8 / unit;
 		high = size * 5 / 8 / unit;
 
 		dispc_ovl_set_mflag_threshold(i, low, high);
-	}
+	पूर्ण
 
-	if (dispc.feat->has_writeback) {
-		u32 size = dispc_ovl_get_fifo_size(OMAP_DSS_WB);
+	अगर (dispc.feat->has_ग_लिखोback) अणु
+		u32 size = dispc_ovl_get_fअगरo_size(OMAP_DSS_WB);
 		u32 unit = dss_feat_get_buffer_size_unit();
 		u32 low, high;
 
@@ -1355,24 +1356,24 @@ static void dispc_init_mflag(void)
 
 		/*
 		 * Simulation team suggests below thesholds:
-		 * HT = fifosize * 5 / 8;
-		 * LT = fifosize * 4 / 8;
+		 * HT = fअगरosize * 5 / 8;
+		 * LT = fअगरosize * 4 / 8;
 		 */
 
 		low = size * 4 / 8 / unit;
 		high = size * 5 / 8 / unit;
 
 		dispc_ovl_set_mflag_threshold(OMAP_DSS_WB, low, high);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void dispc_ovl_set_fir(enum omap_plane plane,
-				int hinc, int vinc,
-				enum omap_color_component color_comp)
-{
+अटल व्योम dispc_ovl_set_fir(क्रमागत omap_plane plane,
+				पूर्णांक hinc, पूर्णांक vinc,
+				क्रमागत omap_color_component color_comp)
+अणु
 	u32 val;
 
-	if (color_comp == DISPC_COLOR_COMPONENT_RGB_Y) {
+	अगर (color_comp == DISPC_COLOR_COMPONENT_RGB_Y) अणु
 		u8 hinc_start, hinc_end, vinc_start, vinc_end;
 
 		dss_feat_get_reg_field(FEAT_REG_FIRHINC,
@@ -1382,15 +1383,15 @@ static void dispc_ovl_set_fir(enum omap_plane plane,
 		val = FLD_VAL(vinc, vinc_start, vinc_end) |
 				FLD_VAL(hinc, hinc_start, hinc_end);
 
-		dispc_write_reg(DISPC_OVL_FIR(plane), val);
-	} else {
+		dispc_ग_लिखो_reg(DISPC_OVL_FIR(plane), val);
+	पूर्ण अन्यथा अणु
 		val = FLD_VAL(vinc, 28, 16) | FLD_VAL(hinc, 12, 0);
-		dispc_write_reg(DISPC_OVL_FIR2(plane), val);
-	}
-}
+		dispc_ग_लिखो_reg(DISPC_OVL_FIR2(plane), val);
+	पूर्ण
+पूर्ण
 
-static void dispc_ovl_set_vid_accu0(enum omap_plane plane, int haccu, int vaccu)
-{
+अटल व्योम dispc_ovl_set_vid_accu0(क्रमागत omap_plane plane, पूर्णांक haccu, पूर्णांक vaccu)
+अणु
 	u32 val;
 	u8 hor_start, hor_end, vert_start, vert_end;
 
@@ -1400,11 +1401,11 @@ static void dispc_ovl_set_vid_accu0(enum omap_plane plane, int haccu, int vaccu)
 	val = FLD_VAL(vaccu, vert_start, vert_end) |
 			FLD_VAL(haccu, hor_start, hor_end);
 
-	dispc_write_reg(DISPC_OVL_ACCU0(plane), val);
-}
+	dispc_ग_लिखो_reg(DISPC_OVL_ACCU0(plane), val);
+पूर्ण
 
-static void dispc_ovl_set_vid_accu1(enum omap_plane plane, int haccu, int vaccu)
-{
+अटल व्योम dispc_ovl_set_vid_accu1(क्रमागत omap_plane plane, पूर्णांक haccu, पूर्णांक vaccu)
+अणु
 	u32 val;
 	u8 hor_start, hor_end, vert_start, vert_end;
 
@@ -1414,34 +1415,34 @@ static void dispc_ovl_set_vid_accu1(enum omap_plane plane, int haccu, int vaccu)
 	val = FLD_VAL(vaccu, vert_start, vert_end) |
 			FLD_VAL(haccu, hor_start, hor_end);
 
-	dispc_write_reg(DISPC_OVL_ACCU1(plane), val);
-}
+	dispc_ग_लिखो_reg(DISPC_OVL_ACCU1(plane), val);
+पूर्ण
 
-static void dispc_ovl_set_vid_accu2_0(enum omap_plane plane, int haccu,
-		int vaccu)
-{
+अटल व्योम dispc_ovl_set_vid_accu2_0(क्रमागत omap_plane plane, पूर्णांक haccu,
+		पूर्णांक vaccu)
+अणु
 	u32 val;
 
 	val = FLD_VAL(vaccu, 26, 16) | FLD_VAL(haccu, 10, 0);
-	dispc_write_reg(DISPC_OVL_ACCU2_0(plane), val);
-}
+	dispc_ग_लिखो_reg(DISPC_OVL_ACCU2_0(plane), val);
+पूर्ण
 
-static void dispc_ovl_set_vid_accu2_1(enum omap_plane plane, int haccu,
-		int vaccu)
-{
+अटल व्योम dispc_ovl_set_vid_accu2_1(क्रमागत omap_plane plane, पूर्णांक haccu,
+		पूर्णांक vaccu)
+अणु
 	u32 val;
 
 	val = FLD_VAL(vaccu, 26, 16) | FLD_VAL(haccu, 10, 0);
-	dispc_write_reg(DISPC_OVL_ACCU2_1(plane), val);
-}
+	dispc_ग_लिखो_reg(DISPC_OVL_ACCU2_1(plane), val);
+पूर्ण
 
-static void dispc_ovl_set_scale_param(enum omap_plane plane,
+अटल व्योम dispc_ovl_set_scale_param(क्रमागत omap_plane plane,
 		u16 orig_width, u16 orig_height,
 		u16 out_width, u16 out_height,
 		bool five_taps, u8 rotation,
-		enum omap_color_component color_comp)
-{
-	int fir_hinc, fir_vinc;
+		क्रमागत omap_color_component color_comp)
+अणु
+	पूर्णांक fir_hinc, fir_vinc;
 
 	fir_hinc = 1024 * orig_width / out_width;
 	fir_vinc = 1024 * orig_height / out_height;
@@ -1449,81 +1450,81 @@ static void dispc_ovl_set_scale_param(enum omap_plane plane,
 	dispc_ovl_set_scale_coef(plane, fir_hinc, fir_vinc, five_taps,
 				color_comp);
 	dispc_ovl_set_fir(plane, fir_hinc, fir_vinc, color_comp);
-}
+पूर्ण
 
-static void dispc_ovl_set_accu_uv(enum omap_plane plane,
+अटल व्योम dispc_ovl_set_accu_uv(क्रमागत omap_plane plane,
 		u16 orig_width,	u16 orig_height, u16 out_width, u16 out_height,
-		bool ilace, enum omap_color_mode color_mode, u8 rotation)
-{
-	int h_accu2_0, h_accu2_1;
-	int v_accu2_0, v_accu2_1;
-	int chroma_hinc, chroma_vinc;
-	int idx;
+		bool ilace, क्रमागत omap_color_mode color_mode, u8 rotation)
+अणु
+	पूर्णांक h_accu2_0, h_accu2_1;
+	पूर्णांक v_accu2_0, v_accu2_1;
+	पूर्णांक chroma_hinc, chroma_vinc;
+	पूर्णांक idx;
 
-	struct accu {
+	काष्ठा accu अणु
 		s8 h0_m, h0_n;
 		s8 h1_m, h1_n;
 		s8 v0_m, v0_n;
 		s8 v1_m, v1_n;
-	};
+	पूर्ण;
 
-	const struct accu *accu_table;
-	const struct accu *accu_val;
+	स्थिर काष्ठा accu *accu_table;
+	स्थिर काष्ठा accu *accu_val;
 
-	static const struct accu accu_nv12[4] = {
-		{  0, 1,  0, 1 , -1, 2, 0, 1 },
-		{  1, 2, -3, 4 ,  0, 1, 0, 1 },
-		{ -1, 1,  0, 1 , -1, 2, 0, 1 },
-		{ -1, 2, -1, 2 , -1, 1, 0, 1 },
-	};
+	अटल स्थिर काष्ठा accu accu_nv12[4] = अणु
+		अणु  0, 1,  0, 1 , -1, 2, 0, 1 पूर्ण,
+		अणु  1, 2, -3, 4 ,  0, 1, 0, 1 पूर्ण,
+		अणु -1, 1,  0, 1 , -1, 2, 0, 1 पूर्ण,
+		अणु -1, 2, -1, 2 , -1, 1, 0, 1 पूर्ण,
+	पूर्ण;
 
-	static const struct accu accu_nv12_ilace[4] = {
-		{  0, 1,  0, 1 , -3, 4, -1, 4 },
-		{ -1, 4, -3, 4 ,  0, 1,  0, 1 },
-		{ -1, 1,  0, 1 , -1, 4, -3, 4 },
-		{ -3, 4, -3, 4 , -1, 1,  0, 1 },
-	};
+	अटल स्थिर काष्ठा accu accu_nv12_ilace[4] = अणु
+		अणु  0, 1,  0, 1 , -3, 4, -1, 4 पूर्ण,
+		अणु -1, 4, -3, 4 ,  0, 1,  0, 1 पूर्ण,
+		अणु -1, 1,  0, 1 , -1, 4, -3, 4 पूर्ण,
+		अणु -3, 4, -3, 4 , -1, 1,  0, 1 पूर्ण,
+	पूर्ण;
 
-	static const struct accu accu_yuv[4] = {
-		{  0, 1, 0, 1,  0, 1, 0, 1 },
-		{  0, 1, 0, 1,  0, 1, 0, 1 },
-		{ -1, 1, 0, 1,  0, 1, 0, 1 },
-		{  0, 1, 0, 1, -1, 1, 0, 1 },
-	};
+	अटल स्थिर काष्ठा accu accu_yuv[4] = अणु
+		अणु  0, 1, 0, 1,  0, 1, 0, 1 पूर्ण,
+		अणु  0, 1, 0, 1,  0, 1, 0, 1 पूर्ण,
+		अणु -1, 1, 0, 1,  0, 1, 0, 1 पूर्ण,
+		अणु  0, 1, 0, 1, -1, 1, 0, 1 पूर्ण,
+	पूर्ण;
 
-	switch (rotation) {
-	case OMAP_DSS_ROT_0:
+	चयन (rotation) अणु
+	हाल OMAP_DSS_ROT_0:
 		idx = 0;
-		break;
-	case OMAP_DSS_ROT_90:
+		अवरोध;
+	हाल OMAP_DSS_ROT_90:
 		idx = 1;
-		break;
-	case OMAP_DSS_ROT_180:
+		अवरोध;
+	हाल OMAP_DSS_ROT_180:
 		idx = 2;
-		break;
-	case OMAP_DSS_ROT_270:
+		अवरोध;
+	हाल OMAP_DSS_ROT_270:
 		idx = 3;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		BUG();
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	switch (color_mode) {
-	case OMAP_DSS_COLOR_NV12:
-		if (ilace)
+	चयन (color_mode) अणु
+	हाल OMAP_DSS_COLOR_NV12:
+		अगर (ilace)
 			accu_table = accu_nv12_ilace;
-		else
+		अन्यथा
 			accu_table = accu_nv12;
-		break;
-	case OMAP_DSS_COLOR_YUV2:
-	case OMAP_DSS_COLOR_UYVY:
+		अवरोध;
+	हाल OMAP_DSS_COLOR_YUV2:
+	हाल OMAP_DSS_COLOR_UYVY:
 		accu_table = accu_yuv;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		BUG();
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	accu_val = &accu_table[idx];
 
@@ -1537,23 +1538,23 @@ static void dispc_ovl_set_accu_uv(enum omap_plane plane,
 
 	dispc_ovl_set_vid_accu2_0(plane, h_accu2_0, v_accu2_0);
 	dispc_ovl_set_vid_accu2_1(plane, h_accu2_1, v_accu2_1);
-}
+पूर्ण
 
-static void dispc_ovl_set_scaling_common(enum omap_plane plane,
+अटल व्योम dispc_ovl_set_scaling_common(क्रमागत omap_plane plane,
 		u16 orig_width, u16 orig_height,
 		u16 out_width, u16 out_height,
 		bool ilace, bool five_taps,
-		bool fieldmode, enum omap_color_mode color_mode,
+		bool fieldmode, क्रमागत omap_color_mode color_mode,
 		u8 rotation)
-{
-	int accu0 = 0;
-	int accu1 = 0;
+अणु
+	पूर्णांक accu0 = 0;
+	पूर्णांक accu1 = 0;
 	u32 l;
 
 	dispc_ovl_set_scale_param(plane, orig_width, orig_height,
 				out_width, out_height, five_taps,
 				rotation, DISPC_COLOR_COMPONENT_RGB_Y);
-	l = dispc_read_reg(DISPC_OVL_ATTRIBUTES(plane));
+	l = dispc_पढ़ो_reg(DISPC_OVL_ATTRIBUTES(plane));
 
 	/* RESIZEENABLE and VERTICALTAPS */
 	l &= ~((0x3 << 5) | (0x1 << 21));
@@ -1562,108 +1563,108 @@ static void dispc_ovl_set_scaling_common(enum omap_plane plane,
 	l |= five_taps ? (1 << 21) : 0;
 
 	/* VRESIZECONF and HRESIZECONF */
-	if (dss_has_feature(FEAT_RESIZECONF)) {
+	अगर (dss_has_feature(FEAT_RESIZECONF)) अणु
 		l &= ~(0x3 << 7);
 		l |= (orig_width <= out_width) ? 0 : (1 << 7);
 		l |= (orig_height <= out_height) ? 0 : (1 << 8);
-	}
+	पूर्ण
 
 	/* LINEBUFFERSPLIT */
-	if (dss_has_feature(FEAT_LINEBUFFERSPLIT)) {
+	अगर (dss_has_feature(FEAT_LINEBUFFERSPLIT)) अणु
 		l &= ~(0x1 << 22);
 		l |= five_taps ? (1 << 22) : 0;
-	}
+	पूर्ण
 
-	dispc_write_reg(DISPC_OVL_ATTRIBUTES(plane), l);
+	dispc_ग_लिखो_reg(DISPC_OVL_ATTRIBUTES(plane), l);
 
 	/*
 	 * field 0 = even field = bottom field
 	 * field 1 = odd field = top field
 	 */
-	if (ilace && !fieldmode) {
+	अगर (ilace && !fieldmode) अणु
 		accu1 = 0;
 		accu0 = ((1024 * orig_height / out_height) / 2) & 0x3ff;
-		if (accu0 >= 1024/2) {
+		अगर (accu0 >= 1024/2) अणु
 			accu1 = 1024/2;
 			accu0 -= accu1;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	dispc_ovl_set_vid_accu0(plane, 0, accu0);
 	dispc_ovl_set_vid_accu1(plane, 0, accu1);
-}
+पूर्ण
 
-static void dispc_ovl_set_scaling_uv(enum omap_plane plane,
+अटल व्योम dispc_ovl_set_scaling_uv(क्रमागत omap_plane plane,
 		u16 orig_width, u16 orig_height,
 		u16 out_width, u16 out_height,
 		bool ilace, bool five_taps,
-		bool fieldmode, enum omap_color_mode color_mode,
+		bool fieldmode, क्रमागत omap_color_mode color_mode,
 		u8 rotation)
-{
-	int scale_x = out_width != orig_width;
-	int scale_y = out_height != orig_height;
+अणु
+	पूर्णांक scale_x = out_width != orig_width;
+	पूर्णांक scale_y = out_height != orig_height;
 	bool chroma_upscale = plane != OMAP_DSS_WB;
 
-	if (!dss_has_feature(FEAT_HANDLE_UV_SEPARATE))
-		return;
-	if ((color_mode != OMAP_DSS_COLOR_YUV2 &&
+	अगर (!dss_has_feature(FEAT_HANDLE_UV_SEPARATE))
+		वापस;
+	अगर ((color_mode != OMAP_DSS_COLOR_YUV2 &&
 			color_mode != OMAP_DSS_COLOR_UYVY &&
-			color_mode != OMAP_DSS_COLOR_NV12)) {
-		/* reset chroma resampling for RGB formats  */
-		if (plane != OMAP_DSS_WB)
+			color_mode != OMAP_DSS_COLOR_NV12)) अणु
+		/* reset chroma resampling क्रम RGB क्रमmats  */
+		अगर (plane != OMAP_DSS_WB)
 			REG_FLD_MOD(DISPC_OVL_ATTRIBUTES2(plane), 0, 8, 8);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	dispc_ovl_set_accu_uv(plane, orig_width, orig_height, out_width,
 			out_height, ilace, color_mode, rotation);
 
-	switch (color_mode) {
-	case OMAP_DSS_COLOR_NV12:
-		if (chroma_upscale) {
+	चयन (color_mode) अणु
+	हाल OMAP_DSS_COLOR_NV12:
+		अगर (chroma_upscale) अणु
 			/* UV is subsampled by 2 horizontally and vertically */
 			orig_height >>= 1;
 			orig_width >>= 1;
-		} else {
-			/* UV is downsampled by 2 horizontally and vertically */
+		पूर्ण अन्यथा अणु
+			/* UV is करोwnsampled by 2 horizontally and vertically */
 			orig_height <<= 1;
 			orig_width <<= 1;
-		}
+		पूर्ण
 
-		break;
-	case OMAP_DSS_COLOR_YUV2:
-	case OMAP_DSS_COLOR_UYVY:
-		/* For YUV422 with 90/270 rotation, we don't upsample chroma */
-		if (rotation == OMAP_DSS_ROT_0 ||
-				rotation == OMAP_DSS_ROT_180) {
-			if (chroma_upscale)
+		अवरोध;
+	हाल OMAP_DSS_COLOR_YUV2:
+	हाल OMAP_DSS_COLOR_UYVY:
+		/* For YUV422 with 90/270 rotation, we करोn't upsample chroma */
+		अगर (rotation == OMAP_DSS_ROT_0 ||
+				rotation == OMAP_DSS_ROT_180) अणु
+			अगर (chroma_upscale)
 				/* UV is subsampled by 2 horizontally */
 				orig_width >>= 1;
-			else
-				/* UV is downsampled by 2 horizontally */
+			अन्यथा
+				/* UV is करोwnsampled by 2 horizontally */
 				orig_width <<= 1;
-		}
+		पूर्ण
 
-		/* must use FIR for YUV422 if rotated */
-		if (rotation != OMAP_DSS_ROT_0)
+		/* must use FIR क्रम YUV422 अगर rotated */
+		अगर (rotation != OMAP_DSS_ROT_0)
 			scale_x = scale_y = true;
 
-		break;
-	default:
+		अवरोध;
+	शेष:
 		BUG();
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (out_width != orig_width)
+	अगर (out_width != orig_width)
 		scale_x = true;
-	if (out_height != orig_height)
+	अगर (out_height != orig_height)
 		scale_y = true;
 
 	dispc_ovl_set_scale_param(plane, orig_width, orig_height,
 			out_width, out_height, five_taps,
 				rotation, DISPC_COLOR_COMPONENT_UV);
 
-	if (plane != OMAP_DSS_WB)
+	अगर (plane != OMAP_DSS_WB)
 		REG_FLD_MOD(DISPC_OVL_ATTRIBUTES2(plane),
 			(scale_x || scale_y) ? 1 : 0, 8, 8);
 
@@ -1671,15 +1672,15 @@ static void dispc_ovl_set_scaling_uv(enum omap_plane plane,
 	REG_FLD_MOD(DISPC_OVL_ATTRIBUTES(plane), scale_x ? 1 : 0, 5, 5);
 	/* set V scaling */
 	REG_FLD_MOD(DISPC_OVL_ATTRIBUTES(plane), scale_y ? 1 : 0, 6, 6);
-}
+पूर्ण
 
-static void dispc_ovl_set_scaling(enum omap_plane plane,
+अटल व्योम dispc_ovl_set_scaling(क्रमागत omap_plane plane,
 		u16 orig_width, u16 orig_height,
 		u16 out_width, u16 out_height,
 		bool ilace, bool five_taps,
-		bool fieldmode, enum omap_color_mode color_mode,
+		bool fieldmode, क्रमागत omap_color_mode color_mode,
 		u8 rotation)
-{
+अणु
 	BUG_ON(plane == OMAP_DSS_GFX);
 
 	dispc_ovl_set_scaling_common(plane,
@@ -1695,154 +1696,154 @@ static void dispc_ovl_set_scaling(enum omap_plane plane,
 		ilace, five_taps,
 		fieldmode, color_mode,
 		rotation);
-}
+पूर्ण
 
-static void dispc_ovl_set_rotation_attrs(enum omap_plane plane, u8 rotation,
-		enum omap_dss_rotation_type rotation_type,
-		bool mirroring, enum omap_color_mode color_mode)
-{
+अटल व्योम dispc_ovl_set_rotation_attrs(क्रमागत omap_plane plane, u8 rotation,
+		क्रमागत omap_dss_rotation_type rotation_type,
+		bool mirroring, क्रमागत omap_color_mode color_mode)
+अणु
 	bool row_repeat = false;
-	int vidrot = 0;
+	पूर्णांक vidrot = 0;
 
-	if (color_mode == OMAP_DSS_COLOR_YUV2 ||
-			color_mode == OMAP_DSS_COLOR_UYVY) {
+	अगर (color_mode == OMAP_DSS_COLOR_YUV2 ||
+			color_mode == OMAP_DSS_COLOR_UYVY) अणु
 
-		if (mirroring) {
-			switch (rotation) {
-			case OMAP_DSS_ROT_0:
+		अगर (mirroring) अणु
+			चयन (rotation) अणु
+			हाल OMAP_DSS_ROT_0:
 				vidrot = 2;
-				break;
-			case OMAP_DSS_ROT_90:
+				अवरोध;
+			हाल OMAP_DSS_ROT_90:
 				vidrot = 1;
-				break;
-			case OMAP_DSS_ROT_180:
+				अवरोध;
+			हाल OMAP_DSS_ROT_180:
 				vidrot = 0;
-				break;
-			case OMAP_DSS_ROT_270:
+				अवरोध;
+			हाल OMAP_DSS_ROT_270:
 				vidrot = 3;
-				break;
-			}
-		} else {
-			switch (rotation) {
-			case OMAP_DSS_ROT_0:
+				अवरोध;
+			पूर्ण
+		पूर्ण अन्यथा अणु
+			चयन (rotation) अणु
+			हाल OMAP_DSS_ROT_0:
 				vidrot = 0;
-				break;
-			case OMAP_DSS_ROT_90:
+				अवरोध;
+			हाल OMAP_DSS_ROT_90:
 				vidrot = 1;
-				break;
-			case OMAP_DSS_ROT_180:
+				अवरोध;
+			हाल OMAP_DSS_ROT_180:
 				vidrot = 2;
-				break;
-			case OMAP_DSS_ROT_270:
+				अवरोध;
+			हाल OMAP_DSS_ROT_270:
 				vidrot = 3;
-				break;
-			}
-		}
+				अवरोध;
+			पूर्ण
+		पूर्ण
 
-		if (rotation == OMAP_DSS_ROT_90 || rotation == OMAP_DSS_ROT_270)
+		अगर (rotation == OMAP_DSS_ROT_90 || rotation == OMAP_DSS_ROT_270)
 			row_repeat = true;
-		else
+		अन्यथा
 			row_repeat = false;
-	}
+	पूर्ण
 
 	/*
 	 * OMAP4/5 Errata i631:
 	 * NV12 in 1D mode must use ROTATION=1. Otherwise DSS will fetch extra
 	 * rows beyond the framebuffer, which may cause OCP error.
 	 */
-	if (color_mode == OMAP_DSS_COLOR_NV12 &&
+	अगर (color_mode == OMAP_DSS_COLOR_NV12 &&
 			rotation_type != OMAP_DSS_ROT_TILER)
 		vidrot = 1;
 
 	REG_FLD_MOD(DISPC_OVL_ATTRIBUTES(plane), vidrot, 13, 12);
-	if (dss_has_feature(FEAT_ROWREPEATENABLE))
+	अगर (dss_has_feature(FEAT_ROWREPEATENABLE))
 		REG_FLD_MOD(DISPC_OVL_ATTRIBUTES(plane),
 			row_repeat ? 1 : 0, 18, 18);
 
-	if (color_mode == OMAP_DSS_COLOR_NV12) {
-		bool doublestride = (rotation_type == OMAP_DSS_ROT_TILER) &&
+	अगर (color_mode == OMAP_DSS_COLOR_NV12) अणु
+		bool द्विगुनstride = (rotation_type == OMAP_DSS_ROT_TILER) &&
 					(rotation == OMAP_DSS_ROT_0 ||
 					rotation == OMAP_DSS_ROT_180);
 		/* DOUBLESTRIDE */
-		REG_FLD_MOD(DISPC_OVL_ATTRIBUTES(plane), doublestride, 22, 22);
-	}
+		REG_FLD_MOD(DISPC_OVL_ATTRIBUTES(plane), द्विगुनstride, 22, 22);
+	पूर्ण
 
-}
+पूर्ण
 
-static int color_mode_to_bpp(enum omap_color_mode color_mode)
-{
-	switch (color_mode) {
-	case OMAP_DSS_COLOR_CLUT1:
-		return 1;
-	case OMAP_DSS_COLOR_CLUT2:
-		return 2;
-	case OMAP_DSS_COLOR_CLUT4:
-		return 4;
-	case OMAP_DSS_COLOR_CLUT8:
-	case OMAP_DSS_COLOR_NV12:
-		return 8;
-	case OMAP_DSS_COLOR_RGB12U:
-	case OMAP_DSS_COLOR_RGB16:
-	case OMAP_DSS_COLOR_ARGB16:
-	case OMAP_DSS_COLOR_YUV2:
-	case OMAP_DSS_COLOR_UYVY:
-	case OMAP_DSS_COLOR_RGBA16:
-	case OMAP_DSS_COLOR_RGBX16:
-	case OMAP_DSS_COLOR_ARGB16_1555:
-	case OMAP_DSS_COLOR_XRGB16_1555:
-		return 16;
-	case OMAP_DSS_COLOR_RGB24P:
-		return 24;
-	case OMAP_DSS_COLOR_RGB24U:
-	case OMAP_DSS_COLOR_ARGB32:
-	case OMAP_DSS_COLOR_RGBA32:
-	case OMAP_DSS_COLOR_RGBX32:
-		return 32;
-	default:
+अटल पूर्णांक color_mode_to_bpp(क्रमागत omap_color_mode color_mode)
+अणु
+	चयन (color_mode) अणु
+	हाल OMAP_DSS_COLOR_CLUT1:
+		वापस 1;
+	हाल OMAP_DSS_COLOR_CLUT2:
+		वापस 2;
+	हाल OMAP_DSS_COLOR_CLUT4:
+		वापस 4;
+	हाल OMAP_DSS_COLOR_CLUT8:
+	हाल OMAP_DSS_COLOR_NV12:
+		वापस 8;
+	हाल OMAP_DSS_COLOR_RGB12U:
+	हाल OMAP_DSS_COLOR_RGB16:
+	हाल OMAP_DSS_COLOR_ARGB16:
+	हाल OMAP_DSS_COLOR_YUV2:
+	हाल OMAP_DSS_COLOR_UYVY:
+	हाल OMAP_DSS_COLOR_RGBA16:
+	हाल OMAP_DSS_COLOR_RGBX16:
+	हाल OMAP_DSS_COLOR_ARGB16_1555:
+	हाल OMAP_DSS_COLOR_XRGB16_1555:
+		वापस 16;
+	हाल OMAP_DSS_COLOR_RGB24P:
+		वापस 24;
+	हाल OMAP_DSS_COLOR_RGB24U:
+	हाल OMAP_DSS_COLOR_ARGB32:
+	हाल OMAP_DSS_COLOR_RGBA32:
+	हाल OMAP_DSS_COLOR_RGBX32:
+		वापस 32;
+	शेष:
 		BUG();
-		return 0;
-	}
-}
+		वापस 0;
+	पूर्ण
+पूर्ण
 
-static s32 pixinc(int pixels, u8 ps)
-{
-	if (pixels == 1)
-		return 1;
-	else if (pixels > 1)
-		return 1 + (pixels - 1) * ps;
-	else if (pixels < 0)
-		return 1 - (-pixels + 1) * ps;
-	else
+अटल s32 pixinc(पूर्णांक pixels, u8 ps)
+अणु
+	अगर (pixels == 1)
+		वापस 1;
+	अन्यथा अगर (pixels > 1)
+		वापस 1 + (pixels - 1) * ps;
+	अन्यथा अगर (pixels < 0)
+		वापस 1 - (-pixels + 1) * ps;
+	अन्यथा
 		BUG();
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void calc_vrfb_rotation_offset(u8 rotation, bool mirror,
+अटल व्योम calc_vrfb_rotation_offset(u8 rotation, bool mirror,
 		u16 screen_width,
 		u16 width, u16 height,
-		enum omap_color_mode color_mode, bool fieldmode,
-		unsigned int field_offset,
-		unsigned *offset0, unsigned *offset1,
-		s32 *row_inc, s32 *pix_inc, int x_predecim, int y_predecim)
-{
+		क्रमागत omap_color_mode color_mode, bool fieldmode,
+		अचिन्हित पूर्णांक field_offset,
+		अचिन्हित *offset0, अचिन्हित *offset1,
+		s32 *row_inc, s32 *pix_inc, पूर्णांक x_predecim, पूर्णांक y_predecim)
+अणु
 	u8 ps;
 
-	/* FIXME CLUT formats */
-	switch (color_mode) {
-	case OMAP_DSS_COLOR_CLUT1:
-	case OMAP_DSS_COLOR_CLUT2:
-	case OMAP_DSS_COLOR_CLUT4:
-	case OMAP_DSS_COLOR_CLUT8:
+	/* FIXME CLUT क्रमmats */
+	चयन (color_mode) अणु
+	हाल OMAP_DSS_COLOR_CLUT1:
+	हाल OMAP_DSS_COLOR_CLUT2:
+	हाल OMAP_DSS_COLOR_CLUT4:
+	हाल OMAP_DSS_COLOR_CLUT8:
 		BUG();
-		return;
-	case OMAP_DSS_COLOR_YUV2:
-	case OMAP_DSS_COLOR_UYVY:
+		वापस;
+	हाल OMAP_DSS_COLOR_YUV2:
+	हाल OMAP_DSS_COLOR_UYVY:
 		ps = 4;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		ps = color_mode_to_bpp(color_mode) / 8;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	DSSDBG("calc_rot(%d): scrw %d, %dx%d\n", rotation, screen_width,
 			width, height);
@@ -1851,233 +1852,233 @@ static void calc_vrfb_rotation_offset(u8 rotation, bool mirror,
 	 * field 0 = even field = bottom field
 	 * field 1 = odd field = top field
 	 */
-	switch (rotation + mirror * 4) {
-	case OMAP_DSS_ROT_0:
-	case OMAP_DSS_ROT_180:
+	चयन (rotation + mirror * 4) अणु
+	हाल OMAP_DSS_ROT_0:
+	हाल OMAP_DSS_ROT_180:
 		/*
-		 * If the pixel format is YUV or UYVY divide the width
-		 * of the image by 2 for 0 and 180 degree rotation.
+		 * If the pixel क्रमmat is YUV or UYVY भागide the width
+		 * of the image by 2 क्रम 0 and 180 degree rotation.
 		 */
-		if (color_mode == OMAP_DSS_COLOR_YUV2 ||
+		अगर (color_mode == OMAP_DSS_COLOR_YUV2 ||
 			color_mode == OMAP_DSS_COLOR_UYVY)
 			width = width >> 1;
 		fallthrough;
-	case OMAP_DSS_ROT_90:
-	case OMAP_DSS_ROT_270:
+	हाल OMAP_DSS_ROT_90:
+	हाल OMAP_DSS_ROT_270:
 		*offset1 = 0;
-		if (field_offset)
+		अगर (field_offset)
 			*offset0 = field_offset * screen_width * ps;
-		else
+		अन्यथा
 			*offset0 = 0;
 
 		*row_inc = pixinc(1 +
 			(y_predecim * screen_width - x_predecim * width) +
 			(fieldmode ? screen_width : 0), ps);
 		*pix_inc = pixinc(x_predecim, ps);
-		break;
+		अवरोध;
 
-	case OMAP_DSS_ROT_0 + 4:
-	case OMAP_DSS_ROT_180 + 4:
-		/* If the pixel format is YUV or UYVY divide the width
-		 * of the image by 2  for 0 degree and 180 degree
+	हाल OMAP_DSS_ROT_0 + 4:
+	हाल OMAP_DSS_ROT_180 + 4:
+		/* If the pixel क्रमmat is YUV or UYVY भागide the width
+		 * of the image by 2  क्रम 0 degree and 180 degree
 		 */
-		if (color_mode == OMAP_DSS_COLOR_YUV2 ||
+		अगर (color_mode == OMAP_DSS_COLOR_YUV2 ||
 			color_mode == OMAP_DSS_COLOR_UYVY)
 			width = width >> 1;
 		fallthrough;
-	case OMAP_DSS_ROT_90 + 4:
-	case OMAP_DSS_ROT_270 + 4:
+	हाल OMAP_DSS_ROT_90 + 4:
+	हाल OMAP_DSS_ROT_270 + 4:
 		*offset1 = 0;
-		if (field_offset)
+		अगर (field_offset)
 			*offset0 = field_offset * screen_width * ps;
-		else
+		अन्यथा
 			*offset0 = 0;
 		*row_inc = pixinc(1 -
 			(y_predecim * screen_width + x_predecim * width) -
 			(fieldmode ? screen_width : 0), ps);
 		*pix_inc = pixinc(x_predecim, ps);
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		BUG();
-		return;
-	}
-}
+		वापस;
+	पूर्ण
+पूर्ण
 
-static void calc_dma_rotation_offset(u8 rotation, bool mirror,
+अटल व्योम calc_dma_rotation_offset(u8 rotation, bool mirror,
 		u16 screen_width,
 		u16 width, u16 height,
-		enum omap_color_mode color_mode, bool fieldmode,
-		unsigned int field_offset,
-		unsigned *offset0, unsigned *offset1,
-		s32 *row_inc, s32 *pix_inc, int x_predecim, int y_predecim)
-{
+		क्रमागत omap_color_mode color_mode, bool fieldmode,
+		अचिन्हित पूर्णांक field_offset,
+		अचिन्हित *offset0, अचिन्हित *offset1,
+		s32 *row_inc, s32 *pix_inc, पूर्णांक x_predecim, पूर्णांक y_predecim)
+अणु
 	u8 ps;
 	u16 fbw, fbh;
 
-	/* FIXME CLUT formats */
-	switch (color_mode) {
-	case OMAP_DSS_COLOR_CLUT1:
-	case OMAP_DSS_COLOR_CLUT2:
-	case OMAP_DSS_COLOR_CLUT4:
-	case OMAP_DSS_COLOR_CLUT8:
+	/* FIXME CLUT क्रमmats */
+	चयन (color_mode) अणु
+	हाल OMAP_DSS_COLOR_CLUT1:
+	हाल OMAP_DSS_COLOR_CLUT2:
+	हाल OMAP_DSS_COLOR_CLUT4:
+	हाल OMAP_DSS_COLOR_CLUT8:
 		BUG();
-		return;
-	default:
+		वापस;
+	शेष:
 		ps = color_mode_to_bpp(color_mode) / 8;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	DSSDBG("calc_rot(%d): scrw %d, %dx%d\n", rotation, screen_width,
 			width, height);
 
 	/* width & height are overlay sizes, convert to fb sizes */
 
-	if (rotation == OMAP_DSS_ROT_0 || rotation == OMAP_DSS_ROT_180) {
+	अगर (rotation == OMAP_DSS_ROT_0 || rotation == OMAP_DSS_ROT_180) अणु
 		fbw = width;
 		fbh = height;
-	} else {
+	पूर्ण अन्यथा अणु
 		fbw = height;
 		fbh = width;
-	}
+	पूर्ण
 
 	/*
 	 * field 0 = even field = bottom field
 	 * field 1 = odd field = top field
 	 */
-	switch (rotation + mirror * 4) {
-	case OMAP_DSS_ROT_0:
+	चयन (rotation + mirror * 4) अणु
+	हाल OMAP_DSS_ROT_0:
 		*offset1 = 0;
-		if (field_offset)
+		अगर (field_offset)
 			*offset0 = *offset1 + field_offset * screen_width * ps;
-		else
+		अन्यथा
 			*offset0 = *offset1;
 		*row_inc = pixinc(1 +
 			(y_predecim * screen_width - fbw * x_predecim) +
 			(fieldmode ? screen_width : 0),	ps);
-		if (color_mode == OMAP_DSS_COLOR_YUV2 ||
+		अगर (color_mode == OMAP_DSS_COLOR_YUV2 ||
 			color_mode == OMAP_DSS_COLOR_UYVY)
 			*pix_inc = pixinc(x_predecim, 2 * ps);
-		else
+		अन्यथा
 			*pix_inc = pixinc(x_predecim, ps);
-		break;
-	case OMAP_DSS_ROT_90:
+		अवरोध;
+	हाल OMAP_DSS_ROT_90:
 		*offset1 = screen_width * (fbh - 1) * ps;
-		if (field_offset)
+		अगर (field_offset)
 			*offset0 = *offset1 + field_offset * ps;
-		else
+		अन्यथा
 			*offset0 = *offset1;
 		*row_inc = pixinc(screen_width * (fbh * x_predecim - 1) +
 				y_predecim + (fieldmode ? 1 : 0), ps);
 		*pix_inc = pixinc(-x_predecim * screen_width, ps);
-		break;
-	case OMAP_DSS_ROT_180:
+		अवरोध;
+	हाल OMAP_DSS_ROT_180:
 		*offset1 = (screen_width * (fbh - 1) + fbw - 1) * ps;
-		if (field_offset)
+		अगर (field_offset)
 			*offset0 = *offset1 - field_offset * screen_width * ps;
-		else
+		अन्यथा
 			*offset0 = *offset1;
 		*row_inc = pixinc(-1 -
 			(y_predecim * screen_width - fbw * x_predecim) -
 			(fieldmode ? screen_width : 0),	ps);
-		if (color_mode == OMAP_DSS_COLOR_YUV2 ||
+		अगर (color_mode == OMAP_DSS_COLOR_YUV2 ||
 			color_mode == OMAP_DSS_COLOR_UYVY)
 			*pix_inc = pixinc(-x_predecim, 2 * ps);
-		else
+		अन्यथा
 			*pix_inc = pixinc(-x_predecim, ps);
-		break;
-	case OMAP_DSS_ROT_270:
+		अवरोध;
+	हाल OMAP_DSS_ROT_270:
 		*offset1 = (fbw - 1) * ps;
-		if (field_offset)
+		अगर (field_offset)
 			*offset0 = *offset1 - field_offset * ps;
-		else
+		अन्यथा
 			*offset0 = *offset1;
 		*row_inc = pixinc(-screen_width * (fbh * x_predecim - 1) -
 				y_predecim - (fieldmode ? 1 : 0), ps);
 		*pix_inc = pixinc(x_predecim * screen_width, ps);
-		break;
+		अवरोध;
 
 	/* mirroring */
-	case OMAP_DSS_ROT_0 + 4:
+	हाल OMAP_DSS_ROT_0 + 4:
 		*offset1 = (fbw - 1) * ps;
-		if (field_offset)
+		अगर (field_offset)
 			*offset0 = *offset1 + field_offset * screen_width * ps;
-		else
+		अन्यथा
 			*offset0 = *offset1;
 		*row_inc = pixinc(y_predecim * screen_width * 2 - 1 +
 				(fieldmode ? screen_width : 0),
 				ps);
-		if (color_mode == OMAP_DSS_COLOR_YUV2 ||
+		अगर (color_mode == OMAP_DSS_COLOR_YUV2 ||
 			color_mode == OMAP_DSS_COLOR_UYVY)
 			*pix_inc = pixinc(-x_predecim, 2 * ps);
-		else
+		अन्यथा
 			*pix_inc = pixinc(-x_predecim, ps);
-		break;
+		अवरोध;
 
-	case OMAP_DSS_ROT_90 + 4:
+	हाल OMAP_DSS_ROT_90 + 4:
 		*offset1 = 0;
-		if (field_offset)
+		अगर (field_offset)
 			*offset0 = *offset1 + field_offset * ps;
-		else
+		अन्यथा
 			*offset0 = *offset1;
 		*row_inc = pixinc(-screen_width * (fbh * x_predecim - 1) +
 				y_predecim + (fieldmode ? 1 : 0),
 				ps);
 		*pix_inc = pixinc(x_predecim * screen_width, ps);
-		break;
+		अवरोध;
 
-	case OMAP_DSS_ROT_180 + 4:
+	हाल OMAP_DSS_ROT_180 + 4:
 		*offset1 = screen_width * (fbh - 1) * ps;
-		if (field_offset)
+		अगर (field_offset)
 			*offset0 = *offset1 - field_offset * screen_width * ps;
-		else
+		अन्यथा
 			*offset0 = *offset1;
 		*row_inc = pixinc(1 - y_predecim * screen_width * 2 -
 				(fieldmode ? screen_width : 0),
 				ps);
-		if (color_mode == OMAP_DSS_COLOR_YUV2 ||
+		अगर (color_mode == OMAP_DSS_COLOR_YUV2 ||
 			color_mode == OMAP_DSS_COLOR_UYVY)
 			*pix_inc = pixinc(x_predecim, 2 * ps);
-		else
+		अन्यथा
 			*pix_inc = pixinc(x_predecim, ps);
-		break;
+		अवरोध;
 
-	case OMAP_DSS_ROT_270 + 4:
+	हाल OMAP_DSS_ROT_270 + 4:
 		*offset1 = (screen_width * (fbh - 1) + fbw - 1) * ps;
-		if (field_offset)
+		अगर (field_offset)
 			*offset0 = *offset1 - field_offset * ps;
-		else
+		अन्यथा
 			*offset0 = *offset1;
 		*row_inc = pixinc(screen_width * (fbh * x_predecim - 1) -
 				y_predecim - (fieldmode ? 1 : 0),
 				ps);
 		*pix_inc = pixinc(-x_predecim * screen_width, ps);
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		BUG();
-		return;
-	}
-}
+		वापस;
+	पूर्ण
+पूर्ण
 
-static void calc_tiler_rotation_offset(u16 screen_width, u16 width,
-		enum omap_color_mode color_mode, bool fieldmode,
-		unsigned int field_offset, unsigned *offset0, unsigned *offset1,
-		s32 *row_inc, s32 *pix_inc, int x_predecim, int y_predecim)
-{
+अटल व्योम calc_tiler_rotation_offset(u16 screen_width, u16 width,
+		क्रमागत omap_color_mode color_mode, bool fieldmode,
+		अचिन्हित पूर्णांक field_offset, अचिन्हित *offset0, अचिन्हित *offset1,
+		s32 *row_inc, s32 *pix_inc, पूर्णांक x_predecim, पूर्णांक y_predecim)
+अणु
 	u8 ps;
 
-	switch (color_mode) {
-	case OMAP_DSS_COLOR_CLUT1:
-	case OMAP_DSS_COLOR_CLUT2:
-	case OMAP_DSS_COLOR_CLUT4:
-	case OMAP_DSS_COLOR_CLUT8:
+	चयन (color_mode) अणु
+	हाल OMAP_DSS_COLOR_CLUT1:
+	हाल OMAP_DSS_COLOR_CLUT2:
+	हाल OMAP_DSS_COLOR_CLUT4:
+	हाल OMAP_DSS_COLOR_CLUT8:
 		BUG();
-		return;
-	default:
+		वापस;
+	शेष:
 		ps = color_mode_to_bpp(color_mode) / 8;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	DSSDBG("scrw %d, width %d\n", screen_width, width);
 
@@ -2086,241 +2087,241 @@ static void calc_tiler_rotation_offset(u16 screen_width, u16 width,
 	 * field 1 = odd field = top field
 	 */
 	*offset1 = 0;
-	if (field_offset)
+	अगर (field_offset)
 		*offset0 = *offset1 + field_offset * screen_width * ps;
-	else
+	अन्यथा
 		*offset0 = *offset1;
 	*row_inc = pixinc(1 + (y_predecim * screen_width - width * x_predecim) +
 			(fieldmode ? screen_width : 0), ps);
-	if (color_mode == OMAP_DSS_COLOR_YUV2 ||
+	अगर (color_mode == OMAP_DSS_COLOR_YUV2 ||
 		color_mode == OMAP_DSS_COLOR_UYVY)
 		*pix_inc = pixinc(x_predecim, 2 * ps);
-	else
+	अन्यथा
 		*pix_inc = pixinc(x_predecim, ps);
-}
+पूर्ण
 
 /*
- * This function is used to avoid synclosts in OMAP3, because of some
- * undocumented horizontal position and timing related limitations.
+ * This function is used to aव्योम synclosts in OMAP3, because of some
+ * unकरोcumented horizontal position and timing related limitations.
  */
-static int check_horiz_timing_omap3(unsigned long pclk, unsigned long lclk,
-		const struct omap_video_timings *t, u16 pos_x,
+अटल पूर्णांक check_horiz_timing_omap3(अचिन्हित दीर्घ pclk, अचिन्हित दीर्घ lclk,
+		स्थिर काष्ठा omap_video_timings *t, u16 pos_x,
 		u16 width, u16 height, u16 out_width, u16 out_height,
 		bool five_taps)
-{
-	const int ds = DIV_ROUND_UP(height, out_height);
-	unsigned long nonactive;
-	static const u8 limits[3] = { 8, 10, 20 };
+अणु
+	स्थिर पूर्णांक ds = DIV_ROUND_UP(height, out_height);
+	अचिन्हित दीर्घ nonactive;
+	अटल स्थिर u8 limits[3] = अणु 8, 10, 20 पूर्ण;
 	u64 val, blank;
-	int i;
+	पूर्णांक i;
 
 	nonactive = t->x_res + t->hfp + t->hsw + t->hbp - out_width;
 
 	i = 0;
-	if (out_height < height)
+	अगर (out_height < height)
 		i++;
-	if (out_width < width)
+	अगर (out_width < width)
 		i++;
-	blank = div_u64((u64)(t->hbp + t->hsw + t->hfp) * lclk, pclk);
+	blank = भाग_u64((u64)(t->hbp + t->hsw + t->hfp) * lclk, pclk);
 	DSSDBG("blanking period + ppl = %llu (limit = %u)\n", blank, limits[i]);
-	if (blank <= limits[i])
-		return -EINVAL;
+	अगर (blank <= limits[i])
+		वापस -EINVAL;
 
-	/* FIXME add checks for 3-tap filter once the limitations are known */
-	if (!five_taps)
-		return 0;
+	/* FIXME add checks क्रम 3-tap filter once the limitations are known */
+	अगर (!five_taps)
+		वापस 0;
 
 	/*
-	 * Pixel data should be prepared before visible display point starts.
-	 * So, atleast DS-2 lines must have already been fetched by DISPC
+	 * Pixel data should be prepared beक्रमe visible display poपूर्णांक starts.
+	 * So, atleast DS-2 lines must have alपढ़ोy been fetched by DISPC
 	 * during nonactive - pos_x period.
 	 */
-	val = div_u64((u64)(nonactive - pos_x) * lclk, pclk);
+	val = भाग_u64((u64)(nonactive - pos_x) * lclk, pclk);
 	DSSDBG("(nonactive - pos_x) * pcd = %llu max(0, DS - 2) * width = %d\n",
 		val, max(0, ds - 2) * width);
-	if (val < max(0, ds - 2) * width)
-		return -EINVAL;
+	अगर (val < max(0, ds - 2) * width)
+		वापस -EINVAL;
 
 	/*
 	 * All lines need to be refilled during the nonactive period of which
 	 * only one line can be loaded during the active period. So, atleast
 	 * DS - 1 lines should be loaded during nonactive period.
 	 */
-	val =  div_u64((u64)nonactive * lclk, pclk);
+	val =  भाग_u64((u64)nonactive * lclk, pclk);
 	DSSDBG("nonactive * pcd  = %llu, max(0, DS - 1) * width = %d\n",
 		val, max(0, ds - 1) * width);
-	if (val < max(0, ds - 1) * width)
-		return -EINVAL;
+	अगर (val < max(0, ds - 1) * width)
+		वापस -EINVAL;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static unsigned long calc_core_clk_five_taps(unsigned long pclk,
-		const struct omap_video_timings *mgr_timings, u16 width,
+अटल अचिन्हित दीर्घ calc_core_clk_five_taps(अचिन्हित दीर्घ pclk,
+		स्थिर काष्ठा omap_video_timings *mgr_timings, u16 width,
 		u16 height, u16 out_width, u16 out_height,
-		enum omap_color_mode color_mode)
-{
+		क्रमागत omap_color_mode color_mode)
+अणु
 	u32 core_clk = 0;
-	u64 tmp;
+	u64 पंचांगp;
 
-	if (height <= out_height && width <= out_width)
-		return (unsigned long) pclk;
+	अगर (height <= out_height && width <= out_width)
+		वापस (अचिन्हित दीर्घ) pclk;
 
-	if (height > out_height) {
-		unsigned int ppl = mgr_timings->x_res;
+	अगर (height > out_height) अणु
+		अचिन्हित पूर्णांक ppl = mgr_timings->x_res;
 
-		tmp = (u64)pclk * height * out_width;
-		do_div(tmp, 2 * out_height * ppl);
-		core_clk = tmp;
+		पंचांगp = (u64)pclk * height * out_width;
+		करो_भाग(पंचांगp, 2 * out_height * ppl);
+		core_clk = पंचांगp;
 
-		if (height > 2 * out_height) {
-			if (ppl == out_width)
-				return 0;
+		अगर (height > 2 * out_height) अणु
+			अगर (ppl == out_width)
+				वापस 0;
 
-			tmp = (u64)pclk * (height - 2 * out_height) * out_width;
-			do_div(tmp, 2 * out_height * (ppl - out_width));
-			core_clk = max_t(u32, core_clk, tmp);
-		}
-	}
+			पंचांगp = (u64)pclk * (height - 2 * out_height) * out_width;
+			करो_भाग(पंचांगp, 2 * out_height * (ppl - out_width));
+			core_clk = max_t(u32, core_clk, पंचांगp);
+		पूर्ण
+	पूर्ण
 
-	if (width > out_width) {
-		tmp = (u64)pclk * width;
-		do_div(tmp, out_width);
-		core_clk = max_t(u32, core_clk, tmp);
+	अगर (width > out_width) अणु
+		पंचांगp = (u64)pclk * width;
+		करो_भाग(पंचांगp, out_width);
+		core_clk = max_t(u32, core_clk, पंचांगp);
 
-		if (color_mode == OMAP_DSS_COLOR_RGB24U)
+		अगर (color_mode == OMAP_DSS_COLOR_RGB24U)
 			core_clk <<= 1;
-	}
+	पूर्ण
 
-	return core_clk;
-}
+	वापस core_clk;
+पूर्ण
 
-static unsigned long calc_core_clk_24xx(unsigned long pclk, u16 width,
+अटल अचिन्हित दीर्घ calc_core_clk_24xx(अचिन्हित दीर्घ pclk, u16 width,
 		u16 height, u16 out_width, u16 out_height, bool mem_to_mem)
-{
-	if (height > out_height && width > out_width)
-		return pclk * 4;
-	else
-		return pclk * 2;
-}
+अणु
+	अगर (height > out_height && width > out_width)
+		वापस pclk * 4;
+	अन्यथा
+		वापस pclk * 2;
+पूर्ण
 
-static unsigned long calc_core_clk_34xx(unsigned long pclk, u16 width,
+अटल अचिन्हित दीर्घ calc_core_clk_34xx(अचिन्हित दीर्घ pclk, u16 width,
 		u16 height, u16 out_width, u16 out_height, bool mem_to_mem)
-{
-	unsigned int hf, vf;
+अणु
+	अचिन्हित पूर्णांक hf, vf;
 
 	/*
 	 * FIXME how to determine the 'A' factor
-	 * for the no downscaling case ?
+	 * क्रम the no करोwnscaling हाल ?
 	 */
 
-	if (width > 3 * out_width)
+	अगर (width > 3 * out_width)
 		hf = 4;
-	else if (width > 2 * out_width)
+	अन्यथा अगर (width > 2 * out_width)
 		hf = 3;
-	else if (width > out_width)
+	अन्यथा अगर (width > out_width)
 		hf = 2;
-	else
+	अन्यथा
 		hf = 1;
-	if (height > out_height)
+	अगर (height > out_height)
 		vf = 2;
-	else
+	अन्यथा
 		vf = 1;
 
-	return pclk * vf * hf;
-}
+	वापस pclk * vf * hf;
+पूर्ण
 
-static unsigned long calc_core_clk_44xx(unsigned long pclk, u16 width,
+अटल अचिन्हित दीर्घ calc_core_clk_44xx(अचिन्हित दीर्घ pclk, u16 width,
 		u16 height, u16 out_width, u16 out_height, bool mem_to_mem)
-{
+अणु
 	/*
-	 * If the overlay/writeback is in mem to mem mode, there are no
-	 * downscaling limitations with respect to pixel clock, return 1 as
-	 * required core clock to represent that we have sufficient enough
-	 * core clock to do maximum downscaling
+	 * If the overlay/ग_लिखोback is in mem to mem mode, there are no
+	 * करोwnscaling limitations with respect to pixel घड़ी, वापस 1 as
+	 * required core घड़ी to represent that we have sufficient enough
+	 * core घड़ी to करो maximum करोwnscaling
 	 */
-	if (mem_to_mem)
-		return 1;
+	अगर (mem_to_mem)
+		वापस 1;
 
-	if (width > out_width)
-		return DIV_ROUND_UP(pclk, out_width) * width;
-	else
-		return pclk;
-}
+	अगर (width > out_width)
+		वापस DIV_ROUND_UP(pclk, out_width) * width;
+	अन्यथा
+		वापस pclk;
+पूर्ण
 
-static int dispc_ovl_calc_scaling_24xx(unsigned long pclk, unsigned long lclk,
-		const struct omap_video_timings *mgr_timings,
+अटल पूर्णांक dispc_ovl_calc_scaling_24xx(अचिन्हित दीर्घ pclk, अचिन्हित दीर्घ lclk,
+		स्थिर काष्ठा omap_video_timings *mgr_timings,
 		u16 width, u16 height, u16 out_width, u16 out_height,
-		enum omap_color_mode color_mode, bool *five_taps,
-		int *x_predecim, int *y_predecim, int *decim_x, int *decim_y,
-		u16 pos_x, unsigned long *core_clk, bool mem_to_mem)
-{
-	int error;
+		क्रमागत omap_color_mode color_mode, bool *five_taps,
+		पूर्णांक *x_predecim, पूर्णांक *y_predecim, पूर्णांक *decim_x, पूर्णांक *decim_y,
+		u16 pos_x, अचिन्हित दीर्घ *core_clk, bool mem_to_mem)
+अणु
+	पूर्णांक error;
 	u16 in_width, in_height;
-	int min_factor = min(*decim_x, *decim_y);
-	const int maxsinglelinewidth =
+	पूर्णांक min_factor = min(*decim_x, *decim_y);
+	स्थिर पूर्णांक maxsinglelinewidth =
 			dss_feat_get_param_max(FEAT_PARAM_LINEWIDTH);
 
 	*five_taps = false;
 
-	do {
+	करो अणु
 		in_height = height / *decim_y;
 		in_width = width / *decim_x;
 		*core_clk = dispc.feat->calc_core_clk(pclk, in_width,
 				in_height, out_width, out_height, mem_to_mem);
 		error = (in_width > maxsinglelinewidth || !*core_clk ||
 			*core_clk > dispc_core_clk_rate());
-		if (error) {
-			if (*decim_x == *decim_y) {
+		अगर (error) अणु
+			अगर (*decim_x == *decim_y) अणु
 				*decim_x = min_factor;
 				++*decim_y;
-			} else {
+			पूर्ण अन्यथा अणु
 				swap(*decim_x, *decim_y);
-				if (*decim_x < *decim_y)
+				अगर (*decim_x < *decim_y)
 					++*decim_x;
-			}
-		}
-	} while (*decim_x <= *x_predecim && *decim_y <= *y_predecim && error);
+			पूर्ण
+		पूर्ण
+	पूर्ण जबतक (*decim_x <= *x_predecim && *decim_y <= *y_predecim && error);
 
-	if (error) {
+	अगर (error) अणु
 		DSSERR("failed to find scaling settings\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (in_width > maxsinglelinewidth) {
+	अगर (in_width > maxsinglelinewidth) अणु
 		DSSERR("Cannot scale max input width exceeded");
-		return -EINVAL;
-	}
-	return 0;
-}
+		वापस -EINVAL;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int dispc_ovl_calc_scaling_34xx(unsigned long pclk, unsigned long lclk,
-		const struct omap_video_timings *mgr_timings,
+अटल पूर्णांक dispc_ovl_calc_scaling_34xx(अचिन्हित दीर्घ pclk, अचिन्हित दीर्घ lclk,
+		स्थिर काष्ठा omap_video_timings *mgr_timings,
 		u16 width, u16 height, u16 out_width, u16 out_height,
-		enum omap_color_mode color_mode, bool *five_taps,
-		int *x_predecim, int *y_predecim, int *decim_x, int *decim_y,
-		u16 pos_x, unsigned long *core_clk, bool mem_to_mem)
-{
-	int error;
+		क्रमागत omap_color_mode color_mode, bool *five_taps,
+		पूर्णांक *x_predecim, पूर्णांक *y_predecim, पूर्णांक *decim_x, पूर्णांक *decim_y,
+		u16 pos_x, अचिन्हित दीर्घ *core_clk, bool mem_to_mem)
+अणु
+	पूर्णांक error;
 	u16 in_width, in_height;
-	const int maxsinglelinewidth =
+	स्थिर पूर्णांक maxsinglelinewidth =
 			dss_feat_get_param_max(FEAT_PARAM_LINEWIDTH);
 
-	do {
+	करो अणु
 		in_height = height / *decim_y;
 		in_width = width / *decim_x;
 		*five_taps = in_height > out_height;
 
-		if (in_width > maxsinglelinewidth)
-			if (in_height > out_height &&
+		अगर (in_width > maxsinglelinewidth)
+			अगर (in_height > out_height &&
 						in_height < out_height * 2)
 				*five_taps = false;
 again:
-		if (*five_taps)
+		अगर (*five_taps)
 			*core_clk = calc_core_clk_five_taps(pclk, mgr_timings,
 						in_width, in_height, out_width,
 						out_height, color_mode);
-		else
+		अन्यथा
 			*core_clk = dispc.feat->calc_core_clk(pclk, in_width,
 					in_height, out_width, out_height,
 					mem_to_mem);
@@ -2328,160 +2329,160 @@ again:
 		error = check_horiz_timing_omap3(pclk, lclk, mgr_timings,
 				pos_x, in_width, in_height, out_width,
 				out_height, *five_taps);
-		if (error && *five_taps) {
+		अगर (error && *five_taps) अणु
 			*five_taps = false;
-			goto again;
-		}
+			जाओ again;
+		पूर्ण
 
 		error = (error || in_width > maxsinglelinewidth * 2 ||
 			(in_width > maxsinglelinewidth && *five_taps) ||
 			!*core_clk || *core_clk > dispc_core_clk_rate());
 
-		if (!error) {
-			/* verify that we're inside the limits of scaler */
-			if (in_width / 4 > out_width)
+		अगर (!error) अणु
+			/* verअगरy that we're inside the limits of scaler */
+			अगर (in_width / 4 > out_width)
 					error = 1;
 
-			if (*five_taps) {
-				if (in_height / 4 > out_height)
+			अगर (*five_taps) अणु
+				अगर (in_height / 4 > out_height)
 					error = 1;
-			} else {
-				if (in_height / 2 > out_height)
+			पूर्ण अन्यथा अणु
+				अगर (in_height / 2 > out_height)
 					error = 1;
-			}
-		}
+			पूर्ण
+		पूर्ण
 
-		if (error)
+		अगर (error)
 			++*decim_y;
-	} while (*decim_x <= *x_predecim && *decim_y <= *y_predecim && error);
+	पूर्ण जबतक (*decim_x <= *x_predecim && *decim_y <= *y_predecim && error);
 
-	if (error) {
+	अगर (error) अणु
 		DSSERR("failed to find scaling settings\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (check_horiz_timing_omap3(pclk, lclk, mgr_timings, pos_x, in_width,
-				in_height, out_width, out_height, *five_taps)) {
+	अगर (check_horiz_timing_omap3(pclk, lclk, mgr_timings, pos_x, in_width,
+				in_height, out_width, out_height, *five_taps)) अणु
 			DSSERR("horizontal timing too tight\n");
-			return -EINVAL;
-	}
+			वापस -EINVAL;
+	पूर्ण
 
-	if (in_width > (maxsinglelinewidth * 2)) {
+	अगर (in_width > (maxsinglelinewidth * 2)) अणु
 		DSSERR("Cannot setup scaling");
 		DSSERR("width exceeds maximum width possible");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (in_width > maxsinglelinewidth && *five_taps) {
+	अगर (in_width > maxsinglelinewidth && *five_taps) अणु
 		DSSERR("cannot setup scaling with five taps");
-		return -EINVAL;
-	}
-	return 0;
-}
+		वापस -EINVAL;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int dispc_ovl_calc_scaling_44xx(unsigned long pclk, unsigned long lclk,
-		const struct omap_video_timings *mgr_timings,
+अटल पूर्णांक dispc_ovl_calc_scaling_44xx(अचिन्हित दीर्घ pclk, अचिन्हित दीर्घ lclk,
+		स्थिर काष्ठा omap_video_timings *mgr_timings,
 		u16 width, u16 height, u16 out_width, u16 out_height,
-		enum omap_color_mode color_mode, bool *five_taps,
-		int *x_predecim, int *y_predecim, int *decim_x, int *decim_y,
-		u16 pos_x, unsigned long *core_clk, bool mem_to_mem)
-{
+		क्रमागत omap_color_mode color_mode, bool *five_taps,
+		पूर्णांक *x_predecim, पूर्णांक *y_predecim, पूर्णांक *decim_x, पूर्णांक *decim_y,
+		u16 pos_x, अचिन्हित दीर्घ *core_clk, bool mem_to_mem)
+अणु
 	u16 in_width, in_width_max;
-	int decim_x_min = *decim_x;
+	पूर्णांक decim_x_min = *decim_x;
 	u16 in_height = height / *decim_y;
-	const int maxsinglelinewidth =
+	स्थिर पूर्णांक maxsinglelinewidth =
 				dss_feat_get_param_max(FEAT_PARAM_LINEWIDTH);
-	const int maxdownscale = dss_feat_get_param_max(FEAT_PARAM_DOWNSCALE);
+	स्थिर पूर्णांक maxकरोwnscale = dss_feat_get_param_max(FEAT_PARAM_DOWNSCALE);
 
-	if (mem_to_mem) {
-		in_width_max = out_width * maxdownscale;
-	} else {
+	अगर (mem_to_mem) अणु
+		in_width_max = out_width * maxकरोwnscale;
+	पूर्ण अन्यथा अणु
 		in_width_max = dispc_core_clk_rate() /
 					DIV_ROUND_UP(pclk, out_width);
-	}
+	पूर्ण
 
 	*decim_x = DIV_ROUND_UP(width, in_width_max);
 
 	*decim_x = *decim_x > decim_x_min ? *decim_x : decim_x_min;
-	if (*decim_x > *x_predecim)
-		return -EINVAL;
+	अगर (*decim_x > *x_predecim)
+		वापस -EINVAL;
 
-	do {
+	करो अणु
 		in_width = width / *decim_x;
-	} while (*decim_x <= *x_predecim &&
+	पूर्ण जबतक (*decim_x <= *x_predecim &&
 			in_width > maxsinglelinewidth && ++*decim_x);
 
-	if (in_width > maxsinglelinewidth) {
+	अगर (in_width > maxsinglelinewidth) अणु
 		DSSERR("Cannot scale width exceeds max line width");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	*core_clk = dispc.feat->calc_core_clk(pclk, in_width, in_height,
 				out_width, out_height, mem_to_mem);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#define DIV_FRAC(dividend, divisor) \
-	((dividend) * 100 / (divisor) - ((dividend) / (divisor) * 100))
+#घोषणा DIV_FRAC(भागidend, भागisor) \
+	((भागidend) * 100 / (भागisor) - ((भागidend) / (भागisor) * 100))
 
-static int dispc_ovl_calc_scaling(unsigned long pclk, unsigned long lclk,
-		enum omap_overlay_caps caps,
-		const struct omap_video_timings *mgr_timings,
+अटल पूर्णांक dispc_ovl_calc_scaling(अचिन्हित दीर्घ pclk, अचिन्हित दीर्घ lclk,
+		क्रमागत omap_overlay_caps caps,
+		स्थिर काष्ठा omap_video_timings *mgr_timings,
 		u16 width, u16 height, u16 out_width, u16 out_height,
-		enum omap_color_mode color_mode, bool *five_taps,
-		int *x_predecim, int *y_predecim, u16 pos_x,
-		enum omap_dss_rotation_type rotation_type, bool mem_to_mem)
-{
-	const int maxdownscale = dss_feat_get_param_max(FEAT_PARAM_DOWNSCALE);
-	const int max_decim_limit = 16;
-	unsigned long core_clk = 0;
-	int decim_x, decim_y, ret;
+		क्रमागत omap_color_mode color_mode, bool *five_taps,
+		पूर्णांक *x_predecim, पूर्णांक *y_predecim, u16 pos_x,
+		क्रमागत omap_dss_rotation_type rotation_type, bool mem_to_mem)
+अणु
+	स्थिर पूर्णांक maxकरोwnscale = dss_feat_get_param_max(FEAT_PARAM_DOWNSCALE);
+	स्थिर पूर्णांक max_decim_limit = 16;
+	अचिन्हित दीर्घ core_clk = 0;
+	पूर्णांक decim_x, decim_y, ret;
 
-	if (width == out_width && height == out_height)
-		return 0;
+	अगर (width == out_width && height == out_height)
+		वापस 0;
 
-	if (!mem_to_mem && (pclk == 0 || mgr_timings->pixelclock == 0)) {
+	अगर (!mem_to_mem && (pclk == 0 || mgr_timings->pixelघड़ी == 0)) अणु
 		DSSERR("cannot calculate scaling settings: pclk is zero\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if ((caps & OMAP_DSS_OVL_CAP_SCALE) == 0)
-		return -EINVAL;
+	अगर ((caps & OMAP_DSS_OVL_CAP_SCALE) == 0)
+		वापस -EINVAL;
 
-	if (mem_to_mem) {
+	अगर (mem_to_mem) अणु
 		*x_predecim = *y_predecim = 1;
-	} else {
+	पूर्ण अन्यथा अणु
 		*x_predecim = max_decim_limit;
 		*y_predecim = (rotation_type == OMAP_DSS_ROT_TILER &&
 				dss_has_feature(FEAT_BURST_2D)) ?
 				2 : max_decim_limit;
-	}
+	पूर्ण
 
-	if (color_mode == OMAP_DSS_COLOR_CLUT1 ||
+	अगर (color_mode == OMAP_DSS_COLOR_CLUT1 ||
 	    color_mode == OMAP_DSS_COLOR_CLUT2 ||
 	    color_mode == OMAP_DSS_COLOR_CLUT4 ||
-	    color_mode == OMAP_DSS_COLOR_CLUT8) {
+	    color_mode == OMAP_DSS_COLOR_CLUT8) अणु
 		*x_predecim = 1;
 		*y_predecim = 1;
 		*five_taps = false;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	decim_x = DIV_ROUND_UP(DIV_ROUND_UP(width, out_width), maxdownscale);
-	decim_y = DIV_ROUND_UP(DIV_ROUND_UP(height, out_height), maxdownscale);
+	decim_x = DIV_ROUND_UP(DIV_ROUND_UP(width, out_width), maxकरोwnscale);
+	decim_y = DIV_ROUND_UP(DIV_ROUND_UP(height, out_height), maxकरोwnscale);
 
-	if (decim_x > *x_predecim || out_width > width * 8)
-		return -EINVAL;
+	अगर (decim_x > *x_predecim || out_width > width * 8)
+		वापस -EINVAL;
 
-	if (decim_y > *y_predecim || out_height > height * 8)
-		return -EINVAL;
+	अगर (decim_y > *y_predecim || out_height > height * 8)
+		वापस -EINVAL;
 
 	ret = dispc.feat->calc_scaling(pclk, lclk, mgr_timings, width, height,
 		out_width, out_height, color_mode, five_taps,
 		x_predecim, y_predecim, &decim_x, &decim_y, pos_x, &core_clk,
 		mem_to_mem);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	DSSDBG("%dx%d -> %dx%d (%d.%02d x %d.%02d), decim %dx%d %dx%d (%d.%02d x %d.%02d), taps %d, req clk %lu, cur clk %lu\n",
 		width, height,
@@ -2497,110 +2498,110 @@ static int dispc_ovl_calc_scaling(unsigned long pclk, unsigned long lclk,
 		*five_taps ? 5 : 3,
 		core_clk, dispc_core_clk_rate());
 
-	if (!core_clk || core_clk > dispc_core_clk_rate()) {
+	अगर (!core_clk || core_clk > dispc_core_clk_rate()) अणु
 		DSSERR("failed to set up scaling, "
 			"required core clk rate = %lu Hz, "
 			"current core clk rate = %lu Hz\n",
 			core_clk, dispc_core_clk_rate());
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	*x_predecim = decim_x;
 	*y_predecim = decim_y;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int dispc_ovl_check(enum omap_plane plane, enum omap_channel channel,
-		const struct omap_overlay_info *oi,
-		const struct omap_video_timings *timings,
-		int *x_predecim, int *y_predecim)
-{
-	enum omap_overlay_caps caps = dss_feat_get_overlay_caps(plane);
+पूर्णांक dispc_ovl_check(क्रमागत omap_plane plane, क्रमागत omap_channel channel,
+		स्थिर काष्ठा omap_overlay_info *oi,
+		स्थिर काष्ठा omap_video_timings *timings,
+		पूर्णांक *x_predecim, पूर्णांक *y_predecim)
+अणु
+	क्रमागत omap_overlay_caps caps = dss_feat_get_overlay_caps(plane);
 	bool five_taps = true;
 	bool fieldmode = false;
 	u16 in_height = oi->height;
 	u16 in_width = oi->width;
-	bool ilace = timings->interlace;
+	bool ilace = timings->पूर्णांकerlace;
 	u16 out_width, out_height;
-	int pos_x = oi->pos_x;
-	unsigned long pclk = dispc_mgr_pclk_rate(channel);
-	unsigned long lclk = dispc_mgr_lclk_rate(channel);
+	पूर्णांक pos_x = oi->pos_x;
+	अचिन्हित दीर्घ pclk = dispc_mgr_pclk_rate(channel);
+	अचिन्हित दीर्घ lclk = dispc_mgr_lclk_rate(channel);
 
 	out_width = oi->out_width == 0 ? oi->width : oi->out_width;
 	out_height = oi->out_height == 0 ? oi->height : oi->out_height;
 
-	if (ilace && oi->height == out_height)
+	अगर (ilace && oi->height == out_height)
 		fieldmode = true;
 
-	if (ilace) {
-		if (fieldmode)
+	अगर (ilace) अणु
+		अगर (fieldmode)
 			in_height /= 2;
 		out_height /= 2;
 
 		DSSDBG("adjusting for ilace: height %d, out_height %d\n",
 				in_height, out_height);
-	}
+	पूर्ण
 
-	if (!dss_feat_color_mode_supported(plane, oi->color_mode))
-		return -EINVAL;
+	अगर (!dss_feat_color_mode_supported(plane, oi->color_mode))
+		वापस -EINVAL;
 
-	return dispc_ovl_calc_scaling(pclk, lclk, caps, timings, in_width,
+	वापस dispc_ovl_calc_scaling(pclk, lclk, caps, timings, in_width,
 			in_height, out_width, out_height, oi->color_mode,
 			&five_taps, x_predecim, y_predecim, pos_x,
 			oi->rotation_type, false);
-}
+पूर्ण
 EXPORT_SYMBOL(dispc_ovl_check);
 
-static int dispc_ovl_setup_common(enum omap_plane plane,
-		enum omap_overlay_caps caps, u32 paddr, u32 p_uv_addr,
-		u16 screen_width, int pos_x, int pos_y, u16 width, u16 height,
-		u16 out_width, u16 out_height, enum omap_color_mode color_mode,
+अटल पूर्णांक dispc_ovl_setup_common(क्रमागत omap_plane plane,
+		क्रमागत omap_overlay_caps caps, u32 paddr, u32 p_uv_addr,
+		u16 screen_width, पूर्णांक pos_x, पूर्णांक pos_y, u16 width, u16 height,
+		u16 out_width, u16 out_height, क्रमागत omap_color_mode color_mode,
 		u8 rotation, bool mirror, u8 zorder, u8 pre_mult_alpha,
-		u8 global_alpha, enum omap_dss_rotation_type rotation_type,
-		bool replication, const struct omap_video_timings *mgr_timings,
+		u8 global_alpha, क्रमागत omap_dss_rotation_type rotation_type,
+		bool replication, स्थिर काष्ठा omap_video_timings *mgr_timings,
 		bool mem_to_mem)
-{
+अणु
 	bool five_taps = true;
 	bool fieldmode = false;
-	int r, cconv = 0;
-	unsigned offset0, offset1;
+	पूर्णांक r, cconv = 0;
+	अचिन्हित offset0, offset1;
 	s32 row_inc;
 	s32 pix_inc;
 	u16 frame_width, frame_height;
-	unsigned int field_offset = 0;
+	अचिन्हित पूर्णांक field_offset = 0;
 	u16 in_height = height;
 	u16 in_width = width;
-	int x_predecim = 1, y_predecim = 1;
-	bool ilace = mgr_timings->interlace;
-	unsigned long pclk = dispc_plane_pclk_rate(plane);
-	unsigned long lclk = dispc_plane_lclk_rate(plane);
+	पूर्णांक x_predecim = 1, y_predecim = 1;
+	bool ilace = mgr_timings->पूर्णांकerlace;
+	अचिन्हित दीर्घ pclk = dispc_plane_pclk_rate(plane);
+	अचिन्हित दीर्घ lclk = dispc_plane_lclk_rate(plane);
 
-	if (paddr == 0 && rotation_type != OMAP_DSS_ROT_TILER)
-		return -EINVAL;
+	अगर (paddr == 0 && rotation_type != OMAP_DSS_ROT_TILER)
+		वापस -EINVAL;
 
-	switch (color_mode) {
-	case OMAP_DSS_COLOR_YUV2:
-	case OMAP_DSS_COLOR_UYVY:
-	case OMAP_DSS_COLOR_NV12:
-		if (in_width & 1) {
+	चयन (color_mode) अणु
+	हाल OMAP_DSS_COLOR_YUV2:
+	हाल OMAP_DSS_COLOR_UYVY:
+	हाल OMAP_DSS_COLOR_NV12:
+		अगर (in_width & 1) अणु
 			DSSERR("input width %d is not even for YUV format\n",
 				in_width);
-			return -EINVAL;
-		}
-		break;
+			वापस -EINVAL;
+		पूर्ण
+		अवरोध;
 
-	default:
-		break;
-	}
+	शेष:
+		अवरोध;
+	पूर्ण
 
 	out_width = out_width == 0 ? width : out_width;
 	out_height = out_height == 0 ? height : out_height;
 
-	if (ilace && height == out_height)
+	अगर (ilace && height == out_height)
 		fieldmode = true;
 
-	if (ilace) {
-		if (fieldmode)
+	अगर (ilace) अणु
+		अगर (fieldmode)
 			in_height /= 2;
 		pos_y /= 2;
 		out_height /= 2;
@@ -2608,63 +2609,63 @@ static int dispc_ovl_setup_common(enum omap_plane plane,
 		DSSDBG("adjusting for ilace: height %d, pos_y %d, "
 			"out_height %d\n", in_height, pos_y,
 			out_height);
-	}
+	पूर्ण
 
-	if (!dss_feat_color_mode_supported(plane, color_mode))
-		return -EINVAL;
+	अगर (!dss_feat_color_mode_supported(plane, color_mode))
+		वापस -EINVAL;
 
 	r = dispc_ovl_calc_scaling(pclk, lclk, caps, mgr_timings, in_width,
 			in_height, out_width, out_height, color_mode,
 			&five_taps, &x_predecim, &y_predecim, pos_x,
 			rotation_type, mem_to_mem);
-	if (r)
-		return r;
+	अगर (r)
+		वापस r;
 
 	in_width = in_width / x_predecim;
 	in_height = in_height / y_predecim;
 
-	if (x_predecim > 1 || y_predecim > 1)
+	अगर (x_predecim > 1 || y_predecim > 1)
 		DSSDBG("predecimation %d x %x, new input size %d x %d\n",
 			x_predecim, y_predecim, in_width, in_height);
 
-	switch (color_mode) {
-	case OMAP_DSS_COLOR_YUV2:
-	case OMAP_DSS_COLOR_UYVY:
-	case OMAP_DSS_COLOR_NV12:
-		if (in_width & 1) {
+	चयन (color_mode) अणु
+	हाल OMAP_DSS_COLOR_YUV2:
+	हाल OMAP_DSS_COLOR_UYVY:
+	हाल OMAP_DSS_COLOR_NV12:
+		अगर (in_width & 1) अणु
 			DSSDBG("predecimated input width is not even for YUV format\n");
 			DSSDBG("adjusting input width %d -> %d\n",
 				in_width, in_width & ~1);
 
 			in_width &= ~1;
-		}
-		break;
+		पूर्ण
+		अवरोध;
 
-	default:
-		break;
-	}
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	if (color_mode == OMAP_DSS_COLOR_YUV2 ||
+	अगर (color_mode == OMAP_DSS_COLOR_YUV2 ||
 			color_mode == OMAP_DSS_COLOR_UYVY ||
 			color_mode == OMAP_DSS_COLOR_NV12)
 		cconv = 1;
 
-	if (ilace && !fieldmode) {
+	अगर (ilace && !fieldmode) अणु
 		/*
-		 * when downscaling the bottom field may have to start several
-		 * source lines below the top field. Unfortunately ACCUI
-		 * registers will only hold the fractional part of the offset
-		 * so the integer part must be added to the base address of the
+		 * when करोwnscaling the bottom field may have to start several
+		 * source lines below the top field. Unक्रमtunately ACCUI
+		 * रेजिस्टरs will only hold the fractional part of the offset
+		 * so the पूर्णांकeger part must be added to the base address of the
 		 * bottom field.
 		 */
-		if (!in_height || in_height == out_height)
+		अगर (!in_height || in_height == out_height)
 			field_offset = 0;
-		else
+		अन्यथा
 			field_offset = in_height / out_height / 2;
-	}
+	पूर्ण
 
-	/* Fields are independent but interleaved in memory. */
-	if (fieldmode)
+	/* Fields are independent but पूर्णांकerleaved in memory. */
+	अगर (fieldmode)
 		field_offset = 1;
 
 	offset0 = 0;
@@ -2672,26 +2673,26 @@ static int dispc_ovl_setup_common(enum omap_plane plane,
 	row_inc = 0;
 	pix_inc = 0;
 
-	if (plane == OMAP_DSS_WB) {
+	अगर (plane == OMAP_DSS_WB) अणु
 		frame_width = out_width;
 		frame_height = out_height;
-	} else {
+	पूर्ण अन्यथा अणु
 		frame_width = in_width;
 		frame_height = height;
-	}
+	पूर्ण
 
-	if (rotation_type == OMAP_DSS_ROT_TILER)
+	अगर (rotation_type == OMAP_DSS_ROT_TILER)
 		calc_tiler_rotation_offset(screen_width, frame_width,
 				color_mode, fieldmode, field_offset,
 				&offset0, &offset1, &row_inc, &pix_inc,
 				x_predecim, y_predecim);
-	else if (rotation_type == OMAP_DSS_ROT_DMA)
+	अन्यथा अगर (rotation_type == OMAP_DSS_ROT_DMA)
 		calc_dma_rotation_offset(rotation, mirror, screen_width,
 				frame_width, frame_height,
 				color_mode, fieldmode, field_offset,
 				&offset0, &offset1, &row_inc, &pix_inc,
 				x_predecim, y_predecim);
-	else
+	अन्यथा
 		calc_vrfb_rotation_offset(rotation, mirror,
 				screen_width, frame_width, frame_height,
 				color_mode, fieldmode, field_offset,
@@ -2708,12 +2709,12 @@ static int dispc_ovl_setup_common(enum omap_plane plane,
 	dispc_ovl_set_ba0(plane, paddr + offset0);
 	dispc_ovl_set_ba1(plane, paddr + offset1);
 
-	if (OMAP_DSS_COLOR_NV12 == color_mode) {
+	अगर (OMAP_DSS_COLOR_NV12 == color_mode) अणु
 		dispc_ovl_set_ba0_uv(plane, p_uv_addr + offset0);
 		dispc_ovl_set_ba1_uv(plane, p_uv_addr + offset1);
-	}
+	पूर्ण
 
-	if (dispc.feat->last_pixel_inc_missing)
+	अगर (dispc.feat->last_pixel_inc_missing)
 		row_inc += pix_inc - 1;
 
 	dispc_ovl_set_row_inc(plane, row_inc);
@@ -2726,13 +2727,13 @@ static int dispc_ovl_setup_common(enum omap_plane plane,
 
 	dispc_ovl_set_input_size(plane, in_width, in_height);
 
-	if (caps & OMAP_DSS_OVL_CAP_SCALE) {
+	अगर (caps & OMAP_DSS_OVL_CAP_SCALE) अणु
 		dispc_ovl_set_scaling(plane, in_width, in_height, out_width,
 				   out_height, ilace, five_taps, fieldmode,
 				   color_mode, rotation);
 		dispc_ovl_set_output_size(plane, out_width, out_height);
 		dispc_ovl_set_vid_color_conv(plane, cconv);
-	}
+	पूर्ण
 
 	dispc_ovl_set_rotation_attrs(plane, rotation, rotation_type, mirror,
 			color_mode);
@@ -2743,16 +2744,16 @@ static int dispc_ovl_setup_common(enum omap_plane plane,
 
 	dispc_ovl_enable_replication(plane, caps, replication);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int dispc_ovl_setup(enum omap_plane plane, const struct omap_overlay_info *oi,
-		bool replication, const struct omap_video_timings *mgr_timings,
+पूर्णांक dispc_ovl_setup(क्रमागत omap_plane plane, स्थिर काष्ठा omap_overlay_info *oi,
+		bool replication, स्थिर काष्ठा omap_video_timings *mgr_timings,
 		bool mem_to_mem)
-{
-	int r;
-	enum omap_overlay_caps caps = dss_feat_get_overlay_caps(plane);
-	enum omap_channel channel;
+अणु
+	पूर्णांक r;
+	क्रमागत omap_overlay_caps caps = dss_feat_get_overlay_caps(plane);
+	क्रमागत omap_channel channel;
 
 	channel = dispc_ovl_get_channel_out(plane);
 
@@ -2768,264 +2769,264 @@ int dispc_ovl_setup(enum omap_plane plane, const struct omap_overlay_info *oi,
 		oi->mirror, oi->zorder, oi->pre_mult_alpha, oi->global_alpha,
 		oi->rotation_type, replication, mgr_timings, mem_to_mem);
 
-	return r;
-}
+	वापस r;
+पूर्ण
 EXPORT_SYMBOL(dispc_ovl_setup);
 
-int dispc_ovl_enable(enum omap_plane plane, bool enable)
-{
+पूर्णांक dispc_ovl_enable(क्रमागत omap_plane plane, bool enable)
+अणु
 	DSSDBG("dispc_enable_plane %d, %d\n", plane, enable);
 
 	REG_FLD_MOD(DISPC_OVL_ATTRIBUTES(plane), enable ? 1 : 0, 0, 0);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(dispc_ovl_enable);
 
-bool dispc_ovl_enabled(enum omap_plane plane)
-{
-	return REG_GET(DISPC_OVL_ATTRIBUTES(plane), 0, 0);
-}
+bool dispc_ovl_enabled(क्रमागत omap_plane plane)
+अणु
+	वापस REG_GET(DISPC_OVL_ATTRIBUTES(plane), 0, 0);
+पूर्ण
 EXPORT_SYMBOL(dispc_ovl_enabled);
 
-void dispc_mgr_enable(enum omap_channel channel, bool enable)
-{
-	mgr_fld_write(channel, DISPC_MGR_FLD_ENABLE, enable);
-	/* flush posted write */
-	mgr_fld_read(channel, DISPC_MGR_FLD_ENABLE);
-}
+व्योम dispc_mgr_enable(क्रमागत omap_channel channel, bool enable)
+अणु
+	mgr_fld_ग_लिखो(channel, DISPC_MGR_FLD_ENABLE, enable);
+	/* flush posted ग_लिखो */
+	mgr_fld_पढ़ो(channel, DISPC_MGR_FLD_ENABLE);
+पूर्ण
 EXPORT_SYMBOL(dispc_mgr_enable);
 
-bool dispc_mgr_is_enabled(enum omap_channel channel)
-{
-	return !!mgr_fld_read(channel, DISPC_MGR_FLD_ENABLE);
-}
+bool dispc_mgr_is_enabled(क्रमागत omap_channel channel)
+अणु
+	वापस !!mgr_fld_पढ़ो(channel, DISPC_MGR_FLD_ENABLE);
+पूर्ण
 EXPORT_SYMBOL(dispc_mgr_is_enabled);
 
-static void dispc_lcd_enable_signal_polarity(bool act_high)
-{
-	if (!dss_has_feature(FEAT_LCDENABLEPOL))
-		return;
+अटल व्योम dispc_lcd_enable_संकेत_polarity(bool act_high)
+अणु
+	अगर (!dss_has_feature(FEAT_LCDENABLEPOL))
+		वापस;
 
 	REG_FLD_MOD(DISPC_CONTROL, act_high ? 1 : 0, 29, 29);
-}
+पूर्ण
 
-void dispc_lcd_enable_signal(bool enable)
-{
-	if (!dss_has_feature(FEAT_LCDENABLESIGNAL))
-		return;
+व्योम dispc_lcd_enable_संकेत(bool enable)
+अणु
+	अगर (!dss_has_feature(FEAT_LCDENABLESIGNAL))
+		वापस;
 
 	REG_FLD_MOD(DISPC_CONTROL, enable ? 1 : 0, 28, 28);
-}
+पूर्ण
 
-void dispc_pck_free_enable(bool enable)
-{
-	if (!dss_has_feature(FEAT_PCKFREEENABLE))
-		return;
+व्योम dispc_pck_मुक्त_enable(bool enable)
+अणु
+	अगर (!dss_has_feature(FEAT_PCKFREEENABLE))
+		वापस;
 
 	REG_FLD_MOD(DISPC_CONTROL, enable ? 1 : 0, 27, 27);
-}
+पूर्ण
 
-static void dispc_mgr_enable_fifohandcheck(enum omap_channel channel, bool enable)
-{
-	mgr_fld_write(channel, DISPC_MGR_FLD_FIFOHANDCHECK, enable);
-}
+अटल व्योम dispc_mgr_enable_fअगरohandcheck(क्रमागत omap_channel channel, bool enable)
+अणु
+	mgr_fld_ग_लिखो(channel, DISPC_MGR_FLD_FIFOHANDCHECK, enable);
+पूर्ण
 
 
-static void dispc_mgr_set_lcd_type_tft(enum omap_channel channel)
-{
-	mgr_fld_write(channel, DISPC_MGR_FLD_STNTFT, 1);
-}
+अटल व्योम dispc_mgr_set_lcd_type_tft(क्रमागत omap_channel channel)
+अणु
+	mgr_fld_ग_लिखो(channel, DISPC_MGR_FLD_STNTFT, 1);
+पूर्ण
 
-static void dispc_set_loadmode(enum omap_dss_load_mode mode)
-{
+अटल व्योम dispc_set_loadmode(क्रमागत omap_dss_load_mode mode)
+अणु
 	REG_FLD_MOD(DISPC_CONFIG, mode, 2, 1);
-}
+पूर्ण
 
 
-static void dispc_mgr_set_default_color(enum omap_channel channel, u32 color)
-{
-	dispc_write_reg(DISPC_DEFAULT_COLOR(channel), color);
-}
+अटल व्योम dispc_mgr_set_शेष_color(क्रमागत omap_channel channel, u32 color)
+अणु
+	dispc_ग_लिखो_reg(DISPC_DEFAULT_COLOR(channel), color);
+पूर्ण
 
-static void dispc_mgr_set_trans_key(enum omap_channel ch,
-		enum omap_dss_trans_key_type type,
+अटल व्योम dispc_mgr_set_trans_key(क्रमागत omap_channel ch,
+		क्रमागत omap_dss_trans_key_type type,
 		u32 trans_key)
-{
-	mgr_fld_write(ch, DISPC_MGR_FLD_TCKSELECTION, type);
+अणु
+	mgr_fld_ग_लिखो(ch, DISPC_MGR_FLD_TCKSELECTION, type);
 
-	dispc_write_reg(DISPC_TRANS_COLOR(ch), trans_key);
-}
+	dispc_ग_लिखो_reg(DISPC_TRANS_COLOR(ch), trans_key);
+पूर्ण
 
-static void dispc_mgr_enable_trans_key(enum omap_channel ch, bool enable)
-{
-	mgr_fld_write(ch, DISPC_MGR_FLD_TCKENABLE, enable);
-}
+अटल व्योम dispc_mgr_enable_trans_key(क्रमागत omap_channel ch, bool enable)
+अणु
+	mgr_fld_ग_लिखो(ch, DISPC_MGR_FLD_TCKENABLE, enable);
+पूर्ण
 
-static void dispc_mgr_enable_alpha_fixed_zorder(enum omap_channel ch,
+अटल व्योम dispc_mgr_enable_alpha_fixed_zorder(क्रमागत omap_channel ch,
 		bool enable)
-{
-	if (!dss_has_feature(FEAT_ALPHA_FIXED_ZORDER))
-		return;
+अणु
+	अगर (!dss_has_feature(FEAT_ALPHA_FIXED_ZORDER))
+		वापस;
 
-	if (ch == OMAP_DSS_CHANNEL_LCD)
+	अगर (ch == OMAP_DSS_CHANNEL_LCD)
 		REG_FLD_MOD(DISPC_CONFIG, enable, 18, 18);
-	else if (ch == OMAP_DSS_CHANNEL_DIGIT)
+	अन्यथा अगर (ch == OMAP_DSS_CHANNEL_DIGIT)
 		REG_FLD_MOD(DISPC_CONFIG, enable, 19, 19);
-}
+पूर्ण
 
-void dispc_mgr_setup(enum omap_channel channel,
-		const struct omap_overlay_manager_info *info)
-{
-	dispc_mgr_set_default_color(channel, info->default_color);
+व्योम dispc_mgr_setup(क्रमागत omap_channel channel,
+		स्थिर काष्ठा omap_overlay_manager_info *info)
+अणु
+	dispc_mgr_set_शेष_color(channel, info->शेष_color);
 	dispc_mgr_set_trans_key(channel, info->trans_key_type, info->trans_key);
 	dispc_mgr_enable_trans_key(channel, info->trans_enabled);
 	dispc_mgr_enable_alpha_fixed_zorder(channel,
 			info->partial_alpha_enabled);
-	if (dss_has_feature(FEAT_CPR)) {
+	अगर (dss_has_feature(FEAT_CPR)) अणु
 		dispc_mgr_enable_cpr(channel, info->cpr_enable);
 		dispc_mgr_set_cpr_coef(channel, &info->cpr_coefs);
-	}
-}
+	पूर्ण
+पूर्ण
 EXPORT_SYMBOL(dispc_mgr_setup);
 
-static void dispc_mgr_set_tft_data_lines(enum omap_channel channel, u8 data_lines)
-{
-	int code;
+अटल व्योम dispc_mgr_set_tft_data_lines(क्रमागत omap_channel channel, u8 data_lines)
+अणु
+	पूर्णांक code;
 
-	switch (data_lines) {
-	case 12:
+	चयन (data_lines) अणु
+	हाल 12:
 		code = 0;
-		break;
-	case 16:
+		अवरोध;
+	हाल 16:
 		code = 1;
-		break;
-	case 18:
+		अवरोध;
+	हाल 18:
 		code = 2;
-		break;
-	case 24:
+		अवरोध;
+	हाल 24:
 		code = 3;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		BUG();
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	mgr_fld_write(channel, DISPC_MGR_FLD_TFTDATALINES, code);
-}
+	mgr_fld_ग_लिखो(channel, DISPC_MGR_FLD_TFTDATALINES, code);
+पूर्ण
 
-static void dispc_mgr_set_io_pad_mode(enum dss_io_pad_mode mode)
-{
+अटल व्योम dispc_mgr_set_io_pad_mode(क्रमागत dss_io_pad_mode mode)
+अणु
 	u32 l;
-	int gpout0, gpout1;
+	पूर्णांक gpout0, gpout1;
 
-	switch (mode) {
-	case DSS_IO_PAD_MODE_RESET:
+	चयन (mode) अणु
+	हाल DSS_IO_PAD_MODE_RESET:
 		gpout0 = 0;
 		gpout1 = 0;
-		break;
-	case DSS_IO_PAD_MODE_RFBI:
+		अवरोध;
+	हाल DSS_IO_PAD_MODE_RFBI:
 		gpout0 = 1;
 		gpout1 = 0;
-		break;
-	case DSS_IO_PAD_MODE_BYPASS:
+		अवरोध;
+	हाल DSS_IO_PAD_MODE_BYPASS:
 		gpout0 = 1;
 		gpout1 = 1;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		BUG();
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	l = dispc_read_reg(DISPC_CONTROL);
+	l = dispc_पढ़ो_reg(DISPC_CONTROL);
 	l = FLD_MOD(l, gpout0, 15, 15);
 	l = FLD_MOD(l, gpout1, 16, 16);
-	dispc_write_reg(DISPC_CONTROL, l);
-}
+	dispc_ग_लिखो_reg(DISPC_CONTROL, l);
+पूर्ण
 
-static void dispc_mgr_enable_stallmode(enum omap_channel channel, bool enable)
-{
-	mgr_fld_write(channel, DISPC_MGR_FLD_STALLMODE, enable);
-}
+अटल व्योम dispc_mgr_enable_stallmode(क्रमागत omap_channel channel, bool enable)
+अणु
+	mgr_fld_ग_लिखो(channel, DISPC_MGR_FLD_STALLMODE, enable);
+पूर्ण
 
-void dispc_mgr_set_lcd_config(enum omap_channel channel,
-		const struct dss_lcd_mgr_config *config)
-{
+व्योम dispc_mgr_set_lcd_config(क्रमागत omap_channel channel,
+		स्थिर काष्ठा dss_lcd_mgr_config *config)
+अणु
 	dispc_mgr_set_io_pad_mode(config->io_pad_mode);
 
 	dispc_mgr_enable_stallmode(channel, config->stallmode);
-	dispc_mgr_enable_fifohandcheck(channel, config->fifohandcheck);
+	dispc_mgr_enable_fअगरohandcheck(channel, config->fअगरohandcheck);
 
-	dispc_mgr_set_clock_div(channel, &config->clock_info);
+	dispc_mgr_set_घड़ी_भाग(channel, &config->घड़ी_info);
 
 	dispc_mgr_set_tft_data_lines(channel, config->video_port_width);
 
-	dispc_lcd_enable_signal_polarity(config->lcden_sig_polarity);
+	dispc_lcd_enable_संकेत_polarity(config->lcden_sig_polarity);
 
 	dispc_mgr_set_lcd_type_tft(channel);
-}
+पूर्ण
 EXPORT_SYMBOL(dispc_mgr_set_lcd_config);
 
-static bool _dispc_mgr_size_ok(u16 width, u16 height)
-{
-	return width <= dispc.feat->mgr_width_max &&
+अटल bool _dispc_mgr_size_ok(u16 width, u16 height)
+अणु
+	वापस width <= dispc.feat->mgr_width_max &&
 		height <= dispc.feat->mgr_height_max;
-}
+पूर्ण
 
-static bool _dispc_lcd_timings_ok(int hsw, int hfp, int hbp,
-		int vsw, int vfp, int vbp)
-{
-	if (hsw < 1 || hsw > dispc.feat->sw_max ||
+अटल bool _dispc_lcd_timings_ok(पूर्णांक hsw, पूर्णांक hfp, पूर्णांक hbp,
+		पूर्णांक vsw, पूर्णांक vfp, पूर्णांक vbp)
+अणु
+	अगर (hsw < 1 || hsw > dispc.feat->sw_max ||
 			hfp < 1 || hfp > dispc.feat->hp_max ||
 			hbp < 1 || hbp > dispc.feat->hp_max ||
 			vsw < 1 || vsw > dispc.feat->sw_max ||
 			vfp < 0 || vfp > dispc.feat->vp_max ||
 			vbp < 0 || vbp > dispc.feat->vp_max)
-		return false;
-	return true;
-}
+		वापस false;
+	वापस true;
+पूर्ण
 
-static bool _dispc_mgr_pclk_ok(enum omap_channel channel,
-		unsigned long pclk)
-{
-	if (dss_mgr_is_lcd(channel))
-		return pclk <= dispc.feat->max_lcd_pclk;
-	else
-		return pclk <= dispc.feat->max_tv_pclk;
-}
+अटल bool _dispc_mgr_pclk_ok(क्रमागत omap_channel channel,
+		अचिन्हित दीर्घ pclk)
+अणु
+	अगर (dss_mgr_is_lcd(channel))
+		वापस pclk <= dispc.feat->max_lcd_pclk;
+	अन्यथा
+		वापस pclk <= dispc.feat->max_tv_pclk;
+पूर्ण
 
-bool dispc_mgr_timings_ok(enum omap_channel channel,
-		const struct omap_video_timings *timings)
-{
-	if (!_dispc_mgr_size_ok(timings->x_res, timings->y_res))
-		return false;
+bool dispc_mgr_timings_ok(क्रमागत omap_channel channel,
+		स्थिर काष्ठा omap_video_timings *timings)
+अणु
+	अगर (!_dispc_mgr_size_ok(timings->x_res, timings->y_res))
+		वापस false;
 
-	if (!_dispc_mgr_pclk_ok(channel, timings->pixelclock))
-		return false;
+	अगर (!_dispc_mgr_pclk_ok(channel, timings->pixelघड़ी))
+		वापस false;
 
-	if (dss_mgr_is_lcd(channel)) {
-		/* TODO: OMAP4+ supports interlace for LCD outputs */
-		if (timings->interlace)
-			return false;
+	अगर (dss_mgr_is_lcd(channel)) अणु
+		/* TODO: OMAP4+ supports पूर्णांकerlace क्रम LCD outमाला_दो */
+		अगर (timings->पूर्णांकerlace)
+			वापस false;
 
-		if (!_dispc_lcd_timings_ok(timings->hsw, timings->hfp,
+		अगर (!_dispc_lcd_timings_ok(timings->hsw, timings->hfp,
 				timings->hbp, timings->vsw, timings->vfp,
 				timings->vbp))
-			return false;
-	}
+			वापस false;
+	पूर्ण
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static void _dispc_mgr_set_lcd_timings(enum omap_channel channel, int hsw,
-		int hfp, int hbp, int vsw, int vfp, int vbp,
-		enum omap_dss_signal_level vsync_level,
-		enum omap_dss_signal_level hsync_level,
-		enum omap_dss_signal_edge data_pclk_edge,
-		enum omap_dss_signal_level de_level,
-		enum omap_dss_signal_edge sync_pclk_edge)
+अटल व्योम _dispc_mgr_set_lcd_timings(क्रमागत omap_channel channel, पूर्णांक hsw,
+		पूर्णांक hfp, पूर्णांक hbp, पूर्णांक vsw, पूर्णांक vfp, पूर्णांक vbp,
+		क्रमागत omap_dss_संकेत_level vsync_level,
+		क्रमागत omap_dss_संकेत_level hsync_level,
+		क्रमागत omap_dss_संकेत_edge data_pclk_edge,
+		क्रमागत omap_dss_संकेत_level de_level,
+		क्रमागत omap_dss_संकेत_edge sync_pclk_edge)
 
-{
+अणु
 	u32 timing_h, timing_v, l;
 	bool onoff, rf, ipc, vs, hs, de;
 
@@ -3036,66 +3037,66 @@ static void _dispc_mgr_set_lcd_timings(enum omap_channel channel, int hsw,
 			FLD_VAL(vfp, dispc.feat->fp_start, 8) |
 			FLD_VAL(vbp, dispc.feat->bp_start, 20);
 
-	dispc_write_reg(DISPC_TIMING_H(channel), timing_h);
-	dispc_write_reg(DISPC_TIMING_V(channel), timing_v);
+	dispc_ग_लिखो_reg(DISPC_TIMING_H(channel), timing_h);
+	dispc_ग_लिखो_reg(DISPC_TIMING_V(channel), timing_v);
 
-	switch (vsync_level) {
-	case OMAPDSS_SIG_ACTIVE_LOW:
+	चयन (vsync_level) अणु
+	हाल OMAPDSS_SIG_ACTIVE_LOW:
 		vs = true;
-		break;
-	case OMAPDSS_SIG_ACTIVE_HIGH:
+		अवरोध;
+	हाल OMAPDSS_SIG_ACTIVE_HIGH:
 		vs = false;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		BUG();
-	}
+	पूर्ण
 
-	switch (hsync_level) {
-	case OMAPDSS_SIG_ACTIVE_LOW:
+	चयन (hsync_level) अणु
+	हाल OMAPDSS_SIG_ACTIVE_LOW:
 		hs = true;
-		break;
-	case OMAPDSS_SIG_ACTIVE_HIGH:
+		अवरोध;
+	हाल OMAPDSS_SIG_ACTIVE_HIGH:
 		hs = false;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		BUG();
-	}
+	पूर्ण
 
-	switch (de_level) {
-	case OMAPDSS_SIG_ACTIVE_LOW:
+	चयन (de_level) अणु
+	हाल OMAPDSS_SIG_ACTIVE_LOW:
 		de = true;
-		break;
-	case OMAPDSS_SIG_ACTIVE_HIGH:
+		अवरोध;
+	हाल OMAPDSS_SIG_ACTIVE_HIGH:
 		de = false;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		BUG();
-	}
+	पूर्ण
 
-	switch (data_pclk_edge) {
-	case OMAPDSS_DRIVE_SIG_RISING_EDGE:
+	चयन (data_pclk_edge) अणु
+	हाल OMAPDSS_DRIVE_SIG_RISING_EDGE:
 		ipc = false;
-		break;
-	case OMAPDSS_DRIVE_SIG_FALLING_EDGE:
+		अवरोध;
+	हाल OMAPDSS_DRIVE_SIG_FALLING_EDGE:
 		ipc = true;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		BUG();
-	}
+	पूर्ण
 
 	/* always use the 'rf' setting */
 	onoff = true;
 
-	switch (sync_pclk_edge) {
-	case OMAPDSS_DRIVE_SIG_FALLING_EDGE:
+	चयन (sync_pclk_edge) अणु
+	हाल OMAPDSS_DRIVE_SIG_FALLING_EDGE:
 		rf = false;
-		break;
-	case OMAPDSS_DRIVE_SIG_RISING_EDGE:
+		अवरोध;
+	हाल OMAPDSS_DRIVE_SIG_RISING_EDGE:
 		rf = true;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		BUG();
-	}
+	पूर्ण
 
 	l = FLD_VAL(onoff, 17, 17) |
 		FLD_VAL(rf, 16, 16) |
@@ -3105,47 +3106,47 @@ static void _dispc_mgr_set_lcd_timings(enum omap_channel channel, int hsw,
 		FLD_VAL(vs, 12, 12);
 
 	/* always set ALIGN bit when available */
-	if (dispc.feat->supports_sync_align)
+	अगर (dispc.feat->supports_sync_align)
 		l |= (1 << 18);
 
-	dispc_write_reg(DISPC_POL_FREQ(channel), l);
+	dispc_ग_लिखो_reg(DISPC_POL_FREQ(channel), l);
 
-	if (dispc.syscon_pol) {
-		const int shifts[] = {
+	अगर (dispc.syscon_pol) अणु
+		स्थिर पूर्णांक shअगरts[] = अणु
 			[OMAP_DSS_CHANNEL_LCD] = 0,
 			[OMAP_DSS_CHANNEL_LCD2] = 1,
 			[OMAP_DSS_CHANNEL_LCD3] = 2,
-		};
+		पूर्ण;
 
 		u32 mask, val;
 
 		mask = (1 << 0) | (1 << 3) | (1 << 6);
 		val = (rf << 0) | (ipc << 3) | (onoff << 6);
 
-		mask <<= 16 + shifts[channel];
-		val <<= 16 + shifts[channel];
+		mask <<= 16 + shअगरts[channel];
+		val <<= 16 + shअगरts[channel];
 
 		regmap_update_bits(dispc.syscon_pol, dispc.syscon_pol_offset,
 			mask, val);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /* change name to mode? */
-void dispc_mgr_set_timings(enum omap_channel channel,
-		const struct omap_video_timings *timings)
-{
-	unsigned xtot, ytot;
-	unsigned long ht, vt;
-	struct omap_video_timings t = *timings;
+व्योम dispc_mgr_set_timings(क्रमागत omap_channel channel,
+		स्थिर काष्ठा omap_video_timings *timings)
+अणु
+	अचिन्हित xtot, ytot;
+	अचिन्हित दीर्घ ht, vt;
+	काष्ठा omap_video_timings t = *timings;
 
 	DSSDBG("channel %d xres %u yres %u\n", channel, t.x_res, t.y_res);
 
-	if (!dispc_mgr_timings_ok(channel, &t)) {
+	अगर (!dispc_mgr_timings_ok(channel, &t)) अणु
 		BUG();
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (dss_mgr_is_lcd(channel)) {
+	अगर (dss_mgr_is_lcd(channel)) अणु
 		_dispc_mgr_set_lcd_timings(channel, t.hsw, t.hfp, t.hbp, t.vsw,
 				t.vfp, t.vbp, t.vsync_level, t.hsync_level,
 				t.data_pclk_edge, t.de_level, t.sync_pclk_edge);
@@ -3153,10 +3154,10 @@ void dispc_mgr_set_timings(enum omap_channel channel,
 		xtot = t.x_res + t.hfp + t.hsw + t.hbp;
 		ytot = t.y_res + t.vfp + t.vsw + t.vbp;
 
-		ht = timings->pixelclock / xtot;
-		vt = timings->pixelclock / xtot / ytot;
+		ht = timings->pixelघड़ी / xtot;
+		vt = timings->pixelघड़ी / xtot / ytot;
 
-		DSSDBG("pck %u\n", timings->pixelclock);
+		DSSDBG("pck %u\n", timings->pixelघड़ी);
 		DSSDBG("hsw %d hfp %d hbp %d vsw %d vfp %d vbp %d\n",
 			t.hsw, t.hfp, t.hbp, t.vsw, t.vfp, t.vbp);
 		DSSDBG("vsync_level %d hsync_level %d data_pclk_edge %d de_level %d sync_pclk_edge %d\n",
@@ -3164,245 +3165,245 @@ void dispc_mgr_set_timings(enum omap_channel channel,
 			t.de_level, t.sync_pclk_edge);
 
 		DSSDBG("hsync %luHz, vsync %luHz\n", ht, vt);
-	} else {
-		if (t.interlace)
+	पूर्ण अन्यथा अणु
+		अगर (t.पूर्णांकerlace)
 			t.y_res /= 2;
-	}
+	पूर्ण
 
 	dispc_mgr_set_size(channel, t.x_res, t.y_res);
-}
+पूर्ण
 EXPORT_SYMBOL(dispc_mgr_set_timings);
 
-static void dispc_mgr_set_lcd_divisor(enum omap_channel channel, u16 lck_div,
-		u16 pck_div)
-{
-	BUG_ON(lck_div < 1);
-	BUG_ON(pck_div < 1);
+अटल व्योम dispc_mgr_set_lcd_भागisor(क्रमागत omap_channel channel, u16 lck_भाग,
+		u16 pck_भाग)
+अणु
+	BUG_ON(lck_भाग < 1);
+	BUG_ON(pck_भाग < 1);
 
-	dispc_write_reg(DISPC_DIVISORo(channel),
-			FLD_VAL(lck_div, 23, 16) | FLD_VAL(pck_div, 7, 0));
+	dispc_ग_लिखो_reg(DISPC_DIVISORo(channel),
+			FLD_VAL(lck_भाग, 23, 16) | FLD_VAL(pck_भाग, 7, 0));
 
-	if (!dss_has_feature(FEAT_CORE_CLK_DIV) &&
+	अगर (!dss_has_feature(FEAT_CORE_CLK_DIV) &&
 			channel == OMAP_DSS_CHANNEL_LCD)
-		dispc.core_clk_rate = dispc_fclk_rate() / lck_div;
-}
+		dispc.core_clk_rate = dispc_fclk_rate() / lck_भाग;
+पूर्ण
 
-static void dispc_mgr_get_lcd_divisor(enum omap_channel channel, int *lck_div,
-		int *pck_div)
-{
+अटल व्योम dispc_mgr_get_lcd_भागisor(क्रमागत omap_channel channel, पूर्णांक *lck_भाग,
+		पूर्णांक *pck_भाग)
+अणु
 	u32 l;
-	l = dispc_read_reg(DISPC_DIVISORo(channel));
-	*lck_div = FLD_GET(l, 23, 16);
-	*pck_div = FLD_GET(l, 7, 0);
-}
+	l = dispc_पढ़ो_reg(DISPC_DIVISORo(channel));
+	*lck_भाग = FLD_GET(l, 23, 16);
+	*pck_भाग = FLD_GET(l, 7, 0);
+पूर्ण
 
-static unsigned long dispc_fclk_rate(void)
-{
-	struct dss_pll *pll;
-	unsigned long r = 0;
+अटल अचिन्हित दीर्घ dispc_fclk_rate(व्योम)
+अणु
+	काष्ठा dss_pll *pll;
+	अचिन्हित दीर्घ r = 0;
 
-	switch (dss_get_dispc_clk_source()) {
-	case OMAP_DSS_CLK_SRC_FCK:
+	चयन (dss_get_dispc_clk_source()) अणु
+	हाल OMAP_DSS_CLK_SRC_FCK:
 		r = dss_get_dispc_clk_rate();
-		break;
-	case OMAP_DSS_CLK_SRC_DSI_PLL_HSDIV_DISPC:
+		अवरोध;
+	हाल OMAP_DSS_CLK_SRC_DSI_PLL_HSDIV_DISPC:
 		pll = dss_pll_find("dsi0");
-		if (!pll)
+		अगर (!pll)
 			pll = dss_pll_find("video0");
 
 		r = pll->cinfo.clkout[0];
-		break;
-	case OMAP_DSS_CLK_SRC_DSI2_PLL_HSDIV_DISPC:
+		अवरोध;
+	हाल OMAP_DSS_CLK_SRC_DSI2_PLL_HSDIV_DISPC:
 		pll = dss_pll_find("dsi1");
-		if (!pll)
+		अगर (!pll)
 			pll = dss_pll_find("video1");
 
 		r = pll->cinfo.clkout[0];
-		break;
-	default:
+		अवरोध;
+	शेष:
 		BUG();
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	return r;
-}
+	वापस r;
+पूर्ण
 
-static unsigned long dispc_mgr_lclk_rate(enum omap_channel channel)
-{
-	struct dss_pll *pll;
-	int lcd;
-	unsigned long r;
+अटल अचिन्हित दीर्घ dispc_mgr_lclk_rate(क्रमागत omap_channel channel)
+अणु
+	काष्ठा dss_pll *pll;
+	पूर्णांक lcd;
+	अचिन्हित दीर्घ r;
 	u32 l;
 
-	if (dss_mgr_is_lcd(channel)) {
-		l = dispc_read_reg(DISPC_DIVISORo(channel));
+	अगर (dss_mgr_is_lcd(channel)) अणु
+		l = dispc_पढ़ो_reg(DISPC_DIVISORo(channel));
 
 		lcd = FLD_GET(l, 23, 16);
 
-		switch (dss_get_lcd_clk_source(channel)) {
-		case OMAP_DSS_CLK_SRC_FCK:
+		चयन (dss_get_lcd_clk_source(channel)) अणु
+		हाल OMAP_DSS_CLK_SRC_FCK:
 			r = dss_get_dispc_clk_rate();
-			break;
-		case OMAP_DSS_CLK_SRC_DSI_PLL_HSDIV_DISPC:
+			अवरोध;
+		हाल OMAP_DSS_CLK_SRC_DSI_PLL_HSDIV_DISPC:
 			pll = dss_pll_find("dsi0");
-			if (!pll)
+			अगर (!pll)
 				pll = dss_pll_find("video0");
 
 			r = pll->cinfo.clkout[0];
-			break;
-		case OMAP_DSS_CLK_SRC_DSI2_PLL_HSDIV_DISPC:
+			अवरोध;
+		हाल OMAP_DSS_CLK_SRC_DSI2_PLL_HSDIV_DISPC:
 			pll = dss_pll_find("dsi1");
-			if (!pll)
+			अगर (!pll)
 				pll = dss_pll_find("video1");
 
 			r = pll->cinfo.clkout[0];
-			break;
-		default:
+			अवरोध;
+		शेष:
 			BUG();
-			return 0;
-		}
+			वापस 0;
+		पूर्ण
 
-		return r / lcd;
-	} else {
-		return dispc_fclk_rate();
-	}
-}
+		वापस r / lcd;
+	पूर्ण अन्यथा अणु
+		वापस dispc_fclk_rate();
+	पूर्ण
+पूर्ण
 
-static unsigned long dispc_mgr_pclk_rate(enum omap_channel channel)
-{
-	unsigned long r;
+अटल अचिन्हित दीर्घ dispc_mgr_pclk_rate(क्रमागत omap_channel channel)
+अणु
+	अचिन्हित दीर्घ r;
 
-	if (dss_mgr_is_lcd(channel)) {
-		int pcd;
+	अगर (dss_mgr_is_lcd(channel)) अणु
+		पूर्णांक pcd;
 		u32 l;
 
-		l = dispc_read_reg(DISPC_DIVISORo(channel));
+		l = dispc_पढ़ो_reg(DISPC_DIVISORo(channel));
 
 		pcd = FLD_GET(l, 7, 0);
 
 		r = dispc_mgr_lclk_rate(channel);
 
-		return r / pcd;
-	} else {
-		return dispc.tv_pclk_rate;
-	}
-}
+		वापस r / pcd;
+	पूर्ण अन्यथा अणु
+		वापस dispc.tv_pclk_rate;
+	पूर्ण
+पूर्ण
 
-void dispc_set_tv_pclk(unsigned long pclk)
-{
+व्योम dispc_set_tv_pclk(अचिन्हित दीर्घ pclk)
+अणु
 	dispc.tv_pclk_rate = pclk;
-}
+पूर्ण
 
-static unsigned long dispc_core_clk_rate(void)
-{
-	return dispc.core_clk_rate;
-}
+अटल अचिन्हित दीर्घ dispc_core_clk_rate(व्योम)
+अणु
+	वापस dispc.core_clk_rate;
+पूर्ण
 
-static unsigned long dispc_plane_pclk_rate(enum omap_plane plane)
-{
-	enum omap_channel channel;
+अटल अचिन्हित दीर्घ dispc_plane_pclk_rate(क्रमागत omap_plane plane)
+अणु
+	क्रमागत omap_channel channel;
 
-	if (plane == OMAP_DSS_WB)
-		return 0;
+	अगर (plane == OMAP_DSS_WB)
+		वापस 0;
 
 	channel = dispc_ovl_get_channel_out(plane);
 
-	return dispc_mgr_pclk_rate(channel);
-}
+	वापस dispc_mgr_pclk_rate(channel);
+पूर्ण
 
-static unsigned long dispc_plane_lclk_rate(enum omap_plane plane)
-{
-	enum omap_channel channel;
+अटल अचिन्हित दीर्घ dispc_plane_lclk_rate(क्रमागत omap_plane plane)
+अणु
+	क्रमागत omap_channel channel;
 
-	if (plane == OMAP_DSS_WB)
-		return 0;
+	अगर (plane == OMAP_DSS_WB)
+		वापस 0;
 
 	channel	= dispc_ovl_get_channel_out(plane);
 
-	return dispc_mgr_lclk_rate(channel);
-}
+	वापस dispc_mgr_lclk_rate(channel);
+पूर्ण
 
-static void dispc_dump_clocks_channel(struct seq_file *s, enum omap_channel channel)
-{
-	int lcd, pcd;
-	enum omap_dss_clk_source lcd_clk_src;
+अटल व्योम dispc_dump_घड़ीs_channel(काष्ठा seq_file *s, क्रमागत omap_channel channel)
+अणु
+	पूर्णांक lcd, pcd;
+	क्रमागत omap_dss_clk_source lcd_clk_src;
 
-	seq_printf(s, "- %s -\n", mgr_desc[channel].name);
+	seq_म_लिखो(s, "- %s -\n", mgr_desc[channel].name);
 
 	lcd_clk_src = dss_get_lcd_clk_source(channel);
 
-	seq_printf(s, "%s clk source = %s (%s)\n", mgr_desc[channel].name,
+	seq_म_लिखो(s, "%s clk source = %s (%s)\n", mgr_desc[channel].name,
 		dss_get_generic_clk_source_name(lcd_clk_src),
 		dss_feat_get_clk_source_name(lcd_clk_src));
 
-	dispc_mgr_get_lcd_divisor(channel, &lcd, &pcd);
+	dispc_mgr_get_lcd_भागisor(channel, &lcd, &pcd);
 
-	seq_printf(s, "lck\t\t%-16lulck div\t%u\n",
+	seq_म_लिखो(s, "lck\t\t%-16lulck div\t%u\n",
 		dispc_mgr_lclk_rate(channel), lcd);
-	seq_printf(s, "pck\t\t%-16lupck div\t%u\n",
+	seq_म_लिखो(s, "pck\t\t%-16lupck div\t%u\n",
 		dispc_mgr_pclk_rate(channel), pcd);
-}
+पूर्ण
 
-void dispc_dump_clocks(struct seq_file *s)
-{
-	int lcd;
+व्योम dispc_dump_घड़ीs(काष्ठा seq_file *s)
+अणु
+	पूर्णांक lcd;
 	u32 l;
-	enum omap_dss_clk_source dispc_clk_src = dss_get_dispc_clk_source();
+	क्रमागत omap_dss_clk_source dispc_clk_src = dss_get_dispc_clk_source();
 
-	if (dispc_runtime_get())
-		return;
+	अगर (dispc_runसमय_get())
+		वापस;
 
-	seq_printf(s, "- DISPC -\n");
+	seq_म_लिखो(s, "- DISPC -\n");
 
-	seq_printf(s, "dispc fclk source = %s (%s)\n",
+	seq_म_लिखो(s, "dispc fclk source = %s (%s)\n",
 			dss_get_generic_clk_source_name(dispc_clk_src),
 			dss_feat_get_clk_source_name(dispc_clk_src));
 
-	seq_printf(s, "fck\t\t%-16lu\n", dispc_fclk_rate());
+	seq_म_लिखो(s, "fck\t\t%-16lu\n", dispc_fclk_rate());
 
-	if (dss_has_feature(FEAT_CORE_CLK_DIV)) {
-		seq_printf(s, "- DISPC-CORE-CLK -\n");
-		l = dispc_read_reg(DISPC_DIVISOR);
+	अगर (dss_has_feature(FEAT_CORE_CLK_DIV)) अणु
+		seq_म_लिखो(s, "- DISPC-CORE-CLK -\n");
+		l = dispc_पढ़ो_reg(DISPC_DIVISOR);
 		lcd = FLD_GET(l, 23, 16);
 
-		seq_printf(s, "lck\t\t%-16lulck div\t%u\n",
+		seq_म_लिखो(s, "lck\t\t%-16lulck div\t%u\n",
 				(dispc_fclk_rate()/lcd), lcd);
-	}
+	पूर्ण
 
-	dispc_dump_clocks_channel(s, OMAP_DSS_CHANNEL_LCD);
+	dispc_dump_घड़ीs_channel(s, OMAP_DSS_CHANNEL_LCD);
 
-	if (dss_has_feature(FEAT_MGR_LCD2))
-		dispc_dump_clocks_channel(s, OMAP_DSS_CHANNEL_LCD2);
-	if (dss_has_feature(FEAT_MGR_LCD3))
-		dispc_dump_clocks_channel(s, OMAP_DSS_CHANNEL_LCD3);
+	अगर (dss_has_feature(FEAT_MGR_LCD2))
+		dispc_dump_घड़ीs_channel(s, OMAP_DSS_CHANNEL_LCD2);
+	अगर (dss_has_feature(FEAT_MGR_LCD3))
+		dispc_dump_घड़ीs_channel(s, OMAP_DSS_CHANNEL_LCD3);
 
-	dispc_runtime_put();
-}
+	dispc_runसमय_put();
+पूर्ण
 
-static void dispc_dump_regs(struct seq_file *s)
-{
-	int i, j;
-	const char *mgr_names[] = {
+अटल व्योम dispc_dump_regs(काष्ठा seq_file *s)
+अणु
+	पूर्णांक i, j;
+	स्थिर अक्षर *mgr_names[] = अणु
 		[OMAP_DSS_CHANNEL_LCD]		= "LCD",
 		[OMAP_DSS_CHANNEL_DIGIT]	= "TV",
 		[OMAP_DSS_CHANNEL_LCD2]		= "LCD2",
 		[OMAP_DSS_CHANNEL_LCD3]		= "LCD3",
-	};
-	const char *ovl_names[] = {
+	पूर्ण;
+	स्थिर अक्षर *ovl_names[] = अणु
 		[OMAP_DSS_GFX]		= "GFX",
 		[OMAP_DSS_VIDEO1]	= "VID1",
 		[OMAP_DSS_VIDEO2]	= "VID2",
 		[OMAP_DSS_VIDEO3]	= "VID3",
 		[OMAP_DSS_WB]		= "WB",
-	};
-	const char **p_names;
+	पूर्ण;
+	स्थिर अक्षर **p_names;
 
-#define DUMPREG(r) seq_printf(s, "%-50s %08x\n", #r, dispc_read_reg(r))
+#घोषणा DUMPREG(r) seq_म_लिखो(s, "%-50s %08x\n", #r, dispc_पढ़ो_reg(r))
 
-	if (dispc_runtime_get())
-		return;
+	अगर (dispc_runसमय_get())
+		वापस;
 
-	/* DISPC common registers */
+	/* DISPC common रेजिस्टरs */
 	DUMPREG(DISPC_REVISION);
 	DUMPREG(DISPC_SYSCONFIG);
 	DUMPREG(DISPC_SYSSTATUS);
@@ -3413,37 +3414,37 @@ static void dispc_dump_regs(struct seq_file *s)
 	DUMPREG(DISPC_CAPABLE);
 	DUMPREG(DISPC_LINE_STATUS);
 	DUMPREG(DISPC_LINE_NUMBER);
-	if (dss_has_feature(FEAT_ALPHA_FIXED_ZORDER) ||
+	अगर (dss_has_feature(FEAT_ALPHA_FIXED_ZORDER) ||
 			dss_has_feature(FEAT_ALPHA_FREE_ZORDER))
 		DUMPREG(DISPC_GLOBAL_ALPHA);
-	if (dss_has_feature(FEAT_MGR_LCD2)) {
+	अगर (dss_has_feature(FEAT_MGR_LCD2)) अणु
 		DUMPREG(DISPC_CONTROL2);
 		DUMPREG(DISPC_CONFIG2);
-	}
-	if (dss_has_feature(FEAT_MGR_LCD3)) {
+	पूर्ण
+	अगर (dss_has_feature(FEAT_MGR_LCD3)) अणु
 		DUMPREG(DISPC_CONTROL3);
 		DUMPREG(DISPC_CONFIG3);
-	}
-	if (dss_has_feature(FEAT_MFLAG))
+	पूर्ण
+	अगर (dss_has_feature(FEAT_MFLAG))
 		DUMPREG(DISPC_GLOBAL_MFLAG_ATTRIBUTE);
 
-#undef DUMPREG
+#अघोषित DUMPREG
 
-#define DISPC_REG(i, name) name(i)
-#define DUMPREG(i, r) seq_printf(s, "%s(%s)%*s %08x\n", #r, p_names[i], \
-	(int)(48 - strlen(#r) - strlen(p_names[i])), " ", \
-	dispc_read_reg(DISPC_REG(i, r)))
+#घोषणा DISPC_REG(i, name) name(i)
+#घोषणा DUMPREG(i, r) seq_म_लिखो(s, "%s(%s)%*s %08x\n", #r, p_names[i], \
+	(पूर्णांक)(48 - म_माप(#r) - म_माप(p_names[i])), " ", \
+	dispc_पढ़ो_reg(DISPC_REG(i, r)))
 
 	p_names = mgr_names;
 
-	/* DISPC channel specific registers */
-	for (i = 0; i < dss_feat_get_num_mgrs(); i++) {
+	/* DISPC channel specअगरic रेजिस्टरs */
+	क्रम (i = 0; i < dss_feat_get_num_mgrs(); i++) अणु
 		DUMPREG(i, DISPC_DEFAULT_COLOR);
 		DUMPREG(i, DISPC_TRANS_COLOR);
 		DUMPREG(i, DISPC_SIZE_MGR);
 
-		if (i == OMAP_DSS_CHANNEL_DIGIT)
-			continue;
+		अगर (i == OMAP_DSS_CHANNEL_DIGIT)
+			जारी;
 
 		DUMPREG(i, DISPC_TIMING_H);
 		DUMPREG(i, DISPC_TIMING_V);
@@ -3454,16 +3455,16 @@ static void dispc_dump_regs(struct seq_file *s)
 		DUMPREG(i, DISPC_DATA_CYCLE2);
 		DUMPREG(i, DISPC_DATA_CYCLE3);
 
-		if (dss_has_feature(FEAT_CPR)) {
+		अगर (dss_has_feature(FEAT_CPR)) अणु
 			DUMPREG(i, DISPC_CPR_COEF_R);
 			DUMPREG(i, DISPC_CPR_COEF_G);
 			DUMPREG(i, DISPC_CPR_COEF_B);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	p_names = ovl_names;
 
-	for (i = 0; i < dss_feat_get_num_ovls(); i++) {
+	क्रम (i = 0; i < dss_feat_get_num_ovls(); i++) अणु
 		DUMPREG(i, DISPC_OVL_BA0);
 		DUMPREG(i, DISPC_OVL_BA1);
 		DUMPREG(i, DISPC_OVL_POSITION);
@@ -3474,33 +3475,33 @@ static void dispc_dump_regs(struct seq_file *s)
 		DUMPREG(i, DISPC_OVL_ROW_INC);
 		DUMPREG(i, DISPC_OVL_PIXEL_INC);
 
-		if (dss_has_feature(FEAT_PRELOAD))
+		अगर (dss_has_feature(FEAT_PRELOAD))
 			DUMPREG(i, DISPC_OVL_PRELOAD);
-		if (dss_has_feature(FEAT_MFLAG))
+		अगर (dss_has_feature(FEAT_MFLAG))
 			DUMPREG(i, DISPC_OVL_MFLAG_THRESHOLD);
 
-		if (i == OMAP_DSS_GFX) {
+		अगर (i == OMAP_DSS_GFX) अणु
 			DUMPREG(i, DISPC_OVL_WINDOW_SKIP);
 			DUMPREG(i, DISPC_OVL_TABLE_BA);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
 		DUMPREG(i, DISPC_OVL_FIR);
 		DUMPREG(i, DISPC_OVL_PICTURE_SIZE);
 		DUMPREG(i, DISPC_OVL_ACCU0);
 		DUMPREG(i, DISPC_OVL_ACCU1);
-		if (dss_has_feature(FEAT_HANDLE_UV_SEPARATE)) {
+		अगर (dss_has_feature(FEAT_HANDLE_UV_SEPARATE)) अणु
 			DUMPREG(i, DISPC_OVL_BA0_UV);
 			DUMPREG(i, DISPC_OVL_BA1_UV);
 			DUMPREG(i, DISPC_OVL_FIR2);
 			DUMPREG(i, DISPC_OVL_ACCU2_0);
 			DUMPREG(i, DISPC_OVL_ACCU2_1);
-		}
-		if (dss_has_feature(FEAT_ATTR2))
+		पूर्ण
+		अगर (dss_has_feature(FEAT_ATTR2))
 			DUMPREG(i, DISPC_OVL_ATTRIBUTES2);
-	}
+	पूर्ण
 
-	if (dispc.feat->has_writeback) {
+	अगर (dispc.feat->has_ग_लिखोback) अणु
 		i = OMAP_DSS_WB;
 		DUMPREG(i, DISPC_OVL_BA0);
 		DUMPREG(i, DISPC_OVL_BA1);
@@ -3511,101 +3512,101 @@ static void dispc_dump_regs(struct seq_file *s)
 		DUMPREG(i, DISPC_OVL_ROW_INC);
 		DUMPREG(i, DISPC_OVL_PIXEL_INC);
 
-		if (dss_has_feature(FEAT_MFLAG))
+		अगर (dss_has_feature(FEAT_MFLAG))
 			DUMPREG(i, DISPC_OVL_MFLAG_THRESHOLD);
 
 		DUMPREG(i, DISPC_OVL_FIR);
 		DUMPREG(i, DISPC_OVL_PICTURE_SIZE);
 		DUMPREG(i, DISPC_OVL_ACCU0);
 		DUMPREG(i, DISPC_OVL_ACCU1);
-		if (dss_has_feature(FEAT_HANDLE_UV_SEPARATE)) {
+		अगर (dss_has_feature(FEAT_HANDLE_UV_SEPARATE)) अणु
 			DUMPREG(i, DISPC_OVL_BA0_UV);
 			DUMPREG(i, DISPC_OVL_BA1_UV);
 			DUMPREG(i, DISPC_OVL_FIR2);
 			DUMPREG(i, DISPC_OVL_ACCU2_0);
 			DUMPREG(i, DISPC_OVL_ACCU2_1);
-		}
-		if (dss_has_feature(FEAT_ATTR2))
+		पूर्ण
+		अगर (dss_has_feature(FEAT_ATTR2))
 			DUMPREG(i, DISPC_OVL_ATTRIBUTES2);
-	}
+	पूर्ण
 
-#undef DISPC_REG
-#undef DUMPREG
+#अघोषित DISPC_REG
+#अघोषित DUMPREG
 
-#define DISPC_REG(plane, name, i) name(plane, i)
-#define DUMPREG(plane, name, i) \
-	seq_printf(s, "%s_%d(%s)%*s %08x\n", #name, i, p_names[plane], \
-	(int)(46 - strlen(#name) - strlen(p_names[plane])), " ", \
-	dispc_read_reg(DISPC_REG(plane, name, i)))
+#घोषणा DISPC_REG(plane, name, i) name(plane, i)
+#घोषणा DUMPREG(plane, name, i) \
+	seq_म_लिखो(s, "%s_%d(%s)%*s %08x\n", #name, i, p_names[plane], \
+	(पूर्णांक)(46 - म_माप(#name) - म_माप(p_names[plane])), " ", \
+	dispc_पढ़ो_reg(DISPC_REG(plane, name, i)))
 
-	/* Video pipeline coefficient registers */
+	/* Video pipeline coefficient रेजिस्टरs */
 
 	/* start from OMAP_DSS_VIDEO1 */
-	for (i = 1; i < dss_feat_get_num_ovls(); i++) {
-		for (j = 0; j < 8; j++)
+	क्रम (i = 1; i < dss_feat_get_num_ovls(); i++) अणु
+		क्रम (j = 0; j < 8; j++)
 			DUMPREG(i, DISPC_OVL_FIR_COEF_H, j);
 
-		for (j = 0; j < 8; j++)
+		क्रम (j = 0; j < 8; j++)
 			DUMPREG(i, DISPC_OVL_FIR_COEF_HV, j);
 
-		for (j = 0; j < 5; j++)
+		क्रम (j = 0; j < 5; j++)
 			DUMPREG(i, DISPC_OVL_CONV_COEF, j);
 
-		if (dss_has_feature(FEAT_FIR_COEF_V)) {
-			for (j = 0; j < 8; j++)
+		अगर (dss_has_feature(FEAT_FIR_COEF_V)) अणु
+			क्रम (j = 0; j < 8; j++)
 				DUMPREG(i, DISPC_OVL_FIR_COEF_V, j);
-		}
+		पूर्ण
 
-		if (dss_has_feature(FEAT_HANDLE_UV_SEPARATE)) {
-			for (j = 0; j < 8; j++)
+		अगर (dss_has_feature(FEAT_HANDLE_UV_SEPARATE)) अणु
+			क्रम (j = 0; j < 8; j++)
 				DUMPREG(i, DISPC_OVL_FIR_COEF_H2, j);
 
-			for (j = 0; j < 8; j++)
+			क्रम (j = 0; j < 8; j++)
 				DUMPREG(i, DISPC_OVL_FIR_COEF_HV2, j);
 
-			for (j = 0; j < 8; j++)
+			क्रम (j = 0; j < 8; j++)
 				DUMPREG(i, DISPC_OVL_FIR_COEF_V2, j);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	dispc_runtime_put();
+	dispc_runसमय_put();
 
-#undef DISPC_REG
-#undef DUMPREG
-}
+#अघोषित DISPC_REG
+#अघोषित DUMPREG
+पूर्ण
 
-/* calculate clock rates using dividers in cinfo */
-int dispc_calc_clock_rates(unsigned long dispc_fclk_rate,
-		struct dispc_clock_info *cinfo)
-{
-	if (cinfo->lck_div > 255 || cinfo->lck_div == 0)
-		return -EINVAL;
-	if (cinfo->pck_div < 1 || cinfo->pck_div > 255)
-		return -EINVAL;
+/* calculate घड़ी rates using भागiders in cinfo */
+पूर्णांक dispc_calc_घड़ी_rates(अचिन्हित दीर्घ dispc_fclk_rate,
+		काष्ठा dispc_घड़ी_info *cinfo)
+अणु
+	अगर (cinfo->lck_भाग > 255 || cinfo->lck_भाग == 0)
+		वापस -EINVAL;
+	अगर (cinfo->pck_भाग < 1 || cinfo->pck_भाग > 255)
+		वापस -EINVAL;
 
-	cinfo->lck = dispc_fclk_rate / cinfo->lck_div;
-	cinfo->pck = cinfo->lck / cinfo->pck_div;
+	cinfo->lck = dispc_fclk_rate / cinfo->lck_भाग;
+	cinfo->pck = cinfo->lck / cinfo->pck_भाग;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-bool dispc_div_calc(unsigned long dispc,
-		unsigned long pck_min, unsigned long pck_max,
-		dispc_div_calc_func func, void *data)
-{
-	int lckd, lckd_start, lckd_stop;
-	int pckd, pckd_start, pckd_stop;
-	unsigned long pck, lck;
-	unsigned long lck_max;
-	unsigned long pckd_hw_min, pckd_hw_max;
-	unsigned min_fck_per_pck;
-	unsigned long fck;
+bool dispc_भाग_calc(अचिन्हित दीर्घ dispc,
+		अचिन्हित दीर्घ pck_min, अचिन्हित दीर्घ pck_max,
+		dispc_भाग_calc_func func, व्योम *data)
+अणु
+	पूर्णांक lckd, lckd_start, lckd_stop;
+	पूर्णांक pckd, pckd_start, pckd_stop;
+	अचिन्हित दीर्घ pck, lck;
+	अचिन्हित दीर्घ lck_max;
+	अचिन्हित दीर्घ pckd_hw_min, pckd_hw_max;
+	अचिन्हित min_fck_per_pck;
+	अचिन्हित दीर्घ fck;
 
-#ifdef CONFIG_FB_OMAP2_DSS_MIN_FCK_PER_PCK
+#अगर_घोषित CONFIG_FB_OMAP2_DSS_MIN_FCK_PER_PCK
 	min_fck_per_pck = CONFIG_FB_OMAP2_DSS_MIN_FCK_PER_PCK;
-#else
+#अन्यथा
 	min_fck_per_pck = 0;
-#endif
+#पूर्ण_अगर
 
 	pckd_hw_min = dss_feat_get_param_min(FEAT_PARAM_DSS_PCD);
 	pckd_hw_max = dss_feat_get_param_max(FEAT_PARAM_DSS_PCD);
@@ -3613,143 +3614,143 @@ bool dispc_div_calc(unsigned long dispc,
 	lck_max = dss_feat_get_param_max(FEAT_PARAM_DSS_FCK);
 
 	pck_min = pck_min ? pck_min : 1;
-	pck_max = pck_max ? pck_max : ULONG_MAX;
+	pck_max = pck_max ? pck_max : अच_दीर्घ_उच्च;
 
 	lckd_start = max(DIV_ROUND_UP(dispc, lck_max), 1ul);
 	lckd_stop = min(dispc / pck_min, 255ul);
 
-	for (lckd = lckd_start; lckd <= lckd_stop; ++lckd) {
+	क्रम (lckd = lckd_start; lckd <= lckd_stop; ++lckd) अणु
 		lck = dispc / lckd;
 
 		pckd_start = max(DIV_ROUND_UP(lck, pck_max), pckd_hw_min);
 		pckd_stop = min(lck / pck_min, pckd_hw_max);
 
-		for (pckd = pckd_start; pckd <= pckd_stop; ++pckd) {
+		क्रम (pckd = pckd_start; pckd <= pckd_stop; ++pckd) अणु
 			pck = lck / pckd;
 
 			/*
 			 * For OMAP2/3 the DISPC fclk is the same as LCD's logic
-			 * clock, which means we're configuring DISPC fclk here
+			 * घड़ी, which means we're configuring DISPC fclk here
 			 * also. Thus we need to use the calculated lck. For
-			 * OMAP4+ the DISPC fclk is a separate clock.
+			 * OMAP4+ the DISPC fclk is a separate घड़ी.
 			 */
-			if (dss_has_feature(FEAT_CORE_CLK_DIV))
+			अगर (dss_has_feature(FEAT_CORE_CLK_DIV))
 				fck = dispc_core_clk_rate();
-			else
+			अन्यथा
 				fck = lck;
 
-			if (fck < pck * min_fck_per_pck)
-				continue;
+			अगर (fck < pck * min_fck_per_pck)
+				जारी;
 
-			if (func(lckd, pckd, lck, pck, data))
-				return true;
-		}
-	}
+			अगर (func(lckd, pckd, lck, pck, data))
+				वापस true;
+		पूर्ण
+	पूर्ण
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-void dispc_mgr_set_clock_div(enum omap_channel channel,
-		const struct dispc_clock_info *cinfo)
-{
-	DSSDBG("lck = %lu (%u)\n", cinfo->lck, cinfo->lck_div);
-	DSSDBG("pck = %lu (%u)\n", cinfo->pck, cinfo->pck_div);
+व्योम dispc_mgr_set_घड़ी_भाग(क्रमागत omap_channel channel,
+		स्थिर काष्ठा dispc_घड़ी_info *cinfo)
+अणु
+	DSSDBG("lck = %lu (%u)\n", cinfo->lck, cinfo->lck_भाग);
+	DSSDBG("pck = %lu (%u)\n", cinfo->pck, cinfo->pck_भाग);
 
-	dispc_mgr_set_lcd_divisor(channel, cinfo->lck_div, cinfo->pck_div);
-}
+	dispc_mgr_set_lcd_भागisor(channel, cinfo->lck_भाग, cinfo->pck_भाग);
+पूर्ण
 
-int dispc_mgr_get_clock_div(enum omap_channel channel,
-		struct dispc_clock_info *cinfo)
-{
-	unsigned long fck;
+पूर्णांक dispc_mgr_get_घड़ी_भाग(क्रमागत omap_channel channel,
+		काष्ठा dispc_घड़ी_info *cinfo)
+अणु
+	अचिन्हित दीर्घ fck;
 
 	fck = dispc_fclk_rate();
 
-	cinfo->lck_div = REG_GET(DISPC_DIVISORo(channel), 23, 16);
-	cinfo->pck_div = REG_GET(DISPC_DIVISORo(channel), 7, 0);
+	cinfo->lck_भाग = REG_GET(DISPC_DIVISORo(channel), 23, 16);
+	cinfo->pck_भाग = REG_GET(DISPC_DIVISORo(channel), 7, 0);
 
-	cinfo->lck = fck / cinfo->lck_div;
-	cinfo->pck = cinfo->lck / cinfo->pck_div;
+	cinfo->lck = fck / cinfo->lck_भाग;
+	cinfo->pck = cinfo->lck / cinfo->pck_भाग;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-u32 dispc_read_irqstatus(void)
-{
-	return dispc_read_reg(DISPC_IRQSTATUS);
-}
-EXPORT_SYMBOL(dispc_read_irqstatus);
+u32 dispc_पढ़ो_irqstatus(व्योम)
+अणु
+	वापस dispc_पढ़ो_reg(DISPC_IRQSTATUS);
+पूर्ण
+EXPORT_SYMBOL(dispc_पढ़ो_irqstatus);
 
-void dispc_clear_irqstatus(u32 mask)
-{
-	dispc_write_reg(DISPC_IRQSTATUS, mask);
-}
+व्योम dispc_clear_irqstatus(u32 mask)
+अणु
+	dispc_ग_लिखो_reg(DISPC_IRQSTATUS, mask);
+पूर्ण
 EXPORT_SYMBOL(dispc_clear_irqstatus);
 
-u32 dispc_read_irqenable(void)
-{
-	return dispc_read_reg(DISPC_IRQENABLE);
-}
-EXPORT_SYMBOL(dispc_read_irqenable);
+u32 dispc_पढ़ो_irqenable(व्योम)
+अणु
+	वापस dispc_पढ़ो_reg(DISPC_IRQENABLE);
+पूर्ण
+EXPORT_SYMBOL(dispc_पढ़ो_irqenable);
 
-void dispc_write_irqenable(u32 mask)
-{
-	u32 old_mask = dispc_read_reg(DISPC_IRQENABLE);
+व्योम dispc_ग_लिखो_irqenable(u32 mask)
+अणु
+	u32 old_mask = dispc_पढ़ो_reg(DISPC_IRQENABLE);
 
-	/* clear the irqstatus for newly enabled irqs */
+	/* clear the irqstatus क्रम newly enabled irqs */
 	dispc_clear_irqstatus((mask ^ old_mask) & mask);
 
-	dispc_write_reg(DISPC_IRQENABLE, mask);
-}
-EXPORT_SYMBOL(dispc_write_irqenable);
+	dispc_ग_लिखो_reg(DISPC_IRQENABLE, mask);
+पूर्ण
+EXPORT_SYMBOL(dispc_ग_लिखो_irqenable);
 
-void dispc_enable_sidle(void)
-{
+व्योम dispc_enable_sidle(व्योम)
+अणु
 	REG_FLD_MOD(DISPC_SYSCONFIG, 2, 4, 3);	/* SIDLEMODE: smart idle */
-}
+पूर्ण
 
-void dispc_disable_sidle(void)
-{
+व्योम dispc_disable_sidle(व्योम)
+अणु
 	REG_FLD_MOD(DISPC_SYSCONFIG, 1, 4, 3);	/* SIDLEMODE: no idle */
-}
+पूर्ण
 
-static void _omap_dispc_initial_config(void)
-{
+अटल व्योम _omap_dispc_initial_config(व्योम)
+अणु
 	u32 l;
 
-	/* Exclusively enable DISPC_CORE_CLK and set divider to 1 */
-	if (dss_has_feature(FEAT_CORE_CLK_DIV)) {
-		l = dispc_read_reg(DISPC_DIVISOR);
+	/* Exclusively enable DISPC_CORE_CLK and set भागider to 1 */
+	अगर (dss_has_feature(FEAT_CORE_CLK_DIV)) अणु
+		l = dispc_पढ़ो_reg(DISPC_DIVISOR);
 		/* Use DISPC_DIVISOR.LCD, instead of DISPC_DIVISOR1.LCD */
 		l = FLD_MOD(l, 1, 0, 0);
 		l = FLD_MOD(l, 1, 23, 16);
-		dispc_write_reg(DISPC_DIVISOR, l);
+		dispc_ग_लिखो_reg(DISPC_DIVISOR, l);
 
 		dispc.core_clk_rate = dispc_fclk_rate();
-	}
+	पूर्ण
 
 	/* FUNCGATED */
-	if (dss_has_feature(FEAT_FUNCGATED))
+	अगर (dss_has_feature(FEAT_FUNCGATED))
 		REG_FLD_MOD(DISPC_CONFIG, 1, 9, 9);
 
 	dispc_setup_color_conv_coef();
 
 	dispc_set_loadmode(OMAP_DSS_LOAD_FRAME_ONLY);
 
-	dispc_init_fifos();
+	dispc_init_fअगरos();
 
 	dispc_configure_burst_sizes();
 
 	dispc_ovl_enable_zorder_planes();
 
-	if (dispc.feat->mstandby_workaround)
+	अगर (dispc.feat->mstandby_workaround)
 		REG_FLD_MOD(DISPC_MSTANDBY_CTRL, 1, 0, 0);
 
-	if (dss_has_feature(FEAT_MFLAG))
+	अगर (dss_has_feature(FEAT_MFLAG))
 		dispc_init_mflag();
-}
+पूर्ण
 
-static const struct dispc_features omap24xx_dispc_feats = {
+अटल स्थिर काष्ठा dispc_features omap24xx_dispc_feats = अणु
 	.sw_start		=	5,
 	.fp_start		=	15,
 	.bp_start		=	27,
@@ -3763,13 +3764,13 @@ static const struct dispc_features omap24xx_dispc_feats = {
 	.max_lcd_pclk		=	66500000,
 	.calc_scaling		=	dispc_ovl_calc_scaling_24xx,
 	.calc_core_clk		=	calc_core_clk_24xx,
-	.num_fifos		=	3,
-	.no_framedone_tv	=	true,
+	.num_fअगरos		=	3,
+	.no_frameकरोne_tv	=	true,
 	.set_max_preload	=	false,
 	.last_pixel_inc_missing	=	true,
-};
+पूर्ण;
 
-static const struct dispc_features omap34xx_rev1_0_dispc_feats = {
+अटल स्थिर काष्ठा dispc_features omap34xx_rev1_0_dispc_feats = अणु
 	.sw_start		=	5,
 	.fp_start		=	15,
 	.bp_start		=	27,
@@ -3784,13 +3785,13 @@ static const struct dispc_features omap34xx_rev1_0_dispc_feats = {
 	.max_tv_pclk		=	59000000,
 	.calc_scaling		=	dispc_ovl_calc_scaling_34xx,
 	.calc_core_clk		=	calc_core_clk_34xx,
-	.num_fifos		=	3,
-	.no_framedone_tv	=	true,
+	.num_fअगरos		=	3,
+	.no_frameकरोne_tv	=	true,
 	.set_max_preload	=	false,
 	.last_pixel_inc_missing	=	true,
-};
+पूर्ण;
 
-static const struct dispc_features omap34xx_rev3_0_dispc_feats = {
+अटल स्थिर काष्ठा dispc_features omap34xx_rev3_0_dispc_feats = अणु
 	.sw_start		=	7,
 	.fp_start		=	19,
 	.bp_start		=	31,
@@ -3805,13 +3806,13 @@ static const struct dispc_features omap34xx_rev3_0_dispc_feats = {
 	.max_tv_pclk		=	59000000,
 	.calc_scaling		=	dispc_ovl_calc_scaling_34xx,
 	.calc_core_clk		=	calc_core_clk_34xx,
-	.num_fifos		=	3,
-	.no_framedone_tv	=	true,
+	.num_fअगरos		=	3,
+	.no_frameकरोne_tv	=	true,
 	.set_max_preload	=	false,
 	.last_pixel_inc_missing	=	true,
-};
+पूर्ण;
 
-static const struct dispc_features omap44xx_dispc_feats = {
+अटल स्थिर काष्ठा dispc_features omap44xx_dispc_feats = अणु
 	.sw_start		=	7,
 	.fp_start		=	19,
 	.bp_start		=	31,
@@ -3826,14 +3827,14 @@ static const struct dispc_features omap44xx_dispc_feats = {
 	.max_tv_pclk		=	185625000,
 	.calc_scaling		=	dispc_ovl_calc_scaling_44xx,
 	.calc_core_clk		=	calc_core_clk_44xx,
-	.num_fifos		=	5,
-	.gfx_fifo_workaround	=	true,
+	.num_fअगरos		=	5,
+	.gfx_fअगरo_workaround	=	true,
 	.set_max_preload	=	true,
 	.supports_sync_align	=	true,
-	.has_writeback		=	true,
-};
+	.has_ग_लिखोback		=	true,
+पूर्ण;
 
-static const struct dispc_features omap54xx_dispc_feats = {
+अटल स्थिर काष्ठा dispc_features omap54xx_dispc_feats = अणु
 	.sw_start		=	7,
 	.fp_start		=	19,
 	.bp_start		=	31,
@@ -3848,57 +3849,57 @@ static const struct dispc_features omap54xx_dispc_feats = {
 	.max_tv_pclk		=	186000000,
 	.calc_scaling		=	dispc_ovl_calc_scaling_44xx,
 	.calc_core_clk		=	calc_core_clk_44xx,
-	.num_fifos		=	5,
-	.gfx_fifo_workaround	=	true,
+	.num_fअगरos		=	5,
+	.gfx_fअगरo_workaround	=	true,
 	.mstandby_workaround	=	true,
 	.set_max_preload	=	true,
 	.supports_sync_align	=	true,
-	.has_writeback		=	true,
-};
+	.has_ग_लिखोback		=	true,
+पूर्ण;
 
-static const struct dispc_features *dispc_get_features(void)
-{
-	switch (omapdss_get_version()) {
-	case OMAPDSS_VER_OMAP24xx:
-		return &omap24xx_dispc_feats;
+अटल स्थिर काष्ठा dispc_features *dispc_get_features(व्योम)
+अणु
+	चयन (omapdss_get_version()) अणु
+	हाल OMAPDSS_VER_OMAP24xx:
+		वापस &omap24xx_dispc_feats;
 
-	case OMAPDSS_VER_OMAP34xx_ES1:
-		return &omap34xx_rev1_0_dispc_feats;
+	हाल OMAPDSS_VER_OMAP34xx_ES1:
+		वापस &omap34xx_rev1_0_dispc_feats;
 
-	case OMAPDSS_VER_OMAP34xx_ES3:
-	case OMAPDSS_VER_OMAP3630:
-	case OMAPDSS_VER_AM35xx:
-	case OMAPDSS_VER_AM43xx:
-		return &omap34xx_rev3_0_dispc_feats;
+	हाल OMAPDSS_VER_OMAP34xx_ES3:
+	हाल OMAPDSS_VER_OMAP3630:
+	हाल OMAPDSS_VER_AM35xx:
+	हाल OMAPDSS_VER_AM43xx:
+		वापस &omap34xx_rev3_0_dispc_feats;
 
-	case OMAPDSS_VER_OMAP4430_ES1:
-	case OMAPDSS_VER_OMAP4430_ES2:
-	case OMAPDSS_VER_OMAP4:
-		return &omap44xx_dispc_feats;
+	हाल OMAPDSS_VER_OMAP4430_ES1:
+	हाल OMAPDSS_VER_OMAP4430_ES2:
+	हाल OMAPDSS_VER_OMAP4:
+		वापस &omap44xx_dispc_feats;
 
-	case OMAPDSS_VER_OMAP5:
-	case OMAPDSS_VER_DRA7xx:
-		return &omap54xx_dispc_feats;
+	हाल OMAPDSS_VER_OMAP5:
+	हाल OMAPDSS_VER_DRA7xx:
+		वापस &omap54xx_dispc_feats;
 
-	default:
-		return NULL;
-	}
-}
+	शेष:
+		वापस शून्य;
+	पूर्ण
+पूर्ण
 
-static irqreturn_t dispc_irq_handler(int irq, void *arg)
-{
-	if (!dispc.is_enabled)
-		return IRQ_NONE;
+अटल irqवापस_t dispc_irq_handler(पूर्णांक irq, व्योम *arg)
+अणु
+	अगर (!dispc.is_enabled)
+		वापस IRQ_NONE;
 
-	return dispc.user_handler(irq, dispc.user_data);
-}
+	वापस dispc.user_handler(irq, dispc.user_data);
+पूर्ण
 
-int dispc_request_irq(irq_handler_t handler, void *dev_id)
-{
-	int r;
+पूर्णांक dispc_request_irq(irq_handler_t handler, व्योम *dev_id)
+अणु
+	पूर्णांक r;
 
-	if (dispc.user_handler != NULL)
-		return -EBUSY;
+	अगर (dispc.user_handler != शून्य)
+		वापस -EBUSY;
 
 	dispc.user_handler = handler;
 	dispc.user_data = dev_id;
@@ -3908,188 +3909,188 @@ int dispc_request_irq(irq_handler_t handler, void *dev_id)
 
 	r = devm_request_irq(&dispc.pdev->dev, dispc.irq, dispc_irq_handler,
 			     IRQF_SHARED, "OMAP DISPC", &dispc);
-	if (r) {
-		dispc.user_handler = NULL;
-		dispc.user_data = NULL;
-	}
+	अगर (r) अणु
+		dispc.user_handler = शून्य;
+		dispc.user_data = शून्य;
+	पूर्ण
 
-	return r;
-}
+	वापस r;
+पूर्ण
 EXPORT_SYMBOL(dispc_request_irq);
 
-void dispc_free_irq(void *dev_id)
-{
-	devm_free_irq(&dispc.pdev->dev, dispc.irq, &dispc);
+व्योम dispc_मुक्त_irq(व्योम *dev_id)
+अणु
+	devm_मुक्त_irq(&dispc.pdev->dev, dispc.irq, &dispc);
 
-	dispc.user_handler = NULL;
-	dispc.user_data = NULL;
-}
-EXPORT_SYMBOL(dispc_free_irq);
+	dispc.user_handler = शून्य;
+	dispc.user_data = शून्य;
+पूर्ण
+EXPORT_SYMBOL(dispc_मुक्त_irq);
 
 /* DISPC HW IP initialisation */
-static int dispc_bind(struct device *dev, struct device *master, void *data)
-{
-	struct platform_device *pdev = to_platform_device(dev);
+अटल पूर्णांक dispc_bind(काष्ठा device *dev, काष्ठा device *master, व्योम *data)
+अणु
+	काष्ठा platक्रमm_device *pdev = to_platक्रमm_device(dev);
 	u32 rev;
-	int r = 0;
-	struct resource *dispc_mem;
-	struct device_node *np = pdev->dev.of_node;
+	पूर्णांक r = 0;
+	काष्ठा resource *dispc_mem;
+	काष्ठा device_node *np = pdev->dev.of_node;
 
 	dispc.pdev = pdev;
 
 	spin_lock_init(&dispc.control_lock);
 
 	dispc.feat = dispc_get_features();
-	if (!dispc.feat)
-		return -ENODEV;
+	अगर (!dispc.feat)
+		वापस -ENODEV;
 
-	dispc_mem = platform_get_resource(dispc.pdev, IORESOURCE_MEM, 0);
-	if (!dispc_mem) {
+	dispc_mem = platक्रमm_get_resource(dispc.pdev, IORESOURCE_MEM, 0);
+	अगर (!dispc_mem) अणु
 		DSSERR("can't get IORESOURCE_MEM DISPC\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	dispc.base = devm_ioremap(&pdev->dev, dispc_mem->start,
 				  resource_size(dispc_mem));
-	if (!dispc.base) {
+	अगर (!dispc.base) अणु
 		DSSERR("can't ioremap DISPC\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
-	dispc.irq = platform_get_irq(dispc.pdev, 0);
-	if (dispc.irq < 0) {
+	dispc.irq = platक्रमm_get_irq(dispc.pdev, 0);
+	अगर (dispc.irq < 0) अणु
 		DSSERR("platform_get_irq failed\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	if (np && of_property_read_bool(np, "syscon-pol")) {
+	अगर (np && of_property_पढ़ो_bool(np, "syscon-pol")) अणु
 		dispc.syscon_pol = syscon_regmap_lookup_by_phandle(np, "syscon-pol");
-		if (IS_ERR(dispc.syscon_pol)) {
+		अगर (IS_ERR(dispc.syscon_pol)) अणु
 			dev_err(&pdev->dev, "failed to get syscon-pol regmap\n");
-			return PTR_ERR(dispc.syscon_pol);
-		}
+			वापस PTR_ERR(dispc.syscon_pol);
+		पूर्ण
 
-		if (of_property_read_u32_index(np, "syscon-pol", 1,
-				&dispc.syscon_pol_offset)) {
+		अगर (of_property_पढ़ो_u32_index(np, "syscon-pol", 1,
+				&dispc.syscon_pol_offset)) अणु
 			dev_err(&pdev->dev, "failed to get syscon-pol offset\n");
-			return -EINVAL;
-		}
-	}
+			वापस -EINVAL;
+		पूर्ण
+	पूर्ण
 
-	pm_runtime_enable(&pdev->dev);
+	pm_runसमय_enable(&pdev->dev);
 
-	r = dispc_runtime_get();
-	if (r)
-		goto err_runtime_get;
+	r = dispc_runसमय_get();
+	अगर (r)
+		जाओ err_runसमय_get;
 
 	_omap_dispc_initial_config();
 
-	rev = dispc_read_reg(DISPC_REVISION);
+	rev = dispc_पढ़ो_reg(DISPC_REVISION);
 	dev_dbg(&pdev->dev, "OMAP DISPC rev %d.%d\n",
 	       FLD_GET(rev, 7, 4), FLD_GET(rev, 3, 0));
 
-	dispc_runtime_put();
+	dispc_runसमय_put();
 
 	dss_init_overlay_managers();
 
 	dss_debugfs_create_file("dispc", dispc_dump_regs);
 
-	return 0;
+	वापस 0;
 
-err_runtime_get:
-	pm_runtime_disable(&pdev->dev);
-	return r;
-}
+err_runसमय_get:
+	pm_runसमय_disable(&pdev->dev);
+	वापस r;
+पूर्ण
 
-static void dispc_unbind(struct device *dev, struct device *master,
-			       void *data)
-{
-	pm_runtime_disable(dev);
+अटल व्योम dispc_unbind(काष्ठा device *dev, काष्ठा device *master,
+			       व्योम *data)
+अणु
+	pm_runसमय_disable(dev);
 
 	dss_uninit_overlay_managers();
-}
+पूर्ण
 
-static const struct component_ops dispc_component_ops = {
+अटल स्थिर काष्ठा component_ops dispc_component_ops = अणु
 	.bind	= dispc_bind,
 	.unbind	= dispc_unbind,
-};
+पूर्ण;
 
-static int dispc_probe(struct platform_device *pdev)
-{
-	return component_add(&pdev->dev, &dispc_component_ops);
-}
+अटल पूर्णांक dispc_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	वापस component_add(&pdev->dev, &dispc_component_ops);
+पूर्ण
 
-static int dispc_remove(struct platform_device *pdev)
-{
+अटल पूर्णांक dispc_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
 	component_del(&pdev->dev, &dispc_component_ops);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int dispc_runtime_suspend(struct device *dev)
-{
+अटल पूर्णांक dispc_runसमय_suspend(काष्ठा device *dev)
+अणु
 	dispc.is_enabled = false;
 	/* ensure the dispc_irq_handler sees the is_enabled value */
 	smp_wmb();
-	/* wait for current handler to finish before turning the DISPC off */
+	/* रुको क्रम current handler to finish beक्रमe turning the DISPC off */
 	synchronize_irq(dispc.irq);
 
 	dispc_save_context();
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int dispc_runtime_resume(struct device *dev)
-{
+अटल पूर्णांक dispc_runसमय_resume(काष्ठा device *dev)
+अणु
 	/*
-	 * The reset value for load mode is 0 (OMAP_DSS_LOAD_CLUT_AND_FRAME)
+	 * The reset value क्रम load mode is 0 (OMAP_DSS_LOAD_CLUT_AND_FRAME)
 	 * but we always initialize it to 2 (OMAP_DSS_LOAD_FRAME_ONLY) in
-	 * _omap_dispc_initial_config(). We can thus use it to detect if
-	 * we have lost register context.
+	 * _omap_dispc_initial_config(). We can thus use it to detect अगर
+	 * we have lost रेजिस्टर context.
 	 */
-	if (REG_GET(DISPC_CONFIG, 2, 1) != OMAP_DSS_LOAD_FRAME_ONLY) {
+	अगर (REG_GET(DISPC_CONFIG, 2, 1) != OMAP_DSS_LOAD_FRAME_ONLY) अणु
 		_omap_dispc_initial_config();
 
 		dispc_restore_context();
-	}
+	पूर्ण
 
 	dispc.is_enabled = true;
 	/* ensure the dispc_irq_handler sees the is_enabled value */
 	smp_wmb();
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct dev_pm_ops dispc_pm_ops = {
-	.runtime_suspend = dispc_runtime_suspend,
-	.runtime_resume = dispc_runtime_resume,
-};
+अटल स्थिर काष्ठा dev_pm_ops dispc_pm_ops = अणु
+	.runसमय_suspend = dispc_runसमय_suspend,
+	.runसमय_resume = dispc_runसमय_resume,
+पूर्ण;
 
-static const struct of_device_id dispc_of_match[] = {
-	{ .compatible = "ti,omap2-dispc", },
-	{ .compatible = "ti,omap3-dispc", },
-	{ .compatible = "ti,omap4-dispc", },
-	{ .compatible = "ti,omap5-dispc", },
-	{ .compatible = "ti,dra7-dispc", },
-	{},
-};
+अटल स्थिर काष्ठा of_device_id dispc_of_match[] = अणु
+	अणु .compatible = "ti,omap2-dispc", पूर्ण,
+	अणु .compatible = "ti,omap3-dispc", पूर्ण,
+	अणु .compatible = "ti,omap4-dispc", पूर्ण,
+	अणु .compatible = "ti,omap5-dispc", पूर्ण,
+	अणु .compatible = "ti,dra7-dispc", पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 
-static struct platform_driver omap_dispchw_driver = {
+अटल काष्ठा platक्रमm_driver omap_dispchw_driver = अणु
 	.probe		= dispc_probe,
-	.remove         = dispc_remove,
-	.driver         = {
+	.हटाओ         = dispc_हटाओ,
+	.driver         = अणु
 		.name   = "omapdss_dispc",
 		.pm	= &dispc_pm_ops,
 		.of_match_table = dispc_of_match,
 		.suppress_bind_attrs = true,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-int __init dispc_init_platform_driver(void)
-{
-	return platform_driver_register(&omap_dispchw_driver);
-}
+पूर्णांक __init dispc_init_platक्रमm_driver(व्योम)
+अणु
+	वापस platक्रमm_driver_रेजिस्टर(&omap_dispchw_driver);
+पूर्ण
 
-void dispc_uninit_platform_driver(void)
-{
-	platform_driver_unregister(&omap_dispchw_driver);
-}
+व्योम dispc_uninit_platक्रमm_driver(व्योम)
+अणु
+	platक्रमm_driver_unरेजिस्टर(&omap_dispchw_driver);
+पूर्ण

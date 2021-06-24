@@ -1,53 +1,54 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * Copyright (C) 2015 Synopsys, Inc. (www.synopsys.com)
  */
 
-#ifndef _ASM_HIGHMEM_H
-#define _ASM_HIGHMEM_H
+#अगर_अघोषित _ASM_HIGHMEM_H
+#घोषणा _ASM_HIGHMEM_H
 
-#ifdef CONFIG_HIGHMEM
+#अगर_घोषित CONFIG_HIGHMEM
 
-#include <uapi/asm/page.h>
-#include <asm/kmap_size.h>
+#समावेश <uapi/यंत्र/page.h>
+#समावेश <यंत्र/kmap_size.h>
 
-#define FIXMAP_SIZE		PGDIR_SIZE
-#define PKMAP_SIZE		PGDIR_SIZE
+#घोषणा FIXMAP_SIZE		PGसूची_SIZE
+#घोषणा PKMAP_SIZE		PGसूची_SIZE
 
-/* start after vmalloc area */
-#define FIXMAP_BASE		(PAGE_OFFSET - FIXMAP_SIZE - PKMAP_SIZE)
+/* start after vदो_स्मृति area */
+#घोषणा FIXMAP_BASE		(PAGE_OFFSET - FIXMAP_SIZE - PKMAP_SIZE)
 
-#define FIX_KMAP_SLOTS		(KM_MAX_IDX * NR_CPUS)
-#define FIX_KMAP_BEGIN		(0UL)
-#define FIX_KMAP_END		((FIX_KMAP_BEGIN + FIX_KMAP_SLOTS) - 1)
+#घोषणा FIX_KMAP_SLOTS		(KM_MAX_IDX * NR_CPUS)
+#घोषणा FIX_KMAP_BEGIN		(0UL)
+#घोषणा FIX_KMAP_END		((FIX_KMAP_BEGIN + FIX_KMAP_SLOTS) - 1)
 
-#define FIXADDR_TOP		(FIXMAP_BASE + (FIX_KMAP_END << PAGE_SHIFT))
+#घोषणा FIXADDR_TOP		(FIXMAP_BASE + (FIX_KMAP_END << PAGE_SHIFT))
 
 /*
- * This should be converted to the asm-generic version, but of course this
- * is needlessly different from all other architectures. Sigh - tglx
+ * This should be converted to the यंत्र-generic version, but of course this
+ * is needlessly dअगरferent from all other architectures. Sigh - tglx
  */
-#define __fix_to_virt(x)	(FIXADDR_TOP - ((x) << PAGE_SHIFT))
-#define __virt_to_fix(x)	(((FIXADDR_TOP - ((x) & PAGE_MASK))) >> PAGE_SHIFT)
+#घोषणा __fix_to_virt(x)	(FIXADDR_TOP - ((x) << PAGE_SHIFT))
+#घोषणा __virt_to_fix(x)	(((FIXADDR_TOP - ((x) & PAGE_MASK))) >> PAGE_SHIFT)
 
 /* start after fixmap area */
-#define PKMAP_BASE		(FIXMAP_BASE + FIXMAP_SIZE)
-#define LAST_PKMAP		(PKMAP_SIZE >> PAGE_SHIFT)
-#define LAST_PKMAP_MASK		(LAST_PKMAP - 1)
-#define PKMAP_ADDR(nr)		(PKMAP_BASE + ((nr) << PAGE_SHIFT))
-#define PKMAP_NR(virt)		(((virt) - PKMAP_BASE) >> PAGE_SHIFT)
+#घोषणा PKMAP_BASE		(FIXMAP_BASE + FIXMAP_SIZE)
+#घोषणा LAST_PKMAP		(PKMAP_SIZE >> PAGE_SHIFT)
+#घोषणा LAST_PKMAP_MASK		(LAST_PKMAP - 1)
+#घोषणा PKMAP_ADDR(nr)		(PKMAP_BASE + ((nr) << PAGE_SHIFT))
+#घोषणा PKMAP_NR(virt)		(((virt) - PKMAP_BASE) >> PAGE_SHIFT)
 
-#include <asm/cacheflush.h>
+#समावेश <यंत्र/cacheflush.h>
 
-extern void kmap_init(void);
+बाह्य व्योम kmap_init(व्योम);
 
-#define arch_kmap_local_post_unmap(vaddr)			\
+#घोषणा arch_kmap_local_post_unmap(vaddr)			\
 	local_flush_tlb_kernel_range(vaddr, vaddr + PAGE_SIZE)
 
-static inline void flush_cache_kmaps(void)
-{
+अटल अंतरभूत व्योम flush_cache_kmaps(व्योम)
+अणु
 	flush_cache_all();
-}
-#endif
+पूर्ण
+#पूर्ण_अगर
 
-#endif
+#पूर्ण_अगर

@@ -1,10 +1,11 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * 6pack.c	This module implements the 6pack protocol for kernel-based
- *		devices like TTY. It interfaces between a raw TTY and the
+ * 6pack.c	This module implements the 6pack protocol क्रम kernel-based
+ *		devices like TTY. It पूर्णांकerfaces between a raw TTY and the
  *		kernel's AX.25 protocol layers.
  *
- * Authors:	Andreas Könsgen <ajk@comnets.uni-bremen.de>
+ * Authors:	Andreas Kथघnsgen <ajk@comnets.uni-bremen.de>
  *              Ralf Baechle DL5RB <ralf@linux-mips.org>
  *
  * Quite a lot of stuff "stolen" by Joerg Reuter from slip.c, written by
@@ -13,300 +14,300 @@
  *		Fred N. van Kempen, <waltje@uwalt.nl.mugnet.org>
  */
 
-#include <linux/module.h>
-#include <linux/uaccess.h>
-#include <linux/bitops.h>
-#include <linux/string.h>
-#include <linux/mm.h>
-#include <linux/interrupt.h>
-#include <linux/in.h>
-#include <linux/tty.h>
-#include <linux/errno.h>
-#include <linux/netdevice.h>
-#include <linux/timer.h>
-#include <linux/slab.h>
-#include <net/ax25.h>
-#include <linux/etherdevice.h>
-#include <linux/skbuff.h>
-#include <linux/rtnetlink.h>
-#include <linux/spinlock.h>
-#include <linux/if_arp.h>
-#include <linux/init.h>
-#include <linux/ip.h>
-#include <linux/tcp.h>
-#include <linux/semaphore.h>
-#include <linux/refcount.h>
+#समावेश <linux/module.h>
+#समावेश <linux/uaccess.h>
+#समावेश <linux/bitops.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/mm.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/in.h>
+#समावेश <linux/tty.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/समयr.h>
+#समावेश <linux/slab.h>
+#समावेश <net/ax25.h>
+#समावेश <linux/etherdevice.h>
+#समावेश <linux/skbuff.h>
+#समावेश <linux/rtnetlink.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/अगर_arp.h>
+#समावेश <linux/init.h>
+#समावेश <linux/ip.h>
+#समावेश <linux/tcp.h>
+#समावेश <linux/semaphore.h>
+#समावेश <linux/refcount.h>
 
-#define SIXPACK_VERSION    "Revision: 0.3.0"
+#घोषणा SIXPACK_VERSION    "Revision: 0.3.0"
 
 /* sixpack priority commands */
-#define SIXP_SEOF		0x40	/* start and end of a 6pack frame */
-#define SIXP_TX_URUN		0x48	/* transmit overrun */
-#define SIXP_RX_ORUN		0x50	/* receive overrun */
-#define SIXP_RX_BUF_OVL		0x58	/* receive buffer overflow */
+#घोषणा SIXP_Sखातापूर्ण		0x40	/* start and end of a 6pack frame */
+#घोषणा SIXP_TX_URUN		0x48	/* transmit overrun */
+#घोषणा SIXP_RX_ORUN		0x50	/* receive overrun */
+#घोषणा SIXP_RX_BUF_OVL		0x58	/* receive buffer overflow */
 
-#define SIXP_CHKSUM		0xFF	/* valid checksum of a 6pack frame */
+#घोषणा SIXP_CHKSUM		0xFF	/* valid checksum of a 6pack frame */
 
 /* masks to get certain bits out of the status bytes sent by the TNC */
 
-#define SIXP_CMD_MASK		0xC0
-#define SIXP_CHN_MASK		0x07
-#define SIXP_PRIO_CMD_MASK	0x80
-#define SIXP_STD_CMD_MASK	0x40
-#define SIXP_PRIO_DATA_MASK	0x38
-#define SIXP_TX_MASK		0x20
-#define SIXP_RX_MASK		0x10
-#define SIXP_RX_DCD_MASK	0x18
-#define SIXP_LEDS_ON		0x78
-#define SIXP_LEDS_OFF		0x60
-#define SIXP_CON		0x08
-#define SIXP_STA		0x10
+#घोषणा SIXP_CMD_MASK		0xC0
+#घोषणा SIXP_CHN_MASK		0x07
+#घोषणा SIXP_PRIO_CMD_MASK	0x80
+#घोषणा SIXP_STD_CMD_MASK	0x40
+#घोषणा SIXP_PRIO_DATA_MASK	0x38
+#घोषणा SIXP_TX_MASK		0x20
+#घोषणा SIXP_RX_MASK		0x10
+#घोषणा SIXP_RX_DCD_MASK	0x18
+#घोषणा SIXP_LEDS_ON		0x78
+#घोषणा SIXP_LEDS_OFF		0x60
+#घोषणा SIXP_CON		0x08
+#घोषणा SIXP_STA		0x10
 
-#define SIXP_FOUND_TNC		0xe9
-#define SIXP_CON_ON		0x68
-#define SIXP_DCD_MASK		0x08
-#define SIXP_DAMA_OFF		0
+#घोषणा SIXP_FOUND_TNC		0xe9
+#घोषणा SIXP_CON_ON		0x68
+#घोषणा SIXP_DCD_MASK		0x08
+#घोषणा SIXP_DAMA_OFF		0
 
-/* default level 2 parameters */
-#define SIXP_TXDELAY			(HZ/4)	/* in 1 s */
-#define SIXP_PERSIST			50	/* in 256ths */
-#define SIXP_SLOTTIME			(HZ/10)	/* in 1 s */
-#define SIXP_INIT_RESYNC_TIMEOUT	(3*HZ/2) /* in 1 s */
-#define SIXP_RESYNC_TIMEOUT		5*HZ	/* in 1 s */
+/* शेष level 2 parameters */
+#घोषणा SIXP_TXDELAY			(HZ/4)	/* in 1 s */
+#घोषणा SIXP_PERSIST			50	/* in 256ths */
+#घोषणा SIXP_SLOTTIME			(HZ/10)	/* in 1 s */
+#घोषणा SIXP_INIT_RESYNC_TIMEOUT	(3*HZ/2) /* in 1 s */
+#घोषणा SIXP_RESYNC_TIMEOUT		5*HZ	/* in 1 s */
 
 /* 6pack configuration. */
-#define SIXP_NRUNIT			31      /* MAX number of 6pack channels */
-#define SIXP_MTU			256	/* Default MTU */
+#घोषणा SIXP_NRUNIT			31      /* MAX number of 6pack channels */
+#घोषणा SIXP_MTU			256	/* Default MTU */
 
-enum sixpack_flags {
+क्रमागत sixpack_flags अणु
 	SIXPF_ERROR,	/* Parity, etc. error	*/
-};
+पूर्ण;
 
-struct sixpack {
+काष्ठा sixpack अणु
 	/* Various fields. */
-	struct tty_struct	*tty;		/* ptr to TTY structure	*/
-	struct net_device	*dev;		/* easy for intr handling  */
+	काष्ठा tty_काष्ठा	*tty;		/* ptr to TTY काष्ठाure	*/
+	काष्ठा net_device	*dev;		/* easy क्रम पूर्णांकr handling  */
 
-	/* These are pointers to the malloc()ed frame buffers. */
-	unsigned char		*rbuff;		/* receiver buffer	*/
-	int			rcount;         /* received chars counter  */
-	unsigned char		*xbuff;		/* transmitter buffer	*/
-	unsigned char		*xhead;         /* next byte to XMIT */
-	int			xleft;          /* bytes left in XMIT queue  */
+	/* These are poपूर्णांकers to the दो_स्मृति()ed frame buffers. */
+	अचिन्हित अक्षर		*rbuff;		/* receiver buffer	*/
+	पूर्णांक			rcount;         /* received अक्षरs counter  */
+	अचिन्हित अक्षर		*xbuff;		/* transmitter buffer	*/
+	अचिन्हित अक्षर		*xhead;         /* next byte to XMIT */
+	पूर्णांक			xleft;          /* bytes left in XMIT queue  */
 
-	unsigned char		raw_buf[4];
-	unsigned char		cooked_buf[400];
+	अचिन्हित अक्षर		raw_buf[4];
+	अचिन्हित अक्षर		cooked_buf[400];
 
-	unsigned int		rx_count;
-	unsigned int		rx_count_cooked;
+	अचिन्हित पूर्णांक		rx_count;
+	अचिन्हित पूर्णांक		rx_count_cooked;
 
-	int			mtu;		/* Our mtu (to spot changes!) */
-	int			buffsize;       /* Max buffers sizes */
+	पूर्णांक			mtu;		/* Our mtu (to spot changes!) */
+	पूर्णांक			buffsize;       /* Max buffers sizes */
 
-	unsigned long		flags;		/* Flag values/ mode etc */
-	unsigned char		mode;		/* 6pack mode */
+	अचिन्हित दीर्घ		flags;		/* Flag values/ mode etc */
+	अचिन्हित अक्षर		mode;		/* 6pack mode */
 
 	/* 6pack stuff */
-	unsigned char		tx_delay;
-	unsigned char		persistence;
-	unsigned char		slottime;
-	unsigned char		duplex;
-	unsigned char		led_state;
-	unsigned char		status;
-	unsigned char		status1;
-	unsigned char		status2;
-	unsigned char		tx_enable;
-	unsigned char		tnc_state;
+	अचिन्हित अक्षर		tx_delay;
+	अचिन्हित अक्षर		persistence;
+	अचिन्हित अक्षर		slotसमय;
+	अचिन्हित अक्षर		duplex;
+	अचिन्हित अक्षर		led_state;
+	अचिन्हित अक्षर		status;
+	अचिन्हित अक्षर		status1;
+	अचिन्हित अक्षर		status2;
+	अचिन्हित अक्षर		tx_enable;
+	अचिन्हित अक्षर		tnc_state;
 
-	struct timer_list	tx_t;
-	struct timer_list	resync_t;
+	काष्ठा समयr_list	tx_t;
+	काष्ठा समयr_list	resync_t;
 	refcount_t		refcnt;
-	struct completion	dead;
+	काष्ठा completion	dead;
 	spinlock_t		lock;
-};
+पूर्ण;
 
-#define AX25_6PACK_HEADER_LEN 0
+#घोषणा AX25_6PACK_HEADER_LEN 0
 
-static void sixpack_decode(struct sixpack *, const unsigned char[], int);
-static int encode_sixpack(unsigned char *, unsigned char *, int, unsigned char);
+अटल व्योम sixpack_decode(काष्ठा sixpack *, स्थिर अचिन्हित अक्षर[], पूर्णांक);
+अटल पूर्णांक encode_sixpack(अचिन्हित अक्षर *, अचिन्हित अक्षर *, पूर्णांक, अचिन्हित अक्षर);
 
 /*
- * Perform the persistence/slottime algorithm for CSMA access. If the
- * persistence check was successful, write the data to the serial driver.
- * Note that in case of DAMA operation, the data is not sent here.
+ * Perक्रमm the persistence/slotसमय algorithm क्रम CSMA access. If the
+ * persistence check was successful, ग_लिखो the data to the serial driver.
+ * Note that in हाल of DAMA operation, the data is not sent here.
  */
 
-static void sp_xmit_on_air(struct timer_list *t)
-{
-	struct sixpack *sp = from_timer(sp, t, tx_t);
-	int actual, when = sp->slottime;
-	static unsigned char random;
+अटल व्योम sp_xmit_on_air(काष्ठा समयr_list *t)
+अणु
+	काष्ठा sixpack *sp = from_समयr(sp, t, tx_t);
+	पूर्णांक actual, when = sp->slotसमय;
+	अटल अचिन्हित अक्षर अक्रमom;
 
-	random = random * 17 + 41;
+	अक्रमom = अक्रमom * 17 + 41;
 
-	if (((sp->status1 & SIXP_DCD_MASK) == 0) && (random < sp->persistence)) {
+	अगर (((sp->status1 & SIXP_DCD_MASK) == 0) && (अक्रमom < sp->persistence)) अणु
 		sp->led_state = 0x70;
-		sp->tty->ops->write(sp->tty, &sp->led_state, 1);
+		sp->tty->ops->ग_लिखो(sp->tty, &sp->led_state, 1);
 		sp->tx_enable = 1;
-		actual = sp->tty->ops->write(sp->tty, sp->xbuff, sp->status2);
+		actual = sp->tty->ops->ग_लिखो(sp->tty, sp->xbuff, sp->status2);
 		sp->xleft -= actual;
 		sp->xhead += actual;
 		sp->led_state = 0x60;
-		sp->tty->ops->write(sp->tty, &sp->led_state, 1);
+		sp->tty->ops->ग_लिखो(sp->tty, &sp->led_state, 1);
 		sp->status2 = 0;
-	} else
-		mod_timer(&sp->tx_t, jiffies + ((when + 1) * HZ) / 100);
-}
+	पूर्ण अन्यथा
+		mod_समयr(&sp->tx_t, jअगरfies + ((when + 1) * HZ) / 100);
+पूर्ण
 
-/* ----> 6pack timer interrupt handler and friends. <---- */
+/* ----> 6pack समयr पूर्णांकerrupt handler and मित्रs. <---- */
 
-/* Encapsulate one AX.25 frame and stuff into a TTY queue. */
-static void sp_encaps(struct sixpack *sp, unsigned char *icp, int len)
-{
-	unsigned char *msg, *p = icp;
-	int actual, count;
+/* Encapsulate one AX.25 frame and stuff पूर्णांकo a TTY queue. */
+अटल व्योम sp_encaps(काष्ठा sixpack *sp, अचिन्हित अक्षर *icp, पूर्णांक len)
+अणु
+	अचिन्हित अक्षर *msg, *p = icp;
+	पूर्णांक actual, count;
 
-	if (len > sp->mtu) {	/* sp->mtu = AX25_MTU = max. PACLEN = 256 */
+	अगर (len > sp->mtu) अणु	/* sp->mtu = AX25_MTU = max. PACLEN = 256 */
 		msg = "oversized transmit packet!";
-		goto out_drop;
-	}
+		जाओ out_drop;
+	पूर्ण
 
-	if (p[0] > 5) {
+	अगर (p[0] > 5) अणु
 		msg = "invalid KISS command";
-		goto out_drop;
-	}
+		जाओ out_drop;
+	पूर्ण
 
-	if ((p[0] != 0) && (len > 2)) {
+	अगर ((p[0] != 0) && (len > 2)) अणु
 		msg = "KISS control packet too long";
-		goto out_drop;
-	}
+		जाओ out_drop;
+	पूर्ण
 
-	if ((p[0] == 0) && (len < 15)) {
+	अगर ((p[0] == 0) && (len < 15)) अणु
 		msg = "bad AX.25 packet to transmit";
-		goto out_drop;
-	}
+		जाओ out_drop;
+	पूर्ण
 
 	count = encode_sixpack(p, sp->xbuff, len, sp->tx_delay);
 	set_bit(TTY_DO_WRITE_WAKEUP, &sp->tty->flags);
 
-	switch (p[0]) {
-	case 1:	sp->tx_delay = p[1];
-		return;
-	case 2:	sp->persistence = p[1];
-		return;
-	case 3:	sp->slottime = p[1];
-		return;
-	case 4:	/* ignored */
-		return;
-	case 5:	sp->duplex = p[1];
-		return;
-	}
+	चयन (p[0]) अणु
+	हाल 1:	sp->tx_delay = p[1];
+		वापस;
+	हाल 2:	sp->persistence = p[1];
+		वापस;
+	हाल 3:	sp->slotसमय = p[1];
+		वापस;
+	हाल 4:	/* ignored */
+		वापस;
+	हाल 5:	sp->duplex = p[1];
+		वापस;
+	पूर्ण
 
-	if (p[0] != 0)
-		return;
+	अगर (p[0] != 0)
+		वापस;
 
 	/*
-	 * In case of fullduplex or DAMA operation, we don't take care about the
-	 * state of the DCD or of any timers, as the determination of the
-	 * correct time to send is the job of the AX.25 layer. We send
+	 * In हाल of fullduplex or DAMA operation, we करोn't take care about the
+	 * state of the DCD or of any समयrs, as the determination of the
+	 * correct समय to send is the job of the AX.25 layer. We send
 	 * immediately after data has arrived.
 	 */
-	if (sp->duplex == 1) {
+	अगर (sp->duplex == 1) अणु
 		sp->led_state = 0x70;
-		sp->tty->ops->write(sp->tty, &sp->led_state, 1);
+		sp->tty->ops->ग_लिखो(sp->tty, &sp->led_state, 1);
 		sp->tx_enable = 1;
-		actual = sp->tty->ops->write(sp->tty, sp->xbuff, count);
+		actual = sp->tty->ops->ग_लिखो(sp->tty, sp->xbuff, count);
 		sp->xleft = count - actual;
 		sp->xhead = sp->xbuff + actual;
 		sp->led_state = 0x60;
-		sp->tty->ops->write(sp->tty, &sp->led_state, 1);
-	} else {
+		sp->tty->ops->ग_लिखो(sp->tty, &sp->led_state, 1);
+	पूर्ण अन्यथा अणु
 		sp->xleft = count;
 		sp->xhead = sp->xbuff;
 		sp->status2 = count;
 		sp_xmit_on_air(&sp->tx_t);
-	}
+	पूर्ण
 
-	return;
+	वापस;
 
 out_drop:
 	sp->dev->stats.tx_dropped++;
-	netif_start_queue(sp->dev);
-	if (net_ratelimit())
-		printk(KERN_DEBUG "%s: %s - dropped.\n", sp->dev->name, msg);
-}
+	netअगर_start_queue(sp->dev);
+	अगर (net_ratelimit())
+		prपूर्णांकk(KERN_DEBUG "%s: %s - dropped.\n", sp->dev->name, msg);
+पूर्ण
 
-/* Encapsulate an IP datagram and kick it into a TTY queue. */
+/* Encapsulate an IP datagram and kick it पूर्णांकo a TTY queue. */
 
-static netdev_tx_t sp_xmit(struct sk_buff *skb, struct net_device *dev)
-{
-	struct sixpack *sp = netdev_priv(dev);
+अटल netdev_tx_t sp_xmit(काष्ठा sk_buff *skb, काष्ठा net_device *dev)
+अणु
+	काष्ठा sixpack *sp = netdev_priv(dev);
 
-	if (skb->protocol == htons(ETH_P_IP))
-		return ax25_ip_xmit(skb);
+	अगर (skb->protocol == htons(ETH_P_IP))
+		वापस ax25_ip_xmit(skb);
 
 	spin_lock_bh(&sp->lock);
 	/* We were not busy, so we are now... :-) */
-	netif_stop_queue(dev);
+	netअगर_stop_queue(dev);
 	dev->stats.tx_bytes += skb->len;
 	sp_encaps(sp, skb->data, skb->len);
 	spin_unlock_bh(&sp->lock);
 
-	dev_kfree_skb(skb);
+	dev_kमुक्त_skb(skb);
 
-	return NETDEV_TX_OK;
-}
+	वापस NETDEV_TX_OK;
+पूर्ण
 
-static int sp_open_dev(struct net_device *dev)
-{
-	struct sixpack *sp = netdev_priv(dev);
+अटल पूर्णांक sp_खोलो_dev(काष्ठा net_device *dev)
+अणु
+	काष्ठा sixpack *sp = netdev_priv(dev);
 
-	if (sp->tty == NULL)
-		return -ENODEV;
-	return 0;
-}
+	अगर (sp->tty == शून्य)
+		वापस -ENODEV;
+	वापस 0;
+पूर्ण
 
 /* Close the low-level part of the 6pack channel. */
-static int sp_close(struct net_device *dev)
-{
-	struct sixpack *sp = netdev_priv(dev);
+अटल पूर्णांक sp_बंद(काष्ठा net_device *dev)
+अणु
+	काष्ठा sixpack *sp = netdev_priv(dev);
 
 	spin_lock_bh(&sp->lock);
-	if (sp->tty) {
+	अगर (sp->tty) अणु
 		/* TTY discipline is running. */
 		clear_bit(TTY_DO_WRITE_WAKEUP, &sp->tty->flags);
-	}
-	netif_stop_queue(dev);
+	पूर्ण
+	netअगर_stop_queue(dev);
 	spin_unlock_bh(&sp->lock);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sp_set_mac_address(struct net_device *dev, void *addr)
-{
-	struct sockaddr_ax25 *sa = addr;
+अटल पूर्णांक sp_set_mac_address(काष्ठा net_device *dev, व्योम *addr)
+अणु
+	काष्ठा sockaddr_ax25 *sa = addr;
 
-	netif_tx_lock_bh(dev);
-	netif_addr_lock(dev);
-	memcpy(dev->dev_addr, &sa->sax25_call, AX25_ADDR_LEN);
-	netif_addr_unlock(dev);
-	netif_tx_unlock_bh(dev);
+	netअगर_tx_lock_bh(dev);
+	netअगर_addr_lock(dev);
+	स_नकल(dev->dev_addr, &sa->sax25_call, AX25_ADDR_LEN);
+	netअगर_addr_unlock(dev);
+	netअगर_tx_unlock_bh(dev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct net_device_ops sp_netdev_ops = {
-	.ndo_open		= sp_open_dev,
-	.ndo_stop		= sp_close,
-	.ndo_start_xmit		= sp_xmit,
-	.ndo_set_mac_address    = sp_set_mac_address,
-};
+अटल स्थिर काष्ठा net_device_ops sp_netdev_ops = अणु
+	.nकरो_खोलो		= sp_खोलो_dev,
+	.nकरो_stop		= sp_बंद,
+	.nकरो_start_xmit		= sp_xmit,
+	.nकरो_set_mac_address    = sp_set_mac_address,
+पूर्ण;
 
-static void sp_setup(struct net_device *dev)
-{
+अटल व्योम sp_setup(काष्ठा net_device *dev)
+अणु
 	/* Finish setting up the DEVICE info. */
 	dev->netdev_ops		= &sp_netdev_ops;
-	dev->needs_free_netdev	= true;
+	dev->needs_मुक्त_netdev	= true;
 	dev->mtu		= SIXP_MTU;
 	dev->hard_header_len	= AX25_MAX_HEADER_LEN;
 	dev->header_ops 	= &ax25_header_ops;
@@ -316,11 +317,11 @@ static void sp_setup(struct net_device *dev)
 	dev->tx_queue_len	= 10;
 
 	/* Only activated in AX.25 mode */
-	memcpy(dev->broadcast, &ax25_bcast, AX25_ADDR_LEN);
-	memcpy(dev->dev_addr, &ax25_defaddr, AX25_ADDR_LEN);
+	स_नकल(dev->broadcast, &ax25_bcast, AX25_ADDR_LEN);
+	स_नकल(dev->dev_addr, &ax25_defaddr, AX25_ADDR_LEN);
 
 	dev->flags		= 0;
-}
+पूर्ण
 
 /* Send one completely decapsulated IP datagram to the IP layer. */
 
@@ -329,32 +330,32 @@ static void sp_setup(struct net_device *dev)
  * 'cmd' is the KISS command. For AX.25 data, it is zero.
  */
 
-static void sp_bump(struct sixpack *sp, char cmd)
-{
-	struct sk_buff *skb;
-	int count;
-	unsigned char *ptr;
+अटल व्योम sp_bump(काष्ठा sixpack *sp, अक्षर cmd)
+अणु
+	काष्ठा sk_buff *skb;
+	पूर्णांक count;
+	अचिन्हित अक्षर *ptr;
 
 	count = sp->rcount + 1;
 
 	sp->dev->stats.rx_bytes += count;
 
-	if ((skb = dev_alloc_skb(count + 1)) == NULL)
-		goto out_mem;
+	अगर ((skb = dev_alloc_skb(count + 1)) == शून्य)
+		जाओ out_mem;
 
 	ptr = skb_put(skb, count + 1);
 	*ptr++ = cmd;	/* KISS command */
 
-	memcpy(ptr, sp->cooked_buf + 1, count);
+	स_नकल(ptr, sp->cooked_buf + 1, count);
 	skb->protocol = ax25_type_trans(skb, sp->dev);
-	netif_rx(skb);
+	netअगर_rx(skb);
 	sp->dev->stats.rx_packets++;
 
-	return;
+	वापस;
 
 out_mem:
 	sp->dev->stats.rx_dropped++;
-}
+पूर्ण
 
 
 /* ----------------------------------------------------------------------- */
@@ -362,143 +363,143 @@ out_mem:
 /*
  * We have a potential race on dereferencing tty->disc_data, because the tty
  * layer provides no locking at all - thus one cpu could be running
- * sixpack_receive_buf while another calls sixpack_close, which zeroes
- * tty->disc_data and frees the memory that sixpack_receive_buf is using.  The
- * best way to fix this is to use a rwlock in the tty struct, but for now we
- * use a single global rwlock for all ttys in ppp line discipline.
+ * sixpack_receive_buf जबतक another calls sixpack_बंद, which zeroes
+ * tty->disc_data and मुक्तs the memory that sixpack_receive_buf is using.  The
+ * best way to fix this is to use a rwlock in the tty काष्ठा, but क्रम now we
+ * use a single global rwlock क्रम all ttys in ppp line discipline.
  */
-static DEFINE_RWLOCK(disc_data_lock);
+अटल DEFINE_RWLOCK(disc_data_lock);
                                                                                 
-static struct sixpack *sp_get(struct tty_struct *tty)
-{
-	struct sixpack *sp;
+अटल काष्ठा sixpack *sp_get(काष्ठा tty_काष्ठा *tty)
+अणु
+	काष्ठा sixpack *sp;
 
-	read_lock(&disc_data_lock);
+	पढ़ो_lock(&disc_data_lock);
 	sp = tty->disc_data;
-	if (sp)
+	अगर (sp)
 		refcount_inc(&sp->refcnt);
-	read_unlock(&disc_data_lock);
+	पढ़ो_unlock(&disc_data_lock);
 
-	return sp;
-}
+	वापस sp;
+पूर्ण
 
-static void sp_put(struct sixpack *sp)
-{
-	if (refcount_dec_and_test(&sp->refcnt))
+अटल व्योम sp_put(काष्ठा sixpack *sp)
+अणु
+	अगर (refcount_dec_and_test(&sp->refcnt))
 		complete(&sp->dead);
-}
+पूर्ण
 
 /*
- * Called by the TTY driver when there's room for more data.  If we have
+ * Called by the TTY driver when there's room क्रम more data.  If we have
  * more packets to send, we send them here.
  */
-static void sixpack_write_wakeup(struct tty_struct *tty)
-{
-	struct sixpack *sp = sp_get(tty);
-	int actual;
+अटल व्योम sixpack_ग_लिखो_wakeup(काष्ठा tty_काष्ठा *tty)
+अणु
+	काष्ठा sixpack *sp = sp_get(tty);
+	पूर्णांक actual;
 
-	if (!sp)
-		return;
-	if (sp->xleft <= 0)  {
-		/* Now serial buffer is almost free & we can start
+	अगर (!sp)
+		वापस;
+	अगर (sp->xleft <= 0)  अणु
+		/* Now serial buffer is almost मुक्त & we can start
 		 * transmission of another packet */
 		sp->dev->stats.tx_packets++;
 		clear_bit(TTY_DO_WRITE_WAKEUP, &tty->flags);
 		sp->tx_enable = 0;
-		netif_wake_queue(sp->dev);
-		goto out;
-	}
+		netअगर_wake_queue(sp->dev);
+		जाओ out;
+	पूर्ण
 
-	if (sp->tx_enable) {
-		actual = tty->ops->write(tty, sp->xhead, sp->xleft);
+	अगर (sp->tx_enable) अणु
+		actual = tty->ops->ग_लिखो(tty, sp->xhead, sp->xleft);
 		sp->xleft -= actual;
 		sp->xhead += actual;
-	}
+	पूर्ण
 
 out:
 	sp_put(sp);
-}
+पूर्ण
 
 /* ----------------------------------------------------------------------- */
 
 /*
- * Handle the 'receiver data ready' interrupt.
+ * Handle the 'receiver data ready' पूर्णांकerrupt.
  * This function is called by the tty module in the kernel when
  * a block of 6pack data has been received, which can now be decapsulated
- * and sent on to some IP layer for further processing.
+ * and sent on to some IP layer क्रम further processing.
  */
-static void sixpack_receive_buf(struct tty_struct *tty,
-	const unsigned char *cp, char *fp, int count)
-{
-	struct sixpack *sp;
-	int count1;
+अटल व्योम sixpack_receive_buf(काष्ठा tty_काष्ठा *tty,
+	स्थिर अचिन्हित अक्षर *cp, अक्षर *fp, पूर्णांक count)
+अणु
+	काष्ठा sixpack *sp;
+	पूर्णांक count1;
 
-	if (!count)
-		return;
+	अगर (!count)
+		वापस;
 
 	sp = sp_get(tty);
-	if (!sp)
-		return;
+	अगर (!sp)
+		वापस;
 
-	/* Read the characters out of the buffer */
+	/* Read the अक्षरacters out of the buffer */
 	count1 = count;
-	while (count) {
+	जबतक (count) अणु
 		count--;
-		if (fp && *fp++) {
-			if (!test_and_set_bit(SIXPF_ERROR, &sp->flags))
+		अगर (fp && *fp++) अणु
+			अगर (!test_and_set_bit(SIXPF_ERROR, &sp->flags))
 				sp->dev->stats.rx_errors++;
-			continue;
-		}
-	}
+			जारी;
+		पूर्ण
+	पूर्ण
 	sixpack_decode(sp, cp, count1);
 
 	sp_put(sp);
 	tty_unthrottle(tty);
-}
+पूर्ण
 
 /*
- * Try to resync the TNC. Called by the resync timer defined in
+ * Try to resync the TNC. Called by the resync समयr defined in
  * decode_prio_command
  */
 
-#define TNC_UNINITIALIZED	0
-#define TNC_UNSYNC_STARTUP	1
-#define TNC_UNSYNCED		2
-#define TNC_IN_SYNC		3
+#घोषणा TNC_UNINITIALIZED	0
+#घोषणा TNC_UNSYNC_STARTUP	1
+#घोषणा TNC_UNSYNCED		2
+#घोषणा TNC_IN_SYNC		3
 
-static void __tnc_set_sync_state(struct sixpack *sp, int new_tnc_state)
-{
-	char *msg;
+अटल व्योम __tnc_set_sync_state(काष्ठा sixpack *sp, पूर्णांक new_tnc_state)
+अणु
+	अक्षर *msg;
 
-	switch (new_tnc_state) {
-	default:			/* gcc oh piece-o-crap ... */
-	case TNC_UNSYNC_STARTUP:
+	चयन (new_tnc_state) अणु
+	शेष:			/* gcc oh piece-o-crap ... */
+	हाल TNC_UNSYNC_STARTUP:
 		msg = "Synchronizing with TNC";
-		break;
-	case TNC_UNSYNCED:
+		अवरोध;
+	हाल TNC_UNSYNCED:
 		msg = "Lost synchronization with TNC\n";
-		break;
-	case TNC_IN_SYNC:
+		अवरोध;
+	हाल TNC_IN_SYNC:
 		msg = "Found TNC";
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	sp->tnc_state = new_tnc_state;
-	printk(KERN_INFO "%s: %s\n", sp->dev->name, msg);
-}
+	prपूर्णांकk(KERN_INFO "%s: %s\n", sp->dev->name, msg);
+पूर्ण
 
-static inline void tnc_set_sync_state(struct sixpack *sp, int new_tnc_state)
-{
-	int old_tnc_state = sp->tnc_state;
+अटल अंतरभूत व्योम tnc_set_sync_state(काष्ठा sixpack *sp, पूर्णांक new_tnc_state)
+अणु
+	पूर्णांक old_tnc_state = sp->tnc_state;
 
-	if (old_tnc_state != new_tnc_state)
+	अगर (old_tnc_state != new_tnc_state)
 		__tnc_set_sync_state(sp, new_tnc_state);
-}
+पूर्ण
 
-static void resync_tnc(struct timer_list *t)
-{
-	struct sixpack *sp = from_timer(sp, t, resync_t);
-	static char resync_cmd = 0xe8;
+अटल व्योम resync_tnc(काष्ठा समयr_list *t)
+अणु
+	काष्ठा sixpack *sp = from_समयr(sp, t, resync_t);
+	अटल अक्षर resync_cmd = 0xe8;
 
 	/* clear any data that might have been received */
 
@@ -514,53 +515,53 @@ static void resync_tnc(struct timer_list *t)
 	/* resync the TNC */
 
 	sp->led_state = 0x60;
-	sp->tty->ops->write(sp->tty, &sp->led_state, 1);
-	sp->tty->ops->write(sp->tty, &resync_cmd, 1);
+	sp->tty->ops->ग_लिखो(sp->tty, &sp->led_state, 1);
+	sp->tty->ops->ग_लिखो(sp->tty, &resync_cmd, 1);
 
 
-	/* Start resync timer again -- the TNC might be still absent */
-	mod_timer(&sp->resync_t, jiffies + SIXP_RESYNC_TIMEOUT);
-}
+	/* Start resync समयr again -- the TNC might be still असलent */
+	mod_समयr(&sp->resync_t, jअगरfies + SIXP_RESYNC_TIMEOUT);
+पूर्ण
 
-static inline int tnc_init(struct sixpack *sp)
-{
-	unsigned char inbyte = 0xe8;
+अटल अंतरभूत पूर्णांक tnc_init(काष्ठा sixpack *sp)
+अणु
+	अचिन्हित अक्षर inbyte = 0xe8;
 
 	tnc_set_sync_state(sp, TNC_UNSYNC_STARTUP);
 
-	sp->tty->ops->write(sp->tty, &inbyte, 1);
+	sp->tty->ops->ग_लिखो(sp->tty, &inbyte, 1);
 
-	mod_timer(&sp->resync_t, jiffies + SIXP_RESYNC_TIMEOUT);
+	mod_समयr(&sp->resync_t, jअगरfies + SIXP_RESYNC_TIMEOUT);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * Open the high-level part of the 6pack channel.
  * This function is called by the TTY module when the
- * 6pack line discipline is called for.  Because we are
+ * 6pack line discipline is called क्रम.  Because we are
  * sure the tty line exists, we only have to link it to
- * a free 6pcack channel...
+ * a मुक्त 6pcack channel...
  */
-static int sixpack_open(struct tty_struct *tty)
-{
-	char *rbuff = NULL, *xbuff = NULL;
-	struct net_device *dev;
-	struct sixpack *sp;
-	unsigned long len;
-	int err = 0;
+अटल पूर्णांक sixpack_खोलो(काष्ठा tty_काष्ठा *tty)
+अणु
+	अक्षर *rbuff = शून्य, *xbuff = शून्य;
+	काष्ठा net_device *dev;
+	काष्ठा sixpack *sp;
+	अचिन्हित दीर्घ len;
+	पूर्णांक err = 0;
 
-	if (!capable(CAP_NET_ADMIN))
-		return -EPERM;
-	if (tty->ops->write == NULL)
-		return -EOPNOTSUPP;
+	अगर (!capable(CAP_NET_ADMIN))
+		वापस -EPERM;
+	अगर (tty->ops->ग_लिखो == शून्य)
+		वापस -EOPNOTSUPP;
 
-	dev = alloc_netdev(sizeof(struct sixpack), "sp%d", NET_NAME_UNKNOWN,
+	dev = alloc_netdev(माप(काष्ठा sixpack), "sp%d", NET_NAME_UNKNOWN,
 			   sp_setup);
-	if (!dev) {
+	अगर (!dev) अणु
 		err = -ENOMEM;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	sp = netdev_priv(dev);
 	sp->dev = dev;
@@ -573,13 +574,13 @@ static int sixpack_open(struct tty_struct *tty)
 
 	len = dev->mtu * 2;
 
-	rbuff = kmalloc(len + 4, GFP_KERNEL);
-	xbuff = kmalloc(len + 4, GFP_KERNEL);
+	rbuff = kदो_स्मृति(len + 4, GFP_KERNEL);
+	xbuff = kदो_स्मृति(len + 4, GFP_KERNEL);
 
-	if (rbuff == NULL || xbuff == NULL) {
+	अगर (rbuff == शून्य || xbuff == शून्य) अणु
 		err = -ENOBUFS;
-		goto out_free;
-	}
+		जाओ out_मुक्त;
+	पूर्ण
 
 	spin_lock_bh(&sp->lock);
 
@@ -600,18 +601,18 @@ static int sixpack_open(struct tty_struct *tty)
 	sp->duplex	= 0;
 	sp->tx_delay    = SIXP_TXDELAY;
 	sp->persistence = SIXP_PERSIST;
-	sp->slottime    = SIXP_SLOTTIME;
+	sp->slotसमय    = SIXP_SLOTTIME;
 	sp->led_state   = 0x60;
 	sp->status      = 1;
 	sp->status1     = 1;
 	sp->status2     = 0;
 	sp->tx_enable   = 0;
 
-	netif_start_queue(dev);
+	netअगर_start_queue(dev);
 
-	timer_setup(&sp->tx_t, sp_xmit_on_air, 0);
+	समयr_setup(&sp->tx_t, sp_xmit_on_air, 0);
 
-	timer_setup(&sp->resync_t, resync_tnc, 0);
+	समयr_setup(&sp->resync_t, resync_tnc, 0);
 
 	spin_unlock_bh(&sp->lock);
 
@@ -619,219 +620,219 @@ static int sixpack_open(struct tty_struct *tty)
 	tty->disc_data = sp;
 	tty->receive_room = 65536;
 
-	/* Now we're ready to register. */
-	err = register_netdev(dev);
-	if (err)
-		goto out_free;
+	/* Now we're पढ़ोy to रेजिस्टर. */
+	err = रेजिस्टर_netdev(dev);
+	अगर (err)
+		जाओ out_मुक्त;
 
 	tnc_init(sp);
 
-	return 0;
+	वापस 0;
 
-out_free:
-	kfree(xbuff);
-	kfree(rbuff);
+out_मुक्त:
+	kमुक्त(xbuff);
+	kमुक्त(rbuff);
 
-	free_netdev(dev);
+	मुक्त_netdev(dev);
 
 out:
-	return err;
-}
+	वापस err;
+पूर्ण
 
 
 /*
- * Close down a 6pack channel.
+ * Close करोwn a 6pack channel.
  * This means flushing out any pending queues, and then restoring the
- * TTY line discipline to what it was before it got hooked to 6pack
+ * TTY line discipline to what it was beक्रमe it got hooked to 6pack
  * (which usually is TTY again).
  */
-static void sixpack_close(struct tty_struct *tty)
-{
-	struct sixpack *sp;
+अटल व्योम sixpack_बंद(काष्ठा tty_काष्ठा *tty)
+अणु
+	काष्ठा sixpack *sp;
 
-	write_lock_irq(&disc_data_lock);
+	ग_लिखो_lock_irq(&disc_data_lock);
 	sp = tty->disc_data;
-	tty->disc_data = NULL;
-	write_unlock_irq(&disc_data_lock);
-	if (!sp)
-		return;
+	tty->disc_data = शून्य;
+	ग_लिखो_unlock_irq(&disc_data_lock);
+	अगर (!sp)
+		वापस;
 
 	/*
 	 * We have now ensured that nobody can start using ap from now on, but
-	 * we have to wait for all existing users to finish.
+	 * we have to रुको क्रम all existing users to finish.
 	 */
-	if (!refcount_dec_and_test(&sp->refcnt))
-		wait_for_completion(&sp->dead);
+	अगर (!refcount_dec_and_test(&sp->refcnt))
+		रुको_क्रम_completion(&sp->dead);
 
-	/* We must stop the queue to avoid potentially scribbling
-	 * on the free buffers. The sp->dead completion is not sufficient
+	/* We must stop the queue to aव्योम potentially scribbling
+	 * on the मुक्त buffers. The sp->dead completion is not sufficient
 	 * to protect us from sp->xbuff access.
 	 */
-	netif_stop_queue(sp->dev);
+	netअगर_stop_queue(sp->dev);
 
-	del_timer_sync(&sp->tx_t);
-	del_timer_sync(&sp->resync_t);
+	del_समयr_sync(&sp->tx_t);
+	del_समयr_sync(&sp->resync_t);
 
 	/* Free all 6pack frame buffers. */
-	kfree(sp->rbuff);
-	kfree(sp->xbuff);
+	kमुक्त(sp->rbuff);
+	kमुक्त(sp->xbuff);
 
-	unregister_netdev(sp->dev);
-}
+	unरेजिस्टर_netdev(sp->dev);
+पूर्ण
 
-/* Perform I/O control on an active 6pack channel. */
-static int sixpack_ioctl(struct tty_struct *tty, struct file *file,
-	unsigned int cmd, unsigned long arg)
-{
-	struct sixpack *sp = sp_get(tty);
-	struct net_device *dev;
-	unsigned int tmp, err;
+/* Perक्रमm I/O control on an active 6pack channel. */
+अटल पूर्णांक sixpack_ioctl(काष्ठा tty_काष्ठा *tty, काष्ठा file *file,
+	अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
+अणु
+	काष्ठा sixpack *sp = sp_get(tty);
+	काष्ठा net_device *dev;
+	अचिन्हित पूर्णांक पंचांगp, err;
 
-	if (!sp)
-		return -ENXIO;
+	अगर (!sp)
+		वापस -ENXIO;
 	dev = sp->dev;
 
-	switch(cmd) {
-	case SIOCGIFNAME:
-		err = copy_to_user((void __user *) arg, dev->name,
-		                   strlen(dev->name) + 1) ? -EFAULT : 0;
-		break;
+	चयन(cmd) अणु
+	हाल SIOCGIFNAME:
+		err = copy_to_user((व्योम __user *) arg, dev->name,
+		                   म_माप(dev->name) + 1) ? -EFAULT : 0;
+		अवरोध;
 
-	case SIOCGIFENCAP:
-		err = put_user(0, (int __user *) arg);
-		break;
+	हाल SIOCGIFENCAP:
+		err = put_user(0, (पूर्णांक __user *) arg);
+		अवरोध;
 
-	case SIOCSIFENCAP:
-		if (get_user(tmp, (int __user *) arg)) {
+	हाल SIOCSIFENCAP:
+		अगर (get_user(पंचांगp, (पूर्णांक __user *) arg)) अणु
 			err = -EFAULT;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		sp->mode = tmp;
+		sp->mode = पंचांगp;
 		dev->addr_len        = AX25_ADDR_LEN;
 		dev->hard_header_len = AX25_KISS_HEADER_LEN +
 		                       AX25_MAX_HEADER_LEN + 3;
 		dev->type            = ARPHRD_AX25;
 
 		err = 0;
-		break;
+		अवरोध;
 
-	 case SIOCSIFHWADDR: {
-		char addr[AX25_ADDR_LEN];
+	 हाल SIOCSIFHWADDR: अणु
+		अक्षर addr[AX25_ADDR_LEN];
 
-		if (copy_from_user(&addr,
-		                   (void __user *) arg, AX25_ADDR_LEN)) {
+		अगर (copy_from_user(&addr,
+		                   (व्योम __user *) arg, AX25_ADDR_LEN)) अणु
 				err = -EFAULT;
-				break;
-			}
+				अवरोध;
+			पूर्ण
 
-			netif_tx_lock_bh(dev);
-			memcpy(dev->dev_addr, &addr, AX25_ADDR_LEN);
-			netif_tx_unlock_bh(dev);
+			netअगर_tx_lock_bh(dev);
+			स_नकल(dev->dev_addr, &addr, AX25_ADDR_LEN);
+			netअगर_tx_unlock_bh(dev);
 
 			err = 0;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-	default:
+	शेष:
 		err = tty_mode_ioctl(tty, file, cmd, arg);
-	}
+	पूर्ण
 
 	sp_put(sp);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static struct tty_ldisc_ops sp_ldisc = {
+अटल काष्ठा tty_ldisc_ops sp_ldisc = अणु
 	.owner		= THIS_MODULE,
 	.name		= "6pack",
-	.open		= sixpack_open,
-	.close		= sixpack_close,
+	.खोलो		= sixpack_खोलो,
+	.बंद		= sixpack_बंद,
 	.ioctl		= sixpack_ioctl,
 	.receive_buf	= sixpack_receive_buf,
-	.write_wakeup	= sixpack_write_wakeup,
-};
+	.ग_लिखो_wakeup	= sixpack_ग_लिखो_wakeup,
+पूर्ण;
 
-/* Initialize 6pack control device -- register 6pack line discipline */
+/* Initialize 6pack control device -- रेजिस्टर 6pack line discipline */
 
-static const char msg_banner[]  __initconst = KERN_INFO \
+अटल स्थिर अक्षर msg_banner[]  __initस्थिर = KERN_INFO \
 	"AX.25: 6pack driver, " SIXPACK_VERSION "\n";
-static const char msg_regfail[] __initconst = KERN_ERR  \
+अटल स्थिर अक्षर msg_regfail[] __initस्थिर = KERN_ERR  \
 	"6pack: can't register line discipline (err = %d)\n";
 
-static int __init sixpack_init_driver(void)
-{
-	int status;
+अटल पूर्णांक __init sixpack_init_driver(व्योम)
+अणु
+	पूर्णांक status;
 
-	printk(msg_banner);
+	prपूर्णांकk(msg_banner);
 
 	/* Register the provided line protocol discipline */
-	if ((status = tty_register_ldisc(N_6PACK, &sp_ldisc)) != 0)
-		printk(msg_regfail, status);
+	अगर ((status = tty_रेजिस्टर_ldisc(N_6PACK, &sp_ldisc)) != 0)
+		prपूर्णांकk(msg_regfail, status);
 
-	return status;
-}
+	वापस status;
+पूर्ण
 
-static const char msg_unregfail[] = KERN_ERR \
+अटल स्थिर अक्षर msg_unregfail[] = KERN_ERR \
 	"6pack: can't unregister line discipline (err = %d)\n";
 
-static void __exit sixpack_exit_driver(void)
-{
-	int ret;
+अटल व्योम __निकास sixpack_निकास_driver(व्योम)
+अणु
+	पूर्णांक ret;
 
-	if ((ret = tty_unregister_ldisc(N_6PACK)))
-		printk(msg_unregfail, ret);
-}
+	अगर ((ret = tty_unरेजिस्टर_ldisc(N_6PACK)))
+		prपूर्णांकk(msg_unregfail, ret);
+पूर्ण
 
-/* encode an AX.25 packet into 6pack */
+/* encode an AX.25 packet पूर्णांकo 6pack */
 
-static int encode_sixpack(unsigned char *tx_buf, unsigned char *tx_buf_raw,
-	int length, unsigned char tx_delay)
-{
-	int count = 0;
-	unsigned char checksum = 0, buf[400];
-	int raw_count = 0;
+अटल पूर्णांक encode_sixpack(अचिन्हित अक्षर *tx_buf, अचिन्हित अक्षर *tx_buf_raw,
+	पूर्णांक length, अचिन्हित अक्षर tx_delay)
+अणु
+	पूर्णांक count = 0;
+	अचिन्हित अक्षर checksum = 0, buf[400];
+	पूर्णांक raw_count = 0;
 
 	tx_buf_raw[raw_count++] = SIXP_PRIO_CMD_MASK | SIXP_TX_MASK;
-	tx_buf_raw[raw_count++] = SIXP_SEOF;
+	tx_buf_raw[raw_count++] = SIXP_Sखातापूर्ण;
 
 	buf[0] = tx_delay;
-	for (count = 1; count < length; count++)
+	क्रम (count = 1; count < length; count++)
 		buf[count] = tx_buf[count];
 
-	for (count = 0; count < length; count++)
+	क्रम (count = 0; count < length; count++)
 		checksum += buf[count];
-	buf[length] = (unsigned char) 0xff - checksum;
+	buf[length] = (अचिन्हित अक्षर) 0xff - checksum;
 
-	for (count = 0; count <= length; count++) {
-		if ((count % 3) == 0) {
+	क्रम (count = 0; count <= length; count++) अणु
+		अगर ((count % 3) == 0) अणु
 			tx_buf_raw[raw_count++] = (buf[count] & 0x3f);
 			tx_buf_raw[raw_count] = ((buf[count] >> 2) & 0x30);
-		} else if ((count % 3) == 1) {
+		पूर्ण अन्यथा अगर ((count % 3) == 1) अणु
 			tx_buf_raw[raw_count++] |= (buf[count] & 0x0f);
 			tx_buf_raw[raw_count] =	((buf[count] >> 2) & 0x3c);
-		} else {
+		पूर्ण अन्यथा अणु
 			tx_buf_raw[raw_count++] |= (buf[count] & 0x03);
 			tx_buf_raw[raw_count++] = (buf[count] >> 2);
-		}
-	}
-	if ((length % 3) != 2)
+		पूर्ण
+	पूर्ण
+	अगर ((length % 3) != 2)
 		raw_count++;
-	tx_buf_raw[raw_count++] = SIXP_SEOF;
-	return raw_count;
-}
+	tx_buf_raw[raw_count++] = SIXP_Sखातापूर्ण;
+	वापस raw_count;
+पूर्ण
 
-/* decode 4 sixpack-encoded bytes into 3 data bytes */
+/* decode 4 sixpack-encoded bytes पूर्णांकo 3 data bytes */
 
-static void decode_data(struct sixpack *sp, unsigned char inbyte)
-{
-	unsigned char *buf;
+अटल व्योम decode_data(काष्ठा sixpack *sp, अचिन्हित अक्षर inbyte)
+अणु
+	अचिन्हित अक्षर *buf;
 
-	if (sp->rx_count != 3) {
+	अगर (sp->rx_count != 3) अणु
 		sp->raw_buf[sp->rx_count++] = inbyte;
 
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	buf = sp->raw_buf;
 	sp->cooked_buf[sp->rx_count_cooked++] =
@@ -841,127 +842,127 @@ static void decode_data(struct sixpack *sp, unsigned char inbyte)
 	sp->cooked_buf[sp->rx_count_cooked++] =
 		(buf[2] & 0x03) | (inbyte << 2);
 	sp->rx_count = 0;
-}
+पूर्ण
 
-/* identify and execute a 6pack priority command byte */
+/* identअगरy and execute a 6pack priority command byte */
 
-static void decode_prio_command(struct sixpack *sp, unsigned char cmd)
-{
-	int actual;
+अटल व्योम decode_prio_command(काष्ठा sixpack *sp, अचिन्हित अक्षर cmd)
+अणु
+	पूर्णांक actual;
 
-	if ((cmd & SIXP_PRIO_DATA_MASK) != 0) {     /* idle ? */
+	अगर ((cmd & SIXP_PRIO_DATA_MASK) != 0) अणु     /* idle ? */
 
 	/* RX and DCD flags can only be set in the same prio command,
-	   if the DCD flag has been set without the RX flag in the previous
-	   prio command. If DCD has not been set before, something in the
-	   transmission has gone wrong. In this case, RX and DCD are
+	   अगर the DCD flag has been set without the RX flag in the previous
+	   prio command. If DCD has not been set beक्रमe, something in the
+	   transmission has gone wrong. In this हाल, RX and DCD are
 	   cleared in order to prevent the decode_data routine from
-	   reading further data that might be corrupt. */
+	   पढ़ोing further data that might be corrupt. */
 
-		if (((sp->status & SIXP_DCD_MASK) == 0) &&
-			((cmd & SIXP_RX_DCD_MASK) == SIXP_RX_DCD_MASK)) {
-				if (sp->status != 1)
-					printk(KERN_DEBUG "6pack: protocol violation\n");
-				else
+		अगर (((sp->status & SIXP_DCD_MASK) == 0) &&
+			((cmd & SIXP_RX_DCD_MASK) == SIXP_RX_DCD_MASK)) अणु
+				अगर (sp->status != 1)
+					prपूर्णांकk(KERN_DEBUG "6pack: protocol violation\n");
+				अन्यथा
 					sp->status = 0;
 				cmd &= ~SIXP_RX_DCD_MASK;
-		}
+		पूर्ण
 		sp->status = cmd & SIXP_PRIO_DATA_MASK;
-	} else { /* output watchdog char if idle */
-		if ((sp->status2 != 0) && (sp->duplex == 1)) {
+	पूर्ण अन्यथा अणु /* output watchकरोg अक्षर अगर idle */
+		अगर ((sp->status2 != 0) && (sp->duplex == 1)) अणु
 			sp->led_state = 0x70;
-			sp->tty->ops->write(sp->tty, &sp->led_state, 1);
+			sp->tty->ops->ग_लिखो(sp->tty, &sp->led_state, 1);
 			sp->tx_enable = 1;
-			actual = sp->tty->ops->write(sp->tty, sp->xbuff, sp->status2);
+			actual = sp->tty->ops->ग_लिखो(sp->tty, sp->xbuff, sp->status2);
 			sp->xleft -= actual;
 			sp->xhead += actual;
 			sp->led_state = 0x60;
 			sp->status2 = 0;
 
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	/* needed to trigger the TNC watchdog */
-	sp->tty->ops->write(sp->tty, &sp->led_state, 1);
+	/* needed to trigger the TNC watchकरोg */
+	sp->tty->ops->ग_लिखो(sp->tty, &sp->led_state, 1);
 
-        /* if the state byte has been received, the TNC is present,
-           so the resync timer can be reset. */
+        /* अगर the state byte has been received, the TNC is present,
+           so the resync समयr can be reset. */
 
-	if (sp->tnc_state == TNC_IN_SYNC)
-		mod_timer(&sp->resync_t, jiffies + SIXP_INIT_RESYNC_TIMEOUT);
+	अगर (sp->tnc_state == TNC_IN_SYNC)
+		mod_समयr(&sp->resync_t, jअगरfies + SIXP_INIT_RESYNC_TIMEOUT);
 
 	sp->status1 = cmd & SIXP_PRIO_DATA_MASK;
-}
+पूर्ण
 
-/* identify and execute a standard 6pack command byte */
+/* identअगरy and execute a standard 6pack command byte */
 
-static void decode_std_command(struct sixpack *sp, unsigned char cmd)
-{
-	unsigned char checksum = 0, rest = 0;
-	short i;
+अटल व्योम decode_std_command(काष्ठा sixpack *sp, अचिन्हित अक्षर cmd)
+अणु
+	अचिन्हित अक्षर checksum = 0, rest = 0;
+	लघु i;
 
-	switch (cmd & SIXP_CMD_MASK) {     /* normal command */
-	case SIXP_SEOF:
-		if ((sp->rx_count == 0) && (sp->rx_count_cooked == 0)) {
-			if ((sp->status & SIXP_RX_DCD_MASK) ==
-				SIXP_RX_DCD_MASK) {
+	चयन (cmd & SIXP_CMD_MASK) अणु     /* normal command */
+	हाल SIXP_Sखातापूर्ण:
+		अगर ((sp->rx_count == 0) && (sp->rx_count_cooked == 0)) अणु
+			अगर ((sp->status & SIXP_RX_DCD_MASK) ==
+				SIXP_RX_DCD_MASK) अणु
 				sp->led_state = 0x68;
-				sp->tty->ops->write(sp->tty, &sp->led_state, 1);
-			}
-		} else {
+				sp->tty->ops->ग_लिखो(sp->tty, &sp->led_state, 1);
+			पूर्ण
+		पूर्ण अन्यथा अणु
 			sp->led_state = 0x60;
 			/* fill trailing bytes with zeroes */
-			sp->tty->ops->write(sp->tty, &sp->led_state, 1);
+			sp->tty->ops->ग_लिखो(sp->tty, &sp->led_state, 1);
 			rest = sp->rx_count;
-			if (rest != 0)
-				 for (i = rest; i <= 3; i++)
+			अगर (rest != 0)
+				 क्रम (i = rest; i <= 3; i++)
 					decode_data(sp, 0);
-			if (rest == 2)
+			अगर (rest == 2)
 				sp->rx_count_cooked -= 2;
-			else if (rest == 3)
+			अन्यथा अगर (rest == 3)
 				sp->rx_count_cooked -= 1;
-			for (i = 0; i < sp->rx_count_cooked; i++)
+			क्रम (i = 0; i < sp->rx_count_cooked; i++)
 				checksum += sp->cooked_buf[i];
-			if (checksum != SIXP_CHKSUM) {
-				printk(KERN_DEBUG "6pack: bad checksum %2.2x\n", checksum);
-			} else {
+			अगर (checksum != SIXP_CHKSUM) अणु
+				prपूर्णांकk(KERN_DEBUG "6pack: bad checksum %2.2x\n", checksum);
+			पूर्ण अन्यथा अणु
 				sp->rcount = sp->rx_count_cooked-2;
 				sp_bump(sp, 0);
-			}
+			पूर्ण
 			sp->rx_count_cooked = 0;
-		}
-		break;
-	case SIXP_TX_URUN: printk(KERN_DEBUG "6pack: TX underrun\n");
-		break;
-	case SIXP_RX_ORUN: printk(KERN_DEBUG "6pack: RX overrun\n");
-		break;
-	case SIXP_RX_BUF_OVL:
-		printk(KERN_DEBUG "6pack: RX buffer overflow\n");
-	}
-}
+		पूर्ण
+		अवरोध;
+	हाल SIXP_TX_URUN: prपूर्णांकk(KERN_DEBUG "6pack: TX underrun\n");
+		अवरोध;
+	हाल SIXP_RX_ORUN: prपूर्णांकk(KERN_DEBUG "6pack: RX overrun\n");
+		अवरोध;
+	हाल SIXP_RX_BUF_OVL:
+		prपूर्णांकk(KERN_DEBUG "6pack: RX buffer overflow\n");
+	पूर्ण
+पूर्ण
 
 /* decode a 6pack packet */
 
-static void
-sixpack_decode(struct sixpack *sp, const unsigned char *pre_rbuff, int count)
-{
-	unsigned char inbyte;
-	int count1;
+अटल व्योम
+sixpack_decode(काष्ठा sixpack *sp, स्थिर अचिन्हित अक्षर *pre_rbuff, पूर्णांक count)
+अणु
+	अचिन्हित अक्षर inbyte;
+	पूर्णांक count1;
 
-	for (count1 = 0; count1 < count; count1++) {
+	क्रम (count1 = 0; count1 < count; count1++) अणु
 		inbyte = pre_rbuff[count1];
-		if (inbyte == SIXP_FOUND_TNC) {
+		अगर (inbyte == SIXP_FOUND_TNC) अणु
 			tnc_set_sync_state(sp, TNC_IN_SYNC);
-			del_timer(&sp->resync_t);
-		}
-		if ((inbyte & SIXP_PRIO_CMD_MASK) != 0)
+			del_समयr(&sp->resync_t);
+		पूर्ण
+		अगर ((inbyte & SIXP_PRIO_CMD_MASK) != 0)
 			decode_prio_command(sp, inbyte);
-		else if ((inbyte & SIXP_STD_CMD_MASK) != 0)
+		अन्यथा अगर ((inbyte & SIXP_STD_CMD_MASK) != 0)
 			decode_std_command(sp, inbyte);
-		else if ((sp->status & SIXP_RX_DCD_MASK) == SIXP_RX_DCD_MASK)
+		अन्यथा अगर ((sp->status & SIXP_RX_DCD_MASK) == SIXP_RX_DCD_MASK)
 			decode_data(sp, inbyte);
-	}
-}
+	पूर्ण
+पूर्ण
 
 MODULE_AUTHOR("Ralf Baechle DO1GRB <ralf@linux-mips.org>");
 MODULE_DESCRIPTION("6pack driver for AX.25");
@@ -969,4 +970,4 @@ MODULE_LICENSE("GPL");
 MODULE_ALIAS_LDISC(N_6PACK);
 
 module_init(sixpack_init_driver);
-module_exit(sixpack_exit_driver);
+module_निकास(sixpack_निकास_driver);

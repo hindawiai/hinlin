@@ -1,9 +1,10 @@
+<शैली गुरु>
 /* Set tz value
  *              by: John Stultz <john.stultz@linaro.org>
  *              (C) Copyright Linaro 2016
  *              Licensed under the GPLv2
  *
- *   This program is free software: you can redistribute it and/or modify
+ *   This program is मुक्त software: you can redistribute it and/or modअगरy
  *   it under the terms of the GNU General Public License as published by
  *   the Free Software Foundation, either version 2 of the License, or
  *   (at your option) any later version.
@@ -11,100 +12,100 @@
  *   This program is distributed in the hope that it will be useful,
  *   but WITHOUT ANY WARRANTY; without even the implied warranty of
  *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *   GNU General Public License for more details.
+ *   GNU General Public License क्रम more details.
  */
 
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <time.h>
-#include <sys/time.h>
-#include <sys/timex.h>
-#include <string.h>
-#include <signal.h>
-#include <unistd.h>
-#include "../kselftest.h"
+#समावेश <मानकपन.स>
+#समावेश <मानककोष.स>
+#समावेश <समय.स>
+#समावेश <sys/समय.स>
+#समावेश <sys/समयx.h>
+#समावेश <माला.स>
+#समावेश <संकेत.स>
+#समावेश <unistd.h>
+#समावेश "../kselftest.h"
 
-int set_tz(int min, int dst)
-{
-	struct timezone tz;
+पूर्णांक set_tz(पूर्णांक min, पूर्णांक dst)
+अणु
+	काष्ठा समयzone tz;
 
 	tz.tz_minuteswest = min;
-	tz.tz_dsttime = dst;
+	tz.tz_dstसमय = dst;
 
-	return settimeofday(0, &tz);
-}
+	वापस समय_रखोofday(0, &tz);
+पूर्ण
 
-int get_tz_min(void)
-{
-	struct timezone tz;
-	struct timeval tv;
+पूर्णांक get_tz_min(व्योम)
+अणु
+	काष्ठा समयzone tz;
+	काष्ठा समयval tv;
 
-	memset(&tz, 0, sizeof(tz));
-	gettimeofday(&tv, &tz);
-	return tz.tz_minuteswest;
-}
+	स_रखो(&tz, 0, माप(tz));
+	समय_लोofday(&tv, &tz);
+	वापस tz.tz_minuteswest;
+पूर्ण
 
-int get_tz_dst(void)
-{
-	struct timezone tz;
-	struct timeval tv;
+पूर्णांक get_tz_dst(व्योम)
+अणु
+	काष्ठा समयzone tz;
+	काष्ठा समयval tv;
 
-	memset(&tz, 0, sizeof(tz));
-	gettimeofday(&tv, &tz);
-	return tz.tz_dsttime;
-}
+	स_रखो(&tz, 0, माप(tz));
+	समय_लोofday(&tv, &tz);
+	वापस tz.tz_dstसमय;
+पूर्ण
 
-int main(int argc, char **argv)
-{
-	int i, ret;
-	int min, dst;
+पूर्णांक मुख्य(पूर्णांक argc, अक्षर **argv)
+अणु
+	पूर्णांक i, ret;
+	पूर्णांक min, dst;
 
 	min = get_tz_min();
 	dst = get_tz_dst();
-	printf("tz_minuteswest started at %i, dst at %i\n", min, dst);
+	म_लिखो("tz_minuteswest started at %i, dst at %i\n", min, dst);
 
-	printf("Checking tz_minuteswest can be properly set: ");
-	fflush(stdout);
-	for (i = -15*60; i < 15*60; i += 30) {
+	म_लिखो("Checking tz_minuteswest can be properly set: ");
+	ख_साफ(मानक_निकास);
+	क्रम (i = -15*60; i < 15*60; i += 30) अणु
 		ret = set_tz(i, dst);
 		ret = get_tz_min();
-		if (ret != i) {
-			printf("[FAILED] expected: %i got %i\n", i, ret);
-			goto err;
-		}
-	}
-	printf("[OK]\n");
+		अगर (ret != i) अणु
+			म_लिखो("[FAILED] expected: %i got %i\n", i, ret);
+			जाओ err;
+		पूर्ण
+	पूर्ण
+	म_लिखो("[OK]\n");
 
-	printf("Checking invalid tz_minuteswest values are caught: ");
-	fflush(stdout);
+	म_लिखो("Checking invalid tz_minuteswest values are caught: ");
+	ख_साफ(मानक_निकास);
 
-	if (!set_tz(-15*60-1, dst)) {
-		printf("[FAILED] %i didn't return failure!\n", -15*60-1);
-		goto err;
-	}
+	अगर (!set_tz(-15*60-1, dst)) अणु
+		म_लिखो("[FAILED] %i didn't return failure!\n", -15*60-1);
+		जाओ err;
+	पूर्ण
 
-	if (!set_tz(15*60+1, dst)) {
-		printf("[FAILED] %i didn't return failure!\n", 15*60+1);
-		goto err;
-	}
+	अगर (!set_tz(15*60+1, dst)) अणु
+		म_लिखो("[FAILED] %i didn't return failure!\n", 15*60+1);
+		जाओ err;
+	पूर्ण
 
-	if (!set_tz(-24*60, dst)) {
-		printf("[FAILED] %i didn't return failure!\n", -24*60);
-		goto err;
-	}
+	अगर (!set_tz(-24*60, dst)) अणु
+		म_लिखो("[FAILED] %i didn't return failure!\n", -24*60);
+		जाओ err;
+	पूर्ण
 
-	if (!set_tz(24*60, dst)) {
-		printf("[FAILED] %i didn't return failure!\n", 24*60);
-		goto err;
-	}
+	अगर (!set_tz(24*60, dst)) अणु
+		म_लिखो("[FAILED] %i didn't return failure!\n", 24*60);
+		जाओ err;
+	पूर्ण
 
-	printf("[OK]\n");
+	म_लिखो("[OK]\n");
 
 	set_tz(min, dst);
-	return ksft_exit_pass();
+	वापस ksft_निकास_pass();
 
 err:
 	set_tz(min, dst);
-	return ksft_exit_fail();
-}
+	वापस ksft_निकास_fail();
+पूर्ण

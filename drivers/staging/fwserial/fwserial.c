@@ -1,240 +1,241 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
  * FireWire Serial driver
  *
  * Copyright (C) 2012 Peter Hurley <peter@hurleysoftware.com>
  */
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include <linux/sched.h>
-#include <linux/slab.h>
-#include <linux/device.h>
-#include <linux/mod_devicetable.h>
-#include <linux/rculist.h>
-#include <linux/workqueue.h>
-#include <linux/ratelimit.h>
-#include <linux/bug.h>
-#include <linux/uaccess.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/device.h>
+#समावेश <linux/mod_devicetable.h>
+#समावेश <linux/rculist.h>
+#समावेश <linux/workqueue.h>
+#समावेश <linux/ratelimit.h>
+#समावेश <linux/bug.h>
+#समावेश <linux/uaccess.h>
 
-#include "fwserial.h"
+#समावेश "fwserial.h"
 
-inline u64 be32_to_u64(__be32 hi, __be32 lo)
-{
-	return ((u64)be32_to_cpu(hi) << 32 | be32_to_cpu(lo));
-}
+अंतरभूत u64 be32_to_u64(__be32 hi, __be32 lo)
+अणु
+	वापस ((u64)be32_to_cpu(hi) << 32 | be32_to_cpu(lo));
+पूर्ण
 
-#define LINUX_VENDOR_ID   0xd00d1eU  /* same id used in card root directory   */
-#define FWSERIAL_VERSION  0x00e81cU  /* must be unique within LINUX_VENDOR_ID */
+#घोषणा LINUX_VENDOR_ID   0xd00d1eU  /* same id used in card root directory   */
+#घोषणा FWSERIAL_VERSION  0x00e81cU  /* must be unique within LINUX_VENDOR_ID */
 
 /* configurable options */
-static int num_ttys = 4;	    /* # of std ttys to create per fw_card    */
-				    /* - doubles as loopback port index       */
-static bool auto_connect = true;    /* try to VIRT_CABLE to every peer        */
-static bool create_loop_dev = true; /* create a loopback device for each card */
+अटल पूर्णांक num_ttys = 4;	    /* # of std ttys to create per fw_card    */
+				    /* - द्विगुनs as loopback port index       */
+अटल bool स्वतः_connect = true;    /* try to VIRT_CABLE to every peer        */
+अटल bool create_loop_dev = true; /* create a loopback device क्रम each card */
 
-module_param_named(ttys, num_ttys, int, 0644);
-module_param_named(auto, auto_connect, bool, 0644);
+module_param_named(ttys, num_ttys, पूर्णांक, 0644);
+module_param_named(स्वतः, स्वतः_connect, bool, 0644);
 module_param_named(loop, create_loop_dev, bool, 0644);
 
 /*
- * Threshold below which the tty is woken for writing
+ * Threshold below which the tty is woken क्रम writing
  * - should be equal to WAKEUP_CHARS in drivers/tty/n_tty.c because
- *   even if the writer is woken, n_tty_poll() won't set EPOLLOUT until
- *   our fifo is below this level
+ *   even अगर the ग_लिखोr is woken, n_tty_poll() won't set EPOLLOUT until
+ *   our fअगरo is below this level
  */
-#define WAKEUP_CHARS             256
+#घोषणा WAKEUP_CHARS             256
 
 /**
- * fwserial_list: list of every fw_serial created for each fw_card
+ * fwserial_list: list of every fw_serial created क्रम each fw_card
  * See discussion in fwserial_probe.
  */
-static LIST_HEAD(fwserial_list);
-static DEFINE_MUTEX(fwserial_list_mutex);
+अटल LIST_HEAD(fwserial_list);
+अटल DEFINE_MUTEX(fwserial_list_mutex);
 
 /**
  * port_table: array of tty ports allocated to each fw_card
  *
  * tty ports are allocated during probe when an fw_serial is first
- * created for a given fw_card. Ports are allocated in a contiguous block,
+ * created क्रम a given fw_card. Ports are allocated in a contiguous block,
  * each block consisting of 'num_ports' ports.
  */
-static struct fwtty_port *port_table[MAX_TOTAL_PORTS];
-static DEFINE_MUTEX(port_table_lock);
-static bool port_table_corrupt;
-#define FWTTY_INVALID_INDEX  MAX_TOTAL_PORTS
+अटल काष्ठा fwtty_port *port_table[MAX_TOTAL_PORTS];
+अटल DEFINE_MUTEX(port_table_lock);
+अटल bool port_table_corrupt;
+#घोषणा FWTTY_INVALID_INDEX  MAX_TOTAL_PORTS
 
-#define loop_idx(port)	(((port)->index) / num_ports)
-#define table_idx(loop)	((loop) * num_ports + num_ttys)
+#घोषणा loop_idx(port)	(((port)->index) / num_ports)
+#घोषणा table_idx(loop)	((loop) * num_ports + num_ttys)
 
 /* total # of tty ports created per fw_card */
-static int num_ports;
+अटल पूर्णांक num_ports;
 
-/* slab used as pool for struct fwtty_transactions */
-static struct kmem_cache *fwtty_txn_cache;
+/* slab used as pool क्रम काष्ठा fwtty_transactions */
+अटल काष्ठा kmem_cache *fwtty_txn_cache;
 
-struct tty_driver *fwtty_driver;
-static struct tty_driver *fwloop_driver;
+काष्ठा tty_driver *fwtty_driver;
+अटल काष्ठा tty_driver *fwloop_driver;
 
-static struct dentry *fwserial_debugfs;
+अटल काष्ठा dentry *fwserial_debugfs;
 
-struct fwtty_transaction;
-typedef void (*fwtty_transaction_cb)(struct fw_card *card, int rcode,
-				     void *data, size_t length,
-				     struct fwtty_transaction *txn);
+काष्ठा fwtty_transaction;
+प्रकार व्योम (*fwtty_transaction_cb)(काष्ठा fw_card *card, पूर्णांक rcode,
+				     व्योम *data, माप_प्रकार length,
+				     काष्ठा fwtty_transaction *txn);
 
-struct fwtty_transaction {
-	struct fw_transaction      fw_txn;
+काष्ठा fwtty_transaction अणु
+	काष्ठा fw_transaction      fw_txn;
 	fwtty_transaction_cb       callback;
-	struct fwtty_port	   *port;
-	union {
-		struct dma_pending dma_pended;
-	};
-};
+	काष्ठा fwtty_port	   *port;
+	जोड़ अणु
+		काष्ठा dma_pending dma_pended;
+	पूर्ण;
+पूर्ण;
 
-#define to_device(a, b)			(a->b)
-#define fwtty_err(p, fmt, ...)						\
+#घोषणा to_device(a, b)			(a->b)
+#घोषणा fwtty_err(p, fmt, ...)						\
 	dev_err(to_device(p, device), fmt, ##__VA_ARGS__)
-#define fwtty_info(p, fmt, ...)						\
+#घोषणा fwtty_info(p, fmt, ...)						\
 	dev_info(to_device(p, device), fmt, ##__VA_ARGS__)
-#define fwtty_notice(p, fmt, ...)					\
+#घोषणा fwtty_notice(p, fmt, ...)					\
 	dev_notice(to_device(p, device), fmt, ##__VA_ARGS__)
-#define fwtty_dbg(p, fmt, ...)						\
+#घोषणा fwtty_dbg(p, fmt, ...)						\
 	dev_dbg(to_device(p, device), "%s: " fmt, __func__, ##__VA_ARGS__)
-#define fwtty_err_ratelimited(p, fmt, ...)				\
+#घोषणा fwtty_err_ratelimited(p, fmt, ...)				\
 	dev_err_ratelimited(to_device(p, device), fmt, ##__VA_ARGS__)
 
-#ifdef DEBUG
-static inline void debug_short_write(struct fwtty_port *port, int c, int n)
-{
-	int avail;
+#अगर_घोषित DEBUG
+अटल अंतरभूत व्योम debug_लघु_ग_लिखो(काष्ठा fwtty_port *port, पूर्णांक c, पूर्णांक n)
+अणु
+	पूर्णांक avail;
 
-	if (n < c) {
+	अगर (n < c) अणु
 		spin_lock_bh(&port->lock);
-		avail = dma_fifo_avail(&port->tx_fifo);
+		avail = dma_fअगरo_avail(&port->tx_fअगरo);
 		spin_unlock_bh(&port->lock);
 		fwtty_dbg(port, "short write: avail:%d req:%d wrote:%d\n",
 			  avail, c, n);
-	}
-}
-#else
-#define debug_short_write(port, c, n)
-#endif
+	पूर्ण
+पूर्ण
+#अन्यथा
+#घोषणा debug_लघु_ग_लिखो(port, c, n)
+#पूर्ण_अगर
 
-static struct fwtty_peer *__fwserial_peer_by_node_id(struct fw_card *card,
-						     int generation, int id);
+अटल काष्ठा fwtty_peer *__fwserial_peer_by_node_id(काष्ठा fw_card *card,
+						     पूर्णांक generation, पूर्णांक id);
 
-#ifdef FWTTY_PROFILING
+#अगर_घोषित FWTTY_PROFILING
 
-static void fwtty_profile_fifo(struct fwtty_port *port, unsigned int *stat)
-{
+अटल व्योम fwtty_profile_fअगरo(काष्ठा fwtty_port *port, अचिन्हित पूर्णांक *stat)
+अणु
 	spin_lock_bh(&port->lock);
-	fwtty_profile_data(stat, dma_fifo_avail(&port->tx_fifo));
+	fwtty_profile_data(stat, dma_fअगरo_avail(&port->tx_fअगरo));
 	spin_unlock_bh(&port->lock);
-}
+पूर्ण
 
-static void fwtty_dump_profile(struct seq_file *m, struct stats *stats)
-{
-	/* for each stat, print sum of 0 to 2^k, then individually */
-	int k = 4;
-	unsigned int sum;
-	int j;
-	char t[10];
+अटल व्योम fwtty_dump_profile(काष्ठा seq_file *m, काष्ठा stats *stats)
+अणु
+	/* क्रम each stat, prपूर्णांक sum of 0 to 2^k, then inभागidually */
+	पूर्णांक k = 4;
+	अचिन्हित पूर्णांक sum;
+	पूर्णांक j;
+	अक्षर t[10];
 
-	snprintf(t, 10, "< %d", 1 << k);
-	seq_printf(m, "\n%14s  %6s", " ", t);
-	for (j = k + 1; j < DISTRIBUTION_MAX_INDEX; ++j)
-		seq_printf(m, "%6d", 1 << j);
+	snम_लिखो(t, 10, "< %d", 1 << k);
+	seq_म_लिखो(m, "\n%14s  %6s", " ", t);
+	क्रम (j = k + 1; j < DISTRIBUTION_MAX_INDEX; ++j)
+		seq_म_लिखो(m, "%6d", 1 << j);
 
 	++k;
-	for (j = 0, sum = 0; j <= k; ++j)
-		sum += stats->reads[j];
-	seq_printf(m, "\n%14s: %6d", "reads", sum);
-	for (j = k + 1; j <= DISTRIBUTION_MAX_INDEX; ++j)
-		seq_printf(m, "%6d", stats->reads[j]);
+	क्रम (j = 0, sum = 0; j <= k; ++j)
+		sum += stats->पढ़ोs[j];
+	seq_म_लिखो(m, "\n%14s: %6d", "reads", sum);
+	क्रम (j = k + 1; j <= DISTRIBUTION_MAX_INDEX; ++j)
+		seq_म_लिखो(m, "%6d", stats->पढ़ोs[j]);
 
-	for (j = 0, sum = 0; j <= k; ++j)
-		sum += stats->writes[j];
-	seq_printf(m, "\n%14s: %6d", "writes", sum);
-	for (j = k + 1; j <= DISTRIBUTION_MAX_INDEX; ++j)
-		seq_printf(m, "%6d", stats->writes[j]);
+	क्रम (j = 0, sum = 0; j <= k; ++j)
+		sum += stats->ग_लिखोs[j];
+	seq_म_लिखो(m, "\n%14s: %6d", "writes", sum);
+	क्रम (j = k + 1; j <= DISTRIBUTION_MAX_INDEX; ++j)
+		seq_म_लिखो(m, "%6d", stats->ग_लिखोs[j]);
 
-	for (j = 0, sum = 0; j <= k; ++j)
+	क्रम (j = 0, sum = 0; j <= k; ++j)
 		sum += stats->txns[j];
-	seq_printf(m, "\n%14s: %6d", "txns", sum);
-	for (j = k + 1; j <= DISTRIBUTION_MAX_INDEX; ++j)
-		seq_printf(m, "%6d", stats->txns[j]);
+	seq_म_लिखो(m, "\n%14s: %6d", "txns", sum);
+	क्रम (j = k + 1; j <= DISTRIBUTION_MAX_INDEX; ++j)
+		seq_म_लिखो(m, "%6d", stats->txns[j]);
 
-	for (j = 0, sum = 0; j <= k; ++j)
+	क्रम (j = 0, sum = 0; j <= k; ++j)
 		sum += stats->unthrottle[j];
-	seq_printf(m, "\n%14s: %6d", "avail @ unthr", sum);
-	for (j = k + 1; j <= DISTRIBUTION_MAX_INDEX; ++j)
-		seq_printf(m, "%6d", stats->unthrottle[j]);
-}
+	seq_म_लिखो(m, "\n%14s: %6d", "avail @ unthr", sum);
+	क्रम (j = k + 1; j <= DISTRIBUTION_MAX_INDEX; ++j)
+		seq_म_लिखो(m, "%6d", stats->unthrottle[j]);
+पूर्ण
 
-#else
-#define fwtty_profile_fifo(port, stat)
-#define fwtty_dump_profile(m, stats)
-#endif
+#अन्यथा
+#घोषणा fwtty_profile_fअगरo(port, stat)
+#घोषणा fwtty_dump_profile(m, stats)
+#पूर्ण_अगर
 
 /*
- * Returns the max receive packet size for the given node
+ * Returns the max receive packet size क्रम the given node
  * Devices which are OHCI v1.0/ v1.1/ v1.2-draft or RFC 2734 compliant
- * are required by specification to support max_rec of 8 (512 bytes) or more.
+ * are required by specअगरication to support max_rec of 8 (512 bytes) or more.
  */
-static inline int device_max_receive(struct fw_device *fw_device)
-{
+अटल अंतरभूत पूर्णांक device_max_receive(काष्ठा fw_device *fw_device)
+अणु
 	/* see IEEE 1394-2008 table 8-8 */
-	return min(2 << fw_device->max_rec, 4096);
-}
+	वापस min(2 << fw_device->max_rec, 4096);
+पूर्ण
 
-static void fwtty_log_tx_error(struct fwtty_port *port, int rcode)
-{
-	switch (rcode) {
-	case RCODE_SEND_ERROR:
+अटल व्योम fwtty_log_tx_error(काष्ठा fwtty_port *port, पूर्णांक rcode)
+अणु
+	चयन (rcode) अणु
+	हाल RCODE_SEND_ERROR:
 		fwtty_err_ratelimited(port, "card busy\n");
-		break;
-	case RCODE_ADDRESS_ERROR:
+		अवरोध;
+	हाल RCODE_ADDRESS_ERROR:
 		fwtty_err_ratelimited(port, "bad unit addr or write length\n");
-		break;
-	case RCODE_DATA_ERROR:
+		अवरोध;
+	हाल RCODE_DATA_ERROR:
 		fwtty_err_ratelimited(port, "failed rx\n");
-		break;
-	case RCODE_NO_ACK:
+		अवरोध;
+	हाल RCODE_NO_ACK:
 		fwtty_err_ratelimited(port, "missing ack\n");
-		break;
-	case RCODE_BUSY:
+		अवरोध;
+	हाल RCODE_BUSY:
 		fwtty_err_ratelimited(port, "remote busy\n");
-		break;
-	default:
+		अवरोध;
+	शेष:
 		fwtty_err_ratelimited(port, "failed tx: %d\n", rcode);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void fwtty_common_callback(struct fw_card *card, int rcode,
-				  void *payload, size_t len, void *cb_data)
-{
-	struct fwtty_transaction *txn = cb_data;
-	struct fwtty_port *port = txn->port;
+अटल व्योम fwtty_common_callback(काष्ठा fw_card *card, पूर्णांक rcode,
+				  व्योम *payload, माप_प्रकार len, व्योम *cb_data)
+अणु
+	काष्ठा fwtty_transaction *txn = cb_data;
+	काष्ठा fwtty_port *port = txn->port;
 
-	if (port && rcode != RCODE_COMPLETE)
+	अगर (port && rcode != RCODE_COMPLETE)
 		fwtty_log_tx_error(port, rcode);
-	if (txn->callback)
+	अगर (txn->callback)
 		txn->callback(card, rcode, payload, len, txn);
-	kmem_cache_free(fwtty_txn_cache, txn);
-}
+	kmem_cache_मुक्त(fwtty_txn_cache, txn);
+पूर्ण
 
-static int fwtty_send_data_async(struct fwtty_peer *peer, int tcode,
-				 unsigned long long addr, void *payload,
-				 size_t len, fwtty_transaction_cb callback,
-				 struct fwtty_port *port)
-{
-	struct fwtty_transaction *txn;
-	int generation;
+अटल पूर्णांक fwtty_send_data_async(काष्ठा fwtty_peer *peer, पूर्णांक tcode,
+				 अचिन्हित दीर्घ दीर्घ addr, व्योम *payload,
+				 माप_प्रकार len, fwtty_transaction_cb callback,
+				 काष्ठा fwtty_port *port)
+अणु
+	काष्ठा fwtty_transaction *txn;
+	पूर्णांक generation;
 
 	txn = kmem_cache_alloc(fwtty_txn_cache, GFP_ATOMIC);
-	if (!txn)
-		return -ENOMEM;
+	अगर (!txn)
+		वापस -ENOMEM;
 
 	txn->callback = callback;
 	txn->port = port;
@@ -244,16 +245,16 @@ static int fwtty_send_data_async(struct fwtty_peer *peer, int tcode,
 	fw_send_request(peer->serial->card, &txn->fw_txn, tcode,
 			peer->node_id, generation, peer->speed, addr, payload,
 			len, fwtty_common_callback, txn);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void fwtty_send_txn_async(struct fwtty_peer *peer,
-				 struct fwtty_transaction *txn, int tcode,
-				 unsigned long long addr, void *payload,
-				 size_t len, fwtty_transaction_cb callback,
-				 struct fwtty_port *port)
-{
-	int generation;
+अटल व्योम fwtty_send_txn_async(काष्ठा fwtty_peer *peer,
+				 काष्ठा fwtty_transaction *txn, पूर्णांक tcode,
+				 अचिन्हित दीर्घ दीर्घ addr, व्योम *payload,
+				 माप_प्रकार len, fwtty_transaction_cb callback,
+				 काष्ठा fwtty_port *port)
+अणु
+	पूर्णांक generation;
 
 	txn->callback = callback;
 	txn->port = port;
@@ -263,38 +264,38 @@ static void fwtty_send_txn_async(struct fwtty_peer *peer,
 	fw_send_request(peer->serial->card, &txn->fw_txn, tcode,
 			peer->node_id, generation, peer->speed, addr, payload,
 			len, fwtty_common_callback, txn);
-}
+पूर्ण
 
-static void __fwtty_restart_tx(struct fwtty_port *port)
-{
-	int len, avail;
+अटल व्योम __fwtty_restart_tx(काष्ठा fwtty_port *port)
+अणु
+	पूर्णांक len, avail;
 
-	len = dma_fifo_out_level(&port->tx_fifo);
-	if (len)
+	len = dma_fअगरo_out_level(&port->tx_fअगरo);
+	अगर (len)
 		schedule_delayed_work(&port->drain, 0);
-	avail = dma_fifo_avail(&port->tx_fifo);
+	avail = dma_fअगरo_avail(&port->tx_fअगरo);
 
 	fwtty_dbg(port, "fifo len: %d avail: %d\n", len, avail);
-}
+पूर्ण
 
-static void fwtty_restart_tx(struct fwtty_port *port)
-{
+अटल व्योम fwtty_restart_tx(काष्ठा fwtty_port *port)
+अणु
 	spin_lock_bh(&port->lock);
 	__fwtty_restart_tx(port);
 	spin_unlock_bh(&port->lock);
-}
+पूर्ण
 
 /**
  * fwtty_update_port_status - decodes & dispatches line status changes
  *
  * Note: in loopback, the port->lock is being held. Only use functions that
- * don't attempt to reclaim the port->lock.
+ * करोn't attempt to reclaim the port->lock.
  */
-static void fwtty_update_port_status(struct fwtty_port *port,
-				     unsigned int status)
-{
-	unsigned int delta;
-	struct tty_struct *tty;
+अटल व्योम fwtty_update_port_status(काष्ठा fwtty_port *port,
+				     अचिन्हित पूर्णांक status)
+अणु
+	अचिन्हित पूर्णांक delta;
+	काष्ठा tty_काष्ठा *tty;
 
 	/* simulated LSR/MSR status from remote */
 	status &= ~MCTRL_MASK;
@@ -302,629 +303,629 @@ static void fwtty_update_port_status(struct fwtty_port *port,
 	delta &= ~(status & TIOCM_RNG);
 	port->mstatus = status;
 
-	if (delta & TIOCM_RNG)
+	अगर (delta & TIOCM_RNG)
 		++port->icount.rng;
-	if (delta & TIOCM_DSR)
+	अगर (delta & TIOCM_DSR)
 		++port->icount.dsr;
-	if (delta & TIOCM_CAR)
+	अगर (delta & TIOCM_CAR)
 		++port->icount.dcd;
-	if (delta & TIOCM_CTS)
+	अगर (delta & TIOCM_CTS)
 		++port->icount.cts;
 
 	fwtty_dbg(port, "status: %x delta: %x\n", status, delta);
 
-	if (delta & TIOCM_CAR) {
+	अगर (delta & TIOCM_CAR) अणु
 		tty = tty_port_tty_get(&port->port);
-		if (tty && !C_CLOCAL(tty)) {
-			if (status & TIOCM_CAR)
-				wake_up_interruptible(&port->port.open_wait);
-			else
+		अगर (tty && !C_CLOCAL(tty)) अणु
+			अगर (status & TIOCM_CAR)
+				wake_up_पूर्णांकerruptible(&port->port.खोलो_रुको);
+			अन्यथा
 				schedule_work(&port->hangup);
-		}
+		पूर्ण
 		tty_kref_put(tty);
-	}
+	पूर्ण
 
-	if (delta & TIOCM_CTS) {
+	अगर (delta & TIOCM_CTS) अणु
 		tty = tty_port_tty_get(&port->port);
-		if (tty && C_CRTSCTS(tty)) {
-			if (tty->hw_stopped) {
-				if (status & TIOCM_CTS) {
+		अगर (tty && C_CRTSCTS(tty)) अणु
+			अगर (tty->hw_stopped) अणु
+				अगर (status & TIOCM_CTS) अणु
 					tty->hw_stopped = 0;
-					if (port->loopback)
+					अगर (port->loopback)
 						__fwtty_restart_tx(port);
-					else
+					अन्यथा
 						fwtty_restart_tx(port);
-				}
-			} else {
-				if (~status & TIOCM_CTS)
+				पूर्ण
+			पूर्ण अन्यथा अणु
+				अगर (~status & TIOCM_CTS)
 					tty->hw_stopped = 1;
-			}
-		}
+			पूर्ण
+		पूर्ण
 		tty_kref_put(tty);
 
-	} else if (delta & OOB_TX_THROTTLE) {
+	पूर्ण अन्यथा अगर (delta & OOB_TX_THROTTLE) अणु
 		tty = tty_port_tty_get(&port->port);
-		if (tty) {
-			if (tty->hw_stopped) {
-				if (~status & OOB_TX_THROTTLE) {
+		अगर (tty) अणु
+			अगर (tty->hw_stopped) अणु
+				अगर (~status & OOB_TX_THROTTLE) अणु
 					tty->hw_stopped = 0;
-					if (port->loopback)
+					अगर (port->loopback)
 						__fwtty_restart_tx(port);
-					else
+					अन्यथा
 						fwtty_restart_tx(port);
-				}
-			} else {
-				if (status & OOB_TX_THROTTLE)
+				पूर्ण
+			पूर्ण अन्यथा अणु
+				अगर (status & OOB_TX_THROTTLE)
 					tty->hw_stopped = 1;
-			}
-		}
+			पूर्ण
+		पूर्ण
 		tty_kref_put(tty);
-	}
+	पूर्ण
 
-	if (delta & (UART_LSR_BI << 24)) {
-		if (status & (UART_LSR_BI << 24)) {
-			port->break_last = jiffies;
-			schedule_delayed_work(&port->emit_breaks, 0);
-		} else {
-			/* run emit_breaks one last time (if pending) */
-			mod_delayed_work(system_wq, &port->emit_breaks, 0);
-		}
-	}
+	अगर (delta & (UART_LSR_BI << 24)) अणु
+		अगर (status & (UART_LSR_BI << 24)) अणु
+			port->अवरोध_last = jअगरfies;
+			schedule_delayed_work(&port->emit_अवरोधs, 0);
+		पूर्ण अन्यथा अणु
+			/* run emit_अवरोधs one last समय (अगर pending) */
+			mod_delayed_work(प्रणाली_wq, &port->emit_अवरोधs, 0);
+		पूर्ण
+	पूर्ण
 
-	if (delta & (TIOCM_DSR | TIOCM_CAR | TIOCM_CTS | TIOCM_RNG))
-		wake_up_interruptible(&port->port.delta_msr_wait);
-}
+	अगर (delta & (TIOCM_DSR | TIOCM_CAR | TIOCM_CTS | TIOCM_RNG))
+		wake_up_पूर्णांकerruptible(&port->port.delta_msr_रुको);
+पूर्ण
 
 /**
- * __fwtty_port_line_status - generate 'line status' for indicated port
+ * __fwtty_port_line_status - generate 'line status' क्रम indicated port
  *
- * This function returns a remote 'MSR' state based on the local 'MCR' state,
- * as if a null modem cable was attached. The actual status is a mangling
- * of TIOCM_* bits suitable for sending to a peer's status_addr.
+ * This function वापसs a remote 'MSR' state based on the local 'MCR' state,
+ * as अगर a null modem cable was attached. The actual status is a mangling
+ * of TIOCM_* bits suitable क्रम sending to a peer's status_addr.
  *
  * Note: caller must be holding port lock
  */
-static unsigned int __fwtty_port_line_status(struct fwtty_port *port)
-{
-	unsigned int status = 0;
+अटल अचिन्हित पूर्णांक __fwtty_port_line_status(काष्ठा fwtty_port *port)
+अणु
+	अचिन्हित पूर्णांक status = 0;
 
 	/* TODO: add module param to tie RNG to DTR as well */
 
-	if (port->mctrl & TIOCM_DTR)
+	अगर (port->mctrl & TIOCM_DTR)
 		status |= TIOCM_DSR | TIOCM_CAR;
-	if (port->mctrl & TIOCM_RTS)
+	अगर (port->mctrl & TIOCM_RTS)
 		status |= TIOCM_CTS;
-	if (port->mctrl & OOB_RX_THROTTLE)
+	अगर (port->mctrl & OOB_RX_THROTTLE)
 		status |= OOB_TX_THROTTLE;
 	/* emulate BRK as add'l line status */
-	if (port->break_ctl)
+	अगर (port->अवरोध_ctl)
 		status |= UART_LSR_BI << 24;
 
-	return status;
-}
+	वापस status;
+पूर्ण
 
 /**
- * __fwtty_write_port_status - send the port line status to peer
+ * __fwtty_ग_लिखो_port_status - send the port line status to peer
  *
  * Note: caller must be holding the port lock.
  */
-static int __fwtty_write_port_status(struct fwtty_port *port)
-{
-	struct fwtty_peer *peer;
-	int err = -ENOENT;
-	unsigned int status = __fwtty_port_line_status(port);
+अटल पूर्णांक __fwtty_ग_लिखो_port_status(काष्ठा fwtty_port *port)
+अणु
+	काष्ठा fwtty_peer *peer;
+	पूर्णांक err = -ENOENT;
+	अचिन्हित पूर्णांक status = __fwtty_port_line_status(port);
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	peer = rcu_dereference(port->peer);
-	if (peer) {
+	अगर (peer) अणु
 		err = fwtty_send_data_async(peer, TCODE_WRITE_QUADLET_REQUEST,
 					    peer->status_addr, &status,
-					    sizeof(status), NULL, port);
-	}
-	rcu_read_unlock();
+					    माप(status), शून्य, port);
+	पूर्ण
+	rcu_पढ़ो_unlock();
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /**
- * fwtty_write_port_status - same as above but locked by port lock
+ * fwtty_ग_लिखो_port_status - same as above but locked by port lock
  */
-static int fwtty_write_port_status(struct fwtty_port *port)
-{
-	int err;
+अटल पूर्णांक fwtty_ग_लिखो_port_status(काष्ठा fwtty_port *port)
+अणु
+	पूर्णांक err;
 
 	spin_lock_bh(&port->lock);
-	err = __fwtty_write_port_status(port);
+	err = __fwtty_ग_लिखो_port_status(port);
 	spin_unlock_bh(&port->lock);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void fwtty_throttle_port(struct fwtty_port *port)
-{
-	struct tty_struct *tty;
-	unsigned int old;
+अटल व्योम fwtty_throttle_port(काष्ठा fwtty_port *port)
+अणु
+	काष्ठा tty_काष्ठा *tty;
+	अचिन्हित पूर्णांक old;
 
 	tty = tty_port_tty_get(&port->port);
-	if (!tty)
-		return;
+	अगर (!tty)
+		वापस;
 
 	spin_lock_bh(&port->lock);
 
 	old = port->mctrl;
 	port->mctrl |= OOB_RX_THROTTLE;
-	if (C_CRTSCTS(tty))
+	अगर (C_CRTSCTS(tty))
 		port->mctrl &= ~TIOCM_RTS;
-	if (~old & OOB_RX_THROTTLE)
-		__fwtty_write_port_status(port);
+	अगर (~old & OOB_RX_THROTTLE)
+		__fwtty_ग_लिखो_port_status(port);
 
 	spin_unlock_bh(&port->lock);
 
 	tty_kref_put(tty);
-}
+पूर्ण
 
 /**
- * fwtty_do_hangup - wait for ldisc to deliver all pending rx; only then hangup
+ * fwtty_करो_hangup - रुको क्रम ldisc to deliver all pending rx; only then hangup
  *
  * When the remote has finished tx, and all in-flight rx has been received and
- * pushed to the flip buffer, the remote may close its device. This will
+ * pushed to the flip buffer, the remote may बंद its device. This will
  * drop DTR on the remote which will drop carrier here. Typically, the tty is
  * hung up when carrier is dropped or lost.
  *
  * However, there is a race between the hang up and the line discipline
- * delivering its data to the reader. A hangup will cause the ldisc to flush
- * (ie., clear) the read buffer and flip buffer. Because of firewire's
+ * delivering its data to the पढ़ोer. A hangup will cause the ldisc to flush
+ * (ie., clear) the पढ़ो buffer and flip buffer. Because of firewire's
  * relatively high throughput, the ldisc frequently lags well behind the driver,
- * resulting in lost data (which has already been received and written to
- * the flip buffer) when the remote closes its end.
+ * resulting in lost data (which has alपढ़ोy been received and written to
+ * the flip buffer) when the remote बंदs its end.
  *
- * Unfortunately, since the flip buffer offers no direct method for determining
- * if it holds data, ensuring the ldisc has delivered all data is problematic.
+ * Unक्रमtunately, since the flip buffer offers no direct method क्रम determining
+ * अगर it holds data, ensuring the ldisc has delivered all data is problematic.
  */
 
-/* FIXME: drop this workaround when __tty_hangup waits for ldisc completion */
-static void fwtty_do_hangup(struct work_struct *work)
-{
-	struct fwtty_port *port = to_port(work, hangup);
-	struct tty_struct *tty;
+/* FIXME: drop this workaround when __tty_hangup रुकोs क्रम ldisc completion */
+अटल व्योम fwtty_करो_hangup(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा fwtty_port *port = to_port(work, hangup);
+	काष्ठा tty_काष्ठा *tty;
 
-	schedule_timeout_uninterruptible(msecs_to_jiffies(50));
+	schedule_समयout_unपूर्णांकerruptible(msecs_to_jअगरfies(50));
 
 	tty = tty_port_tty_get(&port->port);
-	if (tty)
+	अगर (tty)
 		tty_vhangup(tty);
 	tty_kref_put(tty);
-}
+पूर्ण
 
-static void fwtty_emit_breaks(struct work_struct *work)
-{
-	struct fwtty_port *port = to_port(to_delayed_work(work), emit_breaks);
-	static const char buf[16];
-	unsigned long now = jiffies;
-	unsigned long elapsed = now - port->break_last;
-	int n, t, c, brk = 0;
+अटल व्योम fwtty_emit_अवरोधs(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा fwtty_port *port = to_port(to_delayed_work(work), emit_अवरोधs);
+	अटल स्थिर अक्षर buf[16];
+	अचिन्हित दीर्घ now = jअगरfies;
+	अचिन्हित दीर्घ elapsed = now - port->अवरोध_last;
+	पूर्णांक n, t, c, brk = 0;
 
-	/* generate breaks at the line rate (but at least 1) */
+	/* generate अवरोधs at the line rate (but at least 1) */
 	n = (elapsed * port->cps) / HZ + 1;
-	port->break_last = now;
+	port->अवरोध_last = now;
 
 	fwtty_dbg(port, "sending %d brks\n", n);
 
-	while (n) {
+	जबतक (n) अणु
 		t = min(n, 16);
 		c = tty_insert_flip_string_fixed_flag(&port->port, buf,
 						      TTY_BREAK, t);
 		n -= c;
 		brk += c;
-		if (c < t)
-			break;
-	}
+		अगर (c < t)
+			अवरोध;
+	पूर्ण
 	tty_flip_buffer_push(&port->port);
 
-	if (port->mstatus & (UART_LSR_BI << 24))
-		schedule_delayed_work(&port->emit_breaks, FREQ_BREAKS);
+	अगर (port->mstatus & (UART_LSR_BI << 24))
+		schedule_delayed_work(&port->emit_अवरोधs, FREQ_BREAKS);
 	port->icount.brk += brk;
-}
+पूर्ण
 
-static int fwtty_rx(struct fwtty_port *port, unsigned char *data, size_t len)
-{
-	int c, n = len;
-	unsigned int lsr;
-	int err = 0;
+अटल पूर्णांक fwtty_rx(काष्ठा fwtty_port *port, अचिन्हित अक्षर *data, माप_प्रकार len)
+अणु
+	पूर्णांक c, n = len;
+	अचिन्हित पूर्णांक lsr;
+	पूर्णांक err = 0;
 
 	fwtty_dbg(port, "%d\n", n);
-	fwtty_profile_data(port->stats.reads, n);
+	fwtty_profile_data(port->stats.पढ़ोs, n);
 
-	if (port->write_only) {
+	अगर (port->ग_लिखो_only) अणु
 		n = 0;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	/* disregard break status; breaks are generated by emit_breaks work */
+	/* disregard अवरोध status; अवरोधs are generated by emit_अवरोधs work */
 	lsr = (port->mstatus >> 24) & ~UART_LSR_BI;
 
-	if (port->overrun)
+	अगर (port->overrun)
 		lsr |= UART_LSR_OE;
 
-	if (lsr & UART_LSR_OE)
+	अगर (lsr & UART_LSR_OE)
 		++port->icount.overrun;
 
 	lsr &= port->status_mask;
-	if (lsr & ~port->ignore_mask & UART_LSR_OE) {
-		if (!tty_insert_flip_char(&port->port, 0, TTY_OVERRUN)) {
+	अगर (lsr & ~port->ignore_mask & UART_LSR_OE) अणु
+		अगर (!tty_insert_flip_अक्षर(&port->port, 0, TTY_OVERRUN)) अणु
 			err = -EIO;
-			goto out;
-		}
-	}
+			जाओ out;
+		पूर्ण
+	पूर्ण
 	port->overrun = false;
 
-	if (lsr & port->ignore_mask & ~UART_LSR_OE) {
-		/* TODO: don't drop SAK and Magic SysRq here */
+	अगर (lsr & port->ignore_mask & ~UART_LSR_OE) अणु
+		/* TODO: करोn't drop SAK and Magic SysRq here */
 		n = 0;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	c = tty_insert_flip_string_fixed_flag(&port->port, data, TTY_NORMAL, n);
-	if (c > 0)
+	अगर (c > 0)
 		tty_flip_buffer_push(&port->port);
 	n -= c;
 
-	if (n) {
+	अगर (n) अणु
 		port->overrun = true;
 		err = -EIO;
 		fwtty_err_ratelimited(port, "flip buffer overrun\n");
 
-	} else {
-		/* throttle the sender if remaining flip buffer space has
-		 * reached high watermark to avoid losing data which may be
+	पूर्ण अन्यथा अणु
+		/* throttle the sender अगर reमुख्यing flip buffer space has
+		 * reached high watermark to aव्योम losing data which may be
 		 * in-flight. Since the AR request context is 32k, that much
-		 * data may have _already_ been acked.
+		 * data may have _alपढ़ोy_ been acked.
 		 */
-		if (tty_buffer_space_avail(&port->port) < HIGH_WATERMARK)
+		अगर (tty_buffer_space_avail(&port->port) < HIGH_WATERMARK)
 			fwtty_throttle_port(port);
-	}
+	पूर्ण
 
 out:
 	port->icount.rx += len;
 	port->stats.lost += n;
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /**
- * fwtty_port_handler - bus address handler for port reads/writes
- * @parameters: fw_address_callback_t as specified by firewire core interface
+ * fwtty_port_handler - bus address handler क्रम port पढ़ोs/ग_लिखोs
+ * @parameters: fw_address_callback_t as specअगरied by firewire core पूर्णांकerface
  *
- * This handler is responsible for handling inbound read/write dma from remotes.
+ * This handler is responsible क्रम handling inbound पढ़ो/ग_लिखो dma from remotes.
  */
-static void fwtty_port_handler(struct fw_card *card,
-			       struct fw_request *request,
-			       int tcode, int destination, int source,
-			       int generation,
-			       unsigned long long addr,
-			       void *data, size_t len,
-			       void *callback_data)
-{
-	struct fwtty_port *port = callback_data;
-	struct fwtty_peer *peer;
-	int err;
-	int rcode;
+अटल व्योम fwtty_port_handler(काष्ठा fw_card *card,
+			       काष्ठा fw_request *request,
+			       पूर्णांक tcode, पूर्णांक destination, पूर्णांक source,
+			       पूर्णांक generation,
+			       अचिन्हित दीर्घ दीर्घ addr,
+			       व्योम *data, माप_प्रकार len,
+			       व्योम *callback_data)
+अणु
+	काष्ठा fwtty_port *port = callback_data;
+	काष्ठा fwtty_peer *peer;
+	पूर्णांक err;
+	पूर्णांक rcode;
 
-	/* Only accept rx from the peer virtual-cabled to this port */
-	rcu_read_lock();
+	/* Only accept rx from the peer भव-cabled to this port */
+	rcu_पढ़ो_lock();
 	peer = __fwserial_peer_by_node_id(card, generation, source);
-	rcu_read_unlock();
-	if (!peer || peer != rcu_access_pointer(port->peer)) {
+	rcu_पढ़ो_unlock();
+	अगर (!peer || peer != rcu_access_poपूर्णांकer(port->peer)) अणु
 		rcode = RCODE_ADDRESS_ERROR;
 		fwtty_err_ratelimited(port, "ignoring unauthenticated data\n");
-		goto respond;
-	}
+		जाओ respond;
+	पूर्ण
 
-	switch (tcode) {
-	case TCODE_WRITE_QUADLET_REQUEST:
-		if (addr != port->rx_handler.offset || len != 4) {
+	चयन (tcode) अणु
+	हाल TCODE_WRITE_QUADLET_REQUEST:
+		अगर (addr != port->rx_handler.offset || len != 4) अणु
 			rcode = RCODE_ADDRESS_ERROR;
-		} else {
-			fwtty_update_port_status(port, *(unsigned int *)data);
+		पूर्ण अन्यथा अणु
+			fwtty_update_port_status(port, *(अचिन्हित पूर्णांक *)data);
 			rcode = RCODE_COMPLETE;
-		}
-		break;
+		पूर्ण
+		अवरोध;
 
-	case TCODE_WRITE_BLOCK_REQUEST:
-		if (addr != port->rx_handler.offset + 4 ||
-		    len > port->rx_handler.length - 4) {
+	हाल TCODE_WRITE_BLOCK_REQUEST:
+		अगर (addr != port->rx_handler.offset + 4 ||
+		    len > port->rx_handler.length - 4) अणु
 			rcode = RCODE_ADDRESS_ERROR;
-		} else {
+		पूर्ण अन्यथा अणु
 			err = fwtty_rx(port, data, len);
-			switch (err) {
-			case 0:
+			चयन (err) अणु
+			हाल 0:
 				rcode = RCODE_COMPLETE;
-				break;
-			case -EIO:
+				अवरोध;
+			हाल -EIO:
 				rcode = RCODE_DATA_ERROR;
-				break;
-			default:
+				अवरोध;
+			शेष:
 				rcode = RCODE_CONFLICT_ERROR;
-				break;
-			}
-		}
-		break;
+				अवरोध;
+			पूर्ण
+		पूर्ण
+		अवरोध;
 
-	default:
+	शेष:
 		rcode = RCODE_TYPE_ERROR;
-	}
+	पूर्ण
 
 respond:
 	fw_send_response(card, request, rcode);
-}
+पूर्ण
 
 /**
- * fwtty_tx_complete - callback for tx dma
- * @data: ignored, has no meaning for write txns
- * @length: ignored, has no meaning for write txns
+ * fwtty_tx_complete - callback क्रम tx dma
+ * @data: ignored, has no meaning क्रम ग_लिखो txns
+ * @length: ignored, has no meaning क्रम ग_लिखो txns
  *
- * The writer must be woken here if the fifo has been emptied because it
- * may have slept if chars_in_buffer was != 0
+ * The ग_लिखोr must be woken here अगर the fअगरo has been emptied because it
+ * may have slept अगर अक्षरs_in_buffer was != 0
  */
-static void fwtty_tx_complete(struct fw_card *card, int rcode,
-			      void *data, size_t length,
-			      struct fwtty_transaction *txn)
-{
-	struct fwtty_port *port = txn->port;
-	int len;
+अटल व्योम fwtty_tx_complete(काष्ठा fw_card *card, पूर्णांक rcode,
+			      व्योम *data, माप_प्रकार length,
+			      काष्ठा fwtty_transaction *txn)
+अणु
+	काष्ठा fwtty_port *port = txn->port;
+	पूर्णांक len;
 
 	fwtty_dbg(port, "rcode: %d\n", rcode);
 
-	switch (rcode) {
-	case RCODE_COMPLETE:
+	चयन (rcode) अणु
+	हाल RCODE_COMPLETE:
 		spin_lock_bh(&port->lock);
-		dma_fifo_out_complete(&port->tx_fifo, &txn->dma_pended);
-		len = dma_fifo_level(&port->tx_fifo);
+		dma_fअगरo_out_complete(&port->tx_fअगरo, &txn->dma_pended);
+		len = dma_fअगरo_level(&port->tx_fअगरo);
 		spin_unlock_bh(&port->lock);
 
 		port->icount.tx += txn->dma_pended.len;
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		/* TODO: implement retries */
 		spin_lock_bh(&port->lock);
-		dma_fifo_out_complete(&port->tx_fifo, &txn->dma_pended);
-		len = dma_fifo_level(&port->tx_fifo);
+		dma_fअगरo_out_complete(&port->tx_fअगरo, &txn->dma_pended);
+		len = dma_fअगरo_level(&port->tx_fअगरo);
 		spin_unlock_bh(&port->lock);
 
 		port->stats.dropped += txn->dma_pended.len;
-	}
+	पूर्ण
 
-	if (len < WAKEUP_CHARS)
+	अगर (len < WAKEUP_CHARS)
 		tty_port_tty_wakeup(&port->port);
-}
+पूर्ण
 
-static int fwtty_tx(struct fwtty_port *port, bool drain)
-{
-	struct fwtty_peer *peer;
-	struct fwtty_transaction *txn;
-	struct tty_struct *tty;
-	int n, len;
+अटल पूर्णांक fwtty_tx(काष्ठा fwtty_port *port, bool drain)
+अणु
+	काष्ठा fwtty_peer *peer;
+	काष्ठा fwtty_transaction *txn;
+	काष्ठा tty_काष्ठा *tty;
+	पूर्णांक n, len;
 
 	tty = tty_port_tty_get(&port->port);
-	if (!tty)
-		return -ENOENT;
+	अगर (!tty)
+		वापस -ENOENT;
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	peer = rcu_dereference(port->peer);
-	if (!peer) {
+	अगर (!peer) अणु
 		n = -EIO;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (test_and_set_bit(IN_TX, &port->flags)) {
+	अगर (test_and_set_bit(IN_TX, &port->flags)) अणु
 		n = -EALREADY;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	/* try to write as many dma transactions out as possible */
+	/* try to ग_लिखो as many dma transactions out as possible */
 	n = -EAGAIN;
-	while (!tty->stopped && !tty->hw_stopped &&
-	       !test_bit(STOP_TX, &port->flags)) {
+	जबतक (!tty->stopped && !tty->hw_stopped &&
+	       !test_bit(STOP_TX, &port->flags)) अणु
 		txn = kmem_cache_alloc(fwtty_txn_cache, GFP_ATOMIC);
-		if (!txn) {
+		अगर (!txn) अणु
 			n = -ENOMEM;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		spin_lock_bh(&port->lock);
-		n = dma_fifo_out_pend(&port->tx_fifo, &txn->dma_pended);
+		n = dma_fअगरo_out_pend(&port->tx_fअगरo, &txn->dma_pended);
 		spin_unlock_bh(&port->lock);
 
 		fwtty_dbg(port, "out: %u rem: %d\n", txn->dma_pended.len, n);
 
-		if (n < 0) {
-			kmem_cache_free(fwtty_txn_cache, txn);
-			if (n == -EAGAIN) {
+		अगर (n < 0) अणु
+			kmem_cache_मुक्त(fwtty_txn_cache, txn);
+			अगर (n == -EAGAIN) अणु
 				++port->stats.tx_stall;
-			} else if (n == -ENODATA) {
+			पूर्ण अन्यथा अगर (n == -ENODATA) अणु
 				fwtty_profile_data(port->stats.txns, 0);
-			} else {
-				++port->stats.fifo_errs;
+			पूर्ण अन्यथा अणु
+				++port->stats.fअगरo_errs;
 				fwtty_err_ratelimited(port, "fifo err: %d\n",
 						      n);
-			}
-			break;
-		}
+			पूर्ण
+			अवरोध;
+		पूर्ण
 
 		fwtty_profile_data(port->stats.txns, txn->dma_pended.len);
 
 		fwtty_send_txn_async(peer, txn, TCODE_WRITE_BLOCK_REQUEST,
-				     peer->fifo_addr, txn->dma_pended.data,
+				     peer->fअगरo_addr, txn->dma_pended.data,
 				     txn->dma_pended.len, fwtty_tx_complete,
 				     port);
 		++port->stats.sent;
 
 		/*
-		 * Stop tx if the 'last view' of the fifo is empty or if
-		 * this is the writer and there's not enough data to bother
+		 * Stop tx अगर the 'last view' of the fअगरo is empty or अगर
+		 * this is the ग_लिखोr and there's not enough data to bother
 		 */
-		if (n == 0 || (!drain && n < WRITER_MINIMUM))
-			break;
-	}
+		अगर (n == 0 || (!drain && n < WRITER_MINIMUM))
+			अवरोध;
+	पूर्ण
 
-	if (n >= 0 || n == -EAGAIN || n == -ENOMEM || n == -ENODATA) {
+	अगर (n >= 0 || n == -EAGAIN || n == -ENOMEM || n == -ENODATA) अणु
 		spin_lock_bh(&port->lock);
-		len = dma_fifo_out_level(&port->tx_fifo);
-		if (len) {
-			unsigned long delay = (n == -ENOMEM) ? HZ : 1;
+		len = dma_fअगरo_out_level(&port->tx_fअगरo);
+		अगर (len) अणु
+			अचिन्हित दीर्घ delay = (n == -ENOMEM) ? HZ : 1;
 
 			schedule_delayed_work(&port->drain, delay);
-		}
-		len = dma_fifo_level(&port->tx_fifo);
+		पूर्ण
+		len = dma_fअगरo_level(&port->tx_fअगरo);
 		spin_unlock_bh(&port->lock);
 
-		/* wakeup the writer */
-		if (drain && len < WAKEUP_CHARS)
+		/* wakeup the ग_लिखोr */
+		अगर (drain && len < WAKEUP_CHARS)
 			tty_wakeup(tty);
-	}
+	पूर्ण
 
 	clear_bit(IN_TX, &port->flags);
-	wake_up_interruptible(&port->wait_tx);
+	wake_up_पूर्णांकerruptible(&port->रुको_tx);
 
 out:
-	rcu_read_unlock();
+	rcu_पढ़ो_unlock();
 	tty_kref_put(tty);
-	return n;
-}
+	वापस n;
+पूर्ण
 
-static void fwtty_drain_tx(struct work_struct *work)
-{
-	struct fwtty_port *port = to_port(to_delayed_work(work), drain);
+अटल व्योम fwtty_drain_tx(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा fwtty_port *port = to_port(to_delayed_work(work), drain);
 
 	fwtty_tx(port, true);
-}
+पूर्ण
 
-static void fwtty_write_xchar(struct fwtty_port *port, char ch)
-{
-	struct fwtty_peer *peer;
+अटल व्योम fwtty_ग_लिखो_xअक्षर(काष्ठा fwtty_port *port, अक्षर ch)
+अणु
+	काष्ठा fwtty_peer *peer;
 
-	++port->stats.xchars;
+	++port->stats.xअक्षरs;
 
 	fwtty_dbg(port, "%02x\n", ch);
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	peer = rcu_dereference(port->peer);
-	if (peer) {
+	अगर (peer) अणु
 		fwtty_send_data_async(peer, TCODE_WRITE_BLOCK_REQUEST,
-				      peer->fifo_addr, &ch, sizeof(ch),
-				      NULL, port);
-	}
-	rcu_read_unlock();
-}
+				      peer->fअगरo_addr, &ch, माप(ch),
+				      शून्य, port);
+	पूर्ण
+	rcu_पढ़ो_unlock();
+पूर्ण
 
-static struct fwtty_port *fwtty_port_get(unsigned int index)
-{
-	struct fwtty_port *port;
+अटल काष्ठा fwtty_port *fwtty_port_get(अचिन्हित पूर्णांक index)
+अणु
+	काष्ठा fwtty_port *port;
 
-	if (index >= MAX_TOTAL_PORTS)
-		return NULL;
+	अगर (index >= MAX_TOTAL_PORTS)
+		वापस शून्य;
 
 	mutex_lock(&port_table_lock);
 	port = port_table[index];
-	if (port)
+	अगर (port)
 		kref_get(&port->serial->kref);
 	mutex_unlock(&port_table_lock);
-	return port;
-}
+	वापस port;
+पूर्ण
 
-static int fwtty_ports_add(struct fw_serial *serial)
-{
-	int err = -EBUSY;
-	int i, j;
+अटल पूर्णांक fwtty_ports_add(काष्ठा fw_serial *serial)
+अणु
+	पूर्णांक err = -EBUSY;
+	पूर्णांक i, j;
 
-	if (port_table_corrupt)
-		return err;
+	अगर (port_table_corrupt)
+		वापस err;
 
 	mutex_lock(&port_table_lock);
-	for (i = 0; i + num_ports <= MAX_TOTAL_PORTS; i += num_ports) {
-		if (!port_table[i]) {
-			for (j = 0; j < num_ports; ++i, ++j) {
+	क्रम (i = 0; i + num_ports <= MAX_TOTAL_PORTS; i += num_ports) अणु
+		अगर (!port_table[i]) अणु
+			क्रम (j = 0; j < num_ports; ++i, ++j) अणु
 				serial->ports[j]->index = i;
 				port_table[i] = serial->ports[j];
-			}
+			पूर्ण
 			err = 0;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 	mutex_unlock(&port_table_lock);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void fwserial_destroy(struct kref *kref)
-{
-	struct fw_serial *serial = to_serial(kref, kref);
-	struct fwtty_port **ports = serial->ports;
-	int j, i = ports[0]->index;
+अटल व्योम fwserial_destroy(काष्ठा kref *kref)
+अणु
+	काष्ठा fw_serial *serial = to_serial(kref, kref);
+	काष्ठा fwtty_port **ports = serial->ports;
+	पूर्णांक j, i = ports[0]->index;
 
 	synchronize_rcu();
 
 	mutex_lock(&port_table_lock);
-	for (j = 0; j < num_ports; ++i, ++j) {
+	क्रम (j = 0; j < num_ports; ++i, ++j) अणु
 		port_table_corrupt |= port_table[i] != ports[j];
 		WARN_ONCE(port_table_corrupt, "port_table[%d]: %p != ports[%d]: %p",
 			  i, port_table[i], j, ports[j]);
 
-		port_table[i] = NULL;
-	}
+		port_table[i] = शून्य;
+	पूर्ण
 	mutex_unlock(&port_table_lock);
 
-	for (j = 0; j < num_ports; ++j) {
-		fw_core_remove_address_handler(&ports[j]->rx_handler);
+	क्रम (j = 0; j < num_ports; ++j) अणु
+		fw_core_हटाओ_address_handler(&ports[j]->rx_handler);
 		tty_port_destroy(&ports[j]->port);
-		kfree(ports[j]);
-	}
-	kfree(serial);
-}
+		kमुक्त(ports[j]);
+	पूर्ण
+	kमुक्त(serial);
+पूर्ण
 
-static void fwtty_port_put(struct fwtty_port *port)
-{
+अटल व्योम fwtty_port_put(काष्ठा fwtty_port *port)
+अणु
 	kref_put(&port->serial->kref, fwserial_destroy);
-}
+पूर्ण
 
-static void fwtty_port_dtr_rts(struct tty_port *tty_port, int on)
-{
-	struct fwtty_port *port = to_port(tty_port, port);
+अटल व्योम fwtty_port_dtr_rts(काष्ठा tty_port *tty_port, पूर्णांक on)
+अणु
+	काष्ठा fwtty_port *port = to_port(tty_port, port);
 
 	fwtty_dbg(port, "on/off: %d\n", on);
 
 	spin_lock_bh(&port->lock);
-	/* Don't change carrier state if this is a console */
-	if (!port->port.console) {
-		if (on)
+	/* Don't change carrier state अगर this is a console */
+	अगर (!port->port.console) अणु
+		अगर (on)
 			port->mctrl |= TIOCM_DTR | TIOCM_RTS;
-		else
+		अन्यथा
 			port->mctrl &= ~(TIOCM_DTR | TIOCM_RTS);
-	}
+	पूर्ण
 
-	__fwtty_write_port_status(port);
+	__fwtty_ग_लिखो_port_status(port);
 	spin_unlock_bh(&port->lock);
-}
+पूर्ण
 
 /**
- * fwtty_port_carrier_raised: required tty_port operation
+ * fwtty_port_carrier_उठाओd: required tty_port operation
  *
- * This port operation is polled after a tty has been opened and is waiting for
- * carrier detect -- see drivers/tty/tty_port:tty_port_block_til_ready().
+ * This port operation is polled after a tty has been खोलोed and is रुकोing क्रम
+ * carrier detect -- see drivers/tty/tty_port:tty_port_block_til_पढ़ोy().
  */
-static int fwtty_port_carrier_raised(struct tty_port *tty_port)
-{
-	struct fwtty_port *port = to_port(tty_port, port);
-	int rc;
+अटल पूर्णांक fwtty_port_carrier_उठाओd(काष्ठा tty_port *tty_port)
+अणु
+	काष्ठा fwtty_port *port = to_port(tty_port, port);
+	पूर्णांक rc;
 
 	rc = (port->mstatus & TIOCM_CAR);
 
 	fwtty_dbg(port, "%d\n", rc);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static unsigned int set_termios(struct fwtty_port *port, struct tty_struct *tty)
-{
-	unsigned int baud, frame;
+अटल अचिन्हित पूर्णांक set_termios(काष्ठा fwtty_port *port, काष्ठा tty_काष्ठा *tty)
+अणु
+	अचिन्हित पूर्णांक baud, frame;
 
 	baud = tty_termios_baud_rate(&tty->termios);
 	tty_termios_encode_baud_rate(&tty->termios, baud, baud);
@@ -932,263 +933,263 @@ static unsigned int set_termios(struct fwtty_port *port, struct tty_struct *tty)
 	/* compute bit count of 2 frames */
 	frame = 12 + ((C_CSTOPB(tty)) ? 4 : 2) + ((C_PARENB(tty)) ? 2 : 0);
 
-	switch (C_CSIZE(tty)) {
-	case CS5:
+	चयन (C_CSIZE(tty)) अणु
+	हाल CS5:
 		frame -= (C_CSTOPB(tty)) ? 1 : 0;
-		break;
-	case CS6:
+		अवरोध;
+	हाल CS6:
 		frame += 2;
-		break;
-	case CS7:
+		अवरोध;
+	हाल CS7:
 		frame += 4;
-		break;
-	case CS8:
+		अवरोध;
+	हाल CS8:
 		frame += 6;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	port->cps = (baud << 1) / frame;
 
 	port->status_mask = UART_LSR_OE;
-	if (_I_FLAG(tty, BRKINT | PARMRK))
+	अगर (_I_FLAG(tty, BRKINT | PARMRK))
 		port->status_mask |= UART_LSR_BI;
 
 	port->ignore_mask = 0;
-	if (I_IGNBRK(tty)) {
+	अगर (I_IGNBRK(tty)) अणु
 		port->ignore_mask |= UART_LSR_BI;
-		if (I_IGNPAR(tty))
+		अगर (I_IGNPAR(tty))
 			port->ignore_mask |= UART_LSR_OE;
-	}
+	पूर्ण
 
-	port->write_only = !C_CREAD(tty);
+	port->ग_लिखो_only = !C_CREAD(tty);
 
-	/* turn off echo and newline xlat if loopback */
-	if (port->loopback) {
+	/* turn off echo and newline xlat अगर loopback */
+	अगर (port->loopback) अणु
 		tty->termios.c_lflag &= ~(ECHO | ECHOE | ECHOK | ECHOKE |
 					  ECHONL | ECHOPRT | ECHOCTL);
 		tty->termios.c_oflag &= ~ONLCR;
-	}
+	पूर्ण
 
-	return baud;
-}
+	वापस baud;
+पूर्ण
 
-static int fwtty_port_activate(struct tty_port *tty_port,
-			       struct tty_struct *tty)
-{
-	struct fwtty_port *port = to_port(tty_port, port);
-	unsigned int baud;
-	int err;
+अटल पूर्णांक fwtty_port_activate(काष्ठा tty_port *tty_port,
+			       काष्ठा tty_काष्ठा *tty)
+अणु
+	काष्ठा fwtty_port *port = to_port(tty_port, port);
+	अचिन्हित पूर्णांक baud;
+	पूर्णांक err;
 
 	set_bit(TTY_IO_ERROR, &tty->flags);
 
-	err = dma_fifo_alloc(&port->tx_fifo, FWTTY_PORT_TXFIFO_LEN,
+	err = dma_fअगरo_alloc(&port->tx_fअगरo, FWTTY_PORT_TXFIFO_LEN,
 			     cache_line_size(),
 			     port->max_payload,
 			     FWTTY_PORT_MAX_PEND_DMA,
 			     GFP_KERNEL);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	spin_lock_bh(&port->lock);
 
 	baud = set_termios(port, tty);
 
-	/* if console, don't change carrier state */
-	if (!port->port.console) {
+	/* अगर console, करोn't change carrier state */
+	अगर (!port->port.console) अणु
 		port->mctrl = 0;
-		if (baud != 0)
+		अगर (baud != 0)
 			port->mctrl = TIOCM_DTR | TIOCM_RTS;
-	}
+	पूर्ण
 
-	if (C_CRTSCTS(tty) && ~port->mstatus & TIOCM_CTS)
+	अगर (C_CRTSCTS(tty) && ~port->mstatus & TIOCM_CTS)
 		tty->hw_stopped = 1;
 
-	__fwtty_write_port_status(port);
+	__fwtty_ग_लिखो_port_status(port);
 	spin_unlock_bh(&port->lock);
 
 	clear_bit(TTY_IO_ERROR, &tty->flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * fwtty_port_shutdown
+ * fwtty_port_shutकरोwn
  *
  * Note: the tty port core ensures this is not the console and
  * manages TTY_IO_ERROR properly
  */
-static void fwtty_port_shutdown(struct tty_port *tty_port)
-{
-	struct fwtty_port *port = to_port(tty_port, port);
+अटल व्योम fwtty_port_shutकरोwn(काष्ठा tty_port *tty_port)
+अणु
+	काष्ठा fwtty_port *port = to_port(tty_port, port);
 
 	/* TODO: cancel outstanding transactions */
 
-	cancel_delayed_work_sync(&port->emit_breaks);
+	cancel_delayed_work_sync(&port->emit_अवरोधs);
 	cancel_delayed_work_sync(&port->drain);
 
 	spin_lock_bh(&port->lock);
 	port->flags = 0;
-	port->break_ctl = 0;
+	port->अवरोध_ctl = 0;
 	port->overrun = 0;
-	__fwtty_write_port_status(port);
-	dma_fifo_free(&port->tx_fifo);
+	__fwtty_ग_लिखो_port_status(port);
+	dma_fअगरo_मुक्त(&port->tx_fअगरo);
 	spin_unlock_bh(&port->lock);
-}
+पूर्ण
 
-static int fwtty_open(struct tty_struct *tty, struct file *fp)
-{
-	struct fwtty_port *port = tty->driver_data;
+अटल पूर्णांक fwtty_खोलो(काष्ठा tty_काष्ठा *tty, काष्ठा file *fp)
+अणु
+	काष्ठा fwtty_port *port = tty->driver_data;
 
-	return tty_port_open(&port->port, tty, fp);
-}
+	वापस tty_port_खोलो(&port->port, tty, fp);
+पूर्ण
 
-static void fwtty_close(struct tty_struct *tty, struct file *fp)
-{
-	struct fwtty_port *port = tty->driver_data;
+अटल व्योम fwtty_बंद(काष्ठा tty_काष्ठा *tty, काष्ठा file *fp)
+अणु
+	काष्ठा fwtty_port *port = tty->driver_data;
 
-	tty_port_close(&port->port, tty, fp);
-}
+	tty_port_बंद(&port->port, tty, fp);
+पूर्ण
 
-static void fwtty_hangup(struct tty_struct *tty)
-{
-	struct fwtty_port *port = tty->driver_data;
+अटल व्योम fwtty_hangup(काष्ठा tty_काष्ठा *tty)
+अणु
+	काष्ठा fwtty_port *port = tty->driver_data;
 
 	tty_port_hangup(&port->port);
-}
+पूर्ण
 
-static void fwtty_cleanup(struct tty_struct *tty)
-{
-	struct fwtty_port *port = tty->driver_data;
+अटल व्योम fwtty_cleanup(काष्ठा tty_काष्ठा *tty)
+अणु
+	काष्ठा fwtty_port *port = tty->driver_data;
 
-	tty->driver_data = NULL;
+	tty->driver_data = शून्य;
 	fwtty_port_put(port);
-}
+पूर्ण
 
-static int fwtty_install(struct tty_driver *driver, struct tty_struct *tty)
-{
-	struct fwtty_port *port = fwtty_port_get(tty->index);
-	int err;
-
-	err = tty_standard_install(driver, tty);
-	if (!err)
-		tty->driver_data = port;
-	else
-		fwtty_port_put(port);
-	return err;
-}
-
-static int fwloop_install(struct tty_driver *driver, struct tty_struct *tty)
-{
-	struct fwtty_port *port = fwtty_port_get(table_idx(tty->index));
-	int err;
+अटल पूर्णांक fwtty_install(काष्ठा tty_driver *driver, काष्ठा tty_काष्ठा *tty)
+अणु
+	काष्ठा fwtty_port *port = fwtty_port_get(tty->index);
+	पूर्णांक err;
 
 	err = tty_standard_install(driver, tty);
-	if (!err)
+	अगर (!err)
 		tty->driver_data = port;
-	else
+	अन्यथा
 		fwtty_port_put(port);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int fwtty_write(struct tty_struct *tty, const unsigned char *buf, int c)
-{
-	struct fwtty_port *port = tty->driver_data;
-	int n, len;
+अटल पूर्णांक fwloop_install(काष्ठा tty_driver *driver, काष्ठा tty_काष्ठा *tty)
+अणु
+	काष्ठा fwtty_port *port = fwtty_port_get(table_idx(tty->index));
+	पूर्णांक err;
+
+	err = tty_standard_install(driver, tty);
+	अगर (!err)
+		tty->driver_data = port;
+	अन्यथा
+		fwtty_port_put(port);
+	वापस err;
+पूर्ण
+
+अटल पूर्णांक fwtty_ग_लिखो(काष्ठा tty_काष्ठा *tty, स्थिर अचिन्हित अक्षर *buf, पूर्णांक c)
+अणु
+	काष्ठा fwtty_port *port = tty->driver_data;
+	पूर्णांक n, len;
 
 	fwtty_dbg(port, "%d\n", c);
-	fwtty_profile_data(port->stats.writes, c);
+	fwtty_profile_data(port->stats.ग_लिखोs, c);
 
 	spin_lock_bh(&port->lock);
-	n = dma_fifo_in(&port->tx_fifo, buf, c);
-	len = dma_fifo_out_level(&port->tx_fifo);
-	if (len < DRAIN_THRESHOLD)
+	n = dma_fअगरo_in(&port->tx_fअगरo, buf, c);
+	len = dma_fअगरo_out_level(&port->tx_fअगरo);
+	अगर (len < DRAIN_THRESHOLD)
 		schedule_delayed_work(&port->drain, 1);
 	spin_unlock_bh(&port->lock);
 
-	if (len >= DRAIN_THRESHOLD)
+	अगर (len >= DRAIN_THRESHOLD)
 		fwtty_tx(port, false);
 
-	debug_short_write(port, c, n);
+	debug_लघु_ग_लिखो(port, c, n);
 
-	return (n < 0) ? 0 : n;
-}
+	वापस (n < 0) ? 0 : n;
+पूर्ण
 
-static int fwtty_write_room(struct tty_struct *tty)
-{
-	struct fwtty_port *port = tty->driver_data;
-	int n;
+अटल पूर्णांक fwtty_ग_लिखो_room(काष्ठा tty_काष्ठा *tty)
+अणु
+	काष्ठा fwtty_port *port = tty->driver_data;
+	पूर्णांक n;
 
 	spin_lock_bh(&port->lock);
-	n = dma_fifo_avail(&port->tx_fifo);
+	n = dma_fअगरo_avail(&port->tx_fअगरo);
 	spin_unlock_bh(&port->lock);
 
 	fwtty_dbg(port, "%d\n", n);
 
-	return n;
-}
+	वापस n;
+पूर्ण
 
-static int fwtty_chars_in_buffer(struct tty_struct *tty)
-{
-	struct fwtty_port *port = tty->driver_data;
-	int n;
+अटल पूर्णांक fwtty_अक्षरs_in_buffer(काष्ठा tty_काष्ठा *tty)
+अणु
+	काष्ठा fwtty_port *port = tty->driver_data;
+	पूर्णांक n;
 
 	spin_lock_bh(&port->lock);
-	n = dma_fifo_level(&port->tx_fifo);
+	n = dma_fअगरo_level(&port->tx_fअगरo);
 	spin_unlock_bh(&port->lock);
 
 	fwtty_dbg(port, "%d\n", n);
 
-	return n;
-}
+	वापस n;
+पूर्ण
 
-static void fwtty_send_xchar(struct tty_struct *tty, char ch)
-{
-	struct fwtty_port *port = tty->driver_data;
+अटल व्योम fwtty_send_xअक्षर(काष्ठा tty_काष्ठा *tty, अक्षर ch)
+अणु
+	काष्ठा fwtty_port *port = tty->driver_data;
 
 	fwtty_dbg(port, "%02x\n", ch);
 
-	fwtty_write_xchar(port, ch);
-}
+	fwtty_ग_लिखो_xअक्षर(port, ch);
+पूर्ण
 
-static void fwtty_throttle(struct tty_struct *tty)
-{
-	struct fwtty_port *port = tty->driver_data;
+अटल व्योम fwtty_throttle(काष्ठा tty_काष्ठा *tty)
+अणु
+	काष्ठा fwtty_port *port = tty->driver_data;
 
 	/*
 	 * Ignore throttling (but not unthrottling).
-	 * It only makes sense to throttle when data will no longer be
+	 * It only makes sense to throttle when data will no दीर्घer be
 	 * accepted by the tty flip buffer. For example, it is
-	 * possible for received data to overflow the tty buffer long
-	 * before the line discipline ever has a chance to throttle the driver.
-	 * Additionally, the driver may have already completed the I/O
+	 * possible क्रम received data to overflow the tty buffer दीर्घ
+	 * beक्रमe the line discipline ever has a chance to throttle the driver.
+	 * Additionally, the driver may have alपढ़ोy completed the I/O
 	 * but the tty buffer is still emptying, so the line discipline is
 	 * throttling and unthrottling nothing.
 	 */
 
 	++port->stats.throttled;
-}
+पूर्ण
 
-static void fwtty_unthrottle(struct tty_struct *tty)
-{
-	struct fwtty_port *port = tty->driver_data;
+अटल व्योम fwtty_unthrottle(काष्ठा tty_काष्ठा *tty)
+अणु
+	काष्ठा fwtty_port *port = tty->driver_data;
 
 	fwtty_dbg(port, "CRTSCTS: %d\n", C_CRTSCTS(tty) != 0);
 
-	fwtty_profile_fifo(port, port->stats.unthrottle);
+	fwtty_profile_fअगरo(port, port->stats.unthrottle);
 
 	spin_lock_bh(&port->lock);
 	port->mctrl &= ~OOB_RX_THROTTLE;
-	if (C_CRTSCTS(tty))
+	अगर (C_CRTSCTS(tty))
 		port->mctrl |= TIOCM_RTS;
-	__fwtty_write_port_status(port);
+	__fwtty_ग_लिखो_port_status(port);
 	spin_unlock_bh(&port->lock);
-}
+पूर्ण
 
-static int check_msr_delta(struct fwtty_port *port, unsigned long mask,
-			   struct async_icount *prev)
-{
-	struct async_icount now;
-	int delta;
+अटल पूर्णांक check_msr_delta(काष्ठा fwtty_port *port, अचिन्हित दीर्घ mask,
+			   काष्ठा async_icount *prev)
+अणु
+	काष्ठा async_icount now;
+	पूर्णांक delta;
 
 	now = port->icount;
 
@@ -1199,151 +1200,151 @@ static int check_msr_delta(struct fwtty_port *port, unsigned long mask,
 
 	*prev = now;
 
-	return delta;
-}
+	वापस delta;
+पूर्ण
 
-static int wait_msr_change(struct fwtty_port *port, unsigned long mask)
-{
-	struct async_icount prev;
+अटल पूर्णांक रुको_msr_change(काष्ठा fwtty_port *port, अचिन्हित दीर्घ mask)
+अणु
+	काष्ठा async_icount prev;
 
 	prev = port->icount;
 
-	return wait_event_interruptible(port->port.delta_msr_wait,
+	वापस रुको_event_पूर्णांकerruptible(port->port.delta_msr_रुको,
 					check_msr_delta(port, mask, &prev));
-}
+पूर्ण
 
-static int get_serial_info(struct tty_struct *tty,
-			   struct serial_struct *ss)
-{
-	struct fwtty_port *port = tty->driver_data;
+अटल पूर्णांक get_serial_info(काष्ठा tty_काष्ठा *tty,
+			   काष्ठा serial_काष्ठा *ss)
+अणु
+	काष्ठा fwtty_port *port = tty->driver_data;
 
 	mutex_lock(&port->port.mutex);
 	ss->line = port->index;
 	ss->baud_base = 400000000;
-	ss->close_delay = jiffies_to_msecs(port->port.close_delay) / 10;
-	ss->closing_wait = 3000;
+	ss->बंद_delay = jअगरfies_to_msecs(port->port.बंद_delay) / 10;
+	ss->closing_रुको = 3000;
 	mutex_unlock(&port->port.mutex);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int set_serial_info(struct tty_struct *tty,
-			   struct serial_struct *ss)
-{
-	struct fwtty_port *port = tty->driver_data;
-	unsigned int cdelay;
+अटल पूर्णांक set_serial_info(काष्ठा tty_काष्ठा *tty,
+			   काष्ठा serial_काष्ठा *ss)
+अणु
+	काष्ठा fwtty_port *port = tty->driver_data;
+	अचिन्हित पूर्णांक cdelay;
 
-	cdelay = msecs_to_jiffies(ss->close_delay * 10);
+	cdelay = msecs_to_jअगरfies(ss->बंद_delay * 10);
 
 	mutex_lock(&port->port.mutex);
-	if (!capable(CAP_SYS_ADMIN)) {
-		if (cdelay != port->port.close_delay ||
+	अगर (!capable(CAP_SYS_ADMIN)) अणु
+		अगर (cdelay != port->port.बंद_delay ||
 		    ((ss->flags & ~ASYNC_USR_MASK) !=
-		     (port->port.flags & ~ASYNC_USR_MASK))) {
+		     (port->port.flags & ~ASYNC_USR_MASK))) अणु
 			mutex_unlock(&port->port.mutex);
-			return -EPERM;
-		}
-	}
-	port->port.close_delay = cdelay;
+			वापस -EPERM;
+		पूर्ण
+	पूर्ण
+	port->port.बंद_delay = cdelay;
 	mutex_unlock(&port->port.mutex);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int fwtty_ioctl(struct tty_struct *tty, unsigned int cmd,
-		       unsigned long arg)
-{
-	struct fwtty_port *port = tty->driver_data;
-	int err;
+अटल पूर्णांक fwtty_ioctl(काष्ठा tty_काष्ठा *tty, अचिन्हित पूर्णांक cmd,
+		       अचिन्हित दीर्घ arg)
+अणु
+	काष्ठा fwtty_port *port = tty->driver_data;
+	पूर्णांक err;
 
-	switch (cmd) {
-	case TIOCMIWAIT:
-		err = wait_msr_change(port, arg);
-		break;
+	चयन (cmd) अणु
+	हाल TIOCMIWAIT:
+		err = रुको_msr_change(port, arg);
+		अवरोध;
 
-	default:
+	शेष:
 		err = -ENOIOCTLCMD;
-	}
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void fwtty_set_termios(struct tty_struct *tty, struct ktermios *old)
-{
-	struct fwtty_port *port = tty->driver_data;
-	unsigned int baud;
+अटल व्योम fwtty_set_termios(काष्ठा tty_काष्ठा *tty, काष्ठा ktermios *old)
+अणु
+	काष्ठा fwtty_port *port = tty->driver_data;
+	अचिन्हित पूर्णांक baud;
 
 	spin_lock_bh(&port->lock);
 	baud = set_termios(port, tty);
 
-	if ((baud == 0) && (old->c_cflag & CBAUD)) {
+	अगर ((baud == 0) && (old->c_cflag & CBAUD)) अणु
 		port->mctrl &= ~(TIOCM_DTR | TIOCM_RTS);
-	} else if ((baud != 0) && !(old->c_cflag & CBAUD)) {
-		if (C_CRTSCTS(tty) || !tty_throttled(tty))
+	पूर्ण अन्यथा अगर ((baud != 0) && !(old->c_cflag & CBAUD)) अणु
+		अगर (C_CRTSCTS(tty) || !tty_throttled(tty))
 			port->mctrl |= TIOCM_DTR | TIOCM_RTS;
-		else
+		अन्यथा
 			port->mctrl |= TIOCM_DTR;
-	}
-	__fwtty_write_port_status(port);
+	पूर्ण
+	__fwtty_ग_लिखो_port_status(port);
 	spin_unlock_bh(&port->lock);
 
-	if (old->c_cflag & CRTSCTS) {
-		if (!C_CRTSCTS(tty)) {
+	अगर (old->c_cflag & CRTSCTS) अणु
+		अगर (!C_CRTSCTS(tty)) अणु
 			tty->hw_stopped = 0;
 			fwtty_restart_tx(port);
-		}
-	} else if (C_CRTSCTS(tty) && ~port->mstatus & TIOCM_CTS) {
+		पूर्ण
+	पूर्ण अन्यथा अगर (C_CRTSCTS(tty) && ~port->mstatus & TIOCM_CTS) अणु
 		tty->hw_stopped = 1;
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
- * fwtty_break_ctl - start/stop sending breaks
+ * fwtty_अवरोध_ctl - start/stop sending अवरोधs
  *
- * Signals the remote to start or stop generating simulated breaks.
- * First, stop dequeueing from the fifo and wait for writer/drain to leave tx
- * before signalling the break line status. This guarantees any pending rx will
- * be queued to the line discipline before break is simulated on the remote.
- * Conversely, turning off break_ctl requires signalling the line status change,
+ * Signals the remote to start or stop generating simulated अवरोधs.
+ * First, stop dequeueing from the fअगरo and रुको क्रम ग_लिखोr/drain to leave tx
+ * beक्रमe संकेतling the अवरोध line status. This guarantees any pending rx will
+ * be queued to the line discipline beक्रमe अवरोध is simulated on the remote.
+ * Conversely, turning off अवरोध_ctl requires संकेतling the line status change,
  * then enabling tx.
  */
-static int fwtty_break_ctl(struct tty_struct *tty, int state)
-{
-	struct fwtty_port *port = tty->driver_data;
-	long ret;
+अटल पूर्णांक fwtty_अवरोध_ctl(काष्ठा tty_काष्ठा *tty, पूर्णांक state)
+अणु
+	काष्ठा fwtty_port *port = tty->driver_data;
+	दीर्घ ret;
 
 	fwtty_dbg(port, "%d\n", state);
 
-	if (state == -1) {
+	अगर (state == -1) अणु
 		set_bit(STOP_TX, &port->flags);
-		ret = wait_event_interruptible_timeout(port->wait_tx,
+		ret = रुको_event_पूर्णांकerruptible_समयout(port->रुको_tx,
 						       !test_bit(IN_TX, &port->flags),
 						       10);
-		if (ret == 0 || ret == -ERESTARTSYS) {
+		अगर (ret == 0 || ret == -ERESTARTSYS) अणु
 			clear_bit(STOP_TX, &port->flags);
 			fwtty_restart_tx(port);
-			return -EINTR;
-		}
-	}
+			वापस -EINTR;
+		पूर्ण
+	पूर्ण
 
 	spin_lock_bh(&port->lock);
-	port->break_ctl = (state == -1);
-	__fwtty_write_port_status(port);
+	port->अवरोध_ctl = (state == -1);
+	__fwtty_ग_लिखो_port_status(port);
 	spin_unlock_bh(&port->lock);
 
-	if (state == 0) {
+	अगर (state == 0) अणु
 		spin_lock_bh(&port->lock);
-		dma_fifo_reset(&port->tx_fifo);
+		dma_fअगरo_reset(&port->tx_fअगरo);
 		clear_bit(STOP_TX, &port->flags);
 		spin_unlock_bh(&port->lock);
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int fwtty_tiocmget(struct tty_struct *tty)
-{
-	struct fwtty_port *port = tty->driver_data;
-	unsigned int tiocm;
+अटल पूर्णांक fwtty_tiocmget(काष्ठा tty_काष्ठा *tty)
+अणु
+	काष्ठा fwtty_port *port = tty->driver_data;
+	अचिन्हित पूर्णांक tiocm;
 
 	spin_lock_bh(&port->lock);
 	tiocm = (port->mctrl & MCTRL_MASK) | (port->mstatus & ~MCTRL_MASK);
@@ -1351,34 +1352,34 @@ static int fwtty_tiocmget(struct tty_struct *tty)
 
 	fwtty_dbg(port, "%x\n", tiocm);
 
-	return tiocm;
-}
+	वापस tiocm;
+पूर्ण
 
-static int fwtty_tiocmset(struct tty_struct *tty,
-			  unsigned int set, unsigned int clear)
-{
-	struct fwtty_port *port = tty->driver_data;
+अटल पूर्णांक fwtty_tiocmset(काष्ठा tty_काष्ठा *tty,
+			  अचिन्हित पूर्णांक set, अचिन्हित पूर्णांक clear)
+अणु
+	काष्ठा fwtty_port *port = tty->driver_data;
 
 	fwtty_dbg(port, "set: %x clear: %x\n", set, clear);
 
-	/* TODO: simulate loopback if TIOCM_LOOP set */
+	/* TODO: simulate loopback अगर TIOCM_LOOP set */
 
 	spin_lock_bh(&port->lock);
 	port->mctrl &= ~(clear & MCTRL_MASK & 0xffff);
 	port->mctrl |= set & MCTRL_MASK & 0xffff;
-	__fwtty_write_port_status(port);
+	__fwtty_ग_लिखो_port_status(port);
 	spin_unlock_bh(&port->lock);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int fwtty_get_icount(struct tty_struct *tty,
-			    struct serial_icounter_struct *icount)
-{
-	struct fwtty_port *port = tty->driver_data;
-	struct stats stats;
+अटल पूर्णांक fwtty_get_icount(काष्ठा tty_काष्ठा *tty,
+			    काष्ठा serial_icounter_काष्ठा *icount)
+अणु
+	काष्ठा fwtty_port *port = tty->driver_data;
+	काष्ठा stats stats;
 
-	memcpy(&stats, &port->stats, sizeof(stats));
-	if (port->port.console)
+	स_नकल(&stats, &port->stats, माप(stats));
+	अगर (port->port.console)
 		(*port->fwcon_ops->stats)(&stats, port->con_data);
 
 	icount->cts = port->icount.cts;
@@ -1386,269 +1387,269 @@ static int fwtty_get_icount(struct tty_struct *tty,
 	icount->rng = port->icount.rng;
 	icount->dcd = port->icount.dcd;
 	icount->rx  = port->icount.rx;
-	icount->tx  = port->icount.tx + stats.xchars;
+	icount->tx  = port->icount.tx + stats.xअक्षरs;
 	icount->frame   = port->icount.frame;
 	icount->overrun = port->icount.overrun;
 	icount->parity  = port->icount.parity;
 	icount->brk     = port->icount.brk;
 	icount->buf_overrun = port->icount.overrun;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void fwtty_proc_show_port(struct seq_file *m, struct fwtty_port *port)
-{
-	struct stats stats;
+अटल व्योम fwtty_proc_show_port(काष्ठा seq_file *m, काष्ठा fwtty_port *port)
+अणु
+	काष्ठा stats stats;
 
-	memcpy(&stats, &port->stats, sizeof(stats));
-	if (port->port.console)
+	स_नकल(&stats, &port->stats, माप(stats));
+	अगर (port->port.console)
 		(*port->fwcon_ops->stats)(&stats, port->con_data);
 
-	seq_printf(m, " addr:%012llx tx:%d rx:%d", port->rx_handler.offset,
-		   port->icount.tx + stats.xchars, port->icount.rx);
-	seq_printf(m, " cts:%d dsr:%d rng:%d dcd:%d", port->icount.cts,
+	seq_म_लिखो(m, " addr:%012llx tx:%d rx:%d", port->rx_handler.offset,
+		   port->icount.tx + stats.xअक्षरs, port->icount.rx);
+	seq_म_लिखो(m, " cts:%d dsr:%d rng:%d dcd:%d", port->icount.cts,
 		   port->icount.dsr, port->icount.rng, port->icount.dcd);
-	seq_printf(m, " fe:%d oe:%d pe:%d brk:%d", port->icount.frame,
+	seq_म_लिखो(m, " fe:%d oe:%d pe:%d brk:%d", port->icount.frame,
 		   port->icount.overrun, port->icount.parity, port->icount.brk);
-}
+पूर्ण
 
-static void fwtty_debugfs_show_port(struct seq_file *m, struct fwtty_port *port)
-{
-	struct stats stats;
+अटल व्योम fwtty_debugfs_show_port(काष्ठा seq_file *m, काष्ठा fwtty_port *port)
+अणु
+	काष्ठा stats stats;
 
-	memcpy(&stats, &port->stats, sizeof(stats));
-	if (port->port.console)
+	स_नकल(&stats, &port->stats, माप(stats));
+	अगर (port->port.console)
 		(*port->fwcon_ops->stats)(&stats, port->con_data);
 
-	seq_printf(m, " dr:%d st:%d err:%d lost:%d", stats.dropped,
-		   stats.tx_stall, stats.fifo_errs, stats.lost);
-	seq_printf(m, " pkts:%d thr:%d", stats.sent, stats.throttled);
+	seq_म_लिखो(m, " dr:%d st:%d err:%d lost:%d", stats.dropped,
+		   stats.tx_stall, stats.fअगरo_errs, stats.lost);
+	seq_म_लिखो(m, " pkts:%d thr:%d", stats.sent, stats.throttled);
 
-	if (port->port.console) {
-		seq_puts(m, "\n    ");
+	अगर (port->port.console) अणु
+		seq_माला_दो(m, "\n    ");
 		(*port->fwcon_ops->proc_show)(m, port->con_data);
-	}
+	पूर्ण
 
 	fwtty_dump_profile(m, &port->stats);
-}
+पूर्ण
 
-static void fwtty_debugfs_show_peer(struct seq_file *m, struct fwtty_peer *peer)
-{
-	int generation = peer->generation;
+अटल व्योम fwtty_debugfs_show_peer(काष्ठा seq_file *m, काष्ठा fwtty_peer *peer)
+अणु
+	पूर्णांक generation = peer->generation;
 
 	smp_rmb();
-	seq_printf(m, " %s:", dev_name(&peer->unit->device));
-	seq_printf(m, " node:%04x gen:%d", peer->node_id, generation);
-	seq_printf(m, " sp:%d max:%d guid:%016llx", peer->speed,
-		   peer->max_payload, (unsigned long long)peer->guid);
-	seq_printf(m, " mgmt:%012llx", (unsigned long long)peer->mgmt_addr);
-	seq_printf(m, " addr:%012llx", (unsigned long long)peer->status_addr);
-	seq_putc(m, '\n');
-}
+	seq_म_लिखो(m, " %s:", dev_name(&peer->unit->device));
+	seq_म_लिखो(m, " node:%04x gen:%d", peer->node_id, generation);
+	seq_म_लिखो(m, " sp:%d max:%d guid:%016llx", peer->speed,
+		   peer->max_payload, (अचिन्हित दीर्घ दीर्घ)peer->guid);
+	seq_म_लिखो(m, " mgmt:%012llx", (अचिन्हित दीर्घ दीर्घ)peer->mgmt_addr);
+	seq_म_लिखो(m, " addr:%012llx", (अचिन्हित दीर्घ दीर्घ)peer->status_addr);
+	seq_अ_दो(m, '\n');
+पूर्ण
 
-static int fwtty_proc_show(struct seq_file *m, void *v)
-{
-	struct fwtty_port *port;
-	int i;
+अटल पूर्णांक fwtty_proc_show(काष्ठा seq_file *m, व्योम *v)
+अणु
+	काष्ठा fwtty_port *port;
+	पूर्णांक i;
 
-	seq_puts(m, "fwserinfo: 1.0 driver: 1.0\n");
-	for (i = 0; i < MAX_TOTAL_PORTS && (port = fwtty_port_get(i)); ++i) {
-		seq_printf(m, "%2d:", i);
-		if (capable(CAP_SYS_ADMIN))
+	seq_माला_दो(m, "fwserinfo: 1.0 driver: 1.0\n");
+	क्रम (i = 0; i < MAX_TOTAL_PORTS && (port = fwtty_port_get(i)); ++i) अणु
+		seq_म_लिखो(m, "%2d:", i);
+		अगर (capable(CAP_SYS_ADMIN))
 			fwtty_proc_show_port(m, port);
 		fwtty_port_put(port);
-		seq_puts(m, "\n");
-	}
-	return 0;
-}
+		seq_माला_दो(m, "\n");
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int fwtty_stats_show(struct seq_file *m, void *v)
-{
-	struct fw_serial *serial = m->private;
-	struct fwtty_port *port;
-	int i;
+अटल पूर्णांक fwtty_stats_show(काष्ठा seq_file *m, व्योम *v)
+अणु
+	काष्ठा fw_serial *serial = m->निजी;
+	काष्ठा fwtty_port *port;
+	पूर्णांक i;
 
-	for (i = 0; i < num_ports; ++i) {
+	क्रम (i = 0; i < num_ports; ++i) अणु
 		port = fwtty_port_get(serial->ports[i]->index);
-		if (port) {
-			seq_printf(m, "%2d:", port->index);
+		अगर (port) अणु
+			seq_म_लिखो(m, "%2d:", port->index);
 			fwtty_proc_show_port(m, port);
 			fwtty_debugfs_show_port(m, port);
 			fwtty_port_put(port);
-			seq_puts(m, "\n");
-		}
-	}
-	return 0;
-}
+			seq_माला_दो(m, "\n");
+		पूर्ण
+	पूर्ण
+	वापस 0;
+पूर्ण
 DEFINE_SHOW_ATTRIBUTE(fwtty_stats);
 
-static int fwtty_peers_show(struct seq_file *m, void *v)
-{
-	struct fw_serial *serial = m->private;
-	struct fwtty_peer *peer;
+अटल पूर्णांक fwtty_peers_show(काष्ठा seq_file *m, व्योम *v)
+अणु
+	काष्ठा fw_serial *serial = m->निजी;
+	काष्ठा fwtty_peer *peer;
 
-	rcu_read_lock();
-	seq_printf(m, "card: %s  guid: %016llx\n",
+	rcu_पढ़ो_lock();
+	seq_म_लिखो(m, "card: %s  guid: %016llx\n",
 		   dev_name(serial->card->device),
-		   (unsigned long long)serial->card->guid);
-	list_for_each_entry_rcu(peer, &serial->peer_list, list)
+		   (अचिन्हित दीर्घ दीर्घ)serial->card->guid);
+	list_क्रम_each_entry_rcu(peer, &serial->peer_list, list)
 		fwtty_debugfs_show_peer(m, peer);
-	rcu_read_unlock();
-	return 0;
-}
+	rcu_पढ़ो_unlock();
+	वापस 0;
+पूर्ण
 DEFINE_SHOW_ATTRIBUTE(fwtty_peers);
 
-static const struct tty_port_operations fwtty_port_ops = {
+अटल स्थिर काष्ठा tty_port_operations fwtty_port_ops = अणु
 	.dtr_rts =		fwtty_port_dtr_rts,
-	.carrier_raised =	fwtty_port_carrier_raised,
-	.shutdown =		fwtty_port_shutdown,
+	.carrier_उठाओd =	fwtty_port_carrier_उठाओd,
+	.shutकरोwn =		fwtty_port_shutकरोwn,
 	.activate =		fwtty_port_activate,
-};
+पूर्ण;
 
-static const struct tty_operations fwtty_ops = {
-	.open =			fwtty_open,
-	.close =		fwtty_close,
+अटल स्थिर काष्ठा tty_operations fwtty_ops = अणु
+	.खोलो =			fwtty_खोलो,
+	.बंद =		fwtty_बंद,
 	.hangup =		fwtty_hangup,
 	.cleanup =		fwtty_cleanup,
 	.install =		fwtty_install,
-	.write =		fwtty_write,
-	.write_room =		fwtty_write_room,
-	.chars_in_buffer =	fwtty_chars_in_buffer,
-	.send_xchar =           fwtty_send_xchar,
+	.ग_लिखो =		fwtty_ग_लिखो,
+	.ग_लिखो_room =		fwtty_ग_लिखो_room,
+	.अक्षरs_in_buffer =	fwtty_अक्षरs_in_buffer,
+	.send_xअक्षर =           fwtty_send_xअक्षर,
 	.throttle =             fwtty_throttle,
 	.unthrottle =           fwtty_unthrottle,
 	.ioctl =		fwtty_ioctl,
 	.set_termios =		fwtty_set_termios,
-	.break_ctl =		fwtty_break_ctl,
+	.अवरोध_ctl =		fwtty_अवरोध_ctl,
 	.tiocmget =		fwtty_tiocmget,
 	.tiocmset =		fwtty_tiocmset,
 	.get_icount =		fwtty_get_icount,
 	.set_serial =		set_serial_info,
 	.get_serial =		get_serial_info,
 	.proc_show =		fwtty_proc_show,
-};
+पूर्ण;
 
-static const struct tty_operations fwloop_ops = {
-	.open =			fwtty_open,
-	.close =		fwtty_close,
+अटल स्थिर काष्ठा tty_operations fwloop_ops = अणु
+	.खोलो =			fwtty_खोलो,
+	.बंद =		fwtty_बंद,
 	.hangup =		fwtty_hangup,
 	.cleanup =		fwtty_cleanup,
 	.install =		fwloop_install,
-	.write =		fwtty_write,
-	.write_room =		fwtty_write_room,
-	.chars_in_buffer =	fwtty_chars_in_buffer,
-	.send_xchar =           fwtty_send_xchar,
+	.ग_लिखो =		fwtty_ग_लिखो,
+	.ग_लिखो_room =		fwtty_ग_लिखो_room,
+	.अक्षरs_in_buffer =	fwtty_अक्षरs_in_buffer,
+	.send_xअक्षर =           fwtty_send_xअक्षर,
 	.throttle =             fwtty_throttle,
 	.unthrottle =           fwtty_unthrottle,
 	.ioctl =		fwtty_ioctl,
 	.set_termios =		fwtty_set_termios,
-	.break_ctl =		fwtty_break_ctl,
+	.अवरोध_ctl =		fwtty_अवरोध_ctl,
 	.tiocmget =		fwtty_tiocmget,
 	.tiocmset =		fwtty_tiocmset,
 	.get_icount =		fwtty_get_icount,
 	.set_serial =		set_serial_info,
 	.get_serial =		get_serial_info,
-};
+पूर्ण;
 
-static inline int mgmt_pkt_expected_len(__be16 code)
-{
-	static const struct fwserial_mgmt_pkt pkt;
+अटल अंतरभूत पूर्णांक mgmt_pkt_expected_len(__be16 code)
+अणु
+	अटल स्थिर काष्ठा fwserial_mgmt_pkt pkt;
 
-	switch (be16_to_cpu(code)) {
-	case FWSC_VIRT_CABLE_PLUG:
-		return sizeof(pkt.hdr) + sizeof(pkt.plug_req);
+	चयन (be16_to_cpu(code)) अणु
+	हाल FWSC_VIRT_CABLE_PLUG:
+		वापस माप(pkt.hdr) + माप(pkt.plug_req);
 
-	case FWSC_VIRT_CABLE_PLUG_RSP:  /* | FWSC_RSP_OK */
-		return sizeof(pkt.hdr) + sizeof(pkt.plug_rsp);
+	हाल FWSC_VIRT_CABLE_PLUG_RSP:  /* | FWSC_RSP_OK */
+		वापस माप(pkt.hdr) + माप(pkt.plug_rsp);
 
-	case FWSC_VIRT_CABLE_UNPLUG:
-	case FWSC_VIRT_CABLE_UNPLUG_RSP:
-	case FWSC_VIRT_CABLE_PLUG_RSP | FWSC_RSP_NACK:
-	case FWSC_VIRT_CABLE_UNPLUG_RSP | FWSC_RSP_NACK:
-		return sizeof(pkt.hdr);
+	हाल FWSC_VIRT_CABLE_UNPLUG:
+	हाल FWSC_VIRT_CABLE_UNPLUG_RSP:
+	हाल FWSC_VIRT_CABLE_PLUG_RSP | FWSC_RSP_NACK:
+	हाल FWSC_VIRT_CABLE_UNPLUG_RSP | FWSC_RSP_NACK:
+		वापस माप(pkt.hdr);
 
-	default:
-		return -1;
-	}
-}
+	शेष:
+		वापस -1;
+	पूर्ण
+पूर्ण
 
-static inline void fill_plug_params(struct virt_plug_params *params,
-				    struct fwtty_port *port)
-{
+अटल अंतरभूत व्योम fill_plug_params(काष्ठा virt_plug_params *params,
+				    काष्ठा fwtty_port *port)
+अणु
 	u64 status_addr = port->rx_handler.offset;
-	u64 fifo_addr = port->rx_handler.offset + 4;
-	size_t fifo_len = port->rx_handler.length - 4;
+	u64 fअगरo_addr = port->rx_handler.offset + 4;
+	माप_प्रकार fअगरo_len = port->rx_handler.length - 4;
 
 	params->status_hi = cpu_to_be32(status_addr >> 32);
 	params->status_lo = cpu_to_be32(status_addr);
-	params->fifo_hi = cpu_to_be32(fifo_addr >> 32);
-	params->fifo_lo = cpu_to_be32(fifo_addr);
-	params->fifo_len = cpu_to_be32(fifo_len);
-}
+	params->fअगरo_hi = cpu_to_be32(fअगरo_addr >> 32);
+	params->fअगरo_lo = cpu_to_be32(fअगरo_addr);
+	params->fअगरo_len = cpu_to_be32(fअगरo_len);
+पूर्ण
 
-static inline void fill_plug_req(struct fwserial_mgmt_pkt *pkt,
-				 struct fwtty_port *port)
-{
+अटल अंतरभूत व्योम fill_plug_req(काष्ठा fwserial_mgmt_pkt *pkt,
+				 काष्ठा fwtty_port *port)
+अणु
 	pkt->hdr.code = cpu_to_be16(FWSC_VIRT_CABLE_PLUG);
 	pkt->hdr.len = cpu_to_be16(mgmt_pkt_expected_len(pkt->hdr.code));
 	fill_plug_params(&pkt->plug_req, port);
-}
+पूर्ण
 
-static inline void fill_plug_rsp_ok(struct fwserial_mgmt_pkt *pkt,
-				    struct fwtty_port *port)
-{
+अटल अंतरभूत व्योम fill_plug_rsp_ok(काष्ठा fwserial_mgmt_pkt *pkt,
+				    काष्ठा fwtty_port *port)
+अणु
 	pkt->hdr.code = cpu_to_be16(FWSC_VIRT_CABLE_PLUG_RSP);
 	pkt->hdr.len = cpu_to_be16(mgmt_pkt_expected_len(pkt->hdr.code));
 	fill_plug_params(&pkt->plug_rsp, port);
-}
+पूर्ण
 
-static inline void fill_plug_rsp_nack(struct fwserial_mgmt_pkt *pkt)
-{
+अटल अंतरभूत व्योम fill_plug_rsp_nack(काष्ठा fwserial_mgmt_pkt *pkt)
+अणु
 	pkt->hdr.code = cpu_to_be16(FWSC_VIRT_CABLE_PLUG_RSP | FWSC_RSP_NACK);
 	pkt->hdr.len = cpu_to_be16(mgmt_pkt_expected_len(pkt->hdr.code));
-}
+पूर्ण
 
-static inline void fill_unplug_rsp_nack(struct fwserial_mgmt_pkt *pkt)
-{
+अटल अंतरभूत व्योम fill_unplug_rsp_nack(काष्ठा fwserial_mgmt_pkt *pkt)
+अणु
 	pkt->hdr.code = cpu_to_be16(FWSC_VIRT_CABLE_UNPLUG_RSP | FWSC_RSP_NACK);
 	pkt->hdr.len = cpu_to_be16(mgmt_pkt_expected_len(pkt->hdr.code));
-}
+पूर्ण
 
-static inline void fill_unplug_rsp_ok(struct fwserial_mgmt_pkt *pkt)
-{
+अटल अंतरभूत व्योम fill_unplug_rsp_ok(काष्ठा fwserial_mgmt_pkt *pkt)
+अणु
 	pkt->hdr.code = cpu_to_be16(FWSC_VIRT_CABLE_UNPLUG_RSP);
 	pkt->hdr.len = cpu_to_be16(mgmt_pkt_expected_len(pkt->hdr.code));
-}
+पूर्ण
 
-static void fwserial_virt_plug_complete(struct fwtty_peer *peer,
-					struct virt_plug_params *params)
-{
-	struct fwtty_port *port = peer->port;
+अटल व्योम fwserial_virt_plug_complete(काष्ठा fwtty_peer *peer,
+					काष्ठा virt_plug_params *params)
+अणु
+	काष्ठा fwtty_port *port = peer->port;
 
 	peer->status_addr = be32_to_u64(params->status_hi, params->status_lo);
-	peer->fifo_addr = be32_to_u64(params->fifo_hi, params->fifo_lo);
-	peer->fifo_len = be32_to_cpu(params->fifo_len);
+	peer->fअगरo_addr = be32_to_u64(params->fअगरo_hi, params->fअगरo_lo);
+	peer->fअगरo_len = be32_to_cpu(params->fअगरo_len);
 	peer_set_state(peer, FWPS_ATTACHED);
 
-	/* reconfigure tx_fifo optimally for this peer */
+	/* reconfigure tx_fअगरo optimally क्रम this peer */
 	spin_lock_bh(&port->lock);
-	port->max_payload = min(peer->max_payload, peer->fifo_len);
-	dma_fifo_change_tx_limit(&port->tx_fifo, port->max_payload);
+	port->max_payload = min(peer->max_payload, peer->fअगरo_len);
+	dma_fअगरo_change_tx_limit(&port->tx_fअगरo, port->max_payload);
 	spin_unlock_bh(&peer->port->lock);
 
-	if (port->port.console && port->fwcon_ops->notify)
-		(*port->fwcon_ops->notify)(FWCON_NOTIFY_ATTACH, port->con_data);
+	अगर (port->port.console && port->fwcon_ops->notअगरy)
+		(*port->fwcon_ops->notअगरy)(FWCON_NOTIFY_ATTACH, port->con_data);
 
 	fwtty_info(&peer->unit, "peer (guid:%016llx) connected on %s\n",
-		   (unsigned long long)peer->guid, dev_name(port->device));
-}
+		   (अचिन्हित दीर्घ दीर्घ)peer->guid, dev_name(port->device));
+पूर्ण
 
-static inline int fwserial_send_mgmt_sync(struct fwtty_peer *peer,
-					  struct fwserial_mgmt_pkt *pkt)
-{
-	int generation;
-	int rcode, tries = 5;
+अटल अंतरभूत पूर्णांक fwserial_send_mgmt_sync(काष्ठा fwtty_peer *peer,
+					  काष्ठा fwserial_mgmt_pkt *pkt)
+अणु
+	पूर्णांक generation;
+	पूर्णांक rcode, tries = 5;
 
-	do {
+	करो अणु
 		generation = peer->generation;
 		smp_rmb();
 
@@ -1658,204 +1659,204 @@ static inline int fwserial_send_mgmt_sync(struct fwtty_peer *peer,
 					   generation, peer->speed,
 					   peer->mgmt_addr,
 					   pkt, be16_to_cpu(pkt->hdr.len));
-		if (rcode == RCODE_BUSY || rcode == RCODE_SEND_ERROR ||
-		    rcode == RCODE_GENERATION) {
+		अगर (rcode == RCODE_BUSY || rcode == RCODE_SEND_ERROR ||
+		    rcode == RCODE_GENERATION) अणु
 			fwtty_dbg(&peer->unit, "mgmt write error: %d\n", rcode);
-			continue;
-		} else {
-			break;
-		}
-	} while (--tries > 0);
-	return rcode;
-}
+			जारी;
+		पूर्ण अन्यथा अणु
+			अवरोध;
+		पूर्ण
+	पूर्ण जबतक (--tries > 0);
+	वापस rcode;
+पूर्ण
 
 /**
- * fwserial_claim_port - attempt to claim port @ index for peer
+ * fwserial_claim_port - attempt to claim port @ index क्रम peer
  *
  * Returns ptr to claimed port or error code (as ERR_PTR())
  * Can sleep - must be called from process context
  */
-static struct fwtty_port *fwserial_claim_port(struct fwtty_peer *peer,
-					      int index)
-{
-	struct fwtty_port *port;
+अटल काष्ठा fwtty_port *fwserial_claim_port(काष्ठा fwtty_peer *peer,
+					      पूर्णांक index)
+अणु
+	काष्ठा fwtty_port *port;
 
-	if (index < 0 || index >= num_ports)
-		return ERR_PTR(-EINVAL);
+	अगर (index < 0 || index >= num_ports)
+		वापस ERR_PTR(-EINVAL);
 
 	/* must guarantee that previous port releases have completed */
 	synchronize_rcu();
 
 	port = peer->serial->ports[index];
 	spin_lock_bh(&port->lock);
-	if (!rcu_access_pointer(port->peer))
-		rcu_assign_pointer(port->peer, peer);
-	else
+	अगर (!rcu_access_poपूर्णांकer(port->peer))
+		rcu_assign_poपूर्णांकer(port->peer, peer);
+	अन्यथा
 		port = ERR_PTR(-EBUSY);
 	spin_unlock_bh(&port->lock);
 
-	return port;
-}
+	वापस port;
+पूर्ण
 
 /**
- * fwserial_find_port - find avail port and claim for peer
+ * fwserial_find_port - find avail port and claim क्रम peer
  *
- * Returns ptr to claimed port or NULL if none avail
+ * Returns ptr to claimed port or शून्य अगर none avail
  * Can sleep - must be called from process context
  */
-static struct fwtty_port *fwserial_find_port(struct fwtty_peer *peer)
-{
-	struct fwtty_port **ports = peer->serial->ports;
-	int i;
+अटल काष्ठा fwtty_port *fwserial_find_port(काष्ठा fwtty_peer *peer)
+अणु
+	काष्ठा fwtty_port **ports = peer->serial->ports;
+	पूर्णांक i;
 
 	/* must guarantee that previous port releases have completed */
 	synchronize_rcu();
 
-	/* TODO: implement optional GUID-to-specific port # matching */
+	/* TODO: implement optional GUID-to-specअगरic port # matching */
 
-	/* find an unattached port (but not the loopback port, if present) */
-	for (i = 0; i < num_ttys; ++i) {
+	/* find an unattached port (but not the loopback port, अगर present) */
+	क्रम (i = 0; i < num_ttys; ++i) अणु
 		spin_lock_bh(&ports[i]->lock);
-		if (!ports[i]->peer) {
+		अगर (!ports[i]->peer) अणु
 			/* claim port */
-			rcu_assign_pointer(ports[i]->peer, peer);
+			rcu_assign_poपूर्णांकer(ports[i]->peer, peer);
 			spin_unlock_bh(&ports[i]->lock);
-			return ports[i];
-		}
+			वापस ports[i];
+		पूर्ण
 		spin_unlock_bh(&ports[i]->lock);
-	}
-	return NULL;
-}
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
-static void fwserial_release_port(struct fwtty_port *port, bool reset)
-{
+अटल व्योम fwserial_release_port(काष्ठा fwtty_port *port, bool reset)
+अणु
 	/* drop carrier (and all other line status) */
-	if (reset)
+	अगर (reset)
 		fwtty_update_port_status(port, 0);
 
 	spin_lock_bh(&port->lock);
 
-	/* reset dma fifo max transmission size back to S100 */
+	/* reset dma fअगरo max transmission size back to S100 */
 	port->max_payload = link_speed_to_max_payload(SCODE_100);
-	dma_fifo_change_tx_limit(&port->tx_fifo, port->max_payload);
+	dma_fअगरo_change_tx_limit(&port->tx_fअगरo, port->max_payload);
 
-	RCU_INIT_POINTER(port->peer, NULL);
+	RCU_INIT_POINTER(port->peer, शून्य);
 	spin_unlock_bh(&port->lock);
 
-	if (port->port.console && port->fwcon_ops->notify)
-		(*port->fwcon_ops->notify)(FWCON_NOTIFY_DETACH, port->con_data);
-}
+	अगर (port->port.console && port->fwcon_ops->notअगरy)
+		(*port->fwcon_ops->notअगरy)(FWCON_NOTIFY_DETACH, port->con_data);
+पूर्ण
 
-static void fwserial_plug_timeout(struct timer_list *t)
-{
-	struct fwtty_peer *peer = from_timer(peer, t, timer);
-	struct fwtty_port *port;
+अटल व्योम fwserial_plug_समयout(काष्ठा समयr_list *t)
+अणु
+	काष्ठा fwtty_peer *peer = from_समयr(peer, t, समयr);
+	काष्ठा fwtty_port *port;
 
 	spin_lock_bh(&peer->lock);
-	if (peer->state != FWPS_PLUG_PENDING) {
+	अगर (peer->state != FWPS_PLUG_PENDING) अणु
 		spin_unlock_bh(&peer->lock);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	port = peer_revert_state(peer);
 	spin_unlock_bh(&peer->lock);
 
-	if (port)
+	अगर (port)
 		fwserial_release_port(port, false);
-}
+पूर्ण
 
 /**
- * fwserial_connect_peer - initiate virtual cable with peer
+ * fwserial_connect_peer - initiate भव cable with peer
  *
- * Returns 0 if VIRT_CABLE_PLUG request was successfully sent,
+ * Returns 0 अगर VIRT_CABLE_PLUG request was successfully sent,
  * otherwise error code.  Must be called from process context.
  */
-static int fwserial_connect_peer(struct fwtty_peer *peer)
-{
-	struct fwtty_port *port;
-	struct fwserial_mgmt_pkt *pkt;
-	int err, rcode;
+अटल पूर्णांक fwserial_connect_peer(काष्ठा fwtty_peer *peer)
+अणु
+	काष्ठा fwtty_port *port;
+	काष्ठा fwserial_mgmt_pkt *pkt;
+	पूर्णांक err, rcode;
 
-	pkt = kmalloc(sizeof(*pkt), GFP_KERNEL);
-	if (!pkt)
-		return -ENOMEM;
+	pkt = kदो_स्मृति(माप(*pkt), GFP_KERNEL);
+	अगर (!pkt)
+		वापस -ENOMEM;
 
 	port = fwserial_find_port(peer);
-	if (!port) {
+	अगर (!port) अणु
 		fwtty_err(&peer->unit, "avail ports in use\n");
 		err = -EBUSY;
-		goto free_pkt;
-	}
+		जाओ मुक्त_pkt;
+	पूर्ण
 
 	spin_lock_bh(&peer->lock);
 
-	/* only initiate VIRT_CABLE_PLUG if peer is currently not attached */
-	if (peer->state != FWPS_NOT_ATTACHED) {
+	/* only initiate VIRT_CABLE_PLUG अगर peer is currently not attached */
+	अगर (peer->state != FWPS_NOT_ATTACHED) अणु
 		err = -EBUSY;
-		goto release_port;
-	}
+		जाओ release_port;
+	पूर्ण
 
 	peer->port = port;
 	peer_set_state(peer, FWPS_PLUG_PENDING);
 
 	fill_plug_req(pkt, peer->port);
 
-	mod_timer(&peer->timer, jiffies + VIRT_CABLE_PLUG_TIMEOUT);
+	mod_समयr(&peer->समयr, jअगरfies + VIRT_CABLE_PLUG_TIMEOUT);
 	spin_unlock_bh(&peer->lock);
 
 	rcode = fwserial_send_mgmt_sync(peer, pkt);
 
 	spin_lock_bh(&peer->lock);
-	if (peer->state == FWPS_PLUG_PENDING && rcode != RCODE_COMPLETE) {
-		if (rcode == RCODE_CONFLICT_ERROR)
+	अगर (peer->state == FWPS_PLUG_PENDING && rcode != RCODE_COMPLETE) अणु
+		अगर (rcode == RCODE_CONFLICT_ERROR)
 			err = -EAGAIN;
-		else
+		अन्यथा
 			err = -EIO;
-		goto cancel_timer;
-	}
+		जाओ cancel_समयr;
+	पूर्ण
 	spin_unlock_bh(&peer->lock);
 
-	kfree(pkt);
-	return 0;
+	kमुक्त(pkt);
+	वापस 0;
 
-cancel_timer:
-	del_timer(&peer->timer);
+cancel_समयr:
+	del_समयr(&peer->समयr);
 	peer_revert_state(peer);
 release_port:
 	spin_unlock_bh(&peer->lock);
 	fwserial_release_port(port, false);
-free_pkt:
-	kfree(pkt);
-	return err;
-}
+मुक्त_pkt:
+	kमुक्त(pkt);
+	वापस err;
+पूर्ण
 
 /**
- * fwserial_close_port -
- * HUP the tty (if the tty exists) and unregister the tty device.
+ * fwserial_बंद_port -
+ * HUP the tty (अगर the tty exists) and unरेजिस्टर the tty device.
  * Only used by the unit driver upon unit removal to disconnect and
  * cleanup all attached ports
  *
- * The port reference is put by fwtty_cleanup (if a reference was
+ * The port reference is put by fwtty_cleanup (अगर a reference was
  * ever taken).
  */
-static void fwserial_close_port(struct tty_driver *driver,
-				struct fwtty_port *port)
-{
-	struct tty_struct *tty;
+अटल व्योम fwserial_बंद_port(काष्ठा tty_driver *driver,
+				काष्ठा fwtty_port *port)
+अणु
+	काष्ठा tty_काष्ठा *tty;
 
 	mutex_lock(&port->port.mutex);
 	tty = tty_port_tty_get(&port->port);
-	if (tty) {
+	अगर (tty) अणु
 		tty_vhangup(tty);
 		tty_kref_put(tty);
-	}
+	पूर्ण
 	mutex_unlock(&port->port.mutex);
 
-	if (driver == fwloop_driver)
-		tty_unregister_device(driver, loop_idx(port));
-	else
-		tty_unregister_device(driver, port->index);
-}
+	अगर (driver == fwloop_driver)
+		tty_unरेजिस्टर_device(driver, loop_idx(port));
+	अन्यथा
+		tty_unरेजिस्टर_device(driver, port->index);
+पूर्ण
 
 /**
  * fwserial_lookup - finds first fw_serial associated with card
@@ -1863,145 +1864,145 @@ static void fwserial_close_port(struct tty_driver *driver,
  *
  * NB: caller must be holding fwserial_list_mutex
  */
-static struct fw_serial *fwserial_lookup(struct fw_card *card)
-{
-	struct fw_serial *serial;
+अटल काष्ठा fw_serial *fwserial_lookup(काष्ठा fw_card *card)
+अणु
+	काष्ठा fw_serial *serial;
 
-	list_for_each_entry(serial, &fwserial_list, list) {
-		if (card == serial->card)
-			return serial;
-	}
+	list_क्रम_each_entry(serial, &fwserial_list, list) अणु
+		अगर (card == serial->card)
+			वापस serial;
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
 /**
  * __fwserial_lookup_rcu - finds first fw_serial associated with card
  * @card: fw_card to match
  *
- * NB: caller must be inside rcu_read_lock() section
+ * NB: caller must be inside rcu_पढ़ो_lock() section
  */
-static struct fw_serial *__fwserial_lookup_rcu(struct fw_card *card)
-{
-	struct fw_serial *serial;
+अटल काष्ठा fw_serial *__fwserial_lookup_rcu(काष्ठा fw_card *card)
+अणु
+	काष्ठा fw_serial *serial;
 
-	list_for_each_entry_rcu(serial, &fwserial_list, list) {
-		if (card == serial->card)
-			return serial;
-	}
+	list_क्रम_each_entry_rcu(serial, &fwserial_list, list) अणु
+		अगर (card == serial->card)
+			वापस serial;
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
 /**
  * __fwserial_peer_by_node_id - finds a peer matching the given generation + id
  *
- * If a matching peer could not be found for the specified generation/node id,
+ * If a matching peer could not be found क्रम the specअगरied generation/node id,
  * this could be because:
  * a) the generation has changed and one of the nodes hasn't updated yet
- * b) the remote node has created its remote unit device before this
+ * b) the remote node has created its remote unit device beक्रमe this
  *    local node has created its corresponding remote unit device
- * In either case, the remote node should retry
+ * In either हाल, the remote node should retry
  *
- * Note: caller must be in rcu_read_lock() section
+ * Note: caller must be in rcu_पढ़ो_lock() section
  */
-static struct fwtty_peer *__fwserial_peer_by_node_id(struct fw_card *card,
-						     int generation, int id)
-{
-	struct fw_serial *serial;
-	struct fwtty_peer *peer;
+अटल काष्ठा fwtty_peer *__fwserial_peer_by_node_id(काष्ठा fw_card *card,
+						     पूर्णांक generation, पूर्णांक id)
+अणु
+	काष्ठा fw_serial *serial;
+	काष्ठा fwtty_peer *peer;
 
 	serial = __fwserial_lookup_rcu(card);
-	if (!serial) {
+	अगर (!serial) अणु
 		/*
 		 * Something is very wrong - there should be a matching
-		 * fw_serial structure for every fw_card. Maybe the remote node
-		 * has created its remote unit device before this driver has
-		 * been probed for any unit devices...
+		 * fw_serial काष्ठाure क्रम every fw_card. Maybe the remote node
+		 * has created its remote unit device beक्रमe this driver has
+		 * been probed क्रम any unit devices...
 		 */
 		fwtty_err(card, "unknown card (guid %016llx)\n",
-			  (unsigned long long)card->guid);
-		return NULL;
-	}
+			  (अचिन्हित दीर्घ दीर्घ)card->guid);
+		वापस शून्य;
+	पूर्ण
 
-	list_for_each_entry_rcu(peer, &serial->peer_list, list) {
-		int g = peer->generation;
+	list_क्रम_each_entry_rcu(peer, &serial->peer_list, list) अणु
+		पूर्णांक g = peer->generation;
 
 		smp_rmb();
-		if (generation == g && id == peer->node_id)
-			return peer;
-	}
+		अगर (generation == g && id == peer->node_id)
+			वापस peer;
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-#ifdef DEBUG
-static void __dump_peer_list(struct fw_card *card)
-{
-	struct fw_serial *serial;
-	struct fwtty_peer *peer;
+#अगर_घोषित DEBUG
+अटल व्योम __dump_peer_list(काष्ठा fw_card *card)
+अणु
+	काष्ठा fw_serial *serial;
+	काष्ठा fwtty_peer *peer;
 
 	serial = __fwserial_lookup_rcu(card);
-	if (!serial)
-		return;
+	अगर (!serial)
+		वापस;
 
-	list_for_each_entry_rcu(peer, &serial->peer_list, list) {
-		int g = peer->generation;
+	list_क्रम_each_entry_rcu(peer, &serial->peer_list, list) अणु
+		पूर्णांक g = peer->generation;
 
 		smp_rmb();
 		fwtty_dbg(card, "peer(%d:%x) guid: %016llx\n",
-			  g, peer->node_id, (unsigned long long)peer->guid);
-	}
-}
-#else
-#define __dump_peer_list(s)
-#endif
+			  g, peer->node_id, (अचिन्हित दीर्घ दीर्घ)peer->guid);
+	पूर्ण
+पूर्ण
+#अन्यथा
+#घोषणा __dump_peer_list(s)
+#पूर्ण_अगर
 
-static void fwserial_auto_connect(struct work_struct *work)
-{
-	struct fwtty_peer *peer = to_peer(to_delayed_work(work), connect);
-	int err;
+अटल व्योम fwserial_स्वतः_connect(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा fwtty_peer *peer = to_peer(to_delayed_work(work), connect);
+	पूर्णांक err;
 
 	err = fwserial_connect_peer(peer);
-	if (err == -EAGAIN && ++peer->connect_retries < MAX_CONNECT_RETRIES)
+	अगर (err == -EAGAIN && ++peer->connect_retries < MAX_CONNECT_RETRIES)
 		schedule_delayed_work(&peer->connect, CONNECT_RETRY_DELAY);
-}
+पूर्ण
 
-static void fwserial_peer_workfn(struct work_struct *work)
-{
-	struct fwtty_peer *peer = to_peer(work, work);
+अटल व्योम fwserial_peer_workfn(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा fwtty_peer *peer = to_peer(work, work);
 
 	peer->workfn(work);
-}
+पूर्ण
 
 /**
  * fwserial_add_peer - add a newly probed 'serial' unit device as a 'peer'
- * @serial: aggregate representing the specific fw_card to add the peer to
+ * @serial: aggregate representing the specअगरic fw_card to add the peer to
  * @unit: 'peer' to create and add to peer_list of serial
  *
  * Adds a 'peer' (ie, a local or remote 'serial' unit device) to the list of
- * peers for a specific fw_card. Optionally, auto-attach this peer to an
+ * peers क्रम a specअगरic fw_card. Optionally, स्वतः-attach this peer to an
  * available tty port. This function is called either directly or indirectly
  * as a result of a 'serial' unit device being created & probed.
  *
- * Note: this function is serialized with fwserial_remove_peer() by the
+ * Note: this function is serialized with fwserial_हटाओ_peer() by the
  * fwserial_list_mutex held in fwserial_probe().
  *
- * A 1:1 correspondence between an fw_unit and an fwtty_peer is maintained
- * via the dev_set_drvdata() for the device of the fw_unit.
+ * A 1:1 correspondence between an fw_unit and an fwtty_peer is मुख्यtained
+ * via the dev_set_drvdata() क्रम the device of the fw_unit.
  */
-static int fwserial_add_peer(struct fw_serial *serial, struct fw_unit *unit)
-{
-	struct device *dev = &unit->device;
-	struct fw_device  *parent = fw_parent_device(unit);
-	struct fwtty_peer *peer;
-	struct fw_csr_iterator ci;
-	int key, val;
-	int generation;
+अटल पूर्णांक fwserial_add_peer(काष्ठा fw_serial *serial, काष्ठा fw_unit *unit)
+अणु
+	काष्ठा device *dev = &unit->device;
+	काष्ठा fw_device  *parent = fw_parent_device(unit);
+	काष्ठा fwtty_peer *peer;
+	काष्ठा fw_csr_iterator ci;
+	पूर्णांक key, val;
+	पूर्णांक generation;
 
-	peer = kzalloc(sizeof(*peer), GFP_KERNEL);
-	if (!peer)
-		return -ENOMEM;
+	peer = kzalloc(माप(*peer), GFP_KERNEL);
+	अगर (!peer)
+		वापस -ENOMEM;
 
 	peer_set_state(peer, FWPS_NOT_ATTACHED);
 
@@ -2020,43 +2021,43 @@ static int fwserial_add_peer(struct fw_serial *serial, struct fw_unit *unit)
 
 	/* retrieve the mgmt bus addr from the unit directory */
 	fw_csr_iterator_init(&ci, unit->directory);
-	while (fw_csr_iterator_next(&ci, &key, &val)) {
-		if (key == (CSR_OFFSET | CSR_DEPENDENT_INFO)) {
+	जबतक (fw_csr_iterator_next(&ci, &key, &val)) अणु
+		अगर (key == (CSR_OFFSET | CSR_DEPENDENT_INFO)) अणु
 			peer->mgmt_addr = CSR_REGISTER_BASE + 4 * val;
-			break;
-		}
-	}
-	if (peer->mgmt_addr == 0ULL) {
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	अगर (peer->mgmt_addr == 0ULL) अणु
 		/*
 		 * No mgmt address effectively disables VIRT_CABLE_PLUG -
 		 * this peer will not be able to attach to a remote
 		 */
 		peer_set_state(peer, FWPS_NO_MGMT_ADDR);
-	}
+	पूर्ण
 
 	spin_lock_init(&peer->lock);
-	peer->port = NULL;
+	peer->port = शून्य;
 
-	timer_setup(&peer->timer, fwserial_plug_timeout, 0);
+	समयr_setup(&peer->समयr, fwserial_plug_समयout, 0);
 	INIT_WORK(&peer->work, fwserial_peer_workfn);
-	INIT_DELAYED_WORK(&peer->connect, fwserial_auto_connect);
+	INIT_DELAYED_WORK(&peer->connect, fwserial_स्वतः_connect);
 
-	/* associate peer with specific fw_card */
+	/* associate peer with specअगरic fw_card */
 	peer->serial = serial;
 	list_add_rcu(&peer->list, &serial->peer_list);
 
 	fwtty_info(&peer->unit, "peer added (guid:%016llx)\n",
-		   (unsigned long long)peer->guid);
+		   (अचिन्हित दीर्घ दीर्घ)peer->guid);
 
-	/* identify the local unit & virt cable to loopback port */
-	if (parent->is_local) {
+	/* identअगरy the local unit & virt cable to loopback port */
+	अगर (parent->is_local) अणु
 		serial->self = peer;
-		if (create_loop_dev) {
-			struct fwtty_port *port;
+		अगर (create_loop_dev) अणु
+			काष्ठा fwtty_port *port;
 
 			port = fwserial_claim_port(peer, num_ttys);
-			if (!IS_ERR(port)) {
-				struct virt_plug_params params;
+			अगर (!IS_ERR(port)) अणु
+				काष्ठा virt_plug_params params;
 
 				spin_lock_bh(&peer->lock);
 				peer->port = port;
@@ -2064,30 +2065,30 @@ static int fwserial_add_peer(struct fw_serial *serial, struct fw_unit *unit)
 				fwserial_virt_plug_complete(peer, &params);
 				spin_unlock_bh(&peer->lock);
 
-				fwtty_write_port_status(port);
-			}
-		}
+				fwtty_ग_लिखो_port_status(port);
+			पूर्ण
+		पूर्ण
 
-	} else if (auto_connect) {
-		/* auto-attach to remote units only (if policy allows) */
+	पूर्ण अन्यथा अगर (स्वतः_connect) अणु
+		/* स्वतः-attach to remote units only (अगर policy allows) */
 		schedule_delayed_work(&peer->connect, 1);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * fwserial_remove_peer - remove a 'serial' unit device as a 'peer'
+ * fwserial_हटाओ_peer - हटाओ a 'serial' unit device as a 'peer'
  *
  * Remove a 'peer' from its list of peers. This function is only
- * called by fwserial_remove() on bus removal of the unit device.
+ * called by fwserial_हटाओ() on bus removal of the unit device.
  *
  * Note: this function is serialized with fwserial_add_peer() by the
- * fwserial_list_mutex held in fwserial_remove().
+ * fwserial_list_mutex held in fwserial_हटाओ().
  */
-static void fwserial_remove_peer(struct fwtty_peer *peer)
-{
-	struct fwtty_port *port;
+अटल व्योम fwserial_हटाओ_peer(काष्ठा fwtty_peer *peer)
+अणु
+	काष्ठा fwtty_port *port;
 
 	spin_lock_bh(&peer->lock);
 	peer_set_state(peer, FWPS_GONE);
@@ -2097,69 +2098,69 @@ static void fwserial_remove_peer(struct fwtty_peer *peer)
 	cancel_work_sync(&peer->work);
 
 	spin_lock_bh(&peer->lock);
-	/* if this unit is the local unit, clear link */
-	if (peer == peer->serial->self)
-		peer->serial->self = NULL;
+	/* अगर this unit is the local unit, clear link */
+	अगर (peer == peer->serial->self)
+		peer->serial->self = शून्य;
 
-	/* cancel the request timeout timer (if running) */
-	del_timer(&peer->timer);
+	/* cancel the request समयout समयr (अगर running) */
+	del_समयr(&peer->समयr);
 
 	port = peer->port;
-	peer->port = NULL;
+	peer->port = शून्य;
 
 	list_del_rcu(&peer->list);
 
 	fwtty_info(&peer->unit, "peer removed (guid:%016llx)\n",
-		   (unsigned long long)peer->guid);
+		   (अचिन्हित दीर्घ दीर्घ)peer->guid);
 
 	spin_unlock_bh(&peer->lock);
 
-	if (port)
+	अगर (port)
 		fwserial_release_port(port, true);
 
 	synchronize_rcu();
-	kfree(peer);
-}
+	kमुक्त(peer);
+पूर्ण
 
 /**
- * fwserial_create - init everything to create TTYs for a specific fw_card
- * @unit: fw_unit for first 'serial' unit device probed for this fw_card
+ * fwserial_create - init everything to create TTYs क्रम a specअगरic fw_card
+ * @unit: fw_unit क्रम first 'serial' unit device probed क्रम this fw_card
  *
- * This function inits the aggregate structure (an fw_serial instance)
- * used to manage the TTY ports registered by a specific fw_card. Also, the
+ * This function inits the aggregate काष्ठाure (an fw_serial instance)
+ * used to manage the TTY ports रेजिस्टरed by a specअगरic fw_card. Also, the
  * unit device is added as the first 'peer'.
  *
- * This unit device may represent a local unit device (as specified by the
+ * This unit device may represent a local unit device (as specअगरied by the
  * config ROM unit directory) or it may represent a remote unit device
- * (as specified by the reading of the remote node's config ROM).
+ * (as specअगरied by the पढ़ोing of the remote node's config ROM).
  *
- * Returns 0 to indicate "ownership" of the unit device, or a negative errno
+ * Returns 0 to indicate "ownership" of the unit device, or a negative त्रुटि_सं
  * value to indicate which error.
  */
-static int fwserial_create(struct fw_unit *unit)
-{
-	struct fw_device *parent = fw_parent_device(unit);
-	struct fw_card *card = parent->card;
-	struct fw_serial *serial;
-	struct fwtty_port *port;
-	struct device *tty_dev;
-	int i, j;
-	int err;
+अटल पूर्णांक fwserial_create(काष्ठा fw_unit *unit)
+अणु
+	काष्ठा fw_device *parent = fw_parent_device(unit);
+	काष्ठा fw_card *card = parent->card;
+	काष्ठा fw_serial *serial;
+	काष्ठा fwtty_port *port;
+	काष्ठा device *tty_dev;
+	पूर्णांक i, j;
+	पूर्णांक err;
 
-	serial = kzalloc(sizeof(*serial), GFP_KERNEL);
-	if (!serial)
-		return -ENOMEM;
+	serial = kzalloc(माप(*serial), GFP_KERNEL);
+	अगर (!serial)
+		वापस -ENOMEM;
 
 	kref_init(&serial->kref);
 	serial->card = card;
 	INIT_LIST_HEAD(&serial->peer_list);
 
-	for (i = 0; i < num_ports; ++i) {
-		port = kzalloc(sizeof(*port), GFP_KERNEL);
-		if (!port) {
+	क्रम (i = 0; i < num_ports; ++i) अणु
+		port = kzalloc(माप(*port), GFP_KERNEL);
+		अगर (!port) अणु
 			err = -ENOMEM;
-			goto free_ports;
-		}
+			जाओ मुक्त_ports;
+		पूर्ण
 		tty_port_init(&port->port);
 		port->index = FWTTY_INVALID_INDEX;
 		port->port.ops = &fwtty_port_ops;
@@ -2168,16 +2169,16 @@ static int fwserial_create(struct fw_unit *unit)
 
 		spin_lock_init(&port->lock);
 		INIT_DELAYED_WORK(&port->drain, fwtty_drain_tx);
-		INIT_DELAYED_WORK(&port->emit_breaks, fwtty_emit_breaks);
-		INIT_WORK(&port->hangup, fwtty_do_hangup);
-		init_waitqueue_head(&port->wait_tx);
+		INIT_DELAYED_WORK(&port->emit_अवरोधs, fwtty_emit_अवरोधs);
+		INIT_WORK(&port->hangup, fwtty_करो_hangup);
+		init_रुकोqueue_head(&port->रुको_tx);
 		port->max_payload = link_speed_to_max_payload(SCODE_100);
-		dma_fifo_init(&port->tx_fifo);
+		dma_fअगरo_init(&port->tx_fअगरo);
 
-		RCU_INIT_POINTER(port->peer, NULL);
+		RCU_INIT_POINTER(port->peer, शून्य);
 		serial->ports[i] = port;
 
-		/* get unique bus addr region for port's status & recv fifo */
+		/* get unique bus addr region क्रम port's status & recv fअगरo */
 		port->rx_handler.length = FWTTY_PORT_RXFIFO_LEN + 4;
 		port->rx_handler.address_callback = fwtty_port_handler;
 		port->rx_handler.callback_data = port;
@@ -2187,578 +2188,578 @@ static int fwserial_create(struct fw_unit *unit)
 		 */
 		err = fw_core_add_address_handler(&port->rx_handler,
 						  &fw_high_memory_region);
-		if (err) {
+		अगर (err) अणु
 			tty_port_destroy(&port->port);
-			kfree(port);
-			goto free_ports;
-		}
-	}
-	/* preserve i for error cleanup */
+			kमुक्त(port);
+			जाओ मुक्त_ports;
+		पूर्ण
+	पूर्ण
+	/* preserve i क्रम error cleanup */
 
 	err = fwtty_ports_add(serial);
-	if (err) {
+	अगर (err) अणु
 		fwtty_err(&unit, "no space in port table\n");
-		goto free_ports;
-	}
+		जाओ मुक्त_ports;
+	पूर्ण
 
-	for (j = 0; j < num_ttys; ++j) {
-		tty_dev = tty_port_register_device(&serial->ports[j]->port,
+	क्रम (j = 0; j < num_ttys; ++j) अणु
+		tty_dev = tty_port_रेजिस्टर_device(&serial->ports[j]->port,
 						   fwtty_driver,
 						   serial->ports[j]->index,
 						   card->device);
-		if (IS_ERR(tty_dev)) {
+		अगर (IS_ERR(tty_dev)) अणु
 			err = PTR_ERR(tty_dev);
 			fwtty_err(&unit, "register tty device error (%d)\n",
 				  err);
-			goto unregister_ttys;
-		}
+			जाओ unरेजिस्टर_ttys;
+		पूर्ण
 
 		serial->ports[j]->device = tty_dev;
-	}
-	/* preserve j for error cleanup */
+	पूर्ण
+	/* preserve j क्रम error cleanup */
 
-	if (create_loop_dev) {
-		struct device *loop_dev;
+	अगर (create_loop_dev) अणु
+		काष्ठा device *loop_dev;
 
-		loop_dev = tty_port_register_device(&serial->ports[j]->port,
+		loop_dev = tty_port_रेजिस्टर_device(&serial->ports[j]->port,
 						    fwloop_driver,
 						    loop_idx(serial->ports[j]),
 						    card->device);
-		if (IS_ERR(loop_dev)) {
+		अगर (IS_ERR(loop_dev)) अणु
 			err = PTR_ERR(loop_dev);
 			fwtty_err(&unit, "create loop device failed (%d)\n",
 				  err);
-			goto unregister_ttys;
-		}
+			जाओ unरेजिस्टर_ttys;
+		पूर्ण
 		serial->ports[j]->device = loop_dev;
 		serial->ports[j]->loopback = true;
-	}
+	पूर्ण
 
-	if (!IS_ERR_OR_NULL(fwserial_debugfs)) {
+	अगर (!IS_ERR_OR_शून्य(fwserial_debugfs)) अणु
 		serial->debugfs = debugfs_create_dir(dev_name(&unit->device),
 						     fwserial_debugfs);
-		if (!IS_ERR_OR_NULL(serial->debugfs)) {
+		अगर (!IS_ERR_OR_शून्य(serial->debugfs)) अणु
 			debugfs_create_file("peers", 0444, serial->debugfs,
 					    serial, &fwtty_peers_fops);
 			debugfs_create_file("stats", 0444, serial->debugfs,
 					    serial, &fwtty_stats_fops);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	list_add_rcu(&serial->list, &fwserial_list);
 
 	fwtty_notice(&unit, "TTY over FireWire on device %s (guid %016llx)\n",
-		     dev_name(card->device), (unsigned long long)card->guid);
+		     dev_name(card->device), (अचिन्हित दीर्घ दीर्घ)card->guid);
 
 	err = fwserial_add_peer(serial, unit);
-	if (!err)
-		return 0;
+	अगर (!err)
+		वापस 0;
 
 	fwtty_err(&unit, "unable to add peer unit device (%d)\n", err);
 
 	/* fall-through to error processing */
-	debugfs_remove_recursive(serial->debugfs);
+	debugfs_हटाओ_recursive(serial->debugfs);
 
 	list_del_rcu(&serial->list);
-	if (create_loop_dev)
-		tty_unregister_device(fwloop_driver,
+	अगर (create_loop_dev)
+		tty_unरेजिस्टर_device(fwloop_driver,
 				      loop_idx(serial->ports[j]));
-unregister_ttys:
-	for (--j; j >= 0; --j)
-		tty_unregister_device(fwtty_driver, serial->ports[j]->index);
+unरेजिस्टर_ttys:
+	क्रम (--j; j >= 0; --j)
+		tty_unरेजिस्टर_device(fwtty_driver, serial->ports[j]->index);
 	kref_put(&serial->kref, fwserial_destroy);
-	return err;
+	वापस err;
 
-free_ports:
-	for (--i; i >= 0; --i) {
-		fw_core_remove_address_handler(&serial->ports[i]->rx_handler);
+मुक्त_ports:
+	क्रम (--i; i >= 0; --i) अणु
+		fw_core_हटाओ_address_handler(&serial->ports[i]->rx_handler);
 		tty_port_destroy(&serial->ports[i]->port);
-		kfree(serial->ports[i]);
-	}
-	kfree(serial);
-	return err;
-}
+		kमुक्त(serial->ports[i]);
+	पूर्ण
+	kमुक्त(serial);
+	वापस err;
+पूर्ण
 
 /**
- * fwserial_probe: bus probe function for firewire 'serial' unit devices
+ * fwserial_probe: bus probe function क्रम firewire 'serial' unit devices
  *
  * A 'serial' unit device is created and probed as a result of:
- * - declaring a ieee1394 bus id table for 'devices' matching a fabricated
- *   'serial' unit specifier id
- * - adding a unit directory to the config ROM(s) for a 'serial' unit
+ * - declaring a ieee1394 bus id table क्रम 'devices' matching a fabricated
+ *   'serial' unit specअगरier id
+ * - adding a unit directory to the config ROM(s) क्रम a 'serial' unit
  *
- * The firewire core registers unit devices by enumerating unit directories
- * of a node's config ROM after reading the config ROM when a new node is
+ * The firewire core रेजिस्टरs unit devices by क्रमागतerating unit directories
+ * of a node's config ROM after पढ़ोing the config ROM when a new node is
  * added to the bus topology after a bus reset.
  *
  * The practical implications of this are:
- * - this probe is called for both local and remote nodes that have a 'serial'
- *   unit directory in their config ROM (that matches the specifiers in
+ * - this probe is called क्रम both local and remote nodes that have a 'serial'
+ *   unit directory in their config ROM (that matches the specअगरiers in
  *   fwserial_id_table).
- * - no specific order is enforced for local vs. remote unit devices
+ * - no specअगरic order is enक्रमced क्रम local vs. remote unit devices
  *
- * This unit driver copes with the lack of specific order in the same way the
- * firewire net driver does -- each probe, for either a local or remote unit
- * device, is treated as a 'peer' (has a struct fwtty_peer instance) and the
- * first peer created for a given fw_card (tracked by the global fwserial_list)
+ * This unit driver copes with the lack of specअगरic order in the same way the
+ * firewire net driver करोes -- each probe, क्रम either a local or remote unit
+ * device, is treated as a 'peer' (has a काष्ठा fwtty_peer instance) and the
+ * first peer created क्रम a given fw_card (tracked by the global fwserial_list)
  * creates the underlying TTYs (aggregated in a fw_serial instance).
  *
- * NB: an early attempt to differentiate local & remote unit devices by creating
- *     peers only for remote units and fw_serial instances (with their
- *     associated TTY devices) only for local units was discarded. Managing
- *     the peer lifetimes on device removal proved too complicated.
+ * NB: an early attempt to dअगरferentiate local & remote unit devices by creating
+ *     peers only क्रम remote units and fw_serial instances (with their
+ *     associated TTY devices) only क्रम local units was discarded. Managing
+ *     the peer lअगरeबार on device removal proved too complicated.
  *
- * fwserial_probe/fwserial_remove are effectively serialized by the
+ * fwserial_probe/fwserial_हटाओ are effectively serialized by the
  * fwserial_list_mutex. This is necessary because the addition of the first peer
- * for a given fw_card will trigger the creation of the fw_serial for that
+ * क्रम a given fw_card will trigger the creation of the fw_serial क्रम that
  * fw_card, which must not simultaneously contend with the removal of the
- * last peer for a given fw_card triggering the destruction of the same
- * fw_serial for the same fw_card.
+ * last peer क्रम a given fw_card triggering the deकाष्ठाion of the same
+ * fw_serial क्रम the same fw_card.
  */
-static int fwserial_probe(struct fw_unit *unit,
-			  const struct ieee1394_device_id *id)
-{
-	struct fw_serial *serial;
-	int err;
+अटल पूर्णांक fwserial_probe(काष्ठा fw_unit *unit,
+			  स्थिर काष्ठा ieee1394_device_id *id)
+अणु
+	काष्ठा fw_serial *serial;
+	पूर्णांक err;
 
 	mutex_lock(&fwserial_list_mutex);
 	serial = fwserial_lookup(fw_parent_device(unit)->card);
-	if (!serial)
+	अगर (!serial)
 		err = fwserial_create(unit);
-	else
+	अन्यथा
 		err = fwserial_add_peer(serial, unit);
 	mutex_unlock(&fwserial_list_mutex);
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /**
- * fwserial_remove: bus removal function for firewire 'serial' unit devices
+ * fwserial_हटाओ: bus removal function क्रम firewire 'serial' unit devices
  *
- * The corresponding 'peer' for this unit device is removed from the list of
- * peers for the associated fw_serial (which has a 1:1 correspondence with a
- * specific fw_card). If this is the last peer being removed, then trigger
- * the destruction of the underlying TTYs.
+ * The corresponding 'peer' क्रम this unit device is हटाओd from the list of
+ * peers क्रम the associated fw_serial (which has a 1:1 correspondence with a
+ * specअगरic fw_card). If this is the last peer being हटाओd, then trigger
+ * the deकाष्ठाion of the underlying TTYs.
  */
-static void fwserial_remove(struct fw_unit *unit)
-{
-	struct fwtty_peer *peer = dev_get_drvdata(&unit->device);
-	struct fw_serial *serial = peer->serial;
-	int i;
+अटल व्योम fwserial_हटाओ(काष्ठा fw_unit *unit)
+अणु
+	काष्ठा fwtty_peer *peer = dev_get_drvdata(&unit->device);
+	काष्ठा fw_serial *serial = peer->serial;
+	पूर्णांक i;
 
 	mutex_lock(&fwserial_list_mutex);
-	fwserial_remove_peer(peer);
+	fwserial_हटाओ_peer(peer);
 
-	if (list_empty(&serial->peer_list)) {
+	अगर (list_empty(&serial->peer_list)) अणु
 		/* unlink from the fwserial_list here */
 		list_del_rcu(&serial->list);
 
-		debugfs_remove_recursive(serial->debugfs);
+		debugfs_हटाओ_recursive(serial->debugfs);
 
-		for (i = 0; i < num_ttys; ++i)
-			fwserial_close_port(fwtty_driver, serial->ports[i]);
-		if (create_loop_dev)
-			fwserial_close_port(fwloop_driver, serial->ports[i]);
+		क्रम (i = 0; i < num_ttys; ++i)
+			fwserial_बंद_port(fwtty_driver, serial->ports[i]);
+		अगर (create_loop_dev)
+			fwserial_बंद_port(fwloop_driver, serial->ports[i]);
 		kref_put(&serial->kref, fwserial_destroy);
-	}
+	पूर्ण
 	mutex_unlock(&fwserial_list_mutex);
-}
+पूर्ण
 
 /**
- * fwserial_update: bus update function for 'firewire' serial unit devices
+ * fwserial_update: bus update function क्रम 'firewire' serial unit devices
  *
- * Updates the new node_id and bus generation for this peer. Note that locking
- * is unnecessary; but careful memory barrier usage is important to enforce the
+ * Updates the new node_id and bus generation क्रम this peer. Note that locking
+ * is unnecessary; but careful memory barrier usage is important to enक्रमce the
  * load and store order of generation & node_id.
  *
- * The fw-core orders the write of node_id before generation in the parent
+ * The fw-core orders the ग_लिखो of node_id beक्रमe generation in the parent
  * fw_device to ensure that a stale node_id cannot be used with a current
- * bus generation. So the generation value must be read before the node_id.
+ * bus generation. So the generation value must be पढ़ो beक्रमe the node_id.
  *
- * In turn, this orders the write of node_id before generation in the peer to
+ * In turn, this orders the ग_लिखो of node_id beक्रमe generation in the peer to
  * also ensure a stale node_id cannot be used with a current bus generation.
  */
-static void fwserial_update(struct fw_unit *unit)
-{
-	struct fw_device *parent = fw_parent_device(unit);
-	struct fwtty_peer *peer = dev_get_drvdata(&unit->device);
-	int generation;
+अटल व्योम fwserial_update(काष्ठा fw_unit *unit)
+अणु
+	काष्ठा fw_device *parent = fw_parent_device(unit);
+	काष्ठा fwtty_peer *peer = dev_get_drvdata(&unit->device);
+	पूर्णांक generation;
 
 	generation = parent->generation;
 	smp_rmb();
 	peer->node_id = parent->node_id;
 	smp_wmb();
 	peer->generation = generation;
-}
+पूर्ण
 
-static const struct ieee1394_device_id fwserial_id_table[] = {
-	{
+अटल स्थिर काष्ठा ieee1394_device_id fwserial_id_table[] = अणु
+	अणु
 		.match_flags  = IEEE1394_MATCH_SPECIFIER_ID |
 				IEEE1394_MATCH_VERSION,
-		.specifier_id = LINUX_VENDOR_ID,
+		.specअगरier_id = LINUX_VENDOR_ID,
 		.version      = FWSERIAL_VERSION,
-	},
-	{ }
-};
+	पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 
-static struct fw_driver fwserial_driver = {
-	.driver = {
+अटल काष्ठा fw_driver fwserial_driver = अणु
+	.driver = अणु
 		.owner  = THIS_MODULE,
 		.name   = KBUILD_MODNAME,
 		.bus    = &fw_bus_type,
-	},
+	पूर्ण,
 	.probe    = fwserial_probe,
 	.update   = fwserial_update,
-	.remove   = fwserial_remove,
+	.हटाओ   = fwserial_हटाओ,
 	.id_table = fwserial_id_table,
-};
+पूर्ण;
 
-#define FW_UNIT_SPECIFIER(id)	((CSR_SPECIFIER_ID << 24) | (id))
-#define FW_UNIT_VERSION(ver)	((CSR_VERSION << 24) | (ver))
-#define FW_UNIT_ADDRESS(ofs)	(((CSR_OFFSET | CSR_DEPENDENT_INFO) << 24)  \
+#घोषणा FW_UNIT_SPECIFIER(id)	((CSR_SPECIFIER_ID << 24) | (id))
+#घोषणा FW_UNIT_VERSION(ver)	((CSR_VERSION << 24) | (ver))
+#घोषणा FW_UNIT_ADDRESS(ofs)	(((CSR_OFFSET | CSR_DEPENDENT_INFO) << 24)  \
 				 | (((ofs) - CSR_REGISTER_BASE) >> 2))
-/* XXX: config ROM definitons could be improved with semi-automated offset
+/* XXX: config ROM definitons could be improved with semi-स्वतःmated offset
  * and length calculation
  */
-#define FW_ROM_LEN(quads)	((quads) << 16)
-#define FW_ROM_DESCRIPTOR(ofs)	(((CSR_LEAF | CSR_DESCRIPTOR) << 24) | (ofs))
+#घोषणा FW_ROM_LEN(quads)	((quads) << 16)
+#घोषणा FW_ROM_DESCRIPTOR(ofs)	(((CSR_LEAF | CSR_DESCRIPTOR) << 24) | (ofs))
 
-struct fwserial_unit_directory_data {
+काष्ठा fwserial_unit_directory_data अणु
 	u32	len_crc;
-	u32	unit_specifier;
+	u32	unit_specअगरier;
 	u32	unit_sw_version;
 	u32	unit_addr_offset;
 	u32	desc1_ofs;
 	u32	desc1_len_crc;
 	u32	desc1_data[5];
-} __packed;
+पूर्ण __packed;
 
-static struct fwserial_unit_directory_data fwserial_unit_directory_data = {
+अटल काष्ठा fwserial_unit_directory_data fwserial_unit_directory_data = अणु
 	.len_crc = FW_ROM_LEN(4),
-	.unit_specifier = FW_UNIT_SPECIFIER(LINUX_VENDOR_ID),
+	.unit_specअगरier = FW_UNIT_SPECIFIER(LINUX_VENDOR_ID),
 	.unit_sw_version = FW_UNIT_VERSION(FWSERIAL_VERSION),
 	.desc1_ofs = FW_ROM_DESCRIPTOR(1),
 	.desc1_len_crc = FW_ROM_LEN(5),
-	.desc1_data = {
+	.desc1_data = अणु
 		0x00000000,			/*   type = text            */
 		0x00000000,			/*   enc = ASCII, lang EN   */
 		0x4c696e75,			/* 'Linux TTY'              */
 		0x78205454,
 		0x59000000,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static struct fw_descriptor fwserial_unit_directory = {
-	.length = sizeof(fwserial_unit_directory_data) / sizeof(u32),
-	.key    = (CSR_DIRECTORY | CSR_UNIT) << 24,
+अटल काष्ठा fw_descriptor fwserial_unit_directory = अणु
+	.length = माप(fwserial_unit_directory_data) / माप(u32),
+	.key    = (CSR_सूचीECTORY | CSR_UNIT) << 24,
 	.data   = (u32 *)&fwserial_unit_directory_data,
-};
+पूर्ण;
 
 /*
  * The management address is in the unit space region but above other known
- * address users (to keep wild writes from causing havoc)
+ * address users (to keep wild ग_लिखोs from causing havoc)
  */
-static const struct fw_address_region fwserial_mgmt_addr_region = {
+अटल स्थिर काष्ठा fw_address_region fwserial_mgmt_addr_region = अणु
 	.start = CSR_REGISTER_BASE + 0x1e0000ULL,
 	.end = 0x1000000000000ULL,
-};
+पूर्ण;
 
-static struct fw_address_handler fwserial_mgmt_addr_handler;
+अटल काष्ठा fw_address_handler fwserial_mgmt_addr_handler;
 
 /**
  * fwserial_handle_plug_req - handle VIRT_CABLE_PLUG request work
  * @work: ptr to peer->work
  *
- * Attempts to complete the VIRT_CABLE_PLUG handshake sequence for this peer.
+ * Attempts to complete the VIRT_CABLE_PLUG handshake sequence क्रम this peer.
  *
- * This checks for a collided request-- ie, that a VIRT_CABLE_PLUG request was
- * already sent to this peer. If so, the collision is resolved by comparing
+ * This checks क्रम a collided request-- ie, that a VIRT_CABLE_PLUG request was
+ * alपढ़ोy sent to this peer. If so, the collision is resolved by comparing
  * guid values; the loser sends the plug response.
  *
- * Note: if an error prevents a response, don't do anything -- the
- * remote will timeout its request.
+ * Note: अगर an error prevents a response, करोn't करो anything -- the
+ * remote will समयout its request.
  */
-static void fwserial_handle_plug_req(struct work_struct *work)
-{
-	struct fwtty_peer *peer = to_peer(work, work);
-	struct virt_plug_params *plug_req = &peer->work_params.plug_req;
-	struct fwtty_port *port;
-	struct fwserial_mgmt_pkt *pkt;
-	int rcode;
+अटल व्योम fwserial_handle_plug_req(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा fwtty_peer *peer = to_peer(work, work);
+	काष्ठा virt_plug_params *plug_req = &peer->work_params.plug_req;
+	काष्ठा fwtty_port *port;
+	काष्ठा fwserial_mgmt_pkt *pkt;
+	पूर्णांक rcode;
 
-	pkt = kmalloc(sizeof(*pkt), GFP_KERNEL);
-	if (!pkt)
-		return;
+	pkt = kदो_स्मृति(माप(*pkt), GFP_KERNEL);
+	अगर (!pkt)
+		वापस;
 
 	port = fwserial_find_port(peer);
 
 	spin_lock_bh(&peer->lock);
 
-	switch (peer->state) {
-	case FWPS_NOT_ATTACHED:
-		if (!port) {
+	चयन (peer->state) अणु
+	हाल FWPS_NOT_ATTACHED:
+		अगर (!port) अणु
 			fwtty_err(&peer->unit, "no more ports avail\n");
 			fill_plug_rsp_nack(pkt);
-		} else {
+		पूर्ण अन्यथा अणु
 			peer->port = port;
 			fill_plug_rsp_ok(pkt, peer->port);
 			peer_set_state(peer, FWPS_PLUG_RESPONDING);
-			/* don't release claimed port */
-			port = NULL;
-		}
-		break;
+			/* करोn't release claimed port */
+			port = शून्य;
+		पूर्ण
+		अवरोध;
 
-	case FWPS_PLUG_PENDING:
-		if (peer->serial->card->guid > peer->guid)
-			goto cleanup;
+	हाल FWPS_PLUG_PENDING:
+		अगर (peer->serial->card->guid > peer->guid)
+			जाओ cleanup;
 
-		/* We lost - hijack the already-claimed port and send ok */
-		del_timer(&peer->timer);
+		/* We lost - hijack the alपढ़ोy-claimed port and send ok */
+		del_समयr(&peer->समयr);
 		fill_plug_rsp_ok(pkt, peer->port);
 		peer_set_state(peer, FWPS_PLUG_RESPONDING);
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		fill_plug_rsp_nack(pkt);
-	}
+	पूर्ण
 
 	spin_unlock_bh(&peer->lock);
-	if (port)
+	अगर (port)
 		fwserial_release_port(port, false);
 
 	rcode = fwserial_send_mgmt_sync(peer, pkt);
 
 	spin_lock_bh(&peer->lock);
-	if (peer->state == FWPS_PLUG_RESPONDING) {
-		if (rcode == RCODE_COMPLETE) {
-			struct fwtty_port *tmp = peer->port;
+	अगर (peer->state == FWPS_PLUG_RESPONDING) अणु
+		अगर (rcode == RCODE_COMPLETE) अणु
+			काष्ठा fwtty_port *पंचांगp = peer->port;
 
 			fwserial_virt_plug_complete(peer, plug_req);
 			spin_unlock_bh(&peer->lock);
 
-			fwtty_write_port_status(tmp);
+			fwtty_ग_लिखो_port_status(पंचांगp);
 			spin_lock_bh(&peer->lock);
-		} else {
+		पूर्ण अन्यथा अणु
 			fwtty_err(&peer->unit, "PLUG_RSP error (%d)\n", rcode);
 			port = peer_revert_state(peer);
-		}
-	}
+		पूर्ण
+	पूर्ण
 cleanup:
 	spin_unlock_bh(&peer->lock);
-	if (port)
+	अगर (port)
 		fwserial_release_port(port, false);
-	kfree(pkt);
-}
+	kमुक्त(pkt);
+पूर्ण
 
-static void fwserial_handle_unplug_req(struct work_struct *work)
-{
-	struct fwtty_peer *peer = to_peer(work, work);
-	struct fwtty_port *port = NULL;
-	struct fwserial_mgmt_pkt *pkt;
-	int rcode;
+अटल व्योम fwserial_handle_unplug_req(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा fwtty_peer *peer = to_peer(work, work);
+	काष्ठा fwtty_port *port = शून्य;
+	काष्ठा fwserial_mgmt_pkt *pkt;
+	पूर्णांक rcode;
 
-	pkt = kmalloc(sizeof(*pkt), GFP_KERNEL);
-	if (!pkt)
-		return;
+	pkt = kदो_स्मृति(माप(*pkt), GFP_KERNEL);
+	अगर (!pkt)
+		वापस;
 
 	spin_lock_bh(&peer->lock);
 
-	switch (peer->state) {
-	case FWPS_ATTACHED:
+	चयन (peer->state) अणु
+	हाल FWPS_ATTACHED:
 		fill_unplug_rsp_ok(pkt);
 		peer_set_state(peer, FWPS_UNPLUG_RESPONDING);
-		break;
+		अवरोध;
 
-	case FWPS_UNPLUG_PENDING:
-		if (peer->serial->card->guid > peer->guid)
-			goto cleanup;
+	हाल FWPS_UNPLUG_PENDING:
+		अगर (peer->serial->card->guid > peer->guid)
+			जाओ cleanup;
 
 		/* We lost - send unplug rsp */
-		del_timer(&peer->timer);
+		del_समयr(&peer->समयr);
 		fill_unplug_rsp_ok(pkt);
 		peer_set_state(peer, FWPS_UNPLUG_RESPONDING);
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		fill_unplug_rsp_nack(pkt);
-	}
+	पूर्ण
 
 	spin_unlock_bh(&peer->lock);
 
 	rcode = fwserial_send_mgmt_sync(peer, pkt);
 
 	spin_lock_bh(&peer->lock);
-	if (peer->state == FWPS_UNPLUG_RESPONDING) {
-		if (rcode != RCODE_COMPLETE)
+	अगर (peer->state == FWPS_UNPLUG_RESPONDING) अणु
+		अगर (rcode != RCODE_COMPLETE)
 			fwtty_err(&peer->unit, "UNPLUG_RSP error (%d)\n",
 				  rcode);
 		port = peer_revert_state(peer);
-	}
+	पूर्ण
 cleanup:
 	spin_unlock_bh(&peer->lock);
-	if (port)
+	अगर (port)
 		fwserial_release_port(port, true);
-	kfree(pkt);
-}
+	kमुक्त(pkt);
+पूर्ण
 
-static int fwserial_parse_mgmt_write(struct fwtty_peer *peer,
-				     struct fwserial_mgmt_pkt *pkt,
-				     unsigned long long addr,
-				     size_t len)
-{
-	struct fwtty_port *port = NULL;
+अटल पूर्णांक fwserial_parse_mgmt_ग_लिखो(काष्ठा fwtty_peer *peer,
+				     काष्ठा fwserial_mgmt_pkt *pkt,
+				     अचिन्हित दीर्घ दीर्घ addr,
+				     माप_प्रकार len)
+अणु
+	काष्ठा fwtty_port *port = शून्य;
 	bool reset = false;
-	int rcode;
+	पूर्णांक rcode;
 
-	if (addr != fwserial_mgmt_addr_handler.offset || len < sizeof(pkt->hdr))
-		return RCODE_ADDRESS_ERROR;
+	अगर (addr != fwserial_mgmt_addr_handler.offset || len < माप(pkt->hdr))
+		वापस RCODE_ADDRESS_ERROR;
 
-	if (len != be16_to_cpu(pkt->hdr.len) ||
+	अगर (len != be16_to_cpu(pkt->hdr.len) ||
 	    len != mgmt_pkt_expected_len(pkt->hdr.code))
-		return RCODE_DATA_ERROR;
+		वापस RCODE_DATA_ERROR;
 
 	spin_lock_bh(&peer->lock);
-	if (peer->state == FWPS_GONE) {
+	अगर (peer->state == FWPS_GONE) अणु
 		/*
 		 * This should never happen - it would mean that the
 		 * remote unit that just wrote this transaction was
-		 * already removed from the bus -- and the removal was
-		 * processed before we rec'd this transaction
+		 * alपढ़ोy हटाओd from the bus -- and the removal was
+		 * processed beक्रमe we rec'd this transaction
 		 */
 		fwtty_err(&peer->unit, "peer already removed\n");
 		spin_unlock_bh(&peer->lock);
-		return RCODE_ADDRESS_ERROR;
-	}
+		वापस RCODE_ADDRESS_ERROR;
+	पूर्ण
 
 	rcode = RCODE_COMPLETE;
 
 	fwtty_dbg(&peer->unit, "mgmt: hdr.code: %04x\n", pkt->hdr.code);
 
-	switch (be16_to_cpu(pkt->hdr.code) & FWSC_CODE_MASK) {
-	case FWSC_VIRT_CABLE_PLUG:
-		if (work_pending(&peer->work)) {
+	चयन (be16_to_cpu(pkt->hdr.code) & FWSC_CODE_MASK) अणु
+	हाल FWSC_VIRT_CABLE_PLUG:
+		अगर (work_pending(&peer->work)) अणु
 			fwtty_err(&peer->unit, "plug req: busy\n");
 			rcode = RCODE_CONFLICT_ERROR;
 
-		} else {
+		पूर्ण अन्यथा अणु
 			peer->work_params.plug_req = pkt->plug_req;
 			peer->workfn = fwserial_handle_plug_req;
-			queue_work(system_unbound_wq, &peer->work);
-		}
-		break;
+			queue_work(प्रणाली_unbound_wq, &peer->work);
+		पूर्ण
+		अवरोध;
 
-	case FWSC_VIRT_CABLE_PLUG_RSP:
-		if (peer->state != FWPS_PLUG_PENDING) {
+	हाल FWSC_VIRT_CABLE_PLUG_RSP:
+		अगर (peer->state != FWPS_PLUG_PENDING) अणु
 			rcode = RCODE_CONFLICT_ERROR;
 
-		} else if (be16_to_cpu(pkt->hdr.code) & FWSC_RSP_NACK) {
+		पूर्ण अन्यथा अगर (be16_to_cpu(pkt->hdr.code) & FWSC_RSP_NACK) अणु
 			fwtty_notice(&peer->unit, "NACK plug rsp\n");
 			port = peer_revert_state(peer);
 
-		} else {
-			struct fwtty_port *tmp = peer->port;
+		पूर्ण अन्यथा अणु
+			काष्ठा fwtty_port *पंचांगp = peer->port;
 
 			fwserial_virt_plug_complete(peer, &pkt->plug_rsp);
 			spin_unlock_bh(&peer->lock);
 
-			fwtty_write_port_status(tmp);
+			fwtty_ग_लिखो_port_status(पंचांगp);
 			spin_lock_bh(&peer->lock);
-		}
-		break;
+		पूर्ण
+		अवरोध;
 
-	case FWSC_VIRT_CABLE_UNPLUG:
-		if (work_pending(&peer->work)) {
+	हाल FWSC_VIRT_CABLE_UNPLUG:
+		अगर (work_pending(&peer->work)) अणु
 			fwtty_err(&peer->unit, "unplug req: busy\n");
 			rcode = RCODE_CONFLICT_ERROR;
-		} else {
+		पूर्ण अन्यथा अणु
 			peer->workfn = fwserial_handle_unplug_req;
-			queue_work(system_unbound_wq, &peer->work);
-		}
-		break;
+			queue_work(प्रणाली_unbound_wq, &peer->work);
+		पूर्ण
+		अवरोध;
 
-	case FWSC_VIRT_CABLE_UNPLUG_RSP:
-		if (peer->state != FWPS_UNPLUG_PENDING) {
+	हाल FWSC_VIRT_CABLE_UNPLUG_RSP:
+		अगर (peer->state != FWPS_UNPLUG_PENDING) अणु
 			rcode = RCODE_CONFLICT_ERROR;
-		} else {
-			if (be16_to_cpu(pkt->hdr.code) & FWSC_RSP_NACK)
+		पूर्ण अन्यथा अणु
+			अगर (be16_to_cpu(pkt->hdr.code) & FWSC_RSP_NACK)
 				fwtty_notice(&peer->unit, "NACK unplug?\n");
 			port = peer_revert_state(peer);
 			reset = true;
-		}
-		break;
+		पूर्ण
+		अवरोध;
 
-	default:
+	शेष:
 		fwtty_err(&peer->unit, "unknown mgmt code %d\n",
 			  be16_to_cpu(pkt->hdr.code));
 		rcode = RCODE_DATA_ERROR;
-	}
+	पूर्ण
 	spin_unlock_bh(&peer->lock);
 
-	if (port)
+	अगर (port)
 		fwserial_release_port(port, reset);
 
-	return rcode;
-}
+	वापस rcode;
+पूर्ण
 
 /**
- * fwserial_mgmt_handler: bus address handler for mgmt requests
- * @parameters: fw_address_callback_t as specified by firewire core interface
+ * fwserial_mgmt_handler: bus address handler क्रम mgmt requests
+ * @parameters: fw_address_callback_t as specअगरied by firewire core पूर्णांकerface
  *
- * This handler is responsible for handling virtual cable requests from remotes
- * for all cards.
+ * This handler is responsible क्रम handling भव cable requests from remotes
+ * क्रम all cards.
  */
-static void fwserial_mgmt_handler(struct fw_card *card,
-				  struct fw_request *request,
-				  int tcode, int destination, int source,
-				  int generation,
-				  unsigned long long addr,
-				  void *data, size_t len,
-				  void *callback_data)
-{
-	struct fwserial_mgmt_pkt *pkt = data;
-	struct fwtty_peer *peer;
-	int rcode;
+अटल व्योम fwserial_mgmt_handler(काष्ठा fw_card *card,
+				  काष्ठा fw_request *request,
+				  पूर्णांक tcode, पूर्णांक destination, पूर्णांक source,
+				  पूर्णांक generation,
+				  अचिन्हित दीर्घ दीर्घ addr,
+				  व्योम *data, माप_प्रकार len,
+				  व्योम *callback_data)
+अणु
+	काष्ठा fwserial_mgmt_pkt *pkt = data;
+	काष्ठा fwtty_peer *peer;
+	पूर्णांक rcode;
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	peer = __fwserial_peer_by_node_id(card, generation, source);
-	if (!peer) {
+	अगर (!peer) अणु
 		fwtty_dbg(card, "peer(%d:%x) not found\n", generation, source);
 		__dump_peer_list(card);
 		rcode = RCODE_CONFLICT_ERROR;
 
-	} else {
-		switch (tcode) {
-		case TCODE_WRITE_BLOCK_REQUEST:
-			rcode = fwserial_parse_mgmt_write(peer, pkt, addr, len);
-			break;
+	पूर्ण अन्यथा अणु
+		चयन (tcode) अणु
+		हाल TCODE_WRITE_BLOCK_REQUEST:
+			rcode = fwserial_parse_mgmt_ग_लिखो(peer, pkt, addr, len);
+			अवरोध;
 
-		default:
+		शेष:
 			rcode = RCODE_TYPE_ERROR;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	rcu_read_unlock();
+	rcu_पढ़ो_unlock();
 	fw_send_response(card, request, rcode);
-}
+पूर्ण
 
-static int __init fwserial_init(void)
-{
-	int err, num_loops = !!(create_loop_dev);
+अटल पूर्णांक __init fwserial_init(व्योम)
+अणु
+	पूर्णांक err, num_loops = !!(create_loop_dev);
 
-	/* XXX: placeholder for a "firewire" debugfs node */
-	fwserial_debugfs = debugfs_create_dir(KBUILD_MODNAME, NULL);
+	/* XXX: placeholder क्रम a "firewire" debugfs node */
+	fwserial_debugfs = debugfs_create_dir(KBUILD_MODNAME, शून्य);
 
-	/* num_ttys/num_ports must not be set above the static alloc avail */
-	if (num_ttys + num_loops > MAX_CARD_PORTS)
+	/* num_ttys/num_ports must not be set above the अटल alloc avail */
+	अगर (num_ttys + num_loops > MAX_CARD_PORTS)
 		num_ttys = MAX_CARD_PORTS - num_loops;
 
 	num_ports = num_ttys + num_loops;
 
 	fwtty_driver = tty_alloc_driver(MAX_TOTAL_PORTS, TTY_DRIVER_REAL_RAW
 					| TTY_DRIVER_DYNAMIC_DEV);
-	if (IS_ERR(fwtty_driver)) {
+	अगर (IS_ERR(fwtty_driver)) अणु
 		err = PTR_ERR(fwtty_driver);
-		goto remove_debugfs;
-	}
+		जाओ हटाओ_debugfs;
+	पूर्ण
 
 	fwtty_driver->driver_name	= KBUILD_MODNAME;
 	fwtty_driver->name		= tty_dev_name;
@@ -2770,20 +2771,20 @@ static int __init fwserial_init(void)
 	fwtty_driver->init_termios.c_cflag  |= CLOCAL;
 	tty_set_operations(fwtty_driver, &fwtty_ops);
 
-	err = tty_register_driver(fwtty_driver);
-	if (err) {
+	err = tty_रेजिस्टर_driver(fwtty_driver);
+	अगर (err) अणु
 		pr_err("register tty driver failed (%d)\n", err);
-		goto put_tty;
-	}
+		जाओ put_tty;
+	पूर्ण
 
-	if (create_loop_dev) {
+	अगर (create_loop_dev) अणु
 		fwloop_driver = tty_alloc_driver(MAX_TOTAL_PORTS / num_ports,
 						 TTY_DRIVER_REAL_RAW
 						 | TTY_DRIVER_DYNAMIC_DEV);
-		if (IS_ERR(fwloop_driver)) {
+		अगर (IS_ERR(fwloop_driver)) अणु
 			err = PTR_ERR(fwloop_driver);
-			goto unregister_driver;
-		}
+			जाओ unरेजिस्टर_driver;
+		पूर्ण
 
 		fwloop_driver->driver_name	= KBUILD_MODNAME "_loop";
 		fwloop_driver->name		= loop_dev_name;
@@ -2795,98 +2796,98 @@ static int __init fwserial_init(void)
 		fwloop_driver->init_termios.c_cflag  |= CLOCAL;
 		tty_set_operations(fwloop_driver, &fwloop_ops);
 
-		err = tty_register_driver(fwloop_driver);
-		if (err) {
+		err = tty_रेजिस्टर_driver(fwloop_driver);
+		अगर (err) अणु
 			pr_err("register loop driver failed (%d)\n", err);
-			goto put_loop;
-		}
-	}
+			जाओ put_loop;
+		पूर्ण
+	पूर्ण
 
 	fwtty_txn_cache = kmem_cache_create("fwtty_txn_cache",
-					    sizeof(struct fwtty_transaction),
-					    0, 0, NULL);
-	if (!fwtty_txn_cache) {
+					    माप(काष्ठा fwtty_transaction),
+					    0, 0, शून्य);
+	अगर (!fwtty_txn_cache) अणु
 		err = -ENOMEM;
-		goto unregister_loop;
-	}
+		जाओ unरेजिस्टर_loop;
+	पूर्ण
 
 	/*
-	 * Ideally, this address handler would be registered per local node
-	 * (rather than the same handler for all local nodes). However,
-	 * since the firewire core requires the config rom descriptor *before*
+	 * Ideally, this address handler would be रेजिस्टरed per local node
+	 * (rather than the same handler क्रम all local nodes). However,
+	 * since the firewire core requires the config rom descriptor *beक्रमe*
 	 * the local unit device(s) are created, a single management handler
-	 * must suffice for all local serial units.
+	 * must suffice क्रम all local serial units.
 	 */
-	fwserial_mgmt_addr_handler.length = sizeof(struct fwserial_mgmt_pkt);
+	fwserial_mgmt_addr_handler.length = माप(काष्ठा fwserial_mgmt_pkt);
 	fwserial_mgmt_addr_handler.address_callback = fwserial_mgmt_handler;
 
 	err = fw_core_add_address_handler(&fwserial_mgmt_addr_handler,
 					  &fwserial_mgmt_addr_region);
-	if (err) {
+	अगर (err) अणु
 		pr_err("add management handler failed (%d)\n", err);
-		goto destroy_cache;
-	}
+		जाओ destroy_cache;
+	पूर्ण
 
 	fwserial_unit_directory_data.unit_addr_offset =
 		FW_UNIT_ADDRESS(fwserial_mgmt_addr_handler.offset);
 	err = fw_core_add_descriptor(&fwserial_unit_directory);
-	if (err) {
+	अगर (err) अणु
 		pr_err("add unit descriptor failed (%d)\n", err);
-		goto remove_handler;
-	}
+		जाओ हटाओ_handler;
+	पूर्ण
 
-	err = driver_register(&fwserial_driver.driver);
-	if (err) {
+	err = driver_रेजिस्टर(&fwserial_driver.driver);
+	अगर (err) अणु
 		pr_err("register fwserial driver failed (%d)\n", err);
-		goto remove_descriptor;
-	}
+		जाओ हटाओ_descriptor;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
-remove_descriptor:
-	fw_core_remove_descriptor(&fwserial_unit_directory);
-remove_handler:
-	fw_core_remove_address_handler(&fwserial_mgmt_addr_handler);
+हटाओ_descriptor:
+	fw_core_हटाओ_descriptor(&fwserial_unit_directory);
+हटाओ_handler:
+	fw_core_हटाओ_address_handler(&fwserial_mgmt_addr_handler);
 destroy_cache:
 	kmem_cache_destroy(fwtty_txn_cache);
-unregister_loop:
-	if (create_loop_dev)
-		tty_unregister_driver(fwloop_driver);
+unरेजिस्टर_loop:
+	अगर (create_loop_dev)
+		tty_unरेजिस्टर_driver(fwloop_driver);
 put_loop:
-	if (create_loop_dev)
+	अगर (create_loop_dev)
 		put_tty_driver(fwloop_driver);
-unregister_driver:
-	tty_unregister_driver(fwtty_driver);
+unरेजिस्टर_driver:
+	tty_unरेजिस्टर_driver(fwtty_driver);
 put_tty:
 	put_tty_driver(fwtty_driver);
-remove_debugfs:
-	debugfs_remove_recursive(fwserial_debugfs);
+हटाओ_debugfs:
+	debugfs_हटाओ_recursive(fwserial_debugfs);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void __exit fwserial_exit(void)
-{
-	driver_unregister(&fwserial_driver.driver);
-	fw_core_remove_descriptor(&fwserial_unit_directory);
-	fw_core_remove_address_handler(&fwserial_mgmt_addr_handler);
+अटल व्योम __निकास fwserial_निकास(व्योम)
+अणु
+	driver_unरेजिस्टर(&fwserial_driver.driver);
+	fw_core_हटाओ_descriptor(&fwserial_unit_directory);
+	fw_core_हटाओ_address_handler(&fwserial_mgmt_addr_handler);
 	kmem_cache_destroy(fwtty_txn_cache);
-	if (create_loop_dev) {
-		tty_unregister_driver(fwloop_driver);
+	अगर (create_loop_dev) अणु
+		tty_unरेजिस्टर_driver(fwloop_driver);
 		put_tty_driver(fwloop_driver);
-	}
-	tty_unregister_driver(fwtty_driver);
+	पूर्ण
+	tty_unरेजिस्टर_driver(fwtty_driver);
 	put_tty_driver(fwtty_driver);
-	debugfs_remove_recursive(fwserial_debugfs);
-}
+	debugfs_हटाओ_recursive(fwserial_debugfs);
+पूर्ण
 
 module_init(fwserial_init);
-module_exit(fwserial_exit);
+module_निकास(fwserial_निकास);
 
 MODULE_AUTHOR("Peter Hurley (peter@hurleysoftware.com)");
 MODULE_DESCRIPTION("FireWire Serial TTY Driver");
 MODULE_LICENSE("GPL");
 MODULE_DEVICE_TABLE(ieee1394, fwserial_id_table);
 MODULE_PARM_DESC(ttys, "Number of ttys to create for each local firewire node");
-MODULE_PARM_DESC(auto, "Auto-connect a tty to each firewire node discovered");
+MODULE_PARM_DESC(स्वतः, "Auto-connect a tty to each firewire node discovered");
 MODULE_PARM_DESC(loop, "Create a loopback device, fwloop<n>, with ttys");

@@ -1,5 +1,6 @@
+<शैली गुरु>
 
-#include <drm/drm_file.h>
+#समावेश <drm/drm_file.h>
 
-#define CREATE_TRACE_POINTS
-#include "drm_trace.h"
+#घोषणा CREATE_TRACE_POINTS
+#समावेश "drm_trace.h"

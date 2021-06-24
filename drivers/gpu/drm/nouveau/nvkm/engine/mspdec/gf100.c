@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2012 Maarten Lankhorst
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -21,30 +22,30 @@
  *
  * Authors: Maarten Lankhorst
  */
-#include "priv.h"
+#समावेश "priv.h"
 
-#include <nvif/class.h>
+#समावेश <nvअगर/class.h>
 
-void
-gf100_mspdec_init(struct nvkm_falcon *mspdec)
-{
-	struct nvkm_device *device = mspdec->engine.subdev.device;
+व्योम
+gf100_mspdec_init(काष्ठा nvkm_falcon *mspdec)
+अणु
+	काष्ठा nvkm_device *device = mspdec->engine.subdev.device;
 	nvkm_wr32(device, 0x085010, 0x0000fff2);
 	nvkm_wr32(device, 0x08501c, 0x0000fff2);
-}
+पूर्ण
 
-static const struct nvkm_falcon_func
-gf100_mspdec = {
+अटल स्थिर काष्ठा nvkm_falcon_func
+gf100_mspdec = अणु
 	.init = gf100_mspdec_init,
-	.sclass = {
-		{ -1, -1, GF100_MSPDEC },
-		{}
-	}
-};
+	.sclass = अणु
+		अणु -1, -1, GF100_MSPDEC पूर्ण,
+		अणुपूर्ण
+	पूर्ण
+पूर्ण;
 
-int
-gf100_mspdec_new(struct nvkm_device *device, enum nvkm_subdev_type type, int inst,
-		 struct nvkm_engine **pengine)
-{
-	return nvkm_mspdec_new_(&gf100_mspdec, device, type, inst, pengine);
-}
+पूर्णांक
+gf100_mspdec_new(काष्ठा nvkm_device *device, क्रमागत nvkm_subdev_type type, पूर्णांक inst,
+		 काष्ठा nvkm_engine **pengine)
+अणु
+	वापस nvkm_mspdec_new_(&gf100_mspdec, device, type, inst, pengine);
+पूर्ण

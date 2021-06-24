@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2017 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -22,28 +23,28 @@
  * Authors: Xiangliang.Yu@amd.com
  */
 
-#include "amdgpu.h"
-#include "vi.h"
-#include "bif/bif_5_0_d.h"
-#include "bif/bif_5_0_sh_mask.h"
-#include "vid.h"
-#include "gca/gfx_8_0_d.h"
-#include "gca/gfx_8_0_sh_mask.h"
-#include "gmc_v8_0.h"
-#include "gfx_v8_0.h"
-#include "sdma_v3_0.h"
-#include "tonga_ih.h"
-#include "gmc/gmc_8_2_d.h"
-#include "gmc/gmc_8_2_sh_mask.h"
-#include "oss/oss_3_0_d.h"
-#include "oss/oss_3_0_sh_mask.h"
-#include "dce/dce_10_0_d.h"
-#include "dce/dce_10_0_sh_mask.h"
-#include "smu/smu_7_1_3_d.h"
-#include "mxgpu_vi.h"
+#समावेश "amdgpu.h"
+#समावेश "vi.h"
+#समावेश "bif/bif_5_0_d.h"
+#समावेश "bif/bif_5_0_sh_mask.h"
+#समावेश "vid.h"
+#समावेश "gca/gfx_8_0_d.h"
+#समावेश "gca/gfx_8_0_sh_mask.h"
+#समावेश "gmc_v8_0.h"
+#समावेश "gfx_v8_0.h"
+#समावेश "sdma_v3_0.h"
+#समावेश "tonga_ih.h"
+#समावेश "gmc/gmc_8_2_d.h"
+#समावेश "gmc/gmc_8_2_sh_mask.h"
+#समावेश "oss/oss_3_0_d.h"
+#समावेश "oss/oss_3_0_sh_mask.h"
+#समावेश "dce/dce_10_0_d.h"
+#समावेश "dce/dce_10_0_sh_mask.h"
+#समावेश "smu/smu_7_1_3_d.h"
+#समावेश "mxgpu_vi.h"
 
 /* VI golden setting */
-static const u32 xgpu_fiji_mgcg_cgcg_init[] = {
+अटल स्थिर u32 xgpu_fiji_mgcg_cgcg_init[] = अणु
 	mmRLC_CGTT_MGCG_OVERRIDE, 0xffffffff, 0xffffffff,
 	mmGRBM_GFX_INDEX, 0xffffffff, 0xe0000000,
 	mmCB_CGTT_SCLK_CTRL, 0xffffffff, 0x00000100,
@@ -91,9 +92,9 @@ static const u32 xgpu_fiji_mgcg_cgcg_init[] = {
 	mmCP_MEM_SLP_CNTL, 0x00000001, 0x00000001,
 	mmSDMA0_CLK_CTRL, 0xff000ff0, 0x00000100,
 	mmSDMA1_CLK_CTRL, 0xff000ff0, 0x00000100,
-};
+पूर्ण;
 
-static const u32 xgpu_fiji_golden_settings_a10[] = {
+अटल स्थिर u32 xgpu_fiji_golden_settings_a10[] = अणु
 	mmCB_HW_CONTROL_3, 0x000001ff, 0x00000040,
 	mmDB_DEBUG2, 0xf00fffff, 0x00000400,
 	mmDCI_CLK_CNTL, 0x00000080, 0x00000000,
@@ -119,9 +120,9 @@ static const u32 xgpu_fiji_golden_settings_a10[] = {
 	mmVM_PRT_APERTURE1_LOW_ADDR, 0x0fffffff, 0x0fffffff,
 	mmVM_PRT_APERTURE2_LOW_ADDR, 0x0fffffff, 0x0fffffff,
 	mmVM_PRT_APERTURE3_LOW_ADDR, 0x0fffffff, 0x0fffffff,
-};
+पूर्ण;
 
-static const u32 xgpu_fiji_golden_common_all[] = {
+अटल स्थिर u32 xgpu_fiji_golden_common_all[] = अणु
 	mmGRBM_GFX_INDEX, 0xffffffff, 0xe0000000,
 	mmPA_SC_RASTER_CONFIG, 0xffffffff, 0x3a00161a,
 	mmPA_SC_RASTER_CONFIG_1, 0xffffffff, 0x0000002e,
@@ -132,9 +133,9 @@ static const u32 xgpu_fiji_golden_common_all[] = {
 	mmSPI_RESOURCE_RESERVE_EN_CU_1, 0xffffffff, 0x00007FAF,
 	mmGRBM_GFX_INDEX, 0xffffffff, 0xe0000000,
 	mmSPI_CONFIG_CNTL_1, 0x0000000f, 0x00000009,
-};
+पूर्ण;
 
-static const u32 xgpu_tonga_mgcg_cgcg_init[] = {
+अटल स्थिर u32 xgpu_tonga_mgcg_cgcg_init[] = अणु
 	mmRLC_CGTT_MGCG_OVERRIDE,   0xffffffff, 0xffffffff,
 	mmGRBM_GFX_INDEX,           0xffffffff, 0xe0000000,
 	mmCB_CGTT_SCLK_CTRL,        0xffffffff, 0x00000100,
@@ -222,9 +223,9 @@ static const u32 xgpu_tonga_mgcg_cgcg_init[] = {
 	mmCP_MEM_SLP_CNTL,          0x00000001, 0x00000001,
 	mmSDMA0_CLK_CTRL,           0xff000ff0, 0x00000100,
 	mmSDMA1_CLK_CTRL,           0xff000ff0, 0x00000100,
-};
+पूर्ण;
 
-static const u32 xgpu_tonga_golden_settings_a11[] = {
+अटल स्थिर u32 xgpu_tonga_golden_settings_a11[] = अणु
 	mmCB_HW_CONTROL, 0xfffdf3cf, 0x00007208,
 	mmCB_HW_CONTROL_3, 0x00000040, 0x00000040,
 	mmDB_DEBUG2, 0xf00fffff, 0x00000400,
@@ -262,9 +263,9 @@ static const u32 xgpu_tonga_golden_settings_a11[] = {
 	mmVM_PRT_APERTURE1_LOW_ADDR, 0x0fffffff, 0x0fffffff,
 	mmVM_PRT_APERTURE2_LOW_ADDR, 0x0fffffff, 0x0fffffff,
 	mmVM_PRT_APERTURE3_LOW_ADDR, 0x0fffffff, 0x0fffffff,
-};
+पूर्ण;
 
-static const u32 xgpu_tonga_golden_common_all[] = {
+अटल स्थिर u32 xgpu_tonga_golden_common_all[] = अणु
 	mmGRBM_GFX_INDEX,               0xffffffff, 0xe0000000,
 	mmPA_SC_RASTER_CONFIG,          0xffffffff, 0x16000012,
 	mmPA_SC_RASTER_CONFIG_1,        0xffffffff, 0x0000002A,
@@ -272,85 +273,85 @@ static const u32 xgpu_tonga_golden_common_all[] = {
 	mmSPI_RESOURCE_RESERVE_CU_0,    0xffffffff, 0x00000800,
 	mmSPI_RESOURCE_RESERVE_CU_1,    0xffffffff, 0x00000800,
 	mmSPI_RESOURCE_RESERVE_EN_CU_0, 0xffffffff, 0x00007FBF,
-};
+पूर्ण;
 
-void xgpu_vi_init_golden_registers(struct amdgpu_device *adev)
-{
-	switch (adev->asic_type) {
-	case CHIP_FIJI:
-		amdgpu_device_program_register_sequence(adev,
+व्योम xgpu_vi_init_golden_रेजिस्टरs(काष्ठा amdgpu_device *adev)
+अणु
+	चयन (adev->asic_type) अणु
+	हाल CHIP_FIJI:
+		amdgpu_device_program_रेजिस्टर_sequence(adev,
 							xgpu_fiji_mgcg_cgcg_init,
 							ARRAY_SIZE(
 								xgpu_fiji_mgcg_cgcg_init));
-		amdgpu_device_program_register_sequence(adev,
+		amdgpu_device_program_रेजिस्टर_sequence(adev,
 							xgpu_fiji_golden_settings_a10,
 							ARRAY_SIZE(
 								xgpu_fiji_golden_settings_a10));
-		amdgpu_device_program_register_sequence(adev,
+		amdgpu_device_program_रेजिस्टर_sequence(adev,
 							xgpu_fiji_golden_common_all,
 							ARRAY_SIZE(
 								xgpu_fiji_golden_common_all));
-		break;
-	case CHIP_TONGA:
-		amdgpu_device_program_register_sequence(adev,
+		अवरोध;
+	हाल CHIP_TONGA:
+		amdgpu_device_program_रेजिस्टर_sequence(adev,
 							xgpu_tonga_mgcg_cgcg_init,
 							ARRAY_SIZE(
 								xgpu_tonga_mgcg_cgcg_init));
-		amdgpu_device_program_register_sequence(adev,
+		amdgpu_device_program_रेजिस्टर_sequence(adev,
 							xgpu_tonga_golden_settings_a11,
 							ARRAY_SIZE(
 								xgpu_tonga_golden_settings_a11));
-		amdgpu_device_program_register_sequence(adev,
+		amdgpu_device_program_रेजिस्टर_sequence(adev,
 							xgpu_tonga_golden_common_all,
 							ARRAY_SIZE(
 								xgpu_tonga_golden_common_all));
-		break;
-	default:
+		अवरोध;
+	शेष:
 		BUG_ON("Doesn't support chip type.\n");
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
 /*
  * Mailbox communication between GPU hypervisor and VFs
  */
-static void xgpu_vi_mailbox_send_ack(struct amdgpu_device *adev)
-{
+अटल व्योम xgpu_vi_mailbox_send_ack(काष्ठा amdgpu_device *adev)
+अणु
 	u32 reg;
-	int timeout = VI_MAILBOX_TIMEDOUT;
+	पूर्णांक समयout = VI_MAILBOX_TIMEDOUT;
 	u32 mask = REG_FIELD_MASK(MAILBOX_CONTROL, RCV_MSG_VALID);
 
 	reg = RREG32_NO_KIQ(mmMAILBOX_CONTROL);
 	reg = REG_SET_FIELD(reg, MAILBOX_CONTROL, RCV_MSG_ACK, 1);
 	WREG32_NO_KIQ(mmMAILBOX_CONTROL, reg);
 
-	/*Wait for RCV_MSG_VALID to be 0*/
+	/*Wait क्रम RCV_MSG_VALID to be 0*/
 	reg = RREG32_NO_KIQ(mmMAILBOX_CONTROL);
-	while (reg & mask) {
-		if (timeout <= 0) {
+	जबतक (reg & mask) अणु
+		अगर (समयout <= 0) अणु
 			pr_err("RCV_MSG_VALID is not cleared\n");
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		mdelay(1);
-		timeout -=1;
+		समयout -=1;
 
 		reg = RREG32_NO_KIQ(mmMAILBOX_CONTROL);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void xgpu_vi_mailbox_set_valid(struct amdgpu_device *adev, bool val)
-{
+अटल व्योम xgpu_vi_mailbox_set_valid(काष्ठा amdgpu_device *adev, bool val)
+अणु
 	u32 reg;
 
 	reg = RREG32_NO_KIQ(mmMAILBOX_CONTROL);
 	reg = REG_SET_FIELD(reg, MAILBOX_CONTROL,
 			    TRN_MSG_VALID, val ? 1 : 0);
 	WREG32_NO_KIQ(mmMAILBOX_CONTROL, reg);
-}
+पूर्ण
 
-static void xgpu_vi_mailbox_trans_msg(struct amdgpu_device *adev,
-				      enum idh_request req)
-{
+अटल व्योम xgpu_vi_mailbox_trans_msg(काष्ठा amdgpu_device *adev,
+				      क्रमागत idh_request req)
+अणु
 	u32 reg;
 
 	reg = RREG32_NO_KIQ(mmMAILBOX_MSGBUF_TRN_DW0);
@@ -359,267 +360,267 @@ static void xgpu_vi_mailbox_trans_msg(struct amdgpu_device *adev,
 	WREG32_NO_KIQ(mmMAILBOX_MSGBUF_TRN_DW0, reg);
 
 	xgpu_vi_mailbox_set_valid(adev, true);
-}
+पूर्ण
 
-static int xgpu_vi_mailbox_rcv_msg(struct amdgpu_device *adev,
-				   enum idh_event event)
-{
+अटल पूर्णांक xgpu_vi_mailbox_rcv_msg(काष्ठा amdgpu_device *adev,
+				   क्रमागत idh_event event)
+अणु
 	u32 reg;
 	u32 mask = REG_FIELD_MASK(MAILBOX_CONTROL, RCV_MSG_VALID);
 
-	/* workaround: host driver doesn't set VALID for CMPL now */
-	if (event != IDH_FLR_NOTIFICATION_CMPL) {
+	/* workaround: host driver करोesn't set VALID क्रम CMPL now */
+	अगर (event != IDH_FLR_NOTIFICATION_CMPL) अणु
 		reg = RREG32_NO_KIQ(mmMAILBOX_CONTROL);
-		if (!(reg & mask))
-			return -ENOENT;
-	}
+		अगर (!(reg & mask))
+			वापस -ENOENT;
+	पूर्ण
 
 	reg = RREG32_NO_KIQ(mmMAILBOX_MSGBUF_RCV_DW0);
-	if (reg != event)
-		return -ENOENT;
+	अगर (reg != event)
+		वापस -ENOENT;
 
 	/* send ack to PF */
 	xgpu_vi_mailbox_send_ack(adev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int xgpu_vi_poll_ack(struct amdgpu_device *adev)
-{
-	int r = 0, timeout = VI_MAILBOX_TIMEDOUT;
+अटल पूर्णांक xgpu_vi_poll_ack(काष्ठा amdgpu_device *adev)
+अणु
+	पूर्णांक r = 0, समयout = VI_MAILBOX_TIMEDOUT;
 	u32 mask = REG_FIELD_MASK(MAILBOX_CONTROL, TRN_MSG_ACK);
 	u32 reg;
 
 	reg = RREG32_NO_KIQ(mmMAILBOX_CONTROL);
-	while (!(reg & mask)) {
-		if (timeout <= 0) {
+	जबतक (!(reg & mask)) अणु
+		अगर (समयout <= 0) अणु
 			pr_err("Doesn't get ack from pf.\n");
 			r = -ETIME;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		mdelay(5);
-		timeout -= 5;
+		समयout -= 5;
 
 		reg = RREG32_NO_KIQ(mmMAILBOX_CONTROL);
-	}
+	पूर्ण
 
-	return r;
-}
+	वापस r;
+पूर्ण
 
-static int xgpu_vi_poll_msg(struct amdgpu_device *adev, enum idh_event event)
-{
-	int r = 0, timeout = VI_MAILBOX_TIMEDOUT;
+अटल पूर्णांक xgpu_vi_poll_msg(काष्ठा amdgpu_device *adev, क्रमागत idh_event event)
+अणु
+	पूर्णांक r = 0, समयout = VI_MAILBOX_TIMEDOUT;
 
 	r = xgpu_vi_mailbox_rcv_msg(adev, event);
-	while (r) {
-		if (timeout <= 0) {
+	जबतक (r) अणु
+		अगर (समयout <= 0) अणु
 			pr_err("Doesn't get ack from pf.\n");
 			r = -ETIME;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		mdelay(5);
-		timeout -= 5;
+		समयout -= 5;
 
 		r = xgpu_vi_mailbox_rcv_msg(adev, event);
-	}
+	पूर्ण
 
-	return r;
-}
+	वापस r;
+पूर्ण
 
-static int xgpu_vi_send_access_requests(struct amdgpu_device *adev,
-					enum idh_request request)
-{
-	int r;
+अटल पूर्णांक xgpu_vi_send_access_requests(काष्ठा amdgpu_device *adev,
+					क्रमागत idh_request request)
+अणु
+	पूर्णांक r;
 
 	xgpu_vi_mailbox_trans_msg(adev, request);
 
 	/* start to poll ack */
 	r = xgpu_vi_poll_ack(adev);
-	if (r)
-		return r;
+	अगर (r)
+		वापस r;
 
 	xgpu_vi_mailbox_set_valid(adev, false);
 
-	/* start to check msg if request is idh_req_gpu_init_access */
-	if (request == IDH_REQ_GPU_INIT_ACCESS ||
+	/* start to check msg अगर request is idh_req_gpu_init_access */
+	अगर (request == IDH_REQ_GPU_INIT_ACCESS ||
 		request == IDH_REQ_GPU_FINI_ACCESS ||
-		request == IDH_REQ_GPU_RESET_ACCESS) {
+		request == IDH_REQ_GPU_RESET_ACCESS) अणु
 		r = xgpu_vi_poll_msg(adev, IDH_READY_TO_ACCESS_GPU);
-		if (r) {
+		अगर (r) अणु
 			pr_err("Doesn't get ack from pf, give up\n");
-			return r;
-		}
-	}
+			वापस r;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int xgpu_vi_request_reset(struct amdgpu_device *adev)
-{
-	return xgpu_vi_send_access_requests(adev, IDH_REQ_GPU_RESET_ACCESS);
-}
+अटल पूर्णांक xgpu_vi_request_reset(काष्ठा amdgpu_device *adev)
+अणु
+	वापस xgpu_vi_send_access_requests(adev, IDH_REQ_GPU_RESET_ACCESS);
+पूर्ण
 
-static int xgpu_vi_wait_reset_cmpl(struct amdgpu_device *adev)
-{
-	return xgpu_vi_poll_msg(adev, IDH_FLR_NOTIFICATION_CMPL);
-}
+अटल पूर्णांक xgpu_vi_रुको_reset_cmpl(काष्ठा amdgpu_device *adev)
+अणु
+	वापस xgpu_vi_poll_msg(adev, IDH_FLR_NOTIFICATION_CMPL);
+पूर्ण
 
-static int xgpu_vi_request_full_gpu_access(struct amdgpu_device *adev,
+अटल पूर्णांक xgpu_vi_request_full_gpu_access(काष्ठा amdgpu_device *adev,
 					   bool init)
-{
-	enum idh_request req;
+अणु
+	क्रमागत idh_request req;
 
 	req = init ? IDH_REQ_GPU_INIT_ACCESS : IDH_REQ_GPU_FINI_ACCESS;
-	return xgpu_vi_send_access_requests(adev, req);
-}
+	वापस xgpu_vi_send_access_requests(adev, req);
+पूर्ण
 
-static int xgpu_vi_release_full_gpu_access(struct amdgpu_device *adev,
+अटल पूर्णांक xgpu_vi_release_full_gpu_access(काष्ठा amdgpu_device *adev,
 					   bool init)
-{
-	enum idh_request req;
-	int r = 0;
+अणु
+	क्रमागत idh_request req;
+	पूर्णांक r = 0;
 
 	req = init ? IDH_REL_GPU_INIT_ACCESS : IDH_REL_GPU_FINI_ACCESS;
 	r = xgpu_vi_send_access_requests(adev, req);
 
-	return r;
-}
+	वापस r;
+पूर्ण
 
-/* add support mailbox interrupts */
-static int xgpu_vi_mailbox_ack_irq(struct amdgpu_device *adev,
-				   struct amdgpu_irq_src *source,
-				   struct amdgpu_iv_entry *entry)
-{
+/* add support mailbox पूर्णांकerrupts */
+अटल पूर्णांक xgpu_vi_mailbox_ack_irq(काष्ठा amdgpu_device *adev,
+				   काष्ठा amdgpu_irq_src *source,
+				   काष्ठा amdgpu_iv_entry *entry)
+अणु
 	DRM_DEBUG("get ack intr and do nothing.\n");
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int xgpu_vi_set_mailbox_ack_irq(struct amdgpu_device *adev,
-				       struct amdgpu_irq_src *src,
-				       unsigned type,
-				       enum amdgpu_interrupt_state state)
-{
-	u32 tmp = RREG32_NO_KIQ(mmMAILBOX_INT_CNTL);
+अटल पूर्णांक xgpu_vi_set_mailbox_ack_irq(काष्ठा amdgpu_device *adev,
+				       काष्ठा amdgpu_irq_src *src,
+				       अचिन्हित type,
+				       क्रमागत amdgpu_पूर्णांकerrupt_state state)
+अणु
+	u32 पंचांगp = RREG32_NO_KIQ(mmMAILBOX_INT_CNTL);
 
-	tmp = REG_SET_FIELD(tmp, MAILBOX_INT_CNTL, ACK_INT_EN,
+	पंचांगp = REG_SET_FIELD(पंचांगp, MAILBOX_INT_CNTL, ACK_INT_EN,
 			    (state == AMDGPU_IRQ_STATE_ENABLE) ? 1 : 0);
-	WREG32_NO_KIQ(mmMAILBOX_INT_CNTL, tmp);
+	WREG32_NO_KIQ(mmMAILBOX_INT_CNTL, पंचांगp);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void xgpu_vi_mailbox_flr_work(struct work_struct *work)
-{
-	struct amdgpu_virt *virt = container_of(work, struct amdgpu_virt, flr_work);
-	struct amdgpu_device *adev = container_of(virt, struct amdgpu_device, virt);
+अटल व्योम xgpu_vi_mailbox_flr_work(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा amdgpu_virt *virt = container_of(work, काष्ठा amdgpu_virt, flr_work);
+	काष्ठा amdgpu_device *adev = container_of(virt, काष्ठा amdgpu_device, virt);
 
-	/* wait until RCV_MSG become 3 */
-	if (xgpu_vi_poll_msg(adev, IDH_FLR_NOTIFICATION_CMPL)) {
+	/* रुको until RCV_MSG become 3 */
+	अगर (xgpu_vi_poll_msg(adev, IDH_FLR_NOTIFICATION_CMPL)) अणु
 		pr_err("failed to receive FLR_CMPL\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	/* Trigger recovery due to world switch failure */
-	if (amdgpu_device_should_recover_gpu(adev))
-		amdgpu_device_gpu_recover(adev, NULL);
-}
+	/* Trigger recovery due to world चयन failure */
+	अगर (amdgpu_device_should_recover_gpu(adev))
+		amdgpu_device_gpu_recover(adev, शून्य);
+पूर्ण
 
-static int xgpu_vi_set_mailbox_rcv_irq(struct amdgpu_device *adev,
-				       struct amdgpu_irq_src *src,
-				       unsigned type,
-				       enum amdgpu_interrupt_state state)
-{
-	u32 tmp = RREG32_NO_KIQ(mmMAILBOX_INT_CNTL);
+अटल पूर्णांक xgpu_vi_set_mailbox_rcv_irq(काष्ठा amdgpu_device *adev,
+				       काष्ठा amdgpu_irq_src *src,
+				       अचिन्हित type,
+				       क्रमागत amdgpu_पूर्णांकerrupt_state state)
+अणु
+	u32 पंचांगp = RREG32_NO_KIQ(mmMAILBOX_INT_CNTL);
 
-	tmp = REG_SET_FIELD(tmp, MAILBOX_INT_CNTL, VALID_INT_EN,
+	पंचांगp = REG_SET_FIELD(पंचांगp, MAILBOX_INT_CNTL, VALID_INT_EN,
 			    (state == AMDGPU_IRQ_STATE_ENABLE) ? 1 : 0);
-	WREG32_NO_KIQ(mmMAILBOX_INT_CNTL, tmp);
+	WREG32_NO_KIQ(mmMAILBOX_INT_CNTL, पंचांगp);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int xgpu_vi_mailbox_rcv_irq(struct amdgpu_device *adev,
-				   struct amdgpu_irq_src *source,
-				   struct amdgpu_iv_entry *entry)
-{
-	int r;
+अटल पूर्णांक xgpu_vi_mailbox_rcv_irq(काष्ठा amdgpu_device *adev,
+				   काष्ठा amdgpu_irq_src *source,
+				   काष्ठा amdgpu_iv_entry *entry)
+अणु
+	पूर्णांक r;
 
-	/* trigger gpu-reset by hypervisor only if TDR disbaled */
-	if (!amdgpu_gpu_recovery) {
+	/* trigger gpu-reset by hypervisor only अगर TDR disbaled */
+	अगर (!amdgpu_gpu_recovery) अणु
 		/* see what event we get */
 		r = xgpu_vi_mailbox_rcv_msg(adev, IDH_FLR_NOTIFICATION);
 
 		/* only handle FLR_NOTIFY now */
-		if (!r)
+		अगर (!r)
 			schedule_work(&adev->virt.flr_work);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct amdgpu_irq_src_funcs xgpu_vi_mailbox_ack_irq_funcs = {
+अटल स्थिर काष्ठा amdgpu_irq_src_funcs xgpu_vi_mailbox_ack_irq_funcs = अणु
 	.set = xgpu_vi_set_mailbox_ack_irq,
 	.process = xgpu_vi_mailbox_ack_irq,
-};
+पूर्ण;
 
-static const struct amdgpu_irq_src_funcs xgpu_vi_mailbox_rcv_irq_funcs = {
+अटल स्थिर काष्ठा amdgpu_irq_src_funcs xgpu_vi_mailbox_rcv_irq_funcs = अणु
 	.set = xgpu_vi_set_mailbox_rcv_irq,
 	.process = xgpu_vi_mailbox_rcv_irq,
-};
+पूर्ण;
 
-void xgpu_vi_mailbox_set_irq_funcs(struct amdgpu_device *adev)
-{
+व्योम xgpu_vi_mailbox_set_irq_funcs(काष्ठा amdgpu_device *adev)
+अणु
 	adev->virt.ack_irq.num_types = 1;
 	adev->virt.ack_irq.funcs = &xgpu_vi_mailbox_ack_irq_funcs;
 	adev->virt.rcv_irq.num_types = 1;
 	adev->virt.rcv_irq.funcs = &xgpu_vi_mailbox_rcv_irq_funcs;
-}
+पूर्ण
 
-int xgpu_vi_mailbox_add_irq_id(struct amdgpu_device *adev)
-{
-	int r;
+पूर्णांक xgpu_vi_mailbox_add_irq_id(काष्ठा amdgpu_device *adev)
+अणु
+	पूर्णांक r;
 
 	r = amdgpu_irq_add_id(adev, AMDGPU_IRQ_CLIENTID_LEGACY, 135, &adev->virt.rcv_irq);
-	if (r)
-		return r;
+	अगर (r)
+		वापस r;
 
 	r = amdgpu_irq_add_id(adev, AMDGPU_IRQ_CLIENTID_LEGACY, 138, &adev->virt.ack_irq);
-	if (r) {
+	अगर (r) अणु
 		amdgpu_irq_put(adev, &adev->virt.rcv_irq, 0);
-		return r;
-	}
+		वापस r;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int xgpu_vi_mailbox_get_irq(struct amdgpu_device *adev)
-{
-	int r;
+पूर्णांक xgpu_vi_mailbox_get_irq(काष्ठा amdgpu_device *adev)
+अणु
+	पूर्णांक r;
 
 	r = amdgpu_irq_get(adev, &adev->virt.rcv_irq, 0);
-	if (r)
-		return r;
+	अगर (r)
+		वापस r;
 	r = amdgpu_irq_get(adev, &adev->virt.ack_irq, 0);
-	if (r) {
+	अगर (r) अणु
 		amdgpu_irq_put(adev, &adev->virt.rcv_irq, 0);
-		return r;
-	}
+		वापस r;
+	पूर्ण
 
 	INIT_WORK(&adev->virt.flr_work, xgpu_vi_mailbox_flr_work);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void xgpu_vi_mailbox_put_irq(struct amdgpu_device *adev)
-{
+व्योम xgpu_vi_mailbox_put_irq(काष्ठा amdgpu_device *adev)
+अणु
 	amdgpu_irq_put(adev, &adev->virt.ack_irq, 0);
 	amdgpu_irq_put(adev, &adev->virt.rcv_irq, 0);
-}
+पूर्ण
 
-const struct amdgpu_virt_ops xgpu_vi_virt_ops = {
+स्थिर काष्ठा amdgpu_virt_ops xgpu_vi_virt_ops = अणु
 	.req_full_gpu		= xgpu_vi_request_full_gpu_access,
 	.rel_full_gpu		= xgpu_vi_release_full_gpu_access,
 	.reset_gpu		= xgpu_vi_request_reset,
-	.wait_reset             = xgpu_vi_wait_reset_cmpl,
-	.trans_msg		= NULL, /* Does not need to trans VF errors to host. */
-};
+	.रुको_reset             = xgpu_vi_रुको_reset_cmpl,
+	.trans_msg		= शून्य, /* Does not need to trans VF errors to host. */
+पूर्ण;

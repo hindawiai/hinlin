@@ -1,11 +1,12 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
  * copyright (C) 1999/2000 by Henning Zabel <henning@uni-paderborn.de>
  */
 
 
 /*
- *	USB-Kernel Driver for the Mustek MDC800 Digital Camera
+ *	USB-Kernel Driver क्रम the Mustek MDC800 Digital Camera
  *	(c) 1999/2000 Henning Zabel <henning@uni-paderborn.de>
  *
  *
@@ -18,12 +19,12 @@
  * The driver supports only one camera.
  * 
  * Fix: mdc800 used sleep_on and slept with io_lock held.
- * Converted sleep_on to waitqueues with schedule_timeout and made io_lock
+ * Converted sleep_on to रुकोqueues with schedule_समयout and made io_lock
  * a semaphore from a spinlock.
  * by Oliver Neukum <oliver@neukum.name>
  * (02/12/2001)
  * 
- * Identify version on module load.
+ * Identअगरy version on module load.
  * (08/04/2001) gb
  *
  * version 0.7.5
@@ -32,12 +33,12 @@
  * noticed the race conditions.
  * (30/10/2000)
  *
- * Fixed: Setting urb->dev before submitting urb.
+ * Fixed: Setting urb->dev beक्रमe submitting urb.
  * by Greg KH <greg@kroah.com>
  * (13/10/2000)
  *
  * version 0.7.3
- * bugfix : The mdc800->state field gets set to READY after the
+ * bugfix : The mdc800->state field माला_लो set to READY after the
  * the disconnect function sets it to NOT_CONNECTED. This makes the
  * driver running like the camera is connected and causes some
  * hang ups.
@@ -47,7 +48,7 @@
  * problems when compiled as Module.
  * (04/04/2000)
  *
- * The mdc800 driver gets assigned the USB Minor 32-47. The Registration
+ * The mdc800 driver माला_लो asचिन्हित the USB Minor 32-47. The Registration
  * was updated to use these values.
  * (26/03/2000)
  *
@@ -55,472 +56,472 @@
  * (01/03/2000)
  *
  * version 0.7.0
- * Rewrite of the driver : The driver now uses URB's. The old stuff
- * has been removed.
+ * Reग_लिखो of the driver : The driver now uses URB's. The old stuff
+ * has been हटाओd.
  *
  * version 0.6.0
- * Rewrite of this driver: The Emulation of the rs232 protocoll
- * has been removed from the driver. A special executeCommand function
- * for this driver is included to gphoto.
- * The driver supports two kind of communication to bulk endpoints.
+ * Reग_लिखो of this driver: The Emulation of the rs232 protocoll
+ * has been हटाओd from the driver. A special executeCommand function
+ * क्रम this driver is included to gphoto.
+ * The driver supports two kind of communication to bulk endpoपूर्णांकs.
  * Either with the dev->bus->ops->bulk... or with callback function.
  * (09/11/1999)
  *
  * version 0.5.0:
- * first Version that gets a version number. Most of the needed
+ * first Version that माला_लो a version number. Most of the needed
  * functions work.
  * (20/10/1999)
  */
 
-#include <linux/sched/signal.h>
-#include <linux/signal.h>
-#include <linux/spinlock.h>
-#include <linux/errno.h>
-#include <linux/random.h>
-#include <linux/poll.h>
-#include <linux/init.h>
-#include <linux/slab.h>
-#include <linux/module.h>
-#include <linux/wait.h>
-#include <linux/mutex.h>
+#समावेश <linux/sched/संकेत.स>
+#समावेश <linux/संकेत.स>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/अक्रमom.h>
+#समावेश <linux/poll.h>
+#समावेश <linux/init.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/module.h>
+#समावेश <linux/रुको.h>
+#समावेश <linux/mutex.h>
 
-#include <linux/usb.h>
-#include <linux/fs.h>
+#समावेश <linux/usb.h>
+#समावेश <linux/fs.h>
 
 /*
- * Version Information
+ * Version Inक्रमmation
  */
-#define DRIVER_VERSION "v0.7.5 (30/10/2000)"
-#define DRIVER_AUTHOR "Henning Zabel <henning@uni-paderborn.de>"
-#define DRIVER_DESC "USB Driver for Mustek MDC800 Digital Camera"
+#घोषणा DRIVER_VERSION "v0.7.5 (30/10/2000)"
+#घोषणा DRIVER_AUTHOR "Henning Zabel <henning@uni-paderborn.de>"
+#घोषणा DRIVER_DESC "USB Driver for Mustek MDC800 Digital Camera"
 
-/* Vendor and Product Information */
-#define MDC800_VENDOR_ID 	0x055f
-#define MDC800_PRODUCT_ID	0xa800
+/* Venकरोr and Product Inक्रमmation */
+#घोषणा MDC800_VENDOR_ID 	0x055f
+#घोषणा MDC800_PRODUCT_ID	0xa800
 
 /* Timeouts (msec) */
-#define TO_DOWNLOAD_GET_READY		1500
-#define TO_DOWNLOAD_GET_BUSY		1500
-#define TO_WRITE_GET_READY		1000
-#define TO_DEFAULT_COMMAND		5000
-#define TO_READ_FROM_IRQ 		TO_DEFAULT_COMMAND
-#define TO_GET_READY			TO_DEFAULT_COMMAND
+#घोषणा TO_DOWNLOAD_GET_READY		1500
+#घोषणा TO_DOWNLOAD_GET_BUSY		1500
+#घोषणा TO_WRITE_GET_READY		1000
+#घोषणा TO_DEFAULT_COMMAND		5000
+#घोषणा TO_READ_FROM_IRQ 		TO_DEFAULT_COMMAND
+#घोषणा TO_GET_READY			TO_DEFAULT_COMMAND
 
 /* Minor Number of the device (create with mknod /dev/mustek c 180 32) */
-#define MDC800_DEVICE_MINOR_BASE 32
+#घोषणा MDC800_DEVICE_MINOR_BASE 32
 
 
 /**************************************************************************
-	Data and structs
+	Data and काष्ठाs
 ***************************************************************************/
 
 
-typedef enum {
+प्रकार क्रमागत अणु
 	NOT_CONNECTED, READY, WORKING, DOWNLOAD
-} mdc800_state;
+पूर्ण mdc800_state;
 
 
-/* Data for the driver */
-struct mdc800_data
-{
-	struct usb_device *	dev;			// Device Data
+/* Data क्रम the driver */
+काष्ठा mdc800_data
+अणु
+	काष्ठा usb_device *	dev;			// Device Data
 	mdc800_state 		state;
 
-	unsigned int		endpoint [4];
+	अचिन्हित पूर्णांक		endpoपूर्णांक [4];
 
-	struct urb *		irq_urb;
-	wait_queue_head_t	irq_wait;
-	int			irq_woken;
-	char*			irq_urb_buffer;
+	काष्ठा urb *		irq_urb;
+	रुको_queue_head_t	irq_रुको;
+	पूर्णांक			irq_woken;
+	अक्षर*			irq_urb_buffer;
 
-	int			camera_busy;          // is camera busy ?
-	int 			camera_request_ready; // Status to synchronize with irq
-	char 			camera_response [8];  // last Bytes send after busy
+	पूर्णांक			camera_busy;          // is camera busy ?
+	पूर्णांक 			camera_request_पढ़ोy; // Status to synchronize with irq
+	अक्षर 			camera_response [8];  // last Bytes send after busy
 
-	struct urb *   		write_urb;
-	char*			write_urb_buffer;
-	wait_queue_head_t	write_wait;
-	int			written;
+	काष्ठा urb *   		ग_लिखो_urb;
+	अक्षर*			ग_लिखो_urb_buffer;
+	रुको_queue_head_t	ग_लिखो_रुको;
+	पूर्णांक			written;
 
 
-	struct urb *   		download_urb;
-	char*			download_urb_buffer;
-	wait_queue_head_t	download_wait;
-	int			downloaded;
-	int			download_left;		// Bytes left to download ?
+	काष्ठा urb *   		करोwnload_urb;
+	अक्षर*			करोwnload_urb_buffer;
+	रुको_queue_head_t	करोwnload_रुको;
+	पूर्णांक			करोwnloaded;
+	पूर्णांक			करोwnload_left;		// Bytes left to करोwnload ?
 
 
 	/* Device Data */
-	char			out [64];	// Answer Buffer
-	int 			out_ptr;	// Index to the first not readen byte
-	int			out_count;	// Bytes in the buffer
+	अक्षर			out [64];	// Answer Buffer
+	पूर्णांक 			out_ptr;	// Index to the first not पढ़ोen byte
+	पूर्णांक			out_count;	// Bytes in the buffer
 
-	int			open;		// Camera device open ?
-	struct mutex		io_lock;	// IO -lock
+	पूर्णांक			खोलो;		// Camera device खोलो ?
+	काष्ठा mutex		io_lock;	// IO -lock
 
-	char 			in [8];		// Command Input Buffer
-	int  			in_count;
+	अक्षर 			in [8];		// Command Input Buffer
+	पूर्णांक  			in_count;
 
-	int			pic_index;	// Cache for the Imagesize (-1 for nothing cached )
-	int			pic_len;
-	int			minor;
-};
+	पूर्णांक			pic_index;	// Cache क्रम the Imagesize (-1 क्रम nothing cached )
+	पूर्णांक			pic_len;
+	पूर्णांक			minor;
+पूर्ण;
 
 
-/* Specification of the Endpoints */
-static struct usb_endpoint_descriptor mdc800_ed [4] =
-{
-	{ 
+/* Specअगरication of the Endpoपूर्णांकs */
+अटल काष्ठा usb_endpoपूर्णांक_descriptor mdc800_ed [4] =
+अणु
+	अणु 
 		.bLength = 		0,
 		.bDescriptorType =	0,
-		.bEndpointAddress =	0x01,
+		.bEndpoपूर्णांकAddress =	0x01,
 		.bmAttributes = 	0x02,
 		.wMaxPacketSize =	cpu_to_le16(8),
 		.bInterval = 		0,
 		.bRefresh = 		0,
 		.bSynchAddress = 	0,
-	},
-	{
+	पूर्ण,
+	अणु
 		.bLength = 		0,
 		.bDescriptorType = 	0,
-		.bEndpointAddress = 	0x82,
+		.bEndpoपूर्णांकAddress = 	0x82,
 		.bmAttributes = 	0x03,
 		.wMaxPacketSize = 	cpu_to_le16(8),
 		.bInterval = 		0,
 		.bRefresh = 		0,
 		.bSynchAddress = 	0,
-	},
-	{
+	पूर्ण,
+	अणु
 		.bLength = 		0,
 		.bDescriptorType = 	0,
-		.bEndpointAddress = 	0x03,
+		.bEndpoपूर्णांकAddress = 	0x03,
 		.bmAttributes = 	0x02,
 		.wMaxPacketSize = 	cpu_to_le16(64),
 		.bInterval = 		0,
 		.bRefresh = 		0,
 		.bSynchAddress = 	0,
-	},
-	{
+	पूर्ण,
+	अणु
 		.bLength = 		0,
 		.bDescriptorType = 	0,
-		.bEndpointAddress = 	0x84,
+		.bEndpoपूर्णांकAddress = 	0x84,
 		.bmAttributes = 	0x02,
 		.wMaxPacketSize = 	cpu_to_le16(64),
 		.bInterval = 		0,
 		.bRefresh = 		0,
 		.bSynchAddress = 	0,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
 /* The Variable used by the driver */
-static struct mdc800_data* mdc800;
+अटल काष्ठा mdc800_data* mdc800;
 
 
 /***************************************************************************
 	The USB Part of the driver
 ****************************************************************************/
 
-static int mdc800_endpoint_equals (struct usb_endpoint_descriptor *a,struct usb_endpoint_descriptor *b)
-{
-	return (
-		   ( a->bEndpointAddress == b->bEndpointAddress )
+अटल पूर्णांक mdc800_endpoपूर्णांक_equals (काष्ठा usb_endpoपूर्णांक_descriptor *a,काष्ठा usb_endpoपूर्णांक_descriptor *b)
+अणु
+	वापस (
+		   ( a->bEndpoपूर्णांकAddress == b->bEndpoपूर्णांकAddress )
 		&& ( a->bmAttributes     == b->bmAttributes     )
 		&& ( a->wMaxPacketSize   == b->wMaxPacketSize   )
 	);
-}
+पूर्ण
 
 
 /*
  * Checks whether the camera responds busy
  */
-static int mdc800_isBusy (char* ch)
-{
-	int i=0;
-	while (i<8)
-	{
-		if (ch [i] != (char)0x99)
-			return 0;
+अटल पूर्णांक mdc800_isBusy (अक्षर* ch)
+अणु
+	पूर्णांक i=0;
+	जबतक (i<8)
+	अणु
+		अगर (ch [i] != (अक्षर)0x99)
+			वापस 0;
 		i++;
-	}
-	return 1;
-}
+	पूर्ण
+	वापस 1;
+पूर्ण
 
 
 /*
- * Checks whether the Camera is ready
+ * Checks whether the Camera is पढ़ोy
  */
-static int mdc800_isReady (char *ch)
-{
-	int i=0;
-	while (i<8)
-	{
-		if (ch [i] != (char)0xbb)
-			return 0;
+अटल पूर्णांक mdc800_isReady (अक्षर *ch)
+अणु
+	पूर्णांक i=0;
+	जबतक (i<8)
+	अणु
+		अगर (ch [i] != (अक्षर)0xbb)
+			वापस 0;
 		i++;
-	}
-	return 1;
-}
+	पूर्ण
+	वापस 1;
+पूर्ण
 
 
 
 /*
- * USB IRQ Handler for InputLine
+ * USB IRQ Handler क्रम InputLine
  */
-static void mdc800_usb_irq (struct urb *urb)
-{
-	int data_received=0, wake_up;
-	unsigned char* b=urb->transfer_buffer;
-	struct mdc800_data* mdc800=urb->context;
-	struct device *dev = &mdc800->dev->dev;
-	int status = urb->status;
+अटल व्योम mdc800_usb_irq (काष्ठा urb *urb)
+अणु
+	पूर्णांक data_received=0, wake_up;
+	अचिन्हित अक्षर* b=urb->transfer_buffer;
+	काष्ठा mdc800_data* mdc800=urb->context;
+	काष्ठा device *dev = &mdc800->dev->dev;
+	पूर्णांक status = urb->status;
 
-	if (status >= 0) {
-		if (mdc800_isBusy (b))
-		{
-			if (!mdc800->camera_busy)
-			{
+	अगर (status >= 0) अणु
+		अगर (mdc800_isBusy (b))
+		अणु
+			अगर (!mdc800->camera_busy)
+			अणु
 				mdc800->camera_busy=1;
 				dev_dbg(dev, "gets busy\n");
-			}
-		}
-		else
-		{
-			if (mdc800->camera_busy && mdc800_isReady (b))
-			{
+			पूर्ण
+		पूर्ण
+		अन्यथा
+		अणु
+			अगर (mdc800->camera_busy && mdc800_isReady (b))
+			अणु
 				mdc800->camera_busy=0;
 				dev_dbg(dev, "gets ready\n");
-			}
-		}
-		if (!(mdc800_isBusy (b) || mdc800_isReady (b)))
-		{
+			पूर्ण
+		पूर्ण
+		अगर (!(mdc800_isBusy (b) || mdc800_isReady (b)))
+		अणु
 			/* Store Data in camera_answer field */
 			dev_dbg(dev, "%i %i %i %i %i %i %i %i \n",b[0],b[1],b[2],b[3],b[4],b[5],b[6],b[7]);
 
-			memcpy (mdc800->camera_response,b,8);
+			स_नकल (mdc800->camera_response,b,8);
 			data_received=1;
-		}
-	}
-	wake_up= ( mdc800->camera_request_ready > 0 )
+		पूर्ण
+	पूर्ण
+	wake_up= ( mdc800->camera_request_पढ़ोy > 0 )
 		&&
 		(
-			((mdc800->camera_request_ready == 1) && (!mdc800->camera_busy))
+			((mdc800->camera_request_पढ़ोy == 1) && (!mdc800->camera_busy))
 		||
-			((mdc800->camera_request_ready == 2) && data_received)
+			((mdc800->camera_request_पढ़ोy == 2) && data_received)
 		||
-			((mdc800->camera_request_ready == 3) && (mdc800->camera_busy))
+			((mdc800->camera_request_पढ़ोy == 3) && (mdc800->camera_busy))
 		||
 			(status < 0)
 		);
 
-	if (wake_up)
-	{
-		mdc800->camera_request_ready=0;
+	अगर (wake_up)
+	अणु
+		mdc800->camera_request_पढ़ोy=0;
 		mdc800->irq_woken=1;
-		wake_up (&mdc800->irq_wait);
-	}
-}
+		wake_up (&mdc800->irq_रुको);
+	पूर्ण
+पूर्ण
 
 
 /*
- * Waits a while until the irq responds that camera is ready
+ * Waits a जबतक until the irq responds that camera is पढ़ोy
  *
- *  mode : 0: Wait for camera gets ready
- *         1: Wait for receiving data
- *         2: Wait for camera gets busy
+ *  mode : 0: Wait क्रम camera माला_लो पढ़ोy
+ *         1: Wait क्रम receiving data
+ *         2: Wait क्रम camera माला_लो busy
  *
- * msec: Time to wait
+ * msec: Time to रुको
  */
-static int mdc800_usb_waitForIRQ (int mode, int msec)
-{
-	mdc800->camera_request_ready=1+mode;
+अटल पूर्णांक mdc800_usb_रुकोForIRQ (पूर्णांक mode, पूर्णांक msec)
+अणु
+	mdc800->camera_request_पढ़ोy=1+mode;
 
-	wait_event_timeout(mdc800->irq_wait, mdc800->irq_woken,
-			   msecs_to_jiffies(msec));
+	रुको_event_समयout(mdc800->irq_रुको, mdc800->irq_woken,
+			   msecs_to_jअगरfies(msec));
 	mdc800->irq_woken = 0;
 
-	if (mdc800->camera_request_ready>0)
-	{
-		mdc800->camera_request_ready=0;
+	अगर (mdc800->camera_request_पढ़ोy>0)
+	अणु
+		mdc800->camera_request_पढ़ोy=0;
 		dev_err(&mdc800->dev->dev, "timeout waiting for camera.\n");
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 	
-	if (mdc800->state == NOT_CONNECTED)
-	{
-		printk(KERN_WARNING "mdc800: Camera gets disconnected "
+	अगर (mdc800->state == NOT_CONNECTED)
+	अणु
+		prपूर्णांकk(KERN_WARNING "mdc800: Camera gets disconnected "
 		       "during waiting for irq.\n");
-		mdc800->camera_request_ready=0;
-		return -2;
-	}
+		mdc800->camera_request_पढ़ोy=0;
+		वापस -2;
+	पूर्ण
 	
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
 /*
- * The write_urb callback function
+ * The ग_लिखो_urb callback function
  */
-static void mdc800_usb_write_notify (struct urb *urb)
-{
-	struct mdc800_data* mdc800=urb->context;
-	int status = urb->status;
+अटल व्योम mdc800_usb_ग_लिखो_notअगरy (काष्ठा urb *urb)
+अणु
+	काष्ठा mdc800_data* mdc800=urb->context;
+	पूर्णांक status = urb->status;
 
-	if (status != 0)
+	अगर (status != 0)
 		dev_err(&mdc800->dev->dev,
 			"writing command fails (status=%i)\n", status);
-	else
+	अन्यथा
 		mdc800->state=READY;
 	mdc800->written = 1;
-	wake_up (&mdc800->write_wait);
-}
+	wake_up (&mdc800->ग_लिखो_रुको);
+पूर्ण
 
 
 /*
- * The download_urb callback function
+ * The करोwnload_urb callback function
  */
-static void mdc800_usb_download_notify (struct urb *urb)
-{
-	struct mdc800_data* mdc800=urb->context;
-	int status = urb->status;
+अटल व्योम mdc800_usb_करोwnload_notअगरy (काष्ठा urb *urb)
+अणु
+	काष्ठा mdc800_data* mdc800=urb->context;
+	पूर्णांक status = urb->status;
 
-	if (status == 0) {
+	अगर (status == 0) अणु
 		/* Fill output buffer with these data */
-		memcpy (mdc800->out,  urb->transfer_buffer, 64);
+		स_नकल (mdc800->out,  urb->transfer_buffer, 64);
 		mdc800->out_count=64;
 		mdc800->out_ptr=0;
-		mdc800->download_left-=64;
-		if (mdc800->download_left == 0)
-		{
+		mdc800->करोwnload_left-=64;
+		अगर (mdc800->करोwnload_left == 0)
+		अणु
 			mdc800->state=READY;
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		dev_err(&mdc800->dev->dev,
 			"request bytes fails (status:%i)\n", status);
-	}
-	mdc800->downloaded = 1;
-	wake_up (&mdc800->download_wait);
-}
+	पूर्ण
+	mdc800->करोwnloaded = 1;
+	wake_up (&mdc800->करोwnload_रुको);
+पूर्ण
 
 
 /***************************************************************************
-	Probing for the Camera
+	Probing क्रम the Camera
  ***************************************************************************/
 
-static struct usb_driver mdc800_usb_driver;
-static const struct file_operations mdc800_device_ops;
-static struct usb_class_driver mdc800_class = {
+अटल काष्ठा usb_driver mdc800_usb_driver;
+अटल स्थिर काष्ठा file_operations mdc800_device_ops;
+अटल काष्ठा usb_class_driver mdc800_class = अणु
 	.name =		"mdc800%d",
 	.fops =		&mdc800_device_ops,
 	.minor_base =	MDC800_DEVICE_MINOR_BASE,
-};
+पूर्ण;
 
 
 /*
  * Callback to search the Mustek MDC800 on the USB Bus
  */
-static int mdc800_usb_probe (struct usb_interface *intf,
-			       const struct usb_device_id *id)
-{
-	int i,j;
-	struct usb_host_interface *intf_desc;
-	struct usb_device *dev = interface_to_usbdev (intf);
-	int irq_interval=0;
-	int retval;
+अटल पूर्णांक mdc800_usb_probe (काष्ठा usb_पूर्णांकerface *पूर्णांकf,
+			       स्थिर काष्ठा usb_device_id *id)
+अणु
+	पूर्णांक i,j;
+	काष्ठा usb_host_पूर्णांकerface *पूर्णांकf_desc;
+	काष्ठा usb_device *dev = पूर्णांकerface_to_usbdev (पूर्णांकf);
+	पूर्णांक irq_पूर्णांकerval=0;
+	पूर्णांक retval;
 
-	dev_dbg(&intf->dev, "(%s) called.\n", __func__);
+	dev_dbg(&पूर्णांकf->dev, "(%s) called.\n", __func__);
 
 
-	if (mdc800->dev != NULL)
-	{
-		dev_warn(&intf->dev, "only one Mustek MDC800 is supported.\n");
-		return -ENODEV;
-	}
+	अगर (mdc800->dev != शून्य)
+	अणु
+		dev_warn(&पूर्णांकf->dev, "only one Mustek MDC800 is supported.\n");
+		वापस -ENODEV;
+	पूर्ण
 
-	if (dev->descriptor.bNumConfigurations != 1)
-	{
-		dev_err(&intf->dev,
+	अगर (dev->descriptor.bNumConfigurations != 1)
+	अणु
+		dev_err(&पूर्णांकf->dev,
 			"probe fails -> wrong Number of Configuration\n");
-		return -ENODEV;
-	}
-	intf_desc = intf->cur_altsetting;
+		वापस -ENODEV;
+	पूर्ण
+	पूर्णांकf_desc = पूर्णांकf->cur_altsetting;
 
-	if (
-			( intf_desc->desc.bInterfaceClass != 0xff )
-		||	( intf_desc->desc.bInterfaceSubClass != 0 )
-		|| ( intf_desc->desc.bInterfaceProtocol != 0 )
-		|| ( intf_desc->desc.bNumEndpoints != 4)
+	अगर (
+			( पूर्णांकf_desc->desc.bInterfaceClass != 0xff )
+		||	( पूर्णांकf_desc->desc.bInterfaceSubClass != 0 )
+		|| ( पूर्णांकf_desc->desc.bInterfaceProtocol != 0 )
+		|| ( पूर्णांकf_desc->desc.bNumEndpoपूर्णांकs != 4)
 	)
-	{
-		dev_err(&intf->dev, "probe fails -> wrong Interface\n");
-		return -ENODEV;
-	}
+	अणु
+		dev_err(&पूर्णांकf->dev, "probe fails -> wrong Interface\n");
+		वापस -ENODEV;
+	पूर्ण
 
-	/* Check the Endpoints */
-	for (i=0; i<4; i++)
-	{
-		mdc800->endpoint[i]=-1;
-		for (j=0; j<4; j++)
-		{
-			if (mdc800_endpoint_equals (&intf_desc->endpoint [j].desc,&mdc800_ed [i]))
-			{
-				mdc800->endpoint[i]=intf_desc->endpoint [j].desc.bEndpointAddress ;
-				if (i==1)
-				{
-					irq_interval=intf_desc->endpoint [j].desc.bInterval;
-				}
-			}
-		}
-		if (mdc800->endpoint[i] == -1)
-		{
-			dev_err(&intf->dev, "probe fails -> Wrong Endpoints.\n");
-			return -ENODEV;
-		}
-	}
+	/* Check the Endpoपूर्णांकs */
+	क्रम (i=0; i<4; i++)
+	अणु
+		mdc800->endpoपूर्णांक[i]=-1;
+		क्रम (j=0; j<4; j++)
+		अणु
+			अगर (mdc800_endpoपूर्णांक_equals (&पूर्णांकf_desc->endpoपूर्णांक [j].desc,&mdc800_ed [i]))
+			अणु
+				mdc800->endpoपूर्णांक[i]=पूर्णांकf_desc->endpoपूर्णांक [j].desc.bEndpoपूर्णांकAddress ;
+				अगर (i==1)
+				अणु
+					irq_पूर्णांकerval=पूर्णांकf_desc->endpoपूर्णांक [j].desc.bInterval;
+				पूर्ण
+			पूर्ण
+		पूर्ण
+		अगर (mdc800->endpoपूर्णांक[i] == -1)
+		अणु
+			dev_err(&पूर्णांकf->dev, "probe fails -> Wrong Endpoints.\n");
+			वापस -ENODEV;
+		पूर्ण
+	पूर्ण
 
 
-	dev_info(&intf->dev, "Found Mustek MDC800 on USB.\n");
+	dev_info(&पूर्णांकf->dev, "Found Mustek MDC800 on USB.\n");
 
 	mutex_lock(&mdc800->io_lock);
 
-	retval = usb_register_dev(intf, &mdc800_class);
-	if (retval) {
-		dev_err(&intf->dev, "Not able to get a minor for this device.\n");
+	retval = usb_रेजिस्टर_dev(पूर्णांकf, &mdc800_class);
+	अगर (retval) अणु
+		dev_err(&पूर्णांकf->dev, "Not able to get a minor for this device.\n");
 		mutex_unlock(&mdc800->io_lock);
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
 	mdc800->dev=dev;
-	mdc800->open=0;
+	mdc800->खोलो=0;
 
 	/* Setup URB Structs */
-	usb_fill_int_urb (
+	usb_fill_पूर्णांक_urb (
 		mdc800->irq_urb,
 		mdc800->dev,
-		usb_rcvintpipe (mdc800->dev,mdc800->endpoint [1]),
+		usb_rcvपूर्णांकpipe (mdc800->dev,mdc800->endpoपूर्णांक [1]),
 		mdc800->irq_urb_buffer,
 		8,
 		mdc800_usb_irq,
 		mdc800,
-		irq_interval
+		irq_पूर्णांकerval
 	);
 
 	usb_fill_bulk_urb (
-		mdc800->write_urb,
+		mdc800->ग_लिखो_urb,
 		mdc800->dev,
-		usb_sndbulkpipe (mdc800->dev, mdc800->endpoint[0]),
-		mdc800->write_urb_buffer,
+		usb_sndbulkpipe (mdc800->dev, mdc800->endpoपूर्णांक[0]),
+		mdc800->ग_लिखो_urb_buffer,
 		8,
-		mdc800_usb_write_notify,
+		mdc800_usb_ग_लिखो_notअगरy,
 		mdc800
 	);
 
 	usb_fill_bulk_urb (
-		mdc800->download_urb,
+		mdc800->करोwnload_urb,
 		mdc800->dev,
-		usb_rcvbulkpipe (mdc800->dev, mdc800->endpoint [3]),
-		mdc800->download_urb_buffer,
+		usb_rcvbulkpipe (mdc800->dev, mdc800->endpoपूर्णांक [3]),
+		mdc800->करोwnload_urb_buffer,
 		64,
-		mdc800_usb_download_notify,
+		mdc800_usb_करोwnload_notअगरy,
 		mdc800
 	);
 
@@ -528,41 +529,41 @@ static int mdc800_usb_probe (struct usb_interface *intf,
 
 	mutex_unlock(&mdc800->io_lock);
 	
-	usb_set_intfdata(intf, mdc800);
-	return 0;
-}
+	usb_set_पूर्णांकfdata(पूर्णांकf, mdc800);
+	वापस 0;
+पूर्ण
 
 
 /*
  * Disconnect USB device (maybe the MDC800)
  */
-static void mdc800_usb_disconnect (struct usb_interface *intf)
-{
-	struct mdc800_data* mdc800 = usb_get_intfdata(intf);
+अटल व्योम mdc800_usb_disconnect (काष्ठा usb_पूर्णांकerface *पूर्णांकf)
+अणु
+	काष्ठा mdc800_data* mdc800 = usb_get_पूर्णांकfdata(पूर्णांकf);
 
-	dev_dbg(&intf->dev, "(%s) called\n", __func__);
+	dev_dbg(&पूर्णांकf->dev, "(%s) called\n", __func__);
 
-	if (mdc800) {
-		if (mdc800->state == NOT_CONNECTED)
-			return;
+	अगर (mdc800) अणु
+		अगर (mdc800->state == NOT_CONNECTED)
+			वापस;
 
-		usb_deregister_dev(intf, &mdc800_class);
+		usb_deरेजिस्टर_dev(पूर्णांकf, &mdc800_class);
 
 		/* must be under lock to make sure no URB
-		   is submitted after usb_kill_urb() */
+		   is submitted after usb_समाप्त_urb() */
 		mutex_lock(&mdc800->io_lock);
 		mdc800->state=NOT_CONNECTED;
 
-		usb_kill_urb(mdc800->irq_urb);
-		usb_kill_urb(mdc800->write_urb);
-		usb_kill_urb(mdc800->download_urb);
+		usb_समाप्त_urb(mdc800->irq_urb);
+		usb_समाप्त_urb(mdc800->ग_लिखो_urb);
+		usb_समाप्त_urb(mdc800->करोwnload_urb);
 		mutex_unlock(&mdc800->io_lock);
 
-		mdc800->dev = NULL;
-		usb_set_intfdata(intf, NULL);
-	}
-	dev_info(&intf->dev, "Mustek MDC800 disconnected from USB.\n");
-}
+		mdc800->dev = शून्य;
+		usb_set_पूर्णांकfdata(पूर्णांकf, शून्य);
+	पूर्ण
+	dev_info(&पूर्णांकf->dev, "Mustek MDC800 disconnected from USB.\n");
+पूर्ण
 
 
 /***************************************************************************
@@ -570,373 +571,373 @@ static void mdc800_usb_disconnect (struct usb_interface *intf)
 ****************************************************************************/
 
 /*
- * This Function calc the Answersize for a command.
+ * This Function calc the Answersize क्रम a command.
  */
-static int mdc800_getAnswerSize (char command)
-{
-	switch ((unsigned char) command)
-	{
-		case 0x2a:
-		case 0x49:
-		case 0x51:
-		case 0x0d:
-		case 0x20:
-		case 0x07:
-		case 0x01:
-		case 0x25:
-		case 0x00:
-			return 8;
+अटल पूर्णांक mdc800_getAnswerSize (अक्षर command)
+अणु
+	चयन ((अचिन्हित अक्षर) command)
+	अणु
+		हाल 0x2a:
+		हाल 0x49:
+		हाल 0x51:
+		हाल 0x0d:
+		हाल 0x20:
+		हाल 0x07:
+		हाल 0x01:
+		हाल 0x25:
+		हाल 0x00:
+			वापस 8;
 
-		case 0x05:
-		case 0x3e:
-			return mdc800->pic_len;
+		हाल 0x05:
+		हाल 0x3e:
+			वापस mdc800->pic_len;
 
-		case 0x09:
-			return 4096;
+		हाल 0x09:
+			वापस 4096;
 
-		default:
-			return 0;
-	}
-}
+		शेष:
+			वापस 0;
+	पूर्ण
+पूर्ण
 
 
 /*
  * Init the device: (1) alloc mem (2) Increase MOD Count ..
  */
-static int mdc800_device_open (struct inode* inode, struct file *file)
-{
-	int retval=0;
-	int errn=0;
+अटल पूर्णांक mdc800_device_खोलो (काष्ठा inode* inode, काष्ठा file *file)
+अणु
+	पूर्णांक retval=0;
+	पूर्णांक errn=0;
 
 	mutex_lock(&mdc800->io_lock);
 	
-	if (mdc800->state == NOT_CONNECTED)
-	{
+	अगर (mdc800->state == NOT_CONNECTED)
+	अणु
 		errn=-EBUSY;
-		goto error_out;
-	}
-	if (mdc800->open)
-	{
+		जाओ error_out;
+	पूर्ण
+	अगर (mdc800->खोलो)
+	अणु
 		errn=-EBUSY;
-		goto error_out;
-	}
+		जाओ error_out;
+	पूर्ण
 
 	mdc800->in_count=0;
 	mdc800->out_count=0;
 	mdc800->out_ptr=0;
 	mdc800->pic_index=0;
 	mdc800->pic_len=-1;
-	mdc800->download_left=0;
+	mdc800->करोwnload_left=0;
 
 	mdc800->camera_busy=0;
-	mdc800->camera_request_ready=0;
+	mdc800->camera_request_पढ़ोy=0;
 
 	retval=0;
 	mdc800->irq_urb->dev = mdc800->dev;
 	retval = usb_submit_urb (mdc800->irq_urb, GFP_KERNEL);
-	if (retval) {
+	अगर (retval) अणु
 		dev_err(&mdc800->dev->dev,
 			"request USB irq fails (submit_retval=%i).\n", retval);
 		errn = -EIO;
-		goto error_out;
-	}
+		जाओ error_out;
+	पूर्ण
 
-	mdc800->open=1;
+	mdc800->खोलो=1;
 	dev_dbg(&mdc800->dev->dev, "Mustek MDC800 device opened.\n");
 
 error_out:
 	mutex_unlock(&mdc800->io_lock);
-	return errn;
-}
+	वापस errn;
+पूर्ण
 
 
 /*
  * Close the Camera and release Memory
  */
-static int mdc800_device_release (struct inode* inode, struct file *file)
-{
-	int retval=0;
+अटल पूर्णांक mdc800_device_release (काष्ठा inode* inode, काष्ठा file *file)
+अणु
+	पूर्णांक retval=0;
 
 	mutex_lock(&mdc800->io_lock);
-	if (mdc800->open && (mdc800->state != NOT_CONNECTED))
-	{
-		usb_kill_urb(mdc800->irq_urb);
-		usb_kill_urb(mdc800->write_urb);
-		usb_kill_urb(mdc800->download_urb);
-		mdc800->open=0;
-	}
-	else
-	{
+	अगर (mdc800->खोलो && (mdc800->state != NOT_CONNECTED))
+	अणु
+		usb_समाप्त_urb(mdc800->irq_urb);
+		usb_समाप्त_urb(mdc800->ग_लिखो_urb);
+		usb_समाप्त_urb(mdc800->करोwnload_urb);
+		mdc800->खोलो=0;
+	पूर्ण
+	अन्यथा
+	अणु
 		retval=-EIO;
-	}
+	पूर्ण
 
 	mutex_unlock(&mdc800->io_lock);
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
 
 /*
- * The Device read callback Function
+ * The Device पढ़ो callback Function
  */
-static ssize_t mdc800_device_read (struct file *file, char __user *buf, size_t len, loff_t *pos)
-{
-	size_t left=len, sts=len; /* single transfer size */
-	char __user *ptr = buf;
-	int retval;
+अटल sमाप_प्रकार mdc800_device_पढ़ो (काष्ठा file *file, अक्षर __user *buf, माप_प्रकार len, loff_t *pos)
+अणु
+	माप_प्रकार left=len, sts=len; /* single transfer size */
+	अक्षर __user *ptr = buf;
+	पूर्णांक retval;
 
 	mutex_lock(&mdc800->io_lock);
-	if (mdc800->state == NOT_CONNECTED)
-	{
+	अगर (mdc800->state == NOT_CONNECTED)
+	अणु
 		mutex_unlock(&mdc800->io_lock);
-		return -EBUSY;
-	}
-	if (mdc800->state == WORKING)
-	{
-		printk(KERN_WARNING "mdc800: Illegal State \"working\""
+		वापस -EBUSY;
+	पूर्ण
+	अगर (mdc800->state == WORKING)
+	अणु
+		prपूर्णांकk(KERN_WARNING "mdc800: Illegal State \"working\""
 		       "reached during read ?!\n");
 		mutex_unlock(&mdc800->io_lock);
-		return -EBUSY;
-	}
-	if (!mdc800->open)
-	{
+		वापस -EBUSY;
+	पूर्ण
+	अगर (!mdc800->खोलो)
+	अणु
 		mutex_unlock(&mdc800->io_lock);
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 
-	while (left)
-	{
-		if (signal_pending (current)) 
-		{
+	जबतक (left)
+	अणु
+		अगर (संकेत_pending (current)) 
+		अणु
 			mutex_unlock(&mdc800->io_lock);
-			return -EINTR;
-		}
+			वापस -EINTR;
+		पूर्ण
 
 		sts=left > (mdc800->out_count-mdc800->out_ptr)?mdc800->out_count-mdc800->out_ptr:left;
 
-		if (sts <= 0)
-		{
+		अगर (sts <= 0)
+		अणु
 			/* Too less Data in buffer */
-			if (mdc800->state == DOWNLOAD)
-			{
+			अगर (mdc800->state == DOWNLOAD)
+			अणु
 				mdc800->out_count=0;
 				mdc800->out_ptr=0;
 
 				/* Download -> Request new bytes */
-				mdc800->download_urb->dev = mdc800->dev;
-				retval = usb_submit_urb (mdc800->download_urb, GFP_KERNEL);
-				if (retval) {
+				mdc800->करोwnload_urb->dev = mdc800->dev;
+				retval = usb_submit_urb (mdc800->करोwnload_urb, GFP_KERNEL);
+				अगर (retval) अणु
 					dev_err(&mdc800->dev->dev,
 						"Can't submit download urb "
 						"(retval=%i)\n", retval);
 					mutex_unlock(&mdc800->io_lock);
-					return len-left;
-				}
-				wait_event_timeout(mdc800->download_wait,
-				     mdc800->downloaded,
-				     msecs_to_jiffies(TO_DOWNLOAD_GET_READY));
-				mdc800->downloaded = 0;
-				if (mdc800->download_urb->status != 0)
-				{
+					वापस len-left;
+				पूर्ण
+				रुको_event_समयout(mdc800->करोwnload_रुको,
+				     mdc800->करोwnloaded,
+				     msecs_to_jअगरfies(TO_DOWNLOAD_GET_READY));
+				mdc800->करोwnloaded = 0;
+				अगर (mdc800->करोwnload_urb->status != 0)
+				अणु
 					dev_err(&mdc800->dev->dev,
 						"request download-bytes fails "
 						"(status=%i)\n",
-						mdc800->download_urb->status);
+						mdc800->करोwnload_urb->status);
 					mutex_unlock(&mdc800->io_lock);
-					return len-left;
-				}
-			}
-			else
-			{
+					वापस len-left;
+				पूर्ण
+			पूर्ण
+			अन्यथा
+			अणु
 				/* No more bytes -> that's an error*/
 				mutex_unlock(&mdc800->io_lock);
-				return -EIO;
-			}
-		}
-		else
-		{
+				वापस -EIO;
+			पूर्ण
+		पूर्ण
+		अन्यथा
+		अणु
 			/* Copy Bytes */
-			if (copy_to_user(ptr, &mdc800->out [mdc800->out_ptr],
-						sts)) {
+			अगर (copy_to_user(ptr, &mdc800->out [mdc800->out_ptr],
+						sts)) अणु
 				mutex_unlock(&mdc800->io_lock);
-				return -EFAULT;
-			}
+				वापस -EFAULT;
+			पूर्ण
 			ptr+=sts;
 			left-=sts;
 			mdc800->out_ptr+=sts;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	mutex_unlock(&mdc800->io_lock);
-	return len-left;
-}
+	वापस len-left;
+पूर्ण
 
 
 /*
- * The Device write callback Function
+ * The Device ग_लिखो callback Function
  * If a 8Byte Command is received, it will be send to the camera.
- * After this the driver initiates the request for the answer or
- * just waits until the camera becomes ready.
+ * After this the driver initiates the request क्रम the answer or
+ * just रुकोs until the camera becomes पढ़ोy.
  */
-static ssize_t mdc800_device_write (struct file *file, const char __user *buf, size_t len, loff_t *pos)
-{
-	size_t i=0;
-	int retval;
+अटल sमाप_प्रकार mdc800_device_ग_लिखो (काष्ठा file *file, स्थिर अक्षर __user *buf, माप_प्रकार len, loff_t *pos)
+अणु
+	माप_प्रकार i=0;
+	पूर्णांक retval;
 
 	mutex_lock(&mdc800->io_lock);
-	if (mdc800->state != READY)
-	{
+	अगर (mdc800->state != READY)
+	अणु
 		mutex_unlock(&mdc800->io_lock);
-		return -EBUSY;
-	}
-	if (!mdc800->open )
-	{
+		वापस -EBUSY;
+	पूर्ण
+	अगर (!mdc800->खोलो )
+	अणु
 		mutex_unlock(&mdc800->io_lock);
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 
-	while (i<len)
-	{
-		unsigned char c;
-		if (signal_pending (current)) 
-		{
+	जबतक (i<len)
+	अणु
+		अचिन्हित अक्षर c;
+		अगर (संकेत_pending (current)) 
+		अणु
 			mutex_unlock(&mdc800->io_lock);
-			return -EINTR;
-		}
+			वापस -EINTR;
+		पूर्ण
 		
-		if(get_user(c, buf+i))
-		{
+		अगर(get_user(c, buf+i))
+		अणु
 			mutex_unlock(&mdc800->io_lock);
-			return -EFAULT;
-		}
+			वापस -EFAULT;
+		पूर्ण
 
-		/* check for command start */
-		if (c == 0x55)
-		{
+		/* check क्रम command start */
+		अगर (c == 0x55)
+		अणु
 			mdc800->in_count=0;
 			mdc800->out_count=0;
 			mdc800->out_ptr=0;
-			mdc800->download_left=0;
-		}
+			mdc800->करोwnload_left=0;
+		पूर्ण
 
 		/* save command byte */
-		if (mdc800->in_count < 8)
-		{
+		अगर (mdc800->in_count < 8)
+		अणु
 			mdc800->in[mdc800->in_count] = c;
 			mdc800->in_count++;
-		}
-		else
-		{
+		पूर्ण
+		अन्यथा
+		अणु
 			mutex_unlock(&mdc800->io_lock);
-			return -EIO;
-		}
+			वापस -EIO;
+		पूर्ण
 
 		/* Command Buffer full ? -> send it to camera */
-		if (mdc800->in_count == 8)
-		{
-			int answersize;
+		अगर (mdc800->in_count == 8)
+		अणु
+			पूर्णांक answersize;
 
-			if (mdc800_usb_waitForIRQ (0,TO_GET_READY))
-			{
+			अगर (mdc800_usb_रुकोForIRQ (0,TO_GET_READY))
+			अणु
 				dev_err(&mdc800->dev->dev,
 					"Camera didn't get ready.\n");
 				mutex_unlock(&mdc800->io_lock);
-				return -EIO;
-			}
+				वापस -EIO;
+			पूर्ण
 
 			answersize=mdc800_getAnswerSize (mdc800->in[1]);
 
 			mdc800->state=WORKING;
-			memcpy (mdc800->write_urb->transfer_buffer, mdc800->in,8);
-			mdc800->write_urb->dev = mdc800->dev;
-			retval = usb_submit_urb (mdc800->write_urb, GFP_KERNEL);
-			if (retval) {
+			स_नकल (mdc800->ग_लिखो_urb->transfer_buffer, mdc800->in,8);
+			mdc800->ग_लिखो_urb->dev = mdc800->dev;
+			retval = usb_submit_urb (mdc800->ग_लिखो_urb, GFP_KERNEL);
+			अगर (retval) अणु
 				dev_err(&mdc800->dev->dev,
 					"submitting write urb fails "
 					"(retval=%i)\n", retval);
 				mutex_unlock(&mdc800->io_lock);
-				return -EIO;
-			}
-			wait_event_timeout(mdc800->write_wait, mdc800->written,
-					msecs_to_jiffies(TO_WRITE_GET_READY));
+				वापस -EIO;
+			पूर्ण
+			रुको_event_समयout(mdc800->ग_लिखो_रुको, mdc800->written,
+					msecs_to_jअगरfies(TO_WRITE_GET_READY));
 			mdc800->written = 0;
-			if (mdc800->state == WORKING)
-			{
-				usb_kill_urb(mdc800->write_urb);
+			अगर (mdc800->state == WORKING)
+			अणु
+				usb_समाप्त_urb(mdc800->ग_लिखो_urb);
 				mutex_unlock(&mdc800->io_lock);
-				return -EIO;
-			}
+				वापस -EIO;
+			पूर्ण
 
-			switch ((unsigned char) mdc800->in[1])
-			{
-				case 0x05: /* Download Image */
-				case 0x3e: /* Take shot in Fine Mode (WCam Mode) */
-					if (mdc800->pic_len < 0)
-					{
+			चयन ((अचिन्हित अक्षर) mdc800->in[1])
+			अणु
+				हाल 0x05: /* Download Image */
+				हाल 0x3e: /* Take shot in Fine Mode (WCam Mode) */
+					अगर (mdc800->pic_len < 0)
+					अणु
 						dev_err(&mdc800->dev->dev,
 							"call 0x07 before "
 							"0x05,0x3e\n");
 						mdc800->state=READY;
 						mutex_unlock(&mdc800->io_lock);
-						return -EIO;
-					}
+						वापस -EIO;
+					पूर्ण
 					mdc800->pic_len=-1;
 					fallthrough;
 
-				case 0x09: /* Download Thumbnail */
-					mdc800->download_left=answersize+64;
+				हाल 0x09: /* Download Thumbnail */
+					mdc800->करोwnload_left=answersize+64;
 					mdc800->state=DOWNLOAD;
-					mdc800_usb_waitForIRQ (0,TO_DOWNLOAD_GET_BUSY);
-					break;
+					mdc800_usb_रुकोForIRQ (0,TO_DOWNLOAD_GET_BUSY);
+					अवरोध;
 
 
-				default:
-					if (answersize)
-					{
+				शेष:
+					अगर (answersize)
+					अणु
 
-						if (mdc800_usb_waitForIRQ (1,TO_READ_FROM_IRQ))
-						{
+						अगर (mdc800_usb_रुकोForIRQ (1,TO_READ_FROM_IRQ))
+						अणु
 							dev_err(&mdc800->dev->dev, "requesting answer from irq fails\n");
 							mutex_unlock(&mdc800->io_lock);
-							return -EIO;
-						}
+							वापस -EIO;
+						पूर्ण
 
 						/* Write dummy data, (this is ugly but part of the USB Protocol */
-						/* if you use endpoint 1 as bulk and not as irq) */
-						memcpy (mdc800->out, mdc800->camera_response,8);
+						/* अगर you use endpoपूर्णांक 1 as bulk and not as irq) */
+						स_नकल (mdc800->out, mdc800->camera_response,8);
 
-						/* This is the interpreted answer */
-						memcpy (&mdc800->out[8], mdc800->camera_response,8);
+						/* This is the पूर्णांकerpreted answer */
+						स_नकल (&mdc800->out[8], mdc800->camera_response,8);
 
 						mdc800->out_ptr=0;
 						mdc800->out_count=16;
 
-						/* Cache the Imagesize, if command was getImageSize */
-						if (mdc800->in [1] == (char) 0x07)
-						{
-							mdc800->pic_len=(int) 65536*(unsigned char) mdc800->camera_response[0]+256*(unsigned char) mdc800->camera_response[1]+(unsigned char) mdc800->camera_response[2];
+						/* Cache the Imagesize, अगर command was getImageSize */
+						अगर (mdc800->in [1] == (अक्षर) 0x07)
+						अणु
+							mdc800->pic_len=(पूर्णांक) 65536*(अचिन्हित अक्षर) mdc800->camera_response[0]+256*(अचिन्हित अक्षर) mdc800->camera_response[1]+(अचिन्हित अक्षर) mdc800->camera_response[2];
 
 							dev_dbg(&mdc800->dev->dev, "cached imagesize = %i\n", mdc800->pic_len);
-						}
+						पूर्ण
 
-					}
-					else
-					{
-						if (mdc800_usb_waitForIRQ (0,TO_DEFAULT_COMMAND))
-						{
+					पूर्ण
+					अन्यथा
+					अणु
+						अगर (mdc800_usb_रुकोForIRQ (0,TO_DEFAULT_COMMAND))
+						अणु
 							dev_err(&mdc800->dev->dev, "Command Timeout.\n");
 							mutex_unlock(&mdc800->io_lock);
-							return -EIO;
-						}
-					}
+							वापस -EIO;
+						पूर्ण
+					पूर्ण
 					mdc800->state=READY;
-					break;
-			}
-		}
+					अवरोध;
+			पूर्ण
+		पूर्ण
 		i++;
-	}
+	पूर्ण
 	mutex_unlock(&mdc800->io_lock);
-	return i;
-}
+	वापस i;
+पूर्ण
 
 
 /***************************************************************************
@@ -944,34 +945,34 @@ static ssize_t mdc800_device_write (struct file *file, const char __user *buf, s
 ****************************************************************************/
 
 /* File Operations of this drivers */
-static const struct file_operations mdc800_device_ops =
-{
+अटल स्थिर काष्ठा file_operations mdc800_device_ops =
+अणु
 	.owner =	THIS_MODULE,
-	.read =		mdc800_device_read,
-	.write =	mdc800_device_write,
-	.open =		mdc800_device_open,
+	.पढ़ो =		mdc800_device_पढ़ो,
+	.ग_लिखो =	mdc800_device_ग_लिखो,
+	.खोलो =		mdc800_device_खोलो,
 	.release =	mdc800_device_release,
 	.llseek =	noop_llseek,
-};
+पूर्ण;
 
 
 
-static const struct usb_device_id mdc800_table[] = {
-	{ USB_DEVICE(MDC800_VENDOR_ID, MDC800_PRODUCT_ID) },
-	{ }						/* Terminating entry */
-};
+अटल स्थिर काष्ठा usb_device_id mdc800_table[] = अणु
+	अणु USB_DEVICE(MDC800_VENDOR_ID, MDC800_PRODUCT_ID) पूर्ण,
+	अणु पूर्ण						/* Terminating entry */
+पूर्ण;
 
 MODULE_DEVICE_TABLE (usb, mdc800_table);
 /*
- * USB Driver Struct for this device
+ * USB Driver Struct क्रम this device
  */
-static struct usb_driver mdc800_usb_driver =
-{
+अटल काष्ठा usb_driver mdc800_usb_driver =
+अणु
 	.name =		"mdc800",
 	.probe =	mdc800_usb_probe,
 	.disconnect =	mdc800_usb_disconnect,
 	.id_table =	mdc800_table
-};
+पूर्ण;
 
 
 
@@ -979,97 +980,97 @@ static struct usb_driver mdc800_usb_driver =
 	Init and Cleanup this driver (Main Functions)
 *************************************************************************/
 
-static int __init usb_mdc800_init (void)
-{
-	int retval = -ENODEV;
+अटल पूर्णांक __init usb_mdc800_init (व्योम)
+अणु
+	पूर्णांक retval = -ENODEV;
 	/* Allocate Memory */
-	mdc800=kzalloc (sizeof (struct mdc800_data), GFP_KERNEL);
-	if (!mdc800)
-		goto cleanup_on_fail;
+	mdc800=kzalloc (माप (काष्ठा mdc800_data), GFP_KERNEL);
+	अगर (!mdc800)
+		जाओ cleanup_on_fail;
 
-	mdc800->dev = NULL;
+	mdc800->dev = शून्य;
 	mdc800->state=NOT_CONNECTED;
 	mutex_init (&mdc800->io_lock);
 
-	init_waitqueue_head (&mdc800->irq_wait);
-	init_waitqueue_head (&mdc800->write_wait);
-	init_waitqueue_head (&mdc800->download_wait);
+	init_रुकोqueue_head (&mdc800->irq_रुको);
+	init_रुकोqueue_head (&mdc800->ग_लिखो_रुको);
+	init_रुकोqueue_head (&mdc800->करोwnload_रुको);
 
 	mdc800->irq_woken = 0;
-	mdc800->downloaded = 0;
+	mdc800->करोwnloaded = 0;
 	mdc800->written = 0;
 
-	mdc800->irq_urb_buffer=kmalloc (8, GFP_KERNEL);
-	if (!mdc800->irq_urb_buffer)
-		goto cleanup_on_fail;
-	mdc800->write_urb_buffer=kmalloc (8, GFP_KERNEL);
-	if (!mdc800->write_urb_buffer)
-		goto cleanup_on_fail;
-	mdc800->download_urb_buffer=kmalloc (64, GFP_KERNEL);
-	if (!mdc800->download_urb_buffer)
-		goto cleanup_on_fail;
+	mdc800->irq_urb_buffer=kदो_स्मृति (8, GFP_KERNEL);
+	अगर (!mdc800->irq_urb_buffer)
+		जाओ cleanup_on_fail;
+	mdc800->ग_लिखो_urb_buffer=kदो_स्मृति (8, GFP_KERNEL);
+	अगर (!mdc800->ग_लिखो_urb_buffer)
+		जाओ cleanup_on_fail;
+	mdc800->करोwnload_urb_buffer=kदो_स्मृति (64, GFP_KERNEL);
+	अगर (!mdc800->करोwnload_urb_buffer)
+		जाओ cleanup_on_fail;
 
 	mdc800->irq_urb=usb_alloc_urb (0, GFP_KERNEL);
-	if (!mdc800->irq_urb)
-		goto cleanup_on_fail;
-	mdc800->download_urb=usb_alloc_urb (0, GFP_KERNEL);
-	if (!mdc800->download_urb)
-		goto cleanup_on_fail;
-	mdc800->write_urb=usb_alloc_urb (0, GFP_KERNEL);
-	if (!mdc800->write_urb)
-		goto cleanup_on_fail;
+	अगर (!mdc800->irq_urb)
+		जाओ cleanup_on_fail;
+	mdc800->करोwnload_urb=usb_alloc_urb (0, GFP_KERNEL);
+	अगर (!mdc800->करोwnload_urb)
+		जाओ cleanup_on_fail;
+	mdc800->ग_लिखो_urb=usb_alloc_urb (0, GFP_KERNEL);
+	अगर (!mdc800->ग_लिखो_urb)
+		जाओ cleanup_on_fail;
 
 	/* Register the driver */
-	retval = usb_register(&mdc800_usb_driver);
-	if (retval)
-		goto cleanup_on_fail;
+	retval = usb_रेजिस्टर(&mdc800_usb_driver);
+	अगर (retval)
+		जाओ cleanup_on_fail;
 
-	printk(KERN_INFO KBUILD_MODNAME ": " DRIVER_VERSION ":"
+	prपूर्णांकk(KERN_INFO KBUILD_MODNAME ": " DRIVER_VERSION ":"
 	       DRIVER_DESC "\n");
 
-	return 0;
+	वापस 0;
 
 	/* Clean driver up, when something fails */
 
 cleanup_on_fail:
 
-	if (mdc800 != NULL)
-	{
-		printk(KERN_ERR "mdc800: can't alloc memory!\n");
+	अगर (mdc800 != शून्य)
+	अणु
+		prपूर्णांकk(KERN_ERR "mdc800: can't alloc memory!\n");
 
-		kfree(mdc800->download_urb_buffer);
-		kfree(mdc800->write_urb_buffer);
-		kfree(mdc800->irq_urb_buffer);
+		kमुक्त(mdc800->करोwnload_urb_buffer);
+		kमुक्त(mdc800->ग_लिखो_urb_buffer);
+		kमुक्त(mdc800->irq_urb_buffer);
 
-		usb_free_urb(mdc800->write_urb);
-		usb_free_urb(mdc800->download_urb);
-		usb_free_urb(mdc800->irq_urb);
+		usb_मुक्त_urb(mdc800->ग_लिखो_urb);
+		usb_मुक्त_urb(mdc800->करोwnload_urb);
+		usb_मुक्त_urb(mdc800->irq_urb);
 
-		kfree (mdc800);
-	}
-	mdc800 = NULL;
-	return retval;
-}
+		kमुक्त (mdc800);
+	पूर्ण
+	mdc800 = शून्य;
+	वापस retval;
+पूर्ण
 
 
-static void __exit usb_mdc800_cleanup (void)
-{
-	usb_deregister (&mdc800_usb_driver);
+अटल व्योम __निकास usb_mdc800_cleanup (व्योम)
+अणु
+	usb_deरेजिस्टर (&mdc800_usb_driver);
 
-	usb_free_urb (mdc800->irq_urb);
-	usb_free_urb (mdc800->download_urb);
-	usb_free_urb (mdc800->write_urb);
+	usb_मुक्त_urb (mdc800->irq_urb);
+	usb_मुक्त_urb (mdc800->करोwnload_urb);
+	usb_मुक्त_urb (mdc800->ग_लिखो_urb);
 
-	kfree (mdc800->irq_urb_buffer);
-	kfree (mdc800->write_urb_buffer);
-	kfree (mdc800->download_urb_buffer);
+	kमुक्त (mdc800->irq_urb_buffer);
+	kमुक्त (mdc800->ग_लिखो_urb_buffer);
+	kमुक्त (mdc800->करोwnload_urb_buffer);
 
-	kfree (mdc800);
-	mdc800 = NULL;
-}
+	kमुक्त (mdc800);
+	mdc800 = शून्य;
+पूर्ण
 
 module_init (usb_mdc800_init);
-module_exit (usb_mdc800_cleanup);
+module_निकास (usb_mdc800_cleanup);
 
 MODULE_AUTHOR( DRIVER_AUTHOR );
 MODULE_DESCRIPTION( DRIVER_DESC );

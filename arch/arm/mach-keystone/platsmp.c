@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * Keystone SOC SMP platform code
+ * Keystone SOC SMP platक्रमm code
  *
  * Copyright 2013 Texas Instruments, Inc.
  *	Cyril Chemparathy <cyril@ti.com>
@@ -9,33 +10,33 @@
  * Based on platsmp.c, Copyright (C) 2002 ARM Ltd.
  */
 
-#include <linux/init.h>
-#include <linux/smp.h>
-#include <linux/io.h>
-#include <linux/pgtable.h>
+#समावेश <linux/init.h>
+#समावेश <linux/smp.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/pgtable.h>
 
-#include <asm/smp_plat.h>
-#include <asm/prom.h>
-#include <asm/tlbflush.h>
+#समावेश <यंत्र/smp_plat.h>
+#समावेश <यंत्र/prom.h>
+#समावेश <यंत्र/tlbflush.h>
 
-#include "keystone.h"
+#समावेश "keystone.h"
 
-static int keystone_smp_boot_secondary(unsigned int cpu,
-						struct task_struct *idle)
-{
-	unsigned long start = virt_to_idmap(&secondary_startup);
-	int error;
+अटल पूर्णांक keystone_smp_boot_secondary(अचिन्हित पूर्णांक cpu,
+						काष्ठा task_काष्ठा *idle)
+अणु
+	अचिन्हित दीर्घ start = virt_to_idmap(&secondary_startup);
+	पूर्णांक error;
 
 	pr_debug("keystone-smp: booting cpu %d, vector %08lx\n",
 		 cpu, start);
 
 	error = keystone_cpu_smc(KEYSTONE_MON_CPU_UP_IDX, cpu, start);
-	if (error)
+	अगर (error)
 		pr_err("CPU %d bringup failed with %d\n", cpu, error);
 
-	return error;
-}
+	वापस error;
+पूर्ण
 
-const struct smp_operations keystone_smp_ops __initconst = {
+स्थिर काष्ठा smp_operations keystone_smp_ops __initस्थिर = अणु
 	.smp_boot_secondary	= keystone_smp_boot_secondary,
-};
+पूर्ण;

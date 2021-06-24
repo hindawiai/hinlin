@@ -1,17 +1,18 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
- * drivers/net/ethernet/rocker/rocker_hw.h - Rocker switch device driver
+ * drivers/net/ethernet/rocker/rocker_hw.h - Rocker चयन device driver
  * Copyright (c) 2014-2016 Jiri Pirko <jiri@mellanox.com>
  * Copyright (c) 2014 Scott Feldman <sfeldma@gmail.com>
  */
 
-#ifndef _ROCKER_HW_H
-#define _ROCKER_HW_H
+#अगर_अघोषित _ROCKER_HW_H
+#घोषणा _ROCKER_HW_H
 
-#include <linux/types.h>
+#समावेश <linux/types.h>
 
 /* Return codes */
-enum {
+क्रमागत अणु
 	ROCKER_OK = 0,
 	ROCKER_ENOENT = 2,
 	ROCKER_ENXIO = 6,
@@ -21,110 +22,110 @@ enum {
 	ROCKER_EMSGSIZE = 90,
 	ROCKER_ENOTSUP = 95,
 	ROCKER_ENOBUFS = 105,
-};
+पूर्ण;
 
-#define ROCKER_FP_PORTS_MAX 62
+#घोषणा ROCKER_FP_PORTS_MAX 62
 
-#define PCI_DEVICE_ID_REDHAT_ROCKER	0x0006
+#घोषणा PCI_DEVICE_ID_REDHAT_ROCKER	0x0006
 
-#define ROCKER_PCI_BAR0_SIZE		0x2000
+#घोषणा ROCKER_PCI_BAR0_SIZE		0x2000
 
 /* MSI-X vectors */
-enum {
+क्रमागत अणु
 	ROCKER_MSIX_VEC_CMD,
 	ROCKER_MSIX_VEC_EVENT,
 	ROCKER_MSIX_VEC_TEST,
 	ROCKER_MSIX_VEC_RESERVED0,
 	__ROCKER_MSIX_VEC_TX,
 	__ROCKER_MSIX_VEC_RX,
-#define ROCKER_MSIX_VEC_TX(port) \
+#घोषणा ROCKER_MSIX_VEC_TX(port) \
 	(__ROCKER_MSIX_VEC_TX + ((port) * 2))
-#define ROCKER_MSIX_VEC_RX(port) \
+#घोषणा ROCKER_MSIX_VEC_RX(port) \
 	(__ROCKER_MSIX_VEC_RX + ((port) * 2))
-#define ROCKER_MSIX_VEC_COUNT(portcnt) \
+#घोषणा ROCKER_MSIX_VEC_COUNT(portcnt) \
 	(ROCKER_MSIX_VEC_RX((portcnt - 1)) + 1)
-};
+पूर्ण;
 
-/* Rocker bogus registers */
-#define ROCKER_BOGUS_REG0		0x0000
-#define ROCKER_BOGUS_REG1		0x0004
-#define ROCKER_BOGUS_REG2		0x0008
-#define ROCKER_BOGUS_REG3		0x000c
+/* Rocker bogus रेजिस्टरs */
+#घोषणा ROCKER_BOGUS_REG0		0x0000
+#घोषणा ROCKER_BOGUS_REG1		0x0004
+#घोषणा ROCKER_BOGUS_REG2		0x0008
+#घोषणा ROCKER_BOGUS_REG3		0x000c
 
-/* Rocker test registers */
-#define ROCKER_TEST_REG			0x0010
-#define ROCKER_TEST_REG64		0x0018  /* 8-byte */
-#define ROCKER_TEST_IRQ			0x0020
-#define ROCKER_TEST_DMA_ADDR		0x0028  /* 8-byte */
-#define ROCKER_TEST_DMA_SIZE		0x0030
-#define ROCKER_TEST_DMA_CTRL		0x0034
+/* Rocker test रेजिस्टरs */
+#घोषणा ROCKER_TEST_REG			0x0010
+#घोषणा ROCKER_TEST_REG64		0x0018  /* 8-byte */
+#घोषणा ROCKER_TEST_IRQ			0x0020
+#घोषणा ROCKER_TEST_DMA_ADDR		0x0028  /* 8-byte */
+#घोषणा ROCKER_TEST_DMA_SIZE		0x0030
+#घोषणा ROCKER_TEST_DMA_CTRL		0x0034
 
-/* Rocker test register ctrl */
-#define ROCKER_TEST_DMA_CTRL_CLEAR	BIT(0)
-#define ROCKER_TEST_DMA_CTRL_FILL	BIT(1)
-#define ROCKER_TEST_DMA_CTRL_INVERT	BIT(2)
+/* Rocker test रेजिस्टर ctrl */
+#घोषणा ROCKER_TEST_DMA_CTRL_CLEAR	BIT(0)
+#घोषणा ROCKER_TEST_DMA_CTRL_FILL	BIT(1)
+#घोषणा ROCKER_TEST_DMA_CTRL_INVERT	BIT(2)
 
-/* Rocker DMA ring register offsets */
-#define ROCKER_DMA_DESC_ADDR(x)		(0x1000 + (x) * 32)  /* 8-byte */
-#define ROCKER_DMA_DESC_SIZE(x)		(0x1008 + (x) * 32)
-#define ROCKER_DMA_DESC_HEAD(x)		(0x100c + (x) * 32)
-#define ROCKER_DMA_DESC_TAIL(x)		(0x1010 + (x) * 32)
-#define ROCKER_DMA_DESC_CTRL(x)		(0x1014 + (x) * 32)
-#define ROCKER_DMA_DESC_CREDITS(x)	(0x1018 + (x) * 32)
-#define ROCKER_DMA_DESC_RES1(x)		(0x101c + (x) * 32)
+/* Rocker DMA ring रेजिस्टर offsets */
+#घोषणा ROCKER_DMA_DESC_ADDR(x)		(0x1000 + (x) * 32)  /* 8-byte */
+#घोषणा ROCKER_DMA_DESC_SIZE(x)		(0x1008 + (x) * 32)
+#घोषणा ROCKER_DMA_DESC_HEAD(x)		(0x100c + (x) * 32)
+#घोषणा ROCKER_DMA_DESC_TAIL(x)		(0x1010 + (x) * 32)
+#घोषणा ROCKER_DMA_DESC_CTRL(x)		(0x1014 + (x) * 32)
+#घोषणा ROCKER_DMA_DESC_CREDITS(x)	(0x1018 + (x) * 32)
+#घोषणा ROCKER_DMA_DESC_RES1(x)		(0x101c + (x) * 32)
 
-/* Rocker dma ctrl register bits */
-#define ROCKER_DMA_DESC_CTRL_RESET	BIT(0)
+/* Rocker dma ctrl रेजिस्टर bits */
+#घोषणा ROCKER_DMA_DESC_CTRL_RESET	BIT(0)
 
 /* Rocker DMA ring types */
-enum rocker_dma_type {
+क्रमागत rocker_dma_type अणु
 	ROCKER_DMA_CMD,
 	ROCKER_DMA_EVENT,
 	__ROCKER_DMA_TX,
 	__ROCKER_DMA_RX,
-#define ROCKER_DMA_TX(port) (__ROCKER_DMA_TX + (port) * 2)
-#define ROCKER_DMA_RX(port) (__ROCKER_DMA_RX + (port) * 2)
-};
+#घोषणा ROCKER_DMA_TX(port) (__ROCKER_DMA_TX + (port) * 2)
+#घोषणा ROCKER_DMA_RX(port) (__ROCKER_DMA_RX + (port) * 2)
+पूर्ण;
 
-/* Rocker DMA ring size limits and default sizes */
-#define ROCKER_DMA_SIZE_MIN		2ul
-#define ROCKER_DMA_SIZE_MAX		65536ul
-#define ROCKER_DMA_CMD_DEFAULT_SIZE	32ul
-#define ROCKER_DMA_EVENT_DEFAULT_SIZE	32ul
-#define ROCKER_DMA_TX_DEFAULT_SIZE	64ul
-#define ROCKER_DMA_TX_DESC_SIZE		256
-#define ROCKER_DMA_RX_DEFAULT_SIZE	64ul
-#define ROCKER_DMA_RX_DESC_SIZE		256
+/* Rocker DMA ring size limits and शेष sizes */
+#घोषणा ROCKER_DMA_SIZE_MIN		2ul
+#घोषणा ROCKER_DMA_SIZE_MAX		65536ul
+#घोषणा ROCKER_DMA_CMD_DEFAULT_SIZE	32ul
+#घोषणा ROCKER_DMA_EVENT_DEFAULT_SIZE	32ul
+#घोषणा ROCKER_DMA_TX_DEFAULT_SIZE	64ul
+#घोषणा ROCKER_DMA_TX_DESC_SIZE		256
+#घोषणा ROCKER_DMA_RX_DEFAULT_SIZE	64ul
+#घोषणा ROCKER_DMA_RX_DESC_SIZE		256
 
-/* Rocker DMA descriptor struct */
-struct rocker_desc {
+/* Rocker DMA descriptor काष्ठा */
+काष्ठा rocker_desc अणु
 	u64 buf_addr;
 	u64 cookie;
 	u16 buf_size;
 	u16 tlv_size;
 	u16 resv[5];
 	u16 comp_err;
-};
+पूर्ण;
 
-#define ROCKER_DMA_DESC_COMP_ERR_GEN	BIT(15)
+#घोषणा ROCKER_DMA_DESC_COMP_ERR_GEN	BIT(15)
 
-/* Rocker DMA TLV struct */
-struct rocker_tlv {
+/* Rocker DMA TLV काष्ठा */
+काष्ठा rocker_tlv अणु
 	u32 type;
 	u16 len;
-};
+पूर्ण;
 
 /* TLVs */
-enum {
+क्रमागत अणु
 	ROCKER_TLV_CMD_UNSPEC,
 	ROCKER_TLV_CMD_TYPE,	/* u16 */
 	ROCKER_TLV_CMD_INFO,	/* nest */
 
 	__ROCKER_TLV_CMD_MAX,
 	ROCKER_TLV_CMD_MAX = __ROCKER_TLV_CMD_MAX - 1,
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	ROCKER_TLV_CMD_TYPE_UNSPEC,
 	ROCKER_TLV_CMD_TYPE_GET_PORT_SETTINGS,
 	ROCKER_TLV_CMD_TYPE_SET_PORT_SETTINGS,
@@ -142,9 +143,9 @@ enum {
 
 	__ROCKER_TLV_CMD_TYPE_MAX,
 	ROCKER_TLV_CMD_TYPE_MAX = __ROCKER_TLV_CMD_TYPE_MAX - 1,
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	ROCKER_TLV_CMD_PORT_SETTINGS_UNSPEC,
 	ROCKER_TLV_CMD_PORT_SETTINGS_PPORT,		/* u32 */
 	ROCKER_TLV_CMD_PORT_SETTINGS_SPEED,		/* u32 */
@@ -159,9 +160,9 @@ enum {
 	__ROCKER_TLV_CMD_PORT_SETTINGS_MAX,
 	ROCKER_TLV_CMD_PORT_SETTINGS_MAX =
 			__ROCKER_TLV_CMD_PORT_SETTINGS_MAX - 1,
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	ROCKER_TLV_CMD_PORT_STATS_UNSPEC,
 	ROCKER_TLV_CMD_PORT_STATS_PPORT,            /* u32 */
 
@@ -177,31 +178,31 @@ enum {
 
 	__ROCKER_TLV_CMD_PORT_STATS_MAX,
 	ROCKER_TLV_CMD_PORT_STATS_MAX = __ROCKER_TLV_CMD_PORT_STATS_MAX - 1,
-};
+पूर्ण;
 
-enum rocker_port_mode {
+क्रमागत rocker_port_mode अणु
 	ROCKER_PORT_MODE_OF_DPA,
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	ROCKER_TLV_EVENT_UNSPEC,
 	ROCKER_TLV_EVENT_TYPE,	/* u16 */
 	ROCKER_TLV_EVENT_INFO,	/* nest */
 
 	__ROCKER_TLV_EVENT_MAX,
 	ROCKER_TLV_EVENT_MAX = __ROCKER_TLV_EVENT_MAX - 1,
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	ROCKER_TLV_EVENT_TYPE_UNSPEC,
 	ROCKER_TLV_EVENT_TYPE_LINK_CHANGED,
 	ROCKER_TLV_EVENT_TYPE_MAC_VLAN_SEEN,
 
 	__ROCKER_TLV_EVENT_TYPE_MAX,
 	ROCKER_TLV_EVENT_TYPE_MAX = __ROCKER_TLV_EVENT_TYPE_MAX - 1,
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	ROCKER_TLV_EVENT_LINK_CHANGED_UNSPEC,
 	ROCKER_TLV_EVENT_LINK_CHANGED_PPORT,	/* u32 */
 	ROCKER_TLV_EVENT_LINK_CHANGED_LINKUP,	/* u8 */
@@ -209,9 +210,9 @@ enum {
 	__ROCKER_TLV_EVENT_LINK_CHANGED_MAX,
 	ROCKER_TLV_EVENT_LINK_CHANGED_MAX =
 			__ROCKER_TLV_EVENT_LINK_CHANGED_MAX - 1,
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	ROCKER_TLV_EVENT_MAC_VLAN_UNSPEC,
 	ROCKER_TLV_EVENT_MAC_VLAN_PPORT,	/* u32 */
 	ROCKER_TLV_EVENT_MAC_VLAN_MAC,		/* binary */
@@ -219,9 +220,9 @@ enum {
 
 	__ROCKER_TLV_EVENT_MAC_VLAN_MAX,
 	ROCKER_TLV_EVENT_MAC_VLAN_MAX = __ROCKER_TLV_EVENT_MAC_VLAN_MAX - 1,
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	ROCKER_TLV_RX_UNSPEC,
 	ROCKER_TLV_RX_FLAGS,		/* u16, see ROCKER_RX_FLAGS_ */
 	ROCKER_TLV_RX_CSUM,		/* u16 */
@@ -231,19 +232,19 @@ enum {
 
 	__ROCKER_TLV_RX_MAX,
 	ROCKER_TLV_RX_MAX = __ROCKER_TLV_RX_MAX - 1,
-};
+पूर्ण;
 
-#define ROCKER_RX_FLAGS_IPV4			BIT(0)
-#define ROCKER_RX_FLAGS_IPV6			BIT(1)
-#define ROCKER_RX_FLAGS_CSUM_CALC		BIT(2)
-#define ROCKER_RX_FLAGS_IPV4_CSUM_GOOD		BIT(3)
-#define ROCKER_RX_FLAGS_IP_FRAG			BIT(4)
-#define ROCKER_RX_FLAGS_TCP			BIT(5)
-#define ROCKER_RX_FLAGS_UDP			BIT(6)
-#define ROCKER_RX_FLAGS_TCP_UDP_CSUM_GOOD	BIT(7)
-#define ROCKER_RX_FLAGS_FWD_OFFLOAD		BIT(8)
+#घोषणा ROCKER_RX_FLAGS_IPV4			BIT(0)
+#घोषणा ROCKER_RX_FLAGS_IPV6			BIT(1)
+#घोषणा ROCKER_RX_FLAGS_CSUM_CALC		BIT(2)
+#घोषणा ROCKER_RX_FLAGS_IPV4_CSUM_GOOD		BIT(3)
+#घोषणा ROCKER_RX_FLAGS_IP_FRAG			BIT(4)
+#घोषणा ROCKER_RX_FLAGS_TCP			BIT(5)
+#घोषणा ROCKER_RX_FLAGS_UDP			BIT(6)
+#घोषणा ROCKER_RX_FLAGS_TCP_UDP_CSUM_GOOD	BIT(7)
+#घोषणा ROCKER_RX_FLAGS_FWD_OFFLOAD		BIT(8)
 
-enum {
+क्रमागत अणु
 	ROCKER_TLV_TX_UNSPEC,
 	ROCKER_TLV_TX_OFFLOAD,		/* u8, see ROCKER_TX_OFFLOAD_ */
 	ROCKER_TLV_TX_L3_CSUM_OFF,	/* u16 */
@@ -253,35 +254,35 @@ enum {
 
 	__ROCKER_TLV_TX_MAX,
 	ROCKER_TLV_TX_MAX = __ROCKER_TLV_TX_MAX - 1,
-};
+पूर्ण;
 
-#define ROCKER_TX_OFFLOAD_NONE		0
-#define ROCKER_TX_OFFLOAD_IP_CSUM	1
-#define ROCKER_TX_OFFLOAD_TCP_UDP_CSUM	2
-#define ROCKER_TX_OFFLOAD_L3_CSUM	3
-#define ROCKER_TX_OFFLOAD_TSO		4
+#घोषणा ROCKER_TX_OFFLOAD_NONE		0
+#घोषणा ROCKER_TX_OFFLOAD_IP_CSUM	1
+#घोषणा ROCKER_TX_OFFLOAD_TCP_UDP_CSUM	2
+#घोषणा ROCKER_TX_OFFLOAD_L3_CSUM	3
+#घोषणा ROCKER_TX_OFFLOAD_TSO		4
 
-#define ROCKER_TX_FRAGS_MAX		16
+#घोषणा ROCKER_TX_FRAGS_MAX		16
 
-enum {
+क्रमागत अणु
 	ROCKER_TLV_TX_FRAG_UNSPEC,
 	ROCKER_TLV_TX_FRAG,		/* nest */
 
 	__ROCKER_TLV_TX_FRAG_MAX,
 	ROCKER_TLV_TX_FRAG_MAX = __ROCKER_TLV_TX_FRAG_MAX - 1,
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	ROCKER_TLV_TX_FRAG_ATTR_UNSPEC,
 	ROCKER_TLV_TX_FRAG_ATTR_ADDR,	/* u64 */
 	ROCKER_TLV_TX_FRAG_ATTR_LEN,	/* u16 */
 
 	__ROCKER_TLV_TX_FRAG_ATTR_MAX,
 	ROCKER_TLV_TX_FRAG_ATTR_MAX = __ROCKER_TLV_TX_FRAG_ATTR_MAX - 1,
-};
+पूर्ण;
 
-/* cmd info nested for OF-DPA msgs */
-enum {
+/* cmd info nested क्रम OF-DPA msgs */
+क्रमागत अणु
 	ROCKER_TLV_OF_DPA_UNSPEC,
 	ROCKER_TLV_OF_DPA_TABLE_ID,		/* u16 */
 	ROCKER_TLV_OF_DPA_PRIORITY,		/* u32 */
@@ -347,11 +348,11 @@ enum {
 
 	__ROCKER_TLV_OF_DPA_MAX,
 	ROCKER_TLV_OF_DPA_MAX = __ROCKER_TLV_OF_DPA_MAX - 1,
-};
+पूर्ण;
 
 /* OF-DPA table IDs */
 
-enum rocker_of_dpa_table_id {
+क्रमागत rocker_of_dpa_table_id अणु
 	ROCKER_OF_DPA_TABLE_ID_INGRESS_PORT = 0,
 	ROCKER_OF_DPA_TABLE_ID_VLAN = 10,
 	ROCKER_OF_DPA_TABLE_ID_TERMINATION_MAC = 20,
@@ -359,10 +360,10 @@ enum rocker_of_dpa_table_id {
 	ROCKER_OF_DPA_TABLE_ID_MULTICAST_ROUTING = 40,
 	ROCKER_OF_DPA_TABLE_ID_BRIDGING = 50,
 	ROCKER_OF_DPA_TABLE_ID_ACL_POLICY = 60,
-};
+पूर्ण;
 
 /* OF-DPA flow stats */
-enum {
+क्रमागत अणु
 	ROCKER_TLV_OF_DPA_FLOW_STAT_UNSPEC,
 	ROCKER_TLV_OF_DPA_FLOW_STAT_DURATION,	/* u32 */
 	ROCKER_TLV_OF_DPA_FLOW_STAT_RX_PKTS,	/* u64 */
@@ -370,10 +371,10 @@ enum {
 
 	__ROCKER_TLV_OF_DPA_FLOW_STAT_MAX,
 	ROCKER_TLV_OF_DPA_FLOW_STAT_MAX = __ROCKER_TLV_OF_DPA_FLOW_STAT_MAX - 1,
-};
+पूर्ण;
 
 /* OF-DPA group types */
-enum rocker_of_dpa_group_type {
+क्रमागत rocker_of_dpa_group_type अणु
 	ROCKER_OF_DPA_GROUP_TYPE_L2_INTERFACE = 0,
 	ROCKER_OF_DPA_GROUP_TYPE_L2_REWRITE,
 	ROCKER_OF_DPA_GROUP_TYPE_L3_UCAST,
@@ -383,80 +384,80 @@ enum rocker_of_dpa_group_type {
 	ROCKER_OF_DPA_GROUP_TYPE_L3_MCAST,
 	ROCKER_OF_DPA_GROUP_TYPE_L3_ECMP,
 	ROCKER_OF_DPA_GROUP_TYPE_L2_OVERLAY,
-};
+पूर्ण;
 
 /* OF-DPA group L2 overlay types */
-enum rocker_of_dpa_overlay_type {
+क्रमागत rocker_of_dpa_overlay_type अणु
 	ROCKER_OF_DPA_OVERLAY_TYPE_FLOOD_UCAST = 0,
 	ROCKER_OF_DPA_OVERLAY_TYPE_FLOOD_MCAST,
 	ROCKER_OF_DPA_OVERLAY_TYPE_MCAST_UCAST,
 	ROCKER_OF_DPA_OVERLAY_TYPE_MCAST_MCAST,
-};
+पूर्ण;
 
 /* OF-DPA group ID encoding */
-#define ROCKER_GROUP_TYPE_SHIFT 28
-#define ROCKER_GROUP_TYPE_MASK 0xf0000000
-#define ROCKER_GROUP_VLAN_SHIFT 16
-#define ROCKER_GROUP_VLAN_MASK 0x0fff0000
-#define ROCKER_GROUP_PORT_SHIFT 0
-#define ROCKER_GROUP_PORT_MASK 0x0000ffff
-#define ROCKER_GROUP_TUNNEL_ID_SHIFT 12
-#define ROCKER_GROUP_TUNNEL_ID_MASK 0x0ffff000
-#define ROCKER_GROUP_SUBTYPE_SHIFT 10
-#define ROCKER_GROUP_SUBTYPE_MASK 0x00000c00
-#define ROCKER_GROUP_INDEX_SHIFT 0
-#define ROCKER_GROUP_INDEX_MASK 0x0000ffff
-#define ROCKER_GROUP_INDEX_LONG_SHIFT 0
-#define ROCKER_GROUP_INDEX_LONG_MASK 0x0fffffff
+#घोषणा ROCKER_GROUP_TYPE_SHIFT 28
+#घोषणा ROCKER_GROUP_TYPE_MASK 0xf0000000
+#घोषणा ROCKER_GROUP_VLAN_SHIFT 16
+#घोषणा ROCKER_GROUP_VLAN_MASK 0x0fff0000
+#घोषणा ROCKER_GROUP_PORT_SHIFT 0
+#घोषणा ROCKER_GROUP_PORT_MASK 0x0000ffff
+#घोषणा ROCKER_GROUP_TUNNEL_ID_SHIFT 12
+#घोषणा ROCKER_GROUP_TUNNEL_ID_MASK 0x0ffff000
+#घोषणा ROCKER_GROUP_SUBTYPE_SHIFT 10
+#घोषणा ROCKER_GROUP_SUBTYPE_MASK 0x00000c00
+#घोषणा ROCKER_GROUP_INDEX_SHIFT 0
+#घोषणा ROCKER_GROUP_INDEX_MASK 0x0000ffff
+#घोषणा ROCKER_GROUP_INDEX_LONG_SHIFT 0
+#घोषणा ROCKER_GROUP_INDEX_LONG_MASK 0x0fffffff
 
-#define ROCKER_GROUP_TYPE_GET(group_id) \
+#घोषणा ROCKER_GROUP_TYPE_GET(group_id) \
 	(((group_id) & ROCKER_GROUP_TYPE_MASK) >> ROCKER_GROUP_TYPE_SHIFT)
-#define ROCKER_GROUP_TYPE_SET(type) \
+#घोषणा ROCKER_GROUP_TYPE_SET(type) \
 	(((type) << ROCKER_GROUP_TYPE_SHIFT) & ROCKER_GROUP_TYPE_MASK)
-#define ROCKER_GROUP_VLAN_GET(group_id) \
+#घोषणा ROCKER_GROUP_VLAN_GET(group_id) \
 	(((group_id) & ROCKER_GROUP_VLAN_ID_MASK) >> ROCKER_GROUP_VLAN_ID_SHIFT)
-#define ROCKER_GROUP_VLAN_SET(vlan_id) \
+#घोषणा ROCKER_GROUP_VLAN_SET(vlan_id) \
 	(((vlan_id) << ROCKER_GROUP_VLAN_SHIFT) & ROCKER_GROUP_VLAN_MASK)
-#define ROCKER_GROUP_PORT_GET(group_id) \
+#घोषणा ROCKER_GROUP_PORT_GET(group_id) \
 	(((group_id) & ROCKER_GROUP_PORT_MASK) >> ROCKER_GROUP_PORT_SHIFT)
-#define ROCKER_GROUP_PORT_SET(port) \
+#घोषणा ROCKER_GROUP_PORT_SET(port) \
 	(((port) << ROCKER_GROUP_PORT_SHIFT) & ROCKER_GROUP_PORT_MASK)
-#define ROCKER_GROUP_INDEX_GET(group_id) \
+#घोषणा ROCKER_GROUP_INDEX_GET(group_id) \
 	(((group_id) & ROCKER_GROUP_INDEX_MASK) >> ROCKER_GROUP_INDEX_SHIFT)
-#define ROCKER_GROUP_INDEX_SET(index) \
+#घोषणा ROCKER_GROUP_INDEX_SET(index) \
 	(((index) << ROCKER_GROUP_INDEX_SHIFT) & ROCKER_GROUP_INDEX_MASK)
-#define ROCKER_GROUP_INDEX_LONG_GET(group_id) \
+#घोषणा ROCKER_GROUP_INDEX_LONG_GET(group_id) \
 	(((group_id) & ROCKER_GROUP_INDEX_LONG_MASK) >> \
 	 ROCKER_GROUP_INDEX_LONG_SHIFT)
-#define ROCKER_GROUP_INDEX_LONG_SET(index) \
+#घोषणा ROCKER_GROUP_INDEX_LONG_SET(index) \
 	(((index) << ROCKER_GROUP_INDEX_LONG_SHIFT) & \
 	 ROCKER_GROUP_INDEX_LONG_MASK)
 
-#define ROCKER_GROUP_NONE 0
-#define ROCKER_GROUP_L2_INTERFACE(vlan_id, port) \
+#घोषणा ROCKER_GROUP_NONE 0
+#घोषणा ROCKER_GROUP_L2_INTERFACE(vlan_id, port) \
 	(ROCKER_GROUP_TYPE_SET(ROCKER_OF_DPA_GROUP_TYPE_L2_INTERFACE) |\
 	 ROCKER_GROUP_VLAN_SET(ntohs(vlan_id)) | ROCKER_GROUP_PORT_SET(port))
-#define ROCKER_GROUP_L2_REWRITE(index) \
+#घोषणा ROCKER_GROUP_L2_REWRITE(index) \
 	(ROCKER_GROUP_TYPE_SET(ROCKER_OF_DPA_GROUP_TYPE_L2_REWRITE) |\
 	 ROCKER_GROUP_INDEX_LONG_SET(index))
-#define ROCKER_GROUP_L2_MCAST(vlan_id, index) \
+#घोषणा ROCKER_GROUP_L2_MCAST(vlan_id, index) \
 	(ROCKER_GROUP_TYPE_SET(ROCKER_OF_DPA_GROUP_TYPE_L2_MCAST) |\
 	 ROCKER_GROUP_VLAN_SET(ntohs(vlan_id)) | ROCKER_GROUP_INDEX_SET(index))
-#define ROCKER_GROUP_L2_FLOOD(vlan_id, index) \
+#घोषणा ROCKER_GROUP_L2_FLOOD(vlan_id, index) \
 	(ROCKER_GROUP_TYPE_SET(ROCKER_OF_DPA_GROUP_TYPE_L2_FLOOD) |\
 	ROCKER_GROUP_VLAN_SET(ntohs(vlan_id)) | ROCKER_GROUP_INDEX_SET(index))
-#define ROCKER_GROUP_L3_UNICAST(index) \
+#घोषणा ROCKER_GROUP_L3_UNICAST(index) \
 	(ROCKER_GROUP_TYPE_SET(ROCKER_OF_DPA_GROUP_TYPE_L3_UCAST) |\
 	 ROCKER_GROUP_INDEX_LONG_SET(index))
 
-/* Rocker general purpose registers */
-#define ROCKER_CONTROL			0x0300
-#define ROCKER_PORT_PHYS_COUNT		0x0304
-#define ROCKER_PORT_PHYS_LINK_STATUS	0x0310 /* 8-byte */
-#define ROCKER_PORT_PHYS_ENABLE		0x0318 /* 8-byte */
-#define ROCKER_SWITCH_ID		0x0320 /* 8-byte */
+/* Rocker general purpose रेजिस्टरs */
+#घोषणा ROCKER_CONTROL			0x0300
+#घोषणा ROCKER_PORT_PHYS_COUNT		0x0304
+#घोषणा ROCKER_PORT_PHYS_LINK_STATUS	0x0310 /* 8-byte */
+#घोषणा ROCKER_PORT_PHYS_ENABLE		0x0318 /* 8-byte */
+#घोषणा ROCKER_SWITCH_ID		0x0320 /* 8-byte */
 
 /* Rocker control bits */
-#define ROCKER_CONTROL_RESET		BIT(0)
+#घोषणा ROCKER_CONTROL_RESET		BIT(0)
 
-#endif
+#पूर्ण_अगर

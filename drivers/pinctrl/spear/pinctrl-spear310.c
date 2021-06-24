@@ -1,5 +1,6 @@
+<शैली गुरु>
 /*
- * Driver for the ST Microelectronics SPEAr310 pinmux
+ * Driver क्रम the ST Microelectronics SPEAr310 pinmux
  *
  * Copyright (C) 2012 ST Microelectronics
  * Viresh Kumar <vireshk@kernel.org>
@@ -9,339 +10,339 @@
  * warranty of any kind, whether express or implied.
  */
 
-#include <linux/err.h>
-#include <linux/init.h>
-#include <linux/of_device.h>
-#include <linux/platform_device.h>
-#include "pinctrl-spear3xx.h"
+#समावेश <linux/err.h>
+#समावेश <linux/init.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश "pinctrl-spear3xx.h"
 
-#define DRIVER_NAME "spear310-pinmux"
+#घोषणा DRIVER_NAME "spear310-pinmux"
 
 /* addresses */
-#define PMX_CONFIG_REG			0x08
+#घोषणा PMX_CONFIG_REG			0x08
 
 /* emi_cs_0_to_5_pins */
-static const unsigned emi_cs_0_to_5_pins[] = { 45, 46, 47, 48, 49, 50 };
-static struct spear_muxreg emi_cs_0_to_5_muxreg[] = {
-	{
+अटल स्थिर अचिन्हित emi_cs_0_to_5_pins[] = अणु 45, 46, 47, 48, 49, 50 पूर्ण;
+अटल काष्ठा spear_muxreg emi_cs_0_to_5_muxreg[] = अणु
+	अणु
 		.reg = PMX_CONFIG_REG,
 		.mask = PMX_TIMER_0_1_MASK | PMX_TIMER_2_3_MASK,
 		.val = 0,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static struct spear_modemux emi_cs_0_to_5_modemux[] = {
-	{
+अटल काष्ठा spear_modemux emi_cs_0_to_5_modemux[] = अणु
+	अणु
 		.muxregs = emi_cs_0_to_5_muxreg,
 		.nmuxregs = ARRAY_SIZE(emi_cs_0_to_5_muxreg),
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static struct spear_pingroup emi_cs_0_to_5_pingroup = {
+अटल काष्ठा spear_pingroup emi_cs_0_to_5_pingroup = अणु
 	.name = "emi_cs_0_to_5_grp",
 	.pins = emi_cs_0_to_5_pins,
 	.npins = ARRAY_SIZE(emi_cs_0_to_5_pins),
 	.modemuxs = emi_cs_0_to_5_modemux,
 	.nmodemuxs = ARRAY_SIZE(emi_cs_0_to_5_modemux),
-};
+पूर्ण;
 
-static const char *const emi_cs_0_to_5_grps[] = { "emi_cs_0_to_5_grp" };
-static struct spear_function emi_cs_0_to_5_function = {
+अटल स्थिर अक्षर *स्थिर emi_cs_0_to_5_grps[] = अणु "emi_cs_0_to_5_grp" पूर्ण;
+अटल काष्ठा spear_function emi_cs_0_to_5_function = अणु
 	.name = "emi",
 	.groups = emi_cs_0_to_5_grps,
 	.ngroups = ARRAY_SIZE(emi_cs_0_to_5_grps),
-};
+पूर्ण;
 
 /* uart1_pins */
-static const unsigned uart1_pins[] = { 0, 1 };
-static struct spear_muxreg uart1_muxreg[] = {
-	{
+अटल स्थिर अचिन्हित uart1_pins[] = अणु 0, 1 पूर्ण;
+अटल काष्ठा spear_muxreg uart1_muxreg[] = अणु
+	अणु
 		.reg = PMX_CONFIG_REG,
 		.mask = PMX_FIRDA_MASK,
 		.val = 0,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static struct spear_modemux uart1_modemux[] = {
-	{
+अटल काष्ठा spear_modemux uart1_modemux[] = अणु
+	अणु
 		.muxregs = uart1_muxreg,
 		.nmuxregs = ARRAY_SIZE(uart1_muxreg),
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static struct spear_pingroup uart1_pingroup = {
+अटल काष्ठा spear_pingroup uart1_pingroup = अणु
 	.name = "uart1_grp",
 	.pins = uart1_pins,
 	.npins = ARRAY_SIZE(uart1_pins),
 	.modemuxs = uart1_modemux,
 	.nmodemuxs = ARRAY_SIZE(uart1_modemux),
-};
+पूर्ण;
 
-static const char *const uart1_grps[] = { "uart1_grp" };
-static struct spear_function uart1_function = {
+अटल स्थिर अक्षर *स्थिर uart1_grps[] = अणु "uart1_grp" पूर्ण;
+अटल काष्ठा spear_function uart1_function = अणु
 	.name = "uart1",
 	.groups = uart1_grps,
 	.ngroups = ARRAY_SIZE(uart1_grps),
-};
+पूर्ण;
 
 /* uart2_pins */
-static const unsigned uart2_pins[] = { 43, 44 };
-static struct spear_muxreg uart2_muxreg[] = {
-	{
+अटल स्थिर अचिन्हित uart2_pins[] = अणु 43, 44 पूर्ण;
+अटल काष्ठा spear_muxreg uart2_muxreg[] = अणु
+	अणु
 		.reg = PMX_CONFIG_REG,
 		.mask = PMX_TIMER_0_1_MASK,
 		.val = 0,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static struct spear_modemux uart2_modemux[] = {
-	{
+अटल काष्ठा spear_modemux uart2_modemux[] = अणु
+	अणु
 		.muxregs = uart2_muxreg,
 		.nmuxregs = ARRAY_SIZE(uart2_muxreg),
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static struct spear_pingroup uart2_pingroup = {
+अटल काष्ठा spear_pingroup uart2_pingroup = अणु
 	.name = "uart2_grp",
 	.pins = uart2_pins,
 	.npins = ARRAY_SIZE(uart2_pins),
 	.modemuxs = uart2_modemux,
 	.nmodemuxs = ARRAY_SIZE(uart2_modemux),
-};
+पूर्ण;
 
-static const char *const uart2_grps[] = { "uart2_grp" };
-static struct spear_function uart2_function = {
+अटल स्थिर अक्षर *स्थिर uart2_grps[] = अणु "uart2_grp" पूर्ण;
+अटल काष्ठा spear_function uart2_function = अणु
 	.name = "uart2",
 	.groups = uart2_grps,
 	.ngroups = ARRAY_SIZE(uart2_grps),
-};
+पूर्ण;
 
 /* uart3_pins */
-static const unsigned uart3_pins[] = { 37, 38 };
-static struct spear_muxreg uart3_muxreg[] = {
-	{
+अटल स्थिर अचिन्हित uart3_pins[] = अणु 37, 38 पूर्ण;
+अटल काष्ठा spear_muxreg uart3_muxreg[] = अणु
+	अणु
 		.reg = PMX_CONFIG_REG,
 		.mask = PMX_UART0_MODEM_MASK,
 		.val = 0,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static struct spear_modemux uart3_modemux[] = {
-	{
+अटल काष्ठा spear_modemux uart3_modemux[] = अणु
+	अणु
 		.muxregs = uart3_muxreg,
 		.nmuxregs = ARRAY_SIZE(uart3_muxreg),
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static struct spear_pingroup uart3_pingroup = {
+अटल काष्ठा spear_pingroup uart3_pingroup = अणु
 	.name = "uart3_grp",
 	.pins = uart3_pins,
 	.npins = ARRAY_SIZE(uart3_pins),
 	.modemuxs = uart3_modemux,
 	.nmodemuxs = ARRAY_SIZE(uart3_modemux),
-};
+पूर्ण;
 
-static const char *const uart3_grps[] = { "uart3_grp" };
-static struct spear_function uart3_function = {
+अटल स्थिर अक्षर *स्थिर uart3_grps[] = अणु "uart3_grp" पूर्ण;
+अटल काष्ठा spear_function uart3_function = अणु
 	.name = "uart3",
 	.groups = uart3_grps,
 	.ngroups = ARRAY_SIZE(uart3_grps),
-};
+पूर्ण;
 
 /* uart4_pins */
-static const unsigned uart4_pins[] = { 39, 40 };
-static struct spear_muxreg uart4_muxreg[] = {
-	{
+अटल स्थिर अचिन्हित uart4_pins[] = अणु 39, 40 पूर्ण;
+अटल काष्ठा spear_muxreg uart4_muxreg[] = अणु
+	अणु
 		.reg = PMX_CONFIG_REG,
 		.mask = PMX_UART0_MODEM_MASK,
 		.val = 0,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static struct spear_modemux uart4_modemux[] = {
-	{
+अटल काष्ठा spear_modemux uart4_modemux[] = अणु
+	अणु
 		.muxregs = uart4_muxreg,
 		.nmuxregs = ARRAY_SIZE(uart4_muxreg),
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static struct spear_pingroup uart4_pingroup = {
+अटल काष्ठा spear_pingroup uart4_pingroup = अणु
 	.name = "uart4_grp",
 	.pins = uart4_pins,
 	.npins = ARRAY_SIZE(uart4_pins),
 	.modemuxs = uart4_modemux,
 	.nmodemuxs = ARRAY_SIZE(uart4_modemux),
-};
+पूर्ण;
 
-static const char *const uart4_grps[] = { "uart4_grp" };
-static struct spear_function uart4_function = {
+अटल स्थिर अक्षर *स्थिर uart4_grps[] = अणु "uart4_grp" पूर्ण;
+अटल काष्ठा spear_function uart4_function = अणु
 	.name = "uart4",
 	.groups = uart4_grps,
 	.ngroups = ARRAY_SIZE(uart4_grps),
-};
+पूर्ण;
 
 /* uart5_pins */
-static const unsigned uart5_pins[] = { 41, 42 };
-static struct spear_muxreg uart5_muxreg[] = {
-	{
+अटल स्थिर अचिन्हित uart5_pins[] = अणु 41, 42 पूर्ण;
+अटल काष्ठा spear_muxreg uart5_muxreg[] = अणु
+	अणु
 		.reg = PMX_CONFIG_REG,
 		.mask = PMX_UART0_MODEM_MASK,
 		.val = 0,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static struct spear_modemux uart5_modemux[] = {
-	{
+अटल काष्ठा spear_modemux uart5_modemux[] = अणु
+	अणु
 		.muxregs = uart5_muxreg,
 		.nmuxregs = ARRAY_SIZE(uart5_muxreg),
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static struct spear_pingroup uart5_pingroup = {
+अटल काष्ठा spear_pingroup uart5_pingroup = अणु
 	.name = "uart5_grp",
 	.pins = uart5_pins,
 	.npins = ARRAY_SIZE(uart5_pins),
 	.modemuxs = uart5_modemux,
 	.nmodemuxs = ARRAY_SIZE(uart5_modemux),
-};
+पूर्ण;
 
-static const char *const uart5_grps[] = { "uart5_grp" };
-static struct spear_function uart5_function = {
+अटल स्थिर अक्षर *स्थिर uart5_grps[] = अणु "uart5_grp" पूर्ण;
+अटल काष्ठा spear_function uart5_function = अणु
 	.name = "uart5",
 	.groups = uart5_grps,
 	.ngroups = ARRAY_SIZE(uart5_grps),
-};
+पूर्ण;
 
 /* fsmc_pins */
-static const unsigned fsmc_pins[] = { 34, 35, 36 };
-static struct spear_muxreg fsmc_muxreg[] = {
-	{
+अटल स्थिर अचिन्हित fsmc_pins[] = अणु 34, 35, 36 पूर्ण;
+अटल काष्ठा spear_muxreg fsmc_muxreg[] = अणु
+	अणु
 		.reg = PMX_CONFIG_REG,
 		.mask = PMX_SSP_CS_MASK,
 		.val = 0,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static struct spear_modemux fsmc_modemux[] = {
-	{
+अटल काष्ठा spear_modemux fsmc_modemux[] = अणु
+	अणु
 		.muxregs = fsmc_muxreg,
 		.nmuxregs = ARRAY_SIZE(fsmc_muxreg),
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static struct spear_pingroup fsmc_pingroup = {
+अटल काष्ठा spear_pingroup fsmc_pingroup = अणु
 	.name = "fsmc_grp",
 	.pins = fsmc_pins,
 	.npins = ARRAY_SIZE(fsmc_pins),
 	.modemuxs = fsmc_modemux,
 	.nmodemuxs = ARRAY_SIZE(fsmc_modemux),
-};
+पूर्ण;
 
-static const char *const fsmc_grps[] = { "fsmc_grp" };
-static struct spear_function fsmc_function = {
+अटल स्थिर अक्षर *स्थिर fsmc_grps[] = अणु "fsmc_grp" पूर्ण;
+अटल काष्ठा spear_function fsmc_function = अणु
 	.name = "fsmc",
 	.groups = fsmc_grps,
 	.ngroups = ARRAY_SIZE(fsmc_grps),
-};
+पूर्ण;
 
 /* rs485_0_pins */
-static const unsigned rs485_0_pins[] = { 19, 20, 21, 22, 23 };
-static struct spear_muxreg rs485_0_muxreg[] = {
-	{
+अटल स्थिर अचिन्हित rs485_0_pins[] = अणु 19, 20, 21, 22, 23 पूर्ण;
+अटल काष्ठा spear_muxreg rs485_0_muxreg[] = अणु
+	अणु
 		.reg = PMX_CONFIG_REG,
 		.mask = PMX_MII_MASK,
 		.val = 0,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static struct spear_modemux rs485_0_modemux[] = {
-	{
+अटल काष्ठा spear_modemux rs485_0_modemux[] = अणु
+	अणु
 		.muxregs = rs485_0_muxreg,
 		.nmuxregs = ARRAY_SIZE(rs485_0_muxreg),
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static struct spear_pingroup rs485_0_pingroup = {
+अटल काष्ठा spear_pingroup rs485_0_pingroup = अणु
 	.name = "rs485_0_grp",
 	.pins = rs485_0_pins,
 	.npins = ARRAY_SIZE(rs485_0_pins),
 	.modemuxs = rs485_0_modemux,
 	.nmodemuxs = ARRAY_SIZE(rs485_0_modemux),
-};
+पूर्ण;
 
-static const char *const rs485_0_grps[] = { "rs485_0" };
-static struct spear_function rs485_0_function = {
+अटल स्थिर अक्षर *स्थिर rs485_0_grps[] = अणु "rs485_0" पूर्ण;
+अटल काष्ठा spear_function rs485_0_function = अणु
 	.name = "rs485_0",
 	.groups = rs485_0_grps,
 	.ngroups = ARRAY_SIZE(rs485_0_grps),
-};
+पूर्ण;
 
 /* rs485_1_pins */
-static const unsigned rs485_1_pins[] = { 14, 15, 16, 17, 18 };
-static struct spear_muxreg rs485_1_muxreg[] = {
-	{
+अटल स्थिर अचिन्हित rs485_1_pins[] = अणु 14, 15, 16, 17, 18 पूर्ण;
+अटल काष्ठा spear_muxreg rs485_1_muxreg[] = अणु
+	अणु
 		.reg = PMX_CONFIG_REG,
 		.mask = PMX_MII_MASK,
 		.val = 0,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static struct spear_modemux rs485_1_modemux[] = {
-	{
+अटल काष्ठा spear_modemux rs485_1_modemux[] = अणु
+	अणु
 		.muxregs = rs485_1_muxreg,
 		.nmuxregs = ARRAY_SIZE(rs485_1_muxreg),
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static struct spear_pingroup rs485_1_pingroup = {
+अटल काष्ठा spear_pingroup rs485_1_pingroup = अणु
 	.name = "rs485_1_grp",
 	.pins = rs485_1_pins,
 	.npins = ARRAY_SIZE(rs485_1_pins),
 	.modemuxs = rs485_1_modemux,
 	.nmodemuxs = ARRAY_SIZE(rs485_1_modemux),
-};
+पूर्ण;
 
-static const char *const rs485_1_grps[] = { "rs485_1" };
-static struct spear_function rs485_1_function = {
+अटल स्थिर अक्षर *स्थिर rs485_1_grps[] = अणु "rs485_1" पूर्ण;
+अटल काष्ठा spear_function rs485_1_function = अणु
 	.name = "rs485_1",
 	.groups = rs485_1_grps,
 	.ngroups = ARRAY_SIZE(rs485_1_grps),
-};
+पूर्ण;
 
 /* tdm_pins */
-static const unsigned tdm_pins[] = { 10, 11, 12, 13 };
-static struct spear_muxreg tdm_muxreg[] = {
-	{
+अटल स्थिर अचिन्हित tdm_pins[] = अणु 10, 11, 12, 13 पूर्ण;
+अटल काष्ठा spear_muxreg tdm_muxreg[] = अणु
+	अणु
 		.reg = PMX_CONFIG_REG,
 		.mask = PMX_MII_MASK,
 		.val = 0,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static struct spear_modemux tdm_modemux[] = {
-	{
+अटल काष्ठा spear_modemux tdm_modemux[] = अणु
+	अणु
 		.muxregs = tdm_muxreg,
 		.nmuxregs = ARRAY_SIZE(tdm_muxreg),
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static struct spear_pingroup tdm_pingroup = {
+अटल काष्ठा spear_pingroup tdm_pingroup = अणु
 	.name = "tdm_grp",
 	.pins = tdm_pins,
 	.npins = ARRAY_SIZE(tdm_pins),
 	.modemuxs = tdm_modemux,
 	.nmodemuxs = ARRAY_SIZE(tdm_modemux),
-};
+पूर्ण;
 
-static const char *const tdm_grps[] = { "tdm_grp" };
-static struct spear_function tdm_function = {
+अटल स्थिर अक्षर *स्थिर tdm_grps[] = अणु "tdm_grp" पूर्ण;
+अटल काष्ठा spear_function tdm_function = अणु
 	.name = "tdm",
 	.groups = tdm_grps,
 	.ngroups = ARRAY_SIZE(tdm_grps),
-};
+पूर्ण;
 
 /* pingroups */
-static struct spear_pingroup *spear310_pingroups[] = {
+अटल काष्ठा spear_pingroup *spear310_pingroups[] = अणु
 	SPEAR3XX_COMMON_PINGROUPS,
 	&emi_cs_0_to_5_pingroup,
 	&uart1_pingroup,
@@ -353,10 +354,10 @@ static struct spear_pingroup *spear310_pingroups[] = {
 	&rs485_0_pingroup,
 	&rs485_1_pingroup,
 	&tdm_pingroup,
-};
+पूर्ण;
 
 /* functions */
-static struct spear_function *spear310_functions[] = {
+अटल काष्ठा spear_function *spear310_functions[] = अणु
 	SPEAR3XX_COMMON_FUNCTIONS,
 	&emi_cs_0_to_5_function,
 	&uart1_function,
@@ -368,17 +369,17 @@ static struct spear_function *spear310_functions[] = {
 	&rs485_0_function,
 	&rs485_1_function,
 	&tdm_function,
-};
+पूर्ण;
 
-static const struct of_device_id spear310_pinctrl_of_match[] = {
-	{
+अटल स्थिर काष्ठा of_device_id spear310_pinctrl_of_match[] = अणु
+	अणु
 		.compatible = "st,spear310-pinmux",
-	},
-	{},
-};
+	पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 
-static int spear310_pinctrl_probe(struct platform_device *pdev)
-{
+अटल पूर्णांक spear310_pinctrl_probe(काष्ठा platक्रमm_device *pdev)
+अणु
 	spear3xx_machdata.groups = spear310_pingroups;
 	spear3xx_machdata.ngroups = ARRAY_SIZE(spear310_pingroups);
 	spear3xx_machdata.functions = spear310_functions;
@@ -390,19 +391,19 @@ static int spear310_pinctrl_probe(struct platform_device *pdev)
 
 	spear3xx_machdata.modes_supported = false;
 
-	return spear_pinctrl_probe(pdev, &spear3xx_machdata);
-}
+	वापस spear_pinctrl_probe(pdev, &spear3xx_machdata);
+पूर्ण
 
-static struct platform_driver spear310_pinctrl_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver spear310_pinctrl_driver = अणु
+	.driver = अणु
 		.name = DRIVER_NAME,
 		.of_match_table = spear310_pinctrl_of_match,
-	},
+	पूर्ण,
 	.probe = spear310_pinctrl_probe,
-};
+पूर्ण;
 
-static int __init spear310_pinctrl_init(void)
-{
-	return platform_driver_register(&spear310_pinctrl_driver);
-}
+अटल पूर्णांक __init spear310_pinctrl_init(व्योम)
+अणु
+	वापस platक्रमm_driver_रेजिस्टर(&spear310_pinctrl_driver);
+पूर्ण
 arch_initcall(spear310_pinctrl_init);

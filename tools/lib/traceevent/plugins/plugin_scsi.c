@@ -1,162 +1,163 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <stdio.h>
-#include <string.h>
-#include <inttypes.h>
-#include "event-parse.h"
-#include "trace-seq.h"
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <मानकपन.स>
+#समावेश <माला.स>
+#समावेश <पूर्णांकtypes.h>
+#समावेश "event-parse.h"
+#समावेश "trace-seq.h"
 
-typedef unsigned long sector_t;
-typedef uint64_t u64;
-typedef unsigned int u32;
+प्रकार अचिन्हित दीर्घ sector_t;
+प्रकार uपूर्णांक64_t u64;
+प्रकार अचिन्हित पूर्णांक u32;
 
 /*
  *      SCSI opcodes
  */
-#define TEST_UNIT_READY			0x00
-#define REZERO_UNIT			0x01
-#define REQUEST_SENSE			0x03
-#define FORMAT_UNIT			0x04
-#define READ_BLOCK_LIMITS		0x05
-#define REASSIGN_BLOCKS			0x07
-#define INITIALIZE_ELEMENT_STATUS	0x07
-#define READ_6				0x08
-#define WRITE_6				0x0a
-#define SEEK_6				0x0b
-#define READ_REVERSE			0x0f
-#define WRITE_FILEMARKS			0x10
-#define SPACE				0x11
-#define INQUIRY				0x12
-#define RECOVER_BUFFERED_DATA		0x14
-#define MODE_SELECT			0x15
-#define RESERVE				0x16
-#define RELEASE				0x17
-#define COPY				0x18
-#define ERASE				0x19
-#define MODE_SENSE			0x1a
-#define START_STOP			0x1b
-#define RECEIVE_DIAGNOSTIC		0x1c
-#define SEND_DIAGNOSTIC			0x1d
-#define ALLOW_MEDIUM_REMOVAL		0x1e
+#घोषणा TEST_UNIT_READY			0x00
+#घोषणा REZERO_UNIT			0x01
+#घोषणा REQUEST_SENSE			0x03
+#घोषणा FORMAT_UNIT			0x04
+#घोषणा READ_BLOCK_LIMITS		0x05
+#घोषणा REASSIGN_BLOCKS			0x07
+#घोषणा INITIALIZE_ELEMENT_STATUS	0x07
+#घोषणा READ_6				0x08
+#घोषणा WRITE_6				0x0a
+#घोषणा SEEK_6				0x0b
+#घोषणा READ_REVERSE			0x0f
+#घोषणा WRITE_खाताMARKS			0x10
+#घोषणा SPACE				0x11
+#घोषणा INQUIRY				0x12
+#घोषणा RECOVER_BUFFERED_DATA		0x14
+#घोषणा MODE_SELECT			0x15
+#घोषणा RESERVE				0x16
+#घोषणा RELEASE				0x17
+#घोषणा COPY				0x18
+#घोषणा ERASE				0x19
+#घोषणा MODE_SENSE			0x1a
+#घोषणा START_STOP			0x1b
+#घोषणा RECEIVE_DIAGNOSTIC		0x1c
+#घोषणा SEND_DIAGNOSTIC			0x1d
+#घोषणा ALLOW_MEDIUM_REMOVAL		0x1e
 
-#define READ_FORMAT_CAPACITIES		0x23
-#define SET_WINDOW			0x24
-#define READ_CAPACITY			0x25
-#define READ_10				0x28
-#define WRITE_10			0x2a
-#define SEEK_10				0x2b
-#define POSITION_TO_ELEMENT		0x2b
-#define WRITE_VERIFY			0x2e
-#define VERIFY				0x2f
-#define SEARCH_HIGH			0x30
-#define SEARCH_EQUAL			0x31
-#define SEARCH_LOW			0x32
-#define SET_LIMITS			0x33
-#define PRE_FETCH			0x34
-#define READ_POSITION			0x34
-#define SYNCHRONIZE_CACHE		0x35
-#define LOCK_UNLOCK_CACHE		0x36
-#define READ_DEFECT_DATA		0x37
-#define MEDIUM_SCAN			0x38
-#define COMPARE				0x39
-#define COPY_VERIFY			0x3a
-#define WRITE_BUFFER			0x3b
-#define READ_BUFFER			0x3c
-#define UPDATE_BLOCK			0x3d
-#define READ_LONG			0x3e
-#define WRITE_LONG			0x3f
-#define CHANGE_DEFINITION		0x40
-#define WRITE_SAME			0x41
-#define UNMAP				0x42
-#define READ_TOC			0x43
-#define READ_HEADER			0x44
-#define GET_EVENT_STATUS_NOTIFICATION	0x4a
-#define LOG_SELECT			0x4c
-#define LOG_SENSE			0x4d
-#define XDWRITEREAD_10			0x53
-#define MODE_SELECT_10			0x55
-#define RESERVE_10			0x56
-#define RELEASE_10			0x57
-#define MODE_SENSE_10			0x5a
-#define PERSISTENT_RESERVE_IN		0x5e
-#define PERSISTENT_RESERVE_OUT		0x5f
-#define VARIABLE_LENGTH_CMD		0x7f
-#define REPORT_LUNS			0xa0
-#define SECURITY_PROTOCOL_IN		0xa2
-#define MAINTENANCE_IN			0xa3
-#define MAINTENANCE_OUT			0xa4
-#define MOVE_MEDIUM			0xa5
-#define EXCHANGE_MEDIUM			0xa6
-#define READ_12				0xa8
-#define SERVICE_ACTION_OUT_12		0xa9
-#define WRITE_12			0xaa
-#define SERVICE_ACTION_IN_12		0xab
-#define WRITE_VERIFY_12			0xae
-#define VERIFY_12			0xaf
-#define SEARCH_HIGH_12			0xb0
-#define SEARCH_EQUAL_12			0xb1
-#define SEARCH_LOW_12			0xb2
-#define SECURITY_PROTOCOL_OUT		0xb5
-#define READ_ELEMENT_STATUS		0xb8
-#define SEND_VOLUME_TAG			0xb6
-#define WRITE_LONG_2			0xea
-#define EXTENDED_COPY			0x83
-#define RECEIVE_COPY_RESULTS		0x84
-#define ACCESS_CONTROL_IN		0x86
-#define ACCESS_CONTROL_OUT		0x87
-#define READ_16				0x88
-#define WRITE_16			0x8a
-#define READ_ATTRIBUTE			0x8c
-#define WRITE_ATTRIBUTE			0x8d
-#define VERIFY_16			0x8f
-#define SYNCHRONIZE_CACHE_16		0x91
-#define WRITE_SAME_16			0x93
-#define SERVICE_ACTION_BIDIRECTIONAL	0x9d
-#define SERVICE_ACTION_IN_16		0x9e
-#define SERVICE_ACTION_OUT_16		0x9f
-/* values for service action in */
-#define	SAI_READ_CAPACITY_16		0x10
-#define SAI_GET_LBA_STATUS		0x12
-/* values for VARIABLE_LENGTH_CMD service action codes
+#घोषणा READ_FORMAT_CAPACITIES		0x23
+#घोषणा SET_WINDOW			0x24
+#घोषणा READ_CAPACITY			0x25
+#घोषणा READ_10				0x28
+#घोषणा WRITE_10			0x2a
+#घोषणा SEEK_10				0x2b
+#घोषणा POSITION_TO_ELEMENT		0x2b
+#घोषणा WRITE_VERIFY			0x2e
+#घोषणा VERIFY				0x2f
+#घोषणा SEARCH_HIGH			0x30
+#घोषणा SEARCH_EQUAL			0x31
+#घोषणा SEARCH_LOW			0x32
+#घोषणा SET_LIMITS			0x33
+#घोषणा PRE_FETCH			0x34
+#घोषणा READ_POSITION			0x34
+#घोषणा SYNCHRONIZE_CACHE		0x35
+#घोषणा LOCK_UNLOCK_CACHE		0x36
+#घोषणा READ_DEFECT_DATA		0x37
+#घोषणा MEDIUM_SCAN			0x38
+#घोषणा COMPARE				0x39
+#घोषणा COPY_VERIFY			0x3a
+#घोषणा WRITE_BUFFER			0x3b
+#घोषणा READ_BUFFER			0x3c
+#घोषणा UPDATE_BLOCK			0x3d
+#घोषणा READ_LONG			0x3e
+#घोषणा WRITE_LONG			0x3f
+#घोषणा CHANGE_DEFINITION		0x40
+#घोषणा WRITE_SAME			0x41
+#घोषणा UNMAP				0x42
+#घोषणा READ_TOC			0x43
+#घोषणा READ_HEADER			0x44
+#घोषणा GET_EVENT_STATUS_NOTIFICATION	0x4a
+#घोषणा LOG_SELECT			0x4c
+#घोषणा LOG_SENSE			0x4d
+#घोषणा XDWRITEREAD_10			0x53
+#घोषणा MODE_SELECT_10			0x55
+#घोषणा RESERVE_10			0x56
+#घोषणा RELEASE_10			0x57
+#घोषणा MODE_SENSE_10			0x5a
+#घोषणा PERSISTENT_RESERVE_IN		0x5e
+#घोषणा PERSISTENT_RESERVE_OUT		0x5f
+#घोषणा VARIABLE_LENGTH_CMD		0x7f
+#घोषणा REPORT_LUNS			0xa0
+#घोषणा SECURITY_PROTOCOL_IN		0xa2
+#घोषणा MAINTEन_अंकCE_IN			0xa3
+#घोषणा MAINTEन_अंकCE_OUT			0xa4
+#घोषणा MOVE_MEDIUM			0xa5
+#घोषणा EXCHANGE_MEDIUM			0xa6
+#घोषणा READ_12				0xa8
+#घोषणा SERVICE_ACTION_OUT_12		0xa9
+#घोषणा WRITE_12			0xaa
+#घोषणा SERVICE_ACTION_IN_12		0xab
+#घोषणा WRITE_VERIFY_12			0xae
+#घोषणा VERIFY_12			0xaf
+#घोषणा SEARCH_HIGH_12			0xb0
+#घोषणा SEARCH_EQUAL_12			0xb1
+#घोषणा SEARCH_LOW_12			0xb2
+#घोषणा SECURITY_PROTOCOL_OUT		0xb5
+#घोषणा READ_ELEMENT_STATUS		0xb8
+#घोषणा SEND_VOLUME_TAG			0xb6
+#घोषणा WRITE_LONG_2			0xea
+#घोषणा EXTENDED_COPY			0x83
+#घोषणा RECEIVE_COPY_RESULTS		0x84
+#घोषणा ACCESS_CONTROL_IN		0x86
+#घोषणा ACCESS_CONTROL_OUT		0x87
+#घोषणा READ_16				0x88
+#घोषणा WRITE_16			0x8a
+#घोषणा READ_ATTRIBUTE			0x8c
+#घोषणा WRITE_ATTRIBUTE			0x8d
+#घोषणा VERIFY_16			0x8f
+#घोषणा SYNCHRONIZE_CACHE_16		0x91
+#घोषणा WRITE_SAME_16			0x93
+#घोषणा SERVICE_ACTION_BIसूचीECTIONAL	0x9d
+#घोषणा SERVICE_ACTION_IN_16		0x9e
+#घोषणा SERVICE_ACTION_OUT_16		0x9f
+/* values क्रम service action in */
+#घोषणा	SAI_READ_CAPACITY_16		0x10
+#घोषणा SAI_GET_LBA_STATUS		0x12
+/* values क्रम VARIABLE_LENGTH_CMD service action codes
  * see spc4r17 Section D.3.5, table D.7 and D.8 */
-#define VLC_SA_RECEIVE_CREDENTIAL	0x1800
-/* values for maintenance in */
-#define MI_REPORT_IDENTIFYING_INFORMATION		0x05
-#define MI_REPORT_TARGET_PGS				0x0a
-#define MI_REPORT_ALIASES				0x0b
-#define MI_REPORT_SUPPORTED_OPERATION_CODES		0x0c
-#define MI_REPORT_SUPPORTED_TASK_MANAGEMENT_FUNCTIONS	0x0d
-#define MI_REPORT_PRIORITY				0x0e
-#define MI_REPORT_TIMESTAMP				0x0f
-#define MI_MANAGEMENT_PROTOCOL_IN			0x10
-/* value for MI_REPORT_TARGET_PGS ext header */
-#define MI_EXT_HDR_PARAM_FMT		0x20
-/* values for maintenance out */
-#define MO_SET_IDENTIFYING_INFORMATION	0x06
-#define MO_SET_TARGET_PGS		0x0a
-#define MO_CHANGE_ALIASES		0x0b
-#define MO_SET_PRIORITY			0x0e
-#define MO_SET_TIMESTAMP		0x0f
-#define MO_MANAGEMENT_PROTOCOL_OUT	0x10
-/* values for variable length command */
-#define XDREAD_32			0x03
-#define XDWRITE_32			0x04
-#define XPWRITE_32			0x06
-#define XDWRITEREAD_32			0x07
-#define READ_32				0x09
-#define VERIFY_32			0x0a
-#define WRITE_32			0x0b
-#define WRITE_SAME_32			0x0d
+#घोषणा VLC_SA_RECEIVE_CREDENTIAL	0x1800
+/* values क्रम मुख्यtenance in */
+#घोषणा MI_REPORT_IDENTIFYING_INFORMATION		0x05
+#घोषणा MI_REPORT_TARGET_PGS				0x0a
+#घोषणा MI_REPORT_ALIASES				0x0b
+#घोषणा MI_REPORT_SUPPORTED_OPERATION_CODES		0x0c
+#घोषणा MI_REPORT_SUPPORTED_TASK_MANAGEMENT_FUNCTIONS	0x0d
+#घोषणा MI_REPORT_PRIORITY				0x0e
+#घोषणा MI_REPORT_TIMESTAMP				0x0f
+#घोषणा MI_MANAGEMENT_PROTOCOL_IN			0x10
+/* value क्रम MI_REPORT_TARGET_PGS ext header */
+#घोषणा MI_EXT_HDR_PARAM_FMT		0x20
+/* values क्रम मुख्यtenance out */
+#घोषणा MO_SET_IDENTIFYING_INFORMATION	0x06
+#घोषणा MO_SET_TARGET_PGS		0x0a
+#घोषणा MO_CHANGE_ALIASES		0x0b
+#घोषणा MO_SET_PRIORITY			0x0e
+#घोषणा MO_SET_TIMESTAMP		0x0f
+#घोषणा MO_MANAGEMENT_PROTOCOL_OUT	0x10
+/* values क्रम variable length command */
+#घोषणा XDREAD_32			0x03
+#घोषणा XDWRITE_32			0x04
+#घोषणा XPWRITE_32			0x06
+#घोषणा XDWRITEREAD_32			0x07
+#घोषणा READ_32				0x09
+#घोषणा VERIFY_32			0x0a
+#घोषणा WRITE_32			0x0b
+#घोषणा WRITE_SAME_32			0x0d
 
-#define SERVICE_ACTION16(cdb) (cdb[1] & 0x1f)
-#define SERVICE_ACTION32(cdb) ((cdb[8] << 8) | cdb[9])
+#घोषणा SERVICE_ACTION16(cdb) (cdb[1] & 0x1f)
+#घोषणा SERVICE_ACTION32(cdb) ((cdb[8] << 8) | cdb[9])
 
-static const char *
-scsi_trace_misc(struct trace_seq *, unsigned char *, int);
+अटल स्थिर अक्षर *
+scsi_trace_misc(काष्ठा trace_seq *, अचिन्हित अक्षर *, पूर्णांक);
 
-static const char *
-scsi_trace_rw6(struct trace_seq *p, unsigned char *cdb, int len)
-{
-	const char *ret = p->buffer + p->len;
+अटल स्थिर अक्षर *
+scsi_trace_rw6(काष्ठा trace_seq *p, अचिन्हित अक्षर *cdb, पूर्णांक len)
+अणु
+	स्थिर अक्षर *ret = p->buffer + p->len;
 	sector_t lba = 0, txlen = 0;
 
 	lba |= ((cdb[1] & 0x1F) << 16);
@@ -164,16 +165,16 @@ scsi_trace_rw6(struct trace_seq *p, unsigned char *cdb, int len)
 	lba |=   cdb[3];
 	txlen = cdb[4];
 
-	trace_seq_printf(p, "lba=%llu txlen=%llu",
-			 (unsigned long long)lba, (unsigned long long)txlen);
-	trace_seq_putc(p, 0);
-	return ret;
-}
+	trace_seq_म_लिखो(p, "lba=%llu txlen=%llu",
+			 (अचिन्हित दीर्घ दीर्घ)lba, (अचिन्हित दीर्घ दीर्घ)txlen);
+	trace_seq_अ_दो(p, 0);
+	वापस ret;
+पूर्ण
 
-static const char *
-scsi_trace_rw10(struct trace_seq *p, unsigned char *cdb, int len)
-{
-	const char *ret = p->buffer + p->len;
+अटल स्थिर अक्षर *
+scsi_trace_rw10(काष्ठा trace_seq *p, अचिन्हित अक्षर *cdb, पूर्णांक len)
+अणु
+	स्थिर अक्षर *ret = p->buffer + p->len;
 	sector_t lba = 0, txlen = 0;
 
 	lba |= (cdb[2] << 24);
@@ -183,21 +184,21 @@ scsi_trace_rw10(struct trace_seq *p, unsigned char *cdb, int len)
 	txlen |= (cdb[7] << 8);
 	txlen |=  cdb[8];
 
-	trace_seq_printf(p, "lba=%llu txlen=%llu protect=%u",
-			 (unsigned long long)lba, (unsigned long long)txlen,
+	trace_seq_म_लिखो(p, "lba=%llu txlen=%llu protect=%u",
+			 (अचिन्हित दीर्घ दीर्घ)lba, (अचिन्हित दीर्घ दीर्घ)txlen,
 			 cdb[1] >> 5);
 
-	if (cdb[0] == WRITE_SAME)
-		trace_seq_printf(p, " unmap=%u", cdb[1] >> 3 & 1);
+	अगर (cdb[0] == WRITE_SAME)
+		trace_seq_म_लिखो(p, " unmap=%u", cdb[1] >> 3 & 1);
 
-	trace_seq_putc(p, 0);
-	return ret;
-}
+	trace_seq_अ_दो(p, 0);
+	वापस ret;
+पूर्ण
 
-static const char *
-scsi_trace_rw12(struct trace_seq *p, unsigned char *cdb, int len)
-{
-	const char *ret = p->buffer + p->len;
+अटल स्थिर अक्षर *
+scsi_trace_rw12(काष्ठा trace_seq *p, अचिन्हित अक्षर *cdb, पूर्णांक len)
+अणु
+	स्थिर अक्षर *ret = p->buffer + p->len;
 	sector_t lba = 0, txlen = 0;
 
 	lba |= (cdb[2] << 24);
@@ -209,17 +210,17 @@ scsi_trace_rw12(struct trace_seq *p, unsigned char *cdb, int len)
 	txlen |= (cdb[8] << 8);
 	txlen |=  cdb[9];
 
-	trace_seq_printf(p, "lba=%llu txlen=%llu protect=%u",
-			 (unsigned long long)lba, (unsigned long long)txlen,
+	trace_seq_म_लिखो(p, "lba=%llu txlen=%llu protect=%u",
+			 (अचिन्हित दीर्घ दीर्घ)lba, (अचिन्हित दीर्घ दीर्घ)txlen,
 			 cdb[1] >> 5);
-	trace_seq_putc(p, 0);
-	return ret;
-}
+	trace_seq_अ_दो(p, 0);
+	वापस ret;
+पूर्ण
 
-static const char *
-scsi_trace_rw16(struct trace_seq *p, unsigned char *cdb, int len)
-{
-	const char *ret = p->buffer + p->len;
+अटल स्थिर अक्षर *
+scsi_trace_rw16(काष्ठा trace_seq *p, अचिन्हित अक्षर *cdb, पूर्णांक len)
+अणु
+	स्थिर अक्षर *ret = p->buffer + p->len;
 	sector_t lba = 0, txlen = 0;
 
 	lba |= ((u64)cdb[2] << 56);
@@ -235,41 +236,41 @@ scsi_trace_rw16(struct trace_seq *p, unsigned char *cdb, int len)
 	txlen |= (cdb[12] << 8);
 	txlen |=  cdb[13];
 
-	trace_seq_printf(p, "lba=%llu txlen=%llu protect=%u",
-			 (unsigned long long)lba, (unsigned long long)txlen,
+	trace_seq_म_लिखो(p, "lba=%llu txlen=%llu protect=%u",
+			 (अचिन्हित दीर्घ दीर्घ)lba, (अचिन्हित दीर्घ दीर्घ)txlen,
 			 cdb[1] >> 5);
 
-	if (cdb[0] == WRITE_SAME_16)
-		trace_seq_printf(p, " unmap=%u", cdb[1] >> 3 & 1);
+	अगर (cdb[0] == WRITE_SAME_16)
+		trace_seq_म_लिखो(p, " unmap=%u", cdb[1] >> 3 & 1);
 
-	trace_seq_putc(p, 0);
-	return ret;
-}
+	trace_seq_अ_दो(p, 0);
+	वापस ret;
+पूर्ण
 
-static const char *
-scsi_trace_rw32(struct trace_seq *p, unsigned char *cdb, int len)
-{
-	const char *ret = p->buffer + p->len, *cmd;
+अटल स्थिर अक्षर *
+scsi_trace_rw32(काष्ठा trace_seq *p, अचिन्हित अक्षर *cdb, पूर्णांक len)
+अणु
+	स्थिर अक्षर *ret = p->buffer + p->len, *cmd;
 	sector_t lba = 0, txlen = 0;
 	u32 ei_lbrt = 0;
 
-	switch (SERVICE_ACTION32(cdb)) {
-	case READ_32:
+	चयन (SERVICE_ACTION32(cdb)) अणु
+	हाल READ_32:
 		cmd = "READ";
-		break;
-	case VERIFY_32:
+		अवरोध;
+	हाल VERIFY_32:
 		cmd = "VERIFY";
-		break;
-	case WRITE_32:
+		अवरोध;
+	हाल WRITE_32:
 		cmd = "WRITE";
-		break;
-	case WRITE_SAME_32:
+		अवरोध;
+	हाल WRITE_SAME_32:
 		cmd = "WRITE_SAME";
-		break;
-	default:
-		trace_seq_printf(p, "UNKNOWN");
-		goto out;
-	}
+		अवरोध;
+	शेष:
+		trace_seq_म_लिखो(p, "UNKNOWN");
+		जाओ out;
+	पूर्ण
 
 	lba |= ((u64)cdb[12] << 56);
 	lba |= ((u64)cdb[13] << 48);
@@ -288,47 +289,47 @@ scsi_trace_rw32(struct trace_seq *p, unsigned char *cdb, int len)
 	txlen |= (cdb[30] << 8);
 	txlen |=  cdb[31];
 
-	trace_seq_printf(p, "%s_32 lba=%llu txlen=%llu protect=%u ei_lbrt=%u",
-			 cmd, (unsigned long long)lba,
-			 (unsigned long long)txlen, cdb[10] >> 5, ei_lbrt);
+	trace_seq_म_लिखो(p, "%s_32 lba=%llu txlen=%llu protect=%u ei_lbrt=%u",
+			 cmd, (अचिन्हित दीर्घ दीर्घ)lba,
+			 (अचिन्हित दीर्घ दीर्घ)txlen, cdb[10] >> 5, ei_lbrt);
 
-	if (SERVICE_ACTION32(cdb) == WRITE_SAME_32)
-		trace_seq_printf(p, " unmap=%u", cdb[10] >> 3 & 1);
+	अगर (SERVICE_ACTION32(cdb) == WRITE_SAME_32)
+		trace_seq_म_लिखो(p, " unmap=%u", cdb[10] >> 3 & 1);
 
 out:
-	trace_seq_putc(p, 0);
-	return ret;
-}
+	trace_seq_अ_दो(p, 0);
+	वापस ret;
+पूर्ण
 
-static const char *
-scsi_trace_unmap(struct trace_seq *p, unsigned char *cdb, int len)
-{
-	const char *ret = p->buffer + p->len;
-	unsigned int regions = cdb[7] << 8 | cdb[8];
+अटल स्थिर अक्षर *
+scsi_trace_unmap(काष्ठा trace_seq *p, अचिन्हित अक्षर *cdb, पूर्णांक len)
+अणु
+	स्थिर अक्षर *ret = p->buffer + p->len;
+	अचिन्हित पूर्णांक regions = cdb[7] << 8 | cdb[8];
 
-	trace_seq_printf(p, "regions=%u", (regions - 8) / 16);
-	trace_seq_putc(p, 0);
-	return ret;
-}
+	trace_seq_म_लिखो(p, "regions=%u", (regions - 8) / 16);
+	trace_seq_अ_दो(p, 0);
+	वापस ret;
+पूर्ण
 
-static const char *
-scsi_trace_service_action_in(struct trace_seq *p, unsigned char *cdb, int len)
-{
-	const char *ret = p->buffer + p->len, *cmd;
+अटल स्थिर अक्षर *
+scsi_trace_service_action_in(काष्ठा trace_seq *p, अचिन्हित अक्षर *cdb, पूर्णांक len)
+अणु
+	स्थिर अक्षर *ret = p->buffer + p->len, *cmd;
 	sector_t lba = 0;
 	u32 alloc_len = 0;
 
-	switch (SERVICE_ACTION16(cdb)) {
-	case SAI_READ_CAPACITY_16:
+	चयन (SERVICE_ACTION16(cdb)) अणु
+	हाल SAI_READ_CAPACITY_16:
 		cmd = "READ_CAPACITY_16";
-		break;
-	case SAI_GET_LBA_STATUS:
+		अवरोध;
+	हाल SAI_GET_LBA_STATUS:
 		cmd = "GET_LBA_STATUS";
-		break;
-	default:
-		trace_seq_printf(p, "UNKNOWN");
-		goto out;
-	}
+		अवरोध;
+	शेष:
+		trace_seq_म_लिखो(p, "UNKNOWN");
+		जाओ out;
+	पूर्ण
 
 	lba |= ((u64)cdb[2] << 56);
 	lba |= ((u64)cdb[3] << 48);
@@ -343,80 +344,80 @@ scsi_trace_service_action_in(struct trace_seq *p, unsigned char *cdb, int len)
 	alloc_len |= (cdb[12] << 8);
 	alloc_len |=  cdb[13];
 
-	trace_seq_printf(p, "%s lba=%llu alloc_len=%u", cmd,
-			 (unsigned long long)lba, alloc_len);
+	trace_seq_म_लिखो(p, "%s lba=%llu alloc_len=%u", cmd,
+			 (अचिन्हित दीर्घ दीर्घ)lba, alloc_len);
 
 out:
-	trace_seq_putc(p, 0);
-	return ret;
-}
+	trace_seq_अ_दो(p, 0);
+	वापस ret;
+पूर्ण
 
-static const char *
-scsi_trace_varlen(struct trace_seq *p, unsigned char *cdb, int len)
-{
-	switch (SERVICE_ACTION32(cdb)) {
-	case READ_32:
-	case VERIFY_32:
-	case WRITE_32:
-	case WRITE_SAME_32:
-		return scsi_trace_rw32(p, cdb, len);
-	default:
-		return scsi_trace_misc(p, cdb, len);
-	}
-}
+अटल स्थिर अक्षर *
+scsi_trace_varlen(काष्ठा trace_seq *p, अचिन्हित अक्षर *cdb, पूर्णांक len)
+अणु
+	चयन (SERVICE_ACTION32(cdb)) अणु
+	हाल READ_32:
+	हाल VERIFY_32:
+	हाल WRITE_32:
+	हाल WRITE_SAME_32:
+		वापस scsi_trace_rw32(p, cdb, len);
+	शेष:
+		वापस scsi_trace_misc(p, cdb, len);
+	पूर्ण
+पूर्ण
 
-static const char *
-scsi_trace_misc(struct trace_seq *p, unsigned char *cdb, int len)
-{
-	const char *ret = p->buffer + p->len;
+अटल स्थिर अक्षर *
+scsi_trace_misc(काष्ठा trace_seq *p, अचिन्हित अक्षर *cdb, पूर्णांक len)
+अणु
+	स्थिर अक्षर *ret = p->buffer + p->len;
 
-	trace_seq_printf(p, "-");
-	trace_seq_putc(p, 0);
-	return ret;
-}
+	trace_seq_म_लिखो(p, "-");
+	trace_seq_अ_दो(p, 0);
+	वापस ret;
+पूर्ण
 
-const char *
-scsi_trace_parse_cdb(struct trace_seq *p, unsigned char *cdb, int len)
-{
-	switch (cdb[0]) {
-	case READ_6:
-	case WRITE_6:
-		return scsi_trace_rw6(p, cdb, len);
-	case READ_10:
-	case VERIFY:
-	case WRITE_10:
-	case WRITE_SAME:
-		return scsi_trace_rw10(p, cdb, len);
-	case READ_12:
-	case VERIFY_12:
-	case WRITE_12:
-		return scsi_trace_rw12(p, cdb, len);
-	case READ_16:
-	case VERIFY_16:
-	case WRITE_16:
-	case WRITE_SAME_16:
-		return scsi_trace_rw16(p, cdb, len);
-	case UNMAP:
-		return scsi_trace_unmap(p, cdb, len);
-	case SERVICE_ACTION_IN_16:
-		return scsi_trace_service_action_in(p, cdb, len);
-	case VARIABLE_LENGTH_CMD:
-		return scsi_trace_varlen(p, cdb, len);
-	default:
-		return scsi_trace_misc(p, cdb, len);
-	}
-}
+स्थिर अक्षर *
+scsi_trace_parse_cdb(काष्ठा trace_seq *p, अचिन्हित अक्षर *cdb, पूर्णांक len)
+अणु
+	चयन (cdb[0]) अणु
+	हाल READ_6:
+	हाल WRITE_6:
+		वापस scsi_trace_rw6(p, cdb, len);
+	हाल READ_10:
+	हाल VERIFY:
+	हाल WRITE_10:
+	हाल WRITE_SAME:
+		वापस scsi_trace_rw10(p, cdb, len);
+	हाल READ_12:
+	हाल VERIFY_12:
+	हाल WRITE_12:
+		वापस scsi_trace_rw12(p, cdb, len);
+	हाल READ_16:
+	हाल VERIFY_16:
+	हाल WRITE_16:
+	हाल WRITE_SAME_16:
+		वापस scsi_trace_rw16(p, cdb, len);
+	हाल UNMAP:
+		वापस scsi_trace_unmap(p, cdb, len);
+	हाल SERVICE_ACTION_IN_16:
+		वापस scsi_trace_service_action_in(p, cdb, len);
+	हाल VARIABLE_LENGTH_CMD:
+		वापस scsi_trace_varlen(p, cdb, len);
+	शेष:
+		वापस scsi_trace_misc(p, cdb, len);
+	पूर्ण
+पूर्ण
 
-unsigned long long process_scsi_trace_parse_cdb(struct trace_seq *s,
-						unsigned long long *args)
-{
-	scsi_trace_parse_cdb(s, (unsigned char *) (unsigned long) args[1], args[2]);
-	return 0;
-}
+अचिन्हित दीर्घ दीर्घ process_scsi_trace_parse_cdb(काष्ठा trace_seq *s,
+						अचिन्हित दीर्घ दीर्घ *args)
+अणु
+	scsi_trace_parse_cdb(s, (अचिन्हित अक्षर *) (अचिन्हित दीर्घ) args[1], args[2]);
+	वापस 0;
+पूर्ण
 
-int TEP_PLUGIN_LOADER(struct tep_handle *tep)
-{
-	tep_register_print_function(tep,
+पूर्णांक TEP_PLUGIN_LOADER(काष्ठा tep_handle *tep)
+अणु
+	tep_रेजिस्टर_prपूर्णांक_function(tep,
 				    process_scsi_trace_parse_cdb,
 				    TEP_FUNC_ARG_STRING,
 				    "scsi_trace_parse_cdb",
@@ -424,11 +425,11 @@ int TEP_PLUGIN_LOADER(struct tep_handle *tep)
 				    TEP_FUNC_ARG_PTR,
 				    TEP_FUNC_ARG_INT,
 				    TEP_FUNC_ARG_VOID);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void TEP_PLUGIN_UNLOADER(struct tep_handle *tep)
-{
-	tep_unregister_print_function(tep, process_scsi_trace_parse_cdb,
+व्योम TEP_PLUGIN_UNLOADER(काष्ठा tep_handle *tep)
+अणु
+	tep_unरेजिस्टर_prपूर्णांक_function(tep, process_scsi_trace_parse_cdb,
 				      "scsi_trace_parse_cdb");
-}
+पूर्ण

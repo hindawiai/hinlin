@@ -1,44 +1,45 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef BCM63XX_IOREMAP_H_
-#define BCM63XX_IOREMAP_H_
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित BCM63XX_IOREMAP_H_
+#घोषणा BCM63XX_IOREMAP_H_
 
-#include <bcm63xx_cpu.h>
+#समावेश <bcm63xx_cpu.h>
 
-static inline int is_bcm63xx_internal_registers(phys_addr_t offset)
-{
-	switch (bcm63xx_get_cpu_id()) {
-	case BCM3368_CPU_ID:
-		if (offset >= 0xfff80000)
-			return 1;
-		break;
-	case BCM6338_CPU_ID:
-	case BCM6345_CPU_ID:
-	case BCM6348_CPU_ID:
-	case BCM6358_CPU_ID:
-		if (offset >= 0xfff00000)
-			return 1;
-		break;
-	case BCM6328_CPU_ID:
-	case BCM6362_CPU_ID:
-	case BCM6368_CPU_ID:
-		if (offset >= 0xb0000000 && offset < 0xb1000000)
-			return 1;
-		break;
-	}
-	return 0;
-}
+अटल अंतरभूत पूर्णांक is_bcm63xx_पूर्णांकernal_रेजिस्टरs(phys_addr_t offset)
+अणु
+	चयन (bcm63xx_get_cpu_id()) अणु
+	हाल BCM3368_CPU_ID:
+		अगर (offset >= 0xfff80000)
+			वापस 1;
+		अवरोध;
+	हाल BCM6338_CPU_ID:
+	हाल BCM6345_CPU_ID:
+	हाल BCM6348_CPU_ID:
+	हाल BCM6358_CPU_ID:
+		अगर (offset >= 0xfff00000)
+			वापस 1;
+		अवरोध;
+	हाल BCM6328_CPU_ID:
+	हाल BCM6362_CPU_ID:
+	हाल BCM6368_CPU_ID:
+		अगर (offset >= 0xb0000000 && offset < 0xb1000000)
+			वापस 1;
+		अवरोध;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static inline void __iomem *plat_ioremap(phys_addr_t offset, unsigned long size,
-					 unsigned long flags)
-{
-	if (is_bcm63xx_internal_registers(offset))
-		return (void __iomem *)offset;
-	return NULL;
-}
+अटल अंतरभूत व्योम __iomem *plat_ioremap(phys_addr_t offset, अचिन्हित दीर्घ size,
+					 अचिन्हित दीर्घ flags)
+अणु
+	अगर (is_bcm63xx_पूर्णांकernal_रेजिस्टरs(offset))
+		वापस (व्योम __iomem *)offset;
+	वापस शून्य;
+पूर्ण
 
-static inline int plat_iounmap(const volatile void __iomem *addr)
-{
-	return is_bcm63xx_internal_registers((unsigned long)addr);
-}
+अटल अंतरभूत पूर्णांक plat_iounmap(स्थिर अस्थिर व्योम __iomem *addr)
+अणु
+	वापस is_bcm63xx_पूर्णांकernal_रेजिस्टरs((अचिन्हित दीर्घ)addr);
+पूर्ण
 
-#endif /* BCM63XX_IOREMAP_H_ */
+#पूर्ण_अगर /* BCM63XX_IOREMAP_H_ */

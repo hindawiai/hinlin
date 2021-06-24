@@ -1,503 +1,504 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (c) 2010 Cisco Systems, Inc.
  */
 
 /* XXX TBD some includes may be extraneous */
 
-#include <linux/module.h>
-#include <linux/moduleparam.h>
-#include <linux/utsname.h>
-#include <linux/init.h>
-#include <linux/slab.h>
-#include <linux/kthread.h>
-#include <linux/types.h>
-#include <linux/string.h>
-#include <linux/configfs.h>
-#include <linux/ctype.h>
-#include <linux/hash.h>
-#include <linux/rcupdate.h>
-#include <linux/rculist.h>
-#include <linux/kref.h>
-#include <asm/unaligned.h>
-#include <scsi/libfc.h>
+#समावेश <linux/module.h>
+#समावेश <linux/moduleparam.h>
+#समावेश <linux/utsname.h>
+#समावेश <linux/init.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/kthपढ़ो.h>
+#समावेश <linux/types.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/configfs.h>
+#समावेश <linux/प्रकार.स>
+#समावेश <linux/hash.h>
+#समावेश <linux/rcupdate.h>
+#समावेश <linux/rculist.h>
+#समावेश <linux/kref.h>
+#समावेश <यंत्र/unaligned.h>
+#समावेश <scsi/libfc.h>
 
-#include <target/target_core_base.h>
-#include <target/target_core_fabric.h>
+#समावेश <target/target_core_base.h>
+#समावेश <target/target_core_fabric.h>
 
-#include "tcm_fc.h"
+#समावेश "tcm_fc.h"
 
-#define TFC_SESS_DBG(lport, fmt, args...) \
+#घोषणा TFC_SESS_DBG(lport, fmt, args...) \
 	pr_debug("host%u: rport %6.6x: " fmt,	   \
 		 (lport)->host->host_no,	   \
 		 (lport)->port_id, ##args )
 
-static void ft_sess_delete_all(struct ft_tport *);
+अटल व्योम ft_sess_delete_all(काष्ठा ft_tport *);
 
 /*
  * Lookup or allocate target local port.
  * Caller holds ft_lport_lock.
  */
-static struct ft_tport *ft_tport_get(struct fc_lport *lport)
-{
-	struct ft_tpg *tpg;
-	struct ft_tport *tport;
-	int i;
+अटल काष्ठा ft_tport *ft_tport_get(काष्ठा fc_lport *lport)
+अणु
+	काष्ठा ft_tpg *tpg;
+	काष्ठा ft_tport *tport;
+	पूर्णांक i;
 
-	tport = rcu_dereference_protected(lport->prov[FC_TYPE_FCP],
+	tport = rcu_dereference_रक्षित(lport->prov[FC_TYPE_FCP],
 					  lockdep_is_held(&ft_lport_lock));
-	if (tport && tport->tpg)
-		return tport;
+	अगर (tport && tport->tpg)
+		वापस tport;
 
 	tpg = ft_lport_find_tpg(lport);
-	if (!tpg)
-		return NULL;
+	अगर (!tpg)
+		वापस शून्य;
 
-	if (tport) {
+	अगर (tport) अणु
 		tport->tpg = tpg;
 		tpg->tport = tport;
-		return tport;
-	}
+		वापस tport;
+	पूर्ण
 
-	tport = kzalloc(sizeof(*tport), GFP_KERNEL);
-	if (!tport)
-		return NULL;
+	tport = kzalloc(माप(*tport), GFP_KERNEL);
+	अगर (!tport)
+		वापस शून्य;
 
 	tport->lport = lport;
 	tport->tpg = tpg;
 	tpg->tport = tport;
-	for (i = 0; i < FT_SESS_HASH_SIZE; i++)
+	क्रम (i = 0; i < FT_SESS_HASH_SIZE; i++)
 		INIT_HLIST_HEAD(&tport->hash[i]);
 
-	rcu_assign_pointer(lport->prov[FC_TYPE_FCP], tport);
-	return tport;
-}
+	rcu_assign_poपूर्णांकer(lport->prov[FC_TYPE_FCP], tport);
+	वापस tport;
+पूर्ण
 
 /*
  * Delete a target local port.
  * Caller holds ft_lport_lock.
  */
-static void ft_tport_delete(struct ft_tport *tport)
-{
-	struct fc_lport *lport;
-	struct ft_tpg *tpg;
+अटल व्योम ft_tport_delete(काष्ठा ft_tport *tport)
+अणु
+	काष्ठा fc_lport *lport;
+	काष्ठा ft_tpg *tpg;
 
 	ft_sess_delete_all(tport);
 	lport = tport->lport;
 	lport->service_params &= ~FCP_SPPF_TARG_FCN;
 	BUG_ON(tport != lport->prov[FC_TYPE_FCP]);
-	RCU_INIT_POINTER(lport->prov[FC_TYPE_FCP], NULL);
+	RCU_INIT_POINTER(lport->prov[FC_TYPE_FCP], शून्य);
 
 	tpg = tport->tpg;
-	if (tpg) {
-		tpg->tport = NULL;
-		tport->tpg = NULL;
-	}
-	kfree_rcu(tport, rcu);
-}
+	अगर (tpg) अणु
+		tpg->tport = शून्य;
+		tport->tpg = शून्य;
+	पूर्ण
+	kमुक्त_rcu(tport, rcu);
+पूर्ण
 
 /*
  * Add local port.
  * Called thru fc_lport_iterate().
  */
-void ft_lport_add(struct fc_lport *lport, void *arg)
-{
+व्योम ft_lport_add(काष्ठा fc_lport *lport, व्योम *arg)
+अणु
 	mutex_lock(&ft_lport_lock);
 	ft_tport_get(lport);
 	lport->service_params |= FCP_SPPF_TARG_FCN;
 	mutex_unlock(&ft_lport_lock);
-}
+पूर्ण
 
 /*
  * Delete local port.
  * Called thru fc_lport_iterate().
  */
-void ft_lport_del(struct fc_lport *lport, void *arg)
-{
-	struct ft_tport *tport;
+व्योम ft_lport_del(काष्ठा fc_lport *lport, व्योम *arg)
+अणु
+	काष्ठा ft_tport *tport;
 
 	mutex_lock(&ft_lport_lock);
 	tport = lport->prov[FC_TYPE_FCP];
-	if (tport)
+	अगर (tport)
 		ft_tport_delete(tport);
 	mutex_unlock(&ft_lport_lock);
-}
+पूर्ण
 
 /*
- * Notification of local port change from libfc.
+ * Notअगरication of local port change from libfc.
  * Create or delete local port and associated tport.
  */
-int ft_lport_notify(struct notifier_block *nb, unsigned long event, void *arg)
-{
-	struct fc_lport *lport = arg;
+पूर्णांक ft_lport_notअगरy(काष्ठा notअगरier_block *nb, अचिन्हित दीर्घ event, व्योम *arg)
+अणु
+	काष्ठा fc_lport *lport = arg;
 
-	switch (event) {
-	case FC_LPORT_EV_ADD:
-		ft_lport_add(lport, NULL);
-		break;
-	case FC_LPORT_EV_DEL:
-		ft_lport_del(lport, NULL);
-		break;
-	}
-	return NOTIFY_DONE;
-}
+	चयन (event) अणु
+	हाल FC_LPORT_EV_ADD:
+		ft_lport_add(lport, शून्य);
+		अवरोध;
+	हाल FC_LPORT_EV_DEL:
+		ft_lport_del(lport, शून्य);
+		अवरोध;
+	पूर्ण
+	वापस NOTIFY_DONE;
+पूर्ण
 
 /*
- * Hash function for FC_IDs.
+ * Hash function क्रम FC_IDs.
  */
-static u32 ft_sess_hash(u32 port_id)
-{
-	return hash_32(port_id, FT_SESS_HASH_BITS);
-}
+अटल u32 ft_sess_hash(u32 port_id)
+अणु
+	वापस hash_32(port_id, FT_SESS_HASH_BITS);
+पूर्ण
 
 /*
  * Find session in local port.
- * Sessions and hash lists are RCU-protected.
- * A reference is taken which must be eventually freed.
+ * Sessions and hash lists are RCU-रक्षित.
+ * A reference is taken which must be eventually मुक्तd.
  */
-static struct ft_sess *ft_sess_get(struct fc_lport *lport, u32 port_id)
-{
-	struct ft_tport *tport;
-	struct hlist_head *head;
-	struct ft_sess *sess;
-	char *reason = "no session created";
+अटल काष्ठा ft_sess *ft_sess_get(काष्ठा fc_lport *lport, u32 port_id)
+अणु
+	काष्ठा ft_tport *tport;
+	काष्ठा hlist_head *head;
+	काष्ठा ft_sess *sess;
+	अक्षर *reason = "no session created";
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	tport = rcu_dereference(lport->prov[FC_TYPE_FCP]);
-	if (!tport) {
+	अगर (!tport) अणु
 		reason = "not an FCP port";
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	head = &tport->hash[ft_sess_hash(port_id)];
-	hlist_for_each_entry_rcu(sess, head, hash) {
-		if (sess->port_id == port_id) {
+	hlist_क्रम_each_entry_rcu(sess, head, hash) अणु
+		अगर (sess->port_id == port_id) अणु
 			kref_get(&sess->kref);
-			rcu_read_unlock();
+			rcu_पढ़ो_unlock();
 			TFC_SESS_DBG(lport, "port_id %x found %p\n",
 				     port_id, sess);
-			return sess;
-		}
-	}
+			वापस sess;
+		पूर्ण
+	पूर्ण
 out:
-	rcu_read_unlock();
+	rcu_पढ़ो_unlock();
 	TFC_SESS_DBG(lport, "port_id %x not found, %s\n",
 		     port_id, reason);
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static int ft_sess_alloc_cb(struct se_portal_group *se_tpg,
-			    struct se_session *se_sess, void *p)
-{
-	struct ft_sess *sess = p;
-	struct ft_tport *tport = sess->tport;
-	struct hlist_head *head = &tport->hash[ft_sess_hash(sess->port_id)];
+अटल पूर्णांक ft_sess_alloc_cb(काष्ठा se_portal_group *se_tpg,
+			    काष्ठा se_session *se_sess, व्योम *p)
+अणु
+	काष्ठा ft_sess *sess = p;
+	काष्ठा ft_tport *tport = sess->tport;
+	काष्ठा hlist_head *head = &tport->hash[ft_sess_hash(sess->port_id)];
 
 	TFC_SESS_DBG(tport->lport, "port_id %x sess %p\n", sess->port_id, sess);
 	hlist_add_head_rcu(&sess->hash, head);
 	tport->sess_count++;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * Allocate session and enter it in the hash for the local port.
+ * Allocate session and enter it in the hash क्रम the local port.
  * Caller holds ft_lport_lock.
  */
-static struct ft_sess *ft_sess_create(struct ft_tport *tport, u32 port_id,
-				      struct fc_rport_priv *rdata)
-{
-	struct se_portal_group *se_tpg = &tport->tpg->se_tpg;
-	struct ft_sess *sess;
-	struct hlist_head *head;
-	unsigned char initiatorname[TRANSPORT_IQN_LEN];
+अटल काष्ठा ft_sess *ft_sess_create(काष्ठा ft_tport *tport, u32 port_id,
+				      काष्ठा fc_rport_priv *rdata)
+अणु
+	काष्ठा se_portal_group *se_tpg = &tport->tpg->se_tpg;
+	काष्ठा ft_sess *sess;
+	काष्ठा hlist_head *head;
+	अचिन्हित अक्षर initiatorname[TRANSPORT_IQN_LEN];
 
-	ft_format_wwn(&initiatorname[0], TRANSPORT_IQN_LEN, rdata->ids.port_name);
+	ft_क्रमmat_wwn(&initiatorname[0], TRANSPORT_IQN_LEN, rdata->ids.port_name);
 
 	head = &tport->hash[ft_sess_hash(port_id)];
-	hlist_for_each_entry_rcu(sess, head, hash)
-		if (sess->port_id == port_id)
-			return sess;
+	hlist_क्रम_each_entry_rcu(sess, head, hash)
+		अगर (sess->port_id == port_id)
+			वापस sess;
 
-	sess = kzalloc(sizeof(*sess), GFP_KERNEL);
-	if (!sess)
-		return ERR_PTR(-ENOMEM);
+	sess = kzalloc(माप(*sess), GFP_KERNEL);
+	अगर (!sess)
+		वापस ERR_PTR(-ENOMEM);
 
-	kref_init(&sess->kref); /* ref for table entry */
+	kref_init(&sess->kref); /* ref क्रम table entry */
 	sess->tport = tport;
 	sess->port_id = port_id;
 
 	sess->se_sess = target_setup_session(se_tpg, TCM_FC_DEFAULT_TAGS,
-					     sizeof(struct ft_cmd),
+					     माप(काष्ठा ft_cmd),
 					     TARGET_PROT_NORMAL, &initiatorname[0],
 					     sess, ft_sess_alloc_cb);
-	if (IS_ERR(sess->se_sess)) {
-		int rc = PTR_ERR(sess->se_sess);
-		kfree(sess);
+	अगर (IS_ERR(sess->se_sess)) अणु
+		पूर्णांक rc = PTR_ERR(sess->se_sess);
+		kमुक्त(sess);
 		sess = ERR_PTR(rc);
-	}
-	return sess;
-}
+	पूर्ण
+	वापस sess;
+पूर्ण
 
 /*
  * Unhash the session.
  * Caller holds ft_lport_lock.
  */
-static void ft_sess_unhash(struct ft_sess *sess)
-{
-	struct ft_tport *tport = sess->tport;
+अटल व्योम ft_sess_unhash(काष्ठा ft_sess *sess)
+अणु
+	काष्ठा ft_tport *tport = sess->tport;
 
 	hlist_del_rcu(&sess->hash);
 	BUG_ON(!tport->sess_count);
 	tport->sess_count--;
 	sess->port_id = -1;
 	sess->params = 0;
-}
+पूर्ण
 
 /*
  * Delete session from hash.
  * Caller holds ft_lport_lock.
  */
-static struct ft_sess *ft_sess_delete(struct ft_tport *tport, u32 port_id)
-{
-	struct hlist_head *head;
-	struct ft_sess *sess;
+अटल काष्ठा ft_sess *ft_sess_delete(काष्ठा ft_tport *tport, u32 port_id)
+अणु
+	काष्ठा hlist_head *head;
+	काष्ठा ft_sess *sess;
 
 	head = &tport->hash[ft_sess_hash(port_id)];
-	hlist_for_each_entry_rcu(sess, head, hash) {
-		if (sess->port_id == port_id) {
+	hlist_क्रम_each_entry_rcu(sess, head, hash) अणु
+		अगर (sess->port_id == port_id) अणु
 			ft_sess_unhash(sess);
-			return sess;
-		}
-	}
-	return NULL;
-}
+			वापस sess;
+		पूर्ण
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
-static void ft_close_sess(struct ft_sess *sess)
-{
+अटल व्योम ft_बंद_sess(काष्ठा ft_sess *sess)
+अणु
 	target_stop_session(sess->se_sess);
-	target_wait_for_sess_cmds(sess->se_sess);
+	target_रुको_क्रम_sess_cmds(sess->se_sess);
 	ft_sess_put(sess);
-}
+पूर्ण
 
 /*
  * Delete all sessions from tport.
  * Caller holds ft_lport_lock.
  */
-static void ft_sess_delete_all(struct ft_tport *tport)
-{
-	struct hlist_head *head;
-	struct ft_sess *sess;
+अटल व्योम ft_sess_delete_all(काष्ठा ft_tport *tport)
+अणु
+	काष्ठा hlist_head *head;
+	काष्ठा ft_sess *sess;
 
-	for (head = tport->hash;
-	     head < &tport->hash[FT_SESS_HASH_SIZE]; head++) {
-		hlist_for_each_entry_rcu(sess, head, hash) {
+	क्रम (head = tport->hash;
+	     head < &tport->hash[FT_SESS_HASH_SIZE]; head++) अणु
+		hlist_क्रम_each_entry_rcu(sess, head, hash) अणु
 			ft_sess_unhash(sess);
-			ft_close_sess(sess);	/* release from table */
-		}
-	}
-}
+			ft_बंद_sess(sess);	/* release from table */
+		पूर्ण
+	पूर्ण
+पूर्ण
 
 /*
- * TCM ops for sessions.
+ * TCM ops क्रम sessions.
  */
 
 /*
  * Remove session and send PRLO.
  * This is called when the ACL is being deleted or queue depth is changing.
  */
-void ft_sess_close(struct se_session *se_sess)
-{
-	struct ft_sess *sess = se_sess->fabric_sess_ptr;
+व्योम ft_sess_बंद(काष्ठा se_session *se_sess)
+अणु
+	काष्ठा ft_sess *sess = se_sess->fabric_sess_ptr;
 	u32 port_id;
 
 	mutex_lock(&ft_lport_lock);
 	port_id = sess->port_id;
-	if (port_id == -1) {
+	अगर (port_id == -1) अणु
 		mutex_unlock(&ft_lport_lock);
-		return;
-	}
+		वापस;
+	पूर्ण
 	TFC_SESS_DBG(sess->tport->lport, "port_id %x close session\n", port_id);
 	ft_sess_unhash(sess);
 	mutex_unlock(&ft_lport_lock);
-	ft_close_sess(sess);
+	ft_बंद_sess(sess);
 	/* XXX Send LOGO or PRLO */
-	synchronize_rcu();		/* let transport deregister happen */
-}
+	synchronize_rcu();		/* let transport deरेजिस्टर happen */
+पूर्ण
 
-u32 ft_sess_get_index(struct se_session *se_sess)
-{
-	struct ft_sess *sess = se_sess->fabric_sess_ptr;
+u32 ft_sess_get_index(काष्ठा se_session *se_sess)
+अणु
+	काष्ठा ft_sess *sess = se_sess->fabric_sess_ptr;
 
-	return sess->port_id;	/* XXX TBD probably not what is needed */
-}
+	वापस sess->port_id;	/* XXX TBD probably not what is needed */
+पूर्ण
 
-u32 ft_sess_get_port_name(struct se_session *se_sess,
-			  unsigned char *buf, u32 len)
-{
-	struct ft_sess *sess = se_sess->fabric_sess_ptr;
+u32 ft_sess_get_port_name(काष्ठा se_session *se_sess,
+			  अचिन्हित अक्षर *buf, u32 len)
+अणु
+	काष्ठा ft_sess *sess = se_sess->fabric_sess_ptr;
 
-	return ft_format_wwn(buf, len, sess->port_name);
-}
+	वापस ft_क्रमmat_wwn(buf, len, sess->port_name);
+पूर्ण
 
 /*
  * libfc ops involving sessions.
  */
 
-static int ft_prli_locked(struct fc_rport_priv *rdata, u32 spp_len,
-			  const struct fc_els_spp *rspp, struct fc_els_spp *spp)
-{
-	struct ft_tport *tport;
-	struct ft_sess *sess;
+अटल पूर्णांक ft_prli_locked(काष्ठा fc_rport_priv *rdata, u32 spp_len,
+			  स्थिर काष्ठा fc_els_spp *rspp, काष्ठा fc_els_spp *spp)
+अणु
+	काष्ठा ft_tport *tport;
+	काष्ठा ft_sess *sess;
 	u32 fcp_parm;
 
 	tport = ft_tport_get(rdata->local_port);
-	if (!tport)
-		goto not_target;	/* not a target for this local port */
+	अगर (!tport)
+		जाओ not_target;	/* not a target क्रम this local port */
 
-	if (!rspp)
-		goto fill;
+	अगर (!rspp)
+		जाओ fill;
 
-	if (rspp->spp_flags & (FC_SPP_OPA_VAL | FC_SPP_RPA_VAL))
-		return FC_SPP_RESP_NO_PA;
+	अगर (rspp->spp_flags & (FC_SPP_OPA_VAL | FC_SPP_RPA_VAL))
+		वापस FC_SPP_RESP_NO_PA;
 
 	/*
 	 * If both target and initiator bits are off, the SPP is invalid.
 	 */
 	fcp_parm = ntohl(rspp->spp_params);
-	if (!(fcp_parm & (FCP_SPPF_INIT_FCN | FCP_SPPF_TARG_FCN)))
-		return FC_SPP_RESP_INVL;
+	अगर (!(fcp_parm & (FCP_SPPF_INIT_FCN | FCP_SPPF_TARG_FCN)))
+		वापस FC_SPP_RESP_INVL;
 
 	/*
-	 * Create session (image pair) only if requested by
-	 * EST_IMG_PAIR flag and if the requestor is an initiator.
+	 * Create session (image pair) only अगर requested by
+	 * EST_IMG_PAIR flag and अगर the requestor is an initiator.
 	 */
-	if (rspp->spp_flags & FC_SPP_EST_IMG_PAIR) {
+	अगर (rspp->spp_flags & FC_SPP_EST_IMG_PAIR) अणु
 		spp->spp_flags |= FC_SPP_EST_IMG_PAIR;
-		if (!(fcp_parm & FCP_SPPF_INIT_FCN))
-			return FC_SPP_RESP_CONF;
+		अगर (!(fcp_parm & FCP_SPPF_INIT_FCN))
+			वापस FC_SPP_RESP_CONF;
 		sess = ft_sess_create(tport, rdata->ids.port_id, rdata);
-		if (IS_ERR(sess)) {
-			if (PTR_ERR(sess) == -EACCES) {
+		अगर (IS_ERR(sess)) अणु
+			अगर (PTR_ERR(sess) == -EACCES) अणु
 				spp->spp_flags &= ~FC_SPP_EST_IMG_PAIR;
-				return FC_SPP_RESP_CONF;
-			} else
-				return FC_SPP_RESP_RES;
-		}
-		if (!sess->params)
+				वापस FC_SPP_RESP_CONF;
+			पूर्ण अन्यथा
+				वापस FC_SPP_RESP_RES;
+		पूर्ण
+		अगर (!sess->params)
 			rdata->prli_count++;
 		sess->params = fcp_parm;
 		sess->port_name = rdata->ids.port_name;
 		sess->max_frame = rdata->maxframe_size;
 
 		/* XXX TBD - clearing actions.  unit attn, see 4.10 */
-	}
+	पूर्ण
 
 	/*
-	 * OR in our service parameters with other provider (initiator), if any.
+	 * OR in our service parameters with other provider (initiator), अगर any.
 	 */
 fill:
 	fcp_parm = ntohl(spp->spp_params);
 	fcp_parm &= ~FCP_SPPF_RETRY;
 	spp->spp_params = htonl(fcp_parm | FCP_SPPF_TARG_FCN);
-	return FC_SPP_RESP_ACK;
+	वापस FC_SPP_RESP_ACK;
 
 not_target:
 	fcp_parm = ntohl(spp->spp_params);
 	fcp_parm &= ~FCP_SPPF_TARG_FCN;
 	spp->spp_params = htonl(fcp_parm);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * ft_prli() - Handle incoming or outgoing PRLI for the FCP target
- * @rdata: remote port private
+ * ft_prli() - Handle incoming or outgoing PRLI क्रम the FCP target
+ * @rdata: remote port निजी
  * @spp_len: service parameter page length
- * @rspp: received service parameter page (NULL for outgoing PRLI)
+ * @rspp: received service parameter page (शून्य क्रम outgoing PRLI)
  * @spp: response service parameter page
  *
  * Returns spp response code.
  */
-static int ft_prli(struct fc_rport_priv *rdata, u32 spp_len,
-		   const struct fc_els_spp *rspp, struct fc_els_spp *spp)
-{
-	int ret;
+अटल पूर्णांक ft_prli(काष्ठा fc_rport_priv *rdata, u32 spp_len,
+		   स्थिर काष्ठा fc_els_spp *rspp, काष्ठा fc_els_spp *spp)
+अणु
+	पूर्णांक ret;
 
 	mutex_lock(&ft_lport_lock);
 	ret = ft_prli_locked(rdata, spp_len, rspp, spp);
 	mutex_unlock(&ft_lport_lock);
 	TFC_SESS_DBG(rdata->local_port, "port_id %x flags %x ret %x\n",
 		     rdata->ids.port_id, rspp ? rspp->spp_flags : 0, ret);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void ft_sess_free(struct kref *kref)
-{
-	struct ft_sess *sess = container_of(kref, struct ft_sess, kref);
+अटल व्योम ft_sess_मुक्त(काष्ठा kref *kref)
+अणु
+	काष्ठा ft_sess *sess = container_of(kref, काष्ठा ft_sess, kref);
 
-	target_remove_session(sess->se_sess);
-	kfree_rcu(sess, rcu);
-}
+	target_हटाओ_session(sess->se_sess);
+	kमुक्त_rcu(sess, rcu);
+पूर्ण
 
-void ft_sess_put(struct ft_sess *sess)
-{
-	int sess_held = kref_read(&sess->kref);
+व्योम ft_sess_put(काष्ठा ft_sess *sess)
+अणु
+	पूर्णांक sess_held = kref_पढ़ो(&sess->kref);
 
 	BUG_ON(!sess_held);
-	kref_put(&sess->kref, ft_sess_free);
-}
+	kref_put(&sess->kref, ft_sess_मुक्त);
+पूर्ण
 
-static void ft_prlo(struct fc_rport_priv *rdata)
-{
-	struct ft_sess *sess;
-	struct ft_tport *tport;
+अटल व्योम ft_prlo(काष्ठा fc_rport_priv *rdata)
+अणु
+	काष्ठा ft_sess *sess;
+	काष्ठा ft_tport *tport;
 
 	mutex_lock(&ft_lport_lock);
-	tport = rcu_dereference_protected(rdata->local_port->prov[FC_TYPE_FCP],
+	tport = rcu_dereference_रक्षित(rdata->local_port->prov[FC_TYPE_FCP],
 					  lockdep_is_held(&ft_lport_lock));
 
-	if (!tport) {
+	अगर (!tport) अणु
 		mutex_unlock(&ft_lport_lock);
-		return;
-	}
+		वापस;
+	पूर्ण
 	sess = ft_sess_delete(tport, rdata->ids.port_id);
-	if (!sess) {
+	अगर (!sess) अणु
 		mutex_unlock(&ft_lport_lock);
-		return;
-	}
+		वापस;
+	पूर्ण
 	mutex_unlock(&ft_lport_lock);
-	ft_close_sess(sess);		/* release from table */
+	ft_बंद_sess(sess);		/* release from table */
 	rdata->prli_count--;
 	/* XXX TBD - clearing actions.  unit attn, see 4.10 */
-}
+पूर्ण
 
 /*
  * Handle incoming FCP request.
- * Caller has verified that the frame is type FCP.
+ * Caller has verअगरied that the frame is type FCP.
  */
-static void ft_recv(struct fc_lport *lport, struct fc_frame *fp)
-{
-	struct ft_sess *sess;
+अटल व्योम ft_recv(काष्ठा fc_lport *lport, काष्ठा fc_frame *fp)
+अणु
+	काष्ठा ft_sess *sess;
 	u32 sid = fc_frame_sid(fp);
 
 	TFC_SESS_DBG(lport, "recv sid %x\n", sid);
 
 	sess = ft_sess_get(lport, sid);
-	if (!sess) {
+	अगर (!sess) अणु
 		TFC_SESS_DBG(lport, "sid %x sess lookup failed\n", sid);
-		/* TBD XXX - if FCP_CMND, send PRLO */
-		fc_frame_free(fp);
-		return;
-	}
-	ft_recv_req(sess, fp);	/* must do ft_sess_put() */
-}
+		/* TBD XXX - अगर FCP_CMND, send PRLO */
+		fc_frame_मुक्त(fp);
+		वापस;
+	पूर्ण
+	ft_recv_req(sess, fp);	/* must करो ft_sess_put() */
+पूर्ण
 
 /*
- * Provider ops for libfc.
+ * Provider ops क्रम libfc.
  */
-struct fc4_prov ft_prov = {
+काष्ठा fc4_prov ft_prov = अणु
 	.prli = ft_prli,
 	.prlo = ft_prlo,
 	.recv = ft_recv,
 	.module = THIS_MODULE,
-};
+पूर्ण;

@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
  * Samsung Exynos USB HOST EHCI Controller
  *
@@ -7,237 +8,237 @@
  * Author: Joonyoung Shim <jy0922.shim@samsung.com>
  */
 
-#include <linux/clk.h>
-#include <linux/dma-mapping.h>
-#include <linux/io.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/of.h>
-#include <linux/of_gpio.h>
-#include <linux/phy/phy.h>
-#include <linux/platform_device.h>
-#include <linux/usb.h>
-#include <linux/usb/hcd.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/dma-mapping.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_gpपन.स>
+#समावेश <linux/phy/phy.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/usb.h>
+#समावेश <linux/usb/hcd.h>
 
-#include "ehci.h"
+#समावेश "ehci.h"
 
-#define DRIVER_DESC "EHCI Exynos driver"
+#घोषणा DRIVER_DESC "EHCI Exynos driver"
 
-#define EHCI_INSNREG00(base)			(base + 0x90)
-#define EHCI_INSNREG00_ENA_INCR16		(0x1 << 25)
-#define EHCI_INSNREG00_ENA_INCR8		(0x1 << 24)
-#define EHCI_INSNREG00_ENA_INCR4		(0x1 << 23)
-#define EHCI_INSNREG00_ENA_INCRX_ALIGN		(0x1 << 22)
-#define EHCI_INSNREG00_ENABLE_DMA_BURST	\
+#घोषणा EHCI_INSNREG00(base)			(base + 0x90)
+#घोषणा EHCI_INSNREG00_ENA_INCR16		(0x1 << 25)
+#घोषणा EHCI_INSNREG00_ENA_INCR8		(0x1 << 24)
+#घोषणा EHCI_INSNREG00_ENA_INCR4		(0x1 << 23)
+#घोषणा EHCI_INSNREG00_ENA_INCRX_ALIGN		(0x1 << 22)
+#घोषणा EHCI_INSNREG00_ENABLE_DMA_BURST	\
 	(EHCI_INSNREG00_ENA_INCR16 | EHCI_INSNREG00_ENA_INCR8 |	\
 	 EHCI_INSNREG00_ENA_INCR4 | EHCI_INSNREG00_ENA_INCRX_ALIGN)
 
-static const char hcd_name[] = "ehci-exynos";
-static struct hc_driver __read_mostly exynos_ehci_hc_driver;
+अटल स्थिर अक्षर hcd_name[] = "ehci-exynos";
+अटल काष्ठा hc_driver __पढ़ो_mostly exynos_ehci_hc_driver;
 
-#define PHY_NUMBER 3
+#घोषणा PHY_NUMBER 3
 
-struct exynos_ehci_hcd {
-	struct clk *clk;
-	struct device_node *of_node;
-	struct phy *phy[PHY_NUMBER];
+काष्ठा exynos_ehci_hcd अणु
+	काष्ठा clk *clk;
+	काष्ठा device_node *of_node;
+	काष्ठा phy *phy[PHY_NUMBER];
 	bool legacy_phy;
-};
+पूर्ण;
 
-#define to_exynos_ehci(hcd) (struct exynos_ehci_hcd *)(hcd_to_ehci(hcd)->priv)
+#घोषणा to_exynos_ehci(hcd) (काष्ठा exynos_ehci_hcd *)(hcd_to_ehci(hcd)->priv)
 
-static int exynos_ehci_get_phy(struct device *dev,
-				struct exynos_ehci_hcd *exynos_ehci)
-{
-	struct device_node *child;
-	struct phy *phy;
-	int phy_number, num_phys;
-	int ret;
+अटल पूर्णांक exynos_ehci_get_phy(काष्ठा device *dev,
+				काष्ठा exynos_ehci_hcd *exynos_ehci)
+अणु
+	काष्ठा device_node *child;
+	काष्ठा phy *phy;
+	पूर्णांक phy_number, num_phys;
+	पूर्णांक ret;
 
-	/* Get PHYs for the controller */
+	/* Get PHYs क्रम the controller */
 	num_phys = of_count_phandle_with_args(dev->of_node, "phys",
 					      "#phy-cells");
-	for (phy_number = 0; phy_number < num_phys; phy_number++) {
+	क्रम (phy_number = 0; phy_number < num_phys; phy_number++) अणु
 		phy = devm_of_phy_get_by_index(dev, dev->of_node, phy_number);
-		if (IS_ERR(phy))
-			return PTR_ERR(phy);
+		अगर (IS_ERR(phy))
+			वापस PTR_ERR(phy);
 		exynos_ehci->phy[phy_number] = phy;
-	}
-	if (num_phys > 0)
-		return 0;
+	पूर्ण
+	अगर (num_phys > 0)
+		वापस 0;
 
 	/* Get PHYs using legacy bindings */
-	for_each_available_child_of_node(dev->of_node, child) {
-		ret = of_property_read_u32(child, "reg", &phy_number);
-		if (ret) {
+	क्रम_each_available_child_of_node(dev->of_node, child) अणु
+		ret = of_property_पढ़ो_u32(child, "reg", &phy_number);
+		अगर (ret) अणु
 			dev_err(dev, "Failed to parse device tree\n");
 			of_node_put(child);
-			return ret;
-		}
+			वापस ret;
+		पूर्ण
 
-		if (phy_number >= PHY_NUMBER) {
+		अगर (phy_number >= PHY_NUMBER) अणु
 			dev_err(dev, "Invalid number of PHYs\n");
 			of_node_put(child);
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
-		phy = devm_of_phy_get(dev, child, NULL);
+		phy = devm_of_phy_get(dev, child, शून्य);
 		exynos_ehci->phy[phy_number] = phy;
-		if (IS_ERR(phy)) {
+		अगर (IS_ERR(phy)) अणु
 			ret = PTR_ERR(phy);
-			if (ret == -EPROBE_DEFER) {
+			अगर (ret == -EPROBE_DEFER) अणु
 				of_node_put(child);
-				return ret;
-			} else if (ret != -ENOSYS && ret != -ENODEV) {
+				वापस ret;
+			पूर्ण अन्यथा अगर (ret != -ENOSYS && ret != -ENODEV) अणु
 				dev_err(dev,
 					"Error retrieving usb2 phy: %d\n", ret);
 				of_node_put(child);
-				return ret;
-			}
-		}
-	}
+				वापस ret;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
 	exynos_ehci->legacy_phy = true;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int exynos_ehci_phy_enable(struct device *dev)
-{
-	struct usb_hcd *hcd = dev_get_drvdata(dev);
-	struct exynos_ehci_hcd *exynos_ehci = to_exynos_ehci(hcd);
-	int i;
-	int ret = 0;
+अटल पूर्णांक exynos_ehci_phy_enable(काष्ठा device *dev)
+अणु
+	काष्ठा usb_hcd *hcd = dev_get_drvdata(dev);
+	काष्ठा exynos_ehci_hcd *exynos_ehci = to_exynos_ehci(hcd);
+	पूर्णांक i;
+	पूर्णांक ret = 0;
 
-	for (i = 0; ret == 0 && i < PHY_NUMBER; i++)
-		if (!IS_ERR(exynos_ehci->phy[i]))
-			ret = phy_power_on(exynos_ehci->phy[i]);
-	if (ret)
-		for (i--; i >= 0; i--)
-			if (!IS_ERR(exynos_ehci->phy[i]))
-				phy_power_off(exynos_ehci->phy[i]);
+	क्रम (i = 0; ret == 0 && i < PHY_NUMBER; i++)
+		अगर (!IS_ERR(exynos_ehci->phy[i]))
+			ret = phy_घातer_on(exynos_ehci->phy[i]);
+	अगर (ret)
+		क्रम (i--; i >= 0; i--)
+			अगर (!IS_ERR(exynos_ehci->phy[i]))
+				phy_घातer_off(exynos_ehci->phy[i]);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void exynos_ehci_phy_disable(struct device *dev)
-{
-	struct usb_hcd *hcd = dev_get_drvdata(dev);
-	struct exynos_ehci_hcd *exynos_ehci = to_exynos_ehci(hcd);
-	int i;
+अटल व्योम exynos_ehci_phy_disable(काष्ठा device *dev)
+अणु
+	काष्ठा usb_hcd *hcd = dev_get_drvdata(dev);
+	काष्ठा exynos_ehci_hcd *exynos_ehci = to_exynos_ehci(hcd);
+	पूर्णांक i;
 
-	for (i = 0; i < PHY_NUMBER; i++)
-		if (!IS_ERR(exynos_ehci->phy[i]))
-			phy_power_off(exynos_ehci->phy[i]);
-}
+	क्रम (i = 0; i < PHY_NUMBER; i++)
+		अगर (!IS_ERR(exynos_ehci->phy[i]))
+			phy_घातer_off(exynos_ehci->phy[i]);
+पूर्ण
 
-static void exynos_setup_vbus_gpio(struct device *dev)
-{
-	int err;
-	int gpio;
+अटल व्योम exynos_setup_vbus_gpio(काष्ठा device *dev)
+अणु
+	पूर्णांक err;
+	पूर्णांक gpio;
 
-	if (!dev->of_node)
-		return;
+	अगर (!dev->of_node)
+		वापस;
 
 	gpio = of_get_named_gpio(dev->of_node, "samsung,vbus-gpio", 0);
-	if (!gpio_is_valid(gpio))
-		return;
+	अगर (!gpio_is_valid(gpio))
+		वापस;
 
 	err = devm_gpio_request_one(dev, gpio, GPIOF_OUT_INIT_HIGH,
 				    "ehci_vbus_gpio");
-	if (err)
+	अगर (err)
 		dev_err(dev, "can't request ehci vbus gpio %d", gpio);
-}
+पूर्ण
 
-static int exynos_ehci_probe(struct platform_device *pdev)
-{
-	struct exynos_ehci_hcd *exynos_ehci;
-	struct usb_hcd *hcd;
-	struct ehci_hcd *ehci;
-	struct resource *res;
-	int irq;
-	int err;
+अटल पूर्णांक exynos_ehci_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा exynos_ehci_hcd *exynos_ehci;
+	काष्ठा usb_hcd *hcd;
+	काष्ठा ehci_hcd *ehci;
+	काष्ठा resource *res;
+	पूर्णांक irq;
+	पूर्णांक err;
 
 	/*
-	 * Right now device-tree probed devices don't get dma_mask set.
-	 * Since shared usb code relies on it, set it here for now.
+	 * Right now device-tree probed devices करोn't get dma_mask set.
+	 * Since shared usb code relies on it, set it here क्रम now.
 	 * Once we move to full device tree support this will vanish off.
 	 */
 	err = dma_coerce_mask_and_coherent(&pdev->dev, DMA_BIT_MASK(32));
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	exynos_setup_vbus_gpio(&pdev->dev);
 
 	hcd = usb_create_hcd(&exynos_ehci_hc_driver,
 			     &pdev->dev, dev_name(&pdev->dev));
-	if (!hcd) {
+	अगर (!hcd) अणु
 		dev_err(&pdev->dev, "Unable to create HCD\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 	exynos_ehci = to_exynos_ehci(hcd);
 
 	err = exynos_ehci_get_phy(&pdev->dev, exynos_ehci);
-	if (err)
-		goto fail_clk;
+	अगर (err)
+		जाओ fail_clk;
 
 	exynos_ehci->clk = devm_clk_get(&pdev->dev, "usbhost");
 
-	if (IS_ERR(exynos_ehci->clk)) {
+	अगर (IS_ERR(exynos_ehci->clk)) अणु
 		dev_err(&pdev->dev, "Failed to get usbhost clock\n");
 		err = PTR_ERR(exynos_ehci->clk);
-		goto fail_clk;
-	}
+		जाओ fail_clk;
+	पूर्ण
 
 	err = clk_prepare_enable(exynos_ehci->clk);
-	if (err)
-		goto fail_clk;
+	अगर (err)
+		जाओ fail_clk;
 
-	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
 	hcd->regs = devm_ioremap_resource(&pdev->dev, res);
-	if (IS_ERR(hcd->regs)) {
+	अगर (IS_ERR(hcd->regs)) अणु
 		err = PTR_ERR(hcd->regs);
-		goto fail_io;
-	}
+		जाओ fail_io;
+	पूर्ण
 
 	hcd->rsrc_start = res->start;
 	hcd->rsrc_len = resource_size(res);
 
-	irq = platform_get_irq(pdev, 0);
-	if (irq < 0) {
+	irq = platक्रमm_get_irq(pdev, 0);
+	अगर (irq < 0) अणु
 		err = irq;
-		goto fail_io;
-	}
+		जाओ fail_io;
+	पूर्ण
 
 	err = exynos_ehci_phy_enable(&pdev->dev);
-	if (err) {
+	अगर (err) अणु
 		dev_err(&pdev->dev, "Failed to enable USB phy\n");
-		goto fail_io;
-	}
+		जाओ fail_io;
+	पूर्ण
 
 	ehci = hcd_to_ehci(hcd);
 	ehci->caps = hcd->regs;
 
 	/*
-	 * Workaround: reset of_node pointer to avoid conflict between legacy
+	 * Workaround: reset of_node poपूर्णांकer to aव्योम conflict between legacy
 	 * Exynos EHCI port subnodes and generic USB device bindings
 	 */
 	exynos_ehci->of_node = pdev->dev.of_node;
-	if (exynos_ehci->legacy_phy)
-		pdev->dev.of_node = NULL;
+	अगर (exynos_ehci->legacy_phy)
+		pdev->dev.of_node = शून्य;
 
 	/* DMA burst Enable */
-	writel(EHCI_INSNREG00_ENABLE_DMA_BURST, EHCI_INSNREG00(hcd->regs));
+	ग_लिखोl(EHCI_INSNREG00_ENABLE_DMA_BURST, EHCI_INSNREG00(hcd->regs));
 
 	err = usb_add_hcd(hcd, irq, IRQF_SHARED);
-	if (err) {
+	अगर (err) अणु
 		dev_err(&pdev->dev, "Failed to add USB HCD\n");
-		goto fail_add_hcd;
-	}
+		जाओ fail_add_hcd;
+	पूर्ण
 	device_wakeup_enable(hcd->self.controller);
 
-	platform_set_drvdata(pdev, hcd);
+	platक्रमm_set_drvdata(pdev, hcd);
 
-	return 0;
+	वापस 0;
 
 fail_add_hcd:
 	exynos_ehci_phy_disable(&pdev->dev);
@@ -246,17 +247,17 @@ fail_io:
 	clk_disable_unprepare(exynos_ehci->clk);
 fail_clk:
 	usb_put_hcd(hcd);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int exynos_ehci_remove(struct platform_device *pdev)
-{
-	struct usb_hcd *hcd = platform_get_drvdata(pdev);
-	struct exynos_ehci_hcd *exynos_ehci = to_exynos_ehci(hcd);
+अटल पूर्णांक exynos_ehci_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा usb_hcd *hcd = platक्रमm_get_drvdata(pdev);
+	काष्ठा exynos_ehci_hcd *exynos_ehci = to_exynos_ehci(hcd);
 
 	pdev->dev.of_node = exynos_ehci->of_node;
 
-	usb_remove_hcd(hcd);
+	usb_हटाओ_hcd(hcd);
 
 	exynos_ehci_phy_disable(&pdev->dev);
 
@@ -264,100 +265,100 @@ static int exynos_ehci_remove(struct platform_device *pdev)
 
 	usb_put_hcd(hcd);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_PM
-static int exynos_ehci_suspend(struct device *dev)
-{
-	struct usb_hcd *hcd = dev_get_drvdata(dev);
-	struct exynos_ehci_hcd *exynos_ehci = to_exynos_ehci(hcd);
+#अगर_घोषित CONFIG_PM
+अटल पूर्णांक exynos_ehci_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा usb_hcd *hcd = dev_get_drvdata(dev);
+	काष्ठा exynos_ehci_hcd *exynos_ehci = to_exynos_ehci(hcd);
 
-	bool do_wakeup = device_may_wakeup(dev);
-	int rc;
+	bool करो_wakeup = device_may_wakeup(dev);
+	पूर्णांक rc;
 
-	rc = ehci_suspend(hcd, do_wakeup);
-	if (rc)
-		return rc;
+	rc = ehci_suspend(hcd, करो_wakeup);
+	अगर (rc)
+		वापस rc;
 
 	exynos_ehci_phy_disable(dev);
 
 	clk_disable_unprepare(exynos_ehci->clk);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int exynos_ehci_resume(struct device *dev)
-{
-	struct usb_hcd *hcd = dev_get_drvdata(dev);
-	struct exynos_ehci_hcd *exynos_ehci = to_exynos_ehci(hcd);
-	int ret;
+अटल पूर्णांक exynos_ehci_resume(काष्ठा device *dev)
+अणु
+	काष्ठा usb_hcd *hcd = dev_get_drvdata(dev);
+	काष्ठा exynos_ehci_hcd *exynos_ehci = to_exynos_ehci(hcd);
+	पूर्णांक ret;
 
 	ret = clk_prepare_enable(exynos_ehci->clk);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ret = exynos_ehci_phy_enable(dev);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev, "Failed to enable USB phy\n");
 		clk_disable_unprepare(exynos_ehci->clk);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	/* DMA burst Enable */
-	writel(EHCI_INSNREG00_ENABLE_DMA_BURST, EHCI_INSNREG00(hcd->regs));
+	ग_लिखोl(EHCI_INSNREG00_ENABLE_DMA_BURST, EHCI_INSNREG00(hcd->regs));
 
 	ehci_resume(hcd, false);
-	return 0;
-}
-#else
-#define exynos_ehci_suspend	NULL
-#define exynos_ehci_resume	NULL
-#endif
+	वापस 0;
+पूर्ण
+#अन्यथा
+#घोषणा exynos_ehci_suspend	शून्य
+#घोषणा exynos_ehci_resume	शून्य
+#पूर्ण_अगर
 
-static const struct dev_pm_ops exynos_ehci_pm_ops = {
+अटल स्थिर काष्ठा dev_pm_ops exynos_ehci_pm_ops = अणु
 	.suspend	= exynos_ehci_suspend,
 	.resume		= exynos_ehci_resume,
-};
+पूर्ण;
 
-#ifdef CONFIG_OF
-static const struct of_device_id exynos_ehci_match[] = {
-	{ .compatible = "samsung,exynos4210-ehci" },
-	{},
-};
+#अगर_घोषित CONFIG_OF
+अटल स्थिर काष्ठा of_device_id exynos_ehci_match[] = अणु
+	अणु .compatible = "samsung,exynos4210-ehci" पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, exynos_ehci_match);
-#endif
+#पूर्ण_अगर
 
-static struct platform_driver exynos_ehci_driver = {
+अटल काष्ठा platक्रमm_driver exynos_ehci_driver = अणु
 	.probe		= exynos_ehci_probe,
-	.remove		= exynos_ehci_remove,
-	.shutdown	= usb_hcd_platform_shutdown,
-	.driver = {
+	.हटाओ		= exynos_ehci_हटाओ,
+	.shutकरोwn	= usb_hcd_platक्रमm_shutकरोwn,
+	.driver = अणु
 		.name	= "exynos-ehci",
 		.pm	= &exynos_ehci_pm_ops,
 		.of_match_table = of_match_ptr(exynos_ehci_match),
-	}
-};
-static const struct ehci_driver_overrides exynos_overrides __initconst = {
-	.extra_priv_size = sizeof(struct exynos_ehci_hcd),
-};
+	पूर्ण
+पूर्ण;
+अटल स्थिर काष्ठा ehci_driver_overrides exynos_overrides __initस्थिर = अणु
+	.extra_priv_size = माप(काष्ठा exynos_ehci_hcd),
+पूर्ण;
 
-static int __init ehci_exynos_init(void)
-{
-	if (usb_disabled())
-		return -ENODEV;
+अटल पूर्णांक __init ehci_exynos_init(व्योम)
+अणु
+	अगर (usb_disabled())
+		वापस -ENODEV;
 
 	pr_info("%s: " DRIVER_DESC "\n", hcd_name);
 	ehci_init_driver(&exynos_ehci_hc_driver, &exynos_overrides);
-	return platform_driver_register(&exynos_ehci_driver);
-}
+	वापस platक्रमm_driver_रेजिस्टर(&exynos_ehci_driver);
+पूर्ण
 module_init(ehci_exynos_init);
 
-static void __exit ehci_exynos_cleanup(void)
-{
-	platform_driver_unregister(&exynos_ehci_driver);
-}
-module_exit(ehci_exynos_cleanup);
+अटल व्योम __निकास ehci_exynos_cleanup(व्योम)
+अणु
+	platक्रमm_driver_unरेजिस्टर(&exynos_ehci_driver);
+पूर्ण
+module_निकास(ehci_exynos_cleanup);
 
 MODULE_DESCRIPTION(DRIVER_DESC);
 MODULE_ALIAS("platform:exynos-ehci");

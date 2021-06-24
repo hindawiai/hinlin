@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2016 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -23,195 +24,195 @@
  *
  */
 
-#include <linux/mm.h>
-#include <linux/slab.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/slab.h>
 
-#include "dc.h"
-#include "opp.h"
-#include "color_gamma.h"
+#समावेश "dc.h"
+#समावेश "opp.h"
+#समावेश "color_gamma.h"
 
 /* When calculating LUT values the first region and at least one subsequent
  * region are calculated with full precision. These defines are a demarcation
  * of where the second region starts and ends.
- * These are hardcoded values to avoid recalculating them in loops.
+ * These are hardcoded values to aव्योम recalculating them in loops.
  */
-#define PRECISE_LUT_REGION_START 224
-#define PRECISE_LUT_REGION_END 239
+#घोषणा PRECISE_LUT_REGION_START 224
+#घोषणा PRECISE_LUT_REGION_END 239
 
-static struct hw_x_point coordinates_x[MAX_HW_POINTS + 2];
+अटल काष्ठा hw_x_poपूर्णांक coordinates_x[MAX_HW_POINTS + 2];
 
-// these are helpers for calculations to reduce stack usage
-// do not depend on these being preserved across calls
+// these are helpers क्रम calculations to reduce stack usage
+// करो not depend on these being preserved across calls
 
 /* Helper to optimize gamma calculation, only use in translate_from_linear, in
- * particular the dc_fixpt_pow function which is very expensive
- * The idea is that our regions for X points are exponential and currently they all use
- * the same number of points (NUM_PTS_IN_REGION) and in each region every point
+ * particular the dc_fixpt_घात function which is very expensive
+ * The idea is that our regions क्रम X poपूर्णांकs are exponential and currently they all use
+ * the same number of poपूर्णांकs (NUM_PTS_IN_REGION) and in each region every poपूर्णांक
  * is exactly 2x the one at the same index in the previous region. In other words
- * X[i] = 2 * X[i-NUM_PTS_IN_REGION] for i>=16
+ * X[i] = 2 * X[i-NUM_PTS_IN_REGION] क्रम i>=16
  * The other fact is that (2x)^gamma = 2^gamma * x^gamma
- * So we compute and save x^gamma for the first 16 regions, and for every next region
+ * So we compute and save x^gamma क्रम the first 16 regions, and क्रम every next region
  * just multiply with 2^gamma which can be computed once, and save the result so we
  * recursively compute all the values.
  */
 										/*sRGB	 709 2.2 2.4 P3*/
-static const int32_t gamma_numerator01[] = { 31308,	180000,	0,	0,	0};
-static const int32_t gamma_numerator02[] = { 12920,	4500,	0,	0,	0};
-static const int32_t gamma_numerator03[] = { 55,	99,		0,	0,	0};
-static const int32_t gamma_numerator04[] = { 55,	99,		0,	0,	0};
-static const int32_t gamma_numerator05[] = { 2400,	2200,	2200, 2400, 2600};
+अटल स्थिर पूर्णांक32_t gamma_numerator01[] = अणु 31308,	180000,	0,	0,	0पूर्ण;
+अटल स्थिर पूर्णांक32_t gamma_numerator02[] = अणु 12920,	4500,	0,	0,	0पूर्ण;
+अटल स्थिर पूर्णांक32_t gamma_numerator03[] = अणु 55,	99,		0,	0,	0पूर्ण;
+अटल स्थिर पूर्णांक32_t gamma_numerator04[] = अणु 55,	99,		0,	0,	0पूर्ण;
+अटल स्थिर पूर्णांक32_t gamma_numerator05[] = अणु 2400,	2200,	2200, 2400, 2600पूर्ण;
 
-/* one-time setup of X points */
-void setup_x_points_distribution(void)
-{
-	struct fixed31_32 region_size = dc_fixpt_from_int(128);
-	int32_t segment;
-	uint32_t seg_offset;
-	uint32_t index;
-	struct fixed31_32 increment;
+/* one-समय setup of X poपूर्णांकs */
+व्योम setup_x_poपूर्णांकs_distribution(व्योम)
+अणु
+	काष्ठा fixed31_32 region_size = dc_fixpt_from_पूर्णांक(128);
+	पूर्णांक32_t segment;
+	uपूर्णांक32_t seg_offset;
+	uपूर्णांक32_t index;
+	काष्ठा fixed31_32 increment;
 
 	coordinates_x[MAX_HW_POINTS].x = region_size;
 	coordinates_x[MAX_HW_POINTS + 1].x = region_size;
 
-	for (segment = 6; segment > (6 - NUM_REGIONS); segment--) {
-		region_size = dc_fixpt_div_int(region_size, 2);
-		increment = dc_fixpt_div_int(region_size,
+	क्रम (segment = 6; segment > (6 - NUM_REGIONS); segment--) अणु
+		region_size = dc_fixpt_भाग_पूर्णांक(region_size, 2);
+		increment = dc_fixpt_भाग_पूर्णांक(region_size,
 						NUM_PTS_IN_REGION);
 		seg_offset = (segment + (NUM_REGIONS - 7)) * NUM_PTS_IN_REGION;
 		coordinates_x[seg_offset].x = region_size;
 
-		for (index = seg_offset + 1;
+		क्रम (index = seg_offset + 1;
 				index < seg_offset + NUM_PTS_IN_REGION;
-				index++) {
+				index++) अणु
 			coordinates_x[index].x = dc_fixpt_add
 					(coordinates_x[index-1].x, increment);
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-void log_x_points_distribution(struct dal_logger *logger)
-{
-	int i = 0;
+व्योम log_x_poपूर्णांकs_distribution(काष्ठा dal_logger *logger)
+अणु
+	पूर्णांक i = 0;
 
-	if (logger != NULL) {
+	अगर (logger != शून्य) अणु
 		LOG_GAMMA_WRITE("Log X Distribution\n");
 
-		for (i = 0; i < MAX_HW_POINTS; i++)
+		क्रम (i = 0; i < MAX_HW_POINTS; i++)
 			LOG_GAMMA_WRITE("%llu\n", coordinates_x[i].x.value);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void compute_pq(struct fixed31_32 in_x, struct fixed31_32 *out_y)
-{
-	/* consts for PQ gamma formula. */
-	const struct fixed31_32 m1 =
+अटल व्योम compute_pq(काष्ठा fixed31_32 in_x, काष्ठा fixed31_32 *out_y)
+अणु
+	/* स्थिरs क्रम PQ gamma क्रमmula. */
+	स्थिर काष्ठा fixed31_32 m1 =
 		dc_fixpt_from_fraction(159301758, 1000000000);
-	const struct fixed31_32 m2 =
+	स्थिर काष्ठा fixed31_32 m2 =
 		dc_fixpt_from_fraction(7884375, 100000);
-	const struct fixed31_32 c1 =
+	स्थिर काष्ठा fixed31_32 c1 =
 		dc_fixpt_from_fraction(8359375, 10000000);
-	const struct fixed31_32 c2 =
+	स्थिर काष्ठा fixed31_32 c2 =
 		dc_fixpt_from_fraction(188515625, 10000000);
-	const struct fixed31_32 c3 =
+	स्थिर काष्ठा fixed31_32 c3 =
 		dc_fixpt_from_fraction(186875, 10000);
 
-	struct fixed31_32 l_pow_m1;
-	struct fixed31_32 base;
+	काष्ठा fixed31_32 l_घात_m1;
+	काष्ठा fixed31_32 base;
 
-	if (dc_fixpt_lt(in_x, dc_fixpt_zero))
+	अगर (dc_fixpt_lt(in_x, dc_fixpt_zero))
 		in_x = dc_fixpt_zero;
 
-	l_pow_m1 = dc_fixpt_pow(in_x, m1);
-	base = dc_fixpt_div(
+	l_घात_m1 = dc_fixpt_घात(in_x, m1);
+	base = dc_fixpt_भाग(
 			dc_fixpt_add(c1,
-					(dc_fixpt_mul(c2, l_pow_m1))),
+					(dc_fixpt_mul(c2, l_घात_m1))),
 			dc_fixpt_add(dc_fixpt_one,
-					(dc_fixpt_mul(c3, l_pow_m1))));
-	*out_y = dc_fixpt_pow(base, m2);
-}
+					(dc_fixpt_mul(c3, l_घात_m1))));
+	*out_y = dc_fixpt_घात(base, m2);
+पूर्ण
 
-static void compute_de_pq(struct fixed31_32 in_x, struct fixed31_32 *out_y)
-{
-	/* consts for dePQ gamma formula. */
-	const struct fixed31_32 m1 =
+अटल व्योम compute_de_pq(काष्ठा fixed31_32 in_x, काष्ठा fixed31_32 *out_y)
+अणु
+	/* स्थिरs क्रम dePQ gamma क्रमmula. */
+	स्थिर काष्ठा fixed31_32 m1 =
 		dc_fixpt_from_fraction(159301758, 1000000000);
-	const struct fixed31_32 m2 =
+	स्थिर काष्ठा fixed31_32 m2 =
 		dc_fixpt_from_fraction(7884375, 100000);
-	const struct fixed31_32 c1 =
+	स्थिर काष्ठा fixed31_32 c1 =
 		dc_fixpt_from_fraction(8359375, 10000000);
-	const struct fixed31_32 c2 =
+	स्थिर काष्ठा fixed31_32 c2 =
 		dc_fixpt_from_fraction(188515625, 10000000);
-	const struct fixed31_32 c3 =
+	स्थिर काष्ठा fixed31_32 c3 =
 		dc_fixpt_from_fraction(186875, 10000);
 
-	struct fixed31_32 l_pow_m1;
-	struct fixed31_32 base, div;
-	struct fixed31_32 base2;
+	काष्ठा fixed31_32 l_घात_m1;
+	काष्ठा fixed31_32 base, भाग;
+	काष्ठा fixed31_32 base2;
 
 
-	if (dc_fixpt_lt(in_x, dc_fixpt_zero))
+	अगर (dc_fixpt_lt(in_x, dc_fixpt_zero))
 		in_x = dc_fixpt_zero;
 
-	l_pow_m1 = dc_fixpt_pow(in_x,
-			dc_fixpt_div(dc_fixpt_one, m2));
-	base = dc_fixpt_sub(l_pow_m1, c1);
+	l_घात_m1 = dc_fixpt_घात(in_x,
+			dc_fixpt_भाग(dc_fixpt_one, m2));
+	base = dc_fixpt_sub(l_घात_m1, c1);
 
-	div = dc_fixpt_sub(c2, dc_fixpt_mul(c3, l_pow_m1));
+	भाग = dc_fixpt_sub(c2, dc_fixpt_mul(c3, l_घात_m1));
 
-	base2 = dc_fixpt_div(base, div);
-	// avoid complex numbers
-	if (dc_fixpt_lt(base2, dc_fixpt_zero))
+	base2 = dc_fixpt_भाग(base, भाग);
+	// aव्योम complex numbers
+	अगर (dc_fixpt_lt(base2, dc_fixpt_zero))
 		base2 = dc_fixpt_sub(dc_fixpt_zero, base2);
 
 
-	*out_y = dc_fixpt_pow(base2, dc_fixpt_div(dc_fixpt_one, m1));
+	*out_y = dc_fixpt_घात(base2, dc_fixpt_भाग(dc_fixpt_one, m1));
 
-}
+पूर्ण
 
 
 /* de gamma, non-linear to linear */
-static void compute_hlg_eotf(struct fixed31_32 in_x,
-		struct fixed31_32 *out_y,
-		uint32_t sdr_white_level, uint32_t max_luminance_nits)
-{
-	struct fixed31_32 a;
-	struct fixed31_32 b;
-	struct fixed31_32 c;
-	struct fixed31_32 threshold;
-	struct fixed31_32 x;
+अटल व्योम compute_hlg_eotf(काष्ठा fixed31_32 in_x,
+		काष्ठा fixed31_32 *out_y,
+		uपूर्णांक32_t sdr_white_level, uपूर्णांक32_t max_luminance_nits)
+अणु
+	काष्ठा fixed31_32 a;
+	काष्ठा fixed31_32 b;
+	काष्ठा fixed31_32 c;
+	काष्ठा fixed31_32 threshold;
+	काष्ठा fixed31_32 x;
 
-	struct fixed31_32 scaling_factor =
+	काष्ठा fixed31_32 scaling_factor =
 			dc_fixpt_from_fraction(max_luminance_nits, sdr_white_level);
 	a = dc_fixpt_from_fraction(17883277, 100000000);
 	b = dc_fixpt_from_fraction(28466892, 100000000);
 	c = dc_fixpt_from_fraction(55991073, 100000000);
 	threshold = dc_fixpt_from_fraction(1, 2);
 
-	if (dc_fixpt_lt(in_x, threshold)) {
+	अगर (dc_fixpt_lt(in_x, threshold)) अणु
 		x = dc_fixpt_mul(in_x, in_x);
-		x = dc_fixpt_div_int(x, 3);
-	} else {
+		x = dc_fixpt_भाग_पूर्णांक(x, 3);
+	पूर्ण अन्यथा अणु
 		x = dc_fixpt_sub(in_x, c);
-		x = dc_fixpt_div(x, a);
+		x = dc_fixpt_भाग(x, a);
 		x = dc_fixpt_exp(x);
 		x = dc_fixpt_add(x, b);
-		x = dc_fixpt_div_int(x, 12);
-	}
+		x = dc_fixpt_भाग_पूर्णांक(x, 12);
+	पूर्ण
 	*out_y = dc_fixpt_mul(x, scaling_factor);
 
-}
+पूर्ण
 
 /* re gamma, linear to non-linear */
-static void compute_hlg_oetf(struct fixed31_32 in_x, struct fixed31_32 *out_y,
-		uint32_t sdr_white_level, uint32_t max_luminance_nits)
-{
-	struct fixed31_32 a;
-	struct fixed31_32 b;
-	struct fixed31_32 c;
-	struct fixed31_32 threshold;
-	struct fixed31_32 x;
+अटल व्योम compute_hlg_oetf(काष्ठा fixed31_32 in_x, काष्ठा fixed31_32 *out_y,
+		uपूर्णांक32_t sdr_white_level, uपूर्णांक32_t max_luminance_nits)
+अणु
+	काष्ठा fixed31_32 a;
+	काष्ठा fixed31_32 b;
+	काष्ठा fixed31_32 c;
+	काष्ठा fixed31_32 threshold;
+	काष्ठा fixed31_32 x;
 
-	struct fixed31_32 scaling_factor =
+	काष्ठा fixed31_32 scaling_factor =
 			dc_fixpt_from_fraction(sdr_white_level, max_luminance_nits);
 	a = dc_fixpt_from_fraction(17883277, 100000000);
 	b = dc_fixpt_from_fraction(28466892, 100000000);
@@ -220,97 +221,97 @@ static void compute_hlg_oetf(struct fixed31_32 in_x, struct fixed31_32 *out_y,
 	x = dc_fixpt_mul(in_x, scaling_factor);
 
 
-	if (dc_fixpt_lt(x, threshold)) {
+	अगर (dc_fixpt_lt(x, threshold)) अणु
 		x = dc_fixpt_mul(x, dc_fixpt_from_fraction(3, 1));
-		*out_y = dc_fixpt_pow(x, dc_fixpt_half);
-	} else {
+		*out_y = dc_fixpt_घात(x, dc_fixpt_half);
+	पूर्ण अन्यथा अणु
 		x = dc_fixpt_mul(x, dc_fixpt_from_fraction(12, 1));
 		x = dc_fixpt_sub(x, b);
 		x = dc_fixpt_log(x);
 		x = dc_fixpt_mul(a, x);
 		*out_y = dc_fixpt_add(x, c);
-	}
-}
+	पूर्ण
+पूर्ण
 
 
-/* one-time pre-compute PQ values - only for sdr_white_level 80 */
-void precompute_pq(void)
-{
-	int i;
-	struct fixed31_32 x;
-	const struct hw_x_point *coord_x = coordinates_x + 32;
-	struct fixed31_32 scaling_factor =
+/* one-समय pre-compute PQ values - only क्रम sdr_white_level 80 */
+व्योम precompute_pq(व्योम)
+अणु
+	पूर्णांक i;
+	काष्ठा fixed31_32 x;
+	स्थिर काष्ठा hw_x_poपूर्णांक *coord_x = coordinates_x + 32;
+	काष्ठा fixed31_32 scaling_factor =
 			dc_fixpt_from_fraction(80, 10000);
 
-	struct fixed31_32 *pq_table = mod_color_get_table(type_pq_table);
+	काष्ठा fixed31_32 *pq_table = mod_color_get_table(type_pq_table);
 
-	/* pow function has problems with arguments too small */
-	for (i = 0; i < 32; i++)
+	/* घात function has problems with arguments too small */
+	क्रम (i = 0; i < 32; i++)
 		pq_table[i] = dc_fixpt_zero;
 
-	for (i = 32; i <= MAX_HW_POINTS; i++) {
+	क्रम (i = 32; i <= MAX_HW_POINTS; i++) अणु
 		x = dc_fixpt_mul(coord_x->x, scaling_factor);
 		compute_pq(x, &pq_table[i]);
 		++coord_x;
-	}
-}
+	पूर्ण
+पूर्ण
 
-/* one-time pre-compute dePQ values - only for max pixel value 125 FP16 */
-void precompute_de_pq(void)
-{
-	int i;
-	struct fixed31_32  y;
-	uint32_t begin_index, end_index;
+/* one-समय pre-compute dePQ values - only क्रम max pixel value 125 FP16 */
+व्योम precompute_de_pq(व्योम)
+अणु
+	पूर्णांक i;
+	काष्ठा fixed31_32  y;
+	uपूर्णांक32_t begin_index, end_index;
 
-	struct fixed31_32 scaling_factor = dc_fixpt_from_int(125);
-	struct fixed31_32 *de_pq_table = mod_color_get_table(type_de_pq_table);
-	/* X points is 2^-25 to 2^7
-	 * De-gamma X is 2^-12 to 2^0 – we are skipping first -12-(-25) = 13 regions
+	काष्ठा fixed31_32 scaling_factor = dc_fixpt_from_पूर्णांक(125);
+	काष्ठा fixed31_32 *de_pq_table = mod_color_get_table(type_de_pq_table);
+	/* X poपूर्णांकs is 2^-25 to 2^7
+	 * De-gamma X is 2^-12 to 2^0 ै  we are skipping first -12-(-25) = 13 regions
 	 */
 	begin_index = 13 * NUM_PTS_IN_REGION;
 	end_index = begin_index + 12 * NUM_PTS_IN_REGION;
 
-	for (i = 0; i <= begin_index; i++)
+	क्रम (i = 0; i <= begin_index; i++)
 		de_pq_table[i] = dc_fixpt_zero;
 
-	for (; i <= end_index; i++) {
+	क्रम (; i <= end_index; i++) अणु
 		compute_de_pq(coordinates_x[i].x, &y);
 		de_pq_table[i] = dc_fixpt_mul(y, scaling_factor);
-	}
+	पूर्ण
 
-	for (; i <= MAX_HW_POINTS; i++)
+	क्रम (; i <= MAX_HW_POINTS; i++)
 		de_pq_table[i] = de_pq_table[i-1];
-}
-struct dividers {
-	struct fixed31_32 divider1;
-	struct fixed31_32 divider2;
-	struct fixed31_32 divider3;
-};
+पूर्ण
+काष्ठा भागiders अणु
+	काष्ठा fixed31_32 भागider1;
+	काष्ठा fixed31_32 भागider2;
+	काष्ठा fixed31_32 भागider3;
+पूर्ण;
 
 
-static bool build_coefficients(struct gamma_coefficients *coefficients, enum dc_transfer_func_predefined type)
-{
+अटल bool build_coefficients(काष्ठा gamma_coefficients *coefficients, क्रमागत dc_transfer_func_predefined type)
+अणु
 
-	uint32_t i = 0;
-	uint32_t index = 0;
+	uपूर्णांक32_t i = 0;
+	uपूर्णांक32_t index = 0;
 	bool ret = true;
 
-	if (type == TRANSFER_FUNCTION_SRGB)
+	अगर (type == TRANSFER_FUNCTION_SRGB)
 		index = 0;
-	else if (type == TRANSFER_FUNCTION_BT709)
+	अन्यथा अगर (type == TRANSFER_FUNCTION_BT709)
 		index = 1;
-	else if (type == TRANSFER_FUNCTION_GAMMA22)
+	अन्यथा अगर (type == TRANSFER_FUNCTION_GAMMA22)
 		index = 2;
-	else if (type == TRANSFER_FUNCTION_GAMMA24)
+	अन्यथा अगर (type == TRANSFER_FUNCTION_GAMMA24)
 		index = 3;
-	else if (type == TRANSFER_FUNCTION_GAMMA26)
+	अन्यथा अगर (type == TRANSFER_FUNCTION_GAMMA26)
 		index = 4;
-	else {
+	अन्यथा अणु
 		ret = false;
-		goto release;
-	}
+		जाओ release;
+	पूर्ण
 
-	do {
+	करो अणु
 		coefficients->a0[i] = dc_fixpt_from_fraction(
 			gamma_numerator01[index], 10000000);
 		coefficients->a1[i] = dc_fixpt_from_fraction(
@@ -323,101 +324,101 @@ static bool build_coefficients(struct gamma_coefficients *coefficients, enum dc_
 			gamma_numerator05[index], 1000);
 
 		++i;
-	} while (i != ARRAY_SIZE(coefficients->a0));
+	पूर्ण जबतक (i != ARRAY_SIZE(coefficients->a0));
 release:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static struct fixed31_32 translate_from_linear_space(
-		struct translate_from_linear_space_args *args)
-{
-	const struct fixed31_32 one = dc_fixpt_from_int(1);
+अटल काष्ठा fixed31_32 translate_from_linear_space(
+		काष्ठा translate_from_linear_space_args *args)
+अणु
+	स्थिर काष्ठा fixed31_32 one = dc_fixpt_from_पूर्णांक(1);
 
-	struct fixed31_32 scratch_1, scratch_2;
-	struct calculate_buffer *cal_buffer = args->cal_buffer;
+	काष्ठा fixed31_32 scratch_1, scratch_2;
+	काष्ठा calculate_buffer *cal_buffer = args->cal_buffer;
 
-	if (dc_fixpt_le(one, args->arg))
-		return one;
+	अगर (dc_fixpt_le(one, args->arg))
+		वापस one;
 
-	if (dc_fixpt_le(args->arg, dc_fixpt_neg(args->a0))) {
+	अगर (dc_fixpt_le(args->arg, dc_fixpt_neg(args->a0))) अणु
 		scratch_1 = dc_fixpt_add(one, args->a3);
-		scratch_2 = dc_fixpt_pow(
+		scratch_2 = dc_fixpt_घात(
 				dc_fixpt_neg(args->arg),
 				dc_fixpt_recip(args->gamma));
 		scratch_1 = dc_fixpt_mul(scratch_1, scratch_2);
 		scratch_1 = dc_fixpt_sub(args->a2, scratch_1);
 
-		return scratch_1;
-	} else if (dc_fixpt_le(args->a0, args->arg)) {
-		if (cal_buffer->buffer_index == 0) {
-			cal_buffer->gamma_of_2 = dc_fixpt_pow(dc_fixpt_from_int(2),
+		वापस scratch_1;
+	पूर्ण अन्यथा अगर (dc_fixpt_le(args->a0, args->arg)) अणु
+		अगर (cal_buffer->buffer_index == 0) अणु
+			cal_buffer->gamma_of_2 = dc_fixpt_घात(dc_fixpt_from_पूर्णांक(2),
 					dc_fixpt_recip(args->gamma));
-		}
+		पूर्ण
 		scratch_1 = dc_fixpt_add(one, args->a3);
-		/* In the first region (first 16 points) and in the
+		/* In the first region (first 16 poपूर्णांकs) and in the
 		 * region delimited by START/END we calculate with
-		 * full precision to avoid error accumulation. 
+		 * full precision to aव्योम error accumulation. 
 		 */
-		if ((cal_buffer->buffer_index >= PRECISE_LUT_REGION_START &&
+		अगर ((cal_buffer->buffer_index >= PRECISE_LUT_REGION_START &&
 			cal_buffer->buffer_index <= PRECISE_LUT_REGION_END) ||
 			(cal_buffer->buffer_index < 16))
-			scratch_2 = dc_fixpt_pow(args->arg,
+			scratch_2 = dc_fixpt_घात(args->arg,
 					dc_fixpt_recip(args->gamma));
-		else
+		अन्यथा
 			scratch_2 = dc_fixpt_mul(cal_buffer->gamma_of_2,
 					cal_buffer->buffer[cal_buffer->buffer_index%16]);
 
-		if (cal_buffer->buffer_index != -1) {
+		अगर (cal_buffer->buffer_index != -1) अणु
 			cal_buffer->buffer[cal_buffer->buffer_index%16] = scratch_2;
 			cal_buffer->buffer_index++;
-		}
+		पूर्ण
 
 		scratch_1 = dc_fixpt_mul(scratch_1, scratch_2);
 		scratch_1 = dc_fixpt_sub(scratch_1, args->a2);
 
-		return scratch_1;
-	}
-	else
-		return dc_fixpt_mul(args->arg, args->a1);
-}
+		वापस scratch_1;
+	पूर्ण
+	अन्यथा
+		वापस dc_fixpt_mul(args->arg, args->a1);
+पूर्ण
 
 
-static struct fixed31_32 translate_from_linear_space_long(
-		struct translate_from_linear_space_args *args)
-{
-	const struct fixed31_32 one = dc_fixpt_from_int(1);
+अटल काष्ठा fixed31_32 translate_from_linear_space_दीर्घ(
+		काष्ठा translate_from_linear_space_args *args)
+अणु
+	स्थिर काष्ठा fixed31_32 one = dc_fixpt_from_पूर्णांक(1);
 
-	if (dc_fixpt_lt(one, args->arg))
-		return one;
+	अगर (dc_fixpt_lt(one, args->arg))
+		वापस one;
 
-	if (dc_fixpt_le(args->arg, dc_fixpt_neg(args->a0)))
-		return dc_fixpt_sub(
+	अगर (dc_fixpt_le(args->arg, dc_fixpt_neg(args->a0)))
+		वापस dc_fixpt_sub(
 			args->a2,
 			dc_fixpt_mul(
 				dc_fixpt_add(
 					one,
 					args->a3),
-				dc_fixpt_pow(
+				dc_fixpt_घात(
 					dc_fixpt_neg(args->arg),
 					dc_fixpt_recip(args->gamma))));
-	else if (dc_fixpt_le(args->a0, args->arg))
-		return dc_fixpt_sub(
+	अन्यथा अगर (dc_fixpt_le(args->a0, args->arg))
+		वापस dc_fixpt_sub(
 			dc_fixpt_mul(
 				dc_fixpt_add(
 					one,
 					args->a3),
-				dc_fixpt_pow(
+				dc_fixpt_घात(
 						args->arg,
 					dc_fixpt_recip(args->gamma))),
 					args->a2);
-	else
-		return dc_fixpt_mul(args->arg, args->a1);
-}
+	अन्यथा
+		वापस dc_fixpt_mul(args->arg, args->a1);
+पूर्ण
 
-static struct fixed31_32 calculate_gamma22(struct fixed31_32 arg, bool use_eetf, struct calculate_buffer *cal_buffer)
-{
-	struct fixed31_32 gamma = dc_fixpt_from_fraction(22, 10);
-	struct translate_from_linear_space_args scratch_gamma_args;
+अटल काष्ठा fixed31_32 calculate_gamma22(काष्ठा fixed31_32 arg, bool use_eetf, काष्ठा calculate_buffer *cal_buffer)
+अणु
+	काष्ठा fixed31_32 gamma = dc_fixpt_from_fraction(22, 10);
+	काष्ठा translate_from_linear_space_args scratch_gamma_args;
 
 	scratch_gamma_args.arg = arg;
 	scratch_gamma_args.a0 = dc_fixpt_zero;
@@ -427,53 +428,53 @@ static struct fixed31_32 calculate_gamma22(struct fixed31_32 arg, bool use_eetf,
 	scratch_gamma_args.cal_buffer = cal_buffer;
 	scratch_gamma_args.gamma = gamma;
 
-	if (use_eetf)
-		return translate_from_linear_space_long(&scratch_gamma_args);
+	अगर (use_eetf)
+		वापस translate_from_linear_space_दीर्घ(&scratch_gamma_args);
 
-	return translate_from_linear_space(&scratch_gamma_args);
-}
+	वापस translate_from_linear_space(&scratch_gamma_args);
+पूर्ण
 
 
-static struct fixed31_32 translate_to_linear_space(
-	struct fixed31_32 arg,
-	struct fixed31_32 a0,
-	struct fixed31_32 a1,
-	struct fixed31_32 a2,
-	struct fixed31_32 a3,
-	struct fixed31_32 gamma)
-{
-	struct fixed31_32 linear;
+अटल काष्ठा fixed31_32 translate_to_linear_space(
+	काष्ठा fixed31_32 arg,
+	काष्ठा fixed31_32 a0,
+	काष्ठा fixed31_32 a1,
+	काष्ठा fixed31_32 a2,
+	काष्ठा fixed31_32 a3,
+	काष्ठा fixed31_32 gamma)
+अणु
+	काष्ठा fixed31_32 linear;
 
 	a0 = dc_fixpt_mul(a0, a1);
-	if (dc_fixpt_le(arg, dc_fixpt_neg(a0)))
+	अगर (dc_fixpt_le(arg, dc_fixpt_neg(a0)))
 
 		linear = dc_fixpt_neg(
-				 dc_fixpt_pow(
-				 dc_fixpt_div(
+				 dc_fixpt_घात(
+				 dc_fixpt_भाग(
 				 dc_fixpt_sub(a2, arg),
 				 dc_fixpt_add(
 				 dc_fixpt_one, a3)), gamma));
 
-	else if (dc_fixpt_le(dc_fixpt_neg(a0), arg) &&
+	अन्यथा अगर (dc_fixpt_le(dc_fixpt_neg(a0), arg) &&
 			 dc_fixpt_le(arg, a0))
-		linear = dc_fixpt_div(arg, a1);
-	else
-		linear =  dc_fixpt_pow(
-					dc_fixpt_div(
+		linear = dc_fixpt_भाग(arg, a1);
+	अन्यथा
+		linear =  dc_fixpt_घात(
+					dc_fixpt_भाग(
 					dc_fixpt_add(a2, arg),
 					dc_fixpt_add(
 					dc_fixpt_one, a3)), gamma);
 
-	return linear;
-}
+	वापस linear;
+पूर्ण
 
-static struct fixed31_32 translate_from_linear_space_ex(
-	struct fixed31_32 arg,
-	struct gamma_coefficients *coeff,
-	uint32_t color_index,
-	struct calculate_buffer *cal_buffer)
-{
-	struct translate_from_linear_space_args scratch_gamma_args;
+अटल काष्ठा fixed31_32 translate_from_linear_space_ex(
+	काष्ठा fixed31_32 arg,
+	काष्ठा gamma_coefficients *coeff,
+	uपूर्णांक32_t color_index,
+	काष्ठा calculate_buffer *cal_buffer)
+अणु
+	काष्ठा translate_from_linear_space_args scratch_gamma_args;
 
 	scratch_gamma_args.arg = arg;
 	scratch_gamma_args.a0 = coeff->a0[color_index];
@@ -483,300 +484,300 @@ static struct fixed31_32 translate_from_linear_space_ex(
 	scratch_gamma_args.gamma = coeff->user_gamma[color_index];
 	scratch_gamma_args.cal_buffer = cal_buffer;
 
-	return translate_from_linear_space(&scratch_gamma_args);
-}
+	वापस translate_from_linear_space(&scratch_gamma_args);
+पूर्ण
 
 
-static inline struct fixed31_32 translate_to_linear_space_ex(
-	struct fixed31_32 arg,
-	struct gamma_coefficients *coeff,
-	uint32_t color_index)
-{
-	return translate_to_linear_space(
+अटल अंतरभूत काष्ठा fixed31_32 translate_to_linear_space_ex(
+	काष्ठा fixed31_32 arg,
+	काष्ठा gamma_coefficients *coeff,
+	uपूर्णांक32_t color_index)
+अणु
+	वापस translate_to_linear_space(
 		arg,
 		coeff->a0[color_index],
 		coeff->a1[color_index],
 		coeff->a2[color_index],
 		coeff->a3[color_index],
 		coeff->user_gamma[color_index]);
-}
+पूर्ण
 
 
-static bool find_software_points(
-	const struct dc_gamma *ramp,
-	const struct gamma_pixel *axis_x,
-	struct fixed31_32 hw_point,
-	enum channel_name channel,
-	uint32_t *index_to_start,
-	uint32_t *index_left,
-	uint32_t *index_right,
-	enum hw_point_position *pos)
-{
-	const uint32_t max_number = ramp->num_entries + 3;
+अटल bool find_software_poपूर्णांकs(
+	स्थिर काष्ठा dc_gamma *ramp,
+	स्थिर काष्ठा gamma_pixel *axis_x,
+	काष्ठा fixed31_32 hw_poपूर्णांक,
+	क्रमागत channel_name channel,
+	uपूर्णांक32_t *index_to_start,
+	uपूर्णांक32_t *index_left,
+	uपूर्णांक32_t *index_right,
+	क्रमागत hw_poपूर्णांक_position *pos)
+अणु
+	स्थिर uपूर्णांक32_t max_number = ramp->num_entries + 3;
 
-	struct fixed31_32 left, right;
+	काष्ठा fixed31_32 left, right;
 
-	uint32_t i = *index_to_start;
+	uपूर्णांक32_t i = *index_to_start;
 
-	while (i < max_number) {
-		if (channel == CHANNEL_NAME_RED) {
+	जबतक (i < max_number) अणु
+		अगर (channel == CHANNEL_NAME_RED) अणु
 			left = axis_x[i].r;
 
-			if (i < max_number - 1)
+			अगर (i < max_number - 1)
 				right = axis_x[i + 1].r;
-			else
+			अन्यथा
 				right = axis_x[max_number - 1].r;
-		} else if (channel == CHANNEL_NAME_GREEN) {
+		पूर्ण अन्यथा अगर (channel == CHANNEL_NAME_GREEN) अणु
 			left = axis_x[i].g;
 
-			if (i < max_number - 1)
+			अगर (i < max_number - 1)
 				right = axis_x[i + 1].g;
-			else
+			अन्यथा
 				right = axis_x[max_number - 1].g;
-		} else {
+		पूर्ण अन्यथा अणु
 			left = axis_x[i].b;
 
-			if (i < max_number - 1)
+			अगर (i < max_number - 1)
 				right = axis_x[i + 1].b;
-			else
+			अन्यथा
 				right = axis_x[max_number - 1].b;
-		}
+		पूर्ण
 
-		if (dc_fixpt_le(left, hw_point) &&
-			dc_fixpt_le(hw_point, right)) {
+		अगर (dc_fixpt_le(left, hw_poपूर्णांक) &&
+			dc_fixpt_le(hw_poपूर्णांक, right)) अणु
 			*index_to_start = i;
 			*index_left = i;
 
-			if (i < max_number - 1)
+			अगर (i < max_number - 1)
 				*index_right = i + 1;
-			else
+			अन्यथा
 				*index_right = max_number - 1;
 
 			*pos = HW_POINT_POSITION_MIDDLE;
 
-			return true;
-		} else if ((i == *index_to_start) &&
-			dc_fixpt_le(hw_point, left)) {
+			वापस true;
+		पूर्ण अन्यथा अगर ((i == *index_to_start) &&
+			dc_fixpt_le(hw_poपूर्णांक, left)) अणु
 			*index_to_start = i;
 			*index_left = i;
 			*index_right = i;
 
 			*pos = HW_POINT_POSITION_LEFT;
 
-			return true;
-		} else if ((i == max_number - 1) &&
-			dc_fixpt_le(right, hw_point)) {
+			वापस true;
+		पूर्ण अन्यथा अगर ((i == max_number - 1) &&
+			dc_fixpt_le(right, hw_poपूर्णांक)) अणु
 			*index_to_start = i;
 			*index_left = i;
 			*index_right = i;
 
 			*pos = HW_POINT_POSITION_RIGHT;
 
-			return true;
-		}
+			वापस true;
+		पूर्ण
 
 		++i;
-	}
+	पूर्ण
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static bool build_custom_gamma_mapping_coefficients_worker(
-	const struct dc_gamma *ramp,
-	struct pixel_gamma_point *coeff,
-	const struct hw_x_point *coordinates_x,
-	const struct gamma_pixel *axis_x,
-	enum channel_name channel,
-	uint32_t number_of_points)
-{
-	uint32_t i = 0;
+अटल bool build_custom_gamma_mapping_coefficients_worker(
+	स्थिर काष्ठा dc_gamma *ramp,
+	काष्ठा pixel_gamma_poपूर्णांक *coeff,
+	स्थिर काष्ठा hw_x_poपूर्णांक *coordinates_x,
+	स्थिर काष्ठा gamma_pixel *axis_x,
+	क्रमागत channel_name channel,
+	uपूर्णांक32_t number_of_poपूर्णांकs)
+अणु
+	uपूर्णांक32_t i = 0;
 
-	while (i <= number_of_points) {
-		struct fixed31_32 coord_x;
+	जबतक (i <= number_of_poपूर्णांकs) अणु
+		काष्ठा fixed31_32 coord_x;
 
-		uint32_t index_to_start = 0;
-		uint32_t index_left = 0;
-		uint32_t index_right = 0;
+		uपूर्णांक32_t index_to_start = 0;
+		uपूर्णांक32_t index_left = 0;
+		uपूर्णांक32_t index_right = 0;
 
-		enum hw_point_position hw_pos;
+		क्रमागत hw_poपूर्णांक_position hw_pos;
 
-		struct gamma_point *point;
+		काष्ठा gamma_poपूर्णांक *poपूर्णांक;
 
-		struct fixed31_32 left_pos;
-		struct fixed31_32 right_pos;
+		काष्ठा fixed31_32 left_pos;
+		काष्ठा fixed31_32 right_pos;
 
-		if (channel == CHANNEL_NAME_RED)
+		अगर (channel == CHANNEL_NAME_RED)
 			coord_x = coordinates_x[i].regamma_y_red;
-		else if (channel == CHANNEL_NAME_GREEN)
+		अन्यथा अगर (channel == CHANNEL_NAME_GREEN)
 			coord_x = coordinates_x[i].regamma_y_green;
-		else
+		अन्यथा
 			coord_x = coordinates_x[i].regamma_y_blue;
 
-		if (!find_software_points(
+		अगर (!find_software_poपूर्णांकs(
 			ramp, axis_x, coord_x, channel,
-			&index_to_start, &index_left, &index_right, &hw_pos)) {
+			&index_to_start, &index_left, &index_right, &hw_pos)) अणु
 			BREAK_TO_DEBUGGER();
-			return false;
-		}
+			वापस false;
+		पूर्ण
 
-		if (index_left >= ramp->num_entries + 3) {
+		अगर (index_left >= ramp->num_entries + 3) अणु
 			BREAK_TO_DEBUGGER();
-			return false;
-		}
+			वापस false;
+		पूर्ण
 
-		if (index_right >= ramp->num_entries + 3) {
+		अगर (index_right >= ramp->num_entries + 3) अणु
 			BREAK_TO_DEBUGGER();
-			return false;
-		}
+			वापस false;
+		पूर्ण
 
-		if (channel == CHANNEL_NAME_RED) {
-			point = &coeff[i].r;
+		अगर (channel == CHANNEL_NAME_RED) अणु
+			poपूर्णांक = &coeff[i].r;
 
 			left_pos = axis_x[index_left].r;
 			right_pos = axis_x[index_right].r;
-		} else if (channel == CHANNEL_NAME_GREEN) {
-			point = &coeff[i].g;
+		पूर्ण अन्यथा अगर (channel == CHANNEL_NAME_GREEN) अणु
+			poपूर्णांक = &coeff[i].g;
 
 			left_pos = axis_x[index_left].g;
 			right_pos = axis_x[index_right].g;
-		} else {
-			point = &coeff[i].b;
+		पूर्ण अन्यथा अणु
+			poपूर्णांक = &coeff[i].b;
 
 			left_pos = axis_x[index_left].b;
 			right_pos = axis_x[index_right].b;
-		}
+		पूर्ण
 
-		if (hw_pos == HW_POINT_POSITION_MIDDLE)
-			point->coeff = dc_fixpt_div(
+		अगर (hw_pos == HW_POINT_POSITION_MIDDLE)
+			poपूर्णांक->coeff = dc_fixpt_भाग(
 				dc_fixpt_sub(
 					coord_x,
 					left_pos),
 				dc_fixpt_sub(
 					right_pos,
 					left_pos));
-		else if (hw_pos == HW_POINT_POSITION_LEFT)
-			point->coeff = dc_fixpt_zero;
-		else if (hw_pos == HW_POINT_POSITION_RIGHT)
-			point->coeff = dc_fixpt_from_int(2);
-		else {
+		अन्यथा अगर (hw_pos == HW_POINT_POSITION_LEFT)
+			poपूर्णांक->coeff = dc_fixpt_zero;
+		अन्यथा अगर (hw_pos == HW_POINT_POSITION_RIGHT)
+			poपूर्णांक->coeff = dc_fixpt_from_पूर्णांक(2);
+		अन्यथा अणु
 			BREAK_TO_DEBUGGER();
-			return false;
-		}
+			वापस false;
+		पूर्ण
 
-		point->left_index = index_left;
-		point->right_index = index_right;
-		point->pos = hw_pos;
+		poपूर्णांक->left_index = index_left;
+		poपूर्णांक->right_index = index_right;
+		poपूर्णांक->pos = hw_pos;
 
 		++i;
-	}
+	पूर्ण
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static struct fixed31_32 calculate_mapped_value(
-	struct pwl_float_data *rgb,
-	const struct pixel_gamma_point *coeff,
-	enum channel_name channel,
-	uint32_t max_index)
-{
-	const struct gamma_point *point;
+अटल काष्ठा fixed31_32 calculate_mapped_value(
+	काष्ठा pwl_भग्न_data *rgb,
+	स्थिर काष्ठा pixel_gamma_poपूर्णांक *coeff,
+	क्रमागत channel_name channel,
+	uपूर्णांक32_t max_index)
+अणु
+	स्थिर काष्ठा gamma_poपूर्णांक *poपूर्णांक;
 
-	struct fixed31_32 result;
+	काष्ठा fixed31_32 result;
 
-	if (channel == CHANNEL_NAME_RED)
-		point = &coeff->r;
-	else if (channel == CHANNEL_NAME_GREEN)
-		point = &coeff->g;
-	else
-		point = &coeff->b;
+	अगर (channel == CHANNEL_NAME_RED)
+		poपूर्णांक = &coeff->r;
+	अन्यथा अगर (channel == CHANNEL_NAME_GREEN)
+		poपूर्णांक = &coeff->g;
+	अन्यथा
+		poपूर्णांक = &coeff->b;
 
-	if ((point->left_index < 0) || (point->left_index > max_index)) {
+	अगर ((poपूर्णांक->left_index < 0) || (poपूर्णांक->left_index > max_index)) अणु
 		BREAK_TO_DEBUGGER();
-		return dc_fixpt_zero;
-	}
+		वापस dc_fixpt_zero;
+	पूर्ण
 
-	if ((point->right_index < 0) || (point->right_index > max_index)) {
+	अगर ((poपूर्णांक->right_index < 0) || (poपूर्णांक->right_index > max_index)) अणु
 		BREAK_TO_DEBUGGER();
-		return dc_fixpt_zero;
-	}
+		वापस dc_fixpt_zero;
+	पूर्ण
 
-	if (point->pos == HW_POINT_POSITION_MIDDLE)
-		if (channel == CHANNEL_NAME_RED)
+	अगर (poपूर्णांक->pos == HW_POINT_POSITION_MIDDLE)
+		अगर (channel == CHANNEL_NAME_RED)
 			result = dc_fixpt_add(
 				dc_fixpt_mul(
-					point->coeff,
+					poपूर्णांक->coeff,
 					dc_fixpt_sub(
-						rgb[point->right_index].r,
-						rgb[point->left_index].r)),
-				rgb[point->left_index].r);
-		else if (channel == CHANNEL_NAME_GREEN)
+						rgb[poपूर्णांक->right_index].r,
+						rgb[poपूर्णांक->left_index].r)),
+				rgb[poपूर्णांक->left_index].r);
+		अन्यथा अगर (channel == CHANNEL_NAME_GREEN)
 			result = dc_fixpt_add(
 				dc_fixpt_mul(
-					point->coeff,
+					poपूर्णांक->coeff,
 					dc_fixpt_sub(
-						rgb[point->right_index].g,
-						rgb[point->left_index].g)),
-				rgb[point->left_index].g);
-		else
+						rgb[poपूर्णांक->right_index].g,
+						rgb[poपूर्णांक->left_index].g)),
+				rgb[poपूर्णांक->left_index].g);
+		अन्यथा
 			result = dc_fixpt_add(
 				dc_fixpt_mul(
-					point->coeff,
+					poपूर्णांक->coeff,
 					dc_fixpt_sub(
-						rgb[point->right_index].b,
-						rgb[point->left_index].b)),
-				rgb[point->left_index].b);
-	else if (point->pos == HW_POINT_POSITION_LEFT) {
+						rgb[poपूर्णांक->right_index].b,
+						rgb[poपूर्णांक->left_index].b)),
+				rgb[poपूर्णांक->left_index].b);
+	अन्यथा अगर (poपूर्णांक->pos == HW_POINT_POSITION_LEFT) अणु
 		BREAK_TO_DEBUGGER();
 		result = dc_fixpt_zero;
-	} else {
+	पूर्ण अन्यथा अणु
 		result = dc_fixpt_one;
-	}
+	पूर्ण
 
-	return result;
-}
+	वापस result;
+पूर्ण
 
-static void build_pq(struct pwl_float_data_ex *rgb_regamma,
-		uint32_t hw_points_num,
-		const struct hw_x_point *coordinate_x,
-		uint32_t sdr_white_level)
-{
-	uint32_t i, start_index;
+अटल व्योम build_pq(काष्ठा pwl_भग्न_data_ex *rgb_regamma,
+		uपूर्णांक32_t hw_poपूर्णांकs_num,
+		स्थिर काष्ठा hw_x_poपूर्णांक *coordinate_x,
+		uपूर्णांक32_t sdr_white_level)
+अणु
+	uपूर्णांक32_t i, start_index;
 
-	struct pwl_float_data_ex *rgb = rgb_regamma;
-	const struct hw_x_point *coord_x = coordinate_x;
-	struct fixed31_32 x;
-	struct fixed31_32 output;
-	struct fixed31_32 scaling_factor =
+	काष्ठा pwl_भग्न_data_ex *rgb = rgb_regamma;
+	स्थिर काष्ठा hw_x_poपूर्णांक *coord_x = coordinate_x;
+	काष्ठा fixed31_32 x;
+	काष्ठा fixed31_32 output;
+	काष्ठा fixed31_32 scaling_factor =
 			dc_fixpt_from_fraction(sdr_white_level, 10000);
-	struct fixed31_32 *pq_table = mod_color_get_table(type_pq_table);
+	काष्ठा fixed31_32 *pq_table = mod_color_get_table(type_pq_table);
 
-	if (!mod_color_is_table_init(type_pq_table) && sdr_white_level == 80) {
+	अगर (!mod_color_is_table_init(type_pq_table) && sdr_white_level == 80) अणु
 		precompute_pq();
 		mod_color_set_table_init_state(type_pq_table, true);
-	}
+	पूर्ण
 
 	/* TODO: start index is from segment 2^-24, skipping first segment
-	 * due to x values too small for power calculations
+	 * due to x values too small क्रम घातer calculations
 	 */
 	start_index = 32;
 	rgb += start_index;
 	coord_x += start_index;
 
-	for (i = start_index; i <= hw_points_num; i++) {
+	क्रम (i = start_index; i <= hw_poपूर्णांकs_num; i++) अणु
 		/* Multiply 0.008 as regamma is 0-1 and FP16 input is 0-125.
 		 * FP 1.0 = 80nits
 		 */
-		if (sdr_white_level == 80) {
+		अगर (sdr_white_level == 80) अणु
 			output = pq_table[i];
-		} else {
+		पूर्ण अन्यथा अणु
 			x = dc_fixpt_mul(coord_x->x, scaling_factor);
 			compute_pq(x, &output);
-		}
+		पूर्ण
 
 		/* should really not happen? */
-		if (dc_fixpt_lt(output, dc_fixpt_zero))
+		अगर (dc_fixpt_lt(output, dc_fixpt_zero))
 			output = dc_fixpt_zero;
-		else if (dc_fixpt_lt(dc_fixpt_one, output))
+		अन्यथा अगर (dc_fixpt_lt(dc_fixpt_one, output))
 			output = dc_fixpt_one;
 
 		rgb->r = output;
@@ -785,62 +786,62 @@ static void build_pq(struct pwl_float_data_ex *rgb_regamma,
 
 		++coord_x;
 		++rgb;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void build_de_pq(struct pwl_float_data_ex *de_pq,
-		uint32_t hw_points_num,
-		const struct hw_x_point *coordinate_x)
-{
-	uint32_t i;
-	struct fixed31_32 output;
-	struct fixed31_32 *de_pq_table = mod_color_get_table(type_de_pq_table);
-	struct fixed31_32 scaling_factor = dc_fixpt_from_int(125);
+अटल व्योम build_de_pq(काष्ठा pwl_भग्न_data_ex *de_pq,
+		uपूर्णांक32_t hw_poपूर्णांकs_num,
+		स्थिर काष्ठा hw_x_poपूर्णांक *coordinate_x)
+अणु
+	uपूर्णांक32_t i;
+	काष्ठा fixed31_32 output;
+	काष्ठा fixed31_32 *de_pq_table = mod_color_get_table(type_de_pq_table);
+	काष्ठा fixed31_32 scaling_factor = dc_fixpt_from_पूर्णांक(125);
 
-	if (!mod_color_is_table_init(type_de_pq_table)) {
+	अगर (!mod_color_is_table_init(type_de_pq_table)) अणु
 		precompute_de_pq();
 		mod_color_set_table_init_state(type_de_pq_table, true);
-	}
+	पूर्ण
 
 
-	for (i = 0; i <= hw_points_num; i++) {
+	क्रम (i = 0; i <= hw_poपूर्णांकs_num; i++) अणु
 		output = de_pq_table[i];
 		/* should really not happen? */
-		if (dc_fixpt_lt(output, dc_fixpt_zero))
+		अगर (dc_fixpt_lt(output, dc_fixpt_zero))
 			output = dc_fixpt_zero;
-		else if (dc_fixpt_lt(scaling_factor, output))
+		अन्यथा अगर (dc_fixpt_lt(scaling_factor, output))
 			output = scaling_factor;
 		de_pq[i].r = output;
 		de_pq[i].g = output;
 		de_pq[i].b = output;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static bool build_regamma(struct pwl_float_data_ex *rgb_regamma,
-		uint32_t hw_points_num,
-		const struct hw_x_point *coordinate_x,
-		enum dc_transfer_func_predefined type,
-		struct calculate_buffer *cal_buffer)
-{
-	uint32_t i;
+अटल bool build_regamma(काष्ठा pwl_भग्न_data_ex *rgb_regamma,
+		uपूर्णांक32_t hw_poपूर्णांकs_num,
+		स्थिर काष्ठा hw_x_poपूर्णांक *coordinate_x,
+		क्रमागत dc_transfer_func_predefined type,
+		काष्ठा calculate_buffer *cal_buffer)
+अणु
+	uपूर्णांक32_t i;
 	bool ret = false;
 
-	struct gamma_coefficients *coeff;
-	struct pwl_float_data_ex *rgb = rgb_regamma;
-	const struct hw_x_point *coord_x = coordinate_x;
+	काष्ठा gamma_coefficients *coeff;
+	काष्ठा pwl_भग्न_data_ex *rgb = rgb_regamma;
+	स्थिर काष्ठा hw_x_poपूर्णांक *coord_x = coordinate_x;
 
-	coeff = kvzalloc(sizeof(*coeff), GFP_KERNEL);
-	if (!coeff)
-		goto release;
+	coeff = kvzalloc(माप(*coeff), GFP_KERNEL);
+	अगर (!coeff)
+		जाओ release;
 
-	if (!build_coefficients(coeff, type))
-		goto release;
+	अगर (!build_coefficients(coeff, type))
+		जाओ release;
 
-	memset(cal_buffer->buffer, 0, NUM_PTS_IN_REGION * sizeof(struct fixed31_32));
-	cal_buffer->buffer_index = 0; // see variable definition for more info
+	स_रखो(cal_buffer->buffer, 0, NUM_PTS_IN_REGION * माप(काष्ठा fixed31_32));
+	cal_buffer->buffer_index = 0; // see variable definition क्रम more info
 
 	i = 0;
-	while (i <= hw_points_num) {
+	जबतक (i <= hw_poपूर्णांकs_num) अणु
 		/* TODO use y vs r,g,b */
 		rgb->r = translate_from_linear_space_ex(
 			coord_x->x, coeff, 0, cal_buffer);
@@ -849,62 +850,62 @@ static bool build_regamma(struct pwl_float_data_ex *rgb_regamma,
 		++coord_x;
 		++rgb;
 		++i;
-	}
+	पूर्ण
 	cal_buffer->buffer_index = -1;
 	ret = true;
 release:
-	kvfree(coeff);
-	return ret;
-}
+	kvमुक्त(coeff);
+	वापस ret;
+पूर्ण
 
-static void hermite_spline_eetf(struct fixed31_32 input_x,
-				struct fixed31_32 max_display,
-				struct fixed31_32 min_display,
-				struct fixed31_32 max_content,
-				struct fixed31_32 *out_x)
-{
-	struct fixed31_32 min_lum_pq;
-	struct fixed31_32 max_lum_pq;
-	struct fixed31_32 max_content_pq;
-	struct fixed31_32 ks;
-	struct fixed31_32 E1;
-	struct fixed31_32 E2;
-	struct fixed31_32 E3;
-	struct fixed31_32 t;
-	struct fixed31_32 t2;
-	struct fixed31_32 t3;
-	struct fixed31_32 two;
-	struct fixed31_32 three;
-	struct fixed31_32 temp1;
-	struct fixed31_32 temp2;
-	struct fixed31_32 a = dc_fixpt_from_fraction(15, 10);
-	struct fixed31_32 b = dc_fixpt_from_fraction(5, 10);
-	struct fixed31_32 epsilon = dc_fixpt_from_fraction(1, 1000000); // dc_fixpt_epsilon is a bit too small
+अटल व्योम hermite_spline_eetf(काष्ठा fixed31_32 input_x,
+				काष्ठा fixed31_32 max_display,
+				काष्ठा fixed31_32 min_display,
+				काष्ठा fixed31_32 max_content,
+				काष्ठा fixed31_32 *out_x)
+अणु
+	काष्ठा fixed31_32 min_lum_pq;
+	काष्ठा fixed31_32 max_lum_pq;
+	काष्ठा fixed31_32 max_content_pq;
+	काष्ठा fixed31_32 ks;
+	काष्ठा fixed31_32 E1;
+	काष्ठा fixed31_32 E2;
+	काष्ठा fixed31_32 E3;
+	काष्ठा fixed31_32 t;
+	काष्ठा fixed31_32 t2;
+	काष्ठा fixed31_32 t3;
+	काष्ठा fixed31_32 two;
+	काष्ठा fixed31_32 three;
+	काष्ठा fixed31_32 temp1;
+	काष्ठा fixed31_32 temp2;
+	काष्ठा fixed31_32 a = dc_fixpt_from_fraction(15, 10);
+	काष्ठा fixed31_32 b = dc_fixpt_from_fraction(5, 10);
+	काष्ठा fixed31_32 epsilon = dc_fixpt_from_fraction(1, 1000000); // dc_fixpt_epsilon is a bit too small
 
-	if (dc_fixpt_eq(max_content, dc_fixpt_zero)) {
+	अगर (dc_fixpt_eq(max_content, dc_fixpt_zero)) अणु
 		*out_x = dc_fixpt_zero;
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	compute_pq(input_x, &E1);
-	compute_pq(dc_fixpt_div(min_display, max_content), &min_lum_pq);
-	compute_pq(dc_fixpt_div(max_display, max_content), &max_lum_pq);
+	compute_pq(dc_fixpt_भाग(min_display, max_content), &min_lum_pq);
+	compute_pq(dc_fixpt_भाग(max_display, max_content), &max_lum_pq);
 	compute_pq(dc_fixpt_one, &max_content_pq); // always 1? DAL2 code is weird
-	a = dc_fixpt_div(dc_fixpt_add(dc_fixpt_one, b), max_content_pq); // (1+b)/maxContent
+	a = dc_fixpt_भाग(dc_fixpt_add(dc_fixpt_one, b), max_content_pq); // (1+b)/maxContent
 	ks = dc_fixpt_sub(dc_fixpt_mul(a, max_lum_pq), b); // a * max_lum_pq - b
 
-	if (dc_fixpt_lt(E1, ks))
+	अगर (dc_fixpt_lt(E1, ks))
 		E2 = E1;
-	else if (dc_fixpt_le(ks, E1) && dc_fixpt_le(E1, dc_fixpt_one)) {
-		if (dc_fixpt_lt(epsilon, dc_fixpt_sub(dc_fixpt_one, ks)))
+	अन्यथा अगर (dc_fixpt_le(ks, E1) && dc_fixpt_le(E1, dc_fixpt_one)) अणु
+		अगर (dc_fixpt_lt(epsilon, dc_fixpt_sub(dc_fixpt_one, ks)))
 			// t = (E1 - ks) / (1 - ks)
-			t = dc_fixpt_div(dc_fixpt_sub(E1, ks),
+			t = dc_fixpt_भाग(dc_fixpt_sub(E1, ks),
 					dc_fixpt_sub(dc_fixpt_one, ks));
-		else
+		अन्यथा
 			t = dc_fixpt_zero;
 
-		two = dc_fixpt_from_int(2);
-		three = dc_fixpt_from_int(3);
+		two = dc_fixpt_from_पूर्णांक(2);
+		three = dc_fixpt_from_पूर्णांक(3);
 
 		t2 = dc_fixpt_mul(t, t);
 		t3 = dc_fixpt_mul(t2, t);
@@ -925,7 +926,7 @@ static void hermite_spline_eetf(struct fixed31_32 input_x,
 		// (t^3 - 2t^2 + t) * (1-ks)
 		E2 = dc_fixpt_add(E2, dc_fixpt_mul(temp2,
 				dc_fixpt_add(t, dc_fixpt_sub(t3, temp1))));
-	} else
+	पूर्ण अन्यथा
 		E2 = dc_fixpt_one;
 
 	temp1 = dc_fixpt_sub(dc_fixpt_one, E2);
@@ -936,74 +937,74 @@ static void hermite_spline_eetf(struct fixed31_32 input_x,
 	E3 =  dc_fixpt_add(E2, dc_fixpt_mul(min_lum_pq, temp2));
 	compute_de_pq(E3, out_x);
 
-	*out_x = dc_fixpt_div(*out_x, dc_fixpt_div(max_display, max_content));
-}
+	*out_x = dc_fixpt_भाग(*out_x, dc_fixpt_भाग(max_display, max_content));
+पूर्ण
 
-static bool build_freesync_hdr(struct pwl_float_data_ex *rgb_regamma,
-		uint32_t hw_points_num,
-		const struct hw_x_point *coordinate_x,
-		const struct hdr_tm_params *fs_params,
-		struct calculate_buffer *cal_buffer)
-{
-	uint32_t i;
-	struct pwl_float_data_ex *rgb = rgb_regamma;
-	const struct hw_x_point *coord_x = coordinate_x;
-	const struct hw_x_point *prv_coord_x = coord_x;
-	struct fixed31_32 scaledX = dc_fixpt_zero;
-	struct fixed31_32 scaledX1 = dc_fixpt_zero;
-	struct fixed31_32 max_display;
-	struct fixed31_32 min_display;
-	struct fixed31_32 max_content;
-	struct fixed31_32 clip = dc_fixpt_one;
-	struct fixed31_32 output;
+अटल bool build_मुक्तsync_hdr(काष्ठा pwl_भग्न_data_ex *rgb_regamma,
+		uपूर्णांक32_t hw_poपूर्णांकs_num,
+		स्थिर काष्ठा hw_x_poपूर्णांक *coordinate_x,
+		स्थिर काष्ठा hdr_पंचांग_params *fs_params,
+		काष्ठा calculate_buffer *cal_buffer)
+अणु
+	uपूर्णांक32_t i;
+	काष्ठा pwl_भग्न_data_ex *rgb = rgb_regamma;
+	स्थिर काष्ठा hw_x_poपूर्णांक *coord_x = coordinate_x;
+	स्थिर काष्ठा hw_x_poपूर्णांक *prv_coord_x = coord_x;
+	काष्ठा fixed31_32 scaledX = dc_fixpt_zero;
+	काष्ठा fixed31_32 scaledX1 = dc_fixpt_zero;
+	काष्ठा fixed31_32 max_display;
+	काष्ठा fixed31_32 min_display;
+	काष्ठा fixed31_32 max_content;
+	काष्ठा fixed31_32 clip = dc_fixpt_one;
+	काष्ठा fixed31_32 output;
 	bool use_eetf = false;
 	bool is_clipped = false;
-	struct fixed31_32 sdr_white_level;
-	struct fixed31_32 coordX_diff;
-	struct fixed31_32 out_dist_max;
-	struct fixed31_32 bright_norm;
+	काष्ठा fixed31_32 sdr_white_level;
+	काष्ठा fixed31_32 coordX_dअगरf;
+	काष्ठा fixed31_32 out_dist_max;
+	काष्ठा fixed31_32 bright_norm;
 
-	if (fs_params->max_content == 0 ||
+	अगर (fs_params->max_content == 0 ||
 			fs_params->max_display == 0)
-		return false;
+		वापस false;
 
-	max_display = dc_fixpt_from_int(fs_params->max_display);
+	max_display = dc_fixpt_from_पूर्णांक(fs_params->max_display);
 	min_display = dc_fixpt_from_fraction(fs_params->min_display, 10000);
-	max_content = dc_fixpt_from_int(fs_params->max_content);
-	sdr_white_level = dc_fixpt_from_int(fs_params->sdr_white_level);
+	max_content = dc_fixpt_from_पूर्णांक(fs_params->max_content);
+	sdr_white_level = dc_fixpt_from_पूर्णांक(fs_params->sdr_white_level);
 
-	if (fs_params->min_display > 1000) // cap at 0.1 at the bottom
+	अगर (fs_params->min_display > 1000) // cap at 0.1 at the bottom
 		min_display = dc_fixpt_from_fraction(1, 10);
-	if (fs_params->max_display < 100) // cap at 100 at the top
-		max_display = dc_fixpt_from_int(100);
+	अगर (fs_params->max_display < 100) // cap at 100 at the top
+		max_display = dc_fixpt_from_पूर्णांक(100);
 
-	// only max used, we don't adjust min luminance
-	if (fs_params->max_content > fs_params->max_display)
+	// only max used, we करोn't adjust min luminance
+	अगर (fs_params->max_content > fs_params->max_display)
 		use_eetf = true;
-	else
+	अन्यथा
 		max_content = max_display;
 
-	if (!use_eetf)
-		cal_buffer->buffer_index = 0; // see var definition for more info
-	rgb += 32; // first 32 points have problems with fixed point, too small
+	अगर (!use_eetf)
+		cal_buffer->buffer_index = 0; // see var definition क्रम more info
+	rgb += 32; // first 32 poपूर्णांकs have problems with fixed poपूर्णांक, too small
 	coord_x += 32;
 
-	for (i = 32; i <= hw_points_num; i++) {
-		if (!is_clipped) {
-			if (use_eetf) {
+	क्रम (i = 32; i <= hw_poपूर्णांकs_num; i++) अणु
+		अगर (!is_clipped) अणु
+			अगर (use_eetf) अणु
 				/* max content is equal 1 */
-				scaledX1 = dc_fixpt_div(coord_x->x,
-						dc_fixpt_div(max_content, sdr_white_level));
+				scaledX1 = dc_fixpt_भाग(coord_x->x,
+						dc_fixpt_भाग(max_content, sdr_white_level));
 				hermite_spline_eetf(scaledX1, max_display, min_display,
 						max_content, &scaledX);
-			} else
-				scaledX = dc_fixpt_div(coord_x->x,
-						dc_fixpt_div(max_display, sdr_white_level));
+			पूर्ण अन्यथा
+				scaledX = dc_fixpt_भाग(coord_x->x,
+						dc_fixpt_भाग(max_display, sdr_white_level));
 
-			if (dc_fixpt_lt(scaledX, clip)) {
-				if (dc_fixpt_lt(scaledX, dc_fixpt_zero))
+			अगर (dc_fixpt_lt(scaledX, clip)) अणु
+				अगर (dc_fixpt_lt(scaledX, dc_fixpt_zero))
 					output = dc_fixpt_zero;
-				else
+				अन्यथा
 					output = calculate_gamma22(scaledX, use_eetf, cal_buffer);
 
 				// Ensure output respects reasonable boundaries
@@ -1012,8 +1013,8 @@ static bool build_freesync_hdr(struct pwl_float_data_ex *rgb_regamma,
 				rgb->r = output;
 				rgb->g = output;
 				rgb->b = output;
-			} else {
-				/* Here clipping happens for the first time */
+			पूर्ण अन्यथा अणु
+				/* Here clipping happens क्रम the first समय */
 				is_clipped = true;
 
 				/* The next few lines implement the equation
@@ -1022,19 +1023,19 @@ static bool build_freesync_hdr(struct pwl_float_data_ex *rgb_regamma,
 				 * (1.0 - prev_out) /
 				 * (maxDisp/sdr_white_level - prevCoordX)
 				 *
-				 * This equation interpolates the first point
+				 * This equation पूर्णांकerpolates the first poपूर्णांक
 				 * after max_display/80 so that the slope from
-				 * hw_x_before_max and hw_x_after_max is such
+				 * hw_x_beक्रमe_max and hw_x_after_max is such
 				 * that we hit Y=1.0 at max_display/80.
 				 */
 
-				coordX_diff = dc_fixpt_sub(coord_x->x, prv_coord_x->x);
+				coordX_dअगरf = dc_fixpt_sub(coord_x->x, prv_coord_x->x);
 				out_dist_max = dc_fixpt_sub(dc_fixpt_one, output);
-				bright_norm = dc_fixpt_div(max_display, sdr_white_level);
+				bright_norm = dc_fixpt_भाग(max_display, sdr_white_level);
 
 				output = dc_fixpt_add(
 					output, dc_fixpt_mul(
-						coordX_diff, dc_fixpt_div(
+						coordX_dअगरf, dc_fixpt_भाग(
 							out_dist_max,
 							dc_fixpt_sub(bright_norm, prv_coord_x->x)
 						)
@@ -1042,9 +1043,9 @@ static bool build_freesync_hdr(struct pwl_float_data_ex *rgb_regamma,
 				);
 
 				/* Relaxing the maximum boundary to 1.07 (instead of 1.0)
-				 * because the last point in the curve must be such that
-				 * the maximum display pixel brightness interpolates to
-				 * exactly 1.0. The worst case scenario was calculated
+				 * because the last poपूर्णांक in the curve must be such that
+				 * the maximum display pixel brightness पूर्णांकerpolates to
+				 * exactly 1.0. The worst हाल scenario was calculated
 				 * around 1.057, so the limit of 1.07 leaves some safety
 				 * margin.
 				 */
@@ -1054,275 +1055,275 @@ static bool build_freesync_hdr(struct pwl_float_data_ex *rgb_regamma,
 				rgb->r = output;
 				rgb->g = output;
 				rgb->b = output;
-			}
-		} else {
+			पूर्ण
+		पूर्ण अन्यथा अणु
 			/* Every other clipping after the first
 			 * one is dealt with here
 			 */
 			rgb->r = clip;
 			rgb->g = clip;
 			rgb->b = clip;
-		}
+		पूर्ण
 
 		prv_coord_x = coord_x;
 		++coord_x;
 		++rgb;
-	}
+	पूर्ण
 	cal_buffer->buffer_index = -1;
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static bool build_degamma(struct pwl_float_data_ex *curve,
-		uint32_t hw_points_num,
-		const struct hw_x_point *coordinate_x, enum dc_transfer_func_predefined type)
-{
-	uint32_t i;
-	struct gamma_coefficients coeff;
-	uint32_t begin_index, end_index;
+अटल bool build_degamma(काष्ठा pwl_भग्न_data_ex *curve,
+		uपूर्णांक32_t hw_poपूर्णांकs_num,
+		स्थिर काष्ठा hw_x_poपूर्णांक *coordinate_x, क्रमागत dc_transfer_func_predefined type)
+अणु
+	uपूर्णांक32_t i;
+	काष्ठा gamma_coefficients coeff;
+	uपूर्णांक32_t begin_index, end_index;
 	bool ret = false;
 
-	if (!build_coefficients(&coeff, type))
-		goto release;
+	अगर (!build_coefficients(&coeff, type))
+		जाओ release;
 
 	i = 0;
 
-	/* X points is 2^-25 to 2^7
-	 * De-gamma X is 2^-12 to 2^0 – we are skipping first -12-(-25) = 13 regions
+	/* X poपूर्णांकs is 2^-25 to 2^7
+	 * De-gamma X is 2^-12 to 2^0 ै  we are skipping first -12-(-25) = 13 regions
 	 */
 	begin_index = 13 * NUM_PTS_IN_REGION;
 	end_index = begin_index + 12 * NUM_PTS_IN_REGION;
 
-	while (i != begin_index) {
+	जबतक (i != begin_index) अणु
 		curve[i].r = dc_fixpt_zero;
 		curve[i].g = dc_fixpt_zero;
 		curve[i].b = dc_fixpt_zero;
 		i++;
-	}
+	पूर्ण
 
-	while (i != end_index) {
+	जबतक (i != end_index) अणु
 		curve[i].r = translate_to_linear_space_ex(
 				coordinate_x[i].x, &coeff, 0);
 		curve[i].g = curve[i].r;
 		curve[i].b = curve[i].r;
 		i++;
-	}
-	while (i != hw_points_num + 1) {
+	पूर्ण
+	जबतक (i != hw_poपूर्णांकs_num + 1) अणु
 		curve[i].r = dc_fixpt_one;
 		curve[i].g = dc_fixpt_one;
 		curve[i].b = dc_fixpt_one;
 		i++;
-	}
+	पूर्ण
 	ret = true;
 release:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 
 
 
 
-static void build_hlg_degamma(struct pwl_float_data_ex *degamma,
-		uint32_t hw_points_num,
-		const struct hw_x_point *coordinate_x,
-		uint32_t sdr_white_level, uint32_t max_luminance_nits)
-{
-	uint32_t i;
+अटल व्योम build_hlg_degamma(काष्ठा pwl_भग्न_data_ex *degamma,
+		uपूर्णांक32_t hw_poपूर्णांकs_num,
+		स्थिर काष्ठा hw_x_poपूर्णांक *coordinate_x,
+		uपूर्णांक32_t sdr_white_level, uपूर्णांक32_t max_luminance_nits)
+अणु
+	uपूर्णांक32_t i;
 
-	struct pwl_float_data_ex *rgb = degamma;
-	const struct hw_x_point *coord_x = coordinate_x;
+	काष्ठा pwl_भग्न_data_ex *rgb = degamma;
+	स्थिर काष्ठा hw_x_poपूर्णांक *coord_x = coordinate_x;
 
 	i = 0;
 	// check when i == 434
-	while (i != hw_points_num + 1) {
+	जबतक (i != hw_poपूर्णांकs_num + 1) अणु
 		compute_hlg_eotf(coord_x->x, &rgb->r, sdr_white_level, max_luminance_nits);
 		rgb->g = rgb->r;
 		rgb->b = rgb->r;
 		++coord_x;
 		++rgb;
 		++i;
-	}
-}
+	पूर्ण
+पूर्ण
 
 
-static void build_hlg_regamma(struct pwl_float_data_ex *regamma,
-		uint32_t hw_points_num,
-		const struct hw_x_point *coordinate_x,
-		uint32_t sdr_white_level, uint32_t max_luminance_nits)
-{
-	uint32_t i;
+अटल व्योम build_hlg_regamma(काष्ठा pwl_भग्न_data_ex *regamma,
+		uपूर्णांक32_t hw_poपूर्णांकs_num,
+		स्थिर काष्ठा hw_x_poपूर्णांक *coordinate_x,
+		uपूर्णांक32_t sdr_white_level, uपूर्णांक32_t max_luminance_nits)
+अणु
+	uपूर्णांक32_t i;
 
-	struct pwl_float_data_ex *rgb = regamma;
-	const struct hw_x_point *coord_x = coordinate_x;
+	काष्ठा pwl_भग्न_data_ex *rgb = regamma;
+	स्थिर काष्ठा hw_x_poपूर्णांक *coord_x = coordinate_x;
 
 	i = 0;
 
 	// when i == 471
-	while (i != hw_points_num + 1) {
+	जबतक (i != hw_poपूर्णांकs_num + 1) अणु
 		compute_hlg_oetf(coord_x->x, &rgb->r, sdr_white_level, max_luminance_nits);
 		rgb->g = rgb->r;
 		rgb->b = rgb->r;
 		++coord_x;
 		++rgb;
 		++i;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void scale_gamma(struct pwl_float_data *pwl_rgb,
-		const struct dc_gamma *ramp,
-		struct dividers dividers)
-{
-	const struct fixed31_32 max_driver = dc_fixpt_from_int(0xFFFF);
-	const struct fixed31_32 max_os = dc_fixpt_from_int(0xFF00);
-	struct fixed31_32 scaler = max_os;
-	uint32_t i;
-	struct pwl_float_data *rgb = pwl_rgb;
-	struct pwl_float_data *rgb_last = rgb + ramp->num_entries - 1;
+अटल व्योम scale_gamma(काष्ठा pwl_भग्न_data *pwl_rgb,
+		स्थिर काष्ठा dc_gamma *ramp,
+		काष्ठा भागiders भागiders)
+अणु
+	स्थिर काष्ठा fixed31_32 max_driver = dc_fixpt_from_पूर्णांक(0xFFFF);
+	स्थिर काष्ठा fixed31_32 max_os = dc_fixpt_from_पूर्णांक(0xFF00);
+	काष्ठा fixed31_32 scaler = max_os;
+	uपूर्णांक32_t i;
+	काष्ठा pwl_भग्न_data *rgb = pwl_rgb;
+	काष्ठा pwl_भग्न_data *rgb_last = rgb + ramp->num_entries - 1;
 
 	i = 0;
 
-	do {
-		if (dc_fixpt_lt(max_os, ramp->entries.red[i]) ||
+	करो अणु
+		अगर (dc_fixpt_lt(max_os, ramp->entries.red[i]) ||
 			dc_fixpt_lt(max_os, ramp->entries.green[i]) ||
-			dc_fixpt_lt(max_os, ramp->entries.blue[i])) {
+			dc_fixpt_lt(max_os, ramp->entries.blue[i])) अणु
 			scaler = max_driver;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		++i;
-	} while (i != ramp->num_entries);
+	पूर्ण जबतक (i != ramp->num_entries);
 
 	i = 0;
 
-	do {
-		rgb->r = dc_fixpt_div(
+	करो अणु
+		rgb->r = dc_fixpt_भाग(
 			ramp->entries.red[i], scaler);
-		rgb->g = dc_fixpt_div(
+		rgb->g = dc_fixpt_भाग(
 			ramp->entries.green[i], scaler);
-		rgb->b = dc_fixpt_div(
+		rgb->b = dc_fixpt_भाग(
 			ramp->entries.blue[i], scaler);
 
 		++rgb;
 		++i;
-	} while (i != ramp->num_entries);
+	पूर्ण जबतक (i != ramp->num_entries);
 
 	rgb->r = dc_fixpt_mul(rgb_last->r,
-			dividers.divider1);
+			भागiders.भागider1);
 	rgb->g = dc_fixpt_mul(rgb_last->g,
-			dividers.divider1);
+			भागiders.भागider1);
 	rgb->b = dc_fixpt_mul(rgb_last->b,
-			dividers.divider1);
+			भागiders.भागider1);
 
 	++rgb;
 
 	rgb->r = dc_fixpt_mul(rgb_last->r,
-			dividers.divider2);
+			भागiders.भागider2);
 	rgb->g = dc_fixpt_mul(rgb_last->g,
-			dividers.divider2);
+			भागiders.भागider2);
 	rgb->b = dc_fixpt_mul(rgb_last->b,
-			dividers.divider2);
+			भागiders.भागider2);
 
 	++rgb;
 
 	rgb->r = dc_fixpt_mul(rgb_last->r,
-			dividers.divider3);
+			भागiders.भागider3);
 	rgb->g = dc_fixpt_mul(rgb_last->g,
-			dividers.divider3);
+			भागiders.भागider3);
 	rgb->b = dc_fixpt_mul(rgb_last->b,
-			dividers.divider3);
-}
+			भागiders.भागider3);
+पूर्ण
 
-static void scale_gamma_dx(struct pwl_float_data *pwl_rgb,
-		const struct dc_gamma *ramp,
-		struct dividers dividers)
-{
-	uint32_t i;
-	struct fixed31_32 min = dc_fixpt_zero;
-	struct fixed31_32 max = dc_fixpt_one;
+अटल व्योम scale_gamma_dx(काष्ठा pwl_भग्न_data *pwl_rgb,
+		स्थिर काष्ठा dc_gamma *ramp,
+		काष्ठा भागiders भागiders)
+अणु
+	uपूर्णांक32_t i;
+	काष्ठा fixed31_32 min = dc_fixpt_zero;
+	काष्ठा fixed31_32 max = dc_fixpt_one;
 
-	struct fixed31_32 delta = dc_fixpt_zero;
-	struct fixed31_32 offset = dc_fixpt_zero;
+	काष्ठा fixed31_32 delta = dc_fixpt_zero;
+	काष्ठा fixed31_32 offset = dc_fixpt_zero;
 
-	for (i = 0 ; i < ramp->num_entries; i++) {
-		if (dc_fixpt_lt(ramp->entries.red[i], min))
+	क्रम (i = 0 ; i < ramp->num_entries; i++) अणु
+		अगर (dc_fixpt_lt(ramp->entries.red[i], min))
 			min = ramp->entries.red[i];
 
-		if (dc_fixpt_lt(ramp->entries.green[i], min))
+		अगर (dc_fixpt_lt(ramp->entries.green[i], min))
 			min = ramp->entries.green[i];
 
-		if (dc_fixpt_lt(ramp->entries.blue[i], min))
+		अगर (dc_fixpt_lt(ramp->entries.blue[i], min))
 			min = ramp->entries.blue[i];
 
-		if (dc_fixpt_lt(max, ramp->entries.red[i]))
+		अगर (dc_fixpt_lt(max, ramp->entries.red[i]))
 			max = ramp->entries.red[i];
 
-		if (dc_fixpt_lt(max, ramp->entries.green[i]))
+		अगर (dc_fixpt_lt(max, ramp->entries.green[i]))
 			max = ramp->entries.green[i];
 
-		if (dc_fixpt_lt(max, ramp->entries.blue[i]))
+		अगर (dc_fixpt_lt(max, ramp->entries.blue[i]))
 			max = ramp->entries.blue[i];
-	}
+	पूर्ण
 
-	if (dc_fixpt_lt(min, dc_fixpt_zero))
+	अगर (dc_fixpt_lt(min, dc_fixpt_zero))
 		delta = dc_fixpt_neg(min);
 
 	offset = dc_fixpt_add(min, max);
 
-	for (i = 0 ; i < ramp->num_entries; i++) {
-		pwl_rgb[i].r = dc_fixpt_div(
+	क्रम (i = 0 ; i < ramp->num_entries; i++) अणु
+		pwl_rgb[i].r = dc_fixpt_भाग(
 			dc_fixpt_add(
 				ramp->entries.red[i], delta), offset);
-		pwl_rgb[i].g = dc_fixpt_div(
+		pwl_rgb[i].g = dc_fixpt_भाग(
 			dc_fixpt_add(
 				ramp->entries.green[i], delta), offset);
-		pwl_rgb[i].b = dc_fixpt_div(
+		pwl_rgb[i].b = dc_fixpt_भाग(
 			dc_fixpt_add(
 				ramp->entries.blue[i], delta), offset);
 
-	}
+	पूर्ण
 
-	pwl_rgb[i].r =  dc_fixpt_sub(dc_fixpt_mul_int(
+	pwl_rgb[i].r =  dc_fixpt_sub(dc_fixpt_mul_पूर्णांक(
 				pwl_rgb[i-1].r, 2), pwl_rgb[i-2].r);
-	pwl_rgb[i].g =  dc_fixpt_sub(dc_fixpt_mul_int(
+	pwl_rgb[i].g =  dc_fixpt_sub(dc_fixpt_mul_पूर्णांक(
 				pwl_rgb[i-1].g, 2), pwl_rgb[i-2].g);
-	pwl_rgb[i].b =  dc_fixpt_sub(dc_fixpt_mul_int(
+	pwl_rgb[i].b =  dc_fixpt_sub(dc_fixpt_mul_पूर्णांक(
 				pwl_rgb[i-1].b, 2), pwl_rgb[i-2].b);
 	++i;
-	pwl_rgb[i].r =  dc_fixpt_sub(dc_fixpt_mul_int(
+	pwl_rgb[i].r =  dc_fixpt_sub(dc_fixpt_mul_पूर्णांक(
 				pwl_rgb[i-1].r, 2), pwl_rgb[i-2].r);
-	pwl_rgb[i].g =  dc_fixpt_sub(dc_fixpt_mul_int(
+	pwl_rgb[i].g =  dc_fixpt_sub(dc_fixpt_mul_पूर्णांक(
 				pwl_rgb[i-1].g, 2), pwl_rgb[i-2].g);
-	pwl_rgb[i].b =  dc_fixpt_sub(dc_fixpt_mul_int(
+	pwl_rgb[i].b =  dc_fixpt_sub(dc_fixpt_mul_पूर्णांक(
 				pwl_rgb[i-1].b, 2), pwl_rgb[i-2].b);
-}
+पूर्ण
 
-/* todo: all these scale_gamma functions are inherently the same but
- *  take different structures as params or different format for ramp
+/* toकरो: all these scale_gamma functions are inherently the same but
+ *  take dअगरferent काष्ठाures as params or dअगरferent क्रमmat क्रम ramp
  *  values. We could probably implement it in a more generic fashion
  */
-static void scale_user_regamma_ramp(struct pwl_float_data *pwl_rgb,
-		const struct regamma_ramp *ramp,
-		struct dividers dividers)
-{
-	unsigned short max_driver = 0xFFFF;
-	unsigned short max_os = 0xFF00;
-	unsigned short scaler = max_os;
-	uint32_t i;
-	struct pwl_float_data *rgb = pwl_rgb;
-	struct pwl_float_data *rgb_last = rgb + GAMMA_RGB_256_ENTRIES - 1;
+अटल व्योम scale_user_regamma_ramp(काष्ठा pwl_भग्न_data *pwl_rgb,
+		स्थिर काष्ठा regamma_ramp *ramp,
+		काष्ठा भागiders भागiders)
+अणु
+	अचिन्हित लघु max_driver = 0xFFFF;
+	अचिन्हित लघु max_os = 0xFF00;
+	अचिन्हित लघु scaler = max_os;
+	uपूर्णांक32_t i;
+	काष्ठा pwl_भग्न_data *rgb = pwl_rgb;
+	काष्ठा pwl_भग्न_data *rgb_last = rgb + GAMMA_RGB_256_ENTRIES - 1;
 
 	i = 0;
-	do {
-		if (ramp->gamma[i] > max_os ||
+	करो अणु
+		अगर (ramp->gamma[i] > max_os ||
 				ramp->gamma[i + 256] > max_os ||
-				ramp->gamma[i + 512] > max_os) {
+				ramp->gamma[i + 512] > max_os) अणु
 			scaler = max_driver;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		i++;
-	} while (i != GAMMA_RGB_256_ENTRIES);
+	पूर्ण जबतक (i != GAMMA_RGB_256_ENTRIES);
 
 	i = 0;
-	do {
+	करो अणु
 		rgb->r = dc_fixpt_from_fraction(
 				ramp->gamma[i], scaler);
 		rgb->g = dc_fixpt_from_fraction(
@@ -1332,145 +1333,145 @@ static void scale_user_regamma_ramp(struct pwl_float_data *pwl_rgb,
 
 		++rgb;
 		++i;
-	} while (i != GAMMA_RGB_256_ENTRIES);
+	पूर्ण जबतक (i != GAMMA_RGB_256_ENTRIES);
 
 	rgb->r = dc_fixpt_mul(rgb_last->r,
-			dividers.divider1);
+			भागiders.भागider1);
 	rgb->g = dc_fixpt_mul(rgb_last->g,
-			dividers.divider1);
+			भागiders.भागider1);
 	rgb->b = dc_fixpt_mul(rgb_last->b,
-			dividers.divider1);
+			भागiders.भागider1);
 
 	++rgb;
 
 	rgb->r = dc_fixpt_mul(rgb_last->r,
-			dividers.divider2);
+			भागiders.भागider2);
 	rgb->g = dc_fixpt_mul(rgb_last->g,
-			dividers.divider2);
+			भागiders.भागider2);
 	rgb->b = dc_fixpt_mul(rgb_last->b,
-			dividers.divider2);
+			भागiders.भागider2);
 
 	++rgb;
 
 	rgb->r = dc_fixpt_mul(rgb_last->r,
-			dividers.divider3);
+			भागiders.भागider3);
 	rgb->g = dc_fixpt_mul(rgb_last->g,
-			dividers.divider3);
+			भागiders.भागider3);
 	rgb->b = dc_fixpt_mul(rgb_last->b,
-			dividers.divider3);
-}
+			भागiders.भागider3);
+पूर्ण
 
 /*
- * RS3+ color transform DDI - 1D LUT adjustment is composed with regamma here
- * Input is evenly distributed in the output color space as specified in
+ * RS3+ color transक्रमm DDI - 1D LUT adjusपंचांगent is composed with regamma here
+ * Input is evenly distributed in the output color space as specअगरied in
  * SetTimings
  *
  * Interpolation details:
- * 1D LUT has 4096 values which give curve correction in 0-1 float range
- * for evenly spaced points in 0-1 range. lut1D[index] gives correction
- * for index/4095.
- * First we find index for which:
+ * 1D LUT has 4096 values which give curve correction in 0-1 भग्न range
+ * क्रम evenly spaced poपूर्णांकs in 0-1 range. lut1D[index] gives correction
+ * क्रम index/4095.
+ * First we find index क्रम which:
  *	index/4095 < regamma_y < (index+1)/4095 =>
  *	index < 4095*regamma_y < index + 1
- * norm_y = 4095*regamma_y, and index is just truncating to nearest integer
+ * norm_y = 4095*regamma_y, and index is just truncating to nearest पूर्णांकeger
  * lut1 = lut1D[index], lut2 = lut1D[index+1]
  *
- * adjustedY is then linearly interpolating regamma Y between lut1 and lut2
+ * adjustedY is then linearly पूर्णांकerpolating regamma Y between lut1 and lut2
  *
- * Custom degamma on Linux uses the same interpolation math, so is handled here
+ * Custom degamma on Linux uses the same पूर्णांकerpolation math, so is handled here
  */
-static void apply_lut_1d(
-		const struct dc_gamma *ramp,
-		uint32_t num_hw_points,
-		struct dc_transfer_func_distributed_points *tf_pts)
-{
-	int i = 0;
-	int color = 0;
-	struct fixed31_32 *regamma_y;
-	struct fixed31_32 norm_y;
-	struct fixed31_32 lut1;
-	struct fixed31_32 lut2;
-	const int max_lut_index = 4095;
-	const struct fixed31_32 penult_lut_index_f =
-			dc_fixpt_from_int(max_lut_index-1);
-	const struct fixed31_32 max_lut_index_f =
-			dc_fixpt_from_int(max_lut_index);
-	int32_t index = 0, index_next = 0;
-	struct fixed31_32 index_f;
-	struct fixed31_32 delta_lut;
-	struct fixed31_32 delta_index;
+अटल व्योम apply_lut_1d(
+		स्थिर काष्ठा dc_gamma *ramp,
+		uपूर्णांक32_t num_hw_poपूर्णांकs,
+		काष्ठा dc_transfer_func_distributed_poपूर्णांकs *tf_pts)
+अणु
+	पूर्णांक i = 0;
+	पूर्णांक color = 0;
+	काष्ठा fixed31_32 *regamma_y;
+	काष्ठा fixed31_32 norm_y;
+	काष्ठा fixed31_32 lut1;
+	काष्ठा fixed31_32 lut2;
+	स्थिर पूर्णांक max_lut_index = 4095;
+	स्थिर काष्ठा fixed31_32 penult_lut_index_f =
+			dc_fixpt_from_पूर्णांक(max_lut_index-1);
+	स्थिर काष्ठा fixed31_32 max_lut_index_f =
+			dc_fixpt_from_पूर्णांक(max_lut_index);
+	पूर्णांक32_t index = 0, index_next = 0;
+	काष्ठा fixed31_32 index_f;
+	काष्ठा fixed31_32 delta_lut;
+	काष्ठा fixed31_32 delta_index;
 
-	if (ramp->type != GAMMA_CS_TFM_1D && ramp->type != GAMMA_CUSTOM)
-		return; // this is not expected
+	अगर (ramp->type != GAMMA_CS_TFM_1D && ramp->type != GAMMA_CUSTOM)
+		वापस; // this is not expected
 
-	for (i = 0; i < num_hw_points; i++) {
-		for (color = 0; color < 3; color++) {
-			if (color == 0)
+	क्रम (i = 0; i < num_hw_poपूर्णांकs; i++) अणु
+		क्रम (color = 0; color < 3; color++) अणु
+			अगर (color == 0)
 				regamma_y = &tf_pts->red[i];
-			else if (color == 1)
+			अन्यथा अगर (color == 1)
 				regamma_y = &tf_pts->green[i];
-			else
+			अन्यथा
 				regamma_y = &tf_pts->blue[i];
 
 			norm_y = dc_fixpt_mul(max_lut_index_f,
 						   *regamma_y);
-			index = dc_fixpt_floor(norm_y);
-			index_f = dc_fixpt_from_int(index);
+			index = dc_fixpt_न्यूनमान(norm_y);
+			index_f = dc_fixpt_from_पूर्णांक(index);
 
-			if (index < 0)
-				continue;
+			अगर (index < 0)
+				जारी;
 
-			if (index <= max_lut_index)
+			अगर (index <= max_lut_index)
 				index_next = (index == max_lut_index) ? index : index+1;
-			else {
-				/* Here we are dealing with the last point in the curve,
-				 * which in some cases might exceed the range given by
-				 * max_lut_index. So we interpolate the value using
+			अन्यथा अणु
+				/* Here we are dealing with the last poपूर्णांक in the curve,
+				 * which in some हालs might exceed the range given by
+				 * max_lut_index. So we पूर्णांकerpolate the value using
 				 * max_lut_index and max_lut_index - 1.
 				 */
 				index = max_lut_index - 1;
 				index_next = max_lut_index;
 				index_f = penult_lut_index_f;
-			}
+			पूर्ण
 
-			if (color == 0) {
+			अगर (color == 0) अणु
 				lut1 = ramp->entries.red[index];
 				lut2 = ramp->entries.red[index_next];
-			} else if (color == 1) {
+			पूर्ण अन्यथा अगर (color == 1) अणु
 				lut1 = ramp->entries.green[index];
 				lut2 = ramp->entries.green[index_next];
-			} else {
+			पूर्ण अन्यथा अणु
 				lut1 = ramp->entries.blue[index];
 				lut2 = ramp->entries.blue[index_next];
-			}
+			पूर्ण
 
-			// we have everything now, so interpolate
+			// we have everything now, so पूर्णांकerpolate
 			delta_lut = dc_fixpt_sub(lut2, lut1);
 			delta_index = dc_fixpt_sub(norm_y, index_f);
 
 			*regamma_y = dc_fixpt_add(lut1,
 				dc_fixpt_mul(delta_index, delta_lut));
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static void build_evenly_distributed_points(
-	struct gamma_pixel *points,
-	uint32_t numberof_points,
-	struct dividers dividers)
-{
-	struct gamma_pixel *p = points;
-	struct gamma_pixel *p_last;
+अटल व्योम build_evenly_distributed_poपूर्णांकs(
+	काष्ठा gamma_pixel *poपूर्णांकs,
+	uपूर्णांक32_t numberof_poपूर्णांकs,
+	काष्ठा भागiders भागiders)
+अणु
+	काष्ठा gamma_pixel *p = poपूर्णांकs;
+	काष्ठा gamma_pixel *p_last;
 
-	uint32_t i = 0;
+	uपूर्णांक32_t i = 0;
 
-	// This function should not gets called with 0 as a parameter
-	ASSERT(numberof_points > 0);
-	p_last = p + numberof_points - 1;
+	// This function should not माला_लो called with 0 as a parameter
+	ASSERT(numberof_poपूर्णांकs > 0);
+	p_last = p + numberof_poपूर्णांकs - 1;
 
-	do {
-		struct fixed31_32 value = dc_fixpt_from_fraction(i,
-			numberof_points - 1);
+	करो अणु
+		काष्ठा fixed31_32 value = dc_fixpt_from_fraction(i,
+			numberof_poपूर्णांकs - 1);
 
 		p->r = value;
 		p->g = value;
@@ -1478,35 +1479,35 @@ static void build_evenly_distributed_points(
 
 		++p;
 		++i;
-	} while (i < numberof_points);
+	पूर्ण जबतक (i < numberof_poपूर्णांकs);
 
-	p->r = dc_fixpt_div(p_last->r, dividers.divider1);
-	p->g = dc_fixpt_div(p_last->g, dividers.divider1);
-	p->b = dc_fixpt_div(p_last->b, dividers.divider1);
-
-	++p;
-
-	p->r = dc_fixpt_div(p_last->r, dividers.divider2);
-	p->g = dc_fixpt_div(p_last->g, dividers.divider2);
-	p->b = dc_fixpt_div(p_last->b, dividers.divider2);
+	p->r = dc_fixpt_भाग(p_last->r, भागiders.भागider1);
+	p->g = dc_fixpt_भाग(p_last->g, भागiders.भागider1);
+	p->b = dc_fixpt_भाग(p_last->b, भागiders.भागider1);
 
 	++p;
 
-	p->r = dc_fixpt_div(p_last->r, dividers.divider3);
-	p->g = dc_fixpt_div(p_last->g, dividers.divider3);
-	p->b = dc_fixpt_div(p_last->b, dividers.divider3);
-}
+	p->r = dc_fixpt_भाग(p_last->r, भागiders.भागider2);
+	p->g = dc_fixpt_भाग(p_last->g, भागiders.भागider2);
+	p->b = dc_fixpt_भाग(p_last->b, भागiders.भागider2);
 
-static inline void copy_rgb_regamma_to_coordinates_x(
-		struct hw_x_point *coordinates_x,
-		uint32_t hw_points_num,
-		const struct pwl_float_data_ex *rgb_ex)
-{
-	struct hw_x_point *coords = coordinates_x;
-	uint32_t i = 0;
-	const struct pwl_float_data_ex *rgb_regamma = rgb_ex;
+	++p;
 
-	while (i <= hw_points_num + 1) {
+	p->r = dc_fixpt_भाग(p_last->r, भागiders.भागider3);
+	p->g = dc_fixpt_भाग(p_last->g, भागiders.भागider3);
+	p->b = dc_fixpt_भाग(p_last->b, भागiders.भागider3);
+पूर्ण
+
+अटल अंतरभूत व्योम copy_rgb_regamma_to_coordinates_x(
+		काष्ठा hw_x_poपूर्णांक *coordinates_x,
+		uपूर्णांक32_t hw_poपूर्णांकs_num,
+		स्थिर काष्ठा pwl_भग्न_data_ex *rgb_ex)
+अणु
+	काष्ठा hw_x_poपूर्णांक *coords = coordinates_x;
+	uपूर्णांक32_t i = 0;
+	स्थिर काष्ठा pwl_भग्न_data_ex *rgb_regamma = rgb_ex;
+
+	जबतक (i <= hw_poपूर्णांकs_num + 1) अणु
 		coords->regamma_y_red = rgb_regamma->r;
 		coords->regamma_y_green = rgb_regamma->g;
 		coords->regamma_y_blue = rgb_regamma->b;
@@ -1514,37 +1515,37 @@ static inline void copy_rgb_regamma_to_coordinates_x(
 		++coords;
 		++rgb_regamma;
 		++i;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static bool calculate_interpolated_hardware_curve(
-	const struct dc_gamma *ramp,
-	struct pixel_gamma_point *coeff128,
-	struct pwl_float_data *rgb_user,
-	const struct hw_x_point *coordinates_x,
-	const struct gamma_pixel *axis_x,
-	uint32_t number_of_points,
-	struct dc_transfer_func_distributed_points *tf_pts)
-{
+अटल bool calculate_पूर्णांकerpolated_hardware_curve(
+	स्थिर काष्ठा dc_gamma *ramp,
+	काष्ठा pixel_gamma_poपूर्णांक *coeff128,
+	काष्ठा pwl_भग्न_data *rgb_user,
+	स्थिर काष्ठा hw_x_poपूर्णांक *coordinates_x,
+	स्थिर काष्ठा gamma_pixel *axis_x,
+	uपूर्णांक32_t number_of_poपूर्णांकs,
+	काष्ठा dc_transfer_func_distributed_poपूर्णांकs *tf_pts)
+अणु
 
-	const struct pixel_gamma_point *coeff = coeff128;
-	uint32_t max_entries = 3 - 1;
+	स्थिर काष्ठा pixel_gamma_poपूर्णांक *coeff = coeff128;
+	uपूर्णांक32_t max_entries = 3 - 1;
 
-	uint32_t i = 0;
+	uपूर्णांक32_t i = 0;
 
-	for (i = 0; i < 3; i++) {
-		if (!build_custom_gamma_mapping_coefficients_worker(
+	क्रम (i = 0; i < 3; i++) अणु
+		अगर (!build_custom_gamma_mapping_coefficients_worker(
 				ramp, coeff128, coordinates_x, axis_x, i,
-				number_of_points))
-			return false;
-	}
+				number_of_poपूर्णांकs))
+			वापस false;
+	पूर्ण
 
 	i = 0;
 	max_entries += ramp->num_entries;
 
-	/* TODO: float point case */
+	/* TODO: भग्न poपूर्णांक हाल */
 
-	while (i <= number_of_points) {
+	जबतक (i <= number_of_poपूर्णांकs) अणु
 		tf_pts->red[i] = calculate_mapped_value(
 			rgb_user, coeff, CHANNEL_NAME_RED, max_entries);
 		tf_pts->green[i] = calculate_mapped_value(
@@ -1554,114 +1555,114 @@ static bool calculate_interpolated_hardware_curve(
 
 		++coeff;
 		++i;
-	}
+	पूर्ण
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-/* The "old" interpolation uses a complicated scheme to build an array of
- * coefficients while also using an array of 0-255 normalized to 0-1
+/* The "old" पूर्णांकerpolation uses a complicated scheme to build an array of
+ * coefficients जबतक also using an array of 0-255 normalized to 0-1
  * Then there's another loop using both of the above + new scaled user ramp
- * and we concatenate them. It also searches for points of interpolation and
- * uses enums for positions.
+ * and we concatenate them. It also searches क्रम poपूर्णांकs of पूर्णांकerpolation and
+ * uses क्रमागतs क्रम positions.
  *
- * This function uses a different approach:
+ * This function uses a dअगरferent approach:
  * user ramp is always applied on X with 0/255, 1/255, 2/255, ..., 255/255
- * To find index for hwX , we notice the following:
+ * To find index क्रम hwX , we notice the following:
  * i/255 <= hwX < (i+1)/255  <=> i <= 255*hwX < i+1
  * See apply_lut_1d which is the same principle, but on 4K entry 1D LUT
  *
  * Once the index is known, combined Y is simply:
  * user_ramp(index) + (hwX-index/255)*(user_ramp(index+1) - user_ramp(index)
  *
- * We should switch to this method in all cases, it's simpler and faster
- * ToDo one day - for now this only applies to ADL regamma to avoid regression
- * for regular use cases (sRGB and PQ)
+ * We should चयन to this method in all हालs, it's simpler and faster
+ * ToDo one day - क्रम now this only applies to ADL regamma to aव्योम regression
+ * क्रम regular use हालs (sRGB and PQ)
  */
-static void interpolate_user_regamma(uint32_t hw_points_num,
-		struct pwl_float_data *rgb_user,
+अटल व्योम पूर्णांकerpolate_user_regamma(uपूर्णांक32_t hw_poपूर्णांकs_num,
+		काष्ठा pwl_भग्न_data *rgb_user,
 		bool apply_degamma,
-		struct dc_transfer_func_distributed_points *tf_pts)
-{
-	uint32_t i;
-	uint32_t color = 0;
-	int32_t index;
-	int32_t index_next;
-	struct fixed31_32 *tf_point;
-	struct fixed31_32 hw_x;
-	struct fixed31_32 norm_factor =
-			dc_fixpt_from_int(255);
-	struct fixed31_32 norm_x;
-	struct fixed31_32 index_f;
-	struct fixed31_32 lut1;
-	struct fixed31_32 lut2;
-	struct fixed31_32 delta_lut;
-	struct fixed31_32 delta_index;
+		काष्ठा dc_transfer_func_distributed_poपूर्णांकs *tf_pts)
+अणु
+	uपूर्णांक32_t i;
+	uपूर्णांक32_t color = 0;
+	पूर्णांक32_t index;
+	पूर्णांक32_t index_next;
+	काष्ठा fixed31_32 *tf_poपूर्णांक;
+	काष्ठा fixed31_32 hw_x;
+	काष्ठा fixed31_32 norm_factor =
+			dc_fixpt_from_पूर्णांक(255);
+	काष्ठा fixed31_32 norm_x;
+	काष्ठा fixed31_32 index_f;
+	काष्ठा fixed31_32 lut1;
+	काष्ठा fixed31_32 lut2;
+	काष्ठा fixed31_32 delta_lut;
+	काष्ठा fixed31_32 delta_index;
 
 	i = 0;
 	/* fixed_pt library has problems handling too small values */
-	while (i != 32) {
+	जबतक (i != 32) अणु
 		tf_pts->red[i] = dc_fixpt_zero;
 		tf_pts->green[i] = dc_fixpt_zero;
 		tf_pts->blue[i] = dc_fixpt_zero;
 		++i;
-	}
-	while (i <= hw_points_num + 1) {
-		for (color = 0; color < 3; color++) {
-			if (color == 0)
-				tf_point = &tf_pts->red[i];
-			else if (color == 1)
-				tf_point = &tf_pts->green[i];
-			else
-				tf_point = &tf_pts->blue[i];
+	पूर्ण
+	जबतक (i <= hw_poपूर्णांकs_num + 1) अणु
+		क्रम (color = 0; color < 3; color++) अणु
+			अगर (color == 0)
+				tf_poपूर्णांक = &tf_pts->red[i];
+			अन्यथा अगर (color == 1)
+				tf_poपूर्णांक = &tf_pts->green[i];
+			अन्यथा
+				tf_poपूर्णांक = &tf_pts->blue[i];
 
-			if (apply_degamma) {
-				if (color == 0)
+			अगर (apply_degamma) अणु
+				अगर (color == 0)
 					hw_x = coordinates_x[i].regamma_y_red;
-				else if (color == 1)
+				अन्यथा अगर (color == 1)
 					hw_x = coordinates_x[i].regamma_y_green;
-				else
+				अन्यथा
 					hw_x = coordinates_x[i].regamma_y_blue;
-			} else
+			पूर्ण अन्यथा
 				hw_x = coordinates_x[i].x;
 
 			norm_x = dc_fixpt_mul(norm_factor, hw_x);
-			index = dc_fixpt_floor(norm_x);
-			if (index < 0 || index > 255)
-				continue;
+			index = dc_fixpt_न्यूनमान(norm_x);
+			अगर (index < 0 || index > 255)
+				जारी;
 
-			index_f = dc_fixpt_from_int(index);
+			index_f = dc_fixpt_from_पूर्णांक(index);
 			index_next = (index == 255) ? index : index + 1;
 
-			if (color == 0) {
+			अगर (color == 0) अणु
 				lut1 = rgb_user[index].r;
 				lut2 = rgb_user[index_next].r;
-			} else if (color == 1) {
+			पूर्ण अन्यथा अगर (color == 1) अणु
 				lut1 = rgb_user[index].g;
 				lut2 = rgb_user[index_next].g;
-			} else {
+			पूर्ण अन्यथा अणु
 				lut1 = rgb_user[index].b;
 				lut2 = rgb_user[index_next].b;
-			}
+			पूर्ण
 
-			// we have everything now, so interpolate
+			// we have everything now, so पूर्णांकerpolate
 			delta_lut = dc_fixpt_sub(lut2, lut1);
 			delta_index = dc_fixpt_sub(norm_x, index_f);
 
-			*tf_point = dc_fixpt_add(lut1,
+			*tf_poपूर्णांक = dc_fixpt_add(lut1,
 				dc_fixpt_mul(delta_index, delta_lut));
-		}
+		पूर्ण
 		++i;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void build_new_custom_resulted_curve(
-	uint32_t hw_points_num,
-	struct dc_transfer_func_distributed_points *tf_pts)
-{
-	uint32_t i = 0;
+अटल व्योम build_new_custom_resulted_curve(
+	uपूर्णांक32_t hw_poपूर्णांकs_num,
+	काष्ठा dc_transfer_func_distributed_poपूर्णांकs *tf_pts)
+अणु
+	uपूर्णांक32_t i = 0;
 
-	while (i != hw_points_num + 1) {
+	जबतक (i != hw_poपूर्णांकs_num + 1) अणु
 		tf_pts->red[i] = dc_fixpt_clamp(
 			tf_pts->red[i], dc_fixpt_zero,
 			dc_fixpt_one);
@@ -1673,22 +1674,22 @@ static void build_new_custom_resulted_curve(
 			dc_fixpt_one);
 
 		++i;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void apply_degamma_for_user_regamma(struct pwl_float_data_ex *rgb_regamma,
-		uint32_t hw_points_num, struct calculate_buffer *cal_buffer)
-{
-	uint32_t i;
+अटल व्योम apply_degamma_क्रम_user_regamma(काष्ठा pwl_भग्न_data_ex *rgb_regamma,
+		uपूर्णांक32_t hw_poपूर्णांकs_num, काष्ठा calculate_buffer *cal_buffer)
+अणु
+	uपूर्णांक32_t i;
 
-	struct gamma_coefficients coeff;
-	struct pwl_float_data_ex *rgb = rgb_regamma;
-	const struct hw_x_point *coord_x = coordinates_x;
+	काष्ठा gamma_coefficients coeff;
+	काष्ठा pwl_भग्न_data_ex *rgb = rgb_regamma;
+	स्थिर काष्ठा hw_x_poपूर्णांक *coord_x = coordinates_x;
 
 	build_coefficients(&coeff, TRANSFER_FUNCTION_SRGB);
 
 	i = 0;
-	while (i != hw_points_num + 1) {
+	जबतक (i != hw_poपूर्णांकs_num + 1) अणु
 		rgb->r = translate_from_linear_space_ex(
 				coord_x->x, &coeff, 0, cal_buffer);
 		rgb->g = rgb->r;
@@ -1696,67 +1697,67 @@ static void apply_degamma_for_user_regamma(struct pwl_float_data_ex *rgb_regamma
 		++coord_x;
 		++rgb;
 		++i;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static bool map_regamma_hw_to_x_user(
-	const struct dc_gamma *ramp,
-	struct pixel_gamma_point *coeff128,
-	struct pwl_float_data *rgb_user,
-	struct hw_x_point *coords_x,
-	const struct gamma_pixel *axis_x,
-	const struct pwl_float_data_ex *rgb_regamma,
-	uint32_t hw_points_num,
-	struct dc_transfer_func_distributed_points *tf_pts,
+अटल bool map_regamma_hw_to_x_user(
+	स्थिर काष्ठा dc_gamma *ramp,
+	काष्ठा pixel_gamma_poपूर्णांक *coeff128,
+	काष्ठा pwl_भग्न_data *rgb_user,
+	काष्ठा hw_x_poपूर्णांक *coords_x,
+	स्थिर काष्ठा gamma_pixel *axis_x,
+	स्थिर काष्ठा pwl_भग्न_data_ex *rgb_regamma,
+	uपूर्णांक32_t hw_poपूर्णांकs_num,
+	काष्ठा dc_transfer_func_distributed_poपूर्णांकs *tf_pts,
 	bool mapUserRamp,
-	bool doClamping)
-{
+	bool करोClamping)
+अणु
 	/* setup to spare calculated ideal regamma values */
 
-	int i = 0;
-	struct hw_x_point *coords = coords_x;
-	const struct pwl_float_data_ex *regamma = rgb_regamma;
+	पूर्णांक i = 0;
+	काष्ठा hw_x_poपूर्णांक *coords = coords_x;
+	स्थिर काष्ठा pwl_भग्न_data_ex *regamma = rgb_regamma;
 
-	if (ramp && mapUserRamp) {
+	अगर (ramp && mapUserRamp) अणु
 		copy_rgb_regamma_to_coordinates_x(coords,
-				hw_points_num,
+				hw_poपूर्णांकs_num,
 				rgb_regamma);
 
-		calculate_interpolated_hardware_curve(
+		calculate_पूर्णांकerpolated_hardware_curve(
 			ramp, coeff128, rgb_user, coords, axis_x,
-			hw_points_num, tf_pts);
-	} else {
-		/* just copy current rgb_regamma into  tf_pts */
-		while (i <= hw_points_num) {
+			hw_poपूर्णांकs_num, tf_pts);
+	पूर्ण अन्यथा अणु
+		/* just copy current rgb_regamma पूर्णांकo  tf_pts */
+		जबतक (i <= hw_poपूर्णांकs_num) अणु
 			tf_pts->red[i] = regamma->r;
 			tf_pts->green[i] = regamma->g;
 			tf_pts->blue[i] = regamma->b;
 
 			++regamma;
 			++i;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (doClamping) {
-		/* this should be named differently, all it does is clamp to 0-1 */
-		build_new_custom_resulted_curve(hw_points_num, tf_pts);
-	}
+	अगर (करोClamping) अणु
+		/* this should be named dअगरferently, all it करोes is clamp to 0-1 */
+		build_new_custom_resulted_curve(hw_poपूर्णांकs_num, tf_pts);
+	पूर्ण
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-#define _EXTRA_POINTS 3
+#घोषणा _EXTRA_POINTS 3
 
-bool calculate_user_regamma_coeff(struct dc_transfer_func *output_tf,
-		const struct regamma_lut *regamma,
-		struct calculate_buffer *cal_buffer,
-		const struct dc_gamma *ramp)
-{
-	struct gamma_coefficients coeff;
-	const struct hw_x_point *coord_x = coordinates_x;
-	uint32_t i = 0;
+bool calculate_user_regamma_coeff(काष्ठा dc_transfer_func *output_tf,
+		स्थिर काष्ठा regamma_lut *regamma,
+		काष्ठा calculate_buffer *cal_buffer,
+		स्थिर काष्ठा dc_gamma *ramp)
+अणु
+	काष्ठा gamma_coefficients coeff;
+	स्थिर काष्ठा hw_x_poपूर्णांक *coord_x = coordinates_x;
+	uपूर्णांक32_t i = 0;
 
-	do {
+	करो अणु
 		coeff.a0[i] = dc_fixpt_from_fraction(
 				regamma->coeff.A0[i], 10000000);
 		coeff.a1[i] = dc_fixpt_from_fraction(
@@ -1769,18 +1770,18 @@ bool calculate_user_regamma_coeff(struct dc_transfer_func *output_tf,
 				regamma->coeff.gamma[i], 1000);
 
 		++i;
-	} while (i != 3);
+	पूर्ण जबतक (i != 3);
 
 	i = 0;
 	/* fixed_pt library has problems handling too small values */
-	while (i != 32) {
+	जबतक (i != 32) अणु
 		output_tf->tf_pts.red[i] = dc_fixpt_zero;
 		output_tf->tf_pts.green[i] = dc_fixpt_zero;
 		output_tf->tf_pts.blue[i] = dc_fixpt_zero;
 		++coord_x;
 		++i;
-	}
-	while (i != MAX_HW_POINTS + 1) {
+	पूर्ण
+	जबतक (i != MAX_HW_POINTS + 1) अणु
 		output_tf->tf_pts.red[i] = translate_from_linear_space_ex(
 				coord_x->x, &coeff, 0, cal_buffer);
 		output_tf->tf_pts.green[i] = translate_from_linear_space_ex(
@@ -1789,69 +1790,69 @@ bool calculate_user_regamma_coeff(struct dc_transfer_func *output_tf,
 				coord_x->x, &coeff, 2, cal_buffer);
 		++coord_x;
 		++i;
-	}
+	पूर्ण
 
-	if (ramp && ramp->type == GAMMA_CS_TFM_1D)
+	अगर (ramp && ramp->type == GAMMA_CS_TFM_1D)
 		apply_lut_1d(ramp, MAX_HW_POINTS, &output_tf->tf_pts);
 
 	// this function just clamps output to 0-1
 	build_new_custom_resulted_curve(MAX_HW_POINTS, &output_tf->tf_pts);
 	output_tf->type = TF_TYPE_DISTRIBUTED_POINTS;
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-bool calculate_user_regamma_ramp(struct dc_transfer_func *output_tf,
-		const struct regamma_lut *regamma,
-		struct calculate_buffer *cal_buffer,
-		const struct dc_gamma *ramp)
-{
-	struct dc_transfer_func_distributed_points *tf_pts = &output_tf->tf_pts;
-	struct dividers dividers;
+bool calculate_user_regamma_ramp(काष्ठा dc_transfer_func *output_tf,
+		स्थिर काष्ठा regamma_lut *regamma,
+		काष्ठा calculate_buffer *cal_buffer,
+		स्थिर काष्ठा dc_gamma *ramp)
+अणु
+	काष्ठा dc_transfer_func_distributed_poपूर्णांकs *tf_pts = &output_tf->tf_pts;
+	काष्ठा भागiders भागiders;
 
-	struct pwl_float_data *rgb_user = NULL;
-	struct pwl_float_data_ex *rgb_regamma = NULL;
+	काष्ठा pwl_भग्न_data *rgb_user = शून्य;
+	काष्ठा pwl_भग्न_data_ex *rgb_regamma = शून्य;
 	bool ret = false;
 
-	if (regamma == NULL)
-		return false;
+	अगर (regamma == शून्य)
+		वापस false;
 
 	output_tf->type = TF_TYPE_DISTRIBUTED_POINTS;
 
-	rgb_user = kcalloc(GAMMA_RGB_256_ENTRIES + _EXTRA_POINTS,
-			   sizeof(*rgb_user),
+	rgb_user = kसुस्मृति(GAMMA_RGB_256_ENTRIES + _EXTRA_POINTS,
+			   माप(*rgb_user),
 			   GFP_KERNEL);
-	if (!rgb_user)
-		goto rgb_user_alloc_fail;
+	अगर (!rgb_user)
+		जाओ rgb_user_alloc_fail;
 
-	rgb_regamma = kcalloc(MAX_HW_POINTS + _EXTRA_POINTS,
-			      sizeof(*rgb_regamma),
+	rgb_regamma = kसुस्मृति(MAX_HW_POINTS + _EXTRA_POINTS,
+			      माप(*rgb_regamma),
 			      GFP_KERNEL);
-	if (!rgb_regamma)
-		goto rgb_regamma_alloc_fail;
+	अगर (!rgb_regamma)
+		जाओ rgb_regamma_alloc_fail;
 
-	dividers.divider1 = dc_fixpt_from_fraction(3, 2);
-	dividers.divider2 = dc_fixpt_from_int(2);
-	dividers.divider3 = dc_fixpt_from_fraction(5, 2);
+	भागiders.भागider1 = dc_fixpt_from_fraction(3, 2);
+	भागiders.भागider2 = dc_fixpt_from_पूर्णांक(2);
+	भागiders.भागider3 = dc_fixpt_from_fraction(5, 2);
 
-	scale_user_regamma_ramp(rgb_user, &regamma->ramp, dividers);
+	scale_user_regamma_ramp(rgb_user, &regamma->ramp, भागiders);
 
-	if (regamma->flags.bits.applyDegamma == 1) {
-		apply_degamma_for_user_regamma(rgb_regamma, MAX_HW_POINTS, cal_buffer);
+	अगर (regamma->flags.bits.applyDegamma == 1) अणु
+		apply_degamma_क्रम_user_regamma(rgb_regamma, MAX_HW_POINTS, cal_buffer);
 		copy_rgb_regamma_to_coordinates_x(coordinates_x,
 				MAX_HW_POINTS, rgb_regamma);
-	}
+	पूर्ण
 
-	interpolate_user_regamma(MAX_HW_POINTS, rgb_user,
+	पूर्णांकerpolate_user_regamma(MAX_HW_POINTS, rgb_user,
 			regamma->flags.bits.applyDegamma, tf_pts);
 
 	// no custom HDR curves!
 	tf_pts->end_exponent = 0;
-	tf_pts->x_point_at_y1_red = 1;
-	tf_pts->x_point_at_y1_green = 1;
-	tf_pts->x_point_at_y1_blue = 1;
+	tf_pts->x_poपूर्णांक_at_y1_red = 1;
+	tf_pts->x_poपूर्णांक_at_y1_green = 1;
+	tf_pts->x_poपूर्णांक_at_y1_blue = 1;
 
-	if (ramp && ramp->type == GAMMA_CS_TFM_1D)
+	अगर (ramp && ramp->type == GAMMA_CS_TFM_1D)
 		apply_lut_1d(ramp, MAX_HW_POINTS, &output_tf->tf_pts);
 
 	// this function just clamps output to 0-1
@@ -1859,100 +1860,100 @@ bool calculate_user_regamma_ramp(struct dc_transfer_func *output_tf,
 
 	ret = true;
 
-	kfree(rgb_regamma);
+	kमुक्त(rgb_regamma);
 rgb_regamma_alloc_fail:
-	kfree(rgb_user);
+	kमुक्त(rgb_user);
 rgb_user_alloc_fail:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-bool mod_color_calculate_degamma_params(struct dc_color_caps *dc_caps,
-		struct dc_transfer_func *input_tf,
-		const struct dc_gamma *ramp, bool mapUserRamp)
-{
-	struct dc_transfer_func_distributed_points *tf_pts = &input_tf->tf_pts;
-	struct dividers dividers;
-	struct pwl_float_data *rgb_user = NULL;
-	struct pwl_float_data_ex *curve = NULL;
-	struct gamma_pixel *axis_x = NULL;
-	struct pixel_gamma_point *coeff = NULL;
-	enum dc_transfer_func_predefined tf = TRANSFER_FUNCTION_SRGB;
-	uint32_t i;
+bool mod_color_calculate_degamma_params(काष्ठा dc_color_caps *dc_caps,
+		काष्ठा dc_transfer_func *input_tf,
+		स्थिर काष्ठा dc_gamma *ramp, bool mapUserRamp)
+अणु
+	काष्ठा dc_transfer_func_distributed_poपूर्णांकs *tf_pts = &input_tf->tf_pts;
+	काष्ठा भागiders भागiders;
+	काष्ठा pwl_भग्न_data *rgb_user = शून्य;
+	काष्ठा pwl_भग्न_data_ex *curve = शून्य;
+	काष्ठा gamma_pixel *axis_x = शून्य;
+	काष्ठा pixel_gamma_poपूर्णांक *coeff = शून्य;
+	क्रमागत dc_transfer_func_predefined tf = TRANSFER_FUNCTION_SRGB;
+	uपूर्णांक32_t i;
 	bool ret = false;
 
-	if (input_tf->type == TF_TYPE_BYPASS)
-		return false;
+	अगर (input_tf->type == TF_TYPE_BYPASS)
+		वापस false;
 
-	/* we can use hardcoded curve for plain SRGB TF
-	 * If linear, it's bypass if on user ramp
+	/* we can use hardcoded curve क्रम plain SRGB TF
+	 * If linear, it's bypass अगर on user ramp
 	 */
-	if (input_tf->type == TF_TYPE_PREDEFINED) {
-		if ((input_tf->tf == TRANSFER_FUNCTION_SRGB ||
+	अगर (input_tf->type == TF_TYPE_PREDEFINED) अणु
+		अगर ((input_tf->tf == TRANSFER_FUNCTION_SRGB ||
 				input_tf->tf == TRANSFER_FUNCTION_LINEAR) &&
 				!mapUserRamp)
-			return true;
+			वापस true;
 
-		if (dc_caps != NULL &&
-			dc_caps->dpp.dcn_arch == 1) {
+		अगर (dc_caps != शून्य &&
+			dc_caps->dpp.dcn_arch == 1) अणु
 
-			if (input_tf->tf == TRANSFER_FUNCTION_PQ &&
+			अगर (input_tf->tf == TRANSFER_FUNCTION_PQ &&
 					dc_caps->dpp.dgam_rom_caps.pq == 1)
-				return true;
+				वापस true;
 
-			if (input_tf->tf == TRANSFER_FUNCTION_GAMMA22 &&
+			अगर (input_tf->tf == TRANSFER_FUNCTION_GAMMA22 &&
 					dc_caps->dpp.dgam_rom_caps.gamma2_2 == 1)
-				return true;
+				वापस true;
 
-			// HLG OOTF not accounted for
-			if (input_tf->tf == TRANSFER_FUNCTION_HLG &&
+			// HLG OOTF not accounted क्रम
+			अगर (input_tf->tf == TRANSFER_FUNCTION_HLG &&
 					dc_caps->dpp.dgam_rom_caps.hlg == 1)
-				return true;
-		}
-	}
+				वापस true;
+		पूर्ण
+	पूर्ण
 
 	input_tf->type = TF_TYPE_DISTRIBUTED_POINTS;
 
-	if (mapUserRamp && ramp && ramp->type == GAMMA_RGB_256) {
-		rgb_user = kvcalloc(ramp->num_entries + _EXTRA_POINTS,
-				sizeof(*rgb_user),
+	अगर (mapUserRamp && ramp && ramp->type == GAMMA_RGB_256) अणु
+		rgb_user = kvसुस्मृति(ramp->num_entries + _EXTRA_POINTS,
+				माप(*rgb_user),
 				GFP_KERNEL);
-		if (!rgb_user)
-			goto rgb_user_alloc_fail;
+		अगर (!rgb_user)
+			जाओ rgb_user_alloc_fail;
 
-		axis_x = kvcalloc(ramp->num_entries + _EXTRA_POINTS, sizeof(*axis_x),
+		axis_x = kvसुस्मृति(ramp->num_entries + _EXTRA_POINTS, माप(*axis_x),
 				GFP_KERNEL);
-		if (!axis_x)
-			goto axis_x_alloc_fail;
+		अगर (!axis_x)
+			जाओ axis_x_alloc_fail;
 
-		dividers.divider1 = dc_fixpt_from_fraction(3, 2);
-		dividers.divider2 = dc_fixpt_from_int(2);
-		dividers.divider3 = dc_fixpt_from_fraction(5, 2);
+		भागiders.भागider1 = dc_fixpt_from_fraction(3, 2);
+		भागiders.भागider2 = dc_fixpt_from_पूर्णांक(2);
+		भागiders.भागider3 = dc_fixpt_from_fraction(5, 2);
 
-		build_evenly_distributed_points(
+		build_evenly_distributed_poपूर्णांकs(
 				axis_x,
 				ramp->num_entries,
-				dividers);
+				भागiders);
 
-		scale_gamma(rgb_user, ramp, dividers);
-	}
+		scale_gamma(rgb_user, ramp, भागiders);
+	पूर्ण
 
-	curve = kvcalloc(MAX_HW_POINTS + _EXTRA_POINTS, sizeof(*curve),
+	curve = kvसुस्मृति(MAX_HW_POINTS + _EXTRA_POINTS, माप(*curve),
 			GFP_KERNEL);
-	if (!curve)
-		goto curve_alloc_fail;
+	अगर (!curve)
+		जाओ curve_alloc_fail;
 
-	coeff = kvcalloc(MAX_HW_POINTS + _EXTRA_POINTS, sizeof(*coeff),
+	coeff = kvसुस्मृति(MAX_HW_POINTS + _EXTRA_POINTS, माप(*coeff),
 			GFP_KERNEL);
-	if (!coeff)
-		goto coeff_alloc_fail;
+	अगर (!coeff)
+		जाओ coeff_alloc_fail;
 
 	tf = input_tf->tf;
 
-	if (tf == TRANSFER_FUNCTION_PQ)
+	अगर (tf == TRANSFER_FUNCTION_PQ)
 		build_de_pq(curve,
 				MAX_HW_POINTS,
 				coordinates_x);
-	else if (tf == TRANSFER_FUNCTION_SRGB ||
+	अन्यथा अगर (tf == TRANSFER_FUNCTION_SRGB ||
 		tf == TRANSFER_FUNCTION_BT709 ||
 		tf == TRANSFER_FUNCTION_GAMMA22 ||
 		tf == TRANSFER_FUNCTION_GAMMA24 ||
@@ -1961,98 +1962,98 @@ bool mod_color_calculate_degamma_params(struct dc_color_caps *dc_caps,
 				MAX_HW_POINTS,
 				coordinates_x,
 				tf);
-	else if (tf == TRANSFER_FUNCTION_HLG)
+	अन्यथा अगर (tf == TRANSFER_FUNCTION_HLG)
 		build_hlg_degamma(curve,
 				MAX_HW_POINTS,
 				coordinates_x,
 				80, 1000);
-	else if (tf == TRANSFER_FUNCTION_LINEAR) {
-		// just copy coordinates_x into curve
+	अन्यथा अगर (tf == TRANSFER_FUNCTION_LINEAR) अणु
+		// just copy coordinates_x पूर्णांकo curve
 		i = 0;
-		while (i != MAX_HW_POINTS + 1) {
+		जबतक (i != MAX_HW_POINTS + 1) अणु
 			curve[i].r = coordinates_x[i].x;
 			curve[i].g = curve[i].r;
 			curve[i].b = curve[i].r;
 			i++;
-		}
-	} else
-		goto invalid_tf_fail;
+		पूर्ण
+	पूर्ण अन्यथा
+		जाओ invalid_tf_fail;
 
 	tf_pts->end_exponent = 0;
-	tf_pts->x_point_at_y1_red = 1;
-	tf_pts->x_point_at_y1_green = 1;
-	tf_pts->x_point_at_y1_blue = 1;
+	tf_pts->x_poपूर्णांक_at_y1_red = 1;
+	tf_pts->x_poपूर्णांक_at_y1_green = 1;
+	tf_pts->x_poपूर्णांक_at_y1_blue = 1;
 
-	if (input_tf->tf == TRANSFER_FUNCTION_PQ) {
-		/* just copy current rgb_regamma into  tf_pts */
-		struct pwl_float_data_ex *curvePt = curve;
-		int i = 0;
+	अगर (input_tf->tf == TRANSFER_FUNCTION_PQ) अणु
+		/* just copy current rgb_regamma पूर्णांकo  tf_pts */
+		काष्ठा pwl_भग्न_data_ex *curvePt = curve;
+		पूर्णांक i = 0;
 
-		while (i <= MAX_HW_POINTS) {
+		जबतक (i <= MAX_HW_POINTS) अणु
 			tf_pts->red[i]   = curvePt->r;
 			tf_pts->green[i] = curvePt->g;
 			tf_pts->blue[i]  = curvePt->b;
 			++curvePt;
 			++i;
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		// clamps to 0-1
 		map_regamma_hw_to_x_user(ramp, coeff, rgb_user,
 				coordinates_x, axis_x, curve,
 				MAX_HW_POINTS, tf_pts,
 				mapUserRamp && ramp && ramp->type == GAMMA_RGB_256,
 				true);
-	}
+	पूर्ण
 
 
 
-	if (ramp && ramp->type == GAMMA_CUSTOM)
+	अगर (ramp && ramp->type == GAMMA_CUSTOM)
 		apply_lut_1d(ramp, MAX_HW_POINTS, tf_pts);
 
 	ret = true;
 
 invalid_tf_fail:
-	kvfree(coeff);
+	kvमुक्त(coeff);
 coeff_alloc_fail:
-	kvfree(curve);
+	kvमुक्त(curve);
 curve_alloc_fail:
-	kvfree(axis_x);
+	kvमुक्त(axis_x);
 axis_x_alloc_fail:
-	kvfree(rgb_user);
+	kvमुक्त(rgb_user);
 rgb_user_alloc_fail:
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static bool calculate_curve(enum dc_transfer_func_predefined trans,
-				struct dc_transfer_func_distributed_points *points,
-				struct pwl_float_data_ex *rgb_regamma,
-				const struct hdr_tm_params *fs_params,
-				uint32_t sdr_ref_white_level,
-				struct calculate_buffer *cal_buffer)
-{
-	uint32_t i;
+अटल bool calculate_curve(क्रमागत dc_transfer_func_predefined trans,
+				काष्ठा dc_transfer_func_distributed_poपूर्णांकs *poपूर्णांकs,
+				काष्ठा pwl_भग्न_data_ex *rgb_regamma,
+				स्थिर काष्ठा hdr_पंचांग_params *fs_params,
+				uपूर्णांक32_t sdr_ref_white_level,
+				काष्ठा calculate_buffer *cal_buffer)
+अणु
+	uपूर्णांक32_t i;
 	bool ret = false;
 
-	if (trans == TRANSFER_FUNCTION_UNITY ||
-		trans == TRANSFER_FUNCTION_LINEAR) {
-		points->end_exponent = 0;
-		points->x_point_at_y1_red = 1;
-		points->x_point_at_y1_green = 1;
-		points->x_point_at_y1_blue = 1;
+	अगर (trans == TRANSFER_FUNCTION_UNITY ||
+		trans == TRANSFER_FUNCTION_LINEAR) अणु
+		poपूर्णांकs->end_exponent = 0;
+		poपूर्णांकs->x_poपूर्णांक_at_y1_red = 1;
+		poपूर्णांकs->x_poपूर्णांक_at_y1_green = 1;
+		poपूर्णांकs->x_poपूर्णांक_at_y1_blue = 1;
 
-		for (i = 0; i <= MAX_HW_POINTS ; i++) {
+		क्रम (i = 0; i <= MAX_HW_POINTS ; i++) अणु
 			rgb_regamma[i].r = coordinates_x[i].x;
 			rgb_regamma[i].g = coordinates_x[i].x;
 			rgb_regamma[i].b = coordinates_x[i].x;
-		}
+		पूर्ण
 
 		ret = true;
-	} else if (trans == TRANSFER_FUNCTION_PQ) {
-		points->end_exponent = 7;
-		points->x_point_at_y1_red = 125;
-		points->x_point_at_y1_green = 125;
-		points->x_point_at_y1_blue = 125;
+	पूर्ण अन्यथा अगर (trans == TRANSFER_FUNCTION_PQ) अणु
+		poपूर्णांकs->end_exponent = 7;
+		poपूर्णांकs->x_poपूर्णांक_at_y1_red = 125;
+		poपूर्णांकs->x_poपूर्णांक_at_y1_green = 125;
+		poपूर्णांकs->x_poपूर्णांक_at_y1_blue = 125;
 
 		build_pq(rgb_regamma,
 				MAX_HW_POINTS,
@@ -2060,20 +2061,20 @@ static bool calculate_curve(enum dc_transfer_func_predefined trans,
 				sdr_ref_white_level);
 
 		ret = true;
-	} else if (trans == TRANSFER_FUNCTION_GAMMA22 &&
-			fs_params != NULL && fs_params->skip_tm == 0) {
-		build_freesync_hdr(rgb_regamma,
+	पूर्ण अन्यथा अगर (trans == TRANSFER_FUNCTION_GAMMA22 &&
+			fs_params != शून्य && fs_params->skip_पंचांग == 0) अणु
+		build_मुक्तsync_hdr(rgb_regamma,
 				MAX_HW_POINTS,
 				coordinates_x,
 				fs_params,
 				cal_buffer);
 
 		ret = true;
-	} else if (trans == TRANSFER_FUNCTION_HLG) {
-		points->end_exponent = 4;
-		points->x_point_at_y1_red = 12;
-		points->x_point_at_y1_green = 12;
-		points->x_point_at_y1_blue = 12;
+	पूर्ण अन्यथा अगर (trans == TRANSFER_FUNCTION_HLG) अणु
+		poपूर्णांकs->end_exponent = 4;
+		poपूर्णांकs->x_poपूर्णांक_at_y1_red = 12;
+		poपूर्णांकs->x_poपूर्णांक_at_y1_green = 12;
+		poपूर्णांकs->x_poपूर्णांक_at_y1_blue = 12;
 
 		build_hlg_regamma(rgb_regamma,
 				MAX_HW_POINTS,
@@ -2081,16 +2082,16 @@ static bool calculate_curve(enum dc_transfer_func_predefined trans,
 				80, 1000);
 
 		ret = true;
-	} else {
+	पूर्ण अन्यथा अणु
 		// trans == TRANSFER_FUNCTION_SRGB
 		// trans == TRANSFER_FUNCTION_BT709
 		// trans == TRANSFER_FUNCTION_GAMMA22
 		// trans == TRANSFER_FUNCTION_GAMMA24
 		// trans == TRANSFER_FUNCTION_GAMMA26
-		points->end_exponent = 0;
-		points->x_point_at_y1_red = 1;
-		points->x_point_at_y1_green = 1;
-		points->x_point_at_y1_blue = 1;
+		poपूर्णांकs->end_exponent = 0;
+		poपूर्णांकs->x_poपूर्णांक_at_y1_red = 1;
+		poपूर्णांकs->x_poपूर्णांक_at_y1_green = 1;
+		poपूर्णांकs->x_poपूर्णांक_at_y1_blue = 1;
 
 		build_regamma(rgb_regamma,
 				MAX_HW_POINTS,
@@ -2099,80 +2100,80 @@ static bool calculate_curve(enum dc_transfer_func_predefined trans,
 				cal_buffer);
 
 		ret = true;
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-bool mod_color_calculate_regamma_params(struct dc_transfer_func *output_tf,
-		const struct dc_gamma *ramp, bool mapUserRamp, bool canRomBeUsed,
-		const struct hdr_tm_params *fs_params,
-		struct calculate_buffer *cal_buffer)
-{
-	struct dc_transfer_func_distributed_points *tf_pts = &output_tf->tf_pts;
-	struct dividers dividers;
+bool mod_color_calculate_regamma_params(काष्ठा dc_transfer_func *output_tf,
+		स्थिर काष्ठा dc_gamma *ramp, bool mapUserRamp, bool canRomBeUsed,
+		स्थिर काष्ठा hdr_पंचांग_params *fs_params,
+		काष्ठा calculate_buffer *cal_buffer)
+अणु
+	काष्ठा dc_transfer_func_distributed_poपूर्णांकs *tf_pts = &output_tf->tf_pts;
+	काष्ठा भागiders भागiders;
 
-	struct pwl_float_data *rgb_user = NULL;
-	struct pwl_float_data_ex *rgb_regamma = NULL;
-	struct gamma_pixel *axis_x = NULL;
-	struct pixel_gamma_point *coeff = NULL;
-	enum dc_transfer_func_predefined tf = TRANSFER_FUNCTION_SRGB;
-	bool doClamping = true;
+	काष्ठा pwl_भग्न_data *rgb_user = शून्य;
+	काष्ठा pwl_भग्न_data_ex *rgb_regamma = शून्य;
+	काष्ठा gamma_pixel *axis_x = शून्य;
+	काष्ठा pixel_gamma_poपूर्णांक *coeff = शून्य;
+	क्रमागत dc_transfer_func_predefined tf = TRANSFER_FUNCTION_SRGB;
+	bool करोClamping = true;
 	bool ret = false;
 
-	if (output_tf->type == TF_TYPE_BYPASS)
-		return false;
+	अगर (output_tf->type == TF_TYPE_BYPASS)
+		वापस false;
 
-	/* we can use hardcoded curve for plain SRGB TF */
-	if (output_tf->type == TF_TYPE_PREDEFINED && canRomBeUsed == true &&
-			output_tf->tf == TRANSFER_FUNCTION_SRGB) {
-		if (ramp == NULL)
-			return true;
-		if ((ramp->is_identity && ramp->type != GAMMA_CS_TFM_1D) ||
+	/* we can use hardcoded curve क्रम plain SRGB TF */
+	अगर (output_tf->type == TF_TYPE_PREDEFINED && canRomBeUsed == true &&
+			output_tf->tf == TRANSFER_FUNCTION_SRGB) अणु
+		अगर (ramp == शून्य)
+			वापस true;
+		अगर ((ramp->is_identity && ramp->type != GAMMA_CS_TFM_1D) ||
 				(!mapUserRamp && ramp->type == GAMMA_RGB_256))
-			return true;
-	}
+			वापस true;
+	पूर्ण
 
 	output_tf->type = TF_TYPE_DISTRIBUTED_POINTS;
 
-	if (ramp && ramp->type != GAMMA_CS_TFM_1D &&
-			(mapUserRamp || ramp->type != GAMMA_RGB_256)) {
-		rgb_user = kvcalloc(ramp->num_entries + _EXTRA_POINTS,
-			    sizeof(*rgb_user),
+	अगर (ramp && ramp->type != GAMMA_CS_TFM_1D &&
+			(mapUserRamp || ramp->type != GAMMA_RGB_256)) अणु
+		rgb_user = kvसुस्मृति(ramp->num_entries + _EXTRA_POINTS,
+			    माप(*rgb_user),
 			    GFP_KERNEL);
-		if (!rgb_user)
-			goto rgb_user_alloc_fail;
+		अगर (!rgb_user)
+			जाओ rgb_user_alloc_fail;
 
-		axis_x = kvcalloc(ramp->num_entries + 3, sizeof(*axis_x),
+		axis_x = kvसुस्मृति(ramp->num_entries + 3, माप(*axis_x),
 				GFP_KERNEL);
-		if (!axis_x)
-			goto axis_x_alloc_fail;
+		अगर (!axis_x)
+			जाओ axis_x_alloc_fail;
 
-		dividers.divider1 = dc_fixpt_from_fraction(3, 2);
-		dividers.divider2 = dc_fixpt_from_int(2);
-		dividers.divider3 = dc_fixpt_from_fraction(5, 2);
+		भागiders.भागider1 = dc_fixpt_from_fraction(3, 2);
+		भागiders.भागider2 = dc_fixpt_from_पूर्णांक(2);
+		भागiders.भागider3 = dc_fixpt_from_fraction(5, 2);
 
-		build_evenly_distributed_points(
+		build_evenly_distributed_poपूर्णांकs(
 				axis_x,
 				ramp->num_entries,
-				dividers);
+				भागiders);
 
-		if (ramp->type == GAMMA_RGB_256 && mapUserRamp)
-			scale_gamma(rgb_user, ramp, dividers);
-		else if (ramp->type == GAMMA_RGB_FLOAT_1024)
-			scale_gamma_dx(rgb_user, ramp, dividers);
-	}
+		अगर (ramp->type == GAMMA_RGB_256 && mapUserRamp)
+			scale_gamma(rgb_user, ramp, भागiders);
+		अन्यथा अगर (ramp->type == GAMMA_RGB_FLOAT_1024)
+			scale_gamma_dx(rgb_user, ramp, भागiders);
+	पूर्ण
 
-	rgb_regamma = kvcalloc(MAX_HW_POINTS + _EXTRA_POINTS,
-			       sizeof(*rgb_regamma),
+	rgb_regamma = kvसुस्मृति(MAX_HW_POINTS + _EXTRA_POINTS,
+			       माप(*rgb_regamma),
 			       GFP_KERNEL);
-	if (!rgb_regamma)
-		goto rgb_regamma_alloc_fail;
+	अगर (!rgb_regamma)
+		जाओ rgb_regamma_alloc_fail;
 
-	coeff = kvcalloc(MAX_HW_POINTS + _EXTRA_POINTS, sizeof(*coeff),
+	coeff = kvसुस्मृति(MAX_HW_POINTS + _EXTRA_POINTS, माप(*coeff),
 			 GFP_KERNEL);
-	if (!coeff)
-		goto coeff_alloc_fail;
+	अगर (!coeff)
+		जाओ coeff_alloc_fail;
 
 	tf = output_tf->tf;
 
@@ -2183,114 +2184,114 @@ bool mod_color_calculate_regamma_params(struct dc_transfer_func *output_tf,
 			output_tf->sdr_ref_white_level,
 			cal_buffer);
 
-	if (ret) {
-		doClamping = !(output_tf->tf == TRANSFER_FUNCTION_GAMMA22 &&
-			fs_params != NULL && fs_params->skip_tm == 0);
+	अगर (ret) अणु
+		करोClamping = !(output_tf->tf == TRANSFER_FUNCTION_GAMMA22 &&
+			fs_params != शून्य && fs_params->skip_पंचांग == 0);
 
 		map_regamma_hw_to_x_user(ramp, coeff, rgb_user,
 				coordinates_x, axis_x, rgb_regamma,
 				MAX_HW_POINTS, tf_pts,
 				(mapUserRamp || (ramp && ramp->type != GAMMA_RGB_256)) &&
 				(ramp && ramp->type != GAMMA_CS_TFM_1D),
-				doClamping);
+				करोClamping);
 
-		if (ramp && ramp->type == GAMMA_CS_TFM_1D)
+		अगर (ramp && ramp->type == GAMMA_CS_TFM_1D)
 			apply_lut_1d(ramp, MAX_HW_POINTS, tf_pts);
-	}
+	पूर्ण
 
-	kvfree(coeff);
+	kvमुक्त(coeff);
 coeff_alloc_fail:
-	kvfree(rgb_regamma);
+	kvमुक्त(rgb_regamma);
 rgb_regamma_alloc_fail:
-	kvfree(axis_x);
+	kvमुक्त(axis_x);
 axis_x_alloc_fail:
-	kvfree(rgb_user);
+	kvमुक्त(rgb_user);
 rgb_user_alloc_fail:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-bool  mod_color_calculate_degamma_curve(enum dc_transfer_func_predefined trans,
-				struct dc_transfer_func_distributed_points *points)
-{
-	uint32_t i;
+bool  mod_color_calculate_degamma_curve(क्रमागत dc_transfer_func_predefined trans,
+				काष्ठा dc_transfer_func_distributed_poपूर्णांकs *poपूर्णांकs)
+अणु
+	uपूर्णांक32_t i;
 	bool ret = false;
-	struct pwl_float_data_ex *rgb_degamma = NULL;
+	काष्ठा pwl_भग्न_data_ex *rgb_degamma = शून्य;
 
-	if (trans == TRANSFER_FUNCTION_UNITY ||
-		trans == TRANSFER_FUNCTION_LINEAR) {
+	अगर (trans == TRANSFER_FUNCTION_UNITY ||
+		trans == TRANSFER_FUNCTION_LINEAR) अणु
 
-		for (i = 0; i <= MAX_HW_POINTS ; i++) {
-			points->red[i]    = coordinates_x[i].x;
-			points->green[i]  = coordinates_x[i].x;
-			points->blue[i]   = coordinates_x[i].x;
-		}
+		क्रम (i = 0; i <= MAX_HW_POINTS ; i++) अणु
+			poपूर्णांकs->red[i]    = coordinates_x[i].x;
+			poपूर्णांकs->green[i]  = coordinates_x[i].x;
+			poपूर्णांकs->blue[i]   = coordinates_x[i].x;
+		पूर्ण
 		ret = true;
-	} else if (trans == TRANSFER_FUNCTION_PQ) {
-		rgb_degamma = kvcalloc(MAX_HW_POINTS + _EXTRA_POINTS,
-				       sizeof(*rgb_degamma),
+	पूर्ण अन्यथा अगर (trans == TRANSFER_FUNCTION_PQ) अणु
+		rgb_degamma = kvसुस्मृति(MAX_HW_POINTS + _EXTRA_POINTS,
+				       माप(*rgb_degamma),
 				       GFP_KERNEL);
-		if (!rgb_degamma)
-			goto rgb_degamma_alloc_fail;
+		अगर (!rgb_degamma)
+			जाओ rgb_degamma_alloc_fail;
 
 
 		build_de_pq(rgb_degamma,
 				MAX_HW_POINTS,
 				coordinates_x);
-		for (i = 0; i <= MAX_HW_POINTS ; i++) {
-			points->red[i]    = rgb_degamma[i].r;
-			points->green[i]  = rgb_degamma[i].g;
-			points->blue[i]   = rgb_degamma[i].b;
-		}
+		क्रम (i = 0; i <= MAX_HW_POINTS ; i++) अणु
+			poपूर्णांकs->red[i]    = rgb_degamma[i].r;
+			poपूर्णांकs->green[i]  = rgb_degamma[i].g;
+			poपूर्णांकs->blue[i]   = rgb_degamma[i].b;
+		पूर्ण
 		ret = true;
 
-		kvfree(rgb_degamma);
-	} else if (trans == TRANSFER_FUNCTION_SRGB ||
+		kvमुक्त(rgb_degamma);
+	पूर्ण अन्यथा अगर (trans == TRANSFER_FUNCTION_SRGB ||
 		trans == TRANSFER_FUNCTION_BT709 ||
 		trans == TRANSFER_FUNCTION_GAMMA22 ||
 		trans == TRANSFER_FUNCTION_GAMMA24 ||
-		trans == TRANSFER_FUNCTION_GAMMA26) {
-		rgb_degamma = kvcalloc(MAX_HW_POINTS + _EXTRA_POINTS,
-				       sizeof(*rgb_degamma),
+		trans == TRANSFER_FUNCTION_GAMMA26) अणु
+		rgb_degamma = kvसुस्मृति(MAX_HW_POINTS + _EXTRA_POINTS,
+				       माप(*rgb_degamma),
 				       GFP_KERNEL);
-		if (!rgb_degamma)
-			goto rgb_degamma_alloc_fail;
+		अगर (!rgb_degamma)
+			जाओ rgb_degamma_alloc_fail;
 
 		build_degamma(rgb_degamma,
 				MAX_HW_POINTS,
 				coordinates_x,
 				trans);
-		for (i = 0; i <= MAX_HW_POINTS ; i++) {
-			points->red[i]    = rgb_degamma[i].r;
-			points->green[i]  = rgb_degamma[i].g;
-			points->blue[i]   = rgb_degamma[i].b;
-		}
+		क्रम (i = 0; i <= MAX_HW_POINTS ; i++) अणु
+			poपूर्णांकs->red[i]    = rgb_degamma[i].r;
+			poपूर्णांकs->green[i]  = rgb_degamma[i].g;
+			poपूर्णांकs->blue[i]   = rgb_degamma[i].b;
+		पूर्ण
 		ret = true;
 
-		kvfree(rgb_degamma);
-	} else if (trans == TRANSFER_FUNCTION_HLG) {
-		rgb_degamma = kvcalloc(MAX_HW_POINTS + _EXTRA_POINTS,
-				       sizeof(*rgb_degamma),
+		kvमुक्त(rgb_degamma);
+	पूर्ण अन्यथा अगर (trans == TRANSFER_FUNCTION_HLG) अणु
+		rgb_degamma = kvसुस्मृति(MAX_HW_POINTS + _EXTRA_POINTS,
+				       माप(*rgb_degamma),
 				       GFP_KERNEL);
-		if (!rgb_degamma)
-			goto rgb_degamma_alloc_fail;
+		अगर (!rgb_degamma)
+			जाओ rgb_degamma_alloc_fail;
 
 		build_hlg_degamma(rgb_degamma,
 				MAX_HW_POINTS,
 				coordinates_x,
 				80, 1000);
-		for (i = 0; i <= MAX_HW_POINTS ; i++) {
-			points->red[i]    = rgb_degamma[i].r;
-			points->green[i]  = rgb_degamma[i].g;
-			points->blue[i]   = rgb_degamma[i].b;
-		}
+		क्रम (i = 0; i <= MAX_HW_POINTS ; i++) अणु
+			poपूर्णांकs->red[i]    = rgb_degamma[i].r;
+			poपूर्णांकs->green[i]  = rgb_degamma[i].g;
+			poपूर्णांकs->blue[i]   = rgb_degamma[i].b;
+		पूर्ण
 		ret = true;
-		kvfree(rgb_degamma);
-	}
-	points->end_exponent = 0;
-	points->x_point_at_y1_red = 1;
-	points->x_point_at_y1_green = 1;
-	points->x_point_at_y1_blue = 1;
+		kvमुक्त(rgb_degamma);
+	पूर्ण
+	poपूर्णांकs->end_exponent = 0;
+	poपूर्णांकs->x_poपूर्णांक_at_y1_red = 1;
+	poपूर्णांकs->x_poपूर्णांक_at_y1_green = 1;
+	poपूर्णांकs->x_poपूर्णांक_at_y1_blue = 1;
 
 rgb_degamma_alloc_fail:
-	return ret;
-}
+	वापस ret;
+पूर्ण

@@ -1,10 +1,11 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _BMC150_ACCEL_H_
-#define _BMC150_ACCEL_H_
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _BMC150_ACCEL_H_
+#घोषणा _BMC150_ACCEL_H_
 
-struct regmap;
+काष्ठा regmap;
 
-enum {
+क्रमागत अणु
 	bmc150,
 	bmi055,
 	bma255,
@@ -12,14 +13,14 @@ enum {
 	bma222,
 	bma222e,
 	bma280,
-};
+पूर्ण;
 
-int bmc150_accel_core_probe(struct device *dev, struct regmap *regmap, int irq,
-			    const char *name, bool block_supported);
-int bmc150_accel_core_remove(struct device *dev);
-struct i2c_client *bmc150_get_second_device(struct i2c_client *second_device);
-void bmc150_set_second_device(struct i2c_client *second_device);
-extern const struct dev_pm_ops bmc150_accel_pm_ops;
-extern const struct regmap_config bmc150_regmap_conf;
+पूर्णांक bmc150_accel_core_probe(काष्ठा device *dev, काष्ठा regmap *regmap, पूर्णांक irq,
+			    स्थिर अक्षर *name, bool block_supported);
+पूर्णांक bmc150_accel_core_हटाओ(काष्ठा device *dev);
+काष्ठा i2c_client *bmc150_get_second_device(काष्ठा i2c_client *second_device);
+व्योम bmc150_set_second_device(काष्ठा i2c_client *second_device);
+बाह्य स्थिर काष्ठा dev_pm_ops bmc150_accel_pm_ops;
+बाह्य स्थिर काष्ठा regmap_config bmc150_regmap_conf;
 
-#endif  /* _BMC150_ACCEL_H_ */
+#पूर्ण_अगर  /* _BMC150_ACCEL_H_ */

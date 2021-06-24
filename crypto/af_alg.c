@@ -1,329 +1,330 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * af_alg: User-space algorithm interface
+ * af_alg: User-space algorithm पूर्णांकerface
  *
- * This file provides the user-space API for algorithms.
+ * This file provides the user-space API क्रम algorithms.
  *
- * Copyright (c) 2010 Herbert Xu <herbert@gondor.apana.org.au>
+ * Copyright (c) 2010 Herbert Xu <herbert@gonकरोr.apana.org.au>
  */
 
-#include <linux/atomic.h>
-#include <crypto/if_alg.h>
-#include <linux/crypto.h>
-#include <linux/init.h>
-#include <linux/kernel.h>
-#include <linux/list.h>
-#include <linux/module.h>
-#include <linux/net.h>
-#include <linux/rwsem.h>
-#include <linux/sched.h>
-#include <linux/sched/signal.h>
-#include <linux/security.h>
+#समावेश <linux/atomic.h>
+#समावेश <crypto/अगर_alg.h>
+#समावेश <linux/crypto.h>
+#समावेश <linux/init.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/list.h>
+#समावेश <linux/module.h>
+#समावेश <linux/net.h>
+#समावेश <linux/rwsem.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/sched/संकेत.स>
+#समावेश <linux/security.h>
 
-struct alg_type_list {
-	const struct af_alg_type *type;
-	struct list_head list;
-};
+काष्ठा alg_type_list अणु
+	स्थिर काष्ठा af_alg_type *type;
+	काष्ठा list_head list;
+पूर्ण;
 
-static atomic_long_t alg_memory_allocated;
+अटल atomic_दीर्घ_t alg_memory_allocated;
 
-static struct proto alg_proto = {
+अटल काष्ठा proto alg_proto = अणु
 	.name			= "ALG",
 	.owner			= THIS_MODULE,
 	.memory_allocated	= &alg_memory_allocated,
-	.obj_size		= sizeof(struct alg_sock),
-};
+	.obj_size		= माप(काष्ठा alg_sock),
+पूर्ण;
 
-static LIST_HEAD(alg_types);
-static DECLARE_RWSEM(alg_types_sem);
+अटल LIST_HEAD(alg_types);
+अटल DECLARE_RWSEM(alg_types_sem);
 
-static const struct af_alg_type *alg_get_type(const char *name)
-{
-	const struct af_alg_type *type = ERR_PTR(-ENOENT);
-	struct alg_type_list *node;
+अटल स्थिर काष्ठा af_alg_type *alg_get_type(स्थिर अक्षर *name)
+अणु
+	स्थिर काष्ठा af_alg_type *type = ERR_PTR(-ENOENT);
+	काष्ठा alg_type_list *node;
 
-	down_read(&alg_types_sem);
-	list_for_each_entry(node, &alg_types, list) {
-		if (strcmp(node->type->name, name))
-			continue;
+	करोwn_पढ़ो(&alg_types_sem);
+	list_क्रम_each_entry(node, &alg_types, list) अणु
+		अगर (म_भेद(node->type->name, name))
+			जारी;
 
-		if (try_module_get(node->type->owner))
+		अगर (try_module_get(node->type->owner))
 			type = node->type;
-		break;
-	}
-	up_read(&alg_types_sem);
+		अवरोध;
+	पूर्ण
+	up_पढ़ो(&alg_types_sem);
 
-	return type;
-}
+	वापस type;
+पूर्ण
 
-int af_alg_register_type(const struct af_alg_type *type)
-{
-	struct alg_type_list *node;
-	int err = -EEXIST;
+पूर्णांक af_alg_रेजिस्टर_type(स्थिर काष्ठा af_alg_type *type)
+अणु
+	काष्ठा alg_type_list *node;
+	पूर्णांक err = -EEXIST;
 
-	down_write(&alg_types_sem);
-	list_for_each_entry(node, &alg_types, list) {
-		if (!strcmp(node->type->name, type->name))
-			goto unlock;
-	}
+	करोwn_ग_लिखो(&alg_types_sem);
+	list_क्रम_each_entry(node, &alg_types, list) अणु
+		अगर (!म_भेद(node->type->name, type->name))
+			जाओ unlock;
+	पूर्ण
 
-	node = kmalloc(sizeof(*node), GFP_KERNEL);
+	node = kदो_स्मृति(माप(*node), GFP_KERNEL);
 	err = -ENOMEM;
-	if (!node)
-		goto unlock;
+	अगर (!node)
+		जाओ unlock;
 
 	type->ops->owner = THIS_MODULE;
-	if (type->ops_nokey)
+	अगर (type->ops_nokey)
 		type->ops_nokey->owner = THIS_MODULE;
 	node->type = type;
 	list_add(&node->list, &alg_types);
 	err = 0;
 
 unlock:
-	up_write(&alg_types_sem);
+	up_ग_लिखो(&alg_types_sem);
 
-	return err;
-}
-EXPORT_SYMBOL_GPL(af_alg_register_type);
+	वापस err;
+पूर्ण
+EXPORT_SYMBOL_GPL(af_alg_रेजिस्टर_type);
 
-int af_alg_unregister_type(const struct af_alg_type *type)
-{
-	struct alg_type_list *node;
-	int err = -ENOENT;
+पूर्णांक af_alg_unरेजिस्टर_type(स्थिर काष्ठा af_alg_type *type)
+अणु
+	काष्ठा alg_type_list *node;
+	पूर्णांक err = -ENOENT;
 
-	down_write(&alg_types_sem);
-	list_for_each_entry(node, &alg_types, list) {
-		if (strcmp(node->type->name, type->name))
-			continue;
+	करोwn_ग_लिखो(&alg_types_sem);
+	list_क्रम_each_entry(node, &alg_types, list) अणु
+		अगर (म_भेद(node->type->name, type->name))
+			जारी;
 
 		list_del(&node->list);
-		kfree(node);
+		kमुक्त(node);
 		err = 0;
-		break;
-	}
-	up_write(&alg_types_sem);
+		अवरोध;
+	पूर्ण
+	up_ग_लिखो(&alg_types_sem);
 
-	return err;
-}
-EXPORT_SYMBOL_GPL(af_alg_unregister_type);
+	वापस err;
+पूर्ण
+EXPORT_SYMBOL_GPL(af_alg_unरेजिस्टर_type);
 
-static void alg_do_release(const struct af_alg_type *type, void *private)
-{
-	if (!type)
-		return;
+अटल व्योम alg_करो_release(स्थिर काष्ठा af_alg_type *type, व्योम *निजी)
+अणु
+	अगर (!type)
+		वापस;
 
-	type->release(private);
+	type->release(निजी);
 	module_put(type->owner);
-}
+पूर्ण
 
-int af_alg_release(struct socket *sock)
-{
-	if (sock->sk) {
+पूर्णांक af_alg_release(काष्ठा socket *sock)
+अणु
+	अगर (sock->sk) अणु
 		sock_put(sock->sk);
-		sock->sk = NULL;
-	}
-	return 0;
-}
+		sock->sk = शून्य;
+	पूर्ण
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(af_alg_release);
 
-void af_alg_release_parent(struct sock *sk)
-{
-	struct alg_sock *ask = alg_sk(sk);
-	unsigned int nokey = atomic_read(&ask->nokey_refcnt);
+व्योम af_alg_release_parent(काष्ठा sock *sk)
+अणु
+	काष्ठा alg_sock *ask = alg_sk(sk);
+	अचिन्हित पूर्णांक nokey = atomic_पढ़ो(&ask->nokey_refcnt);
 
 	sk = ask->parent;
 	ask = alg_sk(sk);
 
-	if (nokey)
+	अगर (nokey)
 		atomic_dec(&ask->nokey_refcnt);
 
-	if (atomic_dec_and_test(&ask->refcnt))
+	अगर (atomic_dec_and_test(&ask->refcnt))
 		sock_put(sk);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(af_alg_release_parent);
 
-static int alg_bind(struct socket *sock, struct sockaddr *uaddr, int addr_len)
-{
-	const u32 allowed = CRYPTO_ALG_KERN_DRIVER_ONLY;
-	struct sock *sk = sock->sk;
-	struct alg_sock *ask = alg_sk(sk);
-	struct sockaddr_alg_new *sa = (void *)uaddr;
-	const struct af_alg_type *type;
-	void *private;
-	int err;
+अटल पूर्णांक alg_bind(काष्ठा socket *sock, काष्ठा sockaddr *uaddr, पूर्णांक addr_len)
+अणु
+	स्थिर u32 allowed = CRYPTO_ALG_KERN_DRIVER_ONLY;
+	काष्ठा sock *sk = sock->sk;
+	काष्ठा alg_sock *ask = alg_sk(sk);
+	काष्ठा sockaddr_alg_new *sa = (व्योम *)uaddr;
+	स्थिर काष्ठा af_alg_type *type;
+	व्योम *निजी;
+	पूर्णांक err;
 
-	if (sock->state == SS_CONNECTED)
-		return -EINVAL;
+	अगर (sock->state == SS_CONNECTED)
+		वापस -EINVAL;
 
-	BUILD_BUG_ON(offsetof(struct sockaddr_alg_new, salg_name) !=
-		     offsetof(struct sockaddr_alg, salg_name));
-	BUILD_BUG_ON(offsetof(struct sockaddr_alg, salg_name) != sizeof(*sa));
+	BUILD_BUG_ON(दुरत्व(काष्ठा sockaddr_alg_new, salg_name) !=
+		     दुरत्व(काष्ठा sockaddr_alg, salg_name));
+	BUILD_BUG_ON(दुरत्व(काष्ठा sockaddr_alg, salg_name) != माप(*sa));
 
-	if (addr_len < sizeof(*sa) + 1)
-		return -EINVAL;
+	अगर (addr_len < माप(*sa) + 1)
+		वापस -EINVAL;
 
-	/* If caller uses non-allowed flag, return error. */
-	if ((sa->salg_feat & ~allowed) || (sa->salg_mask & ~allowed))
-		return -EINVAL;
+	/* If caller uses non-allowed flag, वापस error. */
+	अगर ((sa->salg_feat & ~allowed) || (sa->salg_mask & ~allowed))
+		वापस -EINVAL;
 
-	sa->salg_type[sizeof(sa->salg_type) - 1] = 0;
-	sa->salg_name[addr_len - sizeof(*sa) - 1] = 0;
+	sa->salg_type[माप(sa->salg_type) - 1] = 0;
+	sa->salg_name[addr_len - माप(*sa) - 1] = 0;
 
 	type = alg_get_type(sa->salg_type);
-	if (PTR_ERR(type) == -ENOENT) {
+	अगर (PTR_ERR(type) == -ENOENT) अणु
 		request_module("algif-%s", sa->salg_type);
 		type = alg_get_type(sa->salg_type);
-	}
+	पूर्ण
 
-	if (IS_ERR(type))
-		return PTR_ERR(type);
+	अगर (IS_ERR(type))
+		वापस PTR_ERR(type);
 
-	private = type->bind(sa->salg_name, sa->salg_feat, sa->salg_mask);
-	if (IS_ERR(private)) {
+	निजी = type->bind(sa->salg_name, sa->salg_feat, sa->salg_mask);
+	अगर (IS_ERR(निजी)) अणु
 		module_put(type->owner);
-		return PTR_ERR(private);
-	}
+		वापस PTR_ERR(निजी);
+	पूर्ण
 
 	err = -EBUSY;
 	lock_sock(sk);
-	if (atomic_read(&ask->refcnt))
-		goto unlock;
+	अगर (atomic_पढ़ो(&ask->refcnt))
+		जाओ unlock;
 
 	swap(ask->type, type);
-	swap(ask->private, private);
+	swap(ask->निजी, निजी);
 
 	err = 0;
 
 unlock:
 	release_sock(sk);
 
-	alg_do_release(type, private);
+	alg_करो_release(type, निजी);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int alg_setkey(struct sock *sk, sockptr_t ukey, unsigned int keylen)
-{
-	struct alg_sock *ask = alg_sk(sk);
-	const struct af_alg_type *type = ask->type;
+अटल पूर्णांक alg_setkey(काष्ठा sock *sk, sockptr_t ukey, अचिन्हित पूर्णांक keylen)
+अणु
+	काष्ठा alg_sock *ask = alg_sk(sk);
+	स्थिर काष्ठा af_alg_type *type = ask->type;
 	u8 *key;
-	int err;
+	पूर्णांक err;
 
-	key = sock_kmalloc(sk, keylen, GFP_KERNEL);
-	if (!key)
-		return -ENOMEM;
+	key = sock_kदो_स्मृति(sk, keylen, GFP_KERNEL);
+	अगर (!key)
+		वापस -ENOMEM;
 
 	err = -EFAULT;
-	if (copy_from_sockptr(key, ukey, keylen))
-		goto out;
+	अगर (copy_from_sockptr(key, ukey, keylen))
+		जाओ out;
 
-	err = type->setkey(ask->private, key, keylen);
+	err = type->setkey(ask->निजी, key, keylen);
 
 out:
-	sock_kzfree_s(sk, key, keylen);
+	sock_kzमुक्त_s(sk, key, keylen);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int alg_setsockopt(struct socket *sock, int level, int optname,
-			  sockptr_t optval, unsigned int optlen)
-{
-	struct sock *sk = sock->sk;
-	struct alg_sock *ask = alg_sk(sk);
-	const struct af_alg_type *type;
-	int err = -EBUSY;
+अटल पूर्णांक alg_setsockopt(काष्ठा socket *sock, पूर्णांक level, पूर्णांक optname,
+			  sockptr_t optval, अचिन्हित पूर्णांक optlen)
+अणु
+	काष्ठा sock *sk = sock->sk;
+	काष्ठा alg_sock *ask = alg_sk(sk);
+	स्थिर काष्ठा af_alg_type *type;
+	पूर्णांक err = -EBUSY;
 
 	lock_sock(sk);
-	if (atomic_read(&ask->refcnt) != atomic_read(&ask->nokey_refcnt))
-		goto unlock;
+	अगर (atomic_पढ़ो(&ask->refcnt) != atomic_पढ़ो(&ask->nokey_refcnt))
+		जाओ unlock;
 
 	type = ask->type;
 
 	err = -ENOPROTOOPT;
-	if (level != SOL_ALG || !type)
-		goto unlock;
+	अगर (level != SOL_ALG || !type)
+		जाओ unlock;
 
-	switch (optname) {
-	case ALG_SET_KEY:
-		if (sock->state == SS_CONNECTED)
-			goto unlock;
-		if (!type->setkey)
-			goto unlock;
+	चयन (optname) अणु
+	हाल ALG_SET_KEY:
+		अगर (sock->state == SS_CONNECTED)
+			जाओ unlock;
+		अगर (!type->setkey)
+			जाओ unlock;
 
 		err = alg_setkey(sk, optval, optlen);
-		break;
-	case ALG_SET_AEAD_AUTHSIZE:
-		if (sock->state == SS_CONNECTED)
-			goto unlock;
-		if (!type->setauthsize)
-			goto unlock;
-		err = type->setauthsize(ask->private, optlen);
-		break;
-	case ALG_SET_DRBG_ENTROPY:
-		if (sock->state == SS_CONNECTED)
-			goto unlock;
-		if (!type->setentropy)
-			goto unlock;
+		अवरोध;
+	हाल ALG_SET_AEAD_AUTHSIZE:
+		अगर (sock->state == SS_CONNECTED)
+			जाओ unlock;
+		अगर (!type->setauthsize)
+			जाओ unlock;
+		err = type->setauthsize(ask->निजी, optlen);
+		अवरोध;
+	हाल ALG_SET_DRBG_ENTROPY:
+		अगर (sock->state == SS_CONNECTED)
+			जाओ unlock;
+		अगर (!type->setentropy)
+			जाओ unlock;
 
-		err = type->setentropy(ask->private, optval, optlen);
-	}
+		err = type->setentropy(ask->निजी, optval, optlen);
+	पूर्ण
 
 unlock:
 	release_sock(sk);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-int af_alg_accept(struct sock *sk, struct socket *newsock, bool kern)
-{
-	struct alg_sock *ask = alg_sk(sk);
-	const struct af_alg_type *type;
-	struct sock *sk2;
-	unsigned int nokey;
-	int err;
+पूर्णांक af_alg_accept(काष्ठा sock *sk, काष्ठा socket *newsock, bool kern)
+अणु
+	काष्ठा alg_sock *ask = alg_sk(sk);
+	स्थिर काष्ठा af_alg_type *type;
+	काष्ठा sock *sk2;
+	अचिन्हित पूर्णांक nokey;
+	पूर्णांक err;
 
 	lock_sock(sk);
 	type = ask->type;
 
 	err = -EINVAL;
-	if (!type)
-		goto unlock;
+	अगर (!type)
+		जाओ unlock;
 
 	sk2 = sk_alloc(sock_net(sk), PF_ALG, GFP_KERNEL, &alg_proto, kern);
 	err = -ENOMEM;
-	if (!sk2)
-		goto unlock;
+	अगर (!sk2)
+		जाओ unlock;
 
 	sock_init_data(newsock, sk2);
 	security_sock_graft(sk2, newsock);
 	security_sk_clone(sk, sk2);
 
 	/*
-	 * newsock->ops assigned here to allow type->accept call to override
+	 * newsock->ops asचिन्हित here to allow type->accept call to override
 	 * them when required.
 	 */
 	newsock->ops = type->ops;
-	err = type->accept(ask->private, sk2);
+	err = type->accept(ask->निजी, sk2);
 
 	nokey = err == -ENOKEY;
-	if (nokey && type->accept_nokey)
-		err = type->accept_nokey(ask->private, sk2);
+	अगर (nokey && type->accept_nokey)
+		err = type->accept_nokey(ask->निजी, sk2);
 
-	if (err)
-		goto unlock;
+	अगर (err)
+		जाओ unlock;
 
-	if (atomic_inc_return_relaxed(&ask->refcnt) == 1)
+	अगर (atomic_inc_वापस_relaxed(&ask->refcnt) == 1)
 		sock_hold(sk);
-	if (nokey) {
+	अगर (nokey) अणु
 		atomic_inc(&ask->nokey_refcnt);
 		atomic_set(&alg_sk(sk2)->nokey_refcnt, 1);
-	}
+	पूर्ण
 	alg_sk(sk2)->parent = sk;
 	alg_sk(sk2)->type = type;
 
 	newsock->state = SS_CONNECTED;
 
-	if (nokey)
+	अगर (nokey)
 		newsock->ops = type->ops_nokey;
 
 	err = 0;
@@ -331,17 +332,17 @@ int af_alg_accept(struct sock *sk, struct socket *newsock, bool kern)
 unlock:
 	release_sock(sk);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 EXPORT_SYMBOL_GPL(af_alg_accept);
 
-static int alg_accept(struct socket *sock, struct socket *newsock, int flags,
+अटल पूर्णांक alg_accept(काष्ठा socket *sock, काष्ठा socket *newsock, पूर्णांक flags,
 		      bool kern)
-{
-	return af_alg_accept(sock->sk, newsock, kern);
-}
+अणु
+	वापस af_alg_accept(sock->sk, newsock, kern);
+पूर्ण
 
-static const struct proto_ops alg_proto_ops = {
+अटल स्थिर काष्ठा proto_ops alg_proto_ops = अणु
 	.family		=	PF_ALG,
 	.owner		=	THIS_MODULE,
 
@@ -350,7 +351,7 @@ static const struct proto_ops alg_proto_ops = {
 	.getname	=	sock_no_getname,
 	.ioctl		=	sock_no_ioctl,
 	.listen		=	sock_no_listen,
-	.shutdown	=	sock_no_shutdown,
+	.shutकरोwn	=	sock_no_shutकरोwn,
 	.mmap		=	sock_no_mmap,
 	.sendpage	=	sock_no_sendpage,
 	.sendmsg	=	sock_no_sendmsg,
@@ -360,133 +361,133 @@ static const struct proto_ops alg_proto_ops = {
 	.release	=	af_alg_release,
 	.setsockopt	=	alg_setsockopt,
 	.accept		=	alg_accept,
-};
+पूर्ण;
 
-static void alg_sock_destruct(struct sock *sk)
-{
-	struct alg_sock *ask = alg_sk(sk);
+अटल व्योम alg_sock_deकाष्ठा(काष्ठा sock *sk)
+अणु
+	काष्ठा alg_sock *ask = alg_sk(sk);
 
-	alg_do_release(ask->type, ask->private);
-}
+	alg_करो_release(ask->type, ask->निजी);
+पूर्ण
 
-static int alg_create(struct net *net, struct socket *sock, int protocol,
-		      int kern)
-{
-	struct sock *sk;
-	int err;
+अटल पूर्णांक alg_create(काष्ठा net *net, काष्ठा socket *sock, पूर्णांक protocol,
+		      पूर्णांक kern)
+अणु
+	काष्ठा sock *sk;
+	पूर्णांक err;
 
-	if (sock->type != SOCK_SEQPACKET)
-		return -ESOCKTNOSUPPORT;
-	if (protocol != 0)
-		return -EPROTONOSUPPORT;
+	अगर (sock->type != SOCK_SEQPACKET)
+		वापस -ESOCKTNOSUPPORT;
+	अगर (protocol != 0)
+		वापस -EPROTONOSUPPORT;
 
 	err = -ENOMEM;
 	sk = sk_alloc(net, PF_ALG, GFP_KERNEL, &alg_proto, kern);
-	if (!sk)
-		goto out;
+	अगर (!sk)
+		जाओ out;
 
 	sock->ops = &alg_proto_ops;
 	sock_init_data(sock, sk);
 
-	sk->sk_destruct = alg_sock_destruct;
+	sk->sk_deकाष्ठा = alg_sock_deकाष्ठा;
 
-	return 0;
+	वापस 0;
 out:
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static const struct net_proto_family alg_family = {
+अटल स्थिर काष्ठा net_proto_family alg_family = अणु
 	.family	=	PF_ALG,
 	.create	=	alg_create,
 	.owner	=	THIS_MODULE,
-};
+पूर्ण;
 
-int af_alg_make_sg(struct af_alg_sgl *sgl, struct iov_iter *iter, int len)
-{
-	size_t off;
-	ssize_t n;
-	int npages, i;
+पूर्णांक af_alg_make_sg(काष्ठा af_alg_sgl *sgl, काष्ठा iov_iter *iter, पूर्णांक len)
+अणु
+	माप_प्रकार off;
+	sमाप_प्रकार n;
+	पूर्णांक npages, i;
 
 	n = iov_iter_get_pages(iter, sgl->pages, len, ALG_MAX_PAGES, &off);
-	if (n < 0)
-		return n;
+	अगर (n < 0)
+		वापस n;
 
 	npages = (off + n + PAGE_SIZE - 1) >> PAGE_SHIFT;
-	if (WARN_ON(npages == 0))
-		return -EINVAL;
-	/* Add one extra for linking */
+	अगर (WARN_ON(npages == 0))
+		वापस -EINVAL;
+	/* Add one extra क्रम linking */
 	sg_init_table(sgl->sg, npages + 1);
 
-	for (i = 0, len = n; i < npages; i++) {
-		int plen = min_t(int, len, PAGE_SIZE - off);
+	क्रम (i = 0, len = n; i < npages; i++) अणु
+		पूर्णांक plen = min_t(पूर्णांक, len, PAGE_SIZE - off);
 
 		sg_set_page(sgl->sg + i, sgl->pages[i], plen, off);
 
 		off = 0;
 		len -= plen;
-	}
+	पूर्ण
 	sg_mark_end(sgl->sg + npages - 1);
 	sgl->npages = npages;
 
-	return n;
-}
+	वापस n;
+पूर्ण
 EXPORT_SYMBOL_GPL(af_alg_make_sg);
 
-static void af_alg_link_sg(struct af_alg_sgl *sgl_prev,
-			   struct af_alg_sgl *sgl_new)
-{
+अटल व्योम af_alg_link_sg(काष्ठा af_alg_sgl *sgl_prev,
+			   काष्ठा af_alg_sgl *sgl_new)
+अणु
 	sg_unmark_end(sgl_prev->sg + sgl_prev->npages - 1);
 	sg_chain(sgl_prev->sg, sgl_prev->npages + 1, sgl_new->sg);
-}
+पूर्ण
 
-void af_alg_free_sg(struct af_alg_sgl *sgl)
-{
-	int i;
+व्योम af_alg_मुक्त_sg(काष्ठा af_alg_sgl *sgl)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < sgl->npages; i++)
+	क्रम (i = 0; i < sgl->npages; i++)
 		put_page(sgl->pages[i]);
-}
-EXPORT_SYMBOL_GPL(af_alg_free_sg);
+पूर्ण
+EXPORT_SYMBOL_GPL(af_alg_मुक्त_sg);
 
-static int af_alg_cmsg_send(struct msghdr *msg, struct af_alg_control *con)
-{
-	struct cmsghdr *cmsg;
+अटल पूर्णांक af_alg_cmsg_send(काष्ठा msghdr *msg, काष्ठा af_alg_control *con)
+अणु
+	काष्ठा cmsghdr *cmsg;
 
-	for_each_cmsghdr(cmsg, msg) {
-		if (!CMSG_OK(msg, cmsg))
-			return -EINVAL;
-		if (cmsg->cmsg_level != SOL_ALG)
-			continue;
+	क्रम_each_cmsghdr(cmsg, msg) अणु
+		अगर (!CMSG_OK(msg, cmsg))
+			वापस -EINVAL;
+		अगर (cmsg->cmsg_level != SOL_ALG)
+			जारी;
 
-		switch (cmsg->cmsg_type) {
-		case ALG_SET_IV:
-			if (cmsg->cmsg_len < CMSG_LEN(sizeof(*con->iv)))
-				return -EINVAL;
-			con->iv = (void *)CMSG_DATA(cmsg);
-			if (cmsg->cmsg_len < CMSG_LEN(con->iv->ivlen +
-						      sizeof(*con->iv)))
-				return -EINVAL;
-			break;
+		चयन (cmsg->cmsg_type) अणु
+		हाल ALG_SET_IV:
+			अगर (cmsg->cmsg_len < CMSG_LEN(माप(*con->iv)))
+				वापस -EINVAL;
+			con->iv = (व्योम *)CMSG_DATA(cmsg);
+			अगर (cmsg->cmsg_len < CMSG_LEN(con->iv->ivlen +
+						      माप(*con->iv)))
+				वापस -EINVAL;
+			अवरोध;
 
-		case ALG_SET_OP:
-			if (cmsg->cmsg_len < CMSG_LEN(sizeof(u32)))
-				return -EINVAL;
+		हाल ALG_SET_OP:
+			अगर (cmsg->cmsg_len < CMSG_LEN(माप(u32)))
+				वापस -EINVAL;
 			con->op = *(u32 *)CMSG_DATA(cmsg);
-			break;
+			अवरोध;
 
-		case ALG_SET_AEAD_ASSOCLEN:
-			if (cmsg->cmsg_len < CMSG_LEN(sizeof(u32)))
-				return -EINVAL;
+		हाल ALG_SET_AEAD_ASSOCLEN:
+			अगर (cmsg->cmsg_len < CMSG_LEN(माप(u32)))
+				वापस -EINVAL;
 			con->aead_assoclen = *(u32 *)CMSG_DATA(cmsg);
-			break;
+			अवरोध;
 
-		default:
-			return -EINVAL;
-		}
-	}
+		शेष:
+			वापस -EINVAL;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * af_alg_alloc_tsgl - allocate the TX SGL
@@ -494,35 +495,35 @@ static int af_alg_cmsg_send(struct msghdr *msg, struct af_alg_control *con)
  * @sk: socket of connection to user space
  * Return: 0 upon success, < 0 upon error
  */
-static int af_alg_alloc_tsgl(struct sock *sk)
-{
-	struct alg_sock *ask = alg_sk(sk);
-	struct af_alg_ctx *ctx = ask->private;
-	struct af_alg_tsgl *sgl;
-	struct scatterlist *sg = NULL;
+अटल पूर्णांक af_alg_alloc_tsgl(काष्ठा sock *sk)
+अणु
+	काष्ठा alg_sock *ask = alg_sk(sk);
+	काष्ठा af_alg_ctx *ctx = ask->निजी;
+	काष्ठा af_alg_tsgl *sgl;
+	काष्ठा scatterlist *sg = शून्य;
 
-	sgl = list_entry(ctx->tsgl_list.prev, struct af_alg_tsgl, list);
-	if (!list_empty(&ctx->tsgl_list))
+	sgl = list_entry(ctx->tsgl_list.prev, काष्ठा af_alg_tsgl, list);
+	अगर (!list_empty(&ctx->tsgl_list))
 		sg = sgl->sg;
 
-	if (!sg || sgl->cur >= MAX_SGL_ENTS) {
-		sgl = sock_kmalloc(sk,
-				   struct_size(sgl, sg, (MAX_SGL_ENTS + 1)),
+	अगर (!sg || sgl->cur >= MAX_SGL_ENTS) अणु
+		sgl = sock_kदो_स्मृति(sk,
+				   काष्ठा_size(sgl, sg, (MAX_SGL_ENTS + 1)),
 				   GFP_KERNEL);
-		if (!sgl)
-			return -ENOMEM;
+		अगर (!sgl)
+			वापस -ENOMEM;
 
 		sg_init_table(sgl->sg, MAX_SGL_ENTS + 1);
 		sgl->cur = 0;
 
-		if (sg)
+		अगर (sg)
 			sg_chain(sg, MAX_SGL_ENTS + 1, sgl->sg);
 
 		list_add_tail(&sgl->list, &ctx->tsgl_list);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * af_alg_count_tsgl - Count number of TX SG entries
@@ -533,31 +534,31 @@ static int af_alg_alloc_tsgl(struct sock *sk)
  * @sk: socket of connection to user space
  * @bytes: Count the number of SG entries holding given number of bytes.
  * @offset: Start the counting of SG entries from the given offset.
- * Return: Number of TX SG entries found given the constraints
+ * Return: Number of TX SG entries found given the स्थिरraपूर्णांकs
  */
-unsigned int af_alg_count_tsgl(struct sock *sk, size_t bytes, size_t offset)
-{
-	const struct alg_sock *ask = alg_sk(sk);
-	const struct af_alg_ctx *ctx = ask->private;
-	const struct af_alg_tsgl *sgl;
-	unsigned int i;
-	unsigned int sgl_count = 0;
+अचिन्हित पूर्णांक af_alg_count_tsgl(काष्ठा sock *sk, माप_प्रकार bytes, माप_प्रकार offset)
+अणु
+	स्थिर काष्ठा alg_sock *ask = alg_sk(sk);
+	स्थिर काष्ठा af_alg_ctx *ctx = ask->निजी;
+	स्थिर काष्ठा af_alg_tsgl *sgl;
+	अचिन्हित पूर्णांक i;
+	अचिन्हित पूर्णांक sgl_count = 0;
 
-	if (!bytes)
-		return 0;
+	अगर (!bytes)
+		वापस 0;
 
-	list_for_each_entry(sgl, &ctx->tsgl_list, list) {
-		const struct scatterlist *sg = sgl->sg;
+	list_क्रम_each_entry(sgl, &ctx->tsgl_list, list) अणु
+		स्थिर काष्ठा scatterlist *sg = sgl->sg;
 
-		for (i = 0; i < sgl->cur; i++) {
-			size_t bytes_count;
+		क्रम (i = 0; i < sgl->cur; i++) अणु
+			माप_प्रकार bytes_count;
 
 			/* Skip offset */
-			if (offset >= sg[i].length) {
+			अगर (offset >= sg[i].length) अणु
 				offset -= sg[i].length;
 				bytes -= sg[i].length;
-				continue;
-			}
+				जारी;
+			पूर्ण
 
 			bytes_count = sg[i].length - offset;
 
@@ -565,19 +566,19 @@ unsigned int af_alg_count_tsgl(struct sock *sk, size_t bytes, size_t offset)
 			sgl_count++;
 
 			/* If we have seen requested number of bytes, stop */
-			if (bytes_count >= bytes)
-				return sgl_count;
+			अगर (bytes_count >= bytes)
+				वापस sgl_count;
 
 			bytes -= bytes_count;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return sgl_count;
-}
+	वापस sgl_count;
+पूर्ण
 EXPORT_SYMBOL_GPL(af_alg_count_tsgl);
 
 /**
- * af_alg_pull_tsgl - Release the specified buffers from TX SGL
+ * af_alg_pull_tsgl - Release the specअगरied buffers from TX SGL
  *
  * If @dst is non-null, reassign the pages to @dst. The caller must release
  * the pages. If @dst_offset is given only reassign the pages to @dst starting
@@ -586,41 +587,41 @@ EXPORT_SYMBOL_GPL(af_alg_count_tsgl);
  *
  * @sk: socket of connection to user space
  * @used: Number of bytes to pull from TX SGL
- * @dst: If non-NULL, buffer is reassigned to dst SGL instead of releasing. The
+ * @dst: If non-शून्य, buffer is reasचिन्हित to dst SGL instead of releasing. The
  *	 caller must release the buffers in dst.
- * @dst_offset: Reassign the TX SGL from given offset. All buffers before
+ * @dst_offset: Reassign the TX SGL from given offset. All buffers beक्रमe
  *	        reaching the offset is released.
  */
-void af_alg_pull_tsgl(struct sock *sk, size_t used, struct scatterlist *dst,
-		      size_t dst_offset)
-{
-	struct alg_sock *ask = alg_sk(sk);
-	struct af_alg_ctx *ctx = ask->private;
-	struct af_alg_tsgl *sgl;
-	struct scatterlist *sg;
-	unsigned int i, j = 0;
+व्योम af_alg_pull_tsgl(काष्ठा sock *sk, माप_प्रकार used, काष्ठा scatterlist *dst,
+		      माप_प्रकार dst_offset)
+अणु
+	काष्ठा alg_sock *ask = alg_sk(sk);
+	काष्ठा af_alg_ctx *ctx = ask->निजी;
+	काष्ठा af_alg_tsgl *sgl;
+	काष्ठा scatterlist *sg;
+	अचिन्हित पूर्णांक i, j = 0;
 
-	while (!list_empty(&ctx->tsgl_list)) {
-		sgl = list_first_entry(&ctx->tsgl_list, struct af_alg_tsgl,
+	जबतक (!list_empty(&ctx->tsgl_list)) अणु
+		sgl = list_first_entry(&ctx->tsgl_list, काष्ठा af_alg_tsgl,
 				       list);
 		sg = sgl->sg;
 
-		for (i = 0; i < sgl->cur; i++) {
-			size_t plen = min_t(size_t, used, sg[i].length);
-			struct page *page = sg_page(sg + i);
+		क्रम (i = 0; i < sgl->cur; i++) अणु
+			माप_प्रकार plen = min_t(माप_प्रकार, used, sg[i].length);
+			काष्ठा page *page = sg_page(sg + i);
 
-			if (!page)
-				continue;
+			अगर (!page)
+				जारी;
 
 			/*
 			 * Assumption: caller created af_alg_count_tsgl(len)
 			 * SG entries in dst.
 			 */
-			if (dst) {
-				if (dst_offset >= plen) {
-					/* discard page before offset */
+			अगर (dst) अणु
+				अगर (dst_offset >= plen) अणु
+					/* discard page beक्रमe offset */
 					dst_offset -= plen;
-				} else {
+				पूर्ण अन्यथा अणु
 					/* reassign page to dst after offset */
 					get_page(page);
 					sg_set_page(dst + j, page,
@@ -628,8 +629,8 @@ void af_alg_pull_tsgl(struct sock *sk, size_t used, struct scatterlist *dst,
 						    sg[i].offset + dst_offset);
 					dst_offset = 0;
 					j++;
-				}
-			}
+				पूर्ण
+			पूर्ण
 
 			sg[i].length -= plen;
 			sg[i].offset += plen;
@@ -637,269 +638,269 @@ void af_alg_pull_tsgl(struct sock *sk, size_t used, struct scatterlist *dst,
 			used -= plen;
 			ctx->used -= plen;
 
-			if (sg[i].length)
-				return;
+			अगर (sg[i].length)
+				वापस;
 
 			put_page(page);
-			sg_assign_page(sg + i, NULL);
-		}
+			sg_assign_page(sg + i, शून्य);
+		पूर्ण
 
 		list_del(&sgl->list);
-		sock_kfree_s(sk, sgl, struct_size(sgl, sg, MAX_SGL_ENTS + 1));
-	}
+		sock_kमुक्त_s(sk, sgl, काष्ठा_size(sgl, sg, MAX_SGL_ENTS + 1));
+	पूर्ण
 
-	if (!ctx->used)
+	अगर (!ctx->used)
 		ctx->merge = 0;
 	ctx->init = ctx->more;
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(af_alg_pull_tsgl);
 
 /**
- * af_alg_free_areq_sgls - Release TX and RX SGLs of the request
+ * af_alg_मुक्त_areq_sgls - Release TX and RX SGLs of the request
  *
  * @areq: Request holding the TX and RX SGL
  */
-static void af_alg_free_areq_sgls(struct af_alg_async_req *areq)
-{
-	struct sock *sk = areq->sk;
-	struct alg_sock *ask = alg_sk(sk);
-	struct af_alg_ctx *ctx = ask->private;
-	struct af_alg_rsgl *rsgl, *tmp;
-	struct scatterlist *tsgl;
-	struct scatterlist *sg;
-	unsigned int i;
+अटल व्योम af_alg_मुक्त_areq_sgls(काष्ठा af_alg_async_req *areq)
+अणु
+	काष्ठा sock *sk = areq->sk;
+	काष्ठा alg_sock *ask = alg_sk(sk);
+	काष्ठा af_alg_ctx *ctx = ask->निजी;
+	काष्ठा af_alg_rsgl *rsgl, *पंचांगp;
+	काष्ठा scatterlist *tsgl;
+	काष्ठा scatterlist *sg;
+	अचिन्हित पूर्णांक i;
 
-	list_for_each_entry_safe(rsgl, tmp, &areq->rsgl_list, list) {
+	list_क्रम_each_entry_safe(rsgl, पंचांगp, &areq->rsgl_list, list) अणु
 		atomic_sub(rsgl->sg_num_bytes, &ctx->rcvused);
-		af_alg_free_sg(&rsgl->sgl);
+		af_alg_मुक्त_sg(&rsgl->sgl);
 		list_del(&rsgl->list);
-		if (rsgl != &areq->first_rsgl)
-			sock_kfree_s(sk, rsgl, sizeof(*rsgl));
-	}
+		अगर (rsgl != &areq->first_rsgl)
+			sock_kमुक्त_s(sk, rsgl, माप(*rsgl));
+	पूर्ण
 
 	tsgl = areq->tsgl;
-	if (tsgl) {
-		for_each_sg(tsgl, sg, areq->tsgl_entries, i) {
-			if (!sg_page(sg))
-				continue;
+	अगर (tsgl) अणु
+		क्रम_each_sg(tsgl, sg, areq->tsgl_entries, i) अणु
+			अगर (!sg_page(sg))
+				जारी;
 			put_page(sg_page(sg));
-		}
+		पूर्ण
 
-		sock_kfree_s(sk, tsgl, areq->tsgl_entries * sizeof(*tsgl));
-	}
-}
+		sock_kमुक्त_s(sk, tsgl, areq->tsgl_entries * माप(*tsgl));
+	पूर्ण
+पूर्ण
 
 /**
- * af_alg_wait_for_wmem - wait for availability of writable memory
+ * af_alg_रुको_क्रम_wmem - रुको क्रम availability of writable memory
  *
  * @sk: socket of connection to user space
- * @flags: If MSG_DONTWAIT is set, then only report if function would sleep
+ * @flags: If MSG_DONTWAIT is set, then only report अगर function would sleep
  * Return: 0 when writable memory is available, < 0 upon error
  */
-static int af_alg_wait_for_wmem(struct sock *sk, unsigned int flags)
-{
-	DEFINE_WAIT_FUNC(wait, woken_wake_function);
-	int err = -ERESTARTSYS;
-	long timeout;
+अटल पूर्णांक af_alg_रुको_क्रम_wmem(काष्ठा sock *sk, अचिन्हित पूर्णांक flags)
+अणु
+	DEFINE_WAIT_FUNC(रुको, woken_wake_function);
+	पूर्णांक err = -ERESTARTSYS;
+	दीर्घ समयout;
 
-	if (flags & MSG_DONTWAIT)
-		return -EAGAIN;
+	अगर (flags & MSG_DONTWAIT)
+		वापस -EAGAIN;
 
 	sk_set_bit(SOCKWQ_ASYNC_NOSPACE, sk);
 
-	add_wait_queue(sk_sleep(sk), &wait);
-	for (;;) {
-		if (signal_pending(current))
-			break;
-		timeout = MAX_SCHEDULE_TIMEOUT;
-		if (sk_wait_event(sk, &timeout, af_alg_writable(sk), &wait)) {
+	add_रुको_queue(sk_sleep(sk), &रुको);
+	क्रम (;;) अणु
+		अगर (संकेत_pending(current))
+			अवरोध;
+		समयout = MAX_SCHEDULE_TIMEOUT;
+		अगर (sk_रुको_event(sk, &समयout, af_alg_writable(sk), &रुको)) अणु
 			err = 0;
-			break;
-		}
-	}
-	remove_wait_queue(sk_sleep(sk), &wait);
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	हटाओ_रुको_queue(sk_sleep(sk), &रुको);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /**
  * af_alg_wmem_wakeup - wakeup caller when writable memory is available
  *
  * @sk: socket of connection to user space
  */
-void af_alg_wmem_wakeup(struct sock *sk)
-{
-	struct socket_wq *wq;
+व्योम af_alg_wmem_wakeup(काष्ठा sock *sk)
+अणु
+	काष्ठा socket_wq *wq;
 
-	if (!af_alg_writable(sk))
-		return;
+	अगर (!af_alg_writable(sk))
+		वापस;
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	wq = rcu_dereference(sk->sk_wq);
-	if (skwq_has_sleeper(wq))
-		wake_up_interruptible_sync_poll(&wq->wait, EPOLLIN |
+	अगर (skwq_has_sleeper(wq))
+		wake_up_पूर्णांकerruptible_sync_poll(&wq->रुको, EPOLLIN |
 							   EPOLLRDNORM |
 							   EPOLLRDBAND);
 	sk_wake_async(sk, SOCK_WAKE_WAITD, POLL_IN);
-	rcu_read_unlock();
-}
+	rcu_पढ़ो_unlock();
+पूर्ण
 EXPORT_SYMBOL_GPL(af_alg_wmem_wakeup);
 
 /**
- * af_alg_wait_for_data - wait for availability of TX data
+ * af_alg_रुको_क्रम_data - रुको क्रम availability of TX data
  *
  * @sk: socket of connection to user space
- * @flags: If MSG_DONTWAIT is set, then only report if function would sleep
- * @min: Set to minimum request size if partial requests are allowed.
+ * @flags: If MSG_DONTWAIT is set, then only report अगर function would sleep
+ * @min: Set to minimum request size अगर partial requests are allowed.
  * Return: 0 when writable memory is available, < 0 upon error
  */
-int af_alg_wait_for_data(struct sock *sk, unsigned flags, unsigned min)
-{
-	DEFINE_WAIT_FUNC(wait, woken_wake_function);
-	struct alg_sock *ask = alg_sk(sk);
-	struct af_alg_ctx *ctx = ask->private;
-	long timeout;
-	int err = -ERESTARTSYS;
+पूर्णांक af_alg_रुको_क्रम_data(काष्ठा sock *sk, अचिन्हित flags, अचिन्हित min)
+अणु
+	DEFINE_WAIT_FUNC(रुको, woken_wake_function);
+	काष्ठा alg_sock *ask = alg_sk(sk);
+	काष्ठा af_alg_ctx *ctx = ask->निजी;
+	दीर्घ समयout;
+	पूर्णांक err = -ERESTARTSYS;
 
-	if (flags & MSG_DONTWAIT)
-		return -EAGAIN;
+	अगर (flags & MSG_DONTWAIT)
+		वापस -EAGAIN;
 
 	sk_set_bit(SOCKWQ_ASYNC_WAITDATA, sk);
 
-	add_wait_queue(sk_sleep(sk), &wait);
-	for (;;) {
-		if (signal_pending(current))
-			break;
-		timeout = MAX_SCHEDULE_TIMEOUT;
-		if (sk_wait_event(sk, &timeout,
+	add_रुको_queue(sk_sleep(sk), &रुको);
+	क्रम (;;) अणु
+		अगर (संकेत_pending(current))
+			अवरोध;
+		समयout = MAX_SCHEDULE_TIMEOUT;
+		अगर (sk_रुको_event(sk, &समयout,
 				  ctx->init && (!ctx->more ||
 						(min && ctx->used >= min)),
-				  &wait)) {
+				  &रुको)) अणु
 			err = 0;
-			break;
-		}
-	}
-	remove_wait_queue(sk_sleep(sk), &wait);
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	हटाओ_रुको_queue(sk_sleep(sk), &रुको);
 
 	sk_clear_bit(SOCKWQ_ASYNC_WAITDATA, sk);
 
-	return err;
-}
-EXPORT_SYMBOL_GPL(af_alg_wait_for_data);
+	वापस err;
+पूर्ण
+EXPORT_SYMBOL_GPL(af_alg_रुको_क्रम_data);
 
 /**
  * af_alg_data_wakeup - wakeup caller when new data can be sent to kernel
  *
  * @sk: socket of connection to user space
  */
-static void af_alg_data_wakeup(struct sock *sk)
-{
-	struct alg_sock *ask = alg_sk(sk);
-	struct af_alg_ctx *ctx = ask->private;
-	struct socket_wq *wq;
+अटल व्योम af_alg_data_wakeup(काष्ठा sock *sk)
+अणु
+	काष्ठा alg_sock *ask = alg_sk(sk);
+	काष्ठा af_alg_ctx *ctx = ask->निजी;
+	काष्ठा socket_wq *wq;
 
-	if (!ctx->used)
-		return;
+	अगर (!ctx->used)
+		वापस;
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	wq = rcu_dereference(sk->sk_wq);
-	if (skwq_has_sleeper(wq))
-		wake_up_interruptible_sync_poll(&wq->wait, EPOLLOUT |
+	अगर (skwq_has_sleeper(wq))
+		wake_up_पूर्णांकerruptible_sync_poll(&wq->रुको, EPOLLOUT |
 							   EPOLLRDNORM |
 							   EPOLLRDBAND);
 	sk_wake_async(sk, SOCK_WAKE_SPACE, POLL_OUT);
-	rcu_read_unlock();
-}
+	rcu_पढ़ो_unlock();
+पूर्ण
 
 /**
- * af_alg_sendmsg - implementation of sendmsg system call handler
+ * af_alg_sendmsg - implementation of sendmsg प्रणाली call handler
  *
- * The sendmsg system call handler obtains the user data and stores it
+ * The sendmsg प्रणाली call handler obtains the user data and stores it
  * in ctx->tsgl_list. This implies allocation of the required numbers of
- * struct af_alg_tsgl.
+ * काष्ठा af_alg_tsgl.
  *
- * In addition, the ctx is filled with the information sent via CMSG.
+ * In addition, the ctx is filled with the inक्रमmation sent via CMSG.
  *
  * @sock: socket of connection to user space
  * @msg: message from user space
  * @size: size of message from user space
- * @ivsize: the size of the IV for the cipher operation to verify that the
+ * @ivsize: the size of the IV क्रम the cipher operation to verअगरy that the
  *	   user-space-provided IV has the right size
  * Return: the number of copied data upon success, < 0 upon error
  */
-int af_alg_sendmsg(struct socket *sock, struct msghdr *msg, size_t size,
-		   unsigned int ivsize)
-{
-	struct sock *sk = sock->sk;
-	struct alg_sock *ask = alg_sk(sk);
-	struct af_alg_ctx *ctx = ask->private;
-	struct af_alg_tsgl *sgl;
-	struct af_alg_control con = {};
-	long copied = 0;
+पूर्णांक af_alg_sendmsg(काष्ठा socket *sock, काष्ठा msghdr *msg, माप_प्रकार size,
+		   अचिन्हित पूर्णांक ivsize)
+अणु
+	काष्ठा sock *sk = sock->sk;
+	काष्ठा alg_sock *ask = alg_sk(sk);
+	काष्ठा af_alg_ctx *ctx = ask->निजी;
+	काष्ठा af_alg_tsgl *sgl;
+	काष्ठा af_alg_control con = अणुपूर्ण;
+	दीर्घ copied = 0;
 	bool enc = false;
 	bool init = false;
-	int err = 0;
+	पूर्णांक err = 0;
 
-	if (msg->msg_controllen) {
+	अगर (msg->msg_controllen) अणु
 		err = af_alg_cmsg_send(msg, &con);
-		if (err)
-			return err;
+		अगर (err)
+			वापस err;
 
 		init = true;
-		switch (con.op) {
-		case ALG_OP_ENCRYPT:
+		चयन (con.op) अणु
+		हाल ALG_OP_ENCRYPT:
 			enc = true;
-			break;
-		case ALG_OP_DECRYPT:
+			अवरोध;
+		हाल ALG_OP_DECRYPT:
 			enc = false;
-			break;
-		default:
-			return -EINVAL;
-		}
+			अवरोध;
+		शेष:
+			वापस -EINVAL;
+		पूर्ण
 
-		if (con.iv && con.iv->ivlen != ivsize)
-			return -EINVAL;
-	}
+		अगर (con.iv && con.iv->ivlen != ivsize)
+			वापस -EINVAL;
+	पूर्ण
 
 	lock_sock(sk);
-	if (ctx->init && !ctx->more) {
-		if (ctx->used) {
+	अगर (ctx->init && !ctx->more) अणु
+		अगर (ctx->used) अणु
 			err = -EINVAL;
-			goto unlock;
-		}
+			जाओ unlock;
+		पूर्ण
 
 		pr_info_once(
 			"%s sent an empty control message without MSG_MORE.\n",
 			current->comm);
-	}
+	पूर्ण
 	ctx->init = true;
 
-	if (init) {
+	अगर (init) अणु
 		ctx->enc = enc;
-		if (con.iv)
-			memcpy(ctx->iv, con.iv->iv, ivsize);
+		अगर (con.iv)
+			स_नकल(ctx->iv, con.iv->iv, ivsize);
 
 		ctx->aead_assoclen = con.aead_assoclen;
-	}
+	पूर्ण
 
-	while (size) {
-		struct scatterlist *sg;
-		size_t len = size;
-		size_t plen;
+	जबतक (size) अणु
+		काष्ठा scatterlist *sg;
+		माप_प्रकार len = size;
+		माप_प्रकार plen;
 
 		/* use the existing memory in an allocated page */
-		if (ctx->merge) {
+		अगर (ctx->merge) अणु
 			sgl = list_entry(ctx->tsgl_list.prev,
-					 struct af_alg_tsgl, list);
+					 काष्ठा af_alg_tsgl, list);
 			sg = sgl->sg + sgl->cur - 1;
-			len = min_t(size_t, len,
+			len = min_t(माप_प्रकार, len,
 				    PAGE_SIZE - sg->offset - sg->length);
 
-			err = memcpy_from_msg(page_address(sg_page(sg)) +
+			err = स_नकल_from_msg(page_address(sg_page(sg)) +
 					      sg->offset + sg->length,
 					      msg, len);
-			if (err)
-				goto unlock;
+			अगर (err)
+				जाओ unlock;
 
 			sg->length += len;
 			ctx->merge = (sg->offset + sg->length) &
@@ -908,46 +909,46 @@ int af_alg_sendmsg(struct socket *sock, struct msghdr *msg, size_t size,
 			ctx->used += len;
 			copied += len;
 			size -= len;
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		if (!af_alg_writable(sk)) {
-			err = af_alg_wait_for_wmem(sk, msg->msg_flags);
-			if (err)
-				goto unlock;
-		}
+		अगर (!af_alg_writable(sk)) अणु
+			err = af_alg_रुको_क्रम_wmem(sk, msg->msg_flags);
+			अगर (err)
+				जाओ unlock;
+		पूर्ण
 
 		/* allocate a new page */
-		len = min_t(unsigned long, len, af_alg_sndbuf(sk));
+		len = min_t(अचिन्हित दीर्घ, len, af_alg_sndbuf(sk));
 
 		err = af_alg_alloc_tsgl(sk);
-		if (err)
-			goto unlock;
+		अगर (err)
+			जाओ unlock;
 
-		sgl = list_entry(ctx->tsgl_list.prev, struct af_alg_tsgl,
+		sgl = list_entry(ctx->tsgl_list.prev, काष्ठा af_alg_tsgl,
 				 list);
 		sg = sgl->sg;
-		if (sgl->cur)
+		अगर (sgl->cur)
 			sg_unmark_end(sg + sgl->cur - 1);
 
-		do {
-			unsigned int i = sgl->cur;
+		करो अणु
+			अचिन्हित पूर्णांक i = sgl->cur;
 
-			plen = min_t(size_t, len, PAGE_SIZE);
+			plen = min_t(माप_प्रकार, len, PAGE_SIZE);
 
 			sg_assign_page(sg + i, alloc_page(GFP_KERNEL));
-			if (!sg_page(sg + i)) {
+			अगर (!sg_page(sg + i)) अणु
 				err = -ENOMEM;
-				goto unlock;
-			}
+				जाओ unlock;
+			पूर्ण
 
-			err = memcpy_from_msg(page_address(sg_page(sg + i)),
+			err = स_नकल_from_msg(page_address(sg_page(sg + i)),
 					      msg, plen);
-			if (err) {
-				__free_page(sg_page(sg + i));
-				sg_assign_page(sg + i, NULL);
-				goto unlock;
-			}
+			अगर (err) अणु
+				__मुक्त_page(sg_page(sg + i));
+				sg_assign_page(sg + i, शून्य);
+				जाओ unlock;
+			पूर्ण
 
 			sg[i].length = plen;
 			len -= plen;
@@ -955,13 +956,13 @@ int af_alg_sendmsg(struct socket *sock, struct msghdr *msg, size_t size,
 			copied += plen;
 			size -= plen;
 			sgl->cur++;
-		} while (len && sgl->cur < MAX_SGL_ENTS);
+		पूर्ण जबतक (len && sgl->cur < MAX_SGL_ENTS);
 
-		if (!size)
+		अगर (!size)
 			sg_mark_end(sg + sgl->cur - 1);
 
 		ctx->merge = plen & (PAGE_SIZE - 1);
-	}
+	पूर्ण
 
 	err = 0;
 
@@ -971,53 +972,53 @@ unlock:
 	af_alg_data_wakeup(sk);
 	release_sock(sk);
 
-	return copied ?: err;
-}
+	वापस copied ?: err;
+पूर्ण
 EXPORT_SYMBOL_GPL(af_alg_sendmsg);
 
 /**
- * af_alg_sendpage - sendpage system call handler
- * @sock: socket of connection to user space to write to
+ * af_alg_sendpage - sendpage प्रणाली call handler
+ * @sock: socket of connection to user space to ग_लिखो to
  * @page: data to send
- * @offset: offset into page to begin sending
+ * @offset: offset पूर्णांकo page to begin sending
  * @size: length of data
  * @flags: message send/receive flags
  *
  * This is a generic implementation of sendpage to fill ctx->tsgl_list.
  */
-ssize_t af_alg_sendpage(struct socket *sock, struct page *page,
-			int offset, size_t size, int flags)
-{
-	struct sock *sk = sock->sk;
-	struct alg_sock *ask = alg_sk(sk);
-	struct af_alg_ctx *ctx = ask->private;
-	struct af_alg_tsgl *sgl;
-	int err = -EINVAL;
+sमाप_प्रकार af_alg_sendpage(काष्ठा socket *sock, काष्ठा page *page,
+			पूर्णांक offset, माप_प्रकार size, पूर्णांक flags)
+अणु
+	काष्ठा sock *sk = sock->sk;
+	काष्ठा alg_sock *ask = alg_sk(sk);
+	काष्ठा af_alg_ctx *ctx = ask->निजी;
+	काष्ठा af_alg_tsgl *sgl;
+	पूर्णांक err = -EINVAL;
 
-	if (flags & MSG_SENDPAGE_NOTLAST)
+	अगर (flags & MSG_SENDPAGE_NOTLAST)
 		flags |= MSG_MORE;
 
 	lock_sock(sk);
-	if (!ctx->more && ctx->used)
-		goto unlock;
+	अगर (!ctx->more && ctx->used)
+		जाओ unlock;
 
-	if (!size)
-		goto done;
+	अगर (!size)
+		जाओ करोne;
 
-	if (!af_alg_writable(sk)) {
-		err = af_alg_wait_for_wmem(sk, flags);
-		if (err)
-			goto unlock;
-	}
+	अगर (!af_alg_writable(sk)) अणु
+		err = af_alg_रुको_क्रम_wmem(sk, flags);
+		अगर (err)
+			जाओ unlock;
+	पूर्ण
 
 	err = af_alg_alloc_tsgl(sk);
-	if (err)
-		goto unlock;
+	अगर (err)
+		जाओ unlock;
 
 	ctx->merge = 0;
-	sgl = list_entry(ctx->tsgl_list.prev, struct af_alg_tsgl, list);
+	sgl = list_entry(ctx->tsgl_list.prev, काष्ठा af_alg_tsgl, list);
 
-	if (sgl->cur)
+	अगर (sgl->cur)
 		sg_unmark_end(sgl->sg + sgl->cur - 1);
 
 	sg_mark_end(sgl->sg + sgl->cur);
@@ -1027,114 +1028,114 @@ ssize_t af_alg_sendpage(struct socket *sock, struct page *page,
 	sgl->cur++;
 	ctx->used += size;
 
-done:
+करोne:
 	ctx->more = flags & MSG_MORE;
 
 unlock:
 	af_alg_data_wakeup(sk);
 	release_sock(sk);
 
-	return err ?: size;
-}
+	वापस err ?: size;
+पूर्ण
 EXPORT_SYMBOL_GPL(af_alg_sendpage);
 
 /**
- * af_alg_free_resources - release resources required for crypto request
+ * af_alg_मुक्त_resources - release resources required क्रम crypto request
  * @areq: Request holding the TX and RX SGL
  */
-void af_alg_free_resources(struct af_alg_async_req *areq)
-{
-	struct sock *sk = areq->sk;
+व्योम af_alg_मुक्त_resources(काष्ठा af_alg_async_req *areq)
+अणु
+	काष्ठा sock *sk = areq->sk;
 
-	af_alg_free_areq_sgls(areq);
-	sock_kfree_s(sk, areq, areq->areqlen);
-}
-EXPORT_SYMBOL_GPL(af_alg_free_resources);
+	af_alg_मुक्त_areq_sgls(areq);
+	sock_kमुक्त_s(sk, areq, areq->areqlen);
+पूर्ण
+EXPORT_SYMBOL_GPL(af_alg_मुक्त_resources);
 
 /**
  * af_alg_async_cb - AIO callback handler
  * @_req: async request info
- * @err: if non-zero, error result to be returned via ki_complete();
- *       otherwise return the AIO output length via ki_complete().
+ * @err: अगर non-zero, error result to be वापसed via ki_complete();
+ *       otherwise वापस the AIO output length via ki_complete().
  *
- * This handler cleans up the struct af_alg_async_req upon completion of the
+ * This handler cleans up the काष्ठा af_alg_async_req upon completion of the
  * AIO operation.
  *
  * The number of bytes to be generated with the AIO operation must be set
- * in areq->outlen before the AIO callback handler is invoked.
+ * in areq->outlen beक्रमe the AIO callback handler is invoked.
  */
-void af_alg_async_cb(struct crypto_async_request *_req, int err)
-{
-	struct af_alg_async_req *areq = _req->data;
-	struct sock *sk = areq->sk;
-	struct kiocb *iocb = areq->iocb;
-	unsigned int resultlen;
+व्योम af_alg_async_cb(काष्ठा crypto_async_request *_req, पूर्णांक err)
+अणु
+	काष्ठा af_alg_async_req *areq = _req->data;
+	काष्ठा sock *sk = areq->sk;
+	काष्ठा kiocb *iocb = areq->iocb;
+	अचिन्हित पूर्णांक resultlen;
 
 	/* Buffer size written by crypto operation. */
 	resultlen = areq->outlen;
 
-	af_alg_free_resources(areq);
+	af_alg_मुक्त_resources(areq);
 	sock_put(sk);
 
-	iocb->ki_complete(iocb, err ? err : (int)resultlen, 0);
-}
+	iocb->ki_complete(iocb, err ? err : (पूर्णांक)resultlen, 0);
+पूर्ण
 EXPORT_SYMBOL_GPL(af_alg_async_cb);
 
 /**
- * af_alg_poll - poll system call handler
- * @file: file pointer
+ * af_alg_poll - poll प्रणाली call handler
+ * @file: file poपूर्णांकer
  * @sock: socket to poll
- * @wait: poll_table
+ * @रुको: poll_table
  */
-__poll_t af_alg_poll(struct file *file, struct socket *sock,
-			 poll_table *wait)
-{
-	struct sock *sk = sock->sk;
-	struct alg_sock *ask = alg_sk(sk);
-	struct af_alg_ctx *ctx = ask->private;
+__poll_t af_alg_poll(काष्ठा file *file, काष्ठा socket *sock,
+			 poll_table *रुको)
+अणु
+	काष्ठा sock *sk = sock->sk;
+	काष्ठा alg_sock *ask = alg_sk(sk);
+	काष्ठा af_alg_ctx *ctx = ask->निजी;
 	__poll_t mask;
 
-	sock_poll_wait(file, sock, wait);
+	sock_poll_रुको(file, sock, रुको);
 	mask = 0;
 
-	if (!ctx->more || ctx->used)
+	अगर (!ctx->more || ctx->used)
 		mask |= EPOLLIN | EPOLLRDNORM;
 
-	if (af_alg_writable(sk))
+	अगर (af_alg_writable(sk))
 		mask |= EPOLLOUT | EPOLLWRNORM | EPOLLWRBAND;
 
-	return mask;
-}
+	वापस mask;
+पूर्ण
 EXPORT_SYMBOL_GPL(af_alg_poll);
 
 /**
- * af_alg_alloc_areq - allocate struct af_alg_async_req
+ * af_alg_alloc_areq - allocate काष्ठा af_alg_async_req
  *
  * @sk: socket of connection to user space
- * @areqlen: size of struct af_alg_async_req + crypto_*_reqsize
- * Return: allocated data structure or ERR_PTR upon error
+ * @areqlen: size of काष्ठा af_alg_async_req + crypto_*_reqsize
+ * Return: allocated data काष्ठाure or ERR_PTR upon error
  */
-struct af_alg_async_req *af_alg_alloc_areq(struct sock *sk,
-					   unsigned int areqlen)
-{
-	struct af_alg_async_req *areq = sock_kmalloc(sk, areqlen, GFP_KERNEL);
+काष्ठा af_alg_async_req *af_alg_alloc_areq(काष्ठा sock *sk,
+					   अचिन्हित पूर्णांक areqlen)
+अणु
+	काष्ठा af_alg_async_req *areq = sock_kदो_स्मृति(sk, areqlen, GFP_KERNEL);
 
-	if (unlikely(!areq))
-		return ERR_PTR(-ENOMEM);
+	अगर (unlikely(!areq))
+		वापस ERR_PTR(-ENOMEM);
 
 	areq->areqlen = areqlen;
 	areq->sk = sk;
-	areq->last_rsgl = NULL;
+	areq->last_rsgl = शून्य;
 	INIT_LIST_HEAD(&areq->rsgl_list);
-	areq->tsgl = NULL;
+	areq->tsgl = शून्य;
 	areq->tsgl_entries = 0;
 
-	return areq;
-}
+	वापस areq;
+पूर्ण
 EXPORT_SYMBOL_GPL(af_alg_alloc_areq);
 
 /**
- * af_alg_get_rsgl - create the RX SGL for the output data from the crypto
+ * af_alg_get_rsgl - create the RX SGL क्रम the output data from the crypto
  *		     operation
  *
  * @sk: socket of connection to user space
@@ -1145,46 +1146,46 @@ EXPORT_SYMBOL_GPL(af_alg_alloc_areq);
  * @outlen: number of bytes in the RX SGL
  * Return: 0 on success, < 0 upon error
  */
-int af_alg_get_rsgl(struct sock *sk, struct msghdr *msg, int flags,
-		    struct af_alg_async_req *areq, size_t maxsize,
-		    size_t *outlen)
-{
-	struct alg_sock *ask = alg_sk(sk);
-	struct af_alg_ctx *ctx = ask->private;
-	size_t len = 0;
+पूर्णांक af_alg_get_rsgl(काष्ठा sock *sk, काष्ठा msghdr *msg, पूर्णांक flags,
+		    काष्ठा af_alg_async_req *areq, माप_प्रकार maxsize,
+		    माप_प्रकार *outlen)
+अणु
+	काष्ठा alg_sock *ask = alg_sk(sk);
+	काष्ठा af_alg_ctx *ctx = ask->निजी;
+	माप_प्रकार len = 0;
 
-	while (maxsize > len && msg_data_left(msg)) {
-		struct af_alg_rsgl *rsgl;
-		size_t seglen;
-		int err;
+	जबतक (maxsize > len && msg_data_left(msg)) अणु
+		काष्ठा af_alg_rsgl *rsgl;
+		माप_प्रकार seglen;
+		पूर्णांक err;
 
-		/* limit the amount of readable buffers */
-		if (!af_alg_readable(sk))
-			break;
+		/* limit the amount of पढ़ोable buffers */
+		अगर (!af_alg_पढ़ोable(sk))
+			अवरोध;
 
-		seglen = min_t(size_t, (maxsize - len),
+		seglen = min_t(माप_प्रकार, (maxsize - len),
 			       msg_data_left(msg));
 
-		if (list_empty(&areq->rsgl_list)) {
+		अगर (list_empty(&areq->rsgl_list)) अणु
 			rsgl = &areq->first_rsgl;
-		} else {
-			rsgl = sock_kmalloc(sk, sizeof(*rsgl), GFP_KERNEL);
-			if (unlikely(!rsgl))
-				return -ENOMEM;
-		}
+		पूर्ण अन्यथा अणु
+			rsgl = sock_kदो_स्मृति(sk, माप(*rsgl), GFP_KERNEL);
+			अगर (unlikely(!rsgl))
+				वापस -ENOMEM;
+		पूर्ण
 
 		rsgl->sgl.npages = 0;
 		list_add_tail(&rsgl->list, &areq->rsgl_list);
 
 		/* make one iovec available as scatterlist */
 		err = af_alg_make_sg(&rsgl->sgl, &msg->msg_iter, seglen);
-		if (err < 0) {
+		अगर (err < 0) अणु
 			rsgl->sg_num_bytes = 0;
-			return err;
-		}
+			वापस err;
+		पूर्ण
 
 		/* chain the new scatterlist with previous one */
-		if (areq->last_rsgl)
+		अगर (areq->last_rsgl)
 			af_alg_link_sg(&areq->last_rsgl->sgl, &rsgl->sgl);
 
 		areq->last_rsgl = rsgl;
@@ -1192,39 +1193,39 @@ int af_alg_get_rsgl(struct sock *sk, struct msghdr *msg, int flags,
 		atomic_add(err, &ctx->rcvused);
 		rsgl->sg_num_bytes = err;
 		iov_iter_advance(&msg->msg_iter, err);
-	}
+	पूर्ण
 
 	*outlen = len;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(af_alg_get_rsgl);
 
-static int __init af_alg_init(void)
-{
-	int err = proto_register(&alg_proto, 0);
+अटल पूर्णांक __init af_alg_init(व्योम)
+अणु
+	पूर्णांक err = proto_रेजिस्टर(&alg_proto, 0);
 
-	if (err)
-		goto out;
+	अगर (err)
+		जाओ out;
 
-	err = sock_register(&alg_family);
-	if (err != 0)
-		goto out_unregister_proto;
+	err = sock_रेजिस्टर(&alg_family);
+	अगर (err != 0)
+		जाओ out_unरेजिस्टर_proto;
 
 out:
-	return err;
+	वापस err;
 
-out_unregister_proto:
-	proto_unregister(&alg_proto);
-	goto out;
-}
+out_unरेजिस्टर_proto:
+	proto_unरेजिस्टर(&alg_proto);
+	जाओ out;
+पूर्ण
 
-static void __exit af_alg_exit(void)
-{
-	sock_unregister(PF_ALG);
-	proto_unregister(&alg_proto);
-}
+अटल व्योम __निकास af_alg_निकास(व्योम)
+अणु
+	sock_unरेजिस्टर(PF_ALG);
+	proto_unरेजिस्टर(&alg_proto);
+पूर्ण
 
 module_init(af_alg_init);
-module_exit(af_alg_exit);
+module_निकास(af_alg_निकास);
 MODULE_LICENSE("GPL");
 MODULE_ALIAS_NETPROTO(AF_ALG);

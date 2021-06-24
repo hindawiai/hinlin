@@ -1,93 +1,94 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <math.h>
-#include <unistd.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <sys/timeb.h>
-#include <sched.h>
-#include <errno.h>
-#include <string.h>
-#include <time.h>
-#include "../kselftest.h"
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <गणित.स>
+#समावेश <unistd.h>
+#समावेश <मानकपन.स>
+#समावेश <मानककोष.स>
+#समावेश <sys/types.h>
+#समावेश <sys/स्थिति.स>
+#समावेश <fcntl.h>
+#समावेश <sys/ब_समय.स>
+#समावेश <sched.h>
+#समावेश <त्रुटिसं.स>
+#समावेश <माला.स>
+#समावेश <समय.स>
+#समावेश "../kselftest.h"
 
-#define MSEC_PER_SEC	1000L
-#define NSEC_PER_MSEC	1000000L
+#घोषणा MSEC_PER_SEC	1000L
+#घोषणा NSEC_PER_MSEC	1000000L
 
-void usage(char *name) {
-	printf ("Usage: %s cpunum\n", name);
-}
+व्योम usage(अक्षर *name) अणु
+	म_लिखो ("Usage: %s cpunum\n", name);
+पूर्ण
 
-int main(int argc, char **argv) {
-	unsigned int i, cpu, fd;
-	char msr_file_name[64];
-	long long tsc, old_tsc, new_tsc;
-	long long aperf, old_aperf, new_aperf;
-	long long mperf, old_mperf, new_mperf;
-	struct timespec before, after;
-	long long int start, finish, total;
+पूर्णांक मुख्य(पूर्णांक argc, अक्षर **argv) अणु
+	अचिन्हित पूर्णांक i, cpu, fd;
+	अक्षर msr_file_name[64];
+	दीर्घ दीर्घ tsc, old_tsc, new_tsc;
+	दीर्घ दीर्घ aperf, old_aperf, new_aperf;
+	दीर्घ दीर्घ mperf, old_mperf, new_mperf;
+	काष्ठा बारpec beक्रमe, after;
+	दीर्घ दीर्घ पूर्णांक start, finish, total;
 	cpu_set_t cpuset;
 
-	if (argc != 2) {
+	अगर (argc != 2) अणु
 		usage(argv[0]);
-		return 1;
-	}
+		वापस 1;
+	पूर्ण
 
-	errno = 0;
-	cpu = strtol(argv[1], (char **) NULL, 10);
+	त्रुटि_सं = 0;
+	cpu = म_से_दीर्घ(argv[1], (अक्षर **) शून्य, 10);
 
-	if (errno) {
+	अगर (त्रुटि_सं) अणु
 		usage(argv[0]);
-		return 1;
-	}
+		वापस 1;
+	पूर्ण
 
-	sprintf(msr_file_name, "/dev/cpu/%d/msr", cpu);
-	fd = open(msr_file_name, O_RDONLY);
+	प्र_लिखो(msr_file_name, "/dev/cpu/%d/msr", cpu);
+	fd = खोलो(msr_file_name, O_RDONLY);
 
-	if (fd == -1) {
-		printf("/dev/cpu/%d/msr: %s\n", cpu, strerror(errno));
-		return KSFT_SKIP;
-	}
+	अगर (fd == -1) अणु
+		म_लिखो("/dev/cpu/%d/msr: %s\n", cpu, म_त्रुटि(त्रुटि_सं));
+		वापस KSFT_SKIP;
+	पूर्ण
 
 	CPU_ZERO(&cpuset);
 	CPU_SET(cpu, &cpuset);
 
-	if (sched_setaffinity(0, sizeof(cpu_set_t), &cpuset)) {
-		perror("Failed to set cpu affinity");
-		return 1;
-	}
+	अगर (sched_setaffinity(0, माप(cpu_set_t), &cpuset)) अणु
+		लिखो_त्रुटि("Failed to set cpu affinity");
+		वापस 1;
+	पूर्ण
 
-	if (clock_gettime(CLOCK_MONOTONIC, &before) < 0) {
-		perror("clock_gettime");
-		return 1;
-	}
-	pread(fd, &old_tsc,  sizeof(old_tsc), 0x10);
-	pread(fd, &old_aperf,  sizeof(old_mperf), 0xe7);
-	pread(fd, &old_mperf,  sizeof(old_aperf), 0xe8);
+	अगर (घड़ी_समय_लो(CLOCK_MONOTONIC, &beक्रमe) < 0) अणु
+		लिखो_त्रुटि("clock_gettime");
+		वापस 1;
+	पूर्ण
+	pपढ़ो(fd, &old_tsc,  माप(old_tsc), 0x10);
+	pपढ़ो(fd, &old_aperf,  माप(old_mperf), 0xe7);
+	pपढ़ो(fd, &old_mperf,  माप(old_aperf), 0xe8);
 
-	for (i=0; i<0x8fffffff; i++) {
-		sqrt(i);
-	}
+	क्रम (i=0; i<0x8fffffff; i++) अणु
+		वर्ग_मूल(i);
+	पूर्ण
 
-	if (clock_gettime(CLOCK_MONOTONIC, &after) < 0) {
-		perror("clock_gettime");
-		return 1;
-	}
-	pread(fd, &new_tsc,  sizeof(new_tsc), 0x10);
-	pread(fd, &new_aperf,  sizeof(new_mperf), 0xe7);
-	pread(fd, &new_mperf,  sizeof(new_aperf), 0xe8);
+	अगर (घड़ी_समय_लो(CLOCK_MONOTONIC, &after) < 0) अणु
+		लिखो_त्रुटि("clock_gettime");
+		वापस 1;
+	पूर्ण
+	pपढ़ो(fd, &new_tsc,  माप(new_tsc), 0x10);
+	pपढ़ो(fd, &new_aperf,  माप(new_mperf), 0xe7);
+	pपढ़ो(fd, &new_mperf,  माप(new_aperf), 0xe8);
 
 	tsc = new_tsc-old_tsc;
 	aperf = new_aperf-old_aperf;
 	mperf = new_mperf-old_mperf;
 
-	start = before.tv_sec*MSEC_PER_SEC + before.tv_nsec/NSEC_PER_MSEC;
+	start = beक्रमe.tv_sec*MSEC_PER_SEC + beक्रमe.tv_nsec/NSEC_PER_MSEC;
 	finish = after.tv_sec*MSEC_PER_SEC + after.tv_nsec/NSEC_PER_MSEC;
 	total = finish - start;
 
-	printf("runTime: %4.2f\n", 1.0*total/MSEC_PER_SEC);
-	printf("freq: %7.0f\n", tsc / (1.0*aperf / (1.0 * mperf)) / total);
-	return 0;
-}
+	म_लिखो("runTime: %4.2f\n", 1.0*total/MSEC_PER_SEC);
+	म_लिखो("freq: %7.0f\n", tsc / (1.0*aperf / (1.0 * mperf)) / total);
+	वापस 0;
+पूर्ण

@@ -1,218 +1,219 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <api/fs/fs.h>
-#include "cpumap.h"
-#include "debug.h"
-#include "event.h"
-#include <assert.h>
-#include <dirent.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <linux/bitmap.h>
-#include "asm/bug.h"
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <api/fs/fs.h>
+#समावेश "cpumap.h"
+#समावेश "debug.h"
+#समावेश "event.h"
+#समावेश <निश्चित.स>
+#समावेश <dirent.h>
+#समावेश <मानकपन.स>
+#समावेश <मानककोष.स>
+#समावेश <linux/biपंचांगap.h>
+#समावेश "asm/bug.h"
 
-#include <linux/ctype.h>
-#include <linux/zalloc.h>
+#समावेश <linux/प्रकार.स>
+#समावेश <linux/zभाग.स>
 
-static int max_cpu_num;
-static int max_present_cpu_num;
-static int max_node_num;
-static int *cpunode_map;
+अटल पूर्णांक max_cpu_num;
+अटल पूर्णांक max_present_cpu_num;
+अटल पूर्णांक max_node_num;
+अटल पूर्णांक *cpunode_map;
 
-static struct perf_cpu_map *cpu_map__from_entries(struct cpu_map_entries *cpus)
-{
-	struct perf_cpu_map *map;
+अटल काष्ठा perf_cpu_map *cpu_map__from_entries(काष्ठा cpu_map_entries *cpus)
+अणु
+	काष्ठा perf_cpu_map *map;
 
 	map = perf_cpu_map__empty_new(cpus->nr);
-	if (map) {
-		unsigned i;
+	अगर (map) अणु
+		अचिन्हित i;
 
-		for (i = 0; i < cpus->nr; i++) {
+		क्रम (i = 0; i < cpus->nr; i++) अणु
 			/*
-			 * Special treatment for -1, which is not real cpu number,
-			 * and we need to use (int) -1 to initialize map[i],
+			 * Special treaपंचांगent क्रम -1, which is not real cpu number,
+			 * and we need to use (पूर्णांक) -1 to initialize map[i],
 			 * otherwise it would become 65535.
 			 */
-			if (cpus->cpu[i] == (u16) -1)
+			अगर (cpus->cpu[i] == (u16) -1)
 				map->map[i] = -1;
-			else
-				map->map[i] = (int) cpus->cpu[i];
-		}
-	}
+			अन्यथा
+				map->map[i] = (पूर्णांक) cpus->cpu[i];
+		पूर्ण
+	पूर्ण
 
-	return map;
-}
+	वापस map;
+पूर्ण
 
-static struct perf_cpu_map *cpu_map__from_mask(struct perf_record_record_cpu_map *mask)
-{
-	struct perf_cpu_map *map;
-	int nr, nbits = mask->nr * mask->long_size * BITS_PER_BYTE;
+अटल काष्ठा perf_cpu_map *cpu_map__from_mask(काष्ठा perf_record_record_cpu_map *mask)
+अणु
+	काष्ठा perf_cpu_map *map;
+	पूर्णांक nr, nbits = mask->nr * mask->दीर्घ_size * BITS_PER_BYTE;
 
-	nr = bitmap_weight(mask->mask, nbits);
+	nr = biपंचांगap_weight(mask->mask, nbits);
 
 	map = perf_cpu_map__empty_new(nr);
-	if (map) {
-		int cpu, i = 0;
+	अगर (map) अणु
+		पूर्णांक cpu, i = 0;
 
-		for_each_set_bit(cpu, mask->mask, nbits)
+		क्रम_each_set_bit(cpu, mask->mask, nbits)
 			map->map[i++] = cpu;
-	}
-	return map;
+	पूर्ण
+	वापस map;
 
-}
+पूर्ण
 
-struct perf_cpu_map *cpu_map__new_data(struct perf_record_cpu_map_data *data)
-{
-	if (data->type == PERF_CPU_MAP__CPUS)
-		return cpu_map__from_entries((struct cpu_map_entries *)data->data);
-	else
-		return cpu_map__from_mask((struct perf_record_record_cpu_map *)data->data);
-}
+काष्ठा perf_cpu_map *cpu_map__new_data(काष्ठा perf_record_cpu_map_data *data)
+अणु
+	अगर (data->type == PERF_CPU_MAP__CPUS)
+		वापस cpu_map__from_entries((काष्ठा cpu_map_entries *)data->data);
+	अन्यथा
+		वापस cpu_map__from_mask((काष्ठा perf_record_record_cpu_map *)data->data);
+पूर्ण
 
-size_t cpu_map__fprintf(struct perf_cpu_map *map, FILE *fp)
-{
-#define BUFSIZE 1024
-	char buf[BUFSIZE];
+माप_प्रकार cpu_map__ख_लिखो(काष्ठा perf_cpu_map *map, खाता *fp)
+अणु
+#घोषणा बफ_मानE 1024
+	अक्षर buf[बफ_मानE];
 
-	cpu_map__snprint(map, buf, sizeof(buf));
-	return fprintf(fp, "%s\n", buf);
-#undef BUFSIZE
-}
+	cpu_map__snprपूर्णांक(map, buf, माप(buf));
+	वापस ख_लिखो(fp, "%s\n", buf);
+#अघोषित बफ_मानE
+पूर्ण
 
-struct perf_cpu_map *perf_cpu_map__empty_new(int nr)
-{
-	struct perf_cpu_map *cpus = malloc(sizeof(*cpus) + sizeof(int) * nr);
+काष्ठा perf_cpu_map *perf_cpu_map__empty_new(पूर्णांक nr)
+अणु
+	काष्ठा perf_cpu_map *cpus = दो_स्मृति(माप(*cpus) + माप(पूर्णांक) * nr);
 
-	if (cpus != NULL) {
-		int i;
+	अगर (cpus != शून्य) अणु
+		पूर्णांक i;
 
 		cpus->nr = nr;
-		for (i = 0; i < nr; i++)
+		क्रम (i = 0; i < nr; i++)
 			cpus->map[i] = -1;
 
 		refcount_set(&cpus->refcnt, 1);
-	}
+	पूर्ण
 
-	return cpus;
-}
+	वापस cpus;
+पूर्ण
 
-struct cpu_aggr_map *cpu_aggr_map__empty_new(int nr)
-{
-	struct cpu_aggr_map *cpus = malloc(sizeof(*cpus) + sizeof(struct aggr_cpu_id) * nr);
+काष्ठा cpu_aggr_map *cpu_aggr_map__empty_new(पूर्णांक nr)
+अणु
+	काष्ठा cpu_aggr_map *cpus = दो_स्मृति(माप(*cpus) + माप(काष्ठा aggr_cpu_id) * nr);
 
-	if (cpus != NULL) {
-		int i;
+	अगर (cpus != शून्य) अणु
+		पूर्णांक i;
 
 		cpus->nr = nr;
-		for (i = 0; i < nr; i++)
+		क्रम (i = 0; i < nr; i++)
 			cpus->map[i] = cpu_map__empty_aggr_cpu_id();
 
 		refcount_set(&cpus->refcnt, 1);
-	}
+	पूर्ण
 
-	return cpus;
-}
+	वापस cpus;
+पूर्ण
 
-static int cpu__get_topology_int(int cpu, const char *name, int *value)
-{
-	char path[PATH_MAX];
+अटल पूर्णांक cpu__get_topology_पूर्णांक(पूर्णांक cpu, स्थिर अक्षर *name, पूर्णांक *value)
+अणु
+	अक्षर path[PATH_MAX];
 
-	snprintf(path, PATH_MAX,
+	snम_लिखो(path, PATH_MAX,
 		"devices/system/cpu/cpu%d/topology/%s", cpu, name);
 
-	return sysfs__read_int(path, value);
-}
+	वापस sysfs__पढ़ो_पूर्णांक(path, value);
+पूर्ण
 
-int cpu_map__get_socket_id(int cpu)
-{
-	int value, ret = cpu__get_topology_int(cpu, "physical_package_id", &value);
-	return ret ?: value;
-}
+पूर्णांक cpu_map__get_socket_id(पूर्णांक cpu)
+अणु
+	पूर्णांक value, ret = cpu__get_topology_पूर्णांक(cpu, "physical_package_id", &value);
+	वापस ret ?: value;
+पूर्ण
 
-struct aggr_cpu_id cpu_map__get_socket(struct perf_cpu_map *map, int idx,
-					void *data __maybe_unused)
-{
-	int cpu;
-	struct aggr_cpu_id id = cpu_map__empty_aggr_cpu_id();
+काष्ठा aggr_cpu_id cpu_map__get_socket(काष्ठा perf_cpu_map *map, पूर्णांक idx,
+					व्योम *data __maybe_unused)
+अणु
+	पूर्णांक cpu;
+	काष्ठा aggr_cpu_id id = cpu_map__empty_aggr_cpu_id();
 
-	if (idx > map->nr)
-		return id;
+	अगर (idx > map->nr)
+		वापस id;
 
 	cpu = map->map[idx];
 
 	id.socket = cpu_map__get_socket_id(cpu);
-	return id;
-}
+	वापस id;
+पूर्ण
 
-static int cmp_aggr_cpu_id(const void *a_pointer, const void *b_pointer)
-{
-	struct aggr_cpu_id *a = (struct aggr_cpu_id *)a_pointer;
-	struct aggr_cpu_id *b = (struct aggr_cpu_id *)b_pointer;
+अटल पूर्णांक cmp_aggr_cpu_id(स्थिर व्योम *a_poपूर्णांकer, स्थिर व्योम *b_poपूर्णांकer)
+अणु
+	काष्ठा aggr_cpu_id *a = (काष्ठा aggr_cpu_id *)a_poपूर्णांकer;
+	काष्ठा aggr_cpu_id *b = (काष्ठा aggr_cpu_id *)b_poपूर्णांकer;
 
-	if (a->node != b->node)
-		return a->node - b->node;
-	else if (a->socket != b->socket)
-		return a->socket - b->socket;
-	else if (a->die != b->die)
-		return a->die - b->die;
-	else if (a->core != b->core)
-		return a->core - b->core;
-	else
-		return a->thread - b->thread;
-}
+	अगर (a->node != b->node)
+		वापस a->node - b->node;
+	अन्यथा अगर (a->socket != b->socket)
+		वापस a->socket - b->socket;
+	अन्यथा अगर (a->die != b->die)
+		वापस a->die - b->die;
+	अन्यथा अगर (a->core != b->core)
+		वापस a->core - b->core;
+	अन्यथा
+		वापस a->thपढ़ो - b->thपढ़ो;
+पूर्ण
 
-int cpu_map__build_map(struct perf_cpu_map *cpus, struct cpu_aggr_map **res,
-		       struct aggr_cpu_id (*f)(struct perf_cpu_map *map, int cpu, void *data),
-		       void *data)
-{
-	int nr = cpus->nr;
-	struct cpu_aggr_map *c = cpu_aggr_map__empty_new(nr);
-	int cpu, s2;
-	struct aggr_cpu_id s1;
+पूर्णांक cpu_map__build_map(काष्ठा perf_cpu_map *cpus, काष्ठा cpu_aggr_map **res,
+		       काष्ठा aggr_cpu_id (*f)(काष्ठा perf_cpu_map *map, पूर्णांक cpu, व्योम *data),
+		       व्योम *data)
+अणु
+	पूर्णांक nr = cpus->nr;
+	काष्ठा cpu_aggr_map *c = cpu_aggr_map__empty_new(nr);
+	पूर्णांक cpu, s2;
+	काष्ठा aggr_cpu_id s1;
 
-	if (!c)
-		return -1;
+	अगर (!c)
+		वापस -1;
 
 	/* Reset size as it may only be partially filled */
 	c->nr = 0;
 
-	for (cpu = 0; cpu < nr; cpu++) {
+	क्रम (cpu = 0; cpu < nr; cpu++) अणु
 		s1 = f(cpus, cpu, data);
-		for (s2 = 0; s2 < c->nr; s2++) {
-			if (cpu_map__compare_aggr_cpu_id(s1, c->map[s2]))
-				break;
-		}
-		if (s2 == c->nr) {
+		क्रम (s2 = 0; s2 < c->nr; s2++) अणु
+			अगर (cpu_map__compare_aggr_cpu_id(s1, c->map[s2]))
+				अवरोध;
+		पूर्ण
+		अगर (s2 == c->nr) अणु
 			c->map[c->nr] = s1;
 			c->nr++;
-		}
-	}
+		पूर्ण
+	पूर्ण
 	/* ensure we process id in increasing order */
-	qsort(c->map, c->nr, sizeof(struct aggr_cpu_id), cmp_aggr_cpu_id);
+	क्विक(c->map, c->nr, माप(काष्ठा aggr_cpu_id), cmp_aggr_cpu_id);
 
 	*res = c;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int cpu_map__get_die_id(int cpu)
-{
-	int value, ret = cpu__get_topology_int(cpu, "die_id", &value);
+पूर्णांक cpu_map__get_die_id(पूर्णांक cpu)
+अणु
+	पूर्णांक value, ret = cpu__get_topology_पूर्णांक(cpu, "die_id", &value);
 
-	return ret ?: value;
-}
+	वापस ret ?: value;
+पूर्ण
 
-struct aggr_cpu_id cpu_map__get_die(struct perf_cpu_map *map, int idx, void *data)
-{
-	int cpu, die;
-	struct aggr_cpu_id id = cpu_map__empty_aggr_cpu_id();
+काष्ठा aggr_cpu_id cpu_map__get_die(काष्ठा perf_cpu_map *map, पूर्णांक idx, व्योम *data)
+अणु
+	पूर्णांक cpu, die;
+	काष्ठा aggr_cpu_id id = cpu_map__empty_aggr_cpu_id();
 
-	if (idx > map->nr)
-		return id;
+	अगर (idx > map->nr)
+		वापस id;
 
 	cpu = map->map[idx];
 
 	die = cpu_map__get_die_id(cpu);
-	/* There is no die_id on legacy system. */
-	if (die == -1)
+	/* There is no die_id on legacy प्रणाली. */
+	अगर (die == -1)
 		die = 0;
 
 	/*
@@ -221,425 +222,425 @@ struct aggr_cpu_id cpu_map__get_die(struct perf_cpu_map *map, int idx, void *dat
 	 * make a unique ID.
 	 */
 	id = cpu_map__get_socket(map, idx, data);
-	if (cpu_map__aggr_cpu_id_is_empty(id))
-		return id;
+	अगर (cpu_map__aggr_cpu_id_is_empty(id))
+		वापस id;
 
 	id.die = die;
-	return id;
-}
+	वापस id;
+पूर्ण
 
-int cpu_map__get_core_id(int cpu)
-{
-	int value, ret = cpu__get_topology_int(cpu, "core_id", &value);
-	return ret ?: value;
-}
+पूर्णांक cpu_map__get_core_id(पूर्णांक cpu)
+अणु
+	पूर्णांक value, ret = cpu__get_topology_पूर्णांक(cpu, "core_id", &value);
+	वापस ret ?: value;
+पूर्ण
 
-int cpu_map__get_node_id(int cpu)
-{
-	return cpu__get_node(cpu);
-}
+पूर्णांक cpu_map__get_node_id(पूर्णांक cpu)
+अणु
+	वापस cpu__get_node(cpu);
+पूर्ण
 
-struct aggr_cpu_id cpu_map__get_core(struct perf_cpu_map *map, int idx, void *data)
-{
-	int cpu;
-	struct aggr_cpu_id id = cpu_map__empty_aggr_cpu_id();
+काष्ठा aggr_cpu_id cpu_map__get_core(काष्ठा perf_cpu_map *map, पूर्णांक idx, व्योम *data)
+अणु
+	पूर्णांक cpu;
+	काष्ठा aggr_cpu_id id = cpu_map__empty_aggr_cpu_id();
 
-	if (idx > map->nr)
-		return id;
+	अगर (idx > map->nr)
+		वापस id;
 
 	cpu = map->map[idx];
 
 	cpu = cpu_map__get_core_id(cpu);
 
-	/* cpu_map__get_die returns a struct with socket and die set*/
+	/* cpu_map__get_die वापसs a काष्ठा with socket and die set*/
 	id = cpu_map__get_die(map, idx, data);
-	if (cpu_map__aggr_cpu_id_is_empty(id))
-		return id;
+	अगर (cpu_map__aggr_cpu_id_is_empty(id))
+		वापस id;
 
 	/*
 	 * core_id is relative to socket and die, we need a global id.
 	 * So we combine the result from cpu_map__get_die with the core id
 	 */
 	id.core = cpu;
-	return id;
-}
+	वापस id;
+पूर्ण
 
-struct aggr_cpu_id cpu_map__get_node(struct perf_cpu_map *map, int idx, void *data __maybe_unused)
-{
-	struct aggr_cpu_id id = cpu_map__empty_aggr_cpu_id();
+काष्ठा aggr_cpu_id cpu_map__get_node(काष्ठा perf_cpu_map *map, पूर्णांक idx, व्योम *data __maybe_unused)
+अणु
+	काष्ठा aggr_cpu_id id = cpu_map__empty_aggr_cpu_id();
 
-	if (idx < 0 || idx >= map->nr)
-		return id;
+	अगर (idx < 0 || idx >= map->nr)
+		वापस id;
 
 	id.node = cpu_map__get_node_id(map->map[idx]);
-	return id;
-}
+	वापस id;
+पूर्ण
 
-int cpu_map__build_socket_map(struct perf_cpu_map *cpus, struct cpu_aggr_map **sockp)
-{
-	return cpu_map__build_map(cpus, sockp, cpu_map__get_socket, NULL);
-}
+पूर्णांक cpu_map__build_socket_map(काष्ठा perf_cpu_map *cpus, काष्ठा cpu_aggr_map **sockp)
+अणु
+	वापस cpu_map__build_map(cpus, sockp, cpu_map__get_socket, शून्य);
+पूर्ण
 
-int cpu_map__build_die_map(struct perf_cpu_map *cpus, struct cpu_aggr_map **diep)
-{
-	return cpu_map__build_map(cpus, diep, cpu_map__get_die, NULL);
-}
+पूर्णांक cpu_map__build_die_map(काष्ठा perf_cpu_map *cpus, काष्ठा cpu_aggr_map **diep)
+अणु
+	वापस cpu_map__build_map(cpus, diep, cpu_map__get_die, शून्य);
+पूर्ण
 
-int cpu_map__build_core_map(struct perf_cpu_map *cpus, struct cpu_aggr_map **corep)
-{
-	return cpu_map__build_map(cpus, corep, cpu_map__get_core, NULL);
-}
+पूर्णांक cpu_map__build_core_map(काष्ठा perf_cpu_map *cpus, काष्ठा cpu_aggr_map **corep)
+अणु
+	वापस cpu_map__build_map(cpus, corep, cpu_map__get_core, शून्य);
+पूर्ण
 
-int cpu_map__build_node_map(struct perf_cpu_map *cpus, struct cpu_aggr_map **numap)
-{
-	return cpu_map__build_map(cpus, numap, cpu_map__get_node, NULL);
-}
+पूर्णांक cpu_map__build_node_map(काष्ठा perf_cpu_map *cpus, काष्ठा cpu_aggr_map **numap)
+अणु
+	वापस cpu_map__build_map(cpus, numap, cpu_map__get_node, शून्य);
+पूर्ण
 
 /* setup simple routines to easily access node numbers given a cpu number */
-static int get_max_num(char *path, int *max)
-{
-	size_t num;
-	char *buf;
-	int err = 0;
+अटल पूर्णांक get_max_num(अक्षर *path, पूर्णांक *max)
+अणु
+	माप_प्रकार num;
+	अक्षर *buf;
+	पूर्णांक err = 0;
 
-	if (filename__read_str(path, &buf, &num))
-		return -1;
+	अगर (filename__पढ़ो_str(path, &buf, &num))
+		वापस -1;
 
 	buf[num] = '\0';
 
 	/* start on the right, to find highest node num */
-	while (--num) {
-		if ((buf[num] == ',') || (buf[num] == '-')) {
+	जबतक (--num) अणु
+		अगर ((buf[num] == ',') || (buf[num] == '-')) अणु
 			num++;
-			break;
-		}
-	}
-	if (sscanf(&buf[num], "%d", max) < 1) {
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	अगर (माला_पूछो(&buf[num], "%d", max) < 1) अणु
 		err = -1;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	/* convert from 0-based to 1-based */
 	(*max)++;
 
 out:
-	free(buf);
-	return err;
-}
+	मुक्त(buf);
+	वापस err;
+पूर्ण
 
-/* Determine highest possible cpu in the system for sparse allocation */
-static void set_max_cpu_num(void)
-{
-	const char *mnt;
-	char path[PATH_MAX];
-	int ret = -1;
+/* Determine highest possible cpu in the प्रणाली क्रम sparse allocation */
+अटल व्योम set_max_cpu_num(व्योम)
+अणु
+	स्थिर अक्षर *mnt;
+	अक्षर path[PATH_MAX];
+	पूर्णांक ret = -1;
 
-	/* set up default */
+	/* set up शेष */
 	max_cpu_num = 4096;
 	max_present_cpu_num = 4096;
 
-	mnt = sysfs__mountpoint();
-	if (!mnt)
-		goto out;
+	mnt = sysfs__mountpoपूर्णांक();
+	अगर (!mnt)
+		जाओ out;
 
-	/* get the highest possible cpu number for a sparse allocation */
-	ret = snprintf(path, PATH_MAX, "%s/devices/system/cpu/possible", mnt);
-	if (ret >= PATH_MAX) {
+	/* get the highest possible cpu number क्रम a sparse allocation */
+	ret = snम_लिखो(path, PATH_MAX, "%s/devices/system/cpu/possible", mnt);
+	अगर (ret >= PATH_MAX) अणु
 		pr_err("sysfs path crossed PATH_MAX(%d) size\n", PATH_MAX);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	ret = get_max_num(path, &max_cpu_num);
-	if (ret)
-		goto out;
+	अगर (ret)
+		जाओ out;
 
-	/* get the highest present cpu number for a sparse allocation */
-	ret = snprintf(path, PATH_MAX, "%s/devices/system/cpu/present", mnt);
-	if (ret >= PATH_MAX) {
+	/* get the highest present cpu number क्रम a sparse allocation */
+	ret = snम_लिखो(path, PATH_MAX, "%s/devices/system/cpu/present", mnt);
+	अगर (ret >= PATH_MAX) अणु
 		pr_err("sysfs path crossed PATH_MAX(%d) size\n", PATH_MAX);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	ret = get_max_num(path, &max_present_cpu_num);
 
 out:
-	if (ret)
+	अगर (ret)
 		pr_err("Failed to read max cpus, using default of %d\n", max_cpu_num);
-}
+पूर्ण
 
-/* Determine highest possible node in the system for sparse allocation */
-static void set_max_node_num(void)
-{
-	const char *mnt;
-	char path[PATH_MAX];
-	int ret = -1;
+/* Determine highest possible node in the प्रणाली क्रम sparse allocation */
+अटल व्योम set_max_node_num(व्योम)
+अणु
+	स्थिर अक्षर *mnt;
+	अक्षर path[PATH_MAX];
+	पूर्णांक ret = -1;
 
-	/* set up default */
+	/* set up शेष */
 	max_node_num = 8;
 
-	mnt = sysfs__mountpoint();
-	if (!mnt)
-		goto out;
+	mnt = sysfs__mountpoपूर्णांक();
+	अगर (!mnt)
+		जाओ out;
 
-	/* get the highest possible cpu number for a sparse allocation */
-	ret = snprintf(path, PATH_MAX, "%s/devices/system/node/possible", mnt);
-	if (ret >= PATH_MAX) {
+	/* get the highest possible cpu number क्रम a sparse allocation */
+	ret = snम_लिखो(path, PATH_MAX, "%s/devices/system/node/possible", mnt);
+	अगर (ret >= PATH_MAX) अणु
 		pr_err("sysfs path crossed PATH_MAX(%d) size\n", PATH_MAX);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	ret = get_max_num(path, &max_node_num);
 
 out:
-	if (ret)
+	अगर (ret)
 		pr_err("Failed to read max nodes, using default of %d\n", max_node_num);
-}
+पूर्ण
 
-int cpu__max_node(void)
-{
-	if (unlikely(!max_node_num))
+पूर्णांक cpu__max_node(व्योम)
+अणु
+	अगर (unlikely(!max_node_num))
 		set_max_node_num();
 
-	return max_node_num;
-}
+	वापस max_node_num;
+पूर्ण
 
-int cpu__max_cpu(void)
-{
-	if (unlikely(!max_cpu_num))
+पूर्णांक cpu__max_cpu(व्योम)
+अणु
+	अगर (unlikely(!max_cpu_num))
 		set_max_cpu_num();
 
-	return max_cpu_num;
-}
+	वापस max_cpu_num;
+पूर्ण
 
-int cpu__max_present_cpu(void)
-{
-	if (unlikely(!max_present_cpu_num))
+पूर्णांक cpu__max_present_cpu(व्योम)
+अणु
+	अगर (unlikely(!max_present_cpu_num))
 		set_max_cpu_num();
 
-	return max_present_cpu_num;
-}
+	वापस max_present_cpu_num;
+पूर्ण
 
 
-int cpu__get_node(int cpu)
-{
-	if (unlikely(cpunode_map == NULL)) {
+पूर्णांक cpu__get_node(पूर्णांक cpu)
+अणु
+	अगर (unlikely(cpunode_map == शून्य)) अणु
 		pr_debug("cpu_map not initialized\n");
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
-	return cpunode_map[cpu];
-}
+	वापस cpunode_map[cpu];
+पूर्ण
 
-static int init_cpunode_map(void)
-{
-	int i;
+अटल पूर्णांक init_cpunode_map(व्योम)
+अणु
+	पूर्णांक i;
 
 	set_max_cpu_num();
 	set_max_node_num();
 
-	cpunode_map = calloc(max_cpu_num, sizeof(int));
-	if (!cpunode_map) {
+	cpunode_map = सुस्मृति(max_cpu_num, माप(पूर्णांक));
+	अगर (!cpunode_map) अणु
 		pr_err("%s: calloc failed\n", __func__);
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
-	for (i = 0; i < max_cpu_num; i++)
+	क्रम (i = 0; i < max_cpu_num; i++)
 		cpunode_map[i] = -1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int cpu__setup_cpunode_map(void)
-{
-	struct dirent *dent1, *dent2;
-	DIR *dir1, *dir2;
-	unsigned int cpu, mem;
-	char buf[PATH_MAX];
-	char path[PATH_MAX];
-	const char *mnt;
-	int n;
+पूर्णांक cpu__setup_cpunode_map(व्योम)
+अणु
+	काष्ठा dirent *dent1, *dent2;
+	सूची *dir1, *dir2;
+	अचिन्हित पूर्णांक cpu, mem;
+	अक्षर buf[PATH_MAX];
+	अक्षर path[PATH_MAX];
+	स्थिर अक्षर *mnt;
+	पूर्णांक n;
 
 	/* initialize globals */
-	if (init_cpunode_map())
-		return -1;
+	अगर (init_cpunode_map())
+		वापस -1;
 
-	mnt = sysfs__mountpoint();
-	if (!mnt)
-		return 0;
+	mnt = sysfs__mountpoपूर्णांक();
+	अगर (!mnt)
+		वापस 0;
 
-	n = snprintf(path, PATH_MAX, "%s/devices/system/node", mnt);
-	if (n >= PATH_MAX) {
+	n = snम_लिखो(path, PATH_MAX, "%s/devices/system/node", mnt);
+	अगर (n >= PATH_MAX) अणु
 		pr_err("sysfs path crossed PATH_MAX(%d) size\n", PATH_MAX);
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
-	dir1 = opendir(path);
-	if (!dir1)
-		return 0;
+	dir1 = सूची_खोलो(path);
+	अगर (!dir1)
+		वापस 0;
 
 	/* walk tree and setup map */
-	while ((dent1 = readdir(dir1)) != NULL) {
-		if (dent1->d_type != DT_DIR || sscanf(dent1->d_name, "node%u", &mem) < 1)
-			continue;
+	जबतक ((dent1 = सूची_पढ़ो(dir1)) != शून्य) अणु
+		अगर (dent1->d_type != DT_सूची || माला_पूछो(dent1->d_name, "node%u", &mem) < 1)
+			जारी;
 
-		n = snprintf(buf, PATH_MAX, "%s/%s", path, dent1->d_name);
-		if (n >= PATH_MAX) {
+		n = snम_लिखो(buf, PATH_MAX, "%s/%s", path, dent1->d_name);
+		अगर (n >= PATH_MAX) अणु
 			pr_err("sysfs path crossed PATH_MAX(%d) size\n", PATH_MAX);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		dir2 = opendir(buf);
-		if (!dir2)
-			continue;
-		while ((dent2 = readdir(dir2)) != NULL) {
-			if (dent2->d_type != DT_LNK || sscanf(dent2->d_name, "cpu%u", &cpu) < 1)
-				continue;
+		dir2 = सूची_खोलो(buf);
+		अगर (!dir2)
+			जारी;
+		जबतक ((dent2 = सूची_पढ़ो(dir2)) != शून्य) अणु
+			अगर (dent2->d_type != DT_LNK || माला_पूछो(dent2->d_name, "cpu%u", &cpu) < 1)
+				जारी;
 			cpunode_map[cpu] = mem;
-		}
-		closedir(dir2);
-	}
-	closedir(dir1);
-	return 0;
-}
+		पूर्ण
+		बंद_सूची(dir2);
+	पूर्ण
+	बंद_सूची(dir1);
+	वापस 0;
+पूर्ण
 
-bool cpu_map__has(struct perf_cpu_map *cpus, int cpu)
-{
-	return perf_cpu_map__idx(cpus, cpu) != -1;
-}
+bool cpu_map__has(काष्ठा perf_cpu_map *cpus, पूर्णांक cpu)
+अणु
+	वापस perf_cpu_map__idx(cpus, cpu) != -1;
+पूर्ण
 
-int cpu_map__cpu(struct perf_cpu_map *cpus, int idx)
-{
-	return cpus->map[idx];
-}
+पूर्णांक cpu_map__cpu(काष्ठा perf_cpu_map *cpus, पूर्णांक idx)
+अणु
+	वापस cpus->map[idx];
+पूर्ण
 
-size_t cpu_map__snprint(struct perf_cpu_map *map, char *buf, size_t size)
-{
-	int i, cpu, start = -1;
+माप_प्रकार cpu_map__snprपूर्णांक(काष्ठा perf_cpu_map *map, अक्षर *buf, माप_प्रकार size)
+अणु
+	पूर्णांक i, cpu, start = -1;
 	bool first = true;
-	size_t ret = 0;
+	माप_प्रकार ret = 0;
 
-#define COMMA first ? "" : ","
+#घोषणा COMMA first ? "" : ","
 
-	for (i = 0; i < map->nr + 1; i++) {
+	क्रम (i = 0; i < map->nr + 1; i++) अणु
 		bool last = i == map->nr;
 
-		cpu = last ? INT_MAX : map->map[i];
+		cpu = last ? पूर्णांक_उच्च : map->map[i];
 
-		if (start == -1) {
+		अगर (start == -1) अणु
 			start = i;
-			if (last) {
-				ret += snprintf(buf + ret, size - ret,
+			अगर (last) अणु
+				ret += snम_लिखो(buf + ret, size - ret,
 						"%s%d", COMMA,
 						map->map[i]);
-			}
-		} else if (((i - start) != (cpu - map->map[start])) || last) {
-			int end = i - 1;
+			पूर्ण
+		पूर्ण अन्यथा अगर (((i - start) != (cpu - map->map[start])) || last) अणु
+			पूर्णांक end = i - 1;
 
-			if (start == end) {
-				ret += snprintf(buf + ret, size - ret,
+			अगर (start == end) अणु
+				ret += snम_लिखो(buf + ret, size - ret,
 						"%s%d", COMMA,
 						map->map[start]);
-			} else {
-				ret += snprintf(buf + ret, size - ret,
+			पूर्ण अन्यथा अणु
+				ret += snम_लिखो(buf + ret, size - ret,
 						"%s%d-%d", COMMA,
 						map->map[start], map->map[end]);
-			}
+			पूर्ण
 			first = false;
 			start = i;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-#undef COMMA
+#अघोषित COMMA
 
 	pr_debug2("cpumask list: %s\n", buf);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static char hex_char(unsigned char val)
-{
-	if (val < 10)
-		return val + '0';
-	if (val < 16)
-		return val - 10 + 'a';
-	return '?';
-}
+अटल अक्षर hex_अक्षर(अचिन्हित अक्षर val)
+अणु
+	अगर (val < 10)
+		वापस val + '0';
+	अगर (val < 16)
+		वापस val - 10 + 'a';
+	वापस '?';
+पूर्ण
 
-size_t cpu_map__snprint_mask(struct perf_cpu_map *map, char *buf, size_t size)
-{
-	int i, cpu;
-	char *ptr = buf;
-	unsigned char *bitmap;
-	int last_cpu = cpu_map__cpu(map, map->nr - 1);
+माप_प्रकार cpu_map__snprपूर्णांक_mask(काष्ठा perf_cpu_map *map, अक्षर *buf, माप_प्रकार size)
+अणु
+	पूर्णांक i, cpu;
+	अक्षर *ptr = buf;
+	अचिन्हित अक्षर *biपंचांगap;
+	पूर्णांक last_cpu = cpu_map__cpu(map, map->nr - 1);
 
-	if (buf == NULL)
-		return 0;
+	अगर (buf == शून्य)
+		वापस 0;
 
-	bitmap = zalloc(last_cpu / 8 + 1);
-	if (bitmap == NULL) {
+	biपंचांगap = zalloc(last_cpu / 8 + 1);
+	अगर (biपंचांगap == शून्य) अणु
 		buf[0] = '\0';
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	for (i = 0; i < map->nr; i++) {
+	क्रम (i = 0; i < map->nr; i++) अणु
 		cpu = cpu_map__cpu(map, i);
-		bitmap[cpu / 8] |= 1 << (cpu % 8);
-	}
+		biपंचांगap[cpu / 8] |= 1 << (cpu % 8);
+	पूर्ण
 
-	for (cpu = last_cpu / 4 * 4; cpu >= 0; cpu -= 4) {
-		unsigned char bits = bitmap[cpu / 8];
+	क्रम (cpu = last_cpu / 4 * 4; cpu >= 0; cpu -= 4) अणु
+		अचिन्हित अक्षर bits = biपंचांगap[cpu / 8];
 
-		if (cpu % 8)
+		अगर (cpu % 8)
 			bits >>= 4;
-		else
+		अन्यथा
 			bits &= 0xf;
 
-		*ptr++ = hex_char(bits);
-		if ((cpu % 32) == 0 && cpu > 0)
+		*ptr++ = hex_अक्षर(bits);
+		अगर ((cpu % 32) == 0 && cpu > 0)
 			*ptr++ = ',';
-	}
+	पूर्ण
 	*ptr = '\0';
-	free(bitmap);
+	मुक्त(biपंचांगap);
 
 	buf[size - 1] = '\0';
-	return ptr - buf;
-}
+	वापस ptr - buf;
+पूर्ण
 
-const struct perf_cpu_map *cpu_map__online(void) /* thread unsafe */
-{
-	static const struct perf_cpu_map *online = NULL;
+स्थिर काष्ठा perf_cpu_map *cpu_map__online(व्योम) /* thपढ़ो unsafe */
+अणु
+	अटल स्थिर काष्ठा perf_cpu_map *online = शून्य;
 
-	if (!online)
-		online = perf_cpu_map__new(NULL); /* from /sys/devices/system/cpu/online */
+	अगर (!online)
+		online = perf_cpu_map__new(शून्य); /* from /sys/devices/प्रणाली/cpu/online */
 
-	return online;
-}
+	वापस online;
+पूर्ण
 
-bool cpu_map__compare_aggr_cpu_id(struct aggr_cpu_id a, struct aggr_cpu_id b)
-{
-	return a.thread == b.thread &&
+bool cpu_map__compare_aggr_cpu_id(काष्ठा aggr_cpu_id a, काष्ठा aggr_cpu_id b)
+अणु
+	वापस a.thपढ़ो == b.thपढ़ो &&
 		a.node == b.node &&
 		a.socket == b.socket &&
 		a.die == b.die &&
 		a.core == b.core;
-}
+पूर्ण
 
-bool cpu_map__aggr_cpu_id_is_empty(struct aggr_cpu_id a)
-{
-	return a.thread == -1 &&
+bool cpu_map__aggr_cpu_id_is_empty(काष्ठा aggr_cpu_id a)
+अणु
+	वापस a.thपढ़ो == -1 &&
 		a.node == -1 &&
 		a.socket == -1 &&
 		a.die == -1 &&
 		a.core == -1;
-}
+पूर्ण
 
-struct aggr_cpu_id cpu_map__empty_aggr_cpu_id(void)
-{
-	struct aggr_cpu_id ret = {
-		.thread = -1,
+काष्ठा aggr_cpu_id cpu_map__empty_aggr_cpu_id(व्योम)
+अणु
+	काष्ठा aggr_cpu_id ret = अणु
+		.thपढ़ो = -1,
 		.node = -1,
 		.socket = -1,
 		.die = -1,
 		.core = -1
-	};
-	return ret;
-}
+	पूर्ण;
+	वापस ret;
+पूर्ण

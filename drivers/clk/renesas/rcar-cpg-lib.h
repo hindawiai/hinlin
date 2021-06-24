@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * R-Car Gen3 Clock Pulse Generator Library
  *
@@ -10,24 +11,24 @@
  * Copyright (C) 2015 Renesas Electronics Corp.
  */
 
-#ifndef __CLK_RENESAS_RCAR_CPG_LIB_H__
-#define __CLK_RENESAS_RCAR_CPG_LIB_H__
+#अगर_अघोषित __CLK_RENESAS_RCAR_CPG_LIB_H__
+#घोषणा __CLK_RENESAS_RCAR_CPG_LIB_H__
 
-extern spinlock_t cpg_lock;
+बाह्य spinlock_t cpg_lock;
 
-struct cpg_simple_notifier {
-	struct notifier_block nb;
-	void __iomem *reg;
+काष्ठा cpg_simple_notअगरier अणु
+	काष्ठा notअगरier_block nb;
+	व्योम __iomem *reg;
 	u32 saved;
-};
+पूर्ण;
 
-void cpg_simple_notifier_register(struct raw_notifier_head *notifiers,
-				  struct cpg_simple_notifier *csn);
+व्योम cpg_simple_notअगरier_रेजिस्टर(काष्ठा raw_notअगरier_head *notअगरiers,
+				  काष्ठा cpg_simple_notअगरier *csn);
 
-void cpg_reg_modify(void __iomem *reg, u32 clear, u32 set);
+व्योम cpg_reg_modअगरy(व्योम __iomem *reg, u32 clear, u32 set);
 
-struct clk * __init cpg_sd_clk_register(const char *name,
-	void __iomem *base, unsigned int offset, const char *parent_name,
-	struct raw_notifier_head *notifiers, bool skip_first);
+काष्ठा clk * __init cpg_sd_clk_रेजिस्टर(स्थिर अक्षर *name,
+	व्योम __iomem *base, अचिन्हित पूर्णांक offset, स्थिर अक्षर *parent_name,
+	काष्ठा raw_notअगरier_head *notअगरiers, bool skip_first);
 
-#endif
+#पूर्ण_अगर

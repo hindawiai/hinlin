@@ -1,375 +1,376 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <linux/netdevice.h>
-#include <linux/proc_fs.h>
-#include <linux/seq_file.h>
-#include <net/wext.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <linux/netdevice.h>
+#समावेश <linux/proc_fs.h>
+#समावेश <linux/seq_file.h>
+#समावेश <net/wext.h>
 
-#define BUCKET_SPACE (32 - NETDEV_HASHBITS - 1)
+#घोषणा BUCKET_SPACE (32 - NETDEV_HASHBITS - 1)
 
-#define get_bucket(x) ((x) >> BUCKET_SPACE)
-#define get_offset(x) ((x) & ((1 << BUCKET_SPACE) - 1))
-#define set_bucket_offset(b, o) ((b) << BUCKET_SPACE | (o))
+#घोषणा get_bucket(x) ((x) >> BUCKET_SPACE)
+#घोषणा get_offset(x) ((x) & ((1 << BUCKET_SPACE) - 1))
+#घोषणा set_bucket_offset(b, o) ((b) << BUCKET_SPACE | (o))
 
-static inline struct net_device *dev_from_same_bucket(struct seq_file *seq, loff_t *pos)
-{
-	struct net *net = seq_file_net(seq);
-	struct net_device *dev;
-	struct hlist_head *h;
-	unsigned int count = 0, offset = get_offset(*pos);
+अटल अंतरभूत काष्ठा net_device *dev_from_same_bucket(काष्ठा seq_file *seq, loff_t *pos)
+अणु
+	काष्ठा net *net = seq_file_net(seq);
+	काष्ठा net_device *dev;
+	काष्ठा hlist_head *h;
+	अचिन्हित पूर्णांक count = 0, offset = get_offset(*pos);
 
 	h = &net->dev_index_head[get_bucket(*pos)];
-	hlist_for_each_entry_rcu(dev, h, index_hlist) {
-		if (++count == offset)
-			return dev;
-	}
+	hlist_क्रम_each_entry_rcu(dev, h, index_hlist) अणु
+		अगर (++count == offset)
+			वापस dev;
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static inline struct net_device *dev_from_bucket(struct seq_file *seq, loff_t *pos)
-{
-	struct net_device *dev;
-	unsigned int bucket;
+अटल अंतरभूत काष्ठा net_device *dev_from_bucket(काष्ठा seq_file *seq, loff_t *pos)
+अणु
+	काष्ठा net_device *dev;
+	अचिन्हित पूर्णांक bucket;
 
-	do {
+	करो अणु
 		dev = dev_from_same_bucket(seq, pos);
-		if (dev)
-			return dev;
+		अगर (dev)
+			वापस dev;
 
 		bucket = get_bucket(*pos) + 1;
 		*pos = set_bucket_offset(bucket, 1);
-	} while (bucket < NETDEV_HASHENTRIES);
+	पूर्ण जबतक (bucket < NETDEV_HASHENTRIES);
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
 /*
- *	This is invoked by the /proc filesystem handler to display a device
+ *	This is invoked by the /proc fileप्रणाली handler to display a device
  *	in detail.
  */
-static void *dev_seq_start(struct seq_file *seq, loff_t *pos)
+अटल व्योम *dev_seq_start(काष्ठा seq_file *seq, loff_t *pos)
 	__acquires(RCU)
-{
-	rcu_read_lock();
-	if (!*pos)
-		return SEQ_START_TOKEN;
+अणु
+	rcu_पढ़ो_lock();
+	अगर (!*pos)
+		वापस SEQ_START_TOKEN;
 
-	if (get_bucket(*pos) >= NETDEV_HASHENTRIES)
-		return NULL;
+	अगर (get_bucket(*pos) >= NETDEV_HASHENTRIES)
+		वापस शून्य;
 
-	return dev_from_bucket(seq, pos);
-}
+	वापस dev_from_bucket(seq, pos);
+पूर्ण
 
-static void *dev_seq_next(struct seq_file *seq, void *v, loff_t *pos)
-{
+अटल व्योम *dev_seq_next(काष्ठा seq_file *seq, व्योम *v, loff_t *pos)
+अणु
 	++*pos;
-	return dev_from_bucket(seq, pos);
-}
+	वापस dev_from_bucket(seq, pos);
+पूर्ण
 
-static void dev_seq_stop(struct seq_file *seq, void *v)
+अटल व्योम dev_seq_stop(काष्ठा seq_file *seq, व्योम *v)
 	__releases(RCU)
-{
-	rcu_read_unlock();
-}
+अणु
+	rcu_पढ़ो_unlock();
+पूर्ण
 
-static void dev_seq_printf_stats(struct seq_file *seq, struct net_device *dev)
-{
-	struct rtnl_link_stats64 temp;
-	const struct rtnl_link_stats64 *stats = dev_get_stats(dev, &temp);
+अटल व्योम dev_seq_म_लिखो_stats(काष्ठा seq_file *seq, काष्ठा net_device *dev)
+अणु
+	काष्ठा rtnl_link_stats64 temp;
+	स्थिर काष्ठा rtnl_link_stats64 *stats = dev_get_stats(dev, &temp);
 
-	seq_printf(seq, "%6s: %7llu %7llu %4llu %4llu %4llu %5llu %10llu %9llu "
+	seq_म_लिखो(seq, "%6s: %7llu %7llu %4llu %4llu %4llu %5llu %10llu %9llu "
 		   "%8llu %7llu %4llu %4llu %4llu %5llu %7llu %10llu\n",
 		   dev->name, stats->rx_bytes, stats->rx_packets,
 		   stats->rx_errors,
 		   stats->rx_dropped + stats->rx_missed_errors,
-		   stats->rx_fifo_errors,
+		   stats->rx_fअगरo_errors,
 		   stats->rx_length_errors + stats->rx_over_errors +
 		    stats->rx_crc_errors + stats->rx_frame_errors,
 		   stats->rx_compressed, stats->multicast,
 		   stats->tx_bytes, stats->tx_packets,
 		   stats->tx_errors, stats->tx_dropped,
-		   stats->tx_fifo_errors, stats->collisions,
+		   stats->tx_fअगरo_errors, stats->collisions,
 		   stats->tx_carrier_errors +
-		    stats->tx_aborted_errors +
-		    stats->tx_window_errors +
+		    stats->tx_पातed_errors +
+		    stats->tx_winकरोw_errors +
 		    stats->tx_heartbeat_errors,
 		   stats->tx_compressed);
-}
+पूर्ण
 
 /*
  *	Called from the PROCfs module. This now uses the new arbitrary sized
- *	/proc/net interface to create /proc/net/dev
+ *	/proc/net पूर्णांकerface to create /proc/net/dev
  */
-static int dev_seq_show(struct seq_file *seq, void *v)
-{
-	if (v == SEQ_START_TOKEN)
-		seq_puts(seq, "Inter-|   Receive                            "
+अटल पूर्णांक dev_seq_show(काष्ठा seq_file *seq, व्योम *v)
+अणु
+	अगर (v == SEQ_START_TOKEN)
+		seq_माला_दो(seq, "Inter-|   Receive                            "
 			      "                    |  Transmit\n"
 			      " face |bytes    packets errs drop fifo frame "
 			      "compressed multicast|bytes    packets errs "
 			      "drop fifo colls carrier compressed\n");
-	else
-		dev_seq_printf_stats(seq, v);
-	return 0;
-}
+	अन्यथा
+		dev_seq_म_लिखो_stats(seq, v);
+	वापस 0;
+पूर्ण
 
-static u32 softnet_backlog_len(struct softnet_data *sd)
-{
-	return skb_queue_len_lockless(&sd->input_pkt_queue) +
+अटल u32 softnet_backlog_len(काष्ठा softnet_data *sd)
+अणु
+	वापस skb_queue_len_lockless(&sd->input_pkt_queue) +
 	       skb_queue_len_lockless(&sd->process_queue);
-}
+पूर्ण
 
-static struct softnet_data *softnet_get_online(loff_t *pos)
-{
-	struct softnet_data *sd = NULL;
+अटल काष्ठा softnet_data *softnet_get_online(loff_t *pos)
+अणु
+	काष्ठा softnet_data *sd = शून्य;
 
-	while (*pos < nr_cpu_ids)
-		if (cpu_online(*pos)) {
+	जबतक (*pos < nr_cpu_ids)
+		अगर (cpu_online(*pos)) अणु
 			sd = &per_cpu(softnet_data, *pos);
-			break;
-		} else
+			अवरोध;
+		पूर्ण अन्यथा
 			++*pos;
-	return sd;
-}
+	वापस sd;
+पूर्ण
 
-static void *softnet_seq_start(struct seq_file *seq, loff_t *pos)
-{
-	return softnet_get_online(pos);
-}
+अटल व्योम *softnet_seq_start(काष्ठा seq_file *seq, loff_t *pos)
+अणु
+	वापस softnet_get_online(pos);
+पूर्ण
 
-static void *softnet_seq_next(struct seq_file *seq, void *v, loff_t *pos)
-{
+अटल व्योम *softnet_seq_next(काष्ठा seq_file *seq, व्योम *v, loff_t *pos)
+अणु
 	++*pos;
-	return softnet_get_online(pos);
-}
+	वापस softnet_get_online(pos);
+पूर्ण
 
-static void softnet_seq_stop(struct seq_file *seq, void *v)
-{
-}
+अटल व्योम softnet_seq_stop(काष्ठा seq_file *seq, व्योम *v)
+अणु
+पूर्ण
 
-static int softnet_seq_show(struct seq_file *seq, void *v)
-{
-	struct softnet_data *sd = v;
-	unsigned int flow_limit_count = 0;
+अटल पूर्णांक softnet_seq_show(काष्ठा seq_file *seq, व्योम *v)
+अणु
+	काष्ठा softnet_data *sd = v;
+	अचिन्हित पूर्णांक flow_limit_count = 0;
 
-#ifdef CONFIG_NET_FLOW_LIMIT
-	struct sd_flow_limit *fl;
+#अगर_घोषित CONFIG_NET_FLOW_LIMIT
+	काष्ठा sd_flow_limit *fl;
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	fl = rcu_dereference(sd->flow_limit);
-	if (fl)
+	अगर (fl)
 		flow_limit_count = fl->count;
-	rcu_read_unlock();
-#endif
+	rcu_पढ़ो_unlock();
+#पूर्ण_अगर
 
 	/* the index is the CPU id owing this sd. Since offline CPUs are not
-	 * displayed, it would be othrwise not trivial for the user-space
-	 * mapping the data a specific CPU
+	 * displayed, it would be othrwise not trivial क्रम the user-space
+	 * mapping the data a specअगरic CPU
 	 */
-	seq_printf(seq,
+	seq_म_लिखो(seq,
 		   "%08x %08x %08x %08x %08x %08x %08x %08x %08x %08x %08x %08x %08x\n",
-		   sd->processed, sd->dropped, sd->time_squeeze, 0,
+		   sd->processed, sd->dropped, sd->समय_squeeze, 0,
 		   0, 0, 0, 0, /* was fastroute */
 		   0,	/* was cpu_collision */
 		   sd->received_rps, flow_limit_count,
-		   softnet_backlog_len(sd), (int)seq->index);
-	return 0;
-}
+		   softnet_backlog_len(sd), (पूर्णांक)seq->index);
+	वापस 0;
+पूर्ण
 
-static const struct seq_operations dev_seq_ops = {
+अटल स्थिर काष्ठा seq_operations dev_seq_ops = अणु
 	.start = dev_seq_start,
 	.next  = dev_seq_next,
 	.stop  = dev_seq_stop,
 	.show  = dev_seq_show,
-};
+पूर्ण;
 
-static const struct seq_operations softnet_seq_ops = {
+अटल स्थिर काष्ठा seq_operations softnet_seq_ops = अणु
 	.start = softnet_seq_start,
 	.next  = softnet_seq_next,
 	.stop  = softnet_seq_stop,
 	.show  = softnet_seq_show,
-};
+पूर्ण;
 
-static void *ptype_get_idx(loff_t pos)
-{
-	struct packet_type *pt = NULL;
+अटल व्योम *ptype_get_idx(loff_t pos)
+अणु
+	काष्ठा packet_type *pt = शून्य;
 	loff_t i = 0;
-	int t;
+	पूर्णांक t;
 
-	list_for_each_entry_rcu(pt, &ptype_all, list) {
-		if (i == pos)
-			return pt;
+	list_क्रम_each_entry_rcu(pt, &ptype_all, list) अणु
+		अगर (i == pos)
+			वापस pt;
 		++i;
-	}
+	पूर्ण
 
-	for (t = 0; t < PTYPE_HASH_SIZE; t++) {
-		list_for_each_entry_rcu(pt, &ptype_base[t], list) {
-			if (i == pos)
-				return pt;
+	क्रम (t = 0; t < PTYPE_HASH_SIZE; t++) अणु
+		list_क्रम_each_entry_rcu(pt, &ptype_base[t], list) अणु
+			अगर (i == pos)
+				वापस pt;
 			++i;
-		}
-	}
-	return NULL;
-}
+		पूर्ण
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
-static void *ptype_seq_start(struct seq_file *seq, loff_t *pos)
+अटल व्योम *ptype_seq_start(काष्ठा seq_file *seq, loff_t *pos)
 	__acquires(RCU)
-{
-	rcu_read_lock();
-	return *pos ? ptype_get_idx(*pos - 1) : SEQ_START_TOKEN;
-}
+अणु
+	rcu_पढ़ो_lock();
+	वापस *pos ? ptype_get_idx(*pos - 1) : SEQ_START_TOKEN;
+पूर्ण
 
-static void *ptype_seq_next(struct seq_file *seq, void *v, loff_t *pos)
-{
-	struct packet_type *pt;
-	struct list_head *nxt;
-	int hash;
+अटल व्योम *ptype_seq_next(काष्ठा seq_file *seq, व्योम *v, loff_t *pos)
+अणु
+	काष्ठा packet_type *pt;
+	काष्ठा list_head *nxt;
+	पूर्णांक hash;
 
 	++*pos;
-	if (v == SEQ_START_TOKEN)
-		return ptype_get_idx(0);
+	अगर (v == SEQ_START_TOKEN)
+		वापस ptype_get_idx(0);
 
 	pt = v;
 	nxt = pt->list.next;
-	if (pt->type == htons(ETH_P_ALL)) {
-		if (nxt != &ptype_all)
-			goto found;
+	अगर (pt->type == htons(ETH_P_ALL)) अणु
+		अगर (nxt != &ptype_all)
+			जाओ found;
 		hash = 0;
 		nxt = ptype_base[0].next;
-	} else
+	पूर्ण अन्यथा
 		hash = ntohs(pt->type) & PTYPE_HASH_MASK;
 
-	while (nxt == &ptype_base[hash]) {
-		if (++hash >= PTYPE_HASH_SIZE)
-			return NULL;
+	जबतक (nxt == &ptype_base[hash]) अणु
+		अगर (++hash >= PTYPE_HASH_SIZE)
+			वापस शून्य;
 		nxt = ptype_base[hash].next;
-	}
+	पूर्ण
 found:
-	return list_entry(nxt, struct packet_type, list);
-}
+	वापस list_entry(nxt, काष्ठा packet_type, list);
+पूर्ण
 
-static void ptype_seq_stop(struct seq_file *seq, void *v)
+अटल व्योम ptype_seq_stop(काष्ठा seq_file *seq, व्योम *v)
 	__releases(RCU)
-{
-	rcu_read_unlock();
-}
+अणु
+	rcu_पढ़ो_unlock();
+पूर्ण
 
-static int ptype_seq_show(struct seq_file *seq, void *v)
-{
-	struct packet_type *pt = v;
+अटल पूर्णांक ptype_seq_show(काष्ठा seq_file *seq, व्योम *v)
+अणु
+	काष्ठा packet_type *pt = v;
 
-	if (v == SEQ_START_TOKEN)
-		seq_puts(seq, "Type Device      Function\n");
-	else if (pt->dev == NULL || dev_net(pt->dev) == seq_file_net(seq)) {
-		if (pt->type == htons(ETH_P_ALL))
-			seq_puts(seq, "ALL ");
-		else
-			seq_printf(seq, "%04x", ntohs(pt->type));
+	अगर (v == SEQ_START_TOKEN)
+		seq_माला_दो(seq, "Type Device      Function\n");
+	अन्यथा अगर (pt->dev == शून्य || dev_net(pt->dev) == seq_file_net(seq)) अणु
+		अगर (pt->type == htons(ETH_P_ALL))
+			seq_माला_दो(seq, "ALL ");
+		अन्यथा
+			seq_म_लिखो(seq, "%04x", ntohs(pt->type));
 
-		seq_printf(seq, " %-8s %ps\n",
+		seq_म_लिखो(seq, " %-8s %ps\n",
 			   pt->dev ? pt->dev->name : "", pt->func);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct seq_operations ptype_seq_ops = {
+अटल स्थिर काष्ठा seq_operations ptype_seq_ops = अणु
 	.start = ptype_seq_start,
 	.next  = ptype_seq_next,
 	.stop  = ptype_seq_stop,
 	.show  = ptype_seq_show,
-};
+पूर्ण;
 
-static int __net_init dev_proc_net_init(struct net *net)
-{
-	int rc = -ENOMEM;
+अटल पूर्णांक __net_init dev_proc_net_init(काष्ठा net *net)
+अणु
+	पूर्णांक rc = -ENOMEM;
 
-	if (!proc_create_net("dev", 0444, net->proc_net, &dev_seq_ops,
-			sizeof(struct seq_net_private)))
-		goto out;
-	if (!proc_create_seq("softnet_stat", 0444, net->proc_net,
+	अगर (!proc_create_net("dev", 0444, net->proc_net, &dev_seq_ops,
+			माप(काष्ठा seq_net_निजी)))
+		जाओ out;
+	अगर (!proc_create_seq("softnet_stat", 0444, net->proc_net,
 			 &softnet_seq_ops))
-		goto out_dev;
-	if (!proc_create_net("ptype", 0444, net->proc_net, &ptype_seq_ops,
-			sizeof(struct seq_net_private)))
-		goto out_softnet;
+		जाओ out_dev;
+	अगर (!proc_create_net("ptype", 0444, net->proc_net, &ptype_seq_ops,
+			माप(काष्ठा seq_net_निजी)))
+		जाओ out_softnet;
 
-	if (wext_proc_init(net))
-		goto out_ptype;
+	अगर (wext_proc_init(net))
+		जाओ out_ptype;
 	rc = 0;
 out:
-	return rc;
+	वापस rc;
 out_ptype:
-	remove_proc_entry("ptype", net->proc_net);
+	हटाओ_proc_entry("ptype", net->proc_net);
 out_softnet:
-	remove_proc_entry("softnet_stat", net->proc_net);
+	हटाओ_proc_entry("softnet_stat", net->proc_net);
 out_dev:
-	remove_proc_entry("dev", net->proc_net);
-	goto out;
-}
+	हटाओ_proc_entry("dev", net->proc_net);
+	जाओ out;
+पूर्ण
 
-static void __net_exit dev_proc_net_exit(struct net *net)
-{
-	wext_proc_exit(net);
+अटल व्योम __net_निकास dev_proc_net_निकास(काष्ठा net *net)
+अणु
+	wext_proc_निकास(net);
 
-	remove_proc_entry("ptype", net->proc_net);
-	remove_proc_entry("softnet_stat", net->proc_net);
-	remove_proc_entry("dev", net->proc_net);
-}
+	हटाओ_proc_entry("ptype", net->proc_net);
+	हटाओ_proc_entry("softnet_stat", net->proc_net);
+	हटाओ_proc_entry("dev", net->proc_net);
+पूर्ण
 
-static struct pernet_operations __net_initdata dev_proc_ops = {
+अटल काष्ठा pernet_operations __net_initdata dev_proc_ops = अणु
 	.init = dev_proc_net_init,
-	.exit = dev_proc_net_exit,
-};
+	.निकास = dev_proc_net_निकास,
+पूर्ण;
 
-static int dev_mc_seq_show(struct seq_file *seq, void *v)
-{
-	struct netdev_hw_addr *ha;
-	struct net_device *dev = v;
+अटल पूर्णांक dev_mc_seq_show(काष्ठा seq_file *seq, व्योम *v)
+अणु
+	काष्ठा netdev_hw_addr *ha;
+	काष्ठा net_device *dev = v;
 
-	if (v == SEQ_START_TOKEN)
-		return 0;
+	अगर (v == SEQ_START_TOKEN)
+		वापस 0;
 
-	netif_addr_lock_bh(dev);
-	netdev_for_each_mc_addr(ha, dev) {
-		seq_printf(seq, "%-4d %-15s %-5d %-5d %*phN\n",
-			   dev->ifindex, dev->name,
+	netअगर_addr_lock_bh(dev);
+	netdev_क्रम_each_mc_addr(ha, dev) अणु
+		seq_म_लिखो(seq, "%-4d %-15s %-5d %-5d %*phN\n",
+			   dev->अगरindex, dev->name,
 			   ha->refcount, ha->global_use,
-			   (int)dev->addr_len, ha->addr);
-	}
-	netif_addr_unlock_bh(dev);
-	return 0;
-}
+			   (पूर्णांक)dev->addr_len, ha->addr);
+	पूर्ण
+	netअगर_addr_unlock_bh(dev);
+	वापस 0;
+पूर्ण
 
-static const struct seq_operations dev_mc_seq_ops = {
+अटल स्थिर काष्ठा seq_operations dev_mc_seq_ops = अणु
 	.start = dev_seq_start,
 	.next  = dev_seq_next,
 	.stop  = dev_seq_stop,
 	.show  = dev_mc_seq_show,
-};
+पूर्ण;
 
-static int __net_init dev_mc_net_init(struct net *net)
-{
-	if (!proc_create_net("dev_mcast", 0, net->proc_net, &dev_mc_seq_ops,
-			sizeof(struct seq_net_private)))
-		return -ENOMEM;
-	return 0;
-}
+अटल पूर्णांक __net_init dev_mc_net_init(काष्ठा net *net)
+अणु
+	अगर (!proc_create_net("dev_mcast", 0, net->proc_net, &dev_mc_seq_ops,
+			माप(काष्ठा seq_net_निजी)))
+		वापस -ENOMEM;
+	वापस 0;
+पूर्ण
 
-static void __net_exit dev_mc_net_exit(struct net *net)
-{
-	remove_proc_entry("dev_mcast", net->proc_net);
-}
+अटल व्योम __net_निकास dev_mc_net_निकास(काष्ठा net *net)
+अणु
+	हटाओ_proc_entry("dev_mcast", net->proc_net);
+पूर्ण
 
-static struct pernet_operations __net_initdata dev_mc_net_ops = {
+अटल काष्ठा pernet_operations __net_initdata dev_mc_net_ops = अणु
 	.init = dev_mc_net_init,
-	.exit = dev_mc_net_exit,
-};
+	.निकास = dev_mc_net_निकास,
+पूर्ण;
 
-int __init dev_proc_init(void)
-{
-	int ret = register_pernet_subsys(&dev_proc_ops);
-	if (!ret)
-		return register_pernet_subsys(&dev_mc_net_ops);
-	return ret;
-}
+पूर्णांक __init dev_proc_init(व्योम)
+अणु
+	पूर्णांक ret = रेजिस्टर_pernet_subsys(&dev_proc_ops);
+	अगर (!ret)
+		वापस रेजिस्टर_pernet_subsys(&dev_mc_net_ops);
+	वापस ret;
+पूर्ण

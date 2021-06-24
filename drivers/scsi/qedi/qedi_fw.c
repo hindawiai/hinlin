@@ -1,48 +1,49 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * QLogic iSCSI Offload Driver
  * Copyright (c) 2016 Cavium Inc.
  */
 
-#include <linux/blkdev.h>
-#include <scsi/scsi_tcq.h>
-#include <linux/delay.h>
+#समावेश <linux/blkdev.h>
+#समावेश <scsi/scsi_tcq.h>
+#समावेश <linux/delay.h>
 
-#include "qedi.h"
-#include "qedi_iscsi.h"
-#include "qedi_gbl.h"
-#include "qedi_fw_iscsi.h"
-#include "qedi_fw_scsi.h"
+#समावेश "qedi.h"
+#समावेश "qedi_iscsi.h"
+#समावेश "qedi_gbl.h"
+#समावेश "qedi_fw_iscsi.h"
+#समावेश "qedi_fw_scsi.h"
 
-static int qedi_send_iscsi_tmf(struct qedi_conn *qedi_conn,
-			       struct iscsi_task *mtask);
+अटल पूर्णांक qedi_send_iscsi_पंचांगf(काष्ठा qedi_conn *qedi_conn,
+			       काष्ठा iscsi_task *mtask);
 
-void qedi_iscsi_unmap_sg_list(struct qedi_cmd *cmd)
-{
-	struct scsi_cmnd *sc = cmd->scsi_cmd;
+व्योम qedi_iscsi_unmap_sg_list(काष्ठा qedi_cmd *cmd)
+अणु
+	काष्ठा scsi_cmnd *sc = cmd->scsi_cmd;
 
-	if (cmd->io_tbl.sge_valid && sc) {
+	अगर (cmd->io_tbl.sge_valid && sc) अणु
 		cmd->io_tbl.sge_valid = 0;
 		scsi_dma_unmap(sc);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void qedi_process_logout_resp(struct qedi_ctx *qedi,
-				     union iscsi_cqe *cqe,
-				     struct iscsi_task *task,
-				     struct qedi_conn *qedi_conn)
-{
-	struct iscsi_conn *conn = qedi_conn->cls_conn->dd_data;
-	struct iscsi_logout_rsp *resp_hdr;
-	struct iscsi_session *session = conn->session;
-	struct iscsi_logout_response_hdr *cqe_logout_response;
-	struct qedi_cmd *cmd;
+अटल व्योम qedi_process_logout_resp(काष्ठा qedi_ctx *qedi,
+				     जोड़ iscsi_cqe *cqe,
+				     काष्ठा iscsi_task *task,
+				     काष्ठा qedi_conn *qedi_conn)
+अणु
+	काष्ठा iscsi_conn *conn = qedi_conn->cls_conn->dd_data;
+	काष्ठा iscsi_logout_rsp *resp_hdr;
+	काष्ठा iscsi_session *session = conn->session;
+	काष्ठा iscsi_logout_response_hdr *cqe_logout_response;
+	काष्ठा qedi_cmd *cmd;
 
-	cmd = (struct qedi_cmd *)task->dd_data;
+	cmd = (काष्ठा qedi_cmd *)task->dd_data;
 	cqe_logout_response = &cqe->cqe_common.iscsi_hdr.logout_response;
 	spin_lock(&session->back_lock);
-	resp_hdr = (struct iscsi_logout_rsp *)&qedi_conn->gen_pdu.resp_hdr;
-	memset(resp_hdr, 0, sizeof(struct iscsi_hdr));
+	resp_hdr = (काष्ठा iscsi_logout_rsp *)&qedi_conn->gen_pdu.resp_hdr;
+	स_रखो(resp_hdr, 0, माप(काष्ठा iscsi_hdr));
 	resp_hdr->opcode = cqe_logout_response->opcode;
 	resp_hdr->flags = cqe_logout_response->flags;
 	resp_hdr->hlength = 0;
@@ -52,53 +53,53 @@ static void qedi_process_logout_resp(struct qedi_ctx *qedi,
 	resp_hdr->exp_cmdsn = cpu_to_be32(cqe_logout_response->exp_cmd_sn);
 	resp_hdr->max_cmdsn = cpu_to_be32(cqe_logout_response->max_cmd_sn);
 
-	resp_hdr->t2wait = cpu_to_be32(cqe_logout_response->time_2_wait);
-	resp_hdr->t2retain = cpu_to_be32(cqe_logout_response->time_2_retain);
+	resp_hdr->t2रुको = cpu_to_be32(cqe_logout_response->समय_2_रुको);
+	resp_hdr->t2retain = cpu_to_be32(cqe_logout_response->समय_2_retain);
 
 	QEDI_INFO(&qedi->dbg_ctx, QEDI_LOG_TID,
 		  "Freeing tid=0x%x for cid=0x%x\n",
 		  cmd->task_id, qedi_conn->iscsi_conn_id);
 
 	spin_lock(&qedi_conn->list_lock);
-	if (likely(cmd->io_cmd_in_list)) {
+	अगर (likely(cmd->io_cmd_in_list)) अणु
 		cmd->io_cmd_in_list = false;
 		list_del_init(&cmd->io_cmd);
 		qedi_conn->active_cmd_count--;
-	} else {
+	पूर्ण अन्यथा अणु
 		QEDI_INFO(&qedi->dbg_ctx, QEDI_LOG_INFO,
 			  "Active cmd list node already deleted, tid=0x%x, cid=0x%x, io_cmd_node=%p\n",
 			  cmd->task_id, qedi_conn->iscsi_conn_id,
 			  &cmd->io_cmd);
-	}
+	पूर्ण
 	spin_unlock(&qedi_conn->list_lock);
 
 	cmd->state = RESPONSE_RECEIVED;
 	qedi_clear_task_idx(qedi, cmd->task_id);
-	__iscsi_complete_pdu(conn, (struct iscsi_hdr *)resp_hdr, NULL, 0);
+	__iscsi_complete_pdu(conn, (काष्ठा iscsi_hdr *)resp_hdr, शून्य, 0);
 
 	spin_unlock(&session->back_lock);
-}
+पूर्ण
 
-static void qedi_process_text_resp(struct qedi_ctx *qedi,
-				   union iscsi_cqe *cqe,
-				   struct iscsi_task *task,
-				   struct qedi_conn *qedi_conn)
-{
-	struct iscsi_conn *conn = qedi_conn->cls_conn->dd_data;
-	struct iscsi_session *session = conn->session;
-	struct e4_iscsi_task_context *task_ctx;
-	struct iscsi_text_rsp *resp_hdr_ptr;
-	struct iscsi_text_response_hdr *cqe_text_response;
-	struct qedi_cmd *cmd;
-	int pld_len;
+अटल व्योम qedi_process_text_resp(काष्ठा qedi_ctx *qedi,
+				   जोड़ iscsi_cqe *cqe,
+				   काष्ठा iscsi_task *task,
+				   काष्ठा qedi_conn *qedi_conn)
+अणु
+	काष्ठा iscsi_conn *conn = qedi_conn->cls_conn->dd_data;
+	काष्ठा iscsi_session *session = conn->session;
+	काष्ठा e4_iscsi_task_context *task_ctx;
+	काष्ठा iscsi_text_rsp *resp_hdr_ptr;
+	काष्ठा iscsi_text_response_hdr *cqe_text_response;
+	काष्ठा qedi_cmd *cmd;
+	पूर्णांक pld_len;
 
-	cmd = (struct qedi_cmd *)task->dd_data;
+	cmd = (काष्ठा qedi_cmd *)task->dd_data;
 	task_ctx = qedi_get_task_mem(&qedi->tasks, cmd->task_id);
 
 	cqe_text_response = &cqe->cqe_common.iscsi_hdr.text_response;
 	spin_lock(&session->back_lock);
-	resp_hdr_ptr =  (struct iscsi_text_rsp *)&qedi_conn->gen_pdu.resp_hdr;
-	memset(resp_hdr_ptr, 0, sizeof(struct iscsi_hdr));
+	resp_hdr_ptr =  (काष्ठा iscsi_text_rsp *)&qedi_conn->gen_pdu.resp_hdr;
+	स_रखो(resp_hdr_ptr, 0, माप(काष्ठा iscsi_hdr));
 	resp_hdr_ptr->opcode = cqe_text_response->opcode;
 	resp_hdr_ptr->flags = cqe_text_response->flags;
 	resp_hdr_ptr->hlength = 0;
@@ -118,163 +119,163 @@ static void qedi_process_text_resp(struct qedi_ctx *qedi,
 		  ISCSI_TEXT_RESPONSE_HDR_DATA_SEG_LEN_MASK;
 	qedi_conn->gen_pdu.resp_wr_ptr = qedi_conn->gen_pdu.resp_buf + pld_len;
 
-	memset(task_ctx, '\0', sizeof(*task_ctx));
+	स_रखो(task_ctx, '\0', माप(*task_ctx));
 
 	QEDI_INFO(&qedi->dbg_ctx, QEDI_LOG_TID,
 		  "Freeing tid=0x%x for cid=0x%x\n",
 		  cmd->task_id, qedi_conn->iscsi_conn_id);
 
 	spin_lock(&qedi_conn->list_lock);
-	if (likely(cmd->io_cmd_in_list)) {
+	अगर (likely(cmd->io_cmd_in_list)) अणु
 		cmd->io_cmd_in_list = false;
 		list_del_init(&cmd->io_cmd);
 		qedi_conn->active_cmd_count--;
-	} else {
+	पूर्ण अन्यथा अणु
 		QEDI_INFO(&qedi->dbg_ctx, QEDI_LOG_INFO,
 			  "Active cmd list node already deleted, tid=0x%x, cid=0x%x, io_cmd_node=%p\n",
 			  cmd->task_id, qedi_conn->iscsi_conn_id,
 			  &cmd->io_cmd);
-	}
+	पूर्ण
 	spin_unlock(&qedi_conn->list_lock);
 
 	cmd->state = RESPONSE_RECEIVED;
 	qedi_clear_task_idx(qedi, cmd->task_id);
 
-	__iscsi_complete_pdu(conn, (struct iscsi_hdr *)resp_hdr_ptr,
+	__iscsi_complete_pdu(conn, (काष्ठा iscsi_hdr *)resp_hdr_ptr,
 			     qedi_conn->gen_pdu.resp_buf,
 			     (qedi_conn->gen_pdu.resp_wr_ptr -
 			      qedi_conn->gen_pdu.resp_buf));
 	spin_unlock(&session->back_lock);
-}
+पूर्ण
 
-static void qedi_tmf_resp_work(struct work_struct *work)
-{
-	struct qedi_cmd *qedi_cmd =
-				container_of(work, struct qedi_cmd, tmf_work);
-	struct qedi_conn *qedi_conn = qedi_cmd->conn;
-	struct qedi_ctx *qedi = qedi_conn->qedi;
-	struct iscsi_conn *conn = qedi_conn->cls_conn->dd_data;
-	struct iscsi_session *session = conn->session;
-	struct iscsi_tm_rsp *resp_hdr_ptr;
-	int rval = 0;
+अटल व्योम qedi_पंचांगf_resp_work(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा qedi_cmd *qedi_cmd =
+				container_of(work, काष्ठा qedi_cmd, पंचांगf_work);
+	काष्ठा qedi_conn *qedi_conn = qedi_cmd->conn;
+	काष्ठा qedi_ctx *qedi = qedi_conn->qedi;
+	काष्ठा iscsi_conn *conn = qedi_conn->cls_conn->dd_data;
+	काष्ठा iscsi_session *session = conn->session;
+	काष्ठा iscsi_पंचांग_rsp *resp_hdr_ptr;
+	पूर्णांक rval = 0;
 
 	set_bit(QEDI_CONN_FW_CLEANUP, &qedi_conn->flags);
-	resp_hdr_ptr =  (struct iscsi_tm_rsp *)qedi_cmd->tmf_resp_buf;
+	resp_hdr_ptr =  (काष्ठा iscsi_पंचांग_rsp *)qedi_cmd->पंचांगf_resp_buf;
 
 	iscsi_block_session(session->cls_session);
 	rval = qedi_cleanup_all_io(qedi, qedi_conn, qedi_cmd->task, true);
-	if (rval) {
+	अगर (rval) अणु
 		qedi_clear_task_idx(qedi, qedi_cmd->task_id);
 		iscsi_unblock_session(session->cls_session);
-		goto exit_tmf_resp;
-	}
+		जाओ निकास_पंचांगf_resp;
+	पूर्ण
 
 	iscsi_unblock_session(session->cls_session);
 	qedi_clear_task_idx(qedi, qedi_cmd->task_id);
 
 	spin_lock(&session->back_lock);
-	__iscsi_complete_pdu(conn, (struct iscsi_hdr *)resp_hdr_ptr, NULL, 0);
+	__iscsi_complete_pdu(conn, (काष्ठा iscsi_hdr *)resp_hdr_ptr, शून्य, 0);
 	spin_unlock(&session->back_lock);
 
-exit_tmf_resp:
-	kfree(resp_hdr_ptr);
+निकास_पंचांगf_resp:
+	kमुक्त(resp_hdr_ptr);
 	clear_bit(QEDI_CONN_FW_CLEANUP, &qedi_conn->flags);
-}
+पूर्ण
 
-static void qedi_process_tmf_resp(struct qedi_ctx *qedi,
-				  union iscsi_cqe *cqe,
-				  struct iscsi_task *task,
-				  struct qedi_conn *qedi_conn)
+अटल व्योम qedi_process_पंचांगf_resp(काष्ठा qedi_ctx *qedi,
+				  जोड़ iscsi_cqe *cqe,
+				  काष्ठा iscsi_task *task,
+				  काष्ठा qedi_conn *qedi_conn)
 
-{
-	struct iscsi_conn *conn = qedi_conn->cls_conn->dd_data;
-	struct iscsi_session *session = conn->session;
-	struct iscsi_tmf_response_hdr *cqe_tmp_response;
-	struct iscsi_tm_rsp *resp_hdr_ptr;
-	struct iscsi_tm *tmf_hdr;
-	struct qedi_cmd *qedi_cmd = NULL;
+अणु
+	काष्ठा iscsi_conn *conn = qedi_conn->cls_conn->dd_data;
+	काष्ठा iscsi_session *session = conn->session;
+	काष्ठा iscsi_पंचांगf_response_hdr *cqe_पंचांगp_response;
+	काष्ठा iscsi_पंचांग_rsp *resp_hdr_ptr;
+	काष्ठा iscsi_पंचांग *पंचांगf_hdr;
+	काष्ठा qedi_cmd *qedi_cmd = शून्य;
 
-	cqe_tmp_response = &cqe->cqe_common.iscsi_hdr.tmf_response;
+	cqe_पंचांगp_response = &cqe->cqe_common.iscsi_hdr.पंचांगf_response;
 
 	qedi_cmd = task->dd_data;
-	qedi_cmd->tmf_resp_buf = kzalloc(sizeof(*resp_hdr_ptr), GFP_ATOMIC);
-	if (!qedi_cmd->tmf_resp_buf) {
+	qedi_cmd->पंचांगf_resp_buf = kzalloc(माप(*resp_hdr_ptr), GFP_ATOMIC);
+	अगर (!qedi_cmd->पंचांगf_resp_buf) अणु
 		QEDI_ERR(&qedi->dbg_ctx,
 			 "Failed to allocate resp buf, cid=0x%x\n",
 			  qedi_conn->iscsi_conn_id);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	spin_lock(&session->back_lock);
-	resp_hdr_ptr =  (struct iscsi_tm_rsp *)qedi_cmd->tmf_resp_buf;
-	memset(resp_hdr_ptr, 0, sizeof(struct iscsi_tm_rsp));
+	resp_hdr_ptr =  (काष्ठा iscsi_पंचांग_rsp *)qedi_cmd->पंचांगf_resp_buf;
+	स_रखो(resp_hdr_ptr, 0, माप(काष्ठा iscsi_पंचांग_rsp));
 
 	/* Fill up the header */
-	resp_hdr_ptr->opcode = cqe_tmp_response->opcode;
-	resp_hdr_ptr->flags = cqe_tmp_response->hdr_flags;
-	resp_hdr_ptr->response = cqe_tmp_response->hdr_response;
+	resp_hdr_ptr->opcode = cqe_पंचांगp_response->opcode;
+	resp_hdr_ptr->flags = cqe_पंचांगp_response->hdr_flags;
+	resp_hdr_ptr->response = cqe_पंचांगp_response->hdr_response;
 	resp_hdr_ptr->hlength = 0;
 
 	hton24(resp_hdr_ptr->dlength,
-	       (cqe_tmp_response->hdr_second_dword &
+	       (cqe_पंचांगp_response->hdr_second_dword &
 		ISCSI_TMF_RESPONSE_HDR_DATA_SEG_LEN_MASK));
 	resp_hdr_ptr->itt = build_itt(cqe->cqe_solicited.itid,
 				      conn->session->age);
-	resp_hdr_ptr->statsn = cpu_to_be32(cqe_tmp_response->stat_sn);
-	resp_hdr_ptr->exp_cmdsn  = cpu_to_be32(cqe_tmp_response->exp_cmd_sn);
-	resp_hdr_ptr->max_cmdsn = cpu_to_be32(cqe_tmp_response->max_cmd_sn);
+	resp_hdr_ptr->statsn = cpu_to_be32(cqe_पंचांगp_response->stat_sn);
+	resp_hdr_ptr->exp_cmdsn  = cpu_to_be32(cqe_पंचांगp_response->exp_cmd_sn);
+	resp_hdr_ptr->max_cmdsn = cpu_to_be32(cqe_पंचांगp_response->max_cmd_sn);
 
-	tmf_hdr = (struct iscsi_tm *)qedi_cmd->task->hdr;
+	पंचांगf_hdr = (काष्ठा iscsi_पंचांग *)qedi_cmd->task->hdr;
 
 	spin_lock(&qedi_conn->list_lock);
-	if (likely(qedi_cmd->io_cmd_in_list)) {
+	अगर (likely(qedi_cmd->io_cmd_in_list)) अणु
 		qedi_cmd->io_cmd_in_list = false;
 		list_del_init(&qedi_cmd->io_cmd);
 		qedi_conn->active_cmd_count--;
-	}
+	पूर्ण
 	spin_unlock(&qedi_conn->list_lock);
 
-	if (((tmf_hdr->flags & ISCSI_FLAG_TM_FUNC_MASK) ==
+	अगर (((पंचांगf_hdr->flags & ISCSI_FLAG_TM_FUNC_MASK) ==
 	      ISCSI_TM_FUNC_LOGICAL_UNIT_RESET) ||
-	    ((tmf_hdr->flags & ISCSI_FLAG_TM_FUNC_MASK) ==
+	    ((पंचांगf_hdr->flags & ISCSI_FLAG_TM_FUNC_MASK) ==
 	      ISCSI_TM_FUNC_TARGET_WARM_RESET) ||
-	    ((tmf_hdr->flags & ISCSI_FLAG_TM_FUNC_MASK) ==
-	      ISCSI_TM_FUNC_TARGET_COLD_RESET)) {
-		INIT_WORK(&qedi_cmd->tmf_work, qedi_tmf_resp_work);
-		queue_work(qedi->tmf_thread, &qedi_cmd->tmf_work);
-		goto unblock_sess;
-	}
+	    ((पंचांगf_hdr->flags & ISCSI_FLAG_TM_FUNC_MASK) ==
+	      ISCSI_TM_FUNC_TARGET_COLD_RESET)) अणु
+		INIT_WORK(&qedi_cmd->पंचांगf_work, qedi_पंचांगf_resp_work);
+		queue_work(qedi->पंचांगf_thपढ़ो, &qedi_cmd->पंचांगf_work);
+		जाओ unblock_sess;
+	पूर्ण
 
 	qedi_clear_task_idx(qedi, qedi_cmd->task_id);
 
-	__iscsi_complete_pdu(conn, (struct iscsi_hdr *)resp_hdr_ptr, NULL, 0);
-	kfree(resp_hdr_ptr);
+	__iscsi_complete_pdu(conn, (काष्ठा iscsi_hdr *)resp_hdr_ptr, शून्य, 0);
+	kमुक्त(resp_hdr_ptr);
 
 unblock_sess:
 	spin_unlock(&session->back_lock);
-}
+पूर्ण
 
-static void qedi_process_login_resp(struct qedi_ctx *qedi,
-				    union iscsi_cqe *cqe,
-				    struct iscsi_task *task,
-				    struct qedi_conn *qedi_conn)
-{
-	struct iscsi_conn *conn = qedi_conn->cls_conn->dd_data;
-	struct iscsi_session *session = conn->session;
-	struct e4_iscsi_task_context *task_ctx;
-	struct iscsi_login_rsp *resp_hdr_ptr;
-	struct iscsi_login_response_hdr *cqe_login_response;
-	struct qedi_cmd *cmd;
-	int pld_len;
+अटल व्योम qedi_process_login_resp(काष्ठा qedi_ctx *qedi,
+				    जोड़ iscsi_cqe *cqe,
+				    काष्ठा iscsi_task *task,
+				    काष्ठा qedi_conn *qedi_conn)
+अणु
+	काष्ठा iscsi_conn *conn = qedi_conn->cls_conn->dd_data;
+	काष्ठा iscsi_session *session = conn->session;
+	काष्ठा e4_iscsi_task_context *task_ctx;
+	काष्ठा iscsi_login_rsp *resp_hdr_ptr;
+	काष्ठा iscsi_login_response_hdr *cqe_login_response;
+	काष्ठा qedi_cmd *cmd;
+	पूर्णांक pld_len;
 
-	cmd = (struct qedi_cmd *)task->dd_data;
+	cmd = (काष्ठा qedi_cmd *)task->dd_data;
 
 	cqe_login_response = &cqe->cqe_common.iscsi_hdr.login_response;
 	task_ctx = qedi_get_task_mem(&qedi->tasks, cmd->task_id);
 
 	spin_lock(&session->back_lock);
-	resp_hdr_ptr =  (struct iscsi_login_rsp *)&qedi_conn->gen_pdu.resp_hdr;
-	memset(resp_hdr_ptr, 0, sizeof(struct iscsi_login_rsp));
+	resp_hdr_ptr =  (काष्ठा iscsi_login_rsp *)&qedi_conn->gen_pdu.resp_hdr;
+	स_रखो(resp_hdr_ptr, 0, माप(काष्ठा iscsi_login_rsp));
 	resp_hdr_ptr->opcode = cqe_login_response->opcode;
 	resp_hdr_ptr->flags = cqe_login_response->flags_attr;
 	resp_hdr_ptr->hlength = 0;
@@ -295,16 +296,16 @@ static void qedi_process_login_resp(struct qedi_ctx *qedi,
 	qedi_conn->gen_pdu.resp_wr_ptr = qedi_conn->gen_pdu.resp_buf + pld_len;
 
 	spin_lock(&qedi_conn->list_lock);
-	if (likely(cmd->io_cmd_in_list)) {
+	अगर (likely(cmd->io_cmd_in_list)) अणु
 		cmd->io_cmd_in_list = false;
 		list_del_init(&cmd->io_cmd);
 		qedi_conn->active_cmd_count--;
-	}
+	पूर्ण
 	spin_unlock(&qedi_conn->list_lock);
 
-	memset(task_ctx, '\0', sizeof(*task_ctx));
+	स_रखो(task_ctx, '\0', माप(*task_ctx));
 
-	__iscsi_complete_pdu(conn, (struct iscsi_hdr *)resp_hdr_ptr,
+	__iscsi_complete_pdu(conn, (काष्ठा iscsi_hdr *)resp_hdr_ptr,
 			     qedi_conn->gen_pdu.resp_buf,
 			     (qedi_conn->gen_pdu.resp_wr_ptr -
 			     qedi_conn->gen_pdu.resp_buf));
@@ -315,12 +316,12 @@ static void qedi_process_login_resp(struct qedi_ctx *qedi,
 		  cmd->task_id, qedi_conn->iscsi_conn_id);
 	cmd->state = RESPONSE_RECEIVED;
 	qedi_clear_task_idx(qedi, cmd->task_id);
-}
+पूर्ण
 
-static void qedi_get_rq_bdq_buf(struct qedi_ctx *qedi,
-				struct iscsi_cqe_unsolicited *cqe,
-				char *ptr, int len)
-{
+अटल व्योम qedi_get_rq_bdq_buf(काष्ठा qedi_ctx *qedi,
+				काष्ठा iscsi_cqe_unsolicited *cqe,
+				अक्षर *ptr, पूर्णांक len)
+अणु
 	u16 idx = 0;
 
 	QEDI_INFO(&qedi->dbg_ctx, QEDI_LOG_CONN,
@@ -330,49 +331,49 @@ static void qedi_get_rq_bdq_buf(struct qedi_ctx *qedi,
 
 	/* Obtain buffer address from rqe_opaque */
 	idx = cqe->rqe_opaque;
-	if (idx > (QEDI_BDQ_NUM - 1)) {
+	अगर (idx > (QEDI_BDQ_NUM - 1)) अणु
 		QEDI_INFO(&qedi->dbg_ctx, QEDI_LOG_CONN,
 			  "wrong idx %d returned by FW, dropping the unsolicited pkt\n",
 			  idx);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	QEDI_INFO(&qedi->dbg_ctx, QEDI_LOG_CONN,
 		  "rqe_opaque [0x%p], idx [%d]\n", cqe->rqe_opaque, idx);
 
 	QEDI_INFO(&qedi->dbg_ctx, QEDI_LOG_CONN,
 		  "unsol_cqe_type = %d\n", cqe->unsol_cqe_type);
-	switch (cqe->unsol_cqe_type) {
-	case ISCSI_CQE_UNSOLICITED_SINGLE:
-	case ISCSI_CQE_UNSOLICITED_FIRST:
-		if (len)
-			memcpy(ptr, (void *)qedi->bdq[idx].buf_addr, len);
-		break;
-	case ISCSI_CQE_UNSOLICITED_MIDDLE:
-	case ISCSI_CQE_UNSOLICITED_LAST:
-		break;
-	default:
-		break;
-	}
-}
+	चयन (cqe->unsol_cqe_type) अणु
+	हाल ISCSI_CQE_UNSOLICITED_SINGLE:
+	हाल ISCSI_CQE_UNSOLICITED_FIRST:
+		अगर (len)
+			स_नकल(ptr, (व्योम *)qedi->bdq[idx].buf_addr, len);
+		अवरोध;
+	हाल ISCSI_CQE_UNSOLICITED_MIDDLE:
+	हाल ISCSI_CQE_UNSOLICITED_LAST:
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static void qedi_put_rq_bdq_buf(struct qedi_ctx *qedi,
-				struct iscsi_cqe_unsolicited *cqe,
-				int count)
-{
+अटल व्योम qedi_put_rq_bdq_buf(काष्ठा qedi_ctx *qedi,
+				काष्ठा iscsi_cqe_unsolicited *cqe,
+				पूर्णांक count)
+अणु
 	u16 idx = 0;
-	struct scsi_bd *pbl;
+	काष्ठा scsi_bd *pbl;
 
 	/* Obtain buffer address from rqe_opaque */
 	idx = cqe->rqe_opaque;
-	if (idx > (QEDI_BDQ_NUM - 1)) {
+	अगर (idx > (QEDI_BDQ_NUM - 1)) अणु
 		QEDI_INFO(&qedi->dbg_ctx, QEDI_LOG_CONN,
 			  "wrong idx %d returned by FW, dropping the unsolicited pkt\n",
 			  idx);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	pbl = (struct scsi_bd *)qedi->bdq_pbl;
+	pbl = (काष्ठा scsi_bd *)qedi->bdq_pbl;
 	pbl += (qedi->bdq_prod_idx % qedi->rq_num_entries);
 	pbl->address.hi = cpu_to_le32(QEDI_U64_HI(qedi->bdq[idx].buf_dma));
 	pbl->address.lo = cpu_to_le32(QEDI_U64_LO(qedi->bdq[idx].buf_dma));
@@ -387,40 +388,40 @@ static void qedi_put_rq_bdq_buf(struct qedi_ctx *qedi,
 	/* Increment producer to let f/w know we've handled the frame */
 	qedi->bdq_prod_idx += count;
 
-	writew(qedi->bdq_prod_idx, qedi->bdq_primary_prod);
-	readw(qedi->bdq_primary_prod);
+	ग_लिखोw(qedi->bdq_prod_idx, qedi->bdq_primary_prod);
+	पढ़ोw(qedi->bdq_primary_prod);
 
-	writew(qedi->bdq_prod_idx, qedi->bdq_secondary_prod);
-	readw(qedi->bdq_secondary_prod);
-}
+	ग_लिखोw(qedi->bdq_prod_idx, qedi->bdq_secondary_prod);
+	पढ़ोw(qedi->bdq_secondary_prod);
+पूर्ण
 
-static void qedi_unsol_pdu_adjust_bdq(struct qedi_ctx *qedi,
-				      struct iscsi_cqe_unsolicited *cqe,
+अटल व्योम qedi_unsol_pdu_adjust_bdq(काष्ठा qedi_ctx *qedi,
+				      काष्ठा iscsi_cqe_unsolicited *cqe,
 				      u32 pdu_len, u32 num_bdqs,
-				      char *bdq_data)
-{
+				      अक्षर *bdq_data)
+अणु
 	QEDI_INFO(&qedi->dbg_ctx, QEDI_LOG_CONN,
 		  "num_bdqs [%d]\n", num_bdqs);
 
 	qedi_get_rq_bdq_buf(qedi, cqe, bdq_data, pdu_len);
 	qedi_put_rq_bdq_buf(qedi, cqe, (num_bdqs + 1));
-}
+पूर्ण
 
-static int qedi_process_nopin_mesg(struct qedi_ctx *qedi,
-				   union iscsi_cqe *cqe,
-				   struct iscsi_task *task,
-				   struct qedi_conn *qedi_conn, u16 que_idx)
-{
-	struct iscsi_conn *conn = qedi_conn->cls_conn->dd_data;
-	struct iscsi_session *session = conn->session;
-	struct iscsi_nop_in_hdr *cqe_nop_in;
-	struct iscsi_nopin *hdr;
-	struct qedi_cmd *cmd;
-	int tgt_async_nop = 0;
+अटल पूर्णांक qedi_process_nopin_mesg(काष्ठा qedi_ctx *qedi,
+				   जोड़ iscsi_cqe *cqe,
+				   काष्ठा iscsi_task *task,
+				   काष्ठा qedi_conn *qedi_conn, u16 que_idx)
+अणु
+	काष्ठा iscsi_conn *conn = qedi_conn->cls_conn->dd_data;
+	काष्ठा iscsi_session *session = conn->session;
+	काष्ठा iscsi_nop_in_hdr *cqe_nop_in;
+	काष्ठा iscsi_nopin *hdr;
+	काष्ठा qedi_cmd *cmd;
+	पूर्णांक tgt_async_nop = 0;
 	u32 lun[2];
 	u32 pdu_len, num_bdqs;
-	char bdq_data[QEDI_BDQ_BUF_SIZE];
-	unsigned long flags;
+	अक्षर bdq_data[QEDI_BDQ_BUF_SIZE];
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_bh(&session->back_lock);
 	cqe_nop_in = &cqe->cqe_common.iscsi_hdr.nop_in;
@@ -429,69 +430,69 @@ static int qedi_process_nopin_mesg(struct qedi_ctx *qedi,
 		  ISCSI_NOP_IN_HDR_DATA_SEG_LEN_MASK;
 	num_bdqs = pdu_len / QEDI_BDQ_BUF_SIZE;
 
-	hdr = (struct iscsi_nopin *)&qedi_conn->gen_pdu.resp_hdr;
-	memset(hdr, 0, sizeof(struct iscsi_hdr));
+	hdr = (काष्ठा iscsi_nopin *)&qedi_conn->gen_pdu.resp_hdr;
+	स_रखो(hdr, 0, माप(काष्ठा iscsi_hdr));
 	hdr->opcode = cqe_nop_in->opcode;
 	hdr->max_cmdsn = cpu_to_be32(cqe_nop_in->max_cmd_sn);
 	hdr->exp_cmdsn = cpu_to_be32(cqe_nop_in->exp_cmd_sn);
 	hdr->statsn = cpu_to_be32(cqe_nop_in->stat_sn);
 	hdr->ttt = cpu_to_be32(cqe_nop_in->ttt);
 
-	if (cqe->cqe_common.cqe_type == ISCSI_CQE_TYPE_UNSOLICITED) {
+	अगर (cqe->cqe_common.cqe_type == ISCSI_CQE_TYPE_UNSOLICITED) अणु
 		spin_lock_irqsave(&qedi->hba_lock, flags);
 		qedi_unsol_pdu_adjust_bdq(qedi, &cqe->cqe_unsolicited,
 					  pdu_len, num_bdqs, bdq_data);
 		hdr->itt = RESERVED_ITT;
 		tgt_async_nop = 1;
 		spin_unlock_irqrestore(&qedi->hba_lock, flags);
-		goto done;
-	}
+		जाओ करोne;
+	पूर्ण
 
 	/* Response to one of our nop-outs */
-	if (task) {
+	अगर (task) अणु
 		cmd = task->dd_data;
 		hdr->flags = ISCSI_FLAG_CMD_FINAL;
 		hdr->itt = build_itt(cqe->cqe_solicited.itid,
 				     conn->session->age);
 		lun[0] = 0xffffffff;
 		lun[1] = 0xffffffff;
-		memcpy(&hdr->lun, lun, sizeof(struct scsi_lun));
+		स_नकल(&hdr->lun, lun, माप(काष्ठा scsi_lun));
 		QEDI_INFO(&qedi->dbg_ctx, QEDI_LOG_TID,
 			  "Freeing tid=0x%x for cid=0x%x\n",
 			  cmd->task_id, qedi_conn->iscsi_conn_id);
 		cmd->state = RESPONSE_RECEIVED;
 		spin_lock(&qedi_conn->list_lock);
-		if (likely(cmd->io_cmd_in_list)) {
+		अगर (likely(cmd->io_cmd_in_list)) अणु
 			cmd->io_cmd_in_list = false;
 			list_del_init(&cmd->io_cmd);
 			qedi_conn->active_cmd_count--;
-		}
+		पूर्ण
 
 		spin_unlock(&qedi_conn->list_lock);
 		qedi_clear_task_idx(qedi, cmd->task_id);
-	}
+	पूर्ण
 
-done:
-	__iscsi_complete_pdu(conn, (struct iscsi_hdr *)hdr, bdq_data, pdu_len);
+करोne:
+	__iscsi_complete_pdu(conn, (काष्ठा iscsi_hdr *)hdr, bdq_data, pdu_len);
 
 	spin_unlock_bh(&session->back_lock);
-	return tgt_async_nop;
-}
+	वापस tgt_async_nop;
+पूर्ण
 
-static void qedi_process_async_mesg(struct qedi_ctx *qedi,
-				    union iscsi_cqe *cqe,
-				    struct iscsi_task *task,
-				    struct qedi_conn *qedi_conn,
+अटल व्योम qedi_process_async_mesg(काष्ठा qedi_ctx *qedi,
+				    जोड़ iscsi_cqe *cqe,
+				    काष्ठा iscsi_task *task,
+				    काष्ठा qedi_conn *qedi_conn,
 				    u16 que_idx)
-{
-	struct iscsi_conn *conn = qedi_conn->cls_conn->dd_data;
-	struct iscsi_session *session = conn->session;
-	struct iscsi_async_msg_hdr *cqe_async_msg;
-	struct iscsi_async *resp_hdr;
+अणु
+	काष्ठा iscsi_conn *conn = qedi_conn->cls_conn->dd_data;
+	काष्ठा iscsi_session *session = conn->session;
+	काष्ठा iscsi_async_msg_hdr *cqe_async_msg;
+	काष्ठा iscsi_async *resp_hdr;
 	u32 lun[2];
 	u32 pdu_len, num_bdqs;
-	char bdq_data[QEDI_BDQ_BUF_SIZE];
-	unsigned long flags;
+	अक्षर bdq_data[QEDI_BDQ_BUF_SIZE];
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_bh(&session->back_lock);
 
@@ -500,21 +501,21 @@ static void qedi_process_async_mesg(struct qedi_ctx *qedi,
 		ISCSI_ASYNC_MSG_HDR_DATA_SEG_LEN_MASK;
 	num_bdqs = pdu_len / QEDI_BDQ_BUF_SIZE;
 
-	if (cqe->cqe_common.cqe_type == ISCSI_CQE_TYPE_UNSOLICITED) {
+	अगर (cqe->cqe_common.cqe_type == ISCSI_CQE_TYPE_UNSOLICITED) अणु
 		spin_lock_irqsave(&qedi->hba_lock, flags);
 		qedi_unsol_pdu_adjust_bdq(qedi, &cqe->cqe_unsolicited,
 					  pdu_len, num_bdqs, bdq_data);
 		spin_unlock_irqrestore(&qedi->hba_lock, flags);
-	}
+	पूर्ण
 
-	resp_hdr = (struct iscsi_async *)&qedi_conn->gen_pdu.resp_hdr;
-	memset(resp_hdr, 0, sizeof(struct iscsi_hdr));
+	resp_hdr = (काष्ठा iscsi_async *)&qedi_conn->gen_pdu.resp_hdr;
+	स_रखो(resp_hdr, 0, माप(काष्ठा iscsi_hdr));
 	resp_hdr->opcode = cqe_async_msg->opcode;
 	resp_hdr->flags = 0x80;
 
 	lun[0] = cpu_to_be32(cqe_async_msg->lun.lo);
 	lun[1] = cpu_to_be32(cqe_async_msg->lun.hi);
-	memcpy(&resp_hdr->lun, lun, sizeof(struct scsi_lun));
+	स_नकल(&resp_hdr->lun, lun, माप(काष्ठा scsi_lun));
 	resp_hdr->exp_cmdsn = cpu_to_be32(cqe_async_msg->exp_cmd_sn);
 	resp_hdr->max_cmdsn = cpu_to_be32(cqe_async_msg->max_cmd_sn);
 	resp_hdr->statsn = cpu_to_be32(cqe_async_msg->stat_sn);
@@ -526,24 +527,24 @@ static void qedi_process_async_mesg(struct qedi_ctx *qedi,
 	resp_hdr->param2 = cpu_to_be16(cqe_async_msg->param2_rsrv);
 	resp_hdr->param3 = cpu_to_be16(cqe_async_msg->param3_rsrv);
 
-	__iscsi_complete_pdu(conn, (struct iscsi_hdr *)resp_hdr, bdq_data,
+	__iscsi_complete_pdu(conn, (काष्ठा iscsi_hdr *)resp_hdr, bdq_data,
 			     pdu_len);
 
 	spin_unlock_bh(&session->back_lock);
-}
+पूर्ण
 
-static void qedi_process_reject_mesg(struct qedi_ctx *qedi,
-				     union iscsi_cqe *cqe,
-				     struct iscsi_task *task,
-				     struct qedi_conn *qedi_conn,
-				     uint16_t que_idx)
-{
-	struct iscsi_conn *conn = qedi_conn->cls_conn->dd_data;
-	struct iscsi_session *session = conn->session;
-	struct iscsi_reject_hdr *cqe_reject;
-	struct iscsi_reject *hdr;
+अटल व्योम qedi_process_reject_mesg(काष्ठा qedi_ctx *qedi,
+				     जोड़ iscsi_cqe *cqe,
+				     काष्ठा iscsi_task *task,
+				     काष्ठा qedi_conn *qedi_conn,
+				     uपूर्णांक16_t que_idx)
+अणु
+	काष्ठा iscsi_conn *conn = qedi_conn->cls_conn->dd_data;
+	काष्ठा iscsi_session *session = conn->session;
+	काष्ठा iscsi_reject_hdr *cqe_reject;
+	काष्ठा iscsi_reject *hdr;
 	u32 pld_len, num_bdqs;
-	unsigned long flags;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_bh(&session->back_lock);
 	cqe_reject = &cqe->cqe_common.iscsi_hdr.reject;
@@ -551,14 +552,14 @@ static void qedi_process_reject_mesg(struct qedi_ctx *qedi,
 		  ISCSI_REJECT_HDR_DATA_SEG_LEN_MASK;
 	num_bdqs = pld_len / QEDI_BDQ_BUF_SIZE;
 
-	if (cqe->cqe_common.cqe_type == ISCSI_CQE_TYPE_UNSOLICITED) {
+	अगर (cqe->cqe_common.cqe_type == ISCSI_CQE_TYPE_UNSOLICITED) अणु
 		spin_lock_irqsave(&qedi->hba_lock, flags);
 		qedi_unsol_pdu_adjust_bdq(qedi, &cqe->cqe_unsolicited,
 					  pld_len, num_bdqs, conn->data);
 		spin_unlock_irqrestore(&qedi->hba_lock, flags);
-	}
-	hdr = (struct iscsi_reject *)&qedi_conn->gen_pdu.resp_hdr;
-	memset(hdr, 0, sizeof(struct iscsi_hdr));
+	पूर्ण
+	hdr = (काष्ठा iscsi_reject *)&qedi_conn->gen_pdu.resp_hdr;
+	स_रखो(hdr, 0, माप(काष्ठा iscsi_hdr));
 	hdr->opcode = cqe_reject->opcode;
 	hdr->reason = cqe_reject->hdr_reason;
 	hdr->flags = cqe_reject->hdr_flags;
@@ -569,23 +570,23 @@ static void qedi_process_reject_mesg(struct qedi_ctx *qedi,
 	hdr->statsn = cpu_to_be32(cqe_reject->stat_sn);
 	hdr->ffffffff = cpu_to_be32(0xffffffff);
 
-	__iscsi_complete_pdu(conn, (struct iscsi_hdr *)hdr,
+	__iscsi_complete_pdu(conn, (काष्ठा iscsi_hdr *)hdr,
 			     conn->data, pld_len);
 	spin_unlock_bh(&session->back_lock);
-}
+पूर्ण
 
-static void qedi_scsi_completion(struct qedi_ctx *qedi,
-				 union iscsi_cqe *cqe,
-				 struct iscsi_task *task,
-				 struct iscsi_conn *conn)
-{
-	struct scsi_cmnd *sc_cmd;
-	struct qedi_cmd *cmd = task->dd_data;
-	struct iscsi_session *session = conn->session;
-	struct iscsi_scsi_rsp *hdr;
-	struct iscsi_data_in_hdr *cqe_data_in;
-	int datalen = 0;
-	struct qedi_conn *qedi_conn;
+अटल व्योम qedi_scsi_completion(काष्ठा qedi_ctx *qedi,
+				 जोड़ iscsi_cqe *cqe,
+				 काष्ठा iscsi_task *task,
+				 काष्ठा iscsi_conn *conn)
+अणु
+	काष्ठा scsi_cmnd *sc_cmd;
+	काष्ठा qedi_cmd *cmd = task->dd_data;
+	काष्ठा iscsi_session *session = conn->session;
+	काष्ठा iscsi_scsi_rsp *hdr;
+	काष्ठा iscsi_data_in_hdr *cqe_data_in;
+	पूर्णांक datalen = 0;
+	काष्ठा qedi_conn *qedi_conn;
 	u32 iscsi_cid;
 	u8 cqe_err_bits = 0;
 
@@ -594,40 +595,40 @@ static void qedi_scsi_completion(struct qedi_ctx *qedi,
 
 	cqe_data_in = &cqe->cqe_common.iscsi_hdr.data_in;
 	cqe_err_bits =
-		cqe->cqe_common.error_bitmap.error_bits.cqe_error_status_bits;
+		cqe->cqe_common.error_biपंचांगap.error_bits.cqe_error_status_bits;
 
 	spin_lock_bh(&session->back_lock);
 	/* get the scsi command */
 	sc_cmd = cmd->scsi_cmd;
 
-	if (!sc_cmd) {
+	अगर (!sc_cmd) अणु
 		QEDI_WARN(&qedi->dbg_ctx, "sc_cmd is NULL!\n");
-		goto error;
-	}
+		जाओ error;
+	पूर्ण
 
-	if (!sc_cmd->SCp.ptr) {
+	अगर (!sc_cmd->SCp.ptr) अणु
 		QEDI_WARN(&qedi->dbg_ctx,
 			  "SCp.ptr is NULL, returned in another context.\n");
-		goto error;
-	}
+		जाओ error;
+	पूर्ण
 
-	if (!sc_cmd->request) {
+	अगर (!sc_cmd->request) अणु
 		QEDI_WARN(&qedi->dbg_ctx,
 			  "sc_cmd->request is NULL, sc_cmd=%p.\n",
 			  sc_cmd);
-		goto error;
-	}
+		जाओ error;
+	पूर्ण
 
-	if (!sc_cmd->request->q) {
+	अगर (!sc_cmd->request->q) अणु
 		QEDI_WARN(&qedi->dbg_ctx,
 			  "request->q is NULL so request is not valid, sc_cmd=%p.\n",
 			  sc_cmd);
-		goto error;
-	}
+		जाओ error;
+	पूर्ण
 
 	qedi_iscsi_unmap_sg_list(cmd);
 
-	hdr = (struct iscsi_scsi_rsp *)task->hdr;
+	hdr = (काष्ठा iscsi_scsi_rsp *)task->hdr;
 	hdr->opcode = cqe_data_in->opcode;
 	hdr->max_cmdsn = cpu_to_be32(cqe_data_in->max_cmd_sn);
 	hdr->exp_cmdsn = cpu_to_be32(cqe_data_in->exp_cmd_sn);
@@ -637,17 +638,17 @@ static void qedi_scsi_completion(struct qedi_ctx *qedi,
 	hdr->flags = cqe_data_in->flags;
 	hdr->residual_count = cpu_to_be32(cqe_data_in->residual_count);
 
-	if (hdr->cmd_status == SAM_STAT_CHECK_CONDITION) {
+	अगर (hdr->cmd_status == SAM_STAT_CHECK_CONDITION) अणु
 		datalen = cqe_data_in->reserved2 &
 			  ISCSI_COMMON_HDR_DATA_SEG_LEN_MASK;
-		memcpy((char *)conn->data, (char *)cmd->sense_buffer, datalen);
-	}
+		स_नकल((अक्षर *)conn->data, (अक्षर *)cmd->sense_buffer, datalen);
+	पूर्ण
 
 	/* If f/w reports data underrun err then set residual to IO transfer
 	 * length, set Underrun flag and clear Overrun flag explicitly
 	 */
-	if (unlikely(cqe_err_bits &&
-		     GET_FIELD(cqe_err_bits, CQE_ERROR_BITMAP_UNDER_RUN_ERR))) {
+	अगर (unlikely(cqe_err_bits &&
+		     GET_FIELD(cqe_err_bits, CQE_ERROR_BITMAP_UNDER_RUN_ERR))) अणु
 		QEDI_INFO(&qedi->dbg_ctx, QEDI_LOG_INFO,
 			  "Under flow itt=0x%x proto flags=0x%x tid=0x%x cid 0x%x fw resid 0x%x sc dlen 0x%x\n",
 			  hdr->itt, cqe_data_in->flags, cmd->task_id,
@@ -656,74 +657,74 @@ static void qedi_scsi_completion(struct qedi_ctx *qedi,
 		hdr->residual_count = cpu_to_be32(scsi_bufflen(sc_cmd));
 		hdr->flags |= ISCSI_FLAG_CMD_UNDERFLOW;
 		hdr->flags &= (~ISCSI_FLAG_CMD_OVERFLOW);
-	}
+	पूर्ण
 
 	spin_lock(&qedi_conn->list_lock);
-	if (likely(cmd->io_cmd_in_list)) {
+	अगर (likely(cmd->io_cmd_in_list)) अणु
 		cmd->io_cmd_in_list = false;
 		list_del_init(&cmd->io_cmd);
 		qedi_conn->active_cmd_count--;
-	}
+	पूर्ण
 	spin_unlock(&qedi_conn->list_lock);
 
 	QEDI_INFO(&qedi->dbg_ctx, QEDI_LOG_TID,
 		  "Freeing tid=0x%x for cid=0x%x\n",
 		  cmd->task_id, qedi_conn->iscsi_conn_id);
 	cmd->state = RESPONSE_RECEIVED;
-	if (qedi_io_tracing)
+	अगर (qedi_io_tracing)
 		qedi_trace_io(qedi, task, cmd->task_id, QEDI_IO_TRACE_RSP);
 
 	qedi_clear_task_idx(qedi, cmd->task_id);
-	__iscsi_complete_pdu(conn, (struct iscsi_hdr *)hdr,
+	__iscsi_complete_pdu(conn, (काष्ठा iscsi_hdr *)hdr,
 			     conn->data, datalen);
 error:
 	spin_unlock_bh(&session->back_lock);
-}
+पूर्ण
 
-static void qedi_mtask_completion(struct qedi_ctx *qedi,
-				  union iscsi_cqe *cqe,
-				  struct iscsi_task *task,
-				  struct qedi_conn *conn, uint16_t que_idx)
-{
-	struct iscsi_conn *iscsi_conn;
+अटल व्योम qedi_mtask_completion(काष्ठा qedi_ctx *qedi,
+				  जोड़ iscsi_cqe *cqe,
+				  काष्ठा iscsi_task *task,
+				  काष्ठा qedi_conn *conn, uपूर्णांक16_t que_idx)
+अणु
+	काष्ठा iscsi_conn *iscsi_conn;
 	u32 hdr_opcode;
 
 	hdr_opcode = cqe->cqe_common.iscsi_hdr.common.hdr_first_byte;
 	iscsi_conn = conn->cls_conn->dd_data;
 
-	switch (hdr_opcode) {
-	case ISCSI_OPCODE_SCSI_RESPONSE:
-	case ISCSI_OPCODE_DATA_IN:
+	चयन (hdr_opcode) अणु
+	हाल ISCSI_OPCODE_SCSI_RESPONSE:
+	हाल ISCSI_OPCODE_DATA_IN:
 		qedi_scsi_completion(qedi, cqe, task, iscsi_conn);
-		break;
-	case ISCSI_OPCODE_LOGIN_RESPONSE:
+		अवरोध;
+	हाल ISCSI_OPCODE_LOGIN_RESPONSE:
 		qedi_process_login_resp(qedi, cqe, task, conn);
-		break;
-	case ISCSI_OPCODE_TMF_RESPONSE:
-		qedi_process_tmf_resp(qedi, cqe, task, conn);
-		break;
-	case ISCSI_OPCODE_TEXT_RESPONSE:
+		अवरोध;
+	हाल ISCSI_OPCODE_TMF_RESPONSE:
+		qedi_process_पंचांगf_resp(qedi, cqe, task, conn);
+		अवरोध;
+	हाल ISCSI_OPCODE_TEXT_RESPONSE:
 		qedi_process_text_resp(qedi, cqe, task, conn);
-		break;
-	case ISCSI_OPCODE_LOGOUT_RESPONSE:
+		अवरोध;
+	हाल ISCSI_OPCODE_LOGOUT_RESPONSE:
 		qedi_process_logout_resp(qedi, cqe, task, conn);
-		break;
-	case ISCSI_OPCODE_NOP_IN:
+		अवरोध;
+	हाल ISCSI_OPCODE_NOP_IN:
 		qedi_process_nopin_mesg(qedi, cqe, task, conn, que_idx);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		QEDI_ERR(&qedi->dbg_ctx, "unknown opcode\n");
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void qedi_process_nopin_local_cmpl(struct qedi_ctx *qedi,
-					  struct iscsi_cqe_solicited *cqe,
-					  struct iscsi_task *task,
-					  struct qedi_conn *qedi_conn)
-{
-	struct iscsi_conn *conn = qedi_conn->cls_conn->dd_data;
-	struct iscsi_session *session = conn->session;
-	struct qedi_cmd *cmd = task->dd_data;
+अटल व्योम qedi_process_nopin_local_cmpl(काष्ठा qedi_ctx *qedi,
+					  काष्ठा iscsi_cqe_solicited *cqe,
+					  काष्ठा iscsi_task *task,
+					  काष्ठा qedi_conn *qedi_conn)
+अणु
+	काष्ठा iscsi_conn *conn = qedi_conn->cls_conn->dd_data;
+	काष्ठा iscsi_session *session = conn->session;
+	काष्ठा qedi_cmd *cmd = task->dd_data;
 
 	QEDI_INFO(&qedi->dbg_ctx, QEDI_LOG_UNSOL,
 		  "itid=0x%x, cmd task id=0x%x\n",
@@ -735,108 +736,108 @@ static void qedi_process_nopin_local_cmpl(struct qedi_ctx *qedi,
 	spin_lock_bh(&session->back_lock);
 	__iscsi_put_task(task);
 	spin_unlock_bh(&session->back_lock);
-}
+पूर्ण
 
-static void qedi_process_cmd_cleanup_resp(struct qedi_ctx *qedi,
-					  struct iscsi_cqe_solicited *cqe,
-					  struct iscsi_task *task,
-					  struct iscsi_conn *conn)
-{
-	struct qedi_work_map *work, *work_tmp;
+अटल व्योम qedi_process_cmd_cleanup_resp(काष्ठा qedi_ctx *qedi,
+					  काष्ठा iscsi_cqe_solicited *cqe,
+					  काष्ठा iscsi_task *task,
+					  काष्ठा iscsi_conn *conn)
+अणु
+	काष्ठा qedi_work_map *work, *work_पंचांगp;
 	u32 proto_itt = cqe->itid;
-	u32 ptmp_itt = 0;
+	u32 pपंचांगp_itt = 0;
 	itt_t protoitt = 0;
-	int found = 0;
-	struct qedi_cmd *qedi_cmd = NULL;
+	पूर्णांक found = 0;
+	काष्ठा qedi_cmd *qedi_cmd = शून्य;
 	u32 rtid = 0;
 	u32 iscsi_cid;
-	struct qedi_conn *qedi_conn;
-	struct qedi_cmd *dbg_cmd;
-	struct iscsi_task *mtask;
-	struct iscsi_tm *tmf_hdr = NULL;
+	काष्ठा qedi_conn *qedi_conn;
+	काष्ठा qedi_cmd *dbg_cmd;
+	काष्ठा iscsi_task *mtask;
+	काष्ठा iscsi_पंचांग *पंचांगf_hdr = शून्य;
 
 	iscsi_cid = cqe->conn_id;
 	qedi_conn = qedi->cid_que.conn_cid_tbl[iscsi_cid];
-	if (!qedi_conn) {
+	अगर (!qedi_conn) अणु
 		QEDI_INFO(&qedi->dbg_ctx, QEDI_LOG_INFO,
 			  "icid not found 0x%x\n", cqe->conn_id);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/* Based on this itt get the corresponding qedi_cmd */
-	spin_lock_bh(&qedi_conn->tmf_work_lock);
-	list_for_each_entry_safe(work, work_tmp, &qedi_conn->tmf_work_list,
-				 list) {
-		if (work->rtid == proto_itt) {
+	spin_lock_bh(&qedi_conn->पंचांगf_work_lock);
+	list_क्रम_each_entry_safe(work, work_पंचांगp, &qedi_conn->पंचांगf_work_list,
+				 list) अणु
+		अगर (work->rtid == proto_itt) अणु
 			/* We found the command */
 			qedi_cmd = work->qedi_cmd;
-			if (!qedi_cmd->list_tmf_work) {
+			अगर (!qedi_cmd->list_पंचांगf_work) अणु
 				QEDI_INFO(&qedi->dbg_ctx, QEDI_LOG_SCSI_TM,
 					  "TMF work not found, cqe->tid=0x%x, cid=0x%x\n",
 					  proto_itt, qedi_conn->iscsi_conn_id);
 				WARN_ON(1);
-			}
+			पूर्ण
 			found = 1;
 			mtask = qedi_cmd->task;
-			tmf_hdr = (struct iscsi_tm *)mtask->hdr;
+			पंचांगf_hdr = (काष्ठा iscsi_पंचांग *)mtask->hdr;
 			rtid = work->rtid;
 
 			list_del_init(&work->list);
-			kfree(work);
-			qedi_cmd->list_tmf_work = NULL;
-		}
-	}
-	spin_unlock_bh(&qedi_conn->tmf_work_lock);
+			kमुक्त(work);
+			qedi_cmd->list_पंचांगf_work = शून्य;
+		पूर्ण
+	पूर्ण
+	spin_unlock_bh(&qedi_conn->पंचांगf_work_lock);
 
-	if (found) {
+	अगर (found) अणु
 		QEDI_INFO(&qedi->dbg_ctx, QEDI_LOG_SCSI_TM,
 			  "TMF work, cqe->tid=0x%x, tmf flags=0x%x, cid=0x%x\n",
-			  proto_itt, tmf_hdr->flags, qedi_conn->iscsi_conn_id);
+			  proto_itt, पंचांगf_hdr->flags, qedi_conn->iscsi_conn_id);
 
-		if ((tmf_hdr->flags & ISCSI_FLAG_TM_FUNC_MASK) ==
-		    ISCSI_TM_FUNC_ABORT_TASK) {
+		अगर ((पंचांगf_hdr->flags & ISCSI_FLAG_TM_FUNC_MASK) ==
+		    ISCSI_TM_FUNC_ABORT_TASK) अणु
 			spin_lock_bh(&conn->session->back_lock);
 
-			protoitt = build_itt(get_itt(tmf_hdr->rtt),
+			protoitt = build_itt(get_itt(पंचांगf_hdr->rtt),
 					     conn->session->age);
 			task = iscsi_itt_to_task(conn, protoitt);
 
 			spin_unlock_bh(&conn->session->back_lock);
 
-			if (!task) {
+			अगर (!task) अणु
 				QEDI_NOTICE(&qedi->dbg_ctx,
 					    "IO task completed, tmf rtt=0x%x, cid=0x%x\n",
-					    get_itt(tmf_hdr->rtt),
+					    get_itt(पंचांगf_hdr->rtt),
 					    qedi_conn->iscsi_conn_id);
-				return;
-			}
+				वापस;
+			पूर्ण
 
 			dbg_cmd = task->dd_data;
 
 			QEDI_INFO(&qedi->dbg_ctx, QEDI_LOG_SCSI_TM,
 				  "Abort tmf rtt=0x%x, i/o itt=0x%x, i/o tid=0x%x, cid=0x%x\n",
-				  get_itt(tmf_hdr->rtt), get_itt(task->itt),
+				  get_itt(पंचांगf_hdr->rtt), get_itt(task->itt),
 				  dbg_cmd->task_id, qedi_conn->iscsi_conn_id);
 
-			if (qedi_cmd->state == CLEANUP_WAIT_FAILED)
+			अगर (qedi_cmd->state == CLEANUP_WAIT_FAILED)
 				qedi_cmd->state = CLEANUP_RECV;
 
 			qedi_clear_task_idx(qedi_conn->qedi, rtid);
 
 			spin_lock(&qedi_conn->list_lock);
-			if (likely(dbg_cmd->io_cmd_in_list)) {
+			अगर (likely(dbg_cmd->io_cmd_in_list)) अणु
 				dbg_cmd->io_cmd_in_list = false;
 				list_del_init(&dbg_cmd->io_cmd);
 				qedi_conn->active_cmd_count--;
-			}
+			पूर्ण
 			spin_unlock(&qedi_conn->list_lock);
 			qedi_cmd->state = CLEANUP_RECV;
-			wake_up_interruptible(&qedi_conn->wait_queue);
-		}
-	} else if (qedi_conn->cmd_cleanup_req > 0) {
+			wake_up_पूर्णांकerruptible(&qedi_conn->रुको_queue);
+		पूर्ण
+	पूर्ण अन्यथा अगर (qedi_conn->cmd_cleanup_req > 0) अणु
 		spin_lock_bh(&conn->session->back_lock);
-		qedi_get_proto_itt(qedi, cqe->itid, &ptmp_itt);
-		protoitt = build_itt(ptmp_itt, conn->session->age);
+		qedi_get_proto_itt(qedi, cqe->itid, &pपंचांगp_itt);
+		protoitt = build_itt(pपंचांगp_itt, conn->session->age);
 		task = iscsi_itt_to_task(conn, protoitt);
 		QEDI_INFO(&qedi->dbg_ctx, QEDI_LOG_SCSI_TM,
 			  "cleanup io itid=0x%x, protoitt=0x%x, cmd_cleanup_cmpl=%d, cid=0x%x\n",
@@ -844,39 +845,39 @@ static void qedi_process_cmd_cleanup_resp(struct qedi_ctx *qedi,
 			  qedi_conn->iscsi_conn_id);
 
 		spin_unlock_bh(&conn->session->back_lock);
-		if (!task) {
+		अगर (!task) अणु
 			QEDI_NOTICE(&qedi->dbg_ctx,
 				    "task is null, itid=0x%x, cid=0x%x\n",
 				    cqe->itid, qedi_conn->iscsi_conn_id);
-			return;
-		}
+			वापस;
+		पूर्ण
 		qedi_conn->cmd_cleanup_cmpl++;
-		wake_up(&qedi_conn->wait_queue);
+		wake_up(&qedi_conn->रुको_queue);
 
 		QEDI_INFO(&qedi->dbg_ctx, QEDI_LOG_TID,
 			  "Freeing tid=0x%x for cid=0x%x\n",
 			  cqe->itid, qedi_conn->iscsi_conn_id);
 		qedi_clear_task_idx(qedi_conn->qedi, cqe->itid);
 
-	} else {
-		qedi_get_proto_itt(qedi, cqe->itid, &ptmp_itt);
-		protoitt = build_itt(ptmp_itt, conn->session->age);
+	पूर्ण अन्यथा अणु
+		qedi_get_proto_itt(qedi, cqe->itid, &pपंचांगp_itt);
+		protoitt = build_itt(pपंचांगp_itt, conn->session->age);
 		task = iscsi_itt_to_task(conn, protoitt);
 		QEDI_ERR(&qedi->dbg_ctx,
 			 "Delayed or untracked cleanup response, itt=0x%x, tid=0x%x, cid=0x%x, task=%p\n",
 			 protoitt, cqe->itid, qedi_conn->iscsi_conn_id, task);
-	}
-}
+	पूर्ण
+पूर्ण
 
-void qedi_fp_process_cqes(struct qedi_work *work)
-{
-	struct qedi_ctx *qedi = work->qedi;
-	union iscsi_cqe *cqe = &work->cqe;
-	struct iscsi_task *task = NULL;
-	struct iscsi_nopout *nopout_hdr;
-	struct qedi_conn *q_conn;
-	struct iscsi_conn *conn;
-	struct qedi_cmd *qedi_cmd;
+व्योम qedi_fp_process_cqes(काष्ठा qedi_work *work)
+अणु
+	काष्ठा qedi_ctx *qedi = work->qedi;
+	जोड़ iscsi_cqe *cqe = &work->cqe;
+	काष्ठा iscsi_task *task = शून्य;
+	काष्ठा iscsi_nopout *nopout_hdr;
+	काष्ठा qedi_conn *q_conn;
+	काष्ठा iscsi_conn *conn;
+	काष्ठा qedi_cmd *qedi_cmd;
 	u32 comp_type;
 	u32 iscsi_cid;
 	u32 hdr_opcode;
@@ -886,94 +887,94 @@ void qedi_fp_process_cqes(struct qedi_work *work)
 	comp_type = cqe->cqe_common.cqe_type;
 	hdr_opcode = cqe->cqe_common.iscsi_hdr.common.hdr_first_byte;
 	cqe_err_bits =
-		cqe->cqe_common.error_bitmap.error_bits.cqe_error_status_bits;
+		cqe->cqe_common.error_biपंचांगap.error_bits.cqe_error_status_bits;
 
 	QEDI_INFO(&qedi->dbg_ctx, QEDI_LOG_CONN,
 		  "fw_cid=0x%x, cqe type=0x%x, opcode=0x%x\n",
 		  cqe->cqe_common.conn_id, comp_type, hdr_opcode);
 
-	if (comp_type >= MAX_ISCSI_CQES_TYPE) {
+	अगर (comp_type >= MAX_ISCSI_CQES_TYPE) अणु
 		QEDI_WARN(&qedi->dbg_ctx, "Invalid CqE type\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	iscsi_cid  = cqe->cqe_common.conn_id;
 	q_conn = qedi->cid_que.conn_cid_tbl[iscsi_cid];
-	if (!q_conn) {
+	अगर (!q_conn) अणु
 		QEDI_WARN(&qedi->dbg_ctx,
 			  "Session no longer exists for cid=0x%x!!\n",
 			  iscsi_cid);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	conn = q_conn->cls_conn->dd_data;
 
-	if (unlikely(cqe_err_bits &&
+	अगर (unlikely(cqe_err_bits &&
 		     GET_FIELD(cqe_err_bits,
-			       CQE_ERROR_BITMAP_DATA_DIGEST_ERR))) {
+			       CQE_ERROR_BITMAP_DATA_DIGEST_ERR))) अणु
 		iscsi_conn_failure(conn, ISCSI_ERR_DATA_DGST);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	switch (comp_type) {
-	case ISCSI_CQE_TYPE_SOLICITED:
-	case ISCSI_CQE_TYPE_SOLICITED_WITH_SENSE:
-		qedi_cmd = container_of(work, struct qedi_cmd, cqe_work);
+	चयन (comp_type) अणु
+	हाल ISCSI_CQE_TYPE_SOLICITED:
+	हाल ISCSI_CQE_TYPE_SOLICITED_WITH_SENSE:
+		qedi_cmd = container_of(work, काष्ठा qedi_cmd, cqe_work);
 		task = qedi_cmd->task;
-		if (!task) {
+		अगर (!task) अणु
 			QEDI_WARN(&qedi->dbg_ctx, "task is NULL\n");
-			return;
-		}
+			वापस;
+		पूर्ण
 
 		/* Process NOPIN local completion */
-		nopout_hdr = (struct iscsi_nopout *)task->hdr;
-		if ((nopout_hdr->itt == RESERVED_ITT) &&
-		    (cqe->cqe_solicited.itid != (u16)RESERVED_ITT)) {
+		nopout_hdr = (काष्ठा iscsi_nopout *)task->hdr;
+		अगर ((nopout_hdr->itt == RESERVED_ITT) &&
+		    (cqe->cqe_solicited.itid != (u16)RESERVED_ITT)) अणु
 			qedi_process_nopin_local_cmpl(qedi, &cqe->cqe_solicited,
 						      task, q_conn);
-		} else {
+		पूर्ण अन्यथा अणु
 			cqe->cqe_solicited.itid =
 					       qedi_get_itt(cqe->cqe_solicited);
 			/* Process other solicited responses */
 			qedi_mtask_completion(qedi, cqe, task, q_conn, que_idx);
-		}
-		break;
-	case ISCSI_CQE_TYPE_UNSOLICITED:
-		switch (hdr_opcode) {
-		case ISCSI_OPCODE_NOP_IN:
+		पूर्ण
+		अवरोध;
+	हाल ISCSI_CQE_TYPE_UNSOLICITED:
+		चयन (hdr_opcode) अणु
+		हाल ISCSI_OPCODE_NOP_IN:
 			qedi_process_nopin_mesg(qedi, cqe, task, q_conn,
 						que_idx);
-			break;
-		case ISCSI_OPCODE_ASYNC_MSG:
+			अवरोध;
+		हाल ISCSI_OPCODE_ASYNC_MSG:
 			qedi_process_async_mesg(qedi, cqe, task, q_conn,
 						que_idx);
-			break;
-		case ISCSI_OPCODE_REJECT:
+			अवरोध;
+		हाल ISCSI_OPCODE_REJECT:
 			qedi_process_reject_mesg(qedi, cqe, task, q_conn,
 						 que_idx);
-			break;
-		}
-		goto exit_fp_process;
-	case ISCSI_CQE_TYPE_DUMMY:
+			अवरोध;
+		पूर्ण
+		जाओ निकास_fp_process;
+	हाल ISCSI_CQE_TYPE_DUMMY:
 		QEDI_INFO(&qedi->dbg_ctx, QEDI_LOG_SCSI_TM, "Dummy CqE\n");
-		goto exit_fp_process;
-	case ISCSI_CQE_TYPE_TASK_CLEANUP:
+		जाओ निकास_fp_process;
+	हाल ISCSI_CQE_TYPE_TASK_CLEANUP:
 		QEDI_INFO(&qedi->dbg_ctx, QEDI_LOG_SCSI_TM, "CleanUp CqE\n");
 		qedi_process_cmd_cleanup_resp(qedi, &cqe->cqe_solicited, task,
 					      conn);
-		goto exit_fp_process;
-	default:
+		जाओ निकास_fp_process;
+	शेष:
 		QEDI_ERR(&qedi->dbg_ctx, "Error cqe.\n");
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-exit_fp_process:
-	return;
-}
+निकास_fp_process:
+	वापस;
+पूर्ण
 
-static void qedi_ring_doorbell(struct qedi_conn *qedi_conn)
-{
-	struct iscsi_db_data dbell = { 0 };
+अटल व्योम qedi_ring_करोorbell(काष्ठा qedi_conn *qedi_conn)
+अणु
+	काष्ठा iscsi_db_data dbell = अणु 0 पूर्ण;
 
 	dbell.agg_flags = 0;
 
@@ -983,22 +984,22 @@ static void qedi_ring_doorbell(struct qedi_conn *qedi_conn)
 		   DQ_XCM_ISCSI_SQ_PROD_CMD << ISCSI_DB_DATA_AGG_VAL_SEL_SHIFT;
 
 	dbell.sq_prod = qedi_conn->ep->fw_sq_prod_idx;
-	writel(*(u32 *)&dbell, qedi_conn->ep->p_doorbell);
+	ग_लिखोl(*(u32 *)&dbell, qedi_conn->ep->p_करोorbell);
 
-	/* Make sure fw write idx is coherent, and include both memory barriers
-	 * as a failsafe as for some architectures the call is the same but on
-	 * others they are two different assembly operations.
+	/* Make sure fw ग_लिखो idx is coherent, and include both memory barriers
+	 * as a failsafe as क्रम some architectures the call is the same but on
+	 * others they are two dअगरferent assembly operations.
 	 */
 	wmb();
 	QEDI_INFO(&qedi_conn->qedi->dbg_ctx, QEDI_LOG_MP_REQ,
 		  "prod_idx=0x%x, fw_prod_idx=0x%x, cid=0x%x\n",
 		  qedi_conn->ep->sq_prod_idx, qedi_conn->ep->fw_sq_prod_idx,
 		  qedi_conn->iscsi_conn_id);
-}
+पूर्ण
 
-static u16 qedi_get_wqe_idx(struct qedi_conn *qedi_conn)
-{
-	struct qedi_endpoint *ep;
+अटल u16 qedi_get_wqe_idx(काष्ठा qedi_conn *qedi_conn)
+अणु
+	काष्ठा qedi_endpoपूर्णांक *ep;
 	u16 rval;
 
 	ep = qedi_conn->ep;
@@ -1007,49 +1008,49 @@ static u16 qedi_get_wqe_idx(struct qedi_conn *qedi_conn)
 	/* Increament SQ index */
 	ep->sq_prod_idx++;
 	ep->fw_sq_prod_idx++;
-	if (ep->sq_prod_idx == QEDI_SQ_SIZE)
+	अगर (ep->sq_prod_idx == QEDI_SQ_SIZE)
 		ep->sq_prod_idx = 0;
 
-	return rval;
-}
+	वापस rval;
+पूर्ण
 
-int qedi_send_iscsi_login(struct qedi_conn *qedi_conn,
-			  struct iscsi_task *task)
-{
-	struct iscsi_login_req_hdr login_req_pdu_header;
-	struct scsi_sgl_task_params tx_sgl_task_params;
-	struct scsi_sgl_task_params rx_sgl_task_params;
-	struct iscsi_task_params task_params;
-	struct e4_iscsi_task_context *fw_task_ctx;
-	struct qedi_ctx *qedi = qedi_conn->qedi;
-	struct iscsi_login_req *login_hdr;
-	struct scsi_sge *resp_sge = NULL;
-	struct qedi_cmd *qedi_cmd;
-	struct qedi_endpoint *ep;
+पूर्णांक qedi_send_iscsi_login(काष्ठा qedi_conn *qedi_conn,
+			  काष्ठा iscsi_task *task)
+अणु
+	काष्ठा iscsi_login_req_hdr login_req_pdu_header;
+	काष्ठा scsi_sgl_task_params tx_sgl_task_params;
+	काष्ठा scsi_sgl_task_params rx_sgl_task_params;
+	काष्ठा iscsi_task_params task_params;
+	काष्ठा e4_iscsi_task_context *fw_task_ctx;
+	काष्ठा qedi_ctx *qedi = qedi_conn->qedi;
+	काष्ठा iscsi_login_req *login_hdr;
+	काष्ठा scsi_sge *resp_sge = शून्य;
+	काष्ठा qedi_cmd *qedi_cmd;
+	काष्ठा qedi_endpoपूर्णांक *ep;
 	s16 tid = 0;
 	u16 sq_idx = 0;
-	int rval = 0;
+	पूर्णांक rval = 0;
 
-	resp_sge = (struct scsi_sge *)qedi_conn->gen_pdu.resp_bd_tbl;
-	qedi_cmd = (struct qedi_cmd *)task->dd_data;
+	resp_sge = (काष्ठा scsi_sge *)qedi_conn->gen_pdu.resp_bd_tbl;
+	qedi_cmd = (काष्ठा qedi_cmd *)task->dd_data;
 	ep = qedi_conn->ep;
-	login_hdr = (struct iscsi_login_req *)task->hdr;
+	login_hdr = (काष्ठा iscsi_login_req *)task->hdr;
 
 	tid = qedi_get_task_idx(qedi);
-	if (tid == -1)
-		return -ENOMEM;
+	अगर (tid == -1)
+		वापस -ENOMEM;
 
 	fw_task_ctx =
-	     (struct e4_iscsi_task_context *)qedi_get_task_mem(&qedi->tasks,
+	     (काष्ठा e4_iscsi_task_context *)qedi_get_task_mem(&qedi->tasks,
 							       tid);
-	memset(fw_task_ctx, 0, sizeof(struct e4_iscsi_task_context));
+	स_रखो(fw_task_ctx, 0, माप(काष्ठा e4_iscsi_task_context));
 
 	qedi_cmd->task_id = tid;
 
-	memset(&task_params, 0, sizeof(task_params));
-	memset(&login_req_pdu_header, 0, sizeof(login_req_pdu_header));
-	memset(&tx_sgl_task_params, 0, sizeof(tx_sgl_task_params));
-	memset(&rx_sgl_task_params, 0, sizeof(rx_sgl_task_params));
+	स_रखो(&task_params, 0, माप(task_params));
+	स_रखो(&login_req_pdu_header, 0, माप(login_req_pdu_header));
+	स_रखो(&tx_sgl_task_params, 0, माप(tx_sgl_task_params));
+	स_रखो(&rx_sgl_task_params, 0, माप(rx_sgl_task_params));
 	/* Update header info */
 	login_req_pdu_header.opcode = login_hdr->opcode;
 	login_req_pdu_header.version_min = login_hdr->min_version;
@@ -1070,7 +1071,7 @@ int qedi_send_iscsi_login(struct qedi_conn *qedi_conn,
 
 	/* Fill tx AHS and rx buffer */
 	tx_sgl_task_params.sgl =
-			       (struct scsi_sge *)qedi_conn->gen_pdu.req_bd_tbl;
+			       (काष्ठा scsi_sge *)qedi_conn->gen_pdu.req_bd_tbl;
 	tx_sgl_task_params.sgl_phys_addr.lo =
 					 (u32)(qedi_conn->gen_pdu.req_dma_addr);
 	tx_sgl_task_params.sgl_phys_addr.hi =
@@ -1079,7 +1080,7 @@ int qedi_send_iscsi_login(struct qedi_conn *qedi_conn,
 	tx_sgl_task_params.num_sges = 1;
 
 	rx_sgl_task_params.sgl =
-			      (struct scsi_sge *)qedi_conn->gen_pdu.resp_bd_tbl;
+			      (काष्ठा scsi_sge *)qedi_conn->gen_pdu.resp_bd_tbl;
 	rx_sgl_task_params.sgl_phys_addr.lo =
 					(u32)(qedi_conn->gen_pdu.resp_dma_addr);
 	rx_sgl_task_params.sgl_phys_addr.hi =
@@ -1098,13 +1099,13 @@ int qedi_send_iscsi_login(struct qedi_conn *qedi_conn,
 	sq_idx = qedi_get_wqe_idx(qedi_conn);
 	task_params.sqe = &ep->sq[sq_idx];
 
-	memset(task_params.sqe, 0, sizeof(struct iscsi_wqe));
+	स_रखो(task_params.sqe, 0, माप(काष्ठा iscsi_wqe));
 	rval = init_initiator_login_request_task(&task_params,
 						 &login_req_pdu_header,
 						 &tx_sgl_task_params,
 						 &rx_sgl_task_params);
-	if (rval)
-		return -1;
+	अगर (rval)
+		वापस -1;
 
 	spin_lock(&qedi_conn->list_lock);
 	list_add_tail(&qedi_cmd->io_cmd, &qedi_conn->active_cmd_list);
@@ -1112,45 +1113,45 @@ int qedi_send_iscsi_login(struct qedi_conn *qedi_conn,
 	qedi_conn->active_cmd_count++;
 	spin_unlock(&qedi_conn->list_lock);
 
-	qedi_ring_doorbell(qedi_conn);
-	return 0;
-}
+	qedi_ring_करोorbell(qedi_conn);
+	वापस 0;
+पूर्ण
 
-int qedi_send_iscsi_logout(struct qedi_conn *qedi_conn,
-			   struct iscsi_task *task)
-{
-	struct iscsi_logout_req_hdr logout_pdu_header;
-	struct scsi_sgl_task_params tx_sgl_task_params;
-	struct scsi_sgl_task_params rx_sgl_task_params;
-	struct iscsi_task_params task_params;
-	struct e4_iscsi_task_context *fw_task_ctx;
-	struct iscsi_logout *logout_hdr = NULL;
-	struct qedi_ctx *qedi = qedi_conn->qedi;
-	struct qedi_cmd *qedi_cmd;
-	struct qedi_endpoint *ep;
+पूर्णांक qedi_send_iscsi_logout(काष्ठा qedi_conn *qedi_conn,
+			   काष्ठा iscsi_task *task)
+अणु
+	काष्ठा iscsi_logout_req_hdr logout_pdu_header;
+	काष्ठा scsi_sgl_task_params tx_sgl_task_params;
+	काष्ठा scsi_sgl_task_params rx_sgl_task_params;
+	काष्ठा iscsi_task_params task_params;
+	काष्ठा e4_iscsi_task_context *fw_task_ctx;
+	काष्ठा iscsi_logout *logout_hdr = शून्य;
+	काष्ठा qedi_ctx *qedi = qedi_conn->qedi;
+	काष्ठा qedi_cmd *qedi_cmd;
+	काष्ठा qedi_endpoपूर्णांक *ep;
 	s16 tid = 0;
 	u16 sq_idx = 0;
-	int rval = 0;
+	पूर्णांक rval = 0;
 
-	qedi_cmd = (struct qedi_cmd *)task->dd_data;
-	logout_hdr = (struct iscsi_logout *)task->hdr;
+	qedi_cmd = (काष्ठा qedi_cmd *)task->dd_data;
+	logout_hdr = (काष्ठा iscsi_logout *)task->hdr;
 	ep = qedi_conn->ep;
 
 	tid = qedi_get_task_idx(qedi);
-	if (tid == -1)
-		return -ENOMEM;
+	अगर (tid == -1)
+		वापस -ENOMEM;
 
 	fw_task_ctx =
-	     (struct e4_iscsi_task_context *)qedi_get_task_mem(&qedi->tasks,
+	     (काष्ठा e4_iscsi_task_context *)qedi_get_task_mem(&qedi->tasks,
 							       tid);
-	memset(fw_task_ctx, 0, sizeof(struct e4_iscsi_task_context));
+	स_रखो(fw_task_ctx, 0, माप(काष्ठा e4_iscsi_task_context));
 
 	qedi_cmd->task_id = tid;
 
-	memset(&task_params, 0, sizeof(task_params));
-	memset(&logout_pdu_header, 0, sizeof(logout_pdu_header));
-	memset(&tx_sgl_task_params, 0, sizeof(tx_sgl_task_params));
-	memset(&rx_sgl_task_params, 0, sizeof(rx_sgl_task_params));
+	स_रखो(&task_params, 0, माप(task_params));
+	स_रखो(&logout_pdu_header, 0, माप(logout_pdu_header));
+	स_रखो(&tx_sgl_task_params, 0, माप(tx_sgl_task_params));
+	स_रखो(&rx_sgl_task_params, 0, माप(rx_sgl_task_params));
 
 	/* Update header info */
 	logout_pdu_header.opcode = logout_hdr->opcode;
@@ -1171,13 +1172,13 @@ int qedi_send_iscsi_logout(struct qedi_conn *qedi_conn,
 
 	sq_idx = qedi_get_wqe_idx(qedi_conn);
 	task_params.sqe = &ep->sq[sq_idx];
-	memset(task_params.sqe, 0, sizeof(struct iscsi_wqe));
+	स_रखो(task_params.sqe, 0, माप(काष्ठा iscsi_wqe));
 
 	rval = init_initiator_logout_request_task(&task_params,
 						  &logout_pdu_header,
-						  NULL, NULL);
-	if (rval)
-		return -1;
+						  शून्य, शून्य);
+	अगर (rval)
+		वापस -1;
 
 	spin_lock(&qedi_conn->list_lock);
 	list_add_tail(&qedi_cmd->io_cmd, &qedi_conn->active_cmd_list);
@@ -1185,32 +1186,32 @@ int qedi_send_iscsi_logout(struct qedi_conn *qedi_conn,
 	qedi_conn->active_cmd_count++;
 	spin_unlock(&qedi_conn->list_lock);
 
-	qedi_ring_doorbell(qedi_conn);
-	return 0;
-}
+	qedi_ring_करोorbell(qedi_conn);
+	वापस 0;
+पूर्ण
 
-int qedi_cleanup_all_io(struct qedi_ctx *qedi, struct qedi_conn *qedi_conn,
-			struct iscsi_task *task, bool in_recovery)
-{
-	int rval;
-	struct iscsi_task *ctask;
-	struct qedi_cmd *cmd, *cmd_tmp;
-	struct iscsi_tm *tmf_hdr;
-	unsigned int lun = 0;
+पूर्णांक qedi_cleanup_all_io(काष्ठा qedi_ctx *qedi, काष्ठा qedi_conn *qedi_conn,
+			काष्ठा iscsi_task *task, bool in_recovery)
+अणु
+	पूर्णांक rval;
+	काष्ठा iscsi_task *ctask;
+	काष्ठा qedi_cmd *cmd, *cmd_पंचांगp;
+	काष्ठा iscsi_पंचांग *पंचांगf_hdr;
+	अचिन्हित पूर्णांक lun = 0;
 	bool lun_reset = false;
-	struct iscsi_conn *conn = qedi_conn->cls_conn->dd_data;
-	struct iscsi_session *session = conn->session;
+	काष्ठा iscsi_conn *conn = qedi_conn->cls_conn->dd_data;
+	काष्ठा iscsi_session *session = conn->session;
 
-	/* From recovery, task is NULL or from tmf resp valid task */
-	if (task) {
-		tmf_hdr = (struct iscsi_tm *)task->hdr;
+	/* From recovery, task is शून्य or from पंचांगf resp valid task */
+	अगर (task) अणु
+		पंचांगf_hdr = (काष्ठा iscsi_पंचांग *)task->hdr;
 
-		if ((tmf_hdr->flags & ISCSI_FLAG_TM_FUNC_MASK) ==
-			ISCSI_TM_FUNC_LOGICAL_UNIT_RESET) {
+		अगर ((पंचांगf_hdr->flags & ISCSI_FLAG_TM_FUNC_MASK) ==
+			ISCSI_TM_FUNC_LOGICAL_UNIT_RESET) अणु
 			lun_reset = true;
-			lun = scsilun_to_int(&tmf_hdr->lun);
-		}
-	}
+			lun = scsilun_to_पूर्णांक(&पंचांगf_hdr->lun);
+		पूर्ण
+	पूर्ण
 
 	qedi_conn->cmd_cleanup_req = 0;
 	qedi_conn->cmd_cleanup_cmpl = 0;
@@ -1220,29 +1221,29 @@ int qedi_cleanup_all_io(struct qedi_ctx *qedi, struct qedi_conn *qedi_conn,
 		  qedi_conn->active_cmd_count, qedi_conn->iscsi_conn_id,
 		  in_recovery, lun_reset);
 
-	if (lun_reset)
+	अगर (lun_reset)
 		spin_lock_bh(&session->back_lock);
 
 	spin_lock(&qedi_conn->list_lock);
 
-	list_for_each_entry_safe(cmd, cmd_tmp, &qedi_conn->active_cmd_list,
-				 io_cmd) {
+	list_क्रम_each_entry_safe(cmd, cmd_पंचांगp, &qedi_conn->active_cmd_list,
+				 io_cmd) अणु
 		ctask = cmd->task;
-		if (ctask == task)
-			continue;
+		अगर (ctask == task)
+			जारी;
 
-		if (lun_reset) {
-			if (cmd->scsi_cmd && cmd->scsi_cmd->device) {
+		अगर (lun_reset) अणु
+			अगर (cmd->scsi_cmd && cmd->scsi_cmd->device) अणु
 				QEDI_INFO(&qedi->dbg_ctx, QEDI_LOG_SCSI_TM,
 					  "tid=0x%x itt=0x%x scsi_cmd_ptr=%p device=%p task_state=%d cmd_state=0%x cid=0x%x\n",
 					  cmd->task_id, get_itt(ctask->itt),
 					  cmd->scsi_cmd, cmd->scsi_cmd->device,
 					  ctask->state, cmd->state,
 					  qedi_conn->iscsi_conn_id);
-				if (cmd->scsi_cmd->device->lun != lun)
-					continue;
-			}
-		}
+				अगर (cmd->scsi_cmd->device->lun != lun)
+					जारी;
+			पूर्ण
+		पूर्ण
 		qedi_conn->cmd_cleanup_req++;
 		qedi_iscsi_cleanup_task(ctask, true);
 
@@ -1252,11 +1253,11 @@ int qedi_cleanup_all_io(struct qedi_ctx *qedi, struct qedi_conn *qedi_conn,
 		QEDI_WARN(&qedi->dbg_ctx,
 			  "Deleted active cmd list node io_cmd=%p, cid=0x%x\n",
 			  &cmd->io_cmd, qedi_conn->iscsi_conn_id);
-	}
+	पूर्ण
 
 	spin_unlock(&qedi_conn->list_lock);
 
-	if (lun_reset)
+	अगर (lun_reset)
 		spin_unlock_bh(&session->back_lock);
 
 	QEDI_INFO(&qedi->dbg_ctx, QEDI_LOG_SCSI_TM,
@@ -1264,21 +1265,21 @@ int qedi_cleanup_all_io(struct qedi_ctx *qedi, struct qedi_conn *qedi_conn,
 		  qedi_conn->cmd_cleanup_req,
 		  qedi_conn->iscsi_conn_id);
 
-	rval  = wait_event_interruptible_timeout(qedi_conn->wait_queue,
+	rval  = रुको_event_पूर्णांकerruptible_समयout(qedi_conn->रुको_queue,
 						 ((qedi_conn->cmd_cleanup_req ==
 						 qedi_conn->cmd_cleanup_cmpl) ||
 						 test_bit(QEDI_IN_RECOVERY,
 							  &qedi->flags)),
 						 5 * HZ);
-	if (rval) {
+	अगर (rval) अणु
 		QEDI_INFO(&qedi->dbg_ctx, QEDI_LOG_SCSI_TM,
 			  "i/o cmd_cleanup_req=%d, equal to cmd_cleanup_cmpl=%d, cid=0x%x\n",
 			  qedi_conn->cmd_cleanup_req,
 			  qedi_conn->cmd_cleanup_cmpl,
 			  qedi_conn->iscsi_conn_id);
 
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	QEDI_INFO(&qedi->dbg_ctx, QEDI_LOG_SCSI_TM,
 		  "i/o cmd_cleanup_req=%d, not equal to cmd_cleanup_cmpl=%d, cid=0x%x\n",
@@ -1286,44 +1287,44 @@ int qedi_cleanup_all_io(struct qedi_ctx *qedi, struct qedi_conn *qedi_conn,
 		  qedi_conn->cmd_cleanup_cmpl,
 		  qedi_conn->iscsi_conn_id);
 
-	iscsi_host_for_each_session(qedi->shost,
+	iscsi_host_क्रम_each_session(qedi->shost,
 				    qedi_mark_device_missing);
 	qedi_ops->common->drain(qedi->cdev);
 
-	/* Enable IOs for all other sessions except current.*/
-	if (!wait_event_interruptible_timeout(qedi_conn->wait_queue,
+	/* Enable IOs क्रम all other sessions except current.*/
+	अगर (!रुको_event_पूर्णांकerruptible_समयout(qedi_conn->रुको_queue,
 					      (qedi_conn->cmd_cleanup_req ==
 					       qedi_conn->cmd_cleanup_cmpl) ||
 					       test_bit(QEDI_IN_RECOVERY,
 							&qedi->flags),
-					      5 * HZ)) {
-		iscsi_host_for_each_session(qedi->shost,
+					      5 * HZ)) अणु
+		iscsi_host_क्रम_each_session(qedi->shost,
 					    qedi_mark_device_available);
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
-	iscsi_host_for_each_session(qedi->shost,
+	iscsi_host_क्रम_each_session(qedi->shost,
 				    qedi_mark_device_available);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void qedi_clearsq(struct qedi_ctx *qedi, struct qedi_conn *qedi_conn,
-		  struct iscsi_task *task)
-{
-	struct qedi_endpoint *qedi_ep;
-	int rval;
+व्योम qedi_clearsq(काष्ठा qedi_ctx *qedi, काष्ठा qedi_conn *qedi_conn,
+		  काष्ठा iscsi_task *task)
+अणु
+	काष्ठा qedi_endpoपूर्णांक *qedi_ep;
+	पूर्णांक rval;
 
 	qedi_ep = qedi_conn->ep;
 	qedi_conn->cmd_cleanup_req = 0;
 	qedi_conn->cmd_cleanup_cmpl = 0;
 
-	if (!qedi_ep) {
+	अगर (!qedi_ep) अणु
 		QEDI_WARN(&qedi->dbg_ctx,
 			  "Cannot proceed, ep already disconnected, cid=0x%x\n",
 			  qedi_conn->iscsi_conn_id);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	QEDI_INFO(&qedi->dbg_ctx, QEDI_LOG_INFO,
 		  "Clearing SQ for cid=0x%x, conn=%p, ep=%p\n",
@@ -1332,212 +1333,212 @@ void qedi_clearsq(struct qedi_ctx *qedi, struct qedi_conn *qedi_conn,
 	qedi_ops->clear_sq(qedi->cdev, qedi_ep->handle);
 
 	rval = qedi_cleanup_all_io(qedi, qedi_conn, task, true);
-	if (rval) {
+	अगर (rval) अणु
 		QEDI_ERR(&qedi->dbg_ctx,
 			 "fatal error, need hard reset, cid=0x%x\n",
 			 qedi_conn->iscsi_conn_id);
 		WARN_ON(1);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int qedi_wait_for_cleanup_request(struct qedi_ctx *qedi,
-					 struct qedi_conn *qedi_conn,
-					 struct iscsi_task *task,
-					 struct qedi_cmd *qedi_cmd,
-					 struct qedi_work_map *list_work)
-{
-	struct qedi_cmd *cmd = (struct qedi_cmd *)task->dd_data;
-	int wait;
+अटल पूर्णांक qedi_रुको_क्रम_cleanup_request(काष्ठा qedi_ctx *qedi,
+					 काष्ठा qedi_conn *qedi_conn,
+					 काष्ठा iscsi_task *task,
+					 काष्ठा qedi_cmd *qedi_cmd,
+					 काष्ठा qedi_work_map *list_work)
+अणु
+	काष्ठा qedi_cmd *cmd = (काष्ठा qedi_cmd *)task->dd_data;
+	पूर्णांक रुको;
 
-	wait  = wait_event_interruptible_timeout(qedi_conn->wait_queue,
+	रुको  = रुको_event_पूर्णांकerruptible_समयout(qedi_conn->रुको_queue,
 						 ((qedi_cmd->state ==
 						   CLEANUP_RECV) ||
 						 ((qedi_cmd->type == TYPEIO) &&
 						  (cmd->state ==
 						   RESPONSE_RECEIVED))),
 						 5 * HZ);
-	if (!wait) {
+	अगर (!रुको) अणु
 		qedi_cmd->state = CLEANUP_WAIT_FAILED;
 
 		QEDI_INFO(&qedi->dbg_ctx, QEDI_LOG_SCSI_TM,
 			  "Cleanup timedout tid=0x%x, issue connection recovery, cid=0x%x\n",
 			  cmd->task_id, qedi_conn->iscsi_conn_id);
 
-		return -1;
-	}
-	return 0;
-}
+		वापस -1;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static void qedi_tmf_work(struct work_struct *work)
-{
-	struct qedi_cmd *qedi_cmd =
-		container_of(work, struct qedi_cmd, tmf_work);
-	struct qedi_conn *qedi_conn = qedi_cmd->conn;
-	struct qedi_ctx *qedi = qedi_conn->qedi;
-	struct iscsi_conn *conn = qedi_conn->cls_conn->dd_data;
-	struct qedi_work_map *list_work = NULL;
-	struct iscsi_task *mtask;
-	struct qedi_cmd *cmd;
-	struct iscsi_task *ctask;
-	struct iscsi_tm *tmf_hdr;
+अटल व्योम qedi_पंचांगf_work(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा qedi_cmd *qedi_cmd =
+		container_of(work, काष्ठा qedi_cmd, पंचांगf_work);
+	काष्ठा qedi_conn *qedi_conn = qedi_cmd->conn;
+	काष्ठा qedi_ctx *qedi = qedi_conn->qedi;
+	काष्ठा iscsi_conn *conn = qedi_conn->cls_conn->dd_data;
+	काष्ठा qedi_work_map *list_work = शून्य;
+	काष्ठा iscsi_task *mtask;
+	काष्ठा qedi_cmd *cmd;
+	काष्ठा iscsi_task *ctask;
+	काष्ठा iscsi_पंचांग *पंचांगf_hdr;
 	s16 rval = 0;
 	s16 tid = 0;
 
 	mtask = qedi_cmd->task;
-	tmf_hdr = (struct iscsi_tm *)mtask->hdr;
+	पंचांगf_hdr = (काष्ठा iscsi_पंचांग *)mtask->hdr;
 	set_bit(QEDI_CONN_FW_CLEANUP, &qedi_conn->flags);
 
-	ctask = iscsi_itt_to_task(conn, tmf_hdr->rtt);
-	if (!ctask || !ctask->sc) {
+	ctask = iscsi_itt_to_task(conn, पंचांगf_hdr->rtt);
+	अगर (!ctask || !ctask->sc) अणु
 		QEDI_ERR(&qedi->dbg_ctx, "Task already completed\n");
-		goto abort_ret;
-	}
+		जाओ पात_ret;
+	पूर्ण
 
-	cmd = (struct qedi_cmd *)ctask->dd_data;
+	cmd = (काष्ठा qedi_cmd *)ctask->dd_data;
 	QEDI_INFO(&qedi->dbg_ctx, QEDI_LOG_INFO,
 		  "Abort tmf rtt=0x%x, cmd itt=0x%x, cmd tid=0x%x, cid=0x%x\n",
-		  get_itt(tmf_hdr->rtt), get_itt(ctask->itt), cmd->task_id,
+		  get_itt(पंचांगf_hdr->rtt), get_itt(ctask->itt), cmd->task_id,
 		  qedi_conn->iscsi_conn_id);
 
-	if (qedi_do_not_recover) {
+	अगर (qedi_करो_not_recover) अणु
 		QEDI_ERR(&qedi->dbg_ctx, "DONT SEND CLEANUP/ABORT %d\n",
-			 qedi_do_not_recover);
-		goto abort_ret;
-	}
+			 qedi_करो_not_recover);
+		जाओ पात_ret;
+	पूर्ण
 
-	list_work = kzalloc(sizeof(*list_work), GFP_ATOMIC);
-	if (!list_work) {
+	list_work = kzalloc(माप(*list_work), GFP_ATOMIC);
+	अगर (!list_work) अणु
 		QEDI_ERR(&qedi->dbg_ctx, "Memory allocation failed\n");
-		goto abort_ret;
-	}
+		जाओ पात_ret;
+	पूर्ण
 
 	qedi_cmd->type = TYPEIO;
 	list_work->qedi_cmd = qedi_cmd;
 	list_work->rtid = cmd->task_id;
 	list_work->state = QEDI_WORK_SCHEDULED;
-	qedi_cmd->list_tmf_work = list_work;
+	qedi_cmd->list_पंचांगf_work = list_work;
 
 	QEDI_INFO(&qedi->dbg_ctx, QEDI_LOG_SCSI_TM,
 		  "Queue tmf work=%p, list node=%p, cid=0x%x, tmf flags=0x%x\n",
-		  list_work->ptr_tmf_work, list_work, qedi_conn->iscsi_conn_id,
-		  tmf_hdr->flags);
+		  list_work->ptr_पंचांगf_work, list_work, qedi_conn->iscsi_conn_id,
+		  पंचांगf_hdr->flags);
 
-	spin_lock_bh(&qedi_conn->tmf_work_lock);
-	list_add_tail(&list_work->list, &qedi_conn->tmf_work_list);
-	spin_unlock_bh(&qedi_conn->tmf_work_lock);
+	spin_lock_bh(&qedi_conn->पंचांगf_work_lock);
+	list_add_tail(&list_work->list, &qedi_conn->पंचांगf_work_list);
+	spin_unlock_bh(&qedi_conn->पंचांगf_work_lock);
 
 	qedi_iscsi_cleanup_task(ctask, false);
 
-	rval = qedi_wait_for_cleanup_request(qedi, qedi_conn, ctask, qedi_cmd,
+	rval = qedi_रुको_क्रम_cleanup_request(qedi, qedi_conn, ctask, qedi_cmd,
 					     list_work);
-	if (rval == -1) {
+	अगर (rval == -1) अणु
 		QEDI_INFO(&qedi->dbg_ctx, QEDI_LOG_INFO,
 			  "FW cleanup got escalated, cid=0x%x\n",
 			  qedi_conn->iscsi_conn_id);
-		goto ldel_exit;
-	}
+		जाओ ldel_निकास;
+	पूर्ण
 
 	tid = qedi_get_task_idx(qedi);
-	if (tid == -1) {
+	अगर (tid == -1) अणु
 		QEDI_ERR(&qedi->dbg_ctx, "Invalid tid, cid=0x%x\n",
 			 qedi_conn->iscsi_conn_id);
-		goto ldel_exit;
-	}
+		जाओ ldel_निकास;
+	पूर्ण
 
 	qedi_cmd->task_id = tid;
-	qedi_send_iscsi_tmf(qedi_conn, qedi_cmd->task);
+	qedi_send_iscsi_पंचांगf(qedi_conn, qedi_cmd->task);
 
-abort_ret:
+पात_ret:
 	clear_bit(QEDI_CONN_FW_CLEANUP, &qedi_conn->flags);
-	return;
+	वापस;
 
-ldel_exit:
-	spin_lock_bh(&qedi_conn->tmf_work_lock);
-	if (!qedi_cmd->list_tmf_work) {
+ldel_निकास:
+	spin_lock_bh(&qedi_conn->पंचांगf_work_lock);
+	अगर (!qedi_cmd->list_पंचांगf_work) अणु
 		list_del_init(&list_work->list);
-		qedi_cmd->list_tmf_work = NULL;
-		kfree(list_work);
-	}
-	spin_unlock_bh(&qedi_conn->tmf_work_lock);
+		qedi_cmd->list_पंचांगf_work = शून्य;
+		kमुक्त(list_work);
+	पूर्ण
+	spin_unlock_bh(&qedi_conn->पंचांगf_work_lock);
 
 	spin_lock(&qedi_conn->list_lock);
-	if (likely(cmd->io_cmd_in_list)) {
+	अगर (likely(cmd->io_cmd_in_list)) अणु
 		cmd->io_cmd_in_list = false;
 		list_del_init(&cmd->io_cmd);
 		qedi_conn->active_cmd_count--;
-	}
+	पूर्ण
 	spin_unlock(&qedi_conn->list_lock);
 
 	clear_bit(QEDI_CONN_FW_CLEANUP, &qedi_conn->flags);
-}
+पूर्ण
 
-static int qedi_send_iscsi_tmf(struct qedi_conn *qedi_conn,
-			       struct iscsi_task *mtask)
-{
-	struct iscsi_tmf_request_hdr tmf_pdu_header;
-	struct iscsi_task_params task_params;
-	struct qedi_ctx *qedi = qedi_conn->qedi;
-	struct e4_iscsi_task_context *fw_task_ctx;
-	struct iscsi_conn *conn = qedi_conn->cls_conn->dd_data;
-	struct iscsi_task *ctask;
-	struct iscsi_tm *tmf_hdr;
-	struct qedi_cmd *qedi_cmd;
-	struct qedi_cmd *cmd;
-	struct qedi_endpoint *ep;
+अटल पूर्णांक qedi_send_iscsi_पंचांगf(काष्ठा qedi_conn *qedi_conn,
+			       काष्ठा iscsi_task *mtask)
+अणु
+	काष्ठा iscsi_पंचांगf_request_hdr पंचांगf_pdu_header;
+	काष्ठा iscsi_task_params task_params;
+	काष्ठा qedi_ctx *qedi = qedi_conn->qedi;
+	काष्ठा e4_iscsi_task_context *fw_task_ctx;
+	काष्ठा iscsi_conn *conn = qedi_conn->cls_conn->dd_data;
+	काष्ठा iscsi_task *ctask;
+	काष्ठा iscsi_पंचांग *पंचांगf_hdr;
+	काष्ठा qedi_cmd *qedi_cmd;
+	काष्ठा qedi_cmd *cmd;
+	काष्ठा qedi_endpoपूर्णांक *ep;
 	u32 scsi_lun[2];
 	s16 tid = 0;
 	u16 sq_idx = 0;
-	int rval = 0;
+	पूर्णांक rval = 0;
 
-	tmf_hdr = (struct iscsi_tm *)mtask->hdr;
-	qedi_cmd = (struct qedi_cmd *)mtask->dd_data;
+	पंचांगf_hdr = (काष्ठा iscsi_पंचांग *)mtask->hdr;
+	qedi_cmd = (काष्ठा qedi_cmd *)mtask->dd_data;
 	ep = qedi_conn->ep;
-	if (!ep)
-		return -ENODEV;
+	अगर (!ep)
+		वापस -ENODEV;
 
 	tid = qedi_get_task_idx(qedi);
-	if (tid == -1)
-		return -ENOMEM;
+	अगर (tid == -1)
+		वापस -ENOMEM;
 
 	fw_task_ctx =
-	     (struct e4_iscsi_task_context *)qedi_get_task_mem(&qedi->tasks,
+	     (काष्ठा e4_iscsi_task_context *)qedi_get_task_mem(&qedi->tasks,
 							       tid);
-	memset(fw_task_ctx, 0, sizeof(struct e4_iscsi_task_context));
+	स_रखो(fw_task_ctx, 0, माप(काष्ठा e4_iscsi_task_context));
 
 	qedi_cmd->task_id = tid;
 
-	memset(&task_params, 0, sizeof(task_params));
-	memset(&tmf_pdu_header, 0, sizeof(tmf_pdu_header));
+	स_रखो(&task_params, 0, माप(task_params));
+	स_रखो(&पंचांगf_pdu_header, 0, माप(पंचांगf_pdu_header));
 
 	/* Update header info */
 	qedi_update_itt_map(qedi, tid, mtask->itt, qedi_cmd);
-	tmf_pdu_header.itt = qedi_set_itt(tid, get_itt(mtask->itt));
-	tmf_pdu_header.cmd_sn = be32_to_cpu(tmf_hdr->cmdsn);
+	पंचांगf_pdu_header.itt = qedi_set_itt(tid, get_itt(mtask->itt));
+	पंचांगf_pdu_header.cmd_sn = be32_to_cpu(पंचांगf_hdr->cmdsn);
 
-	memcpy(scsi_lun, &tmf_hdr->lun, sizeof(struct scsi_lun));
-	tmf_pdu_header.lun.lo = be32_to_cpu(scsi_lun[0]);
-	tmf_pdu_header.lun.hi = be32_to_cpu(scsi_lun[1]);
+	स_नकल(scsi_lun, &पंचांगf_hdr->lun, माप(काष्ठा scsi_lun));
+	पंचांगf_pdu_header.lun.lo = be32_to_cpu(scsi_lun[0]);
+	पंचांगf_pdu_header.lun.hi = be32_to_cpu(scsi_lun[1]);
 
-	if ((tmf_hdr->flags & ISCSI_FLAG_TM_FUNC_MASK) ==
-	     ISCSI_TM_FUNC_ABORT_TASK) {
-		ctask = iscsi_itt_to_task(conn, tmf_hdr->rtt);
-		if (!ctask || !ctask->sc) {
+	अगर ((पंचांगf_hdr->flags & ISCSI_FLAG_TM_FUNC_MASK) ==
+	     ISCSI_TM_FUNC_ABORT_TASK) अणु
+		ctask = iscsi_itt_to_task(conn, पंचांगf_hdr->rtt);
+		अगर (!ctask || !ctask->sc) अणु
 			QEDI_ERR(&qedi->dbg_ctx,
 				 "Could not get reference task\n");
-			return 0;
-		}
-		cmd = (struct qedi_cmd *)ctask->dd_data;
-		tmf_pdu_header.rtt =
+			वापस 0;
+		पूर्ण
+		cmd = (काष्ठा qedi_cmd *)ctask->dd_data;
+		पंचांगf_pdu_header.rtt =
 				qedi_set_itt(cmd->task_id,
-					     get_itt(tmf_hdr->rtt));
-	} else {
-		tmf_pdu_header.rtt = ISCSI_RESERVED_TAG;
-	}
+					     get_itt(पंचांगf_hdr->rtt));
+	पूर्ण अन्यथा अणु
+		पंचांगf_pdu_header.rtt = ISCSI_RESERVED_TAG;
+	पूर्ण
 
-	tmf_pdu_header.opcode = tmf_hdr->opcode;
-	tmf_pdu_header.function = tmf_hdr->flags;
-	tmf_pdu_header.hdr_second_dword = ntoh24(tmf_hdr->dlength);
-	tmf_pdu_header.ref_cmd_sn = be32_to_cpu(tmf_hdr->refcmdsn);
+	पंचांगf_pdu_header.opcode = पंचांगf_hdr->opcode;
+	पंचांगf_pdu_header.function = पंचांगf_hdr->flags;
+	पंचांगf_pdu_header.hdr_second_dword = ntoh24(पंचांगf_hdr->dlength);
+	पंचांगf_pdu_header.ref_cmd_sn = be32_to_cpu(पंचांगf_hdr->refcmdsn);
 
 	/* Fill fw input params */
 	task_params.context = fw_task_ctx;
@@ -1550,11 +1551,11 @@ static int qedi_send_iscsi_tmf(struct qedi_conn *qedi_conn,
 	sq_idx = qedi_get_wqe_idx(qedi_conn);
 	task_params.sqe = &ep->sq[sq_idx];
 
-	memset(task_params.sqe, 0, sizeof(struct iscsi_wqe));
-	rval = init_initiator_tmf_request_task(&task_params,
-					       &tmf_pdu_header);
-	if (rval)
-		return -1;
+	स_रखो(task_params.sqe, 0, माप(काष्ठा iscsi_wqe));
+	rval = init_initiator_पंचांगf_request_task(&task_params,
+					       &पंचांगf_pdu_header);
+	अगर (rval)
+		वापस -1;
 
 	spin_lock(&qedi_conn->list_lock);
 	list_add_tail(&qedi_cmd->io_cmd, &qedi_conn->active_cmd_list);
@@ -1562,92 +1563,92 @@ static int qedi_send_iscsi_tmf(struct qedi_conn *qedi_conn,
 	qedi_conn->active_cmd_count++;
 	spin_unlock(&qedi_conn->list_lock);
 
-	qedi_ring_doorbell(qedi_conn);
-	return 0;
-}
+	qedi_ring_करोorbell(qedi_conn);
+	वापस 0;
+पूर्ण
 
-int qedi_iscsi_abort_work(struct qedi_conn *qedi_conn,
-			  struct iscsi_task *mtask)
-{
-	struct qedi_ctx *qedi = qedi_conn->qedi;
-	struct iscsi_tm *tmf_hdr;
-	struct qedi_cmd *qedi_cmd = (struct qedi_cmd *)mtask->dd_data;
+पूर्णांक qedi_iscsi_पात_work(काष्ठा qedi_conn *qedi_conn,
+			  काष्ठा iscsi_task *mtask)
+अणु
+	काष्ठा qedi_ctx *qedi = qedi_conn->qedi;
+	काष्ठा iscsi_पंचांग *पंचांगf_hdr;
+	काष्ठा qedi_cmd *qedi_cmd = (काष्ठा qedi_cmd *)mtask->dd_data;
 	s16 tid = 0;
 
-	tmf_hdr = (struct iscsi_tm *)mtask->hdr;
+	पंचांगf_hdr = (काष्ठा iscsi_पंचांग *)mtask->hdr;
 	qedi_cmd->task = mtask;
 
-	/* If abort task then schedule the work and return */
-	if ((tmf_hdr->flags & ISCSI_FLAG_TM_FUNC_MASK) ==
-	    ISCSI_TM_FUNC_ABORT_TASK) {
+	/* If पात task then schedule the work and वापस */
+	अगर ((पंचांगf_hdr->flags & ISCSI_FLAG_TM_FUNC_MASK) ==
+	    ISCSI_TM_FUNC_ABORT_TASK) अणु
 		qedi_cmd->state = CLEANUP_WAIT;
-		INIT_WORK(&qedi_cmd->tmf_work, qedi_tmf_work);
-		queue_work(qedi->tmf_thread, &qedi_cmd->tmf_work);
+		INIT_WORK(&qedi_cmd->पंचांगf_work, qedi_पंचांगf_work);
+		queue_work(qedi->पंचांगf_thपढ़ो, &qedi_cmd->पंचांगf_work);
 
-	} else if (((tmf_hdr->flags & ISCSI_FLAG_TM_FUNC_MASK) ==
+	पूर्ण अन्यथा अगर (((पंचांगf_hdr->flags & ISCSI_FLAG_TM_FUNC_MASK) ==
 		    ISCSI_TM_FUNC_LOGICAL_UNIT_RESET) ||
-		   ((tmf_hdr->flags & ISCSI_FLAG_TM_FUNC_MASK) ==
+		   ((पंचांगf_hdr->flags & ISCSI_FLAG_TM_FUNC_MASK) ==
 		    ISCSI_TM_FUNC_TARGET_WARM_RESET) ||
-		   ((tmf_hdr->flags & ISCSI_FLAG_TM_FUNC_MASK) ==
-		    ISCSI_TM_FUNC_TARGET_COLD_RESET)) {
+		   ((पंचांगf_hdr->flags & ISCSI_FLAG_TM_FUNC_MASK) ==
+		    ISCSI_TM_FUNC_TARGET_COLD_RESET)) अणु
 		tid = qedi_get_task_idx(qedi);
-		if (tid == -1) {
+		अगर (tid == -1) अणु
 			QEDI_ERR(&qedi->dbg_ctx, "Invalid tid, cid=0x%x\n",
 				 qedi_conn->iscsi_conn_id);
-			return -1;
-		}
+			वापस -1;
+		पूर्ण
 		qedi_cmd->task_id = tid;
 
-		qedi_send_iscsi_tmf(qedi_conn, qedi_cmd->task);
+		qedi_send_iscsi_पंचांगf(qedi_conn, qedi_cmd->task);
 
-	} else {
+	पूर्ण अन्यथा अणु
 		QEDI_ERR(&qedi->dbg_ctx, "Invalid tmf, cid=0x%x\n",
 			 qedi_conn->iscsi_conn_id);
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int qedi_send_iscsi_text(struct qedi_conn *qedi_conn,
-			 struct iscsi_task *task)
-{
-	struct iscsi_text_request_hdr text_request_pdu_header;
-	struct scsi_sgl_task_params tx_sgl_task_params;
-	struct scsi_sgl_task_params rx_sgl_task_params;
-	struct iscsi_task_params task_params;
-	struct e4_iscsi_task_context *fw_task_ctx;
-	struct qedi_ctx *qedi = qedi_conn->qedi;
-	struct iscsi_text *text_hdr;
-	struct scsi_sge *req_sge = NULL;
-	struct scsi_sge *resp_sge = NULL;
-	struct qedi_cmd *qedi_cmd;
-	struct qedi_endpoint *ep;
+पूर्णांक qedi_send_iscsi_text(काष्ठा qedi_conn *qedi_conn,
+			 काष्ठा iscsi_task *task)
+अणु
+	काष्ठा iscsi_text_request_hdr text_request_pdu_header;
+	काष्ठा scsi_sgl_task_params tx_sgl_task_params;
+	काष्ठा scsi_sgl_task_params rx_sgl_task_params;
+	काष्ठा iscsi_task_params task_params;
+	काष्ठा e4_iscsi_task_context *fw_task_ctx;
+	काष्ठा qedi_ctx *qedi = qedi_conn->qedi;
+	काष्ठा iscsi_text *text_hdr;
+	काष्ठा scsi_sge *req_sge = शून्य;
+	काष्ठा scsi_sge *resp_sge = शून्य;
+	काष्ठा qedi_cmd *qedi_cmd;
+	काष्ठा qedi_endpoपूर्णांक *ep;
 	s16 tid = 0;
 	u16 sq_idx = 0;
-	int rval = 0;
+	पूर्णांक rval = 0;
 
-	req_sge = (struct scsi_sge *)qedi_conn->gen_pdu.req_bd_tbl;
-	resp_sge = (struct scsi_sge *)qedi_conn->gen_pdu.resp_bd_tbl;
-	qedi_cmd = (struct qedi_cmd *)task->dd_data;
-	text_hdr = (struct iscsi_text *)task->hdr;
+	req_sge = (काष्ठा scsi_sge *)qedi_conn->gen_pdu.req_bd_tbl;
+	resp_sge = (काष्ठा scsi_sge *)qedi_conn->gen_pdu.resp_bd_tbl;
+	qedi_cmd = (काष्ठा qedi_cmd *)task->dd_data;
+	text_hdr = (काष्ठा iscsi_text *)task->hdr;
 	ep = qedi_conn->ep;
 
 	tid = qedi_get_task_idx(qedi);
-	if (tid == -1)
-		return -ENOMEM;
+	अगर (tid == -1)
+		वापस -ENOMEM;
 
 	fw_task_ctx =
-	     (struct e4_iscsi_task_context *)qedi_get_task_mem(&qedi->tasks,
+	     (काष्ठा e4_iscsi_task_context *)qedi_get_task_mem(&qedi->tasks,
 							       tid);
-	memset(fw_task_ctx, 0, sizeof(struct e4_iscsi_task_context));
+	स_रखो(fw_task_ctx, 0, माप(काष्ठा e4_iscsi_task_context));
 
 	qedi_cmd->task_id = tid;
 
-	memset(&task_params, 0, sizeof(task_params));
-	memset(&text_request_pdu_header, 0, sizeof(text_request_pdu_header));
-	memset(&tx_sgl_task_params, 0, sizeof(tx_sgl_task_params));
-	memset(&rx_sgl_task_params, 0, sizeof(rx_sgl_task_params));
+	स_रखो(&task_params, 0, माप(task_params));
+	स_रखो(&text_request_pdu_header, 0, माप(text_request_pdu_header));
+	स_रखो(&tx_sgl_task_params, 0, माप(tx_sgl_task_params));
+	स_रखो(&rx_sgl_task_params, 0, माप(rx_sgl_task_params));
 
 	/* Update header info */
 	text_request_pdu_header.opcode = text_hdr->opcode;
@@ -1662,7 +1663,7 @@ int qedi_send_iscsi_text(struct qedi_conn *qedi_conn,
 
 	/* Fill tx AHS and rx buffer */
 	tx_sgl_task_params.sgl =
-			       (struct scsi_sge *)qedi_conn->gen_pdu.req_bd_tbl;
+			       (काष्ठा scsi_sge *)qedi_conn->gen_pdu.req_bd_tbl;
 	tx_sgl_task_params.sgl_phys_addr.lo =
 					 (u32)(qedi_conn->gen_pdu.req_dma_addr);
 	tx_sgl_task_params.sgl_phys_addr.hi =
@@ -1671,7 +1672,7 @@ int qedi_send_iscsi_text(struct qedi_conn *qedi_conn,
 	tx_sgl_task_params.num_sges = 1;
 
 	rx_sgl_task_params.sgl =
-			      (struct scsi_sge *)qedi_conn->gen_pdu.resp_bd_tbl;
+			      (काष्ठा scsi_sge *)qedi_conn->gen_pdu.resp_bd_tbl;
 	rx_sgl_task_params.sgl_phys_addr.lo =
 					(u32)(qedi_conn->gen_pdu.resp_dma_addr);
 	rx_sgl_task_params.sgl_phys_addr.hi =
@@ -1690,13 +1691,13 @@ int qedi_send_iscsi_text(struct qedi_conn *qedi_conn,
 	sq_idx = qedi_get_wqe_idx(qedi_conn);
 	task_params.sqe = &ep->sq[sq_idx];
 
-	memset(task_params.sqe, 0, sizeof(struct iscsi_wqe));
+	स_रखो(task_params.sqe, 0, माप(काष्ठा iscsi_wqe));
 	rval = init_initiator_text_request_task(&task_params,
 						&text_request_pdu_header,
 						&tx_sgl_task_params,
 						&rx_sgl_task_params);
-	if (rval)
-		return -1;
+	अगर (rval)
+		वापस -1;
 
 	spin_lock(&qedi_conn->list_lock);
 	list_add_tail(&qedi_cmd->io_cmd, &qedi_conn->active_cmd_list);
@@ -1704,56 +1705,56 @@ int qedi_send_iscsi_text(struct qedi_conn *qedi_conn,
 	qedi_conn->active_cmd_count++;
 	spin_unlock(&qedi_conn->list_lock);
 
-	qedi_ring_doorbell(qedi_conn);
-	return 0;
-}
+	qedi_ring_करोorbell(qedi_conn);
+	वापस 0;
+पूर्ण
 
-int qedi_send_iscsi_nopout(struct qedi_conn *qedi_conn,
-			   struct iscsi_task *task,
-			   char *datap, int data_len, int unsol)
-{
-	struct iscsi_nop_out_hdr nop_out_pdu_header;
-	struct scsi_sgl_task_params tx_sgl_task_params;
-	struct scsi_sgl_task_params rx_sgl_task_params;
-	struct iscsi_task_params task_params;
-	struct qedi_ctx *qedi = qedi_conn->qedi;
-	struct e4_iscsi_task_context *fw_task_ctx;
-	struct iscsi_nopout *nopout_hdr;
-	struct scsi_sge *resp_sge = NULL;
-	struct qedi_cmd *qedi_cmd;
-	struct qedi_endpoint *ep;
+पूर्णांक qedi_send_iscsi_nopout(काष्ठा qedi_conn *qedi_conn,
+			   काष्ठा iscsi_task *task,
+			   अक्षर *datap, पूर्णांक data_len, पूर्णांक unsol)
+अणु
+	काष्ठा iscsi_nop_out_hdr nop_out_pdu_header;
+	काष्ठा scsi_sgl_task_params tx_sgl_task_params;
+	काष्ठा scsi_sgl_task_params rx_sgl_task_params;
+	काष्ठा iscsi_task_params task_params;
+	काष्ठा qedi_ctx *qedi = qedi_conn->qedi;
+	काष्ठा e4_iscsi_task_context *fw_task_ctx;
+	काष्ठा iscsi_nopout *nopout_hdr;
+	काष्ठा scsi_sge *resp_sge = शून्य;
+	काष्ठा qedi_cmd *qedi_cmd;
+	काष्ठा qedi_endpoपूर्णांक *ep;
 	u32 scsi_lun[2];
 	s16 tid = 0;
 	u16 sq_idx = 0;
-	int rval = 0;
+	पूर्णांक rval = 0;
 
-	resp_sge = (struct scsi_sge *)qedi_conn->gen_pdu.resp_bd_tbl;
-	qedi_cmd = (struct qedi_cmd *)task->dd_data;
-	nopout_hdr = (struct iscsi_nopout *)task->hdr;
+	resp_sge = (काष्ठा scsi_sge *)qedi_conn->gen_pdu.resp_bd_tbl;
+	qedi_cmd = (काष्ठा qedi_cmd *)task->dd_data;
+	nopout_hdr = (काष्ठा iscsi_nopout *)task->hdr;
 	ep = qedi_conn->ep;
 
 	tid = qedi_get_task_idx(qedi);
-	if (tid == -1)
-		return -ENOMEM;
+	अगर (tid == -1)
+		वापस -ENOMEM;
 
 	fw_task_ctx =
-	     (struct e4_iscsi_task_context *)qedi_get_task_mem(&qedi->tasks,
+	     (काष्ठा e4_iscsi_task_context *)qedi_get_task_mem(&qedi->tasks,
 							       tid);
-	memset(fw_task_ctx, 0, sizeof(struct e4_iscsi_task_context));
+	स_रखो(fw_task_ctx, 0, माप(काष्ठा e4_iscsi_task_context));
 
 	qedi_cmd->task_id = tid;
 
-	memset(&task_params, 0, sizeof(task_params));
-	memset(&nop_out_pdu_header, 0, sizeof(nop_out_pdu_header));
-	memset(&tx_sgl_task_params, 0, sizeof(tx_sgl_task_params));
-	memset(&rx_sgl_task_params, 0, sizeof(rx_sgl_task_params));
+	स_रखो(&task_params, 0, माप(task_params));
+	स_रखो(&nop_out_pdu_header, 0, माप(nop_out_pdu_header));
+	स_रखो(&tx_sgl_task_params, 0, माप(tx_sgl_task_params));
+	स_रखो(&rx_sgl_task_params, 0, माप(rx_sgl_task_params));
 
 	/* Update header info */
 	nop_out_pdu_header.opcode = nopout_hdr->opcode;
 	SET_FIELD(nop_out_pdu_header.flags_attr, ISCSI_NOP_OUT_HDR_CONST1, 1);
 	SET_FIELD(nop_out_pdu_header.flags_attr, ISCSI_NOP_OUT_HDR_RSRV, 0);
 
-	memcpy(scsi_lun, &nopout_hdr->lun, sizeof(struct scsi_lun));
+	स_नकल(scsi_lun, &nopout_hdr->lun, माप(काष्ठा scsi_lun));
 	nop_out_pdu_header.lun.lo = be32_to_cpu(scsi_lun[0]);
 	nop_out_pdu_header.lun.hi = be32_to_cpu(scsi_lun[1]);
 	nop_out_pdu_header.cmd_sn = be32_to_cpu(nopout_hdr->cmdsn);
@@ -1761,10 +1762,10 @@ int qedi_send_iscsi_nopout(struct qedi_conn *qedi_conn,
 
 	qedi_update_itt_map(qedi, tid, task->itt, qedi_cmd);
 
-	if (nopout_hdr->ttt != ISCSI_TTT_ALL_ONES) {
+	अगर (nopout_hdr->ttt != ISCSI_TTT_ALL_ONES) अणु
 		nop_out_pdu_header.itt = be32_to_cpu(nopout_hdr->itt);
 		nop_out_pdu_header.ttt = be32_to_cpu(nopout_hdr->ttt);
-	} else {
+	पूर्ण अन्यथा अणु
 		nop_out_pdu_header.itt = qedi_set_itt(tid, get_itt(task->itt));
 		nop_out_pdu_header.ttt = ISCSI_TTT_ALL_ONES;
 
@@ -1773,12 +1774,12 @@ int qedi_send_iscsi_nopout(struct qedi_conn *qedi_conn,
 		qedi_cmd->io_cmd_in_list = true;
 		qedi_conn->active_cmd_count++;
 		spin_unlock(&qedi_conn->list_lock);
-	}
+	पूर्ण
 
 	/* Fill tx AHS and rx buffer */
-	if (data_len) {
+	अगर (data_len) अणु
 		tx_sgl_task_params.sgl =
-			       (struct scsi_sge *)qedi_conn->gen_pdu.req_bd_tbl;
+			       (काष्ठा scsi_sge *)qedi_conn->gen_pdu.req_bd_tbl;
 		tx_sgl_task_params.sgl_phys_addr.lo =
 					 (u32)(qedi_conn->gen_pdu.req_dma_addr);
 		tx_sgl_task_params.sgl_phys_addr.hi =
@@ -1787,14 +1788,14 @@ int qedi_send_iscsi_nopout(struct qedi_conn *qedi_conn,
 		tx_sgl_task_params.num_sges = 1;
 
 		rx_sgl_task_params.sgl =
-			      (struct scsi_sge *)qedi_conn->gen_pdu.resp_bd_tbl;
+			      (काष्ठा scsi_sge *)qedi_conn->gen_pdu.resp_bd_tbl;
 		rx_sgl_task_params.sgl_phys_addr.lo =
 					(u32)(qedi_conn->gen_pdu.resp_dma_addr);
 		rx_sgl_task_params.sgl_phys_addr.hi =
 			     (u32)((u64)qedi_conn->gen_pdu.resp_dma_addr >> 32);
 		rx_sgl_task_params.total_buffer_size = resp_sge->sge_len;
 		rx_sgl_task_params.num_sges = 1;
-	}
+	पूर्ण
 
 	/* Fill fw input params */
 	task_params.context = fw_task_ctx;
@@ -1807,35 +1808,35 @@ int qedi_send_iscsi_nopout(struct qedi_conn *qedi_conn,
 	sq_idx = qedi_get_wqe_idx(qedi_conn);
 	task_params.sqe = &ep->sq[sq_idx];
 
-	memset(task_params.sqe, 0, sizeof(struct iscsi_wqe));
+	स_रखो(task_params.sqe, 0, माप(काष्ठा iscsi_wqe));
 	rval = init_initiator_nop_out_task(&task_params,
 					   &nop_out_pdu_header,
 					   &tx_sgl_task_params,
 					   &rx_sgl_task_params);
-	if (rval)
-		return -1;
+	अगर (rval)
+		वापस -1;
 
-	qedi_ring_doorbell(qedi_conn);
-	return 0;
-}
+	qedi_ring_करोorbell(qedi_conn);
+	वापस 0;
+पूर्ण
 
-static int qedi_split_bd(struct qedi_cmd *cmd, u64 addr, int sg_len,
-			 int bd_index)
-{
-	struct scsi_sge *bd = cmd->io_tbl.sge_tbl;
-	int frag_size, sg_frags;
+अटल पूर्णांक qedi_split_bd(काष्ठा qedi_cmd *cmd, u64 addr, पूर्णांक sg_len,
+			 पूर्णांक bd_index)
+अणु
+	काष्ठा scsi_sge *bd = cmd->io_tbl.sge_tbl;
+	पूर्णांक frag_size, sg_frags;
 
 	sg_frags = 0;
 
-	while (sg_len) {
-		if (addr % QEDI_PAGE_SIZE)
+	जबतक (sg_len) अणु
+		अगर (addr % QEDI_PAGE_SIZE)
 			frag_size =
 				   (QEDI_PAGE_SIZE - (addr % QEDI_PAGE_SIZE));
-		else
+		अन्यथा
 			frag_size = (sg_len > QEDI_BD_SPLIT_SZ) ? 0 :
 				    (sg_len % QEDI_BD_SPLIT_SZ);
 
-		if (frag_size == 0)
+		अगर (frag_size == 0)
 			frag_size = QEDI_BD_SPLIT_SZ;
 
 		bd[bd_index + sg_frags].sge_addr.lo = (addr & 0xffffffff);
@@ -1848,22 +1849,22 @@ static int qedi_split_bd(struct qedi_cmd *cmd, u64 addr, int sg_len,
 		addr += (u64)frag_size;
 		sg_frags++;
 		sg_len -= frag_size;
-	}
-	return sg_frags;
-}
+	पूर्ण
+	वापस sg_frags;
+पूर्ण
 
-static int qedi_map_scsi_sg(struct qedi_ctx *qedi, struct qedi_cmd *cmd)
-{
-	struct scsi_cmnd *sc = cmd->scsi_cmd;
-	struct scsi_sge *bd = cmd->io_tbl.sge_tbl;
-	struct scatterlist *sg;
-	int byte_count = 0;
-	int bd_count = 0;
-	int sg_count;
-	int sg_len;
-	int sg_frags;
+अटल पूर्णांक qedi_map_scsi_sg(काष्ठा qedi_ctx *qedi, काष्ठा qedi_cmd *cmd)
+अणु
+	काष्ठा scsi_cmnd *sc = cmd->scsi_cmd;
+	काष्ठा scsi_sge *bd = cmd->io_tbl.sge_tbl;
+	काष्ठा scatterlist *sg;
+	पूर्णांक byte_count = 0;
+	पूर्णांक bd_count = 0;
+	पूर्णांक sg_count;
+	पूर्णांक sg_len;
+	पूर्णांक sg_frags;
 	u64 addr, end_addr;
-	int i;
+	पूर्णांक i;
 
 	WARN_ON(scsi_sg_count(sc) > QEDI_ISCSI_MAX_BDS_PER_CMD);
 
@@ -1875,7 +1876,7 @@ static int qedi_map_scsi_sg(struct qedi_ctx *qedi, struct qedi_cmd *cmd)
 	 * Single SGE with length less than 64K.
 	 */
 	sg = scsi_sglist(sc);
-	if ((sg_count == 1) && (sg_dma_len(sg) <= MAX_SGLEN_FOR_CACHESGL)) {
+	अगर ((sg_count == 1) && (sg_dma_len(sg) <= MAX_SGLEN_FOR_CACHESGL)) अणु
 		sg_len = sg_dma_len(sg);
 		addr = (u64)sg_dma_address(sg);
 
@@ -1887,34 +1888,34 @@ static int qedi_map_scsi_sg(struct qedi_ctx *qedi, struct qedi_cmd *cmd)
 			  "single-cached-sgl: bd_count:%d addr=%llx, len=%x",
 			  sg_count, addr, sg_len);
 
-		return ++bd_count;
-	}
+		वापस ++bd_count;
+	पूर्ण
 
-	scsi_for_each_sg(sc, sg, sg_count, i) {
+	scsi_क्रम_each_sg(sc, sg, sg_count, i) अणु
 		sg_len = sg_dma_len(sg);
 		addr = (u64)sg_dma_address(sg);
 		end_addr = (addr + sg_len);
 
 		/*
 		 * first sg elem in the 'list',
-		 * check if end addr is page-aligned.
+		 * check अगर end addr is page-aligned.
 		 */
-		if ((i == 0) && (sg_count > 1) && (end_addr % QEDI_PAGE_SIZE))
+		अगर ((i == 0) && (sg_count > 1) && (end_addr % QEDI_PAGE_SIZE))
 			cmd->use_slowpath = true;
 
 		/*
 		 * last sg elem in the 'list',
-		 * check if start addr is page-aligned.
+		 * check अगर start addr is page-aligned.
 		 */
-		else if ((i == (sg_count - 1)) &&
+		अन्यथा अगर ((i == (sg_count - 1)) &&
 			 (sg_count > 1) && (addr % QEDI_PAGE_SIZE))
 			cmd->use_slowpath = true;
 
 		/*
 		 * middle sg elements in list,
-		 * check if start and end addr is page-aligned
+		 * check अगर start and end addr is page-aligned
 		 */
-		else if ((i != 0) && (i != (sg_count - 1)) &&
+		अन्यथा अगर ((i != 0) && (i != (sg_count - 1)) &&
 			 ((addr % QEDI_PAGE_SIZE) ||
 			 (end_addr % QEDI_PAGE_SIZE)))
 			cmd->use_slowpath = true;
@@ -1922,79 +1923,79 @@ static int qedi_map_scsi_sg(struct qedi_ctx *qedi, struct qedi_cmd *cmd)
 		QEDI_INFO(&qedi->dbg_ctx, QEDI_LOG_IO, "sg[%d] size=0x%x",
 			  i, sg_len);
 
-		if (sg_len > QEDI_BD_SPLIT_SZ) {
+		अगर (sg_len > QEDI_BD_SPLIT_SZ) अणु
 			sg_frags = qedi_split_bd(cmd, addr, sg_len, bd_count);
-		} else {
+		पूर्ण अन्यथा अणु
 			sg_frags = 1;
 			bd[bd_count].sge_addr.lo = addr & 0xffffffff;
 			bd[bd_count].sge_addr.hi = addr >> 32;
 			bd[bd_count].sge_len = sg_len;
-		}
+		पूर्ण
 		byte_count += sg_len;
 		bd_count += sg_frags;
-	}
+	पूर्ण
 
-	if (byte_count != scsi_bufflen(sc))
+	अगर (byte_count != scsi_bufflen(sc))
 		QEDI_ERR(&qedi->dbg_ctx,
 			 "byte_count = %d != scsi_bufflen = %d\n", byte_count,
 			 scsi_bufflen(sc));
-	else
+	अन्यथा
 		QEDI_INFO(&qedi->dbg_ctx, QEDI_LOG_IO, "byte_count = %d\n",
 			  byte_count);
 
 	WARN_ON(byte_count != scsi_bufflen(sc));
 
-	return bd_count;
-}
+	वापस bd_count;
+पूर्ण
 
-static void qedi_iscsi_map_sg_list(struct qedi_cmd *cmd)
-{
-	int bd_count;
-	struct scsi_cmnd *sc = cmd->scsi_cmd;
+अटल व्योम qedi_iscsi_map_sg_list(काष्ठा qedi_cmd *cmd)
+अणु
+	पूर्णांक bd_count;
+	काष्ठा scsi_cmnd *sc = cmd->scsi_cmd;
 
-	if (scsi_sg_count(sc)) {
+	अगर (scsi_sg_count(sc)) अणु
 		bd_count  = qedi_map_scsi_sg(cmd->conn->qedi, cmd);
-		if (bd_count == 0)
-			return;
-	} else {
-		struct scsi_sge *bd = cmd->io_tbl.sge_tbl;
+		अगर (bd_count == 0)
+			वापस;
+	पूर्ण अन्यथा अणु
+		काष्ठा scsi_sge *bd = cmd->io_tbl.sge_tbl;
 
 		bd[0].sge_addr.lo = 0;
 		bd[0].sge_addr.hi = 0;
 		bd[0].sge_len = 0;
 		bd_count = 0;
-	}
+	पूर्ण
 	cmd->io_tbl.sge_valid = bd_count;
-}
+पूर्ण
 
-static void qedi_cpy_scsi_cdb(struct scsi_cmnd *sc, u32 *dstp)
-{
+अटल व्योम qedi_cpy_scsi_cdb(काष्ठा scsi_cmnd *sc, u32 *dstp)
+अणु
 	u32 dword;
-	int lpcnt;
+	पूर्णांक lpcnt;
 	u8 *srcp;
 
-	lpcnt = sc->cmd_len / sizeof(dword);
+	lpcnt = sc->cmd_len / माप(dword);
 	srcp = (u8 *)sc->cmnd;
-	while (lpcnt--) {
-		memcpy(&dword, (const void *)srcp, 4);
+	जबतक (lpcnt--) अणु
+		स_नकल(&dword, (स्थिर व्योम *)srcp, 4);
 		*dstp = cpu_to_be32(dword);
 		srcp += 4;
 		dstp++;
-	}
-	if (sc->cmd_len & 0x3) {
+	पूर्ण
+	अगर (sc->cmd_len & 0x3) अणु
 		dword = (u32)srcp[0] | ((u32)srcp[1] << 8);
 		*dstp = cpu_to_be32(dword);
-	}
-}
+	पूर्ण
+पूर्ण
 
-void qedi_trace_io(struct qedi_ctx *qedi, struct iscsi_task *task,
-		   u16 tid, int8_t direction)
-{
-	struct qedi_io_log *io_log;
-	struct iscsi_conn *conn = task->conn;
-	struct qedi_conn *qedi_conn = conn->dd_data;
-	struct scsi_cmnd *sc_cmd = task->sc;
-	unsigned long flags;
+व्योम qedi_trace_io(काष्ठा qedi_ctx *qedi, काष्ठा iscsi_task *task,
+		   u16 tid, पूर्णांक8_t direction)
+अणु
+	काष्ठा qedi_io_log *io_log;
+	काष्ठा iscsi_conn *conn = task->conn;
+	काष्ठा qedi_conn *qedi_conn = conn->dd_data;
+	काष्ठा scsi_cmnd *sc_cmd = task->sc;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&qedi->io_trace_lock, flags);
 
@@ -2017,22 +2018,22 @@ void qedi_trace_io(struct qedi_ctx *qedi, struct iscsi_task *task,
 	io_log->slow_sge = qedi->use_slow_sge;
 	io_log->fast_sge = qedi->use_fast_sge;
 	io_log->result = sc_cmd->result;
-	io_log->jiffies = jiffies;
+	io_log->jअगरfies = jअगरfies;
 	io_log->blk_req_cpu = smp_processor_id();
 
-	if (direction == QEDI_IO_TRACE_REQ) {
+	अगर (direction == QEDI_IO_TRACE_REQ) अणु
 		/* For requests we only care about the submission CPU */
 		io_log->req_cpu = smp_processor_id() % qedi->num_queues;
-		io_log->intr_cpu = 0;
+		io_log->पूर्णांकr_cpu = 0;
 		io_log->blk_rsp_cpu = 0;
-	} else if (direction == QEDI_IO_TRACE_RSP) {
+	पूर्ण अन्यथा अगर (direction == QEDI_IO_TRACE_RSP) अणु
 		io_log->req_cpu = smp_processor_id() % qedi->num_queues;
-		io_log->intr_cpu = qedi->intr_cpu;
+		io_log->पूर्णांकr_cpu = qedi->पूर्णांकr_cpu;
 		io_log->blk_rsp_cpu = smp_processor_id();
-	}
+	पूर्ण
 
 	qedi->io_trace_idx++;
-	if (qedi->io_trace_idx == QEDI_IO_TRACE_SIZE)
+	अगर (qedi->io_trace_idx == QEDI_IO_TRACE_SIZE)
 		qedi->io_trace_idx = 0;
 
 	qedi->use_cached_sge = false;
@@ -2040,76 +2041,76 @@ void qedi_trace_io(struct qedi_ctx *qedi, struct iscsi_task *task,
 	qedi->use_fast_sge = false;
 
 	spin_unlock_irqrestore(&qedi->io_trace_lock, flags);
-}
+पूर्ण
 
-int qedi_iscsi_send_ioreq(struct iscsi_task *task)
-{
-	struct iscsi_conn *conn = task->conn;
-	struct iscsi_session *session = conn->session;
-	struct Scsi_Host *shost = iscsi_session_to_shost(session->cls_session);
-	struct qedi_ctx *qedi = iscsi_host_priv(shost);
-	struct qedi_conn *qedi_conn = conn->dd_data;
-	struct qedi_cmd *cmd = task->dd_data;
-	struct scsi_cmnd *sc = task->sc;
-	struct iscsi_cmd_hdr cmd_pdu_header;
-	struct scsi_sgl_task_params tx_sgl_task_params;
-	struct scsi_sgl_task_params rx_sgl_task_params;
-	struct scsi_sgl_task_params *prx_sgl = NULL;
-	struct scsi_sgl_task_params *ptx_sgl = NULL;
-	struct iscsi_task_params task_params;
-	struct iscsi_conn_params conn_params;
-	struct scsi_initiator_cmd_params cmd_params;
-	struct e4_iscsi_task_context *fw_task_ctx;
-	struct iscsi_cls_conn *cls_conn;
-	struct iscsi_scsi_req *hdr = (struct iscsi_scsi_req *)task->hdr;
-	enum iscsi_task_type task_type = MAX_ISCSI_TASK_TYPE;
-	struct qedi_endpoint *ep;
+पूर्णांक qedi_iscsi_send_ioreq(काष्ठा iscsi_task *task)
+अणु
+	काष्ठा iscsi_conn *conn = task->conn;
+	काष्ठा iscsi_session *session = conn->session;
+	काष्ठा Scsi_Host *shost = iscsi_session_to_shost(session->cls_session);
+	काष्ठा qedi_ctx *qedi = iscsi_host_priv(shost);
+	काष्ठा qedi_conn *qedi_conn = conn->dd_data;
+	काष्ठा qedi_cmd *cmd = task->dd_data;
+	काष्ठा scsi_cmnd *sc = task->sc;
+	काष्ठा iscsi_cmd_hdr cmd_pdu_header;
+	काष्ठा scsi_sgl_task_params tx_sgl_task_params;
+	काष्ठा scsi_sgl_task_params rx_sgl_task_params;
+	काष्ठा scsi_sgl_task_params *prx_sgl = शून्य;
+	काष्ठा scsi_sgl_task_params *ptx_sgl = शून्य;
+	काष्ठा iscsi_task_params task_params;
+	काष्ठा iscsi_conn_params conn_params;
+	काष्ठा scsi_initiator_cmd_params cmd_params;
+	काष्ठा e4_iscsi_task_context *fw_task_ctx;
+	काष्ठा iscsi_cls_conn *cls_conn;
+	काष्ठा iscsi_scsi_req *hdr = (काष्ठा iscsi_scsi_req *)task->hdr;
+	क्रमागत iscsi_task_type task_type = MAX_ISCSI_TASK_TYPE;
+	काष्ठा qedi_endpoपूर्णांक *ep;
 	u32 scsi_lun[2];
 	s16 tid = 0;
 	u16 sq_idx = 0;
 	u16 cq_idx;
-	int rval = 0;
+	पूर्णांक rval = 0;
 
 	ep = qedi_conn->ep;
 	cls_conn = qedi_conn->cls_conn;
 	conn = cls_conn->dd_data;
 
 	qedi_iscsi_map_sg_list(cmd);
-	int_to_scsilun(sc->device->lun, (struct scsi_lun *)scsi_lun);
+	पूर्णांक_to_scsilun(sc->device->lun, (काष्ठा scsi_lun *)scsi_lun);
 
 	tid = qedi_get_task_idx(qedi);
-	if (tid == -1)
-		return -ENOMEM;
+	अगर (tid == -1)
+		वापस -ENOMEM;
 
 	fw_task_ctx =
-	     (struct e4_iscsi_task_context *)qedi_get_task_mem(&qedi->tasks,
+	     (काष्ठा e4_iscsi_task_context *)qedi_get_task_mem(&qedi->tasks,
 							       tid);
-	memset(fw_task_ctx, 0, sizeof(struct e4_iscsi_task_context));
+	स_रखो(fw_task_ctx, 0, माप(काष्ठा e4_iscsi_task_context));
 
 	cmd->task_id = tid;
 
-	memset(&task_params, 0, sizeof(task_params));
-	memset(&cmd_pdu_header, 0, sizeof(cmd_pdu_header));
-	memset(&tx_sgl_task_params, 0, sizeof(tx_sgl_task_params));
-	memset(&rx_sgl_task_params, 0, sizeof(rx_sgl_task_params));
-	memset(&conn_params, 0, sizeof(conn_params));
-	memset(&cmd_params, 0, sizeof(cmd_params));
+	स_रखो(&task_params, 0, माप(task_params));
+	स_रखो(&cmd_pdu_header, 0, माप(cmd_pdu_header));
+	स_रखो(&tx_sgl_task_params, 0, माप(tx_sgl_task_params));
+	स_रखो(&rx_sgl_task_params, 0, माप(rx_sgl_task_params));
+	स_रखो(&conn_params, 0, माप(conn_params));
+	स_रखो(&cmd_params, 0, माप(cmd_params));
 
 	cq_idx = smp_processor_id() % qedi->num_queues;
 	/* Update header info */
 	SET_FIELD(cmd_pdu_header.flags_attr, ISCSI_CMD_HDR_ATTR,
 		  ISCSI_ATTR_SIMPLE);
-	if (hdr->cdb[0] != TEST_UNIT_READY) {
-		if (sc->sc_data_direction == DMA_TO_DEVICE) {
+	अगर (hdr->cdb[0] != TEST_UNIT_READY) अणु
+		अगर (sc->sc_data_direction == DMA_TO_DEVICE) अणु
 			SET_FIELD(cmd_pdu_header.flags_attr,
 				  ISCSI_CMD_HDR_WRITE, 1);
 			task_type = ISCSI_TASK_TYPE_INITIATOR_WRITE;
-		} else {
+		पूर्ण अन्यथा अणु
 			SET_FIELD(cmd_pdu_header.flags_attr,
 				  ISCSI_CMD_HDR_READ, 1);
 			task_type = ISCSI_TASK_TYPE_INITIATOR_READ;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	cmd_pdu_header.lun.lo = be32_to_cpu(scsi_lun[0]);
 	cmd_pdu_header.lun.hi = be32_to_cpu(scsi_lun[1]);
@@ -2123,7 +2124,7 @@ int qedi_iscsi_send_ioreq(struct iscsi_task *task)
 	qedi_cpy_scsi_cdb(sc, (u32 *)cmd_pdu_header.cdb);
 
 	/* Fill tx AHS and rx buffer */
-	if (task_type == ISCSI_TASK_TYPE_INITIATOR_WRITE) {
+	अगर (task_type == ISCSI_TASK_TYPE_INITIATOR_WRITE) अणु
 		tx_sgl_task_params.sgl = cmd->io_tbl.sge_tbl;
 		tx_sgl_task_params.sgl_phys_addr.lo =
 						 (u32)(cmd->io_tbl.sge_tbl_dma);
@@ -2131,9 +2132,9 @@ int qedi_iscsi_send_ioreq(struct iscsi_task *task)
 				      (u32)((u64)cmd->io_tbl.sge_tbl_dma >> 32);
 		tx_sgl_task_params.total_buffer_size = scsi_bufflen(sc);
 		tx_sgl_task_params.num_sges = cmd->io_tbl.sge_valid;
-		if (cmd->use_slowpath)
+		अगर (cmd->use_slowpath)
 			tx_sgl_task_params.small_mid_sge = true;
-	} else if (task_type == ISCSI_TASK_TYPE_INITIATOR_READ) {
+	पूर्ण अन्यथा अगर (task_type == ISCSI_TASK_TYPE_INITIATOR_READ) अणु
 		rx_sgl_task_params.sgl = cmd->io_tbl.sge_tbl;
 		rx_sgl_task_params.sgl_phys_addr.lo =
 						 (u32)(cmd->io_tbl.sge_tbl_dma);
@@ -2141,15 +2142,15 @@ int qedi_iscsi_send_ioreq(struct iscsi_task *task)
 				      (u32)((u64)cmd->io_tbl.sge_tbl_dma >> 32);
 		rx_sgl_task_params.total_buffer_size = scsi_bufflen(sc);
 		rx_sgl_task_params.num_sges = cmd->io_tbl.sge_valid;
-	}
+	पूर्ण
 
 	/* Add conn param */
 	conn_params.first_burst_length = conn->session->first_burst;
 	conn_params.max_send_pdu_length = conn->max_xmit_dlength;
 	conn_params.max_burst_length = conn->session->max_burst;
-	if (conn->session->initial_r2t_en)
+	अगर (conn->session->initial_r2t_en)
 		conn_params.initial_r2t = true;
-	if (conn->session->imm_data_en)
+	अगर (conn->session->imm_data_en)
 		conn_params.immediate_data = true;
 
 	/* Add cmd params */
@@ -2161,9 +2162,9 @@ int qedi_iscsi_send_ioreq(struct iscsi_task *task)
 	task_params.conn_icid = (u16)qedi_conn->iscsi_conn_id;
 	task_params.itid = tid;
 	task_params.cq_rss_number = cq_idx;
-	if (task_type == ISCSI_TASK_TYPE_INITIATOR_WRITE)
+	अगर (task_type == ISCSI_TASK_TYPE_INITIATOR_WRITE)
 		task_params.tx_io_size = scsi_bufflen(sc);
-	else if (task_type == ISCSI_TASK_TYPE_INITIATOR_READ)
+	अन्यथा अगर (task_type == ISCSI_TASK_TYPE_INITIATOR_READ)
 		task_params.rx_io_size = scsi_bufflen(sc);
 
 	sq_idx = qedi_get_wqe_idx(qedi_conn);
@@ -2178,19 +2179,19 @@ int qedi_iscsi_send_ioreq(struct iscsi_task *task)
 		  (u32)(cmd->io_tbl.sge_tbl_dma),
 		  (u32)((u64)cmd->io_tbl.sge_tbl_dma >> 32));
 
-	memset(task_params.sqe, 0, sizeof(struct iscsi_wqe));
+	स_रखो(task_params.sqe, 0, माप(काष्ठा iscsi_wqe));
 
-	if (task_params.tx_io_size != 0)
+	अगर (task_params.tx_io_size != 0)
 		ptx_sgl = &tx_sgl_task_params;
-	if (task_params.rx_io_size != 0)
+	अगर (task_params.rx_io_size != 0)
 		prx_sgl = &rx_sgl_task_params;
 
 	rval = init_initiator_rw_iscsi_task(&task_params, &conn_params,
 					    &cmd_params, &cmd_pdu_header,
 					    ptx_sgl, prx_sgl,
-					    NULL);
-	if (rval)
-		return -1;
+					    शून्य);
+	अगर (rval)
+		वापस -1;
 
 	spin_lock(&qedi_conn->list_lock);
 	list_add_tail(&cmd->io_cmd, &qedi_conn->active_cmd_list);
@@ -2198,38 +2199,38 @@ int qedi_iscsi_send_ioreq(struct iscsi_task *task)
 	qedi_conn->active_cmd_count++;
 	spin_unlock(&qedi_conn->list_lock);
 
-	qedi_ring_doorbell(qedi_conn);
-	return 0;
-}
+	qedi_ring_करोorbell(qedi_conn);
+	वापस 0;
+पूर्ण
 
-int qedi_iscsi_cleanup_task(struct iscsi_task *task, bool mark_cmd_node_deleted)
-{
-	struct iscsi_task_params task_params;
-	struct qedi_endpoint *ep;
-	struct iscsi_conn *conn = task->conn;
-	struct qedi_conn *qedi_conn = conn->dd_data;
-	struct qedi_cmd *cmd = task->dd_data;
+पूर्णांक qedi_iscsi_cleanup_task(काष्ठा iscsi_task *task, bool mark_cmd_node_deleted)
+अणु
+	काष्ठा iscsi_task_params task_params;
+	काष्ठा qedi_endpoपूर्णांक *ep;
+	काष्ठा iscsi_conn *conn = task->conn;
+	काष्ठा qedi_conn *qedi_conn = conn->dd_data;
+	काष्ठा qedi_cmd *cmd = task->dd_data;
 	u16 sq_idx = 0;
-	int rval = 0;
+	पूर्णांक rval = 0;
 
 	QEDI_INFO(&qedi_conn->qedi->dbg_ctx, QEDI_LOG_SCSI_TM,
 		  "issue cleanup tid=0x%x itt=0x%x task_state=%d cmd_state=0%x cid=0x%x\n",
 		  cmd->task_id, get_itt(task->itt), task->state,
 		  cmd->state, qedi_conn->iscsi_conn_id);
 
-	memset(&task_params, 0, sizeof(task_params));
+	स_रखो(&task_params, 0, माप(task_params));
 	ep = qedi_conn->ep;
 
 	sq_idx = qedi_get_wqe_idx(qedi_conn);
 
 	task_params.sqe = &ep->sq[sq_idx];
-	memset(task_params.sqe, 0, sizeof(struct iscsi_wqe));
+	स_रखो(task_params.sqe, 0, माप(काष्ठा iscsi_wqe));
 	task_params.itid = cmd->task_id;
 
 	rval = init_cleanup_task(&task_params);
-	if (rval)
-		return rval;
+	अगर (rval)
+		वापस rval;
 
-	qedi_ring_doorbell(qedi_conn);
-	return 0;
-}
+	qedi_ring_करोorbell(qedi_conn);
+	वापस 0;
+पूर्ण

@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * wm8350.c -- WM8350 ALSA SoC audio driver
  *
@@ -7,375 +8,375 @@
  * Author: Liam Girdwood <lrg@slimlogic.co.uk>
  */
 
-#include <linux/module.h>
-#include <linux/moduleparam.h>
-#include <linux/init.h>
-#include <linux/slab.h>
-#include <linux/delay.h>
-#include <linux/pm.h>
-#include <linux/platform_device.h>
-#include <linux/mfd/wm8350/audio.h>
-#include <linux/mfd/wm8350/core.h>
-#include <linux/regulator/consumer.h>
-#include <sound/core.h>
-#include <sound/pcm.h>
-#include <sound/pcm_params.h>
-#include <sound/soc.h>
-#include <sound/initval.h>
-#include <sound/tlv.h>
-#include <trace/events/asoc.h>
+#समावेश <linux/module.h>
+#समावेश <linux/moduleparam.h>
+#समावेश <linux/init.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/pm.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/mfd/wm8350/audपन.स>
+#समावेश <linux/mfd/wm8350/core.h>
+#समावेश <linux/regulator/consumer.h>
+#समावेश <sound/core.h>
+#समावेश <sound/pcm.h>
+#समावेश <sound/pcm_params.h>
+#समावेश <sound/soc.h>
+#समावेश <sound/initval.h>
+#समावेश <sound/tlv.h>
+#समावेश <trace/events/asoc.h>
 
-#include "wm8350.h"
+#समावेश "wm8350.h"
 
-#define WM8350_OUTn_0dB 0x39
+#घोषणा WM8350_OUTn_0dB 0x39
 
-#define WM8350_RAMP_NONE	0
-#define WM8350_RAMP_UP		1
-#define WM8350_RAMP_DOWN	2
+#घोषणा WM8350_RAMP_NONE	0
+#घोषणा WM8350_RAMP_UP		1
+#घोषणा WM8350_RAMP_DOWN	2
 
 /* We only include the analogue supplies here; the digital supplies
- * need to be available well before this driver can be probed.
+ * need to be available well beक्रमe this driver can be probed.
  */
-static const char *supply_names[] = {
+अटल स्थिर अक्षर *supply_names[] = अणु
 	"AVDD",
 	"HPVDD",
-};
+पूर्ण;
 
-struct wm8350_output {
+काष्ठा wm8350_output अणु
 	u16 active;
 	u16 left_vol;
 	u16 right_vol;
 	u16 ramp;
 	u16 mute;
-};
+पूर्ण;
 
-struct wm8350_jack_data {
-	struct snd_soc_jack *jack;
-	struct delayed_work work;
-	int report;
-	int short_report;
-};
+काष्ठा wm8350_jack_data अणु
+	काष्ठा snd_soc_jack *jack;
+	काष्ठा delayed_work work;
+	पूर्णांक report;
+	पूर्णांक लघु_report;
+पूर्ण;
 
-struct wm8350_data {
-	struct wm8350 *wm8350;
-	struct wm8350_output out1;
-	struct wm8350_output out2;
-	struct wm8350_jack_data hpl;
-	struct wm8350_jack_data hpr;
-	struct wm8350_jack_data mic;
-	struct regulator_bulk_data supplies[ARRAY_SIZE(supply_names)];
-	int fll_freq_out;
-	int fll_freq_in;
-	struct delayed_work pga_work;
-};
+काष्ठा wm8350_data अणु
+	काष्ठा wm8350 *wm8350;
+	काष्ठा wm8350_output out1;
+	काष्ठा wm8350_output out2;
+	काष्ठा wm8350_jack_data hpl;
+	काष्ठा wm8350_jack_data hpr;
+	काष्ठा wm8350_jack_data mic;
+	काष्ठा regulator_bulk_data supplies[ARRAY_SIZE(supply_names)];
+	पूर्णांक fll_freq_out;
+	पूर्णांक fll_freq_in;
+	काष्ठा delayed_work pga_work;
+पूर्ण;
 
 /*
- * Ramp OUT1 PGA volume to minimise pops at stream startup and shutdown.
+ * Ramp OUT1 PGA volume to minimise pops at stream startup and shutकरोwn.
  */
-static inline int wm8350_out1_ramp_step(struct wm8350_data *wm8350_data)
-{
-	struct wm8350_output *out1 = &wm8350_data->out1;
-	struct wm8350 *wm8350 = wm8350_data->wm8350;
-	int left_complete = 0, right_complete = 0;
+अटल अंतरभूत पूर्णांक wm8350_out1_ramp_step(काष्ठा wm8350_data *wm8350_data)
+अणु
+	काष्ठा wm8350_output *out1 = &wm8350_data->out1;
+	काष्ठा wm8350 *wm8350 = wm8350_data->wm8350;
+	पूर्णांक left_complete = 0, right_complete = 0;
 	u16 reg, val;
 
 	/* left channel */
-	reg = wm8350_reg_read(wm8350, WM8350_LOUT1_VOLUME);
+	reg = wm8350_reg_पढ़ो(wm8350, WM8350_LOUT1_VOLUME);
 	val = (reg & WM8350_OUT1L_VOL_MASK) >> WM8350_OUT1L_VOL_SHIFT;
 
-	if (out1->ramp == WM8350_RAMP_UP) {
+	अगर (out1->ramp == WM8350_RAMP_UP) अणु
 		/* ramp step up */
-		if (val < out1->left_vol) {
+		अगर (val < out1->left_vol) अणु
 			val++;
 			reg &= ~WM8350_OUT1L_VOL_MASK;
-			wm8350_reg_write(wm8350, WM8350_LOUT1_VOLUME,
+			wm8350_reg_ग_लिखो(wm8350, WM8350_LOUT1_VOLUME,
 					 reg | (val << WM8350_OUT1L_VOL_SHIFT));
-		} else
+		पूर्ण अन्यथा
 			left_complete = 1;
-	} else if (out1->ramp == WM8350_RAMP_DOWN) {
-		/* ramp step down */
-		if (val > 0) {
+	पूर्ण अन्यथा अगर (out1->ramp == WM8350_RAMP_DOWN) अणु
+		/* ramp step करोwn */
+		अगर (val > 0) अणु
 			val--;
 			reg &= ~WM8350_OUT1L_VOL_MASK;
-			wm8350_reg_write(wm8350, WM8350_LOUT1_VOLUME,
+			wm8350_reg_ग_लिखो(wm8350, WM8350_LOUT1_VOLUME,
 					 reg | (val << WM8350_OUT1L_VOL_SHIFT));
-		} else
+		पूर्ण अन्यथा
 			left_complete = 1;
-	} else
-		return 1;
+	पूर्ण अन्यथा
+		वापस 1;
 
 	/* right channel */
-	reg = wm8350_reg_read(wm8350, WM8350_ROUT1_VOLUME);
+	reg = wm8350_reg_पढ़ो(wm8350, WM8350_ROUT1_VOLUME);
 	val = (reg & WM8350_OUT1R_VOL_MASK) >> WM8350_OUT1R_VOL_SHIFT;
-	if (out1->ramp == WM8350_RAMP_UP) {
+	अगर (out1->ramp == WM8350_RAMP_UP) अणु
 		/* ramp step up */
-		if (val < out1->right_vol) {
+		अगर (val < out1->right_vol) अणु
 			val++;
 			reg &= ~WM8350_OUT1R_VOL_MASK;
-			wm8350_reg_write(wm8350, WM8350_ROUT1_VOLUME,
+			wm8350_reg_ग_लिखो(wm8350, WM8350_ROUT1_VOLUME,
 					 reg | (val << WM8350_OUT1R_VOL_SHIFT));
-		} else
+		पूर्ण अन्यथा
 			right_complete = 1;
-	} else if (out1->ramp == WM8350_RAMP_DOWN) {
-		/* ramp step down */
-		if (val > 0) {
+	पूर्ण अन्यथा अगर (out1->ramp == WM8350_RAMP_DOWN) अणु
+		/* ramp step करोwn */
+		अगर (val > 0) अणु
 			val--;
 			reg &= ~WM8350_OUT1R_VOL_MASK;
-			wm8350_reg_write(wm8350, WM8350_ROUT1_VOLUME,
+			wm8350_reg_ग_लिखो(wm8350, WM8350_ROUT1_VOLUME,
 					 reg | (val << WM8350_OUT1R_VOL_SHIFT));
-		} else
+		पूर्ण अन्यथा
 			right_complete = 1;
-	}
+	पूर्ण
 
-	/* only hit the update bit if either volume has changed this step */
-	if (!left_complete || !right_complete)
+	/* only hit the update bit अगर either volume has changed this step */
+	अगर (!left_complete || !right_complete)
 		wm8350_set_bits(wm8350, WM8350_LOUT1_VOLUME, WM8350_OUT1_VU);
 
-	return left_complete & right_complete;
-}
+	वापस left_complete & right_complete;
+पूर्ण
 
 /*
- * Ramp OUT2 PGA volume to minimise pops at stream startup and shutdown.
+ * Ramp OUT2 PGA volume to minimise pops at stream startup and shutकरोwn.
  */
-static inline int wm8350_out2_ramp_step(struct wm8350_data *wm8350_data)
-{
-	struct wm8350_output *out2 = &wm8350_data->out2;
-	struct wm8350 *wm8350 = wm8350_data->wm8350;
-	int left_complete = 0, right_complete = 0;
+अटल अंतरभूत पूर्णांक wm8350_out2_ramp_step(काष्ठा wm8350_data *wm8350_data)
+अणु
+	काष्ठा wm8350_output *out2 = &wm8350_data->out2;
+	काष्ठा wm8350 *wm8350 = wm8350_data->wm8350;
+	पूर्णांक left_complete = 0, right_complete = 0;
 	u16 reg, val;
 
 	/* left channel */
-	reg = wm8350_reg_read(wm8350, WM8350_LOUT2_VOLUME);
+	reg = wm8350_reg_पढ़ो(wm8350, WM8350_LOUT2_VOLUME);
 	val = (reg & WM8350_OUT2L_VOL_MASK) >> WM8350_OUT1L_VOL_SHIFT;
-	if (out2->ramp == WM8350_RAMP_UP) {
+	अगर (out2->ramp == WM8350_RAMP_UP) अणु
 		/* ramp step up */
-		if (val < out2->left_vol) {
+		अगर (val < out2->left_vol) अणु
 			val++;
 			reg &= ~WM8350_OUT2L_VOL_MASK;
-			wm8350_reg_write(wm8350, WM8350_LOUT2_VOLUME,
+			wm8350_reg_ग_लिखो(wm8350, WM8350_LOUT2_VOLUME,
 					 reg | (val << WM8350_OUT1L_VOL_SHIFT));
-		} else
+		पूर्ण अन्यथा
 			left_complete = 1;
-	} else if (out2->ramp == WM8350_RAMP_DOWN) {
-		/* ramp step down */
-		if (val > 0) {
+	पूर्ण अन्यथा अगर (out2->ramp == WM8350_RAMP_DOWN) अणु
+		/* ramp step करोwn */
+		अगर (val > 0) अणु
 			val--;
 			reg &= ~WM8350_OUT2L_VOL_MASK;
-			wm8350_reg_write(wm8350, WM8350_LOUT2_VOLUME,
+			wm8350_reg_ग_लिखो(wm8350, WM8350_LOUT2_VOLUME,
 					 reg | (val << WM8350_OUT1L_VOL_SHIFT));
-		} else
+		पूर्ण अन्यथा
 			left_complete = 1;
-	} else
-		return 1;
+	पूर्ण अन्यथा
+		वापस 1;
 
 	/* right channel */
-	reg = wm8350_reg_read(wm8350, WM8350_ROUT2_VOLUME);
+	reg = wm8350_reg_पढ़ो(wm8350, WM8350_ROUT2_VOLUME);
 	val = (reg & WM8350_OUT2R_VOL_MASK) >> WM8350_OUT1R_VOL_SHIFT;
-	if (out2->ramp == WM8350_RAMP_UP) {
+	अगर (out2->ramp == WM8350_RAMP_UP) अणु
 		/* ramp step up */
-		if (val < out2->right_vol) {
+		अगर (val < out2->right_vol) अणु
 			val++;
 			reg &= ~WM8350_OUT2R_VOL_MASK;
-			wm8350_reg_write(wm8350, WM8350_ROUT2_VOLUME,
+			wm8350_reg_ग_लिखो(wm8350, WM8350_ROUT2_VOLUME,
 					 reg | (val << WM8350_OUT1R_VOL_SHIFT));
-		} else
+		पूर्ण अन्यथा
 			right_complete = 1;
-	} else if (out2->ramp == WM8350_RAMP_DOWN) {
-		/* ramp step down */
-		if (val > 0) {
+	पूर्ण अन्यथा अगर (out2->ramp == WM8350_RAMP_DOWN) अणु
+		/* ramp step करोwn */
+		अगर (val > 0) अणु
 			val--;
 			reg &= ~WM8350_OUT2R_VOL_MASK;
-			wm8350_reg_write(wm8350, WM8350_ROUT2_VOLUME,
+			wm8350_reg_ग_लिखो(wm8350, WM8350_ROUT2_VOLUME,
 					 reg | (val << WM8350_OUT1R_VOL_SHIFT));
-		} else
+		पूर्ण अन्यथा
 			right_complete = 1;
-	}
+	पूर्ण
 
-	/* only hit the update bit if either volume has changed this step */
-	if (!left_complete || !right_complete)
+	/* only hit the update bit अगर either volume has changed this step */
+	अगर (!left_complete || !right_complete)
 		wm8350_set_bits(wm8350, WM8350_LOUT2_VOLUME, WM8350_OUT2_VU);
 
-	return left_complete & right_complete;
-}
+	वापस left_complete & right_complete;
+पूर्ण
 
 /*
- * This work ramps both output PGAs at stream start/stop time to
- * minimise pop associated with DAPM power switching.
+ * This work ramps both output PGAs at stream start/stop समय to
+ * minimise pop associated with DAPM घातer चयनing.
  * It's best to enable Zero Cross when ramping occurs to minimise any
  * zipper noises.
  */
-static void wm8350_pga_work(struct work_struct *work)
-{
-	struct wm8350_data *wm8350_data =
-		container_of(work, struct wm8350_data, pga_work.work);
-	struct wm8350_output *out1 = &wm8350_data->out1,
+अटल व्योम wm8350_pga_work(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा wm8350_data *wm8350_data =
+		container_of(work, काष्ठा wm8350_data, pga_work.work);
+	काष्ठा wm8350_output *out1 = &wm8350_data->out1,
 	    *out2 = &wm8350_data->out2;
-	int i, out1_complete, out2_complete;
+	पूर्णांक i, out1_complete, out2_complete;
 
-	/* do we need to ramp at all ? */
-	if (out1->ramp == WM8350_RAMP_NONE && out2->ramp == WM8350_RAMP_NONE)
-		return;
+	/* करो we need to ramp at all ? */
+	अगर (out1->ramp == WM8350_RAMP_NONE && out2->ramp == WM8350_RAMP_NONE)
+		वापस;
 
 	/* PGA volumes have 6 bits of resolution to ramp */
-	for (i = 0; i <= 63; i++) {
+	क्रम (i = 0; i <= 63; i++) अणु
 		out1_complete = 1;
 		out2_complete = 1;
-		if (out1->ramp != WM8350_RAMP_NONE)
+		अगर (out1->ramp != WM8350_RAMP_NONE)
 			out1_complete = wm8350_out1_ramp_step(wm8350_data);
-		if (out2->ramp != WM8350_RAMP_NONE)
+		अगर (out2->ramp != WM8350_RAMP_NONE)
 			out2_complete = wm8350_out2_ramp_step(wm8350_data);
 
 		/* ramp finished ? */
-		if (out1_complete && out2_complete)
-			break;
+		अगर (out1_complete && out2_complete)
+			अवरोध;
 
-		/* we need to delay longer on the up ramp */
-		if (out1->ramp == WM8350_RAMP_UP ||
-		    out2->ramp == WM8350_RAMP_UP) {
-			/* delay is longer over 0dB as increases are larger */
-			if (i >= WM8350_OUTn_0dB)
-				schedule_timeout_interruptible(msecs_to_jiffies
+		/* we need to delay दीर्घer on the up ramp */
+		अगर (out1->ramp == WM8350_RAMP_UP ||
+		    out2->ramp == WM8350_RAMP_UP) अणु
+			/* delay is दीर्घer over 0dB as increases are larger */
+			अगर (i >= WM8350_OUTn_0dB)
+				schedule_समयout_पूर्णांकerruptible(msecs_to_jअगरfies
 							       (2));
-			else
-				schedule_timeout_interruptible(msecs_to_jiffies
+			अन्यथा
+				schedule_समयout_पूर्णांकerruptible(msecs_to_jअगरfies
 							       (1));
-		} else
-			udelay(50);	/* doesn't matter if we delay longer */
-	}
+		पूर्ण अन्यथा
+			udelay(50);	/* करोesn't matter अगर we delay दीर्घer */
+	पूर्ण
 
 	out1->ramp = WM8350_RAMP_NONE;
 	out2->ramp = WM8350_RAMP_NONE;
-}
+पूर्ण
 
 /*
  * WM8350 Controls
  */
 
-static int pga_event(struct snd_soc_dapm_widget *w,
-		     struct snd_kcontrol *kcontrol, int event)
-{
-	struct snd_soc_component *component = snd_soc_dapm_to_component(w->dapm);
-	struct wm8350_data *wm8350_data = snd_soc_component_get_drvdata(component);
-	struct wm8350_output *out;
+अटल पूर्णांक pga_event(काष्ठा snd_soc_dapm_widget *w,
+		     काष्ठा snd_kcontrol *kcontrol, पूर्णांक event)
+अणु
+	काष्ठा snd_soc_component *component = snd_soc_dapm_to_component(w->dapm);
+	काष्ठा wm8350_data *wm8350_data = snd_soc_component_get_drvdata(component);
+	काष्ठा wm8350_output *out;
 
-	switch (w->shift) {
-	case 0:
-	case 1:
+	चयन (w->shअगरt) अणु
+	हाल 0:
+	हाल 1:
 		out = &wm8350_data->out1;
-		break;
-	case 2:
-	case 3:
+		अवरोध;
+	हाल 2:
+	हाल 3:
 		out = &wm8350_data->out2;
-		break;
+		अवरोध;
 
-	default:
-		WARN(1, "Invalid shift %d\n", w->shift);
-		return -1;
-	}
+	शेष:
+		WARN(1, "Invalid shift %d\n", w->shअगरt);
+		वापस -1;
+	पूर्ण
 
-	switch (event) {
-	case SND_SOC_DAPM_POST_PMU:
+	चयन (event) अणु
+	हाल SND_SOC_DAPM_POST_PMU:
 		out->ramp = WM8350_RAMP_UP;
 		out->active = 1;
 
 		schedule_delayed_work(&wm8350_data->pga_work,
-				      msecs_to_jiffies(1));
-		break;
+				      msecs_to_jअगरfies(1));
+		अवरोध;
 
-	case SND_SOC_DAPM_PRE_PMD:
+	हाल SND_SOC_DAPM_PRE_PMD:
 		out->ramp = WM8350_RAMP_DOWN;
 		out->active = 0;
 
 		schedule_delayed_work(&wm8350_data->pga_work,
-				      msecs_to_jiffies(1));
-		break;
-	}
+				      msecs_to_jअगरfies(1));
+		अवरोध;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int wm8350_put_volsw_2r_vu(struct snd_kcontrol *kcontrol,
-				  struct snd_ctl_elem_value *ucontrol)
-{
-	struct snd_soc_component *component = snd_soc_kcontrol_component(kcontrol);
-	struct wm8350_data *wm8350_priv = snd_soc_component_get_drvdata(component);
-	struct wm8350_output *out = NULL;
-	struct soc_mixer_control *mc =
-		(struct soc_mixer_control *)kcontrol->private_value;
-	int ret;
-	unsigned int reg = mc->reg;
+अटल पूर्णांक wm8350_put_volsw_2r_vu(काष्ठा snd_kcontrol *kcontrol,
+				  काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	काष्ठा snd_soc_component *component = snd_soc_kcontrol_component(kcontrol);
+	काष्ठा wm8350_data *wm8350_priv = snd_soc_component_get_drvdata(component);
+	काष्ठा wm8350_output *out = शून्य;
+	काष्ठा soc_mixer_control *mc =
+		(काष्ठा soc_mixer_control *)kcontrol->निजी_value;
+	पूर्णांक ret;
+	अचिन्हित पूर्णांक reg = mc->reg;
 	u16 val;
 
-	/* For OUT1 and OUT2 we shadow the values and only actually write
-	 * them out when active in order to ensure the amplifier comes on
+	/* For OUT1 and OUT2 we shaकरोw the values and only actually ग_लिखो
+	 * them out when active in order to ensure the amplअगरier comes on
 	 * as quietly as possible. */
-	switch (reg) {
-	case WM8350_LOUT1_VOLUME:
+	चयन (reg) अणु
+	हाल WM8350_LOUT1_VOLUME:
 		out = &wm8350_priv->out1;
-		break;
-	case WM8350_LOUT2_VOLUME:
+		अवरोध;
+	हाल WM8350_LOUT2_VOLUME:
 		out = &wm8350_priv->out2;
-		break;
-	default:
-		break;
-	}
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	if (out) {
-		out->left_vol = ucontrol->value.integer.value[0];
-		out->right_vol = ucontrol->value.integer.value[1];
-		if (!out->active)
-			return 1;
-	}
+	अगर (out) अणु
+		out->left_vol = ucontrol->value.पूर्णांकeger.value[0];
+		out->right_vol = ucontrol->value.पूर्णांकeger.value[1];
+		अगर (!out->active)
+			वापस 1;
+	पूर्ण
 
 	ret = snd_soc_put_volsw(kcontrol, ucontrol);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	/* now hit the volume update bits (always bit 8) */
-	val = snd_soc_component_read(component, reg);
-	snd_soc_component_write(component, reg, val | WM8350_OUT1_VU);
-	return 1;
-}
+	val = snd_soc_component_पढ़ो(component, reg);
+	snd_soc_component_ग_लिखो(component, reg, val | WM8350_OUT1_VU);
+	वापस 1;
+पूर्ण
 
-static int wm8350_get_volsw_2r(struct snd_kcontrol *kcontrol,
-			       struct snd_ctl_elem_value *ucontrol)
-{
-	struct snd_soc_component *component = snd_soc_kcontrol_component(kcontrol);
-	struct wm8350_data *wm8350_priv = snd_soc_component_get_drvdata(component);
-	struct wm8350_output *out1 = &wm8350_priv->out1;
-	struct wm8350_output *out2 = &wm8350_priv->out2;
-	struct soc_mixer_control *mc =
-		(struct soc_mixer_control *)kcontrol->private_value;
-	unsigned int reg = mc->reg;
+अटल पूर्णांक wm8350_get_volsw_2r(काष्ठा snd_kcontrol *kcontrol,
+			       काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	काष्ठा snd_soc_component *component = snd_soc_kcontrol_component(kcontrol);
+	काष्ठा wm8350_data *wm8350_priv = snd_soc_component_get_drvdata(component);
+	काष्ठा wm8350_output *out1 = &wm8350_priv->out1;
+	काष्ठा wm8350_output *out2 = &wm8350_priv->out2;
+	काष्ठा soc_mixer_control *mc =
+		(काष्ठा soc_mixer_control *)kcontrol->निजी_value;
+	अचिन्हित पूर्णांक reg = mc->reg;
 
-	/* If these are cached registers use the cache */
-	switch (reg) {
-	case WM8350_LOUT1_VOLUME:
-		ucontrol->value.integer.value[0] = out1->left_vol;
-		ucontrol->value.integer.value[1] = out1->right_vol;
-		return 0;
+	/* If these are cached रेजिस्टरs use the cache */
+	चयन (reg) अणु
+	हाल WM8350_LOUT1_VOLUME:
+		ucontrol->value.पूर्णांकeger.value[0] = out1->left_vol;
+		ucontrol->value.पूर्णांकeger.value[1] = out1->right_vol;
+		वापस 0;
 
-	case WM8350_LOUT2_VOLUME:
-		ucontrol->value.integer.value[0] = out2->left_vol;
-		ucontrol->value.integer.value[1] = out2->right_vol;
-		return 0;
+	हाल WM8350_LOUT2_VOLUME:
+		ucontrol->value.पूर्णांकeger.value[0] = out2->left_vol;
+		ucontrol->value.पूर्णांकeger.value[1] = out2->right_vol;
+		वापस 0;
 
-	default:
-		break;
-	}
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	return snd_soc_get_volsw(kcontrol, ucontrol);
-}
+	वापस snd_soc_get_volsw(kcontrol, ucontrol);
+पूर्ण
 
-static const char *wm8350_deemp[] = { "None", "32kHz", "44.1kHz", "48kHz" };
-static const char *wm8350_pol[] = { "Normal", "Inv R", "Inv L", "Inv L & R" };
-static const char *wm8350_dacmutem[] = { "Normal", "Soft" };
-static const char *wm8350_dacmutes[] = { "Fast", "Slow" };
-static const char *wm8350_adcfilter[] = { "None", "High Pass" };
-static const char *wm8350_adchp[] = { "44.1kHz", "8kHz", "16kHz", "32kHz" };
-static const char *wm8350_lr[] = { "Left", "Right" };
+अटल स्थिर अक्षर *wm8350_deemp[] = अणु "None", "32kHz", "44.1kHz", "48kHz" पूर्ण;
+अटल स्थिर अक्षर *wm8350_pol[] = अणु "Normal", "Inv R", "Inv L", "Inv L & R" पूर्ण;
+अटल स्थिर अक्षर *wm8350_dacmutem[] = अणु "Normal", "Soft" पूर्ण;
+अटल स्थिर अक्षर *wm8350_dacmutes[] = अणु "Fast", "Slow" पूर्ण;
+अटल स्थिर अक्षर *wm8350_adcfilter[] = अणु "None", "High Pass" पूर्ण;
+अटल स्थिर अक्षर *wm8350_adchp[] = अणु "44.1kHz", "8kHz", "16kHz", "32kHz" पूर्ण;
+अटल स्थिर अक्षर *wm8350_lr[] = अणु "Left", "Right" पूर्ण;
 
-static const struct soc_enum wm8350_enum[] = {
+अटल स्थिर काष्ठा soc_क्रमागत wm8350_क्रमागत[] = अणु
 	SOC_ENUM_SINGLE(WM8350_DAC_CONTROL, 4, 4, wm8350_deemp),
 	SOC_ENUM_SINGLE(WM8350_DAC_CONTROL, 0, 4, wm8350_pol),
 	SOC_ENUM_SINGLE(WM8350_DAC_MUTE_VOLUME, 14, 2, wm8350_dacmutem),
@@ -384,32 +385,32 @@ static const struct soc_enum wm8350_enum[] = {
 	SOC_ENUM_SINGLE(WM8350_ADC_CONTROL, 8, 4, wm8350_adchp),
 	SOC_ENUM_SINGLE(WM8350_ADC_CONTROL, 0, 4, wm8350_pol),
 	SOC_ENUM_SINGLE(WM8350_INPUT_MIXER_VOLUME, 15, 2, wm8350_lr),
-};
+पूर्ण;
 
-static DECLARE_TLV_DB_SCALE(pre_amp_tlv, -1200, 3525, 0);
-static DECLARE_TLV_DB_SCALE(out_pga_tlv, -5700, 600, 0);
-static DECLARE_TLV_DB_SCALE(dac_pcm_tlv, -7163, 36, 1);
-static DECLARE_TLV_DB_SCALE(adc_pcm_tlv, -12700, 50, 1);
-static DECLARE_TLV_DB_SCALE(out_mix_tlv, -1500, 300, 1);
+अटल DECLARE_TLV_DB_SCALE(pre_amp_tlv, -1200, 3525, 0);
+अटल DECLARE_TLV_DB_SCALE(out_pga_tlv, -5700, 600, 0);
+अटल DECLARE_TLV_DB_SCALE(dac_pcm_tlv, -7163, 36, 1);
+अटल DECLARE_TLV_DB_SCALE(adc_pcm_tlv, -12700, 50, 1);
+अटल DECLARE_TLV_DB_SCALE(out_mix_tlv, -1500, 300, 1);
 
-static const DECLARE_TLV_DB_RANGE(capture_sd_tlv,
+अटल स्थिर DECLARE_TLV_DB_RANGE(capture_sd_tlv,
 	0, 12, TLV_DB_SCALE_ITEM(-3600, 300, 1),
 	13, 15, TLV_DB_SCALE_ITEM(0, 0, 0)
 );
 
-static const struct snd_kcontrol_new wm8350_snd_controls[] = {
-	SOC_ENUM("Playback Deemphasis", wm8350_enum[0]),
-	SOC_ENUM("Playback DAC Inversion", wm8350_enum[1]),
+अटल स्थिर काष्ठा snd_kcontrol_new wm8350_snd_controls[] = अणु
+	SOC_ENUM("Playback Deemphasis", wm8350_क्रमागत[0]),
+	SOC_ENUM("Playback DAC Inversion", wm8350_क्रमागत[1]),
 	SOC_DOUBLE_R_EXT_TLV("Playback PCM Volume",
 				WM8350_DAC_DIGITAL_VOLUME_L,
 				WM8350_DAC_DIGITAL_VOLUME_R,
 				0, 255, 0, wm8350_get_volsw_2r,
 				wm8350_put_volsw_2r_vu, dac_pcm_tlv),
-	SOC_ENUM("Playback PCM Mute Function", wm8350_enum[2]),
-	SOC_ENUM("Playback PCM Mute Speed", wm8350_enum[3]),
-	SOC_ENUM("Capture PCM Filter", wm8350_enum[4]),
-	SOC_ENUM("Capture PCM HP Filter", wm8350_enum[5]),
-	SOC_ENUM("Capture ADC Inversion", wm8350_enum[6]),
+	SOC_ENUM("Playback PCM Mute Function", wm8350_क्रमागत[2]),
+	SOC_ENUM("Playback PCM Mute Speed", wm8350_क्रमागत[3]),
+	SOC_ENUM("Capture PCM Filter", wm8350_क्रमागत[4]),
+	SOC_ENUM("Capture PCM HP Filter", wm8350_क्रमागत[5]),
+	SOC_ENUM("Capture ADC Inversion", wm8350_क्रमागत[6]),
 	SOC_DOUBLE_R_EXT_TLV("Capture PCM Volume",
 				WM8350_ADC_DIGITAL_VOLUME_L,
 				WM8350_ADC_DIGITAL_VOLUME_R,
@@ -477,14 +478,14 @@ static const struct snd_kcontrol_new wm8350_snd_controls[] = {
 		     WM8350_LOUT2_VOLUME,
 		     WM8350_ROUT2_VOLUME,
 		     14, 1, 1),
-};
+पूर्ण;
 
 /*
  * DAPM Controls
  */
 
 /* Left Playback Mixer */
-static const struct snd_kcontrol_new wm8350_left_play_mixer_controls[] = {
+अटल स्थिर काष्ठा snd_kcontrol_new wm8350_left_play_mixer_controls[] = अणु
 	SOC_DAPM_SINGLE("Playback Switch",
 			WM8350_LEFT_MIXER_CONTROL, 11, 1, 0),
 	SOC_DAPM_SINGLE("Left Bypass Switch",
@@ -495,10 +496,10 @@ static const struct snd_kcontrol_new wm8350_left_play_mixer_controls[] = {
 			WM8350_LEFT_MIXER_CONTROL, 0, 1, 0),
 	SOC_DAPM_SINGLE("Right Sidetone Switch",
 			WM8350_LEFT_MIXER_CONTROL, 1, 1, 0),
-};
+पूर्ण;
 
 /* Right Playback Mixer */
-static const struct snd_kcontrol_new wm8350_right_play_mixer_controls[] = {
+अटल स्थिर काष्ठा snd_kcontrol_new wm8350_right_play_mixer_controls[] = अणु
 	SOC_DAPM_SINGLE("Playback Switch",
 			WM8350_RIGHT_MIXER_CONTROL, 12, 1, 0),
 	SOC_DAPM_SINGLE("Right Bypass Switch",
@@ -509,10 +510,10 @@ static const struct snd_kcontrol_new wm8350_right_play_mixer_controls[] = {
 			WM8350_RIGHT_MIXER_CONTROL, 0, 1, 0),
 	SOC_DAPM_SINGLE("Right Sidetone Switch",
 			WM8350_RIGHT_MIXER_CONTROL, 1, 1, 0),
-};
+पूर्ण;
 
 /* Out4 Mixer */
-static const struct snd_kcontrol_new wm8350_out4_mixer_controls[] = {
+अटल स्थिर काष्ठा snd_kcontrol_new wm8350_out4_mixer_controls[] = अणु
 	SOC_DAPM_SINGLE("Right Playback Switch",
 			WM8350_OUT4_MIXER_CONTROL, 12, 1, 0),
 	SOC_DAPM_SINGLE("Left Playback Switch",
@@ -525,10 +526,10 @@ static const struct snd_kcontrol_new wm8350_out4_mixer_controls[] = {
 			WM8350_OUT4_MIXER_CONTROL, 1, 1, 0),
 	SOC_DAPM_SINGLE("Left Mixer Switch",
 			WM8350_OUT4_MIXER_CONTROL, 0, 1, 0),
-};
+पूर्ण;
 
 /* Out3 Mixer */
-static const struct snd_kcontrol_new wm8350_out3_mixer_controls[] = {
+अटल स्थिर काष्ठा snd_kcontrol_new wm8350_out3_mixer_controls[] = अणु
 	SOC_DAPM_SINGLE("Left Playback Switch",
 			WM8350_OUT3_MIXER_CONTROL, 11, 1, 0),
 	SOC_DAPM_SINGLE("Left Capture Switch",
@@ -537,64 +538,64 @@ static const struct snd_kcontrol_new wm8350_out3_mixer_controls[] = {
 			WM8350_OUT3_MIXER_CONTROL, 3, 1, 0),
 	SOC_DAPM_SINGLE("Left Mixer Switch",
 			WM8350_OUT3_MIXER_CONTROL, 0, 1, 0),
-};
+पूर्ण;
 
 /* Left Input Mixer */
-static const struct snd_kcontrol_new wm8350_left_capt_mixer_controls[] = {
+अटल स्थिर काष्ठा snd_kcontrol_new wm8350_left_capt_mixer_controls[] = अणु
 	SOC_DAPM_SINGLE_TLV("L2 Capture Volume",
 			    WM8350_INPUT_MIXER_VOLUME_L, 1, 7, 0, out_mix_tlv),
 	SOC_DAPM_SINGLE_TLV("L3 Capture Volume",
 			    WM8350_INPUT_MIXER_VOLUME_L, 9, 7, 0, out_mix_tlv),
 	SOC_DAPM_SINGLE("PGA Capture Switch",
 			WM8350_LEFT_INPUT_VOLUME, 14, 1, 1),
-};
+पूर्ण;
 
 /* Right Input Mixer */
-static const struct snd_kcontrol_new wm8350_right_capt_mixer_controls[] = {
+अटल स्थिर काष्ठा snd_kcontrol_new wm8350_right_capt_mixer_controls[] = अणु
 	SOC_DAPM_SINGLE_TLV("L2 Capture Volume",
 			    WM8350_INPUT_MIXER_VOLUME_R, 5, 7, 0, out_mix_tlv),
 	SOC_DAPM_SINGLE_TLV("L3 Capture Volume",
 			    WM8350_INPUT_MIXER_VOLUME_R, 13, 7, 0, out_mix_tlv),
 	SOC_DAPM_SINGLE("PGA Capture Switch",
 			WM8350_RIGHT_INPUT_VOLUME, 14, 1, 1),
-};
+पूर्ण;
 
 /* Left Mic Mixer */
-static const struct snd_kcontrol_new wm8350_left_mic_mixer_controls[] = {
+अटल स्थिर काष्ठा snd_kcontrol_new wm8350_left_mic_mixer_controls[] = अणु
 	SOC_DAPM_SINGLE("INN Capture Switch", WM8350_INPUT_CONTROL, 1, 1, 0),
 	SOC_DAPM_SINGLE("INP Capture Switch", WM8350_INPUT_CONTROL, 0, 1, 0),
 	SOC_DAPM_SINGLE("IN2 Capture Switch", WM8350_INPUT_CONTROL, 2, 1, 0),
-};
+पूर्ण;
 
 /* Right Mic Mixer */
-static const struct snd_kcontrol_new wm8350_right_mic_mixer_controls[] = {
+अटल स्थिर काष्ठा snd_kcontrol_new wm8350_right_mic_mixer_controls[] = अणु
 	SOC_DAPM_SINGLE("INN Capture Switch", WM8350_INPUT_CONTROL, 9, 1, 0),
 	SOC_DAPM_SINGLE("INP Capture Switch", WM8350_INPUT_CONTROL, 8, 1, 0),
 	SOC_DAPM_SINGLE("IN2 Capture Switch", WM8350_INPUT_CONTROL, 10, 1, 0),
-};
+पूर्ण;
 
 /* Beep Switch */
-static const struct snd_kcontrol_new wm8350_beep_switch_controls =
+अटल स्थिर काष्ठा snd_kcontrol_new wm8350_beep_चयन_controls =
 SOC_DAPM_SINGLE("Switch", WM8350_BEEP_VOLUME, 15, 1, 1);
 
 /* Out4 Capture Mux */
-static const struct snd_kcontrol_new wm8350_out4_capture_controls =
-SOC_DAPM_ENUM("Route", wm8350_enum[7]);
+अटल स्थिर काष्ठा snd_kcontrol_new wm8350_out4_capture_controls =
+SOC_DAPM_ENUM("Route", wm8350_क्रमागत[7]);
 
-static const struct snd_soc_dapm_widget wm8350_dapm_widgets[] = {
+अटल स्थिर काष्ठा snd_soc_dapm_widget wm8350_dapm_widमाला_लो[] = अणु
 
-	SND_SOC_DAPM_PGA("IN3R PGA", WM8350_POWER_MGMT_2, 11, 0, NULL, 0),
-	SND_SOC_DAPM_PGA("IN3L PGA", WM8350_POWER_MGMT_2, 10, 0, NULL, 0),
-	SND_SOC_DAPM_PGA_E("Right Out2 PGA", WM8350_POWER_MGMT_3, 3, 0, NULL,
+	SND_SOC_DAPM_PGA("IN3R PGA", WM8350_POWER_MGMT_2, 11, 0, शून्य, 0),
+	SND_SOC_DAPM_PGA("IN3L PGA", WM8350_POWER_MGMT_2, 10, 0, शून्य, 0),
+	SND_SOC_DAPM_PGA_E("Right Out2 PGA", WM8350_POWER_MGMT_3, 3, 0, शून्य,
 			   0, pga_event,
 			   SND_SOC_DAPM_POST_PMU | SND_SOC_DAPM_PRE_PMD),
-	SND_SOC_DAPM_PGA_E("Left Out2 PGA", WM8350_POWER_MGMT_3, 2, 0, NULL, 0,
+	SND_SOC_DAPM_PGA_E("Left Out2 PGA", WM8350_POWER_MGMT_3, 2, 0, शून्य, 0,
 			   pga_event,
 			   SND_SOC_DAPM_POST_PMU | SND_SOC_DAPM_PRE_PMD),
-	SND_SOC_DAPM_PGA_E("Right Out1 PGA", WM8350_POWER_MGMT_3, 1, 0, NULL,
+	SND_SOC_DAPM_PGA_E("Right Out1 PGA", WM8350_POWER_MGMT_3, 1, 0, शून्य,
 			   0, pga_event,
 			   SND_SOC_DAPM_POST_PMU | SND_SOC_DAPM_PRE_PMD),
-	SND_SOC_DAPM_PGA_E("Left Out1 PGA", WM8350_POWER_MGMT_3, 0, 0, NULL, 0,
+	SND_SOC_DAPM_PGA_E("Left Out1 PGA", WM8350_POWER_MGMT_3, 0, 0, शून्य, 0,
 			   pga_event,
 			   SND_SOC_DAPM_POST_PMU | SND_SOC_DAPM_PRE_PMD),
 
@@ -630,11 +631,11 @@ static const struct snd_soc_dapm_widget wm8350_dapm_widgets[] = {
 			   &wm8350_right_mic_mixer_controls[0],
 			   ARRAY_SIZE(wm8350_right_mic_mixer_controls)),
 
-	/* virtual mixer for Beep and Out2R */
-	SND_SOC_DAPM_MIXER("Out2 Mixer", SND_SOC_NOPM, 0, 0, NULL, 0),
+	/* भव mixer क्रम Beep and Out2R */
+	SND_SOC_DAPM_MIXER("Out2 Mixer", SND_SOC_NOPM, 0, 0, शून्य, 0),
 
 	SND_SOC_DAPM_SWITCH("Beep", WM8350_POWER_MGMT_3, 7, 0,
-			    &wm8350_beep_switch_controls),
+			    &wm8350_beep_चयन_controls),
 
 	SND_SOC_DAPM_ADC("Right ADC", "Right Capture",
 			 WM8350_POWER_MGMT_4, 3, 0),
@@ -665,513 +666,513 @@ static const struct snd_soc_dapm_widget wm8350_dapm_widgets[] = {
 	SND_SOC_DAPM_INPUT("IN2L"),
 	SND_SOC_DAPM_INPUT("IN3R"),
 	SND_SOC_DAPM_INPUT("IN3L"),
-};
+पूर्ण;
 
-static const struct snd_soc_dapm_route wm8350_dapm_routes[] = {
+अटल स्थिर काष्ठा snd_soc_dapm_route wm8350_dapm_routes[] = अणु
 
 	/* left playback mixer */
-	{"Left Playback Mixer", "Playback Switch", "Left DAC"},
-	{"Left Playback Mixer", "Left Bypass Switch", "IN3L PGA"},
-	{"Left Playback Mixer", "Right Playback Switch", "Right DAC"},
-	{"Left Playback Mixer", "Left Sidetone Switch", "Left Mic Mixer"},
-	{"Left Playback Mixer", "Right Sidetone Switch", "Right Mic Mixer"},
+	अणु"Left Playback Mixer", "Playback Switch", "Left DAC"पूर्ण,
+	अणु"Left Playback Mixer", "Left Bypass Switch", "IN3L PGA"पूर्ण,
+	अणु"Left Playback Mixer", "Right Playback Switch", "Right DAC"पूर्ण,
+	अणु"Left Playback Mixer", "Left Sidetone Switch", "Left Mic Mixer"पूर्ण,
+	अणु"Left Playback Mixer", "Right Sidetone Switch", "Right Mic Mixer"पूर्ण,
 
 	/* right playback mixer */
-	{"Right Playback Mixer", "Playback Switch", "Right DAC"},
-	{"Right Playback Mixer", "Right Bypass Switch", "IN3R PGA"},
-	{"Right Playback Mixer", "Left Playback Switch", "Left DAC"},
-	{"Right Playback Mixer", "Left Sidetone Switch", "Left Mic Mixer"},
-	{"Right Playback Mixer", "Right Sidetone Switch", "Right Mic Mixer"},
+	अणु"Right Playback Mixer", "Playback Switch", "Right DAC"पूर्ण,
+	अणु"Right Playback Mixer", "Right Bypass Switch", "IN3R PGA"पूर्ण,
+	अणु"Right Playback Mixer", "Left Playback Switch", "Left DAC"पूर्ण,
+	अणु"Right Playback Mixer", "Left Sidetone Switch", "Left Mic Mixer"पूर्ण,
+	अणु"Right Playback Mixer", "Right Sidetone Switch", "Right Mic Mixer"पूर्ण,
 
 	/* out4 playback mixer */
-	{"Out4 Mixer", "Right Playback Switch", "Right DAC"},
-	{"Out4 Mixer", "Left Playback Switch", "Left DAC"},
-	{"Out4 Mixer", "Right Capture Switch", "Right Capture Mixer"},
-	{"Out4 Mixer", "Out3 Playback Switch", "Out3 Mixer"},
-	{"Out4 Mixer", "Right Mixer Switch", "Right Playback Mixer"},
-	{"Out4 Mixer", "Left Mixer Switch", "Left Playback Mixer"},
-	{"OUT4", NULL, "Out4 Mixer"},
+	अणु"Out4 Mixer", "Right Playback Switch", "Right DAC"पूर्ण,
+	अणु"Out4 Mixer", "Left Playback Switch", "Left DAC"पूर्ण,
+	अणु"Out4 Mixer", "Right Capture Switch", "Right Capture Mixer"पूर्ण,
+	अणु"Out4 Mixer", "Out3 Playback Switch", "Out3 Mixer"पूर्ण,
+	अणु"Out4 Mixer", "Right Mixer Switch", "Right Playback Mixer"पूर्ण,
+	अणु"Out4 Mixer", "Left Mixer Switch", "Left Playback Mixer"पूर्ण,
+	अणु"OUT4", शून्य, "Out4 Mixer"पूर्ण,
 
 	/* out3 playback mixer */
-	{"Out3 Mixer", "Left Playback Switch", "Left DAC"},
-	{"Out3 Mixer", "Left Capture Switch", "Left Capture Mixer"},
-	{"Out3 Mixer", "Left Mixer Switch", "Left Playback Mixer"},
-	{"Out3 Mixer", "Out4 Playback Switch", "Out4 Mixer"},
-	{"OUT3", NULL, "Out3 Mixer"},
+	अणु"Out3 Mixer", "Left Playback Switch", "Left DAC"पूर्ण,
+	अणु"Out3 Mixer", "Left Capture Switch", "Left Capture Mixer"पूर्ण,
+	अणु"Out3 Mixer", "Left Mixer Switch", "Left Playback Mixer"पूर्ण,
+	अणु"Out3 Mixer", "Out4 Playback Switch", "Out4 Mixer"पूर्ण,
+	अणु"OUT3", शून्य, "Out3 Mixer"पूर्ण,
 
 	/* out2 */
-	{"Right Out2 PGA", NULL, "Right Playback Mixer"},
-	{"Left Out2 PGA", NULL, "Left Playback Mixer"},
-	{"OUT2L", NULL, "Left Out2 PGA"},
-	{"OUT2R", NULL, "Right Out2 PGA"},
+	अणु"Right Out2 PGA", शून्य, "Right Playback Mixer"पूर्ण,
+	अणु"Left Out2 PGA", शून्य, "Left Playback Mixer"पूर्ण,
+	अणु"OUT2L", शून्य, "Left Out2 PGA"पूर्ण,
+	अणु"OUT2R", शून्य, "Right Out2 PGA"पूर्ण,
 
 	/* out1 */
-	{"Right Out1 PGA", NULL, "Right Playback Mixer"},
-	{"Left Out1 PGA", NULL, "Left Playback Mixer"},
-	{"OUT1L", NULL, "Left Out1 PGA"},
-	{"OUT1R", NULL, "Right Out1 PGA"},
+	अणु"Right Out1 PGA", शून्य, "Right Playback Mixer"पूर्ण,
+	अणु"Left Out1 PGA", शून्य, "Left Playback Mixer"पूर्ण,
+	अणु"OUT1L", शून्य, "Left Out1 PGA"पूर्ण,
+	अणु"OUT1R", शून्य, "Right Out1 PGA"पूर्ण,
 
 	/* ADCs */
-	{"Left ADC", NULL, "Left Capture Mixer"},
-	{"Right ADC", NULL, "Right Capture Mixer"},
+	अणु"Left ADC", शून्य, "Left Capture Mixer"पूर्ण,
+	अणु"Right ADC", शून्य, "Right Capture Mixer"पूर्ण,
 
 	/* Left capture mixer */
-	{"Left Capture Mixer", "L2 Capture Volume", "IN2L"},
-	{"Left Capture Mixer", "L3 Capture Volume", "IN3L PGA"},
-	{"Left Capture Mixer", "PGA Capture Switch", "Left Mic Mixer"},
-	{"Left Capture Mixer", NULL, "Out4 Capture Channel"},
+	अणु"Left Capture Mixer", "L2 Capture Volume", "IN2L"पूर्ण,
+	अणु"Left Capture Mixer", "L3 Capture Volume", "IN3L PGA"पूर्ण,
+	अणु"Left Capture Mixer", "PGA Capture Switch", "Left Mic Mixer"पूर्ण,
+	अणु"Left Capture Mixer", शून्य, "Out4 Capture Channel"पूर्ण,
 
 	/* Right capture mixer */
-	{"Right Capture Mixer", "L2 Capture Volume", "IN2R"},
-	{"Right Capture Mixer", "L3 Capture Volume", "IN3R PGA"},
-	{"Right Capture Mixer", "PGA Capture Switch", "Right Mic Mixer"},
-	{"Right Capture Mixer", NULL, "Out4 Capture Channel"},
+	अणु"Right Capture Mixer", "L2 Capture Volume", "IN2R"पूर्ण,
+	अणु"Right Capture Mixer", "L3 Capture Volume", "IN3R PGA"पूर्ण,
+	अणु"Right Capture Mixer", "PGA Capture Switch", "Right Mic Mixer"पूर्ण,
+	अणु"Right Capture Mixer", शून्य, "Out4 Capture Channel"पूर्ण,
 
-	/* L3 Inputs */
-	{"IN3L PGA", NULL, "IN3L"},
-	{"IN3R PGA", NULL, "IN3R"},
+	/* L3 Inमाला_दो */
+	अणु"IN3L PGA", शून्य, "IN3L"पूर्ण,
+	अणु"IN3R PGA", शून्य, "IN3R"पूर्ण,
 
 	/* Left Mic mixer */
-	{"Left Mic Mixer", "INN Capture Switch", "IN1LN"},
-	{"Left Mic Mixer", "INP Capture Switch", "IN1LP"},
-	{"Left Mic Mixer", "IN2 Capture Switch", "IN2L"},
+	अणु"Left Mic Mixer", "INN Capture Switch", "IN1LN"पूर्ण,
+	अणु"Left Mic Mixer", "INP Capture Switch", "IN1LP"पूर्ण,
+	अणु"Left Mic Mixer", "IN2 Capture Switch", "IN2L"पूर्ण,
 
 	/* Right Mic mixer */
-	{"Right Mic Mixer", "INN Capture Switch", "IN1RN"},
-	{"Right Mic Mixer", "INP Capture Switch", "IN1RP"},
-	{"Right Mic Mixer", "IN2 Capture Switch", "IN2R"},
+	अणु"Right Mic Mixer", "INN Capture Switch", "IN1RN"पूर्ण,
+	अणु"Right Mic Mixer", "INP Capture Switch", "IN1RP"पूर्ण,
+	अणु"Right Mic Mixer", "IN2 Capture Switch", "IN2R"पूर्ण,
 
 	/* out 4 capture */
-	{"Out4 Capture Channel", NULL, "Out4 Mixer"},
+	अणु"Out4 Capture Channel", शून्य, "Out4 Mixer"पूर्ण,
 
 	/* Beep */
-	{"Beep", NULL, "IN3R PGA"},
-};
+	अणु"Beep", शून्य, "IN3R PGA"पूर्ण,
+पूर्ण;
 
-static int wm8350_set_dai_sysclk(struct snd_soc_dai *codec_dai,
-				 int clk_id, unsigned int freq, int dir)
-{
-	struct snd_soc_component *component = codec_dai->component;
-	struct wm8350_data *wm8350_data = snd_soc_component_get_drvdata(component);
-	struct wm8350 *wm8350 = wm8350_data->wm8350;
+अटल पूर्णांक wm8350_set_dai_sysclk(काष्ठा snd_soc_dai *codec_dai,
+				 पूर्णांक clk_id, अचिन्हित पूर्णांक freq, पूर्णांक dir)
+अणु
+	काष्ठा snd_soc_component *component = codec_dai->component;
+	काष्ठा wm8350_data *wm8350_data = snd_soc_component_get_drvdata(component);
+	काष्ठा wm8350 *wm8350 = wm8350_data->wm8350;
 	u16 fll_4;
 
-	switch (clk_id) {
-	case WM8350_MCLK_SEL_MCLK:
+	चयन (clk_id) अणु
+	हाल WM8350_MCLK_SEL_MCLK:
 		wm8350_clear_bits(wm8350, WM8350_CLOCK_CONTROL_1,
 				  WM8350_MCLK_SEL);
-		break;
-	case WM8350_MCLK_SEL_PLL_MCLK:
-	case WM8350_MCLK_SEL_PLL_DAC:
-	case WM8350_MCLK_SEL_PLL_ADC:
-	case WM8350_MCLK_SEL_PLL_32K:
+		अवरोध;
+	हाल WM8350_MCLK_SEL_PLL_MCLK:
+	हाल WM8350_MCLK_SEL_PLL_DAC:
+	हाल WM8350_MCLK_SEL_PLL_ADC:
+	हाल WM8350_MCLK_SEL_PLL_32K:
 		wm8350_set_bits(wm8350, WM8350_CLOCK_CONTROL_1,
 				WM8350_MCLK_SEL);
-		fll_4 = snd_soc_component_read(component, WM8350_FLL_CONTROL_4) &
+		fll_4 = snd_soc_component_पढ़ो(component, WM8350_FLL_CONTROL_4) &
 		    ~WM8350_FLL_CLK_SRC_MASK;
-		snd_soc_component_write(component, WM8350_FLL_CONTROL_4, fll_4 | clk_id);
-		break;
-	}
+		snd_soc_component_ग_लिखो(component, WM8350_FLL_CONTROL_4, fll_4 | clk_id);
+		अवरोध;
+	पूर्ण
 
 	/* MCLK direction */
-	if (dir == SND_SOC_CLOCK_OUT)
+	अगर (dir == SND_SOC_CLOCK_OUT)
 		wm8350_set_bits(wm8350, WM8350_CLOCK_CONTROL_2,
-				WM8350_MCLK_DIR);
-	else
+				WM8350_MCLK_सूची);
+	अन्यथा
 		wm8350_clear_bits(wm8350, WM8350_CLOCK_CONTROL_2,
-				  WM8350_MCLK_DIR);
+				  WM8350_MCLK_सूची);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int wm8350_set_clkdiv(struct snd_soc_dai *codec_dai, int div_id, int div)
-{
-	struct snd_soc_component *component = codec_dai->component;
+अटल पूर्णांक wm8350_set_clkभाग(काष्ठा snd_soc_dai *codec_dai, पूर्णांक भाग_id, पूर्णांक भाग)
+अणु
+	काष्ठा snd_soc_component *component = codec_dai->component;
 	u16 val;
 
-	switch (div_id) {
-	case WM8350_ADC_CLKDIV:
-		val = snd_soc_component_read(component, WM8350_ADC_DIVIDER) &
+	चयन (भाग_id) अणु
+	हाल WM8350_ADC_CLKDIV:
+		val = snd_soc_component_पढ़ो(component, WM8350_ADC_DIVIDER) &
 		    ~WM8350_ADC_CLKDIV_MASK;
-		snd_soc_component_write(component, WM8350_ADC_DIVIDER, val | div);
-		break;
-	case WM8350_DAC_CLKDIV:
-		val = snd_soc_component_read(component, WM8350_DAC_CLOCK_CONTROL) &
+		snd_soc_component_ग_लिखो(component, WM8350_ADC_DIVIDER, val | भाग);
+		अवरोध;
+	हाल WM8350_DAC_CLKDIV:
+		val = snd_soc_component_पढ़ो(component, WM8350_DAC_CLOCK_CONTROL) &
 		    ~WM8350_DAC_CLKDIV_MASK;
-		snd_soc_component_write(component, WM8350_DAC_CLOCK_CONTROL, val | div);
-		break;
-	case WM8350_BCLK_CLKDIV:
-		val = snd_soc_component_read(component, WM8350_CLOCK_CONTROL_1) &
+		snd_soc_component_ग_लिखो(component, WM8350_DAC_CLOCK_CONTROL, val | भाग);
+		अवरोध;
+	हाल WM8350_BCLK_CLKDIV:
+		val = snd_soc_component_पढ़ो(component, WM8350_CLOCK_CONTROL_1) &
 		    ~WM8350_BCLK_DIV_MASK;
-		snd_soc_component_write(component, WM8350_CLOCK_CONTROL_1, val | div);
-		break;
-	case WM8350_OPCLK_CLKDIV:
-		val = snd_soc_component_read(component, WM8350_CLOCK_CONTROL_1) &
+		snd_soc_component_ग_लिखो(component, WM8350_CLOCK_CONTROL_1, val | भाग);
+		अवरोध;
+	हाल WM8350_OPCLK_CLKDIV:
+		val = snd_soc_component_पढ़ो(component, WM8350_CLOCK_CONTROL_1) &
 		    ~WM8350_OPCLK_DIV_MASK;
-		snd_soc_component_write(component, WM8350_CLOCK_CONTROL_1, val | div);
-		break;
-	case WM8350_SYS_CLKDIV:
-		val = snd_soc_component_read(component, WM8350_CLOCK_CONTROL_1) &
+		snd_soc_component_ग_लिखो(component, WM8350_CLOCK_CONTROL_1, val | भाग);
+		अवरोध;
+	हाल WM8350_SYS_CLKDIV:
+		val = snd_soc_component_पढ़ो(component, WM8350_CLOCK_CONTROL_1) &
 		    ~WM8350_MCLK_DIV_MASK;
-		snd_soc_component_write(component, WM8350_CLOCK_CONTROL_1, val | div);
-		break;
-	case WM8350_DACLR_CLKDIV:
-		val = snd_soc_component_read(component, WM8350_DAC_LR_RATE) &
+		snd_soc_component_ग_लिखो(component, WM8350_CLOCK_CONTROL_1, val | भाग);
+		अवरोध;
+	हाल WM8350_DACLR_CLKDIV:
+		val = snd_soc_component_पढ़ो(component, WM8350_DAC_LR_RATE) &
 		    ~WM8350_DACLRC_RATE_MASK;
-		snd_soc_component_write(component, WM8350_DAC_LR_RATE, val | div);
-		break;
-	case WM8350_ADCLR_CLKDIV:
-		val = snd_soc_component_read(component, WM8350_ADC_LR_RATE) &
+		snd_soc_component_ग_लिखो(component, WM8350_DAC_LR_RATE, val | भाग);
+		अवरोध;
+	हाल WM8350_ADCLR_CLKDIV:
+		val = snd_soc_component_पढ़ो(component, WM8350_ADC_LR_RATE) &
 		    ~WM8350_ADCLRC_RATE_MASK;
-		snd_soc_component_write(component, WM8350_ADC_LR_RATE, val | div);
-		break;
-	default:
-		return -EINVAL;
-	}
+		snd_soc_component_ग_लिखो(component, WM8350_ADC_LR_RATE, val | भाग);
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int wm8350_set_dai_fmt(struct snd_soc_dai *codec_dai, unsigned int fmt)
-{
-	struct snd_soc_component *component = codec_dai->component;
-	u16 iface = snd_soc_component_read(component, WM8350_AI_FORMATING) &
+अटल पूर्णांक wm8350_set_dai_fmt(काष्ठा snd_soc_dai *codec_dai, अचिन्हित पूर्णांक fmt)
+अणु
+	काष्ठा snd_soc_component *component = codec_dai->component;
+	u16 अगरace = snd_soc_component_पढ़ो(component, WM8350_AI_FORMATING) &
 	    ~(WM8350_AIF_BCLK_INV | WM8350_AIF_LRCLK_INV | WM8350_AIF_FMT_MASK);
-	u16 master = snd_soc_component_read(component, WM8350_AI_DAC_CONTROL) &
+	u16 master = snd_soc_component_पढ़ो(component, WM8350_AI_DAC_CONTROL) &
 	    ~WM8350_BCLK_MSTR;
-	u16 dac_lrc = snd_soc_component_read(component, WM8350_DAC_LR_RATE) &
+	u16 dac_lrc = snd_soc_component_पढ़ो(component, WM8350_DAC_LR_RATE) &
 	    ~WM8350_DACLRC_ENA;
-	u16 adc_lrc = snd_soc_component_read(component, WM8350_ADC_LR_RATE) &
+	u16 adc_lrc = snd_soc_component_पढ़ो(component, WM8350_ADC_LR_RATE) &
 	    ~WM8350_ADCLRC_ENA;
 
-	/* set master/slave audio interface */
-	switch (fmt & SND_SOC_DAIFMT_MASTER_MASK) {
-	case SND_SOC_DAIFMT_CBM_CFM:
+	/* set master/slave audio पूर्णांकerface */
+	चयन (fmt & SND_SOC_DAIFMT_MASTER_MASK) अणु
+	हाल SND_SOC_DAIFMT_CBM_CFM:
 		master |= WM8350_BCLK_MSTR;
 		dac_lrc |= WM8350_DACLRC_ENA;
 		adc_lrc |= WM8350_ADCLRC_ENA;
-		break;
-	case SND_SOC_DAIFMT_CBS_CFS:
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	हाल SND_SOC_DAIFMT_CBS_CFS:
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	/* interface format */
-	switch (fmt & SND_SOC_DAIFMT_FORMAT_MASK) {
-	case SND_SOC_DAIFMT_I2S:
-		iface |= 0x2 << 8;
-		break;
-	case SND_SOC_DAIFMT_RIGHT_J:
-		break;
-	case SND_SOC_DAIFMT_LEFT_J:
-		iface |= 0x1 << 8;
-		break;
-	case SND_SOC_DAIFMT_DSP_A:
-		iface |= 0x3 << 8;
-		break;
-	case SND_SOC_DAIFMT_DSP_B:
-		iface |= 0x3 << 8 | WM8350_AIF_LRCLK_INV;
-		break;
-	default:
-		return -EINVAL;
-	}
+	/* पूर्णांकerface क्रमmat */
+	चयन (fmt & SND_SOC_DAIFMT_FORMAT_MASK) अणु
+	हाल SND_SOC_DAIFMT_I2S:
+		अगरace |= 0x2 << 8;
+		अवरोध;
+	हाल SND_SOC_DAIFMT_RIGHT_J:
+		अवरोध;
+	हाल SND_SOC_DAIFMT_LEFT_J:
+		अगरace |= 0x1 << 8;
+		अवरोध;
+	हाल SND_SOC_DAIFMT_DSP_A:
+		अगरace |= 0x3 << 8;
+		अवरोध;
+	हाल SND_SOC_DAIFMT_DSP_B:
+		अगरace |= 0x3 << 8 | WM8350_AIF_LRCLK_INV;
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	/* clock inversion */
-	switch (fmt & SND_SOC_DAIFMT_INV_MASK) {
-	case SND_SOC_DAIFMT_NB_NF:
-		break;
-	case SND_SOC_DAIFMT_IB_IF:
-		iface |= WM8350_AIF_LRCLK_INV | WM8350_AIF_BCLK_INV;
-		break;
-	case SND_SOC_DAIFMT_IB_NF:
-		iface |= WM8350_AIF_BCLK_INV;
-		break;
-	case SND_SOC_DAIFMT_NB_IF:
-		iface |= WM8350_AIF_LRCLK_INV;
-		break;
-	default:
-		return -EINVAL;
-	}
+	/* घड़ी inversion */
+	चयन (fmt & SND_SOC_DAIFMT_INV_MASK) अणु
+	हाल SND_SOC_DAIFMT_NB_NF:
+		अवरोध;
+	हाल SND_SOC_DAIFMT_IB_IF:
+		अगरace |= WM8350_AIF_LRCLK_INV | WM8350_AIF_BCLK_INV;
+		अवरोध;
+	हाल SND_SOC_DAIFMT_IB_NF:
+		अगरace |= WM8350_AIF_BCLK_INV;
+		अवरोध;
+	हाल SND_SOC_DAIFMT_NB_IF:
+		अगरace |= WM8350_AIF_LRCLK_INV;
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	snd_soc_component_write(component, WM8350_AI_FORMATING, iface);
-	snd_soc_component_write(component, WM8350_AI_DAC_CONTROL, master);
-	snd_soc_component_write(component, WM8350_DAC_LR_RATE, dac_lrc);
-	snd_soc_component_write(component, WM8350_ADC_LR_RATE, adc_lrc);
-	return 0;
-}
+	snd_soc_component_ग_लिखो(component, WM8350_AI_FORMATING, अगरace);
+	snd_soc_component_ग_लिखो(component, WM8350_AI_DAC_CONTROL, master);
+	snd_soc_component_ग_लिखो(component, WM8350_DAC_LR_RATE, dac_lrc);
+	snd_soc_component_ग_लिखो(component, WM8350_ADC_LR_RATE, adc_lrc);
+	वापस 0;
+पूर्ण
 
-static int wm8350_pcm_hw_params(struct snd_pcm_substream *substream,
-				struct snd_pcm_hw_params *params,
-				struct snd_soc_dai *codec_dai)
-{
-	struct snd_soc_component *component = codec_dai->component;
-	struct wm8350_data *wm8350_data = snd_soc_component_get_drvdata(component);
-	struct wm8350 *wm8350 = wm8350_data->wm8350;
-	u16 iface = snd_soc_component_read(component, WM8350_AI_FORMATING) &
+अटल पूर्णांक wm8350_pcm_hw_params(काष्ठा snd_pcm_substream *substream,
+				काष्ठा snd_pcm_hw_params *params,
+				काष्ठा snd_soc_dai *codec_dai)
+अणु
+	काष्ठा snd_soc_component *component = codec_dai->component;
+	काष्ठा wm8350_data *wm8350_data = snd_soc_component_get_drvdata(component);
+	काष्ठा wm8350 *wm8350 = wm8350_data->wm8350;
+	u16 अगरace = snd_soc_component_पढ़ो(component, WM8350_AI_FORMATING) &
 	    ~WM8350_AIF_WL_MASK;
 
 	/* bit size */
-	switch (params_width(params)) {
-	case 16:
-		break;
-	case 20:
-		iface |= 0x1 << 10;
-		break;
-	case 24:
-		iface |= 0x2 << 10;
-		break;
-	case 32:
-		iface |= 0x3 << 10;
-		break;
-	}
+	चयन (params_width(params)) अणु
+	हाल 16:
+		अवरोध;
+	हाल 20:
+		अगरace |= 0x1 << 10;
+		अवरोध;
+	हाल 24:
+		अगरace |= 0x2 << 10;
+		अवरोध;
+	हाल 32:
+		अगरace |= 0x3 << 10;
+		अवरोध;
+	पूर्ण
 
-	snd_soc_component_write(component, WM8350_AI_FORMATING, iface);
+	snd_soc_component_ग_लिखो(component, WM8350_AI_FORMATING, अगरace);
 
-	/* The sloping stopband filter is recommended for use with
-	 * lower sample rates to improve performance.
+	/* The sloping stopband filter is recommended क्रम use with
+	 * lower sample rates to improve perक्रमmance.
 	 */
-	if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK) {
-		if (params_rate(params) < 24000)
+	अगर (substream->stream == SNDRV_PCM_STREAM_PLAYBACK) अणु
+		अगर (params_rate(params) < 24000)
 			wm8350_set_bits(wm8350, WM8350_DAC_MUTE_VOLUME,
 					WM8350_DAC_SB_FILT);
-		else
+		अन्यथा
 			wm8350_clear_bits(wm8350, WM8350_DAC_MUTE_VOLUME,
 					  WM8350_DAC_SB_FILT);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int wm8350_mute(struct snd_soc_dai *dai, int mute, int direction)
-{
-	struct snd_soc_component *component = dai->component;
-	unsigned int val;
+अटल पूर्णांक wm8350_mute(काष्ठा snd_soc_dai *dai, पूर्णांक mute, पूर्णांक direction)
+अणु
+	काष्ठा snd_soc_component *component = dai->component;
+	अचिन्हित पूर्णांक val;
 
-	if (mute)
+	अगर (mute)
 		val = WM8350_DAC_MUTE_ENA;
-	else
+	अन्यथा
 		val = 0;
 
 	snd_soc_component_update_bits(component, WM8350_DAC_MUTE, WM8350_DAC_MUTE_ENA, val);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* FLL divisors */
-struct _fll_div {
-	int div;		/* FLL_OUTDIV */
-	int n;
-	int k;
-	int ratio;		/* FLL_FRATIO */
-};
+/* FLL भागisors */
+काष्ठा _fll_भाग अणु
+	पूर्णांक भाग;		/* FLL_OUTDIV */
+	पूर्णांक n;
+	पूर्णांक k;
+	पूर्णांक ratio;		/* FLL_FRATIO */
+पूर्ण;
 
-/* The size in bits of the fll divide multiplied by 10
+/* The size in bits of the fll भागide multiplied by 10
  * to allow rounding later */
-#define FIXED_FLL_SIZE ((1 << 16) * 10)
+#घोषणा FIXED_FLL_SIZE ((1 << 16) * 10)
 
-static inline int fll_factors(struct _fll_div *fll_div, unsigned int input,
-			      unsigned int output)
-{
+अटल अंतरभूत पूर्णांक fll_factors(काष्ठा _fll_भाग *fll_भाग, अचिन्हित पूर्णांक input,
+			      अचिन्हित पूर्णांक output)
+अणु
 	u64 Kpart;
-	unsigned int t1, t2, K, Nmod;
+	अचिन्हित पूर्णांक t1, t2, K, Nmod;
 
-	if (output >= 2815250 && output <= 3125000)
-		fll_div->div = 0x4;
-	else if (output >= 5625000 && output <= 6250000)
-		fll_div->div = 0x3;
-	else if (output >= 11250000 && output <= 12500000)
-		fll_div->div = 0x2;
-	else if (output >= 22500000 && output <= 25000000)
-		fll_div->div = 0x1;
-	else {
-		printk(KERN_ERR "wm8350: fll freq %d out of range\n", output);
-		return -EINVAL;
-	}
+	अगर (output >= 2815250 && output <= 3125000)
+		fll_भाग->भाग = 0x4;
+	अन्यथा अगर (output >= 5625000 && output <= 6250000)
+		fll_भाग->भाग = 0x3;
+	अन्यथा अगर (output >= 11250000 && output <= 12500000)
+		fll_भाग->भाग = 0x2;
+	अन्यथा अगर (output >= 22500000 && output <= 25000000)
+		fll_भाग->भाग = 0x1;
+	अन्यथा अणु
+		prपूर्णांकk(KERN_ERR "wm8350: fll freq %d out of range\n", output);
+		वापस -EINVAL;
+	पूर्ण
 
-	if (input > 48000)
-		fll_div->ratio = 1;
-	else
-		fll_div->ratio = 8;
+	अगर (input > 48000)
+		fll_भाग->ratio = 1;
+	अन्यथा
+		fll_भाग->ratio = 8;
 
-	t1 = output * (1 << (fll_div->div + 1));
-	t2 = input * fll_div->ratio;
+	t1 = output * (1 << (fll_भाग->भाग + 1));
+	t2 = input * fll_भाग->ratio;
 
-	fll_div->n = t1 / t2;
+	fll_भाग->n = t1 / t2;
 	Nmod = t1 % t2;
 
-	if (Nmod) {
-		Kpart = FIXED_FLL_SIZE * (long long)Nmod;
-		do_div(Kpart, t2);
+	अगर (Nmod) अणु
+		Kpart = FIXED_FLL_SIZE * (दीर्घ दीर्घ)Nmod;
+		करो_भाग(Kpart, t2);
 		K = Kpart & 0xFFFFFFFF;
 
-		/* Check if we need to round */
-		if ((K % 10) >= 5)
+		/* Check अगर we need to round */
+		अगर ((K % 10) >= 5)
 			K += 5;
 
-		/* Move down to proper range now rounding is done */
+		/* Move करोwn to proper range now rounding is करोne */
 		K /= 10;
-		fll_div->k = K;
-	} else
-		fll_div->k = 0;
+		fll_भाग->k = K;
+	पूर्ण अन्यथा
+		fll_भाग->k = 0;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int wm8350_set_fll(struct snd_soc_dai *codec_dai,
-			  int pll_id, int source, unsigned int freq_in,
-			  unsigned int freq_out)
-{
-	struct snd_soc_component *component = codec_dai->component;
-	struct wm8350_data *priv = snd_soc_component_get_drvdata(component);
-	struct wm8350 *wm8350 = priv->wm8350;
-	struct _fll_div fll_div;
-	int ret = 0;
+अटल पूर्णांक wm8350_set_fll(काष्ठा snd_soc_dai *codec_dai,
+			  पूर्णांक pll_id, पूर्णांक source, अचिन्हित पूर्णांक freq_in,
+			  अचिन्हित पूर्णांक freq_out)
+अणु
+	काष्ठा snd_soc_component *component = codec_dai->component;
+	काष्ठा wm8350_data *priv = snd_soc_component_get_drvdata(component);
+	काष्ठा wm8350 *wm8350 = priv->wm8350;
+	काष्ठा _fll_भाग fll_भाग;
+	पूर्णांक ret = 0;
 	u16 fll_1, fll_4;
 
-	if (freq_in == priv->fll_freq_in && freq_out == priv->fll_freq_out)
-		return 0;
+	अगर (freq_in == priv->fll_freq_in && freq_out == priv->fll_freq_out)
+		वापस 0;
 
-	/* power down FLL - we need to do this for reconfiguration */
+	/* घातer करोwn FLL - we need to करो this क्रम reconfiguration */
 	wm8350_clear_bits(wm8350, WM8350_POWER_MGMT_4,
 			  WM8350_FLL_ENA | WM8350_FLL_OSC_ENA);
 
-	if (freq_out == 0 || freq_in == 0)
-		return ret;
+	अगर (freq_out == 0 || freq_in == 0)
+		वापस ret;
 
-	ret = fll_factors(&fll_div, freq_in, freq_out);
-	if (ret < 0)
-		return ret;
+	ret = fll_factors(&fll_भाग, freq_in, freq_out);
+	अगर (ret < 0)
+		वापस ret;
 	dev_dbg(wm8350->dev,
 		"FLL in %u FLL out %u N 0x%x K 0x%x div %d ratio %d",
-		freq_in, freq_out, fll_div.n, fll_div.k, fll_div.div,
-		fll_div.ratio);
+		freq_in, freq_out, fll_भाग.n, fll_भाग.k, fll_भाग.भाग,
+		fll_भाग.ratio);
 
-	/* set up N.K & dividers */
-	fll_1 = snd_soc_component_read(component, WM8350_FLL_CONTROL_1) &
+	/* set up N.K & भागiders */
+	fll_1 = snd_soc_component_पढ़ो(component, WM8350_FLL_CONTROL_1) &
 	    ~(WM8350_FLL_OUTDIV_MASK | WM8350_FLL_RSP_RATE_MASK | 0xc000);
-	snd_soc_component_write(component, WM8350_FLL_CONTROL_1,
-			   fll_1 | (fll_div.div << 8) | 0x50);
-	snd_soc_component_write(component, WM8350_FLL_CONTROL_2,
-			   (fll_div.ratio << 11) | (fll_div.
+	snd_soc_component_ग_लिखो(component, WM8350_FLL_CONTROL_1,
+			   fll_1 | (fll_भाग.भाग << 8) | 0x50);
+	snd_soc_component_ग_लिखो(component, WM8350_FLL_CONTROL_2,
+			   (fll_भाग.ratio << 11) | (fll_भाग.
 						    n & WM8350_FLL_N_MASK));
-	snd_soc_component_write(component, WM8350_FLL_CONTROL_3, fll_div.k);
-	fll_4 = snd_soc_component_read(component, WM8350_FLL_CONTROL_4) &
+	snd_soc_component_ग_लिखो(component, WM8350_FLL_CONTROL_3, fll_भाग.k);
+	fll_4 = snd_soc_component_पढ़ो(component, WM8350_FLL_CONTROL_4) &
 	    ~(WM8350_FLL_FRAC | WM8350_FLL_SLOW_LOCK_REF);
-	snd_soc_component_write(component, WM8350_FLL_CONTROL_4,
-			   fll_4 | (fll_div.k ? WM8350_FLL_FRAC : 0) |
-			   (fll_div.ratio == 8 ? WM8350_FLL_SLOW_LOCK_REF : 0));
+	snd_soc_component_ग_लिखो(component, WM8350_FLL_CONTROL_4,
+			   fll_4 | (fll_भाग.k ? WM8350_FLL_FRAC : 0) |
+			   (fll_भाग.ratio == 8 ? WM8350_FLL_SLOW_LOCK_REF : 0));
 
-	/* power FLL on */
+	/* घातer FLL on */
 	wm8350_set_bits(wm8350, WM8350_POWER_MGMT_4, WM8350_FLL_OSC_ENA);
 	wm8350_set_bits(wm8350, WM8350_POWER_MGMT_4, WM8350_FLL_ENA);
 
 	priv->fll_freq_out = freq_out;
 	priv->fll_freq_in = freq_in;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int wm8350_set_bias_level(struct snd_soc_component *component,
-				 enum snd_soc_bias_level level)
-{
-	struct wm8350_data *priv = snd_soc_component_get_drvdata(component);
-	struct wm8350 *wm8350 = priv->wm8350;
-	struct wm8350_audio_platform_data *platform =
-		wm8350->codec.platform_data;
+अटल पूर्णांक wm8350_set_bias_level(काष्ठा snd_soc_component *component,
+				 क्रमागत snd_soc_bias_level level)
+अणु
+	काष्ठा wm8350_data *priv = snd_soc_component_get_drvdata(component);
+	काष्ठा wm8350 *wm8350 = priv->wm8350;
+	काष्ठा wm8350_audio_platक्रमm_data *platक्रमm =
+		wm8350->codec.platक्रमm_data;
 	u16 pm1;
-	int ret;
+	पूर्णांक ret;
 
-	switch (level) {
-	case SND_SOC_BIAS_ON:
-		pm1 = wm8350_reg_read(wm8350, WM8350_POWER_MGMT_1) &
+	चयन (level) अणु
+	हाल SND_SOC_BIAS_ON:
+		pm1 = wm8350_reg_पढ़ो(wm8350, WM8350_POWER_MGMT_1) &
 		    ~(WM8350_VMID_MASK | WM8350_CODEC_ISEL_MASK);
-		wm8350_reg_write(wm8350, WM8350_POWER_MGMT_1,
+		wm8350_reg_ग_लिखो(wm8350, WM8350_POWER_MGMT_1,
 				 pm1 | WM8350_VMID_50K |
-				 platform->codec_current_on << 14);
-		break;
+				 platक्रमm->codec_current_on << 14);
+		अवरोध;
 
-	case SND_SOC_BIAS_PREPARE:
-		pm1 = wm8350_reg_read(wm8350, WM8350_POWER_MGMT_1);
+	हाल SND_SOC_BIAS_PREPARE:
+		pm1 = wm8350_reg_पढ़ो(wm8350, WM8350_POWER_MGMT_1);
 		pm1 &= ~WM8350_VMID_MASK;
-		wm8350_reg_write(wm8350, WM8350_POWER_MGMT_1,
+		wm8350_reg_ग_लिखो(wm8350, WM8350_POWER_MGMT_1,
 				 pm1 | WM8350_VMID_50K);
-		break;
+		अवरोध;
 
-	case SND_SOC_BIAS_STANDBY:
-		if (snd_soc_component_get_bias_level(component) == SND_SOC_BIAS_OFF) {
+	हाल SND_SOC_BIAS_STANDBY:
+		अगर (snd_soc_component_get_bias_level(component) == SND_SOC_BIAS_OFF) अणु
 			ret = regulator_bulk_enable(ARRAY_SIZE(priv->supplies),
 						    priv->supplies);
-			if (ret != 0)
-				return ret;
+			अगर (ret != 0)
+				वापस ret;
 
-			/* Enable the system clock */
+			/* Enable the प्रणाली घड़ी */
 			wm8350_set_bits(wm8350, WM8350_POWER_MGMT_4,
 					WM8350_SYSCLK_ENA);
 
-			/* mute DAC & outputs */
+			/* mute DAC & outमाला_दो */
 			wm8350_set_bits(wm8350, WM8350_DAC_MUTE,
 					WM8350_DAC_MUTE_ENA);
 
-			/* discharge cap memory */
-			wm8350_reg_write(wm8350, WM8350_ANTI_POP_CONTROL,
-					 platform->dis_out1 |
-					 (platform->dis_out2 << 2) |
-					 (platform->dis_out3 << 4) |
-					 (platform->dis_out4 << 6));
+			/* disअक्षरge cap memory */
+			wm8350_reg_ग_लिखो(wm8350, WM8350_ANTI_POP_CONTROL,
+					 platक्रमm->dis_out1 |
+					 (platक्रमm->dis_out2 << 2) |
+					 (platक्रमm->dis_out3 << 4) |
+					 (platक्रमm->dis_out4 << 6));
 
-			/* wait for discharge */
-			schedule_timeout_interruptible(msecs_to_jiffies
-						       (platform->
-							cap_discharge_msecs));
+			/* रुको क्रम disअक्षरge */
+			schedule_समयout_पूर्णांकerruptible(msecs_to_jअगरfies
+						       (platक्रमm->
+							cap_disअक्षरge_msecs));
 
 			/* enable antipop */
-			wm8350_reg_write(wm8350, WM8350_ANTI_POP_CONTROL,
-					 (platform->vmid_s_curve << 8));
+			wm8350_reg_ग_लिखो(wm8350, WM8350_ANTI_POP_CONTROL,
+					 (platक्रमm->vmid_s_curve << 8));
 
 			/* ramp up vmid */
-			wm8350_reg_write(wm8350, WM8350_POWER_MGMT_1,
-					 (platform->
-					  codec_current_charge << 14) |
+			wm8350_reg_ग_लिखो(wm8350, WM8350_POWER_MGMT_1,
+					 (platक्रमm->
+					  codec_current_अक्षरge << 14) |
 					 WM8350_VMID_5K | WM8350_VMIDEN |
 					 WM8350_VBUFEN);
 
-			/* wait for vmid */
-			schedule_timeout_interruptible(msecs_to_jiffies
-						       (platform->
-							vmid_charge_msecs));
+			/* रुको क्रम vmid */
+			schedule_समयout_पूर्णांकerruptible(msecs_to_jअगरfies
+						       (platक्रमm->
+							vmid_अक्षरge_msecs));
 
 			/* turn on vmid 300k  */
-			pm1 = wm8350_reg_read(wm8350, WM8350_POWER_MGMT_1) &
+			pm1 = wm8350_reg_पढ़ो(wm8350, WM8350_POWER_MGMT_1) &
 			    ~(WM8350_VMID_MASK | WM8350_CODEC_ISEL_MASK);
 			pm1 |= WM8350_VMID_300K |
-				(platform->codec_current_standby << 14);
-			wm8350_reg_write(wm8350, WM8350_POWER_MGMT_1,
+				(platक्रमm->codec_current_standby << 14);
+			wm8350_reg_ग_लिखो(wm8350, WM8350_POWER_MGMT_1,
 					 pm1);
 
 
 			/* enable analogue bias */
 			pm1 |= WM8350_BIASEN;
-			wm8350_reg_write(wm8350, WM8350_POWER_MGMT_1, pm1);
+			wm8350_reg_ग_लिखो(wm8350, WM8350_POWER_MGMT_1, pm1);
 
 			/* disable antipop */
-			wm8350_reg_write(wm8350, WM8350_ANTI_POP_CONTROL, 0);
+			wm8350_reg_ग_लिखो(wm8350, WM8350_ANTI_POP_CONTROL, 0);
 
-		} else {
+		पूर्ण अन्यथा अणु
 			/* turn on vmid 300k and reduce current */
-			pm1 = wm8350_reg_read(wm8350, WM8350_POWER_MGMT_1) &
+			pm1 = wm8350_reg_पढ़ो(wm8350, WM8350_POWER_MGMT_1) &
 			    ~(WM8350_VMID_MASK | WM8350_CODEC_ISEL_MASK);
-			wm8350_reg_write(wm8350, WM8350_POWER_MGMT_1,
+			wm8350_reg_ग_लिखो(wm8350, WM8350_POWER_MGMT_1,
 					 pm1 | WM8350_VMID_300K |
-					 (platform->
+					 (platक्रमm->
 					  codec_current_standby << 14));
 
-		}
-		break;
+		पूर्ण
+		अवरोध;
 
-	case SND_SOC_BIAS_OFF:
+	हाल SND_SOC_BIAS_OFF:
 
-		/* mute DAC & enable outputs */
+		/* mute DAC & enable outमाला_दो */
 		wm8350_set_bits(wm8350, WM8350_DAC_MUTE, WM8350_DAC_MUTE_ENA);
 
 		wm8350_set_bits(wm8350, WM8350_POWER_MGMT_3,
@@ -1179,41 +1180,41 @@ static int wm8350_set_bias_level(struct snd_soc_component *component,
 				WM8350_OUT2L_ENA | WM8350_OUT2R_ENA);
 
 		/* enable anti pop S curve */
-		wm8350_reg_write(wm8350, WM8350_ANTI_POP_CONTROL,
-				 (platform->vmid_s_curve << 8));
+		wm8350_reg_ग_लिखो(wm8350, WM8350_ANTI_POP_CONTROL,
+				 (platक्रमm->vmid_s_curve << 8));
 
 		/* turn off vmid  */
-		pm1 = wm8350_reg_read(wm8350, WM8350_POWER_MGMT_1) &
+		pm1 = wm8350_reg_पढ़ो(wm8350, WM8350_POWER_MGMT_1) &
 		    ~WM8350_VMIDEN;
-		wm8350_reg_write(wm8350, WM8350_POWER_MGMT_1, pm1);
+		wm8350_reg_ग_लिखो(wm8350, WM8350_POWER_MGMT_1, pm1);
 
-		/* wait */
-		schedule_timeout_interruptible(msecs_to_jiffies
-					       (platform->
-						vmid_discharge_msecs));
+		/* रुको */
+		schedule_समयout_पूर्णांकerruptible(msecs_to_jअगरfies
+					       (platक्रमm->
+						vmid_disअक्षरge_msecs));
 
-		wm8350_reg_write(wm8350, WM8350_ANTI_POP_CONTROL,
-				 (platform->vmid_s_curve << 8) |
-				 platform->dis_out1 |
-				 (platform->dis_out2 << 2) |
-				 (platform->dis_out3 << 4) |
-				 (platform->dis_out4 << 6));
+		wm8350_reg_ग_लिखो(wm8350, WM8350_ANTI_POP_CONTROL,
+				 (platक्रमm->vmid_s_curve << 8) |
+				 platक्रमm->dis_out1 |
+				 (platक्रमm->dis_out2 << 2) |
+				 (platक्रमm->dis_out3 << 4) |
+				 (platक्रमm->dis_out4 << 6));
 
 		/* turn off VBuf and drain */
-		pm1 = wm8350_reg_read(wm8350, WM8350_POWER_MGMT_1) &
+		pm1 = wm8350_reg_पढ़ो(wm8350, WM8350_POWER_MGMT_1) &
 		    ~(WM8350_VBUFEN | WM8350_VMID_MASK);
-		wm8350_reg_write(wm8350, WM8350_POWER_MGMT_1,
+		wm8350_reg_ग_लिखो(wm8350, WM8350_POWER_MGMT_1,
 				 pm1 | WM8350_OUTPUT_DRAIN_EN);
 
-		/* wait */
-		schedule_timeout_interruptible(msecs_to_jiffies
-					       (platform->drain_msecs));
+		/* रुको */
+		schedule_समयout_पूर्णांकerruptible(msecs_to_jअगरfies
+					       (platक्रमm->drain_msecs));
 
 		pm1 &= ~WM8350_BIASEN;
-		wm8350_reg_write(wm8350, WM8350_POWER_MGMT_1, pm1);
+		wm8350_reg_ग_लिखो(wm8350, WM8350_POWER_MGMT_1, pm1);
 
 		/* disable anti-pop */
-		wm8350_reg_write(wm8350, WM8350_ANTI_POP_CONTROL, 0);
+		wm8350_reg_ग_लिखो(wm8350, WM8350_ANTI_POP_CONTROL, 0);
 
 		wm8350_clear_bits(wm8350, WM8350_LOUT1_VOLUME,
 				  WM8350_OUT1L_ENA);
@@ -1224,165 +1225,165 @@ static int wm8350_set_bias_level(struct snd_soc_component *component,
 		wm8350_clear_bits(wm8350, WM8350_ROUT2_VOLUME,
 				  WM8350_OUT2R_ENA);
 
-		/* disable clock gen */
+		/* disable घड़ी gen */
 		wm8350_clear_bits(wm8350, WM8350_POWER_MGMT_4,
 				  WM8350_SYSCLK_ENA);
 
 		regulator_bulk_disable(ARRAY_SIZE(priv->supplies),
 				       priv->supplies);
-		break;
-	}
-	return 0;
-}
+		अवरोध;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static void wm8350_hp_work(struct wm8350_data *priv,
-			   struct wm8350_jack_data *jack,
+अटल व्योम wm8350_hp_work(काष्ठा wm8350_data *priv,
+			   काष्ठा wm8350_jack_data *jack,
 			   u16 mask)
-{
-	struct wm8350 *wm8350 = priv->wm8350;
+अणु
+	काष्ठा wm8350 *wm8350 = priv->wm8350;
 	u16 reg;
-	int report;
+	पूर्णांक report;
 
-	reg = wm8350_reg_read(wm8350, WM8350_JACK_PIN_STATUS);
-	if (reg & mask)
+	reg = wm8350_reg_पढ़ो(wm8350, WM8350_JACK_PIN_STATUS);
+	अगर (reg & mask)
 		report = jack->report;
-	else
+	अन्यथा
 		report = 0;
 
 	snd_soc_jack_report(jack->jack, report, jack->report);
 
-}
+पूर्ण
 
-static void wm8350_hpl_work(struct work_struct *work)
-{
-	struct wm8350_data *priv =
-	    container_of(work, struct wm8350_data, hpl.work.work);
+अटल व्योम wm8350_hpl_work(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा wm8350_data *priv =
+	    container_of(work, काष्ठा wm8350_data, hpl.work.work);
 
 	wm8350_hp_work(priv, &priv->hpl, WM8350_JACK_L_LVL);
-}
+पूर्ण
 
-static void wm8350_hpr_work(struct work_struct *work)
-{
-	struct wm8350_data *priv =
-	    container_of(work, struct wm8350_data, hpr.work.work);
+अटल व्योम wm8350_hpr_work(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा wm8350_data *priv =
+	    container_of(work, काष्ठा wm8350_data, hpr.work.work);
 	
 	wm8350_hp_work(priv, &priv->hpr, WM8350_JACK_R_LVL);
-}
+पूर्ण
 
-static irqreturn_t wm8350_hpl_jack_handler(int irq, void *data)
-{
-	struct wm8350_data *priv = data;
-	struct wm8350 *wm8350 = priv->wm8350;
+अटल irqवापस_t wm8350_hpl_jack_handler(पूर्णांक irq, व्योम *data)
+अणु
+	काष्ठा wm8350_data *priv = data;
+	काष्ठा wm8350 *wm8350 = priv->wm8350;
 
-#ifndef CONFIG_SND_SOC_WM8350_MODULE
+#अगर_अघोषित CONFIG_SND_SOC_WM8350_MODULE
 	trace_snd_soc_jack_irq("WM8350 HPL");
-#endif
+#पूर्ण_अगर
 
-	if (device_may_wakeup(wm8350->dev))
+	अगर (device_may_wakeup(wm8350->dev))
 		pm_wakeup_event(wm8350->dev, 250);
 
-	queue_delayed_work(system_power_efficient_wq,
-			   &priv->hpl.work, msecs_to_jiffies(200));
+	queue_delayed_work(प्रणाली_घातer_efficient_wq,
+			   &priv->hpl.work, msecs_to_jअगरfies(200));
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static irqreturn_t wm8350_hpr_jack_handler(int irq, void *data)
-{
-	struct wm8350_data *priv = data;
-	struct wm8350 *wm8350 = priv->wm8350;
+अटल irqवापस_t wm8350_hpr_jack_handler(पूर्णांक irq, व्योम *data)
+अणु
+	काष्ठा wm8350_data *priv = data;
+	काष्ठा wm8350 *wm8350 = priv->wm8350;
 
-#ifndef CONFIG_SND_SOC_WM8350_MODULE
+#अगर_अघोषित CONFIG_SND_SOC_WM8350_MODULE
 	trace_snd_soc_jack_irq("WM8350 HPR");
-#endif
+#पूर्ण_अगर
 
-	if (device_may_wakeup(wm8350->dev))
+	अगर (device_may_wakeup(wm8350->dev))
 		pm_wakeup_event(wm8350->dev, 250);
 
-	queue_delayed_work(system_power_efficient_wq,
-			   &priv->hpr.work, msecs_to_jiffies(200));
+	queue_delayed_work(प्रणाली_घातer_efficient_wq,
+			   &priv->hpr.work, msecs_to_jअगरfies(200));
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
 /**
  * wm8350_hp_jack_detect - Enable headphone jack detection.
  *
  * @component:  WM8350 component
- * @which:  left or right jack detect signal
+ * @which:  left or right jack detect संकेत
  * @jack:   jack to report detection events on
  * @report: value to report
  *
  * Enables the headphone jack detection of the WM8350.  If no report
- * is specified then detection is disabled.
+ * is specअगरied then detection is disabled.
  */
-int wm8350_hp_jack_detect(struct snd_soc_component *component, enum wm8350_jack which,
-			  struct snd_soc_jack *jack, int report)
-{
-	struct wm8350_data *priv = snd_soc_component_get_drvdata(component);
-	struct wm8350 *wm8350 = priv->wm8350;
-	int ena;
+पूर्णांक wm8350_hp_jack_detect(काष्ठा snd_soc_component *component, क्रमागत wm8350_jack which,
+			  काष्ठा snd_soc_jack *jack, पूर्णांक report)
+अणु
+	काष्ठा wm8350_data *priv = snd_soc_component_get_drvdata(component);
+	काष्ठा wm8350 *wm8350 = priv->wm8350;
+	पूर्णांक ena;
 
-	switch (which) {
-	case WM8350_JDL:
+	चयन (which) अणु
+	हाल WM8350_JDL:
 		priv->hpl.jack = jack;
 		priv->hpl.report = report;
 		ena = WM8350_JDL_ENA;
-		break;
+		अवरोध;
 
-	case WM8350_JDR:
+	हाल WM8350_JDR:
 		priv->hpr.jack = jack;
 		priv->hpr.report = report;
 		ena = WM8350_JDR_ENA;
-		break;
+		अवरोध;
 
-	default:
-		return -EINVAL;
-	}
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	if (report) {
+	अगर (report) अणु
 		wm8350_set_bits(wm8350, WM8350_POWER_MGMT_4, WM8350_TOCLK_ENA);
 		wm8350_set_bits(wm8350, WM8350_JACK_DETECT, ena);
-	} else {
+	पूर्ण अन्यथा अणु
 		wm8350_clear_bits(wm8350, WM8350_JACK_DETECT, ena);
-	}
+	पूर्ण
 
 	/* Sync status */
-	switch (which) {
-	case WM8350_JDL:
+	चयन (which) अणु
+	हाल WM8350_JDL:
 		wm8350_hpl_jack_handler(0, priv);
-		break;
-	case WM8350_JDR:
+		अवरोध;
+	हाल WM8350_JDR:
 		wm8350_hpr_jack_handler(0, priv);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(wm8350_hp_jack_detect);
 
-static irqreturn_t wm8350_mic_handler(int irq, void *data)
-{
-	struct wm8350_data *priv = data;
-	struct wm8350 *wm8350 = priv->wm8350;
+अटल irqवापस_t wm8350_mic_handler(पूर्णांक irq, व्योम *data)
+अणु
+	काष्ठा wm8350_data *priv = data;
+	काष्ठा wm8350 *wm8350 = priv->wm8350;
 	u16 reg;
-	int report = 0;
+	पूर्णांक report = 0;
 
-#ifndef CONFIG_SND_SOC_WM8350_MODULE
+#अगर_अघोषित CONFIG_SND_SOC_WM8350_MODULE
 	trace_snd_soc_jack_irq("WM8350 mic");
-#endif
+#पूर्ण_अगर
 
-	reg = wm8350_reg_read(wm8350, WM8350_JACK_PIN_STATUS);
-	if (reg & WM8350_JACK_MICSCD_LVL)
-		report |= priv->mic.short_report;
-	if (reg & WM8350_JACK_MICSD_LVL)
+	reg = wm8350_reg_पढ़ो(wm8350, WM8350_JACK_PIN_STATUS);
+	अगर (reg & WM8350_JACK_MICSCD_LVL)
+		report |= priv->mic.लघु_report;
+	अगर (reg & WM8350_JACK_MICSD_LVL)
 		report |= priv->mic.report;
 
 	snd_soc_jack_report(priv->mic.jack, report,
-			    priv->mic.report | priv->mic.short_report);
+			    priv->mic.report | priv->mic.लघु_report);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
 /**
  * wm8350_mic_jack_detect - Enable microphone jack detection.
@@ -1390,102 +1391,102 @@ static irqreturn_t wm8350_mic_handler(int irq, void *data)
  * @component:         WM8350 component
  * @jack:          jack to report detection events on
  * @detect_report: value to report when presence detected
- * @short_report:  value to report when microphone short detected
+ * @लघु_report:  value to report when microphone लघु detected
  *
  * Enables the microphone jack detection of the WM8350.  If both reports
- * are specified as zero then detection is disabled.
+ * are specअगरied as zero then detection is disabled.
  */
-int wm8350_mic_jack_detect(struct snd_soc_component *component,
-			   struct snd_soc_jack *jack,
-			   int detect_report, int short_report)
-{
-	struct wm8350_data *priv = snd_soc_component_get_drvdata(component);
-	struct wm8350 *wm8350 = priv->wm8350;
+पूर्णांक wm8350_mic_jack_detect(काष्ठा snd_soc_component *component,
+			   काष्ठा snd_soc_jack *jack,
+			   पूर्णांक detect_report, पूर्णांक लघु_report)
+अणु
+	काष्ठा wm8350_data *priv = snd_soc_component_get_drvdata(component);
+	काष्ठा wm8350 *wm8350 = priv->wm8350;
 
 	priv->mic.jack = jack;
 	priv->mic.report = detect_report;
-	priv->mic.short_report = short_report;
+	priv->mic.लघु_report = लघु_report;
 
-	if (detect_report || short_report) {
+	अगर (detect_report || लघु_report) अणु
 		wm8350_set_bits(wm8350, WM8350_POWER_MGMT_4, WM8350_TOCLK_ENA);
 		wm8350_set_bits(wm8350, WM8350_POWER_MGMT_1,
 				WM8350_MIC_DET_ENA);
-	} else {
+	पूर्ण अन्यथा अणु
 		wm8350_clear_bits(wm8350, WM8350_POWER_MGMT_1,
 				  WM8350_MIC_DET_ENA);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(wm8350_mic_jack_detect);
 
-#define WM8350_RATES (SNDRV_PCM_RATE_8000_96000)
+#घोषणा WM8350_RATES (SNDRV_PCM_RATE_8000_96000)
 
-#define WM8350_FORMATS (SNDRV_PCM_FMTBIT_S16_LE |\
+#घोषणा WM8350_FORMATS (SNDRV_PCM_FMTBIT_S16_LE |\
 			SNDRV_PCM_FMTBIT_S20_3LE |\
 			SNDRV_PCM_FMTBIT_S24_LE)
 
-static const struct snd_soc_dai_ops wm8350_dai_ops = {
+अटल स्थिर काष्ठा snd_soc_dai_ops wm8350_dai_ops = अणु
 	 .hw_params	= wm8350_pcm_hw_params,
 	 .mute_stream	= wm8350_mute,
 	 .set_fmt	= wm8350_set_dai_fmt,
 	 .set_sysclk	= wm8350_set_dai_sysclk,
 	 .set_pll	= wm8350_set_fll,
-	 .set_clkdiv	= wm8350_set_clkdiv,
+	 .set_clkभाग	= wm8350_set_clkभाग,
 	 .no_capture_mute = 1,
-};
+पूर्ण;
 
-static struct snd_soc_dai_driver wm8350_dai = {
+अटल काष्ठा snd_soc_dai_driver wm8350_dai = अणु
 	.name = "wm8350-hifi",
-	.playback = {
+	.playback = अणु
 		.stream_name = "Playback",
 		.channels_min = 1,
 		.channels_max = 2,
 		.rates = WM8350_RATES,
-		.formats = WM8350_FORMATS,
-	},
-	.capture = {
+		.क्रमmats = WM8350_FORMATS,
+	पूर्ण,
+	.capture = अणु
 		 .stream_name = "Capture",
 		 .channels_min = 1,
 		 .channels_max = 2,
 		 .rates = WM8350_RATES,
-		 .formats = WM8350_FORMATS,
-	 },
+		 .क्रमmats = WM8350_FORMATS,
+	 पूर्ण,
 	.ops = &wm8350_dai_ops,
-};
+पूर्ण;
 
-static  int wm8350_component_probe(struct snd_soc_component *component)
-{
-	struct wm8350 *wm8350 = dev_get_platdata(component->dev);
-	struct wm8350_data *priv;
-	struct wm8350_output *out1;
-	struct wm8350_output *out2;
-	int ret, i;
+अटल  पूर्णांक wm8350_component_probe(काष्ठा snd_soc_component *component)
+अणु
+	काष्ठा wm8350 *wm8350 = dev_get_platdata(component->dev);
+	काष्ठा wm8350_data *priv;
+	काष्ठा wm8350_output *out1;
+	काष्ठा wm8350_output *out2;
+	पूर्णांक ret, i;
 
-	if (wm8350->codec.platform_data == NULL) {
+	अगर (wm8350->codec.platक्रमm_data == शून्य) अणु
 		dev_err(component->dev, "No audio platform data supplied\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	priv = devm_kzalloc(component->dev, sizeof(struct wm8350_data),
+	priv = devm_kzalloc(component->dev, माप(काष्ठा wm8350_data),
 			    GFP_KERNEL);
-	if (priv == NULL)
-		return -ENOMEM;
+	अगर (priv == शून्य)
+		वापस -ENOMEM;
 
 	snd_soc_component_init_regmap(component, wm8350->regmap);
 	snd_soc_component_set_drvdata(component, priv);
 
 	priv->wm8350 = wm8350;
 
-	for (i = 0; i < ARRAY_SIZE(supply_names); i++)
+	क्रम (i = 0; i < ARRAY_SIZE(supply_names); i++)
 		priv->supplies[i].supply = supply_names[i];
 
 	ret = devm_regulator_bulk_get(wm8350->dev, ARRAY_SIZE(priv->supplies),
 				 priv->supplies);
-	if (ret != 0)
-		return ret;
+	अगर (ret != 0)
+		वापस ret;
 
-	/* Put the codec into reset if it wasn't already */
+	/* Put the codec पूर्णांकo reset अगर it wasn't alपढ़ोy */
 	wm8350_clear_bits(wm8350, WM8350_POWER_MGMT_5, WM8350_CODEC_ENA);
 
 	INIT_DELAYED_WORK(&priv->pga_work, wm8350_pga_work);
@@ -1495,26 +1496,26 @@ static  int wm8350_component_probe(struct snd_soc_component *component)
 	/* Enable the codec */
 	wm8350_set_bits(wm8350, WM8350_POWER_MGMT_5, WM8350_CODEC_ENA);
 
-	/* Enable robust clocking mode in ADC */
-	snd_soc_component_write(component, WM8350_SECURITY, 0xa7);
-	snd_soc_component_write(component, 0xde, 0x13);
-	snd_soc_component_write(component, WM8350_SECURITY, 0);
+	/* Enable robust घड़ीing mode in ADC */
+	snd_soc_component_ग_लिखो(component, WM8350_SECURITY, 0xa7);
+	snd_soc_component_ग_लिखो(component, 0xde, 0x13);
+	snd_soc_component_ग_लिखो(component, WM8350_SECURITY, 0);
 
-	/* read OUT1 & OUT2 volumes */
+	/* पढ़ो OUT1 & OUT2 volumes */
 	out1 = &priv->out1;
 	out2 = &priv->out2;
-	out1->left_vol = (wm8350_reg_read(wm8350, WM8350_LOUT1_VOLUME) &
+	out1->left_vol = (wm8350_reg_पढ़ो(wm8350, WM8350_LOUT1_VOLUME) &
 			  WM8350_OUT1L_VOL_MASK) >> WM8350_OUT1L_VOL_SHIFT;
-	out1->right_vol = (wm8350_reg_read(wm8350, WM8350_ROUT1_VOLUME) &
+	out1->right_vol = (wm8350_reg_पढ़ो(wm8350, WM8350_ROUT1_VOLUME) &
 			   WM8350_OUT1R_VOL_MASK) >> WM8350_OUT1R_VOL_SHIFT;
-	out2->left_vol = (wm8350_reg_read(wm8350, WM8350_LOUT2_VOLUME) &
+	out2->left_vol = (wm8350_reg_पढ़ो(wm8350, WM8350_LOUT2_VOLUME) &
 			  WM8350_OUT2L_VOL_MASK) >> WM8350_OUT1L_VOL_SHIFT;
-	out2->right_vol = (wm8350_reg_read(wm8350, WM8350_ROUT2_VOLUME) &
+	out2->right_vol = (wm8350_reg_पढ़ो(wm8350, WM8350_ROUT2_VOLUME) &
 			   WM8350_OUT2R_VOL_MASK) >> WM8350_OUT1R_VOL_SHIFT;
-	wm8350_reg_write(wm8350, WM8350_LOUT1_VOLUME, 0);
-	wm8350_reg_write(wm8350, WM8350_ROUT1_VOLUME, 0);
-	wm8350_reg_write(wm8350, WM8350_LOUT2_VOLUME, 0);
-	wm8350_reg_write(wm8350, WM8350_ROUT2_VOLUME, 0);
+	wm8350_reg_ग_लिखो(wm8350, WM8350_LOUT1_VOLUME, 0);
+	wm8350_reg_ग_लिखो(wm8350, WM8350_ROUT1_VOLUME, 0);
+	wm8350_reg_ग_लिखो(wm8350, WM8350_LOUT2_VOLUME, 0);
+	wm8350_reg_ग_लिखो(wm8350, WM8350_ROUT2_VOLUME, 0);
 
 	/* Latch VU bits & mute */
 	wm8350_set_bits(wm8350, WM8350_LOUT1_VOLUME,
@@ -1526,7 +1527,7 @@ static  int wm8350_component_probe(struct snd_soc_component *component)
 	wm8350_set_bits(wm8350, WM8350_ROUT2_VOLUME,
 			WM8350_OUT2_VU | WM8350_OUT2R_MUTE);
 
-	/* Make sure AIF tristating is disabled by default */
+	/* Make sure AIF tristating is disabled by शेष */
 	wm8350_clear_bits(wm8350, WM8350_AI_FORMATING, WM8350_AIF_TRI);
 
 	/* Make sure we've got a sane companding setup too */
@@ -1537,80 +1538,80 @@ static  int wm8350_component_probe(struct snd_soc_component *component)
 	wm8350_clear_bits(wm8350, WM8350_JACK_DETECT,
 			  WM8350_JDL_ENA | WM8350_JDR_ENA);
 
-	wm8350_register_irq(wm8350, WM8350_IRQ_CODEC_JCK_DET_L,
+	wm8350_रेजिस्टर_irq(wm8350, WM8350_IRQ_CODEC_JCK_DET_L,
 			    wm8350_hpl_jack_handler, 0, "Left jack detect",
 			    priv);
-	wm8350_register_irq(wm8350, WM8350_IRQ_CODEC_JCK_DET_R,
+	wm8350_रेजिस्टर_irq(wm8350, WM8350_IRQ_CODEC_JCK_DET_R,
 			    wm8350_hpr_jack_handler, 0, "Right jack detect",
 			    priv);
-	wm8350_register_irq(wm8350, WM8350_IRQ_CODEC_MICSCD,
+	wm8350_रेजिस्टर_irq(wm8350, WM8350_IRQ_CODEC_MICSCD,
 			    wm8350_mic_handler, 0, "Microphone short", priv);
-	wm8350_register_irq(wm8350, WM8350_IRQ_CODEC_MICD,
+	wm8350_रेजिस्टर_irq(wm8350, WM8350_IRQ_CODEC_MICD,
 			    wm8350_mic_handler, 0, "Microphone detect", priv);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void wm8350_component_remove(struct snd_soc_component *component)
-{
-	struct wm8350_data *priv = snd_soc_component_get_drvdata(component);
-	struct wm8350 *wm8350 = dev_get_platdata(component->dev);
+अटल व्योम wm8350_component_हटाओ(काष्ठा snd_soc_component *component)
+अणु
+	काष्ठा wm8350_data *priv = snd_soc_component_get_drvdata(component);
+	काष्ठा wm8350 *wm8350 = dev_get_platdata(component->dev);
 
 	wm8350_clear_bits(wm8350, WM8350_JACK_DETECT,
 			  WM8350_JDL_ENA | WM8350_JDR_ENA);
 	wm8350_clear_bits(wm8350, WM8350_POWER_MGMT_4, WM8350_TOCLK_ENA);
 
-	wm8350_free_irq(wm8350, WM8350_IRQ_CODEC_MICD, priv);
-	wm8350_free_irq(wm8350, WM8350_IRQ_CODEC_MICSCD, priv);
-	wm8350_free_irq(wm8350, WM8350_IRQ_CODEC_JCK_DET_L, priv);
-	wm8350_free_irq(wm8350, WM8350_IRQ_CODEC_JCK_DET_R, priv);
+	wm8350_मुक्त_irq(wm8350, WM8350_IRQ_CODEC_MICD, priv);
+	wm8350_मुक्त_irq(wm8350, WM8350_IRQ_CODEC_MICSCD, priv);
+	wm8350_मुक्त_irq(wm8350, WM8350_IRQ_CODEC_JCK_DET_L, priv);
+	wm8350_मुक्त_irq(wm8350, WM8350_IRQ_CODEC_JCK_DET_R, priv);
 
-	priv->hpl.jack = NULL;
-	priv->hpr.jack = NULL;
-	priv->mic.jack = NULL;
+	priv->hpl.jack = शून्य;
+	priv->hpr.jack = शून्य;
+	priv->mic.jack = शून्य;
 
 	cancel_delayed_work_sync(&priv->hpl.work);
 	cancel_delayed_work_sync(&priv->hpr.work);
 
-	/* if there was any work waiting then we run it now and
-	 * wait for its completion */
+	/* अगर there was any work रुकोing then we run it now and
+	 * रुको क्रम its completion */
 	flush_delayed_work(&priv->pga_work);
 
 	wm8350_clear_bits(wm8350, WM8350_POWER_MGMT_5, WM8350_CODEC_ENA);
-}
+पूर्ण
 
-static const struct snd_soc_component_driver soc_component_dev_wm8350 = {
+अटल स्थिर काष्ठा snd_soc_component_driver soc_component_dev_wm8350 = अणु
 	.probe			= wm8350_component_probe,
-	.remove			= wm8350_component_remove,
+	.हटाओ			= wm8350_component_हटाओ,
 	.set_bias_level		= wm8350_set_bias_level,
 	.controls		= wm8350_snd_controls,
 	.num_controls		= ARRAY_SIZE(wm8350_snd_controls),
-	.dapm_widgets		= wm8350_dapm_widgets,
-	.num_dapm_widgets	= ARRAY_SIZE(wm8350_dapm_widgets),
+	.dapm_widमाला_लो		= wm8350_dapm_widमाला_लो,
+	.num_dapm_widमाला_लो	= ARRAY_SIZE(wm8350_dapm_widमाला_लो),
 	.dapm_routes		= wm8350_dapm_routes,
 	.num_dapm_routes	= ARRAY_SIZE(wm8350_dapm_routes),
 	.suspend_bias_off	= 1,
 	.idle_bias_on		= 1,
-	.use_pmdown_time	= 1,
+	.use_pmकरोwn_समय	= 1,
 	.endianness		= 1,
 	.non_legacy_dai_naming	= 1,
-};
+पूर्ण;
 
-static int wm8350_probe(struct platform_device *pdev)
-{
-	return devm_snd_soc_register_component(&pdev->dev,
+अटल पूर्णांक wm8350_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	वापस devm_snd_soc_रेजिस्टर_component(&pdev->dev,
 			&soc_component_dev_wm8350,
 			&wm8350_dai, 1);
-}
+पूर्ण
 
-static struct platform_driver wm8350_codec_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver wm8350_codec_driver = अणु
+	.driver = अणु
 		   .name = "wm8350-codec",
-		   },
+		   पूर्ण,
 	.probe = wm8350_probe,
-};
+पूर्ण;
 
-module_platform_driver(wm8350_codec_driver);
+module_platक्रमm_driver(wm8350_codec_driver);
 
 MODULE_DESCRIPTION("ASoC WM8350 driver");
 MODULE_AUTHOR("Liam Girdwood");

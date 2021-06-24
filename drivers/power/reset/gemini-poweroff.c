@@ -1,175 +1,176 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * Gemini power management controller
+ * Gemini घातer management controller
  * Copyright (C) 2017 Linus Walleij <linus.walleij@linaro.org>
  *
  * Inspired by code from the SL3516 board support by Jason Lee
  * Inspired by code from Janos Laube <janos.dev@gmail.com>
  */
-#include <linux/of.h>
-#include <linux/of_platform.h>
-#include <linux/platform_device.h>
-#include <linux/pm.h>
-#include <linux/bitops.h>
-#include <linux/interrupt.h>
-#include <linux/io.h>
-#include <linux/reboot.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_platक्रमm.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/pm.h>
+#समावेश <linux/bitops.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/reboot.h>
 
-#define GEMINI_PWC_ID		0x00010500
-#define	GEMINI_PWC_IDREG	0x00
-#define	GEMINI_PWC_CTRLREG	0x04
-#define	GEMINI_PWC_STATREG	0x08
+#घोषणा GEMINI_PWC_ID		0x00010500
+#घोषणा	GEMINI_PWC_IDREG	0x00
+#घोषणा	GEMINI_PWC_CTRLREG	0x04
+#घोषणा	GEMINI_PWC_STATREG	0x08
 
-#define GEMINI_CTRL_SHUTDOWN	BIT(0)
-#define GEMINI_CTRL_ENABLE	BIT(1)
-#define GEMINI_CTRL_IRQ_CLR	BIT(2)
+#घोषणा GEMINI_CTRL_SHUTDOWN	BIT(0)
+#घोषणा GEMINI_CTRL_ENABLE	BIT(1)
+#घोषणा GEMINI_CTRL_IRQ_CLR	BIT(2)
 
-#define GEMINI_STAT_CIR		BIT(4)
-#define	GEMINI_STAT_RTC		BIT(5)
-#define	GEMINI_STAT_POWERBUTTON	BIT(6)
+#घोषणा GEMINI_STAT_CIR		BIT(4)
+#घोषणा	GEMINI_STAT_RTC		BIT(5)
+#घोषणा	GEMINI_STAT_POWERBUTTON	BIT(6)
 
-struct gemini_powercon {
-        struct device           *dev;
-        void __iomem            *base;
-};
+काष्ठा gemini_घातercon अणु
+        काष्ठा device           *dev;
+        व्योम __iomem            *base;
+पूर्ण;
 
-static irqreturn_t gemini_powerbutton_interrupt(int irq, void *data)
-{
-	struct gemini_powercon *gpw = data;
+अटल irqवापस_t gemini_घातerbutton_पूर्णांकerrupt(पूर्णांक irq, व्योम *data)
+अणु
+	काष्ठा gemini_घातercon *gpw = data;
 	u32 val;
 
 	/* ACK the IRQ */
-	val = readl(gpw->base + GEMINI_PWC_CTRLREG);
+	val = पढ़ोl(gpw->base + GEMINI_PWC_CTRLREG);
 	val |= GEMINI_CTRL_IRQ_CLR;
-	writel(val, gpw->base + GEMINI_PWC_CTRLREG);
+	ग_लिखोl(val, gpw->base + GEMINI_PWC_CTRLREG);
 
-	val = readl(gpw->base + GEMINI_PWC_STATREG);
+	val = पढ़ोl(gpw->base + GEMINI_PWC_STATREG);
 	val &= 0x70U;
-	switch (val) {
-	case GEMINI_STAT_CIR:
+	चयन (val) अणु
+	हाल GEMINI_STAT_CIR:
 		/*
-		 * We do not yet have a driver for the infrared
-		 * controller so it can cause spurious poweroff
-		 * events. Ignore those for now.
+		 * We करो not yet have a driver क्रम the infrared
+		 * controller so it can cause spurious घातeroff
+		 * events. Ignore those क्रम now.
 		 */
 		dev_info(gpw->dev, "infrared poweroff - ignored\n");
-		break;
-	case GEMINI_STAT_RTC:
+		अवरोध;
+	हाल GEMINI_STAT_RTC:
 		dev_info(gpw->dev, "RTC poweroff\n");
-		orderly_poweroff(true);
-		break;
-	case GEMINI_STAT_POWERBUTTON:
+		orderly_घातeroff(true);
+		अवरोध;
+	हाल GEMINI_STAT_POWERBUTTON:
 		dev_info(gpw->dev, "poweroff button pressed\n");
-		orderly_poweroff(true);
-		break;
-	default:
+		orderly_घातeroff(true);
+		अवरोध;
+	शेष:
 		dev_info(gpw->dev, "other power management IRQ\n");
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-/* This callback needs this static local as it has void as argument */
-static struct gemini_powercon *gpw_poweroff;
+/* This callback needs this अटल local as it has व्योम as argument */
+अटल काष्ठा gemini_घातercon *gpw_घातeroff;
 
-static void gemini_poweroff(void)
-{
-	struct gemini_powercon *gpw = gpw_poweroff;
+अटल व्योम gemini_घातeroff(व्योम)
+अणु
+	काष्ठा gemini_घातercon *gpw = gpw_घातeroff;
 	u32 val;
 
 	dev_crit(gpw->dev, "Gemini power off\n");
-	val = readl(gpw->base + GEMINI_PWC_CTRLREG);
+	val = पढ़ोl(gpw->base + GEMINI_PWC_CTRLREG);
 	val |= GEMINI_CTRL_ENABLE | GEMINI_CTRL_IRQ_CLR;
-	writel(val, gpw->base + GEMINI_PWC_CTRLREG);
+	ग_लिखोl(val, gpw->base + GEMINI_PWC_CTRLREG);
 
 	val &= ~GEMINI_CTRL_ENABLE;
 	val |= GEMINI_CTRL_SHUTDOWN;
-	writel(val, gpw->base + GEMINI_PWC_CTRLREG);
-}
+	ग_लिखोl(val, gpw->base + GEMINI_PWC_CTRLREG);
+पूर्ण
 
-static int gemini_poweroff_probe(struct platform_device *pdev)
-{
-	struct device *dev = &pdev->dev;
-	struct resource *res;
-	struct gemini_powercon *gpw;
+अटल पूर्णांक gemini_घातeroff_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा resource *res;
+	काष्ठा gemini_घातercon *gpw;
 	u32 val;
-	int irq;
-	int ret;
+	पूर्णांक irq;
+	पूर्णांक ret;
 
-	gpw = devm_kzalloc(dev, sizeof(*gpw), GFP_KERNEL);
-	if (!gpw)
-		return -ENOMEM;
+	gpw = devm_kzalloc(dev, माप(*gpw), GFP_KERNEL);
+	अगर (!gpw)
+		वापस -ENOMEM;
 
-	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
 	gpw->base = devm_ioremap_resource(dev, res);
-	if (IS_ERR(gpw->base))
-		return PTR_ERR(gpw->base);
+	अगर (IS_ERR(gpw->base))
+		वापस PTR_ERR(gpw->base);
 
-	irq = platform_get_irq(pdev, 0);
-	if (!irq)
-		return -EINVAL;
+	irq = platक्रमm_get_irq(pdev, 0);
+	अगर (!irq)
+		वापस -EINVAL;
 
 	gpw->dev = dev;
 
-	val = readl(gpw->base + GEMINI_PWC_IDREG);
+	val = पढ़ोl(gpw->base + GEMINI_PWC_IDREG);
 	val &= 0xFFFFFF00U;
-	if (val != GEMINI_PWC_ID) {
+	अगर (val != GEMINI_PWC_ID) अणु
 		dev_err(dev, "wrong power controller ID: %08x\n",
 			val);
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
 	/*
-	 * Enable the power controller. This is crucial on Gemini
-	 * systems: if this is not done, pressing the power button
-	 * will result in unconditional poweroff without any warning.
-	 * This makes the kernel handle the poweroff.
+	 * Enable the घातer controller. This is crucial on Gemini
+	 * प्रणालीs: अगर this is not करोne, pressing the घातer button
+	 * will result in unconditional घातeroff without any warning.
+	 * This makes the kernel handle the घातeroff.
 	 */
-	val = readl(gpw->base + GEMINI_PWC_CTRLREG);
+	val = पढ़ोl(gpw->base + GEMINI_PWC_CTRLREG);
 	val |= GEMINI_CTRL_ENABLE;
-	writel(val, gpw->base + GEMINI_PWC_CTRLREG);
+	ग_लिखोl(val, gpw->base + GEMINI_PWC_CTRLREG);
 
 	/* Clear the IRQ */
-	val = readl(gpw->base + GEMINI_PWC_CTRLREG);
+	val = पढ़ोl(gpw->base + GEMINI_PWC_CTRLREG);
 	val |= GEMINI_CTRL_IRQ_CLR;
-	writel(val, gpw->base + GEMINI_PWC_CTRLREG);
+	ग_लिखोl(val, gpw->base + GEMINI_PWC_CTRLREG);
 
-	/* Wait for this to clear */
-	val = readl(gpw->base + GEMINI_PWC_STATREG);
-	while (val & 0x70U)
-		val = readl(gpw->base + GEMINI_PWC_STATREG);
+	/* Wait क्रम this to clear */
+	val = पढ़ोl(gpw->base + GEMINI_PWC_STATREG);
+	जबतक (val & 0x70U)
+		val = पढ़ोl(gpw->base + GEMINI_PWC_STATREG);
 
 	/* Clear the IRQ again */
-	val = readl(gpw->base + GEMINI_PWC_CTRLREG);
+	val = पढ़ोl(gpw->base + GEMINI_PWC_CTRLREG);
 	val |= GEMINI_CTRL_IRQ_CLR;
-	writel(val, gpw->base + GEMINI_PWC_CTRLREG);
+	ग_लिखोl(val, gpw->base + GEMINI_PWC_CTRLREG);
 
-	ret = devm_request_irq(dev, irq, gemini_powerbutton_interrupt, 0,
+	ret = devm_request_irq(dev, irq, gemini_घातerbutton_पूर्णांकerrupt, 0,
 			       "poweroff", gpw);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	pm_power_off = gemini_poweroff;
-	gpw_poweroff = gpw;
+	pm_घातer_off = gemini_घातeroff;
+	gpw_घातeroff = gpw;
 
 	dev_info(dev, "Gemini poweroff driver registered\n");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct of_device_id gemini_poweroff_of_match[] = {
-	{
+अटल स्थिर काष्ठा of_device_id gemini_घातeroff_of_match[] = अणु
+	अणु
 		.compatible = "cortina,gemini-power-controller",
-	},
-	{}
-};
+	पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
-static struct platform_driver gemini_poweroff_driver = {
-	.probe = gemini_poweroff_probe,
-	.driver = {
+अटल काष्ठा platक्रमm_driver gemini_घातeroff_driver = अणु
+	.probe = gemini_घातeroff_probe,
+	.driver = अणु
 		.name = "gemini-poweroff",
-		.of_match_table = gemini_poweroff_of_match,
-	},
-};
-builtin_platform_driver(gemini_poweroff_driver);
+		.of_match_table = gemini_घातeroff_of_match,
+	पूर्ण,
+पूर्ण;
+builtin_platक्रमm_driver(gemini_घातeroff_driver);

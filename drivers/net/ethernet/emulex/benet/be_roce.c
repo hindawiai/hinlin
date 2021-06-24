@@ -1,9 +1,10 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (C) 2005 - 2016 Broadcom
  * All rights reserved.
  *
- * Contact Information:
+ * Contact Inक्रमmation:
  * linux-drivers@emulex.com
  *
  * Emulex
@@ -11,147 +12,147 @@
  * Costa Mesa, CA 92626
  */
 
-#include <linux/mutex.h>
-#include <linux/list.h>
-#include <linux/netdevice.h>
-#include <linux/module.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/list.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/module.h>
 
-#include "be.h"
-#include "be_cmds.h"
+#समावेश "be.h"
+#समावेश "be_cmds.h"
 
-static struct ocrdma_driver *ocrdma_drv;
-static LIST_HEAD(be_adapter_list);
-static DEFINE_MUTEX(be_adapter_list_lock);
+अटल काष्ठा ocrdma_driver *ocrdma_drv;
+अटल LIST_HEAD(be_adapter_list);
+अटल DEFINE_MUTEX(be_adapter_list_lock);
 
-static void _be_roce_dev_add(struct be_adapter *adapter)
-{
-	struct be_dev_info dev_info;
-	int i, num_vec;
-	struct pci_dev *pdev = adapter->pdev;
+अटल व्योम _be_roce_dev_add(काष्ठा be_adapter *adapter)
+अणु
+	काष्ठा be_dev_info dev_info;
+	पूर्णांक i, num_vec;
+	काष्ठा pci_dev *pdev = adapter->pdev;
 
-	if (!ocrdma_drv)
-		return;
+	अगर (!ocrdma_drv)
+		वापस;
 
-	if (ocrdma_drv->be_abi_version != BE_ROCE_ABI_VERSION) {
+	अगर (ocrdma_drv->be_abi_version != BE_ROCE_ABI_VERSION) अणु
 		dev_warn(&pdev->dev, "Cannot initialize RoCE due to ocrdma ABI mismatch\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (pdev->device == OC_DEVICE_ID5) {
+	अगर (pdev->device == OC_DEVICE_ID5) अणु
 		/* only msix is supported on these devices */
-		if (!msix_enabled(adapter))
-			return;
+		अगर (!msix_enabled(adapter))
+			वापस;
 		/* DPP region address and length */
 		dev_info.dpp_unmapped_addr = pci_resource_start(pdev, 2);
 		dev_info.dpp_unmapped_len = pci_resource_len(pdev, 2);
-	} else {
+	पूर्ण अन्यथा अणु
 		dev_info.dpp_unmapped_addr = 0;
 		dev_info.dpp_unmapped_len = 0;
-	}
+	पूर्ण
 	dev_info.pdev = adapter->pdev;
 	dev_info.db = adapter->db;
 	dev_info.unmapped_db = adapter->roce_db.io_addr;
 	dev_info.db_page_size = adapter->roce_db.size;
 	dev_info.db_total_size = adapter->roce_db.total_size;
 	dev_info.netdev = adapter->netdev;
-	memcpy(dev_info.mac_addr, adapter->netdev->dev_addr, ETH_ALEN);
+	स_नकल(dev_info.mac_addr, adapter->netdev->dev_addr, ETH_ALEN);
 	dev_info.dev_family = adapter->sli_family;
-	if (msix_enabled(adapter)) {
+	अगर (msix_enabled(adapter)) अणु
 		/* provide all the vectors, so that EQ creation response
 		 * can decide which one to use.
 		 */
 		num_vec = adapter->num_msix_vec + adapter->num_msix_roce_vec;
-		dev_info.intr_mode = BE_INTERRUPT_MODE_MSIX;
+		dev_info.पूर्णांकr_mode = BE_INTERRUPT_MODE_MSIX;
 		dev_info.msix.num_vectors = min(num_vec, MAX_MSIX_VECTORS);
 		/* provide start index of the vector,
-		 * so in case of linear usage,
-		 * it can use the base as starting point.
+		 * so in हाल of linear usage,
+		 * it can use the base as starting poपूर्णांक.
 		 */
 		dev_info.msix.start_vector = adapter->num_evt_qs;
-		for (i = 0; i < dev_info.msix.num_vectors; i++) {
+		क्रम (i = 0; i < dev_info.msix.num_vectors; i++) अणु
 			dev_info.msix.vector_list[i] =
 			    adapter->msix_entries[i].vector;
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		dev_info.msix.num_vectors = 0;
-		dev_info.intr_mode = BE_INTERRUPT_MODE_INTX;
-	}
+		dev_info.पूर्णांकr_mode = BE_INTERRUPT_MODE_INTX;
+	पूर्ण
 	adapter->ocrdma_dev = ocrdma_drv->add(&dev_info);
-}
+पूर्ण
 
-void be_roce_dev_add(struct be_adapter *adapter)
-{
-	if (be_roce_supported(adapter)) {
+व्योम be_roce_dev_add(काष्ठा be_adapter *adapter)
+अणु
+	अगर (be_roce_supported(adapter)) अणु
 		INIT_LIST_HEAD(&adapter->entry);
 		mutex_lock(&be_adapter_list_lock);
 		list_add_tail(&adapter->entry, &be_adapter_list);
 
-		/* invoke add() routine of roce driver only if
-		 * valid driver registered with add method and add() is not yet
+		/* invoke add() routine of roce driver only अगर
+		 * valid driver रेजिस्टरed with add method and add() is not yet
 		 * invoked on a given adapter.
 		 */
 		_be_roce_dev_add(adapter);
 		mutex_unlock(&be_adapter_list_lock);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void _be_roce_dev_remove(struct be_adapter *adapter)
-{
-	if (ocrdma_drv && ocrdma_drv->remove && adapter->ocrdma_dev)
-		ocrdma_drv->remove(adapter->ocrdma_dev);
-	adapter->ocrdma_dev = NULL;
-}
+अटल व्योम _be_roce_dev_हटाओ(काष्ठा be_adapter *adapter)
+अणु
+	अगर (ocrdma_drv && ocrdma_drv->हटाओ && adapter->ocrdma_dev)
+		ocrdma_drv->हटाओ(adapter->ocrdma_dev);
+	adapter->ocrdma_dev = शून्य;
+पूर्ण
 
-void be_roce_dev_remove(struct be_adapter *adapter)
-{
-	if (be_roce_supported(adapter)) {
+व्योम be_roce_dev_हटाओ(काष्ठा be_adapter *adapter)
+अणु
+	अगर (be_roce_supported(adapter)) अणु
 		mutex_lock(&be_adapter_list_lock);
-		_be_roce_dev_remove(adapter);
+		_be_roce_dev_हटाओ(adapter);
 		list_del(&adapter->entry);
 		mutex_unlock(&be_adapter_list_lock);
-	}
-}
+	पूर्ण
+पूर्ण
 
-void be_roce_dev_shutdown(struct be_adapter *adapter)
-{
-	if (be_roce_supported(adapter)) {
+व्योम be_roce_dev_shutकरोwn(काष्ठा be_adapter *adapter)
+अणु
+	अगर (be_roce_supported(adapter)) अणु
 		mutex_lock(&be_adapter_list_lock);
-		if (ocrdma_drv && adapter->ocrdma_dev &&
+		अगर (ocrdma_drv && adapter->ocrdma_dev &&
 		    ocrdma_drv->state_change_handler)
 			ocrdma_drv->state_change_handler(adapter->ocrdma_dev,
 							 BE_DEV_SHUTDOWN);
 		mutex_unlock(&be_adapter_list_lock);
-	}
-}
+	पूर्ण
+पूर्ण
 
-int be_roce_register_driver(struct ocrdma_driver *drv)
-{
-	struct be_adapter *dev;
+पूर्णांक be_roce_रेजिस्टर_driver(काष्ठा ocrdma_driver *drv)
+अणु
+	काष्ठा be_adapter *dev;
 
 	mutex_lock(&be_adapter_list_lock);
-	if (ocrdma_drv) {
+	अगर (ocrdma_drv) अणु
 		mutex_unlock(&be_adapter_list_lock);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 	ocrdma_drv = drv;
-	list_for_each_entry(dev, &be_adapter_list, entry) {
+	list_क्रम_each_entry(dev, &be_adapter_list, entry) अणु
 		_be_roce_dev_add(dev);
-	}
+	पूर्ण
 	mutex_unlock(&be_adapter_list_lock);
-	return 0;
-}
-EXPORT_SYMBOL(be_roce_register_driver);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL(be_roce_रेजिस्टर_driver);
 
-void be_roce_unregister_driver(struct ocrdma_driver *drv)
-{
-	struct be_adapter *dev;
+व्योम be_roce_unरेजिस्टर_driver(काष्ठा ocrdma_driver *drv)
+अणु
+	काष्ठा be_adapter *dev;
 
 	mutex_lock(&be_adapter_list_lock);
-	list_for_each_entry(dev, &be_adapter_list, entry) {
-		if (dev->ocrdma_dev)
-			_be_roce_dev_remove(dev);
-	}
-	ocrdma_drv = NULL;
+	list_क्रम_each_entry(dev, &be_adapter_list, entry) अणु
+		अगर (dev->ocrdma_dev)
+			_be_roce_dev_हटाओ(dev);
+	पूर्ण
+	ocrdma_drv = शून्य;
 	mutex_unlock(&be_adapter_list_lock);
-}
-EXPORT_SYMBOL(be_roce_unregister_driver);
+पूर्ण
+EXPORT_SYMBOL(be_roce_unरेजिस्टर_driver);

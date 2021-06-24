@@ -1,155 +1,156 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * A sensor driver for the magnetometer AK8975.
+ * A sensor driver क्रम the magnetometer AK8975.
  *
- * Magnetic compass sensor driver for monitoring magnetic flux information.
+ * Magnetic compass sensor driver क्रम monitoring magnetic flux inक्रमmation.
  *
  * Copyright (c) 2010, NVIDIA Corporation.
  */
 
-#include <linux/module.h>
-#include <linux/mod_devicetable.h>
-#include <linux/kernel.h>
-#include <linux/slab.h>
-#include <linux/i2c.h>
-#include <linux/interrupt.h>
-#include <linux/err.h>
-#include <linux/mutex.h>
-#include <linux/delay.h>
-#include <linux/bitops.h>
-#include <linux/gpio/consumer.h>
-#include <linux/regulator/consumer.h>
-#include <linux/pm_runtime.h>
+#समावेश <linux/module.h>
+#समावेश <linux/mod_devicetable.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/err.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/bitops.h>
+#समावेश <linux/gpio/consumer.h>
+#समावेश <linux/regulator/consumer.h>
+#समावेश <linux/pm_runसमय.स>
 
-#include <linux/iio/iio.h>
-#include <linux/iio/sysfs.h>
-#include <linux/iio/buffer.h>
-#include <linux/iio/trigger.h>
-#include <linux/iio/trigger_consumer.h>
-#include <linux/iio/triggered_buffer.h>
+#समावेश <linux/iio/iपन.स>
+#समावेश <linux/iio/sysfs.h>
+#समावेश <linux/iio/buffer.h>
+#समावेश <linux/iio/trigger.h>
+#समावेश <linux/iio/trigger_consumer.h>
+#समावेश <linux/iio/triggered_buffer.h>
 
 /*
- * Register definitions, as well as various shifts and masks to get at the
- * individual fields of the registers.
+ * Register definitions, as well as various shअगरts and masks to get at the
+ * inभागidual fields of the रेजिस्टरs.
  */
-#define AK8975_REG_WIA			0x00
-#define AK8975_DEVICE_ID		0x48
+#घोषणा AK8975_REG_WIA			0x00
+#घोषणा AK8975_DEVICE_ID		0x48
 
-#define AK8975_REG_INFO			0x01
+#घोषणा AK8975_REG_INFO			0x01
 
-#define AK8975_REG_ST1			0x02
-#define AK8975_REG_ST1_DRDY_SHIFT	0
-#define AK8975_REG_ST1_DRDY_MASK	(1 << AK8975_REG_ST1_DRDY_SHIFT)
+#घोषणा AK8975_REG_ST1			0x02
+#घोषणा AK8975_REG_ST1_DRDY_SHIFT	0
+#घोषणा AK8975_REG_ST1_DRDY_MASK	(1 << AK8975_REG_ST1_DRDY_SHIFT)
 
-#define AK8975_REG_HXL			0x03
-#define AK8975_REG_HXH			0x04
-#define AK8975_REG_HYL			0x05
-#define AK8975_REG_HYH			0x06
-#define AK8975_REG_HZL			0x07
-#define AK8975_REG_HZH			0x08
-#define AK8975_REG_ST2			0x09
-#define AK8975_REG_ST2_DERR_SHIFT	2
-#define AK8975_REG_ST2_DERR_MASK	(1 << AK8975_REG_ST2_DERR_SHIFT)
+#घोषणा AK8975_REG_HXL			0x03
+#घोषणा AK8975_REG_HXH			0x04
+#घोषणा AK8975_REG_HYL			0x05
+#घोषणा AK8975_REG_HYH			0x06
+#घोषणा AK8975_REG_HZL			0x07
+#घोषणा AK8975_REG_HZH			0x08
+#घोषणा AK8975_REG_ST2			0x09
+#घोषणा AK8975_REG_ST2_DERR_SHIFT	2
+#घोषणा AK8975_REG_ST2_DERR_MASK	(1 << AK8975_REG_ST2_DERR_SHIFT)
 
-#define AK8975_REG_ST2_HOFL_SHIFT	3
-#define AK8975_REG_ST2_HOFL_MASK	(1 << AK8975_REG_ST2_HOFL_SHIFT)
+#घोषणा AK8975_REG_ST2_HOFL_SHIFT	3
+#घोषणा AK8975_REG_ST2_HOFL_MASK	(1 << AK8975_REG_ST2_HOFL_SHIFT)
 
-#define AK8975_REG_CNTL			0x0A
-#define AK8975_REG_CNTL_MODE_SHIFT	0
-#define AK8975_REG_CNTL_MODE_MASK	(0xF << AK8975_REG_CNTL_MODE_SHIFT)
-#define AK8975_REG_CNTL_MODE_POWER_DOWN	0x00
-#define AK8975_REG_CNTL_MODE_ONCE	0x01
-#define AK8975_REG_CNTL_MODE_SELF_TEST	0x08
-#define AK8975_REG_CNTL_MODE_FUSE_ROM	0x0F
+#घोषणा AK8975_REG_CNTL			0x0A
+#घोषणा AK8975_REG_CNTL_MODE_SHIFT	0
+#घोषणा AK8975_REG_CNTL_MODE_MASK	(0xF << AK8975_REG_CNTL_MODE_SHIFT)
+#घोषणा AK8975_REG_CNTL_MODE_POWER_DOWN	0x00
+#घोषणा AK8975_REG_CNTL_MODE_ONCE	0x01
+#घोषणा AK8975_REG_CNTL_MODE_SELF_TEST	0x08
+#घोषणा AK8975_REG_CNTL_MODE_FUSE_ROM	0x0F
 
-#define AK8975_REG_RSVC			0x0B
-#define AK8975_REG_ASTC			0x0C
-#define AK8975_REG_TS1			0x0D
-#define AK8975_REG_TS2			0x0E
-#define AK8975_REG_I2CDIS		0x0F
-#define AK8975_REG_ASAX			0x10
-#define AK8975_REG_ASAY			0x11
-#define AK8975_REG_ASAZ			0x12
+#घोषणा AK8975_REG_RSVC			0x0B
+#घोषणा AK8975_REG_ASTC			0x0C
+#घोषणा AK8975_REG_TS1			0x0D
+#घोषणा AK8975_REG_TS2			0x0E
+#घोषणा AK8975_REG_I2CDIS		0x0F
+#घोषणा AK8975_REG_ASAX			0x10
+#घोषणा AK8975_REG_ASAY			0x11
+#घोषणा AK8975_REG_ASAZ			0x12
 
-#define AK8975_MAX_REGS			AK8975_REG_ASAZ
+#घोषणा AK8975_MAX_REGS			AK8975_REG_ASAZ
 
 /*
  * AK09912 Register definitions
  */
-#define AK09912_REG_WIA1		0x00
-#define AK09912_REG_WIA2		0x01
-#define AK09912_DEVICE_ID		0x04
-#define AK09911_DEVICE_ID		0x05
+#घोषणा AK09912_REG_WIA1		0x00
+#घोषणा AK09912_REG_WIA2		0x01
+#घोषणा AK09912_DEVICE_ID		0x04
+#घोषणा AK09911_DEVICE_ID		0x05
 
-#define AK09911_REG_INFO1		0x02
-#define AK09911_REG_INFO2		0x03
+#घोषणा AK09911_REG_INFO1		0x02
+#घोषणा AK09911_REG_INFO2		0x03
 
-#define AK09912_REG_ST1			0x10
+#घोषणा AK09912_REG_ST1			0x10
 
-#define AK09912_REG_ST1_DRDY_SHIFT	0
-#define AK09912_REG_ST1_DRDY_MASK	(1 << AK09912_REG_ST1_DRDY_SHIFT)
+#घोषणा AK09912_REG_ST1_DRDY_SHIFT	0
+#घोषणा AK09912_REG_ST1_DRDY_MASK	(1 << AK09912_REG_ST1_DRDY_SHIFT)
 
-#define AK09912_REG_HXL			0x11
-#define AK09912_REG_HXH			0x12
-#define AK09912_REG_HYL			0x13
-#define AK09912_REG_HYH			0x14
-#define AK09912_REG_HZL			0x15
-#define AK09912_REG_HZH			0x16
-#define AK09912_REG_TMPS		0x17
+#घोषणा AK09912_REG_HXL			0x11
+#घोषणा AK09912_REG_HXH			0x12
+#घोषणा AK09912_REG_HYL			0x13
+#घोषणा AK09912_REG_HYH			0x14
+#घोषणा AK09912_REG_HZL			0x15
+#घोषणा AK09912_REG_HZH			0x16
+#घोषणा AK09912_REG_TMPS		0x17
 
-#define AK09912_REG_ST2			0x18
-#define AK09912_REG_ST2_HOFL_SHIFT	3
-#define AK09912_REG_ST2_HOFL_MASK	(1 << AK09912_REG_ST2_HOFL_SHIFT)
+#घोषणा AK09912_REG_ST2			0x18
+#घोषणा AK09912_REG_ST2_HOFL_SHIFT	3
+#घोषणा AK09912_REG_ST2_HOFL_MASK	(1 << AK09912_REG_ST2_HOFL_SHIFT)
 
-#define AK09912_REG_CNTL1		0x30
+#घोषणा AK09912_REG_CNTL1		0x30
 
-#define AK09912_REG_CNTL2		0x31
-#define AK09912_REG_CNTL_MODE_POWER_DOWN	0x00
-#define AK09912_REG_CNTL_MODE_ONCE	0x01
-#define AK09912_REG_CNTL_MODE_SELF_TEST	0x10
-#define AK09912_REG_CNTL_MODE_FUSE_ROM	0x1F
-#define AK09912_REG_CNTL2_MODE_SHIFT	0
-#define AK09912_REG_CNTL2_MODE_MASK	(0x1F << AK09912_REG_CNTL2_MODE_SHIFT)
+#घोषणा AK09912_REG_CNTL2		0x31
+#घोषणा AK09912_REG_CNTL_MODE_POWER_DOWN	0x00
+#घोषणा AK09912_REG_CNTL_MODE_ONCE	0x01
+#घोषणा AK09912_REG_CNTL_MODE_SELF_TEST	0x10
+#घोषणा AK09912_REG_CNTL_MODE_FUSE_ROM	0x1F
+#घोषणा AK09912_REG_CNTL2_MODE_SHIFT	0
+#घोषणा AK09912_REG_CNTL2_MODE_MASK	(0x1F << AK09912_REG_CNTL2_MODE_SHIFT)
 
-#define AK09912_REG_CNTL3		0x32
+#घोषणा AK09912_REG_CNTL3		0x32
 
-#define AK09912_REG_TS1			0x33
-#define AK09912_REG_TS2			0x34
-#define AK09912_REG_TS3			0x35
-#define AK09912_REG_I2CDIS		0x36
-#define AK09912_REG_TS4			0x37
+#घोषणा AK09912_REG_TS1			0x33
+#घोषणा AK09912_REG_TS2			0x34
+#घोषणा AK09912_REG_TS3			0x35
+#घोषणा AK09912_REG_I2CDIS		0x36
+#घोषणा AK09912_REG_TS4			0x37
 
-#define AK09912_REG_ASAX		0x60
-#define AK09912_REG_ASAY		0x61
-#define AK09912_REG_ASAZ		0x62
+#घोषणा AK09912_REG_ASAX		0x60
+#घोषणा AK09912_REG_ASAY		0x61
+#घोषणा AK09912_REG_ASAZ		0x62
 
-#define AK09912_MAX_REGS		AK09912_REG_ASAZ
+#घोषणा AK09912_MAX_REGS		AK09912_REG_ASAZ
 
 /*
  * Miscellaneous values.
  */
-#define AK8975_MAX_CONVERSION_TIMEOUT	500
-#define AK8975_CONVERSION_DONE_POLL_TIME 10
-#define AK8975_DATA_READY_TIMEOUT	((100*HZ)/1000)
+#घोषणा AK8975_MAX_CONVERSION_TIMEOUT	500
+#घोषणा AK8975_CONVERSION_DONE_POLL_TIME 10
+#घोषणा AK8975_DATA_READY_TIMEOUT	((100*HZ)/1000)
 
 /*
- * Precalculate scale factor (in Gauss units) for each axis and
+ * Precalculate scale factor (in Gauss units) क्रम each axis and
  * store in the device data.
  *
  * This scale factor is axis-dependent, and is derived from 3 calibration
  * factors ASA(x), ASA(y), and ASA(z).
  *
- * These ASA values are read from the sensor device at start of day, and
- * cached in the device context struct.
+ * These ASA values are पढ़ो from the sensor device at start of day, and
+ * cached in the device context काष्ठा.
  *
- * Adjusting the flux value with the sensitivity adjustment value should be
- * done via the following formula:
+ * Adjusting the flux value with the sensitivity adjusपंचांगent value should be
+ * करोne via the following क्रमmula:
  *
  * Hadj = H * ( ( ( (ASA-128)*0.5 ) / 128 ) + 1 )
- * where H is the raw value, ASA is the sensitivity adjustment, and Hadj
+ * where H is the raw value, ASA is the sensitivity adjusपंचांगent, and Hadj
  * is the resultant adjusted value.
  *
- * We reduce the formula to:
+ * We reduce the क्रमmula to:
  *
  * Hadj = H * (ASA + 128) / 256
  *
@@ -163,16 +164,16 @@
  * Hadj = H * ((ASA + 128) / 256) * 3/10 * 1/100
  * Hadj = H * ((ASA + 128) * 0.003) / 256
  *
- * Since ASA doesn't change, we cache the resultant scale factor into the
+ * Since ASA करोesn't change, we cache the resultant scale factor पूर्णांकo the
  * device context in ak8975_setup().
  *
  * Given we use IIO_VAL_INT_PLUS_MICRO bit when displaying the scale, we
  * multiply the stored scale value by 1e6.
  */
-static long ak8975_raw_to_gauss(u16 data)
-{
-	return (((long)data + 128) * 3000) / 256;
-}
+अटल दीर्घ ak8975_raw_to_gauss(u16 data)
+अणु
+	वापस (((दीर्घ)data + 128) * 3000) / 256;
+पूर्ण
 
 /*
  * For AK8963 and AK09911, same calculation, but the device is less sensitive:
@@ -183,10 +184,10 @@ static long ak8975_raw_to_gauss(u16 data)
  * HuT = H * 4912/8190, or roughly, 6/10, instead of 3/10.
  */
 
-static long ak8963_09911_raw_to_gauss(u16 data)
-{
-	return (((long)data + 128) * 6000) / 256;
-}
+अटल दीर्घ ak8963_09911_raw_to_gauss(u16 data)
+अणु
+	वापस (((दीर्घ)data + 128) * 6000) / 256;
+पूर्ण
 
 /*
  * For AK09912, same calculation, except the device is more sensitive:
@@ -196,625 +197,625 @@ static long ak8963_09911_raw_to_gauss(u16 data)
  *
  * HuT = H * 4912/32752, or roughly, 3/20, instead of 3/10.
  */
-static long ak09912_raw_to_gauss(u16 data)
-{
-	return (((long)data + 128) * 1500) / 256;
-}
+अटल दीर्घ ak09912_raw_to_gauss(u16 data)
+अणु
+	वापस (((दीर्घ)data + 128) * 1500) / 256;
+पूर्ण
 
 /* Compatible Asahi Kasei Compass parts */
-enum asahi_compass_chipset {
+क्रमागत asahi_compass_chipset अणु
 	AKXXXX		= 0,
 	AK8975,
 	AK8963,
 	AK09911,
 	AK09912,
-};
+पूर्ण;
 
-enum ak_ctrl_reg_addr {
+क्रमागत ak_ctrl_reg_addr अणु
 	ST1,
 	ST2,
 	CNTL,
 	ASA_BASE,
 	MAX_REGS,
 	REGS_END,
-};
+पूर्ण;
 
-enum ak_ctrl_reg_mask {
+क्रमागत ak_ctrl_reg_mask अणु
 	ST1_DRDY,
 	ST2_HOFL,
 	ST2_DERR,
 	CNTL_MODE,
 	MASK_END,
-};
+पूर्ण;
 
-enum ak_ctrl_mode {
+क्रमागत ak_ctrl_mode अणु
 	POWER_DOWN,
 	MODE_ONCE,
 	SELF_TEST,
 	FUSE_ROM,
 	MODE_END,
-};
+पूर्ण;
 
-struct ak_def {
-	enum asahi_compass_chipset type;
-	long (*raw_to_gauss)(u16 data);
+काष्ठा ak_def अणु
+	क्रमागत asahi_compass_chipset type;
+	दीर्घ (*raw_to_gauss)(u16 data);
 	u16 range;
 	u8 ctrl_regs[REGS_END];
 	u8 ctrl_masks[MASK_END];
 	u8 ctrl_modes[MODE_END];
 	u8 data_regs[3];
-};
+पूर्ण;
 
-static const struct ak_def ak_def_array[] = {
-	{
+अटल स्थिर काष्ठा ak_def ak_def_array[] = अणु
+	अणु
 		.type = AK8975,
 		.raw_to_gauss = ak8975_raw_to_gauss,
 		.range = 4096,
-		.ctrl_regs = {
+		.ctrl_regs = अणु
 			AK8975_REG_ST1,
 			AK8975_REG_ST2,
 			AK8975_REG_CNTL,
 			AK8975_REG_ASAX,
-			AK8975_MAX_REGS},
-		.ctrl_masks = {
+			AK8975_MAX_REGSपूर्ण,
+		.ctrl_masks = अणु
 			AK8975_REG_ST1_DRDY_MASK,
 			AK8975_REG_ST2_HOFL_MASK,
 			AK8975_REG_ST2_DERR_MASK,
-			AK8975_REG_CNTL_MODE_MASK},
-		.ctrl_modes = {
+			AK8975_REG_CNTL_MODE_MASKपूर्ण,
+		.ctrl_modes = अणु
 			AK8975_REG_CNTL_MODE_POWER_DOWN,
 			AK8975_REG_CNTL_MODE_ONCE,
 			AK8975_REG_CNTL_MODE_SELF_TEST,
-			AK8975_REG_CNTL_MODE_FUSE_ROM},
-		.data_regs = {
+			AK8975_REG_CNTL_MODE_FUSE_ROMपूर्ण,
+		.data_regs = अणु
 			AK8975_REG_HXL,
 			AK8975_REG_HYL,
-			AK8975_REG_HZL},
-	},
-	{
+			AK8975_REG_HZLपूर्ण,
+	पूर्ण,
+	अणु
 		.type = AK8963,
 		.raw_to_gauss = ak8963_09911_raw_to_gauss,
 		.range = 8190,
-		.ctrl_regs = {
+		.ctrl_regs = अणु
 			AK8975_REG_ST1,
 			AK8975_REG_ST2,
 			AK8975_REG_CNTL,
 			AK8975_REG_ASAX,
-			AK8975_MAX_REGS},
-		.ctrl_masks = {
+			AK8975_MAX_REGSपूर्ण,
+		.ctrl_masks = अणु
 			AK8975_REG_ST1_DRDY_MASK,
 			AK8975_REG_ST2_HOFL_MASK,
 			0,
-			AK8975_REG_CNTL_MODE_MASK},
-		.ctrl_modes = {
+			AK8975_REG_CNTL_MODE_MASKपूर्ण,
+		.ctrl_modes = अणु
 			AK8975_REG_CNTL_MODE_POWER_DOWN,
 			AK8975_REG_CNTL_MODE_ONCE,
 			AK8975_REG_CNTL_MODE_SELF_TEST,
-			AK8975_REG_CNTL_MODE_FUSE_ROM},
-		.data_regs = {
+			AK8975_REG_CNTL_MODE_FUSE_ROMपूर्ण,
+		.data_regs = अणु
 			AK8975_REG_HXL,
 			AK8975_REG_HYL,
-			AK8975_REG_HZL},
-	},
-	{
+			AK8975_REG_HZLपूर्ण,
+	पूर्ण,
+	अणु
 		.type = AK09911,
 		.raw_to_gauss = ak8963_09911_raw_to_gauss,
 		.range = 8192,
-		.ctrl_regs = {
+		.ctrl_regs = अणु
 			AK09912_REG_ST1,
 			AK09912_REG_ST2,
 			AK09912_REG_CNTL2,
 			AK09912_REG_ASAX,
-			AK09912_MAX_REGS},
-		.ctrl_masks = {
+			AK09912_MAX_REGSपूर्ण,
+		.ctrl_masks = अणु
 			AK09912_REG_ST1_DRDY_MASK,
 			AK09912_REG_ST2_HOFL_MASK,
 			0,
-			AK09912_REG_CNTL2_MODE_MASK},
-		.ctrl_modes = {
+			AK09912_REG_CNTL2_MODE_MASKपूर्ण,
+		.ctrl_modes = अणु
 			AK09912_REG_CNTL_MODE_POWER_DOWN,
 			AK09912_REG_CNTL_MODE_ONCE,
 			AK09912_REG_CNTL_MODE_SELF_TEST,
-			AK09912_REG_CNTL_MODE_FUSE_ROM},
-		.data_regs = {
+			AK09912_REG_CNTL_MODE_FUSE_ROMपूर्ण,
+		.data_regs = अणु
 			AK09912_REG_HXL,
 			AK09912_REG_HYL,
-			AK09912_REG_HZL},
-	},
-	{
+			AK09912_REG_HZLपूर्ण,
+	पूर्ण,
+	अणु
 		.type = AK09912,
 		.raw_to_gauss = ak09912_raw_to_gauss,
 		.range = 32752,
-		.ctrl_regs = {
+		.ctrl_regs = अणु
 			AK09912_REG_ST1,
 			AK09912_REG_ST2,
 			AK09912_REG_CNTL2,
 			AK09912_REG_ASAX,
-			AK09912_MAX_REGS},
-		.ctrl_masks = {
+			AK09912_MAX_REGSपूर्ण,
+		.ctrl_masks = अणु
 			AK09912_REG_ST1_DRDY_MASK,
 			AK09912_REG_ST2_HOFL_MASK,
 			0,
-			AK09912_REG_CNTL2_MODE_MASK},
-		.ctrl_modes = {
+			AK09912_REG_CNTL2_MODE_MASKपूर्ण,
+		.ctrl_modes = अणु
 			AK09912_REG_CNTL_MODE_POWER_DOWN,
 			AK09912_REG_CNTL_MODE_ONCE,
 			AK09912_REG_CNTL_MODE_SELF_TEST,
-			AK09912_REG_CNTL_MODE_FUSE_ROM},
-		.data_regs = {
+			AK09912_REG_CNTL_MODE_FUSE_ROMपूर्ण,
+		.data_regs = अणु
 			AK09912_REG_HXL,
 			AK09912_REG_HYL,
-			AK09912_REG_HZL},
-	}
-};
+			AK09912_REG_HZLपूर्ण,
+	पूर्ण
+पूर्ण;
 
 /*
- * Per-instance context data for the device.
+ * Per-instance context data क्रम the device.
  */
-struct ak8975_data {
-	struct i2c_client	*client;
-	const struct ak_def	*def;
-	struct mutex		lock;
+काष्ठा ak8975_data अणु
+	काष्ठा i2c_client	*client;
+	स्थिर काष्ठा ak_def	*def;
+	काष्ठा mutex		lock;
 	u8			asa[3];
-	long			raw_to_gauss[3];
-	struct gpio_desc	*eoc_gpiod;
-	struct gpio_desc	*reset_gpiod;
-	int			eoc_irq;
-	wait_queue_head_t	data_ready_queue;
-	unsigned long		flags;
+	दीर्घ			raw_to_gauss[3];
+	काष्ठा gpio_desc	*eoc_gpiod;
+	काष्ठा gpio_desc	*reset_gpiod;
+	पूर्णांक			eoc_irq;
+	रुको_queue_head_t	data_पढ़ोy_queue;
+	अचिन्हित दीर्घ		flags;
 	u8			cntl_cache;
-	struct iio_mount_matrix orientation;
-	struct regulator	*vdd;
-	struct regulator	*vid;
+	काष्ठा iio_mount_matrix orientation;
+	काष्ठा regulator	*vdd;
+	काष्ठा regulator	*vid;
 
-	/* Ensure natural alignment of timestamp */
-	struct {
+	/* Ensure natural alignment of बारtamp */
+	काष्ठा अणु
 		s16 channels[3];
 		s64 ts __aligned(8);
-	} scan;
-};
+	पूर्ण scan;
+पूर्ण;
 
-/* Enable attached power regulator if any. */
-static int ak8975_power_on(const struct ak8975_data *data)
-{
-	int ret;
+/* Enable attached घातer regulator अगर any. */
+अटल पूर्णांक ak8975_घातer_on(स्थिर काष्ठा ak8975_data *data)
+अणु
+	पूर्णांक ret;
 
 	ret = regulator_enable(data->vdd);
-	if (ret) {
+	अगर (ret) अणु
 		dev_warn(&data->client->dev,
 			 "Failed to enable specified Vdd supply\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 	ret = regulator_enable(data->vid);
-	if (ret) {
+	अगर (ret) अणु
 		dev_warn(&data->client->dev,
 			 "Failed to enable specified Vid supply\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	gpiod_set_value_cansleep(data->reset_gpiod, 0);
 
 	/*
-	 * According to the datasheet the power supply rise time is 200us
-	 * and the minimum wait time before mode setting is 100us, in
+	 * According to the datasheet the घातer supply rise समय is 200us
+	 * and the minimum रुको समय beक्रमe mode setting is 100us, in
 	 * total 300us. Add some margin and say minimum 500us here.
 	 */
 	usleep_range(500, 1000);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* Disable attached power regulator if any. */
-static void ak8975_power_off(const struct ak8975_data *data)
-{
+/* Disable attached घातer regulator अगर any. */
+अटल व्योम ak8975_घातer_off(स्थिर काष्ठा ak8975_data *data)
+अणु
 	gpiod_set_value_cansleep(data->reset_gpiod, 1);
 
 	regulator_disable(data->vid);
 	regulator_disable(data->vdd);
-}
+पूर्ण
 
 /*
- * Return 0 if the i2c device is the one we expect.
- * return a negative error number otherwise
+ * Return 0 अगर the i2c device is the one we expect.
+ * वापस a negative error number otherwise
  */
-static int ak8975_who_i_am(struct i2c_client *client,
-			   enum asahi_compass_chipset type)
-{
+अटल पूर्णांक ak8975_who_i_am(काष्ठा i2c_client *client,
+			   क्रमागत asahi_compass_chipset type)
+अणु
 	u8 wia_val[2];
-	int ret;
+	पूर्णांक ret;
 
 	/*
-	 * Signature for each device:
+	 * Signature क्रम each device:
 	 * Device   |  WIA1      |  WIA2
 	 * AK09912  |  DEVICE_ID |  AK09912_DEVICE_ID
 	 * AK09911  |  DEVICE_ID |  AK09911_DEVICE_ID
 	 * AK8975   |  DEVICE_ID |  NA
 	 * AK8963   |  DEVICE_ID |  NA
 	 */
-	ret = i2c_smbus_read_i2c_block_data_or_emulated(
+	ret = i2c_smbus_पढ़ो_i2c_block_data_or_emulated(
 			client, AK09912_REG_WIA1, 2, wia_val);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(&client->dev, "Error reading WIA\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	if (wia_val[0] != AK8975_DEVICE_ID)
-		return -ENODEV;
+	अगर (wia_val[0] != AK8975_DEVICE_ID)
+		वापस -ENODEV;
 
-	switch (type) {
-	case AK8975:
-	case AK8963:
-		return 0;
-	case AK09911:
-		if (wia_val[1] == AK09911_DEVICE_ID)
-			return 0;
-		break;
-	case AK09912:
-		if (wia_val[1] == AK09912_DEVICE_ID)
-			return 0;
-		break;
-	default:
+	चयन (type) अणु
+	हाल AK8975:
+	हाल AK8963:
+		वापस 0;
+	हाल AK09911:
+		अगर (wia_val[1] == AK09911_DEVICE_ID)
+			वापस 0;
+		अवरोध;
+	हाल AK09912:
+		अगर (wia_val[1] == AK09912_DEVICE_ID)
+			वापस 0;
+		अवरोध;
+	शेष:
 		dev_err(&client->dev, "Type %d unknown\n", type);
-	}
-	return -ENODEV;
-}
+	पूर्ण
+	वापस -ENODEV;
+पूर्ण
 
 /*
- * Helper function to write to CNTL register.
+ * Helper function to ग_लिखो to CNTL रेजिस्टर.
  */
-static int ak8975_set_mode(struct ak8975_data *data, enum ak_ctrl_mode mode)
-{
+अटल पूर्णांक ak8975_set_mode(काष्ठा ak8975_data *data, क्रमागत ak_ctrl_mode mode)
+अणु
 	u8 regval;
-	int ret;
+	पूर्णांक ret;
 
 	regval = (data->cntl_cache & ~data->def->ctrl_masks[CNTL_MODE]) |
 		 data->def->ctrl_modes[mode];
-	ret = i2c_smbus_write_byte_data(data->client,
+	ret = i2c_smbus_ग_लिखो_byte_data(data->client,
 					data->def->ctrl_regs[CNTL], regval);
-	if (ret < 0) {
-		return ret;
-	}
+	अगर (ret < 0) अणु
+		वापस ret;
+	पूर्ण
 	data->cntl_cache = regval;
-	/* After mode change wait atleast 100us */
+	/* After mode change रुको atleast 100us */
 	usleep_range(100, 500);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * Handle data ready irq
+ * Handle data पढ़ोy irq
  */
-static irqreturn_t ak8975_irq_handler(int irq, void *data)
-{
-	struct ak8975_data *ak8975 = data;
+अटल irqवापस_t ak8975_irq_handler(पूर्णांक irq, व्योम *data)
+अणु
+	काष्ठा ak8975_data *ak8975 = data;
 
 	set_bit(0, &ak8975->flags);
-	wake_up(&ak8975->data_ready_queue);
+	wake_up(&ak8975->data_पढ़ोy_queue);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
 /*
- * Install data ready interrupt handler
+ * Install data पढ़ोy पूर्णांकerrupt handler
  */
-static int ak8975_setup_irq(struct ak8975_data *data)
-{
-	struct i2c_client *client = data->client;
-	int rc;
-	int irq;
+अटल पूर्णांक ak8975_setup_irq(काष्ठा ak8975_data *data)
+अणु
+	काष्ठा i2c_client *client = data->client;
+	पूर्णांक rc;
+	पूर्णांक irq;
 
-	init_waitqueue_head(&data->data_ready_queue);
+	init_रुकोqueue_head(&data->data_पढ़ोy_queue);
 	clear_bit(0, &data->flags);
-	if (client->irq)
+	अगर (client->irq)
 		irq = client->irq;
-	else
+	अन्यथा
 		irq = gpiod_to_irq(data->eoc_gpiod);
 
 	rc = devm_request_irq(&client->dev, irq, ak8975_irq_handler,
 			      IRQF_TRIGGER_RISING | IRQF_ONESHOT,
 			      dev_name(&client->dev), data);
-	if (rc < 0) {
+	अगर (rc < 0) अणु
 		dev_err(&client->dev, "irq %d request failed: %d\n", irq, rc);
-		return rc;
-	}
+		वापस rc;
+	पूर्ण
 
 	data->eoc_irq = irq;
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
 
 /*
- * Perform some start-of-day setup, including reading the asa calibration
+ * Perक्रमm some start-of-day setup, including पढ़ोing the asa calibration
  * values and caching them.
  */
-static int ak8975_setup(struct i2c_client *client)
-{
-	struct iio_dev *indio_dev = i2c_get_clientdata(client);
-	struct ak8975_data *data = iio_priv(indio_dev);
-	int ret;
+अटल पूर्णांक ak8975_setup(काष्ठा i2c_client *client)
+अणु
+	काष्ठा iio_dev *indio_dev = i2c_get_clientdata(client);
+	काष्ठा ak8975_data *data = iio_priv(indio_dev);
+	पूर्णांक ret;
 
 	/* Write the fused rom access mode. */
 	ret = ak8975_set_mode(data, FUSE_ROM);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(&client->dev, "Error in setting fuse access mode\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	/* Get asa data and store in the device data. */
-	ret = i2c_smbus_read_i2c_block_data_or_emulated(
+	ret = i2c_smbus_पढ़ो_i2c_block_data_or_emulated(
 			client, data->def->ctrl_regs[ASA_BASE],
 			3, data->asa);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(&client->dev, "Not able to read asa data\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	/* After reading fuse ROM data set power-down mode */
+	/* After पढ़ोing fuse ROM data set घातer-करोwn mode */
 	ret = ak8975_set_mode(data, POWER_DOWN);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(&client->dev, "Error in setting power-down mode\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	if (data->eoc_gpiod || client->irq > 0) {
+	अगर (data->eoc_gpiod || client->irq > 0) अणु
 		ret = ak8975_setup_irq(data);
-		if (ret < 0) {
+		अगर (ret < 0) अणु
 			dev_err(&client->dev,
 				"Error setting data ready interrupt\n");
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
 	data->raw_to_gauss[0] = data->def->raw_to_gauss(data->asa[0]);
 	data->raw_to_gauss[1] = data->def->raw_to_gauss(data->asa[1]);
 	data->raw_to_gauss[2] = data->def->raw_to_gauss(data->asa[2]);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int wait_conversion_complete_gpio(struct ak8975_data *data)
-{
-	struct i2c_client *client = data->client;
-	u32 timeout_ms = AK8975_MAX_CONVERSION_TIMEOUT;
-	int ret;
+अटल पूर्णांक रुको_conversion_complete_gpio(काष्ठा ak8975_data *data)
+अणु
+	काष्ठा i2c_client *client = data->client;
+	u32 समयout_ms = AK8975_MAX_CONVERSION_TIMEOUT;
+	पूर्णांक ret;
 
-	/* Wait for the conversion to complete. */
-	while (timeout_ms) {
+	/* Wait क्रम the conversion to complete. */
+	जबतक (समयout_ms) अणु
 		msleep(AK8975_CONVERSION_DONE_POLL_TIME);
-		if (gpiod_get_value(data->eoc_gpiod))
-			break;
-		timeout_ms -= AK8975_CONVERSION_DONE_POLL_TIME;
-	}
-	if (!timeout_ms) {
+		अगर (gpiod_get_value(data->eoc_gpiod))
+			अवरोध;
+		समयout_ms -= AK8975_CONVERSION_DONE_POLL_TIME;
+	पूर्ण
+	अगर (!समयout_ms) अणु
 		dev_err(&client->dev, "Conversion timeout happened\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	ret = i2c_smbus_read_byte_data(client, data->def->ctrl_regs[ST1]);
-	if (ret < 0)
+	ret = i2c_smbus_पढ़ो_byte_data(client, data->def->ctrl_regs[ST1]);
+	अगर (ret < 0)
 		dev_err(&client->dev, "Error in reading ST1\n");
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int wait_conversion_complete_polled(struct ak8975_data *data)
-{
-	struct i2c_client *client = data->client;
-	u8 read_status;
-	u32 timeout_ms = AK8975_MAX_CONVERSION_TIMEOUT;
-	int ret;
+अटल पूर्णांक रुको_conversion_complete_polled(काष्ठा ak8975_data *data)
+अणु
+	काष्ठा i2c_client *client = data->client;
+	u8 पढ़ो_status;
+	u32 समयout_ms = AK8975_MAX_CONVERSION_TIMEOUT;
+	पूर्णांक ret;
 
-	/* Wait for the conversion to complete. */
-	while (timeout_ms) {
+	/* Wait क्रम the conversion to complete. */
+	जबतक (समयout_ms) अणु
 		msleep(AK8975_CONVERSION_DONE_POLL_TIME);
-		ret = i2c_smbus_read_byte_data(client,
+		ret = i2c_smbus_पढ़ो_byte_data(client,
 					       data->def->ctrl_regs[ST1]);
-		if (ret < 0) {
+		अगर (ret < 0) अणु
 			dev_err(&client->dev, "Error in reading ST1\n");
-			return ret;
-		}
-		read_status = ret;
-		if (read_status)
-			break;
-		timeout_ms -= AK8975_CONVERSION_DONE_POLL_TIME;
-	}
-	if (!timeout_ms) {
+			वापस ret;
+		पूर्ण
+		पढ़ो_status = ret;
+		अगर (पढ़ो_status)
+			अवरोध;
+		समयout_ms -= AK8975_CONVERSION_DONE_POLL_TIME;
+	पूर्ण
+	अगर (!समयout_ms) अणु
 		dev_err(&client->dev, "Conversion timeout happened\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return read_status;
-}
+	वापस पढ़ो_status;
+पूर्ण
 
-/* Returns 0 if the end of conversion interrupt occured or -ETIME otherwise */
-static int wait_conversion_complete_interrupt(struct ak8975_data *data)
-{
-	int ret;
+/* Returns 0 अगर the end of conversion पूर्णांकerrupt occured or -ETIME otherwise */
+अटल पूर्णांक रुको_conversion_complete_पूर्णांकerrupt(काष्ठा ak8975_data *data)
+अणु
+	पूर्णांक ret;
 
-	ret = wait_event_timeout(data->data_ready_queue,
+	ret = रुको_event_समयout(data->data_पढ़ोy_queue,
 				 test_bit(0, &data->flags),
 				 AK8975_DATA_READY_TIMEOUT);
 	clear_bit(0, &data->flags);
 
-	return ret > 0 ? 0 : -ETIME;
-}
+	वापस ret > 0 ? 0 : -ETIME;
+पूर्ण
 
-static int ak8975_start_read_axis(struct ak8975_data *data,
-				  const struct i2c_client *client)
-{
-	/* Set up the device for taking a sample. */
-	int ret = ak8975_set_mode(data, MODE_ONCE);
+अटल पूर्णांक ak8975_start_पढ़ो_axis(काष्ठा ak8975_data *data,
+				  स्थिर काष्ठा i2c_client *client)
+अणु
+	/* Set up the device क्रम taking a sample. */
+	पूर्णांक ret = ak8975_set_mode(data, MODE_ONCE);
 
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(&client->dev, "Error in setting operating mode\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	/* Wait for the conversion to complete. */
-	if (data->eoc_irq)
-		ret = wait_conversion_complete_interrupt(data);
-	else if (data->eoc_gpiod)
-		ret = wait_conversion_complete_gpio(data);
-	else
-		ret = wait_conversion_complete_polled(data);
-	if (ret < 0)
-		return ret;
+	/* Wait क्रम the conversion to complete. */
+	अगर (data->eoc_irq)
+		ret = रुको_conversion_complete_पूर्णांकerrupt(data);
+	अन्यथा अगर (data->eoc_gpiod)
+		ret = रुको_conversion_complete_gpio(data);
+	अन्यथा
+		ret = रुको_conversion_complete_polled(data);
+	अगर (ret < 0)
+		वापस ret;
 
-	/* This will be executed only for non-interrupt based waiting case */
-	if (ret & data->def->ctrl_masks[ST1_DRDY]) {
-		ret = i2c_smbus_read_byte_data(client,
+	/* This will be executed only क्रम non-पूर्णांकerrupt based रुकोing हाल */
+	अगर (ret & data->def->ctrl_masks[ST1_DRDY]) अणु
+		ret = i2c_smbus_पढ़ो_byte_data(client,
 					       data->def->ctrl_regs[ST2]);
-		if (ret < 0) {
+		अगर (ret < 0) अणु
 			dev_err(&client->dev, "Error in reading ST2\n");
-			return ret;
-		}
-		if (ret & (data->def->ctrl_masks[ST2_DERR] |
-			   data->def->ctrl_masks[ST2_HOFL])) {
+			वापस ret;
+		पूर्ण
+		अगर (ret & (data->def->ctrl_masks[ST2_DERR] |
+			   data->def->ctrl_masks[ST2_HOFL])) अणु
 			dev_err(&client->dev, "ST2 status error 0x%x\n", ret);
-			return -EINVAL;
-		}
-	}
+			वापस -EINVAL;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* Retrieve raw flux value for one of the x, y, or z axis.  */
-static int ak8975_read_axis(struct iio_dev *indio_dev, int index, int *val)
-{
-	struct ak8975_data *data = iio_priv(indio_dev);
-	const struct i2c_client *client = data->client;
-	const struct ak_def *def = data->def;
+/* Retrieve raw flux value क्रम one of the x, y, or z axis.  */
+अटल पूर्णांक ak8975_पढ़ो_axis(काष्ठा iio_dev *indio_dev, पूर्णांक index, पूर्णांक *val)
+अणु
+	काष्ठा ak8975_data *data = iio_priv(indio_dev);
+	स्थिर काष्ठा i2c_client *client = data->client;
+	स्थिर काष्ठा ak_def *def = data->def;
 	__le16 rval;
 	u16 buff;
-	int ret;
+	पूर्णांक ret;
 
-	pm_runtime_get_sync(&data->client->dev);
+	pm_runसमय_get_sync(&data->client->dev);
 
 	mutex_lock(&data->lock);
 
-	ret = ak8975_start_read_axis(data, client);
-	if (ret)
-		goto exit;
+	ret = ak8975_start_पढ़ो_axis(data, client);
+	अगर (ret)
+		जाओ निकास;
 
-	ret = i2c_smbus_read_i2c_block_data_or_emulated(
+	ret = i2c_smbus_पढ़ो_i2c_block_data_or_emulated(
 			client, def->data_regs[index],
-			sizeof(rval), (u8*)&rval);
-	if (ret < 0)
-		goto exit;
+			माप(rval), (u8*)&rval);
+	अगर (ret < 0)
+		जाओ निकास;
 
 	mutex_unlock(&data->lock);
 
-	pm_runtime_mark_last_busy(&data->client->dev);
-	pm_runtime_put_autosuspend(&data->client->dev);
+	pm_runसमय_mark_last_busy(&data->client->dev);
+	pm_runसमय_put_स्वतःsuspend(&data->client->dev);
 
 	/* Swap bytes and convert to valid range. */
 	buff = le16_to_cpu(rval);
 	*val = clamp_t(s16, buff, -def->range, def->range);
-	return IIO_VAL_INT;
+	वापस IIO_VAL_INT;
 
-exit:
+निकास:
 	mutex_unlock(&data->lock);
 	dev_err(&client->dev, "Error in reading axis\n");
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int ak8975_read_raw(struct iio_dev *indio_dev,
-			   struct iio_chan_spec const *chan,
-			   int *val, int *val2,
-			   long mask)
-{
-	struct ak8975_data *data = iio_priv(indio_dev);
+अटल पूर्णांक ak8975_पढ़ो_raw(काष्ठा iio_dev *indio_dev,
+			   काष्ठा iio_chan_spec स्थिर *chan,
+			   पूर्णांक *val, पूर्णांक *val2,
+			   दीर्घ mask)
+अणु
+	काष्ठा ak8975_data *data = iio_priv(indio_dev);
 
-	switch (mask) {
-	case IIO_CHAN_INFO_RAW:
-		return ak8975_read_axis(indio_dev, chan->address, val);
-	case IIO_CHAN_INFO_SCALE:
+	चयन (mask) अणु
+	हाल IIO_CHAN_INFO_RAW:
+		वापस ak8975_पढ़ो_axis(indio_dev, chan->address, val);
+	हाल IIO_CHAN_INFO_SCALE:
 		*val = 0;
 		*val2 = data->raw_to_gauss[chan->address];
-		return IIO_VAL_INT_PLUS_MICRO;
-	}
-	return -EINVAL;
-}
+		वापस IIO_VAL_INT_PLUS_MICRO;
+	पूर्ण
+	वापस -EINVAL;
+पूर्ण
 
-static const struct iio_mount_matrix *
-ak8975_get_mount_matrix(const struct iio_dev *indio_dev,
-			const struct iio_chan_spec *chan)
-{
-	struct ak8975_data *data = iio_priv(indio_dev);
+अटल स्थिर काष्ठा iio_mount_matrix *
+ak8975_get_mount_matrix(स्थिर काष्ठा iio_dev *indio_dev,
+			स्थिर काष्ठा iio_chan_spec *chan)
+अणु
+	काष्ठा ak8975_data *data = iio_priv(indio_dev);
 
-	return &data->orientation;
-}
+	वापस &data->orientation;
+पूर्ण
 
-static const struct iio_chan_spec_ext_info ak8975_ext_info[] = {
-	IIO_MOUNT_MATRIX(IIO_SHARED_BY_DIR, ak8975_get_mount_matrix),
-	{ }
-};
+अटल स्थिर काष्ठा iio_chan_spec_ext_info ak8975_ext_info[] = अणु
+	IIO_MOUNT_MATRIX(IIO_SHARED_BY_सूची, ak8975_get_mount_matrix),
+	अणु पूर्ण
+पूर्ण;
 
-#define AK8975_CHANNEL(axis, index)					\
-	{								\
+#घोषणा AK8975_CHANNEL(axis, index)					\
+	अणु								\
 		.type = IIO_MAGN,					\
-		.modified = 1,						\
+		.modअगरied = 1,						\
 		.channel2 = IIO_MOD_##axis,				\
 		.info_mask_separate = BIT(IIO_CHAN_INFO_RAW) |		\
 			     BIT(IIO_CHAN_INFO_SCALE),			\
 		.address = index,					\
 		.scan_index = index,					\
-		.scan_type = {						\
+		.scan_type = अणु						\
 			.sign = 's',					\
 			.realbits = 16,					\
 			.storagebits = 16,				\
 			.endianness = IIO_CPU				\
-		},							\
+		पूर्ण,							\
 		.ext_info = ak8975_ext_info,				\
-	}
+	पूर्ण
 
-static const struct iio_chan_spec ak8975_channels[] = {
+अटल स्थिर काष्ठा iio_chan_spec ak8975_channels[] = अणु
 	AK8975_CHANNEL(X, 0), AK8975_CHANNEL(Y, 1), AK8975_CHANNEL(Z, 2),
 	IIO_CHAN_SOFT_TIMESTAMP(3),
-};
+पूर्ण;
 
-static const unsigned long ak8975_scan_masks[] = { 0x7, 0 };
+अटल स्थिर अचिन्हित दीर्घ ak8975_scan_masks[] = अणु 0x7, 0 पूर्ण;
 
-static const struct iio_info ak8975_info = {
-	.read_raw = &ak8975_read_raw,
-};
+अटल स्थिर काष्ठा iio_info ak8975_info = अणु
+	.पढ़ो_raw = &ak8975_पढ़ो_raw,
+पूर्ण;
 
-static const struct acpi_device_id ak_acpi_match[] = {
-	{"AK8975", AK8975},
-	{"AK8963", AK8963},
-	{"INVN6500", AK8963},
-	{"AK009911", AK09911},
-	{"AK09911", AK09911},
-	{"AKM9911", AK09911},
-	{"AK09912", AK09912},
-	{ }
-};
+अटल स्थिर काष्ठा acpi_device_id ak_acpi_match[] = अणु
+	अणु"AK8975", AK8975पूर्ण,
+	अणु"AK8963", AK8963पूर्ण,
+	अणु"INVN6500", AK8963पूर्ण,
+	अणु"AK009911", AK09911पूर्ण,
+	अणु"AK09911", AK09911पूर्ण,
+	अणु"AKM9911", AK09911पूर्ण,
+	अणु"AK09912", AK09912पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(acpi, ak_acpi_match);
 
-static void ak8975_fill_buffer(struct iio_dev *indio_dev)
-{
-	struct ak8975_data *data = iio_priv(indio_dev);
-	const struct i2c_client *client = data->client;
-	const struct ak_def *def = data->def;
-	int ret;
+अटल व्योम ak8975_fill_buffer(काष्ठा iio_dev *indio_dev)
+अणु
+	काष्ठा ak8975_data *data = iio_priv(indio_dev);
+	स्थिर काष्ठा i2c_client *client = data->client;
+	स्थिर काष्ठा ak_def *def = data->def;
+	पूर्णांक ret;
 	__le16 fval[3];
 
 	mutex_lock(&data->lock);
 
-	ret = ak8975_start_read_axis(data, client);
-	if (ret)
-		goto unlock;
+	ret = ak8975_start_पढ़ो_axis(data, client);
+	अगर (ret)
+		जाओ unlock;
 
 	/*
-	 * For each axis, read the flux value from the appropriate register
-	 * (the register is specified in the iio device attributes).
+	 * For each axis, पढ़ो the flux value from the appropriate रेजिस्टर
+	 * (the रेजिस्टर is specअगरied in the iio device attributes).
 	 */
-	ret = i2c_smbus_read_i2c_block_data_or_emulated(client,
+	ret = i2c_smbus_पढ़ो_i2c_block_data_or_emulated(client,
 							def->data_regs[0],
-							3 * sizeof(fval[0]),
+							3 * माप(fval[0]),
 							(u8 *)fval);
-	if (ret < 0)
-		goto unlock;
+	अगर (ret < 0)
+		जाओ unlock;
 
 	mutex_unlock(&data->lock);
 
@@ -823,64 +824,64 @@ static void ak8975_fill_buffer(struct iio_dev *indio_dev)
 	data->scan.channels[1] = clamp_t(s16, le16_to_cpu(fval[1]), -def->range, def->range);
 	data->scan.channels[2] = clamp_t(s16, le16_to_cpu(fval[2]), -def->range, def->range);
 
-	iio_push_to_buffers_with_timestamp(indio_dev, &data->scan,
-					   iio_get_time_ns(indio_dev));
+	iio_push_to_buffers_with_बारtamp(indio_dev, &data->scan,
+					   iio_get_समय_ns(indio_dev));
 
-	return;
+	वापस;
 
 unlock:
 	mutex_unlock(&data->lock);
 	dev_err(&client->dev, "Error in reading axes block\n");
-}
+पूर्ण
 
-static irqreturn_t ak8975_handle_trigger(int irq, void *p)
-{
-	const struct iio_poll_func *pf = p;
-	struct iio_dev *indio_dev = pf->indio_dev;
+अटल irqवापस_t ak8975_handle_trigger(पूर्णांक irq, व्योम *p)
+अणु
+	स्थिर काष्ठा iio_poll_func *pf = p;
+	काष्ठा iio_dev *indio_dev = pf->indio_dev;
 
 	ak8975_fill_buffer(indio_dev);
-	iio_trigger_notify_done(indio_dev->trig);
-	return IRQ_HANDLED;
-}
+	iio_trigger_notअगरy_करोne(indio_dev->trig);
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static int ak8975_probe(struct i2c_client *client,
-			const struct i2c_device_id *id)
-{
-	struct ak8975_data *data;
-	struct iio_dev *indio_dev;
-	struct gpio_desc *eoc_gpiod;
-	struct gpio_desc *reset_gpiod;
-	const void *match;
-	unsigned int i;
-	int err;
-	enum asahi_compass_chipset chipset;
-	const char *name = NULL;
+अटल पूर्णांक ak8975_probe(काष्ठा i2c_client *client,
+			स्थिर काष्ठा i2c_device_id *id)
+अणु
+	काष्ठा ak8975_data *data;
+	काष्ठा iio_dev *indio_dev;
+	काष्ठा gpio_desc *eoc_gpiod;
+	काष्ठा gpio_desc *reset_gpiod;
+	स्थिर व्योम *match;
+	अचिन्हित पूर्णांक i;
+	पूर्णांक err;
+	क्रमागत asahi_compass_chipset chipset;
+	स्थिर अक्षर *name = शून्य;
 
 	/*
 	 * Grab and set up the supplied GPIO.
 	 * We may not have a GPIO based IRQ to scan, that is fine, we will
-	 * poll if so.
+	 * poll अगर so.
 	 */
-	eoc_gpiod = devm_gpiod_get_optional(&client->dev, NULL, GPIOD_IN);
-	if (IS_ERR(eoc_gpiod))
-		return PTR_ERR(eoc_gpiod);
-	if (eoc_gpiod)
+	eoc_gpiod = devm_gpiod_get_optional(&client->dev, शून्य, GPIOD_IN);
+	अगर (IS_ERR(eoc_gpiod))
+		वापस PTR_ERR(eoc_gpiod);
+	अगर (eoc_gpiod)
 		gpiod_set_consumer_name(eoc_gpiod, "ak_8975");
 
 	/*
-	 * According to AK09911 datasheet, if reset GPIO is provided then
-	 * deassert reset on ak8975_power_on() and assert reset on
-	 * ak8975_power_off().
+	 * According to AK09911 datasheet, अगर reset GPIO is provided then
+	 * deनिश्चित reset on ak8975_घातer_on() and निश्चित reset on
+	 * ak8975_घातer_off().
 	 */
 	reset_gpiod = devm_gpiod_get_optional(&client->dev,
 					      "reset", GPIOD_OUT_HIGH);
-	if (IS_ERR(reset_gpiod))
-		return PTR_ERR(reset_gpiod);
+	अगर (IS_ERR(reset_gpiod))
+		वापस PTR_ERR(reset_gpiod);
 
 	/* Register with IIO */
-	indio_dev = devm_iio_device_alloc(&client->dev, sizeof(*data));
-	if (indio_dev == NULL)
-		return -ENOMEM;
+	indio_dev = devm_iio_device_alloc(&client->dev, माप(*data));
+	अगर (indio_dev == शून्य)
+		वापस -ENOMEM;
 
 	data = iio_priv(indio_dev);
 	i2c_set_clientdata(client, indio_dev);
@@ -890,202 +891,202 @@ static int ak8975_probe(struct i2c_client *client,
 	data->reset_gpiod = reset_gpiod;
 	data->eoc_irq = 0;
 
-	err = iio_read_mount_matrix(&client->dev, "mount-matrix", &data->orientation);
-	if (err)
-		return err;
+	err = iio_पढ़ो_mount_matrix(&client->dev, "mount-matrix", &data->orientation);
+	अगर (err)
+		वापस err;
 
-	/* id will be NULL when enumerated via ACPI */
+	/* id will be शून्य when क्रमागतerated via ACPI */
 	match = device_get_match_data(&client->dev);
-	if (match) {
-		chipset = (enum asahi_compass_chipset)(match);
+	अगर (match) अणु
+		chipset = (क्रमागत asahi_compass_chipset)(match);
 		name = dev_name(&client->dev);
-	} else if (id) {
-		chipset = (enum asahi_compass_chipset)(id->driver_data);
+	पूर्ण अन्यथा अगर (id) अणु
+		chipset = (क्रमागत asahi_compass_chipset)(id->driver_data);
 		name = id->name;
-	} else
-		return -ENOSYS;
+	पूर्ण अन्यथा
+		वापस -ENOSYS;
 
-	for (i = 0; i < ARRAY_SIZE(ak_def_array); i++)
-		if (ak_def_array[i].type == chipset)
-			break;
+	क्रम (i = 0; i < ARRAY_SIZE(ak_def_array); i++)
+		अगर (ak_def_array[i].type == chipset)
+			अवरोध;
 
-	if (i == ARRAY_SIZE(ak_def_array)) {
+	अगर (i == ARRAY_SIZE(ak_def_array)) अणु
 		dev_err(&client->dev, "AKM device type unsupported: %d\n",
 			chipset);
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
 	data->def = &ak_def_array[i];
 
 	/* Fetch the regulators */
 	data->vdd = devm_regulator_get(&client->dev, "vdd");
-	if (IS_ERR(data->vdd))
-		return PTR_ERR(data->vdd);
+	अगर (IS_ERR(data->vdd))
+		वापस PTR_ERR(data->vdd);
 	data->vid = devm_regulator_get(&client->dev, "vid");
-	if (IS_ERR(data->vid))
-		return PTR_ERR(data->vid);
+	अगर (IS_ERR(data->vid))
+		वापस PTR_ERR(data->vid);
 
-	err = ak8975_power_on(data);
-	if (err)
-		return err;
+	err = ak8975_घातer_on(data);
+	अगर (err)
+		वापस err;
 
 	err = ak8975_who_i_am(client, data->def->type);
-	if (err < 0) {
+	अगर (err < 0) अणु
 		dev_err(&client->dev, "Unexpected device\n");
-		goto power_off;
-	}
+		जाओ घातer_off;
+	पूर्ण
 	dev_dbg(&client->dev, "Asahi compass chip %s\n", name);
 
-	/* Perform some basic start-of-day setup of the device. */
+	/* Perक्रमm some basic start-of-day setup of the device. */
 	err = ak8975_setup(client);
-	if (err < 0) {
+	अगर (err < 0) अणु
 		dev_err(&client->dev, "%s initialization fails\n", name);
-		goto power_off;
-	}
+		जाओ घातer_off;
+	पूर्ण
 
 	mutex_init(&data->lock);
 	indio_dev->channels = ak8975_channels;
 	indio_dev->num_channels = ARRAY_SIZE(ak8975_channels);
 	indio_dev->info = &ak8975_info;
 	indio_dev->available_scan_masks = ak8975_scan_masks;
-	indio_dev->modes = INDIO_DIRECT_MODE;
+	indio_dev->modes = INDIO_सूचीECT_MODE;
 	indio_dev->name = name;
 
-	err = iio_triggered_buffer_setup(indio_dev, NULL, ak8975_handle_trigger,
-					 NULL);
-	if (err) {
+	err = iio_triggered_buffer_setup(indio_dev, शून्य, ak8975_handle_trigger,
+					 शून्य);
+	अगर (err) अणु
 		dev_err(&client->dev, "triggered buffer setup failed\n");
-		goto power_off;
-	}
+		जाओ घातer_off;
+	पूर्ण
 
-	err = iio_device_register(indio_dev);
-	if (err) {
+	err = iio_device_रेजिस्टर(indio_dev);
+	अगर (err) अणु
 		dev_err(&client->dev, "device register failed\n");
-		goto cleanup_buffer;
-	}
+		जाओ cleanup_buffer;
+	पूर्ण
 
-	/* Enable runtime PM */
-	pm_runtime_get_noresume(&client->dev);
-	pm_runtime_set_active(&client->dev);
-	pm_runtime_enable(&client->dev);
+	/* Enable runसमय PM */
+	pm_runसमय_get_noresume(&client->dev);
+	pm_runसमय_set_active(&client->dev);
+	pm_runसमय_enable(&client->dev);
 	/*
 	 * The device comes online in 500us, so add two orders of magnitude
-	 * of delay before autosuspending: 50 ms.
+	 * of delay beक्रमe स्वतःsuspending: 50 ms.
 	 */
-	pm_runtime_set_autosuspend_delay(&client->dev, 50);
-	pm_runtime_use_autosuspend(&client->dev);
-	pm_runtime_put(&client->dev);
+	pm_runसमय_set_स्वतःsuspend_delay(&client->dev, 50);
+	pm_runसमय_use_स्वतःsuspend(&client->dev);
+	pm_runसमय_put(&client->dev);
 
-	return 0;
+	वापस 0;
 
 cleanup_buffer:
 	iio_triggered_buffer_cleanup(indio_dev);
-power_off:
-	ak8975_power_off(data);
-	return err;
-}
+घातer_off:
+	ak8975_घातer_off(data);
+	वापस err;
+पूर्ण
 
-static int ak8975_remove(struct i2c_client *client)
-{
-	struct iio_dev *indio_dev = i2c_get_clientdata(client);
-	struct ak8975_data *data = iio_priv(indio_dev);
+अटल पूर्णांक ak8975_हटाओ(काष्ठा i2c_client *client)
+अणु
+	काष्ठा iio_dev *indio_dev = i2c_get_clientdata(client);
+	काष्ठा ak8975_data *data = iio_priv(indio_dev);
 
-	pm_runtime_get_sync(&client->dev);
-	pm_runtime_put_noidle(&client->dev);
-	pm_runtime_disable(&client->dev);
-	iio_device_unregister(indio_dev);
+	pm_runसमय_get_sync(&client->dev);
+	pm_runसमय_put_noidle(&client->dev);
+	pm_runसमय_disable(&client->dev);
+	iio_device_unरेजिस्टर(indio_dev);
 	iio_triggered_buffer_cleanup(indio_dev);
 	ak8975_set_mode(data, POWER_DOWN);
-	ak8975_power_off(data);
+	ak8975_घातer_off(data);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_PM
-static int ak8975_runtime_suspend(struct device *dev)
-{
-	struct i2c_client *client = to_i2c_client(dev);
-	struct iio_dev *indio_dev = i2c_get_clientdata(client);
-	struct ak8975_data *data = iio_priv(indio_dev);
-	int ret;
+#अगर_घोषित CONFIG_PM
+अटल पूर्णांक ak8975_runसमय_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा i2c_client *client = to_i2c_client(dev);
+	काष्ठा iio_dev *indio_dev = i2c_get_clientdata(client);
+	काष्ठा ak8975_data *data = iio_priv(indio_dev);
+	पूर्णांक ret;
 
-	/* Set the device in power down if it wasn't already */
+	/* Set the device in घातer करोwn अगर it wasn't alपढ़ोy */
 	ret = ak8975_set_mode(data, POWER_DOWN);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(&client->dev, "Error in setting power-down mode\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 	/* Next cut the regulators */
-	ak8975_power_off(data);
+	ak8975_घातer_off(data);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ak8975_runtime_resume(struct device *dev)
-{
-	struct i2c_client *client = to_i2c_client(dev);
-	struct iio_dev *indio_dev = i2c_get_clientdata(client);
-	struct ak8975_data *data = iio_priv(indio_dev);
-	int ret;
+अटल पूर्णांक ak8975_runसमय_resume(काष्ठा device *dev)
+अणु
+	काष्ठा i2c_client *client = to_i2c_client(dev);
+	काष्ठा iio_dev *indio_dev = i2c_get_clientdata(client);
+	काष्ठा ak8975_data *data = iio_priv(indio_dev);
+	पूर्णांक ret;
 
 	/* Take up the regulators */
-	ak8975_power_on(data);
+	ak8975_घातer_on(data);
 	/*
-	 * We come up in powered down mode, the reading routines will
-	 * put us in the mode to read values later.
+	 * We come up in घातered करोwn mode, the पढ़ोing routines will
+	 * put us in the mode to पढ़ो values later.
 	 */
 	ret = ak8975_set_mode(data, POWER_DOWN);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(&client->dev, "Error in setting power-down mode\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return 0;
-}
-#endif /* CONFIG_PM */
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर /* CONFIG_PM */
 
-static const struct dev_pm_ops ak8975_dev_pm_ops = {
-	SET_SYSTEM_SLEEP_PM_OPS(pm_runtime_force_suspend,
-				pm_runtime_force_resume)
-	SET_RUNTIME_PM_OPS(ak8975_runtime_suspend,
-			   ak8975_runtime_resume, NULL)
-};
+अटल स्थिर काष्ठा dev_pm_ops ak8975_dev_pm_ops = अणु
+	SET_SYSTEM_SLEEP_PM_OPS(pm_runसमय_क्रमce_suspend,
+				pm_runसमय_क्रमce_resume)
+	SET_RUNTIME_PM_OPS(ak8975_runसमय_suspend,
+			   ak8975_runसमय_resume, शून्य)
+पूर्ण;
 
-static const struct i2c_device_id ak8975_id[] = {
-	{"ak8975", AK8975},
-	{"ak8963", AK8963},
-	{"AK8963", AK8963},
-	{"ak09911", AK09911},
-	{"ak09912", AK09912},
-	{}
-};
+अटल स्थिर काष्ठा i2c_device_id ak8975_id[] = अणु
+	अणु"ak8975", AK8975पूर्ण,
+	अणु"ak8963", AK8963पूर्ण,
+	अणु"AK8963", AK8963पूर्ण,
+	अणु"ak09911", AK09911पूर्ण,
+	अणु"ak09912", AK09912पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
 MODULE_DEVICE_TABLE(i2c, ak8975_id);
 
-static const struct of_device_id ak8975_of_match[] = {
-	{ .compatible = "asahi-kasei,ak8975", },
-	{ .compatible = "ak8975", },
-	{ .compatible = "asahi-kasei,ak8963", },
-	{ .compatible = "ak8963", },
-	{ .compatible = "asahi-kasei,ak09911", },
-	{ .compatible = "ak09911", },
-	{ .compatible = "asahi-kasei,ak09912", },
-	{ .compatible = "ak09912", },
-	{}
-};
+अटल स्थिर काष्ठा of_device_id ak8975_of_match[] = अणु
+	अणु .compatible = "asahi-kasei,ak8975", पूर्ण,
+	अणु .compatible = "ak8975", पूर्ण,
+	अणु .compatible = "asahi-kasei,ak8963", पूर्ण,
+	अणु .compatible = "ak8963", पूर्ण,
+	अणु .compatible = "asahi-kasei,ak09911", पूर्ण,
+	अणु .compatible = "ak09911", पूर्ण,
+	अणु .compatible = "asahi-kasei,ak09912", पूर्ण,
+	अणु .compatible = "ak09912", पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, ak8975_of_match);
 
-static struct i2c_driver ak8975_driver = {
-	.driver = {
+अटल काष्ठा i2c_driver ak8975_driver = अणु
+	.driver = अणु
 		.name	= "ak8975",
 		.pm = &ak8975_dev_pm_ops,
 		.of_match_table = ak8975_of_match,
 		.acpi_match_table = ak_acpi_match,
-	},
+	पूर्ण,
 	.probe		= ak8975_probe,
-	.remove		= ak8975_remove,
+	.हटाओ		= ak8975_हटाओ,
 	.id_table	= ak8975_id,
-};
+पूर्ण;
 module_i2c_driver(ak8975_driver);
 
 MODULE_AUTHOR("Laxman Dewangan <ldewangan@nvidia.com>");

@@ -1,7 +1,8 @@
+<शैली गुरु>
 /*
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the main directory of this archive
- * for more details.
+ * License.  See the file "COPYING" in the मुख्य directory of this archive
+ * क्रम more details.
  *
  * Copyright (C) 1994, 95, 96, 97, 98, 99, 2003, 06 by Ralf Baechle
  * Copyright (C) 1996 by Paul M. Antoine
@@ -9,134 +10,134 @@
  * Kevin D. Kissell, kevink@mips.org and Carsten Langgaard, carstenl@mips.com
  * Copyright (C) 2000 MIPS Technologies, Inc.
  */
-#ifndef _ASM_SWITCH_TO_H
-#define _ASM_SWITCH_TO_H
+#अगर_अघोषित _ASM_SWITCH_TO_H
+#घोषणा _ASM_SWITCH_TO_H
 
-#include <asm/cpu-features.h>
-#include <asm/watch.h>
-#include <asm/dsp.h>
-#include <asm/cop2.h>
-#include <asm/fpu.h>
+#समावेश <यंत्र/cpu-features.h>
+#समावेश <यंत्र/watch.h>
+#समावेश <यंत्र/dsp.h>
+#समावेश <यंत्र/cop2.h>
+#समावेश <यंत्र/fpu.h>
 
-struct task_struct;
+काष्ठा task_काष्ठा;
 
 /**
  * resume - resume execution of a task
  * @prev:	The task previously executed.
  * @next:	The task to begin executing.
- * @next_ti:	task_thread_info(next).
+ * @next_ti:	task_thपढ़ो_info(next).
  *
  * This function is used whilst scheduling to save the context of prev & load
  * the context of next. Returns prev.
  */
-extern asmlinkage struct task_struct *resume(struct task_struct *prev,
-		struct task_struct *next, struct thread_info *next_ti);
+बाह्य यंत्रlinkage काष्ठा task_काष्ठा *resume(काष्ठा task_काष्ठा *prev,
+		काष्ठा task_काष्ठा *next, काष्ठा thपढ़ो_info *next_ti);
 
-extern unsigned int ll_bit;
-extern struct task_struct *ll_task;
+बाह्य अचिन्हित पूर्णांक ll_bit;
+बाह्य काष्ठा task_काष्ठा *ll_task;
 
-#ifdef CONFIG_MIPS_MT_FPAFF
+#अगर_घोषित CONFIG_MIPS_MT_FPAFF
 
 /*
- * Handle the scheduler resume end of FPU affinity management.	We do this
- * inline to try to keep the overhead down. If we have been forced to run on
+ * Handle the scheduler resume end of FPU affinity management.	We करो this
+ * अंतरभूत to try to keep the overhead करोwn. If we have been क्रमced to run on
  * a "CPU" with an FPU because of a previous high level of FP computation,
- * but did not actually use the FPU during the most recent time-slice (CU1
- * isn't set), we undo the restriction on cpus_mask.
+ * but did not actually use the FPU during the most recent समय-slice (CU1
+ * isn't set), we unकरो the restriction on cpus_mask.
  *
  * We're not calling set_cpus_allowed() here, because we have no need to
- * force prompt migration - we're already switching the current CPU to a
- * different thread.
+ * क्रमce prompt migration - we're alपढ़ोy चयनing the current CPU to a
+ * dअगरferent thपढ़ो.
  */
 
-#define __mips_mt_fpaff_switch_to(prev)					\
-do {									\
-	struct thread_info *__prev_ti = task_thread_info(prev);		\
+#घोषणा __mips_mt_fpaff_चयन_to(prev)					\
+करो अणु									\
+	काष्ठा thपढ़ो_info *__prev_ti = task_thपढ़ो_info(prev);		\
 									\
-	if (cpu_has_fpu &&						\
-	    test_ti_thread_flag(__prev_ti, TIF_FPUBOUND) &&		\
-	    (!(KSTK_STATUS(prev) & ST0_CU1))) {				\
-		clear_ti_thread_flag(__prev_ti, TIF_FPUBOUND);		\
-		prev->cpus_mask = prev->thread.user_cpus_allowed;	\
-	}								\
-	next->thread.emulated_fp = 0;					\
-} while(0)
+	अगर (cpu_has_fpu &&						\
+	    test_ti_thपढ़ो_flag(__prev_ti, TIF_FPUBOUND) &&		\
+	    (!(KSTK_STATUS(prev) & ST0_CU1))) अणु				\
+		clear_ti_thपढ़ो_flag(__prev_ti, TIF_FPUBOUND);		\
+		prev->cpus_mask = prev->thपढ़ो.user_cpus_allowed;	\
+	पूर्ण								\
+	next->thपढ़ो.emulated_fp = 0;					\
+पूर्ण जबतक(0)
 
-#else
-#define __mips_mt_fpaff_switch_to(prev) do { (void) (prev); } while (0)
-#endif
+#अन्यथा
+#घोषणा __mips_mt_fpaff_चयन_to(prev) करो अणु (व्योम) (prev); पूर्ण जबतक (0)
+#पूर्ण_अगर
 
 /*
- * Clear LLBit during context switches on MIPSr5+ such that eretnc can be used
- * unconditionally when returning to userland in entry.S.
+ * Clear LLBit during context चयनes on MIPSr5+ such that eretnc can be used
+ * unconditionally when वापसing to userland in entry.S.
  */
-#define __clear_r5_hw_ll_bit() do {					\
-	if (cpu_has_mips_r5 || cpu_has_mips_r6)				\
-		write_c0_lladdr(0);					\
-} while (0)
+#घोषणा __clear_r5_hw_ll_bit() करो अणु					\
+	अगर (cpu_has_mips_r5 || cpu_has_mips_r6)				\
+		ग_लिखो_c0_lladdr(0);					\
+पूर्ण जबतक (0)
 
-#define __clear_software_ll_bit() do {					\
-	if (!__builtin_constant_p(cpu_has_llsc) || !cpu_has_llsc)	\
+#घोषणा __clear_software_ll_bit() करो अणु					\
+	अगर (!__builtin_स्थिरant_p(cpu_has_llsc) || !cpu_has_llsc)	\
 		ll_bit = 0;						\
-} while (0)
+पूर्ण जबतक (0)
 
 /*
- * Check FCSR for any unmasked exceptions pending set with `ptrace',
- * clear them and send a signal.
+ * Check FCSR क्रम any unmasked exceptions pending set with `ptrace',
+ * clear them and send a संकेत.
  */
-#ifdef CONFIG_MIPS_FP_SUPPORT
+#अगर_घोषित CONFIG_MIPS_FP_SUPPORT
 # define __sanitize_fcr31(next)						\
-do {									\
-	unsigned long fcr31 = mask_fcr31_x(next->thread.fpu.fcr31);	\
-	void __user *pc;						\
+करो अणु									\
+	अचिन्हित दीर्घ fcr31 = mask_fcr31_x(next->thपढ़ो.fpu.fcr31);	\
+	व्योम __user *pc;						\
 									\
-	if (unlikely(fcr31)) {						\
-		pc = (void __user *)task_pt_regs(next)->cp0_epc;	\
-		next->thread.fpu.fcr31 &= ~fcr31;			\
-		force_fcr31_sig(fcr31, pc, next);			\
-	}								\
-} while (0)
-#else
+	अगर (unlikely(fcr31)) अणु						\
+		pc = (व्योम __user *)task_pt_regs(next)->cp0_epc;	\
+		next->thपढ़ो.fpu.fcr31 &= ~fcr31;			\
+		क्रमce_fcr31_sig(fcr31, pc, next);			\
+	पूर्ण								\
+पूर्ण जबतक (0)
+#अन्यथा
 # define __sanitize_fcr31(next)
-#endif
+#पूर्ण_अगर
 
 /*
- * For newly created kernel threads switch_to() will return to
- * ret_from_kernel_thread, newly created user threads to ret_from_fork.
- * That is, everything following resume() will be skipped for new threads.
- * So everything that matters to new threads should be placed before resume().
+ * For newly created kernel thपढ़ोs चयन_to() will वापस to
+ * ret_from_kernel_thपढ़ो, newly created user thपढ़ोs to ret_from_विभाजन.
+ * That is, everything following resume() will be skipped क्रम new thपढ़ोs.
+ * So everything that matters to new thपढ़ोs should be placed beक्रमe resume().
  */
-#define switch_to(prev, next, last)					\
-do {									\
-	__mips_mt_fpaff_switch_to(prev);				\
+#घोषणा चयन_to(prev, next, last)					\
+करो अणु									\
+	__mips_mt_fpaff_चयन_to(prev);				\
 	lose_fpu_inatomic(1, prev);					\
-	if (tsk_used_math(next))					\
+	अगर (tsk_used_math(next))					\
 		__sanitize_fcr31(next);					\
-	if (cpu_has_dsp) {						\
+	अगर (cpu_has_dsp) अणु						\
 		__save_dsp(prev);					\
 		__restore_dsp(next);					\
-	}								\
-	if (cop2_present) {						\
-		u32 status = read_c0_status();				\
+	पूर्ण								\
+	अगर (cop2_present) अणु						\
+		u32 status = पढ़ो_c0_status();				\
 									\
 		set_c0_status(ST0_CU2);					\
-		if ((KSTK_STATUS(prev) & ST0_CU2)) {			\
-			if (cop2_lazy_restore)				\
+		अगर ((KSTK_STATUS(prev) & ST0_CU2)) अणु			\
+			अगर (cop2_lazy_restore)				\
 				KSTK_STATUS(prev) &= ~ST0_CU2;		\
 			cop2_save(prev);				\
-		}							\
-		if (KSTK_STATUS(next) & ST0_CU2 &&			\
-		    !cop2_lazy_restore) {				\
+		पूर्ण							\
+		अगर (KSTK_STATUS(next) & ST0_CU2 &&			\
+		    !cop2_lazy_restore) अणु				\
 			cop2_restore(next);				\
-		}							\
-		write_c0_status(status);				\
-	}								\
+		पूर्ण							\
+		ग_लिखो_c0_status(status);				\
+	पूर्ण								\
 	__clear_r5_hw_ll_bit();						\
 	__clear_software_ll_bit();					\
-	if (cpu_has_userlocal)						\
-		write_c0_userlocal(task_thread_info(next)->tp_value);	\
+	अगर (cpu_has_userlocal)						\
+		ग_लिखो_c0_userlocal(task_thपढ़ो_info(next)->tp_value);	\
 	__restore_watch(next);						\
-	(last) = resume(prev, next, task_thread_info(next));		\
-} while (0)
+	(last) = resume(prev, next, task_thपढ़ो_info(next));		\
+पूर्ण जबतक (0)
 
-#endif /* _ASM_SWITCH_TO_H */
+#पूर्ण_अगर /* _ASM_SWITCH_TO_H */

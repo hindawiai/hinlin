@@ -1,17 +1,18 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- * Copyright (C) 2006 Atmark Techno, Inc.
+ * Copyright (C) 2006 Aपंचांगark Techno, Inc.
  */
 
-#ifndef _ASM_MICROBLAZE_IRQ_H
-#define _ASM_MICROBLAZE_IRQ_H
+#अगर_अघोषित _ASM_MICROBLAZE_IRQ_H
+#घोषणा _ASM_MICROBLAZE_IRQ_H
 
-#include <asm-generic/irq.h>
+#समावेश <यंत्र-generic/irq.h>
 
-struct pt_regs;
-extern void do_IRQ(struct pt_regs *regs);
+काष्ठा pt_regs;
+बाह्य व्योम करो_IRQ(काष्ठा pt_regs *regs);
 
-/* should be defined in each interrupt controller driver */
-extern unsigned int xintc_get_irq(void);
+/* should be defined in each पूर्णांकerrupt controller driver */
+बाह्य अचिन्हित पूर्णांक xपूर्णांकc_get_irq(व्योम);
 
-#endif /* _ASM_MICROBLAZE_IRQ_H */
+#पूर्ण_अगर /* _ASM_MICROBLAZE_IRQ_H */

@@ -1,110 +1,111 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _ASM_X86_STRING_64_H
-#define _ASM_X86_STRING_64_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _ASM_X86_STRING_64_H
+#घोषणा _ASM_X86_STRING_64_H
 
-#ifdef __KERNEL__
-#include <linux/jump_label.h>
+#अगर_घोषित __KERNEL__
+#समावेश <linux/jump_label.h>
 
 /* Written 2002 by Andi Kleen */
 
 /* Even with __builtin_ the compiler may decide to use the out of line
    function. */
 
-#define __HAVE_ARCH_MEMCPY 1
-extern void *memcpy(void *to, const void *from, size_t len);
-extern void *__memcpy(void *to, const void *from, size_t len);
+#घोषणा __HAVE_ARCH_MEMCPY 1
+बाह्य व्योम *स_नकल(व्योम *to, स्थिर व्योम *from, माप_प्रकार len);
+बाह्य व्योम *__स_नकल(व्योम *to, स्थिर व्योम *from, माप_प्रकार len);
 
-#define __HAVE_ARCH_MEMSET
-void *memset(void *s, int c, size_t n);
-void *__memset(void *s, int c, size_t n);
+#घोषणा __HAVE_ARCH_MEMSET
+व्योम *स_रखो(व्योम *s, पूर्णांक c, माप_प्रकार n);
+व्योम *__स_रखो(व्योम *s, पूर्णांक c, माप_प्रकार n);
 
-#define __HAVE_ARCH_MEMSET16
-static inline void *memset16(uint16_t *s, uint16_t v, size_t n)
-{
-	long d0, d1;
-	asm volatile("rep\n\t"
+#घोषणा __HAVE_ARCH_MEMSET16
+अटल अंतरभूत व्योम *स_रखो16(uपूर्णांक16_t *s, uपूर्णांक16_t v, माप_प्रकार n)
+अणु
+	दीर्घ d0, d1;
+	यंत्र अस्थिर("rep\n\t"
 		     "stosw"
 		     : "=&c" (d0), "=&D" (d1)
 		     : "a" (v), "1" (s), "0" (n)
 		     : "memory");
-	return s;
-}
+	वापस s;
+पूर्ण
 
-#define __HAVE_ARCH_MEMSET32
-static inline void *memset32(uint32_t *s, uint32_t v, size_t n)
-{
-	long d0, d1;
-	asm volatile("rep\n\t"
+#घोषणा __HAVE_ARCH_MEMSET32
+अटल अंतरभूत व्योम *स_रखो32(uपूर्णांक32_t *s, uपूर्णांक32_t v, माप_प्रकार n)
+अणु
+	दीर्घ d0, d1;
+	यंत्र अस्थिर("rep\n\t"
 		     "stosl"
 		     : "=&c" (d0), "=&D" (d1)
 		     : "a" (v), "1" (s), "0" (n)
 		     : "memory");
-	return s;
-}
+	वापस s;
+पूर्ण
 
-#define __HAVE_ARCH_MEMSET64
-static inline void *memset64(uint64_t *s, uint64_t v, size_t n)
-{
-	long d0, d1;
-	asm volatile("rep\n\t"
+#घोषणा __HAVE_ARCH_MEMSET64
+अटल अंतरभूत व्योम *स_रखो64(uपूर्णांक64_t *s, uपूर्णांक64_t v, माप_प्रकार n)
+अणु
+	दीर्घ d0, d1;
+	यंत्र अस्थिर("rep\n\t"
 		     "stosq"
 		     : "=&c" (d0), "=&D" (d1)
 		     : "a" (v), "1" (s), "0" (n)
 		     : "memory");
-	return s;
-}
+	वापस s;
+पूर्ण
 
-#define __HAVE_ARCH_MEMMOVE
-void *memmove(void *dest, const void *src, size_t count);
-void *__memmove(void *dest, const void *src, size_t count);
+#घोषणा __HAVE_ARCH_MEMMOVE
+व्योम *स_हटाओ(व्योम *dest, स्थिर व्योम *src, माप_प्रकार count);
+व्योम *__स_हटाओ(व्योम *dest, स्थिर व्योम *src, माप_प्रकार count);
 
-int memcmp(const void *cs, const void *ct, size_t count);
-size_t strlen(const char *s);
-char *strcpy(char *dest, const char *src);
-char *strcat(char *dest, const char *src);
-int strcmp(const char *cs, const char *ct);
+पूर्णांक स_भेद(स्थिर व्योम *cs, स्थिर व्योम *ct, माप_प्रकार count);
+माप_प्रकार म_माप(स्थिर अक्षर *s);
+अक्षर *म_नकल(अक्षर *dest, स्थिर अक्षर *src);
+अक्षर *म_जोड़ो(अक्षर *dest, स्थिर अक्षर *src);
+पूर्णांक म_भेद(स्थिर अक्षर *cs, स्थिर अक्षर *ct);
 
-#if defined(CONFIG_KASAN) && !defined(__SANITIZE_ADDRESS__)
+#अगर defined(CONFIG_KASAN) && !defined(__SANITIZE_ADDRESS__)
 
 /*
  * For files that not instrumented (e.g. mm/slub.c) we
  * should use not instrumented version of mem* functions.
  */
 
-#undef memcpy
-#define memcpy(dst, src, len) __memcpy(dst, src, len)
-#define memmove(dst, src, len) __memmove(dst, src, len)
-#define memset(s, c, n) __memset(s, c, n)
+#अघोषित स_नकल
+#घोषणा स_नकल(dst, src, len) __स_नकल(dst, src, len)
+#घोषणा स_हटाओ(dst, src, len) __स_हटाओ(dst, src, len)
+#घोषणा स_रखो(s, c, n) __स_रखो(s, c, n)
 
-#ifndef __NO_FORTIFY
-#define __NO_FORTIFY /* FORTIFY_SOURCE uses __builtin_memcpy, etc. */
-#endif
+#अगर_अघोषित __NO_FORTIFY
+#घोषणा __NO_FORTIFY /* FORTIFY_SOURCE uses __builtin_स_नकल, etc. */
+#पूर्ण_अगर
 
-#endif
+#पूर्ण_अगर
 
-#ifdef CONFIG_ARCH_HAS_UACCESS_FLUSHCACHE
-#define __HAVE_ARCH_MEMCPY_FLUSHCACHE 1
-void __memcpy_flushcache(void *dst, const void *src, size_t cnt);
-static __always_inline void memcpy_flushcache(void *dst, const void *src, size_t cnt)
-{
-	if (__builtin_constant_p(cnt)) {
-		switch (cnt) {
-			case 4:
-				asm ("movntil %1, %0" : "=m"(*(u32 *)dst) : "r"(*(u32 *)src));
-				return;
-			case 8:
-				asm ("movntiq %1, %0" : "=m"(*(u64 *)dst) : "r"(*(u64 *)src));
-				return;
-			case 16:
-				asm ("movntiq %1, %0" : "=m"(*(u64 *)dst) : "r"(*(u64 *)src));
-				asm ("movntiq %1, %0" : "=m"(*(u64 *)(dst + 8)) : "r"(*(u64 *)(src + 8)));
-				return;
-		}
-	}
-	__memcpy_flushcache(dst, src, cnt);
-}
-#endif
+#अगर_घोषित CONFIG_ARCH_HAS_UACCESS_FLUSHCACHE
+#घोषणा __HAVE_ARCH_MEMCPY_FLUSHCACHE 1
+व्योम __स_नकल_flushcache(व्योम *dst, स्थिर व्योम *src, माप_प्रकार cnt);
+अटल __always_अंतरभूत व्योम स_नकल_flushcache(व्योम *dst, स्थिर व्योम *src, माप_प्रकार cnt)
+अणु
+	अगर (__builtin_स्थिरant_p(cnt)) अणु
+		चयन (cnt) अणु
+			हाल 4:
+				यंत्र ("movntil %1, %0" : "=m"(*(u32 *)dst) : "r"(*(u32 *)src));
+				वापस;
+			हाल 8:
+				यंत्र ("movntiq %1, %0" : "=m"(*(u64 *)dst) : "r"(*(u64 *)src));
+				वापस;
+			हाल 16:
+				यंत्र ("movntiq %1, %0" : "=m"(*(u64 *)dst) : "r"(*(u64 *)src));
+				यंत्र ("movntiq %1, %0" : "=m"(*(u64 *)(dst + 8)) : "r"(*(u64 *)(src + 8)));
+				वापस;
+		पूर्ण
+	पूर्ण
+	__स_नकल_flushcache(dst, src, cnt);
+पूर्ण
+#पूर्ण_अगर
 
-#endif /* __KERNEL__ */
+#पूर्ण_अगर /* __KERNEL__ */
 
-#endif /* _ASM_X86_STRING_64_H */
+#पूर्ण_अगर /* _ASM_X86_STRING_64_H */

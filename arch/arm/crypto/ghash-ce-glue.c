@@ -1,171 +1,172 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * Accelerated GHASH implementation with ARMv8 vmull.p64 instructions.
+ * Accelerated GHASH implementation with ARMv8 vmull.p64 inकाष्ठाions.
  *
  * Copyright (C) 2015 - 2018 Linaro Ltd. <ard.biesheuvel@linaro.org>
  */
 
-#include <asm/hwcap.h>
-#include <asm/neon.h>
-#include <asm/simd.h>
-#include <asm/unaligned.h>
-#include <crypto/b128ops.h>
-#include <crypto/cryptd.h>
-#include <crypto/internal/hash.h>
-#include <crypto/internal/simd.h>
-#include <crypto/gf128mul.h>
-#include <linux/cpufeature.h>
-#include <linux/crypto.h>
-#include <linux/jump_label.h>
-#include <linux/module.h>
+#समावेश <यंत्र/hwcap.h>
+#समावेश <यंत्र/neon.h>
+#समावेश <यंत्र/simd.h>
+#समावेश <यंत्र/unaligned.h>
+#समावेश <crypto/b128ops.h>
+#समावेश <crypto/cryptd.h>
+#समावेश <crypto/पूर्णांकernal/hash.h>
+#समावेश <crypto/पूर्णांकernal/simd.h>
+#समावेश <crypto/gf128mul.h>
+#समावेश <linux/cpufeature.h>
+#समावेश <linux/crypto.h>
+#समावेश <linux/jump_label.h>
+#समावेश <linux/module.h>
 
 MODULE_DESCRIPTION("GHASH hash function using ARMv8 Crypto Extensions");
 MODULE_AUTHOR("Ard Biesheuvel <ard.biesheuvel@linaro.org>");
 MODULE_LICENSE("GPL v2");
 MODULE_ALIAS_CRYPTO("ghash");
 
-#define GHASH_BLOCK_SIZE	16
-#define GHASH_DIGEST_SIZE	16
+#घोषणा GHASH_BLOCK_SIZE	16
+#घोषणा GHASH_DIGEST_SIZE	16
 
-struct ghash_key {
+काष्ठा ghash_key अणु
 	be128	k;
 	u64	h[][2];
-};
+पूर्ण;
 
-struct ghash_desc_ctx {
-	u64 digest[GHASH_DIGEST_SIZE/sizeof(u64)];
+काष्ठा ghash_desc_ctx अणु
+	u64 digest[GHASH_DIGEST_SIZE/माप(u64)];
 	u8 buf[GHASH_BLOCK_SIZE];
 	u32 count;
-};
+पूर्ण;
 
-struct ghash_async_ctx {
-	struct cryptd_ahash *cryptd_tfm;
-};
+काष्ठा ghash_async_ctx अणु
+	काष्ठा cryptd_ahash *cryptd_tfm;
+पूर्ण;
 
-asmlinkage void pmull_ghash_update_p64(int blocks, u64 dg[], const char *src,
-				       u64 const h[][2], const char *head);
+यंत्रlinkage व्योम pmull_ghash_update_p64(पूर्णांक blocks, u64 dg[], स्थिर अक्षर *src,
+				       u64 स्थिर h[][2], स्थिर अक्षर *head);
 
-asmlinkage void pmull_ghash_update_p8(int blocks, u64 dg[], const char *src,
-				      u64 const h[][2], const char *head);
+यंत्रlinkage व्योम pmull_ghash_update_p8(पूर्णांक blocks, u64 dg[], स्थिर अक्षर *src,
+				      u64 स्थिर h[][2], स्थिर अक्षर *head);
 
-static __ro_after_init DEFINE_STATIC_KEY_FALSE(use_p64);
+अटल __ro_after_init DEFINE_STATIC_KEY_FALSE(use_p64);
 
-static int ghash_init(struct shash_desc *desc)
-{
-	struct ghash_desc_ctx *ctx = shash_desc_ctx(desc);
+अटल पूर्णांक ghash_init(काष्ठा shash_desc *desc)
+अणु
+	काष्ठा ghash_desc_ctx *ctx = shash_desc_ctx(desc);
 
-	*ctx = (struct ghash_desc_ctx){};
-	return 0;
-}
+	*ctx = (काष्ठा ghash_desc_ctx)अणुपूर्ण;
+	वापस 0;
+पूर्ण
 
-static void ghash_do_update(int blocks, u64 dg[], const char *src,
-			    struct ghash_key *key, const char *head)
-{
-	if (likely(crypto_simd_usable())) {
+अटल व्योम ghash_करो_update(पूर्णांक blocks, u64 dg[], स्थिर अक्षर *src,
+			    काष्ठा ghash_key *key, स्थिर अक्षर *head)
+अणु
+	अगर (likely(crypto_simd_usable())) अणु
 		kernel_neon_begin();
-		if (static_branch_likely(&use_p64))
+		अगर (अटल_branch_likely(&use_p64))
 			pmull_ghash_update_p64(blocks, dg, src, key->h, head);
-		else
+		अन्यथा
 			pmull_ghash_update_p8(blocks, dg, src, key->h, head);
 		kernel_neon_end();
-	} else {
-		be128 dst = { cpu_to_be64(dg[1]), cpu_to_be64(dg[0]) };
+	पूर्ण अन्यथा अणु
+		be128 dst = अणु cpu_to_be64(dg[1]), cpu_to_be64(dg[0]) पूर्ण;
 
-		do {
-			const u8 *in = src;
+		करो अणु
+			स्थिर u8 *in = src;
 
-			if (head) {
+			अगर (head) अणु
 				in = head;
 				blocks++;
-				head = NULL;
-			} else {
+				head = शून्य;
+			पूर्ण अन्यथा अणु
 				src += GHASH_BLOCK_SIZE;
-			}
+			पूर्ण
 
 			crypto_xor((u8 *)&dst, in, GHASH_BLOCK_SIZE);
 			gf128mul_lle(&dst, &key->k);
-		} while (--blocks);
+		पूर्ण जबतक (--blocks);
 
 		dg[0] = be64_to_cpu(dst.b);
 		dg[1] = be64_to_cpu(dst.a);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int ghash_update(struct shash_desc *desc, const u8 *src,
-			unsigned int len)
-{
-	struct ghash_desc_ctx *ctx = shash_desc_ctx(desc);
-	unsigned int partial = ctx->count % GHASH_BLOCK_SIZE;
+अटल पूर्णांक ghash_update(काष्ठा shash_desc *desc, स्थिर u8 *src,
+			अचिन्हित पूर्णांक len)
+अणु
+	काष्ठा ghash_desc_ctx *ctx = shash_desc_ctx(desc);
+	अचिन्हित पूर्णांक partial = ctx->count % GHASH_BLOCK_SIZE;
 
 	ctx->count += len;
 
-	if ((partial + len) >= GHASH_BLOCK_SIZE) {
-		struct ghash_key *key = crypto_shash_ctx(desc->tfm);
-		int blocks;
+	अगर ((partial + len) >= GHASH_BLOCK_SIZE) अणु
+		काष्ठा ghash_key *key = crypto_shash_ctx(desc->tfm);
+		पूर्णांक blocks;
 
-		if (partial) {
-			int p = GHASH_BLOCK_SIZE - partial;
+		अगर (partial) अणु
+			पूर्णांक p = GHASH_BLOCK_SIZE - partial;
 
-			memcpy(ctx->buf + partial, src, p);
+			स_नकल(ctx->buf + partial, src, p);
 			src += p;
 			len -= p;
-		}
+		पूर्ण
 
 		blocks = len / GHASH_BLOCK_SIZE;
 		len %= GHASH_BLOCK_SIZE;
 
-		ghash_do_update(blocks, ctx->digest, src, key,
-				partial ? ctx->buf : NULL);
+		ghash_करो_update(blocks, ctx->digest, src, key,
+				partial ? ctx->buf : शून्य);
 		src += blocks * GHASH_BLOCK_SIZE;
 		partial = 0;
-	}
-	if (len)
-		memcpy(ctx->buf + partial, src, len);
-	return 0;
-}
+	पूर्ण
+	अगर (len)
+		स_नकल(ctx->buf + partial, src, len);
+	वापस 0;
+पूर्ण
 
-static int ghash_final(struct shash_desc *desc, u8 *dst)
-{
-	struct ghash_desc_ctx *ctx = shash_desc_ctx(desc);
-	unsigned int partial = ctx->count % GHASH_BLOCK_SIZE;
+अटल पूर्णांक ghash_final(काष्ठा shash_desc *desc, u8 *dst)
+अणु
+	काष्ठा ghash_desc_ctx *ctx = shash_desc_ctx(desc);
+	अचिन्हित पूर्णांक partial = ctx->count % GHASH_BLOCK_SIZE;
 
-	if (partial) {
-		struct ghash_key *key = crypto_shash_ctx(desc->tfm);
+	अगर (partial) अणु
+		काष्ठा ghash_key *key = crypto_shash_ctx(desc->tfm);
 
-		memset(ctx->buf + partial, 0, GHASH_BLOCK_SIZE - partial);
-		ghash_do_update(1, ctx->digest, ctx->buf, key, NULL);
-	}
+		स_रखो(ctx->buf + partial, 0, GHASH_BLOCK_SIZE - partial);
+		ghash_करो_update(1, ctx->digest, ctx->buf, key, शून्य);
+	पूर्ण
 	put_unaligned_be64(ctx->digest[1], dst);
 	put_unaligned_be64(ctx->digest[0], dst + 8);
 
-	*ctx = (struct ghash_desc_ctx){};
-	return 0;
-}
+	*ctx = (काष्ठा ghash_desc_ctx)अणुपूर्ण;
+	वापस 0;
+पूर्ण
 
-static void ghash_reflect(u64 h[], const be128 *k)
-{
+अटल व्योम ghash_reflect(u64 h[], स्थिर be128 *k)
+अणु
 	u64 carry = be64_to_cpu(k->a) >> 63;
 
 	h[0] = (be64_to_cpu(k->b) << 1) | carry;
 	h[1] = (be64_to_cpu(k->a) << 1) | (be64_to_cpu(k->b) >> 63);
 
-	if (carry)
+	अगर (carry)
 		h[1] ^= 0xc200000000000000UL;
-}
+पूर्ण
 
-static int ghash_setkey(struct crypto_shash *tfm,
-			const u8 *inkey, unsigned int keylen)
-{
-	struct ghash_key *key = crypto_shash_ctx(tfm);
+अटल पूर्णांक ghash_setkey(काष्ठा crypto_shash *tfm,
+			स्थिर u8 *inkey, अचिन्हित पूर्णांक keylen)
+अणु
+	काष्ठा ghash_key *key = crypto_shash_ctx(tfm);
 
-	if (keylen != GHASH_BLOCK_SIZE)
-		return -EINVAL;
+	अगर (keylen != GHASH_BLOCK_SIZE)
+		वापस -EINVAL;
 
-	/* needed for the fallback */
-	memcpy(&key->k, inkey, GHASH_BLOCK_SIZE);
+	/* needed क्रम the fallback */
+	स_नकल(&key->k, inkey, GHASH_BLOCK_SIZE);
 	ghash_reflect(key->h[0], &key->k);
 
-	if (static_branch_likely(&use_p64)) {
+	अगर (अटल_branch_likely(&use_p64)) अणु
 		be128 h = key->k;
 
 		gf128mul_lle(&h, &key->k);
@@ -176,152 +177,152 @@ static int ghash_setkey(struct crypto_shash *tfm,
 
 		gf128mul_lle(&h, &key->k);
 		ghash_reflect(key->h[3], &h);
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static struct shash_alg ghash_alg = {
+अटल काष्ठा shash_alg ghash_alg = अणु
 	.digestsize		= GHASH_DIGEST_SIZE,
 	.init			= ghash_init,
 	.update			= ghash_update,
 	.final			= ghash_final,
 	.setkey			= ghash_setkey,
-	.descsize		= sizeof(struct ghash_desc_ctx),
+	.descsize		= माप(काष्ठा ghash_desc_ctx),
 
 	.base.cra_name		= "ghash",
 	.base.cra_driver_name	= "ghash-ce-sync",
 	.base.cra_priority	= 300 - 1,
 	.base.cra_blocksize	= GHASH_BLOCK_SIZE,
-	.base.cra_ctxsize	= sizeof(struct ghash_key) + sizeof(u64[2]),
+	.base.cra_ctxsize	= माप(काष्ठा ghash_key) + माप(u64[2]),
 	.base.cra_module	= THIS_MODULE,
-};
+पूर्ण;
 
-static int ghash_async_init(struct ahash_request *req)
-{
-	struct crypto_ahash *tfm = crypto_ahash_reqtfm(req);
-	struct ghash_async_ctx *ctx = crypto_ahash_ctx(tfm);
-	struct ahash_request *cryptd_req = ahash_request_ctx(req);
-	struct cryptd_ahash *cryptd_tfm = ctx->cryptd_tfm;
-	struct shash_desc *desc = cryptd_shash_desc(cryptd_req);
-	struct crypto_shash *child = cryptd_ahash_child(cryptd_tfm);
+अटल पूर्णांक ghash_async_init(काष्ठा ahash_request *req)
+अणु
+	काष्ठा crypto_ahash *tfm = crypto_ahash_reqtfm(req);
+	काष्ठा ghash_async_ctx *ctx = crypto_ahash_ctx(tfm);
+	काष्ठा ahash_request *cryptd_req = ahash_request_ctx(req);
+	काष्ठा cryptd_ahash *cryptd_tfm = ctx->cryptd_tfm;
+	काष्ठा shash_desc *desc = cryptd_shash_desc(cryptd_req);
+	काष्ठा crypto_shash *child = cryptd_ahash_child(cryptd_tfm);
 
 	desc->tfm = child;
-	return crypto_shash_init(desc);
-}
+	वापस crypto_shash_init(desc);
+पूर्ण
 
-static int ghash_async_update(struct ahash_request *req)
-{
-	struct ahash_request *cryptd_req = ahash_request_ctx(req);
-	struct crypto_ahash *tfm = crypto_ahash_reqtfm(req);
-	struct ghash_async_ctx *ctx = crypto_ahash_ctx(tfm);
-	struct cryptd_ahash *cryptd_tfm = ctx->cryptd_tfm;
+अटल पूर्णांक ghash_async_update(काष्ठा ahash_request *req)
+अणु
+	काष्ठा ahash_request *cryptd_req = ahash_request_ctx(req);
+	काष्ठा crypto_ahash *tfm = crypto_ahash_reqtfm(req);
+	काष्ठा ghash_async_ctx *ctx = crypto_ahash_ctx(tfm);
+	काष्ठा cryptd_ahash *cryptd_tfm = ctx->cryptd_tfm;
 
-	if (!crypto_simd_usable() ||
-	    (in_atomic() && cryptd_ahash_queued(cryptd_tfm))) {
-		memcpy(cryptd_req, req, sizeof(*req));
+	अगर (!crypto_simd_usable() ||
+	    (in_atomic() && cryptd_ahash_queued(cryptd_tfm))) अणु
+		स_नकल(cryptd_req, req, माप(*req));
 		ahash_request_set_tfm(cryptd_req, &cryptd_tfm->base);
-		return crypto_ahash_update(cryptd_req);
-	} else {
-		struct shash_desc *desc = cryptd_shash_desc(cryptd_req);
-		return shash_ahash_update(req, desc);
-	}
-}
+		वापस crypto_ahash_update(cryptd_req);
+	पूर्ण अन्यथा अणु
+		काष्ठा shash_desc *desc = cryptd_shash_desc(cryptd_req);
+		वापस shash_ahash_update(req, desc);
+	पूर्ण
+पूर्ण
 
-static int ghash_async_final(struct ahash_request *req)
-{
-	struct ahash_request *cryptd_req = ahash_request_ctx(req);
-	struct crypto_ahash *tfm = crypto_ahash_reqtfm(req);
-	struct ghash_async_ctx *ctx = crypto_ahash_ctx(tfm);
-	struct cryptd_ahash *cryptd_tfm = ctx->cryptd_tfm;
+अटल पूर्णांक ghash_async_final(काष्ठा ahash_request *req)
+अणु
+	काष्ठा ahash_request *cryptd_req = ahash_request_ctx(req);
+	काष्ठा crypto_ahash *tfm = crypto_ahash_reqtfm(req);
+	काष्ठा ghash_async_ctx *ctx = crypto_ahash_ctx(tfm);
+	काष्ठा cryptd_ahash *cryptd_tfm = ctx->cryptd_tfm;
 
-	if (!crypto_simd_usable() ||
-	    (in_atomic() && cryptd_ahash_queued(cryptd_tfm))) {
-		memcpy(cryptd_req, req, sizeof(*req));
+	अगर (!crypto_simd_usable() ||
+	    (in_atomic() && cryptd_ahash_queued(cryptd_tfm))) अणु
+		स_नकल(cryptd_req, req, माप(*req));
 		ahash_request_set_tfm(cryptd_req, &cryptd_tfm->base);
-		return crypto_ahash_final(cryptd_req);
-	} else {
-		struct shash_desc *desc = cryptd_shash_desc(cryptd_req);
-		return crypto_shash_final(desc, req->result);
-	}
-}
+		वापस crypto_ahash_final(cryptd_req);
+	पूर्ण अन्यथा अणु
+		काष्ठा shash_desc *desc = cryptd_shash_desc(cryptd_req);
+		वापस crypto_shash_final(desc, req->result);
+	पूर्ण
+पूर्ण
 
-static int ghash_async_digest(struct ahash_request *req)
-{
-	struct crypto_ahash *tfm = crypto_ahash_reqtfm(req);
-	struct ghash_async_ctx *ctx = crypto_ahash_ctx(tfm);
-	struct ahash_request *cryptd_req = ahash_request_ctx(req);
-	struct cryptd_ahash *cryptd_tfm = ctx->cryptd_tfm;
+अटल पूर्णांक ghash_async_digest(काष्ठा ahash_request *req)
+अणु
+	काष्ठा crypto_ahash *tfm = crypto_ahash_reqtfm(req);
+	काष्ठा ghash_async_ctx *ctx = crypto_ahash_ctx(tfm);
+	काष्ठा ahash_request *cryptd_req = ahash_request_ctx(req);
+	काष्ठा cryptd_ahash *cryptd_tfm = ctx->cryptd_tfm;
 
-	if (!crypto_simd_usable() ||
-	    (in_atomic() && cryptd_ahash_queued(cryptd_tfm))) {
-		memcpy(cryptd_req, req, sizeof(*req));
+	अगर (!crypto_simd_usable() ||
+	    (in_atomic() && cryptd_ahash_queued(cryptd_tfm))) अणु
+		स_नकल(cryptd_req, req, माप(*req));
 		ahash_request_set_tfm(cryptd_req, &cryptd_tfm->base);
-		return crypto_ahash_digest(cryptd_req);
-	} else {
-		struct shash_desc *desc = cryptd_shash_desc(cryptd_req);
-		struct crypto_shash *child = cryptd_ahash_child(cryptd_tfm);
+		वापस crypto_ahash_digest(cryptd_req);
+	पूर्ण अन्यथा अणु
+		काष्ठा shash_desc *desc = cryptd_shash_desc(cryptd_req);
+		काष्ठा crypto_shash *child = cryptd_ahash_child(cryptd_tfm);
 
 		desc->tfm = child;
-		return shash_ahash_digest(req, desc);
-	}
-}
+		वापस shash_ahash_digest(req, desc);
+	पूर्ण
+पूर्ण
 
-static int ghash_async_import(struct ahash_request *req, const void *in)
-{
-	struct ahash_request *cryptd_req = ahash_request_ctx(req);
-	struct crypto_ahash *tfm = crypto_ahash_reqtfm(req);
-	struct ghash_async_ctx *ctx = crypto_ahash_ctx(tfm);
-	struct shash_desc *desc = cryptd_shash_desc(cryptd_req);
+अटल पूर्णांक ghash_async_import(काष्ठा ahash_request *req, स्थिर व्योम *in)
+अणु
+	काष्ठा ahash_request *cryptd_req = ahash_request_ctx(req);
+	काष्ठा crypto_ahash *tfm = crypto_ahash_reqtfm(req);
+	काष्ठा ghash_async_ctx *ctx = crypto_ahash_ctx(tfm);
+	काष्ठा shash_desc *desc = cryptd_shash_desc(cryptd_req);
 
 	desc->tfm = cryptd_ahash_child(ctx->cryptd_tfm);
 
-	return crypto_shash_import(desc, in);
-}
+	वापस crypto_shash_import(desc, in);
+पूर्ण
 
-static int ghash_async_export(struct ahash_request *req, void *out)
-{
-	struct ahash_request *cryptd_req = ahash_request_ctx(req);
-	struct shash_desc *desc = cryptd_shash_desc(cryptd_req);
+अटल पूर्णांक ghash_async_export(काष्ठा ahash_request *req, व्योम *out)
+अणु
+	काष्ठा ahash_request *cryptd_req = ahash_request_ctx(req);
+	काष्ठा shash_desc *desc = cryptd_shash_desc(cryptd_req);
 
-	return crypto_shash_export(desc, out);
-}
+	वापस crypto_shash_export(desc, out);
+पूर्ण
 
-static int ghash_async_setkey(struct crypto_ahash *tfm, const u8 *key,
-			      unsigned int keylen)
-{
-	struct ghash_async_ctx *ctx = crypto_ahash_ctx(tfm);
-	struct crypto_ahash *child = &ctx->cryptd_tfm->base;
+अटल पूर्णांक ghash_async_setkey(काष्ठा crypto_ahash *tfm, स्थिर u8 *key,
+			      अचिन्हित पूर्णांक keylen)
+अणु
+	काष्ठा ghash_async_ctx *ctx = crypto_ahash_ctx(tfm);
+	काष्ठा crypto_ahash *child = &ctx->cryptd_tfm->base;
 
 	crypto_ahash_clear_flags(child, CRYPTO_TFM_REQ_MASK);
 	crypto_ahash_set_flags(child, crypto_ahash_get_flags(tfm)
 			       & CRYPTO_TFM_REQ_MASK);
-	return crypto_ahash_setkey(child, key, keylen);
-}
+	वापस crypto_ahash_setkey(child, key, keylen);
+पूर्ण
 
-static int ghash_async_init_tfm(struct crypto_tfm *tfm)
-{
-	struct cryptd_ahash *cryptd_tfm;
-	struct ghash_async_ctx *ctx = crypto_tfm_ctx(tfm);
+अटल पूर्णांक ghash_async_init_tfm(काष्ठा crypto_tfm *tfm)
+अणु
+	काष्ठा cryptd_ahash *cryptd_tfm;
+	काष्ठा ghash_async_ctx *ctx = crypto_tfm_ctx(tfm);
 
 	cryptd_tfm = cryptd_alloc_ahash("ghash-ce-sync", 0, 0);
-	if (IS_ERR(cryptd_tfm))
-		return PTR_ERR(cryptd_tfm);
+	अगर (IS_ERR(cryptd_tfm))
+		वापस PTR_ERR(cryptd_tfm);
 	ctx->cryptd_tfm = cryptd_tfm;
 	crypto_ahash_set_reqsize(__crypto_ahash_cast(tfm),
-				 sizeof(struct ahash_request) +
+				 माप(काष्ठा ahash_request) +
 				 crypto_ahash_reqsize(&cryptd_tfm->base));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void ghash_async_exit_tfm(struct crypto_tfm *tfm)
-{
-	struct ghash_async_ctx *ctx = crypto_tfm_ctx(tfm);
+अटल व्योम ghash_async_निकास_tfm(काष्ठा crypto_tfm *tfm)
+अणु
+	काष्ठा ghash_async_ctx *ctx = crypto_tfm_ctx(tfm);
 
-	cryptd_free_ahash(ctx->cryptd_tfm);
-}
+	cryptd_मुक्त_ahash(ctx->cryptd_tfm);
+पूर्ण
 
-static struct ahash_alg ghash_async_alg = {
+अटल काष्ठा ahash_alg ghash_async_alg = अणु
 	.init			= ghash_async_init,
 	.update			= ghash_async_update,
 	.final			= ghash_async_final,
@@ -330,51 +331,51 @@ static struct ahash_alg ghash_async_alg = {
 	.import			= ghash_async_import,
 	.export			= ghash_async_export,
 	.halg.digestsize	= GHASH_DIGEST_SIZE,
-	.halg.statesize		= sizeof(struct ghash_desc_ctx),
-	.halg.base		= {
+	.halg.statesize		= माप(काष्ठा ghash_desc_ctx),
+	.halg.base		= अणु
 		.cra_name	= "ghash",
 		.cra_driver_name = "ghash-ce",
 		.cra_priority	= 300,
 		.cra_flags	= CRYPTO_ALG_ASYNC,
 		.cra_blocksize	= GHASH_BLOCK_SIZE,
-		.cra_ctxsize	= sizeof(struct ghash_async_ctx),
+		.cra_ctxsize	= माप(काष्ठा ghash_async_ctx),
 		.cra_module	= THIS_MODULE,
 		.cra_init	= ghash_async_init_tfm,
-		.cra_exit	= ghash_async_exit_tfm,
-	},
-};
+		.cra_निकास	= ghash_async_निकास_tfm,
+	पूर्ण,
+पूर्ण;
 
-static int __init ghash_ce_mod_init(void)
-{
-	int err;
+अटल पूर्णांक __init ghash_ce_mod_init(व्योम)
+अणु
+	पूर्णांक err;
 
-	if (!(elf_hwcap & HWCAP_NEON))
-		return -ENODEV;
+	अगर (!(elf_hwcap & HWCAP_NEON))
+		वापस -ENODEV;
 
-	if (elf_hwcap2 & HWCAP2_PMULL) {
-		ghash_alg.base.cra_ctxsize += 3 * sizeof(u64[2]);
-		static_branch_enable(&use_p64);
-	}
+	अगर (elf_hwcap2 & HWCAP2_PMULL) अणु
+		ghash_alg.base.cra_ctxsize += 3 * माप(u64[2]);
+		अटल_branch_enable(&use_p64);
+	पूर्ण
 
-	err = crypto_register_shash(&ghash_alg);
-	if (err)
-		return err;
-	err = crypto_register_ahash(&ghash_async_alg);
-	if (err)
-		goto err_shash;
+	err = crypto_रेजिस्टर_shash(&ghash_alg);
+	अगर (err)
+		वापस err;
+	err = crypto_रेजिस्टर_ahash(&ghash_async_alg);
+	अगर (err)
+		जाओ err_shash;
 
-	return 0;
+	वापस 0;
 
 err_shash:
-	crypto_unregister_shash(&ghash_alg);
-	return err;
-}
+	crypto_unरेजिस्टर_shash(&ghash_alg);
+	वापस err;
+पूर्ण
 
-static void __exit ghash_ce_mod_exit(void)
-{
-	crypto_unregister_ahash(&ghash_async_alg);
-	crypto_unregister_shash(&ghash_alg);
-}
+अटल व्योम __निकास ghash_ce_mod_निकास(व्योम)
+अणु
+	crypto_unरेजिस्टर_ahash(&ghash_async_alg);
+	crypto_unरेजिस्टर_shash(&ghash_alg);
+पूर्ण
 
 module_init(ghash_ce_mod_init);
-module_exit(ghash_ce_mod_exit);
+module_निकास(ghash_ce_mod_निकास);

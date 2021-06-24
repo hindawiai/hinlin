@@ -1,46 +1,47 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- * Support for Intel Camera Imaging ISP subsystem.
+ * Support क्रम Intel Camera Imaging ISP subप्रणाली.
  * Copyright (c) 2015, Intel Corporation.
  *
- * This program is free software; you can redistribute it and/or modify it
+ * This program is मुक्त software; you can redistribute it and/or modअगरy it
  * under the terms and conditions of the GNU General Public License,
  * version 2, as published by the Free Software Foundation.
  *
  * This program is distributed in the hope it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License क्रम
  * more details.
  */
 
-#ifndef __SP_H_INCLUDED__
-#define __SP_H_INCLUDED__
+#अगर_अघोषित __SP_H_INCLUDED__
+#घोषणा __SP_H_INCLUDED__
 
 /*
- * This file is included on every cell {SP,ISP,host} and on every system
+ * This file is included on every cell अणुSP,ISP,hostपूर्ण and on every प्रणाली
  * that uses the SP cell. It defines the API to DLI bridge
  *
- * System and cell specific interfaces and inline code are included
+ * System and cell specअगरic पूर्णांकerfaces and अंतरभूत code are included
  * conditionally through Makefile path settings.
  *
- *  - .        system and cell agnostic interfaces, constants and identifiers
- *	- public:  system agnostic, cell specific interfaces
- *	- private: system dependent, cell specific interfaces & inline implementations
- *	- global:  system specific constants and identifiers
- *	- local:   system and cell specific constants and identifiers
+ *  - .        प्रणाली and cell agnostic पूर्णांकerfaces, स्थिरants and identअगरiers
+ *	- खुला:  प्रणाली agnostic, cell specअगरic पूर्णांकerfaces
+ *	- निजी: प्रणाली dependent, cell specअगरic पूर्णांकerfaces & अंतरभूत implementations
+ *	- global:  प्रणाली specअगरic स्थिरants and identअगरiers
+ *	- local:   प्रणाली and cell specअगरic स्थिरants and identअगरiers
  */
 
-#include "system_local.h"
-#include "sp_local.h"
+#समावेश "system_local.h"
+#समावेश "sp_local.h"
 
-#ifndef __INLINE_SP__
-#define STORAGE_CLASS_SP_H extern
-#define STORAGE_CLASS_SP_C
-#include "sp_public.h"
-#else  /* __INLINE_SP__ */
-#define STORAGE_CLASS_SP_H static inline
-#define STORAGE_CLASS_SP_C static inline
-#include "sp_private.h"
-#endif /* __INLINE_SP__ */
+#अगर_अघोषित __INLINE_SP__
+#घोषणा STORAGE_CLASS_SP_H बाह्य
+#घोषणा STORAGE_CLASS_SP_C
+#समावेश "sp_public.h"
+#अन्यथा  /* __INLINE_SP__ */
+#घोषणा STORAGE_CLASS_SP_H अटल अंतरभूत
+#घोषणा STORAGE_CLASS_SP_C अटल अंतरभूत
+#समावेश "sp_private.h"
+#पूर्ण_अगर /* __INLINE_SP__ */
 
-#endif /* __SP_H_INCLUDED__ */
+#पूर्ण_अगर /* __SP_H_INCLUDED__ */

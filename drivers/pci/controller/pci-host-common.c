@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Generic PCI host driver common code
  *
@@ -7,95 +8,95 @@
  * Author: Will Deacon <will.deacon@arm.com>
  */
 
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/of_address.h>
-#include <linux/of_device.h>
-#include <linux/of_pci.h>
-#include <linux/pci-ecam.h>
-#include <linux/platform_device.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of_address.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/of_pci.h>
+#समावेश <linux/pci-ecam.h>
+#समावेश <linux/platक्रमm_device.h>
 
-static void gen_pci_unmap_cfg(void *ptr)
-{
-	pci_ecam_free((struct pci_config_window *)ptr);
-}
+अटल व्योम gen_pci_unmap_cfg(व्योम *ptr)
+अणु
+	pci_ecam_मुक्त((काष्ठा pci_config_winकरोw *)ptr);
+पूर्ण
 
-static struct pci_config_window *gen_pci_init(struct device *dev,
-		struct pci_host_bridge *bridge, const struct pci_ecam_ops *ops)
-{
-	int err;
-	struct resource cfgres;
-	struct resource_entry *bus;
-	struct pci_config_window *cfg;
+अटल काष्ठा pci_config_winकरोw *gen_pci_init(काष्ठा device *dev,
+		काष्ठा pci_host_bridge *bridge, स्थिर काष्ठा pci_ecam_ops *ops)
+अणु
+	पूर्णांक err;
+	काष्ठा resource cfgres;
+	काष्ठा resource_entry *bus;
+	काष्ठा pci_config_winकरोw *cfg;
 
 	err = of_address_to_resource(dev->of_node, 0, &cfgres);
-	if (err) {
+	अगर (err) अणु
 		dev_err(dev, "missing \"reg\" property\n");
-		return ERR_PTR(err);
-	}
+		वापस ERR_PTR(err);
+	पूर्ण
 
-	bus = resource_list_first_type(&bridge->windows, IORESOURCE_BUS);
-	if (!bus)
-		return ERR_PTR(-ENODEV);
+	bus = resource_list_first_type(&bridge->winकरोws, IORESOURCE_BUS);
+	अगर (!bus)
+		वापस ERR_PTR(-ENODEV);
 
 	cfg = pci_ecam_create(dev, &cfgres, bus->res, ops);
-	if (IS_ERR(cfg))
-		return cfg;
+	अगर (IS_ERR(cfg))
+		वापस cfg;
 
 	err = devm_add_action_or_reset(dev, gen_pci_unmap_cfg, cfg);
-	if (err)
-		return ERR_PTR(err);
+	अगर (err)
+		वापस ERR_PTR(err);
 
-	return cfg;
-}
+	वापस cfg;
+पूर्ण
 
-int pci_host_common_probe(struct platform_device *pdev)
-{
-	struct device *dev = &pdev->dev;
-	struct pci_host_bridge *bridge;
-	struct pci_config_window *cfg;
-	const struct pci_ecam_ops *ops;
+पूर्णांक pci_host_common_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा pci_host_bridge *bridge;
+	काष्ठा pci_config_winकरोw *cfg;
+	स्थिर काष्ठा pci_ecam_ops *ops;
 
 	ops = of_device_get_match_data(&pdev->dev);
-	if (!ops)
-		return -ENODEV;
+	अगर (!ops)
+		वापस -ENODEV;
 
 	bridge = devm_pci_alloc_host_bridge(dev, 0);
-	if (!bridge)
-		return -ENOMEM;
+	अगर (!bridge)
+		वापस -ENOMEM;
 
-	platform_set_drvdata(pdev, bridge);
+	platक्रमm_set_drvdata(pdev, bridge);
 
 	of_pci_check_probe_only();
 
-	/* Parse and map our Configuration Space windows */
+	/* Parse and map our Configuration Space winकरोws */
 	cfg = gen_pci_init(dev, bridge, ops);
-	if (IS_ERR(cfg))
-		return PTR_ERR(cfg);
+	अगर (IS_ERR(cfg))
+		वापस PTR_ERR(cfg);
 
-	/* Do not reassign resources if probe only */
-	if (!pci_has_flag(PCI_PROBE_ONLY))
+	/* Do not reassign resources अगर probe only */
+	अगर (!pci_has_flag(PCI_PROBE_ONLY))
 		pci_add_flags(PCI_REASSIGN_ALL_BUS);
 
 	bridge->sysdata = cfg;
-	bridge->ops = (struct pci_ops *)&ops->pci_ops;
-	bridge->msi_domain = true;
+	bridge->ops = (काष्ठा pci_ops *)&ops->pci_ops;
+	bridge->msi_करोमुख्य = true;
 
-	return pci_host_probe(bridge);
-}
+	वापस pci_host_probe(bridge);
+पूर्ण
 EXPORT_SYMBOL_GPL(pci_host_common_probe);
 
-int pci_host_common_remove(struct platform_device *pdev)
-{
-	struct pci_host_bridge *bridge = platform_get_drvdata(pdev);
+पूर्णांक pci_host_common_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा pci_host_bridge *bridge = platक्रमm_get_drvdata(pdev);
 
-	pci_lock_rescan_remove();
+	pci_lock_rescan_हटाओ();
 	pci_stop_root_bus(bridge->bus);
-	pci_remove_root_bus(bridge->bus);
-	pci_unlock_rescan_remove();
+	pci_हटाओ_root_bus(bridge->bus);
+	pci_unlock_rescan_हटाओ();
 
-	return 0;
-}
-EXPORT_SYMBOL_GPL(pci_host_common_remove);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL_GPL(pci_host_common_हटाओ);
 
 MODULE_LICENSE("GPL v2");

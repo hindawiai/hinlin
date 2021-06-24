@@ -1,23 +1,24 @@
+<शैली गुरु>
 /*
  * Copyright (c) 2006, 2018 Oracle and/or its affiliates. All rights reserved.
  *
  * This software is available to you under a choice of one of two
  * licenses.  You may choose to be licensed under the terms of the GNU
  * General Public License (GPL) Version 2, available from the file
- * COPYING in the main directory of this source tree, or the
+ * COPYING in the मुख्य directory of this source tree, or the
  * OpenIB.org BSD license below:
  *
- *     Redistribution and use in source and binary forms, with or
- *     without modification, are permitted provided that the following
+ *     Redistribution and use in source and binary क्रमms, with or
+ *     without modअगरication, are permitted provided that the following
  *     conditions are met:
  *
  *      - Redistributions of source code must retain the above
  *        copyright notice, this list of conditions and the following
  *        disclaimer.
  *
- *      - Redistributions in binary form must reproduce the above
+ *      - Redistributions in binary क्रमm must reproduce the above
  *        copyright notice, this list of conditions and the following
- *        disclaimer in the documentation and/or other materials
+ *        disclaimer in the करोcumentation and/or other materials
  *        provided with the distribution.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
@@ -30,151 +31,151 @@
  * SOFTWARE.
  *
  */
-#include <linux/kernel.h>
-#include <linux/slab.h>
-#include <linux/in.h>
-#include <linux/module.h>
-#include <net/tcp.h>
-#include <net/net_namespace.h>
-#include <net/netns/generic.h>
-#include <net/addrconf.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/in.h>
+#समावेश <linux/module.h>
+#समावेश <net/tcp.h>
+#समावेश <net/net_namespace.h>
+#समावेश <net/netns/generic.h>
+#समावेश <net/addrconf.h>
 
-#include "rds.h"
-#include "tcp.h"
+#समावेश "rds.h"
+#समावेश "tcp.h"
 
-/* only for info exporting */
-static DEFINE_SPINLOCK(rds_tcp_tc_list_lock);
-static LIST_HEAD(rds_tcp_tc_list);
+/* only क्रम info exporting */
+अटल DEFINE_SPINLOCK(rds_tcp_tc_list_lock);
+अटल LIST_HEAD(rds_tcp_tc_list);
 
 /* rds_tcp_tc_count counts only IPv4 connections.
  * rds6_tcp_tc_count counts both IPv4 and IPv6 connections.
  */
-static unsigned int rds_tcp_tc_count;
-#if IS_ENABLED(CONFIG_IPV6)
-static unsigned int rds6_tcp_tc_count;
-#endif
+अटल अचिन्हित पूर्णांक rds_tcp_tc_count;
+#अगर IS_ENABLED(CONFIG_IPV6)
+अटल अचिन्हित पूर्णांक rds6_tcp_tc_count;
+#पूर्ण_अगर
 
-/* Track rds_tcp_connection structs so they can be cleaned up */
-static DEFINE_SPINLOCK(rds_tcp_conn_lock);
-static LIST_HEAD(rds_tcp_conn_list);
-static atomic_t rds_tcp_unloading = ATOMIC_INIT(0);
+/* Track rds_tcp_connection काष्ठाs so they can be cleaned up */
+अटल DEFINE_SPINLOCK(rds_tcp_conn_lock);
+अटल LIST_HEAD(rds_tcp_conn_list);
+अटल atomic_t rds_tcp_unloading = ATOMIC_INIT(0);
 
-static struct kmem_cache *rds_tcp_conn_slab;
+अटल काष्ठा kmem_cache *rds_tcp_conn_slab;
 
-static int rds_tcp_skbuf_handler(struct ctl_table *ctl, int write,
-				 void *buffer, size_t *lenp, loff_t *fpos);
+अटल पूर्णांक rds_tcp_skbuf_handler(काष्ठा ctl_table *ctl, पूर्णांक ग_लिखो,
+				 व्योम *buffer, माप_प्रकार *lenp, loff_t *fpos);
 
-static int rds_tcp_min_sndbuf = SOCK_MIN_SNDBUF;
-static int rds_tcp_min_rcvbuf = SOCK_MIN_RCVBUF;
+अटल पूर्णांक rds_tcp_min_sndbuf = SOCK_MIN_SNDBUF;
+अटल पूर्णांक rds_tcp_min_rcvbuf = SOCK_MIN_RCVBUF;
 
-static struct ctl_table rds_tcp_sysctl_table[] = {
-#define	RDS_TCP_SNDBUF	0
-	{
+अटल काष्ठा ctl_table rds_tcp_sysctl_table[] = अणु
+#घोषणा	RDS_TCP_SNDBUF	0
+	अणु
 		.procname       = "rds_tcp_sndbuf",
-		/* data is per-net pointer */
-		.maxlen         = sizeof(int),
+		/* data is per-net poपूर्णांकer */
+		.maxlen         = माप(पूर्णांक),
 		.mode           = 0644,
 		.proc_handler   = rds_tcp_skbuf_handler,
 		.extra1		= &rds_tcp_min_sndbuf,
-	},
-#define	RDS_TCP_RCVBUF	1
-	{
+	पूर्ण,
+#घोषणा	RDS_TCP_RCVBUF	1
+	अणु
 		.procname       = "rds_tcp_rcvbuf",
-		/* data is per-net pointer */
-		.maxlen         = sizeof(int),
+		/* data is per-net poपूर्णांकer */
+		.maxlen         = माप(पूर्णांक),
 		.mode           = 0644,
 		.proc_handler   = rds_tcp_skbuf_handler,
 		.extra1		= &rds_tcp_min_rcvbuf,
-	},
-	{ }
-};
+	पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 
-u32 rds_tcp_write_seq(struct rds_tcp_connection *tc)
-{
+u32 rds_tcp_ग_लिखो_seq(काष्ठा rds_tcp_connection *tc)
+अणु
 	/* seq# of the last byte of data in tcp send buffer */
-	return tcp_sk(tc->t_sock->sk)->write_seq;
-}
+	वापस tcp_sk(tc->t_sock->sk)->ग_लिखो_seq;
+पूर्ण
 
-u32 rds_tcp_snd_una(struct rds_tcp_connection *tc)
-{
-	return tcp_sk(tc->t_sock->sk)->snd_una;
-}
+u32 rds_tcp_snd_una(काष्ठा rds_tcp_connection *tc)
+अणु
+	वापस tcp_sk(tc->t_sock->sk)->snd_una;
+पूर्ण
 
-void rds_tcp_restore_callbacks(struct socket *sock,
-			       struct rds_tcp_connection *tc)
-{
+व्योम rds_tcp_restore_callbacks(काष्ठा socket *sock,
+			       काष्ठा rds_tcp_connection *tc)
+अणु
 	rdsdebug("restoring sock %p callbacks from tc %p\n", sock, tc);
-	write_lock_bh(&sock->sk->sk_callback_lock);
+	ग_लिखो_lock_bh(&sock->sk->sk_callback_lock);
 
-	/* done under the callback_lock to serialize with write_space */
+	/* करोne under the callback_lock to serialize with ग_लिखो_space */
 	spin_lock(&rds_tcp_tc_list_lock);
 	list_del_init(&tc->t_list_item);
-#if IS_ENABLED(CONFIG_IPV6)
+#अगर IS_ENABLED(CONFIG_IPV6)
 	rds6_tcp_tc_count--;
-#endif
-	if (!tc->t_cpath->cp_conn->c_isv6)
+#पूर्ण_अगर
+	अगर (!tc->t_cpath->cp_conn->c_isv6)
 		rds_tcp_tc_count--;
 	spin_unlock(&rds_tcp_tc_list_lock);
 
-	tc->t_sock = NULL;
+	tc->t_sock = शून्य;
 
-	sock->sk->sk_write_space = tc->t_orig_write_space;
-	sock->sk->sk_data_ready = tc->t_orig_data_ready;
+	sock->sk->sk_ग_लिखो_space = tc->t_orig_ग_लिखो_space;
+	sock->sk->sk_data_पढ़ोy = tc->t_orig_data_पढ़ोy;
 	sock->sk->sk_state_change = tc->t_orig_state_change;
-	sock->sk->sk_user_data = NULL;
+	sock->sk->sk_user_data = शून्य;
 
-	write_unlock_bh(&sock->sk->sk_callback_lock);
-}
+	ग_लिखो_unlock_bh(&sock->sk->sk_callback_lock);
+पूर्ण
 
 /*
- * rds_tcp_reset_callbacks() switches the to the new sock and
- * returns the existing tc->t_sock.
+ * rds_tcp_reset_callbacks() चयनes the to the new sock and
+ * वापसs the existing tc->t_sock.
  *
  * The only functions that set tc->t_sock are rds_tcp_set_callbacks
  * and rds_tcp_reset_callbacks.  Send and receive trust that
- * it is set.  The absence of RDS_CONN_UP bit protects those paths
- * from being called while it isn't set.
+ * it is set.  The असलence of RDS_CONN_UP bit protects those paths
+ * from being called जबतक it isn't set.
  */
-void rds_tcp_reset_callbacks(struct socket *sock,
-			     struct rds_conn_path *cp)
-{
-	struct rds_tcp_connection *tc = cp->cp_transport_data;
-	struct socket *osock = tc->t_sock;
+व्योम rds_tcp_reset_callbacks(काष्ठा socket *sock,
+			     काष्ठा rds_conn_path *cp)
+अणु
+	काष्ठा rds_tcp_connection *tc = cp->cp_transport_data;
+	काष्ठा socket *osock = tc->t_sock;
 
-	if (!osock)
-		goto newsock;
+	अगर (!osock)
+		जाओ newsock;
 
 	/* Need to resolve a duelling SYN between peers.
 	 * We have an outstanding SYN to this peer, which may
 	 * potentially have transitioned to the RDS_CONN_UP state,
-	 * so we must quiesce any send threads before resetting
-	 * cp_transport_data. We quiesce these threads by setting
+	 * so we must quiesce any send thपढ़ोs beक्रमe resetting
+	 * cp_transport_data. We quiesce these thपढ़ोs by setting
 	 * cp_state to something other than RDS_CONN_UP, and then
-	 * waiting for any existing threads in rds_send_xmit to
-	 * complete release_in_xmit(). (Subsequent threads entering
+	 * रुकोing क्रम any existing thपढ़ोs in rds_send_xmit to
+	 * complete release_in_xmit(). (Subsequent thपढ़ोs entering
 	 * rds_send_xmit() will bail on !rds_conn_up().
 	 *
-	 * However an incoming syn-ack at this point would end up
+	 * However an incoming syn-ack at this poपूर्णांक would end up
 	 * marking the conn as RDS_CONN_UP, and would again permit
-	 * rds_send_xmi() threads through, so ideally we would
+	 * rds_send_xmi() thपढ़ोs through, so ideally we would
 	 * synchronize on RDS_CONN_UP after lock_sock(), but cannot
-	 * do that: waiting on !RDS_IN_XMIT after lock_sock() may
+	 * करो that: रुकोing on !RDS_IN_XMIT after lock_sock() may
 	 * end up deadlocking with tcp_sendmsg(), and the RDS_IN_XMIT
 	 * would not get set. As a result, we set c_state to
 	 * RDS_CONN_RESETTTING, to ensure that rds_tcp_state_change
-	 * cannot mark rds_conn_path_up() in the window before lock_sock()
+	 * cannot mark rds_conn_path_up() in the winकरोw beक्रमe lock_sock()
 	 */
 	atomic_set(&cp->cp_state, RDS_CONN_RESETTING);
-	wait_event(cp->cp_waitq, !test_bit(RDS_IN_XMIT, &cp->cp_flags));
+	रुको_event(cp->cp_रुकोq, !test_bit(RDS_IN_XMIT, &cp->cp_flags));
 	lock_sock(osock->sk);
-	/* reset receive side state for rds_tcp_data_recv() for osock  */
+	/* reset receive side state क्रम rds_tcp_data_recv() क्रम osock  */
 	cancel_delayed_work_sync(&cp->cp_send_w);
 	cancel_delayed_work_sync(&cp->cp_recv_w);
-	if (tc->t_tinc) {
+	अगर (tc->t_tinc) अणु
 		rds_inc_put(&tc->t_tinc->ti_inc);
-		tc->t_tinc = NULL;
-	}
-	tc->t_tinc_hdr_rem = sizeof(struct rds_header);
+		tc->t_tinc = शून्य;
+	पूर्ण
+	tc->t_tinc_hdr_rem = माप(काष्ठा rds_header);
 	tc->t_tinc_data_rem = 0;
 	rds_tcp_restore_callbacks(osock, tc);
 	release_sock(osock->sk);
@@ -184,68 +185,68 @@ newsock:
 	lock_sock(sock->sk);
 	rds_tcp_set_callbacks(sock, cp);
 	release_sock(sock->sk);
-}
+पूर्ण
 
 /* Add tc to rds_tcp_tc_list and set tc->t_sock. See comments
- * above rds_tcp_reset_callbacks for notes about synchronization
+ * above rds_tcp_reset_callbacks क्रम notes about synchronization
  * with data path
  */
-void rds_tcp_set_callbacks(struct socket *sock, struct rds_conn_path *cp)
-{
-	struct rds_tcp_connection *tc = cp->cp_transport_data;
+व्योम rds_tcp_set_callbacks(काष्ठा socket *sock, काष्ठा rds_conn_path *cp)
+अणु
+	काष्ठा rds_tcp_connection *tc = cp->cp_transport_data;
 
 	rdsdebug("setting sock %p callbacks to tc %p\n", sock, tc);
-	write_lock_bh(&sock->sk->sk_callback_lock);
+	ग_लिखो_lock_bh(&sock->sk->sk_callback_lock);
 
-	/* done under the callback_lock to serialize with write_space */
+	/* करोne under the callback_lock to serialize with ग_लिखो_space */
 	spin_lock(&rds_tcp_tc_list_lock);
 	list_add_tail(&tc->t_list_item, &rds_tcp_tc_list);
-#if IS_ENABLED(CONFIG_IPV6)
+#अगर IS_ENABLED(CONFIG_IPV6)
 	rds6_tcp_tc_count++;
-#endif
-	if (!tc->t_cpath->cp_conn->c_isv6)
+#पूर्ण_अगर
+	अगर (!tc->t_cpath->cp_conn->c_isv6)
 		rds_tcp_tc_count++;
 	spin_unlock(&rds_tcp_tc_list_lock);
 
-	/* accepted sockets need our listen data ready undone */
-	if (sock->sk->sk_data_ready == rds_tcp_listen_data_ready)
-		sock->sk->sk_data_ready = sock->sk->sk_user_data;
+	/* accepted sockets need our listen data पढ़ोy unकरोne */
+	अगर (sock->sk->sk_data_पढ़ोy == rds_tcp_listen_data_पढ़ोy)
+		sock->sk->sk_data_पढ़ोy = sock->sk->sk_user_data;
 
 	tc->t_sock = sock;
 	tc->t_cpath = cp;
-	tc->t_orig_data_ready = sock->sk->sk_data_ready;
-	tc->t_orig_write_space = sock->sk->sk_write_space;
+	tc->t_orig_data_पढ़ोy = sock->sk->sk_data_पढ़ोy;
+	tc->t_orig_ग_लिखो_space = sock->sk->sk_ग_लिखो_space;
 	tc->t_orig_state_change = sock->sk->sk_state_change;
 
 	sock->sk->sk_user_data = cp;
-	sock->sk->sk_data_ready = rds_tcp_data_ready;
-	sock->sk->sk_write_space = rds_tcp_write_space;
+	sock->sk->sk_data_पढ़ोy = rds_tcp_data_पढ़ोy;
+	sock->sk->sk_ग_लिखो_space = rds_tcp_ग_लिखो_space;
 	sock->sk->sk_state_change = rds_tcp_state_change;
 
-	write_unlock_bh(&sock->sk->sk_callback_lock);
-}
+	ग_लिखो_unlock_bh(&sock->sk->sk_callback_lock);
+पूर्ण
 
-/* Handle RDS_INFO_TCP_SOCKETS socket option.  It only returns IPv4
- * connections for backward compatibility.
+/* Handle RDS_INFO_TCP_SOCKETS socket option.  It only वापसs IPv4
+ * connections क्रम backward compatibility.
  */
-static void rds_tcp_tc_info(struct socket *rds_sock, unsigned int len,
-			    struct rds_info_iterator *iter,
-			    struct rds_info_lengths *lens)
-{
-	struct rds_info_tcp_socket tsinfo;
-	struct rds_tcp_connection *tc;
-	unsigned long flags;
+अटल व्योम rds_tcp_tc_info(काष्ठा socket *rds_sock, अचिन्हित पूर्णांक len,
+			    काष्ठा rds_info_iterator *iter,
+			    काष्ठा rds_info_lengths *lens)
+अणु
+	काष्ठा rds_info_tcp_socket tsinfo;
+	काष्ठा rds_tcp_connection *tc;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&rds_tcp_tc_list_lock, flags);
 
-	if (len / sizeof(tsinfo) < rds_tcp_tc_count)
-		goto out;
+	अगर (len / माप(tsinfo) < rds_tcp_tc_count)
+		जाओ out;
 
-	list_for_each_entry(tc, &rds_tcp_tc_list, t_list_item) {
-		struct inet_sock *inet = inet_sk(tc->t_sock->sk);
+	list_क्रम_each_entry(tc, &rds_tcp_tc_list, t_list_item) अणु
+		काष्ठा inet_sock *inet = inet_sk(tc->t_sock->sk);
 
-		if (tc->t_cpath->cp_conn->c_isv6)
-			continue;
+		अगर (tc->t_cpath->cp_conn->c_isv6)
+			जारी;
 
 		tsinfo.local_addr = inet->inet_saddr;
 		tsinfo.local_port = inet->inet_sport;
@@ -259,37 +260,37 @@ static void rds_tcp_tc_info(struct socket *rds_sock, unsigned int len,
 		tsinfo.last_seen_una = tc->t_last_seen_una;
 		tsinfo.tos = tc->t_cpath->cp_conn->c_tos;
 
-		rds_info_copy(iter, &tsinfo, sizeof(tsinfo));
-	}
+		rds_info_copy(iter, &tsinfo, माप(tsinfo));
+	पूर्ण
 
 out:
 	lens->nr = rds_tcp_tc_count;
-	lens->each = sizeof(tsinfo);
+	lens->each = माप(tsinfo);
 
 	spin_unlock_irqrestore(&rds_tcp_tc_list_lock, flags);
-}
+पूर्ण
 
-#if IS_ENABLED(CONFIG_IPV6)
-/* Handle RDS6_INFO_TCP_SOCKETS socket option. It returns both IPv4 and
- * IPv6 connections. IPv4 connection address is returned in an IPv4 mapped
+#अगर IS_ENABLED(CONFIG_IPV6)
+/* Handle RDS6_INFO_TCP_SOCKETS socket option. It वापसs both IPv4 and
+ * IPv6 connections. IPv4 connection address is वापसed in an IPv4 mapped
  * address.
  */
-static void rds6_tcp_tc_info(struct socket *sock, unsigned int len,
-			     struct rds_info_iterator *iter,
-			     struct rds_info_lengths *lens)
-{
-	struct rds6_info_tcp_socket tsinfo6;
-	struct rds_tcp_connection *tc;
-	unsigned long flags;
+अटल व्योम rds6_tcp_tc_info(काष्ठा socket *sock, अचिन्हित पूर्णांक len,
+			     काष्ठा rds_info_iterator *iter,
+			     काष्ठा rds_info_lengths *lens)
+अणु
+	काष्ठा rds6_info_tcp_socket tsinfo6;
+	काष्ठा rds_tcp_connection *tc;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&rds_tcp_tc_list_lock, flags);
 
-	if (len / sizeof(tsinfo6) < rds6_tcp_tc_count)
-		goto out;
+	अगर (len / माप(tsinfo6) < rds6_tcp_tc_count)
+		जाओ out;
 
-	list_for_each_entry(tc, &rds_tcp_tc_list, t_list_item) {
-		struct sock *sk = tc->t_sock->sk;
-		struct inet_sock *inet = inet_sk(sk);
+	list_क्रम_each_entry(tc, &rds_tcp_tc_list, t_list_item) अणु
+		काष्ठा sock *sk = tc->t_sock->sk;
+		काष्ठा inet_sock *inet = inet_sk(sk);
 
 		tsinfo6.local_addr = sk->sk_v6_rcv_saddr;
 		tsinfo6.local_port = inet->inet_sport;
@@ -302,83 +303,83 @@ static void rds6_tcp_tc_info(struct socket *sock, unsigned int len,
 		tsinfo6.last_expected_una = tc->t_last_expected_una;
 		tsinfo6.last_seen_una = tc->t_last_seen_una;
 
-		rds_info_copy(iter, &tsinfo6, sizeof(tsinfo6));
-	}
+		rds_info_copy(iter, &tsinfo6, माप(tsinfo6));
+	पूर्ण
 
 out:
 	lens->nr = rds6_tcp_tc_count;
-	lens->each = sizeof(tsinfo6);
+	lens->each = माप(tsinfo6);
 
 	spin_unlock_irqrestore(&rds_tcp_tc_list_lock, flags);
-}
-#endif
+पूर्ण
+#पूर्ण_अगर
 
-int rds_tcp_laddr_check(struct net *net, const struct in6_addr *addr,
+पूर्णांक rds_tcp_laddr_check(काष्ठा net *net, स्थिर काष्ठा in6_addr *addr,
 			__u32 scope_id)
-{
-	struct net_device *dev = NULL;
-#if IS_ENABLED(CONFIG_IPV6)
-	int ret;
-#endif
+अणु
+	काष्ठा net_device *dev = शून्य;
+#अगर IS_ENABLED(CONFIG_IPV6)
+	पूर्णांक ret;
+#पूर्ण_अगर
 
-	if (ipv6_addr_v4mapped(addr)) {
-		if (inet_addr_type(net, addr->s6_addr32[3]) == RTN_LOCAL)
-			return 0;
-		return -EADDRNOTAVAIL;
-	}
+	अगर (ipv6_addr_v4mapped(addr)) अणु
+		अगर (inet_addr_type(net, addr->s6_addr32[3]) == RTN_LOCAL)
+			वापस 0;
+		वापस -EADDRNOTAVAIL;
+	पूर्ण
 
-	/* If the scope_id is specified, check only those addresses
-	 * hosted on the specified interface.
+	/* If the scope_id is specअगरied, check only those addresses
+	 * hosted on the specअगरied पूर्णांकerface.
 	 */
-	if (scope_id != 0) {
-		rcu_read_lock();
+	अगर (scope_id != 0) अणु
+		rcu_पढ़ो_lock();
 		dev = dev_get_by_index_rcu(net, scope_id);
 		/* scope_id is not valid... */
-		if (!dev) {
-			rcu_read_unlock();
-			return -EADDRNOTAVAIL;
-		}
-		rcu_read_unlock();
-	}
-#if IS_ENABLED(CONFIG_IPV6)
+		अगर (!dev) अणु
+			rcu_पढ़ो_unlock();
+			वापस -EADDRNOTAVAIL;
+		पूर्ण
+		rcu_पढ़ो_unlock();
+	पूर्ण
+#अगर IS_ENABLED(CONFIG_IPV6)
 	ret = ipv6_chk_addr(net, addr, dev, 0);
-	if (ret)
-		return 0;
-#endif
-	return -EADDRNOTAVAIL;
-}
+	अगर (ret)
+		वापस 0;
+#पूर्ण_अगर
+	वापस -EADDRNOTAVAIL;
+पूर्ण
 
-static void rds_tcp_conn_free(void *arg)
-{
-	struct rds_tcp_connection *tc = arg;
-	unsigned long flags;
+अटल व्योम rds_tcp_conn_मुक्त(व्योम *arg)
+अणु
+	काष्ठा rds_tcp_connection *tc = arg;
+	अचिन्हित दीर्घ flags;
 
 	rdsdebug("freeing tc %p\n", tc);
 
 	spin_lock_irqsave(&rds_tcp_conn_lock, flags);
-	if (!tc->t_tcp_node_detached)
+	अगर (!tc->t_tcp_node_detached)
 		list_del(&tc->t_tcp_node);
 	spin_unlock_irqrestore(&rds_tcp_conn_lock, flags);
 
-	kmem_cache_free(rds_tcp_conn_slab, tc);
-}
+	kmem_cache_मुक्त(rds_tcp_conn_slab, tc);
+पूर्ण
 
-static int rds_tcp_conn_alloc(struct rds_connection *conn, gfp_t gfp)
-{
-	struct rds_tcp_connection *tc;
-	int i, j;
-	int ret = 0;
+अटल पूर्णांक rds_tcp_conn_alloc(काष्ठा rds_connection *conn, gfp_t gfp)
+अणु
+	काष्ठा rds_tcp_connection *tc;
+	पूर्णांक i, j;
+	पूर्णांक ret = 0;
 
-	for (i = 0; i < RDS_MPATH_WORKERS; i++) {
+	क्रम (i = 0; i < RDS_MPATH_WORKERS; i++) अणु
 		tc = kmem_cache_alloc(rds_tcp_conn_slab, gfp);
-		if (!tc) {
+		अगर (!tc) अणु
 			ret = -ENOMEM;
-			goto fail;
-		}
+			जाओ fail;
+		पूर्ण
 		mutex_init(&tc->t_conn_path_lock);
-		tc->t_sock = NULL;
-		tc->t_tinc = NULL;
-		tc->t_tinc_hdr_rem = sizeof(struct rds_header);
+		tc->t_sock = शून्य;
+		tc->t_tinc = शून्य;
+		tc->t_tinc_hdr_rem = माप(काष्ठा rds_header);
 		tc->t_tinc_data_rem = 0;
 
 		conn->c_path[i].cp_transport_data = tc;
@@ -387,82 +388,82 @@ static int rds_tcp_conn_alloc(struct rds_connection *conn, gfp_t gfp)
 
 		rdsdebug("rds_conn_path [%d] tc %p\n", i,
 			 conn->c_path[i].cp_transport_data);
-	}
+	पूर्ण
 	spin_lock_irq(&rds_tcp_conn_lock);
-	for (i = 0; i < RDS_MPATH_WORKERS; i++) {
+	क्रम (i = 0; i < RDS_MPATH_WORKERS; i++) अणु
 		tc = conn->c_path[i].cp_transport_data;
 		tc->t_tcp_node_detached = false;
 		list_add_tail(&tc->t_tcp_node, &rds_tcp_conn_list);
-	}
+	पूर्ण
 	spin_unlock_irq(&rds_tcp_conn_lock);
 fail:
-	if (ret) {
-		for (j = 0; j < i; j++)
-			rds_tcp_conn_free(conn->c_path[j].cp_transport_data);
-	}
-	return ret;
-}
+	अगर (ret) अणु
+		क्रम (j = 0; j < i; j++)
+			rds_tcp_conn_मुक्त(conn->c_path[j].cp_transport_data);
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static bool list_has_conn(struct list_head *list, struct rds_connection *conn)
-{
-	struct rds_tcp_connection *tc, *_tc;
+अटल bool list_has_conn(काष्ठा list_head *list, काष्ठा rds_connection *conn)
+अणु
+	काष्ठा rds_tcp_connection *tc, *_tc;
 
-	list_for_each_entry_safe(tc, _tc, list, t_tcp_node) {
-		if (tc->t_cpath->cp_conn == conn)
-			return true;
-	}
-	return false;
-}
+	list_क्रम_each_entry_safe(tc, _tc, list, t_tcp_node) अणु
+		अगर (tc->t_cpath->cp_conn == conn)
+			वापस true;
+	पूर्ण
+	वापस false;
+पूर्ण
 
-static void rds_tcp_set_unloading(void)
-{
+अटल व्योम rds_tcp_set_unloading(व्योम)
+अणु
 	atomic_set(&rds_tcp_unloading, 1);
-}
+पूर्ण
 
-static bool rds_tcp_is_unloading(struct rds_connection *conn)
-{
-	return atomic_read(&rds_tcp_unloading) != 0;
-}
+अटल bool rds_tcp_is_unloading(काष्ठा rds_connection *conn)
+अणु
+	वापस atomic_पढ़ो(&rds_tcp_unloading) != 0;
+पूर्ण
 
-static void rds_tcp_destroy_conns(void)
-{
-	struct rds_tcp_connection *tc, *_tc;
-	LIST_HEAD(tmp_list);
+अटल व्योम rds_tcp_destroy_conns(व्योम)
+अणु
+	काष्ठा rds_tcp_connection *tc, *_tc;
+	LIST_HEAD(पंचांगp_list);
 
-	/* avoid calling conn_destroy with irqs off */
+	/* aव्योम calling conn_destroy with irqs off */
 	spin_lock_irq(&rds_tcp_conn_lock);
-	list_for_each_entry_safe(tc, _tc, &rds_tcp_conn_list, t_tcp_node) {
-		if (!list_has_conn(&tmp_list, tc->t_cpath->cp_conn))
-			list_move_tail(&tc->t_tcp_node, &tmp_list);
-	}
+	list_क्रम_each_entry_safe(tc, _tc, &rds_tcp_conn_list, t_tcp_node) अणु
+		अगर (!list_has_conn(&पंचांगp_list, tc->t_cpath->cp_conn))
+			list_move_tail(&tc->t_tcp_node, &पंचांगp_list);
+	पूर्ण
 	spin_unlock_irq(&rds_tcp_conn_lock);
 
-	list_for_each_entry_safe(tc, _tc, &tmp_list, t_tcp_node)
+	list_क्रम_each_entry_safe(tc, _tc, &पंचांगp_list, t_tcp_node)
 		rds_conn_destroy(tc->t_cpath->cp_conn);
-}
+पूर्ण
 
-static void rds_tcp_exit(void);
+अटल व्योम rds_tcp_निकास(व्योम);
 
-static u8 rds_tcp_get_tos_map(u8 tos)
-{
-	/* all user tos mapped to default 0 for TCP transport */
-	return 0;
-}
+अटल u8 rds_tcp_get_tos_map(u8 tos)
+अणु
+	/* all user tos mapped to शेष 0 क्रम TCP transport */
+	वापस 0;
+पूर्ण
 
-struct rds_transport rds_tcp_transport = {
+काष्ठा rds_transport rds_tcp_transport = अणु
 	.laddr_check		= rds_tcp_laddr_check,
 	.xmit_path_prepare	= rds_tcp_xmit_path_prepare,
 	.xmit_path_complete	= rds_tcp_xmit_path_complete,
 	.xmit			= rds_tcp_xmit,
 	.recv_path		= rds_tcp_recv_path,
 	.conn_alloc		= rds_tcp_conn_alloc,
-	.conn_free		= rds_tcp_conn_free,
+	.conn_मुक्त		= rds_tcp_conn_मुक्त,
 	.conn_path_connect	= rds_tcp_conn_path_connect,
-	.conn_path_shutdown	= rds_tcp_conn_path_shutdown,
+	.conn_path_shutकरोwn	= rds_tcp_conn_path_shutकरोwn,
 	.inc_copy_to_user	= rds_tcp_inc_copy_to_user,
-	.inc_free		= rds_tcp_inc_free,
+	.inc_मुक्त		= rds_tcp_inc_मुक्त,
 	.stats_info_copy	= rds_tcp_stats_info_copy,
-	.exit			= rds_tcp_exit,
+	.निकास			= rds_tcp_निकास,
 	.get_tos_map		= rds_tcp_get_tos_map,
 	.t_owner		= THIS_MODULE,
 	.t_name			= "tcp",
@@ -470,269 +471,269 @@ struct rds_transport rds_tcp_transport = {
 	.t_prefer_loopback	= 1,
 	.t_mp_capable		= 1,
 	.t_unloading		= rds_tcp_is_unloading,
-};
+पूर्ण;
 
-static unsigned int rds_tcp_netid;
+अटल अचिन्हित पूर्णांक rds_tcp_netid;
 
-/* per-network namespace private data for this module */
-struct rds_tcp_net {
-	struct socket *rds_tcp_listen_sock;
-	struct work_struct rds_tcp_accept_w;
-	struct ctl_table_header *rds_tcp_sysctl;
-	struct ctl_table *ctl_table;
-	int sndbuf_size;
-	int rcvbuf_size;
-};
+/* per-network namespace निजी data क्रम this module */
+काष्ठा rds_tcp_net अणु
+	काष्ठा socket *rds_tcp_listen_sock;
+	काष्ठा work_काष्ठा rds_tcp_accept_w;
+	काष्ठा ctl_table_header *rds_tcp_sysctl;
+	काष्ठा ctl_table *ctl_table;
+	पूर्णांक sndbuf_size;
+	पूर्णांक rcvbuf_size;
+पूर्ण;
 
-/* All module specific customizations to the RDS-TCP socket should be done in
+/* All module specअगरic customizations to the RDS-TCP socket should be करोne in
  * rds_tcp_tune() and applied after socket creation.
  */
-void rds_tcp_tune(struct socket *sock)
-{
-	struct sock *sk = sock->sk;
-	struct net *net = sock_net(sk);
-	struct rds_tcp_net *rtn = net_generic(net, rds_tcp_netid);
+व्योम rds_tcp_tune(काष्ठा socket *sock)
+अणु
+	काष्ठा sock *sk = sock->sk;
+	काष्ठा net *net = sock_net(sk);
+	काष्ठा rds_tcp_net *rtn = net_generic(net, rds_tcp_netid);
 
 	tcp_sock_set_nodelay(sock->sk);
 	lock_sock(sk);
-	if (rtn->sndbuf_size > 0) {
+	अगर (rtn->sndbuf_size > 0) अणु
 		sk->sk_sndbuf = rtn->sndbuf_size;
 		sk->sk_userlocks |= SOCK_SNDBUF_LOCK;
-	}
-	if (rtn->rcvbuf_size > 0) {
+	पूर्ण
+	अगर (rtn->rcvbuf_size > 0) अणु
 		sk->sk_sndbuf = rtn->rcvbuf_size;
 		sk->sk_userlocks |= SOCK_RCVBUF_LOCK;
-	}
+	पूर्ण
 	release_sock(sk);
-}
+पूर्ण
 
-static void rds_tcp_accept_worker(struct work_struct *work)
-{
-	struct rds_tcp_net *rtn = container_of(work,
-					       struct rds_tcp_net,
+अटल व्योम rds_tcp_accept_worker(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा rds_tcp_net *rtn = container_of(work,
+					       काष्ठा rds_tcp_net,
 					       rds_tcp_accept_w);
 
-	while (rds_tcp_accept_one(rtn->rds_tcp_listen_sock) == 0)
+	जबतक (rds_tcp_accept_one(rtn->rds_tcp_listen_sock) == 0)
 		cond_resched();
-}
+पूर्ण
 
-void rds_tcp_accept_work(struct sock *sk)
-{
-	struct net *net = sock_net(sk);
-	struct rds_tcp_net *rtn = net_generic(net, rds_tcp_netid);
+व्योम rds_tcp_accept_work(काष्ठा sock *sk)
+अणु
+	काष्ठा net *net = sock_net(sk);
+	काष्ठा rds_tcp_net *rtn = net_generic(net, rds_tcp_netid);
 
 	queue_work(rds_wq, &rtn->rds_tcp_accept_w);
-}
+पूर्ण
 
-static __net_init int rds_tcp_init_net(struct net *net)
-{
-	struct rds_tcp_net *rtn = net_generic(net, rds_tcp_netid);
-	struct ctl_table *tbl;
-	int err = 0;
+अटल __net_init पूर्णांक rds_tcp_init_net(काष्ठा net *net)
+अणु
+	काष्ठा rds_tcp_net *rtn = net_generic(net, rds_tcp_netid);
+	काष्ठा ctl_table *tbl;
+	पूर्णांक err = 0;
 
-	memset(rtn, 0, sizeof(*rtn));
+	स_रखो(rtn, 0, माप(*rtn));
 
-	/* {snd, rcv}buf_size default to 0, which implies we let the
-	 * stack pick the value, and permit auto-tuning of buffer size.
+	/* अणुsnd, rcvपूर्णbuf_size शेष to 0, which implies we let the
+	 * stack pick the value, and permit स्वतः-tuning of buffer size.
 	 */
-	if (net == &init_net) {
+	अगर (net == &init_net) अणु
 		tbl = rds_tcp_sysctl_table;
-	} else {
+	पूर्ण अन्यथा अणु
 		tbl = kmemdup(rds_tcp_sysctl_table,
-			      sizeof(rds_tcp_sysctl_table), GFP_KERNEL);
-		if (!tbl) {
+			      माप(rds_tcp_sysctl_table), GFP_KERNEL);
+		अगर (!tbl) अणु
 			pr_warn("could not set allocate sysctl table\n");
-			return -ENOMEM;
-		}
+			वापस -ENOMEM;
+		पूर्ण
 		rtn->ctl_table = tbl;
-	}
+	पूर्ण
 	tbl[RDS_TCP_SNDBUF].data = &rtn->sndbuf_size;
 	tbl[RDS_TCP_RCVBUF].data = &rtn->rcvbuf_size;
-	rtn->rds_tcp_sysctl = register_net_sysctl(net, "net/rds/tcp", tbl);
-	if (!rtn->rds_tcp_sysctl) {
+	rtn->rds_tcp_sysctl = रेजिस्टर_net_sysctl(net, "net/rds/tcp", tbl);
+	अगर (!rtn->rds_tcp_sysctl) अणु
 		pr_warn("could not register sysctl\n");
 		err = -ENOMEM;
-		goto fail;
-	}
+		जाओ fail;
+	पूर्ण
 
-#if IS_ENABLED(CONFIG_IPV6)
+#अगर IS_ENABLED(CONFIG_IPV6)
 	rtn->rds_tcp_listen_sock = rds_tcp_listen_init(net, true);
-#else
+#अन्यथा
 	rtn->rds_tcp_listen_sock = rds_tcp_listen_init(net, false);
-#endif
-	if (!rtn->rds_tcp_listen_sock) {
+#पूर्ण_अगर
+	अगर (!rtn->rds_tcp_listen_sock) अणु
 		pr_warn("could not set up IPv6 listen sock\n");
 
-#if IS_ENABLED(CONFIG_IPV6)
-		/* Try IPv4 as some systems disable IPv6 */
+#अगर IS_ENABLED(CONFIG_IPV6)
+		/* Try IPv4 as some प्रणालीs disable IPv6 */
 		rtn->rds_tcp_listen_sock = rds_tcp_listen_init(net, false);
-		if (!rtn->rds_tcp_listen_sock) {
-#endif
-			unregister_net_sysctl_table(rtn->rds_tcp_sysctl);
-			rtn->rds_tcp_sysctl = NULL;
+		अगर (!rtn->rds_tcp_listen_sock) अणु
+#पूर्ण_अगर
+			unरेजिस्टर_net_sysctl_table(rtn->rds_tcp_sysctl);
+			rtn->rds_tcp_sysctl = शून्य;
 			err = -EAFNOSUPPORT;
-			goto fail;
-#if IS_ENABLED(CONFIG_IPV6)
-		}
-#endif
-	}
+			जाओ fail;
+#अगर IS_ENABLED(CONFIG_IPV6)
+		पूर्ण
+#पूर्ण_अगर
+	पूर्ण
 	INIT_WORK(&rtn->rds_tcp_accept_w, rds_tcp_accept_worker);
-	return 0;
+	वापस 0;
 
 fail:
-	if (net != &init_net)
-		kfree(tbl);
-	return err;
-}
+	अगर (net != &init_net)
+		kमुक्त(tbl);
+	वापस err;
+पूर्ण
 
-static void rds_tcp_kill_sock(struct net *net)
-{
-	struct rds_tcp_connection *tc, *_tc;
-	LIST_HEAD(tmp_list);
-	struct rds_tcp_net *rtn = net_generic(net, rds_tcp_netid);
-	struct socket *lsock = rtn->rds_tcp_listen_sock;
+अटल व्योम rds_tcp_समाप्त_sock(काष्ठा net *net)
+अणु
+	काष्ठा rds_tcp_connection *tc, *_tc;
+	LIST_HEAD(पंचांगp_list);
+	काष्ठा rds_tcp_net *rtn = net_generic(net, rds_tcp_netid);
+	काष्ठा socket *lsock = rtn->rds_tcp_listen_sock;
 
-	rtn->rds_tcp_listen_sock = NULL;
+	rtn->rds_tcp_listen_sock = शून्य;
 	rds_tcp_listen_stop(lsock, &rtn->rds_tcp_accept_w);
 	spin_lock_irq(&rds_tcp_conn_lock);
-	list_for_each_entry_safe(tc, _tc, &rds_tcp_conn_list, t_tcp_node) {
-		struct net *c_net = read_pnet(&tc->t_cpath->cp_conn->c_net);
+	list_क्रम_each_entry_safe(tc, _tc, &rds_tcp_conn_list, t_tcp_node) अणु
+		काष्ठा net *c_net = पढ़ो_pnet(&tc->t_cpath->cp_conn->c_net);
 
-		if (net != c_net)
-			continue;
-		if (!list_has_conn(&tmp_list, tc->t_cpath->cp_conn)) {
-			list_move_tail(&tc->t_tcp_node, &tmp_list);
-		} else {
+		अगर (net != c_net)
+			जारी;
+		अगर (!list_has_conn(&पंचांगp_list, tc->t_cpath->cp_conn)) अणु
+			list_move_tail(&tc->t_tcp_node, &पंचांगp_list);
+		पूर्ण अन्यथा अणु
 			list_del(&tc->t_tcp_node);
 			tc->t_tcp_node_detached = true;
-		}
-	}
+		पूर्ण
+	पूर्ण
 	spin_unlock_irq(&rds_tcp_conn_lock);
-	list_for_each_entry_safe(tc, _tc, &tmp_list, t_tcp_node)
+	list_क्रम_each_entry_safe(tc, _tc, &पंचांगp_list, t_tcp_node)
 		rds_conn_destroy(tc->t_cpath->cp_conn);
-}
+पूर्ण
 
-static void __net_exit rds_tcp_exit_net(struct net *net)
-{
-	struct rds_tcp_net *rtn = net_generic(net, rds_tcp_netid);
+अटल व्योम __net_निकास rds_tcp_निकास_net(काष्ठा net *net)
+अणु
+	काष्ठा rds_tcp_net *rtn = net_generic(net, rds_tcp_netid);
 
-	rds_tcp_kill_sock(net);
+	rds_tcp_समाप्त_sock(net);
 
-	if (rtn->rds_tcp_sysctl)
-		unregister_net_sysctl_table(rtn->rds_tcp_sysctl);
+	अगर (rtn->rds_tcp_sysctl)
+		unरेजिस्टर_net_sysctl_table(rtn->rds_tcp_sysctl);
 
-	if (net != &init_net)
-		kfree(rtn->ctl_table);
-}
+	अगर (net != &init_net)
+		kमुक्त(rtn->ctl_table);
+पूर्ण
 
-static struct pernet_operations rds_tcp_net_ops = {
+अटल काष्ठा pernet_operations rds_tcp_net_ops = अणु
 	.init = rds_tcp_init_net,
-	.exit = rds_tcp_exit_net,
+	.निकास = rds_tcp_निकास_net,
 	.id = &rds_tcp_netid,
-	.size = sizeof(struct rds_tcp_net),
-};
+	.size = माप(काष्ठा rds_tcp_net),
+पूर्ण;
 
-void *rds_tcp_listen_sock_def_readable(struct net *net)
-{
-	struct rds_tcp_net *rtn = net_generic(net, rds_tcp_netid);
-	struct socket *lsock = rtn->rds_tcp_listen_sock;
+व्योम *rds_tcp_listen_sock_def_पढ़ोable(काष्ठा net *net)
+अणु
+	काष्ठा rds_tcp_net *rtn = net_generic(net, rds_tcp_netid);
+	काष्ठा socket *lsock = rtn->rds_tcp_listen_sock;
 
-	if (!lsock)
-		return NULL;
+	अगर (!lsock)
+		वापस शून्य;
 
-	return lsock->sk->sk_user_data;
-}
+	वापस lsock->sk->sk_user_data;
+पूर्ण
 
-/* when sysctl is used to modify some kernel socket parameters,this
+/* when sysctl is used to modअगरy some kernel socket parameters,this
  * function  resets the RDS connections in that netns  so that we can
  * restart with new parameters.  The assumption is that such reset
  * events are few and far-between.
  */
-static void rds_tcp_sysctl_reset(struct net *net)
-{
-	struct rds_tcp_connection *tc, *_tc;
+अटल व्योम rds_tcp_sysctl_reset(काष्ठा net *net)
+अणु
+	काष्ठा rds_tcp_connection *tc, *_tc;
 
 	spin_lock_irq(&rds_tcp_conn_lock);
-	list_for_each_entry_safe(tc, _tc, &rds_tcp_conn_list, t_tcp_node) {
-		struct net *c_net = read_pnet(&tc->t_cpath->cp_conn->c_net);
+	list_क्रम_each_entry_safe(tc, _tc, &rds_tcp_conn_list, t_tcp_node) अणु
+		काष्ठा net *c_net = पढ़ो_pnet(&tc->t_cpath->cp_conn->c_net);
 
-		if (net != c_net || !tc->t_sock)
-			continue;
+		अगर (net != c_net || !tc->t_sock)
+			जारी;
 
 		/* reconnect with new parameters */
 		rds_conn_path_drop(tc->t_cpath, false);
-	}
+	पूर्ण
 	spin_unlock_irq(&rds_tcp_conn_lock);
-}
+पूर्ण
 
-static int rds_tcp_skbuf_handler(struct ctl_table *ctl, int write,
-				 void *buffer, size_t *lenp, loff_t *fpos)
-{
-	struct net *net = current->nsproxy->net_ns;
-	int err;
+अटल पूर्णांक rds_tcp_skbuf_handler(काष्ठा ctl_table *ctl, पूर्णांक ग_लिखो,
+				 व्योम *buffer, माप_प्रकार *lenp, loff_t *fpos)
+अणु
+	काष्ठा net *net = current->nsproxy->net_ns;
+	पूर्णांक err;
 
-	err = proc_dointvec_minmax(ctl, write, buffer, lenp, fpos);
-	if (err < 0) {
+	err = proc_करोपूर्णांकvec_minmax(ctl, ग_लिखो, buffer, lenp, fpos);
+	अगर (err < 0) अणु
 		pr_warn("Invalid input. Must be >= %d\n",
-			*(int *)(ctl->extra1));
-		return err;
-	}
-	if (write)
+			*(पूर्णांक *)(ctl->extra1));
+		वापस err;
+	पूर्ण
+	अगर (ग_लिखो)
 		rds_tcp_sysctl_reset(net);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void rds_tcp_exit(void)
-{
+अटल व्योम rds_tcp_निकास(व्योम)
+अणु
 	rds_tcp_set_unloading();
 	synchronize_rcu();
-	rds_info_deregister_func(RDS_INFO_TCP_SOCKETS, rds_tcp_tc_info);
-#if IS_ENABLED(CONFIG_IPV6)
-	rds_info_deregister_func(RDS6_INFO_TCP_SOCKETS, rds6_tcp_tc_info);
-#endif
-	unregister_pernet_device(&rds_tcp_net_ops);
+	rds_info_deरेजिस्टर_func(RDS_INFO_TCP_SOCKETS, rds_tcp_tc_info);
+#अगर IS_ENABLED(CONFIG_IPV6)
+	rds_info_deरेजिस्टर_func(RDS6_INFO_TCP_SOCKETS, rds6_tcp_tc_info);
+#पूर्ण_अगर
+	unरेजिस्टर_pernet_device(&rds_tcp_net_ops);
 	rds_tcp_destroy_conns();
-	rds_trans_unregister(&rds_tcp_transport);
-	rds_tcp_recv_exit();
+	rds_trans_unरेजिस्टर(&rds_tcp_transport);
+	rds_tcp_recv_निकास();
 	kmem_cache_destroy(rds_tcp_conn_slab);
-}
-module_exit(rds_tcp_exit);
+पूर्ण
+module_निकास(rds_tcp_निकास);
 
-static int rds_tcp_init(void)
-{
-	int ret;
+अटल पूर्णांक rds_tcp_init(व्योम)
+अणु
+	पूर्णांक ret;
 
 	rds_tcp_conn_slab = kmem_cache_create("rds_tcp_connection",
-					      sizeof(struct rds_tcp_connection),
-					      0, 0, NULL);
-	if (!rds_tcp_conn_slab) {
+					      माप(काष्ठा rds_tcp_connection),
+					      0, 0, शून्य);
+	अगर (!rds_tcp_conn_slab) अणु
 		ret = -ENOMEM;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	ret = rds_tcp_recv_init();
-	if (ret)
-		goto out_slab;
+	अगर (ret)
+		जाओ out_slab;
 
-	ret = register_pernet_device(&rds_tcp_net_ops);
-	if (ret)
-		goto out_recv;
+	ret = रेजिस्टर_pernet_device(&rds_tcp_net_ops);
+	अगर (ret)
+		जाओ out_recv;
 
-	rds_trans_register(&rds_tcp_transport);
+	rds_trans_रेजिस्टर(&rds_tcp_transport);
 
-	rds_info_register_func(RDS_INFO_TCP_SOCKETS, rds_tcp_tc_info);
-#if IS_ENABLED(CONFIG_IPV6)
-	rds_info_register_func(RDS6_INFO_TCP_SOCKETS, rds6_tcp_tc_info);
-#endif
+	rds_info_रेजिस्टर_func(RDS_INFO_TCP_SOCKETS, rds_tcp_tc_info);
+#अगर IS_ENABLED(CONFIG_IPV6)
+	rds_info_रेजिस्टर_func(RDS6_INFO_TCP_SOCKETS, rds6_tcp_tc_info);
+#पूर्ण_अगर
 
-	goto out;
+	जाओ out;
 out_recv:
-	rds_tcp_recv_exit();
+	rds_tcp_recv_निकास();
 out_slab:
 	kmem_cache_destroy(rds_tcp_conn_slab);
 out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 module_init(rds_tcp_init);
 
 MODULE_AUTHOR("Oracle Corporation <rds-devel@oss.oracle.com>");

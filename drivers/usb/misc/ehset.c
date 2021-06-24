@@ -1,130 +1,131 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Copyright (c) 2010-2013, The Linux Foundation. All rights reserved.
  */
 
-#include <linux/kernel.h>
-#include <linux/errno.h>
-#include <linux/module.h>
-#include <linux/slab.h>
-#include <linux/usb.h>
-#include <linux/usb/ch11.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/module.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/usb.h>
+#समावेश <linux/usb/ch11.h>
 
-#define TEST_SE0_NAK_PID			0x0101
-#define TEST_J_PID				0x0102
-#define TEST_K_PID				0x0103
-#define TEST_PACKET_PID				0x0104
-#define TEST_HS_HOST_PORT_SUSPEND_RESUME	0x0106
-#define TEST_SINGLE_STEP_GET_DEV_DESC		0x0107
-#define TEST_SINGLE_STEP_SET_FEATURE		0x0108
+#घोषणा TEST_SE0_NAK_PID			0x0101
+#घोषणा TEST_J_PID				0x0102
+#घोषणा TEST_K_PID				0x0103
+#घोषणा TEST_PACKET_PID				0x0104
+#घोषणा TEST_HS_HOST_PORT_SUSPEND_RESUME	0x0106
+#घोषणा TEST_SINGLE_STEP_GET_DEV_DESC		0x0107
+#घोषणा TEST_SINGLE_STEP_SET_FEATURE		0x0108
 
-static int ehset_probe(struct usb_interface *intf,
-		       const struct usb_device_id *id)
-{
-	int ret = -EINVAL;
-	struct usb_device *dev = interface_to_usbdev(intf);
-	struct usb_device *hub_udev = dev->parent;
-	struct usb_device_descriptor buf;
+अटल पूर्णांक ehset_probe(काष्ठा usb_पूर्णांकerface *पूर्णांकf,
+		       स्थिर काष्ठा usb_device_id *id)
+अणु
+	पूर्णांक ret = -EINVAL;
+	काष्ठा usb_device *dev = पूर्णांकerface_to_usbdev(पूर्णांकf);
+	काष्ठा usb_device *hub_udev = dev->parent;
+	काष्ठा usb_device_descriptor buf;
 	u8 portnum = dev->portnum;
 	u16 test_pid = le16_to_cpu(dev->descriptor.idProduct);
 
-	switch (test_pid) {
-	case TEST_SE0_NAK_PID:
+	चयन (test_pid) अणु
+	हाल TEST_SE0_NAK_PID:
 		ret = usb_control_msg_send(hub_udev, 0, USB_REQ_SET_FEATURE,
 					   USB_RT_PORT, USB_PORT_FEAT_TEST,
 					   (USB_TEST_SE0_NAK << 8) | portnum,
-					   NULL, 0, 1000, GFP_KERNEL);
-		break;
-	case TEST_J_PID:
+					   शून्य, 0, 1000, GFP_KERNEL);
+		अवरोध;
+	हाल TEST_J_PID:
 		ret = usb_control_msg_send(hub_udev, 0, USB_REQ_SET_FEATURE,
 					   USB_RT_PORT, USB_PORT_FEAT_TEST,
-					   (USB_TEST_J << 8) | portnum, NULL, 0,
+					   (USB_TEST_J << 8) | portnum, शून्य, 0,
 					   1000, GFP_KERNEL);
-		break;
-	case TEST_K_PID:
+		अवरोध;
+	हाल TEST_K_PID:
 		ret = usb_control_msg_send(hub_udev, 0, USB_REQ_SET_FEATURE,
 					   USB_RT_PORT, USB_PORT_FEAT_TEST,
-					   (USB_TEST_K << 8) | portnum, NULL, 0,
+					   (USB_TEST_K << 8) | portnum, शून्य, 0,
 					   1000, GFP_KERNEL);
-		break;
-	case TEST_PACKET_PID:
+		अवरोध;
+	हाल TEST_PACKET_PID:
 		ret = usb_control_msg_send(hub_udev, 0, USB_REQ_SET_FEATURE,
 					   USB_RT_PORT, USB_PORT_FEAT_TEST,
 					   (USB_TEST_PACKET << 8) | portnum,
-					   NULL, 0, 1000, GFP_KERNEL);
-		break;
-	case TEST_HS_HOST_PORT_SUSPEND_RESUME:
-		/* Test: wait for 15secs -> suspend -> 15secs delay -> resume */
+					   शून्य, 0, 1000, GFP_KERNEL);
+		अवरोध;
+	हाल TEST_HS_HOST_PORT_SUSPEND_RESUME:
+		/* Test: रुको क्रम 15secs -> suspend -> 15secs delay -> resume */
 		msleep(15 * 1000);
 		ret = usb_control_msg_send(hub_udev, 0, USB_REQ_SET_FEATURE,
 					   USB_RT_PORT, USB_PORT_FEAT_SUSPEND,
-					   portnum, NULL, 0, 1000, GFP_KERNEL);
-		if (ret < 0)
-			break;
+					   portnum, शून्य, 0, 1000, GFP_KERNEL);
+		अगर (ret < 0)
+			अवरोध;
 
 		msleep(15 * 1000);
 		ret = usb_control_msg_send(hub_udev, 0, USB_REQ_CLEAR_FEATURE,
 					   USB_RT_PORT, USB_PORT_FEAT_SUSPEND,
-					   portnum, NULL, 0, 1000, GFP_KERNEL);
-		break;
-	case TEST_SINGLE_STEP_GET_DEV_DESC:
-		/* Test: wait for 15secs -> GetDescriptor request */
+					   portnum, शून्य, 0, 1000, GFP_KERNEL);
+		अवरोध;
+	हाल TEST_SINGLE_STEP_GET_DEV_DESC:
+		/* Test: रुको क्रम 15secs -> GetDescriptor request */
 		msleep(15 * 1000);
 
 		ret = usb_control_msg_recv(dev, 0, USB_REQ_GET_DESCRIPTOR,
-					   USB_DIR_IN, USB_DT_DEVICE << 8, 0,
+					   USB_सूची_IN, USB_DT_DEVICE << 8, 0,
 					   &buf, USB_DT_DEVICE_SIZE,
 					   USB_CTRL_GET_TIMEOUT, GFP_KERNEL);
-		break;
-	case TEST_SINGLE_STEP_SET_FEATURE:
+		अवरोध;
+	हाल TEST_SINGLE_STEP_SET_FEATURE:
 		/*
 		 * GetDescriptor SETUP request -> 15secs delay -> IN & STATUS
 		 *
 		 * Note, this test is only supported on root hubs since the
-		 * SetPortFeature handling can only be done inside the HCD's
+		 * SetPortFeature handling can only be करोne inside the HCD's
 		 * hub_control callback function.
 		 */
-		if (hub_udev != dev->bus->root_hub) {
-			dev_err(&intf->dev, "SINGLE_STEP_SET_FEATURE test only supported on root hub\n");
-			break;
-		}
+		अगर (hub_udev != dev->bus->root_hub) अणु
+			dev_err(&पूर्णांकf->dev, "SINGLE_STEP_SET_FEATURE test only supported on root hub\n");
+			अवरोध;
+		पूर्ण
 
 		ret = usb_control_msg_send(hub_udev, 0, USB_REQ_SET_FEATURE,
 					   USB_RT_PORT, USB_PORT_FEAT_TEST,
-					   (6 << 8) | portnum, NULL, 0,
+					   (6 << 8) | portnum, शून्य, 0,
 					   60 * 1000, GFP_KERNEL);
 
-		break;
-	default:
-		dev_err(&intf->dev, "%s: unsupported PID: 0x%x\n",
+		अवरोध;
+	शेष:
+		dev_err(&पूर्णांकf->dev, "%s: unsupported PID: 0x%x\n",
 			__func__, test_pid);
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void ehset_disconnect(struct usb_interface *intf)
-{
-}
+अटल व्योम ehset_disconnect(काष्ठा usb_पूर्णांकerface *पूर्णांकf)
+अणु
+पूर्ण
 
-static const struct usb_device_id ehset_id_table[] = {
-	{ USB_DEVICE(0x1a0a, TEST_SE0_NAK_PID) },
-	{ USB_DEVICE(0x1a0a, TEST_J_PID) },
-	{ USB_DEVICE(0x1a0a, TEST_K_PID) },
-	{ USB_DEVICE(0x1a0a, TEST_PACKET_PID) },
-	{ USB_DEVICE(0x1a0a, TEST_HS_HOST_PORT_SUSPEND_RESUME) },
-	{ USB_DEVICE(0x1a0a, TEST_SINGLE_STEP_GET_DEV_DESC) },
-	{ USB_DEVICE(0x1a0a, TEST_SINGLE_STEP_SET_FEATURE) },
-	{ }			/* Terminating entry */
-};
+अटल स्थिर काष्ठा usb_device_id ehset_id_table[] = अणु
+	अणु USB_DEVICE(0x1a0a, TEST_SE0_NAK_PID) पूर्ण,
+	अणु USB_DEVICE(0x1a0a, TEST_J_PID) पूर्ण,
+	अणु USB_DEVICE(0x1a0a, TEST_K_PID) पूर्ण,
+	अणु USB_DEVICE(0x1a0a, TEST_PACKET_PID) पूर्ण,
+	अणु USB_DEVICE(0x1a0a, TEST_HS_HOST_PORT_SUSPEND_RESUME) पूर्ण,
+	अणु USB_DEVICE(0x1a0a, TEST_SINGLE_STEP_GET_DEV_DESC) पूर्ण,
+	अणु USB_DEVICE(0x1a0a, TEST_SINGLE_STEP_SET_FEATURE) पूर्ण,
+	अणु पूर्ण			/* Terminating entry */
+पूर्ण;
 MODULE_DEVICE_TABLE(usb, ehset_id_table);
 
-static struct usb_driver ehset_driver = {
+अटल काष्ठा usb_driver ehset_driver = अणु
 	.name =		"usb_ehset_test",
 	.probe =	ehset_probe,
 	.disconnect =	ehset_disconnect,
 	.id_table =	ehset_id_table,
-};
+पूर्ण;
 
 module_usb_driver(ehset_driver);
 

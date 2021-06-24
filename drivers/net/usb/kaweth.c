@@ -1,91 +1,92 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /****************************************************************
  *
- *     kaweth.c - driver for KL5KUSB101 based USB->Ethernet
+ *     kaweth.c - driver क्रम KL5KUSB101 based USB->Ethernet
  *
  *     (c) 2000 Interlan Communications
  *     (c) 2000 Stephane Alnet
  *     (C) 2001 Brad Hards
  *     (C) 2002 Oliver Neukum
  *
- *     Original author: The Zapman <zapman@interlan.net>
+ *     Original author: The Zapman <zapman@पूर्णांकerlan.net>
  *     Inspired by, and much credit goes to Michael Rothwell
- *     <rothwell@interlan.net> for the test equipment, help, and patience
+ *     <rothwell@पूर्णांकerlan.net> क्रम the test equipment, help, and patience
  *     Based off of (and with thanks to) Petko Manolov's pegaus.c driver.
  *     Also many thanks to Joel Silverman and Ed Surprenant at Kawasaki
- *     for providing the firmware and driver resources.
+ *     क्रम providing the firmware and driver resources.
  *
  ****************************************************************/
 
 /* TODO:
- * Develop test procedures for USB net interfaces
+ * Develop test procedures क्रम USB net पूर्णांकerfaces
  * Run test procedures
  * Fix bugs from previous two steps
- * Snoop other OSs for any tricks we're not doing
- * Reduce arbitrary timeouts
+ * Snoop other OSs क्रम any tricks we're not करोing
+ * Reduce arbitrary समयouts
  * Smart multicast support
  * Temporary MAC change support
  * Tunable SOFs parameter - ioctl()?
  * Ethernet stats collection
- * Code formatting improvements
+ * Code क्रमmatting improvements
  */
 
-#include <linux/module.h>
-#include <linux/slab.h>
-#include <linux/string.h>
-#include <linux/delay.h>
-#include <linux/netdevice.h>
-#include <linux/etherdevice.h>
-#include <linux/usb.h>
-#include <linux/types.h>
-#include <linux/ethtool.h>
-#include <linux/dma-mapping.h>
-#include <linux/wait.h>
-#include <linux/firmware.h>
-#include <linux/uaccess.h>
-#include <asm/byteorder.h>
+#समावेश <linux/module.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/delay.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/etherdevice.h>
+#समावेश <linux/usb.h>
+#समावेश <linux/types.h>
+#समावेश <linux/ethtool.h>
+#समावेश <linux/dma-mapping.h>
+#समावेश <linux/रुको.h>
+#समावेश <linux/firmware.h>
+#समावेश <linux/uaccess.h>
+#समावेश <यंत्र/byteorder.h>
 
-#undef DEBUG
+#अघोषित DEBUG
 
-#define KAWETH_MTU			1514
-#define KAWETH_BUF_SIZE			1664
-#define KAWETH_TX_TIMEOUT		(5 * HZ)
-#define KAWETH_SCRATCH_SIZE		32
-#define KAWETH_FIRMWARE_BUF_SIZE	4096
-#define KAWETH_CONTROL_TIMEOUT		(30000)
+#घोषणा KAWETH_MTU			1514
+#घोषणा KAWETH_BUF_SIZE			1664
+#घोषणा KAWETH_TX_TIMEOUT		(5 * HZ)
+#घोषणा KAWETH_SCRATCH_SIZE		32
+#घोषणा KAWETH_FIRMWARE_BUF_SIZE	4096
+#घोषणा KAWETH_CONTROL_TIMEOUT		(30000)
 
-#define KAWETH_STATUS_BROKEN		0x0000001
-#define KAWETH_STATUS_CLOSING		0x0000002
-#define KAWETH_STATUS_SUSPENDING	0x0000004
+#घोषणा KAWETH_STATUS_BROKEN		0x0000001
+#घोषणा KAWETH_STATUS_CLOSING		0x0000002
+#घोषणा KAWETH_STATUS_SUSPENDING	0x0000004
 
-#define KAWETH_STATUS_BLOCKED (KAWETH_STATUS_CLOSING | KAWETH_STATUS_SUSPENDING)
+#घोषणा KAWETH_STATUS_BLOCKED (KAWETH_STATUS_CLOSING | KAWETH_STATUS_SUSPENDING)
 
-#define KAWETH_PACKET_FILTER_PROMISCUOUS	0x01
-#define KAWETH_PACKET_FILTER_ALL_MULTICAST	0x02
-#define KAWETH_PACKET_FILTER_DIRECTED		0x04
-#define KAWETH_PACKET_FILTER_BROADCAST		0x08
-#define KAWETH_PACKET_FILTER_MULTICAST		0x10
+#घोषणा KAWETH_PACKET_FILTER_PROMISCUOUS	0x01
+#घोषणा KAWETH_PACKET_FILTER_ALL_MULTICAST	0x02
+#घोषणा KAWETH_PACKET_FILTER_सूचीECTED		0x04
+#घोषणा KAWETH_PACKET_FILTER_BROADCAST		0x08
+#घोषणा KAWETH_PACKET_FILTER_MULTICAST		0x10
 
 /* Table 7 */
-#define KAWETH_COMMAND_GET_ETHERNET_DESC	0x00
-#define KAWETH_COMMAND_MULTICAST_FILTERS        0x01
-#define KAWETH_COMMAND_SET_PACKET_FILTER	0x02
-#define KAWETH_COMMAND_STATISTICS               0x03
-#define KAWETH_COMMAND_SET_TEMP_MAC     	0x06
-#define KAWETH_COMMAND_GET_TEMP_MAC             0x07
-#define KAWETH_COMMAND_SET_URB_SIZE		0x08
-#define KAWETH_COMMAND_SET_SOFS_WAIT		0x09
-#define KAWETH_COMMAND_SCAN			0xFF
+#घोषणा KAWETH_COMMAND_GET_ETHERNET_DESC	0x00
+#घोषणा KAWETH_COMMAND_MULTICAST_FILTERS        0x01
+#घोषणा KAWETH_COMMAND_SET_PACKET_FILTER	0x02
+#घोषणा KAWETH_COMMAND_STATISTICS               0x03
+#घोषणा KAWETH_COMMAND_SET_TEMP_MAC     	0x06
+#घोषणा KAWETH_COMMAND_GET_TEMP_MAC             0x07
+#घोषणा KAWETH_COMMAND_SET_URB_SIZE		0x08
+#घोषणा KAWETH_COMMAND_SET_SOFS_WAIT		0x09
+#घोषणा KAWETH_COMMAND_SCAN			0xFF
 
-#define KAWETH_SOFS_TO_WAIT			0x05
+#घोषणा KAWETH_SOFS_TO_WAIT			0x05
 
-#define INTBUFFERSIZE				4
+#घोषणा INTBUFFERSIZE				4
 
-#define STATE_OFFSET				0
-#define STATE_MASK				0x40
-#define	STATE_SHIFT				5
+#घोषणा STATE_OFFSET				0
+#घोषणा STATE_MASK				0x40
+#घोषणा	STATE_SHIFT				5
 
-#define IS_BLOCKED(s) (s & KAWETH_STATUS_BLOCKED)
+#घोषणा IS_BLOCKED(s) (s & KAWETH_STATUS_BLOCKED)
 
 
 MODULE_AUTHOR("Michael Zappe <zapman@interlan.net>, Stephane Alnet <stephane@u-picardie.fr>, Brad Hards <bhards@bigpond.net.au> and Oliver Neukum <oliver@neukum.org>");
@@ -96,92 +97,92 @@ MODULE_FIRMWARE("kaweth/new_code_fix.bin");
 MODULE_FIRMWARE("kaweth/trigger_code.bin");
 MODULE_FIRMWARE("kaweth/trigger_code_fix.bin");
 
-static const char driver_name[] = "kaweth";
+अटल स्थिर अक्षर driver_name[] = "kaweth";
 
-static int kaweth_probe(
-		struct usb_interface *intf,
-		const struct usb_device_id *id	/* from id_table */
+अटल पूर्णांक kaweth_probe(
+		काष्ठा usb_पूर्णांकerface *पूर्णांकf,
+		स्थिर काष्ठा usb_device_id *id	/* from id_table */
 	);
-static void kaweth_disconnect(struct usb_interface *intf);
-static int kaweth_suspend(struct usb_interface *intf, pm_message_t message);
-static int kaweth_resume(struct usb_interface *intf);
+अटल व्योम kaweth_disconnect(काष्ठा usb_पूर्णांकerface *पूर्णांकf);
+अटल पूर्णांक kaweth_suspend(काष्ठा usb_पूर्णांकerface *पूर्णांकf, pm_message_t message);
+अटल पूर्णांक kaweth_resume(काष्ठा usb_पूर्णांकerface *पूर्णांकf);
 
 /****************************************************************
  *     usb_device_id
  ****************************************************************/
-static const struct usb_device_id usb_klsi_table[] = {
-	{ USB_DEVICE(0x03e8, 0x0008) }, /* AOX Endpoints USB Ethernet */
-	{ USB_DEVICE(0x04bb, 0x0901) }, /* I-O DATA USB-ET/T */
-	{ USB_DEVICE(0x0506, 0x03e8) }, /* 3Com 3C19250 */
-	{ USB_DEVICE(0x0506, 0x11f8) }, /* 3Com 3C460 */
-	{ USB_DEVICE(0x0557, 0x2002) }, /* ATEN USB Ethernet */
-	{ USB_DEVICE(0x0557, 0x4000) }, /* D-Link DSB-650C */
-	{ USB_DEVICE(0x0565, 0x0002) }, /* Peracom Enet */
-	{ USB_DEVICE(0x0565, 0x0003) }, /* Optus@Home UEP1045A */
-	{ USB_DEVICE(0x0565, 0x0005) }, /* Peracom Enet2 */
-	{ USB_DEVICE(0x05e9, 0x0008) }, /* KLSI KL5KUSB101B */
-	{ USB_DEVICE(0x05e9, 0x0009) }, /* KLSI KL5KUSB101B (Board change) */
-	{ USB_DEVICE(0x066b, 0x2202) }, /* Linksys USB10T */
-	{ USB_DEVICE(0x06e1, 0x0008) }, /* ADS USB-10BT */
-	{ USB_DEVICE(0x06e1, 0x0009) }, /* ADS USB-10BT */
-	{ USB_DEVICE(0x0707, 0x0100) }, /* SMC 2202USB */
-	{ USB_DEVICE(0x07aa, 0x0001) }, /* Correga K.K. */
-	{ USB_DEVICE(0x07b8, 0x4000) }, /* D-Link DU-E10 */
-	{ USB_DEVICE(0x07c9, 0xb010) }, /* Allied Telesyn AT-USB10 USB Ethernet Adapter */
-	{ USB_DEVICE(0x0846, 0x1001) }, /* NetGear EA-101 */
-	{ USB_DEVICE(0x0846, 0x1002) }, /* NetGear EA-101 */
-	{ USB_DEVICE(0x085a, 0x0008) }, /* PortGear Ethernet Adapter */
-	{ USB_DEVICE(0x085a, 0x0009) }, /* PortGear Ethernet Adapter */
-	{ USB_DEVICE(0x087d, 0x5704) }, /* Jaton USB Ethernet Device Adapter */
-	{ USB_DEVICE(0x0951, 0x0008) }, /* Kingston Technology USB Ethernet Adapter */
-	{ USB_DEVICE(0x095a, 0x3003) }, /* Portsmith Express Ethernet Adapter */
-	{ USB_DEVICE(0x10bd, 0x1427) }, /* ASANTE USB To Ethernet Adapter */
-	{ USB_DEVICE(0x1342, 0x0204) }, /* Mobility USB-Ethernet Adapter */
-	{ USB_DEVICE(0x13d2, 0x0400) }, /* Shark Pocket Adapter */
-	{ USB_DEVICE(0x1485, 0x0001) },	/* Silicom U2E */
-	{ USB_DEVICE(0x1485, 0x0002) }, /* Psion Dacom Gold Port Ethernet */
-	{ USB_DEVICE(0x1645, 0x0005) }, /* Entrega E45 */
-	{ USB_DEVICE(0x1645, 0x0008) }, /* Entrega USB Ethernet Adapter */
-	{ USB_DEVICE(0x1645, 0x8005) }, /* PortGear Ethernet Adapter */
-	{ USB_DEVICE(0x1668, 0x0323) }, /* Actiontec USB Ethernet */
-	{ USB_DEVICE(0x2001, 0x4000) }, /* D-link DSB-650C */
-	{} /* Null terminator */
-};
+अटल स्थिर काष्ठा usb_device_id usb_klsi_table[] = अणु
+	अणु USB_DEVICE(0x03e8, 0x0008) पूर्ण, /* AOX Endpoपूर्णांकs USB Ethernet */
+	अणु USB_DEVICE(0x04bb, 0x0901) पूर्ण, /* I-O DATA USB-ET/T */
+	अणु USB_DEVICE(0x0506, 0x03e8) पूर्ण, /* 3Com 3C19250 */
+	अणु USB_DEVICE(0x0506, 0x11f8) पूर्ण, /* 3Com 3C460 */
+	अणु USB_DEVICE(0x0557, 0x2002) पूर्ण, /* ATEN USB Ethernet */
+	अणु USB_DEVICE(0x0557, 0x4000) पूर्ण, /* D-Link DSB-650C */
+	अणु USB_DEVICE(0x0565, 0x0002) पूर्ण, /* Peracom Enet */
+	अणु USB_DEVICE(0x0565, 0x0003) पूर्ण, /* Optus@Home UEP1045A */
+	अणु USB_DEVICE(0x0565, 0x0005) पूर्ण, /* Peracom Enet2 */
+	अणु USB_DEVICE(0x05e9, 0x0008) पूर्ण, /* KLSI KL5KUSB101B */
+	अणु USB_DEVICE(0x05e9, 0x0009) पूर्ण, /* KLSI KL5KUSB101B (Board change) */
+	अणु USB_DEVICE(0x066b, 0x2202) पूर्ण, /* Linksys USB10T */
+	अणु USB_DEVICE(0x06e1, 0x0008) पूर्ण, /* ADS USB-10BT */
+	अणु USB_DEVICE(0x06e1, 0x0009) पूर्ण, /* ADS USB-10BT */
+	अणु USB_DEVICE(0x0707, 0x0100) पूर्ण, /* SMC 2202USB */
+	अणु USB_DEVICE(0x07aa, 0x0001) पूर्ण, /* Correga K.K. */
+	अणु USB_DEVICE(0x07b8, 0x4000) पूर्ण, /* D-Link DU-E10 */
+	अणु USB_DEVICE(0x07c9, 0xb010) पूर्ण, /* Allied Telesyn AT-USB10 USB Ethernet Adapter */
+	अणु USB_DEVICE(0x0846, 0x1001) पूर्ण, /* NetGear EA-101 */
+	अणु USB_DEVICE(0x0846, 0x1002) पूर्ण, /* NetGear EA-101 */
+	अणु USB_DEVICE(0x085a, 0x0008) पूर्ण, /* PortGear Ethernet Adapter */
+	अणु USB_DEVICE(0x085a, 0x0009) पूर्ण, /* PortGear Ethernet Adapter */
+	अणु USB_DEVICE(0x087d, 0x5704) पूर्ण, /* Jaton USB Ethernet Device Adapter */
+	अणु USB_DEVICE(0x0951, 0x0008) पूर्ण, /* Kingston Technology USB Ethernet Adapter */
+	अणु USB_DEVICE(0x095a, 0x3003) पूर्ण, /* Portsmith Express Ethernet Adapter */
+	अणु USB_DEVICE(0x10bd, 0x1427) पूर्ण, /* ASANTE USB To Ethernet Adapter */
+	अणु USB_DEVICE(0x1342, 0x0204) पूर्ण, /* Mobility USB-Ethernet Adapter */
+	अणु USB_DEVICE(0x13d2, 0x0400) पूर्ण, /* Shark Pocket Adapter */
+	अणु USB_DEVICE(0x1485, 0x0001) पूर्ण,	/* Silicom U2E */
+	अणु USB_DEVICE(0x1485, 0x0002) पूर्ण, /* Psion Dacom Gold Port Ethernet */
+	अणु USB_DEVICE(0x1645, 0x0005) पूर्ण, /* Entrega E45 */
+	अणु USB_DEVICE(0x1645, 0x0008) पूर्ण, /* Entrega USB Ethernet Adapter */
+	अणु USB_DEVICE(0x1645, 0x8005) पूर्ण, /* PortGear Ethernet Adapter */
+	अणु USB_DEVICE(0x1668, 0x0323) पूर्ण, /* Actiontec USB Ethernet */
+	अणु USB_DEVICE(0x2001, 0x4000) पूर्ण, /* D-link DSB-650C */
+	अणुपूर्ण /* Null terminator */
+पूर्ण;
 
 MODULE_DEVICE_TABLE (usb, usb_klsi_table);
 
 /****************************************************************
  *     kaweth_driver
  ****************************************************************/
-static struct usb_driver kaweth_driver = {
+अटल काष्ठा usb_driver kaweth_driver = अणु
 	.name =		driver_name,
 	.probe =	kaweth_probe,
 	.disconnect =	kaweth_disconnect,
 	.suspend =	kaweth_suspend,
 	.resume =	kaweth_resume,
 	.id_table =     usb_klsi_table,
-	.supports_autosuspend =	1,
+	.supports_स्वतःsuspend =	1,
 	.disable_hub_initiated_lpm = 1,
-};
+पूर्ण;
 
-typedef __u8 eth_addr_t[6];
+प्रकार __u8 eth_addr_t[6];
 
 /****************************************************************
  *     usb_eth_dev
  ****************************************************************/
-struct usb_eth_dev {
-	char *name;
-	__u16 vendor;
+काष्ठा usb_eth_dev अणु
+	अक्षर *name;
+	__u16 venकरोr;
 	__u16 device;
-	void *pdata;
-};
+	व्योम *pdata;
+पूर्ण;
 
 /****************************************************************
  *     kaweth_ethernet_configuration
  *     Refer Table 8
  ****************************************************************/
-struct kaweth_ethernet_configuration
-{
+काष्ठा kaweth_ethernet_configuration
+अणु
 	__u8 size;
 	__u8 reserved1;
 	__u8 reserved2;
@@ -190,141 +191,141 @@ struct kaweth_ethernet_configuration
 	__le16 segment_size;
 	__u16 max_multicast_filters;
 	__u8 reserved3;
-} __packed;
+पूर्ण __packed;
 
 /****************************************************************
  *     kaweth_device
  ****************************************************************/
-struct kaweth_device
-{
+काष्ठा kaweth_device
+अणु
 	spinlock_t device_lock;
 
 	__u32 status;
-	int end;
-	int suspend_lowmem_rx;
-	int suspend_lowmem_ctrl;
-	int linkstate;
-	int opened;
-	struct delayed_work lowmem_work;
+	पूर्णांक end;
+	पूर्णांक suspend_lowmem_rx;
+	पूर्णांक suspend_lowmem_ctrl;
+	पूर्णांक linkstate;
+	पूर्णांक खोलोed;
+	काष्ठा delayed_work lowmem_work;
 
-	struct usb_device *dev;
-	struct usb_interface *intf;
-	struct net_device *net;
-	wait_queue_head_t term_wait;
+	काष्ठा usb_device *dev;
+	काष्ठा usb_पूर्णांकerface *पूर्णांकf;
+	काष्ठा net_device *net;
+	रुको_queue_head_t term_रुको;
 
-	struct urb *rx_urb;
-	struct urb *tx_urb;
-	struct urb *irq_urb;
+	काष्ठा urb *rx_urb;
+	काष्ठा urb *tx_urb;
+	काष्ठा urb *irq_urb;
 
-	dma_addr_t intbufferhandle;
-	__u8 *intbuffer;
+	dma_addr_t पूर्णांकbufferhandle;
+	__u8 *पूर्णांकbuffer;
 	dma_addr_t rxbufferhandle;
 	__u8 *rx_buf;
 
 	
-	struct sk_buff *tx_skb;
+	काष्ठा sk_buff *tx_skb;
 
 	__u8 *firmware_buf;
 	__u8 scratch[KAWETH_SCRATCH_SIZE];
-	__u16 packet_filter_bitmap;
+	__u16 packet_filter_biपंचांगap;
 
-	struct kaweth_ethernet_configuration configuration;
-};
+	काष्ठा kaweth_ethernet_configuration configuration;
+पूर्ण;
 
 /****************************************************************
- *     kaweth_read_configuration
+ *     kaweth_पढ़ो_configuration
  ****************************************************************/
-static int kaweth_read_configuration(struct kaweth_device *kaweth)
-{
-	return usb_control_msg(kaweth->dev, usb_rcvctrlpipe(kaweth->dev, 0),
+अटल पूर्णांक kaweth_पढ़ो_configuration(काष्ठा kaweth_device *kaweth)
+अणु
+	वापस usb_control_msg(kaweth->dev, usb_rcvctrlpipe(kaweth->dev, 0),
 				KAWETH_COMMAND_GET_ETHERNET_DESC,
-				USB_TYPE_VENDOR | USB_DIR_IN | USB_RECIP_DEVICE,
+				USB_TYPE_VENDOR | USB_सूची_IN | USB_RECIP_DEVICE,
 				0, 0,
 				&kaweth->configuration,
-				sizeof(kaweth->configuration),
+				माप(kaweth->configuration),
 				KAWETH_CONTROL_TIMEOUT);
-}
+पूर्ण
 
 /****************************************************************
  *     kaweth_set_urb_size
  ****************************************************************/
-static int kaweth_set_urb_size(struct kaweth_device *kaweth, __u16 urb_size)
-{
-	netdev_dbg(kaweth->net, "Setting URB size to %d\n", (unsigned)urb_size);
+अटल पूर्णांक kaweth_set_urb_size(काष्ठा kaweth_device *kaweth, __u16 urb_size)
+अणु
+	netdev_dbg(kaweth->net, "Setting URB size to %d\n", (अचिन्हित)urb_size);
 
-	return usb_control_msg(kaweth->dev, usb_sndctrlpipe(kaweth->dev, 0),
+	वापस usb_control_msg(kaweth->dev, usb_sndctrlpipe(kaweth->dev, 0),
 			       KAWETH_COMMAND_SET_URB_SIZE,
-			       USB_TYPE_VENDOR | USB_DIR_OUT | USB_RECIP_DEVICE,
+			       USB_TYPE_VENDOR | USB_सूची_OUT | USB_RECIP_DEVICE,
 			       urb_size, 0,
 			       &kaweth->scratch, 0,
 			       KAWETH_CONTROL_TIMEOUT);
-}
+पूर्ण
 
 /****************************************************************
- *     kaweth_set_sofs_wait
+ *     kaweth_set_sofs_रुको
  ****************************************************************/
-static int kaweth_set_sofs_wait(struct kaweth_device *kaweth, __u16 sofs_wait)
-{
-	netdev_dbg(kaweth->net, "Set SOFS wait to %d\n", (unsigned)sofs_wait);
+अटल पूर्णांक kaweth_set_sofs_रुको(काष्ठा kaweth_device *kaweth, __u16 sofs_रुको)
+अणु
+	netdev_dbg(kaweth->net, "Set SOFS wait to %d\n", (अचिन्हित)sofs_रुको);
 
-	return usb_control_msg(kaweth->dev, usb_sndctrlpipe(kaweth->dev, 0),
+	वापस usb_control_msg(kaweth->dev, usb_sndctrlpipe(kaweth->dev, 0),
 			       KAWETH_COMMAND_SET_SOFS_WAIT,
-			       USB_TYPE_VENDOR | USB_DIR_OUT | USB_RECIP_DEVICE,
-			       sofs_wait, 0,
+			       USB_TYPE_VENDOR | USB_सूची_OUT | USB_RECIP_DEVICE,
+			       sofs_रुको, 0,
 			       &kaweth->scratch, 0,
 			       KAWETH_CONTROL_TIMEOUT);
-}
+पूर्ण
 
 /****************************************************************
  *     kaweth_set_receive_filter
  ****************************************************************/
-static int kaweth_set_receive_filter(struct kaweth_device *kaweth,
+अटल पूर्णांक kaweth_set_receive_filter(काष्ठा kaweth_device *kaweth,
 				     __u16 receive_filter)
-{
+अणु
 	netdev_dbg(kaweth->net, "Set receive filter to %d\n",
-		   (unsigned)receive_filter);
+		   (अचिन्हित)receive_filter);
 
-	return usb_control_msg(kaweth->dev, usb_sndctrlpipe(kaweth->dev, 0),
+	वापस usb_control_msg(kaweth->dev, usb_sndctrlpipe(kaweth->dev, 0),
 			       KAWETH_COMMAND_SET_PACKET_FILTER,
-			       USB_TYPE_VENDOR | USB_DIR_OUT | USB_RECIP_DEVICE,
+			       USB_TYPE_VENDOR | USB_सूची_OUT | USB_RECIP_DEVICE,
 			       receive_filter, 0,
 			       &kaweth->scratch, 0,
 			       KAWETH_CONTROL_TIMEOUT);
-}
+पूर्ण
 
 /****************************************************************
- *     kaweth_download_firmware
+ *     kaweth_करोwnload_firmware
  ****************************************************************/
-static int kaweth_download_firmware(struct kaweth_device *kaweth,
-				    const char *fwname,
-				    __u8 interrupt,
+अटल पूर्णांक kaweth_करोwnload_firmware(काष्ठा kaweth_device *kaweth,
+				    स्थिर अक्षर *fwname,
+				    __u8 पूर्णांकerrupt,
 				    __u8 type)
-{
-	const struct firmware *fw;
-	int data_len;
-	int ret;
+अणु
+	स्थिर काष्ठा firmware *fw;
+	पूर्णांक data_len;
+	पूर्णांक ret;
 
 	ret = request_firmware(&fw, fwname, &kaweth->dev->dev);
-	if (ret) {
-		dev_err(&kaweth->intf->dev, "Firmware request failed\n");
-		return ret;
-	}
+	अगर (ret) अणु
+		dev_err(&kaweth->पूर्णांकf->dev, "Firmware request failed\n");
+		वापस ret;
+	पूर्ण
 
-	if (fw->size > KAWETH_FIRMWARE_BUF_SIZE) {
-		dev_err(&kaweth->intf->dev, "Firmware too big: %zu\n",
+	अगर (fw->size > KAWETH_FIRMWARE_BUF_SIZE) अणु
+		dev_err(&kaweth->पूर्णांकf->dev, "Firmware too big: %zu\n",
 			fw->size);
 		release_firmware(fw);
-		return -ENOSPC;
-	}
+		वापस -ENOSPC;
+	पूर्ण
 	data_len = fw->size;
-	memcpy(kaweth->firmware_buf, fw->data, fw->size);
+	स_नकल(kaweth->firmware_buf, fw->data, fw->size);
 
 	release_firmware(fw);
 
 	kaweth->firmware_buf[2] = (data_len & 0xFF) - 7;
 	kaweth->firmware_buf[3] = data_len >> 8;
 	kaweth->firmware_buf[4] = type;
-	kaweth->firmware_buf[5] = interrupt;
+	kaweth->firmware_buf[5] = पूर्णांकerrupt;
 
 	netdev_dbg(kaweth->net, "High: %i, Low:%i\n", kaweth->firmware_buf[3],
 		   kaweth->firmware_buf[2]);
@@ -334,132 +335,132 @@ static int kaweth_download_firmware(struct kaweth_device *kaweth,
 		   kaweth->firmware_buf, kaweth);
 	netdev_dbg(kaweth->net, "Firmware length: %d\n", data_len);
 
-	return usb_control_msg(kaweth->dev, usb_sndctrlpipe(kaweth->dev, 0),
+	वापस usb_control_msg(kaweth->dev, usb_sndctrlpipe(kaweth->dev, 0),
 			      KAWETH_COMMAND_SCAN,
-			      USB_TYPE_VENDOR | USB_DIR_OUT | USB_RECIP_DEVICE,
+			      USB_TYPE_VENDOR | USB_सूची_OUT | USB_RECIP_DEVICE,
 			      0, 0,
 			      kaweth->firmware_buf, data_len,
 			      KAWETH_CONTROL_TIMEOUT);
-}
+पूर्ण
 
 /****************************************************************
  *     kaweth_trigger_firmware
  ****************************************************************/
-static int kaweth_trigger_firmware(struct kaweth_device *kaweth,
-				   __u8 interrupt)
-{
+अटल पूर्णांक kaweth_trigger_firmware(काष्ठा kaweth_device *kaweth,
+				   __u8 पूर्णांकerrupt)
+अणु
 	kaweth->firmware_buf[0] = 0xB6;
 	kaweth->firmware_buf[1] = 0xC3;
 	kaweth->firmware_buf[2] = 0x01;
 	kaweth->firmware_buf[3] = 0x00;
 	kaweth->firmware_buf[4] = 0x06;
-	kaweth->firmware_buf[5] = interrupt;
+	kaweth->firmware_buf[5] = पूर्णांकerrupt;
 	kaweth->firmware_buf[6] = 0x00;
 	kaweth->firmware_buf[7] = 0x00;
 
-	return usb_control_msg(kaweth->dev, usb_sndctrlpipe(kaweth->dev, 0),
+	वापस usb_control_msg(kaweth->dev, usb_sndctrlpipe(kaweth->dev, 0),
 			       KAWETH_COMMAND_SCAN,
-			       USB_TYPE_VENDOR | USB_DIR_OUT | USB_RECIP_DEVICE,
+			       USB_TYPE_VENDOR | USB_सूची_OUT | USB_RECIP_DEVICE,
 			       0, 0,
-			       (void *)kaweth->firmware_buf, 8,
+			       (व्योम *)kaweth->firmware_buf, 8,
 			       KAWETH_CONTROL_TIMEOUT);
-}
+पूर्ण
 
 /****************************************************************
  *     kaweth_reset
  ****************************************************************/
-static int kaweth_reset(struct kaweth_device *kaweth)
-{
-	int result;
+अटल पूर्णांक kaweth_reset(काष्ठा kaweth_device *kaweth)
+अणु
+	पूर्णांक result;
 
 	result = usb_reset_configuration(kaweth->dev);
 	mdelay(10);
 
 	netdev_dbg(kaweth->net, "kaweth_reset() returns %d.\n", result);
 
-	return result;
-}
+	वापस result;
+पूर्ण
 
-static void kaweth_usb_receive(struct urb *);
-static int kaweth_resubmit_rx_urb(struct kaweth_device *, gfp_t);
+अटल व्योम kaweth_usb_receive(काष्ठा urb *);
+अटल पूर्णांक kaweth_resubmit_rx_urb(काष्ठा kaweth_device *, gfp_t);
 
 /****************************************************************
-	int_callback
+	पूर्णांक_callback
 *****************************************************************/
 
-static void kaweth_resubmit_int_urb(struct kaweth_device *kaweth, gfp_t mf)
-{
-	int status;
+अटल व्योम kaweth_resubmit_पूर्णांक_urb(काष्ठा kaweth_device *kaweth, gfp_t mf)
+अणु
+	पूर्णांक status;
 
 	status = usb_submit_urb (kaweth->irq_urb, mf);
-	if (unlikely(status == -ENOMEM)) {
+	अगर (unlikely(status == -ENOMEM)) अणु
 		kaweth->suspend_lowmem_ctrl = 1;
 		schedule_delayed_work(&kaweth->lowmem_work, HZ/4);
-	} else {
+	पूर्ण अन्यथा अणु
 		kaweth->suspend_lowmem_ctrl = 0;
-	}
+	पूर्ण
 
-	if (status)
-		dev_err(&kaweth->intf->dev,
+	अगर (status)
+		dev_err(&kaweth->पूर्णांकf->dev,
 			"can't resubmit intr, %s-%s, status %d\n",
 			kaweth->dev->bus->bus_name,
 			kaweth->dev->devpath, status);
-}
+पूर्ण
 
-static void int_callback(struct urb *u)
-{
-	struct kaweth_device *kaweth = u->context;
-	int act_state;
-	int status = u->status;
+अटल व्योम पूर्णांक_callback(काष्ठा urb *u)
+अणु
+	काष्ठा kaweth_device *kaweth = u->context;
+	पूर्णांक act_state;
+	पूर्णांक status = u->status;
 
-	switch (status) {
-	case 0:			/* success */
-		break;
-	case -ECONNRESET:	/* unlink */
-	case -ENOENT:
-	case -ESHUTDOWN:
-		return;
+	चयन (status) अणु
+	हाल 0:			/* success */
+		अवरोध;
+	हाल -ECONNRESET:	/* unlink */
+	हाल -ENOENT:
+	हाल -ESHUTDOWN:
+		वापस;
 	/* -EPIPE:  should clear the halt */
-	default:		/* error */
-		goto resubmit;
-	}
+	शेष:		/* error */
+		जाओ resubmit;
+	पूर्ण
 
 	/* we check the link state to report changes */
-	if (kaweth->linkstate != (act_state = ( kaweth->intbuffer[STATE_OFFSET] | STATE_MASK) >> STATE_SHIFT)) {
-		if (act_state)
-			netif_carrier_on(kaweth->net);
-		else
-			netif_carrier_off(kaweth->net);
+	अगर (kaweth->linkstate != (act_state = ( kaweth->पूर्णांकbuffer[STATE_OFFSET] | STATE_MASK) >> STATE_SHIFT)) अणु
+		अगर (act_state)
+			netअगर_carrier_on(kaweth->net);
+		अन्यथा
+			netअगर_carrier_off(kaweth->net);
 
 		kaweth->linkstate = act_state;
-	}
+	पूर्ण
 resubmit:
-	kaweth_resubmit_int_urb(kaweth, GFP_ATOMIC);
-}
+	kaweth_resubmit_पूर्णांक_urb(kaweth, GFP_ATOMIC);
+पूर्ण
 
-static void kaweth_resubmit_tl(struct work_struct *work)
-{
-	struct kaweth_device *kaweth =
-		container_of(work, struct kaweth_device, lowmem_work.work);
+अटल व्योम kaweth_resubmit_tl(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा kaweth_device *kaweth =
+		container_of(work, काष्ठा kaweth_device, lowmem_work.work);
 
-	if (IS_BLOCKED(kaweth->status))
-		return;
+	अगर (IS_BLOCKED(kaweth->status))
+		वापस;
 
-	if (kaweth->suspend_lowmem_rx)
+	अगर (kaweth->suspend_lowmem_rx)
 		kaweth_resubmit_rx_urb(kaweth, GFP_NOIO);
 
-	if (kaweth->suspend_lowmem_ctrl)
-		kaweth_resubmit_int_urb(kaweth, GFP_NOIO);
-}
+	अगर (kaweth->suspend_lowmem_ctrl)
+		kaweth_resubmit_पूर्णांक_urb(kaweth, GFP_NOIO);
+पूर्ण
 
 
 /****************************************************************
  *     kaweth_resubmit_rx_urb
  ****************************************************************/
-static int kaweth_resubmit_rx_urb(struct kaweth_device *kaweth,
+अटल पूर्णांक kaweth_resubmit_rx_urb(काष्ठा kaweth_device *kaweth,
 						gfp_t mem_flags)
-{
-	int result;
+अणु
+	पूर्णांक result;
 
 	usb_fill_bulk_urb(kaweth->rx_urb,
 		      kaweth->dev,
@@ -471,95 +472,95 @@ static int kaweth_resubmit_rx_urb(struct kaweth_device *kaweth,
 	kaweth->rx_urb->transfer_flags |= URB_NO_TRANSFER_DMA_MAP;
 	kaweth->rx_urb->transfer_dma = kaweth->rxbufferhandle;
 
-	if((result = usb_submit_urb(kaweth->rx_urb, mem_flags))) {
-		if (result == -ENOMEM) {
+	अगर((result = usb_submit_urb(kaweth->rx_urb, mem_flags))) अणु
+		अगर (result == -ENOMEM) अणु
 			kaweth->suspend_lowmem_rx = 1;
 			schedule_delayed_work(&kaweth->lowmem_work, HZ/4);
-		}
-		dev_err(&kaweth->intf->dev, "resubmitting rx_urb %d failed\n",
+		पूर्ण
+		dev_err(&kaweth->पूर्णांकf->dev, "resubmitting rx_urb %d failed\n",
 			result);
-	} else {
+	पूर्ण अन्यथा अणु
 		kaweth->suspend_lowmem_rx = 0;
-	}
+	पूर्ण
 
-	return result;
-}
+	वापस result;
+पूर्ण
 
-static void kaweth_async_set_rx_mode(struct kaweth_device *kaweth,
+अटल व्योम kaweth_async_set_rx_mode(काष्ठा kaweth_device *kaweth,
 				     bool may_sleep);
 
 /****************************************************************
  *     kaweth_usb_receive
  ****************************************************************/
-static void kaweth_usb_receive(struct urb *urb)
-{
-	struct device *dev = &urb->dev->dev;
-	struct kaweth_device *kaweth = urb->context;
-	struct net_device *net = kaweth->net;
-	int status = urb->status;
-	unsigned long flags;
-	int count = urb->actual_length;
-	int count2 = urb->transfer_buffer_length;
+अटल व्योम kaweth_usb_receive(काष्ठा urb *urb)
+अणु
+	काष्ठा device *dev = &urb->dev->dev;
+	काष्ठा kaweth_device *kaweth = urb->context;
+	काष्ठा net_device *net = kaweth->net;
+	पूर्णांक status = urb->status;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक count = urb->actual_length;
+	पूर्णांक count2 = urb->transfer_buffer_length;
 
 	__u16 pkt_len = le16_to_cpup((__le16 *)kaweth->rx_buf);
 
-	struct sk_buff *skb;
+	काष्ठा sk_buff *skb;
 
-	if (unlikely(status == -EPIPE)) {
+	अगर (unlikely(status == -EPIPE)) अणु
 		net->stats.rx_errors++;
 		kaweth->end = 1;
-		wake_up(&kaweth->term_wait);
+		wake_up(&kaweth->term_रुको);
 		dev_dbg(dev, "Status was -EPIPE.\n");
-		return;
-	}
-	if (unlikely(status == -ECONNRESET || status == -ESHUTDOWN)) {
-		/* we are killed - set a flag and wake the disconnect handler */
+		वापस;
+	पूर्ण
+	अगर (unlikely(status == -ECONNRESET || status == -ESHUTDOWN)) अणु
+		/* we are समाप्तed - set a flag and wake the disconnect handler */
 		kaweth->end = 1;
-		wake_up(&kaweth->term_wait);
+		wake_up(&kaweth->term_रुको);
 		dev_dbg(dev, "Status was -ECONNRESET or -ESHUTDOWN.\n");
-		return;
-	}
-	if (unlikely(status == -EPROTO || status == -ETIME ||
-		     status == -EILSEQ)) {
+		वापस;
+	पूर्ण
+	अगर (unlikely(status == -EPROTO || status == -ETIME ||
+		     status == -EILSEQ)) अणु
 		net->stats.rx_errors++;
 		dev_dbg(dev, "Status was -EPROTO, -ETIME, or -EILSEQ.\n");
-		return;
-	}
-	if (unlikely(status == -EOVERFLOW)) {
+		वापस;
+	पूर्ण
+	अगर (unlikely(status == -EOVERFLOW)) अणु
 		net->stats.rx_errors++;
 		dev_dbg(dev, "Status was -EOVERFLOW.\n");
-	}
+	पूर्ण
 	spin_lock_irqsave(&kaweth->device_lock, flags);
-	if (IS_BLOCKED(kaweth->status)) {
+	अगर (IS_BLOCKED(kaweth->status)) अणु
 		spin_unlock_irqrestore(&kaweth->device_lock, flags);
-		return;
-	}
+		वापस;
+	पूर्ण
 	spin_unlock_irqrestore(&kaweth->device_lock, flags);
 
-	if(status && status != -EREMOTEIO && count != 1) {
-		dev_err(&kaweth->intf->dev,
+	अगर(status && status != -EREMOTEIO && count != 1) अणु
+		dev_err(&kaweth->पूर्णांकf->dev,
 			"%s RX status: %d count: %d packet_len: %d\n",
-			net->name, status, count, (int)pkt_len);
+			net->name, status, count, (पूर्णांक)pkt_len);
 		kaweth_resubmit_rx_urb(kaweth, GFP_ATOMIC);
-                return;
-	}
+                वापस;
+	पूर्ण
 
-	if(kaweth->net && (count > 2)) {
-		if(pkt_len > (count - 2)) {
-			dev_err(&kaweth->intf->dev,
+	अगर(kaweth->net && (count > 2)) अणु
+		अगर(pkt_len > (count - 2)) अणु
+			dev_err(&kaweth->पूर्णांकf->dev,
 				"Packet length too long for USB frame (pkt_len: %x, count: %x)\n",
 				pkt_len, count);
-			dev_err(&kaweth->intf->dev, "Packet len & 2047: %x\n",
+			dev_err(&kaweth->पूर्णांकf->dev, "Packet len & 2047: %x\n",
 				pkt_len & 2047);
-			dev_err(&kaweth->intf->dev, "Count 2: %x\n", count2);
+			dev_err(&kaweth->पूर्णांकf->dev, "Count 2: %x\n", count2);
 		        kaweth_resubmit_rx_urb(kaweth, GFP_ATOMIC);
-                        return;
-                }
+                        वापस;
+                पूर्ण
 
-		if(!(skb = dev_alloc_skb(pkt_len+2))) {
+		अगर(!(skb = dev_alloc_skb(pkt_len+2))) अणु
 		        kaweth_resubmit_rx_urb(kaweth, GFP_ATOMIC);
-                        return;
-		}
+                        वापस;
+		पूर्ण
 
 		skb_reserve(skb, 2);    /* Align IP on 16 byte boundaries */
 
@@ -569,548 +570,548 @@ static void kaweth_usb_receive(struct urb *urb)
 
 		skb->protocol = eth_type_trans(skb, net);
 
-		netif_rx(skb);
+		netअगर_rx(skb);
 
 		net->stats.rx_packets++;
 		net->stats.rx_bytes += pkt_len;
-	}
+	पूर्ण
 
 	kaweth_resubmit_rx_urb(kaweth, GFP_ATOMIC);
-}
+पूर्ण
 
 /****************************************************************
- *     kaweth_open
+ *     kaweth_खोलो
  ****************************************************************/
-static int kaweth_open(struct net_device *net)
-{
-	struct kaweth_device *kaweth = netdev_priv(net);
-	int res;
+अटल पूर्णांक kaweth_खोलो(काष्ठा net_device *net)
+अणु
+	काष्ठा kaweth_device *kaweth = netdev_priv(net);
+	पूर्णांक res;
 
-	res = usb_autopm_get_interface(kaweth->intf);
-	if (res) {
-		dev_err(&kaweth->intf->dev, "Interface cannot be resumed.\n");
-		return -EIO;
-	}
+	res = usb_स्वतःpm_get_पूर्णांकerface(kaweth->पूर्णांकf);
+	अगर (res) अणु
+		dev_err(&kaweth->पूर्णांकf->dev, "Interface cannot be resumed.\n");
+		वापस -EIO;
+	पूर्ण
 	res = kaweth_resubmit_rx_urb(kaweth, GFP_KERNEL);
-	if (res)
-		goto err_out;
+	अगर (res)
+		जाओ err_out;
 
-	usb_fill_int_urb(
+	usb_fill_पूर्णांक_urb(
 		kaweth->irq_urb,
 		kaweth->dev,
-		usb_rcvintpipe(kaweth->dev, 3),
-		kaweth->intbuffer,
+		usb_rcvपूर्णांकpipe(kaweth->dev, 3),
+		kaweth->पूर्णांकbuffer,
 		INTBUFFERSIZE,
-		int_callback,
+		पूर्णांक_callback,
 		kaweth,
 		250); /* overriding the descriptor */
-	kaweth->irq_urb->transfer_dma = kaweth->intbufferhandle;
+	kaweth->irq_urb->transfer_dma = kaweth->पूर्णांकbufferhandle;
 	kaweth->irq_urb->transfer_flags |= URB_NO_TRANSFER_DMA_MAP;
 
 	res = usb_submit_urb(kaweth->irq_urb, GFP_KERNEL);
-	if (res) {
-		usb_kill_urb(kaweth->rx_urb);
-		goto err_out;
-	}
-	kaweth->opened = 1;
+	अगर (res) अणु
+		usb_समाप्त_urb(kaweth->rx_urb);
+		जाओ err_out;
+	पूर्ण
+	kaweth->खोलोed = 1;
 
-	netif_start_queue(net);
+	netअगर_start_queue(net);
 
 	kaweth_async_set_rx_mode(kaweth, true);
-	return 0;
+	वापस 0;
 
 err_out:
-	usb_autopm_put_interface(kaweth->intf);
-	return -EIO;
-}
+	usb_स्वतःpm_put_पूर्णांकerface(kaweth->पूर्णांकf);
+	वापस -EIO;
+पूर्ण
 
 /****************************************************************
- *     kaweth_kill_urbs
+ *     kaweth_समाप्त_urbs
  ****************************************************************/
-static void kaweth_kill_urbs(struct kaweth_device *kaweth)
-{
-	usb_kill_urb(kaweth->irq_urb);
-	usb_kill_urb(kaweth->rx_urb);
-	usb_kill_urb(kaweth->tx_urb);
+अटल व्योम kaweth_समाप्त_urbs(काष्ठा kaweth_device *kaweth)
+अणु
+	usb_समाप्त_urb(kaweth->irq_urb);
+	usb_समाप्त_urb(kaweth->rx_urb);
+	usb_समाप्त_urb(kaweth->tx_urb);
 
 	cancel_delayed_work_sync(&kaweth->lowmem_work);
 
 	/* a scheduled work may have resubmitted,
 	   we hit them again */
-	usb_kill_urb(kaweth->irq_urb);
-	usb_kill_urb(kaweth->rx_urb);
-}
+	usb_समाप्त_urb(kaweth->irq_urb);
+	usb_समाप्त_urb(kaweth->rx_urb);
+पूर्ण
 
 /****************************************************************
- *     kaweth_close
+ *     kaweth_बंद
  ****************************************************************/
-static int kaweth_close(struct net_device *net)
-{
-	struct kaweth_device *kaweth = netdev_priv(net);
+अटल पूर्णांक kaweth_बंद(काष्ठा net_device *net)
+अणु
+	काष्ठा kaweth_device *kaweth = netdev_priv(net);
 
-	netif_stop_queue(net);
-	kaweth->opened = 0;
+	netअगर_stop_queue(net);
+	kaweth->खोलोed = 0;
 
 	kaweth->status |= KAWETH_STATUS_CLOSING;
 
-	kaweth_kill_urbs(kaweth);
+	kaweth_समाप्त_urbs(kaweth);
 
 	kaweth->status &= ~KAWETH_STATUS_CLOSING;
 
-	usb_autopm_put_interface(kaweth->intf);
+	usb_स्वतःpm_put_पूर्णांकerface(kaweth->पूर्णांकf);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static u32 kaweth_get_link(struct net_device *dev)
-{
-	struct kaweth_device *kaweth = netdev_priv(dev);
+अटल u32 kaweth_get_link(काष्ठा net_device *dev)
+अणु
+	काष्ठा kaweth_device *kaweth = netdev_priv(dev);
 
-	return kaweth->linkstate;
-}
+	वापस kaweth->linkstate;
+पूर्ण
 
-static const struct ethtool_ops ops = {
+अटल स्थिर काष्ठा ethtool_ops ops = अणु
 	.get_link	= kaweth_get_link
-};
+पूर्ण;
 
 /****************************************************************
  *     kaweth_usb_transmit_complete
  ****************************************************************/
-static void kaweth_usb_transmit_complete(struct urb *urb)
-{
-	struct kaweth_device *kaweth = urb->context;
-	struct sk_buff *skb = kaweth->tx_skb;
-	int status = urb->status;
+अटल व्योम kaweth_usb_transmit_complete(काष्ठा urb *urb)
+अणु
+	काष्ठा kaweth_device *kaweth = urb->context;
+	काष्ठा sk_buff *skb = kaweth->tx_skb;
+	पूर्णांक status = urb->status;
 
-	if (unlikely(status != 0))
-		if (status != -ENOENT)
+	अगर (unlikely(status != 0))
+		अगर (status != -ENOENT)
 			dev_dbg(&urb->dev->dev, "%s: TX status %d.\n",
 				kaweth->net->name, status);
 
-	netif_wake_queue(kaweth->net);
-	dev_kfree_skb_irq(skb);
-}
+	netअगर_wake_queue(kaweth->net);
+	dev_kमुक्त_skb_irq(skb);
+पूर्ण
 
 /****************************************************************
  *     kaweth_start_xmit
  ****************************************************************/
-static netdev_tx_t kaweth_start_xmit(struct sk_buff *skb,
-					   struct net_device *net)
-{
-	struct kaweth_device *kaweth = netdev_priv(net);
-	__le16 *private_header;
+अटल netdev_tx_t kaweth_start_xmit(काष्ठा sk_buff *skb,
+					   काष्ठा net_device *net)
+अणु
+	काष्ठा kaweth_device *kaweth = netdev_priv(net);
+	__le16 *निजी_header;
 
-	int res;
+	पूर्णांक res;
 
 	spin_lock_irq(&kaweth->device_lock);
 
 	kaweth_async_set_rx_mode(kaweth, false);
-	netif_stop_queue(net);
-	if (IS_BLOCKED(kaweth->status)) {
-		goto skip;
-	}
+	netअगर_stop_queue(net);
+	अगर (IS_BLOCKED(kaweth->status)) अणु
+		जाओ skip;
+	पूर्ण
 
-	/* We now decide whether we can put our special header into the sk_buff */
-	if (skb_cow_head(skb, 2)) {
+	/* We now decide whether we can put our special header पूर्णांकo the sk_buff */
+	अगर (skb_cow_head(skb, 2)) अणु
 		net->stats.tx_errors++;
-		netif_start_queue(net);
+		netअगर_start_queue(net);
 		spin_unlock_irq(&kaweth->device_lock);
-		dev_kfree_skb_any(skb);
-		return NETDEV_TX_OK;
-	}
+		dev_kमुक्त_skb_any(skb);
+		वापस NETDEV_TX_OK;
+	पूर्ण
 
-	private_header = __skb_push(skb, 2);
-	*private_header = cpu_to_le16(skb->len-2);
+	निजी_header = __skb_push(skb, 2);
+	*निजी_header = cpu_to_le16(skb->len-2);
 	kaweth->tx_skb = skb;
 
 	usb_fill_bulk_urb(kaweth->tx_urb,
 		      kaweth->dev,
 		      usb_sndbulkpipe(kaweth->dev, 2),
-		      private_header,
+		      निजी_header,
 		      skb->len,
 		      kaweth_usb_transmit_complete,
 		      kaweth);
 	kaweth->end = 0;
 
-	if((res = usb_submit_urb(kaweth->tx_urb, GFP_ATOMIC)))
-	{
+	अगर((res = usb_submit_urb(kaweth->tx_urb, GFP_ATOMIC)))
+	अणु
 		dev_warn(&net->dev, "kaweth failed tx_urb %d\n", res);
 skip:
 		net->stats.tx_errors++;
 
-		netif_start_queue(net);
-		dev_kfree_skb_irq(skb);
-	}
-	else
-	{
+		netअगर_start_queue(net);
+		dev_kमुक्त_skb_irq(skb);
+	पूर्ण
+	अन्यथा
+	अणु
 		net->stats.tx_packets++;
 		net->stats.tx_bytes += skb->len;
-	}
+	पूर्ण
 
 	spin_unlock_irq(&kaweth->device_lock);
 
-	return NETDEV_TX_OK;
-}
+	वापस NETDEV_TX_OK;
+पूर्ण
 
 /****************************************************************
  *     kaweth_set_rx_mode
  ****************************************************************/
-static void kaweth_set_rx_mode(struct net_device *net)
-{
-	struct kaweth_device *kaweth = netdev_priv(net);
+अटल व्योम kaweth_set_rx_mode(काष्ठा net_device *net)
+अणु
+	काष्ठा kaweth_device *kaweth = netdev_priv(net);
 
-	__u16 packet_filter_bitmap = KAWETH_PACKET_FILTER_DIRECTED |
+	__u16 packet_filter_biपंचांगap = KAWETH_PACKET_FILTER_सूचीECTED |
                                      KAWETH_PACKET_FILTER_BROADCAST |
 		                     KAWETH_PACKET_FILTER_MULTICAST;
 
-	netdev_dbg(net, "Setting Rx mode to %d\n", packet_filter_bitmap);
+	netdev_dbg(net, "Setting Rx mode to %d\n", packet_filter_biपंचांगap);
 
-	netif_stop_queue(net);
+	netअगर_stop_queue(net);
 
-	if (net->flags & IFF_PROMISC) {
-		packet_filter_bitmap |= KAWETH_PACKET_FILTER_PROMISCUOUS;
-	}
-	else if (!netdev_mc_empty(net) || (net->flags & IFF_ALLMULTI)) {
-		packet_filter_bitmap |= KAWETH_PACKET_FILTER_ALL_MULTICAST;
-	}
+	अगर (net->flags & IFF_PROMISC) अणु
+		packet_filter_biपंचांगap |= KAWETH_PACKET_FILTER_PROMISCUOUS;
+	पूर्ण
+	अन्यथा अगर (!netdev_mc_empty(net) || (net->flags & IFF_ALLMULTI)) अणु
+		packet_filter_biपंचांगap |= KAWETH_PACKET_FILTER_ALL_MULTICAST;
+	पूर्ण
 
-	kaweth->packet_filter_bitmap = packet_filter_bitmap;
-	netif_wake_queue(net);
-}
+	kaweth->packet_filter_biपंचांगap = packet_filter_biपंचांगap;
+	netअगर_wake_queue(net);
+पूर्ण
 
 /****************************************************************
  *     kaweth_async_set_rx_mode
  ****************************************************************/
-static void kaweth_async_set_rx_mode(struct kaweth_device *kaweth,
+अटल व्योम kaweth_async_set_rx_mode(काष्ठा kaweth_device *kaweth,
 				     bool may_sleep)
-{
-	int ret;
-	__u16 packet_filter_bitmap = kaweth->packet_filter_bitmap;
+अणु
+	पूर्णांक ret;
+	__u16 packet_filter_biपंचांगap = kaweth->packet_filter_biपंचांगap;
 
-	kaweth->packet_filter_bitmap = 0;
-	if (packet_filter_bitmap == 0)
-		return;
+	kaweth->packet_filter_biपंचांगap = 0;
+	अगर (packet_filter_biपंचांगap == 0)
+		वापस;
 
-	if (!may_sleep)
-		return;
+	अगर (!may_sleep)
+		वापस;
 
 	ret = usb_control_msg(kaweth->dev, usb_sndctrlpipe(kaweth->dev, 0),
 			      KAWETH_COMMAND_SET_PACKET_FILTER,
-			      USB_TYPE_VENDOR | USB_DIR_OUT | USB_RECIP_DEVICE,
-			      packet_filter_bitmap, 0,
+			      USB_TYPE_VENDOR | USB_सूची_OUT | USB_RECIP_DEVICE,
+			      packet_filter_biपंचांगap, 0,
 			      &kaweth->scratch, 0,
 			      KAWETH_CONTROL_TIMEOUT);
-	if (ret < 0)
-		dev_err(&kaweth->intf->dev, "Failed to set Rx mode: %d\n",
+	अगर (ret < 0)
+		dev_err(&kaweth->पूर्णांकf->dev, "Failed to set Rx mode: %d\n",
 			ret);
-	else
+	अन्यथा
 		netdev_dbg(kaweth->net, "Set Rx mode to %d\n",
-			   packet_filter_bitmap);
-}
+			   packet_filter_biपंचांगap);
+पूर्ण
 
 /****************************************************************
- *     kaweth_tx_timeout
+ *     kaweth_tx_समयout
  ****************************************************************/
-static void kaweth_tx_timeout(struct net_device *net, unsigned int txqueue)
-{
-	struct kaweth_device *kaweth = netdev_priv(net);
+अटल व्योम kaweth_tx_समयout(काष्ठा net_device *net, अचिन्हित पूर्णांक txqueue)
+अणु
+	काष्ठा kaweth_device *kaweth = netdev_priv(net);
 
 	dev_warn(&net->dev, "%s: Tx timed out. Resetting.\n", net->name);
 	net->stats.tx_errors++;
-	netif_trans_update(net);
+	netअगर_trans_update(net);
 
 	usb_unlink_urb(kaweth->tx_urb);
-}
+पूर्ण
 
 /****************************************************************
  *     kaweth_suspend
  ****************************************************************/
-static int kaweth_suspend(struct usb_interface *intf, pm_message_t message)
-{
-	struct kaweth_device *kaweth = usb_get_intfdata(intf);
-	unsigned long flags;
+अटल पूर्णांक kaweth_suspend(काष्ठा usb_पूर्णांकerface *पूर्णांकf, pm_message_t message)
+अणु
+	काष्ठा kaweth_device *kaweth = usb_get_पूर्णांकfdata(पूर्णांकf);
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&kaweth->device_lock, flags);
 	kaweth->status |= KAWETH_STATUS_SUSPENDING;
 	spin_unlock_irqrestore(&kaweth->device_lock, flags);
 
-	kaweth_kill_urbs(kaweth);
-	return 0;
-}
+	kaweth_समाप्त_urbs(kaweth);
+	वापस 0;
+पूर्ण
 
 /****************************************************************
  *     kaweth_resume
  ****************************************************************/
-static int kaweth_resume(struct usb_interface *intf)
-{
-	struct kaweth_device *kaweth = usb_get_intfdata(intf);
-	unsigned long flags;
+अटल पूर्णांक kaweth_resume(काष्ठा usb_पूर्णांकerface *पूर्णांकf)
+अणु
+	काष्ठा kaweth_device *kaweth = usb_get_पूर्णांकfdata(पूर्णांकf);
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&kaweth->device_lock, flags);
 	kaweth->status &= ~KAWETH_STATUS_SUSPENDING;
 	spin_unlock_irqrestore(&kaweth->device_lock, flags);
 
-	if (!kaweth->opened)
-		return 0;
+	अगर (!kaweth->खोलोed)
+		वापस 0;
 	kaweth_resubmit_rx_urb(kaweth, GFP_NOIO);
-	kaweth_resubmit_int_urb(kaweth, GFP_NOIO);
+	kaweth_resubmit_पूर्णांक_urb(kaweth, GFP_NOIO);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /****************************************************************
  *     kaweth_probe
  ****************************************************************/
 
 
-static const struct net_device_ops kaweth_netdev_ops = {
-	.ndo_open =			kaweth_open,
-	.ndo_stop =			kaweth_close,
-	.ndo_start_xmit =		kaweth_start_xmit,
-	.ndo_tx_timeout =		kaweth_tx_timeout,
-	.ndo_set_rx_mode =		kaweth_set_rx_mode,
-	.ndo_set_mac_address =		eth_mac_addr,
-	.ndo_validate_addr =		eth_validate_addr,
-};
+अटल स्थिर काष्ठा net_device_ops kaweth_netdev_ops = अणु
+	.nकरो_खोलो =			kaweth_खोलो,
+	.nकरो_stop =			kaweth_बंद,
+	.nकरो_start_xmit =		kaweth_start_xmit,
+	.nकरो_tx_समयout =		kaweth_tx_समयout,
+	.nकरो_set_rx_mode =		kaweth_set_rx_mode,
+	.nकरो_set_mac_address =		eth_mac_addr,
+	.nकरो_validate_addr =		eth_validate_addr,
+पूर्ण;
 
-static int kaweth_probe(
-		struct usb_interface *intf,
-		const struct usb_device_id *id      /* from id_table */
+अटल पूर्णांक kaweth_probe(
+		काष्ठा usb_पूर्णांकerface *पूर्णांकf,
+		स्थिर काष्ठा usb_device_id *id      /* from id_table */
 	)
-{
-	struct device *dev = &intf->dev;
-	struct usb_device *udev = interface_to_usbdev(intf);
-	struct kaweth_device *kaweth;
-	struct net_device *netdev;
-	const eth_addr_t bcast_addr = { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF };
-	int result = 0;
-	int rv = -EIO;
+अणु
+	काष्ठा device *dev = &पूर्णांकf->dev;
+	काष्ठा usb_device *udev = पूर्णांकerface_to_usbdev(पूर्णांकf);
+	काष्ठा kaweth_device *kaweth;
+	काष्ठा net_device *netdev;
+	स्थिर eth_addr_t bcast_addr = अणु 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF पूर्ण;
+	पूर्णांक result = 0;
+	पूर्णांक rv = -EIO;
 
 	dev_dbg(dev,
 		"Kawasaki Device Probe (Device number:%d): 0x%4.4x:0x%4.4x:0x%4.4x\n",
-		udev->devnum, le16_to_cpu(udev->descriptor.idVendor),
+		udev->devnum, le16_to_cpu(udev->descriptor.idVenकरोr),
 		le16_to_cpu(udev->descriptor.idProduct),
 		le16_to_cpu(udev->descriptor.bcdDevice));
 
 	dev_dbg(dev, "Device at %p\n", udev);
 
 	dev_dbg(dev, "Descriptor length: %x type: %x\n",
-		(int)udev->descriptor.bLength,
-		(int)udev->descriptor.bDescriptorType);
+		(पूर्णांक)udev->descriptor.bLength,
+		(पूर्णांक)udev->descriptor.bDescriptorType);
 
-	netdev = alloc_etherdev(sizeof(*kaweth));
-	if (!netdev)
-		return -ENOMEM;
+	netdev = alloc_etherdev(माप(*kaweth));
+	अगर (!netdev)
+		वापस -ENOMEM;
 
 	kaweth = netdev_priv(netdev);
 	kaweth->dev = udev;
 	kaweth->net = netdev;
-	kaweth->intf = intf;
+	kaweth->पूर्णांकf = पूर्णांकf;
 
 	spin_lock_init(&kaweth->device_lock);
-	init_waitqueue_head(&kaweth->term_wait);
+	init_रुकोqueue_head(&kaweth->term_रुको);
 
 	dev_dbg(dev, "Resetting.\n");
 
 	kaweth_reset(kaweth);
 
 	/*
-	 * If high byte of bcdDevice is nonzero, firmware is already
-	 * downloaded. Don't try to do it again, or we'll hang the device.
+	 * If high byte of bcdDevice is nonzero, firmware is alपढ़ोy
+	 * करोwnloaded. Don't try to do it again, or we'll hang the device.
 	 */
 
-	if (le16_to_cpu(udev->descriptor.bcdDevice) >> 8) {
+	अगर (le16_to_cpu(udev->descriptor.bcdDevice) >> 8) अणु
 		dev_info(dev, "Firmware present in device.\n");
-	} else {
+	पूर्ण अन्यथा अणु
 		/* Download the firmware */
 		dev_info(dev, "Downloading firmware...\n");
-		kaweth->firmware_buf = (__u8 *)__get_free_page(GFP_KERNEL);
-		if (!kaweth->firmware_buf) {
+		kaweth->firmware_buf = (__u8 *)__get_मुक्त_page(GFP_KERNEL);
+		अगर (!kaweth->firmware_buf) अणु
 			rv = -ENOMEM;
-			goto err_free_netdev;
-		}
-		if ((result = kaweth_download_firmware(kaweth,
+			जाओ err_मुक्त_netdev;
+		पूर्ण
+		अगर ((result = kaweth_करोwnload_firmware(kaweth,
 						      "kaweth/new_code.bin",
 						      100,
-						      2)) < 0) {
+						      2)) < 0) अणु
 			dev_err(dev, "Error downloading firmware (%d)\n",
 				result);
-			goto err_fw;
-		}
+			जाओ err_fw;
+		पूर्ण
 
-		if ((result = kaweth_download_firmware(kaweth,
+		अगर ((result = kaweth_करोwnload_firmware(kaweth,
 						      "kaweth/new_code_fix.bin",
 						      100,
-						      3)) < 0) {
+						      3)) < 0) अणु
 			dev_err(dev, "Error downloading firmware fix (%d)\n",
 				result);
-			goto err_fw;
-		}
+			जाओ err_fw;
+		पूर्ण
 
-		if ((result = kaweth_download_firmware(kaweth,
+		अगर ((result = kaweth_करोwnload_firmware(kaweth,
 						      "kaweth/trigger_code.bin",
 						      126,
-						      2)) < 0) {
+						      2)) < 0) अणु
 			dev_err(dev, "Error downloading trigger code (%d)\n",
 				result);
-			goto err_fw;
+			जाओ err_fw;
 
-		}
+		पूर्ण
 
-		if ((result = kaweth_download_firmware(kaweth,
+		अगर ((result = kaweth_करोwnload_firmware(kaweth,
 						      "kaweth/trigger_code_fix.bin",
 						      126,
-						      3)) < 0) {
+						      3)) < 0) अणु
 			dev_err(dev, "Error downloading trigger code fix (%d)\n", result);
-			goto err_fw;
-		}
+			जाओ err_fw;
+		पूर्ण
 
 
-		if ((result = kaweth_trigger_firmware(kaweth, 126)) < 0) {
+		अगर ((result = kaweth_trigger_firmware(kaweth, 126)) < 0) अणु
 			dev_err(dev, "Error triggering firmware (%d)\n", result);
-			goto err_fw;
-		}
+			जाओ err_fw;
+		पूर्ण
 
-		/* Device will now disappear for a moment...  */
+		/* Device will now disappear क्रम a moment...  */
 		dev_info(dev, "Firmware loaded.  I'll be back...\n");
 err_fw:
-		free_page((unsigned long)kaweth->firmware_buf);
-		free_netdev(netdev);
-		return -EIO;
-	}
+		मुक्त_page((अचिन्हित दीर्घ)kaweth->firmware_buf);
+		मुक्त_netdev(netdev);
+		वापस -EIO;
+	पूर्ण
 
-	result = kaweth_read_configuration(kaweth);
+	result = kaweth_पढ़ो_configuration(kaweth);
 
-	if(result < 0) {
+	अगर(result < 0) अणु
 		dev_err(dev, "Error reading configuration (%d), no net device created\n", result);
-		goto err_free_netdev;
-	}
+		जाओ err_मुक्त_netdev;
+	पूर्ण
 
 	dev_info(dev, "Statistics collection: %x\n", kaweth->configuration.statistics_mask);
 	dev_info(dev, "Multicast filter limit: %x\n", kaweth->configuration.max_multicast_filters & ((1 << 15) - 1));
 	dev_info(dev, "MTU: %d\n", le16_to_cpu(kaweth->configuration.segment_size));
 	dev_info(dev, "Read MAC address %pM\n", kaweth->configuration.hw_addr);
 
-	if(!memcmp(&kaweth->configuration.hw_addr,
+	अगर(!स_भेद(&kaweth->configuration.hw_addr,
                    &bcast_addr,
-		   sizeof(bcast_addr))) {
+		   माप(bcast_addr))) अणु
 		dev_err(dev, "Firmware not functioning properly, no net device created\n");
-		goto err_free_netdev;
-	}
+		जाओ err_मुक्त_netdev;
+	पूर्ण
 
-	if(kaweth_set_urb_size(kaweth, KAWETH_BUF_SIZE) < 0) {
+	अगर(kaweth_set_urb_size(kaweth, KAWETH_BUF_SIZE) < 0) अणु
 		dev_dbg(dev, "Error setting URB size\n");
-		goto err_free_netdev;
-	}
+		जाओ err_मुक्त_netdev;
+	पूर्ण
 
-	if(kaweth_set_sofs_wait(kaweth, KAWETH_SOFS_TO_WAIT) < 0) {
+	अगर(kaweth_set_sofs_रुको(kaweth, KAWETH_SOFS_TO_WAIT) < 0) अणु
 		dev_err(dev, "Error setting SOFS wait\n");
-		goto err_free_netdev;
-	}
+		जाओ err_मुक्त_netdev;
+	पूर्ण
 
 	result = kaweth_set_receive_filter(kaweth,
-                                           KAWETH_PACKET_FILTER_DIRECTED |
+                                           KAWETH_PACKET_FILTER_सूचीECTED |
                                            KAWETH_PACKET_FILTER_BROADCAST |
                                            KAWETH_PACKET_FILTER_MULTICAST);
 
-	if(result < 0) {
+	अगर(result < 0) अणु
 		dev_err(dev, "Error setting receive filter\n");
-		goto err_free_netdev;
-	}
+		जाओ err_मुक्त_netdev;
+	पूर्ण
 
 	dev_dbg(dev, "Initializing net device.\n");
 
 	kaweth->tx_urb = usb_alloc_urb(0, GFP_KERNEL);
-	if (!kaweth->tx_urb)
-		goto err_free_netdev;
+	अगर (!kaweth->tx_urb)
+		जाओ err_मुक्त_netdev;
 	kaweth->rx_urb = usb_alloc_urb(0, GFP_KERNEL);
-	if (!kaweth->rx_urb)
-		goto err_only_tx;
+	अगर (!kaweth->rx_urb)
+		जाओ err_only_tx;
 	kaweth->irq_urb = usb_alloc_urb(0, GFP_KERNEL);
-	if (!kaweth->irq_urb)
-		goto err_tx_and_rx;
+	अगर (!kaweth->irq_urb)
+		जाओ err_tx_and_rx;
 
-	kaweth->intbuffer = usb_alloc_coherent(	kaweth->dev,
+	kaweth->पूर्णांकbuffer = usb_alloc_coherent(	kaweth->dev,
 						INTBUFFERSIZE,
 						GFP_KERNEL,
-						&kaweth->intbufferhandle);
-	if (!kaweth->intbuffer)
-		goto err_tx_and_rx_and_irq;
+						&kaweth->पूर्णांकbufferhandle);
+	अगर (!kaweth->पूर्णांकbuffer)
+		जाओ err_tx_and_rx_and_irq;
 	kaweth->rx_buf = usb_alloc_coherent(	kaweth->dev,
 						KAWETH_BUF_SIZE,
 						GFP_KERNEL,
 						&kaweth->rxbufferhandle);
-	if (!kaweth->rx_buf)
-		goto err_all_but_rxbuf;
+	अगर (!kaweth->rx_buf)
+		जाओ err_all_but_rxbuf;
 
-	memcpy(netdev->broadcast, &bcast_addr, sizeof(bcast_addr));
-	memcpy(netdev->dev_addr, &kaweth->configuration.hw_addr,
-               sizeof(kaweth->configuration.hw_addr));
+	स_नकल(netdev->broadcast, &bcast_addr, माप(bcast_addr));
+	स_नकल(netdev->dev_addr, &kaweth->configuration.hw_addr,
+               माप(kaweth->configuration.hw_addr));
 
 	netdev->netdev_ops = &kaweth_netdev_ops;
-	netdev->watchdog_timeo = KAWETH_TX_TIMEOUT;
+	netdev->watchकरोg_समयo = KAWETH_TX_TIMEOUT;
 	netdev->mtu = le16_to_cpu(kaweth->configuration.segment_size);
 	netdev->ethtool_ops = &ops;
 
 	/* kaweth is zeroed as part of alloc_netdev */
 	INIT_DELAYED_WORK(&kaweth->lowmem_work, kaweth_resubmit_tl);
-	usb_set_intfdata(intf, kaweth);
+	usb_set_पूर्णांकfdata(पूर्णांकf, kaweth);
 
 	SET_NETDEV_DEV(netdev, dev);
-	if (register_netdev(netdev) != 0) {
+	अगर (रेजिस्टर_netdev(netdev) != 0) अणु
 		dev_err(dev, "Error registering netdev.\n");
-		goto err_intfdata;
-	}
+		जाओ err_पूर्णांकfdata;
+	पूर्ण
 
 	dev_info(dev, "kaweth interface created at %s\n",
 		 kaweth->net->name);
 
-	return 0;
+	वापस 0;
 
-err_intfdata:
-	usb_set_intfdata(intf, NULL);
-	usb_free_coherent(kaweth->dev, KAWETH_BUF_SIZE, (void *)kaweth->rx_buf, kaweth->rxbufferhandle);
+err_पूर्णांकfdata:
+	usb_set_पूर्णांकfdata(पूर्णांकf, शून्य);
+	usb_मुक्त_coherent(kaweth->dev, KAWETH_BUF_SIZE, (व्योम *)kaweth->rx_buf, kaweth->rxbufferhandle);
 err_all_but_rxbuf:
-	usb_free_coherent(kaweth->dev, INTBUFFERSIZE, (void *)kaweth->intbuffer, kaweth->intbufferhandle);
+	usb_मुक्त_coherent(kaweth->dev, INTBUFFERSIZE, (व्योम *)kaweth->पूर्णांकbuffer, kaweth->पूर्णांकbufferhandle);
 err_tx_and_rx_and_irq:
-	usb_free_urb(kaweth->irq_urb);
+	usb_मुक्त_urb(kaweth->irq_urb);
 err_tx_and_rx:
-	usb_free_urb(kaweth->rx_urb);
+	usb_मुक्त_urb(kaweth->rx_urb);
 err_only_tx:
-	usb_free_urb(kaweth->tx_urb);
-err_free_netdev:
-	free_netdev(netdev);
+	usb_मुक्त_urb(kaweth->tx_urb);
+err_मुक्त_netdev:
+	मुक्त_netdev(netdev);
 
-	return rv;
-}
+	वापस rv;
+पूर्ण
 
 /****************************************************************
  *     kaweth_disconnect
  ****************************************************************/
-static void kaweth_disconnect(struct usb_interface *intf)
-{
-	struct kaweth_device *kaweth = usb_get_intfdata(intf);
-	struct net_device *netdev;
+अटल व्योम kaweth_disconnect(काष्ठा usb_पूर्णांकerface *पूर्णांकf)
+अणु
+	काष्ठा kaweth_device *kaweth = usb_get_पूर्णांकfdata(पूर्णांकf);
+	काष्ठा net_device *netdev;
 
-	usb_set_intfdata(intf, NULL);
-	if (!kaweth) {
-		dev_warn(&intf->dev, "unregistering non-existent device\n");
-		return;
-	}
+	usb_set_पूर्णांकfdata(पूर्णांकf, शून्य);
+	अगर (!kaweth) अणु
+		dev_warn(&पूर्णांकf->dev, "unregistering non-existent device\n");
+		वापस;
+	पूर्ण
 	netdev = kaweth->net;
 
 	netdev_dbg(kaweth->net, "Unregistering net device\n");
-	unregister_netdev(netdev);
+	unरेजिस्टर_netdev(netdev);
 
-	usb_free_urb(kaweth->rx_urb);
-	usb_free_urb(kaweth->tx_urb);
-	usb_free_urb(kaweth->irq_urb);
+	usb_मुक्त_urb(kaweth->rx_urb);
+	usb_मुक्त_urb(kaweth->tx_urb);
+	usb_मुक्त_urb(kaweth->irq_urb);
 
-	usb_free_coherent(kaweth->dev, KAWETH_BUF_SIZE, (void *)kaweth->rx_buf, kaweth->rxbufferhandle);
-	usb_free_coherent(kaweth->dev, INTBUFFERSIZE, (void *)kaweth->intbuffer, kaweth->intbufferhandle);
+	usb_मुक्त_coherent(kaweth->dev, KAWETH_BUF_SIZE, (व्योम *)kaweth->rx_buf, kaweth->rxbufferhandle);
+	usb_मुक्त_coherent(kaweth->dev, INTBUFFERSIZE, (व्योम *)kaweth->पूर्णांकbuffer, kaweth->पूर्णांकbufferhandle);
 
-	free_netdev(netdev);
-}
+	मुक्त_netdev(netdev);
+पूर्ण
 
 
 module_usb_driver(kaweth_driver);

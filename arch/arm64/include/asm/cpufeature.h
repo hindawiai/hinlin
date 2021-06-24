@@ -1,73 +1,74 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * Copyright (C) 2014 Linaro Ltd. <ard.biesheuvel@linaro.org>
  */
 
-#ifndef __ASM_CPUFEATURE_H
-#define __ASM_CPUFEATURE_H
+#अगर_अघोषित __ASM_CPUFEATURE_H
+#घोषणा __ASM_CPUFEATURE_H
 
-#include <asm/cpucaps.h>
-#include <asm/cputype.h>
-#include <asm/hwcap.h>
-#include <asm/sysreg.h>
+#समावेश <यंत्र/cpucaps.h>
+#समावेश <यंत्र/cputype.h>
+#समावेश <यंत्र/hwcap.h>
+#समावेश <यंत्र/sysreg.h>
 
-#define MAX_CPU_FEATURES	64
-#define cpu_feature(x)		KERNEL_HWCAP_ ## x
+#घोषणा MAX_CPU_FEATURES	64
+#घोषणा cpu_feature(x)		KERNEL_HWCAP_ ## x
 
-#ifndef __ASSEMBLY__
+#अगर_अघोषित __ASSEMBLY__
 
-#include <linux/bug.h>
-#include <linux/jump_label.h>
-#include <linux/kernel.h>
+#समावेश <linux/bug.h>
+#समावेश <linux/jump_label.h>
+#समावेश <linux/kernel.h>
 
 /*
- * CPU feature register tracking
+ * CPU feature रेजिस्टर tracking
  *
  * The safe value of a CPUID feature field is dependent on the implications
- * of the values assigned to it by the architecture. Based on the relationship
- * between the values, the features are classified into 3 types - LOWER_SAFE,
+ * of the values asचिन्हित to it by the architecture. Based on the relationship
+ * between the values, the features are classअगरied पूर्णांकo 3 types - LOWER_SAFE,
  * HIGHER_SAFE and EXACT.
  *
- * The lowest value of all the CPUs is chosen for LOWER_SAFE and highest
- * for HIGHER_SAFE. It is expected that all CPUs have the same value for
- * a field when EXACT is specified, failing which, the safe value specified
+ * The lowest value of all the CPUs is chosen क्रम LOWER_SAFE and highest
+ * क्रम HIGHER_SAFE. It is expected that all CPUs have the same value क्रम
+ * a field when EXACT is specअगरied, failing which, the safe value specअगरied
  * in the table is chosen.
  */
 
-enum ftr_type {
+क्रमागत ftr_type अणु
 	FTR_EXACT,			/* Use a predefined safe value */
 	FTR_LOWER_SAFE,			/* Smaller value is safe */
 	FTR_HIGHER_SAFE,		/* Bigger value is safe */
 	FTR_HIGHER_OR_ZERO_SAFE,	/* Bigger value is safe, but 0 is biggest */
-};
+पूर्ण;
 
-#define FTR_STRICT	true	/* SANITY check strict matching required */
-#define FTR_NONSTRICT	false	/* SANITY check ignored */
+#घोषणा FTR_STRICT	true	/* SANITY check strict matching required */
+#घोषणा FTR_NONSTRICT	false	/* SANITY check ignored */
 
-#define FTR_SIGNED	true	/* Value should be treated as signed */
-#define FTR_UNSIGNED	false	/* Value should be treated as unsigned */
+#घोषणा FTR_SIGNED	true	/* Value should be treated as चिन्हित */
+#घोषणा FTR_UNSIGNED	false	/* Value should be treated as अचिन्हित */
 
-#define FTR_VISIBLE	true	/* Feature visible to the user space */
-#define FTR_HIDDEN	false	/* Feature is hidden from the user */
+#घोषणा FTR_VISIBLE	true	/* Feature visible to the user space */
+#घोषणा FTR_HIDDEN	false	/* Feature is hidden from the user */
 
-#define FTR_VISIBLE_IF_IS_ENABLED(config)		\
+#घोषणा FTR_VISIBLE_IF_IS_ENABLED(config)		\
 	(IS_ENABLED(config) ? FTR_VISIBLE : FTR_HIDDEN)
 
-struct arm64_ftr_bits {
-	bool		sign;	/* Value is signed ? */
+काष्ठा arm64_ftr_bits अणु
+	bool		sign;	/* Value is चिन्हित ? */
 	bool		visible;
 	bool		strict;	/* CPU Sanity check: strict matching required ? */
-	enum ftr_type	type;
-	u8		shift;
+	क्रमागत ftr_type	type;
+	u8		shअगरt;
 	u8		width;
-	s64		safe_val; /* safe value for FTR_EXACT features */
-};
+	s64		safe_val; /* safe value क्रम FTR_EXACT features */
+पूर्ण;
 
 /*
  * Describe the early feature override to the core override code:
  *
- * @val			Values that are to be merged into the final
- *			sanitised value of the register. Only the bitfields
+ * @val			Values that are to be merged पूर्णांकo the final
+ *			sanitised value of the रेजिस्टर. Only the bitfields
  *			set to 1 in @mask are valid
  * @mask		Mask of the features that are overridden by @val
  *
@@ -80,119 +81,119 @@ struct arm64_ftr_bits {
  * A @mask field set to full-0 with the corresponding @val field set
  * to full-1 denotes thath this field has an invalid override.
  */
-struct arm64_ftr_override {
+काष्ठा arm64_ftr_override अणु
 	u64		val;
 	u64		mask;
-};
+पूर्ण;
 
 /*
- * @arm64_ftr_reg - Feature register
- * @strict_mask		Bits which should match across all CPUs for sanity.
- * @sys_val		Safe value across the CPUs (system view)
+ * @arm64_ftr_reg - Feature रेजिस्टर
+ * @strict_mask		Bits which should match across all CPUs क्रम sanity.
+ * @sys_val		Safe value across the CPUs (प्रणाली view)
  */
-struct arm64_ftr_reg {
-	const char			*name;
+काष्ठा arm64_ftr_reg अणु
+	स्थिर अक्षर			*name;
 	u64				strict_mask;
 	u64				user_mask;
 	u64				sys_val;
 	u64				user_val;
-	struct arm64_ftr_override	*override;
-	const struct arm64_ftr_bits	*ftr_bits;
-};
+	काष्ठा arm64_ftr_override	*override;
+	स्थिर काष्ठा arm64_ftr_bits	*ftr_bits;
+पूर्ण;
 
-extern struct arm64_ftr_reg arm64_ftr_reg_ctrel0;
+बाह्य काष्ठा arm64_ftr_reg arm64_ftr_reg_ctrel0;
 
 /*
  * CPU capabilities:
  *
- * We use arm64_cpu_capabilities to represent system features, errata work
- * arounds (both used internally by kernel and tracked in cpu_hwcaps) and
+ * We use arm64_cpu_capabilities to represent प्रणाली features, errata work
+ * arounds (both used पूर्णांकernally by kernel and tracked in cpu_hwcaps) and
  * ELF HWCAPs (which are exposed to user).
  *
- * To support systems with heterogeneous CPUs, we need to make sure that we
- * detect the capabilities correctly on the system and take appropriate
+ * To support प्रणालीs with heterogeneous CPUs, we need to make sure that we
+ * detect the capabilities correctly on the प्रणाली and take appropriate
  * measures to ensure there are no incompatibilities.
  *
  * This comment tries to explain how we treat the capabilities.
  * Each capability has the following list of attributes :
  *
- * 1) Scope of Detection : The system detects a given capability by
- *    performing some checks at runtime. This could be, e.g, checking the
- *    value of a field in CPU ID feature register or checking the cpu
+ * 1) Scope of Detection : The प्रणाली detects a given capability by
+ *    perक्रमming some checks at runसमय. This could be, e.g, checking the
+ *    value of a field in CPU ID feature रेजिस्टर or checking the cpu
  *    model. The capability provides a call back ( @matches() ) to
- *    perform the check. Scope defines how the checks should be performed.
- *    There are three cases:
+ *    perक्रमm the check. Scope defines how the checks should be perक्रमmed.
+ *    There are three हालs:
  *
- *     a) SCOPE_LOCAL_CPU: check all the CPUs and "detect" if at least one
+ *     a) SCOPE_LOCAL_CPU: check all the CPUs and "detect" अगर at least one
  *        matches. This implies, we have to run the check on all the
- *        booting CPUs, until the system decides that state of the
+ *        booting CPUs, until the प्रणाली decides that state of the
  *        capability is finalised. (See section 2 below)
  *		Or
- *     b) SCOPE_SYSTEM: check all the CPUs and "detect" if all the CPUs
+ *     b) SCOPE_SYSTEM: check all the CPUs and "detect" अगर all the CPUs
  *        matches. This implies, we run the check only once, when the
- *        system decides to finalise the state of the capability. If the
+ *        प्रणाली decides to finalise the state of the capability. If the
  *        capability relies on a field in one of the CPU ID feature
- *        registers, we use the sanitised value of the register from the
- *        CPU feature infrastructure to make the decision.
+ *        रेजिस्टरs, we use the sanitised value of the रेजिस्टर from the
+ *        CPU feature infraकाष्ठाure to make the decision.
  *		Or
  *     c) SCOPE_BOOT_CPU: Check only on the primary boot CPU to detect the
- *        feature. This category is for features that are "finalised"
- *        (or used) by the kernel very early even before the SMP cpus
+ *        feature. This category is क्रम features that are "finalised"
+ *        (or used) by the kernel very early even beक्रमe the SMP cpus
  *        are brought up.
  *
  *    The process of detection is usually denoted by "update" capability
  *    state in the code.
  *
  * 2) Finalise the state : The kernel should finalise the state of a
- *    capability at some point during its execution and take necessary
- *    actions if any. Usually, this is done, after all the boot-time
+ *    capability at some poपूर्णांक during its execution and take necessary
+ *    actions अगर any. Usually, this is करोne, after all the boot-समय
  *    enabled CPUs are brought up by the kernel, so that it can make
  *    better decision based on the available set of CPUs. However, there
- *    are some special cases, where the action is taken during the early
+ *    are some special हालs, where the action is taken during the early
  *    boot by the primary boot CPU. (e.g, running the kernel at EL2 with
  *    Virtualisation Host Extensions). The kernel usually disallows any
  *    changes to the state of a capability once it finalises the capability
  *    and takes any action, as it may be impossible to execute the actions
  *    safely. A CPU brought up after a capability is "finalised" is
  *    referred to as "Late CPU" w.r.t the capability. e.g, all secondary
- *    CPUs are treated "late CPUs" for capabilities determined by the boot
+ *    CPUs are treated "late CPUs" क्रम capabilities determined by the boot
  *    CPU.
  *
  *    At the moment there are two passes of finalising the capabilities.
  *      a) Boot CPU scope capabilities - Finalised by primary boot CPU via
  *         setup_boot_cpu_capabilities().
- *      b) Everything except (a) - Run via setup_system_capabilities().
+ *      b) Everything except (a) - Run via setup_प्रणाली_capabilities().
  *
- * 3) Verification: When a CPU is brought online (e.g, by user or by the
+ * 3) Verअगरication: When a CPU is brought online (e.g, by user or by the
  *    kernel), the kernel should make sure that it is safe to use the CPU,
- *    by verifying that the CPU is compliant with the state of the
- *    capabilities finalised already. This happens via :
+ *    by verअगरying that the CPU is compliant with the state of the
+ *    capabilities finalised alपढ़ोy. This happens via :
  *
  *	secondary_start_kernel()-> check_local_cpu_capabilities()
  *
  *    As explained in (2) above, capabilities could be finalised at
- *    different points in the execution. Each newly booted CPU is verified
- *    against the capabilities that have been finalised by the time it
+ *    dअगरferent poपूर्णांकs in the execution. Each newly booted CPU is verअगरied
+ *    against the capabilities that have been finalised by the समय it
  *    boots.
  *
- *	a) SCOPE_BOOT_CPU : All CPUs are verified against the capability
- *	except for the primary boot CPU.
+ *	a) SCOPE_BOOT_CPU : All CPUs are verअगरied against the capability
+ *	except क्रम the primary boot CPU.
  *
  *	b) SCOPE_LOCAL_CPU, SCOPE_SYSTEM: All CPUs hotplugged on by the
- *	user after the kernel boot are verified against the capability.
+ *	user after the kernel boot are verअगरied against the capability.
  *
  *    If there is a conflict, the kernel takes an action, based on the
  *    severity (e.g, a CPU could be prevented from booting or cause a
  *    kernel panic). The CPU is allowed to "affect" the state of the
- *    capability, if it has not been finalised already. See section 5
- *    for more details on conflicts.
+ *    capability, अगर it has not been finalised alपढ़ोy. See section 5
+ *    क्रम more details on conflicts.
  *
- * 4) Action: As mentioned in (2), the kernel can take an action for each
- *    detected capability, on all CPUs on the system. Appropriate actions
- *    include, turning on an architectural feature, modifying the control
- *    registers (e.g, SCTLR, TCR etc.) or patching the kernel via
- *    alternatives. The kernel patching is batched and performed at later
- *    point. The actions are always initiated only after the capability
+ * 4) Action: As mentioned in (2), the kernel can take an action क्रम each
+ *    detected capability, on all CPUs on the प्रणाली. Appropriate actions
+ *    include, turning on an architectural feature, modअगरying the control
+ *    रेजिस्टरs (e.g, SCTLR, TCR etc.) or patching the kernel via
+ *    alternatives. The kernel patching is batched and perक्रमmed at later
+ *    poपूर्णांक. The actions are always initiated only after the capability
  *    is finalised. This is usally denoted by "enabling" the capability.
  *    The actions are initiated as follows :
  *	a) Action is triggered on all online CPUs, after the capability is
@@ -201,10 +202,10 @@ extern struct arm64_ftr_reg arm64_ftr_reg_ctrel0;
  *
  *	b) Any late CPU, brought up after (1), the action is triggered via:
  *
- *	  check_local_cpu_capabilities() -> verify_local_cpu_capabilities()
+ *	  check_local_cpu_capabilities() -> verअगरy_local_cpu_capabilities()
  *
  * 5) Conflicts: Based on the state of the capability on a late CPU vs.
- *    the system state, we could have the following combinations :
+ *    the प्रणाली state, we could have the following combinations :
  *
  *		x-----------------------------x
  *		| Type  | System   | Late CPU |
@@ -219,21 +220,21 @@ extern struct arm64_ftr_reg arm64_ftr_reg_ctrel0;
  *		ARM64_CPUCAP_OPTIONAL_FOR_LATE_CPU - Case(a) is allowed
  *		ARM64_CPUCAP_PERMITTED_FOR_LATE_CPU - Case(b) is allowed
  *
- *     Case (a) is not permitted for a capability that the system requires
- *     all CPUs to have in order for the capability to be enabled. This is
- *     typical for capabilities that represent enhanced functionality.
+ *     Case (a) is not permitted क्रम a capability that the प्रणाली requires
+ *     all CPUs to have in order क्रम the capability to be enabled. This is
+ *     typical क्रम capabilities that represent enhanced functionality.
  *
- *     Case (b) is not permitted for a capability that must be enabled
- *     during boot if any CPU in the system requires it in order to run
- *     safely. This is typical for erratum work arounds that cannot be
+ *     Case (b) is not permitted क्रम a capability that must be enabled
+ *     during boot अगर any CPU in the प्रणाली requires it in order to run
+ *     safely. This is typical क्रम erratum work arounds that cannot be
  *     enabled after the corresponding capability is finalised.
  *
- *     In some non-typical cases either both (a) and (b), or neither,
+ *     In some non-typical हालs either both (a) and (b), or neither,
  *     should be permitted. This can be described by including neither
  *     or both flags in the capability's type field.
  *
- *     In case of a conflict, the CPU is prevented from booting. If the
- *     ARM64_CPUCAP_PANIC_ON_CONFLICT flag is specified for the capability,
+ *     In हाल of a conflict, the CPU is prevented from booting. If the
+ *     ARM64_CPUCAP_PANIC_ON_CONFLICT flag is specअगरied क्रम the capability,
  *     then a kernel panic is triggered.
  */
 
@@ -242,606 +243,606 @@ extern struct arm64_ftr_reg arm64_ftr_reg_ctrel0;
  * Decide how the capability is detected.
  * On any local CPU vs System wide vs the primary boot CPU
  */
-#define ARM64_CPUCAP_SCOPE_LOCAL_CPU		((u16)BIT(0))
-#define ARM64_CPUCAP_SCOPE_SYSTEM		((u16)BIT(1))
+#घोषणा ARM64_CPUCAP_SCOPE_LOCAL_CPU		((u16)BIT(0))
+#घोषणा ARM64_CPUCAP_SCOPE_SYSTEM		((u16)BIT(1))
 /*
  * The capabilitiy is detected on the Boot CPU and is used by kernel
  * during early boot. i.e, the capability should be "detected" and
  * "enabled" as early as possibly on all booting CPUs.
  */
-#define ARM64_CPUCAP_SCOPE_BOOT_CPU		((u16)BIT(2))
-#define ARM64_CPUCAP_SCOPE_MASK			\
+#घोषणा ARM64_CPUCAP_SCOPE_BOOT_CPU		((u16)BIT(2))
+#घोषणा ARM64_CPUCAP_SCOPE_MASK			\
 	(ARM64_CPUCAP_SCOPE_SYSTEM	|	\
 	 ARM64_CPUCAP_SCOPE_LOCAL_CPU	|	\
 	 ARM64_CPUCAP_SCOPE_BOOT_CPU)
 
-#define SCOPE_SYSTEM				ARM64_CPUCAP_SCOPE_SYSTEM
-#define SCOPE_LOCAL_CPU				ARM64_CPUCAP_SCOPE_LOCAL_CPU
-#define SCOPE_BOOT_CPU				ARM64_CPUCAP_SCOPE_BOOT_CPU
-#define SCOPE_ALL				ARM64_CPUCAP_SCOPE_MASK
+#घोषणा SCOPE_SYSTEM				ARM64_CPUCAP_SCOPE_SYSTEM
+#घोषणा SCOPE_LOCAL_CPU				ARM64_CPUCAP_SCOPE_LOCAL_CPU
+#घोषणा SCOPE_BOOT_CPU				ARM64_CPUCAP_SCOPE_BOOT_CPU
+#घोषणा SCOPE_ALL				ARM64_CPUCAP_SCOPE_MASK
 
 /*
- * Is it permitted for a late CPU to have this capability when system
- * hasn't already enabled it ?
+ * Is it permitted क्रम a late CPU to have this capability when प्रणाली
+ * hasn't alपढ़ोy enabled it ?
  */
-#define ARM64_CPUCAP_PERMITTED_FOR_LATE_CPU	((u16)BIT(4))
-/* Is it safe for a late CPU to miss this capability when system has it */
-#define ARM64_CPUCAP_OPTIONAL_FOR_LATE_CPU	((u16)BIT(5))
+#घोषणा ARM64_CPUCAP_PERMITTED_FOR_LATE_CPU	((u16)BIT(4))
+/* Is it safe क्रम a late CPU to miss this capability when प्रणाली has it */
+#घोषणा ARM64_CPUCAP_OPTIONAL_FOR_LATE_CPU	((u16)BIT(5))
 /* Panic when a conflict is detected */
-#define ARM64_CPUCAP_PANIC_ON_CONFLICT		((u16)BIT(6))
+#घोषणा ARM64_CPUCAP_PANIC_ON_CONFLICT		((u16)BIT(6))
 
 /*
- * CPU errata workarounds that need to be enabled at boot time if one or
- * more CPUs in the system requires it. When one of these capabilities
- * has been enabled, it is safe to allow any CPU to boot that doesn't
- * require the workaround. However, it is not safe if a "late" CPU
- * requires a workaround and the system hasn't enabled it already.
+ * CPU errata workarounds that need to be enabled at boot समय अगर one or
+ * more CPUs in the प्रणाली requires it. When one of these capabilities
+ * has been enabled, it is safe to allow any CPU to boot that करोesn't
+ * require the workaround. However, it is not safe अगर a "late" CPU
+ * requires a workaround and the प्रणाली hasn't enabled it alपढ़ोy.
  */
-#define ARM64_CPUCAP_LOCAL_CPU_ERRATUM		\
+#घोषणा ARM64_CPUCAP_LOCAL_CPU_ERRATUM		\
 	(ARM64_CPUCAP_SCOPE_LOCAL_CPU | ARM64_CPUCAP_OPTIONAL_FOR_LATE_CPU)
 /*
- * CPU feature detected at boot time based on system-wide value of a
- * feature. It is safe for a late CPU to have this feature even though
- * the system hasn't enabled it, although the feature will not be used
- * by Linux in this case. If the system has enabled this feature already,
+ * CPU feature detected at boot समय based on प्रणाली-wide value of a
+ * feature. It is safe क्रम a late CPU to have this feature even though
+ * the प्रणाली hasn't enabled it, although the feature will not be used
+ * by Linux in this हाल. If the प्रणाली has enabled this feature alपढ़ोy,
  * then every late CPU must have it.
  */
-#define ARM64_CPUCAP_SYSTEM_FEATURE	\
+#घोषणा ARM64_CPUCAP_SYSTEM_FEATURE	\
 	(ARM64_CPUCAP_SCOPE_SYSTEM | ARM64_CPUCAP_PERMITTED_FOR_LATE_CPU)
 /*
- * CPU feature detected at boot time based on feature of one or more CPUs.
- * All possible conflicts for a late CPU are ignored.
+ * CPU feature detected at boot समय based on feature of one or more CPUs.
+ * All possible conflicts क्रम a late CPU are ignored.
  * NOTE: this means that a late CPU with the feature will *not* cause the
  * capability to be advertised by cpus_have_*cap()!
  */
-#define ARM64_CPUCAP_WEAK_LOCAL_CPU_FEATURE		\
+#घोषणा ARM64_CPUCAP_WEAK_LOCAL_CPU_FEATURE		\
 	(ARM64_CPUCAP_SCOPE_LOCAL_CPU		|	\
 	 ARM64_CPUCAP_OPTIONAL_FOR_LATE_CPU	|	\
 	 ARM64_CPUCAP_PERMITTED_FOR_LATE_CPU)
 
 /*
- * CPU feature detected at boot time, on one or more CPUs. A late CPU
- * is not allowed to have the capability when the system doesn't have it.
- * It is Ok for a late CPU to miss the feature.
+ * CPU feature detected at boot समय, on one or more CPUs. A late CPU
+ * is not allowed to have the capability when the प्रणाली करोesn't have it.
+ * It is Ok क्रम a late CPU to miss the feature.
  */
-#define ARM64_CPUCAP_BOOT_RESTRICTED_CPU_LOCAL_FEATURE	\
+#घोषणा ARM64_CPUCAP_BOOT_RESTRICTED_CPU_LOCAL_FEATURE	\
 	(ARM64_CPUCAP_SCOPE_LOCAL_CPU		|	\
 	 ARM64_CPUCAP_OPTIONAL_FOR_LATE_CPU)
 
 /*
  * CPU feature used early in the boot based on the boot CPU. All secondary
  * CPUs must match the state of the capability as detected by the boot CPU. In
- * case of a conflict, a kernel panic is triggered.
+ * हाल of a conflict, a kernel panic is triggered.
  */
-#define ARM64_CPUCAP_STRICT_BOOT_CPU_FEATURE		\
+#घोषणा ARM64_CPUCAP_STRICT_BOOT_CPU_FEATURE		\
 	(ARM64_CPUCAP_SCOPE_BOOT_CPU | ARM64_CPUCAP_PANIC_ON_CONFLICT)
 
 /*
- * CPU feature used early in the boot based on the boot CPU. It is safe for a
+ * CPU feature used early in the boot based on the boot CPU. It is safe क्रम a
  * late CPU to have this feature even though the boot CPU hasn't enabled it,
- * although the feature will not be used by Linux in this case. If the boot CPU
- * has enabled this feature already, then every late CPU must have it.
+ * although the feature will not be used by Linux in this हाल. If the boot CPU
+ * has enabled this feature alपढ़ोy, then every late CPU must have it.
  */
-#define ARM64_CPUCAP_BOOT_CPU_FEATURE                  \
+#घोषणा ARM64_CPUCAP_BOOT_CPU_FEATURE                  \
 	(ARM64_CPUCAP_SCOPE_BOOT_CPU | ARM64_CPUCAP_PERMITTED_FOR_LATE_CPU)
 
-struct arm64_cpu_capabilities {
-	const char *desc;
+काष्ठा arm64_cpu_capabilities अणु
+	स्थिर अक्षर *desc;
 	u16 capability;
 	u16 type;
-	bool (*matches)(const struct arm64_cpu_capabilities *caps, int scope);
+	bool (*matches)(स्थिर काष्ठा arm64_cpu_capabilities *caps, पूर्णांक scope);
 	/*
 	 * Take the appropriate actions to configure this capability
-	 * for this CPU. If the capability is detected by the kernel
-	 * this will be called on all the CPUs in the system,
+	 * क्रम this CPU. If the capability is detected by the kernel
+	 * this will be called on all the CPUs in the प्रणाली,
 	 * including the hotplugged CPUs, regardless of whether the
-	 * capability is available on that specific CPU. This is
-	 * useful for some capabilities (e.g, working around CPU
+	 * capability is available on that specअगरic CPU. This is
+	 * useful क्रम some capabilities (e.g, working around CPU
 	 * errata), where all the CPUs must take some action (e.g,
-	 * changing system control/configuration). Thus, if an action
-	 * is required only if the CPU has the capability, then the
-	 * routine must check it before taking any action.
+	 * changing प्रणाली control/configuration). Thus, अगर an action
+	 * is required only अगर the CPU has the capability, then the
+	 * routine must check it beक्रमe taking any action.
 	 */
-	void (*cpu_enable)(const struct arm64_cpu_capabilities *cap);
-	union {
-		struct {	/* To be used for erratum handling only */
-			struct midr_range midr_range;
-			const struct arm64_midr_revidr {
+	व्योम (*cpu_enable)(स्थिर काष्ठा arm64_cpu_capabilities *cap);
+	जोड़ अणु
+		काष्ठा अणु	/* To be used क्रम erratum handling only */
+			काष्ठा midr_range midr_range;
+			स्थिर काष्ठा arm64_midr_revidr अणु
 				u32 midr_rv;		/* revision/variant */
 				u32 revidr_mask;
-			} * const fixed_revs;
-		};
+			पूर्ण * स्थिर fixed_revs;
+		पूर्ण;
 
-		const struct midr_range *midr_range_list;
-		struct {	/* Feature register checking */
+		स्थिर काष्ठा midr_range *midr_range_list;
+		काष्ठा अणु	/* Feature रेजिस्टर checking */
 			u32 sys_reg;
 			u8 field_pos;
 			u8 min_field_value;
 			u8 hwcap_type;
 			bool sign;
-			unsigned long hwcap;
-		};
-	};
+			अचिन्हित दीर्घ hwcap;
+		पूर्ण;
+	पूर्ण;
 
 	/*
-	 * An optional list of "matches/cpu_enable" pair for the same
+	 * An optional list of "matches/cpu_enable" pair क्रम the same
 	 * "capability" of the same "type" as described by the parent.
 	 * Only matches(), cpu_enable() and fields relevant to these
-	 * methods are significant in the list. The cpu_enable is
-	 * invoked only if the corresponding entry "matches()".
-	 * However, if a cpu_enable() method is associated
+	 * methods are signअगरicant in the list. The cpu_enable is
+	 * invoked only अगर the corresponding entry "matches()".
+	 * However, अगर a cpu_enable() method is associated
 	 * with multiple matches(), care should be taken that either
 	 * the match criteria are mutually exclusive, or that the
-	 * method is robust against being called multiple times.
+	 * method is robust against being called multiple बार.
 	 */
-	const struct arm64_cpu_capabilities *match_list;
-};
+	स्थिर काष्ठा arm64_cpu_capabilities *match_list;
+पूर्ण;
 
-static inline int cpucap_default_scope(const struct arm64_cpu_capabilities *cap)
-{
-	return cap->type & ARM64_CPUCAP_SCOPE_MASK;
-}
+अटल अंतरभूत पूर्णांक cpucap_शेष_scope(स्थिर काष्ठा arm64_cpu_capabilities *cap)
+अणु
+	वापस cap->type & ARM64_CPUCAP_SCOPE_MASK;
+पूर्ण
 
 /*
- * Generic helper for handling capabilities with multiple (match,enable) pairs
+ * Generic helper क्रम handling capabilities with multiple (match,enable) pairs
  * of call backs, sharing the same capability bit.
- * Iterate over each entry to see if at least one matches.
+ * Iterate over each entry to see अगर at least one matches.
  */
-static inline bool
-cpucap_multi_entry_cap_matches(const struct arm64_cpu_capabilities *entry,
-			       int scope)
-{
-	const struct arm64_cpu_capabilities *caps;
+अटल अंतरभूत bool
+cpucap_multi_entry_cap_matches(स्थिर काष्ठा arm64_cpu_capabilities *entry,
+			       पूर्णांक scope)
+अणु
+	स्थिर काष्ठा arm64_cpu_capabilities *caps;
 
-	for (caps = entry->match_list; caps->matches; caps++)
-		if (caps->matches(caps, scope))
-			return true;
+	क्रम (caps = entry->match_list; caps->matches; caps++)
+		अगर (caps->matches(caps, scope))
+			वापस true;
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static __always_inline bool is_vhe_hyp_code(void)
-{
-	/* Only defined for code run in VHE hyp context */
-	return __is_defined(__KVM_VHE_HYPERVISOR__);
-}
+अटल __always_अंतरभूत bool is_vhe_hyp_code(व्योम)
+अणु
+	/* Only defined क्रम code run in VHE hyp context */
+	वापस __is_defined(__KVM_VHE_HYPERVISOR__);
+पूर्ण
 
-static __always_inline bool is_nvhe_hyp_code(void)
-{
-	/* Only defined for code run in NVHE hyp context */
-	return __is_defined(__KVM_NVHE_HYPERVISOR__);
-}
+अटल __always_अंतरभूत bool is_nvhe_hyp_code(व्योम)
+अणु
+	/* Only defined क्रम code run in NVHE hyp context */
+	वापस __is_defined(__KVM_NVHE_HYPERVISOR__);
+पूर्ण
 
-static __always_inline bool is_hyp_code(void)
-{
-	return is_vhe_hyp_code() || is_nvhe_hyp_code();
-}
+अटल __always_अंतरभूत bool is_hyp_code(व्योम)
+अणु
+	वापस is_vhe_hyp_code() || is_nvhe_hyp_code();
+पूर्ण
 
-extern DECLARE_BITMAP(cpu_hwcaps, ARM64_NCAPS);
-extern struct static_key_false cpu_hwcap_keys[ARM64_NCAPS];
-extern struct static_key_false arm64_const_caps_ready;
+बाह्य DECLARE_BITMAP(cpu_hwcaps, ARM64_NCAPS);
+बाह्य काष्ठा अटल_key_false cpu_hwcap_keys[ARM64_NCAPS];
+बाह्य काष्ठा अटल_key_false arm64_स्थिर_caps_पढ़ोy;
 
 /* ARM64 CAPS + alternative_cb */
-#define ARM64_NPATCHABLE (ARM64_NCAPS + 1)
-extern DECLARE_BITMAP(boot_capabilities, ARM64_NPATCHABLE);
+#घोषणा ARM64_NPATCHABLE (ARM64_NCAPS + 1)
+बाह्य DECLARE_BITMAP(boot_capabilities, ARM64_NPATCHABLE);
 
-#define for_each_available_cap(cap)		\
-	for_each_set_bit(cap, cpu_hwcaps, ARM64_NCAPS)
+#घोषणा क्रम_each_available_cap(cap)		\
+	क्रम_each_set_bit(cap, cpu_hwcaps, ARM64_NCAPS)
 
-bool this_cpu_has_cap(unsigned int cap);
-void cpu_set_feature(unsigned int num);
-bool cpu_have_feature(unsigned int num);
-unsigned long cpu_get_elf_hwcap(void);
-unsigned long cpu_get_elf_hwcap2(void);
+bool this_cpu_has_cap(अचिन्हित पूर्णांक cap);
+व्योम cpu_set_feature(अचिन्हित पूर्णांक num);
+bool cpu_have_feature(अचिन्हित पूर्णांक num);
+अचिन्हित दीर्घ cpu_get_elf_hwcap(व्योम);
+अचिन्हित दीर्घ cpu_get_elf_hwcap2(व्योम);
 
-#define cpu_set_named_feature(name) cpu_set_feature(cpu_feature(name))
-#define cpu_have_named_feature(name) cpu_have_feature(cpu_feature(name))
+#घोषणा cpu_set_named_feature(name) cpu_set_feature(cpu_feature(name))
+#घोषणा cpu_have_named_feature(name) cpu_have_feature(cpu_feature(name))
 
-static __always_inline bool system_capabilities_finalized(void)
-{
-	return static_branch_likely(&arm64_const_caps_ready);
-}
-
-/*
- * Test for a capability with a runtime check.
- *
- * Before the capability is detected, this returns false.
- */
-static inline bool cpus_have_cap(unsigned int num)
-{
-	if (num >= ARM64_NCAPS)
-		return false;
-	return test_bit(num, cpu_hwcaps);
-}
+अटल __always_अंतरभूत bool प्रणाली_capabilities_finalized(व्योम)
+अणु
+	वापस अटल_branch_likely(&arm64_स्थिर_caps_पढ़ोy);
+पूर्ण
 
 /*
- * Test for a capability without a runtime check.
+ * Test क्रम a capability with a runसमय check.
  *
- * Before capabilities are finalized, this returns false.
- * After capabilities are finalized, this is patched to avoid a runtime check.
- *
- * @num must be a compile-time constant.
+ * Beक्रमe the capability is detected, this वापसs false.
  */
-static __always_inline bool __cpus_have_const_cap(int num)
-{
-	if (num >= ARM64_NCAPS)
-		return false;
-	return static_branch_unlikely(&cpu_hwcap_keys[num]);
-}
+अटल अंतरभूत bool cpus_have_cap(अचिन्हित पूर्णांक num)
+अणु
+	अगर (num >= ARM64_NCAPS)
+		वापस false;
+	वापस test_bit(num, cpu_hwcaps);
+पूर्ण
 
 /*
- * Test for a capability without a runtime check.
+ * Test क्रम a capability without a runसमय check.
  *
- * Before capabilities are finalized, this will BUG().
- * After capabilities are finalized, this is patched to avoid a runtime check.
+ * Beक्रमe capabilities are finalized, this वापसs false.
+ * After capabilities are finalized, this is patched to aव्योम a runसमय check.
  *
- * @num must be a compile-time constant.
+ * @num must be a compile-समय स्थिरant.
  */
-static __always_inline bool cpus_have_final_cap(int num)
-{
-	if (system_capabilities_finalized())
-		return __cpus_have_const_cap(num);
-	else
+अटल __always_अंतरभूत bool __cpus_have_स्थिर_cap(पूर्णांक num)
+अणु
+	अगर (num >= ARM64_NCAPS)
+		वापस false;
+	वापस अटल_branch_unlikely(&cpu_hwcap_keys[num]);
+पूर्ण
+
+/*
+ * Test क्रम a capability without a runसमय check.
+ *
+ * Beक्रमe capabilities are finalized, this will BUG().
+ * After capabilities are finalized, this is patched to aव्योम a runसमय check.
+ *
+ * @num must be a compile-समय स्थिरant.
+ */
+अटल __always_अंतरभूत bool cpus_have_final_cap(पूर्णांक num)
+अणु
+	अगर (प्रणाली_capabilities_finalized())
+		वापस __cpus_have_स्थिर_cap(num);
+	अन्यथा
 		BUG();
-}
+पूर्ण
 
 /*
- * Test for a capability, possibly with a runtime check for non-hyp code.
+ * Test क्रम a capability, possibly with a runसमय check क्रम non-hyp code.
  *
  * For hyp code, this behaves the same as cpus_have_final_cap().
  *
  * For non-hyp code:
- * Before capabilities are finalized, this behaves as cpus_have_cap().
- * After capabilities are finalized, this is patched to avoid a runtime check.
+ * Beक्रमe capabilities are finalized, this behaves as cpus_have_cap().
+ * After capabilities are finalized, this is patched to aव्योम a runसमय check.
  *
- * @num must be a compile-time constant.
+ * @num must be a compile-समय स्थिरant.
  */
-static __always_inline bool cpus_have_const_cap(int num)
-{
-	if (is_hyp_code())
-		return cpus_have_final_cap(num);
-	else if (system_capabilities_finalized())
-		return __cpus_have_const_cap(num);
-	else
-		return cpus_have_cap(num);
-}
+अटल __always_अंतरभूत bool cpus_have_स्थिर_cap(पूर्णांक num)
+अणु
+	अगर (is_hyp_code())
+		वापस cpus_have_final_cap(num);
+	अन्यथा अगर (प्रणाली_capabilities_finalized())
+		वापस __cpus_have_स्थिर_cap(num);
+	अन्यथा
+		वापस cpus_have_cap(num);
+पूर्ण
 
-static inline void cpus_set_cap(unsigned int num)
-{
-	if (num >= ARM64_NCAPS) {
+अटल अंतरभूत व्योम cpus_set_cap(अचिन्हित पूर्णांक num)
+अणु
+	अगर (num >= ARM64_NCAPS) अणु
 		pr_warn("Attempt to set an illegal CPU capability (%d >= %d)\n",
 			num, ARM64_NCAPS);
-	} else {
+	पूर्ण अन्यथा अणु
 		__set_bit(num, cpu_hwcaps);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static inline int __attribute_const__
-cpuid_feature_extract_signed_field_width(u64 features, int field, int width)
-{
-	return (s64)(features << (64 - width - field)) >> (64 - width);
-}
+अटल अंतरभूत पूर्णांक __attribute_स्थिर__
+cpuid_feature_extract_चिन्हित_field_width(u64 features, पूर्णांक field, पूर्णांक width)
+अणु
+	वापस (s64)(features << (64 - width - field)) >> (64 - width);
+पूर्ण
 
-static inline int __attribute_const__
-cpuid_feature_extract_signed_field(u64 features, int field)
-{
-	return cpuid_feature_extract_signed_field_width(features, field, 4);
-}
+अटल अंतरभूत पूर्णांक __attribute_स्थिर__
+cpuid_feature_extract_चिन्हित_field(u64 features, पूर्णांक field)
+अणु
+	वापस cpuid_feature_extract_चिन्हित_field_width(features, field, 4);
+पूर्ण
 
-static __always_inline unsigned int __attribute_const__
-cpuid_feature_extract_unsigned_field_width(u64 features, int field, int width)
-{
-	return (u64)(features << (64 - width - field)) >> (64 - width);
-}
+अटल __always_अंतरभूत अचिन्हित पूर्णांक __attribute_स्थिर__
+cpuid_feature_extract_अचिन्हित_field_width(u64 features, पूर्णांक field, पूर्णांक width)
+अणु
+	वापस (u64)(features << (64 - width - field)) >> (64 - width);
+पूर्ण
 
-static __always_inline unsigned int __attribute_const__
-cpuid_feature_extract_unsigned_field(u64 features, int field)
-{
-	return cpuid_feature_extract_unsigned_field_width(features, field, 4);
-}
+अटल __always_अंतरभूत अचिन्हित पूर्णांक __attribute_स्थिर__
+cpuid_feature_extract_अचिन्हित_field(u64 features, पूर्णांक field)
+अणु
+	वापस cpuid_feature_extract_अचिन्हित_field_width(features, field, 4);
+पूर्ण
 
 /*
- * Fields that identify the version of the Performance Monitors Extension do
+ * Fields that identअगरy the version of the Perक्रमmance Monitors Extension करो
  * not follow the standard ID scheme. See ARM DDI 0487E.a page D13-2825,
  * "Alternative ID scheme used for the Performance Monitors Extension version".
  */
-static inline u64 __attribute_const__
-cpuid_feature_cap_perfmon_field(u64 features, int field, u64 cap)
-{
-	u64 val = cpuid_feature_extract_unsigned_field(features, field);
+अटल अंतरभूत u64 __attribute_स्थिर__
+cpuid_feature_cap_perfmon_field(u64 features, पूर्णांक field, u64 cap)
+अणु
+	u64 val = cpuid_feature_extract_अचिन्हित_field(features, field);
 	u64 mask = GENMASK_ULL(field + 3, field);
 
 	/* Treat IMPLEMENTATION DEFINED functionality as unimplemented */
-	if (val == 0xf)
+	अगर (val == 0xf)
 		val = 0;
 
-	if (val > cap) {
+	अगर (val > cap) अणु
 		features &= ~mask;
 		features |= (cap << field) & mask;
-	}
+	पूर्ण
 
-	return features;
-}
+	वापस features;
+पूर्ण
 
-static inline u64 arm64_ftr_mask(const struct arm64_ftr_bits *ftrp)
-{
-	return (u64)GENMASK(ftrp->shift + ftrp->width - 1, ftrp->shift);
-}
+अटल अंतरभूत u64 arm64_ftr_mask(स्थिर काष्ठा arm64_ftr_bits *ftrp)
+अणु
+	वापस (u64)GENMASK(ftrp->shअगरt + ftrp->width - 1, ftrp->shअगरt);
+पूर्ण
 
-static inline u64 arm64_ftr_reg_user_value(const struct arm64_ftr_reg *reg)
-{
-	return (reg->user_val | (reg->sys_val & reg->user_mask));
-}
+अटल अंतरभूत u64 arm64_ftr_reg_user_value(स्थिर काष्ठा arm64_ftr_reg *reg)
+अणु
+	वापस (reg->user_val | (reg->sys_val & reg->user_mask));
+पूर्ण
 
-static inline int __attribute_const__
-cpuid_feature_extract_field_width(u64 features, int field, int width, bool sign)
-{
-	return (sign) ?
-		cpuid_feature_extract_signed_field_width(features, field, width) :
-		cpuid_feature_extract_unsigned_field_width(features, field, width);
-}
+अटल अंतरभूत पूर्णांक __attribute_स्थिर__
+cpuid_feature_extract_field_width(u64 features, पूर्णांक field, पूर्णांक width, bool sign)
+अणु
+	वापस (sign) ?
+		cpuid_feature_extract_चिन्हित_field_width(features, field, width) :
+		cpuid_feature_extract_अचिन्हित_field_width(features, field, width);
+पूर्ण
 
-static inline int __attribute_const__
-cpuid_feature_extract_field(u64 features, int field, bool sign)
-{
-	return cpuid_feature_extract_field_width(features, field, 4, sign);
-}
+अटल अंतरभूत पूर्णांक __attribute_स्थिर__
+cpuid_feature_extract_field(u64 features, पूर्णांक field, bool sign)
+अणु
+	वापस cpuid_feature_extract_field_width(features, field, 4, sign);
+पूर्ण
 
-static inline s64 arm64_ftr_value(const struct arm64_ftr_bits *ftrp, u64 val)
-{
-	return (s64)cpuid_feature_extract_field_width(val, ftrp->shift, ftrp->width, ftrp->sign);
-}
+अटल अंतरभूत s64 arm64_ftr_value(स्थिर काष्ठा arm64_ftr_bits *ftrp, u64 val)
+अणु
+	वापस (s64)cpuid_feature_extract_field_width(val, ftrp->shअगरt, ftrp->width, ftrp->sign);
+पूर्ण
 
-static inline bool id_aa64mmfr0_mixed_endian_el0(u64 mmfr0)
-{
-	return cpuid_feature_extract_unsigned_field(mmfr0, ID_AA64MMFR0_BIGENDEL_SHIFT) == 0x1 ||
-		cpuid_feature_extract_unsigned_field(mmfr0, ID_AA64MMFR0_BIGENDEL0_SHIFT) == 0x1;
-}
+अटल अंतरभूत bool id_aa64mmfr0_mixed_endian_el0(u64 mmfr0)
+अणु
+	वापस cpuid_feature_extract_अचिन्हित_field(mmfr0, ID_AA64MMFR0_BIGENDEL_SHIFT) == 0x1 ||
+		cpuid_feature_extract_अचिन्हित_field(mmfr0, ID_AA64MMFR0_BIGENDEL0_SHIFT) == 0x1;
+पूर्ण
 
-static inline bool id_aa64pfr0_32bit_el1(u64 pfr0)
-{
-	u32 val = cpuid_feature_extract_unsigned_field(pfr0, ID_AA64PFR0_EL1_SHIFT);
+अटल अंतरभूत bool id_aa64pfr0_32bit_el1(u64 pfr0)
+अणु
+	u32 val = cpuid_feature_extract_अचिन्हित_field(pfr0, ID_AA64PFR0_EL1_SHIFT);
 
-	return val == ID_AA64PFR0_EL1_32BIT_64BIT;
-}
+	वापस val == ID_AA64PFR0_EL1_32BIT_64BIT;
+पूर्ण
 
-static inline bool id_aa64pfr0_32bit_el0(u64 pfr0)
-{
-	u32 val = cpuid_feature_extract_unsigned_field(pfr0, ID_AA64PFR0_EL0_SHIFT);
+अटल अंतरभूत bool id_aa64pfr0_32bit_el0(u64 pfr0)
+अणु
+	u32 val = cpuid_feature_extract_अचिन्हित_field(pfr0, ID_AA64PFR0_EL0_SHIFT);
 
-	return val == ID_AA64PFR0_EL0_32BIT_64BIT;
-}
+	वापस val == ID_AA64PFR0_EL0_32BIT_64BIT;
+पूर्ण
 
-static inline bool id_aa64pfr0_sve(u64 pfr0)
-{
-	u32 val = cpuid_feature_extract_unsigned_field(pfr0, ID_AA64PFR0_SVE_SHIFT);
+अटल अंतरभूत bool id_aa64pfr0_sve(u64 pfr0)
+अणु
+	u32 val = cpuid_feature_extract_अचिन्हित_field(pfr0, ID_AA64PFR0_SVE_SHIFT);
 
-	return val > 0;
-}
+	वापस val > 0;
+पूर्ण
 
-void __init setup_cpu_features(void);
-void check_local_cpu_capabilities(void);
+व्योम __init setup_cpu_features(व्योम);
+व्योम check_local_cpu_capabilities(व्योम);
 
-u64 read_sanitised_ftr_reg(u32 id);
-u64 __read_sysreg_by_encoding(u32 sys_id);
+u64 पढ़ो_sanitised_ftr_reg(u32 id);
+u64 __पढ़ो_sysreg_by_encoding(u32 sys_id);
 
-static inline bool cpu_supports_mixed_endian_el0(void)
-{
-	return id_aa64mmfr0_mixed_endian_el0(read_cpuid(ID_AA64MMFR0_EL1));
-}
+अटल अंतरभूत bool cpu_supports_mixed_endian_el0(व्योम)
+अणु
+	वापस id_aa64mmfr0_mixed_endian_el0(पढ़ो_cpuid(ID_AA64MMFR0_EL1));
+पूर्ण
 
-static inline bool system_supports_32bit_el0(void)
-{
-	return cpus_have_const_cap(ARM64_HAS_32BIT_EL0);
-}
+अटल अंतरभूत bool प्रणाली_supports_32bit_el0(व्योम)
+अणु
+	वापस cpus_have_स्थिर_cap(ARM64_HAS_32BIT_EL0);
+पूर्ण
 
-static inline bool system_supports_4kb_granule(void)
-{
+अटल अंतरभूत bool प्रणाली_supports_4kb_granule(व्योम)
+अणु
 	u64 mmfr0;
 	u32 val;
 
-	mmfr0 =	read_sanitised_ftr_reg(SYS_ID_AA64MMFR0_EL1);
-	val = cpuid_feature_extract_unsigned_field(mmfr0,
+	mmfr0 =	पढ़ो_sanitised_ftr_reg(SYS_ID_AA64MMFR0_EL1);
+	val = cpuid_feature_extract_अचिन्हित_field(mmfr0,
 						ID_AA64MMFR0_TGRAN4_SHIFT);
 
-	return val == ID_AA64MMFR0_TGRAN4_SUPPORTED;
-}
+	वापस val == ID_AA64MMFR0_TGRAN4_SUPPORTED;
+पूर्ण
 
-static inline bool system_supports_64kb_granule(void)
-{
+अटल अंतरभूत bool प्रणाली_supports_64kb_granule(व्योम)
+अणु
 	u64 mmfr0;
 	u32 val;
 
-	mmfr0 =	read_sanitised_ftr_reg(SYS_ID_AA64MMFR0_EL1);
-	val = cpuid_feature_extract_unsigned_field(mmfr0,
+	mmfr0 =	पढ़ो_sanitised_ftr_reg(SYS_ID_AA64MMFR0_EL1);
+	val = cpuid_feature_extract_अचिन्हित_field(mmfr0,
 						ID_AA64MMFR0_TGRAN64_SHIFT);
 
-	return val == ID_AA64MMFR0_TGRAN64_SUPPORTED;
-}
+	वापस val == ID_AA64MMFR0_TGRAN64_SUPPORTED;
+पूर्ण
 
-static inline bool system_supports_16kb_granule(void)
-{
+अटल अंतरभूत bool प्रणाली_supports_16kb_granule(व्योम)
+अणु
 	u64 mmfr0;
 	u32 val;
 
-	mmfr0 =	read_sanitised_ftr_reg(SYS_ID_AA64MMFR0_EL1);
-	val = cpuid_feature_extract_unsigned_field(mmfr0,
+	mmfr0 =	पढ़ो_sanitised_ftr_reg(SYS_ID_AA64MMFR0_EL1);
+	val = cpuid_feature_extract_अचिन्हित_field(mmfr0,
 						ID_AA64MMFR0_TGRAN16_SHIFT);
 
-	return val == ID_AA64MMFR0_TGRAN16_SUPPORTED;
-}
+	वापस val == ID_AA64MMFR0_TGRAN16_SUPPORTED;
+पूर्ण
 
-static inline bool system_supports_mixed_endian_el0(void)
-{
-	return id_aa64mmfr0_mixed_endian_el0(read_sanitised_ftr_reg(SYS_ID_AA64MMFR0_EL1));
-}
+अटल अंतरभूत bool प्रणाली_supports_mixed_endian_el0(व्योम)
+अणु
+	वापस id_aa64mmfr0_mixed_endian_el0(पढ़ो_sanitised_ftr_reg(SYS_ID_AA64MMFR0_EL1));
+पूर्ण
 
-static inline bool system_supports_mixed_endian(void)
-{
+अटल अंतरभूत bool प्रणाली_supports_mixed_endian(व्योम)
+अणु
 	u64 mmfr0;
 	u32 val;
 
-	mmfr0 =	read_sanitised_ftr_reg(SYS_ID_AA64MMFR0_EL1);
-	val = cpuid_feature_extract_unsigned_field(mmfr0,
+	mmfr0 =	पढ़ो_sanitised_ftr_reg(SYS_ID_AA64MMFR0_EL1);
+	val = cpuid_feature_extract_अचिन्हित_field(mmfr0,
 						ID_AA64MMFR0_BIGENDEL_SHIFT);
 
-	return val == 0x1;
-}
+	वापस val == 0x1;
+पूर्ण
 
-static __always_inline bool system_supports_fpsimd(void)
-{
-	return !cpus_have_const_cap(ARM64_HAS_NO_FPSIMD);
-}
+अटल __always_अंतरभूत bool प्रणाली_supports_fpsimd(व्योम)
+अणु
+	वापस !cpus_have_स्थिर_cap(ARM64_HAS_NO_FPSIMD);
+पूर्ण
 
-static inline bool system_uses_hw_pan(void)
-{
-	return IS_ENABLED(CONFIG_ARM64_PAN) &&
-		cpus_have_const_cap(ARM64_HAS_PAN);
-}
+अटल अंतरभूत bool प्रणाली_uses_hw_pan(व्योम)
+अणु
+	वापस IS_ENABLED(CONFIG_ARM64_PAN) &&
+		cpus_have_स्थिर_cap(ARM64_HAS_PAN);
+पूर्ण
 
-static inline bool system_uses_ttbr0_pan(void)
-{
-	return IS_ENABLED(CONFIG_ARM64_SW_TTBR0_PAN) &&
-		!system_uses_hw_pan();
-}
+अटल अंतरभूत bool प्रणाली_uses_ttbr0_pan(व्योम)
+अणु
+	वापस IS_ENABLED(CONFIG_ARM64_SW_TTBR0_PAN) &&
+		!प्रणाली_uses_hw_pan();
+पूर्ण
 
-static __always_inline bool system_supports_sve(void)
-{
-	return IS_ENABLED(CONFIG_ARM64_SVE) &&
-		cpus_have_const_cap(ARM64_SVE);
-}
+अटल __always_अंतरभूत bool प्रणाली_supports_sve(व्योम)
+अणु
+	वापस IS_ENABLED(CONFIG_ARM64_SVE) &&
+		cpus_have_स्थिर_cap(ARM64_SVE);
+पूर्ण
 
-static __always_inline bool system_supports_cnp(void)
-{
-	return IS_ENABLED(CONFIG_ARM64_CNP) &&
-		cpus_have_const_cap(ARM64_HAS_CNP);
-}
+अटल __always_अंतरभूत bool प्रणाली_supports_cnp(व्योम)
+अणु
+	वापस IS_ENABLED(CONFIG_ARM64_CNP) &&
+		cpus_have_स्थिर_cap(ARM64_HAS_CNP);
+पूर्ण
 
-static inline bool system_supports_address_auth(void)
-{
-	return IS_ENABLED(CONFIG_ARM64_PTR_AUTH) &&
-		cpus_have_const_cap(ARM64_HAS_ADDRESS_AUTH);
-}
+अटल अंतरभूत bool प्रणाली_supports_address_auth(व्योम)
+अणु
+	वापस IS_ENABLED(CONFIG_ARM64_PTR_AUTH) &&
+		cpus_have_स्थिर_cap(ARM64_HAS_ADDRESS_AUTH);
+पूर्ण
 
-static inline bool system_supports_generic_auth(void)
-{
-	return IS_ENABLED(CONFIG_ARM64_PTR_AUTH) &&
-		cpus_have_const_cap(ARM64_HAS_GENERIC_AUTH);
-}
+अटल अंतरभूत bool प्रणाली_supports_generic_auth(व्योम)
+अणु
+	वापस IS_ENABLED(CONFIG_ARM64_PTR_AUTH) &&
+		cpus_have_स्थिर_cap(ARM64_HAS_GENERIC_AUTH);
+पूर्ण
 
-static inline bool system_has_full_ptr_auth(void)
-{
-	return system_supports_address_auth() && system_supports_generic_auth();
-}
+अटल अंतरभूत bool प्रणाली_has_full_ptr_auth(व्योम)
+अणु
+	वापस प्रणाली_supports_address_auth() && प्रणाली_supports_generic_auth();
+पूर्ण
 
-static __always_inline bool system_uses_irq_prio_masking(void)
-{
-	return IS_ENABLED(CONFIG_ARM64_PSEUDO_NMI) &&
-	       cpus_have_const_cap(ARM64_HAS_IRQ_PRIO_MASKING);
-}
+अटल __always_अंतरभूत bool प्रणाली_uses_irq_prio_masking(व्योम)
+अणु
+	वापस IS_ENABLED(CONFIG_ARM64_PSEUDO_NMI) &&
+	       cpus_have_स्थिर_cap(ARM64_HAS_IRQ_PRIO_MASKING);
+पूर्ण
 
-static inline bool system_supports_mte(void)
-{
-	return IS_ENABLED(CONFIG_ARM64_MTE) &&
-		cpus_have_const_cap(ARM64_MTE);
-}
+अटल अंतरभूत bool प्रणाली_supports_mte(व्योम)
+अणु
+	वापस IS_ENABLED(CONFIG_ARM64_MTE) &&
+		cpus_have_स्थिर_cap(ARM64_MTE);
+पूर्ण
 
-static inline bool system_has_prio_mask_debugging(void)
-{
-	return IS_ENABLED(CONFIG_ARM64_DEBUG_PRIORITY_MASKING) &&
-	       system_uses_irq_prio_masking();
-}
+अटल अंतरभूत bool प्रणाली_has_prio_mask_debugging(व्योम)
+अणु
+	वापस IS_ENABLED(CONFIG_ARM64_DEBUG_PRIORITY_MASKING) &&
+	       प्रणाली_uses_irq_prio_masking();
+पूर्ण
 
-static inline bool system_supports_bti(void)
-{
-	return IS_ENABLED(CONFIG_ARM64_BTI) && cpus_have_const_cap(ARM64_BTI);
-}
+अटल अंतरभूत bool प्रणाली_supports_bti(व्योम)
+अणु
+	वापस IS_ENABLED(CONFIG_ARM64_BTI) && cpus_have_स्थिर_cap(ARM64_BTI);
+पूर्ण
 
-static inline bool system_supports_tlb_range(void)
-{
-	return IS_ENABLED(CONFIG_ARM64_TLB_RANGE) &&
-		cpus_have_const_cap(ARM64_HAS_TLB_RANGE);
-}
+अटल अंतरभूत bool प्रणाली_supports_tlb_range(व्योम)
+अणु
+	वापस IS_ENABLED(CONFIG_ARM64_TLB_RANGE) &&
+		cpus_have_स्थिर_cap(ARM64_HAS_TLB_RANGE);
+पूर्ण
 
-extern int do_emulate_mrs(struct pt_regs *regs, u32 sys_reg, u32 rt);
+बाह्य पूर्णांक करो_emulate_mrs(काष्ठा pt_regs *regs, u32 sys_reg, u32 rt);
 
-static inline u32 id_aa64mmfr0_parange_to_phys_shift(int parange)
-{
-	switch (parange) {
-	case 0: return 32;
-	case 1: return 36;
-	case 2: return 40;
-	case 3: return 42;
-	case 4: return 44;
-	case 5: return 48;
-	case 6: return 52;
+अटल अंतरभूत u32 id_aa64mmfr0_parange_to_phys_shअगरt(पूर्णांक parange)
+अणु
+	चयन (parange) अणु
+	हाल 0: वापस 32;
+	हाल 1: वापस 36;
+	हाल 2: वापस 40;
+	हाल 3: वापस 42;
+	हाल 4: वापस 44;
+	हाल 5: वापस 48;
+	हाल 6: वापस 52;
 	/*
 	 * A future PE could use a value unknown to the kernel.
 	 * However, by the "D10.1.4 Principles of the ID scheme
-	 * for fields in ID registers", ARM DDI 0487C.a, any new
-	 * value is guaranteed to be higher than what we know already.
-	 * As a safe limit, we return the limit supported by the kernel.
+	 * क्रम fields in ID रेजिस्टरs", ARM DDI 0487C.a, any new
+	 * value is guaranteed to be higher than what we know alपढ़ोy.
+	 * As a safe limit, we वापस the limit supported by the kernel.
 	 */
-	default: return CONFIG_ARM64_PA_BITS;
-	}
-}
+	शेष: वापस CONFIG_ARM64_PA_BITS;
+	पूर्ण
+पूर्ण
 
 /* Check whether hardware update of the Access flag is supported */
-static inline bool cpu_has_hw_af(void)
-{
+अटल अंतरभूत bool cpu_has_hw_af(व्योम)
+अणु
 	u64 mmfr1;
 
-	if (!IS_ENABLED(CONFIG_ARM64_HW_AFDBM))
-		return false;
+	अगर (!IS_ENABLED(CONFIG_ARM64_HW_AFDBM))
+		वापस false;
 
-	mmfr1 = read_cpuid(ID_AA64MMFR1_EL1);
-	return cpuid_feature_extract_unsigned_field(mmfr1,
+	mmfr1 = पढ़ो_cpuid(ID_AA64MMFR1_EL1);
+	वापस cpuid_feature_extract_अचिन्हित_field(mmfr1,
 						ID_AA64MMFR1_HADBS_SHIFT);
-}
+पूर्ण
 
-static inline bool cpu_has_pan(void)
-{
-	u64 mmfr1 = read_cpuid(ID_AA64MMFR1_EL1);
-	return cpuid_feature_extract_unsigned_field(mmfr1,
+अटल अंतरभूत bool cpu_has_pan(व्योम)
+अणु
+	u64 mmfr1 = पढ़ो_cpuid(ID_AA64MMFR1_EL1);
+	वापस cpuid_feature_extract_अचिन्हित_field(mmfr1,
 						    ID_AA64MMFR1_PAN_SHIFT);
-}
+पूर्ण
 
-#ifdef CONFIG_ARM64_AMU_EXTN
+#अगर_घोषित CONFIG_ARM64_AMU_EXTN
 /* Check whether the cpu supports the Activity Monitors Unit (AMU) */
-extern bool cpu_has_amu_feat(int cpu);
-#else
-static inline bool cpu_has_amu_feat(int cpu)
-{
-	return false;
-}
-#endif
+बाह्य bool cpu_has_amu_feat(पूर्णांक cpu);
+#अन्यथा
+अटल अंतरभूत bool cpu_has_amu_feat(पूर्णांक cpu)
+अणु
+	वापस false;
+पूर्ण
+#पूर्ण_अगर
 
 /* Get a cpu that supports the Activity Monitors Unit (AMU) */
-extern int get_cpu_with_amu_feat(void);
+बाह्य पूर्णांक get_cpu_with_amu_feat(व्योम);
 
-static inline unsigned int get_vmid_bits(u64 mmfr1)
-{
-	int vmid_bits;
+अटल अंतरभूत अचिन्हित पूर्णांक get_vmid_bits(u64 mmfr1)
+अणु
+	पूर्णांक vmid_bits;
 
-	vmid_bits = cpuid_feature_extract_unsigned_field(mmfr1,
+	vmid_bits = cpuid_feature_extract_अचिन्हित_field(mmfr1,
 						ID_AA64MMFR1_VMIDBITS_SHIFT);
-	if (vmid_bits == ID_AA64MMFR1_VMIDBITS_16)
-		return 16;
+	अगर (vmid_bits == ID_AA64MMFR1_VMIDBITS_16)
+		वापस 16;
 
 	/*
-	 * Return the default here even if any reserved
-	 * value is fetched from the system register.
+	 * Return the शेष here even अगर any reserved
+	 * value is fetched from the प्रणाली रेजिस्टर.
 	 */
-	return 8;
-}
+	वापस 8;
+पूर्ण
 
-extern struct arm64_ftr_override id_aa64mmfr1_override;
-extern struct arm64_ftr_override id_aa64pfr1_override;
-extern struct arm64_ftr_override id_aa64isar1_override;
+बाह्य काष्ठा arm64_ftr_override id_aa64mmfr1_override;
+बाह्य काष्ठा arm64_ftr_override id_aa64pfr1_override;
+बाह्य काष्ठा arm64_ftr_override id_aa64isar1_override;
 
-u32 get_kvm_ipa_limit(void);
-void dump_cpu_features(void);
+u32 get_kvm_ipa_limit(व्योम);
+व्योम dump_cpu_features(व्योम);
 
-#endif /* __ASSEMBLY__ */
+#पूर्ण_अगर /* __ASSEMBLY__ */
 
-#endif
+#पूर्ण_अगर

@@ -1,176 +1,177 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * Qualcomm Wireless Connectivity Subsystem Iris driver
+ * Qualcomm Wireless Connectivity Subप्रणाली Iris driver
  *
  * Copyright (C) 2016 Linaro Ltd
  * Copyright (C) 2014 Sony Mobile Communications AB
  * Copyright (c) 2012-2013, The Linux Foundation. All rights reserved.
  */
 
-#include <linux/clk.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/of_device.h>
-#include <linux/platform_device.h>
-#include <linux/regulator/consumer.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/regulator/consumer.h>
 
-#include "qcom_wcnss.h"
+#समावेश "qcom_wcnss.h"
 
-struct qcom_iris {
-	struct device *dev;
+काष्ठा qcom_iris अणु
+	काष्ठा device *dev;
 
-	struct clk *xo_clk;
+	काष्ठा clk *xo_clk;
 
-	struct regulator_bulk_data *vregs;
-	size_t num_vregs;
-};
+	काष्ठा regulator_bulk_data *vregs;
+	माप_प्रकार num_vregs;
+पूर्ण;
 
-struct iris_data {
-	const struct wcnss_vreg_info *vregs;
-	size_t num_vregs;
+काष्ठा iris_data अणु
+	स्थिर काष्ठा wcnss_vreg_info *vregs;
+	माप_प्रकार num_vregs;
 
 	bool use_48mhz_xo;
-};
+पूर्ण;
 
-static const struct iris_data wcn3620_data = {
-	.vregs = (struct wcnss_vreg_info[]) {
-		{ "vddxo",  1800000, 1800000, 10000 },
-		{ "vddrfa", 1300000, 1300000, 100000 },
-		{ "vddpa",  3300000, 3300000, 515000 },
-		{ "vdddig", 1800000, 1800000, 10000 },
-	},
+अटल स्थिर काष्ठा iris_data wcn3620_data = अणु
+	.vregs = (काष्ठा wcnss_vreg_info[]) अणु
+		अणु "vddxo",  1800000, 1800000, 10000 पूर्ण,
+		अणु "vddrfa", 1300000, 1300000, 100000 पूर्ण,
+		अणु "vddpa",  3300000, 3300000, 515000 पूर्ण,
+		अणु "vdddig", 1800000, 1800000, 10000 पूर्ण,
+	पूर्ण,
 	.num_vregs = 4,
 	.use_48mhz_xo = false,
-};
+पूर्ण;
 
-static const struct iris_data wcn3660_data = {
-	.vregs = (struct wcnss_vreg_info[]) {
-		{ "vddxo",  1800000, 1800000, 10000 },
-		{ "vddrfa", 1300000, 1300000, 100000 },
-		{ "vddpa",  2900000, 3000000, 515000 },
-		{ "vdddig", 1200000, 1225000, 10000 },
-	},
+अटल स्थिर काष्ठा iris_data wcn3660_data = अणु
+	.vregs = (काष्ठा wcnss_vreg_info[]) अणु
+		अणु "vddxo",  1800000, 1800000, 10000 पूर्ण,
+		अणु "vddrfa", 1300000, 1300000, 100000 पूर्ण,
+		अणु "vddpa",  2900000, 3000000, 515000 पूर्ण,
+		अणु "vdddig", 1200000, 1225000, 10000 पूर्ण,
+	पूर्ण,
 	.num_vregs = 4,
 	.use_48mhz_xo = true,
-};
+पूर्ण;
 
-static const struct iris_data wcn3680_data = {
-	.vregs = (struct wcnss_vreg_info[]) {
-		{ "vddxo",  1800000, 1800000, 10000 },
-		{ "vddrfa", 1300000, 1300000, 100000 },
-		{ "vddpa",  3300000, 3300000, 515000 },
-		{ "vdddig", 1800000, 1800000, 10000 },
-	},
+अटल स्थिर काष्ठा iris_data wcn3680_data = अणु
+	.vregs = (काष्ठा wcnss_vreg_info[]) अणु
+		अणु "vddxo",  1800000, 1800000, 10000 पूर्ण,
+		अणु "vddrfa", 1300000, 1300000, 100000 पूर्ण,
+		अणु "vddpa",  3300000, 3300000, 515000 पूर्ण,
+		अणु "vdddig", 1800000, 1800000, 10000 पूर्ण,
+	पूर्ण,
 	.num_vregs = 4,
 	.use_48mhz_xo = true,
-};
+पूर्ण;
 
-int qcom_iris_enable(struct qcom_iris *iris)
-{
-	int ret;
+पूर्णांक qcom_iris_enable(काष्ठा qcom_iris *iris)
+अणु
+	पूर्णांक ret;
 
 	ret = regulator_bulk_enable(iris->num_vregs, iris->vregs);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ret = clk_prepare_enable(iris->xo_clk);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(iris->dev, "failed to enable xo clk\n");
-		goto disable_regulators;
-	}
+		जाओ disable_regulators;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 disable_regulators:
 	regulator_bulk_disable(iris->num_vregs, iris->vregs);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-void qcom_iris_disable(struct qcom_iris *iris)
-{
+व्योम qcom_iris_disable(काष्ठा qcom_iris *iris)
+अणु
 	clk_disable_unprepare(iris->xo_clk);
 	regulator_bulk_disable(iris->num_vregs, iris->vregs);
-}
+पूर्ण
 
-static int qcom_iris_probe(struct platform_device *pdev)
-{
-	const struct iris_data *data;
-	struct qcom_wcnss *wcnss;
-	struct qcom_iris *iris;
-	int ret;
-	int i;
+अटल पूर्णांक qcom_iris_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	स्थिर काष्ठा iris_data *data;
+	काष्ठा qcom_wcnss *wcnss;
+	काष्ठा qcom_iris *iris;
+	पूर्णांक ret;
+	पूर्णांक i;
 
-	iris = devm_kzalloc(&pdev->dev, sizeof(struct qcom_iris), GFP_KERNEL);
-	if (!iris)
-		return -ENOMEM;
+	iris = devm_kzalloc(&pdev->dev, माप(काष्ठा qcom_iris), GFP_KERNEL);
+	अगर (!iris)
+		वापस -ENOMEM;
 
 	data = of_device_get_match_data(&pdev->dev);
 	wcnss = dev_get_drvdata(pdev->dev.parent);
 
 	iris->xo_clk = devm_clk_get(&pdev->dev, "xo");
-	if (IS_ERR(iris->xo_clk)) {
-		if (PTR_ERR(iris->xo_clk) != -EPROBE_DEFER)
+	अगर (IS_ERR(iris->xo_clk)) अणु
+		अगर (PTR_ERR(iris->xo_clk) != -EPROBE_DEFER)
 			dev_err(&pdev->dev, "failed to acquire xo clk\n");
-		return PTR_ERR(iris->xo_clk);
-	}
+		वापस PTR_ERR(iris->xo_clk);
+	पूर्ण
 
 	iris->num_vregs = data->num_vregs;
-	iris->vregs = devm_kcalloc(&pdev->dev,
+	iris->vregs = devm_kसुस्मृति(&pdev->dev,
 				   iris->num_vregs,
-				   sizeof(struct regulator_bulk_data),
+				   माप(काष्ठा regulator_bulk_data),
 				   GFP_KERNEL);
-	if (!iris->vregs)
-		return -ENOMEM;
+	अगर (!iris->vregs)
+		वापस -ENOMEM;
 
-	for (i = 0; i < iris->num_vregs; i++)
+	क्रम (i = 0; i < iris->num_vregs; i++)
 		iris->vregs[i].supply = data->vregs[i].name;
 
 	ret = devm_regulator_bulk_get(&pdev->dev, iris->num_vregs, iris->vregs);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&pdev->dev, "failed to get regulators\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	for (i = 0; i < iris->num_vregs; i++) {
-		if (data->vregs[i].max_voltage)
+	क्रम (i = 0; i < iris->num_vregs; i++) अणु
+		अगर (data->vregs[i].max_voltage)
 			regulator_set_voltage(iris->vregs[i].consumer,
 					      data->vregs[i].min_voltage,
 					      data->vregs[i].max_voltage);
 
-		if (data->vregs[i].load_uA)
+		अगर (data->vregs[i].load_uA)
 			regulator_set_load(iris->vregs[i].consumer,
 					   data->vregs[i].load_uA);
-	}
+	पूर्ण
 
 	qcom_wcnss_assign_iris(wcnss, iris, data->use_48mhz_xo);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int qcom_iris_remove(struct platform_device *pdev)
-{
-	struct qcom_wcnss *wcnss = dev_get_drvdata(pdev->dev.parent);
+अटल पूर्णांक qcom_iris_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा qcom_wcnss *wcnss = dev_get_drvdata(pdev->dev.parent);
 
-	qcom_wcnss_assign_iris(wcnss, NULL, false);
+	qcom_wcnss_assign_iris(wcnss, शून्य, false);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct of_device_id iris_of_match[] = {
-	{ .compatible = "qcom,wcn3620", .data = &wcn3620_data },
-	{ .compatible = "qcom,wcn3660", .data = &wcn3660_data },
-	{ .compatible = "qcom,wcn3660b", .data = &wcn3680_data },
-	{ .compatible = "qcom,wcn3680", .data = &wcn3680_data },
-	{}
-};
+अटल स्थिर काष्ठा of_device_id iris_of_match[] = अणु
+	अणु .compatible = "qcom,wcn3620", .data = &wcn3620_data पूर्ण,
+	अणु .compatible = "qcom,wcn3660", .data = &wcn3660_data पूर्ण,
+	अणु .compatible = "qcom,wcn3660b", .data = &wcn3680_data पूर्ण,
+	अणु .compatible = "qcom,wcn3680", .data = &wcn3680_data पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, iris_of_match);
 
-struct platform_driver qcom_iris_driver = {
+काष्ठा platक्रमm_driver qcom_iris_driver = अणु
 	.probe = qcom_iris_probe,
-	.remove = qcom_iris_remove,
-	.driver = {
+	.हटाओ = qcom_iris_हटाओ,
+	.driver = अणु
 		.name = "qcom-iris",
 		.of_match_table = iris_of_match,
-	},
-};
+	पूर्ण,
+पूर्ण;

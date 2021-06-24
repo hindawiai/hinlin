@@ -1,79 +1,80 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * Performance events ring-buffer code:
+ * Perक्रमmance events ring-buffer code:
  *
  *  Copyright (C) 2008 Thomas Gleixner <tglx@linutronix.de>
  *  Copyright (C) 2008-2011 Red Hat, Inc., Ingo Molnar
  *  Copyright (C) 2008-2011 Red Hat, Inc., Peter Zijlstra
- *  Copyright  ©  2009 Paul Mackerras, IBM Corp. <paulus@au1.ibm.com>
+ *  Copyright  तऊ  2009 Paul Mackerras, IBM Corp. <paulus@au1.ibm.com>
  */
 
-#include <linux/perf_event.h>
-#include <linux/vmalloc.h>
-#include <linux/slab.h>
-#include <linux/circ_buf.h>
-#include <linux/poll.h>
-#include <linux/nospec.h>
+#समावेश <linux/perf_event.h>
+#समावेश <linux/vदो_स्मृति.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/circ_buf.h>
+#समावेश <linux/poll.h>
+#समावेश <linux/nospec.h>
 
-#include "internal.h"
+#समावेश "internal.h"
 
-static void perf_output_wakeup(struct perf_output_handle *handle)
-{
+अटल व्योम perf_output_wakeup(काष्ठा perf_output_handle *handle)
+अणु
 	atomic_set(&handle->rb->poll, EPOLLIN);
 
 	handle->event->pending_wakeup = 1;
 	irq_work_queue(&handle->event->pending);
-}
+पूर्ण
 
 /*
- * We need to ensure a later event_id doesn't publish a head when a former
- * event isn't done writing. However since we need to deal with NMIs we
+ * We need to ensure a later event_id करोesn't publish a head when a क्रमmer
+ * event isn't करोne writing. However since we need to deal with NMIs we
  * cannot fully serialize things.
  *
  * We only publish the head (and generate a wakeup) when the outer-most
  * event completes.
  */
-static void perf_output_get_handle(struct perf_output_handle *handle)
-{
-	struct perf_buffer *rb = handle->rb;
+अटल व्योम perf_output_get_handle(काष्ठा perf_output_handle *handle)
+अणु
+	काष्ठा perf_buffer *rb = handle->rb;
 
 	preempt_disable();
 
 	/*
-	 * Avoid an explicit LOAD/STORE such that architectures with memops
+	 * Aव्योम an explicit LOAD/STORE such that architectures with memops
 	 * can use them.
 	 */
-	(*(volatile unsigned int *)&rb->nest)++;
-	handle->wakeup = local_read(&rb->wakeup);
-}
+	(*(अस्थिर अचिन्हित पूर्णांक *)&rb->nest)++;
+	handle->wakeup = local_पढ़ो(&rb->wakeup);
+पूर्ण
 
-static void perf_output_put_handle(struct perf_output_handle *handle)
-{
-	struct perf_buffer *rb = handle->rb;
-	unsigned long head;
-	unsigned int nest;
+अटल व्योम perf_output_put_handle(काष्ठा perf_output_handle *handle)
+अणु
+	काष्ठा perf_buffer *rb = handle->rb;
+	अचिन्हित दीर्घ head;
+	अचिन्हित पूर्णांक nest;
 
 	/*
 	 * If this isn't the outermost nesting, we don't have to update
 	 * @rb->user_page->data_head.
 	 */
 	nest = READ_ONCE(rb->nest);
-	if (nest > 1) {
+	अगर (nest > 1) अणु
 		WRITE_ONCE(rb->nest, nest - 1);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 again:
 	/*
-	 * In order to avoid publishing a head value that goes backwards,
+	 * In order to aव्योम publishing a head value that goes backwards,
 	 * we must ensure the load of @rb->head happens after we've
 	 * incremented @rb->nest.
 	 *
-	 * Otherwise we can observe a @rb->head value before one published
+	 * Otherwise we can observe a @rb->head value beक्रमe one published
 	 * by an IRQ/NMI happening between the load and the increment.
 	 */
 	barrier();
-	head = local_read(&rb->head);
+	head = local_पढ़ो(&rb->head);
 
 	/*
 	 * IRQ/NMI can happen here and advance @rb->head, causing our
@@ -81,27 +82,27 @@ again:
 	 */
 
 	/*
-	 * Since the mmap() consumer (userspace) can run on a different CPU:
+	 * Since the mmap() consumer (userspace) can run on a dअगरferent CPU:
 	 *
 	 *   kernel				user
 	 *
-	 *   if (LOAD ->data_tail) {		LOAD ->data_head
+	 *   अगर (LOAD ->data_tail) अणु		LOAD ->data_head
 	 *			(A)		smp_rmb()	(C)
 	 *	STORE $data			LOAD $data
 	 *	smp_wmb()	(B)		smp_mb()	(D)
 	 *	STORE ->data_head		STORE ->data_tail
-	 *   }
+	 *   पूर्ण
 	 *
 	 * Where A pairs with D, and B pairs with C.
 	 *
-	 * In our case (A) is a control dependency that separates the load of
-	 * the ->data_tail and the stores of $data. In case ->data_tail
-	 * indicates there is no room in the buffer to store $data we do not.
+	 * In our हाल (A) is a control dependency that separates the load of
+	 * the ->data_tail and the stores of $data. In हाल ->data_tail
+	 * indicates there is no room in the buffer to store $data we करो not.
 	 *
 	 * D needs to be a full barrier since it separates the data READ
 	 * from the tail WRITE.
 	 *
-	 * For B a WMB is sufficient since it separates two WRITEs, and for C
+	 * For B a WMB is sufficient since it separates two WRITEs, and क्रम C
 	 * an RMB is sufficient since it separates two READs.
 	 *
 	 * See perf_output_begin().
@@ -110,213 +111,213 @@ again:
 	WRITE_ONCE(rb->user_page->data_head, head);
 
 	/*
-	 * We must publish the head before decrementing the nest count,
+	 * We must publish the head beक्रमe decrementing the nest count,
 	 * otherwise an IRQ/NMI can publish a more recent head value and our
-	 * write will (temporarily) publish a stale value.
+	 * ग_लिखो will (temporarily) publish a stale value.
 	 */
 	barrier();
 	WRITE_ONCE(rb->nest, 0);
 
 	/*
-	 * Ensure we decrement @rb->nest before we validate the @rb->head.
+	 * Ensure we decrement @rb->nest beक्रमe we validate the @rb->head.
 	 * Otherwise we cannot be sure we caught the 'last' nested update.
 	 */
 	barrier();
-	if (unlikely(head != local_read(&rb->head))) {
+	अगर (unlikely(head != local_पढ़ो(&rb->head))) अणु
 		WRITE_ONCE(rb->nest, 1);
-		goto again;
-	}
+		जाओ again;
+	पूर्ण
 
-	if (handle->wakeup != local_read(&rb->wakeup))
+	अगर (handle->wakeup != local_पढ़ो(&rb->wakeup))
 		perf_output_wakeup(handle);
 
 out:
 	preempt_enable();
-}
+पूर्ण
 
-static __always_inline bool
-ring_buffer_has_space(unsigned long head, unsigned long tail,
-		      unsigned long data_size, unsigned int size,
+अटल __always_अंतरभूत bool
+ring_buffer_has_space(अचिन्हित दीर्घ head, अचिन्हित दीर्घ tail,
+		      अचिन्हित दीर्घ data_size, अचिन्हित पूर्णांक size,
 		      bool backward)
-{
-	if (!backward)
-		return CIRC_SPACE(head, tail, data_size) >= size;
-	else
-		return CIRC_SPACE(tail, head, data_size) >= size;
-}
+अणु
+	अगर (!backward)
+		वापस CIRC_SPACE(head, tail, data_size) >= size;
+	अन्यथा
+		वापस CIRC_SPACE(tail, head, data_size) >= size;
+पूर्ण
 
-static __always_inline int
-__perf_output_begin(struct perf_output_handle *handle,
-		    struct perf_sample_data *data,
-		    struct perf_event *event, unsigned int size,
+अटल __always_अंतरभूत पूर्णांक
+__perf_output_begin(काष्ठा perf_output_handle *handle,
+		    काष्ठा perf_sample_data *data,
+		    काष्ठा perf_event *event, अचिन्हित पूर्णांक size,
 		    bool backward)
-{
-	struct perf_buffer *rb;
-	unsigned long tail, offset, head;
-	int have_lost, page_shift;
-	struct {
-		struct perf_event_header header;
+अणु
+	काष्ठा perf_buffer *rb;
+	अचिन्हित दीर्घ tail, offset, head;
+	पूर्णांक have_lost, page_shअगरt;
+	काष्ठा अणु
+		काष्ठा perf_event_header header;
 		u64			 id;
 		u64			 lost;
-	} lost_event;
+	पूर्ण lost_event;
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	/*
 	 * For inherited events we send all the output towards the parent.
 	 */
-	if (event->parent)
+	अगर (event->parent)
 		event = event->parent;
 
 	rb = rcu_dereference(event->rb);
-	if (unlikely(!rb))
-		goto out;
+	अगर (unlikely(!rb))
+		जाओ out;
 
-	if (unlikely(rb->paused)) {
-		if (rb->nr_pages)
+	अगर (unlikely(rb->छोड़ोd)) अणु
+		अगर (rb->nr_pages)
 			local_inc(&rb->lost);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	handle->rb    = rb;
 	handle->event = event;
 
-	have_lost = local_read(&rb->lost);
-	if (unlikely(have_lost)) {
-		size += sizeof(lost_event);
-		if (event->attr.sample_id_all)
+	have_lost = local_पढ़ो(&rb->lost);
+	अगर (unlikely(have_lost)) अणु
+		size += माप(lost_event);
+		अगर (event->attr.sample_id_all)
 			size += event->id_header_size;
-	}
+	पूर्ण
 
 	perf_output_get_handle(handle);
 
-	do {
+	करो अणु
 		tail = READ_ONCE(rb->user_page->data_tail);
-		offset = head = local_read(&rb->head);
-		if (!rb->overwrite) {
-			if (unlikely(!ring_buffer_has_space(head, tail,
+		offset = head = local_पढ़ो(&rb->head);
+		अगर (!rb->overग_लिखो) अणु
+			अगर (unlikely(!ring_buffer_has_space(head, tail,
 							    perf_data_size(rb),
 							    size, backward)))
-				goto fail;
-		}
+				जाओ fail;
+		पूर्ण
 
 		/*
-		 * The above forms a control dependency barrier separating the
+		 * The above क्रमms a control dependency barrier separating the
 		 * @tail load above from the data stores below. Since the @tail
 		 * load is required to compute the branch to fail below.
 		 *
 		 * A, matches D; the full memory barrier userspace SHOULD issue
-		 * after reading the data and before storing the new tail
+		 * after पढ़ोing the data and beक्रमe storing the new tail
 		 * position.
 		 *
 		 * See perf_output_put_handle().
 		 */
 
-		if (!backward)
+		अगर (!backward)
 			head += size;
-		else
+		अन्यथा
 			head -= size;
-	} while (local_cmpxchg(&rb->head, offset, head) != offset);
+	पूर्ण जबतक (local_cmpxchg(&rb->head, offset, head) != offset);
 
-	if (backward) {
+	अगर (backward) अणु
 		offset = head;
 		head = (u64)(-head);
-	}
+	पूर्ण
 
 	/*
 	 * We rely on the implied barrier() by local_cmpxchg() to ensure
-	 * none of the data stores below can be lifted up by the compiler.
+	 * none of the data stores below can be lअगरted up by the compiler.
 	 */
 
-	if (unlikely(head - local_read(&rb->wakeup) > rb->watermark))
+	अगर (unlikely(head - local_पढ़ो(&rb->wakeup) > rb->watermark))
 		local_add(rb->watermark, &rb->wakeup);
 
-	page_shift = PAGE_SHIFT + page_order(rb);
+	page_shअगरt = PAGE_SHIFT + page_order(rb);
 
-	handle->page = (offset >> page_shift) & (rb->nr_pages - 1);
-	offset &= (1UL << page_shift) - 1;
+	handle->page = (offset >> page_shअगरt) & (rb->nr_pages - 1);
+	offset &= (1UL << page_shअगरt) - 1;
 	handle->addr = rb->data_pages[handle->page] + offset;
-	handle->size = (1UL << page_shift) - offset;
+	handle->size = (1UL << page_shअगरt) - offset;
 
-	if (unlikely(have_lost)) {
-		lost_event.header.size = sizeof(lost_event);
+	अगर (unlikely(have_lost)) अणु
+		lost_event.header.size = माप(lost_event);
 		lost_event.header.type = PERF_RECORD_LOST;
 		lost_event.header.misc = 0;
 		lost_event.id          = event->id;
 		lost_event.lost        = local_xchg(&rb->lost, 0);
 
-		/* XXX mostly redundant; @data is already fully initializes */
+		/* XXX mostly redundant; @data is alपढ़ोy fully initializes */
 		perf_event_header__init_id(&lost_event.header, data, event);
 		perf_output_put(handle, lost_event);
 		perf_event__output_id_sample(event, handle, data);
-	}
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 fail:
 	local_inc(&rb->lost);
 	perf_output_put_handle(handle);
 out:
-	rcu_read_unlock();
+	rcu_पढ़ो_unlock();
 
-	return -ENOSPC;
-}
+	वापस -ENOSPC;
+पूर्ण
 
-int perf_output_begin_forward(struct perf_output_handle *handle,
-			      struct perf_sample_data *data,
-			      struct perf_event *event, unsigned int size)
-{
-	return __perf_output_begin(handle, data, event, size, false);
-}
+पूर्णांक perf_output_begin_क्रमward(काष्ठा perf_output_handle *handle,
+			      काष्ठा perf_sample_data *data,
+			      काष्ठा perf_event *event, अचिन्हित पूर्णांक size)
+अणु
+	वापस __perf_output_begin(handle, data, event, size, false);
+पूर्ण
 
-int perf_output_begin_backward(struct perf_output_handle *handle,
-			       struct perf_sample_data *data,
-			       struct perf_event *event, unsigned int size)
-{
-	return __perf_output_begin(handle, data, event, size, true);
-}
+पूर्णांक perf_output_begin_backward(काष्ठा perf_output_handle *handle,
+			       काष्ठा perf_sample_data *data,
+			       काष्ठा perf_event *event, अचिन्हित पूर्णांक size)
+अणु
+	वापस __perf_output_begin(handle, data, event, size, true);
+पूर्ण
 
-int perf_output_begin(struct perf_output_handle *handle,
-		      struct perf_sample_data *data,
-		      struct perf_event *event, unsigned int size)
-{
+पूर्णांक perf_output_begin(काष्ठा perf_output_handle *handle,
+		      काष्ठा perf_sample_data *data,
+		      काष्ठा perf_event *event, अचिन्हित पूर्णांक size)
+अणु
 
-	return __perf_output_begin(handle, data, event, size,
-				   unlikely(is_write_backward(event)));
-}
+	वापस __perf_output_begin(handle, data, event, size,
+				   unlikely(is_ग_लिखो_backward(event)));
+पूर्ण
 
-unsigned int perf_output_copy(struct perf_output_handle *handle,
-		      const void *buf, unsigned int len)
-{
-	return __output_copy(handle, buf, len);
-}
+अचिन्हित पूर्णांक perf_output_copy(काष्ठा perf_output_handle *handle,
+		      स्थिर व्योम *buf, अचिन्हित पूर्णांक len)
+अणु
+	वापस __output_copy(handle, buf, len);
+पूर्ण
 
-unsigned int perf_output_skip(struct perf_output_handle *handle,
-			      unsigned int len)
-{
-	return __output_skip(handle, NULL, len);
-}
+अचिन्हित पूर्णांक perf_output_skip(काष्ठा perf_output_handle *handle,
+			      अचिन्हित पूर्णांक len)
+अणु
+	वापस __output_skip(handle, शून्य, len);
+पूर्ण
 
-void perf_output_end(struct perf_output_handle *handle)
-{
+व्योम perf_output_end(काष्ठा perf_output_handle *handle)
+अणु
 	perf_output_put_handle(handle);
-	rcu_read_unlock();
-}
+	rcu_पढ़ो_unlock();
+पूर्ण
 
-static void
-ring_buffer_init(struct perf_buffer *rb, long watermark, int flags)
-{
-	long max_size = perf_data_size(rb);
+अटल व्योम
+ring_buffer_init(काष्ठा perf_buffer *rb, दीर्घ watermark, पूर्णांक flags)
+अणु
+	दीर्घ max_size = perf_data_size(rb);
 
-	if (watermark)
+	अगर (watermark)
 		rb->watermark = min(max_size, watermark);
 
-	if (!rb->watermark)
+	अगर (!rb->watermark)
 		rb->watermark = max_size / 2;
 
-	if (flags & RING_BUFFER_WRITABLE)
-		rb->overwrite = 0;
-	else
-		rb->overwrite = 1;
+	अगर (flags & RING_BUFFER_WRITABLE)
+		rb->overग_लिखो = 0;
+	अन्यथा
+		rb->overग_लिखो = 1;
 
 	refcount_set(&rb->refcount, 1);
 
@@ -324,84 +325,84 @@ ring_buffer_init(struct perf_buffer *rb, long watermark, int flags)
 	spin_lock_init(&rb->event_lock);
 
 	/*
-	 * perf_output_begin() only checks rb->paused, therefore
-	 * rb->paused must be true if we have no pages for output.
+	 * perf_output_begin() only checks rb->छोड़ोd, thereक्रमe
+	 * rb->छोड़ोd must be true अगर we have no pages क्रम output.
 	 */
-	if (!rb->nr_pages)
-		rb->paused = 1;
-}
+	अगर (!rb->nr_pages)
+		rb->छोड़ोd = 1;
+पूर्ण
 
-void perf_aux_output_flag(struct perf_output_handle *handle, u64 flags)
-{
+व्योम perf_aux_output_flag(काष्ठा perf_output_handle *handle, u64 flags)
+अणु
 	/*
 	 * OVERWRITE is determined by perf_aux_output_end() and can't
 	 * be passed in directly.
 	 */
-	if (WARN_ON_ONCE(flags & PERF_AUX_FLAG_OVERWRITE))
-		return;
+	अगर (WARN_ON_ONCE(flags & PERF_AUX_FLAG_OVERWRITE))
+		वापस;
 
 	handle->aux_flags |= flags;
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(perf_aux_output_flag);
 
 /*
- * This is called before hardware starts writing to the AUX area to
+ * This is called beक्रमe hardware starts writing to the AUX area to
  * obtain an output handle and make sure there's room in the buffer.
  * When the capture completes, call perf_aux_output_end() to commit
  * the recorded data to the buffer.
  *
- * The ordering is similar to that of perf_output_{begin,end}, with
+ * The ordering is similar to that of perf_output_अणुbegin,endपूर्ण, with
  * the exception of (B), which should be taken care of by the pmu
- * driver, since ordering rules will differ depending on hardware.
+ * driver, since ordering rules will dअगरfer depending on hardware.
  *
  * Call this from pmu::start(); see the comment in perf_aux_output_end()
  * about its use in pmu callbacks. Both can also be called from the PMI
- * handler if needed.
+ * handler अगर needed.
  */
-void *perf_aux_output_begin(struct perf_output_handle *handle,
-			    struct perf_event *event)
-{
-	struct perf_event *output_event = event;
-	unsigned long aux_head, aux_tail;
-	struct perf_buffer *rb;
-	unsigned int nest;
+व्योम *perf_aux_output_begin(काष्ठा perf_output_handle *handle,
+			    काष्ठा perf_event *event)
+अणु
+	काष्ठा perf_event *output_event = event;
+	अचिन्हित दीर्घ aux_head, aux_tail;
+	काष्ठा perf_buffer *rb;
+	अचिन्हित पूर्णांक nest;
 
-	if (output_event->parent)
+	अगर (output_event->parent)
 		output_event = output_event->parent;
 
 	/*
-	 * Since this will typically be open across pmu::add/pmu::del, we
-	 * grab ring_buffer's refcount instead of holding rcu read lock
-	 * to make sure it doesn't disappear under us.
+	 * Since this will typically be खोलो across pmu::add/pmu::del, we
+	 * grab ring_buffer's refcount instead of holding rcu पढ़ो lock
+	 * to make sure it करोesn't disappear under us.
 	 */
 	rb = ring_buffer_get(output_event);
-	if (!rb)
-		return NULL;
+	अगर (!rb)
+		वापस शून्य;
 
-	if (!rb_has_aux(rb))
-		goto err;
+	अगर (!rb_has_aux(rb))
+		जाओ err;
 
 	/*
-	 * If aux_mmap_count is zero, the aux buffer is in perf_mmap_close(),
-	 * about to get freed, so we leave immediately.
+	 * If aux_mmap_count is zero, the aux buffer is in perf_mmap_बंद(),
+	 * about to get मुक्तd, so we leave immediately.
 	 *
-	 * Checking rb::aux_mmap_count and rb::refcount has to be done in
-	 * the same order, see perf_mmap_close. Otherwise we end up freeing
+	 * Checking rb::aux_mmap_count and rb::refcount has to be करोne in
+	 * the same order, see perf_mmap_बंद. Otherwise we end up मुक्तing
 	 * aux pages in this path, which is a bug, because in_atomic().
 	 */
-	if (!atomic_read(&rb->aux_mmap_count))
-		goto err;
+	अगर (!atomic_पढ़ो(&rb->aux_mmap_count))
+		जाओ err;
 
-	if (!refcount_inc_not_zero(&rb->aux_refcount))
-		goto err;
+	अगर (!refcount_inc_not_zero(&rb->aux_refcount))
+		जाओ err;
 
 	nest = READ_ONCE(rb->aux_nest);
 	/*
-	 * Nesting is not supported for AUX area, make sure nested
-	 * writers are caught early
+	 * Nesting is not supported क्रम AUX area, make sure nested
+	 * ग_लिखोrs are caught early
 	 */
-	if (WARN_ON_ONCE(nest))
-		goto err_put;
+	अगर (WARN_ON_ONCE(nest))
+		जाओ err_put;
 
 	WRITE_ONCE(rb->aux_nest, nest + 1);
 
@@ -414,551 +415,551 @@ void *perf_aux_output_begin(struct perf_output_handle *handle,
 	handle->aux_flags = 0;
 
 	/*
-	 * In overwrite mode, AUX data stores do not depend on aux_tail,
-	 * therefore (A) control dependency barrier does not exist. The
+	 * In overग_लिखो mode, AUX data stores करो not depend on aux_tail,
+	 * thereक्रमe (A) control dependency barrier करोes not exist. The
 	 * (B) <-> (C) ordering is still observed by the pmu driver.
 	 */
-	if (!rb->aux_overwrite) {
+	अगर (!rb->aux_overग_लिखो) अणु
 		aux_tail = READ_ONCE(rb->user_page->aux_tail);
 		handle->wakeup = rb->aux_wakeup + rb->aux_watermark;
-		if (aux_head - aux_tail < perf_aux_size(rb))
+		अगर (aux_head - aux_tail < perf_aux_size(rb))
 			handle->size = CIRC_SPACE(aux_head, aux_tail, perf_aux_size(rb));
 
 		/*
-		 * handle->size computation depends on aux_tail load; this forms a
+		 * handle->size computation depends on aux_tail load; this क्रमms a
 		 * control dependency barrier separating aux_tail load from aux data
-		 * store that will be enabled on successful return
+		 * store that will be enabled on successful वापस
 		 */
-		if (!handle->size) { /* A, matches D */
+		अगर (!handle->size) अणु /* A, matches D */
 			event->pending_disable = smp_processor_id();
 			perf_output_wakeup(handle);
 			WRITE_ONCE(rb->aux_nest, 0);
-			goto err_put;
-		}
-	}
+			जाओ err_put;
+		पूर्ण
+	पूर्ण
 
-	return handle->rb->aux_priv;
+	वापस handle->rb->aux_priv;
 
 err_put:
 	/* can't be last */
-	rb_free_aux(rb);
+	rb_मुक्त_aux(rb);
 
 err:
 	ring_buffer_put(rb);
-	handle->event = NULL;
+	handle->event = शून्य;
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 EXPORT_SYMBOL_GPL(perf_aux_output_begin);
 
-static __always_inline bool rb_need_aux_wakeup(struct perf_buffer *rb)
-{
-	if (rb->aux_overwrite)
-		return false;
+अटल __always_अंतरभूत bool rb_need_aux_wakeup(काष्ठा perf_buffer *rb)
+अणु
+	अगर (rb->aux_overग_लिखो)
+		वापस false;
 
-	if (rb->aux_head - rb->aux_wakeup >= rb->aux_watermark) {
-		rb->aux_wakeup = rounddown(rb->aux_head, rb->aux_watermark);
-		return true;
-	}
+	अगर (rb->aux_head - rb->aux_wakeup >= rb->aux_watermark) अणु
+		rb->aux_wakeup = roundकरोwn(rb->aux_head, rb->aux_watermark);
+		वापस true;
+	पूर्ण
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
 /*
- * Commit the data written by hardware into the ring buffer by adjusting
- * aux_head and posting a PERF_RECORD_AUX into the perf buffer. It is the
+ * Commit the data written by hardware पूर्णांकo the ring buffer by adjusting
+ * aux_head and posting a PERF_RECORD_AUX पूर्णांकo the perf buffer. It is the
  * pmu driver's responsibility to observe ordering rules of the hardware,
- * so that all the data is externally visible before this is called.
+ * so that all the data is बाह्यally visible beक्रमe this is called.
  *
  * Note: this has to be called from pmu::stop() callback, as the assumption
  * of the AUX buffer management code is that after pmu::stop(), the AUX
- * transaction must be stopped and therefore drop the AUX reference count.
+ * transaction must be stopped and thereक्रमe drop the AUX reference count.
  */
-void perf_aux_output_end(struct perf_output_handle *handle, unsigned long size)
-{
+व्योम perf_aux_output_end(काष्ठा perf_output_handle *handle, अचिन्हित दीर्घ size)
+अणु
 	bool wakeup = !!(handle->aux_flags & PERF_AUX_FLAG_TRUNCATED);
-	struct perf_buffer *rb = handle->rb;
-	unsigned long aux_head;
+	काष्ठा perf_buffer *rb = handle->rb;
+	अचिन्हित दीर्घ aux_head;
 
-	/* in overwrite mode, driver provides aux_head via handle */
-	if (rb->aux_overwrite) {
+	/* in overग_लिखो mode, driver provides aux_head via handle */
+	अगर (rb->aux_overग_लिखो) अणु
 		handle->aux_flags |= PERF_AUX_FLAG_OVERWRITE;
 
 		aux_head = handle->head;
 		rb->aux_head = aux_head;
-	} else {
+	पूर्ण अन्यथा अणु
 		handle->aux_flags &= ~PERF_AUX_FLAG_OVERWRITE;
 
 		aux_head = rb->aux_head;
 		rb->aux_head += size;
-	}
+	पूर्ण
 
 	/*
-	 * Only send RECORD_AUX if we have something useful to communicate
+	 * Only send RECORD_AUX अगर we have something useful to communicate
 	 *
 	 * Note: the OVERWRITE records by themselves are not considered
-	 * useful, as they don't communicate any *new* information,
-	 * aside from the short-lived offset, that becomes history at
-	 * the next event sched-in and therefore isn't useful.
-	 * The userspace that needs to copy out AUX data in overwrite
-	 * mode should know to use user_page::aux_head for the actual
-	 * offset. So, from now on we don't output AUX records that
+	 * useful, as they करोn't communicate any *new* inक्रमmation,
+	 * aside from the लघु-lived offset, that becomes history at
+	 * the next event sched-in and thereक्रमe isn't useful.
+	 * The userspace that needs to copy out AUX data in overग_लिखो
+	 * mode should know to use user_page::aux_head क्रम the actual
+	 * offset. So, from now on we करोn't output AUX records that
 	 * have *only* OVERWRITE flag set.
 	 */
-	if (size || (handle->aux_flags & ~(u64)PERF_AUX_FLAG_OVERWRITE))
+	अगर (size || (handle->aux_flags & ~(u64)PERF_AUX_FLAG_OVERWRITE))
 		perf_event_aux_event(handle->event, aux_head, size,
 				     handle->aux_flags);
 
 	WRITE_ONCE(rb->user_page->aux_head, rb->aux_head);
-	if (rb_need_aux_wakeup(rb))
+	अगर (rb_need_aux_wakeup(rb))
 		wakeup = true;
 
-	if (wakeup) {
-		if (handle->aux_flags & PERF_AUX_FLAG_TRUNCATED)
+	अगर (wakeup) अणु
+		अगर (handle->aux_flags & PERF_AUX_FLAG_TRUNCATED)
 			handle->event->pending_disable = smp_processor_id();
 		perf_output_wakeup(handle);
-	}
+	पूर्ण
 
-	handle->event = NULL;
+	handle->event = शून्य;
 
 	WRITE_ONCE(rb->aux_nest, 0);
 	/* can't be last */
-	rb_free_aux(rb);
+	rb_मुक्त_aux(rb);
 	ring_buffer_put(rb);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(perf_aux_output_end);
 
 /*
- * Skip over a given number of bytes in the AUX buffer, due to, for example,
- * hardware's alignment constraints.
+ * Skip over a given number of bytes in the AUX buffer, due to, क्रम example,
+ * hardware's alignment स्थिरraपूर्णांकs.
  */
-int perf_aux_output_skip(struct perf_output_handle *handle, unsigned long size)
-{
-	struct perf_buffer *rb = handle->rb;
+पूर्णांक perf_aux_output_skip(काष्ठा perf_output_handle *handle, अचिन्हित दीर्घ size)
+अणु
+	काष्ठा perf_buffer *rb = handle->rb;
 
-	if (size > handle->size)
-		return -ENOSPC;
+	अगर (size > handle->size)
+		वापस -ENOSPC;
 
 	rb->aux_head += size;
 
 	WRITE_ONCE(rb->user_page->aux_head, rb->aux_head);
-	if (rb_need_aux_wakeup(rb)) {
+	अगर (rb_need_aux_wakeup(rb)) अणु
 		perf_output_wakeup(handle);
 		handle->wakeup = rb->aux_wakeup + rb->aux_watermark;
-	}
+	पूर्ण
 
 	handle->head = rb->aux_head;
 	handle->size -= size;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(perf_aux_output_skip);
 
-void *perf_get_aux(struct perf_output_handle *handle)
-{
+व्योम *perf_get_aux(काष्ठा perf_output_handle *handle)
+अणु
 	/* this is only valid between perf_aux_output_begin and *_end */
-	if (!handle->event)
-		return NULL;
+	अगर (!handle->event)
+		वापस शून्य;
 
-	return handle->rb->aux_priv;
-}
+	वापस handle->rb->aux_priv;
+पूर्ण
 EXPORT_SYMBOL_GPL(perf_get_aux);
 
 /*
  * Copy out AUX data from an AUX handle.
  */
-long perf_output_copy_aux(struct perf_output_handle *aux_handle,
-			  struct perf_output_handle *handle,
-			  unsigned long from, unsigned long to)
-{
-	struct perf_buffer *rb = aux_handle->rb;
-	unsigned long tocopy, remainder, len = 0;
-	void *addr;
+दीर्घ perf_output_copy_aux(काष्ठा perf_output_handle *aux_handle,
+			  काष्ठा perf_output_handle *handle,
+			  अचिन्हित दीर्घ from, अचिन्हित दीर्घ to)
+अणु
+	काष्ठा perf_buffer *rb = aux_handle->rb;
+	अचिन्हित दीर्घ tocopy, reमुख्यder, len = 0;
+	व्योम *addr;
 
 	from &= (rb->aux_nr_pages << PAGE_SHIFT) - 1;
 	to &= (rb->aux_nr_pages << PAGE_SHIFT) - 1;
 
-	do {
+	करो अणु
 		tocopy = PAGE_SIZE - offset_in_page(from);
-		if (to > from)
+		अगर (to > from)
 			tocopy = min(tocopy, to - from);
-		if (!tocopy)
-			break;
+		अगर (!tocopy)
+			अवरोध;
 
 		addr = rb->aux_pages[from >> PAGE_SHIFT];
 		addr += offset_in_page(from);
 
-		remainder = perf_output_copy(handle, addr, tocopy);
-		if (remainder)
-			return -EFAULT;
+		reमुख्यder = perf_output_copy(handle, addr, tocopy);
+		अगर (reमुख्यder)
+			वापस -EFAULT;
 
 		len += tocopy;
 		from += tocopy;
 		from &= (rb->aux_nr_pages << PAGE_SHIFT) - 1;
-	} while (to != from);
+	पूर्ण जबतक (to != from);
 
-	return len;
-}
+	वापस len;
+पूर्ण
 
-#define PERF_AUX_GFP	(GFP_KERNEL | __GFP_ZERO | __GFP_NOWARN | __GFP_NORETRY)
+#घोषणा PERF_AUX_GFP	(GFP_KERNEL | __GFP_ZERO | __GFP_NOWARN | __GFP_NORETRY)
 
-static struct page *rb_alloc_aux_page(int node, int order)
-{
-	struct page *page;
+अटल काष्ठा page *rb_alloc_aux_page(पूर्णांक node, पूर्णांक order)
+अणु
+	काष्ठा page *page;
 
-	if (order > MAX_ORDER)
+	अगर (order > MAX_ORDER)
 		order = MAX_ORDER;
 
-	do {
+	करो अणु
 		page = alloc_pages_node(node, PERF_AUX_GFP, order);
-	} while (!page && order--);
+	पूर्ण जबतक (!page && order--);
 
-	if (page && order) {
+	अगर (page && order) अणु
 		/*
 		 * Communicate the allocation size to the driver:
-		 * if we managed to secure a high-order allocation,
-		 * set its first page's private to this order;
+		 * अगर we managed to secure a high-order allocation,
+		 * set its first page's निजी to this order;
 		 * !PagePrivate(page) means it's just a normal page.
 		 */
 		split_page(page, order);
 		SetPagePrivate(page);
-		set_page_private(page, order);
-	}
+		set_page_निजी(page, order);
+	पूर्ण
 
-	return page;
-}
+	वापस page;
+पूर्ण
 
-static void rb_free_aux_page(struct perf_buffer *rb, int idx)
-{
-	struct page *page = virt_to_page(rb->aux_pages[idx]);
+अटल व्योम rb_मुक्त_aux_page(काष्ठा perf_buffer *rb, पूर्णांक idx)
+अणु
+	काष्ठा page *page = virt_to_page(rb->aux_pages[idx]);
 
 	ClearPagePrivate(page);
-	page->mapping = NULL;
-	__free_page(page);
-}
+	page->mapping = शून्य;
+	__मुक्त_page(page);
+पूर्ण
 
-static void __rb_free_aux(struct perf_buffer *rb)
-{
-	int pg;
+अटल व्योम __rb_मुक्त_aux(काष्ठा perf_buffer *rb)
+अणु
+	पूर्णांक pg;
 
 	/*
 	 * Should never happen, the last reference should be dropped from
-	 * perf_mmap_close() path, which first stops aux transactions (which
-	 * in turn are the atomic holders of aux_refcount) and then does the
-	 * last rb_free_aux().
+	 * perf_mmap_बंद() path, which first stops aux transactions (which
+	 * in turn are the atomic holders of aux_refcount) and then करोes the
+	 * last rb_मुक्त_aux().
 	 */
 	WARN_ON_ONCE(in_atomic());
 
-	if (rb->aux_priv) {
-		rb->free_aux(rb->aux_priv);
-		rb->free_aux = NULL;
-		rb->aux_priv = NULL;
-	}
+	अगर (rb->aux_priv) अणु
+		rb->मुक्त_aux(rb->aux_priv);
+		rb->मुक्त_aux = शून्य;
+		rb->aux_priv = शून्य;
+	पूर्ण
 
-	if (rb->aux_nr_pages) {
-		for (pg = 0; pg < rb->aux_nr_pages; pg++)
-			rb_free_aux_page(rb, pg);
+	अगर (rb->aux_nr_pages) अणु
+		क्रम (pg = 0; pg < rb->aux_nr_pages; pg++)
+			rb_मुक्त_aux_page(rb, pg);
 
-		kfree(rb->aux_pages);
+		kमुक्त(rb->aux_pages);
 		rb->aux_nr_pages = 0;
-	}
-}
+	पूर्ण
+पूर्ण
 
-int rb_alloc_aux(struct perf_buffer *rb, struct perf_event *event,
-		 pgoff_t pgoff, int nr_pages, long watermark, int flags)
-{
-	bool overwrite = !(flags & RING_BUFFER_WRITABLE);
-	int node = (event->cpu == -1) ? -1 : cpu_to_node(event->cpu);
-	int ret = -ENOMEM, max_order;
+पूर्णांक rb_alloc_aux(काष्ठा perf_buffer *rb, काष्ठा perf_event *event,
+		 pgoff_t pgoff, पूर्णांक nr_pages, दीर्घ watermark, पूर्णांक flags)
+अणु
+	bool overग_लिखो = !(flags & RING_BUFFER_WRITABLE);
+	पूर्णांक node = (event->cpu == -1) ? -1 : cpu_to_node(event->cpu);
+	पूर्णांक ret = -ENOMEM, max_order;
 
-	if (!has_aux(event))
-		return -EOPNOTSUPP;
+	अगर (!has_aux(event))
+		वापस -EOPNOTSUPP;
 
-	if (!overwrite) {
+	अगर (!overग_लिखो) अणु
 		/*
-		 * Watermark defaults to half the buffer, and so does the
-		 * max_order, to aid PMU drivers in double buffering.
+		 * Watermark शेषs to half the buffer, and so करोes the
+		 * max_order, to aid PMU drivers in द्विगुन buffering.
 		 */
-		if (!watermark)
+		अगर (!watermark)
 			watermark = nr_pages << (PAGE_SHIFT - 1);
 
 		/*
-		 * Use aux_watermark as the basis for chunking to
+		 * Use aux_watermark as the basis क्रम chunking to
 		 * help PMU drivers honor the watermark.
 		 */
 		max_order = get_order(watermark);
-	} else {
+	पूर्ण अन्यथा अणु
 		/*
 		 * We need to start with the max_order that fits in nr_pages,
 		 * not the other way around, hence ilog2() and not get_order.
 		 */
 		max_order = ilog2(nr_pages);
 		watermark = 0;
-	}
+	पूर्ण
 
-	rb->aux_pages = kcalloc_node(nr_pages, sizeof(void *), GFP_KERNEL,
+	rb->aux_pages = kसुस्मृति_node(nr_pages, माप(व्योम *), GFP_KERNEL,
 				     node);
-	if (!rb->aux_pages)
-		return -ENOMEM;
+	अगर (!rb->aux_pages)
+		वापस -ENOMEM;
 
-	rb->free_aux = event->pmu->free_aux;
-	for (rb->aux_nr_pages = 0; rb->aux_nr_pages < nr_pages;) {
-		struct page *page;
-		int last, order;
+	rb->मुक्त_aux = event->pmu->मुक्त_aux;
+	क्रम (rb->aux_nr_pages = 0; rb->aux_nr_pages < nr_pages;) अणु
+		काष्ठा page *page;
+		पूर्णांक last, order;
 
 		order = min(max_order, ilog2(nr_pages - rb->aux_nr_pages));
 		page = rb_alloc_aux_page(node, order);
-		if (!page)
-			goto out;
+		अगर (!page)
+			जाओ out;
 
-		for (last = rb->aux_nr_pages + (1 << page_private(page));
+		क्रम (last = rb->aux_nr_pages + (1 << page_निजी(page));
 		     last > rb->aux_nr_pages; rb->aux_nr_pages++)
 			rb->aux_pages[rb->aux_nr_pages] = page_address(page++);
-	}
+	पूर्ण
 
 	/*
-	 * In overwrite mode, PMUs that don't support SG may not handle more
-	 * than one contiguous allocation, since they rely on PMI to do double
-	 * buffering. In this case, the entire buffer has to be one contiguous
+	 * In overग_लिखो mode, PMUs that करोn't support SG may not handle more
+	 * than one contiguous allocation, since they rely on PMI to करो द्विगुन
+	 * buffering. In this हाल, the entire buffer has to be one contiguous
 	 * chunk.
 	 */
-	if ((event->pmu->capabilities & PERF_PMU_CAP_AUX_NO_SG) &&
-	    overwrite) {
-		struct page *page = virt_to_page(rb->aux_pages[0]);
+	अगर ((event->pmu->capabilities & PERF_PMU_CAP_AUX_NO_SG) &&
+	    overग_लिखो) अणु
+		काष्ठा page *page = virt_to_page(rb->aux_pages[0]);
 
-		if (page_private(page) != max_order)
-			goto out;
-	}
+		अगर (page_निजी(page) != max_order)
+			जाओ out;
+	पूर्ण
 
 	rb->aux_priv = event->pmu->setup_aux(event, rb->aux_pages, nr_pages,
-					     overwrite);
-	if (!rb->aux_priv)
-		goto out;
+					     overग_लिखो);
+	अगर (!rb->aux_priv)
+		जाओ out;
 
 	ret = 0;
 
 	/*
-	 * aux_pages (and pmu driver's private data, aux_priv) will be
+	 * aux_pages (and pmu driver's निजी data, aux_priv) will be
 	 * referenced in both producer's and consumer's contexts, thus
 	 * we keep a refcount here to make sure either of the two can
 	 * reference them safely.
 	 */
 	refcount_set(&rb->aux_refcount, 1);
 
-	rb->aux_overwrite = overwrite;
+	rb->aux_overग_लिखो = overग_लिखो;
 	rb->aux_watermark = watermark;
 
 out:
-	if (!ret)
+	अगर (!ret)
 		rb->aux_pgoff = pgoff;
-	else
-		__rb_free_aux(rb);
+	अन्यथा
+		__rb_मुक्त_aux(rb);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-void rb_free_aux(struct perf_buffer *rb)
-{
-	if (refcount_dec_and_test(&rb->aux_refcount))
-		__rb_free_aux(rb);
-}
+व्योम rb_मुक्त_aux(काष्ठा perf_buffer *rb)
+अणु
+	अगर (refcount_dec_and_test(&rb->aux_refcount))
+		__rb_मुक्त_aux(rb);
+पूर्ण
 
-#ifndef CONFIG_PERF_USE_VMALLOC
+#अगर_अघोषित CONFIG_PERF_USE_VMALLOC
 
 /*
  * Back perf_mmap() with regular GFP_KERNEL-0 pages.
  */
 
-static struct page *
-__perf_mmap_to_page(struct perf_buffer *rb, unsigned long pgoff)
-{
-	if (pgoff > rb->nr_pages)
-		return NULL;
+अटल काष्ठा page *
+__perf_mmap_to_page(काष्ठा perf_buffer *rb, अचिन्हित दीर्घ pgoff)
+अणु
+	अगर (pgoff > rb->nr_pages)
+		वापस शून्य;
 
-	if (pgoff == 0)
-		return virt_to_page(rb->user_page);
+	अगर (pgoff == 0)
+		वापस virt_to_page(rb->user_page);
 
-	return virt_to_page(rb->data_pages[pgoff - 1]);
-}
+	वापस virt_to_page(rb->data_pages[pgoff - 1]);
+पूर्ण
 
-static void *perf_mmap_alloc_page(int cpu)
-{
-	struct page *page;
-	int node;
+अटल व्योम *perf_mmap_alloc_page(पूर्णांक cpu)
+अणु
+	काष्ठा page *page;
+	पूर्णांक node;
 
 	node = (cpu == -1) ? cpu : cpu_to_node(cpu);
 	page = alloc_pages_node(node, GFP_KERNEL | __GFP_ZERO, 0);
-	if (!page)
-		return NULL;
+	अगर (!page)
+		वापस शून्य;
 
-	return page_address(page);
-}
+	वापस page_address(page);
+पूर्ण
 
-static void perf_mmap_free_page(void *addr)
-{
-	struct page *page = virt_to_page(addr);
+अटल व्योम perf_mmap_मुक्त_page(व्योम *addr)
+अणु
+	काष्ठा page *page = virt_to_page(addr);
 
-	page->mapping = NULL;
-	__free_page(page);
-}
+	page->mapping = शून्य;
+	__मुक्त_page(page);
+पूर्ण
 
-struct perf_buffer *rb_alloc(int nr_pages, long watermark, int cpu, int flags)
-{
-	struct perf_buffer *rb;
-	unsigned long size;
-	int i, node;
+काष्ठा perf_buffer *rb_alloc(पूर्णांक nr_pages, दीर्घ watermark, पूर्णांक cpu, पूर्णांक flags)
+अणु
+	काष्ठा perf_buffer *rb;
+	अचिन्हित दीर्घ size;
+	पूर्णांक i, node;
 
-	size = sizeof(struct perf_buffer);
-	size += nr_pages * sizeof(void *);
+	size = माप(काष्ठा perf_buffer);
+	size += nr_pages * माप(व्योम *);
 
-	if (order_base_2(size) >= PAGE_SHIFT+MAX_ORDER)
-		goto fail;
+	अगर (order_base_2(size) >= PAGE_SHIFT+MAX_ORDER)
+		जाओ fail;
 
 	node = (cpu == -1) ? cpu : cpu_to_node(cpu);
 	rb = kzalloc_node(size, GFP_KERNEL, node);
-	if (!rb)
-		goto fail;
+	अगर (!rb)
+		जाओ fail;
 
 	rb->user_page = perf_mmap_alloc_page(cpu);
-	if (!rb->user_page)
-		goto fail_user_page;
+	अगर (!rb->user_page)
+		जाओ fail_user_page;
 
-	for (i = 0; i < nr_pages; i++) {
+	क्रम (i = 0; i < nr_pages; i++) अणु
 		rb->data_pages[i] = perf_mmap_alloc_page(cpu);
-		if (!rb->data_pages[i])
-			goto fail_data_pages;
-	}
+		अगर (!rb->data_pages[i])
+			जाओ fail_data_pages;
+	पूर्ण
 
 	rb->nr_pages = nr_pages;
 
 	ring_buffer_init(rb, watermark, flags);
 
-	return rb;
+	वापस rb;
 
 fail_data_pages:
-	for (i--; i >= 0; i--)
-		perf_mmap_free_page(rb->data_pages[i]);
+	क्रम (i--; i >= 0; i--)
+		perf_mmap_मुक्त_page(rb->data_pages[i]);
 
-	perf_mmap_free_page(rb->user_page);
+	perf_mmap_मुक्त_page(rb->user_page);
 
 fail_user_page:
-	kfree(rb);
+	kमुक्त(rb);
 
 fail:
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-void rb_free(struct perf_buffer *rb)
-{
-	int i;
+व्योम rb_मुक्त(काष्ठा perf_buffer *rb)
+अणु
+	पूर्णांक i;
 
-	perf_mmap_free_page(rb->user_page);
-	for (i = 0; i < rb->nr_pages; i++)
-		perf_mmap_free_page(rb->data_pages[i]);
-	kfree(rb);
-}
+	perf_mmap_मुक्त_page(rb->user_page);
+	क्रम (i = 0; i < rb->nr_pages; i++)
+		perf_mmap_मुक्त_page(rb->data_pages[i]);
+	kमुक्त(rb);
+पूर्ण
 
-#else
-static int data_page_nr(struct perf_buffer *rb)
-{
-	return rb->nr_pages << page_order(rb);
-}
+#अन्यथा
+अटल पूर्णांक data_page_nr(काष्ठा perf_buffer *rb)
+अणु
+	वापस rb->nr_pages << page_order(rb);
+पूर्ण
 
-static struct page *
-__perf_mmap_to_page(struct perf_buffer *rb, unsigned long pgoff)
-{
+अटल काष्ठा page *
+__perf_mmap_to_page(काष्ठा perf_buffer *rb, अचिन्हित दीर्घ pgoff)
+अणु
 	/* The '>' counts in the user page. */
-	if (pgoff > data_page_nr(rb))
-		return NULL;
+	अगर (pgoff > data_page_nr(rb))
+		वापस शून्य;
 
-	return vmalloc_to_page((void *)rb->user_page + pgoff * PAGE_SIZE);
-}
+	वापस vदो_स्मृति_to_page((व्योम *)rb->user_page + pgoff * PAGE_SIZE);
+पूर्ण
 
-static void perf_mmap_unmark_page(void *addr)
-{
-	struct page *page = vmalloc_to_page(addr);
+अटल व्योम perf_mmap_unmark_page(व्योम *addr)
+अणु
+	काष्ठा page *page = vदो_स्मृति_to_page(addr);
 
-	page->mapping = NULL;
-}
+	page->mapping = शून्य;
+पूर्ण
 
-static void rb_free_work(struct work_struct *work)
-{
-	struct perf_buffer *rb;
-	void *base;
-	int i, nr;
+अटल व्योम rb_मुक्त_work(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा perf_buffer *rb;
+	व्योम *base;
+	पूर्णांक i, nr;
 
-	rb = container_of(work, struct perf_buffer, work);
+	rb = container_of(work, काष्ठा perf_buffer, work);
 	nr = data_page_nr(rb);
 
 	base = rb->user_page;
 	/* The '<=' counts in the user page. */
-	for (i = 0; i <= nr; i++)
+	क्रम (i = 0; i <= nr; i++)
 		perf_mmap_unmark_page(base + (i * PAGE_SIZE));
 
-	vfree(base);
-	kfree(rb);
-}
+	vमुक्त(base);
+	kमुक्त(rb);
+पूर्ण
 
-void rb_free(struct perf_buffer *rb)
-{
+व्योम rb_मुक्त(काष्ठा perf_buffer *rb)
+अणु
 	schedule_work(&rb->work);
-}
+पूर्ण
 
-struct perf_buffer *rb_alloc(int nr_pages, long watermark, int cpu, int flags)
-{
-	struct perf_buffer *rb;
-	unsigned long size;
-	void *all_buf;
-	int node;
+काष्ठा perf_buffer *rb_alloc(पूर्णांक nr_pages, दीर्घ watermark, पूर्णांक cpu, पूर्णांक flags)
+अणु
+	काष्ठा perf_buffer *rb;
+	अचिन्हित दीर्घ size;
+	व्योम *all_buf;
+	पूर्णांक node;
 
-	size = sizeof(struct perf_buffer);
-	size += sizeof(void *);
+	size = माप(काष्ठा perf_buffer);
+	size += माप(व्योम *);
 
 	node = (cpu == -1) ? cpu : cpu_to_node(cpu);
 	rb = kzalloc_node(size, GFP_KERNEL, node);
-	if (!rb)
-		goto fail;
+	अगर (!rb)
+		जाओ fail;
 
-	INIT_WORK(&rb->work, rb_free_work);
+	INIT_WORK(&rb->work, rb_मुक्त_work);
 
-	all_buf = vmalloc_user((nr_pages + 1) * PAGE_SIZE);
-	if (!all_buf)
-		goto fail_all_buf;
+	all_buf = vदो_स्मृति_user((nr_pages + 1) * PAGE_SIZE);
+	अगर (!all_buf)
+		जाओ fail_all_buf;
 
 	rb->user_page = all_buf;
 	rb->data_pages[0] = all_buf + PAGE_SIZE;
-	if (nr_pages) {
+	अगर (nr_pages) अणु
 		rb->nr_pages = 1;
 		rb->page_order = ilog2(nr_pages);
-	}
+	पूर्ण
 
 	ring_buffer_init(rb, watermark, flags);
 
-	return rb;
+	वापस rb;
 
 fail_all_buf:
-	kfree(rb);
+	kमुक्त(rb);
 
 fail:
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-#endif
+#पूर्ण_अगर
 
-struct page *
-perf_mmap_to_page(struct perf_buffer *rb, unsigned long pgoff)
-{
-	if (rb->aux_nr_pages) {
+काष्ठा page *
+perf_mmap_to_page(काष्ठा perf_buffer *rb, अचिन्हित दीर्घ pgoff)
+अणु
+	अगर (rb->aux_nr_pages) अणु
 		/* above AUX space */
-		if (pgoff > rb->aux_pgoff + rb->aux_nr_pages)
-			return NULL;
+		अगर (pgoff > rb->aux_pgoff + rb->aux_nr_pages)
+			वापस शून्य;
 
 		/* AUX space */
-		if (pgoff >= rb->aux_pgoff) {
-			int aux_pgoff = array_index_nospec(pgoff - rb->aux_pgoff, rb->aux_nr_pages);
-			return virt_to_page(rb->aux_pages[aux_pgoff]);
-		}
-	}
+		अगर (pgoff >= rb->aux_pgoff) अणु
+			पूर्णांक aux_pgoff = array_index_nospec(pgoff - rb->aux_pgoff, rb->aux_nr_pages);
+			वापस virt_to_page(rb->aux_pages[aux_pgoff]);
+		पूर्ण
+	पूर्ण
 
-	return __perf_mmap_to_page(rb, pgoff);
-}
+	वापस __perf_mmap_to_page(rb, pgoff);
+पूर्ण

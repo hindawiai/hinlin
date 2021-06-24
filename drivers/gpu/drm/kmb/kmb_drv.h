@@ -1,88 +1,89 @@
-/* SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only
  *
- * Copyright © 2018-2020 Intel Corporation
+ * Copyright तऊ 2018-2020 Intel Corporation
  */
 
-#ifndef __KMB_DRV_H__
-#define __KMB_DRV_H__
+#अगर_अघोषित __KMB_DRV_H__
+#घोषणा __KMB_DRV_H__
 
-#include <drm/drm_device.h>
+#समावेश <drm/drm_device.h>
 
-#include "kmb_plane.h"
-#include "kmb_regs.h"
+#समावेश "kmb_plane.h"
+#समावेश "kmb_regs.h"
 
-#define KMB_MAX_WIDTH			1920 /*Max width in pixels */
-#define KMB_MAX_HEIGHT			1080 /*Max height in pixels */
-#define KMB_MIN_WIDTH                   1920 /*Max width in pixels */
-#define KMB_MIN_HEIGHT                  1080 /*Max height in pixels */
-#define KMB_LCD_DEFAULT_CLK		200000000
-#define KMB_SYS_CLK_MHZ			500
+#घोषणा KMB_MAX_WIDTH			1920 /*Max width in pixels */
+#घोषणा KMB_MAX_HEIGHT			1080 /*Max height in pixels */
+#घोषणा KMB_MIN_WIDTH                   1920 /*Max width in pixels */
+#घोषणा KMB_MIN_HEIGHT                  1080 /*Max height in pixels */
+#घोषणा KMB_LCD_DEFAULT_CLK		200000000
+#घोषणा KMB_SYS_CLK_MHZ			500
 
-#define ICAM_MMIO		0x3b100000
-#define ICAM_LCD_OFFSET		0x1080
-#define ICAM_MMIO_SIZE		0x2000
+#घोषणा ICAM_MMIO		0x3b100000
+#घोषणा ICAM_LCD_OFFSET		0x1080
+#घोषणा ICAM_MMIO_SIZE		0x2000
 
-struct kmb_dsi;
+काष्ठा kmb_dsi;
 
-struct kmb_clock {
-	struct clk *clk_lcd;
-	struct clk *clk_pll0;
-};
+काष्ठा kmb_घड़ी अणु
+	काष्ठा clk *clk_lcd;
+	काष्ठा clk *clk_pll0;
+पूर्ण;
 
-struct kmb_drm_private {
-	struct drm_device		drm;
-	struct kmb_dsi			*kmb_dsi;
-	void __iomem			*lcd_mmio;
-	struct kmb_clock		kmb_clk;
-	struct drm_crtc			crtc;
-	struct kmb_plane		*plane;
-	struct drm_atomic_state		*state;
+काष्ठा kmb_drm_निजी अणु
+	काष्ठा drm_device		drm;
+	काष्ठा kmb_dsi			*kmb_dsi;
+	व्योम __iomem			*lcd_mmio;
+	काष्ठा kmb_घड़ी		kmb_clk;
+	काष्ठा drm_crtc			crtc;
+	काष्ठा kmb_plane		*plane;
+	काष्ठा drm_atomic_state		*state;
 	spinlock_t			irq_lock;
-	int				irq_lcd;
-	int				sys_clk_mhz;
-	struct layer_status		plane_status[KMB_MAX_PLANES];
-	int				kmb_under_flow;
-	int				kmb_flush_done;
-	int				layer_no;
-};
+	पूर्णांक				irq_lcd;
+	पूर्णांक				sys_clk_mhz;
+	काष्ठा layer_status		plane_status[KMB_MAX_PLANES];
+	पूर्णांक				kmb_under_flow;
+	पूर्णांक				kmb_flush_करोne;
+	पूर्णांक				layer_no;
+पूर्ण;
 
-static inline struct kmb_drm_private *to_kmb(const struct drm_device *dev)
-{
-	return container_of(dev, struct kmb_drm_private, drm);
-}
+अटल अंतरभूत काष्ठा kmb_drm_निजी *to_kmb(स्थिर काष्ठा drm_device *dev)
+अणु
+	वापस container_of(dev, काष्ठा kmb_drm_निजी, drm);
+पूर्ण
 
-static inline struct kmb_drm_private *crtc_to_kmb_priv(const struct drm_crtc *x)
-{
-	return container_of(x, struct kmb_drm_private, crtc);
-}
+अटल अंतरभूत काष्ठा kmb_drm_निजी *crtc_to_kmb_priv(स्थिर काष्ठा drm_crtc *x)
+अणु
+	वापस container_of(x, काष्ठा kmb_drm_निजी, crtc);
+पूर्ण
 
-static inline void kmb_write_lcd(struct kmb_drm_private *dev_p,
-				 unsigned int reg, u32 value)
-{
-	writel(value, (dev_p->lcd_mmio + reg));
-}
+अटल अंतरभूत व्योम kmb_ग_लिखो_lcd(काष्ठा kmb_drm_निजी *dev_p,
+				 अचिन्हित पूर्णांक reg, u32 value)
+अणु
+	ग_लिखोl(value, (dev_p->lcd_mmio + reg));
+पूर्ण
 
-static inline u32 kmb_read_lcd(struct kmb_drm_private *dev_p, unsigned int reg)
-{
-	return readl(dev_p->lcd_mmio + reg);
-}
+अटल अंतरभूत u32 kmb_पढ़ो_lcd(काष्ठा kmb_drm_निजी *dev_p, अचिन्हित पूर्णांक reg)
+अणु
+	वापस पढ़ोl(dev_p->lcd_mmio + reg);
+पूर्ण
 
-static inline void kmb_set_bitmask_lcd(struct kmb_drm_private *dev_p,
-				       unsigned int reg, u32 mask)
-{
-	u32 reg_val = kmb_read_lcd(dev_p, reg);
+अटल अंतरभूत व्योम kmb_set_biपंचांगask_lcd(काष्ठा kmb_drm_निजी *dev_p,
+				       अचिन्हित पूर्णांक reg, u32 mask)
+अणु
+	u32 reg_val = kmb_पढ़ो_lcd(dev_p, reg);
 
-	kmb_write_lcd(dev_p, reg, (reg_val | mask));
-}
+	kmb_ग_लिखो_lcd(dev_p, reg, (reg_val | mask));
+पूर्ण
 
-static inline void kmb_clr_bitmask_lcd(struct kmb_drm_private *dev_p,
-				       unsigned int reg, u32 mask)
-{
-	u32 reg_val = kmb_read_lcd(dev_p, reg);
+अटल अंतरभूत व्योम kmb_clr_biपंचांगask_lcd(काष्ठा kmb_drm_निजी *dev_p,
+				       अचिन्हित पूर्णांक reg, u32 mask)
+अणु
+	u32 reg_val = kmb_पढ़ो_lcd(dev_p, reg);
 
-	kmb_write_lcd(dev_p, reg, (reg_val & (~mask)));
-}
+	kmb_ग_लिखो_lcd(dev_p, reg, (reg_val & (~mask)));
+पूर्ण
 
-int kmb_setup_crtc(struct drm_device *dev);
-void kmb_set_scanout(struct kmb_drm_private *lcd);
-#endif /* __KMB_DRV_H__ */
+पूर्णांक kmb_setup_crtc(काष्ठा drm_device *dev);
+व्योम kmb_set_scanout(काष्ठा kmb_drm_निजी *lcd);
+#पूर्ण_अगर /* __KMB_DRV_H__ */

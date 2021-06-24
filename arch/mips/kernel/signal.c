@@ -1,458 +1,459 @@
+<शैली गुरु>
 /*
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the main directory of this archive
- * for more details.
+ * License.  See the file "COPYING" in the मुख्य directory of this archive
+ * क्रम more details.
  *
  * Copyright (C) 1991, 1992  Linus Torvalds
  * Copyright (C) 1994 - 2000  Ralf Baechle
  * Copyright (C) 1999, 2000 Silicon Graphics, Inc.
  * Copyright (C) 2014, Imagination Technologies Ltd.
  */
-#include <linux/cache.h>
-#include <linux/context_tracking.h>
-#include <linux/irqflags.h>
-#include <linux/sched.h>
-#include <linux/mm.h>
-#include <linux/personality.h>
-#include <linux/smp.h>
-#include <linux/kernel.h>
-#include <linux/signal.h>
-#include <linux/errno.h>
-#include <linux/wait.h>
-#include <linux/ptrace.h>
-#include <linux/unistd.h>
-#include <linux/uprobes.h>
-#include <linux/compiler.h>
-#include <linux/syscalls.h>
-#include <linux/uaccess.h>
-#include <linux/tracehook.h>
+#समावेश <linux/cache.h>
+#समावेश <linux/context_tracking.h>
+#समावेश <linux/irqflags.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/personality.h>
+#समावेश <linux/smp.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/संकेत.स>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/रुको.h>
+#समावेश <linux/ptrace.h>
+#समावेश <linux/unistd.h>
+#समावेश <linux/uprobes.h>
+#समावेश <linux/compiler.h>
+#समावेश <linux/syscalls.h>
+#समावेश <linux/uaccess.h>
+#समावेश <linux/tracehook.h>
 
-#include <asm/abi.h>
-#include <asm/asm.h>
-#include <linux/bitops.h>
-#include <asm/cacheflush.h>
-#include <asm/fpu.h>
-#include <asm/sim.h>
-#include <asm/ucontext.h>
-#include <asm/cpu-features.h>
-#include <asm/war.h>
-#include <asm/dsp.h>
-#include <asm/inst.h>
-#include <asm/msa.h>
+#समावेश <यंत्र/abi.h>
+#समावेश <यंत्र/यंत्र.h>
+#समावेश <linux/bitops.h>
+#समावेश <यंत्र/cacheflush.h>
+#समावेश <यंत्र/fpu.h>
+#समावेश <यंत्र/sim.h>
+#समावेश <यंत्र/ucontext.h>
+#समावेश <यंत्र/cpu-features.h>
+#समावेश <यंत्र/war.h>
+#समावेश <यंत्र/dsp.h>
+#समावेश <यंत्र/inst.h>
+#समावेश <यंत्र/msa.h>
 
-#include "signal-common.h"
+#समावेश "signal-common.h"
 
-static int (*save_fp_context)(void __user *sc);
-static int (*restore_fp_context)(void __user *sc);
+अटल पूर्णांक (*save_fp_context)(व्योम __user *sc);
+अटल पूर्णांक (*restore_fp_context)(व्योम __user *sc);
 
-struct sigframe {
-	u32 sf_ass[4];		/* argument save space for o32 */
-	u32 sf_pad[2];		/* Was: signal trampoline */
+काष्ठा sigframe अणु
+	u32 sf_ass[4];		/* argument save space क्रम o32 */
+	u32 sf_pad[2];		/* Was: संकेत trampoline */
 
-	/* Matches struct ucontext from its uc_mcontext field onwards */
-	struct sigcontext sf_sc;
+	/* Matches काष्ठा ucontext from its uc_mcontext field onwards */
+	काष्ठा sigcontext sf_sc;
 	sigset_t sf_mask;
-	unsigned long long sf_extcontext[];
-};
+	अचिन्हित दीर्घ दीर्घ sf_extcontext[];
+पूर्ण;
 
-struct rt_sigframe {
-	u32 rs_ass[4];		/* argument save space for o32 */
-	u32 rs_pad[2];		/* Was: signal trampoline */
-	struct siginfo rs_info;
-	struct ucontext rs_uc;
-};
+काष्ठा rt_sigframe अणु
+	u32 rs_ass[4];		/* argument save space क्रम o32 */
+	u32 rs_pad[2];		/* Was: संकेत trampoline */
+	काष्ठा siginfo rs_info;
+	काष्ठा ucontext rs_uc;
+पूर्ण;
 
-#ifdef CONFIG_MIPS_FP_SUPPORT
+#अगर_घोषित CONFIG_MIPS_FP_SUPPORT
 
 /*
- * Thread saved context copy to/from a signal context presumed to be on the
- * user stack, and therefore accessed with appropriate macros from uaccess.h.
+ * Thपढ़ो saved context copy to/from a संकेत context presumed to be on the
+ * user stack, and thereक्रमe accessed with appropriate macros from uaccess.h.
  */
-static int copy_fp_to_sigcontext(void __user *sc)
-{
-	struct mips_abi *abi = current->thread.abi;
-	uint64_t __user *fpregs = sc + abi->off_sc_fpregs;
-	uint32_t __user *csr = sc + abi->off_sc_fpc_csr;
-	int i;
-	int err = 0;
-	int inc = test_thread_flag(TIF_32BIT_FPREGS) ? 2 : 1;
+अटल पूर्णांक copy_fp_to_sigcontext(व्योम __user *sc)
+अणु
+	काष्ठा mips_abi *abi = current->thपढ़ो.abi;
+	uपूर्णांक64_t __user *fpregs = sc + abi->off_sc_fpregs;
+	uपूर्णांक32_t __user *csr = sc + abi->off_sc_fpc_csr;
+	पूर्णांक i;
+	पूर्णांक err = 0;
+	पूर्णांक inc = test_thपढ़ो_flag(TIF_32BIT_FPREGS) ? 2 : 1;
 
-	for (i = 0; i < NUM_FPU_REGS; i += inc) {
+	क्रम (i = 0; i < NUM_FPU_REGS; i += inc) अणु
 		err |=
-		    __put_user(get_fpr64(&current->thread.fpu.fpr[i], 0),
+		    __put_user(get_fpr64(&current->thपढ़ो.fpu.fpr[i], 0),
 			       &fpregs[i]);
-	}
-	err |= __put_user(current->thread.fpu.fcr31, csr);
+	पूर्ण
+	err |= __put_user(current->thपढ़ो.fpu.fcr31, csr);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int copy_fp_from_sigcontext(void __user *sc)
-{
-	struct mips_abi *abi = current->thread.abi;
-	uint64_t __user *fpregs = sc + abi->off_sc_fpregs;
-	uint32_t __user *csr = sc + abi->off_sc_fpc_csr;
-	int i;
-	int err = 0;
-	int inc = test_thread_flag(TIF_32BIT_FPREGS) ? 2 : 1;
+अटल पूर्णांक copy_fp_from_sigcontext(व्योम __user *sc)
+अणु
+	काष्ठा mips_abi *abi = current->thपढ़ो.abi;
+	uपूर्णांक64_t __user *fpregs = sc + abi->off_sc_fpregs;
+	uपूर्णांक32_t __user *csr = sc + abi->off_sc_fpc_csr;
+	पूर्णांक i;
+	पूर्णांक err = 0;
+	पूर्णांक inc = test_thपढ़ो_flag(TIF_32BIT_FPREGS) ? 2 : 1;
 	u64 fpr_val;
 
-	for (i = 0; i < NUM_FPU_REGS; i += inc) {
+	क्रम (i = 0; i < NUM_FPU_REGS; i += inc) अणु
 		err |= __get_user(fpr_val, &fpregs[i]);
-		set_fpr64(&current->thread.fpu.fpr[i], 0, fpr_val);
-	}
-	err |= __get_user(current->thread.fpu.fcr31, csr);
+		set_fpr64(&current->thपढ़ो.fpu.fpr[i], 0, fpr_val);
+	पूर्ण
+	err |= __get_user(current->thपढ़ो.fpu.fcr31, csr);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-#else /* !CONFIG_MIPS_FP_SUPPORT */
+#अन्यथा /* !CONFIG_MIPS_FP_SUPPORT */
 
-static int copy_fp_to_sigcontext(void __user *sc)
-{
-	return 0;
-}
+अटल पूर्णांक copy_fp_to_sigcontext(व्योम __user *sc)
+अणु
+	वापस 0;
+पूर्ण
 
-static int copy_fp_from_sigcontext(void __user *sc)
-{
-	return 0;
-}
+अटल पूर्णांक copy_fp_from_sigcontext(व्योम __user *sc)
+अणु
+	वापस 0;
+पूर्ण
 
-#endif /* !CONFIG_MIPS_FP_SUPPORT */
+#पूर्ण_अगर /* !CONFIG_MIPS_FP_SUPPORT */
 
 /*
- * Wrappers for the assembly _{save,restore}_fp_context functions.
+ * Wrappers क्रम the assembly _अणुsave,restoreपूर्ण_fp_context functions.
  */
-static int save_hw_fp_context(void __user *sc)
-{
-	struct mips_abi *abi = current->thread.abi;
-	uint64_t __user *fpregs = sc + abi->off_sc_fpregs;
-	uint32_t __user *csr = sc + abi->off_sc_fpc_csr;
+अटल पूर्णांक save_hw_fp_context(व्योम __user *sc)
+अणु
+	काष्ठा mips_abi *abi = current->thपढ़ो.abi;
+	uपूर्णांक64_t __user *fpregs = sc + abi->off_sc_fpregs;
+	uपूर्णांक32_t __user *csr = sc + abi->off_sc_fpc_csr;
 
-	return _save_fp_context(fpregs, csr);
-}
+	वापस _save_fp_context(fpregs, csr);
+पूर्ण
 
-static int restore_hw_fp_context(void __user *sc)
-{
-	struct mips_abi *abi = current->thread.abi;
-	uint64_t __user *fpregs = sc + abi->off_sc_fpregs;
-	uint32_t __user *csr = sc + abi->off_sc_fpc_csr;
+अटल पूर्णांक restore_hw_fp_context(व्योम __user *sc)
+अणु
+	काष्ठा mips_abi *abi = current->thपढ़ो.abi;
+	uपूर्णांक64_t __user *fpregs = sc + abi->off_sc_fpregs;
+	uपूर्णांक32_t __user *csr = sc + abi->off_sc_fpc_csr;
 
-	return _restore_fp_context(fpregs, csr);
-}
+	वापस _restore_fp_context(fpregs, csr);
+पूर्ण
 
 /*
  * Extended context handling.
  */
 
-static inline void __user *sc_to_extcontext(void __user *sc)
-{
-	struct ucontext __user *uc;
+अटल अंतरभूत व्योम __user *sc_to_extcontext(व्योम __user *sc)
+अणु
+	काष्ठा ucontext __user *uc;
 
 	/*
-	 * We can just pretend the sigcontext is always embedded in a struct
+	 * We can just pretend the sigcontext is always embedded in a काष्ठा
 	 * ucontext here, because the offset from sigcontext to extended
-	 * context is the same in the struct sigframe case.
+	 * context is the same in the काष्ठा sigframe हाल.
 	 */
-	uc = container_of(sc, struct ucontext, uc_mcontext);
-	return &uc->uc_extcontext;
-}
+	uc = container_of(sc, काष्ठा ucontext, uc_mcontext);
+	वापस &uc->uc_extcontext;
+पूर्ण
 
-#ifdef CONFIG_CPU_HAS_MSA
+#अगर_घोषित CONFIG_CPU_HAS_MSA
 
-static int save_msa_extcontext(void __user *buf)
-{
-	struct msa_extcontext __user *msa = buf;
-	uint64_t val;
-	int i, err;
+अटल पूर्णांक save_msa_extcontext(व्योम __user *buf)
+अणु
+	काष्ठा msa_extcontext __user *msa = buf;
+	uपूर्णांक64_t val;
+	पूर्णांक i, err;
 
-	if (!thread_msa_context_live())
-		return 0;
+	अगर (!thपढ़ो_msa_context_live())
+		वापस 0;
 
 	/*
 	 * Ensure that we can't lose the live MSA context between checking
-	 * for it & writing it to memory.
+	 * क्रम it & writing it to memory.
 	 */
 	preempt_disable();
 
-	if (is_msa_enabled()) {
+	अगर (is_msa_enabled()) अणु
 		/*
-		 * There are no EVA versions of the vector register load/store
-		 * instructions, so MSA context has to be saved to kernel memory
+		 * There are no EVA versions of the vector रेजिस्टर load/store
+		 * inकाष्ठाions, so MSA context has to be saved to kernel memory
 		 * and then copied to user memory. The save to kernel memory
-		 * should already have been done when handling scalar FP
+		 * should alपढ़ोy have been करोne when handling scalar FP
 		 * context.
 		 */
 		BUG_ON(IS_ENABLED(CONFIG_EVA));
 
-		err = __put_user(read_msa_csr(), &msa->csr);
+		err = __put_user(पढ़ो_msa_csr(), &msa->csr);
 		err |= _save_msa_all_upper(&msa->wr);
 
 		preempt_enable();
-	} else {
+	पूर्ण अन्यथा अणु
 		preempt_enable();
 
-		err = __put_user(current->thread.fpu.msacsr, &msa->csr);
+		err = __put_user(current->thपढ़ो.fpu.msacsr, &msa->csr);
 
-		for (i = 0; i < NUM_FPU_REGS; i++) {
-			val = get_fpr64(&current->thread.fpu.fpr[i], 1);
+		क्रम (i = 0; i < NUM_FPU_REGS; i++) अणु
+			val = get_fpr64(&current->thपढ़ो.fpu.fpr[i], 1);
 			err |= __put_user(val, &msa->wr[i]);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	err |= __put_user(MSA_EXTCONTEXT_MAGIC, &msa->ext.magic);
-	err |= __put_user(sizeof(*msa), &msa->ext.size);
+	err |= __put_user(माप(*msa), &msa->ext.size);
 
-	return err ? -EFAULT : sizeof(*msa);
-}
+	वापस err ? -EFAULT : माप(*msa);
+पूर्ण
 
-static int restore_msa_extcontext(void __user *buf, unsigned int size)
-{
-	struct msa_extcontext __user *msa = buf;
-	unsigned long long val;
-	unsigned int csr;
-	int i, err;
+अटल पूर्णांक restore_msa_extcontext(व्योम __user *buf, अचिन्हित पूर्णांक size)
+अणु
+	काष्ठा msa_extcontext __user *msa = buf;
+	अचिन्हित दीर्घ दीर्घ val;
+	अचिन्हित पूर्णांक csr;
+	पूर्णांक i, err;
 
-	if (size != sizeof(*msa))
-		return -EINVAL;
+	अगर (size != माप(*msa))
+		वापस -EINVAL;
 
 	err = get_user(csr, &msa->csr);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	preempt_disable();
 
-	if (is_msa_enabled()) {
+	अगर (is_msa_enabled()) अणु
 		/*
-		 * There are no EVA versions of the vector register load/store
-		 * instructions, so MSA context has to be copied to kernel
-		 * memory and later loaded to registers. The same is true of
-		 * scalar FP context, so FPU & MSA should have already been
+		 * There are no EVA versions of the vector रेजिस्टर load/store
+		 * inकाष्ठाions, so MSA context has to be copied to kernel
+		 * memory and later loaded to रेजिस्टरs. The same is true of
+		 * scalar FP context, so FPU & MSA should have alपढ़ोy been
 		 * disabled whilst handling scalar FP context.
 		 */
 		BUG_ON(IS_ENABLED(CONFIG_EVA));
 
-		write_msa_csr(csr);
+		ग_लिखो_msa_csr(csr);
 		err |= _restore_msa_all_upper(&msa->wr);
 		preempt_enable();
-	} else {
+	पूर्ण अन्यथा अणु
 		preempt_enable();
 
-		current->thread.fpu.msacsr = csr;
+		current->thपढ़ो.fpu.msacsr = csr;
 
-		for (i = 0; i < NUM_FPU_REGS; i++) {
+		क्रम (i = 0; i < NUM_FPU_REGS; i++) अणु
 			err |= __get_user(val, &msa->wr[i]);
-			set_fpr64(&current->thread.fpu.fpr[i], 1, val);
-		}
-	}
+			set_fpr64(&current->thपढ़ो.fpu.fpr[i], 1, val);
+		पूर्ण
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-#else /* !CONFIG_CPU_HAS_MSA */
+#अन्यथा /* !CONFIG_CPU_HAS_MSA */
 
-static int save_msa_extcontext(void __user *buf)
-{
-	return 0;
-}
+अटल पूर्णांक save_msa_extcontext(व्योम __user *buf)
+अणु
+	वापस 0;
+पूर्ण
 
-static int restore_msa_extcontext(void __user *buf, unsigned int size)
-{
-	return SIGSYS;
-}
+अटल पूर्णांक restore_msa_extcontext(व्योम __user *buf, अचिन्हित पूर्णांक size)
+अणु
+	वापस SIGSYS;
+पूर्ण
 
-#endif /* !CONFIG_CPU_HAS_MSA */
+#पूर्ण_अगर /* !CONFIG_CPU_HAS_MSA */
 
-static int save_extcontext(void __user *buf)
-{
-	int sz;
+अटल पूर्णांक save_extcontext(व्योम __user *buf)
+अणु
+	पूर्णांक sz;
 
 	sz = save_msa_extcontext(buf);
-	if (sz < 0)
-		return sz;
+	अगर (sz < 0)
+		वापस sz;
 	buf += sz;
 
-	/* If no context was saved then trivially return */
-	if (!sz)
-		return 0;
+	/* If no context was saved then trivially वापस */
+	अगर (!sz)
+		वापस 0;
 
 	/* Write the end marker */
-	if (__put_user(END_EXTCONTEXT_MAGIC, (u32 *)buf))
-		return -EFAULT;
+	अगर (__put_user(END_EXTCONTEXT_MAGIC, (u32 *)buf))
+		वापस -EFAULT;
 
-	sz += sizeof(((struct extcontext *)NULL)->magic);
-	return sz;
-}
+	sz += माप(((काष्ठा extcontext *)शून्य)->magic);
+	वापस sz;
+पूर्ण
 
-static int restore_extcontext(void __user *buf)
-{
-	struct extcontext ext;
-	int err;
+अटल पूर्णांक restore_extcontext(व्योम __user *buf)
+अणु
+	काष्ठा extcontext ext;
+	पूर्णांक err;
 
-	while (1) {
-		err = __get_user(ext.magic, (unsigned int *)buf);
-		if (err)
-			return err;
+	जबतक (1) अणु
+		err = __get_user(ext.magic, (अचिन्हित पूर्णांक *)buf);
+		अगर (err)
+			वापस err;
 
-		if (ext.magic == END_EXTCONTEXT_MAGIC)
-			return 0;
+		अगर (ext.magic == END_EXTCONTEXT_MAGIC)
+			वापस 0;
 
-		err = __get_user(ext.size, (unsigned int *)(buf
-			+ offsetof(struct extcontext, size)));
-		if (err)
-			return err;
+		err = __get_user(ext.size, (अचिन्हित पूर्णांक *)(buf
+			+ दुरत्व(काष्ठा extcontext, size)));
+		अगर (err)
+			वापस err;
 
-		switch (ext.magic) {
-		case MSA_EXTCONTEXT_MAGIC:
+		चयन (ext.magic) अणु
+		हाल MSA_EXTCONTEXT_MAGIC:
 			err = restore_msa_extcontext(buf, ext.size);
-			break;
+			अवरोध;
 
-		default:
+		शेष:
 			err = -EINVAL;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		if (err)
-			return err;
+		अगर (err)
+			वापस err;
 
 		buf += ext.size;
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
  * Helper routines
  */
-int protected_save_fp_context(void __user *sc)
-{
-	struct mips_abi *abi = current->thread.abi;
-	uint64_t __user *fpregs = sc + abi->off_sc_fpregs;
-	uint32_t __user *csr = sc + abi->off_sc_fpc_csr;
-	uint32_t __user *used_math = sc + abi->off_sc_used_math;
-	unsigned int used, ext_sz;
-	int err;
+पूर्णांक रक्षित_save_fp_context(व्योम __user *sc)
+अणु
+	काष्ठा mips_abi *abi = current->thपढ़ो.abi;
+	uपूर्णांक64_t __user *fpregs = sc + abi->off_sc_fpregs;
+	uपूर्णांक32_t __user *csr = sc + abi->off_sc_fpc_csr;
+	uपूर्णांक32_t __user *used_math = sc + abi->off_sc_used_math;
+	अचिन्हित पूर्णांक used, ext_sz;
+	पूर्णांक err;
 
 	used = used_math() ? USED_FP : 0;
-	if (!used)
-		goto fp_done;
+	अगर (!used)
+		जाओ fp_करोne;
 
-	if (!test_thread_flag(TIF_32BIT_FPREGS))
+	अगर (!test_thपढ़ो_flag(TIF_32BIT_FPREGS))
 		used |= USED_FR1;
-	if (test_thread_flag(TIF_HYBRID_FPREGS))
+	अगर (test_thपढ़ो_flag(TIF_HYBRID_FPREGS))
 		used |= USED_HYBRID_FPRS;
 
 	/*
-	 * EVA does not have userland equivalents of ldc1 or sdc1, so
+	 * EVA करोes not have userland equivalents of ldc1 or sdc1, so
 	 * save to the kernel FP context & copy that to userland below.
 	 */
-	if (IS_ENABLED(CONFIG_EVA))
+	अगर (IS_ENABLED(CONFIG_EVA))
 		lose_fpu(1);
 
-	while (1) {
+	जबतक (1) अणु
 		lock_fpu_owner();
-		if (is_fpu_owner()) {
+		अगर (is_fpu_owner()) अणु
 			err = save_fp_context(sc);
 			unlock_fpu_owner();
-		} else {
+		पूर्ण अन्यथा अणु
 			unlock_fpu_owner();
 			err = copy_fp_to_sigcontext(sc);
-		}
-		if (likely(!err))
-			break;
+		पूर्ण
+		अगर (likely(!err))
+			अवरोध;
 		/* touch the sigcontext and try again */
 		err = __put_user(0, &fpregs[0]) |
 			__put_user(0, &fpregs[31]) |
 			__put_user(0, csr);
-		if (err)
-			return err;	/* really bad sigcontext */
-	}
+		अगर (err)
+			वापस err;	/* really bad sigcontext */
+	पूर्ण
 
-fp_done:
+fp_करोne:
 	ext_sz = err = save_extcontext(sc_to_extcontext(sc));
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 	used |= ext_sz ? USED_EXTCONTEXT : 0;
 
-	return __put_user(used, used_math);
-}
+	वापस __put_user(used, used_math);
+पूर्ण
 
-int protected_restore_fp_context(void __user *sc)
-{
-	struct mips_abi *abi = current->thread.abi;
-	uint64_t __user *fpregs = sc + abi->off_sc_fpregs;
-	uint32_t __user *csr = sc + abi->off_sc_fpc_csr;
-	uint32_t __user *used_math = sc + abi->off_sc_used_math;
-	unsigned int used;
-	int err, sig = 0, tmp __maybe_unused;
+पूर्णांक रक्षित_restore_fp_context(व्योम __user *sc)
+अणु
+	काष्ठा mips_abi *abi = current->thपढ़ो.abi;
+	uपूर्णांक64_t __user *fpregs = sc + abi->off_sc_fpregs;
+	uपूर्णांक32_t __user *csr = sc + abi->off_sc_fpc_csr;
+	uपूर्णांक32_t __user *used_math = sc + abi->off_sc_used_math;
+	अचिन्हित पूर्णांक used;
+	पूर्णांक err, sig = 0, पंचांगp __maybe_unused;
 
 	err = __get_user(used, used_math);
 	conditional_used_math(used & USED_FP);
 
 	/*
-	 * The signal handler may have used FPU; give it up if the program
-	 * doesn't want it following sigreturn.
+	 * The संकेत handler may have used FPU; give it up अगर the program
+	 * करोesn't want it following sigवापस.
 	 */
-	if (err || !(used & USED_FP))
+	अगर (err || !(used & USED_FP))
 		lose_fpu(0);
-	if (err)
-		return err;
-	if (!(used & USED_FP))
-		goto fp_done;
+	अगर (err)
+		वापस err;
+	अगर (!(used & USED_FP))
+		जाओ fp_करोne;
 
 	err = sig = fpcsr_pending(csr);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
 	/*
-	 * EVA does not have userland equivalents of ldc1 or sdc1, so we
+	 * EVA करोes not have userland equivalents of ldc1 or sdc1, so we
 	 * disable the FPU here such that the code below simply copies to
 	 * the kernel FP context.
 	 */
-	if (IS_ENABLED(CONFIG_EVA))
+	अगर (IS_ENABLED(CONFIG_EVA))
 		lose_fpu(0);
 
-	while (1) {
+	जबतक (1) अणु
 		lock_fpu_owner();
-		if (is_fpu_owner()) {
+		अगर (is_fpu_owner()) अणु
 			err = restore_fp_context(sc);
 			unlock_fpu_owner();
-		} else {
+		पूर्ण अन्यथा अणु
 			unlock_fpu_owner();
 			err = copy_fp_from_sigcontext(sc);
-		}
-		if (likely(!err))
-			break;
+		पूर्ण
+		अगर (likely(!err))
+			अवरोध;
 		/* touch the sigcontext and try again */
-		err = __get_user(tmp, &fpregs[0]) |
-			__get_user(tmp, &fpregs[31]) |
-			__get_user(tmp, csr);
-		if (err)
-			break;	/* really bad sigcontext */
-	}
+		err = __get_user(पंचांगp, &fpregs[0]) |
+			__get_user(पंचांगp, &fpregs[31]) |
+			__get_user(पंचांगp, csr);
+		अगर (err)
+			अवरोध;	/* really bad sigcontext */
+	पूर्ण
 
-fp_done:
-	if (!err && (used & USED_EXTCONTEXT))
+fp_करोne:
+	अगर (!err && (used & USED_EXTCONTEXT))
 		err = restore_extcontext(sc_to_extcontext(sc));
 
-	return err ?: sig;
-}
+	वापस err ?: sig;
+पूर्ण
 
-int setup_sigcontext(struct pt_regs *regs, struct sigcontext __user *sc)
-{
-	int err = 0;
-	int i;
+पूर्णांक setup_sigcontext(काष्ठा pt_regs *regs, काष्ठा sigcontext __user *sc)
+अणु
+	पूर्णांक err = 0;
+	पूर्णांक i;
 
 	err |= __put_user(regs->cp0_epc, &sc->sc_pc);
 
 	err |= __put_user(0, &sc->sc_regs[0]);
-	for (i = 1; i < 32; i++)
+	क्रम (i = 1; i < 32; i++)
 		err |= __put_user(regs->regs[i], &sc->sc_regs[i]);
 
-#ifdef CONFIG_CPU_HAS_SMARTMIPS
+#अगर_घोषित CONFIG_CPU_HAS_SMARTMIPS
 	err |= __put_user(regs->acx, &sc->sc_acx);
-#endif
+#पूर्ण_अगर
 	err |= __put_user(regs->hi, &sc->sc_mdhi);
 	err |= __put_user(regs->lo, &sc->sc_mdlo);
-	if (cpu_has_dsp) {
+	अगर (cpu_has_dsp) अणु
 		err |= __put_user(mfhi1(), &sc->sc_hi1);
 		err |= __put_user(mflo1(), &sc->sc_lo1);
 		err |= __put_user(mfhi2(), &sc->sc_hi2);
@@ -460,76 +461,76 @@ int setup_sigcontext(struct pt_regs *regs, struct sigcontext __user *sc)
 		err |= __put_user(mfhi3(), &sc->sc_hi3);
 		err |= __put_user(mflo3(), &sc->sc_lo3);
 		err |= __put_user(rddsp(DSP_MASK), &sc->sc_dsp);
-	}
+	पूर्ण
 
 
 	/*
-	 * Save FPU state to signal context. Signal handler
+	 * Save FPU state to संकेत context. Signal handler
 	 * will "inherit" current FPU state.
 	 */
-	err |= protected_save_fp_context(sc);
+	err |= रक्षित_save_fp_context(sc);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static size_t extcontext_max_size(void)
-{
-	size_t sz = 0;
+अटल माप_प्रकार extcontext_max_size(व्योम)
+अणु
+	माप_प्रकार sz = 0;
 
 	/*
-	 * The assumption here is that between this point & the point at which
+	 * The assumption here is that between this poपूर्णांक & the poपूर्णांक at which
 	 * the extended context is saved the size of the context should only
-	 * ever be able to shrink (if the task is preempted), but never grow.
-	 * That is, what this function returns is an upper bound on the size of
-	 * the extended context for the current task at the current time.
+	 * ever be able to shrink (अगर the task is preempted), but never grow.
+	 * That is, what this function वापसs is an upper bound on the size of
+	 * the extended context क्रम the current task at the current समय.
 	 */
 
-	if (thread_msa_context_live())
-		sz += sizeof(struct msa_extcontext);
+	अगर (thपढ़ो_msa_context_live())
+		sz += माप(काष्ठा msa_extcontext);
 
 	/* If any context is saved then we'll append the end marker */
-	if (sz)
-		sz += sizeof(((struct extcontext *)NULL)->magic);
+	अगर (sz)
+		sz += माप(((काष्ठा extcontext *)शून्य)->magic);
 
-	return sz;
-}
+	वापस sz;
+पूर्ण
 
-int fpcsr_pending(unsigned int __user *fpcsr)
-{
-	int err, sig = 0;
-	unsigned int csr, enabled;
+पूर्णांक fpcsr_pending(अचिन्हित पूर्णांक __user *fpcsr)
+अणु
+	पूर्णांक err, sig = 0;
+	अचिन्हित पूर्णांक csr, enabled;
 
 	err = __get_user(csr, fpcsr);
 	enabled = FPU_CSR_UNI_X | ((csr & FPU_CSR_ALL_E) << 5);
 	/*
-	 * If the signal handler set some FPU exceptions, clear it and
-	 * send SIGFPE.
+	 * If the संकेत handler set some FPU exceptions, clear it and
+	 * send संक_भ_त्रुटि.
 	 */
-	if (csr & enabled) {
+	अगर (csr & enabled) अणु
 		csr &= ~enabled;
 		err |= __put_user(csr, fpcsr);
-		sig = SIGFPE;
-	}
-	return err ?: sig;
-}
+		sig = संक_भ_त्रुटि;
+	पूर्ण
+	वापस err ?: sig;
+पूर्ण
 
-int restore_sigcontext(struct pt_regs *regs, struct sigcontext __user *sc)
-{
-	unsigned long treg;
-	int err = 0;
-	int i;
+पूर्णांक restore_sigcontext(काष्ठा pt_regs *regs, काष्ठा sigcontext __user *sc)
+अणु
+	अचिन्हित दीर्घ treg;
+	पूर्णांक err = 0;
+	पूर्णांक i;
 
-	/* Always make any pending restarted system calls return -EINTR */
-	current->restart_block.fn = do_no_restart_syscall;
+	/* Always make any pending restarted प्रणाली calls वापस -EINTR */
+	current->restart_block.fn = करो_no_restart_syscall;
 
 	err |= __get_user(regs->cp0_epc, &sc->sc_pc);
 
-#ifdef CONFIG_CPU_HAS_SMARTMIPS
+#अगर_घोषित CONFIG_CPU_HAS_SMARTMIPS
 	err |= __get_user(regs->acx, &sc->sc_acx);
-#endif
+#पूर्ण_अगर
 	err |= __get_user(regs->hi, &sc->sc_mdhi);
 	err |= __get_user(regs->lo, &sc->sc_mdlo);
-	if (cpu_has_dsp) {
+	अगर (cpu_has_dsp) अणु
 		err |= __get_user(treg, &sc->sc_hi1); mthi1(treg);
 		err |= __get_user(treg, &sc->sc_lo1); mtlo1(treg);
 		err |= __get_user(treg, &sc->sc_hi2); mthi2(treg);
@@ -537,26 +538,26 @@ int restore_sigcontext(struct pt_regs *regs, struct sigcontext __user *sc)
 		err |= __get_user(treg, &sc->sc_hi3); mthi3(treg);
 		err |= __get_user(treg, &sc->sc_lo3); mtlo3(treg);
 		err |= __get_user(treg, &sc->sc_dsp); wrdsp(treg, DSP_MASK);
-	}
+	पूर्ण
 
-	for (i = 1; i < 32; i++)
+	क्रम (i = 1; i < 32; i++)
 		err |= __get_user(regs->regs[i], &sc->sc_regs[i]);
 
-	return err ?: protected_restore_fp_context(sc);
-}
+	वापस err ?: रक्षित_restore_fp_context(sc);
+पूर्ण
 
-#ifdef CONFIG_WAR_ICACHE_REFILLS
-#define SIGMASK		~(cpu_icache_line_size()-1)
-#else
-#define SIGMASK		ALMASK
-#endif
+#अगर_घोषित CONFIG_WAR_ICACHE_REFILLS
+#घोषणा SIGMASK		~(cpu_icache_line_size()-1)
+#अन्यथा
+#घोषणा SIGMASK		ALMASK
+#पूर्ण_अगर
 
-void __user *get_sigframe(struct ksignal *ksig, struct pt_regs *regs,
-			  size_t frame_size)
-{
-	unsigned long sp;
+व्योम __user *get_sigframe(काष्ठा kसंकेत *ksig, काष्ठा pt_regs *regs,
+			  माप_प्रकार frame_size)
+अणु
+	अचिन्हित दीर्घ sp;
 
-	/* Leave space for potential extended context */
+	/* Leave space क्रम potential extended context */
 	frame_size += extcontext_max_size();
 
 	/* Default to using normal stack */
@@ -564,399 +565,399 @@ void __user *get_sigframe(struct ksignal *ksig, struct pt_regs *regs,
 
 	/*
 	 * FPU emulator may have it's own trampoline active just
-	 * above the user stack, 16-bytes before the next lowest
-	 * 16 byte boundary.  Try to avoid trashing it.
+	 * above the user stack, 16-bytes beक्रमe the next lowest
+	 * 16 byte boundary.  Try to aव्योम trashing it.
 	 */
 	sp -= 32;
 
 	sp = sigsp(sp, ksig);
 
-	return (void __user *)((sp - frame_size) & SIGMASK);
-}
+	वापस (व्योम __user *)((sp - frame_size) & SIGMASK);
+पूर्ण
 
 /*
- * Atomically swap in the new signal mask, and wait for a signal.
+ * Atomically swap in the new संकेत mask, and रुको क्रम a संकेत.
  */
 
-#ifdef CONFIG_TRAD_SIGNALS
-SYSCALL_DEFINE1(sigsuspend, sigset_t __user *, uset)
-{
-	return sys_rt_sigsuspend(uset, sizeof(sigset_t));
-}
-#endif
+#अगर_घोषित CONFIG_TRAD_SIGNALS
+SYSCALL_DEFINE1(संक_रोको, sigset_t __user *, uset)
+अणु
+	वापस sys_rt_संक_रोको(uset, माप(sigset_t));
+पूर्ण
+#पूर्ण_अगर
 
-#ifdef CONFIG_TRAD_SIGNALS
-SYSCALL_DEFINE3(sigaction, int, sig, const struct sigaction __user *, act,
-	struct sigaction __user *, oact)
-{
-	struct k_sigaction new_ka, old_ka;
-	int ret;
-	int err = 0;
+#अगर_घोषित CONFIG_TRAD_SIGNALS
+SYSCALL_DEFINE3(sigaction, पूर्णांक, sig, स्थिर काष्ठा sigaction __user *, act,
+	काष्ठा sigaction __user *, oact)
+अणु
+	काष्ठा k_sigaction new_ka, old_ka;
+	पूर्णांक ret;
+	पूर्णांक err = 0;
 
-	if (act) {
+	अगर (act) अणु
 		old_sigset_t mask;
 
-		if (!access_ok(act, sizeof(*act)))
-			return -EFAULT;
+		अगर (!access_ok(act, माप(*act)))
+			वापस -EFAULT;
 		err |= __get_user(new_ka.sa.sa_handler, &act->sa_handler);
 		err |= __get_user(new_ka.sa.sa_flags, &act->sa_flags);
 		err |= __get_user(mask, &act->sa_mask.sig[0]);
-		if (err)
-			return -EFAULT;
+		अगर (err)
+			वापस -EFAULT;
 
 		siginitset(&new_ka.sa.sa_mask, mask);
-	}
+	पूर्ण
 
-	ret = do_sigaction(sig, act ? &new_ka : NULL, oact ? &old_ka : NULL);
+	ret = करो_sigaction(sig, act ? &new_ka : शून्य, oact ? &old_ka : शून्य);
 
-	if (!ret && oact) {
-		if (!access_ok(oact, sizeof(*oact)))
-			return -EFAULT;
+	अगर (!ret && oact) अणु
+		अगर (!access_ok(oact, माप(*oact)))
+			वापस -EFAULT;
 		err |= __put_user(old_ka.sa.sa_flags, &oact->sa_flags);
 		err |= __put_user(old_ka.sa.sa_handler, &oact->sa_handler);
 		err |= __put_user(old_ka.sa.sa_mask.sig[0], oact->sa_mask.sig);
 		err |= __put_user(0, &oact->sa_mask.sig[1]);
 		err |= __put_user(0, &oact->sa_mask.sig[2]);
 		err |= __put_user(0, &oact->sa_mask.sig[3]);
-		if (err)
-			return -EFAULT;
-	}
+		अगर (err)
+			वापस -EFAULT;
+	पूर्ण
 
-	return ret;
-}
-#endif
+	वापस ret;
+पूर्ण
+#पूर्ण_अगर
 
-#ifdef CONFIG_TRAD_SIGNALS
-asmlinkage void sys_sigreturn(void)
-{
-	struct sigframe __user *frame;
-	struct pt_regs *regs;
+#अगर_घोषित CONFIG_TRAD_SIGNALS
+यंत्रlinkage व्योम sys_sigवापस(व्योम)
+अणु
+	काष्ठा sigframe __user *frame;
+	काष्ठा pt_regs *regs;
 	sigset_t blocked;
-	int sig;
+	पूर्णांक sig;
 
 	regs = current_pt_regs();
-	frame = (struct sigframe __user *)regs->regs[29];
-	if (!access_ok(frame, sizeof(*frame)))
-		goto badframe;
-	if (__copy_from_user(&blocked, &frame->sf_mask, sizeof(blocked)))
-		goto badframe;
+	frame = (काष्ठा sigframe __user *)regs->regs[29];
+	अगर (!access_ok(frame, माप(*frame)))
+		जाओ badframe;
+	अगर (__copy_from_user(&blocked, &frame->sf_mask, माप(blocked)))
+		जाओ badframe;
 
 	set_current_blocked(&blocked);
 
 	sig = restore_sigcontext(regs, &frame->sf_sc);
-	if (sig < 0)
-		goto badframe;
-	else if (sig)
-		force_sig(sig);
+	अगर (sig < 0)
+		जाओ badframe;
+	अन्यथा अगर (sig)
+		क्रमce_sig(sig);
 
 	/*
-	 * Don't let your children do this ...
+	 * Don't let your children करो this ...
 	 */
-	__asm__ __volatile__(
+	__यंत्र__ __अस्थिर__(
 		"move\t$29, %0\n\t"
 		"j\tsyscall_exit"
-		: /* no outputs */
+		: /* no outमाला_दो */
 		: "r" (regs));
 	/* Unreached */
 
 badframe:
-	force_sig(SIGSEGV);
-}
-#endif /* CONFIG_TRAD_SIGNALS */
+	क्रमce_sig(संक_अंश);
+पूर्ण
+#पूर्ण_अगर /* CONFIG_TRAD_SIGNALS */
 
-asmlinkage void sys_rt_sigreturn(void)
-{
-	struct rt_sigframe __user *frame;
-	struct pt_regs *regs;
+यंत्रlinkage व्योम sys_rt_sigवापस(व्योम)
+अणु
+	काष्ठा rt_sigframe __user *frame;
+	काष्ठा pt_regs *regs;
 	sigset_t set;
-	int sig;
+	पूर्णांक sig;
 
 	regs = current_pt_regs();
-	frame = (struct rt_sigframe __user *)regs->regs[29];
-	if (!access_ok(frame, sizeof(*frame)))
-		goto badframe;
-	if (__copy_from_user(&set, &frame->rs_uc.uc_sigmask, sizeof(set)))
-		goto badframe;
+	frame = (काष्ठा rt_sigframe __user *)regs->regs[29];
+	अगर (!access_ok(frame, माप(*frame)))
+		जाओ badframe;
+	अगर (__copy_from_user(&set, &frame->rs_uc.uc_sigmask, माप(set)))
+		जाओ badframe;
 
 	set_current_blocked(&set);
 
 	sig = restore_sigcontext(regs, &frame->rs_uc.uc_mcontext);
-	if (sig < 0)
-		goto badframe;
-	else if (sig)
-		force_sig(sig);
+	अगर (sig < 0)
+		जाओ badframe;
+	अन्यथा अगर (sig)
+		क्रमce_sig(sig);
 
-	if (restore_altstack(&frame->rs_uc.uc_stack))
-		goto badframe;
+	अगर (restore_altstack(&frame->rs_uc.uc_stack))
+		जाओ badframe;
 
 	/*
-	 * Don't let your children do this ...
+	 * Don't let your children करो this ...
 	 */
-	__asm__ __volatile__(
+	__यंत्र__ __अस्थिर__(
 		"move\t$29, %0\n\t"
 		"j\tsyscall_exit"
-		: /* no outputs */
+		: /* no outमाला_दो */
 		: "r" (regs));
 	/* Unreached */
 
 badframe:
-	force_sig(SIGSEGV);
-}
+	क्रमce_sig(संक_अंश);
+पूर्ण
 
-#ifdef CONFIG_TRAD_SIGNALS
-static int setup_frame(void *sig_return, struct ksignal *ksig,
-		       struct pt_regs *regs, sigset_t *set)
-{
-	struct sigframe __user *frame;
-	int err = 0;
+#अगर_घोषित CONFIG_TRAD_SIGNALS
+अटल पूर्णांक setup_frame(व्योम *sig_वापस, काष्ठा kसंकेत *ksig,
+		       काष्ठा pt_regs *regs, sigset_t *set)
+अणु
+	काष्ठा sigframe __user *frame;
+	पूर्णांक err = 0;
 
-	frame = get_sigframe(ksig, regs, sizeof(*frame));
-	if (!access_ok(frame, sizeof (*frame)))
-		return -EFAULT;
+	frame = get_sigframe(ksig, regs, माप(*frame));
+	अगर (!access_ok(frame, माप (*frame)))
+		वापस -EFAULT;
 
 	err |= setup_sigcontext(regs, &frame->sf_sc);
-	err |= __copy_to_user(&frame->sf_mask, set, sizeof(*set));
-	if (err)
-		return -EFAULT;
+	err |= __copy_to_user(&frame->sf_mask, set, माप(*set));
+	अगर (err)
+		वापस -EFAULT;
 
 	/*
-	 * Arguments to signal handler:
+	 * Arguments to संकेत handler:
 	 *
-	 *   a0 = signal number
+	 *   a0 = संकेत number
 	 *   a1 = 0 (should be cause)
-	 *   a2 = pointer to struct sigcontext
+	 *   a2 = poपूर्णांकer to काष्ठा sigcontext
 	 *
-	 * $25 and c0_epc point to the signal handler, $29 points to the
-	 * struct sigframe.
+	 * $25 and c0_epc poपूर्णांक to the संकेत handler, $29 poपूर्णांकs to the
+	 * काष्ठा sigframe.
 	 */
 	regs->regs[ 4] = ksig->sig;
 	regs->regs[ 5] = 0;
-	regs->regs[ 6] = (unsigned long) &frame->sf_sc;
-	regs->regs[29] = (unsigned long) frame;
-	regs->regs[31] = (unsigned long) sig_return;
-	regs->cp0_epc = regs->regs[25] = (unsigned long) ksig->ka.sa.sa_handler;
+	regs->regs[ 6] = (अचिन्हित दीर्घ) &frame->sf_sc;
+	regs->regs[29] = (अचिन्हित दीर्घ) frame;
+	regs->regs[31] = (अचिन्हित दीर्घ) sig_वापस;
+	regs->cp0_epc = regs->regs[25] = (अचिन्हित दीर्घ) ksig->ka.sa.sa_handler;
 
 	DEBUGP("SIG deliver (%s:%d): sp=0x%p pc=0x%lx ra=0x%lx\n",
 	       current->comm, current->pid,
 	       frame, regs->cp0_epc, regs->regs[31]);
-	return 0;
-}
-#endif
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
-static int setup_rt_frame(void *sig_return, struct ksignal *ksig,
-			  struct pt_regs *regs, sigset_t *set)
-{
-	struct rt_sigframe __user *frame;
-	int err = 0;
+अटल पूर्णांक setup_rt_frame(व्योम *sig_वापस, काष्ठा kसंकेत *ksig,
+			  काष्ठा pt_regs *regs, sigset_t *set)
+अणु
+	काष्ठा rt_sigframe __user *frame;
+	पूर्णांक err = 0;
 
-	frame = get_sigframe(ksig, regs, sizeof(*frame));
-	if (!access_ok(frame, sizeof (*frame)))
-		return -EFAULT;
+	frame = get_sigframe(ksig, regs, माप(*frame));
+	अगर (!access_ok(frame, माप (*frame)))
+		वापस -EFAULT;
 
 	/* Create siginfo.  */
 	err |= copy_siginfo_to_user(&frame->rs_info, &ksig->info);
 
 	/* Create the ucontext.	 */
 	err |= __put_user(0, &frame->rs_uc.uc_flags);
-	err |= __put_user(NULL, &frame->rs_uc.uc_link);
+	err |= __put_user(शून्य, &frame->rs_uc.uc_link);
 	err |= __save_altstack(&frame->rs_uc.uc_stack, regs->regs[29]);
 	err |= setup_sigcontext(regs, &frame->rs_uc.uc_mcontext);
-	err |= __copy_to_user(&frame->rs_uc.uc_sigmask, set, sizeof(*set));
+	err |= __copy_to_user(&frame->rs_uc.uc_sigmask, set, माप(*set));
 
-	if (err)
-		return -EFAULT;
+	अगर (err)
+		वापस -EFAULT;
 
 	/*
-	 * Arguments to signal handler:
+	 * Arguments to संकेत handler:
 	 *
-	 *   a0 = signal number
+	 *   a0 = संकेत number
 	 *   a1 = 0 (should be cause)
-	 *   a2 = pointer to ucontext
+	 *   a2 = poपूर्णांकer to ucontext
 	 *
-	 * $25 and c0_epc point to the signal handler, $29 points to
-	 * the struct rt_sigframe.
+	 * $25 and c0_epc poपूर्णांक to the संकेत handler, $29 poपूर्णांकs to
+	 * the काष्ठा rt_sigframe.
 	 */
 	regs->regs[ 4] = ksig->sig;
-	regs->regs[ 5] = (unsigned long) &frame->rs_info;
-	regs->regs[ 6] = (unsigned long) &frame->rs_uc;
-	regs->regs[29] = (unsigned long) frame;
-	regs->regs[31] = (unsigned long) sig_return;
-	regs->cp0_epc = regs->regs[25] = (unsigned long) ksig->ka.sa.sa_handler;
+	regs->regs[ 5] = (अचिन्हित दीर्घ) &frame->rs_info;
+	regs->regs[ 6] = (अचिन्हित दीर्घ) &frame->rs_uc;
+	regs->regs[29] = (अचिन्हित दीर्घ) frame;
+	regs->regs[31] = (अचिन्हित दीर्घ) sig_वापस;
+	regs->cp0_epc = regs->regs[25] = (अचिन्हित दीर्घ) ksig->ka.sa.sa_handler;
 
 	DEBUGP("SIG deliver (%s:%d): sp=0x%p pc=0x%lx ra=0x%lx\n",
 	       current->comm, current->pid,
 	       frame, regs->cp0_epc, regs->regs[31]);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-struct mips_abi mips_abi = {
-#ifdef CONFIG_TRAD_SIGNALS
+काष्ठा mips_abi mips_abi = अणु
+#अगर_घोषित CONFIG_TRAD_SIGNALS
 	.setup_frame	= setup_frame,
-#endif
+#पूर्ण_अगर
 	.setup_rt_frame = setup_rt_frame,
 	.restart	= __NR_restart_syscall,
 
-	.off_sc_fpregs = offsetof(struct sigcontext, sc_fpregs),
-	.off_sc_fpc_csr = offsetof(struct sigcontext, sc_fpc_csr),
-	.off_sc_used_math = offsetof(struct sigcontext, sc_used_math),
+	.off_sc_fpregs = दुरत्व(काष्ठा sigcontext, sc_fpregs),
+	.off_sc_fpc_csr = दुरत्व(काष्ठा sigcontext, sc_fpc_csr),
+	.off_sc_used_math = दुरत्व(काष्ठा sigcontext, sc_used_math),
 
 	.vdso		= &vdso_image,
-};
+पूर्ण;
 
-static void handle_signal(struct ksignal *ksig, struct pt_regs *regs)
-{
+अटल व्योम handle_संकेत(काष्ठा kसंकेत *ksig, काष्ठा pt_regs *regs)
+अणु
 	sigset_t *oldset = sigmask_to_save();
-	int ret;
-	struct mips_abi *abi = current->thread.abi;
-	void *vdso = current->mm->context.vdso;
+	पूर्णांक ret;
+	काष्ठा mips_abi *abi = current->thपढ़ो.abi;
+	व्योम *vdso = current->mm->context.vdso;
 
 	/*
-	 * If we were emulating a delay slot instruction, exit that frame such
-	 * that addresses in the sigframe are as expected for userland and we
-	 * don't have a problem if we reuse the thread's frame for an
-	 * instruction within the signal handler.
+	 * If we were emulating a delay slot inकाष्ठाion, निकास that frame such
+	 * that addresses in the sigframe are as expected क्रम userland and we
+	 * करोn't have a problem if we reuse the thread's frame क्रम an
+	 * inकाष्ठाion within the संकेत handler.
 	 */
-	dsemul_thread_rollback(regs);
+	dsemul_thपढ़ो_rollback(regs);
 
-	if (regs->regs[0]) {
-		switch(regs->regs[2]) {
-		case ERESTART_RESTARTBLOCK:
-		case ERESTARTNOHAND:
+	अगर (regs->regs[0]) अणु
+		चयन(regs->regs[2]) अणु
+		हाल ERESTART_RESTARTBLOCK:
+		हाल ERESTARTNOHAND:
 			regs->regs[2] = EINTR;
-			break;
-		case ERESTARTSYS:
-			if (!(ksig->ka.sa.sa_flags & SA_RESTART)) {
+			अवरोध;
+		हाल ERESTARTSYS:
+			अगर (!(ksig->ka.sa.sa_flags & SA_RESTART)) अणु
 				regs->regs[2] = EINTR;
-				break;
-			}
+				अवरोध;
+			पूर्ण
 			fallthrough;
-		case ERESTARTNOINTR:
+		हाल ERESTARTNOINTR:
 			regs->regs[7] = regs->regs[26];
 			regs->regs[2] = regs->regs[0];
 			regs->cp0_epc -= 4;
-		}
+		पूर्ण
 
 		regs->regs[0] = 0;		/* Don't deal with this again.	*/
-	}
+	पूर्ण
 
-	rseq_signal_deliver(ksig, regs);
+	rseq_संकेत_deliver(ksig, regs);
 
-	if (sig_uses_siginfo(&ksig->ka, abi))
-		ret = abi->setup_rt_frame(vdso + abi->vdso->off_rt_sigreturn,
+	अगर (sig_uses_siginfo(&ksig->ka, abi))
+		ret = abi->setup_rt_frame(vdso + abi->vdso->off_rt_sigवापस,
 					  ksig, regs, oldset);
-	else
-		ret = abi->setup_frame(vdso + abi->vdso->off_sigreturn,
+	अन्यथा
+		ret = abi->setup_frame(vdso + abi->vdso->off_sigवापस,
 				       ksig, regs, oldset);
 
-	signal_setup_done(ret, ksig, 0);
-}
+	संकेत_setup_करोne(ret, ksig, 0);
+पूर्ण
 
-static void do_signal(struct pt_regs *regs)
-{
-	struct ksignal ksig;
+अटल व्योम करो_संकेत(काष्ठा pt_regs *regs)
+अणु
+	काष्ठा kसंकेत ksig;
 
-	if (get_signal(&ksig)) {
-		/* Whee!  Actually deliver the signal.	*/
-		handle_signal(&ksig, regs);
-		return;
-	}
+	अगर (get_संकेत(&ksig)) अणु
+		/* Whee!  Actually deliver the संकेत.	*/
+		handle_संकेत(&ksig, regs);
+		वापस;
+	पूर्ण
 
-	if (regs->regs[0]) {
-		switch (regs->regs[2]) {
-		case ERESTARTNOHAND:
-		case ERESTARTSYS:
-		case ERESTARTNOINTR:
+	अगर (regs->regs[0]) अणु
+		चयन (regs->regs[2]) अणु
+		हाल ERESTARTNOHAND:
+		हाल ERESTARTSYS:
+		हाल ERESTARTNOINTR:
 			regs->regs[2] = regs->regs[0];
 			regs->regs[7] = regs->regs[26];
 			regs->cp0_epc -= 4;
-			break;
+			अवरोध;
 
-		case ERESTART_RESTARTBLOCK:
-			regs->regs[2] = current->thread.abi->restart;
+		हाल ERESTART_RESTARTBLOCK:
+			regs->regs[2] = current->thपढ़ो.abi->restart;
 			regs->regs[7] = regs->regs[26];
 			regs->cp0_epc -= 4;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		regs->regs[0] = 0;	/* Don't deal with this again.	*/
-	}
+	पूर्ण
 
 	/*
-	 * If there's no signal to deliver, we just put the saved sigmask
+	 * If there's no संकेत to deliver, we just put the saved sigmask
 	 * back
 	 */
 	restore_saved_sigmask();
-}
+पूर्ण
 
 /*
- * notification of userspace execution resumption
+ * notअगरication of userspace execution resumption
  * - triggered by the TIF_WORK_MASK flags
  */
-asmlinkage void do_notify_resume(struct pt_regs *regs, void *unused,
-	__u32 thread_info_flags)
-{
+यंत्रlinkage व्योम करो_notअगरy_resume(काष्ठा pt_regs *regs, व्योम *unused,
+	__u32 thपढ़ो_info_flags)
+अणु
 	local_irq_enable();
 
-	user_exit();
+	user_निकास();
 
-	if (thread_info_flags & _TIF_UPROBE)
-		uprobe_notify_resume(regs);
+	अगर (thपढ़ो_info_flags & _TIF_UPROBE)
+		uprobe_notअगरy_resume(regs);
 
-	/* deal with pending signal delivery */
-	if (thread_info_flags & (_TIF_SIGPENDING | _TIF_NOTIFY_SIGNAL))
-		do_signal(regs);
+	/* deal with pending संकेत delivery */
+	अगर (thपढ़ो_info_flags & (_TIF_SIGPENDING | _TIF_NOTIFY_SIGNAL))
+		करो_संकेत(regs);
 
-	if (thread_info_flags & _TIF_NOTIFY_RESUME) {
-		tracehook_notify_resume(regs);
-		rseq_handle_notify_resume(NULL, regs);
-	}
+	अगर (thपढ़ो_info_flags & _TIF_NOTIFY_RESUME) अणु
+		tracehook_notअगरy_resume(regs);
+		rseq_handle_notअगरy_resume(शून्य, regs);
+	पूर्ण
 
 	user_enter();
-}
+पूर्ण
 
-#if defined(CONFIG_SMP) && defined(CONFIG_MIPS_FP_SUPPORT)
-static int smp_save_fp_context(void __user *sc)
-{
-	return raw_cpu_has_fpu
+#अगर defined(CONFIG_SMP) && defined(CONFIG_MIPS_FP_SUPPORT)
+अटल पूर्णांक smp_save_fp_context(व्योम __user *sc)
+अणु
+	वापस raw_cpu_has_fpu
 	       ? save_hw_fp_context(sc)
 	       : copy_fp_to_sigcontext(sc);
-}
+पूर्ण
 
-static int smp_restore_fp_context(void __user *sc)
-{
-	return raw_cpu_has_fpu
+अटल पूर्णांक smp_restore_fp_context(व्योम __user *sc)
+अणु
+	वापस raw_cpu_has_fpu
 	       ? restore_hw_fp_context(sc)
 	       : copy_fp_from_sigcontext(sc);
-}
-#endif
+पूर्ण
+#पूर्ण_अगर
 
-static int signal_setup(void)
-{
+अटल पूर्णांक संकेत_setup(व्योम)
+अणु
 	/*
 	 * The offset from sigcontext to extended context should be the same
-	 * regardless of the type of signal, such that userland can always know
-	 * where to look if it wishes to find the extended context structures.
+	 * regardless of the type of संकेत, such that userland can always know
+	 * where to look अगर it wishes to find the extended context काष्ठाures.
 	 */
-	BUILD_BUG_ON((offsetof(struct sigframe, sf_extcontext) -
-		      offsetof(struct sigframe, sf_sc)) !=
-		     (offsetof(struct rt_sigframe, rs_uc.uc_extcontext) -
-		      offsetof(struct rt_sigframe, rs_uc.uc_mcontext)));
+	BUILD_BUG_ON((दुरत्व(काष्ठा sigframe, sf_extcontext) -
+		      दुरत्व(काष्ठा sigframe, sf_sc)) !=
+		     (दुरत्व(काष्ठा rt_sigframe, rs_uc.uc_extcontext) -
+		      दुरत्व(काष्ठा rt_sigframe, rs_uc.uc_mcontext)));
 
-#if defined(CONFIG_SMP) && defined(CONFIG_MIPS_FP_SUPPORT)
-	/* For now just do the cpu_has_fpu check when the functions are invoked */
+#अगर defined(CONFIG_SMP) && defined(CONFIG_MIPS_FP_SUPPORT)
+	/* For now just करो the cpu_has_fpu check when the functions are invoked */
 	save_fp_context = smp_save_fp_context;
 	restore_fp_context = smp_restore_fp_context;
-#else
-	if (cpu_has_fpu) {
+#अन्यथा
+	अगर (cpu_has_fpu) अणु
 		save_fp_context = save_hw_fp_context;
 		restore_fp_context = restore_hw_fp_context;
-	} else {
+	पूर्ण अन्यथा अणु
 		save_fp_context = copy_fp_to_sigcontext;
 		restore_fp_context = copy_fp_from_sigcontext;
-	}
-#endif /* CONFIG_SMP */
+	पूर्ण
+#पूर्ण_अगर /* CONFIG_SMP */
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-arch_initcall(signal_setup);
+arch_initcall(संकेत_setup);

@@ -1,333 +1,334 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * net/sched/cls_basic.c	Basic Packet Classifier.
+ * net/sched/cls_basic.c	Basic Packet Classअगरier.
  *
  * Authors:	Thomas Graf <tgraf@suug.ch>
  */
 
-#include <linux/module.h>
-#include <linux/slab.h>
-#include <linux/types.h>
-#include <linux/kernel.h>
-#include <linux/string.h>
-#include <linux/errno.h>
-#include <linux/rtnetlink.h>
-#include <linux/skbuff.h>
-#include <linux/idr.h>
-#include <linux/percpu.h>
-#include <net/netlink.h>
-#include <net/act_api.h>
-#include <net/pkt_cls.h>
+#समावेश <linux/module.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/types.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/rtnetlink.h>
+#समावेश <linux/skbuff.h>
+#समावेश <linux/idr.h>
+#समावेश <linux/percpu.h>
+#समावेश <net/netlink.h>
+#समावेश <net/act_api.h>
+#समावेश <net/pkt_cls.h>
 
-struct basic_head {
-	struct list_head	flist;
-	struct idr		handle_idr;
-	struct rcu_head		rcu;
-};
+काष्ठा basic_head अणु
+	काष्ठा list_head	flist;
+	काष्ठा idr		handle_idr;
+	काष्ठा rcu_head		rcu;
+पूर्ण;
 
-struct basic_filter {
+काष्ठा basic_filter अणु
 	u32			handle;
-	struct tcf_exts		exts;
-	struct tcf_ematch_tree	ematches;
-	struct tcf_result	res;
-	struct tcf_proto	*tp;
-	struct list_head	link;
-	struct tc_basic_pcnt __percpu *pf;
-	struct rcu_work		rwork;
-};
+	काष्ठा tcf_exts		exts;
+	काष्ठा tcf_ematch_tree	ematches;
+	काष्ठा tcf_result	res;
+	काष्ठा tcf_proto	*tp;
+	काष्ठा list_head	link;
+	काष्ठा tc_basic_pcnt __percpu *pf;
+	काष्ठा rcu_work		rwork;
+पूर्ण;
 
-static int basic_classify(struct sk_buff *skb, const struct tcf_proto *tp,
-			  struct tcf_result *res)
-{
-	int r;
-	struct basic_head *head = rcu_dereference_bh(tp->root);
-	struct basic_filter *f;
+अटल पूर्णांक basic_classअगरy(काष्ठा sk_buff *skb, स्थिर काष्ठा tcf_proto *tp,
+			  काष्ठा tcf_result *res)
+अणु
+	पूर्णांक r;
+	काष्ठा basic_head *head = rcu_dereference_bh(tp->root);
+	काष्ठा basic_filter *f;
 
-	list_for_each_entry_rcu(f, &head->flist, link) {
+	list_क्रम_each_entry_rcu(f, &head->flist, link) अणु
 		__this_cpu_inc(f->pf->rcnt);
-		if (!tcf_em_tree_match(skb, &f->ematches, NULL))
-			continue;
+		अगर (!tcf_em_tree_match(skb, &f->ematches, शून्य))
+			जारी;
 		__this_cpu_inc(f->pf->rhit);
 		*res = f->res;
 		r = tcf_exts_exec(skb, &f->exts, res);
-		if (r < 0)
-			continue;
-		return r;
-	}
-	return -1;
-}
+		अगर (r < 0)
+			जारी;
+		वापस r;
+	पूर्ण
+	वापस -1;
+पूर्ण
 
-static void *basic_get(struct tcf_proto *tp, u32 handle)
-{
-	struct basic_head *head = rtnl_dereference(tp->root);
-	struct basic_filter *f;
+अटल व्योम *basic_get(काष्ठा tcf_proto *tp, u32 handle)
+अणु
+	काष्ठा basic_head *head = rtnl_dereference(tp->root);
+	काष्ठा basic_filter *f;
 
-	list_for_each_entry(f, &head->flist, link) {
-		if (f->handle == handle) {
-			return f;
-		}
-	}
+	list_क्रम_each_entry(f, &head->flist, link) अणु
+		अगर (f->handle == handle) अणु
+			वापस f;
+		पूर्ण
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static int basic_init(struct tcf_proto *tp)
-{
-	struct basic_head *head;
+अटल पूर्णांक basic_init(काष्ठा tcf_proto *tp)
+अणु
+	काष्ठा basic_head *head;
 
-	head = kzalloc(sizeof(*head), GFP_KERNEL);
-	if (head == NULL)
-		return -ENOBUFS;
+	head = kzalloc(माप(*head), GFP_KERNEL);
+	अगर (head == शून्य)
+		वापस -ENOBUFS;
 	INIT_LIST_HEAD(&head->flist);
 	idr_init(&head->handle_idr);
-	rcu_assign_pointer(tp->root, head);
-	return 0;
-}
+	rcu_assign_poपूर्णांकer(tp->root, head);
+	वापस 0;
+पूर्ण
 
-static void __basic_delete_filter(struct basic_filter *f)
-{
+अटल व्योम __basic_delete_filter(काष्ठा basic_filter *f)
+अणु
 	tcf_exts_destroy(&f->exts);
 	tcf_em_tree_destroy(&f->ematches);
 	tcf_exts_put_net(&f->exts);
-	free_percpu(f->pf);
-	kfree(f);
-}
+	मुक्त_percpu(f->pf);
+	kमुक्त(f);
+पूर्ण
 
-static void basic_delete_filter_work(struct work_struct *work)
-{
-	struct basic_filter *f = container_of(to_rcu_work(work),
-					      struct basic_filter,
+अटल व्योम basic_delete_filter_work(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा basic_filter *f = container_of(to_rcu_work(work),
+					      काष्ठा basic_filter,
 					      rwork);
 	rtnl_lock();
 	__basic_delete_filter(f);
 	rtnl_unlock();
-}
+पूर्ण
 
-static void basic_destroy(struct tcf_proto *tp, bool rtnl_held,
-			  struct netlink_ext_ack *extack)
-{
-	struct basic_head *head = rtnl_dereference(tp->root);
-	struct basic_filter *f, *n;
+अटल व्योम basic_destroy(काष्ठा tcf_proto *tp, bool rtnl_held,
+			  काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा basic_head *head = rtnl_dereference(tp->root);
+	काष्ठा basic_filter *f, *n;
 
-	list_for_each_entry_safe(f, n, &head->flist, link) {
+	list_क्रम_each_entry_safe(f, n, &head->flist, link) अणु
 		list_del_rcu(&f->link);
 		tcf_unbind_filter(tp, &f->res);
-		idr_remove(&head->handle_idr, f->handle);
-		if (tcf_exts_get_net(&f->exts))
+		idr_हटाओ(&head->handle_idr, f->handle);
+		अगर (tcf_exts_get_net(&f->exts))
 			tcf_queue_work(&f->rwork, basic_delete_filter_work);
-		else
+		अन्यथा
 			__basic_delete_filter(f);
-	}
+	पूर्ण
 	idr_destroy(&head->handle_idr);
-	kfree_rcu(head, rcu);
-}
+	kमुक्त_rcu(head, rcu);
+पूर्ण
 
-static int basic_delete(struct tcf_proto *tp, void *arg, bool *last,
-			bool rtnl_held, struct netlink_ext_ack *extack)
-{
-	struct basic_head *head = rtnl_dereference(tp->root);
-	struct basic_filter *f = arg;
+अटल पूर्णांक basic_delete(काष्ठा tcf_proto *tp, व्योम *arg, bool *last,
+			bool rtnl_held, काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा basic_head *head = rtnl_dereference(tp->root);
+	काष्ठा basic_filter *f = arg;
 
 	list_del_rcu(&f->link);
 	tcf_unbind_filter(tp, &f->res);
-	idr_remove(&head->handle_idr, f->handle);
+	idr_हटाओ(&head->handle_idr, f->handle);
 	tcf_exts_get_net(&f->exts);
 	tcf_queue_work(&f->rwork, basic_delete_filter_work);
 	*last = list_empty(&head->flist);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct nla_policy basic_policy[TCA_BASIC_MAX + 1] = {
-	[TCA_BASIC_CLASSID]	= { .type = NLA_U32 },
-	[TCA_BASIC_EMATCHES]	= { .type = NLA_NESTED },
-};
+अटल स्थिर काष्ठा nla_policy basic_policy[TCA_BASIC_MAX + 1] = अणु
+	[TCA_BASIC_CLASSID]	= अणु .type = NLA_U32 पूर्ण,
+	[TCA_BASIC_EMATCHES]	= अणु .type = NLA_NESTED पूर्ण,
+पूर्ण;
 
-static int basic_set_parms(struct net *net, struct tcf_proto *tp,
-			   struct basic_filter *f, unsigned long base,
-			   struct nlattr **tb,
-			   struct nlattr *est, bool ovr,
-			   struct netlink_ext_ack *extack)
-{
-	int err;
+अटल पूर्णांक basic_set_parms(काष्ठा net *net, काष्ठा tcf_proto *tp,
+			   काष्ठा basic_filter *f, अचिन्हित दीर्घ base,
+			   काष्ठा nlattr **tb,
+			   काष्ठा nlattr *est, bool ovr,
+			   काष्ठा netlink_ext_ack *extack)
+अणु
+	पूर्णांक err;
 
 	err = tcf_exts_validate(net, tp, tb, est, &f->exts, ovr, true, extack);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
 	err = tcf_em_tree_validate(tp, tb[TCA_BASIC_EMATCHES], &f->ematches);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
-	if (tb[TCA_BASIC_CLASSID]) {
+	अगर (tb[TCA_BASIC_CLASSID]) अणु
 		f->res.classid = nla_get_u32(tb[TCA_BASIC_CLASSID]);
 		tcf_bind_filter(tp, &f->res, base);
-	}
+	पूर्ण
 
 	f->tp = tp;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int basic_change(struct net *net, struct sk_buff *in_skb,
-			struct tcf_proto *tp, unsigned long base, u32 handle,
-			struct nlattr **tca, void **arg, bool ovr,
-			bool rtnl_held, struct netlink_ext_ack *extack)
-{
-	int err;
-	struct basic_head *head = rtnl_dereference(tp->root);
-	struct nlattr *tb[TCA_BASIC_MAX + 1];
-	struct basic_filter *fold = (struct basic_filter *) *arg;
-	struct basic_filter *fnew;
+अटल पूर्णांक basic_change(काष्ठा net *net, काष्ठा sk_buff *in_skb,
+			काष्ठा tcf_proto *tp, अचिन्हित दीर्घ base, u32 handle,
+			काष्ठा nlattr **tca, व्योम **arg, bool ovr,
+			bool rtnl_held, काष्ठा netlink_ext_ack *extack)
+अणु
+	पूर्णांक err;
+	काष्ठा basic_head *head = rtnl_dereference(tp->root);
+	काष्ठा nlattr *tb[TCA_BASIC_MAX + 1];
+	काष्ठा basic_filter *fold = (काष्ठा basic_filter *) *arg;
+	काष्ठा basic_filter *fnew;
 
-	if (tca[TCA_OPTIONS] == NULL)
-		return -EINVAL;
+	अगर (tca[TCA_OPTIONS] == शून्य)
+		वापस -EINVAL;
 
 	err = nla_parse_nested_deprecated(tb, TCA_BASIC_MAX, tca[TCA_OPTIONS],
-					  basic_policy, NULL);
-	if (err < 0)
-		return err;
+					  basic_policy, शून्य);
+	अगर (err < 0)
+		वापस err;
 
-	if (fold != NULL) {
-		if (handle && fold->handle != handle)
-			return -EINVAL;
-	}
+	अगर (fold != शून्य) अणु
+		अगर (handle && fold->handle != handle)
+			वापस -EINVAL;
+	पूर्ण
 
-	fnew = kzalloc(sizeof(*fnew), GFP_KERNEL);
-	if (!fnew)
-		return -ENOBUFS;
+	fnew = kzalloc(माप(*fnew), GFP_KERNEL);
+	अगर (!fnew)
+		वापस -ENOBUFS;
 
 	err = tcf_exts_init(&fnew->exts, net, TCA_BASIC_ACT, TCA_BASIC_POLICE);
-	if (err < 0)
-		goto errout;
+	अगर (err < 0)
+		जाओ errout;
 
-	if (!handle) {
+	अगर (!handle) अणु
 		handle = 1;
 		err = idr_alloc_u32(&head->handle_idr, fnew, &handle,
-				    INT_MAX, GFP_KERNEL);
-	} else if (!fold) {
+				    पूर्णांक_उच्च, GFP_KERNEL);
+	पूर्ण अन्यथा अगर (!fold) अणु
 		err = idr_alloc_u32(&head->handle_idr, fnew, &handle,
 				    handle, GFP_KERNEL);
-	}
-	if (err)
-		goto errout;
+	पूर्ण
+	अगर (err)
+		जाओ errout;
 	fnew->handle = handle;
-	fnew->pf = alloc_percpu(struct tc_basic_pcnt);
-	if (!fnew->pf) {
+	fnew->pf = alloc_percpu(काष्ठा tc_basic_pcnt);
+	अगर (!fnew->pf) अणु
 		err = -ENOMEM;
-		goto errout;
-	}
+		जाओ errout;
+	पूर्ण
 
 	err = basic_set_parms(net, tp, fnew, base, tb, tca[TCA_RATE], ovr,
 			      extack);
-	if (err < 0) {
-		if (!fold)
-			idr_remove(&head->handle_idr, fnew->handle);
-		goto errout;
-	}
+	अगर (err < 0) अणु
+		अगर (!fold)
+			idr_हटाओ(&head->handle_idr, fnew->handle);
+		जाओ errout;
+	पूर्ण
 
 	*arg = fnew;
 
-	if (fold) {
+	अगर (fold) अणु
 		idr_replace(&head->handle_idr, fnew, fnew->handle);
 		list_replace_rcu(&fold->link, &fnew->link);
 		tcf_unbind_filter(tp, &fold->res);
 		tcf_exts_get_net(&fold->exts);
 		tcf_queue_work(&fold->rwork, basic_delete_filter_work);
-	} else {
+	पूर्ण अन्यथा अणु
 		list_add_rcu(&fnew->link, &head->flist);
-	}
+	पूर्ण
 
-	return 0;
+	वापस 0;
 errout:
-	free_percpu(fnew->pf);
+	मुक्त_percpu(fnew->pf);
 	tcf_exts_destroy(&fnew->exts);
-	kfree(fnew);
-	return err;
-}
+	kमुक्त(fnew);
+	वापस err;
+पूर्ण
 
-static void basic_walk(struct tcf_proto *tp, struct tcf_walker *arg,
+अटल व्योम basic_walk(काष्ठा tcf_proto *tp, काष्ठा tcf_walker *arg,
 		       bool rtnl_held)
-{
-	struct basic_head *head = rtnl_dereference(tp->root);
-	struct basic_filter *f;
+अणु
+	काष्ठा basic_head *head = rtnl_dereference(tp->root);
+	काष्ठा basic_filter *f;
 
-	list_for_each_entry(f, &head->flist, link) {
-		if (arg->count < arg->skip)
-			goto skip;
+	list_क्रम_each_entry(f, &head->flist, link) अणु
+		अगर (arg->count < arg->skip)
+			जाओ skip;
 
-		if (arg->fn(tp, f, arg) < 0) {
+		अगर (arg->fn(tp, f, arg) < 0) अणु
 			arg->stop = 1;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 skip:
 		arg->count++;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void basic_bind_class(void *fh, u32 classid, unsigned long cl, void *q,
-			     unsigned long base)
-{
-	struct basic_filter *f = fh;
+अटल व्योम basic_bind_class(व्योम *fh, u32 classid, अचिन्हित दीर्घ cl, व्योम *q,
+			     अचिन्हित दीर्घ base)
+अणु
+	काष्ठा basic_filter *f = fh;
 
-	if (f && f->res.classid == classid) {
-		if (cl)
+	अगर (f && f->res.classid == classid) अणु
+		अगर (cl)
 			__tcf_bind_filter(q, &f->res, base);
-		else
+		अन्यथा
 			__tcf_unbind_filter(q, &f->res);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int basic_dump(struct net *net, struct tcf_proto *tp, void *fh,
-		      struct sk_buff *skb, struct tcmsg *t, bool rtnl_held)
-{
-	struct tc_basic_pcnt gpf = {};
-	struct basic_filter *f = fh;
-	struct nlattr *nest;
-	int cpu;
+अटल पूर्णांक basic_dump(काष्ठा net *net, काष्ठा tcf_proto *tp, व्योम *fh,
+		      काष्ठा sk_buff *skb, काष्ठा tcmsg *t, bool rtnl_held)
+अणु
+	काष्ठा tc_basic_pcnt gpf = अणुपूर्ण;
+	काष्ठा basic_filter *f = fh;
+	काष्ठा nlattr *nest;
+	पूर्णांक cpu;
 
-	if (f == NULL)
-		return skb->len;
+	अगर (f == शून्य)
+		वापस skb->len;
 
 	t->tcm_handle = f->handle;
 
 	nest = nla_nest_start_noflag(skb, TCA_OPTIONS);
-	if (nest == NULL)
-		goto nla_put_failure;
+	अगर (nest == शून्य)
+		जाओ nla_put_failure;
 
-	if (f->res.classid &&
+	अगर (f->res.classid &&
 	    nla_put_u32(skb, TCA_BASIC_CLASSID, f->res.classid))
-		goto nla_put_failure;
+		जाओ nla_put_failure;
 
-	for_each_possible_cpu(cpu) {
-		struct tc_basic_pcnt *pf = per_cpu_ptr(f->pf, cpu);
+	क्रम_each_possible_cpu(cpu) अणु
+		काष्ठा tc_basic_pcnt *pf = per_cpu_ptr(f->pf, cpu);
 
 		gpf.rcnt += pf->rcnt;
 		gpf.rhit += pf->rhit;
-	}
+	पूर्ण
 
-	if (nla_put_64bit(skb, TCA_BASIC_PCNT,
-			  sizeof(struct tc_basic_pcnt),
+	अगर (nla_put_64bit(skb, TCA_BASIC_PCNT,
+			  माप(काष्ठा tc_basic_pcnt),
 			  &gpf, TCA_BASIC_PAD))
-		goto nla_put_failure;
+		जाओ nla_put_failure;
 
-	if (tcf_exts_dump(skb, &f->exts) < 0 ||
+	अगर (tcf_exts_dump(skb, &f->exts) < 0 ||
 	    tcf_em_tree_dump(skb, &f->ematches, TCA_BASIC_EMATCHES) < 0)
-		goto nla_put_failure;
+		जाओ nla_put_failure;
 
 	nla_nest_end(skb, nest);
 
-	if (tcf_exts_dump_stats(skb, &f->exts) < 0)
-		goto nla_put_failure;
+	अगर (tcf_exts_dump_stats(skb, &f->exts) < 0)
+		जाओ nla_put_failure;
 
-	return skb->len;
+	वापस skb->len;
 
 nla_put_failure:
 	nla_nest_cancel(skb, nest);
-	return -1;
-}
+	वापस -1;
+पूर्ण
 
-static struct tcf_proto_ops cls_basic_ops __read_mostly = {
+अटल काष्ठा tcf_proto_ops cls_basic_ops __पढ़ो_mostly = अणु
 	.kind		=	"basic",
-	.classify	=	basic_classify,
+	.classअगरy	=	basic_classअगरy,
 	.init		=	basic_init,
 	.destroy	=	basic_destroy,
 	.get		=	basic_get,
@@ -337,18 +338,18 @@ static struct tcf_proto_ops cls_basic_ops __read_mostly = {
 	.dump		=	basic_dump,
 	.bind_class	=	basic_bind_class,
 	.owner		=	THIS_MODULE,
-};
+पूर्ण;
 
-static int __init init_basic(void)
-{
-	return register_tcf_proto_ops(&cls_basic_ops);
-}
+अटल पूर्णांक __init init_basic(व्योम)
+अणु
+	वापस रेजिस्टर_tcf_proto_ops(&cls_basic_ops);
+पूर्ण
 
-static void __exit exit_basic(void)
-{
-	unregister_tcf_proto_ops(&cls_basic_ops);
-}
+अटल व्योम __निकास निकास_basic(व्योम)
+अणु
+	unरेजिस्टर_tcf_proto_ops(&cls_basic_ops);
+पूर्ण
 
 module_init(init_basic)
-module_exit(exit_basic)
+module_निकास(निकास_basic)
 MODULE_LICENSE("GPL");

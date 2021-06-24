@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * STMicroelectronics hts221 i2c driver
  *
@@ -7,68 +8,68 @@
  * Lorenzo Bianconi <lorenzo.bianconi@st.com>
  */
 
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/acpi.h>
-#include <linux/i2c.h>
-#include <linux/slab.h>
-#include <linux/regmap.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/acpi.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/regmap.h>
 
-#include "hts221.h"
+#समावेश "hts221.h"
 
-#define HTS221_I2C_AUTO_INCREMENT	BIT(7)
+#घोषणा HTS221_I2C_AUTO_INCREMENT	BIT(7)
 
-static const struct regmap_config hts221_i2c_regmap_config = {
+अटल स्थिर काष्ठा regmap_config hts221_i2c_regmap_config = अणु
 	.reg_bits = 8,
 	.val_bits = 8,
-	.write_flag_mask = HTS221_I2C_AUTO_INCREMENT,
-	.read_flag_mask = HTS221_I2C_AUTO_INCREMENT,
-};
+	.ग_लिखो_flag_mask = HTS221_I2C_AUTO_INCREMENT,
+	.पढ़ो_flag_mask = HTS221_I2C_AUTO_INCREMENT,
+पूर्ण;
 
-static int hts221_i2c_probe(struct i2c_client *client,
-			    const struct i2c_device_id *id)
-{
-	struct regmap *regmap;
+अटल पूर्णांक hts221_i2c_probe(काष्ठा i2c_client *client,
+			    स्थिर काष्ठा i2c_device_id *id)
+अणु
+	काष्ठा regmap *regmap;
 
 	regmap = devm_regmap_init_i2c(client, &hts221_i2c_regmap_config);
-	if (IS_ERR(regmap)) {
+	अगर (IS_ERR(regmap)) अणु
 		dev_err(&client->dev, "Failed to register i2c regmap %ld\n",
 			PTR_ERR(regmap));
-		return PTR_ERR(regmap);
-	}
+		वापस PTR_ERR(regmap);
+	पूर्ण
 
-	return hts221_probe(&client->dev, client->irq,
+	वापस hts221_probe(&client->dev, client->irq,
 			    client->name, regmap);
-}
+पूर्ण
 
-static const struct acpi_device_id hts221_acpi_match[] = {
-	{"SMO9100", 0},
-	{ },
-};
+अटल स्थिर काष्ठा acpi_device_id hts221_acpi_match[] = अणु
+	अणु"SMO9100", 0पूर्ण,
+	अणु पूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(acpi, hts221_acpi_match);
 
-static const struct of_device_id hts221_i2c_of_match[] = {
-	{ .compatible = "st,hts221", },
-	{},
-};
+अटल स्थिर काष्ठा of_device_id hts221_i2c_of_match[] = अणु
+	अणु .compatible = "st,hts221", पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, hts221_i2c_of_match);
 
-static const struct i2c_device_id hts221_i2c_id_table[] = {
-	{ HTS221_DEV_NAME },
-	{},
-};
+अटल स्थिर काष्ठा i2c_device_id hts221_i2c_id_table[] = अणु
+	अणु HTS221_DEV_NAME पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(i2c, hts221_i2c_id_table);
 
-static struct i2c_driver hts221_driver = {
-	.driver = {
+अटल काष्ठा i2c_driver hts221_driver = अणु
+	.driver = अणु
 		.name = "hts221_i2c",
 		.pm = &hts221_pm_ops,
 		.of_match_table = hts221_i2c_of_match,
 		.acpi_match_table = ACPI_PTR(hts221_acpi_match),
-	},
+	पूर्ण,
 	.probe = hts221_i2c_probe,
 	.id_table = hts221_i2c_id_table,
-};
+पूर्ण;
 module_i2c_driver(hts221_driver);
 
 MODULE_AUTHOR("Lorenzo Bianconi <lorenzo.bianconi@st.com>");

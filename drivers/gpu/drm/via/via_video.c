@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2005 Thomas Hellstrom. All Rights Reserved.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sub license,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sub license,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice (including the
  * next paragraph) shall be included in all copies or substantial portions
@@ -25,70 +26,70 @@
  * Video and XvMC related functions.
  */
 
-#include <drm/drm_device.h>
-#include <drm/via_drm.h>
+#समावेश <drm/drm_device.h>
+#समावेश <drm/via_drm.h>
 
-#include "via_drv.h"
+#समावेश "via_drv.h"
 
-void via_init_futex(drm_via_private_t *dev_priv)
-{
-	unsigned int i;
+व्योम via_init_futex(drm_via_निजी_t *dev_priv)
+अणु
+	अचिन्हित पूर्णांक i;
 
 	DRM_DEBUG("\n");
 
-	for (i = 0; i < VIA_NR_XVMC_LOCKS; ++i) {
-		init_waitqueue_head(&(dev_priv->decoder_queue[i]));
+	क्रम (i = 0; i < VIA_NR_XVMC_LOCKS; ++i) अणु
+		init_रुकोqueue_head(&(dev_priv->decoder_queue[i]));
 		XVMCLOCKPTR(dev_priv->sarea_priv, i)->lock = 0;
-	}
-}
+	पूर्ण
+पूर्ण
 
-void via_cleanup_futex(drm_via_private_t *dev_priv)
-{
-}
+व्योम via_cleanup_futex(drm_via_निजी_t *dev_priv)
+अणु
+पूर्ण
 
-void via_release_futex(drm_via_private_t *dev_priv, int context)
-{
-	unsigned int i;
-	volatile int *lock;
+व्योम via_release_futex(drm_via_निजी_t *dev_priv, पूर्णांक context)
+अणु
+	अचिन्हित पूर्णांक i;
+	अस्थिर पूर्णांक *lock;
 
-	if (!dev_priv->sarea_priv)
-		return;
+	अगर (!dev_priv->sarea_priv)
+		वापस;
 
-	for (i = 0; i < VIA_NR_XVMC_LOCKS; ++i) {
-		lock = (volatile int *)XVMCLOCKPTR(dev_priv->sarea_priv, i);
-		if ((_DRM_LOCKING_CONTEXT(*lock) == context)) {
-			if (_DRM_LOCK_IS_HELD(*lock)
-			    && (*lock & _DRM_LOCK_CONT)) {
+	क्रम (i = 0; i < VIA_NR_XVMC_LOCKS; ++i) अणु
+		lock = (अस्थिर पूर्णांक *)XVMCLOCKPTR(dev_priv->sarea_priv, i);
+		अगर ((_DRM_LOCKING_CONTEXT(*lock) == context)) अणु
+			अगर (_DRM_LOCK_IS_HELD(*lock)
+			    && (*lock & _DRM_LOCK_CONT)) अणु
 				wake_up(&(dev_priv->decoder_queue[i]));
-			}
+			पूर्ण
 			*lock = 0;
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-int via_decoder_futex(struct drm_device *dev, void *data, struct drm_file *file_priv)
-{
+पूर्णांक via_decoder_futex(काष्ठा drm_device *dev, व्योम *data, काष्ठा drm_file *file_priv)
+अणु
 	drm_via_futex_t *fx = data;
-	volatile int *lock;
-	drm_via_private_t *dev_priv = (drm_via_private_t *) dev->dev_private;
+	अस्थिर पूर्णांक *lock;
+	drm_via_निजी_t *dev_priv = (drm_via_निजी_t *) dev->dev_निजी;
 	drm_via_sarea_t *sAPriv = dev_priv->sarea_priv;
-	int ret = 0;
+	पूर्णांक ret = 0;
 
 	DRM_DEBUG("\n");
 
-	if (fx->lock >= VIA_NR_XVMC_LOCKS)
-		return -EFAULT;
+	अगर (fx->lock >= VIA_NR_XVMC_LOCKS)
+		वापस -EFAULT;
 
-	lock = (volatile int *)XVMCLOCKPTR(sAPriv, fx->lock);
+	lock = (अस्थिर पूर्णांक *)XVMCLOCKPTR(sAPriv, fx->lock);
 
-	switch (fx->func) {
-	case VIA_FUTEX_WAIT:
+	चयन (fx->func) अणु
+	हाल VIA_FUTEX_WAIT:
 		VIA_WAIT_ON(ret, dev_priv->decoder_queue[fx->lock],
 			    (fx->ms / 10) * (HZ / 100), *lock != fx->val);
-		return ret;
-	case VIA_FUTEX_WAKE:
+		वापस ret;
+	हाल VIA_FUTEX_WAKE:
 		wake_up(&(dev_priv->decoder_queue[fx->lock]));
-		return 0;
-	}
-	return 0;
-}
+		वापस 0;
+	पूर्ण
+	वापस 0;
+पूर्ण

@@ -1,55 +1,56 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /* Copyright (c) 2018 Quantenna Communications */
 
-#include <linux/kernel.h>
-#include <linux/firmware.h>
-#include <linux/pci.h>
-#include <linux/vmalloc.h>
-#include <linux/delay.h>
-#include <linux/interrupt.h>
-#include <linux/sched.h>
-#include <linux/crc32.h>
-#include <linux/completion.h>
-#include <linux/spinlock.h>
-#include <linux/circ_buf.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/firmware.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/vदो_स्मृति.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/crc32.h>
+#समावेश <linux/completion.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/circ_buf.h>
 
-#include "pcie_priv.h"
-#include "topaz_pcie_regs.h"
-#include "topaz_pcie_ipc.h"
-#include "qtn_hw_ids.h"
-#include "core.h"
-#include "bus.h"
-#include "shm_ipc.h"
-#include "debug.h"
+#समावेश "pcie_priv.h"
+#समावेश "topaz_pcie_regs.h"
+#समावेश "topaz_pcie_ipc.h"
+#समावेश "qtn_hw_ids.h"
+#समावेश "core.h"
+#समावेश "bus.h"
+#समावेश "shm_ipc.h"
+#समावेश "debug.h"
 
-#define TOPAZ_TX_BD_SIZE_DEFAULT	128
-#define TOPAZ_RX_BD_SIZE_DEFAULT	256
+#घोषणा TOPAZ_TX_BD_SIZE_DEFAULT	128
+#घोषणा TOPAZ_RX_BD_SIZE_DEFAULT	256
 
-struct qtnf_topaz_tx_bd {
+काष्ठा qtnf_topaz_tx_bd अणु
 	__le32 addr;
 	__le32 info;
-} __packed;
+पूर्ण __packed;
 
-struct qtnf_topaz_rx_bd {
+काष्ठा qtnf_topaz_rx_bd अणु
 	__le32 addr;
 	__le32 info;
-} __packed;
+पूर्ण __packed;
 
-struct qtnf_extra_bd_params {
+काष्ठा qtnf_extra_bd_params अणु
 	__le32 param1;
 	__le32 param2;
 	__le32 param3;
 	__le32 param4;
-} __packed;
+पूर्ण __packed;
 
-#define QTNF_BD_PARAM_OFFSET(n)	offsetof(struct qtnf_extra_bd_params, param##n)
+#घोषणा QTNF_BD_PARAM_OFFSET(n)	दुरत्व(काष्ठा qtnf_extra_bd_params, param##n)
 
-struct vmac_pkt_info {
+काष्ठा vmac_pkt_info अणु
 	__le32 addr;
 	__le32 info;
-};
+पूर्ण;
 
-struct qtnf_topaz_bda {
+काष्ठा qtnf_topaz_bda अणु
 	__le16	bda_len;
 	__le16	bda_version;
 	__le32	bda_bootstate;
@@ -78,134 +79,134 @@ struct qtnf_topaz_bda {
 	u8	bda_rc_msi_enabled;
 	u8	reserved2;
 	__le32	bda_ep_next_pkt;
-	struct vmac_pkt_info request[QTN_PCIE_RC_TX_QUEUE_LEN];
-	struct qtnf_shm_ipc_region bda_shm_reg1 __aligned(4096);
-	struct qtnf_shm_ipc_region bda_shm_reg2 __aligned(4096);
-} __packed;
+	काष्ठा vmac_pkt_info request[QTN_PCIE_RC_TX_QUEUE_LEN];
+	काष्ठा qtnf_shm_ipc_region bda_shm_reg1 __aligned(4096);
+	काष्ठा qtnf_shm_ipc_region bda_shm_reg2 __aligned(4096);
+पूर्ण __packed;
 
-struct qtnf_pcie_topaz_state {
-	struct qtnf_pcie_bus_priv base;
-	struct qtnf_topaz_bda __iomem *bda;
+काष्ठा qtnf_pcie_topaz_state अणु
+	काष्ठा qtnf_pcie_bus_priv base;
+	काष्ठा qtnf_topaz_bda __iomem *bda;
 
 	dma_addr_t dma_msi_dummy;
 	u32 dma_msi_imwr;
 
-	struct qtnf_topaz_tx_bd *tx_bd_vbase;
-	struct qtnf_topaz_rx_bd *rx_bd_vbase;
+	काष्ठा qtnf_topaz_tx_bd *tx_bd_vbase;
+	काष्ठा qtnf_topaz_rx_bd *rx_bd_vbase;
 
 	__le32 __iomem *ep_next_rx_pkt;
 	__le32 __iomem *txqueue_wake;
 	__le32 __iomem *ep_pmstate;
 
-	unsigned long rx_pkt_count;
-};
+	अचिन्हित दीर्घ rx_pkt_count;
+पूर्ण;
 
-static void qtnf_deassert_intx(struct qtnf_pcie_topaz_state *ts)
-{
-	void __iomem *reg = ts->base.sysctl_bar + TOPAZ_PCIE_CFG0_OFFSET;
+अटल व्योम qtnf_deनिश्चित_पूर्णांकx(काष्ठा qtnf_pcie_topaz_state *ts)
+अणु
+	व्योम __iomem *reg = ts->base.sysctl_bar + TOPAZ_PCIE_CFG0_OFFSET;
 	u32 cfg;
 
-	cfg = readl(reg);
+	cfg = पढ़ोl(reg);
 	cfg &= ~TOPAZ_ASSERT_INTX;
-	qtnf_non_posted_write(cfg, reg);
-}
+	qtnf_non_posted_ग_लिखो(cfg, reg);
+पूर्ण
 
-static inline int qtnf_topaz_intx_asserted(struct qtnf_pcie_topaz_state *ts)
-{
-	void __iomem *reg = ts->base.sysctl_bar + TOPAZ_PCIE_CFG0_OFFSET;
-	u32 cfg = readl(reg);
+अटल अंतरभूत पूर्णांक qtnf_topaz_पूर्णांकx_निश्चितed(काष्ठा qtnf_pcie_topaz_state *ts)
+अणु
+	व्योम __iomem *reg = ts->base.sysctl_bar + TOPAZ_PCIE_CFG0_OFFSET;
+	u32 cfg = पढ़ोl(reg);
 
-	return !!(cfg & TOPAZ_ASSERT_INTX);
-}
+	वापस !!(cfg & TOPAZ_ASSERT_INTX);
+पूर्ण
 
-static void qtnf_topaz_reset_ep(struct qtnf_pcie_topaz_state *ts)
-{
-	writel(TOPAZ_IPC_IRQ_WORD(TOPAZ_RC_RST_EP_IRQ),
+अटल व्योम qtnf_topaz_reset_ep(काष्ठा qtnf_pcie_topaz_state *ts)
+अणु
+	ग_लिखोl(TOPAZ_IPC_IRQ_WORD(TOPAZ_RC_RST_EP_IRQ),
 	       TOPAZ_LH_IPC4_INT(ts->base.sysctl_bar));
 	msleep(QTN_EP_RESET_WAIT_MS);
 	pci_restore_state(ts->base.pdev);
-}
+पूर्ण
 
-static void setup_rx_irqs(struct qtnf_pcie_topaz_state *ts)
-{
-	void __iomem *reg = PCIE_DMA_WR_DONE_IMWR_ADDR_LOW(ts->base.dmareg_bar);
+अटल व्योम setup_rx_irqs(काष्ठा qtnf_pcie_topaz_state *ts)
+अणु
+	व्योम __iomem *reg = PCIE_DMA_WR_DONE_IMWR_ADDR_LOW(ts->base.dmareg_bar);
 
-	ts->dma_msi_imwr = readl(reg);
-}
+	ts->dma_msi_imwr = पढ़ोl(reg);
+पूर्ण
 
-static void enable_rx_irqs(struct qtnf_pcie_topaz_state *ts)
-{
-	void __iomem *reg = PCIE_DMA_WR_DONE_IMWR_ADDR_LOW(ts->base.dmareg_bar);
+अटल व्योम enable_rx_irqs(काष्ठा qtnf_pcie_topaz_state *ts)
+अणु
+	व्योम __iomem *reg = PCIE_DMA_WR_DONE_IMWR_ADDR_LOW(ts->base.dmareg_bar);
 
-	qtnf_non_posted_write(ts->dma_msi_imwr, reg);
-}
+	qtnf_non_posted_ग_लिखो(ts->dma_msi_imwr, reg);
+पूर्ण
 
-static void disable_rx_irqs(struct qtnf_pcie_topaz_state *ts)
-{
-	void __iomem *reg = PCIE_DMA_WR_DONE_IMWR_ADDR_LOW(ts->base.dmareg_bar);
+अटल व्योम disable_rx_irqs(काष्ठा qtnf_pcie_topaz_state *ts)
+अणु
+	व्योम __iomem *reg = PCIE_DMA_WR_DONE_IMWR_ADDR_LOW(ts->base.dmareg_bar);
 
-	qtnf_non_posted_write(QTN_HOST_LO32(ts->dma_msi_dummy), reg);
-}
+	qtnf_non_posted_ग_लिखो(QTN_HOST_LO32(ts->dma_msi_dummy), reg);
+पूर्ण
 
-static void qtnf_topaz_ipc_gen_ep_int(void *arg)
-{
-	struct qtnf_pcie_topaz_state *ts = arg;
+अटल व्योम qtnf_topaz_ipc_gen_ep_पूर्णांक(व्योम *arg)
+अणु
+	काष्ठा qtnf_pcie_topaz_state *ts = arg;
 
-	writel(TOPAZ_IPC_IRQ_WORD(TOPAZ_RC_CTRL_IRQ),
+	ग_लिखोl(TOPAZ_IPC_IRQ_WORD(TOPAZ_RC_CTRL_IRQ),
 	       TOPAZ_CTL_M2L_INT(ts->base.sysctl_bar));
-}
+पूर्ण
 
-static int qtnf_is_state(__le32 __iomem *reg, u32 state)
-{
-	u32 s = readl(reg);
+अटल पूर्णांक qtnf_is_state(__le32 __iomem *reg, u32 state)
+अणु
+	u32 s = पढ़ोl(reg);
 
-	return (s == state);
-}
+	वापस (s == state);
+पूर्ण
 
-static void qtnf_set_state(__le32 __iomem *reg, u32 state)
-{
-	qtnf_non_posted_write(state, reg);
-}
+अटल व्योम qtnf_set_state(__le32 __iomem *reg, u32 state)
+अणु
+	qtnf_non_posted_ग_लिखो(state, reg);
+पूर्ण
 
-static int qtnf_poll_state(__le32 __iomem *reg, u32 state, u32 delay_in_ms)
-{
-	u32 timeout = 0;
+अटल पूर्णांक qtnf_poll_state(__le32 __iomem *reg, u32 state, u32 delay_in_ms)
+अणु
+	u32 समयout = 0;
 
-	while ((qtnf_is_state(reg, state) == 0)) {
+	जबतक ((qtnf_is_state(reg, state) == 0)) अणु
 		usleep_range(1000, 1200);
-		if (++timeout > delay_in_ms)
-			return -1;
-	}
+		अगर (++समयout > delay_in_ms)
+			वापस -1;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int topaz_alloc_bd_table(struct qtnf_pcie_topaz_state *ts,
-				struct qtnf_topaz_bda __iomem *bda)
-{
-	struct qtnf_extra_bd_params __iomem *extra_params;
-	struct qtnf_pcie_bus_priv *priv = &ts->base;
+अटल पूर्णांक topaz_alloc_bd_table(काष्ठा qtnf_pcie_topaz_state *ts,
+				काष्ठा qtnf_topaz_bda __iomem *bda)
+अणु
+	काष्ठा qtnf_extra_bd_params __iomem *extra_params;
+	काष्ठा qtnf_pcie_bus_priv *priv = &ts->base;
 	dma_addr_t paddr;
-	void *vaddr;
-	int len;
-	int i;
+	व्योम *vaddr;
+	पूर्णांक len;
+	पूर्णांक i;
 
 	/* bd table */
 
-	len = priv->tx_bd_num * sizeof(struct qtnf_topaz_tx_bd) +
-		priv->rx_bd_num * sizeof(struct qtnf_topaz_rx_bd) +
-			sizeof(struct qtnf_extra_bd_params);
+	len = priv->tx_bd_num * माप(काष्ठा qtnf_topaz_tx_bd) +
+		priv->rx_bd_num * माप(काष्ठा qtnf_topaz_rx_bd) +
+			माप(काष्ठा qtnf_extra_bd_params);
 
 	vaddr = dmam_alloc_coherent(&priv->pdev->dev, len, &paddr, GFP_KERNEL);
-	if (!vaddr)
-		return -ENOMEM;
+	अगर (!vaddr)
+		वापस -ENOMEM;
 
 	/* tx bd */
 
 	ts->tx_bd_vbase = vaddr;
-	qtnf_non_posted_write(paddr, &bda->bda_rc_tx_bd_base);
+	qtnf_non_posted_ग_लिखो(paddr, &bda->bda_rc_tx_bd_base);
 
-	for (i = 0; i < priv->tx_bd_num; i++)
+	क्रम (i = 0; i < priv->tx_bd_num; i++)
 		ts->tx_bd_vbase[i].info |= cpu_to_le32(QTN_BD_EMPTY);
 
 	pr_debug("TX descriptor table: vaddr=0x%p paddr=%pad\n", vaddr, &paddr);
@@ -215,308 +216,308 @@ static int topaz_alloc_bd_table(struct qtnf_pcie_topaz_state *ts,
 
 	/* rx bd */
 
-	vaddr = ((struct qtnf_topaz_tx_bd *)vaddr) + priv->tx_bd_num;
-	paddr += priv->tx_bd_num * sizeof(struct qtnf_topaz_tx_bd);
+	vaddr = ((काष्ठा qtnf_topaz_tx_bd *)vaddr) + priv->tx_bd_num;
+	paddr += priv->tx_bd_num * माप(काष्ठा qtnf_topaz_tx_bd);
 
 	ts->rx_bd_vbase = vaddr;
-	qtnf_non_posted_write(paddr, &bda->bda_rc_rx_bd_base);
+	qtnf_non_posted_ग_लिखो(paddr, &bda->bda_rc_rx_bd_base);
 
 	pr_debug("RX descriptor table: vaddr=0x%p paddr=%pad\n", vaddr, &paddr);
 
 	/* extra shared params */
 
-	vaddr = ((struct qtnf_topaz_rx_bd *)vaddr) + priv->rx_bd_num;
-	paddr += priv->rx_bd_num * sizeof(struct qtnf_topaz_rx_bd);
+	vaddr = ((काष्ठा qtnf_topaz_rx_bd *)vaddr) + priv->rx_bd_num;
+	paddr += priv->rx_bd_num * माप(काष्ठा qtnf_topaz_rx_bd);
 
-	extra_params = (struct qtnf_extra_bd_params __iomem *)vaddr;
+	extra_params = (काष्ठा qtnf_extra_bd_params __iomem *)vaddr;
 
 	ts->ep_next_rx_pkt = &extra_params->param1;
-	qtnf_non_posted_write(paddr + QTNF_BD_PARAM_OFFSET(1),
+	qtnf_non_posted_ग_लिखो(paddr + QTNF_BD_PARAM_OFFSET(1),
 			      &bda->bda_ep_next_pkt);
 	ts->txqueue_wake = &extra_params->param2;
 	ts->ep_pmstate = &extra_params->param3;
 	ts->dma_msi_dummy = paddr + QTNF_BD_PARAM_OFFSET(4);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-topaz_skb2rbd_attach(struct qtnf_pcie_topaz_state *ts, u16 index, u32 wrap)
-{
-	struct qtnf_topaz_rx_bd *rxbd = &ts->rx_bd_vbase[index];
-	struct sk_buff *skb;
+अटल पूर्णांक
+topaz_skb2rbd_attach(काष्ठा qtnf_pcie_topaz_state *ts, u16 index, u32 wrap)
+अणु
+	काष्ठा qtnf_topaz_rx_bd *rxbd = &ts->rx_bd_vbase[index];
+	काष्ठा sk_buff *skb;
 	dma_addr_t paddr;
 
-	skb = netdev_alloc_skb_ip_align(NULL, SKB_BUF_SIZE);
-	if (!skb) {
-		ts->base.rx_skb[index] = NULL;
-		return -ENOMEM;
-	}
+	skb = netdev_alloc_skb_ip_align(शून्य, SKB_BUF_SIZE);
+	अगर (!skb) अणु
+		ts->base.rx_skb[index] = शून्य;
+		वापस -ENOMEM;
+	पूर्ण
 
 	ts->base.rx_skb[index] = skb;
 
 	paddr = pci_map_single(ts->base.pdev, skb->data,
 			       SKB_BUF_SIZE, PCI_DMA_FROMDEVICE);
-	if (pci_dma_mapping_error(ts->base.pdev, paddr)) {
+	अगर (pci_dma_mapping_error(ts->base.pdev, paddr)) अणु
 		pr_err("skb mapping error: %pad\n", &paddr);
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	rxbd->addr = cpu_to_le32(QTN_HOST_LO32(paddr));
 	rxbd->info = cpu_to_le32(QTN_BD_EMPTY | wrap);
 
 	ts->base.rx_bd_w_index = index;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int topaz_alloc_rx_buffers(struct qtnf_pcie_topaz_state *ts)
-{
+अटल पूर्णांक topaz_alloc_rx_buffers(काष्ठा qtnf_pcie_topaz_state *ts)
+अणु
 	u16 i;
-	int ret = 0;
+	पूर्णांक ret = 0;
 
-	memset(ts->rx_bd_vbase, 0x0,
-	       ts->base.rx_bd_num * sizeof(struct qtnf_topaz_rx_bd));
+	स_रखो(ts->rx_bd_vbase, 0x0,
+	       ts->base.rx_bd_num * माप(काष्ठा qtnf_topaz_rx_bd));
 
-	for (i = 0; i < ts->base.rx_bd_num; i++) {
+	क्रम (i = 0; i < ts->base.rx_bd_num; i++) अणु
 		ret = topaz_skb2rbd_attach(ts, i, 0);
-		if (ret)
-			break;
-	}
+		अगर (ret)
+			अवरोध;
+	पूर्ण
 
 	ts->rx_bd_vbase[ts->base.rx_bd_num - 1].info |=
 						cpu_to_le32(QTN_BD_WRAP);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-/* all rx/tx activity should have ceased before calling this function */
-static void qtnf_topaz_free_xfer_buffers(struct qtnf_pcie_topaz_state *ts)
-{
-	struct qtnf_pcie_bus_priv *priv = &ts->base;
-	struct qtnf_topaz_rx_bd *rxbd;
-	struct qtnf_topaz_tx_bd *txbd;
-	struct sk_buff *skb;
+/* all rx/tx activity should have ceased beक्रमe calling this function */
+अटल व्योम qtnf_topaz_मुक्त_xfer_buffers(काष्ठा qtnf_pcie_topaz_state *ts)
+अणु
+	काष्ठा qtnf_pcie_bus_priv *priv = &ts->base;
+	काष्ठा qtnf_topaz_rx_bd *rxbd;
+	काष्ठा qtnf_topaz_tx_bd *txbd;
+	काष्ठा sk_buff *skb;
 	dma_addr_t paddr;
-	int i;
+	पूर्णांक i;
 
-	/* free rx buffers */
-	for (i = 0; i < priv->rx_bd_num; i++) {
-		if (priv->rx_skb && priv->rx_skb[i]) {
+	/* मुक्त rx buffers */
+	क्रम (i = 0; i < priv->rx_bd_num; i++) अणु
+		अगर (priv->rx_skb && priv->rx_skb[i]) अणु
 			rxbd = &ts->rx_bd_vbase[i];
 			skb = priv->rx_skb[i];
 			paddr = QTN_HOST_ADDR(0x0, le32_to_cpu(rxbd->addr));
 			pci_unmap_single(priv->pdev, paddr, SKB_BUF_SIZE,
 					 PCI_DMA_FROMDEVICE);
-			dev_kfree_skb_any(skb);
-			priv->rx_skb[i] = NULL;
+			dev_kमुक्त_skb_any(skb);
+			priv->rx_skb[i] = शून्य;
 			rxbd->addr = 0;
 			rxbd->info = 0;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	/* free tx buffers */
-	for (i = 0; i < priv->tx_bd_num; i++) {
-		if (priv->tx_skb && priv->tx_skb[i]) {
+	/* मुक्त tx buffers */
+	क्रम (i = 0; i < priv->tx_bd_num; i++) अणु
+		अगर (priv->tx_skb && priv->tx_skb[i]) अणु
 			txbd = &ts->tx_bd_vbase[i];
 			skb = priv->tx_skb[i];
 			paddr = QTN_HOST_ADDR(0x0, le32_to_cpu(txbd->addr));
 			pci_unmap_single(priv->pdev, paddr, SKB_BUF_SIZE,
 					 PCI_DMA_TODEVICE);
-			dev_kfree_skb_any(skb);
-			priv->tx_skb[i] = NULL;
+			dev_kमुक्त_skb_any(skb);
+			priv->tx_skb[i] = शून्य;
 			txbd->addr = 0;
 			txbd->info = 0;
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static int qtnf_pcie_topaz_init_xfer(struct qtnf_pcie_topaz_state *ts,
-				     unsigned int tx_bd_size,
-				     unsigned int rx_bd_size)
-{
-	struct qtnf_topaz_bda __iomem *bda = ts->bda;
-	struct qtnf_pcie_bus_priv *priv = &ts->base;
-	int ret;
+अटल पूर्णांक qtnf_pcie_topaz_init_xfer(काष्ठा qtnf_pcie_topaz_state *ts,
+				     अचिन्हित पूर्णांक tx_bd_size,
+				     अचिन्हित पूर्णांक rx_bd_size)
+अणु
+	काष्ठा qtnf_topaz_bda __iomem *bda = ts->bda;
+	काष्ठा qtnf_pcie_bus_priv *priv = &ts->base;
+	पूर्णांक ret;
 
-	if (tx_bd_size == 0)
+	अगर (tx_bd_size == 0)
 		tx_bd_size = TOPAZ_TX_BD_SIZE_DEFAULT;
 
-	/* check TX BD queue max length according to struct qtnf_topaz_bda */
-	if (tx_bd_size > QTN_PCIE_RC_TX_QUEUE_LEN) {
+	/* check TX BD queue max length according to काष्ठा qtnf_topaz_bda */
+	अगर (tx_bd_size > QTN_PCIE_RC_TX_QUEUE_LEN) अणु
 		pr_warn("TX BD queue cannot exceed %d\n",
 			QTN_PCIE_RC_TX_QUEUE_LEN);
 		tx_bd_size = QTN_PCIE_RC_TX_QUEUE_LEN;
-	}
+	पूर्ण
 
 	priv->tx_bd_num = tx_bd_size;
-	qtnf_non_posted_write(priv->tx_bd_num, &bda->bda_rc_tx_bd_num);
+	qtnf_non_posted_ग_लिखो(priv->tx_bd_num, &bda->bda_rc_tx_bd_num);
 
-	if (rx_bd_size == 0)
+	अगर (rx_bd_size == 0)
 		rx_bd_size = TOPAZ_RX_BD_SIZE_DEFAULT;
 
-	if (rx_bd_size > TOPAZ_RX_BD_SIZE_DEFAULT) {
+	अगर (rx_bd_size > TOPAZ_RX_BD_SIZE_DEFAULT) अणु
 		pr_warn("RX BD queue cannot exceed %d\n",
 			TOPAZ_RX_BD_SIZE_DEFAULT);
 		rx_bd_size = TOPAZ_RX_BD_SIZE_DEFAULT;
-	}
+	पूर्ण
 
 	priv->rx_bd_num = rx_bd_size;
-	qtnf_non_posted_write(priv->rx_bd_num, &bda->bda_rc_rx_bd_num);
+	qtnf_non_posted_ग_लिखो(priv->rx_bd_num, &bda->bda_rc_rx_bd_num);
 
 	priv->rx_bd_w_index = 0;
 	priv->rx_bd_r_index = 0;
 
 	ret = qtnf_pcie_alloc_skb_array(priv);
-	if (ret) {
+	अगर (ret) अणु
 		pr_err("failed to allocate skb array\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	ret = topaz_alloc_bd_table(ts, bda);
-	if (ret) {
+	अगर (ret) अणु
 		pr_err("failed to allocate bd table\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	ret = topaz_alloc_rx_buffers(ts);
-	if (ret) {
+	अगर (ret) अणु
 		pr_err("failed to allocate rx buffers\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void qtnf_topaz_data_tx_reclaim(struct qtnf_pcie_topaz_state *ts)
-{
-	struct qtnf_pcie_bus_priv *priv = &ts->base;
-	struct qtnf_topaz_tx_bd *txbd;
-	struct sk_buff *skb;
-	unsigned long flags;
+अटल व्योम qtnf_topaz_data_tx_reclaim(काष्ठा qtnf_pcie_topaz_state *ts)
+अणु
+	काष्ठा qtnf_pcie_bus_priv *priv = &ts->base;
+	काष्ठा qtnf_topaz_tx_bd *txbd;
+	काष्ठा sk_buff *skb;
+	अचिन्हित दीर्घ flags;
 	dma_addr_t paddr;
-	u32 tx_done_index;
-	int count = 0;
-	int i;
+	u32 tx_करोne_index;
+	पूर्णांक count = 0;
+	पूर्णांक i;
 
 	spin_lock_irqsave(&priv->tx_reclaim_lock, flags);
 
-	tx_done_index = readl(ts->ep_next_rx_pkt);
+	tx_करोne_index = पढ़ोl(ts->ep_next_rx_pkt);
 	i = priv->tx_bd_r_index;
 
-	if (CIRC_CNT(priv->tx_bd_w_index, tx_done_index, priv->tx_bd_num))
-		writel(TOPAZ_IPC_IRQ_WORD(TOPAZ_RC_TX_DONE_IRQ),
+	अगर (CIRC_CNT(priv->tx_bd_w_index, tx_करोne_index, priv->tx_bd_num))
+		ग_लिखोl(TOPAZ_IPC_IRQ_WORD(TOPAZ_RC_TX_DONE_IRQ),
 		       TOPAZ_LH_IPC4_INT(priv->sysctl_bar));
 
-	while (CIRC_CNT(tx_done_index, i, priv->tx_bd_num)) {
+	जबतक (CIRC_CNT(tx_करोne_index, i, priv->tx_bd_num)) अणु
 		skb = priv->tx_skb[i];
 
-		if (likely(skb)) {
+		अगर (likely(skb)) अणु
 			txbd = &ts->tx_bd_vbase[i];
 			paddr = QTN_HOST_ADDR(0x0, le32_to_cpu(txbd->addr));
 			pci_unmap_single(priv->pdev, paddr, skb->len,
 					 PCI_DMA_TODEVICE);
 
-			if (skb->dev) {
+			अगर (skb->dev) अणु
 				dev_sw_netstats_tx_add(skb->dev, 1, skb->len);
-				if (unlikely(priv->tx_stopped)) {
+				अगर (unlikely(priv->tx_stopped)) अणु
 					qtnf_wake_all_queues(skb->dev);
 					priv->tx_stopped = 0;
-				}
-			}
+				पूर्ण
+			पूर्ण
 
-			dev_kfree_skb_any(skb);
-		}
+			dev_kमुक्त_skb_any(skb);
+		पूर्ण
 
-		priv->tx_skb[i] = NULL;
+		priv->tx_skb[i] = शून्य;
 		count++;
 
-		if (++i >= priv->tx_bd_num)
+		अगर (++i >= priv->tx_bd_num)
 			i = 0;
-	}
+	पूर्ण
 
-	priv->tx_reclaim_done += count;
+	priv->tx_reclaim_करोne += count;
 	priv->tx_reclaim_req++;
 	priv->tx_bd_r_index = i;
 
 	spin_unlock_irqrestore(&priv->tx_reclaim_lock, flags);
-}
+पूर्ण
 
-static void qtnf_try_stop_xmit(struct qtnf_bus *bus, struct net_device *ndev)
-{
-	struct qtnf_pcie_topaz_state *ts = (void *)get_bus_priv(bus);
+अटल व्योम qtnf_try_stop_xmit(काष्ठा qtnf_bus *bus, काष्ठा net_device *ndev)
+अणु
+	काष्ठा qtnf_pcie_topaz_state *ts = (व्योम *)get_bus_priv(bus);
 
-	if (ndev) {
-		netif_tx_stop_all_queues(ndev);
+	अगर (ndev) अणु
+		netअगर_tx_stop_all_queues(ndev);
 		ts->base.tx_stopped = 1;
-	}
+	पूर्ण
 
-	writel(0x0, ts->txqueue_wake);
+	ग_लिखोl(0x0, ts->txqueue_wake);
 
-	/* sync up tx queue status before generating interrupt */
+	/* sync up tx queue status beक्रमe generating पूर्णांकerrupt */
 	dma_wmb();
 
 	/* send irq to card: tx stopped */
-	writel(TOPAZ_IPC_IRQ_WORD(TOPAZ_RC_TX_STOP_IRQ),
+	ग_लिखोl(TOPAZ_IPC_IRQ_WORD(TOPAZ_RC_TX_STOP_IRQ),
 	       TOPAZ_LH_IPC4_INT(ts->base.sysctl_bar));
 
 	/* schedule reclaim attempt */
 	tasklet_hi_schedule(&ts->base.reclaim_tq);
-}
+पूर्ण
 
-static void qtnf_try_wake_xmit(struct qtnf_bus *bus, struct net_device *ndev)
-{
-	struct qtnf_pcie_topaz_state *ts = get_bus_priv(bus);
-	int ready;
+अटल व्योम qtnf_try_wake_xmit(काष्ठा qtnf_bus *bus, काष्ठा net_device *ndev)
+अणु
+	काष्ठा qtnf_pcie_topaz_state *ts = get_bus_priv(bus);
+	पूर्णांक पढ़ोy;
 
-	ready = readl(ts->txqueue_wake);
-	if (ready) {
-		netif_wake_queue(ndev);
-	} else {
+	पढ़ोy = पढ़ोl(ts->txqueue_wake);
+	अगर (पढ़ोy) अणु
+		netअगर_wake_queue(ndev);
+	पूर्ण अन्यथा अणु
 		/* re-send irq to card: tx stopped */
-		writel(TOPAZ_IPC_IRQ_WORD(TOPAZ_RC_TX_STOP_IRQ),
+		ग_लिखोl(TOPAZ_IPC_IRQ_WORD(TOPAZ_RC_TX_STOP_IRQ),
 		       TOPAZ_LH_IPC4_INT(ts->base.sysctl_bar));
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int qtnf_tx_queue_ready(struct qtnf_pcie_topaz_state *ts)
-{
-	struct qtnf_pcie_bus_priv *priv = &ts->base;
+अटल पूर्णांक qtnf_tx_queue_पढ़ोy(काष्ठा qtnf_pcie_topaz_state *ts)
+अणु
+	काष्ठा qtnf_pcie_bus_priv *priv = &ts->base;
 
-	if (!CIRC_SPACE(priv->tx_bd_w_index, priv->tx_bd_r_index,
-			priv->tx_bd_num)) {
+	अगर (!CIRC_SPACE(priv->tx_bd_w_index, priv->tx_bd_r_index,
+			priv->tx_bd_num)) अणु
 		qtnf_topaz_data_tx_reclaim(ts);
 
-		if (!CIRC_SPACE(priv->tx_bd_w_index, priv->tx_bd_r_index,
-				priv->tx_bd_num)) {
+		अगर (!CIRC_SPACE(priv->tx_bd_w_index, priv->tx_bd_r_index,
+				priv->tx_bd_num)) अणु
 			priv->tx_full_count++;
-			return 0;
-		}
-	}
+			वापस 0;
+		पूर्ण
+	पूर्ण
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-static int qtnf_pcie_data_tx(struct qtnf_bus *bus, struct sk_buff *skb,
-			     unsigned int macid, unsigned int vifid)
-{
-	struct qtnf_pcie_topaz_state *ts = (void *)get_bus_priv(bus);
-	struct qtnf_pcie_bus_priv *priv = &ts->base;
-	struct qtnf_topaz_bda __iomem *bda = ts->bda;
-	struct qtnf_topaz_tx_bd *txbd;
+अटल पूर्णांक qtnf_pcie_data_tx(काष्ठा qtnf_bus *bus, काष्ठा sk_buff *skb,
+			     अचिन्हित पूर्णांक macid, अचिन्हित पूर्णांक vअगरid)
+अणु
+	काष्ठा qtnf_pcie_topaz_state *ts = (व्योम *)get_bus_priv(bus);
+	काष्ठा qtnf_pcie_bus_priv *priv = &ts->base;
+	काष्ठा qtnf_topaz_bda __iomem *bda = ts->bda;
+	काष्ठा qtnf_topaz_tx_bd *txbd;
 	dma_addr_t skb_paddr;
-	unsigned long flags;
-	int ret = 0;
-	int len;
-	int i;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक ret = 0;
+	पूर्णांक len;
+	पूर्णांक i;
 
 	spin_lock_irqsave(&priv->tx_lock, flags);
 
-	if (!qtnf_tx_queue_ready(ts)) {
+	अगर (!qtnf_tx_queue_पढ़ोy(ts)) अणु
 		qtnf_try_stop_xmit(bus, skb->dev);
 		spin_unlock_irqrestore(&priv->tx_lock, flags);
-		return NETDEV_TX_BUSY;
-	}
+		वापस NETDEV_TX_BUSY;
+	पूर्ण
 
 	i = priv->tx_bd_w_index;
 	priv->tx_skb[i] = skb;
@@ -524,107 +525,107 @@ static int qtnf_pcie_data_tx(struct qtnf_bus *bus, struct sk_buff *skb,
 
 	skb_paddr = pci_map_single(priv->pdev, skb->data,
 				   skb->len, PCI_DMA_TODEVICE);
-	if (pci_dma_mapping_error(priv->pdev, skb_paddr)) {
+	अगर (pci_dma_mapping_error(priv->pdev, skb_paddr)) अणु
 		ret = -ENOMEM;
-		goto tx_done;
-	}
+		जाओ tx_करोne;
+	पूर्ण
 
 	txbd = &ts->tx_bd_vbase[i];
 	txbd->addr = cpu_to_le32(QTN_HOST_LO32(skb_paddr));
 
-	writel(QTN_HOST_LO32(skb_paddr), &bda->request[i].addr);
-	writel(len | QTN_PCIE_TX_VALID_PKT, &bda->request[i].info);
+	ग_लिखोl(QTN_HOST_LO32(skb_paddr), &bda->request[i].addr);
+	ग_लिखोl(len | QTN_PCIE_TX_VALID_PKT, &bda->request[i].info);
 
-	/* sync up descriptor updates before generating interrupt */
+	/* sync up descriptor updates beक्रमe generating पूर्णांकerrupt */
 	dma_wmb();
 
-	/* generate irq to card: tx done */
-	writel(TOPAZ_IPC_IRQ_WORD(TOPAZ_RC_TX_DONE_IRQ),
+	/* generate irq to card: tx करोne */
+	ग_लिखोl(TOPAZ_IPC_IRQ_WORD(TOPAZ_RC_TX_DONE_IRQ),
 	       TOPAZ_LH_IPC4_INT(priv->sysctl_bar));
 
-	if (++i >= priv->tx_bd_num)
+	अगर (++i >= priv->tx_bd_num)
 		i = 0;
 
 	priv->tx_bd_w_index = i;
 
-tx_done:
-	if (ret) {
-		if (skb->dev)
+tx_करोne:
+	अगर (ret) अणु
+		अगर (skb->dev)
 			skb->dev->stats.tx_dropped++;
-		dev_kfree_skb_any(skb);
-	}
+		dev_kमुक्त_skb_any(skb);
+	पूर्ण
 
-	priv->tx_done_count++;
+	priv->tx_करोne_count++;
 	spin_unlock_irqrestore(&priv->tx_lock, flags);
 
 	qtnf_topaz_data_tx_reclaim(ts);
 
-	return NETDEV_TX_OK;
-}
+	वापस NETDEV_TX_OK;
+पूर्ण
 
-static irqreturn_t qtnf_pcie_topaz_interrupt(int irq, void *data)
-{
-	struct qtnf_bus *bus = (struct qtnf_bus *)data;
-	struct qtnf_pcie_topaz_state *ts = (void *)get_bus_priv(bus);
-	struct qtnf_pcie_bus_priv *priv = &ts->base;
+अटल irqवापस_t qtnf_pcie_topaz_पूर्णांकerrupt(पूर्णांक irq, व्योम *data)
+अणु
+	काष्ठा qtnf_bus *bus = (काष्ठा qtnf_bus *)data;
+	काष्ठा qtnf_pcie_topaz_state *ts = (व्योम *)get_bus_priv(bus);
+	काष्ठा qtnf_pcie_bus_priv *priv = &ts->base;
 
-	if (!priv->msi_enabled && !qtnf_topaz_intx_asserted(ts))
-		return IRQ_NONE;
+	अगर (!priv->msi_enabled && !qtnf_topaz_पूर्णांकx_निश्चितed(ts))
+		वापस IRQ_NONE;
 
-	if (!priv->msi_enabled)
-		qtnf_deassert_intx(ts);
+	अगर (!priv->msi_enabled)
+		qtnf_deनिश्चित_पूर्णांकx(ts);
 
 	priv->pcie_irq_count++;
 
 	qtnf_shm_ipc_irq_handler(&priv->shm_ipc_ep_in);
 	qtnf_shm_ipc_irq_handler(&priv->shm_ipc_ep_out);
 
-	if (napi_schedule_prep(&bus->mux_napi)) {
+	अगर (napi_schedule_prep(&bus->mux_napi)) अणु
 		disable_rx_irqs(ts);
 		__napi_schedule(&bus->mux_napi);
-	}
+	पूर्ण
 
 	tasklet_hi_schedule(&priv->reclaim_tq);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static int qtnf_rx_data_ready(struct qtnf_pcie_topaz_state *ts)
-{
+अटल पूर्णांक qtnf_rx_data_पढ़ोy(काष्ठा qtnf_pcie_topaz_state *ts)
+अणु
 	u16 index = ts->base.rx_bd_r_index;
-	struct qtnf_topaz_rx_bd *rxbd;
+	काष्ठा qtnf_topaz_rx_bd *rxbd;
 	u32 descw;
 
 	rxbd = &ts->rx_bd_vbase[index];
 	descw = le32_to_cpu(rxbd->info);
 
-	if (descw & QTN_BD_EMPTY)
-		return 0;
+	अगर (descw & QTN_BD_EMPTY)
+		वापस 0;
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-static int qtnf_topaz_rx_poll(struct napi_struct *napi, int budget)
-{
-	struct qtnf_bus *bus = container_of(napi, struct qtnf_bus, mux_napi);
-	struct qtnf_pcie_topaz_state *ts = (void *)get_bus_priv(bus);
-	struct qtnf_pcie_bus_priv *priv = &ts->base;
-	struct net_device *ndev = NULL;
-	struct sk_buff *skb = NULL;
-	int processed = 0;
-	struct qtnf_topaz_rx_bd *rxbd;
+अटल पूर्णांक qtnf_topaz_rx_poll(काष्ठा napi_काष्ठा *napi, पूर्णांक budget)
+अणु
+	काष्ठा qtnf_bus *bus = container_of(napi, काष्ठा qtnf_bus, mux_napi);
+	काष्ठा qtnf_pcie_topaz_state *ts = (व्योम *)get_bus_priv(bus);
+	काष्ठा qtnf_pcie_bus_priv *priv = &ts->base;
+	काष्ठा net_device *ndev = शून्य;
+	काष्ठा sk_buff *skb = शून्य;
+	पूर्णांक processed = 0;
+	काष्ठा qtnf_topaz_rx_bd *rxbd;
 	dma_addr_t skb_paddr;
-	int consume;
+	पूर्णांक consume;
 	u32 descw;
 	u32 poffset;
 	u32 psize;
 	u16 r_idx;
 	u16 w_idx;
-	int ret;
+	पूर्णांक ret;
 
-	while (processed < budget) {
-		if (!qtnf_rx_data_ready(ts))
-			goto rx_out;
+	जबतक (processed < budget) अणु
+		अगर (!qtnf_rx_data_पढ़ोy(ts))
+			जाओ rx_out;
 
 		r_idx = priv->rx_bd_r_index;
 		rxbd = &ts->rx_bd_vbase[r_idx];
@@ -635,275 +636,275 @@ static int qtnf_topaz_rx_poll(struct napi_struct *napi, int budget)
 		psize = QTN_GET_LEN(descw);
 		consume = 1;
 
-		if (descw & QTN_BD_EMPTY) {
+		अगर (descw & QTN_BD_EMPTY) अणु
 			pr_warn("skip invalid rxbd[%d]\n", r_idx);
 			consume = 0;
-		}
+		पूर्ण
 
-		if (!skb) {
+		अगर (!skb) अणु
 			pr_warn("skip missing rx_skb[%d]\n", r_idx);
 			consume = 0;
-		}
+		पूर्ण
 
-		if (skb && (skb_tailroom(skb) <  psize)) {
+		अगर (skb && (skb_tailroom(skb) <  psize)) अणु
 			pr_err("skip packet with invalid length: %u > %u\n",
 			       psize, skb_tailroom(skb));
 			consume = 0;
-		}
+		पूर्ण
 
-		if (skb) {
+		अगर (skb) अणु
 			skb_paddr = QTN_HOST_ADDR(0x0, le32_to_cpu(rxbd->addr));
 			pci_unmap_single(priv->pdev, skb_paddr, SKB_BUF_SIZE,
 					 PCI_DMA_FROMDEVICE);
-		}
+		पूर्ण
 
-		if (consume) {
+		अगर (consume) अणु
 			skb_reserve(skb, poffset);
 			skb_put(skb, psize);
-			ndev = qtnf_classify_skb(bus, skb);
-			if (likely(ndev)) {
+			ndev = qtnf_classअगरy_skb(bus, skb);
+			अगर (likely(ndev)) अणु
 				dev_sw_netstats_rx_add(ndev, skb->len);
 				skb->protocol = eth_type_trans(skb, ndev);
-				netif_receive_skb(skb);
-			} else {
+				netअगर_receive_skb(skb);
+			पूर्ण अन्यथा अणु
 				pr_debug("drop untagged skb\n");
 				bus->mux_dev.stats.rx_dropped++;
-				dev_kfree_skb_any(skb);
-			}
-		} else {
-			if (skb) {
+				dev_kमुक्त_skb_any(skb);
+			पूर्ण
+		पूर्ण अन्यथा अणु
+			अगर (skb) अणु
 				bus->mux_dev.stats.rx_dropped++;
-				dev_kfree_skb_any(skb);
-			}
-		}
+				dev_kमुक्त_skb_any(skb);
+			पूर्ण
+		पूर्ण
 
-		/* notify card about recv packets once per several packets */
-		if (((++ts->rx_pkt_count) & RX_DONE_INTR_MSK) == 0)
-			writel(TOPAZ_IPC_IRQ_WORD(TOPAZ_RC_RX_DONE_IRQ),
+		/* notअगरy card about recv packets once per several packets */
+		अगर (((++ts->rx_pkt_count) & RX_DONE_INTR_MSK) == 0)
+			ग_लिखोl(TOPAZ_IPC_IRQ_WORD(TOPAZ_RC_RX_DONE_IRQ),
 			       TOPAZ_LH_IPC4_INT(priv->sysctl_bar));
 
-		priv->rx_skb[r_idx] = NULL;
-		if (++r_idx >= priv->rx_bd_num)
+		priv->rx_skb[r_idx] = शून्य;
+		अगर (++r_idx >= priv->rx_bd_num)
 			r_idx = 0;
 
 		priv->rx_bd_r_index = r_idx;
 
 		/* repalce processed buffer by a new one */
 		w_idx = priv->rx_bd_w_index;
-		while (CIRC_SPACE(priv->rx_bd_w_index, priv->rx_bd_r_index,
-				  priv->rx_bd_num) > 0) {
-			if (++w_idx >= priv->rx_bd_num)
+		जबतक (CIRC_SPACE(priv->rx_bd_w_index, priv->rx_bd_r_index,
+				  priv->rx_bd_num) > 0) अणु
+			अगर (++w_idx >= priv->rx_bd_num)
 				w_idx = 0;
 
 			ret = topaz_skb2rbd_attach(ts, w_idx,
 						   descw & QTN_BD_WRAP);
-			if (ret) {
+			अगर (ret) अणु
 				pr_err("failed to allocate new rx_skb[%d]\n",
 				       w_idx);
-				break;
-			}
-		}
+				अवरोध;
+			पूर्ण
+		पूर्ण
 
 		processed++;
-	}
+	पूर्ण
 
 rx_out:
-	if (processed < budget) {
+	अगर (processed < budget) अणु
 		napi_complete(napi);
 		enable_rx_irqs(ts);
-	}
+	पूर्ण
 
-	return processed;
-}
+	वापस processed;
+पूर्ण
 
-static void
-qtnf_pcie_data_tx_timeout(struct qtnf_bus *bus, struct net_device *ndev)
-{
-	struct qtnf_pcie_topaz_state *ts = get_bus_priv(bus);
+अटल व्योम
+qtnf_pcie_data_tx_समयout(काष्ठा qtnf_bus *bus, काष्ठा net_device *ndev)
+अणु
+	काष्ठा qtnf_pcie_topaz_state *ts = get_bus_priv(bus);
 
 	qtnf_try_wake_xmit(bus, ndev);
 	tasklet_hi_schedule(&ts->base.reclaim_tq);
-}
+पूर्ण
 
-static void qtnf_pcie_data_rx_start(struct qtnf_bus *bus)
-{
-	struct qtnf_pcie_topaz_state *ts = get_bus_priv(bus);
+अटल व्योम qtnf_pcie_data_rx_start(काष्ठा qtnf_bus *bus)
+अणु
+	काष्ठा qtnf_pcie_topaz_state *ts = get_bus_priv(bus);
 
 	napi_enable(&bus->mux_napi);
 	enable_rx_irqs(ts);
-}
+पूर्ण
 
-static void qtnf_pcie_data_rx_stop(struct qtnf_bus *bus)
-{
-	struct qtnf_pcie_topaz_state *ts = get_bus_priv(bus);
+अटल व्योम qtnf_pcie_data_rx_stop(काष्ठा qtnf_bus *bus)
+अणु
+	काष्ठा qtnf_pcie_topaz_state *ts = get_bus_priv(bus);
 
 	disable_rx_irqs(ts);
 	napi_disable(&bus->mux_napi);
-}
+पूर्ण
 
-static struct qtnf_bus_ops qtnf_pcie_topaz_bus_ops = {
+अटल काष्ठा qtnf_bus_ops qtnf_pcie_topaz_bus_ops = अणु
 	/* control path methods */
 	.control_tx	= qtnf_pcie_control_tx,
 
 	/* data path methods */
 	.data_tx		= qtnf_pcie_data_tx,
-	.data_tx_timeout	= qtnf_pcie_data_tx_timeout,
+	.data_tx_समयout	= qtnf_pcie_data_tx_समयout,
 	.data_rx_start		= qtnf_pcie_data_rx_start,
 	.data_rx_stop		= qtnf_pcie_data_rx_stop,
-};
+पूर्ण;
 
-static int qtnf_dbg_irq_stats(struct seq_file *s, void *data)
-{
-	struct qtnf_bus *bus = dev_get_drvdata(s->private);
-	struct qtnf_pcie_topaz_state *ts = get_bus_priv(bus);
+अटल पूर्णांक qtnf_dbg_irq_stats(काष्ठा seq_file *s, व्योम *data)
+अणु
+	काष्ठा qtnf_bus *bus = dev_get_drvdata(s->निजी);
+	काष्ठा qtnf_pcie_topaz_state *ts = get_bus_priv(bus);
 
-	seq_printf(s, "pcie_irq_count(%u)\n", ts->base.pcie_irq_count);
+	seq_म_लिखो(s, "pcie_irq_count(%u)\n", ts->base.pcie_irq_count);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int qtnf_dbg_pkt_stats(struct seq_file *s, void *data)
-{
-	struct qtnf_bus *bus = dev_get_drvdata(s->private);
-	struct qtnf_pcie_topaz_state *ts = get_bus_priv(bus);
-	struct qtnf_pcie_bus_priv *priv = &ts->base;
-	u32 tx_done_index = readl(ts->ep_next_rx_pkt);
+अटल पूर्णांक qtnf_dbg_pkt_stats(काष्ठा seq_file *s, व्योम *data)
+अणु
+	काष्ठा qtnf_bus *bus = dev_get_drvdata(s->निजी);
+	काष्ठा qtnf_pcie_topaz_state *ts = get_bus_priv(bus);
+	काष्ठा qtnf_pcie_bus_priv *priv = &ts->base;
+	u32 tx_करोne_index = पढ़ोl(ts->ep_next_rx_pkt);
 
-	seq_printf(s, "tx_full_count(%u)\n", priv->tx_full_count);
-	seq_printf(s, "tx_done_count(%u)\n", priv->tx_done_count);
-	seq_printf(s, "tx_reclaim_done(%u)\n", priv->tx_reclaim_done);
-	seq_printf(s, "tx_reclaim_req(%u)\n", priv->tx_reclaim_req);
+	seq_म_लिखो(s, "tx_full_count(%u)\n", priv->tx_full_count);
+	seq_म_लिखो(s, "tx_done_count(%u)\n", priv->tx_करोne_count);
+	seq_म_लिखो(s, "tx_reclaim_done(%u)\n", priv->tx_reclaim_करोne);
+	seq_म_लिखो(s, "tx_reclaim_req(%u)\n", priv->tx_reclaim_req);
 
-	seq_printf(s, "tx_bd_r_index(%u)\n", priv->tx_bd_r_index);
-	seq_printf(s, "tx_done_index(%u)\n", tx_done_index);
-	seq_printf(s, "tx_bd_w_index(%u)\n", priv->tx_bd_w_index);
+	seq_म_लिखो(s, "tx_bd_r_index(%u)\n", priv->tx_bd_r_index);
+	seq_म_लिखो(s, "tx_done_index(%u)\n", tx_करोne_index);
+	seq_म_लिखो(s, "tx_bd_w_index(%u)\n", priv->tx_bd_w_index);
 
-	seq_printf(s, "tx host queue len(%u)\n",
+	seq_म_लिखो(s, "tx host queue len(%u)\n",
 		   CIRC_CNT(priv->tx_bd_w_index, priv->tx_bd_r_index,
 			    priv->tx_bd_num));
-	seq_printf(s, "tx reclaim queue len(%u)\n",
-		   CIRC_CNT(tx_done_index, priv->tx_bd_r_index,
+	seq_म_लिखो(s, "tx reclaim queue len(%u)\n",
+		   CIRC_CNT(tx_करोne_index, priv->tx_bd_r_index,
 			    priv->tx_bd_num));
-	seq_printf(s, "tx card queue len(%u)\n",
-		   CIRC_CNT(priv->tx_bd_w_index, tx_done_index,
+	seq_म_लिखो(s, "tx card queue len(%u)\n",
+		   CIRC_CNT(priv->tx_bd_w_index, tx_करोne_index,
 			    priv->tx_bd_num));
 
-	seq_printf(s, "rx_bd_r_index(%u)\n", priv->rx_bd_r_index);
-	seq_printf(s, "rx_bd_w_index(%u)\n", priv->rx_bd_w_index);
-	seq_printf(s, "rx alloc queue len(%u)\n",
+	seq_म_लिखो(s, "rx_bd_r_index(%u)\n", priv->rx_bd_r_index);
+	seq_म_लिखो(s, "rx_bd_w_index(%u)\n", priv->rx_bd_w_index);
+	seq_म_लिखो(s, "rx alloc queue len(%u)\n",
 		   CIRC_SPACE(priv->rx_bd_w_index, priv->rx_bd_r_index,
 			      priv->rx_bd_num));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void qtnf_reset_dma_offset(struct qtnf_pcie_topaz_state *ts)
-{
-	struct qtnf_topaz_bda __iomem *bda = ts->bda;
-	u32 offset = readl(&bda->bda_dma_offset);
+अटल व्योम qtnf_reset_dma_offset(काष्ठा qtnf_pcie_topaz_state *ts)
+अणु
+	काष्ठा qtnf_topaz_bda __iomem *bda = ts->bda;
+	u32 offset = पढ़ोl(&bda->bda_dma_offset);
 
-	if ((offset & PCIE_DMA_OFFSET_ERROR_MASK) != PCIE_DMA_OFFSET_ERROR)
-		return;
+	अगर ((offset & PCIE_DMA_OFFSET_ERROR_MASK) != PCIE_DMA_OFFSET_ERROR)
+		वापस;
 
-	writel(0x0, &bda->bda_dma_offset);
-}
+	ग_लिखोl(0x0, &bda->bda_dma_offset);
+पूर्ण
 
-static int qtnf_pcie_endian_detect(struct qtnf_pcie_topaz_state *ts)
-{
-	struct qtnf_topaz_bda __iomem *bda = ts->bda;
-	u32 timeout = 0;
+अटल पूर्णांक qtnf_pcie_endian_detect(काष्ठा qtnf_pcie_topaz_state *ts)
+अणु
+	काष्ठा qtnf_topaz_bda __iomem *bda = ts->bda;
+	u32 समयout = 0;
 	u32 endian;
-	int ret = 0;
+	पूर्णांक ret = 0;
 
-	writel(QTN_PCI_ENDIAN_DETECT_DATA, &bda->bda_pci_endian);
+	ग_लिखोl(QTN_PCI_ENDIAN_DETECT_DATA, &bda->bda_pci_endian);
 
-	/* flush endian modifications before status update */
+	/* flush endian modअगरications beक्रमe status update */
 	dma_wmb();
 
-	writel(QTN_PCI_ENDIAN_VALID_STATUS, &bda->bda_pci_pre_status);
+	ग_लिखोl(QTN_PCI_ENDIAN_VALID_STATUS, &bda->bda_pci_pre_status);
 
-	while (readl(&bda->bda_pci_post_status) !=
-	       QTN_PCI_ENDIAN_VALID_STATUS) {
+	जबतक (पढ़ोl(&bda->bda_pci_post_status) !=
+	       QTN_PCI_ENDIAN_VALID_STATUS) अणु
 		usleep_range(1000, 1200);
-		if (++timeout > QTN_FW_DL_TIMEOUT_MS) {
+		अगर (++समयout > QTN_FW_DL_TIMEOUT_MS) अणु
 			pr_err("card endianness detection timed out\n");
 			ret = -ETIMEDOUT;
-			goto endian_out;
-		}
-	}
+			जाओ endian_out;
+		पूर्ण
+	पूर्ण
 
-	/* do not read before status is updated */
+	/* करो not पढ़ो beक्रमe status is updated */
 	dma_rmb();
 
-	endian = readl(&bda->bda_pci_endian);
+	endian = पढ़ोl(&bda->bda_pci_endian);
 	WARN(endian != QTN_PCI_LITTLE_ENDIAN,
 	     "%s: unexpected card endianness", __func__);
 
 endian_out:
-	writel(0, &bda->bda_pci_pre_status);
-	writel(0, &bda->bda_pci_post_status);
-	writel(0, &bda->bda_pci_endian);
+	ग_लिखोl(0, &bda->bda_pci_pre_status);
+	ग_लिखोl(0, &bda->bda_pci_post_status);
+	ग_लिखोl(0, &bda->bda_pci_endian);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int qtnf_pre_init_ep(struct qtnf_bus *bus)
-{
-	struct qtnf_pcie_topaz_state *ts = (void *)get_bus_priv(bus);
-	struct qtnf_topaz_bda __iomem *bda = ts->bda;
+अटल पूर्णांक qtnf_pre_init_ep(काष्ठा qtnf_bus *bus)
+अणु
+	काष्ठा qtnf_pcie_topaz_state *ts = (व्योम *)get_bus_priv(bus);
+	काष्ठा qtnf_topaz_bda __iomem *bda = ts->bda;
 	u32 flags;
-	int ret;
+	पूर्णांक ret;
 
 	ret = qtnf_pcie_endian_detect(ts);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		pr_err("failed to detect card endianness\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	writeb(ts->base.msi_enabled, &ts->bda->bda_rc_msi_enabled);
+	ग_लिखोb(ts->base.msi_enabled, &ts->bda->bda_rc_msi_enabled);
 	qtnf_reset_dma_offset(ts);
 
-	/* notify card about driver type and boot mode */
-	flags = readl(&bda->bda_flags) | QTN_BDA_HOST_QLINK_DRV;
+	/* notअगरy card about driver type and boot mode */
+	flags = पढ़ोl(&bda->bda_flags) | QTN_BDA_HOST_QLINK_DRV;
 
-	if (ts->base.flashboot)
+	अगर (ts->base.flashboot)
 		flags |= QTN_BDA_FLASH_BOOT;
-	else
+	अन्यथा
 		flags &= ~QTN_BDA_FLASH_BOOT;
 
-	writel(flags, &bda->bda_flags);
+	ग_लिखोl(flags, &bda->bda_flags);
 
 	qtnf_set_state(&ts->bda->bda_bootstate, QTN_BDA_FW_HOST_RDY);
-	if (qtnf_poll_state(&ts->bda->bda_bootstate, QTN_BDA_FW_TARGET_RDY,
-			    QTN_FW_DL_TIMEOUT_MS)) {
+	अगर (qtnf_poll_state(&ts->bda->bda_bootstate, QTN_BDA_FW_TARGET_RDY,
+			    QTN_FW_DL_TIMEOUT_MS)) अणु
 		pr_err("card is not ready to boot...\n");
-		return -ETIMEDOUT;
-	}
+		वापस -ETIMEDOUT;
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int qtnf_post_init_ep(struct qtnf_pcie_topaz_state *ts)
-{
-	struct pci_dev *pdev = ts->base.pdev;
+अटल पूर्णांक qtnf_post_init_ep(काष्ठा qtnf_pcie_topaz_state *ts)
+अणु
+	काष्ठा pci_dev *pdev = ts->base.pdev;
 
 	setup_rx_irqs(ts);
 	disable_rx_irqs(ts);
 
-	if (qtnf_poll_state(&ts->bda->bda_bootstate, QTN_BDA_FW_QLINK_DONE,
+	अगर (qtnf_poll_state(&ts->bda->bda_bootstate, QTN_BDA_FW_QLINK_DONE,
 			    QTN_FW_QLINK_TIMEOUT_MS))
-		return -ETIMEDOUT;
+		वापस -ETIMEDOUT;
 
 	enable_irq(pdev->irq);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-qtnf_ep_fw_load(struct qtnf_pcie_topaz_state *ts, const u8 *fw, u32 fw_size)
-{
-	struct qtnf_topaz_bda __iomem *bda = ts->bda;
-	struct pci_dev *pdev = ts->base.pdev;
-	u32 remaining = fw_size;
+अटल पूर्णांक
+qtnf_ep_fw_load(काष्ठा qtnf_pcie_topaz_state *ts, स्थिर u8 *fw, u32 fw_size)
+अणु
+	काष्ठा qtnf_topaz_bda __iomem *bda = ts->bda;
+	काष्ठा pci_dev *pdev = ts->base.pdev;
+	u32 reमुख्यing = fw_size;
 	u8 *curr = (u8 *)fw;
 	u32 blksize;
 	u32 nblocks;
@@ -911,326 +912,326 @@ qtnf_ep_fw_load(struct qtnf_pcie_topaz_state *ts, const u8 *fw, u32 fw_size)
 	u32 count;
 	u32 size;
 	dma_addr_t paddr;
-	void *data;
-	int ret = 0;
+	व्योम *data;
+	पूर्णांक ret = 0;
 
 	pr_debug("FW upload started: fw_addr = 0x%p, size=%d\n", fw, fw_size);
 
 	blksize = ts->base.fw_blksize;
 
-	if (blksize < PAGE_SIZE)
+	अगर (blksize < PAGE_SIZE)
 		blksize = PAGE_SIZE;
 
-	while (blksize >= PAGE_SIZE) {
+	जबतक (blksize >= PAGE_SIZE) अणु
 		pr_debug("allocating %u bytes to upload FW\n", blksize);
 		data = dma_alloc_coherent(&pdev->dev, blksize,
 					  &paddr, GFP_KERNEL);
-		if (data)
-			break;
+		अगर (data)
+			अवरोध;
 		blksize /= 2;
-	}
+	पूर्ण
 
-	if (!data) {
+	अगर (!data) अणु
 		pr_err("failed to allocate DMA buffer for FW upload\n");
 		ret = -ENOMEM;
-		goto fw_load_out;
-	}
+		जाओ fw_load_out;
+	पूर्ण
 
 	nblocks = NBLOCKS(fw_size, blksize);
-	offset = readl(&bda->bda_dma_offset);
+	offset = पढ़ोl(&bda->bda_dma_offset);
 
 	qtnf_set_state(&ts->bda->bda_bootstate, QTN_BDA_FW_HOST_LOAD);
-	if (qtnf_poll_state(&ts->bda->bda_bootstate, QTN_BDA_FW_EP_RDY,
-			    QTN_FW_DL_TIMEOUT_MS)) {
+	अगर (qtnf_poll_state(&ts->bda->bda_bootstate, QTN_BDA_FW_EP_RDY,
+			    QTN_FW_DL_TIMEOUT_MS)) अणु
 		pr_err("card is not ready to download FW\n");
 		ret = -ETIMEDOUT;
-		goto fw_load_map;
-	}
+		जाओ fw_load_map;
+	पूर्ण
 
-	for (count = 0 ; count < nblocks; count++) {
-		size = (remaining > blksize) ? blksize : remaining;
+	क्रम (count = 0 ; count < nblocks; count++) अणु
+		size = (reमुख्यing > blksize) ? blksize : reमुख्यing;
 
-		memcpy(data, curr, size);
-		qtnf_non_posted_write(paddr + offset, &bda->bda_img);
-		qtnf_non_posted_write(size, &bda->bda_img_size);
+		स_नकल(data, curr, size);
+		qtnf_non_posted_ग_लिखो(paddr + offset, &bda->bda_img);
+		qtnf_non_posted_ग_लिखो(size, &bda->bda_img_size);
 
 		pr_debug("chunk[%u] VA[0x%p] PA[%pad] sz[%u]\n",
-			 count, (void *)curr, &paddr, size);
+			 count, (व्योम *)curr, &paddr, size);
 
 		qtnf_set_state(&ts->bda->bda_bootstate, QTN_BDA_FW_BLOCK_RDY);
-		if (qtnf_poll_state(&ts->bda->bda_bootstate,
+		अगर (qtnf_poll_state(&ts->bda->bda_bootstate,
 				    QTN_BDA_FW_BLOCK_DONE,
-				    QTN_FW_DL_TIMEOUT_MS)) {
+				    QTN_FW_DL_TIMEOUT_MS)) अणु
 			pr_err("confirmation for block #%d timed out\n", count);
 			ret = -ETIMEDOUT;
-			goto fw_load_map;
-		}
+			जाओ fw_load_map;
+		पूर्ण
 
-		remaining = (remaining < size) ? remaining : (remaining - size);
+		reमुख्यing = (reमुख्यing < size) ? reमुख्यing : (reमुख्यing - size);
 		curr += size;
-	}
+	पूर्ण
 
 	/* upload completion mark: zero-sized block */
-	qtnf_non_posted_write(0, &bda->bda_img);
-	qtnf_non_posted_write(0, &bda->bda_img_size);
+	qtnf_non_posted_ग_लिखो(0, &bda->bda_img);
+	qtnf_non_posted_ग_लिखो(0, &bda->bda_img_size);
 
 	qtnf_set_state(&ts->bda->bda_bootstate, QTN_BDA_FW_BLOCK_RDY);
-	if (qtnf_poll_state(&ts->bda->bda_bootstate, QTN_BDA_FW_BLOCK_DONE,
-			    QTN_FW_DL_TIMEOUT_MS)) {
+	अगर (qtnf_poll_state(&ts->bda->bda_bootstate, QTN_BDA_FW_BLOCK_DONE,
+			    QTN_FW_DL_TIMEOUT_MS)) अणु
 		pr_err("confirmation for the last block timed out\n");
 		ret = -ETIMEDOUT;
-		goto fw_load_map;
-	}
+		जाओ fw_load_map;
+	पूर्ण
 
-	/* RC is done */
+	/* RC is करोne */
 	qtnf_set_state(&ts->bda->bda_bootstate, QTN_BDA_FW_BLOCK_END);
-	if (qtnf_poll_state(&ts->bda->bda_bootstate, QTN_BDA_FW_LOAD_DONE,
-			    QTN_FW_DL_TIMEOUT_MS)) {
+	अगर (qtnf_poll_state(&ts->bda->bda_bootstate, QTN_BDA_FW_LOAD_DONE,
+			    QTN_FW_DL_TIMEOUT_MS)) अणु
 		pr_err("confirmation for FW upload completion timed out\n");
 		ret = -ETIMEDOUT;
-		goto fw_load_map;
-	}
+		जाओ fw_load_map;
+	पूर्ण
 
 	pr_debug("FW upload completed: totally sent %d blocks\n", count);
 
 fw_load_map:
-	dma_free_coherent(&pdev->dev, blksize, data, paddr);
+	dma_मुक्त_coherent(&pdev->dev, blksize, data, paddr);
 
 fw_load_out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int qtnf_topaz_fw_upload(struct qtnf_pcie_topaz_state *ts,
-				const char *fwname)
-{
-	const struct firmware *fw;
-	struct pci_dev *pdev = ts->base.pdev;
-	int ret;
+अटल पूर्णांक qtnf_topaz_fw_upload(काष्ठा qtnf_pcie_topaz_state *ts,
+				स्थिर अक्षर *fwname)
+अणु
+	स्थिर काष्ठा firmware *fw;
+	काष्ठा pci_dev *pdev = ts->base.pdev;
+	पूर्णांक ret;
 
-	if (qtnf_poll_state(&ts->bda->bda_bootstate,
+	अगर (qtnf_poll_state(&ts->bda->bda_bootstate,
 			    QTN_BDA_FW_LOAD_RDY,
-			    QTN_FW_DL_TIMEOUT_MS)) {
+			    QTN_FW_DL_TIMEOUT_MS)) अणु
 		pr_err("%s: card is not ready\n", fwname);
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
 	pr_info("starting firmware upload: %s\n", fwname);
 
 	ret = request_firmware(&fw, fwname, &pdev->dev);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		pr_err("%s: request_firmware error %d\n", fwname, ret);
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
 	ret = qtnf_ep_fw_load(ts, fw->data, fw->size);
 	release_firmware(fw);
 
-	if (ret)
+	अगर (ret)
 		pr_err("%s: FW upload error\n", fwname);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void qtnf_topaz_fw_work_handler(struct work_struct *work)
-{
-	struct qtnf_bus *bus = container_of(work, struct qtnf_bus, fw_work);
-	struct qtnf_pcie_topaz_state *ts = (void *)get_bus_priv(bus);
-	int bootloader_needed = readl(&ts->bda->bda_flags) & QTN_BDA_XMIT_UBOOT;
-	struct pci_dev *pdev = ts->base.pdev;
-	int ret;
+अटल व्योम qtnf_topaz_fw_work_handler(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा qtnf_bus *bus = container_of(work, काष्ठा qtnf_bus, fw_work);
+	काष्ठा qtnf_pcie_topaz_state *ts = (व्योम *)get_bus_priv(bus);
+	पूर्णांक bootloader_needed = पढ़ोl(&ts->bda->bda_flags) & QTN_BDA_XMIT_UBOOT;
+	काष्ठा pci_dev *pdev = ts->base.pdev;
+	पूर्णांक ret;
 
 	qtnf_set_state(&ts->bda->bda_bootstate, QTN_BDA_FW_TARGET_BOOT);
 
-	if (bootloader_needed) {
+	अगर (bootloader_needed) अणु
 		ret = qtnf_topaz_fw_upload(ts, QTN_PCI_TOPAZ_BOOTLD_NAME);
-		if (ret)
-			goto fw_load_exit;
+		अगर (ret)
+			जाओ fw_load_निकास;
 
 		ret = qtnf_pre_init_ep(bus);
-		if (ret)
-			goto fw_load_exit;
+		अगर (ret)
+			जाओ fw_load_निकास;
 
 		qtnf_set_state(&ts->bda->bda_bootstate,
 			       QTN_BDA_FW_TARGET_BOOT);
-	}
+	पूर्ण
 
-	if (ts->base.flashboot) {
+	अगर (ts->base.flashboot) अणु
 		pr_info("booting firmware from flash\n");
 
 		ret = qtnf_poll_state(&ts->bda->bda_bootstate,
 				      QTN_BDA_FW_FLASH_BOOT,
 				      QTN_FW_DL_TIMEOUT_MS);
-		if (ret)
-			goto fw_load_exit;
-	} else {
+		अगर (ret)
+			जाओ fw_load_निकास;
+	पूर्ण अन्यथा अणु
 		ret = qtnf_topaz_fw_upload(ts, QTN_PCI_TOPAZ_FW_NAME);
-		if (ret)
-			goto fw_load_exit;
+		अगर (ret)
+			जाओ fw_load_निकास;
 
 		qtnf_set_state(&ts->bda->bda_bootstate, QTN_BDA_FW_START);
 		ret = qtnf_poll_state(&ts->bda->bda_bootstate,
 				      QTN_BDA_FW_CONFIG,
 				      QTN_FW_QLINK_TIMEOUT_MS);
-		if (ret) {
+		अगर (ret) अणु
 			pr_err("FW bringup timed out\n");
-			goto fw_load_exit;
-		}
+			जाओ fw_load_निकास;
+		पूर्ण
 
 		qtnf_set_state(&ts->bda->bda_bootstate, QTN_BDA_FW_RUN);
 		ret = qtnf_poll_state(&ts->bda->bda_bootstate,
 				      QTN_BDA_FW_RUNNING,
 				      QTN_FW_QLINK_TIMEOUT_MS);
-		if (ret) {
+		अगर (ret) अणु
 			pr_err("card bringup timed out\n");
-			goto fw_load_exit;
-		}
-	}
+			जाओ fw_load_निकास;
+		पूर्ण
+	पूर्ण
 
 	ret = qtnf_post_init_ep(ts);
-	if (ret) {
+	अगर (ret) अणु
 		pr_err("FW runtime failure\n");
-		goto fw_load_exit;
-	}
+		जाओ fw_load_निकास;
+	पूर्ण
 
 	pr_info("firmware is up and running\n");
 
-	ret = qtnf_pcie_fw_boot_done(bus);
-	if (ret)
-		goto fw_load_exit;
+	ret = qtnf_pcie_fw_boot_करोne(bus);
+	अगर (ret)
+		जाओ fw_load_निकास;
 
 	qtnf_debugfs_add_entry(bus, "pkt_stats", qtnf_dbg_pkt_stats);
 	qtnf_debugfs_add_entry(bus, "irq_stats", qtnf_dbg_irq_stats);
 
-fw_load_exit:
+fw_load_निकास:
 	put_device(&pdev->dev);
-}
+पूर्ण
 
-static void qtnf_reclaim_tasklet_fn(struct tasklet_struct *t)
-{
-	struct qtnf_pcie_topaz_state *ts = from_tasklet(ts, t, base.reclaim_tq);
+अटल व्योम qtnf_reclaim_tasklet_fn(काष्ठा tasklet_काष्ठा *t)
+अणु
+	काष्ठा qtnf_pcie_topaz_state *ts = from_tasklet(ts, t, base.reclaim_tq);
 
 	qtnf_topaz_data_tx_reclaim(ts);
-}
+पूर्ण
 
-static u64 qtnf_topaz_dma_mask_get(void)
-{
-	return DMA_BIT_MASK(32);
-}
+अटल u64 qtnf_topaz_dma_mask_get(व्योम)
+अणु
+	वापस DMA_BIT_MASK(32);
+पूर्ण
 
-static int qtnf_pcie_topaz_probe(struct qtnf_bus *bus,
-				 unsigned int tx_bd_num, unsigned int rx_bd_num)
-{
-	struct qtnf_pcie_topaz_state *ts = get_bus_priv(bus);
-	struct pci_dev *pdev = ts->base.pdev;
-	struct qtnf_shm_ipc_int ipc_int;
-	unsigned long irqflags;
-	int ret;
+अटल पूर्णांक qtnf_pcie_topaz_probe(काष्ठा qtnf_bus *bus,
+				 अचिन्हित पूर्णांक tx_bd_num, अचिन्हित पूर्णांक rx_bd_num)
+अणु
+	काष्ठा qtnf_pcie_topaz_state *ts = get_bus_priv(bus);
+	काष्ठा pci_dev *pdev = ts->base.pdev;
+	काष्ठा qtnf_shm_ipc_पूर्णांक ipc_पूर्णांक;
+	अचिन्हित दीर्घ irqflags;
+	पूर्णांक ret;
 
 	bus->bus_ops = &qtnf_pcie_topaz_bus_ops;
 	INIT_WORK(&bus->fw_work, qtnf_topaz_fw_work_handler);
 	ts->bda = ts->base.epmem_bar;
 
-	/* assign host msi irq before card init */
-	if (ts->base.msi_enabled)
+	/* assign host msi irq beक्रमe card init */
+	अगर (ts->base.msi_enabled)
 		irqflags = IRQF_NOBALANCING;
-	else
+	अन्यथा
 		irqflags = IRQF_NOBALANCING | IRQF_SHARED;
 
 	ret = devm_request_irq(&pdev->dev, pdev->irq,
-			       &qtnf_pcie_topaz_interrupt,
-			       irqflags, "qtnf_topaz_irq", (void *)bus);
-	if (ret) {
+			       &qtnf_pcie_topaz_पूर्णांकerrupt,
+			       irqflags, "qtnf_topaz_irq", (व्योम *)bus);
+	अगर (ret) अणु
 		pr_err("failed to request pcie irq %d\n", pdev->irq);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	disable_irq(pdev->irq);
 
 	ret = qtnf_pre_init_ep(bus);
-	if (ret) {
+	अगर (ret) अणु
 		pr_err("failed to init card\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	ret = qtnf_pcie_topaz_init_xfer(ts, tx_bd_num, rx_bd_num);
-	if (ret) {
+	अगर (ret) अणु
 		pr_err("PCIE xfer init failed\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	tasklet_setup(&ts->base.reclaim_tq, qtnf_reclaim_tasklet_fn);
-	netif_napi_add(&bus->mux_dev, &bus->mux_napi,
+	netअगर_napi_add(&bus->mux_dev, &bus->mux_napi,
 		       qtnf_topaz_rx_poll, 10);
 
-	ipc_int.fn = qtnf_topaz_ipc_gen_ep_int;
-	ipc_int.arg = ts;
+	ipc_पूर्णांक.fn = qtnf_topaz_ipc_gen_ep_पूर्णांक;
+	ipc_पूर्णांक.arg = ts;
 	qtnf_pcie_init_shm_ipc(&ts->base, &ts->bda->bda_shm_reg1,
-			       &ts->bda->bda_shm_reg2, &ipc_int);
+			       &ts->bda->bda_shm_reg2, &ipc_पूर्णांक);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void qtnf_pcie_topaz_remove(struct qtnf_bus *bus)
-{
-	struct qtnf_pcie_topaz_state *ts = get_bus_priv(bus);
+अटल व्योम qtnf_pcie_topaz_हटाओ(काष्ठा qtnf_bus *bus)
+अणु
+	काष्ठा qtnf_pcie_topaz_state *ts = get_bus_priv(bus);
 
 	qtnf_topaz_reset_ep(ts);
-	qtnf_topaz_free_xfer_buffers(ts);
-}
+	qtnf_topaz_मुक्त_xfer_buffers(ts);
+पूर्ण
 
-#ifdef CONFIG_PM_SLEEP
-static int qtnf_pcie_topaz_suspend(struct qtnf_bus *bus)
-{
-	struct qtnf_pcie_topaz_state *ts = get_bus_priv(bus);
-	struct pci_dev *pdev = ts->base.pdev;
+#अगर_घोषित CONFIG_PM_SLEEP
+अटल पूर्णांक qtnf_pcie_topaz_suspend(काष्ठा qtnf_bus *bus)
+अणु
+	काष्ठा qtnf_pcie_topaz_state *ts = get_bus_priv(bus);
+	काष्ठा pci_dev *pdev = ts->base.pdev;
 
-	writel((u32 __force)PCI_D3hot, ts->ep_pmstate);
+	ग_लिखोl((u32 __क्रमce)PCI_D3hot, ts->ep_pmstate);
 	dma_wmb();
-	writel(TOPAZ_IPC_IRQ_WORD(TOPAZ_RC_PM_EP_IRQ),
+	ग_लिखोl(TOPAZ_IPC_IRQ_WORD(TOPAZ_RC_PM_EP_IRQ),
 	       TOPAZ_LH_IPC4_INT(ts->base.sysctl_bar));
 
 	pci_save_state(pdev);
 	pci_enable_wake(pdev, PCI_D3hot, 1);
-	pci_set_power_state(pdev, PCI_D3hot);
+	pci_set_घातer_state(pdev, PCI_D3hot);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int qtnf_pcie_topaz_resume(struct qtnf_bus *bus)
-{
-	struct qtnf_pcie_topaz_state *ts = get_bus_priv(bus);
-	struct pci_dev *pdev = ts->base.pdev;
+अटल पूर्णांक qtnf_pcie_topaz_resume(काष्ठा qtnf_bus *bus)
+अणु
+	काष्ठा qtnf_pcie_topaz_state *ts = get_bus_priv(bus);
+	काष्ठा pci_dev *pdev = ts->base.pdev;
 
-	pci_set_power_state(pdev, PCI_D0);
+	pci_set_घातer_state(pdev, PCI_D0);
 	pci_restore_state(pdev);
 	pci_enable_wake(pdev, PCI_D0, 0);
 
-	writel((u32 __force)PCI_D0, ts->ep_pmstate);
+	ग_लिखोl((u32 __क्रमce)PCI_D0, ts->ep_pmstate);
 	dma_wmb();
-	writel(TOPAZ_IPC_IRQ_WORD(TOPAZ_RC_PM_EP_IRQ),
+	ग_लिखोl(TOPAZ_IPC_IRQ_WORD(TOPAZ_RC_PM_EP_IRQ),
 	       TOPAZ_LH_IPC4_INT(ts->base.sysctl_bar));
 
-	return 0;
-}
-#endif
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
-struct qtnf_bus *qtnf_pcie_topaz_alloc(struct pci_dev *pdev)
-{
-	struct qtnf_bus *bus;
-	struct qtnf_pcie_topaz_state *ts;
+काष्ठा qtnf_bus *qtnf_pcie_topaz_alloc(काष्ठा pci_dev *pdev)
+अणु
+	काष्ठा qtnf_bus *bus;
+	काष्ठा qtnf_pcie_topaz_state *ts;
 
-	bus = devm_kzalloc(&pdev->dev, sizeof(*bus) + sizeof(*ts), GFP_KERNEL);
-	if (!bus)
-		return NULL;
+	bus = devm_kzalloc(&pdev->dev, माप(*bus) + माप(*ts), GFP_KERNEL);
+	अगर (!bus)
+		वापस शून्य;
 
 	ts = get_bus_priv(bus);
 	ts->base.probe_cb = qtnf_pcie_topaz_probe;
-	ts->base.remove_cb = qtnf_pcie_topaz_remove;
+	ts->base.हटाओ_cb = qtnf_pcie_topaz_हटाओ;
 	ts->base.dma_mask_get_cb = qtnf_topaz_dma_mask_get;
-#ifdef CONFIG_PM_SLEEP
+#अगर_घोषित CONFIG_PM_SLEEP
 	ts->base.resume_cb = qtnf_pcie_topaz_resume;
 	ts->base.suspend_cb = qtnf_pcie_topaz_suspend;
-#endif
+#पूर्ण_अगर
 
-	return bus;
-}
+	वापस bus;
+पूर्ण

@@ -1,23 +1,24 @@
+<शैली गुरु>
 /*
  * Copyright (c) 2007 Mellanox Technologies. All rights reserved.
  *
  * This software is available to you under a choice of one of two
  * licenses.  You may choose to be licensed under the terms of the GNU
  * General Public License (GPL) Version 2, available from the file
- * COPYING in the main directory of this source tree, or the
+ * COPYING in the मुख्य directory of this source tree, or the
  * OpenIB.org BSD license below:
  *
- *     Redistribution and use in source and binary forms, with or
- *     without modification, are permitted provided that the following
+ *     Redistribution and use in source and binary क्रमms, with or
+ *     without modअगरication, are permitted provided that the following
  *     conditions are met:
  *
  *      - Redistributions of source code must retain the above
  *        copyright notice, this list of conditions and the following
  *        disclaimer.
  *
- *      - Redistributions in binary form must reproduce the above
+ *      - Redistributions in binary क्रमm must reproduce the above
  *        copyright notice, this list of conditions and the following
- *        disclaimer in the documentation and/or other materials
+ *        disclaimer in the करोcumentation and/or other materials
  *        provided with the distribution.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
@@ -31,30 +32,30 @@
  *
  */
 
-#include <linux/cpumask.h>
-#include <linux/module.h>
-#include <linux/delay.h>
-#include <linux/netdevice.h>
-#include <linux/slab.h>
+#समावेश <linux/cpumask.h>
+#समावेश <linux/module.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/slab.h>
 
-#include <linux/mlx4/driver.h>
-#include <linux/mlx4/device.h>
-#include <linux/mlx4/cmd.h>
+#समावेश <linux/mlx4/driver.h>
+#समावेश <linux/mlx4/device.h>
+#समावेश <linux/mlx4/cmd.h>
 
-#include "mlx4_en.h"
+#समावेश "mlx4_en.h"
 
 MODULE_AUTHOR("Liran Liss, Yevgeny Petrilin");
 MODULE_DESCRIPTION("Mellanox ConnectX HCA Ethernet driver");
 MODULE_LICENSE("Dual BSD/GPL");
 MODULE_VERSION(DRV_VERSION);
 
-static const char mlx4_en_version[] =
+अटल स्थिर अक्षर mlx4_en_version[] =
 	DRV_NAME ": Mellanox ConnectX HCA Ethernet driver v"
 	DRV_VERSION "\n";
 
-#define MLX4_EN_PARM_INT(X, def_val, desc) \
-	static unsigned int X = def_val;\
-	module_param(X , uint, 0444); \
+#घोषणा MLX4_EN_PARM_INT(X, def_val, desc) \
+	अटल अचिन्हित पूर्णांक X = def_val;\
+	module_param(X , uपूर्णांक, 0444); \
 	MODULE_PARM_DESC(X, desc);
 
 
@@ -72,223 +73,223 @@ MLX4_EN_PARM_INT(pfctx, 0, "Priority based Flow Control policy on TX[7:0]."
 MLX4_EN_PARM_INT(pfcrx, 0, "Priority based Flow Control policy on RX[7:0]."
 			   " Per priority bit mask");
 
-MLX4_EN_PARM_INT(inline_thold, MAX_INLINE,
+MLX4_EN_PARM_INT(अंतरभूत_thold, MAX_INLINE,
 		 "Threshold for using inline data (range: 17-104, default: 104)");
 
-#define MAX_PFC_TX     0xff
-#define MAX_PFC_RX     0xff
+#घोषणा MAX_PFC_TX     0xff
+#घोषणा MAX_PFC_RX     0xff
 
-void en_print(const char *level, const struct mlx4_en_priv *priv,
-	      const char *format, ...)
-{
-	va_list args;
-	struct va_format vaf;
+व्योम en_prपूर्णांक(स्थिर अक्षर *level, स्थिर काष्ठा mlx4_en_priv *priv,
+	      स्थिर अक्षर *क्रमmat, ...)
+अणु
+	बहु_सूची args;
+	काष्ठा va_क्रमmat vaf;
 
-	va_start(args, format);
+	बहु_शुरू(args, क्रमmat);
 
-	vaf.fmt = format;
+	vaf.fmt = क्रमmat;
 	vaf.va = &args;
-	if (priv->registered)
-		printk("%s%s: %s: %pV",
+	अगर (priv->रेजिस्टरed)
+		prपूर्णांकk("%s%s: %s: %pV",
 		       level, DRV_NAME, priv->dev->name, &vaf);
-	else
-		printk("%s%s: %s: Port %d: %pV",
+	अन्यथा
+		prपूर्णांकk("%s%s: %s: Port %d: %pV",
 		       level, DRV_NAME, dev_name(&priv->mdev->pdev->dev),
 		       priv->port, &vaf);
-	va_end(args);
-}
+	बहु_पूर्ण(args);
+पूर्ण
 
-void mlx4_en_update_loopback_state(struct net_device *dev,
+व्योम mlx4_en_update_loopback_state(काष्ठा net_device *dev,
 				   netdev_features_t features)
-{
-	struct mlx4_en_priv *priv = netdev_priv(dev);
+अणु
+	काष्ठा mlx4_en_priv *priv = netdev_priv(dev);
 
-	if (features & NETIF_F_LOOPBACK)
+	अगर (features & NETIF_F_LOOPBACK)
 		priv->ctrl_flags |= cpu_to_be32(MLX4_WQE_CTRL_FORCE_LOOPBACK);
-	else
+	अन्यथा
 		priv->ctrl_flags &= cpu_to_be32(~MLX4_WQE_CTRL_FORCE_LOOPBACK);
 
 	priv->flags &= ~(MLX4_EN_FLAG_RX_FILTER_NEEDED|
 			MLX4_EN_FLAG_ENABLE_HW_LOOPBACK);
 
-	/* Drop the packet if SRIOV is not enabled
-	 * and not performing the selftest or flb disabled
+	/* Drop the packet अगर SRIOV is not enabled
+	 * and not perक्रमming the selftest or flb disabled
 	 */
-	if (mlx4_is_mfunc(priv->mdev->dev) &&
+	अगर (mlx4_is_mfunc(priv->mdev->dev) &&
 	    !(features & NETIF_F_LOOPBACK) && !priv->validate_loopback)
 		priv->flags |= MLX4_EN_FLAG_RX_FILTER_NEEDED;
 
-	/* Set dmac in Tx WQE if we are in SRIOV mode or if loopback selftest
+	/* Set dmac in Tx WQE अगर we are in SRIOV mode or अगर loopback selftest
 	 * is requested
 	 */
-	if (mlx4_is_mfunc(priv->mdev->dev) || priv->validate_loopback)
+	अगर (mlx4_is_mfunc(priv->mdev->dev) || priv->validate_loopback)
 		priv->flags |= MLX4_EN_FLAG_ENABLE_HW_LOOPBACK;
 
 	mutex_lock(&priv->mdev->state_lock);
-	if ((priv->mdev->dev->caps.flags2 &
+	अगर ((priv->mdev->dev->caps.flags2 &
 	     MLX4_DEV_CAP_FLAG2_UPDATE_QP_SRC_CHECK_LB) &&
-	    priv->rss_map.indir_qp && priv->rss_map.indir_qp->qpn) {
-		int i;
-		int err = 0;
-		int loopback = !!(features & NETIF_F_LOOPBACK);
+	    priv->rss_map.indir_qp && priv->rss_map.indir_qp->qpn) अणु
+		पूर्णांक i;
+		पूर्णांक err = 0;
+		पूर्णांक loopback = !!(features & NETIF_F_LOOPBACK);
 
-		for (i = 0; i < priv->rx_ring_num; i++) {
-			int ret;
+		क्रम (i = 0; i < priv->rx_ring_num; i++) अणु
+			पूर्णांक ret;
 
 			ret = mlx4_en_change_mcast_lb(priv,
 						      &priv->rss_map.qps[i],
 						      loopback);
-			if (!err)
+			अगर (!err)
 				err = ret;
-		}
-		if (err)
+		पूर्ण
+		अगर (err)
 			mlx4_warn(priv->mdev, "failed to change mcast loopback\n");
-	}
+	पूर्ण
 	mutex_unlock(&priv->mdev->state_lock);
-}
+पूर्ण
 
-static void mlx4_en_get_profile(struct mlx4_en_dev *mdev)
-{
-	struct mlx4_en_profile *params = &mdev->profile;
-	int i;
+अटल व्योम mlx4_en_get_profile(काष्ठा mlx4_en_dev *mdev)
+अणु
+	काष्ठा mlx4_en_profile *params = &mdev->profile;
+	पूर्णांक i;
 
 	params->udp_rss = udp_rss;
 	params->max_num_tx_rings_p_up = mlx4_low_memory_profile() ?
 		MLX4_EN_MIN_TX_RING_P_UP :
-		min_t(int, num_online_cpus(), MLX4_EN_MAX_TX_RING_P_UP);
+		min_t(पूर्णांक, num_online_cpus(), MLX4_EN_MAX_TX_RING_P_UP);
 
-	if (params->udp_rss && !(mdev->dev->caps.flags
-					& MLX4_DEV_CAP_FLAG_UDP_RSS)) {
+	अगर (params->udp_rss && !(mdev->dev->caps.flags
+					& MLX4_DEV_CAP_FLAG_UDP_RSS)) अणु
 		mlx4_warn(mdev, "UDP RSS is not supported on this device\n");
 		params->udp_rss = 0;
-	}
-	for (i = 1; i <= MLX4_MAX_PORTS; i++) {
-		params->prof[i].rx_pause = !(pfcrx || pfctx);
+	पूर्ण
+	क्रम (i = 1; i <= MLX4_MAX_PORTS; i++) अणु
+		params->prof[i].rx_छोड़ो = !(pfcrx || pfctx);
 		params->prof[i].rx_ppp = pfcrx;
-		params->prof[i].tx_pause = !(pfcrx || pfctx);
+		params->prof[i].tx_छोड़ो = !(pfcrx || pfctx);
 		params->prof[i].tx_ppp = pfctx;
-		if (mlx4_low_memory_profile()) {
+		अगर (mlx4_low_memory_profile()) अणु
 			params->prof[i].tx_ring_size = MLX4_EN_MIN_TX_SIZE;
 			params->prof[i].rx_ring_size = MLX4_EN_MIN_RX_SIZE;
-		} else {
+		पूर्ण अन्यथा अणु
 			params->prof[i].tx_ring_size = MLX4_EN_DEF_TX_RING_SIZE;
 			params->prof[i].rx_ring_size = MLX4_EN_DEF_RX_RING_SIZE;
-		}
+		पूर्ण
 		params->prof[i].num_up = MLX4_EN_NUM_UP_LOW;
 		params->prof[i].num_tx_rings_p_up = params->max_num_tx_rings_p_up;
 		params->prof[i].tx_ring_num[TX] = params->max_num_tx_rings_p_up *
 			params->prof[i].num_up;
 		params->prof[i].rss_rings = 0;
-		params->prof[i].inline_thold = inline_thold;
-	}
-}
+		params->prof[i].अंतरभूत_thold = अंतरभूत_thold;
+	पूर्ण
+पूर्ण
 
-static void *mlx4_en_get_netdev(struct mlx4_dev *dev, void *ctx, u8 port)
-{
-	struct mlx4_en_dev *endev = ctx;
+अटल व्योम *mlx4_en_get_netdev(काष्ठा mlx4_dev *dev, व्योम *ctx, u8 port)
+अणु
+	काष्ठा mlx4_en_dev *endev = ctx;
 
-	return endev->pndev[port];
-}
+	वापस endev->pndev[port];
+पूर्ण
 
-static void mlx4_en_event(struct mlx4_dev *dev, void *endev_ptr,
-			  enum mlx4_dev_event event, unsigned long port)
-{
-	struct mlx4_en_dev *mdev = (struct mlx4_en_dev *) endev_ptr;
-	struct mlx4_en_priv *priv;
+अटल व्योम mlx4_en_event(काष्ठा mlx4_dev *dev, व्योम *endev_ptr,
+			  क्रमागत mlx4_dev_event event, अचिन्हित दीर्घ port)
+अणु
+	काष्ठा mlx4_en_dev *mdev = (काष्ठा mlx4_en_dev *) endev_ptr;
+	काष्ठा mlx4_en_priv *priv;
 
-	switch (event) {
-	case MLX4_DEV_EVENT_PORT_UP:
-	case MLX4_DEV_EVENT_PORT_DOWN:
-		if (!mdev->pndev[port])
-			return;
+	चयन (event) अणु
+	हाल MLX4_DEV_EVENT_PORT_UP:
+	हाल MLX4_DEV_EVENT_PORT_DOWN:
+		अगर (!mdev->pndev[port])
+			वापस;
 		priv = netdev_priv(mdev->pndev[port]);
 		/* To prevent races, we poll the link state in a separate
 		  task rather than changing it here */
 		priv->link_state = event;
 		queue_work(mdev->workqueue, &priv->linkstate_task);
-		break;
+		अवरोध;
 
-	case MLX4_DEV_EVENT_CATASTROPHIC_ERROR:
+	हाल MLX4_DEV_EVENT_CATASTROPHIC_ERROR:
 		mlx4_err(mdev, "Internal error detected, restarting device\n");
-		break;
+		अवरोध;
 
-	case MLX4_DEV_EVENT_SLAVE_INIT:
-	case MLX4_DEV_EVENT_SLAVE_SHUTDOWN:
-		break;
-	default:
-		if (port < 1 || port > dev->caps.num_ports ||
+	हाल MLX4_DEV_EVENT_SLAVE_INIT:
+	हाल MLX4_DEV_EVENT_SLAVE_SHUTDOWN:
+		अवरोध;
+	शेष:
+		अगर (port < 1 || port > dev->caps.num_ports ||
 		    !mdev->pndev[port])
-			return;
+			वापस;
 		mlx4_warn(mdev, "Unhandled event %d for port %d\n", event,
-			  (int) port);
-	}
-}
+			  (पूर्णांक) port);
+	पूर्ण
+पूर्ण
 
-static void mlx4_en_remove(struct mlx4_dev *dev, void *endev_ptr)
-{
-	struct mlx4_en_dev *mdev = endev_ptr;
-	int i;
+अटल व्योम mlx4_en_हटाओ(काष्ठा mlx4_dev *dev, व्योम *endev_ptr)
+अणु
+	काष्ठा mlx4_en_dev *mdev = endev_ptr;
+	पूर्णांक i;
 
 	mutex_lock(&mdev->state_lock);
 	mdev->device_up = false;
 	mutex_unlock(&mdev->state_lock);
 
-	mlx4_foreach_port(i, dev, MLX4_PORT_TYPE_ETH)
-		if (mdev->pndev[i])
+	mlx4_क्रमeach_port(i, dev, MLX4_PORT_TYPE_ETH)
+		अगर (mdev->pndev[i])
 			mlx4_en_destroy_netdev(mdev->pndev[i]);
 
 	flush_workqueue(mdev->workqueue);
 	destroy_workqueue(mdev->workqueue);
-	(void) mlx4_mr_free(dev, &mdev->mr);
+	(व्योम) mlx4_mr_मुक्त(dev, &mdev->mr);
 	iounmap(mdev->uar_map);
-	mlx4_uar_free(dev, &mdev->priv_uar);
-	mlx4_pd_free(dev, mdev->priv_pdn);
-	if (mdev->nb.notifier_call)
-		unregister_netdevice_notifier(&mdev->nb);
-	kfree(mdev);
-}
+	mlx4_uar_मुक्त(dev, &mdev->priv_uar);
+	mlx4_pd_मुक्त(dev, mdev->priv_pdn);
+	अगर (mdev->nb.notअगरier_call)
+		unरेजिस्टर_netdevice_notअगरier(&mdev->nb);
+	kमुक्त(mdev);
+पूर्ण
 
-static void mlx4_en_activate(struct mlx4_dev *dev, void *ctx)
-{
-	int i;
-	struct mlx4_en_dev *mdev = ctx;
+अटल व्योम mlx4_en_activate(काष्ठा mlx4_dev *dev, व्योम *ctx)
+अणु
+	पूर्णांक i;
+	काष्ठा mlx4_en_dev *mdev = ctx;
 
-	/* Create a netdev for each port */
-	mlx4_foreach_port(i, dev, MLX4_PORT_TYPE_ETH) {
+	/* Create a netdev क्रम each port */
+	mlx4_क्रमeach_port(i, dev, MLX4_PORT_TYPE_ETH) अणु
 		mlx4_info(mdev, "Activating port:%d\n", i);
-		if (mlx4_en_init_netdev(mdev, i, &mdev->profile.prof[i]))
-			mdev->pndev[i] = NULL;
-	}
+		अगर (mlx4_en_init_netdev(mdev, i, &mdev->profile.prof[i]))
+			mdev->pndev[i] = शून्य;
+	पूर्ण
 
-	/* register notifier */
-	mdev->nb.notifier_call = mlx4_en_netdev_event;
-	if (register_netdevice_notifier(&mdev->nb)) {
-		mdev->nb.notifier_call = NULL;
+	/* रेजिस्टर notअगरier */
+	mdev->nb.notअगरier_call = mlx4_en_netdev_event;
+	अगर (रेजिस्टर_netdevice_notअगरier(&mdev->nb)) अणु
+		mdev->nb.notअगरier_call = शून्य;
 		mlx4_err(mdev, "Failed to create notifier\n");
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void *mlx4_en_add(struct mlx4_dev *dev)
-{
-	struct mlx4_en_dev *mdev;
-	int i;
+अटल व्योम *mlx4_en_add(काष्ठा mlx4_dev *dev)
+अणु
+	काष्ठा mlx4_en_dev *mdev;
+	पूर्णांक i;
 
-	printk_once(KERN_INFO "%s", mlx4_en_version);
+	prपूर्णांकk_once(KERN_INFO "%s", mlx4_en_version);
 
-	mdev = kzalloc(sizeof(*mdev), GFP_KERNEL);
-	if (!mdev)
-		goto err_free_res;
+	mdev = kzalloc(माप(*mdev), GFP_KERNEL);
+	अगर (!mdev)
+		जाओ err_मुक्त_res;
 
-	if (mlx4_pd_alloc(dev, &mdev->priv_pdn))
-		goto err_free_dev;
+	अगर (mlx4_pd_alloc(dev, &mdev->priv_pdn))
+		जाओ err_मुक्त_dev;
 
-	if (mlx4_uar_alloc(dev, &mdev->priv_uar))
-		goto err_pd;
+	अगर (mlx4_uar_alloc(dev, &mdev->priv_uar))
+		जाओ err_pd;
 
 	mdev->uar_map = ioremap((phys_addr_t) mdev->priv_uar.pfn << PAGE_SHIFT,
 				PAGE_SIZE);
-	if (!mdev->uar_map)
-		goto err_uar;
+	अगर (!mdev->uar_map)
+		जाओ err_uar;
 	spin_lock_init(&mdev->uar_lock);
 
 	mdev->dev = dev;
@@ -297,103 +298,103 @@ static void *mlx4_en_add(struct mlx4_dev *dev)
 	mdev->device_up = false;
 
 	mdev->LSO_support = !!(dev->caps.flags & (1 << 15));
-	if (!mdev->LSO_support)
+	अगर (!mdev->LSO_support)
 		mlx4_warn(mdev, "LSO not supported, please upgrade to later FW version to enable LSO\n");
 
-	if (mlx4_mr_alloc(mdev->dev, mdev->priv_pdn, 0, ~0ull,
+	अगर (mlx4_mr_alloc(mdev->dev, mdev->priv_pdn, 0, ~0ull,
 			 MLX4_PERM_LOCAL_WRITE |  MLX4_PERM_LOCAL_READ,
-			 0, 0, &mdev->mr)) {
+			 0, 0, &mdev->mr)) अणु
 		mlx4_err(mdev, "Failed allocating memory region\n");
-		goto err_map;
-	}
-	if (mlx4_mr_enable(mdev->dev, &mdev->mr)) {
+		जाओ err_map;
+	पूर्ण
+	अगर (mlx4_mr_enable(mdev->dev, &mdev->mr)) अणु
 		mlx4_err(mdev, "Failed enabling memory region\n");
-		goto err_mr;
-	}
+		जाओ err_mr;
+	पूर्ण
 
 	/* Build device profile according to supplied module parameters */
 	mlx4_en_get_profile(mdev);
 
 	/* Configure which ports to start according to module parameters */
 	mdev->port_cnt = 0;
-	mlx4_foreach_port(i, dev, MLX4_PORT_TYPE_ETH)
+	mlx4_क्रमeach_port(i, dev, MLX4_PORT_TYPE_ETH)
 		mdev->port_cnt++;
 
-	/* Set default number of RX rings*/
+	/* Set शेष number of RX rings*/
 	mlx4_en_set_num_rx_rings(mdev);
 
-	/* Create our own workqueue for reset/multicast tasks
+	/* Create our own workqueue क्रम reset/multicast tasks
 	 * Note: we cannot use the shared workqueue because of deadlocks caused
 	 *       by the rtnl lock */
-	mdev->workqueue = create_singlethread_workqueue("mlx4_en");
-	if (!mdev->workqueue)
-		goto err_mr;
+	mdev->workqueue = create_singlethपढ़ो_workqueue("mlx4_en");
+	अगर (!mdev->workqueue)
+		जाओ err_mr;
 
-	/* At this stage all non-port specific tasks are complete:
+	/* At this stage all non-port specअगरic tasks are complete:
 	 * mark the card state as up */
 	mutex_init(&mdev->state_lock);
 	mdev->device_up = true;
 
-	return mdev;
+	वापस mdev;
 
 err_mr:
-	(void) mlx4_mr_free(dev, &mdev->mr);
+	(व्योम) mlx4_mr_मुक्त(dev, &mdev->mr);
 err_map:
-	if (mdev->uar_map)
+	अगर (mdev->uar_map)
 		iounmap(mdev->uar_map);
 err_uar:
-	mlx4_uar_free(dev, &mdev->priv_uar);
+	mlx4_uar_मुक्त(dev, &mdev->priv_uar);
 err_pd:
-	mlx4_pd_free(dev, mdev->priv_pdn);
-err_free_dev:
-	kfree(mdev);
-err_free_res:
-	return NULL;
-}
+	mlx4_pd_मुक्त(dev, mdev->priv_pdn);
+err_मुक्त_dev:
+	kमुक्त(mdev);
+err_मुक्त_res:
+	वापस शून्य;
+पूर्ण
 
-static struct mlx4_interface mlx4_en_interface = {
+अटल काष्ठा mlx4_पूर्णांकerface mlx4_en_पूर्णांकerface = अणु
 	.add		= mlx4_en_add,
-	.remove		= mlx4_en_remove,
+	.हटाओ		= mlx4_en_हटाओ,
 	.event		= mlx4_en_event,
 	.get_dev	= mlx4_en_get_netdev,
 	.protocol	= MLX4_PROT_ETH,
 	.activate	= mlx4_en_activate,
-};
+पूर्ण;
 
-static void mlx4_en_verify_params(void)
-{
-	if (pfctx > MAX_PFC_TX) {
+अटल व्योम mlx4_en_verअगरy_params(व्योम)
+अणु
+	अगर (pfctx > MAX_PFC_TX) अणु
 		pr_warn("mlx4_en: WARNING: illegal module parameter pfctx 0x%x - should be in range 0-0x%x, will be changed to default (0)\n",
 			pfctx, MAX_PFC_TX);
 		pfctx = 0;
-	}
+	पूर्ण
 
-	if (pfcrx > MAX_PFC_RX) {
+	अगर (pfcrx > MAX_PFC_RX) अणु
 		pr_warn("mlx4_en: WARNING: illegal module parameter pfcrx 0x%x - should be in range 0-0x%x, will be changed to default (0)\n",
 			pfcrx, MAX_PFC_RX);
 		pfcrx = 0;
-	}
+	पूर्ण
 
-	if (inline_thold < MIN_PKT_LEN || inline_thold > MAX_INLINE) {
+	अगर (अंतरभूत_thold < MIN_PKT_LEN || अंतरभूत_thold > MAX_INLINE) अणु
 		pr_warn("mlx4_en: WARNING: illegal module parameter inline_thold %d - should be in range %d-%d, will be changed to default (%d)\n",
-			inline_thold, MIN_PKT_LEN, MAX_INLINE, MAX_INLINE);
-		inline_thold = MAX_INLINE;
-	}
-}
+			अंतरभूत_thold, MIN_PKT_LEN, MAX_INLINE, MAX_INLINE);
+		अंतरभूत_thold = MAX_INLINE;
+	पूर्ण
+पूर्ण
 
-static int __init mlx4_en_init(void)
-{
-	mlx4_en_verify_params();
+अटल पूर्णांक __init mlx4_en_init(व्योम)
+अणु
+	mlx4_en_verअगरy_params();
 	mlx4_en_init_ptys2ethtool_map();
 
-	return mlx4_register_interface(&mlx4_en_interface);
-}
+	वापस mlx4_रेजिस्टर_पूर्णांकerface(&mlx4_en_पूर्णांकerface);
+पूर्ण
 
-static void __exit mlx4_en_cleanup(void)
-{
-	mlx4_unregister_interface(&mlx4_en_interface);
-}
+अटल व्योम __निकास mlx4_en_cleanup(व्योम)
+अणु
+	mlx4_unरेजिस्टर_पूर्णांकerface(&mlx4_en_पूर्णांकerface);
+पूर्ण
 
 module_init(mlx4_en_init);
-module_exit(mlx4_en_cleanup);
+module_निकास(mlx4_en_cleanup);
 

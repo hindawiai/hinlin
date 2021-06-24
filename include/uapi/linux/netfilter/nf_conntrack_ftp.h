@@ -1,10 +1,11 @@
-/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
-#ifndef _UAPI_NF_CONNTRACK_FTP_H
-#define _UAPI_NF_CONNTRACK_FTP_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
+#अगर_अघोषित _UAPI_NF_CONNTRACK_FTP_H
+#घोषणा _UAPI_NF_CONNTRACK_FTP_H
 /* FTP tracking. */
 
-/* This enum is exposed to userspace */
-enum nf_ct_ftp_type {
+/* This क्रमागत is exposed to userspace */
+क्रमागत nf_ct_ftp_type अणु
 	/* PORT command from client */
 	NF_CT_FTP_PORT,
 	/* PASV response from server */
@@ -13,7 +14,7 @@ enum nf_ct_ftp_type {
 	NF_CT_FTP_EPRT,
 	/* EPSV response from server */
 	NF_CT_FTP_EPSV,
-};
+पूर्ण;
 
 
-#endif /* _UAPI_NF_CONNTRACK_FTP_H */
+#पूर्ण_अगर /* _UAPI_NF_CONNTRACK_FTP_H */

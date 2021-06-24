@@ -1,11 +1,12 @@
-/* SPDX-License-Identifier: GPL-2.0+ */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0+ */
 /* Copyright (C) 2018 Microchip Technology Inc. */
 
-#ifndef _LAN743X_ETHTOOL_H
-#define _LAN743X_ETHTOOL_H
+#अगर_अघोषित _LAN743X_ETHTOOL_H
+#घोषणा _LAN743X_ETHTOOL_H
 
-#include "linux/ethtool.h"
+#समावेश "linux/ethtool.h"
 
-extern const struct ethtool_ops lan743x_ethtool_ops;
+बाह्य स्थिर काष्ठा ethtool_ops lan743x_ethtool_ops;
 
-#endif /* _LAN743X_ETHTOOL_H */
+#पूर्ण_अगर /* _LAN743X_ETHTOOL_H */

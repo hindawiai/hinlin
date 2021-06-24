@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * TI CPUFreq/OPP hw-supported driver
  *
@@ -6,131 +7,131 @@
  *	 Dave Gerlach <d-gerlach@ti.com>
  */
 
-#include <linux/cpu.h>
-#include <linux/io.h>
-#include <linux/mfd/syscon.h>
-#include <linux/module.h>
-#include <linux/init.h>
-#include <linux/of.h>
-#include <linux/of_platform.h>
-#include <linux/pm_opp.h>
-#include <linux/regmap.h>
-#include <linux/slab.h>
+#समावेश <linux/cpu.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/mfd/syscon.h>
+#समावेश <linux/module.h>
+#समावेश <linux/init.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_platक्रमm.h>
+#समावेश <linux/pm_opp.h>
+#समावेश <linux/regmap.h>
+#समावेश <linux/slab.h>
 
-#define REVISION_MASK				0xF
-#define REVISION_SHIFT				28
+#घोषणा REVISION_MASK				0xF
+#घोषणा REVISION_SHIFT				28
 
-#define AM33XX_800M_ARM_MPU_MAX_FREQ		0x1E2F
-#define AM43XX_600M_ARM_MPU_MAX_FREQ		0xFFA
+#घोषणा AM33XX_800M_ARM_MPU_MAX_FREQ		0x1E2F
+#घोषणा AM43XX_600M_ARM_MPU_MAX_FREQ		0xFFA
 
-#define DRA7_EFUSE_HAS_OD_MPU_OPP		11
-#define DRA7_EFUSE_HAS_HIGH_MPU_OPP		15
-#define DRA76_EFUSE_HAS_PLUS_MPU_OPP		18
-#define DRA7_EFUSE_HAS_ALL_MPU_OPP		23
-#define DRA76_EFUSE_HAS_ALL_MPU_OPP		24
+#घोषणा DRA7_EFUSE_HAS_OD_MPU_OPP		11
+#घोषणा DRA7_EFUSE_HAS_HIGH_MPU_OPP		15
+#घोषणा DRA76_EFUSE_HAS_PLUS_MPU_OPP		18
+#घोषणा DRA7_EFUSE_HAS_ALL_MPU_OPP		23
+#घोषणा DRA76_EFUSE_HAS_ALL_MPU_OPP		24
 
-#define DRA7_EFUSE_NOM_MPU_OPP			BIT(0)
-#define DRA7_EFUSE_OD_MPU_OPP			BIT(1)
-#define DRA7_EFUSE_HIGH_MPU_OPP			BIT(2)
-#define DRA76_EFUSE_PLUS_MPU_OPP		BIT(3)
+#घोषणा DRA7_EFUSE_NOM_MPU_OPP			BIT(0)
+#घोषणा DRA7_EFUSE_OD_MPU_OPP			BIT(1)
+#घोषणा DRA7_EFUSE_HIGH_MPU_OPP			BIT(2)
+#घोषणा DRA76_EFUSE_PLUS_MPU_OPP		BIT(3)
 
-#define OMAP3_CONTROL_DEVICE_STATUS		0x4800244C
-#define OMAP3_CONTROL_IDCODE			0x4830A204
-#define OMAP34xx_ProdID_SKUID			0x4830A20C
-#define OMAP3_SYSCON_BASE	(0x48000000 + 0x2000 + 0x270)
+#घोषणा OMAP3_CONTROL_DEVICE_STATUS		0x4800244C
+#घोषणा OMAP3_CONTROL_IDCODE			0x4830A204
+#घोषणा OMAP34xx_ProdID_SKUID			0x4830A20C
+#घोषणा OMAP3_SYSCON_BASE	(0x48000000 + 0x2000 + 0x270)
 
-#define VERSION_COUNT				2
+#घोषणा VERSION_COUNT				2
 
-struct ti_cpufreq_data;
+काष्ठा ti_cpufreq_data;
 
-struct ti_cpufreq_soc_data {
-	const char * const *reg_names;
-	unsigned long (*efuse_xlate)(struct ti_cpufreq_data *opp_data,
-				     unsigned long efuse);
-	unsigned long efuse_fallback;
-	unsigned long efuse_offset;
-	unsigned long efuse_mask;
-	unsigned long efuse_shift;
-	unsigned long rev_offset;
+काष्ठा ti_cpufreq_soc_data अणु
+	स्थिर अक्षर * स्थिर *reg_names;
+	अचिन्हित दीर्घ (*efuse_xlate)(काष्ठा ti_cpufreq_data *opp_data,
+				     अचिन्हित दीर्घ efuse);
+	अचिन्हित दीर्घ efuse_fallback;
+	अचिन्हित दीर्घ efuse_offset;
+	अचिन्हित दीर्घ efuse_mask;
+	अचिन्हित दीर्घ efuse_shअगरt;
+	अचिन्हित दीर्घ rev_offset;
 	bool multi_regulator;
-};
+पूर्ण;
 
-struct ti_cpufreq_data {
-	struct device *cpu_dev;
-	struct device_node *opp_node;
-	struct regmap *syscon;
-	const struct ti_cpufreq_soc_data *soc_data;
-	struct opp_table *opp_table;
-};
+काष्ठा ti_cpufreq_data अणु
+	काष्ठा device *cpu_dev;
+	काष्ठा device_node *opp_node;
+	काष्ठा regmap *syscon;
+	स्थिर काष्ठा ti_cpufreq_soc_data *soc_data;
+	काष्ठा opp_table *opp_table;
+पूर्ण;
 
-static unsigned long amx3_efuse_xlate(struct ti_cpufreq_data *opp_data,
-				      unsigned long efuse)
-{
-	if (!efuse)
+अटल अचिन्हित दीर्घ amx3_efuse_xlate(काष्ठा ti_cpufreq_data *opp_data,
+				      अचिन्हित दीर्घ efuse)
+अणु
+	अगर (!efuse)
 		efuse = opp_data->soc_data->efuse_fallback;
 	/* AM335x and AM437x use "OPP disable" bits, so invert */
-	return ~efuse;
-}
+	वापस ~efuse;
+पूर्ण
 
-static unsigned long dra7_efuse_xlate(struct ti_cpufreq_data *opp_data,
-				      unsigned long efuse)
-{
-	unsigned long calculated_efuse = DRA7_EFUSE_NOM_MPU_OPP;
+अटल अचिन्हित दीर्घ dra7_efuse_xlate(काष्ठा ti_cpufreq_data *opp_data,
+				      अचिन्हित दीर्घ efuse)
+अणु
+	अचिन्हित दीर्घ calculated_efuse = DRA7_EFUSE_NOM_MPU_OPP;
 
 	/*
-	 * The efuse on dra7 and am57 parts contains a specific
+	 * The efuse on dra7 and am57 parts contains a specअगरic
 	 * value indicating the highest available OPP.
 	 */
 
-	switch (efuse) {
-	case DRA76_EFUSE_HAS_PLUS_MPU_OPP:
-	case DRA76_EFUSE_HAS_ALL_MPU_OPP:
+	चयन (efuse) अणु
+	हाल DRA76_EFUSE_HAS_PLUS_MPU_OPP:
+	हाल DRA76_EFUSE_HAS_ALL_MPU_OPP:
 		calculated_efuse |= DRA76_EFUSE_PLUS_MPU_OPP;
 		fallthrough;
-	case DRA7_EFUSE_HAS_ALL_MPU_OPP:
-	case DRA7_EFUSE_HAS_HIGH_MPU_OPP:
+	हाल DRA7_EFUSE_HAS_ALL_MPU_OPP:
+	हाल DRA7_EFUSE_HAS_HIGH_MPU_OPP:
 		calculated_efuse |= DRA7_EFUSE_HIGH_MPU_OPP;
 		fallthrough;
-	case DRA7_EFUSE_HAS_OD_MPU_OPP:
+	हाल DRA7_EFUSE_HAS_OD_MPU_OPP:
 		calculated_efuse |= DRA7_EFUSE_OD_MPU_OPP;
-	}
+	पूर्ण
 
-	return calculated_efuse;
-}
+	वापस calculated_efuse;
+पूर्ण
 
-static unsigned long omap3_efuse_xlate(struct ti_cpufreq_data *opp_data,
-				      unsigned long efuse)
-{
+अटल अचिन्हित दीर्घ omap3_efuse_xlate(काष्ठा ti_cpufreq_data *opp_data,
+				      अचिन्हित दीर्घ efuse)
+अणु
 	/* OPP enable bit ("Speed Binned") */
-	return BIT(efuse);
-}
+	वापस BIT(efuse);
+पूर्ण
 
-static struct ti_cpufreq_soc_data am3x_soc_data = {
+अटल काष्ठा ti_cpufreq_soc_data am3x_soc_data = अणु
 	.efuse_xlate = amx3_efuse_xlate,
 	.efuse_fallback = AM33XX_800M_ARM_MPU_MAX_FREQ,
 	.efuse_offset = 0x07fc,
 	.efuse_mask = 0x1fff,
 	.rev_offset = 0x600,
 	.multi_regulator = false,
-};
+पूर्ण;
 
-static struct ti_cpufreq_soc_data am4x_soc_data = {
+अटल काष्ठा ti_cpufreq_soc_data am4x_soc_data = अणु
 	.efuse_xlate = amx3_efuse_xlate,
 	.efuse_fallback = AM43XX_600M_ARM_MPU_MAX_FREQ,
 	.efuse_offset = 0x0610,
 	.efuse_mask = 0x3f,
 	.rev_offset = 0x600,
 	.multi_regulator = false,
-};
+पूर्ण;
 
-static struct ti_cpufreq_soc_data dra7_soc_data = {
+अटल काष्ठा ti_cpufreq_soc_data dra7_soc_data = अणु
 	.efuse_xlate = dra7_efuse_xlate,
 	.efuse_offset = 0x020c,
 	.efuse_mask = 0xf80000,
-	.efuse_shift = 19,
+	.efuse_shअगरt = 19,
 	.rev_offset = 0x204,
 	.multi_regulator = true,
-};
+पूर्ण;
 
 /*
  * OMAP35x TRM (SPRUF98K):
@@ -138,25 +139,25 @@ static struct ti_cpufreq_soc_data dra7_soc_data = {
  *  Control OMAP Status Register 15:0 (Address 0x4800 244C)
  *    to separate between omap3503, omap3515, omap3525, omap3530
  *    and feature presence.
- *    There are encodings for versions limited to 400/266MHz
+ *    There are encodings क्रम versions limited to 400/266MHz
  *    but we ignore.
- *    Not clear if this also holds for omap34xx.
+ *    Not clear अगर this also holds क्रम omap34xx.
  *  some eFuse values e.g. CONTROL_FUSE_OPP1_VDD1
- *    are stored in the SYSCON register range
+ *    are stored in the SYSCON रेजिस्टर range
  *  Register 0x4830A20C [ProdID.SKUID] [0:3]
- *    0x0 for normal 600/430MHz device.
- *    0x8 for 720/520MHz device.
+ *    0x0 क्रम normal 600/430MHz device.
+ *    0x8 क्रम 720/520MHz device.
  *    Not clear what omap34xx value is.
  */
 
-static struct ti_cpufreq_soc_data omap34xx_soc_data = {
+अटल काष्ठा ti_cpufreq_soc_data omap34xx_soc_data = अणु
 	.efuse_xlate = omap3_efuse_xlate,
 	.efuse_offset = OMAP34xx_ProdID_SKUID - OMAP3_SYSCON_BASE,
-	.efuse_shift = 3,
+	.efuse_shअगरt = 3,
 	.efuse_mask = BIT(3),
 	.rev_offset = OMAP3_CONTROL_IDCODE - OMAP3_SYSCON_BASE,
 	.multi_regulator = false,
-};
+पूर्ण;
 
 /*
  * AM/DM37x TRM (SPRUGN4M)
@@ -168,193 +169,193 @@ static struct ti_cpufreq_soc_data omap34xx_soc_data = {
  *     0 800/600 MHz
  *     1 1000/800 MHz
  *  some eFuse values e.g. CONTROL_FUSE_OPP 1G_VDD1
- *    are stored in the SYSCON register range.
- *  There is no 0x4830A20C [ProdID.SKUID] register (exists but
- *    seems to always read as 0).
+ *    are stored in the SYSCON रेजिस्टर range.
+ *  There is no 0x4830A20C [ProdID.SKUID] रेजिस्टर (exists but
+ *    seems to always पढ़ो as 0).
  */
 
-static const char * const omap3_reg_names[] = {"cpu0", "vbb"};
+अटल स्थिर अक्षर * स्थिर omap3_reg_names[] = अणु"cpu0", "vbb"पूर्ण;
 
-static struct ti_cpufreq_soc_data omap36xx_soc_data = {
+अटल काष्ठा ti_cpufreq_soc_data omap36xx_soc_data = अणु
 	.reg_names = omap3_reg_names,
 	.efuse_xlate = omap3_efuse_xlate,
 	.efuse_offset = OMAP3_CONTROL_DEVICE_STATUS - OMAP3_SYSCON_BASE,
-	.efuse_shift = 9,
+	.efuse_shअगरt = 9,
 	.efuse_mask = BIT(9),
 	.rev_offset = OMAP3_CONTROL_IDCODE - OMAP3_SYSCON_BASE,
 	.multi_regulator = true,
-};
+पूर्ण;
 
 /*
  * AM3517 is quite similar to AM/DM37x except that it has no
- * high speed grade eFuse and no abb ldo
+ * high speed grade eFuse and no abb lकरो
  */
 
-static struct ti_cpufreq_soc_data am3517_soc_data = {
+अटल काष्ठा ti_cpufreq_soc_data am3517_soc_data = अणु
 	.efuse_xlate = omap3_efuse_xlate,
 	.efuse_offset = OMAP3_CONTROL_DEVICE_STATUS - OMAP3_SYSCON_BASE,
-	.efuse_shift = 0,
+	.efuse_shअगरt = 0,
 	.efuse_mask = 0,
 	.rev_offset = OMAP3_CONTROL_IDCODE - OMAP3_SYSCON_BASE,
 	.multi_regulator = false,
-};
+पूर्ण;
 
 
 /**
- * ti_cpufreq_get_efuse() - Parse and return efuse value present on SoC
- * @opp_data: pointer to ti_cpufreq_data context
+ * ti_cpufreq_get_efuse() - Parse and वापस efuse value present on SoC
+ * @opp_data: poपूर्णांकer to ti_cpufreq_data context
  * @efuse_value: Set to the value parsed from efuse
  *
- * Returns error code if efuse not read properly.
+ * Returns error code अगर efuse not पढ़ो properly.
  */
-static int ti_cpufreq_get_efuse(struct ti_cpufreq_data *opp_data,
+अटल पूर्णांक ti_cpufreq_get_efuse(काष्ठा ti_cpufreq_data *opp_data,
 				u32 *efuse_value)
-{
-	struct device *dev = opp_data->cpu_dev;
+अणु
+	काष्ठा device *dev = opp_data->cpu_dev;
 	u32 efuse;
-	int ret;
+	पूर्णांक ret;
 
-	ret = regmap_read(opp_data->syscon, opp_data->soc_data->efuse_offset,
+	ret = regmap_पढ़ो(opp_data->syscon, opp_data->soc_data->efuse_offset,
 			  &efuse);
-	if (ret == -EIO) {
-		/* not a syscon register! */
-		void __iomem *regs = ioremap(OMAP3_SYSCON_BASE +
+	अगर (ret == -EIO) अणु
+		/* not a syscon रेजिस्टर! */
+		व्योम __iomem *regs = ioremap(OMAP3_SYSCON_BASE +
 				opp_data->soc_data->efuse_offset, 4);
 
-		if (!regs)
-			return -ENOMEM;
-		efuse = readl(regs);
+		अगर (!regs)
+			वापस -ENOMEM;
+		efuse = पढ़ोl(regs);
 		iounmap(regs);
-		}
-	else if (ret) {
+		पूर्ण
+	अन्यथा अगर (ret) अणु
 		dev_err(dev,
 			"Failed to read the efuse value from syscon: %d\n",
 			ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	efuse = (efuse & opp_data->soc_data->efuse_mask);
-	efuse >>= opp_data->soc_data->efuse_shift;
+	efuse >>= opp_data->soc_data->efuse_shअगरt;
 
 	*efuse_value = opp_data->soc_data->efuse_xlate(opp_data, efuse);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * ti_cpufreq_get_rev() - Parse and return rev value present on SoC
- * @opp_data: pointer to ti_cpufreq_data context
- * @revision_value: Set to the value parsed from revision register
+ * ti_cpufreq_get_rev() - Parse and वापस rev value present on SoC
+ * @opp_data: poपूर्णांकer to ti_cpufreq_data context
+ * @revision_value: Set to the value parsed from revision रेजिस्टर
  *
- * Returns error code if revision not read properly.
+ * Returns error code अगर revision not पढ़ो properly.
  */
-static int ti_cpufreq_get_rev(struct ti_cpufreq_data *opp_data,
+अटल पूर्णांक ti_cpufreq_get_rev(काष्ठा ti_cpufreq_data *opp_data,
 			      u32 *revision_value)
-{
-	struct device *dev = opp_data->cpu_dev;
+अणु
+	काष्ठा device *dev = opp_data->cpu_dev;
 	u32 revision;
-	int ret;
+	पूर्णांक ret;
 
-	ret = regmap_read(opp_data->syscon, opp_data->soc_data->rev_offset,
+	ret = regmap_पढ़ो(opp_data->syscon, opp_data->soc_data->rev_offset,
 			  &revision);
-	if (ret == -EIO) {
-		/* not a syscon register! */
-		void __iomem *regs = ioremap(OMAP3_SYSCON_BASE +
+	अगर (ret == -EIO) अणु
+		/* not a syscon रेजिस्टर! */
+		व्योम __iomem *regs = ioremap(OMAP3_SYSCON_BASE +
 				opp_data->soc_data->rev_offset, 4);
 
-		if (!regs)
-			return -ENOMEM;
-		revision = readl(regs);
+		अगर (!regs)
+			वापस -ENOMEM;
+		revision = पढ़ोl(regs);
 		iounmap(regs);
-		}
-	else if (ret) {
+		पूर्ण
+	अन्यथा अगर (ret) अणु
 		dev_err(dev,
 			"Failed to read the revision number from syscon: %d\n",
 			ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	*revision_value = BIT((revision >> REVISION_SHIFT) & REVISION_MASK);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ti_cpufreq_setup_syscon_register(struct ti_cpufreq_data *opp_data)
-{
-	struct device *dev = opp_data->cpu_dev;
-	struct device_node *np = opp_data->opp_node;
+अटल पूर्णांक ti_cpufreq_setup_syscon_रेजिस्टर(काष्ठा ti_cpufreq_data *opp_data)
+अणु
+	काष्ठा device *dev = opp_data->cpu_dev;
+	काष्ठा device_node *np = opp_data->opp_node;
 
 	opp_data->syscon = syscon_regmap_lookup_by_phandle(np,
 							"syscon");
-	if (IS_ERR(opp_data->syscon)) {
+	अगर (IS_ERR(opp_data->syscon)) अणु
 		dev_err(dev,
 			"\"syscon\" is missing, cannot use OPPv2 table.\n");
-		return PTR_ERR(opp_data->syscon);
-	}
+		वापस PTR_ERR(opp_data->syscon);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct of_device_id ti_cpufreq_of_match[] = {
-	{ .compatible = "ti,am33xx", .data = &am3x_soc_data, },
-	{ .compatible = "ti,am3517", .data = &am3517_soc_data, },
-	{ .compatible = "ti,am43", .data = &am4x_soc_data, },
-	{ .compatible = "ti,dra7", .data = &dra7_soc_data },
-	{ .compatible = "ti,omap34xx", .data = &omap34xx_soc_data, },
-	{ .compatible = "ti,omap36xx", .data = &omap36xx_soc_data, },
+अटल स्थिर काष्ठा of_device_id ti_cpufreq_of_match[] = अणु
+	अणु .compatible = "ti,am33xx", .data = &am3x_soc_data, पूर्ण,
+	अणु .compatible = "ti,am3517", .data = &am3517_soc_data, पूर्ण,
+	अणु .compatible = "ti,am43", .data = &am4x_soc_data, पूर्ण,
+	अणु .compatible = "ti,dra7", .data = &dra7_soc_data पूर्ण,
+	अणु .compatible = "ti,omap34xx", .data = &omap34xx_soc_data, पूर्ण,
+	अणु .compatible = "ti,omap36xx", .data = &omap36xx_soc_data, पूर्ण,
 	/* legacy */
-	{ .compatible = "ti,omap3430", .data = &omap34xx_soc_data, },
-	{ .compatible = "ti,omap3630", .data = &omap36xx_soc_data, },
-	{},
-};
+	अणु .compatible = "ti,omap3430", .data = &omap34xx_soc_data, पूर्ण,
+	अणु .compatible = "ti,omap3630", .data = &omap36xx_soc_data, पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 
-static const struct of_device_id *ti_cpufreq_match_node(void)
-{
-	struct device_node *np;
-	const struct of_device_id *match;
+अटल स्थिर काष्ठा of_device_id *ti_cpufreq_match_node(व्योम)
+अणु
+	काष्ठा device_node *np;
+	स्थिर काष्ठा of_device_id *match;
 
 	np = of_find_node_by_path("/");
 	match = of_match_node(ti_cpufreq_of_match, np);
 	of_node_put(np);
 
-	return match;
-}
+	वापस match;
+पूर्ण
 
-static int ti_cpufreq_probe(struct platform_device *pdev)
-{
+अटल पूर्णांक ti_cpufreq_probe(काष्ठा platक्रमm_device *pdev)
+अणु
 	u32 version[VERSION_COUNT];
-	const struct of_device_id *match;
-	struct opp_table *ti_opp_table;
-	struct ti_cpufreq_data *opp_data;
-	const char * const default_reg_names[] = {"vdd", "vbb"};
-	int ret;
+	स्थिर काष्ठा of_device_id *match;
+	काष्ठा opp_table *ti_opp_table;
+	काष्ठा ti_cpufreq_data *opp_data;
+	स्थिर अक्षर * स्थिर शेष_reg_names[] = अणु"vdd", "vbb"पूर्ण;
+	पूर्णांक ret;
 
 	match = dev_get_platdata(&pdev->dev);
-	if (!match)
-		return -ENODEV;
+	अगर (!match)
+		वापस -ENODEV;
 
-	opp_data = devm_kzalloc(&pdev->dev, sizeof(*opp_data), GFP_KERNEL);
-	if (!opp_data)
-		return -ENOMEM;
+	opp_data = devm_kzalloc(&pdev->dev, माप(*opp_data), GFP_KERNEL);
+	अगर (!opp_data)
+		वापस -ENOMEM;
 
 	opp_data->soc_data = match->data;
 
 	opp_data->cpu_dev = get_cpu_device(0);
-	if (!opp_data->cpu_dev) {
+	अगर (!opp_data->cpu_dev) अणु
 		pr_err("%s: Failed to get device for CPU0\n", __func__);
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
 	opp_data->opp_node = dev_pm_opp_of_get_opp_desc_node(opp_data->cpu_dev);
-	if (!opp_data->opp_node) {
+	अगर (!opp_data->opp_node) अणु
 		dev_info(opp_data->cpu_dev,
 			 "OPP-v2 not supported, cpufreq-dt will attempt to use legacy tables.\n");
-		goto register_cpufreq_dt;
-	}
+		जाओ रेजिस्टर_cpufreq_dt;
+	पूर्ण
 
-	ret = ti_cpufreq_setup_syscon_register(opp_data);
-	if (ret)
-		goto fail_put_node;
+	ret = ti_cpufreq_setup_syscon_रेजिस्टर(opp_data);
+	अगर (ret)
+		जाओ fail_put_node;
 
 	/*
 	 * OPPs determine whether or not they are supported based on
@@ -363,72 +364,72 @@ static int ti_cpufreq_probe(struct platform_device *pdev)
 	 *	1 - eFuse value
 	 */
 	ret = ti_cpufreq_get_rev(opp_data, &version[0]);
-	if (ret)
-		goto fail_put_node;
+	अगर (ret)
+		जाओ fail_put_node;
 
 	ret = ti_cpufreq_get_efuse(opp_data, &version[1]);
-	if (ret)
-		goto fail_put_node;
+	अगर (ret)
+		जाओ fail_put_node;
 
 	ti_opp_table = dev_pm_opp_set_supported_hw(opp_data->cpu_dev,
 						   version, VERSION_COUNT);
-	if (IS_ERR(ti_opp_table)) {
+	अगर (IS_ERR(ti_opp_table)) अणु
 		dev_err(opp_data->cpu_dev,
 			"Failed to set supported hardware\n");
 		ret = PTR_ERR(ti_opp_table);
-		goto fail_put_node;
-	}
+		जाओ fail_put_node;
+	पूर्ण
 
 	opp_data->opp_table = ti_opp_table;
 
-	if (opp_data->soc_data->multi_regulator) {
-		const char * const *reg_names = default_reg_names;
+	अगर (opp_data->soc_data->multi_regulator) अणु
+		स्थिर अक्षर * स्थिर *reg_names = शेष_reg_names;
 
-		if (opp_data->soc_data->reg_names)
+		अगर (opp_data->soc_data->reg_names)
 			reg_names = opp_data->soc_data->reg_names;
 		ti_opp_table = dev_pm_opp_set_regulators(opp_data->cpu_dev,
 							 reg_names,
-							 ARRAY_SIZE(default_reg_names));
-		if (IS_ERR(ti_opp_table)) {
+							 ARRAY_SIZE(शेष_reg_names));
+		अगर (IS_ERR(ti_opp_table)) अणु
 			dev_pm_opp_put_supported_hw(opp_data->opp_table);
 			ret =  PTR_ERR(ti_opp_table);
-			goto fail_put_node;
-		}
-	}
+			जाओ fail_put_node;
+		पूर्ण
+	पूर्ण
 
 	of_node_put(opp_data->opp_node);
-register_cpufreq_dt:
-	platform_device_register_simple("cpufreq-dt", -1, NULL, 0);
+रेजिस्टर_cpufreq_dt:
+	platक्रमm_device_रेजिस्टर_simple("cpufreq-dt", -1, शून्य, 0);
 
-	return 0;
+	वापस 0;
 
 fail_put_node:
 	of_node_put(opp_data->opp_node);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int ti_cpufreq_init(void)
-{
-	const struct of_device_id *match;
+अटल पूर्णांक ti_cpufreq_init(व्योम)
+अणु
+	स्थिर काष्ठा of_device_id *match;
 
-	/* Check to ensure we are on a compatible platform */
+	/* Check to ensure we are on a compatible platक्रमm */
 	match = ti_cpufreq_match_node();
-	if (match)
-		platform_device_register_data(NULL, "ti-cpufreq", -1, match,
-					      sizeof(*match));
+	अगर (match)
+		platक्रमm_device_रेजिस्टर_data(शून्य, "ti-cpufreq", -1, match,
+					      माप(*match));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 module_init(ti_cpufreq_init);
 
-static struct platform_driver ti_cpufreq_driver = {
+अटल काष्ठा platक्रमm_driver ti_cpufreq_driver = अणु
 	.probe = ti_cpufreq_probe,
-	.driver = {
+	.driver = अणु
 		.name = "ti-cpufreq",
-	},
-};
-builtin_platform_driver(ti_cpufreq_driver);
+	पूर्ण,
+पूर्ण;
+builtin_platक्रमm_driver(ti_cpufreq_driver);
 
 MODULE_DESCRIPTION("TI CPUFreq/OPP hw-supported driver");
 MODULE_AUTHOR("Dave Gerlach <d-gerlach@ti.com>");

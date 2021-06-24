@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * USB GPIO Based Connection Detection Driver
  *
@@ -9,46 +10,46 @@
  * Some code borrowed from drivers/extcon/extcon-usb-gpio.c
  */
 
-#include <linux/device.h>
-#include <linux/gpio/consumer.h>
-#include <linux/interrupt.h>
-#include <linux/irq.h>
-#include <linux/module.h>
-#include <linux/of.h>
-#include <linux/pinctrl/consumer.h>
-#include <linux/platform_device.h>
-#include <linux/power_supply.h>
-#include <linux/regulator/consumer.h>
-#include <linux/usb/role.h>
+#समावेश <linux/device.h>
+#समावेश <linux/gpio/consumer.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/irq.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of.h>
+#समावेश <linux/pinctrl/consumer.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/घातer_supply.h>
+#समावेश <linux/regulator/consumer.h>
+#समावेश <linux/usb/role.h>
 
-#define USB_GPIO_DEB_MS		20	/* ms */
-#define USB_GPIO_DEB_US		((USB_GPIO_DEB_MS) * 1000)	/* us */
+#घोषणा USB_GPIO_DEB_MS		20	/* ms */
+#घोषणा USB_GPIO_DEB_US		((USB_GPIO_DEB_MS) * 1000)	/* us */
 
-#define USB_CONN_IRQF	\
+#घोषणा USB_CONN_IRQF	\
 	(IRQF_TRIGGER_RISING | IRQF_TRIGGER_FALLING | IRQF_ONESHOT)
 
-struct usb_conn_info {
-	struct device *dev;
-	struct usb_role_switch *role_sw;
-	enum usb_role last_role;
-	struct regulator *vbus;
-	struct delayed_work dw_det;
-	unsigned long debounce_jiffies;
+काष्ठा usb_conn_info अणु
+	काष्ठा device *dev;
+	काष्ठा usb_role_चयन *role_sw;
+	क्रमागत usb_role last_role;
+	काष्ठा regulator *vbus;
+	काष्ठा delayed_work dw_det;
+	अचिन्हित दीर्घ debounce_jअगरfies;
 
-	struct gpio_desc *id_gpiod;
-	struct gpio_desc *vbus_gpiod;
-	int id_irq;
-	int vbus_irq;
+	काष्ठा gpio_desc *id_gpiod;
+	काष्ठा gpio_desc *vbus_gpiod;
+	पूर्णांक id_irq;
+	पूर्णांक vbus_irq;
 
-	struct power_supply_desc desc;
-	struct power_supply *charger;
-};
+	काष्ठा घातer_supply_desc desc;
+	काष्ठा घातer_supply *अक्षरger;
+पूर्ण;
 
 /*
  * "DEVICE" = VBUS and "HOST" = !ID, so we have:
- * Both "DEVICE" and "HOST" can't be set as active at the same time
- * so if "HOST" is active (i.e. ID is 0)  we keep "DEVICE" inactive
- * even if VBUS is on.
+ * Both "DEVICE" and "HOST" can't be set as active at the same समय
+ * so अगर "HOST" is active (i.e. ID is 0)  we keep "DEVICE" inactive
+ * even अगर VBUS is on.
  *
  *  Role          |   ID  |  VBUS
  * ------------------------------------
@@ -57,18 +58,18 @@ struct usb_conn_info {
  *  [3] HOST      |   L   |   H
  *  [4] HOST      |   L   |   L
  *
- * In case we have only one of these signals:
+ * In हाल we have only one of these संकेतs:
  * - VBUS only - we want to distinguish between [1] and [2], so ID is always 1
  * - ID only - we want to distinguish between [1] and [4], so VBUS = ID
  */
-static void usb_conn_detect_cable(struct work_struct *work)
-{
-	struct usb_conn_info *info;
-	enum usb_role role;
-	int id, vbus, ret;
+अटल व्योम usb_conn_detect_cable(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा usb_conn_info *info;
+	क्रमागत usb_role role;
+	पूर्णांक id, vbus, ret;
 
 	info = container_of(to_delayed_work(work),
-			    struct usb_conn_info, dw_det);
+			    काष्ठा usb_conn_info, dw_det);
 
 	/* check ID and VBUS */
 	id = info->id_gpiod ?
@@ -76,272 +77,272 @@ static void usb_conn_detect_cable(struct work_struct *work)
 	vbus = info->vbus_gpiod ?
 		gpiod_get_value_cansleep(info->vbus_gpiod) : id;
 
-	if (!id)
+	अगर (!id)
 		role = USB_ROLE_HOST;
-	else if (vbus)
+	अन्यथा अगर (vbus)
 		role = USB_ROLE_DEVICE;
-	else
+	अन्यथा
 		role = USB_ROLE_NONE;
 
 	dev_dbg(info->dev, "role %d/%d, gpios: id %d, vbus %d\n",
 		info->last_role, role, id, vbus);
 
-	if (info->last_role == role) {
+	अगर (info->last_role == role) अणु
 		dev_warn(info->dev, "repeated role: %d\n", role);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (info->last_role == USB_ROLE_HOST && info->vbus)
+	अगर (info->last_role == USB_ROLE_HOST && info->vbus)
 		regulator_disable(info->vbus);
 
-	ret = usb_role_switch_set_role(info->role_sw, role);
-	if (ret)
+	ret = usb_role_चयन_set_role(info->role_sw, role);
+	अगर (ret)
 		dev_err(info->dev, "failed to set role: %d\n", ret);
 
-	if (role == USB_ROLE_HOST && info->vbus) {
+	अगर (role == USB_ROLE_HOST && info->vbus) अणु
 		ret = regulator_enable(info->vbus);
-		if (ret)
+		अगर (ret)
 			dev_err(info->dev, "enable vbus regulator failed\n");
-	}
+	पूर्ण
 
 	info->last_role = role;
 
-	if (info->vbus)
+	अगर (info->vbus)
 		dev_dbg(info->dev, "vbus regulator is %s\n",
 			regulator_is_enabled(info->vbus) ? "enabled" : "disabled");
 
-	power_supply_changed(info->charger);
-}
+	घातer_supply_changed(info->अक्षरger);
+पूर्ण
 
-static void usb_conn_queue_dwork(struct usb_conn_info *info,
-				 unsigned long delay)
-{
-	queue_delayed_work(system_power_efficient_wq, &info->dw_det, delay);
-}
+अटल व्योम usb_conn_queue_dwork(काष्ठा usb_conn_info *info,
+				 अचिन्हित दीर्घ delay)
+अणु
+	queue_delayed_work(प्रणाली_घातer_efficient_wq, &info->dw_det, delay);
+पूर्ण
 
-static irqreturn_t usb_conn_isr(int irq, void *dev_id)
-{
-	struct usb_conn_info *info = dev_id;
+अटल irqवापस_t usb_conn_isr(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा usb_conn_info *info = dev_id;
 
-	usb_conn_queue_dwork(info, info->debounce_jiffies);
+	usb_conn_queue_dwork(info, info->debounce_jअगरfies);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static enum power_supply_property usb_charger_properties[] = {
+अटल क्रमागत घातer_supply_property usb_अक्षरger_properties[] = अणु
 	POWER_SUPPLY_PROP_ONLINE,
-};
+पूर्ण;
 
-static int usb_charger_get_property(struct power_supply *psy,
-				    enum power_supply_property psp,
-				    union power_supply_propval *val)
-{
-	struct usb_conn_info *info = power_supply_get_drvdata(psy);
+अटल पूर्णांक usb_अक्षरger_get_property(काष्ठा घातer_supply *psy,
+				    क्रमागत घातer_supply_property psp,
+				    जोड़ घातer_supply_propval *val)
+अणु
+	काष्ठा usb_conn_info *info = घातer_supply_get_drvdata(psy);
 
-	switch (psp) {
-	case POWER_SUPPLY_PROP_ONLINE:
-		val->intval = info->last_role == USB_ROLE_DEVICE;
-		break;
-	default:
-		return -EINVAL;
-	}
+	चयन (psp) अणु
+	हाल POWER_SUPPLY_PROP_ONLINE:
+		val->पूर्णांकval = info->last_role == USB_ROLE_DEVICE;
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int usb_conn_probe(struct platform_device *pdev)
-{
-	struct device *dev = &pdev->dev;
-	struct power_supply_desc *desc;
-	struct usb_conn_info *info;
-	struct power_supply_config cfg = {
+अटल पूर्णांक usb_conn_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा घातer_supply_desc *desc;
+	काष्ठा usb_conn_info *info;
+	काष्ठा घातer_supply_config cfg = अणु
 		.of_node = dev->of_node,
-	};
+	पूर्ण;
 	bool need_vbus = true;
-	int ret = 0;
+	पूर्णांक ret = 0;
 
-	info = devm_kzalloc(dev, sizeof(*info), GFP_KERNEL);
-	if (!info)
-		return -ENOMEM;
+	info = devm_kzalloc(dev, माप(*info), GFP_KERNEL);
+	अगर (!info)
+		वापस -ENOMEM;
 
 	info->dev = dev;
 	info->id_gpiod = devm_gpiod_get_optional(dev, "id", GPIOD_IN);
-	if (IS_ERR(info->id_gpiod))
-		return PTR_ERR(info->id_gpiod);
+	अगर (IS_ERR(info->id_gpiod))
+		वापस PTR_ERR(info->id_gpiod);
 
 	info->vbus_gpiod = devm_gpiod_get_optional(dev, "vbus", GPIOD_IN);
-	if (IS_ERR(info->vbus_gpiod))
-		return PTR_ERR(info->vbus_gpiod);
+	अगर (IS_ERR(info->vbus_gpiod))
+		वापस PTR_ERR(info->vbus_gpiod);
 
-	if (!info->id_gpiod && !info->vbus_gpiod) {
+	अगर (!info->id_gpiod && !info->vbus_gpiod) अणु
 		dev_err(dev, "failed to get gpios\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	if (info->id_gpiod)
+	अगर (info->id_gpiod)
 		ret = gpiod_set_debounce(info->id_gpiod, USB_GPIO_DEB_US);
-	if (!ret && info->vbus_gpiod)
+	अगर (!ret && info->vbus_gpiod)
 		ret = gpiod_set_debounce(info->vbus_gpiod, USB_GPIO_DEB_US);
-	if (ret < 0)
-		info->debounce_jiffies = msecs_to_jiffies(USB_GPIO_DEB_MS);
+	अगर (ret < 0)
+		info->debounce_jअगरfies = msecs_to_jअगरfies(USB_GPIO_DEB_MS);
 
 	INIT_DELAYED_WORK(&info->dw_det, usb_conn_detect_cable);
 
 	/*
-	 * If the USB connector is a child of a USB port and that port already provides the VBUS
-	 * supply, there's no need for the USB connector to provide it again.
+	 * If the USB connector is a child of a USB port and that port alपढ़ोy provides the VBUS
+	 * supply, there's no need क्रम the USB connector to provide it again.
 	 */
-	if (dev->parent && dev->parent->of_node) {
-		if (of_find_property(dev->parent->of_node, "vbus-supply", NULL))
+	अगर (dev->parent && dev->parent->of_node) अणु
+		अगर (of_find_property(dev->parent->of_node, "vbus-supply", शून्य))
 			need_vbus = false;
-	}
+	पूर्ण
 
-	if (!need_vbus) {
+	अगर (!need_vbus) अणु
 		info->vbus = devm_regulator_get_optional(dev, "vbus");
-		if (PTR_ERR(info->vbus) == -ENODEV)
-			info->vbus = NULL;
-	} else {
+		अगर (PTR_ERR(info->vbus) == -ENODEV)
+			info->vbus = शून्य;
+	पूर्ण अन्यथा अणु
 		info->vbus = devm_regulator_get(dev, "vbus");
-	}
+	पूर्ण
 
-	if (IS_ERR(info->vbus)) {
-		if (PTR_ERR(info->vbus) != -EPROBE_DEFER)
+	अगर (IS_ERR(info->vbus)) अणु
+		अगर (PTR_ERR(info->vbus) != -EPROBE_DEFER)
 			dev_err(dev, "failed to get vbus: %ld\n", PTR_ERR(info->vbus));
-		return PTR_ERR(info->vbus);
-	}
+		वापस PTR_ERR(info->vbus);
+	पूर्ण
 
-	info->role_sw = usb_role_switch_get(dev);
-	if (IS_ERR(info->role_sw)) {
-		if (PTR_ERR(info->role_sw) != -EPROBE_DEFER)
+	info->role_sw = usb_role_चयन_get(dev);
+	अगर (IS_ERR(info->role_sw)) अणु
+		अगर (PTR_ERR(info->role_sw) != -EPROBE_DEFER)
 			dev_err(dev, "failed to get role switch\n");
 
-		return PTR_ERR(info->role_sw);
-	}
+		वापस PTR_ERR(info->role_sw);
+	पूर्ण
 
-	if (info->id_gpiod) {
+	अगर (info->id_gpiod) अणु
 		info->id_irq = gpiod_to_irq(info->id_gpiod);
-		if (info->id_irq < 0) {
+		अगर (info->id_irq < 0) अणु
 			dev_err(dev, "failed to get ID IRQ\n");
 			ret = info->id_irq;
-			goto put_role_sw;
-		}
+			जाओ put_role_sw;
+		पूर्ण
 
-		ret = devm_request_threaded_irq(dev, info->id_irq, NULL,
+		ret = devm_request_thपढ़ोed_irq(dev, info->id_irq, शून्य,
 						usb_conn_isr, USB_CONN_IRQF,
 						pdev->name, info);
-		if (ret < 0) {
+		अगर (ret < 0) अणु
 			dev_err(dev, "failed to request ID IRQ\n");
-			goto put_role_sw;
-		}
-	}
+			जाओ put_role_sw;
+		पूर्ण
+	पूर्ण
 
-	if (info->vbus_gpiod) {
+	अगर (info->vbus_gpiod) अणु
 		info->vbus_irq = gpiod_to_irq(info->vbus_gpiod);
-		if (info->vbus_irq < 0) {
+		अगर (info->vbus_irq < 0) अणु
 			dev_err(dev, "failed to get VBUS IRQ\n");
 			ret = info->vbus_irq;
-			goto put_role_sw;
-		}
+			जाओ put_role_sw;
+		पूर्ण
 
-		ret = devm_request_threaded_irq(dev, info->vbus_irq, NULL,
+		ret = devm_request_thपढ़ोed_irq(dev, info->vbus_irq, शून्य,
 						usb_conn_isr, USB_CONN_IRQF,
 						pdev->name, info);
-		if (ret < 0) {
+		अगर (ret < 0) अणु
 			dev_err(dev, "failed to request VBUS IRQ\n");
-			goto put_role_sw;
-		}
-	}
+			जाओ put_role_sw;
+		पूर्ण
+	पूर्ण
 
 	desc = &info->desc;
 	desc->name = "usb-charger";
-	desc->properties = usb_charger_properties;
-	desc->num_properties = ARRAY_SIZE(usb_charger_properties);
-	desc->get_property = usb_charger_get_property;
+	desc->properties = usb_अक्षरger_properties;
+	desc->num_properties = ARRAY_SIZE(usb_अक्षरger_properties);
+	desc->get_property = usb_अक्षरger_get_property;
 	desc->type = POWER_SUPPLY_TYPE_USB;
 	cfg.drv_data = info;
 
-	info->charger = devm_power_supply_register(dev, desc, &cfg);
-	if (IS_ERR(info->charger)) {
+	info->अक्षरger = devm_घातer_supply_रेजिस्टर(dev, desc, &cfg);
+	अगर (IS_ERR(info->अक्षरger)) अणु
 		dev_err(dev, "Unable to register charger\n");
-		return PTR_ERR(info->charger);
-	}
+		वापस PTR_ERR(info->अक्षरger);
+	पूर्ण
 
-	platform_set_drvdata(pdev, info);
+	platक्रमm_set_drvdata(pdev, info);
 
-	/* Perform initial detection */
+	/* Perक्रमm initial detection */
 	usb_conn_queue_dwork(info, 0);
 
-	return 0;
+	वापस 0;
 
 put_role_sw:
-	usb_role_switch_put(info->role_sw);
-	return ret;
-}
+	usb_role_चयन_put(info->role_sw);
+	वापस ret;
+पूर्ण
 
-static int usb_conn_remove(struct platform_device *pdev)
-{
-	struct usb_conn_info *info = platform_get_drvdata(pdev);
+अटल पूर्णांक usb_conn_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा usb_conn_info *info = platक्रमm_get_drvdata(pdev);
 
 	cancel_delayed_work_sync(&info->dw_det);
 
-	if (info->last_role == USB_ROLE_HOST && info->vbus)
+	अगर (info->last_role == USB_ROLE_HOST && info->vbus)
 		regulator_disable(info->vbus);
 
-	usb_role_switch_put(info->role_sw);
+	usb_role_चयन_put(info->role_sw);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __maybe_unused usb_conn_suspend(struct device *dev)
-{
-	struct usb_conn_info *info = dev_get_drvdata(dev);
+अटल पूर्णांक __maybe_unused usb_conn_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा usb_conn_info *info = dev_get_drvdata(dev);
 
-	if (info->id_gpiod)
+	अगर (info->id_gpiod)
 		disable_irq(info->id_irq);
-	if (info->vbus_gpiod)
+	अगर (info->vbus_gpiod)
 		disable_irq(info->vbus_irq);
 
 	pinctrl_pm_select_sleep_state(dev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __maybe_unused usb_conn_resume(struct device *dev)
-{
-	struct usb_conn_info *info = dev_get_drvdata(dev);
+अटल पूर्णांक __maybe_unused usb_conn_resume(काष्ठा device *dev)
+अणु
+	काष्ठा usb_conn_info *info = dev_get_drvdata(dev);
 
-	pinctrl_pm_select_default_state(dev);
+	pinctrl_pm_select_शेष_state(dev);
 
-	if (info->id_gpiod)
+	अगर (info->id_gpiod)
 		enable_irq(info->id_irq);
-	if (info->vbus_gpiod)
+	अगर (info->vbus_gpiod)
 		enable_irq(info->vbus_irq);
 
 	usb_conn_queue_dwork(info, 0);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static SIMPLE_DEV_PM_OPS(usb_conn_pm_ops,
+अटल SIMPLE_DEV_PM_OPS(usb_conn_pm_ops,
 			 usb_conn_suspend, usb_conn_resume);
 
-static const struct of_device_id usb_conn_dt_match[] = {
-	{ .compatible = "gpio-usb-b-connector", },
-	{ }
-};
+अटल स्थिर काष्ठा of_device_id usb_conn_dt_match[] = अणु
+	अणु .compatible = "gpio-usb-b-connector", पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, usb_conn_dt_match);
 
-static struct platform_driver usb_conn_driver = {
+अटल काष्ठा platक्रमm_driver usb_conn_driver = अणु
 	.probe		= usb_conn_probe,
-	.remove		= usb_conn_remove,
-	.driver		= {
+	.हटाओ		= usb_conn_हटाओ,
+	.driver		= अणु
 		.name	= "usb-conn-gpio",
 		.pm	= &usb_conn_pm_ops,
 		.of_match_table = usb_conn_dt_match,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-module_platform_driver(usb_conn_driver);
+module_platक्रमm_driver(usb_conn_driver);
 
 MODULE_AUTHOR("Chunfeng Yun <chunfeng.yun@mediatek.com>");
 MODULE_DESCRIPTION("USB GPIO based connection detection driver");

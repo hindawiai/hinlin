@@ -1,583 +1,584 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 
-#define _GNU_SOURCE
+#घोषणा _GNU_SOURCE
 
-#include <stdio.h>
-#include <sys/time.h>
-#include <time.h>
-#include <stdlib.h>
-#include <sys/syscall.h>
-#include <unistd.h>
-#include <dlfcn.h>
-#include <string.h>
-#include <inttypes.h>
-#include <signal.h>
-#include <sys/ucontext.h>
-#include <errno.h>
-#include <err.h>
-#include <sched.h>
-#include <stdbool.h>
-#include <setjmp.h>
-#include <sys/uio.h>
+#समावेश <मानकपन.स>
+#समावेश <sys/समय.स>
+#समावेश <समय.स>
+#समावेश <मानककोष.स>
+#समावेश <sys/syscall.h>
+#समावेश <unistd.h>
+#समावेश <dlfcn.h>
+#समावेश <माला.स>
+#समावेश <पूर्णांकtypes.h>
+#समावेश <संकेत.स>
+#समावेश <sys/ucontext.h>
+#समावेश <त्रुटिसं.स>
+#समावेश <err.h>
+#समावेश <sched.h>
+#समावेश <stdbool.h>
+#समावेश <समलाँघ.स>
+#समावेश <sys/uपन.स>
 
-#include "helpers.h"
+#समावेश "helpers.h"
 
-#ifdef __x86_64__
+#अगर_घोषित __x86_64__
 # define VSYS(x) (x)
-#else
+#अन्यथा
 # define VSYS(x) 0
-#endif
+#पूर्ण_अगर
 
-#ifndef SYS_getcpu
-# ifdef __x86_64__
-#  define SYS_getcpu 309
-# else
-#  define SYS_getcpu 318
-# endif
-#endif
+#अगर_अघोषित SYS_अ_लोpu
+# अगरdef __x86_64__
+#  define SYS_अ_लोpu 309
+# अन्यथा
+#  define SYS_अ_लोpu 318
+# endअगर
+#पूर्ण_अगर
 
-/* max length of lines in /proc/self/maps - anything longer is skipped here */
-#define MAPS_LINE_LEN 128
+/* max length of lines in /proc/self/maps - anything दीर्घer is skipped here */
+#घोषणा MAPS_LINE_LEN 128
 
-static void sethandler(int sig, void (*handler)(int, siginfo_t *, void *),
-		       int flags)
-{
-	struct sigaction sa;
-	memset(&sa, 0, sizeof(sa));
+अटल व्योम sethandler(पूर्णांक sig, व्योम (*handler)(पूर्णांक, siginfo_t *, व्योम *),
+		       पूर्णांक flags)
+अणु
+	काष्ठा sigaction sa;
+	स_रखो(&sa, 0, माप(sa));
 	sa.sa_sigaction = handler;
 	sa.sa_flags = SA_SIGINFO | flags;
 	sigemptyset(&sa.sa_mask);
-	if (sigaction(sig, &sa, 0))
+	अगर (sigaction(sig, &sa, 0))
 		err(1, "sigaction");
-}
+पूर्ण
 
 /* vsyscalls and vDSO */
 bool vsyscall_map_r = false, vsyscall_map_x = false;
 
-typedef long (*gtod_t)(struct timeval *tv, struct timezone *tz);
-const gtod_t vgtod = (gtod_t)VSYS(0xffffffffff600000);
+प्रकार दीर्घ (*gtod_t)(काष्ठा समयval *tv, काष्ठा समयzone *tz);
+स्थिर gtod_t vgtod = (gtod_t)VSYS(0xffffffffff600000);
 gtod_t vdso_gtod;
 
-typedef int (*vgettime_t)(clockid_t, struct timespec *);
-vgettime_t vdso_gettime;
+प्रकार पूर्णांक (*vसमय_लो_t)(घड़ीid_t, काष्ठा बारpec *);
+vसमय_लो_t vdso_समय_लो;
 
-typedef long (*time_func_t)(time_t *t);
-const time_func_t vtime = (time_func_t)VSYS(0xffffffffff600400);
-time_func_t vdso_time;
+प्रकार दीर्घ (*समय_func_t)(समय_प्रकार *t);
+स्थिर समय_func_t vसमय = (समय_func_t)VSYS(0xffffffffff600400);
+समय_func_t vdso_समय;
 
-typedef long (*getcpu_t)(unsigned *, unsigned *, void *);
-const getcpu_t vgetcpu = (getcpu_t)VSYS(0xffffffffff600800);
-getcpu_t vdso_getcpu;
+प्रकार दीर्घ (*अ_लोpu_t)(अचिन्हित *, अचिन्हित *, व्योम *);
+स्थिर अ_लोpu_t vअ_लोpu = (अ_लोpu_t)VSYS(0xffffffffff600800);
+अ_लोpu_t vdso_अ_लोpu;
 
-static void init_vdso(void)
-{
-	void *vdso = dlopen("linux-vdso.so.1", RTLD_LAZY | RTLD_LOCAL | RTLD_NOLOAD);
-	if (!vdso)
-		vdso = dlopen("linux-gate.so.1", RTLD_LAZY | RTLD_LOCAL | RTLD_NOLOAD);
-	if (!vdso) {
-		printf("[WARN]\tfailed to find vDSO\n");
-		return;
-	}
+अटल व्योम init_vdso(व्योम)
+अणु
+	व्योम *vdso = dlखोलो("linux-vdso.so.1", RTLD_LAZY | RTLD_LOCAL | RTLD_NOLOAD);
+	अगर (!vdso)
+		vdso = dlखोलो("linux-gate.so.1", RTLD_LAZY | RTLD_LOCAL | RTLD_NOLOAD);
+	अगर (!vdso) अणु
+		म_लिखो("[WARN]\tfailed to find vDSO\n");
+		वापस;
+	पूर्ण
 
 	vdso_gtod = (gtod_t)dlsym(vdso, "__vdso_gettimeofday");
-	if (!vdso_gtod)
-		printf("[WARN]\tfailed to find gettimeofday in vDSO\n");
+	अगर (!vdso_gtod)
+		म_लिखो("[WARN]\tfailed to find gettimeofday in vDSO\n");
 
-	vdso_gettime = (vgettime_t)dlsym(vdso, "__vdso_clock_gettime");
-	if (!vdso_gettime)
-		printf("[WARN]\tfailed to find clock_gettime in vDSO\n");
+	vdso_समय_लो = (vसमय_लो_t)dlsym(vdso, "__vdso_clock_gettime");
+	अगर (!vdso_समय_लो)
+		म_लिखो("[WARN]\tfailed to find clock_gettime in vDSO\n");
 
-	vdso_time = (time_func_t)dlsym(vdso, "__vdso_time");
-	if (!vdso_time)
-		printf("[WARN]\tfailed to find time in vDSO\n");
+	vdso_समय = (समय_func_t)dlsym(vdso, "__vdso_time");
+	अगर (!vdso_समय)
+		म_लिखो("[WARN]\tfailed to find time in vDSO\n");
 
-	vdso_getcpu = (getcpu_t)dlsym(vdso, "__vdso_getcpu");
-	if (!vdso_getcpu) {
-		/* getcpu() was never wired up in the 32-bit vDSO. */
-		printf("[%s]\tfailed to find getcpu in vDSO\n",
-		       sizeof(long) == 8 ? "WARN" : "NOTE");
-	}
-}
+	vdso_अ_लोpu = (अ_लोpu_t)dlsym(vdso, "__vdso_getcpu");
+	अगर (!vdso_अ_लोpu) अणु
+		/* अ_लोpu() was never wired up in the 32-bit vDSO. */
+		म_लिखो("[%s]\tfailed to find getcpu in vDSO\n",
+		       माप(दीर्घ) == 8 ? "WARN" : "NOTE");
+	पूर्ण
+पूर्ण
 
-static int init_vsys(void)
-{
-#ifdef __x86_64__
-	int nerrs = 0;
-	FILE *maps;
-	char line[MAPS_LINE_LEN];
+अटल पूर्णांक init_vsys(व्योम)
+अणु
+#अगर_घोषित __x86_64__
+	पूर्णांक nerrs = 0;
+	खाता *maps;
+	अक्षर line[MAPS_LINE_LEN];
 	bool found = false;
 
-	maps = fopen("/proc/self/maps", "r");
-	if (!maps) {
-		printf("[WARN]\tCould not open /proc/self/maps -- assuming vsyscall is r-x\n");
+	maps = ख_खोलो("/proc/self/maps", "r");
+	अगर (!maps) अणु
+		म_लिखो("[WARN]\tCould not open /proc/self/maps -- assuming vsyscall is r-x\n");
 		vsyscall_map_r = true;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	while (fgets(line, MAPS_LINE_LEN, maps)) {
-		char r, x;
-		void *start, *end;
-		char name[MAPS_LINE_LEN];
+	जबतक (ख_माला_लो(line, MAPS_LINE_LEN, maps)) अणु
+		अक्षर r, x;
+		व्योम *start, *end;
+		अक्षर name[MAPS_LINE_LEN];
 
-		/* sscanf() is safe here as strlen(name) >= strlen(line) */
-		if (sscanf(line, "%p-%p %c-%cp %*x %*x:%*x %*u %s",
+		/* माला_पूछो() is safe here as म_माप(name) >= म_माप(line) */
+		अगर (माला_पूछो(line, "%p-%p %c-%cp %*x %*x:%*x %*u %s",
 			   &start, &end, &r, &x, name) != 5)
-			continue;
+			जारी;
 
-		if (strcmp(name, "[vsyscall]"))
-			continue;
+		अगर (म_भेद(name, "[vsyscall]"))
+			जारी;
 
-		printf("\tvsyscall map: %s", line);
+		म_लिखो("\tvsyscall map: %s", line);
 
-		if (start != (void *)0xffffffffff600000 ||
-		    end != (void *)0xffffffffff601000) {
-			printf("[FAIL]\taddress range is nonsense\n");
+		अगर (start != (व्योम *)0xffffffffff600000 ||
+		    end != (व्योम *)0xffffffffff601000) अणु
+			म_लिखो("[FAIL]\taddress range is nonsense\n");
 			nerrs++;
-		}
+		पूर्ण
 
-		printf("\tvsyscall permissions are %c-%c\n", r, x);
+		म_लिखो("\tvsyscall permissions are %c-%c\n", r, x);
 		vsyscall_map_r = (r == 'r');
 		vsyscall_map_x = (x == 'x');
 
 		found = true;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	fclose(maps);
+	ख_बंद(maps);
 
-	if (!found) {
-		printf("\tno vsyscall map in /proc/self/maps\n");
+	अगर (!found) अणु
+		म_लिखो("\tno vsyscall map in /proc/self/maps\n");
 		vsyscall_map_r = false;
 		vsyscall_map_x = false;
-	}
+	पूर्ण
 
-	return nerrs;
-#else
-	return 0;
-#endif
-}
+	वापस nerrs;
+#अन्यथा
+	वापस 0;
+#पूर्ण_अगर
+पूर्ण
 
 /* syscalls */
-static inline long sys_gtod(struct timeval *tv, struct timezone *tz)
-{
-	return syscall(SYS_gettimeofday, tv, tz);
-}
+अटल अंतरभूत दीर्घ sys_gtod(काष्ठा समयval *tv, काष्ठा समयzone *tz)
+अणु
+	वापस syscall(SYS_समय_लोofday, tv, tz);
+पूर्ण
 
-static inline int sys_clock_gettime(clockid_t id, struct timespec *ts)
-{
-	return syscall(SYS_clock_gettime, id, ts);
-}
+अटल अंतरभूत पूर्णांक sys_घड़ी_समय_लो(घड़ीid_t id, काष्ठा बारpec *ts)
+अणु
+	वापस syscall(SYS_घड़ी_समय_लो, id, ts);
+पूर्ण
 
-static inline long sys_time(time_t *t)
-{
-	return syscall(SYS_time, t);
-}
+अटल अंतरभूत दीर्घ sys_समय(समय_प्रकार *t)
+अणु
+	वापस syscall(SYS_समय, t);
+पूर्ण
 
-static inline long sys_getcpu(unsigned * cpu, unsigned * node,
-			      void* cache)
-{
-	return syscall(SYS_getcpu, cpu, node, cache);
-}
+अटल अंतरभूत दीर्घ sys_अ_लोpu(अचिन्हित * cpu, अचिन्हित * node,
+			      व्योम* cache)
+अणु
+	वापस syscall(SYS_अ_लोpu, cpu, node, cache);
+पूर्ण
 
-static jmp_buf jmpbuf;
-static volatile unsigned long segv_err;
+अटल लाँघ_बफ jmpbuf;
+अटल अस्थिर अचिन्हित दीर्घ segv_err;
 
-static void sigsegv(int sig, siginfo_t *info, void *ctx_void)
-{
-	ucontext_t *ctx = (ucontext_t *)ctx_void;
+अटल व्योम sigsegv(पूर्णांक sig, siginfo_t *info, व्योम *ctx_व्योम)
+अणु
+	ucontext_t *ctx = (ucontext_t *)ctx_व्योम;
 
 	segv_err =  ctx->uc_mcontext.gregs[REG_ERR];
-	siglongjmp(jmpbuf, 1);
-}
+	sigदीर्घ_लाँघ(jmpbuf, 1);
+पूर्ण
 
-static double tv_diff(const struct timeval *a, const struct timeval *b)
-{
-	return (double)(a->tv_sec - b->tv_sec) +
-		(double)((int)a->tv_usec - (int)b->tv_usec) * 1e-6;
-}
+अटल द्विगुन tv_dअगरf(स्थिर काष्ठा समयval *a, स्थिर काष्ठा समयval *b)
+अणु
+	वापस (द्विगुन)(a->tv_sec - b->tv_sec) +
+		(द्विगुन)((पूर्णांक)a->tv_usec - (पूर्णांक)b->tv_usec) * 1e-6;
+पूर्ण
 
-static int check_gtod(const struct timeval *tv_sys1,
-		      const struct timeval *tv_sys2,
-		      const struct timezone *tz_sys,
-		      const char *which,
-		      const struct timeval *tv_other,
-		      const struct timezone *tz_other)
-{
-	int nerrs = 0;
-	double d1, d2;
+अटल पूर्णांक check_gtod(स्थिर काष्ठा समयval *tv_sys1,
+		      स्थिर काष्ठा समयval *tv_sys2,
+		      स्थिर काष्ठा समयzone *tz_sys,
+		      स्थिर अक्षर *which,
+		      स्थिर काष्ठा समयval *tv_other,
+		      स्थिर काष्ठा समयzone *tz_other)
+अणु
+	पूर्णांक nerrs = 0;
+	द्विगुन d1, d2;
 
-	if (tz_other && (tz_sys->tz_minuteswest != tz_other->tz_minuteswest || tz_sys->tz_dsttime != tz_other->tz_dsttime)) {
-		printf("[FAIL] %s tz mismatch\n", which);
+	अगर (tz_other && (tz_sys->tz_minuteswest != tz_other->tz_minuteswest || tz_sys->tz_dstसमय != tz_other->tz_dstसमय)) अणु
+		म_लिखो("[FAIL] %s tz mismatch\n", which);
 		nerrs++;
-	}
+	पूर्ण
 
-	d1 = tv_diff(tv_other, tv_sys1);
-	d2 = tv_diff(tv_sys2, tv_other); 
-	printf("\t%s time offsets: %lf %lf\n", which, d1, d2);
+	d1 = tv_dअगरf(tv_other, tv_sys1);
+	d2 = tv_dअगरf(tv_sys2, tv_other); 
+	म_लिखो("\t%s time offsets: %lf %lf\n", which, d1, d2);
 
-	if (d1 < 0 || d2 < 0) {
-		printf("[FAIL]\t%s time was inconsistent with the syscall\n", which);
+	अगर (d1 < 0 || d2 < 0) अणु
+		म_लिखो("[FAIL]\t%s time was inconsistent with the syscall\n", which);
 		nerrs++;
-	} else {
-		printf("[OK]\t%s gettimeofday()'s timeval was okay\n", which);
-	}
+	पूर्ण अन्यथा अणु
+		म_लिखो("[OK]\t%s gettimeofday()'s timeval was okay\n", which);
+	पूर्ण
 
-	return nerrs;
-}
+	वापस nerrs;
+पूर्ण
 
-static int test_gtod(void)
-{
-	struct timeval tv_sys1, tv_sys2, tv_vdso, tv_vsys;
-	struct timezone tz_sys, tz_vdso, tz_vsys;
-	long ret_vdso = -1;
-	long ret_vsys = -1;
-	int nerrs = 0;
+अटल पूर्णांक test_gtod(व्योम)
+अणु
+	काष्ठा समयval tv_sys1, tv_sys2, tv_vdso, tv_vsys;
+	काष्ठा समयzone tz_sys, tz_vdso, tz_vsys;
+	दीर्घ ret_vdso = -1;
+	दीर्घ ret_vsys = -1;
+	पूर्णांक nerrs = 0;
 
-	printf("[RUN]\ttest gettimeofday()\n");
+	म_लिखो("[RUN]\ttest gettimeofday()\n");
 
-	if (sys_gtod(&tv_sys1, &tz_sys) != 0)
+	अगर (sys_gtod(&tv_sys1, &tz_sys) != 0)
 		err(1, "syscall gettimeofday");
-	if (vdso_gtod)
+	अगर (vdso_gtod)
 		ret_vdso = vdso_gtod(&tv_vdso, &tz_vdso);
-	if (vsyscall_map_x)
+	अगर (vsyscall_map_x)
 		ret_vsys = vgtod(&tv_vsys, &tz_vsys);
-	if (sys_gtod(&tv_sys2, &tz_sys) != 0)
+	अगर (sys_gtod(&tv_sys2, &tz_sys) != 0)
 		err(1, "syscall gettimeofday");
 
-	if (vdso_gtod) {
-		if (ret_vdso == 0) {
+	अगर (vdso_gtod) अणु
+		अगर (ret_vdso == 0) अणु
 			nerrs += check_gtod(&tv_sys1, &tv_sys2, &tz_sys, "vDSO", &tv_vdso, &tz_vdso);
-		} else {
-			printf("[FAIL]\tvDSO gettimeofday() failed: %ld\n", ret_vdso);
+		पूर्ण अन्यथा अणु
+			म_लिखो("[FAIL]\tvDSO gettimeofday() failed: %ld\n", ret_vdso);
 			nerrs++;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (vsyscall_map_x) {
-		if (ret_vsys == 0) {
+	अगर (vsyscall_map_x) अणु
+		अगर (ret_vsys == 0) अणु
 			nerrs += check_gtod(&tv_sys1, &tv_sys2, &tz_sys, "vsyscall", &tv_vsys, &tz_vsys);
-		} else {
-			printf("[FAIL]\tvsys gettimeofday() failed: %ld\n", ret_vsys);
+		पूर्ण अन्यथा अणु
+			म_लिखो("[FAIL]\tvsys gettimeofday() failed: %ld\n", ret_vsys);
 			nerrs++;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return nerrs;
-}
+	वापस nerrs;
+पूर्ण
 
-static int test_time(void) {
-	int nerrs = 0;
+अटल पूर्णांक test_समय(व्योम) अणु
+	पूर्णांक nerrs = 0;
 
-	printf("[RUN]\ttest time()\n");
-	long t_sys1, t_sys2, t_vdso = 0, t_vsys = 0;
-	long t2_sys1 = -1, t2_sys2 = -1, t2_vdso = -1, t2_vsys = -1;
-	t_sys1 = sys_time(&t2_sys1);
-	if (vdso_time)
-		t_vdso = vdso_time(&t2_vdso);
-	if (vsyscall_map_x)
-		t_vsys = vtime(&t2_vsys);
-	t_sys2 = sys_time(&t2_sys2);
-	if (t_sys1 < 0 || t_sys1 != t2_sys1 || t_sys2 < 0 || t_sys2 != t2_sys2) {
-		printf("[FAIL]\tsyscall failed (ret1:%ld output1:%ld ret2:%ld output2:%ld)\n", t_sys1, t2_sys1, t_sys2, t2_sys2);
+	म_लिखो("[RUN]\ttest time()\n");
+	दीर्घ t_sys1, t_sys2, t_vdso = 0, t_vsys = 0;
+	दीर्घ t2_sys1 = -1, t2_sys2 = -1, t2_vdso = -1, t2_vsys = -1;
+	t_sys1 = sys_समय(&t2_sys1);
+	अगर (vdso_समय)
+		t_vdso = vdso_समय(&t2_vdso);
+	अगर (vsyscall_map_x)
+		t_vsys = vसमय(&t2_vsys);
+	t_sys2 = sys_समय(&t2_sys2);
+	अगर (t_sys1 < 0 || t_sys1 != t2_sys1 || t_sys2 < 0 || t_sys2 != t2_sys2) अणु
+		म_लिखो("[FAIL]\tsyscall failed (ret1:%ld output1:%ld ret2:%ld output2:%ld)\n", t_sys1, t2_sys1, t_sys2, t2_sys2);
 		nerrs++;
-		return nerrs;
-	}
+		वापस nerrs;
+	पूर्ण
 
-	if (vdso_time) {
-		if (t_vdso < 0 || t_vdso != t2_vdso) {
-			printf("[FAIL]\tvDSO failed (ret:%ld output:%ld)\n", t_vdso, t2_vdso);
+	अगर (vdso_समय) अणु
+		अगर (t_vdso < 0 || t_vdso != t2_vdso) अणु
+			म_लिखो("[FAIL]\tvDSO failed (ret:%ld output:%ld)\n", t_vdso, t2_vdso);
 			nerrs++;
-		} else if (t_vdso < t_sys1 || t_vdso > t_sys2) {
-			printf("[FAIL]\tvDSO returned the wrong time (%ld %ld %ld)\n", t_sys1, t_vdso, t_sys2);
+		पूर्ण अन्यथा अगर (t_vdso < t_sys1 || t_vdso > t_sys2) अणु
+			म_लिखो("[FAIL]\tvDSO returned the wrong time (%ld %ld %ld)\n", t_sys1, t_vdso, t_sys2);
 			nerrs++;
-		} else {
-			printf("[OK]\tvDSO time() is okay\n");
-		}
-	}
+		पूर्ण अन्यथा अणु
+			म_लिखो("[OK]\tvDSO time() is okay\n");
+		पूर्ण
+	पूर्ण
 
-	if (vsyscall_map_x) {
-		if (t_vsys < 0 || t_vsys != t2_vsys) {
-			printf("[FAIL]\tvsyscall failed (ret:%ld output:%ld)\n", t_vsys, t2_vsys);
+	अगर (vsyscall_map_x) अणु
+		अगर (t_vsys < 0 || t_vsys != t2_vsys) अणु
+			म_लिखो("[FAIL]\tvsyscall failed (ret:%ld output:%ld)\n", t_vsys, t2_vsys);
 			nerrs++;
-		} else if (t_vsys < t_sys1 || t_vsys > t_sys2) {
-			printf("[FAIL]\tvsyscall returned the wrong time (%ld %ld %ld)\n", t_sys1, t_vsys, t_sys2);
+		पूर्ण अन्यथा अगर (t_vsys < t_sys1 || t_vsys > t_sys2) अणु
+			म_लिखो("[FAIL]\tvsyscall returned the wrong time (%ld %ld %ld)\n", t_sys1, t_vsys, t_sys2);
 			nerrs++;
-		} else {
-			printf("[OK]\tvsyscall time() is okay\n");
-		}
-	}
+		पूर्ण अन्यथा अणु
+			म_लिखो("[OK]\tvsyscall time() is okay\n");
+		पूर्ण
+	पूर्ण
 
-	return nerrs;
-}
+	वापस nerrs;
+पूर्ण
 
-static int test_getcpu(int cpu)
-{
-	int nerrs = 0;
-	long ret_sys, ret_vdso = -1, ret_vsys = -1;
+अटल पूर्णांक test_अ_लोpu(पूर्णांक cpu)
+अणु
+	पूर्णांक nerrs = 0;
+	दीर्घ ret_sys, ret_vdso = -1, ret_vsys = -1;
 
-	printf("[RUN]\tgetcpu() on CPU %d\n", cpu);
+	म_लिखो("[RUN]\tgetcpu() on CPU %d\n", cpu);
 
 	cpu_set_t cpuset;
 	CPU_ZERO(&cpuset);
 	CPU_SET(cpu, &cpuset);
-	if (sched_setaffinity(0, sizeof(cpuset), &cpuset) != 0) {
-		printf("[SKIP]\tfailed to force CPU %d\n", cpu);
-		return nerrs;
-	}
+	अगर (sched_setaffinity(0, माप(cpuset), &cpuset) != 0) अणु
+		म_लिखो("[SKIP]\tfailed to force CPU %d\n", cpu);
+		वापस nerrs;
+	पूर्ण
 
-	unsigned cpu_sys, cpu_vdso, cpu_vsys, node_sys, node_vdso, node_vsys;
-	unsigned node = 0;
+	अचिन्हित cpu_sys, cpu_vdso, cpu_vsys, node_sys, node_vdso, node_vsys;
+	अचिन्हित node = 0;
 	bool have_node = false;
-	ret_sys = sys_getcpu(&cpu_sys, &node_sys, 0);
-	if (vdso_getcpu)
-		ret_vdso = vdso_getcpu(&cpu_vdso, &node_vdso, 0);
-	if (vsyscall_map_x)
-		ret_vsys = vgetcpu(&cpu_vsys, &node_vsys, 0);
+	ret_sys = sys_अ_लोpu(&cpu_sys, &node_sys, 0);
+	अगर (vdso_अ_लोpu)
+		ret_vdso = vdso_अ_लोpu(&cpu_vdso, &node_vdso, 0);
+	अगर (vsyscall_map_x)
+		ret_vsys = vअ_लोpu(&cpu_vsys, &node_vsys, 0);
 
-	if (ret_sys == 0) {
-		if (cpu_sys != cpu) {
-			printf("[FAIL]\tsyscall reported CPU %hu but should be %d\n", cpu_sys, cpu);
+	अगर (ret_sys == 0) अणु
+		अगर (cpu_sys != cpu) अणु
+			म_लिखो("[FAIL]\tsyscall reported CPU %hu but should be %d\n", cpu_sys, cpu);
 			nerrs++;
-		}
+		पूर्ण
 
 		have_node = true;
 		node = node_sys;
-	}
+	पूर्ण
 
-	if (vdso_getcpu) {
-		if (ret_vdso) {
-			printf("[FAIL]\tvDSO getcpu() failed\n");
+	अगर (vdso_अ_लोpu) अणु
+		अगर (ret_vdso) अणु
+			म_लिखो("[FAIL]\tvDSO getcpu() failed\n");
 			nerrs++;
-		} else {
-			if (!have_node) {
+		पूर्ण अन्यथा अणु
+			अगर (!have_node) अणु
 				have_node = true;
 				node = node_vdso;
-			}
+			पूर्ण
 
-			if (cpu_vdso != cpu) {
-				printf("[FAIL]\tvDSO reported CPU %hu but should be %d\n", cpu_vdso, cpu);
+			अगर (cpu_vdso != cpu) अणु
+				म_लिखो("[FAIL]\tvDSO reported CPU %hu but should be %d\n", cpu_vdso, cpu);
 				nerrs++;
-			} else {
-				printf("[OK]\tvDSO reported correct CPU\n");
-			}
+			पूर्ण अन्यथा अणु
+				म_लिखो("[OK]\tvDSO reported correct CPU\n");
+			पूर्ण
 
-			if (node_vdso != node) {
-				printf("[FAIL]\tvDSO reported node %hu but should be %hu\n", node_vdso, node);
+			अगर (node_vdso != node) अणु
+				म_लिखो("[FAIL]\tvDSO reported node %hu but should be %hu\n", node_vdso, node);
 				nerrs++;
-			} else {
-				printf("[OK]\tvDSO reported correct node\n");
-			}
-		}
-	}
+			पूर्ण अन्यथा अणु
+				म_लिखो("[OK]\tvDSO reported correct node\n");
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	if (vsyscall_map_x) {
-		if (ret_vsys) {
-			printf("[FAIL]\tvsyscall getcpu() failed\n");
+	अगर (vsyscall_map_x) अणु
+		अगर (ret_vsys) अणु
+			म_लिखो("[FAIL]\tvsyscall getcpu() failed\n");
 			nerrs++;
-		} else {
-			if (!have_node) {
+		पूर्ण अन्यथा अणु
+			अगर (!have_node) अणु
 				have_node = true;
 				node = node_vsys;
-			}
+			पूर्ण
 
-			if (cpu_vsys != cpu) {
-				printf("[FAIL]\tvsyscall reported CPU %hu but should be %d\n", cpu_vsys, cpu);
+			अगर (cpu_vsys != cpu) अणु
+				म_लिखो("[FAIL]\tvsyscall reported CPU %hu but should be %d\n", cpu_vsys, cpu);
 				nerrs++;
-			} else {
-				printf("[OK]\tvsyscall reported correct CPU\n");
-			}
+			पूर्ण अन्यथा अणु
+				म_लिखो("[OK]\tvsyscall reported correct CPU\n");
+			पूर्ण
 
-			if (node_vsys != node) {
-				printf("[FAIL]\tvsyscall reported node %hu but should be %hu\n", node_vsys, node);
+			अगर (node_vsys != node) अणु
+				म_लिखो("[FAIL]\tvsyscall reported node %hu but should be %hu\n", node_vsys, node);
 				nerrs++;
-			} else {
-				printf("[OK]\tvsyscall reported correct node\n");
-			}
-		}
-	}
+			पूर्ण अन्यथा अणु
+				म_लिखो("[OK]\tvsyscall reported correct node\n");
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	return nerrs;
-}
+	वापस nerrs;
+पूर्ण
 
-static int test_vsys_r(void)
-{
-#ifdef __x86_64__
-	printf("[RUN]\tChecking read access to the vsyscall page\n");
-	bool can_read;
-	if (sigsetjmp(jmpbuf, 1) == 0) {
-		*(volatile int *)0xffffffffff600000;
-		can_read = true;
-	} else {
-		can_read = false;
-	}
+अटल पूर्णांक test_vsys_r(व्योम)
+अणु
+#अगर_घोषित __x86_64__
+	म_लिखो("[RUN]\tChecking read access to the vsyscall page\n");
+	bool can_पढ़ो;
+	अगर (sigबनाओ_लाँघ(jmpbuf, 1) == 0) अणु
+		*(अस्थिर पूर्णांक *)0xffffffffff600000;
+		can_पढ़ो = true;
+	पूर्ण अन्यथा अणु
+		can_पढ़ो = false;
+	पूर्ण
 
-	if (can_read && !vsyscall_map_r) {
-		printf("[FAIL]\tWe have read access, but we shouldn't\n");
-		return 1;
-	} else if (!can_read && vsyscall_map_r) {
-		printf("[FAIL]\tWe don't have read access, but we should\n");
-		return 1;
-	} else if (can_read) {
-		printf("[OK]\tWe have read access\n");
-	} else {
-		printf("[OK]\tWe do not have read access: #PF(0x%lx)\n",
+	अगर (can_पढ़ो && !vsyscall_map_r) अणु
+		म_लिखो("[FAIL]\tWe have read access, but we shouldn't\n");
+		वापस 1;
+	पूर्ण अन्यथा अगर (!can_पढ़ो && vsyscall_map_r) अणु
+		म_लिखो("[FAIL]\tWe don't have read access, but we should\n");
+		वापस 1;
+	पूर्ण अन्यथा अगर (can_पढ़ो) अणु
+		म_लिखो("[OK]\tWe have read access\n");
+	पूर्ण अन्यथा अणु
+		म_लिखो("[OK]\tWe do not have read access: #PF(0x%lx)\n",
 		       segv_err);
-	}
-#endif
+	पूर्ण
+#पूर्ण_अगर
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int test_vsys_x(void)
-{
-#ifdef __x86_64__
-	if (vsyscall_map_x) {
-		/* We already tested this adequately. */
-		return 0;
-	}
+अटल पूर्णांक test_vsys_x(व्योम)
+अणु
+#अगर_घोषित __x86_64__
+	अगर (vsyscall_map_x) अणु
+		/* We alपढ़ोy tested this adequately. */
+		वापस 0;
+	पूर्ण
 
-	printf("[RUN]\tMake sure that vsyscalls really page fault\n");
+	म_लिखो("[RUN]\tMake sure that vsyscalls really page fault\n");
 
 	bool can_exec;
-	if (sigsetjmp(jmpbuf, 1) == 0) {
-		vgtod(NULL, NULL);
+	अगर (sigबनाओ_लाँघ(jmpbuf, 1) == 0) अणु
+		vgtod(शून्य, शून्य);
 		can_exec = true;
-	} else {
+	पूर्ण अन्यथा अणु
 		can_exec = false;
-	}
+	पूर्ण
 
-	if (can_exec) {
-		printf("[FAIL]\tExecuting the vsyscall did not page fault\n");
-		return 1;
-	} else if (segv_err & (1 << 4)) { /* INSTR */
-		printf("[OK]\tExecuting the vsyscall page failed: #PF(0x%lx)\n",
+	अगर (can_exec) अणु
+		म_लिखो("[FAIL]\tExecuting the vsyscall did not page fault\n");
+		वापस 1;
+	पूर्ण अन्यथा अगर (segv_err & (1 << 4)) अणु /* INSTR */
+		म_लिखो("[OK]\tExecuting the vsyscall page failed: #PF(0x%lx)\n",
 		       segv_err);
-	} else {
-		printf("[FAIL]\tExecution failed with the wrong error: #PF(0x%lx)\n",
+	पूर्ण अन्यथा अणु
+		म_लिखो("[FAIL]\tExecution failed with the wrong error: #PF(0x%lx)\n",
 		       segv_err);
-		return 1;
-	}
-#endif
+		वापस 1;
+	पूर्ण
+#पूर्ण_अगर
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * Debuggers expect ptrace() to be able to peek at the vsyscall page.
- * Use process_vm_readv() as a proxy for ptrace() to test this.  We
- * want it to work in the vsyscall=emulate case and to fail in the
- * vsyscall=xonly case.
+ * Use process_vm_पढ़ोv() as a proxy क्रम ptrace() to test this.  We
+ * want it to work in the vsyscall=emulate हाल and to fail in the
+ * vsyscall=xonly हाल.
  *
  * It's worth noting that this ABI is a bit nutty.  write(2) can't
- * read from the vsyscall page on any kernel version or mode.  The
+ * पढ़ो from the vsyscall page on any kernel version or mode.  The
  * fact that ptrace() ever worked was a nice courtesy of old kernels,
  * but the code to support it is fairly gross.
  */
-static int test_process_vm_readv(void)
-{
-#ifdef __x86_64__
-	char buf[4096];
-	struct iovec local, remote;
-	int ret;
+अटल पूर्णांक test_process_vm_पढ़ोv(व्योम)
+अणु
+#अगर_घोषित __x86_64__
+	अक्षर buf[4096];
+	काष्ठा iovec local, remote;
+	पूर्णांक ret;
 
-	printf("[RUN]\tprocess_vm_readv() from vsyscall page\n");
+	म_लिखो("[RUN]\tprocess_vm_readv() from vsyscall page\n");
 
 	local.iov_base = buf;
 	local.iov_len = 4096;
-	remote.iov_base = (void *)0xffffffffff600000;
+	remote.iov_base = (व्योम *)0xffffffffff600000;
 	remote.iov_len = 4096;
-	ret = process_vm_readv(getpid(), &local, 1, &remote, 1, 0);
-	if (ret != 4096) {
+	ret = process_vm_पढ़ोv(getpid(), &local, 1, &remote, 1, 0);
+	अगर (ret != 4096) अणु
 		/*
-		 * We expect process_vm_readv() to work if and only if the
-		 * vsyscall page is readable.
+		 * We expect process_vm_पढ़ोv() to work अगर and only अगर the
+		 * vsyscall page is पढ़ोable.
 		 */
-		printf("[%s]\tprocess_vm_readv() failed (ret = %d, errno = %d)\n", vsyscall_map_r ? "FAIL" : "OK", ret, errno);
-		return vsyscall_map_r ? 1 : 0;
-	}
+		म_लिखो("[%s]\tprocess_vm_readv() failed (ret = %d, errno = %d)\n", vsyscall_map_r ? "FAIL" : "OK", ret, त्रुटि_सं);
+		वापस vsyscall_map_r ? 1 : 0;
+	पूर्ण
 
-	if (vsyscall_map_r) {
-		if (!memcmp(buf, (const void *)0xffffffffff600000, 4096)) {
-			printf("[OK]\tIt worked and read correct data\n");
-		} else {
-			printf("[FAIL]\tIt worked but returned incorrect data\n");
-			return 1;
-		}
-	} else {
-		printf("[FAIL]\tprocess_rm_readv() succeeded, but it should have failed in this configuration\n");
-		return 1;
-	}
-#endif
+	अगर (vsyscall_map_r) अणु
+		अगर (!स_भेद(buf, (स्थिर व्योम *)0xffffffffff600000, 4096)) अणु
+			म_लिखो("[OK]\tIt worked and read correct data\n");
+		पूर्ण अन्यथा अणु
+			म_लिखो("[FAIL]\tIt worked but returned incorrect data\n");
+			वापस 1;
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		म_लिखो("[FAIL]\tprocess_rm_readv() succeeded, but it should have failed in this configuration\n");
+		वापस 1;
+	पूर्ण
+#पूर्ण_अगर
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#ifdef __x86_64__
-static volatile sig_atomic_t num_vsyscall_traps;
+#अगर_घोषित __x86_64__
+अटल अस्थिर संक_पूर्ण_प्रकार num_vsyscall_traps;
 
-static void sigtrap(int sig, siginfo_t *info, void *ctx_void)
-{
-	ucontext_t *ctx = (ucontext_t *)ctx_void;
-	unsigned long ip = ctx->uc_mcontext.gregs[REG_RIP];
+अटल व्योम sigtrap(पूर्णांक sig, siginfo_t *info, व्योम *ctx_व्योम)
+अणु
+	ucontext_t *ctx = (ucontext_t *)ctx_व्योम;
+	अचिन्हित दीर्घ ip = ctx->uc_mcontext.gregs[REG_RIP];
 
-	if (((ip ^ 0xffffffffff600000UL) & ~0xfffUL) == 0)
+	अगर (((ip ^ 0xffffffffff600000UL) & ~0xfffUL) == 0)
 		num_vsyscall_traps++;
-}
+पूर्ण
 
-static int test_emulation(void)
-{
-	time_t tmp;
+अटल पूर्णांक test_emulation(व्योम)
+अणु
+	समय_प्रकार पंचांगp;
 	bool is_native;
 
-	if (!vsyscall_map_x)
-		return 0;
+	अगर (!vsyscall_map_x)
+		वापस 0;
 
-	printf("[RUN]\tchecking that vsyscalls are emulated\n");
+	म_लिखो("[RUN]\tchecking that vsyscalls are emulated\n");
 	sethandler(SIGTRAP, sigtrap, 0);
 	set_eflags(get_eflags() | X86_EFLAGS_TF);
-	vtime(&tmp);
+	vसमय(&पंचांगp);
 	set_eflags(get_eflags() & ~X86_EFLAGS_TF);
 
 	/*
 	 * If vsyscalls are emulated, we expect a single trap in the
-	 * vsyscall page -- the call instruction will trap with RIP
-	 * pointing to the entry point before emulation takes over.
+	 * vsyscall page -- the call inकाष्ठाion will trap with RIP
+	 * poपूर्णांकing to the entry poपूर्णांक beक्रमe emulation takes over.
 	 * In native mode, we expect two traps, since whatever code
 	 * the vsyscall page contains will be more than just a ret
-	 * instruction.
+	 * inकाष्ठाion.
 	 */
 	is_native = (num_vsyscall_traps > 1);
 
-	printf("[%s]\tvsyscalls are %s (%d instructions in vsyscall page)\n",
+	म_लिखो("[%s]\tvsyscalls are %s (%d instructions in vsyscall page)\n",
 	       (is_native ? "FAIL" : "OK"),
 	       (is_native ? "native" : "emulated"),
-	       (int)num_vsyscall_traps);
+	       (पूर्णांक)num_vsyscall_traps);
 
-	return is_native;
-}
-#endif
+	वापस is_native;
+पूर्ण
+#पूर्ण_अगर
 
-int main(int argc, char **argv)
-{
-	int nerrs = 0;
+पूर्णांक मुख्य(पूर्णांक argc, अक्षर **argv)
+अणु
+	पूर्णांक nerrs = 0;
 
 	init_vdso();
 	nerrs += init_vsys();
 
 	nerrs += test_gtod();
-	nerrs += test_time();
-	nerrs += test_getcpu(0);
-	nerrs += test_getcpu(1);
+	nerrs += test_समय();
+	nerrs += test_अ_लोpu(0);
+	nerrs += test_अ_लोpu(1);
 
-	sethandler(SIGSEGV, sigsegv, 0);
+	sethandler(संक_अंश, sigsegv, 0);
 	nerrs += test_vsys_r();
 	nerrs += test_vsys_x();
 
-	nerrs += test_process_vm_readv();
+	nerrs += test_process_vm_पढ़ोv();
 
-#ifdef __x86_64__
+#अगर_घोषित __x86_64__
 	nerrs += test_emulation();
-#endif
+#पूर्ण_अगर
 
-	return nerrs ? 1 : 0;
-}
+	वापस nerrs ? 1 : 0;
+पूर्ण

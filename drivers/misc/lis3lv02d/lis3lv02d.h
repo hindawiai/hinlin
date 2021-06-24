@@ -1,29 +1,30 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
  *  lis3lv02d.h - ST LIS3LV02DL accelerometer driver
  *
  *  Copyright (C) 2007-2008 Yan Burman
  *  Copyright (C) 2008-2009 Eric Piel
  */
-#include <linux/platform_device.h>
-#include <linux/input.h>
-#include <linux/regulator/consumer.h>
-#include <linux/miscdevice.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/input.h>
+#समावेश <linux/regulator/consumer.h>
+#समावेश <linux/miscdevice.h>
 
 /*
  * This driver tries to support the "digital" accelerometer chips from
  * STMicroelectronics such as LIS3LV02DL, LIS302DL, LIS3L02DQ, LIS331DL,
  * LIS331DLH, LIS35DE, or LIS202DL. They are very similar in terms of
- * programming, with almost the same registers. In addition to differing
- * on physical properties, they differ on the number of axes (2/3),
- * precision (8/12 bits), and special features (freefall detection,
- * click...). Unfortunately, not all the differences can be probed via
- * a register. They can be connected either via I²C or SPI.
+ * programming, with almost the same रेजिस्टरs. In addition to dअगरfering
+ * on physical properties, they dअगरfer on the number of axes (2/3),
+ * precision (8/12 bits), and special features (मुक्तfall detection,
+ * click...). Unक्रमtunately, not all the dअगरferences can be probed via
+ * a रेजिस्टर. They can be connected either via IतऑC or SPI.
  */
 
-#include <linux/lis3lv02d.h>
+#समावेश <linux/lis3lv02d.h>
 
-enum lis3_reg {
+क्रमागत lis3_reg अणु
 	WHO_AM_I	= 0x0F,
 	OFFSET_X	= 0x16,
 	OFFSET_Y	= 0x17,
@@ -46,9 +47,9 @@ enum lis3_reg {
 	OUTZ_L		= 0x2C,
 	OUTZ_H		= 0x2D,
 	OUTZ		= 0x2D,
-};
+पूर्ण;
 
-enum lis302d_reg {
+क्रमागत lis302d_reg अणु
 	FF_WU_CFG_1	= 0x30,
 	FF_WU_SRC_1	= 0x31,
 	FF_WU_THS_1	= 0x32,
@@ -64,9 +65,9 @@ enum lis302d_reg {
 	CLICK_TIMELIMIT	= 0x3D,
 	CLICK_LATENCY	= 0x3E,
 	CLICK_WINDOW	= 0x3F,
-};
+पूर्ण;
 
-enum lis3lv02d_reg {
+क्रमागत lis3lv02d_reg अणु
 	FF_WU_CFG	= 0x30,
 	FF_WU_SRC	= 0x31,
 	FF_WU_ACK	= 0x32,
@@ -80,26 +81,26 @@ enum lis3lv02d_reg {
 	DD_THSI_H	= 0x3D,
 	DD_THSE_L	= 0x3E,
 	DD_THSE_H	= 0x3F,
-};
+पूर्ण;
 
-enum lis3_who_am_i {
+क्रमागत lis3_who_am_i अणु
 	WAI_3DLH	= 0x32,	/* 16 bits: LIS331DLH */
 	WAI_3DC		= 0x33,	/* 8 bits: LIS3DC, HP3DC */
 	WAI_12B		= 0x3A, /* 12 bits: LIS3LV02D[LQ]... */
 	WAI_8B		= 0x3B, /* 8 bits: LIS[23]02D[LQ]... */
 	WAI_6B		= 0x52, /* 6 bits: LIS331DLF - not supported */
-};
+पूर्ण;
 
-enum lis3_type {
+क्रमागत lis3_type अणु
 	LIS3LV02D,
 	LIS3DC,
 	HP3DC,
 	LIS2302D,
 	LIS331DLF,
 	LIS331DLH,
-};
+पूर्ण;
 
-enum lis3lv02d_ctrl1_12b {
+क्रमागत lis3lv02d_ctrl1_12b अणु
 	CTRL1_Xen	= 0x01,
 	CTRL1_Yen	= 0x02,
 	CTRL1_Zen	= 0x04,
@@ -108,46 +109,46 @@ enum lis3lv02d_ctrl1_12b {
 	CTRL1_DF1	= 0x20,
 	CTRL1_PD0	= 0x40,
 	CTRL1_PD1	= 0x80,
-};
+पूर्ण;
 
 /* Delta to ctrl1_12b version */
-enum lis3lv02d_ctrl1_8b {
+क्रमागत lis3lv02d_ctrl1_8b अणु
 	CTRL1_STM	= 0x08,
 	CTRL1_STP	= 0x10,
 	CTRL1_FS	= 0x20,
 	CTRL1_PD	= 0x40,
 	CTRL1_DR	= 0x80,
-};
+पूर्ण;
 
-enum lis3lv02d_ctrl1_3dc {
+क्रमागत lis3lv02d_ctrl1_3dc अणु
 	CTRL1_ODR0	= 0x10,
 	CTRL1_ODR1	= 0x20,
 	CTRL1_ODR2	= 0x40,
 	CTRL1_ODR3	= 0x80,
-};
+पूर्ण;
 
-enum lis331dlh_ctrl1 {
+क्रमागत lis331dlh_ctrl1 अणु
 	CTRL1_DR0	= 0x08,
 	CTRL1_DR1	= 0x10,
 	CTRL1_PM0	= 0x20,
 	CTRL1_PM1	= 0x40,
 	CTRL1_PM2	= 0x80,
-};
+पूर्ण;
 
-enum lis331dlh_ctrl2 {
+क्रमागत lis331dlh_ctrl2 अणु
 	CTRL2_HPEN1	= 0x04,
 	CTRL2_HPEN2	= 0x08,
 	CTRL2_FDS_3DLH	= 0x10,
 	CTRL2_BOOT_3DLH	= 0x80,
-};
+पूर्ण;
 
-enum lis331dlh_ctrl4 {
+क्रमागत lis331dlh_ctrl4 अणु
 	CTRL4_STSIGN	= 0x08,
 	CTRL4_BLE	= 0x40,
 	CTRL4_BDU	= 0x80,
-};
+पूर्ण;
 
-enum lis3lv02d_ctrl2 {
+क्रमागत lis3lv02d_ctrl2 अणु
 	CTRL2_DAS	= 0x01,
 	CTRL2_SIM	= 0x02,
 	CTRL2_DRDY	= 0x04,
@@ -156,32 +157,32 @@ enum lis3lv02d_ctrl2 {
 	CTRL2_BLE	= 0x20,
 	CTRL2_BDU	= 0x40, /* Block Data Update */
 	CTRL2_FS	= 0x80, /* Full Scale selection */
-};
+पूर्ण;
 
-enum lis3lv02d_ctrl4_3dc {
+क्रमागत lis3lv02d_ctrl4_3dc अणु
 	CTRL4_SIM	= 0x01,
 	CTRL4_ST0	= 0x02,
 	CTRL4_ST1	= 0x04,
 	CTRL4_FS0	= 0x10,
 	CTRL4_FS1	= 0x20,
-};
+पूर्ण;
 
-enum lis302d_ctrl2 {
+क्रमागत lis302d_ctrl2 अणु
 	HP_FF_WU2	= 0x08,
 	HP_FF_WU1	= 0x04,
 	CTRL2_BOOT_8B   = 0x40,
-};
+पूर्ण;
 
-enum lis3lv02d_ctrl3 {
+क्रमागत lis3lv02d_ctrl3 अणु
 	CTRL3_CFS0	= 0x01,
 	CTRL3_CFS1	= 0x02,
 	CTRL3_FDS	= 0x10,
 	CTRL3_HPFF	= 0x20,
 	CTRL3_HPDD	= 0x40,
 	CTRL3_ECK	= 0x80,
-};
+पूर्ण;
 
-enum lis3lv02d_status_reg {
+क्रमागत lis3lv02d_status_reg अणु
 	STATUS_XDA	= 0x01,
 	STATUS_YDA	= 0x02,
 	STATUS_ZDA	= 0x04,
@@ -190,9 +191,9 @@ enum lis3lv02d_status_reg {
 	STATUS_YOR	= 0x20,
 	STATUS_ZOR	= 0x40,
 	STATUS_XYZOR	= 0x80,
-};
+पूर्ण;
 
-enum lis3lv02d_ff_wu_cfg {
+क्रमागत lis3lv02d_ff_wu_cfg अणु
 	FF_WU_CFG_XLIE	= 0x01,
 	FF_WU_CFG_XHIE	= 0x02,
 	FF_WU_CFG_YLIE	= 0x04,
@@ -201,9 +202,9 @@ enum lis3lv02d_ff_wu_cfg {
 	FF_WU_CFG_ZHIE	= 0x20,
 	FF_WU_CFG_LIR	= 0x40,
 	FF_WU_CFG_AOI	= 0x80,
-};
+पूर्ण;
 
-enum lis3lv02d_ff_wu_src {
+क्रमागत lis3lv02d_ff_wu_src अणु
 	FF_WU_SRC_XL	= 0x01,
 	FF_WU_SRC_XH	= 0x02,
 	FF_WU_SRC_YL	= 0x04,
@@ -211,9 +212,9 @@ enum lis3lv02d_ff_wu_src {
 	FF_WU_SRC_ZL	= 0x10,
 	FF_WU_SRC_ZH	= 0x20,
 	FF_WU_SRC_IA	= 0x40,
-};
+पूर्ण;
 
-enum lis3lv02d_dd_cfg {
+क्रमागत lis3lv02d_dd_cfg अणु
 	DD_CFG_XLIE	= 0x01,
 	DD_CFG_XHIE	= 0x02,
 	DD_CFG_YLIE	= 0x04,
@@ -222,9 +223,9 @@ enum lis3lv02d_dd_cfg {
 	DD_CFG_ZHIE	= 0x20,
 	DD_CFG_LIR	= 0x40,
 	DD_CFG_IEND	= 0x80,
-};
+पूर्ण;
 
-enum lis3lv02d_dd_src {
+क्रमागत lis3lv02d_dd_src अणु
 	DD_SRC_XL	= 0x01,
 	DD_SRC_XH	= 0x02,
 	DD_SRC_YL	= 0x04,
@@ -232,9 +233,9 @@ enum lis3lv02d_dd_src {
 	DD_SRC_ZL	= 0x10,
 	DD_SRC_ZH	= 0x20,
 	DD_SRC_IA	= 0x40,
-};
+पूर्ण;
 
-enum lis3lv02d_click_src_8b {
+क्रमागत lis3lv02d_click_src_8b अणु
 	CLICK_SINGLE_X	= 0x01,
 	CLICK_DOUBLE_X	= 0x02,
 	CLICK_SINGLE_Y	= 0x04,
@@ -242,78 +243,78 @@ enum lis3lv02d_click_src_8b {
 	CLICK_SINGLE_Z	= 0x10,
 	CLICK_DOUBLE_Z	= 0x20,
 	CLICK_IA	= 0x40,
-};
+पूर्ण;
 
-enum lis3lv02d_reg_state {
+क्रमागत lis3lv02d_reg_state अणु
 	LIS3_REG_OFF	= 0x00,
 	LIS3_REG_ON	= 0x01,
-};
+पूर्ण;
 
-union axis_conversion {
-	struct {
-		int x, y, z;
-	};
-	int as_array[3];
+जोड़ axis_conversion अणु
+	काष्ठा अणु
+		पूर्णांक x, y, z;
+	पूर्ण;
+	पूर्णांक as_array[3];
 
-};
+पूर्ण;
 
-struct lis3lv02d {
-	void			*bus_priv; /* used by the bus layer only */
-	struct device		*pm_dev; /* for pm_runtime purposes */
-	int (*init) (struct lis3lv02d *lis3);
-	int (*write) (struct lis3lv02d *lis3, int reg, u8 val);
-	int (*read) (struct lis3lv02d *lis3, int reg, u8 *ret);
-	int (*blkread) (struct lis3lv02d *lis3, int reg, int len, u8 *ret);
-	int (*reg_ctrl) (struct lis3lv02d *lis3, bool state);
+काष्ठा lis3lv02d अणु
+	व्योम			*bus_priv; /* used by the bus layer only */
+	काष्ठा device		*pm_dev; /* क्रम pm_runसमय purposes */
+	पूर्णांक (*init) (काष्ठा lis3lv02d *lis3);
+	पूर्णांक (*ग_लिखो) (काष्ठा lis3lv02d *lis3, पूर्णांक reg, u8 val);
+	पूर्णांक (*पढ़ो) (काष्ठा lis3lv02d *lis3, पूर्णांक reg, u8 *ret);
+	पूर्णांक (*blkपढ़ो) (काष्ठा lis3lv02d *lis3, पूर्णांक reg, पूर्णांक len, u8 *ret);
+	पूर्णांक (*reg_ctrl) (काष्ठा lis3lv02d *lis3, bool state);
 
-	int                     *odrs;     /* Supported output data rates */
+	पूर्णांक                     *odrs;     /* Supported output data rates */
 	u8			*regs;	   /* Regs to store / restore */
-	int			regs_size;
+	पूर्णांक			regs_size;
 	u8                      *reg_cache;
 	bool			regs_stored;
 	bool			init_required;
 	u8                      odr_mask;  /* ODR bit mask */
 	u8			whoami;    /* indicates measurement precision */
-	s16 (*read_data) (struct lis3lv02d *lis3, int reg);
-	int			mdps_max_val;
-	int			pwron_delay;
-	int                     scale; /*
+	s16 (*पढ़ो_data) (काष्ठा lis3lv02d *lis3, पूर्णांक reg);
+	पूर्णांक			mdps_max_val;
+	पूर्णांक			pwron_delay;
+	पूर्णांक                     scale; /*
 					* relationship between 1 LBS and mG
 					* (1/1000th of earth gravity)
 					*/
 
-	struct input_dev	*idev;     /* input device */
-	struct platform_device	*pdev;     /* platform device */
-	struct regulator_bulk_data regulators[2];
-	atomic_t		count;     /* interrupt count after last read */
-	union axis_conversion	ac;        /* hw -> logical axis */
-	int			mapped_btns[3];
+	काष्ठा input_dev	*idev;     /* input device */
+	काष्ठा platक्रमm_device	*pdev;     /* platक्रमm device */
+	काष्ठा regulator_bulk_data regulators[2];
+	atomic_t		count;     /* पूर्णांकerrupt count after last पढ़ो */
+	जोड़ axis_conversion	ac;        /* hw -> logical axis */
+	पूर्णांक			mapped_btns[3];
 
 	u32			irq;       /* IRQ number */
-	struct fasync_struct	*async_queue; /* queue for the misc device */
-	wait_queue_head_t	misc_wait; /* Wait queue for the misc device */
-	unsigned long		misc_opened; /* bit0: whether the device is open */
-	struct miscdevice	miscdev;
+	काष्ठा fasync_काष्ठा	*async_queue; /* queue क्रम the misc device */
+	रुको_queue_head_t	misc_रुको; /* Wait queue क्रम the misc device */
+	अचिन्हित दीर्घ		misc_खोलोed; /* bit0: whether the device is खोलो */
+	काष्ठा miscdevice	miscdev;
 
-	int                     data_ready_count[2];
-	atomic_t		wake_thread;
-	unsigned char           irq_cfg;
-	unsigned int		shift_adj;
+	पूर्णांक                     data_पढ़ोy_count[2];
+	atomic_t		wake_thपढ़ो;
+	अचिन्हित अक्षर           irq_cfg;
+	अचिन्हित पूर्णांक		shअगरt_adj;
 
-	struct lis3lv02d_platform_data *pdata;	/* for passing board config */
-	struct mutex		mutex;     /* Serialize poll and selftest */
+	काष्ठा lis3lv02d_platक्रमm_data *pdata;	/* क्रम passing board config */
+	काष्ठा mutex		mutex;     /* Serialize poll and selftest */
 
-#ifdef CONFIG_OF
-	struct device_node	*of_node;
-#endif
-};
+#अगर_घोषित CONFIG_OF
+	काष्ठा device_node	*of_node;
+#पूर्ण_अगर
+पूर्ण;
 
-int lis3lv02d_init_device(struct lis3lv02d *lis3);
-int lis3lv02d_joystick_enable(struct lis3lv02d *lis3);
-void lis3lv02d_joystick_disable(struct lis3lv02d *lis3);
-void lis3lv02d_poweroff(struct lis3lv02d *lis3);
-int lis3lv02d_poweron(struct lis3lv02d *lis3);
-int lis3lv02d_remove_fs(struct lis3lv02d *lis3);
-int lis3lv02d_init_dt(struct lis3lv02d *lis3);
+पूर्णांक lis3lv02d_init_device(काष्ठा lis3lv02d *lis3);
+पूर्णांक lis3lv02d_joystick_enable(काष्ठा lis3lv02d *lis3);
+व्योम lis3lv02d_joystick_disable(काष्ठा lis3lv02d *lis3);
+व्योम lis3lv02d_घातeroff(काष्ठा lis3lv02d *lis3);
+पूर्णांक lis3lv02d_घातeron(काष्ठा lis3lv02d *lis3);
+पूर्णांक lis3lv02d_हटाओ_fs(काष्ठा lis3lv02d *lis3);
+पूर्णांक lis3lv02d_init_dt(काष्ठा lis3lv02d *lis3);
 
-extern struct lis3lv02d lis3_dev;
+बाह्य काष्ठा lis3lv02d lis3_dev;

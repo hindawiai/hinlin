@@ -1,39 +1,40 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
- *    Support for OR51211 (pcHDTV HD-2000) - VSB
+ *    Support क्रम OR51211 (pcHDTV HD-2000) - VSB
  *
  *    Copyright (C) 2005 Kirk Lapray <kirk_lapray@bigfoot.com>
 */
 
-#ifndef OR51211_H
-#define OR51211_H
+#अगर_अघोषित OR51211_H
+#घोषणा OR51211_H
 
-#include <linux/dvb/frontend.h>
-#include <linux/firmware.h>
+#समावेश <linux/dvb/frontend.h>
+#समावेश <linux/firmware.h>
 
-struct or51211_config
-{
+काष्ठा or51211_config
+अणु
 	/* The demodulator's i2c address */
 	u8 demod_address;
 
-	/* Request firmware for device */
-	int (*request_firmware)(struct dvb_frontend* fe, const struct firmware **fw, char* name);
-	void (*setmode)(struct dvb_frontend * fe, int mode);
-	void (*reset)(struct dvb_frontend * fe);
-	void (*sleep)(struct dvb_frontend * fe);
-};
+	/* Request firmware क्रम device */
+	पूर्णांक (*request_firmware)(काष्ठा dvb_frontend* fe, स्थिर काष्ठा firmware **fw, अक्षर* name);
+	व्योम (*seपंचांगode)(काष्ठा dvb_frontend * fe, पूर्णांक mode);
+	व्योम (*reset)(काष्ठा dvb_frontend * fe);
+	व्योम (*sleep)(काष्ठा dvb_frontend * fe);
+पूर्ण;
 
-#if IS_REACHABLE(CONFIG_DVB_OR51211)
-extern struct dvb_frontend* or51211_attach(const struct or51211_config* config,
-					   struct i2c_adapter* i2c);
-#else
-static inline struct dvb_frontend* or51211_attach(const struct or51211_config* config,
-					   struct i2c_adapter* i2c)
-{
-	printk(KERN_WARNING "%s: driver disabled by Kconfig\n", __func__);
-	return NULL;
-}
-#endif // CONFIG_DVB_OR51211
+#अगर IS_REACHABLE(CONFIG_DVB_OR51211)
+बाह्य काष्ठा dvb_frontend* or51211_attach(स्थिर काष्ठा or51211_config* config,
+					   काष्ठा i2c_adapter* i2c);
+#अन्यथा
+अटल अंतरभूत काष्ठा dvb_frontend* or51211_attach(स्थिर काष्ठा or51211_config* config,
+					   काष्ठा i2c_adapter* i2c)
+अणु
+	prपूर्णांकk(KERN_WARNING "%s: driver disabled by Kconfig\n", __func__);
+	वापस शून्य;
+पूर्ण
+#पूर्ण_अगर // CONFIG_DVB_OR51211
 
-#endif // OR51211_H
+#पूर्ण_अगर // OR51211_H
 

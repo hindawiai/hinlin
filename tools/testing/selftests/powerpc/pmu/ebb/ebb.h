@@ -1,78 +1,79 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * Copyright 2014, Michael Ellerman, IBM Corp.
  */
 
-#ifndef _SELFTESTS_POWERPC_PMU_EBB_EBB_H
-#define _SELFTESTS_POWERPC_PMU_EBB_EBB_H
+#अगर_अघोषित _SELFTESTS_POWERPC_PMU_EBB_EBB_H
+#घोषणा _SELFTESTS_POWERPC_PMU_EBB_EBB_H
 
-#include "../event.h"
-#include "../lib.h"
-#include "trace.h"
-#include "reg.h"
+#समावेश "../event.h"
+#समावेश "../lib.h"
+#समावेश "trace.h"
+#समावेश "reg.h"
 
-#define PMC_INDEX(pmc)	((pmc)-1)
+#घोषणा PMC_INDEX(pmc)	((pmc)-1)
 
-#define NUM_PMC_VALUES	128
+#घोषणा NUM_PMC_VALUES	128
 
-struct ebb_state
-{
-	struct {
+काष्ठा ebb_state
+अणु
+	काष्ठा अणु
 		u64 pmc_count[6];
-		volatile int ebb_count;
-		int spurious;
-		int negative;
-		int no_overflow;
-	} stats;
+		अस्थिर पूर्णांक ebb_count;
+		पूर्णांक spurious;
+		पूर्णांक negative;
+		पूर्णांक no_overflow;
+	पूर्ण stats;
 
 	bool pmc_enable[6];
-	struct trace_buffer *trace;
-};
+	काष्ठा trace_buffer *trace;
+पूर्ण;
 
-extern struct ebb_state ebb_state;
+बाह्य काष्ठा ebb_state ebb_state;
 
-#define COUNTER_OVERFLOW 0x80000000ull
+#घोषणा COUNTER_OVERFLOW 0x80000000ull
 
-static inline uint32_t pmc_sample_period(uint32_t value)
-{
-	return COUNTER_OVERFLOW - value;
-}
+अटल अंतरभूत uपूर्णांक32_t pmc_sample_period(uपूर्णांक32_t value)
+अणु
+	वापस COUNTER_OVERFLOW - value;
+पूर्ण
 
-static inline void ebb_enable_pmc_counting(int pmc)
-{
+अटल अंतरभूत व्योम ebb_enable_pmc_counting(पूर्णांक pmc)
+अणु
 	ebb_state.pmc_enable[PMC_INDEX(pmc)] = true;
-}
+पूर्ण
 
-bool ebb_check_count(int pmc, u64 sample_period, int fudge);
-void event_leader_ebb_init(struct event *e);
-void event_ebb_init(struct event *e);
-void event_bhrb_init(struct event *e, unsigned ifm);
-void setup_ebb_handler(void (*callee)(void));
-void standard_ebb_callee(void);
-int ebb_event_enable(struct event *e);
-void ebb_global_enable(void);
-void ebb_global_disable(void);
-bool ebb_is_supported(void);
-void ebb_freeze_pmcs(void);
-void ebb_unfreeze_pmcs(void);
-void event_ebb_init(struct event *e);
-void event_leader_ebb_init(struct event *e);
-int count_pmc(int pmc, uint32_t sample_period);
-void dump_ebb_state(void);
-void dump_summary_ebb_state(void);
-void dump_ebb_hw_state(void);
-void clear_ebb_stats(void);
-void write_pmc(int pmc, u64 value);
-u64 read_pmc(int pmc);
-void reset_ebb_with_clear_mask(unsigned long mmcr0_clear_mask);
-void reset_ebb(void);
-int ebb_check_mmcr0(void);
+bool ebb_check_count(पूर्णांक pmc, u64 sample_period, पूर्णांक fudge);
+व्योम event_leader_ebb_init(काष्ठा event *e);
+व्योम event_ebb_init(काष्ठा event *e);
+व्योम event_bhrb_init(काष्ठा event *e, अचिन्हित अगरm);
+व्योम setup_ebb_handler(व्योम (*callee)(व्योम));
+व्योम standard_ebb_callee(व्योम);
+पूर्णांक ebb_event_enable(काष्ठा event *e);
+व्योम ebb_global_enable(व्योम);
+व्योम ebb_global_disable(व्योम);
+bool ebb_is_supported(व्योम);
+व्योम ebb_मुक्तze_pmcs(व्योम);
+व्योम ebb_unमुक्तze_pmcs(व्योम);
+व्योम event_ebb_init(काष्ठा event *e);
+व्योम event_leader_ebb_init(काष्ठा event *e);
+पूर्णांक count_pmc(पूर्णांक pmc, uपूर्णांक32_t sample_period);
+व्योम dump_ebb_state(व्योम);
+व्योम dump_summary_ebb_state(व्योम);
+व्योम dump_ebb_hw_state(व्योम);
+व्योम clear_ebb_stats(व्योम);
+व्योम ग_लिखो_pmc(पूर्णांक pmc, u64 value);
+u64 पढ़ो_pmc(पूर्णांक pmc);
+व्योम reset_ebb_with_clear_mask(अचिन्हित दीर्घ mmcr0_clear_mask);
+व्योम reset_ebb(व्योम);
+पूर्णांक ebb_check_mmcr0(व्योम);
 
-extern u64 sample_period;
+बाह्य u64 sample_period;
 
-int core_busy_loop(void);
-int ebb_child(union pipe read_pipe, union pipe write_pipe);
-int catch_sigill(void (*func)(void));
-void write_pmc1(void);
+पूर्णांक core_busy_loop(व्योम);
+पूर्णांक ebb_child(जोड़ pipe पढ़ो_pipe, जोड़ pipe ग_लिखो_pipe);
+पूर्णांक catch_sigill(व्योम (*func)(व्योम));
+व्योम ग_लिखो_pmc1(व्योम);
 
-#endif /* _SELFTESTS_POWERPC_PMU_EBB_EBB_H */
+#पूर्ण_अगर /* _SELFTESTS_POWERPC_PMU_EBB_EBB_H */

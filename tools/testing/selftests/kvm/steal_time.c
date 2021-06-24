@@ -1,95 +1,96 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * steal/stolen time test
+ * steal/stolen समय test
  *
  * Copyright (C) 2020, Red Hat, Inc.
  */
-#define _GNU_SOURCE
-#include <stdio.h>
-#include <time.h>
-#include <sched.h>
-#include <pthread.h>
-#include <linux/kernel.h>
-#include <sys/syscall.h>
-#include <asm/kvm.h>
-#include <asm/kvm_para.h>
+#घोषणा _GNU_SOURCE
+#समावेश <मानकपन.स>
+#समावेश <समय.स>
+#समावेश <sched.h>
+#समावेश <pthपढ़ो.h>
+#समावेश <linux/kernel.h>
+#समावेश <sys/syscall.h>
+#समावेश <यंत्र/kvm.h>
+#समावेश <यंत्र/kvm_para.h>
 
-#include "test_util.h"
-#include "kvm_util.h"
-#include "processor.h"
+#समावेश "test_util.h"
+#समावेश "kvm_util.h"
+#समावेश "processor.h"
 
-#define NR_VCPUS		4
-#define ST_GPA_BASE		(1 << 30)
-#define MIN_RUN_DELAY_NS	200000UL
+#घोषणा NR_VCPUS		4
+#घोषणा ST_GPA_BASE		(1 << 30)
+#घोषणा MIN_RUN_DELAY_NS	200000UL
 
-static void *st_gva[NR_VCPUS];
-static uint64_t guest_stolen_time[NR_VCPUS];
+अटल व्योम *st_gva[NR_VCPUS];
+अटल uपूर्णांक64_t guest_stolen_समय[NR_VCPUS];
 
-#if defined(__x86_64__)
+#अगर defined(__x86_64__)
 
-/* steal_time must have 64-byte alignment */
-#define STEAL_TIME_SIZE		((sizeof(struct kvm_steal_time) + 63) & ~63)
+/* steal_समय must have 64-byte alignment */
+#घोषणा STEAL_TIME_SIZE		((माप(काष्ठा kvm_steal_समय) + 63) & ~63)
 
-static void check_status(struct kvm_steal_time *st)
-{
+अटल व्योम check_status(काष्ठा kvm_steal_समय *st)
+अणु
 	GUEST_ASSERT(!(READ_ONCE(st->version) & 1));
 	GUEST_ASSERT(READ_ONCE(st->flags) == 0);
 	GUEST_ASSERT(READ_ONCE(st->preempted) == 0);
-}
+पूर्ण
 
-static void guest_code(int cpu)
-{
-	struct kvm_steal_time *st = st_gva[cpu];
-	uint32_t version;
+अटल व्योम guest_code(पूर्णांक cpu)
+अणु
+	काष्ठा kvm_steal_समय *st = st_gva[cpu];
+	uपूर्णांक32_t version;
 
-	GUEST_ASSERT(rdmsr(MSR_KVM_STEAL_TIME) == ((uint64_t)st_gva[cpu] | KVM_MSR_ENABLED));
+	GUEST_ASSERT(rdmsr(MSR_KVM_STEAL_TIME) == ((uपूर्णांक64_t)st_gva[cpu] | KVM_MSR_ENABLED));
 
-	memset(st, 0, sizeof(*st));
+	स_रखो(st, 0, माप(*st));
 	GUEST_SYNC(0);
 
 	check_status(st);
-	WRITE_ONCE(guest_stolen_time[cpu], st->steal);
+	WRITE_ONCE(guest_stolen_समय[cpu], st->steal);
 	version = READ_ONCE(st->version);
 	check_status(st);
 	GUEST_SYNC(1);
 
 	check_status(st);
 	GUEST_ASSERT(version < READ_ONCE(st->version));
-	WRITE_ONCE(guest_stolen_time[cpu], st->steal);
+	WRITE_ONCE(guest_stolen_समय[cpu], st->steal);
 	check_status(st);
 	GUEST_DONE();
-}
+पूर्ण
 
-static void steal_time_init(struct kvm_vm *vm)
-{
-	int i;
+अटल व्योम steal_समय_init(काष्ठा kvm_vm *vm)
+अणु
+	पूर्णांक i;
 
-	if (!(kvm_get_supported_cpuid_entry(KVM_CPUID_FEATURES)->eax &
-	      KVM_FEATURE_STEAL_TIME)) {
-		print_skip("steal-time not supported");
-		exit(KSFT_SKIP);
-	}
+	अगर (!(kvm_get_supported_cpuid_entry(KVM_CPUID_FEATURES)->eax &
+	      KVM_FEATURE_STEAL_TIME)) अणु
+		prपूर्णांक_skip("steal-time not supported");
+		निकास(KSFT_SKIP);
+	पूर्ण
 
-	for (i = 0; i < NR_VCPUS; ++i) {
-		int ret;
+	क्रम (i = 0; i < NR_VCPUS; ++i) अणु
+		पूर्णांक ret;
 
 		vcpu_set_cpuid(vm, i, kvm_get_supported_cpuid());
 
 		/* ST_GPA_BASE is identity mapped */
-		st_gva[i] = (void *)(ST_GPA_BASE + i * STEAL_TIME_SIZE);
+		st_gva[i] = (व्योम *)(ST_GPA_BASE + i * STEAL_TIME_SIZE);
 		sync_global_to_guest(vm, st_gva[i]);
 
-		ret = _vcpu_set_msr(vm, i, MSR_KVM_STEAL_TIME, (ulong)st_gva[i] | KVM_STEAL_RESERVED_MASK);
+		ret = _vcpu_set_msr(vm, i, MSR_KVM_STEAL_TIME, (uदीर्घ)st_gva[i] | KVM_STEAL_RESERVED_MASK);
 		TEST_ASSERT(ret == 0, "Bad GPA didn't fail");
 
-		vcpu_set_msr(vm, i, MSR_KVM_STEAL_TIME, (ulong)st_gva[i] | KVM_MSR_ENABLED);
-	}
-}
+		vcpu_set_msr(vm, i, MSR_KVM_STEAL_TIME, (uदीर्घ)st_gva[i] | KVM_MSR_ENABLED);
+	पूर्ण
+पूर्ण
 
-static void steal_time_dump(struct kvm_vm *vm, uint32_t vcpuid)
-{
-	struct kvm_steal_time *st = addr_gva2hva(vm, (ulong)st_gva[vcpuid]);
-	int i;
+अटल व्योम steal_समय_dump(काष्ठा kvm_vm *vm, uपूर्णांक32_t vcpuid)
+अणु
+	काष्ठा kvm_steal_समय *st = addr_gva2hva(vm, (uदीर्घ)st_gva[vcpuid]);
+	पूर्णांक i;
 
 	pr_info("VCPU%d:\n", vcpuid);
 	pr_info("    steal:     %lld\n", st->steal);
@@ -97,34 +98,34 @@ static void steal_time_dump(struct kvm_vm *vm, uint32_t vcpuid)
 	pr_info("    flags:     %d\n", st->flags);
 	pr_info("    preempted: %d\n", st->preempted);
 	pr_info("    u8_pad:    ");
-	for (i = 0; i < 3; ++i)
+	क्रम (i = 0; i < 3; ++i)
 		pr_info("%d", st->u8_pad[i]);
 	pr_info("\n    pad:       ");
-	for (i = 0; i < 11; ++i)
+	क्रम (i = 0; i < 11; ++i)
 		pr_info("%d", st->pad[i]);
 	pr_info("\n");
-}
+पूर्ण
 
-#elif defined(__aarch64__)
+#या_अगर defined(__aarch64__)
 
 /* PV_TIME_ST must have 64-byte alignment */
-#define STEAL_TIME_SIZE		((sizeof(struct st_time) + 63) & ~63)
+#घोषणा STEAL_TIME_SIZE		((माप(काष्ठा st_समय) + 63) & ~63)
 
-#define SMCCC_ARCH_FEATURES	0x80000001
-#define PV_TIME_FEATURES	0xc5000020
-#define PV_TIME_ST		0xc5000021
+#घोषणा SMCCC_ARCH_FEATURES	0x80000001
+#घोषणा PV_TIME_FEATURES	0xc5000020
+#घोषणा PV_TIME_ST		0xc5000021
 
-struct st_time {
-	uint32_t rev;
-	uint32_t attr;
-	uint64_t st_time;
-};
+काष्ठा st_समय अणु
+	uपूर्णांक32_t rev;
+	uपूर्णांक32_t attr;
+	uपूर्णांक64_t st_समय;
+पूर्ण;
 
-static int64_t smccc(uint32_t func, uint32_t arg)
-{
-	unsigned long ret;
+अटल पूर्णांक64_t smccc(uपूर्णांक32_t func, uपूर्णांक32_t arg)
+अणु
+	अचिन्हित दीर्घ ret;
 
-	asm volatile(
+	यंत्र अस्थिर(
 		"mov	x0, %1\n"
 		"mov	x1, %2\n"
 		"hvc	#0\n"
@@ -132,19 +133,19 @@ static int64_t smccc(uint32_t func, uint32_t arg)
 	: "=r" (ret) : "r" (func), "r" (arg) :
 	  "x0", "x1", "x2", "x3");
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void check_status(struct st_time *st)
-{
+अटल व्योम check_status(काष्ठा st_समय *st)
+अणु
 	GUEST_ASSERT(READ_ONCE(st->rev) == 0);
 	GUEST_ASSERT(READ_ONCE(st->attr) == 0);
-}
+पूर्ण
 
-static void guest_code(int cpu)
-{
-	struct st_time *st;
-	int64_t status;
+अटल व्योम guest_code(पूर्णांक cpu)
+अणु
+	काष्ठा st_समय *st;
+	पूर्णांक64_t status;
 
 	status = smccc(SMCCC_ARCH_FEATURES, PV_TIME_FEATURES);
 	GUEST_ASSERT(status == 0);
@@ -155,198 +156,198 @@ static void guest_code(int cpu)
 
 	status = smccc(PV_TIME_ST, 0);
 	GUEST_ASSERT(status != -1);
-	GUEST_ASSERT(status == (ulong)st_gva[cpu]);
+	GUEST_ASSERT(status == (uदीर्घ)st_gva[cpu]);
 
-	st = (struct st_time *)status;
+	st = (काष्ठा st_समय *)status;
 	GUEST_SYNC(0);
 
 	check_status(st);
-	WRITE_ONCE(guest_stolen_time[cpu], st->st_time);
+	WRITE_ONCE(guest_stolen_समय[cpu], st->st_समय);
 	GUEST_SYNC(1);
 
 	check_status(st);
-	WRITE_ONCE(guest_stolen_time[cpu], st->st_time);
+	WRITE_ONCE(guest_stolen_समय[cpu], st->st_समय);
 	GUEST_DONE();
-}
+पूर्ण
 
-static void steal_time_init(struct kvm_vm *vm)
-{
-	struct kvm_device_attr dev = {
+अटल व्योम steal_समय_init(काष्ठा kvm_vm *vm)
+अणु
+	काष्ठा kvm_device_attr dev = अणु
 		.group = KVM_ARM_VCPU_PVTIME_CTRL,
 		.attr = KVM_ARM_VCPU_PVTIME_IPA,
-	};
-	int i, ret;
+	पूर्ण;
+	पूर्णांक i, ret;
 
 	ret = _vcpu_ioctl(vm, 0, KVM_HAS_DEVICE_ATTR, &dev);
-	if (ret != 0 && errno == ENXIO) {
-		print_skip("steal-time not supported");
-		exit(KSFT_SKIP);
-	}
+	अगर (ret != 0 && त्रुटि_सं == ENXIO) अणु
+		prपूर्णांक_skip("steal-time not supported");
+		निकास(KSFT_SKIP);
+	पूर्ण
 
-	for (i = 0; i < NR_VCPUS; ++i) {
-		uint64_t st_ipa;
+	क्रम (i = 0; i < NR_VCPUS; ++i) अणु
+		uपूर्णांक64_t st_ipa;
 
 		vcpu_ioctl(vm, i, KVM_HAS_DEVICE_ATTR, &dev);
 
-		dev.addr = (uint64_t)&st_ipa;
+		dev.addr = (uपूर्णांक64_t)&st_ipa;
 
 		/* ST_GPA_BASE is identity mapped */
-		st_gva[i] = (void *)(ST_GPA_BASE + i * STEAL_TIME_SIZE);
+		st_gva[i] = (व्योम *)(ST_GPA_BASE + i * STEAL_TIME_SIZE);
 		sync_global_to_guest(vm, st_gva[i]);
 
-		st_ipa = (ulong)st_gva[i] | 1;
+		st_ipa = (uदीर्घ)st_gva[i] | 1;
 		ret = _vcpu_ioctl(vm, i, KVM_SET_DEVICE_ATTR, &dev);
-		TEST_ASSERT(ret == -1 && errno == EINVAL, "Bad IPA didn't report EINVAL");
+		TEST_ASSERT(ret == -1 && त्रुटि_सं == EINVAL, "Bad IPA didn't report EINVAL");
 
-		st_ipa = (ulong)st_gva[i];
+		st_ipa = (uदीर्घ)st_gva[i];
 		vcpu_ioctl(vm, i, KVM_SET_DEVICE_ATTR, &dev);
 
 		ret = _vcpu_ioctl(vm, i, KVM_SET_DEVICE_ATTR, &dev);
-		TEST_ASSERT(ret == -1 && errno == EEXIST, "Set IPA twice without EEXIST");
+		TEST_ASSERT(ret == -1 && त्रुटि_सं == EEXIST, "Set IPA twice without EEXIST");
 
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void steal_time_dump(struct kvm_vm *vm, uint32_t vcpuid)
-{
-	struct st_time *st = addr_gva2hva(vm, (ulong)st_gva[vcpuid]);
+अटल व्योम steal_समय_dump(काष्ठा kvm_vm *vm, uपूर्णांक32_t vcpuid)
+अणु
+	काष्ठा st_समय *st = addr_gva2hva(vm, (uदीर्घ)st_gva[vcpuid]);
 
 	pr_info("VCPU%d:\n", vcpuid);
 	pr_info("    rev:     %d\n", st->rev);
 	pr_info("    attr:    %d\n", st->attr);
-	pr_info("    st_time: %ld\n", st->st_time);
-}
+	pr_info("    st_time: %ld\n", st->st_समय);
+पूर्ण
 
-#endif
+#पूर्ण_अगर
 
-static long get_run_delay(void)
-{
-	char path[64];
-	long val[2];
-	FILE *fp;
+अटल दीर्घ get_run_delay(व्योम)
+अणु
+	अक्षर path[64];
+	दीर्घ val[2];
+	खाता *fp;
 
-	sprintf(path, "/proc/%ld/schedstat", syscall(SYS_gettid));
-	fp = fopen(path, "r");
-	fscanf(fp, "%ld %ld ", &val[0], &val[1]);
-	fclose(fp);
+	प्र_लिखो(path, "/proc/%ld/schedstat", syscall(SYS_gettid));
+	fp = ख_खोलो(path, "r");
+	ख_पूछो(fp, "%ld %ld ", &val[0], &val[1]);
+	ख_बंद(fp);
 
-	return val[1];
-}
+	वापस val[1];
+पूर्ण
 
-static void *do_steal_time(void *arg)
-{
-	struct timespec ts, stop;
+अटल व्योम *करो_steal_समय(व्योम *arg)
+अणु
+	काष्ठा बारpec ts, stop;
 
-	clock_gettime(CLOCK_MONOTONIC, &ts);
-	stop = timespec_add_ns(ts, MIN_RUN_DELAY_NS);
+	घड़ी_समय_लो(CLOCK_MONOTONIC, &ts);
+	stop = बारpec_add_ns(ts, MIN_RUN_DELAY_NS);
 
-	while (1) {
-		clock_gettime(CLOCK_MONOTONIC, &ts);
-		if (timespec_to_ns(timespec_sub(ts, stop)) >= 0)
-			break;
-	}
+	जबतक (1) अणु
+		घड़ी_समय_लो(CLOCK_MONOTONIC, &ts);
+		अगर (बारpec_to_ns(बारpec_sub(ts, stop)) >= 0)
+			अवरोध;
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static void run_vcpu(struct kvm_vm *vm, uint32_t vcpuid)
-{
-	struct ucall uc;
+अटल व्योम run_vcpu(काष्ठा kvm_vm *vm, uपूर्णांक32_t vcpuid)
+अणु
+	काष्ठा ucall uc;
 
 	vcpu_args_set(vm, vcpuid, 1, vcpuid);
 
-	vcpu_ioctl(vm, vcpuid, KVM_RUN, NULL);
+	vcpu_ioctl(vm, vcpuid, KVM_RUN, शून्य);
 
-	switch (get_ucall(vm, vcpuid, &uc)) {
-	case UCALL_SYNC:
-	case UCALL_DONE:
-		break;
-	case UCALL_ABORT:
-		TEST_ASSERT(false, "%s at %s:%ld", (const char *)uc.args[0],
-			    __FILE__, uc.args[1]);
-	default:
+	चयन (get_ucall(vm, vcpuid, &uc)) अणु
+	हाल UCALL_SYNC:
+	हाल UCALL_DONE:
+		अवरोध;
+	हाल UCALL_ABORT:
+		TEST_ASSERT(false, "%s at %s:%ld", (स्थिर अक्षर *)uc.args[0],
+			    __खाता__, uc.args[1]);
+	शेष:
 		TEST_ASSERT(false, "Unexpected exit: %s",
-			    exit_reason_str(vcpu_state(vm, vcpuid)->exit_reason));
-	}
-}
+			    निकास_reason_str(vcpu_state(vm, vcpuid)->निकास_reason));
+	पूर्ण
+पूर्ण
 
-int main(int ac, char **av)
-{
-	struct kvm_vm *vm;
-	pthread_attr_t attr;
-	pthread_t thread;
+पूर्णांक मुख्य(पूर्णांक ac, अक्षर **av)
+अणु
+	काष्ठा kvm_vm *vm;
+	pthपढ़ो_attr_t attr;
+	pthपढ़ो_t thपढ़ो;
 	cpu_set_t cpuset;
-	unsigned int gpages;
-	long stolen_time;
-	long run_delay;
+	अचिन्हित पूर्णांक gpages;
+	दीर्घ stolen_समय;
+	दीर्घ run_delay;
 	bool verbose;
-	int i;
+	पूर्णांक i;
 
-	verbose = ac > 1 && (!strncmp(av[1], "-v", 3) || !strncmp(av[1], "--verbose", 10));
+	verbose = ac > 1 && (!म_भेदन(av[1], "-v", 3) || !म_भेदन(av[1], "--verbose", 10));
 
-	/* Set CPU affinity so we can force preemption of the VCPU */
+	/* Set CPU affinity so we can क्रमce preemption of the VCPU */
 	CPU_ZERO(&cpuset);
 	CPU_SET(0, &cpuset);
-	pthread_attr_init(&attr);
-	pthread_attr_setaffinity_np(&attr, sizeof(cpu_set_t), &cpuset);
-	pthread_setaffinity_np(pthread_self(), sizeof(cpu_set_t), &cpuset);
+	pthपढ़ो_attr_init(&attr);
+	pthपढ़ो_attr_setaffinity_np(&attr, माप(cpu_set_t), &cpuset);
+	pthपढ़ो_setaffinity_np(pthपढ़ो_self(), माप(cpu_set_t), &cpuset);
 
-	/* Create a one VCPU guest and an identity mapped memslot for the steal time structure */
-	vm = vm_create_default(0, 0, guest_code);
+	/* Create a one VCPU guest and an identity mapped memslot क्रम the steal समय काष्ठाure */
+	vm = vm_create_शेष(0, 0, guest_code);
 	gpages = vm_calc_num_guest_pages(VM_MODE_DEFAULT, STEAL_TIME_SIZE * NR_VCPUS);
 	vm_userspace_mem_region_add(vm, VM_MEM_SRC_ANONYMOUS, ST_GPA_BASE, 1, gpages, 0);
 	virt_map(vm, ST_GPA_BASE, ST_GPA_BASE, gpages, 0);
-	ucall_init(vm, NULL);
+	ucall_init(vm, शून्य);
 
 	/* Add the rest of the VCPUs */
-	for (i = 1; i < NR_VCPUS; ++i)
-		vm_vcpu_add_default(vm, i, guest_code);
+	क्रम (i = 1; i < NR_VCPUS; ++i)
+		vm_vcpu_add_शेष(vm, i, guest_code);
 
-	steal_time_init(vm);
+	steal_समय_init(vm);
 
 	/* Run test on each VCPU */
-	for (i = 0; i < NR_VCPUS; ++i) {
-		/* First VCPU run initializes steal-time */
+	क्रम (i = 0; i < NR_VCPUS; ++i) अणु
+		/* First VCPU run initializes steal-समय */
 		run_vcpu(vm, i);
 
-		/* Second VCPU run, expect guest stolen time to be <= run_delay */
+		/* Second VCPU run, expect guest stolen समय to be <= run_delay */
 		run_vcpu(vm, i);
-		sync_global_from_guest(vm, guest_stolen_time[i]);
-		stolen_time = guest_stolen_time[i];
+		sync_global_from_guest(vm, guest_stolen_समय[i]);
+		stolen_समय = guest_stolen_समय[i];
 		run_delay = get_run_delay();
-		TEST_ASSERT(stolen_time <= run_delay,
+		TEST_ASSERT(stolen_समय <= run_delay,
 			    "Expected stolen time <= %ld, got %ld",
-			    run_delay, stolen_time);
+			    run_delay, stolen_समय);
 
-		/* Steal time from the VCPU. The steal time thread has the same CPU affinity as the VCPUs. */
+		/* Steal समय from the VCPU. The steal समय thपढ़ो has the same CPU affinity as the VCPUs. */
 		run_delay = get_run_delay();
-		pthread_create(&thread, &attr, do_steal_time, NULL);
-		do
-			pthread_yield();
-		while (get_run_delay() - run_delay < MIN_RUN_DELAY_NS);
-		pthread_join(thread, NULL);
+		pthपढ़ो_create(&thपढ़ो, &attr, करो_steal_समय, शून्य);
+		करो
+			pthपढ़ो_yield();
+		जबतक (get_run_delay() - run_delay < MIN_RUN_DELAY_NS);
+		pthपढ़ो_join(thपढ़ो, शून्य);
 		run_delay = get_run_delay() - run_delay;
 		TEST_ASSERT(run_delay >= MIN_RUN_DELAY_NS,
 			    "Expected run_delay >= %ld, got %ld",
 			    MIN_RUN_DELAY_NS, run_delay);
 
-		/* Run VCPU again to confirm stolen time is consistent with run_delay */
+		/* Run VCPU again to confirm stolen समय is consistent with run_delay */
 		run_vcpu(vm, i);
-		sync_global_from_guest(vm, guest_stolen_time[i]);
-		stolen_time = guest_stolen_time[i] - stolen_time;
-		TEST_ASSERT(stolen_time >= run_delay,
+		sync_global_from_guest(vm, guest_stolen_समय[i]);
+		stolen_समय = guest_stolen_समय[i] - stolen_समय;
+		TEST_ASSERT(stolen_समय >= run_delay,
 			    "Expected stolen time >= %ld, got %ld",
-			    run_delay, stolen_time);
+			    run_delay, stolen_समय);
 
-		if (verbose) {
+		अगर (verbose) अणु
 			pr_info("VCPU%d: total-stolen-time=%ld test-stolen-time=%ld", i,
-				guest_stolen_time[i], stolen_time);
-			if (stolen_time == run_delay)
+				guest_stolen_समय[i], stolen_समय);
+			अगर (stolen_समय == run_delay)
 				pr_info(" (BONUS: guest test-stolen-time even exactly matches test-run_delay)");
 			pr_info("\n");
-			steal_time_dump(vm, i);
-		}
-	}
+			steal_समय_dump(vm, i);
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

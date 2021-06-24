@@ -1,51 +1,52 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- * Support for Intel Camera Imaging ISP subsystem.
+ * Support क्रम Intel Camera Imaging ISP subप्रणाली.
  * Copyright (c) 2015, Intel Corporation.
  *
- * This program is free software; you can redistribute it and/or modify it
+ * This program is मुक्त software; you can redistribute it and/or modअगरy it
  * under the terms and conditions of the GNU General Public License,
  * version 2, as published by the Free Software Foundation.
  *
  * This program is distributed in the hope it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License क्रम
  * more details.
  */
 
-#ifndef _IA_CSS_CIRCBUF_H
-#define _IA_CSS_CIRCBUF_H
+#अगर_अघोषित _IA_CSS_CIRCBUF_H
+#घोषणा _IA_CSS_CIRCBUF_H
 
-#include <sp.h>
-#include <type_support.h>
-#include <math_support.h>
-#include <assert_support.h>
-#include <platform_support.h>
-#include "ia_css_circbuf_comm.h"
-#include "ia_css_circbuf_desc.h"
+#समावेश <sp.h>
+#समावेश <type_support.h>
+#समावेश <math_support.h>
+#समावेश <निश्चित_support.h>
+#समावेश <platक्रमm_support.h>
+#समावेश "ia_css_circbuf_comm.h"
+#समावेश "ia_css_circbuf_desc.h"
 
 /****************************************************************
  *
- * Data structures.
+ * Data काष्ठाures.
  *
  ****************************************************************/
 /**
- * @brief Data structure for the circular buffer.
+ * @brief Data काष्ठाure क्रम the circular buffer.
  */
-typedef struct ia_css_circbuf_s ia_css_circbuf_t;
-struct ia_css_circbuf_s {
-	ia_css_circbuf_desc_t *desc;    /* Pointer to the descriptor of the circbuf */
+प्रकार काष्ठा ia_css_circbuf_s ia_css_circbuf_t;
+काष्ठा ia_css_circbuf_s अणु
+	ia_css_circbuf_desc_t *desc;    /* Poपूर्णांकer to the descriptor of the circbuf */
 	ia_css_circbuf_elem_t *elems;	/* an array of elements    */
-};
+पूर्ण;
 
 /**
  * @brief Create the circular buffer.
  *
- * @param cb	The pointer to the circular buffer.
+ * @param cb	The poपूर्णांकer to the circular buffer.
  * @param elems	An array of elements.
  * @param desc	The descriptor set to the size using ia_css_circbuf_desc_init().
  */
-void ia_css_circbuf_create(
+व्योम ia_css_circbuf_create(
     ia_css_circbuf_t *cb,
     ia_css_circbuf_elem_t *elems,
     ia_css_circbuf_desc_t *desc);
@@ -53,38 +54,38 @@ void ia_css_circbuf_create(
 /**
  * @brief Destroy the circular buffer.
  *
- * @param cb The pointer to the circular buffer.
+ * @param cb The poपूर्णांकer to the circular buffer.
  */
-void ia_css_circbuf_destroy(
+व्योम ia_css_circbuf_destroy(
     ia_css_circbuf_t *cb);
 
 /**
  * @brief Pop a value out of the circular buffer.
  * Get a value at the head of the circular buffer.
  * The user should call "ia_css_circbuf_is_empty()"
- * to avoid accessing to an empty buffer.
+ * to aव्योम accessing to an empty buffer.
  *
- * @param cb	The pointer to the circular buffer.
+ * @param cb	The poपूर्णांकer to the circular buffer.
  *
- * @return the pop-out value.
+ * @वापस the pop-out value.
  */
-uint32_t ia_css_circbuf_pop(
+uपूर्णांक32_t ia_css_circbuf_pop(
     ia_css_circbuf_t *cb);
 
 /**
  * @brief Extract a value out of the circular buffer.
  * Get a value at an arbitrary poistion in the circular
  * buffer. The user should call "ia_css_circbuf_is_empty()"
- * to avoid accessing to an empty buffer.
+ * to aव्योम accessing to an empty buffer.
  *
- * @param cb	 The pointer to the circular buffer.
+ * @param cb	 The poपूर्णांकer to the circular buffer.
  * @param offset The offset from "start" to the target position.
  *
- * @return the extracted value.
+ * @वापस the extracted value.
  */
-uint32_t ia_css_circbuf_extract(
+uपूर्णांक32_t ia_css_circbuf_extract(
     ia_css_circbuf_t *cb,
-    int offset);
+    पूर्णांक offset);
 
 /****************************************************************
  *
@@ -94,29 +95,29 @@ uint32_t ia_css_circbuf_extract(
 /**
  * @brief Set the "val" field in the element.
  *
- * @param elem The pointer to the element.
+ * @param elem The poपूर्णांकer to the element.
  * @param val  The value to be set.
  */
-static inline void ia_css_circbuf_elem_set_val(
+अटल अंतरभूत व्योम ia_css_circbuf_elem_set_val(
     ia_css_circbuf_elem_t *elem,
-    uint32_t val)
-{
-	OP___assert(elem);
+    uपूर्णांक32_t val)
+अणु
+	OP___निश्चित(elem);
 
 	elem->val = val;
-}
+पूर्ण
 
 /**
  * @brief Initialize the element.
  *
- * @param elem The pointer to the element.
+ * @param elem The poपूर्णांकer to the element.
  */
-static inline void ia_css_circbuf_elem_init(
+अटल अंतरभूत व्योम ia_css_circbuf_elem_init(
     ia_css_circbuf_elem_t *elem)
-{
-	OP___assert(elem);
+अणु
+	OP___निश्चित(elem);
 	ia_css_circbuf_elem_set_val(elem, 0);
-}
+पूर्ण
 
 /**
  * @brief Copy an element.
@@ -124,254 +125,254 @@ static inline void ia_css_circbuf_elem_init(
  * @param src  The element as the copy source.
  * @param dest The element as the copy destination.
  */
-static inline void ia_css_circbuf_elem_cpy(
+अटल अंतरभूत व्योम ia_css_circbuf_elem_cpy(
     ia_css_circbuf_elem_t *src,
     ia_css_circbuf_elem_t *dest)
-{
-	OP___assert(src);
-	OP___assert(dest);
+अणु
+	OP___निश्चित(src);
+	OP___निश्चित(dest);
 
 	ia_css_circbuf_elem_set_val(dest, src->val);
-}
+पूर्ण
 
 /**
  * @brief Get position in the circular buffer.
  *
- * @param cb		The pointer to the circular buffer.
+ * @param cb		The poपूर्णांकer to the circular buffer.
  * @param base		The base position.
  * @param offset	The offset.
  *
- * @return the position at offset.
+ * @वापस the position at offset.
  */
-static inline uint8_t ia_css_circbuf_get_pos_at_offset(
+अटल अंतरभूत uपूर्णांक8_t ia_css_circbuf_get_pos_at_offset(
     ia_css_circbuf_t *cb,
     u32 base,
-    int offset)
-{
+    पूर्णांक offset)
+अणु
 	u8 dest;
 
-	OP___assert(cb);
-	OP___assert(cb->desc);
-	OP___assert(cb->desc->size > 0);
+	OP___निश्चित(cb);
+	OP___निश्चित(cb->desc);
+	OP___निश्चित(cb->desc->size > 0);
 
 	/* step 1: adjudst the offset  */
-	while (offset < 0) {
+	जबतक (offset < 0) अणु
 		offset += cb->desc->size;
-	}
+	पूर्ण
 
-	/* step 2: shift and round by the upper limit */
+	/* step 2: shअगरt and round by the upper limit */
 	dest = OP_std_modadd(base, offset, cb->desc->size);
 
-	return dest;
-}
+	वापस dest;
+पूर्ण
 
 /**
  * @brief Get the offset between two positions in the circular buffer.
  * Get the offset from the source position to the terminal position,
- * along the direction in which the new elements come in.
+ * aदीर्घ the direction in which the new elements come in.
  *
- * @param cb		The pointer to the circular buffer.
+ * @param cb		The poपूर्णांकer to the circular buffer.
  * @param src_pos	The source position.
  * @param dest_pos	The terminal position.
  *
- * @return the offset.
+ * @वापस the offset.
  */
-static inline int ia_css_circbuf_get_offset(
+अटल अंतरभूत पूर्णांक ia_css_circbuf_get_offset(
     ia_css_circbuf_t *cb,
     u32 src_pos,
-    uint32_t dest_pos)
-{
-	int offset;
+    uपूर्णांक32_t dest_pos)
+अणु
+	पूर्णांक offset;
 
-	OP___assert(cb);
-	OP___assert(cb->desc);
+	OP___निश्चित(cb);
+	OP___निश्चित(cb->desc);
 
-	offset = (int)(dest_pos - src_pos);
+	offset = (पूर्णांक)(dest_pos - src_pos);
 	offset += (offset < 0) ? cb->desc->size : 0;
 
-	return offset;
-}
+	वापस offset;
+पूर्ण
 
 /**
  * @brief Get the maximum number of elements.
  *
- * @param cb The pointer to the circular buffer.
+ * @param cb The poपूर्णांकer to the circular buffer.
  *
- * @return the maximum number of elements.
+ * @वापस the maximum number of elements.
  *
  * TODO: Test this API.
  */
-static inline uint32_t ia_css_circbuf_get_size(
+अटल अंतरभूत uपूर्णांक32_t ia_css_circbuf_get_size(
     ia_css_circbuf_t *cb)
-{
-	OP___assert(cb);
-	OP___assert(cb->desc);
+अणु
+	OP___निश्चित(cb);
+	OP___निश्चित(cb->desc);
 
-	return cb->desc->size;
-}
+	वापस cb->desc->size;
+पूर्ण
 
 /**
  * @brief Get the number of available elements.
  *
- * @param cb The pointer to the circular buffer.
+ * @param cb The poपूर्णांकer to the circular buffer.
  *
- * @return the number of available elements.
+ * @वापस the number of available elements.
  */
-static inline uint32_t ia_css_circbuf_get_num_elems(
+अटल अंतरभूत uपूर्णांक32_t ia_css_circbuf_get_num_elems(
     ia_css_circbuf_t *cb)
-{
-	int num;
+अणु
+	पूर्णांक num;
 
-	OP___assert(cb);
-	OP___assert(cb->desc);
+	OP___निश्चित(cb);
+	OP___निश्चित(cb->desc);
 
 	num = ia_css_circbuf_get_offset(cb, cb->desc->start, cb->desc->end);
 
-	return (uint32_t)num;
-}
+	वापस (uपूर्णांक32_t)num;
+पूर्ण
 
 /**
- * @brief Test if the circular buffer is empty.
+ * @brief Test अगर the circular buffer is empty.
  *
- * @param cb	The pointer to the circular buffer.
+ * @param cb	The poपूर्णांकer to the circular buffer.
  *
- * @return
+ * @वापस
  *	- true when it is empty.
  *	- false when it is not empty.
  */
-static inline bool ia_css_circbuf_is_empty(
+अटल अंतरभूत bool ia_css_circbuf_is_empty(
     ia_css_circbuf_t *cb)
-{
-	OP___assert(cb);
-	OP___assert(cb->desc);
+अणु
+	OP___निश्चित(cb);
+	OP___निश्चित(cb->desc);
 
-	return ia_css_circbuf_desc_is_empty(cb->desc);
-}
+	वापस ia_css_circbuf_desc_is_empty(cb->desc);
+पूर्ण
 
 /**
- * @brief Test if the circular buffer is full.
+ * @brief Test अगर the circular buffer is full.
  *
- * @param cb	The pointer to the circular buffer.
+ * @param cb	The poपूर्णांकer to the circular buffer.
  *
- * @return
+ * @वापस
  *	- true when it is full.
  *	- false when it is not full.
  */
-static inline bool ia_css_circbuf_is_full(ia_css_circbuf_t *cb)
-{
-	OP___assert(cb);
-	OP___assert(cb->desc);
+अटल अंतरभूत bool ia_css_circbuf_is_full(ia_css_circbuf_t *cb)
+अणु
+	OP___निश्चित(cb);
+	OP___निश्चित(cb->desc);
 
-	return ia_css_circbuf_desc_is_full(cb->desc);
-}
+	वापस ia_css_circbuf_desc_is_full(cb->desc);
+पूर्ण
 
 /**
- * @brief Write a new element into the circular buffer.
+ * @brief Write a new element पूर्णांकo the circular buffer.
  * Write a new element WITHOUT checking whether the
- * circular buffer is full or not. So it also overwrites
+ * circular buffer is full or not. So it also overग_लिखोs
  * the oldest element when the buffer is full.
  *
- * @param cb	The pointer to the circular buffer.
+ * @param cb	The poपूर्णांकer to the circular buffer.
  * @param elem	The new element.
  */
-static inline void ia_css_circbuf_write(
+अटल अंतरभूत व्योम ia_css_circbuf_ग_लिखो(
     ia_css_circbuf_t *cb,
     ia_css_circbuf_elem_t elem)
-{
-	OP___assert(cb);
-	OP___assert(cb->desc);
+अणु
+	OP___निश्चित(cb);
+	OP___निश्चित(cb->desc);
 
-	/* Cannot continue as the queue is full*/
-	assert(!ia_css_circbuf_is_full(cb));
+	/* Cannot जारी as the queue is full*/
+	निश्चित(!ia_css_circbuf_is_full(cb));
 
 	ia_css_circbuf_elem_cpy(&elem, &cb->elems[cb->desc->end]);
 
 	cb->desc->end = ia_css_circbuf_get_pos_at_offset(cb, cb->desc->end, 1);
-}
+पूर्ण
 
 /**
  * @brief Push a value in the circular buffer.
  * Put a new value at the tail of the circular buffer.
  * The user should call "ia_css_circbuf_is_full()"
- * to avoid accessing to a full buffer.
+ * to aव्योम accessing to a full buffer.
  *
- * @param cb	The pointer to the circular buffer.
+ * @param cb	The poपूर्णांकer to the circular buffer.
  * @param val	The value to be pushed in.
  */
-static inline void ia_css_circbuf_push(
+अटल अंतरभूत व्योम ia_css_circbuf_push(
     ia_css_circbuf_t *cb,
-    uint32_t val)
-{
+    uपूर्णांक32_t val)
+अणु
 	ia_css_circbuf_elem_t elem;
 
-	OP___assert(cb);
+	OP___निश्चित(cb);
 
 	/* set up an element */
 	ia_css_circbuf_elem_init(&elem);
 	ia_css_circbuf_elem_set_val(&elem, val);
 
-	/* write the element into the buffer */
-	ia_css_circbuf_write(cb, elem);
-}
+	/* ग_लिखो the element पूर्णांकo the buffer */
+	ia_css_circbuf_ग_लिखो(cb, elem);
+पूर्ण
 
 /**
- * @brief Get the number of free elements.
+ * @brief Get the number of मुक्त elements.
  *
- * @param cb The pointer to the circular buffer.
+ * @param cb The poपूर्णांकer to the circular buffer.
  *
- * @return: The number of free elements.
+ * @वापस: The number of मुक्त elements.
  */
-static inline uint32_t ia_css_circbuf_get_free_elems(
+अटल अंतरभूत uपूर्णांक32_t ia_css_circbuf_get_मुक्त_elems(
     ia_css_circbuf_t *cb)
-{
-	OP___assert(cb);
-	OP___assert(cb->desc);
+अणु
+	OP___निश्चित(cb);
+	OP___निश्चित(cb->desc);
 
-	return ia_css_circbuf_desc_get_free_elems(cb->desc);
-}
+	वापस ia_css_circbuf_desc_get_मुक्त_elems(cb->desc);
+पूर्ण
 
 /**
  * @brief Peek an element in Circular Buffer.
  *
- * @param cb	 The pointer to the circular buffer.
+ * @param cb	 The poपूर्णांकer to the circular buffer.
  * @param offset Offset to the element.
  *
- * @return the elements value.
+ * @वापस the elements value.
  */
-uint32_t ia_css_circbuf_peek(
+uपूर्णांक32_t ia_css_circbuf_peek(
     ia_css_circbuf_t *cb,
-    int offset);
+    पूर्णांक offset);
 
 /**
  * @brief Get an element in Circular Buffer.
  *
- * @param cb	 The pointer to the circular buffer.
+ * @param cb	 The poपूर्णांकer to the circular buffer.
  * @param offset Offset to the element.
  *
- * @return the elements value.
+ * @वापस the elements value.
  */
-uint32_t ia_css_circbuf_peek_from_start(
+uपूर्णांक32_t ia_css_circbuf_peek_from_start(
     ia_css_circbuf_t *cb,
-    int offset);
+    पूर्णांक offset);
 
 /**
  * @brief Increase Size of a Circular Buffer.
- * Use 'CAUTION' before using this function, This was added to
- * support / fix issue with increasing size for tagger only
+ * Use 'CAUTION' beक्रमe using this function, This was added to
+ * support / fix issue with increasing size क्रम tagger only
  *
- * @param cb The pointer to the circular buffer.
- * @param sz_delta delta increase for new size
- * @param elems (optional) pointers to new additional elements
+ * @param cb The poपूर्णांकer to the circular buffer.
+ * @param sz_delta delta increase क्रम new size
+ * @param elems (optional) poपूर्णांकers to new additional elements
  *		cb element array size will not be increased dynamically,
  *		but new elements should be added at the end to existing
- *		cb element array which if of max_size >= new size
+ *		cb element array which अगर of max_size >= new size
  *
- * @return	true on successfully increasing the size
+ * @वापस	true on successfully increasing the size
  *			false on failure
  */
 bool ia_css_circbuf_increase_size(
     ia_css_circbuf_t *cb,
-    unsigned int sz_delta,
+    अचिन्हित पूर्णांक sz_delta,
     ia_css_circbuf_elem_t *elems);
 
-#endif /*_IA_CSS_CIRCBUF_H */
+#पूर्ण_अगर /*_IA_CSS_CIRCBUF_H */

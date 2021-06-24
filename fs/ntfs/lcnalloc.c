@@ -1,87 +1,88 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * lcnalloc.c - Cluster (de)allocation code.  Part of the Linux-NTFS project.
  *
  * Copyright (c) 2004-2005 Anton Altaparmakov
  */
 
-#ifdef NTFS_RW
+#अगर_घोषित NTFS_RW
 
-#include <linux/pagemap.h>
+#समावेश <linux/pagemap.h>
 
-#include "lcnalloc.h"
-#include "debug.h"
-#include "bitmap.h"
-#include "inode.h"
-#include "volume.h"
-#include "attrib.h"
-#include "malloc.h"
-#include "aops.h"
-#include "ntfs.h"
+#समावेश "lcnalloc.h"
+#समावेश "debug.h"
+#समावेश "bitmap.h"
+#समावेश "inode.h"
+#समावेश "volume.h"
+#समावेश "attrib.h"
+#समावेश "malloc.h"
+#समावेश "aops.h"
+#समावेश "ntfs.h"
 
 /**
- * ntfs_cluster_free_from_rl_nolock - free clusters from runlist
- * @vol:	mounted ntfs volume on which to free the clusters
- * @rl:		runlist describing the clusters to free
+ * ntfs_cluster_मुक्त_from_rl_nolock - मुक्त clusters from runlist
+ * @vol:	mounted ntfs volume on which to मुक्त the clusters
+ * @rl:		runlist describing the clusters to मुक्त
  *
  * Free all the clusters described by the runlist @rl on the volume @vol.  In
- * the case of an error being returned, at least some of the clusters were not
- * freed.
+ * the हाल of an error being वापसed, at least some of the clusters were not
+ * मुक्तd.
  *
- * Return 0 on success and -errno on error.
+ * Return 0 on success and -त्रुटि_सं on error.
  *
- * Locking: - The volume lcn bitmap must be locked for writing on entry and is
- *	      left locked on return.
+ * Locking: - The volume lcn biपंचांगap must be locked क्रम writing on entry and is
+ *	      left locked on वापस.
  */
-int ntfs_cluster_free_from_rl_nolock(ntfs_volume *vol,
-		const runlist_element *rl)
-{
-	struct inode *lcnbmp_vi = vol->lcnbmp_ino;
-	int ret = 0;
+पूर्णांक ntfs_cluster_मुक्त_from_rl_nolock(ntfs_volume *vol,
+		स्थिर runlist_element *rl)
+अणु
+	काष्ठा inode *lcnbmp_vi = vol->lcnbmp_ino;
+	पूर्णांक ret = 0;
 
 	ntfs_debug("Entering.");
-	if (!rl)
-		return 0;
-	for (; rl->length; rl++) {
-		int err;
+	अगर (!rl)
+		वापस 0;
+	क्रम (; rl->length; rl++) अणु
+		पूर्णांक err;
 
-		if (rl->lcn < 0)
-			continue;
-		err = ntfs_bitmap_clear_run(lcnbmp_vi, rl->lcn, rl->length);
-		if (unlikely(err && (!ret || ret == -ENOMEM) && ret != err))
+		अगर (rl->lcn < 0)
+			जारी;
+		err = ntfs_biपंचांगap_clear_run(lcnbmp_vi, rl->lcn, rl->length);
+		अगर (unlikely(err && (!ret || ret == -ENOMEM) && ret != err))
 			ret = err;
-	}
+	पूर्ण
 	ntfs_debug("Done.");
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
  * ntfs_cluster_alloc - allocate clusters on an ntfs volume
  * @vol:	mounted ntfs volume on which to allocate the clusters
- * @start_vcn:	vcn to use for the first allocated cluster
+ * @start_vcn:	vcn to use क्रम the first allocated cluster
  * @count:	number of clusters to allocate
- * @start_lcn:	starting lcn at which to allocate the clusters (or -1 if none)
+ * @start_lcn:	starting lcn at which to allocate the clusters (or -1 अगर none)
  * @zone:	zone from which to allocate the clusters
- * @is_extension:	if 'true', this is an attribute extension
+ * @is_extension:	अगर 'true', this is an attribute extension
  *
  * Allocate @count clusters preferably starting at cluster @start_lcn or at the
- * current allocator position if @start_lcn is -1, on the mounted ntfs volume
- * @vol. @zone is either DATA_ZONE for allocation of normal clusters or
- * MFT_ZONE for allocation of clusters for the master file table, i.e. the
+ * current allocator position अगर @start_lcn is -1, on the mounted ntfs volume
+ * @vol. @zone is either DATA_ZONE क्रम allocation of normal clusters or
+ * MFT_ZONE क्रम allocation of clusters क्रम the master file table, i.e. the
  * $MFT/$DATA attribute.
  *
- * @start_vcn specifies the vcn of the first allocated cluster.  This makes
+ * @start_vcn specअगरies the vcn of the first allocated cluster.  This makes
  * merging the resulting runlist with the old runlist easier.
  *
  * If @is_extension is 'true', the caller is allocating clusters to extend an
- * attribute and if it is 'false', the caller is allocating clusters to fill a
- * hole in an attribute.  Practically the difference is that if @is_extension
- * is 'true' the returned runlist will be terminated with LCN_ENOENT and if
+ * attribute and अगर it is 'false', the caller is allocating clusters to fill a
+ * hole in an attribute.  Practically the dअगरference is that अगर @is_extension
+ * is 'true' the वापसed runlist will be terminated with LCN_ENOENT and अगर
  * @is_extension is 'false' the runlist will be terminated with
  * LCN_RL_NOT_MAPPED.
  *
- * You need to check the return value with IS_ERR().  If this is false, the
- * function was successful and the return value is a runlist describing the
+ * You need to check the वापस value with IS_ERR().  If this is false, the
+ * function was successful and the वापस value is a runlist describing the
  * allocated cluster(s).  If IS_ERR() is true, the function failed and
  * PTR_ERR() gives you the error code.
  *
@@ -90,66 +91,66 @@ int ntfs_cluster_free_from_rl_nolock(ntfs_volume *vol,
  *
  * There are two data zones.  First is the area between the end of the mft zone
  * and the end of the volume, and second is the area between the start of the
- * volume and the start of the mft zone.  On unmodified/standard NTFS 1.x
- * volumes, the second data zone does not exist due to the mft zone being
- * expanded to cover the start of the volume in order to reserve space for the
- * mft bitmap attribute.
+ * volume and the start of the mft zone.  On unmodअगरied/standard NTFS 1.x
+ * volumes, the second data zone करोes not exist due to the mft zone being
+ * expanded to cover the start of the volume in order to reserve space क्रम the
+ * mft biपंचांगap attribute.
  *
- * This is not the prettiest function but the complexity stems from the need of
+ * This is not the prettiest function but the complनिकासy stems from the need of
  * implementing the mft vs data zoned approach and from the fact that we have
- * access to the lcn bitmap in portions of up to 8192 bytes at a time, so we
+ * access to the lcn biपंचांगap in portions of up to 8192 bytes at a समय, so we
  * need to cope with crossing over boundaries of two buffers.  Further, the
- * fact that the allocator allows for caller supplied hints as to the location
+ * fact that the allocator allows क्रम caller supplied hपूर्णांकs as to the location
  * of where allocation should begin and the fact that the allocator keeps track
  * of where in the data zones the next natural allocation should occur,
- * contribute to the complexity of the function.  But it should all be
- * worthwhile, because this allocator should: 1) be a full implementation of
- * the MFT zone approach used by Windows NT, 2) cause reduction in
+ * contribute to the complनिकासy of the function.  But it should all be
+ * worthजबतक, because this allocator should: 1) be a full implementation of
+ * the MFT zone approach used by Winकरोws NT, 2) cause reduction in
  * fragmentation, and 3) be speedy in allocations (the code is not optimized
- * for speed, but the algorithm is, so further speed improvements are probably
+ * क्रम speed, but the algorithm is, so further speed improvements are probably
  * possible).
  *
  * FIXME: We should be monitoring cluster allocation and increment the MFT zone
- * size dynamically but this is something for the future.  We will just cause
- * heavier fragmentation by not doing it and I am not even sure Windows would
- * grow the MFT zone dynamically, so it might even be correct not to do this.
- * The overhead in doing dynamic MFT zone expansion would be very large and
- * unlikely worth the effort. (AIA)
+ * size dynamically but this is something क्रम the future.  We will just cause
+ * heavier fragmentation by not करोing it and I am not even sure Winकरोws would
+ * grow the MFT zone dynamically, so it might even be correct not to करो this.
+ * The overhead in करोing dynamic MFT zone expansion would be very large and
+ * unlikely worth the efक्रमt. (AIA)
  *
- * TODO: I have added in double the required zone position pointer wrap around
+ * TODO: I have added in द्विगुन the required zone position poपूर्णांकer wrap around
  * logic which can be optimized to having only one of the two logic sets.
- * However, having the double logic will work fine, but if we have only one of
- * the sets and we get it wrong somewhere, then we get into trouble, so
+ * However, having the द्विगुन logic will work fine, but अगर we have only one of
+ * the sets and we get it wrong somewhere, then we get पूर्णांकo trouble, so
  * removing the duplicate logic requires _very_ careful consideration of _all_
- * possible code paths.  So at least for now, I am leaving the double logic -
+ * possible code paths.  So at least क्रम now, I am leaving the द्विगुन logic -
  * better safe than sorry... (AIA)
  *
- * Locking: - The volume lcn bitmap must be unlocked on entry and is unlocked
- *	      on return.
- *	    - This function takes the volume lcn bitmap lock for writing and
- *	      modifies the bitmap contents.
+ * Locking: - The volume lcn biपंचांगap must be unlocked on entry and is unlocked
+ *	      on वापस.
+ *	    - This function takes the volume lcn biपंचांगap lock क्रम writing and
+ *	      modअगरies the biपंचांगap contents.
  */
-runlist_element *ntfs_cluster_alloc(ntfs_volume *vol, const VCN start_vcn,
-		const s64 count, const LCN start_lcn,
-		const NTFS_CLUSTER_ALLOCATION_ZONES zone,
-		const bool is_extension)
-{
-	LCN zone_start, zone_end, bmp_pos, bmp_initial_pos, last_read_pos, lcn;
+runlist_element *ntfs_cluster_alloc(ntfs_volume *vol, स्थिर VCN start_vcn,
+		स्थिर s64 count, स्थिर LCN start_lcn,
+		स्थिर NTFS_CLUSTER_ALLOCATION_ZONES zone,
+		स्थिर bool is_extension)
+अणु
+	LCN zone_start, zone_end, bmp_pos, bmp_initial_pos, last_पढ़ो_pos, lcn;
 	LCN prev_lcn = 0, prev_run_len = 0, mft_zone_size;
 	s64 clusters;
 	loff_t i_size;
-	struct inode *lcnbmp_vi;
-	runlist_element *rl = NULL;
-	struct address_space *mapping;
-	struct page *page = NULL;
+	काष्ठा inode *lcnbmp_vi;
+	runlist_element *rl = शून्य;
+	काष्ठा address_space *mapping;
+	काष्ठा page *page = शून्य;
 	u8 *buf, *byte;
-	int err = 0, rlpos, rlsize, buf_size;
-	u8 pass, done_zones, search_zone, need_writeback = 0, bit;
+	पूर्णांक err = 0, rlpos, rlsize, buf_size;
+	u8 pass, करोne_zones, search_zone, need_ग_लिखोback = 0, bit;
 
 	ntfs_debug("Entering for start_vcn 0x%llx, count 0x%llx, start_lcn "
-			"0x%llx, zone %s_ZONE.", (unsigned long long)start_vcn,
-			(unsigned long long)count,
-			(unsigned long long)start_lcn,
+			"0x%llx, zone %s_ZONE.", (अचिन्हित दीर्घ दीर्घ)start_vcn,
+			(अचिन्हित दीर्घ दीर्घ)count,
+			(अचिन्हित दीर्घ दीर्घ)start_lcn,
 			zone == MFT_ZONE ? "MFT" : "DATA");
 	BUG_ON(!vol);
 	lcnbmp_vi = vol->lcnbmp_ino;
@@ -160,78 +161,78 @@ runlist_element *ntfs_cluster_alloc(ntfs_volume *vol, const VCN start_vcn,
 	BUG_ON(zone < FIRST_ZONE);
 	BUG_ON(zone > LAST_ZONE);
 
-	/* Return NULL if @count is zero. */
-	if (!count)
-		return NULL;
-	/* Take the lcnbmp lock for writing. */
-	down_write(&vol->lcnbmp_lock);
+	/* Return शून्य अगर @count is zero. */
+	अगर (!count)
+		वापस शून्य;
+	/* Take the lcnbmp lock क्रम writing. */
+	करोwn_ग_लिखो(&vol->lcnbmp_lock);
 	/*
-	 * If no specific @start_lcn was requested, use the current data zone
+	 * If no specअगरic @start_lcn was requested, use the current data zone
 	 * position, otherwise use the requested @start_lcn but make sure it
-	 * lies outside the mft zone.  Also set done_zones to 0 (no zones done)
+	 * lies outside the mft zone.  Also set करोne_zones to 0 (no zones करोne)
 	 * and pass depending on whether we are starting inside a zone (1) or
 	 * at the beginning of a zone (2).  If requesting from the MFT_ZONE,
 	 * we either start at the current position within the mft zone or at
-	 * the specified position.  If the latter is out of bounds then we start
+	 * the specअगरied position.  If the latter is out of bounds then we start
 	 * at the beginning of the MFT_ZONE.
 	 */
-	done_zones = 0;
+	करोne_zones = 0;
 	pass = 1;
 	/*
 	 * zone_start and zone_end are the current search range.  search_zone
-	 * is 1 for mft zone, 2 for data zone 1 (end of mft zone till end of
-	 * volume) and 4 for data zone 2 (start of volume till start of mft
+	 * is 1 क्रम mft zone, 2 क्रम data zone 1 (end of mft zone till end of
+	 * volume) and 4 क्रम data zone 2 (start of volume till start of mft
 	 * zone).
 	 */
 	zone_start = start_lcn;
-	if (zone_start < 0) {
-		if (zone == DATA_ZONE)
+	अगर (zone_start < 0) अणु
+		अगर (zone == DATA_ZONE)
 			zone_start = vol->data1_zone_pos;
-		else
+		अन्यथा
 			zone_start = vol->mft_zone_pos;
-		if (!zone_start) {
+		अगर (!zone_start) अणु
 			/*
 			 * Zone starts at beginning of volume which means a
 			 * single pass is sufficient.
 			 */
 			pass = 2;
-		}
-	} else if (zone == DATA_ZONE && zone_start >= vol->mft_zone_start &&
-			zone_start < vol->mft_zone_end) {
+		पूर्ण
+	पूर्ण अन्यथा अगर (zone == DATA_ZONE && zone_start >= vol->mft_zone_start &&
+			zone_start < vol->mft_zone_end) अणु
 		zone_start = vol->mft_zone_end;
 		/*
 		 * Starting at beginning of data1_zone which means a single
 		 * pass in this zone is sufficient.
 		 */
 		pass = 2;
-	} else if (zone == MFT_ZONE && (zone_start < vol->mft_zone_start ||
-			zone_start >= vol->mft_zone_end)) {
+	पूर्ण अन्यथा अगर (zone == MFT_ZONE && (zone_start < vol->mft_zone_start ||
+			zone_start >= vol->mft_zone_end)) अणु
 		zone_start = vol->mft_lcn;
-		if (!vol->mft_zone_end)
+		अगर (!vol->mft_zone_end)
 			zone_start = 0;
 		/*
 		 * Starting at beginning of volume which means a single pass
 		 * is sufficient.
 		 */
 		pass = 2;
-	}
-	if (zone == MFT_ZONE) {
+	पूर्ण
+	अगर (zone == MFT_ZONE) अणु
 		zone_end = vol->mft_zone_end;
 		search_zone = 1;
-	} else /* if (zone == DATA_ZONE) */ {
+	पूर्ण अन्यथा /* अगर (zone == DATA_ZONE) */ अणु
 		/* Skip searching the mft zone. */
-		done_zones |= 1;
-		if (zone_start >= vol->mft_zone_end) {
+		करोne_zones |= 1;
+		अगर (zone_start >= vol->mft_zone_end) अणु
 			zone_end = vol->nr_clusters;
 			search_zone = 2;
-		} else {
+		पूर्ण अन्यथा अणु
 			zone_end = vol->mft_zone_start;
 			search_zone = 4;
-		}
-	}
+		पूर्ण
+	पूर्ण
 	/*
-	 * bmp_pos is the current bit position inside the bitmap.  We use
-	 * bmp_initial_pos to determine whether or not to do a zone switch.
+	 * bmp_pos is the current bit position inside the biपंचांगap.  We use
+	 * bmp_initial_pos to determine whether or not to करो a zone चयन.
 	 */
 	bmp_pos = bmp_initial_pos = zone_start;
 
@@ -239,190 +240,190 @@ runlist_element *ntfs_cluster_alloc(ntfs_volume *vol, const VCN start_vcn,
 	clusters = count;
 	rlpos = rlsize = 0;
 	mapping = lcnbmp_vi->i_mapping;
-	i_size = i_size_read(lcnbmp_vi);
-	while (1) {
+	i_size = i_size_पढ़ो(lcnbmp_vi);
+	जबतक (1) अणु
 		ntfs_debug("Start of outer while loop: done_zones 0x%x, "
 				"search_zone %i, pass %i, zone_start 0x%llx, "
 				"zone_end 0x%llx, bmp_initial_pos 0x%llx, "
 				"bmp_pos 0x%llx, rlpos %i, rlsize %i.",
-				done_zones, search_zone, pass,
-				(unsigned long long)zone_start,
-				(unsigned long long)zone_end,
-				(unsigned long long)bmp_initial_pos,
-				(unsigned long long)bmp_pos, rlpos, rlsize);
-		/* Loop until we run out of free clusters. */
-		last_read_pos = bmp_pos >> 3;
+				करोne_zones, search_zone, pass,
+				(अचिन्हित दीर्घ दीर्घ)zone_start,
+				(अचिन्हित दीर्घ दीर्घ)zone_end,
+				(अचिन्हित दीर्घ दीर्घ)bmp_initial_pos,
+				(अचिन्हित दीर्घ दीर्घ)bmp_pos, rlpos, rlsize);
+		/* Loop until we run out of मुक्त clusters. */
+		last_पढ़ो_pos = bmp_pos >> 3;
 		ntfs_debug("last_read_pos 0x%llx.",
-				(unsigned long long)last_read_pos);
-		if (last_read_pos > i_size) {
+				(अचिन्हित दीर्घ दीर्घ)last_पढ़ो_pos);
+		अगर (last_पढ़ो_pos > i_size) अणु
 			ntfs_debug("End of attribute reached.  "
 					"Skipping to zone_pass_done.");
-			goto zone_pass_done;
-		}
-		if (likely(page)) {
-			if (need_writeback) {
+			जाओ zone_pass_करोne;
+		पूर्ण
+		अगर (likely(page)) अणु
+			अगर (need_ग_लिखोback) अणु
 				ntfs_debug("Marking page dirty.");
 				flush_dcache_page(page);
 				set_page_dirty(page);
-				need_writeback = 0;
-			}
+				need_ग_लिखोback = 0;
+			पूर्ण
 			ntfs_unmap_page(page);
-		}
-		page = ntfs_map_page(mapping, last_read_pos >>
+		पूर्ण
+		page = ntfs_map_page(mapping, last_पढ़ो_pos >>
 				PAGE_SHIFT);
-		if (IS_ERR(page)) {
+		अगर (IS_ERR(page)) अणु
 			err = PTR_ERR(page);
 			ntfs_error(vol->sb, "Failed to map page.");
-			goto out;
-		}
-		buf_size = last_read_pos & ~PAGE_MASK;
+			जाओ out;
+		पूर्ण
+		buf_size = last_पढ़ो_pos & ~PAGE_MASK;
 		buf = page_address(page) + buf_size;
 		buf_size = PAGE_SIZE - buf_size;
-		if (unlikely(last_read_pos + buf_size > i_size))
-			buf_size = i_size - last_read_pos;
+		अगर (unlikely(last_पढ़ो_pos + buf_size > i_size))
+			buf_size = i_size - last_पढ़ो_pos;
 		buf_size <<= 3;
 		lcn = bmp_pos & 7;
 		bmp_pos &= ~(LCN)7;
 		ntfs_debug("Before inner while loop: buf_size %i, lcn 0x%llx, "
 				"bmp_pos 0x%llx, need_writeback %i.", buf_size,
-				(unsigned long long)lcn,
-				(unsigned long long)bmp_pos, need_writeback);
-		while (lcn < buf_size && lcn + bmp_pos < zone_end) {
+				(अचिन्हित दीर्घ दीर्घ)lcn,
+				(अचिन्हित दीर्घ दीर्घ)bmp_pos, need_ग_लिखोback);
+		जबतक (lcn < buf_size && lcn + bmp_pos < zone_end) अणु
 			byte = buf + (lcn >> 3);
 			ntfs_debug("In inner while loop: buf_size %i, "
 					"lcn 0x%llx, bmp_pos 0x%llx, "
 					"need_writeback %i, byte ofs 0x%x, "
 					"*byte 0x%x.", buf_size,
-					(unsigned long long)lcn,
-					(unsigned long long)bmp_pos,
-					need_writeback,
-					(unsigned int)(lcn >> 3),
-					(unsigned int)*byte);
+					(अचिन्हित दीर्घ दीर्घ)lcn,
+					(अचिन्हित दीर्घ दीर्घ)bmp_pos,
+					need_ग_लिखोback,
+					(अचिन्हित पूर्णांक)(lcn >> 3),
+					(अचिन्हित पूर्णांक)*byte);
 			/* Skip full bytes. */
-			if (*byte == 0xff) {
+			अगर (*byte == 0xff) अणु
 				lcn = (lcn + 8) & ~(LCN)7;
 				ntfs_debug("Continuing while loop 1.");
-				continue;
-			}
+				जारी;
+			पूर्ण
 			bit = 1 << (lcn & 7);
 			ntfs_debug("bit 0x%x.", bit);
-			/* If the bit is already set, go onto the next one. */
-			if (*byte & bit) {
+			/* If the bit is alपढ़ोy set, go onto the next one. */
+			अगर (*byte & bit) अणु
 				lcn++;
 				ntfs_debug("Continuing while loop 2.");
-				continue;
-			}
+				जारी;
+			पूर्ण
 			/*
-			 * Allocate more memory if needed, including space for
+			 * Allocate more memory अगर needed, including space क्रम
 			 * the terminator element.
-			 * ntfs_malloc_nofs() operates on whole pages only.
+			 * ntfs_दो_स्मृति_nofs() operates on whole pages only.
 			 */
-			if ((rlpos + 2) * sizeof(*rl) > rlsize) {
+			अगर ((rlpos + 2) * माप(*rl) > rlsize) अणु
 				runlist_element *rl2;
 
 				ntfs_debug("Reallocating memory.");
-				if (!rl)
+				अगर (!rl)
 					ntfs_debug("First free bit is at LCN "
 							"0x%llx.",
-							(unsigned long long)
+							(अचिन्हित दीर्घ दीर्घ)
 							(lcn + bmp_pos));
-				rl2 = ntfs_malloc_nofs(rlsize + (int)PAGE_SIZE);
-				if (unlikely(!rl2)) {
+				rl2 = ntfs_दो_स्मृति_nofs(rlsize + (पूर्णांक)PAGE_SIZE);
+				अगर (unlikely(!rl2)) अणु
 					err = -ENOMEM;
 					ntfs_error(vol->sb, "Failed to "
 							"allocate memory.");
-					goto out;
-				}
-				memcpy(rl2, rl, rlsize);
-				ntfs_free(rl);
+					जाओ out;
+				पूर्ण
+				स_नकल(rl2, rl, rlsize);
+				ntfs_मुक्त(rl);
 				rl = rl2;
 				rlsize += PAGE_SIZE;
 				ntfs_debug("Reallocated memory, rlsize 0x%x.",
 						rlsize);
-			}
-			/* Allocate the bitmap bit. */
+			पूर्ण
+			/* Allocate the biपंचांगap bit. */
 			*byte |= bit;
-			/* We need to write this bitmap page to disk. */
-			need_writeback = 1;
+			/* We need to ग_लिखो this biपंचांगap page to disk. */
+			need_ग_लिखोback = 1;
 			ntfs_debug("*byte 0x%x, need_writeback is set.",
-					(unsigned int)*byte);
+					(अचिन्हित पूर्णांक)*byte);
 			/*
-			 * Coalesce with previous run if adjacent LCNs.
+			 * Coalesce with previous run अगर adjacent LCNs.
 			 * Otherwise, append a new run.
 			 */
 			ntfs_debug("Adding run (lcn 0x%llx, len 0x%llx), "
 					"prev_lcn 0x%llx, lcn 0x%llx, "
 					"bmp_pos 0x%llx, prev_run_len 0x%llx, "
 					"rlpos %i.",
-					(unsigned long long)(lcn + bmp_pos),
-					1ULL, (unsigned long long)prev_lcn,
-					(unsigned long long)lcn,
-					(unsigned long long)bmp_pos,
-					(unsigned long long)prev_run_len,
+					(अचिन्हित दीर्घ दीर्घ)(lcn + bmp_pos),
+					1ULL, (अचिन्हित दीर्घ दीर्घ)prev_lcn,
+					(अचिन्हित दीर्घ दीर्घ)lcn,
+					(अचिन्हित दीर्घ दीर्घ)bmp_pos,
+					(अचिन्हित दीर्घ दीर्घ)prev_run_len,
 					rlpos);
-			if (prev_lcn == lcn + bmp_pos - prev_run_len && rlpos) {
+			अगर (prev_lcn == lcn + bmp_pos - prev_run_len && rlpos) अणु
 				ntfs_debug("Coalescing to run (lcn 0x%llx, "
 						"len 0x%llx).",
-						(unsigned long long)
+						(अचिन्हित दीर्घ दीर्घ)
 						rl[rlpos - 1].lcn,
-						(unsigned long long)
+						(अचिन्हित दीर्घ दीर्घ)
 						rl[rlpos - 1].length);
 				rl[rlpos - 1].length = ++prev_run_len;
 				ntfs_debug("Run now (lcn 0x%llx, len 0x%llx), "
 						"prev_run_len 0x%llx.",
-						(unsigned long long)
+						(अचिन्हित दीर्घ दीर्घ)
 						rl[rlpos - 1].lcn,
-						(unsigned long long)
+						(अचिन्हित दीर्घ दीर्घ)
 						rl[rlpos - 1].length,
-						(unsigned long long)
+						(अचिन्हित दीर्घ दीर्घ)
 						prev_run_len);
-			} else {
-				if (likely(rlpos)) {
+			पूर्ण अन्यथा अणु
+				अगर (likely(rlpos)) अणु
 					ntfs_debug("Adding new run, (previous "
 							"run lcn 0x%llx, "
 							"len 0x%llx).",
-							(unsigned long long)
+							(अचिन्हित दीर्घ दीर्घ)
 							rl[rlpos - 1].lcn,
-							(unsigned long long)
+							(अचिन्हित दीर्घ दीर्घ)
 							rl[rlpos - 1].length);
 					rl[rlpos].vcn = rl[rlpos - 1].vcn +
 							prev_run_len;
-				} else {
+				पूर्ण अन्यथा अणु
 					ntfs_debug("Adding new run, is first "
 							"run.");
 					rl[rlpos].vcn = start_vcn;
-				}
+				पूर्ण
 				rl[rlpos].lcn = prev_lcn = lcn + bmp_pos;
 				rl[rlpos].length = prev_run_len = 1;
 				rlpos++;
-			}
+			पूर्ण
 			/* Done? */
-			if (!--clusters) {
+			अगर (!--clusters) अणु
 				LCN tc;
 				/*
 				 * Update the current zone position.  Positions
-				 * of already scanned zones have been updated
-				 * during the respective zone switches.
+				 * of alपढ़ोy scanned zones have been updated
+				 * during the respective zone चयनes.
 				 */
 				tc = lcn + bmp_pos + 1;
 				ntfs_debug("Done. Updating current zone "
 						"position, tc 0x%llx, "
 						"search_zone %i.",
-						(unsigned long long)tc,
+						(अचिन्हित दीर्घ दीर्घ)tc,
 						search_zone);
-				switch (search_zone) {
-				case 1:
+				चयन (search_zone) अणु
+				हाल 1:
 					ntfs_debug("Before checks, "
 							"vol->mft_zone_pos "
 							"0x%llx.",
-							(unsigned long long)
+							(अचिन्हित दीर्घ दीर्घ)
 							vol->mft_zone_pos);
-					if (tc >= vol->mft_zone_end) {
+					अगर (tc >= vol->mft_zone_end) अणु
 						vol->mft_zone_pos =
 								vol->mft_lcn;
-						if (!vol->mft_zone_end)
+						अगर (!vol->mft_zone_end)
 							vol->mft_zone_pos = 0;
-					} else if ((bmp_initial_pos >=
+					पूर्ण अन्यथा अगर ((bmp_initial_pos >=
 							vol->mft_zone_pos ||
 							tc > vol->mft_zone_pos)
 							&& tc >= vol->mft_lcn)
@@ -430,19 +431,19 @@ runlist_element *ntfs_cluster_alloc(ntfs_volume *vol, const VCN start_vcn,
 					ntfs_debug("After checks, "
 							"vol->mft_zone_pos "
 							"0x%llx.",
-							(unsigned long long)
+							(अचिन्हित दीर्घ दीर्घ)
 							vol->mft_zone_pos);
-					break;
-				case 2:
+					अवरोध;
+				हाल 2:
 					ntfs_debug("Before checks, "
 							"vol->data1_zone_pos "
 							"0x%llx.",
-							(unsigned long long)
+							(अचिन्हित दीर्घ दीर्घ)
 							vol->data1_zone_pos);
-					if (tc >= vol->nr_clusters)
+					अगर (tc >= vol->nr_clusters)
 						vol->data1_zone_pos =
 							     vol->mft_zone_end;
-					else if ((bmp_initial_pos >=
+					अन्यथा अगर ((bmp_initial_pos >=
 						    vol->data1_zone_pos ||
 						    tc > vol->data1_zone_pos)
 						    && tc >= vol->mft_zone_end)
@@ -450,112 +451,112 @@ runlist_element *ntfs_cluster_alloc(ntfs_volume *vol, const VCN start_vcn,
 					ntfs_debug("After checks, "
 							"vol->data1_zone_pos "
 							"0x%llx.",
-							(unsigned long long)
+							(अचिन्हित दीर्घ दीर्घ)
 							vol->data1_zone_pos);
-					break;
-				case 4:
+					अवरोध;
+				हाल 4:
 					ntfs_debug("Before checks, "
 							"vol->data2_zone_pos "
 							"0x%llx.",
-							(unsigned long long)
+							(अचिन्हित दीर्घ दीर्घ)
 							vol->data2_zone_pos);
-					if (tc >= vol->mft_zone_start)
+					अगर (tc >= vol->mft_zone_start)
 						vol->data2_zone_pos = 0;
-					else if (bmp_initial_pos >=
+					अन्यथा अगर (bmp_initial_pos >=
 						      vol->data2_zone_pos ||
 						      tc > vol->data2_zone_pos)
 						vol->data2_zone_pos = tc;
 					ntfs_debug("After checks, "
 							"vol->data2_zone_pos "
 							"0x%llx.",
-							(unsigned long long)
+							(अचिन्हित दीर्घ दीर्घ)
 							vol->data2_zone_pos);
-					break;
-				default:
+					अवरोध;
+				शेष:
 					BUG();
-				}
+				पूर्ण
 				ntfs_debug("Finished.  Going to out.");
-				goto out;
-			}
+				जाओ out;
+			पूर्ण
 			lcn++;
-		}
+		पूर्ण
 		bmp_pos += buf_size;
 		ntfs_debug("After inner while loop: buf_size 0x%x, lcn "
 				"0x%llx, bmp_pos 0x%llx, need_writeback %i.",
-				buf_size, (unsigned long long)lcn,
-				(unsigned long long)bmp_pos, need_writeback);
-		if (bmp_pos < zone_end) {
+				buf_size, (अचिन्हित दीर्घ दीर्घ)lcn,
+				(अचिन्हित दीर्घ दीर्घ)bmp_pos, need_ग_लिखोback);
+		अगर (bmp_pos < zone_end) अणु
 			ntfs_debug("Continuing outer while loop, "
 					"bmp_pos 0x%llx, zone_end 0x%llx.",
-					(unsigned long long)bmp_pos,
-					(unsigned long long)zone_end);
-			continue;
-		}
-zone_pass_done:	/* Finished with the current zone pass. */
+					(अचिन्हित दीर्घ दीर्घ)bmp_pos,
+					(अचिन्हित दीर्घ दीर्घ)zone_end);
+			जारी;
+		पूर्ण
+zone_pass_करोne:	/* Finished with the current zone pass. */
 		ntfs_debug("At zone_pass_done, pass %i.", pass);
-		if (pass == 1) {
+		अगर (pass == 1) अणु
 			/*
-			 * Now do pass 2, scanning the first part of the zone
+			 * Now करो pass 2, scanning the first part of the zone
 			 * we omitted in pass 1.
 			 */
 			pass = 2;
 			zone_end = zone_start;
-			switch (search_zone) {
-			case 1: /* mft_zone */
+			चयन (search_zone) अणु
+			हाल 1: /* mft_zone */
 				zone_start = vol->mft_zone_start;
-				break;
-			case 2: /* data1_zone */
+				अवरोध;
+			हाल 2: /* data1_zone */
 				zone_start = vol->mft_zone_end;
-				break;
-			case 4: /* data2_zone */
+				अवरोध;
+			हाल 4: /* data2_zone */
 				zone_start = 0;
-				break;
-			default:
+				अवरोध;
+			शेष:
 				BUG();
-			}
+			पूर्ण
 			/* Sanity check. */
-			if (zone_end < zone_start)
+			अगर (zone_end < zone_start)
 				zone_end = zone_start;
 			bmp_pos = zone_start;
 			ntfs_debug("Continuing outer while loop, pass 2, "
 					"zone_start 0x%llx, zone_end 0x%llx, "
 					"bmp_pos 0x%llx.",
-					(unsigned long long)zone_start,
-					(unsigned long long)zone_end,
-					(unsigned long long)bmp_pos);
-			continue;
-		} /* pass == 2 */
-done_zones_check:
+					(अचिन्हित दीर्घ दीर्घ)zone_start,
+					(अचिन्हित दीर्घ दीर्घ)zone_end,
+					(अचिन्हित दीर्घ दीर्घ)bmp_pos);
+			जारी;
+		पूर्ण /* pass == 2 */
+करोne_zones_check:
 		ntfs_debug("At done_zones_check, search_zone %i, done_zones "
 				"before 0x%x, done_zones after 0x%x.",
-				search_zone, done_zones,
-				done_zones | search_zone);
-		done_zones |= search_zone;
-		if (done_zones < 7) {
+				search_zone, करोne_zones,
+				करोne_zones | search_zone);
+		करोne_zones |= search_zone;
+		अगर (करोne_zones < 7) अणु
 			ntfs_debug("Switching zone.");
-			/* Now switch to the next zone we haven't done yet. */
+			/* Now चयन to the next zone we haven't करोne yet. */
 			pass = 1;
-			switch (search_zone) {
-			case 1:
+			चयन (search_zone) अणु
+			हाल 1:
 				ntfs_debug("Switching from mft zone to data1 "
 						"zone.");
 				/* Update mft zone position. */
-				if (rlpos) {
+				अगर (rlpos) अणु
 					LCN tc;
 
 					ntfs_debug("Before checks, "
 							"vol->mft_zone_pos "
 							"0x%llx.",
-							(unsigned long long)
+							(अचिन्हित दीर्घ दीर्घ)
 							vol->mft_zone_pos);
 					tc = rl[rlpos - 1].lcn +
 							rl[rlpos - 1].length;
-					if (tc >= vol->mft_zone_end) {
+					अगर (tc >= vol->mft_zone_end) अणु
 						vol->mft_zone_pos =
 								vol->mft_lcn;
-						if (!vol->mft_zone_end)
+						अगर (!vol->mft_zone_end)
 							vol->mft_zone_pos = 0;
-					} else if ((bmp_initial_pos >=
+					पूर्ण अन्यथा अगर ((bmp_initial_pos >=
 							vol->mft_zone_pos ||
 							tc > vol->mft_zone_pos)
 							&& tc >= vol->mft_lcn)
@@ -563,40 +564,40 @@ done_zones_check:
 					ntfs_debug("After checks, "
 							"vol->mft_zone_pos "
 							"0x%llx.",
-							(unsigned long long)
+							(अचिन्हित दीर्घ दीर्घ)
 							vol->mft_zone_pos);
-				}
+				पूर्ण
 				/* Switch from mft zone to data1 zone. */
-switch_to_data1_zone:		search_zone = 2;
+चयन_to_data1_zone:		search_zone = 2;
 				zone_start = bmp_initial_pos =
 						vol->data1_zone_pos;
 				zone_end = vol->nr_clusters;
-				if (zone_start == vol->mft_zone_end)
+				अगर (zone_start == vol->mft_zone_end)
 					pass = 2;
-				if (zone_start >= zone_end) {
+				अगर (zone_start >= zone_end) अणु
 					vol->data1_zone_pos = zone_start =
 							vol->mft_zone_end;
 					pass = 2;
-				}
-				break;
-			case 2:
+				पूर्ण
+				अवरोध;
+			हाल 2:
 				ntfs_debug("Switching from data1 zone to "
 						"data2 zone.");
 				/* Update data1 zone position. */
-				if (rlpos) {
+				अगर (rlpos) अणु
 					LCN tc;
 
 					ntfs_debug("Before checks, "
 							"vol->data1_zone_pos "
 							"0x%llx.",
-							(unsigned long long)
+							(अचिन्हित दीर्घ दीर्घ)
 							vol->data1_zone_pos);
 					tc = rl[rlpos - 1].lcn +
 							rl[rlpos - 1].length;
-					if (tc >= vol->nr_clusters)
+					अगर (tc >= vol->nr_clusters)
 						vol->data1_zone_pos =
 							     vol->mft_zone_end;
-					else if ((bmp_initial_pos >=
+					अन्यथा अगर ((bmp_initial_pos >=
 						    vol->data1_zone_pos ||
 						    tc > vol->data1_zone_pos)
 						    && tc >= vol->mft_zone_end)
@@ -604,70 +605,70 @@ switch_to_data1_zone:		search_zone = 2;
 					ntfs_debug("After checks, "
 							"vol->data1_zone_pos "
 							"0x%llx.",
-							(unsigned long long)
+							(अचिन्हित दीर्घ दीर्घ)
 							vol->data1_zone_pos);
-				}
+				पूर्ण
 				/* Switch from data1 zone to data2 zone. */
 				search_zone = 4;
 				zone_start = bmp_initial_pos =
 						vol->data2_zone_pos;
 				zone_end = vol->mft_zone_start;
-				if (!zone_start)
+				अगर (!zone_start)
 					pass = 2;
-				if (zone_start >= zone_end) {
+				अगर (zone_start >= zone_end) अणु
 					vol->data2_zone_pos = zone_start =
 							bmp_initial_pos = 0;
 					pass = 2;
-				}
-				break;
-			case 4:
+				पूर्ण
+				अवरोध;
+			हाल 4:
 				ntfs_debug("Switching from data2 zone to "
 						"data1 zone.");
 				/* Update data2 zone position. */
-				if (rlpos) {
+				अगर (rlpos) अणु
 					LCN tc;
 
 					ntfs_debug("Before checks, "
 							"vol->data2_zone_pos "
 							"0x%llx.",
-							(unsigned long long)
+							(अचिन्हित दीर्घ दीर्घ)
 							vol->data2_zone_pos);
 					tc = rl[rlpos - 1].lcn +
 							rl[rlpos - 1].length;
-					if (tc >= vol->mft_zone_start)
+					अगर (tc >= vol->mft_zone_start)
 						vol->data2_zone_pos = 0;
-					else if (bmp_initial_pos >=
+					अन्यथा अगर (bmp_initial_pos >=
 						      vol->data2_zone_pos ||
 						      tc > vol->data2_zone_pos)
 						vol->data2_zone_pos = tc;
 					ntfs_debug("After checks, "
 							"vol->data2_zone_pos "
 							"0x%llx.",
-							(unsigned long long)
+							(अचिन्हित दीर्घ दीर्घ)
 							vol->data2_zone_pos);
-				}
+				पूर्ण
 				/* Switch from data2 zone to data1 zone. */
-				goto switch_to_data1_zone;
-			default:
+				जाओ चयन_to_data1_zone;
+			शेष:
 				BUG();
-			}
+			पूर्ण
 			ntfs_debug("After zone switch, search_zone %i, "
 					"pass %i, bmp_initial_pos 0x%llx, "
 					"zone_start 0x%llx, zone_end 0x%llx.",
 					search_zone, pass,
-					(unsigned long long)bmp_initial_pos,
-					(unsigned long long)zone_start,
-					(unsigned long long)zone_end);
+					(अचिन्हित दीर्घ दीर्घ)bmp_initial_pos,
+					(अचिन्हित दीर्घ दीर्घ)zone_start,
+					(अचिन्हित दीर्घ दीर्घ)zone_end);
 			bmp_pos = zone_start;
-			if (zone_start == zone_end) {
+			अगर (zone_start == zone_end) अणु
 				ntfs_debug("Empty zone, going to "
 						"done_zones_check.");
 				/* Empty zone. Don't bother searching it. */
-				goto done_zones_check;
-			}
+				जाओ करोne_zones_check;
+			पूर्ण
 			ntfs_debug("Continuing outer while loop.");
-			continue;
-		} /* done_zones == 7 */
+			जारी;
+		पूर्ण /* करोne_zones == 7 */
 		ntfs_debug("All zones are finished.");
 		/*
 		 * All zones are finished!  If DATA_ZONE, shrink mft zone.  If
@@ -676,33 +677,33 @@ switch_to_data1_zone:		search_zone = 2;
 		mft_zone_size = vol->mft_zone_end - vol->mft_zone_start;
 		ntfs_debug("vol->mft_zone_start 0x%llx, vol->mft_zone_end "
 				"0x%llx, mft_zone_size 0x%llx.",
-				(unsigned long long)vol->mft_zone_start,
-				(unsigned long long)vol->mft_zone_end,
-				(unsigned long long)mft_zone_size);
-		if (zone == MFT_ZONE || mft_zone_size <= 0) {
+				(अचिन्हित दीर्घ दीर्घ)vol->mft_zone_start,
+				(अचिन्हित दीर्घ दीर्घ)vol->mft_zone_end,
+				(अचिन्हित दीर्घ दीर्घ)mft_zone_size);
+		अगर (zone == MFT_ZONE || mft_zone_size <= 0) अणु
 			ntfs_debug("No free clusters left, going to out.");
 			/* Really no more space left on device. */
 			err = -ENOSPC;
-			goto out;
-		} /* zone == DATA_ZONE && mft_zone_size > 0 */
+			जाओ out;
+		पूर्ण /* zone == DATA_ZONE && mft_zone_size > 0 */
 		ntfs_debug("Shrinking mft zone.");
 		zone_end = vol->mft_zone_end;
 		mft_zone_size >>= 1;
-		if (mft_zone_size > 0)
+		अगर (mft_zone_size > 0)
 			vol->mft_zone_end = vol->mft_zone_start + mft_zone_size;
-		else /* mft zone and data2 zone no longer exist. */
+		अन्यथा /* mft zone and data2 zone no दीर्घer exist. */
 			vol->data2_zone_pos = vol->mft_zone_start =
 					vol->mft_zone_end = 0;
-		if (vol->mft_zone_pos >= vol->mft_zone_end) {
+		अगर (vol->mft_zone_pos >= vol->mft_zone_end) अणु
 			vol->mft_zone_pos = vol->mft_lcn;
-			if (!vol->mft_zone_end)
+			अगर (!vol->mft_zone_end)
 				vol->mft_zone_pos = 0;
-		}
+		पूर्ण
 		bmp_pos = zone_start = bmp_initial_pos =
 				vol->data1_zone_pos = vol->mft_zone_end;
 		search_zone = 2;
 		pass = 2;
-		done_zones &= ~2;
+		करोne_zones &= ~2;
 		ntfs_debug("After shrinking mft zone, mft_zone_size 0x%llx, "
 				"vol->mft_zone_start 0x%llx, "
 				"vol->mft_zone_end 0x%llx, "
@@ -710,141 +711,141 @@ switch_to_data1_zone:		search_zone = 2;
 				"pass 2, dones_zones 0x%x, zone_start 0x%llx, "
 				"zone_end 0x%llx, vol->data1_zone_pos 0x%llx, "
 				"continuing outer while loop.",
-				(unsigned long long)mft_zone_size,
-				(unsigned long long)vol->mft_zone_start,
-				(unsigned long long)vol->mft_zone_end,
-				(unsigned long long)vol->mft_zone_pos,
-				done_zones, (unsigned long long)zone_start,
-				(unsigned long long)zone_end,
-				(unsigned long long)vol->data1_zone_pos);
-	}
+				(अचिन्हित दीर्घ दीर्घ)mft_zone_size,
+				(अचिन्हित दीर्घ दीर्घ)vol->mft_zone_start,
+				(अचिन्हित दीर्घ दीर्घ)vol->mft_zone_end,
+				(अचिन्हित दीर्घ दीर्घ)vol->mft_zone_pos,
+				करोne_zones, (अचिन्हित दीर्घ दीर्घ)zone_start,
+				(अचिन्हित दीर्घ दीर्घ)zone_end,
+				(अचिन्हित दीर्घ दीर्घ)vol->data1_zone_pos);
+	पूर्ण
 	ntfs_debug("After outer while loop.");
 out:
 	ntfs_debug("At out.");
 	/* Add runlist terminator element. */
-	if (likely(rl)) {
+	अगर (likely(rl)) अणु
 		rl[rlpos].vcn = rl[rlpos - 1].vcn + rl[rlpos - 1].length;
 		rl[rlpos].lcn = is_extension ? LCN_ENOENT : LCN_RL_NOT_MAPPED;
 		rl[rlpos].length = 0;
-	}
-	if (likely(page && !IS_ERR(page))) {
-		if (need_writeback) {
+	पूर्ण
+	अगर (likely(page && !IS_ERR(page))) अणु
+		अगर (need_ग_लिखोback) अणु
 			ntfs_debug("Marking page dirty.");
 			flush_dcache_page(page);
 			set_page_dirty(page);
-			need_writeback = 0;
-		}
+			need_ग_लिखोback = 0;
+		पूर्ण
 		ntfs_unmap_page(page);
-	}
-	if (likely(!err)) {
-		up_write(&vol->lcnbmp_lock);
+	पूर्ण
+	अगर (likely(!err)) अणु
+		up_ग_लिखो(&vol->lcnbmp_lock);
 		ntfs_debug("Done.");
-		return rl;
-	}
+		वापस rl;
+	पूर्ण
 	ntfs_error(vol->sb, "Failed to allocate clusters, aborting "
 			"(error %i).", err);
-	if (rl) {
-		int err2;
+	अगर (rl) अणु
+		पूर्णांक err2;
 
-		if (err == -ENOSPC)
+		अगर (err == -ENOSPC)
 			ntfs_debug("Not enough space to complete allocation, "
 					"err -ENOSPC, first free lcn 0x%llx, "
 					"could allocate up to 0x%llx "
 					"clusters.",
-					(unsigned long long)rl[0].lcn,
-					(unsigned long long)(count - clusters));
+					(अचिन्हित दीर्घ दीर्घ)rl[0].lcn,
+					(अचिन्हित दीर्घ दीर्घ)(count - clusters));
 		/* Deallocate all allocated clusters. */
 		ntfs_debug("Attempting rollback...");
-		err2 = ntfs_cluster_free_from_rl_nolock(vol, rl);
-		if (err2) {
+		err2 = ntfs_cluster_मुक्त_from_rl_nolock(vol, rl);
+		अगर (err2) अणु
 			ntfs_error(vol->sb, "Failed to rollback (error %i).  "
 					"Leaving inconsistent metadata!  "
 					"Unmount and run chkdsk.", err2);
 			NVolSetErrors(vol);
-		}
+		पूर्ण
 		/* Free the runlist. */
-		ntfs_free(rl);
-	} else if (err == -ENOSPC)
+		ntfs_मुक्त(rl);
+	पूर्ण अन्यथा अगर (err == -ENOSPC)
 		ntfs_debug("No space left at all, err = -ENOSPC, first free "
 				"lcn = 0x%llx.",
-				(long long)vol->data1_zone_pos);
-	up_write(&vol->lcnbmp_lock);
-	return ERR_PTR(err);
-}
+				(दीर्घ दीर्घ)vol->data1_zone_pos);
+	up_ग_लिखो(&vol->lcnbmp_lock);
+	वापस ERR_PTR(err);
+पूर्ण
 
 /**
- * __ntfs_cluster_free - free clusters on an ntfs volume
- * @ni:		ntfs inode whose runlist describes the clusters to free
- * @start_vcn:	vcn in the runlist of @ni at which to start freeing clusters
- * @count:	number of clusters to free or -1 for all clusters
- * @ctx:	active attribute search context if present or NULL if not
- * @is_rollback:	true if this is a rollback operation
+ * __ntfs_cluster_मुक्त - मुक्त clusters on an ntfs volume
+ * @ni:		ntfs inode whose runlist describes the clusters to मुक्त
+ * @start_vcn:	vcn in the runlist of @ni at which to start मुक्तing clusters
+ * @count:	number of clusters to मुक्त or -1 क्रम all clusters
+ * @ctx:	active attribute search context अगर present or शून्य अगर not
+ * @is_rollback:	true अगर this is a rollback operation
  *
  * Free @count clusters starting at the cluster @start_vcn in the runlist
  * described by the vfs inode @ni.
  *
  * If @count is -1, all clusters from @start_vcn to the end of the runlist are
- * deallocated.  Thus, to completely free all clusters in a runlist, use
+ * deallocated.  Thus, to completely मुक्त all clusters in a runlist, use
  * @start_vcn = 0 and @count = -1.
  *
- * If @ctx is specified, it is an active search context of @ni and its base mft
- * record.  This is needed when __ntfs_cluster_free() encounters unmapped
- * runlist fragments and allows their mapping.  If you do not have the mft
- * record mapped, you can specify @ctx as NULL and __ntfs_cluster_free() will
- * perform the necessary mapping and unmapping.
+ * If @ctx is specअगरied, it is an active search context of @ni and its base mft
+ * record.  This is needed when __ntfs_cluster_मुक्त() encounters unmapped
+ * runlist fragments and allows their mapping.  If you करो not have the mft
+ * record mapped, you can specअगरy @ctx as शून्य and __ntfs_cluster_मुक्त() will
+ * perक्रमm the necessary mapping and unmapping.
  *
- * Note, __ntfs_cluster_free() saves the state of @ctx on entry and restores it
- * before returning.  Thus, @ctx will be left pointing to the same attribute on
- * return as on entry.  However, the actual pointers in @ctx may point to
- * different memory locations on return, so you must remember to reset any
- * cached pointers from the @ctx, i.e. after the call to __ntfs_cluster_free(),
- * you will probably want to do:
+ * Note, __ntfs_cluster_मुक्त() saves the state of @ctx on entry and restores it
+ * beक्रमe वापसing.  Thus, @ctx will be left poपूर्णांकing to the same attribute on
+ * वापस as on entry.  However, the actual poपूर्णांकers in @ctx may poपूर्णांक to
+ * dअगरferent memory locations on वापस, so you must remember to reset any
+ * cached poपूर्णांकers from the @ctx, i.e. after the call to __ntfs_cluster_मुक्त(),
+ * you will probably want to करो:
  *	m = ctx->mrec;
  *	a = ctx->attr;
  * Assuming you cache ctx->attr in a variable @a of type ATTR_RECORD * and that
  * you cache ctx->mrec in a variable @m of type MFT_RECORD *.
  *
- * @is_rollback should always be 'false', it is for internal use to rollback
- * errors.  You probably want to use ntfs_cluster_free() instead.
+ * @is_rollback should always be 'false', it is क्रम पूर्णांकernal use to rollback
+ * errors.  You probably want to use ntfs_cluster_मुक्त() instead.
  *
- * Note, __ntfs_cluster_free() does not modify the runlist, so you have to
- * remove from the runlist or mark sparse the freed runs later.
+ * Note, __ntfs_cluster_मुक्त() करोes not modअगरy the runlist, so you have to
+ * हटाओ from the runlist or mark sparse the मुक्तd runs later.
  *
  * Return the number of deallocated clusters (not counting sparse ones) on
- * success and -errno on error.
+ * success and -त्रुटि_सं on error.
  *
  * WARNING: If @ctx is supplied, regardless of whether success or failure is
- *	    returned, you need to check IS_ERR(@ctx->mrec) and if 'true' the @ctx
- *	    is no longer valid, i.e. you need to either call
+ *	    वापसed, you need to check IS_ERR(@ctx->mrec) and अगर 'true' the @ctx
+ *	    is no दीर्घer valid, i.e. you need to either call
  *	    ntfs_attr_reinit_search_ctx() or ntfs_attr_put_search_ctx() on it.
- *	    In that case PTR_ERR(@ctx->mrec) will give you the error code for
+ *	    In that हाल PTR_ERR(@ctx->mrec) will give you the error code क्रम
  *	    why the mapping of the old inode failed.
  *
- * Locking: - The runlist described by @ni must be locked for writing on entry
- *	      and is locked on return.  Note the runlist may be modified when
+ * Locking: - The runlist described by @ni must be locked क्रम writing on entry
+ *	      and is locked on वापस.  Note the runlist may be modअगरied when
  *	      needed runlist fragments need to be mapped.
- *	    - The volume lcn bitmap must be unlocked on entry and is unlocked
- *	      on return.
- *	    - This function takes the volume lcn bitmap lock for writing and
- *	      modifies the bitmap contents.
- *	    - If @ctx is NULL, the base mft record of @ni must not be mapped on
- *	      entry and it will be left unmapped on return.
- *	    - If @ctx is not NULL, the base mft record must be mapped on entry
- *	      and it will be left mapped on return.
+ *	    - The volume lcn biपंचांगap must be unlocked on entry and is unlocked
+ *	      on वापस.
+ *	    - This function takes the volume lcn biपंचांगap lock क्रम writing and
+ *	      modअगरies the biपंचांगap contents.
+ *	    - If @ctx is शून्य, the base mft record of @ni must not be mapped on
+ *	      entry and it will be left unmapped on वापस.
+ *	    - If @ctx is not शून्य, the base mft record must be mapped on entry
+ *	      and it will be left mapped on वापस.
  */
-s64 __ntfs_cluster_free(ntfs_inode *ni, const VCN start_vcn, s64 count,
-		ntfs_attr_search_ctx *ctx, const bool is_rollback)
-{
-	s64 delta, to_free, total_freed, real_freed;
+s64 __ntfs_cluster_मुक्त(ntfs_inode *ni, स्थिर VCN start_vcn, s64 count,
+		ntfs_attr_search_ctx *ctx, स्थिर bool is_rollback)
+अणु
+	s64 delta, to_मुक्त, total_मुक्तd, real_मुक्तd;
 	ntfs_volume *vol;
-	struct inode *lcnbmp_vi;
+	काष्ठा inode *lcnbmp_vi;
 	runlist_element *rl;
-	int err;
+	पूर्णांक err;
 
 	BUG_ON(!ni);
 	ntfs_debug("Entering for i_ino 0x%lx, start_vcn 0x%llx, count "
-			"0x%llx.%s", ni->mft_no, (unsigned long long)start_vcn,
-			(unsigned long long)count,
+			"0x%llx.%s", ni->mft_no, (अचिन्हित दीर्घ दीर्घ)start_vcn,
+			(अचिन्हित दीर्घ दीर्घ)count,
 			is_rollback ? " (rollback)" : "");
 	vol = ni->vol;
 	lcnbmp_vi = vol->lcnbmp_ino;
@@ -852,149 +853,149 @@ s64 __ntfs_cluster_free(ntfs_inode *ni, const VCN start_vcn, s64 count,
 	BUG_ON(start_vcn < 0);
 	BUG_ON(count < -1);
 	/*
-	 * Lock the lcn bitmap for writing but only if not rolling back.  We
+	 * Lock the lcn biपंचांगap क्रम writing but only अगर not rolling back.  We
 	 * must hold the lock all the way including through rollback otherwise
 	 * rollback is not possible because once we have cleared a bit and
 	 * dropped the lock, anyone could have set the bit again, thus
-	 * allocating the cluster for another use.
+	 * allocating the cluster क्रम another use.
 	 */
-	if (likely(!is_rollback))
-		down_write(&vol->lcnbmp_lock);
+	अगर (likely(!is_rollback))
+		करोwn_ग_लिखो(&vol->lcnbmp_lock);
 
-	total_freed = real_freed = 0;
+	total_मुक्तd = real_मुक्तd = 0;
 
 	rl = ntfs_attr_find_vcn_nolock(ni, start_vcn, ctx);
-	if (IS_ERR(rl)) {
-		if (!is_rollback)
+	अगर (IS_ERR(rl)) अणु
+		अगर (!is_rollback)
 			ntfs_error(vol->sb, "Failed to find first runlist "
 					"element (error %li), aborting.",
 					PTR_ERR(rl));
 		err = PTR_ERR(rl);
-		goto err_out;
-	}
-	if (unlikely(rl->lcn < LCN_HOLE)) {
-		if (!is_rollback)
+		जाओ err_out;
+	पूर्ण
+	अगर (unlikely(rl->lcn < LCN_HOLE)) अणु
+		अगर (!is_rollback)
 			ntfs_error(vol->sb, "First runlist element has "
 					"invalid lcn, aborting.");
 		err = -EIO;
-		goto err_out;
-	}
-	/* Find the starting cluster inside the run that needs freeing. */
+		जाओ err_out;
+	पूर्ण
+	/* Find the starting cluster inside the run that needs मुक्तing. */
 	delta = start_vcn - rl->vcn;
 
-	/* The number of clusters in this run that need freeing. */
-	to_free = rl->length - delta;
-	if (count >= 0 && to_free > count)
-		to_free = count;
+	/* The number of clusters in this run that need मुक्तing. */
+	to_मुक्त = rl->length - delta;
+	अगर (count >= 0 && to_मुक्त > count)
+		to_मुक्त = count;
 
-	if (likely(rl->lcn >= 0)) {
-		/* Do the actual freeing of the clusters in this run. */
-		err = ntfs_bitmap_set_bits_in_run(lcnbmp_vi, rl->lcn + delta,
-				to_free, likely(!is_rollback) ? 0 : 1);
-		if (unlikely(err)) {
-			if (!is_rollback)
+	अगर (likely(rl->lcn >= 0)) अणु
+		/* Do the actual मुक्तing of the clusters in this run. */
+		err = ntfs_biपंचांगap_set_bits_in_run(lcnbmp_vi, rl->lcn + delta,
+				to_मुक्त, likely(!is_rollback) ? 0 : 1);
+		अगर (unlikely(err)) अणु
+			अगर (!is_rollback)
 				ntfs_error(vol->sb, "Failed to clear first run "
 						"(error %i), aborting.", err);
-			goto err_out;
-		}
-		/* We have freed @to_free real clusters. */
-		real_freed = to_free;
-	};
-	/* Go to the next run and adjust the number of clusters left to free. */
+			जाओ err_out;
+		पूर्ण
+		/* We have मुक्तd @to_मुक्त real clusters. */
+		real_मुक्तd = to_मुक्त;
+	पूर्ण;
+	/* Go to the next run and adjust the number of clusters left to मुक्त. */
 	++rl;
-	if (count >= 0)
-		count -= to_free;
+	अगर (count >= 0)
+		count -= to_मुक्त;
 
 	/* Keep track of the total "freed" clusters, including sparse ones. */
-	total_freed = to_free;
+	total_मुक्तd = to_मुक्त;
 	/*
-	 * Loop over the remaining runs, using @count as a capping value, and
-	 * free them.
+	 * Loop over the reमुख्यing runs, using @count as a capping value, and
+	 * मुक्त them.
 	 */
-	for (; rl->length && count != 0; ++rl) {
-		if (unlikely(rl->lcn < LCN_HOLE)) {
+	क्रम (; rl->length && count != 0; ++rl) अणु
+		अगर (unlikely(rl->lcn < LCN_HOLE)) अणु
 			VCN vcn;
 
 			/* Attempt to map runlist. */
 			vcn = rl->vcn;
 			rl = ntfs_attr_find_vcn_nolock(ni, vcn, ctx);
-			if (IS_ERR(rl)) {
+			अगर (IS_ERR(rl)) अणु
 				err = PTR_ERR(rl);
-				if (!is_rollback)
+				अगर (!is_rollback)
 					ntfs_error(vol->sb, "Failed to map "
 							"runlist fragment or "
 							"failed to find "
 							"subsequent runlist "
 							"element.");
-				goto err_out;
-			}
-			if (unlikely(rl->lcn < LCN_HOLE)) {
-				if (!is_rollback)
+				जाओ err_out;
+			पूर्ण
+			अगर (unlikely(rl->lcn < LCN_HOLE)) अणु
+				अगर (!is_rollback)
 					ntfs_error(vol->sb, "Runlist element "
 							"has invalid lcn "
 							"(0x%llx).",
-							(unsigned long long)
+							(अचिन्हित दीर्घ दीर्घ)
 							rl->lcn);
 				err = -EIO;
-				goto err_out;
-			}
-		}
-		/* The number of clusters in this run that need freeing. */
-		to_free = rl->length;
-		if (count >= 0 && to_free > count)
-			to_free = count;
+				जाओ err_out;
+			पूर्ण
+		पूर्ण
+		/* The number of clusters in this run that need मुक्तing. */
+		to_मुक्त = rl->length;
+		अगर (count >= 0 && to_मुक्त > count)
+			to_मुक्त = count;
 
-		if (likely(rl->lcn >= 0)) {
-			/* Do the actual freeing of the clusters in the run. */
-			err = ntfs_bitmap_set_bits_in_run(lcnbmp_vi, rl->lcn,
-					to_free, likely(!is_rollback) ? 0 : 1);
-			if (unlikely(err)) {
-				if (!is_rollback)
+		अगर (likely(rl->lcn >= 0)) अणु
+			/* Do the actual मुक्तing of the clusters in the run. */
+			err = ntfs_biपंचांगap_set_bits_in_run(lcnbmp_vi, rl->lcn,
+					to_मुक्त, likely(!is_rollback) ? 0 : 1);
+			अगर (unlikely(err)) अणु
+				अगर (!is_rollback)
 					ntfs_error(vol->sb, "Failed to clear "
 							"subsequent run.");
-				goto err_out;
-			}
-			/* We have freed @to_free real clusters. */
-			real_freed += to_free;
-		}
-		/* Adjust the number of clusters left to free. */
-		if (count >= 0)
-			count -= to_free;
+				जाओ err_out;
+			पूर्ण
+			/* We have मुक्तd @to_मुक्त real clusters. */
+			real_मुक्तd += to_मुक्त;
+		पूर्ण
+		/* Adjust the number of clusters left to मुक्त. */
+		अगर (count >= 0)
+			count -= to_मुक्त;
 	
-		/* Update the total done clusters. */
-		total_freed += to_free;
-	}
-	if (likely(!is_rollback))
-		up_write(&vol->lcnbmp_lock);
+		/* Update the total करोne clusters. */
+		total_मुक्तd += to_मुक्त;
+	पूर्ण
+	अगर (likely(!is_rollback))
+		up_ग_लिखो(&vol->lcnbmp_lock);
 
 	BUG_ON(count > 0);
 
-	/* We are done.  Return the number of actually freed clusters. */
+	/* We are करोne.  Return the number of actually मुक्तd clusters. */
 	ntfs_debug("Done.");
-	return real_freed;
+	वापस real_मुक्तd;
 err_out:
-	if (is_rollback)
-		return err;
-	/* If no real clusters were freed, no need to rollback. */
-	if (!real_freed) {
-		up_write(&vol->lcnbmp_lock);
-		return err;
-	}
+	अगर (is_rollback)
+		वापस err;
+	/* If no real clusters were मुक्तd, no need to rollback. */
+	अगर (!real_मुक्तd) अणु
+		up_ग_लिखो(&vol->lcnbmp_lock);
+		वापस err;
+	पूर्ण
 	/*
-	 * Attempt to rollback and if that succeeds just return the error code.
+	 * Attempt to rollback and अगर that succeeds just वापस the error code.
 	 * If rollback fails, set the volume errors flag, emit an error
-	 * message, and return the error code.
+	 * message, and वापस the error code.
 	 */
-	delta = __ntfs_cluster_free(ni, start_vcn, total_freed, ctx, true);
-	if (delta < 0) {
+	delta = __ntfs_cluster_मुक्त(ni, start_vcn, total_मुक्तd, ctx, true);
+	अगर (delta < 0) अणु
 		ntfs_error(vol->sb, "Failed to rollback (error %i).  Leaving "
 				"inconsistent metadata!  Unmount and run "
-				"chkdsk.", (int)delta);
+				"chkdsk.", (पूर्णांक)delta);
 		NVolSetErrors(vol);
-	}
-	up_write(&vol->lcnbmp_lock);
+	पूर्ण
+	up_ग_लिखो(&vol->lcnbmp_lock);
 	ntfs_error(vol->sb, "Aborting (error %i).", err);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-#endif /* NTFS_RW */
+#पूर्ण_अगर /* NTFS_RW */

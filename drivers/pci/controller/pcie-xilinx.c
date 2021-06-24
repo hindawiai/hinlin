@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
- * PCIe host controller driver for Xilinx AXI PCIe Bridge
+ * PCIe host controller driver क्रम Xilinx AXI PCIe Bridge
  *
  * Copyright (c) 2012 - 2014 Xilinx, Inc.
  *
@@ -10,613 +11,613 @@
  * ARM PCI Host generic driver.
  */
 
-#include <linux/interrupt.h>
-#include <linux/irq.h>
-#include <linux/irqdomain.h>
-#include <linux/kernel.h>
-#include <linux/init.h>
-#include <linux/msi.h>
-#include <linux/of_address.h>
-#include <linux/of_pci.h>
-#include <linux/of_platform.h>
-#include <linux/of_irq.h>
-#include <linux/pci.h>
-#include <linux/pci-ecam.h>
-#include <linux/platform_device.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/irq.h>
+#समावेश <linux/irqकरोमुख्य.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/init.h>
+#समावेश <linux/msi.h>
+#समावेश <linux/of_address.h>
+#समावेश <linux/of_pci.h>
+#समावेश <linux/of_platक्रमm.h>
+#समावेश <linux/of_irq.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/pci-ecam.h>
+#समावेश <linux/platक्रमm_device.h>
 
-#include "../pci.h"
+#समावेश "../pci.h"
 
 /* Register definitions */
-#define XILINX_PCIE_REG_BIR		0x00000130
-#define XILINX_PCIE_REG_IDR		0x00000138
-#define XILINX_PCIE_REG_IMR		0x0000013c
-#define XILINX_PCIE_REG_PSCR		0x00000144
-#define XILINX_PCIE_REG_RPSC		0x00000148
-#define XILINX_PCIE_REG_MSIBASE1	0x0000014c
-#define XILINX_PCIE_REG_MSIBASE2	0x00000150
-#define XILINX_PCIE_REG_RPEFR		0x00000154
-#define XILINX_PCIE_REG_RPIFR1		0x00000158
-#define XILINX_PCIE_REG_RPIFR2		0x0000015c
+#घोषणा XILINX_PCIE_REG_BIR		0x00000130
+#घोषणा XILINX_PCIE_REG_IDR		0x00000138
+#घोषणा XILINX_PCIE_REG_IMR		0x0000013c
+#घोषणा XILINX_PCIE_REG_PSCR		0x00000144
+#घोषणा XILINX_PCIE_REG_RPSC		0x00000148
+#घोषणा XILINX_PCIE_REG_MSIBASE1	0x0000014c
+#घोषणा XILINX_PCIE_REG_MSIBASE2	0x00000150
+#घोषणा XILINX_PCIE_REG_RPEFR		0x00000154
+#घोषणा XILINX_PCIE_REG_RPIFR1		0x00000158
+#घोषणा XILINX_PCIE_REG_RPIFR2		0x0000015c
 
-/* Interrupt registers definitions */
-#define XILINX_PCIE_INTR_LINK_DOWN	BIT(0)
-#define XILINX_PCIE_INTR_ECRC_ERR	BIT(1)
-#define XILINX_PCIE_INTR_STR_ERR	BIT(2)
-#define XILINX_PCIE_INTR_HOT_RESET	BIT(3)
-#define XILINX_PCIE_INTR_CFG_TIMEOUT	BIT(8)
-#define XILINX_PCIE_INTR_CORRECTABLE	BIT(9)
-#define XILINX_PCIE_INTR_NONFATAL	BIT(10)
-#define XILINX_PCIE_INTR_FATAL		BIT(11)
-#define XILINX_PCIE_INTR_INTX		BIT(16)
-#define XILINX_PCIE_INTR_MSI		BIT(17)
-#define XILINX_PCIE_INTR_SLV_UNSUPP	BIT(20)
-#define XILINX_PCIE_INTR_SLV_UNEXP	BIT(21)
-#define XILINX_PCIE_INTR_SLV_COMPL	BIT(22)
-#define XILINX_PCIE_INTR_SLV_ERRP	BIT(23)
-#define XILINX_PCIE_INTR_SLV_CMPABT	BIT(24)
-#define XILINX_PCIE_INTR_SLV_ILLBUR	BIT(25)
-#define XILINX_PCIE_INTR_MST_DECERR	BIT(26)
-#define XILINX_PCIE_INTR_MST_SLVERR	BIT(27)
-#define XILINX_PCIE_INTR_MST_ERRP	BIT(28)
-#define XILINX_PCIE_IMR_ALL_MASK	0x1FF30FED
-#define XILINX_PCIE_IMR_ENABLE_MASK	0x1FF30F0D
-#define XILINX_PCIE_IDR_ALL_MASK	0xFFFFFFFF
+/* Interrupt रेजिस्टरs definitions */
+#घोषणा XILINX_PCIE_INTR_LINK_DOWN	BIT(0)
+#घोषणा XILINX_PCIE_INTR_ECRC_ERR	BIT(1)
+#घोषणा XILINX_PCIE_INTR_STR_ERR	BIT(2)
+#घोषणा XILINX_PCIE_INTR_HOT_RESET	BIT(3)
+#घोषणा XILINX_PCIE_INTR_CFG_TIMEOUT	BIT(8)
+#घोषणा XILINX_PCIE_INTR_CORRECTABLE	BIT(9)
+#घोषणा XILINX_PCIE_INTR_NONFATAL	BIT(10)
+#घोषणा XILINX_PCIE_INTR_FATAL		BIT(11)
+#घोषणा XILINX_PCIE_INTR_INTX		BIT(16)
+#घोषणा XILINX_PCIE_INTR_MSI		BIT(17)
+#घोषणा XILINX_PCIE_INTR_SLV_UNSUPP	BIT(20)
+#घोषणा XILINX_PCIE_INTR_SLV_UNEXP	BIT(21)
+#घोषणा XILINX_PCIE_INTR_SLV_COMPL	BIT(22)
+#घोषणा XILINX_PCIE_INTR_SLV_ERRP	BIT(23)
+#घोषणा XILINX_PCIE_INTR_SLV_CMPABT	BIT(24)
+#घोषणा XILINX_PCIE_INTR_SLV_ILLBUR	BIT(25)
+#घोषणा XILINX_PCIE_INTR_MST_DECERR	BIT(26)
+#घोषणा XILINX_PCIE_INTR_MST_SLVERR	BIT(27)
+#घोषणा XILINX_PCIE_INTR_MST_ERRP	BIT(28)
+#घोषणा XILINX_PCIE_IMR_ALL_MASK	0x1FF30FED
+#घोषणा XILINX_PCIE_IMR_ENABLE_MASK	0x1FF30F0D
+#घोषणा XILINX_PCIE_IDR_ALL_MASK	0xFFFFFFFF
 
 /* Root Port Error FIFO Read Register definitions */
-#define XILINX_PCIE_RPEFR_ERR_VALID	BIT(18)
-#define XILINX_PCIE_RPEFR_REQ_ID	GENMASK(15, 0)
-#define XILINX_PCIE_RPEFR_ALL_MASK	0xFFFFFFFF
+#घोषणा XILINX_PCIE_RPEFR_ERR_VALID	BIT(18)
+#घोषणा XILINX_PCIE_RPEFR_REQ_ID	GENMASK(15, 0)
+#घोषणा XILINX_PCIE_RPEFR_ALL_MASK	0xFFFFFFFF
 
 /* Root Port Interrupt FIFO Read Register 1 definitions */
-#define XILINX_PCIE_RPIFR1_INTR_VALID	BIT(31)
-#define XILINX_PCIE_RPIFR1_MSI_INTR	BIT(30)
-#define XILINX_PCIE_RPIFR1_INTR_MASK	GENMASK(28, 27)
-#define XILINX_PCIE_RPIFR1_ALL_MASK	0xFFFFFFFF
-#define XILINX_PCIE_RPIFR1_INTR_SHIFT	27
+#घोषणा XILINX_PCIE_RPIFR1_INTR_VALID	BIT(31)
+#घोषणा XILINX_PCIE_RPIFR1_MSI_INTR	BIT(30)
+#घोषणा XILINX_PCIE_RPIFR1_INTR_MASK	GENMASK(28, 27)
+#घोषणा XILINX_PCIE_RPIFR1_ALL_MASK	0xFFFFFFFF
+#घोषणा XILINX_PCIE_RPIFR1_INTR_SHIFT	27
 
 /* Bridge Info Register definitions */
-#define XILINX_PCIE_BIR_ECAM_SZ_MASK	GENMASK(18, 16)
-#define XILINX_PCIE_BIR_ECAM_SZ_SHIFT	16
+#घोषणा XILINX_PCIE_BIR_ECAM_SZ_MASK	GENMASK(18, 16)
+#घोषणा XILINX_PCIE_BIR_ECAM_SZ_SHIFT	16
 
 /* Root Port Interrupt FIFO Read Register 2 definitions */
-#define XILINX_PCIE_RPIFR2_MSG_DATA	GENMASK(15, 0)
+#घोषणा XILINX_PCIE_RPIFR2_MSG_DATA	GENMASK(15, 0)
 
 /* Root Port Status/control Register definitions */
-#define XILINX_PCIE_REG_RPSC_BEN	BIT(0)
+#घोषणा XILINX_PCIE_REG_RPSC_BEN	BIT(0)
 
 /* Phy Status/Control Register definitions */
-#define XILINX_PCIE_REG_PSCR_LNKUP	BIT(11)
+#घोषणा XILINX_PCIE_REG_PSCR_LNKUP	BIT(11)
 
 /* Number of MSI IRQs */
-#define XILINX_NUM_MSI_IRQS		128
+#घोषणा XILINX_NUM_MSI_IRQS		128
 
 /**
- * struct xilinx_pcie_port - PCIe port information
+ * काष्ठा xilinx_pcie_port - PCIe port inक्रमmation
  * @reg_base: IO Mapped Register Base
- * @dev: Device pointer
- * @msi_map: Bitmap of allocated MSIs
+ * @dev: Device poपूर्णांकer
+ * @msi_map: Biपंचांगap of allocated MSIs
  * @map_lock: Mutex protecting the MSI allocation
- * @msi_domain: MSI IRQ domain pointer
- * @leg_domain: Legacy IRQ domain pointer
+ * @msi_करोमुख्य: MSI IRQ करोमुख्य poपूर्णांकer
+ * @leg_करोमुख्य: Legacy IRQ करोमुख्य poपूर्णांकer
  * @resources: Bus Resources
  */
-struct xilinx_pcie_port {
-	void __iomem *reg_base;
-	struct device *dev;
-	unsigned long msi_map[BITS_TO_LONGS(XILINX_NUM_MSI_IRQS)];
-	struct mutex map_lock;
-	struct irq_domain *msi_domain;
-	struct irq_domain *leg_domain;
-	struct list_head resources;
-};
+काष्ठा xilinx_pcie_port अणु
+	व्योम __iomem *reg_base;
+	काष्ठा device *dev;
+	अचिन्हित दीर्घ msi_map[BITS_TO_LONGS(XILINX_NUM_MSI_IRQS)];
+	काष्ठा mutex map_lock;
+	काष्ठा irq_करोमुख्य *msi_करोमुख्य;
+	काष्ठा irq_करोमुख्य *leg_करोमुख्य;
+	काष्ठा list_head resources;
+पूर्ण;
 
-static inline u32 pcie_read(struct xilinx_pcie_port *port, u32 reg)
-{
-	return readl(port->reg_base + reg);
-}
+अटल अंतरभूत u32 pcie_पढ़ो(काष्ठा xilinx_pcie_port *port, u32 reg)
+अणु
+	वापस पढ़ोl(port->reg_base + reg);
+पूर्ण
 
-static inline void pcie_write(struct xilinx_pcie_port *port, u32 val, u32 reg)
-{
-	writel(val, port->reg_base + reg);
-}
+अटल अंतरभूत व्योम pcie_ग_लिखो(काष्ठा xilinx_pcie_port *port, u32 val, u32 reg)
+अणु
+	ग_लिखोl(val, port->reg_base + reg);
+पूर्ण
 
-static inline bool xilinx_pcie_link_up(struct xilinx_pcie_port *port)
-{
-	return (pcie_read(port, XILINX_PCIE_REG_PSCR) &
+अटल अंतरभूत bool xilinx_pcie_link_up(काष्ठा xilinx_pcie_port *port)
+अणु
+	वापस (pcie_पढ़ो(port, XILINX_PCIE_REG_PSCR) &
 		XILINX_PCIE_REG_PSCR_LNKUP) ? 1 : 0;
-}
+पूर्ण
 
 /**
- * xilinx_pcie_clear_err_interrupts - Clear Error Interrupts
- * @port: PCIe port information
+ * xilinx_pcie_clear_err_पूर्णांकerrupts - Clear Error Interrupts
+ * @port: PCIe port inक्रमmation
  */
-static void xilinx_pcie_clear_err_interrupts(struct xilinx_pcie_port *port)
-{
-	struct device *dev = port->dev;
-	unsigned long val = pcie_read(port, XILINX_PCIE_REG_RPEFR);
+अटल व्योम xilinx_pcie_clear_err_पूर्णांकerrupts(काष्ठा xilinx_pcie_port *port)
+अणु
+	काष्ठा device *dev = port->dev;
+	अचिन्हित दीर्घ val = pcie_पढ़ो(port, XILINX_PCIE_REG_RPEFR);
 
-	if (val & XILINX_PCIE_RPEFR_ERR_VALID) {
+	अगर (val & XILINX_PCIE_RPEFR_ERR_VALID) अणु
 		dev_dbg(dev, "Requester ID %lu\n",
 			val & XILINX_PCIE_RPEFR_REQ_ID);
-		pcie_write(port, XILINX_PCIE_RPEFR_ALL_MASK,
+		pcie_ग_लिखो(port, XILINX_PCIE_RPEFR_ALL_MASK,
 			   XILINX_PCIE_REG_RPEFR);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
- * xilinx_pcie_valid_device - Check if a valid device is present on bus
- * @bus: PCI Bus structure
+ * xilinx_pcie_valid_device - Check अगर a valid device is present on bus
+ * @bus: PCI Bus काष्ठाure
  * @devfn: device/function
  *
- * Return: 'true' on success and 'false' if invalid device is found
+ * Return: 'true' on success and 'false' अगर invalid device is found
  */
-static bool xilinx_pcie_valid_device(struct pci_bus *bus, unsigned int devfn)
-{
-	struct xilinx_pcie_port *port = bus->sysdata;
+अटल bool xilinx_pcie_valid_device(काष्ठा pci_bus *bus, अचिन्हित पूर्णांक devfn)
+अणु
+	काष्ठा xilinx_pcie_port *port = bus->sysdata;
 
-	/* Check if link is up when trying to access downstream ports */
-	if (!pci_is_root_bus(bus)) {
-		if (!xilinx_pcie_link_up(port))
-			return false;
-	} else if (devfn > 0) {
-		/* Only one device down on each root port */
-		return false;
-	}
-	return true;
-}
+	/* Check अगर link is up when trying to access करोwnstream ports */
+	अगर (!pci_is_root_bus(bus)) अणु
+		अगर (!xilinx_pcie_link_up(port))
+			वापस false;
+	पूर्ण अन्यथा अगर (devfn > 0) अणु
+		/* Only one device करोwn on each root port */
+		वापस false;
+	पूर्ण
+	वापस true;
+पूर्ण
 
 /**
  * xilinx_pcie_map_bus - Get configuration base
- * @bus: PCI Bus structure
+ * @bus: PCI Bus काष्ठाure
  * @devfn: Device/function
  * @where: Offset from base
  *
  * Return: Base address of the configuration space needed to be
  *	   accessed.
  */
-static void __iomem *xilinx_pcie_map_bus(struct pci_bus *bus,
-					 unsigned int devfn, int where)
-{
-	struct xilinx_pcie_port *port = bus->sysdata;
+अटल व्योम __iomem *xilinx_pcie_map_bus(काष्ठा pci_bus *bus,
+					 अचिन्हित पूर्णांक devfn, पूर्णांक where)
+अणु
+	काष्ठा xilinx_pcie_port *port = bus->sysdata;
 
-	if (!xilinx_pcie_valid_device(bus, devfn))
-		return NULL;
+	अगर (!xilinx_pcie_valid_device(bus, devfn))
+		वापस शून्य;
 
-	return port->reg_base + PCIE_ECAM_OFFSET(bus->number, devfn, where);
-}
+	वापस port->reg_base + PCIE_ECAM_OFFSET(bus->number, devfn, where);
+पूर्ण
 
 /* PCIe operations */
-static struct pci_ops xilinx_pcie_ops = {
+अटल काष्ठा pci_ops xilinx_pcie_ops = अणु
 	.map_bus = xilinx_pcie_map_bus,
-	.read	= pci_generic_config_read,
-	.write	= pci_generic_config_write,
-};
+	.पढ़ो	= pci_generic_config_पढ़ो,
+	.ग_लिखो	= pci_generic_config_ग_लिखो,
+पूर्ण;
 
 /* MSI functions */
 
-static void xilinx_msi_top_irq_ack(struct irq_data *d)
-{
+अटल व्योम xilinx_msi_top_irq_ack(काष्ठा irq_data *d)
+अणु
 	/*
-	 * xilinx_pcie_intr_handler() will have performed the Ack.
+	 * xilinx_pcie_पूर्णांकr_handler() will have perक्रमmed the Ack.
 	 * Eventually, this should be fixed and the Ack be moved in
-	 * the respective callbacks for INTx and MSI.
+	 * the respective callbacks क्रम INTx and MSI.
 	 */
-}
+पूर्ण
 
-static struct irq_chip xilinx_msi_top_chip = {
+अटल काष्ठा irq_chip xilinx_msi_top_chip = अणु
 	.name		= "PCIe MSI",
 	.irq_ack	= xilinx_msi_top_irq_ack,
-};
+पूर्ण;
 
-static int xilinx_msi_set_affinity(struct irq_data *d, const struct cpumask *mask, bool force)
-{
-	return -EINVAL;
-}
+अटल पूर्णांक xilinx_msi_set_affinity(काष्ठा irq_data *d, स्थिर काष्ठा cpumask *mask, bool क्रमce)
+अणु
+	वापस -EINVAL;
+पूर्ण
 
-static void xilinx_compose_msi_msg(struct irq_data *data, struct msi_msg *msg)
-{
-	struct xilinx_pcie_port *pcie = irq_data_get_irq_chip_data(data);
+अटल व्योम xilinx_compose_msi_msg(काष्ठा irq_data *data, काष्ठा msi_msg *msg)
+अणु
+	काष्ठा xilinx_pcie_port *pcie = irq_data_get_irq_chip_data(data);
 	phys_addr_t pa = ALIGN_DOWN(virt_to_phys(pcie), SZ_4K);
 
 	msg->address_lo = lower_32_bits(pa);
 	msg->address_hi = upper_32_bits(pa);
 	msg->data = data->hwirq;
-}
+पूर्ण
 
-static struct irq_chip xilinx_msi_bottom_chip = {
+अटल काष्ठा irq_chip xilinx_msi_bottom_chip = अणु
 	.name			= "Xilinx MSI",
 	.irq_set_affinity 	= xilinx_msi_set_affinity,
 	.irq_compose_msi_msg	= xilinx_compose_msi_msg,
-};
+पूर्ण;
 
-static int xilinx_msi_domain_alloc(struct irq_domain *domain, unsigned int virq,
-				  unsigned int nr_irqs, void *args)
-{
-	struct xilinx_pcie_port *port = domain->host_data;
-	int hwirq, i;
-
-	mutex_lock(&port->map_lock);
-
-	hwirq = bitmap_find_free_region(port->msi_map, XILINX_NUM_MSI_IRQS, order_base_2(nr_irqs));
-
-	mutex_unlock(&port->map_lock);
-
-	if (hwirq < 0)
-		return -ENOSPC;
-
-	for (i = 0; i < nr_irqs; i++)
-		irq_domain_set_info(domain, virq + i, hwirq + i,
-				    &xilinx_msi_bottom_chip, domain->host_data,
-				    handle_edge_irq, NULL, NULL);
-
-	return 0;
-}
-
-static void xilinx_msi_domain_free(struct irq_domain *domain, unsigned int virq,
-				  unsigned int nr_irqs)
-{
-	struct irq_data *d = irq_domain_get_irq_data(domain, virq);
-	struct xilinx_pcie_port *port = domain->host_data;
+अटल पूर्णांक xilinx_msi_करोमुख्य_alloc(काष्ठा irq_करोमुख्य *करोमुख्य, अचिन्हित पूर्णांक virq,
+				  अचिन्हित पूर्णांक nr_irqs, व्योम *args)
+अणु
+	काष्ठा xilinx_pcie_port *port = करोमुख्य->host_data;
+	पूर्णांक hwirq, i;
 
 	mutex_lock(&port->map_lock);
 
-	bitmap_release_region(port->msi_map, d->hwirq, order_base_2(nr_irqs));
+	hwirq = biपंचांगap_find_मुक्त_region(port->msi_map, XILINX_NUM_MSI_IRQS, order_base_2(nr_irqs));
 
 	mutex_unlock(&port->map_lock);
-}
 
-static const struct irq_domain_ops xilinx_msi_domain_ops = {
-	.alloc	= xilinx_msi_domain_alloc,
-	.free	= xilinx_msi_domain_free,
-};
+	अगर (hwirq < 0)
+		वापस -ENOSPC;
 
-static struct msi_domain_info xilinx_msi_info = {
+	क्रम (i = 0; i < nr_irqs; i++)
+		irq_करोमुख्य_set_info(करोमुख्य, virq + i, hwirq + i,
+				    &xilinx_msi_bottom_chip, करोमुख्य->host_data,
+				    handle_edge_irq, शून्य, शून्य);
+
+	वापस 0;
+पूर्ण
+
+अटल व्योम xilinx_msi_करोमुख्य_मुक्त(काष्ठा irq_करोमुख्य *करोमुख्य, अचिन्हित पूर्णांक virq,
+				  अचिन्हित पूर्णांक nr_irqs)
+अणु
+	काष्ठा irq_data *d = irq_करोमुख्य_get_irq_data(करोमुख्य, virq);
+	काष्ठा xilinx_pcie_port *port = करोमुख्य->host_data;
+
+	mutex_lock(&port->map_lock);
+
+	biपंचांगap_release_region(port->msi_map, d->hwirq, order_base_2(nr_irqs));
+
+	mutex_unlock(&port->map_lock);
+पूर्ण
+
+अटल स्थिर काष्ठा irq_करोमुख्य_ops xilinx_msi_करोमुख्य_ops = अणु
+	.alloc	= xilinx_msi_करोमुख्य_alloc,
+	.मुक्त	= xilinx_msi_करोमुख्य_मुक्त,
+पूर्ण;
+
+अटल काष्ठा msi_करोमुख्य_info xilinx_msi_info = अणु
 	.flags	= (MSI_FLAG_USE_DEF_DOM_OPS | MSI_FLAG_USE_DEF_CHIP_OPS),
 	.chip	= &xilinx_msi_top_chip,
-};
+पूर्ण;
 
-static int xilinx_allocate_msi_domains(struct xilinx_pcie_port *pcie)
-{
-	struct fwnode_handle *fwnode = dev_fwnode(pcie->dev);
-	struct irq_domain *parent;
+अटल पूर्णांक xilinx_allocate_msi_करोमुख्यs(काष्ठा xilinx_pcie_port *pcie)
+अणु
+	काष्ठा fwnode_handle *fwnode = dev_fwnode(pcie->dev);
+	काष्ठा irq_करोमुख्य *parent;
 
-	parent = irq_domain_create_linear(fwnode, XILINX_NUM_MSI_IRQS,
-					  &xilinx_msi_domain_ops, pcie);
-	if (!parent) {
+	parent = irq_करोमुख्य_create_linear(fwnode, XILINX_NUM_MSI_IRQS,
+					  &xilinx_msi_करोमुख्य_ops, pcie);
+	अगर (!parent) अणु
 		dev_err(pcie->dev, "failed to create IRQ domain\n");
-		return -ENOMEM;
-	}
-	irq_domain_update_bus_token(parent, DOMAIN_BUS_NEXUS);
+		वापस -ENOMEM;
+	पूर्ण
+	irq_करोमुख्य_update_bus_token(parent, DOMAIN_BUS_NEXUS);
 
-	pcie->msi_domain = pci_msi_create_irq_domain(fwnode, &xilinx_msi_info, parent);
-	if (!pcie->msi_domain) {
+	pcie->msi_करोमुख्य = pci_msi_create_irq_करोमुख्य(fwnode, &xilinx_msi_info, parent);
+	अगर (!pcie->msi_करोमुख्य) अणु
 		dev_err(pcie->dev, "failed to create MSI domain\n");
-		irq_domain_remove(parent);
-		return -ENOMEM;
-	}
+		irq_करोमुख्य_हटाओ(parent);
+		वापस -ENOMEM;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void xilinx_free_msi_domains(struct xilinx_pcie_port *pcie)
-{
-	struct irq_domain *parent = pcie->msi_domain->parent;
+अटल व्योम xilinx_मुक्त_msi_करोमुख्यs(काष्ठा xilinx_pcie_port *pcie)
+अणु
+	काष्ठा irq_करोमुख्य *parent = pcie->msi_करोमुख्य->parent;
 
-	irq_domain_remove(pcie->msi_domain);
-	irq_domain_remove(parent);
-}
+	irq_करोमुख्य_हटाओ(pcie->msi_करोमुख्य);
+	irq_करोमुख्य_हटाओ(parent);
+पूर्ण
 
 /* INTx Functions */
 
 /**
- * xilinx_pcie_intx_map - Set the handler for the INTx and mark IRQ as valid
- * @domain: IRQ domain
+ * xilinx_pcie_पूर्णांकx_map - Set the handler क्रम the INTx and mark IRQ as valid
+ * @करोमुख्य: IRQ करोमुख्य
  * @irq: Virtual IRQ number
- * @hwirq: HW interrupt number
+ * @hwirq: HW पूर्णांकerrupt number
  *
- * Return: Always returns 0.
+ * Return: Always वापसs 0.
  */
-static int xilinx_pcie_intx_map(struct irq_domain *domain, unsigned int irq,
+अटल पूर्णांक xilinx_pcie_पूर्णांकx_map(काष्ठा irq_करोमुख्य *करोमुख्य, अचिन्हित पूर्णांक irq,
 				irq_hw_number_t hwirq)
-{
+अणु
 	irq_set_chip_and_handler(irq, &dummy_irq_chip, handle_simple_irq);
-	irq_set_chip_data(irq, domain->host_data);
+	irq_set_chip_data(irq, करोमुख्य->host_data);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* INTx IRQ Domain operations */
-static const struct irq_domain_ops intx_domain_ops = {
-	.map = xilinx_pcie_intx_map,
-	.xlate = pci_irqd_intx_xlate,
-};
+/* INTx IRQ Doमुख्य operations */
+अटल स्थिर काष्ठा irq_करोमुख्य_ops पूर्णांकx_करोमुख्य_ops = अणु
+	.map = xilinx_pcie_पूर्णांकx_map,
+	.xlate = pci_irqd_पूर्णांकx_xlate,
+पूर्ण;
 
 /* PCIe HW Functions */
 
 /**
- * xilinx_pcie_intr_handler - Interrupt Service Handler
+ * xilinx_pcie_पूर्णांकr_handler - Interrupt Service Handler
  * @irq: IRQ number
- * @data: PCIe port information
+ * @data: PCIe port inक्रमmation
  *
  * Return: IRQ_HANDLED on success and IRQ_NONE on failure
  */
-static irqreturn_t xilinx_pcie_intr_handler(int irq, void *data)
-{
-	struct xilinx_pcie_port *port = (struct xilinx_pcie_port *)data;
-	struct device *dev = port->dev;
+अटल irqवापस_t xilinx_pcie_पूर्णांकr_handler(पूर्णांक irq, व्योम *data)
+अणु
+	काष्ठा xilinx_pcie_port *port = (काष्ठा xilinx_pcie_port *)data;
+	काष्ठा device *dev = port->dev;
 	u32 val, mask, status;
 
-	/* Read interrupt decode and mask registers */
-	val = pcie_read(port, XILINX_PCIE_REG_IDR);
-	mask = pcie_read(port, XILINX_PCIE_REG_IMR);
+	/* Read पूर्णांकerrupt decode and mask रेजिस्टरs */
+	val = pcie_पढ़ो(port, XILINX_PCIE_REG_IDR);
+	mask = pcie_पढ़ो(port, XILINX_PCIE_REG_IMR);
 
 	status = val & mask;
-	if (!status)
-		return IRQ_NONE;
+	अगर (!status)
+		वापस IRQ_NONE;
 
-	if (status & XILINX_PCIE_INTR_LINK_DOWN)
+	अगर (status & XILINX_PCIE_INTR_LINK_DOWN)
 		dev_warn(dev, "Link Down\n");
 
-	if (status & XILINX_PCIE_INTR_ECRC_ERR)
+	अगर (status & XILINX_PCIE_INTR_ECRC_ERR)
 		dev_warn(dev, "ECRC failed\n");
 
-	if (status & XILINX_PCIE_INTR_STR_ERR)
+	अगर (status & XILINX_PCIE_INTR_STR_ERR)
 		dev_warn(dev, "Streaming error\n");
 
-	if (status & XILINX_PCIE_INTR_HOT_RESET)
+	अगर (status & XILINX_PCIE_INTR_HOT_RESET)
 		dev_info(dev, "Hot reset\n");
 
-	if (status & XILINX_PCIE_INTR_CFG_TIMEOUT)
+	अगर (status & XILINX_PCIE_INTR_CFG_TIMEOUT)
 		dev_warn(dev, "ECAM access timeout\n");
 
-	if (status & XILINX_PCIE_INTR_CORRECTABLE) {
+	अगर (status & XILINX_PCIE_INTR_CORRECTABLE) अणु
 		dev_warn(dev, "Correctable error message\n");
-		xilinx_pcie_clear_err_interrupts(port);
-	}
+		xilinx_pcie_clear_err_पूर्णांकerrupts(port);
+	पूर्ण
 
-	if (status & XILINX_PCIE_INTR_NONFATAL) {
+	अगर (status & XILINX_PCIE_INTR_NONFATAL) अणु
 		dev_warn(dev, "Non fatal error message\n");
-		xilinx_pcie_clear_err_interrupts(port);
-	}
+		xilinx_pcie_clear_err_पूर्णांकerrupts(port);
+	पूर्ण
 
-	if (status & XILINX_PCIE_INTR_FATAL) {
+	अगर (status & XILINX_PCIE_INTR_FATAL) अणु
 		dev_warn(dev, "Fatal error message\n");
-		xilinx_pcie_clear_err_interrupts(port);
-	}
+		xilinx_pcie_clear_err_पूर्णांकerrupts(port);
+	पूर्ण
 
-	if (status & (XILINX_PCIE_INTR_INTX | XILINX_PCIE_INTR_MSI)) {
-		unsigned int irq;
+	अगर (status & (XILINX_PCIE_INTR_INTX | XILINX_PCIE_INTR_MSI)) अणु
+		अचिन्हित पूर्णांक irq;
 
-		val = pcie_read(port, XILINX_PCIE_REG_RPIFR1);
+		val = pcie_पढ़ो(port, XILINX_PCIE_REG_RPIFR1);
 
-		/* Check whether interrupt valid */
-		if (!(val & XILINX_PCIE_RPIFR1_INTR_VALID)) {
+		/* Check whether पूर्णांकerrupt valid */
+		अगर (!(val & XILINX_PCIE_RPIFR1_INTR_VALID)) अणु
 			dev_warn(dev, "RP Intr FIFO1 read error\n");
-			goto error;
-		}
+			जाओ error;
+		पूर्ण
 
 		/* Decode the IRQ number */
-		if (val & XILINX_PCIE_RPIFR1_MSI_INTR) {
-			val = pcie_read(port, XILINX_PCIE_REG_RPIFR2) &
+		अगर (val & XILINX_PCIE_RPIFR1_MSI_INTR) अणु
+			val = pcie_पढ़ो(port, XILINX_PCIE_REG_RPIFR2) &
 				XILINX_PCIE_RPIFR2_MSG_DATA;
-			irq = irq_find_mapping(port->msi_domain->parent, val);
-		} else {
+			irq = irq_find_mapping(port->msi_करोमुख्य->parent, val);
+		पूर्ण अन्यथा अणु
 			val = (val & XILINX_PCIE_RPIFR1_INTR_MASK) >>
 				XILINX_PCIE_RPIFR1_INTR_SHIFT;
-			irq = irq_find_mapping(port->leg_domain, val);
-		}
+			irq = irq_find_mapping(port->leg_करोमुख्य, val);
+		पूर्ण
 
-		/* Clear interrupt FIFO register 1 */
-		pcie_write(port, XILINX_PCIE_RPIFR1_ALL_MASK,
+		/* Clear पूर्णांकerrupt FIFO रेजिस्टर 1 */
+		pcie_ग_लिखो(port, XILINX_PCIE_RPIFR1_ALL_MASK,
 			   XILINX_PCIE_REG_RPIFR1);
 
-		if (irq)
+		अगर (irq)
 			generic_handle_irq(irq);
-	}
+	पूर्ण
 
-	if (status & XILINX_PCIE_INTR_SLV_UNSUPP)
+	अगर (status & XILINX_PCIE_INTR_SLV_UNSUPP)
 		dev_warn(dev, "Slave unsupported request\n");
 
-	if (status & XILINX_PCIE_INTR_SLV_UNEXP)
+	अगर (status & XILINX_PCIE_INTR_SLV_UNEXP)
 		dev_warn(dev, "Slave unexpected completion\n");
 
-	if (status & XILINX_PCIE_INTR_SLV_COMPL)
+	अगर (status & XILINX_PCIE_INTR_SLV_COMPL)
 		dev_warn(dev, "Slave completion timeout\n");
 
-	if (status & XILINX_PCIE_INTR_SLV_ERRP)
+	अगर (status & XILINX_PCIE_INTR_SLV_ERRP)
 		dev_warn(dev, "Slave Error Poison\n");
 
-	if (status & XILINX_PCIE_INTR_SLV_CMPABT)
+	अगर (status & XILINX_PCIE_INTR_SLV_CMPABT)
 		dev_warn(dev, "Slave Completer Abort\n");
 
-	if (status & XILINX_PCIE_INTR_SLV_ILLBUR)
+	अगर (status & XILINX_PCIE_INTR_SLV_ILLBUR)
 		dev_warn(dev, "Slave Illegal Burst\n");
 
-	if (status & XILINX_PCIE_INTR_MST_DECERR)
+	अगर (status & XILINX_PCIE_INTR_MST_DECERR)
 		dev_warn(dev, "Master decode error\n");
 
-	if (status & XILINX_PCIE_INTR_MST_SLVERR)
+	अगर (status & XILINX_PCIE_INTR_MST_SLVERR)
 		dev_warn(dev, "Master slave error\n");
 
-	if (status & XILINX_PCIE_INTR_MST_ERRP)
+	अगर (status & XILINX_PCIE_INTR_MST_ERRP)
 		dev_warn(dev, "Master error poison\n");
 
 error:
-	/* Clear the Interrupt Decode register */
-	pcie_write(port, status, XILINX_PCIE_REG_IDR);
+	/* Clear the Interrupt Decode रेजिस्टर */
+	pcie_ग_लिखो(port, status, XILINX_PCIE_REG_IDR);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
 /**
- * xilinx_pcie_init_irq_domain - Initialize IRQ domain
- * @port: PCIe port information
+ * xilinx_pcie_init_irq_करोमुख्य - Initialize IRQ करोमुख्य
+ * @port: PCIe port inक्रमmation
  *
  * Return: '0' on success and error value on failure
  */
-static int xilinx_pcie_init_irq_domain(struct xilinx_pcie_port *port)
-{
-	struct device *dev = port->dev;
-	struct device_node *pcie_intc_node;
-	int ret;
+अटल पूर्णांक xilinx_pcie_init_irq_करोमुख्य(काष्ठा xilinx_pcie_port *port)
+अणु
+	काष्ठा device *dev = port->dev;
+	काष्ठा device_node *pcie_पूर्णांकc_node;
+	पूर्णांक ret;
 
 	/* Setup INTx */
-	pcie_intc_node = of_get_next_child(dev->of_node, NULL);
-	if (!pcie_intc_node) {
+	pcie_पूर्णांकc_node = of_get_next_child(dev->of_node, शून्य);
+	अगर (!pcie_पूर्णांकc_node) अणु
 		dev_err(dev, "No PCIe Intc node found\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	port->leg_domain = irq_domain_add_linear(pcie_intc_node, PCI_NUM_INTX,
-						 &intx_domain_ops,
+	port->leg_करोमुख्य = irq_करोमुख्य_add_linear(pcie_पूर्णांकc_node, PCI_NUM_INTX,
+						 &पूर्णांकx_करोमुख्य_ops,
 						 port);
-	of_node_put(pcie_intc_node);
-	if (!port->leg_domain) {
+	of_node_put(pcie_पूर्णांकc_node);
+	अगर (!port->leg_करोमुख्य) अणु
 		dev_err(dev, "Failed to get a INTx IRQ domain\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
 	/* Setup MSI */
-	if (IS_ENABLED(CONFIG_PCI_MSI)) {
+	अगर (IS_ENABLED(CONFIG_PCI_MSI)) अणु
 		phys_addr_t pa = ALIGN_DOWN(virt_to_phys(port), SZ_4K);
 
-		ret = xilinx_allocate_msi_domains(port);
-		if (ret)
-			return ret;
+		ret = xilinx_allocate_msi_करोमुख्यs(port);
+		अगर (ret)
+			वापस ret;
 
-		pcie_write(port, upper_32_bits(pa), XILINX_PCIE_REG_MSIBASE1);
-		pcie_write(port, lower_32_bits(pa), XILINX_PCIE_REG_MSIBASE2);
-	}
+		pcie_ग_लिखो(port, upper_32_bits(pa), XILINX_PCIE_REG_MSIBASE1);
+		pcie_ग_लिखो(port, lower_32_bits(pa), XILINX_PCIE_REG_MSIBASE2);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * xilinx_pcie_init_port - Initialize hardware
- * @port: PCIe port information
+ * @port: PCIe port inक्रमmation
  */
-static void xilinx_pcie_init_port(struct xilinx_pcie_port *port)
-{
-	struct device *dev = port->dev;
+अटल व्योम xilinx_pcie_init_port(काष्ठा xilinx_pcie_port *port)
+अणु
+	काष्ठा device *dev = port->dev;
 
-	if (xilinx_pcie_link_up(port))
+	अगर (xilinx_pcie_link_up(port))
 		dev_info(dev, "PCIe Link is UP\n");
-	else
+	अन्यथा
 		dev_info(dev, "PCIe Link is DOWN\n");
 
-	/* Disable all interrupts */
-	pcie_write(port, ~XILINX_PCIE_IDR_ALL_MASK,
+	/* Disable all पूर्णांकerrupts */
+	pcie_ग_लिखो(port, ~XILINX_PCIE_IDR_ALL_MASK,
 		   XILINX_PCIE_REG_IMR);
 
-	/* Clear pending interrupts */
-	pcie_write(port, pcie_read(port, XILINX_PCIE_REG_IDR) &
+	/* Clear pending पूर्णांकerrupts */
+	pcie_ग_लिखो(port, pcie_पढ़ो(port, XILINX_PCIE_REG_IDR) &
 			 XILINX_PCIE_IMR_ALL_MASK,
 		   XILINX_PCIE_REG_IDR);
 
-	/* Enable all interrupts we handle */
-	pcie_write(port, XILINX_PCIE_IMR_ENABLE_MASK, XILINX_PCIE_REG_IMR);
+	/* Enable all पूर्णांकerrupts we handle */
+	pcie_ग_लिखो(port, XILINX_PCIE_IMR_ENABLE_MASK, XILINX_PCIE_REG_IMR);
 
 	/* Enable the Bridge enable bit */
-	pcie_write(port, pcie_read(port, XILINX_PCIE_REG_RPSC) |
+	pcie_ग_लिखो(port, pcie_पढ़ो(port, XILINX_PCIE_REG_RPSC) |
 			 XILINX_PCIE_REG_RPSC_BEN,
 		   XILINX_PCIE_REG_RPSC);
-}
+पूर्ण
 
 /**
  * xilinx_pcie_parse_dt - Parse Device tree
- * @port: PCIe port information
+ * @port: PCIe port inक्रमmation
  *
  * Return: '0' on success and error value on failure
  */
-static int xilinx_pcie_parse_dt(struct xilinx_pcie_port *port)
-{
-	struct device *dev = port->dev;
-	struct device_node *node = dev->of_node;
-	struct resource regs;
-	unsigned int irq;
-	int err;
+अटल पूर्णांक xilinx_pcie_parse_dt(काष्ठा xilinx_pcie_port *port)
+अणु
+	काष्ठा device *dev = port->dev;
+	काष्ठा device_node *node = dev->of_node;
+	काष्ठा resource regs;
+	अचिन्हित पूर्णांक irq;
+	पूर्णांक err;
 
 	err = of_address_to_resource(node, 0, &regs);
-	if (err) {
+	अगर (err) अणु
 		dev_err(dev, "missing \"reg\" property\n");
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
 	port->reg_base = devm_pci_remap_cfg_resource(dev, &regs);
-	if (IS_ERR(port->reg_base))
-		return PTR_ERR(port->reg_base);
+	अगर (IS_ERR(port->reg_base))
+		वापस PTR_ERR(port->reg_base);
 
 	irq = irq_of_parse_and_map(node, 0);
-	err = devm_request_irq(dev, irq, xilinx_pcie_intr_handler,
+	err = devm_request_irq(dev, irq, xilinx_pcie_पूर्णांकr_handler,
 			       IRQF_SHARED | IRQF_NO_THREAD,
 			       "xilinx-pcie", port);
-	if (err) {
+	अगर (err) अणु
 		dev_err(dev, "unable to request irq %d\n", irq);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * xilinx_pcie_probe - Probe function
- * @pdev: Platform device pointer
+ * @pdev: Platक्रमm device poपूर्णांकer
  *
  * Return: '0' on success and error value on failure
  */
-static int xilinx_pcie_probe(struct platform_device *pdev)
-{
-	struct device *dev = &pdev->dev;
-	struct xilinx_pcie_port *port;
-	struct pci_host_bridge *bridge;
-	int err;
+अटल पूर्णांक xilinx_pcie_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा xilinx_pcie_port *port;
+	काष्ठा pci_host_bridge *bridge;
+	पूर्णांक err;
 
-	if (!dev->of_node)
-		return -ENODEV;
+	अगर (!dev->of_node)
+		वापस -ENODEV;
 
-	bridge = devm_pci_alloc_host_bridge(dev, sizeof(*port));
-	if (!bridge)
-		return -ENODEV;
+	bridge = devm_pci_alloc_host_bridge(dev, माप(*port));
+	अगर (!bridge)
+		वापस -ENODEV;
 
 	port = pci_host_bridge_priv(bridge);
 	mutex_init(&port->map_lock);
 	port->dev = dev;
 
 	err = xilinx_pcie_parse_dt(port);
-	if (err) {
+	अगर (err) अणु
 		dev_err(dev, "Parsing DT failed\n");
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
 	xilinx_pcie_init_port(port);
 
-	err = xilinx_pcie_init_irq_domain(port);
-	if (err) {
+	err = xilinx_pcie_init_irq_करोमुख्य(port);
+	अगर (err) अणु
 		dev_err(dev, "Failed creating IRQ Domain\n");
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
 	bridge->sysdata = port;
 	bridge->ops = &xilinx_pcie_ops;
 
 	err = pci_host_probe(bridge);
-	if (err)
-		xilinx_free_msi_domains(port);
+	अगर (err)
+		xilinx_मुक्त_msi_करोमुख्यs(port);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static const struct of_device_id xilinx_pcie_of_match[] = {
-	{ .compatible = "xlnx,axi-pcie-host-1.00.a", },
-	{}
-};
+अटल स्थिर काष्ठा of_device_id xilinx_pcie_of_match[] = अणु
+	अणु .compatible = "xlnx,axi-pcie-host-1.00.a", पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
-static struct platform_driver xilinx_pcie_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver xilinx_pcie_driver = अणु
+	.driver = अणु
 		.name = "xilinx-pcie",
 		.of_match_table = xilinx_pcie_of_match,
 		.suppress_bind_attrs = true,
-	},
+	पूर्ण,
 	.probe = xilinx_pcie_probe,
-};
-builtin_platform_driver(xilinx_pcie_driver);
+पूर्ण;
+builtin_platक्रमm_driver(xilinx_pcie_driver);

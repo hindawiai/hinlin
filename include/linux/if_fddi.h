@@ -1,36 +1,37 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
- * INET		An implementation of the TCP/IP protocol suite for the LINUX
- *		operating system.  INET is implemented using the BSD Socket
- *		interface as the means of communication with the user level.
+ * INET		An implementation of the TCP/IP protocol suite क्रम the LINUX
+ *		operating प्रणाली.  INET is implemented using the BSD Socket
+ *		पूर्णांकerface as the means of communication with the user level.
  *
- *		Global definitions for the ANSI FDDI interface.
+ *		Global definitions क्रम the ANSI FDDI पूर्णांकerface.
  *
- * Version:	@(#)if_fddi.h	1.0.2	Sep 29 2004
+ * Version:	@(#)अगर_fddi.h	1.0.2	Sep 29 2004
  *
  * Author:	Lawrence V. Stefani, <stefani@lkg.dec.com>
  *
- *		if_fddi.h is based on previous if_ether.h and if_tr.h work by
+ *		अगर_fddi.h is based on previous अगर_ether.h and अगर_tr.h work by
  *			Fred N. van Kempen, <waltje@uWalt.NL.Mugnet.ORG>
  *			Donald Becker, <becker@super.org>
  *			Alan Cox, <alan@lxorguk.ukuu.org.uk>
  *			Steve Whitehouse, <gw7rrm@eeshack3.swan.ac.uk>
  *			Peter De Schrijver, <stud11@cc4.kuleuven.ac.be>
  */
-#ifndef _LINUX_IF_FDDI_H
-#define _LINUX_IF_FDDI_H
+#अगर_अघोषित _LINUX_IF_FDDI_H
+#घोषणा _LINUX_IF_FDDI_H
 
-#include <linux/netdevice.h>
-#include <uapi/linux/if_fddi.h>
+#समावेश <linux/netdevice.h>
+#समावेश <uapi/linux/अगर_fddi.h>
 
-/* Define FDDI statistics structure */
-struct fddi_statistics {
+/* Define FDDI statistics काष्ठाure */
+काष्ठा fddi_statistics अणु
 
 	/* Generic statistics. */
 
-	struct net_device_stats gen;
+	काष्ठा net_device_stats gen;
 
-	/* Detailed FDDI statistics.  Adopted from RFC 1512 */
+	/* Detailed FDDI statistics.  Aकरोpted from RFC 1512 */
 
 	__u8	smt_station_id[8];
 	__u32	smt_op_version_id;
@@ -45,7 +46,7 @@ struct fddi_statistics {
 	__u32	smt_config_capabilities;
 	__u32	smt_config_policy;
 	__u32	smt_connection_policy;
-	__u32	smt_t_notify;
+	__u32	smt_t_notअगरy;
 	__u32	smt_stat_rpt_policy;
 	__u32	smt_trace_max_expiration;
 	__u32	smt_bypass_present;
@@ -54,20 +55,20 @@ struct fddi_statistics {
 	__u32	smt_remote_disconnect_flag;
 	__u32	smt_station_status;
 	__u32	smt_peer_wrap_flag;
-	__u32	smt_time_stamp;
-	__u32	smt_transition_time_stamp;
+	__u32	smt_समय_stamp;
+	__u32	smt_transition_समय_stamp;
 	__u32	mac_frame_status_functions;
 	__u32	mac_t_max_capability;
 	__u32	mac_tvx_capability;
 	__u32	mac_available_paths;
 	__u32	mac_current_path;
 	__u8	mac_upstream_nbr[FDDI_K_ALEN];
-	__u8	mac_downstream_nbr[FDDI_K_ALEN];
+	__u8	mac_करोwnstream_nbr[FDDI_K_ALEN];
 	__u8	mac_old_upstream_nbr[FDDI_K_ALEN];
-	__u8	mac_old_downstream_nbr[FDDI_K_ALEN];
+	__u8	mac_old_करोwnstream_nbr[FDDI_K_ALEN];
 	__u32	mac_dup_address_test;
 	__u32	mac_requested_paths;
-	__u32	mac_downstream_port_type;
+	__u32	mac_करोwnstream_port_type;
 	__u8	mac_smt_address[FDDI_K_ALEN];
 	__u32	mac_t_req;
 	__u32	mac_t_neg;
@@ -113,5 +114,5 @@ struct fddi_statistics {
 	__u32	port_pc_withhold[2];
 	__u32	port_ler_flag[2];
 	__u32	port_hardware_present[2];
-};
-#endif	/* _LINUX_IF_FDDI_H */
+पूर्ण;
+#पूर्ण_अगर	/* _LINUX_IF_FDDI_H */

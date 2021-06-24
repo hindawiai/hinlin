@@ -1,119 +1,120 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * H8S2678 clock driver
+ * H8S2678 घड़ी driver
  *
- * Copyright 2015 Yoshinori Sato <ysato@users.sourceforge.jp>
+ * Copyright 2015 Yoshinori Sato <ysato@users.sourceक्रमge.jp>
  */
 
-#include <linux/clk-provider.h>
-#include <linux/device.h>
-#include <linux/io.h>
-#include <linux/err.h>
-#include <linux/of_address.h>
-#include <linux/slab.h>
+#समावेश <linux/clk-provider.h>
+#समावेश <linux/device.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/err.h>
+#समावेश <linux/of_address.h>
+#समावेश <linux/slab.h>
 
-static DEFINE_SPINLOCK(clklock);
+अटल DEFINE_SPINLOCK(clklock);
 
-#define MAX_FREQ 33333333
-#define MIN_FREQ  8000000
+#घोषणा MAX_FREQ 33333333
+#घोषणा MIN_FREQ  8000000
 
-struct pll_clock {
-	struct clk_hw hw;
-	void __iomem *sckcr;
-	void __iomem *pllcr;
-};
+काष्ठा pll_घड़ी अणु
+	काष्ठा clk_hw hw;
+	व्योम __iomem *sckcr;
+	व्योम __iomem *pllcr;
+पूर्ण;
 
-#define to_pll_clock(_hw) container_of(_hw, struct pll_clock, hw)
+#घोषणा to_pll_घड़ी(_hw) container_of(_hw, काष्ठा pll_घड़ी, hw)
 
-static unsigned long pll_recalc_rate(struct clk_hw *hw,
-		unsigned long parent_rate)
-{
-	struct pll_clock *pll_clock = to_pll_clock(hw);
-	int mul = 1 << (readb(pll_clock->pllcr) & 3);
+अटल अचिन्हित दीर्घ pll_recalc_rate(काष्ठा clk_hw *hw,
+		अचिन्हित दीर्घ parent_rate)
+अणु
+	काष्ठा pll_घड़ी *pll_घड़ी = to_pll_घड़ी(hw);
+	पूर्णांक mul = 1 << (पढ़ोb(pll_घड़ी->pllcr) & 3);
 
-	return parent_rate * mul;
-}
+	वापस parent_rate * mul;
+पूर्ण
 
-static long pll_round_rate(struct clk_hw *hw, unsigned long rate,
-				unsigned long *prate)
-{
-	int i, m = -1;
-	long offset[3];
+अटल दीर्घ pll_round_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
+				अचिन्हित दीर्घ *prate)
+अणु
+	पूर्णांक i, m = -1;
+	दीर्घ offset[3];
 
-	if (rate > MAX_FREQ)
+	अगर (rate > MAX_FREQ)
 		rate = MAX_FREQ;
-	if (rate < MIN_FREQ)
+	अगर (rate < MIN_FREQ)
 		rate = MIN_FREQ;
 
-	for (i = 0; i < 3; i++)
-		offset[i] = abs(rate - (*prate * (1 << i)));
-	for (i = 0; i < 3; i++)
-		if (m < 0)
+	क्रम (i = 0; i < 3; i++)
+		offset[i] = असल(rate - (*prate * (1 << i)));
+	क्रम (i = 0; i < 3; i++)
+		अगर (m < 0)
 			m = i;
-		else
+		अन्यथा
 			m = (offset[i] < offset[m])?i:m;
 
-	return *prate * (1 << m);
-}
+	वापस *prate * (1 << m);
+पूर्ण
 
-static int pll_set_rate(struct clk_hw *hw, unsigned long rate,
-			unsigned long parent_rate)
-{
-	int pll;
-	unsigned char val;
-	unsigned long flags;
-	struct pll_clock *pll_clock = to_pll_clock(hw);
+अटल पूर्णांक pll_set_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
+			अचिन्हित दीर्घ parent_rate)
+अणु
+	पूर्णांक pll;
+	अचिन्हित अक्षर val;
+	अचिन्हित दीर्घ flags;
+	काष्ठा pll_घड़ी *pll_घड़ी = to_pll_घड़ी(hw);
 
 	pll = ((rate / parent_rate) / 2) & 0x03;
 	spin_lock_irqsave(&clklock, flags);
-	val = readb(pll_clock->sckcr);
+	val = पढ़ोb(pll_घड़ी->sckcr);
 	val |= 0x08;
-	writeb(val, pll_clock->sckcr);
-	val = readb(pll_clock->pllcr);
+	ग_लिखोb(val, pll_घड़ी->sckcr);
+	val = पढ़ोb(pll_घड़ी->pllcr);
 	val &= ~0x03;
 	val |= pll;
-	writeb(val, pll_clock->pllcr);
+	ग_लिखोb(val, pll_घड़ी->pllcr);
 	spin_unlock_irqrestore(&clklock, flags);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct clk_ops pll_ops = {
+अटल स्थिर काष्ठा clk_ops pll_ops = अणु
 	.recalc_rate = pll_recalc_rate,
 	.round_rate = pll_round_rate,
 	.set_rate = pll_set_rate,
-};
+पूर्ण;
 
-static void __init h8s2678_pll_clk_setup(struct device_node *node)
-{
-	unsigned int num_parents;
-	const char *clk_name = node->name;
-	const char *parent_name;
-	struct pll_clock *pll_clock;
-	struct clk_init_data init;
-	int ret;
+अटल व्योम __init h8s2678_pll_clk_setup(काष्ठा device_node *node)
+अणु
+	अचिन्हित पूर्णांक num_parents;
+	स्थिर अक्षर *clk_name = node->name;
+	स्थिर अक्षर *parent_name;
+	काष्ठा pll_घड़ी *pll_घड़ी;
+	काष्ठा clk_init_data init;
+	पूर्णांक ret;
 
 	num_parents = of_clk_get_parent_count(node);
-	if (!num_parents) {
+	अगर (!num_parents) अणु
 		pr_err("%s: no parent found\n", clk_name);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 
-	pll_clock = kzalloc(sizeof(*pll_clock), GFP_KERNEL);
-	if (!pll_clock)
-		return;
+	pll_घड़ी = kzalloc(माप(*pll_घड़ी), GFP_KERNEL);
+	अगर (!pll_घड़ी)
+		वापस;
 
-	pll_clock->sckcr = of_iomap(node, 0);
-	if (pll_clock->sckcr == NULL) {
+	pll_घड़ी->sckcr = of_iomap(node, 0);
+	अगर (pll_घड़ी->sckcr == शून्य) अणु
 		pr_err("%s: failed to map divide register\n", clk_name);
-		goto free_clock;
-	}
+		जाओ मुक्त_घड़ी;
+	पूर्ण
 
-	pll_clock->pllcr = of_iomap(node, 1);
-	if (pll_clock->pllcr == NULL) {
+	pll_घड़ी->pllcr = of_iomap(node, 1);
+	अगर (pll_घड़ी->pllcr == शून्य) अणु
 		pr_err("%s: failed to map multiply register\n", clk_name);
-		goto unmap_sckcr;
-	}
+		जाओ unmap_sckcr;
+	पूर्ण
 
 	parent_name = of_clk_get_parent_name(node, 0);
 	init.name = clk_name;
@@ -121,25 +122,25 @@ static void __init h8s2678_pll_clk_setup(struct device_node *node)
 	init.flags = 0;
 	init.parent_names = &parent_name;
 	init.num_parents = 1;
-	pll_clock->hw.init = &init;
+	pll_घड़ी->hw.init = &init;
 
-	ret = clk_hw_register(NULL, &pll_clock->hw);
-	if (ret) {
+	ret = clk_hw_रेजिस्टर(शून्य, &pll_घड़ी->hw);
+	अगर (ret) अणु
 		pr_err("%s: failed to register %s div clock (%d)\n",
 		       __func__, clk_name, ret);
-		goto unmap_pllcr;
-	}
+		जाओ unmap_pllcr;
+	पूर्ण
 
-	of_clk_add_hw_provider(node, of_clk_hw_simple_get, &pll_clock->hw);
-	return;
+	of_clk_add_hw_provider(node, of_clk_hw_simple_get, &pll_घड़ी->hw);
+	वापस;
 
 unmap_pllcr:
-	iounmap(pll_clock->pllcr);
+	iounmap(pll_घड़ी->pllcr);
 unmap_sckcr:
-	iounmap(pll_clock->sckcr);
-free_clock:
-	kfree(pll_clock);
-}
+	iounmap(pll_घड़ी->sckcr);
+मुक्त_घड़ी:
+	kमुक्त(pll_घड़ी);
+पूर्ण
 
-CLK_OF_DECLARE(h8s2678_div_clk, "renesas,h8s2678-pll-clock",
+CLK_OF_DECLARE(h8s2678_भाग_clk, "renesas,h8s2678-pll-clock",
 	       h8s2678_pll_clk_setup);

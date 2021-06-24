@@ -1,15 +1,16 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
  * Copyright 2015 Freescale Semiconductor, Inc.
  *
  * Freescale DCU drm device driver
  */
 
-#ifndef __FSL_DCU_DRM_CRTC_H__
-#define __FSL_DCU_DRM_CRTC_H__
+#अगर_अघोषित __FSL_DCU_DRM_CRTC_H__
+#घोषणा __FSL_DCU_DRM_CRTC_H__
 
-struct fsl_dcu_drm_device;
+काष्ठा fsl_dcu_drm_device;
 
-int fsl_dcu_drm_crtc_create(struct fsl_dcu_drm_device *fsl_dev);
+पूर्णांक fsl_dcu_drm_crtc_create(काष्ठा fsl_dcu_drm_device *fsl_dev);
 
-#endif /* __FSL_DCU_DRM_CRTC_H__ */
+#पूर्ण_अगर /* __FSL_DCU_DRM_CRTC_H__ */

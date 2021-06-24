@@ -1,37 +1,38 @@
-/* SPDX-License-Identifier: (GPL-2.0+ OR BSD-3-Clause) */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: (GPL-2.0+ OR BSD-3-Clause) */
 /* Copyright 2014-2015 Freescale Semiconductor Inc.
  */
 
-#undef TRACE_SYSTEM
-#define TRACE_SYSTEM	dpaa2_eth
+#अघोषित TRACE_SYSTEM
+#घोषणा TRACE_SYSTEM	dpaa2_eth
 
-#if !defined(_DPAA2_ETH_TRACE_H) || defined(TRACE_HEADER_MULTI_READ)
-#define _DPAA2_ETH_TRACE_H
+#अगर !defined(_DPAA2_ETH_TRACE_H) || defined(TRACE_HEADER_MULTI_READ)
+#घोषणा _DPAA2_ETH_TRACE_H
 
-#include <linux/skbuff.h>
-#include <linux/netdevice.h>
-#include <linux/tracepoint.h>
+#समावेश <linux/skbuff.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/tracepoपूर्णांक.h>
 
-#define TR_FMT "[%s] fd: addr=0x%llx, len=%u, off=%u"
-/* trace_printk format for raw buffer event class */
-#define TR_BUF_FMT "[%s] vaddr=%p size=%zu dma_addr=%pad map_size=%zu bpid=%d"
+#घोषणा TR_FMT "[%s] fd: addr=0x%llx, len=%u, off=%u"
+/* trace_prपूर्णांकk क्रमmat क्रम raw buffer event class */
+#घोषणा TR_BUF_FMT "[%s] vaddr=%p size=%zu dma_addr=%pad map_size=%zu bpid=%d"
 
 /* This is used to declare a class of events.
- * individual events of this type will be defined below.
+ * inभागidual events of this type will be defined below.
  */
 
 /* Store details about a frame descriptor */
 DECLARE_EVENT_CLASS(dpaa2_eth_fd,
 		    /* Trace function prototype */
-		    TP_PROTO(struct net_device *netdev,
-			     const struct dpaa2_fd *fd),
+		    TP_PROTO(काष्ठा net_device *netdev,
+			     स्थिर काष्ठा dpaa2_fd *fd),
 
 		    /* Repeat argument list here */
 		    TP_ARGS(netdev, fd),
 
-		    /* A structure containing the relevant information we want
-		     * to record. Declare name and type for each normal element,
-		     * name, type and size for arrays. Use __string for variable
+		    /* A काष्ठाure containing the relevant inक्रमmation we want
+		     * to record. Declare name and type क्रम each normal element,
+		     * name, type and size क्रम arrays. Use __string क्रम variable
 		     * length strings.
 		     */
 		    TP_STRUCT__entry(
@@ -51,10 +52,10 @@ DECLARE_EVENT_CLASS(dpaa2_eth_fd,
 				   __assign_str(name, netdev->name);
 		    ),
 
-		    /* This is what gets printed when the trace event is
+		    /* This is what माला_लो prपूर्णांकed when the trace event is
 		     * triggered.
 		     */
-		    TP_printk(TR_FMT,
+		    TP_prपूर्णांकk(TR_FMT,
 			      __get_str(name),
 			      __entry->fd_addr,
 			      __entry->fd_len,
@@ -62,59 +63,59 @@ DECLARE_EVENT_CLASS(dpaa2_eth_fd,
 );
 
 /* Now declare events of the above type. Format is:
- * DEFINE_EVENT(class, name, proto, args), with proto and args same as for class
+ * DEFINE_EVENT(class, name, proto, args), with proto and args same as क्रम class
  */
 
 /* Tx (egress) fd */
 DEFINE_EVENT(dpaa2_eth_fd, dpaa2_tx_fd,
-	     TP_PROTO(struct net_device *netdev,
-		      const struct dpaa2_fd *fd),
+	     TP_PROTO(काष्ठा net_device *netdev,
+		      स्थिर काष्ठा dpaa2_fd *fd),
 
 	     TP_ARGS(netdev, fd)
 );
 
 /* Rx fd */
 DEFINE_EVENT(dpaa2_eth_fd, dpaa2_rx_fd,
-	     TP_PROTO(struct net_device *netdev,
-		      const struct dpaa2_fd *fd),
+	     TP_PROTO(काष्ठा net_device *netdev,
+		      स्थिर काष्ठा dpaa2_fd *fd),
 
 	     TP_ARGS(netdev, fd)
 );
 
 /* Tx confirmation fd */
 DEFINE_EVENT(dpaa2_eth_fd, dpaa2_tx_conf_fd,
-	     TP_PROTO(struct net_device *netdev,
-		      const struct dpaa2_fd *fd),
+	     TP_PROTO(काष्ठा net_device *netdev,
+		      स्थिर काष्ठा dpaa2_fd *fd),
 
 	     TP_ARGS(netdev, fd)
 );
 
-/* Log data about raw buffers. Useful for tracing DPBP content. */
+/* Log data about raw buffers. Useful क्रम tracing DPBP content. */
 TRACE_EVENT(dpaa2_eth_buf_seed,
 	    /* Trace function prototype */
-	    TP_PROTO(struct net_device *netdev,
-		     /* virtual address and size */
-		     void *vaddr,
-		     size_t size,
+	    TP_PROTO(काष्ठा net_device *netdev,
+		     /* भव address and size */
+		     व्योम *vaddr,
+		     माप_प्रकार size,
 		     /* dma map address and size */
 		     dma_addr_t dma_addr,
-		     size_t map_size,
-		     /* buffer pool id, if relevant */
+		     माप_प्रकार map_size,
+		     /* buffer pool id, अगर relevant */
 		     u16 bpid),
 
 	    /* Repeat argument list here */
 	    TP_ARGS(netdev, vaddr, size, dma_addr, map_size, bpid),
 
-	    /* A structure containing the relevant information we want
-	     * to record. Declare name and type for each normal element,
-	     * name, type and size for arrays. Use __string for variable
+	    /* A काष्ठाure containing the relevant inक्रमmation we want
+	     * to record. Declare name and type क्रम each normal element,
+	     * name, type and size क्रम arrays. Use __string क्रम variable
 	     * length strings.
 	     */
 	    TP_STRUCT__entry(
-			     __field(void *, vaddr)
-			     __field(size_t, size)
+			     __field(व्योम *, vaddr)
+			     __field(माप_प्रकार, size)
 			     __field(dma_addr_t, dma_addr)
-			     __field(size_t, map_size)
+			     __field(माप_प्रकार, map_size)
 			     __field(u16, bpid)
 			     __string(name, netdev->name)
 	    ),
@@ -131,10 +132,10 @@ TRACE_EVENT(dpaa2_eth_buf_seed,
 			   __assign_str(name, netdev->name);
 	    ),
 
-	    /* This is what gets printed when the trace event is
+	    /* This is what माला_लो prपूर्णांकed when the trace event is
 	     * triggered.
 	     */
-	    TP_printk(TR_BUF_FMT,
+	    TP_prपूर्णांकk(TR_BUF_FMT,
 		      __get_str(name),
 		      __entry->vaddr,
 		      __entry->size,
@@ -144,14 +145,14 @@ TRACE_EVENT(dpaa2_eth_buf_seed,
 );
 
 /* If only one event of a certain type needs to be declared, use TRACE_EVENT().
- * The syntax is the same as for DECLARE_EVENT_CLASS().
+ * The syntax is the same as क्रम DECLARE_EVENT_CLASS().
  */
 
-#endif /* _DPAA2_ETH_TRACE_H */
+#पूर्ण_अगर /* _DPAA2_ETH_TRACE_H */
 
-/* This must be outside ifdef _DPAA2_ETH_TRACE_H */
-#undef TRACE_INCLUDE_PATH
-#define TRACE_INCLUDE_PATH .
-#undef TRACE_INCLUDE_FILE
-#define TRACE_INCLUDE_FILE	dpaa2-eth-trace
-#include <trace/define_trace.h>
+/* This must be outside अगरdef _DPAA2_ETH_TRACE_H */
+#अघोषित TRACE_INCLUDE_PATH
+#घोषणा TRACE_INCLUDE_PATH .
+#अघोषित TRACE_INCLUDE_खाता
+#घोषणा TRACE_INCLUDE_खाता	dpaa2-eth-trace
+#समावेश <trace/define_trace.h>

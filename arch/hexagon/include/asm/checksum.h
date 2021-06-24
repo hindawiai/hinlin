@@ -1,26 +1,27 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * Copyright (c) 2010-2011, The Linux Foundation. All rights reserved.
  */
 
-#ifndef _ASM_CHECKSUM_H
-#define _ASM_CHECKSUM_H
+#अगर_अघोषित _ASM_CHECKSUM_H
+#घोषणा _ASM_CHECKSUM_H
 
-#define do_csum	do_csum
-unsigned int do_csum(const void *voidptr, int len);
+#घोषणा करो_csum	करो_csum
+अचिन्हित पूर्णांक करो_csum(स्थिर व्योम *व्योमptr, पूर्णांक len);
 
 /*
- * computes the checksum of the TCP/UDP pseudo-header
- * returns a 16-bit checksum, already complemented
+ * computes the checksum of the TCP/UDP pseuकरो-header
+ * वापसs a 16-bit checksum, alपढ़ोy complemented
  */
-#define csum_tcpudp_nofold csum_tcpudp_nofold
+#घोषणा csum_tcpudp_nofold csum_tcpudp_nofold
 __wsum csum_tcpudp_nofold(__be32 saddr, __be32 daddr,
 			  __u32 len, __u8 proto, __wsum sum);
 
-#define csum_tcpudp_magic csum_tcpudp_magic
+#घोषणा csum_tcpudp_magic csum_tcpudp_magic
 __sum16 csum_tcpudp_magic(__be32 saddr, __be32 daddr,
 			  __u32 len, __u8 proto, __wsum sum);
 
-#include <asm-generic/checksum.h>
+#समावेश <यंत्र-generic/checksum.h>
 
-#endif
+#पूर्ण_अगर

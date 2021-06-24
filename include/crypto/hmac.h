@@ -1,8 +1,9 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _CRYPTO_HMAC_H
-#define _CRYPTO_HMAC_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _CRYPTO_HMAC_H
+#घोषणा _CRYPTO_HMAC_H
 
-#define HMAC_IPAD_VALUE 0x36
-#define HMAC_OPAD_VALUE 0x5c
+#घोषणा HMAC_IPAD_VALUE 0x36
+#घोषणा HMAC_OPAD_VALUE 0x5c
 
-#endif /* _CRYPTO_HMAC_H */
+#पूर्ण_अगर /* _CRYPTO_HMAC_H */

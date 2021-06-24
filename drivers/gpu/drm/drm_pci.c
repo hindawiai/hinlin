@@ -1,14 +1,15 @@
+<शैली गुरु>
 /*
- * Copyright 2003 José Fonseca.
- * Copyright 2003 Leif Delgass.
+ * Copyright 2003 Josथऊ Fonseca.
+ * Copyright 2003 Leअगर Delgass.
  * All Rights Reserved.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice (including the next
  * paragraph) shall be included in all copies or substantial portions of the
@@ -22,236 +23,236 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include <linux/dma-mapping.h>
-#include <linux/export.h>
-#include <linux/list.h>
-#include <linux/mutex.h>
-#include <linux/pci.h>
-#include <linux/slab.h>
+#समावेश <linux/dma-mapping.h>
+#समावेश <linux/export.h>
+#समावेश <linux/list.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/slab.h>
 
-#include <drm/drm.h>
-#include <drm/drm_agpsupport.h>
-#include <drm/drm_drv.h>
-#include <drm/drm_print.h>
+#समावेश <drm/drm.h>
+#समावेश <drm/drm_agpsupport.h>
+#समावेश <drm/drm_drv.h>
+#समावेश <drm/drm_prपूर्णांक.h>
 
-#include "drm_internal.h"
-#include "drm_legacy.h"
+#समावेश "drm_internal.h"
+#समावेश "drm_legacy.h"
 
-#ifdef CONFIG_DRM_LEGACY
+#अगर_घोषित CONFIG_DRM_LEGACY
 /* List of devices hanging off drivers with stealth attach. */
-static LIST_HEAD(legacy_dev_list);
-static DEFINE_MUTEX(legacy_dev_list_lock);
+अटल LIST_HEAD(legacy_dev_list);
+अटल DEFINE_MUTEX(legacy_dev_list_lock);
 
 /**
- * drm_pci_alloc - Allocate a PCI consistent memory block, for DMA.
+ * drm_pci_alloc - Allocate a PCI consistent memory block, क्रम DMA.
  * @dev: DRM device
  * @size: size of block to allocate
  * @align: alignment of block
  *
- * FIXME: This is a needless abstraction of the Linux dma-api and should be
- * removed.
+ * FIXME: This is a needless असलtraction of the Linux dma-api and should be
+ * हटाओd.
  *
- * Return: A handle to the allocated memory block on success or NULL on
+ * Return: A handle to the allocated memory block on success or शून्य on
  * failure.
  */
-drm_dma_handle_t *drm_pci_alloc(struct drm_device * dev, size_t size, size_t align)
-{
+drm_dma_handle_t *drm_pci_alloc(काष्ठा drm_device * dev, माप_प्रकार size, माप_प्रकार align)
+अणु
 	drm_dma_handle_t *dmah;
 
 	/* pci_alloc_consistent only guarantees alignment to the smallest
 	 * PAGE_SIZE order which is greater than or equal to the requested size.
-	 * Return NULL here for now to make sure nobody tries for larger alignment
+	 * Return शून्य here क्रम now to make sure nobody tries क्रम larger alignment
 	 */
-	if (align > size)
-		return NULL;
+	अगर (align > size)
+		वापस शून्य;
 
-	dmah = kmalloc(sizeof(drm_dma_handle_t), GFP_KERNEL);
-	if (!dmah)
-		return NULL;
+	dmah = kदो_स्मृति(माप(drm_dma_handle_t), GFP_KERNEL);
+	अगर (!dmah)
+		वापस शून्य;
 
 	dmah->size = size;
 	dmah->vaddr = dma_alloc_coherent(dev->dev, size,
 					 &dmah->busaddr,
 					 GFP_KERNEL);
 
-	if (dmah->vaddr == NULL) {
-		kfree(dmah);
-		return NULL;
-	}
+	अगर (dmah->vaddr == शून्य) अणु
+		kमुक्त(dmah);
+		वापस शून्य;
+	पूर्ण
 
-	return dmah;
-}
+	वापस dmah;
+पूर्ण
 EXPORT_SYMBOL(drm_pci_alloc);
 
 /**
- * drm_pci_free - Free a PCI consistent memory block
+ * drm_pci_मुक्त - Free a PCI consistent memory block
  * @dev: DRM device
  * @dmah: handle to memory block
  *
- * FIXME: This is a needless abstraction of the Linux dma-api and should be
- * removed.
+ * FIXME: This is a needless असलtraction of the Linux dma-api and should be
+ * हटाओd.
  */
-void drm_pci_free(struct drm_device * dev, drm_dma_handle_t * dmah)
-{
-	dma_free_coherent(dev->dev, dmah->size, dmah->vaddr,
+व्योम drm_pci_मुक्त(काष्ठा drm_device * dev, drm_dma_handle_t * dmah)
+अणु
+	dma_मुक्त_coherent(dev->dev, dmah->size, dmah->vaddr,
 			  dmah->busaddr);
-	kfree(dmah);
-}
+	kमुक्त(dmah);
+पूर्ण
 
-EXPORT_SYMBOL(drm_pci_free);
-#endif
+EXPORT_SYMBOL(drm_pci_मुक्त);
+#पूर्ण_अगर
 
-static int drm_get_pci_domain(struct drm_device *dev)
-{
-#ifndef __alpha__
-	/* For historical reasons, drm_get_pci_domain() is busticated
-	 * on most archs and has to remain so for userspace interface
+अटल पूर्णांक drm_get_pci_करोमुख्य(काष्ठा drm_device *dev)
+अणु
+#अगर_अघोषित __alpha__
+	/* For historical reasons, drm_get_pci_करोमुख्य() is busticated
+	 * on most archs and has to reमुख्य so क्रम userspace पूर्णांकerface
 	 * < 1.4, except on alpha which was right from the beginning
 	 */
-	if (dev->if_version < 0x10004)
-		return 0;
-#endif /* __alpha__ */
+	अगर (dev->अगर_version < 0x10004)
+		वापस 0;
+#पूर्ण_अगर /* __alpha__ */
 
-	return pci_domain_nr(to_pci_dev(dev->dev)->bus);
-}
+	वापस pci_करोमुख्य_nr(to_pci_dev(dev->dev)->bus);
+पूर्ण
 
-int drm_pci_set_busid(struct drm_device *dev, struct drm_master *master)
-{
-	struct pci_dev *pdev = to_pci_dev(dev->dev);
+पूर्णांक drm_pci_set_busid(काष्ठा drm_device *dev, काष्ठा drm_master *master)
+अणु
+	काष्ठा pci_dev *pdev = to_pci_dev(dev->dev);
 
-	master->unique = kasprintf(GFP_KERNEL, "pci:%04x:%02x:%02x.%d",
-					drm_get_pci_domain(dev),
+	master->unique = kaप्र_लिखो(GFP_KERNEL, "pci:%04x:%02x:%02x.%d",
+					drm_get_pci_करोमुख्य(dev),
 					pdev->bus->number,
 					PCI_SLOT(pdev->devfn),
 					PCI_FUNC(pdev->devfn));
-	if (!master->unique)
-		return -ENOMEM;
+	अगर (!master->unique)
+		वापस -ENOMEM;
 
-	master->unique_len = strlen(master->unique);
-	return 0;
-}
+	master->unique_len = म_माप(master->unique);
+	वापस 0;
+पूर्ण
 
-static int drm_pci_irq_by_busid(struct drm_device *dev, struct drm_irq_busid *p)
-{
-	struct pci_dev *pdev = to_pci_dev(dev->dev);
+अटल पूर्णांक drm_pci_irq_by_busid(काष्ठा drm_device *dev, काष्ठा drm_irq_busid *p)
+अणु
+	काष्ठा pci_dev *pdev = to_pci_dev(dev->dev);
 
-	if ((p->busnum >> 8) != drm_get_pci_domain(dev) ||
+	अगर ((p->busnum >> 8) != drm_get_pci_करोमुख्य(dev) ||
 	    (p->busnum & 0xff) != pdev->bus->number ||
 	    p->devnum != PCI_SLOT(pdev->devfn) || p->funcnum != PCI_FUNC(pdev->devfn))
-		return -EINVAL;
+		वापस -EINVAL;
 
 	p->irq = pdev->irq;
 
 	DRM_DEBUG("%d:%d:%d => IRQ %d\n", p->busnum, p->devnum, p->funcnum,
 		  p->irq);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * drm_legacy_irq_by_busid - Get interrupt from bus ID
+ * drm_legacy_irq_by_busid - Get पूर्णांकerrupt from bus ID
  * @dev: DRM device
- * @data: IOCTL parameter pointing to a drm_irq_busid structure
- * @file_priv: DRM file private.
+ * @data: IOCTL parameter poपूर्णांकing to a drm_irq_busid काष्ठाure
+ * @file_priv: DRM file निजी.
  *
- * Finds the PCI device with the specified bus id and gets its IRQ number.
- * This IOCTL is deprecated, and will now return EINVAL for any busid not equal
+ * Finds the PCI device with the specअगरied bus id and माला_लो its IRQ number.
+ * This IOCTL is deprecated, and will now वापस EINVAL क्रम any busid not equal
  * to that of the device that this DRM instance attached to.
  *
  * Return: 0 on success or a negative error code on failure.
  */
-int drm_legacy_irq_by_busid(struct drm_device *dev, void *data,
-			    struct drm_file *file_priv)
-{
-	struct drm_irq_busid *p = data;
+पूर्णांक drm_legacy_irq_by_busid(काष्ठा drm_device *dev, व्योम *data,
+			    काष्ठा drm_file *file_priv)
+अणु
+	काष्ठा drm_irq_busid *p = data;
 
-	if (!drm_core_check_feature(dev, DRIVER_LEGACY))
-		return -EOPNOTSUPP;
+	अगर (!drm_core_check_feature(dev, DRIVER_LEGACY))
+		वापस -EOPNOTSUPP;
 
 	/* UMS was only ever support on PCI devices. */
-	if (WARN_ON(!dev_is_pci(dev->dev)))
-		return -EINVAL;
+	अगर (WARN_ON(!dev_is_pci(dev->dev)))
+		वापस -EINVAL;
 
-	if (!drm_core_check_feature(dev, DRIVER_HAVE_IRQ))
-		return -EOPNOTSUPP;
+	अगर (!drm_core_check_feature(dev, DRIVER_HAVE_IRQ))
+		वापस -EOPNOTSUPP;
 
-	return drm_pci_irq_by_busid(dev, p);
-}
+	वापस drm_pci_irq_by_busid(dev, p);
+पूर्ण
 
-void drm_pci_agp_destroy(struct drm_device *dev)
-{
-	if (dev->agp) {
+व्योम drm_pci_agp_destroy(काष्ठा drm_device *dev)
+अणु
+	अगर (dev->agp) अणु
 		arch_phys_wc_del(dev->agp->agp_mtrr);
 		drm_legacy_agp_clear(dev);
-		kfree(dev->agp);
-		dev->agp = NULL;
-	}
-}
+		kमुक्त(dev->agp);
+		dev->agp = शून्य;
+	पूर्ण
+पूर्ण
 
-#ifdef CONFIG_DRM_LEGACY
+#अगर_घोषित CONFIG_DRM_LEGACY
 
-static void drm_pci_agp_init(struct drm_device *dev)
-{
-	if (drm_core_check_feature(dev, DRIVER_USE_AGP)) {
-		if (pci_find_capability(to_pci_dev(dev->dev), PCI_CAP_ID_AGP))
+अटल व्योम drm_pci_agp_init(काष्ठा drm_device *dev)
+अणु
+	अगर (drm_core_check_feature(dev, DRIVER_USE_AGP)) अणु
+		अगर (pci_find_capability(to_pci_dev(dev->dev), PCI_CAP_ID_AGP))
 			dev->agp = drm_agp_init(dev);
-		if (dev->agp) {
+		अगर (dev->agp) अणु
 			dev->agp->agp_mtrr = arch_phys_wc_add(
 				dev->agp->agp_info.aper_base,
 				dev->agp->agp_info.aper_size *
 				1024 * 1024);
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static int drm_get_pci_dev(struct pci_dev *pdev,
-			   const struct pci_device_id *ent,
-			   const struct drm_driver *driver)
-{
-	struct drm_device *dev;
-	int ret;
+अटल पूर्णांक drm_get_pci_dev(काष्ठा pci_dev *pdev,
+			   स्थिर काष्ठा pci_device_id *ent,
+			   स्थिर काष्ठा drm_driver *driver)
+अणु
+	काष्ठा drm_device *dev;
+	पूर्णांक ret;
 
 	DRM_DEBUG("\n");
 
 	dev = drm_dev_alloc(driver, &pdev->dev);
-	if (IS_ERR(dev))
-		return PTR_ERR(dev);
+	अगर (IS_ERR(dev))
+		वापस PTR_ERR(dev);
 
 	ret = pci_enable_device(pdev);
-	if (ret)
-		goto err_free;
+	अगर (ret)
+		जाओ err_मुक्त;
 
 	dev->pdev = pdev;
-#ifdef __alpha__
+#अगर_घोषित __alpha__
 	dev->hose = pdev->sysdata;
-#endif
+#पूर्ण_अगर
 
-	if (drm_core_check_feature(dev, DRIVER_MODESET))
+	अगर (drm_core_check_feature(dev, DRIVER_MODESET))
 		pci_set_drvdata(pdev, dev);
 
 	drm_pci_agp_init(dev);
 
-	ret = drm_dev_register(dev, ent->driver_data);
-	if (ret)
-		goto err_agp;
+	ret = drm_dev_रेजिस्टर(dev, ent->driver_data);
+	अगर (ret)
+		जाओ err_agp;
 
-	if (drm_core_check_feature(dev, DRIVER_LEGACY)) {
+	अगर (drm_core_check_feature(dev, DRIVER_LEGACY)) अणु
 		mutex_lock(&legacy_dev_list_lock);
 		list_add_tail(&dev->legacy_dev_list, &legacy_dev_list);
 		mutex_unlock(&legacy_dev_list_lock);
-	}
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 err_agp:
 	drm_pci_agp_destroy(dev);
 	pci_disable_device(pdev);
-err_free:
+err_मुक्त:
 	drm_dev_put(dev);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * drm_legacy_pci_init - shadow-attach a legacy DRM PCI driver
+ * drm_legacy_pci_init - shaकरोw-attach a legacy DRM PCI driver
  * @driver: DRM device driver
  * @pdriver: PCI device driver
  *
@@ -259,74 +260,74 @@ err_free:
  *
  * Return: 0 on success or a negative error code on failure.
  */
-int drm_legacy_pci_init(const struct drm_driver *driver,
-			struct pci_driver *pdriver)
-{
-	struct pci_dev *pdev = NULL;
-	const struct pci_device_id *pid;
-	int i;
+पूर्णांक drm_legacy_pci_init(स्थिर काष्ठा drm_driver *driver,
+			काष्ठा pci_driver *pdriver)
+अणु
+	काष्ठा pci_dev *pdev = शून्य;
+	स्थिर काष्ठा pci_device_id *pid;
+	पूर्णांक i;
 
 	DRM_DEBUG("\n");
 
-	if (WARN_ON(!(driver->driver_features & DRIVER_LEGACY)))
-		return -EINVAL;
+	अगर (WARN_ON(!(driver->driver_features & DRIVER_LEGACY)))
+		वापस -EINVAL;
 
 	/* If not using KMS, fall back to stealth mode manual scanning. */
-	for (i = 0; pdriver->id_table[i].vendor != 0; i++) {
+	क्रम (i = 0; pdriver->id_table[i].venकरोr != 0; i++) अणु
 		pid = &pdriver->id_table[i];
 
-		/* Loop around setting up a DRM device for each PCI device
-		 * matching our ID and device class.  If we had the internal
+		/* Loop around setting up a DRM device क्रम each PCI device
+		 * matching our ID and device class.  If we had the पूर्णांकernal
 		 * function that pci_get_subsys and pci_get_class used, we'd
-		 * be able to just pass pid in instead of doing a two-stage
+		 * be able to just pass pid in instead of करोing a two-stage
 		 * thing.
 		 */
-		pdev = NULL;
-		while ((pdev =
-			pci_get_subsys(pid->vendor, pid->device, pid->subvendor,
-				       pid->subdevice, pdev)) != NULL) {
-			if ((pdev->class & pid->class_mask) != pid->class)
-				continue;
+		pdev = शून्य;
+		जबतक ((pdev =
+			pci_get_subsys(pid->venकरोr, pid->device, pid->subvenकरोr,
+				       pid->subdevice, pdev)) != शून्य) अणु
+			अगर ((pdev->class & pid->class_mask) != pid->class)
+				जारी;
 
 			/* stealth mode requires a manual probe */
 			pci_dev_get(pdev);
 			drm_get_pci_dev(pdev, pid, driver);
-		}
-	}
-	return 0;
-}
+		पूर्ण
+	पूर्ण
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(drm_legacy_pci_init);
 
 /**
- * drm_legacy_pci_exit - unregister shadow-attach legacy DRM driver
+ * drm_legacy_pci_निकास - unरेजिस्टर shaकरोw-attach legacy DRM driver
  * @driver: DRM device driver
  * @pdriver: PCI device driver
  *
- * Unregister a DRM driver shadow-attached through drm_legacy_pci_init(). This
+ * Unरेजिस्टर a DRM driver shaकरोw-attached through drm_legacy_pci_init(). This
  * is deprecated and only used by dri1 drivers.
  */
-void drm_legacy_pci_exit(const struct drm_driver *driver,
-			 struct pci_driver *pdriver)
-{
-	struct drm_device *dev, *tmp;
+व्योम drm_legacy_pci_निकास(स्थिर काष्ठा drm_driver *driver,
+			 काष्ठा pci_driver *pdriver)
+अणु
+	काष्ठा drm_device *dev, *पंचांगp;
 
 	DRM_DEBUG("\n");
 
-	if (!(driver->driver_features & DRIVER_LEGACY)) {
+	अगर (!(driver->driver_features & DRIVER_LEGACY)) अणु
 		WARN_ON(1);
-	} else {
+	पूर्ण अन्यथा अणु
 		mutex_lock(&legacy_dev_list_lock);
-		list_for_each_entry_safe(dev, tmp, &legacy_dev_list,
-					 legacy_dev_list) {
-			if (dev->driver == driver) {
+		list_क्रम_each_entry_safe(dev, पंचांगp, &legacy_dev_list,
+					 legacy_dev_list) अणु
+			अगर (dev->driver == driver) अणु
 				list_del(&dev->legacy_dev_list);
 				drm_put_dev(dev);
-			}
-		}
+			पूर्ण
+		पूर्ण
 		mutex_unlock(&legacy_dev_list_lock);
-	}
+	पूर्ण
 	DRM_INFO("Module unloaded\n");
-}
-EXPORT_SYMBOL(drm_legacy_pci_exit);
+पूर्ण
+EXPORT_SYMBOL(drm_legacy_pci_निकास);
 
-#endif
+#पूर्ण_अगर

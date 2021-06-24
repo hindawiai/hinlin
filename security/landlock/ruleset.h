@@ -1,25 +1,26 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * Landlock LSM - Ruleset management
  *
- * Copyright © 2016-2020 Mickaël Salaün <mic@digikod.net>
- * Copyright © 2018-2020 ANSSI
+ * Copyright तऊ 2016-2020 Mickaथ+l Salaथञn <mic@digikod.net>
+ * Copyright तऊ 2018-2020 ANSSI
  */
 
-#ifndef _SECURITY_LANDLOCK_RULESET_H
-#define _SECURITY_LANDLOCK_RULESET_H
+#अगर_अघोषित _SECURITY_LANDLOCK_RULESET_H
+#घोषणा _SECURITY_LANDLOCK_RULESET_H
 
-#include <linux/mutex.h>
-#include <linux/rbtree.h>
-#include <linux/refcount.h>
-#include <linux/workqueue.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/rbtree.h>
+#समावेश <linux/refcount.h>
+#समावेश <linux/workqueue.h>
 
-#include "object.h"
+#समावेश "object.h"
 
 /**
- * struct landlock_layer - Access rights for a given layer
+ * काष्ठा landlock_layer - Access rights क्रम a given layer
  */
-struct landlock_layer {
+काष्ठा landlock_layer अणु
 	/**
 	 * @level: Position of this layer in the layer stack.
 	 */
@@ -29,23 +30,23 @@ struct landlock_layer {
 	 * relative to the object type (e.g. %LANDLOCK_ACTION_FS_READ).
 	 */
 	u16 access;
-};
+पूर्ण;
 
 /**
- * struct landlock_rule - Access rights tied to an object
+ * काष्ठा landlock_rule - Access rights tied to an object
  */
-struct landlock_rule {
+काष्ठा landlock_rule अणु
 	/**
 	 * @node: Node in the ruleset's red-black tree.
 	 */
-	struct rb_node node;
+	काष्ठा rb_node node;
 	/**
-	 * @object: Pointer to identify a kernel object (e.g. an inode).  This
-	 * is used as a key for this ruleset element.  This pointer is set once
-	 * and never modified.  It always points to an allocated object because
+	 * @object: Poपूर्णांकer to identअगरy a kernel object (e.g. an inode).  This
+	 * is used as a key क्रम this ruleset element.  This poपूर्णांकer is set once
+	 * and never modअगरied.  It always poपूर्णांकs to an allocated object because
 	 * each rule increments the refcount of its object.
 	 */
-	struct landlock_object *object;
+	काष्ठा landlock_object *object;
 	/**
 	 * @num_layers: Number of entries in @layers.
 	 */
@@ -54,112 +55,112 @@ struct landlock_rule {
 	 * @layers: Stack of layers, from the latest to the newest, implemented
 	 * as a flexible array member (FAM).
 	 */
-	struct landlock_layer layers[];
-};
+	काष्ठा landlock_layer layers[];
+पूर्ण;
 
 /**
- * struct landlock_hierarchy - Node in a ruleset hierarchy
+ * काष्ठा landlock_hierarchy - Node in a ruleset hierarchy
  */
-struct landlock_hierarchy {
+काष्ठा landlock_hierarchy अणु
 	/**
-	 * @parent: Pointer to the parent node, or NULL if it is a root
-	 * Landlock domain.
+	 * @parent: Poपूर्णांकer to the parent node, or शून्य अगर it is a root
+	 * Landlock करोमुख्य.
 	 */
-	struct landlock_hierarchy *parent;
+	काष्ठा landlock_hierarchy *parent;
 	/**
-	 * @usage: Number of potential children domains plus their parent
-	 * domain.
+	 * @usage: Number of potential children करोमुख्यs plus their parent
+	 * करोमुख्य.
 	 */
 	refcount_t usage;
-};
+पूर्ण;
 
 /**
- * struct landlock_ruleset - Landlock ruleset
+ * काष्ठा landlock_ruleset - Landlock ruleset
  *
- * This data structure must contain unique entries, be updatable, and quick to
+ * This data काष्ठाure must contain unique entries, be updatable, and quick to
  * match an object.
  */
-struct landlock_ruleset {
+काष्ठा landlock_ruleset अणु
 	/**
-	 * @root: Root of a red-black tree containing &struct landlock_rule
-	 * nodes.  Once a ruleset is tied to a process (i.e. as a domain), this
+	 * @root: Root of a red-black tree containing &काष्ठा landlock_rule
+	 * nodes.  Once a ruleset is tied to a process (i.e. as a करोमुख्य), this
 	 * tree is immutable until @usage reaches zero.
 	 */
-	struct rb_root root;
+	काष्ठा rb_root root;
 	/**
-	 * @hierarchy: Enables hierarchy identification even when a parent
-	 * domain vanishes.  This is needed for the ptrace protection.
+	 * @hierarchy: Enables hierarchy identअगरication even when a parent
+	 * करोमुख्य vanishes.  This is needed क्रम the ptrace protection.
 	 */
-	struct landlock_hierarchy *hierarchy;
-	union {
+	काष्ठा landlock_hierarchy *hierarchy;
+	जोड़ अणु
 		/**
-		 * @work_free: Enables to free a ruleset within a lockless
+		 * @work_मुक्त: Enables to मुक्त a ruleset within a lockless
 		 * section.  This is only used by
 		 * landlock_put_ruleset_deferred() when @usage reaches zero.
 		 * The fields @lock, @usage, @num_rules, @num_layers and
 		 * @fs_access_masks are then unused.
 		 */
-		struct work_struct work_free;
-		struct {
+		काष्ठा work_काष्ठा work_मुक्त;
+		काष्ठा अणु
 			/**
-			 * @lock: Protects against concurrent modifications of
-			 * @root, if @usage is greater than zero.
+			 * @lock: Protects against concurrent modअगरications of
+			 * @root, अगर @usage is greater than zero.
 			 */
-			struct mutex lock;
+			काष्ठा mutex lock;
 			/**
-			 * @usage: Number of processes (i.e. domains) or file
+			 * @usage: Number of processes (i.e. करोमुख्यs) or file
 			 * descriptors referencing this ruleset.
 			 */
 			refcount_t usage;
 			/**
-			 * @num_rules: Number of non-overlapping (i.e. not for
+			 * @num_rules: Number of non-overlapping (i.e. not क्रम
 			 * the same object) rules in this ruleset.
 			 */
 			u32 num_rules;
 			/**
 			 * @num_layers: Number of layers that are used in this
 			 * ruleset.  This enables to check that all the layers
-			 * allow an access request.  A value of 0 identifies a
-			 * non-merged ruleset (i.e. not a domain).
+			 * allow an access request.  A value of 0 identअगरies a
+			 * non-merged ruleset (i.e. not a करोमुख्य).
 			 */
 			u32 num_layers;
 			/**
-			 * @fs_access_masks: Contains the subset of filesystem
-			 * actions that are restricted by a ruleset.  A domain
+			 * @fs_access_masks: Contains the subset of fileप्रणाली
+			 * actions that are restricted by a ruleset.  A करोमुख्य
 			 * saves all layers of merged rulesets in a stack
 			 * (FAM), starting from the first layer to the last
 			 * one.  These layers are used when merging rulesets,
-			 * for user space backward compatibility (i.e.
+			 * क्रम user space backward compatibility (i.e.
 			 * future-proof), and to properly handle merged
 			 * rulesets without overlapping access rights.  These
-			 * layers are set once and never changed for the
-			 * lifetime of the ruleset.
+			 * layers are set once and never changed क्रम the
+			 * lअगरeसमय of the ruleset.
 			 */
 			u16 fs_access_masks[];
-		};
-	};
-};
+		पूर्ण;
+	पूर्ण;
+पूर्ण;
 
-struct landlock_ruleset *landlock_create_ruleset(const u32 fs_access_mask);
+काष्ठा landlock_ruleset *landlock_create_ruleset(स्थिर u32 fs_access_mask);
 
-void landlock_put_ruleset(struct landlock_ruleset *const ruleset);
-void landlock_put_ruleset_deferred(struct landlock_ruleset *const ruleset);
+व्योम landlock_put_ruleset(काष्ठा landlock_ruleset *स्थिर ruleset);
+व्योम landlock_put_ruleset_deferred(काष्ठा landlock_ruleset *स्थिर ruleset);
 
-int landlock_insert_rule(struct landlock_ruleset *const ruleset,
-		struct landlock_object *const object, const u32 access);
+पूर्णांक landlock_insert_rule(काष्ठा landlock_ruleset *स्थिर ruleset,
+		काष्ठा landlock_object *स्थिर object, स्थिर u32 access);
 
-struct landlock_ruleset *landlock_merge_ruleset(
-		struct landlock_ruleset *const parent,
-		struct landlock_ruleset *const ruleset);
+काष्ठा landlock_ruleset *landlock_merge_ruleset(
+		काष्ठा landlock_ruleset *स्थिर parent,
+		काष्ठा landlock_ruleset *स्थिर ruleset);
 
-const struct landlock_rule *landlock_find_rule(
-		const struct landlock_ruleset *const ruleset,
-		const struct landlock_object *const object);
+स्थिर काष्ठा landlock_rule *landlock_find_rule(
+		स्थिर काष्ठा landlock_ruleset *स्थिर ruleset,
+		स्थिर काष्ठा landlock_object *स्थिर object);
 
-static inline void landlock_get_ruleset(struct landlock_ruleset *const ruleset)
-{
-	if (ruleset)
+अटल अंतरभूत व्योम landlock_get_ruleset(काष्ठा landlock_ruleset *स्थिर ruleset)
+अणु
+	अगर (ruleset)
 		refcount_inc(&ruleset->usage);
-}
+पूर्ण
 
-#endif /* _SECURITY_LANDLOCK_RULESET_H */
+#पूर्ण_अगर /* _SECURITY_LANDLOCK_RULESET_H */

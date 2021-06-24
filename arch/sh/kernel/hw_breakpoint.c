@@ -1,315 +1,316 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * arch/sh/kernel/hw_breakpoint.c
+ * arch/sh/kernel/hw_अवरोधpoपूर्णांक.c
  *
- * Unified kernel/user-space hardware breakpoint facility for the on-chip UBC.
+ * Unअगरied kernel/user-space hardware अवरोधpoपूर्णांक facility क्रम the on-chip UBC.
  *
  * Copyright (C) 2009 - 2010  Paul Mundt
  */
-#include <linux/init.h>
-#include <linux/perf_event.h>
-#include <linux/sched/signal.h>
-#include <linux/hw_breakpoint.h>
-#include <linux/percpu.h>
-#include <linux/kallsyms.h>
-#include <linux/notifier.h>
-#include <linux/kprobes.h>
-#include <linux/kdebug.h>
-#include <linux/io.h>
-#include <linux/clk.h>
-#include <asm/hw_breakpoint.h>
-#include <asm/mmu_context.h>
-#include <asm/ptrace.h>
-#include <asm/traps.h>
+#समावेश <linux/init.h>
+#समावेश <linux/perf_event.h>
+#समावेश <linux/sched/संकेत.स>
+#समावेश <linux/hw_अवरोधpoपूर्णांक.h>
+#समावेश <linux/percpu.h>
+#समावेश <linux/kallsyms.h>
+#समावेश <linux/notअगरier.h>
+#समावेश <linux/kprobes.h>
+#समावेश <linux/kdebug.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/clk.h>
+#समावेश <यंत्र/hw_अवरोधpoपूर्णांक.h>
+#समावेश <यंत्र/mmu_context.h>
+#समावेश <यंत्र/ptrace.h>
+#समावेश <यंत्र/traps.h>
 
 /*
- * Stores the breakpoints currently in use on each breakpoint address
- * register for each cpus
+ * Stores the अवरोधpoपूर्णांकs currently in use on each अवरोधpoपूर्णांक address
+ * रेजिस्टर क्रम each cpus
  */
-static DEFINE_PER_CPU(struct perf_event *, bp_per_reg[HBP_NUM]);
+अटल DEFINE_PER_CPU(काष्ठा perf_event *, bp_per_reg[HBP_NUM]);
 
 /*
- * A dummy placeholder for early accesses until the CPUs get a chance to
- * register their UBCs later in the boot process.
+ * A dummy placeholder क्रम early accesses until the CPUs get a chance to
+ * रेजिस्टर their UBCs later in the boot process.
  */
-static struct sh_ubc ubc_dummy = { .num_events = 0 };
+अटल काष्ठा sh_ubc ubc_dummy = अणु .num_events = 0 पूर्ण;
 
-static struct sh_ubc *sh_ubc __read_mostly = &ubc_dummy;
+अटल काष्ठा sh_ubc *sh_ubc __पढ़ो_mostly = &ubc_dummy;
 
 /*
- * Install a perf counter breakpoint.
+ * Install a perf counter अवरोधpoपूर्णांक.
  *
- * We seek a free UBC channel and use it for this breakpoint.
+ * We seek a मुक्त UBC channel and use it क्रम this अवरोधpoपूर्णांक.
  *
  * Atomic: we hold the counter->ctx->lock and we only handle variables
- * and registers local to this cpu.
+ * and रेजिस्टरs local to this cpu.
  */
-int arch_install_hw_breakpoint(struct perf_event *bp)
-{
-	struct arch_hw_breakpoint *info = counter_arch_bp(bp);
-	int i;
+पूर्णांक arch_install_hw_अवरोधpoपूर्णांक(काष्ठा perf_event *bp)
+अणु
+	काष्ठा arch_hw_अवरोधpoपूर्णांक *info = counter_arch_bp(bp);
+	पूर्णांक i;
 
-	for (i = 0; i < sh_ubc->num_events; i++) {
-		struct perf_event **slot = this_cpu_ptr(&bp_per_reg[i]);
+	क्रम (i = 0; i < sh_ubc->num_events; i++) अणु
+		काष्ठा perf_event **slot = this_cpu_ptr(&bp_per_reg[i]);
 
-		if (!*slot) {
+		अगर (!*slot) अणु
 			*slot = bp;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	if (WARN_ONCE(i == sh_ubc->num_events, "Can't find any breakpoint slot"))
-		return -EBUSY;
+	अगर (WARN_ONCE(i == sh_ubc->num_events, "Can't find any breakpoint slot"))
+		वापस -EBUSY;
 
 	clk_enable(sh_ubc->clk);
 	sh_ubc->enable(info, i);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * Uninstall the breakpoint contained in the given counter.
+ * Uninstall the अवरोधpoपूर्णांक contained in the given counter.
  *
- * First we search the debug address register it uses and then we disable
+ * First we search the debug address रेजिस्टर it uses and then we disable
  * it.
  *
  * Atomic: we hold the counter->ctx->lock and we only handle variables
- * and registers local to this cpu.
+ * and रेजिस्टरs local to this cpu.
  */
-void arch_uninstall_hw_breakpoint(struct perf_event *bp)
-{
-	struct arch_hw_breakpoint *info = counter_arch_bp(bp);
-	int i;
+व्योम arch_uninstall_hw_अवरोधpoपूर्णांक(काष्ठा perf_event *bp)
+अणु
+	काष्ठा arch_hw_अवरोधpoपूर्णांक *info = counter_arch_bp(bp);
+	पूर्णांक i;
 
-	for (i = 0; i < sh_ubc->num_events; i++) {
-		struct perf_event **slot = this_cpu_ptr(&bp_per_reg[i]);
+	क्रम (i = 0; i < sh_ubc->num_events; i++) अणु
+		काष्ठा perf_event **slot = this_cpu_ptr(&bp_per_reg[i]);
 
-		if (*slot == bp) {
-			*slot = NULL;
-			break;
-		}
-	}
+		अगर (*slot == bp) अणु
+			*slot = शून्य;
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	if (WARN_ONCE(i == sh_ubc->num_events, "Can't find any breakpoint slot"))
-		return;
+	अगर (WARN_ONCE(i == sh_ubc->num_events, "Can't find any breakpoint slot"))
+		वापस;
 
 	sh_ubc->disable(info, i);
 	clk_disable(sh_ubc->clk);
-}
+पूर्ण
 
-static int get_hbp_len(u16 hbp_len)
-{
-	unsigned int len_in_bytes = 0;
+अटल पूर्णांक get_hbp_len(u16 hbp_len)
+अणु
+	अचिन्हित पूर्णांक len_in_bytes = 0;
 
-	switch (hbp_len) {
-	case SH_BREAKPOINT_LEN_1:
+	चयन (hbp_len) अणु
+	हाल SH_BREAKPOINT_LEN_1:
 		len_in_bytes = 1;
-		break;
-	case SH_BREAKPOINT_LEN_2:
+		अवरोध;
+	हाल SH_BREAKPOINT_LEN_2:
 		len_in_bytes = 2;
-		break;
-	case SH_BREAKPOINT_LEN_4:
+		अवरोध;
+	हाल SH_BREAKPOINT_LEN_4:
 		len_in_bytes = 4;
-		break;
-	case SH_BREAKPOINT_LEN_8:
+		अवरोध;
+	हाल SH_BREAKPOINT_LEN_8:
 		len_in_bytes = 8;
-		break;
-	}
-	return len_in_bytes;
-}
+		अवरोध;
+	पूर्ण
+	वापस len_in_bytes;
+पूर्ण
 
 /*
- * Check for virtual address in kernel space.
+ * Check क्रम भव address in kernel space.
  */
-int arch_check_bp_in_kernelspace(struct arch_hw_breakpoint *hw)
-{
-	unsigned int len;
-	unsigned long va;
+पूर्णांक arch_check_bp_in_kernelspace(काष्ठा arch_hw_अवरोधpoपूर्णांक *hw)
+अणु
+	अचिन्हित पूर्णांक len;
+	अचिन्हित दीर्घ va;
 
 	va = hw->address;
 	len = get_hbp_len(hw->len);
 
-	return (va >= TASK_SIZE) && ((va + len - 1) >= TASK_SIZE);
-}
+	वापस (va >= TASK_SIZE) && ((va + len - 1) >= TASK_SIZE);
+पूर्ण
 
-int arch_bp_generic_fields(int sh_len, int sh_type,
-			   int *gen_len, int *gen_type)
-{
+पूर्णांक arch_bp_generic_fields(पूर्णांक sh_len, पूर्णांक sh_type,
+			   पूर्णांक *gen_len, पूर्णांक *gen_type)
+अणु
 	/* Len */
-	switch (sh_len) {
-	case SH_BREAKPOINT_LEN_1:
+	चयन (sh_len) अणु
+	हाल SH_BREAKPOINT_LEN_1:
 		*gen_len = HW_BREAKPOINT_LEN_1;
-		break;
-	case SH_BREAKPOINT_LEN_2:
+		अवरोध;
+	हाल SH_BREAKPOINT_LEN_2:
 		*gen_len = HW_BREAKPOINT_LEN_2;
-		break;
-	case SH_BREAKPOINT_LEN_4:
+		अवरोध;
+	हाल SH_BREAKPOINT_LEN_4:
 		*gen_len = HW_BREAKPOINT_LEN_4;
-		break;
-	case SH_BREAKPOINT_LEN_8:
+		अवरोध;
+	हाल SH_BREAKPOINT_LEN_8:
 		*gen_len = HW_BREAKPOINT_LEN_8;
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
 	/* Type */
-	switch (sh_type) {
-	case SH_BREAKPOINT_READ:
+	चयन (sh_type) अणु
+	हाल SH_BREAKPOINT_READ:
 		*gen_type = HW_BREAKPOINT_R;
-		break;
-	case SH_BREAKPOINT_WRITE:
+		अवरोध;
+	हाल SH_BREAKPOINT_WRITE:
 		*gen_type = HW_BREAKPOINT_W;
-		break;
-	case SH_BREAKPOINT_RW:
+		अवरोध;
+	हाल SH_BREAKPOINT_RW:
 		*gen_type = HW_BREAKPOINT_W | HW_BREAKPOINT_R;
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int arch_build_bp_info(struct perf_event *bp,
-			      const struct perf_event_attr *attr,
-			      struct arch_hw_breakpoint *hw)
-{
+अटल पूर्णांक arch_build_bp_info(काष्ठा perf_event *bp,
+			      स्थिर काष्ठा perf_event_attr *attr,
+			      काष्ठा arch_hw_अवरोधpoपूर्णांक *hw)
+अणु
 	hw->address = attr->bp_addr;
 
 	/* Len */
-	switch (attr->bp_len) {
-	case HW_BREAKPOINT_LEN_1:
+	चयन (attr->bp_len) अणु
+	हाल HW_BREAKPOINT_LEN_1:
 		hw->len = SH_BREAKPOINT_LEN_1;
-		break;
-	case HW_BREAKPOINT_LEN_2:
+		अवरोध;
+	हाल HW_BREAKPOINT_LEN_2:
 		hw->len = SH_BREAKPOINT_LEN_2;
-		break;
-	case HW_BREAKPOINT_LEN_4:
+		अवरोध;
+	हाल HW_BREAKPOINT_LEN_4:
 		hw->len = SH_BREAKPOINT_LEN_4;
-		break;
-	case HW_BREAKPOINT_LEN_8:
+		अवरोध;
+	हाल HW_BREAKPOINT_LEN_8:
 		hw->len = SH_BREAKPOINT_LEN_8;
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
 	/* Type */
-	switch (attr->bp_type) {
-	case HW_BREAKPOINT_R:
+	चयन (attr->bp_type) अणु
+	हाल HW_BREAKPOINT_R:
 		hw->type = SH_BREAKPOINT_READ;
-		break;
-	case HW_BREAKPOINT_W:
+		अवरोध;
+	हाल HW_BREAKPOINT_W:
 		hw->type = SH_BREAKPOINT_WRITE;
-		break;
-	case HW_BREAKPOINT_W | HW_BREAKPOINT_R:
+		अवरोध;
+	हाल HW_BREAKPOINT_W | HW_BREAKPOINT_R:
 		hw->type = SH_BREAKPOINT_RW;
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * Validate the arch-specific HW Breakpoint register settings
+ * Validate the arch-specअगरic HW Breakpoपूर्णांक रेजिस्टर settings
  */
-int hw_breakpoint_arch_parse(struct perf_event *bp,
-			     const struct perf_event_attr *attr,
-			     struct arch_hw_breakpoint *hw)
-{
-	unsigned int align;
-	int ret;
+पूर्णांक hw_अवरोधpoपूर्णांक_arch_parse(काष्ठा perf_event *bp,
+			     स्थिर काष्ठा perf_event_attr *attr,
+			     काष्ठा arch_hw_अवरोधpoपूर्णांक *hw)
+अणु
+	अचिन्हित पूर्णांक align;
+	पूर्णांक ret;
 
 	ret = arch_build_bp_info(bp, attr, hw);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ret = -EINVAL;
 
-	switch (hw->len) {
-	case SH_BREAKPOINT_LEN_1:
+	चयन (hw->len) अणु
+	हाल SH_BREAKPOINT_LEN_1:
 		align = 0;
-		break;
-	case SH_BREAKPOINT_LEN_2:
+		अवरोध;
+	हाल SH_BREAKPOINT_LEN_2:
 		align = 1;
-		break;
-	case SH_BREAKPOINT_LEN_4:
+		अवरोध;
+	हाल SH_BREAKPOINT_LEN_4:
 		align = 3;
-		break;
-	case SH_BREAKPOINT_LEN_8:
+		अवरोध;
+	हाल SH_BREAKPOINT_LEN_8:
 		align = 7;
-		break;
-	default:
-		return ret;
-	}
+		अवरोध;
+	शेष:
+		वापस ret;
+	पूर्ण
 
 	/*
 	 * Check that the low-order bits of the address are appropriate
-	 * for the alignment implied by len.
+	 * क्रम the alignment implied by len.
 	 */
-	if (hw->address & align)
-		return -EINVAL;
+	अगर (hw->address & align)
+		वापस -EINVAL;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * Release the user breakpoints used by ptrace
+ * Release the user अवरोधpoपूर्णांकs used by ptrace
  */
-void flush_ptrace_hw_breakpoint(struct task_struct *tsk)
-{
-	int i;
-	struct thread_struct *t = &tsk->thread;
+व्योम flush_ptrace_hw_अवरोधpoपूर्णांक(काष्ठा task_काष्ठा *tsk)
+अणु
+	पूर्णांक i;
+	काष्ठा thपढ़ो_काष्ठा *t = &tsk->thपढ़ो;
 
-	for (i = 0; i < sh_ubc->num_events; i++) {
-		unregister_hw_breakpoint(t->ptrace_bps[i]);
-		t->ptrace_bps[i] = NULL;
-	}
-}
+	क्रम (i = 0; i < sh_ubc->num_events; i++) अणु
+		unरेजिस्टर_hw_अवरोधpoपूर्णांक(t->ptrace_bps[i]);
+		t->ptrace_bps[i] = शून्य;
+	पूर्ण
+पूर्ण
 
-static int __kprobes hw_breakpoint_handler(struct die_args *args)
-{
-	int cpu, i, rc = NOTIFY_STOP;
-	struct perf_event *bp;
-	unsigned int cmf, resume_mask;
+अटल पूर्णांक __kprobes hw_अवरोधpoपूर्णांक_handler(काष्ठा die_args *args)
+अणु
+	पूर्णांक cpu, i, rc = NOTIFY_STOP;
+	काष्ठा perf_event *bp;
+	अचिन्हित पूर्णांक cmf, resume_mask;
 
 	/*
-	 * Do an early return if none of the channels triggered.
+	 * Do an early वापस अगर none of the channels triggered.
 	 */
 	cmf = sh_ubc->triggered_mask();
-	if (unlikely(!cmf))
-		return NOTIFY_DONE;
+	अगर (unlikely(!cmf))
+		वापस NOTIFY_DONE;
 
 	/*
-	 * By default, resume all of the active channels.
+	 * By शेष, resume all of the active channels.
 	 */
 	resume_mask = sh_ubc->active_mask();
 
 	/*
-	 * Disable breakpoints during exception handling.
+	 * Disable अवरोधpoपूर्णांकs during exception handling.
 	 */
 	sh_ubc->disable_all();
 
 	cpu = get_cpu();
-	for (i = 0; i < sh_ubc->num_events; i++) {
-		unsigned long event_mask = (1 << i);
+	क्रम (i = 0; i < sh_ubc->num_events; i++) अणु
+		अचिन्हित दीर्घ event_mask = (1 << i);
 
-		if (likely(!(cmf & event_mask)))
-			continue;
+		अगर (likely(!(cmf & event_mask)))
+			जारी;
 
 		/*
 		 * The counter may be concurrently released but that can only
 		 * occur from a call_rcu() path. We can then safely fetch
-		 * the breakpoint, use its callback, touch its counter
-		 * while we are in an rcu_read_lock() path.
+		 * the अवरोधpoपूर्णांक, use its callback, touch its counter
+		 * जबतक we are in an rcu_पढ़ो_lock() path.
 		 */
-		rcu_read_lock();
+		rcu_पढ़ो_lock();
 
 		bp = per_cpu(bp_per_reg[i], cpu);
-		if (bp)
+		अगर (bp)
 			rc = NOTIFY_DONE;
 
 		/*
@@ -319,90 +320,90 @@ static int __kprobes hw_breakpoint_handler(struct die_args *args)
 		sh_ubc->clear_triggered_mask(event_mask);
 
 		/*
-		 * bp can be NULL due to concurrent perf counter
+		 * bp can be शून्य due to concurrent perf counter
 		 * removing.
 		 */
-		if (!bp) {
-			rcu_read_unlock();
-			break;
-		}
+		अगर (!bp) अणु
+			rcu_पढ़ो_unlock();
+			अवरोध;
+		पूर्ण
 
 		/*
-		 * Don't restore the channel if the breakpoint is from
+		 * Don't restore the channel अगर the अवरोधpoपूर्णांक is from
 		 * ptrace, as it always operates in one-shot mode.
 		 */
-		if (bp->overflow_handler == ptrace_triggered)
+		अगर (bp->overflow_handler == ptrace_triggered)
 			resume_mask &= ~(1 << i);
 
 		perf_bp_event(bp, args->regs);
 
-		/* Deliver the signal to userspace */
-		if (!arch_check_bp_in_kernelspace(&bp->hw.info)) {
-			force_sig_fault(SIGTRAP, TRAP_HWBKPT,
-					(void __user *)NULL);
-		}
+		/* Deliver the संकेत to userspace */
+		अगर (!arch_check_bp_in_kernelspace(&bp->hw.info)) अणु
+			क्रमce_sig_fault(SIGTRAP, TRAP_HWBKPT,
+					(व्योम __user *)शून्य);
+		पूर्ण
 
-		rcu_read_unlock();
-	}
+		rcu_पढ़ो_unlock();
+	पूर्ण
 
-	if (cmf == 0)
+	अगर (cmf == 0)
 		rc = NOTIFY_DONE;
 
 	sh_ubc->enable_all(resume_mask);
 
 	put_cpu();
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-BUILD_TRAP_HANDLER(breakpoint)
-{
-	unsigned long ex = lookup_exception_vector();
+BUILD_TRAP_HANDLER(अवरोधpoपूर्णांक)
+अणु
+	अचिन्हित दीर्घ ex = lookup_exception_vector();
 	TRAP_HANDLER_DECL;
 
-	notify_die(DIE_BREAKPOINT, "breakpoint", regs, 0, ex, SIGTRAP);
-}
+	notअगरy_die(DIE_BREAKPOINT, "breakpoint", regs, 0, ex, SIGTRAP);
+पूर्ण
 
 /*
- * Handle debug exception notifications.
+ * Handle debug exception notअगरications.
  */
-int __kprobes hw_breakpoint_exceptions_notify(struct notifier_block *unused,
-				    unsigned long val, void *data)
-{
-	struct die_args *args = data;
+पूर्णांक __kprobes hw_अवरोधpoपूर्णांक_exceptions_notअगरy(काष्ठा notअगरier_block *unused,
+				    अचिन्हित दीर्घ val, व्योम *data)
+अणु
+	काष्ठा die_args *args = data;
 
-	if (val != DIE_BREAKPOINT)
-		return NOTIFY_DONE;
+	अगर (val != DIE_BREAKPOINT)
+		वापस NOTIFY_DONE;
 
 	/*
-	 * If the breakpoint hasn't been triggered by the UBC, it's
-	 * probably from a debugger, so don't do anything more here.
+	 * If the अवरोधpoपूर्णांक hasn't been triggered by the UBC, it's
+	 * probably from a debugger, so करोn't करो anything more here.
 	 *
-	 * This also permits the UBC interface clock to remain off for
-	 * non-UBC breakpoints, as we don't need to check the triggered
+	 * This also permits the UBC पूर्णांकerface घड़ी to reमुख्य off क्रम
+	 * non-UBC अवरोधpoपूर्णांकs, as we करोn't need to check the triggered
 	 * or active channel masks.
 	 */
-	if (args->trapnr != sh_ubc->trap_nr)
-		return NOTIFY_DONE;
+	अगर (args->trapnr != sh_ubc->trap_nr)
+		वापस NOTIFY_DONE;
 
-	return hw_breakpoint_handler(data);
-}
+	वापस hw_अवरोधpoपूर्णांक_handler(data);
+पूर्ण
 
-void hw_breakpoint_pmu_read(struct perf_event *bp)
-{
+व्योम hw_अवरोधpoपूर्णांक_pmu_पढ़ो(काष्ठा perf_event *bp)
+अणु
 	/* TODO */
-}
+पूर्ण
 
-int register_sh_ubc(struct sh_ubc *ubc)
-{
-	/* Bail if it's already assigned */
-	if (sh_ubc != &ubc_dummy)
-		return -EBUSY;
+पूर्णांक रेजिस्टर_sh_ubc(काष्ठा sh_ubc *ubc)
+अणु
+	/* Bail अगर it's alपढ़ोy asचिन्हित */
+	अगर (sh_ubc != &ubc_dummy)
+		वापस -EBUSY;
 	sh_ubc = ubc;
 
 	pr_info("HW Breakpoints: %s UBC support registered\n", ubc->name);
 
 	WARN_ON(ubc->num_events > HBP_NUM);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

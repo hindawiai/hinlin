@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * Dmaengine driver base library for DMA controllers, found on SH-based SoCs
+ * Dmaengine driver base library क्रम DMA controllers, found on SH-based SoCs
  *
  * extracted from shdma.c
  *
@@ -10,278 +11,278 @@
  * Copyright (C) 2007 Freescale Semiconductor, Inc. All rights reserved.
  */
 
-#include <linux/delay.h>
-#include <linux/shdma-base.h>
-#include <linux/dmaengine.h>
-#include <linux/init.h>
-#include <linux/interrupt.h>
-#include <linux/module.h>
-#include <linux/pm_runtime.h>
-#include <linux/slab.h>
-#include <linux/spinlock.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/shdma-base.h>
+#समावेश <linux/dmaengine.h>
+#समावेश <linux/init.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/module.h>
+#समावेश <linux/pm_runसमय.स>
+#समावेश <linux/slab.h>
+#समावेश <linux/spinlock.h>
 
-#include "../dmaengine.h"
+#समावेश "../dmaengine.h"
 
 /* DMA descriptor control */
-enum shdma_desc_status {
+क्रमागत shdma_desc_status अणु
 	DESC_IDLE,
 	DESC_PREPARED,
 	DESC_SUBMITTED,
 	DESC_COMPLETED,	/* completed, have to call callback */
-	DESC_WAITING,	/* callback called, waiting for ack / re-submit */
-};
+	DESC_WAITING,	/* callback called, रुकोing क्रम ack / re-submit */
+पूर्ण;
 
-#define NR_DESCS_PER_CHANNEL 32
+#घोषणा NR_DESCS_PER_CHANNEL 32
 
-#define to_shdma_chan(c) container_of(c, struct shdma_chan, dma_chan)
-#define to_shdma_dev(d) container_of(d, struct shdma_dev, dma_dev)
+#घोषणा to_shdma_chan(c) container_of(c, काष्ठा shdma_chan, dma_chan)
+#घोषणा to_shdma_dev(d) container_of(d, काष्ठा shdma_dev, dma_dev)
 
 /*
  * For slave DMA we assume, that there is a finite number of DMA slaves in the
- * system, and that each such slave can only use a finite number of channels.
+ * प्रणाली, and that each such slave can only use a finite number of channels.
  * We use slave channel IDs to make sure, that no such slave channel ID is
  * allocated more than once.
  */
-static unsigned int slave_num = 256;
-module_param(slave_num, uint, 0444);
+अटल अचिन्हित पूर्णांक slave_num = 256;
+module_param(slave_num, uपूर्णांक, 0444);
 
-/* A bitmask with slave_num bits */
-static unsigned long *shdma_slave_used;
+/* A biपंचांगask with slave_num bits */
+अटल अचिन्हित दीर्घ *shdma_slave_used;
 
 /* Called under spin_lock_irq(&schan->chan_lock") */
-static void shdma_chan_xfer_ld_queue(struct shdma_chan *schan)
-{
-	struct shdma_dev *sdev = to_shdma_dev(schan->dma_chan.device);
-	const struct shdma_ops *ops = sdev->ops;
-	struct shdma_desc *sdesc;
+अटल व्योम shdma_chan_xfer_ld_queue(काष्ठा shdma_chan *schan)
+अणु
+	काष्ठा shdma_dev *sdev = to_shdma_dev(schan->dma_chan.device);
+	स्थिर काष्ठा shdma_ops *ops = sdev->ops;
+	काष्ठा shdma_desc *sdesc;
 
 	/* DMA work check */
-	if (ops->channel_busy(schan))
-		return;
+	अगर (ops->channel_busy(schan))
+		वापस;
 
 	/* Find the first not transferred descriptor */
-	list_for_each_entry(sdesc, &schan->ld_queue, node)
-		if (sdesc->mark == DESC_SUBMITTED) {
+	list_क्रम_each_entry(sdesc, &schan->ld_queue, node)
+		अगर (sdesc->mark == DESC_SUBMITTED) अणु
 			ops->start_xfer(schan, sdesc);
-			break;
-		}
-}
+			अवरोध;
+		पूर्ण
+पूर्ण
 
-static dma_cookie_t shdma_tx_submit(struct dma_async_tx_descriptor *tx)
-{
-	struct shdma_desc *chunk, *c, *desc =
-		container_of(tx, struct shdma_desc, async_tx);
-	struct shdma_chan *schan = to_shdma_chan(tx->chan);
+अटल dma_cookie_t shdma_tx_submit(काष्ठा dma_async_tx_descriptor *tx)
+अणु
+	काष्ठा shdma_desc *chunk, *c, *desc =
+		container_of(tx, काष्ठा shdma_desc, async_tx);
+	काष्ठा shdma_chan *schan = to_shdma_chan(tx->chan);
 	dma_async_tx_callback callback = tx->callback;
 	dma_cookie_t cookie;
-	bool power_up;
+	bool घातer_up;
 
 	spin_lock_irq(&schan->chan_lock);
 
-	power_up = list_empty(&schan->ld_queue);
+	घातer_up = list_empty(&schan->ld_queue);
 
 	cookie = dma_cookie_assign(tx);
 
 	/* Mark all chunks of this descriptor as submitted, move to the queue */
-	list_for_each_entry_safe(chunk, c, desc->node.prev, node) {
+	list_क्रम_each_entry_safe(chunk, c, desc->node.prev, node) अणु
 		/*
-		 * All chunks are on the global ld_free, so, we have to find
+		 * All chunks are on the global ld_मुक्त, so, we have to find
 		 * the end of the chain ourselves
 		 */
-		if (chunk != desc && (chunk->mark == DESC_IDLE ||
+		अगर (chunk != desc && (chunk->mark == DESC_IDLE ||
 				      chunk->async_tx.cookie > 0 ||
 				      chunk->async_tx.cookie == -EBUSY ||
-				      &chunk->node == &schan->ld_free))
-			break;
+				      &chunk->node == &schan->ld_मुक्त))
+			अवरोध;
 		chunk->mark = DESC_SUBMITTED;
-		if (chunk->chunks == 1) {
+		अगर (chunk->chunks == 1) अणु
 			chunk->async_tx.callback = callback;
 			chunk->async_tx.callback_param = tx->callback_param;
-		} else {
+		पूर्ण अन्यथा अणु
 			/* Callback goes to the last chunk */
-			chunk->async_tx.callback = NULL;
-		}
+			chunk->async_tx.callback = शून्य;
+		पूर्ण
 		chunk->cookie = cookie;
 		list_move_tail(&chunk->node, &schan->ld_queue);
 
 		dev_dbg(schan->dev, "submit #%d@%p on %d\n",
 			tx->cookie, &chunk->async_tx, schan->id);
-	}
+	पूर्ण
 
-	if (power_up) {
-		int ret;
+	अगर (घातer_up) अणु
+		पूर्णांक ret;
 		schan->pm_state = SHDMA_PM_BUSY;
 
-		ret = pm_runtime_get(schan->dev);
+		ret = pm_runसमय_get(schan->dev);
 
 		spin_unlock_irq(&schan->chan_lock);
-		if (ret < 0)
+		अगर (ret < 0)
 			dev_err(schan->dev, "%s(): GET = %d\n", __func__, ret);
 
-		pm_runtime_barrier(schan->dev);
+		pm_runसमय_barrier(schan->dev);
 
 		spin_lock_irq(&schan->chan_lock);
 
-		/* Have we been reset, while waiting? */
-		if (schan->pm_state != SHDMA_PM_ESTABLISHED) {
-			struct shdma_dev *sdev =
+		/* Have we been reset, जबतक रुकोing? */
+		अगर (schan->pm_state != SHDMA_PM_ESTABLISHED) अणु
+			काष्ठा shdma_dev *sdev =
 				to_shdma_dev(schan->dma_chan.device);
-			const struct shdma_ops *ops = sdev->ops;
+			स्थिर काष्ठा shdma_ops *ops = sdev->ops;
 			dev_dbg(schan->dev, "Bring up channel %d\n",
 				schan->id);
 			/*
-			 * TODO: .xfer_setup() might fail on some platforms.
-			 * Make it int then, on error remove chunks from the
+			 * TODO: .xfer_setup() might fail on some platक्रमms.
+			 * Make it पूर्णांक then, on error हटाओ chunks from the
 			 * queue again
 			 */
 			ops->setup_xfer(schan, schan->slave_id);
 
-			if (schan->pm_state == SHDMA_PM_PENDING)
+			अगर (schan->pm_state == SHDMA_PM_PENDING)
 				shdma_chan_xfer_ld_queue(schan);
 			schan->pm_state = SHDMA_PM_ESTABLISHED;
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		/*
-		 * Tell .device_issue_pending() not to run the queue, interrupts
-		 * will do it anyway
+		 * Tell .device_issue_pending() not to run the queue, पूर्णांकerrupts
+		 * will करो it anyway
 		 */
 		schan->pm_state = SHDMA_PM_PENDING;
-	}
+	पूर्ण
 
 	spin_unlock_irq(&schan->chan_lock);
 
-	return cookie;
-}
+	वापस cookie;
+पूर्ण
 
 /* Called with desc_lock held */
-static struct shdma_desc *shdma_get_desc(struct shdma_chan *schan)
-{
-	struct shdma_desc *sdesc;
+अटल काष्ठा shdma_desc *shdma_get_desc(काष्ठा shdma_chan *schan)
+अणु
+	काष्ठा shdma_desc *sdesc;
 
-	list_for_each_entry(sdesc, &schan->ld_free, node)
-		if (sdesc->mark != DESC_PREPARED) {
+	list_क्रम_each_entry(sdesc, &schan->ld_मुक्त, node)
+		अगर (sdesc->mark != DESC_PREPARED) अणु
 			BUG_ON(sdesc->mark != DESC_IDLE);
 			list_del(&sdesc->node);
-			return sdesc;
-		}
+			वापस sdesc;
+		पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static int shdma_setup_slave(struct shdma_chan *schan, dma_addr_t slave_addr)
-{
-	struct shdma_dev *sdev = to_shdma_dev(schan->dma_chan.device);
-	const struct shdma_ops *ops = sdev->ops;
-	int ret, match;
+अटल पूर्णांक shdma_setup_slave(काष्ठा shdma_chan *schan, dma_addr_t slave_addr)
+अणु
+	काष्ठा shdma_dev *sdev = to_shdma_dev(schan->dma_chan.device);
+	स्थिर काष्ठा shdma_ops *ops = sdev->ops;
+	पूर्णांक ret, match;
 
-	if (schan->dev->of_node) {
+	अगर (schan->dev->of_node) अणु
 		match = schan->hw_req;
 		ret = ops->set_slave(schan, match, slave_addr, true);
-		if (ret < 0)
-			return ret;
-	} else {
+		अगर (ret < 0)
+			वापस ret;
+	पूर्ण अन्यथा अणु
 		match = schan->real_slave_id;
-	}
+	पूर्ण
 
-	if (schan->real_slave_id < 0 || schan->real_slave_id >= slave_num)
-		return -EINVAL;
+	अगर (schan->real_slave_id < 0 || schan->real_slave_id >= slave_num)
+		वापस -EINVAL;
 
-	if (test_and_set_bit(schan->real_slave_id, shdma_slave_used))
-		return -EBUSY;
+	अगर (test_and_set_bit(schan->real_slave_id, shdma_slave_used))
+		वापस -EBUSY;
 
 	ret = ops->set_slave(schan, match, slave_addr, false);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		clear_bit(schan->real_slave_id, shdma_slave_used);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	schan->slave_id = schan->real_slave_id;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int shdma_alloc_chan_resources(struct dma_chan *chan)
-{
-	struct shdma_chan *schan = to_shdma_chan(chan);
-	struct shdma_dev *sdev = to_shdma_dev(schan->dma_chan.device);
-	const struct shdma_ops *ops = sdev->ops;
-	struct shdma_desc *desc;
-	struct shdma_slave *slave = chan->private;
-	int ret, i;
+अटल पूर्णांक shdma_alloc_chan_resources(काष्ठा dma_chan *chan)
+अणु
+	काष्ठा shdma_chan *schan = to_shdma_chan(chan);
+	काष्ठा shdma_dev *sdev = to_shdma_dev(schan->dma_chan.device);
+	स्थिर काष्ठा shdma_ops *ops = sdev->ops;
+	काष्ठा shdma_desc *desc;
+	काष्ठा shdma_slave *slave = chan->निजी;
+	पूर्णांक ret, i;
 
 	/*
 	 * This relies on the guarantee from dmaengine that alloc_chan_resources
-	 * never runs concurrently with itself or free_chan_resources.
+	 * never runs concurrently with itself or मुक्त_chan_resources.
 	 */
-	if (slave) {
-		/* Legacy mode: .private is set in filter */
+	अगर (slave) अणु
+		/* Legacy mode: .निजी is set in filter */
 		schan->real_slave_id = slave->slave_id;
 		ret = shdma_setup_slave(schan, 0);
-		if (ret < 0)
-			goto esetslave;
-	} else {
+		अगर (ret < 0)
+			जाओ esetslave;
+	पूर्ण अन्यथा अणु
 		/* Normal mode: real_slave_id was set by filter */
 		schan->slave_id = -EINVAL;
-	}
+	पूर्ण
 
-	schan->desc = kcalloc(NR_DESCS_PER_CHANNEL,
+	schan->desc = kसुस्मृति(NR_DESCS_PER_CHANNEL,
 			      sdev->desc_size, GFP_KERNEL);
-	if (!schan->desc) {
+	अगर (!schan->desc) अणु
 		ret = -ENOMEM;
-		goto edescalloc;
-	}
+		जाओ edesसुस्मृति;
+	पूर्ण
 	schan->desc_num = NR_DESCS_PER_CHANNEL;
 
-	for (i = 0; i < NR_DESCS_PER_CHANNEL; i++) {
+	क्रम (i = 0; i < NR_DESCS_PER_CHANNEL; i++) अणु
 		desc = ops->embedded_desc(schan->desc, i);
 		dma_async_tx_descriptor_init(&desc->async_tx,
 					     &schan->dma_chan);
 		desc->async_tx.tx_submit = shdma_tx_submit;
 		desc->mark = DESC_IDLE;
 
-		list_add(&desc->node, &schan->ld_free);
-	}
+		list_add(&desc->node, &schan->ld_मुक्त);
+	पूर्ण
 
-	return NR_DESCS_PER_CHANNEL;
+	वापस NR_DESCS_PER_CHANNEL;
 
-edescalloc:
-	if (slave)
+edesसुस्मृति:
+	अगर (slave)
 esetslave:
 		clear_bit(slave->slave_id, shdma_slave_used);
-	chan->private = NULL;
-	return ret;
-}
+	chan->निजी = शून्य;
+	वापस ret;
+पूर्ण
 
 /*
  * This is the standard shdma filter function to be used as a replacement to the
- * "old" method, using the .private pointer.
+ * "old" method, using the .निजी poपूर्णांकer.
  * You always have to pass a valid slave id as the argument, old drivers that
  * pass ERR_PTR(-EINVAL) as a filter parameter and set it up in dma_slave_config
- * need to be updated so we can remove the slave_id field from dma_slave_config.
+ * need to be updated so we can हटाओ the slave_id field from dma_slave_config.
  * parameter. If this filter is used, the slave driver, after calling
  * dma_request_channel(), will also have to call dmaengine_slave_config() with
  * .direction, and either .src_addr or .dst_addr set.
  *
- * NOTE: this filter doesn't support multiple DMAC drivers with the DMA_SLAVE
+ * NOTE: this filter करोesn't support multiple DMAC drivers with the DMA_SLAVE
  * capability! If this becomes a requirement, hardware glue drivers, using this
  * services would have to provide their own filters, which first would check
- * the device driver, similar to how other DMAC drivers, e.g., sa11x0-dma.c, do
- * this, and only then, in case of a match, call this common filter.
- * NOTE 2: This filter function is also used in the DT case by shdma_of_xlate().
- * In that case the MID-RID value is used for slave channel filtering and is
+ * the device driver, similar to how other DMAC drivers, e.g., sa11x0-dma.c, करो
+ * this, and only then, in हाल of a match, call this common filter.
+ * NOTE 2: This filter function is also used in the DT हाल by shdma_of_xlate().
+ * In that हाल the MID-RID value is used क्रम slave channel filtering and is
  * passed to this function in the "arg" parameter.
  */
-bool shdma_chan_filter(struct dma_chan *chan, void *arg)
-{
-	struct shdma_chan *schan;
-	struct shdma_dev *sdev;
-	int slave_id = (long)arg;
-	int ret;
+bool shdma_chan_filter(काष्ठा dma_chan *chan, व्योम *arg)
+अणु
+	काष्ठा shdma_chan *schan;
+	काष्ठा shdma_dev *sdev;
+	पूर्णांक slave_id = (दीर्घ)arg;
+	पूर्णांक ret;
 
 	/* Only support channels handled by this driver. */
-	if (chan->device->device_alloc_chan_resources !=
+	अगर (chan->device->device_alloc_chan_resources !=
 	    shdma_alloc_chan_resources)
-		return false;
+		वापस false;
 
 	schan = to_shdma_chan(chan);
 	sdev = to_shdma_dev(chan->device);
@@ -289,52 +290,52 @@ bool shdma_chan_filter(struct dma_chan *chan, void *arg)
 	/*
 	 * For DT, the schan->slave_id field is generated by the
 	 * set_slave function from the slave ID that is passed in
-	 * from xlate. For the non-DT case, the slave ID is
-	 * directly passed into the filter function by the driver
+	 * from xlate. For the non-DT हाल, the slave ID is
+	 * directly passed पूर्णांकo the filter function by the driver
 	 */
-	if (schan->dev->of_node) {
+	अगर (schan->dev->of_node) अणु
 		ret = sdev->ops->set_slave(schan, slave_id, 0, true);
-		if (ret < 0)
-			return false;
+		अगर (ret < 0)
+			वापस false;
 
 		schan->real_slave_id = schan->slave_id;
-		return true;
-	}
+		वापस true;
+	पूर्ण
 
-	if (slave_id < 0) {
+	अगर (slave_id < 0) अणु
 		/* No slave requested - arbitrary channel */
 		dev_warn(sdev->dma_dev.dev, "invalid slave ID passed to dma_request_slave\n");
-		return true;
-	}
+		वापस true;
+	पूर्ण
 
-	if (slave_id >= slave_num)
-		return false;
+	अगर (slave_id >= slave_num)
+		वापस false;
 
 	ret = sdev->ops->set_slave(schan, slave_id, 0, true);
-	if (ret < 0)
-		return false;
+	अगर (ret < 0)
+		वापस false;
 
 	schan->real_slave_id = slave_id;
 
-	return true;
-}
+	वापस true;
+पूर्ण
 EXPORT_SYMBOL(shdma_chan_filter);
 
-static dma_async_tx_callback __ld_cleanup(struct shdma_chan *schan, bool all)
-{
-	struct shdma_desc *desc, *_desc;
+अटल dma_async_tx_callback __ld_cleanup(काष्ठा shdma_chan *schan, bool all)
+अणु
+	काष्ठा shdma_desc *desc, *_desc;
 	/* Is the "exposed" head of a chain acked? */
 	bool head_acked = false;
 	dma_cookie_t cookie = 0;
-	dma_async_tx_callback callback = NULL;
-	struct dmaengine_desc_callback cb;
-	unsigned long flags;
+	dma_async_tx_callback callback = शून्य;
+	काष्ठा dmaengine_desc_callback cb;
+	अचिन्हित दीर्घ flags;
 	LIST_HEAD(cyclic_list);
 
-	memset(&cb, 0, sizeof(cb));
+	स_रखो(&cb, 0, माप(cb));
 	spin_lock_irqsave(&schan->chan_lock, flags);
-	list_for_each_entry_safe(desc, _desc, &schan->ld_queue, node) {
-		struct dma_async_tx_descriptor *tx = &desc->async_tx;
+	list_क्रम_each_entry_safe(desc, _desc, &schan->ld_queue, node) अणु
+		काष्ठा dma_async_tx_descriptor *tx = &desc->async_tx;
 
 		BUG_ON(tx->cookie > 0 && tx->cookie != desc->cookie);
 		BUG_ON(desc->mark != DESC_SUBMITTED &&
@@ -346,80 +347,80 @@ static dma_async_tx_callback __ld_cleanup(struct shdma_chan *schan, bool all)
 		 * completed descriptors, and to (2) update descriptor flags of
 		 * any chunks in a (partially) completed chain
 		 */
-		if (!all && desc->mark == DESC_SUBMITTED &&
+		अगर (!all && desc->mark == DESC_SUBMITTED &&
 		    desc->cookie != cookie)
-			break;
+			अवरोध;
 
-		if (tx->cookie > 0)
+		अगर (tx->cookie > 0)
 			cookie = tx->cookie;
 
-		if (desc->mark == DESC_COMPLETED && desc->chunks == 1) {
-			if (schan->dma_chan.completed_cookie != desc->cookie - 1)
+		अगर (desc->mark == DESC_COMPLETED && desc->chunks == 1) अणु
+			अगर (schan->dma_chan.completed_cookie != desc->cookie - 1)
 				dev_dbg(schan->dev,
 					"Completing cookie %d, expected %d\n",
 					desc->cookie,
 					schan->dma_chan.completed_cookie + 1);
 			schan->dma_chan.completed_cookie = desc->cookie;
-		}
+		पूर्ण
 
 		/* Call callback on the last chunk */
-		if (desc->mark == DESC_COMPLETED && tx->callback) {
+		अगर (desc->mark == DESC_COMPLETED && tx->callback) अणु
 			desc->mark = DESC_WAITING;
 			dmaengine_desc_get_callback(tx, &cb);
 			callback = tx->callback;
 			dev_dbg(schan->dev, "descriptor #%d@%p on %d callback\n",
 				tx->cookie, tx, schan->id);
 			BUG_ON(desc->chunks != 1);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		if (tx->cookie > 0 || tx->cookie == -EBUSY) {
-			if (desc->mark == DESC_COMPLETED) {
+		अगर (tx->cookie > 0 || tx->cookie == -EBUSY) अणु
+			अगर (desc->mark == DESC_COMPLETED) अणु
 				BUG_ON(tx->cookie < 0);
 				desc->mark = DESC_WAITING;
-			}
+			पूर्ण
 			head_acked = async_tx_test_ack(tx);
-		} else {
-			switch (desc->mark) {
-			case DESC_COMPLETED:
+		पूर्ण अन्यथा अणु
+			चयन (desc->mark) अणु
+			हाल DESC_COMPLETED:
 				desc->mark = DESC_WAITING;
 				fallthrough;
-			case DESC_WAITING:
-				if (head_acked)
+			हाल DESC_WAITING:
+				अगर (head_acked)
 					async_tx_ack(&desc->async_tx);
-			}
-		}
+			पूर्ण
+		पूर्ण
 
 		dev_dbg(schan->dev, "descriptor %p #%d completed.\n",
 			tx, tx->cookie);
 
-		if (((desc->mark == DESC_COMPLETED ||
+		अगर (((desc->mark == DESC_COMPLETED ||
 		      desc->mark == DESC_WAITING) &&
-		     async_tx_test_ack(&desc->async_tx)) || all) {
+		     async_tx_test_ack(&desc->async_tx)) || all) अणु
 
-			if (all || !desc->cyclic) {
+			अगर (all || !desc->cyclic) अणु
 				/* Remove from ld_queue list */
 				desc->mark = DESC_IDLE;
-				list_move(&desc->node, &schan->ld_free);
-			} else {
+				list_move(&desc->node, &schan->ld_मुक्त);
+			पूर्ण अन्यथा अणु
 				/* reuse as cyclic */
 				desc->mark = DESC_SUBMITTED;
 				list_move_tail(&desc->node, &cyclic_list);
-			}
+			पूर्ण
 
-			if (list_empty(&schan->ld_queue)) {
+			अगर (list_empty(&schan->ld_queue)) अणु
 				dev_dbg(schan->dev, "Bring down channel %d\n", schan->id);
-				pm_runtime_put(schan->dev);
+				pm_runसमय_put(schan->dev);
 				schan->pm_state = SHDMA_PM_ESTABLISHED;
-			} else if (schan->pm_state == SHDMA_PM_PENDING) {
+			पूर्ण अन्यथा अगर (schan->pm_state == SHDMA_PM_PENDING) अणु
 				shdma_chan_xfer_ld_queue(schan);
-			}
-		}
-	}
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	if (all && !callback)
+	अगर (all && !callback)
 		/*
-		 * Terminating and the loop completed normally: forgive
+		 * Terminating and the loop completed normally: क्रमgive
 		 * uncompleted cookies
 		 */
 		schan->dma_chan.completed_cookie = schan->dma_chan.cookie;
@@ -428,30 +429,30 @@ static dma_async_tx_callback __ld_cleanup(struct shdma_chan *schan, bool all)
 
 	spin_unlock_irqrestore(&schan->chan_lock, flags);
 
-	dmaengine_desc_callback_invoke(&cb, NULL);
+	dmaengine_desc_callback_invoke(&cb, शून्य);
 
-	return callback;
-}
+	वापस callback;
+पूर्ण
 
 /*
  * shdma_chan_ld_cleanup - Clean up link descriptors
  *
  * Clean up the ld_queue of DMA channel.
  */
-static void shdma_chan_ld_cleanup(struct shdma_chan *schan, bool all)
-{
-	while (__ld_cleanup(schan, all))
+अटल व्योम shdma_chan_ld_cleanup(काष्ठा shdma_chan *schan, bool all)
+अणु
+	जबतक (__ld_cleanup(schan, all))
 		;
-}
+पूर्ण
 
 /*
- * shdma_free_chan_resources - Free all resources of the channel.
+ * shdma_मुक्त_chan_resources - Free all resources of the channel.
  */
-static void shdma_free_chan_resources(struct dma_chan *chan)
-{
-	struct shdma_chan *schan = to_shdma_chan(chan);
-	struct shdma_dev *sdev = to_shdma_dev(chan->device);
-	const struct shdma_ops *ops = sdev->ops;
+अटल व्योम shdma_मुक्त_chan_resources(काष्ठा dma_chan *chan)
+अणु
+	काष्ठा shdma_chan *schan = to_shdma_chan(chan);
+	काष्ठा shdma_dev *sdev = to_shdma_dev(chan->device);
+	स्थिर काष्ठा shdma_ops *ops = sdev->ops;
 	LIST_HEAD(list);
 
 	/* Protect against ISR */
@@ -459,32 +460,32 @@ static void shdma_free_chan_resources(struct dma_chan *chan)
 	ops->halt_channel(schan);
 	spin_unlock_irq(&schan->chan_lock);
 
-	/* Now no new interrupts will occur */
+	/* Now no new पूर्णांकerrupts will occur */
 
 	/* Prepared and not submitted descriptors can still be on the queue */
-	if (!list_empty(&schan->ld_queue))
+	अगर (!list_empty(&schan->ld_queue))
 		shdma_chan_ld_cleanup(schan, true);
 
-	if (schan->slave_id >= 0) {
+	अगर (schan->slave_id >= 0) अणु
 		/* The caller is holding dma_list_mutex */
 		clear_bit(schan->slave_id, shdma_slave_used);
-		chan->private = NULL;
-	}
+		chan->निजी = शून्य;
+	पूर्ण
 
 	schan->real_slave_id = 0;
 
 	spin_lock_irq(&schan->chan_lock);
 
-	list_splice_init(&schan->ld_free, &list);
+	list_splice_init(&schan->ld_मुक्त, &list);
 	schan->desc_num = 0;
 
 	spin_unlock_irq(&schan->chan_lock);
 
-	kfree(schan->desc);
-}
+	kमुक्त(schan->desc);
+पूर्ण
 
 /**
- * shdma_add_desc - get, set up and return one transfer descriptor
+ * shdma_add_desc - get, set up and वापस one transfer descriptor
  * @schan:	DMA channel
  * @flags:	DMA transfer flags
  * @dst:	destination DMA address, incremented when direction equals
@@ -492,41 +493,41 @@ static void shdma_free_chan_resources(struct dma_chan *chan)
  * @src:	source DMA address, incremented when direction equals
  *		DMA_MEM_TO_DEV or DMA_MEM_TO_MEM
  * @len:	DMA transfer length
- * @first:	if NULL, set to the current descriptor and cookie set to -EBUSY
- * @direction:	needed for slave DMA to decide which address to keep constant,
- *		equals DMA_MEM_TO_MEM for MEMCPY
+ * @first:	अगर शून्य, set to the current descriptor and cookie set to -EBUSY
+ * @direction:	needed क्रम slave DMA to decide which address to keep स्थिरant,
+ *		equals DMA_MEM_TO_MEM क्रम MEMCPY
  * Returns 0 or an error
  * Locks: called with desc_lock held
  */
-static struct shdma_desc *shdma_add_desc(struct shdma_chan *schan,
-	unsigned long flags, dma_addr_t *dst, dma_addr_t *src, size_t *len,
-	struct shdma_desc **first, enum dma_transfer_direction direction)
-{
-	struct shdma_dev *sdev = to_shdma_dev(schan->dma_chan.device);
-	const struct shdma_ops *ops = sdev->ops;
-	struct shdma_desc *new;
-	size_t copy_size = *len;
+अटल काष्ठा shdma_desc *shdma_add_desc(काष्ठा shdma_chan *schan,
+	अचिन्हित दीर्घ flags, dma_addr_t *dst, dma_addr_t *src, माप_प्रकार *len,
+	काष्ठा shdma_desc **first, क्रमागत dma_transfer_direction direction)
+अणु
+	काष्ठा shdma_dev *sdev = to_shdma_dev(schan->dma_chan.device);
+	स्थिर काष्ठा shdma_ops *ops = sdev->ops;
+	काष्ठा shdma_desc *new;
+	माप_प्रकार copy_size = *len;
 
-	if (!copy_size)
-		return NULL;
+	अगर (!copy_size)
+		वापस शून्य;
 
-	/* Allocate the link descriptor from the free list */
+	/* Allocate the link descriptor from the मुक्त list */
 	new = shdma_get_desc(schan);
-	if (!new) {
+	अगर (!new) अणु
 		dev_err(schan->dev, "No free link descriptor available\n");
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
 	ops->desc_setup(schan, new, *src, *dst, &copy_size);
 
-	if (!*first) {
+	अगर (!*first) अणु
 		/* First desc */
 		new->async_tx.cookie = -EBUSY;
 		*first = new;
-	} else {
+	पूर्ण अन्यथा अणु
 		/* Other desc - invisible to the user */
 		new->async_tx.cookie = -EINVAL;
-	}
+	पूर्ण
 
 	dev_dbg(schan->dev,
 		"chaining (%zu/%zu)@%pad -> %pad with %p, cookie %d\n",
@@ -539,36 +540,36 @@ static struct shdma_desc *shdma_add_desc(struct shdma_chan *schan,
 	new->partial = 0;
 
 	*len -= copy_size;
-	if (direction == DMA_MEM_TO_MEM || direction == DMA_MEM_TO_DEV)
+	अगर (direction == DMA_MEM_TO_MEM || direction == DMA_MEM_TO_DEV)
 		*src += copy_size;
-	if (direction == DMA_MEM_TO_MEM || direction == DMA_DEV_TO_MEM)
+	अगर (direction == DMA_MEM_TO_MEM || direction == DMA_DEV_TO_MEM)
 		*dst += copy_size;
 
-	return new;
-}
+	वापस new;
+पूर्ण
 
 /*
  * shdma_prep_sg - prepare transfer descriptors from an SG list
  *
- * Common routine for public (MEMCPY) and slave DMA. The MEMCPY case is also
+ * Common routine क्रम खुला (MEMCPY) and slave DMA. The MEMCPY हाल is also
  * converted to scatter-gather to guarantee consistent locking and a correct
  * list manipulation. For slave DMA direction carries the usual meaning, and,
  * logically, the SG list is RAM and the addr variable contains slave address,
- * e.g., the FIFO I/O register. For MEMCPY direction equals DMA_MEM_TO_MEM
- * and the SG list contains only one element and points at the source buffer.
+ * e.g., the FIFO I/O रेजिस्टर. For MEMCPY direction equals DMA_MEM_TO_MEM
+ * and the SG list contains only one element and poपूर्णांकs at the source buffer.
  */
-static struct dma_async_tx_descriptor *shdma_prep_sg(struct shdma_chan *schan,
-	struct scatterlist *sgl, unsigned int sg_len, dma_addr_t *addr,
-	enum dma_transfer_direction direction, unsigned long flags, bool cyclic)
-{
-	struct scatterlist *sg;
-	struct shdma_desc *first = NULL, *new = NULL /* compiler... */;
+अटल काष्ठा dma_async_tx_descriptor *shdma_prep_sg(काष्ठा shdma_chan *schan,
+	काष्ठा scatterlist *sgl, अचिन्हित पूर्णांक sg_len, dma_addr_t *addr,
+	क्रमागत dma_transfer_direction direction, अचिन्हित दीर्घ flags, bool cyclic)
+अणु
+	काष्ठा scatterlist *sg;
+	काष्ठा shdma_desc *first = शून्य, *new = शून्य /* compiler... */;
 	LIST_HEAD(tx_list);
-	int chunks = 0;
-	unsigned long irq_flags;
-	int i;
+	पूर्णांक chunks = 0;
+	अचिन्हित दीर्घ irq_flags;
+	पूर्णांक i;
 
-	for_each_sg(sgl, sg, sg_len, i)
+	क्रम_each_sg(sgl, sg, sg_len, i)
 		chunks += DIV_ROUND_UP(sg_dma_len(sg), schan->max_xfer_len);
 
 	/* Have to lock the whole loop to protect against concurrent release */
@@ -579,72 +580,72 @@ static struct dma_async_tx_descriptor *shdma_prep_sg(struct shdma_chan *schan,
 	 * first descriptor is what user is dealing with in all API calls, its
 	 *	cookie is at first set to -EBUSY, at tx-submit to a positive
 	 *	number
-	 * if more than one chunk is needed further chunks have cookie = -EINVAL
-	 * the last chunk, if not equal to the first, has cookie = -ENOSPC
+	 * अगर more than one chunk is needed further chunks have cookie = -EINVAL
+	 * the last chunk, अगर not equal to the first, has cookie = -ENOSPC
 	 * all chunks are linked onto the tx_list head with their .node heads
 	 *	only during this function, then they are immediately spliced
-	 *	back onto the free list in form of a chain
+	 *	back onto the मुक्त list in क्रमm of a chain
 	 */
-	for_each_sg(sgl, sg, sg_len, i) {
+	क्रम_each_sg(sgl, sg, sg_len, i) अणु
 		dma_addr_t sg_addr = sg_dma_address(sg);
-		size_t len = sg_dma_len(sg);
+		माप_प्रकार len = sg_dma_len(sg);
 
-		if (!len)
-			goto err_get_desc;
+		अगर (!len)
+			जाओ err_get_desc;
 
-		do {
+		करो अणु
 			dev_dbg(schan->dev, "Add SG #%d@%p[%zu], dma %pad\n",
 				i, sg, len, &sg_addr);
 
-			if (direction == DMA_DEV_TO_MEM)
+			अगर (direction == DMA_DEV_TO_MEM)
 				new = shdma_add_desc(schan, flags,
 						&sg_addr, addr, &len, &first,
 						direction);
-			else
+			अन्यथा
 				new = shdma_add_desc(schan, flags,
 						addr, &sg_addr, &len, &first,
 						direction);
-			if (!new)
-				goto err_get_desc;
+			अगर (!new)
+				जाओ err_get_desc;
 
 			new->cyclic = cyclic;
-			if (cyclic)
+			अगर (cyclic)
 				new->chunks = 1;
-			else
+			अन्यथा
 				new->chunks = chunks--;
 			list_add_tail(&new->node, &tx_list);
-		} while (len);
-	}
+		पूर्ण जबतक (len);
+	पूर्ण
 
-	if (new != first)
+	अगर (new != first)
 		new->async_tx.cookie = -ENOSPC;
 
-	/* Put them back on the free list, so, they don't get lost */
-	list_splice_tail(&tx_list, &schan->ld_free);
+	/* Put them back on the मुक्त list, so, they करोn't get lost */
+	list_splice_tail(&tx_list, &schan->ld_मुक्त);
 
 	spin_unlock_irqrestore(&schan->chan_lock, irq_flags);
 
-	return &first->async_tx;
+	वापस &first->async_tx;
 
 err_get_desc:
-	list_for_each_entry(new, &tx_list, node)
+	list_क्रम_each_entry(new, &tx_list, node)
 		new->mark = DESC_IDLE;
-	list_splice(&tx_list, &schan->ld_free);
+	list_splice(&tx_list, &schan->ld_मुक्त);
 
 	spin_unlock_irqrestore(&schan->chan_lock, irq_flags);
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static struct dma_async_tx_descriptor *shdma_prep_memcpy(
-	struct dma_chan *chan, dma_addr_t dma_dest, dma_addr_t dma_src,
-	size_t len, unsigned long flags)
-{
-	struct shdma_chan *schan = to_shdma_chan(chan);
-	struct scatterlist sg;
+अटल काष्ठा dma_async_tx_descriptor *shdma_prep_स_नकल(
+	काष्ठा dma_chan *chan, dma_addr_t dma_dest, dma_addr_t dma_src,
+	माप_प्रकार len, अचिन्हित दीर्घ flags)
+अणु
+	काष्ठा shdma_chan *schan = to_shdma_chan(chan);
+	काष्ठा scatterlist sg;
 
-	if (!chan || !len)
-		return NULL;
+	अगर (!chan || !len)
+		वापस शून्य;
 
 	BUG_ON(!schan->desc_num);
 
@@ -654,73 +655,73 @@ static struct dma_async_tx_descriptor *shdma_prep_memcpy(
 	sg_dma_address(&sg) = dma_src;
 	sg_dma_len(&sg) = len;
 
-	return shdma_prep_sg(schan, &sg, 1, &dma_dest, DMA_MEM_TO_MEM,
+	वापस shdma_prep_sg(schan, &sg, 1, &dma_dest, DMA_MEM_TO_MEM,
 			     flags, false);
-}
+पूर्ण
 
-static struct dma_async_tx_descriptor *shdma_prep_slave_sg(
-	struct dma_chan *chan, struct scatterlist *sgl, unsigned int sg_len,
-	enum dma_transfer_direction direction, unsigned long flags, void *context)
-{
-	struct shdma_chan *schan = to_shdma_chan(chan);
-	struct shdma_dev *sdev = to_shdma_dev(schan->dma_chan.device);
-	const struct shdma_ops *ops = sdev->ops;
-	int slave_id = schan->slave_id;
+अटल काष्ठा dma_async_tx_descriptor *shdma_prep_slave_sg(
+	काष्ठा dma_chan *chan, काष्ठा scatterlist *sgl, अचिन्हित पूर्णांक sg_len,
+	क्रमागत dma_transfer_direction direction, अचिन्हित दीर्घ flags, व्योम *context)
+अणु
+	काष्ठा shdma_chan *schan = to_shdma_chan(chan);
+	काष्ठा shdma_dev *sdev = to_shdma_dev(schan->dma_chan.device);
+	स्थिर काष्ठा shdma_ops *ops = sdev->ops;
+	पूर्णांक slave_id = schan->slave_id;
 	dma_addr_t slave_addr;
 
-	if (!chan)
-		return NULL;
+	अगर (!chan)
+		वापस शून्य;
 
 	BUG_ON(!schan->desc_num);
 
 	/* Someone calling slave DMA on a generic channel? */
-	if (slave_id < 0 || !sg_len) {
+	अगर (slave_id < 0 || !sg_len) अणु
 		dev_warn(schan->dev, "%s: bad parameter: len=%d, id=%d\n",
 			 __func__, sg_len, slave_id);
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
 	slave_addr = ops->slave_addr(schan);
 
-	return shdma_prep_sg(schan, sgl, sg_len, &slave_addr,
+	वापस shdma_prep_sg(schan, sgl, sg_len, &slave_addr,
 			     direction, flags, false);
-}
+पूर्ण
 
-#define SHDMA_MAX_SG_LEN 32
+#घोषणा SHDMA_MAX_SG_LEN 32
 
-static struct dma_async_tx_descriptor *shdma_prep_dma_cyclic(
-	struct dma_chan *chan, dma_addr_t buf_addr, size_t buf_len,
-	size_t period_len, enum dma_transfer_direction direction,
-	unsigned long flags)
-{
-	struct shdma_chan *schan = to_shdma_chan(chan);
-	struct shdma_dev *sdev = to_shdma_dev(schan->dma_chan.device);
-	struct dma_async_tx_descriptor *desc;
-	const struct shdma_ops *ops = sdev->ops;
-	unsigned int sg_len = buf_len / period_len;
-	int slave_id = schan->slave_id;
+अटल काष्ठा dma_async_tx_descriptor *shdma_prep_dma_cyclic(
+	काष्ठा dma_chan *chan, dma_addr_t buf_addr, माप_प्रकार buf_len,
+	माप_प्रकार period_len, क्रमागत dma_transfer_direction direction,
+	अचिन्हित दीर्घ flags)
+अणु
+	काष्ठा shdma_chan *schan = to_shdma_chan(chan);
+	काष्ठा shdma_dev *sdev = to_shdma_dev(schan->dma_chan.device);
+	काष्ठा dma_async_tx_descriptor *desc;
+	स्थिर काष्ठा shdma_ops *ops = sdev->ops;
+	अचिन्हित पूर्णांक sg_len = buf_len / period_len;
+	पूर्णांक slave_id = schan->slave_id;
 	dma_addr_t slave_addr;
-	struct scatterlist *sgl;
-	int i;
+	काष्ठा scatterlist *sgl;
+	पूर्णांक i;
 
-	if (!chan)
-		return NULL;
+	अगर (!chan)
+		वापस शून्य;
 
 	BUG_ON(!schan->desc_num);
 
-	if (sg_len > SHDMA_MAX_SG_LEN) {
+	अगर (sg_len > SHDMA_MAX_SG_LEN) अणु
 		dev_err(schan->dev, "sg length %d exceeds limit %d",
 				sg_len, SHDMA_MAX_SG_LEN);
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
 	/* Someone calling slave DMA on a generic channel? */
-	if (slave_id < 0 || (buf_len < period_len)) {
+	अगर (slave_id < 0 || (buf_len < period_len)) अणु
 		dev_warn(schan->dev,
 			"%s: bad parameter: buf_len=%zu, period_len=%zu, id=%d\n",
 			__func__, buf_len, period_len, slave_id);
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
 	slave_addr = ops->slave_addr(schan);
 
@@ -728,100 +729,100 @@ static struct dma_async_tx_descriptor *shdma_prep_dma_cyclic(
 	 * Allocate the sg list dynamically as it would consumer too much stack
 	 * space.
 	 */
-	sgl = kmalloc_array(sg_len, sizeof(*sgl), GFP_KERNEL);
-	if (!sgl)
-		return NULL;
+	sgl = kदो_स्मृति_array(sg_len, माप(*sgl), GFP_KERNEL);
+	अगर (!sgl)
+		वापस शून्य;
 
 	sg_init_table(sgl, sg_len);
 
-	for (i = 0; i < sg_len; i++) {
+	क्रम (i = 0; i < sg_len; i++) अणु
 		dma_addr_t src = buf_addr + (period_len * i);
 
 		sg_set_page(&sgl[i], pfn_to_page(PFN_DOWN(src)), period_len,
 			    offset_in_page(src));
 		sg_dma_address(&sgl[i]) = src;
 		sg_dma_len(&sgl[i]) = period_len;
-	}
+	पूर्ण
 
 	desc = shdma_prep_sg(schan, sgl, sg_len, &slave_addr,
 			     direction, flags, true);
 
-	kfree(sgl);
-	return desc;
-}
+	kमुक्त(sgl);
+	वापस desc;
+पूर्ण
 
-static int shdma_terminate_all(struct dma_chan *chan)
-{
-	struct shdma_chan *schan = to_shdma_chan(chan);
-	struct shdma_dev *sdev = to_shdma_dev(chan->device);
-	const struct shdma_ops *ops = sdev->ops;
-	unsigned long flags;
+अटल पूर्णांक shdma_terminate_all(काष्ठा dma_chan *chan)
+अणु
+	काष्ठा shdma_chan *schan = to_shdma_chan(chan);
+	काष्ठा shdma_dev *sdev = to_shdma_dev(chan->device);
+	स्थिर काष्ठा shdma_ops *ops = sdev->ops;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&schan->chan_lock, flags);
 	ops->halt_channel(schan);
 
-	if (ops->get_partial && !list_empty(&schan->ld_queue)) {
+	अगर (ops->get_partial && !list_empty(&schan->ld_queue)) अणु
 		/* Record partial transfer */
-		struct shdma_desc *desc = list_first_entry(&schan->ld_queue,
-							   struct shdma_desc, node);
+		काष्ठा shdma_desc *desc = list_first_entry(&schan->ld_queue,
+							   काष्ठा shdma_desc, node);
 		desc->partial = ops->get_partial(schan, desc);
-	}
+	पूर्ण
 
 	spin_unlock_irqrestore(&schan->chan_lock, flags);
 
 	shdma_chan_ld_cleanup(schan, true);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int shdma_config(struct dma_chan *chan,
-			struct dma_slave_config *config)
-{
-	struct shdma_chan *schan = to_shdma_chan(chan);
+अटल पूर्णांक shdma_config(काष्ठा dma_chan *chan,
+			काष्ठा dma_slave_config *config)
+अणु
+	काष्ठा shdma_chan *schan = to_shdma_chan(chan);
 
 	/*
 	 * So far only .slave_id is used, but the slave drivers are
 	 * encouraged to also set a transfer direction and an address.
 	 */
-	if (!config)
-		return -EINVAL;
+	अगर (!config)
+		वापस -EINVAL;
 
 	/*
 	 * overriding the slave_id through dma_slave_config is deprecated,
-	 * but possibly some out-of-tree drivers still do it.
+	 * but possibly some out-of-tree drivers still करो it.
 	 */
-	if (WARN_ON_ONCE(config->slave_id &&
+	अगर (WARN_ON_ONCE(config->slave_id &&
 			 config->slave_id != schan->real_slave_id))
 		schan->real_slave_id = config->slave_id;
 
 	/*
 	 * We could lock this, but you shouldn't be configuring the
-	 * channel, while using it...
+	 * channel, जबतक using it...
 	 */
-	return shdma_setup_slave(schan,
+	वापस shdma_setup_slave(schan,
 				 config->direction == DMA_DEV_TO_MEM ?
 				 config->src_addr : config->dst_addr);
-}
+पूर्ण
 
-static void shdma_issue_pending(struct dma_chan *chan)
-{
-	struct shdma_chan *schan = to_shdma_chan(chan);
+अटल व्योम shdma_issue_pending(काष्ठा dma_chan *chan)
+अणु
+	काष्ठा shdma_chan *schan = to_shdma_chan(chan);
 
 	spin_lock_irq(&schan->chan_lock);
-	if (schan->pm_state == SHDMA_PM_ESTABLISHED)
+	अगर (schan->pm_state == SHDMA_PM_ESTABLISHED)
 		shdma_chan_xfer_ld_queue(schan);
-	else
+	अन्यथा
 		schan->pm_state = SHDMA_PM_PENDING;
 	spin_unlock_irq(&schan->chan_lock);
-}
+पूर्ण
 
-static enum dma_status shdma_tx_status(struct dma_chan *chan,
+अटल क्रमागत dma_status shdma_tx_status(काष्ठा dma_chan *chan,
 					dma_cookie_t cookie,
-					struct dma_tx_state *txstate)
-{
-	struct shdma_chan *schan = to_shdma_chan(chan);
-	enum dma_status status;
-	unsigned long flags;
+					काष्ठा dma_tx_state *txstate)
+अणु
+	काष्ठा shdma_chan *schan = to_shdma_chan(chan);
+	क्रमागत dma_status status;
+	अचिन्हित दीर्घ flags;
 
 	shdma_chan_ld_cleanup(schan, false);
 
@@ -830,39 +831,39 @@ static enum dma_status shdma_tx_status(struct dma_chan *chan,
 	status = dma_cookie_status(chan, cookie, txstate);
 
 	/*
-	 * If we don't find cookie on the queue, it has been aborted and we have
+	 * If we करोn't find cookie on the queue, it has been पातed and we have
 	 * to report error
 	 */
-	if (status != DMA_COMPLETE) {
-		struct shdma_desc *sdesc;
+	अगर (status != DMA_COMPLETE) अणु
+		काष्ठा shdma_desc *sdesc;
 		status = DMA_ERROR;
-		list_for_each_entry(sdesc, &schan->ld_queue, node)
-			if (sdesc->cookie == cookie) {
+		list_क्रम_each_entry(sdesc, &schan->ld_queue, node)
+			अगर (sdesc->cookie == cookie) अणु
 				status = DMA_IN_PROGRESS;
-				break;
-			}
-	}
+				अवरोध;
+			पूर्ण
+	पूर्ण
 
 	spin_unlock_irqrestore(&schan->chan_lock, flags);
 
-	return status;
-}
+	वापस status;
+पूर्ण
 
 /* Called from error IRQ or NMI */
-bool shdma_reset(struct shdma_dev *sdev)
-{
-	const struct shdma_ops *ops = sdev->ops;
-	struct shdma_chan *schan;
-	unsigned int handled = 0;
-	int i;
+bool shdma_reset(काष्ठा shdma_dev *sdev)
+अणु
+	स्थिर काष्ठा shdma_ops *ops = sdev->ops;
+	काष्ठा shdma_chan *schan;
+	अचिन्हित पूर्णांक handled = 0;
+	पूर्णांक i;
 
 	/* Reset all channels */
-	shdma_for_each_chan(schan, sdev, i) {
-		struct shdma_desc *sdesc;
+	shdma_क्रम_each_chan(schan, sdev, i) अणु
+		काष्ठा shdma_desc *sdesc;
 		LIST_HEAD(dl);
 
-		if (!schan)
-			continue;
+		अगर (!schan)
+			जारी;
 
 		spin_lock(&schan->chan_lock);
 
@@ -871,39 +872,39 @@ bool shdma_reset(struct shdma_dev *sdev)
 
 		list_splice_init(&schan->ld_queue, &dl);
 
-		if (!list_empty(&dl)) {
+		अगर (!list_empty(&dl)) अणु
 			dev_dbg(schan->dev, "Bring down channel %d\n", schan->id);
-			pm_runtime_put(schan->dev);
-		}
+			pm_runसमय_put(schan->dev);
+		पूर्ण
 		schan->pm_state = SHDMA_PM_ESTABLISHED;
 
 		spin_unlock(&schan->chan_lock);
 
 		/* Complete all  */
-		list_for_each_entry(sdesc, &dl, node) {
-			struct dma_async_tx_descriptor *tx = &sdesc->async_tx;
+		list_क्रम_each_entry(sdesc, &dl, node) अणु
+			काष्ठा dma_async_tx_descriptor *tx = &sdesc->async_tx;
 
 			sdesc->mark = DESC_IDLE;
-			dmaengine_desc_get_callback_invoke(tx, NULL);
-		}
+			dmaengine_desc_get_callback_invoke(tx, शून्य);
+		पूर्ण
 
 		spin_lock(&schan->chan_lock);
-		list_splice(&dl, &schan->ld_free);
+		list_splice(&dl, &schan->ld_मुक्त);
 		spin_unlock(&schan->chan_lock);
 
 		handled++;
-	}
+	पूर्ण
 
-	return !!handled;
-}
+	वापस !!handled;
+पूर्ण
 EXPORT_SYMBOL(shdma_reset);
 
-static irqreturn_t chan_irq(int irq, void *dev)
-{
-	struct shdma_chan *schan = dev;
-	const struct shdma_ops *ops =
+अटल irqवापस_t chan_irq(पूर्णांक irq, व्योम *dev)
+अणु
+	काष्ठा shdma_chan *schan = dev;
+	स्थिर काष्ठा shdma_ops *ops =
 		to_shdma_dev(schan->dma_chan.device)->ops;
-	irqreturn_t ret;
+	irqवापस_t ret;
 
 	spin_lock(&schan->chan_lock);
 
@@ -911,91 +912,91 @@ static irqreturn_t chan_irq(int irq, void *dev)
 
 	spin_unlock(&schan->chan_lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static irqreturn_t chan_irqt(int irq, void *dev)
-{
-	struct shdma_chan *schan = dev;
-	const struct shdma_ops *ops =
+अटल irqवापस_t chan_irqt(पूर्णांक irq, व्योम *dev)
+अणु
+	काष्ठा shdma_chan *schan = dev;
+	स्थिर काष्ठा shdma_ops *ops =
 		to_shdma_dev(schan->dma_chan.device)->ops;
-	struct shdma_desc *sdesc;
+	काष्ठा shdma_desc *sdesc;
 
 	spin_lock_irq(&schan->chan_lock);
-	list_for_each_entry(sdesc, &schan->ld_queue, node) {
-		if (sdesc->mark == DESC_SUBMITTED &&
-		    ops->desc_completed(schan, sdesc)) {
+	list_क्रम_each_entry(sdesc, &schan->ld_queue, node) अणु
+		अगर (sdesc->mark == DESC_SUBMITTED &&
+		    ops->desc_completed(schan, sdesc)) अणु
 			dev_dbg(schan->dev, "done #%d@%p\n",
 				sdesc->async_tx.cookie, &sdesc->async_tx);
 			sdesc->mark = DESC_COMPLETED;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 	/* Next desc */
 	shdma_chan_xfer_ld_queue(schan);
 	spin_unlock_irq(&schan->chan_lock);
 
 	shdma_chan_ld_cleanup(schan, false);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-int shdma_request_irq(struct shdma_chan *schan, int irq,
-			   unsigned long flags, const char *name)
-{
-	int ret = devm_request_threaded_irq(schan->dev, irq, chan_irq,
+पूर्णांक shdma_request_irq(काष्ठा shdma_chan *schan, पूर्णांक irq,
+			   अचिन्हित दीर्घ flags, स्थिर अक्षर *name)
+अणु
+	पूर्णांक ret = devm_request_thपढ़ोed_irq(schan->dev, irq, chan_irq,
 					    chan_irqt, flags, name, schan);
 
 	schan->irq = ret < 0 ? ret : irq;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL(shdma_request_irq);
 
-void shdma_chan_probe(struct shdma_dev *sdev,
-			   struct shdma_chan *schan, int id)
-{
+व्योम shdma_chan_probe(काष्ठा shdma_dev *sdev,
+			   काष्ठा shdma_chan *schan, पूर्णांक id)
+अणु
 	schan->pm_state = SHDMA_PM_ESTABLISHED;
 
-	/* reference struct dma_device */
+	/* reference काष्ठा dma_device */
 	schan->dma_chan.device = &sdev->dma_dev;
 	dma_cookie_init(&schan->dma_chan);
 
 	schan->dev = sdev->dma_dev.dev;
 	schan->id = id;
 
-	if (!schan->max_xfer_len)
+	अगर (!schan->max_xfer_len)
 		schan->max_xfer_len = PAGE_SIZE;
 
 	spin_lock_init(&schan->chan_lock);
 
 	/* Init descripter manage list */
 	INIT_LIST_HEAD(&schan->ld_queue);
-	INIT_LIST_HEAD(&schan->ld_free);
+	INIT_LIST_HEAD(&schan->ld_मुक्त);
 
 	/* Add the channel to DMA device channel list */
 	list_add_tail(&schan->dma_chan.device_node,
 			&sdev->dma_dev.channels);
 	sdev->schan[id] = schan;
-}
+पूर्ण
 EXPORT_SYMBOL(shdma_chan_probe);
 
-void shdma_chan_remove(struct shdma_chan *schan)
-{
+व्योम shdma_chan_हटाओ(काष्ठा shdma_chan *schan)
+अणु
 	list_del(&schan->dma_chan.device_node);
-}
-EXPORT_SYMBOL(shdma_chan_remove);
+पूर्ण
+EXPORT_SYMBOL(shdma_chan_हटाओ);
 
-int shdma_init(struct device *dev, struct shdma_dev *sdev,
-		    int chan_num)
-{
-	struct dma_device *dma_dev = &sdev->dma_dev;
+पूर्णांक shdma_init(काष्ठा device *dev, काष्ठा shdma_dev *sdev,
+		    पूर्णांक chan_num)
+अणु
+	काष्ठा dma_device *dma_dev = &sdev->dma_dev;
 
 	/*
-	 * Require all call-backs for now, they can trivially be made optional
+	 * Require all call-backs क्रम now, they can trivially be made optional
 	 * later as required
 	 */
-	if (!sdev->ops ||
+	अगर (!sdev->ops ||
 	    !sdev->desc_size ||
 	    !sdev->ops->embedded_desc ||
 	    !sdev->ops->start_xfer ||
@@ -1006,23 +1007,23 @@ int shdma_init(struct device *dev, struct shdma_dev *sdev,
 	    !sdev->ops->channel_busy ||
 	    !sdev->ops->halt_channel ||
 	    !sdev->ops->desc_completed)
-		return -EINVAL;
+		वापस -EINVAL;
 
-	sdev->schan = kcalloc(chan_num, sizeof(*sdev->schan), GFP_KERNEL);
-	if (!sdev->schan)
-		return -ENOMEM;
+	sdev->schan = kसुस्मृति(chan_num, माप(*sdev->schan), GFP_KERNEL);
+	अगर (!sdev->schan)
+		वापस -ENOMEM;
 
 	INIT_LIST_HEAD(&dma_dev->channels);
 
 	/* Common and MEMCPY operations */
 	dma_dev->device_alloc_chan_resources
 		= shdma_alloc_chan_resources;
-	dma_dev->device_free_chan_resources = shdma_free_chan_resources;
-	dma_dev->device_prep_dma_memcpy = shdma_prep_memcpy;
+	dma_dev->device_मुक्त_chan_resources = shdma_मुक्त_chan_resources;
+	dma_dev->device_prep_dma_स_नकल = shdma_prep_स_नकल;
 	dma_dev->device_tx_status = shdma_tx_status;
 	dma_dev->device_issue_pending = shdma_issue_pending;
 
-	/* Compulsory for DMA_SLAVE fields */
+	/* Compulsory क्रम DMA_SLAVE fields */
 	dma_dev->device_prep_slave_sg = shdma_prep_slave_sg;
 	dma_dev->device_prep_dma_cyclic = shdma_prep_dma_cyclic;
 	dma_dev->device_config = shdma_config;
@@ -1030,32 +1031,32 @@ int shdma_init(struct device *dev, struct shdma_dev *sdev,
 
 	dma_dev->dev = dev;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(shdma_init);
 
-void shdma_cleanup(struct shdma_dev *sdev)
-{
-	kfree(sdev->schan);
-}
+व्योम shdma_cleanup(काष्ठा shdma_dev *sdev)
+अणु
+	kमुक्त(sdev->schan);
+पूर्ण
 EXPORT_SYMBOL(shdma_cleanup);
 
-static int __init shdma_enter(void)
-{
-	shdma_slave_used = kcalloc(DIV_ROUND_UP(slave_num, BITS_PER_LONG),
-				   sizeof(long),
+अटल पूर्णांक __init shdma_enter(व्योम)
+अणु
+	shdma_slave_used = kसुस्मृति(DIV_ROUND_UP(slave_num, BITS_PER_LONG),
+				   माप(दीर्घ),
 				   GFP_KERNEL);
-	if (!shdma_slave_used)
-		return -ENOMEM;
-	return 0;
-}
+	अगर (!shdma_slave_used)
+		वापस -ENOMEM;
+	वापस 0;
+पूर्ण
 module_init(shdma_enter);
 
-static void __exit shdma_exit(void)
-{
-	kfree(shdma_slave_used);
-}
-module_exit(shdma_exit);
+अटल व्योम __निकास shdma_निकास(व्योम)
+अणु
+	kमुक्त(shdma_slave_used);
+पूर्ण
+module_निकास(shdma_निकास);
 
 MODULE_LICENSE("GPL v2");
 MODULE_DESCRIPTION("SH-DMA driver base library");

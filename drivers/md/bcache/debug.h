@@ -1,35 +1,36 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _BCACHE_DEBUG_H
-#define _BCACHE_DEBUG_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _BCACHE_DEBUG_H
+#घोषणा _BCACHE_DEBUG_H
 
-struct bio;
-struct cached_dev;
-struct cache_set;
+काष्ठा bio;
+काष्ठा cached_dev;
+काष्ठा cache_set;
 
-#ifdef CONFIG_BCACHE_DEBUG
+#अगर_घोषित CONFIG_BCACHE_DEBUG
 
-void bch_btree_verify(struct btree *b);
-void bch_data_verify(struct cached_dev *dc, struct bio *bio);
+व्योम bch_btree_verअगरy(काष्ठा btree *b);
+व्योम bch_data_verअगरy(काष्ठा cached_dev *dc, काष्ठा bio *bio);
 
-#define expensive_debug_checks(c)	((c)->expensive_debug_checks)
-#define key_merging_disabled(c)		((c)->key_merging_disabled)
-#define bypass_torture_test(d)		((d)->bypass_torture_test)
+#घोषणा expensive_debug_checks(c)	((c)->expensive_debug_checks)
+#घोषणा key_merging_disabled(c)		((c)->key_merging_disabled)
+#घोषणा bypass_torture_test(d)		((d)->bypass_torture_test)
 
-#else /* DEBUG */
+#अन्यथा /* DEBUG */
 
-static inline void bch_btree_verify(struct btree *b) {}
-static inline void bch_data_verify(struct cached_dev *dc, struct bio *bio) {}
+अटल अंतरभूत व्योम bch_btree_verअगरy(काष्ठा btree *b) अणुपूर्ण
+अटल अंतरभूत व्योम bch_data_verअगरy(काष्ठा cached_dev *dc, काष्ठा bio *bio) अणुपूर्ण
 
-#define expensive_debug_checks(c)	0
-#define key_merging_disabled(c)		0
-#define bypass_torture_test(d)		0
+#घोषणा expensive_debug_checks(c)	0
+#घोषणा key_merging_disabled(c)		0
+#घोषणा bypass_torture_test(d)		0
 
-#endif
+#पूर्ण_अगर
 
-#ifdef CONFIG_DEBUG_FS
-void bch_debug_init_cache_set(struct cache_set *c);
-#else
-static inline void bch_debug_init_cache_set(struct cache_set *c) {}
-#endif
+#अगर_घोषित CONFIG_DEBUG_FS
+व्योम bch_debug_init_cache_set(काष्ठा cache_set *c);
+#अन्यथा
+अटल अंतरभूत व्योम bch_debug_init_cache_set(काष्ठा cache_set *c) अणुपूर्ण
+#पूर्ण_अगर
 
-#endif
+#पूर्ण_अगर

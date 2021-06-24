@@ -1,417 +1,418 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <linux/compiler.h>
-#include <linux/string.h>
-#include <linux/types.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdint.h>
-#include <string.h>
-#include <ctype.h>
-#include "subcmd-util.h"
-#include "parse-options.h"
-#include "subcmd-config.h"
-#include "pager.h"
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <linux/compiler.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/types.h>
+#समावेश <मानकपन.स>
+#समावेश <मानककोष.स>
+#समावेश <मानक_निवेशt.h>
+#समावेश <माला.स>
+#समावेश <प्रकार.स>
+#समावेश "subcmd-util.h"
+#समावेश "parse-options.h"
+#समावेश "subcmd-config.h"
+#समावेश "pager.h"
 
-#define OPT_SHORT 1
-#define OPT_UNSET 2
+#घोषणा OPT_SHORT 1
+#घोषणा OPT_UNSET 2
 
-char *error_buf;
+अक्षर *error_buf;
 
-static int opterror(const struct option *opt, const char *reason, int flags)
-{
-	if (flags & OPT_SHORT)
-		fprintf(stderr, " Error: switch `%c' %s", opt->short_name, reason);
-	else if (flags & OPT_UNSET)
-		fprintf(stderr, " Error: option `no-%s' %s", opt->long_name, reason);
-	else
-		fprintf(stderr, " Error: option `%s' %s", opt->long_name, reason);
+अटल पूर्णांक opterror(स्थिर काष्ठा option *opt, स्थिर अक्षर *reason, पूर्णांक flags)
+अणु
+	अगर (flags & OPT_SHORT)
+		ख_लिखो(मानक_त्रुटि, " Error: switch `%c' %s", opt->लघु_name, reason);
+	अन्यथा अगर (flags & OPT_UNSET)
+		ख_लिखो(मानक_त्रुटि, " Error: option `no-%s' %s", opt->दीर्घ_name, reason);
+	अन्यथा
+		ख_लिखो(मानक_त्रुटि, " Error: option `%s' %s", opt->दीर्घ_name, reason);
 
-	return -1;
-}
+	वापस -1;
+पूर्ण
 
-static const char *skip_prefix(const char *str, const char *prefix)
-{
-	size_t len = strlen(prefix);
-	return strncmp(str, prefix, len) ? NULL : str + len;
-}
+अटल स्थिर अक्षर *skip_prefix(स्थिर अक्षर *str, स्थिर अक्षर *prefix)
+अणु
+	माप_प्रकार len = म_माप(prefix);
+	वापस म_भेदन(str, prefix, len) ? शून्य : str + len;
+पूर्ण
 
-static void optwarning(const struct option *opt, const char *reason, int flags)
-{
-	if (flags & OPT_SHORT)
-		fprintf(stderr, " Warning: switch `%c' %s", opt->short_name, reason);
-	else if (flags & OPT_UNSET)
-		fprintf(stderr, " Warning: option `no-%s' %s", opt->long_name, reason);
-	else
-		fprintf(stderr, " Warning: option `%s' %s", opt->long_name, reason);
-}
+अटल व्योम optwarning(स्थिर काष्ठा option *opt, स्थिर अक्षर *reason, पूर्णांक flags)
+अणु
+	अगर (flags & OPT_SHORT)
+		ख_लिखो(मानक_त्रुटि, " Warning: switch `%c' %s", opt->लघु_name, reason);
+	अन्यथा अगर (flags & OPT_UNSET)
+		ख_लिखो(मानक_त्रुटि, " Warning: option `no-%s' %s", opt->दीर्घ_name, reason);
+	अन्यथा
+		ख_लिखो(मानक_त्रुटि, " Warning: option `%s' %s", opt->दीर्घ_name, reason);
+पूर्ण
 
-static int get_arg(struct parse_opt_ctx_t *p, const struct option *opt,
-		   int flags, const char **arg)
-{
-	const char *res;
+अटल पूर्णांक get_arg(काष्ठा parse_opt_ctx_t *p, स्थिर काष्ठा option *opt,
+		   पूर्णांक flags, स्थिर अक्षर **arg)
+अणु
+	स्थिर अक्षर *res;
 
-	if (p->opt) {
+	अगर (p->opt) अणु
 		res = p->opt;
-		p->opt = NULL;
-	} else if ((opt->flags & PARSE_OPT_LASTARG_DEFAULT) && (p->argc == 1 ||
-		    **(p->argv + 1) == '-')) {
-		res = (const char *)opt->defval;
-	} else if (p->argc > 1) {
+		p->opt = शून्य;
+	पूर्ण अन्यथा अगर ((opt->flags & PARSE_OPT_LASTARG_DEFAULT) && (p->argc == 1 ||
+		    **(p->argv + 1) == '-')) अणु
+		res = (स्थिर अक्षर *)opt->defval;
+	पूर्ण अन्यथा अगर (p->argc > 1) अणु
 		p->argc--;
 		res = *++p->argv;
-	} else
-		return opterror(opt, "requires a value", flags);
-	if (arg)
+	पूर्ण अन्यथा
+		वापस opterror(opt, "requires a value", flags);
+	अगर (arg)
 		*arg = res;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int get_value(struct parse_opt_ctx_t *p,
-		     const struct option *opt, int flags)
-{
-	const char *s, *arg = NULL;
-	const int unset = flags & OPT_UNSET;
-	int err;
+अटल पूर्णांक get_value(काष्ठा parse_opt_ctx_t *p,
+		     स्थिर काष्ठा option *opt, पूर्णांक flags)
+अणु
+	स्थिर अक्षर *s, *arg = शून्य;
+	स्थिर पूर्णांक unset = flags & OPT_UNSET;
+	पूर्णांक err;
 
-	if (unset && p->opt)
-		return opterror(opt, "takes no value", flags);
-	if (unset && (opt->flags & PARSE_OPT_NONEG))
-		return opterror(opt, "isn't available", flags);
-	if (opt->flags & PARSE_OPT_DISABLED)
-		return opterror(opt, "is not usable", flags);
+	अगर (unset && p->opt)
+		वापस opterror(opt, "takes no value", flags);
+	अगर (unset && (opt->flags & PARSE_OPT_NONEG))
+		वापस opterror(opt, "isn't available", flags);
+	अगर (opt->flags & PARSE_OPT_DISABLED)
+		वापस opterror(opt, "is not usable", flags);
 
-	if (opt->flags & PARSE_OPT_EXCLUSIVE) {
-		if (p->excl_opt && p->excl_opt != opt) {
-			char msg[128];
+	अगर (opt->flags & PARSE_OPT_EXCLUSIVE) अणु
+		अगर (p->excl_opt && p->excl_opt != opt) अणु
+			अक्षर msg[128];
 
-			if (((flags & OPT_SHORT) && p->excl_opt->short_name) ||
-			    p->excl_opt->long_name == NULL) {
-				snprintf(msg, sizeof(msg), "cannot be used with switch `%c'",
-					 p->excl_opt->short_name);
-			} else {
-				snprintf(msg, sizeof(msg), "cannot be used with %s",
-					 p->excl_opt->long_name);
-			}
+			अगर (((flags & OPT_SHORT) && p->excl_opt->लघु_name) ||
+			    p->excl_opt->दीर्घ_name == शून्य) अणु
+				snम_लिखो(msg, माप(msg), "cannot be used with switch `%c'",
+					 p->excl_opt->लघु_name);
+			पूर्ण अन्यथा अणु
+				snम_लिखो(msg, माप(msg), "cannot be used with %s",
+					 p->excl_opt->दीर्घ_name);
+			पूर्ण
 			opterror(opt, msg, flags);
-			return -3;
-		}
+			वापस -3;
+		पूर्ण
 		p->excl_opt = opt;
-	}
-	if (!(flags & OPT_SHORT) && p->opt) {
-		switch (opt->type) {
-		case OPTION_CALLBACK:
-			if (!(opt->flags & PARSE_OPT_NOARG))
-				break;
+	पूर्ण
+	अगर (!(flags & OPT_SHORT) && p->opt) अणु
+		चयन (opt->type) अणु
+		हाल OPTION_CALLBACK:
+			अगर (!(opt->flags & PARSE_OPT_NOARG))
+				अवरोध;
 			/* FALLTHROUGH */
-		case OPTION_BOOLEAN:
-		case OPTION_INCR:
-		case OPTION_BIT:
-		case OPTION_SET_UINT:
-		case OPTION_SET_PTR:
-			return opterror(opt, "takes no value", flags);
-		case OPTION_END:
-		case OPTION_ARGUMENT:
-		case OPTION_GROUP:
-		case OPTION_STRING:
-		case OPTION_INTEGER:
-		case OPTION_UINTEGER:
-		case OPTION_LONG:
-		case OPTION_ULONG:
-		case OPTION_U64:
-		default:
-			break;
-		}
-	}
+		हाल OPTION_BOOLEAN:
+		हाल OPTION_INCR:
+		हाल OPTION_BIT:
+		हाल OPTION_SET_UINT:
+		हाल OPTION_SET_PTR:
+			वापस opterror(opt, "takes no value", flags);
+		हाल OPTION_END:
+		हाल OPTION_ARGUMENT:
+		हाल OPTION_GROUP:
+		हाल OPTION_STRING:
+		हाल OPTION_INTEGER:
+		हाल OPTION_UINTEGER:
+		हाल OPTION_LONG:
+		हाल OPTION_ULONG:
+		हाल OPTION_U64:
+		शेष:
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	if (opt->flags & PARSE_OPT_NOBUILD) {
-		char reason[128];
+	अगर (opt->flags & PARSE_OPT_NOBUILD) अणु
+		अक्षर reason[128];
 		bool noarg = false;
 
-		err = snprintf(reason, sizeof(reason),
+		err = snम_लिखो(reason, माप(reason),
 				opt->flags & PARSE_OPT_CANSKIP ?
 					"is being ignored because %s " :
 					"is not available because %s",
 				opt->build_opt);
-		reason[sizeof(reason) - 1] = '\0';
+		reason[माप(reason) - 1] = '\0';
 
-		if (err < 0)
-			strncpy(reason, opt->flags & PARSE_OPT_CANSKIP ?
+		अगर (err < 0)
+			म_नकलन(reason, opt->flags & PARSE_OPT_CANSKIP ?
 					"is being ignored" :
 					"is not available",
-					sizeof(reason));
+					माप(reason));
 
-		if (!(opt->flags & PARSE_OPT_CANSKIP))
-			return opterror(opt, reason, flags);
+		अगर (!(opt->flags & PARSE_OPT_CANSKIP))
+			वापस opterror(opt, reason, flags);
 
 		err = 0;
-		if (unset)
+		अगर (unset)
 			noarg = true;
-		if (opt->flags & PARSE_OPT_NOARG)
+		अगर (opt->flags & PARSE_OPT_NOARG)
 			noarg = true;
-		if (opt->flags & PARSE_OPT_OPTARG && !p->opt)
+		अगर (opt->flags & PARSE_OPT_OPTARG && !p->opt)
 			noarg = true;
 
-		switch (opt->type) {
-		case OPTION_BOOLEAN:
-		case OPTION_INCR:
-		case OPTION_BIT:
-		case OPTION_SET_UINT:
-		case OPTION_SET_PTR:
-		case OPTION_END:
-		case OPTION_ARGUMENT:
-		case OPTION_GROUP:
+		चयन (opt->type) अणु
+		हाल OPTION_BOOLEAN:
+		हाल OPTION_INCR:
+		हाल OPTION_BIT:
+		हाल OPTION_SET_UINT:
+		हाल OPTION_SET_PTR:
+		हाल OPTION_END:
+		हाल OPTION_ARGUMENT:
+		हाल OPTION_GROUP:
 			noarg = true;
-			break;
-		case OPTION_CALLBACK:
-		case OPTION_STRING:
-		case OPTION_INTEGER:
-		case OPTION_UINTEGER:
-		case OPTION_LONG:
-		case OPTION_ULONG:
-		case OPTION_U64:
-		default:
-			break;
-		}
+			अवरोध;
+		हाल OPTION_CALLBACK:
+		हाल OPTION_STRING:
+		हाल OPTION_INTEGER:
+		हाल OPTION_UINTEGER:
+		हाल OPTION_LONG:
+		हाल OPTION_ULONG:
+		हाल OPTION_U64:
+		शेष:
+			अवरोध;
+		पूर्ण
 
-		if (!noarg)
-			err = get_arg(p, opt, flags, NULL);
-		if (err)
-			return err;
+		अगर (!noarg)
+			err = get_arg(p, opt, flags, शून्य);
+		अगर (err)
+			वापस err;
 
 		optwarning(opt, reason, flags);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	switch (opt->type) {
-	case OPTION_BIT:
-		if (unset)
-			*(int *)opt->value &= ~opt->defval;
-		else
-			*(int *)opt->value |= opt->defval;
-		return 0;
+	चयन (opt->type) अणु
+	हाल OPTION_BIT:
+		अगर (unset)
+			*(पूर्णांक *)opt->value &= ~opt->defval;
+		अन्यथा
+			*(पूर्णांक *)opt->value |= opt->defval;
+		वापस 0;
 
-	case OPTION_BOOLEAN:
+	हाल OPTION_BOOLEAN:
 		*(bool *)opt->value = unset ? false : true;
-		if (opt->set)
+		अगर (opt->set)
 			*(bool *)opt->set = true;
-		return 0;
+		वापस 0;
 
-	case OPTION_INCR:
-		*(int *)opt->value = unset ? 0 : *(int *)opt->value + 1;
-		return 0;
+	हाल OPTION_INCR:
+		*(पूर्णांक *)opt->value = unset ? 0 : *(पूर्णांक *)opt->value + 1;
+		वापस 0;
 
-	case OPTION_SET_UINT:
-		*(unsigned int *)opt->value = unset ? 0 : opt->defval;
-		return 0;
+	हाल OPTION_SET_UINT:
+		*(अचिन्हित पूर्णांक *)opt->value = unset ? 0 : opt->defval;
+		वापस 0;
 
-	case OPTION_SET_PTR:
-		*(void **)opt->value = unset ? NULL : (void *)opt->defval;
-		return 0;
+	हाल OPTION_SET_PTR:
+		*(व्योम **)opt->value = unset ? शून्य : (व्योम *)opt->defval;
+		वापस 0;
 
-	case OPTION_STRING:
+	हाल OPTION_STRING:
 		err = 0;
-		if (unset)
-			*(const char **)opt->value = NULL;
-		else if (opt->flags & PARSE_OPT_OPTARG && !p->opt)
-			*(const char **)opt->value = (const char *)opt->defval;
-		else
-			err = get_arg(p, opt, flags, (const char **)opt->value);
+		अगर (unset)
+			*(स्थिर अक्षर **)opt->value = शून्य;
+		अन्यथा अगर (opt->flags & PARSE_OPT_OPTARG && !p->opt)
+			*(स्थिर अक्षर **)opt->value = (स्थिर अक्षर *)opt->defval;
+		अन्यथा
+			err = get_arg(p, opt, flags, (स्थिर अक्षर **)opt->value);
 
-		if (opt->set)
+		अगर (opt->set)
 			*(bool *)opt->set = true;
 
-		/* PARSE_OPT_NOEMPTY: Allow NULL but disallow empty string. */
-		if (opt->flags & PARSE_OPT_NOEMPTY) {
-			const char *val = *(const char **)opt->value;
+		/* PARSE_OPT_NOEMPTY: Allow शून्य but disallow empty string. */
+		अगर (opt->flags & PARSE_OPT_NOEMPTY) अणु
+			स्थिर अक्षर *val = *(स्थिर अक्षर **)opt->value;
 
-			if (!val)
-				return err;
+			अगर (!val)
+				वापस err;
 
-			/* Similar to unset if we are given an empty string. */
-			if (val[0] == '\0') {
-				*(const char **)opt->value = NULL;
-				return 0;
-			}
-		}
+			/* Similar to unset अगर we are given an empty string. */
+			अगर (val[0] == '\0') अणु
+				*(स्थिर अक्षर **)opt->value = शून्य;
+				वापस 0;
+			पूर्ण
+		पूर्ण
 
-		return err;
+		वापस err;
 
-	case OPTION_CALLBACK:
-		if (opt->set)
+	हाल OPTION_CALLBACK:
+		अगर (opt->set)
 			*(bool *)opt->set = true;
 
-		if (unset)
-			return (*opt->callback)(opt, NULL, 1) ? (-1) : 0;
-		if (opt->flags & PARSE_OPT_NOARG)
-			return (*opt->callback)(opt, NULL, 0) ? (-1) : 0;
-		if (opt->flags & PARSE_OPT_OPTARG && !p->opt)
-			return (*opt->callback)(opt, NULL, 0) ? (-1) : 0;
-		if (get_arg(p, opt, flags, &arg))
-			return -1;
-		return (*opt->callback)(opt, arg, 0) ? (-1) : 0;
+		अगर (unset)
+			वापस (*opt->callback)(opt, शून्य, 1) ? (-1) : 0;
+		अगर (opt->flags & PARSE_OPT_NOARG)
+			वापस (*opt->callback)(opt, शून्य, 0) ? (-1) : 0;
+		अगर (opt->flags & PARSE_OPT_OPTARG && !p->opt)
+			वापस (*opt->callback)(opt, शून्य, 0) ? (-1) : 0;
+		अगर (get_arg(p, opt, flags, &arg))
+			वापस -1;
+		वापस (*opt->callback)(opt, arg, 0) ? (-1) : 0;
 
-	case OPTION_INTEGER:
-		if (unset) {
-			*(int *)opt->value = 0;
-			return 0;
-		}
-		if (opt->flags & PARSE_OPT_OPTARG && !p->opt) {
-			*(int *)opt->value = opt->defval;
-			return 0;
-		}
-		if (get_arg(p, opt, flags, &arg))
-			return -1;
-		*(int *)opt->value = strtol(arg, (char **)&s, 10);
-		if (*s)
-			return opterror(opt, "expects a numerical value", flags);
-		return 0;
+	हाल OPTION_INTEGER:
+		अगर (unset) अणु
+			*(पूर्णांक *)opt->value = 0;
+			वापस 0;
+		पूर्ण
+		अगर (opt->flags & PARSE_OPT_OPTARG && !p->opt) अणु
+			*(पूर्णांक *)opt->value = opt->defval;
+			वापस 0;
+		पूर्ण
+		अगर (get_arg(p, opt, flags, &arg))
+			वापस -1;
+		*(पूर्णांक *)opt->value = म_से_दीर्घ(arg, (अक्षर **)&s, 10);
+		अगर (*s)
+			वापस opterror(opt, "expects a numerical value", flags);
+		वापस 0;
 
-	case OPTION_UINTEGER:
-		if (unset) {
-			*(unsigned int *)opt->value = 0;
-			return 0;
-		}
-		if (opt->flags & PARSE_OPT_OPTARG && !p->opt) {
-			*(unsigned int *)opt->value = opt->defval;
-			return 0;
-		}
-		if (get_arg(p, opt, flags, &arg))
-			return -1;
-		if (arg[0] == '-')
-			return opterror(opt, "expects an unsigned numerical value", flags);
-		*(unsigned int *)opt->value = strtol(arg, (char **)&s, 10);
-		if (*s)
-			return opterror(opt, "expects a numerical value", flags);
-		return 0;
+	हाल OPTION_UINTEGER:
+		अगर (unset) अणु
+			*(अचिन्हित पूर्णांक *)opt->value = 0;
+			वापस 0;
+		पूर्ण
+		अगर (opt->flags & PARSE_OPT_OPTARG && !p->opt) अणु
+			*(अचिन्हित पूर्णांक *)opt->value = opt->defval;
+			वापस 0;
+		पूर्ण
+		अगर (get_arg(p, opt, flags, &arg))
+			वापस -1;
+		अगर (arg[0] == '-')
+			वापस opterror(opt, "expects an unsigned numerical value", flags);
+		*(अचिन्हित पूर्णांक *)opt->value = म_से_दीर्घ(arg, (अक्षर **)&s, 10);
+		अगर (*s)
+			वापस opterror(opt, "expects a numerical value", flags);
+		वापस 0;
 
-	case OPTION_LONG:
-		if (unset) {
-			*(long *)opt->value = 0;
-			return 0;
-		}
-		if (opt->flags & PARSE_OPT_OPTARG && !p->opt) {
-			*(long *)opt->value = opt->defval;
-			return 0;
-		}
-		if (get_arg(p, opt, flags, &arg))
-			return -1;
-		*(long *)opt->value = strtol(arg, (char **)&s, 10);
-		if (*s)
-			return opterror(opt, "expects a numerical value", flags);
-		return 0;
+	हाल OPTION_LONG:
+		अगर (unset) अणु
+			*(दीर्घ *)opt->value = 0;
+			वापस 0;
+		पूर्ण
+		अगर (opt->flags & PARSE_OPT_OPTARG && !p->opt) अणु
+			*(दीर्घ *)opt->value = opt->defval;
+			वापस 0;
+		पूर्ण
+		अगर (get_arg(p, opt, flags, &arg))
+			वापस -1;
+		*(दीर्घ *)opt->value = म_से_दीर्घ(arg, (अक्षर **)&s, 10);
+		अगर (*s)
+			वापस opterror(opt, "expects a numerical value", flags);
+		वापस 0;
 
-	case OPTION_ULONG:
-		if (unset) {
-			*(unsigned long *)opt->value = 0;
-			return 0;
-		}
-		if (opt->flags & PARSE_OPT_OPTARG && !p->opt) {
-			*(unsigned long *)opt->value = opt->defval;
-			return 0;
-		}
-		if (get_arg(p, opt, flags, &arg))
-			return -1;
-		*(unsigned long *)opt->value = strtoul(arg, (char **)&s, 10);
-		if (*s)
-			return opterror(opt, "expects a numerical value", flags);
-		return 0;
+	हाल OPTION_ULONG:
+		अगर (unset) अणु
+			*(अचिन्हित दीर्घ *)opt->value = 0;
+			वापस 0;
+		पूर्ण
+		अगर (opt->flags & PARSE_OPT_OPTARG && !p->opt) अणु
+			*(अचिन्हित दीर्घ *)opt->value = opt->defval;
+			वापस 0;
+		पूर्ण
+		अगर (get_arg(p, opt, flags, &arg))
+			वापस -1;
+		*(अचिन्हित दीर्घ *)opt->value = म_से_अदीर्घ(arg, (अक्षर **)&s, 10);
+		अगर (*s)
+			वापस opterror(opt, "expects a numerical value", flags);
+		वापस 0;
 
-	case OPTION_U64:
-		if (unset) {
+	हाल OPTION_U64:
+		अगर (unset) अणु
 			*(u64 *)opt->value = 0;
-			return 0;
-		}
-		if (opt->flags & PARSE_OPT_OPTARG && !p->opt) {
+			वापस 0;
+		पूर्ण
+		अगर (opt->flags & PARSE_OPT_OPTARG && !p->opt) अणु
 			*(u64 *)opt->value = opt->defval;
-			return 0;
-		}
-		if (get_arg(p, opt, flags, &arg))
-			return -1;
-		if (arg[0] == '-')
-			return opterror(opt, "expects an unsigned numerical value", flags);
-		*(u64 *)opt->value = strtoull(arg, (char **)&s, 10);
-		if (*s)
-			return opterror(opt, "expects a numerical value", flags);
-		return 0;
+			वापस 0;
+		पूर्ण
+		अगर (get_arg(p, opt, flags, &arg))
+			वापस -1;
+		अगर (arg[0] == '-')
+			वापस opterror(opt, "expects an unsigned numerical value", flags);
+		*(u64 *)opt->value = म_से_अदीर्घl(arg, (अक्षर **)&s, 10);
+		अगर (*s)
+			वापस opterror(opt, "expects a numerical value", flags);
+		वापस 0;
 
-	case OPTION_END:
-	case OPTION_ARGUMENT:
-	case OPTION_GROUP:
-	default:
+	हाल OPTION_END:
+	हाल OPTION_ARGUMENT:
+	हाल OPTION_GROUP:
+	शेष:
 		die("should not happen, someone must be hit on the forehead");
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int parse_short_opt(struct parse_opt_ctx_t *p, const struct option *options)
-{
+अटल पूर्णांक parse_लघु_opt(काष्ठा parse_opt_ctx_t *p, स्थिर काष्ठा option *options)
+अणु
 retry:
-	for (; options->type != OPTION_END; options++) {
-		if (options->short_name == *p->opt) {
-			p->opt = p->opt[1] ? p->opt + 1 : NULL;
-			return get_value(p, options, OPT_SHORT);
-		}
-	}
+	क्रम (; options->type != OPTION_END; options++) अणु
+		अगर (options->लघु_name == *p->opt) अणु
+			p->opt = p->opt[1] ? p->opt + 1 : शून्य;
+			वापस get_value(p, options, OPT_SHORT);
+		पूर्ण
+	पूर्ण
 
-	if (options->parent) {
+	अगर (options->parent) अणु
 		options = options->parent;
-		goto retry;
-	}
+		जाओ retry;
+	पूर्ण
 
-	return -2;
-}
+	वापस -2;
+पूर्ण
 
-static int parse_long_opt(struct parse_opt_ctx_t *p, const char *arg,
-                          const struct option *options)
-{
-	const char *arg_end = strchr(arg, '=');
-	const struct option *abbrev_option = NULL, *ambiguous_option = NULL;
-	int abbrev_flags = 0, ambiguous_flags = 0;
+अटल पूर्णांक parse_दीर्घ_opt(काष्ठा parse_opt_ctx_t *p, स्थिर अक्षर *arg,
+                          स्थिर काष्ठा option *options)
+अणु
+	स्थिर अक्षर *arg_end = म_अक्षर(arg, '=');
+	स्थिर काष्ठा option *abbrev_option = शून्य, *ambiguous_option = शून्य;
+	पूर्णांक abbrev_flags = 0, ambiguous_flags = 0;
 
-	if (!arg_end)
-		arg_end = arg + strlen(arg);
+	अगर (!arg_end)
+		arg_end = arg + म_माप(arg);
 
 retry:
-	for (; options->type != OPTION_END; options++) {
-		const char *rest;
-		int flags = 0;
+	क्रम (; options->type != OPTION_END; options++) अणु
+		स्थिर अक्षर *rest;
+		पूर्णांक flags = 0;
 
-		if (!options->long_name)
-			continue;
+		अगर (!options->दीर्घ_name)
+			जारी;
 
-		rest = skip_prefix(arg, options->long_name);
-		if (options->type == OPTION_ARGUMENT) {
-			if (!rest)
-				continue;
-			if (*rest == '=')
-				return opterror(options, "takes no value", flags);
-			if (*rest)
-				continue;
+		rest = skip_prefix(arg, options->दीर्घ_name);
+		अगर (options->type == OPTION_ARGUMENT) अणु
+			अगर (!rest)
+				जारी;
+			अगर (*rest == '=')
+				वापस opterror(options, "takes no value", flags);
+			अगर (*rest)
+				जारी;
 			p->out[p->cpidx++] = arg - 2;
-			return 0;
-		}
-		if (!rest) {
-			if (strstarts(options->long_name, "no-")) {
+			वापस 0;
+		पूर्ण
+		अगर (!rest) अणु
+			अगर (strstarts(options->दीर्घ_name, "no-")) अणु
 				/*
-				 * The long name itself starts with "no-", so
+				 * The दीर्घ name itself starts with "no-", so
 				 * accept the option without "no-" so that users
-				 * do not have to enter "no-no-" to get the
+				 * करो not have to enter "no-no-" to get the
 				 * negation.
 				 */
-				rest = skip_prefix(arg, options->long_name + 3);
-				if (rest) {
+				rest = skip_prefix(arg, options->दीर्घ_name + 3);
+				अगर (rest) अणु
 					flags |= OPT_UNSET;
-					goto match;
-				}
-				/* Abbreviated case */
-				if (strstarts(options->long_name + 3, arg)) {
+					जाओ match;
+				पूर्ण
+				/* Abbreviated हाल */
+				अगर (strstarts(options->दीर्घ_name + 3, arg)) अणु
 					flags |= OPT_UNSET;
-					goto is_abbreviated;
-				}
-			}
+					जाओ is_abbreviated;
+				पूर्ण
+			पूर्ण
 			/* abbreviated? */
-			if (!strncmp(options->long_name, arg, arg_end - arg)) {
+			अगर (!म_भेदन(options->दीर्घ_name, arg, arg_end - arg)) अणु
 is_abbreviated:
-				if (abbrev_option) {
+				अगर (abbrev_option) अणु
 					/*
 					 * If this is abbreviated, it is
 					 * ambiguous. So when there is no
@@ -420,609 +421,609 @@ is_abbreviated:
 					 */
 					ambiguous_option = abbrev_option;
 					ambiguous_flags = abbrev_flags;
-				}
-				if (!(flags & OPT_UNSET) && *arg_end)
+				पूर्ण
+				अगर (!(flags & OPT_UNSET) && *arg_end)
 					p->opt = arg_end + 1;
 				abbrev_option = options;
 				abbrev_flags = flags;
-				continue;
-			}
+				जारी;
+			पूर्ण
 			/* negated and abbreviated very much? */
-			if (strstarts("no-", arg)) {
+			अगर (strstarts("no-", arg)) अणु
 				flags |= OPT_UNSET;
-				goto is_abbreviated;
-			}
+				जाओ is_abbreviated;
+			पूर्ण
 			/* negated? */
-			if (strncmp(arg, "no-", 3))
-				continue;
+			अगर (म_भेदन(arg, "no-", 3))
+				जारी;
 			flags |= OPT_UNSET;
-			rest = skip_prefix(arg + 3, options->long_name);
+			rest = skip_prefix(arg + 3, options->दीर्घ_name);
 			/* abbreviated and negated? */
-			if (!rest && strstarts(options->long_name, arg + 3))
-				goto is_abbreviated;
-			if (!rest)
-				continue;
-		}
+			अगर (!rest && strstarts(options->दीर्घ_name, arg + 3))
+				जाओ is_abbreviated;
+			अगर (!rest)
+				जारी;
+		पूर्ण
 match:
-		if (*rest) {
-			if (*rest != '=')
-				continue;
+		अगर (*rest) अणु
+			अगर (*rest != '=')
+				जारी;
 			p->opt = rest + 1;
-		}
-		return get_value(p, options, flags);
-	}
+		पूर्ण
+		वापस get_value(p, options, flags);
+	पूर्ण
 
-	if (ambiguous_option) {
-		 fprintf(stderr,
+	अगर (ambiguous_option) अणु
+		 ख_लिखो(मानक_त्रुटि,
 			 " Error: Ambiguous option: %s (could be --%s%s or --%s%s)\n",
 			 arg,
 			 (ambiguous_flags & OPT_UNSET) ?  "no-" : "",
-			 ambiguous_option->long_name,
+			 ambiguous_option->दीर्घ_name,
 			 (abbrev_flags & OPT_UNSET) ?  "no-" : "",
-			 abbrev_option->long_name);
-		 return -1;
-	}
-	if (abbrev_option)
-		return get_value(p, abbrev_option, abbrev_flags);
+			 abbrev_option->दीर्घ_name);
+		 वापस -1;
+	पूर्ण
+	अगर (abbrev_option)
+		वापस get_value(p, abbrev_option, abbrev_flags);
 
-	if (options->parent) {
+	अगर (options->parent) अणु
 		options = options->parent;
-		goto retry;
-	}
+		जाओ retry;
+	पूर्ण
 
-	return -2;
-}
+	वापस -2;
+पूर्ण
 
-static void check_typos(const char *arg, const struct option *options)
-{
-	if (strlen(arg) < 3)
-		return;
+अटल व्योम check_typos(स्थिर अक्षर *arg, स्थिर काष्ठा option *options)
+अणु
+	अगर (म_माप(arg) < 3)
+		वापस;
 
-	if (strstarts(arg, "no-")) {
-		fprintf(stderr, " Error: did you mean `--%s` (with two dashes ?)\n", arg);
-		exit(129);
-	}
+	अगर (strstarts(arg, "no-")) अणु
+		ख_लिखो(मानक_त्रुटि, " Error: did you mean `--%s` (with two dashes ?)\n", arg);
+		निकास(129);
+	पूर्ण
 
-	for (; options->type != OPTION_END; options++) {
-		if (!options->long_name)
-			continue;
-		if (strstarts(options->long_name, arg)) {
-			fprintf(stderr, " Error: did you mean `--%s` (with two dashes ?)\n", arg);
-			exit(129);
-		}
-	}
-}
+	क्रम (; options->type != OPTION_END; options++) अणु
+		अगर (!options->दीर्घ_name)
+			जारी;
+		अगर (strstarts(options->दीर्घ_name, arg)) अणु
+			ख_लिखो(मानक_त्रुटि, " Error: did you mean `--%s` (with two dashes ?)\n", arg);
+			निकास(129);
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static void parse_options_start(struct parse_opt_ctx_t *ctx,
-				int argc, const char **argv, int flags)
-{
-	memset(ctx, 0, sizeof(*ctx));
+अटल व्योम parse_options_start(काष्ठा parse_opt_ctx_t *ctx,
+				पूर्णांक argc, स्थिर अक्षर **argv, पूर्णांक flags)
+अणु
+	स_रखो(ctx, 0, माप(*ctx));
 	ctx->argc = argc - 1;
 	ctx->argv = argv + 1;
 	ctx->out  = argv;
 	ctx->cpidx = ((flags & PARSE_OPT_KEEP_ARGV0) != 0);
 	ctx->flags = flags;
-	if ((flags & PARSE_OPT_KEEP_UNKNOWN) &&
+	अगर ((flags & PARSE_OPT_KEEP_UNKNOWN) &&
 	    (flags & PARSE_OPT_STOP_AT_NON_OPTION))
 		die("STOP_AT_NON_OPTION and KEEP_UNKNOWN don't go together");
-}
+पूर्ण
 
-static int usage_with_options_internal(const char * const *,
-				       const struct option *, int,
-				       struct parse_opt_ctx_t *);
+अटल पूर्णांक usage_with_options_पूर्णांकernal(स्थिर अक्षर * स्थिर *,
+				       स्थिर काष्ठा option *, पूर्णांक,
+				       काष्ठा parse_opt_ctx_t *);
 
-static int parse_options_step(struct parse_opt_ctx_t *ctx,
-			      const struct option *options,
-			      const char * const usagestr[])
-{
-	int internal_help = !(ctx->flags & PARSE_OPT_NO_INTERNAL_HELP);
-	int excl_short_opt = 1;
-	const char *arg;
+अटल पूर्णांक parse_options_step(काष्ठा parse_opt_ctx_t *ctx,
+			      स्थिर काष्ठा option *options,
+			      स्थिर अक्षर * स्थिर usagestr[])
+अणु
+	पूर्णांक पूर्णांकernal_help = !(ctx->flags & PARSE_OPT_NO_INTERNAL_HELP);
+	पूर्णांक excl_लघु_opt = 1;
+	स्थिर अक्षर *arg;
 
-	/* we must reset ->opt, unknown short option leave it dangling */
-	ctx->opt = NULL;
+	/* we must reset ->opt, unknown लघु option leave it dangling */
+	ctx->opt = शून्य;
 
-	for (; ctx->argc; ctx->argc--, ctx->argv++) {
+	क्रम (; ctx->argc; ctx->argc--, ctx->argv++) अणु
 		arg = ctx->argv[0];
-		if (*arg != '-' || !arg[1]) {
-			if (ctx->flags & PARSE_OPT_STOP_AT_NON_OPTION)
-				break;
+		अगर (*arg != '-' || !arg[1]) अणु
+			अगर (ctx->flags & PARSE_OPT_STOP_AT_NON_OPTION)
+				अवरोध;
 			ctx->out[ctx->cpidx++] = ctx->argv[0];
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		if (arg[1] != '-') {
+		अगर (arg[1] != '-') अणु
 			ctx->opt = ++arg;
-			if (internal_help && *ctx->opt == 'h') {
-				return usage_with_options_internal(usagestr, options, 0, ctx);
-			}
-			switch (parse_short_opt(ctx, options)) {
-			case -1:
-				return parse_options_usage(usagestr, options, arg, 1);
-			case -2:
-				goto unknown;
-			case -3:
-				goto exclusive;
-			default:
-				break;
-			}
-			if (ctx->opt)
+			अगर (पूर्णांकernal_help && *ctx->opt == 'h') अणु
+				वापस usage_with_options_पूर्णांकernal(usagestr, options, 0, ctx);
+			पूर्ण
+			चयन (parse_लघु_opt(ctx, options)) अणु
+			हाल -1:
+				वापस parse_options_usage(usagestr, options, arg, 1);
+			हाल -2:
+				जाओ unknown;
+			हाल -3:
+				जाओ exclusive;
+			शेष:
+				अवरोध;
+			पूर्ण
+			अगर (ctx->opt)
 				check_typos(arg, options);
-			while (ctx->opt) {
-				if (internal_help && *ctx->opt == 'h')
-					return usage_with_options_internal(usagestr, options, 0, ctx);
+			जबतक (ctx->opt) अणु
+				अगर (पूर्णांकernal_help && *ctx->opt == 'h')
+					वापस usage_with_options_पूर्णांकernal(usagestr, options, 0, ctx);
 				arg = ctx->opt;
-				switch (parse_short_opt(ctx, options)) {
-				case -1:
-					return parse_options_usage(usagestr, options, arg, 1);
-				case -2:
-					/* fake a short option thing to hide the fact that we may have
+				चयन (parse_लघु_opt(ctx, options)) अणु
+				हाल -1:
+					वापस parse_options_usage(usagestr, options, arg, 1);
+				हाल -2:
+					/* fake a लघु option thing to hide the fact that we may have
 					 * started to parse aggregated stuff
 					 *
 					 * This is leaky, too bad.
 					 */
 					ctx->argv[0] = strdup(ctx->opt - 1);
-					*(char *)ctx->argv[0] = '-';
-					goto unknown;
-				case -3:
-					goto exclusive;
-				default:
-					break;
-				}
-			}
-			continue;
-		}
+					*(अक्षर *)ctx->argv[0] = '-';
+					जाओ unknown;
+				हाल -3:
+					जाओ exclusive;
+				शेष:
+					अवरोध;
+				पूर्ण
+			पूर्ण
+			जारी;
+		पूर्ण
 
-		if (!arg[2]) { /* "--" */
-			if (!(ctx->flags & PARSE_OPT_KEEP_DASHDASH)) {
+		अगर (!arg[2]) अणु /* "--" */
+			अगर (!(ctx->flags & PARSE_OPT_KEEP_DASHDASH)) अणु
 				ctx->argc--;
 				ctx->argv++;
-			}
-			break;
-		}
+			पूर्ण
+			अवरोध;
+		पूर्ण
 
 		arg += 2;
-		if (internal_help && !strcmp(arg, "help-all"))
-			return usage_with_options_internal(usagestr, options, 1, ctx);
-		if (internal_help && !strcmp(arg, "help"))
-			return usage_with_options_internal(usagestr, options, 0, ctx);
-		if (!strcmp(arg, "list-opts"))
-			return PARSE_OPT_LIST_OPTS;
-		if (!strcmp(arg, "list-cmds"))
-			return PARSE_OPT_LIST_SUBCMDS;
-		switch (parse_long_opt(ctx, arg, options)) {
-		case -1:
-			return parse_options_usage(usagestr, options, arg, 0);
-		case -2:
-			goto unknown;
-		case -3:
-			excl_short_opt = 0;
-			goto exclusive;
-		default:
-			break;
-		}
-		continue;
+		अगर (पूर्णांकernal_help && !म_भेद(arg, "help-all"))
+			वापस usage_with_options_पूर्णांकernal(usagestr, options, 1, ctx);
+		अगर (पूर्णांकernal_help && !म_भेद(arg, "help"))
+			वापस usage_with_options_पूर्णांकernal(usagestr, options, 0, ctx);
+		अगर (!म_भेद(arg, "list-opts"))
+			वापस PARSE_OPT_LIST_OPTS;
+		अगर (!म_भेद(arg, "list-cmds"))
+			वापस PARSE_OPT_LIST_SUBCMDS;
+		चयन (parse_दीर्घ_opt(ctx, arg, options)) अणु
+		हाल -1:
+			वापस parse_options_usage(usagestr, options, arg, 0);
+		हाल -2:
+			जाओ unknown;
+		हाल -3:
+			excl_लघु_opt = 0;
+			जाओ exclusive;
+		शेष:
+			अवरोध;
+		पूर्ण
+		जारी;
 unknown:
-		if (!(ctx->flags & PARSE_OPT_KEEP_UNKNOWN))
-			return PARSE_OPT_UNKNOWN;
+		अगर (!(ctx->flags & PARSE_OPT_KEEP_UNKNOWN))
+			वापस PARSE_OPT_UNKNOWN;
 		ctx->out[ctx->cpidx++] = ctx->argv[0];
-		ctx->opt = NULL;
-	}
-	return PARSE_OPT_DONE;
+		ctx->opt = शून्य;
+	पूर्ण
+	वापस PARSE_OPT_DONE;
 
 exclusive:
-	parse_options_usage(usagestr, options, arg, excl_short_opt);
-	if ((excl_short_opt && ctx->excl_opt->short_name) ||
-	    ctx->excl_opt->long_name == NULL) {
-		char opt = ctx->excl_opt->short_name;
-		parse_options_usage(NULL, options, &opt, 1);
-	} else {
-		parse_options_usage(NULL, options, ctx->excl_opt->long_name, 0);
-	}
-	return PARSE_OPT_HELP;
-}
+	parse_options_usage(usagestr, options, arg, excl_लघु_opt);
+	अगर ((excl_लघु_opt && ctx->excl_opt->लघु_name) ||
+	    ctx->excl_opt->दीर्घ_name == शून्य) अणु
+		अक्षर opt = ctx->excl_opt->लघु_name;
+		parse_options_usage(शून्य, options, &opt, 1);
+	पूर्ण अन्यथा अणु
+		parse_options_usage(शून्य, options, ctx->excl_opt->दीर्घ_name, 0);
+	पूर्ण
+	वापस PARSE_OPT_HELP;
+पूर्ण
 
-static int parse_options_end(struct parse_opt_ctx_t *ctx)
-{
-	memmove(ctx->out + ctx->cpidx, ctx->argv, ctx->argc * sizeof(*ctx->out));
-	ctx->out[ctx->cpidx + ctx->argc] = NULL;
-	return ctx->cpidx + ctx->argc;
-}
+अटल पूर्णांक parse_options_end(काष्ठा parse_opt_ctx_t *ctx)
+अणु
+	स_हटाओ(ctx->out + ctx->cpidx, ctx->argv, ctx->argc * माप(*ctx->out));
+	ctx->out[ctx->cpidx + ctx->argc] = शून्य;
+	वापस ctx->cpidx + ctx->argc;
+पूर्ण
 
-int parse_options_subcommand(int argc, const char **argv, const struct option *options,
-			const char *const subcommands[], const char *usagestr[], int flags)
-{
-	struct parse_opt_ctx_t ctx;
+पूर्णांक parse_options_subcommand(पूर्णांक argc, स्थिर अक्षर **argv, स्थिर काष्ठा option *options,
+			स्थिर अक्षर *स्थिर subcommands[], स्थिर अक्षर *usagestr[], पूर्णांक flags)
+अणु
+	काष्ठा parse_opt_ctx_t ctx;
 
-	/* build usage string if it's not provided */
-	if (subcommands && !usagestr[0]) {
-		char *buf = NULL;
+	/* build usage string अगर it's not provided */
+	अगर (subcommands && !usagestr[0]) अणु
+		अक्षर *buf = शून्य;
 
-		astrcatf(&buf, "%s %s [<options>] {", subcmd_config.exec_name, argv[0]);
+		aम_जोड़ोf(&buf, "%s %s [<options>] {", subcmd_config.exec_name, argv[0]);
 
-		for (int i = 0; subcommands[i]; i++) {
-			if (i)
-				astrcat(&buf, "|");
-			astrcat(&buf, subcommands[i]);
-		}
-		astrcat(&buf, "}");
+		क्रम (पूर्णांक i = 0; subcommands[i]; i++) अणु
+			अगर (i)
+				aम_जोड़ो(&buf, "|");
+			aम_जोड़ो(&buf, subcommands[i]);
+		पूर्ण
+		aम_जोड़ो(&buf, "}");
 
 		usagestr[0] = buf;
-	}
+	पूर्ण
 
 	parse_options_start(&ctx, argc, argv, flags);
-	switch (parse_options_step(&ctx, options, usagestr)) {
-	case PARSE_OPT_HELP:
-		exit(129);
-	case PARSE_OPT_DONE:
-		break;
-	case PARSE_OPT_LIST_OPTS:
-		while (options->type != OPTION_END) {
-			if (options->long_name)
-				printf("--%s ", options->long_name);
+	चयन (parse_options_step(&ctx, options, usagestr)) अणु
+	हाल PARSE_OPT_HELP:
+		निकास(129);
+	हाल PARSE_OPT_DONE:
+		अवरोध;
+	हाल PARSE_OPT_LIST_OPTS:
+		जबतक (options->type != OPTION_END) अणु
+			अगर (options->दीर्घ_name)
+				म_लिखो("--%s ", options->दीर्घ_name);
 			options++;
-		}
-		putchar('\n');
-		exit(130);
-	case PARSE_OPT_LIST_SUBCMDS:
-		if (subcommands) {
-			for (int i = 0; subcommands[i]; i++)
-				printf("%s ", subcommands[i]);
-		}
-		putchar('\n');
-		exit(130);
-	default: /* PARSE_OPT_UNKNOWN */
-		if (ctx.argv[0][1] == '-')
-			astrcatf(&error_buf, "unknown option `%s'",
+		पूर्ण
+		अक्षर_दो('\n');
+		निकास(130);
+	हाल PARSE_OPT_LIST_SUBCMDS:
+		अगर (subcommands) अणु
+			क्रम (पूर्णांक i = 0; subcommands[i]; i++)
+				म_लिखो("%s ", subcommands[i]);
+		पूर्ण
+		अक्षर_दो('\n');
+		निकास(130);
+	शेष: /* PARSE_OPT_UNKNOWN */
+		अगर (ctx.argv[0][1] == '-')
+			aम_जोड़ोf(&error_buf, "unknown option `%s'",
 				 ctx.argv[0] + 2);
-		else
-			astrcatf(&error_buf, "unknown switch `%c'", *ctx.opt);
+		अन्यथा
+			aम_जोड़ोf(&error_buf, "unknown switch `%c'", *ctx.opt);
 		usage_with_options(usagestr, options);
-	}
+	पूर्ण
 
-	return parse_options_end(&ctx);
-}
+	वापस parse_options_end(&ctx);
+पूर्ण
 
-int parse_options(int argc, const char **argv, const struct option *options,
-		  const char * const usagestr[], int flags)
-{
-	return parse_options_subcommand(argc, argv, options, NULL,
-					(const char **) usagestr, flags);
-}
+पूर्णांक parse_options(पूर्णांक argc, स्थिर अक्षर **argv, स्थिर काष्ठा option *options,
+		  स्थिर अक्षर * स्थिर usagestr[], पूर्णांक flags)
+अणु
+	वापस parse_options_subcommand(argc, argv, options, शून्य,
+					(स्थिर अक्षर **) usagestr, flags);
+पूर्ण
 
-#define USAGE_OPTS_WIDTH 24
-#define USAGE_GAP         2
+#घोषणा USAGE_OPTS_WIDTH 24
+#घोषणा USAGE_GAP         2
 
-static void print_option_help(const struct option *opts, int full)
-{
-	size_t pos;
-	int pad;
+अटल व्योम prपूर्णांक_option_help(स्थिर काष्ठा option *opts, पूर्णांक full)
+अणु
+	माप_प्रकार pos;
+	पूर्णांक pad;
 
-	if (opts->type == OPTION_GROUP) {
-		fputc('\n', stderr);
-		if (*opts->help)
-			fprintf(stderr, "%s\n", opts->help);
-		return;
-	}
-	if (!full && (opts->flags & PARSE_OPT_HIDDEN))
-		return;
-	if (opts->flags & PARSE_OPT_DISABLED)
-		return;
+	अगर (opts->type == OPTION_GROUP) अणु
+		ख_अक्षर_दो('\n', मानक_त्रुटि);
+		अगर (*opts->help)
+			ख_लिखो(मानक_त्रुटि, "%s\n", opts->help);
+		वापस;
+	पूर्ण
+	अगर (!full && (opts->flags & PARSE_OPT_HIDDEN))
+		वापस;
+	अगर (opts->flags & PARSE_OPT_DISABLED)
+		वापस;
 
-	pos = fprintf(stderr, "    ");
-	if (opts->short_name)
-		pos += fprintf(stderr, "-%c", opts->short_name);
-	else
-		pos += fprintf(stderr, "    ");
+	pos = ख_लिखो(मानक_त्रुटि, "    ");
+	अगर (opts->लघु_name)
+		pos += ख_लिखो(मानक_त्रुटि, "-%c", opts->लघु_name);
+	अन्यथा
+		pos += ख_लिखो(मानक_त्रुटि, "    ");
 
-	if (opts->long_name && opts->short_name)
-		pos += fprintf(stderr, ", ");
-	if (opts->long_name)
-		pos += fprintf(stderr, "--%s", opts->long_name);
+	अगर (opts->दीर्घ_name && opts->लघु_name)
+		pos += ख_लिखो(मानक_त्रुटि, ", ");
+	अगर (opts->दीर्घ_name)
+		pos += ख_लिखो(मानक_त्रुटि, "--%s", opts->दीर्घ_name);
 
-	switch (opts->type) {
-	case OPTION_ARGUMENT:
-		break;
-	case OPTION_LONG:
-	case OPTION_ULONG:
-	case OPTION_U64:
-	case OPTION_INTEGER:
-	case OPTION_UINTEGER:
-		if (opts->flags & PARSE_OPT_OPTARG)
-			if (opts->long_name)
-				pos += fprintf(stderr, "[=<n>]");
-			else
-				pos += fprintf(stderr, "[<n>]");
-		else
-			pos += fprintf(stderr, " <n>");
-		break;
-	case OPTION_CALLBACK:
-		if (opts->flags & PARSE_OPT_NOARG)
-			break;
+	चयन (opts->type) अणु
+	हाल OPTION_ARGUMENT:
+		अवरोध;
+	हाल OPTION_LONG:
+	हाल OPTION_ULONG:
+	हाल OPTION_U64:
+	हाल OPTION_INTEGER:
+	हाल OPTION_UINTEGER:
+		अगर (opts->flags & PARSE_OPT_OPTARG)
+			अगर (opts->दीर्घ_name)
+				pos += ख_लिखो(मानक_त्रुटि, "[=<n>]");
+			अन्यथा
+				pos += ख_लिखो(मानक_त्रुटि, "[<n>]");
+		अन्यथा
+			pos += ख_लिखो(मानक_त्रुटि, " <n>");
+		अवरोध;
+	हाल OPTION_CALLBACK:
+		अगर (opts->flags & PARSE_OPT_NOARG)
+			अवरोध;
 		/* FALLTHROUGH */
-	case OPTION_STRING:
-		if (opts->argh) {
-			if (opts->flags & PARSE_OPT_OPTARG)
-				if (opts->long_name)
-					pos += fprintf(stderr, "[=<%s>]", opts->argh);
-				else
-					pos += fprintf(stderr, "[<%s>]", opts->argh);
-			else
-				pos += fprintf(stderr, " <%s>", opts->argh);
-		} else {
-			if (opts->flags & PARSE_OPT_OPTARG)
-				if (opts->long_name)
-					pos += fprintf(stderr, "[=...]");
-				else
-					pos += fprintf(stderr, "[...]");
-			else
-				pos += fprintf(stderr, " ...");
-		}
-		break;
-	default: /* OPTION_{BIT,BOOLEAN,SET_UINT,SET_PTR} */
-	case OPTION_END:
-	case OPTION_GROUP:
-	case OPTION_BIT:
-	case OPTION_BOOLEAN:
-	case OPTION_INCR:
-	case OPTION_SET_UINT:
-	case OPTION_SET_PTR:
-		break;
-	}
+	हाल OPTION_STRING:
+		अगर (opts->argh) अणु
+			अगर (opts->flags & PARSE_OPT_OPTARG)
+				अगर (opts->दीर्घ_name)
+					pos += ख_लिखो(मानक_त्रुटि, "[=<%s>]", opts->argh);
+				अन्यथा
+					pos += ख_लिखो(मानक_त्रुटि, "[<%s>]", opts->argh);
+			अन्यथा
+				pos += ख_लिखो(मानक_त्रुटि, " <%s>", opts->argh);
+		पूर्ण अन्यथा अणु
+			अगर (opts->flags & PARSE_OPT_OPTARG)
+				अगर (opts->दीर्घ_name)
+					pos += ख_लिखो(मानक_त्रुटि, "[=...]");
+				अन्यथा
+					pos += ख_लिखो(मानक_त्रुटि, "[...]");
+			अन्यथा
+				pos += ख_लिखो(मानक_त्रुटि, " ...");
+		पूर्ण
+		अवरोध;
+	शेष: /* OPTION_अणुBIT,BOOLEAN,SET_UINT,SET_PTRपूर्ण */
+	हाल OPTION_END:
+	हाल OPTION_GROUP:
+	हाल OPTION_BIT:
+	हाल OPTION_BOOLEAN:
+	हाल OPTION_INCR:
+	हाल OPTION_SET_UINT:
+	हाल OPTION_SET_PTR:
+		अवरोध;
+	पूर्ण
 
-	if (pos <= USAGE_OPTS_WIDTH)
+	अगर (pos <= USAGE_OPTS_WIDTH)
 		pad = USAGE_OPTS_WIDTH - pos;
-	else {
-		fputc('\n', stderr);
+	अन्यथा अणु
+		ख_अक्षर_दो('\n', मानक_त्रुटि);
 		pad = USAGE_OPTS_WIDTH;
-	}
-	fprintf(stderr, "%*s%s\n", pad + USAGE_GAP, "", opts->help);
-	if (opts->flags & PARSE_OPT_NOBUILD)
-		fprintf(stderr, "%*s(not built-in because %s)\n",
+	पूर्ण
+	ख_लिखो(मानक_त्रुटि, "%*s%s\n", pad + USAGE_GAP, "", opts->help);
+	अगर (opts->flags & PARSE_OPT_NOBUILD)
+		ख_लिखो(मानक_त्रुटि, "%*s(not built-in because %s)\n",
 			USAGE_OPTS_WIDTH + USAGE_GAP, "",
 			opts->build_opt);
-}
+पूर्ण
 
-static int option__cmp(const void *va, const void *vb)
-{
-	const struct option *a = va, *b = vb;
-	int sa = tolower(a->short_name), sb = tolower(b->short_name), ret;
+अटल पूर्णांक option__cmp(स्थिर व्योम *va, स्थिर व्योम *vb)
+अणु
+	स्थिर काष्ठा option *a = va, *b = vb;
+	पूर्णांक sa = छोटे(a->लघु_name), sb = छोटे(b->लघु_name), ret;
 
-	if (sa == 0)
+	अगर (sa == 0)
 		sa = 'z' + 1;
-	if (sb == 0)
+	अगर (sb == 0)
 		sb = 'z' + 1;
 
 	ret = sa - sb;
 
-	if (ret == 0) {
-		const char *la = a->long_name ?: "",
-			   *lb = b->long_name ?: "";
-		ret = strcmp(la, lb);
-	}
+	अगर (ret == 0) अणु
+		स्थिर अक्षर *la = a->दीर्घ_name ?: "",
+			   *lb = b->दीर्घ_name ?: "";
+		ret = म_भेद(la, lb);
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static struct option *options__order(const struct option *opts)
-{
-	int nr_opts = 0, len;
-	const struct option *o = opts;
-	struct option *ordered;
+अटल काष्ठा option *options__order(स्थिर काष्ठा option *opts)
+अणु
+	पूर्णांक nr_opts = 0, len;
+	स्थिर काष्ठा option *o = opts;
+	काष्ठा option *ordered;
 
-	for (o = opts; o->type != OPTION_END; o++)
+	क्रम (o = opts; o->type != OPTION_END; o++)
 		++nr_opts;
 
-	len = sizeof(*o) * (nr_opts + 1);
-	ordered = malloc(len);
-	if (!ordered)
-		goto out;
-	memcpy(ordered, opts, len);
+	len = माप(*o) * (nr_opts + 1);
+	ordered = दो_स्मृति(len);
+	अगर (!ordered)
+		जाओ out;
+	स_नकल(ordered, opts, len);
 
-	qsort(ordered, nr_opts, sizeof(*o), option__cmp);
+	क्विक(ordered, nr_opts, माप(*o), option__cmp);
 out:
-	return ordered;
-}
+	वापस ordered;
+पूर्ण
 
-static bool option__in_argv(const struct option *opt, const struct parse_opt_ctx_t *ctx)
-{
-	int i;
+अटल bool option__in_argv(स्थिर काष्ठा option *opt, स्थिर काष्ठा parse_opt_ctx_t *ctx)
+अणु
+	पूर्णांक i;
 
-	for (i = 1; i < ctx->argc; ++i) {
-		const char *arg = ctx->argv[i];
+	क्रम (i = 1; i < ctx->argc; ++i) अणु
+		स्थिर अक्षर *arg = ctx->argv[i];
 
-		if (arg[0] != '-') {
-			if (arg[1] == '\0') {
-				if (arg[0] == opt->short_name)
-					return true;
-				continue;
-			}
+		अगर (arg[0] != '-') अणु
+			अगर (arg[1] == '\0') अणु
+				अगर (arg[0] == opt->लघु_name)
+					वापस true;
+				जारी;
+			पूर्ण
 
-			if (opt->long_name && strcmp(opt->long_name, arg) == 0)
-				return true;
+			अगर (opt->दीर्घ_name && म_भेद(opt->दीर्घ_name, arg) == 0)
+				वापस true;
 
-			if (opt->help && strcasestr(opt->help, arg) != NULL)
-				return true;
+			अगर (opt->help && strहालstr(opt->help, arg) != शून्य)
+				वापस true;
 
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		if (arg[1] == opt->short_name ||
-		    (arg[1] == '-' && opt->long_name && strcmp(opt->long_name, arg + 2) == 0))
-			return true;
-	}
+		अगर (arg[1] == opt->लघु_name ||
+		    (arg[1] == '-' && opt->दीर्घ_name && म_भेद(opt->दीर्घ_name, arg + 2) == 0))
+			वापस true;
+	पूर्ण
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static int usage_with_options_internal(const char * const *usagestr,
-				       const struct option *opts, int full,
-				       struct parse_opt_ctx_t *ctx)
-{
-	struct option *ordered;
+अटल पूर्णांक usage_with_options_पूर्णांकernal(स्थिर अक्षर * स्थिर *usagestr,
+				       स्थिर काष्ठा option *opts, पूर्णांक full,
+				       काष्ठा parse_opt_ctx_t *ctx)
+अणु
+	काष्ठा option *ordered;
 
-	if (!usagestr)
-		return PARSE_OPT_HELP;
+	अगर (!usagestr)
+		वापस PARSE_OPT_HELP;
 
 	setup_pager();
 
-	if (error_buf) {
-		fprintf(stderr, "  Error: %s\n", error_buf);
-		zfree(&error_buf);
-	}
+	अगर (error_buf) अणु
+		ख_लिखो(मानक_त्रुटि, "  Error: %s\n", error_buf);
+		zमुक्त(&error_buf);
+	पूर्ण
 
-	fprintf(stderr, "\n Usage: %s\n", *usagestr++);
-	while (*usagestr && **usagestr)
-		fprintf(stderr, "    or: %s\n", *usagestr++);
-	while (*usagestr) {
-		fprintf(stderr, "%s%s\n",
+	ख_लिखो(मानक_त्रुटि, "\n Usage: %s\n", *usagestr++);
+	जबतक (*usagestr && **usagestr)
+		ख_लिखो(मानक_त्रुटि, "    or: %s\n", *usagestr++);
+	जबतक (*usagestr) अणु
+		ख_लिखो(मानक_त्रुटि, "%s%s\n",
 				**usagestr ? "    " : "",
 				*usagestr);
 		usagestr++;
-	}
+	पूर्ण
 
-	if (opts->type != OPTION_GROUP)
-		fputc('\n', stderr);
+	अगर (opts->type != OPTION_GROUP)
+		ख_अक्षर_दो('\n', मानक_त्रुटि);
 
 	ordered = options__order(opts);
-	if (ordered)
+	अगर (ordered)
 		opts = ordered;
 
-	for (  ; opts->type != OPTION_END; opts++) {
-		if (ctx && ctx->argc > 1 && !option__in_argv(opts, ctx))
-			continue;
-		print_option_help(opts, full);
-	}
+	क्रम (  ; opts->type != OPTION_END; opts++) अणु
+		अगर (ctx && ctx->argc > 1 && !option__in_argv(opts, ctx))
+			जारी;
+		prपूर्णांक_option_help(opts, full);
+	पूर्ण
 
-	fputc('\n', stderr);
+	ख_अक्षर_दो('\n', मानक_त्रुटि);
 
-	free(ordered);
+	मुक्त(ordered);
 
-	return PARSE_OPT_HELP;
-}
+	वापस PARSE_OPT_HELP;
+पूर्ण
 
-void usage_with_options(const char * const *usagestr,
-			const struct option *opts)
-{
-	usage_with_options_internal(usagestr, opts, 0, NULL);
-	exit(129);
-}
+व्योम usage_with_options(स्थिर अक्षर * स्थिर *usagestr,
+			स्थिर काष्ठा option *opts)
+अणु
+	usage_with_options_पूर्णांकernal(usagestr, opts, 0, शून्य);
+	निकास(129);
+पूर्ण
 
-void usage_with_options_msg(const char * const *usagestr,
-			    const struct option *opts, const char *fmt, ...)
-{
-	va_list ap;
-	char *tmp = error_buf;
+व्योम usage_with_options_msg(स्थिर अक्षर * स्थिर *usagestr,
+			    स्थिर काष्ठा option *opts, स्थिर अक्षर *fmt, ...)
+अणु
+	बहु_सूची ap;
+	अक्षर *पंचांगp = error_buf;
 
-	va_start(ap, fmt);
-	if (vasprintf(&error_buf, fmt, ap) == -1)
+	बहु_शुरू(ap, fmt);
+	अगर (vaप्र_लिखो(&error_buf, fmt, ap) == -1)
 		die("vasprintf failed");
-	va_end(ap);
+	बहु_पूर्ण(ap);
 
-	free(tmp);
+	मुक्त(पंचांगp);
 
-	usage_with_options_internal(usagestr, opts, 0, NULL);
-	exit(129);
-}
+	usage_with_options_पूर्णांकernal(usagestr, opts, 0, शून्य);
+	निकास(129);
+पूर्ण
 
-int parse_options_usage(const char * const *usagestr,
-			const struct option *opts,
-			const char *optstr, bool short_opt)
-{
-	if (!usagestr)
-		goto opt;
+पूर्णांक parse_options_usage(स्थिर अक्षर * स्थिर *usagestr,
+			स्थिर काष्ठा option *opts,
+			स्थिर अक्षर *optstr, bool लघु_opt)
+अणु
+	अगर (!usagestr)
+		जाओ opt;
 
-	fprintf(stderr, "\n Usage: %s\n", *usagestr++);
-	while (*usagestr && **usagestr)
-		fprintf(stderr, "    or: %s\n", *usagestr++);
-	while (*usagestr) {
-		fprintf(stderr, "%s%s\n",
+	ख_लिखो(मानक_त्रुटि, "\n Usage: %s\n", *usagestr++);
+	जबतक (*usagestr && **usagestr)
+		ख_लिखो(मानक_त्रुटि, "    or: %s\n", *usagestr++);
+	जबतक (*usagestr) अणु
+		ख_लिखो(मानक_त्रुटि, "%s%s\n",
 				**usagestr ? "    " : "",
 				*usagestr);
 		usagestr++;
-	}
-	fputc('\n', stderr);
+	पूर्ण
+	ख_अक्षर_दो('\n', मानक_त्रुटि);
 
 opt:
-	for (  ; opts->type != OPTION_END; opts++) {
-		if (short_opt) {
-			if (opts->short_name == *optstr) {
-				print_option_help(opts, 0);
-				break;
-			}
-			continue;
-		}
+	क्रम (  ; opts->type != OPTION_END; opts++) अणु
+		अगर (लघु_opt) अणु
+			अगर (opts->लघु_name == *optstr) अणु
+				prपूर्णांक_option_help(opts, 0);
+				अवरोध;
+			पूर्ण
+			जारी;
+		पूर्ण
 
-		if (opts->long_name == NULL)
-			continue;
+		अगर (opts->दीर्घ_name == शून्य)
+			जारी;
 
-		if (strstarts(opts->long_name, optstr))
-			print_option_help(opts, 0);
-		if (strstarts("no-", optstr) &&
-		    strstarts(opts->long_name, optstr + 3))
-			print_option_help(opts, 0);
-	}
+		अगर (strstarts(opts->दीर्घ_name, optstr))
+			prपूर्णांक_option_help(opts, 0);
+		अगर (strstarts("no-", optstr) &&
+		    strstarts(opts->दीर्घ_name, optstr + 3))
+			prपूर्णांक_option_help(opts, 0);
+	पूर्ण
 
-	return PARSE_OPT_HELP;
-}
+	वापस PARSE_OPT_HELP;
+पूर्ण
 
 
-int parse_opt_verbosity_cb(const struct option *opt,
-			   const char *arg __maybe_unused,
-			   int unset)
-{
-	int *target = opt->value;
+पूर्णांक parse_opt_verbosity_cb(स्थिर काष्ठा option *opt,
+			   स्थिर अक्षर *arg __maybe_unused,
+			   पूर्णांक unset)
+अणु
+	पूर्णांक *target = opt->value;
 
-	if (unset)
+	अगर (unset)
 		/* --no-quiet, --no-verbose */
 		*target = 0;
-	else if (opt->short_name == 'v') {
-		if (*target >= 0)
+	अन्यथा अगर (opt->लघु_name == 'v') अणु
+		अगर (*target >= 0)
 			(*target)++;
-		else
+		अन्यथा
 			*target = 1;
-	} else {
-		if (*target <= 0)
+	पूर्ण अन्यथा अणु
+		अगर (*target <= 0)
 			(*target)--;
-		else
+		अन्यथा
 			*target = -1;
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static struct option *
-find_option(struct option *opts, int shortopt, const char *longopt)
-{
-	for (; opts->type != OPTION_END; opts++) {
-		if ((shortopt && opts->short_name == shortopt) ||
-		    (opts->long_name && longopt &&
-		     !strcmp(opts->long_name, longopt)))
-			return opts;
-	}
-	return NULL;
-}
+अटल काष्ठा option *
+find_option(काष्ठा option *opts, पूर्णांक लघुopt, स्थिर अक्षर *दीर्घopt)
+अणु
+	क्रम (; opts->type != OPTION_END; opts++) अणु
+		अगर ((लघुopt && opts->लघु_name == लघुopt) ||
+		    (opts->दीर्घ_name && दीर्घopt &&
+		     !म_भेद(opts->दीर्घ_name, दीर्घopt)))
+			वापस opts;
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
-void set_option_flag(struct option *opts, int shortopt, const char *longopt,
-		     int flag)
-{
-	struct option *opt = find_option(opts, shortopt, longopt);
+व्योम set_option_flag(काष्ठा option *opts, पूर्णांक लघुopt, स्थिर अक्षर *दीर्घopt,
+		     पूर्णांक flag)
+अणु
+	काष्ठा option *opt = find_option(opts, लघुopt, दीर्घopt);
 
-	if (opt)
+	अगर (opt)
 		opt->flags |= flag;
-	return;
-}
+	वापस;
+पूर्ण
 
-void set_option_nobuild(struct option *opts, int shortopt,
-			const char *longopt,
-			const char *build_opt,
+व्योम set_option_nobuild(काष्ठा option *opts, पूर्णांक लघुopt,
+			स्थिर अक्षर *दीर्घopt,
+			स्थिर अक्षर *build_opt,
 			bool can_skip)
-{
-	struct option *opt = find_option(opts, shortopt, longopt);
+अणु
+	काष्ठा option *opt = find_option(opts, लघुopt, दीर्घopt);
 
-	if (!opt)
-		return;
+	अगर (!opt)
+		वापस;
 
 	opt->flags |= PARSE_OPT_NOBUILD;
 	opt->flags |= can_skip ? PARSE_OPT_CANSKIP : 0;
 	opt->build_opt = build_opt;
-}
+पूर्ण

@@ -1,12 +1,13 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __CFG80211_DEBUGFS_H
-#define __CFG80211_DEBUGFS_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __CFG80211_DEBUGFS_H
+#घोषणा __CFG80211_DEBUGFS_H
 
-#ifdef CONFIG_CFG80211_DEBUGFS
-void cfg80211_debugfs_rdev_add(struct cfg80211_registered_device *rdev);
-#else
-static inline
-void cfg80211_debugfs_rdev_add(struct cfg80211_registered_device *rdev) {}
-#endif
+#अगर_घोषित CONFIG_CFG80211_DEBUGFS
+व्योम cfg80211_debugfs_rdev_add(काष्ठा cfg80211_रेजिस्टरed_device *rdev);
+#अन्यथा
+अटल अंतरभूत
+व्योम cfg80211_debugfs_rdev_add(काष्ठा cfg80211_रेजिस्टरed_device *rdev) अणुपूर्ण
+#पूर्ण_अगर
 
-#endif /* __CFG80211_DEBUGFS_H */
+#पूर्ण_अगर /* __CFG80211_DEBUGFS_H */

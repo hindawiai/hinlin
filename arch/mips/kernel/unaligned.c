@@ -1,122 +1,123 @@
+<शैली गुरु>
 /*
  * Handle unaligned accesses by emulation.
  *
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the main directory of this archive
- * for more details.
+ * License.  See the file "COPYING" in the मुख्य directory of this archive
+ * क्रम more details.
  *
  * Copyright (C) 1996, 1998, 1999, 2002 by Ralf Baechle
  * Copyright (C) 1999 Silicon Graphics, Inc.
  * Copyright (C) 2014 Imagination Technologies Ltd.
  *
- * This file contains exception handler for address error exception with the
- * special capability to execute faulting instructions in software.  The
- * handler does not try to handle the case when the program counter points
+ * This file contains exception handler क्रम address error exception with the
+ * special capability to execute faulting inकाष्ठाions in software.  The
+ * handler करोes not try to handle the हाल when the program counter poपूर्णांकs
  * to an address not aligned to a word boundary.
  *
  * Putting data to unaligned addresses is a bad practice even on Intel where
- * only the performance is affected.  Much worse is that such code is non-
+ * only the perक्रमmance is affected.  Much worse is that such code is non-
  * portable.  Due to several programs that die on MIPS due to alignment
  * problems I decided to implement this handler anyway though I originally
- * didn't intend to do this at all for user code.
+ * didn't पूर्णांकend to करो this at all क्रम user code.
  *
- * For now I enable fixing of address errors by default to make life easier.
- * I however intend to disable this somewhen in the future when the alignment
+ * For now I enable fixing of address errors by शेष to make lअगरe easier.
+ * I however पूर्णांकend to disable this somewhen in the future when the alignment
  * problems with user programs have been fixed.	 For programmers this is the
  * right way to go.
  *
  * Fixing address errors is a per process option.  The option is inherited
- * across fork(2) and execve(2) calls.	If you really want to use the
+ * across विभाजन(2) and execve(2) calls.	If you really want to use the
  * option in your user programs - I discourage the use of the software
  * emulation strongly - use the following code in your userland stuff:
  *
- * #include <sys/sysmips.h>
+ * #समावेश <sys/sysmips.h>
  *
  * ...
  * sysmips(MIPS_FIXADE, x);
  * ...
  *
- * The argument x is 0 for disabling software emulation, enabled otherwise.
+ * The argument x is 0 क्रम disabling software emulation, enabled otherwise.
  *
  * Below a little program to play around with this feature.
  *
- * #include <stdio.h>
- * #include <sys/sysmips.h>
+ * #समावेश <मानकपन.स>
+ * #समावेश <sys/sysmips.h>
  *
- * struct foo {
- *	   unsigned char bar[8];
- * };
+ * काष्ठा foo अणु
+ *	   अचिन्हित अक्षर bar[8];
+ * पूर्ण;
  *
- * main(int argc, char *argv[])
- * {
- *	   struct foo x = {0, 1, 2, 3, 4, 5, 6, 7};
- *	   unsigned int *p = (unsigned int *) (x.bar + 3);
- *	   int i;
+ * मुख्य(पूर्णांक argc, अक्षर *argv[])
+ * अणु
+ *	   काष्ठा foo x = अणु0, 1, 2, 3, 4, 5, 6, 7पूर्ण;
+ *	   अचिन्हित पूर्णांक *p = (अचिन्हित पूर्णांक *) (x.bar + 3);
+ *	   पूर्णांक i;
  *
- *	   if (argc > 1)
- *		   sysmips(MIPS_FIXADE, atoi(argv[1]));
+ *	   अगर (argc > 1)
+ *		   sysmips(MIPS_FIXADE, म_से_प(argv[1]));
  *
- *	   printf("*p = %08lx\n", *p);
+ *	   म_लिखो("*p = %08lx\n", *p);
  *
  *	   *p = 0xdeadface;
  *
- *	   for(i = 0; i <= 7; i++)
- *	   printf("%02x ", x.bar[i]);
- *	   printf("\n");
- * }
+ *	   क्रम(i = 0; i <= 7; i++)
+ *	   म_लिखो("%02x ", x.bar[i]);
+ *	   म_लिखो("\n");
+ * पूर्ण
  *
- * Coprocessor loads are not supported; I think this case is unimportant
+ * Coprocessor loads are not supported; I think this हाल is unimportant
  * in the practice.
  *
- * TODO: Handle ndc (attempted store to doubleword in uncached memory)
- *	 exception for the R6000.
+ * TODO: Handle ndc (attempted store to द्विगुनword in uncached memory)
+ *	 exception क्रम the R6000.
  *	 A store crossing a page boundary might be executed only partially.
- *	 Undo the partial store in this case.
+ *	 Unकरो the partial store in this हाल.
  */
-#include <linux/context_tracking.h>
-#include <linux/mm.h>
-#include <linux/signal.h>
-#include <linux/smp.h>
-#include <linux/sched.h>
-#include <linux/debugfs.h>
-#include <linux/perf_event.h>
+#समावेश <linux/context_tracking.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/संकेत.स>
+#समावेश <linux/smp.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/debugfs.h>
+#समावेश <linux/perf_event.h>
 
-#include <asm/asm.h>
-#include <asm/branch.h>
-#include <asm/byteorder.h>
-#include <asm/cop2.h>
-#include <asm/debug.h>
-#include <asm/fpu.h>
-#include <asm/fpu_emulator.h>
-#include <asm/inst.h>
-#include <asm/unaligned-emul.h>
-#include <asm/mmu_context.h>
-#include <linux/uaccess.h>
+#समावेश <यंत्र/यंत्र.h>
+#समावेश <यंत्र/branch.h>
+#समावेश <यंत्र/byteorder.h>
+#समावेश <यंत्र/cop2.h>
+#समावेश <यंत्र/debug.h>
+#समावेश <यंत्र/fpu.h>
+#समावेश <यंत्र/fpu_emulator.h>
+#समावेश <यंत्र/inst.h>
+#समावेश <यंत्र/unaligned-emul.h>
+#समावेश <यंत्र/mmu_context.h>
+#समावेश <linux/uaccess.h>
 
-#include "access-helper.h"
+#समावेश "access-helper.h"
 
-enum {
+क्रमागत अणु
 	UNALIGNED_ACTION_QUIET,
 	UNALIGNED_ACTION_SIGNAL,
 	UNALIGNED_ACTION_SHOW,
-};
-#ifdef CONFIG_DEBUG_FS
-static u32 unaligned_instructions;
-static u32 unaligned_action;
-#else
-#define unaligned_action UNALIGNED_ACTION_QUIET
-#endif
-extern void show_registers(struct pt_regs *regs);
+पूर्ण;
+#अगर_घोषित CONFIG_DEBUG_FS
+अटल u32 unaligned_inकाष्ठाions;
+अटल u32 unaligned_action;
+#अन्यथा
+#घोषणा unaligned_action UNALIGNED_ACTION_QUIET
+#पूर्ण_अगर
+बाह्य व्योम show_रेजिस्टरs(काष्ठा pt_regs *regs);
 
-static void emulate_load_store_insn(struct pt_regs *regs,
-	void __user *addr, unsigned int *pc)
-{
-	unsigned long origpc, orig31, value;
-	union mips_instruction insn;
-	unsigned int res;
+अटल व्योम emulate_load_store_insn(काष्ठा pt_regs *regs,
+	व्योम __user *addr, अचिन्हित पूर्णांक *pc)
+अणु
+	अचिन्हित दीर्घ origpc, orig31, value;
+	जोड़ mips_inकाष्ठाion insn;
+	अचिन्हित पूर्णांक res;
 	bool user = user_mode(regs);
 
-	origpc = (unsigned long)pc;
+	origpc = (अचिन्हित दीर्घ)pc;
 	orig31 = regs->regs[31];
 
 	perf_sw_event(PERF_COUNT_SW_EMULATION_FAULTS, 1, regs, 0);
@@ -126,464 +127,464 @@ static void emulate_load_store_insn(struct pt_regs *regs,
 	 */
 	__get_inst32(&insn.word, pc, user);
 
-	switch (insn.i_format.opcode) {
+	चयन (insn.i_क्रमmat.opcode) अणु
 		/*
-		 * These are instructions that a compiler doesn't generate.  We
-		 * can assume therefore that the code is MIPS-aware and
-		 * really buggy.  Emulating these instructions would break the
+		 * These are inकाष्ठाions that a compiler करोesn't generate.  We
+		 * can assume thereक्रमe that the code is MIPS-aware and
+		 * really buggy.  Emulating these inकाष्ठाions would अवरोध the
 		 * semantics anyway.
 		 */
-	case ll_op:
-	case lld_op:
-	case sc_op:
-	case scd_op:
+	हाल ll_op:
+	हाल lld_op:
+	हाल sc_op:
+	हाल scd_op:
 
 		/*
-		 * For these instructions the only way to create an address
+		 * For these inकाष्ठाions the only way to create an address
 		 * error is an attempted access to kernel/supervisor address
 		 * space.
 		 */
-	case ldl_op:
-	case ldr_op:
-	case lwl_op:
-	case lwr_op:
-	case sdl_op:
-	case sdr_op:
-	case swl_op:
-	case swr_op:
-	case lb_op:
-	case lbu_op:
-	case sb_op:
-		goto sigbus;
+	हाल ldl_op:
+	हाल ldr_op:
+	हाल lwl_op:
+	हाल lwr_op:
+	हाल sdl_op:
+	हाल sdr_op:
+	हाल swl_op:
+	हाल swr_op:
+	हाल lb_op:
+	हाल lbu_op:
+	हाल sb_op:
+		जाओ sigbus;
 
 		/*
-		 * The remaining opcodes are the ones that are really of
-		 * interest.
+		 * The reमुख्यing opcodes are the ones that are really of
+		 * पूर्णांकerest.
 		 */
-	case spec3_op:
-		if (insn.dsp_format.func == lx_op) {
-			switch (insn.dsp_format.op) {
-			case lwx_op:
-				if (user && !access_ok(addr, 4))
-					goto sigbus;
+	हाल spec3_op:
+		अगर (insn.dsp_क्रमmat.func == lx_op) अणु
+			चयन (insn.dsp_क्रमmat.op) अणु
+			हाल lwx_op:
+				अगर (user && !access_ok(addr, 4))
+					जाओ sigbus;
 				LoadW(addr, value, res);
-				if (res)
-					goto fault;
-				compute_return_epc(regs);
-				regs->regs[insn.dsp_format.rd] = value;
-				break;
-			case lhx_op:
-				if (user && !access_ok(addr, 2))
-					goto sigbus;
+				अगर (res)
+					जाओ fault;
+				compute_वापस_epc(regs);
+				regs->regs[insn.dsp_क्रमmat.rd] = value;
+				अवरोध;
+			हाल lhx_op:
+				अगर (user && !access_ok(addr, 2))
+					जाओ sigbus;
 				LoadHW(addr, value, res);
-				if (res)
-					goto fault;
-				compute_return_epc(regs);
-				regs->regs[insn.dsp_format.rd] = value;
-				break;
-			default:
-				goto sigill;
-			}
-		}
-#ifdef CONFIG_EVA
-		else {
+				अगर (res)
+					जाओ fault;
+				compute_वापस_epc(regs);
+				regs->regs[insn.dsp_क्रमmat.rd] = value;
+				अवरोध;
+			शेष:
+				जाओ sigill;
+			पूर्ण
+		पूर्ण
+#अगर_घोषित CONFIG_EVA
+		अन्यथा अणु
 			/*
 			 * we can land here only from kernel accessing user
 			 * memory, so we need to "switch" the address limit to
 			 * user space, so that address check can work properly.
 			 */
-			switch (insn.spec3_format.func) {
-			case lhe_op:
-				if (!access_ok(addr, 2))
-					goto sigbus;
+			चयन (insn.spec3_क्रमmat.func) अणु
+			हाल lhe_op:
+				अगर (!access_ok(addr, 2))
+					जाओ sigbus;
 				LoadHWE(addr, value, res);
-				if (res)
-					goto fault;
-				compute_return_epc(regs);
-				regs->regs[insn.spec3_format.rt] = value;
-				break;
-			case lwe_op:
-				if (!access_ok(addr, 4))
-					goto sigbus;
+				अगर (res)
+					जाओ fault;
+				compute_वापस_epc(regs);
+				regs->regs[insn.spec3_क्रमmat.rt] = value;
+				अवरोध;
+			हाल lwe_op:
+				अगर (!access_ok(addr, 4))
+					जाओ sigbus;
 				LoadWE(addr, value, res);
-				if (res)
-					goto fault;
-				compute_return_epc(regs);
-				regs->regs[insn.spec3_format.rt] = value;
-				break;
-			case lhue_op:
-				if (!access_ok(addr, 2))
-					goto sigbus;
+				अगर (res)
+					जाओ fault;
+				compute_वापस_epc(regs);
+				regs->regs[insn.spec3_क्रमmat.rt] = value;
+				अवरोध;
+			हाल lhue_op:
+				अगर (!access_ok(addr, 2))
+					जाओ sigbus;
 				LoadHWUE(addr, value, res);
-				if (res)
-					goto fault;
-				compute_return_epc(regs);
-				regs->regs[insn.spec3_format.rt] = value;
-				break;
-			case she_op:
-				if (!access_ok(addr, 2))
-					goto sigbus;
-				compute_return_epc(regs);
-				value = regs->regs[insn.spec3_format.rt];
+				अगर (res)
+					जाओ fault;
+				compute_वापस_epc(regs);
+				regs->regs[insn.spec3_क्रमmat.rt] = value;
+				अवरोध;
+			हाल she_op:
+				अगर (!access_ok(addr, 2))
+					जाओ sigbus;
+				compute_वापस_epc(regs);
+				value = regs->regs[insn.spec3_क्रमmat.rt];
 				StoreHWE(addr, value, res);
-				if (res)
-					goto fault;
-				break;
-			case swe_op:
-				if (!access_ok(addr, 4))
-					goto sigbus;
-				compute_return_epc(regs);
-				value = regs->regs[insn.spec3_format.rt];
+				अगर (res)
+					जाओ fault;
+				अवरोध;
+			हाल swe_op:
+				अगर (!access_ok(addr, 4))
+					जाओ sigbus;
+				compute_वापस_epc(regs);
+				value = regs->regs[insn.spec3_क्रमmat.rt];
 				StoreWE(addr, value, res);
-				if (res)
-					goto fault;
-				break;
-			default:
-				goto sigill;
-			}
-		}
-#endif
-		break;
-	case lh_op:
-		if (user && !access_ok(addr, 2))
-			goto sigbus;
+				अगर (res)
+					जाओ fault;
+				अवरोध;
+			शेष:
+				जाओ sigill;
+			पूर्ण
+		पूर्ण
+#पूर्ण_अगर
+		अवरोध;
+	हाल lh_op:
+		अगर (user && !access_ok(addr, 2))
+			जाओ sigbus;
 
-		if (IS_ENABLED(CONFIG_EVA) && user)
+		अगर (IS_ENABLED(CONFIG_EVA) && user)
 			LoadHWE(addr, value, res);
-		else
+		अन्यथा
 			LoadHW(addr, value, res);
 
-		if (res)
-			goto fault;
-		compute_return_epc(regs);
-		regs->regs[insn.i_format.rt] = value;
-		break;
+		अगर (res)
+			जाओ fault;
+		compute_वापस_epc(regs);
+		regs->regs[insn.i_क्रमmat.rt] = value;
+		अवरोध;
 
-	case lw_op:
-		if (user && !access_ok(addr, 4))
-			goto sigbus;
+	हाल lw_op:
+		अगर (user && !access_ok(addr, 4))
+			जाओ sigbus;
 
-		if (IS_ENABLED(CONFIG_EVA) && user)
+		अगर (IS_ENABLED(CONFIG_EVA) && user)
 			LoadWE(addr, value, res);
-		else
+		अन्यथा
 			LoadW(addr, value, res);
 
-		if (res)
-			goto fault;
-		compute_return_epc(regs);
-		regs->regs[insn.i_format.rt] = value;
-		break;
+		अगर (res)
+			जाओ fault;
+		compute_वापस_epc(regs);
+		regs->regs[insn.i_क्रमmat.rt] = value;
+		अवरोध;
 
-	case lhu_op:
-		if (user && !access_ok(addr, 2))
-			goto sigbus;
+	हाल lhu_op:
+		अगर (user && !access_ok(addr, 2))
+			जाओ sigbus;
 
-		if (IS_ENABLED(CONFIG_EVA) && user)
+		अगर (IS_ENABLED(CONFIG_EVA) && user)
 			LoadHWUE(addr, value, res);
-		else
+		अन्यथा
 			LoadHWU(addr, value, res);
 
-		if (res)
-			goto fault;
-		compute_return_epc(regs);
-		regs->regs[insn.i_format.rt] = value;
-		break;
+		अगर (res)
+			जाओ fault;
+		compute_वापस_epc(regs);
+		regs->regs[insn.i_क्रमmat.rt] = value;
+		अवरोध;
 
-	case lwu_op:
-#ifdef CONFIG_64BIT
+	हाल lwu_op:
+#अगर_घोषित CONFIG_64BIT
 		/*
 		 * A 32-bit kernel might be running on a 64-bit processor.  But
-		 * if we're on a 32-bit processor and an i-cache incoherency
-		 * or race makes us see a 64-bit instruction here the sdl/sdr
-		 * would blow up, so for now we don't handle unaligned 64-bit
-		 * instructions on 32-bit kernels.
+		 * अगर we're on a 32-bit processor and an i-cache incoherency
+		 * or race makes us see a 64-bit inकाष्ठाion here the sdl/sdr
+		 * would blow up, so क्रम now we करोn't handle unaligned 64-bit
+		 * inकाष्ठाions on 32-bit kernels.
 		 */
-		if (user && !access_ok(addr, 4))
-			goto sigbus;
+		अगर (user && !access_ok(addr, 4))
+			जाओ sigbus;
 
 		LoadWU(addr, value, res);
-		if (res)
-			goto fault;
-		compute_return_epc(regs);
-		regs->regs[insn.i_format.rt] = value;
-		break;
-#endif /* CONFIG_64BIT */
+		अगर (res)
+			जाओ fault;
+		compute_वापस_epc(regs);
+		regs->regs[insn.i_क्रमmat.rt] = value;
+		अवरोध;
+#पूर्ण_अगर /* CONFIG_64BIT */
 
-		/* Cannot handle 64-bit instructions in 32-bit kernel */
-		goto sigill;
+		/* Cannot handle 64-bit inकाष्ठाions in 32-bit kernel */
+		जाओ sigill;
 
-	case ld_op:
-#ifdef CONFIG_64BIT
+	हाल ld_op:
+#अगर_घोषित CONFIG_64BIT
 		/*
 		 * A 32-bit kernel might be running on a 64-bit processor.  But
-		 * if we're on a 32-bit processor and an i-cache incoherency
-		 * or race makes us see a 64-bit instruction here the sdl/sdr
-		 * would blow up, so for now we don't handle unaligned 64-bit
-		 * instructions on 32-bit kernels.
+		 * अगर we're on a 32-bit processor and an i-cache incoherency
+		 * or race makes us see a 64-bit inकाष्ठाion here the sdl/sdr
+		 * would blow up, so क्रम now we करोn't handle unaligned 64-bit
+		 * inकाष्ठाions on 32-bit kernels.
 		 */
-		if (user && !access_ok(addr, 8))
-			goto sigbus;
+		अगर (user && !access_ok(addr, 8))
+			जाओ sigbus;
 
 		LoadDW(addr, value, res);
-		if (res)
-			goto fault;
-		compute_return_epc(regs);
-		regs->regs[insn.i_format.rt] = value;
-		break;
-#endif /* CONFIG_64BIT */
+		अगर (res)
+			जाओ fault;
+		compute_वापस_epc(regs);
+		regs->regs[insn.i_क्रमmat.rt] = value;
+		अवरोध;
+#पूर्ण_अगर /* CONFIG_64BIT */
 
-		/* Cannot handle 64-bit instructions in 32-bit kernel */
-		goto sigill;
+		/* Cannot handle 64-bit inकाष्ठाions in 32-bit kernel */
+		जाओ sigill;
 
-	case sh_op:
-		if (user && !access_ok(addr, 2))
-			goto sigbus;
+	हाल sh_op:
+		अगर (user && !access_ok(addr, 2))
+			जाओ sigbus;
 
-		compute_return_epc(regs);
-		value = regs->regs[insn.i_format.rt];
+		compute_वापस_epc(regs);
+		value = regs->regs[insn.i_क्रमmat.rt];
 
-		if (IS_ENABLED(CONFIG_EVA) && user)
+		अगर (IS_ENABLED(CONFIG_EVA) && user)
 			StoreHWE(addr, value, res);
-		else
+		अन्यथा
 			StoreHW(addr, value, res);
 
-		if (res)
-			goto fault;
-		break;
+		अगर (res)
+			जाओ fault;
+		अवरोध;
 
-	case sw_op:
-		if (user && !access_ok(addr, 4))
-			goto sigbus;
+	हाल sw_op:
+		अगर (user && !access_ok(addr, 4))
+			जाओ sigbus;
 
-		compute_return_epc(regs);
-		value = regs->regs[insn.i_format.rt];
+		compute_वापस_epc(regs);
+		value = regs->regs[insn.i_क्रमmat.rt];
 
-		if (IS_ENABLED(CONFIG_EVA) && user)
+		अगर (IS_ENABLED(CONFIG_EVA) && user)
 			StoreWE(addr, value, res);
-		else
+		अन्यथा
 			StoreW(addr, value, res);
 
-		if (res)
-			goto fault;
-		break;
+		अगर (res)
+			जाओ fault;
+		अवरोध;
 
-	case sd_op:
-#ifdef CONFIG_64BIT
+	हाल sd_op:
+#अगर_घोषित CONFIG_64BIT
 		/*
 		 * A 32-bit kernel might be running on a 64-bit processor.  But
-		 * if we're on a 32-bit processor and an i-cache incoherency
-		 * or race makes us see a 64-bit instruction here the sdl/sdr
-		 * would blow up, so for now we don't handle unaligned 64-bit
-		 * instructions on 32-bit kernels.
+		 * अगर we're on a 32-bit processor and an i-cache incoherency
+		 * or race makes us see a 64-bit inकाष्ठाion here the sdl/sdr
+		 * would blow up, so क्रम now we करोn't handle unaligned 64-bit
+		 * inकाष्ठाions on 32-bit kernels.
 		 */
-		if (user && !access_ok(addr, 8))
-			goto sigbus;
+		अगर (user && !access_ok(addr, 8))
+			जाओ sigbus;
 
-		compute_return_epc(regs);
-		value = regs->regs[insn.i_format.rt];
+		compute_वापस_epc(regs);
+		value = regs->regs[insn.i_क्रमmat.rt];
 		StoreDW(addr, value, res);
-		if (res)
-			goto fault;
-		break;
-#endif /* CONFIG_64BIT */
+		अगर (res)
+			जाओ fault;
+		अवरोध;
+#पूर्ण_अगर /* CONFIG_64BIT */
 
-		/* Cannot handle 64-bit instructions in 32-bit kernel */
-		goto sigill;
+		/* Cannot handle 64-bit inकाष्ठाions in 32-bit kernel */
+		जाओ sigill;
 
-#ifdef CONFIG_MIPS_FP_SUPPORT
+#अगर_घोषित CONFIG_MIPS_FP_SUPPORT
 
-	case lwc1_op:
-	case ldc1_op:
-	case swc1_op:
-	case sdc1_op:
-	case cop1x_op: {
-		void __user *fault_addr = NULL;
+	हाल lwc1_op:
+	हाल ldc1_op:
+	हाल swc1_op:
+	हाल sdc1_op:
+	हाल cop1x_op: अणु
+		व्योम __user *fault_addr = शून्य;
 
-		die_if_kernel("Unaligned FP access in kernel code", regs);
+		die_अगर_kernel("Unaligned FP access in kernel code", regs);
 		BUG_ON(!used_math());
 
-		res = fpu_emulator_cop1Handler(regs, &current->thread.fpu, 1,
+		res = fpu_emulator_cop1Handler(regs, &current->thपढ़ो.fpu, 1,
 					       &fault_addr);
 		own_fpu(1);	/* Restore FPU state. */
 
-		/* Signal if something went wrong. */
-		process_fpemu_return(res, fault_addr, 0);
+		/* Signal अगर something went wrong. */
+		process_fpemu_वापस(res, fault_addr, 0);
 
-		if (res == 0)
-			break;
-		return;
-	}
-#endif /* CONFIG_MIPS_FP_SUPPORT */
+		अगर (res == 0)
+			अवरोध;
+		वापस;
+	पूर्ण
+#पूर्ण_अगर /* CONFIG_MIPS_FP_SUPPORT */
 
-#ifdef CONFIG_CPU_HAS_MSA
+#अगर_घोषित CONFIG_CPU_HAS_MSA
 
-	case msa_op: {
-		unsigned int wd, preempted;
-		enum msa_2b_fmt df;
-		union fpureg *fpr;
+	हाल msa_op: अणु
+		अचिन्हित पूर्णांक wd, preempted;
+		क्रमागत msa_2b_fmt df;
+		जोड़ fpureg *fpr;
 
-		if (!cpu_has_msa)
-			goto sigill;
+		अगर (!cpu_has_msa)
+			जाओ sigill;
 
 		/*
-		 * If we've reached this point then userland should have taken
+		 * If we've reached this poपूर्णांक then userland should have taken
 		 * the MSA disabled exception & initialised vector context at
-		 * some point in the past.
+		 * some poपूर्णांक in the past.
 		 */
-		BUG_ON(!thread_msa_context_live());
+		BUG_ON(!thपढ़ो_msa_context_live());
 
-		df = insn.msa_mi10_format.df;
-		wd = insn.msa_mi10_format.wd;
-		fpr = &current->thread.fpu.fpr[wd];
+		df = insn.msa_mi10_क्रमmat.df;
+		wd = insn.msa_mi10_क्रमmat.wd;
+		fpr = &current->thपढ़ो.fpu.fpr[wd];
 
-		switch (insn.msa_mi10_format.func) {
-		case msa_ld_op:
-			if (!access_ok(addr, sizeof(*fpr)))
-				goto sigbus;
+		चयन (insn.msa_mi10_क्रमmat.func) अणु
+		हाल msa_ld_op:
+			अगर (!access_ok(addr, माप(*fpr)))
+				जाओ sigbus;
 
-			do {
+			करो अणु
 				/*
 				 * If we have live MSA context keep track of
-				 * whether we get preempted in order to avoid
-				 * the register context we load being clobbered
+				 * whether we get preempted in order to aव्योम
+				 * the रेजिस्टर context we load being clobbered
 				 * by the live context as it's saved during
-				 * preemption. If we don't have live context
+				 * preemption. If we करोn't have live context
 				 * then it can't be saved to clobber the value
 				 * we load.
 				 */
-				preempted = test_thread_flag(TIF_USEDMSA);
+				preempted = test_thपढ़ो_flag(TIF_USEDMSA);
 
 				res = __copy_from_user_inatomic(fpr, addr,
-								sizeof(*fpr));
-				if (res)
-					goto fault;
+								माप(*fpr));
+				अगर (res)
+					जाओ fault;
 
 				/*
-				 * Update the hardware register if it is in use
+				 * Update the hardware रेजिस्टर अगर it is in use
 				 * by the task in this quantum, in order to
-				 * avoid having to save & restore the whole
+				 * aव्योम having to save & restore the whole
 				 * vector context.
 				 */
 				preempt_disable();
-				if (test_thread_flag(TIF_USEDMSA)) {
-					write_msa_wr(wd, fpr, df);
+				अगर (test_thपढ़ो_flag(TIF_USEDMSA)) अणु
+					ग_लिखो_msa_wr(wd, fpr, df);
 					preempted = 0;
-				}
+				पूर्ण
 				preempt_enable();
-			} while (preempted);
-			break;
+			पूर्ण जबतक (preempted);
+			अवरोध;
 
-		case msa_st_op:
-			if (!access_ok(addr, sizeof(*fpr)))
-				goto sigbus;
+		हाल msa_st_op:
+			अगर (!access_ok(addr, माप(*fpr)))
+				जाओ sigbus;
 
 			/*
-			 * Update from the hardware register if it is in use by
-			 * the task in this quantum, in order to avoid having to
+			 * Update from the hardware रेजिस्टर अगर it is in use by
+			 * the task in this quantum, in order to aव्योम having to
 			 * save & restore the whole vector context.
 			 */
 			preempt_disable();
-			if (test_thread_flag(TIF_USEDMSA))
-				read_msa_wr(wd, fpr, df);
+			अगर (test_thपढ़ो_flag(TIF_USEDMSA))
+				पढ़ो_msa_wr(wd, fpr, df);
 			preempt_enable();
 
-			res = __copy_to_user_inatomic(addr, fpr, sizeof(*fpr));
-			if (res)
-				goto fault;
-			break;
+			res = __copy_to_user_inatomic(addr, fpr, माप(*fpr));
+			अगर (res)
+				जाओ fault;
+			अवरोध;
 
-		default:
-			goto sigbus;
-		}
+		शेष:
+			जाओ sigbus;
+		पूर्ण
 
-		compute_return_epc(regs);
-		break;
-	}
-#endif /* CONFIG_CPU_HAS_MSA */
+		compute_वापस_epc(regs);
+		अवरोध;
+	पूर्ण
+#पूर्ण_अगर /* CONFIG_CPU_HAS_MSA */
 
-#ifndef CONFIG_CPU_MIPSR6
+#अगर_अघोषित CONFIG_CPU_MIPSR6
 	/*
-	 * COP2 is available to implementor for application specific use.
-	 * It's up to applications to register a notifier chain and do
-	 * whatever they have to do, including possible sending of signals.
+	 * COP2 is available to implementor क्रम application specअगरic use.
+	 * It's up to applications to रेजिस्टर a notअगरier chain and करो
+	 * whatever they have to करो, including possible sending of संकेतs.
 	 *
-	 * This instruction has been reallocated in Release 6
+	 * This inकाष्ठाion has been पुनः_स्मृतिated in Release 6
 	 */
-	case lwc2_op:
-		cu2_notifier_call_chain(CU2_LWC2_OP, regs);
-		break;
+	हाल lwc2_op:
+		cu2_notअगरier_call_chain(CU2_LWC2_OP, regs);
+		अवरोध;
 
-	case ldc2_op:
-		cu2_notifier_call_chain(CU2_LDC2_OP, regs);
-		break;
+	हाल ldc2_op:
+		cu2_notअगरier_call_chain(CU2_LDC2_OP, regs);
+		अवरोध;
 
-	case swc2_op:
-		cu2_notifier_call_chain(CU2_SWC2_OP, regs);
-		break;
+	हाल swc2_op:
+		cu2_notअगरier_call_chain(CU2_SWC2_OP, regs);
+		अवरोध;
 
-	case sdc2_op:
-		cu2_notifier_call_chain(CU2_SDC2_OP, regs);
-		break;
-#endif
-	default:
+	हाल sdc2_op:
+		cu2_notअगरier_call_chain(CU2_SDC2_OP, regs);
+		अवरोध;
+#पूर्ण_अगर
+	शेष:
 		/*
-		 * Pheeee...  We encountered an yet unknown instruction or
+		 * Pheeee...  We encountered an yet unknown inकाष्ठाion or
 		 * cache coherence problem.  Die sucker, die ...
 		 */
-		goto sigill;
-	}
+		जाओ sigill;
+	पूर्ण
 
-#ifdef CONFIG_DEBUG_FS
-	unaligned_instructions++;
-#endif
+#अगर_घोषित CONFIG_DEBUG_FS
+	unaligned_inकाष्ठाions++;
+#पूर्ण_अगर
 
-	return;
+	वापस;
 
 fault:
 	/* roll back jump/branch */
 	regs->cp0_epc = origpc;
 	regs->regs[31] = orig31;
 	/* Did we have an exception handler installed? */
-	if (fixup_exception(regs))
-		return;
+	अगर (fixup_exception(regs))
+		वापस;
 
-	die_if_kernel("Unhandled kernel unaligned access", regs);
-	force_sig(SIGSEGV);
+	die_अगर_kernel("Unhandled kernel unaligned access", regs);
+	क्रमce_sig(संक_अंश);
 
-	return;
+	वापस;
 
 sigbus:
-	die_if_kernel("Unhandled kernel unaligned access", regs);
-	force_sig(SIGBUS);
+	die_अगर_kernel("Unhandled kernel unaligned access", regs);
+	क्रमce_sig(SIGBUS);
 
-	return;
+	वापस;
 
 sigill:
-	die_if_kernel
+	die_अगर_kernel
 	    ("Unhandled kernel unaligned access or invalid instruction", regs);
-	force_sig(SIGILL);
-}
+	क्रमce_sig(संक_अवैध);
+पूर्ण
 
-/* Recode table from 16-bit register notation to 32-bit GPR. */
-const int reg16to32[] = { 16, 17, 2, 3, 4, 5, 6, 7 };
+/* Recode table from 16-bit रेजिस्टर notation to 32-bit GPR. */
+स्थिर पूर्णांक reg16to32[] = अणु 16, 17, 2, 3, 4, 5, 6, 7 पूर्ण;
 
-/* Recode table from 16-bit STORE register notation to 32-bit GPR. */
-static const int reg16to32st[] = { 0, 17, 2, 3, 4, 5, 6, 7 };
+/* Recode table from 16-bit STORE रेजिस्टर notation to 32-bit GPR. */
+अटल स्थिर पूर्णांक reg16to32st[] = अणु 0, 17, 2, 3, 4, 5, 6, 7 पूर्ण;
 
-static void emulate_load_store_microMIPS(struct pt_regs *regs,
-					 void __user *addr)
-{
-	unsigned long value;
-	unsigned int res;
-	int i;
-	unsigned int reg = 0, rvar;
-	unsigned long orig31;
+अटल व्योम emulate_load_store_microMIPS(काष्ठा pt_regs *regs,
+					 व्योम __user *addr)
+अणु
+	अचिन्हित दीर्घ value;
+	अचिन्हित पूर्णांक res;
+	पूर्णांक i;
+	अचिन्हित पूर्णांक reg = 0, rvar;
+	अचिन्हित दीर्घ orig31;
 	u16 __user *pc16;
 	u16 halfword;
-	unsigned int word;
-	unsigned long origpc, contpc;
-	union mips_instruction insn;
-	struct mm_decoded_insn mminsn;
+	अचिन्हित पूर्णांक word;
+	अचिन्हित दीर्घ origpc, contpc;
+	जोड़ mips_inकाष्ठाion insn;
+	काष्ठा mm_decoded_insn mminsn;
 	bool user = user_mode(regs);
 
 	origpc = regs->cp0_epc;
@@ -594,962 +595,962 @@ static void emulate_load_store_microMIPS(struct pt_regs *regs,
 	/*
 	 * This load never faults.
 	 */
-	pc16 = (unsigned short __user *)msk_isa16_mode(regs->cp0_epc);
+	pc16 = (अचिन्हित लघु __user *)msk_isa16_mode(regs->cp0_epc);
 	__get_user(halfword, pc16);
 	pc16++;
 	contpc = regs->cp0_epc + 2;
-	word = ((unsigned int)halfword << 16);
+	word = ((अचिन्हित पूर्णांक)halfword << 16);
 	mminsn.pc_inc = 2;
 
-	if (!mm_insn_16bit(halfword)) {
+	अगर (!mm_insn_16bit(halfword)) अणु
 		__get_user(halfword, pc16);
 		pc16++;
 		contpc = regs->cp0_epc + 4;
 		mminsn.pc_inc = 4;
 		word |= halfword;
-	}
+	पूर्ण
 	mminsn.insn = word;
 
-	if (get_user(halfword, pc16))
-		goto fault;
+	अगर (get_user(halfword, pc16))
+		जाओ fault;
 	mminsn.next_pc_inc = 2;
-	word = ((unsigned int)halfword << 16);
+	word = ((अचिन्हित पूर्णांक)halfword << 16);
 
-	if (!mm_insn_16bit(halfword)) {
+	अगर (!mm_insn_16bit(halfword)) अणु
 		pc16++;
-		if (get_user(halfword, pc16))
-			goto fault;
+		अगर (get_user(halfword, pc16))
+			जाओ fault;
 		mminsn.next_pc_inc = 4;
 		word |= halfword;
-	}
+	पूर्ण
 	mminsn.next_insn = word;
 
-	insn = (union mips_instruction)(mminsn.insn);
-	if (mm_isBranchInstr(regs, mminsn, &contpc))
-		insn = (union mips_instruction)(mminsn.next_insn);
+	insn = (जोड़ mips_inकाष्ठाion)(mminsn.insn);
+	अगर (mm_isBranchInstr(regs, mminsn, &contpc))
+		insn = (जोड़ mips_inकाष्ठाion)(mminsn.next_insn);
 
-	/*  Parse instruction to find what to do */
+	/*  Parse inकाष्ठाion to find what to करो */
 
-	switch (insn.mm_i_format.opcode) {
+	चयन (insn.mm_i_क्रमmat.opcode) अणु
 
-	case mm_pool32a_op:
-		switch (insn.mm_x_format.func) {
-		case mm_lwxs_op:
-			reg = insn.mm_x_format.rd;
-			goto loadW;
-		}
+	हाल mm_pool32a_op:
+		चयन (insn.mm_x_क्रमmat.func) अणु
+		हाल mm_lwxs_op:
+			reg = insn.mm_x_क्रमmat.rd;
+			जाओ loadW;
+		पूर्ण
 
-		goto sigbus;
+		जाओ sigbus;
 
-	case mm_pool32b_op:
-		switch (insn.mm_m_format.func) {
-		case mm_lwp_func:
-			reg = insn.mm_m_format.rd;
-			if (reg == 31)
-				goto sigbus;
+	हाल mm_pool32b_op:
+		चयन (insn.mm_m_क्रमmat.func) अणु
+		हाल mm_lwp_func:
+			reg = insn.mm_m_क्रमmat.rd;
+			अगर (reg == 31)
+				जाओ sigbus;
 
-			if (user && !access_ok(addr, 8))
-				goto sigbus;
+			अगर (user && !access_ok(addr, 8))
+				जाओ sigbus;
 
 			LoadW(addr, value, res);
-			if (res)
-				goto fault;
+			अगर (res)
+				जाओ fault;
 			regs->regs[reg] = value;
 			addr += 4;
 			LoadW(addr, value, res);
-			if (res)
-				goto fault;
+			अगर (res)
+				जाओ fault;
 			regs->regs[reg + 1] = value;
-			goto success;
+			जाओ success;
 
-		case mm_swp_func:
-			reg = insn.mm_m_format.rd;
-			if (reg == 31)
-				goto sigbus;
+		हाल mm_swp_func:
+			reg = insn.mm_m_क्रमmat.rd;
+			अगर (reg == 31)
+				जाओ sigbus;
 
-			if (user && !access_ok(addr, 8))
-				goto sigbus;
+			अगर (user && !access_ok(addr, 8))
+				जाओ sigbus;
 
 			value = regs->regs[reg];
 			StoreW(addr, value, res);
-			if (res)
-				goto fault;
+			अगर (res)
+				जाओ fault;
 			addr += 4;
 			value = regs->regs[reg + 1];
 			StoreW(addr, value, res);
-			if (res)
-				goto fault;
-			goto success;
+			अगर (res)
+				जाओ fault;
+			जाओ success;
 
-		case mm_ldp_func:
-#ifdef CONFIG_64BIT
-			reg = insn.mm_m_format.rd;
-			if (reg == 31)
-				goto sigbus;
+		हाल mm_ldp_func:
+#अगर_घोषित CONFIG_64BIT
+			reg = insn.mm_m_क्रमmat.rd;
+			अगर (reg == 31)
+				जाओ sigbus;
 
-			if (user && !access_ok(addr, 16))
-				goto sigbus;
+			अगर (user && !access_ok(addr, 16))
+				जाओ sigbus;
 
 			LoadDW(addr, value, res);
-			if (res)
-				goto fault;
+			अगर (res)
+				जाओ fault;
 			regs->regs[reg] = value;
 			addr += 8;
 			LoadDW(addr, value, res);
-			if (res)
-				goto fault;
+			अगर (res)
+				जाओ fault;
 			regs->regs[reg + 1] = value;
-			goto success;
-#endif /* CONFIG_64BIT */
+			जाओ success;
+#पूर्ण_अगर /* CONFIG_64BIT */
 
-			goto sigill;
+			जाओ sigill;
 
-		case mm_sdp_func:
-#ifdef CONFIG_64BIT
-			reg = insn.mm_m_format.rd;
-			if (reg == 31)
-				goto sigbus;
+		हाल mm_sdp_func:
+#अगर_घोषित CONFIG_64BIT
+			reg = insn.mm_m_क्रमmat.rd;
+			अगर (reg == 31)
+				जाओ sigbus;
 
-			if (user && !access_ok(addr, 16))
-				goto sigbus;
+			अगर (user && !access_ok(addr, 16))
+				जाओ sigbus;
 
 			value = regs->regs[reg];
 			StoreDW(addr, value, res);
-			if (res)
-				goto fault;
+			अगर (res)
+				जाओ fault;
 			addr += 8;
 			value = regs->regs[reg + 1];
 			StoreDW(addr, value, res);
-			if (res)
-				goto fault;
-			goto success;
-#endif /* CONFIG_64BIT */
+			अगर (res)
+				जाओ fault;
+			जाओ success;
+#पूर्ण_अगर /* CONFIG_64BIT */
 
-			goto sigill;
+			जाओ sigill;
 
-		case mm_lwm32_func:
-			reg = insn.mm_m_format.rd;
+		हाल mm_lwm32_func:
+			reg = insn.mm_m_क्रमmat.rd;
 			rvar = reg & 0xf;
-			if ((rvar > 9) || !reg)
-				goto sigill;
-			if (reg & 0x10) {
-				if (user && !access_ok(addr, 4 * (rvar + 1)))
-					goto sigbus;
-			} else {
-				if (user && !access_ok(addr, 4 * rvar))
-					goto sigbus;
-			}
-			if (rvar == 9)
+			अगर ((rvar > 9) || !reg)
+				जाओ sigill;
+			अगर (reg & 0x10) अणु
+				अगर (user && !access_ok(addr, 4 * (rvar + 1)))
+					जाओ sigbus;
+			पूर्ण अन्यथा अणु
+				अगर (user && !access_ok(addr, 4 * rvar))
+					जाओ sigbus;
+			पूर्ण
+			अगर (rvar == 9)
 				rvar = 8;
-			for (i = 16; rvar; rvar--, i++) {
+			क्रम (i = 16; rvar; rvar--, i++) अणु
 				LoadW(addr, value, res);
-				if (res)
-					goto fault;
+				अगर (res)
+					जाओ fault;
 				addr += 4;
 				regs->regs[i] = value;
-			}
-			if ((reg & 0xf) == 9) {
+			पूर्ण
+			अगर ((reg & 0xf) == 9) अणु
 				LoadW(addr, value, res);
-				if (res)
-					goto fault;
+				अगर (res)
+					जाओ fault;
 				addr += 4;
 				regs->regs[30] = value;
-			}
-			if (reg & 0x10) {
+			पूर्ण
+			अगर (reg & 0x10) अणु
 				LoadW(addr, value, res);
-				if (res)
-					goto fault;
+				अगर (res)
+					जाओ fault;
 				regs->regs[31] = value;
-			}
-			goto success;
+			पूर्ण
+			जाओ success;
 
-		case mm_swm32_func:
-			reg = insn.mm_m_format.rd;
+		हाल mm_swm32_func:
+			reg = insn.mm_m_क्रमmat.rd;
 			rvar = reg & 0xf;
-			if ((rvar > 9) || !reg)
-				goto sigill;
-			if (reg & 0x10) {
-				if (user && !access_ok(addr, 4 * (rvar + 1)))
-					goto sigbus;
-			} else {
-				if (user && !access_ok(addr, 4 * rvar))
-					goto sigbus;
-			}
-			if (rvar == 9)
+			अगर ((rvar > 9) || !reg)
+				जाओ sigill;
+			अगर (reg & 0x10) अणु
+				अगर (user && !access_ok(addr, 4 * (rvar + 1)))
+					जाओ sigbus;
+			पूर्ण अन्यथा अणु
+				अगर (user && !access_ok(addr, 4 * rvar))
+					जाओ sigbus;
+			पूर्ण
+			अगर (rvar == 9)
 				rvar = 8;
-			for (i = 16; rvar; rvar--, i++) {
+			क्रम (i = 16; rvar; rvar--, i++) अणु
 				value = regs->regs[i];
 				StoreW(addr, value, res);
-				if (res)
-					goto fault;
+				अगर (res)
+					जाओ fault;
 				addr += 4;
-			}
-			if ((reg & 0xf) == 9) {
+			पूर्ण
+			अगर ((reg & 0xf) == 9) अणु
 				value = regs->regs[30];
 				StoreW(addr, value, res);
-				if (res)
-					goto fault;
+				अगर (res)
+					जाओ fault;
 				addr += 4;
-			}
-			if (reg & 0x10) {
+			पूर्ण
+			अगर (reg & 0x10) अणु
 				value = regs->regs[31];
 				StoreW(addr, value, res);
-				if (res)
-					goto fault;
-			}
-			goto success;
+				अगर (res)
+					जाओ fault;
+			पूर्ण
+			जाओ success;
 
-		case mm_ldm_func:
-#ifdef CONFIG_64BIT
-			reg = insn.mm_m_format.rd;
+		हाल mm_ldm_func:
+#अगर_घोषित CONFIG_64BIT
+			reg = insn.mm_m_क्रमmat.rd;
 			rvar = reg & 0xf;
-			if ((rvar > 9) || !reg)
-				goto sigill;
-			if (reg & 0x10) {
-				if (user && !access_ok(addr, 8 * (rvar + 1)))
-					goto sigbus;
-			} else {
-				if (user && !access_ok(addr, 8 * rvar))
-					goto sigbus;
-			}
-			if (rvar == 9)
+			अगर ((rvar > 9) || !reg)
+				जाओ sigill;
+			अगर (reg & 0x10) अणु
+				अगर (user && !access_ok(addr, 8 * (rvar + 1)))
+					जाओ sigbus;
+			पूर्ण अन्यथा अणु
+				अगर (user && !access_ok(addr, 8 * rvar))
+					जाओ sigbus;
+			पूर्ण
+			अगर (rvar == 9)
 				rvar = 8;
 
-			for (i = 16; rvar; rvar--, i++) {
+			क्रम (i = 16; rvar; rvar--, i++) अणु
 				LoadDW(addr, value, res);
-				if (res)
-					goto fault;
+				अगर (res)
+					जाओ fault;
 				addr += 4;
 				regs->regs[i] = value;
-			}
-			if ((reg & 0xf) == 9) {
+			पूर्ण
+			अगर ((reg & 0xf) == 9) अणु
 				LoadDW(addr, value, res);
-				if (res)
-					goto fault;
+				अगर (res)
+					जाओ fault;
 				addr += 8;
 				regs->regs[30] = value;
-			}
-			if (reg & 0x10) {
+			पूर्ण
+			अगर (reg & 0x10) अणु
 				LoadDW(addr, value, res);
-				if (res)
-					goto fault;
+				अगर (res)
+					जाओ fault;
 				regs->regs[31] = value;
-			}
-			goto success;
-#endif /* CONFIG_64BIT */
+			पूर्ण
+			जाओ success;
+#पूर्ण_अगर /* CONFIG_64BIT */
 
-			goto sigill;
+			जाओ sigill;
 
-		case mm_sdm_func:
-#ifdef CONFIG_64BIT
-			reg = insn.mm_m_format.rd;
+		हाल mm_sdm_func:
+#अगर_घोषित CONFIG_64BIT
+			reg = insn.mm_m_क्रमmat.rd;
 			rvar = reg & 0xf;
-			if ((rvar > 9) || !reg)
-				goto sigill;
-			if (reg & 0x10) {
-				if (user && !access_ok(addr, 8 * (rvar + 1)))
-					goto sigbus;
-			} else {
-				if (user && !access_ok(addr, 8 * rvar))
-					goto sigbus;
-			}
-			if (rvar == 9)
+			अगर ((rvar > 9) || !reg)
+				जाओ sigill;
+			अगर (reg & 0x10) अणु
+				अगर (user && !access_ok(addr, 8 * (rvar + 1)))
+					जाओ sigbus;
+			पूर्ण अन्यथा अणु
+				अगर (user && !access_ok(addr, 8 * rvar))
+					जाओ sigbus;
+			पूर्ण
+			अगर (rvar == 9)
 				rvar = 8;
 
-			for (i = 16; rvar; rvar--, i++) {
+			क्रम (i = 16; rvar; rvar--, i++) अणु
 				value = regs->regs[i];
 				StoreDW(addr, value, res);
-				if (res)
-					goto fault;
+				अगर (res)
+					जाओ fault;
 				addr += 8;
-			}
-			if ((reg & 0xf) == 9) {
+			पूर्ण
+			अगर ((reg & 0xf) == 9) अणु
 				value = regs->regs[30];
 				StoreDW(addr, value, res);
-				if (res)
-					goto fault;
+				अगर (res)
+					जाओ fault;
 				addr += 8;
-			}
-			if (reg & 0x10) {
+			पूर्ण
+			अगर (reg & 0x10) अणु
 				value = regs->regs[31];
 				StoreDW(addr, value, res);
-				if (res)
-					goto fault;
-			}
-			goto success;
-#endif /* CONFIG_64BIT */
+				अगर (res)
+					जाओ fault;
+			पूर्ण
+			जाओ success;
+#पूर्ण_अगर /* CONFIG_64BIT */
 
-			goto sigill;
+			जाओ sigill;
 
 			/*  LWC2, SWC2, LDC2, SDC2 are not serviced */
-		}
+		पूर्ण
 
-		goto sigbus;
+		जाओ sigbus;
 
-	case mm_pool32c_op:
-		switch (insn.mm_m_format.func) {
-		case mm_lwu_func:
-			reg = insn.mm_m_format.rd;
-			goto loadWU;
-		}
+	हाल mm_pool32c_op:
+		चयन (insn.mm_m_क्रमmat.func) अणु
+		हाल mm_lwu_func:
+			reg = insn.mm_m_क्रमmat.rd;
+			जाओ loadWU;
+		पूर्ण
 
 		/*  LL,SC,LLD,SCD are not serviced */
-		goto sigbus;
+		जाओ sigbus;
 
-#ifdef CONFIG_MIPS_FP_SUPPORT
-	case mm_pool32f_op:
-		switch (insn.mm_x_format.func) {
-		case mm_lwxc1_func:
-		case mm_swxc1_func:
-		case mm_ldxc1_func:
-		case mm_sdxc1_func:
-			goto fpu_emul;
-		}
+#अगर_घोषित CONFIG_MIPS_FP_SUPPORT
+	हाल mm_pool32f_op:
+		चयन (insn.mm_x_क्रमmat.func) अणु
+		हाल mm_lwxc1_func:
+		हाल mm_swxc1_func:
+		हाल mm_ldxc1_func:
+		हाल mm_sdxc1_func:
+			जाओ fpu_emul;
+		पूर्ण
 
-		goto sigbus;
+		जाओ sigbus;
 
-	case mm_ldc132_op:
-	case mm_sdc132_op:
-	case mm_lwc132_op:
-	case mm_swc132_op: {
-		void __user *fault_addr = NULL;
+	हाल mm_ldc132_op:
+	हाल mm_sdc132_op:
+	हाल mm_lwc132_op:
+	हाल mm_swc132_op: अणु
+		व्योम __user *fault_addr = शून्य;
 
 fpu_emul:
 		/* roll back jump/branch */
 		regs->cp0_epc = origpc;
 		regs->regs[31] = orig31;
 
-		die_if_kernel("Unaligned FP access in kernel code", regs);
+		die_अगर_kernel("Unaligned FP access in kernel code", regs);
 		BUG_ON(!used_math());
 		BUG_ON(!is_fpu_owner());
 
-		res = fpu_emulator_cop1Handler(regs, &current->thread.fpu, 1,
+		res = fpu_emulator_cop1Handler(regs, &current->thपढ़ो.fpu, 1,
 					       &fault_addr);
 		own_fpu(1);	/* restore FPU state */
 
-		/* If something went wrong, signal */
-		process_fpemu_return(res, fault_addr, 0);
+		/* If something went wrong, संकेत */
+		process_fpemu_वापस(res, fault_addr, 0);
 
-		if (res == 0)
-			goto success;
-		return;
-	}
-#endif /* CONFIG_MIPS_FP_SUPPORT */
+		अगर (res == 0)
+			जाओ success;
+		वापस;
+	पूर्ण
+#पूर्ण_अगर /* CONFIG_MIPS_FP_SUPPORT */
 
-	case mm_lh32_op:
-		reg = insn.mm_i_format.rt;
-		goto loadHW;
+	हाल mm_lh32_op:
+		reg = insn.mm_i_क्रमmat.rt;
+		जाओ loadHW;
 
-	case mm_lhu32_op:
-		reg = insn.mm_i_format.rt;
-		goto loadHWU;
+	हाल mm_lhu32_op:
+		reg = insn.mm_i_क्रमmat.rt;
+		जाओ loadHWU;
 
-	case mm_lw32_op:
-		reg = insn.mm_i_format.rt;
-		goto loadW;
+	हाल mm_lw32_op:
+		reg = insn.mm_i_क्रमmat.rt;
+		जाओ loadW;
 
-	case mm_sh32_op:
-		reg = insn.mm_i_format.rt;
-		goto storeHW;
+	हाल mm_sh32_op:
+		reg = insn.mm_i_क्रमmat.rt;
+		जाओ storeHW;
 
-	case mm_sw32_op:
-		reg = insn.mm_i_format.rt;
-		goto storeW;
+	हाल mm_sw32_op:
+		reg = insn.mm_i_क्रमmat.rt;
+		जाओ storeW;
 
-	case mm_ld32_op:
-		reg = insn.mm_i_format.rt;
-		goto loadDW;
+	हाल mm_ld32_op:
+		reg = insn.mm_i_क्रमmat.rt;
+		जाओ loadDW;
 
-	case mm_sd32_op:
-		reg = insn.mm_i_format.rt;
-		goto storeDW;
+	हाल mm_sd32_op:
+		reg = insn.mm_i_क्रमmat.rt;
+		जाओ storeDW;
 
-	case mm_pool16c_op:
-		switch (insn.mm16_m_format.func) {
-		case mm_lwm16_op:
-			reg = insn.mm16_m_format.rlist;
+	हाल mm_pool16c_op:
+		चयन (insn.mm16_m_क्रमmat.func) अणु
+		हाल mm_lwm16_op:
+			reg = insn.mm16_m_क्रमmat.rlist;
 			rvar = reg + 1;
-			if (user && !access_ok(addr, 4 * rvar))
-				goto sigbus;
+			अगर (user && !access_ok(addr, 4 * rvar))
+				जाओ sigbus;
 
-			for (i = 16; rvar; rvar--, i++) {
+			क्रम (i = 16; rvar; rvar--, i++) अणु
 				LoadW(addr, value, res);
-				if (res)
-					goto fault;
+				अगर (res)
+					जाओ fault;
 				addr += 4;
 				regs->regs[i] = value;
-			}
+			पूर्ण
 			LoadW(addr, value, res);
-			if (res)
-				goto fault;
+			अगर (res)
+				जाओ fault;
 			regs->regs[31] = value;
 
-			goto success;
+			जाओ success;
 
-		case mm_swm16_op:
-			reg = insn.mm16_m_format.rlist;
+		हाल mm_swm16_op:
+			reg = insn.mm16_m_क्रमmat.rlist;
 			rvar = reg + 1;
-			if (user && !access_ok(addr, 4 * rvar))
-				goto sigbus;
+			अगर (user && !access_ok(addr, 4 * rvar))
+				जाओ sigbus;
 
-			for (i = 16; rvar; rvar--, i++) {
+			क्रम (i = 16; rvar; rvar--, i++) अणु
 				value = regs->regs[i];
 				StoreW(addr, value, res);
-				if (res)
-					goto fault;
+				अगर (res)
+					जाओ fault;
 				addr += 4;
-			}
+			पूर्ण
 			value = regs->regs[31];
 			StoreW(addr, value, res);
-			if (res)
-				goto fault;
+			अगर (res)
+				जाओ fault;
 
-			goto success;
+			जाओ success;
 
-		}
+		पूर्ण
 
-		goto sigbus;
+		जाओ sigbus;
 
-	case mm_lhu16_op:
-		reg = reg16to32[insn.mm16_rb_format.rt];
-		goto loadHWU;
+	हाल mm_lhu16_op:
+		reg = reg16to32[insn.mm16_rb_क्रमmat.rt];
+		जाओ loadHWU;
 
-	case mm_lw16_op:
-		reg = reg16to32[insn.mm16_rb_format.rt];
-		goto loadW;
+	हाल mm_lw16_op:
+		reg = reg16to32[insn.mm16_rb_क्रमmat.rt];
+		जाओ loadW;
 
-	case mm_sh16_op:
-		reg = reg16to32st[insn.mm16_rb_format.rt];
-		goto storeHW;
+	हाल mm_sh16_op:
+		reg = reg16to32st[insn.mm16_rb_क्रमmat.rt];
+		जाओ storeHW;
 
-	case mm_sw16_op:
-		reg = reg16to32st[insn.mm16_rb_format.rt];
-		goto storeW;
+	हाल mm_sw16_op:
+		reg = reg16to32st[insn.mm16_rb_क्रमmat.rt];
+		जाओ storeW;
 
-	case mm_lwsp16_op:
-		reg = insn.mm16_r5_format.rt;
-		goto loadW;
+	हाल mm_lwsp16_op:
+		reg = insn.mm16_r5_क्रमmat.rt;
+		जाओ loadW;
 
-	case mm_swsp16_op:
-		reg = insn.mm16_r5_format.rt;
-		goto storeW;
+	हाल mm_swsp16_op:
+		reg = insn.mm16_r5_क्रमmat.rt;
+		जाओ storeW;
 
-	case mm_lwgp16_op:
-		reg = reg16to32[insn.mm16_r3_format.rt];
-		goto loadW;
+	हाल mm_lwgp16_op:
+		reg = reg16to32[insn.mm16_r3_क्रमmat.rt];
+		जाओ loadW;
 
-	default:
-		goto sigill;
-	}
+	शेष:
+		जाओ sigill;
+	पूर्ण
 
 loadHW:
-	if (user && !access_ok(addr, 2))
-		goto sigbus;
+	अगर (user && !access_ok(addr, 2))
+		जाओ sigbus;
 
 	LoadHW(addr, value, res);
-	if (res)
-		goto fault;
+	अगर (res)
+		जाओ fault;
 	regs->regs[reg] = value;
-	goto success;
+	जाओ success;
 
 loadHWU:
-	if (user && !access_ok(addr, 2))
-		goto sigbus;
+	अगर (user && !access_ok(addr, 2))
+		जाओ sigbus;
 
 	LoadHWU(addr, value, res);
-	if (res)
-		goto fault;
+	अगर (res)
+		जाओ fault;
 	regs->regs[reg] = value;
-	goto success;
+	जाओ success;
 
 loadW:
-	if (user && !access_ok(addr, 4))
-		goto sigbus;
+	अगर (user && !access_ok(addr, 4))
+		जाओ sigbus;
 
 	LoadW(addr, value, res);
-	if (res)
-		goto fault;
+	अगर (res)
+		जाओ fault;
 	regs->regs[reg] = value;
-	goto success;
+	जाओ success;
 
 loadWU:
-#ifdef CONFIG_64BIT
+#अगर_घोषित CONFIG_64BIT
 	/*
 	 * A 32-bit kernel might be running on a 64-bit processor.  But
-	 * if we're on a 32-bit processor and an i-cache incoherency
-	 * or race makes us see a 64-bit instruction here the sdl/sdr
-	 * would blow up, so for now we don't handle unaligned 64-bit
-	 * instructions on 32-bit kernels.
+	 * अगर we're on a 32-bit processor and an i-cache incoherency
+	 * or race makes us see a 64-bit inकाष्ठाion here the sdl/sdr
+	 * would blow up, so क्रम now we करोn't handle unaligned 64-bit
+	 * inकाष्ठाions on 32-bit kernels.
 	 */
-	if (user && !access_ok(addr, 4))
-		goto sigbus;
+	अगर (user && !access_ok(addr, 4))
+		जाओ sigbus;
 
 	LoadWU(addr, value, res);
-	if (res)
-		goto fault;
+	अगर (res)
+		जाओ fault;
 	regs->regs[reg] = value;
-	goto success;
-#endif /* CONFIG_64BIT */
+	जाओ success;
+#पूर्ण_अगर /* CONFIG_64BIT */
 
-	/* Cannot handle 64-bit instructions in 32-bit kernel */
-	goto sigill;
+	/* Cannot handle 64-bit inकाष्ठाions in 32-bit kernel */
+	जाओ sigill;
 
 loadDW:
-#ifdef CONFIG_64BIT
+#अगर_घोषित CONFIG_64BIT
 	/*
 	 * A 32-bit kernel might be running on a 64-bit processor.  But
-	 * if we're on a 32-bit processor and an i-cache incoherency
-	 * or race makes us see a 64-bit instruction here the sdl/sdr
-	 * would blow up, so for now we don't handle unaligned 64-bit
-	 * instructions on 32-bit kernels.
+	 * अगर we're on a 32-bit processor and an i-cache incoherency
+	 * or race makes us see a 64-bit inकाष्ठाion here the sdl/sdr
+	 * would blow up, so क्रम now we करोn't handle unaligned 64-bit
+	 * inकाष्ठाions on 32-bit kernels.
 	 */
-	if (user && !access_ok(addr, 8))
-		goto sigbus;
+	अगर (user && !access_ok(addr, 8))
+		जाओ sigbus;
 
 	LoadDW(addr, value, res);
-	if (res)
-		goto fault;
+	अगर (res)
+		जाओ fault;
 	regs->regs[reg] = value;
-	goto success;
-#endif /* CONFIG_64BIT */
+	जाओ success;
+#पूर्ण_अगर /* CONFIG_64BIT */
 
-	/* Cannot handle 64-bit instructions in 32-bit kernel */
-	goto sigill;
+	/* Cannot handle 64-bit inकाष्ठाions in 32-bit kernel */
+	जाओ sigill;
 
 storeHW:
-	if (user && !access_ok(addr, 2))
-		goto sigbus;
+	अगर (user && !access_ok(addr, 2))
+		जाओ sigbus;
 
 	value = regs->regs[reg];
 	StoreHW(addr, value, res);
-	if (res)
-		goto fault;
-	goto success;
+	अगर (res)
+		जाओ fault;
+	जाओ success;
 
 storeW:
-	if (user && !access_ok(addr, 4))
-		goto sigbus;
+	अगर (user && !access_ok(addr, 4))
+		जाओ sigbus;
 
 	value = regs->regs[reg];
 	StoreW(addr, value, res);
-	if (res)
-		goto fault;
-	goto success;
+	अगर (res)
+		जाओ fault;
+	जाओ success;
 
 storeDW:
-#ifdef CONFIG_64BIT
+#अगर_घोषित CONFIG_64BIT
 	/*
 	 * A 32-bit kernel might be running on a 64-bit processor.  But
-	 * if we're on a 32-bit processor and an i-cache incoherency
-	 * or race makes us see a 64-bit instruction here the sdl/sdr
-	 * would blow up, so for now we don't handle unaligned 64-bit
-	 * instructions on 32-bit kernels.
+	 * अगर we're on a 32-bit processor and an i-cache incoherency
+	 * or race makes us see a 64-bit inकाष्ठाion here the sdl/sdr
+	 * would blow up, so क्रम now we करोn't handle unaligned 64-bit
+	 * inकाष्ठाions on 32-bit kernels.
 	 */
-	if (user && !access_ok(addr, 8))
-		goto sigbus;
+	अगर (user && !access_ok(addr, 8))
+		जाओ sigbus;
 
 	value = regs->regs[reg];
 	StoreDW(addr, value, res);
-	if (res)
-		goto fault;
-	goto success;
-#endif /* CONFIG_64BIT */
+	अगर (res)
+		जाओ fault;
+	जाओ success;
+#पूर्ण_अगर /* CONFIG_64BIT */
 
-	/* Cannot handle 64-bit instructions in 32-bit kernel */
-	goto sigill;
+	/* Cannot handle 64-bit inकाष्ठाions in 32-bit kernel */
+	जाओ sigill;
 
 success:
 	regs->cp0_epc = contpc;	/* advance or branch */
 
-#ifdef CONFIG_DEBUG_FS
-	unaligned_instructions++;
-#endif
-	return;
+#अगर_घोषित CONFIG_DEBUG_FS
+	unaligned_inकाष्ठाions++;
+#पूर्ण_अगर
+	वापस;
 
 fault:
 	/* roll back jump/branch */
 	regs->cp0_epc = origpc;
 	regs->regs[31] = orig31;
 	/* Did we have an exception handler installed? */
-	if (fixup_exception(regs))
-		return;
+	अगर (fixup_exception(regs))
+		वापस;
 
-	die_if_kernel("Unhandled kernel unaligned access", regs);
-	force_sig(SIGSEGV);
+	die_अगर_kernel("Unhandled kernel unaligned access", regs);
+	क्रमce_sig(संक_अंश);
 
-	return;
+	वापस;
 
 sigbus:
-	die_if_kernel("Unhandled kernel unaligned access", regs);
-	force_sig(SIGBUS);
+	die_अगर_kernel("Unhandled kernel unaligned access", regs);
+	क्रमce_sig(SIGBUS);
 
-	return;
+	वापस;
 
 sigill:
-	die_if_kernel
+	die_अगर_kernel
 	    ("Unhandled kernel unaligned access or invalid instruction", regs);
-	force_sig(SIGILL);
-}
+	क्रमce_sig(संक_अवैध);
+पूर्ण
 
-static void emulate_load_store_MIPS16e(struct pt_regs *regs, void __user * addr)
-{
-	unsigned long value;
-	unsigned int res;
-	int reg;
-	unsigned long orig31;
+अटल व्योम emulate_load_store_MIPS16e(काष्ठा pt_regs *regs, व्योम __user * addr)
+अणु
+	अचिन्हित दीर्घ value;
+	अचिन्हित पूर्णांक res;
+	पूर्णांक reg;
+	अचिन्हित दीर्घ orig31;
 	u16 __user *pc16;
-	unsigned long origpc;
-	union mips16e_instruction mips16inst, oldinst;
-	unsigned int opcode;
-	int extended = 0;
+	अचिन्हित दीर्घ origpc;
+	जोड़ mips16e_inकाष्ठाion mips16inst, oldinst;
+	अचिन्हित पूर्णांक opcode;
+	पूर्णांक extended = 0;
 	bool user = user_mode(regs);
 
 	origpc = regs->cp0_epc;
 	orig31 = regs->regs[31];
-	pc16 = (unsigned short __user *)msk_isa16_mode(origpc);
+	pc16 = (अचिन्हित लघु __user *)msk_isa16_mode(origpc);
 	/*
 	 * This load never faults.
 	 */
 	__get_user(mips16inst.full, pc16);
 	oldinst = mips16inst;
 
-	/* skip EXTEND instruction */
-	if (mips16inst.ri.opcode == MIPS16e_extend_op) {
+	/* skip EXTEND inकाष्ठाion */
+	अगर (mips16inst.ri.opcode == MIPS16e_extend_op) अणु
 		extended = 1;
 		pc16++;
 		__get_user(mips16inst.full, pc16);
-	} else if (delay_slot(regs)) {
-		/*  skip jump instructions */
-		/*  JAL/JALX are 32 bits but have OPCODE in first short int */
-		if (mips16inst.ri.opcode == MIPS16e_jal_op)
+	पूर्ण अन्यथा अगर (delay_slot(regs)) अणु
+		/*  skip jump inकाष्ठाions */
+		/*  JAL/JALX are 32 bits but have OPCODE in first लघु पूर्णांक */
+		अगर (mips16inst.ri.opcode == MIPS16e_jal_op)
 			pc16++;
 		pc16++;
-		if (get_user(mips16inst.full, pc16))
-			goto sigbus;
-	}
+		अगर (get_user(mips16inst.full, pc16))
+			जाओ sigbus;
+	पूर्ण
 
 	opcode = mips16inst.ri.opcode;
-	switch (opcode) {
-	case MIPS16e_i64_op:	/* I64 or RI64 instruction */
-		switch (mips16inst.i64.func) {	/* I64/RI64 func field check */
-		case MIPS16e_ldpc_func:
-		case MIPS16e_ldsp_func:
+	चयन (opcode) अणु
+	हाल MIPS16e_i64_op:	/* I64 or RI64 inकाष्ठाion */
+		चयन (mips16inst.i64.func) अणु	/* I64/RI64 func field check */
+		हाल MIPS16e_ldpc_func:
+		हाल MIPS16e_ldsp_func:
 			reg = reg16to32[mips16inst.ri64.ry];
-			goto loadDW;
+			जाओ loadDW;
 
-		case MIPS16e_sdsp_func:
+		हाल MIPS16e_sdsp_func:
 			reg = reg16to32[mips16inst.ri64.ry];
-			goto writeDW;
+			जाओ ग_लिखोDW;
 
-		case MIPS16e_sdrasp_func:
+		हाल MIPS16e_sdrasp_func:
 			reg = 29;	/* GPRSP */
-			goto writeDW;
-		}
+			जाओ ग_लिखोDW;
+		पूर्ण
 
-		goto sigbus;
+		जाओ sigbus;
 
-	case MIPS16e_swsp_op:
+	हाल MIPS16e_swsp_op:
 		reg = reg16to32[mips16inst.ri.rx];
-		if (extended && cpu_has_mips16e2)
-			switch (mips16inst.ri.imm >> 5) {
-			case 0:		/* SWSP */
-			case 1:		/* SWGP */
-				break;
-			case 2:		/* SHGP */
+		अगर (extended && cpu_has_mips16e2)
+			चयन (mips16inst.ri.imm >> 5) अणु
+			हाल 0:		/* SWSP */
+			हाल 1:		/* SWGP */
+				अवरोध;
+			हाल 2:		/* SHGP */
 				opcode = MIPS16e_sh_op;
-				break;
-			default:
-				goto sigbus;
-			}
-		break;
+				अवरोध;
+			शेष:
+				जाओ sigbus;
+			पूर्ण
+		अवरोध;
 
-	case MIPS16e_lwpc_op:
+	हाल MIPS16e_lwpc_op:
 		reg = reg16to32[mips16inst.ri.rx];
-		break;
+		अवरोध;
 
-	case MIPS16e_lwsp_op:
+	हाल MIPS16e_lwsp_op:
 		reg = reg16to32[mips16inst.ri.rx];
-		if (extended && cpu_has_mips16e2)
-			switch (mips16inst.ri.imm >> 5) {
-			case 0:		/* LWSP */
-			case 1:		/* LWGP */
-				break;
-			case 2:		/* LHGP */
+		अगर (extended && cpu_has_mips16e2)
+			चयन (mips16inst.ri.imm >> 5) अणु
+			हाल 0:		/* LWSP */
+			हाल 1:		/* LWGP */
+				अवरोध;
+			हाल 2:		/* LHGP */
 				opcode = MIPS16e_lh_op;
-				break;
-			case 4:		/* LHUGP */
+				अवरोध;
+			हाल 4:		/* LHUGP */
 				opcode = MIPS16e_lhu_op;
-				break;
-			default:
-				goto sigbus;
-			}
-		break;
+				अवरोध;
+			शेष:
+				जाओ sigbus;
+			पूर्ण
+		अवरोध;
 
-	case MIPS16e_i8_op:
-		if (mips16inst.i8.func != MIPS16e_swrasp_func)
-			goto sigbus;
+	हाल MIPS16e_i8_op:
+		अगर (mips16inst.i8.func != MIPS16e_swrasp_func)
+			जाओ sigbus;
 		reg = 29;	/* GPRSP */
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		reg = reg16to32[mips16inst.rri.ry];
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	switch (opcode) {
+	चयन (opcode) अणु
 
-	case MIPS16e_lb_op:
-	case MIPS16e_lbu_op:
-	case MIPS16e_sb_op:
-		goto sigbus;
+	हाल MIPS16e_lb_op:
+	हाल MIPS16e_lbu_op:
+	हाल MIPS16e_sb_op:
+		जाओ sigbus;
 
-	case MIPS16e_lh_op:
-		if (user && !access_ok(addr, 2))
-			goto sigbus;
+	हाल MIPS16e_lh_op:
+		अगर (user && !access_ok(addr, 2))
+			जाओ sigbus;
 
 		LoadHW(addr, value, res);
-		if (res)
-			goto fault;
-		MIPS16e_compute_return_epc(regs, &oldinst);
+		अगर (res)
+			जाओ fault;
+		MIPS16e_compute_वापस_epc(regs, &oldinst);
 		regs->regs[reg] = value;
-		break;
+		अवरोध;
 
-	case MIPS16e_lhu_op:
-		if (user && !access_ok(addr, 2))
-			goto sigbus;
+	हाल MIPS16e_lhu_op:
+		अगर (user && !access_ok(addr, 2))
+			जाओ sigbus;
 
 		LoadHWU(addr, value, res);
-		if (res)
-			goto fault;
-		MIPS16e_compute_return_epc(regs, &oldinst);
+		अगर (res)
+			जाओ fault;
+		MIPS16e_compute_वापस_epc(regs, &oldinst);
 		regs->regs[reg] = value;
-		break;
+		अवरोध;
 
-	case MIPS16e_lw_op:
-	case MIPS16e_lwpc_op:
-	case MIPS16e_lwsp_op:
-		if (user && !access_ok(addr, 4))
-			goto sigbus;
+	हाल MIPS16e_lw_op:
+	हाल MIPS16e_lwpc_op:
+	हाल MIPS16e_lwsp_op:
+		अगर (user && !access_ok(addr, 4))
+			जाओ sigbus;
 
 		LoadW(addr, value, res);
-		if (res)
-			goto fault;
-		MIPS16e_compute_return_epc(regs, &oldinst);
+		अगर (res)
+			जाओ fault;
+		MIPS16e_compute_वापस_epc(regs, &oldinst);
 		regs->regs[reg] = value;
-		break;
+		अवरोध;
 
-	case MIPS16e_lwu_op:
-#ifdef CONFIG_64BIT
+	हाल MIPS16e_lwu_op:
+#अगर_घोषित CONFIG_64BIT
 		/*
 		 * A 32-bit kernel might be running on a 64-bit processor.  But
-		 * if we're on a 32-bit processor and an i-cache incoherency
-		 * or race makes us see a 64-bit instruction here the sdl/sdr
-		 * would blow up, so for now we don't handle unaligned 64-bit
-		 * instructions on 32-bit kernels.
+		 * अगर we're on a 32-bit processor and an i-cache incoherency
+		 * or race makes us see a 64-bit inकाष्ठाion here the sdl/sdr
+		 * would blow up, so क्रम now we करोn't handle unaligned 64-bit
+		 * inकाष्ठाions on 32-bit kernels.
 		 */
-		if (user && !access_ok(addr, 4))
-			goto sigbus;
+		अगर (user && !access_ok(addr, 4))
+			जाओ sigbus;
 
 		LoadWU(addr, value, res);
-		if (res)
-			goto fault;
-		MIPS16e_compute_return_epc(regs, &oldinst);
+		अगर (res)
+			जाओ fault;
+		MIPS16e_compute_वापस_epc(regs, &oldinst);
 		regs->regs[reg] = value;
-		break;
-#endif /* CONFIG_64BIT */
+		अवरोध;
+#पूर्ण_अगर /* CONFIG_64BIT */
 
-		/* Cannot handle 64-bit instructions in 32-bit kernel */
-		goto sigill;
+		/* Cannot handle 64-bit inकाष्ठाions in 32-bit kernel */
+		जाओ sigill;
 
-	case MIPS16e_ld_op:
+	हाल MIPS16e_ld_op:
 loadDW:
-#ifdef CONFIG_64BIT
+#अगर_घोषित CONFIG_64BIT
 		/*
 		 * A 32-bit kernel might be running on a 64-bit processor.  But
-		 * if we're on a 32-bit processor and an i-cache incoherency
-		 * or race makes us see a 64-bit instruction here the sdl/sdr
-		 * would blow up, so for now we don't handle unaligned 64-bit
-		 * instructions on 32-bit kernels.
+		 * अगर we're on a 32-bit processor and an i-cache incoherency
+		 * or race makes us see a 64-bit inकाष्ठाion here the sdl/sdr
+		 * would blow up, so क्रम now we करोn't handle unaligned 64-bit
+		 * inकाष्ठाions on 32-bit kernels.
 		 */
-		if (user && !access_ok(addr, 8))
-			goto sigbus;
+		अगर (user && !access_ok(addr, 8))
+			जाओ sigbus;
 
 		LoadDW(addr, value, res);
-		if (res)
-			goto fault;
-		MIPS16e_compute_return_epc(regs, &oldinst);
+		अगर (res)
+			जाओ fault;
+		MIPS16e_compute_वापस_epc(regs, &oldinst);
 		regs->regs[reg] = value;
-		break;
-#endif /* CONFIG_64BIT */
+		अवरोध;
+#पूर्ण_अगर /* CONFIG_64BIT */
 
-		/* Cannot handle 64-bit instructions in 32-bit kernel */
-		goto sigill;
+		/* Cannot handle 64-bit inकाष्ठाions in 32-bit kernel */
+		जाओ sigill;
 
-	case MIPS16e_sh_op:
-		if (user && !access_ok(addr, 2))
-			goto sigbus;
+	हाल MIPS16e_sh_op:
+		अगर (user && !access_ok(addr, 2))
+			जाओ sigbus;
 
-		MIPS16e_compute_return_epc(regs, &oldinst);
+		MIPS16e_compute_वापस_epc(regs, &oldinst);
 		value = regs->regs[reg];
 		StoreHW(addr, value, res);
-		if (res)
-			goto fault;
-		break;
+		अगर (res)
+			जाओ fault;
+		अवरोध;
 
-	case MIPS16e_sw_op:
-	case MIPS16e_swsp_op:
-	case MIPS16e_i8_op:	/* actually - MIPS16e_swrasp_func */
-		if (user && !access_ok(addr, 4))
-			goto sigbus;
+	हाल MIPS16e_sw_op:
+	हाल MIPS16e_swsp_op:
+	हाल MIPS16e_i8_op:	/* actually - MIPS16e_swrasp_func */
+		अगर (user && !access_ok(addr, 4))
+			जाओ sigbus;
 
-		MIPS16e_compute_return_epc(regs, &oldinst);
+		MIPS16e_compute_वापस_epc(regs, &oldinst);
 		value = regs->regs[reg];
 		StoreW(addr, value, res);
-		if (res)
-			goto fault;
-		break;
+		अगर (res)
+			जाओ fault;
+		अवरोध;
 
-	case MIPS16e_sd_op:
-writeDW:
-#ifdef CONFIG_64BIT
+	हाल MIPS16e_sd_op:
+ग_लिखोDW:
+#अगर_घोषित CONFIG_64BIT
 		/*
 		 * A 32-bit kernel might be running on a 64-bit processor.  But
-		 * if we're on a 32-bit processor and an i-cache incoherency
-		 * or race makes us see a 64-bit instruction here the sdl/sdr
-		 * would blow up, so for now we don't handle unaligned 64-bit
-		 * instructions on 32-bit kernels.
+		 * अगर we're on a 32-bit processor and an i-cache incoherency
+		 * or race makes us see a 64-bit inकाष्ठाion here the sdl/sdr
+		 * would blow up, so क्रम now we करोn't handle unaligned 64-bit
+		 * inकाष्ठाions on 32-bit kernels.
 		 */
-		if (user && !access_ok(addr, 8))
-			goto sigbus;
+		अगर (user && !access_ok(addr, 8))
+			जाओ sigbus;
 
-		MIPS16e_compute_return_epc(regs, &oldinst);
+		MIPS16e_compute_वापस_epc(regs, &oldinst);
 		value = regs->regs[reg];
 		StoreDW(addr, value, res);
-		if (res)
-			goto fault;
-		break;
-#endif /* CONFIG_64BIT */
+		अगर (res)
+			जाओ fault;
+		अवरोध;
+#पूर्ण_अगर /* CONFIG_64BIT */
 
-		/* Cannot handle 64-bit instructions in 32-bit kernel */
-		goto sigill;
+		/* Cannot handle 64-bit inकाष्ठाions in 32-bit kernel */
+		जाओ sigill;
 
-	default:
+	शेष:
 		/*
-		 * Pheeee...  We encountered an yet unknown instruction or
+		 * Pheeee...  We encountered an yet unknown inकाष्ठाion or
 		 * cache coherence problem.  Die sucker, die ...
 		 */
-		goto sigill;
-	}
+		जाओ sigill;
+	पूर्ण
 
-#ifdef CONFIG_DEBUG_FS
-	unaligned_instructions++;
-#endif
+#अगर_घोषित CONFIG_DEBUG_FS
+	unaligned_inकाष्ठाions++;
+#पूर्ण_अगर
 
-	return;
+	वापस;
 
 fault:
 	/* roll back jump/branch */
 	regs->cp0_epc = origpc;
 	regs->regs[31] = orig31;
 	/* Did we have an exception handler installed? */
-	if (fixup_exception(regs))
-		return;
+	अगर (fixup_exception(regs))
+		वापस;
 
-	die_if_kernel("Unhandled kernel unaligned access", regs);
-	force_sig(SIGSEGV);
+	die_अगर_kernel("Unhandled kernel unaligned access", regs);
+	क्रमce_sig(संक_अंश);
 
-	return;
+	वापस;
 
 sigbus:
-	die_if_kernel("Unhandled kernel unaligned access", regs);
-	force_sig(SIGBUS);
+	die_अगर_kernel("Unhandled kernel unaligned access", regs);
+	क्रमce_sig(SIGBUS);
 
-	return;
+	वापस;
 
 sigill:
-	die_if_kernel
+	die_अगर_kernel
 	    ("Unhandled kernel unaligned access or invalid instruction", regs);
-	force_sig(SIGILL);
-}
+	क्रमce_sig(संक_अवैध);
+पूर्ण
 
-asmlinkage void do_ade(struct pt_regs *regs)
-{
-	enum ctx_state prev_state;
-	unsigned int *pc;
+यंत्रlinkage व्योम करो_ade(काष्ठा pt_regs *regs)
+अणु
+	क्रमागत ctx_state prev_state;
+	अचिन्हित पूर्णांक *pc;
 
 	prev_state = exception_enter();
 	perf_sw_event(PERF_COUNT_SW_ALIGNMENT_FAULTS,
 			1, regs, regs->cp0_badvaddr);
 	/*
-	 * Did we catch a fault trying to load an instruction?
+	 * Did we catch a fault trying to load an inकाष्ठाion?
 	 */
-	if (regs->cp0_badvaddr == regs->cp0_epc)
-		goto sigbus;
+	अगर (regs->cp0_badvaddr == regs->cp0_epc)
+		जाओ sigbus;
 
-	if (user_mode(regs) && !test_thread_flag(TIF_FIXADE))
-		goto sigbus;
-	if (unaligned_action == UNALIGNED_ACTION_SIGNAL)
-		goto sigbus;
+	अगर (user_mode(regs) && !test_thपढ़ो_flag(TIF_FIXADE))
+		जाओ sigbus;
+	अगर (unaligned_action == UNALIGNED_ACTION_SIGNAL)
+		जाओ sigbus;
 
 	/*
-	 * Do branch emulation only if we didn't forward the exception.
+	 * Do branch emulation only अगर we didn't क्रमward the exception.
 	 * This is all so but ugly ...
 	 */
 
 	/*
 	 * Are we running in microMIPS mode?
 	 */
-	if (get_isa16_mode(regs->cp0_epc)) {
+	अगर (get_isa16_mode(regs->cp0_epc)) अणु
 		/*
-		 * Did we catch a fault trying to load an instruction in
+		 * Did we catch a fault trying to load an inकाष्ठाion in
 		 * 16-bit mode?
 		 */
-		if (regs->cp0_badvaddr == msk_isa16_mode(regs->cp0_epc))
-			goto sigbus;
-		if (unaligned_action == UNALIGNED_ACTION_SHOW)
-			show_registers(regs);
+		अगर (regs->cp0_badvaddr == msk_isa16_mode(regs->cp0_epc))
+			जाओ sigbus;
+		अगर (unaligned_action == UNALIGNED_ACTION_SHOW)
+			show_रेजिस्टरs(regs);
 
-		if (cpu_has_mmips) {
+		अगर (cpu_has_mmips) अणु
 			emulate_load_store_microMIPS(regs,
-				(void __user *)regs->cp0_badvaddr);
-			return;
-		}
+				(व्योम __user *)regs->cp0_badvaddr);
+			वापस;
+		पूर्ण
 
-		if (cpu_has_mips16) {
+		अगर (cpu_has_mips16) अणु
 			emulate_load_store_MIPS16e(regs,
-				(void __user *)regs->cp0_badvaddr);
-			return;
-		}
+				(व्योम __user *)regs->cp0_badvaddr);
+			वापस;
+		पूर्ण
 
-		goto sigbus;
-	}
+		जाओ sigbus;
+	पूर्ण
 
-	if (unaligned_action == UNALIGNED_ACTION_SHOW)
-		show_registers(regs);
-	pc = (unsigned int *)exception_epc(regs);
+	अगर (unaligned_action == UNALIGNED_ACTION_SHOW)
+		show_रेजिस्टरs(regs);
+	pc = (अचिन्हित पूर्णांक *)exception_epc(regs);
 
-	emulate_load_store_insn(regs, (void __user *)regs->cp0_badvaddr, pc);
+	emulate_load_store_insn(regs, (व्योम __user *)regs->cp0_badvaddr, pc);
 
-	return;
+	वापस;
 
 sigbus:
-	die_if_kernel("Kernel unaligned instruction access", regs);
-	force_sig(SIGBUS);
+	die_अगर_kernel("Kernel unaligned instruction access", regs);
+	क्रमce_sig(SIGBUS);
 
 	/*
-	 * XXX On return from the signal handler we should advance the epc
+	 * XXX On वापस from the संकेत handler we should advance the epc
 	 */
-	exception_exit(prev_state);
-}
+	exception_निकास(prev_state);
+पूर्ण
 
-#ifdef CONFIG_DEBUG_FS
-static int __init debugfs_unaligned(void)
-{
+#अगर_घोषित CONFIG_DEBUG_FS
+अटल पूर्णांक __init debugfs_unaligned(व्योम)
+अणु
 	debugfs_create_u32("unaligned_instructions", S_IRUGO, mips_debugfs_dir,
-			   &unaligned_instructions);
+			   &unaligned_inकाष्ठाions);
 	debugfs_create_u32("unaligned_action", S_IRUGO | S_IWUSR,
 			   mips_debugfs_dir, &unaligned_action);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 arch_initcall(debugfs_unaligned);
-#endif
+#पूर्ण_अगर

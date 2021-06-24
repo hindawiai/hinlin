@@ -1,218 +1,219 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * linux/drivers/input/keyboard/omap-keypad.c
  *
  * OMAP Keypad Driver
  *
  * Copyright (C) 2003 Nokia Corporation
- * Written by Timo Teräs <ext-timo.teras@nokia.com>
+ * Written by Timo Terथअs <ext-timo.teras@nokia.com>
  *
- * Added support for H2 & H3 Keypad
+ * Added support क्रम H2 & H3 Keypad
  * Copyright (C) 2004 Texas Instruments
  */
 
-#include <linux/module.h>
-#include <linux/interrupt.h>
-#include <linux/types.h>
-#include <linux/input.h>
-#include <linux/kernel.h>
-#include <linux/delay.h>
-#include <linux/platform_device.h>
-#include <linux/mutex.h>
-#include <linux/errno.h>
-#include <linux/slab.h>
-#include <linux/gpio.h>
-#include <linux/platform_data/gpio-omap.h>
-#include <linux/platform_data/keypad-omap.h>
+#समावेश <linux/module.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/types.h>
+#समावेश <linux/input.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/slab.h>
+#समावेश <linux/gpपन.स>
+#समावेश <linux/platक्रमm_data/gpio-omap.h>
+#समावेश <linux/platक्रमm_data/keypad-omap.h>
 
-#undef NEW_BOARD_LEARNING_MODE
+#अघोषित NEW_BOARD_LEARNING_MODE
 
-static void omap_kp_tasklet(unsigned long);
-static void omap_kp_timer(struct timer_list *);
+अटल व्योम omap_kp_tasklet(अचिन्हित दीर्घ);
+अटल व्योम omap_kp_समयr(काष्ठा समयr_list *);
 
-static unsigned char keypad_state[8];
-static DEFINE_MUTEX(kp_enable_mutex);
-static int kp_enable = 1;
-static int kp_cur_group = -1;
+अटल अचिन्हित अक्षर keypad_state[8];
+अटल DEFINE_MUTEX(kp_enable_mutex);
+अटल पूर्णांक kp_enable = 1;
+अटल पूर्णांक kp_cur_group = -1;
 
-struct omap_kp {
-	struct input_dev *input;
-	struct timer_list timer;
-	int irq;
-	unsigned int rows;
-	unsigned int cols;
-	unsigned long delay;
-	unsigned int debounce;
-	unsigned short keymap[];
-};
+काष्ठा omap_kp अणु
+	काष्ठा input_dev *input;
+	काष्ठा समयr_list समयr;
+	पूर्णांक irq;
+	अचिन्हित पूर्णांक rows;
+	अचिन्हित पूर्णांक cols;
+	अचिन्हित दीर्घ delay;
+	अचिन्हित पूर्णांक debounce;
+	अचिन्हित लघु keymap[];
+पूर्ण;
 
-static DECLARE_TASKLET_DISABLED_OLD(kp_tasklet, omap_kp_tasklet);
+अटल DECLARE_TASKLET_DISABLED_OLD(kp_tasklet, omap_kp_tasklet);
 
-static unsigned int *row_gpios;
-static unsigned int *col_gpios;
+अटल अचिन्हित पूर्णांक *row_gpios;
+अटल अचिन्हित पूर्णांक *col_gpios;
 
-static irqreturn_t omap_kp_interrupt(int irq, void *dev_id)
-{
-	/* disable keyboard interrupt and schedule for handling */
-	omap_writew(1, OMAP1_MPUIO_BASE + OMAP_MPUIO_KBD_MASKIT);
+अटल irqवापस_t omap_kp_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id)
+अणु
+	/* disable keyboard पूर्णांकerrupt and schedule क्रम handling */
+	omap_ग_लिखोw(1, OMAP1_MPUIO_BASE + OMAP_MPUIO_KBD_MASKIT);
 
 	tasklet_schedule(&kp_tasklet);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static void omap_kp_timer(struct timer_list *unused)
-{
+अटल व्योम omap_kp_समयr(काष्ठा समयr_list *unused)
+अणु
 	tasklet_schedule(&kp_tasklet);
-}
+पूर्ण
 
-static void omap_kp_scan_keypad(struct omap_kp *omap_kp, unsigned char *state)
-{
-	int col = 0;
+अटल व्योम omap_kp_scan_keypad(काष्ठा omap_kp *omap_kp, अचिन्हित अक्षर *state)
+अणु
+	पूर्णांक col = 0;
 
-	/* disable keyboard interrupt and schedule for handling */
-	omap_writew(1, OMAP1_MPUIO_BASE + OMAP_MPUIO_KBD_MASKIT);
+	/* disable keyboard पूर्णांकerrupt and schedule क्रम handling */
+	omap_ग_लिखोw(1, OMAP1_MPUIO_BASE + OMAP_MPUIO_KBD_MASKIT);
 
-	/* read the keypad status */
-	omap_writew(0xff, OMAP1_MPUIO_BASE + OMAP_MPUIO_KBC);
-	for (col = 0; col < omap_kp->cols; col++) {
-		omap_writew(~(1 << col) & 0xff,
+	/* पढ़ो the keypad status */
+	omap_ग_लिखोw(0xff, OMAP1_MPUIO_BASE + OMAP_MPUIO_KBC);
+	क्रम (col = 0; col < omap_kp->cols; col++) अणु
+		omap_ग_लिखोw(~(1 << col) & 0xff,
 			    OMAP1_MPUIO_BASE + OMAP_MPUIO_KBC);
 
 		udelay(omap_kp->delay);
 
-		state[col] = ~omap_readw(OMAP1_MPUIO_BASE +
+		state[col] = ~omap_पढ़ोw(OMAP1_MPUIO_BASE +
 					 OMAP_MPUIO_KBR_LATCH) & 0xff;
-	}
-	omap_writew(0x00, OMAP1_MPUIO_BASE + OMAP_MPUIO_KBC);
+	पूर्ण
+	omap_ग_लिखोw(0x00, OMAP1_MPUIO_BASE + OMAP_MPUIO_KBC);
 	udelay(2);
-}
+पूर्ण
 
-static void omap_kp_tasklet(unsigned long data)
-{
-	struct omap_kp *omap_kp_data = (struct omap_kp *) data;
-	unsigned short *keycodes = omap_kp_data->input->keycode;
-	unsigned int row_shift = get_count_order(omap_kp_data->cols);
-	unsigned char new_state[8], changed, key_down = 0;
-	int col, row;
+अटल व्योम omap_kp_tasklet(अचिन्हित दीर्घ data)
+अणु
+	काष्ठा omap_kp *omap_kp_data = (काष्ठा omap_kp *) data;
+	अचिन्हित लघु *keycodes = omap_kp_data->input->keycode;
+	अचिन्हित पूर्णांक row_shअगरt = get_count_order(omap_kp_data->cols);
+	अचिन्हित अक्षर new_state[8], changed, key_करोwn = 0;
+	पूर्णांक col, row;
 
-	/* check for any changes */
+	/* check क्रम any changes */
 	omap_kp_scan_keypad(omap_kp_data, new_state);
 
-	/* check for changes and print those */
-	for (col = 0; col < omap_kp_data->cols; col++) {
+	/* check क्रम changes and prपूर्णांक those */
+	क्रम (col = 0; col < omap_kp_data->cols; col++) अणु
 		changed = new_state[col] ^ keypad_state[col];
-		key_down |= new_state[col];
-		if (changed == 0)
-			continue;
+		key_करोwn |= new_state[col];
+		अगर (changed == 0)
+			जारी;
 
-		for (row = 0; row < omap_kp_data->rows; row++) {
-			int key;
-			if (!(changed & (1 << row)))
-				continue;
-#ifdef NEW_BOARD_LEARNING_MODE
-			printk(KERN_INFO "omap-keypad: key %d-%d %s\n", col,
+		क्रम (row = 0; row < omap_kp_data->rows; row++) अणु
+			पूर्णांक key;
+			अगर (!(changed & (1 << row)))
+				जारी;
+#अगर_घोषित NEW_BOARD_LEARNING_MODE
+			prपूर्णांकk(KERN_INFO "omap-keypad: key %d-%d %s\n", col,
 			       row, (new_state[col] & (1 << row)) ?
 			       "pressed" : "released");
-#else
-			key = keycodes[MATRIX_SCAN_CODE(row, col, row_shift)];
+#अन्यथा
+			key = keycodes[MATRIX_SCAN_CODE(row, col, row_shअगरt)];
 
-			if (!(kp_cur_group == (key & GROUP_MASK) ||
+			अगर (!(kp_cur_group == (key & GROUP_MASK) ||
 			      kp_cur_group == -1))
-				continue;
+				जारी;
 
 			kp_cur_group = key & GROUP_MASK;
 			input_report_key(omap_kp_data->input, key & ~GROUP_MASK,
 					 new_state[col] & (1 << row));
-#endif
-		}
-	}
+#पूर्ण_अगर
+		पूर्ण
+	पूर्ण
 	input_sync(omap_kp_data->input);
-	memcpy(keypad_state, new_state, sizeof(keypad_state));
+	स_नकल(keypad_state, new_state, माप(keypad_state));
 
-	if (key_down) {
-		/* some key is pressed - keep irq disabled and use timer
+	अगर (key_करोwn) अणु
+		/* some key is pressed - keep irq disabled and use समयr
 		 * to poll the keypad */
-		mod_timer(&omap_kp_data->timer, jiffies + HZ / 20);
-	} else {
-		/* enable interrupts */
-		omap_writew(0, OMAP1_MPUIO_BASE + OMAP_MPUIO_KBD_MASKIT);
+		mod_समयr(&omap_kp_data->समयr, jअगरfies + HZ / 20);
+	पूर्ण अन्यथा अणु
+		/* enable पूर्णांकerrupts */
+		omap_ग_लिखोw(0, OMAP1_MPUIO_BASE + OMAP_MPUIO_KBD_MASKIT);
 		kp_cur_group = -1;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static ssize_t omap_kp_enable_show(struct device *dev,
-				   struct device_attribute *attr, char *buf)
-{
-	return sprintf(buf, "%u\n", kp_enable);
-}
+अटल sमाप_प्रकार omap_kp_enable_show(काष्ठा device *dev,
+				   काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	वापस प्र_लिखो(buf, "%u\n", kp_enable);
+पूर्ण
 
-static ssize_t omap_kp_enable_store(struct device *dev, struct device_attribute *attr,
-				    const char *buf, size_t count)
-{
-	struct omap_kp *omap_kp = dev_get_drvdata(dev);
-	int state;
+अटल sमाप_प्रकार omap_kp_enable_store(काष्ठा device *dev, काष्ठा device_attribute *attr,
+				    स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	काष्ठा omap_kp *omap_kp = dev_get_drvdata(dev);
+	पूर्णांक state;
 
-	if (sscanf(buf, "%u", &state) != 1)
-		return -EINVAL;
+	अगर (माला_पूछो(buf, "%u", &state) != 1)
+		वापस -EINVAL;
 
-	if ((state != 1) && (state != 0))
-		return -EINVAL;
+	अगर ((state != 1) && (state != 0))
+		वापस -EINVAL;
 
 	mutex_lock(&kp_enable_mutex);
-	if (state != kp_enable) {
-		if (state)
+	अगर (state != kp_enable) अणु
+		अगर (state)
 			enable_irq(omap_kp->irq);
-		else
+		अन्यथा
 			disable_irq(omap_kp->irq);
 		kp_enable = state;
-	}
+	पूर्ण
 	mutex_unlock(&kp_enable_mutex);
 
-	return strnlen(buf, count);
-}
+	वापस strnlen(buf, count);
+पूर्ण
 
-static DEVICE_ATTR(enable, S_IRUGO | S_IWUSR, omap_kp_enable_show, omap_kp_enable_store);
+अटल DEVICE_ATTR(enable, S_IRUGO | S_IWUSR, omap_kp_enable_show, omap_kp_enable_store);
 
-static int omap_kp_probe(struct platform_device *pdev)
-{
-	struct omap_kp *omap_kp;
-	struct input_dev *input_dev;
-	struct omap_kp_platform_data *pdata = dev_get_platdata(&pdev->dev);
-	int i, col_idx, row_idx, ret;
-	unsigned int row_shift, keycodemax;
+अटल पूर्णांक omap_kp_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा omap_kp *omap_kp;
+	काष्ठा input_dev *input_dev;
+	काष्ठा omap_kp_platक्रमm_data *pdata = dev_get_platdata(&pdev->dev);
+	पूर्णांक i, col_idx, row_idx, ret;
+	अचिन्हित पूर्णांक row_shअगरt, keycodemax;
 
-	if (!pdata->rows || !pdata->cols || !pdata->keymap_data) {
-		printk(KERN_ERR "No rows, cols or keymap_data from pdata\n");
-		return -EINVAL;
-	}
+	अगर (!pdata->rows || !pdata->cols || !pdata->keymap_data) अणु
+		prपूर्णांकk(KERN_ERR "No rows, cols or keymap_data from pdata\n");
+		वापस -EINVAL;
+	पूर्ण
 
-	row_shift = get_count_order(pdata->cols);
-	keycodemax = pdata->rows << row_shift;
+	row_shअगरt = get_count_order(pdata->cols);
+	keycodemax = pdata->rows << row_shअगरt;
 
-	omap_kp = kzalloc(sizeof(struct omap_kp) +
-			keycodemax * sizeof(unsigned short), GFP_KERNEL);
+	omap_kp = kzalloc(माप(काष्ठा omap_kp) +
+			keycodemax * माप(अचिन्हित लघु), GFP_KERNEL);
 	input_dev = input_allocate_device();
-	if (!omap_kp || !input_dev) {
-		kfree(omap_kp);
-		input_free_device(input_dev);
-		return -ENOMEM;
-	}
+	अगर (!omap_kp || !input_dev) अणु
+		kमुक्त(omap_kp);
+		input_मुक्त_device(input_dev);
+		वापस -ENOMEM;
+	पूर्ण
 
-	platform_set_drvdata(pdev, omap_kp);
+	platक्रमm_set_drvdata(pdev, omap_kp);
 
 	omap_kp->input = input_dev;
 
-	/* Disable the interrupt for the MPUIO keyboard */
-	omap_writew(1, OMAP1_MPUIO_BASE + OMAP_MPUIO_KBD_MASKIT);
+	/* Disable the पूर्णांकerrupt क्रम the MPUIO keyboard */
+	omap_ग_लिखोw(1, OMAP1_MPUIO_BASE + OMAP_MPUIO_KBD_MASKIT);
 
-	if (pdata->delay)
+	अगर (pdata->delay)
 		omap_kp->delay = pdata->delay;
 
-	if (pdata->row_gpios && pdata->col_gpios) {
+	अगर (pdata->row_gpios && pdata->col_gpios) अणु
 		row_gpios = pdata->row_gpios;
 		col_gpios = pdata->col_gpios;
-	}
+	पूर्ण
 
 	omap_kp->rows = pdata->rows;
 	omap_kp->cols = pdata->cols;
@@ -220,15 +221,15 @@ static int omap_kp_probe(struct platform_device *pdev)
 	col_idx = 0;
 	row_idx = 0;
 
-	timer_setup(&omap_kp->timer, omap_kp_timer, 0);
+	समयr_setup(&omap_kp->समयr, omap_kp_समयr, 0);
 
-	/* get the irq and init timer*/
-	kp_tasklet.data = (unsigned long) omap_kp;
+	/* get the irq and init समयr*/
+	kp_tasklet.data = (अचिन्हित दीर्घ) omap_kp;
 	tasklet_enable(&kp_tasklet);
 
 	ret = device_create_file(&pdev->dev, &dev_attr_enable);
-	if (ret < 0)
-		goto err2;
+	अगर (ret < 0)
+		जाओ err2;
 
 	/* setup input device */
 	input_dev->name = "omap-keypad";
@@ -236,87 +237,87 @@ static int omap_kp_probe(struct platform_device *pdev)
 	input_dev->dev.parent = &pdev->dev;
 
 	input_dev->id.bustype = BUS_HOST;
-	input_dev->id.vendor = 0x0001;
+	input_dev->id.venकरोr = 0x0001;
 	input_dev->id.product = 0x0001;
 	input_dev->id.version = 0x0100;
 
-	if (pdata->rep)
+	अगर (pdata->rep)
 		__set_bit(EV_REP, input_dev->evbit);
 
-	ret = matrix_keypad_build_keymap(pdata->keymap_data, NULL,
+	ret = matrix_keypad_build_keymap(pdata->keymap_data, शून्य,
 					 pdata->rows, pdata->cols,
 					 omap_kp->keymap, input_dev);
-	if (ret < 0)
-		goto err3;
+	अगर (ret < 0)
+		जाओ err3;
 
-	ret = input_register_device(omap_kp->input);
-	if (ret < 0) {
-		printk(KERN_ERR "Unable to register omap-keypad input device\n");
-		goto err3;
-	}
+	ret = input_रेजिस्टर_device(omap_kp->input);
+	अगर (ret < 0) अणु
+		prपूर्णांकk(KERN_ERR "Unable to register omap-keypad input device\n");
+		जाओ err3;
+	पूर्ण
 
-	if (pdata->dbounce)
-		omap_writew(0xff, OMAP1_MPUIO_BASE + OMAP_MPUIO_GPIO_DEBOUNCING);
+	अगर (pdata->dbounce)
+		omap_ग_लिखोw(0xff, OMAP1_MPUIO_BASE + OMAP_MPUIO_GPIO_DEBOUNCING);
 
-	/* scan current status and enable interrupt */
+	/* scan current status and enable पूर्णांकerrupt */
 	omap_kp_scan_keypad(omap_kp, keypad_state);
-	omap_kp->irq = platform_get_irq(pdev, 0);
-	if (omap_kp->irq >= 0) {
-		if (request_irq(omap_kp->irq, omap_kp_interrupt, 0,
+	omap_kp->irq = platक्रमm_get_irq(pdev, 0);
+	अगर (omap_kp->irq >= 0) अणु
+		अगर (request_irq(omap_kp->irq, omap_kp_पूर्णांकerrupt, 0,
 				"omap-keypad", omap_kp) < 0)
-			goto err4;
-	}
-	omap_writew(0, OMAP1_MPUIO_BASE + OMAP_MPUIO_KBD_MASKIT);
+			जाओ err4;
+	पूर्ण
+	omap_ग_लिखोw(0, OMAP1_MPUIO_BASE + OMAP_MPUIO_KBD_MASKIT);
 
-	return 0;
+	वापस 0;
 
 err4:
-	input_unregister_device(omap_kp->input);
-	input_dev = NULL;
+	input_unरेजिस्टर_device(omap_kp->input);
+	input_dev = शून्य;
 err3:
-	device_remove_file(&pdev->dev, &dev_attr_enable);
+	device_हटाओ_file(&pdev->dev, &dev_attr_enable);
 err2:
-	for (i = row_idx - 1; i >= 0; i--)
-		gpio_free(row_gpios[i]);
-	for (i = col_idx - 1; i >= 0; i--)
-		gpio_free(col_gpios[i]);
+	क्रम (i = row_idx - 1; i >= 0; i--)
+		gpio_मुक्त(row_gpios[i]);
+	क्रम (i = col_idx - 1; i >= 0; i--)
+		gpio_मुक्त(col_gpios[i]);
 
-	kfree(omap_kp);
-	input_free_device(input_dev);
+	kमुक्त(omap_kp);
+	input_मुक्त_device(input_dev);
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static int omap_kp_remove(struct platform_device *pdev)
-{
-	struct omap_kp *omap_kp = platform_get_drvdata(pdev);
+अटल पूर्णांक omap_kp_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा omap_kp *omap_kp = platक्रमm_get_drvdata(pdev);
 
-	/* disable keypad interrupt handling */
+	/* disable keypad पूर्णांकerrupt handling */
 	tasklet_disable(&kp_tasklet);
-	omap_writew(1, OMAP1_MPUIO_BASE + OMAP_MPUIO_KBD_MASKIT);
-	free_irq(omap_kp->irq, omap_kp);
+	omap_ग_लिखोw(1, OMAP1_MPUIO_BASE + OMAP_MPUIO_KBD_MASKIT);
+	मुक्त_irq(omap_kp->irq, omap_kp);
 
-	del_timer_sync(&omap_kp->timer);
-	tasklet_kill(&kp_tasklet);
+	del_समयr_sync(&omap_kp->समयr);
+	tasklet_समाप्त(&kp_tasklet);
 
-	/* unregister everything */
-	input_unregister_device(omap_kp->input);
+	/* unरेजिस्टर everything */
+	input_unरेजिस्टर_device(omap_kp->input);
 
-	kfree(omap_kp);
+	kमुक्त(omap_kp);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct platform_driver omap_kp_driver = {
+अटल काष्ठा platक्रमm_driver omap_kp_driver = अणु
 	.probe		= omap_kp_probe,
-	.remove		= omap_kp_remove,
-	.driver		= {
+	.हटाओ		= omap_kp_हटाओ,
+	.driver		= अणु
 		.name	= "omap-keypad",
-	},
-};
-module_platform_driver(omap_kp_driver);
+	पूर्ण,
+पूर्ण;
+module_platक्रमm_driver(omap_kp_driver);
 
-MODULE_AUTHOR("Timo Teräs");
+MODULE_AUTHOR("Timo Terथअs");
 MODULE_DESCRIPTION("OMAP Keypad Driver");
 MODULE_LICENSE("GPL");
 MODULE_ALIAS("platform:omap-keypad");

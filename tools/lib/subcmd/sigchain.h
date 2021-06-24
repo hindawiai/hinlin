@@ -1,11 +1,12 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __SUBCMD_SIGCHAIN_H
-#define __SUBCMD_SIGCHAIN_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __SUBCMD_SIGCHAIN_H
+#घोषणा __SUBCMD_SIGCHAIN_H
 
-typedef void (*sigchain_fun)(int);
+प्रकार व्योम (*sigchain_fun)(पूर्णांक);
 
-int sigchain_pop(int sig);
+पूर्णांक sigchain_pop(पूर्णांक sig);
 
-void sigchain_push_common(sigchain_fun f);
+व्योम sigchain_push_common(sigchain_fun f);
 
-#endif /* __SUBCMD_SIGCHAIN_H */
+#पूर्ण_अगर /* __SUBCMD_SIGCHAIN_H */

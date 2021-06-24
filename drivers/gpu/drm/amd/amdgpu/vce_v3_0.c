@@ -1,13 +1,14 @@
+<शैली गुरु>
 /*
  * Copyright 2014 Advanced Micro Devices, Inc.
  * All Rights Reserved.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the
  * "Software"), to deal in the Software without restriction, including
- * without limitation the rights to use, copy, modify, merge, publish,
+ * without limitation the rights to use, copy, modअगरy, merge, publish,
  * distribute, sub license, and/or sell copies of the Software, and to
- * permit persons to whom the Software is furnished to do so, subject to
+ * permit persons to whom the Software is furnished to करो so, subject to
  * the following conditions:
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
@@ -22,163 +23,163 @@
  * next paragraph) shall be included in all copies or substantial portions
  * of the Software.
  *
- * Authors: Christian König <christian.koenig@amd.com>
+ * Authors: Christian Kथघnig <christian.koenig@amd.com>
  */
 
-#include <linux/firmware.h>
+#समावेश <linux/firmware.h>
 
-#include "amdgpu.h"
-#include "amdgpu_vce.h"
-#include "vid.h"
-#include "vce/vce_3_0_d.h"
-#include "vce/vce_3_0_sh_mask.h"
-#include "oss/oss_3_0_d.h"
-#include "oss/oss_3_0_sh_mask.h"
-#include "gca/gfx_8_0_d.h"
-#include "smu/smu_7_1_2_d.h"
-#include "smu/smu_7_1_2_sh_mask.h"
-#include "gca/gfx_8_0_sh_mask.h"
-#include "ivsrcid/ivsrcid_vislands30.h"
+#समावेश "amdgpu.h"
+#समावेश "amdgpu_vce.h"
+#समावेश "vid.h"
+#समावेश "vce/vce_3_0_d.h"
+#समावेश "vce/vce_3_0_sh_mask.h"
+#समावेश "oss/oss_3_0_d.h"
+#समावेश "oss/oss_3_0_sh_mask.h"
+#समावेश "gca/gfx_8_0_d.h"
+#समावेश "smu/smu_7_1_2_d.h"
+#समावेश "smu/smu_7_1_2_sh_mask.h"
+#समावेश "gca/gfx_8_0_sh_mask.h"
+#समावेश "ivsrcid/ivsrcid_vislands30.h"
 
 
-#define GRBM_GFX_INDEX__VCE_INSTANCE__SHIFT	0x04
-#define GRBM_GFX_INDEX__VCE_INSTANCE_MASK	0x10
-#define GRBM_GFX_INDEX__VCE_ALL_PIPE		0x07
+#घोषणा GRBM_GFX_INDEX__VCE_INSTANCE__SHIFT	0x04
+#घोषणा GRBM_GFX_INDEX__VCE_INSTANCE_MASK	0x10
+#घोषणा GRBM_GFX_INDEX__VCE_ALL_PIPE		0x07
 
-#define mmVCE_LMI_VCPU_CACHE_40BIT_BAR0	0x8616
-#define mmVCE_LMI_VCPU_CACHE_40BIT_BAR1	0x8617
-#define mmVCE_LMI_VCPU_CACHE_40BIT_BAR2	0x8618
-#define mmGRBM_GFX_INDEX_DEFAULT 0xE0000000
+#घोषणा mmVCE_LMI_VCPU_CACHE_40BIT_BAR0	0x8616
+#घोषणा mmVCE_LMI_VCPU_CACHE_40BIT_BAR1	0x8617
+#घोषणा mmVCE_LMI_VCPU_CACHE_40BIT_BAR2	0x8618
+#घोषणा mmGRBM_GFX_INDEX_DEFAULT 0xE0000000
 
-#define VCE_STATUS_VCPU_REPORT_FW_LOADED_MASK	0x02
+#घोषणा VCE_STATUS_VCPU_REPORT_FW_LOADED_MASK	0x02
 
-#define VCE_V3_0_FW_SIZE	(384 * 1024)
-#define VCE_V3_0_STACK_SIZE	(64 * 1024)
-#define VCE_V3_0_DATA_SIZE	((16 * 1024 * AMDGPU_MAX_VCE_HANDLES) + (52 * 1024))
+#घोषणा VCE_V3_0_FW_SIZE	(384 * 1024)
+#घोषणा VCE_V3_0_STACK_SIZE	(64 * 1024)
+#घोषणा VCE_V3_0_DATA_SIZE	((16 * 1024 * AMDGPU_MAX_VCE_HANDLES) + (52 * 1024))
 
-#define FW_52_8_3	((52 << 24) | (8 << 16) | (3 << 8))
+#घोषणा FW_52_8_3	((52 << 24) | (8 << 16) | (3 << 8))
 
-#define GET_VCE_INSTANCE(i)  ((i) << GRBM_GFX_INDEX__VCE_INSTANCE__SHIFT \
+#घोषणा GET_VCE_INSTANCE(i)  ((i) << GRBM_GFX_INDEX__VCE_INSTANCE__SHIFT \
 					| GRBM_GFX_INDEX__VCE_ALL_PIPE)
 
-static void vce_v3_0_mc_resume(struct amdgpu_device *adev, int idx);
-static void vce_v3_0_set_ring_funcs(struct amdgpu_device *adev);
-static void vce_v3_0_set_irq_funcs(struct amdgpu_device *adev);
-static int vce_v3_0_wait_for_idle(void *handle);
-static int vce_v3_0_set_clockgating_state(void *handle,
-					  enum amd_clockgating_state state);
+अटल व्योम vce_v3_0_mc_resume(काष्ठा amdgpu_device *adev, पूर्णांक idx);
+अटल व्योम vce_v3_0_set_ring_funcs(काष्ठा amdgpu_device *adev);
+अटल व्योम vce_v3_0_set_irq_funcs(काष्ठा amdgpu_device *adev);
+अटल पूर्णांक vce_v3_0_रुको_क्रम_idle(व्योम *handle);
+अटल पूर्णांक vce_v3_0_set_घड़ीgating_state(व्योम *handle,
+					  क्रमागत amd_घड़ीgating_state state);
 /**
- * vce_v3_0_ring_get_rptr - get read pointer
+ * vce_v3_0_ring_get_rptr - get पढ़ो poपूर्णांकer
  *
- * @ring: amdgpu_ring pointer
+ * @ring: amdgpu_ring poपूर्णांकer
  *
- * Returns the current hardware read pointer
+ * Returns the current hardware पढ़ो poपूर्णांकer
  */
-static uint64_t vce_v3_0_ring_get_rptr(struct amdgpu_ring *ring)
-{
-	struct amdgpu_device *adev = ring->adev;
+अटल uपूर्णांक64_t vce_v3_0_ring_get_rptr(काष्ठा amdgpu_ring *ring)
+अणु
+	काष्ठा amdgpu_device *adev = ring->adev;
 	u32 v;
 
 	mutex_lock(&adev->grbm_idx_mutex);
-	if (adev->vce.harvest_config == 0 ||
+	अगर (adev->vce.harvest_config == 0 ||
 		adev->vce.harvest_config == AMDGPU_VCE_HARVEST_VCE1)
 		WREG32(mmGRBM_GFX_INDEX, GET_VCE_INSTANCE(0));
-	else if (adev->vce.harvest_config == AMDGPU_VCE_HARVEST_VCE0)
+	अन्यथा अगर (adev->vce.harvest_config == AMDGPU_VCE_HARVEST_VCE0)
 		WREG32(mmGRBM_GFX_INDEX, GET_VCE_INSTANCE(1));
 
-	if (ring->me == 0)
+	अगर (ring->me == 0)
 		v = RREG32(mmVCE_RB_RPTR);
-	else if (ring->me == 1)
+	अन्यथा अगर (ring->me == 1)
 		v = RREG32(mmVCE_RB_RPTR2);
-	else
+	अन्यथा
 		v = RREG32(mmVCE_RB_RPTR3);
 
 	WREG32(mmGRBM_GFX_INDEX, mmGRBM_GFX_INDEX_DEFAULT);
 	mutex_unlock(&adev->grbm_idx_mutex);
 
-	return v;
-}
+	वापस v;
+पूर्ण
 
 /**
- * vce_v3_0_ring_get_wptr - get write pointer
+ * vce_v3_0_ring_get_wptr - get ग_लिखो poपूर्णांकer
  *
- * @ring: amdgpu_ring pointer
+ * @ring: amdgpu_ring poपूर्णांकer
  *
- * Returns the current hardware write pointer
+ * Returns the current hardware ग_लिखो poपूर्णांकer
  */
-static uint64_t vce_v3_0_ring_get_wptr(struct amdgpu_ring *ring)
-{
-	struct amdgpu_device *adev = ring->adev;
+अटल uपूर्णांक64_t vce_v3_0_ring_get_wptr(काष्ठा amdgpu_ring *ring)
+अणु
+	काष्ठा amdgpu_device *adev = ring->adev;
 	u32 v;
 
 	mutex_lock(&adev->grbm_idx_mutex);
-	if (adev->vce.harvest_config == 0 ||
+	अगर (adev->vce.harvest_config == 0 ||
 		adev->vce.harvest_config == AMDGPU_VCE_HARVEST_VCE1)
 		WREG32(mmGRBM_GFX_INDEX, GET_VCE_INSTANCE(0));
-	else if (adev->vce.harvest_config == AMDGPU_VCE_HARVEST_VCE0)
+	अन्यथा अगर (adev->vce.harvest_config == AMDGPU_VCE_HARVEST_VCE0)
 		WREG32(mmGRBM_GFX_INDEX, GET_VCE_INSTANCE(1));
 
-	if (ring->me == 0)
+	अगर (ring->me == 0)
 		v = RREG32(mmVCE_RB_WPTR);
-	else if (ring->me == 1)
+	अन्यथा अगर (ring->me == 1)
 		v = RREG32(mmVCE_RB_WPTR2);
-	else
+	अन्यथा
 		v = RREG32(mmVCE_RB_WPTR3);
 
 	WREG32(mmGRBM_GFX_INDEX, mmGRBM_GFX_INDEX_DEFAULT);
 	mutex_unlock(&adev->grbm_idx_mutex);
 
-	return v;
-}
+	वापस v;
+पूर्ण
 
 /**
- * vce_v3_0_ring_set_wptr - set write pointer
+ * vce_v3_0_ring_set_wptr - set ग_लिखो poपूर्णांकer
  *
- * @ring: amdgpu_ring pointer
+ * @ring: amdgpu_ring poपूर्णांकer
  *
- * Commits the write pointer to the hardware
+ * Commits the ग_लिखो poपूर्णांकer to the hardware
  */
-static void vce_v3_0_ring_set_wptr(struct amdgpu_ring *ring)
-{
-	struct amdgpu_device *adev = ring->adev;
+अटल व्योम vce_v3_0_ring_set_wptr(काष्ठा amdgpu_ring *ring)
+अणु
+	काष्ठा amdgpu_device *adev = ring->adev;
 
 	mutex_lock(&adev->grbm_idx_mutex);
-	if (adev->vce.harvest_config == 0 ||
+	अगर (adev->vce.harvest_config == 0 ||
 		adev->vce.harvest_config == AMDGPU_VCE_HARVEST_VCE1)
 		WREG32(mmGRBM_GFX_INDEX, GET_VCE_INSTANCE(0));
-	else if (adev->vce.harvest_config == AMDGPU_VCE_HARVEST_VCE0)
+	अन्यथा अगर (adev->vce.harvest_config == AMDGPU_VCE_HARVEST_VCE0)
 		WREG32(mmGRBM_GFX_INDEX, GET_VCE_INSTANCE(1));
 
-	if (ring->me == 0)
+	अगर (ring->me == 0)
 		WREG32(mmVCE_RB_WPTR, lower_32_bits(ring->wptr));
-	else if (ring->me == 1)
+	अन्यथा अगर (ring->me == 1)
 		WREG32(mmVCE_RB_WPTR2, lower_32_bits(ring->wptr));
-	else
+	अन्यथा
 		WREG32(mmVCE_RB_WPTR3, lower_32_bits(ring->wptr));
 
 	WREG32(mmGRBM_GFX_INDEX, mmGRBM_GFX_INDEX_DEFAULT);
 	mutex_unlock(&adev->grbm_idx_mutex);
-}
+पूर्ण
 
-static void vce_v3_0_override_vce_clock_gating(struct amdgpu_device *adev, bool override)
-{
+अटल व्योम vce_v3_0_override_vce_घड़ी_gating(काष्ठा amdgpu_device *adev, bool override)
+अणु
 	WREG32_FIELD(VCE_RB_ARB_CTRL, VCE_CGTT_OVERRIDE, override ? 1 : 0);
-}
+पूर्ण
 
-static void vce_v3_0_set_vce_sw_clock_gating(struct amdgpu_device *adev,
+अटल व्योम vce_v3_0_set_vce_sw_घड़ी_gating(काष्ठा amdgpu_device *adev,
 					     bool gated)
-{
+अणु
 	u32 data;
 
 	/* Set Override to disable Clock Gating */
-	vce_v3_0_override_vce_clock_gating(adev, true);
+	vce_v3_0_override_vce_घड़ी_gating(adev, true);
 
 	/* This function enables MGCG which is controlled by firmware.
-	   With the clocks in the gated state the core is still
-	   accessible but the firmware will throttle the clocks on the
+	   With the घड़ीs in the gated state the core is still
+	   accessible but the firmware will throttle the घड़ीs on the
 	   fly as necessary.
 	*/
-	if (!gated) {
+	अगर (!gated) अणु
 		data = RREG32(mmVCE_CLOCK_GATING_B);
 		data |= 0x1ff;
 		data &= ~0xef0000;
@@ -204,7 +205,7 @@ static void vce_v3_0_set_vce_sw_clock_gating(struct amdgpu_device *adev,
 			VCE_UENC_DMA_DCLK_CTRL__REGCLK_FORCEON_MASK  |
 			0x8;
 		WREG32(mmVCE_UENC_DMA_DCLK_CTRL, data);
-	} else {
+	पूर्ण अन्यथा अणु
 		data = RREG32(mmVCE_CLOCK_GATING_B);
 		data &= ~0x80010;
 		data |= 0xe70008;
@@ -228,55 +229,55 @@ static void vce_v3_0_set_vce_sw_clock_gating(struct amdgpu_device *adev,
 			  VCE_UENC_DMA_DCLK_CTRL__REGCLK_FORCEON_MASK  |
 			  0x8);
 		WREG32(mmVCE_UENC_DMA_DCLK_CTRL, data);
-	}
-	vce_v3_0_override_vce_clock_gating(adev, false);
-}
+	पूर्ण
+	vce_v3_0_override_vce_घड़ी_gating(adev, false);
+पूर्ण
 
-static int vce_v3_0_firmware_loaded(struct amdgpu_device *adev)
-{
-	int i, j;
+अटल पूर्णांक vce_v3_0_firmware_loaded(काष्ठा amdgpu_device *adev)
+अणु
+	पूर्णांक i, j;
 
-	for (i = 0; i < 10; ++i) {
-		for (j = 0; j < 100; ++j) {
-			uint32_t status = RREG32(mmVCE_STATUS);
+	क्रम (i = 0; i < 10; ++i) अणु
+		क्रम (j = 0; j < 100; ++j) अणु
+			uपूर्णांक32_t status = RREG32(mmVCE_STATUS);
 
-			if (status & VCE_STATUS_VCPU_REPORT_FW_LOADED_MASK)
-				return 0;
+			अगर (status & VCE_STATUS_VCPU_REPORT_FW_LOADED_MASK)
+				वापस 0;
 			mdelay(10);
-		}
+		पूर्ण
 
 		DRM_ERROR("VCE not responding, trying to reset the ECPU!!!\n");
 		WREG32_FIELD(VCE_SOFT_RESET, ECPU_SOFT_RESET, 1);
 		mdelay(10);
 		WREG32_FIELD(VCE_SOFT_RESET, ECPU_SOFT_RESET, 0);
 		mdelay(10);
-	}
+	पूर्ण
 
-	return -ETIMEDOUT;
-}
+	वापस -ETIMEDOUT;
+पूर्ण
 
 /**
  * vce_v3_0_start - start VCE block
  *
- * @adev: amdgpu_device pointer
+ * @adev: amdgpu_device poपूर्णांकer
  *
  * Setup and start the VCE block
  */
-static int vce_v3_0_start(struct amdgpu_device *adev)
-{
-	struct amdgpu_ring *ring;
-	int idx, r;
+अटल पूर्णांक vce_v3_0_start(काष्ठा amdgpu_device *adev)
+अणु
+	काष्ठा amdgpu_ring *ring;
+	पूर्णांक idx, r;
 
 	mutex_lock(&adev->grbm_idx_mutex);
-	for (idx = 0; idx < 2; ++idx) {
-		if (adev->vce.harvest_config & (1 << idx))
-			continue;
+	क्रम (idx = 0; idx < 2; ++idx) अणु
+		अगर (adev->vce.harvest_config & (1 << idx))
+			जारी;
 
 		WREG32(mmGRBM_GFX_INDEX, GET_VCE_INSTANCE(idx));
 
-		/* Program instance 0 reg space for two instances or instance 0 case
-		program instance 1 reg space for only instance 1 available case */
-		if (idx != 1 || adev->vce.harvest_config == AMDGPU_VCE_HARVEST_VCE0) {
+		/* Program instance 0 reg space क्रम two instances or instance 0 हाल
+		program instance 1 reg space क्रम only instance 1 available हाल */
+		अगर (idx != 1 || adev->vce.harvest_config == AMDGPU_VCE_HARVEST_VCE0) अणु
 			ring = &adev->vce.ring[0];
 			WREG32(mmVCE_RB_RPTR, lower_32_bits(ring->wptr));
 			WREG32(mmVCE_RB_WPTR, lower_32_bits(ring->wptr));
@@ -297,14 +298,14 @@ static int vce_v3_0_start(struct amdgpu_device *adev)
 			WREG32(mmVCE_RB_BASE_LO3, ring->gpu_addr);
 			WREG32(mmVCE_RB_BASE_HI3, upper_32_bits(ring->gpu_addr));
 			WREG32(mmVCE_RB_SIZE3, ring->ring_size / 4);
-		}
+		पूर्ण
 
 		vce_v3_0_mc_resume(adev, idx);
 		WREG32_FIELD(VCE_STATUS, JOB_BUSY, 1);
 
-		if (adev->asic_type >= CHIP_STONEY)
+		अगर (adev->asic_type >= CHIP_STONEY)
 			WREG32_P(mmVCE_VCPU_CNTL, 1, ~0x200001);
-		else
+		अन्यथा
 			WREG32_FIELD(VCE_VCPU_CNTL, CLK_EN, 1);
 
 		WREG32_FIELD(VCE_SOFT_RESET, ECPU_SOFT_RESET, 0);
@@ -315,33 +316,33 @@ static int vce_v3_0_start(struct amdgpu_device *adev)
 		/* clear BUSY flag */
 		WREG32_FIELD(VCE_STATUS, JOB_BUSY, 0);
 
-		if (r) {
+		अगर (r) अणु
 			DRM_ERROR("VCE not responding, giving up!!!\n");
 			mutex_unlock(&adev->grbm_idx_mutex);
-			return r;
-		}
-	}
+			वापस r;
+		पूर्ण
+	पूर्ण
 
 	WREG32(mmGRBM_GFX_INDEX, mmGRBM_GFX_INDEX_DEFAULT);
 	mutex_unlock(&adev->grbm_idx_mutex);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int vce_v3_0_stop(struct amdgpu_device *adev)
-{
-	int idx;
+अटल पूर्णांक vce_v3_0_stop(काष्ठा amdgpu_device *adev)
+अणु
+	पूर्णांक idx;
 
 	mutex_lock(&adev->grbm_idx_mutex);
-	for (idx = 0; idx < 2; ++idx) {
-		if (adev->vce.harvest_config & (1 << idx))
-			continue;
+	क्रम (idx = 0; idx < 2; ++idx) अणु
+		अगर (adev->vce.harvest_config & (1 << idx))
+			जारी;
 
 		WREG32(mmGRBM_GFX_INDEX, GET_VCE_INSTANCE(idx));
 
-		if (adev->asic_type >= CHIP_STONEY)
+		अगर (adev->asic_type >= CHIP_STONEY)
 			WREG32_P(mmVCE_VCPU_CNTL, 0, ~0x200001);
-		else
+		अन्यथा
 			WREG32_FIELD(VCE_VCPU_CNTL, CLK_EN, 0);
 
 		/* hold on ECPU */
@@ -349,182 +350,182 @@ static int vce_v3_0_stop(struct amdgpu_device *adev)
 
 		/* clear VCE STATUS */
 		WREG32(mmVCE_STATUS, 0);
-	}
+	पूर्ण
 
 	WREG32(mmGRBM_GFX_INDEX, mmGRBM_GFX_INDEX_DEFAULT);
 	mutex_unlock(&adev->grbm_idx_mutex);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#define ixVCE_HARVEST_FUSE_MACRO__ADDRESS     0xC0014074
-#define VCE_HARVEST_FUSE_MACRO__SHIFT       27
-#define VCE_HARVEST_FUSE_MACRO__MASK        0x18000000
+#घोषणा ixVCE_HARVEST_FUSE_MACRO__ADDRESS     0xC0014074
+#घोषणा VCE_HARVEST_FUSE_MACRO__SHIFT       27
+#घोषणा VCE_HARVEST_FUSE_MACRO__MASK        0x18000000
 
-static unsigned vce_v3_0_get_harvest_config(struct amdgpu_device *adev)
-{
-	u32 tmp;
+अटल अचिन्हित vce_v3_0_get_harvest_config(काष्ठा amdgpu_device *adev)
+अणु
+	u32 पंचांगp;
 
-	if ((adev->asic_type == CHIP_FIJI) ||
+	अगर ((adev->asic_type == CHIP_FIJI) ||
 	    (adev->asic_type == CHIP_STONEY))
-		return AMDGPU_VCE_HARVEST_VCE1;
+		वापस AMDGPU_VCE_HARVEST_VCE1;
 
-	if (adev->flags & AMD_IS_APU)
-		tmp = (RREG32_SMC(ixVCE_HARVEST_FUSE_MACRO__ADDRESS) &
+	अगर (adev->flags & AMD_IS_APU)
+		पंचांगp = (RREG32_SMC(ixVCE_HARVEST_FUSE_MACRO__ADDRESS) &
 		       VCE_HARVEST_FUSE_MACRO__MASK) >>
 			VCE_HARVEST_FUSE_MACRO__SHIFT;
-	else
-		tmp = (RREG32_SMC(ixCC_HARVEST_FUSES) &
+	अन्यथा
+		पंचांगp = (RREG32_SMC(ixCC_HARVEST_FUSES) &
 		       CC_HARVEST_FUSES__VCE_DISABLE_MASK) >>
 			CC_HARVEST_FUSES__VCE_DISABLE__SHIFT;
 
-	switch (tmp) {
-	case 1:
-		return AMDGPU_VCE_HARVEST_VCE0;
-	case 2:
-		return AMDGPU_VCE_HARVEST_VCE1;
-	case 3:
-		return AMDGPU_VCE_HARVEST_VCE0 | AMDGPU_VCE_HARVEST_VCE1;
-	default:
-		if ((adev->asic_type == CHIP_POLARIS10) ||
+	चयन (पंचांगp) अणु
+	हाल 1:
+		वापस AMDGPU_VCE_HARVEST_VCE0;
+	हाल 2:
+		वापस AMDGPU_VCE_HARVEST_VCE1;
+	हाल 3:
+		वापस AMDGPU_VCE_HARVEST_VCE0 | AMDGPU_VCE_HARVEST_VCE1;
+	शेष:
+		अगर ((adev->asic_type == CHIP_POLARIS10) ||
 		    (adev->asic_type == CHIP_POLARIS11) ||
 		    (adev->asic_type == CHIP_POLARIS12) ||
 		    (adev->asic_type == CHIP_VEGAM))
-			return AMDGPU_VCE_HARVEST_VCE1;
+			वापस AMDGPU_VCE_HARVEST_VCE1;
 
-		return 0;
-	}
-}
+		वापस 0;
+	पूर्ण
+पूर्ण
 
-static int vce_v3_0_early_init(void *handle)
-{
-	struct amdgpu_device *adev = (struct amdgpu_device *)handle;
+अटल पूर्णांक vce_v3_0_early_init(व्योम *handle)
+अणु
+	काष्ठा amdgpu_device *adev = (काष्ठा amdgpu_device *)handle;
 
 	adev->vce.harvest_config = vce_v3_0_get_harvest_config(adev);
 
-	if ((adev->vce.harvest_config &
+	अगर ((adev->vce.harvest_config &
 	     (AMDGPU_VCE_HARVEST_VCE0 | AMDGPU_VCE_HARVEST_VCE1)) ==
 	    (AMDGPU_VCE_HARVEST_VCE0 | AMDGPU_VCE_HARVEST_VCE1))
-		return -ENOENT;
+		वापस -ENOENT;
 
 	adev->vce.num_rings = 3;
 
 	vce_v3_0_set_ring_funcs(adev);
 	vce_v3_0_set_irq_funcs(adev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int vce_v3_0_sw_init(void *handle)
-{
-	struct amdgpu_device *adev = (struct amdgpu_device *)handle;
-	struct amdgpu_ring *ring;
-	int r, i;
+अटल पूर्णांक vce_v3_0_sw_init(व्योम *handle)
+अणु
+	काष्ठा amdgpu_device *adev = (काष्ठा amdgpu_device *)handle;
+	काष्ठा amdgpu_ring *ring;
+	पूर्णांक r, i;
 
 	/* VCE */
 	r = amdgpu_irq_add_id(adev, AMDGPU_IRQ_CLIENTID_LEGACY, VISLANDS30_IV_SRCID_VCE_TRAP, &adev->vce.irq);
-	if (r)
-		return r;
+	अगर (r)
+		वापस r;
 
 	r = amdgpu_vce_sw_init(adev, VCE_V3_0_FW_SIZE +
 		(VCE_V3_0_STACK_SIZE + VCE_V3_0_DATA_SIZE) * 2);
-	if (r)
-		return r;
+	अगर (r)
+		वापस r;
 
-	/* 52.8.3 required for 3 ring support */
-	if (adev->vce.fw_version < FW_52_8_3)
+	/* 52.8.3 required क्रम 3 ring support */
+	अगर (adev->vce.fw_version < FW_52_8_3)
 		adev->vce.num_rings = 2;
 
 	r = amdgpu_vce_resume(adev);
-	if (r)
-		return r;
+	अगर (r)
+		वापस r;
 
-	for (i = 0; i < adev->vce.num_rings; i++) {
+	क्रम (i = 0; i < adev->vce.num_rings; i++) अणु
 		ring = &adev->vce.ring[i];
-		sprintf(ring->name, "vce%d", i);
+		प्र_लिखो(ring->name, "vce%d", i);
 		r = amdgpu_ring_init(adev, ring, 512, &adev->vce.irq, 0,
-				     AMDGPU_RING_PRIO_DEFAULT, NULL);
-		if (r)
-			return r;
-	}
+				     AMDGPU_RING_PRIO_DEFAULT, शून्य);
+		अगर (r)
+			वापस r;
+	पूर्ण
 
 	r = amdgpu_vce_entity_init(adev);
 
-	return r;
-}
+	वापस r;
+पूर्ण
 
-static int vce_v3_0_sw_fini(void *handle)
-{
-	int r;
-	struct amdgpu_device *adev = (struct amdgpu_device *)handle;
+अटल पूर्णांक vce_v3_0_sw_fini(व्योम *handle)
+अणु
+	पूर्णांक r;
+	काष्ठा amdgpu_device *adev = (काष्ठा amdgpu_device *)handle;
 
 	r = amdgpu_vce_suspend(adev);
-	if (r)
-		return r;
+	अगर (r)
+		वापस r;
 
-	return amdgpu_vce_sw_fini(adev);
-}
+	वापस amdgpu_vce_sw_fini(adev);
+पूर्ण
 
-static int vce_v3_0_hw_init(void *handle)
-{
-	int r, i;
-	struct amdgpu_device *adev = (struct amdgpu_device *)handle;
+अटल पूर्णांक vce_v3_0_hw_init(व्योम *handle)
+अणु
+	पूर्णांक r, i;
+	काष्ठा amdgpu_device *adev = (काष्ठा amdgpu_device *)handle;
 
-	vce_v3_0_override_vce_clock_gating(adev, true);
+	vce_v3_0_override_vce_घड़ी_gating(adev, true);
 
-	amdgpu_asic_set_vce_clocks(adev, 10000, 10000);
+	amdgpu_asic_set_vce_घड़ीs(adev, 10000, 10000);
 
-	for (i = 0; i < adev->vce.num_rings; i++) {
+	क्रम (i = 0; i < adev->vce.num_rings; i++) अणु
 		r = amdgpu_ring_test_helper(&adev->vce.ring[i]);
-		if (r)
-			return r;
-	}
+		अगर (r)
+			वापस r;
+	पूर्ण
 
 	DRM_INFO("VCE initialized successfully.\n");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int vce_v3_0_hw_fini(void *handle)
-{
-	int r;
-	struct amdgpu_device *adev = (struct amdgpu_device *)handle;
+अटल पूर्णांक vce_v3_0_hw_fini(व्योम *handle)
+अणु
+	पूर्णांक r;
+	काष्ठा amdgpu_device *adev = (काष्ठा amdgpu_device *)handle;
 
-	r = vce_v3_0_wait_for_idle(handle);
-	if (r)
-		return r;
+	r = vce_v3_0_रुको_क्रम_idle(handle);
+	अगर (r)
+		वापस r;
 
 	vce_v3_0_stop(adev);
-	return vce_v3_0_set_clockgating_state(adev, AMD_CG_STATE_GATE);
-}
+	वापस vce_v3_0_set_घड़ीgating_state(adev, AMD_CG_STATE_GATE);
+पूर्ण
 
-static int vce_v3_0_suspend(void *handle)
-{
-	int r;
-	struct amdgpu_device *adev = (struct amdgpu_device *)handle;
+अटल पूर्णांक vce_v3_0_suspend(व्योम *handle)
+अणु
+	पूर्णांक r;
+	काष्ठा amdgpu_device *adev = (काष्ठा amdgpu_device *)handle;
 
 	r = vce_v3_0_hw_fini(adev);
-	if (r)
-		return r;
+	अगर (r)
+		वापस r;
 
-	return amdgpu_vce_suspend(adev);
-}
+	वापस amdgpu_vce_suspend(adev);
+पूर्ण
 
-static int vce_v3_0_resume(void *handle)
-{
-	int r;
-	struct amdgpu_device *adev = (struct amdgpu_device *)handle;
+अटल पूर्णांक vce_v3_0_resume(व्योम *handle)
+अणु
+	पूर्णांक r;
+	काष्ठा amdgpu_device *adev = (काष्ठा amdgpu_device *)handle;
 
 	r = amdgpu_vce_resume(adev);
-	if (r)
-		return r;
+	अगर (r)
+		वापस r;
 
-	return vce_v3_0_hw_init(adev);
-}
+	वापस vce_v3_0_hw_init(adev);
+पूर्ण
 
-static void vce_v3_0_mc_resume(struct amdgpu_device *adev, int idx)
-{
-	uint32_t offset, size;
+अटल व्योम vce_v3_0_mc_resume(काष्ठा amdgpu_device *adev, पूर्णांक idx)
+अणु
+	uपूर्णांक32_t offset, size;
 
 	WREG32_P(mmVCE_CLOCK_GATING_A, 0, ~(1 << 16));
 	WREG32_P(mmVCE_UENC_CLOCK_GATING, 0x1FF000, ~0xFF9FF000);
@@ -538,18 +539,18 @@ static void vce_v3_0_mc_resume(struct amdgpu_device *adev, int idx)
 	WREG32(mmVCE_LMI_VM_CTRL, 0);
 	WREG32_OR(mmVCE_VCPU_CNTL, 0x00100000);
 
-	if (adev->asic_type >= CHIP_STONEY) {
+	अगर (adev->asic_type >= CHIP_STONEY) अणु
 		WREG32(mmVCE_LMI_VCPU_CACHE_40BIT_BAR0, (adev->vce.gpu_addr >> 8));
 		WREG32(mmVCE_LMI_VCPU_CACHE_40BIT_BAR1, (adev->vce.gpu_addr >> 8));
 		WREG32(mmVCE_LMI_VCPU_CACHE_40BIT_BAR2, (adev->vce.gpu_addr >> 8));
-	} else
+	पूर्ण अन्यथा
 		WREG32(mmVCE_LMI_VCPU_CACHE_40BIT_BAR, (adev->vce.gpu_addr >> 8));
 	offset = AMDGPU_VCE_FIRMWARE_OFFSET;
 	size = VCE_V3_0_FW_SIZE;
 	WREG32(mmVCE_VCPU_CACHE_OFFSET0, offset & 0x7fffffff);
 	WREG32(mmVCE_VCPU_CACHE_SIZE0, size);
 
-	if (idx == 0) {
+	अगर (idx == 0) अणु
 		offset += size;
 		size = VCE_V3_0_STACK_SIZE;
 		WREG32(mmVCE_VCPU_CACHE_OFFSET1, offset & 0x7fffffff);
@@ -558,7 +559,7 @@ static void vce_v3_0_mc_resume(struct amdgpu_device *adev, int idx)
 		size = VCE_V3_0_DATA_SIZE;
 		WREG32(mmVCE_VCPU_CACHE_OFFSET2, offset & 0x7fffffff);
 		WREG32(mmVCE_VCPU_CACHE_SIZE2, size);
-	} else {
+	पूर्ण अन्यथा अणु
 		offset += size + VCE_V3_0_STACK_SIZE + VCE_V3_0_DATA_SIZE;
 		size = VCE_V3_0_STACK_SIZE;
 		WREG32(mmVCE_VCPU_CACHE_OFFSET1, offset & 0xfffffff);
@@ -567,196 +568,196 @@ static void vce_v3_0_mc_resume(struct amdgpu_device *adev, int idx)
 		size = VCE_V3_0_DATA_SIZE;
 		WREG32(mmVCE_VCPU_CACHE_OFFSET2, offset & 0xfffffff);
 		WREG32(mmVCE_VCPU_CACHE_SIZE2, size);
-	}
+	पूर्ण
 
 	WREG32_P(mmVCE_LMI_CTRL2, 0x0, ~0x100);
 	WREG32_FIELD(VCE_SYS_INT_EN, VCE_SYS_INT_TRAP_INTERRUPT_EN, 1);
-}
+पूर्ण
 
-static bool vce_v3_0_is_idle(void *handle)
-{
-	struct amdgpu_device *adev = (struct amdgpu_device *)handle;
+अटल bool vce_v3_0_is_idle(व्योम *handle)
+अणु
+	काष्ठा amdgpu_device *adev = (काष्ठा amdgpu_device *)handle;
 	u32 mask = 0;
 
 	mask |= (adev->vce.harvest_config & AMDGPU_VCE_HARVEST_VCE0) ? 0 : SRBM_STATUS2__VCE0_BUSY_MASK;
 	mask |= (adev->vce.harvest_config & AMDGPU_VCE_HARVEST_VCE1) ? 0 : SRBM_STATUS2__VCE1_BUSY_MASK;
 
-	return !(RREG32(mmSRBM_STATUS2) & mask);
-}
+	वापस !(RREG32(mmSRBM_STATUS2) & mask);
+पूर्ण
 
-static int vce_v3_0_wait_for_idle(void *handle)
-{
-	unsigned i;
-	struct amdgpu_device *adev = (struct amdgpu_device *)handle;
+अटल पूर्णांक vce_v3_0_रुको_क्रम_idle(व्योम *handle)
+अणु
+	अचिन्हित i;
+	काष्ठा amdgpu_device *adev = (काष्ठा amdgpu_device *)handle;
 
-	for (i = 0; i < adev->usec_timeout; i++)
-		if (vce_v3_0_is_idle(handle))
-			return 0;
+	क्रम (i = 0; i < adev->usec_समयout; i++)
+		अगर (vce_v3_0_is_idle(handle))
+			वापस 0;
 
-	return -ETIMEDOUT;
-}
+	वापस -ETIMEDOUT;
+पूर्ण
 
-#define  VCE_STATUS_VCPU_REPORT_AUTO_BUSY_MASK  0x00000008L   /* AUTO_BUSY */
-#define  VCE_STATUS_VCPU_REPORT_RB0_BUSY_MASK   0x00000010L   /* RB0_BUSY */
-#define  VCE_STATUS_VCPU_REPORT_RB1_BUSY_MASK   0x00000020L   /* RB1_BUSY */
-#define  AMDGPU_VCE_STATUS_BUSY_MASK (VCE_STATUS_VCPU_REPORT_AUTO_BUSY_MASK | \
+#घोषणा  VCE_STATUS_VCPU_REPORT_AUTO_BUSY_MASK  0x00000008L   /* AUTO_BUSY */
+#घोषणा  VCE_STATUS_VCPU_REPORT_RB0_BUSY_MASK   0x00000010L   /* RB0_BUSY */
+#घोषणा  VCE_STATUS_VCPU_REPORT_RB1_BUSY_MASK   0x00000020L   /* RB1_BUSY */
+#घोषणा  AMDGPU_VCE_STATUS_BUSY_MASK (VCE_STATUS_VCPU_REPORT_AUTO_BUSY_MASK | \
 				      VCE_STATUS_VCPU_REPORT_RB0_BUSY_MASK)
 
-static bool vce_v3_0_check_soft_reset(void *handle)
-{
-	struct amdgpu_device *adev = (struct amdgpu_device *)handle;
+अटल bool vce_v3_0_check_soft_reset(व्योम *handle)
+अणु
+	काष्ठा amdgpu_device *adev = (काष्ठा amdgpu_device *)handle;
 	u32 srbm_soft_reset = 0;
 
 	/* According to VCE team , we should use VCE_STATUS instead
-	 * SRBM_STATUS.VCE_BUSY bit for busy status checking.
-	 * GRBM_GFX_INDEX.INSTANCE_INDEX is used to specify which VCE
-	 * instance's registers are accessed
-	 * (0 for 1st instance, 10 for 2nd instance).
+	 * SRBM_STATUS.VCE_BUSY bit क्रम busy status checking.
+	 * GRBM_GFX_INDEX.INSTANCE_INDEX is used to specअगरy which VCE
+	 * instance's रेजिस्टरs are accessed
+	 * (0 क्रम 1st instance, 10 क्रम 2nd instance).
 	 *
 	 *VCE_STATUS
 	 *|UENC|ACPI|AUTO ACTIVE|RB1 |RB0 |RB2 |          |FW_LOADED|JOB |
 	 *|----+----+-----------+----+----+----+----------+---------+----|
 	 *|bit8|bit7|    bit6   |bit5|bit4|bit3|   bit2   |  bit1   |bit0|
 	 *
-	 * VCE team suggest use bit 3--bit 6 for busy status check
+	 * VCE team suggest use bit 3--bit 6 क्रम busy status check
 	 */
 	mutex_lock(&adev->grbm_idx_mutex);
 	WREG32(mmGRBM_GFX_INDEX, GET_VCE_INSTANCE(0));
-	if (RREG32(mmVCE_STATUS) & AMDGPU_VCE_STATUS_BUSY_MASK) {
+	अगर (RREG32(mmVCE_STATUS) & AMDGPU_VCE_STATUS_BUSY_MASK) अणु
 		srbm_soft_reset = REG_SET_FIELD(srbm_soft_reset, SRBM_SOFT_RESET, SOFT_RESET_VCE0, 1);
 		srbm_soft_reset = REG_SET_FIELD(srbm_soft_reset, SRBM_SOFT_RESET, SOFT_RESET_VCE1, 1);
-	}
+	पूर्ण
 	WREG32(mmGRBM_GFX_INDEX, GET_VCE_INSTANCE(1));
-	if (RREG32(mmVCE_STATUS) & AMDGPU_VCE_STATUS_BUSY_MASK) {
+	अगर (RREG32(mmVCE_STATUS) & AMDGPU_VCE_STATUS_BUSY_MASK) अणु
 		srbm_soft_reset = REG_SET_FIELD(srbm_soft_reset, SRBM_SOFT_RESET, SOFT_RESET_VCE0, 1);
 		srbm_soft_reset = REG_SET_FIELD(srbm_soft_reset, SRBM_SOFT_RESET, SOFT_RESET_VCE1, 1);
-	}
+	पूर्ण
 	WREG32(mmGRBM_GFX_INDEX, GET_VCE_INSTANCE(0));
 	mutex_unlock(&adev->grbm_idx_mutex);
 
-	if (srbm_soft_reset) {
+	अगर (srbm_soft_reset) अणु
 		adev->vce.srbm_soft_reset = srbm_soft_reset;
-		return true;
-	} else {
+		वापस true;
+	पूर्ण अन्यथा अणु
 		adev->vce.srbm_soft_reset = 0;
-		return false;
-	}
-}
+		वापस false;
+	पूर्ण
+पूर्ण
 
-static int vce_v3_0_soft_reset(void *handle)
-{
-	struct amdgpu_device *adev = (struct amdgpu_device *)handle;
+अटल पूर्णांक vce_v3_0_soft_reset(व्योम *handle)
+अणु
+	काष्ठा amdgpu_device *adev = (काष्ठा amdgpu_device *)handle;
 	u32 srbm_soft_reset;
 
-	if (!adev->vce.srbm_soft_reset)
-		return 0;
+	अगर (!adev->vce.srbm_soft_reset)
+		वापस 0;
 	srbm_soft_reset = adev->vce.srbm_soft_reset;
 
-	if (srbm_soft_reset) {
-		u32 tmp;
+	अगर (srbm_soft_reset) अणु
+		u32 पंचांगp;
 
-		tmp = RREG32(mmSRBM_SOFT_RESET);
-		tmp |= srbm_soft_reset;
-		dev_info(adev->dev, "SRBM_SOFT_RESET=0x%08X\n", tmp);
-		WREG32(mmSRBM_SOFT_RESET, tmp);
-		tmp = RREG32(mmSRBM_SOFT_RESET);
+		पंचांगp = RREG32(mmSRBM_SOFT_RESET);
+		पंचांगp |= srbm_soft_reset;
+		dev_info(adev->dev, "SRBM_SOFT_RESET=0x%08X\n", पंचांगp);
+		WREG32(mmSRBM_SOFT_RESET, पंचांगp);
+		पंचांगp = RREG32(mmSRBM_SOFT_RESET);
 
 		udelay(50);
 
-		tmp &= ~srbm_soft_reset;
-		WREG32(mmSRBM_SOFT_RESET, tmp);
-		tmp = RREG32(mmSRBM_SOFT_RESET);
+		पंचांगp &= ~srbm_soft_reset;
+		WREG32(mmSRBM_SOFT_RESET, पंचांगp);
+		पंचांगp = RREG32(mmSRBM_SOFT_RESET);
 
-		/* Wait a little for things to settle down */
+		/* Wait a little क्रम things to settle करोwn */
 		udelay(50);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int vce_v3_0_pre_soft_reset(void *handle)
-{
-	struct amdgpu_device *adev = (struct amdgpu_device *)handle;
+अटल पूर्णांक vce_v3_0_pre_soft_reset(व्योम *handle)
+अणु
+	काष्ठा amdgpu_device *adev = (काष्ठा amdgpu_device *)handle;
 
-	if (!adev->vce.srbm_soft_reset)
-		return 0;
-
-	mdelay(5);
-
-	return vce_v3_0_suspend(adev);
-}
-
-
-static int vce_v3_0_post_soft_reset(void *handle)
-{
-	struct amdgpu_device *adev = (struct amdgpu_device *)handle;
-
-	if (!adev->vce.srbm_soft_reset)
-		return 0;
+	अगर (!adev->vce.srbm_soft_reset)
+		वापस 0;
 
 	mdelay(5);
 
-	return vce_v3_0_resume(adev);
-}
+	वापस vce_v3_0_suspend(adev);
+पूर्ण
 
-static int vce_v3_0_set_interrupt_state(struct amdgpu_device *adev,
-					struct amdgpu_irq_src *source,
-					unsigned type,
-					enum amdgpu_interrupt_state state)
-{
-	uint32_t val = 0;
 
-	if (state == AMDGPU_IRQ_STATE_ENABLE)
+अटल पूर्णांक vce_v3_0_post_soft_reset(व्योम *handle)
+अणु
+	काष्ठा amdgpu_device *adev = (काष्ठा amdgpu_device *)handle;
+
+	अगर (!adev->vce.srbm_soft_reset)
+		वापस 0;
+
+	mdelay(5);
+
+	वापस vce_v3_0_resume(adev);
+पूर्ण
+
+अटल पूर्णांक vce_v3_0_set_पूर्णांकerrupt_state(काष्ठा amdgpu_device *adev,
+					काष्ठा amdgpu_irq_src *source,
+					अचिन्हित type,
+					क्रमागत amdgpu_पूर्णांकerrupt_state state)
+अणु
+	uपूर्णांक32_t val = 0;
+
+	अगर (state == AMDGPU_IRQ_STATE_ENABLE)
 		val |= VCE_SYS_INT_EN__VCE_SYS_INT_TRAP_INTERRUPT_EN_MASK;
 
 	WREG32_P(mmVCE_SYS_INT_EN, val, ~VCE_SYS_INT_EN__VCE_SYS_INT_TRAP_INTERRUPT_EN_MASK);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int vce_v3_0_process_interrupt(struct amdgpu_device *adev,
-				      struct amdgpu_irq_src *source,
-				      struct amdgpu_iv_entry *entry)
-{
+अटल पूर्णांक vce_v3_0_process_पूर्णांकerrupt(काष्ठा amdgpu_device *adev,
+				      काष्ठा amdgpu_irq_src *source,
+				      काष्ठा amdgpu_iv_entry *entry)
+अणु
 	DRM_DEBUG("IH: VCE\n");
 
 	WREG32_FIELD(VCE_SYS_INT_STATUS, VCE_SYS_INT_TRAP_INTERRUPT_INT, 1);
 
-	switch (entry->src_data[0]) {
-	case 0:
-	case 1:
-	case 2:
+	चयन (entry->src_data[0]) अणु
+	हाल 0:
+	हाल 1:
+	हाल 2:
 		amdgpu_fence_process(&adev->vce.ring[entry->src_data[0]]);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		DRM_ERROR("Unhandled interrupt: %d %d\n",
 			  entry->src_id, entry->src_data[0]);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int vce_v3_0_set_clockgating_state(void *handle,
-					  enum amd_clockgating_state state)
-{
-	struct amdgpu_device *adev = (struct amdgpu_device *)handle;
+अटल पूर्णांक vce_v3_0_set_घड़ीgating_state(व्योम *handle,
+					  क्रमागत amd_घड़ीgating_state state)
+अणु
+	काष्ठा amdgpu_device *adev = (काष्ठा amdgpu_device *)handle;
 	bool enable = (state == AMD_CG_STATE_GATE);
-	int i;
+	पूर्णांक i;
 
-	if (!(adev->cg_flags & AMD_CG_SUPPORT_VCE_MGCG))
-		return 0;
+	अगर (!(adev->cg_flags & AMD_CG_SUPPORT_VCE_MGCG))
+		वापस 0;
 
 	mutex_lock(&adev->grbm_idx_mutex);
-	for (i = 0; i < 2; i++) {
-		/* Program VCE Instance 0 or 1 if not harvested */
-		if (adev->vce.harvest_config & (1 << i))
-			continue;
+	क्रम (i = 0; i < 2; i++) अणु
+		/* Program VCE Instance 0 or 1 अगर not harvested */
+		अगर (adev->vce.harvest_config & (1 << i))
+			जारी;
 
 		WREG32(mmGRBM_GFX_INDEX, GET_VCE_INSTANCE(i));
 
-		if (!enable) {
+		अगर (!enable) अणु
 			/* initialize VCE_CLOCK_GATING_A: Clock ON/OFF delay */
-			uint32_t data = RREG32(mmVCE_CLOCK_GATING_A);
+			uपूर्णांक32_t data = RREG32(mmVCE_CLOCK_GATING_A);
 			data &= ~(0xf | 0xff0);
 			data |= ((0x0 << 0) | (0x04 << 4));
 			WREG32(mmVCE_CLOCK_GATING_A, data);
@@ -766,113 +767,113 @@ static int vce_v3_0_set_clockgating_state(void *handle,
 			data &= ~(0xf | 0xff0);
 			data |= ((0x0 << 0) | (0x04 << 4));
 			WREG32(mmVCE_UENC_CLOCK_GATING, data);
-		}
+		पूर्ण
 
-		vce_v3_0_set_vce_sw_clock_gating(adev, enable);
-	}
+		vce_v3_0_set_vce_sw_घड़ी_gating(adev, enable);
+	पूर्ण
 
 	WREG32(mmGRBM_GFX_INDEX, mmGRBM_GFX_INDEX_DEFAULT);
 	mutex_unlock(&adev->grbm_idx_mutex);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int vce_v3_0_set_powergating_state(void *handle,
-					  enum amd_powergating_state state)
-{
-	/* This doesn't actually powergate the VCE block.
-	 * That's done in the dpm code via the SMC.  This
+अटल पूर्णांक vce_v3_0_set_घातergating_state(व्योम *handle,
+					  क्रमागत amd_घातergating_state state)
+अणु
+	/* This करोesn't actually घातergate the VCE block.
+	 * That's करोne in the dpm code via the SMC.  This
 	 * just re-inits the block as necessary.  The actual
 	 * gating still happens in the dpm code.  We should
 	 * revisit this when there is a cleaner line between
 	 * the smc and the hw blocks
 	 */
-	struct amdgpu_device *adev = (struct amdgpu_device *)handle;
-	int ret = 0;
+	काष्ठा amdgpu_device *adev = (काष्ठा amdgpu_device *)handle;
+	पूर्णांक ret = 0;
 
-	if (state == AMD_PG_STATE_GATE) {
+	अगर (state == AMD_PG_STATE_GATE) अणु
 		ret = vce_v3_0_stop(adev);
-		if (ret)
-			goto out;
-	} else {
+		अगर (ret)
+			जाओ out;
+	पूर्ण अन्यथा अणु
 		ret = vce_v3_0_start(adev);
-		if (ret)
-			goto out;
-	}
+		अगर (ret)
+			जाओ out;
+	पूर्ण
 
 out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void vce_v3_0_get_clockgating_state(void *handle, u32 *flags)
-{
-	struct amdgpu_device *adev = (struct amdgpu_device *)handle;
-	int data;
+अटल व्योम vce_v3_0_get_घड़ीgating_state(व्योम *handle, u32 *flags)
+अणु
+	काष्ठा amdgpu_device *adev = (काष्ठा amdgpu_device *)handle;
+	पूर्णांक data;
 
 	mutex_lock(&adev->pm.mutex);
 
-	if (adev->flags & AMD_IS_APU)
+	अगर (adev->flags & AMD_IS_APU)
 		data = RREG32_SMC(ixCURRENT_PG_STATUS_APU);
-	else
+	अन्यथा
 		data = RREG32_SMC(ixCURRENT_PG_STATUS);
 
-	if (data & CURRENT_PG_STATUS__VCE_PG_STATUS_MASK) {
+	अगर (data & CURRENT_PG_STATUS__VCE_PG_STATUS_MASK) अणु
 		DRM_INFO("Cannot get clockgating state when VCE is powergated.\n");
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	WREG32_FIELD(GRBM_GFX_INDEX, VCE_INSTANCE, 0);
 
 	/* AMD_CG_SUPPORT_VCE_MGCG */
 	data = RREG32(mmVCE_CLOCK_GATING_A);
-	if (data & (0x04 << 4))
+	अगर (data & (0x04 << 4))
 		*flags |= AMD_CG_SUPPORT_VCE_MGCG;
 
 out:
 	mutex_unlock(&adev->pm.mutex);
-}
+पूर्ण
 
-static void vce_v3_0_ring_emit_ib(struct amdgpu_ring *ring,
-				  struct amdgpu_job *job,
-				  struct amdgpu_ib *ib,
-				  uint32_t flags)
-{
-	unsigned vmid = AMDGPU_JOB_GET_VMID(job);
+अटल व्योम vce_v3_0_ring_emit_ib(काष्ठा amdgpu_ring *ring,
+				  काष्ठा amdgpu_job *job,
+				  काष्ठा amdgpu_ib *ib,
+				  uपूर्णांक32_t flags)
+अणु
+	अचिन्हित vmid = AMDGPU_JOB_GET_VMID(job);
 
-	amdgpu_ring_write(ring, VCE_CMD_IB_VM);
-	amdgpu_ring_write(ring, vmid);
-	amdgpu_ring_write(ring, lower_32_bits(ib->gpu_addr));
-	amdgpu_ring_write(ring, upper_32_bits(ib->gpu_addr));
-	amdgpu_ring_write(ring, ib->length_dw);
-}
+	amdgpu_ring_ग_लिखो(ring, VCE_CMD_IB_VM);
+	amdgpu_ring_ग_लिखो(ring, vmid);
+	amdgpu_ring_ग_लिखो(ring, lower_32_bits(ib->gpu_addr));
+	amdgpu_ring_ग_लिखो(ring, upper_32_bits(ib->gpu_addr));
+	amdgpu_ring_ग_लिखो(ring, ib->length_dw);
+पूर्ण
 
-static void vce_v3_0_emit_vm_flush(struct amdgpu_ring *ring,
-				   unsigned int vmid, uint64_t pd_addr)
-{
-	amdgpu_ring_write(ring, VCE_CMD_UPDATE_PTB);
-	amdgpu_ring_write(ring, vmid);
-	amdgpu_ring_write(ring, pd_addr >> 12);
+अटल व्योम vce_v3_0_emit_vm_flush(काष्ठा amdgpu_ring *ring,
+				   अचिन्हित पूर्णांक vmid, uपूर्णांक64_t pd_addr)
+अणु
+	amdgpu_ring_ग_लिखो(ring, VCE_CMD_UPDATE_PTB);
+	amdgpu_ring_ग_लिखो(ring, vmid);
+	amdgpu_ring_ग_लिखो(ring, pd_addr >> 12);
 
-	amdgpu_ring_write(ring, VCE_CMD_FLUSH_TLB);
-	amdgpu_ring_write(ring, vmid);
-	amdgpu_ring_write(ring, VCE_CMD_END);
-}
+	amdgpu_ring_ग_लिखो(ring, VCE_CMD_FLUSH_TLB);
+	amdgpu_ring_ग_लिखो(ring, vmid);
+	amdgpu_ring_ग_लिखो(ring, VCE_CMD_END);
+पूर्ण
 
-static void vce_v3_0_emit_pipeline_sync(struct amdgpu_ring *ring)
-{
-	uint32_t seq = ring->fence_drv.sync_seq;
-	uint64_t addr = ring->fence_drv.gpu_addr;
+अटल व्योम vce_v3_0_emit_pipeline_sync(काष्ठा amdgpu_ring *ring)
+अणु
+	uपूर्णांक32_t seq = ring->fence_drv.sync_seq;
+	uपूर्णांक64_t addr = ring->fence_drv.gpu_addr;
 
-	amdgpu_ring_write(ring, VCE_CMD_WAIT_GE);
-	amdgpu_ring_write(ring, lower_32_bits(addr));
-	amdgpu_ring_write(ring, upper_32_bits(addr));
-	amdgpu_ring_write(ring, seq);
-}
+	amdgpu_ring_ग_लिखो(ring, VCE_CMD_WAIT_GE);
+	amdgpu_ring_ग_लिखो(ring, lower_32_bits(addr));
+	amdgpu_ring_ग_लिखो(ring, upper_32_bits(addr));
+	amdgpu_ring_ग_लिखो(ring, seq);
+पूर्ण
 
-static const struct amd_ip_funcs vce_v3_0_ip_funcs = {
+अटल स्थिर काष्ठा amd_ip_funcs vce_v3_0_ip_funcs = अणु
 	.name = "vce_v3_0",
 	.early_init = vce_v3_0_early_init,
-	.late_init = NULL,
+	.late_init = शून्य,
 	.sw_init = vce_v3_0_sw_init,
 	.sw_fini = vce_v3_0_sw_fini,
 	.hw_init = vce_v3_0_hw_init,
@@ -880,17 +881,17 @@ static const struct amd_ip_funcs vce_v3_0_ip_funcs = {
 	.suspend = vce_v3_0_suspend,
 	.resume = vce_v3_0_resume,
 	.is_idle = vce_v3_0_is_idle,
-	.wait_for_idle = vce_v3_0_wait_for_idle,
+	.रुको_क्रम_idle = vce_v3_0_रुको_क्रम_idle,
 	.check_soft_reset = vce_v3_0_check_soft_reset,
 	.pre_soft_reset = vce_v3_0_pre_soft_reset,
 	.soft_reset = vce_v3_0_soft_reset,
 	.post_soft_reset = vce_v3_0_post_soft_reset,
-	.set_clockgating_state = vce_v3_0_set_clockgating_state,
-	.set_powergating_state = vce_v3_0_set_powergating_state,
-	.get_clockgating_state = vce_v3_0_get_clockgating_state,
-};
+	.set_घड़ीgating_state = vce_v3_0_set_घड़ीgating_state,
+	.set_घातergating_state = vce_v3_0_set_घातergating_state,
+	.get_घड़ीgating_state = vce_v3_0_get_घड़ीgating_state,
+पूर्ण;
 
-static const struct amdgpu_ring_funcs vce_v3_0_ring_phys_funcs = {
+अटल स्थिर काष्ठा amdgpu_ring_funcs vce_v3_0_ring_phys_funcs = अणु
 	.type = AMDGPU_RING_TYPE_VCE,
 	.align_mask = 0xf,
 	.nop = VCE_CMD_NO_OP,
@@ -912,9 +913,9 @@ static const struct amdgpu_ring_funcs vce_v3_0_ring_phys_funcs = {
 	.pad_ib = amdgpu_ring_generic_pad_ib,
 	.begin_use = amdgpu_vce_ring_begin_use,
 	.end_use = amdgpu_vce_ring_end_use,
-};
+पूर्ण;
 
-static const struct amdgpu_ring_funcs vce_v3_0_ring_vm_funcs = {
+अटल स्थिर काष्ठा amdgpu_ring_funcs vce_v3_0_ring_vm_funcs = अणु
 	.type = AMDGPU_RING_TYPE_VCE,
 	.align_mask = 0xf,
 	.nop = VCE_CMD_NO_OP,
@@ -939,61 +940,61 @@ static const struct amdgpu_ring_funcs vce_v3_0_ring_vm_funcs = {
 	.pad_ib = amdgpu_ring_generic_pad_ib,
 	.begin_use = amdgpu_vce_ring_begin_use,
 	.end_use = amdgpu_vce_ring_end_use,
-};
+पूर्ण;
 
-static void vce_v3_0_set_ring_funcs(struct amdgpu_device *adev)
-{
-	int i;
+अटल व्योम vce_v3_0_set_ring_funcs(काष्ठा amdgpu_device *adev)
+अणु
+	पूर्णांक i;
 
-	if (adev->asic_type >= CHIP_STONEY) {
-		for (i = 0; i < adev->vce.num_rings; i++) {
+	अगर (adev->asic_type >= CHIP_STONEY) अणु
+		क्रम (i = 0; i < adev->vce.num_rings; i++) अणु
 			adev->vce.ring[i].funcs = &vce_v3_0_ring_vm_funcs;
 			adev->vce.ring[i].me = i;
-		}
+		पूर्ण
 		DRM_INFO("VCE enabled in VM mode\n");
-	} else {
-		for (i = 0; i < adev->vce.num_rings; i++) {
+	पूर्ण अन्यथा अणु
+		क्रम (i = 0; i < adev->vce.num_rings; i++) अणु
 			adev->vce.ring[i].funcs = &vce_v3_0_ring_phys_funcs;
 			adev->vce.ring[i].me = i;
-		}
+		पूर्ण
 		DRM_INFO("VCE enabled in physical mode\n");
-	}
-}
+	पूर्ण
+पूर्ण
 
-static const struct amdgpu_irq_src_funcs vce_v3_0_irq_funcs = {
-	.set = vce_v3_0_set_interrupt_state,
-	.process = vce_v3_0_process_interrupt,
-};
+अटल स्थिर काष्ठा amdgpu_irq_src_funcs vce_v3_0_irq_funcs = अणु
+	.set = vce_v3_0_set_पूर्णांकerrupt_state,
+	.process = vce_v3_0_process_पूर्णांकerrupt,
+पूर्ण;
 
-static void vce_v3_0_set_irq_funcs(struct amdgpu_device *adev)
-{
+अटल व्योम vce_v3_0_set_irq_funcs(काष्ठा amdgpu_device *adev)
+अणु
 	adev->vce.irq.num_types = 1;
 	adev->vce.irq.funcs = &vce_v3_0_irq_funcs;
-};
+पूर्ण;
 
-const struct amdgpu_ip_block_version vce_v3_0_ip_block =
-{
+स्थिर काष्ठा amdgpu_ip_block_version vce_v3_0_ip_block =
+अणु
 	.type = AMD_IP_BLOCK_TYPE_VCE,
 	.major = 3,
 	.minor = 0,
 	.rev = 0,
 	.funcs = &vce_v3_0_ip_funcs,
-};
+पूर्ण;
 
-const struct amdgpu_ip_block_version vce_v3_1_ip_block =
-{
+स्थिर काष्ठा amdgpu_ip_block_version vce_v3_1_ip_block =
+अणु
 	.type = AMD_IP_BLOCK_TYPE_VCE,
 	.major = 3,
 	.minor = 1,
 	.rev = 0,
 	.funcs = &vce_v3_0_ip_funcs,
-};
+पूर्ण;
 
-const struct amdgpu_ip_block_version vce_v3_4_ip_block =
-{
+स्थिर काष्ठा amdgpu_ip_block_version vce_v3_4_ip_block =
+अणु
 	.type = AMD_IP_BLOCK_TYPE_VCE,
 	.major = 3,
 	.minor = 4,
 	.rev = 0,
 	.funcs = &vce_v3_0_ip_funcs,
-};
+पूर्ण;

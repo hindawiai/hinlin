@@ -1,11 +1,12 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <Python.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <Python.h>
 
-#if PY_VERSION_HEX >= 0x03000000
-	#error
-#endif
+#अगर PY_VERSION_HEX >= 0x03000000
+	#त्रुटि
+#पूर्ण_अगर
 
-int main(void)
-{
-	return 0;
-}
+पूर्णांक मुख्य(व्योम)
+अणु
+	वापस 0;
+पूर्ण

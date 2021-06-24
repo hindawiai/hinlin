@@ -1,51 +1,52 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 
-#ifndef _FPGA_REGION_H
-#define _FPGA_REGION_H
+#अगर_अघोषित _FPGA_REGION_H
+#घोषणा _FPGA_REGION_H
 
-#include <linux/device.h>
-#include <linux/fpga/fpga-mgr.h>
-#include <linux/fpga/fpga-bridge.h>
+#समावेश <linux/device.h>
+#समावेश <linux/fpga/fpga-mgr.h>
+#समावेश <linux/fpga/fpga-bridge.h>
 
 /**
- * struct fpga_region - FPGA Region structure
+ * काष्ठा fpga_region - FPGA Region काष्ठाure
  * @dev: FPGA Region device
- * @mutex: enforces exclusive reference to region
- * @bridge_list: list of FPGA bridges specified in region
+ * @mutex: enक्रमces exclusive reference to region
+ * @bridge_list: list of FPGA bridges specअगरied in region
  * @mgr: FPGA manager
  * @info: FPGA image info
- * @compat_id: FPGA region id for compatibility check.
- * @priv: private data
+ * @compat_id: FPGA region id क्रम compatibility check.
+ * @priv: निजी data
  * @get_bridges: optional function to get bridges to a list
  */
-struct fpga_region {
-	struct device dev;
-	struct mutex mutex; /* for exclusive reference to region */
-	struct list_head bridge_list;
-	struct fpga_manager *mgr;
-	struct fpga_image_info *info;
-	struct fpga_compat_id *compat_id;
-	void *priv;
-	int (*get_bridges)(struct fpga_region *region);
-};
+काष्ठा fpga_region अणु
+	काष्ठा device dev;
+	काष्ठा mutex mutex; /* क्रम exclusive reference to region */
+	काष्ठा list_head bridge_list;
+	काष्ठा fpga_manager *mgr;
+	काष्ठा fpga_image_info *info;
+	काष्ठा fpga_compat_id *compat_id;
+	व्योम *priv;
+	पूर्णांक (*get_bridges)(काष्ठा fpga_region *region);
+पूर्ण;
 
-#define to_fpga_region(d) container_of(d, struct fpga_region, dev)
+#घोषणा to_fpga_region(d) container_of(d, काष्ठा fpga_region, dev)
 
-struct fpga_region *fpga_region_class_find(
-	struct device *start, const void *data,
-	int (*match)(struct device *, const void *));
+काष्ठा fpga_region *fpga_region_class_find(
+	काष्ठा device *start, स्थिर व्योम *data,
+	पूर्णांक (*match)(काष्ठा device *, स्थिर व्योम *));
 
-int fpga_region_program_fpga(struct fpga_region *region);
+पूर्णांक fpga_region_program_fpga(काष्ठा fpga_region *region);
 
-struct fpga_region
-*fpga_region_create(struct device *dev, struct fpga_manager *mgr,
-		    int (*get_bridges)(struct fpga_region *));
-void fpga_region_free(struct fpga_region *region);
-int fpga_region_register(struct fpga_region *region);
-void fpga_region_unregister(struct fpga_region *region);
+काष्ठा fpga_region
+*fpga_region_create(काष्ठा device *dev, काष्ठा fpga_manager *mgr,
+		    पूर्णांक (*get_bridges)(काष्ठा fpga_region *));
+व्योम fpga_region_मुक्त(काष्ठा fpga_region *region);
+पूर्णांक fpga_region_रेजिस्टर(काष्ठा fpga_region *region);
+व्योम fpga_region_unरेजिस्टर(काष्ठा fpga_region *region);
 
-struct fpga_region
-*devm_fpga_region_create(struct device *dev, struct fpga_manager *mgr,
-			int (*get_bridges)(struct fpga_region *));
+काष्ठा fpga_region
+*devm_fpga_region_create(काष्ठा device *dev, काष्ठा fpga_manager *mgr,
+			पूर्णांक (*get_bridges)(काष्ठा fpga_region *));
 
-#endif /* _FPGA_REGION_H */
+#पूर्ण_अगर /* _FPGA_REGION_H */

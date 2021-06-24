@@ -1,221 +1,222 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Copyright (c) 2020 Samsung Electronics Co., Ltd.
  *	      http://www.samsung.com/
  * Author: Marek Szyprowski <m.szyprowski@samsung.com>
  *
- * Simplified generic voltage coupler from regulator core.c
- * The main difference is that it keeps current regulator voltage
- * if consumers didn't apply their constraints yet.
+ * Simplअगरied generic voltage coupler from regulator core.c
+ * The मुख्य dअगरference is that it keeps current regulator voltage
+ * अगर consumers didn't apply their स्थिरraपूर्णांकs yet.
  */
 
-#include <linux/init.h>
-#include <linux/kernel.h>
-#include <linux/of.h>
-#include <linux/regulator/coupler.h>
-#include <linux/regulator/driver.h>
-#include <linux/regulator/machine.h>
+#समावेश <linux/init.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/of.h>
+#समावेश <linux/regulator/coupler.h>
+#समावेश <linux/regulator/driver.h>
+#समावेश <linux/regulator/machine.h>
 
-static int regulator_get_optimal_voltage(struct regulator_dev *rdev,
-					 int *current_uV,
-					 int *min_uV, int *max_uV,
+अटल पूर्णांक regulator_get_optimal_voltage(काष्ठा regulator_dev *rdev,
+					 पूर्णांक *current_uV,
+					 पूर्णांक *min_uV, पूर्णांक *max_uV,
 					 suspend_state_t state)
-{
-	struct coupling_desc *c_desc = &rdev->coupling_desc;
-	struct regulator_dev **c_rdevs = c_desc->coupled_rdevs;
-	struct regulation_constraints *constraints = rdev->constraints;
-	int desired_min_uV = 0, desired_max_uV = INT_MAX;
-	int max_current_uV = 0, min_current_uV = INT_MAX;
-	int highest_min_uV = 0, target_uV, possible_uV;
-	int i, ret, max_spread, n_coupled = c_desc->n_coupled;
-	bool done;
+अणु
+	काष्ठा coupling_desc *c_desc = &rdev->coupling_desc;
+	काष्ठा regulator_dev **c_rdevs = c_desc->coupled_rdevs;
+	काष्ठा regulation_स्थिरraपूर्णांकs *स्थिरraपूर्णांकs = rdev->स्थिरraपूर्णांकs;
+	पूर्णांक desired_min_uV = 0, desired_max_uV = पूर्णांक_उच्च;
+	पूर्णांक max_current_uV = 0, min_current_uV = पूर्णांक_उच्च;
+	पूर्णांक highest_min_uV = 0, target_uV, possible_uV;
+	पूर्णांक i, ret, max_spपढ़ो, n_coupled = c_desc->n_coupled;
+	bool करोne;
 
 	*current_uV = -1;
 
 	/* Find highest min desired voltage */
-	for (i = 0; i < n_coupled; i++) {
-		int tmp_min = 0;
-		int tmp_max = INT_MAX;
+	क्रम (i = 0; i < n_coupled; i++) अणु
+		पूर्णांक पंचांगp_min = 0;
+		पूर्णांक पंचांगp_max = पूर्णांक_उच्च;
 
-		lockdep_assert_held_once(&c_rdevs[i]->mutex.base);
+		lockdep_निश्चित_held_once(&c_rdevs[i]->mutex.base);
 
 		ret = regulator_check_consumers(c_rdevs[i],
-						&tmp_min,
-						&tmp_max, state);
-		if (ret < 0)
-			return ret;
+						&पंचांगp_min,
+						&पंचांगp_max, state);
+		अगर (ret < 0)
+			वापस ret;
 
-		if (tmp_min == 0) {
+		अगर (पंचांगp_min == 0) अणु
 			ret = regulator_get_voltage_rdev(c_rdevs[i]);
-			if (ret < 0)
-				return ret;
-			tmp_min = ret;
-		}
+			अगर (ret < 0)
+				वापस ret;
+			पंचांगp_min = ret;
+		पूर्ण
 
-		/* apply constraints */
-		ret = regulator_check_voltage(c_rdevs[i], &tmp_min, &tmp_max);
-		if (ret < 0)
-			return ret;
+		/* apply स्थिरraपूर्णांकs */
+		ret = regulator_check_voltage(c_rdevs[i], &पंचांगp_min, &पंचांगp_max);
+		अगर (ret < 0)
+			वापस ret;
 
-		highest_min_uV = max(highest_min_uV, tmp_min);
+		highest_min_uV = max(highest_min_uV, पंचांगp_min);
 
-		if (i == 0) {
-			desired_min_uV = tmp_min;
-			desired_max_uV = tmp_max;
-		}
-	}
+		अगर (i == 0) अणु
+			desired_min_uV = पंचांगp_min;
+			desired_max_uV = पंचांगp_max;
+		पूर्ण
+	पूर्ण
 
-	max_spread = constraints->max_spread[0];
+	max_spपढ़ो = स्थिरraपूर्णांकs->max_spपढ़ो[0];
 
 	/*
-	 * Let target_uV be equal to the desired one if possible.
+	 * Let target_uV be equal to the desired one अगर possible.
 	 * If not, set it to minimum voltage, allowed by other coupled
 	 * regulators.
 	 */
-	target_uV = max(desired_min_uV, highest_min_uV - max_spread);
+	target_uV = max(desired_min_uV, highest_min_uV - max_spपढ़ो);
 
 	/*
 	 * Find min and max voltages, which currently aren't violating
-	 * max_spread.
+	 * max_spपढ़ो.
 	 */
-	for (i = 1; i < n_coupled; i++) {
-		int tmp_act;
+	क्रम (i = 1; i < n_coupled; i++) अणु
+		पूर्णांक पंचांगp_act;
 
-		tmp_act = regulator_get_voltage_rdev(c_rdevs[i]);
-		if (tmp_act < 0)
-			return tmp_act;
+		पंचांगp_act = regulator_get_voltage_rdev(c_rdevs[i]);
+		अगर (पंचांगp_act < 0)
+			वापस पंचांगp_act;
 
-		min_current_uV = min(tmp_act, min_current_uV);
-		max_current_uV = max(tmp_act, max_current_uV);
-	}
+		min_current_uV = min(पंचांगp_act, min_current_uV);
+		max_current_uV = max(पंचांगp_act, max_current_uV);
+	पूर्ण
 
 	/*
 	 * Correct target voltage, so as it currently isn't
-	 * violating max_spread
+	 * violating max_spपढ़ो
 	 */
-	possible_uV = max(target_uV, max_current_uV - max_spread);
-	possible_uV = min(possible_uV, min_current_uV + max_spread);
+	possible_uV = max(target_uV, max_current_uV - max_spपढ़ो);
+	possible_uV = min(possible_uV, min_current_uV + max_spपढ़ो);
 
-	if (possible_uV > desired_max_uV)
-		return -EINVAL;
+	अगर (possible_uV > desired_max_uV)
+		वापस -EINVAL;
 
-	done = (possible_uV == target_uV);
+	करोne = (possible_uV == target_uV);
 	desired_min_uV = possible_uV;
 
-	/* Set current_uV if wasn't done earlier in the code and if necessary */
-	if (*current_uV == -1) {
+	/* Set current_uV अगर wasn't करोne earlier in the code and अगर necessary */
+	अगर (*current_uV == -1) अणु
 		ret = regulator_get_voltage_rdev(rdev);
-		if (ret < 0)
-			return ret;
+		अगर (ret < 0)
+			वापस ret;
 		*current_uV = ret;
-	}
+	पूर्ण
 
 	*min_uV = desired_min_uV;
 	*max_uV = desired_max_uV;
 
-	return done;
-}
+	वापस करोne;
+पूर्ण
 
-static int exynos_coupler_balance_voltage(struct regulator_coupler *coupler,
-					  struct regulator_dev *rdev,
+अटल पूर्णांक exynos_coupler_balance_voltage(काष्ठा regulator_coupler *coupler,
+					  काष्ठा regulator_dev *rdev,
 					  suspend_state_t state)
-{
-	struct regulator_dev **c_rdevs;
-	struct regulator_dev *best_rdev;
-	struct coupling_desc *c_desc = &rdev->coupling_desc;
-	int i, ret, n_coupled, best_min_uV, best_max_uV, best_c_rdev;
-	unsigned int delta, best_delta;
-	unsigned long c_rdev_done = 0;
-	bool best_c_rdev_done;
+अणु
+	काष्ठा regulator_dev **c_rdevs;
+	काष्ठा regulator_dev *best_rdev;
+	काष्ठा coupling_desc *c_desc = &rdev->coupling_desc;
+	पूर्णांक i, ret, n_coupled, best_min_uV, best_max_uV, best_c_rdev;
+	अचिन्हित पूर्णांक delta, best_delta;
+	अचिन्हित दीर्घ c_rdev_करोne = 0;
+	bool best_c_rdev_करोne;
 
 	c_rdevs = c_desc->coupled_rdevs;
 	n_coupled = c_desc->n_coupled;
 
 	/*
 	 * Find the best possible voltage change on each loop. Leave the loop
-	 * if there isn't any possible change.
+	 * अगर there isn't any possible change.
 	 */
-	do {
-		best_c_rdev_done = false;
+	करो अणु
+		best_c_rdev_करोne = false;
 		best_delta = 0;
 		best_min_uV = 0;
 		best_max_uV = 0;
 		best_c_rdev = 0;
-		best_rdev = NULL;
+		best_rdev = शून्य;
 
 		/*
-		 * Find highest difference between optimal voltage
+		 * Find highest dअगरference between optimal voltage
 		 * and current voltage.
 		 */
-		for (i = 0; i < n_coupled; i++) {
+		क्रम (i = 0; i < n_coupled; i++) अणु
 			/*
-			 * optimal_uV is the best voltage that can be set for
+			 * optimal_uV is the best voltage that can be set क्रम
 			 * i-th regulator at the moment without violating
-			 * max_spread constraint in order to balance
+			 * max_spपढ़ो स्थिरraपूर्णांक in order to balance
 			 * the coupled voltages.
 			 */
-			int optimal_uV = 0, optimal_max_uV = 0, current_uV = 0;
+			पूर्णांक optimal_uV = 0, optimal_max_uV = 0, current_uV = 0;
 
-			if (test_bit(i, &c_rdev_done))
-				continue;
+			अगर (test_bit(i, &c_rdev_करोne))
+				जारी;
 
 			ret = regulator_get_optimal_voltage(c_rdevs[i],
 							    &current_uV,
 							    &optimal_uV,
 							    &optimal_max_uV,
 							    state);
-			if (ret < 0)
-				goto out;
+			अगर (ret < 0)
+				जाओ out;
 
-			delta = abs(optimal_uV - current_uV);
+			delta = असल(optimal_uV - current_uV);
 
-			if (delta && best_delta <= delta) {
-				best_c_rdev_done = ret;
+			अगर (delta && best_delta <= delta) अणु
+				best_c_rdev_करोne = ret;
 				best_delta = delta;
 				best_rdev = c_rdevs[i];
 				best_min_uV = optimal_uV;
 				best_max_uV = optimal_max_uV;
 				best_c_rdev = i;
-			}
-		}
+			पूर्ण
+		पूर्ण
 
-		/* Nothing to change, return successfully */
-		if (!best_rdev) {
+		/* Nothing to change, वापस successfully */
+		अगर (!best_rdev) अणु
 			ret = 0;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
 		ret = regulator_set_voltage_rdev(best_rdev, best_min_uV,
 						 best_max_uV, state);
 
-		if (ret < 0)
-			goto out;
+		अगर (ret < 0)
+			जाओ out;
 
-		if (best_c_rdev_done)
-			set_bit(best_c_rdev, &c_rdev_done);
+		अगर (best_c_rdev_करोne)
+			set_bit(best_c_rdev, &c_rdev_करोne);
 
-	} while (n_coupled > 1);
+	पूर्ण जबतक (n_coupled > 1);
 
 out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int exynos_coupler_attach(struct regulator_coupler *coupler,
-				 struct regulator_dev *rdev)
-{
-	return 0;
-}
+अटल पूर्णांक exynos_coupler_attach(काष्ठा regulator_coupler *coupler,
+				 काष्ठा regulator_dev *rdev)
+अणु
+	वापस 0;
+पूर्ण
 
-static struct regulator_coupler exynos_coupler = {
+अटल काष्ठा regulator_coupler exynos_coupler = अणु
 	.attach_regulator = exynos_coupler_attach,
 	.balance_voltage  = exynos_coupler_balance_voltage,
-};
+पूर्ण;
 
-static int __init exynos_coupler_init(void)
-{
-	if (!of_machine_is_compatible("samsung,exynos5800"))
-		return 0;
+अटल पूर्णांक __init exynos_coupler_init(व्योम)
+अणु
+	अगर (!of_machine_is_compatible("samsung,exynos5800"))
+		वापस 0;
 
-	return regulator_coupler_register(&exynos_coupler);
-}
+	वापस regulator_coupler_रेजिस्टर(&exynos_coupler);
+पूर्ण
 arch_initcall(exynos_coupler_init);

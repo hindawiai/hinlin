@@ -1,436 +1,437 @@
-// SPDX-License-Identifier: GPL-2.0
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include <linux/errno.h>
-#include <linux/kernel.h>
-#include <linux/mm.h>
-#include <linux/smp.h>
-#include <linux/prctl.h>
-#include <linux/slab.h>
-#include <linux/sched.h>
-#include <linux/sched/idle.h>
-#include <linux/sched/debug.h>
-#include <linux/sched/task.h>
-#include <linux/sched/task_stack.h>
-#include <linux/init.h>
-#include <linux/export.h>
-#include <linux/pm.h>
-#include <linux/tick.h>
-#include <linux/random.h>
-#include <linux/user-return-notifier.h>
-#include <linux/dmi.h>
-#include <linux/utsname.h>
-#include <linux/stackprotector.h>
-#include <linux/cpuidle.h>
-#include <linux/acpi.h>
-#include <linux/elf-randomize.h>
-#include <trace/events/power.h>
-#include <linux/hw_breakpoint.h>
-#include <asm/cpu.h>
-#include <asm/apic.h>
-#include <linux/uaccess.h>
-#include <asm/mwait.h>
-#include <asm/fpu/internal.h>
-#include <asm/debugreg.h>
-#include <asm/nmi.h>
-#include <asm/tlbflush.h>
-#include <asm/mce.h>
-#include <asm/vm86.h>
-#include <asm/switch_to.h>
-#include <asm/desc.h>
-#include <asm/prctl.h>
-#include <asm/spec-ctrl.h>
-#include <asm/io_bitmap.h>
-#include <asm/proto.h>
-#include <asm/frame.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/kernel.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/smp.h>
+#समावेश <linux/prctl.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/sched/idle.h>
+#समावेश <linux/sched/debug.h>
+#समावेश <linux/sched/task.h>
+#समावेश <linux/sched/task_stack.h>
+#समावेश <linux/init.h>
+#समावेश <linux/export.h>
+#समावेश <linux/pm.h>
+#समावेश <linux/tick.h>
+#समावेश <linux/अक्रमom.h>
+#समावेश <linux/user-वापस-notअगरier.h>
+#समावेश <linux/dmi.h>
+#समावेश <linux/utsname.h>
+#समावेश <linux/stackprotector.h>
+#समावेश <linux/cpuidle.h>
+#समावेश <linux/acpi.h>
+#समावेश <linux/elf-अक्रमomize.h>
+#समावेश <trace/events/घातer.h>
+#समावेश <linux/hw_अवरोधpoपूर्णांक.h>
+#समावेश <यंत्र/cpu.h>
+#समावेश <यंत्र/apic.h>
+#समावेश <linux/uaccess.h>
+#समावेश <यंत्र/mरुको.h>
+#समावेश <यंत्र/fpu/पूर्णांकernal.h>
+#समावेश <यंत्र/debugreg.h>
+#समावेश <यंत्र/nmi.h>
+#समावेश <यंत्र/tlbflush.h>
+#समावेश <यंत्र/mce.h>
+#समावेश <यंत्र/vm86.h>
+#समावेश <यंत्र/चयन_to.h>
+#समावेश <यंत्र/desc.h>
+#समावेश <यंत्र/prctl.h>
+#समावेश <यंत्र/spec-ctrl.h>
+#समावेश <यंत्र/io_biपंचांगap.h>
+#समावेश <यंत्र/proto.h>
+#समावेश <यंत्र/frame.h>
 
-#include "process.h"
+#समावेश "process.h"
 
 /*
- * per-CPU TSS segments. Threads are completely 'soft' on Linux,
+ * per-CPU TSS segments. Thपढ़ोs are completely 'soft' on Linux,
  * no more per-task TSS's. The TSS size is kept cacheline-aligned
  * so they are allowed to end up in the .data..cacheline_aligned
  * section. Since TSS's are completely CPU-local, we want them
  * on exact cacheline boundaries, to eliminate cacheline ping-pong.
  */
-__visible DEFINE_PER_CPU_PAGE_ALIGNED(struct tss_struct, cpu_tss_rw) = {
-	.x86_tss = {
+__visible DEFINE_PER_CPU_PAGE_ALIGNED(काष्ठा tss_काष्ठा, cpu_tss_rw) = अणु
+	.x86_tss = अणु
 		/*
 		 * .sp0 is only used when entering ring 0 from a lower
 		 * privilege level.  Since the init task never runs anything
-		 * but ring 0 code, there is no need for a valid value here.
+		 * but ring 0 code, there is no need क्रम a valid value here.
 		 * Poison it.
 		 */
 		.sp0 = (1UL << (BITS_PER_LONG-1)) + 1,
 
-#ifdef CONFIG_X86_32
+#अगर_घोषित CONFIG_X86_32
 		.sp1 = TOP_OF_INIT_STACK,
 
 		.ss0 = __KERNEL_DS,
 		.ss1 = __KERNEL_CS,
-#endif
-		.io_bitmap_base	= IO_BITMAP_OFFSET_INVALID,
-	 },
-};
+#पूर्ण_अगर
+		.io_biपंचांगap_base	= IO_BITMAP_OFFSET_INVALID,
+	 पूर्ण,
+पूर्ण;
 EXPORT_PER_CPU_SYMBOL(cpu_tss_rw);
 
 DEFINE_PER_CPU(bool, __tss_limit_invalid);
 EXPORT_PER_CPU_SYMBOL_GPL(__tss_limit_invalid);
 
 /*
- * this gets called so that we can store lazy state into memory and copy the
- * current task into the new thread.
+ * this माला_लो called so that we can store lazy state पूर्णांकo memory and copy the
+ * current task पूर्णांकo the new thपढ़ो.
  */
-int arch_dup_task_struct(struct task_struct *dst, struct task_struct *src)
-{
-	memcpy(dst, src, arch_task_struct_size);
-#ifdef CONFIG_VM86
-	dst->thread.vm86 = NULL;
-#endif
+पूर्णांक arch_dup_task_काष्ठा(काष्ठा task_काष्ठा *dst, काष्ठा task_काष्ठा *src)
+अणु
+	स_नकल(dst, src, arch_task_काष्ठा_size);
+#अगर_घोषित CONFIG_VM86
+	dst->thपढ़ो.vm86 = शून्य;
+#पूर्ण_अगर
 
-	return fpu__copy(dst, src);
-}
+	वापस fpu__copy(dst, src);
+पूर्ण
 
 /*
- * Free thread data structures etc..
+ * Free thपढ़ो data काष्ठाures etc..
  */
-void exit_thread(struct task_struct *tsk)
-{
-	struct thread_struct *t = &tsk->thread;
-	struct fpu *fpu = &t->fpu;
+व्योम निकास_thपढ़ो(काष्ठा task_काष्ठा *tsk)
+अणु
+	काष्ठा thपढ़ो_काष्ठा *t = &tsk->thपढ़ो;
+	काष्ठा fpu *fpu = &t->fpu;
 
-	if (test_thread_flag(TIF_IO_BITMAP))
-		io_bitmap_exit(tsk);
+	अगर (test_thपढ़ो_flag(TIF_IO_BITMAP))
+		io_biपंचांगap_निकास(tsk);
 
-	free_vm86(t);
+	मुक्त_vm86(t);
 
 	fpu__drop(fpu);
-}
+पूर्ण
 
-static int set_new_tls(struct task_struct *p, unsigned long tls)
-{
-	struct user_desc __user *utls = (struct user_desc __user *)tls;
+अटल पूर्णांक set_new_tls(काष्ठा task_काष्ठा *p, अचिन्हित दीर्घ tls)
+अणु
+	काष्ठा user_desc __user *utls = (काष्ठा user_desc __user *)tls;
 
-	if (in_ia32_syscall())
-		return do_set_thread_area(p, -1, utls, 0);
-	else
-		return do_set_thread_area_64(p, ARCH_SET_FS, tls);
-}
+	अगर (in_ia32_syscall())
+		वापस करो_set_thपढ़ो_area(p, -1, utls, 0);
+	अन्यथा
+		वापस करो_set_thपढ़ो_area_64(p, ARCH_SET_FS, tls);
+पूर्ण
 
-int copy_thread(unsigned long clone_flags, unsigned long sp, unsigned long arg,
-		struct task_struct *p, unsigned long tls)
-{
-	struct inactive_task_frame *frame;
-	struct fork_frame *fork_frame;
-	struct pt_regs *childregs;
-	int ret = 0;
+पूर्णांक copy_thपढ़ो(अचिन्हित दीर्घ clone_flags, अचिन्हित दीर्घ sp, अचिन्हित दीर्घ arg,
+		काष्ठा task_काष्ठा *p, अचिन्हित दीर्घ tls)
+अणु
+	काष्ठा inactive_task_frame *frame;
+	काष्ठा विभाजन_frame *विभाजन_frame;
+	काष्ठा pt_regs *childregs;
+	पूर्णांक ret = 0;
 
 	childregs = task_pt_regs(p);
-	fork_frame = container_of(childregs, struct fork_frame, regs);
-	frame = &fork_frame->frame;
+	विभाजन_frame = container_of(childregs, काष्ठा विभाजन_frame, regs);
+	frame = &विभाजन_frame->frame;
 
-	frame->bp = encode_frame_pointer(childregs);
-	frame->ret_addr = (unsigned long) ret_from_fork;
-	p->thread.sp = (unsigned long) fork_frame;
-	p->thread.io_bitmap = NULL;
-	memset(p->thread.ptrace_bps, 0, sizeof(p->thread.ptrace_bps));
+	frame->bp = encode_frame_poपूर्णांकer(childregs);
+	frame->ret_addr = (अचिन्हित दीर्घ) ret_from_विभाजन;
+	p->thपढ़ो.sp = (अचिन्हित दीर्घ) विभाजन_frame;
+	p->thपढ़ो.io_biपंचांगap = शून्य;
+	स_रखो(p->thपढ़ो.ptrace_bps, 0, माप(p->thपढ़ो.ptrace_bps));
 
-#ifdef CONFIG_X86_64
+#अगर_घोषित CONFIG_X86_64
 	current_save_fsgs();
-	p->thread.fsindex = current->thread.fsindex;
-	p->thread.fsbase = current->thread.fsbase;
-	p->thread.gsindex = current->thread.gsindex;
-	p->thread.gsbase = current->thread.gsbase;
+	p->thपढ़ो.fsindex = current->thपढ़ो.fsindex;
+	p->thपढ़ो.fsbase = current->thपढ़ो.fsbase;
+	p->thपढ़ो.gsindex = current->thपढ़ो.gsindex;
+	p->thपढ़ो.gsbase = current->thपढ़ो.gsbase;
 
-	savesegment(es, p->thread.es);
-	savesegment(ds, p->thread.ds);
-#else
-	p->thread.sp0 = (unsigned long) (childregs + 1);
+	savesegment(es, p->thपढ़ो.es);
+	savesegment(ds, p->thपढ़ो.ds);
+#अन्यथा
+	p->thपढ़ो.sp0 = (अचिन्हित दीर्घ) (childregs + 1);
 	/*
 	 * Clear all status flags including IF and set fixed bit. 64bit
-	 * does not have this initialization as the frame does not contain
+	 * करोes not have this initialization as the frame करोes not contain
 	 * flags. The flags consistency (especially vs. AC) is there
 	 * ensured via objtool, which lacks 32bit support.
 	 */
 	frame->flags = X86_EFLAGS_FIXED;
-#endif
+#पूर्ण_अगर
 
-	/* Kernel thread ? */
-	if (unlikely(p->flags & PF_KTHREAD)) {
-		memset(childregs, 0, sizeof(struct pt_regs));
-		kthread_frame_init(frame, sp, arg);
-		return 0;
-	}
+	/* Kernel thपढ़ो ? */
+	अगर (unlikely(p->flags & PF_KTHREAD)) अणु
+		स_रखो(childregs, 0, माप(काष्ठा pt_regs));
+		kthपढ़ो_frame_init(frame, sp, arg);
+		वापस 0;
+	पूर्ण
 
 	frame->bx = 0;
 	*childregs = *current_pt_regs();
 	childregs->ax = 0;
-	if (sp)
+	अगर (sp)
 		childregs->sp = sp;
 
-#ifdef CONFIG_X86_32
+#अगर_घोषित CONFIG_X86_32
 	task_user_gs(p) = get_user_gs(current_pt_regs());
-#endif
+#पूर्ण_अगर
 
-	if (unlikely(p->flags & PF_IO_WORKER)) {
+	अगर (unlikely(p->flags & PF_IO_WORKER)) अणु
 		/*
-		 * An IO thread is a user space thread, but it doesn't
-		 * return to ret_after_fork().
+		 * An IO thपढ़ो is a user space thपढ़ो, but it करोesn't
+		 * वापस to ret_after_विभाजन().
 		 *
 		 * In order to indicate that to tools like gdb,
-		 * we reset the stack and instruction pointers.
+		 * we reset the stack and inकाष्ठाion poपूर्णांकers.
 		 *
-		 * It does the same kernel frame setup to return to a kernel
-		 * function that a kernel thread does.
+		 * It करोes the same kernel frame setup to वापस to a kernel
+		 * function that a kernel thपढ़ो करोes.
 		 */
 		childregs->sp = 0;
 		childregs->ip = 0;
-		kthread_frame_init(frame, sp, arg);
-		return 0;
-	}
+		kthपढ़ो_frame_init(frame, sp, arg);
+		वापस 0;
+	पूर्ण
 
-	/* Set a new TLS for the child thread? */
-	if (clone_flags & CLONE_SETTLS)
+	/* Set a new TLS क्रम the child thपढ़ो? */
+	अगर (clone_flags & CLONE_SETTLS)
 		ret = set_new_tls(p, tls);
 
-	if (!ret && unlikely(test_tsk_thread_flag(current, TIF_IO_BITMAP)))
-		io_bitmap_share(p);
+	अगर (!ret && unlikely(test_tsk_thपढ़ो_flag(current, TIF_IO_BITMAP)))
+		io_biपंचांगap_share(p);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-void flush_thread(void)
-{
-	struct task_struct *tsk = current;
+व्योम flush_thपढ़ो(व्योम)
+अणु
+	काष्ठा task_काष्ठा *tsk = current;
 
-	flush_ptrace_hw_breakpoint(tsk);
-	memset(tsk->thread.tls_array, 0, sizeof(tsk->thread.tls_array));
+	flush_ptrace_hw_अवरोधpoपूर्णांक(tsk);
+	स_रखो(tsk->thपढ़ो.tls_array, 0, माप(tsk->thपढ़ो.tls_array));
 
-	fpu__clear_all(&tsk->thread.fpu);
-}
+	fpu__clear_all(&tsk->thपढ़ो.fpu);
+पूर्ण
 
-void disable_TSC(void)
-{
+व्योम disable_TSC(व्योम)
+अणु
 	preempt_disable();
-	if (!test_and_set_thread_flag(TIF_NOTSC))
+	अगर (!test_and_set_thपढ़ो_flag(TIF_NOTSC))
 		/*
 		 * Must flip the CPU state synchronously with
 		 * TIF_NOTSC in the current running context.
 		 */
 		cr4_set_bits(X86_CR4_TSD);
 	preempt_enable();
-}
+पूर्ण
 
-static void enable_TSC(void)
-{
+अटल व्योम enable_TSC(व्योम)
+अणु
 	preempt_disable();
-	if (test_and_clear_thread_flag(TIF_NOTSC))
+	अगर (test_and_clear_thपढ़ो_flag(TIF_NOTSC))
 		/*
 		 * Must flip the CPU state synchronously with
 		 * TIF_NOTSC in the current running context.
 		 */
 		cr4_clear_bits(X86_CR4_TSD);
 	preempt_enable();
-}
+पूर्ण
 
-int get_tsc_mode(unsigned long adr)
-{
-	unsigned int val;
+पूर्णांक get_tsc_mode(अचिन्हित दीर्घ adr)
+अणु
+	अचिन्हित पूर्णांक val;
 
-	if (test_thread_flag(TIF_NOTSC))
-		val = PR_TSC_SIGSEGV;
-	else
+	अगर (test_thपढ़ो_flag(TIF_NOTSC))
+		val = PR_TSC_संक_अंश;
+	अन्यथा
 		val = PR_TSC_ENABLE;
 
-	return put_user(val, (unsigned int __user *)adr);
-}
+	वापस put_user(val, (अचिन्हित पूर्णांक __user *)adr);
+पूर्ण
 
-int set_tsc_mode(unsigned int val)
-{
-	if (val == PR_TSC_SIGSEGV)
+पूर्णांक set_tsc_mode(अचिन्हित पूर्णांक val)
+अणु
+	अगर (val == PR_TSC_संक_अंश)
 		disable_TSC();
-	else if (val == PR_TSC_ENABLE)
+	अन्यथा अगर (val == PR_TSC_ENABLE)
 		enable_TSC();
-	else
-		return -EINVAL;
+	अन्यथा
+		वापस -EINVAL;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-DEFINE_PER_CPU(u64, msr_misc_features_shadow);
+DEFINE_PER_CPU(u64, msr_misc_features_shaकरोw);
 
-static void set_cpuid_faulting(bool on)
-{
+अटल व्योम set_cpuid_faulting(bool on)
+अणु
 	u64 msrval;
 
-	msrval = this_cpu_read(msr_misc_features_shadow);
+	msrval = this_cpu_पढ़ो(msr_misc_features_shaकरोw);
 	msrval &= ~MSR_MISC_FEATURES_ENABLES_CPUID_FAULT;
 	msrval |= (on << MSR_MISC_FEATURES_ENABLES_CPUID_FAULT_BIT);
-	this_cpu_write(msr_misc_features_shadow, msrval);
+	this_cpu_ग_लिखो(msr_misc_features_shaकरोw, msrval);
 	wrmsrl(MSR_MISC_FEATURES_ENABLES, msrval);
-}
+पूर्ण
 
-static void disable_cpuid(void)
-{
+अटल व्योम disable_cpuid(व्योम)
+अणु
 	preempt_disable();
-	if (!test_and_set_thread_flag(TIF_NOCPUID)) {
+	अगर (!test_and_set_thपढ़ो_flag(TIF_NOCPUID)) अणु
 		/*
 		 * Must flip the CPU state synchronously with
 		 * TIF_NOCPUID in the current running context.
 		 */
 		set_cpuid_faulting(true);
-	}
+	पूर्ण
 	preempt_enable();
-}
+पूर्ण
 
-static void enable_cpuid(void)
-{
+अटल व्योम enable_cpuid(व्योम)
+अणु
 	preempt_disable();
-	if (test_and_clear_thread_flag(TIF_NOCPUID)) {
+	अगर (test_and_clear_thपढ़ो_flag(TIF_NOCPUID)) अणु
 		/*
 		 * Must flip the CPU state synchronously with
 		 * TIF_NOCPUID in the current running context.
 		 */
 		set_cpuid_faulting(false);
-	}
+	पूर्ण
 	preempt_enable();
-}
+पूर्ण
 
-static int get_cpuid_mode(void)
-{
-	return !test_thread_flag(TIF_NOCPUID);
-}
+अटल पूर्णांक get_cpuid_mode(व्योम)
+अणु
+	वापस !test_thपढ़ो_flag(TIF_NOCPUID);
+पूर्ण
 
-static int set_cpuid_mode(struct task_struct *task, unsigned long cpuid_enabled)
-{
-	if (!boot_cpu_has(X86_FEATURE_CPUID_FAULT))
-		return -ENODEV;
+अटल पूर्णांक set_cpuid_mode(काष्ठा task_काष्ठा *task, अचिन्हित दीर्घ cpuid_enabled)
+अणु
+	अगर (!boot_cpu_has(X86_FEATURE_CPUID_FAULT))
+		वापस -ENODEV;
 
-	if (cpuid_enabled)
+	अगर (cpuid_enabled)
 		enable_cpuid();
-	else
+	अन्यथा
 		disable_cpuid();
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * Called immediately after a successful exec.
  */
-void arch_setup_new_exec(void)
-{
-	/* If cpuid was previously disabled for this task, re-enable it. */
-	if (test_thread_flag(TIF_NOCPUID))
+व्योम arch_setup_new_exec(व्योम)
+अणु
+	/* If cpuid was previously disabled क्रम this task, re-enable it. */
+	अगर (test_thपढ़ो_flag(TIF_NOCPUID))
 		enable_cpuid();
 
 	/*
 	 * Don't inherit TIF_SSBD across exec boundary when
 	 * PR_SPEC_DISABLE_NOEXEC is used.
 	 */
-	if (test_thread_flag(TIF_SSBD) &&
-	    task_spec_ssb_noexec(current)) {
-		clear_thread_flag(TIF_SSBD);
+	अगर (test_thपढ़ो_flag(TIF_SSBD) &&
+	    task_spec_ssb_noexec(current)) अणु
+		clear_thपढ़ो_flag(TIF_SSBD);
 		task_clear_spec_ssb_disable(current);
 		task_clear_spec_ssb_noexec(current);
-		speculation_ctrl_update(task_thread_info(current)->flags);
-	}
-}
+		speculation_ctrl_update(task_thपढ़ो_info(current)->flags);
+	पूर्ण
+पूर्ण
 
-#ifdef CONFIG_X86_IOPL_IOPERM
-static inline void switch_to_bitmap(unsigned long tifp)
-{
+#अगर_घोषित CONFIG_X86_IOPL_IOPERM
+अटल अंतरभूत व्योम चयन_to_biपंचांगap(अचिन्हित दीर्घ tअगरp)
+अणु
 	/*
-	 * Invalidate I/O bitmap if the previous task used it. This prevents
-	 * any possible leakage of an active I/O bitmap.
+	 * Invalidate I/O biपंचांगap अगर the previous task used it. This prevents
+	 * any possible leakage of an active I/O biपंचांगap.
 	 *
-	 * If the next task has an I/O bitmap it will handle it on exit to
+	 * If the next task has an I/O biपंचांगap it will handle it on निकास to
 	 * user mode.
 	 */
-	if (tifp & _TIF_IO_BITMAP)
-		tss_invalidate_io_bitmap();
-}
+	अगर (tअगरp & _TIF_IO_BITMAP)
+		tss_invalidate_io_biपंचांगap();
+पूर्ण
 
-static void tss_copy_io_bitmap(struct tss_struct *tss, struct io_bitmap *iobm)
-{
+अटल व्योम tss_copy_io_biपंचांगap(काष्ठा tss_काष्ठा *tss, काष्ठा io_biपंचांगap *iobm)
+अणु
 	/*
-	 * Copy at least the byte range of the incoming tasks bitmap which
+	 * Copy at least the byte range of the incoming tasks biपंचांगap which
 	 * covers the permitted I/O ports.
 	 *
-	 * If the previous task which used an I/O bitmap had more bits
+	 * If the previous task which used an I/O biपंचांगap had more bits
 	 * permitted, then the copy needs to cover those as well so they
 	 * get turned off.
 	 */
-	memcpy(tss->io_bitmap.bitmap, iobm->bitmap,
-	       max(tss->io_bitmap.prev_max, iobm->max));
+	स_नकल(tss->io_biपंचांगap.biपंचांगap, iobm->biपंचांगap,
+	       max(tss->io_biपंचांगap.prev_max, iobm->max));
 
 	/*
-	 * Store the new max and the sequence number of this bitmap
-	 * and a pointer to the bitmap itself.
+	 * Store the new max and the sequence number of this biपंचांगap
+	 * and a poपूर्णांकer to the biपंचांगap itself.
 	 */
-	tss->io_bitmap.prev_max = iobm->max;
-	tss->io_bitmap.prev_sequence = iobm->sequence;
-}
+	tss->io_biपंचांगap.prev_max = iobm->max;
+	tss->io_biपंचांगap.prev_sequence = iobm->sequence;
+पूर्ण
 
 /**
- * tss_update_io_bitmap - Update I/O bitmap before exiting to usermode
+ * tss_update_io_biपंचांगap - Update I/O biपंचांगap beक्रमe निकासing to usermode
  */
-void native_tss_update_io_bitmap(void)
-{
-	struct tss_struct *tss = this_cpu_ptr(&cpu_tss_rw);
-	struct thread_struct *t = &current->thread;
-	u16 *base = &tss->x86_tss.io_bitmap_base;
+व्योम native_tss_update_io_biपंचांगap(व्योम)
+अणु
+	काष्ठा tss_काष्ठा *tss = this_cpu_ptr(&cpu_tss_rw);
+	काष्ठा thपढ़ो_काष्ठा *t = &current->thपढ़ो;
+	u16 *base = &tss->x86_tss.io_biपंचांगap_base;
 
-	if (!test_thread_flag(TIF_IO_BITMAP)) {
-		native_tss_invalidate_io_bitmap();
-		return;
-	}
+	अगर (!test_thपढ़ो_flag(TIF_IO_BITMAP)) अणु
+		native_tss_invalidate_io_biपंचांगap();
+		वापस;
+	पूर्ण
 
-	if (IS_ENABLED(CONFIG_X86_IOPL_IOPERM) && t->iopl_emul == 3) {
+	अगर (IS_ENABLED(CONFIG_X86_IOPL_IOPERM) && t->iopl_emul == 3) अणु
 		*base = IO_BITMAP_OFFSET_VALID_ALL;
-	} else {
-		struct io_bitmap *iobm = t->io_bitmap;
+	पूर्ण अन्यथा अणु
+		काष्ठा io_biपंचांगap *iobm = t->io_biपंचांगap;
 
 		/*
-		 * Only copy bitmap data when the sequence number differs. The
-		 * update time is accounted to the incoming task.
+		 * Only copy biपंचांगap data when the sequence number dअगरfers. The
+		 * update समय is accounted to the incoming task.
 		 */
-		if (tss->io_bitmap.prev_sequence != iobm->sequence)
-			tss_copy_io_bitmap(tss, iobm);
+		अगर (tss->io_biपंचांगap.prev_sequence != iobm->sequence)
+			tss_copy_io_biपंचांगap(tss, iobm);
 
-		/* Enable the bitmap */
+		/* Enable the biपंचांगap */
 		*base = IO_BITMAP_OFFSET_VALID_MAP;
-	}
+	पूर्ण
 
 	/*
-	 * Make sure that the TSS limit is covering the IO bitmap. It might have
-	 * been cut down by a VMEXIT to 0x67 which would cause a subsequent I/O
-	 * access from user space to trigger a #GP because tbe bitmap is outside
+	 * Make sure that the TSS limit is covering the IO biपंचांगap. It might have
+	 * been cut करोwn by a VMEXIT to 0x67 which would cause a subsequent I/O
+	 * access from user space to trigger a #GP because tbe biपंचांगap is outside
 	 * the TSS limit.
 	 */
 	refresh_tss_limit();
-}
-#else /* CONFIG_X86_IOPL_IOPERM */
-static inline void switch_to_bitmap(unsigned long tifp) { }
-#endif
+पूर्ण
+#अन्यथा /* CONFIG_X86_IOPL_IOPERM */
+अटल अंतरभूत व्योम चयन_to_biपंचांगap(अचिन्हित दीर्घ tअगरp) अणु पूर्ण
+#पूर्ण_अगर
 
-#ifdef CONFIG_SMP
+#अगर_घोषित CONFIG_SMP
 
-struct ssb_state {
-	struct ssb_state	*shared_state;
+काष्ठा ssb_state अणु
+	काष्ठा ssb_state	*shared_state;
 	raw_spinlock_t		lock;
-	unsigned int		disable_state;
-	unsigned long		local_state;
-};
+	अचिन्हित पूर्णांक		disable_state;
+	अचिन्हित दीर्घ		local_state;
+पूर्ण;
 
-#define LSTATE_SSB	0
+#घोषणा LSTATE_SSB	0
 
-static DEFINE_PER_CPU(struct ssb_state, ssb_state);
+अटल DEFINE_PER_CPU(काष्ठा ssb_state, ssb_state);
 
-void speculative_store_bypass_ht_init(void)
-{
-	struct ssb_state *st = this_cpu_ptr(&ssb_state);
-	unsigned int this_cpu = smp_processor_id();
-	unsigned int cpu;
+व्योम speculative_store_bypass_ht_init(व्योम)
+अणु
+	काष्ठा ssb_state *st = this_cpu_ptr(&ssb_state);
+	अचिन्हित पूर्णांक this_cpu = smp_processor_id();
+	अचिन्हित पूर्णांक cpu;
 
 	st->local_state = 0;
 
@@ -438,284 +439,284 @@ void speculative_store_bypass_ht_init(void)
 	 * Shared state setup happens once on the first bringup
 	 * of the CPU. It's not destroyed on CPU hotunplug.
 	 */
-	if (st->shared_state)
-		return;
+	अगर (st->shared_state)
+		वापस;
 
 	raw_spin_lock_init(&st->lock);
 
 	/*
 	 * Go over HT siblings and check whether one of them has set up the
-	 * shared state pointer already.
+	 * shared state poपूर्णांकer alपढ़ोy.
 	 */
-	for_each_cpu(cpu, topology_sibling_cpumask(this_cpu)) {
-		if (cpu == this_cpu)
-			continue;
+	क्रम_each_cpu(cpu, topology_sibling_cpumask(this_cpu)) अणु
+		अगर (cpu == this_cpu)
+			जारी;
 
-		if (!per_cpu(ssb_state, cpu).shared_state)
-			continue;
+		अगर (!per_cpu(ssb_state, cpu).shared_state)
+			जारी;
 
 		/* Link it to the state of the sibling: */
 		st->shared_state = per_cpu(ssb_state, cpu).shared_state;
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/*
 	 * First HT sibling to come up on the core.  Link shared state of
 	 * the first HT sibling to itself. The siblings on the same core
-	 * which come up later will see the shared state pointer and link
+	 * which come up later will see the shared state poपूर्णांकer and link
 	 * themselves to the state of this CPU.
 	 */
 	st->shared_state = st;
-}
+पूर्ण
 
 /*
- * Logic is: First HT sibling enables SSBD for both siblings in the core
- * and last sibling to disable it, disables it for the whole core. This how
+ * Logic is: First HT sibling enables SSBD क्रम both siblings in the core
+ * and last sibling to disable it, disables it क्रम the whole core. This how
  * MSR_SPEC_CTRL works in "hardware":
  *
  *  CORE_SPEC_CTRL = THREAD0_SPEC_CTRL | THREAD1_SPEC_CTRL
  */
-static __always_inline void amd_set_core_ssb_state(unsigned long tifn)
-{
-	struct ssb_state *st = this_cpu_ptr(&ssb_state);
+अटल __always_अंतरभूत व्योम amd_set_core_ssb_state(अचिन्हित दीर्घ tअगरn)
+अणु
+	काष्ठा ssb_state *st = this_cpu_ptr(&ssb_state);
 	u64 msr = x86_amd_ls_cfg_base;
 
-	if (!static_cpu_has(X86_FEATURE_ZEN)) {
-		msr |= ssbd_tif_to_amd_ls_cfg(tifn);
+	अगर (!अटल_cpu_has(X86_FEATURE_ZEN)) अणु
+		msr |= ssbd_tअगर_to_amd_ls_cfg(tअगरn);
 		wrmsrl(MSR_AMD64_LS_CFG, msr);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (tifn & _TIF_SSBD) {
+	अगर (tअगरn & _TIF_SSBD) अणु
 		/*
 		 * Since this can race with prctl(), block reentry on the
 		 * same CPU.
 		 */
-		if (__test_and_set_bit(LSTATE_SSB, &st->local_state))
-			return;
+		अगर (__test_and_set_bit(LSTATE_SSB, &st->local_state))
+			वापस;
 
 		msr |= x86_amd_ls_cfg_ssbd_mask;
 
 		raw_spin_lock(&st->shared_state->lock);
 		/* First sibling enables SSBD: */
-		if (!st->shared_state->disable_state)
+		अगर (!st->shared_state->disable_state)
 			wrmsrl(MSR_AMD64_LS_CFG, msr);
 		st->shared_state->disable_state++;
 		raw_spin_unlock(&st->shared_state->lock);
-	} else {
-		if (!__test_and_clear_bit(LSTATE_SSB, &st->local_state))
-			return;
+	पूर्ण अन्यथा अणु
+		अगर (!__test_and_clear_bit(LSTATE_SSB, &st->local_state))
+			वापस;
 
 		raw_spin_lock(&st->shared_state->lock);
 		st->shared_state->disable_state--;
-		if (!st->shared_state->disable_state)
+		अगर (!st->shared_state->disable_state)
 			wrmsrl(MSR_AMD64_LS_CFG, msr);
 		raw_spin_unlock(&st->shared_state->lock);
-	}
-}
-#else
-static __always_inline void amd_set_core_ssb_state(unsigned long tifn)
-{
-	u64 msr = x86_amd_ls_cfg_base | ssbd_tif_to_amd_ls_cfg(tifn);
+	पूर्ण
+पूर्ण
+#अन्यथा
+अटल __always_अंतरभूत व्योम amd_set_core_ssb_state(अचिन्हित दीर्घ tअगरn)
+अणु
+	u64 msr = x86_amd_ls_cfg_base | ssbd_tअगर_to_amd_ls_cfg(tअगरn);
 
 	wrmsrl(MSR_AMD64_LS_CFG, msr);
-}
-#endif
+पूर्ण
+#पूर्ण_अगर
 
-static __always_inline void amd_set_ssb_virt_state(unsigned long tifn)
-{
+अटल __always_अंतरभूत व्योम amd_set_ssb_virt_state(अचिन्हित दीर्घ tअगरn)
+अणु
 	/*
 	 * SSBD has the same definition in SPEC_CTRL and VIRT_SPEC_CTRL,
-	 * so ssbd_tif_to_spec_ctrl() just works.
+	 * so ssbd_tअगर_to_spec_ctrl() just works.
 	 */
-	wrmsrl(MSR_AMD64_VIRT_SPEC_CTRL, ssbd_tif_to_spec_ctrl(tifn));
-}
+	wrmsrl(MSR_AMD64_VIRT_SPEC_CTRL, ssbd_tअगर_to_spec_ctrl(tअगरn));
+पूर्ण
 
 /*
- * Update the MSRs managing speculation control, during context switch.
+ * Update the MSRs managing speculation control, during context चयन.
  *
- * tifp: Previous task's thread flags
- * tifn: Next task's thread flags
+ * tअगरp: Previous task's thपढ़ो flags
+ * tअगरn: Next task's thपढ़ो flags
  */
-static __always_inline void __speculation_ctrl_update(unsigned long tifp,
-						      unsigned long tifn)
-{
-	unsigned long tif_diff = tifp ^ tifn;
+अटल __always_अंतरभूत व्योम __speculation_ctrl_update(अचिन्हित दीर्घ tअगरp,
+						      अचिन्हित दीर्घ tअगरn)
+अणु
+	अचिन्हित दीर्घ tअगर_dअगरf = tअगरp ^ tअगरn;
 	u64 msr = x86_spec_ctrl_base;
 	bool updmsr = false;
 
-	lockdep_assert_irqs_disabled();
+	lockdep_निश्चित_irqs_disabled();
 
 	/* Handle change of TIF_SSBD depending on the mitigation method. */
-	if (static_cpu_has(X86_FEATURE_VIRT_SSBD)) {
-		if (tif_diff & _TIF_SSBD)
-			amd_set_ssb_virt_state(tifn);
-	} else if (static_cpu_has(X86_FEATURE_LS_CFG_SSBD)) {
-		if (tif_diff & _TIF_SSBD)
-			amd_set_core_ssb_state(tifn);
-	} else if (static_cpu_has(X86_FEATURE_SPEC_CTRL_SSBD) ||
-		   static_cpu_has(X86_FEATURE_AMD_SSBD)) {
-		updmsr |= !!(tif_diff & _TIF_SSBD);
-		msr |= ssbd_tif_to_spec_ctrl(tifn);
-	}
+	अगर (अटल_cpu_has(X86_FEATURE_VIRT_SSBD)) अणु
+		अगर (tअगर_dअगरf & _TIF_SSBD)
+			amd_set_ssb_virt_state(tअगरn);
+	पूर्ण अन्यथा अगर (अटल_cpu_has(X86_FEATURE_LS_CFG_SSBD)) अणु
+		अगर (tअगर_dअगरf & _TIF_SSBD)
+			amd_set_core_ssb_state(tअगरn);
+	पूर्ण अन्यथा अगर (अटल_cpu_has(X86_FEATURE_SPEC_CTRL_SSBD) ||
+		   अटल_cpu_has(X86_FEATURE_AMD_SSBD)) अणु
+		updmsr |= !!(tअगर_dअगरf & _TIF_SSBD);
+		msr |= ssbd_tअगर_to_spec_ctrl(tअगरn);
+	पूर्ण
 
-	/* Only evaluate TIF_SPEC_IB if conditional STIBP is enabled. */
-	if (IS_ENABLED(CONFIG_SMP) &&
-	    static_branch_unlikely(&switch_to_cond_stibp)) {
-		updmsr |= !!(tif_diff & _TIF_SPEC_IB);
-		msr |= stibp_tif_to_spec_ctrl(tifn);
-	}
+	/* Only evaluate TIF_SPEC_IB अगर conditional STIBP is enabled. */
+	अगर (IS_ENABLED(CONFIG_SMP) &&
+	    अटल_branch_unlikely(&चयन_to_cond_stibp)) अणु
+		updmsr |= !!(tअगर_dअगरf & _TIF_SPEC_IB);
+		msr |= stibp_tअगर_to_spec_ctrl(tअगरn);
+	पूर्ण
 
-	if (updmsr)
+	अगर (updmsr)
 		wrmsrl(MSR_IA32_SPEC_CTRL, msr);
-}
+पूर्ण
 
-static unsigned long speculation_ctrl_update_tif(struct task_struct *tsk)
-{
-	if (test_and_clear_tsk_thread_flag(tsk, TIF_SPEC_FORCE_UPDATE)) {
-		if (task_spec_ssb_disable(tsk))
-			set_tsk_thread_flag(tsk, TIF_SSBD);
-		else
-			clear_tsk_thread_flag(tsk, TIF_SSBD);
+अटल अचिन्हित दीर्घ speculation_ctrl_update_tअगर(काष्ठा task_काष्ठा *tsk)
+अणु
+	अगर (test_and_clear_tsk_thपढ़ो_flag(tsk, TIF_SPEC_FORCE_UPDATE)) अणु
+		अगर (task_spec_ssb_disable(tsk))
+			set_tsk_thपढ़ो_flag(tsk, TIF_SSBD);
+		अन्यथा
+			clear_tsk_thपढ़ो_flag(tsk, TIF_SSBD);
 
-		if (task_spec_ib_disable(tsk))
-			set_tsk_thread_flag(tsk, TIF_SPEC_IB);
-		else
-			clear_tsk_thread_flag(tsk, TIF_SPEC_IB);
-	}
-	/* Return the updated threadinfo flags*/
-	return task_thread_info(tsk)->flags;
-}
+		अगर (task_spec_ib_disable(tsk))
+			set_tsk_thपढ़ो_flag(tsk, TIF_SPEC_IB);
+		अन्यथा
+			clear_tsk_thपढ़ो_flag(tsk, TIF_SPEC_IB);
+	पूर्ण
+	/* Return the updated thपढ़ोinfo flags*/
+	वापस task_thपढ़ो_info(tsk)->flags;
+पूर्ण
 
-void speculation_ctrl_update(unsigned long tif)
-{
-	unsigned long flags;
+व्योम speculation_ctrl_update(अचिन्हित दीर्घ tअगर)
+अणु
+	अचिन्हित दीर्घ flags;
 
-	/* Forced update. Make sure all relevant TIF flags are different */
+	/* Forced update. Make sure all relevant TIF flags are dअगरferent */
 	local_irq_save(flags);
-	__speculation_ctrl_update(~tif, tif);
+	__speculation_ctrl_update(~tअगर, tअगर);
 	local_irq_restore(flags);
-}
+पूर्ण
 
 /* Called from seccomp/prctl update */
-void speculation_ctrl_update_current(void)
-{
+व्योम speculation_ctrl_update_current(व्योम)
+अणु
 	preempt_disable();
-	speculation_ctrl_update(speculation_ctrl_update_tif(current));
+	speculation_ctrl_update(speculation_ctrl_update_tअगर(current));
 	preempt_enable();
-}
+पूर्ण
 
-static inline void cr4_toggle_bits_irqsoff(unsigned long mask)
-{
-	unsigned long newval, cr4 = this_cpu_read(cpu_tlbstate.cr4);
+अटल अंतरभूत व्योम cr4_toggle_bits_irqsoff(अचिन्हित दीर्घ mask)
+अणु
+	अचिन्हित दीर्घ newval, cr4 = this_cpu_पढ़ो(cpu_tlbstate.cr4);
 
 	newval = cr4 ^ mask;
-	if (newval != cr4) {
-		this_cpu_write(cpu_tlbstate.cr4, newval);
-		__write_cr4(newval);
-	}
-}
+	अगर (newval != cr4) अणु
+		this_cpu_ग_लिखो(cpu_tlbstate.cr4, newval);
+		__ग_लिखो_cr4(newval);
+	पूर्ण
+पूर्ण
 
-void __switch_to_xtra(struct task_struct *prev_p, struct task_struct *next_p)
-{
-	unsigned long tifp, tifn;
+व्योम __चयन_to_xtra(काष्ठा task_काष्ठा *prev_p, काष्ठा task_काष्ठा *next_p)
+अणु
+	अचिन्हित दीर्घ tअगरp, tअगरn;
 
-	tifn = READ_ONCE(task_thread_info(next_p)->flags);
-	tifp = READ_ONCE(task_thread_info(prev_p)->flags);
+	tअगरn = READ_ONCE(task_thपढ़ो_info(next_p)->flags);
+	tअगरp = READ_ONCE(task_thपढ़ो_info(prev_p)->flags);
 
-	switch_to_bitmap(tifp);
+	चयन_to_biपंचांगap(tअगरp);
 
-	propagate_user_return_notify(prev_p, next_p);
+	propagate_user_वापस_notअगरy(prev_p, next_p);
 
-	if ((tifp & _TIF_BLOCKSTEP || tifn & _TIF_BLOCKSTEP) &&
-	    arch_has_block_step()) {
-		unsigned long debugctl, msk;
+	अगर ((tअगरp & _TIF_BLOCKSTEP || tअगरn & _TIF_BLOCKSTEP) &&
+	    arch_has_block_step()) अणु
+		अचिन्हित दीर्घ debugctl, msk;
 
 		rdmsrl(MSR_IA32_DEBUGCTLMSR, debugctl);
 		debugctl &= ~DEBUGCTLMSR_BTF;
-		msk = tifn & _TIF_BLOCKSTEP;
+		msk = tअगरn & _TIF_BLOCKSTEP;
 		debugctl |= (msk >> TIF_BLOCKSTEP) << DEBUGCTLMSR_BTF_SHIFT;
 		wrmsrl(MSR_IA32_DEBUGCTLMSR, debugctl);
-	}
+	पूर्ण
 
-	if ((tifp ^ tifn) & _TIF_NOTSC)
+	अगर ((tअगरp ^ tअगरn) & _TIF_NOTSC)
 		cr4_toggle_bits_irqsoff(X86_CR4_TSD);
 
-	if ((tifp ^ tifn) & _TIF_NOCPUID)
-		set_cpuid_faulting(!!(tifn & _TIF_NOCPUID));
+	अगर ((tअगरp ^ tअगरn) & _TIF_NOCPUID)
+		set_cpuid_faulting(!!(tअगरn & _TIF_NOCPUID));
 
-	if (likely(!((tifp | tifn) & _TIF_SPEC_FORCE_UPDATE))) {
-		__speculation_ctrl_update(tifp, tifn);
-	} else {
-		speculation_ctrl_update_tif(prev_p);
-		tifn = speculation_ctrl_update_tif(next_p);
+	अगर (likely(!((tअगरp | tअगरn) & _TIF_SPEC_FORCE_UPDATE))) अणु
+		__speculation_ctrl_update(tअगरp, tअगरn);
+	पूर्ण अन्यथा अणु
+		speculation_ctrl_update_tअगर(prev_p);
+		tअगरn = speculation_ctrl_update_tअगर(next_p);
 
-		/* Enforce MSR update to ensure consistent state */
-		__speculation_ctrl_update(~tifn, tifn);
-	}
+		/* Enक्रमce MSR update to ensure consistent state */
+		__speculation_ctrl_update(~tअगरn, tअगरn);
+	पूर्ण
 
-	if ((tifp ^ tifn) & _TIF_SLD)
-		switch_to_sld(tifn);
-}
+	अगर ((tअगरp ^ tअगरn) & _TIF_SLD)
+		चयन_to_sld(tअगरn);
+पूर्ण
 
 /*
  * Idle related variables and functions
  */
-unsigned long boot_option_idle_override = IDLE_NO_OVERRIDE;
+अचिन्हित दीर्घ boot_option_idle_override = IDLE_NO_OVERRIDE;
 EXPORT_SYMBOL(boot_option_idle_override);
 
-static void (*x86_idle)(void);
+अटल व्योम (*x86_idle)(व्योम);
 
-#ifndef CONFIG_SMP
-static inline void play_dead(void)
-{
+#अगर_अघोषित CONFIG_SMP
+अटल अंतरभूत व्योम play_dead(व्योम)
+अणु
 	BUG();
-}
-#endif
+पूर्ण
+#पूर्ण_अगर
 
-void arch_cpu_idle_enter(void)
-{
-	tsc_verify_tsc_adjust(false);
+व्योम arch_cpu_idle_enter(व्योम)
+अणु
+	tsc_verअगरy_tsc_adjust(false);
 	local_touch_nmi();
-}
+पूर्ण
 
-void arch_cpu_idle_dead(void)
-{
+व्योम arch_cpu_idle_dead(व्योम)
+अणु
 	play_dead();
-}
+पूर्ण
 
 /*
  * Called from the generic idle code.
  */
-void arch_cpu_idle(void)
-{
+व्योम arch_cpu_idle(व्योम)
+अणु
 	x86_idle();
-}
+पूर्ण
 
 /*
- * We use this if we don't have any better idle routine..
+ * We use this अगर we करोn't have any better idle routine..
  */
-void __cpuidle default_idle(void)
-{
+व्योम __cpuidle शेष_idle(व्योम)
+अणु
 	raw_safe_halt();
-}
-#if defined(CONFIG_APM_MODULE) || defined(CONFIG_HALTPOLL_CPUIDLE_MODULE)
-EXPORT_SYMBOL(default_idle);
-#endif
+पूर्ण
+#अगर defined(CONFIG_APM_MODULE) || defined(CONFIG_HALTPOLL_CPUIDLE_MODULE)
+EXPORT_SYMBOL(शेष_idle);
+#पूर्ण_अगर
 
-#ifdef CONFIG_XEN
-bool xen_set_default_idle(void)
-{
+#अगर_घोषित CONFIG_XEN
+bool xen_set_शेष_idle(व्योम)
+अणु
 	bool ret = !!x86_idle;
 
-	x86_idle = default_idle;
+	x86_idle = शेष_idle;
 
-	return ret;
-}
-#endif
+	वापस ret;
+पूर्ण
+#पूर्ण_अगर
 
-void stop_this_cpu(void *dummy)
-{
+व्योम stop_this_cpu(व्योम *dummy)
+अणु
 	local_irq_disable();
 	/*
 	 * Remove this CPU:
@@ -726,137 +727,137 @@ void stop_this_cpu(void *dummy)
 
 	/*
 	 * Use wbinvd on processors that support SME. This provides support
-	 * for performing a successful kexec when going from SME inactive
+	 * क्रम perक्रमming a successful kexec when going from SME inactive
 	 * to SME active (or vice-versa). The cache must be cleared so that
-	 * if there are entries with the same physical address, both with and
-	 * without the encryption bit, they don't race each other when flushed
+	 * अगर there are entries with the same physical address, both with and
+	 * without the encryption bit, they करोn't race each other when flushed
 	 * and potentially end up with the wrong entry being committed to
 	 * memory.
 	 */
-	if (boot_cpu_has(X86_FEATURE_SME))
+	अगर (boot_cpu_has(X86_FEATURE_SME))
 		native_wbinvd();
-	for (;;) {
+	क्रम (;;) अणु
 		/*
-		 * Use native_halt() so that memory contents don't change
+		 * Use native_halt() so that memory contents करोn't change
 		 * (stack usage and variables) after possibly issuing the
 		 * native_wbinvd() above.
 		 */
 		native_halt();
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
- * AMD Erratum 400 aware idle routine. We handle it the same way as C3 power
- * states (local apic timer and TSC stop).
+ * AMD Erratum 400 aware idle routine. We handle it the same way as C3 घातer
+ * states (local apic समयr and TSC stop).
  *
  * XXX this function is completely buggered vs RCU and tracing.
  */
-static void amd_e400_idle(void)
-{
+अटल व्योम amd_e400_idle(व्योम)
+अणु
 	/*
-	 * We cannot use static_cpu_has_bug() here because X86_BUG_AMD_APIC_C1E
-	 * gets set after static_cpu_has() places have been converted via
+	 * We cannot use अटल_cpu_has_bug() here because X86_BUG_AMD_APIC_C1E
+	 * माला_लो set after अटल_cpu_has() places have been converted via
 	 * alternatives.
 	 */
-	if (!boot_cpu_has_bug(X86_BUG_AMD_APIC_C1E)) {
-		default_idle();
-		return;
-	}
+	अगर (!boot_cpu_has_bug(X86_BUG_AMD_APIC_C1E)) अणु
+		शेष_idle();
+		वापस;
+	पूर्ण
 
 	tick_broadcast_enter();
 
-	default_idle();
+	शेष_idle();
 
 	/*
-	 * The switch back from broadcast mode needs to be called with
-	 * interrupts disabled.
+	 * The चयन back from broadcast mode needs to be called with
+	 * पूर्णांकerrupts disabled.
 	 */
 	raw_local_irq_disable();
-	tick_broadcast_exit();
+	tick_broadcast_निकास();
 	raw_local_irq_enable();
-}
+पूर्ण
 
 /*
- * Intel Core2 and older machines prefer MWAIT over HALT for C1.
+ * Intel Core2 and older machines prefer MWAIT over HALT क्रम C1.
  * We can't rely on cpuidle installing MWAIT, because it will not load
- * on systems that support only C1 -- so the boot default must be MWAIT.
+ * on प्रणालीs that support only C1 -- so the boot शेष must be MWAIT.
  *
  * Some AMD machines are the opposite, they depend on using HALT.
  *
- * So for default C1, which is used during boot until cpuidle loads,
- * use MWAIT-C1 on Intel HW that has it, else use HALT.
+ * So क्रम शेष C1, which is used during boot until cpuidle loads,
+ * use MWAIT-C1 on Intel HW that has it, अन्यथा use HALT.
  */
-static int prefer_mwait_c1_over_halt(const struct cpuinfo_x86 *c)
-{
-	if (c->x86_vendor != X86_VENDOR_INTEL)
-		return 0;
+अटल पूर्णांक prefer_mरुको_c1_over_halt(स्थिर काष्ठा cpuinfo_x86 *c)
+अणु
+	अगर (c->x86_venकरोr != X86_VENDOR_INTEL)
+		वापस 0;
 
-	if (!cpu_has(c, X86_FEATURE_MWAIT) || boot_cpu_has_bug(X86_BUG_MONITOR))
-		return 0;
+	अगर (!cpu_has(c, X86_FEATURE_MWAIT) || boot_cpu_has_bug(X86_BUG_MONITOR))
+		वापस 0;
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
 /*
- * MONITOR/MWAIT with no hints, used for default C1 state. This invokes MWAIT
- * with interrupts enabled and no flags, which is backwards compatible with the
+ * MONITOR/MWAIT with no hपूर्णांकs, used क्रम शेष C1 state. This invokes MWAIT
+ * with पूर्णांकerrupts enabled and no flags, which is backwards compatible with the
  * original MWAIT implementation.
  */
-static __cpuidle void mwait_idle(void)
-{
-	if (!current_set_polling_and_test()) {
-		if (this_cpu_has(X86_BUG_CLFLUSH_MONITOR)) {
+अटल __cpuidle व्योम mरुको_idle(व्योम)
+अणु
+	अगर (!current_set_polling_and_test()) अणु
+		अगर (this_cpu_has(X86_BUG_CLFLUSH_MONITOR)) अणु
 			mb(); /* quirk */
-			clflush((void *)&current_thread_info()->flags);
+			clflush((व्योम *)&current_thपढ़ो_info()->flags);
 			mb(); /* quirk */
-		}
+		पूर्ण
 
-		__monitor((void *)&current_thread_info()->flags, 0, 0);
-		if (!need_resched())
-			__sti_mwait(0, 0);
-		else
+		__monitor((व्योम *)&current_thपढ़ो_info()->flags, 0, 0);
+		अगर (!need_resched())
+			__sti_mरुको(0, 0);
+		अन्यथा
 			raw_local_irq_enable();
-	} else {
+	पूर्ण अन्यथा अणु
 		raw_local_irq_enable();
-	}
+	पूर्ण
 	__current_clr_polling();
-}
+पूर्ण
 
-void select_idle_routine(const struct cpuinfo_x86 *c)
-{
-#ifdef CONFIG_SMP
-	if (boot_option_idle_override == IDLE_POLL && smp_num_siblings > 1)
+व्योम select_idle_routine(स्थिर काष्ठा cpuinfo_x86 *c)
+अणु
+#अगर_घोषित CONFIG_SMP
+	अगर (boot_option_idle_override == IDLE_POLL && smp_num_siblings > 1)
 		pr_warn_once("WARNING: polling idle and HT enabled, performance may degrade\n");
-#endif
-	if (x86_idle || boot_option_idle_override == IDLE_POLL)
-		return;
+#पूर्ण_अगर
+	अगर (x86_idle || boot_option_idle_override == IDLE_POLL)
+		वापस;
 
-	if (boot_cpu_has_bug(X86_BUG_AMD_E400)) {
+	अगर (boot_cpu_has_bug(X86_BUG_AMD_E400)) अणु
 		pr_info("using AMD E400 aware idle routine\n");
 		x86_idle = amd_e400_idle;
-	} else if (prefer_mwait_c1_over_halt(c)) {
+	पूर्ण अन्यथा अगर (prefer_mरुको_c1_over_halt(c)) अणु
 		pr_info("using mwait in idle threads\n");
-		x86_idle = mwait_idle;
-	} else
-		x86_idle = default_idle;
-}
+		x86_idle = mरुको_idle;
+	पूर्ण अन्यथा
+		x86_idle = शेष_idle;
+पूर्ण
 
-void amd_e400_c1e_apic_setup(void)
-{
-	if (boot_cpu_has_bug(X86_BUG_AMD_APIC_C1E)) {
+व्योम amd_e400_c1e_apic_setup(व्योम)
+अणु
+	अगर (boot_cpu_has_bug(X86_BUG_AMD_APIC_C1E)) अणु
 		pr_info("Switch to broadcast mode on CPU%d\n", smp_processor_id());
 		local_irq_disable();
-		tick_broadcast_force();
+		tick_broadcast_क्रमce();
 		local_irq_enable();
-	}
-}
+	पूर्ण
+पूर्ण
 
-void __init arch_post_acpi_subsys_init(void)
-{
+व्योम __init arch_post_acpi_subsys_init(व्योम)
+अणु
 	u32 lo, hi;
 
-	if (!boot_cpu_has_bug(X86_BUG_AMD_E400))
-		return;
+	अगर (!boot_cpu_has_bug(X86_BUG_AMD_E400))
+		वापस;
 
 	/*
 	 * AMD E400 detection needs to happen after ACPI has been enabled. If
@@ -864,133 +865,133 @@ void __init arch_post_acpi_subsys_init(void)
 	 * MSR_K8_INT_PENDING_MSG.
 	 */
 	rdmsr(MSR_K8_INT_PENDING_MSG, lo, hi);
-	if (!(lo & K8_INTP_C1E_ACTIVE_MASK))
-		return;
+	अगर (!(lo & K8_INTP_C1E_ACTIVE_MASK))
+		वापस;
 
 	boot_cpu_set_bug(X86_BUG_AMD_APIC_C1E);
 
-	if (!boot_cpu_has(X86_FEATURE_NONSTOP_TSC))
+	अगर (!boot_cpu_has(X86_FEATURE_NONSTOP_TSC))
 		mark_tsc_unstable("TSC halt in AMD C1E");
 	pr_info("System has AMD C1E enabled\n");
-}
+पूर्ण
 
-static int __init idle_setup(char *str)
-{
-	if (!str)
-		return -EINVAL;
+अटल पूर्णांक __init idle_setup(अक्षर *str)
+अणु
+	अगर (!str)
+		वापस -EINVAL;
 
-	if (!strcmp(str, "poll")) {
+	अगर (!म_भेद(str, "poll")) अणु
 		pr_info("using polling idle threads\n");
 		boot_option_idle_override = IDLE_POLL;
 		cpu_idle_poll_ctrl(true);
-	} else if (!strcmp(str, "halt")) {
+	पूर्ण अन्यथा अगर (!म_भेद(str, "halt")) अणु
 		/*
 		 * When the boot option of idle=halt is added, halt is
-		 * forced to be used for CPU idle. In such case CPU C2/C3
+		 * क्रमced to be used क्रम CPU idle. In such हाल CPU C2/C3
 		 * won't be used again.
-		 * To continue to load the CPU idle driver, don't touch
+		 * To जारी to load the CPU idle driver, करोn't touch
 		 * the boot_option_idle_override.
 		 */
-		x86_idle = default_idle;
+		x86_idle = शेष_idle;
 		boot_option_idle_override = IDLE_HALT;
-	} else if (!strcmp(str, "nomwait")) {
+	पूर्ण अन्यथा अगर (!म_भेद(str, "nomwait")) अणु
 		/*
 		 * If the boot option of "idle=nomwait" is added,
-		 * it means that mwait will be disabled for CPU C2/C3
-		 * states. In such case it won't touch the variable
+		 * it means that mरुको will be disabled क्रम CPU C2/C3
+		 * states. In such हाल it won't touch the variable
 		 * of boot_option_idle_override.
 		 */
 		boot_option_idle_override = IDLE_NOMWAIT;
-	} else
-		return -1;
+	पूर्ण अन्यथा
+		वापस -1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 early_param("idle", idle_setup);
 
-unsigned long arch_align_stack(unsigned long sp)
-{
-	if (!(current->personality & ADDR_NO_RANDOMIZE) && randomize_va_space)
-		sp -= get_random_int() % 8192;
-	return sp & ~0xf;
-}
+अचिन्हित दीर्घ arch_align_stack(अचिन्हित दीर्घ sp)
+अणु
+	अगर (!(current->personality & ADDR_NO_RANDOMIZE) && अक्रमomize_va_space)
+		sp -= get_अक्रमom_पूर्णांक() % 8192;
+	वापस sp & ~0xf;
+पूर्ण
 
-unsigned long arch_randomize_brk(struct mm_struct *mm)
-{
-	return randomize_page(mm->brk, 0x02000000);
-}
+अचिन्हित दीर्घ arch_अक्रमomize_brk(काष्ठा mm_काष्ठा *mm)
+अणु
+	वापस अक्रमomize_page(mm->brk, 0x02000000);
+पूर्ण
 
 /*
  * Called from fs/proc with a reference on @p to find the function
- * which called into schedule(). This needs to be done carefully
+ * which called पूर्णांकo schedule(). This needs to be करोne carefully
  * because the task might wake up and we might look at a stack
  * changing under us.
  */
-unsigned long get_wchan(struct task_struct *p)
-{
-	unsigned long start, bottom, top, sp, fp, ip, ret = 0;
-	int count = 0;
+अचिन्हित दीर्घ get_wchan(काष्ठा task_काष्ठा *p)
+अणु
+	अचिन्हित दीर्घ start, bottom, top, sp, fp, ip, ret = 0;
+	पूर्णांक count = 0;
 
-	if (p == current || p->state == TASK_RUNNING)
-		return 0;
+	अगर (p == current || p->state == TASK_RUNNING)
+		वापस 0;
 
-	if (!try_get_task_stack(p))
-		return 0;
+	अगर (!try_get_task_stack(p))
+		वापस 0;
 
-	start = (unsigned long)task_stack_page(p);
-	if (!start)
-		goto out;
+	start = (अचिन्हित दीर्घ)task_stack_page(p);
+	अगर (!start)
+		जाओ out;
 
 	/*
 	 * Layout of the stack page:
 	 *
-	 * ----------- topmax = start + THREAD_SIZE - sizeof(unsigned long)
+	 * ----------- topmax = start + THREAD_SIZE - माप(अचिन्हित दीर्घ)
 	 * PADDING
 	 * ----------- top = topmax - TOP_OF_KERNEL_STACK_PADDING
 	 * stack
 	 * ----------- bottom = start
 	 *
-	 * The tasks stack pointer points at the location where the
-	 * framepointer is stored. The data on the stack is:
+	 * The tasks stack poपूर्णांकer poपूर्णांकs at the location where the
+	 * framepoपूर्णांकer is stored. The data on the stack is:
 	 * ... IP FP ... IP FP
 	 *
-	 * We need to read FP and IP, so we need to adjust the upper
-	 * bound by another unsigned long.
+	 * We need to पढ़ो FP and IP, so we need to adjust the upper
+	 * bound by another अचिन्हित दीर्घ.
 	 */
 	top = start + THREAD_SIZE - TOP_OF_KERNEL_STACK_PADDING;
-	top -= 2 * sizeof(unsigned long);
+	top -= 2 * माप(अचिन्हित दीर्घ);
 	bottom = start;
 
-	sp = READ_ONCE(p->thread.sp);
-	if (sp < bottom || sp > top)
-		goto out;
+	sp = READ_ONCE(p->thपढ़ो.sp);
+	अगर (sp < bottom || sp > top)
+		जाओ out;
 
-	fp = READ_ONCE_NOCHECK(((struct inactive_task_frame *)sp)->bp);
-	do {
-		if (fp < bottom || fp > top)
-			goto out;
-		ip = READ_ONCE_NOCHECK(*(unsigned long *)(fp + sizeof(unsigned long)));
-		if (!in_sched_functions(ip)) {
+	fp = READ_ONCE_NOCHECK(((काष्ठा inactive_task_frame *)sp)->bp);
+	करो अणु
+		अगर (fp < bottom || fp > top)
+			जाओ out;
+		ip = READ_ONCE_NOCHECK(*(अचिन्हित दीर्घ *)(fp + माप(अचिन्हित दीर्घ)));
+		अगर (!in_sched_functions(ip)) अणु
 			ret = ip;
-			goto out;
-		}
-		fp = READ_ONCE_NOCHECK(*(unsigned long *)fp);
-	} while (count++ < 16 && p->state != TASK_RUNNING);
+			जाओ out;
+		पूर्ण
+		fp = READ_ONCE_NOCHECK(*(अचिन्हित दीर्घ *)fp);
+	पूर्ण जबतक (count++ < 16 && p->state != TASK_RUNNING);
 
 out:
 	put_task_stack(p);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-long do_arch_prctl_common(struct task_struct *task, int option,
-			  unsigned long cpuid_enabled)
-{
-	switch (option) {
-	case ARCH_GET_CPUID:
-		return get_cpuid_mode();
-	case ARCH_SET_CPUID:
-		return set_cpuid_mode(task, cpuid_enabled);
-	}
+दीर्घ करो_arch_prctl_common(काष्ठा task_काष्ठा *task, पूर्णांक option,
+			  अचिन्हित दीर्घ cpuid_enabled)
+अणु
+	चयन (option) अणु
+	हाल ARCH_GET_CPUID:
+		वापस get_cpuid_mode();
+	हाल ARCH_SET_CPUID:
+		वापस set_cpuid_mode(task, cpuid_enabled);
+	पूर्ण
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण

@@ -1,23 +1,24 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __BARRIER_H
-#define __BARRIER_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __BARRIER_H
+#घोषणा __BARRIER_H
 
-#define mb()	__asm__ __volatile__("mb": : :"memory")
-#define rmb()	__asm__ __volatile__("mb": : :"memory")
-#define wmb()	__asm__ __volatile__("wmb": : :"memory")
+#घोषणा mb()	__यंत्र__ __अस्थिर__("mb": : :"memory")
+#घोषणा rmb()	__यंत्र__ __अस्थिर__("mb": : :"memory")
+#घोषणा wmb()	__यंत्र__ __अस्थिर__("wmb": : :"memory")
 
-#define __smp_load_acquire(p)						\
-({									\
-	compiletime_assert_atomic_type(*p);				\
+#घोषणा __smp_load_acquire(p)						\
+(अणु									\
+	compileसमय_निश्चित_atomic_type(*p);				\
 	__READ_ONCE(*p);						\
-})
+पूर्ण)
 
-#ifdef CONFIG_SMP
-#define __ASM_SMP_MB	"\tmb\n"
-#else
-#define __ASM_SMP_MB
-#endif
+#अगर_घोषित CONFIG_SMP
+#घोषणा __ASM_SMP_MB	"\tmb\n"
+#अन्यथा
+#घोषणा __ASM_SMP_MB
+#पूर्ण_अगर
 
-#include <asm-generic/barrier.h>
+#समावेश <यंत्र-generic/barrier.h>
 
-#endif		/* __BARRIER_H */
+#पूर्ण_अगर		/* __BARRIER_H */

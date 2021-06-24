@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * Data gathering module for Linux-VM Monitor Stream, Stage 1.
+ * Data gathering module क्रम Linux-VM Monitor Stream, Stage 1.
  * Collects accumulated network statistics (Packets received/transmitted,
  * dropped, errors, ...).
  *
@@ -9,32 +10,32 @@
  * Author: Gerald Schaefer <gerald.schaefer@de.ibm.com>
  */
 
-#include <linux/module.h>
-#include <linux/init.h>
-#include <linux/errno.h>
-#include <linux/kernel_stat.h>
-#include <linux/netdevice.h>
-#include <net/net_namespace.h>
+#समावेश <linux/module.h>
+#समावेश <linux/init.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/kernel_स्थिति.स>
+#समावेश <linux/netdevice.h>
+#समावेश <net/net_namespace.h>
 
-#include "appldata.h"
+#समावेश "appldata.h"
 
 
 /*
  * Network data
  *
- * This is accessed as binary data by z/VM. If changes to it can't be avoided,
- * the structure version (product ID, see appldata_base.c) needs to be changed
- * as well and all documentation and z/VM applications using it must be updated.
+ * This is accessed as binary data by z/VM. If changes to it can't be aव्योमed,
+ * the काष्ठाure version (product ID, see appldata_base.c) needs to be changed
+ * as well and all करोcumentation and z/VM applications using it must be updated.
  */
-struct appldata_net_sum_data {
-	u64 timestamp;
+काष्ठा appldata_net_sum_data अणु
+	u64 बारtamp;
 	u32 sync_count_1;	/* after VM collected the record data, */
 	u32 sync_count_2;	/* sync_count_1 and sync_count_2 should be the
 				   same. If not, the record has been updated on
-				   the Linux side while VM was collecting the
+				   the Linux side जबतक VM was collecting the
 				   (possibly corrupt) data */
 
-	u32 nr_interfaces;	/* nr. of network interfaces being monitored */
+	u32 nr_पूर्णांकerfaces;	/* nr. of network पूर्णांकerfaces being monitored */
 
 	u32 padding;		/* next value is 64-bit aligned, so these */
 				/* 4 byte would be padded out by compiler */
@@ -47,8 +48,8 @@ struct appldata_net_sum_data {
 	u64 tx_errors;		/* packet transmit problems      */
 	u64 rx_dropped;		/* no space in linux buffers     */
 	u64 tx_dropped;		/* no space available in linux   */
-	u64 collisions;		/* collisions while transmitting */
-} __packed;
+	u64 collisions;		/* collisions जबतक transmitting */
+पूर्ण __packed;
 
 
 /*
@@ -56,12 +57,12 @@ struct appldata_net_sum_data {
  *
  * gather accumulated network statistics
  */
-static void appldata_get_net_sum_data(void *data)
-{
-	int i;
-	struct appldata_net_sum_data *net_data;
-	struct net_device *dev;
-	unsigned long rx_packets, tx_packets, rx_bytes, tx_bytes, rx_errors,
+अटल व्योम appldata_get_net_sum_data(व्योम *data)
+अणु
+	पूर्णांक i;
+	काष्ठा appldata_net_sum_data *net_data;
+	काष्ठा net_device *dev;
+	अचिन्हित दीर्घ rx_packets, tx_packets, rx_bytes, tx_bytes, rx_errors,
 			tx_errors, rx_dropped, tx_dropped, collisions;
 
 	net_data = data;
@@ -78,10 +79,10 @@ static void appldata_get_net_sum_data(void *data)
 	tx_dropped = 0;
 	collisions = 0;
 
-	rcu_read_lock();
-	for_each_netdev_rcu(&init_net, dev) {
-		const struct rtnl_link_stats64 *stats;
-		struct rtnl_link_stats64 temp;
+	rcu_पढ़ो_lock();
+	क्रम_each_netdev_rcu(&init_net, dev) अणु
+		स्थिर काष्ठा rtnl_link_stats64 *stats;
+		काष्ठा rtnl_link_stats64 temp;
 
 		stats = dev_get_stats(dev, &temp);
 		rx_packets += stats->rx_packets;
@@ -94,10 +95,10 @@ static void appldata_get_net_sum_data(void *data)
 		tx_dropped += stats->tx_dropped;
 		collisions += stats->collisions;
 		i++;
-	}
-	rcu_read_unlock();
+	पूर्ण
+	rcu_पढ़ो_unlock();
 
-	net_data->nr_interfaces = i;
+	net_data->nr_पूर्णांकerfaces = i;
 	net_data->rx_packets = rx_packets;
 	net_data->tx_packets = tx_packets;
 	net_data->rx_bytes   = rx_bytes;
@@ -108,55 +109,55 @@ static void appldata_get_net_sum_data(void *data)
 	net_data->tx_dropped = tx_dropped;
 	net_data->collisions = collisions;
 
-	net_data->timestamp = get_tod_clock();
+	net_data->बारtamp = get_tod_घड़ी();
 	net_data->sync_count_2++;
-}
+पूर्ण
 
 
-static struct appldata_ops ops = {
+अटल काष्ठा appldata_ops ops = अणु
 	.name	   = "net_sum",
 	.record_nr = APPLDATA_RECORD_NET_SUM_ID,
-	.size	   = sizeof(struct appldata_net_sum_data),
+	.size	   = माप(काष्ठा appldata_net_sum_data),
 	.callback  = &appldata_get_net_sum_data,
 	.owner     = THIS_MODULE,
-	.mod_lvl   = {0xF0, 0xF0},		/* EBCDIC "00" */
-};
+	.mod_lvl   = अणु0xF0, 0xF0पूर्ण,		/* EBCDIC "00" */
+पूर्ण;
 
 
 /*
  * appldata_net_init()
  *
- * init data, register ops
+ * init data, रेजिस्टर ops
  */
-static int __init appldata_net_init(void)
-{
-	int ret;
+अटल पूर्णांक __init appldata_net_init(व्योम)
+अणु
+	पूर्णांक ret;
 
-	ops.data = kzalloc(sizeof(struct appldata_net_sum_data), GFP_KERNEL);
-	if (!ops.data)
-		return -ENOMEM;
+	ops.data = kzalloc(माप(काष्ठा appldata_net_sum_data), GFP_KERNEL);
+	अगर (!ops.data)
+		वापस -ENOMEM;
 
-	ret = appldata_register_ops(&ops);
-	if (ret)
-		kfree(ops.data);
+	ret = appldata_रेजिस्टर_ops(&ops);
+	अगर (ret)
+		kमुक्त(ops.data);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
- * appldata_net_exit()
+ * appldata_net_निकास()
  *
- * unregister ops
+ * unरेजिस्टर ops
  */
-static void __exit appldata_net_exit(void)
-{
-	appldata_unregister_ops(&ops);
-	kfree(ops.data);
-}
+अटल व्योम __निकास appldata_net_निकास(व्योम)
+अणु
+	appldata_unरेजिस्टर_ops(&ops);
+	kमुक्त(ops.data);
+पूर्ण
 
 
 module_init(appldata_net_init);
-module_exit(appldata_net_exit);
+module_निकास(appldata_net_निकास);
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Gerald Schaefer");

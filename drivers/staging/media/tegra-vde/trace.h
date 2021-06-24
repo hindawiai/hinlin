@@ -1,17 +1,18 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 
-#undef TRACE_SYSTEM
-#define TRACE_SYSTEM tegra_vde
+#अघोषित TRACE_SYSTEM
+#घोषणा TRACE_SYSTEM tegra_vde
 
-#if !defined(TEGRA_VDE_TRACE_H) || defined(TRACE_HEADER_MULTI_READ)
-#define TEGRA_VDE_TRACE_H
+#अगर !defined(TEGRA_VDE_TRACE_H) || defined(TRACE_HEADER_MULTI_READ)
+#घोषणा TEGRA_VDE_TRACE_H
 
-#include <linux/tracepoint.h>
+#समावेश <linux/tracepoपूर्णांक.h>
 
-#include "vde.h"
+#समावेश "vde.h"
 
-DECLARE_EVENT_CLASS(register_access,
-	TP_PROTO(struct tegra_vde *vde, void __iomem *base,
+DECLARE_EVENT_CLASS(रेजिस्टर_access,
+	TP_PROTO(काष्ठा tegra_vde *vde, व्योम __iomem *base,
 		 u32 offset, u32 value),
 	TP_ARGS(vde, base, offset, value),
 	TP_STRUCT__entry(
@@ -24,25 +25,25 @@ DECLARE_EVENT_CLASS(register_access,
 		__entry->offset = offset;
 		__entry->value = value;
 	),
-	TP_printk("%s:0x%03x 0x%08x", __get_str(hw_name), __entry->offset,
+	TP_prपूर्णांकk("%s:0x%03x 0x%08x", __get_str(hw_name), __entry->offset,
 		  __entry->value)
 );
 
-DEFINE_EVENT(register_access, vde_writel,
-	TP_PROTO(struct tegra_vde *vde, void __iomem *base,
+DEFINE_EVENT(रेजिस्टर_access, vde_ग_लिखोl,
+	TP_PROTO(काष्ठा tegra_vde *vde, व्योम __iomem *base,
 		 u32 offset, u32 value),
 	TP_ARGS(vde, base, offset, value));
-DEFINE_EVENT(register_access, vde_readl,
-	TP_PROTO(struct tegra_vde *vde, void __iomem *base,
+DEFINE_EVENT(रेजिस्टर_access, vde_पढ़ोl,
+	TP_PROTO(काष्ठा tegra_vde *vde, व्योम __iomem *base,
 		 u32 offset, u32 value),
 	TP_ARGS(vde, base, offset, value));
 
 TRACE_EVENT(vde_setup_iram_entry,
-	TP_PROTO(unsigned int table, unsigned int row, u32 value, u32 aux_addr),
+	TP_PROTO(अचिन्हित पूर्णांक table, अचिन्हित पूर्णांक row, u32 value, u32 aux_addr),
 	TP_ARGS(table, row, value, aux_addr),
 	TP_STRUCT__entry(
-		__field(unsigned int, table)
-		__field(unsigned int, row)
+		__field(अचिन्हित पूर्णांक, table)
+		__field(अचिन्हित पूर्णांक, row)
 		__field(u32, value)
 		__field(u32, aux_addr)
 	),
@@ -52,44 +53,44 @@ TRACE_EVENT(vde_setup_iram_entry,
 		__entry->value = value;
 		__entry->aux_addr = aux_addr;
 	),
-	TP_printk("[%u][%u] = { 0x%08x (flags = \"%s\", frame_num = %u); 0x%08x }",
+	TP_prपूर्णांकk("[%u][%u] = { 0x%08x (flags = \"%s\", frame_num = %u); 0x%08x }",
 		  __entry->table, __entry->row, __entry->value,
-		  __print_flags(__entry->value, " ", { (1 << 25), "B" }),
+		  __prपूर्णांक_flags(__entry->value, " ", अणु (1 << 25), "B" पूर्ण),
 		  __entry->value & 0x7FFFFF, __entry->aux_addr)
 );
 
 TRACE_EVENT(vde_ref_l0,
-	TP_PROTO(unsigned int frame_num),
+	TP_PROTO(अचिन्हित पूर्णांक frame_num),
 	TP_ARGS(frame_num),
 	TP_STRUCT__entry(
-		__field(unsigned int, frame_num)
+		__field(अचिन्हित पूर्णांक, frame_num)
 	),
 	TP_fast_assign(
 		__entry->frame_num = frame_num;
 	),
-	TP_printk("REF L0: DPB: Frame 0: frame_num = %u", __entry->frame_num)
+	TP_prपूर्णांकk("REF L0: DPB: Frame 0: frame_num = %u", __entry->frame_num)
 );
 
 TRACE_EVENT(vde_ref_l1,
-	TP_PROTO(unsigned int with_later_poc_nb,
-		 unsigned int with_earlier_poc_nb),
+	TP_PROTO(अचिन्हित पूर्णांक with_later_poc_nb,
+		 अचिन्हित पूर्णांक with_earlier_poc_nb),
 	TP_ARGS(with_later_poc_nb, with_earlier_poc_nb),
 	TP_STRUCT__entry(
-		__field(unsigned int, with_later_poc_nb)
-		__field(unsigned int, with_earlier_poc_nb)
+		__field(अचिन्हित पूर्णांक, with_later_poc_nb)
+		__field(अचिन्हित पूर्णांक, with_earlier_poc_nb)
 	),
 	TP_fast_assign(
 		__entry->with_later_poc_nb = with_later_poc_nb;
 		__entry->with_earlier_poc_nb = with_earlier_poc_nb;
 	),
-	TP_printk("REF L1: with_later_poc_nb %u, with_earlier_poc_nb %u",
+	TP_prपूर्णांकk("REF L1: with_later_poc_nb %u, with_earlier_poc_nb %u",
 		  __entry->with_later_poc_nb, __entry->with_earlier_poc_nb)
 );
 
-#endif /* TEGRA_VDE_TRACE_H */
+#पूर्ण_अगर /* TEGRA_VDE_TRACE_H */
 
 /* This part must be outside protection */
-#undef TRACE_INCLUDE_PATH
-#define TRACE_INCLUDE_PATH ../../drivers/staging/media/tegra-vde
-#define TRACE_INCLUDE_FILE trace
-#include <trace/define_trace.h>
+#अघोषित TRACE_INCLUDE_PATH
+#घोषणा TRACE_INCLUDE_PATH ../../drivers/staging/media/tegra-vde
+#घोषणा TRACE_INCLUDE_खाता trace
+#समावेश <trace/define_trace.h>

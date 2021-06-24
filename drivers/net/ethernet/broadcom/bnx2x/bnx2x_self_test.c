@@ -1,3001 +1,3002 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <linux/kernel.h>
-#include <linux/netdevice.h>
-#include "bnx2x.h"
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <linux/kernel.h>
+#समावेश <linux/netdevice.h>
+#समावेश "bnx2x.h"
 
-#define NA 0xCD
+#घोषणा NA 0xCD
 
-#define IDLE_CHK_E1			0x01
-#define IDLE_CHK_E1H			0x02
-#define IDLE_CHK_E2			0x04
-#define IDLE_CHK_E3A0			0x08
-#define IDLE_CHK_E3B0			0x10
+#घोषणा IDLE_CHK_E1			0x01
+#घोषणा IDLE_CHK_E1H			0x02
+#घोषणा IDLE_CHK_E2			0x04
+#घोषणा IDLE_CHK_E3A0			0x08
+#घोषणा IDLE_CHK_E3B0			0x10
 
-#define IDLE_CHK_ERROR			1
-#define IDLE_CHK_ERROR_NO_TRAFFIC	2
-#define IDLE_CHK_WARNING		3
+#घोषणा IDLE_CHK_ERROR			1
+#घोषणा IDLE_CHK_ERROR_NO_TRAFFIC	2
+#घोषणा IDLE_CHK_WARNING		3
 
-#define MAX_FAIL_MSG 256
+#घोषणा MAX_FAIL_MSG 256
 
 /* statistics and error reporting */
-static int idle_chk_errors, idle_chk_warnings;
+अटल पूर्णांक idle_chk_errors, idle_chk_warnings;
 
-/* masks for all chip types */
-static int is_e1, is_e1h, is_e2, is_e3a0, is_e3b0;
+/* masks क्रम all chip types */
+अटल पूर्णांक is_e1, is_e1h, is_e2, is_e3a0, is_e3b0;
 
-/* struct for the argument list for a predicate in the self test databasei */
-struct st_pred_args {
-	u32 val1; /* value read from first register */
-	u32 val2; /* value read from second register, if applicable */
+/* काष्ठा क्रम the argument list क्रम a predicate in the self test databasei */
+काष्ठा st_pred_args अणु
+	u32 val1; /* value पढ़ो from first रेजिस्टर */
+	u32 val2; /* value पढ़ो from second रेजिस्टर, अगर applicable */
 	u32 imm1; /* 1st value in predicate condition, left-to-right */
 	u32 imm2; /* 2nd value in predicate condition, left-to-right */
 	u32 imm3; /* 3rd value in predicate condition, left-to-right */
 	u32 imm4; /* 4th value in predicate condition, left-to-right */
-};
+पूर्ण;
 
-/* struct representing self test record - a single test */
-struct st_record {
+/* काष्ठा representing self test record - a single test */
+काष्ठा st_record अणु
 	u8 chip_mask;
 	u8 macro;
 	u32 reg1;
 	u32 reg2;
 	u16 loop;
 	u16 incr;
-	int (*bnx2x_predicate)(struct st_pred_args *pred_args);
+	पूर्णांक (*bnx2x_predicate)(काष्ठा st_pred_args *pred_args);
 	u32 reg3;
 	u8 severity;
-	char *fail_msg;
-	struct st_pred_args pred_args;
-};
+	अक्षर *fail_msg;
+	काष्ठा st_pred_args pred_args;
+पूर्ण;
 
-/* predicates for self test */
-static int peq(struct st_pred_args *args)
-{
-	return (args->val1 == args->imm1);
-}
+/* predicates क्रम self test */
+अटल पूर्णांक peq(काष्ठा st_pred_args *args)
+अणु
+	वापस (args->val1 == args->imm1);
+पूर्ण
 
-static int pneq(struct st_pred_args *args)
-{
-	return (args->val1 != args->imm1);
-}
+अटल पूर्णांक pneq(काष्ठा st_pred_args *args)
+अणु
+	वापस (args->val1 != args->imm1);
+पूर्ण
 
-static int pand_neq(struct st_pred_args *args)
-{
-	return ((args->val1 & args->imm1) != args->imm2);
-}
+अटल पूर्णांक pand_neq(काष्ठा st_pred_args *args)
+अणु
+	वापस ((args->val1 & args->imm1) != args->imm2);
+पूर्ण
 
-static int pand_neq_x2(struct st_pred_args *args)
-{
-	return (((args->val1 & args->imm1) != args->imm2) &&
+अटल पूर्णांक pand_neq_x2(काष्ठा st_pred_args *args)
+अणु
+	वापस (((args->val1 & args->imm1) != args->imm2) &&
 		((args->val1 & args->imm3) != args->imm4));
-}
+पूर्ण
 
-static int pneq_err(struct st_pred_args *args)
-{
-	return ((args->val1 != args->imm1) && (idle_chk_errors > args->imm2));
-}
+अटल पूर्णांक pneq_err(काष्ठा st_pred_args *args)
+अणु
+	वापस ((args->val1 != args->imm1) && (idle_chk_errors > args->imm2));
+पूर्ण
 
-static int pgt(struct st_pred_args *args)
-{
-	return (args->val1 > args->imm1);
-}
+अटल पूर्णांक pgt(काष्ठा st_pred_args *args)
+अणु
+	वापस (args->val1 > args->imm1);
+पूर्ण
 
-static int pneq_r2(struct st_pred_args *args)
-{
-	return (args->val1 != args->val2);
-}
+अटल पूर्णांक pneq_r2(काष्ठा st_pred_args *args)
+अणु
+	वापस (args->val1 != args->val2);
+पूर्ण
 
-static int plt_sub_r2(struct st_pred_args *args)
-{
-	return (args->val1 < (args->val2 - args->imm1));
-}
+अटल पूर्णांक plt_sub_r2(काष्ठा st_pred_args *args)
+अणु
+	वापस (args->val1 < (args->val2 - args->imm1));
+पूर्ण
 
-static int pne_sub_r2(struct st_pred_args *args)
-{
-	return (args->val1 != (args->val2 - args->imm1));
-}
+अटल पूर्णांक pne_sub_r2(काष्ठा st_pred_args *args)
+अणु
+	वापस (args->val1 != (args->val2 - args->imm1));
+पूर्ण
 
-static int prsh_and_neq(struct st_pred_args *args)
-{
-	return (((args->val1 >> args->imm1) & args->imm2) != args->imm3);
-}
+अटल पूर्णांक prsh_and_neq(काष्ठा st_pred_args *args)
+अणु
+	वापस (((args->val1 >> args->imm1) & args->imm2) != args->imm3);
+पूर्ण
 
-static int peq_neq_r2(struct st_pred_args *args)
-{
-	return ((args->val1 == args->imm1) && (args->val2 != args->imm2));
-}
+अटल पूर्णांक peq_neq_r2(काष्ठा st_pred_args *args)
+अणु
+	वापस ((args->val1 == args->imm1) && (args->val2 != args->imm2));
+पूर्ण
 
-static int peq_neq_neq_r2(struct st_pred_args *args)
-{
-	return ((args->val1 == args->imm1) && (args->val2 != args->imm2) &&
+अटल पूर्णांक peq_neq_neq_r2(काष्ठा st_pred_args *args)
+अणु
+	वापस ((args->val1 == args->imm1) && (args->val2 != args->imm2) &&
 		(args->val2 != args->imm3));
-}
+पूर्ण
 
-/* struct holding the database of self test checks (registers and predicates) */
+/* काष्ठा holding the database of self test checks (रेजिस्टरs and predicates) */
 /* lines start from 2 since line 1 is heading in csv */
-#define ST_DB_LINES 468
-static struct st_record st_database[ST_DB_LINES] = {
-/*line 2*/{(0x3), 1, 0x2114,
+#घोषणा ST_DB_LINES 468
+अटल काष्ठा st_record st_database[ST_DB_LINES] = अणु
+/*line 2*/अणु(0x3), 1, 0x2114,
 	NA, 1, 0, pand_neq,
 	NA, IDLE_CHK_ERROR,
 	"PCIE: ucorr_err_status is not 0",
-	{NA, NA, 0x0FF010, 0, NA, NA} },
+	अणुNA, NA, 0x0FF010, 0, NA, NAपूर्ण पूर्ण,
 
-/*line 3*/{(0x3), 1, 0x2114,
+/*line 3*/अणु(0x3), 1, 0x2114,
 	NA, 1, 0, pand_neq,
 	NA, IDLE_CHK_WARNING,
 	"PCIE: ucorr_err_status - Unsupported request error",
-	{NA, NA, 0x100000, 0, NA, NA} },
+	अणुNA, NA, 0x100000, 0, NA, NAपूर्ण पूर्ण,
 
-/*line 4*/{(0x3), 1, 0x2120,
+/*line 4*/अणु(0x3), 1, 0x2120,
 	NA, 1, 0, pand_neq_x2,
 	NA, IDLE_CHK_WARNING,
 	"PCIE: corr_err_status is not 0x2000",
-	{NA, NA, 0x31C1, 0x2000, 0x31C1, 0} },
+	अणुNA, NA, 0x31C1, 0x2000, 0x31C1, 0पूर्ण पूर्ण,
 
-/*line 5*/{(0x3), 1, 0x2814,
+/*line 5*/अणु(0x3), 1, 0x2814,
 	NA, 1, 0, pand_neq,
 	NA, IDLE_CHK_ERROR,
 	"PCIE: attentions register is not 0x40100",
-	{NA, NA, ~0x40100, 0, NA, NA} },
+	अणुNA, NA, ~0x40100, 0, NA, NAपूर्ण पूर्ण,
 
-/*line 6*/{(0x2), 1, 0x281c,
+/*line 6*/अणु(0x2), 1, 0x281c,
 	NA, 1, 0, pand_neq,
 	NA, IDLE_CHK_ERROR,
 	"PCIE: attentions register is not 0x40040100",
-	{NA, NA, ~0x40040100, 0, NA, NA} },
+	अणुNA, NA, ~0x40040100, 0, NA, NAपूर्ण पूर्ण,
 
-/*line 7*/{(0x2), 1, 0x2820,
+/*line 7*/अणु(0x2), 1, 0x2820,
 	NA, 1, 0, pand_neq,
 	NA, IDLE_CHK_ERROR,
 	"PCIE: attentions register is not 0x40040100",
-	{NA, NA, ~0x40040100, 0, NA, NA} },
+	अणुNA, NA, ~0x40040100, 0, NA, NAपूर्ण पूर्ण,
 
-/*line 8*/{(0x3), 1, PXP2_REG_PGL_EXP_ROM2,
+/*line 8*/अणु(0x3), 1, PXP2_REG_PGL_EXP_ROM2,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_WARNING,
 	"PXP2: There are outstanding read requests. Not all completios have arrived for read requests on tags that are marked with 0",
-	{NA, NA, 0xffffffff, NA, NA, NA} },
+	अणुNA, NA, 0xffffffff, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 9*/{(0x3), 2, 0x212c,
+/*line 9*/अणु(0x3), 2, 0x212c,
 	NA, 4, 4, pneq_err,
 	NA, IDLE_CHK_WARNING,
 	"PCIE: error packet header is not 0",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 10*/{(0x1C), 1, 0x2104,
+/*line 10*/अणु(0x1C), 1, 0x2104,
 	NA, 1, 0, pand_neq,
 	NA, IDLE_CHK_ERROR,
 	"PCIE: ucorr_err_status is not 0",
-	{NA, NA, 0x0FD010, 0, NA, NA} },
+	अणुNA, NA, 0x0FD010, 0, NA, NAपूर्ण पूर्ण,
 
-/*line 11*/{(0x1C), 1, 0x2104,
+/*line 11*/अणु(0x1C), 1, 0x2104,
 	NA, 1, 0, pand_neq,
 	NA, IDLE_CHK_WARNING,
 	"PCIE: ucorr_err_status - Unsupported request error",
-	{NA, NA, 0x100000, 0, NA, NA} },
+	अणुNA, NA, 0x100000, 0, NA, NAपूर्ण पूर्ण,
 
-/*line 12*/{(0x1C), 1, 0x2104,
+/*line 12*/अणु(0x1C), 1, 0x2104,
 	NA, 1, 0, pand_neq,
 	NA, IDLE_CHK_WARNING,
 	"PCIE: ucorr_err_status - Flow Control Protocol Error",
-	{NA, NA, 0x2000, 0, NA, NA} },
+	अणुNA, NA, 0x2000, 0, NA, NAपूर्ण पूर्ण,
 
-/*line 13*/{(0x1C), 1, 0x2110,
+/*line 13*/अणु(0x1C), 1, 0x2110,
 	NA, 1, 0, pand_neq_x2,
 	NA, IDLE_CHK_WARNING,
 	"PCIE: corr_err_status is not 0x2000",
-	{NA, NA, 0x31C1, 0x2000, 0x31C1, 0} },
+	अणुNA, NA, 0x31C1, 0x2000, 0x31C1, 0पूर्ण पूर्ण,
 
-/*line 14*/{(0x1C), 1, 0x2814,
+/*line 14*/अणु(0x1C), 1, 0x2814,
 	NA, 1, 0, pand_neq,
 	NA, IDLE_CHK_WARNING,
 	"PCIE: TTX_BRIDGE_FORWARD_ERR - Received master request while BME was 0",
-	{NA, NA, 0x2000000, 0, NA, NA} },
+	अणुNA, NA, 0x2000000, 0, NA, NAपूर्ण पूर्ण,
 
-/*line 15*/{(0x1C), 1, 0x2814,
+/*line 15*/अणु(0x1C), 1, 0x2814,
 	NA, 1, 0, pand_neq,
 	NA, IDLE_CHK_ERROR,
 	"PCIE: Func 0 1: attentions register is not 0x2040902",
-	{NA, NA, ~0x2040902, 0, NA, NA} },
+	अणुNA, NA, ~0x2040902, 0, NA, NAपूर्ण पूर्ण,
 
-/*line 16*/{(0x1C), 1, 0x2854,
+/*line 16*/अणु(0x1C), 1, 0x2854,
 	NA, 1, 0, pand_neq,
 	NA, IDLE_CHK_ERROR,
 	"PCIE: Func 2 3 4: attentions register is not 0x10240902",
-	{NA, NA, ~0x10240902, 0, NA, NA} },
+	अणुNA, NA, ~0x10240902, 0, NA, NAपूर्ण पूर्ण,
 
-/*line 17*/{(0x1C), 1, 0x285c,
+/*line 17*/अणु(0x1C), 1, 0x285c,
 	NA, 1, 0, pand_neq,
 	NA, IDLE_CHK_ERROR,
 	"PCIE: Func 5 6 7: attentions register is not 0x10240902",
-	{NA, NA, ~0x10240902, 0, NA, NA} },
+	अणुNA, NA, ~0x10240902, 0, NA, NAपूर्ण पूर्ण,
 
-/*line 18*/{(0x18), 1, 0x3040,
+/*line 18*/अणु(0x18), 1, 0x3040,
 	NA, 1, 0, pand_neq,
 	NA, IDLE_CHK_ERROR,
 	"PCIE: Overflow in DLP2TLP buffer",
-	{NA, NA, 0x2, 0, NA, NA} },
+	अणुNA, NA, 0x2, 0, NA, NAपूर्ण पूर्ण,
 
-/*line 19*/{(0x1C), 1, PXP2_REG_PGL_EXP_ROM2,
+/*line 19*/अणु(0x1C), 1, PXP2_REG_PGL_EXP_ROM2,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_WARNING,
 	"PXP2: There are outstanding read requests for tags 0-31. Not all completios have arrived for read requests on tags that are marked with 0",
-	{NA, NA, 0xffffffff, NA, NA, NA} },
+	अणुNA, NA, 0xffffffff, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 20*/{(0x1C), 2, 0x211c,
+/*line 20*/अणु(0x1C), 2, 0x211c,
 	NA, 4, 4, pneq_err,
 	NA, IDLE_CHK_WARNING,
 	"PCIE: error packet header is not 0",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 21*/{(0x1C), 1, PGLUE_B_REG_INCORRECT_RCV_DETAILS,
+/*line 21*/अणु(0x1C), 1, PGLUE_B_REG_INCORRECT_RCV_DETAILS,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR,
 	"PGLUE_B: Packet received from PCIe not according to the rules",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 22*/{(0x1C), 1, PGLUE_B_REG_WAS_ERROR_VF_31_0,
+/*line 22*/अणु(0x1C), 1, PGLUE_B_REG_WAS_ERROR_VF_31_0,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_WARNING,
 	"PGLUE_B: was_error for VFs 0-31 is not 0",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 23*/{(0x1C), 1, PGLUE_B_REG_WAS_ERROR_VF_63_32,
+/*line 23*/अणु(0x1C), 1, PGLUE_B_REG_WAS_ERROR_VF_63_32,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_WARNING,
 	"PGLUE_B: was_error for VFs 32-63 is not 0",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 24*/{(0x1C), 1, PGLUE_B_REG_WAS_ERROR_VF_95_64,
+/*line 24*/अणु(0x1C), 1, PGLUE_B_REG_WAS_ERROR_VF_95_64,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_WARNING,
 	"PGLUE_B: was_error for VFs 64-95 is not 0",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 25*/{(0x1C), 1, PGLUE_B_REG_WAS_ERROR_VF_127_96,
+/*line 25*/अणु(0x1C), 1, PGLUE_B_REG_WAS_ERROR_VF_127_96,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_WARNING,
 	"PGLUE_B: was_error for VFs 96-127 is not 0",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 26*/{(0x1C), 1, PGLUE_B_REG_WAS_ERROR_PF_7_0,
+/*line 26*/अणु(0x1C), 1, PGLUE_B_REG_WAS_ERROR_PF_7_0,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_WARNING,
 	"PGLUE_B: was_error for PFs 0-7 is not 0",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 27*/{(0x1C), 1, PGLUE_B_REG_RX_ERR_DETAILS,
+/*line 27*/अणु(0x1C), 1, PGLUE_B_REG_RX_ERR_DETAILS,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_WARNING,
 	"PGLUE_B: Completion received with error. (2:0) - PFID. (3) - VF_VALID. (9:4) - VFID. (11:10) - Error code : 0 - Completion Timeout; 1 - Unsupported Request; 2 - Completer Abort. (12) - valid bit",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 28*/{(0x1C), 1, PGLUE_B_REG_RX_TCPL_ERR_DETAILS,
+/*line 28*/अणु(0x1C), 1, PGLUE_B_REG_RX_TCPL_ERR_DETAILS,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_WARNING,
 	"PGLUE_B: ATS TCPL received with error. (2:0) - PFID. (3) - VF_VALID. (9:4) - VFID. (11:10) - Error code : 0 - Completion Timeout ; 1 - Unsupported Request; 2 - Completer Abort. (16:12) - OTB Entry ID. (17) - valid bit",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 29*/{(0x1C), 1, PGLUE_B_REG_TX_ERR_WR_ADD_31_0,
+/*line 29*/अणु(0x1C), 1, PGLUE_B_REG_TX_ERR_WR_ADD_31_0,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_WARNING,
 	"PGLUE_B: Error in master write. Address(31:0) is not 0",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 30*/{(0x1C), 1, PGLUE_B_REG_TX_ERR_WR_ADD_63_32,
+/*line 30*/अणु(0x1C), 1, PGLUE_B_REG_TX_ERR_WR_ADD_63_32,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_WARNING,
 	"PGLUE_B: Error in master write. Address(63:32) is not 0",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 31*/{(0x1C), 1, PGLUE_B_REG_TX_ERR_WR_DETAILS,
+/*line 31*/अणु(0x1C), 1, PGLUE_B_REG_TX_ERR_WR_DETAILS,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_WARNING,
 	"PGLUE_B: Error in master write. Error details register is not 0. (4:0) VQID. (23:21) - PFID. (24) - VF_VALID. (30:25) - VFID",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 32*/{(0x1C), 1, PGLUE_B_REG_TX_ERR_WR_DETAILS2,
+/*line 32*/अणु(0x1C), 1, PGLUE_B_REG_TX_ERR_WR_DETAILS2,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_WARNING,
 	"PGLUE_B: Error in master write. Error details 2nd register is not 0. (21) - was_error set; (22) - BME cleared; (23) - FID_enable cleared; (24) - VF with parent PF FLR_request or IOV_disable_request",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 33*/{(0x1C), 1, PGLUE_B_REG_TX_ERR_RD_ADD_31_0,
+/*line 33*/अणु(0x1C), 1, PGLUE_B_REG_TX_ERR_RD_ADD_31_0,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_WARNING,
 	"PGLUE: Error in master read address(31:0) is not 0",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 34*/{(0x1C), 1, PGLUE_B_REG_TX_ERR_RD_ADD_63_32,
+/*line 34*/अणु(0x1C), 1, PGLUE_B_REG_TX_ERR_RD_ADD_63_32,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_WARNING,
 	"PGLUE_B: Error in master read address(63:32) is not 0",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 35*/{(0x1C), 1, PGLUE_B_REG_TX_ERR_RD_DETAILS,
+/*line 35*/अणु(0x1C), 1, PGLUE_B_REG_TX_ERR_RD_DETAILS,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_WARNING,
 	"PGLUE_B: Error in master read Error details register is not 0. (4:0) VQID. (23:21) - PFID. (24) - VF_VALID. (30:25) - VFID",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 36*/{(0x1C), 1, PGLUE_B_REG_TX_ERR_RD_DETAILS2,
+/*line 36*/अणु(0x1C), 1, PGLUE_B_REG_TX_ERR_RD_DETAILS2,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_WARNING,
 	"PGLUE_B: Error in master read Error details 2nd register is not 0. (21) - was_error set; (22) - BME cleared; (23) - FID_enable cleared; (24) - VF with parent PF FLR_request or IOV_disable_request",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 37*/{(0x1C), 1, PGLUE_B_REG_VF_LENGTH_VIOLATION_DETAILS,
+/*line 37*/अणु(0x1C), 1, PGLUE_B_REG_VF_LENGTH_VIOLATION_DETAILS,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_WARNING,
 	"PGLUE_B: Target VF length violation access",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 38*/{(0x1C), 1, PGLUE_B_REG_VF_GRC_SPACE_VIOLATION_DETAILS,
+/*line 38*/अणु(0x1C), 1, PGLUE_B_REG_VF_GRC_SPACE_VIOLATION_DETAILS,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_WARNING,
 	"PGLUE_B: Target VF GRC space access failed permission check",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 39*/{(0x1C), 1, PGLUE_B_REG_TAGS_63_32,
+/*line 39*/अणु(0x1C), 1, PGLUE_B_REG_TAGS_63_32,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_WARNING,
 	"PGLUE_B: There are outstanding read requests for tags 32-63. Not all completios have arrived for read requests on tags that are marked with 0",
-	{NA, NA, 0xffffffff, NA, NA, NA} },
+	अणुNA, NA, 0xffffffff, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 40*/{(0x1C), 3, PXP_REG_HST_VF_DISABLED_ERROR_VALID,
+/*line 40*/अणु(0x1C), 3, PXP_REG_HST_VF_DISABLED_ERROR_VALID,
 	PXP_REG_HST_VF_DISABLED_ERROR_DATA, 1, 0, pneq,
 	NA, IDLE_CHK_WARNING,
 	"PXP: Access to disabled VF took place",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 41*/{(0x1C), 1, PXP_REG_HST_PER_VIOLATION_VALID,
+/*line 41*/अणु(0x1C), 1, PXP_REG_HST_PER_VIOLATION_VALID,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_WARNING,
 	"PXP: Zone A permission violation occurred",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 42*/{(0x1C), 1, PXP_REG_HST_INCORRECT_ACCESS_VALID,
+/*line 42*/अणु(0x1C), 1, PXP_REG_HST_INCORRECT_ACCESS_VALID,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_WARNING,
 	"PXP: Incorrect transaction took place",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 43*/{(0x1C), 1, PXP2_REG_RD_CPL_ERR_DETAILS,
+/*line 43*/अणु(0x1C), 1, PXP2_REG_RD_CPL_ERR_DETAILS,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_WARNING,
 	"PXP2: Completion received with error. Error details register is not 0. (15:0) - ECHO. (28:16) - Sub Request length plus start_offset_2_0 minus 1",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 44*/{(0x1C), 1, PXP2_REG_RD_CPL_ERR_DETAILS2,
+/*line 44*/अणु(0x1C), 1, PXP2_REG_RD_CPL_ERR_DETAILS2,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_WARNING,
 	"PXP2: Completion received with error. Error details 2nd register is not 0. (4:0) - VQ ID. (8:5) - client ID. (9) - valid bit",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 45*/{(0x1F), 1, PXP2_REG_RQ_VQ0_ENTRY_CNT,
+/*line 45*/अणु(0x1F), 1, PXP2_REG_RQ_VQ0_ENTRY_CNT,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"PXP2: VQ0 is not empty",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 46*/{(0x1F), 1, PXP2_REG_RQ_VQ1_ENTRY_CNT,
+/*line 46*/अणु(0x1F), 1, PXP2_REG_RQ_VQ1_ENTRY_CNT,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"PXP2: VQ1 is not empty",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 47*/{(0x1F), 1, PXP2_REG_RQ_VQ2_ENTRY_CNT,
+/*line 47*/अणु(0x1F), 1, PXP2_REG_RQ_VQ2_ENTRY_CNT,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"PXP2: VQ2 is not empty",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 48*/{(0x1F), 1, PXP2_REG_RQ_VQ3_ENTRY_CNT,
+/*line 48*/अणु(0x1F), 1, PXP2_REG_RQ_VQ3_ENTRY_CNT,
 	NA, 1, 0, pgt,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"PXP2: VQ3 is not empty",
-	{NA, NA, 2, NA, NA, NA} },
+	अणुNA, NA, 2, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 49*/{(0x1F), 1, PXP2_REG_RQ_VQ4_ENTRY_CNT,
+/*line 49*/अणु(0x1F), 1, PXP2_REG_RQ_VQ4_ENTRY_CNT,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"PXP2: VQ4 is not empty",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 50*/{(0x1F), 1, PXP2_REG_RQ_VQ5_ENTRY_CNT,
+/*line 50*/अणु(0x1F), 1, PXP2_REG_RQ_VQ5_ENTRY_CNT,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"PXP2: VQ5 is not empty",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 51*/{(0x1F), 1, PXP2_REG_RQ_VQ6_ENTRY_CNT,
+/*line 51*/अणु(0x1F), 1, PXP2_REG_RQ_VQ6_ENTRY_CNT,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"PXP2: VQ6 is not empty",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 52*/{(0x1F), 1, PXP2_REG_RQ_VQ7_ENTRY_CNT,
+/*line 52*/अणु(0x1F), 1, PXP2_REG_RQ_VQ7_ENTRY_CNT,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"PXP2: VQ7 is not empty",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 53*/{(0x1F), 1, PXP2_REG_RQ_VQ8_ENTRY_CNT,
+/*line 53*/अणु(0x1F), 1, PXP2_REG_RQ_VQ8_ENTRY_CNT,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"PXP2: VQ8 is not empty",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 54*/{(0x1F), 1, PXP2_REG_RQ_VQ9_ENTRY_CNT,
+/*line 54*/अणु(0x1F), 1, PXP2_REG_RQ_VQ9_ENTRY_CNT,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"PXP2: VQ9 is not empty",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 55*/{(0x1F), 1, PXP2_REG_RQ_VQ10_ENTRY_CNT,
+/*line 55*/अणु(0x1F), 1, PXP2_REG_RQ_VQ10_ENTRY_CNT,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"PXP2: VQ10 is not empty",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 56*/{(0x1F), 1, PXP2_REG_RQ_VQ11_ENTRY_CNT,
+/*line 56*/अणु(0x1F), 1, PXP2_REG_RQ_VQ11_ENTRY_CNT,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"PXP2: VQ11 is not empty",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 57*/{(0x1F), 1, PXP2_REG_RQ_VQ12_ENTRY_CNT,
+/*line 57*/अणु(0x1F), 1, PXP2_REG_RQ_VQ12_ENTRY_CNT,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"PXP2: VQ12 is not empty",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 58*/{(0x1F), 1, PXP2_REG_RQ_VQ13_ENTRY_CNT,
+/*line 58*/अणु(0x1F), 1, PXP2_REG_RQ_VQ13_ENTRY_CNT,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"PXP2: VQ13 is not empty",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 59*/{(0x1F), 1, PXP2_REG_RQ_VQ14_ENTRY_CNT,
+/*line 59*/अणु(0x1F), 1, PXP2_REG_RQ_VQ14_ENTRY_CNT,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"PXP2: VQ14 is not empty",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 60*/{(0x1F), 1, PXP2_REG_RQ_VQ15_ENTRY_CNT,
+/*line 60*/अणु(0x1F), 1, PXP2_REG_RQ_VQ15_ENTRY_CNT,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"PXP2: VQ15 is not empty",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 61*/{(0x1F), 1, PXP2_REG_RQ_VQ16_ENTRY_CNT,
+/*line 61*/अणु(0x1F), 1, PXP2_REG_RQ_VQ16_ENTRY_CNT,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"PXP2: VQ16 is not empty",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 62*/{(0x1F), 1, PXP2_REG_RQ_VQ17_ENTRY_CNT,
+/*line 62*/अणु(0x1F), 1, PXP2_REG_RQ_VQ17_ENTRY_CNT,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"PXP2: VQ17 is not empty",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 63*/{(0x1F), 1, PXP2_REG_RQ_VQ18_ENTRY_CNT,
+/*line 63*/अणु(0x1F), 1, PXP2_REG_RQ_VQ18_ENTRY_CNT,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"PXP2: VQ18 is not empty",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 64*/{(0x1F), 1, PXP2_REG_RQ_VQ19_ENTRY_CNT,
+/*line 64*/अणु(0x1F), 1, PXP2_REG_RQ_VQ19_ENTRY_CNT,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"PXP2: VQ19 is not empty",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 65*/{(0x1F), 1, PXP2_REG_RQ_VQ20_ENTRY_CNT,
+/*line 65*/अणु(0x1F), 1, PXP2_REG_RQ_VQ20_ENTRY_CNT,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"PXP2: VQ20 is not empty",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 66*/{(0x1F), 1, PXP2_REG_RQ_VQ21_ENTRY_CNT,
+/*line 66*/अणु(0x1F), 1, PXP2_REG_RQ_VQ21_ENTRY_CNT,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"PXP2: VQ21 is not empty",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 67*/{(0x1F), 1, PXP2_REG_RQ_VQ22_ENTRY_CNT,
+/*line 67*/अणु(0x1F), 1, PXP2_REG_RQ_VQ22_ENTRY_CNT,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"PXP2: VQ22 is not empty",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 68*/{(0x1F), 1, PXP2_REG_RQ_VQ23_ENTRY_CNT,
+/*line 68*/अणु(0x1F), 1, PXP2_REG_RQ_VQ23_ENTRY_CNT,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"PXP2: VQ23 is not empty",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 69*/{(0x1F), 1, PXP2_REG_RQ_VQ24_ENTRY_CNT,
+/*line 69*/अणु(0x1F), 1, PXP2_REG_RQ_VQ24_ENTRY_CNT,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"PXP2: VQ24 is not empty",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 70*/{(0x1F), 1, PXP2_REG_RQ_VQ25_ENTRY_CNT,
+/*line 70*/अणु(0x1F), 1, PXP2_REG_RQ_VQ25_ENTRY_CNT,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"PXP2: VQ25 is not empty",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 71*/{(0x1F), 1, PXP2_REG_RQ_VQ26_ENTRY_CNT,
+/*line 71*/अणु(0x1F), 1, PXP2_REG_RQ_VQ26_ENTRY_CNT,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"PXP2: VQ26 is not empty",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 72*/{(0x1F), 1, PXP2_REG_RQ_VQ27_ENTRY_CNT,
+/*line 72*/अणु(0x1F), 1, PXP2_REG_RQ_VQ27_ENTRY_CNT,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"PXP2: VQ27 is not empty",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 73*/{(0x1F), 1, PXP2_REG_RQ_VQ28_ENTRY_CNT,
+/*line 73*/अणु(0x1F), 1, PXP2_REG_RQ_VQ28_ENTRY_CNT,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"PXP2: VQ28 is not empty",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 74*/{(0x1F), 1, PXP2_REG_RQ_VQ29_ENTRY_CNT,
+/*line 74*/अणु(0x1F), 1, PXP2_REG_RQ_VQ29_ENTRY_CNT,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"PXP2: VQ29 is not empty",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 75*/{(0x1F), 1, PXP2_REG_RQ_VQ30_ENTRY_CNT,
+/*line 75*/अणु(0x1F), 1, PXP2_REG_RQ_VQ30_ENTRY_CNT,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"PXP2: VQ30 is not empty",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 76*/{(0x1F), 1, PXP2_REG_RQ_VQ31_ENTRY_CNT,
+/*line 76*/अणु(0x1F), 1, PXP2_REG_RQ_VQ31_ENTRY_CNT,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"PXP2: VQ31 is not empty",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 77*/{(0x1F), 1, PXP2_REG_RQ_UFIFO_NUM_OF_ENTRY,
+/*line 77*/अणु(0x1F), 1, PXP2_REG_RQ_UFIFO_NUM_OF_ENTRY,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"PXP2: rq_ufifo_num_of_entry is not 0",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 78*/{(0x1F), 1, PXP2_REG_RQ_RBC_DONE,
+/*line 78*/अणु(0x1F), 1, PXP2_REG_RQ_RBC_DONE,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR,
 	"PXP2: rq_rbc_done is not 1",
-	{NA, NA, 1, NA, NA, NA} },
+	अणुNA, NA, 1, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 79*/{(0x1F), 1, PXP2_REG_RQ_CFG_DONE,
+/*line 79*/अणु(0x1F), 1, PXP2_REG_RQ_CFG_DONE,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR,
 	"PXP2: rq_cfg_done is not 1",
-	{NA, NA, 1, NA, NA, NA} },
+	अणुNA, NA, 1, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 80*/{(0x3), 1, PXP2_REG_PSWRQ_BW_CREDIT,
+/*line 80*/अणु(0x3), 1, PXP2_REG_PSWRQ_BW_CREDIT,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"PXP2: rq_read_credit and rq_write_credit are not 3",
-	{NA, NA, 0x1B, NA, NA, NA} },
+	अणुNA, NA, 0x1B, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 81*/{(0x1F), 1, PXP2_REG_RD_START_INIT,
+/*line 81*/अणु(0x1F), 1, PXP2_REG_RD_START_INIT,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR,
 	"PXP2: rd_start_init is not 1",
-	{NA, NA, 1, NA, NA, NA} },
+	अणुNA, NA, 1, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 82*/{(0x1F), 1, PXP2_REG_RD_INIT_DONE,
+/*line 82*/अणु(0x1F), 1, PXP2_REG_RD_INIT_DONE,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR,
 	"PXP2: rd_init_done is not 1",
-	{NA, NA, 1, NA, NA, NA} },
+	अणुNA, NA, 1, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 83*/{(0x1F), 3, PXP2_REG_RD_SR_CNT,
+/*line 83*/अणु(0x1F), 3, PXP2_REG_RD_SR_CNT,
 	PXP2_REG_RD_SR_NUM_CFG, 1, 0, pne_sub_r2,
 	NA, IDLE_CHK_WARNING,
 	"PXP2: rd_sr_cnt is not equal to rd_sr_num_cfg",
-	{NA, NA, 1, NA, NA, NA} },
+	अणुNA, NA, 1, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 84*/{(0x1F), 3, PXP2_REG_RD_BLK_CNT,
+/*line 84*/अणु(0x1F), 3, PXP2_REG_RD_BLK_CNT,
 	PXP2_REG_RD_BLK_NUM_CFG, 1, 0, pneq_r2,
 	NA, IDLE_CHK_WARNING,
 	"PXP2: rd_blk_cnt is not equal to rd_blk_num_cfg",
-	{NA, NA, NA, NA, NA, NA} },
+	अणुNA, NA, NA, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 85*/{(0x1F), 3, PXP2_REG_RD_SR_CNT,
+/*line 85*/अणु(0x1F), 3, PXP2_REG_RD_SR_CNT,
 	PXP2_REG_RD_SR_NUM_CFG, 1, 0, plt_sub_r2,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"PXP2: There are more than two unused SRs",
-	{NA, NA, 3, NA, NA, NA} },
+	अणुNA, NA, 3, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 86*/{(0x1F), 3, PXP2_REG_RD_BLK_CNT,
+/*line 86*/अणु(0x1F), 3, PXP2_REG_RD_BLK_CNT,
 	PXP2_REG_RD_BLK_NUM_CFG, 1, 0, plt_sub_r2,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"PXP2: There are more than two unused blocks",
-	{NA, NA, 2, NA, NA, NA} },
+	अणुNA, NA, 2, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 87*/{(0x1F), 1, PXP2_REG_RD_PORT_IS_IDLE_0,
+/*line 87*/अणु(0x1F), 1, PXP2_REG_RD_PORT_IS_IDLE_0,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"PXP2: P0 All delivery ports are not idle",
-	{NA, NA, 1, NA, NA, NA} },
+	अणुNA, NA, 1, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 88*/{(0x1F), 1, PXP2_REG_RD_PORT_IS_IDLE_1,
+/*line 88*/अणु(0x1F), 1, PXP2_REG_RD_PORT_IS_IDLE_1,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"PXP2: P1 All delivery ports are not idle",
-	{NA, NA, 1, NA, NA, NA} },
+	अणुNA, NA, 1, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 89*/{(0x1F), 2, PXP2_REG_RD_ALMOST_FULL_0,
+/*line 89*/अणु(0x1F), 2, PXP2_REG_RD_ALMOST_FULL_0,
 	NA, 11, 4, pneq,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"PXP2: rd_almost_full is not 0",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 90*/{(0x1F), 1, PXP2_REG_RD_DISABLE_INPUTS,
+/*line 90*/अणु(0x1F), 1, PXP2_REG_RD_DISABLE_INPUTS,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR,
 	"PXP2: PSWRD inputs are disabled",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 91*/{(0x1F), 1, PXP2_REG_HST_HEADER_FIFO_STATUS,
+/*line 91*/अणु(0x1F), 1, PXP2_REG_HST_HEADER_FIFO_STATUS,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"PXP2: HST header FIFO status is not 0",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 92*/{(0x1F), 1, PXP2_REG_HST_DATA_FIFO_STATUS,
+/*line 92*/अणु(0x1F), 1, PXP2_REG_HST_DATA_FIFO_STATUS,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"PXP2: HST data FIFO status is not 0",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 93*/{(0x3), 1, PXP2_REG_PGL_WRITE_BLOCKED,
+/*line 93*/अणु(0x3), 1, PXP2_REG_PGL_WRITE_BLOCKED,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR,
 	"PXP2: pgl_write_blocked is not 0",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 94*/{(0x3), 1, PXP2_REG_PGL_READ_BLOCKED,
+/*line 94*/अणु(0x3), 1, PXP2_REG_PGL_READ_BLOCKED,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR,
 	"PXP2: pgl_read_blocked is not 0",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 95*/{(0x1C), 1, PXP2_REG_PGL_WRITE_BLOCKED,
+/*line 95*/अणु(0x1C), 1, PXP2_REG_PGL_WRITE_BLOCKED,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_WARNING,
 	"PXP2: pgl_write_blocked is not 0",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 96*/{(0x1C), 1, PXP2_REG_PGL_READ_BLOCKED,
+/*line 96*/अणु(0x1C), 1, PXP2_REG_PGL_READ_BLOCKED,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_WARNING,
 	"PXP2: pgl_read_blocked is not 0",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 97*/{(0x1F), 1, PXP2_REG_PGL_TXW_CDTS,
+/*line 97*/अणु(0x1F), 1, PXP2_REG_PGL_TXW_CDTS,
 	NA, 1, 0, prsh_and_neq,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"PXP2: There is data which is ready",
-	{NA, NA, 17, 1, 0, NA} },
+	अणुNA, NA, 17, 1, 0, NAपूर्ण पूर्ण,
 
-/*line 98*/{(0x1F), 1, PXP_REG_HST_ARB_IS_IDLE,
+/*line 98*/अणु(0x1F), 1, PXP_REG_HST_ARB_IS_IDLE,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_WARNING,
 	"PXP: HST arbiter is not idle",
-	{NA, NA, 1, NA, NA, NA} },
+	अणुNA, NA, 1, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 99*/{(0x1F), 1, PXP_REG_HST_CLIENTS_WAITING_TO_ARB,
+/*line 99*/अणु(0x1F), 1, PXP_REG_HST_CLIENTS_WAITING_TO_ARB,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_WARNING,
 	"PXP: HST one of the clients is waiting for delivery",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 100*/{(0x1E), 1, PXP_REG_HST_DISCARD_INTERNAL_WRITES_STATUS,
+/*line 100*/अणु(0x1E), 1, PXP_REG_HST_DISCARD_INTERNAL_WRITES_STATUS,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_WARNING,
 	"PXP: HST Close the gates: Discarding internal writes",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 101*/{(0x1E), 1, PXP_REG_HST_DISCARD_DOORBELLS_STATUS,
+/*line 101*/अणु(0x1E), 1, PXP_REG_HST_DISCARD_DOORBELLS_STATUS,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_WARNING,
 	"PXP: HST Close the gates: Discarding doorbells",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 102*/{(0x1C), 1, PXP2_REG_RQ_GARB,
+/*line 102*/अणु(0x1C), 1, PXP2_REG_RQ_GARB,
 	NA, 1, 0, pand_neq,
 	NA, IDLE_CHK_WARNING,
 	"PXP2: PSWRQ Close the gates is asserted. Check AEU AFTER_INVERT registers for parity errors",
-	{NA, NA, 0x1000, 0, NA, NA} },
+	अणुNA, NA, 0x1000, 0, NA, NAपूर्ण पूर्ण,
 
-/*line 103*/{(0x1F), 1, DMAE_REG_GO_C0,
+/*line 103*/अणु(0x1F), 1, DMAE_REG_GO_C0,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"DMAE: command 0 go is not 0",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 104*/{(0x1F), 1, DMAE_REG_GO_C1,
+/*line 104*/अणु(0x1F), 1, DMAE_REG_GO_C1,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"DMAE: command 1 go is not 0",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 105*/{(0x1F), 1, DMAE_REG_GO_C2,
+/*line 105*/अणु(0x1F), 1, DMAE_REG_GO_C2,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"DMAE: command 2 go is not 0",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 106*/{(0x1F), 1, DMAE_REG_GO_C3,
+/*line 106*/अणु(0x1F), 1, DMAE_REG_GO_C3,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"DMAE: command 3 go is not 0",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 107*/{(0x1F), 1, DMAE_REG_GO_C4,
+/*line 107*/अणु(0x1F), 1, DMAE_REG_GO_C4,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"DMAE: command 4 go is not 0",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 108*/{(0x1F), 1, DMAE_REG_GO_C5,
+/*line 108*/अणु(0x1F), 1, DMAE_REG_GO_C5,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"DMAE: command 5 go is not 0",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 109*/{(0x1F), 1, DMAE_REG_GO_C6,
+/*line 109*/अणु(0x1F), 1, DMAE_REG_GO_C6,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"DMAE: command 6 go is not 0",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 110*/{(0x1F), 1, DMAE_REG_GO_C7,
+/*line 110*/अणु(0x1F), 1, DMAE_REG_GO_C7,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"DMAE: command 7 go is not 0",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 111*/{(0x1F), 1, DMAE_REG_GO_C8,
+/*line 111*/अणु(0x1F), 1, DMAE_REG_GO_C8,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"DMAE: command 8 go is not 0",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 112*/{(0x1F), 1, DMAE_REG_GO_C9,
+/*line 112*/अणु(0x1F), 1, DMAE_REG_GO_C9,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"DMAE: command 9 go is not 0",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 113*/{(0x1F), 1, DMAE_REG_GO_C10,
+/*line 113*/अणु(0x1F), 1, DMAE_REG_GO_C10,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"DMAE: command 10 go is not 0",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 114*/{(0x1F), 1, DMAE_REG_GO_C11,
+/*line 114*/अणु(0x1F), 1, DMAE_REG_GO_C11,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"DMAE: command 11 go is not 0",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 115*/{(0x1F), 1, DMAE_REG_GO_C12,
+/*line 115*/अणु(0x1F), 1, DMAE_REG_GO_C12,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"DMAE: command 12 go is not 0",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 116*/{(0x1F), 1, DMAE_REG_GO_C13,
+/*line 116*/अणु(0x1F), 1, DMAE_REG_GO_C13,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"DMAE: command 13 go is not 0",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 117*/{(0x1F), 1, DMAE_REG_GO_C14,
+/*line 117*/अणु(0x1F), 1, DMAE_REG_GO_C14,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"DMAE: command 14 go is not 0",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 118*/{(0x1F), 1, DMAE_REG_GO_C15,
+/*line 118*/अणु(0x1F), 1, DMAE_REG_GO_C15,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"DMAE: command 15 go is not 0",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 119*/{(0x1F), 1, CFC_REG_ERROR_VECTOR,
+/*line 119*/अणु(0x1F), 1, CFC_REG_ERROR_VECTOR,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR,
 	"CFC: error vector is not 0",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 120*/{(0x1F), 1, CFC_REG_NUM_LCIDS_ARRIVING,
+/*line 120*/अणु(0x1F), 1, CFC_REG_NUM_LCIDS_ARRIVING,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR,
 	"CFC: number of arriving LCIDs is not 0",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 121*/{(0x1F), 1, CFC_REG_NUM_LCIDS_ALLOC,
+/*line 121*/अणु(0x1F), 1, CFC_REG_NUM_LCIDS_ALLOC,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR,
 	"CFC: number of alloc LCIDs is not 0",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 122*/{(0x1F), 1, CFC_REG_NUM_LCIDS_LEAVING,
+/*line 122*/अणु(0x1F), 1, CFC_REG_NUM_LCIDS_LEAVING,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR,
 	"CFC: number of leaving LCIDs is not 0",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 123*/{(0x1F), 7, CFC_REG_INFO_RAM,
+/*line 123*/अणु(0x1F), 7, CFC_REG_INFO_RAM,
 	CFC_REG_CID_CAM, (CFC_REG_INFO_RAM_SIZE >> 4), 16, peq_neq_neq_r2,
 	CFC_REG_ACTIVITY_COUNTER, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"CFC: AC is neither 0 nor 2 on connType 0 (ETH)",
-	{NA, NA, 0, 0, 2, NA} },
+	अणुNA, NA, 0, 0, 2, NAपूर्ण पूर्ण,
 
-/*line 124*/{(0x1F), 7, CFC_REG_INFO_RAM,
+/*line 124*/अणु(0x1F), 7, CFC_REG_INFO_RAM,
 	CFC_REG_CID_CAM, (CFC_REG_INFO_RAM_SIZE >> 4), 16, peq_neq_r2,
 	CFC_REG_ACTIVITY_COUNTER, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"CFC: AC is not 0 on connType 1 (TOE)",
-	{NA, NA, 1, 0, NA, NA} },
+	अणुNA, NA, 1, 0, NA, NAपूर्ण पूर्ण,
 
-/*line 125*/{(0x1F), 7, CFC_REG_INFO_RAM,
+/*line 125*/अणु(0x1F), 7, CFC_REG_INFO_RAM,
 	CFC_REG_CID_CAM, (CFC_REG_INFO_RAM_SIZE >> 4), 16, peq_neq_r2,
 	CFC_REG_ACTIVITY_COUNTER, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"CFC: AC is not 0 on connType 3 (iSCSI)",
-	{NA, NA, 3, 0, NA, NA} },
+	अणुNA, NA, 3, 0, NA, NAपूर्ण पूर्ण,
 
-/*line 126*/{(0x1F), 7, CFC_REG_INFO_RAM,
+/*line 126*/अणु(0x1F), 7, CFC_REG_INFO_RAM,
 	CFC_REG_CID_CAM, (CFC_REG_INFO_RAM_SIZE >> 4), 16, peq_neq_r2,
 	CFC_REG_ACTIVITY_COUNTER, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"CFC: AC is not 0 on connType 4 (FCoE)",
-	{NA, NA, 4, 0, NA, NA} },
+	अणुNA, NA, 4, 0, NA, NAपूर्ण पूर्ण,
 
-/*line 127*/{(0x1F), 2, QM_REG_QTASKCTR_0,
+/*line 127*/अणु(0x1F), 2, QM_REG_QTASKCTR_0,
 	NA, 64, 4, pneq,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"QM: Queue is not empty",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 128*/{(0xF), 3, QM_REG_VOQCREDIT_0,
+/*line 128*/अणु(0xF), 3, QM_REG_VOQCREDIT_0,
 	QM_REG_VOQINITCREDIT_0, 1, 0, pneq_r2,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"QM: VOQ_0, VOQ credit is not equal to initial credit",
-	{NA, NA, NA, NA, NA, NA} },
+	अणुNA, NA, NA, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 129*/{(0xF), 3, QM_REG_VOQCREDIT_1,
+/*line 129*/अणु(0xF), 3, QM_REG_VOQCREDIT_1,
 	QM_REG_VOQINITCREDIT_1, 1, 0, pneq_r2,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"QM: VOQ_1, VOQ credit is not equal to initial credit",
-	{NA, NA, NA, NA, NA, NA} },
+	अणुNA, NA, NA, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 130*/{(0xF), 3, QM_REG_VOQCREDIT_4,
+/*line 130*/अणु(0xF), 3, QM_REG_VOQCREDIT_4,
 	QM_REG_VOQINITCREDIT_4, 1, 0, pneq_r2,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"QM: VOQ_4, VOQ credit is not equal to initial credit",
-	{NA, NA, NA, NA, NA, NA} },
+	अणुNA, NA, NA, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 131*/{(0x3), 3, QM_REG_PORT0BYTECRD,
+/*line 131*/अणु(0x3), 3, QM_REG_PORT0BYTECRD,
 	QM_REG_BYTECRDINITVAL, 1, 0, pneq_r2,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"QM: P0 Byte credit is not equal to initial credit",
-	{NA, NA, NA, NA, NA, NA} },
+	अणुNA, NA, NA, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 132*/{(0x3), 3, QM_REG_PORT1BYTECRD,
+/*line 132*/अणु(0x3), 3, QM_REG_PORT1BYTECRD,
 	QM_REG_BYTECRDINITVAL, 1, 0, pneq_r2,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"QM: P1 Byte credit is not equal to initial credit",
-	{NA, NA, NA, NA, NA, NA} },
+	अणुNA, NA, NA, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 133*/{(0x1F), 1, CCM_REG_CAM_OCCUP,
+/*line 133*/अणु(0x1F), 1, CCM_REG_CAM_OCCUP,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"CCM: XX protection CAM is not empty",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 134*/{(0x1F), 1, TCM_REG_CAM_OCCUP,
+/*line 134*/अणु(0x1F), 1, TCM_REG_CAM_OCCUP,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"TCM: XX protection CAM is not empty",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 135*/{(0x1F), 1, UCM_REG_CAM_OCCUP,
+/*line 135*/अणु(0x1F), 1, UCM_REG_CAM_OCCUP,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"UCM: XX protection CAM is not empty",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 136*/{(0x1F), 1, XCM_REG_CAM_OCCUP,
+/*line 136*/अणु(0x1F), 1, XCM_REG_CAM_OCCUP,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"XCM: XX protection CAM is not empty",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 137*/{(0x1F), 1, BRB1_REG_NUM_OF_FULL_BLOCKS,
+/*line 137*/अणु(0x1F), 1, BRB1_REG_NUM_OF_FULL_BLOCKS,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"BRB1: BRB is not empty",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 138*/{(0x1F), 1, CSEM_REG_SLEEP_THREADS_VALID,
+/*line 138*/अणु(0x1F), 1, CSEM_REG_SLEEP_THREADS_VALID,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"CSEM: There are sleeping threads",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 139*/{(0x1F), 1, TSEM_REG_SLEEP_THREADS_VALID,
+/*line 139*/अणु(0x1F), 1, TSEM_REG_SLEEP_THREADS_VALID,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"TSEM: There are sleeping threads",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 140*/{(0x1F), 1, USEM_REG_SLEEP_THREADS_VALID,
+/*line 140*/अणु(0x1F), 1, USEM_REG_SLEEP_THREADS_VALID,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"USEM: There are sleeping threads",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 141*/{(0x1F), 1, XSEM_REG_SLEEP_THREADS_VALID,
+/*line 141*/अणु(0x1F), 1, XSEM_REG_SLEEP_THREADS_VALID,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"XSEM: There are sleeping threads",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 142*/{(0x1F), 1, CSEM_REG_SLOW_EXT_STORE_EMPTY,
+/*line 142*/अणु(0x1F), 1, CSEM_REG_SLOW_EXT_STORE_EMPTY,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"CSEM: External store FIFO is not empty",
-	{NA, NA, 1, NA, NA, NA} },
+	अणुNA, NA, 1, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 143*/{(0x1F), 1, TSEM_REG_SLOW_EXT_STORE_EMPTY,
+/*line 143*/अणु(0x1F), 1, TSEM_REG_SLOW_EXT_STORE_EMPTY,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"TSEM: External store FIFO is not empty",
-	{NA, NA, 1, NA, NA, NA} },
+	अणुNA, NA, 1, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 144*/{(0x1F), 1, USEM_REG_SLOW_EXT_STORE_EMPTY,
+/*line 144*/अणु(0x1F), 1, USEM_REG_SLOW_EXT_STORE_EMPTY,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"USEM: External store FIFO is not empty",
-	{NA, NA, 1, NA, NA, NA} },
+	अणुNA, NA, 1, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 145*/{(0x1F), 1, XSEM_REG_SLOW_EXT_STORE_EMPTY,
+/*line 145*/अणु(0x1F), 1, XSEM_REG_SLOW_EXT_STORE_EMPTY,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"XSEM: External store FIFO is not empty",
-	{NA, NA, 1, NA, NA, NA} },
+	अणुNA, NA, 1, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 146*/{(0x1F), 1, CSDM_REG_SYNC_PARSER_EMPTY,
+/*line 146*/अणु(0x1F), 1, CSDM_REG_SYNC_PARSER_EMPTY,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"CSDM: Parser serial FIFO is not empty",
-	{NA, NA, 1, NA, NA, NA} },
+	अणुNA, NA, 1, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 147*/{(0x1F), 1, TSDM_REG_SYNC_PARSER_EMPTY,
+/*line 147*/अणु(0x1F), 1, TSDM_REG_SYNC_PARSER_EMPTY,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"TSDM: Parser serial FIFO is not empty",
-	{NA, NA, 1, NA, NA, NA} },
+	अणुNA, NA, 1, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 148*/{(0x1F), 1, USDM_REG_SYNC_PARSER_EMPTY,
+/*line 148*/अणु(0x1F), 1, USDM_REG_SYNC_PARSER_EMPTY,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"USDM: Parser serial FIFO is not empty",
-	{NA, NA, 1, NA, NA, NA} },
+	अणुNA, NA, 1, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 149*/{(0x1F), 1, XSDM_REG_SYNC_PARSER_EMPTY,
+/*line 149*/अणु(0x1F), 1, XSDM_REG_SYNC_PARSER_EMPTY,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"XSDM: Parser serial FIFO is not empty",
-	{NA, NA, 1, NA, NA, NA} },
+	अणुNA, NA, 1, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 150*/{(0x1F), 1, CSDM_REG_SYNC_SYNC_EMPTY,
+/*line 150*/अणु(0x1F), 1, CSDM_REG_SYNC_SYNC_EMPTY,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"CSDM: Parser SYNC serial FIFO is not empty",
-	{NA, NA, 1, NA, NA, NA} },
+	अणुNA, NA, 1, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 151*/{(0x1F), 1, TSDM_REG_SYNC_SYNC_EMPTY,
+/*line 151*/अणु(0x1F), 1, TSDM_REG_SYNC_SYNC_EMPTY,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"TSDM: Parser SYNC serial FIFO is not empty",
-	{NA, NA, 1, NA, NA, NA} },
+	अणुNA, NA, 1, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 152*/{(0x1F), 1, USDM_REG_SYNC_SYNC_EMPTY,
+/*line 152*/अणु(0x1F), 1, USDM_REG_SYNC_SYNC_EMPTY,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"USDM: Parser SYNC serial FIFO is not empty",
-	{NA, NA, 1, NA, NA, NA} },
+	अणुNA, NA, 1, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 153*/{(0x1F), 1, XSDM_REG_SYNC_SYNC_EMPTY,
+/*line 153*/अणु(0x1F), 1, XSDM_REG_SYNC_SYNC_EMPTY,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"XSDM: Parser SYNC serial FIFO is not empty",
-	{NA, NA, 1, NA, NA, NA} },
+	अणुNA, NA, 1, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 154*/{(0x1F), 1, CSDM_REG_RSP_PXP_CTRL_RDATA_EMPTY,
+/*line 154*/अणु(0x1F), 1, CSDM_REG_RSP_PXP_CTRL_RDATA_EMPTY,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"CSDM: pxp_ctrl rd_data fifo is not empty in sdm_dma_rsp block",
-	{NA, NA, 1, NA, NA, NA} },
+	अणुNA, NA, 1, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 155*/{(0x1F), 1, TSDM_REG_RSP_PXP_CTRL_RDATA_EMPTY,
+/*line 155*/अणु(0x1F), 1, TSDM_REG_RSP_PXP_CTRL_RDATA_EMPTY,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"TSDM: pxp_ctrl rd_data fifo is not empty in sdm_dma_rsp block",
-	{NA, NA, 1, NA, NA, NA} },
+	अणुNA, NA, 1, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 156*/{(0x1F), 1, USDM_REG_RSP_PXP_CTRL_RDATA_EMPTY,
+/*line 156*/अणु(0x1F), 1, USDM_REG_RSP_PXP_CTRL_RDATA_EMPTY,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"USDM: pxp_ctrl rd_data fifo is not empty in sdm_dma_rsp block",
-	{NA, NA, 1, NA, NA, NA} },
+	अणुNA, NA, 1, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 157*/{(0x1F), 1, XSDM_REG_RSP_PXP_CTRL_RDATA_EMPTY,
+/*line 157*/अणु(0x1F), 1, XSDM_REG_RSP_PXP_CTRL_RDATA_EMPTY,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"XSDM: pxp_ctrl rd_data fifo is not empty in sdm_dma_rsp block",
-	{NA, NA, 1, NA, NA, NA} },
+	अणुNA, NA, 1, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 158*/{(0x1F), 1, DORQ_REG_DQ_FILL_LVLF,
+/*line 158*/अणु(0x1F), 1, DORQ_REG_DQ_FILL_LVLF,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"DORQ: DORQ queue is not empty",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 159*/{(0x1F), 1, CFC_REG_CFC_INT_STS,
+/*line 159*/अणु(0x1F), 1, CFC_REG_CFC_INT_STS,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR,
 	"CFC: Interrupt status is not 0",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 160*/{(0x1F), 1, CDU_REG_CDU_INT_STS,
+/*line 160*/अणु(0x1F), 1, CDU_REG_CDU_INT_STS,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR,
 	"CDU: Interrupt status is not 0",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 161*/{(0x1F), 1, CCM_REG_CCM_INT_STS,
+/*line 161*/अणु(0x1F), 1, CCM_REG_CCM_INT_STS,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR,
 	"CCM: Interrupt status is not 0",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 162*/{(0x1F), 1, TCM_REG_TCM_INT_STS,
+/*line 162*/अणु(0x1F), 1, TCM_REG_TCM_INT_STS,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR,
 	"TCM: Interrupt status is not 0",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 163*/{(0x1F), 1, UCM_REG_UCM_INT_STS,
+/*line 163*/अणु(0x1F), 1, UCM_REG_UCM_INT_STS,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR,
 	"UCM: Interrupt status is not 0",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 164*/{(0x1F), 1, XCM_REG_XCM_INT_STS,
+/*line 164*/अणु(0x1F), 1, XCM_REG_XCM_INT_STS,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR,
 	"XCM: Interrupt status is not 0",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 165*/{(0xF), 1, PBF_REG_PBF_INT_STS,
+/*line 165*/अणु(0xF), 1, PBF_REG_PBF_INT_STS,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR,
 	"PBF: Interrupt status is not 0",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 166*/{(0x1F), 1, TM_REG_TM_INT_STS,
+/*line 166*/अणु(0x1F), 1, TM_REG_TM_INT_STS,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR,
 	"TIMERS: Interrupt status is not 0",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 167*/{(0x1F), 1, DORQ_REG_DORQ_INT_STS,
+/*line 167*/अणु(0x1F), 1, DORQ_REG_DORQ_INT_STS,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR,
 	"DORQ: Interrupt status is not 0",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 168*/{(0x1F), 1, SRC_REG_SRC_INT_STS,
+/*line 168*/अणु(0x1F), 1, SRC_REG_SRC_INT_STS,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR,
 	"SRCH: Interrupt status is not 0",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 169*/{(0x1F), 1, PRS_REG_PRS_INT_STS,
+/*line 169*/अणु(0x1F), 1, PRS_REG_PRS_INT_STS,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR,
 	"PRS: Interrupt status is not 0",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 170*/{(0x1F), 1, BRB1_REG_BRB1_INT_STS,
+/*line 170*/अणु(0x1F), 1, BRB1_REG_BRB1_INT_STS,
 	NA, 1, 0, pand_neq,
 	NA, IDLE_CHK_ERROR,
 	"BRB1: Interrupt status is not 0",
-	{NA, NA, ~0xFC00, 0, NA, NA} },
+	अणुNA, NA, ~0xFC00, 0, NA, NAपूर्ण पूर्ण,
 
-/*line 171*/{(0x1F), 1, GRCBASE_XPB + PB_REG_PB_INT_STS,
+/*line 171*/अणु(0x1F), 1, GRCBASE_XPB + PB_REG_PB_INT_STS,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR,
 	"XPB: Interrupt status is not 0",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 172*/{(0x1F), 1, GRCBASE_UPB + PB_REG_PB_INT_STS,
+/*line 172*/अणु(0x1F), 1, GRCBASE_UPB + PB_REG_PB_INT_STS,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR,
 	"UPB: Interrupt status is not 0",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 173*/{(0x1), 1, PXP2_REG_PXP2_INT_STS,
+/*line 173*/अणु(0x1), 1, PXP2_REG_PXP2_INT_STS,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_WARNING,
 	"PXP2: Interrupt status 0 is not 0",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 174*/{(0x1E), 1, PXP2_REG_PXP2_INT_STS_0,
+/*line 174*/अणु(0x1E), 1, PXP2_REG_PXP2_INT_STS_0,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_WARNING,
 	"PXP2: Interrupt status 0 is not 0",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 175*/{(0x1E), 1, PXP2_REG_PXP2_INT_STS_1,
+/*line 175*/अणु(0x1E), 1, PXP2_REG_PXP2_INT_STS_1,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_WARNING,
 	"PXP2: Interrupt status 1 is not 0",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 176*/{(0x1F), 1, QM_REG_QM_INT_STS,
+/*line 176*/अणु(0x1F), 1, QM_REG_QM_INT_STS,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR,
 	"QM: Interrupt status is not 0",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 177*/{(0x1F), 1, PXP_REG_PXP_INT_STS_0,
+/*line 177*/अणु(0x1F), 1, PXP_REG_PXP_INT_STS_0,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_WARNING,
 	"PXP: P0 Interrupt status is not 0",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 178*/{(0x1F), 1, PXP_REG_PXP_INT_STS_1,
+/*line 178*/अणु(0x1F), 1, PXP_REG_PXP_INT_STS_1,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_WARNING,
 	"PXP: P1 Interrupt status is not 0",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 179*/{(0x1C), 1, PGLUE_B_REG_PGLUE_B_INT_STS,
+/*line 179*/अणु(0x1C), 1, PGLUE_B_REG_PGLUE_B_INT_STS,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_WARNING,
 	"PGLUE_B: Interrupt status is not 0",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 180*/{(0x1F), 1, DORQ_REG_RSPA_CRD_CNT,
+/*line 180*/अणु(0x1F), 1, DORQ_REG_RSPA_CRD_CNT,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"DORQ: Credit to XCM is not full",
-	{NA, NA, 2, NA, NA, NA} },
+	अणुNA, NA, 2, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 181*/{(0x1F), 1, DORQ_REG_RSPB_CRD_CNT,
+/*line 181*/अणु(0x1F), 1, DORQ_REG_RSPB_CRD_CNT,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"DORQ: Credit to UCM is not full",
-	{NA, NA, 2, NA, NA, NA} },
+	अणुNA, NA, 2, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 182*/{(0x3), 1, QM_REG_VOQCRDERRREG,
+/*line 182*/अणु(0x3), 1, QM_REG_VOQCRDERRREG,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR,
 	"QM: Credit error register is not 0 (byte or credit overflow/underflow)",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 183*/{(0x1F), 1, DORQ_REG_DQ_FULL_ST,
+/*line 183*/अणु(0x1F), 1, DORQ_REG_DQ_FULL_ST,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR,
 	"DORQ: DORQ queue is full",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 184*/{(0x1F), 1, MISC_REG_AEU_AFTER_INVERT_1_FUNC_0,
+/*line 184*/अणु(0x1F), 1, MISC_REG_AEU_AFTER_INVERT_1_FUNC_0,
 	NA, 1, 0, pand_neq,
 	NA, IDLE_CHK_WARNING,
 	"AEU: P0 AFTER_INVERT_1 is not 0",
-	{NA, NA, ~0xCFFC, 0, NA, NA} },
+	अणुNA, NA, ~0xCFFC, 0, NA, NAपूर्ण पूर्ण,
 
-/*line 185*/{(0x1F), 1, MISC_REG_AEU_AFTER_INVERT_2_FUNC_0,
+/*line 185*/अणु(0x1F), 1, MISC_REG_AEU_AFTER_INVERT_2_FUNC_0,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR,
 	"AEU: P0 AFTER_INVERT_2 is not 0",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 186*/{(0x1F), 1, MISC_REG_AEU_AFTER_INVERT_3_FUNC_0,
+/*line 186*/अणु(0x1F), 1, MISC_REG_AEU_AFTER_INVERT_3_FUNC_0,
 	NA, 1, 0, pand_neq,
 	NA, IDLE_CHK_ERROR,
 	"AEU: P0 AFTER_INVERT_3 is not 0",
-	{NA, NA, ~0xFFFF0000, 0, NA, NA} },
+	अणुNA, NA, ~0xFFFF0000, 0, NA, NAपूर्ण पूर्ण,
 
-/*line 187*/{(0x1F), 1, MISC_REG_AEU_AFTER_INVERT_4_FUNC_0,
+/*line 187*/अणु(0x1F), 1, MISC_REG_AEU_AFTER_INVERT_4_FUNC_0,
 	NA, 1, 0, pand_neq,
 	NA, IDLE_CHK_ERROR,
 	"AEU: P0 AFTER_INVERT_4 is not 0",
-	{NA, NA, ~0x801FFFFF, 0, NA, NA} },
+	अणुNA, NA, ~0x801FFFFF, 0, NA, NAपूर्ण पूर्ण,
 
-/*line 188*/{(0x3), 1, MISC_REG_AEU_AFTER_INVERT_1_FUNC_1,
+/*line 188*/अणु(0x3), 1, MISC_REG_AEU_AFTER_INVERT_1_FUNC_1,
 	NA, 1, 0, pand_neq,
 	NA, IDLE_CHK_WARNING,
 	"AEU: P1 AFTER_INVERT_1 is not 0",
-	{NA, NA, ~0xCFFC, 0, NA, NA} },
+	अणुNA, NA, ~0xCFFC, 0, NA, NAपूर्ण पूर्ण,
 
-/*line 189*/{(0x3), 1, MISC_REG_AEU_AFTER_INVERT_2_FUNC_1,
+/*line 189*/अणु(0x3), 1, MISC_REG_AEU_AFTER_INVERT_2_FUNC_1,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR,
 	"AEU: P1 AFTER_INVERT_2 is not 0",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 190*/{(0x3), 1, MISC_REG_AEU_AFTER_INVERT_3_FUNC_1,
+/*line 190*/अणु(0x3), 1, MISC_REG_AEU_AFTER_INVERT_3_FUNC_1,
 	NA, 1, 0, pand_neq,
 	NA, IDLE_CHK_ERROR,
 	"AEU: P1 AFTER_INVERT_3 is not 0",
-	{NA, NA, ~0xFFFF0000, 0, NA, NA} },
+	अणुNA, NA, ~0xFFFF0000, 0, NA, NAपूर्ण पूर्ण,
 
-/*line 191*/{(0x3), 1, MISC_REG_AEU_AFTER_INVERT_4_FUNC_1,
+/*line 191*/अणु(0x3), 1, MISC_REG_AEU_AFTER_INVERT_4_FUNC_1,
 	NA, 1, 0, pand_neq,
 	NA, IDLE_CHK_ERROR,
 	"AEU: P1 AFTER_INVERT_4 is not 0",
-	{NA, NA, ~0x801FFFFF, 0, NA, NA} },
+	अणुNA, NA, ~0x801FFFFF, 0, NA, NAपूर्ण पूर्ण,
 
-/*line 192*/{(0x1F), 1, MISC_REG_AEU_AFTER_INVERT_1_MCP,
+/*line 192*/अणु(0x1F), 1, MISC_REG_AEU_AFTER_INVERT_1_MCP,
 	NA, 1, 0, pand_neq,
 	NA, IDLE_CHK_WARNING,
 	"AEU: MCP AFTER_INVERT_1 is not 0",
-	{NA, NA, ~0xCFFC, 0, NA, NA} },
+	अणुNA, NA, ~0xCFFC, 0, NA, NAपूर्ण पूर्ण,
 
-/*line 193*/{(0x1F), 1, MISC_REG_AEU_AFTER_INVERT_2_MCP,
+/*line 193*/अणु(0x1F), 1, MISC_REG_AEU_AFTER_INVERT_2_MCP,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR,
 	"AEU: MCP AFTER_INVERT_2 is not 0",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 194*/{(0x1F), 1, MISC_REG_AEU_AFTER_INVERT_3_MCP,
+/*line 194*/अणु(0x1F), 1, MISC_REG_AEU_AFTER_INVERT_3_MCP,
 	NA, 1, 0, pand_neq,
 	NA, IDLE_CHK_ERROR,
 	"AEU: MCP AFTER_INVERT_3 is not 0",
-	{NA, NA, ~0xFFFF0000, 0, NA, NA} },
+	अणुNA, NA, ~0xFFFF0000, 0, NA, NAपूर्ण पूर्ण,
 
-/*line 195*/{(0x1F), 1, MISC_REG_AEU_AFTER_INVERT_4_MCP,
+/*line 195*/अणु(0x1F), 1, MISC_REG_AEU_AFTER_INVERT_4_MCP,
 	NA, 1, 0, pand_neq,
 	NA, IDLE_CHK_ERROR,
 	"AEU: MCP AFTER_INVERT_4 is not 0",
-	{NA, NA, ~0x801FFFFF, 0, NA, NA} },
+	अणुNA, NA, ~0x801FFFFF, 0, NA, NAपूर्ण पूर्ण,
 
-/*line 196*/{(0xF), 5, PBF_REG_P0_CREDIT,
+/*line 196*/अणु(0xF), 5, PBF_REG_P0_CREDIT,
 	PBF_REG_P0_INIT_CRD, 1, 0, pneq_r2,
 	PBF_REG_DISABLE_NEW_TASK_PROC_P0, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"PBF: P0 credit is not equal to init_crd",
-	{NA, NA, NA, NA, NA, NA} },
+	अणुNA, NA, NA, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 197*/{(0xF), 5, PBF_REG_P1_CREDIT,
+/*line 197*/अणु(0xF), 5, PBF_REG_P1_CREDIT,
 	PBF_REG_P1_INIT_CRD, 1, 0, pneq_r2,
 	PBF_REG_DISABLE_NEW_TASK_PROC_P1, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"PBF: P1 credit is not equal to init_crd",
-	{NA, NA, NA, NA, NA, NA} },
+	अणुNA, NA, NA, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 198*/{(0xF), 3, PBF_REG_P4_CREDIT,
+/*line 198*/अणु(0xF), 3, PBF_REG_P4_CREDIT,
 	PBF_REG_P4_INIT_CRD, 1, 0, pneq_r2,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"PBF: P4 credit is not equal to init_crd",
-	{NA, NA, NA, NA, NA, NA} },
+	अणुNA, NA, NA, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 199*/{(0x10), 5, PBF_REG_CREDIT_Q0,
+/*line 199*/अणु(0x10), 5, PBF_REG_CREDIT_Q0,
 	PBF_REG_INIT_CRD_Q0, 1, 0, pneq_r2,
 	PBF_REG_DISABLE_NEW_TASK_PROC_Q0, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"PBF: Q0 credit is not equal to init_crd",
-	{NA, NA, NA, NA, NA, NA} },
+	अणुNA, NA, NA, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 200*/{(0x10), 5, PBF_REG_CREDIT_Q1,
+/*line 200*/अणु(0x10), 5, PBF_REG_CREDIT_Q1,
 	PBF_REG_INIT_CRD_Q1, 1, 0, pneq_r2,
 	PBF_REG_DISABLE_NEW_TASK_PROC_Q1, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"PBF: Q1 credit is not equal to init_crd",
-	{NA, NA, NA, NA, NA, NA} },
+	अणुNA, NA, NA, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 201*/{(0x10), 5, PBF_REG_CREDIT_Q2,
+/*line 201*/अणु(0x10), 5, PBF_REG_CREDIT_Q2,
 	PBF_REG_INIT_CRD_Q2, 1, 0, pneq_r2,
 	PBF_REG_DISABLE_NEW_TASK_PROC_Q2, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"PBF: Q2 credit is not equal to init_crd",
-	{NA, NA, NA, NA, NA, NA} },
+	अणुNA, NA, NA, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 202*/{(0x10), 5, PBF_REG_CREDIT_Q3,
+/*line 202*/अणु(0x10), 5, PBF_REG_CREDIT_Q3,
 	PBF_REG_INIT_CRD_Q3, 1, 0, pneq_r2,
 	PBF_REG_DISABLE_NEW_TASK_PROC_Q3, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"PBF: Q3 credit is not equal to init_crd",
-	{NA, NA, NA, NA, NA, NA} },
+	अणुNA, NA, NA, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 203*/{(0x10), 5, PBF_REG_CREDIT_Q4,
+/*line 203*/अणु(0x10), 5, PBF_REG_CREDIT_Q4,
 	PBF_REG_INIT_CRD_Q4, 1, 0, pneq_r2,
 	PBF_REG_DISABLE_NEW_TASK_PROC_Q4, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"PBF: Q4 credit is not equal to init_crd",
-	{NA, NA, NA, NA, NA, NA} },
+	अणुNA, NA, NA, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 204*/{(0x10), 5, PBF_REG_CREDIT_Q5,
+/*line 204*/अणु(0x10), 5, PBF_REG_CREDIT_Q5,
 	PBF_REG_INIT_CRD_Q5, 1, 0, pneq_r2,
 	PBF_REG_DISABLE_NEW_TASK_PROC_Q5, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"PBF: Q5 credit is not equal to init_crd",
-	{NA, NA, NA, NA, NA, NA} },
+	अणुNA, NA, NA, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 205*/{(0x10), 3, PBF_REG_CREDIT_LB_Q,
+/*line 205*/अणु(0x10), 3, PBF_REG_CREDIT_LB_Q,
 	PBF_REG_INIT_CRD_LB_Q, 1, 0, pneq_r2,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"PBF: LB Q credit is not equal to init_crd",
-	{NA, NA, NA, NA, NA, NA} },
+	अणुNA, NA, NA, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 206*/{(0xF), 1, PBF_REG_P0_TASK_CNT,
+/*line 206*/अणु(0xF), 1, PBF_REG_P0_TASK_CNT,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"PBF: P0 task_cnt is not 0",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 207*/{(0xF), 1, PBF_REG_P1_TASK_CNT,
+/*line 207*/अणु(0xF), 1, PBF_REG_P1_TASK_CNT,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"PBF: P1 task_cnt is not 0",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 208*/{(0xF), 1, PBF_REG_P4_TASK_CNT,
+/*line 208*/अणु(0xF), 1, PBF_REG_P4_TASK_CNT,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"PBF: P4 task_cnt is not 0",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 209*/{(0x10), 1, PBF_REG_TASK_CNT_Q0,
+/*line 209*/अणु(0x10), 1, PBF_REG_TASK_CNT_Q0,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"PBF: Q0 task_cnt is not 0",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 210*/{(0x10), 1, PBF_REG_TASK_CNT_Q1,
+/*line 210*/अणु(0x10), 1, PBF_REG_TASK_CNT_Q1,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"PBF: Q1 task_cnt is not 0",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 211*/{(0x10), 1, PBF_REG_TASK_CNT_Q2,
+/*line 211*/अणु(0x10), 1, PBF_REG_TASK_CNT_Q2,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"PBF: Q2 task_cnt is not 0",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 212*/{(0x10), 1, PBF_REG_TASK_CNT_Q3,
+/*line 212*/अणु(0x10), 1, PBF_REG_TASK_CNT_Q3,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"PBF: Q3 task_cnt is not 0",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 213*/{(0x10), 1, PBF_REG_TASK_CNT_Q4,
+/*line 213*/अणु(0x10), 1, PBF_REG_TASK_CNT_Q4,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"PBF: Q4 task_cnt is not 0",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 214*/{(0x10), 1, PBF_REG_TASK_CNT_Q5,
+/*line 214*/अणु(0x10), 1, PBF_REG_TASK_CNT_Q5,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"PBF: Q5 task_cnt is not 0",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 215*/{(0x10), 1, PBF_REG_TASK_CNT_LB_Q,
+/*line 215*/अणु(0x10), 1, PBF_REG_TASK_CNT_LB_Q,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"PBF: LB Q task_cnt is not 0",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 216*/{(0x1F), 1, XCM_REG_CFC_INIT_CRD,
+/*line 216*/अणु(0x1F), 1, XCM_REG_CFC_INIT_CRD,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"XCM: CFC_INIT_CRD is not 1",
-	{NA, NA, 1, NA, NA, NA} },
+	अणुNA, NA, 1, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 217*/{(0x1F), 1, UCM_REG_CFC_INIT_CRD,
+/*line 217*/अणु(0x1F), 1, UCM_REG_CFC_INIT_CRD,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"UCM: CFC_INIT_CRD is not 1",
-	{NA, NA, 1, NA, NA, NA} },
+	अणुNA, NA, 1, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 218*/{(0x1F), 1, TCM_REG_CFC_INIT_CRD,
+/*line 218*/अणु(0x1F), 1, TCM_REG_CFC_INIT_CRD,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"TCM: CFC_INIT_CRD is not 1",
-	{NA, NA, 1, NA, NA, NA} },
+	अणुNA, NA, 1, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 219*/{(0x1F), 1, CCM_REG_CFC_INIT_CRD,
+/*line 219*/अणु(0x1F), 1, CCM_REG_CFC_INIT_CRD,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"CCM: CFC_INIT_CRD is not 1",
-	{NA, NA, 1, NA, NA, NA} },
+	अणुNA, NA, 1, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 220*/{(0x1F), 1, XCM_REG_XQM_INIT_CRD,
+/*line 220*/अणु(0x1F), 1, XCM_REG_XQM_INIT_CRD,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"XCM: XQM_INIT_CRD is not 32",
-	{NA, NA, 32, NA, NA, NA} },
+	अणुNA, NA, 32, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 221*/{(0x1F), 1, UCM_REG_UQM_INIT_CRD,
+/*line 221*/अणु(0x1F), 1, UCM_REG_UQM_INIT_CRD,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"UCM: UQM_INIT_CRD is not 32",
-	{NA, NA, 32, NA, NA, NA} },
+	अणुNA, NA, 32, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 222*/{(0x1F), 1, TCM_REG_TQM_INIT_CRD,
+/*line 222*/अणु(0x1F), 1, TCM_REG_TQM_INIT_CRD,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"TCM: TQM_INIT_CRD is not 32",
-	{NA, NA, 32, NA, NA, NA} },
+	अणुNA, NA, 32, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 223*/{(0x1F), 1, CCM_REG_CQM_INIT_CRD,
+/*line 223*/अणु(0x1F), 1, CCM_REG_CQM_INIT_CRD,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"CCM: CQM_INIT_CRD is not 32",
-	{NA, NA, 32, NA, NA, NA} },
+	अणुNA, NA, 32, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 224*/{(0x1F), 1, XCM_REG_TM_INIT_CRD,
+/*line 224*/अणु(0x1F), 1, XCM_REG_TM_INIT_CRD,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"XCM: TM_INIT_CRD is not 4",
-	{NA, NA, 4, NA, NA, NA} },
+	अणुNA, NA, 4, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 225*/{(0x1F), 1, UCM_REG_TM_INIT_CRD,
+/*line 225*/अणु(0x1F), 1, UCM_REG_TM_INIT_CRD,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"UCM: TM_INIT_CRD is not 4",
-	{NA, NA, 4, NA, NA, NA} },
+	अणुNA, NA, 4, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 226*/{(0x1F), 1, XCM_REG_FIC0_INIT_CRD,
+/*line 226*/अणु(0x1F), 1, XCM_REG_FIC0_INIT_CRD,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_WARNING,
 	"XCM: FIC0_INIT_CRD is not 64",
-	{NA, NA, 64, NA, NA, NA} },
+	अणुNA, NA, 64, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 227*/{(0x1F), 1, UCM_REG_FIC0_INIT_CRD,
+/*line 227*/अणु(0x1F), 1, UCM_REG_FIC0_INIT_CRD,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"UCM: FIC0_INIT_CRD is not 64",
-	{NA, NA, 64, NA, NA, NA} },
+	अणुNA, NA, 64, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 228*/{(0x1F), 1, TCM_REG_FIC0_INIT_CRD,
+/*line 228*/अणु(0x1F), 1, TCM_REG_FIC0_INIT_CRD,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"TCM: FIC0_INIT_CRD is not 64",
-	{NA, NA, 64, NA, NA, NA} },
+	अणुNA, NA, 64, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 229*/{(0x1F), 1, CCM_REG_FIC0_INIT_CRD,
+/*line 229*/अणु(0x1F), 1, CCM_REG_FIC0_INIT_CRD,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"CCM: FIC0_INIT_CRD is not 64",
-	{NA, NA, 64, NA, NA, NA} },
+	अणुNA, NA, 64, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 230*/{(0x1F), 1, XCM_REG_FIC1_INIT_CRD,
+/*line 230*/अणु(0x1F), 1, XCM_REG_FIC1_INIT_CRD,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"XCM: FIC1_INIT_CRD is not 64",
-	{NA, NA, 64, NA, NA, NA} },
+	अणुNA, NA, 64, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 231*/{(0x1F), 1, UCM_REG_FIC1_INIT_CRD,
+/*line 231*/अणु(0x1F), 1, UCM_REG_FIC1_INIT_CRD,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"UCM: FIC1_INIT_CRD is not 64",
-	{NA, NA, 64, NA, NA, NA} },
+	अणुNA, NA, 64, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 232*/{(0x1F), 1, TCM_REG_FIC1_INIT_CRD,
+/*line 232*/अणु(0x1F), 1, TCM_REG_FIC1_INIT_CRD,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"TCM: FIC1_INIT_CRD is not 64",
-	{NA, NA, 64, NA, NA, NA} },
+	अणुNA, NA, 64, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 233*/{(0x1F), 1, CCM_REG_FIC1_INIT_CRD,
+/*line 233*/अणु(0x1F), 1, CCM_REG_FIC1_INIT_CRD,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"CCM: FIC1_INIT_CRD is not 64",
-	{NA, NA, 64, NA, NA, NA} },
+	अणुNA, NA, 64, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 234*/{(0x1), 1, XCM_REG_XX_FREE,
+/*line 234*/अणु(0x1), 1, XCM_REG_XX_FREE,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"XCM: XX_FREE differs from expected 31",
-	{NA, NA, 31, NA, NA, NA} },
+	अणुNA, NA, 31, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 235*/{(0x1E), 1, XCM_REG_XX_FREE,
+/*line 235*/अणु(0x1E), 1, XCM_REG_XX_FREE,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"XCM: XX_FREE differs from expected 32",
-	{NA, NA, 32, NA, NA, NA} },
+	अणुNA, NA, 32, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 236*/{(0x1F), 1, UCM_REG_XX_FREE,
+/*line 236*/अणु(0x1F), 1, UCM_REG_XX_FREE,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"UCM: XX_FREE differs from expected 27",
-	{NA, NA, 27, NA, NA, NA} },
+	अणुNA, NA, 27, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 237*/{(0x7), 1, TCM_REG_XX_FREE,
+/*line 237*/अणु(0x7), 1, TCM_REG_XX_FREE,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"TCM: XX_FREE differs from expected 32",
-	{NA, NA, 32, NA, NA, NA} },
+	अणुNA, NA, 32, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 238*/{(0x18), 1, TCM_REG_XX_FREE,
+/*line 238*/अणु(0x18), 1, TCM_REG_XX_FREE,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"TCM: XX_FREE differs from expected 29",
-	{NA, NA, 29, NA, NA, NA} },
+	अणुNA, NA, 29, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 239*/{(0x1F), 1, CCM_REG_XX_FREE,
+/*line 239*/अणु(0x1F), 1, CCM_REG_XX_FREE,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"CCM: XX_FREE differs from expected 24",
-	{NA, NA, 24, NA, NA, NA} },
+	अणुNA, NA, 24, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 240*/{(0x1F), 1, XSEM_REG_FAST_MEMORY + 0x18000,
+/*line 240*/अणु(0x1F), 1, XSEM_REG_FAST_MEMORY + 0x18000,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"XSEM: FOC0 credit less than initial credit",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 241*/{(0x1F), 1, XSEM_REG_FAST_MEMORY + 0x18040,
+/*line 241*/अणु(0x1F), 1, XSEM_REG_FAST_MEMORY + 0x18040,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"XSEM: FOC1 credit less than initial credit",
-	{NA, NA, 24, NA, NA, NA} },
+	अणुNA, NA, 24, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 242*/{(0x1F), 1, XSEM_REG_FAST_MEMORY + 0x18080,
+/*line 242*/अणु(0x1F), 1, XSEM_REG_FAST_MEMORY + 0x18080,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"XSEM: FOC2 credit less than initial credit",
-	{NA, NA, 12, NA, NA, NA} },
+	अणुNA, NA, 12, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 243*/{(0x1F), 1, USEM_REG_FAST_MEMORY + 0x18000,
+/*line 243*/अणु(0x1F), 1, USEM_REG_FAST_MEMORY + 0x18000,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"USEM: FOC0 credit less than initial credit",
-	{NA, NA, 26, NA, NA, NA} },
+	अणुNA, NA, 26, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 244*/{(0x1F), 1, USEM_REG_FAST_MEMORY + 0x18040,
+/*line 244*/अणु(0x1F), 1, USEM_REG_FAST_MEMORY + 0x18040,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"USEM: FOC1 credit less than initial credit",
-	{NA, NA, 78, NA, NA, NA} },
+	अणुNA, NA, 78, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 245*/{(0x1F), 1, USEM_REG_FAST_MEMORY + 0x18080,
+/*line 245*/अणु(0x1F), 1, USEM_REG_FAST_MEMORY + 0x18080,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"USEM: FOC2 credit less than initial credit",
-	{NA, NA, 16, NA, NA, NA} },
+	अणुNA, NA, 16, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 246*/{(0x1F), 1, USEM_REG_FAST_MEMORY + 0x180C0,
+/*line 246*/अणु(0x1F), 1, USEM_REG_FAST_MEMORY + 0x180C0,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"USEM: FOC3 credit less than initial credit",
-	{NA, NA, 32, NA, NA, NA} },
+	अणुNA, NA, 32, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 247*/{(0x1F), 1, TSEM_REG_FAST_MEMORY + 0x18000,
+/*line 247*/अणु(0x1F), 1, TSEM_REG_FAST_MEMORY + 0x18000,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"TSEM: FOC0 credit less than initial credit",
-	{NA, NA, 52, NA, NA, NA} },
+	अणुNA, NA, 52, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 248*/{(0x1F), 1, TSEM_REG_FAST_MEMORY + 0x18040,
+/*line 248*/अणु(0x1F), 1, TSEM_REG_FAST_MEMORY + 0x18040,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"TSEM: FOC1 credit less than initial credit",
-	{NA, NA, 24, NA, NA, NA} },
+	अणुNA, NA, 24, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 249*/{(0x1F), 1, TSEM_REG_FAST_MEMORY + 0x18080,
+/*line 249*/अणु(0x1F), 1, TSEM_REG_FAST_MEMORY + 0x18080,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"TSEM: FOC2 credit less than initial credit",
-	{NA, NA, 12, NA, NA, NA} },
+	अणुNA, NA, 12, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 250*/{(0x1F), 1, TSEM_REG_FAST_MEMORY + 0x180C0,
+/*line 250*/अणु(0x1F), 1, TSEM_REG_FAST_MEMORY + 0x180C0,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"TSEM: FOC3 credit less than initial credit",
-	{NA, NA, 32, NA, NA, NA} },
+	अणुNA, NA, 32, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 251*/{(0x1F), 1, CSEM_REG_FAST_MEMORY + 0x18000,
+/*line 251*/अणु(0x1F), 1, CSEM_REG_FAST_MEMORY + 0x18000,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"CSEM: FOC0 credit less than initial credit",
-	{NA, NA, 16, NA, NA, NA} },
+	अणुNA, NA, 16, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 252*/{(0x1F), 1, CSEM_REG_FAST_MEMORY + 0x18040,
+/*line 252*/अणु(0x1F), 1, CSEM_REG_FAST_MEMORY + 0x18040,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"CSEM: FOC1 credit less than initial credit",
-	{NA, NA, 18, NA, NA, NA} },
+	अणुNA, NA, 18, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 253*/{(0x1F), 1, CSEM_REG_FAST_MEMORY + 0x18080,
+/*line 253*/अणु(0x1F), 1, CSEM_REG_FAST_MEMORY + 0x18080,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"CSEM: FOC2 credit less than initial credit",
-	{NA, NA, 48, NA, NA, NA} },
+	अणुNA, NA, 48, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 254*/{(0x1F), 1, CSEM_REG_FAST_MEMORY + 0x180C0,
+/*line 254*/अणु(0x1F), 1, CSEM_REG_FAST_MEMORY + 0x180C0,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"CSEM: FOC3 credit less than initial credit",
-	{NA, NA, 14, NA, NA, NA} },
+	अणुNA, NA, 14, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 255*/{(0x1F), 1, PRS_REG_TSDM_CURRENT_CREDIT,
+/*line 255*/अणु(0x1F), 1, PRS_REG_TSDM_CURRENT_CREDIT,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"PRS: TSDM current credit is not 0",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 256*/{(0x1F), 1, PRS_REG_TCM_CURRENT_CREDIT,
+/*line 256*/अणु(0x1F), 1, PRS_REG_TCM_CURRENT_CREDIT,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"PRS: TCM current credit is not 0",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 257*/{(0x1F), 1, PRS_REG_CFC_LD_CURRENT_CREDIT,
+/*line 257*/अणु(0x1F), 1, PRS_REG_CFC_LD_CURRENT_CREDIT,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"PRS: CFC_LD current credit is not 0",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 258*/{(0x1F), 1, PRS_REG_CFC_SEARCH_CURRENT_CREDIT,
+/*line 258*/अणु(0x1F), 1, PRS_REG_CFC_SEARCH_CURRENT_CREDIT,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"PRS: CFC_SEARCH current credit is not 0",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 259*/{(0x1F), 1, PRS_REG_SRC_CURRENT_CREDIT,
+/*line 259*/अणु(0x1F), 1, PRS_REG_SRC_CURRENT_CREDIT,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"PRS: SRCH current credit is not 0",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 260*/{(0x1F), 1, PRS_REG_PENDING_BRB_PRS_RQ,
+/*line 260*/अणु(0x1F), 1, PRS_REG_PENDING_BRB_PRS_RQ,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"PRS: PENDING_BRB_PRS_RQ is not 0",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 261*/{(0x1F), 2, PRS_REG_PENDING_BRB_CAC0_RQ,
+/*line 261*/अणु(0x1F), 2, PRS_REG_PENDING_BRB_CAC0_RQ,
 	NA, 5, 4, pneq,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"PRS: PENDING_BRB_CAC_RQ is not 0",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 262*/{(0x1F), 1, PRS_REG_SERIAL_NUM_STATUS_LSB,
+/*line 262*/अणु(0x1F), 1, PRS_REG_SERIAL_NUM_STATUS_LSB,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"PRS: SERIAL_NUM_STATUS_LSB is not 0",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 263*/{(0x1F), 1, PRS_REG_SERIAL_NUM_STATUS_MSB,
+/*line 263*/अणु(0x1F), 1, PRS_REG_SERIAL_NUM_STATUS_MSB,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"PRS: SERIAL_NUM_STATUS_MSB is not 0",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 264*/{(0x1F), 1, CDU_REG_ERROR_DATA,
+/*line 264*/अणु(0x1F), 1, CDU_REG_ERROR_DATA,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR,
 	"CDU: ERROR_DATA is not 0",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 265*/{(0x1F), 1, CCM_REG_STORM_LENGTH_MIS,
+/*line 265*/अणु(0x1F), 1, CCM_REG_STORM_LENGTH_MIS,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR,
 	"CCM: STORM declared message length unequal to actual",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 266*/{(0x1F), 1, CCM_REG_CSDM_LENGTH_MIS,
+/*line 266*/अणु(0x1F), 1, CCM_REG_CSDM_LENGTH_MIS,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR,
 	"CCM: CSDM declared message length unequal to actual",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 267*/{(0x1F), 1, CCM_REG_TSEM_LENGTH_MIS,
+/*line 267*/अणु(0x1F), 1, CCM_REG_TSEM_LENGTH_MIS,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR,
 	"CCM: TSEM declared message length unequal to actual",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 268*/{(0x1F), 1, CCM_REG_XSEM_LENGTH_MIS,
+/*line 268*/अणु(0x1F), 1, CCM_REG_XSEM_LENGTH_MIS,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR,
 	"CCM: XSEM declared message length unequal to actual",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 269*/{(0x1F), 1, CCM_REG_USEM_LENGTH_MIS,
+/*line 269*/अणु(0x1F), 1, CCM_REG_USEM_LENGTH_MIS,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR,
 	"CCM: USEM declared message length unequal to actual",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 270*/{(0x1F), 1, CCM_REG_PBF_LENGTH_MIS,
+/*line 270*/अणु(0x1F), 1, CCM_REG_PBF_LENGTH_MIS,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR,
 	"CCM: PBF declared message length unequal to actual",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 271*/{(0x1F), 1, TCM_REG_STORM_LENGTH_MIS,
+/*line 271*/अणु(0x1F), 1, TCM_REG_STORM_LENGTH_MIS,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR,
 	"TCM: STORM declared message length unequal to actual",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 272*/{(0x1F), 1, TCM_REG_TSDM_LENGTH_MIS,
+/*line 272*/अणु(0x1F), 1, TCM_REG_TSDM_LENGTH_MIS,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR,
 	"TCM: TSDM declared message length unequal to actual",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 273*/{(0x1F), 1, TCM_REG_PRS_LENGTH_MIS,
+/*line 273*/अणु(0x1F), 1, TCM_REG_PRS_LENGTH_MIS,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR,
 	"TCM: PRS declared message length unequal to actual",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 274*/{(0x1F), 1, TCM_REG_PBF_LENGTH_MIS,
+/*line 274*/अणु(0x1F), 1, TCM_REG_PBF_LENGTH_MIS,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR,
 	"TCM: PBF declared message length unequal to actual",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 275*/{(0x1F), 1, TCM_REG_USEM_LENGTH_MIS,
+/*line 275*/अणु(0x1F), 1, TCM_REG_USEM_LENGTH_MIS,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR,
 	"TCM: USEM declared message length unequal to actual",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 276*/{(0x1F), 1, TCM_REG_CSEM_LENGTH_MIS,
+/*line 276*/अणु(0x1F), 1, TCM_REG_CSEM_LENGTH_MIS,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR,
 	"TCM: CSEM declared message length unequal to actual",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 277*/{(0x1F), 1, UCM_REG_STORM_LENGTH_MIS,
+/*line 277*/अणु(0x1F), 1, UCM_REG_STORM_LENGTH_MIS,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR,
 	"UCM: STORM declared message length unequal to actual",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 278*/{(0x1F), 1, UCM_REG_USDM_LENGTH_MIS,
+/*line 278*/अणु(0x1F), 1, UCM_REG_USDM_LENGTH_MIS,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR,
 	"UCM: USDM declared message length unequal to actual",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 279*/{(0x1F), 1, UCM_REG_TSEM_LENGTH_MIS,
+/*line 279*/अणु(0x1F), 1, UCM_REG_TSEM_LENGTH_MIS,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR,
 	"UCM: TSEM declared message length unequal to actual",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 280*/{(0x1F), 1, UCM_REG_CSEM_LENGTH_MIS,
+/*line 280*/अणु(0x1F), 1, UCM_REG_CSEM_LENGTH_MIS,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR,
 	"UCM: CSEM declared message length unequal to actual",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 281*/{(0x1F), 1, UCM_REG_XSEM_LENGTH_MIS,
+/*line 281*/अणु(0x1F), 1, UCM_REG_XSEM_LENGTH_MIS,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR,
 	"UCM: XSEM declared message length unequal to actual",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 282*/{(0x1F), 1, UCM_REG_DORQ_LENGTH_MIS,
+/*line 282*/अणु(0x1F), 1, UCM_REG_DORQ_LENGTH_MIS,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR,
 	"UCM: DORQ declared message length unequal to actual",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 283*/{(0x1F), 1, XCM_REG_STORM_LENGTH_MIS,
+/*line 283*/अणु(0x1F), 1, XCM_REG_STORM_LENGTH_MIS,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR,
 	"XCM: STORM declared message length unequal to actual",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 284*/{(0x1F), 1, XCM_REG_XSDM_LENGTH_MIS,
+/*line 284*/अणु(0x1F), 1, XCM_REG_XSDM_LENGTH_MIS,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR,
 	"XCM: XSDM declared message length unequal to actual",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 285*/{(0x1F), 1, XCM_REG_TSEM_LENGTH_MIS,
+/*line 285*/अणु(0x1F), 1, XCM_REG_TSEM_LENGTH_MIS,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR,
 	"XCM: TSEM declared message length unequal to actual",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 286*/{(0x1F), 1, XCM_REG_CSEM_LENGTH_MIS,
+/*line 286*/अणु(0x1F), 1, XCM_REG_CSEM_LENGTH_MIS,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR,
 	"XCM: CSEM declared message length unequal to actual",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 287*/{(0x1F), 1, XCM_REG_USEM_LENGTH_MIS,
+/*line 287*/अणु(0x1F), 1, XCM_REG_USEM_LENGTH_MIS,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR,
 	"XCM: USEM declared message length unequal to actual",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 288*/{(0x1F), 1, XCM_REG_DORQ_LENGTH_MIS,
+/*line 288*/अणु(0x1F), 1, XCM_REG_DORQ_LENGTH_MIS,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR,
 	"XCM: DORQ declared message length unequal to actual",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 289*/{(0x1F), 1, XCM_REG_PBF_LENGTH_MIS,
+/*line 289*/अणु(0x1F), 1, XCM_REG_PBF_LENGTH_MIS,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR,
 	"XCM: PBF declared message length unequal to actual",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 290*/{(0x1F), 1, XCM_REG_NIG0_LENGTH_MIS,
+/*line 290*/अणु(0x1F), 1, XCM_REG_NIG0_LENGTH_MIS,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR,
 	"XCM: NIG0 declared message length unequal to actual",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 291*/{(0x1F), 1, XCM_REG_NIG1_LENGTH_MIS,
+/*line 291*/अणु(0x1F), 1, XCM_REG_NIG1_LENGTH_MIS,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR,
 	"XCM: NIG1 declared message length unequal to actual",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 292*/{(0x1F), 1, QM_REG_XQM_WRC_FIFOLVL,
+/*line 292*/अणु(0x1F), 1, QM_REG_XQM_WRC_FIFOLVL,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"QM: XQM wrc_fifolvl is not 0",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 293*/{(0x1F), 1, QM_REG_UQM_WRC_FIFOLVL,
+/*line 293*/अणु(0x1F), 1, QM_REG_UQM_WRC_FIFOLVL,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"QM: UQM wrc_fifolvl is not 0",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 294*/{(0x1F), 1, QM_REG_TQM_WRC_FIFOLVL,
+/*line 294*/अणु(0x1F), 1, QM_REG_TQM_WRC_FIFOLVL,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"QM: TQM wrc_fifolvl is not 0",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 295*/{(0x1F), 1, QM_REG_CQM_WRC_FIFOLVL,
+/*line 295*/अणु(0x1F), 1, QM_REG_CQM_WRC_FIFOLVL,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"QM: CQM wrc_fifolvl is not 0",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 296*/{(0x1F), 1, QM_REG_QSTATUS_LOW,
+/*line 296*/अणु(0x1F), 1, QM_REG_QSTATUS_LOW,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"QM: QSTATUS_LOW is not 0",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 297*/{(0x1F), 1, QM_REG_QSTATUS_HIGH,
+/*line 297*/अणु(0x1F), 1, QM_REG_QSTATUS_HIGH,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"QM: QSTATUS_HIGH is not 0",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 298*/{(0x1F), 1, QM_REG_PAUSESTATE0,
+/*line 298*/अणु(0x1F), 1, QM_REG_PAUSESTATE0,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"QM: PAUSESTATE0 is not 0",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 299*/{(0x1F), 1, QM_REG_PAUSESTATE1,
+/*line 299*/अणु(0x1F), 1, QM_REG_PAUSESTATE1,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"QM: PAUSESTATE1 is not 0",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 300*/{(0x1F), 1, QM_REG_OVFQNUM,
+/*line 300*/अणु(0x1F), 1, QM_REG_OVFQNUM,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR,
 	"QM: OVFQNUM is not 0",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 301*/{(0x1F), 1, QM_REG_OVFERROR,
+/*line 301*/अणु(0x1F), 1, QM_REG_OVFERROR,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR,
 	"QM: OVFERROR is not 0",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 302*/{(0x1F), 6, QM_REG_PTRTBL,
+/*line 302*/अणु(0x1F), 6, QM_REG_PTRTBL,
 	NA, 64, 8, pneq_r2,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"QM: read and write variables not equal",
-	{NA, NA, NA, NA, NA, NA} },
+	अणुNA, NA, NA, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 303*/{(0x1F), 1, BRB1_REG_BRB1_PRTY_STS,
+/*line 303*/अणु(0x1F), 1, BRB1_REG_BRB1_PRTY_STS,
 	NA, 1, 0, pand_neq,
 	NA, IDLE_CHK_WARNING,
 	"BRB1: parity status is not 0",
-	{NA, NA, ~0x8, 0, NA, NA} },
+	अणुNA, NA, ~0x8, 0, NA, NAपूर्ण पूर्ण,
 
-/*line 304*/{(0x1F), 1, CDU_REG_CDU_PRTY_STS,
+/*line 304*/अणु(0x1F), 1, CDU_REG_CDU_PRTY_STS,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_WARNING,
 	"CDU: parity status is not 0",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 305*/{(0x1F), 1, CFC_REG_CFC_PRTY_STS,
+/*line 305*/अणु(0x1F), 1, CFC_REG_CFC_PRTY_STS,
 	NA, 1, 0, pand_neq,
 	NA, IDLE_CHK_WARNING,
 	"CFC: parity status is not 0",
-	{NA, NA, ~0x2, 0, NA, NA} },
+	अणुNA, NA, ~0x2, 0, NA, NAपूर्ण पूर्ण,
 
-/*line 306*/{(0x1F), 1, CSDM_REG_CSDM_PRTY_STS,
+/*line 306*/अणु(0x1F), 1, CSDM_REG_CSDM_PRTY_STS,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_WARNING,
 	"CSDM: parity status is not 0",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 307*/{(0x3), 1, DBG_REG_DBG_PRTY_STS,
+/*line 307*/अणु(0x3), 1, DBG_REG_DBG_PRTY_STS,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_WARNING,
 	"DBG: parity status is not 0",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 308*/{(0x1F), 1, DMAE_REG_DMAE_PRTY_STS,
+/*line 308*/अणु(0x1F), 1, DMAE_REG_DMAE_PRTY_STS,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_WARNING,
 	"DMAE: parity status is not 0",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 309*/{(0x1F), 1, DORQ_REG_DORQ_PRTY_STS,
+/*line 309*/अणु(0x1F), 1, DORQ_REG_DORQ_PRTY_STS,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_WARNING,
 	"DORQ: parity status is not 0",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 310*/{(0x1), 1, TCM_REG_TCM_PRTY_STS,
+/*line 310*/अणु(0x1), 1, TCM_REG_TCM_PRTY_STS,
 	NA, 1, 0, pand_neq,
 	NA, IDLE_CHK_WARNING,
 	"TCM: parity status is not 0",
-	{NA, NA, ~0x3ffc0, 0, NA, NA} },
+	अणुNA, NA, ~0x3ffc0, 0, NA, NAपूर्ण पूर्ण,
 
-/*line 311*/{(0x1E), 1, TCM_REG_TCM_PRTY_STS,
+/*line 311*/अणु(0x1E), 1, TCM_REG_TCM_PRTY_STS,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_WARNING,
 	"TCM: parity status is not 0",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 312*/{(0x1), 1, CCM_REG_CCM_PRTY_STS,
+/*line 312*/अणु(0x1), 1, CCM_REG_CCM_PRTY_STS,
 	NA, 1, 0, pand_neq,
 	NA, IDLE_CHK_WARNING,
 	"CCM: parity status is not 0",
-	{NA, NA, ~0x3ffc0, 0, NA, NA} },
+	अणुNA, NA, ~0x3ffc0, 0, NA, NAपूर्ण पूर्ण,
 
-/*line 313*/{(0x1E), 1, CCM_REG_CCM_PRTY_STS,
+/*line 313*/अणु(0x1E), 1, CCM_REG_CCM_PRTY_STS,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_WARNING,
 	"CCM: parity status is not 0",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 314*/{(0x1), 1, UCM_REG_UCM_PRTY_STS,
+/*line 314*/अणु(0x1), 1, UCM_REG_UCM_PRTY_STS,
 	NA, 1, 0, pand_neq,
 	NA, IDLE_CHK_WARNING,
 	"UCM: parity status is not 0",
-	{NA, NA, ~0x3ffc0, 0, NA, NA} },
+	अणुNA, NA, ~0x3ffc0, 0, NA, NAपूर्ण पूर्ण,
 
-/*line 315*/{(0x1E), 1, UCM_REG_UCM_PRTY_STS,
+/*line 315*/अणु(0x1E), 1, UCM_REG_UCM_PRTY_STS,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_WARNING,
 	"UCM: parity status is not 0",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 316*/{(0x1), 1, XCM_REG_XCM_PRTY_STS,
+/*line 316*/अणु(0x1), 1, XCM_REG_XCM_PRTY_STS,
 	NA, 1, 0, pand_neq,
 	NA, IDLE_CHK_WARNING,
 	"XCM: parity status is not 0",
-	{NA, NA, ~0x3ffc0, 0, NA, NA} },
+	अणुNA, NA, ~0x3ffc0, 0, NA, NAपूर्ण पूर्ण,
 
-/*line 317*/{(0x1E), 1, XCM_REG_XCM_PRTY_STS,
+/*line 317*/अणु(0x1E), 1, XCM_REG_XCM_PRTY_STS,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_WARNING,
 	"XCM: parity status is not 0",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 318*/{(0x1), 1, HC_REG_HC_PRTY_STS,
+/*line 318*/अणु(0x1), 1, HC_REG_HC_PRTY_STS,
 	NA, 1, 0, pand_neq,
 	NA, IDLE_CHK_WARNING,
 	"HC: parity status is not 0",
-	{NA, NA, ~0x1, 0, NA, NA} },
+	अणुNA, NA, ~0x1, 0, NA, NAपूर्ण पूर्ण,
 
-/*line 319*/{(0x1), 1, MISC_REG_MISC_PRTY_STS,
+/*line 319*/अणु(0x1), 1, MISC_REG_MISC_PRTY_STS,
 	NA, 1, 0, pand_neq,
 	NA, IDLE_CHK_WARNING,
 	"MISC: parity status is not 0",
-	{NA, NA, ~0x1, 0, NA, NA} },
+	अणुNA, NA, ~0x1, 0, NA, NAपूर्ण पूर्ण,
 
-/*line 320*/{(0x1F), 1, PRS_REG_PRS_PRTY_STS,
+/*line 320*/अणु(0x1F), 1, PRS_REG_PRS_PRTY_STS,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_WARNING,
 	"PRS: parity status is not 0",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 321*/{(0x1F), 1, PXP_REG_PXP_PRTY_STS,
+/*line 321*/अणु(0x1F), 1, PXP_REG_PXP_PRTY_STS,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_WARNING,
 	"PXP: parity status is not 0",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 322*/{(0x1F), 1, QM_REG_QM_PRTY_STS,
+/*line 322*/अणु(0x1F), 1, QM_REG_QM_PRTY_STS,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_WARNING,
 	"QM: parity status is not 0",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 323*/{(0x1), 1, SRC_REG_SRC_PRTY_STS,
+/*line 323*/अणु(0x1), 1, SRC_REG_SRC_PRTY_STS,
 	NA, 1, 0, pand_neq,
 	NA, IDLE_CHK_WARNING,
 	"SRCH: parity status is not 0",
-	{NA, NA, ~0x4, 0, NA, NA} },
+	अणुNA, NA, ~0x4, 0, NA, NAपूर्ण पूर्ण,
 
-/*line 324*/{(0x1F), 1, TSDM_REG_TSDM_PRTY_STS,
+/*line 324*/अणु(0x1F), 1, TSDM_REG_TSDM_PRTY_STS,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_WARNING,
 	"TSDM: parity status is not 0",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 325*/{(0x1F), 1, USDM_REG_USDM_PRTY_STS,
+/*line 325*/अणु(0x1F), 1, USDM_REG_USDM_PRTY_STS,
 	NA, 1, 0, pand_neq,
 	NA, IDLE_CHK_WARNING,
 	"USDM: parity status is not 0",
-	{NA, NA, ~0x20, 0, NA, NA} },
+	अणुNA, NA, ~0x20, 0, NA, NAपूर्ण पूर्ण,
 
-/*line 326*/{(0x1F), 1, XSDM_REG_XSDM_PRTY_STS,
+/*line 326*/अणु(0x1F), 1, XSDM_REG_XSDM_PRTY_STS,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_WARNING,
 	"XSDM: parity status is not 0",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 327*/{(0x1F), 1, GRCBASE_XPB + PB_REG_PB_PRTY_STS,
+/*line 327*/अणु(0x1F), 1, GRCBASE_XPB + PB_REG_PB_PRTY_STS,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_WARNING,
 	"XPB: parity status is not 0",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 328*/{(0x1F), 1, GRCBASE_UPB + PB_REG_PB_PRTY_STS,
+/*line 328*/अणु(0x1F), 1, GRCBASE_UPB + PB_REG_PB_PRTY_STS,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_WARNING,
 	"UPB: parity status is not 0",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 329*/{(0x1F), 1, CSEM_REG_CSEM_PRTY_STS_0,
+/*line 329*/अणु(0x1F), 1, CSEM_REG_CSEM_PRTY_STS_0,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_WARNING,
 	"CSEM: parity status 0 is not 0",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 330*/{(0x1), 1, PXP2_REG_PXP2_PRTY_STS_0,
+/*line 330*/अणु(0x1), 1, PXP2_REG_PXP2_PRTY_STS_0,
 	NA, 1, 0, pand_neq,
 	NA, IDLE_CHK_WARNING,
 	"PXP2: parity status 0 is not 0",
-	{NA, NA, ~0xfff40020, 0, NA, NA} },
+	अणुNA, NA, ~0xfff40020, 0, NA, NAपूर्ण पूर्ण,
 
-/*line 331*/{(0x1E), 1, PXP2_REG_PXP2_PRTY_STS_0,
+/*line 331*/अणु(0x1E), 1, PXP2_REG_PXP2_PRTY_STS_0,
 	NA, 1, 0, pand_neq,
 	NA, IDLE_CHK_WARNING,
 	"PXP2: parity status 0 is not 0",
-	{NA, NA, ~0x20, 0, NA, NA} },
+	अणुNA, NA, ~0x20, 0, NA, NAपूर्ण पूर्ण,
 
-/*line 332*/{(0x1F), 1, TSEM_REG_TSEM_PRTY_STS_0,
+/*line 332*/अणु(0x1F), 1, TSEM_REG_TSEM_PRTY_STS_0,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_WARNING,
 	"TSEM: parity status 0 is not 0",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 333*/{(0x1F), 1, USEM_REG_USEM_PRTY_STS_0,
+/*line 333*/अणु(0x1F), 1, USEM_REG_USEM_PRTY_STS_0,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_WARNING,
 	"USEM: parity status 0 is not 0",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 334*/{(0x1F), 1, XSEM_REG_XSEM_PRTY_STS_0,
+/*line 334*/अणु(0x1F), 1, XSEM_REG_XSEM_PRTY_STS_0,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_WARNING,
 	"XSEM: parity status 0 is not 0",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 335*/{(0x1F), 1, CSEM_REG_CSEM_PRTY_STS_1,
+/*line 335*/अणु(0x1F), 1, CSEM_REG_CSEM_PRTY_STS_1,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_WARNING,
 	"CSEM: parity status 1 is not 0",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 336*/{(0x1), 1, PXP2_REG_PXP2_PRTY_STS_1,
+/*line 336*/अणु(0x1), 1, PXP2_REG_PXP2_PRTY_STS_1,
 	NA, 1, 0, pand_neq,
 	NA, IDLE_CHK_WARNING,
 	"PXP2: parity status 1 is not 0",
-	{NA, NA, ~0x20, 0, NA, NA} },
+	अणुNA, NA, ~0x20, 0, NA, NAपूर्ण पूर्ण,
 
-/*line 337*/{(0x1E), 1, PXP2_REG_PXP2_PRTY_STS_1,
+/*line 337*/अणु(0x1E), 1, PXP2_REG_PXP2_PRTY_STS_1,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_WARNING,
 	"PXP2: parity status 1 is not 0",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 338*/{(0x1F), 1, TSEM_REG_TSEM_PRTY_STS_1,
+/*line 338*/अणु(0x1F), 1, TSEM_REG_TSEM_PRTY_STS_1,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_WARNING,
 	"TSEM: parity status 1 is not 0",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 339*/{(0x1F), 1, USEM_REG_USEM_PRTY_STS_1,
+/*line 339*/अणु(0x1F), 1, USEM_REG_USEM_PRTY_STS_1,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_WARNING,
 	"USEM: parity status 1 is not 0",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 340*/{(0x1F), 1, XSEM_REG_XSEM_PRTY_STS_1,
+/*line 340*/अणु(0x1F), 1, XSEM_REG_XSEM_PRTY_STS_1,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_WARNING,
 	"XSEM: parity status 1 is not 0",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 341*/{(0x1C), 1, PGLUE_B_REG_PGLUE_B_PRTY_STS,
+/*line 341*/अणु(0x1C), 1, PGLUE_B_REG_PGLUE_B_PRTY_STS,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_WARNING,
 	"PGLUE_B: parity status is not 0",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 342*/{(0x2), 2, QM_REG_QTASKCTR_EXT_A_0,
+/*line 342*/अणु(0x2), 2, QM_REG_QTASKCTR_EXT_A_0,
 	NA, 64, 4, pneq,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"QM: Q_EXT_A (upper 64 queues), Queue is not empty",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 343*/{(0x2), 1, QM_REG_QSTATUS_LOW_EXT_A,
+/*line 343*/अणु(0x2), 1, QM_REG_QSTATUS_LOW_EXT_A,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR,
 	"QM: QSTATUS_LOW_EXT_A is not 0",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 344*/{(0x2), 1, QM_REG_QSTATUS_HIGH_EXT_A,
+/*line 344*/अणु(0x2), 1, QM_REG_QSTATUS_HIGH_EXT_A,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR,
 	"QM: QSTATUS_HIGH_EXT_A is not 0",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 345*/{(0x1E), 1, QM_REG_PAUSESTATE2,
+/*line 345*/अणु(0x1E), 1, QM_REG_PAUSESTATE2,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"QM: PAUSESTATE2 is not 0",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 346*/{(0x1E), 1, QM_REG_PAUSESTATE3,
+/*line 346*/अणु(0x1E), 1, QM_REG_PAUSESTATE3,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"QM: PAUSESTATE3 is not 0",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 347*/{(0x2), 1, QM_REG_PAUSESTATE4,
+/*line 347*/अणु(0x2), 1, QM_REG_PAUSESTATE4,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR,
 	"QM: PAUSESTATE4 is not 0",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 348*/{(0x2), 1, QM_REG_PAUSESTATE5,
+/*line 348*/अणु(0x2), 1, QM_REG_PAUSESTATE5,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR,
 	"QM: PAUSESTATE5 is not 0",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 349*/{(0x2), 1, QM_REG_PAUSESTATE6,
+/*line 349*/अणु(0x2), 1, QM_REG_PAUSESTATE6,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR,
 	"QM: PAUSESTATE6 is not 0",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 350*/{(0x2), 1, QM_REG_PAUSESTATE7,
+/*line 350*/अणु(0x2), 1, QM_REG_PAUSESTATE7,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR,
 	"QM: PAUSESTATE7 is not 0",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 351*/{(0x2), 6, QM_REG_PTRTBL_EXT_A,
+/*line 351*/अणु(0x2), 6, QM_REG_PTRTBL_EXT_A,
 	NA, 64, 8, pneq_r2,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"QM: read and write variables not equal in ext table",
-	{NA, NA, NA, NA, NA, NA} },
+	अणुNA, NA, NA, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 352*/{(0x1E), 1, MISC_REG_AEU_SYS_KILL_OCCURRED,
+/*line 352*/अणु(0x1E), 1, MISC_REG_AEU_SYS_KILL_OCCURRED,
 	NA, NA, NA, pneq,
 	NA, IDLE_CHK_ERROR,
 	"MISC: system kill occurred;",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 353*/{(0x1E), 1, MISC_REG_AEU_SYS_KILL_STATUS_0,
+/*line 353*/अणु(0x1E), 1, MISC_REG_AEU_SYS_KILL_STATUS_0,
 	NA, NA, NA, pneq,
 	NA, IDLE_CHK_ERROR,
 	"MISC: system kill occurred; status_0 register",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 354*/{(0x1E), 1, MISC_REG_AEU_SYS_KILL_STATUS_1,
+/*line 354*/अणु(0x1E), 1, MISC_REG_AEU_SYS_KILL_STATUS_1,
 	NA, NA, NA, pneq,
 	NA, IDLE_CHK_ERROR,
 	"MISC: system kill occurred; status_1 register",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 355*/{(0x1E), 1, MISC_REG_AEU_SYS_KILL_STATUS_2,
+/*line 355*/अणु(0x1E), 1, MISC_REG_AEU_SYS_KILL_STATUS_2,
 	NA, NA, NA, pneq,
 	NA, IDLE_CHK_ERROR,
 	"MISC: system kill occurred; status_2 register",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 356*/{(0x1E), 1, MISC_REG_AEU_SYS_KILL_STATUS_3,
+/*line 356*/अणु(0x1E), 1, MISC_REG_AEU_SYS_KILL_STATUS_3,
 	NA, NA, NA, pneq,
 	NA, IDLE_CHK_ERROR,
 	"MISC: system kill occurred; status_3 register",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 357*/{(0x1E), 1, MISC_REG_PCIE_HOT_RESET,
+/*line 357*/अणु(0x1E), 1, MISC_REG_PCIE_HOT_RESET,
 	NA, NA, NA, pneq,
 	NA, IDLE_CHK_WARNING,
 	"MISC: pcie_rst_b was asserted without perst assertion",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 358*/{(0x1F), 1, NIG_REG_NIG_INT_STS_0,
+/*line 358*/अणु(0x1F), 1, NIG_REG_NIG_INT_STS_0,
 	NA, NA, NA, pand_neq,
 	NA, IDLE_CHK_ERROR,
 	"NIG: interrupt 0 is active",
-	{NA, NA, ~0x300, 0, NA, NA} },
+	अणुNA, NA, ~0x300, 0, NA, NAपूर्ण पूर्ण,
 
-/*line 359*/{(0x1F), 1, NIG_REG_NIG_INT_STS_0,
+/*line 359*/अणु(0x1F), 1, NIG_REG_NIG_INT_STS_0,
 	NA, NA, NA, peq,
 	NA, IDLE_CHK_WARNING,
 	"NIG: Access to BMAC while not active. If tested on FPGA, ignore this warning",
-	{NA, NA, 0x300, NA, NA, NA} },
+	अणुNA, NA, 0x300, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 360*/{(0x1F), 1, NIG_REG_NIG_INT_STS_1,
+/*line 360*/अणु(0x1F), 1, NIG_REG_NIG_INT_STS_1,
 	NA, NA, NA, pand_neq,
 	NA, IDLE_CHK_ERROR,
 	"NIG: interrupt 1 is active",
-	{NA, NA, 0x783FF03, 0, NA, NA} },
+	अणुNA, NA, 0x783FF03, 0, NA, NAपूर्ण पूर्ण,
 
-/*line 361*/{(0x1F), 1, NIG_REG_NIG_INT_STS_1,
+/*line 361*/अणु(0x1F), 1, NIG_REG_NIG_INT_STS_1,
 	NA, NA, NA, pand_neq,
 	NA, IDLE_CHK_WARNING,
 	"NIG: port cos was paused too long",
-	{NA, NA, ~0x783FF0F, 0, NA, NA} },
+	अणुNA, NA, ~0x783FF0F, 0, NA, NAपूर्ण पूर्ण,
 
-/*line 362*/{(0x1F), 1, NIG_REG_NIG_INT_STS_1,
+/*line 362*/अणु(0x1F), 1, NIG_REG_NIG_INT_STS_1,
 	NA, NA, NA, pand_neq,
 	NA, IDLE_CHK_WARNING,
 	"NIG: Got packets w/o Outer-VLAN in MF mode",
-	{NA, NA, 0xC, 0, NA, NA} },
+	अणुNA, NA, 0xC, 0, NA, NAपूर्ण पूर्ण,
 
-/*line 363*/{(0x2), 1, NIG_REG_NIG_PRTY_STS,
+/*line 363*/अणु(0x2), 1, NIG_REG_NIG_PRTY_STS,
 	NA, NA, NA, pand_neq,
 	NA, IDLE_CHK_ERROR,
 	"NIG: parity interrupt is active",
-	{NA, NA, ~0xFFC00000, 0, NA, NA} },
+	अणुNA, NA, ~0xFFC00000, 0, NA, NAपूर्ण पूर्ण,
 
-/*line 364*/{(0x1C), 1, NIG_REG_NIG_PRTY_STS_0,
+/*line 364*/अणु(0x1C), 1, NIG_REG_NIG_PRTY_STS_0,
 	NA, NA, NA, pand_neq,
 	NA, IDLE_CHK_ERROR,
 	"NIG: parity 0 interrupt is active",
-	{NA, NA, ~0xFFC00000, 0, NA, NA} },
+	अणुNA, NA, ~0xFFC00000, 0, NA, NAपूर्ण पूर्ण,
 
-/*line 365*/{(0x4), 1, NIG_REG_NIG_PRTY_STS_1,
+/*line 365*/अणु(0x4), 1, NIG_REG_NIG_PRTY_STS_1,
 	NA, NA, NA, pand_neq,
 	NA, IDLE_CHK_ERROR,
 	"NIG: parity 1 interrupt is active",
-	{NA, NA, 0xff, 0, NA, NA} },
+	अणुNA, NA, 0xff, 0, NA, NAपूर्ण पूर्ण,
 
-/*line 366*/{(0x18), 1, NIG_REG_NIG_PRTY_STS_1,
+/*line 366*/अणु(0x18), 1, NIG_REG_NIG_PRTY_STS_1,
 	NA, NA, NA, pneq,
 	NA, IDLE_CHK_ERROR,
 	"NIG: parity 1 interrupt is active",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 367*/{(0x1F), 1, TSEM_REG_TSEM_INT_STS_0,
+/*line 367*/अणु(0x1F), 1, TSEM_REG_TSEM_INT_STS_0,
 	NA, NA, NA, pand_neq,
 	NA, IDLE_CHK_WARNING,
 	"TSEM: interrupt 0 is active",
-	{NA, NA, ~0x10000000, 0, NA, NA} },
+	अणुNA, NA, ~0x10000000, 0, NA, NAपूर्ण पूर्ण,
 
-/*line 368*/{(0x1F), 1, TSEM_REG_TSEM_INT_STS_0,
+/*line 368*/अणु(0x1F), 1, TSEM_REG_TSEM_INT_STS_0,
 	NA, NA, NA, peq,
 	NA, IDLE_CHK_WARNING,
 	"TSEM: interrupt 0 is active",
-	{NA, NA, 0x10000000, NA, NA, NA} },
+	अणुNA, NA, 0x10000000, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 369*/{(0x1F), 1, TSEM_REG_TSEM_INT_STS_1,
+/*line 369*/अणु(0x1F), 1, TSEM_REG_TSEM_INT_STS_1,
 	NA, NA, NA, pneq,
 	NA, IDLE_CHK_ERROR,
 	"TSEM: interrupt 1 is active",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 370*/{(0x1F), 1, CSEM_REG_CSEM_INT_STS_0,
+/*line 370*/अणु(0x1F), 1, CSEM_REG_CSEM_INT_STS_0,
 	NA, NA, NA, pand_neq,
 	NA, IDLE_CHK_WARNING,
 	"CSEM: interrupt 0 is active",
-	{NA, NA, ~0x10000000, 0, NA, NA} },
+	अणुNA, NA, ~0x10000000, 0, NA, NAपूर्ण पूर्ण,
 
-/*line 371*/{(0x1F), 1, CSEM_REG_CSEM_INT_STS_0,
+/*line 371*/अणु(0x1F), 1, CSEM_REG_CSEM_INT_STS_0,
 	NA, NA, NA, peq,
 	NA, IDLE_CHK_WARNING,
 	"CSEM: interrupt 0 is active",
-	{NA, NA, 0x10000000, NA, NA, NA} },
+	अणुNA, NA, 0x10000000, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 372*/{(0x1F), 1, CSEM_REG_CSEM_INT_STS_1,
+/*line 372*/अणु(0x1F), 1, CSEM_REG_CSEM_INT_STS_1,
 	NA, NA, NA, pneq,
 	NA, IDLE_CHK_ERROR,
 	"CSEM: interrupt 1 is active",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 373*/{(0x1F), 1, USEM_REG_USEM_INT_STS_0,
+/*line 373*/अणु(0x1F), 1, USEM_REG_USEM_INT_STS_0,
 	NA, NA, NA, pand_neq,
 	NA, IDLE_CHK_WARNING,
 	"USEM: interrupt 0 is active",
-	{NA, NA, ~0x10000000, 0, NA, NA} },
+	अणुNA, NA, ~0x10000000, 0, NA, NAपूर्ण पूर्ण,
 
-/*line 374*/{(0x1F), 1, USEM_REG_USEM_INT_STS_0,
+/*line 374*/अणु(0x1F), 1, USEM_REG_USEM_INT_STS_0,
 	NA, NA, NA, peq,
 	NA, IDLE_CHK_WARNING,
 	"USEM: interrupt 0 is active",
-	{NA, NA, 0x10000000, NA, NA, NA} },
+	अणुNA, NA, 0x10000000, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 375*/{(0x1F), 1, USEM_REG_USEM_INT_STS_1,
+/*line 375*/अणु(0x1F), 1, USEM_REG_USEM_INT_STS_1,
 	NA, NA, NA, pneq,
 	NA, IDLE_CHK_ERROR,
 	"USEM: interrupt 1 is active",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 376*/{(0x1F), 1, XSEM_REG_XSEM_INT_STS_0,
+/*line 376*/अणु(0x1F), 1, XSEM_REG_XSEM_INT_STS_0,
 	NA, NA, NA, pand_neq,
 	NA, IDLE_CHK_WARNING,
 	"XSEM: interrupt 0 is active",
-	{NA, NA, ~0x10000000, 0, NA, NA} },
+	अणुNA, NA, ~0x10000000, 0, NA, NAपूर्ण पूर्ण,
 
-/*line 377*/{(0x1F), 1, XSEM_REG_XSEM_INT_STS_0,
+/*line 377*/अणु(0x1F), 1, XSEM_REG_XSEM_INT_STS_0,
 	NA, NA, NA, peq,
 	NA, IDLE_CHK_WARNING,
 	"XSEM: interrupt 0 is active",
-	{NA, NA, 0x10000000, NA, NA, NA} },
+	अणुNA, NA, 0x10000000, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 378*/{(0x1F), 1, XSEM_REG_XSEM_INT_STS_1,
+/*line 378*/अणु(0x1F), 1, XSEM_REG_XSEM_INT_STS_1,
 	NA, NA, NA, pneq,
 	NA, IDLE_CHK_ERROR,
 	"XSEM: interrupt 1 is active",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 379*/{(0x1F), 1, TSDM_REG_TSDM_INT_STS_0,
+/*line 379*/अणु(0x1F), 1, TSDM_REG_TSDM_INT_STS_0,
 	NA, NA, NA, pneq,
 	NA, IDLE_CHK_ERROR,
 	"TSDM: interrupt 0 is active",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 380*/{(0x1F), 1, TSDM_REG_TSDM_INT_STS_1,
+/*line 380*/अणु(0x1F), 1, TSDM_REG_TSDM_INT_STS_1,
 	NA, NA, NA, pneq,
 	NA, IDLE_CHK_ERROR,
 	"TSDM: interrupt 0 is active",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 381*/{(0x1F), 1, CSDM_REG_CSDM_INT_STS_0,
+/*line 381*/अणु(0x1F), 1, CSDM_REG_CSDM_INT_STS_0,
 	NA, NA, NA, pneq,
 	NA, IDLE_CHK_ERROR,
 	"CSDM: interrupt 0 is active",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 382*/{(0x1F), 1, CSDM_REG_CSDM_INT_STS_1,
+/*line 382*/अणु(0x1F), 1, CSDM_REG_CSDM_INT_STS_1,
 	NA, NA, NA, pneq,
 	NA, IDLE_CHK_ERROR,
 	"CSDM: interrupt 0 is active",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 383*/{(0x1F), 1, USDM_REG_USDM_INT_STS_0,
+/*line 383*/अणु(0x1F), 1, USDM_REG_USDM_INT_STS_0,
 	NA, NA, NA, pneq,
 	NA, IDLE_CHK_ERROR,
 	"USDM: interrupt 0 is active",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 384*/{(0x1F), 1, USDM_REG_USDM_INT_STS_1,
+/*line 384*/अणु(0x1F), 1, USDM_REG_USDM_INT_STS_1,
 	NA, NA, NA, pneq,
 	NA, IDLE_CHK_ERROR,
 	"USDM: interrupt 0 is active",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 385*/{(0x1F), 1, XSDM_REG_XSDM_INT_STS_0,
+/*line 385*/अणु(0x1F), 1, XSDM_REG_XSDM_INT_STS_0,
 	NA, NA, NA, pneq,
 	NA, IDLE_CHK_ERROR,
 	"XSDM: interrupt 0 is active",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 386*/{(0x1F), 1, XSDM_REG_XSDM_INT_STS_1,
+/*line 386*/अणु(0x1F), 1, XSDM_REG_XSDM_INT_STS_1,
 	NA, NA, NA, pneq,
 	NA, IDLE_CHK_ERROR,
 	"XSDM: interrupt 0 is active",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 387*/{(0x2), 1, HC_REG_HC_PRTY_STS,
+/*line 387*/अणु(0x2), 1, HC_REG_HC_PRTY_STS,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_WARNING,
 	"HC: parity status is not 0",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 388*/{(0x1E), 1, MISC_REG_MISC_PRTY_STS,
+/*line 388*/अणु(0x1E), 1, MISC_REG_MISC_PRTY_STS,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_WARNING,
 	"MISC: parity status is not 0",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 389*/{(0x1E), 1, SRC_REG_SRC_PRTY_STS,
+/*line 389*/अणु(0x1E), 1, SRC_REG_SRC_PRTY_STS,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_WARNING,
 	"SRCH: parity status is not 0",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 390*/{(0xC), 3, QM_REG_BYTECRD0,
+/*line 390*/अणु(0xC), 3, QM_REG_BYTECRD0,
 	QM_REG_BYTECRDINITVAL, 1, 0, pneq_r2,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"QM: Byte credit 0 is not equal to initial credit",
-	{NA, NA, NA, NA, NA, NA} },
+	अणुNA, NA, NA, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 391*/{(0xC), 3, QM_REG_BYTECRD1,
+/*line 391*/अणु(0xC), 3, QM_REG_BYTECRD1,
 	QM_REG_BYTECRDINITVAL, 1, 0, pneq_r2,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"QM: Byte credit 1 is not equal to initial credit",
-	{NA, NA, NA, NA, NA, NA} },
+	अणुNA, NA, NA, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 392*/{(0xC), 3, QM_REG_BYTECRD2,
+/*line 392*/अणु(0xC), 3, QM_REG_BYTECRD2,
 	QM_REG_BYTECRDINITVAL, 1, 0, pneq_r2,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"QM: Byte credit 2 is not equal to initial credit",
-	{NA, NA, NA, NA, NA, NA} },
+	अणुNA, NA, NA, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 393*/{(0x1C), 1, QM_REG_VOQCRDERRREG,
+/*line 393*/अणु(0x1C), 1, QM_REG_VOQCRDERRREG,
 	NA, 1, 0, pand_neq,
 	NA, IDLE_CHK_ERROR,
 	"QM: VOQ credit error register is not 0 (VOQ credit overflow/underflow)",
-	{NA, NA, 0xFFFF, 0, NA, NA} },
+	अणुNA, NA, 0xFFFF, 0, NA, NAपूर्ण पूर्ण,
 
-/*line 394*/{(0x1C), 1, QM_REG_BYTECRDERRREG,
+/*line 394*/अणु(0x1C), 1, QM_REG_BYTECRDERRREG,
 	NA, 1, 0, pand_neq,
 	NA, IDLE_CHK_ERROR,
 	"QM: Byte credit error register is not 0 (Byte credit overflow/underflow)",
-	{NA, NA, 0xFFF, 0, NA, NA} },
+	अणुNA, NA, 0xFFF, 0, NA, NAपूर्ण पूर्ण,
 
-/*line 395*/{(0x1C), 1, PGLUE_B_REG_FLR_REQUEST_VF_31_0,
+/*line 395*/अणु(0x1C), 1, PGLUE_B_REG_FLR_REQUEST_VF_31_0,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_WARNING,
 	"PGL: FLR request is set for VF addresses 31-0",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 396*/{(0x1C), 1, PGLUE_B_REG_FLR_REQUEST_VF_63_32,
+/*line 396*/अणु(0x1C), 1, PGLUE_B_REG_FLR_REQUEST_VF_63_32,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_WARNING,
 	"PGL: FLR request is set for VF addresses 63-32",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 397*/{(0x1C), 1, PGLUE_B_REG_FLR_REQUEST_VF_95_64,
+/*line 397*/अणु(0x1C), 1, PGLUE_B_REG_FLR_REQUEST_VF_95_64,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_WARNING,
 	"PGL: FLR request is set for VF addresses 95-64",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 398*/{(0x1C), 1, PGLUE_B_REG_FLR_REQUEST_VF_127_96,
+/*line 398*/अणु(0x1C), 1, PGLUE_B_REG_FLR_REQUEST_VF_127_96,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_WARNING,
 	"PGL: FLR request is set for VF addresses 127-96",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 399*/{(0x1C), 1, PGLUE_B_REG_FLR_REQUEST_PF_7_0,
+/*line 399*/अणु(0x1C), 1, PGLUE_B_REG_FLR_REQUEST_PF_7_0,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_WARNING,
 	"PGL: FLR request is set for PF addresses 7-0",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 400*/{(0x1C), 1, PGLUE_B_REG_SR_IOV_DISABLED_REQUEST,
+/*line 400*/अणु(0x1C), 1, PGLUE_B_REG_SR_IOV_DISABLED_REQUEST,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_WARNING,
 	"PGL: SR-IOV disable request is set",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 401*/{(0x1C), 1, PGLUE_B_REG_CFG_SPACE_A_REQUEST,
+/*line 401*/अणु(0x1C), 1, PGLUE_B_REG_CFG_SPACE_A_REQUEST,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_WARNING,
 	"PGL: Cfg-Space A request is set",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 402*/{(0x1C), 1, PGLUE_B_REG_CFG_SPACE_B_REQUEST,
+/*line 402*/अणु(0x1C), 1, PGLUE_B_REG_CFG_SPACE_B_REQUEST,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_WARNING,
 	"PGL: Cfg-Space B request is set",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 403*/{(0x1C), 1, IGU_REG_ERROR_HANDLING_DATA_VALID,
+/*line 403*/अणु(0x1C), 1, IGU_REG_ERROR_HANDLING_DATA_VALID,
 	NA, NA, 0, pneq,
 	NA, IDLE_CHK_WARNING,
 	"IGU: some unauthorized commands arrived to the IGU. Use igu_dump_fifo utility for more details",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 404*/{(0x1C), 1, IGU_REG_ATTN_WRITE_DONE_PENDING,
+/*line 404*/अणु(0x1C), 1, IGU_REG_ATTN_WRITE_DONE_PENDING,
 	NA, NA, NA, pneq,
 	NA, IDLE_CHK_WARNING,
 	"IGU attention message write done pending is not empty",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 405*/{(0x1C), 1, IGU_REG_WRITE_DONE_PENDING,
+/*line 405*/अणु(0x1C), 1, IGU_REG_WRITE_DONE_PENDING,
 	NA, 5, 4, pneq,
 	NA, IDLE_CHK_WARNING,
 	"IGU MSI/MSIX message write done pending is not empty",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 406*/{(0x1C), 1, IGU_REG_IGU_PRTY_STS,
+/*line 406*/अणु(0x1C), 1, IGU_REG_IGU_PRTY_STS,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_WARNING,
 	"IGU: parity status is not 0",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 407*/{(0x1E), 3, MISC_REG_GRC_TIMEOUT_ATTN,
+/*line 407*/अणु(0x1E), 3, MISC_REG_GRC_TIMEOUT_ATTN,
 	MISC_REG_AEU_AFTER_INVERT_4_FUNC_0, 1, 0, pand_neq,
 	NA, IDLE_CHK_ERROR,
 	"MISC_REG_GRC_TIMEOUT_ATTN: GRC timeout attention parameters (FUNC_0)",
-	{NA, NA, 0x4000000, 0, NA, NA} },
+	अणुNA, NA, 0x4000000, 0, NA, NAपूर्ण पूर्ण,
 
-/*line 408*/{(0x1C), 3, MISC_REG_GRC_TIMEOUT_ATTN_FULL_FID,
+/*line 408*/अणु(0x1C), 3, MISC_REG_GRC_TIMEOUT_ATTN_FULL_FID,
 	MISC_REG_AEU_AFTER_INVERT_4_FUNC_0, 1, 0, pand_neq,
 	NA, IDLE_CHK_ERROR,
 	"MISC_REG_GRC_TIMEOUT_ATTN_FULL_FID: GRC timeout attention FID (FUNC_0)",
-	{NA, NA, 0x4000000, 0, NA, NA} },
+	अणुNA, NA, 0x4000000, 0, NA, NAपूर्ण पूर्ण,
 
-/*line 409*/{(0x1E), 3, MISC_REG_GRC_TIMEOUT_ATTN,
+/*line 409*/अणु(0x1E), 3, MISC_REG_GRC_TIMEOUT_ATTN,
 	MISC_REG_AEU_AFTER_INVERT_4_FUNC_1, 1, 0, pand_neq,
 	NA, IDLE_CHK_ERROR,
 	"MISC_REG_GRC_TIMEOUT_ATTN: GRC timeout attention parameters (FUNC_1)",
-	{NA, NA, 0x4000000, 0, NA, NA} },
+	अणुNA, NA, 0x4000000, 0, NA, NAपूर्ण पूर्ण,
 
-/*line 410*/{(0x1C), 3, MISC_REG_GRC_TIMEOUT_ATTN_FULL_FID,
+/*line 410*/अणु(0x1C), 3, MISC_REG_GRC_TIMEOUT_ATTN_FULL_FID,
 	MISC_REG_AEU_AFTER_INVERT_4_FUNC_1, 1, 0, pand_neq,
 	NA, IDLE_CHK_ERROR,
 	"MISC_REG_GRC_TIMEOUT_ATTN_FULL_FID: GRC timeout attention FID (FUNC_1)",
-	{NA, NA, 0x4000000, 0, NA, NA} },
+	अणुNA, NA, 0x4000000, 0, NA, NAपूर्ण पूर्ण,
 
-/*line 411*/{(0x1E), 3, MISC_REG_GRC_TIMEOUT_ATTN,
+/*line 411*/अणु(0x1E), 3, MISC_REG_GRC_TIMEOUT_ATTN,
 	MISC_REG_AEU_AFTER_INVERT_4_MCP, 1, 0, pand_neq,
 	NA, IDLE_CHK_ERROR,
 	"MISC_REG_GRC_TIMEOUT_ATTN: GRC timeout attention parameters (MCP)",
-	{NA, NA, 0x4000000, 0, NA, NA} },
+	अणुNA, NA, 0x4000000, 0, NA, NAपूर्ण पूर्ण,
 
-/*line 412*/{(0x1C), 3, MISC_REG_GRC_TIMEOUT_ATTN_FULL_FID,
+/*line 412*/अणु(0x1C), 3, MISC_REG_GRC_TIMEOUT_ATTN_FULL_FID,
 	MISC_REG_AEU_AFTER_INVERT_4_MCP, 1, 0, pand_neq,
 	NA, IDLE_CHK_ERROR,
 	"MISC_REG_GRC_TIMEOUT_ATTN_FULL_FID: GRC timeout attention FID (MCP)",
-	{NA, NA, 0x4000000, 0, NA, NA} },
+	अणुNA, NA, 0x4000000, 0, NA, NAपूर्ण पूर्ण,
 
-/*line 413*/{(0x1C), 1, IGU_REG_SILENT_DROP,
+/*line 413*/अणु(0x1C), 1, IGU_REG_SILENT_DROP,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR,
 	"Some messages were not executed in the IGU",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 414*/{(0x1C), 1, PXP2_REG_PSWRQ_BW_CREDIT,
+/*line 414*/अणु(0x1C), 1, PXP2_REG_PSWRQ_BW_CREDIT,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR,
 	"PXP2: rq_read_credit and rq_write_credit are not 5",
-	{NA, NA, 0x2D, NA, NA, NA} },
+	अणुNA, NA, 0x2D, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 415*/{(0x1C), 1, IGU_REG_SB_CTRL_FSM,
+/*line 415*/अणु(0x1C), 1, IGU_REG_SB_CTRL_FSM,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_WARNING,
 	"IGU: block is not in idle. SB_CTRL_FSM should be zero in idle state",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 416*/{(0x1C), 1, IGU_REG_INT_HANDLE_FSM,
+/*line 416*/अणु(0x1C), 1, IGU_REG_INT_HANDLE_FSM,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_WARNING,
 	"IGU: block is not in idle. INT_HANDLE_FSM should be zero in idle state",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 417*/{(0x1C), 1, IGU_REG_ATTN_FSM,
+/*line 417*/अणु(0x1C), 1, IGU_REG_ATTN_FSM,
 	NA, 1, 0, pand_neq,
 	NA, IDLE_CHK_WARNING,
 	"IGU: block is not in idle. SB_ATTN_FSMshould be zeroor two in idle state",
-	{NA, NA, ~0x2, 0, NA, NA} },
+	अणुNA, NA, ~0x2, 0, NA, NAपूर्ण पूर्ण,
 
-/*line 418*/{(0x1C), 1, IGU_REG_CTRL_FSM,
+/*line 418*/अणु(0x1C), 1, IGU_REG_CTRL_FSM,
 	NA, 1, 0, pand_neq,
 	NA, IDLE_CHK_WARNING,
 	"IGU: block is not in idle. SB_CTRL_FSM should be zero in idle state",
-	{NA, NA, ~0x1, 0, NA, NA} },
+	अणुNA, NA, ~0x1, 0, NA, NAपूर्ण पूर्ण,
 
-/*line 419*/{(0x1C), 1, IGU_REG_PXP_ARB_FSM,
+/*line 419*/अणु(0x1C), 1, IGU_REG_PXP_ARB_FSM,
 	NA, 1, 0, pand_neq,
 	NA, IDLE_CHK_WARNING,
 	"IGU: block is not in idle. SB_ARB_FSM should be zero in idle state",
-	{NA, NA, ~0x1, 0, NA, NA} },
+	अणुNA, NA, ~0x1, 0, NA, NAपूर्ण पूर्ण,
 
-/*line 420*/{(0x1C), 1, IGU_REG_PENDING_BITS_STATUS,
+/*line 420*/अणु(0x1C), 1, IGU_REG_PENDING_BITS_STATUS,
 	NA, 5, 4, pneq,
 	NA, IDLE_CHK_WARNING,
 	"IGU: block is not in idle. There are pending write done",
-	{NA, NA, 0, NA, NA, NA} },
+	अणुNA, NA, 0, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 421*/{(0x10), 3, QM_REG_VOQCREDIT_0,
+/*line 421*/अणु(0x10), 3, QM_REG_VOQCREDIT_0,
 	QM_REG_VOQINITCREDIT_0, 1, 0, pneq_r2,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"QM: VOQ_0, VOQ credit is not equal to initial credit",
-	{NA, NA, NA, NA, NA, NA} },
+	अणुNA, NA, NA, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 422*/{(0x10), 3, QM_REG_VOQCREDIT_1,
+/*line 422*/अणु(0x10), 3, QM_REG_VOQCREDIT_1,
 	QM_REG_VOQINITCREDIT_1, 1, 0, pneq_r2,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"QM: VOQ_1, VOQ credit is not equal to initial credit",
-	{NA, NA, NA, NA, NA, NA} },
+	अणुNA, NA, NA, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 423*/{(0x10), 3, QM_REG_VOQCREDIT_2,
+/*line 423*/अणु(0x10), 3, QM_REG_VOQCREDIT_2,
 	QM_REG_VOQINITCREDIT_2, 1, 0, pneq_r2,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"QM: VOQ_2, VOQ credit is not equal to initial credit",
-	{NA, NA, NA, NA, NA, NA} },
+	अणुNA, NA, NA, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 424*/{(0x10), 3, QM_REG_VOQCREDIT_3,
+/*line 424*/अणु(0x10), 3, QM_REG_VOQCREDIT_3,
 	QM_REG_VOQINITCREDIT_3, 1, 0, pneq_r2,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"QM: VOQ_3, VOQ credit is not equal to initial credit",
-	{NA, NA, NA, NA, NA, NA} },
+	अणुNA, NA, NA, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 425*/{(0x10), 3, QM_REG_VOQCREDIT_4,
+/*line 425*/अणु(0x10), 3, QM_REG_VOQCREDIT_4,
 	QM_REG_VOQINITCREDIT_4, 1, 0, pneq_r2,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"QM: VOQ_4, VOQ credit is not equal to initial credit",
-	{NA, NA, NA, NA, NA, NA} },
+	अणुNA, NA, NA, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 426*/{(0x10), 3, QM_REG_VOQCREDIT_5,
+/*line 426*/अणु(0x10), 3, QM_REG_VOQCREDIT_5,
 	QM_REG_VOQINITCREDIT_5, 1, 0, pneq_r2,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"QM: VOQ_5, VOQ credit is not equal to initial credit",
-	{NA, NA, NA, NA, NA, NA} },
+	अणुNA, NA, NA, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 427*/{(0x10), 3, QM_REG_VOQCREDIT_6,
+/*line 427*/अणु(0x10), 3, QM_REG_VOQCREDIT_6,
 	QM_REG_VOQINITCREDIT_6, 1, 0, pneq_r2,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"QM: VOQ_6 (LB VOQ), VOQ credit is not equal to initial credit",
-	{NA, NA, NA, NA, NA, NA} },
+	अणुNA, NA, NA, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 428*/{(0x10), 3, QM_REG_BYTECRD0,
+/*line 428*/अणु(0x10), 3, QM_REG_BYTECRD0,
 	QM_REG_BYTECRDINITVAL, 1, 0, pneq_r2,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"QM: Byte credit 0 is not equal to initial credit",
-	{NA, NA, NA, NA, NA, NA} },
+	अणुNA, NA, NA, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 429*/{(0x10), 3, QM_REG_BYTECRD1,
+/*line 429*/अणु(0x10), 3, QM_REG_BYTECRD1,
 	QM_REG_BYTECRDINITVAL, 1, 0, pneq_r2,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"QM: Byte credit 1 is not equal to initial credit",
-	{NA, NA, NA, NA, NA, NA} },
+	अणुNA, NA, NA, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 430*/{(0x10), 3, QM_REG_BYTECRD2,
+/*line 430*/अणु(0x10), 3, QM_REG_BYTECRD2,
 	QM_REG_BYTECRDINITVAL, 1, 0, pneq_r2,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"QM: Byte credit 2 is not equal to initial credit",
-	{NA, NA, NA, NA, NA, NA} },
+	अणुNA, NA, NA, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 431*/{(0x10), 3, QM_REG_BYTECRD3,
+/*line 431*/अणु(0x10), 3, QM_REG_BYTECRD3,
 	QM_REG_BYTECRDINITVAL, 1, 0, pneq_r2,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"QM: Byte credit 3 is not equal to initial credit",
-	{NA, NA, NA, NA, NA, NA} },
+	अणुNA, NA, NA, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 432*/{(0x10), 3, QM_REG_BYTECRD4,
+/*line 432*/अणु(0x10), 3, QM_REG_BYTECRD4,
 	QM_REG_BYTECRDINITVAL, 1, 0, pneq_r2,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"QM: Byte credit 4 is not equal to initial credit",
-	{NA, NA, NA, NA, NA, NA} },
+	अणुNA, NA, NA, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 433*/{(0x10), 3, QM_REG_BYTECRD5,
+/*line 433*/अणु(0x10), 3, QM_REG_BYTECRD5,
 	QM_REG_BYTECRDINITVAL, 1, 0, pneq_r2,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"QM: Byte credit 5 is not equal to initial credit",
-	{NA, NA, NA, NA, NA, NA} },
+	अणुNA, NA, NA, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 434*/{(0x10), 3, QM_REG_BYTECRD6,
+/*line 434*/अणु(0x10), 3, QM_REG_BYTECRD6,
 	QM_REG_BYTECRDINITVAL, 1, 0, pneq_r2,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"QM: Byte credit 6 is not equal to initial credit",
-	{NA, NA, NA, NA, NA, NA} },
+	अणुNA, NA, NA, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 435*/{(0x10), 1, QM_REG_FWVOQ0TOHWVOQ,
+/*line 435*/अणु(0x10), 1, QM_REG_FWVOQ0TOHWVOQ,
 	NA, 1, 0, peq,
 	NA, IDLE_CHK_ERROR,
 	"QM: FwVoq0 is mapped to HwVoq7 (non-TX HwVoq)",
-	{NA, NA, 0x7, NA, NA, NA} },
+	अणुNA, NA, 0x7, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 436*/{(0x10), 1, QM_REG_FWVOQ1TOHWVOQ,
+/*line 436*/अणु(0x10), 1, QM_REG_FWVOQ1TOHWVOQ,
 	NA, 1, 0, peq,
 	NA, IDLE_CHK_ERROR,
 	"QM: FwVoq1 is mapped to HwVoq7 (non-TX HwVoq)",
-	{NA, NA, 0x7, NA, NA, NA} },
+	अणुNA, NA, 0x7, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 437*/{(0x10), 1, QM_REG_FWVOQ2TOHWVOQ,
+/*line 437*/अणु(0x10), 1, QM_REG_FWVOQ2TOHWVOQ,
 	NA, 1, 0, peq,
 	NA, IDLE_CHK_ERROR,
 	"QM: FwVoq2 is mapped to HwVoq7 (non-TX HwVoq)",
-	{NA, NA, 0x7, NA, NA, NA} },
+	अणुNA, NA, 0x7, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 438*/{(0x10), 1, QM_REG_FWVOQ3TOHWVOQ,
+/*line 438*/अणु(0x10), 1, QM_REG_FWVOQ3TOHWVOQ,
 	NA, 1, 0, peq,
 	NA, IDLE_CHK_ERROR,
 	"QM: FwVoq3 is mapped to HwVoq7 (non-TX HwVoq)",
-	{NA, NA, 0x7, NA, NA, NA} },
+	अणुNA, NA, 0x7, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 439*/{(0x10), 1, QM_REG_FWVOQ4TOHWVOQ,
+/*line 439*/अणु(0x10), 1, QM_REG_FWVOQ4TOHWVOQ,
 	NA, 1, 0, peq,
 	NA, IDLE_CHK_ERROR,
 	"QM: FwVoq4 is mapped to HwVoq7 (non-TX HwVoq)",
-	{NA, NA, 0x7, NA, NA, NA} },
+	अणुNA, NA, 0x7, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 440*/{(0x10), 1, QM_REG_FWVOQ5TOHWVOQ,
+/*line 440*/अणु(0x10), 1, QM_REG_FWVOQ5TOHWVOQ,
 	NA, 1, 0, peq,
 	NA, IDLE_CHK_ERROR,
 	"QM: FwVoq5 is mapped to HwVoq7 (non-TX HwVoq)",
-	{NA, NA, 0x7, NA, NA, NA} },
+	अणुNA, NA, 0x7, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 441*/{(0x10), 1, QM_REG_FWVOQ6TOHWVOQ,
+/*line 441*/अणु(0x10), 1, QM_REG_FWVOQ6TOHWVOQ,
 	NA, 1, 0, peq,
 	NA, IDLE_CHK_ERROR,
 	"QM: FwVoq6 is mapped to HwVoq7 (non-TX HwVoq)",
-	{NA, NA, 0x7, NA, NA, NA} },
+	अणुNA, NA, 0x7, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 442*/{(0x10), 1, QM_REG_FWVOQ7TOHWVOQ,
+/*line 442*/अणु(0x10), 1, QM_REG_FWVOQ7TOHWVOQ,
 	NA, 1, 0, peq,
 	NA, IDLE_CHK_ERROR,
 	"QM: FwVoq7 is mapped to HwVoq7 (non-TX HwVoq)",
-	{NA, NA, 0x7, NA, NA, NA} },
+	अणुNA, NA, 0x7, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 443*/{(0x1F), 1, NIG_REG_INGRESS_EOP_PORT0_EMPTY,
+/*line 443*/अणु(0x1F), 1, NIG_REG_INGRESS_EOP_PORT0_EMPTY,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"NIG: Port 0 EOP FIFO is not empty",
-	{NA, NA, 1, NA, NA, NA} },
+	अणुNA, NA, 1, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 444*/{(0x1F), 1, NIG_REG_INGRESS_EOP_PORT1_EMPTY,
+/*line 444*/अणु(0x1F), 1, NIG_REG_INGRESS_EOP_PORT1_EMPTY,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"NIG: Port 1 EOP FIFO is not empty",
-	{NA, NA, 1, NA, NA, NA} },
+	अणुNA, NA, 1, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 445*/{(0x1F), 1, NIG_REG_INGRESS_EOP_LB_EMPTY,
+/*line 445*/अणु(0x1F), 1, NIG_REG_INGRESS_EOP_LB_EMPTY,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"NIG: LB EOP FIFO is not empty",
-	{NA, NA, 1, NA, NA, NA} },
+	अणुNA, NA, 1, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 446*/{(0x1F), 1, NIG_REG_INGRESS_RMP0_DSCR_EMPTY,
+/*line 446*/अणु(0x1F), 1, NIG_REG_INGRESS_RMP0_DSCR_EMPTY,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_WARNING,
 	"NIG: Port 0 RX MCP descriptor FIFO is not empty",
-	{NA, NA, 1, NA, NA, NA} },
+	अणुNA, NA, 1, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 447*/{(0x1F), 1, NIG_REG_INGRESS_RMP1_DSCR_EMPTY,
+/*line 447*/अणु(0x1F), 1, NIG_REG_INGRESS_RMP1_DSCR_EMPTY,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_WARNING,
 	"NIG: Port 1 RX MCP descriptor FIFO is not empty",
-	{NA, NA, 1, NA, NA, NA} },
+	अणुNA, NA, 1, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 448*/{(0x1F), 1, NIG_REG_INGRESS_LB_PBF_DELAY_EMPTY,
+/*line 448*/अणु(0x1F), 1, NIG_REG_INGRESS_LB_PBF_DELAY_EMPTY,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"NIG: PBF LB FIFO is not empty",
-	{NA, NA, 1, NA, NA, NA} },
+	अणुNA, NA, 1, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 449*/{(0x1F), 1, NIG_REG_EGRESS_MNG0_FIFO_EMPTY,
+/*line 449*/अणु(0x1F), 1, NIG_REG_EGRESS_MNG0_FIFO_EMPTY,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_WARNING,
 	"NIG: Port 0 TX MCP FIFO is not empty",
-	{NA, NA, 1, NA, NA, NA} },
+	अणुNA, NA, 1, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 450*/{(0x1F), 1, NIG_REG_EGRESS_MNG1_FIFO_EMPTY,
+/*line 450*/अणु(0x1F), 1, NIG_REG_EGRESS_MNG1_FIFO_EMPTY,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_WARNING,
 	"NIG: Port 1 TX MCP FIFO is not empty",
-	{NA, NA, 1, NA, NA, NA} },
+	अणुNA, NA, 1, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 451*/{(0x1F), 1, NIG_REG_EGRESS_DEBUG_FIFO_EMPTY,
+/*line 451*/अणु(0x1F), 1, NIG_REG_EGRESS_DEBUG_FIFO_EMPTY,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"NIG: Debug FIFO is not empty",
-	{NA, NA, 1, NA, NA, NA} },
+	अणुNA, NA, 1, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 452*/{(0x1F), 1, NIG_REG_EGRESS_DELAY0_EMPTY,
+/*line 452*/अणु(0x1F), 1, NIG_REG_EGRESS_DELAY0_EMPTY,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"NIG: PBF IF0 FIFO is not empty",
-	{NA, NA, 1, NA, NA, NA} },
+	अणुNA, NA, 1, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 453*/{(0x1F), 1, NIG_REG_EGRESS_DELAY1_EMPTY,
+/*line 453*/अणु(0x1F), 1, NIG_REG_EGRESS_DELAY1_EMPTY,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"NIG: PBF IF1 FIFO is not empty",
-	{NA, NA, 1, NA, NA, NA} },
+	अणुNA, NA, 1, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 454*/{(0x1F), 1, NIG_REG_LLH0_FIFO_EMPTY,
+/*line 454*/अणु(0x1F), 1, NIG_REG_LLH0_FIFO_EMPTY,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"NIG: Port 0 RX LLH FIFO is not empty",
-	{NA, NA, 1, NA, NA, NA} },
+	अणुNA, NA, 1, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 455*/{(0x1F), 1, NIG_REG_LLH1_FIFO_EMPTY,
+/*line 455*/अणु(0x1F), 1, NIG_REG_LLH1_FIFO_EMPTY,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"NIG: Port 1 RX LLH FIFO is not empty",
-	{NA, NA, 1, NA, NA, NA} },
+	अणुNA, NA, 1, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 456*/{(0x1C), 1, NIG_REG_P0_TX_MNG_HOST_FIFO_EMPTY,
+/*line 456*/अणु(0x1C), 1, NIG_REG_P0_TX_MNG_HOST_FIFO_EMPTY,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_WARNING,
 	"NIG: Port 0 TX MCP FIFO for traffic going to the host is not empty",
-	{NA, NA, 1, NA, NA, NA} },
+	अणुNA, NA, 1, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 457*/{(0x1C), 1, NIG_REG_P1_TX_MNG_HOST_FIFO_EMPTY,
+/*line 457*/अणु(0x1C), 1, NIG_REG_P1_TX_MNG_HOST_FIFO_EMPTY,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_WARNING,
 	"NIG: Port 1 TX MCP FIFO for traffic going to the host is not empty",
-	{NA, NA, 1, NA, NA, NA} },
+	अणुNA, NA, 1, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 458*/{(0x1C), 1, NIG_REG_P0_TLLH_FIFO_EMPTY,
+/*line 458*/अणु(0x1C), 1, NIG_REG_P0_TLLH_FIFO_EMPTY,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"NIG: Port 0 TX LLH FIFO is not empty",
-	{NA, NA, 1, NA, NA, NA} },
+	अणुNA, NA, 1, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 459*/{(0x1C), 1, NIG_REG_P1_TLLH_FIFO_EMPTY,
+/*line 459*/अणु(0x1C), 1, NIG_REG_P1_TLLH_FIFO_EMPTY,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"NIG: Port 1 TX LLH FIFO is not empty",
-	{NA, NA, 1, NA, NA, NA} },
+	अणुNA, NA, 1, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 460*/{(0x1C), 1, NIG_REG_P0_HBUF_DSCR_EMPTY,
+/*line 460*/अणु(0x1C), 1, NIG_REG_P0_HBUF_DSCR_EMPTY,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_WARNING,
 	"NIG: Port 0 RX MCP descriptor FIFO for traffic from the host is not empty",
-	{NA, NA, 1, NA, NA, NA} },
+	अणुNA, NA, 1, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 461*/{(0x1C), 1, NIG_REG_P1_HBUF_DSCR_EMPTY,
+/*line 461*/अणु(0x1C), 1, NIG_REG_P1_HBUF_DSCR_EMPTY,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_WARNING,
 	"NIG: Port 1 RX MCP descriptor FIFO for traffic from the host is not empty",
-	{NA, NA, 1, NA, NA, NA} },
+	अणुNA, NA, 1, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 462*/{(0x18), 1, NIG_REG_P0_RX_MACFIFO_EMPTY,
+/*line 462*/अणु(0x18), 1, NIG_REG_P0_RX_MACFIFO_EMPTY,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"NIG: Port 0 RX MAC interface FIFO is not empty",
-	{NA, NA, 1, NA, NA, NA} },
+	अणुNA, NA, 1, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 463*/{(0x18), 1, NIG_REG_P1_RX_MACFIFO_EMPTY,
+/*line 463*/अणु(0x18), 1, NIG_REG_P1_RX_MACFIFO_EMPTY,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"NIG: Port 1 RX MAC interface FIFO is not empty",
-	{NA, NA, 1, NA, NA, NA} },
+	अणुNA, NA, 1, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 464*/{(0x18), 1, NIG_REG_P0_TX_MACFIFO_EMPTY,
+/*line 464*/अणु(0x18), 1, NIG_REG_P0_TX_MACFIFO_EMPTY,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"NIG: Port 0 TX MAC interface FIFO is not empty",
-	{NA, NA, 1, NA, NA, NA} },
+	अणुNA, NA, 1, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 465*/{(0x18), 1, NIG_REG_P1_TX_MACFIFO_EMPTY,
+/*line 465*/अणु(0x18), 1, NIG_REG_P1_TX_MACFIFO_EMPTY,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"NIG: Port 1 TX MAC interface FIFO is not empty",
-	{NA, NA, 1, NA, NA, NA} },
+	अणुNA, NA, 1, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 466*/{(0x10), 1, NIG_REG_EGRESS_DELAY2_EMPTY,
+/*line 466*/अणु(0x10), 1, NIG_REG_EGRESS_DELAY2_EMPTY,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"NIG: PBF IF2 FIFO is not empty",
-	{NA, NA, 1, NA, NA, NA} },
+	अणुNA, NA, 1, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 467*/{(0x10), 1, NIG_REG_EGRESS_DELAY3_EMPTY,
+/*line 467*/अणु(0x10), 1, NIG_REG_EGRESS_DELAY3_EMPTY,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"NIG: PBF IF3 FIFO is not empty",
-	{NA, NA, 1, NA, NA, NA} },
+	अणुNA, NA, 1, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 468*/{(0x10), 1, NIG_REG_EGRESS_DELAY4_EMPTY,
+/*line 468*/अणु(0x10), 1, NIG_REG_EGRESS_DELAY4_EMPTY,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"NIG: PBF IF4 FIFO is not empty",
-	{NA, NA, 1, NA, NA, NA} },
+	अणुNA, NA, 1, NA, NA, NAपूर्ण पूर्ण,
 
-/*line 469*/{(0x10), 1, NIG_REG_EGRESS_DELAY5_EMPTY,
+/*line 469*/अणु(0x10), 1, NIG_REG_EGRESS_DELAY5_EMPTY,
 	NA, 1, 0, pneq,
 	NA, IDLE_CHK_ERROR_NO_TRAFFIC,
 	"NIG: PBF IF5 FIFO is not empty",
-	{NA, NA, 1, NA, NA, NA} },
-};
+	अणुNA, NA, 1, NA, NA, NAपूर्ण पूर्ण,
+पूर्ण;
 
 /* handle self test fails according to severity and type */
-static void bnx2x_self_test_log(struct bnx2x *bp, u8 severity, char *message)
-{
-	switch (severity) {
-	case IDLE_CHK_ERROR:
+अटल व्योम bnx2x_self_test_log(काष्ठा bnx2x *bp, u8 severity, अक्षर *message)
+अणु
+	चयन (severity) अणु
+	हाल IDLE_CHK_ERROR:
 		BNX2X_ERR("ERROR %s", message);
 		idle_chk_errors++;
-		break;
-	case IDLE_CHK_ERROR_NO_TRAFFIC:
+		अवरोध;
+	हाल IDLE_CHK_ERROR_NO_TRAFFIC:
 		DP(NETIF_MSG_HW, "INFO %s", message);
-		break;
-	case IDLE_CHK_WARNING:
+		अवरोध;
+	हाल IDLE_CHK_WARNING:
 		DP(NETIF_MSG_HW, "WARNING %s", message);
 		idle_chk_warnings++;
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-/* specific test for QM rd/wr pointers and rd/wr banks */
-static void bnx2x_idle_chk6(struct bnx2x *bp,
-			    struct st_record *rec, char *message)
-{
+/* specअगरic test क्रम QM rd/wr poपूर्णांकers and rd/wr banks */
+अटल व्योम bnx2x_idle_chk6(काष्ठा bnx2x *bp,
+			    काष्ठा st_record *rec, अक्षर *message)
+अणु
 	u32 rd_ptr, wr_ptr, rd_bank, wr_bank;
-	int i;
+	पूर्णांक i;
 
-	for (i = 0; i < rec->loop; i++) {
-		/* read regs */
+	क्रम (i = 0; i < rec->loop; i++) अणु
+		/* पढ़ो regs */
 		rec->pred_args.val1 =
 			REG_RD(bp, rec->reg1 + i * rec->incr);
 		rec->pred_args.val2 =
 			REG_RD(bp, rec->reg1 + i * rec->incr + 4);
 
-		/* calc read and write pointers */
+		/* calc पढ़ो and ग_लिखो poपूर्णांकers */
 		rd_ptr = ((rec->pred_args.val1 & 0x3FFFFFC0) >> 6);
 		wr_ptr = ((((rec->pred_args.val1 & 0xC0000000) >> 30) & 0x3) |
 			((rec->pred_args.val2 & 0x3FFFFF) << 2));
 
-		/* perfrom pointer test */
-		if (rd_ptr != wr_ptr) {
-			snprintf(message, MAX_FAIL_MSG,
+		/* perfrom poपूर्णांकer test */
+		अगर (rd_ptr != wr_ptr) अणु
+			snम_लिखो(message, MAX_FAIL_MSG,
 				 "QM: PTRTBL entry %d- rd_ptr is not equal to wr_ptr. Values are 0x%x and 0x%x\n",
 				 i, rd_ptr, wr_ptr);
 			bnx2x_self_test_log(bp, rec->severity, message);
-		}
+		पूर्ण
 
-		/* calculate read and write banks */
+		/* calculate पढ़ो and ग_लिखो banks */
 		rd_bank = ((rec->pred_args.val1 & 0x30) >> 4);
 		wr_bank = (rec->pred_args.val1 & 0x03);
 
-		/* perform bank test */
-		if (rd_bank != wr_bank) {
-			snprintf(message, MAX_FAIL_MSG,
+		/* perक्रमm bank test */
+		अगर (rd_bank != wr_bank) अणु
+			snम_लिखो(message, MAX_FAIL_MSG,
 				 "QM: PTRTBL entry %d - rd_bank is not equal to wr_bank. Values are 0x%x 0x%x\n",
 				 i, rd_bank, wr_bank);
 			bnx2x_self_test_log(bp, rec->severity, message);
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-/* specific test for cfc info ram and cid cam */
-static void bnx2x_idle_chk7(struct bnx2x *bp,
-			    struct st_record *rec, char *message)
-{
-	int i;
+/* specअगरic test क्रम cfc info ram and cid cam */
+अटल व्योम bnx2x_idle_chk7(काष्ठा bnx2x *bp,
+			    काष्ठा st_record *rec, अक्षर *message)
+अणु
+	पूर्णांक i;
 
 	/* iterate through lcids */
-	for (i = 0; i < rec->loop; i++) {
+	क्रम (i = 0; i < rec->loop; i++) अणु
 		/* make sure cam entry is valid (bit 0) */
-		if ((REG_RD(bp, (rec->reg2 + i * 4)) & 0x1) != 0x1)
-			continue;
+		अगर ((REG_RD(bp, (rec->reg2 + i * 4)) & 0x1) != 0x1)
+			जारी;
 
-		/* get connection type (multiple reads due to widebus) */
+		/* get connection type (multiple पढ़ोs due to widebus) */
 		REG_RD(bp, (rec->reg1 + i * rec->incr));
 		REG_RD(bp, (rec->reg1 + i * rec->incr + 4));
 		rec->pred_args.val1 =
@@ -3003,133 +3004,133 @@ static void bnx2x_idle_chk7(struct bnx2x *bp,
 		REG_RD(bp, (rec->reg1 + i * rec->incr + 12));
 
 		/* obtain connection type */
-		if (is_e1 || is_e1h) {
+		अगर (is_e1 || is_e1h) अणु
 			/* E1 E1H (bits 4..7) */
 			rec->pred_args.val1 &= 0x78;
 			rec->pred_args.val1 >>= 3;
-		} else {
+		पूर्ण अन्यथा अणु
 			/* E2 E3A0 E3B0 (bits 26..29) */
 			rec->pred_args.val1 &= 0x1E000000;
 			rec->pred_args.val1 >>= 25;
-		}
+		पूर्ण
 
 		/* get activity counter value */
 		rec->pred_args.val2 = REG_RD(bp, rec->reg3 + i * 4);
 
-		/* validate ac value is legal for con_type at idle state */
-		if (rec->bnx2x_predicate(&rec->pred_args)) {
-			snprintf(message, MAX_FAIL_MSG,
+		/* validate ac value is legal क्रम con_type at idle state */
+		अगर (rec->bnx2x_predicate(&rec->pred_args)) अणु
+			snम_लिखो(message, MAX_FAIL_MSG,
 				 "%s. Values are 0x%x 0x%x\n", rec->fail_msg,
 				 rec->pred_args.val1, rec->pred_args.val2);
 			bnx2x_self_test_log(bp, rec->severity, message);
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
 /* self test procedure
- * scan auto-generated database
- * for each line:
+ * scan स्वतः-generated database
+ * क्रम each line:
  * 1.	compare chip mask
  * 2.	determine type (according to maro number)
- * 3.	read registers
+ * 3.	पढ़ो रेजिस्टरs
  * 4.	call predicate
  * 5.	collate results and statistics
  */
-int bnx2x_idle_chk(struct bnx2x *bp)
-{
+पूर्णांक bnx2x_idle_chk(काष्ठा bnx2x *bp)
+अणु
 	u16 i;				/* loop counter */
 	u16 st_ind;			/* self test database access index */
-	struct st_record rec;		/* current record variable */
-	char message[MAX_FAIL_MSG];	/* message to log */
+	काष्ठा st_record rec;		/* current record variable */
+	अक्षर message[MAX_FAIL_MSG];	/* message to log */
 
 	/*init stats*/
 	idle_chk_errors = 0;
 	idle_chk_warnings = 0;
 
-	/*create masks for all chip types*/
+	/*create masks क्रम all chip types*/
 	is_e1	= CHIP_IS_E1(bp);
 	is_e1h	= CHIP_IS_E1H(bp);
 	is_e2	= CHIP_IS_E2(bp);
 	is_e3a0	= CHIP_IS_E3A0(bp);
 	is_e3b0	= CHIP_IS_E3B0(bp);
 
-	/*database main loop*/
-	for (st_ind = 0; st_ind < ST_DB_LINES; st_ind++) {
+	/*database मुख्य loop*/
+	क्रम (st_ind = 0; st_ind < ST_DB_LINES; st_ind++) अणु
 		rec = st_database[st_ind];
 
-		/*check if test applies to chip*/
-		if (!((rec.chip_mask & IDLE_CHK_E1) && is_e1) &&
+		/*check अगर test applies to chip*/
+		अगर (!((rec.chip_mask & IDLE_CHK_E1) && is_e1) &&
 		    !((rec.chip_mask & IDLE_CHK_E1H) && is_e1h) &&
 		    !((rec.chip_mask & IDLE_CHK_E2) && is_e2) &&
 		    !((rec.chip_mask & IDLE_CHK_E3A0) && is_e3a0) &&
 		    !((rec.chip_mask & IDLE_CHK_E3B0) && is_e3b0))
-			continue;
+			जारी;
 
-		/* identify macro */
-		switch (rec.macro) {
-		case 1:
-			/* read single reg and call predicate */
+		/* identअगरy macro */
+		चयन (rec.macro) अणु
+		हाल 1:
+			/* पढ़ो single reg and call predicate */
 			rec.pred_args.val1 = REG_RD(bp, rec.reg1);
 			DP(BNX2X_MSG_IDLE, "mac1 add %x\n", rec.reg1);
-			if (rec.bnx2x_predicate(&rec.pred_args)) {
-				snprintf(message, sizeof(message),
+			अगर (rec.bnx2x_predicate(&rec.pred_args)) अणु
+				snम_लिखो(message, माप(message),
 					 "%s.Value is 0x%x\n", rec.fail_msg,
 					 rec.pred_args.val1);
 				bnx2x_self_test_log(bp, rec.severity, message);
-			}
-			break;
-		case 2:
-			/* read repeatedly starting from reg1 and call
-			 * predicate after each read
+			पूर्ण
+			अवरोध;
+		हाल 2:
+			/* पढ़ो repeatedly starting from reg1 and call
+			 * predicate after each पढ़ो
 			 */
-			for (i = 0; i < rec.loop; i++) {
+			क्रम (i = 0; i < rec.loop; i++) अणु
 				rec.pred_args.val1 =
 					REG_RD(bp, rec.reg1 + i * rec.incr);
 				DP(BNX2X_MSG_IDLE, "mac2 add %x\n", rec.reg1);
-				if (rec.bnx2x_predicate(&rec.pred_args)) {
-					snprintf(message, sizeof(message),
+				अगर (rec.bnx2x_predicate(&rec.pred_args)) अणु
+					snम_लिखो(message, माप(message),
 						 "%s. Value is 0x%x in loop %d\n",
 						 rec.fail_msg,
 						 rec.pred_args.val1, i);
 					bnx2x_self_test_log(bp, rec.severity,
 							    message);
-				}
-			}
-			break;
-		case 3:
-			/* read two regs and call predicate */
+				पूर्ण
+			पूर्ण
+			अवरोध;
+		हाल 3:
+			/* पढ़ो two regs and call predicate */
 			rec.pred_args.val1 = REG_RD(bp, rec.reg1);
 			rec.pred_args.val2 = REG_RD(bp, rec.reg2);
 			DP(BNX2X_MSG_IDLE, "mac3 add1 %x add2 %x\n",
 			   rec.reg1, rec.reg2);
-			if (rec.bnx2x_predicate(&rec.pred_args)) {
-				snprintf(message, sizeof(message),
+			अगर (rec.bnx2x_predicate(&rec.pred_args)) अणु
+				snम_लिखो(message, माप(message),
 					 "%s. Values are 0x%x 0x%x\n",
 					 rec.fail_msg, rec.pred_args.val1,
 					 rec.pred_args.val2);
 				bnx2x_self_test_log(bp, rec.severity, message);
-			}
-			break;
-		case 4:
+			पूर्ण
+			अवरोध;
+		हाल 4:
 			/*unused to-date*/
-			for (i = 0; i < rec.loop; i++) {
+			क्रम (i = 0; i < rec.loop; i++) अणु
 				rec.pred_args.val1 =
 					REG_RD(bp, rec.reg1 + i * rec.incr);
 				rec.pred_args.val2 =
 					(REG_RD(bp,
 						rec.reg2 + i * rec.incr)) >> 1;
-				if (rec.bnx2x_predicate(&rec.pred_args)) {
-					snprintf(message, sizeof(message),
+				अगर (rec.bnx2x_predicate(&rec.pred_args)) अणु
+					snम_लिखो(message, माप(message),
 						 "%s. Values are 0x%x 0x%x in loop %d\n",
 						 rec.fail_msg,
 						 rec.pred_args.val1,
 						 rec.pred_args.val2, i);
 					bnx2x_self_test_log(bp, rec.severity,
 							    message);
-				}
-			}
-			break;
-		case 5:
+				पूर्ण
+			पूर्ण
+			अवरोध;
+		हाल 5:
 			/* compare two regs, pending
 			 * the value of a condition reg
 			 */
@@ -3137,47 +3138,47 @@ int bnx2x_idle_chk(struct bnx2x *bp)
 			rec.pred_args.val2 = REG_RD(bp, rec.reg2);
 			DP(BNX2X_MSG_IDLE, "mac3 add1 %x add2 %x add3 %x\n",
 			   rec.reg1, rec.reg2, rec.reg3);
-			if (REG_RD(bp, rec.reg3) != 0) {
-				if (rec.bnx2x_predicate(&rec.pred_args)) {
-					snprintf(message, sizeof(message),
+			अगर (REG_RD(bp, rec.reg3) != 0) अणु
+				अगर (rec.bnx2x_predicate(&rec.pred_args)) अणु
+					snम_लिखो(message, माप(message),
 						 "%s. Values are 0x%x 0x%x\n",
 						 rec.fail_msg,
 						 rec.pred_args.val1,
 						 rec.pred_args.val2);
 					bnx2x_self_test_log(bp, rec.severity,
 							    message);
-				}
-			}
-			break;
-		case 6:
-			/* compare read and write pointers
-			 * and read and write banks in QM
+				पूर्ण
+			पूर्ण
+			अवरोध;
+		हाल 6:
+			/* compare पढ़ो and ग_लिखो poपूर्णांकers
+			 * and पढ़ो and ग_लिखो banks in QM
 			 */
 			bnx2x_idle_chk6(bp, &rec, message);
-			break;
-		case 7:
+			अवरोध;
+		हाल 7:
 			/* compare cfc info cam with cid cam */
 			bnx2x_idle_chk7(bp, &rec, message);
-			break;
-		default:
+			अवरोध;
+		शेष:
 			DP(BNX2X_MSG_IDLE,
 			   "unknown macro in self test data base. macro %d line %d",
 			   rec.macro, st_ind);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	/* abort if interface is not running */
-	if (!netif_running(bp->dev))
-		return idle_chk_errors;
+	/* पात अगर पूर्णांकerface is not running */
+	अगर (!netअगर_running(bp->dev))
+		वापस idle_chk_errors;
 
-	/* return value accorindg to statistics */
-	if (idle_chk_errors == 0) {
+	/* वापस value accorindg to statistics */
+	अगर (idle_chk_errors == 0) अणु
 		DP(BNX2X_MSG_IDLE,
 		   "completed successfully (logged %d warnings)\n",
 		   idle_chk_warnings);
-	} else {
+	पूर्ण अन्यथा अणु
 		BNX2X_ERR("failed (with %d errors, %d warnings)\n",
 			  idle_chk_errors, idle_chk_warnings);
-	}
-	return idle_chk_errors;
-}
+	पूर्ण
+	वापस idle_chk_errors;
+पूर्ण

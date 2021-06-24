@@ -1,42 +1,43 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * linux/arch/arm/mach-pxa/himalaya.c
  *
- * Hardware definitions for the HTC Himalaya
+ * Hardware definitions क्रम the HTC Himalaya
  *
  * Based on 2.6.21-hh20's himalaya.c and himalaya_lcd.c
  *
  * Copyright (c) 2008 Zbynek Michl <Zbynek.Michl@seznam.cz>
  */
 
-#include <linux/kernel.h>
-#include <linux/init.h>
-#include <linux/device.h>
-#include <linux/fb.h>
-#include <linux/platform_device.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/init.h>
+#समावेश <linux/device.h>
+#समावेश <linux/fb.h>
+#समावेश <linux/platक्रमm_device.h>
 
-#include <video/w100fb.h>
+#समावेश <video/w100fb.h>
 
-#include <asm/setup.h>
-#include <asm/mach-types.h>
-#include <asm/mach/arch.h>
+#समावेश <यंत्र/setup.h>
+#समावेश <यंत्र/mach-types.h>
+#समावेश <यंत्र/mach/arch.h>
 
-#include "pxa25x.h"
+#समावेश "pxa25x.h"
 
-#include "generic.h"
+#समावेश "generic.h"
 
 /* ---------------------- Himalaya LCD definitions -------------------- */
 
-static struct w100_gen_regs himalaya_lcd_regs = {
-	.lcd_format =        0x00000003,
+अटल काष्ठा w100_gen_regs himalaya_lcd_regs = अणु
+	.lcd_क्रमmat =        0x00000003,
 	.lcdd_cntl1 =        0x00000000,
 	.lcdd_cntl2 =        0x0003ffff,
 	.genlcd_cntl1 =      0x00fff003,
 	.genlcd_cntl2 =      0x00000003,
 	.genlcd_cntl3 =      0x000102aa,
-};
+पूर्ण;
 
-static struct w100_mode himalaya4_lcd_mode = {
+अटल काष्ठा w100_mode himalaya4_lcd_mode = अणु
 	.xres 		= 240,
 	.yres 		= 320,
 	.left_margin 	= 0,
@@ -52,14 +53,14 @@ static struct w100_mode himalaya4_lcd_mode = {
 	.crtc_gclk	= 0x8015010f,
 	.crtc_goe	= 0x00000000,
 	.pll_freq 	= 80,
-	.pixclk_divider = 15,
-	.pixclk_divider_rotated = 15,
+	.pixclk_भागider = 15,
+	.pixclk_भागider_rotated = 15,
 	.pixclk_src     = CLK_SRC_PLL,
-	.sysclk_divider = 0,
+	.sysclk_भागider = 0,
 	.sysclk_src     = CLK_SRC_PLL,
-};
+पूर्ण;
 
-static struct w100_mode himalaya6_lcd_mode = {
+अटल काष्ठा w100_mode himalaya6_lcd_mode = अणु
 	.xres 		= 240,
 	.yres 		= 320,
 	.left_margin 	= 9,
@@ -75,83 +76,83 @@ static struct w100_mode himalaya6_lcd_mode = {
 	.crtc_gclk	= 0x8015010f,
 	.crtc_goe	= 0x00000000,
 	.pll_freq 	= 95,
-	.pixclk_divider = 0xb,
-	.pixclk_divider_rotated = 4,
+	.pixclk_भागider = 0xb,
+	.pixclk_भागider_rotated = 4,
 	.pixclk_src     = CLK_SRC_PLL,
-	.sysclk_divider = 1,
+	.sysclk_भागider = 1,
 	.sysclk_src     = CLK_SRC_PLL,
-};
+पूर्ण;
 
-static struct w100_gpio_regs himalaya_w100_gpio_info = {
+अटल काष्ठा w100_gpio_regs himalaya_w100_gpio_info = अणु
 	.init_data1 = 0xffff0000,	/* GPIO_DATA  */
 	.gpio_dir1  = 0x00000000,	/* GPIO_CNTL1 */
 	.gpio_oe1   = 0x003c0000,	/* GPIO_CNTL2 */
 	.init_data2 = 0x00000000,	/* GPIO_DATA2 */
 	.gpio_dir2  = 0x00000000,	/* GPIO_CNTL3 */
 	.gpio_oe2   = 0x00000000,	/* GPIO_CNTL4 */
-};
+पूर्ण;
 
-static struct w100fb_mach_info himalaya_fb_info = {
+अटल काष्ठा w100fb_mach_info himalaya_fb_info = अणु
 	.num_modes  = 1,
 	.regs       = &himalaya_lcd_regs,
 	.gpio       = &himalaya_w100_gpio_info,
 	.xtal_freq = 16000000,
-};
+पूर्ण;
 
-static struct resource himalaya_fb_resources[] = {
-	[0] = {
+अटल काष्ठा resource himalaya_fb_resources[] = अणु
+	[0] = अणु
 		.start	= 0x08000000,
 		.end	= 0x08ffffff,
 		.flags	= IORESOURCE_MEM,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static struct platform_device himalaya_fb_device = {
+अटल काष्ठा platक्रमm_device himalaya_fb_device = अणु
 	.name           = "w100fb",
 	.id             = -1,
-	.dev            = {
-		.platform_data  = &himalaya_fb_info,
-	},
+	.dev            = अणु
+		.platक्रमm_data  = &himalaya_fb_info,
+	पूर्ण,
 	.num_resources  = ARRAY_SIZE(himalaya_fb_resources),
 	.resource       = himalaya_fb_resources,
-};
+पूर्ण;
 
 /* ----------------------------------------------------------------------- */
 
-static struct platform_device *devices[] __initdata = {
+अटल काष्ठा platक्रमm_device *devices[] __initdata = अणु
 	&himalaya_fb_device,
-};
+पूर्ण;
 
-static void __init himalaya_lcd_init(void)
-{
-	int himalaya_boardid;
+अटल व्योम __init himalaya_lcd_init(व्योम)
+अणु
+	पूर्णांक himalaya_boardid;
 
 	himalaya_boardid = 0x4; /* hardcoded (detection needs ASIC3 functions) */
-	printk(KERN_INFO "himalaya LCD Driver init. boardid=%d\n",
+	prपूर्णांकk(KERN_INFO "himalaya LCD Driver init. boardid=%d\n",
 		himalaya_boardid);
 
-	switch (himalaya_boardid) {
-	case 0x4:
+	चयन (himalaya_boardid) अणु
+	हाल 0x4:
 		himalaya_fb_info.modelist = &himalaya4_lcd_mode;
-	break;
-	case 0x6:
+	अवरोध;
+	हाल 0x6:
 		himalaya_fb_info.modelist = &himalaya6_lcd_mode;
-	break;
-	default:
-		printk(KERN_INFO "himalaya lcd_init: unknown boardid=%d. Using 0x4\n",
+	अवरोध;
+	शेष:
+		prपूर्णांकk(KERN_INFO "himalaya lcd_init: unknown boardid=%d. Using 0x4\n",
 			himalaya_boardid);
 		himalaya_fb_info.modelist = &himalaya4_lcd_mode;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void __init himalaya_init(void)
-{
-	pxa_set_ffuart_info(NULL);
-	pxa_set_btuart_info(NULL);
-	pxa_set_stuart_info(NULL);
+अटल व्योम __init himalaya_init(व्योम)
+अणु
+	pxa_set_ffuart_info(शून्य);
+	pxa_set_btuart_info(शून्य);
+	pxa_set_stuart_info(शून्य);
 	himalaya_lcd_init();
-	platform_add_devices(devices, ARRAY_SIZE(devices));
-}
+	platक्रमm_add_devices(devices, ARRAY_SIZE(devices));
+पूर्ण
 
 
 MACHINE_START(HIMALAYA, "HTC Himalaya")
@@ -161,6 +162,6 @@ MACHINE_START(HIMALAYA, "HTC Himalaya")
 	.init_irq = pxa25x_init_irq,
 	.handle_irq = pxa25x_handle_irq,
 	.init_machine = himalaya_init,
-	.init_time	= pxa_timer_init,
+	.init_समय	= pxa_समयr_init,
 	.restart	= pxa_restart,
 MACHINE_END

@@ -1,195 +1,196 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
- * RDA8810PL SoC timer driver
+ * RDA8810PL SoC समयr driver
  *
  * Copyright RDA Microelectronics Company Limited
- * Copyright (c) 2017 Andreas Färber
+ * Copyright (c) 2017 Andreas Fथअrber
  * Copyright (c) 2018 Manivannan Sadhasivam
  *
- * RDA8810PL has two independent timers: OSTIMER (56 bit) and HWTIMER (64 bit).
- * Each timer provides optional interrupt support. In this driver, OSTIMER is
- * used for clockevents and HWTIMER is used for clocksource.
+ * RDA8810PL has two independent समयrs: OSTIMER (56 bit) and HWTIMER (64 bit).
+ * Each समयr provides optional पूर्णांकerrupt support. In this driver, OSTIMER is
+ * used क्रम घड़ीevents and HWTIMER is used क्रम घड़ीsource.
  */
 
-#include <linux/init.h>
-#include <linux/interrupt.h>
+#समावेश <linux/init.h>
+#समावेश <linux/पूर्णांकerrupt.h>
 
-#include "timer-of.h"
+#समावेश "timer-of.h"
 
-#define RDA_OSTIMER_LOADVAL_L	0x000
-#define RDA_OSTIMER_CTRL	0x004
-#define RDA_HWTIMER_LOCKVAL_L	0x024
-#define RDA_HWTIMER_LOCKVAL_H	0x028
-#define RDA_TIMER_IRQ_MASK_SET	0x02c
-#define RDA_TIMER_IRQ_MASK_CLR	0x030
-#define RDA_TIMER_IRQ_CLR	0x034
+#घोषणा RDA_OSTIMER_LOADVAL_L	0x000
+#घोषणा RDA_OSTIMER_CTRL	0x004
+#घोषणा RDA_HWTIMER_LOCKVAL_L	0x024
+#घोषणा RDA_HWTIMER_LOCKVAL_H	0x028
+#घोषणा RDA_TIMER_IRQ_MASK_SET	0x02c
+#घोषणा RDA_TIMER_IRQ_MASK_CLR	0x030
+#घोषणा RDA_TIMER_IRQ_CLR	0x034
 
-#define RDA_OSTIMER_CTRL_ENABLE		BIT(24)
-#define RDA_OSTIMER_CTRL_REPEAT		BIT(28)
-#define RDA_OSTIMER_CTRL_LOAD		BIT(30)
+#घोषणा RDA_OSTIMER_CTRL_ENABLE		BIT(24)
+#घोषणा RDA_OSTIMER_CTRL_REPEAT		BIT(28)
+#घोषणा RDA_OSTIMER_CTRL_LOAD		BIT(30)
 
-#define RDA_TIMER_IRQ_MASK_OSTIMER	BIT(0)
+#घोषणा RDA_TIMER_IRQ_MASK_OSTIMER	BIT(0)
 
-#define RDA_TIMER_IRQ_CLR_OSTIMER	BIT(0)
+#घोषणा RDA_TIMER_IRQ_CLR_OSTIMER	BIT(0)
 
-static int rda_ostimer_start(void __iomem *base, bool periodic, u64 cycles)
-{
+अटल पूर्णांक rda_osसमयr_start(व्योम __iomem *base, bool periodic, u64 cycles)
+अणु
 	u32 ctrl, load_l;
 
 	load_l = (u32)cycles;
 	ctrl = ((cycles >> 32) & 0xffffff);
 	ctrl |= RDA_OSTIMER_CTRL_LOAD | RDA_OSTIMER_CTRL_ENABLE;
-	if (periodic)
+	अगर (periodic)
 		ctrl |= RDA_OSTIMER_CTRL_REPEAT;
 
-	/* Enable ostimer interrupt first */
-	writel_relaxed(RDA_TIMER_IRQ_MASK_OSTIMER,
+	/* Enable osसमयr पूर्णांकerrupt first */
+	ग_लिखोl_relaxed(RDA_TIMER_IRQ_MASK_OSTIMER,
 		       base + RDA_TIMER_IRQ_MASK_SET);
 
 	/* Write low 32 bits first, high 24 bits are with ctrl */
-	writel_relaxed(load_l, base + RDA_OSTIMER_LOADVAL_L);
-	writel_relaxed(ctrl, base + RDA_OSTIMER_CTRL);
+	ग_लिखोl_relaxed(load_l, base + RDA_OSTIMER_LOADVAL_L);
+	ग_लिखोl_relaxed(ctrl, base + RDA_OSTIMER_CTRL);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int rda_ostimer_stop(void __iomem *base)
-{
-	/* Disable ostimer interrupt first */
-	writel_relaxed(RDA_TIMER_IRQ_MASK_OSTIMER,
+अटल पूर्णांक rda_osसमयr_stop(व्योम __iomem *base)
+अणु
+	/* Disable osसमयr पूर्णांकerrupt first */
+	ग_लिखोl_relaxed(RDA_TIMER_IRQ_MASK_OSTIMER,
 		       base + RDA_TIMER_IRQ_MASK_CLR);
 
-	writel_relaxed(0, base + RDA_OSTIMER_CTRL);
+	ग_लिखोl_relaxed(0, base + RDA_OSTIMER_CTRL);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int rda_ostimer_set_state_shutdown(struct clock_event_device *evt)
-{
-	struct timer_of *to = to_timer_of(evt);
+अटल पूर्णांक rda_osसमयr_set_state_shutकरोwn(काष्ठा घड़ी_event_device *evt)
+अणु
+	काष्ठा समयr_of *to = to_समयr_of(evt);
 
-	rda_ostimer_stop(timer_of_base(to));
+	rda_osसमयr_stop(समयr_of_base(to));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int rda_ostimer_set_state_oneshot(struct clock_event_device *evt)
-{
-	struct timer_of *to = to_timer_of(evt);
+अटल पूर्णांक rda_osसमयr_set_state_oneshot(काष्ठा घड़ी_event_device *evt)
+अणु
+	काष्ठा समयr_of *to = to_समयr_of(evt);
 
-	rda_ostimer_stop(timer_of_base(to));
+	rda_osसमयr_stop(समयr_of_base(to));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int rda_ostimer_set_state_periodic(struct clock_event_device *evt)
-{
-	struct timer_of *to = to_timer_of(evt);
-	unsigned long cycles_per_jiffy;
+अटल पूर्णांक rda_osसमयr_set_state_periodic(काष्ठा घड़ी_event_device *evt)
+अणु
+	काष्ठा समयr_of *to = to_समयr_of(evt);
+	अचिन्हित दीर्घ cycles_per_jअगरfy;
 
-	rda_ostimer_stop(timer_of_base(to));
+	rda_osसमयr_stop(समयr_of_base(to));
 
-	cycles_per_jiffy = ((unsigned long long)NSEC_PER_SEC / HZ *
-			     evt->mult) >> evt->shift;
-	rda_ostimer_start(timer_of_base(to), true, cycles_per_jiffy);
+	cycles_per_jअगरfy = ((अचिन्हित दीर्घ दीर्घ)NSEC_PER_SEC / HZ *
+			     evt->mult) >> evt->shअगरt;
+	rda_osसमयr_start(समयr_of_base(to), true, cycles_per_jअगरfy);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int rda_ostimer_tick_resume(struct clock_event_device *evt)
-{
-	return 0;
-}
+अटल पूर्णांक rda_osसमयr_tick_resume(काष्ठा घड़ी_event_device *evt)
+अणु
+	वापस 0;
+पूर्ण
 
-static int rda_ostimer_set_next_event(unsigned long evt,
-				      struct clock_event_device *ev)
-{
-	struct timer_of *to = to_timer_of(ev);
+अटल पूर्णांक rda_osसमयr_set_next_event(अचिन्हित दीर्घ evt,
+				      काष्ठा घड़ी_event_device *ev)
+अणु
+	काष्ठा समयr_of *to = to_समयr_of(ev);
 
-	rda_ostimer_start(timer_of_base(to), false, evt);
+	rda_osसमयr_start(समयr_of_base(to), false, evt);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static irqreturn_t rda_ostimer_interrupt(int irq, void *dev_id)
-{
-	struct clock_event_device *evt = dev_id;
-	struct timer_of *to = to_timer_of(evt);
+अटल irqवापस_t rda_osसमयr_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा घड़ी_event_device *evt = dev_id;
+	काष्ठा समयr_of *to = to_समयr_of(evt);
 
-	/* clear timer int */
-	writel_relaxed(RDA_TIMER_IRQ_CLR_OSTIMER,
-		       timer_of_base(to) + RDA_TIMER_IRQ_CLR);
+	/* clear समयr पूर्णांक */
+	ग_लिखोl_relaxed(RDA_TIMER_IRQ_CLR_OSTIMER,
+		       समयr_of_base(to) + RDA_TIMER_IRQ_CLR);
 
-	if (evt->event_handler)
+	अगर (evt->event_handler)
 		evt->event_handler(evt);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static struct timer_of rda_ostimer_of = {
+अटल काष्ठा समयr_of rda_osसमयr_of = अणु
 	.flags = TIMER_OF_IRQ | TIMER_OF_BASE,
 
-	.clkevt = {
+	.clkevt = अणु
 		.name = "rda-ostimer",
 		.rating = 250,
 		.features = CLOCK_EVT_FEAT_PERIODIC | CLOCK_EVT_FEAT_ONESHOT |
 			    CLOCK_EVT_FEAT_DYNIRQ,
-		.set_state_shutdown = rda_ostimer_set_state_shutdown,
-		.set_state_oneshot = rda_ostimer_set_state_oneshot,
-		.set_state_periodic = rda_ostimer_set_state_periodic,
-		.tick_resume = rda_ostimer_tick_resume,
-		.set_next_event	= rda_ostimer_set_next_event,
-	},
+		.set_state_shutकरोwn = rda_osसमयr_set_state_shutकरोwn,
+		.set_state_oneshot = rda_osसमयr_set_state_oneshot,
+		.set_state_periodic = rda_osसमयr_set_state_periodic,
+		.tick_resume = rda_osसमयr_tick_resume,
+		.set_next_event	= rda_osसमयr_set_next_event,
+	पूर्ण,
 
-	.of_base = {
+	.of_base = अणु
 		.name = "rda-timer",
 		.index = 0,
-	},
+	पूर्ण,
 
-	.of_irq = {
+	.of_irq = अणु
 		.name = "ostimer",
-		.handler = rda_ostimer_interrupt,
+		.handler = rda_osसमयr_पूर्णांकerrupt,
 		.flags = IRQF_TIMER,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static u64 rda_hwtimer_read(struct clocksource *cs)
-{
-	void __iomem *base = timer_of_base(&rda_ostimer_of);
+अटल u64 rda_hwसमयr_पढ़ो(काष्ठा घड़ीsource *cs)
+अणु
+	व्योम __iomem *base = समयr_of_base(&rda_osसमयr_of);
 	u32 lo, hi;
 
-	/* Always read low 32 bits first */
-	do {
-		lo = readl_relaxed(base + RDA_HWTIMER_LOCKVAL_L);
-		hi = readl_relaxed(base + RDA_HWTIMER_LOCKVAL_H);
-	} while (hi != readl_relaxed(base + RDA_HWTIMER_LOCKVAL_H));
+	/* Always पढ़ो low 32 bits first */
+	करो अणु
+		lo = पढ़ोl_relaxed(base + RDA_HWTIMER_LOCKVAL_L);
+		hi = पढ़ोl_relaxed(base + RDA_HWTIMER_LOCKVAL_H);
+	पूर्ण जबतक (hi != पढ़ोl_relaxed(base + RDA_HWTIMER_LOCKVAL_H));
 
-	return ((u64)hi << 32) | lo;
-}
+	वापस ((u64)hi << 32) | lo;
+पूर्ण
 
-static struct clocksource rda_hwtimer_clocksource = {
+अटल काष्ठा घड़ीsource rda_hwसमयr_घड़ीsource = अणु
 	.name           = "rda-timer",
 	.rating         = 400,
-	.read           = rda_hwtimer_read,
+	.पढ़ो           = rda_hwसमयr_पढ़ो,
 	.mask           = CLOCKSOURCE_MASK(64),
 	.flags          = CLOCK_SOURCE_IS_CONTINUOUS,
-};
+पूर्ण;
 
-static int __init rda_timer_init(struct device_node *np)
-{
-	unsigned long rate = 2000000;
-	int ret;
+अटल पूर्णांक __init rda_समयr_init(काष्ठा device_node *np)
+अणु
+	अचिन्हित दीर्घ rate = 2000000;
+	पूर्णांक ret;
 
-	ret = timer_of_init(np, &rda_ostimer_of);
-	if (ret)
-		return ret;
+	ret = समयr_of_init(np, &rda_osसमयr_of);
+	अगर (ret)
+		वापस ret;
 
-	clocksource_register_hz(&rda_hwtimer_clocksource, rate);
+	घड़ीsource_रेजिस्टर_hz(&rda_hwसमयr_घड़ीsource, rate);
 
-	clockevents_config_and_register(&rda_ostimer_of.clkevt, rate,
-					0x2, UINT_MAX);
+	घड़ीevents_config_and_रेजिस्टर(&rda_osसमयr_of.clkevt, rate,
+					0x2, अच_पूर्णांक_उच्च);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-TIMER_OF_DECLARE(rda8810pl, "rda,8810pl-timer", rda_timer_init);
+TIMER_OF_DECLARE(rda8810pl, "rda,8810pl-timer", rda_समयr_init);

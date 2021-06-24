@@ -1,28 +1,29 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Copyright (C) 2011 Tobias Klauser <tklauser@distanz.ch>
  */
 
-#include <linux/stddef.h>
-#include <linux/sched.h>
-#include <linux/kernel_stat.h>
-#include <linux/ptrace.h>
-#include <linux/hardirq.h>
-#include <linux/thread_info.h>
-#include <linux/kbuild.h>
+#समावेश <linux/मानकघोष.स>
+#समावेश <linux/sched.h>
+#समावेश <linux/kernel_स्थिति.स>
+#समावेश <linux/ptrace.h>
+#समावेश <linux/hardirq.h>
+#समावेश <linux/thपढ़ो_info.h>
+#समावेश <linux/kbuild.h>
 
-int main(void)
-{
-	/* struct task_struct */
-	OFFSET(TASK_THREAD, task_struct, thread);
+पूर्णांक मुख्य(व्योम)
+अणु
+	/* काष्ठा task_काष्ठा */
+	OFFSET(TASK_THREAD, task_काष्ठा, thपढ़ो);
 	BLANK();
 
-	/* struct thread_struct */
-	OFFSET(THREAD_KSP, thread_struct, ksp);
-	OFFSET(THREAD_KPSR, thread_struct, kpsr);
+	/* काष्ठा thपढ़ो_काष्ठा */
+	OFFSET(THREAD_KSP, thपढ़ो_काष्ठा, ksp);
+	OFFSET(THREAD_KPSR, thपढ़ो_काष्ठा, kpsr);
 	BLANK();
 
-	/* struct pt_regs */
+	/* काष्ठा pt_regs */
 	OFFSET(PT_ORIG_R2, pt_regs, orig_r2);
 	OFFSET(PT_ORIG_R7, pt_regs, orig_r7);
 
@@ -47,28 +48,28 @@ int main(void)
 	OFFSET(PT_SP, pt_regs, sp);
 	OFFSET(PT_GP, pt_regs, gp);
 	OFFSET(PT_ESTATUS, pt_regs, estatus);
-	DEFINE(PT_REGS_SIZE, sizeof(struct pt_regs));
+	DEFINE(PT_REGS_SIZE, माप(काष्ठा pt_regs));
 	BLANK();
 
-	/* struct switch_stack */
-	OFFSET(SW_R16, switch_stack, r16);
-	OFFSET(SW_R17, switch_stack, r17);
-	OFFSET(SW_R18, switch_stack, r18);
-	OFFSET(SW_R19, switch_stack, r19);
-	OFFSET(SW_R20, switch_stack, r20);
-	OFFSET(SW_R21, switch_stack, r21);
-	OFFSET(SW_R22, switch_stack, r22);
-	OFFSET(SW_R23, switch_stack, r23);
-	OFFSET(SW_FP, switch_stack, fp);
-	OFFSET(SW_GP, switch_stack, gp);
-	OFFSET(SW_RA, switch_stack, ra);
-	DEFINE(SWITCH_STACK_SIZE, sizeof(struct switch_stack));
+	/* काष्ठा चयन_stack */
+	OFFSET(SW_R16, चयन_stack, r16);
+	OFFSET(SW_R17, चयन_stack, r17);
+	OFFSET(SW_R18, चयन_stack, r18);
+	OFFSET(SW_R19, चयन_stack, r19);
+	OFFSET(SW_R20, चयन_stack, r20);
+	OFFSET(SW_R21, चयन_stack, r21);
+	OFFSET(SW_R22, चयन_stack, r22);
+	OFFSET(SW_R23, चयन_stack, r23);
+	OFFSET(SW_FP, चयन_stack, fp);
+	OFFSET(SW_GP, चयन_stack, gp);
+	OFFSET(SW_RA, चयन_stack, ra);
+	DEFINE(SWITCH_STACK_SIZE, माप(काष्ठा चयन_stack));
 	BLANK();
 
-	/* struct thread_info */
-	OFFSET(TI_FLAGS, thread_info, flags);
-	OFFSET(TI_PREEMPT_COUNT, thread_info, preempt_count);
+	/* काष्ठा thपढ़ो_info */
+	OFFSET(TI_FLAGS, thपढ़ो_info, flags);
+	OFFSET(TI_PREEMPT_COUNT, thपढ़ो_info, preempt_count);
 	BLANK();
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

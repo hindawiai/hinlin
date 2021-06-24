@@ -1,193 +1,194 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * linux/net/sunrpc/sysctl.c
  *
- * Sysctl interface to sunrpc module.
+ * Sysctl पूर्णांकerface to sunrpc module.
  *
- * I would prefer to register the sunrpc table below sys/net, but that's
+ * I would prefer to रेजिस्टर the sunrpc table below sys/net, but that's
  * impossible at the moment.
  */
 
-#include <linux/types.h>
-#include <linux/linkage.h>
-#include <linux/ctype.h>
-#include <linux/fs.h>
-#include <linux/sysctl.h>
-#include <linux/module.h>
+#समावेश <linux/types.h>
+#समावेश <linux/linkage.h>
+#समावेश <linux/प्रकार.स>
+#समावेश <linux/fs.h>
+#समावेश <linux/sysctl.h>
+#समावेश <linux/module.h>
 
-#include <linux/uaccess.h>
-#include <linux/sunrpc/types.h>
-#include <linux/sunrpc/sched.h>
-#include <linux/sunrpc/stats.h>
-#include <linux/sunrpc/svc_xprt.h>
+#समावेश <linux/uaccess.h>
+#समावेश <linux/sunrpc/types.h>
+#समावेश <linux/sunrpc/sched.h>
+#समावेश <linux/sunrpc/stats.h>
+#समावेश <linux/sunrpc/svc_xprt.h>
 
-#include "netns.h"
+#समावेश "netns.h"
 
 /*
  * Declare the debug flags here
  */
-unsigned int	rpc_debug;
+अचिन्हित पूर्णांक	rpc_debug;
 EXPORT_SYMBOL_GPL(rpc_debug);
 
-unsigned int	nfs_debug;
+अचिन्हित पूर्णांक	nfs_debug;
 EXPORT_SYMBOL_GPL(nfs_debug);
 
-unsigned int	nfsd_debug;
+अचिन्हित पूर्णांक	nfsd_debug;
 EXPORT_SYMBOL_GPL(nfsd_debug);
 
-unsigned int	nlm_debug;
+अचिन्हित पूर्णांक	nlm_debug;
 EXPORT_SYMBOL_GPL(nlm_debug);
 
-#if IS_ENABLED(CONFIG_SUNRPC_DEBUG)
+#अगर IS_ENABLED(CONFIG_SUNRPC_DEBUG)
 
-static struct ctl_table_header *sunrpc_table_header;
-static struct ctl_table sunrpc_table[];
+अटल काष्ठा ctl_table_header *sunrpc_table_header;
+अटल काष्ठा ctl_table sunrpc_table[];
 
-void
-rpc_register_sysctl(void)
-{
-	if (!sunrpc_table_header)
-		sunrpc_table_header = register_sysctl_table(sunrpc_table);
-}
+व्योम
+rpc_रेजिस्टर_sysctl(व्योम)
+अणु
+	अगर (!sunrpc_table_header)
+		sunrpc_table_header = रेजिस्टर_sysctl_table(sunrpc_table);
+पूर्ण
 
-void
-rpc_unregister_sysctl(void)
-{
-	if (sunrpc_table_header) {
-		unregister_sysctl_table(sunrpc_table_header);
-		sunrpc_table_header = NULL;
-	}
-}
+व्योम
+rpc_unरेजिस्टर_sysctl(व्योम)
+अणु
+	अगर (sunrpc_table_header) अणु
+		unरेजिस्टर_sysctl_table(sunrpc_table_header);
+		sunrpc_table_header = शून्य;
+	पूर्ण
+पूर्ण
 
-static int proc_do_xprt(struct ctl_table *table, int write,
-			void *buffer, size_t *lenp, loff_t *ppos)
-{
-	char tmpbuf[256];
-	ssize_t len;
+अटल पूर्णांक proc_करो_xprt(काष्ठा ctl_table *table, पूर्णांक ग_लिखो,
+			व्योम *buffer, माप_प्रकार *lenp, loff_t *ppos)
+अणु
+	अक्षर पंचांगpbuf[256];
+	sमाप_प्रकार len;
 
-	if (write || *ppos) {
+	अगर (ग_लिखो || *ppos) अणु
 		*lenp = 0;
-		return 0;
-	}
-	len = svc_print_xprts(tmpbuf, sizeof(tmpbuf));
-	len = memory_read_from_buffer(buffer, *lenp, ppos, tmpbuf, len);
+		वापस 0;
+	पूर्ण
+	len = svc_prपूर्णांक_xprts(पंचांगpbuf, माप(पंचांगpbuf));
+	len = memory_पढ़ो_from_buffer(buffer, *lenp, ppos, पंचांगpbuf, len);
 
-	if (len < 0) {
+	अगर (len < 0) अणु
 		*lenp = 0;
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 	*lenp = len;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-proc_dodebug(struct ctl_table *table, int write, void *buffer, size_t *lenp,
+अटल पूर्णांक
+proc_करोdebug(काष्ठा ctl_table *table, पूर्णांक ग_लिखो, व्योम *buffer, माप_प्रकार *lenp,
 	     loff_t *ppos)
-{
-	char		tmpbuf[20], *s = NULL;
-	char *p;
-	unsigned int	value;
-	size_t		left, len;
+अणु
+	अक्षर		पंचांगpbuf[20], *s = शून्य;
+	अक्षर *p;
+	अचिन्हित पूर्णांक	value;
+	माप_प्रकार		left, len;
 
-	if ((*ppos && !write) || !*lenp) {
+	अगर ((*ppos && !ग_लिखो) || !*lenp) अणु
 		*lenp = 0;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	left = *lenp;
 
-	if (write) {
+	अगर (ग_लिखो) अणु
 		p = buffer;
-		while (left && isspace(*p)) {
+		जबतक (left && है_खाली(*p)) अणु
 			left--;
 			p++;
-		}
-		if (!left)
-			goto done;
+		पूर्ण
+		अगर (!left)
+			जाओ करोne;
 
-		if (left > sizeof(tmpbuf) - 1)
-			return -EINVAL;
-		memcpy(tmpbuf, p, left);
-		tmpbuf[left] = '\0';
+		अगर (left > माप(पंचांगpbuf) - 1)
+			वापस -EINVAL;
+		स_नकल(पंचांगpbuf, p, left);
+		पंचांगpbuf[left] = '\0';
 
-		value = simple_strtol(tmpbuf, &s, 0);
-		if (s) {
-			left -= (s - tmpbuf);
-			if (left && !isspace(*s))
-				return -EINVAL;
-			while (left && isspace(*s)) {
+		value = simple_म_से_दीर्घ(पंचांगpbuf, &s, 0);
+		अगर (s) अणु
+			left -= (s - पंचांगpbuf);
+			अगर (left && !है_खाली(*s))
+				वापस -EINVAL;
+			जबतक (left && है_खाली(*s)) अणु
 				left--;
 				s++;
-			}
-		} else
+			पूर्ण
+		पूर्ण अन्यथा
 			left = 0;
-		*(unsigned int *) table->data = value;
+		*(अचिन्हित पूर्णांक *) table->data = value;
 		/* Display the RPC tasks on writing to rpc_debug */
-		if (strcmp(table->procname, "rpc_debug") == 0)
+		अगर (म_भेद(table->procname, "rpc_debug") == 0)
 			rpc_show_tasks(&init_net);
-	} else {
-		len = sprintf(tmpbuf, "0x%04x", *(unsigned int *) table->data);
-		if (len > left)
+	पूर्ण अन्यथा अणु
+		len = प्र_लिखो(पंचांगpbuf, "0x%04x", *(अचिन्हित पूर्णांक *) table->data);
+		अगर (len > left)
 			len = left;
-		memcpy(buffer, tmpbuf, len);
-		if ((left -= len) > 0) {
-			*((char *)buffer + len) = '\n';
+		स_नकल(buffer, पंचांगpbuf, len);
+		अगर ((left -= len) > 0) अणु
+			*((अक्षर *)buffer + len) = '\n';
 			left--;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-done:
+करोne:
 	*lenp -= left;
 	*ppos += *lenp;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
-static struct ctl_table debug_table[] = {
-	{
+अटल काष्ठा ctl_table debug_table[] = अणु
+	अणु
 		.procname	= "rpc_debug",
 		.data		= &rpc_debug,
-		.maxlen		= sizeof(int),
+		.maxlen		= माप(पूर्णांक),
 		.mode		= 0644,
-		.proc_handler	= proc_dodebug
-	},
-	{
+		.proc_handler	= proc_करोdebug
+	पूर्ण,
+	अणु
 		.procname	= "nfs_debug",
 		.data		= &nfs_debug,
-		.maxlen		= sizeof(int),
+		.maxlen		= माप(पूर्णांक),
 		.mode		= 0644,
-		.proc_handler	= proc_dodebug
-	},
-	{
+		.proc_handler	= proc_करोdebug
+	पूर्ण,
+	अणु
 		.procname	= "nfsd_debug",
 		.data		= &nfsd_debug,
-		.maxlen		= sizeof(int),
+		.maxlen		= माप(पूर्णांक),
 		.mode		= 0644,
-		.proc_handler	= proc_dodebug
-	},
-	{
+		.proc_handler	= proc_करोdebug
+	पूर्ण,
+	अणु
 		.procname	= "nlm_debug",
 		.data		= &nlm_debug,
-		.maxlen		= sizeof(int),
+		.maxlen		= माप(पूर्णांक),
 		.mode		= 0644,
-		.proc_handler	= proc_dodebug
-	},
-	{
+		.proc_handler	= proc_करोdebug
+	पूर्ण,
+	अणु
 		.procname	= "transports",
 		.maxlen		= 256,
 		.mode		= 0444,
-		.proc_handler	= proc_do_xprt,
-	},
-	{ }
-};
+		.proc_handler	= proc_करो_xprt,
+	पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 
-static struct ctl_table sunrpc_table[] = {
-	{
+अटल काष्ठा ctl_table sunrpc_table[] = अणु
+	अणु
 		.procname	= "sunrpc",
 		.mode		= 0555,
 		.child		= debug_table
-	},
-	{ }
-};
+	पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 
-#endif
+#पूर्ण_अगर

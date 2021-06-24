@@ -1,90 +1,91 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <linux/init.h>
-#include <linux/pci.h>
-#include <linux/percpu.h>
-#include <linux/delay.h>
-#include <linux/spinlock.h>
-#include <linux/interrupt.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <linux/init.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/percpu.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/पूर्णांकerrupt.h>
 
-#include <asm/hpet.h>
-#include <asm/time.h>
+#समावेश <यंत्र/hpet.h>
+#समावेश <यंत्र/समय.स>
 
-#define SMBUS_CFG_BASE		(loongson_sysconf.ht_control_base + 0x0300a000)
-#define SMBUS_PCI_REG40		0x40
-#define SMBUS_PCI_REG64		0x64
-#define SMBUS_PCI_REGB4		0xb4
+#घोषणा SMBUS_CFG_BASE		(loongson_sysconf.ht_control_base + 0x0300a000)
+#घोषणा SMBUS_PCI_REG40		0x40
+#घोषणा SMBUS_PCI_REG64		0x64
+#घोषणा SMBUS_PCI_REGB4		0xb4
 
-#define HPET_MIN_CYCLES		16
-#define HPET_MIN_PROG_DELTA	(HPET_MIN_CYCLES * 12)
+#घोषणा HPET_MIN_CYCLES		16
+#घोषणा HPET_MIN_PROG_DELTA	(HPET_MIN_CYCLES * 12)
 
-static DEFINE_SPINLOCK(hpet_lock);
-DEFINE_PER_CPU(struct clock_event_device, hpet_clockevent_device);
+अटल DEFINE_SPINLOCK(hpet_lock);
+DEFINE_PER_CPU(काष्ठा घड़ी_event_device, hpet_घड़ीevent_device);
 
-static unsigned int smbus_read(int offset)
-{
-	return *(volatile unsigned int *)(SMBUS_CFG_BASE + offset);
-}
+अटल अचिन्हित पूर्णांक smbus_पढ़ो(पूर्णांक offset)
+अणु
+	वापस *(अस्थिर अचिन्हित पूर्णांक *)(SMBUS_CFG_BASE + offset);
+पूर्ण
 
-static void smbus_write(int offset, int data)
-{
-	*(volatile unsigned int *)(SMBUS_CFG_BASE + offset) = data;
-}
+अटल व्योम smbus_ग_लिखो(पूर्णांक offset, पूर्णांक data)
+अणु
+	*(अस्थिर अचिन्हित पूर्णांक *)(SMBUS_CFG_BASE + offset) = data;
+पूर्ण
 
-static void smbus_enable(int offset, int bit)
-{
-	unsigned int cfg = smbus_read(offset);
+अटल व्योम smbus_enable(पूर्णांक offset, पूर्णांक bit)
+अणु
+	अचिन्हित पूर्णांक cfg = smbus_पढ़ो(offset);
 
 	cfg |= bit;
-	smbus_write(offset, cfg);
-}
+	smbus_ग_लिखो(offset, cfg);
+पूर्ण
 
-static int hpet_read(int offset)
-{
-	return *(volatile unsigned int *)(HPET_MMIO_ADDR + offset);
-}
+अटल पूर्णांक hpet_पढ़ो(पूर्णांक offset)
+अणु
+	वापस *(अस्थिर अचिन्हित पूर्णांक *)(HPET_MMIO_ADDR + offset);
+पूर्ण
 
-static void hpet_write(int offset, int data)
-{
-	*(volatile unsigned int *)(HPET_MMIO_ADDR + offset) = data;
-}
+अटल व्योम hpet_ग_लिखो(पूर्णांक offset, पूर्णांक data)
+अणु
+	*(अस्थिर अचिन्हित पूर्णांक *)(HPET_MMIO_ADDR + offset) = data;
+पूर्ण
 
-static void hpet_start_counter(void)
-{
-	unsigned int cfg = hpet_read(HPET_CFG);
+अटल व्योम hpet_start_counter(व्योम)
+अणु
+	अचिन्हित पूर्णांक cfg = hpet_पढ़ो(HPET_CFG);
 
 	cfg |= HPET_CFG_ENABLE;
-	hpet_write(HPET_CFG, cfg);
-}
+	hpet_ग_लिखो(HPET_CFG, cfg);
+पूर्ण
 
-static void hpet_stop_counter(void)
-{
-	unsigned int cfg = hpet_read(HPET_CFG);
+अटल व्योम hpet_stop_counter(व्योम)
+अणु
+	अचिन्हित पूर्णांक cfg = hpet_पढ़ो(HPET_CFG);
 
 	cfg &= ~HPET_CFG_ENABLE;
-	hpet_write(HPET_CFG, cfg);
-}
+	hpet_ग_लिखो(HPET_CFG, cfg);
+पूर्ण
 
-static void hpet_reset_counter(void)
-{
-	hpet_write(HPET_COUNTER, 0);
-	hpet_write(HPET_COUNTER + 4, 0);
-}
+अटल व्योम hpet_reset_counter(व्योम)
+अणु
+	hpet_ग_लिखो(HPET_COUNTER, 0);
+	hpet_ग_लिखो(HPET_COUNTER + 4, 0);
+पूर्ण
 
-static void hpet_restart_counter(void)
-{
+अटल व्योम hpet_restart_counter(व्योम)
+अणु
 	hpet_stop_counter();
 	hpet_reset_counter();
 	hpet_start_counter();
-}
+पूर्ण
 
-static void hpet_enable_legacy_int(void)
-{
+अटल व्योम hpet_enable_legacy_पूर्णांक(व्योम)
+अणु
 	/* Do nothing on Loongson-3 */
-}
+पूर्ण
 
-static int hpet_set_state_periodic(struct clock_event_device *evt)
-{
-	int cfg;
+अटल पूर्णांक hpet_set_state_periodic(काष्ठा घड़ी_event_device *evt)
+अणु
+	पूर्णांक cfg;
 
 	spin_lock(&hpet_lock);
 
@@ -92,120 +93,120 @@ static int hpet_set_state_periodic(struct clock_event_device *evt)
 	/* stop counter */
 	hpet_stop_counter();
 
-	/* enables the timer0 to generate a periodic interrupt */
-	cfg = hpet_read(HPET_T0_CFG);
+	/* enables the समयr0 to generate a periodic पूर्णांकerrupt */
+	cfg = hpet_पढ़ो(HPET_T0_CFG);
 	cfg &= ~HPET_TN_LEVEL;
 	cfg |= HPET_TN_ENABLE | HPET_TN_PERIODIC | HPET_TN_SETVAL |
 		HPET_TN_32BIT;
-	hpet_write(HPET_T0_CFG, cfg);
+	hpet_ग_लिखो(HPET_T0_CFG, cfg);
 
 	/* set the comparator */
-	hpet_write(HPET_T0_CMP, HPET_COMPARE_VAL);
+	hpet_ग_लिखो(HPET_T0_CMP, HPET_COMPARE_VAL);
 	udelay(1);
-	hpet_write(HPET_T0_CMP, HPET_COMPARE_VAL);
+	hpet_ग_लिखो(HPET_T0_CMP, HPET_COMPARE_VAL);
 
 	/* start counter */
 	hpet_start_counter();
 
 	spin_unlock(&hpet_lock);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int hpet_set_state_shutdown(struct clock_event_device *evt)
-{
-	int cfg;
+अटल पूर्णांक hpet_set_state_shutकरोwn(काष्ठा घड़ी_event_device *evt)
+अणु
+	पूर्णांक cfg;
 
 	spin_lock(&hpet_lock);
 
-	cfg = hpet_read(HPET_T0_CFG);
+	cfg = hpet_पढ़ो(HPET_T0_CFG);
 	cfg &= ~HPET_TN_ENABLE;
-	hpet_write(HPET_T0_CFG, cfg);
+	hpet_ग_लिखो(HPET_T0_CFG, cfg);
 
 	spin_unlock(&hpet_lock);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int hpet_set_state_oneshot(struct clock_event_device *evt)
-{
-	int cfg;
+अटल पूर्णांक hpet_set_state_oneshot(काष्ठा घड़ी_event_device *evt)
+अणु
+	पूर्णांक cfg;
 
 	spin_lock(&hpet_lock);
 
 	pr_info("set clock event to one shot mode!\n");
-	cfg = hpet_read(HPET_T0_CFG);
+	cfg = hpet_पढ़ो(HPET_T0_CFG);
 	/*
-	 * set timer0 type
-	 * 1 : periodic interrupt
-	 * 0 : non-periodic(oneshot) interrupt
+	 * set समयr0 type
+	 * 1 : periodic पूर्णांकerrupt
+	 * 0 : non-periodic(oneshot) पूर्णांकerrupt
 	 */
 	cfg &= ~HPET_TN_PERIODIC;
 	cfg |= HPET_TN_ENABLE | HPET_TN_32BIT;
-	hpet_write(HPET_T0_CFG, cfg);
+	hpet_ग_लिखो(HPET_T0_CFG, cfg);
 
 	spin_unlock(&hpet_lock);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int hpet_tick_resume(struct clock_event_device *evt)
-{
+अटल पूर्णांक hpet_tick_resume(काष्ठा घड़ी_event_device *evt)
+अणु
 	spin_lock(&hpet_lock);
-	hpet_enable_legacy_int();
+	hpet_enable_legacy_पूर्णांक();
 	spin_unlock(&hpet_lock);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int hpet_next_event(unsigned long delta,
-		struct clock_event_device *evt)
-{
+अटल पूर्णांक hpet_next_event(अचिन्हित दीर्घ delta,
+		काष्ठा घड़ी_event_device *evt)
+अणु
 	u32 cnt;
 	s32 res;
 
-	cnt = hpet_read(HPET_COUNTER);
+	cnt = hpet_पढ़ो(HPET_COUNTER);
 	cnt += (u32) delta;
-	hpet_write(HPET_T0_CMP, cnt);
+	hpet_ग_लिखो(HPET_T0_CMP, cnt);
 
-	res = (s32)(cnt - hpet_read(HPET_COUNTER));
+	res = (s32)(cnt - hpet_पढ़ो(HPET_COUNTER));
 
-	return res < HPET_MIN_CYCLES ? -ETIME : 0;
-}
+	वापस res < HPET_MIN_CYCLES ? -ETIME : 0;
+पूर्ण
 
-static irqreturn_t hpet_irq_handler(int irq, void *data)
-{
-	int is_irq;
-	struct clock_event_device *cd;
-	unsigned int cpu = smp_processor_id();
+अटल irqवापस_t hpet_irq_handler(पूर्णांक irq, व्योम *data)
+अणु
+	पूर्णांक is_irq;
+	काष्ठा घड़ी_event_device *cd;
+	अचिन्हित पूर्णांक cpu = smp_processor_id();
 
-	is_irq = hpet_read(HPET_STATUS);
-	if (is_irq & HPET_T0_IRS) {
-		/* clear the TIMER0 irq status register */
-		hpet_write(HPET_STATUS, HPET_T0_IRS);
-		cd = &per_cpu(hpet_clockevent_device, cpu);
+	is_irq = hpet_पढ़ो(HPET_STATUS);
+	अगर (is_irq & HPET_T0_IRS) अणु
+		/* clear the TIMER0 irq status रेजिस्टर */
+		hpet_ग_लिखो(HPET_STATUS, HPET_T0_IRS);
+		cd = &per_cpu(hpet_घड़ीevent_device, cpu);
 		cd->event_handler(cd);
-		return IRQ_HANDLED;
-	}
-	return IRQ_NONE;
-}
+		वापस IRQ_HANDLED;
+	पूर्ण
+	वापस IRQ_NONE;
+पूर्ण
 
 /*
- * hpet address assignation and irq setting should be done in bios.
- * but pmon don't do this, we just setup here directly.
- * The operation under is normal. unfortunately, hpet_setup process
- * is before pci initialize.
+ * hpet address assignation and irq setting should be करोne in bios.
+ * but pmon करोn't करो this, we just setup here directly.
+ * The operation under is normal. unक्रमtunately, hpet_setup process
+ * is beक्रमe pci initialize.
  *
- * {
- *	struct pci_dev *pdev;
+ * अणु
+ *	काष्ठा pci_dev *pdev;
  *
- *	pdev = pci_get_device(PCI_VENDOR_ID_ATI, PCI_DEVICE_ID_ATI_SBX00_SMBUS, NULL);
- *	pci_write_config_word(pdev, SMBUS_PCI_REGB4, HPET_ADDR);
+ *	pdev = pci_get_device(PCI_VENDOR_ID_ATI, PCI_DEVICE_ID_ATI_SBX00_SMBUS, शून्य);
+ *	pci_ग_लिखो_config_word(pdev, SMBUS_PCI_REGB4, HPET_ADDR);
  *
  *	...
- * }
+ * पूर्ण
  */
-static void hpet_setup(void)
-{
+अटल व्योम hpet_setup(व्योम)
+अणु
 	/* set hpet base address */
-	smbus_write(SMBUS_PCI_REGB4, HPET_ADDR);
+	smbus_ग_लिखो(SMBUS_PCI_REGB4, HPET_ADDR);
 
 	/* enable decoding of access to HPET MMIO*/
 	smbus_enable(SMBUS_PCI_REG40, (1 << 28));
@@ -213,73 +214,73 @@ static void hpet_setup(void)
 	/* HPET irq enable */
 	smbus_enable(SMBUS_PCI_REG64, (1 << 10));
 
-	hpet_enable_legacy_int();
-}
+	hpet_enable_legacy_पूर्णांक();
+पूर्ण
 
-void __init setup_hpet_timer(void)
-{
-	unsigned long flags = IRQF_NOBALANCING | IRQF_TIMER;
-	unsigned int cpu = smp_processor_id();
-	struct clock_event_device *cd;
+व्योम __init setup_hpet_समयr(व्योम)
+अणु
+	अचिन्हित दीर्घ flags = IRQF_NOBALANCING | IRQF_TIMER;
+	अचिन्हित पूर्णांक cpu = smp_processor_id();
+	काष्ठा घड़ी_event_device *cd;
 
 	hpet_setup();
 
-	cd = &per_cpu(hpet_clockevent_device, cpu);
+	cd = &per_cpu(hpet_घड़ीevent_device, cpu);
 	cd->name = "hpet";
 	cd->rating = 100;
 	cd->features = CLOCK_EVT_FEAT_PERIODIC | CLOCK_EVT_FEAT_ONESHOT;
-	cd->set_state_shutdown = hpet_set_state_shutdown;
+	cd->set_state_shutकरोwn = hpet_set_state_shutकरोwn;
 	cd->set_state_periodic = hpet_set_state_periodic;
 	cd->set_state_oneshot = hpet_set_state_oneshot;
 	cd->tick_resume = hpet_tick_resume;
 	cd->set_next_event = hpet_next_event;
 	cd->irq = HPET_T0_IRQ;
 	cd->cpumask = cpumask_of(cpu);
-	clockevent_set_clock(cd, HPET_FREQ);
-	cd->max_delta_ns = clockevent_delta2ns(0x7fffffff, cd);
+	घड़ीevent_set_घड़ी(cd, HPET_FREQ);
+	cd->max_delta_ns = घड़ीevent_delta2ns(0x7fffffff, cd);
 	cd->max_delta_ticks = 0x7fffffff;
-	cd->min_delta_ns = clockevent_delta2ns(HPET_MIN_PROG_DELTA, cd);
+	cd->min_delta_ns = घड़ीevent_delta2ns(HPET_MIN_PROG_DELTA, cd);
 	cd->min_delta_ticks = HPET_MIN_PROG_DELTA;
 
-	clockevents_register_device(cd);
-	if (request_irq(HPET_T0_IRQ, hpet_irq_handler, flags, "hpet", NULL))
+	घड़ीevents_रेजिस्टर_device(cd);
+	अगर (request_irq(HPET_T0_IRQ, hpet_irq_handler, flags, "hpet", शून्य))
 		pr_err("Failed to request irq %d (hpet)\n", HPET_T0_IRQ);
 	pr_info("hpet clock event device register\n");
-}
+पूर्ण
 
-static u64 hpet_read_counter(struct clocksource *cs)
-{
-	return (u64)hpet_read(HPET_COUNTER);
-}
+अटल u64 hpet_पढ़ो_counter(काष्ठा घड़ीsource *cs)
+अणु
+	वापस (u64)hpet_पढ़ो(HPET_COUNTER);
+पूर्ण
 
-static void hpet_suspend(struct clocksource *cs)
-{
-}
+अटल व्योम hpet_suspend(काष्ठा घड़ीsource *cs)
+अणु
+पूर्ण
 
-static void hpet_resume(struct clocksource *cs)
-{
+अटल व्योम hpet_resume(काष्ठा घड़ीsource *cs)
+अणु
 	hpet_setup();
 	hpet_restart_counter();
-}
+पूर्ण
 
-static struct clocksource csrc_hpet = {
+अटल काष्ठा घड़ीsource csrc_hpet = अणु
 	.name = "hpet",
-	/* mips clocksource rating is less than 300, so hpet is better. */
+	/* mips घड़ीsource rating is less than 300, so hpet is better. */
 	.rating = 300,
-	.read = hpet_read_counter,
+	.पढ़ो = hpet_पढ़ो_counter,
 	.mask = CLOCKSOURCE_MASK(32),
 	/* oneshot mode work normal with this flag */
 	.flags = CLOCK_SOURCE_IS_CONTINUOUS,
 	.suspend = hpet_suspend,
 	.resume = hpet_resume,
 	.mult = 0,
-	.shift = 10,
-};
+	.shअगरt = 10,
+पूर्ण;
 
-int __init init_hpet_clocksource(void)
-{
-	csrc_hpet.mult = clocksource_hz2mult(HPET_FREQ, csrc_hpet.shift);
-	return clocksource_register_hz(&csrc_hpet, HPET_FREQ);
-}
+पूर्णांक __init init_hpet_घड़ीsource(व्योम)
+अणु
+	csrc_hpet.mult = घड़ीsource_hz2mult(HPET_FREQ, csrc_hpet.shअगरt);
+	वापस घड़ीsource_रेजिस्टर_hz(&csrc_hpet, HPET_FREQ);
+पूर्ण
 
-arch_initcall(init_hpet_clocksource);
+arch_initcall(init_hpet_घड़ीsource);

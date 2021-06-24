@@ -1,9 +1,10 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef CAIAQ_INPUT_H
-#define CAIAQ_INPUT_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित CAIAQ_INPUT_H
+#घोषणा CAIAQ_INPUT_H
 
-void snd_usb_caiaq_input_dispatch(struct snd_usb_caiaqdev *cdev, char *buf, unsigned int len);
-int snd_usb_caiaq_input_init(struct snd_usb_caiaqdev *cdev);
-void snd_usb_caiaq_input_free(struct snd_usb_caiaqdev *cdev);
+व्योम snd_usb_caiaq_input_dispatch(काष्ठा snd_usb_caiaqdev *cdev, अक्षर *buf, अचिन्हित पूर्णांक len);
+पूर्णांक snd_usb_caiaq_input_init(काष्ठा snd_usb_caiaqdev *cdev);
+व्योम snd_usb_caiaq_input_मुक्त(काष्ठा snd_usb_caiaqdev *cdev);
 
-#endif
+#पूर्ण_अगर

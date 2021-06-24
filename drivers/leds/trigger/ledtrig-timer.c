@@ -1,139 +1,140 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * LED Kernel Timer Trigger
  *
  * Copyright 2005-2006 Openedhand Ltd.
  *
- * Author: Richard Purdie <rpurdie@openedhand.com>
+ * Author: Riअक्षरd Purdie <rpurdie@खोलोedhand.com>
  */
 
-#include <linux/module.h>
-#include <linux/kernel.h>
-#include <linux/init.h>
-#include <linux/device.h>
-#include <linux/ctype.h>
-#include <linux/slab.h>
-#include <linux/leds.h>
+#समावेश <linux/module.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/init.h>
+#समावेश <linux/device.h>
+#समावेश <linux/प्रकार.स>
+#समावेश <linux/slab.h>
+#समावेश <linux/leds.h>
 
-static ssize_t led_delay_on_show(struct device *dev,
-		struct device_attribute *attr, char *buf)
-{
-	struct led_classdev *led_cdev = led_trigger_get_led(dev);
+अटल sमाप_प्रकार led_delay_on_show(काष्ठा device *dev,
+		काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा led_classdev *led_cdev = led_trigger_get_led(dev);
 
-	return sprintf(buf, "%lu\n", led_cdev->blink_delay_on);
-}
+	वापस प्र_लिखो(buf, "%lu\n", led_cdev->blink_delay_on);
+पूर्ण
 
-static ssize_t led_delay_on_store(struct device *dev,
-		struct device_attribute *attr, const char *buf, size_t size)
-{
-	struct led_classdev *led_cdev = led_trigger_get_led(dev);
-	unsigned long state;
-	ssize_t ret;
+अटल sमाप_प्रकार led_delay_on_store(काष्ठा device *dev,
+		काष्ठा device_attribute *attr, स्थिर अक्षर *buf, माप_प्रकार size)
+अणु
+	काष्ठा led_classdev *led_cdev = led_trigger_get_led(dev);
+	अचिन्हित दीर्घ state;
+	sमाप_प्रकार ret;
 
-	ret = kstrtoul(buf, 10, &state);
-	if (ret)
-		return ret;
+	ret = kम_से_अदीर्घ(buf, 10, &state);
+	अगर (ret)
+		वापस ret;
 
 	led_blink_set(led_cdev, &state, &led_cdev->blink_delay_off);
 	led_cdev->blink_delay_on = state;
 
-	return size;
-}
+	वापस size;
+पूर्ण
 
-static ssize_t led_delay_off_show(struct device *dev,
-		struct device_attribute *attr, char *buf)
-{
-	struct led_classdev *led_cdev = led_trigger_get_led(dev);
+अटल sमाप_प्रकार led_delay_off_show(काष्ठा device *dev,
+		काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा led_classdev *led_cdev = led_trigger_get_led(dev);
 
-	return sprintf(buf, "%lu\n", led_cdev->blink_delay_off);
-}
+	वापस प्र_लिखो(buf, "%lu\n", led_cdev->blink_delay_off);
+पूर्ण
 
-static ssize_t led_delay_off_store(struct device *dev,
-		struct device_attribute *attr, const char *buf, size_t size)
-{
-	struct led_classdev *led_cdev = led_trigger_get_led(dev);
-	unsigned long state;
-	ssize_t ret;
+अटल sमाप_प्रकार led_delay_off_store(काष्ठा device *dev,
+		काष्ठा device_attribute *attr, स्थिर अक्षर *buf, माप_प्रकार size)
+अणु
+	काष्ठा led_classdev *led_cdev = led_trigger_get_led(dev);
+	अचिन्हित दीर्घ state;
+	sमाप_प्रकार ret;
 
-	ret = kstrtoul(buf, 10, &state);
-	if (ret)
-		return ret;
+	ret = kम_से_अदीर्घ(buf, 10, &state);
+	अगर (ret)
+		वापस ret;
 
 	led_blink_set(led_cdev, &led_cdev->blink_delay_on, &state);
 	led_cdev->blink_delay_off = state;
 
-	return size;
-}
+	वापस size;
+पूर्ण
 
-static DEVICE_ATTR(delay_on, 0644, led_delay_on_show, led_delay_on_store);
-static DEVICE_ATTR(delay_off, 0644, led_delay_off_show, led_delay_off_store);
+अटल DEVICE_ATTR(delay_on, 0644, led_delay_on_show, led_delay_on_store);
+अटल DEVICE_ATTR(delay_off, 0644, led_delay_off_show, led_delay_off_store);
 
-static struct attribute *timer_trig_attrs[] = {
+अटल काष्ठा attribute *समयr_trig_attrs[] = अणु
 	&dev_attr_delay_on.attr,
 	&dev_attr_delay_off.attr,
-	NULL
-};
-ATTRIBUTE_GROUPS(timer_trig);
+	शून्य
+पूर्ण;
+ATTRIBUTE_GROUPS(समयr_trig);
 
-static void pattern_init(struct led_classdev *led_cdev)
-{
+अटल व्योम pattern_init(काष्ठा led_classdev *led_cdev)
+अणु
 	u32 *pattern;
-	unsigned int size = 0;
+	अचिन्हित पूर्णांक size = 0;
 
-	pattern = led_get_default_pattern(led_cdev, &size);
-	if (!pattern)
-		return;
+	pattern = led_get_शेष_pattern(led_cdev, &size);
+	अगर (!pattern)
+		वापस;
 
-	if (size != 2) {
+	अगर (size != 2) अणु
 		dev_warn(led_cdev->dev,
 			 "Expected 2 but got %u values for delays pattern\n",
 			 size);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	led_cdev->blink_delay_on = pattern[0];
 	led_cdev->blink_delay_off = pattern[1];
 	/* led_blink_set() called by caller */
 
 out:
-	kfree(pattern);
-}
+	kमुक्त(pattern);
+पूर्ण
 
-static int timer_trig_activate(struct led_classdev *led_cdev)
-{
-	if (led_cdev->flags & LED_INIT_DEFAULT_TRIGGER) {
+अटल पूर्णांक समयr_trig_activate(काष्ठा led_classdev *led_cdev)
+अणु
+	अगर (led_cdev->flags & LED_INIT_DEFAULT_TRIGGER) अणु
 		pattern_init(led_cdev);
 		/*
 		 * Mark as initialized even on pattern_init() error because
 		 * any consecutive call to it would produce the same error.
 		 */
 		led_cdev->flags &= ~LED_INIT_DEFAULT_TRIGGER;
-	}
+	पूर्ण
 
 	/*
-	 * If "set brightness to 0" is pending in workqueue, we don't
+	 * If "set brightness to 0" is pending in workqueue, we करोn't
 	 * want that to be reordered after blink_set()
 	 */
 	flush_work(&led_cdev->set_brightness_work);
 	led_blink_set(led_cdev, &led_cdev->blink_delay_on,
 		      &led_cdev->blink_delay_off);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void timer_trig_deactivate(struct led_classdev *led_cdev)
-{
+अटल व्योम समयr_trig_deactivate(काष्ठा led_classdev *led_cdev)
+अणु
 	/* Stop blinking */
 	led_set_brightness(led_cdev, LED_OFF);
-}
+पूर्ण
 
-static struct led_trigger timer_led_trigger = {
+अटल काष्ठा led_trigger समयr_led_trigger = अणु
 	.name     = "timer",
-	.activate = timer_trig_activate,
-	.deactivate = timer_trig_deactivate,
-	.groups = timer_trig_groups,
-};
-module_led_trigger(timer_led_trigger);
+	.activate = समयr_trig_activate,
+	.deactivate = समयr_trig_deactivate,
+	.groups = समयr_trig_groups,
+पूर्ण;
+module_led_trigger(समयr_led_trigger);
 
 MODULE_AUTHOR("Richard Purdie <rpurdie@openedhand.com>");
 MODULE_DESCRIPTION("Timer LED trigger");

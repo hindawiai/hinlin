@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
- * Copyright © 2016 Intel Corporation
+ * Copyright तऊ 2016 Intel Corporation
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice (including the next
  * paragraph) shall be included in all copies or substantial portions of the
@@ -21,21 +22,21 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef __DRM_SELFTEST_H__
-#define __DRM_SELFTEST_H__
+#अगर_अघोषित __DRM_SELFTEST_H__
+#घोषणा __DRM_SELFTEST_H__
 
-struct drm_subtest {
-	int (*func)(void *data);
-	const char *name;
-};
+काष्ठा drm_subtest अणु
+	पूर्णांक (*func)(व्योम *data);
+	स्थिर अक्षर *name;
+पूर्ण;
 
-static int __drm_subtests(const char *caller,
-			  const struct drm_subtest *st,
-			  int count,
-			  void *data);
-#define drm_subtests(T, data) \
+अटल पूर्णांक __drm_subtests(स्थिर अक्षर *caller,
+			  स्थिर काष्ठा drm_subtest *st,
+			  पूर्णांक count,
+			  व्योम *data);
+#घोषणा drm_subtests(T, data) \
 	__drm_subtests(__func__, T, ARRAY_SIZE(T), data)
 
-#define SUBTEST(x) { x, #x }
+#घोषणा SUBTEST(x) अणु x, #x पूर्ण
 
-#endif /* __DRM_SELFTEST_H__ */
+#पूर्ण_अगर /* __DRM_SELFTEST_H__ */

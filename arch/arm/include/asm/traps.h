@@ -1,38 +1,39 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _ASMARM_TRAP_H
-#define _ASMARM_TRAP_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _ASMARM_TRAP_H
+#घोषणा _ASMARM_TRAP_H
 
-#include <linux/list.h>
+#समावेश <linux/list.h>
 
-struct pt_regs;
-struct task_struct;
+काष्ठा pt_regs;
+काष्ठा task_काष्ठा;
 
-struct undef_hook {
-	struct list_head node;
+काष्ठा undef_hook अणु
+	काष्ठा list_head node;
 	u32 instr_mask;
 	u32 instr_val;
 	u32 cpsr_mask;
 	u32 cpsr_val;
-	int (*fn)(struct pt_regs *regs, unsigned int instr);
-};
+	पूर्णांक (*fn)(काष्ठा pt_regs *regs, अचिन्हित पूर्णांक instr);
+पूर्ण;
 
-void register_undef_hook(struct undef_hook *hook);
-void unregister_undef_hook(struct undef_hook *hook);
+व्योम रेजिस्टर_undef_hook(काष्ठा undef_hook *hook);
+व्योम unरेजिस्टर_undef_hook(काष्ठा undef_hook *hook);
 
-static inline int __in_irqentry_text(unsigned long ptr)
-{
-	extern char __irqentry_text_start[];
-	extern char __irqentry_text_end[];
+अटल अंतरभूत पूर्णांक __in_irqentry_text(अचिन्हित दीर्घ ptr)
+अणु
+	बाह्य अक्षर __irqentry_text_start[];
+	बाह्य अक्षर __irqentry_text_end[];
 
-	return ptr >= (unsigned long)&__irqentry_text_start &&
-	       ptr < (unsigned long)&__irqentry_text_end;
-}
+	वापस ptr >= (अचिन्हित दीर्घ)&__irqentry_text_start &&
+	       ptr < (अचिन्हित दीर्घ)&__irqentry_text_end;
+पूर्ण
 
-extern void __init early_trap_init(void *);
-extern void dump_backtrace_entry(unsigned long where, unsigned long from,
-				 unsigned long frame, const char *loglvl);
-extern void ptrace_break(struct pt_regs *regs);
+बाह्य व्योम __init early_trap_init(व्योम *);
+बाह्य व्योम dump_backtrace_entry(अचिन्हित दीर्घ where, अचिन्हित दीर्घ from,
+				 अचिन्हित दीर्घ frame, स्थिर अक्षर *loglvl);
+बाह्य व्योम ptrace_अवरोध(काष्ठा pt_regs *regs);
 
-extern void *vectors_page;
+बाह्य व्योम *vectors_page;
 
-#endif
+#पूर्ण_अगर

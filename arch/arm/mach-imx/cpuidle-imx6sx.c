@@ -1,115 +1,116 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (C) 2014 Freescale Semiconductor, Inc.
  */
 
-#include <linux/cpuidle.h>
-#include <linux/cpu_pm.h>
-#include <linux/module.h>
-#include <asm/cacheflush.h>
-#include <asm/cpuidle.h>
-#include <asm/suspend.h>
+#समावेश <linux/cpuidle.h>
+#समावेश <linux/cpu_pm.h>
+#समावेश <linux/module.h>
+#समावेश <यंत्र/cacheflush.h>
+#समावेश <यंत्र/cpuidle.h>
+#समावेश <यंत्र/suspend.h>
 
-#include "common.h"
-#include "cpuidle.h"
-#include "hardware.h"
+#समावेश "common.h"
+#समावेश "cpuidle.h"
+#समावेश "hardware.h"
 
-static int imx6sx_idle_finish(unsigned long val)
-{
+अटल पूर्णांक imx6sx_idle_finish(अचिन्हित दीर्घ val)
+अणु
 	/*
-	 * for Cortex-A7 which has an internal L2
-	 * cache, need to flush it before powering
-	 * down ARM platform, since flushing L1 cache
+	 * क्रम Cortex-A7 which has an पूर्णांकernal L2
+	 * cache, need to flush it beक्रमe घातering
+	 * करोwn ARM platक्रमm, since flushing L1 cache
 	 * here again has very small overhead, compared
-	 * to adding conditional code for L2 cache type,
+	 * to adding conditional code क्रम L2 cache type,
 	 * just call flush_cache_all() is fine.
 	 */
 	flush_cache_all();
-	cpu_do_idle();
+	cpu_करो_idle();
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int imx6sx_enter_wait(struct cpuidle_device *dev,
-			    struct cpuidle_driver *drv, int index)
-{
+अटल पूर्णांक imx6sx_enter_रुको(काष्ठा cpuidle_device *dev,
+			    काष्ठा cpuidle_driver *drv, पूर्णांक index)
+अणु
 	imx6_set_lpm(WAIT_UNCLOCKED);
 
-	switch (index) {
-	case 1:
-		cpu_do_idle();
-		break;
-	case 2:
+	चयन (index) अणु
+	हाल 1:
+		cpu_करो_idle();
+		अवरोध;
+	हाल 2:
 		imx6_enable_rbc(true);
-		imx_gpc_set_arm_power_in_lpm(true);
+		imx_gpc_set_arm_घातer_in_lpm(true);
 		imx_set_cpu_jump(0, v7_cpu_resume);
-		/* Need to notify there is a cpu pm operation. */
+		/* Need to notअगरy there is a cpu pm operation. */
 		cpu_pm_enter();
 		cpu_cluster_pm_enter();
 
 		cpu_suspend(0, imx6sx_idle_finish);
 
-		cpu_cluster_pm_exit();
-		cpu_pm_exit();
-		imx_gpc_set_arm_power_in_lpm(false);
+		cpu_cluster_pm_निकास();
+		cpu_pm_निकास();
+		imx_gpc_set_arm_घातer_in_lpm(false);
 		imx6_enable_rbc(false);
-		break;
-	default:
-		break;
-	}
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
 
 	imx6_set_lpm(WAIT_CLOCKED);
 
-	return index;
-}
+	वापस index;
+पूर्ण
 
-static struct cpuidle_driver imx6sx_cpuidle_driver = {
+अटल काष्ठा cpuidle_driver imx6sx_cpuidle_driver = अणु
 	.name = "imx6sx_cpuidle",
 	.owner = THIS_MODULE,
-	.states = {
+	.states = अणु
 		/* WFI */
 		ARM_CPUIDLE_WFI_STATE,
 		/* WAIT */
-		{
-			.exit_latency = 50,
+		अणु
+			.निकास_latency = 50,
 			.target_residency = 75,
 			.flags = CPUIDLE_FLAG_TIMER_STOP,
-			.enter = imx6sx_enter_wait,
+			.enter = imx6sx_enter_रुको,
 			.name = "WAIT",
 			.desc = "Clock off",
-		},
-		/* WAIT + ARM power off  */
-		{
+		पूर्ण,
+		/* WAIT + ARM घातer off  */
+		अणु
 			/*
 			 * ARM gating 31us * 5 + RBC clear 65us
-			 * and some margin for SW execution, here set it
+			 * and some margin क्रम SW execution, here set it
 			 * to 300us.
 			 */
-			.exit_latency = 300,
+			.निकास_latency = 300,
 			.target_residency = 500,
 			.flags = CPUIDLE_FLAG_TIMER_STOP,
-			.enter = imx6sx_enter_wait,
+			.enter = imx6sx_enter_रुको,
 			.name = "LOW-POWER-IDLE",
 			.desc = "ARM power off",
-		},
-	},
+		पूर्ण,
+	पूर्ण,
 	.state_count = 3,
 	.safe_state_index = 0,
-};
+पूर्ण;
 
-int __init imx6sx_cpuidle_init(void)
-{
-	imx6_set_int_mem_clk_lpm(true);
+पूर्णांक __init imx6sx_cpuidle_init(व्योम)
+अणु
+	imx6_set_पूर्णांक_mem_clk_lpm(true);
 	imx6_enable_rbc(false);
-	imx_gpc_set_l2_mem_power_in_lpm(false);
+	imx_gpc_set_l2_mem_घातer_in_lpm(false);
 	/*
-	 * set ARM power up/down timing to the fastest,
+	 * set ARM घातer up/करोwn timing to the fastest,
 	 * sw2iso and sw can be set to one 32K cycle = 31us
-	 * except for power up sw2iso which need to be
-	 * larger than LDO ramp up time.
+	 * except क्रम घातer up sw2iso which need to be
+	 * larger than LDO ramp up समय.
 	 */
-	imx_gpc_set_arm_power_up_timing(cpu_is_imx6sx() ? 0xf : 0x2, 1);
-	imx_gpc_set_arm_power_down_timing(1, 1);
+	imx_gpc_set_arm_घातer_up_timing(cpu_is_imx6sx() ? 0xf : 0x2, 1);
+	imx_gpc_set_arm_घातer_करोwn_timing(1, 1);
 
-	return cpuidle_register(&imx6sx_cpuidle_driver, NULL);
-}
+	वापस cpuidle_रेजिस्टर(&imx6sx_cpuidle_driver, शून्य);
+पूर्ण

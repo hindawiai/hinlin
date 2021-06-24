@@ -1,25 +1,26 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 // Copyright (c) 2019 Facebook
 
-#include <linux/ptrace.h>
-#include <linux/bpf.h>
-#include <bpf/bpf_helpers.h>
-#include <bpf/bpf_tracing.h>
+#समावेश <linux/ptrace.h>
+#समावेश <linux/bpf.h>
+#समावेश <bpf/bpf_helpers.h>
+#समावेश <bpf/bpf_tracing.h>
 
-struct {
-	__uint(type, BPF_MAP_TYPE_PERF_EVENT_ARRAY);
-	__uint(key_size, sizeof(int));
-	__uint(value_size, sizeof(int));
-} perf_buf_map SEC(".maps");
+काष्ठा अणु
+	__uपूर्णांक(type, BPF_MAP_TYPE_PERF_EVENT_ARRAY);
+	__uपूर्णांक(key_size, माप(पूर्णांक));
+	__uपूर्णांक(value_size, माप(पूर्णांक));
+पूर्ण perf_buf_map SEC(".maps");
 
 SEC("tp/raw_syscalls/sys_enter")
-int handle_sys_enter(void *ctx)
-{
-	int cpu = bpf_get_smp_processor_id();
+पूर्णांक handle_sys_enter(व्योम *ctx)
+अणु
+	पूर्णांक cpu = bpf_get_smp_processor_id();
 
 	bpf_perf_event_output(ctx, &perf_buf_map, BPF_F_CURRENT_CPU,
-			      &cpu, sizeof(cpu));
-	return 0;
-}
+			      &cpu, माप(cpu));
+	वापस 0;
+पूर्ण
 
-char _license[] SEC("license") = "GPL";
+अक्षर _license[] SEC("license") = "GPL";

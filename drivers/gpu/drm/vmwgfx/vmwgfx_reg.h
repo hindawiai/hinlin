@@ -1,14 +1,15 @@
-/* SPDX-License-Identifier: GPL-2.0 OR MIT */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 OR MIT */
 /**************************************************************************
  *
  * Copyright 2009-2014 VMware, Inc., Palo Alto, CA., USA
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the
  * "Software"), to deal in the Software without restriction, including
- * without limitation the rights to use, copy, modify, merge, publish,
+ * without limitation the rights to use, copy, modअगरy, merge, publish,
  * distribute, sub license, and/or sell copies of the Software, and to
- * permit persons to whom the Software is furnished to do so, subject to
+ * permit persons to whom the Software is furnished to करो so, subject to
  * the following conditions:
  *
  * The above copyright notice and this permission notice (including the
@@ -26,30 +27,30 @@
  **************************************************************************/
 
 /**
- * This file contains virtual hardware defines for kernel space.
+ * This file contains भव hardware defines क्रम kernel space.
  */
 
-#ifndef _VMWGFX_REG_H_
-#define _VMWGFX_REG_H_
+#अगर_अघोषित _VMWGFX_REG_H_
+#घोषणा _VMWGFX_REG_H_
 
-#include <linux/types.h>
+#समावेश <linux/types.h>
 
-#define VMWGFX_INDEX_PORT     0x0
-#define VMWGFX_VALUE_PORT     0x1
-#define VMWGFX_IRQSTATUS_PORT 0x8
+#घोषणा VMWGFX_INDEX_PORT     0x0
+#घोषणा VMWGFX_VALUE_PORT     0x1
+#घोषणा VMWGFX_IRQSTATUS_PORT 0x8
 
-struct svga_guest_mem_descriptor {
+काष्ठा svga_guest_mem_descriptor अणु
 	u32 ppn;
 	u32 num_pages;
-};
+पूर्ण;
 
-struct svga_fifo_cmd_fence {
+काष्ठा svga_fअगरo_cmd_fence अणु
 	u32 fence;
-};
+पूर्ण;
 
-#define SVGA_SYNC_GENERIC         1
-#define SVGA_SYNC_FIFOFULL        2
+#घोषणा SVGA_SYNC_GENERIC         1
+#घोषणा SVGA_SYNC_FIFOFULL        2
 
-#include "device_include/svga3d_reg.h"
+#समावेश "device_include/svga3d_reg.h"
 
-#endif
+#पूर्ण_अगर

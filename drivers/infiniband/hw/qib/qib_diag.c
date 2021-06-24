@@ -1,3 +1,4 @@
+<शैली गुरु>
 /*
  * Copyright (c) 2012 Intel Corporation. All rights reserved.
  * Copyright (c) 2006 - 2012 QLogic Corporation. All rights reserved.
@@ -6,20 +7,20 @@
  * This software is available to you under a choice of one of two
  * licenses.  You may choose to be licensed under the terms of the GNU
  * General Public License (GPL) Version 2, available from the file
- * COPYING in the main directory of this source tree, or the
+ * COPYING in the मुख्य directory of this source tree, or the
  * OpenIB.org BSD license below:
  *
- *     Redistribution and use in source and binary forms, with or
- *     without modification, are permitted provided that the following
+ *     Redistribution and use in source and binary क्रमms, with or
+ *     without modअगरication, are permitted provided that the following
  *     conditions are met:
  *
  *      - Redistributions of source code must retain the above
  *        copyright notice, this list of conditions and the following
  *        disclaimer.
  *
- *      - Redistributions in binary form must reproduce the above
+ *      - Redistributions in binary क्रमm must reproduce the above
  *        copyright notice, this list of conditions and the following
- *        disclaimer in the documentation and/or other materials
+ *        disclaimer in the करोcumentation and/or other materials
  *        provided with the distribution.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
@@ -33,188 +34,188 @@
  */
 
 /*
- * This file contains support for diagnostic functions.  It is accessed by
- * opening the qib_diag device, normally minor number 129.  Diagnostic use
+ * This file contains support क्रम diagnostic functions.  It is accessed by
+ * खोलोing the qib_diag device, normally minor number 129.  Diagnostic use
  * of the QLogic_IB chip may render the chip or board unusable until the
- * driver is unloaded, or in some cases, until the system is rebooted.
+ * driver is unloaded, or in some हालs, until the प्रणाली is rebooted.
  *
- * Accesses to the chip through this interface are not similar to going
- * through the /sys/bus/pci resource mmap interface.
+ * Accesses to the chip through this पूर्णांकerface are not similar to going
+ * through the /sys/bus/pci resource mmap पूर्णांकerface.
  */
 
-#include <linux/io.h>
-#include <linux/pci.h>
-#include <linux/poll.h>
-#include <linux/vmalloc.h>
-#include <linux/export.h>
-#include <linux/fs.h>
-#include <linux/uaccess.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/pci.h>
+#समावेश <linux/poll.h>
+#समावेश <linux/vदो_स्मृति.h>
+#समावेश <linux/export.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/uaccess.h>
 
-#include "qib.h"
-#include "qib_common.h"
+#समावेश "qib.h"
+#समावेश "qib_common.h"
 
-#undef pr_fmt
-#define pr_fmt(fmt) QIB_DRV_NAME ": " fmt
+#अघोषित pr_fmt
+#घोषणा pr_fmt(fmt) QIB_DRV_NAME ": " fmt
 
 /*
- * Each client that opens the diag device must read then write
- * offset 0, to prevent lossage from random cat or od. diag_state
+ * Each client that खोलोs the diag device must पढ़ो then ग_लिखो
+ * offset 0, to prevent lossage from अक्रमom cat or od. diag_state
  * sequences this "handshake".
  */
-enum diag_state { UNUSED = 0, OPENED, INIT, READY };
+क्रमागत diag_state अणु UNUSED = 0, OPENED, INIT, READY पूर्ण;
 
-/* State for an individual client. PID so children cannot abuse handshake */
-static struct qib_diag_client {
-	struct qib_diag_client *next;
-	struct qib_devdata *dd;
+/* State क्रम an inभागidual client. PID so children cannot abuse handshake */
+अटल काष्ठा qib_diag_client अणु
+	काष्ठा qib_diag_client *next;
+	काष्ठा qib_devdata *dd;
 	pid_t pid;
-	enum diag_state state;
-} *client_pool;
+	क्रमागत diag_state state;
+पूर्ण *client_pool;
 
 /*
- * Get a client struct. Recycled if possible, else kmalloc.
+ * Get a client काष्ठा. Recycled अगर possible, अन्यथा kदो_स्मृति.
  * Must be called with qib_mutex held
  */
-static struct qib_diag_client *get_client(struct qib_devdata *dd)
-{
-	struct qib_diag_client *dc;
+अटल काष्ठा qib_diag_client *get_client(काष्ठा qib_devdata *dd)
+अणु
+	काष्ठा qib_diag_client *dc;
 
 	dc = client_pool;
-	if (dc)
-		/* got from pool remove it and use */
+	अगर (dc)
+		/* got from pool हटाओ it and use */
 		client_pool = dc->next;
-	else
+	अन्यथा
 		/* None in pool, alloc and init */
-		dc = kmalloc(sizeof(*dc), GFP_KERNEL);
+		dc = kदो_स्मृति(माप(*dc), GFP_KERNEL);
 
-	if (dc) {
-		dc->next = NULL;
+	अगर (dc) अणु
+		dc->next = शून्य;
 		dc->dd = dd;
 		dc->pid = current->pid;
 		dc->state = OPENED;
-	}
-	return dc;
-}
+	पूर्ण
+	वापस dc;
+पूर्ण
 
 /*
  * Return to pool. Must be called with qib_mutex held
  */
-static void return_client(struct qib_diag_client *dc)
-{
-	struct qib_devdata *dd = dc->dd;
-	struct qib_diag_client *tdc, *rdc;
+अटल व्योम वापस_client(काष्ठा qib_diag_client *dc)
+अणु
+	काष्ठा qib_devdata *dd = dc->dd;
+	काष्ठा qib_diag_client *tdc, *rdc;
 
-	rdc = NULL;
-	if (dc == dd->diag_client) {
+	rdc = शून्य;
+	अगर (dc == dd->diag_client) अणु
 		dd->diag_client = dc->next;
 		rdc = dc;
-	} else {
+	पूर्ण अन्यथा अणु
 		tdc = dc->dd->diag_client;
-		while (tdc) {
-			if (dc == tdc->next) {
+		जबतक (tdc) अणु
+			अगर (dc == tdc->next) अणु
 				tdc->next = dc->next;
 				rdc = dc;
-				break;
-			}
+				अवरोध;
+			पूर्ण
 			tdc = tdc->next;
-		}
-	}
-	if (rdc) {
+		पूर्ण
+	पूर्ण
+	अगर (rdc) अणु
 		rdc->state = UNUSED;
-		rdc->dd = NULL;
+		rdc->dd = शून्य;
 		rdc->pid = 0;
 		rdc->next = client_pool;
 		client_pool = rdc;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int qib_diag_open(struct inode *in, struct file *fp);
-static int qib_diag_release(struct inode *in, struct file *fp);
-static ssize_t qib_diag_read(struct file *fp, char __user *data,
-			     size_t count, loff_t *off);
-static ssize_t qib_diag_write(struct file *fp, const char __user *data,
-			      size_t count, loff_t *off);
+अटल पूर्णांक qib_diag_खोलो(काष्ठा inode *in, काष्ठा file *fp);
+अटल पूर्णांक qib_diag_release(काष्ठा inode *in, काष्ठा file *fp);
+अटल sमाप_प्रकार qib_diag_पढ़ो(काष्ठा file *fp, अक्षर __user *data,
+			     माप_प्रकार count, loff_t *off);
+अटल sमाप_प्रकार qib_diag_ग_लिखो(काष्ठा file *fp, स्थिर अक्षर __user *data,
+			      माप_प्रकार count, loff_t *off);
 
-static const struct file_operations diag_file_ops = {
+अटल स्थिर काष्ठा file_operations diag_file_ops = अणु
 	.owner = THIS_MODULE,
-	.write = qib_diag_write,
-	.read = qib_diag_read,
-	.open = qib_diag_open,
+	.ग_लिखो = qib_diag_ग_लिखो,
+	.पढ़ो = qib_diag_पढ़ो,
+	.खोलो = qib_diag_खोलो,
 	.release = qib_diag_release,
-	.llseek = default_llseek,
-};
+	.llseek = शेष_llseek,
+पूर्ण;
 
-static atomic_t diagpkt_count = ATOMIC_INIT(0);
-static struct cdev *diagpkt_cdev;
-static struct device *diagpkt_device;
+अटल atomic_t diagpkt_count = ATOMIC_INIT(0);
+अटल काष्ठा cdev *diagpkt_cdev;
+अटल काष्ठा device *diagpkt_device;
 
-static ssize_t qib_diagpkt_write(struct file *fp, const char __user *data,
-				 size_t count, loff_t *off);
+अटल sमाप_प्रकार qib_diagpkt_ग_लिखो(काष्ठा file *fp, स्थिर अक्षर __user *data,
+				 माप_प्रकार count, loff_t *off);
 
-static const struct file_operations diagpkt_file_ops = {
+अटल स्थिर काष्ठा file_operations diagpkt_file_ops = अणु
 	.owner = THIS_MODULE,
-	.write = qib_diagpkt_write,
+	.ग_लिखो = qib_diagpkt_ग_लिखो,
 	.llseek = noop_llseek,
-};
+पूर्ण;
 
-int qib_diag_add(struct qib_devdata *dd)
-{
-	char name[16];
-	int ret = 0;
+पूर्णांक qib_diag_add(काष्ठा qib_devdata *dd)
+अणु
+	अक्षर name[16];
+	पूर्णांक ret = 0;
 
-	if (atomic_inc_return(&diagpkt_count) == 1) {
+	अगर (atomic_inc_वापस(&diagpkt_count) == 1) अणु
 		ret = qib_cdev_init(QIB_DIAGPKT_MINOR, "ipath_diagpkt",
 				    &diagpkt_file_ops, &diagpkt_cdev,
 				    &diagpkt_device);
-		if (ret)
-			goto done;
-	}
+		अगर (ret)
+			जाओ करोne;
+	पूर्ण
 
-	snprintf(name, sizeof(name), "ipath_diag%d", dd->unit);
+	snम_लिखो(name, माप(name), "ipath_diag%d", dd->unit);
 	ret = qib_cdev_init(QIB_DIAG_MINOR_BASE + dd->unit, name,
 			    &diag_file_ops, &dd->diag_cdev,
 			    &dd->diag_device);
-done:
-	return ret;
-}
+करोne:
+	वापस ret;
+पूर्ण
 
-static void qib_unregister_observers(struct qib_devdata *dd);
+अटल व्योम qib_unरेजिस्टर_observers(काष्ठा qib_devdata *dd);
 
-void qib_diag_remove(struct qib_devdata *dd)
-{
-	struct qib_diag_client *dc;
+व्योम qib_diag_हटाओ(काष्ठा qib_devdata *dd)
+अणु
+	काष्ठा qib_diag_client *dc;
 
-	if (atomic_dec_and_test(&diagpkt_count))
+	अगर (atomic_dec_and_test(&diagpkt_count))
 		qib_cdev_cleanup(&diagpkt_cdev, &diagpkt_device);
 
 	qib_cdev_cleanup(&dd->diag_cdev, &dd->diag_device);
 
 	/*
 	 * Return all diag_clients of this device. There should be none,
-	 * as we are "guaranteed" that no clients are still open
+	 * as we are "guaranteed" that no clients are still खोलो
 	 */
-	while (dd->diag_client)
-		return_client(dd->diag_client);
+	जबतक (dd->diag_client)
+		वापस_client(dd->diag_client);
 
-	/* Now clean up all unused client structs */
-	while (client_pool) {
+	/* Now clean up all unused client काष्ठाs */
+	जबतक (client_pool) अणु
 		dc = client_pool;
 		client_pool = dc->next;
-		kfree(dc);
-	}
+		kमुक्त(dc);
+	पूर्ण
 	/* Clean up observer list */
-	qib_unregister_observers(dd);
-}
+	qib_unरेजिस्टर_observers(dd);
+पूर्ण
 
-/* qib_remap_ioaddr32 - remap an offset into chip address space to __iomem *
+/* qib_remap_ioaddr32 - remap an offset पूर्णांकo chip address space to __iomem *
  *
  * @dd: the qlogic_ib device
  * @offs: the offset in chip-space
- * @cntp: Pointer to max (byte) count for transfer starting at offset
- * This returns a u32 __iomem * so it can be used for both 64 and 32-bit
- * mapping. It is needed because with the use of PAT for control of
- * write-combining, the logically contiguous address-space of the chip
- * may be split into virtually non-contiguous spaces, with different
+ * @cntp: Poपूर्णांकer to max (byte) count क्रम transfer starting at offset
+ * This वापसs a u32 __iomem * so it can be used क्रम both 64 and 32-bit
+ * mapping. It is needed because with the use of PAT क्रम control of
+ * ग_लिखो-combining, the logically contiguous address-space of the chip
+ * may be split पूर्णांकo भवly non-contiguous spaces, with dअगरferent
  * attributes, which are them mapped to contiguous physical space
  * based from the first BAR.
  *
@@ -228,480 +229,480 @@ void qib_diag_remove(struct qib_devdata *dd)
  *		- piobufs (2K and 4K bufs in either order)
  *		- uregs
  *
- * If cntp is non-NULL, returns how many bytes from offset can be accessed
- * Returns 0 if the offset is not mapped.
+ * If cntp is non-शून्य, वापसs how many bytes from offset can be accessed
+ * Returns 0 अगर the offset is not mapped.
  */
-static u32 __iomem *qib_remap_ioaddr32(struct qib_devdata *dd, u32 offset,
+अटल u32 __iomem *qib_remap_ioaddr32(काष्ठा qib_devdata *dd, u32 offset,
 				       u32 *cntp)
-{
+अणु
 	u32 kreglen;
 	u32 snd_bottom, snd_lim = 0;
 	u32 __iomem *krb32 = (u32 __iomem *)dd->kregbase;
-	u32 __iomem *map = NULL;
+	u32 __iomem *map = शून्य;
 	u32 cnt = 0;
 	u32 tot4k, offs4k;
 
-	/* First, simplest case, offset is within the first map. */
-	kreglen = (dd->kregend - dd->kregbase) * sizeof(u64);
-	if (offset < kreglen) {
-		map = krb32 + (offset / sizeof(u32));
+	/* First, simplest हाल, offset is within the first map. */
+	kreglen = (dd->kregend - dd->kregbase) * माप(u64);
+	अगर (offset < kreglen) अणु
+		map = krb32 + (offset / माप(u32));
 		cnt = kreglen - offset;
-		goto mapped;
-	}
+		जाओ mapped;
+	पूर्ण
 
 	/*
-	 * Next check for user regs, the next most common case,
-	 * and a cheap check because if they are not in the first map
+	 * Next check क्रम user regs, the next most common हाल,
+	 * and a cheap check because अगर they are not in the first map
 	 * they are last in chip.
 	 */
-	if (dd->userbase) {
+	अगर (dd->userbase) अणु
 		/* If user regs mapped, they are after send, so set limit. */
 		u32 ulim = (dd->cfgctxts * dd->ureg_align) + dd->uregbase;
 
-		if (!dd->piovl15base)
+		अगर (!dd->piovl15base)
 			snd_lim = dd->uregbase;
 		krb32 = (u32 __iomem *)dd->userbase;
-		if (offset >= dd->uregbase && offset < ulim) {
-			map = krb32 + (offset - dd->uregbase) / sizeof(u32);
+		अगर (offset >= dd->uregbase && offset < ulim) अणु
+			map = krb32 + (offset - dd->uregbase) / माप(u32);
 			cnt = ulim - offset;
-			goto mapped;
-		}
-	}
+			जाओ mapped;
+		पूर्ण
+	पूर्ण
 
 	/*
-	 * Lastly, check for offset within Send Buffers.
-	 * This is gnarly because struct devdata is deliberately vague
+	 * Lastly, check क्रम offset within Send Buffers.
+	 * This is gnarly because काष्ठा devdata is deliberately vague
 	 * about things like 7322 VL15 buffers, and we are not in
-	 * chip-specific code here, so should not make many assumptions.
-	 * The one we _do_ make is that the only chip that has more sndbufs
+	 * chip-specअगरic code here, so should not make many assumptions.
+	 * The one we _करो_ make is that the only chip that has more sndbufs
 	 * than we admit is the 7322, and it has userregs above that, so
 	 * we know the snd_lim.
 	 */
 	/* Assume 2K buffers are first. */
 	snd_bottom = dd->pio2k_bufbase;
-	if (snd_lim == 0) {
+	अगर (snd_lim == 0) अणु
 		u32 tot2k = dd->piobcnt2k * ALIGN(dd->piosize2k, dd->palign);
 
 		snd_lim = snd_bottom + tot2k;
-	}
-	/* If 4k buffers exist, account for them by bumping
+	पूर्ण
+	/* If 4k buffers exist, account क्रम them by bumping
 	 * appropriate limit.
 	 */
 	tot4k = dd->piobcnt4k * dd->align4k;
 	offs4k = dd->piobufbase >> 32;
-	if (dd->piobcnt4k) {
-		if (snd_bottom > offs4k)
+	अगर (dd->piobcnt4k) अणु
+		अगर (snd_bottom > offs4k)
 			snd_bottom = offs4k;
-		else {
-			/* 4k above 2k. Bump snd_lim, if needed*/
-			if (!dd->userbase || dd->piovl15base)
+		अन्यथा अणु
+			/* 4k above 2k. Bump snd_lim, अगर needed*/
+			अगर (!dd->userbase || dd->piovl15base)
 				snd_lim = offs4k + tot4k;
-		}
-	}
+		पूर्ण
+	पूर्ण
 	/*
 	 * Judgement call: can we ignore the space between SendBuffs and
 	 * UserRegs, where we would like to see vl15 buffs, but not more?
 	 */
-	if (offset >= snd_bottom && offset < snd_lim) {
+	अगर (offset >= snd_bottom && offset < snd_lim) अणु
 		offset -= snd_bottom;
-		map = (u32 __iomem *)dd->piobase + (offset / sizeof(u32));
+		map = (u32 __iomem *)dd->piobase + (offset / माप(u32));
 		cnt = snd_lim - offset;
-	}
+	पूर्ण
 
-	if (!map && offs4k && dd->piovl15base) {
+	अगर (!map && offs4k && dd->piovl15base) अणु
 		snd_lim = offs4k + tot4k + 2 * dd->align4k;
-		if (offset >= (offs4k + tot4k) && offset < snd_lim) {
+		अगर (offset >= (offs4k + tot4k) && offset < snd_lim) अणु
 			map = (u32 __iomem *)dd->piovl15base +
-				((offset - (offs4k + tot4k)) / sizeof(u32));
+				((offset - (offs4k + tot4k)) / माप(u32));
 			cnt = snd_lim - offset;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 mapped:
-	if (cntp)
+	अगर (cntp)
 		*cntp = cnt;
-	return map;
-}
+	वापस map;
+पूर्ण
 
 /*
- * qib_read_umem64 - read a 64-bit quantity from the chip into user space
+ * qib_पढ़ो_umem64 - पढ़ो a 64-bit quantity from the chip पूर्णांकo user space
  * @dd: the qlogic_ib device
  * @uaddr: the location to store the data in user memory
- * @regoffs: the offset from BAR0 (_NOT_ full pointer, anymore)
+ * @regoffs: the offset from BAR0 (_NOT_ full poपूर्णांकer, anymore)
  * @count: number of bytes to copy (multiple of 32 bits)
  *
  * This function also localizes all chip memory accesses.
- * The copy should be written such that we read full cacheline packets
- * from the chip.  This is usually used for a single qword
+ * The copy should be written such that we पढ़ो full cacheline packets
+ * from the chip.  This is usually used क्रम a single qword
  *
  * NOTE:  This assumes the chip address is 64-bit aligned.
  */
-static int qib_read_umem64(struct qib_devdata *dd, void __user *uaddr,
-			   u32 regoffs, size_t count)
-{
-	const u64 __iomem *reg_addr;
-	const u64 __iomem *reg_end;
+अटल पूर्णांक qib_पढ़ो_umem64(काष्ठा qib_devdata *dd, व्योम __user *uaddr,
+			   u32 regoffs, माप_प्रकार count)
+अणु
+	स्थिर u64 __iomem *reg_addr;
+	स्थिर u64 __iomem *reg_end;
 	u32 limit;
-	int ret;
+	पूर्णांक ret;
 
-	reg_addr = (const u64 __iomem *)qib_remap_ioaddr32(dd, regoffs, &limit);
-	if (reg_addr == NULL || limit == 0 || !(dd->flags & QIB_PRESENT)) {
+	reg_addr = (स्थिर u64 __iomem *)qib_remap_ioaddr32(dd, regoffs, &limit);
+	अगर (reg_addr == शून्य || limit == 0 || !(dd->flags & QIB_PRESENT)) अणु
 		ret = -EINVAL;
-		goto bail;
-	}
-	if (count >= limit)
+		जाओ bail;
+	पूर्ण
+	अगर (count >= limit)
 		count = limit;
-	reg_end = reg_addr + (count / sizeof(u64));
+	reg_end = reg_addr + (count / माप(u64));
 
-	/* not very efficient, but it works for now */
-	while (reg_addr < reg_end) {
-		u64 data = readq(reg_addr);
+	/* not very efficient, but it works क्रम now */
+	जबतक (reg_addr < reg_end) अणु
+		u64 data = पढ़ोq(reg_addr);
 
-		if (copy_to_user(uaddr, &data, sizeof(u64))) {
+		अगर (copy_to_user(uaddr, &data, माप(u64))) अणु
 			ret = -EFAULT;
-			goto bail;
-		}
+			जाओ bail;
+		पूर्ण
 		reg_addr++;
-		uaddr += sizeof(u64);
-	}
+		uaddr += माप(u64);
+	पूर्ण
 	ret = 0;
 bail:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
- * qib_write_umem64 - write a 64-bit quantity to the chip from user space
+ * qib_ग_लिखो_umem64 - ग_लिखो a 64-bit quantity to the chip from user space
  * @dd: the qlogic_ib device
- * @regoffs: the offset from BAR0 (_NOT_ full pointer, anymore)
+ * @regoffs: the offset from BAR0 (_NOT_ full poपूर्णांकer, anymore)
  * @uaddr: the source of the data in user memory
  * @count: the number of bytes to copy (multiple of 32 bits)
  *
- * This is usually used for a single qword
+ * This is usually used क्रम a single qword
  * NOTE:  This assumes the chip address is 64-bit aligned.
  */
 
-static int qib_write_umem64(struct qib_devdata *dd, u32 regoffs,
-			    const void __user *uaddr, size_t count)
-{
+अटल पूर्णांक qib_ग_लिखो_umem64(काष्ठा qib_devdata *dd, u32 regoffs,
+			    स्थिर व्योम __user *uaddr, माप_प्रकार count)
+अणु
 	u64 __iomem *reg_addr;
-	const u64 __iomem *reg_end;
+	स्थिर u64 __iomem *reg_end;
 	u32 limit;
-	int ret;
+	पूर्णांक ret;
 
 	reg_addr = (u64 __iomem *)qib_remap_ioaddr32(dd, regoffs, &limit);
-	if (reg_addr == NULL || limit == 0 || !(dd->flags & QIB_PRESENT)) {
+	अगर (reg_addr == शून्य || limit == 0 || !(dd->flags & QIB_PRESENT)) अणु
 		ret = -EINVAL;
-		goto bail;
-	}
-	if (count >= limit)
+		जाओ bail;
+	पूर्ण
+	अगर (count >= limit)
 		count = limit;
-	reg_end = reg_addr + (count / sizeof(u64));
+	reg_end = reg_addr + (count / माप(u64));
 
-	/* not very efficient, but it works for now */
-	while (reg_addr < reg_end) {
+	/* not very efficient, but it works क्रम now */
+	जबतक (reg_addr < reg_end) अणु
 		u64 data;
 
-		if (copy_from_user(&data, uaddr, sizeof(data))) {
+		अगर (copy_from_user(&data, uaddr, माप(data))) अणु
 			ret = -EFAULT;
-			goto bail;
-		}
-		writeq(data, reg_addr);
+			जाओ bail;
+		पूर्ण
+		ग_लिखोq(data, reg_addr);
 
 		reg_addr++;
-		uaddr += sizeof(u64);
-	}
+		uaddr += माप(u64);
+	पूर्ण
 	ret = 0;
 bail:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
- * qib_read_umem32 - read a 32-bit quantity from the chip into user space
+ * qib_पढ़ो_umem32 - पढ़ो a 32-bit quantity from the chip पूर्णांकo user space
  * @dd: the qlogic_ib device
  * @uaddr: the location to store the data in user memory
- * @regoffs: the offset from BAR0 (_NOT_ full pointer, anymore)
+ * @regoffs: the offset from BAR0 (_NOT_ full poपूर्णांकer, anymore)
  * @count: number of bytes to copy
  *
- * read 32 bit values, not 64 bit; for memories that only
- * support 32 bit reads; usually a single dword.
+ * पढ़ो 32 bit values, not 64 bit; क्रम memories that only
+ * support 32 bit पढ़ोs; usually a single dword.
  */
-static int qib_read_umem32(struct qib_devdata *dd, void __user *uaddr,
-			   u32 regoffs, size_t count)
-{
-	const u32 __iomem *reg_addr;
-	const u32 __iomem *reg_end;
+अटल पूर्णांक qib_पढ़ो_umem32(काष्ठा qib_devdata *dd, व्योम __user *uaddr,
+			   u32 regoffs, माप_प्रकार count)
+अणु
+	स्थिर u32 __iomem *reg_addr;
+	स्थिर u32 __iomem *reg_end;
 	u32 limit;
-	int ret;
+	पूर्णांक ret;
 
 	reg_addr = qib_remap_ioaddr32(dd, regoffs, &limit);
-	if (reg_addr == NULL || limit == 0 || !(dd->flags & QIB_PRESENT)) {
+	अगर (reg_addr == शून्य || limit == 0 || !(dd->flags & QIB_PRESENT)) अणु
 		ret = -EINVAL;
-		goto bail;
-	}
-	if (count >= limit)
+		जाओ bail;
+	पूर्ण
+	अगर (count >= limit)
 		count = limit;
-	reg_end = reg_addr + (count / sizeof(u32));
+	reg_end = reg_addr + (count / माप(u32));
 
-	/* not very efficient, but it works for now */
-	while (reg_addr < reg_end) {
-		u32 data = readl(reg_addr);
+	/* not very efficient, but it works क्रम now */
+	जबतक (reg_addr < reg_end) अणु
+		u32 data = पढ़ोl(reg_addr);
 
-		if (copy_to_user(uaddr, &data, sizeof(data))) {
+		अगर (copy_to_user(uaddr, &data, माप(data))) अणु
 			ret = -EFAULT;
-			goto bail;
-		}
+			जाओ bail;
+		पूर्ण
 
 		reg_addr++;
-		uaddr += sizeof(u32);
+		uaddr += माप(u32);
 
-	}
+	पूर्ण
 	ret = 0;
 bail:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
- * qib_write_umem32 - write a 32-bit quantity to the chip from user space
+ * qib_ग_लिखो_umem32 - ग_लिखो a 32-bit quantity to the chip from user space
  * @dd: the qlogic_ib device
- * @regoffs: the offset from BAR0 (_NOT_ full pointer, anymore)
+ * @regoffs: the offset from BAR0 (_NOT_ full poपूर्णांकer, anymore)
  * @uaddr: the source of the data in user memory
  * @count: number of bytes to copy
  *
- * write 32 bit values, not 64 bit; for memories that only
- * support 32 bit write; usually a single dword.
+ * ग_लिखो 32 bit values, not 64 bit; क्रम memories that only
+ * support 32 bit ग_लिखो; usually a single dword.
  */
 
-static int qib_write_umem32(struct qib_devdata *dd, u32 regoffs,
-			    const void __user *uaddr, size_t count)
-{
+अटल पूर्णांक qib_ग_लिखो_umem32(काष्ठा qib_devdata *dd, u32 regoffs,
+			    स्थिर व्योम __user *uaddr, माप_प्रकार count)
+अणु
 	u32 __iomem *reg_addr;
-	const u32 __iomem *reg_end;
+	स्थिर u32 __iomem *reg_end;
 	u32 limit;
-	int ret;
+	पूर्णांक ret;
 
 	reg_addr = qib_remap_ioaddr32(dd, regoffs, &limit);
-	if (reg_addr == NULL || limit == 0 || !(dd->flags & QIB_PRESENT)) {
+	अगर (reg_addr == शून्य || limit == 0 || !(dd->flags & QIB_PRESENT)) अणु
 		ret = -EINVAL;
-		goto bail;
-	}
-	if (count >= limit)
+		जाओ bail;
+	पूर्ण
+	अगर (count >= limit)
 		count = limit;
-	reg_end = reg_addr + (count / sizeof(u32));
+	reg_end = reg_addr + (count / माप(u32));
 
-	while (reg_addr < reg_end) {
+	जबतक (reg_addr < reg_end) अणु
 		u32 data;
 
-		if (copy_from_user(&data, uaddr, sizeof(data))) {
+		अगर (copy_from_user(&data, uaddr, माप(data))) अणु
 			ret = -EFAULT;
-			goto bail;
-		}
-		writel(data, reg_addr);
+			जाओ bail;
+		पूर्ण
+		ग_लिखोl(data, reg_addr);
 
 		reg_addr++;
-		uaddr += sizeof(u32);
-	}
+		uaddr += माप(u32);
+	पूर्ण
 	ret = 0;
 bail:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int qib_diag_open(struct inode *in, struct file *fp)
-{
-	int unit = iminor(in) - QIB_DIAG_MINOR_BASE;
-	struct qib_devdata *dd;
-	struct qib_diag_client *dc;
-	int ret;
+अटल पूर्णांक qib_diag_खोलो(काष्ठा inode *in, काष्ठा file *fp)
+अणु
+	पूर्णांक unit = iminor(in) - QIB_DIAG_MINOR_BASE;
+	काष्ठा qib_devdata *dd;
+	काष्ठा qib_diag_client *dc;
+	पूर्णांक ret;
 
 	mutex_lock(&qib_mutex);
 
 	dd = qib_lookup(unit);
 
-	if (dd == NULL || !(dd->flags & QIB_PRESENT) ||
-	    !dd->kregbase) {
+	अगर (dd == शून्य || !(dd->flags & QIB_PRESENT) ||
+	    !dd->kregbase) अणु
 		ret = -ENODEV;
-		goto bail;
-	}
+		जाओ bail;
+	पूर्ण
 
 	dc = get_client(dd);
-	if (!dc) {
+	अगर (!dc) अणु
 		ret = -ENOMEM;
-		goto bail;
-	}
+		जाओ bail;
+	पूर्ण
 	dc->next = dd->diag_client;
 	dd->diag_client = dc;
-	fp->private_data = dc;
+	fp->निजी_data = dc;
 	ret = 0;
 bail:
 	mutex_unlock(&qib_mutex);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * qib_diagpkt_write - write an IB packet
- * @fp: the diag data device file pointer
- * @data: qib_diag_pkt structure saying where to get the packet
- * @count: size of data to write
+ * qib_diagpkt_ग_लिखो - ग_लिखो an IB packet
+ * @fp: the diag data device file poपूर्णांकer
+ * @data: qib_diag_pkt काष्ठाure saying where to get the packet
+ * @count: size of data to ग_लिखो
  * @off: unused by this code
  */
-static ssize_t qib_diagpkt_write(struct file *fp,
-				 const char __user *data,
-				 size_t count, loff_t *off)
-{
+अटल sमाप_प्रकार qib_diagpkt_ग_लिखो(काष्ठा file *fp,
+				 स्थिर अक्षर __user *data,
+				 माप_प्रकार count, loff_t *off)
+अणु
 	u32 __iomem *piobuf;
 	u32 plen, pbufn, maxlen_reserve;
-	struct qib_diag_xpkt dp;
-	u32 *tmpbuf = NULL;
-	struct qib_devdata *dd;
-	struct qib_pportdata *ppd;
-	ssize_t ret = 0;
+	काष्ठा qib_diag_xpkt dp;
+	u32 *पंचांगpbuf = शून्य;
+	काष्ठा qib_devdata *dd;
+	काष्ठा qib_pportdata *ppd;
+	sमाप_प्रकार ret = 0;
 
-	if (count != sizeof(dp)) {
+	अगर (count != माप(dp)) अणु
 		ret = -EINVAL;
-		goto bail;
-	}
-	if (copy_from_user(&dp, data, sizeof(dp))) {
+		जाओ bail;
+	पूर्ण
+	अगर (copy_from_user(&dp, data, माप(dp))) अणु
 		ret = -EFAULT;
-		goto bail;
-	}
+		जाओ bail;
+	पूर्ण
 
 	dd = qib_lookup(dp.unit);
-	if (!dd || !(dd->flags & QIB_PRESENT) || !dd->kregbase) {
+	अगर (!dd || !(dd->flags & QIB_PRESENT) || !dd->kregbase) अणु
 		ret = -ENODEV;
-		goto bail;
-	}
-	if (!(dd->flags & QIB_INITTED)) {
-		/* no hardware, freeze, etc. */
+		जाओ bail;
+	पूर्ण
+	अगर (!(dd->flags & QIB_INITTED)) अणु
+		/* no hardware, मुक्तze, etc. */
 		ret = -ENODEV;
-		goto bail;
-	}
+		जाओ bail;
+	पूर्ण
 
-	if (dp.version != _DIAG_XPKT_VERS) {
+	अगर (dp.version != _DIAG_XPKT_VERS) अणु
 		qib_dev_err(dd, "Invalid version %u for diagpkt_write\n",
 			    dp.version);
 		ret = -EINVAL;
-		goto bail;
-	}
+		जाओ bail;
+	पूर्ण
 	/* send count must be an exact number of dwords */
-	if (dp.len & 3) {
+	अगर (dp.len & 3) अणु
 		ret = -EINVAL;
-		goto bail;
-	}
-	if (!dp.port || dp.port > dd->num_pports) {
+		जाओ bail;
+	पूर्ण
+	अगर (!dp.port || dp.port > dd->num_pports) अणु
 		ret = -EINVAL;
-		goto bail;
-	}
+		जाओ bail;
+	पूर्ण
 	ppd = &dd->pport[dp.port - 1];
 
 	/*
-	 * need total length before first word written, plus 2 Dwords. One Dword
-	 * is for padding so we get the full user data when not aligned on
-	 * a word boundary. The other Dword is to make sure we have room for the
-	 * ICRC which gets tacked on later.
+	 * need total length beक्रमe first word written, plus 2 Dwords. One Dword
+	 * is क्रम padding so we get the full user data when not aligned on
+	 * a word boundary. The other Dword is to make sure we have room क्रम the
+	 * ICRC which माला_लो tacked on later.
 	 */
-	maxlen_reserve = 2 * sizeof(u32);
-	if (dp.len > ppd->ibmaxlen - maxlen_reserve) {
+	maxlen_reserve = 2 * माप(u32);
+	अगर (dp.len > ppd->ibmaxlen - maxlen_reserve) अणु
 		ret = -EINVAL;
-		goto bail;
-	}
+		जाओ bail;
+	पूर्ण
 
-	plen = sizeof(u32) + dp.len;
+	plen = माप(u32) + dp.len;
 
-	tmpbuf = vmalloc(plen);
-	if (!tmpbuf) {
+	पंचांगpbuf = vदो_स्मृति(plen);
+	अगर (!पंचांगpbuf) अणु
 		ret = -ENOMEM;
-		goto bail;
-	}
+		जाओ bail;
+	पूर्ण
 
-	if (copy_from_user(tmpbuf,
+	अगर (copy_from_user(पंचांगpbuf,
 			   u64_to_user_ptr(dp.data),
-			   dp.len)) {
+			   dp.len)) अणु
 		ret = -EFAULT;
-		goto bail;
-	}
+		जाओ bail;
+	पूर्ण
 
 	plen >>= 2;             /* in dwords */
 
-	if (dp.pbc_wd == 0)
+	अगर (dp.pbc_wd == 0)
 		dp.pbc_wd = plen;
 
-	piobuf = dd->f_getsendbuf(ppd, dp.pbc_wd, &pbufn);
-	if (!piobuf) {
+	piobuf = dd->f_माला_लोendbuf(ppd, dp.pbc_wd, &pbufn);
+	अगर (!piobuf) अणु
 		ret = -EBUSY;
-		goto bail;
-	}
+		जाओ bail;
+	पूर्ण
 	/* disarm it just to be extra sure */
 	dd->f_sendctrl(dd->pport, QIB_SENDCTRL_DISARM_BUF(pbufn));
 
-	/* disable header check on pbufn for this packet */
-	dd->f_txchk_change(dd, pbufn, 1, TXCHK_CHG_TYPE_DIS1, NULL);
+	/* disable header check on pbufn क्रम this packet */
+	dd->f_txchk_change(dd, pbufn, 1, TXCHK_CHG_TYPE_DIS1, शून्य);
 
-	writeq(dp.pbc_wd, piobuf);
+	ग_लिखोq(dp.pbc_wd, piobuf);
 	/*
 	 * Copy all but the trigger word, then flush, so it's written
-	 * to chip before trigger word, then write trigger word, then
+	 * to chip beक्रमe trigger word, then ग_लिखो trigger word, then
 	 * flush again, so packet is sent.
 	 */
-	if (dd->flags & QIB_PIO_FLUSH_WC) {
+	अगर (dd->flags & QIB_PIO_FLUSH_WC) अणु
 		qib_flush_wc();
-		qib_pio_copy(piobuf + 2, tmpbuf, plen - 1);
+		qib_pio_copy(piobuf + 2, पंचांगpbuf, plen - 1);
 		qib_flush_wc();
-		__raw_writel(tmpbuf[plen - 1], piobuf + plen + 1);
-	} else
-		qib_pio_copy(piobuf + 2, tmpbuf, plen);
+		__raw_ग_लिखोl(पंचांगpbuf[plen - 1], piobuf + plen + 1);
+	पूर्ण अन्यथा
+		qib_pio_copy(piobuf + 2, पंचांगpbuf, plen);
 
-	if (dd->flags & QIB_USE_SPCL_TRIG) {
+	अगर (dd->flags & QIB_USE_SPCL_TRIG) अणु
 		u32 spcl_off = (pbufn >= dd->piobcnt2k) ? 2047 : 1023;
 
 		qib_flush_wc();
-		__raw_writel(0xaebecede, piobuf + spcl_off);
-	}
+		__raw_ग_लिखोl(0xaebecede, piobuf + spcl_off);
+	पूर्ण
 
 	/*
 	 * Ensure buffer is written to the chip, then re-enable
-	 * header checks (if supported by chip).  The txchk
-	 * code will ensure seen by chip before returning.
+	 * header checks (अगर supported by chip).  The txchk
+	 * code will ensure seen by chip beक्रमe वापसing.
 	 */
 	qib_flush_wc();
-	qib_sendbuf_done(dd, pbufn);
-	dd->f_txchk_change(dd, pbufn, 1, TXCHK_CHG_TYPE_ENAB1, NULL);
+	qib_sendbuf_करोne(dd, pbufn);
+	dd->f_txchk_change(dd, pbufn, 1, TXCHK_CHG_TYPE_ENAB1, शून्य);
 
-	ret = sizeof(dp);
+	ret = माप(dp);
 
 bail:
-	vfree(tmpbuf);
-	return ret;
-}
+	vमुक्त(पंचांगpbuf);
+	वापस ret;
+पूर्ण
 
-static int qib_diag_release(struct inode *in, struct file *fp)
-{
+अटल पूर्णांक qib_diag_release(काष्ठा inode *in, काष्ठा file *fp)
+अणु
 	mutex_lock(&qib_mutex);
-	return_client(fp->private_data);
-	fp->private_data = NULL;
+	वापस_client(fp->निजी_data);
+	fp->निजी_data = शून्य;
 	mutex_unlock(&qib_mutex);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * Chip-specific code calls to register its interest in
- * a specific range.
+ * Chip-specअगरic code calls to रेजिस्टर its पूर्णांकerest in
+ * a specअगरic range.
  */
-struct diag_observer_list_elt {
-	struct diag_observer_list_elt *next;
-	const struct diag_observer *op;
-};
+काष्ठा diag_observer_list_elt अणु
+	काष्ठा diag_observer_list_elt *next;
+	स्थिर काष्ठा diag_observer *op;
+पूर्ण;
 
-int qib_register_observer(struct qib_devdata *dd,
-			  const struct diag_observer *op)
-{
-	struct diag_observer_list_elt *olp;
-	unsigned long flags;
+पूर्णांक qib_रेजिस्टर_observer(काष्ठा qib_devdata *dd,
+			  स्थिर काष्ठा diag_observer *op)
+अणु
+	काष्ठा diag_observer_list_elt *olp;
+	अचिन्हित दीर्घ flags;
 
-	if (!dd || !op)
-		return -EINVAL;
-	olp = vmalloc(sizeof(*olp));
-	if (!olp)
-		return -ENOMEM;
+	अगर (!dd || !op)
+		वापस -EINVAL;
+	olp = vदो_स्मृति(माप(*olp));
+	अगर (!olp)
+		वापस -ENOMEM;
 
 	spin_lock_irqsave(&dd->qib_diag_trans_lock, flags);
 	olp->op = op;
@@ -709,198 +710,198 @@ int qib_register_observer(struct qib_devdata *dd,
 	dd->diag_observer_list = olp;
 	spin_unlock_irqrestore(&dd->qib_diag_trans_lock, flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* Remove all registered observers when device is closed */
-static void qib_unregister_observers(struct qib_devdata *dd)
-{
-	struct diag_observer_list_elt *olp;
-	unsigned long flags;
+/* Remove all रेजिस्टरed observers when device is बंदd */
+अटल व्योम qib_unरेजिस्टर_observers(काष्ठा qib_devdata *dd)
+अणु
+	काष्ठा diag_observer_list_elt *olp;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&dd->qib_diag_trans_lock, flags);
 	olp = dd->diag_observer_list;
-	while (olp) {
+	जबतक (olp) अणु
 		/* Pop one observer, let go of lock */
 		dd->diag_observer_list = olp->next;
 		spin_unlock_irqrestore(&dd->qib_diag_trans_lock, flags);
-		vfree(olp);
+		vमुक्त(olp);
 		/* try again. */
 		spin_lock_irqsave(&dd->qib_diag_trans_lock, flags);
 		olp = dd->diag_observer_list;
-	}
+	पूर्ण
 	spin_unlock_irqrestore(&dd->qib_diag_trans_lock, flags);
-}
+पूर्ण
 
 /*
- * Find the observer, if any, for the specified address. Initial implementation
+ * Find the observer, अगर any, क्रम the specअगरied address. Initial implementation
  * is simple stack of observers. This must be called with diag transaction
  * lock held.
  */
-static const struct diag_observer *diag_get_observer(struct qib_devdata *dd,
+अटल स्थिर काष्ठा diag_observer *diag_get_observer(काष्ठा qib_devdata *dd,
 						     u32 addr)
-{
-	struct diag_observer_list_elt *olp;
-	const struct diag_observer *op = NULL;
+अणु
+	काष्ठा diag_observer_list_elt *olp;
+	स्थिर काष्ठा diag_observer *op = शून्य;
 
 	olp = dd->diag_observer_list;
-	while (olp) {
+	जबतक (olp) अणु
 		op = olp->op;
-		if (addr >= op->bottom && addr <= op->top)
-			break;
+		अगर (addr >= op->bottom && addr <= op->top)
+			अवरोध;
 		olp = olp->next;
-	}
-	if (!olp)
-		op = NULL;
+	पूर्ण
+	अगर (!olp)
+		op = शून्य;
 
-	return op;
-}
+	वापस op;
+पूर्ण
 
-static ssize_t qib_diag_read(struct file *fp, char __user *data,
-			     size_t count, loff_t *off)
-{
-	struct qib_diag_client *dc = fp->private_data;
-	struct qib_devdata *dd = dc->dd;
-	ssize_t ret;
+अटल sमाप_प्रकार qib_diag_पढ़ो(काष्ठा file *fp, अक्षर __user *data,
+			     माप_प्रकार count, loff_t *off)
+अणु
+	काष्ठा qib_diag_client *dc = fp->निजी_data;
+	काष्ठा qib_devdata *dd = dc->dd;
+	sमाप_प्रकार ret;
 
-	if (dc->pid != current->pid) {
+	अगर (dc->pid != current->pid) अणु
 		ret = -EPERM;
-		goto bail;
-	}
+		जाओ bail;
+	पूर्ण
 
-	if (count == 0)
+	अगर (count == 0)
 		ret = 0;
-	else if ((count % 4) || (*off % 4))
+	अन्यथा अगर ((count % 4) || (*off % 4))
 		/* address or length is not 32-bit aligned, hence invalid */
 		ret = -EINVAL;
-	else if (dc->state < READY && (*off || count != 8))
+	अन्यथा अगर (dc->state < READY && (*off || count != 8))
 		ret = -EINVAL;  /* prevent cat /dev/qib_diag* */
-	else {
-		unsigned long flags;
+	अन्यथा अणु
+		अचिन्हित दीर्घ flags;
 		u64 data64 = 0;
-		int use_32;
-		const struct diag_observer *op;
+		पूर्णांक use_32;
+		स्थिर काष्ठा diag_observer *op;
 
 		use_32 = (count % 8) || (*off % 8);
 		ret = -1;
 		spin_lock_irqsave(&dd->qib_diag_trans_lock, flags);
 		/*
-		 * Check for observer on this address range.
-		 * we only support a single 32 or 64-bit read
+		 * Check क्रम observer on this address range.
+		 * we only support a single 32 or 64-bit पढ़ो
 		 * via observer, currently.
 		 */
 		op = diag_get_observer(dd, *off);
-		if (op) {
+		अगर (op) अणु
 			u32 offset = *off;
 
 			ret = op->hook(dd, op, offset, &data64, 0, use_32);
-		}
+		पूर्ण
 		/*
-		 * We need to release lock before any copy_to_user(),
-		 * whether implicit in qib_read_umem* or explicit below.
+		 * We need to release lock beक्रमe any copy_to_user(),
+		 * whether implicit in qib_पढ़ो_umem* or explicit below.
 		 */
 		spin_unlock_irqrestore(&dd->qib_diag_trans_lock, flags);
-		if (!op) {
-			if (use_32)
+		अगर (!op) अणु
+			अगर (use_32)
 				/*
 				 * Address or length is not 64-bit aligned;
-				 * do 32-bit rd
+				 * करो 32-bit rd
 				 */
-				ret = qib_read_umem32(dd, data, (u32) *off,
+				ret = qib_पढ़ो_umem32(dd, data, (u32) *off,
 						      count);
-			else
-				ret = qib_read_umem64(dd, data, (u32) *off,
+			अन्यथा
+				ret = qib_पढ़ो_umem64(dd, data, (u32) *off,
 						      count);
-		} else if (ret == count) {
-			/* Below finishes case where observer existed */
+		पूर्ण अन्यथा अगर (ret == count) अणु
+			/* Below finishes हाल where observer existed */
 			ret = copy_to_user(data, &data64, use_32 ?
-					   sizeof(u32) : sizeof(u64));
-			if (ret)
+					   माप(u32) : माप(u64));
+			अगर (ret)
 				ret = -EFAULT;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (ret >= 0) {
+	अगर (ret >= 0) अणु
 		*off += count;
 		ret = count;
-		if (dc->state == OPENED)
+		अगर (dc->state == OPENED)
 			dc->state = INIT;
-	}
+	पूर्ण
 bail:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static ssize_t qib_diag_write(struct file *fp, const char __user *data,
-			      size_t count, loff_t *off)
-{
-	struct qib_diag_client *dc = fp->private_data;
-	struct qib_devdata *dd = dc->dd;
-	ssize_t ret;
+अटल sमाप_प्रकार qib_diag_ग_लिखो(काष्ठा file *fp, स्थिर अक्षर __user *data,
+			      माप_प्रकार count, loff_t *off)
+अणु
+	काष्ठा qib_diag_client *dc = fp->निजी_data;
+	काष्ठा qib_devdata *dd = dc->dd;
+	sमाप_प्रकार ret;
 
-	if (dc->pid != current->pid) {
+	अगर (dc->pid != current->pid) अणु
 		ret = -EPERM;
-		goto bail;
-	}
+		जाओ bail;
+	पूर्ण
 
-	if (count == 0)
+	अगर (count == 0)
 		ret = 0;
-	else if ((count % 4) || (*off % 4))
+	अन्यथा अगर ((count % 4) || (*off % 4))
 		/* address or length is not 32-bit aligned, hence invalid */
 		ret = -EINVAL;
-	else if (dc->state < READY &&
+	अन्यथा अगर (dc->state < READY &&
 		((*off || count != 8) || dc->state != INIT))
-		/* No writes except second-step of init seq */
-		ret = -EINVAL;  /* before any other write allowed */
-	else {
-		unsigned long flags;
-		const struct diag_observer *op = NULL;
-		int use_32 =  (count % 8) || (*off % 8);
+		/* No ग_लिखोs except second-step of init seq */
+		ret = -EINVAL;  /* beक्रमe any other ग_लिखो allowed */
+	अन्यथा अणु
+		अचिन्हित दीर्घ flags;
+		स्थिर काष्ठा diag_observer *op = शून्य;
+		पूर्णांक use_32 =  (count % 8) || (*off % 8);
 
 		/*
-		 * Check for observer on this address range.
-		 * We only support a single 32 or 64-bit write
+		 * Check क्रम observer on this address range.
+		 * We only support a single 32 or 64-bit ग_लिखो
 		 * via observer, currently. This helps, because
 		 * we would otherwise have to jump through hoops
 		 * to make "diag transaction" meaningful when we
-		 * cannot do a copy_from_user while holding the lock.
+		 * cannot करो a copy_from_user जबतक holding the lock.
 		 */
-		if (count == 4 || count == 8) {
+		अगर (count == 4 || count == 8) अणु
 			u64 data64;
 			u32 offset = *off;
 
 			ret = copy_from_user(&data64, data, count);
-			if (ret) {
+			अगर (ret) अणु
 				ret = -EFAULT;
-				goto bail;
-			}
+				जाओ bail;
+			पूर्ण
 			spin_lock_irqsave(&dd->qib_diag_trans_lock, flags);
 			op = diag_get_observer(dd, *off);
-			if (op)
+			अगर (op)
 				ret = op->hook(dd, op, offset, &data64, ~0Ull,
 					       use_32);
 			spin_unlock_irqrestore(&dd->qib_diag_trans_lock, flags);
-		}
+		पूर्ण
 
-		if (!op) {
-			if (use_32)
+		अगर (!op) अणु
+			अगर (use_32)
 				/*
 				 * Address or length is not 64-bit aligned;
-				 * do 32-bit write
+				 * करो 32-bit ग_लिखो
 				 */
-				ret = qib_write_umem32(dd, (u32) *off, data,
+				ret = qib_ग_लिखो_umem32(dd, (u32) *off, data,
 						       count);
-			else
-				ret = qib_write_umem64(dd, (u32) *off, data,
+			अन्यथा
+				ret = qib_ग_लिखो_umem64(dd, (u32) *off, data,
 						       count);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (ret >= 0) {
+	अगर (ret >= 0) अणु
 		*off += count;
 		ret = count;
-		if (dc->state == INIT)
-			dc->state = READY; /* all read/write OK now */
-	}
+		अगर (dc->state == INIT)
+			dc->state = READY; /* all पढ़ो/ग_लिखो OK now */
+	पूर्ण
 bail:
-	return ret;
-}
+	वापस ret;
+पूर्ण

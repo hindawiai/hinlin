@@ -1,405 +1,406 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
- * linux/mdio.h: definitions for MDIO (clause 45) transceivers
+ * linux/mdपन.स: definitions क्रम MDIO (clause 45) transceivers
  * Copyright 2006-2009 Solarflare Communications Inc.
  */
-#ifndef __LINUX_MDIO_H__
-#define __LINUX_MDIO_H__
+#अगर_अघोषित __LINUX_MDIO_H__
+#घोषणा __LINUX_MDIO_H__
 
-#include <uapi/linux/mdio.h>
-#include <linux/mod_devicetable.h>
+#समावेश <uapi/linux/mdपन.स>
+#समावेश <linux/mod_devicetable.h>
 
-/* Or MII_ADDR_C45 into regnum for read/write on mii_bus to enable the 21 bit
+/* Or MII_ADDR_C45 पूर्णांकo regnum क्रम पढ़ो/ग_लिखो on mii_bus to enable the 21 bit
  * IEEE 802.3ae clause 45 addressing mode used by 10GIGE phy chips.
  */
-#define MII_ADDR_C45		(1<<30)
-#define MII_DEVADDR_C45_SHIFT	16
-#define MII_REGADDR_C45_MASK	GENMASK(15, 0)
+#घोषणा MII_ADDR_C45		(1<<30)
+#घोषणा MII_DEVADDR_C45_SHIFT	16
+#घोषणा MII_REGADDR_C45_MASK	GENMASK(15, 0)
 
-struct gpio_desc;
-struct mii_bus;
-struct reset_control;
+काष्ठा gpio_desc;
+काष्ठा mii_bus;
+काष्ठा reset_control;
 
 /* Multiple levels of nesting are possible. However typically this is
  * limited to nested DSA like layer, a MUX layer, and the normal
- * user. Instead of trying to handle the general case, just define
- * these cases.
+ * user. Instead of trying to handle the general हाल, just define
+ * these हालs.
  */
-enum mdio_mutex_lock_class {
+क्रमागत mdio_mutex_lock_class अणु
 	MDIO_MUTEX_NORMAL,
 	MDIO_MUTEX_MUX,
 	MDIO_MUTEX_NESTED,
-};
+पूर्ण;
 
-struct mdio_device {
-	struct device dev;
+काष्ठा mdio_device अणु
+	काष्ठा device dev;
 
-	struct mii_bus *bus;
-	char modalias[MDIO_NAME_SIZE];
+	काष्ठा mii_bus *bus;
+	अक्षर modalias[MDIO_NAME_SIZE];
 
-	int (*bus_match)(struct device *dev, struct device_driver *drv);
-	void (*device_free)(struct mdio_device *mdiodev);
-	void (*device_remove)(struct mdio_device *mdiodev);
+	पूर्णांक (*bus_match)(काष्ठा device *dev, काष्ठा device_driver *drv);
+	व्योम (*device_मुक्त)(काष्ठा mdio_device *mdiodev);
+	व्योम (*device_हटाओ)(काष्ठा mdio_device *mdiodev);
 
 	/* Bus address of the MDIO device (0-31) */
-	int addr;
-	int flags;
-	struct gpio_desc *reset_gpio;
-	struct reset_control *reset_ctrl;
-	unsigned int reset_assert_delay;
-	unsigned int reset_deassert_delay;
-};
+	पूर्णांक addr;
+	पूर्णांक flags;
+	काष्ठा gpio_desc *reset_gpio;
+	काष्ठा reset_control *reset_ctrl;
+	अचिन्हित पूर्णांक reset_निश्चित_delay;
+	अचिन्हित पूर्णांक reset_deनिश्चित_delay;
+पूर्ण;
 
-static inline struct mdio_device *to_mdio_device(const struct device *dev)
-{
-	return container_of(dev, struct mdio_device, dev);
-}
+अटल अंतरभूत काष्ठा mdio_device *to_mdio_device(स्थिर काष्ठा device *dev)
+अणु
+	वापस container_of(dev, काष्ठा mdio_device, dev);
+पूर्ण
 
-/* struct mdio_driver_common: Common to all MDIO drivers */
-struct mdio_driver_common {
-	struct device_driver driver;
-	int flags;
-};
-#define MDIO_DEVICE_FLAG_PHY		1
+/* काष्ठा mdio_driver_common: Common to all MDIO drivers */
+काष्ठा mdio_driver_common अणु
+	काष्ठा device_driver driver;
+	पूर्णांक flags;
+पूर्ण;
+#घोषणा MDIO_DEVICE_FLAG_PHY		1
 
-static inline struct mdio_driver_common *
-to_mdio_common_driver(const struct device_driver *driver)
-{
-	return container_of(driver, struct mdio_driver_common, driver);
-}
+अटल अंतरभूत काष्ठा mdio_driver_common *
+to_mdio_common_driver(स्थिर काष्ठा device_driver *driver)
+अणु
+	वापस container_of(driver, काष्ठा mdio_driver_common, driver);
+पूर्ण
 
-/* struct mdio_driver: Generic MDIO driver */
-struct mdio_driver {
-	struct mdio_driver_common mdiodrv;
+/* काष्ठा mdio_driver: Generic MDIO driver */
+काष्ठा mdio_driver अणु
+	काष्ठा mdio_driver_common mdiodrv;
 
 	/*
 	 * Called during discovery.  Used to set
-	 * up device-specific structures, if any
+	 * up device-specअगरic काष्ठाures, अगर any
 	 */
-	int (*probe)(struct mdio_device *mdiodev);
+	पूर्णांक (*probe)(काष्ठा mdio_device *mdiodev);
 
-	/* Clears up any memory if needed */
-	void (*remove)(struct mdio_device *mdiodev);
-};
+	/* Clears up any memory अगर needed */
+	व्योम (*हटाओ)(काष्ठा mdio_device *mdiodev);
+पूर्ण;
 
-static inline struct mdio_driver *
-to_mdio_driver(const struct device_driver *driver)
-{
-	return container_of(to_mdio_common_driver(driver), struct mdio_driver,
+अटल अंतरभूत काष्ठा mdio_driver *
+to_mdio_driver(स्थिर काष्ठा device_driver *driver)
+अणु
+	वापस container_of(to_mdio_common_driver(driver), काष्ठा mdio_driver,
 			    mdiodrv);
-}
+पूर्ण
 
 /* device driver data */
-static inline void mdiodev_set_drvdata(struct mdio_device *mdio, void *data)
-{
+अटल अंतरभूत व्योम mdiodev_set_drvdata(काष्ठा mdio_device *mdio, व्योम *data)
+अणु
 	dev_set_drvdata(&mdio->dev, data);
-}
+पूर्ण
 
-static inline void *mdiodev_get_drvdata(struct mdio_device *mdio)
-{
-	return dev_get_drvdata(&mdio->dev);
-}
+अटल अंतरभूत व्योम *mdiodev_get_drvdata(काष्ठा mdio_device *mdio)
+अणु
+	वापस dev_get_drvdata(&mdio->dev);
+पूर्ण
 
-void mdio_device_free(struct mdio_device *mdiodev);
-struct mdio_device *mdio_device_create(struct mii_bus *bus, int addr);
-int mdio_device_register(struct mdio_device *mdiodev);
-void mdio_device_remove(struct mdio_device *mdiodev);
-void mdio_device_reset(struct mdio_device *mdiodev, int value);
-int mdio_driver_register(struct mdio_driver *drv);
-void mdio_driver_unregister(struct mdio_driver *drv);
-int mdio_device_bus_match(struct device *dev, struct device_driver *drv);
+व्योम mdio_device_मुक्त(काष्ठा mdio_device *mdiodev);
+काष्ठा mdio_device *mdio_device_create(काष्ठा mii_bus *bus, पूर्णांक addr);
+पूर्णांक mdio_device_रेजिस्टर(काष्ठा mdio_device *mdiodev);
+व्योम mdio_device_हटाओ(काष्ठा mdio_device *mdiodev);
+व्योम mdio_device_reset(काष्ठा mdio_device *mdiodev, पूर्णांक value);
+पूर्णांक mdio_driver_रेजिस्टर(काष्ठा mdio_driver *drv);
+व्योम mdio_driver_unरेजिस्टर(काष्ठा mdio_driver *drv);
+पूर्णांक mdio_device_bus_match(काष्ठा device *dev, काष्ठा device_driver *drv);
 
-static inline bool mdio_phy_id_is_c45(int phy_id)
-{
-	return (phy_id & MDIO_PHY_ID_C45) && !(phy_id & ~MDIO_PHY_ID_C45_MASK);
-}
+अटल अंतरभूत bool mdio_phy_id_is_c45(पूर्णांक phy_id)
+अणु
+	वापस (phy_id & MDIO_PHY_ID_C45) && !(phy_id & ~MDIO_PHY_ID_C45_MASK);
+पूर्ण
 
-static inline __u16 mdio_phy_id_prtad(int phy_id)
-{
-	return (phy_id & MDIO_PHY_ID_PRTAD) >> 5;
-}
+अटल अंतरभूत __u16 mdio_phy_id_prtad(पूर्णांक phy_id)
+अणु
+	वापस (phy_id & MDIO_PHY_ID_PRTAD) >> 5;
+पूर्ण
 
-static inline __u16 mdio_phy_id_devad(int phy_id)
-{
-	return phy_id & MDIO_PHY_ID_DEVAD;
-}
+अटल अंतरभूत __u16 mdio_phy_id_devad(पूर्णांक phy_id)
+अणु
+	वापस phy_id & MDIO_PHY_ID_DEVAD;
+पूर्ण
 
 /**
- * struct mdio_if_info - Ethernet controller MDIO interface
- * @prtad: PRTAD of the PHY (%MDIO_PRTAD_NONE if not present/unknown)
+ * काष्ठा mdio_अगर_info - Ethernet controller MDIO पूर्णांकerface
+ * @prtad: PRTAD of the PHY (%MDIO_PRTAD_NONE अगर not present/unknown)
  * @mmds: Mask of MMDs expected to be present in the PHY.  This must be
  *	non-zero unless @prtad = %MDIO_PRTAD_NONE.
  * @mode_support: MDIO modes supported.  If %MDIO_SUPPORTS_C22 is set then
- *	MII register access will be passed through with @devad =
+ *	MII रेजिस्टर access will be passed through with @devad =
  *	%MDIO_DEVAD_NONE.  If %MDIO_EMULATE_C22 is set then access to
- *	commonly used clause 22 registers will be translated into
- *	clause 45 registers.
- * @dev: Net device structure
- * @mdio_read: Register read function; returns value or negative error code
- * @mdio_write: Register write function; returns 0 or negative error code
+ *	commonly used clause 22 रेजिस्टरs will be translated पूर्णांकo
+ *	clause 45 रेजिस्टरs.
+ * @dev: Net device काष्ठाure
+ * @mdio_पढ़ो: Register पढ़ो function; वापसs value or negative error code
+ * @mdio_ग_लिखो: Register ग_लिखो function; वापसs 0 or negative error code
  */
-struct mdio_if_info {
-	int prtad;
+काष्ठा mdio_अगर_info अणु
+	पूर्णांक prtad;
 	u32 mmds;
-	unsigned mode_support;
+	अचिन्हित mode_support;
 
-	struct net_device *dev;
-	int (*mdio_read)(struct net_device *dev, int prtad, int devad,
+	काष्ठा net_device *dev;
+	पूर्णांक (*mdio_पढ़ो)(काष्ठा net_device *dev, पूर्णांक prtad, पूर्णांक devad,
 			 u16 addr);
-	int (*mdio_write)(struct net_device *dev, int prtad, int devad,
+	पूर्णांक (*mdio_ग_लिखो)(काष्ठा net_device *dev, पूर्णांक prtad, पूर्णांक devad,
 			  u16 addr, u16 val);
-};
+पूर्ण;
 
-#define MDIO_PRTAD_NONE			(-1)
-#define MDIO_DEVAD_NONE			(-1)
-#define MDIO_SUPPORTS_C22		1
-#define MDIO_SUPPORTS_C45		2
-#define MDIO_EMULATE_C22		4
+#घोषणा MDIO_PRTAD_NONE			(-1)
+#घोषणा MDIO_DEVAD_NONE			(-1)
+#घोषणा MDIO_SUPPORTS_C22		1
+#घोषणा MDIO_SUPPORTS_C45		2
+#घोषणा MDIO_EMULATE_C22		4
 
-struct ethtool_cmd;
-struct ethtool_pauseparam;
-extern int mdio45_probe(struct mdio_if_info *mdio, int prtad);
-extern int mdio_set_flag(const struct mdio_if_info *mdio,
-			 int prtad, int devad, u16 addr, int mask,
+काष्ठा ethtool_cmd;
+काष्ठा ethtool_छोड़ोparam;
+बाह्य पूर्णांक mdio45_probe(काष्ठा mdio_अगर_info *mdio, पूर्णांक prtad);
+बाह्य पूर्णांक mdio_set_flag(स्थिर काष्ठा mdio_अगर_info *mdio,
+			 पूर्णांक prtad, पूर्णांक devad, u16 addr, पूर्णांक mask,
 			 bool sense);
-extern int mdio45_links_ok(const struct mdio_if_info *mdio, u32 mmds);
-extern int mdio45_nway_restart(const struct mdio_if_info *mdio);
-extern void mdio45_ethtool_gset_npage(const struct mdio_if_info *mdio,
-				      struct ethtool_cmd *ecmd,
+बाह्य पूर्णांक mdio45_links_ok(स्थिर काष्ठा mdio_अगर_info *mdio, u32 mmds);
+बाह्य पूर्णांक mdio45_nway_restart(स्थिर काष्ठा mdio_अगर_info *mdio);
+बाह्य व्योम mdio45_ethtool_gset_npage(स्थिर काष्ठा mdio_अगर_info *mdio,
+				      काष्ठा ethtool_cmd *ecmd,
 				      u32 npage_adv, u32 npage_lpa);
-extern void
-mdio45_ethtool_ksettings_get_npage(const struct mdio_if_info *mdio,
-				   struct ethtool_link_ksettings *cmd,
+बाह्य व्योम
+mdio45_ethtool_ksettings_get_npage(स्थिर काष्ठा mdio_अगर_info *mdio,
+				   काष्ठा ethtool_link_ksettings *cmd,
 				   u32 npage_adv, u32 npage_lpa);
 
 /**
- * mdio45_ethtool_gset - get settings for ETHTOOL_GSET
- * @mdio: MDIO interface
- * @ecmd: Ethtool request structure
+ * mdio45_ethtool_gset - get settings क्रम ETHTOOL_GSET
+ * @mdio: MDIO पूर्णांकerface
+ * @ecmd: Ethtool request काष्ठाure
  *
- * Since the CSRs for auto-negotiation using next pages are not fully
- * standardised, this function does not attempt to decode them.  Use
- * mdio45_ethtool_gset_npage() to specify advertisement bits from next
+ * Since the CSRs क्रम स्वतः-negotiation using next pages are not fully
+ * standardised, this function करोes not attempt to decode them.  Use
+ * mdio45_ethtool_gset_npage() to specअगरy advertisement bits from next
  * pages.
  */
-static inline void mdio45_ethtool_gset(const struct mdio_if_info *mdio,
-				       struct ethtool_cmd *ecmd)
-{
+अटल अंतरभूत व्योम mdio45_ethtool_gset(स्थिर काष्ठा mdio_अगर_info *mdio,
+				       काष्ठा ethtool_cmd *ecmd)
+अणु
 	mdio45_ethtool_gset_npage(mdio, ecmd, 0, 0);
-}
+पूर्ण
 
 /**
- * mdio45_ethtool_ksettings_get - get settings for ETHTOOL_GLINKSETTINGS
- * @mdio: MDIO interface
- * @cmd: Ethtool request structure
+ * mdio45_ethtool_ksettings_get - get settings क्रम ETHTOOL_GLINKSETTINGS
+ * @mdio: MDIO पूर्णांकerface
+ * @cmd: Ethtool request काष्ठाure
  *
- * Since the CSRs for auto-negotiation using next pages are not fully
- * standardised, this function does not attempt to decode them.  Use
- * mdio45_ethtool_ksettings_get_npage() to specify advertisement bits
+ * Since the CSRs क्रम स्वतः-negotiation using next pages are not fully
+ * standardised, this function करोes not attempt to decode them.  Use
+ * mdio45_ethtool_ksettings_get_npage() to specअगरy advertisement bits
  * from next pages.
  */
-static inline void
-mdio45_ethtool_ksettings_get(const struct mdio_if_info *mdio,
-			     struct ethtool_link_ksettings *cmd)
-{
+अटल अंतरभूत व्योम
+mdio45_ethtool_ksettings_get(स्थिर काष्ठा mdio_अगर_info *mdio,
+			     काष्ठा ethtool_link_ksettings *cmd)
+अणु
 	mdio45_ethtool_ksettings_get_npage(mdio, cmd, 0, 0);
-}
+पूर्ण
 
-extern int mdio_mii_ioctl(const struct mdio_if_info *mdio,
-			  struct mii_ioctl_data *mii_data, int cmd);
+बाह्य पूर्णांक mdio_mii_ioctl(स्थिर काष्ठा mdio_अगर_info *mdio,
+			  काष्ठा mii_ioctl_data *mii_data, पूर्णांक cmd);
 
 /**
  * mmd_eee_cap_to_ethtool_sup_t
- * @eee_cap: value of the MMD EEE Capability register
+ * @eee_cap: value of the MMD EEE Capability रेजिस्टर
  *
  * A small helper function that translates MMD EEE Capability (3.20) bits
  * to ethtool supported settings.
  */
-static inline u32 mmd_eee_cap_to_ethtool_sup_t(u16 eee_cap)
-{
+अटल अंतरभूत u32 mmd_eee_cap_to_ethtool_sup_t(u16 eee_cap)
+अणु
 	u32 supported = 0;
 
-	if (eee_cap & MDIO_EEE_100TX)
+	अगर (eee_cap & MDIO_EEE_100TX)
 		supported |= SUPPORTED_100baseT_Full;
-	if (eee_cap & MDIO_EEE_1000T)
+	अगर (eee_cap & MDIO_EEE_1000T)
 		supported |= SUPPORTED_1000baseT_Full;
-	if (eee_cap & MDIO_EEE_10GT)
+	अगर (eee_cap & MDIO_EEE_10GT)
 		supported |= SUPPORTED_10000baseT_Full;
-	if (eee_cap & MDIO_EEE_1000KX)
+	अगर (eee_cap & MDIO_EEE_1000KX)
 		supported |= SUPPORTED_1000baseKX_Full;
-	if (eee_cap & MDIO_EEE_10GKX4)
+	अगर (eee_cap & MDIO_EEE_10GKX4)
 		supported |= SUPPORTED_10000baseKX4_Full;
-	if (eee_cap & MDIO_EEE_10GKR)
+	अगर (eee_cap & MDIO_EEE_10GKR)
 		supported |= SUPPORTED_10000baseKR_Full;
 
-	return supported;
-}
+	वापस supported;
+पूर्ण
 
 /**
  * mmd_eee_adv_to_ethtool_adv_t
- * @eee_adv: value of the MMD EEE Advertisement/Link Partner Ability registers
+ * @eee_adv: value of the MMD EEE Advertisement/Link Partner Ability रेजिस्टरs
  *
  * A small helper function that translates the MMD EEE Advertisment (7.60)
  * and MMD EEE Link Partner Ability (7.61) bits to ethtool advertisement
  * settings.
  */
-static inline u32 mmd_eee_adv_to_ethtool_adv_t(u16 eee_adv)
-{
+अटल अंतरभूत u32 mmd_eee_adv_to_ethtool_adv_t(u16 eee_adv)
+अणु
 	u32 adv = 0;
 
-	if (eee_adv & MDIO_EEE_100TX)
+	अगर (eee_adv & MDIO_EEE_100TX)
 		adv |= ADVERTISED_100baseT_Full;
-	if (eee_adv & MDIO_EEE_1000T)
+	अगर (eee_adv & MDIO_EEE_1000T)
 		adv |= ADVERTISED_1000baseT_Full;
-	if (eee_adv & MDIO_EEE_10GT)
+	अगर (eee_adv & MDIO_EEE_10GT)
 		adv |= ADVERTISED_10000baseT_Full;
-	if (eee_adv & MDIO_EEE_1000KX)
+	अगर (eee_adv & MDIO_EEE_1000KX)
 		adv |= ADVERTISED_1000baseKX_Full;
-	if (eee_adv & MDIO_EEE_10GKX4)
+	अगर (eee_adv & MDIO_EEE_10GKX4)
 		adv |= ADVERTISED_10000baseKX4_Full;
-	if (eee_adv & MDIO_EEE_10GKR)
+	अगर (eee_adv & MDIO_EEE_10GKR)
 		adv |= ADVERTISED_10000baseKR_Full;
 
-	return adv;
-}
+	वापस adv;
+पूर्ण
 
 /**
  * ethtool_adv_to_mmd_eee_adv_t
  * @adv: the ethtool advertisement settings
  *
  * A small helper function that translates ethtool advertisement settings
- * to EEE advertisements for the MMD EEE Advertisement (7.60) and
- * MMD EEE Link Partner Ability (7.61) registers.
+ * to EEE advertisements क्रम the MMD EEE Advertisement (7.60) and
+ * MMD EEE Link Partner Ability (7.61) रेजिस्टरs.
  */
-static inline u16 ethtool_adv_to_mmd_eee_adv_t(u32 adv)
-{
+अटल अंतरभूत u16 ethtool_adv_to_mmd_eee_adv_t(u32 adv)
+अणु
 	u16 reg = 0;
 
-	if (adv & ADVERTISED_100baseT_Full)
+	अगर (adv & ADVERTISED_100baseT_Full)
 		reg |= MDIO_EEE_100TX;
-	if (adv & ADVERTISED_1000baseT_Full)
+	अगर (adv & ADVERTISED_1000baseT_Full)
 		reg |= MDIO_EEE_1000T;
-	if (adv & ADVERTISED_10000baseT_Full)
+	अगर (adv & ADVERTISED_10000baseT_Full)
 		reg |= MDIO_EEE_10GT;
-	if (adv & ADVERTISED_1000baseKX_Full)
+	अगर (adv & ADVERTISED_1000baseKX_Full)
 		reg |= MDIO_EEE_1000KX;
-	if (adv & ADVERTISED_10000baseKX4_Full)
+	अगर (adv & ADVERTISED_10000baseKX4_Full)
 		reg |= MDIO_EEE_10GKX4;
-	if (adv & ADVERTISED_10000baseKR_Full)
+	अगर (adv & ADVERTISED_10000baseKR_Full)
 		reg |= MDIO_EEE_10GKR;
 
-	return reg;
-}
+	वापस reg;
+पूर्ण
 
 /**
  * linkmode_adv_to_mii_10gbt_adv_t
  * @advertising: the linkmode advertisement settings
  *
  * A small helper function that translates linkmode advertisement
- * settings to phy autonegotiation advertisements for the C45
- * 10GBASE-T AN CONTROL (7.32) register.
+ * settings to phy स्वतःnegotiation advertisements क्रम the C45
+ * 10GBASE-T AN CONTROL (7.32) रेजिस्टर.
  */
-static inline u32 linkmode_adv_to_mii_10gbt_adv_t(unsigned long *advertising)
-{
+अटल अंतरभूत u32 linkmode_adv_to_mii_10gbt_adv_t(अचिन्हित दीर्घ *advertising)
+अणु
 	u32 result = 0;
 
-	if (linkmode_test_bit(ETHTOOL_LINK_MODE_2500baseT_Full_BIT,
+	अगर (linkmode_test_bit(ETHTOOL_LINK_MODE_2500baseT_Full_BIT,
 			      advertising))
 		result |= MDIO_AN_10GBT_CTRL_ADV2_5G;
-	if (linkmode_test_bit(ETHTOOL_LINK_MODE_5000baseT_Full_BIT,
+	अगर (linkmode_test_bit(ETHTOOL_LINK_MODE_5000baseT_Full_BIT,
 			      advertising))
 		result |= MDIO_AN_10GBT_CTRL_ADV5G;
-	if (linkmode_test_bit(ETHTOOL_LINK_MODE_10000baseT_Full_BIT,
+	अगर (linkmode_test_bit(ETHTOOL_LINK_MODE_10000baseT_Full_BIT,
 			      advertising))
 		result |= MDIO_AN_10GBT_CTRL_ADV10G;
 
-	return result;
-}
+	वापस result;
+पूर्ण
 
 /**
  * mii_10gbt_stat_mod_linkmode_lpa_t
  * @advertising: target the linkmode advertisement settings
- * @lpa: value of the C45 10GBASE-T AN STATUS register
+ * @lpa: value of the C45 10GBASE-T AN STATUS रेजिस्टर
  *
- * A small helper function that translates C45 10GBASE-T AN STATUS register bits
+ * A small helper function that translates C45 10GBASE-T AN STATUS रेजिस्टर bits
  * to linkmode advertisement settings. Other bits in advertising aren't changed.
  */
-static inline void mii_10gbt_stat_mod_linkmode_lpa_t(unsigned long *advertising,
+अटल अंतरभूत व्योम mii_10gbt_stat_mod_linkmode_lpa_t(अचिन्हित दीर्घ *advertising,
 						     u32 lpa)
-{
+अणु
 	linkmode_mod_bit(ETHTOOL_LINK_MODE_2500baseT_Full_BIT,
 			 advertising, lpa & MDIO_AN_10GBT_STAT_LP2_5G);
 	linkmode_mod_bit(ETHTOOL_LINK_MODE_5000baseT_Full_BIT,
 			 advertising, lpa & MDIO_AN_10GBT_STAT_LP5G);
 	linkmode_mod_bit(ETHTOOL_LINK_MODE_10000baseT_Full_BIT,
 			 advertising, lpa & MDIO_AN_10GBT_STAT_LP10G);
-}
+पूर्ण
 
-int __mdiobus_read(struct mii_bus *bus, int addr, u32 regnum);
-int __mdiobus_write(struct mii_bus *bus, int addr, u32 regnum, u16 val);
-int __mdiobus_modify_changed(struct mii_bus *bus, int addr, u32 regnum,
+पूर्णांक __mdiobus_पढ़ो(काष्ठा mii_bus *bus, पूर्णांक addr, u32 regnum);
+पूर्णांक __mdiobus_ग_लिखो(काष्ठा mii_bus *bus, पूर्णांक addr, u32 regnum, u16 val);
+पूर्णांक __mdiobus_modअगरy_changed(काष्ठा mii_bus *bus, पूर्णांक addr, u32 regnum,
 			     u16 mask, u16 set);
 
-int mdiobus_read(struct mii_bus *bus, int addr, u32 regnum);
-int mdiobus_read_nested(struct mii_bus *bus, int addr, u32 regnum);
-int mdiobus_write(struct mii_bus *bus, int addr, u32 regnum, u16 val);
-int mdiobus_write_nested(struct mii_bus *bus, int addr, u32 regnum, u16 val);
-int mdiobus_modify(struct mii_bus *bus, int addr, u32 regnum, u16 mask,
+पूर्णांक mdiobus_पढ़ो(काष्ठा mii_bus *bus, पूर्णांक addr, u32 regnum);
+पूर्णांक mdiobus_पढ़ो_nested(काष्ठा mii_bus *bus, पूर्णांक addr, u32 regnum);
+पूर्णांक mdiobus_ग_लिखो(काष्ठा mii_bus *bus, पूर्णांक addr, u32 regnum, u16 val);
+पूर्णांक mdiobus_ग_लिखो_nested(काष्ठा mii_bus *bus, पूर्णांक addr, u32 regnum, u16 val);
+पूर्णांक mdiobus_modअगरy(काष्ठा mii_bus *bus, पूर्णांक addr, u32 regnum, u16 mask,
 		   u16 set);
 
-static inline u32 mdiobus_c45_addr(int devad, u16 regnum)
-{
-	return MII_ADDR_C45 | devad << MII_DEVADDR_C45_SHIFT | regnum;
-}
+अटल अंतरभूत u32 mdiobus_c45_addr(पूर्णांक devad, u16 regnum)
+अणु
+	वापस MII_ADDR_C45 | devad << MII_DEVADDR_C45_SHIFT | regnum;
+पूर्ण
 
-static inline int __mdiobus_c45_read(struct mii_bus *bus, int prtad, int devad,
+अटल अंतरभूत पूर्णांक __mdiobus_c45_पढ़ो(काष्ठा mii_bus *bus, पूर्णांक prtad, पूर्णांक devad,
 				     u16 regnum)
-{
-	return __mdiobus_read(bus, prtad, mdiobus_c45_addr(devad, regnum));
-}
+अणु
+	वापस __mdiobus_पढ़ो(bus, prtad, mdiobus_c45_addr(devad, regnum));
+पूर्ण
 
-static inline int __mdiobus_c45_write(struct mii_bus *bus, int prtad, int devad,
+अटल अंतरभूत पूर्णांक __mdiobus_c45_ग_लिखो(काष्ठा mii_bus *bus, पूर्णांक prtad, पूर्णांक devad,
 				      u16 regnum, u16 val)
-{
-	return __mdiobus_write(bus, prtad, mdiobus_c45_addr(devad, regnum),
+अणु
+	वापस __mdiobus_ग_लिखो(bus, prtad, mdiobus_c45_addr(devad, regnum),
 			       val);
-}
+पूर्ण
 
-static inline int mdiobus_c45_read(struct mii_bus *bus, int prtad, int devad,
+अटल अंतरभूत पूर्णांक mdiobus_c45_पढ़ो(काष्ठा mii_bus *bus, पूर्णांक prtad, पूर्णांक devad,
 				   u16 regnum)
-{
-	return mdiobus_read(bus, prtad, mdiobus_c45_addr(devad, regnum));
-}
+अणु
+	वापस mdiobus_पढ़ो(bus, prtad, mdiobus_c45_addr(devad, regnum));
+पूर्ण
 
-static inline int mdiobus_c45_write(struct mii_bus *bus, int prtad, int devad,
+अटल अंतरभूत पूर्णांक mdiobus_c45_ग_लिखो(काष्ठा mii_bus *bus, पूर्णांक prtad, पूर्णांक devad,
 				    u16 regnum, u16 val)
-{
-	return mdiobus_write(bus, prtad, mdiobus_c45_addr(devad, regnum), val);
-}
+अणु
+	वापस mdiobus_ग_लिखो(bus, prtad, mdiobus_c45_addr(devad, regnum), val);
+पूर्ण
 
-int mdiobus_register_device(struct mdio_device *mdiodev);
-int mdiobus_unregister_device(struct mdio_device *mdiodev);
-bool mdiobus_is_registered_device(struct mii_bus *bus, int addr);
-struct phy_device *mdiobus_get_phy(struct mii_bus *bus, int addr);
+पूर्णांक mdiobus_रेजिस्टर_device(काष्ठा mdio_device *mdiodev);
+पूर्णांक mdiobus_unरेजिस्टर_device(काष्ठा mdio_device *mdiodev);
+bool mdiobus_is_रेजिस्टरed_device(काष्ठा mii_bus *bus, पूर्णांक addr);
+काष्ठा phy_device *mdiobus_get_phy(काष्ठा mii_bus *bus, पूर्णांक addr);
 
 /**
- * mdio_module_driver() - Helper macro for registering mdio drivers
- * @_mdio_driver: driver to register
+ * mdio_module_driver() - Helper macro क्रम रेजिस्टरing mdio drivers
+ * @_mdio_driver: driver to रेजिस्टर
  *
- * Helper macro for MDIO drivers which do not do anything special in module
- * init/exit. Each module may only use this macro once, and calling it
- * replaces module_init() and module_exit().
+ * Helper macro क्रम MDIO drivers which करो not करो anything special in module
+ * init/निकास. Each module may only use this macro once, and calling it
+ * replaces module_init() and module_निकास().
  */
-#define mdio_module_driver(_mdio_driver)				\
-static int __init mdio_module_init(void)				\
-{									\
-	return mdio_driver_register(&_mdio_driver);			\
-}									\
+#घोषणा mdio_module_driver(_mdio_driver)				\
+अटल पूर्णांक __init mdio_module_init(व्योम)				\
+अणु									\
+	वापस mdio_driver_रेजिस्टर(&_mdio_driver);			\
+पूर्ण									\
 module_init(mdio_module_init);						\
-static void __exit mdio_module_exit(void)				\
-{									\
-	mdio_driver_unregister(&_mdio_driver);				\
-}									\
-module_exit(mdio_module_exit)
+अटल व्योम __निकास mdio_module_निकास(व्योम)				\
+अणु									\
+	mdio_driver_unरेजिस्टर(&_mdio_driver);				\
+पूर्ण									\
+module_निकास(mdio_module_निकास)
 
-#endif /* __LINUX_MDIO_H__ */
+#पूर्ण_अगर /* __LINUX_MDIO_H__ */

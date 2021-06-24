@@ -1,99 +1,100 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 
-#include <linux/ptrace.h>
-#include <stddef.h>
-#include <linux/bpf.h>
-#include <bpf/bpf_helpers.h>
-#include <bpf/bpf_tracing.h>
+#समावेश <linux/ptrace.h>
+#समावेश <मानकघोष.स>
+#समावेश <linux/bpf.h>
+#समावेश <bpf/bpf_helpers.h>
+#समावेश <bpf/bpf_tracing.h>
 
-char _license[] SEC("license") = "GPL";
+अक्षर _license[] SEC("license") = "GPL";
 
 /* typically virtio scsi has max SGs of 6 */
-#define VIRTIO_MAX_SGS	6
+#घोषणा VIRTIO_MAX_SGS	6
 
-/* Verifier will fail with SG_MAX = 128. The failure can be
+/* Verअगरier will fail with SG_MAX = 128. The failure can be
  * workarounded with a smaller SG_MAX, e.g. 10.
  */
-#define WORKAROUND
-#ifdef WORKAROUND
-#define SG_MAX		10
-#else
+#घोषणा WORKAROUND
+#अगर_घोषित WORKAROUND
+#घोषणा SG_MAX		10
+#अन्यथा
 /* typically virtio blk has max SEG of 128 */
-#define SG_MAX		128
-#endif
+#घोषणा SG_MAX		128
+#पूर्ण_अगर
 
-#define SG_CHAIN	0x01UL
-#define SG_END		0x02UL
+#घोषणा SG_CHAIN	0x01UL
+#घोषणा SG_END		0x02UL
 
-struct scatterlist {
-	unsigned long   page_link;
-	unsigned int    offset;
-	unsigned int    length;
-};
+काष्ठा scatterlist अणु
+	अचिन्हित दीर्घ   page_link;
+	अचिन्हित पूर्णांक    offset;
+	अचिन्हित पूर्णांक    length;
+पूर्ण;
 
-#define sg_is_chain(sg)		((sg)->page_link & SG_CHAIN)
-#define sg_is_last(sg)		((sg)->page_link & SG_END)
-#define sg_chain_ptr(sg)	\
-	((struct scatterlist *) ((sg)->page_link & ~(SG_CHAIN | SG_END)))
+#घोषणा sg_is_chain(sg)		((sg)->page_link & SG_CHAIN)
+#घोषणा sg_is_last(sg)		((sg)->page_link & SG_END)
+#घोषणा sg_chain_ptr(sg)	\
+	((काष्ठा scatterlist *) ((sg)->page_link & ~(SG_CHAIN | SG_END)))
 
-static inline struct scatterlist *__sg_next(struct scatterlist *sgp)
-{
-	struct scatterlist sg;
+अटल अंतरभूत काष्ठा scatterlist *__sg_next(काष्ठा scatterlist *sgp)
+अणु
+	काष्ठा scatterlist sg;
 
-	bpf_probe_read_kernel(&sg, sizeof(sg), sgp);
-	if (sg_is_last(&sg))
-		return NULL;
+	bpf_probe_पढ़ो_kernel(&sg, माप(sg), sgp);
+	अगर (sg_is_last(&sg))
+		वापस शून्य;
 
 	sgp++;
 
-	bpf_probe_read_kernel(&sg, sizeof(sg), sgp);
-	if (sg_is_chain(&sg))
+	bpf_probe_पढ़ो_kernel(&sg, माप(sg), sgp);
+	अगर (sg_is_chain(&sg))
 		sgp = sg_chain_ptr(&sg);
 
-	return sgp;
-}
+	वापस sgp;
+पूर्ण
 
-static inline struct scatterlist *get_sgp(struct scatterlist **sgs, int i)
-{
-	struct scatterlist *sgp;
+अटल अंतरभूत काष्ठा scatterlist *get_sgp(काष्ठा scatterlist **sgs, पूर्णांक i)
+अणु
+	काष्ठा scatterlist *sgp;
 
-	bpf_probe_read_kernel(&sgp, sizeof(sgp), sgs + i);
-	return sgp;
-}
+	bpf_probe_पढ़ो_kernel(&sgp, माप(sgp), sgs + i);
+	वापस sgp;
+पूर्ण
 
-int config = 0;
-int result = 0;
+पूर्णांक config = 0;
+पूर्णांक result = 0;
 
 SEC("kprobe/virtqueue_add_sgs")
-int BPF_KPROBE(trace_virtqueue_add_sgs, void *unused, struct scatterlist **sgs,
-	       unsigned int out_sgs, unsigned int in_sgs)
-{
-	struct scatterlist *sgp = NULL;
+पूर्णांक BPF_KPROBE(trace_virtqueue_add_sgs, व्योम *unused, काष्ठा scatterlist **sgs,
+	       अचिन्हित पूर्णांक out_sgs, अचिन्हित पूर्णांक in_sgs)
+अणु
+	काष्ठा scatterlist *sgp = शून्य;
 	__u64 length1 = 0, length2 = 0;
-	unsigned int i, n, len;
+	अचिन्हित पूर्णांक i, n, len;
 
-	if (config != 0)
-		return 0;
+	अगर (config != 0)
+		वापस 0;
 
-	for (i = 0; (i < VIRTIO_MAX_SGS) && (i < out_sgs); i++) {
-		for (n = 0, sgp = get_sgp(sgs, i); sgp && (n < SG_MAX);
-		     sgp = __sg_next(sgp)) {
-			bpf_probe_read_kernel(&len, sizeof(len), &sgp->length);
+	क्रम (i = 0; (i < VIRTIO_MAX_SGS) && (i < out_sgs); i++) अणु
+		क्रम (n = 0, sgp = get_sgp(sgs, i); sgp && (n < SG_MAX);
+		     sgp = __sg_next(sgp)) अणु
+			bpf_probe_पढ़ो_kernel(&len, माप(len), &sgp->length);
 			length1 += len;
 			n++;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	for (i = 0; (i < VIRTIO_MAX_SGS) && (i < in_sgs); i++) {
-		for (n = 0, sgp = get_sgp(sgs, i); sgp && (n < SG_MAX);
-		     sgp = __sg_next(sgp)) {
-			bpf_probe_read_kernel(&len, sizeof(len), &sgp->length);
+	क्रम (i = 0; (i < VIRTIO_MAX_SGS) && (i < in_sgs); i++) अणु
+		क्रम (n = 0, sgp = get_sgp(sgs, i); sgp && (n < SG_MAX);
+		     sgp = __sg_next(sgp)) अणु
+			bpf_probe_पढ़ो_kernel(&len, माप(len), &sgp->length);
 			length2 += len;
 			n++;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	config = 1;
 	result = length2 - length1;
-	return 0;
-}
+	वापस 0;
+पूर्ण

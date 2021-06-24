@@ -1,34 +1,35 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * Copyright 2016 Linaro Ltd.
  * Copyright 2016 ZTE Corporation.
  */
 
-#ifndef __ZX_DRM_DRV_H__
-#define __ZX_DRM_DRV_H__
+#अगर_अघोषित __ZX_DRM_DRV_H__
+#घोषणा __ZX_DRM_DRV_H__
 
-extern struct platform_driver zx_crtc_driver;
-extern struct platform_driver zx_hdmi_driver;
-extern struct platform_driver zx_tvenc_driver;
-extern struct platform_driver zx_vga_driver;
+बाह्य काष्ठा platक्रमm_driver zx_crtc_driver;
+बाह्य काष्ठा platक्रमm_driver zx_hdmi_driver;
+बाह्य काष्ठा platक्रमm_driver zx_tvenc_driver;
+बाह्य काष्ठा platक्रमm_driver zx_vga_driver;
 
-static inline u32 zx_readl(void __iomem *reg)
-{
-	return readl_relaxed(reg);
-}
+अटल अंतरभूत u32 zx_पढ़ोl(व्योम __iomem *reg)
+अणु
+	वापस पढ़ोl_relaxed(reg);
+पूर्ण
 
-static inline void zx_writel(void __iomem *reg, u32 val)
-{
-	writel_relaxed(val, reg);
-}
+अटल अंतरभूत व्योम zx_ग_लिखोl(व्योम __iomem *reg, u32 val)
+अणु
+	ग_लिखोl_relaxed(val, reg);
+पूर्ण
 
-static inline void zx_writel_mask(void __iomem *reg, u32 mask, u32 val)
-{
-	u32 tmp;
+अटल अंतरभूत व्योम zx_ग_लिखोl_mask(व्योम __iomem *reg, u32 mask, u32 val)
+अणु
+	u32 पंचांगp;
 
-	tmp = zx_readl(reg);
-	tmp = (tmp & ~mask) | (val & mask);
-	zx_writel(reg, tmp);
-}
+	पंचांगp = zx_पढ़ोl(reg);
+	पंचांगp = (पंचांगp & ~mask) | (val & mask);
+	zx_ग_लिखोl(reg, पंचांगp);
+पूर्ण
 
-#endif /* __ZX_DRM_DRV_H__ */
+#पूर्ण_अगर /* __ZX_DRM_DRV_H__ */

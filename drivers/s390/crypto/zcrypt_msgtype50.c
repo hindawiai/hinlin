@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
  *  Copyright IBM Corp. 2001, 2012
  *  Author(s): Robert Burroughs
@@ -7,32 +8,32 @@
  *  Hotplug & misc device support: Jochen Roehrig (roehrig@de.ibm.com)
  *  Major cleanup & driver split: Martin Schwidefsky <schwidefsky@de.ibm.com>
  *				  Ralph Wuerthner <rwuerthn@de.ibm.com>
- *  MSGTYPE restruct:		  Holger Dengler <hd@linux.vnet.ibm.com>
+ *  MSGTYPE reकाष्ठा:		  Holger Dengler <hd@linux.vnet.ibm.com>
  */
 
-#define KMSG_COMPONENT "zcrypt"
-#define pr_fmt(fmt) KMSG_COMPONENT ": " fmt
+#घोषणा KMSG_COMPONENT "zcrypt"
+#घोषणा pr_fmt(fmt) KMSG_COMPONENT ": " fmt
 
-#include <linux/module.h>
-#include <linux/slab.h>
-#include <linux/init.h>
-#include <linux/err.h>
-#include <linux/atomic.h>
-#include <linux/uaccess.h>
+#समावेश <linux/module.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/init.h>
+#समावेश <linux/err.h>
+#समावेश <linux/atomic.h>
+#समावेश <linux/uaccess.h>
 
-#include "ap_bus.h"
-#include "zcrypt_api.h"
-#include "zcrypt_error.h"
-#include "zcrypt_msgtype50.h"
+#समावेश "ap_bus.h"
+#समावेश "zcrypt_api.h"
+#समावेश "zcrypt_error.h"
+#समावेश "zcrypt_msgtype50.h"
 
 /* >= CEX3A: 4096 bits */
-#define CEX3A_MAX_MOD_SIZE 512
+#घोषणा CEX3A_MAX_MOD_SIZE 512
 
 /* CEX2A: max outputdatalength + type80_hdr */
-#define CEX2A_MAX_RESPONSE_SIZE 0x110
+#घोषणा CEX2A_MAX_RESPONSE_SIZE 0x110
 
 /* >= CEX3A: 512 bit modulus, (max outputdatalength) + type80_hdr */
-#define CEX3A_MAX_RESPONSE_SIZE 0x210
+#घोषणा CEX3A_MAX_RESPONSE_SIZE 0x210
 
 MODULE_AUTHOR("IBM Corporation");
 MODULE_DESCRIPTION("Cryptographic Accelerator (message type 50), " \
@@ -44,235 +45,235 @@ MODULE_LICENSE("GPL");
  *
  * The four members of the family are described below.
  *
- * Note that all unsigned char arrays are right-justified and left-padded
+ * Note that all अचिन्हित अक्षर arrays are right-justअगरied and left-padded
  * with zeroes.
  *
  * Note that all reserved fields must be zeroes.
  */
-struct type50_hdr {
-	unsigned char	reserved1;
-	unsigned char	msg_type_code;	/* 0x50 */
-	unsigned short	msg_len;
-	unsigned char	reserved2;
-	unsigned char	ignored;
-	unsigned short	reserved3;
-} __packed;
+काष्ठा type50_hdr अणु
+	अचिन्हित अक्षर	reserved1;
+	अचिन्हित अक्षर	msg_type_code;	/* 0x50 */
+	अचिन्हित लघु	msg_len;
+	अचिन्हित अक्षर	reserved2;
+	अचिन्हित अक्षर	ignored;
+	अचिन्हित लघु	reserved3;
+पूर्ण __packed;
 
-#define TYPE50_TYPE_CODE	0x50
+#घोषणा TYPE50_TYPE_CODE	0x50
 
-#define TYPE50_MEB1_FMT		0x0001
-#define TYPE50_MEB2_FMT		0x0002
-#define TYPE50_MEB3_FMT		0x0003
-#define TYPE50_CRB1_FMT		0x0011
-#define TYPE50_CRB2_FMT		0x0012
-#define TYPE50_CRB3_FMT		0x0013
+#घोषणा TYPE50_MEB1_FMT		0x0001
+#घोषणा TYPE50_MEB2_FMT		0x0002
+#घोषणा TYPE50_MEB3_FMT		0x0003
+#घोषणा TYPE50_CRB1_FMT		0x0011
+#घोषणा TYPE50_CRB2_FMT		0x0012
+#घोषणा TYPE50_CRB3_FMT		0x0013
 
 /* Mod-Exp, with a small modulus */
-struct type50_meb1_msg {
-	struct type50_hdr header;
-	unsigned short	keyblock_type;	/* 0x0001 */
-	unsigned char	reserved[6];
-	unsigned char	exponent[128];
-	unsigned char	modulus[128];
-	unsigned char	message[128];
-} __packed;
+काष्ठा type50_meb1_msg अणु
+	काष्ठा type50_hdr header;
+	अचिन्हित लघु	keyblock_type;	/* 0x0001 */
+	अचिन्हित अक्षर	reserved[6];
+	अचिन्हित अक्षर	exponent[128];
+	अचिन्हित अक्षर	modulus[128];
+	अचिन्हित अक्षर	message[128];
+पूर्ण __packed;
 
 /* Mod-Exp, with a large modulus */
-struct type50_meb2_msg {
-	struct type50_hdr header;
-	unsigned short	keyblock_type;	/* 0x0002 */
-	unsigned char	reserved[6];
-	unsigned char	exponent[256];
-	unsigned char	modulus[256];
-	unsigned char	message[256];
-} __packed;
+काष्ठा type50_meb2_msg अणु
+	काष्ठा type50_hdr header;
+	अचिन्हित लघु	keyblock_type;	/* 0x0002 */
+	अचिन्हित अक्षर	reserved[6];
+	अचिन्हित अक्षर	exponent[256];
+	अचिन्हित अक्षर	modulus[256];
+	अचिन्हित अक्षर	message[256];
+पूर्ण __packed;
 
 /* Mod-Exp, with a larger modulus */
-struct type50_meb3_msg {
-	struct type50_hdr header;
-	unsigned short	keyblock_type;	/* 0x0003 */
-	unsigned char	reserved[6];
-	unsigned char	exponent[512];
-	unsigned char	modulus[512];
-	unsigned char	message[512];
-} __packed;
+काष्ठा type50_meb3_msg अणु
+	काष्ठा type50_hdr header;
+	अचिन्हित लघु	keyblock_type;	/* 0x0003 */
+	अचिन्हित अक्षर	reserved[6];
+	अचिन्हित अक्षर	exponent[512];
+	अचिन्हित अक्षर	modulus[512];
+	अचिन्हित अक्षर	message[512];
+पूर्ण __packed;
 
 /* CRT, with a small modulus */
-struct type50_crb1_msg {
-	struct type50_hdr header;
-	unsigned short	keyblock_type;	/* 0x0011 */
-	unsigned char	reserved[6];
-	unsigned char	p[64];
-	unsigned char	q[64];
-	unsigned char	dp[64];
-	unsigned char	dq[64];
-	unsigned char	u[64];
-	unsigned char	message[128];
-} __packed;
+काष्ठा type50_crb1_msg अणु
+	काष्ठा type50_hdr header;
+	अचिन्हित लघु	keyblock_type;	/* 0x0011 */
+	अचिन्हित अक्षर	reserved[6];
+	अचिन्हित अक्षर	p[64];
+	अचिन्हित अक्षर	q[64];
+	अचिन्हित अक्षर	dp[64];
+	अचिन्हित अक्षर	dq[64];
+	अचिन्हित अक्षर	u[64];
+	अचिन्हित अक्षर	message[128];
+पूर्ण __packed;
 
 /* CRT, with a large modulus */
-struct type50_crb2_msg {
-	struct type50_hdr header;
-	unsigned short	keyblock_type;	/* 0x0012 */
-	unsigned char	reserved[6];
-	unsigned char	p[128];
-	unsigned char	q[128];
-	unsigned char	dp[128];
-	unsigned char	dq[128];
-	unsigned char	u[128];
-	unsigned char	message[256];
-} __packed;
+काष्ठा type50_crb2_msg अणु
+	काष्ठा type50_hdr header;
+	अचिन्हित लघु	keyblock_type;	/* 0x0012 */
+	अचिन्हित अक्षर	reserved[6];
+	अचिन्हित अक्षर	p[128];
+	अचिन्हित अक्षर	q[128];
+	अचिन्हित अक्षर	dp[128];
+	अचिन्हित अक्षर	dq[128];
+	अचिन्हित अक्षर	u[128];
+	अचिन्हित अक्षर	message[256];
+पूर्ण __packed;
 
 /* CRT, with a larger modulus */
-struct type50_crb3_msg {
-	struct type50_hdr header;
-	unsigned short	keyblock_type;	/* 0x0013 */
-	unsigned char	reserved[6];
-	unsigned char	p[256];
-	unsigned char	q[256];
-	unsigned char	dp[256];
-	unsigned char	dq[256];
-	unsigned char	u[256];
-	unsigned char	message[512];
-} __packed;
+काष्ठा type50_crb3_msg अणु
+	काष्ठा type50_hdr header;
+	अचिन्हित लघु	keyblock_type;	/* 0x0013 */
+	अचिन्हित अक्षर	reserved[6];
+	अचिन्हित अक्षर	p[256];
+	अचिन्हित अक्षर	q[256];
+	अचिन्हित अक्षर	dp[256];
+	अचिन्हित अक्षर	dq[256];
+	अचिन्हित अक्षर	u[256];
+	अचिन्हित अक्षर	message[512];
+पूर्ण __packed;
 
 /**
  * The type 80 response family is associated with a CEXxA cards.
  *
- * Note that all unsigned char arrays are right-justified and left-padded
+ * Note that all अचिन्हित अक्षर arrays are right-justअगरied and left-padded
  * with zeroes.
  *
  * Note that all reserved fields must be zeroes.
  */
 
-#define TYPE80_RSP_CODE 0x80
+#घोषणा TYPE80_RSP_CODE 0x80
 
-struct type80_hdr {
-	unsigned char	reserved1;
-	unsigned char	type;		/* 0x80 */
-	unsigned short	len;
-	unsigned char	code;		/* 0x00 */
-	unsigned char	reserved2[3];
-	unsigned char	reserved3[8];
-} __packed;
+काष्ठा type80_hdr अणु
+	अचिन्हित अक्षर	reserved1;
+	अचिन्हित अक्षर	type;		/* 0x80 */
+	अचिन्हित लघु	len;
+	अचिन्हित अक्षर	code;		/* 0x00 */
+	अचिन्हित अक्षर	reserved2[3];
+	अचिन्हित अक्षर	reserved3[8];
+पूर्ण __packed;
 
-unsigned int get_rsa_modex_fc(struct ica_rsa_modexpo *mex, int *fcode)
-{
+अचिन्हित पूर्णांक get_rsa_modex_fc(काष्ठा ica_rsa_modexpo *mex, पूर्णांक *fcode)
+अणु
 
-	if (!mex->inputdatalength)
-		return -EINVAL;
+	अगर (!mex->inputdatalength)
+		वापस -EINVAL;
 
-	if (mex->inputdatalength <= 128)	/* 1024 bit */
+	अगर (mex->inputdatalength <= 128)	/* 1024 bit */
 		*fcode = MEX_1K;
-	else if (mex->inputdatalength <= 256)	/* 2048 bit */
+	अन्यथा अगर (mex->inputdatalength <= 256)	/* 2048 bit */
 		*fcode = MEX_2K;
-	else					/* 4096 bit */
+	अन्यथा					/* 4096 bit */
 		*fcode = MEX_4K;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-unsigned int get_rsa_crt_fc(struct ica_rsa_modexpo_crt *crt, int *fcode)
-{
+अचिन्हित पूर्णांक get_rsa_crt_fc(काष्ठा ica_rsa_modexpo_crt *crt, पूर्णांक *fcode)
+अणु
 
-	if (!crt->inputdatalength)
-		return -EINVAL;
+	अगर (!crt->inputdatalength)
+		वापस -EINVAL;
 
-	if (crt->inputdatalength <= 128)	/* 1024 bit */
+	अगर (crt->inputdatalength <= 128)	/* 1024 bit */
 		*fcode = CRT_1K;
-	else if (crt->inputdatalength <= 256)	/* 2048 bit */
+	अन्यथा अगर (crt->inputdatalength <= 256)	/* 2048 bit */
 		*fcode = CRT_2K;
-	else					/* 4096 bit */
+	अन्यथा					/* 4096 bit */
 		*fcode = CRT_4K;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * Convert a ICAMEX message to a type50 MEX message.
  *
- * @zq: crypto queue pointer
- * @ap_msg: crypto request pointer
- * @mex: pointer to user input data
+ * @zq: crypto queue poपूर्णांकer
+ * @ap_msg: crypto request poपूर्णांकer
+ * @mex: poपूर्णांकer to user input data
  *
  * Returns 0 on success or -EFAULT.
  */
-static int ICAMEX_msg_to_type50MEX_msg(struct zcrypt_queue *zq,
-				       struct ap_message *ap_msg,
-				       struct ica_rsa_modexpo *mex)
-{
-	unsigned char *mod, *exp, *inp;
-	int mod_len;
+अटल पूर्णांक ICAMEX_msg_to_type50MEX_msg(काष्ठा zcrypt_queue *zq,
+				       काष्ठा ap_message *ap_msg,
+				       काष्ठा ica_rsa_modexpo *mex)
+अणु
+	अचिन्हित अक्षर *mod, *exp, *inp;
+	पूर्णांक mod_len;
 
 	mod_len = mex->inputdatalength;
 
-	if (mod_len <= 128) {
-		struct type50_meb1_msg *meb1 = ap_msg->msg;
+	अगर (mod_len <= 128) अणु
+		काष्ठा type50_meb1_msg *meb1 = ap_msg->msg;
 
-		memset(meb1, 0, sizeof(*meb1));
-		ap_msg->len = sizeof(*meb1);
+		स_रखो(meb1, 0, माप(*meb1));
+		ap_msg->len = माप(*meb1);
 		meb1->header.msg_type_code = TYPE50_TYPE_CODE;
-		meb1->header.msg_len = sizeof(*meb1);
+		meb1->header.msg_len = माप(*meb1);
 		meb1->keyblock_type = TYPE50_MEB1_FMT;
-		mod = meb1->modulus + sizeof(meb1->modulus) - mod_len;
-		exp = meb1->exponent + sizeof(meb1->exponent) - mod_len;
-		inp = meb1->message + sizeof(meb1->message) - mod_len;
-	} else if (mod_len <= 256) {
-		struct type50_meb2_msg *meb2 = ap_msg->msg;
+		mod = meb1->modulus + माप(meb1->modulus) - mod_len;
+		exp = meb1->exponent + माप(meb1->exponent) - mod_len;
+		inp = meb1->message + माप(meb1->message) - mod_len;
+	पूर्ण अन्यथा अगर (mod_len <= 256) अणु
+		काष्ठा type50_meb2_msg *meb2 = ap_msg->msg;
 
-		memset(meb2, 0, sizeof(*meb2));
-		ap_msg->len = sizeof(*meb2);
+		स_रखो(meb2, 0, माप(*meb2));
+		ap_msg->len = माप(*meb2);
 		meb2->header.msg_type_code = TYPE50_TYPE_CODE;
-		meb2->header.msg_len = sizeof(*meb2);
+		meb2->header.msg_len = माप(*meb2);
 		meb2->keyblock_type = TYPE50_MEB2_FMT;
-		mod = meb2->modulus + sizeof(meb2->modulus) - mod_len;
-		exp = meb2->exponent + sizeof(meb2->exponent) - mod_len;
-		inp = meb2->message + sizeof(meb2->message) - mod_len;
-	} else if (mod_len <= 512) {
-		struct type50_meb3_msg *meb3 = ap_msg->msg;
+		mod = meb2->modulus + माप(meb2->modulus) - mod_len;
+		exp = meb2->exponent + माप(meb2->exponent) - mod_len;
+		inp = meb2->message + माप(meb2->message) - mod_len;
+	पूर्ण अन्यथा अगर (mod_len <= 512) अणु
+		काष्ठा type50_meb3_msg *meb3 = ap_msg->msg;
 
-		memset(meb3, 0, sizeof(*meb3));
-		ap_msg->len = sizeof(*meb3);
+		स_रखो(meb3, 0, माप(*meb3));
+		ap_msg->len = माप(*meb3);
 		meb3->header.msg_type_code = TYPE50_TYPE_CODE;
-		meb3->header.msg_len = sizeof(*meb3);
+		meb3->header.msg_len = माप(*meb3);
 		meb3->keyblock_type = TYPE50_MEB3_FMT;
-		mod = meb3->modulus + sizeof(meb3->modulus) - mod_len;
-		exp = meb3->exponent + sizeof(meb3->exponent) - mod_len;
-		inp = meb3->message + sizeof(meb3->message) - mod_len;
-	} else
-		return -EINVAL;
+		mod = meb3->modulus + माप(meb3->modulus) - mod_len;
+		exp = meb3->exponent + माप(meb3->exponent) - mod_len;
+		inp = meb3->message + माप(meb3->message) - mod_len;
+	पूर्ण अन्यथा
+		वापस -EINVAL;
 
-	if (copy_from_user(mod, mex->n_modulus, mod_len) ||
+	अगर (copy_from_user(mod, mex->n_modulus, mod_len) ||
 	    copy_from_user(exp, mex->b_key, mod_len) ||
 	    copy_from_user(inp, mex->inputdata, mod_len))
-		return -EFAULT;
+		वापस -EFAULT;
 
-#ifdef CONFIG_ZCRYPT_DEBUG
-	if (ap_msg->fi.flags & AP_FI_FLAG_TOGGLE_SPECIAL)
+#अगर_घोषित CONFIG_ZCRYPT_DEBUG
+	अगर (ap_msg->fi.flags & AP_FI_FLAG_TOGGLE_SPECIAL)
 		ap_msg->flags ^= AP_MSG_FLAG_SPECIAL;
-#endif
+#पूर्ण_अगर
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * Convert a ICACRT message to a type50 CRT message.
  *
- * @zq: crypto queue pointer
- * @ap_msg: crypto request pointer
- * @crt: pointer to user input data
+ * @zq: crypto queue poपूर्णांकer
+ * @ap_msg: crypto request poपूर्णांकer
+ * @crt: poपूर्णांकer to user input data
  *
  * Returns 0 on success or -EFAULT.
  */
-static int ICACRT_msg_to_type50CRT_msg(struct zcrypt_queue *zq,
-				       struct ap_message *ap_msg,
-				       struct ica_rsa_modexpo_crt *crt)
-{
-	int mod_len, short_len;
-	unsigned char *p, *q, *dp, *dq, *u, *inp;
+अटल पूर्णांक ICACRT_msg_to_type50CRT_msg(काष्ठा zcrypt_queue *zq,
+				       काष्ठा ap_message *ap_msg,
+				       काष्ठा ica_rsa_modexpo_crt *crt)
+अणु
+	पूर्णांक mod_len, लघु_len;
+	अचिन्हित अक्षर *p, *q, *dp, *dq, *u, *inp;
 
 	mod_len = crt->inputdatalength;
-	short_len = (mod_len + 1) / 2;
+	लघु_len = (mod_len + 1) / 2;
 
 	/*
 	 * CEX2A and CEX3A w/o FW update can handle requests up to
@@ -280,92 +281,92 @@ static int ICACRT_msg_to_type50CRT_msg(struct zcrypt_queue *zq,
 	 * CEX3A with FW update and newer CEXxA cards are able to handle
 	 * 512 byte modulus (4k keys).
 	 */
-	if (mod_len <= 128) {		/* up to 1024 bit key size */
-		struct type50_crb1_msg *crb1 = ap_msg->msg;
+	अगर (mod_len <= 128) अणु		/* up to 1024 bit key size */
+		काष्ठा type50_crb1_msg *crb1 = ap_msg->msg;
 
-		memset(crb1, 0, sizeof(*crb1));
-		ap_msg->len = sizeof(*crb1);
+		स_रखो(crb1, 0, माप(*crb1));
+		ap_msg->len = माप(*crb1);
 		crb1->header.msg_type_code = TYPE50_TYPE_CODE;
-		crb1->header.msg_len = sizeof(*crb1);
+		crb1->header.msg_len = माप(*crb1);
 		crb1->keyblock_type = TYPE50_CRB1_FMT;
-		p = crb1->p + sizeof(crb1->p) - short_len;
-		q = crb1->q + sizeof(crb1->q) - short_len;
-		dp = crb1->dp + sizeof(crb1->dp) - short_len;
-		dq = crb1->dq + sizeof(crb1->dq) - short_len;
-		u = crb1->u + sizeof(crb1->u) - short_len;
-		inp = crb1->message + sizeof(crb1->message) - mod_len;
-	} else if (mod_len <= 256) {	/* up to 2048 bit key size */
-		struct type50_crb2_msg *crb2 = ap_msg->msg;
+		p = crb1->p + माप(crb1->p) - लघु_len;
+		q = crb1->q + माप(crb1->q) - लघु_len;
+		dp = crb1->dp + माप(crb1->dp) - लघु_len;
+		dq = crb1->dq + माप(crb1->dq) - लघु_len;
+		u = crb1->u + माप(crb1->u) - लघु_len;
+		inp = crb1->message + माप(crb1->message) - mod_len;
+	पूर्ण अन्यथा अगर (mod_len <= 256) अणु	/* up to 2048 bit key size */
+		काष्ठा type50_crb2_msg *crb2 = ap_msg->msg;
 
-		memset(crb2, 0, sizeof(*crb2));
-		ap_msg->len = sizeof(*crb2);
+		स_रखो(crb2, 0, माप(*crb2));
+		ap_msg->len = माप(*crb2);
 		crb2->header.msg_type_code = TYPE50_TYPE_CODE;
-		crb2->header.msg_len = sizeof(*crb2);
+		crb2->header.msg_len = माप(*crb2);
 		crb2->keyblock_type = TYPE50_CRB2_FMT;
-		p = crb2->p + sizeof(crb2->p) - short_len;
-		q = crb2->q + sizeof(crb2->q) - short_len;
-		dp = crb2->dp + sizeof(crb2->dp) - short_len;
-		dq = crb2->dq + sizeof(crb2->dq) - short_len;
-		u = crb2->u + sizeof(crb2->u) - short_len;
-		inp = crb2->message + sizeof(crb2->message) - mod_len;
-	} else if ((mod_len <= 512) &&	/* up to 4096 bit key size */
-		   (zq->zcard->max_mod_size == CEX3A_MAX_MOD_SIZE)) {
-		struct type50_crb3_msg *crb3 = ap_msg->msg;
+		p = crb2->p + माप(crb2->p) - लघु_len;
+		q = crb2->q + माप(crb2->q) - लघु_len;
+		dp = crb2->dp + माप(crb2->dp) - लघु_len;
+		dq = crb2->dq + माप(crb2->dq) - लघु_len;
+		u = crb2->u + माप(crb2->u) - लघु_len;
+		inp = crb2->message + माप(crb2->message) - mod_len;
+	पूर्ण अन्यथा अगर ((mod_len <= 512) &&	/* up to 4096 bit key size */
+		   (zq->zcard->max_mod_size == CEX3A_MAX_MOD_SIZE)) अणु
+		काष्ठा type50_crb3_msg *crb3 = ap_msg->msg;
 
-		memset(crb3, 0, sizeof(*crb3));
-		ap_msg->len = sizeof(*crb3);
+		स_रखो(crb3, 0, माप(*crb3));
+		ap_msg->len = माप(*crb3);
 		crb3->header.msg_type_code = TYPE50_TYPE_CODE;
-		crb3->header.msg_len = sizeof(*crb3);
+		crb3->header.msg_len = माप(*crb3);
 		crb3->keyblock_type = TYPE50_CRB3_FMT;
-		p = crb3->p + sizeof(crb3->p) - short_len;
-		q = crb3->q + sizeof(crb3->q) - short_len;
-		dp = crb3->dp + sizeof(crb3->dp) - short_len;
-		dq = crb3->dq + sizeof(crb3->dq) - short_len;
-		u = crb3->u + sizeof(crb3->u) - short_len;
-		inp = crb3->message + sizeof(crb3->message) - mod_len;
-	} else
-		return -EINVAL;
+		p = crb3->p + माप(crb3->p) - लघु_len;
+		q = crb3->q + माप(crb3->q) - लघु_len;
+		dp = crb3->dp + माप(crb3->dp) - लघु_len;
+		dq = crb3->dq + माप(crb3->dq) - लघु_len;
+		u = crb3->u + माप(crb3->u) - लघु_len;
+		inp = crb3->message + माप(crb3->message) - mod_len;
+	पूर्ण अन्यथा
+		वापस -EINVAL;
 
 	/*
 	 * correct the offset of p, bp and mult_inv according zcrypt.h
 	 * block size right aligned (skip the first byte)
 	 */
-	if (copy_from_user(p, crt->np_prime + MSGTYPE_ADJUSTMENT, short_len) ||
-	    copy_from_user(q, crt->nq_prime, short_len) ||
-	    copy_from_user(dp, crt->bp_key + MSGTYPE_ADJUSTMENT, short_len) ||
-	    copy_from_user(dq, crt->bq_key, short_len) ||
-	    copy_from_user(u, crt->u_mult_inv + MSGTYPE_ADJUSTMENT, short_len) ||
+	अगर (copy_from_user(p, crt->np_prime + MSGTYPE_ADJUSTMENT, लघु_len) ||
+	    copy_from_user(q, crt->nq_prime, लघु_len) ||
+	    copy_from_user(dp, crt->bp_key + MSGTYPE_ADJUSTMENT, लघु_len) ||
+	    copy_from_user(dq, crt->bq_key, लघु_len) ||
+	    copy_from_user(u, crt->u_mult_inv + MSGTYPE_ADJUSTMENT, लघु_len) ||
 	    copy_from_user(inp, crt->inputdata, mod_len))
-		return -EFAULT;
+		वापस -EFAULT;
 
-#ifdef CONFIG_ZCRYPT_DEBUG
-	if (ap_msg->fi.flags & AP_FI_FLAG_TOGGLE_SPECIAL)
+#अगर_घोषित CONFIG_ZCRYPT_DEBUG
+	अगर (ap_msg->fi.flags & AP_FI_FLAG_TOGGLE_SPECIAL)
 		ap_msg->flags ^= AP_MSG_FLAG_SPECIAL;
-#endif
+#पूर्ण_अगर
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * Copy results from a type 80 reply message back to user space.
  *
- * @zq: crypto device pointer
+ * @zq: crypto device poपूर्णांकer
  * @reply: reply AP message.
- * @data: pointer to user output data
+ * @data: poपूर्णांकer to user output data
  * @length: size of user output data
  *
  * Returns 0 on success or -EFAULT.
  */
-static int convert_type80(struct zcrypt_queue *zq,
-			  struct ap_message *reply,
-			  char __user *outputdata,
-			  unsigned int outputdatalength)
-{
-	struct type80_hdr *t80h = reply->msg;
-	unsigned char *data;
+अटल पूर्णांक convert_type80(काष्ठा zcrypt_queue *zq,
+			  काष्ठा ap_message *reply,
+			  अक्षर __user *outputdata,
+			  अचिन्हित पूर्णांक outputdatalength)
+अणु
+	काष्ठा type80_hdr *t80h = reply->msg;
+	अचिन्हित अक्षर *data;
 
-	if (t80h->len < sizeof(*t80h) + outputdatalength) {
-		/* The result is too short, the CEXxA card may not do that.. */
+	अगर (t80h->len < माप(*t80h) + outputdatalength) अणु
+		/* The result is too लघु, the CEXxA card may not करो that.. */
 		zq->online = 0;
 		pr_err("Crypto dev=%02x.%04x code=0x%02x => online=0 rc=EAGAIN\n",
 		       AP_QID_CARD(zq->queue->qid),
@@ -375,193 +376,193 @@ static int convert_type80(struct zcrypt_queue *zq,
 			       AP_QID_CARD(zq->queue->qid),
 			       AP_QID_QUEUE(zq->queue->qid),
 			       t80h->code);
-		return -EAGAIN;
-	}
-	if (zq->zcard->user_space_type == ZCRYPT_CEX2A)
+		वापस -EAGAIN;
+	पूर्ण
+	अगर (zq->zcard->user_space_type == ZCRYPT_CEX2A)
 		BUG_ON(t80h->len > CEX2A_MAX_RESPONSE_SIZE);
-	else
+	अन्यथा
 		BUG_ON(t80h->len > CEX3A_MAX_RESPONSE_SIZE);
 	data = reply->msg + t80h->len - outputdatalength;
-	if (copy_to_user(outputdata, data, outputdatalength))
-		return -EFAULT;
-	return 0;
-}
+	अगर (copy_to_user(outputdata, data, outputdatalength))
+		वापस -EFAULT;
+	वापस 0;
+पूर्ण
 
-static int convert_response_cex2a(struct zcrypt_queue *zq,
-				  struct ap_message *reply,
-				  char __user *outputdata,
-				  unsigned int outputdatalength)
-{
+अटल पूर्णांक convert_response_cex2a(काष्ठा zcrypt_queue *zq,
+				  काष्ठा ap_message *reply,
+				  अक्षर __user *outputdata,
+				  अचिन्हित पूर्णांक outputdatalength)
+अणु
 	/* Response type byte is the second byte in the response. */
-	unsigned char rtype = ((unsigned char *) reply->msg)[1];
+	अचिन्हित अक्षर rtype = ((अचिन्हित अक्षर *) reply->msg)[1];
 
-	switch (rtype) {
-	case TYPE82_RSP_CODE:
-	case TYPE88_RSP_CODE:
-		return convert_error(zq, reply);
-	case TYPE80_RSP_CODE:
-		return convert_type80(zq, reply,
+	चयन (rtype) अणु
+	हाल TYPE82_RSP_CODE:
+	हाल TYPE88_RSP_CODE:
+		वापस convert_error(zq, reply);
+	हाल TYPE80_RSP_CODE:
+		वापस convert_type80(zq, reply,
 				      outputdata, outputdatalength);
-	default: /* Unknown response type, this should NEVER EVER happen */
+	शेष: /* Unknown response type, this should NEVER EVER happen */
 		zq->online = 0;
 		pr_err("Crypto dev=%02x.%04x unknown response type 0x%02x => online=0 rc=EAGAIN\n",
 		       AP_QID_CARD(zq->queue->qid),
 		       AP_QID_QUEUE(zq->queue->qid),
-		       (int) rtype);
+		       (पूर्णांक) rtype);
 		ZCRYPT_DBF_ERR("dev=%02x.%04x unknown response type 0x%02x => online=0 rc=EAGAIN\n",
 			       AP_QID_CARD(zq->queue->qid),
 			       AP_QID_QUEUE(zq->queue->qid),
-			       (int) rtype);
-		return -EAGAIN;
-	}
-}
+			       (पूर्णांक) rtype);
+		वापस -EAGAIN;
+	पूर्ण
+पूर्ण
 
 /**
  * This function is called from the AP bus code after a crypto request
  * "msg" has finished with the reply message "reply".
  * It is called from tasklet context.
- * @aq: pointer to the AP device
- * @msg: pointer to the AP message
- * @reply: pointer to the AP reply message
+ * @aq: poपूर्णांकer to the AP device
+ * @msg: poपूर्णांकer to the AP message
+ * @reply: poपूर्णांकer to the AP reply message
  */
-static void zcrypt_cex2a_receive(struct ap_queue *aq,
-				 struct ap_message *msg,
-				 struct ap_message *reply)
-{
-	static struct error_hdr error_reply = {
+अटल व्योम zcrypt_cex2a_receive(काष्ठा ap_queue *aq,
+				 काष्ठा ap_message *msg,
+				 काष्ठा ap_message *reply)
+अणु
+	अटल काष्ठा error_hdr error_reply = अणु
 		.type = TYPE82_RSP_CODE,
 		.reply_code = REP82_ERROR_MACHINE_FAILURE,
-	};
-	struct type80_hdr *t80h;
-	int len;
+	पूर्ण;
+	काष्ठा type80_hdr *t80h;
+	पूर्णांक len;
 
 	/* Copy the reply message to the request message buffer. */
-	if (!reply)
-		goto out;	/* ap_msg->rc indicates the error */
+	अगर (!reply)
+		जाओ out;	/* ap_msg->rc indicates the error */
 	t80h = reply->msg;
-	if (t80h->type == TYPE80_RSP_CODE) {
-		if (aq->ap_dev.device_type == AP_DEVICE_TYPE_CEX2A)
-			len = min_t(int, CEX2A_MAX_RESPONSE_SIZE, t80h->len);
-		else
-			len = min_t(int, CEX3A_MAX_RESPONSE_SIZE, t80h->len);
-		memcpy(msg->msg, reply->msg, len);
-	} else
-		memcpy(msg->msg, reply->msg, sizeof(error_reply));
+	अगर (t80h->type == TYPE80_RSP_CODE) अणु
+		अगर (aq->ap_dev.device_type == AP_DEVICE_TYPE_CEX2A)
+			len = min_t(पूर्णांक, CEX2A_MAX_RESPONSE_SIZE, t80h->len);
+		अन्यथा
+			len = min_t(पूर्णांक, CEX3A_MAX_RESPONSE_SIZE, t80h->len);
+		स_नकल(msg->msg, reply->msg, len);
+	पूर्ण अन्यथा
+		स_नकल(msg->msg, reply->msg, माप(error_reply));
 out:
-	complete((struct completion *) msg->private);
-}
+	complete((काष्ठा completion *) msg->निजी);
+पूर्ण
 
-static atomic_t zcrypt_step = ATOMIC_INIT(0);
+अटल atomic_t zcrypt_step = ATOMIC_INIT(0);
 
 /**
- * The request distributor calls this function if it picked the CEXxA
+ * The request distributor calls this function अगर it picked the CEXxA
  * device to handle a modexpo request.
- * @zq: pointer to zcrypt_queue structure that identifies the
+ * @zq: poपूर्णांकer to zcrypt_queue काष्ठाure that identअगरies the
  *	CEXxA device to the request distributor
- * @mex: pointer to the modexpo request buffer
+ * @mex: poपूर्णांकer to the modexpo request buffer
  */
-static long zcrypt_cex2a_modexpo(struct zcrypt_queue *zq,
-				 struct ica_rsa_modexpo *mex,
-				 struct ap_message *ap_msg)
-{
-	struct completion work;
-	int rc;
+अटल दीर्घ zcrypt_cex2a_modexpo(काष्ठा zcrypt_queue *zq,
+				 काष्ठा ica_rsa_modexpo *mex,
+				 काष्ठा ap_message *ap_msg)
+अणु
+	काष्ठा completion work;
+	पूर्णांक rc;
 
-	if (zq->zcard->user_space_type == ZCRYPT_CEX2A)
-		ap_msg->msg = kmalloc(MSGTYPE50_CRB2_MAX_MSG_SIZE, GFP_KERNEL);
-	else
-		ap_msg->msg = kmalloc(MSGTYPE50_CRB3_MAX_MSG_SIZE, GFP_KERNEL);
-	if (!ap_msg->msg)
-		return -ENOMEM;
+	अगर (zq->zcard->user_space_type == ZCRYPT_CEX2A)
+		ap_msg->msg = kदो_स्मृति(MSGTYPE50_CRB2_MAX_MSG_SIZE, GFP_KERNEL);
+	अन्यथा
+		ap_msg->msg = kदो_स्मृति(MSGTYPE50_CRB3_MAX_MSG_SIZE, GFP_KERNEL);
+	अगर (!ap_msg->msg)
+		वापस -ENOMEM;
 	ap_msg->receive = zcrypt_cex2a_receive;
-	ap_msg->psmid = (((unsigned long long) current->pid) << 32) +
-		atomic_inc_return(&zcrypt_step);
-	ap_msg->private = &work;
+	ap_msg->psmid = (((अचिन्हित दीर्घ दीर्घ) current->pid) << 32) +
+		atomic_inc_वापस(&zcrypt_step);
+	ap_msg->निजी = &work;
 	rc = ICAMEX_msg_to_type50MEX_msg(zq, ap_msg, mex);
-	if (rc)
-		goto out;
+	अगर (rc)
+		जाओ out;
 	init_completion(&work);
 	rc = ap_queue_message(zq->queue, ap_msg);
-	if (rc)
-		goto out;
-	rc = wait_for_completion_interruptible(&work);
-	if (rc == 0) {
+	अगर (rc)
+		जाओ out;
+	rc = रुको_क्रम_completion_पूर्णांकerruptible(&work);
+	अगर (rc == 0) अणु
 		rc = ap_msg->rc;
-		if (rc == 0)
+		अगर (rc == 0)
 			rc = convert_response_cex2a(zq, ap_msg,
 						    mex->outputdata,
 						    mex->outputdatalength);
-	} else
+	पूर्ण अन्यथा
 		/* Signal pending. */
 		ap_cancel_message(zq->queue, ap_msg);
 out:
-	ap_msg->private = NULL;
-	return rc;
-}
+	ap_msg->निजी = शून्य;
+	वापस rc;
+पूर्ण
 
 /**
- * The request distributor calls this function if it picked the CEXxA
+ * The request distributor calls this function अगर it picked the CEXxA
  * device to handle a modexpo_crt request.
- * @zq: pointer to zcrypt_queue structure that identifies the
+ * @zq: poपूर्णांकer to zcrypt_queue काष्ठाure that identअगरies the
  *	CEXxA device to the request distributor
- * @crt: pointer to the modexpoc_crt request buffer
+ * @crt: poपूर्णांकer to the modexpoc_crt request buffer
  */
-static long zcrypt_cex2a_modexpo_crt(struct zcrypt_queue *zq,
-				     struct ica_rsa_modexpo_crt *crt,
-				     struct ap_message *ap_msg)
-{
-	struct completion work;
-	int rc;
+अटल दीर्घ zcrypt_cex2a_modexpo_crt(काष्ठा zcrypt_queue *zq,
+				     काष्ठा ica_rsa_modexpo_crt *crt,
+				     काष्ठा ap_message *ap_msg)
+अणु
+	काष्ठा completion work;
+	पूर्णांक rc;
 
-	if (zq->zcard->user_space_type == ZCRYPT_CEX2A)
-		ap_msg->msg = kmalloc(MSGTYPE50_CRB2_MAX_MSG_SIZE, GFP_KERNEL);
-	else
-		ap_msg->msg = kmalloc(MSGTYPE50_CRB3_MAX_MSG_SIZE, GFP_KERNEL);
-	if (!ap_msg->msg)
-		return -ENOMEM;
+	अगर (zq->zcard->user_space_type == ZCRYPT_CEX2A)
+		ap_msg->msg = kदो_स्मृति(MSGTYPE50_CRB2_MAX_MSG_SIZE, GFP_KERNEL);
+	अन्यथा
+		ap_msg->msg = kदो_स्मृति(MSGTYPE50_CRB3_MAX_MSG_SIZE, GFP_KERNEL);
+	अगर (!ap_msg->msg)
+		वापस -ENOMEM;
 	ap_msg->receive = zcrypt_cex2a_receive;
-	ap_msg->psmid = (((unsigned long long) current->pid) << 32) +
-		atomic_inc_return(&zcrypt_step);
-	ap_msg->private = &work;
+	ap_msg->psmid = (((अचिन्हित दीर्घ दीर्घ) current->pid) << 32) +
+		atomic_inc_वापस(&zcrypt_step);
+	ap_msg->निजी = &work;
 	rc = ICACRT_msg_to_type50CRT_msg(zq, ap_msg, crt);
-	if (rc)
-		goto out;
+	अगर (rc)
+		जाओ out;
 	init_completion(&work);
 	rc = ap_queue_message(zq->queue, ap_msg);
-	if (rc)
-		goto out;
-	rc = wait_for_completion_interruptible(&work);
-	if (rc == 0) {
+	अगर (rc)
+		जाओ out;
+	rc = रुको_क्रम_completion_पूर्णांकerruptible(&work);
+	अगर (rc == 0) अणु
 		rc = ap_msg->rc;
-		if (rc == 0)
+		अगर (rc == 0)
 			rc = convert_response_cex2a(zq, ap_msg,
 						    crt->outputdata,
 						    crt->outputdatalength);
-	} else
+	पूर्ण अन्यथा
 		/* Signal pending. */
 		ap_cancel_message(zq->queue, ap_msg);
 out:
-	ap_msg->private = NULL;
-	return rc;
-}
+	ap_msg->निजी = शून्य;
+	वापस rc;
+पूर्ण
 
 /**
- * The crypto operations for message type 50.
+ * The crypto operations क्रम message type 50.
  */
-static struct zcrypt_ops zcrypt_msgtype50_ops = {
+अटल काष्ठा zcrypt_ops zcrypt_msgtype50_ops = अणु
 	.rsa_modexpo = zcrypt_cex2a_modexpo,
 	.rsa_modexpo_crt = zcrypt_cex2a_modexpo_crt,
 	.owner = THIS_MODULE,
 	.name = MSGTYPE50_NAME,
 	.variant = MSGTYPE50_VARIANT_DEFAULT,
-};
+पूर्ण;
 
-void __init zcrypt_msgtype50_init(void)
-{
-	zcrypt_msgtype_register(&zcrypt_msgtype50_ops);
-}
+व्योम __init zcrypt_msgtype50_init(व्योम)
+अणु
+	zcrypt_msgtype_रेजिस्टर(&zcrypt_msgtype50_ops);
+पूर्ण
 
-void __exit zcrypt_msgtype50_exit(void)
-{
-	zcrypt_msgtype_unregister(&zcrypt_msgtype50_ops);
-}
+व्योम __निकास zcrypt_msgtype50_निकास(व्योम)
+अणु
+	zcrypt_msgtype_unरेजिस्टर(&zcrypt_msgtype50_ops);
+पूर्ण

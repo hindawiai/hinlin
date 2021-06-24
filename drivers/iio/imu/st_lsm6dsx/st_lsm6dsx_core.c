@@ -1,17 +1,18 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * STMicroelectronics st_lsm6dsx sensor driver
  *
  * The ST LSM6DSx IMU MEMS series consists of 3D digital accelerometer
- * and 3D digital gyroscope system-in-package with a digital I2C/SPI serial
- * interface standard output.
+ * and 3D digital gyroscope प्रणाली-in-package with a digital I2C/SPI serial
+ * पूर्णांकerface standard output.
  * LSM6DSx IMU MEMS series has a dynamic user-selectable full-scale
  * acceleration range of +-2/+-4/+-8/+-16 g and an angular rate range of
  * +-125/+-245/+-500/+-1000/+-2000 dps
- * LSM6DSx series has an integrated First-In-First-Out (FIFO) buffer
+ * LSM6DSx series has an पूर्णांकegrated First-In-First-Out (FIFO) buffer
  * allowing dynamic batching of sensor data.
  * LSM9DSx series is similar but includes an additional magnetometer, handled
- * by a different driver.
+ * by a dअगरferent driver.
  *
  * Supported sensors:
  * - LSM6DS3:
@@ -46,1115 +47,1115 @@
  * Denis Ciocca <denis.ciocca@st.com>
  */
 
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/delay.h>
-#include <linux/iio/events.h>
-#include <linux/iio/iio.h>
-#include <linux/iio/sysfs.h>
-#include <linux/interrupt.h>
-#include <linux/irq.h>
-#include <linux/pm.h>
-#include <linux/property.h>
-#include <linux/regmap.h>
-#include <linux/bitfield.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/iio/events.h>
+#समावेश <linux/iio/iपन.स>
+#समावेश <linux/iio/sysfs.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/irq.h>
+#समावेश <linux/pm.h>
+#समावेश <linux/property.h>
+#समावेश <linux/regmap.h>
+#समावेश <linux/bitfield.h>
 
-#include <linux/platform_data/st_sensors_pdata.h>
+#समावेश <linux/platक्रमm_data/st_sensors_pdata.h>
 
-#include "st_lsm6dsx.h"
+#समावेश "st_lsm6dsx.h"
 
-#define ST_LSM6DSX_REG_WHOAMI_ADDR		0x0f
+#घोषणा ST_LSM6DSX_REG_WHOAMI_ADDR		0x0f
 
-#define ST_LSM6DSX_TS_SENSITIVITY		25000UL /* 25us */
+#घोषणा ST_LSM6DSX_TS_SENSITIVITY		25000UL /* 25us */
 
-static const struct iio_chan_spec st_lsm6dsx_acc_channels[] = {
+अटल स्थिर काष्ठा iio_chan_spec st_lsm6dsx_acc_channels[] = अणु
 	ST_LSM6DSX_CHANNEL_ACC(IIO_ACCEL, 0x28, IIO_MOD_X, 0),
 	ST_LSM6DSX_CHANNEL_ACC(IIO_ACCEL, 0x2a, IIO_MOD_Y, 1),
 	ST_LSM6DSX_CHANNEL_ACC(IIO_ACCEL, 0x2c, IIO_MOD_Z, 2),
 	IIO_CHAN_SOFT_TIMESTAMP(3),
-};
+पूर्ण;
 
-static const struct iio_chan_spec st_lsm6dsx_gyro_channels[] = {
+अटल स्थिर काष्ठा iio_chan_spec st_lsm6dsx_gyro_channels[] = अणु
 	ST_LSM6DSX_CHANNEL(IIO_ANGL_VEL, 0x22, IIO_MOD_X, 0),
 	ST_LSM6DSX_CHANNEL(IIO_ANGL_VEL, 0x24, IIO_MOD_Y, 1),
 	ST_LSM6DSX_CHANNEL(IIO_ANGL_VEL, 0x26, IIO_MOD_Z, 2),
 	IIO_CHAN_SOFT_TIMESTAMP(3),
-};
+पूर्ण;
 
-static const struct iio_chan_spec st_lsm6ds0_gyro_channels[] = {
+अटल स्थिर काष्ठा iio_chan_spec st_lsm6ds0_gyro_channels[] = अणु
 	ST_LSM6DSX_CHANNEL(IIO_ANGL_VEL, 0x18, IIO_MOD_X, 0),
 	ST_LSM6DSX_CHANNEL(IIO_ANGL_VEL, 0x1a, IIO_MOD_Y, 1),
 	ST_LSM6DSX_CHANNEL(IIO_ANGL_VEL, 0x1c, IIO_MOD_Z, 2),
 	IIO_CHAN_SOFT_TIMESTAMP(3),
-};
+पूर्ण;
 
-static const struct st_lsm6dsx_settings st_lsm6dsx_sensor_settings[] = {
-	{
-		.reset = {
+अटल स्थिर काष्ठा st_lsm6dsx_settings st_lsm6dsx_sensor_settings[] = अणु
+	अणु
+		.reset = अणु
 			.addr = 0x22,
 			.mask = BIT(0),
-		},
-		.boot = {
+		पूर्ण,
+		.boot = अणु
 			.addr = 0x22,
 			.mask = BIT(7),
-		},
-		.bdu = {
+		पूर्ण,
+		.bdu = अणु
 			.addr = 0x22,
 			.mask = BIT(6),
-		},
-		.max_fifo_size = 32,
-		.id = {
-			{
+		पूर्ण,
+		.max_fअगरo_size = 32,
+		.id = अणु
+			अणु
 				.hw_id = ST_LSM9DS1_ID,
 				.name = ST_LSM9DS1_DEV_NAME,
 				.wai = 0x68,
-			}, {
+			पूर्ण, अणु
 				.hw_id = ST_LSM6DS0_ID,
 				.name = ST_LSM6DS0_DEV_NAME,
 				.wai = 0x68,
-			},
-		},
-		.channels = {
-			[ST_LSM6DSX_ID_ACC] = {
+			पूर्ण,
+		पूर्ण,
+		.channels = अणु
+			[ST_LSM6DSX_ID_ACC] = अणु
 				.chan = st_lsm6dsx_acc_channels,
 				.len = ARRAY_SIZE(st_lsm6dsx_acc_channels),
-			},
-			[ST_LSM6DSX_ID_GYRO] = {
+			पूर्ण,
+			[ST_LSM6DSX_ID_GYRO] = अणु
 				.chan = st_lsm6ds0_gyro_channels,
 				.len = ARRAY_SIZE(st_lsm6ds0_gyro_channels),
-			},
-		},
-		.odr_table = {
-			[ST_LSM6DSX_ID_ACC] = {
-				.reg = {
+			पूर्ण,
+		पूर्ण,
+		.odr_table = अणु
+			[ST_LSM6DSX_ID_ACC] = अणु
+				.reg = अणु
 					.addr = 0x20,
 					.mask = GENMASK(7, 5),
-				},
-				.odr_avl[0] = {  10000, 0x01 },
-				.odr_avl[1] = {  50000, 0x02 },
-				.odr_avl[2] = { 119000, 0x03 },
-				.odr_avl[3] = { 238000, 0x04 },
-				.odr_avl[4] = { 476000, 0x05 },
-				.odr_avl[5] = { 952000, 0x06 },
+				पूर्ण,
+				.odr_avl[0] = अणु  10000, 0x01 पूर्ण,
+				.odr_avl[1] = अणु  50000, 0x02 पूर्ण,
+				.odr_avl[2] = अणु 119000, 0x03 पूर्ण,
+				.odr_avl[3] = अणु 238000, 0x04 पूर्ण,
+				.odr_avl[4] = अणु 476000, 0x05 पूर्ण,
+				.odr_avl[5] = अणु 952000, 0x06 पूर्ण,
 				.odr_len = 6,
-			},
-			[ST_LSM6DSX_ID_GYRO] = {
-				.reg = {
+			पूर्ण,
+			[ST_LSM6DSX_ID_GYRO] = अणु
+				.reg = अणु
 					.addr = 0x10,
 					.mask = GENMASK(7, 5),
-				},
-				.odr_avl[0] = {  14900, 0x01 },
-				.odr_avl[1] = {  59500, 0x02 },
-				.odr_avl[2] = { 119000, 0x03 },
-				.odr_avl[3] = { 238000, 0x04 },
-				.odr_avl[4] = { 476000, 0x05 },
-				.odr_avl[5] = { 952000, 0x06 },
+				पूर्ण,
+				.odr_avl[0] = अणु  14900, 0x01 पूर्ण,
+				.odr_avl[1] = अणु  59500, 0x02 पूर्ण,
+				.odr_avl[2] = अणु 119000, 0x03 पूर्ण,
+				.odr_avl[3] = अणु 238000, 0x04 पूर्ण,
+				.odr_avl[4] = अणु 476000, 0x05 पूर्ण,
+				.odr_avl[5] = अणु 952000, 0x06 पूर्ण,
 				.odr_len = 6,
-			},
-		},
-		.fs_table = {
-			[ST_LSM6DSX_ID_ACC] = {
-				.reg = {
+			पूर्ण,
+		पूर्ण,
+		.fs_table = अणु
+			[ST_LSM6DSX_ID_ACC] = अणु
+				.reg = अणु
 					.addr = 0x20,
 					.mask = GENMASK(4, 3),
-				},
-				.fs_avl[0] = {  IIO_G_TO_M_S_2(61000), 0x0 },
-				.fs_avl[1] = { IIO_G_TO_M_S_2(122000), 0x2 },
-				.fs_avl[2] = { IIO_G_TO_M_S_2(244000), 0x3 },
-				.fs_avl[3] = { IIO_G_TO_M_S_2(732000), 0x1 },
+				पूर्ण,
+				.fs_avl[0] = अणु  IIO_G_TO_M_S_2(61000), 0x0 पूर्ण,
+				.fs_avl[1] = अणु IIO_G_TO_M_S_2(122000), 0x2 पूर्ण,
+				.fs_avl[2] = अणु IIO_G_TO_M_S_2(244000), 0x3 पूर्ण,
+				.fs_avl[3] = अणु IIO_G_TO_M_S_2(732000), 0x1 पूर्ण,
 				.fs_len = 4,
-			},
-			[ST_LSM6DSX_ID_GYRO] = {
-				.reg = {
+			पूर्ण,
+			[ST_LSM6DSX_ID_GYRO] = अणु
+				.reg = अणु
 					.addr = 0x10,
 					.mask = GENMASK(4, 3),
-				},
+				पूर्ण,
 
-				.fs_avl[0] = {  IIO_DEGREE_TO_RAD(8750000), 0x0 },
-				.fs_avl[1] = { IIO_DEGREE_TO_RAD(17500000), 0x1 },
-				.fs_avl[2] = { IIO_DEGREE_TO_RAD(70000000), 0x3 },
+				.fs_avl[0] = अणु  IIO_DEGREE_TO_RAD(8750000), 0x0 पूर्ण,
+				.fs_avl[1] = अणु IIO_DEGREE_TO_RAD(17500000), 0x1 पूर्ण,
+				.fs_avl[2] = अणु IIO_DEGREE_TO_RAD(70000000), 0x3 पूर्ण,
 				.fs_len = 3,
-			},
-		},
-		.irq_config = {
-			.irq1 = {
+			पूर्ण,
+		पूर्ण,
+		.irq_config = अणु
+			.irq1 = अणु
 				.addr = 0x0c,
 				.mask = BIT(3),
-			},
-			.irq2 = {
+			पूर्ण,
+			.irq2 = अणु
 				.addr = 0x0d,
 				.mask = BIT(3),
-			},
-			.hla = {
+			पूर्ण,
+			.hla = अणु
 				.addr = 0x22,
 				.mask = BIT(5),
-			},
-			.od = {
+			पूर्ण,
+			.od = अणु
 				.addr = 0x22,
 				.mask = BIT(4),
-			},
-		},
-	},
-	{
-		.reset = {
+			पूर्ण,
+		पूर्ण,
+	पूर्ण,
+	अणु
+		.reset = अणु
 			.addr = 0x12,
 			.mask = BIT(0),
-		},
-		.boot = {
+		पूर्ण,
+		.boot = अणु
 			.addr = 0x12,
 			.mask = BIT(7),
-		},
-		.bdu = {
+		पूर्ण,
+		.bdu = अणु
 			.addr = 0x12,
 			.mask = BIT(6),
-		},
-		.max_fifo_size = 1365,
-		.id = {
-			{
+		पूर्ण,
+		.max_fअगरo_size = 1365,
+		.id = अणु
+			अणु
 				.hw_id = ST_LSM6DS3_ID,
 				.name = ST_LSM6DS3_DEV_NAME,
 				.wai = 0x69,
-			},
-		},
-		.channels = {
-			[ST_LSM6DSX_ID_ACC] = {
+			पूर्ण,
+		पूर्ण,
+		.channels = अणु
+			[ST_LSM6DSX_ID_ACC] = अणु
 				.chan = st_lsm6dsx_acc_channels,
 				.len = ARRAY_SIZE(st_lsm6dsx_acc_channels),
-			},
-			[ST_LSM6DSX_ID_GYRO] = {
+			पूर्ण,
+			[ST_LSM6DSX_ID_GYRO] = अणु
 				.chan = st_lsm6dsx_gyro_channels,
 				.len = ARRAY_SIZE(st_lsm6dsx_gyro_channels),
-			},
-		},
-		.odr_table = {
-			[ST_LSM6DSX_ID_ACC] = {
-				.reg = {
+			पूर्ण,
+		पूर्ण,
+		.odr_table = अणु
+			[ST_LSM6DSX_ID_ACC] = अणु
+				.reg = अणु
 					.addr = 0x10,
 					.mask = GENMASK(7, 4),
-				},
-				.odr_avl[0] = {  12500, 0x01 },
-				.odr_avl[1] = {  26000, 0x02 },
-				.odr_avl[2] = {  52000, 0x03 },
-				.odr_avl[3] = { 104000, 0x04 },
-				.odr_avl[4] = { 208000, 0x05 },
-				.odr_avl[5] = { 416000, 0x06 },
+				पूर्ण,
+				.odr_avl[0] = अणु  12500, 0x01 पूर्ण,
+				.odr_avl[1] = अणु  26000, 0x02 पूर्ण,
+				.odr_avl[2] = अणु  52000, 0x03 पूर्ण,
+				.odr_avl[3] = अणु 104000, 0x04 पूर्ण,
+				.odr_avl[4] = अणु 208000, 0x05 पूर्ण,
+				.odr_avl[5] = अणु 416000, 0x06 पूर्ण,
 				.odr_len = 6,
-			},
-			[ST_LSM6DSX_ID_GYRO] = {
-				.reg = {
+			पूर्ण,
+			[ST_LSM6DSX_ID_GYRO] = अणु
+				.reg = अणु
 					.addr = 0x11,
 					.mask = GENMASK(7, 4),
-				},
-				.odr_avl[0] = {  12500, 0x01 },
-				.odr_avl[1] = {  26000, 0x02 },
-				.odr_avl[2] = {  52000, 0x03 },
-				.odr_avl[3] = { 104000, 0x04 },
-				.odr_avl[4] = { 208000, 0x05 },
-				.odr_avl[5] = { 416000, 0x06 },
+				पूर्ण,
+				.odr_avl[0] = अणु  12500, 0x01 पूर्ण,
+				.odr_avl[1] = अणु  26000, 0x02 पूर्ण,
+				.odr_avl[2] = अणु  52000, 0x03 पूर्ण,
+				.odr_avl[3] = अणु 104000, 0x04 पूर्ण,
+				.odr_avl[4] = अणु 208000, 0x05 पूर्ण,
+				.odr_avl[5] = अणु 416000, 0x06 पूर्ण,
 				.odr_len = 6,
-			},
-		},
-		.fs_table = {
-			[ST_LSM6DSX_ID_ACC] = {
-				.reg = {
+			पूर्ण,
+		पूर्ण,
+		.fs_table = अणु
+			[ST_LSM6DSX_ID_ACC] = अणु
+				.reg = अणु
 					.addr = 0x10,
 					.mask = GENMASK(3, 2),
-				},
-				.fs_avl[0] = {  IIO_G_TO_M_S_2(61000), 0x0 },
-				.fs_avl[1] = { IIO_G_TO_M_S_2(122000), 0x2 },
-				.fs_avl[2] = { IIO_G_TO_M_S_2(244000), 0x3 },
-				.fs_avl[3] = { IIO_G_TO_M_S_2(488000), 0x1 },
+				पूर्ण,
+				.fs_avl[0] = अणु  IIO_G_TO_M_S_2(61000), 0x0 पूर्ण,
+				.fs_avl[1] = अणु IIO_G_TO_M_S_2(122000), 0x2 पूर्ण,
+				.fs_avl[2] = अणु IIO_G_TO_M_S_2(244000), 0x3 पूर्ण,
+				.fs_avl[3] = अणु IIO_G_TO_M_S_2(488000), 0x1 पूर्ण,
 				.fs_len = 4,
-			},
-			[ST_LSM6DSX_ID_GYRO] = {
-				.reg = {
+			पूर्ण,
+			[ST_LSM6DSX_ID_GYRO] = अणु
+				.reg = अणु
 					.addr = 0x11,
 					.mask = GENMASK(3, 2),
-				},
-				.fs_avl[0] = {  IIO_DEGREE_TO_RAD(8750000), 0x0 },
-				.fs_avl[1] = { IIO_DEGREE_TO_RAD(17500000), 0x1 },
-				.fs_avl[2] = { IIO_DEGREE_TO_RAD(35000000), 0x2 },
-				.fs_avl[3] = { IIO_DEGREE_TO_RAD(70000000), 0x3 },
+				पूर्ण,
+				.fs_avl[0] = अणु  IIO_DEGREE_TO_RAD(8750000), 0x0 पूर्ण,
+				.fs_avl[1] = अणु IIO_DEGREE_TO_RAD(17500000), 0x1 पूर्ण,
+				.fs_avl[2] = अणु IIO_DEGREE_TO_RAD(35000000), 0x2 पूर्ण,
+				.fs_avl[3] = अणु IIO_DEGREE_TO_RAD(70000000), 0x3 पूर्ण,
 				.fs_len = 4,
-			},
-		},
-		.irq_config = {
-			.irq1 = {
+			पूर्ण,
+		पूर्ण,
+		.irq_config = अणु
+			.irq1 = अणु
 				.addr = 0x0d,
 				.mask = BIT(3),
-			},
-			.irq2 = {
+			पूर्ण,
+			.irq2 = अणु
 				.addr = 0x0e,
 				.mask = BIT(3),
-			},
-			.lir = {
+			पूर्ण,
+			.lir = अणु
 				.addr = 0x58,
 				.mask = BIT(0),
-			},
-			.irq1_func = {
+			पूर्ण,
+			.irq1_func = अणु
 				.addr = 0x5e,
 				.mask = BIT(5),
-			},
-			.irq2_func = {
+			पूर्ण,
+			.irq2_func = अणु
 				.addr = 0x5f,
 				.mask = BIT(5),
-			},
-			.hla = {
+			पूर्ण,
+			.hla = अणु
 				.addr = 0x12,
 				.mask = BIT(5),
-			},
-			.od = {
+			पूर्ण,
+			.od = अणु
 				.addr = 0x12,
 				.mask = BIT(4),
-			},
-		},
-		.decimator = {
-			[ST_LSM6DSX_ID_ACC] = {
+			पूर्ण,
+		पूर्ण,
+		.decimator = अणु
+			[ST_LSM6DSX_ID_ACC] = अणु
 				.addr = 0x08,
 				.mask = GENMASK(2, 0),
-			},
-			[ST_LSM6DSX_ID_GYRO] = {
+			पूर्ण,
+			[ST_LSM6DSX_ID_GYRO] = अणु
 				.addr = 0x08,
 				.mask = GENMASK(5, 3),
-			},
-		},
-		.fifo_ops = {
-			.update_fifo = st_lsm6dsx_update_fifo,
-			.read_fifo = st_lsm6dsx_read_fifo,
-			.fifo_th = {
+			पूर्ण,
+		पूर्ण,
+		.fअगरo_ops = अणु
+			.update_fअगरo = st_lsm6dsx_update_fअगरo,
+			.पढ़ो_fअगरo = st_lsm6dsx_पढ़ो_fअगरo,
+			.fअगरo_th = अणु
 				.addr = 0x06,
 				.mask = GENMASK(11, 0),
-			},
-			.fifo_diff = {
+			पूर्ण,
+			.fअगरo_dअगरf = अणु
 				.addr = 0x3a,
 				.mask = GENMASK(11, 0),
-			},
+			पूर्ण,
 			.th_wl = 3, /* 1LSB = 2B */
-		},
-		.ts_settings = {
-			.timer_en = {
+		पूर्ण,
+		.ts_settings = अणु
+			.समयr_en = अणु
 				.addr = 0x58,
 				.mask = BIT(7),
-			},
-			.hr_timer = {
+			पूर्ण,
+			.hr_समयr = अणु
 				.addr = 0x5c,
 				.mask = BIT(4),
-			},
-			.fifo_en = {
+			पूर्ण,
+			.fअगरo_en = अणु
 				.addr = 0x07,
 				.mask = BIT(7),
-			},
-			.decimator = {
+			पूर्ण,
+			.decimator = अणु
 				.addr = 0x09,
 				.mask = GENMASK(5, 3),
-			},
-		},
-		.event_settings = {
-			.wakeup_reg = {
+			पूर्ण,
+		पूर्ण,
+		.event_settings = अणु
+			.wakeup_reg = अणु
 				.addr = 0x5B,
 				.mask = GENMASK(5, 0),
-			},
+			पूर्ण,
 			.wakeup_src_reg = 0x1b,
 			.wakeup_src_status_mask = BIT(3),
 			.wakeup_src_z_mask = BIT(0),
 			.wakeup_src_y_mask = BIT(1),
 			.wakeup_src_x_mask = BIT(2),
-		},
-	},
-	{
-		.reset = {
+		पूर्ण,
+	पूर्ण,
+	अणु
+		.reset = अणु
 			.addr = 0x12,
 			.mask = BIT(0),
-		},
-		.boot = {
+		पूर्ण,
+		.boot = अणु
 			.addr = 0x12,
 			.mask = BIT(7),
-		},
-		.bdu = {
+		पूर्ण,
+		.bdu = अणु
 			.addr = 0x12,
 			.mask = BIT(6),
-		},
-		.max_fifo_size = 682,
-		.id = {
-			{
+		पूर्ण,
+		.max_fअगरo_size = 682,
+		.id = अणु
+			अणु
 				.hw_id = ST_LSM6DS3H_ID,
 				.name = ST_LSM6DS3H_DEV_NAME,
 				.wai = 0x69,
-			},
-		},
-		.channels = {
-			[ST_LSM6DSX_ID_ACC] = {
+			पूर्ण,
+		पूर्ण,
+		.channels = अणु
+			[ST_LSM6DSX_ID_ACC] = अणु
 				.chan = st_lsm6dsx_acc_channels,
 				.len = ARRAY_SIZE(st_lsm6dsx_acc_channels),
-			},
-			[ST_LSM6DSX_ID_GYRO] = {
+			पूर्ण,
+			[ST_LSM6DSX_ID_GYRO] = अणु
 				.chan = st_lsm6dsx_gyro_channels,
 				.len = ARRAY_SIZE(st_lsm6dsx_gyro_channels),
-			},
-		},
-		.odr_table = {
-			[ST_LSM6DSX_ID_ACC] = {
-				.reg = {
+			पूर्ण,
+		पूर्ण,
+		.odr_table = अणु
+			[ST_LSM6DSX_ID_ACC] = अणु
+				.reg = अणु
 					.addr = 0x10,
 					.mask = GENMASK(7, 4),
-				},
-				.odr_avl[0] = {  12500, 0x01 },
-				.odr_avl[1] = {  26000, 0x02 },
-				.odr_avl[2] = {  52000, 0x03 },
-				.odr_avl[3] = { 104000, 0x04 },
-				.odr_avl[4] = { 208000, 0x05 },
-				.odr_avl[5] = { 416000, 0x06 },
+				पूर्ण,
+				.odr_avl[0] = अणु  12500, 0x01 पूर्ण,
+				.odr_avl[1] = अणु  26000, 0x02 पूर्ण,
+				.odr_avl[2] = अणु  52000, 0x03 पूर्ण,
+				.odr_avl[3] = अणु 104000, 0x04 पूर्ण,
+				.odr_avl[4] = अणु 208000, 0x05 पूर्ण,
+				.odr_avl[5] = अणु 416000, 0x06 पूर्ण,
 				.odr_len = 6,
-			},
-			[ST_LSM6DSX_ID_GYRO] = {
-				.reg = {
+			पूर्ण,
+			[ST_LSM6DSX_ID_GYRO] = अणु
+				.reg = अणु
 					.addr = 0x11,
 					.mask = GENMASK(7, 4),
-				},
-				.odr_avl[0] = {  12500, 0x01 },
-				.odr_avl[1] = {  26000, 0x02 },
-				.odr_avl[2] = {  52000, 0x03 },
-				.odr_avl[3] = { 104000, 0x04 },
-				.odr_avl[4] = { 208000, 0x05 },
-				.odr_avl[5] = { 416000, 0x06 },
+				पूर्ण,
+				.odr_avl[0] = अणु  12500, 0x01 पूर्ण,
+				.odr_avl[1] = अणु  26000, 0x02 पूर्ण,
+				.odr_avl[2] = अणु  52000, 0x03 पूर्ण,
+				.odr_avl[3] = अणु 104000, 0x04 पूर्ण,
+				.odr_avl[4] = अणु 208000, 0x05 पूर्ण,
+				.odr_avl[5] = अणु 416000, 0x06 पूर्ण,
 				.odr_len = 6,
-			},
-		},
-		.fs_table = {
-			[ST_LSM6DSX_ID_ACC] = {
-				.reg = {
+			पूर्ण,
+		पूर्ण,
+		.fs_table = अणु
+			[ST_LSM6DSX_ID_ACC] = अणु
+				.reg = अणु
 					.addr = 0x10,
 					.mask = GENMASK(3, 2),
-				},
-				.fs_avl[0] = {  IIO_G_TO_M_S_2(61000), 0x0 },
-				.fs_avl[1] = { IIO_G_TO_M_S_2(122000), 0x2 },
-				.fs_avl[2] = { IIO_G_TO_M_S_2(244000), 0x3 },
-				.fs_avl[3] = { IIO_G_TO_M_S_2(488000), 0x1 },
+				पूर्ण,
+				.fs_avl[0] = अणु  IIO_G_TO_M_S_2(61000), 0x0 पूर्ण,
+				.fs_avl[1] = अणु IIO_G_TO_M_S_2(122000), 0x2 पूर्ण,
+				.fs_avl[2] = अणु IIO_G_TO_M_S_2(244000), 0x3 पूर्ण,
+				.fs_avl[3] = अणु IIO_G_TO_M_S_2(488000), 0x1 पूर्ण,
 				.fs_len = 4,
-			},
-			[ST_LSM6DSX_ID_GYRO] = {
-				.reg = {
+			पूर्ण,
+			[ST_LSM6DSX_ID_GYRO] = अणु
+				.reg = अणु
 					.addr = 0x11,
 					.mask = GENMASK(3, 2),
-				},
-				.fs_avl[0] = {  IIO_DEGREE_TO_RAD(8750000), 0x0 },
-				.fs_avl[1] = { IIO_DEGREE_TO_RAD(17500000), 0x1 },
-				.fs_avl[2] = { IIO_DEGREE_TO_RAD(35000000), 0x2 },
-				.fs_avl[3] = { IIO_DEGREE_TO_RAD(70000000), 0x3 },
+				पूर्ण,
+				.fs_avl[0] = अणु  IIO_DEGREE_TO_RAD(8750000), 0x0 पूर्ण,
+				.fs_avl[1] = अणु IIO_DEGREE_TO_RAD(17500000), 0x1 पूर्ण,
+				.fs_avl[2] = अणु IIO_DEGREE_TO_RAD(35000000), 0x2 पूर्ण,
+				.fs_avl[3] = अणु IIO_DEGREE_TO_RAD(70000000), 0x3 पूर्ण,
 				.fs_len = 4,
-			},
-		},
-		.irq_config = {
-			.irq1 = {
+			पूर्ण,
+		पूर्ण,
+		.irq_config = अणु
+			.irq1 = अणु
 				.addr = 0x0d,
 				.mask = BIT(3),
-			},
-			.irq2 = {
+			पूर्ण,
+			.irq2 = अणु
 				.addr = 0x0e,
 				.mask = BIT(3),
-			},
-			.lir = {
+			पूर्ण,
+			.lir = अणु
 				.addr = 0x58,
 				.mask = BIT(0),
-			},
-			.irq1_func = {
+			पूर्ण,
+			.irq1_func = अणु
 				.addr = 0x5e,
 				.mask = BIT(5),
-			},
-			.irq2_func = {
+			पूर्ण,
+			.irq2_func = अणु
 				.addr = 0x5f,
 				.mask = BIT(5),
-			},
-			.hla = {
+			पूर्ण,
+			.hla = अणु
 				.addr = 0x12,
 				.mask = BIT(5),
-			},
-			.od = {
+			पूर्ण,
+			.od = अणु
 				.addr = 0x12,
 				.mask = BIT(4),
-			},
-		},
-		.decimator = {
-			[ST_LSM6DSX_ID_ACC] = {
+			पूर्ण,
+		पूर्ण,
+		.decimator = अणु
+			[ST_LSM6DSX_ID_ACC] = अणु
 				.addr = 0x08,
 				.mask = GENMASK(2, 0),
-			},
-			[ST_LSM6DSX_ID_GYRO] = {
+			पूर्ण,
+			[ST_LSM6DSX_ID_GYRO] = अणु
 				.addr = 0x08,
 				.mask = GENMASK(5, 3),
-			},
-		},
-		.fifo_ops = {
-			.update_fifo = st_lsm6dsx_update_fifo,
-			.read_fifo = st_lsm6dsx_read_fifo,
-			.fifo_th = {
+			पूर्ण,
+		पूर्ण,
+		.fअगरo_ops = अणु
+			.update_fअगरo = st_lsm6dsx_update_fअगरo,
+			.पढ़ो_fअगरo = st_lsm6dsx_पढ़ो_fअगरo,
+			.fअगरo_th = अणु
 				.addr = 0x06,
 				.mask = GENMASK(11, 0),
-			},
-			.fifo_diff = {
+			पूर्ण,
+			.fअगरo_dअगरf = अणु
 				.addr = 0x3a,
 				.mask = GENMASK(11, 0),
-			},
+			पूर्ण,
 			.th_wl = 3, /* 1LSB = 2B */
-		},
-		.ts_settings = {
-			.timer_en = {
+		पूर्ण,
+		.ts_settings = अणु
+			.समयr_en = अणु
 				.addr = 0x58,
 				.mask = BIT(7),
-			},
-			.hr_timer = {
+			पूर्ण,
+			.hr_समयr = अणु
 				.addr = 0x5c,
 				.mask = BIT(4),
-			},
-			.fifo_en = {
+			पूर्ण,
+			.fअगरo_en = अणु
 				.addr = 0x07,
 				.mask = BIT(7),
-			},
-			.decimator = {
+			पूर्ण,
+			.decimator = अणु
 				.addr = 0x09,
 				.mask = GENMASK(5, 3),
-			},
-		},
-		.event_settings = {
-			.wakeup_reg = {
+			पूर्ण,
+		पूर्ण,
+		.event_settings = अणु
+			.wakeup_reg = अणु
 				.addr = 0x5B,
 				.mask = GENMASK(5, 0),
-			},
+			पूर्ण,
 			.wakeup_src_reg = 0x1b,
 			.wakeup_src_status_mask = BIT(3),
 			.wakeup_src_z_mask = BIT(0),
 			.wakeup_src_y_mask = BIT(1),
 			.wakeup_src_x_mask = BIT(2),
-		},
-	},
-	{
-		.reset = {
+		पूर्ण,
+	पूर्ण,
+	अणु
+		.reset = अणु
 			.addr = 0x12,
 			.mask = BIT(0),
-		},
-		.boot = {
+		पूर्ण,
+		.boot = अणु
 			.addr = 0x12,
 			.mask = BIT(7),
-		},
-		.bdu = {
+		पूर्ण,
+		.bdu = अणु
 			.addr = 0x12,
 			.mask = BIT(6),
-		},
-		.max_fifo_size = 682,
-		.id = {
-			{
+		पूर्ण,
+		.max_fअगरo_size = 682,
+		.id = अणु
+			अणु
 				.hw_id = ST_LSM6DSL_ID,
 				.name = ST_LSM6DSL_DEV_NAME,
 				.wai = 0x6a,
-			}, {
+			पूर्ण, अणु
 				.hw_id = ST_LSM6DSM_ID,
 				.name = ST_LSM6DSM_DEV_NAME,
 				.wai = 0x6a,
-			}, {
+			पूर्ण, अणु
 				.hw_id = ST_ISM330DLC_ID,
 				.name = ST_ISM330DLC_DEV_NAME,
 				.wai = 0x6a,
-			}, {
+			पूर्ण, अणु
 				.hw_id = ST_LSM6DS3TRC_ID,
 				.name = ST_LSM6DS3TRC_DEV_NAME,
 				.wai = 0x6a,
-			},
-		},
-		.channels = {
-			[ST_LSM6DSX_ID_ACC] = {
+			पूर्ण,
+		पूर्ण,
+		.channels = अणु
+			[ST_LSM6DSX_ID_ACC] = अणु
 				.chan = st_lsm6dsx_acc_channels,
 				.len = ARRAY_SIZE(st_lsm6dsx_acc_channels),
-			},
-			[ST_LSM6DSX_ID_GYRO] = {
+			पूर्ण,
+			[ST_LSM6DSX_ID_GYRO] = अणु
 				.chan = st_lsm6dsx_gyro_channels,
 				.len = ARRAY_SIZE(st_lsm6dsx_gyro_channels),
-			},
-		},
-		.odr_table = {
-			[ST_LSM6DSX_ID_ACC] = {
-				.reg = {
+			पूर्ण,
+		पूर्ण,
+		.odr_table = अणु
+			[ST_LSM6DSX_ID_ACC] = अणु
+				.reg = अणु
 					.addr = 0x10,
 					.mask = GENMASK(7, 4),
-				},
-				.odr_avl[0] = {  12500, 0x01 },
-				.odr_avl[1] = {  26000, 0x02 },
-				.odr_avl[2] = {  52000, 0x03 },
-				.odr_avl[3] = { 104000, 0x04 },
-				.odr_avl[4] = { 208000, 0x05 },
-				.odr_avl[5] = { 416000, 0x06 },
+				पूर्ण,
+				.odr_avl[0] = अणु  12500, 0x01 पूर्ण,
+				.odr_avl[1] = अणु  26000, 0x02 पूर्ण,
+				.odr_avl[2] = अणु  52000, 0x03 पूर्ण,
+				.odr_avl[3] = अणु 104000, 0x04 पूर्ण,
+				.odr_avl[4] = अणु 208000, 0x05 पूर्ण,
+				.odr_avl[5] = अणु 416000, 0x06 पूर्ण,
 				.odr_len = 6,
-			},
-			[ST_LSM6DSX_ID_GYRO] = {
-				.reg = {
+			पूर्ण,
+			[ST_LSM6DSX_ID_GYRO] = अणु
+				.reg = अणु
 					.addr = 0x11,
 					.mask = GENMASK(7, 4),
-				},
-				.odr_avl[0] = {  12500, 0x01 },
-				.odr_avl[1] = {  26000, 0x02 },
-				.odr_avl[2] = {  52000, 0x03 },
-				.odr_avl[3] = { 104000, 0x04 },
-				.odr_avl[4] = { 208000, 0x05 },
-				.odr_avl[5] = { 416000, 0x06 },
+				पूर्ण,
+				.odr_avl[0] = अणु  12500, 0x01 पूर्ण,
+				.odr_avl[1] = अणु  26000, 0x02 पूर्ण,
+				.odr_avl[2] = अणु  52000, 0x03 पूर्ण,
+				.odr_avl[3] = अणु 104000, 0x04 पूर्ण,
+				.odr_avl[4] = अणु 208000, 0x05 पूर्ण,
+				.odr_avl[5] = अणु 416000, 0x06 पूर्ण,
 				.odr_len = 6,
-			},
-		},
-		.fs_table = {
-			[ST_LSM6DSX_ID_ACC] = {
-				.reg = {
+			पूर्ण,
+		पूर्ण,
+		.fs_table = अणु
+			[ST_LSM6DSX_ID_ACC] = अणु
+				.reg = अणु
 					.addr = 0x10,
 					.mask = GENMASK(3, 2),
-				},
-				.fs_avl[0] = {  IIO_G_TO_M_S_2(61000), 0x0 },
-				.fs_avl[1] = { IIO_G_TO_M_S_2(122000), 0x2 },
-				.fs_avl[2] = { IIO_G_TO_M_S_2(244000), 0x3 },
-				.fs_avl[3] = { IIO_G_TO_M_S_2(488000), 0x1 },
+				पूर्ण,
+				.fs_avl[0] = अणु  IIO_G_TO_M_S_2(61000), 0x0 पूर्ण,
+				.fs_avl[1] = अणु IIO_G_TO_M_S_2(122000), 0x2 पूर्ण,
+				.fs_avl[2] = अणु IIO_G_TO_M_S_2(244000), 0x3 पूर्ण,
+				.fs_avl[3] = अणु IIO_G_TO_M_S_2(488000), 0x1 पूर्ण,
 				.fs_len = 4,
-			},
-			[ST_LSM6DSX_ID_GYRO] = {
-				.reg = {
+			पूर्ण,
+			[ST_LSM6DSX_ID_GYRO] = अणु
+				.reg = अणु
 					.addr = 0x11,
 					.mask = GENMASK(3, 2),
-				},
-				.fs_avl[0] = {  IIO_DEGREE_TO_RAD(8750000), 0x0 },
-				.fs_avl[1] = { IIO_DEGREE_TO_RAD(17500000), 0x1 },
-				.fs_avl[2] = { IIO_DEGREE_TO_RAD(35000000), 0x2 },
-				.fs_avl[3] = { IIO_DEGREE_TO_RAD(70000000), 0x3 },
+				पूर्ण,
+				.fs_avl[0] = अणु  IIO_DEGREE_TO_RAD(8750000), 0x0 पूर्ण,
+				.fs_avl[1] = अणु IIO_DEGREE_TO_RAD(17500000), 0x1 पूर्ण,
+				.fs_avl[2] = अणु IIO_DEGREE_TO_RAD(35000000), 0x2 पूर्ण,
+				.fs_avl[3] = अणु IIO_DEGREE_TO_RAD(70000000), 0x3 पूर्ण,
 				.fs_len = 4,
-			},
-		},
-		.irq_config = {
-			.irq1 = {
+			पूर्ण,
+		पूर्ण,
+		.irq_config = अणु
+			.irq1 = अणु
 				.addr = 0x0d,
 				.mask = BIT(3),
-			},
-			.irq2 = {
+			पूर्ण,
+			.irq2 = अणु
 				.addr = 0x0e,
 				.mask = BIT(3),
-			},
-			.lir = {
+			पूर्ण,
+			.lir = अणु
 				.addr = 0x58,
 				.mask = BIT(0),
-			},
-			.irq1_func = {
+			पूर्ण,
+			.irq1_func = अणु
 				.addr = 0x5e,
 				.mask = BIT(5),
-			},
-			.irq2_func = {
+			पूर्ण,
+			.irq2_func = अणु
 				.addr = 0x5f,
 				.mask = BIT(5),
-			},
-			.hla = {
+			पूर्ण,
+			.hla = अणु
 				.addr = 0x12,
 				.mask = BIT(5),
-			},
-			.od = {
+			पूर्ण,
+			.od = अणु
 				.addr = 0x12,
 				.mask = BIT(4),
-			},
-		},
-		.decimator = {
-			[ST_LSM6DSX_ID_ACC] = {
+			पूर्ण,
+		पूर्ण,
+		.decimator = अणु
+			[ST_LSM6DSX_ID_ACC] = अणु
 				.addr = 0x08,
 				.mask = GENMASK(2, 0),
-			},
-			[ST_LSM6DSX_ID_GYRO] = {
+			पूर्ण,
+			[ST_LSM6DSX_ID_GYRO] = अणु
 				.addr = 0x08,
 				.mask = GENMASK(5, 3),
-			},
-			[ST_LSM6DSX_ID_EXT0] = {
+			पूर्ण,
+			[ST_LSM6DSX_ID_EXT0] = अणु
 				.addr = 0x09,
 				.mask = GENMASK(2, 0),
-			},
-		},
-		.fifo_ops = {
-			.update_fifo = st_lsm6dsx_update_fifo,
-			.read_fifo = st_lsm6dsx_read_fifo,
-			.fifo_th = {
+			पूर्ण,
+		पूर्ण,
+		.fअगरo_ops = अणु
+			.update_fअगरo = st_lsm6dsx_update_fअगरo,
+			.पढ़ो_fअगरo = st_lsm6dsx_पढ़ो_fअगरo,
+			.fअगरo_th = अणु
 				.addr = 0x06,
 				.mask = GENMASK(10, 0),
-			},
-			.fifo_diff = {
+			पूर्ण,
+			.fअगरo_dअगरf = अणु
 				.addr = 0x3a,
 				.mask = GENMASK(10, 0),
-			},
+			पूर्ण,
 			.th_wl = 3, /* 1LSB = 2B */
-		},
-		.ts_settings = {
-			.timer_en = {
+		पूर्ण,
+		.ts_settings = अणु
+			.समयr_en = अणु
 				.addr = 0x19,
 				.mask = BIT(5),
-			},
-			.hr_timer = {
+			पूर्ण,
+			.hr_समयr = अणु
 				.addr = 0x5c,
 				.mask = BIT(4),
-			},
-			.fifo_en = {
+			पूर्ण,
+			.fअगरo_en = अणु
 				.addr = 0x07,
 				.mask = BIT(7),
-			},
-			.decimator = {
+			पूर्ण,
+			.decimator = अणु
 				.addr = 0x09,
 				.mask = GENMASK(5, 3),
-			},
-		},
-		.shub_settings = {
-			.page_mux = {
+			पूर्ण,
+		पूर्ण,
+		.shub_settings = अणु
+			.page_mux = अणु
 				.addr = 0x01,
 				.mask = BIT(7),
-			},
-			.master_en = {
+			पूर्ण,
+			.master_en = अणु
 				.addr = 0x1a,
 				.mask = BIT(0),
-			},
-			.pullup_en = {
+			पूर्ण,
+			.pullup_en = अणु
 				.addr = 0x1a,
 				.mask = BIT(3),
-			},
-			.aux_sens = {
+			पूर्ण,
+			.aux_sens = अणु
 				.addr = 0x04,
 				.mask = GENMASK(5, 4),
-			},
-			.wr_once = {
+			पूर्ण,
+			.wr_once = अणु
 				.addr = 0x07,
 				.mask = BIT(5),
-			},
-			.emb_func = {
+			पूर्ण,
+			.emb_func = अणु
 				.addr = 0x19,
 				.mask = BIT(2),
-			},
+			पूर्ण,
 			.num_ext_dev = 1,
-			.shub_out = {
+			.shub_out = अणु
 				.addr = 0x2e,
-			},
+			पूर्ण,
 			.slv0_addr = 0x02,
 			.dw_slv0_addr = 0x0e,
-			.pause = 0x7,
-		},
-		.event_settings = {
-			.enable_reg = {
+			.छोड़ो = 0x7,
+		पूर्ण,
+		.event_settings = अणु
+			.enable_reg = अणु
 				.addr = 0x58,
 				.mask = BIT(7),
-			},
-			.wakeup_reg = {
+			पूर्ण,
+			.wakeup_reg = अणु
 				.addr = 0x5B,
 				.mask = GENMASK(5, 0),
-			},
+			पूर्ण,
 			.wakeup_src_reg = 0x1b,
 			.wakeup_src_status_mask = BIT(3),
 			.wakeup_src_z_mask = BIT(0),
 			.wakeup_src_y_mask = BIT(1),
 			.wakeup_src_x_mask = BIT(2),
-		},
-	},
-	{
-		.reset = {
+		पूर्ण,
+	पूर्ण,
+	अणु
+		.reset = अणु
 			.addr = 0x12,
 			.mask = BIT(0),
-		},
-		.boot = {
+		पूर्ण,
+		.boot = अणु
 			.addr = 0x12,
 			.mask = BIT(7),
-		},
-		.bdu = {
+		पूर्ण,
+		.bdu = अणु
 			.addr = 0x12,
 			.mask = BIT(6),
-		},
-		.max_fifo_size = 512,
-		.id = {
-			{
+		पूर्ण,
+		.max_fअगरo_size = 512,
+		.id = अणु
+			अणु
 				.hw_id = ST_LSM6DSR_ID,
 				.name = ST_LSM6DSR_DEV_NAME,
 				.wai = 0x6b,
-			}, {
+			पूर्ण, अणु
 				.hw_id = ST_ISM330DHCX_ID,
 				.name = ST_ISM330DHCX_DEV_NAME,
 				.wai = 0x6b,
-			}, {
+			पूर्ण, अणु
 				.hw_id = ST_LSM6DSRX_ID,
 				.name = ST_LSM6DSRX_DEV_NAME,
 				.wai = 0x6b,
-			}, {
+			पूर्ण, अणु
 				.hw_id = ST_LSM6DSO_ID,
 				.name = ST_LSM6DSO_DEV_NAME,
 				.wai = 0x6c,
-			}, {
+			पूर्ण, अणु
 				.hw_id = ST_LSM6DSOX_ID,
 				.name = ST_LSM6DSOX_DEV_NAME,
 				.wai = 0x6c,
-			}, {
+			पूर्ण, अणु
 				.hw_id = ST_LSM6DST_ID,
 				.name = ST_LSM6DST_DEV_NAME,
 				.wai = 0x6d,
-			},
-		},
-		.channels = {
-			[ST_LSM6DSX_ID_ACC] = {
+			पूर्ण,
+		पूर्ण,
+		.channels = अणु
+			[ST_LSM6DSX_ID_ACC] = अणु
 				.chan = st_lsm6dsx_acc_channels,
 				.len = ARRAY_SIZE(st_lsm6dsx_acc_channels),
-			},
-			[ST_LSM6DSX_ID_GYRO] = {
+			पूर्ण,
+			[ST_LSM6DSX_ID_GYRO] = अणु
 				.chan = st_lsm6dsx_gyro_channels,
 				.len = ARRAY_SIZE(st_lsm6dsx_gyro_channels),
-			},
-		},
-		.drdy_mask = {
+			पूर्ण,
+		पूर्ण,
+		.drdy_mask = अणु
 			.addr = 0x13,
 			.mask = BIT(3),
-		},
-		.odr_table = {
-			[ST_LSM6DSX_ID_ACC] = {
-				.reg = {
+		पूर्ण,
+		.odr_table = अणु
+			[ST_LSM6DSX_ID_ACC] = अणु
+				.reg = अणु
 					.addr = 0x10,
 					.mask = GENMASK(7, 4),
-				},
-				.odr_avl[0] = {  12500, 0x01 },
-				.odr_avl[1] = {  26000, 0x02 },
-				.odr_avl[2] = {  52000, 0x03 },
-				.odr_avl[3] = { 104000, 0x04 },
-				.odr_avl[4] = { 208000, 0x05 },
-				.odr_avl[5] = { 416000, 0x06 },
-				.odr_avl[6] = { 833000, 0x07 },
+				पूर्ण,
+				.odr_avl[0] = अणु  12500, 0x01 पूर्ण,
+				.odr_avl[1] = अणु  26000, 0x02 पूर्ण,
+				.odr_avl[2] = अणु  52000, 0x03 पूर्ण,
+				.odr_avl[3] = अणु 104000, 0x04 पूर्ण,
+				.odr_avl[4] = अणु 208000, 0x05 पूर्ण,
+				.odr_avl[5] = अणु 416000, 0x06 पूर्ण,
+				.odr_avl[6] = अणु 833000, 0x07 पूर्ण,
 				.odr_len = 7,
-			},
-			[ST_LSM6DSX_ID_GYRO] = {
-				.reg = {
+			पूर्ण,
+			[ST_LSM6DSX_ID_GYRO] = अणु
+				.reg = अणु
 					.addr = 0x11,
 					.mask = GENMASK(7, 4),
-				},
-				.odr_avl[0] = {  12500, 0x01 },
-				.odr_avl[1] = {  26000, 0x02 },
-				.odr_avl[2] = {  52000, 0x03 },
-				.odr_avl[3] = { 104000, 0x04 },
-				.odr_avl[4] = { 208000, 0x05 },
-				.odr_avl[5] = { 416000, 0x06 },
-				.odr_avl[6] = { 833000, 0x07 },
+				पूर्ण,
+				.odr_avl[0] = अणु  12500, 0x01 पूर्ण,
+				.odr_avl[1] = अणु  26000, 0x02 पूर्ण,
+				.odr_avl[2] = अणु  52000, 0x03 पूर्ण,
+				.odr_avl[3] = अणु 104000, 0x04 पूर्ण,
+				.odr_avl[4] = अणु 208000, 0x05 पूर्ण,
+				.odr_avl[5] = अणु 416000, 0x06 पूर्ण,
+				.odr_avl[6] = अणु 833000, 0x07 पूर्ण,
 				.odr_len = 7,
-			},
-		},
-		.fs_table = {
-			[ST_LSM6DSX_ID_ACC] = {
-				.reg = {
+			पूर्ण,
+		पूर्ण,
+		.fs_table = अणु
+			[ST_LSM6DSX_ID_ACC] = अणु
+				.reg = अणु
 					.addr = 0x10,
 					.mask = GENMASK(3, 2),
-				},
-				.fs_avl[0] = {  IIO_G_TO_M_S_2(61000), 0x0 },
-				.fs_avl[1] = { IIO_G_TO_M_S_2(122000), 0x2 },
-				.fs_avl[2] = { IIO_G_TO_M_S_2(244000), 0x3 },
-				.fs_avl[3] = { IIO_G_TO_M_S_2(488000), 0x1 },
+				पूर्ण,
+				.fs_avl[0] = अणु  IIO_G_TO_M_S_2(61000), 0x0 पूर्ण,
+				.fs_avl[1] = अणु IIO_G_TO_M_S_2(122000), 0x2 पूर्ण,
+				.fs_avl[2] = अणु IIO_G_TO_M_S_2(244000), 0x3 पूर्ण,
+				.fs_avl[3] = अणु IIO_G_TO_M_S_2(488000), 0x1 पूर्ण,
 				.fs_len = 4,
-			},
-			[ST_LSM6DSX_ID_GYRO] = {
-				.reg = {
+			पूर्ण,
+			[ST_LSM6DSX_ID_GYRO] = अणु
+				.reg = अणु
 					.addr = 0x11,
 					.mask = GENMASK(3, 2),
-				},
-				.fs_avl[0] = {  IIO_DEGREE_TO_RAD(8750000), 0x0 },
-				.fs_avl[1] = { IIO_DEGREE_TO_RAD(17500000), 0x1 },
-				.fs_avl[2] = { IIO_DEGREE_TO_RAD(35000000), 0x2 },
-				.fs_avl[3] = { IIO_DEGREE_TO_RAD(70000000), 0x3 },
+				पूर्ण,
+				.fs_avl[0] = अणु  IIO_DEGREE_TO_RAD(8750000), 0x0 पूर्ण,
+				.fs_avl[1] = अणु IIO_DEGREE_TO_RAD(17500000), 0x1 पूर्ण,
+				.fs_avl[2] = अणु IIO_DEGREE_TO_RAD(35000000), 0x2 पूर्ण,
+				.fs_avl[3] = अणु IIO_DEGREE_TO_RAD(70000000), 0x3 पूर्ण,
 				.fs_len = 4,
-			},
-		},
-		.irq_config = {
-			.irq1 = {
+			पूर्ण,
+		पूर्ण,
+		.irq_config = अणु
+			.irq1 = अणु
 				.addr = 0x0d,
 				.mask = BIT(3),
-			},
-			.irq2 = {
+			पूर्ण,
+			.irq2 = अणु
 				.addr = 0x0e,
 				.mask = BIT(3),
-			},
-			.lir = {
+			पूर्ण,
+			.lir = अणु
 				.addr = 0x56,
 				.mask = BIT(0),
-			},
-			.clear_on_read = {
+			पूर्ण,
+			.clear_on_पढ़ो = अणु
 				.addr = 0x56,
 				.mask = BIT(6),
-			},
-			.irq1_func = {
+			पूर्ण,
+			.irq1_func = अणु
 				.addr = 0x5e,
 				.mask = BIT(5),
-			},
-			.irq2_func = {
+			पूर्ण,
+			.irq2_func = अणु
 				.addr = 0x5f,
 				.mask = BIT(5),
-			},
-			.hla = {
+			पूर्ण,
+			.hla = अणु
 				.addr = 0x12,
 				.mask = BIT(5),
-			},
-			.od = {
+			पूर्ण,
+			.od = अणु
 				.addr = 0x12,
 				.mask = BIT(4),
-			},
-		},
-		.batch = {
-			[ST_LSM6DSX_ID_ACC] = {
+			पूर्ण,
+		पूर्ण,
+		.batch = अणु
+			[ST_LSM6DSX_ID_ACC] = अणु
 				.addr = 0x09,
 				.mask = GENMASK(3, 0),
-			},
-			[ST_LSM6DSX_ID_GYRO] = {
+			पूर्ण,
+			[ST_LSM6DSX_ID_GYRO] = अणु
 				.addr = 0x09,
 				.mask = GENMASK(7, 4),
-			},
-		},
-		.fifo_ops = {
-			.update_fifo = st_lsm6dsx_update_fifo,
-			.read_fifo = st_lsm6dsx_read_tagged_fifo,
-			.fifo_th = {
+			पूर्ण,
+		पूर्ण,
+		.fअगरo_ops = अणु
+			.update_fअगरo = st_lsm6dsx_update_fअगरo,
+			.पढ़ो_fअगरo = st_lsm6dsx_पढ़ो_tagged_fअगरo,
+			.fअगरo_th = अणु
 				.addr = 0x07,
 				.mask = GENMASK(8, 0),
-			},
-			.fifo_diff = {
+			पूर्ण,
+			.fअगरo_dअगरf = अणु
 				.addr = 0x3a,
 				.mask = GENMASK(9, 0),
-			},
+			पूर्ण,
 			.th_wl = 1,
-		},
-		.ts_settings = {
-			.timer_en = {
+		पूर्ण,
+		.ts_settings = अणु
+			.समयr_en = अणु
 				.addr = 0x19,
 				.mask = BIT(5),
-			},
-			.decimator = {
+			पूर्ण,
+			.decimator = अणु
 				.addr = 0x0a,
 				.mask = GENMASK(7, 6),
-			},
+			पूर्ण,
 			.freq_fine = 0x63,
-		},
-		.shub_settings = {
-			.page_mux = {
+		पूर्ण,
+		.shub_settings = अणु
+			.page_mux = अणु
 				.addr = 0x01,
 				.mask = BIT(6),
-			},
-			.master_en = {
+			पूर्ण,
+			.master_en = अणु
 				.sec_page = true,
 				.addr = 0x14,
 				.mask = BIT(2),
-			},
-			.pullup_en = {
+			पूर्ण,
+			.pullup_en = अणु
 				.sec_page = true,
 				.addr = 0x14,
 				.mask = BIT(3),
-			},
-			.aux_sens = {
+			पूर्ण,
+			.aux_sens = अणु
 				.addr = 0x14,
 				.mask = GENMASK(1, 0),
-			},
-			.wr_once = {
+			पूर्ण,
+			.wr_once = अणु
 				.addr = 0x14,
 				.mask = BIT(6),
-			},
+			पूर्ण,
 			.num_ext_dev = 3,
-			.shub_out = {
+			.shub_out = अणु
 				.sec_page = true,
 				.addr = 0x02,
-			},
+			पूर्ण,
 			.slv0_addr = 0x15,
 			.dw_slv0_addr = 0x21,
 			.batch_en = BIT(3),
-		},
-		.event_settings = {
-			.enable_reg = {
+		पूर्ण,
+		.event_settings = अणु
+			.enable_reg = अणु
 				.addr = 0x58,
 				.mask = BIT(7),
-			},
-			.wakeup_reg = {
+			पूर्ण,
+			.wakeup_reg = अणु
 				.addr = 0x5b,
 				.mask = GENMASK(5, 0),
-			},
+			पूर्ण,
 			.wakeup_src_reg = 0x1b,
 			.wakeup_src_status_mask = BIT(3),
 			.wakeup_src_z_mask = BIT(0),
 			.wakeup_src_y_mask = BIT(1),
 			.wakeup_src_x_mask = BIT(2),
-		},
-	},
-	{
-		.reset = {
+		पूर्ण,
+	पूर्ण,
+	अणु
+		.reset = अणु
 			.addr = 0x12,
 			.mask = BIT(0),
-		},
-		.boot = {
+		पूर्ण,
+		.boot = अणु
 			.addr = 0x12,
 			.mask = BIT(7),
-		},
-		.bdu = {
+		पूर्ण,
+		.bdu = अणु
 			.addr = 0x12,
 			.mask = BIT(6),
-		},
-		.max_fifo_size = 512,
-		.id = {
-			{
+		पूर्ण,
+		.max_fअगरo_size = 512,
+		.id = अणु
+			अणु
 				.hw_id = ST_ASM330LHH_ID,
 				.name = ST_ASM330LHH_DEV_NAME,
 				.wai = 0x6b,
-			}, {
+			पूर्ण, अणु
 				.hw_id = ST_LSM6DSOP_ID,
 				.name = ST_LSM6DSOP_DEV_NAME,
 				.wai = 0x6c,
-			},
-		},
-		.channels = {
-			[ST_LSM6DSX_ID_ACC] = {
+			पूर्ण,
+		पूर्ण,
+		.channels = अणु
+			[ST_LSM6DSX_ID_ACC] = अणु
 				.chan = st_lsm6dsx_acc_channels,
 				.len = ARRAY_SIZE(st_lsm6dsx_acc_channels),
-			},
-			[ST_LSM6DSX_ID_GYRO] = {
+			पूर्ण,
+			[ST_LSM6DSX_ID_GYRO] = अणु
 				.chan = st_lsm6dsx_gyro_channels,
 				.len = ARRAY_SIZE(st_lsm6dsx_gyro_channels),
-			},
-		},
-		.drdy_mask = {
+			पूर्ण,
+		पूर्ण,
+		.drdy_mask = अणु
 			.addr = 0x13,
 			.mask = BIT(3),
-		},
-		.odr_table = {
-			[ST_LSM6DSX_ID_ACC] = {
-				.reg = {
+		पूर्ण,
+		.odr_table = अणु
+			[ST_LSM6DSX_ID_ACC] = अणु
+				.reg = अणु
 					.addr = 0x10,
 					.mask = GENMASK(7, 4),
-				},
-				.odr_avl[0] = {  12500, 0x01 },
-				.odr_avl[1] = {  26000, 0x02 },
-				.odr_avl[2] = {  52000, 0x03 },
-				.odr_avl[3] = { 104000, 0x04 },
-				.odr_avl[4] = { 208000, 0x05 },
-				.odr_avl[5] = { 416000, 0x06 },
-				.odr_avl[6] = { 833000, 0x07 },
+				पूर्ण,
+				.odr_avl[0] = अणु  12500, 0x01 पूर्ण,
+				.odr_avl[1] = अणु  26000, 0x02 पूर्ण,
+				.odr_avl[2] = अणु  52000, 0x03 पूर्ण,
+				.odr_avl[3] = अणु 104000, 0x04 पूर्ण,
+				.odr_avl[4] = अणु 208000, 0x05 पूर्ण,
+				.odr_avl[5] = अणु 416000, 0x06 पूर्ण,
+				.odr_avl[6] = अणु 833000, 0x07 पूर्ण,
 				.odr_len = 7,
-			},
-			[ST_LSM6DSX_ID_GYRO] = {
-				.reg = {
+			पूर्ण,
+			[ST_LSM6DSX_ID_GYRO] = अणु
+				.reg = अणु
 					.addr = 0x11,
 					.mask = GENMASK(7, 4),
-				},
-				.odr_avl[0] = {  12500, 0x01 },
-				.odr_avl[1] = {  26000, 0x02 },
-				.odr_avl[2] = {  52000, 0x03 },
-				.odr_avl[3] = { 104000, 0x04 },
-				.odr_avl[4] = { 208000, 0x05 },
-				.odr_avl[5] = { 416000, 0x06 },
-				.odr_avl[6] = { 833000, 0x07 },
+				पूर्ण,
+				.odr_avl[0] = अणु  12500, 0x01 पूर्ण,
+				.odr_avl[1] = अणु  26000, 0x02 पूर्ण,
+				.odr_avl[2] = अणु  52000, 0x03 पूर्ण,
+				.odr_avl[3] = अणु 104000, 0x04 पूर्ण,
+				.odr_avl[4] = अणु 208000, 0x05 पूर्ण,
+				.odr_avl[5] = अणु 416000, 0x06 पूर्ण,
+				.odr_avl[6] = अणु 833000, 0x07 पूर्ण,
 				.odr_len = 7,
-			},
-		},
-		.fs_table = {
-			[ST_LSM6DSX_ID_ACC] = {
-				.reg = {
+			पूर्ण,
+		पूर्ण,
+		.fs_table = अणु
+			[ST_LSM6DSX_ID_ACC] = अणु
+				.reg = अणु
 					.addr = 0x10,
 					.mask = GENMASK(3, 2),
-				},
-				.fs_avl[0] = {  IIO_G_TO_M_S_2(61000), 0x0 },
-				.fs_avl[1] = { IIO_G_TO_M_S_2(122000), 0x2 },
-				.fs_avl[2] = { IIO_G_TO_M_S_2(244000), 0x3 },
-				.fs_avl[3] = { IIO_G_TO_M_S_2(488000), 0x1 },
+				पूर्ण,
+				.fs_avl[0] = अणु  IIO_G_TO_M_S_2(61000), 0x0 पूर्ण,
+				.fs_avl[1] = अणु IIO_G_TO_M_S_2(122000), 0x2 पूर्ण,
+				.fs_avl[2] = अणु IIO_G_TO_M_S_2(244000), 0x3 पूर्ण,
+				.fs_avl[3] = अणु IIO_G_TO_M_S_2(488000), 0x1 पूर्ण,
 				.fs_len = 4,
-			},
-			[ST_LSM6DSX_ID_GYRO] = {
-				.reg = {
+			पूर्ण,
+			[ST_LSM6DSX_ID_GYRO] = अणु
+				.reg = अणु
 					.addr = 0x11,
 					.mask = GENMASK(3, 2),
-				},
-				.fs_avl[0] = {  IIO_DEGREE_TO_RAD(8750000), 0x0 },
-				.fs_avl[1] = { IIO_DEGREE_TO_RAD(17500000), 0x1 },
-				.fs_avl[2] = { IIO_DEGREE_TO_RAD(35000000), 0x2 },
-				.fs_avl[3] = { IIO_DEGREE_TO_RAD(70000000), 0x3 },
+				पूर्ण,
+				.fs_avl[0] = अणु  IIO_DEGREE_TO_RAD(8750000), 0x0 पूर्ण,
+				.fs_avl[1] = अणु IIO_DEGREE_TO_RAD(17500000), 0x1 पूर्ण,
+				.fs_avl[2] = अणु IIO_DEGREE_TO_RAD(35000000), 0x2 पूर्ण,
+				.fs_avl[3] = अणु IIO_DEGREE_TO_RAD(70000000), 0x3 पूर्ण,
 				.fs_len = 4,
-			},
-		},
-		.irq_config = {
-			.irq1 = {
+			पूर्ण,
+		पूर्ण,
+		.irq_config = अणु
+			.irq1 = अणु
 				.addr = 0x0d,
 				.mask = BIT(3),
-			},
-			.irq2 = {
+			पूर्ण,
+			.irq2 = अणु
 				.addr = 0x0e,
 				.mask = BIT(3),
-			},
-			.lir = {
+			पूर्ण,
+			.lir = अणु
 				.addr = 0x56,
 				.mask = BIT(0),
-			},
-			.clear_on_read = {
+			पूर्ण,
+			.clear_on_पढ़ो = अणु
 				.addr = 0x56,
 				.mask = BIT(6),
-			},
-			.irq1_func = {
+			पूर्ण,
+			.irq1_func = अणु
 				.addr = 0x5e,
 				.mask = BIT(5),
-			},
-			.irq2_func = {
+			पूर्ण,
+			.irq2_func = अणु
 				.addr = 0x5f,
 				.mask = BIT(5),
-			},
-			.hla = {
+			पूर्ण,
+			.hla = अणु
 				.addr = 0x12,
 				.mask = BIT(5),
-			},
-			.od = {
+			पूर्ण,
+			.od = अणु
 				.addr = 0x12,
 				.mask = BIT(4),
-			},
-		},
-		.batch = {
-			[ST_LSM6DSX_ID_ACC] = {
+			पूर्ण,
+		पूर्ण,
+		.batch = अणु
+			[ST_LSM6DSX_ID_ACC] = अणु
 				.addr = 0x09,
 				.mask = GENMASK(3, 0),
-			},
-			[ST_LSM6DSX_ID_GYRO] = {
+			पूर्ण,
+			[ST_LSM6DSX_ID_GYRO] = अणु
 				.addr = 0x09,
 				.mask = GENMASK(7, 4),
-			},
-		},
-		.fifo_ops = {
-			.update_fifo = st_lsm6dsx_update_fifo,
-			.read_fifo = st_lsm6dsx_read_tagged_fifo,
-			.fifo_th = {
+			पूर्ण,
+		पूर्ण,
+		.fअगरo_ops = अणु
+			.update_fअगरo = st_lsm6dsx_update_fअगरo,
+			.पढ़ो_fअगरo = st_lsm6dsx_पढ़ो_tagged_fअगरo,
+			.fअगरo_th = अणु
 				.addr = 0x07,
 				.mask = GENMASK(8, 0),
-			},
-			.fifo_diff = {
+			पूर्ण,
+			.fअगरo_dअगरf = अणु
 				.addr = 0x3a,
 				.mask = GENMASK(9, 0),
-			},
+			पूर्ण,
 			.th_wl = 1,
-		},
-		.ts_settings = {
-			.timer_en = {
+		पूर्ण,
+		.ts_settings = अणु
+			.समयr_en = अणु
 				.addr = 0x19,
 				.mask = BIT(5),
-			},
-			.decimator = {
+			पूर्ण,
+			.decimator = अणु
 				.addr = 0x0a,
 				.mask = GENMASK(7, 6),
-			},
+			पूर्ण,
 			.freq_fine = 0x63,
-		},
-		.event_settings = {
-			.enable_reg = {
+		पूर्ण,
+		.event_settings = अणु
+			.enable_reg = अणु
 				.addr = 0x58,
 				.mask = BIT(7),
-			},
-			.wakeup_reg = {
+			पूर्ण,
+			.wakeup_reg = अणु
 				.addr = 0x5B,
 				.mask = GENMASK(5, 0),
-			},
+			पूर्ण,
 			.wakeup_src_reg = 0x1b,
 			.wakeup_src_status_mask = BIT(3),
 			.wakeup_src_z_mask = BIT(0),
 			.wakeup_src_y_mask = BIT(1),
 			.wakeup_src_x_mask = BIT(2),
-		},
-	},
-};
+		पूर्ण,
+	पूर्ण,
+पूर्ण;
 
-int st_lsm6dsx_set_page(struct st_lsm6dsx_hw *hw, bool enable)
-{
-	const struct st_lsm6dsx_shub_settings *hub_settings;
-	unsigned int data;
-	int err;
+पूर्णांक st_lsm6dsx_set_page(काष्ठा st_lsm6dsx_hw *hw, bool enable)
+अणु
+	स्थिर काष्ठा st_lsm6dsx_shub_settings *hub_settings;
+	अचिन्हित पूर्णांक data;
+	पूर्णांक err;
 
 	hub_settings = &hw->settings->shub_settings;
 	data = ST_LSM6DSX_SHIFT_VAL(enable, hub_settings->page_mux.mask);
@@ -1162,449 +1163,449 @@ int st_lsm6dsx_set_page(struct st_lsm6dsx_hw *hw, bool enable)
 				 hub_settings->page_mux.mask, data);
 	usleep_range(100, 150);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int st_lsm6dsx_check_whoami(struct st_lsm6dsx_hw *hw, int id,
-				   const char **name)
-{
-	int err, i, j, data;
+अटल पूर्णांक st_lsm6dsx_check_whoami(काष्ठा st_lsm6dsx_hw *hw, पूर्णांक id,
+				   स्थिर अक्षर **name)
+अणु
+	पूर्णांक err, i, j, data;
 
-	for (i = 0; i < ARRAY_SIZE(st_lsm6dsx_sensor_settings); i++) {
-		for (j = 0; j < ST_LSM6DSX_MAX_ID; j++) {
-			if (st_lsm6dsx_sensor_settings[i].id[j].name &&
+	क्रम (i = 0; i < ARRAY_SIZE(st_lsm6dsx_sensor_settings); i++) अणु
+		क्रम (j = 0; j < ST_LSM6DSX_MAX_ID; j++) अणु
+			अगर (st_lsm6dsx_sensor_settings[i].id[j].name &&
 			    id == st_lsm6dsx_sensor_settings[i].id[j].hw_id)
-				break;
-		}
-		if (j < ST_LSM6DSX_MAX_ID)
-			break;
-	}
+				अवरोध;
+		पूर्ण
+		अगर (j < ST_LSM6DSX_MAX_ID)
+			अवरोध;
+	पूर्ण
 
-	if (i == ARRAY_SIZE(st_lsm6dsx_sensor_settings)) {
+	अगर (i == ARRAY_SIZE(st_lsm6dsx_sensor_settings)) अणु
 		dev_err(hw->dev, "unsupported hw id [%02x]\n", id);
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	err = regmap_read(hw->regmap, ST_LSM6DSX_REG_WHOAMI_ADDR, &data);
-	if (err < 0) {
+	err = regmap_पढ़ो(hw->regmap, ST_LSM6DSX_REG_WHOAMI_ADDR, &data);
+	अगर (err < 0) अणु
 		dev_err(hw->dev, "failed to read whoami register\n");
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	if (data != st_lsm6dsx_sensor_settings[i].id[j].wai) {
+	अगर (data != st_lsm6dsx_sensor_settings[i].id[j].wai) अणु
 		dev_err(hw->dev, "unsupported whoami [%02x]\n", data);
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
 	*name = st_lsm6dsx_sensor_settings[i].id[j].name;
 	hw->settings = &st_lsm6dsx_sensor_settings[i];
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int st_lsm6dsx_set_full_scale(struct st_lsm6dsx_sensor *sensor,
+अटल पूर्णांक st_lsm6dsx_set_full_scale(काष्ठा st_lsm6dsx_sensor *sensor,
 				     u32 gain)
-{
-	const struct st_lsm6dsx_fs_table_entry *fs_table;
-	unsigned int data;
-	int i, err;
+अणु
+	स्थिर काष्ठा st_lsm6dsx_fs_table_entry *fs_table;
+	अचिन्हित पूर्णांक data;
+	पूर्णांक i, err;
 
 	fs_table = &sensor->hw->settings->fs_table[sensor->id];
-	for (i = 0; i < fs_table->fs_len; i++) {
-		if (fs_table->fs_avl[i].gain == gain)
-			break;
-	}
+	क्रम (i = 0; i < fs_table->fs_len; i++) अणु
+		अगर (fs_table->fs_avl[i].gain == gain)
+			अवरोध;
+	पूर्ण
 
-	if (i == fs_table->fs_len)
-		return -EINVAL;
+	अगर (i == fs_table->fs_len)
+		वापस -EINVAL;
 
 	data = ST_LSM6DSX_SHIFT_VAL(fs_table->fs_avl[i].val,
 				    fs_table->reg.mask);
 	err = st_lsm6dsx_update_bits_locked(sensor->hw, fs_table->reg.addr,
 					    fs_table->reg.mask, data);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
 	sensor->gain = gain;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int st_lsm6dsx_check_odr(struct st_lsm6dsx_sensor *sensor, u32 odr, u8 *val)
-{
-	const struct st_lsm6dsx_odr_table_entry *odr_table;
-	int i;
+पूर्णांक st_lsm6dsx_check_odr(काष्ठा st_lsm6dsx_sensor *sensor, u32 odr, u8 *val)
+अणु
+	स्थिर काष्ठा st_lsm6dsx_odr_table_entry *odr_table;
+	पूर्णांक i;
 
 	odr_table = &sensor->hw->settings->odr_table[sensor->id];
-	for (i = 0; i < odr_table->odr_len; i++) {
+	क्रम (i = 0; i < odr_table->odr_len; i++) अणु
 		/*
-		 * ext devices can run at different odr respect to
+		 * ext devices can run at dअगरferent odr respect to
 		 * accel sensor
 		 */
-		if (odr_table->odr_avl[i].milli_hz >= odr)
-			break;
-	}
+		अगर (odr_table->odr_avl[i].milli_hz >= odr)
+			अवरोध;
+	पूर्ण
 
-	if (i == odr_table->odr_len)
-		return -EINVAL;
+	अगर (i == odr_table->odr_len)
+		वापस -EINVAL;
 
 	*val = odr_table->odr_avl[i].val;
-	return odr_table->odr_avl[i].milli_hz;
-}
+	वापस odr_table->odr_avl[i].milli_hz;
+पूर्ण
 
-static int
-st_lsm6dsx_check_odr_dependency(struct st_lsm6dsx_hw *hw, u32 odr,
-				enum st_lsm6dsx_sensor_id id)
-{
-	struct st_lsm6dsx_sensor *ref = iio_priv(hw->iio_devs[id]);
+अटल पूर्णांक
+st_lsm6dsx_check_odr_dependency(काष्ठा st_lsm6dsx_hw *hw, u32 odr,
+				क्रमागत st_lsm6dsx_sensor_id id)
+अणु
+	काष्ठा st_lsm6dsx_sensor *ref = iio_priv(hw->iio_devs[id]);
 
-	if (odr > 0) {
-		if (hw->enable_mask & BIT(id))
-			return max_t(u32, ref->odr, odr);
-		else
-			return odr;
-	} else {
-		return (hw->enable_mask & BIT(id)) ? ref->odr : 0;
-	}
-}
+	अगर (odr > 0) अणु
+		अगर (hw->enable_mask & BIT(id))
+			वापस max_t(u32, ref->odr, odr);
+		अन्यथा
+			वापस odr;
+	पूर्ण अन्यथा अणु
+		वापस (hw->enable_mask & BIT(id)) ? ref->odr : 0;
+	पूर्ण
+पूर्ण
 
-static int
-st_lsm6dsx_set_odr(struct st_lsm6dsx_sensor *sensor, u32 req_odr)
-{
-	struct st_lsm6dsx_sensor *ref_sensor = sensor;
-	struct st_lsm6dsx_hw *hw = sensor->hw;
-	const struct st_lsm6dsx_reg *reg;
-	unsigned int data;
+अटल पूर्णांक
+st_lsm6dsx_set_odr(काष्ठा st_lsm6dsx_sensor *sensor, u32 req_odr)
+अणु
+	काष्ठा st_lsm6dsx_sensor *ref_sensor = sensor;
+	काष्ठा st_lsm6dsx_hw *hw = sensor->hw;
+	स्थिर काष्ठा st_lsm6dsx_reg *reg;
+	अचिन्हित पूर्णांक data;
 	u8 val = 0;
-	int err;
+	पूर्णांक err;
 
-	switch (sensor->id) {
-	case ST_LSM6DSX_ID_EXT0:
-	case ST_LSM6DSX_ID_EXT1:
-	case ST_LSM6DSX_ID_EXT2:
-	case ST_LSM6DSX_ID_ACC: {
+	चयन (sensor->id) अणु
+	हाल ST_LSM6DSX_ID_EXT0:
+	हाल ST_LSM6DSX_ID_EXT1:
+	हाल ST_LSM6DSX_ID_EXT2:
+	हाल ST_LSM6DSX_ID_ACC: अणु
 		u32 odr;
-		int i;
+		पूर्णांक i;
 
 		/*
 		 * i2c embedded controller relies on the accelerometer sensor as
-		 * bus read/write trigger so we need to enable accel device
+		 * bus पढ़ो/ग_लिखो trigger so we need to enable accel device
 		 * at odr = max(accel_odr, ext_odr) in order to properly
 		 * communicate with i2c slave devices
 		 */
 		ref_sensor = iio_priv(hw->iio_devs[ST_LSM6DSX_ID_ACC]);
-		for (i = ST_LSM6DSX_ID_ACC; i < ST_LSM6DSX_ID_MAX; i++) {
-			if (!hw->iio_devs[i] || i == sensor->id)
-				continue;
+		क्रम (i = ST_LSM6DSX_ID_ACC; i < ST_LSM6DSX_ID_MAX; i++) अणु
+			अगर (!hw->iio_devs[i] || i == sensor->id)
+				जारी;
 
 			odr = st_lsm6dsx_check_odr_dependency(hw, req_odr, i);
-			if (odr != req_odr)
-				/* device already configured */
-				return 0;
-		}
-		break;
-	}
-	default:
-		break;
-	}
+			अगर (odr != req_odr)
+				/* device alपढ़ोy configured */
+				वापस 0;
+		पूर्ण
+		अवरोध;
+	पूर्ण
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	if (req_odr > 0) {
+	अगर (req_odr > 0) अणु
 		err = st_lsm6dsx_check_odr(ref_sensor, req_odr, &val);
-		if (err < 0)
-			return err;
-	}
+		अगर (err < 0)
+			वापस err;
+	पूर्ण
 
 	reg = &hw->settings->odr_table[ref_sensor->id].reg;
 	data = ST_LSM6DSX_SHIFT_VAL(val, reg->mask);
-	return st_lsm6dsx_update_bits_locked(hw, reg->addr, reg->mask, data);
-}
+	वापस st_lsm6dsx_update_bits_locked(hw, reg->addr, reg->mask, data);
+पूर्ण
 
-static int
-__st_lsm6dsx_sensor_set_enable(struct st_lsm6dsx_sensor *sensor,
+अटल पूर्णांक
+__st_lsm6dsx_sensor_set_enable(काष्ठा st_lsm6dsx_sensor *sensor,
 			       bool enable)
-{
-	struct st_lsm6dsx_hw *hw = sensor->hw;
+अणु
+	काष्ठा st_lsm6dsx_hw *hw = sensor->hw;
 	u32 odr = enable ? sensor->odr : 0;
-	int err;
+	पूर्णांक err;
 
 	err = st_lsm6dsx_set_odr(sensor, odr);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
-	if (enable)
+	अगर (enable)
 		hw->enable_mask |= BIT(sensor->id);
-	else
+	अन्यथा
 		hw->enable_mask &= ~BIT(sensor->id);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-st_lsm6dsx_check_events(struct st_lsm6dsx_sensor *sensor, bool enable)
-{
-	struct st_lsm6dsx_hw *hw = sensor->hw;
+अटल पूर्णांक
+st_lsm6dsx_check_events(काष्ठा st_lsm6dsx_sensor *sensor, bool enable)
+अणु
+	काष्ठा st_lsm6dsx_hw *hw = sensor->hw;
 
-	if (sensor->id == ST_LSM6DSX_ID_GYRO || enable)
-		return 0;
+	अगर (sensor->id == ST_LSM6DSX_ID_GYRO || enable)
+		वापस 0;
 
-	return hw->enable_event;
-}
+	वापस hw->enable_event;
+पूर्ण
 
-int st_lsm6dsx_sensor_set_enable(struct st_lsm6dsx_sensor *sensor,
+पूर्णांक st_lsm6dsx_sensor_set_enable(काष्ठा st_lsm6dsx_sensor *sensor,
 				 bool enable)
-{
-	if (st_lsm6dsx_check_events(sensor, enable))
-		return 0;
+अणु
+	अगर (st_lsm6dsx_check_events(sensor, enable))
+		वापस 0;
 
-	return __st_lsm6dsx_sensor_set_enable(sensor, enable);
-}
+	वापस __st_lsm6dsx_sensor_set_enable(sensor, enable);
+पूर्ण
 
-static int st_lsm6dsx_read_oneshot(struct st_lsm6dsx_sensor *sensor,
-				   u8 addr, int *val)
-{
-	struct st_lsm6dsx_hw *hw = sensor->hw;
-	int err, delay;
+अटल पूर्णांक st_lsm6dsx_पढ़ो_oneshot(काष्ठा st_lsm6dsx_sensor *sensor,
+				   u8 addr, पूर्णांक *val)
+अणु
+	काष्ठा st_lsm6dsx_hw *hw = sensor->hw;
+	पूर्णांक err, delay;
 	__le16 data;
 
 	err = st_lsm6dsx_sensor_set_enable(sensor, true);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
 	delay = 1000000000 / sensor->odr;
 	usleep_range(delay, 2 * delay);
 
-	err = st_lsm6dsx_read_locked(hw, addr, &data, sizeof(data));
-	if (err < 0)
-		return err;
+	err = st_lsm6dsx_पढ़ो_locked(hw, addr, &data, माप(data));
+	अगर (err < 0)
+		वापस err;
 
-	if (!hw->enable_event) {
+	अगर (!hw->enable_event) अणु
 		err = st_lsm6dsx_sensor_set_enable(sensor, false);
-		if (err < 0)
-			return err;
-	}
+		अगर (err < 0)
+			वापस err;
+	पूर्ण
 
 	*val = (s16)le16_to_cpu(data);
 
-	return IIO_VAL_INT;
-}
+	वापस IIO_VAL_INT;
+पूर्ण
 
-static int st_lsm6dsx_read_raw(struct iio_dev *iio_dev,
-			       struct iio_chan_spec const *ch,
-			       int *val, int *val2, long mask)
-{
-	struct st_lsm6dsx_sensor *sensor = iio_priv(iio_dev);
-	int ret;
+अटल पूर्णांक st_lsm6dsx_पढ़ो_raw(काष्ठा iio_dev *iio_dev,
+			       काष्ठा iio_chan_spec स्थिर *ch,
+			       पूर्णांक *val, पूर्णांक *val2, दीर्घ mask)
+अणु
+	काष्ठा st_lsm6dsx_sensor *sensor = iio_priv(iio_dev);
+	पूर्णांक ret;
 
-	switch (mask) {
-	case IIO_CHAN_INFO_RAW:
+	चयन (mask) अणु
+	हाल IIO_CHAN_INFO_RAW:
 		ret = iio_device_claim_direct_mode(iio_dev);
-		if (ret)
-			break;
+		अगर (ret)
+			अवरोध;
 
-		ret = st_lsm6dsx_read_oneshot(sensor, ch->address, val);
+		ret = st_lsm6dsx_पढ़ो_oneshot(sensor, ch->address, val);
 		iio_device_release_direct_mode(iio_dev);
-		break;
-	case IIO_CHAN_INFO_SAMP_FREQ:
+		अवरोध;
+	हाल IIO_CHAN_INFO_SAMP_FREQ:
 		*val = sensor->odr / 1000;
 		*val2 = (sensor->odr % 1000) * 1000;
 		ret = IIO_VAL_INT_PLUS_MICRO;
-		break;
-	case IIO_CHAN_INFO_SCALE:
+		अवरोध;
+	हाल IIO_CHAN_INFO_SCALE:
 		*val = 0;
 		*val2 = sensor->gain;
-		ret = IIO_VAL_INT_PLUS_NANO;
-		break;
-	default:
+		ret = IIO_VAL_INT_PLUS_न_अंकO;
+		अवरोध;
+	शेष:
 		ret = -EINVAL;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int st_lsm6dsx_write_raw(struct iio_dev *iio_dev,
-				struct iio_chan_spec const *chan,
-				int val, int val2, long mask)
-{
-	struct st_lsm6dsx_sensor *sensor = iio_priv(iio_dev);
-	int err;
+अटल पूर्णांक st_lsm6dsx_ग_लिखो_raw(काष्ठा iio_dev *iio_dev,
+				काष्ठा iio_chan_spec स्थिर *chan,
+				पूर्णांक val, पूर्णांक val2, दीर्घ mask)
+अणु
+	काष्ठा st_lsm6dsx_sensor *sensor = iio_priv(iio_dev);
+	पूर्णांक err;
 
 	err = iio_device_claim_direct_mode(iio_dev);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	switch (mask) {
-	case IIO_CHAN_INFO_SCALE:
+	चयन (mask) अणु
+	हाल IIO_CHAN_INFO_SCALE:
 		err = st_lsm6dsx_set_full_scale(sensor, val2);
-		break;
-	case IIO_CHAN_INFO_SAMP_FREQ: {
+		अवरोध;
+	हाल IIO_CHAN_INFO_SAMP_FREQ: अणु
 		u8 data;
 
 		val = val * 1000 + val2 / 1000;
 		val = st_lsm6dsx_check_odr(sensor, val, &data);
-		if (val < 0)
+		अगर (val < 0)
 			err = val;
-		else
+		अन्यथा
 			sensor->odr = val;
-		break;
-	}
-	default:
+		अवरोध;
+	पूर्ण
+	शेष:
 		err = -EINVAL;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	iio_device_release_direct_mode(iio_dev);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int st_lsm6dsx_event_setup(struct st_lsm6dsx_hw *hw, int state)
-{
-	const struct st_lsm6dsx_reg *reg;
-	unsigned int data;
-	int err;
+अटल पूर्णांक st_lsm6dsx_event_setup(काष्ठा st_lsm6dsx_hw *hw, पूर्णांक state)
+अणु
+	स्थिर काष्ठा st_lsm6dsx_reg *reg;
+	अचिन्हित पूर्णांक data;
+	पूर्णांक err;
 
-	if (!hw->settings->irq_config.irq1_func.addr)
-		return -ENOTSUPP;
+	अगर (!hw->settings->irq_config.irq1_func.addr)
+		वापस -ENOTSUPP;
 
 	reg = &hw->settings->event_settings.enable_reg;
-	if (reg->addr) {
+	अगर (reg->addr) अणु
 		data = ST_LSM6DSX_SHIFT_VAL(state, reg->mask);
 		err = st_lsm6dsx_update_bits_locked(hw, reg->addr,
 						    reg->mask, data);
-		if (err < 0)
-			return err;
-	}
+		अगर (err < 0)
+			वापस err;
+	पूर्ण
 
-	/* Enable wakeup interrupt */
+	/* Enable wakeup पूर्णांकerrupt */
 	data = ST_LSM6DSX_SHIFT_VAL(state, hw->irq_routing->mask);
-	return st_lsm6dsx_update_bits_locked(hw, hw->irq_routing->addr,
+	वापस st_lsm6dsx_update_bits_locked(hw, hw->irq_routing->addr,
 					     hw->irq_routing->mask, data);
-}
+पूर्ण
 
-static int st_lsm6dsx_read_event(struct iio_dev *iio_dev,
-				 const struct iio_chan_spec *chan,
-				 enum iio_event_type type,
-				 enum iio_event_direction dir,
-				 enum iio_event_info info,
-				 int *val, int *val2)
-{
-	struct st_lsm6dsx_sensor *sensor = iio_priv(iio_dev);
-	struct st_lsm6dsx_hw *hw = sensor->hw;
+अटल पूर्णांक st_lsm6dsx_पढ़ो_event(काष्ठा iio_dev *iio_dev,
+				 स्थिर काष्ठा iio_chan_spec *chan,
+				 क्रमागत iio_event_type type,
+				 क्रमागत iio_event_direction dir,
+				 क्रमागत iio_event_info info,
+				 पूर्णांक *val, पूर्णांक *val2)
+अणु
+	काष्ठा st_lsm6dsx_sensor *sensor = iio_priv(iio_dev);
+	काष्ठा st_lsm6dsx_hw *hw = sensor->hw;
 
-	if (type != IIO_EV_TYPE_THRESH)
-		return -EINVAL;
+	अगर (type != IIO_EV_TYPE_THRESH)
+		वापस -EINVAL;
 
 	*val2 = 0;
 	*val = hw->event_threshold;
 
-	return IIO_VAL_INT;
-}
+	वापस IIO_VAL_INT;
+पूर्ण
 
-static int
-st_lsm6dsx_write_event(struct iio_dev *iio_dev,
-		       const struct iio_chan_spec *chan,
-		       enum iio_event_type type,
-		       enum iio_event_direction dir,
-		       enum iio_event_info info,
-		       int val, int val2)
-{
-	struct st_lsm6dsx_sensor *sensor = iio_priv(iio_dev);
-	struct st_lsm6dsx_hw *hw = sensor->hw;
-	const struct st_lsm6dsx_reg *reg;
-	unsigned int data;
-	int err;
+अटल पूर्णांक
+st_lsm6dsx_ग_लिखो_event(काष्ठा iio_dev *iio_dev,
+		       स्थिर काष्ठा iio_chan_spec *chan,
+		       क्रमागत iio_event_type type,
+		       क्रमागत iio_event_direction dir,
+		       क्रमागत iio_event_info info,
+		       पूर्णांक val, पूर्णांक val2)
+अणु
+	काष्ठा st_lsm6dsx_sensor *sensor = iio_priv(iio_dev);
+	काष्ठा st_lsm6dsx_hw *hw = sensor->hw;
+	स्थिर काष्ठा st_lsm6dsx_reg *reg;
+	अचिन्हित पूर्णांक data;
+	पूर्णांक err;
 
-	if (type != IIO_EV_TYPE_THRESH)
-		return -EINVAL;
+	अगर (type != IIO_EV_TYPE_THRESH)
+		वापस -EINVAL;
 
-	if (val < 0 || val > 31)
-		return -EINVAL;
+	अगर (val < 0 || val > 31)
+		वापस -EINVAL;
 
 	reg = &hw->settings->event_settings.wakeup_reg;
 	data = ST_LSM6DSX_SHIFT_VAL(val, reg->mask);
 	err = st_lsm6dsx_update_bits_locked(hw, reg->addr,
 					    reg->mask, data);
-	if (err < 0)
-		return -EINVAL;
+	अगर (err < 0)
+		वापस -EINVAL;
 
 	hw->event_threshold = val;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-st_lsm6dsx_read_event_config(struct iio_dev *iio_dev,
-			     const struct iio_chan_spec *chan,
-			     enum iio_event_type type,
-			     enum iio_event_direction dir)
-{
-	struct st_lsm6dsx_sensor *sensor = iio_priv(iio_dev);
-	struct st_lsm6dsx_hw *hw = sensor->hw;
+अटल पूर्णांक
+st_lsm6dsx_पढ़ो_event_config(काष्ठा iio_dev *iio_dev,
+			     स्थिर काष्ठा iio_chan_spec *chan,
+			     क्रमागत iio_event_type type,
+			     क्रमागत iio_event_direction dir)
+अणु
+	काष्ठा st_lsm6dsx_sensor *sensor = iio_priv(iio_dev);
+	काष्ठा st_lsm6dsx_hw *hw = sensor->hw;
 
-	if (type != IIO_EV_TYPE_THRESH)
-		return -EINVAL;
+	अगर (type != IIO_EV_TYPE_THRESH)
+		वापस -EINVAL;
 
-	return !!(hw->enable_event & BIT(chan->channel2));
-}
+	वापस !!(hw->enable_event & BIT(chan->channel2));
+पूर्ण
 
-static int
-st_lsm6dsx_write_event_config(struct iio_dev *iio_dev,
-			      const struct iio_chan_spec *chan,
-			      enum iio_event_type type,
-			      enum iio_event_direction dir, int state)
-{
-	struct st_lsm6dsx_sensor *sensor = iio_priv(iio_dev);
-	struct st_lsm6dsx_hw *hw = sensor->hw;
+अटल पूर्णांक
+st_lsm6dsx_ग_लिखो_event_config(काष्ठा iio_dev *iio_dev,
+			      स्थिर काष्ठा iio_chan_spec *chan,
+			      क्रमागत iio_event_type type,
+			      क्रमागत iio_event_direction dir, पूर्णांक state)
+अणु
+	काष्ठा st_lsm6dsx_sensor *sensor = iio_priv(iio_dev);
+	काष्ठा st_lsm6dsx_hw *hw = sensor->hw;
 	u8 enable_event;
-	int err;
+	पूर्णांक err;
 
-	if (type != IIO_EV_TYPE_THRESH)
-		return -EINVAL;
+	अगर (type != IIO_EV_TYPE_THRESH)
+		वापस -EINVAL;
 
-	if (state) {
+	अगर (state) अणु
 		enable_event = hw->enable_event | BIT(chan->channel2);
 
-		/* do not enable events if they are already enabled */
-		if (hw->enable_event)
-			goto out;
-	} else {
+		/* करो not enable events अगर they are alपढ़ोy enabled */
+		अगर (hw->enable_event)
+			जाओ out;
+	पूर्ण अन्यथा अणु
 		enable_event = hw->enable_event & ~BIT(chan->channel2);
 
-		/* only turn off sensor if no events is enabled */
-		if (enable_event)
-			goto out;
-	}
+		/* only turn off sensor अगर no events is enabled */
+		अगर (enable_event)
+			जाओ out;
+	पूर्ण
 
-	/* stop here if no changes have been made */
-	if (hw->enable_event == enable_event)
-		return 0;
+	/* stop here अगर no changes have been made */
+	अगर (hw->enable_event == enable_event)
+		वापस 0;
 
 	err = st_lsm6dsx_event_setup(hw, state);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
 	mutex_lock(&hw->conf_lock);
-	if (enable_event || !(hw->fifo_mask & BIT(sensor->id)))
+	अगर (enable_event || !(hw->fअगरo_mask & BIT(sensor->id)))
 		err = __st_lsm6dsx_sensor_set_enable(sensor, state);
 	mutex_unlock(&hw->conf_lock);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
 out:
 	hw->enable_event = enable_event;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int st_lsm6dsx_set_watermark(struct iio_dev *iio_dev, unsigned int val)
-{
-	struct st_lsm6dsx_sensor *sensor = iio_priv(iio_dev);
-	struct st_lsm6dsx_hw *hw = sensor->hw;
-	int err;
+पूर्णांक st_lsm6dsx_set_watermark(काष्ठा iio_dev *iio_dev, अचिन्हित पूर्णांक val)
+अणु
+	काष्ठा st_lsm6dsx_sensor *sensor = iio_priv(iio_dev);
+	काष्ठा st_lsm6dsx_hw *hw = sensor->hw;
+	पूर्णांक err;
 
-	if (val < 1 || val > hw->settings->max_fifo_size)
-		return -EINVAL;
+	अगर (val < 1 || val > hw->settings->max_fअगरo_size)
+		वापस -EINVAL;
 
 	mutex_lock(&hw->conf_lock);
 
@@ -1612,193 +1613,193 @@ int st_lsm6dsx_set_watermark(struct iio_dev *iio_dev, unsigned int val)
 
 	mutex_unlock(&hw->conf_lock);
 
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
 	sensor->watermark = val;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static ssize_t
-st_lsm6dsx_sysfs_sampling_frequency_avail(struct device *dev,
-					  struct device_attribute *attr,
-					  char *buf)
-{
-	struct st_lsm6dsx_sensor *sensor = iio_priv(dev_get_drvdata(dev));
-	const struct st_lsm6dsx_odr_table_entry *odr_table;
-	int i, len = 0;
+अटल sमाप_प्रकार
+st_lsm6dsx_sysfs_sampling_frequency_avail(काष्ठा device *dev,
+					  काष्ठा device_attribute *attr,
+					  अक्षर *buf)
+अणु
+	काष्ठा st_lsm6dsx_sensor *sensor = iio_priv(dev_get_drvdata(dev));
+	स्थिर काष्ठा st_lsm6dsx_odr_table_entry *odr_table;
+	पूर्णांक i, len = 0;
 
 	odr_table = &sensor->hw->settings->odr_table[sensor->id];
-	for (i = 0; i < odr_table->odr_len; i++)
-		len += scnprintf(buf + len, PAGE_SIZE - len, "%d.%03d ",
+	क्रम (i = 0; i < odr_table->odr_len; i++)
+		len += scnम_लिखो(buf + len, PAGE_SIZE - len, "%d.%03d ",
 				 odr_table->odr_avl[i].milli_hz / 1000,
 				 odr_table->odr_avl[i].milli_hz % 1000);
 	buf[len - 1] = '\n';
 
-	return len;
-}
+	वापस len;
+पूर्ण
 
-static ssize_t st_lsm6dsx_sysfs_scale_avail(struct device *dev,
-					    struct device_attribute *attr,
-					    char *buf)
-{
-	struct st_lsm6dsx_sensor *sensor = iio_priv(dev_get_drvdata(dev));
-	const struct st_lsm6dsx_fs_table_entry *fs_table;
-	struct st_lsm6dsx_hw *hw = sensor->hw;
-	int i, len = 0;
+अटल sमाप_प्रकार st_lsm6dsx_sysfs_scale_avail(काष्ठा device *dev,
+					    काष्ठा device_attribute *attr,
+					    अक्षर *buf)
+अणु
+	काष्ठा st_lsm6dsx_sensor *sensor = iio_priv(dev_get_drvdata(dev));
+	स्थिर काष्ठा st_lsm6dsx_fs_table_entry *fs_table;
+	काष्ठा st_lsm6dsx_hw *hw = sensor->hw;
+	पूर्णांक i, len = 0;
 
 	fs_table = &hw->settings->fs_table[sensor->id];
-	for (i = 0; i < fs_table->fs_len; i++)
-		len += scnprintf(buf + len, PAGE_SIZE - len, "0.%09u ",
+	क्रम (i = 0; i < fs_table->fs_len; i++)
+		len += scnम_लिखो(buf + len, PAGE_SIZE - len, "0.%09u ",
 				 fs_table->fs_avl[i].gain);
 	buf[len - 1] = '\n';
 
-	return len;
-}
+	वापस len;
+पूर्ण
 
-static int st_lsm6dsx_write_raw_get_fmt(struct iio_dev *indio_dev,
-					struct iio_chan_spec const *chan,
-					long mask)
-{
-	switch (mask) {
-	case IIO_CHAN_INFO_SCALE:
-		switch (chan->type) {
-		case IIO_ANGL_VEL:
-		case IIO_ACCEL:
-			return IIO_VAL_INT_PLUS_NANO;
-		default:
-			return IIO_VAL_INT_PLUS_MICRO;
-		}
-	default:
-		return IIO_VAL_INT_PLUS_MICRO;
-	}
-}
+अटल पूर्णांक st_lsm6dsx_ग_लिखो_raw_get_fmt(काष्ठा iio_dev *indio_dev,
+					काष्ठा iio_chan_spec स्थिर *chan,
+					दीर्घ mask)
+अणु
+	चयन (mask) अणु
+	हाल IIO_CHAN_INFO_SCALE:
+		चयन (chan->type) अणु
+		हाल IIO_ANGL_VEL:
+		हाल IIO_ACCEL:
+			वापस IIO_VAL_INT_PLUS_न_अंकO;
+		शेष:
+			वापस IIO_VAL_INT_PLUS_MICRO;
+		पूर्ण
+	शेष:
+		वापस IIO_VAL_INT_PLUS_MICRO;
+	पूर्ण
+पूर्ण
 
-static IIO_DEV_ATTR_SAMP_FREQ_AVAIL(st_lsm6dsx_sysfs_sampling_frequency_avail);
-static IIO_DEVICE_ATTR(in_accel_scale_available, 0444,
-		       st_lsm6dsx_sysfs_scale_avail, NULL, 0);
-static IIO_DEVICE_ATTR(in_anglvel_scale_available, 0444,
-		       st_lsm6dsx_sysfs_scale_avail, NULL, 0);
+अटल IIO_DEV_ATTR_SAMP_FREQ_AVAIL(st_lsm6dsx_sysfs_sampling_frequency_avail);
+अटल IIO_DEVICE_ATTR(in_accel_scale_available, 0444,
+		       st_lsm6dsx_sysfs_scale_avail, शून्य, 0);
+अटल IIO_DEVICE_ATTR(in_anglvel_scale_available, 0444,
+		       st_lsm6dsx_sysfs_scale_avail, शून्य, 0);
 
-static struct attribute *st_lsm6dsx_acc_attributes[] = {
+अटल काष्ठा attribute *st_lsm6dsx_acc_attributes[] = अणु
 	&iio_dev_attr_sampling_frequency_available.dev_attr.attr,
 	&iio_dev_attr_in_accel_scale_available.dev_attr.attr,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-static const struct attribute_group st_lsm6dsx_acc_attribute_group = {
+अटल स्थिर काष्ठा attribute_group st_lsm6dsx_acc_attribute_group = अणु
 	.attrs = st_lsm6dsx_acc_attributes,
-};
+पूर्ण;
 
-static const struct iio_info st_lsm6dsx_acc_info = {
+अटल स्थिर काष्ठा iio_info st_lsm6dsx_acc_info = अणु
 	.attrs = &st_lsm6dsx_acc_attribute_group,
-	.read_raw = st_lsm6dsx_read_raw,
-	.write_raw = st_lsm6dsx_write_raw,
-	.read_event_value = st_lsm6dsx_read_event,
-	.write_event_value = st_lsm6dsx_write_event,
-	.read_event_config = st_lsm6dsx_read_event_config,
-	.write_event_config = st_lsm6dsx_write_event_config,
-	.hwfifo_set_watermark = st_lsm6dsx_set_watermark,
-	.write_raw_get_fmt = st_lsm6dsx_write_raw_get_fmt,
-};
+	.पढ़ो_raw = st_lsm6dsx_पढ़ो_raw,
+	.ग_लिखो_raw = st_lsm6dsx_ग_लिखो_raw,
+	.पढ़ो_event_value = st_lsm6dsx_पढ़ो_event,
+	.ग_लिखो_event_value = st_lsm6dsx_ग_लिखो_event,
+	.पढ़ो_event_config = st_lsm6dsx_पढ़ो_event_config,
+	.ग_लिखो_event_config = st_lsm6dsx_ग_लिखो_event_config,
+	.hwfअगरo_set_watermark = st_lsm6dsx_set_watermark,
+	.ग_लिखो_raw_get_fmt = st_lsm6dsx_ग_लिखो_raw_get_fmt,
+पूर्ण;
 
-static struct attribute *st_lsm6dsx_gyro_attributes[] = {
+अटल काष्ठा attribute *st_lsm6dsx_gyro_attributes[] = अणु
 	&iio_dev_attr_sampling_frequency_available.dev_attr.attr,
 	&iio_dev_attr_in_anglvel_scale_available.dev_attr.attr,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-static const struct attribute_group st_lsm6dsx_gyro_attribute_group = {
+अटल स्थिर काष्ठा attribute_group st_lsm6dsx_gyro_attribute_group = अणु
 	.attrs = st_lsm6dsx_gyro_attributes,
-};
+पूर्ण;
 
-static const struct iio_info st_lsm6dsx_gyro_info = {
+अटल स्थिर काष्ठा iio_info st_lsm6dsx_gyro_info = अणु
 	.attrs = &st_lsm6dsx_gyro_attribute_group,
-	.read_raw = st_lsm6dsx_read_raw,
-	.write_raw = st_lsm6dsx_write_raw,
-	.hwfifo_set_watermark = st_lsm6dsx_set_watermark,
-	.write_raw_get_fmt = st_lsm6dsx_write_raw_get_fmt,
-};
+	.पढ़ो_raw = st_lsm6dsx_पढ़ो_raw,
+	.ग_लिखो_raw = st_lsm6dsx_ग_लिखो_raw,
+	.hwfअगरo_set_watermark = st_lsm6dsx_set_watermark,
+	.ग_लिखो_raw_get_fmt = st_lsm6dsx_ग_लिखो_raw_get_fmt,
+पूर्ण;
 
-static int st_lsm6dsx_get_drdy_pin(struct st_lsm6dsx_hw *hw, int *drdy_pin)
-{
-	struct device *dev = hw->dev;
+अटल पूर्णांक st_lsm6dsx_get_drdy_pin(काष्ठा st_lsm6dsx_hw *hw, पूर्णांक *drdy_pin)
+अणु
+	काष्ठा device *dev = hw->dev;
 
-	if (!dev_fwnode(dev))
-		return -EINVAL;
+	अगर (!dev_fwnode(dev))
+		वापस -EINVAL;
 
-	return device_property_read_u32(dev, "st,drdy-int-pin", drdy_pin);
-}
+	वापस device_property_पढ़ो_u32(dev, "st,drdy-int-pin", drdy_pin);
+पूर्ण
 
-static int
-st_lsm6dsx_get_drdy_reg(struct st_lsm6dsx_hw *hw,
-			const struct st_lsm6dsx_reg **drdy_reg)
-{
-	int err = 0, drdy_pin;
+अटल पूर्णांक
+st_lsm6dsx_get_drdy_reg(काष्ठा st_lsm6dsx_hw *hw,
+			स्थिर काष्ठा st_lsm6dsx_reg **drdy_reg)
+अणु
+	पूर्णांक err = 0, drdy_pin;
 
-	if (st_lsm6dsx_get_drdy_pin(hw, &drdy_pin) < 0) {
-		struct st_sensors_platform_data *pdata;
-		struct device *dev = hw->dev;
+	अगर (st_lsm6dsx_get_drdy_pin(hw, &drdy_pin) < 0) अणु
+		काष्ठा st_sensors_platक्रमm_data *pdata;
+		काष्ठा device *dev = hw->dev;
 
-		pdata = (struct st_sensors_platform_data *)dev->platform_data;
-		drdy_pin = pdata ? pdata->drdy_int_pin : 1;
-	}
+		pdata = (काष्ठा st_sensors_platक्रमm_data *)dev->platक्रमm_data;
+		drdy_pin = pdata ? pdata->drdy_पूर्णांक_pin : 1;
+	पूर्ण
 
-	switch (drdy_pin) {
-	case 1:
+	चयन (drdy_pin) अणु
+	हाल 1:
 		hw->irq_routing = &hw->settings->irq_config.irq1_func;
 		*drdy_reg = &hw->settings->irq_config.irq1;
-		break;
-	case 2:
+		अवरोध;
+	हाल 2:
 		hw->irq_routing = &hw->settings->irq_config.irq2_func;
 		*drdy_reg = &hw->settings->irq_config.irq2;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		dev_err(hw->dev, "unsupported data ready pin\n");
 		err = -EINVAL;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int st_lsm6dsx_init_shub(struct st_lsm6dsx_hw *hw)
-{
-	const struct st_lsm6dsx_shub_settings *hub_settings;
-	struct st_sensors_platform_data *pdata;
-	struct device *dev = hw->dev;
-	unsigned int data;
-	int err = 0;
+अटल पूर्णांक st_lsm6dsx_init_shub(काष्ठा st_lsm6dsx_hw *hw)
+अणु
+	स्थिर काष्ठा st_lsm6dsx_shub_settings *hub_settings;
+	काष्ठा st_sensors_platक्रमm_data *pdata;
+	काष्ठा device *dev = hw->dev;
+	अचिन्हित पूर्णांक data;
+	पूर्णांक err = 0;
 
 	hub_settings = &hw->settings->shub_settings;
 
-	pdata = (struct st_sensors_platform_data *)dev->platform_data;
-	if ((dev_fwnode(dev) && device_property_read_bool(dev, "st,pullups")) ||
-	    (pdata && pdata->pullups)) {
-		if (hub_settings->pullup_en.sec_page) {
+	pdata = (काष्ठा st_sensors_platक्रमm_data *)dev->platक्रमm_data;
+	अगर ((dev_fwnode(dev) && device_property_पढ़ो_bool(dev, "st,pullups")) ||
+	    (pdata && pdata->pullups)) अणु
+		अगर (hub_settings->pullup_en.sec_page) अणु
 			err = st_lsm6dsx_set_page(hw, true);
-			if (err < 0)
-				return err;
-		}
+			अगर (err < 0)
+				वापस err;
+		पूर्ण
 
 		data = ST_LSM6DSX_SHIFT_VAL(1, hub_settings->pullup_en.mask);
 		err = regmap_update_bits(hw->regmap,
 					 hub_settings->pullup_en.addr,
 					 hub_settings->pullup_en.mask, data);
 
-		if (hub_settings->pullup_en.sec_page)
+		अगर (hub_settings->pullup_en.sec_page)
 			st_lsm6dsx_set_page(hw, false);
 
-		if (err < 0)
-			return err;
-	}
+		अगर (err < 0)
+			वापस err;
+	पूर्ण
 
-	if (hub_settings->aux_sens.addr) {
+	अगर (hub_settings->aux_sens.addr) अणु
 		/* configure aux sensors */
 		err = st_lsm6dsx_set_page(hw, true);
-		if (err < 0)
-			return err;
+		अगर (err < 0)
+			वापस err;
 
 		data = ST_LSM6DSX_SHIFT_VAL(3, hub_settings->aux_sens.mask);
 		err = regmap_update_bits(hw->regmap,
@@ -1807,97 +1808,97 @@ static int st_lsm6dsx_init_shub(struct st_lsm6dsx_hw *hw)
 
 		st_lsm6dsx_set_page(hw, false);
 
-		if (err < 0)
-			return err;
-	}
+		अगर (err < 0)
+			वापस err;
+	पूर्ण
 
-	if (hub_settings->emb_func.addr) {
+	अगर (hub_settings->emb_func.addr) अणु
 		data = ST_LSM6DSX_SHIFT_VAL(1, hub_settings->emb_func.mask);
 		err = regmap_update_bits(hw->regmap,
 					 hub_settings->emb_func.addr,
 					 hub_settings->emb_func.mask, data);
-	}
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int st_lsm6dsx_init_hw_timer(struct st_lsm6dsx_hw *hw)
-{
-	const struct st_lsm6dsx_hw_ts_settings *ts_settings;
-	int err, val;
+अटल पूर्णांक st_lsm6dsx_init_hw_समयr(काष्ठा st_lsm6dsx_hw *hw)
+अणु
+	स्थिर काष्ठा st_lsm6dsx_hw_ts_settings *ts_settings;
+	पूर्णांक err, val;
 
 	ts_settings = &hw->settings->ts_settings;
-	/* enable hw timestamp generation if necessary */
-	if (ts_settings->timer_en.addr) {
-		val = ST_LSM6DSX_SHIFT_VAL(1, ts_settings->timer_en.mask);
+	/* enable hw बारtamp generation अगर necessary */
+	अगर (ts_settings->समयr_en.addr) अणु
+		val = ST_LSM6DSX_SHIFT_VAL(1, ts_settings->समयr_en.mask);
 		err = regmap_update_bits(hw->regmap,
-					 ts_settings->timer_en.addr,
-					 ts_settings->timer_en.mask, val);
-		if (err < 0)
-			return err;
-	}
+					 ts_settings->समयr_en.addr,
+					 ts_settings->समयr_en.mask, val);
+		अगर (err < 0)
+			वापस err;
+	पूर्ण
 
-	/* enable high resolution for hw ts timer if necessary */
-	if (ts_settings->hr_timer.addr) {
-		val = ST_LSM6DSX_SHIFT_VAL(1, ts_settings->hr_timer.mask);
+	/* enable high resolution क्रम hw ts समयr अगर necessary */
+	अगर (ts_settings->hr_समयr.addr) अणु
+		val = ST_LSM6DSX_SHIFT_VAL(1, ts_settings->hr_समयr.mask);
 		err = regmap_update_bits(hw->regmap,
-					 ts_settings->hr_timer.addr,
-					 ts_settings->hr_timer.mask, val);
-		if (err < 0)
-			return err;
-	}
+					 ts_settings->hr_समयr.addr,
+					 ts_settings->hr_समयr.mask, val);
+		अगर (err < 0)
+			वापस err;
+	पूर्ण
 
-	/* enable ts queueing in FIFO if necessary */
-	if (ts_settings->fifo_en.addr) {
-		val = ST_LSM6DSX_SHIFT_VAL(1, ts_settings->fifo_en.mask);
+	/* enable ts queueing in FIFO अगर necessary */
+	अगर (ts_settings->fअगरo_en.addr) अणु
+		val = ST_LSM6DSX_SHIFT_VAL(1, ts_settings->fअगरo_en.mask);
 		err = regmap_update_bits(hw->regmap,
-					 ts_settings->fifo_en.addr,
-					 ts_settings->fifo_en.mask, val);
-		if (err < 0)
-			return err;
-	}
+					 ts_settings->fअगरo_en.addr,
+					 ts_settings->fअगरo_en.mask, val);
+		अगर (err < 0)
+			वापस err;
+	पूर्ण
 
-	/* calibrate timestamp sensitivity */
+	/* calibrate बारtamp sensitivity */
 	hw->ts_gain = ST_LSM6DSX_TS_SENSITIVITY;
-	if (ts_settings->freq_fine) {
-		err = regmap_read(hw->regmap, ts_settings->freq_fine, &val);
-		if (err < 0)
-			return err;
+	अगर (ts_settings->freq_fine) अणु
+		err = regmap_पढ़ो(hw->regmap, ts_settings->freq_fine, &val);
+		अगर (err < 0)
+			वापस err;
 
 		/*
-		 * linearize the AN5192 formula:
-		 * 1 / (1 + x) ~= 1 - x (Taylor’s Series)
+		 * linearize the AN5192 क्रमmula:
+		 * 1 / (1 + x) ~= 1 - x (Taylorै s Series)
 		 * ttrim[s] = 1 / (40000 * (1 + 0.0015 * val))
 		 * ttrim[ns] ~= 25000 - 37.5 * val
 		 * ttrim[ns] ~= 25000 - (37500 * val) / 1000
 		 */
 		hw->ts_gain -= ((s8)val * 37500) / 1000;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int st_lsm6dsx_reset_device(struct st_lsm6dsx_hw *hw)
-{
-	const struct st_lsm6dsx_reg *reg;
-	int err;
+अटल पूर्णांक st_lsm6dsx_reset_device(काष्ठा st_lsm6dsx_hw *hw)
+अणु
+	स्थिर काष्ठा st_lsm6dsx_reg *reg;
+	पूर्णांक err;
 
 	/*
-	 * flush hw FIFO before device reset in order to avoid
-	 * possible races on interrupt line 1. If the first interrupt
-	 * line is asserted during hw reset the device will work in
-	 * I3C-only mode (if it is supported)
+	 * flush hw FIFO beक्रमe device reset in order to aव्योम
+	 * possible races on पूर्णांकerrupt line 1. If the first पूर्णांकerrupt
+	 * line is निश्चितed during hw reset the device will work in
+	 * I3C-only mode (अगर it is supported)
 	 */
-	err = st_lsm6dsx_flush_fifo(hw);
-	if (err < 0 && err != -ENOTSUPP)
-		return err;
+	err = st_lsm6dsx_flush_fअगरo(hw);
+	अगर (err < 0 && err != -ENOTSUPP)
+		वापस err;
 
 	/* device sw reset */
 	reg = &hw->settings->reset;
 	err = regmap_update_bits(hw->regmap, reg->addr, reg->mask,
 				 ST_LSM6DSX_SHIFT_VAL(1, reg->mask));
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
 	msleep(50);
 
@@ -1905,87 +1906,87 @@ static int st_lsm6dsx_reset_device(struct st_lsm6dsx_hw *hw)
 	reg = &hw->settings->boot;
 	err = regmap_update_bits(hw->regmap, reg->addr, reg->mask,
 				 ST_LSM6DSX_SHIFT_VAL(1, reg->mask));
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
 	msleep(50);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int st_lsm6dsx_init_device(struct st_lsm6dsx_hw *hw)
-{
-	const struct st_lsm6dsx_reg *reg;
-	int err;
+अटल पूर्णांक st_lsm6dsx_init_device(काष्ठा st_lsm6dsx_hw *hw)
+अणु
+	स्थिर काष्ठा st_lsm6dsx_reg *reg;
+	पूर्णांक err;
 
 	err = st_lsm6dsx_reset_device(hw);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
 	/* enable Block Data Update */
 	reg = &hw->settings->bdu;
 	err = regmap_update_bits(hw->regmap, reg->addr, reg->mask,
 				 ST_LSM6DSX_SHIFT_VAL(1, reg->mask));
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
-	/* enable FIFO watermak interrupt */
+	/* enable FIFO watermak पूर्णांकerrupt */
 	err = st_lsm6dsx_get_drdy_reg(hw, &reg);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
 	err = regmap_update_bits(hw->regmap, reg->addr, reg->mask,
 				 ST_LSM6DSX_SHIFT_VAL(1, reg->mask));
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
-	/* enable Latched interrupts for device events */
-	if (hw->settings->irq_config.lir.addr) {
+	/* enable Latched पूर्णांकerrupts क्रम device events */
+	अगर (hw->settings->irq_config.lir.addr) अणु
 		reg = &hw->settings->irq_config.lir;
 		err = regmap_update_bits(hw->regmap, reg->addr, reg->mask,
 					 ST_LSM6DSX_SHIFT_VAL(1, reg->mask));
-		if (err < 0)
-			return err;
+		अगर (err < 0)
+			वापस err;
 
-		/* enable clear on read for latched interrupts */
-		if (hw->settings->irq_config.clear_on_read.addr) {
-			reg = &hw->settings->irq_config.clear_on_read;
+		/* enable clear on पढ़ो क्रम latched पूर्णांकerrupts */
+		अगर (hw->settings->irq_config.clear_on_पढ़ो.addr) अणु
+			reg = &hw->settings->irq_config.clear_on_पढ़ो;
 			err = regmap_update_bits(hw->regmap,
 					reg->addr, reg->mask,
 					ST_LSM6DSX_SHIFT_VAL(1, reg->mask));
-			if (err < 0)
-				return err;
-		}
-	}
+			अगर (err < 0)
+				वापस err;
+		पूर्ण
+	पूर्ण
 
-	/* enable drdy-mas if available */
-	if (hw->settings->drdy_mask.addr) {
+	/* enable drdy-mas अगर available */
+	अगर (hw->settings->drdy_mask.addr) अणु
 		reg = &hw->settings->drdy_mask;
 		err = regmap_update_bits(hw->regmap, reg->addr, reg->mask,
 					 ST_LSM6DSX_SHIFT_VAL(1, reg->mask));
-		if (err < 0)
-			return err;
-	}
+		अगर (err < 0)
+			वापस err;
+	पूर्ण
 
 	err = st_lsm6dsx_init_shub(hw);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
-	return st_lsm6dsx_init_hw_timer(hw);
-}
+	वापस st_lsm6dsx_init_hw_समयr(hw);
+पूर्ण
 
-static struct iio_dev *st_lsm6dsx_alloc_iiodev(struct st_lsm6dsx_hw *hw,
-					       enum st_lsm6dsx_sensor_id id,
-					       const char *name)
-{
-	struct st_lsm6dsx_sensor *sensor;
-	struct iio_dev *iio_dev;
+अटल काष्ठा iio_dev *st_lsm6dsx_alloc_iiodev(काष्ठा st_lsm6dsx_hw *hw,
+					       क्रमागत st_lsm6dsx_sensor_id id,
+					       स्थिर अक्षर *name)
+अणु
+	काष्ठा st_lsm6dsx_sensor *sensor;
+	काष्ठा iio_dev *iio_dev;
 
-	iio_dev = devm_iio_device_alloc(hw->dev, sizeof(*sensor));
-	if (!iio_dev)
-		return NULL;
+	iio_dev = devm_iio_device_alloc(hw->dev, माप(*sensor));
+	अगर (!iio_dev)
+		वापस शून्य;
 
-	iio_dev->modes = INDIO_DIRECT_MODE;
+	iio_dev->modes = INDIO_सूचीECT_MODE;
 	iio_dev->available_scan_masks = st_lsm6dsx_available_scan_masks;
 	iio_dev->channels = hw->settings->channels[id].chan;
 	iio_dev->num_channels = hw->settings->channels[id].len;
@@ -1997,364 +1998,364 @@ static struct iio_dev *st_lsm6dsx_alloc_iiodev(struct st_lsm6dsx_hw *hw,
 	sensor->gain = hw->settings->fs_table[id].fs_avl[0].gain;
 	sensor->watermark = 1;
 
-	switch (id) {
-	case ST_LSM6DSX_ID_ACC:
+	चयन (id) अणु
+	हाल ST_LSM6DSX_ID_ACC:
 		iio_dev->info = &st_lsm6dsx_acc_info;
-		scnprintf(sensor->name, sizeof(sensor->name), "%s_accel",
+		scnम_लिखो(sensor->name, माप(sensor->name), "%s_accel",
 			  name);
-		break;
-	case ST_LSM6DSX_ID_GYRO:
+		अवरोध;
+	हाल ST_LSM6DSX_ID_GYRO:
 		iio_dev->info = &st_lsm6dsx_gyro_info;
-		scnprintf(sensor->name, sizeof(sensor->name), "%s_gyro",
+		scnम_लिखो(sensor->name, माप(sensor->name), "%s_gyro",
 			  name);
-		break;
-	default:
-		return NULL;
-	}
+		अवरोध;
+	शेष:
+		वापस शून्य;
+	पूर्ण
 	iio_dev->name = sensor->name;
 
-	return iio_dev;
-}
+	वापस iio_dev;
+पूर्ण
 
-static bool
-st_lsm6dsx_report_motion_event(struct st_lsm6dsx_hw *hw)
-{
-	const struct st_lsm6dsx_event_settings *event_settings;
-	int err, data;
-	s64 timestamp;
+अटल bool
+st_lsm6dsx_report_motion_event(काष्ठा st_lsm6dsx_hw *hw)
+अणु
+	स्थिर काष्ठा st_lsm6dsx_event_settings *event_settings;
+	पूर्णांक err, data;
+	s64 बारtamp;
 
-	if (!hw->enable_event)
-		return false;
+	अगर (!hw->enable_event)
+		वापस false;
 
 	event_settings = &hw->settings->event_settings;
-	err = st_lsm6dsx_read_locked(hw, event_settings->wakeup_src_reg,
-				     &data, sizeof(data));
-	if (err < 0)
-		return false;
+	err = st_lsm6dsx_पढ़ो_locked(hw, event_settings->wakeup_src_reg,
+				     &data, माप(data));
+	अगर (err < 0)
+		वापस false;
 
-	timestamp = iio_get_time_ns(hw->iio_devs[ST_LSM6DSX_ID_ACC]);
-	if ((data & hw->settings->event_settings.wakeup_src_z_mask) &&
+	बारtamp = iio_get_समय_ns(hw->iio_devs[ST_LSM6DSX_ID_ACC]);
+	अगर ((data & hw->settings->event_settings.wakeup_src_z_mask) &&
 	    (hw->enable_event & BIT(IIO_MOD_Z)))
 		iio_push_event(hw->iio_devs[ST_LSM6DSX_ID_ACC],
 			       IIO_MOD_EVENT_CODE(IIO_ACCEL,
 						  0,
 						  IIO_MOD_Z,
 						  IIO_EV_TYPE_THRESH,
-						  IIO_EV_DIR_EITHER),
-						  timestamp);
+						  IIO_EV_सूची_EITHER),
+						  बारtamp);
 
-	if ((data & hw->settings->event_settings.wakeup_src_y_mask) &&
+	अगर ((data & hw->settings->event_settings.wakeup_src_y_mask) &&
 	    (hw->enable_event & BIT(IIO_MOD_Y)))
 		iio_push_event(hw->iio_devs[ST_LSM6DSX_ID_ACC],
 			       IIO_MOD_EVENT_CODE(IIO_ACCEL,
 						  0,
 						  IIO_MOD_Y,
 						  IIO_EV_TYPE_THRESH,
-						  IIO_EV_DIR_EITHER),
-						  timestamp);
+						  IIO_EV_सूची_EITHER),
+						  बारtamp);
 
-	if ((data & hw->settings->event_settings.wakeup_src_x_mask) &&
+	अगर ((data & hw->settings->event_settings.wakeup_src_x_mask) &&
 	    (hw->enable_event & BIT(IIO_MOD_X)))
 		iio_push_event(hw->iio_devs[ST_LSM6DSX_ID_ACC],
 			       IIO_MOD_EVENT_CODE(IIO_ACCEL,
 						  0,
 						  IIO_MOD_X,
 						  IIO_EV_TYPE_THRESH,
-						  IIO_EV_DIR_EITHER),
-						  timestamp);
+						  IIO_EV_सूची_EITHER),
+						  बारtamp);
 
-	return data & event_settings->wakeup_src_status_mask;
-}
+	वापस data & event_settings->wakeup_src_status_mask;
+पूर्ण
 
-static irqreturn_t st_lsm6dsx_handler_thread(int irq, void *private)
-{
-	struct st_lsm6dsx_hw *hw = private;
-	int fifo_len = 0, len;
+अटल irqवापस_t st_lsm6dsx_handler_thपढ़ो(पूर्णांक irq, व्योम *निजी)
+अणु
+	काष्ठा st_lsm6dsx_hw *hw = निजी;
+	पूर्णांक fअगरo_len = 0, len;
 	bool event;
 
 	event = st_lsm6dsx_report_motion_event(hw);
 
-	if (!hw->settings->fifo_ops.read_fifo)
-		return event ? IRQ_HANDLED : IRQ_NONE;
+	अगर (!hw->settings->fअगरo_ops.पढ़ो_fअगरo)
+		वापस event ? IRQ_HANDLED : IRQ_NONE;
 
 	/*
-	 * If we are using edge IRQs, new samples can arrive while
-	 * processing current interrupt since there are no hw
-	 * guarantees the irq line stays "low" long enough to properly
-	 * detect the new interrupt. In this case the new sample will
+	 * If we are using edge IRQs, new samples can arrive जबतक
+	 * processing current पूर्णांकerrupt since there are no hw
+	 * guarantees the irq line stays "low" दीर्घ enough to properly
+	 * detect the new पूर्णांकerrupt. In this हाल the new sample will
 	 * be missed.
-	 * Polling FIFO status register allow us to read new
-	 * samples even if the interrupt arrives while processing
-	 * previous data and the timeslot where the line is "low" is
-	 * too short to be properly detected.
+	 * Polling FIFO status रेजिस्टर allow us to पढ़ो new
+	 * samples even अगर the पूर्णांकerrupt arrives जबतक processing
+	 * previous data and the बारlot where the line is "low" is
+	 * too लघु to be properly detected.
 	 */
-	do {
-		mutex_lock(&hw->fifo_lock);
-		len = hw->settings->fifo_ops.read_fifo(hw);
-		mutex_unlock(&hw->fifo_lock);
+	करो अणु
+		mutex_lock(&hw->fअगरo_lock);
+		len = hw->settings->fअगरo_ops.पढ़ो_fअगरo(hw);
+		mutex_unlock(&hw->fअगरo_lock);
 
-		if (len > 0)
-			fifo_len += len;
-	} while (len > 0);
+		अगर (len > 0)
+			fअगरo_len += len;
+	पूर्ण जबतक (len > 0);
 
-	return fifo_len || event ? IRQ_HANDLED : IRQ_NONE;
-}
+	वापस fअगरo_len || event ? IRQ_HANDLED : IRQ_NONE;
+पूर्ण
 
-static int st_lsm6dsx_irq_setup(struct st_lsm6dsx_hw *hw)
-{
-	struct st_sensors_platform_data *pdata;
-	const struct st_lsm6dsx_reg *reg;
-	struct device *dev = hw->dev;
-	unsigned long irq_type;
+अटल पूर्णांक st_lsm6dsx_irq_setup(काष्ठा st_lsm6dsx_hw *hw)
+अणु
+	काष्ठा st_sensors_platक्रमm_data *pdata;
+	स्थिर काष्ठा st_lsm6dsx_reg *reg;
+	काष्ठा device *dev = hw->dev;
+	अचिन्हित दीर्घ irq_type;
 	bool irq_active_low;
-	int err;
+	पूर्णांक err;
 
 	irq_type = irqd_get_trigger_type(irq_get_irq_data(hw->irq));
 
-	switch (irq_type) {
-	case IRQF_TRIGGER_HIGH:
-	case IRQF_TRIGGER_RISING:
+	चयन (irq_type) अणु
+	हाल IRQF_TRIGGER_HIGH:
+	हाल IRQF_TRIGGER_RISING:
 		irq_active_low = false;
-		break;
-	case IRQF_TRIGGER_LOW:
-	case IRQF_TRIGGER_FALLING:
+		अवरोध;
+	हाल IRQF_TRIGGER_LOW:
+	हाल IRQF_TRIGGER_FALLING:
 		irq_active_low = true;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		dev_info(hw->dev, "mode %lx unsupported\n", irq_type);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	reg = &hw->settings->irq_config.hla;
 	err = regmap_update_bits(hw->regmap, reg->addr, reg->mask,
 				 ST_LSM6DSX_SHIFT_VAL(irq_active_low,
 						      reg->mask));
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
-	pdata = (struct st_sensors_platform_data *)dev->platform_data;
-	if ((dev_fwnode(dev) && device_property_read_bool(dev, "drive-open-drain")) ||
-	    (pdata && pdata->open_drain)) {
+	pdata = (काष्ठा st_sensors_platक्रमm_data *)dev->platक्रमm_data;
+	अगर ((dev_fwnode(dev) && device_property_पढ़ो_bool(dev, "drive-open-drain")) ||
+	    (pdata && pdata->खोलो_drain)) अणु
 		reg = &hw->settings->irq_config.od;
 		err = regmap_update_bits(hw->regmap, reg->addr, reg->mask,
 					 ST_LSM6DSX_SHIFT_VAL(1, reg->mask));
-		if (err < 0)
-			return err;
+		अगर (err < 0)
+			वापस err;
 
 		irq_type |= IRQF_SHARED;
-	}
+	पूर्ण
 
-	err = devm_request_threaded_irq(hw->dev, hw->irq,
-					NULL,
-					st_lsm6dsx_handler_thread,
+	err = devm_request_thपढ़ोed_irq(hw->dev, hw->irq,
+					शून्य,
+					st_lsm6dsx_handler_thपढ़ो,
 					irq_type | IRQF_ONESHOT,
 					"lsm6dsx", hw);
-	if (err) {
+	अगर (err) अणु
 		dev_err(hw->dev, "failed to request trigger irq %d\n",
 			hw->irq);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int st_lsm6dsx_init_regulators(struct device *dev)
-{
-	struct st_lsm6dsx_hw *hw = dev_get_drvdata(dev);
-	int err;
+अटल पूर्णांक st_lsm6dsx_init_regulators(काष्ठा device *dev)
+अणु
+	काष्ठा st_lsm6dsx_hw *hw = dev_get_drvdata(dev);
+	पूर्णांक err;
 
-	/* vdd-vddio power regulators */
+	/* vdd-vddio घातer regulators */
 	hw->regulators[0].supply = "vdd";
 	hw->regulators[1].supply = "vddio";
 	err = devm_regulator_bulk_get(dev, ARRAY_SIZE(hw->regulators),
 				      hw->regulators);
-	if (err)
-		return dev_err_probe(dev, err, "failed to get regulators\n");
+	अगर (err)
+		वापस dev_err_probe(dev, err, "failed to get regulators\n");
 
 	err = regulator_bulk_enable(ARRAY_SIZE(hw->regulators),
 				    hw->regulators);
-	if (err) {
+	अगर (err) अणु
 		dev_err(dev, "failed to enable regulators: %d\n", err);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
 	msleep(50);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void st_lsm6dsx_chip_uninit(void *data)
-{
-	struct st_lsm6dsx_hw *hw = data;
+अटल व्योम st_lsm6dsx_chip_uninit(व्योम *data)
+अणु
+	काष्ठा st_lsm6dsx_hw *hw = data;
 
 	regulator_bulk_disable(ARRAY_SIZE(hw->regulators), hw->regulators);
-}
+पूर्ण
 
-int st_lsm6dsx_probe(struct device *dev, int irq, int hw_id,
-		     struct regmap *regmap)
-{
-	struct st_sensors_platform_data *pdata = dev->platform_data;
-	const struct st_lsm6dsx_shub_settings *hub_settings;
-	struct st_lsm6dsx_hw *hw;
-	const char *name = NULL;
-	int i, err;
+पूर्णांक st_lsm6dsx_probe(काष्ठा device *dev, पूर्णांक irq, पूर्णांक hw_id,
+		     काष्ठा regmap *regmap)
+अणु
+	काष्ठा st_sensors_platक्रमm_data *pdata = dev->platक्रमm_data;
+	स्थिर काष्ठा st_lsm6dsx_shub_settings *hub_settings;
+	काष्ठा st_lsm6dsx_hw *hw;
+	स्थिर अक्षर *name = शून्य;
+	पूर्णांक i, err;
 
-	hw = devm_kzalloc(dev, sizeof(*hw), GFP_KERNEL);
-	if (!hw)
-		return -ENOMEM;
+	hw = devm_kzalloc(dev, माप(*hw), GFP_KERNEL);
+	अगर (!hw)
+		वापस -ENOMEM;
 
-	dev_set_drvdata(dev, (void *)hw);
+	dev_set_drvdata(dev, (व्योम *)hw);
 
-	mutex_init(&hw->fifo_lock);
+	mutex_init(&hw->fअगरo_lock);
 	mutex_init(&hw->conf_lock);
 	mutex_init(&hw->page_lock);
 
 	err = st_lsm6dsx_init_regulators(dev);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	err = devm_add_action_or_reset(dev, st_lsm6dsx_chip_uninit, hw);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	hw->buff = devm_kzalloc(dev, ST_LSM6DSX_BUFF_SIZE, GFP_KERNEL);
-	if (!hw->buff)
-		return -ENOMEM;
+	अगर (!hw->buff)
+		वापस -ENOMEM;
 
 	hw->dev = dev;
 	hw->irq = irq;
 	hw->regmap = regmap;
 
 	err = st_lsm6dsx_check_whoami(hw, hw_id, &name);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
-	for (i = 0; i < ST_LSM6DSX_ID_EXT0; i++) {
+	क्रम (i = 0; i < ST_LSM6DSX_ID_EXT0; i++) अणु
 		hw->iio_devs[i] = st_lsm6dsx_alloc_iiodev(hw, i, name);
-		if (!hw->iio_devs[i])
-			return -ENOMEM;
-	}
+		अगर (!hw->iio_devs[i])
+			वापस -ENOMEM;
+	पूर्ण
 
 	err = st_lsm6dsx_init_device(hw);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
 	hub_settings = &hw->settings->shub_settings;
-	if (hub_settings->master_en.addr) {
+	अगर (hub_settings->master_en.addr) अणु
 		err = st_lsm6dsx_shub_probe(hw, name);
-		if (err < 0)
-			return err;
-	}
+		अगर (err < 0)
+			वापस err;
+	पूर्ण
 
-	if (hw->irq > 0) {
+	अगर (hw->irq > 0) अणु
 		err = st_lsm6dsx_irq_setup(hw);
-		if (err < 0)
-			return err;
+		अगर (err < 0)
+			वापस err;
 
-		err = st_lsm6dsx_fifo_setup(hw);
-		if (err < 0)
-			return err;
-	}
+		err = st_lsm6dsx_fअगरo_setup(hw);
+		अगर (err < 0)
+			वापस err;
+	पूर्ण
 
-	err = iio_read_mount_matrix(hw->dev, "mount-matrix", &hw->orientation);
-	if (err)
-		return err;
+	err = iio_पढ़ो_mount_matrix(hw->dev, "mount-matrix", &hw->orientation);
+	अगर (err)
+		वापस err;
 
-	for (i = 0; i < ST_LSM6DSX_ID_MAX; i++) {
-		if (!hw->iio_devs[i])
-			continue;
+	क्रम (i = 0; i < ST_LSM6DSX_ID_MAX; i++) अणु
+		अगर (!hw->iio_devs[i])
+			जारी;
 
-		err = devm_iio_device_register(hw->dev, hw->iio_devs[i]);
-		if (err)
-			return err;
-	}
+		err = devm_iio_device_रेजिस्टर(hw->dev, hw->iio_devs[i]);
+		अगर (err)
+			वापस err;
+	पूर्ण
 
-	if ((dev_fwnode(dev) && device_property_read_bool(dev, "wakeup-source")) ||
+	अगर ((dev_fwnode(dev) && device_property_पढ़ो_bool(dev, "wakeup-source")) ||
 	    (pdata && pdata->wakeup_source))
 		device_init_wakeup(dev, true);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(st_lsm6dsx_probe);
 
-static int __maybe_unused st_lsm6dsx_suspend(struct device *dev)
-{
-	struct st_lsm6dsx_hw *hw = dev_get_drvdata(dev);
-	struct st_lsm6dsx_sensor *sensor;
-	int i, err = 0;
+अटल पूर्णांक __maybe_unused st_lsm6dsx_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा st_lsm6dsx_hw *hw = dev_get_drvdata(dev);
+	काष्ठा st_lsm6dsx_sensor *sensor;
+	पूर्णांक i, err = 0;
 
-	for (i = 0; i < ST_LSM6DSX_ID_MAX; i++) {
-		if (!hw->iio_devs[i])
-			continue;
+	क्रम (i = 0; i < ST_LSM6DSX_ID_MAX; i++) अणु
+		अगर (!hw->iio_devs[i])
+			जारी;
 
 		sensor = iio_priv(hw->iio_devs[i]);
-		if (!(hw->enable_mask & BIT(sensor->id)))
-			continue;
+		अगर (!(hw->enable_mask & BIT(sensor->id)))
+			जारी;
 
-		if (device_may_wakeup(dev) &&
-		    sensor->id == ST_LSM6DSX_ID_ACC && hw->enable_event) {
+		अगर (device_may_wakeup(dev) &&
+		    sensor->id == ST_LSM6DSX_ID_ACC && hw->enable_event) अणु
 			/* Enable wake from IRQ */
 			enable_irq_wake(hw->irq);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		if (sensor->id == ST_LSM6DSX_ID_EXT0 ||
+		अगर (sensor->id == ST_LSM6DSX_ID_EXT0 ||
 		    sensor->id == ST_LSM6DSX_ID_EXT1 ||
 		    sensor->id == ST_LSM6DSX_ID_EXT2)
 			err = st_lsm6dsx_shub_set_enable(sensor, false);
-		else
+		अन्यथा
 			err = st_lsm6dsx_sensor_set_enable(sensor, false);
-		if (err < 0)
-			return err;
+		अगर (err < 0)
+			वापस err;
 
 		hw->suspend_mask |= BIT(sensor->id);
-	}
+	पूर्ण
 
-	if (hw->fifo_mask)
-		err = st_lsm6dsx_flush_fifo(hw);
+	अगर (hw->fअगरo_mask)
+		err = st_lsm6dsx_flush_fअगरo(hw);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int __maybe_unused st_lsm6dsx_resume(struct device *dev)
-{
-	struct st_lsm6dsx_hw *hw = dev_get_drvdata(dev);
-	struct st_lsm6dsx_sensor *sensor;
-	int i, err = 0;
+अटल पूर्णांक __maybe_unused st_lsm6dsx_resume(काष्ठा device *dev)
+अणु
+	काष्ठा st_lsm6dsx_hw *hw = dev_get_drvdata(dev);
+	काष्ठा st_lsm6dsx_sensor *sensor;
+	पूर्णांक i, err = 0;
 
-	for (i = 0; i < ST_LSM6DSX_ID_MAX; i++) {
-		if (!hw->iio_devs[i])
-			continue;
+	क्रम (i = 0; i < ST_LSM6DSX_ID_MAX; i++) अणु
+		अगर (!hw->iio_devs[i])
+			जारी;
 
 		sensor = iio_priv(hw->iio_devs[i]);
-		if (device_may_wakeup(dev) &&
+		अगर (device_may_wakeup(dev) &&
 		    sensor->id == ST_LSM6DSX_ID_ACC && hw->enable_event)
 			disable_irq_wake(hw->irq);
 
-		if (!(hw->suspend_mask & BIT(sensor->id)))
-			continue;
+		अगर (!(hw->suspend_mask & BIT(sensor->id)))
+			जारी;
 
-		if (sensor->id == ST_LSM6DSX_ID_EXT0 ||
+		अगर (sensor->id == ST_LSM6DSX_ID_EXT0 ||
 		    sensor->id == ST_LSM6DSX_ID_EXT1 ||
 		    sensor->id == ST_LSM6DSX_ID_EXT2)
 			err = st_lsm6dsx_shub_set_enable(sensor, true);
-		else
+		अन्यथा
 			err = st_lsm6dsx_sensor_set_enable(sensor, true);
-		if (err < 0)
-			return err;
+		अगर (err < 0)
+			वापस err;
 
 		hw->suspend_mask &= ~BIT(sensor->id);
-	}
+	पूर्ण
 
-	if (hw->fifo_mask)
-		err = st_lsm6dsx_resume_fifo(hw);
+	अगर (hw->fअगरo_mask)
+		err = st_lsm6dsx_resume_fअगरo(hw);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-const struct dev_pm_ops st_lsm6dsx_pm_ops = {
+स्थिर काष्ठा dev_pm_ops st_lsm6dsx_pm_ops = अणु
 	SET_SYSTEM_SLEEP_PM_OPS(st_lsm6dsx_suspend, st_lsm6dsx_resume)
-};
+पूर्ण;
 EXPORT_SYMBOL(st_lsm6dsx_pm_ops);
 
 MODULE_AUTHOR("Lorenzo Bianconi <lorenzo.bianconi@st.com>");

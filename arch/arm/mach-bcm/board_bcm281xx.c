@@ -1,70 +1,71 @@
+<शैली गुरु>
 /*
  * Copyright (C) 2012-2014 Broadcom Corporation
  *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License as
+ * This program is मुक्त software; you can redistribute it and/or
+ * modअगरy it under the terms of the GNU General Public License as
  * published by the Free Software Foundation version 2.
  *
  * This program is distributed "as is" WITHOUT ANY WARRANTY of any
  * kind, whether express or implied; without even the implied warranty
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU General Public License क्रम more details.
  */
 
-#include <linux/clocksource.h>
-#include <linux/of_address.h>
+#समावेश <linux/घड़ीsource.h>
+#समावेश <linux/of_address.h>
 
-#include <asm/mach/arch.h>
+#समावेश <यंत्र/mach/arch.h>
 
-#include "kona_l2_cache.h"
+#समावेश "kona_l2_cache.h"
 
-#define SECWDOG_OFFSET			0x00000000
-#define SECWDOG_RESERVED_MASK		0xe2000000
-#define SECWDOG_WD_LOAD_FLAG_MASK	0x10000000
-#define SECWDOG_EN_MASK			0x08000000
-#define SECWDOG_SRSTEN_MASK		0x04000000
-#define SECWDOG_CLKS_SHIFT		20
-#define SECWDOG_COUNT_SHIFT		0
+#घोषणा SECWDOG_OFFSET			0x00000000
+#घोषणा SECWDOG_RESERVED_MASK		0xe2000000
+#घोषणा SECWDOG_WD_LOAD_FLAG_MASK	0x10000000
+#घोषणा SECWDOG_EN_MASK			0x08000000
+#घोषणा SECWDOG_SRSTEN_MASK		0x04000000
+#घोषणा SECWDOG_CLKS_SHIFT		20
+#घोषणा SECWDOG_COUNT_SHIFT		0
 
-static void bcm281xx_restart(enum reboot_mode mode, const char *cmd)
-{
-	uint32_t val;
-	void __iomem *base;
-	struct device_node *np_wdog;
+अटल व्योम bcm281xx_restart(क्रमागत reboot_mode mode, स्थिर अक्षर *cmd)
+अणु
+	uपूर्णांक32_t val;
+	व्योम __iomem *base;
+	काष्ठा device_node *np_wकरोg;
 
-	np_wdog = of_find_compatible_node(NULL, NULL, "brcm,kona-wdt");
-	if (!np_wdog) {
+	np_wकरोg = of_find_compatible_node(शून्य, शून्य, "brcm,kona-wdt");
+	अगर (!np_wकरोg) अणु
 		pr_emerg("Couldn't find brcm,kona-wdt\n");
-		return;
-	}
-	base = of_iomap(np_wdog, 0);
-	of_node_put(np_wdog);
-	if (!base) {
+		वापस;
+	पूर्ण
+	base = of_iomap(np_wकरोg, 0);
+	of_node_put(np_wकरोg);
+	अगर (!base) अणु
 		pr_emerg("Couldn't map brcm,kona-wdt\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	/* Enable watchdog with short timeout (244us). */
-	val = readl(base + SECWDOG_OFFSET);
+	/* Enable watchकरोg with लघु समयout (244us). */
+	val = पढ़ोl(base + SECWDOG_OFFSET);
 	val &= SECWDOG_RESERVED_MASK | SECWDOG_WD_LOAD_FLAG_MASK;
 	val |= SECWDOG_EN_MASK | SECWDOG_SRSTEN_MASK |
 		(0x15 << SECWDOG_CLKS_SHIFT) |
 		(0x8 << SECWDOG_COUNT_SHIFT);
-	writel(val, base + SECWDOG_OFFSET);
+	ग_लिखोl(val, base + SECWDOG_OFFSET);
 
-	/* Wait for reset */
-	while (1);
-}
+	/* Wait क्रम reset */
+	जबतक (1);
+पूर्ण
 
-static void __init bcm281xx_init(void)
-{
+अटल व्योम __init bcm281xx_init(व्योम)
+अणु
 	kona_l2_cache_init();
-}
+पूर्ण
 
-static const char * const bcm281xx_dt_compat[] = {
+अटल स्थिर अक्षर * स्थिर bcm281xx_dt_compat[] = अणु
 	"brcm,bcm11351",	/* Have to use the first number upstreamed */
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
 DT_MACHINE_START(BCM281XX_DT, "BCM281xx Broadcom Application Processor")
 	.init_machine = bcm281xx_init,

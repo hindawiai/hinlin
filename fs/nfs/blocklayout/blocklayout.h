@@ -1,7 +1,8 @@
+<शैली गुरु>
 /*
  *  linux/fs/nfs/blocklayout/blocklayout.h
  *
- *  Module for the NFSv4.1 pNFS block layout driver.
+ *  Module क्रम the NFSv4.1 pNFS block layout driver.
  *
  *  Copyright (c) 2006 The Regents of the University of Michigan.
  *  All rights reserved.
@@ -10,188 +11,188 @@
  *  Fred Isaman <iisaman@umich.edu>
  *
  * permission is granted to use, copy, create derivative works and
- * redistribute this software and such derivative works for any purpose,
- * so long as the name of the university of michigan is not used in
- * any advertising or publicity pertaining to the use or distribution
- * of this software without specific, written prior authorization.  if
- * the above copyright notice or any other identification of the
+ * redistribute this software and such derivative works क्रम any purpose,
+ * so दीर्घ as the name of the university of michigan is not used in
+ * any advertising or खुलाity pertaining to the use or distribution
+ * of this software without specअगरic, written prior authorization.  अगर
+ * the above copyright notice or any other identअगरication of the
  * university of michigan is included in any copy of any portion of
  * this software, then the disclaimer below must also be included.
  *
  * this software is provided as is, without representation from the
- * university of michigan as to its fitness for any purpose, and without
+ * university of michigan as to its fitness क्रम any purpose, and without
  * warranty by the university of michigan of any kind, either express
  * or implied, including without limitation the implied warranties of
- * merchantability and fitness for a particular purpose.  the regents
- * of the university of michigan shall not be liable for any damages,
+ * merchantability and fitness क्रम a particular purpose.  the regents
+ * of the university of michigan shall not be liable क्रम any damages,
  * including special, indirect, incidental, or consequential damages,
  * with respect to any claim arising out or in connection with the use
- * of the software, even if it has been or is hereafter advised of the
+ * of the software, even अगर it has been or is hereafter advised of the
  * possibility of such damages.
  */
-#ifndef FS_NFS_NFS4BLOCKLAYOUT_H
-#define FS_NFS_NFS4BLOCKLAYOUT_H
+#अगर_अघोषित FS_NFS_NFS4BLOCKLAYOUT_H
+#घोषणा FS_NFS_NFS4BLOCKLAYOUT_H
 
-#include <linux/device-mapper.h>
-#include <linux/nfs_fs.h>
-#include <linux/sunrpc/rpc_pipe_fs.h>
+#समावेश <linux/device-mapper.h>
+#समावेश <linux/nfs_fs.h>
+#समावेश <linux/sunrpc/rpc_pipe_fs.h>
 
-#include "../nfs4_fs.h"
-#include "../pnfs.h"
-#include "../netns.h"
+#समावेश "../nfs4_fs.h"
+#समावेश "../pnfs.h"
+#समावेश "../netns.h"
 
-#define PAGE_CACHE_SECTORS (PAGE_SIZE >> SECTOR_SHIFT)
-#define PAGE_CACHE_SECTOR_SHIFT (PAGE_SHIFT - SECTOR_SHIFT)
-#define SECTOR_SIZE (1 << SECTOR_SHIFT)
+#घोषणा PAGE_CACHE_SECTORS (PAGE_SIZE >> SECTOR_SHIFT)
+#घोषणा PAGE_CACHE_SECTOR_SHIFT (PAGE_SHIFT - SECTOR_SHIFT)
+#घोषणा SECTOR_SIZE (1 << SECTOR_SHIFT)
 
-struct pnfs_block_dev;
+काष्ठा pnfs_block_dev;
 
-#define PNFS_BLOCK_MAX_UUIDS	4
-#define PNFS_BLOCK_MAX_DEVICES	64
+#घोषणा PNFS_BLOCK_MAX_UUIDS	4
+#घोषणा PNFS_BLOCK_MAX_DEVICES	64
 
 /*
- * Random upper cap for the uuid length to avoid unbounded allocation.
+ * Ranकरोm upper cap क्रम the uuid length to aव्योम unbounded allocation.
  * Not actually limited by the protocol.
  */
-#define PNFS_BLOCK_UUID_LEN	128
+#घोषणा PNFS_BLOCK_UUID_LEN	128
 
-struct pnfs_block_volume {
-	enum pnfs_block_volume_type	type;
-	union {
-		struct {
-			int		len;
-			int		nr_sigs;
-			struct {
+काष्ठा pnfs_block_volume अणु
+	क्रमागत pnfs_block_volume_type	type;
+	जोड़ अणु
+		काष्ठा अणु
+			पूर्णांक		len;
+			पूर्णांक		nr_sigs;
+			काष्ठा अणु
 				u64		offset;
 				u32		sig_len;
 				u8		sig[PNFS_BLOCK_UUID_LEN];
-			} sigs[PNFS_BLOCK_MAX_UUIDS];
-		} simple;
-		struct {
+			पूर्ण sigs[PNFS_BLOCK_MAX_UUIDS];
+		पूर्ण simple;
+		काष्ठा अणु
 			u64		start;
 			u64		len;
 			u32		volume;
-		} slice;
-		struct {
+		पूर्ण slice;
+		काष्ठा अणु
 			u32		volumes_count;
 			u32		volumes[PNFS_BLOCK_MAX_DEVICES];
-		} concat;
-		struct {
+		पूर्ण concat;
+		काष्ठा अणु
 			u64		chunk_size;
 			u32		volumes_count;
 			u32		volumes[PNFS_BLOCK_MAX_DEVICES];
-		} stripe;
-		struct {
-			enum scsi_code_set		code_set;
-			enum scsi_designator_type	designator_type;
-			int				designator_len;
+		पूर्ण stripe;
+		काष्ठा अणु
+			क्रमागत scsi_code_set		code_set;
+			क्रमागत scsi_designator_type	designator_type;
+			पूर्णांक				designator_len;
 			u8				designator[256];
 			u64				pr_key;
-		} scsi;
-	};
-};
+		पूर्ण scsi;
+	पूर्ण;
+पूर्ण;
 
-struct pnfs_block_dev_map {
+काष्ठा pnfs_block_dev_map अणु
 	u64			start;
 	u64			len;
 	u64			disk_offset;
-	struct block_device		*bdev;
-};
+	काष्ठा block_device		*bdev;
+पूर्ण;
 
-struct pnfs_block_dev {
-	struct nfs4_deviceid_node	node;
+काष्ठा pnfs_block_dev अणु
+	काष्ठा nfs4_deviceid_node	node;
 
 	u64				start;
 	u64				len;
 
 	u32				nr_children;
-	struct pnfs_block_dev		*children;
+	काष्ठा pnfs_block_dev		*children;
 	u64				chunk_size;
 
-	struct block_device		*bdev;
+	काष्ठा block_device		*bdev;
 	u64				disk_offset;
 
 	u64				pr_key;
-	bool				pr_registered;
+	bool				pr_रेजिस्टरed;
 
-	bool (*map)(struct pnfs_block_dev *dev, u64 offset,
-			struct pnfs_block_dev_map *map);
-};
+	bool (*map)(काष्ठा pnfs_block_dev *dev, u64 offset,
+			काष्ठा pnfs_block_dev_map *map);
+पूर्ण;
 
 /* sector_t fields are all in 512-byte sectors */
-struct pnfs_block_extent {
-	union {
-		struct rb_node	be_node;
-		struct list_head be_list;
-	};
-	struct nfs4_deviceid_node *be_device;
+काष्ठा pnfs_block_extent अणु
+	जोड़ अणु
+		काष्ठा rb_node	be_node;
+		काष्ठा list_head be_list;
+	पूर्ण;
+	काष्ठा nfs4_deviceid_node *be_device;
 	sector_t	be_f_offset;	/* the starting offset in the file */
 	sector_t	be_length;	/* the size of the extent */
 	sector_t	be_v_offset;	/* the starting offset in the volume */
-	enum pnfs_block_extent_state be_state;	/* the state of this extent */
-#define EXTENT_WRITTEN		1
-#define EXTENT_COMMITTING	2
-	unsigned int	be_tag;
-};
+	क्रमागत pnfs_block_extent_state be_state;	/* the state of this extent */
+#घोषणा EXTENT_WRITTEN		1
+#घोषणा EXTENT_COMMITTING	2
+	अचिन्हित पूर्णांक	be_tag;
+पूर्ण;
 
-struct pnfs_block_layout {
-	struct pnfs_layout_hdr	bl_layout;
-	struct rb_root		bl_ext_rw;
-	struct rb_root		bl_ext_ro;
+काष्ठा pnfs_block_layout अणु
+	काष्ठा pnfs_layout_hdr	bl_layout;
+	काष्ठा rb_root		bl_ext_rw;
+	काष्ठा rb_root		bl_ext_ro;
 	spinlock_t		bl_ext_lock;   /* Protects list manipulation */
 	bool			bl_scsi_layout;
 	u64			bl_lwb;
-};
+पूर्ण;
 
-static inline struct pnfs_block_layout *
-BLK_LO2EXT(struct pnfs_layout_hdr *lo)
-{
-	return container_of(lo, struct pnfs_block_layout, bl_layout);
-}
+अटल अंतरभूत काष्ठा pnfs_block_layout *
+BLK_LO2EXT(काष्ठा pnfs_layout_hdr *lo)
+अणु
+	वापस container_of(lo, काष्ठा pnfs_block_layout, bl_layout);
+पूर्ण
 
-static inline struct pnfs_block_layout *
-BLK_LSEG2EXT(struct pnfs_layout_segment *lseg)
-{
-	return BLK_LO2EXT(lseg->pls_layout);
-}
+अटल अंतरभूत काष्ठा pnfs_block_layout *
+BLK_LSEG2EXT(काष्ठा pnfs_layout_segment *lseg)
+अणु
+	वापस BLK_LO2EXT(lseg->pls_layout);
+पूर्ण
 
-struct bl_pipe_msg {
-	struct rpc_pipe_msg msg;
-	wait_queue_head_t *bl_wq;
-};
+काष्ठा bl_pipe_msg अणु
+	काष्ठा rpc_pipe_msg msg;
+	रुको_queue_head_t *bl_wq;
+पूर्ण;
 
-struct bl_msg_hdr {
+काष्ठा bl_msg_hdr अणु
 	u8  type;
 	u16 totallen; /* length of entire message, including hdr itself */
-};
+पूर्ण;
 
-#define BL_DEVICE_UMOUNT               0x0 /* Umount--delete devices */
-#define BL_DEVICE_MOUNT                0x1 /* Mount--create devices*/
-#define BL_DEVICE_REQUEST_INIT         0x0 /* Start request */
-#define BL_DEVICE_REQUEST_PROC         0x1 /* User level process succeeds */
-#define BL_DEVICE_REQUEST_ERR          0x2 /* User level process fails */
+#घोषणा BL_DEVICE_UMOUNT               0x0 /* Umount--delete devices */
+#घोषणा BL_DEVICE_MOUNT                0x1 /* Mount--create devices*/
+#घोषणा BL_DEVICE_REQUEST_INIT         0x0 /* Start request */
+#घोषणा BL_DEVICE_REQUEST_PROC         0x1 /* User level process succeeds */
+#घोषणा BL_DEVICE_REQUEST_ERR          0x2 /* User level process fails */
 
 /* dev.c */
-struct nfs4_deviceid_node *bl_alloc_deviceid_node(struct nfs_server *server,
-		struct pnfs_device *pdev, gfp_t gfp_mask);
-void bl_free_deviceid_node(struct nfs4_deviceid_node *d);
+काष्ठा nfs4_deviceid_node *bl_alloc_deviceid_node(काष्ठा nfs_server *server,
+		काष्ठा pnfs_device *pdev, gfp_t gfp_mask);
+व्योम bl_मुक्त_deviceid_node(काष्ठा nfs4_deviceid_node *d);
 
 /* extent_tree.c */
-int ext_tree_insert(struct pnfs_block_layout *bl,
-		struct pnfs_block_extent *new);
-int ext_tree_remove(struct pnfs_block_layout *bl, bool rw, sector_t start,
+पूर्णांक ext_tree_insert(काष्ठा pnfs_block_layout *bl,
+		काष्ठा pnfs_block_extent *new);
+पूर्णांक ext_tree_हटाओ(काष्ठा pnfs_block_layout *bl, bool rw, sector_t start,
 		sector_t end);
-int ext_tree_mark_written(struct pnfs_block_layout *bl, sector_t start,
+पूर्णांक ext_tree_mark_written(काष्ठा pnfs_block_layout *bl, sector_t start,
 		sector_t len, u64 lwb);
-bool ext_tree_lookup(struct pnfs_block_layout *bl, sector_t isect,
-		struct pnfs_block_extent *ret, bool rw);
-int ext_tree_prepare_commit(struct nfs4_layoutcommit_args *arg);
-void ext_tree_mark_committed(struct nfs4_layoutcommit_args *arg, int status);
+bool ext_tree_lookup(काष्ठा pnfs_block_layout *bl, sector_t isect,
+		काष्ठा pnfs_block_extent *ret, bool rw);
+पूर्णांक ext_tree_prepare_commit(काष्ठा nfs4_layoutcommit_args *arg);
+व्योम ext_tree_mark_committed(काष्ठा nfs4_layoutcommit_args *arg, पूर्णांक status);
 
 /* rpc_pipefs.c */
-dev_t bl_resolve_deviceid(struct nfs_server *server,
-		struct pnfs_block_volume *b, gfp_t gfp_mask);
-int __init bl_init_pipefs(void);
-void bl_cleanup_pipefs(void);
+dev_t bl_resolve_deviceid(काष्ठा nfs_server *server,
+		काष्ठा pnfs_block_volume *b, gfp_t gfp_mask);
+पूर्णांक __init bl_init_pipefs(व्योम);
+व्योम bl_cleanup_pipefs(व्योम);
 
-#endif /* FS_NFS_NFS4BLOCKLAYOUT_H */
+#पूर्ण_अगर /* FS_NFS_NFS4BLOCKLAYOUT_H */

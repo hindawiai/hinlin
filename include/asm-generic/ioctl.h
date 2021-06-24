@@ -1,18 +1,19 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _ASM_GENERIC_IOCTL_H
-#define _ASM_GENERIC_IOCTL_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _ASM_GENERIC_IOCTL_H
+#घोषणा _ASM_GENERIC_IOCTL_H
 
-#include <uapi/asm-generic/ioctl.h>
+#समावेश <uapi/यंत्र-generic/ioctl.h>
 
-#ifdef __CHECKER__
-#define _IOC_TYPECHECK(t) (sizeof(t))
-#else
-/* provoke compile error for invalid uses of size argument */
-extern unsigned int __invalid_size_argument_for_IOC;
-#define _IOC_TYPECHECK(t) \
-	((sizeof(t) == sizeof(t[1]) && \
-	  sizeof(t) < (1 << _IOC_SIZEBITS)) ? \
-	  sizeof(t) : __invalid_size_argument_for_IOC)
-#endif
+#अगर_घोषित __CHECKER__
+#घोषणा _IOC_TYPECHECK(t) (माप(t))
+#अन्यथा
+/* provoke compile error क्रम invalid uses of size argument */
+बाह्य अचिन्हित पूर्णांक __invalid_size_argument_क्रम_IOC;
+#घोषणा _IOC_TYPECHECK(t) \
+	((माप(t) == माप(t[1]) && \
+	  माप(t) < (1 << _IOC_SIZEBITS)) ? \
+	  माप(t) : __invalid_size_argument_क्रम_IOC)
+#पूर्ण_अगर
 
-#endif /* _ASM_GENERIC_IOCTL_H */
+#पूर्ण_अगर /* _ASM_GENERIC_IOCTL_H */

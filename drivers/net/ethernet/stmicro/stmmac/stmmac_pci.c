@@ -1,126 +1,127 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*******************************************************************************
   This contains the functions to handle the pci driver.
 
-  Copyright (C) 2011-2012  Vayavya Labs Pvt Ltd
+  Copyright (C) 2011-2012  Vayavya Lअसल Pvt Ltd
 
 
-  Author: Rayagond Kokatanur <rayagond@vayavyalabs.com>
+  Author: Rayagond Kokatanur <rayagond@vayavyaद_असल.com>
   Author: Giuseppe Cavallaro <peppe.cavallaro@st.com>
 *******************************************************************************/
 
-#include <linux/clk-provider.h>
-#include <linux/pci.h>
-#include <linux/dmi.h>
+#समावेश <linux/clk-provider.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/dmi.h>
 
-#include "stmmac.h"
+#समावेश "stmmac.h"
 
-struct stmmac_pci_info {
-	int (*setup)(struct pci_dev *pdev, struct plat_stmmacenet_data *plat);
-};
+काष्ठा sपंचांगmac_pci_info अणु
+	पूर्णांक (*setup)(काष्ठा pci_dev *pdev, काष्ठा plat_sपंचांगmacenet_data *plat);
+पूर्ण;
 
-static void common_default_data(struct plat_stmmacenet_data *plat)
-{
+अटल व्योम common_शेष_data(काष्ठा plat_sपंचांगmacenet_data *plat)
+अणु
 	plat->clk_csr = 2;	/* clk_csr_i = 20-35MHz & MDC = clk_csr_i/16 */
 	plat->has_gmac = 1;
-	plat->force_sf_dma_mode = 1;
+	plat->क्रमce_sf_dma_mode = 1;
 
 	plat->mdio_bus_data->needs_reset = true;
 
-	/* Set default value for multicast hash bins */
+	/* Set शेष value क्रम multicast hash bins */
 	plat->multicast_filter_bins = HASH_TABLE_SIZE;
 
-	/* Set default value for unicast filter entries */
+	/* Set शेष value क्रम unicast filter entries */
 	plat->unicast_filter_entries = 1;
 
-	/* Set the maxmtu to a default of JUMBO_LEN */
+	/* Set the maxmtu to a शेष of JUMBO_LEN */
 	plat->maxmtu = JUMBO_LEN;
 
-	/* Set default number of RX and TX queues to use */
+	/* Set शेष number of RX and TX queues to use */
 	plat->tx_queues_to_use = 1;
 	plat->rx_queues_to_use = 1;
 
-	/* Disable Priority config by default */
+	/* Disable Priority config by शेष */
 	plat->tx_queues_cfg[0].use_prio = false;
 	plat->rx_queues_cfg[0].use_prio = false;
 
-	/* Disable RX queues routing by default */
+	/* Disable RX queues routing by शेष */
 	plat->rx_queues_cfg[0].pkt_route = 0x0;
-}
+पूर्ण
 
-static int stmmac_default_data(struct pci_dev *pdev,
-			       struct plat_stmmacenet_data *plat)
-{
-	/* Set common default data first */
-	common_default_data(plat);
+अटल पूर्णांक sपंचांगmac_शेष_data(काष्ठा pci_dev *pdev,
+			       काष्ठा plat_sपंचांगmacenet_data *plat)
+अणु
+	/* Set common शेष data first */
+	common_शेष_data(plat);
 
 	plat->bus_id = 1;
 	plat->phy_addr = 0;
-	plat->phy_interface = PHY_INTERFACE_MODE_GMII;
+	plat->phy_पूर्णांकerface = PHY_INTERFACE_MODE_GMII;
 
 	plat->dma_cfg->pbl = 32;
 	plat->dma_cfg->pblx8 = true;
 	/* TODO: AXI */
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct stmmac_pci_info stmmac_pci_info = {
-	.setup = stmmac_default_data,
-};
+अटल स्थिर काष्ठा sपंचांगmac_pci_info sपंचांगmac_pci_info = अणु
+	.setup = sपंचांगmac_शेष_data,
+पूर्ण;
 
-static int snps_gmac5_default_data(struct pci_dev *pdev,
-				   struct plat_stmmacenet_data *plat)
-{
-	int i;
+अटल पूर्णांक snps_gmac5_शेष_data(काष्ठा pci_dev *pdev,
+				   काष्ठा plat_sपंचांगmacenet_data *plat)
+अणु
+	पूर्णांक i;
 
 	plat->clk_csr = 5;
 	plat->has_gmac4 = 1;
-	plat->force_sf_dma_mode = 1;
+	plat->क्रमce_sf_dma_mode = 1;
 	plat->tso_en = 1;
 	plat->pmt = 1;
 
-	/* Set default value for multicast hash bins */
+	/* Set शेष value क्रम multicast hash bins */
 	plat->multicast_filter_bins = HASH_TABLE_SIZE;
 
-	/* Set default value for unicast filter entries */
+	/* Set शेष value क्रम unicast filter entries */
 	plat->unicast_filter_entries = 1;
 
-	/* Set the maxmtu to a default of JUMBO_LEN */
+	/* Set the maxmtu to a शेष of JUMBO_LEN */
 	plat->maxmtu = JUMBO_LEN;
 
-	/* Set default number of RX and TX queues to use */
+	/* Set शेष number of RX and TX queues to use */
 	plat->tx_queues_to_use = 4;
 	plat->rx_queues_to_use = 4;
 
 	plat->tx_sched_algorithm = MTL_TX_ALGORITHM_WRR;
-	for (i = 0; i < plat->tx_queues_to_use; i++) {
+	क्रम (i = 0; i < plat->tx_queues_to_use; i++) अणु
 		plat->tx_queues_cfg[i].use_prio = false;
 		plat->tx_queues_cfg[i].mode_to_use = MTL_QUEUE_DCB;
 		plat->tx_queues_cfg[i].weight = 25;
-		if (i > 0)
+		अगर (i > 0)
 			plat->tx_queues_cfg[i].tbs_en = 1;
-	}
+	पूर्ण
 
 	plat->rx_sched_algorithm = MTL_RX_ALGORITHM_SP;
-	for (i = 0; i < plat->rx_queues_to_use; i++) {
+	क्रम (i = 0; i < plat->rx_queues_to_use; i++) अणु
 		plat->rx_queues_cfg[i].use_prio = false;
 		plat->rx_queues_cfg[i].mode_to_use = MTL_QUEUE_DCB;
 		plat->rx_queues_cfg[i].pkt_route = 0x0;
 		plat->rx_queues_cfg[i].chan = i;
-	}
+	पूर्ण
 
 	plat->bus_id = 1;
 	plat->phy_addr = -1;
-	plat->phy_interface = PHY_INTERFACE_MODE_GMII;
+	plat->phy_पूर्णांकerface = PHY_INTERFACE_MODE_GMII;
 
 	plat->dma_cfg->pbl = 32;
 	plat->dma_cfg->pblx8 = true;
 
 	/* Axi Configuration */
-	plat->axi = devm_kzalloc(&pdev->dev, sizeof(*plat->axi), GFP_KERNEL);
-	if (!plat->axi)
-		return -ENOMEM;
+	plat->axi = devm_kzalloc(&pdev->dev, माप(*plat->axi), GFP_KERNEL);
+	अगर (!plat->axi)
+		वापस -ENOMEM;
 
 	plat->axi->axi_wr_osr_lmt = 31;
 	plat->axi->axi_rd_osr_lmt = 31;
@@ -131,167 +132,167 @@ static int snps_gmac5_default_data(struct pci_dev *pdev,
 	plat->axi->axi_blen[2] = 16;
 	plat->axi->axi_blen[3] = 32;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct stmmac_pci_info snps_gmac5_pci_info = {
-	.setup = snps_gmac5_default_data,
-};
+अटल स्थिर काष्ठा sपंचांगmac_pci_info snps_gmac5_pci_info = अणु
+	.setup = snps_gmac5_शेष_data,
+पूर्ण;
 
 /**
- * stmmac_pci_probe
+ * sपंचांगmac_pci_probe
  *
- * @pdev: pci device pointer
- * @id: pointer to table of device id/id's.
+ * @pdev: pci device poपूर्णांकer
+ * @id: poपूर्णांकer to table of device id/id's.
  *
- * Description: This probing function gets called for all PCI devices which
+ * Description: This probing function माला_लो called क्रम all PCI devices which
  * match the ID table and are not "owned" by other driver yet. This function
- * gets passed a "struct pci_dev *" for each device whose entry in the ID table
- * matches the device. The probe functions returns zero when the driver choose
+ * माला_लो passed a "struct pci_dev *" क्रम each device whose entry in the ID table
+ * matches the device. The probe functions वापसs zero when the driver choose
  * to take "ownership" of the device or an error code(-ve no) otherwise.
  */
-static int stmmac_pci_probe(struct pci_dev *pdev,
-			    const struct pci_device_id *id)
-{
-	struct stmmac_pci_info *info = (struct stmmac_pci_info *)id->driver_data;
-	struct plat_stmmacenet_data *plat;
-	struct stmmac_resources res;
-	int i;
-	int ret;
+अटल पूर्णांक sपंचांगmac_pci_probe(काष्ठा pci_dev *pdev,
+			    स्थिर काष्ठा pci_device_id *id)
+अणु
+	काष्ठा sपंचांगmac_pci_info *info = (काष्ठा sपंचांगmac_pci_info *)id->driver_data;
+	काष्ठा plat_sपंचांगmacenet_data *plat;
+	काष्ठा sपंचांगmac_resources res;
+	पूर्णांक i;
+	पूर्णांक ret;
 
-	plat = devm_kzalloc(&pdev->dev, sizeof(*plat), GFP_KERNEL);
-	if (!plat)
-		return -ENOMEM;
+	plat = devm_kzalloc(&pdev->dev, माप(*plat), GFP_KERNEL);
+	अगर (!plat)
+		वापस -ENOMEM;
 
 	plat->mdio_bus_data = devm_kzalloc(&pdev->dev,
-					   sizeof(*plat->mdio_bus_data),
+					   माप(*plat->mdio_bus_data),
 					   GFP_KERNEL);
-	if (!plat->mdio_bus_data)
-		return -ENOMEM;
+	अगर (!plat->mdio_bus_data)
+		वापस -ENOMEM;
 
-	plat->dma_cfg = devm_kzalloc(&pdev->dev, sizeof(*plat->dma_cfg),
+	plat->dma_cfg = devm_kzalloc(&pdev->dev, माप(*plat->dma_cfg),
 				     GFP_KERNEL);
-	if (!plat->dma_cfg)
-		return -ENOMEM;
+	अगर (!plat->dma_cfg)
+		वापस -ENOMEM;
 
 	/* Enable pci device */
 	ret = pci_enable_device(pdev);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&pdev->dev, "%s: ERROR: failed to enable device\n",
 			__func__);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	/* Get the base address of device */
-	for (i = 0; i < PCI_STD_NUM_BARS; i++) {
-		if (pci_resource_len(pdev, i) == 0)
-			continue;
+	क्रम (i = 0; i < PCI_STD_NUM_BARS; i++) अणु
+		अगर (pci_resource_len(pdev, i) == 0)
+			जारी;
 		ret = pcim_iomap_regions(pdev, BIT(i), pci_name(pdev));
-		if (ret)
-			return ret;
-		break;
-	}
+		अगर (ret)
+			वापस ret;
+		अवरोध;
+	पूर्ण
 
 	pci_set_master(pdev);
 
 	ret = info->setup(pdev, plat);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	memset(&res, 0, sizeof(res));
+	स_रखो(&res, 0, माप(res));
 	res.addr = pcim_iomap_table(pdev)[i];
 	res.wol_irq = pdev->irq;
 	res.irq = pdev->irq;
 
-	return stmmac_dvr_probe(&pdev->dev, plat, &res);
-}
+	वापस sपंचांगmac_dvr_probe(&pdev->dev, plat, &res);
+पूर्ण
 
 /**
- * stmmac_pci_remove
+ * sपंचांगmac_pci_हटाओ
  *
- * @pdev: platform device pointer
- * Description: this function calls the main to free the net resources
+ * @pdev: platक्रमm device poपूर्णांकer
+ * Description: this function calls the मुख्य to मुक्त the net resources
  * and releases the PCI resources.
  */
-static void stmmac_pci_remove(struct pci_dev *pdev)
-{
-	int i;
+अटल व्योम sपंचांगmac_pci_हटाओ(काष्ठा pci_dev *pdev)
+अणु
+	पूर्णांक i;
 
-	stmmac_dvr_remove(&pdev->dev);
+	sपंचांगmac_dvr_हटाओ(&pdev->dev);
 
-	for (i = 0; i < PCI_STD_NUM_BARS; i++) {
-		if (pci_resource_len(pdev, i) == 0)
-			continue;
+	क्रम (i = 0; i < PCI_STD_NUM_BARS; i++) अणु
+		अगर (pci_resource_len(pdev, i) == 0)
+			जारी;
 		pcim_iounmap_regions(pdev, BIT(i));
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	pci_disable_device(pdev);
-}
+पूर्ण
 
-static int __maybe_unused stmmac_pci_suspend(struct device *dev)
-{
-	struct pci_dev *pdev = to_pci_dev(dev);
-	int ret;
+अटल पूर्णांक __maybe_unused sपंचांगmac_pci_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा pci_dev *pdev = to_pci_dev(dev);
+	पूर्णांक ret;
 
-	ret = stmmac_suspend(dev);
-	if (ret)
-		return ret;
+	ret = sपंचांगmac_suspend(dev);
+	अगर (ret)
+		वापस ret;
 
 	ret = pci_save_state(pdev);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	pci_disable_device(pdev);
 	pci_wake_from_d3(pdev, true);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __maybe_unused stmmac_pci_resume(struct device *dev)
-{
-	struct pci_dev *pdev = to_pci_dev(dev);
-	int ret;
+अटल पूर्णांक __maybe_unused sपंचांगmac_pci_resume(काष्ठा device *dev)
+अणु
+	काष्ठा pci_dev *pdev = to_pci_dev(dev);
+	पूर्णांक ret;
 
 	pci_restore_state(pdev);
-	pci_set_power_state(pdev, PCI_D0);
+	pci_set_घातer_state(pdev, PCI_D0);
 
 	ret = pci_enable_device(pdev);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	pci_set_master(pdev);
 
-	return stmmac_resume(dev);
-}
+	वापस sपंचांगmac_resume(dev);
+पूर्ण
 
-static SIMPLE_DEV_PM_OPS(stmmac_pm_ops, stmmac_pci_suspend, stmmac_pci_resume);
+अटल SIMPLE_DEV_PM_OPS(sपंचांगmac_pm_ops, sपंचांगmac_pci_suspend, sपंचांगmac_pci_resume);
 
-/* synthetic ID, no official vendor */
-#define PCI_VENDOR_ID_STMMAC		0x0700
+/* synthetic ID, no official venकरोr */
+#घोषणा PCI_VENDOR_ID_STMMAC		0x0700
 
-#define PCI_DEVICE_ID_STMMAC_STMMAC		0x1108
-#define PCI_DEVICE_ID_SYNOPSYS_GMAC5_ID		0x7102
+#घोषणा PCI_DEVICE_ID_STMMAC_STMMAC		0x1108
+#घोषणा PCI_DEVICE_ID_SYNOPSYS_GMAC5_ID		0x7102
 
-static const struct pci_device_id stmmac_id_table[] = {
-	{ PCI_DEVICE_DATA(STMMAC, STMMAC, &stmmac_pci_info) },
-	{ PCI_DEVICE_DATA(STMICRO, MAC, &stmmac_pci_info) },
-	{ PCI_DEVICE_DATA(SYNOPSYS, GMAC5_ID, &snps_gmac5_pci_info) },
-	{}
-};
+अटल स्थिर काष्ठा pci_device_id sपंचांगmac_id_table[] = अणु
+	अणु PCI_DEVICE_DATA(STMMAC, STMMAC, &sपंचांगmac_pci_info) पूर्ण,
+	अणु PCI_DEVICE_DATA(STMICRO, MAC, &sपंचांगmac_pci_info) पूर्ण,
+	अणु PCI_DEVICE_DATA(SYNOPSYS, GMAC5_ID, &snps_gmac5_pci_info) पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
-MODULE_DEVICE_TABLE(pci, stmmac_id_table);
+MODULE_DEVICE_TABLE(pci, sपंचांगmac_id_table);
 
-static struct pci_driver stmmac_pci_driver = {
+अटल काष्ठा pci_driver sपंचांगmac_pci_driver = अणु
 	.name = STMMAC_RESOURCE_NAME,
-	.id_table = stmmac_id_table,
-	.probe = stmmac_pci_probe,
-	.remove = stmmac_pci_remove,
-	.driver         = {
-		.pm     = &stmmac_pm_ops,
-	},
-};
+	.id_table = sपंचांगmac_id_table,
+	.probe = sपंचांगmac_pci_probe,
+	.हटाओ = sपंचांगmac_pci_हटाओ,
+	.driver         = अणु
+		.pm     = &sपंचांगmac_pm_ops,
+	पूर्ण,
+पूर्ण;
 
-module_pci_driver(stmmac_pci_driver);
+module_pci_driver(sपंचांगmac_pci_driver);
 
 MODULE_DESCRIPTION("STMMAC 10/100/1000 Ethernet PCI driver");
 MODULE_AUTHOR("Rayagond Kokatanur <rayagond.kokatanur@vayavyalabs.com>");

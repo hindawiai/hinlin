@@ -1,64 +1,65 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
-#ifndef __WEXT_COMPAT
-#define __WEXT_COMPAT
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
+#अगर_अघोषित __WEXT_COMPAT
+#घोषणा __WEXT_COMPAT
 
-#include <net/iw_handler.h>
-#include <linux/wireless.h>
+#समावेश <net/iw_handler.h>
+#समावेश <linux/wireless.h>
 
-#ifdef CONFIG_CFG80211_WEXT_EXPORT
-#define EXPORT_WEXT_HANDLER(h) EXPORT_SYMBOL_GPL(h)
-#else
-#define EXPORT_WEXT_HANDLER(h)
-#endif /* CONFIG_CFG80211_WEXT_EXPORT */
+#अगर_घोषित CONFIG_CFG80211_WEXT_EXPORT
+#घोषणा EXPORT_WEXT_HANDLER(h) EXPORT_SYMBOL_GPL(h)
+#अन्यथा
+#घोषणा EXPORT_WEXT_HANDLER(h)
+#पूर्ण_अगर /* CONFIG_CFG80211_WEXT_EXPORT */
 
-int cfg80211_ibss_wext_siwfreq(struct net_device *dev,
-			       struct iw_request_info *info,
-			       struct iw_freq *freq, char *extra);
-int cfg80211_ibss_wext_giwfreq(struct net_device *dev,
-			       struct iw_request_info *info,
-			       struct iw_freq *freq, char *extra);
-int cfg80211_ibss_wext_siwap(struct net_device *dev,
-			     struct iw_request_info *info,
-			     struct sockaddr *ap_addr, char *extra);
-int cfg80211_ibss_wext_giwap(struct net_device *dev,
-			     struct iw_request_info *info,
-			     struct sockaddr *ap_addr, char *extra);
-int cfg80211_ibss_wext_siwessid(struct net_device *dev,
-				struct iw_request_info *info,
-				struct iw_point *data, char *ssid);
-int cfg80211_ibss_wext_giwessid(struct net_device *dev,
-				struct iw_request_info *info,
-				struct iw_point *data, char *ssid);
+पूर्णांक cfg80211_ibss_wext_siwfreq(काष्ठा net_device *dev,
+			       काष्ठा iw_request_info *info,
+			       काष्ठा iw_freq *freq, अक्षर *extra);
+पूर्णांक cfg80211_ibss_wext_giwfreq(काष्ठा net_device *dev,
+			       काष्ठा iw_request_info *info,
+			       काष्ठा iw_freq *freq, अक्षर *extra);
+पूर्णांक cfg80211_ibss_wext_siwap(काष्ठा net_device *dev,
+			     काष्ठा iw_request_info *info,
+			     काष्ठा sockaddr *ap_addr, अक्षर *extra);
+पूर्णांक cfg80211_ibss_wext_giwap(काष्ठा net_device *dev,
+			     काष्ठा iw_request_info *info,
+			     काष्ठा sockaddr *ap_addr, अक्षर *extra);
+पूर्णांक cfg80211_ibss_wext_siwessid(काष्ठा net_device *dev,
+				काष्ठा iw_request_info *info,
+				काष्ठा iw_poपूर्णांक *data, अक्षर *ssid);
+पूर्णांक cfg80211_ibss_wext_giwessid(काष्ठा net_device *dev,
+				काष्ठा iw_request_info *info,
+				काष्ठा iw_poपूर्णांक *data, अक्षर *ssid);
 
-int cfg80211_mgd_wext_siwfreq(struct net_device *dev,
-			      struct iw_request_info *info,
-			      struct iw_freq *freq, char *extra);
-int cfg80211_mgd_wext_giwfreq(struct net_device *dev,
-			      struct iw_request_info *info,
-			      struct iw_freq *freq, char *extra);
-int cfg80211_mgd_wext_siwap(struct net_device *dev,
-			    struct iw_request_info *info,
-			    struct sockaddr *ap_addr, char *extra);
-int cfg80211_mgd_wext_giwap(struct net_device *dev,
-			    struct iw_request_info *info,
-			    struct sockaddr *ap_addr, char *extra);
-int cfg80211_mgd_wext_siwessid(struct net_device *dev,
-			       struct iw_request_info *info,
-			       struct iw_point *data, char *ssid);
-int cfg80211_mgd_wext_giwessid(struct net_device *dev,
-			       struct iw_request_info *info,
-			       struct iw_point *data, char *ssid);
+पूर्णांक cfg80211_mgd_wext_siwfreq(काष्ठा net_device *dev,
+			      काष्ठा iw_request_info *info,
+			      काष्ठा iw_freq *freq, अक्षर *extra);
+पूर्णांक cfg80211_mgd_wext_giwfreq(काष्ठा net_device *dev,
+			      काष्ठा iw_request_info *info,
+			      काष्ठा iw_freq *freq, अक्षर *extra);
+पूर्णांक cfg80211_mgd_wext_siwap(काष्ठा net_device *dev,
+			    काष्ठा iw_request_info *info,
+			    काष्ठा sockaddr *ap_addr, अक्षर *extra);
+पूर्णांक cfg80211_mgd_wext_giwap(काष्ठा net_device *dev,
+			    काष्ठा iw_request_info *info,
+			    काष्ठा sockaddr *ap_addr, अक्षर *extra);
+पूर्णांक cfg80211_mgd_wext_siwessid(काष्ठा net_device *dev,
+			       काष्ठा iw_request_info *info,
+			       काष्ठा iw_poपूर्णांक *data, अक्षर *ssid);
+पूर्णांक cfg80211_mgd_wext_giwessid(काष्ठा net_device *dev,
+			       काष्ठा iw_request_info *info,
+			       काष्ठा iw_poपूर्णांक *data, अक्षर *ssid);
 
-int cfg80211_wext_siwmlme(struct net_device *dev,
-			  struct iw_request_info *info,
-			  struct iw_point *data, char *extra);
-int cfg80211_wext_siwgenie(struct net_device *dev,
-			   struct iw_request_info *info,
-			   struct iw_point *data, char *extra);
-
-
-int cfg80211_wext_freq(struct iw_freq *freq);
+पूर्णांक cfg80211_wext_siwmlme(काष्ठा net_device *dev,
+			  काष्ठा iw_request_info *info,
+			  काष्ठा iw_poपूर्णांक *data, अक्षर *extra);
+पूर्णांक cfg80211_wext_siwgenie(काष्ठा net_device *dev,
+			   काष्ठा iw_request_info *info,
+			   काष्ठा iw_poपूर्णांक *data, अक्षर *extra);
 
 
-extern const struct iw_handler_def cfg80211_wext_handler;
-#endif /* __WEXT_COMPAT */
+पूर्णांक cfg80211_wext_freq(काष्ठा iw_freq *freq);
+
+
+बाह्य स्थिर काष्ठा iw_handler_def cfg80211_wext_handler;
+#पूर्ण_अगर /* __WEXT_COMPAT */

@@ -1,261 +1,262 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
  * Copyright 2010 Broadcom
  * Copyright 2012 Simon Arlott, Chris Boot, Stephen Warren
  *
- * Quirk 1: Shortcut interrupts don't set the bank 1/2 register pending bits
+ * Quirk 1: Shortcut पूर्णांकerrupts करोn't set the bank 1/2 रेजिस्टर pending bits
  *
- * If an interrupt fires on bank 1 that isn't in the shortcuts list, bit 8
- * on bank 0 is set to signify that an interrupt in bank 1 has fired, and
- * to look in the bank 1 status register for more information.
+ * If an पूर्णांकerrupt fires on bank 1 that isn't in the लघुcuts list, bit 8
+ * on bank 0 is set to signअगरy that an पूर्णांकerrupt in bank 1 has fired, and
+ * to look in the bank 1 status रेजिस्टर क्रम more inक्रमmation.
  *
- * If an interrupt fires on bank 1 that _is_ in the shortcuts list, its
- * shortcut bit in bank 0 is set as well as its interrupt bit in the bank 1
- * status register, but bank 0 bit 8 is _not_ set.
+ * If an पूर्णांकerrupt fires on bank 1 that _is_ in the लघुcuts list, its
+ * लघुcut bit in bank 0 is set as well as its पूर्णांकerrupt bit in the bank 1
+ * status रेजिस्टर, but bank 0 bit 8 is _not_ set.
  *
- * Quirk 2: You can't mask the register 1/2 pending interrupts
+ * Quirk 2: You can't mask the रेजिस्टर 1/2 pending पूर्णांकerrupts
  *
- * In a proper cascaded interrupt controller, the interrupt lines with
- * cascaded interrupt controllers on them are just normal interrupt lines.
- * You can mask the interrupts and get on with things. With this controller
- * you can't do that.
+ * In a proper cascaded पूर्णांकerrupt controller, the पूर्णांकerrupt lines with
+ * cascaded पूर्णांकerrupt controllers on them are just normal पूर्णांकerrupt lines.
+ * You can mask the पूर्णांकerrupts and get on with things. With this controller
+ * you can't करो that.
  *
- * Quirk 3: The shortcut interrupts can't be (un)masked in bank 0
+ * Quirk 3: The लघुcut पूर्णांकerrupts can't be (un)masked in bank 0
  *
- * Those interrupts that have shortcuts can only be masked/unmasked in
- * their respective banks' enable/disable registers. Doing so in the bank 0
- * enable/disable registers has no effect.
+ * Those पूर्णांकerrupts that have लघुcuts can only be masked/unmasked in
+ * their respective banks' enable/disable रेजिस्टरs. Doing so in the bank 0
+ * enable/disable रेजिस्टरs has no effect.
  *
- * The FIQ control register:
- *  Bits 0-6: IRQ (index in order of interrupts from banks 1, 2, then 0)
+ * The FIQ control रेजिस्टर:
+ *  Bits 0-6: IRQ (index in order of पूर्णांकerrupts from banks 1, 2, then 0)
  *  Bit    7: Enable FIQ generation
  *  Bits  8+: Unused
  *
- * An interrupt must be disabled before configuring it for FIQ generation
- * otherwise both handlers will fire at the same time!
+ * An पूर्णांकerrupt must be disabled beक्रमe configuring it क्रम FIQ generation
+ * otherwise both handlers will fire at the same समय!
  */
 
-#include <linux/io.h>
-#include <linux/slab.h>
-#include <linux/of_address.h>
-#include <linux/of_irq.h>
-#include <linux/irqchip.h>
-#include <linux/irqdomain.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/slab.h>
+#समावेश <linux/of_address.h>
+#समावेश <linux/of_irq.h>
+#समावेश <linux/irqchip.h>
+#समावेश <linux/irqकरोमुख्य.h>
 
-#include <asm/exception.h>
+#समावेश <यंत्र/exception.h>
 
-/* Put the bank and irq (32 bits) into the hwirq */
-#define MAKE_HWIRQ(b, n)	((b << 5) | (n))
-#define HWIRQ_BANK(i)		(i >> 5)
-#define HWIRQ_BIT(i)		BIT(i & 0x1f)
+/* Put the bank and irq (32 bits) पूर्णांकo the hwirq */
+#घोषणा MAKE_HWIRQ(b, n)	((b << 5) | (n))
+#घोषणा HWIRQ_BANK(i)		(i >> 5)
+#घोषणा HWIRQ_BIT(i)		BIT(i & 0x1f)
 
-#define NR_IRQS_BANK0		8
-#define BANK0_HWIRQ_MASK	0xff
+#घोषणा NR_IRQS_BANK0		8
+#घोषणा BANK0_HWIRQ_MASK	0xff
 /* Shortcuts can't be disabled so any unknown new ones need to be masked */
-#define SHORTCUT1_MASK		0x00007c00
-#define SHORTCUT2_MASK		0x001f8000
-#define SHORTCUT_SHIFT		10
-#define BANK1_HWIRQ		BIT(8)
-#define BANK2_HWIRQ		BIT(9)
-#define BANK0_VALID_MASK	(BANK0_HWIRQ_MASK | BANK1_HWIRQ | BANK2_HWIRQ \
+#घोषणा SHORTCUT1_MASK		0x00007c00
+#घोषणा SHORTCUT2_MASK		0x001f8000
+#घोषणा SHORTCUT_SHIFT		10
+#घोषणा BANK1_HWIRQ		BIT(8)
+#घोषणा BANK2_HWIRQ		BIT(9)
+#घोषणा BANK0_VALID_MASK	(BANK0_HWIRQ_MASK | BANK1_HWIRQ | BANK2_HWIRQ \
 					| SHORTCUT1_MASK | SHORTCUT2_MASK)
 
-#define REG_FIQ_CONTROL		0x0c
-#define FIQ_CONTROL_ENABLE	BIT(7)
+#घोषणा REG_FIQ_CONTROL		0x0c
+#घोषणा FIQ_CONTROL_ENABLE	BIT(7)
 
-#define NR_BANKS		3
-#define IRQS_PER_BANK		32
+#घोषणा NR_BANKS		3
+#घोषणा IRQS_PER_BANK		32
 
-static const int reg_pending[] __initconst = { 0x00, 0x04, 0x08 };
-static const int reg_enable[] __initconst = { 0x18, 0x10, 0x14 };
-static const int reg_disable[] __initconst = { 0x24, 0x1c, 0x20 };
-static const int bank_irqs[] __initconst = { 8, 32, 32 };
+अटल स्थिर पूर्णांक reg_pending[] __initस्थिर = अणु 0x00, 0x04, 0x08 पूर्ण;
+अटल स्थिर पूर्णांक reg_enable[] __initस्थिर = अणु 0x18, 0x10, 0x14 पूर्ण;
+अटल स्थिर पूर्णांक reg_disable[] __initस्थिर = अणु 0x24, 0x1c, 0x20 पूर्ण;
+अटल स्थिर पूर्णांक bank_irqs[] __initस्थिर = अणु 8, 32, 32 पूर्ण;
 
-static const int shortcuts[] = {
+अटल स्थिर पूर्णांक लघुcuts[] = अणु
 	7, 9, 10, 18, 19,		/* Bank 1 */
 	21, 22, 23, 24, 25, 30		/* Bank 2 */
-};
+पूर्ण;
 
-struct armctrl_ic {
-	void __iomem *base;
-	void __iomem *pending[NR_BANKS];
-	void __iomem *enable[NR_BANKS];
-	void __iomem *disable[NR_BANKS];
-	struct irq_domain *domain;
-};
+काष्ठा armctrl_ic अणु
+	व्योम __iomem *base;
+	व्योम __iomem *pending[NR_BANKS];
+	व्योम __iomem *enable[NR_BANKS];
+	व्योम __iomem *disable[NR_BANKS];
+	काष्ठा irq_करोमुख्य *करोमुख्य;
+पूर्ण;
 
-static struct armctrl_ic intc __read_mostly;
-static void __exception_irq_entry bcm2835_handle_irq(
-	struct pt_regs *regs);
-static void bcm2836_chained_handle_irq(struct irq_desc *desc);
+अटल काष्ठा armctrl_ic पूर्णांकc __पढ़ो_mostly;
+अटल व्योम __exception_irq_entry bcm2835_handle_irq(
+	काष्ठा pt_regs *regs);
+अटल व्योम bcm2836_chained_handle_irq(काष्ठा irq_desc *desc);
 
-static void armctrl_mask_irq(struct irq_data *d)
-{
-	writel_relaxed(HWIRQ_BIT(d->hwirq), intc.disable[HWIRQ_BANK(d->hwirq)]);
-}
+अटल व्योम armctrl_mask_irq(काष्ठा irq_data *d)
+अणु
+	ग_लिखोl_relaxed(HWIRQ_BIT(d->hwirq), पूर्णांकc.disable[HWIRQ_BANK(d->hwirq)]);
+पूर्ण
 
-static void armctrl_unmask_irq(struct irq_data *d)
-{
-	writel_relaxed(HWIRQ_BIT(d->hwirq), intc.enable[HWIRQ_BANK(d->hwirq)]);
-}
+अटल व्योम armctrl_unmask_irq(काष्ठा irq_data *d)
+अणु
+	ग_लिखोl_relaxed(HWIRQ_BIT(d->hwirq), पूर्णांकc.enable[HWIRQ_BANK(d->hwirq)]);
+पूर्ण
 
-static struct irq_chip armctrl_chip = {
+अटल काष्ठा irq_chip armctrl_chip = अणु
 	.name = "ARMCTRL-level",
 	.irq_mask = armctrl_mask_irq,
 	.irq_unmask = armctrl_unmask_irq
-};
+पूर्ण;
 
-static int armctrl_xlate(struct irq_domain *d, struct device_node *ctrlr,
-	const u32 *intspec, unsigned int intsize,
-	unsigned long *out_hwirq, unsigned int *out_type)
-{
-	if (WARN_ON(intsize != 2))
-		return -EINVAL;
+अटल पूर्णांक armctrl_xlate(काष्ठा irq_करोमुख्य *d, काष्ठा device_node *ctrlr,
+	स्थिर u32 *पूर्णांकspec, अचिन्हित पूर्णांक पूर्णांकsize,
+	अचिन्हित दीर्घ *out_hwirq, अचिन्हित पूर्णांक *out_type)
+अणु
+	अगर (WARN_ON(पूर्णांकsize != 2))
+		वापस -EINVAL;
 
-	if (WARN_ON(intspec[0] >= NR_BANKS))
-		return -EINVAL;
+	अगर (WARN_ON(पूर्णांकspec[0] >= NR_BANKS))
+		वापस -EINVAL;
 
-	if (WARN_ON(intspec[1] >= IRQS_PER_BANK))
-		return -EINVAL;
+	अगर (WARN_ON(पूर्णांकspec[1] >= IRQS_PER_BANK))
+		वापस -EINVAL;
 
-	if (WARN_ON(intspec[0] == 0 && intspec[1] >= NR_IRQS_BANK0))
-		return -EINVAL;
+	अगर (WARN_ON(पूर्णांकspec[0] == 0 && पूर्णांकspec[1] >= NR_IRQS_BANK0))
+		वापस -EINVAL;
 
-	*out_hwirq = MAKE_HWIRQ(intspec[0], intspec[1]);
+	*out_hwirq = MAKE_HWIRQ(पूर्णांकspec[0], पूर्णांकspec[1]);
 	*out_type = IRQ_TYPE_NONE;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct irq_domain_ops armctrl_ops = {
+अटल स्थिर काष्ठा irq_करोमुख्य_ops armctrl_ops = अणु
 	.xlate = armctrl_xlate
-};
+पूर्ण;
 
-static int __init armctrl_of_init(struct device_node *node,
-				  struct device_node *parent,
+अटल पूर्णांक __init armctrl_of_init(काष्ठा device_node *node,
+				  काष्ठा device_node *parent,
 				  bool is_2836)
-{
-	void __iomem *base;
-	int irq, b, i;
+अणु
+	व्योम __iomem *base;
+	पूर्णांक irq, b, i;
 	u32 reg;
 
 	base = of_iomap(node, 0);
-	if (!base)
+	अगर (!base)
 		panic("%pOF: unable to map IC registers\n", node);
 
-	intc.domain = irq_domain_add_linear(node, MAKE_HWIRQ(NR_BANKS, 0),
-			&armctrl_ops, NULL);
-	if (!intc.domain)
+	पूर्णांकc.करोमुख्य = irq_करोमुख्य_add_linear(node, MAKE_HWIRQ(NR_BANKS, 0),
+			&armctrl_ops, शून्य);
+	अगर (!पूर्णांकc.करोमुख्य)
 		panic("%pOF: unable to create IRQ domain\n", node);
 
-	for (b = 0; b < NR_BANKS; b++) {
-		intc.pending[b] = base + reg_pending[b];
-		intc.enable[b] = base + reg_enable[b];
-		intc.disable[b] = base + reg_disable[b];
+	क्रम (b = 0; b < NR_BANKS; b++) अणु
+		पूर्णांकc.pending[b] = base + reg_pending[b];
+		पूर्णांकc.enable[b] = base + reg_enable[b];
+		पूर्णांकc.disable[b] = base + reg_disable[b];
 
-		for (i = 0; i < bank_irqs[b]; i++) {
-			irq = irq_create_mapping(intc.domain, MAKE_HWIRQ(b, i));
+		क्रम (i = 0; i < bank_irqs[b]; i++) अणु
+			irq = irq_create_mapping(पूर्णांकc.करोमुख्य, MAKE_HWIRQ(b, i));
 			BUG_ON(irq <= 0);
 			irq_set_chip_and_handler(irq, &armctrl_chip,
 				handle_level_irq);
 			irq_set_probe(irq);
-		}
+		पूर्ण
 
-		reg = readl_relaxed(intc.enable[b]);
-		if (reg) {
-			writel_relaxed(reg, intc.disable[b]);
+		reg = पढ़ोl_relaxed(पूर्णांकc.enable[b]);
+		अगर (reg) अणु
+			ग_लिखोl_relaxed(reg, पूर्णांकc.disable[b]);
 			pr_err(FW_BUG "Bootloader left irq enabled: "
 			       "bank %d irq %*pbl\n", b, IRQS_PER_BANK, &reg);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	reg = readl_relaxed(base + REG_FIQ_CONTROL);
-	if (reg & FIQ_CONTROL_ENABLE) {
-		writel_relaxed(0, base + REG_FIQ_CONTROL);
+	reg = पढ़ोl_relaxed(base + REG_FIQ_CONTROL);
+	अगर (reg & FIQ_CONTROL_ENABLE) अणु
+		ग_लिखोl_relaxed(0, base + REG_FIQ_CONTROL);
 		pr_err(FW_BUG "Bootloader left fiq enabled\n");
-	}
+	पूर्ण
 
-	if (is_2836) {
-		int parent_irq = irq_of_parse_and_map(node, 0);
+	अगर (is_2836) अणु
+		पूर्णांक parent_irq = irq_of_parse_and_map(node, 0);
 
-		if (!parent_irq) {
+		अगर (!parent_irq) अणु
 			panic("%pOF: unable to get parent interrupt.\n",
 			      node);
-		}
+		पूर्ण
 		irq_set_chained_handler(parent_irq, bcm2836_chained_handle_irq);
-	} else {
+	पूर्ण अन्यथा अणु
 		set_handle_irq(bcm2835_handle_irq);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __init bcm2835_armctrl_of_init(struct device_node *node,
-					  struct device_node *parent)
-{
-	return armctrl_of_init(node, parent, false);
-}
+अटल पूर्णांक __init bcm2835_armctrl_of_init(काष्ठा device_node *node,
+					  काष्ठा device_node *parent)
+अणु
+	वापस armctrl_of_init(node, parent, false);
+पूर्ण
 
-static int __init bcm2836_armctrl_of_init(struct device_node *node,
-					  struct device_node *parent)
-{
-	return armctrl_of_init(node, parent, true);
-}
+अटल पूर्णांक __init bcm2836_armctrl_of_init(काष्ठा device_node *node,
+					  काष्ठा device_node *parent)
+अणु
+	वापस armctrl_of_init(node, parent, true);
+पूर्ण
 
 
 /*
- * Handle each interrupt across the entire interrupt controller.  This reads the
- * status register before handling each interrupt, which is necessary given that
- * handle_IRQ may briefly re-enable interrupts for soft IRQ handling.
+ * Handle each पूर्णांकerrupt across the entire पूर्णांकerrupt controller.  This पढ़ोs the
+ * status रेजिस्टर beक्रमe handling each पूर्णांकerrupt, which is necessary given that
+ * handle_IRQ may briefly re-enable पूर्णांकerrupts क्रम soft IRQ handling.
  */
 
-static u32 armctrl_translate_bank(int bank)
-{
-	u32 stat = readl_relaxed(intc.pending[bank]);
+अटल u32 armctrl_translate_bank(पूर्णांक bank)
+अणु
+	u32 stat = पढ़ोl_relaxed(पूर्णांकc.pending[bank]);
 
-	return MAKE_HWIRQ(bank, ffs(stat) - 1);
-}
+	वापस MAKE_HWIRQ(bank, ffs(stat) - 1);
+पूर्ण
 
-static u32 armctrl_translate_shortcut(int bank, u32 stat)
-{
-	return MAKE_HWIRQ(bank, shortcuts[ffs(stat >> SHORTCUT_SHIFT) - 1]);
-}
+अटल u32 armctrl_translate_लघुcut(पूर्णांक bank, u32 stat)
+अणु
+	वापस MAKE_HWIRQ(bank, लघुcuts[ffs(stat >> SHORTCUT_SHIFT) - 1]);
+पूर्ण
 
-static u32 get_next_armctrl_hwirq(void)
-{
-	u32 stat = readl_relaxed(intc.pending[0]) & BANK0_VALID_MASK;
+अटल u32 get_next_armctrl_hwirq(व्योम)
+अणु
+	u32 stat = पढ़ोl_relaxed(पूर्णांकc.pending[0]) & BANK0_VALID_MASK;
 
-	if (stat == 0)
-		return ~0;
-	else if (stat & BANK0_HWIRQ_MASK)
-		return MAKE_HWIRQ(0, ffs(stat & BANK0_HWIRQ_MASK) - 1);
-	else if (stat & SHORTCUT1_MASK)
-		return armctrl_translate_shortcut(1, stat & SHORTCUT1_MASK);
-	else if (stat & SHORTCUT2_MASK)
-		return armctrl_translate_shortcut(2, stat & SHORTCUT2_MASK);
-	else if (stat & BANK1_HWIRQ)
-		return armctrl_translate_bank(1);
-	else if (stat & BANK2_HWIRQ)
-		return armctrl_translate_bank(2);
-	else
+	अगर (stat == 0)
+		वापस ~0;
+	अन्यथा अगर (stat & BANK0_HWIRQ_MASK)
+		वापस MAKE_HWIRQ(0, ffs(stat & BANK0_HWIRQ_MASK) - 1);
+	अन्यथा अगर (stat & SHORTCUT1_MASK)
+		वापस armctrl_translate_लघुcut(1, stat & SHORTCUT1_MASK);
+	अन्यथा अगर (stat & SHORTCUT2_MASK)
+		वापस armctrl_translate_लघुcut(2, stat & SHORTCUT2_MASK);
+	अन्यथा अगर (stat & BANK1_HWIRQ)
+		वापस armctrl_translate_bank(1);
+	अन्यथा अगर (stat & BANK2_HWIRQ)
+		वापस armctrl_translate_bank(2);
+	अन्यथा
 		BUG();
-}
+पूर्ण
 
-static void __exception_irq_entry bcm2835_handle_irq(
-	struct pt_regs *regs)
-{
+अटल व्योम __exception_irq_entry bcm2835_handle_irq(
+	काष्ठा pt_regs *regs)
+अणु
 	u32 hwirq;
 
-	while ((hwirq = get_next_armctrl_hwirq()) != ~0)
-		handle_domain_irq(intc.domain, hwirq, regs);
-}
+	जबतक ((hwirq = get_next_armctrl_hwirq()) != ~0)
+		handle_करोमुख्य_irq(पूर्णांकc.करोमुख्य, hwirq, regs);
+पूर्ण
 
-static void bcm2836_chained_handle_irq(struct irq_desc *desc)
-{
+अटल व्योम bcm2836_chained_handle_irq(काष्ठा irq_desc *desc)
+अणु
 	u32 hwirq;
 
-	while ((hwirq = get_next_armctrl_hwirq()) != ~0)
-		generic_handle_irq(irq_linear_revmap(intc.domain, hwirq));
-}
+	जबतक ((hwirq = get_next_armctrl_hwirq()) != ~0)
+		generic_handle_irq(irq_linear_revmap(पूर्णांकc.करोमुख्य, hwirq));
+पूर्ण
 
 IRQCHIP_DECLARE(bcm2835_armctrl_ic, "brcm,bcm2835-armctrl-ic",
 		bcm2835_armctrl_of_init);

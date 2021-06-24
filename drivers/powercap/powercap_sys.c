@@ -1,676 +1,677 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Power capping class
  * Copyright (c) 2013, Intel Corporation.
  */
 
-#include <linux/module.h>
-#include <linux/device.h>
-#include <linux/err.h>
-#include <linux/slab.h>
-#include <linux/powercap.h>
+#समावेश <linux/module.h>
+#समावेश <linux/device.h>
+#समावेश <linux/err.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/घातercap.h>
 
-#define to_powercap_zone(n) container_of(n, struct powercap_zone, dev)
-#define to_powercap_control_type(n) \
-			container_of(n, struct powercap_control_type, dev)
+#घोषणा to_घातercap_zone(n) container_of(n, काष्ठा घातercap_zone, dev)
+#घोषणा to_घातercap_control_type(n) \
+			container_of(n, काष्ठा घातercap_control_type, dev)
 
 /* Power zone show function */
-#define define_power_zone_show(_attr)		\
-static ssize_t _attr##_show(struct device *dev, \
-					struct device_attribute *dev_attr,\
-					char *buf) \
-{ \
+#घोषणा define_घातer_zone_show(_attr)		\
+अटल sमाप_प्रकार _attr##_show(काष्ठा device *dev, \
+					काष्ठा device_attribute *dev_attr,\
+					अक्षर *buf) \
+अणु \
 	u64 value; \
-	ssize_t len = -EINVAL; \
-	struct powercap_zone *power_zone = to_powercap_zone(dev); \
+	sमाप_प्रकार len = -EINVAL; \
+	काष्ठा घातercap_zone *घातer_zone = to_घातercap_zone(dev); \
 	\
-	if (power_zone->ops->get_##_attr) { \
-		if (!power_zone->ops->get_##_attr(power_zone, &value)) \
-			len = sprintf(buf, "%lld\n", value); \
-	} \
+	अगर (घातer_zone->ops->get_##_attr) अणु \
+		अगर (!घातer_zone->ops->get_##_attr(घातer_zone, &value)) \
+			len = प्र_लिखो(buf, "%lld\n", value); \
+	पूर्ण \
 	\
-	return len; \
-}
+	वापस len; \
+पूर्ण
 
 /* The only meaningful input is 0 (reset), others are silently ignored */
-#define define_power_zone_store(_attr)		\
-static ssize_t _attr##_store(struct device *dev,\
-				struct device_attribute *dev_attr, \
-				const char *buf, size_t count) \
-{ \
-	int err; \
-	struct powercap_zone *power_zone = to_powercap_zone(dev); \
+#घोषणा define_घातer_zone_store(_attr)		\
+अटल sमाप_प्रकार _attr##_store(काष्ठा device *dev,\
+				काष्ठा device_attribute *dev_attr, \
+				स्थिर अक्षर *buf, माप_प्रकार count) \
+अणु \
+	पूर्णांक err; \
+	काष्ठा घातercap_zone *घातer_zone = to_घातercap_zone(dev); \
 	u64 value; \
 	\
-	err = kstrtoull(buf, 10, &value); \
-	if (err) \
-		return -EINVAL; \
-	if (value) \
-		return count; \
-	if (power_zone->ops->reset_##_attr) { \
-		if (!power_zone->ops->reset_##_attr(power_zone)) \
-			return count; \
-	} \
+	err = kम_से_अदीर्घl(buf, 10, &value); \
+	अगर (err) \
+		वापस -EINVAL; \
+	अगर (value) \
+		वापस count; \
+	अगर (घातer_zone->ops->reset_##_attr) अणु \
+		अगर (!घातer_zone->ops->reset_##_attr(घातer_zone)) \
+			वापस count; \
+	पूर्ण \
 	\
-	return -EINVAL; \
-}
+	वापस -EINVAL; \
+पूर्ण
 
-/* Power zone constraint show function */
-#define define_power_zone_constraint_show(_attr) \
-static ssize_t show_constraint_##_attr(struct device *dev, \
-				struct device_attribute *dev_attr,\
-				char *buf) \
-{ \
+/* Power zone स्थिरraपूर्णांक show function */
+#घोषणा define_घातer_zone_स्थिरraपूर्णांक_show(_attr) \
+अटल sमाप_प्रकार show_स्थिरraपूर्णांक_##_attr(काष्ठा device *dev, \
+				काष्ठा device_attribute *dev_attr,\
+				अक्षर *buf) \
+अणु \
 	u64 value; \
-	ssize_t len = -ENODATA; \
-	struct powercap_zone *power_zone = to_powercap_zone(dev); \
-	int id; \
-	struct powercap_zone_constraint *pconst;\
+	sमाप_प्रकार len = -ENODATA; \
+	काष्ठा घातercap_zone *घातer_zone = to_घातercap_zone(dev); \
+	पूर्णांक id; \
+	काष्ठा घातercap_zone_स्थिरraपूर्णांक *pस्थिर;\
 	\
-	if (!sscanf(dev_attr->attr.name, "constraint_%d_", &id)) \
-		return -EINVAL; \
-	if (id >= power_zone->const_id_cnt)	\
-		return -EINVAL; \
-	pconst = &power_zone->constraints[id]; \
-	if (pconst && pconst->ops && pconst->ops->get_##_attr) { \
-		if (!pconst->ops->get_##_attr(power_zone, id, &value)) \
-			len = sprintf(buf, "%lld\n", value); \
-	} \
+	अगर (!माला_पूछो(dev_attr->attr.name, "constraint_%d_", &id)) \
+		वापस -EINVAL; \
+	अगर (id >= घातer_zone->स्थिर_id_cnt)	\
+		वापस -EINVAL; \
+	pस्थिर = &घातer_zone->स्थिरraपूर्णांकs[id]; \
+	अगर (pस्थिर && pस्थिर->ops && pस्थिर->ops->get_##_attr) अणु \
+		अगर (!pस्थिर->ops->get_##_attr(घातer_zone, id, &value)) \
+			len = प्र_लिखो(buf, "%lld\n", value); \
+	पूर्ण \
 	\
-	return len; \
-}
+	वापस len; \
+पूर्ण
 
-/* Power zone constraint store function */
-#define define_power_zone_constraint_store(_attr) \
-static ssize_t store_constraint_##_attr(struct device *dev,\
-				struct device_attribute *dev_attr, \
-				const char *buf, size_t count) \
-{ \
-	int err; \
+/* Power zone स्थिरraपूर्णांक store function */
+#घोषणा define_घातer_zone_स्थिरraपूर्णांक_store(_attr) \
+अटल sमाप_प्रकार store_स्थिरraपूर्णांक_##_attr(काष्ठा device *dev,\
+				काष्ठा device_attribute *dev_attr, \
+				स्थिर अक्षर *buf, माप_प्रकार count) \
+अणु \
+	पूर्णांक err; \
 	u64 value; \
-	struct powercap_zone *power_zone = to_powercap_zone(dev); \
-	int id; \
-	struct powercap_zone_constraint *pconst;\
+	काष्ठा घातercap_zone *घातer_zone = to_घातercap_zone(dev); \
+	पूर्णांक id; \
+	काष्ठा घातercap_zone_स्थिरraपूर्णांक *pस्थिर;\
 	\
-	if (!sscanf(dev_attr->attr.name, "constraint_%d_", &id)) \
-		return -EINVAL; \
-	if (id >= power_zone->const_id_cnt)	\
-		return -EINVAL; \
-	pconst = &power_zone->constraints[id]; \
-	err = kstrtoull(buf, 10, &value); \
-	if (err) \
-		return -EINVAL; \
-	if (pconst && pconst->ops && pconst->ops->set_##_attr) { \
-		if (!pconst->ops->set_##_attr(power_zone, id, value)) \
-			return count; \
-	} \
+	अगर (!माला_पूछो(dev_attr->attr.name, "constraint_%d_", &id)) \
+		वापस -EINVAL; \
+	अगर (id >= घातer_zone->स्थिर_id_cnt)	\
+		वापस -EINVAL; \
+	pस्थिर = &घातer_zone->स्थिरraपूर्णांकs[id]; \
+	err = kम_से_अदीर्घl(buf, 10, &value); \
+	अगर (err) \
+		वापस -EINVAL; \
+	अगर (pस्थिर && pस्थिर->ops && pस्थिर->ops->set_##_attr) अणु \
+		अगर (!pस्थिर->ops->set_##_attr(घातer_zone, id, value)) \
+			वापस count; \
+	पूर्ण \
 	\
-	return -ENODATA; \
-}
+	वापस -ENODATA; \
+पूर्ण
 
-/* Power zone information callbacks */
-define_power_zone_show(power_uw);
-define_power_zone_show(max_power_range_uw);
-define_power_zone_show(energy_uj);
-define_power_zone_store(energy_uj);
-define_power_zone_show(max_energy_range_uj);
+/* Power zone inक्रमmation callbacks */
+define_घातer_zone_show(घातer_uw);
+define_घातer_zone_show(max_घातer_range_uw);
+define_घातer_zone_show(energy_uj);
+define_घातer_zone_store(energy_uj);
+define_घातer_zone_show(max_energy_range_uj);
 
 /* Power zone attributes */
-static DEVICE_ATTR_RO(max_power_range_uw);
-static DEVICE_ATTR_RO(power_uw);
-static DEVICE_ATTR_RO(max_energy_range_uj);
-static DEVICE_ATTR_RW(energy_uj);
+अटल DEVICE_ATTR_RO(max_घातer_range_uw);
+अटल DEVICE_ATTR_RO(घातer_uw);
+अटल DEVICE_ATTR_RO(max_energy_range_uj);
+अटल DEVICE_ATTR_RW(energy_uj);
 
-/* Power zone constraint attributes callbacks */
-define_power_zone_constraint_show(power_limit_uw);
-define_power_zone_constraint_store(power_limit_uw);
-define_power_zone_constraint_show(time_window_us);
-define_power_zone_constraint_store(time_window_us);
-define_power_zone_constraint_show(max_power_uw);
-define_power_zone_constraint_show(min_power_uw);
-define_power_zone_constraint_show(max_time_window_us);
-define_power_zone_constraint_show(min_time_window_us);
+/* Power zone स्थिरraपूर्णांक attributes callbacks */
+define_घातer_zone_स्थिरraपूर्णांक_show(घातer_limit_uw);
+define_घातer_zone_स्थिरraपूर्णांक_store(घातer_limit_uw);
+define_घातer_zone_स्थिरraपूर्णांक_show(समय_winकरोw_us);
+define_घातer_zone_स्थिरraपूर्णांक_store(समय_winकरोw_us);
+define_घातer_zone_स्थिरraपूर्णांक_show(max_घातer_uw);
+define_घातer_zone_स्थिरraपूर्णांक_show(min_घातer_uw);
+define_घातer_zone_स्थिरraपूर्णांक_show(max_समय_winकरोw_us);
+define_घातer_zone_स्थिरraपूर्णांक_show(min_समय_winकरोw_us);
 
-/* For one time seeding of constraint device attributes */
-struct powercap_constraint_attr {
-	struct device_attribute power_limit_attr;
-	struct device_attribute time_window_attr;
-	struct device_attribute max_power_attr;
-	struct device_attribute min_power_attr;
-	struct device_attribute max_time_window_attr;
-	struct device_attribute min_time_window_attr;
-	struct device_attribute name_attr;
-};
+/* For one समय seeding of स्थिरraपूर्णांक device attributes */
+काष्ठा घातercap_स्थिरraपूर्णांक_attr अणु
+	काष्ठा device_attribute घातer_limit_attr;
+	काष्ठा device_attribute समय_winकरोw_attr;
+	काष्ठा device_attribute max_घातer_attr;
+	काष्ठा device_attribute min_घातer_attr;
+	काष्ठा device_attribute max_समय_winकरोw_attr;
+	काष्ठा device_attribute min_समय_winकरोw_attr;
+	काष्ठा device_attribute name_attr;
+पूर्ण;
 
-static struct powercap_constraint_attr
-				constraint_attrs[MAX_CONSTRAINTS_PER_ZONE];
+अटल काष्ठा घातercap_स्थिरraपूर्णांक_attr
+				स्थिरraपूर्णांक_attrs[MAX_CONSTRAINTS_PER_ZONE];
 
-/* A list of powercap control_types */
-static LIST_HEAD(powercap_cntrl_list);
-/* Mutex to protect list of powercap control_types */
-static DEFINE_MUTEX(powercap_cntrl_list_lock);
+/* A list of घातercap control_types */
+अटल LIST_HEAD(घातercap_cntrl_list);
+/* Mutex to protect list of घातercap control_types */
+अटल DEFINE_MUTEX(घातercap_cntrl_list_lock);
 
-#define POWERCAP_CONSTRAINT_NAME_LEN	30 /* Some limit to avoid overflow */
-static ssize_t show_constraint_name(struct device *dev,
-				struct device_attribute *dev_attr,
-				char *buf)
-{
-	const char *name;
-	struct powercap_zone *power_zone = to_powercap_zone(dev);
-	int id;
-	ssize_t len = -ENODATA;
-	struct powercap_zone_constraint *pconst;
+#घोषणा POWERCAP_CONSTRAINT_NAME_LEN	30 /* Some limit to aव्योम overflow */
+अटल sमाप_प्रकार show_स्थिरraपूर्णांक_name(काष्ठा device *dev,
+				काष्ठा device_attribute *dev_attr,
+				अक्षर *buf)
+अणु
+	स्थिर अक्षर *name;
+	काष्ठा घातercap_zone *घातer_zone = to_घातercap_zone(dev);
+	पूर्णांक id;
+	sमाप_प्रकार len = -ENODATA;
+	काष्ठा घातercap_zone_स्थिरraपूर्णांक *pस्थिर;
 
-	if (!sscanf(dev_attr->attr.name, "constraint_%d_", &id))
-		return -EINVAL;
-	if (id >= power_zone->const_id_cnt)
-		return -EINVAL;
-	pconst = &power_zone->constraints[id];
+	अगर (!माला_पूछो(dev_attr->attr.name, "constraint_%d_", &id))
+		वापस -EINVAL;
+	अगर (id >= घातer_zone->स्थिर_id_cnt)
+		वापस -EINVAL;
+	pस्थिर = &घातer_zone->स्थिरraपूर्णांकs[id];
 
-	if (pconst && pconst->ops && pconst->ops->get_name) {
-		name = pconst->ops->get_name(power_zone, id);
-		if (name) {
-			sprintf(buf, "%.*s\n", POWERCAP_CONSTRAINT_NAME_LEN - 1,
+	अगर (pस्थिर && pस्थिर->ops && pस्थिर->ops->get_name) अणु
+		name = pस्थिर->ops->get_name(घातer_zone, id);
+		अगर (name) अणु
+			प्र_लिखो(buf, "%.*s\n", POWERCAP_CONSTRAINT_NAME_LEN - 1,
 				name);
-			len = strlen(buf);
-		}
-	}
+			len = म_माप(buf);
+		पूर्ण
+	पूर्ण
 
-	return len;
-}
+	वापस len;
+पूर्ण
 
-static int create_constraint_attribute(int id, const char *name,
-				int mode,
-				struct device_attribute *dev_attr,
-				ssize_t (*show)(struct device *,
-					struct device_attribute *, char *),
-				ssize_t (*store)(struct device *,
-					struct device_attribute *,
-				const char *, size_t)
+अटल पूर्णांक create_स्थिरraपूर्णांक_attribute(पूर्णांक id, स्थिर अक्षर *name,
+				पूर्णांक mode,
+				काष्ठा device_attribute *dev_attr,
+				sमाप_प्रकार (*show)(काष्ठा device *,
+					काष्ठा device_attribute *, अक्षर *),
+				sमाप_प्रकार (*store)(काष्ठा device *,
+					काष्ठा device_attribute *,
+				स्थिर अक्षर *, माप_प्रकार)
 				)
-{
+अणु
 
-	dev_attr->attr.name = kasprintf(GFP_KERNEL, "constraint_%d_%s",
+	dev_attr->attr.name = kaप्र_लिखो(GFP_KERNEL, "constraint_%d_%s",
 								id, name);
-	if (!dev_attr->attr.name)
-		return -ENOMEM;
+	अगर (!dev_attr->attr.name)
+		वापस -ENOMEM;
 	dev_attr->attr.mode = mode;
 	dev_attr->show = show;
 	dev_attr->store = store;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void free_constraint_attributes(void)
-{
-	int i;
+अटल व्योम मुक्त_स्थिरraपूर्णांक_attributes(व्योम)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < MAX_CONSTRAINTS_PER_ZONE; ++i) {
-		kfree(constraint_attrs[i].power_limit_attr.attr.name);
-		kfree(constraint_attrs[i].time_window_attr.attr.name);
-		kfree(constraint_attrs[i].name_attr.attr.name);
-		kfree(constraint_attrs[i].max_power_attr.attr.name);
-		kfree(constraint_attrs[i].min_power_attr.attr.name);
-		kfree(constraint_attrs[i].max_time_window_attr.attr.name);
-		kfree(constraint_attrs[i].min_time_window_attr.attr.name);
-	}
-}
+	क्रम (i = 0; i < MAX_CONSTRAINTS_PER_ZONE; ++i) अणु
+		kमुक्त(स्थिरraपूर्णांक_attrs[i].घातer_limit_attr.attr.name);
+		kमुक्त(स्थिरraपूर्णांक_attrs[i].समय_winकरोw_attr.attr.name);
+		kमुक्त(स्थिरraपूर्णांक_attrs[i].name_attr.attr.name);
+		kमुक्त(स्थिरraपूर्णांक_attrs[i].max_घातer_attr.attr.name);
+		kमुक्त(स्थिरraपूर्णांक_attrs[i].min_घातer_attr.attr.name);
+		kमुक्त(स्थिरraपूर्णांक_attrs[i].max_समय_winकरोw_attr.attr.name);
+		kमुक्त(स्थिरraपूर्णांक_attrs[i].min_समय_winकरोw_attr.attr.name);
+	पूर्ण
+पूर्ण
 
-static int seed_constraint_attributes(void)
-{
-	int i;
-	int ret;
+अटल पूर्णांक seed_स्थिरraपूर्णांक_attributes(व्योम)
+अणु
+	पूर्णांक i;
+	पूर्णांक ret;
 
-	for (i = 0; i < MAX_CONSTRAINTS_PER_ZONE; ++i) {
-		ret = create_constraint_attribute(i, "power_limit_uw",
+	क्रम (i = 0; i < MAX_CONSTRAINTS_PER_ZONE; ++i) अणु
+		ret = create_स्थिरraपूर्णांक_attribute(i, "power_limit_uw",
 					S_IWUSR | S_IRUGO,
-					&constraint_attrs[i].power_limit_attr,
-					show_constraint_power_limit_uw,
-					store_constraint_power_limit_uw);
-		if (ret)
-			goto err_alloc;
-		ret = create_constraint_attribute(i, "time_window_us",
+					&स्थिरraपूर्णांक_attrs[i].घातer_limit_attr,
+					show_स्थिरraपूर्णांक_घातer_limit_uw,
+					store_स्थिरraपूर्णांक_घातer_limit_uw);
+		अगर (ret)
+			जाओ err_alloc;
+		ret = create_स्थिरraपूर्णांक_attribute(i, "time_window_us",
 					S_IWUSR | S_IRUGO,
-					&constraint_attrs[i].time_window_attr,
-					show_constraint_time_window_us,
-					store_constraint_time_window_us);
-		if (ret)
-			goto err_alloc;
-		ret = create_constraint_attribute(i, "name", S_IRUGO,
-				&constraint_attrs[i].name_attr,
-				show_constraint_name,
-				NULL);
-		if (ret)
-			goto err_alloc;
-		ret = create_constraint_attribute(i, "max_power_uw", S_IRUGO,
-				&constraint_attrs[i].max_power_attr,
-				show_constraint_max_power_uw,
-				NULL);
-		if (ret)
-			goto err_alloc;
-		ret = create_constraint_attribute(i, "min_power_uw", S_IRUGO,
-				&constraint_attrs[i].min_power_attr,
-				show_constraint_min_power_uw,
-				NULL);
-		if (ret)
-			goto err_alloc;
-		ret = create_constraint_attribute(i, "max_time_window_us",
+					&स्थिरraपूर्णांक_attrs[i].समय_winकरोw_attr,
+					show_स्थिरraपूर्णांक_समय_winकरोw_us,
+					store_स्थिरraपूर्णांक_समय_winकरोw_us);
+		अगर (ret)
+			जाओ err_alloc;
+		ret = create_स्थिरraपूर्णांक_attribute(i, "name", S_IRUGO,
+				&स्थिरraपूर्णांक_attrs[i].name_attr,
+				show_स्थिरraपूर्णांक_name,
+				शून्य);
+		अगर (ret)
+			जाओ err_alloc;
+		ret = create_स्थिरraपूर्णांक_attribute(i, "max_power_uw", S_IRUGO,
+				&स्थिरraपूर्णांक_attrs[i].max_घातer_attr,
+				show_स्थिरraपूर्णांक_max_घातer_uw,
+				शून्य);
+		अगर (ret)
+			जाओ err_alloc;
+		ret = create_स्थिरraपूर्णांक_attribute(i, "min_power_uw", S_IRUGO,
+				&स्थिरraपूर्णांक_attrs[i].min_घातer_attr,
+				show_स्थिरraपूर्णांक_min_घातer_uw,
+				शून्य);
+		अगर (ret)
+			जाओ err_alloc;
+		ret = create_स्थिरraपूर्णांक_attribute(i, "max_time_window_us",
 				S_IRUGO,
-				&constraint_attrs[i].max_time_window_attr,
-				show_constraint_max_time_window_us,
-				NULL);
-		if (ret)
-			goto err_alloc;
-		ret = create_constraint_attribute(i, "min_time_window_us",
+				&स्थिरraपूर्णांक_attrs[i].max_समय_winकरोw_attr,
+				show_स्थिरraपूर्णांक_max_समय_winकरोw_us,
+				शून्य);
+		अगर (ret)
+			जाओ err_alloc;
+		ret = create_स्थिरraपूर्णांक_attribute(i, "min_time_window_us",
 				S_IRUGO,
-				&constraint_attrs[i].min_time_window_attr,
-				show_constraint_min_time_window_us,
-				NULL);
-		if (ret)
-			goto err_alloc;
+				&स्थिरraपूर्णांक_attrs[i].min_समय_winकरोw_attr,
+				show_स्थिरraपूर्णांक_min_समय_winकरोw_us,
+				शून्य);
+		अगर (ret)
+			जाओ err_alloc;
 
-	}
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 err_alloc:
-	free_constraint_attributes();
+	मुक्त_स्थिरraपूर्णांक_attributes();
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int create_constraints(struct powercap_zone *power_zone,
-			int nr_constraints,
-			const struct powercap_zone_constraint_ops *const_ops)
-{
-	int i;
-	int ret = 0;
-	int count;
-	struct powercap_zone_constraint *pconst;
+अटल पूर्णांक create_स्थिरraपूर्णांकs(काष्ठा घातercap_zone *घातer_zone,
+			पूर्णांक nr_स्थिरraपूर्णांकs,
+			स्थिर काष्ठा घातercap_zone_स्थिरraपूर्णांक_ops *स्थिर_ops)
+अणु
+	पूर्णांक i;
+	पूर्णांक ret = 0;
+	पूर्णांक count;
+	काष्ठा घातercap_zone_स्थिरraपूर्णांक *pस्थिर;
 
-	if (!power_zone || !const_ops || !const_ops->get_power_limit_uw ||
-					!const_ops->set_power_limit_uw ||
-					!const_ops->get_time_window_us ||
-					!const_ops->set_time_window_us)
-		return -EINVAL;
+	अगर (!घातer_zone || !स्थिर_ops || !स्थिर_ops->get_घातer_limit_uw ||
+					!स्थिर_ops->set_घातer_limit_uw ||
+					!स्थिर_ops->get_समय_winकरोw_us ||
+					!स्थिर_ops->set_समय_winकरोw_us)
+		वापस -EINVAL;
 
-	count = power_zone->zone_attr_count;
-	for (i = 0; i < nr_constraints; ++i) {
-		pconst = &power_zone->constraints[i];
-		pconst->ops = const_ops;
-		pconst->id = power_zone->const_id_cnt;
-		power_zone->const_id_cnt++;
-		power_zone->zone_dev_attrs[count++] =
-				&constraint_attrs[i].power_limit_attr.attr;
-		power_zone->zone_dev_attrs[count++] =
-				&constraint_attrs[i].time_window_attr.attr;
-		if (pconst->ops->get_name)
-			power_zone->zone_dev_attrs[count++] =
-				&constraint_attrs[i].name_attr.attr;
-		if (pconst->ops->get_max_power_uw)
-			power_zone->zone_dev_attrs[count++] =
-				&constraint_attrs[i].max_power_attr.attr;
-		if (pconst->ops->get_min_power_uw)
-			power_zone->zone_dev_attrs[count++] =
-				&constraint_attrs[i].min_power_attr.attr;
-		if (pconst->ops->get_max_time_window_us)
-			power_zone->zone_dev_attrs[count++] =
-				&constraint_attrs[i].max_time_window_attr.attr;
-		if (pconst->ops->get_min_time_window_us)
-			power_zone->zone_dev_attrs[count++] =
-				&constraint_attrs[i].min_time_window_attr.attr;
-	}
-	power_zone->zone_attr_count = count;
+	count = घातer_zone->zone_attr_count;
+	क्रम (i = 0; i < nr_स्थिरraपूर्णांकs; ++i) अणु
+		pस्थिर = &घातer_zone->स्थिरraपूर्णांकs[i];
+		pस्थिर->ops = स्थिर_ops;
+		pस्थिर->id = घातer_zone->स्थिर_id_cnt;
+		घातer_zone->स्थिर_id_cnt++;
+		घातer_zone->zone_dev_attrs[count++] =
+				&स्थिरraपूर्णांक_attrs[i].घातer_limit_attr.attr;
+		घातer_zone->zone_dev_attrs[count++] =
+				&स्थिरraपूर्णांक_attrs[i].समय_winकरोw_attr.attr;
+		अगर (pस्थिर->ops->get_name)
+			घातer_zone->zone_dev_attrs[count++] =
+				&स्थिरraपूर्णांक_attrs[i].name_attr.attr;
+		अगर (pस्थिर->ops->get_max_घातer_uw)
+			घातer_zone->zone_dev_attrs[count++] =
+				&स्थिरraपूर्णांक_attrs[i].max_घातer_attr.attr;
+		अगर (pस्थिर->ops->get_min_घातer_uw)
+			घातer_zone->zone_dev_attrs[count++] =
+				&स्थिरraपूर्णांक_attrs[i].min_घातer_attr.attr;
+		अगर (pस्थिर->ops->get_max_समय_winकरोw_us)
+			घातer_zone->zone_dev_attrs[count++] =
+				&स्थिरraपूर्णांक_attrs[i].max_समय_winकरोw_attr.attr;
+		अगर (pस्थिर->ops->get_min_समय_winकरोw_us)
+			घातer_zone->zone_dev_attrs[count++] =
+				&स्थिरraपूर्णांक_attrs[i].min_समय_winकरोw_attr.attr;
+	पूर्ण
+	घातer_zone->zone_attr_count = count;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static bool control_type_valid(void *control_type)
-{
-	struct powercap_control_type *pos = NULL;
+अटल bool control_type_valid(व्योम *control_type)
+अणु
+	काष्ठा घातercap_control_type *pos = शून्य;
 	bool found = false;
 
-	mutex_lock(&powercap_cntrl_list_lock);
+	mutex_lock(&घातercap_cntrl_list_lock);
 
-	list_for_each_entry(pos, &powercap_cntrl_list, node) {
-		if (pos == control_type) {
+	list_क्रम_each_entry(pos, &घातercap_cntrl_list, node) अणु
+		अगर (pos == control_type) अणु
 			found = true;
-			break;
-		}
-	}
-	mutex_unlock(&powercap_cntrl_list_lock);
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	mutex_unlock(&घातercap_cntrl_list_lock);
 
-	return found;
-}
+	वापस found;
+पूर्ण
 
-static ssize_t name_show(struct device *dev,
-				struct device_attribute *attr,
-				char *buf)
-{
-	struct powercap_zone *power_zone = to_powercap_zone(dev);
+अटल sमाप_प्रकार name_show(काष्ठा device *dev,
+				काष्ठा device_attribute *attr,
+				अक्षर *buf)
+अणु
+	काष्ठा घातercap_zone *घातer_zone = to_घातercap_zone(dev);
 
-	return sprintf(buf, "%s\n", power_zone->name);
-}
+	वापस प्र_लिखो(buf, "%s\n", घातer_zone->name);
+पूर्ण
 
-static DEVICE_ATTR_RO(name);
+अटल DEVICE_ATTR_RO(name);
 
 /* Create zone and attributes in sysfs */
-static void create_power_zone_common_attributes(
-					struct powercap_zone *power_zone)
-{
-	int count = 0;
+अटल व्योम create_घातer_zone_common_attributes(
+					काष्ठा घातercap_zone *घातer_zone)
+अणु
+	पूर्णांक count = 0;
 
-	power_zone->zone_dev_attrs[count++] = &dev_attr_name.attr;
-	if (power_zone->ops->get_max_energy_range_uj)
-		power_zone->zone_dev_attrs[count++] =
+	घातer_zone->zone_dev_attrs[count++] = &dev_attr_name.attr;
+	अगर (घातer_zone->ops->get_max_energy_range_uj)
+		घातer_zone->zone_dev_attrs[count++] =
 					&dev_attr_max_energy_range_uj.attr;
-	if (power_zone->ops->get_energy_uj) {
-		if (power_zone->ops->reset_energy_uj)
+	अगर (घातer_zone->ops->get_energy_uj) अणु
+		अगर (घातer_zone->ops->reset_energy_uj)
 			dev_attr_energy_uj.attr.mode = S_IWUSR | S_IRUSR;
-		else
+		अन्यथा
 			dev_attr_energy_uj.attr.mode = S_IRUSR;
-		power_zone->zone_dev_attrs[count++] =
+		घातer_zone->zone_dev_attrs[count++] =
 					&dev_attr_energy_uj.attr;
-	}
-	if (power_zone->ops->get_power_uw)
-		power_zone->zone_dev_attrs[count++] =
-					&dev_attr_power_uw.attr;
-	if (power_zone->ops->get_max_power_range_uw)
-		power_zone->zone_dev_attrs[count++] =
-					&dev_attr_max_power_range_uw.attr;
-	power_zone->zone_dev_attrs[count] = NULL;
-	power_zone->zone_attr_count = count;
-}
+	पूर्ण
+	अगर (घातer_zone->ops->get_घातer_uw)
+		घातer_zone->zone_dev_attrs[count++] =
+					&dev_attr_घातer_uw.attr;
+	अगर (घातer_zone->ops->get_max_घातer_range_uw)
+		घातer_zone->zone_dev_attrs[count++] =
+					&dev_attr_max_घातer_range_uw.attr;
+	घातer_zone->zone_dev_attrs[count] = शून्य;
+	घातer_zone->zone_attr_count = count;
+पूर्ण
 
-static void powercap_release(struct device *dev)
-{
+अटल व्योम घातercap_release(काष्ठा device *dev)
+अणु
 	bool allocated;
 
-	if (dev->parent) {
-		struct powercap_zone *power_zone = to_powercap_zone(dev);
+	अगर (dev->parent) अणु
+		काष्ठा घातercap_zone *घातer_zone = to_घातercap_zone(dev);
 
-		/* Store flag as the release() may free memory */
-		allocated = power_zone->allocated;
-		/* Remove id from parent idr struct */
-		idr_remove(power_zone->parent_idr, power_zone->id);
-		/* Destroy idrs allocated for this zone */
-		idr_destroy(&power_zone->idr);
-		kfree(power_zone->name);
-		kfree(power_zone->zone_dev_attrs);
-		kfree(power_zone->constraints);
-		if (power_zone->ops->release)
-			power_zone->ops->release(power_zone);
-		if (allocated)
-			kfree(power_zone);
-	} else {
-		struct powercap_control_type *control_type =
-						to_powercap_control_type(dev);
+		/* Store flag as the release() may मुक्त memory */
+		allocated = घातer_zone->allocated;
+		/* Remove id from parent idr काष्ठा */
+		idr_हटाओ(घातer_zone->parent_idr, घातer_zone->id);
+		/* Destroy idrs allocated क्रम this zone */
+		idr_destroy(&घातer_zone->idr);
+		kमुक्त(घातer_zone->name);
+		kमुक्त(घातer_zone->zone_dev_attrs);
+		kमुक्त(घातer_zone->स्थिरraपूर्णांकs);
+		अगर (घातer_zone->ops->release)
+			घातer_zone->ops->release(घातer_zone);
+		अगर (allocated)
+			kमुक्त(घातer_zone);
+	पूर्ण अन्यथा अणु
+		काष्ठा घातercap_control_type *control_type =
+						to_घातercap_control_type(dev);
 
-		/* Store flag as the release() may free memory */
+		/* Store flag as the release() may मुक्त memory */
 		allocated = control_type->allocated;
 		idr_destroy(&control_type->idr);
 		mutex_destroy(&control_type->lock);
-		if (control_type->ops && control_type->ops->release)
+		अगर (control_type->ops && control_type->ops->release)
 			control_type->ops->release(control_type);
-		if (allocated)
-			kfree(control_type);
-	}
-}
+		अगर (allocated)
+			kमुक्त(control_type);
+	पूर्ण
+पूर्ण
 
-static ssize_t enabled_show(struct device *dev,
-				struct device_attribute *attr,
-				char *buf)
-{
+अटल sमाप_प्रकार enabled_show(काष्ठा device *dev,
+				काष्ठा device_attribute *attr,
+				अक्षर *buf)
+अणु
 	bool mode = true;
 
 	/* Default is enabled */
-	if (dev->parent) {
-		struct powercap_zone *power_zone = to_powercap_zone(dev);
-		if (power_zone->ops->get_enable)
-			if (power_zone->ops->get_enable(power_zone, &mode))
+	अगर (dev->parent) अणु
+		काष्ठा घातercap_zone *घातer_zone = to_घातercap_zone(dev);
+		अगर (घातer_zone->ops->get_enable)
+			अगर (घातer_zone->ops->get_enable(घातer_zone, &mode))
 				mode = false;
-	} else {
-		struct powercap_control_type *control_type =
-						to_powercap_control_type(dev);
-		if (control_type->ops && control_type->ops->get_enable)
-			if (control_type->ops->get_enable(control_type, &mode))
+	पूर्ण अन्यथा अणु
+		काष्ठा घातercap_control_type *control_type =
+						to_घातercap_control_type(dev);
+		अगर (control_type->ops && control_type->ops->get_enable)
+			अगर (control_type->ops->get_enable(control_type, &mode))
 				mode = false;
-	}
+	पूर्ण
 
-	return sprintf(buf, "%d\n", mode);
-}
+	वापस प्र_लिखो(buf, "%d\n", mode);
+पूर्ण
 
-static ssize_t enabled_store(struct device *dev,
-				struct device_attribute *attr,
-				const char *buf,  size_t len)
-{
+अटल sमाप_प्रकार enabled_store(काष्ठा device *dev,
+				काष्ठा device_attribute *attr,
+				स्थिर अक्षर *buf,  माप_प्रकार len)
+अणु
 	bool mode;
 
-	if (strtobool(buf, &mode))
-		return -EINVAL;
-	if (dev->parent) {
-		struct powercap_zone *power_zone = to_powercap_zone(dev);
-		if (power_zone->ops->set_enable)
-			if (!power_zone->ops->set_enable(power_zone, mode))
-				return len;
-	} else {
-		struct powercap_control_type *control_type =
-						to_powercap_control_type(dev);
-		if (control_type->ops && control_type->ops->set_enable)
-			if (!control_type->ops->set_enable(control_type, mode))
-				return len;
-	}
+	अगर (strtobool(buf, &mode))
+		वापस -EINVAL;
+	अगर (dev->parent) अणु
+		काष्ठा घातercap_zone *घातer_zone = to_घातercap_zone(dev);
+		अगर (घातer_zone->ops->set_enable)
+			अगर (!घातer_zone->ops->set_enable(घातer_zone, mode))
+				वापस len;
+	पूर्ण अन्यथा अणु
+		काष्ठा घातercap_control_type *control_type =
+						to_घातercap_control_type(dev);
+		अगर (control_type->ops && control_type->ops->set_enable)
+			अगर (!control_type->ops->set_enable(control_type, mode))
+				वापस len;
+	पूर्ण
 
-	return -ENOSYS;
-}
+	वापस -ENOSYS;
+पूर्ण
 
-static DEVICE_ATTR_RW(enabled);
+अटल DEVICE_ATTR_RW(enabled);
 
-static struct attribute *powercap_attrs[] = {
+अटल काष्ठा attribute *घातercap_attrs[] = अणु
 	&dev_attr_enabled.attr,
-	NULL,
-};
-ATTRIBUTE_GROUPS(powercap);
+	शून्य,
+पूर्ण;
+ATTRIBUTE_GROUPS(घातercap);
 
-static struct class powercap_class = {
+अटल काष्ठा class घातercap_class = अणु
 	.name = "powercap",
-	.dev_release = powercap_release,
-	.dev_groups = powercap_groups,
-};
+	.dev_release = घातercap_release,
+	.dev_groups = घातercap_groups,
+पूर्ण;
 
-struct powercap_zone *powercap_register_zone(
-			struct powercap_zone *power_zone,
-			struct powercap_control_type *control_type,
-			const char *name,
-			struct powercap_zone *parent,
-			const struct powercap_zone_ops *ops,
-			int nr_constraints,
-			const struct powercap_zone_constraint_ops *const_ops)
-{
-	int result;
-	int nr_attrs;
+काष्ठा घातercap_zone *घातercap_रेजिस्टर_zone(
+			काष्ठा घातercap_zone *घातer_zone,
+			काष्ठा घातercap_control_type *control_type,
+			स्थिर अक्षर *name,
+			काष्ठा घातercap_zone *parent,
+			स्थिर काष्ठा घातercap_zone_ops *ops,
+			पूर्णांक nr_स्थिरraपूर्णांकs,
+			स्थिर काष्ठा घातercap_zone_स्थिरraपूर्णांक_ops *स्थिर_ops)
+अणु
+	पूर्णांक result;
+	पूर्णांक nr_attrs;
 
-	if (!name || !control_type || !ops ||
-			nr_constraints > MAX_CONSTRAINTS_PER_ZONE ||
-			(!ops->get_energy_uj && !ops->get_power_uw) ||
+	अगर (!name || !control_type || !ops ||
+			nr_स्थिरraपूर्णांकs > MAX_CONSTRAINTS_PER_ZONE ||
+			(!ops->get_energy_uj && !ops->get_घातer_uw) ||
 			!control_type_valid(control_type))
-		return ERR_PTR(-EINVAL);
+		वापस ERR_PTR(-EINVAL);
 
-	if (power_zone) {
-		if (!ops->release)
-			return ERR_PTR(-EINVAL);
-		memset(power_zone, 0, sizeof(*power_zone));
-	} else {
-		power_zone = kzalloc(sizeof(*power_zone), GFP_KERNEL);
-		if (!power_zone)
-			return ERR_PTR(-ENOMEM);
-		power_zone->allocated = true;
-	}
-	power_zone->ops = ops;
-	power_zone->control_type_inst = control_type;
-	if (!parent) {
-		power_zone->dev.parent = &control_type->dev;
-		power_zone->parent_idr = &control_type->idr;
-	} else {
-		power_zone->dev.parent = &parent->dev;
-		power_zone->parent_idr = &parent->idr;
-	}
-	power_zone->dev.class = &powercap_class;
+	अगर (घातer_zone) अणु
+		अगर (!ops->release)
+			वापस ERR_PTR(-EINVAL);
+		स_रखो(घातer_zone, 0, माप(*घातer_zone));
+	पूर्ण अन्यथा अणु
+		घातer_zone = kzalloc(माप(*घातer_zone), GFP_KERNEL);
+		अगर (!घातer_zone)
+			वापस ERR_PTR(-ENOMEM);
+		घातer_zone->allocated = true;
+	पूर्ण
+	घातer_zone->ops = ops;
+	घातer_zone->control_type_inst = control_type;
+	अगर (!parent) अणु
+		घातer_zone->dev.parent = &control_type->dev;
+		घातer_zone->parent_idr = &control_type->idr;
+	पूर्ण अन्यथा अणु
+		घातer_zone->dev.parent = &parent->dev;
+		घातer_zone->parent_idr = &parent->idr;
+	पूर्ण
+	घातer_zone->dev.class = &घातercap_class;
 
 	mutex_lock(&control_type->lock);
 	/* Using idr to get the unique id */
-	result = idr_alloc(power_zone->parent_idr, NULL, 0, 0, GFP_KERNEL);
-	if (result < 0)
-		goto err_idr_alloc;
+	result = idr_alloc(घातer_zone->parent_idr, शून्य, 0, 0, GFP_KERNEL);
+	अगर (result < 0)
+		जाओ err_idr_alloc;
 
-	power_zone->id = result;
-	idr_init(&power_zone->idr);
+	घातer_zone->id = result;
+	idr_init(&घातer_zone->idr);
 	result = -ENOMEM;
-	power_zone->name = kstrdup(name, GFP_KERNEL);
-	if (!power_zone->name)
-		goto err_name_alloc;
-	dev_set_name(&power_zone->dev, "%s:%x",
-					dev_name(power_zone->dev.parent),
-					power_zone->id);
-	power_zone->constraints = kcalloc(nr_constraints,
-					  sizeof(*power_zone->constraints),
+	घातer_zone->name = kstrdup(name, GFP_KERNEL);
+	अगर (!घातer_zone->name)
+		जाओ err_name_alloc;
+	dev_set_name(&घातer_zone->dev, "%s:%x",
+					dev_name(घातer_zone->dev.parent),
+					घातer_zone->id);
+	घातer_zone->स्थिरraपूर्णांकs = kसुस्मृति(nr_स्थिरraपूर्णांकs,
+					  माप(*घातer_zone->स्थिरraपूर्णांकs),
 					  GFP_KERNEL);
-	if (!power_zone->constraints)
-		goto err_const_alloc;
+	अगर (!घातer_zone->स्थिरraपूर्णांकs)
+		जाओ err_स्थिर_alloc;
 
-	nr_attrs = nr_constraints * POWERCAP_CONSTRAINTS_ATTRS +
+	nr_attrs = nr_स्थिरraपूर्णांकs * POWERCAP_CONSTRAINTS_ATTRS +
 						POWERCAP_ZONE_MAX_ATTRS + 1;
-	power_zone->zone_dev_attrs = kcalloc(nr_attrs, sizeof(void *),
+	घातer_zone->zone_dev_attrs = kसुस्मृति(nr_attrs, माप(व्योम *),
 					     GFP_KERNEL);
-	if (!power_zone->zone_dev_attrs)
-		goto err_attr_alloc;
-	create_power_zone_common_attributes(power_zone);
-	result = create_constraints(power_zone, nr_constraints, const_ops);
-	if (result)
-		goto err_dev_ret;
+	अगर (!घातer_zone->zone_dev_attrs)
+		जाओ err_attr_alloc;
+	create_घातer_zone_common_attributes(घातer_zone);
+	result = create_स्थिरraपूर्णांकs(घातer_zone, nr_स्थिरraपूर्णांकs, स्थिर_ops);
+	अगर (result)
+		जाओ err_dev_ret;
 
-	power_zone->zone_dev_attrs[power_zone->zone_attr_count] = NULL;
-	power_zone->dev_zone_attr_group.attrs = power_zone->zone_dev_attrs;
-	power_zone->dev_attr_groups[0] = &power_zone->dev_zone_attr_group;
-	power_zone->dev_attr_groups[1] = NULL;
-	power_zone->dev.groups = power_zone->dev_attr_groups;
-	result = device_register(&power_zone->dev);
-	if (result)
-		goto err_dev_ret;
+	घातer_zone->zone_dev_attrs[घातer_zone->zone_attr_count] = शून्य;
+	घातer_zone->dev_zone_attr_group.attrs = घातer_zone->zone_dev_attrs;
+	घातer_zone->dev_attr_groups[0] = &घातer_zone->dev_zone_attr_group;
+	घातer_zone->dev_attr_groups[1] = शून्य;
+	घातer_zone->dev.groups = घातer_zone->dev_attr_groups;
+	result = device_रेजिस्टर(&घातer_zone->dev);
+	अगर (result)
+		जाओ err_dev_ret;
 
 	control_type->nr_zones++;
 	mutex_unlock(&control_type->lock);
 
-	return power_zone;
+	वापस घातer_zone;
 
 err_dev_ret:
-	kfree(power_zone->zone_dev_attrs);
+	kमुक्त(घातer_zone->zone_dev_attrs);
 err_attr_alloc:
-	kfree(power_zone->constraints);
-err_const_alloc:
-	kfree(power_zone->name);
+	kमुक्त(घातer_zone->स्थिरraपूर्णांकs);
+err_स्थिर_alloc:
+	kमुक्त(घातer_zone->name);
 err_name_alloc:
-	idr_remove(power_zone->parent_idr, power_zone->id);
+	idr_हटाओ(घातer_zone->parent_idr, घातer_zone->id);
 err_idr_alloc:
-	if (power_zone->allocated)
-		kfree(power_zone);
+	अगर (घातer_zone->allocated)
+		kमुक्त(घातer_zone);
 	mutex_unlock(&control_type->lock);
 
-	return ERR_PTR(result);
-}
-EXPORT_SYMBOL_GPL(powercap_register_zone);
+	वापस ERR_PTR(result);
+पूर्ण
+EXPORT_SYMBOL_GPL(घातercap_रेजिस्टर_zone);
 
-int powercap_unregister_zone(struct powercap_control_type *control_type,
-				struct powercap_zone *power_zone)
-{
-	if (!power_zone || !control_type)
-		return -EINVAL;
+पूर्णांक घातercap_unरेजिस्टर_zone(काष्ठा घातercap_control_type *control_type,
+				काष्ठा घातercap_zone *घातer_zone)
+अणु
+	अगर (!घातer_zone || !control_type)
+		वापस -EINVAL;
 
 	mutex_lock(&control_type->lock);
 	control_type->nr_zones--;
 	mutex_unlock(&control_type->lock);
 
-	device_unregister(&power_zone->dev);
+	device_unरेजिस्टर(&घातer_zone->dev);
 
-	return 0;
-}
-EXPORT_SYMBOL_GPL(powercap_unregister_zone);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL_GPL(घातercap_unरेजिस्टर_zone);
 
-struct powercap_control_type *powercap_register_control_type(
-				struct powercap_control_type *control_type,
-				const char *name,
-				const struct powercap_control_type_ops *ops)
-{
-	int result;
+काष्ठा घातercap_control_type *घातercap_रेजिस्टर_control_type(
+				काष्ठा घातercap_control_type *control_type,
+				स्थिर अक्षर *name,
+				स्थिर काष्ठा घातercap_control_type_ops *ops)
+अणु
+	पूर्णांक result;
 
-	if (!name)
-		return ERR_PTR(-EINVAL);
-	if (control_type) {
-		if (!ops || !ops->release)
-			return ERR_PTR(-EINVAL);
-		memset(control_type, 0, sizeof(*control_type));
-	} else {
-		control_type = kzalloc(sizeof(*control_type), GFP_KERNEL);
-		if (!control_type)
-			return ERR_PTR(-ENOMEM);
+	अगर (!name)
+		वापस ERR_PTR(-EINVAL);
+	अगर (control_type) अणु
+		अगर (!ops || !ops->release)
+			वापस ERR_PTR(-EINVAL);
+		स_रखो(control_type, 0, माप(*control_type));
+	पूर्ण अन्यथा अणु
+		control_type = kzalloc(माप(*control_type), GFP_KERNEL);
+		अगर (!control_type)
+			वापस ERR_PTR(-ENOMEM);
 		control_type->allocated = true;
-	}
+	पूर्ण
 	mutex_init(&control_type->lock);
 	control_type->ops = ops;
 	INIT_LIST_HEAD(&control_type->node);
-	control_type->dev.class = &powercap_class;
+	control_type->dev.class = &घातercap_class;
 	dev_set_name(&control_type->dev, "%s", name);
-	result = device_register(&control_type->dev);
-	if (result) {
-		if (control_type->allocated)
-			kfree(control_type);
-		return ERR_PTR(result);
-	}
+	result = device_रेजिस्टर(&control_type->dev);
+	अगर (result) अणु
+		अगर (control_type->allocated)
+			kमुक्त(control_type);
+		वापस ERR_PTR(result);
+	पूर्ण
 	idr_init(&control_type->idr);
 
-	mutex_lock(&powercap_cntrl_list_lock);
-	list_add_tail(&control_type->node, &powercap_cntrl_list);
-	mutex_unlock(&powercap_cntrl_list_lock);
+	mutex_lock(&घातercap_cntrl_list_lock);
+	list_add_tail(&control_type->node, &घातercap_cntrl_list);
+	mutex_unlock(&घातercap_cntrl_list_lock);
 
-	return control_type;
-}
-EXPORT_SYMBOL_GPL(powercap_register_control_type);
+	वापस control_type;
+पूर्ण
+EXPORT_SYMBOL_GPL(घातercap_रेजिस्टर_control_type);
 
-int powercap_unregister_control_type(struct powercap_control_type *control_type)
-{
-	struct powercap_control_type *pos = NULL;
+पूर्णांक घातercap_unरेजिस्टर_control_type(काष्ठा घातercap_control_type *control_type)
+अणु
+	काष्ठा घातercap_control_type *pos = शून्य;
 
-	if (control_type->nr_zones) {
+	अगर (control_type->nr_zones) अणु
 		dev_err(&control_type->dev, "Zones of this type still not freed\n");
-		return -EINVAL;
-	}
-	mutex_lock(&powercap_cntrl_list_lock);
-	list_for_each_entry(pos, &powercap_cntrl_list, node) {
-		if (pos == control_type) {
+		वापस -EINVAL;
+	पूर्ण
+	mutex_lock(&घातercap_cntrl_list_lock);
+	list_क्रम_each_entry(pos, &घातercap_cntrl_list, node) अणु
+		अगर (pos == control_type) अणु
 			list_del(&control_type->node);
-			mutex_unlock(&powercap_cntrl_list_lock);
-			device_unregister(&control_type->dev);
-			return 0;
-		}
-	}
-	mutex_unlock(&powercap_cntrl_list_lock);
+			mutex_unlock(&घातercap_cntrl_list_lock);
+			device_unरेजिस्टर(&control_type->dev);
+			वापस 0;
+		पूर्ण
+	पूर्ण
+	mutex_unlock(&घातercap_cntrl_list_lock);
 
-	return -ENODEV;
-}
-EXPORT_SYMBOL_GPL(powercap_unregister_control_type);
+	वापस -ENODEV;
+पूर्ण
+EXPORT_SYMBOL_GPL(घातercap_unरेजिस्टर_control_type);
 
-static int __init powercap_init(void)
-{
-	int result;
+अटल पूर्णांक __init घातercap_init(व्योम)
+अणु
+	पूर्णांक result;
 
-	result = seed_constraint_attributes();
-	if (result)
-		return result;
+	result = seed_स्थिरraपूर्णांक_attributes();
+	अगर (result)
+		वापस result;
 
-	return class_register(&powercap_class);
-}
+	वापस class_रेजिस्टर(&घातercap_class);
+पूर्ण
 
-fs_initcall(powercap_init);
+fs_initcall(घातercap_init);
 
 MODULE_DESCRIPTION("PowerCap sysfs Driver");
 MODULE_AUTHOR("Srinivas Pandruvada <srinivas.pandruvada@linux.intel.com>");

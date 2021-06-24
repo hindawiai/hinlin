@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * drivers/hwmon/nsa320-hwmon.c
  *
@@ -10,194 +11,194 @@
  * Copyright (C) 2012 Peter Schildmann <linux@schildmann.info>
  */
 
-#include <linux/bitops.h>
-#include <linux/delay.h>
-#include <linux/err.h>
-#include <linux/gpio/consumer.h>
-#include <linux/hwmon.h>
-#include <linux/hwmon-sysfs.h>
-#include <linux/jiffies.h>
-#include <linux/module.h>
-#include <linux/mutex.h>
-#include <linux/of.h>
-#include <linux/of_device.h>
-#include <linux/of_platform.h>
-#include <linux/platform_device.h>
+#समावेश <linux/bitops.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/err.h>
+#समावेश <linux/gpio/consumer.h>
+#समावेश <linux/hwmon.h>
+#समावेश <linux/hwmon-sysfs.h>
+#समावेश <linux/jअगरfies.h>
+#समावेश <linux/module.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/of_platक्रमm.h>
+#समावेश <linux/platक्रमm_device.h>
 
-/* Tests for error return values rely upon this value being < 0x80 */
-#define MAGIC_NUMBER 0x55
+/* Tests क्रम error वापस values rely upon this value being < 0x80 */
+#घोषणा MAGIC_NUMBER 0x55
 
 /*
  * The Zyxel hwmon MCU is a Holtek HT46R065 that is factory programmed
- * to perform temperature and fan speed monitoring. It is read by taking
- * the active pin low. The 32 bit output word is then clocked onto the
+ * to perक्रमm temperature and fan speed monitoring. It is पढ़ो by taking
+ * the active pin low. The 32 bit output word is then घड़ीed onto the
  * data line. The MSB of the data word is a magic nuber to indicate it
- * has been read correctly, the next byte is the fan speed (in hundreds
+ * has been पढ़ो correctly, the next byte is the fan speed (in hundreds
  * of RPM) and the last two bytes are the temperature (in tenths of a
  * degree)
  */
 
-struct nsa320_hwmon {
-	struct mutex		update_lock;	/* lock GPIO operations */
-	unsigned long		last_updated;	/* jiffies */
-	unsigned long		mcu_data;
-	struct gpio_desc	*act;
-	struct gpio_desc	*clk;
-	struct gpio_desc	*data;
-};
+काष्ठा nsa320_hwmon अणु
+	काष्ठा mutex		update_lock;	/* lock GPIO operations */
+	अचिन्हित दीर्घ		last_updated;	/* jअगरfies */
+	अचिन्हित दीर्घ		mcu_data;
+	काष्ठा gpio_desc	*act;
+	काष्ठा gpio_desc	*clk;
+	काष्ठा gpio_desc	*data;
+पूर्ण;
 
-enum nsa320_inputs {
+क्रमागत nsa320_inमाला_दो अणु
 	NSA320_TEMP = 0,
 	NSA320_FAN = 1,
-};
+पूर्ण;
 
-static const char * const nsa320_input_names[] = {
+अटल स्थिर अक्षर * स्थिर nsa320_input_names[] = अणु
 	[NSA320_TEMP] = "System Temperature",
 	[NSA320_FAN] = "Chassis Fan",
-};
+पूर्ण;
 
 /*
- * Although this protocol looks similar to SPI the long delay
- * between the active (aka chip select) signal and the shorter
- * delay between clock pulses are needed for reliable operation.
+ * Although this protocol looks similar to SPI the दीर्घ delay
+ * between the active (aka chip select) संकेत and the लघुer
+ * delay between घड़ी pulses are needed क्रम reliable operation.
  * The delays provided are taken from the manufacturer kernel,
  * testing suggest they probably incorporate a reasonable safety
- * margin. (The single device tested became unreliable if the
+ * margin. (The single device tested became unreliable अगर the
  * delay was reduced to 1/10th of this value.)
  */
-static s32 nsa320_hwmon_update(struct device *dev)
-{
+अटल s32 nsa320_hwmon_update(काष्ठा device *dev)
+अणु
 	u32 mcu_data;
 	u32 mask;
-	struct nsa320_hwmon *hwmon = dev_get_drvdata(dev);
+	काष्ठा nsa320_hwmon *hwmon = dev_get_drvdata(dev);
 
 	mutex_lock(&hwmon->update_lock);
 
 	mcu_data = hwmon->mcu_data;
 
-	if (time_after(jiffies, hwmon->last_updated + HZ) || mcu_data == 0) {
+	अगर (समय_after(jअगरfies, hwmon->last_updated + HZ) || mcu_data == 0) अणु
 		gpiod_set_value(hwmon->act, 1);
 		msleep(100);
 
 		mcu_data = 0;
-		for (mask = BIT(31); mask; mask >>= 1) {
+		क्रम (mask = BIT(31); mask; mask >>= 1) अणु
 			gpiod_set_value(hwmon->clk, 0);
 			usleep_range(100, 200);
 			gpiod_set_value(hwmon->clk, 1);
 			usleep_range(100, 200);
-			if (gpiod_get_value(hwmon->data))
+			अगर (gpiod_get_value(hwmon->data))
 				mcu_data |= mask;
-		}
+		पूर्ण
 
 		gpiod_set_value(hwmon->act, 0);
 		dev_dbg(dev, "Read raw MCU data %08x\n", mcu_data);
 
-		if ((mcu_data >> 24) != MAGIC_NUMBER) {
+		अगर ((mcu_data >> 24) != MAGIC_NUMBER) अणु
 			dev_dbg(dev, "Read invalid MCU data %08x\n", mcu_data);
 			mcu_data = -EIO;
-		} else {
+		पूर्ण अन्यथा अणु
 			hwmon->mcu_data = mcu_data;
-			hwmon->last_updated = jiffies;
-		}
-	}
+			hwmon->last_updated = jअगरfies;
+		पूर्ण
+	पूर्ण
 
 	mutex_unlock(&hwmon->update_lock);
 
-	return mcu_data;
-}
+	वापस mcu_data;
+पूर्ण
 
-static ssize_t label_show(struct device *dev, struct device_attribute *attr,
-			  char *buf)
-{
-	int channel = to_sensor_dev_attr(attr)->index;
+अटल sमाप_प्रकार label_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
+			  अक्षर *buf)
+अणु
+	पूर्णांक channel = to_sensor_dev_attr(attr)->index;
 
-	return sprintf(buf, "%s\n", nsa320_input_names[channel]);
-}
+	वापस प्र_लिखो(buf, "%s\n", nsa320_input_names[channel]);
+पूर्ण
 
-static ssize_t temp1_input_show(struct device *dev,
-				struct device_attribute *attr, char *buf)
-{
+अटल sमाप_प्रकार temp1_input_show(काष्ठा device *dev,
+				काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
 	s32 mcu_data = nsa320_hwmon_update(dev);
 
-	if (mcu_data < 0)
-		return mcu_data;
+	अगर (mcu_data < 0)
+		वापस mcu_data;
 
-	return sprintf(buf, "%d\n", (mcu_data & 0xffff) * 100);
-}
+	वापस प्र_लिखो(buf, "%d\n", (mcu_data & 0xffff) * 100);
+पूर्ण
 
-static ssize_t fan1_input_show(struct device *dev,
-			       struct device_attribute *attr, char *buf)
-{
+अटल sमाप_प्रकार fan1_input_show(काष्ठा device *dev,
+			       काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
 	s32 mcu_data = nsa320_hwmon_update(dev);
 
-	if (mcu_data < 0)
-		return mcu_data;
+	अगर (mcu_data < 0)
+		वापस mcu_data;
 
-	return sprintf(buf, "%d\n", ((mcu_data & 0xff0000) >> 16) * 100);
-}
+	वापस प्र_लिखो(buf, "%d\n", ((mcu_data & 0xff0000) >> 16) * 100);
+पूर्ण
 
-static SENSOR_DEVICE_ATTR_RO(temp1_label, label, NSA320_TEMP);
-static DEVICE_ATTR_RO(temp1_input);
-static SENSOR_DEVICE_ATTR_RO(fan1_label, label, NSA320_FAN);
-static DEVICE_ATTR_RO(fan1_input);
+अटल SENSOR_DEVICE_ATTR_RO(temp1_label, label, NSA320_TEMP);
+अटल DEVICE_ATTR_RO(temp1_input);
+अटल SENSOR_DEVICE_ATTR_RO(fan1_label, label, NSA320_FAN);
+अटल DEVICE_ATTR_RO(fan1_input);
 
-static struct attribute *nsa320_attrs[] = {
+अटल काष्ठा attribute *nsa320_attrs[] = अणु
 	&sensor_dev_attr_temp1_label.dev_attr.attr,
 	&dev_attr_temp1_input.attr,
 	&sensor_dev_attr_fan1_label.dev_attr.attr,
 	&dev_attr_fan1_input.attr,
-	NULL
-};
+	शून्य
+पूर्ण;
 
 ATTRIBUTE_GROUPS(nsa320);
 
-static const struct of_device_id of_nsa320_hwmon_match[] = {
-	{ .compatible = "zyxel,nsa320-mcu", },
-	{ },
-};
+अटल स्थिर काष्ठा of_device_id of_nsa320_hwmon_match[] = अणु
+	अणु .compatible = "zyxel,nsa320-mcu", पूर्ण,
+	अणु पूर्ण,
+पूर्ण;
 
-static int nsa320_hwmon_probe(struct platform_device *pdev)
-{
-	struct nsa320_hwmon	*hwmon;
-	struct device		*classdev;
+अटल पूर्णांक nsa320_hwmon_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा nsa320_hwmon	*hwmon;
+	काष्ठा device		*classdev;
 
-	hwmon = devm_kzalloc(&pdev->dev, sizeof(*hwmon), GFP_KERNEL);
-	if (!hwmon)
-		return -ENOMEM;
+	hwmon = devm_kzalloc(&pdev->dev, माप(*hwmon), GFP_KERNEL);
+	अगर (!hwmon)
+		वापस -ENOMEM;
 
 	/* Look up the GPIO pins to use */
 	hwmon->act = devm_gpiod_get(&pdev->dev, "act", GPIOD_OUT_LOW);
-	if (IS_ERR(hwmon->act))
-		return PTR_ERR(hwmon->act);
+	अगर (IS_ERR(hwmon->act))
+		वापस PTR_ERR(hwmon->act);
 
 	hwmon->clk = devm_gpiod_get(&pdev->dev, "clk", GPIOD_OUT_HIGH);
-	if (IS_ERR(hwmon->clk))
-		return PTR_ERR(hwmon->clk);
+	अगर (IS_ERR(hwmon->clk))
+		वापस PTR_ERR(hwmon->clk);
 
 	hwmon->data = devm_gpiod_get(&pdev->dev, "data", GPIOD_IN);
-	if (IS_ERR(hwmon->data))
-		return PTR_ERR(hwmon->data);
+	अगर (IS_ERR(hwmon->data))
+		वापस PTR_ERR(hwmon->data);
 
 	mutex_init(&hwmon->update_lock);
 
-	classdev = devm_hwmon_device_register_with_groups(&pdev->dev,
+	classdev = devm_hwmon_device_रेजिस्टर_with_groups(&pdev->dev,
 					"nsa320", hwmon, nsa320_groups);
 
-	return PTR_ERR_OR_ZERO(classdev);
+	वापस PTR_ERR_OR_ZERO(classdev);
 
-}
+पूर्ण
 
-/* All allocations use devres so remove() is not needed. */
+/* All allocations use devres so हटाओ() is not needed. */
 
-static struct platform_driver nsa320_hwmon_driver = {
+अटल काष्ठा platक्रमm_driver nsa320_hwmon_driver = अणु
 	.probe = nsa320_hwmon_probe,
-	.driver = {
+	.driver = अणु
 		.name = "nsa320-hwmon",
 		.of_match_table = of_match_ptr(of_nsa320_hwmon_match),
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-module_platform_driver(nsa320_hwmon_driver);
+module_platक्रमm_driver(nsa320_hwmon_driver);
 
 MODULE_DEVICE_TABLE(of, of_nsa320_hwmon_match);
 MODULE_AUTHOR("Peter Schildmann <linux@schildmann.info>");

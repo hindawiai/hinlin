@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * rotary_encoder.c
  *
@@ -7,171 +8,171 @@
  *
  * state machine code inspired by code from Tim Ruetz
  *
- * A generic driver for rotary encoders connected to GPIO lines.
- * See file:Documentation/input/devices/rotary-encoder.rst for more information
+ * A generic driver क्रम rotary encoders connected to GPIO lines.
+ * See file:Documentation/input/devices/rotary-encoder.rst क्रम more inक्रमmation
  */
 
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/interrupt.h>
-#include <linux/input.h>
-#include <linux/device.h>
-#include <linux/platform_device.h>
-#include <linux/gpio/consumer.h>
-#include <linux/slab.h>
-#include <linux/of.h>
-#include <linux/pm.h>
-#include <linux/property.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/input.h>
+#समावेश <linux/device.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/gpio/consumer.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/of.h>
+#समावेश <linux/pm.h>
+#समावेश <linux/property.h>
 
-#define DRV_NAME "rotary-encoder"
+#घोषणा DRV_NAME "rotary-encoder"
 
-enum rotary_encoder_encoding {
+क्रमागत rotary_encoder_encoding अणु
 	ROTENC_GRAY,
 	ROTENC_BINARY,
-};
+पूर्ण;
 
-struct rotary_encoder {
-	struct input_dev *input;
+काष्ठा rotary_encoder अणु
+	काष्ठा input_dev *input;
 
-	struct mutex access_mutex;
+	काष्ठा mutex access_mutex;
 
 	u32 steps;
 	u32 axis;
 	bool relative_axis;
 	bool rollover;
-	enum rotary_encoder_encoding encoding;
+	क्रमागत rotary_encoder_encoding encoding;
 
-	unsigned int pos;
+	अचिन्हित पूर्णांक pos;
 
-	struct gpio_descs *gpios;
+	काष्ठा gpio_descs *gpios;
 
-	unsigned int *irq;
+	अचिन्हित पूर्णांक *irq;
 
 	bool armed;
-	signed char dir;	/* 1 - clockwise, -1 - CCW */
+	चिन्हित अक्षर dir;	/* 1 - घड़ीwise, -1 - CCW */
 
-	unsigned int last_stable;
-};
+	अचिन्हित पूर्णांक last_stable;
+पूर्ण;
 
-static unsigned int rotary_encoder_get_state(struct rotary_encoder *encoder)
-{
-	int i;
-	unsigned int ret = 0;
+अटल अचिन्हित पूर्णांक rotary_encoder_get_state(काष्ठा rotary_encoder *encoder)
+अणु
+	पूर्णांक i;
+	अचिन्हित पूर्णांक ret = 0;
 
-	for (i = 0; i < encoder->gpios->ndescs; ++i) {
-		int val = gpiod_get_value_cansleep(encoder->gpios->desc[i]);
+	क्रम (i = 0; i < encoder->gpios->ndescs; ++i) अणु
+		पूर्णांक val = gpiod_get_value_cansleep(encoder->gpios->desc[i]);
 
 		/* convert from gray encoding to normal */
-		if (encoder->encoding == ROTENC_GRAY && ret & 1)
+		अगर (encoder->encoding == ROTENC_GRAY && ret & 1)
 			val = !val;
 
 		ret = ret << 1 | val;
-	}
+	पूर्ण
 
-	return ret & 3;
-}
+	वापस ret & 3;
+पूर्ण
 
-static void rotary_encoder_report_event(struct rotary_encoder *encoder)
-{
-	if (encoder->relative_axis) {
+अटल व्योम rotary_encoder_report_event(काष्ठा rotary_encoder *encoder)
+अणु
+	अगर (encoder->relative_axis) अणु
 		input_report_rel(encoder->input,
 				 encoder->axis, encoder->dir);
-	} else {
-		unsigned int pos = encoder->pos;
+	पूर्ण अन्यथा अणु
+		अचिन्हित पूर्णांक pos = encoder->pos;
 
-		if (encoder->dir < 0) {
-			/* turning counter-clockwise */
-			if (encoder->rollover)
+		अगर (encoder->dir < 0) अणु
+			/* turning counter-घड़ीwise */
+			अगर (encoder->rollover)
 				pos += encoder->steps;
-			if (pos)
+			अगर (pos)
 				pos--;
-		} else {
-			/* turning clockwise */
-			if (encoder->rollover || pos < encoder->steps)
+		पूर्ण अन्यथा अणु
+			/* turning घड़ीwise */
+			अगर (encoder->rollover || pos < encoder->steps)
 				pos++;
-		}
+		पूर्ण
 
-		if (encoder->rollover)
+		अगर (encoder->rollover)
 			pos %= encoder->steps;
 
 		encoder->pos = pos;
-		input_report_abs(encoder->input, encoder->axis, encoder->pos);
-	}
+		input_report_असल(encoder->input, encoder->axis, encoder->pos);
+	पूर्ण
 
 	input_sync(encoder->input);
-}
+पूर्ण
 
-static irqreturn_t rotary_encoder_irq(int irq, void *dev_id)
-{
-	struct rotary_encoder *encoder = dev_id;
-	unsigned int state;
+अटल irqवापस_t rotary_encoder_irq(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा rotary_encoder *encoder = dev_id;
+	अचिन्हित पूर्णांक state;
 
 	mutex_lock(&encoder->access_mutex);
 
 	state = rotary_encoder_get_state(encoder);
 
-	switch (state) {
-	case 0x0:
-		if (encoder->armed) {
+	चयन (state) अणु
+	हाल 0x0:
+		अगर (encoder->armed) अणु
 			rotary_encoder_report_event(encoder);
 			encoder->armed = false;
-		}
-		break;
+		पूर्ण
+		अवरोध;
 
-	case 0x1:
-	case 0x3:
-		if (encoder->armed)
+	हाल 0x1:
+	हाल 0x3:
+		अगर (encoder->armed)
 			encoder->dir = 2 - state;
-		break;
+		अवरोध;
 
-	case 0x2:
+	हाल 0x2:
 		encoder->armed = true;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	mutex_unlock(&encoder->access_mutex);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static irqreturn_t rotary_encoder_half_period_irq(int irq, void *dev_id)
-{
-	struct rotary_encoder *encoder = dev_id;
-	unsigned int state;
+अटल irqवापस_t rotary_encoder_half_period_irq(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा rotary_encoder *encoder = dev_id;
+	अचिन्हित पूर्णांक state;
 
 	mutex_lock(&encoder->access_mutex);
 
 	state = rotary_encoder_get_state(encoder);
 
-	if (state & 1) {
+	अगर (state & 1) अणु
 		encoder->dir = ((encoder->last_stable - state + 1) % 4) - 1;
-	} else {
-		if (state != encoder->last_stable) {
+	पूर्ण अन्यथा अणु
+		अगर (state != encoder->last_stable) अणु
 			rotary_encoder_report_event(encoder);
 			encoder->last_stable = state;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	mutex_unlock(&encoder->access_mutex);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static irqreturn_t rotary_encoder_quarter_period_irq(int irq, void *dev_id)
-{
-	struct rotary_encoder *encoder = dev_id;
-	unsigned int state;
+अटल irqवापस_t rotary_encoder_quarter_period_irq(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा rotary_encoder *encoder = dev_id;
+	अचिन्हित पूर्णांक state;
 
 	mutex_lock(&encoder->access_mutex);
 
 	state = rotary_encoder_get_state(encoder);
 
-	if ((encoder->last_stable + 1) % 4 == state)
+	अगर ((encoder->last_stable + 1) % 4 == state)
 		encoder->dir = 1;
-	else if (encoder->last_stable == (state + 1) % 4)
+	अन्यथा अगर (encoder->last_stable == (state + 1) % 4)
 		encoder->dir = -1;
-	else
-		goto out;
+	अन्यथा
+		जाओ out;
 
 	rotary_encoder_report_event(encoder);
 
@@ -179,77 +180,77 @@ out:
 	encoder->last_stable = state;
 	mutex_unlock(&encoder->access_mutex);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static int rotary_encoder_probe(struct platform_device *pdev)
-{
-	struct device *dev = &pdev->dev;
-	struct rotary_encoder *encoder;
-	struct input_dev *input;
+अटल पूर्णांक rotary_encoder_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा rotary_encoder *encoder;
+	काष्ठा input_dev *input;
 	irq_handler_t handler;
 	u32 steps_per_period;
-	unsigned int i;
-	int err;
+	अचिन्हित पूर्णांक i;
+	पूर्णांक err;
 
-	encoder = devm_kzalloc(dev, sizeof(struct rotary_encoder), GFP_KERNEL);
-	if (!encoder)
-		return -ENOMEM;
+	encoder = devm_kzalloc(dev, माप(काष्ठा rotary_encoder), GFP_KERNEL);
+	अगर (!encoder)
+		वापस -ENOMEM;
 
 	mutex_init(&encoder->access_mutex);
 
-	device_property_read_u32(dev, "rotary-encoder,steps", &encoder->steps);
+	device_property_पढ़ो_u32(dev, "rotary-encoder,steps", &encoder->steps);
 
-	err = device_property_read_u32(dev, "rotary-encoder,steps-per-period",
+	err = device_property_पढ़ो_u32(dev, "rotary-encoder,steps-per-period",
 				       &steps_per_period);
-	if (err) {
+	अगर (err) अणु
 		/*
 		 * The 'half-period' property has been deprecated, you must
 		 * use 'steps-per-period' and set an appropriate value, but
-		 * we still need to parse it to maintain compatibility. If
+		 * we still need to parse it to मुख्यtain compatibility. If
 		 * neither property is present we fall back to the one step
 		 * per period behavior.
 		 */
-		steps_per_period = device_property_read_bool(dev,
+		steps_per_period = device_property_पढ़ो_bool(dev,
 					"rotary-encoder,half-period") ? 2 : 1;
-	}
+	पूर्ण
 
 	encoder->rollover =
-		device_property_read_bool(dev, "rotary-encoder,rollover");
+		device_property_पढ़ो_bool(dev, "rotary-encoder,rollover");
 
-	if (!device_property_present(dev, "rotary-encoder,encoding") ||
+	अगर (!device_property_present(dev, "rotary-encoder,encoding") ||
 	    !device_property_match_string(dev, "rotary-encoder,encoding",
-					  "gray")) {
+					  "gray")) अणु
 		dev_info(dev, "gray");
 		encoder->encoding = ROTENC_GRAY;
-	} else if (!device_property_match_string(dev, "rotary-encoder,encoding",
-						 "binary")) {
+	पूर्ण अन्यथा अगर (!device_property_match_string(dev, "rotary-encoder,encoding",
+						 "binary")) अणु
 		dev_info(dev, "binary");
 		encoder->encoding = ROTENC_BINARY;
-	} else {
+	पूर्ण अन्यथा अणु
 		dev_err(dev, "unknown encoding setting\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	device_property_read_u32(dev, "linux,axis", &encoder->axis);
+	device_property_पढ़ो_u32(dev, "linux,axis", &encoder->axis);
 	encoder->relative_axis =
-		device_property_read_bool(dev, "rotary-encoder,relative-axis");
+		device_property_पढ़ो_bool(dev, "rotary-encoder,relative-axis");
 
-	encoder->gpios = devm_gpiod_get_array(dev, NULL, GPIOD_IN);
-	if (IS_ERR(encoder->gpios)) {
+	encoder->gpios = devm_gpiod_get_array(dev, शून्य, GPIOD_IN);
+	अगर (IS_ERR(encoder->gpios)) अणु
 		err = PTR_ERR(encoder->gpios);
-		if (err != -EPROBE_DEFER)
+		अगर (err != -EPROBE_DEFER)
 			dev_err(dev, "unable to get gpios: %d\n", err);
-		return err;
-	}
-	if (encoder->gpios->ndescs < 2) {
+		वापस err;
+	पूर्ण
+	अगर (encoder->gpios->ndescs < 2) अणु
 		dev_err(dev, "not enough gpios found\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	input = devm_input_allocate_device(dev);
-	if (!input)
-		return -ENOMEM;
+	अगर (!input)
+		वापस -ENOMEM;
 
 	encoder->input = input;
 
@@ -257,112 +258,112 @@ static int rotary_encoder_probe(struct platform_device *pdev)
 	input->id.bustype = BUS_HOST;
 	input->dev.parent = dev;
 
-	if (encoder->relative_axis)
+	अगर (encoder->relative_axis)
 		input_set_capability(input, EV_REL, encoder->axis);
-	else
-		input_set_abs_params(input,
+	अन्यथा
+		input_set_असल_params(input,
 				     encoder->axis, 0, encoder->steps, 0, 1);
 
-	switch (steps_per_period >> (encoder->gpios->ndescs - 2)) {
-	case 4:
+	चयन (steps_per_period >> (encoder->gpios->ndescs - 2)) अणु
+	हाल 4:
 		handler = &rotary_encoder_quarter_period_irq;
 		encoder->last_stable = rotary_encoder_get_state(encoder);
-		break;
-	case 2:
+		अवरोध;
+	हाल 2:
 		handler = &rotary_encoder_half_period_irq;
 		encoder->last_stable = rotary_encoder_get_state(encoder);
-		break;
-	case 1:
+		अवरोध;
+	हाल 1:
 		handler = &rotary_encoder_irq;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		dev_err(dev, "'%d' is not a valid steps-per-period value\n",
 			steps_per_period);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	encoder->irq =
-		devm_kcalloc(dev,
-			     encoder->gpios->ndescs, sizeof(*encoder->irq),
+		devm_kसुस्मृति(dev,
+			     encoder->gpios->ndescs, माप(*encoder->irq),
 			     GFP_KERNEL);
-	if (!encoder->irq)
-		return -ENOMEM;
+	अगर (!encoder->irq)
+		वापस -ENOMEM;
 
-	for (i = 0; i < encoder->gpios->ndescs; ++i) {
+	क्रम (i = 0; i < encoder->gpios->ndescs; ++i) अणु
 		encoder->irq[i] = gpiod_to_irq(encoder->gpios->desc[i]);
 
-		err = devm_request_threaded_irq(dev, encoder->irq[i],
-				NULL, handler,
+		err = devm_request_thपढ़ोed_irq(dev, encoder->irq[i],
+				शून्य, handler,
 				IRQF_TRIGGER_RISING | IRQF_TRIGGER_FALLING |
 				IRQF_ONESHOT,
 				DRV_NAME, encoder);
-		if (err) {
+		अगर (err) अणु
 			dev_err(dev, "unable to request IRQ %d (gpio#%d)\n",
 				encoder->irq[i], i);
-			return err;
-		}
-	}
+			वापस err;
+		पूर्ण
+	पूर्ण
 
-	err = input_register_device(input);
-	if (err) {
+	err = input_रेजिस्टर_device(input);
+	अगर (err) अणु
 		dev_err(dev, "failed to register input device\n");
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
 	device_init_wakeup(dev,
-			   device_property_read_bool(dev, "wakeup-source"));
+			   device_property_पढ़ो_bool(dev, "wakeup-source"));
 
-	platform_set_drvdata(pdev, encoder);
+	platक्रमm_set_drvdata(pdev, encoder);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __maybe_unused rotary_encoder_suspend(struct device *dev)
-{
-	struct rotary_encoder *encoder = dev_get_drvdata(dev);
-	unsigned int i;
+अटल पूर्णांक __maybe_unused rotary_encoder_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा rotary_encoder *encoder = dev_get_drvdata(dev);
+	अचिन्हित पूर्णांक i;
 
-	if (device_may_wakeup(dev)) {
-		for (i = 0; i < encoder->gpios->ndescs; ++i)
+	अगर (device_may_wakeup(dev)) अणु
+		क्रम (i = 0; i < encoder->gpios->ndescs; ++i)
 			enable_irq_wake(encoder->irq[i]);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __maybe_unused rotary_encoder_resume(struct device *dev)
-{
-	struct rotary_encoder *encoder = dev_get_drvdata(dev);
-	unsigned int i;
+अटल पूर्णांक __maybe_unused rotary_encoder_resume(काष्ठा device *dev)
+अणु
+	काष्ठा rotary_encoder *encoder = dev_get_drvdata(dev);
+	अचिन्हित पूर्णांक i;
 
-	if (device_may_wakeup(dev)) {
-		for (i = 0; i < encoder->gpios->ndescs; ++i)
+	अगर (device_may_wakeup(dev)) अणु
+		क्रम (i = 0; i < encoder->gpios->ndescs; ++i)
 			disable_irq_wake(encoder->irq[i]);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static SIMPLE_DEV_PM_OPS(rotary_encoder_pm_ops,
+अटल SIMPLE_DEV_PM_OPS(rotary_encoder_pm_ops,
 			 rotary_encoder_suspend, rotary_encoder_resume);
 
-#ifdef CONFIG_OF
-static const struct of_device_id rotary_encoder_of_match[] = {
-	{ .compatible = "rotary-encoder", },
-	{ },
-};
+#अगर_घोषित CONFIG_OF
+अटल स्थिर काष्ठा of_device_id rotary_encoder_of_match[] = अणु
+	अणु .compatible = "rotary-encoder", पूर्ण,
+	अणु पूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, rotary_encoder_of_match);
-#endif
+#पूर्ण_अगर
 
-static struct platform_driver rotary_encoder_driver = {
+अटल काष्ठा platक्रमm_driver rotary_encoder_driver = अणु
 	.probe		= rotary_encoder_probe,
-	.driver		= {
+	.driver		= अणु
 		.name	= DRV_NAME,
 		.pm	= &rotary_encoder_pm_ops,
 		.of_match_table = of_match_ptr(rotary_encoder_of_match),
-	}
-};
-module_platform_driver(rotary_encoder_driver);
+	पूर्ण
+पूर्ण;
+module_platक्रमm_driver(rotary_encoder_driver);
 
 MODULE_ALIAS("platform:" DRV_NAME);
 MODULE_DESCRIPTION("GPIO rotary encoder driver");

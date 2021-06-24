@@ -1,32 +1,33 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 //
-// da9210-regulator.c - Regulator device driver for DA9210
+// da9210-regulator.c - Regulator device driver क्रम DA9210
 // Copyright (C) 2013  Dialog Semiconductor Ltd.
 
-#include <linux/err.h>
-#include <linux/i2c.h>
-#include <linux/module.h>
-#include <linux/interrupt.h>
-#include <linux/irq.h>
-#include <linux/regulator/driver.h>
-#include <linux/regulator/machine.h>
-#include <linux/of_device.h>
-#include <linux/regulator/of_regulator.h>
-#include <linux/regmap.h>
+#समावेश <linux/err.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/module.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/irq.h>
+#समावेश <linux/regulator/driver.h>
+#समावेश <linux/regulator/machine.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/regulator/of_regulator.h>
+#समावेश <linux/regmap.h>
 
-#include "da9210-regulator.h"
+#समावेश "da9210-regulator.h"
 
-struct da9210 {
-	struct regulator_dev *rdev;
-	struct regmap *regmap;
-};
+काष्ठा da9210 अणु
+	काष्ठा regulator_dev *rdev;
+	काष्ठा regmap *regmap;
+पूर्ण;
 
-static const struct regmap_config da9210_regmap_config = {
+अटल स्थिर काष्ठा regmap_config da9210_regmap_config = अणु
 	.reg_bits = 8,
 	.val_bits = 8,
-};
+पूर्ण;
 
-static const struct regulator_ops da9210_buck_ops = {
+अटल स्थिर काष्ठा regulator_ops da9210_buck_ops = अणु
 	.enable = regulator_enable_regmap,
 	.disable = regulator_disable_regmap,
 	.is_enabled = regulator_is_enabled_regmap,
@@ -35,20 +36,20 @@ static const struct regulator_ops da9210_buck_ops = {
 	.list_voltage = regulator_list_voltage_linear,
 	.set_current_limit = regulator_set_current_limit_regmap,
 	.get_current_limit = regulator_get_current_limit_regmap,
-};
+पूर्ण;
 
 /* Default limits measured in millivolts and milliamps */
-#define DA9210_MIN_MV		300
-#define DA9210_MAX_MV		1570
-#define DA9210_STEP_MV		10
+#घोषणा DA9210_MIN_MV		300
+#घोषणा DA9210_MAX_MV		1570
+#घोषणा DA9210_STEP_MV		10
 
-/* Current limits for buck (uA) indices corresponds with register values */
-static const unsigned int da9210_buck_limits[] = {
+/* Current limits क्रम buck (uA) indices corresponds with रेजिस्टर values */
+अटल स्थिर अचिन्हित पूर्णांक da9210_buck_limits[] = अणु
 	1600000, 1800000, 2000000, 2200000, 2400000, 2600000, 2800000, 3000000,
 	3200000, 3400000, 3600000, 3800000, 4000000, 4200000, 4400000, 4600000
-};
+पूर्ण;
 
-static const struct regulator_desc da9210_reg = {
+अटल स्थिर काष्ठा regulator_desc da9210_reg = अणु
 	.name = "DA9210",
 	.id = 0,
 	.ops = &da9210_buck_ops,
@@ -65,167 +66,167 @@ static const struct regulator_desc da9210_reg = {
 	.n_current_limits = ARRAY_SIZE(da9210_buck_limits),
 	.csel_reg = DA9210_REG_BUCK_ILIM,
 	.csel_mask = DA9210_BUCK_ILIM_MASK,
-};
+पूर्ण;
 
-static irqreturn_t da9210_irq_handler(int irq, void *data)
-{
-	struct da9210 *chip = data;
-	unsigned int val, handled = 0;
-	int error, ret = IRQ_NONE;
+अटल irqवापस_t da9210_irq_handler(पूर्णांक irq, व्योम *data)
+अणु
+	काष्ठा da9210 *chip = data;
+	अचिन्हित पूर्णांक val, handled = 0;
+	पूर्णांक error, ret = IRQ_NONE;
 
-	error = regmap_read(chip->regmap, DA9210_REG_EVENT_B, &val);
-	if (error < 0)
-		goto error_i2c;
+	error = regmap_पढ़ो(chip->regmap, DA9210_REG_EVENT_B, &val);
+	अगर (error < 0)
+		जाओ error_i2c;
 
-	if (val & DA9210_E_OVCURR) {
-		regulator_notifier_call_chain(chip->rdev,
+	अगर (val & DA9210_E_OVCURR) अणु
+		regulator_notअगरier_call_chain(chip->rdev,
 					      REGULATOR_EVENT_OVER_CURRENT,
-					      NULL);
+					      शून्य);
 		handled |= DA9210_E_OVCURR;
-	}
-	if (val & DA9210_E_NPWRGOOD) {
-		regulator_notifier_call_chain(chip->rdev,
+	पूर्ण
+	अगर (val & DA9210_E_NPWRGOOD) अणु
+		regulator_notअगरier_call_chain(chip->rdev,
 					      REGULATOR_EVENT_UNDER_VOLTAGE,
-					      NULL);
+					      शून्य);
 		handled |= DA9210_E_NPWRGOOD;
-	}
-	if (val & (DA9210_E_TEMP_WARN | DA9210_E_TEMP_CRIT)) {
-		regulator_notifier_call_chain(chip->rdev,
-					      REGULATOR_EVENT_OVER_TEMP, NULL);
+	पूर्ण
+	अगर (val & (DA9210_E_TEMP_WARN | DA9210_E_TEMP_CRIT)) अणु
+		regulator_notअगरier_call_chain(chip->rdev,
+					      REGULATOR_EVENT_OVER_TEMP, शून्य);
 		handled |= val & (DA9210_E_TEMP_WARN | DA9210_E_TEMP_CRIT);
-	}
-	if (val & DA9210_E_VMAX) {
-		regulator_notifier_call_chain(chip->rdev,
+	पूर्ण
+	अगर (val & DA9210_E_VMAX) अणु
+		regulator_notअगरier_call_chain(chip->rdev,
 					      REGULATOR_EVENT_REGULATION_OUT,
-					      NULL);
+					      शून्य);
 		handled |= DA9210_E_VMAX;
-	}
+	पूर्ण
 
-	if (handled) {
+	अगर (handled) अणु
 		/* Clear handled events */
-		error = regmap_write(chip->regmap, DA9210_REG_EVENT_B, handled);
-		if (error < 0)
-			goto error_i2c;
+		error = regmap_ग_लिखो(chip->regmap, DA9210_REG_EVENT_B, handled);
+		अगर (error < 0)
+			जाओ error_i2c;
 
 		ret = IRQ_HANDLED;
-	}
+	पूर्ण
 
-	return ret;
+	वापस ret;
 
 error_i2c:
 	dev_err(regmap_get_device(chip->regmap), "I2C error : %d\n", error);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
- * I2C driver interface functions
+ * I2C driver पूर्णांकerface functions
  */
 
-static const struct of_device_id __maybe_unused da9210_dt_ids[] = {
-	{ .compatible = "dlg,da9210", },
-	{ }
-};
+अटल स्थिर काष्ठा of_device_id __maybe_unused da9210_dt_ids[] = अणु
+	अणु .compatible = "dlg,da9210", पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, da9210_dt_ids);
 
-static int da9210_i2c_probe(struct i2c_client *i2c)
-{
-	struct da9210 *chip;
-	struct device *dev = &i2c->dev;
-	struct da9210_pdata *pdata = dev_get_platdata(dev);
-	struct regulator_dev *rdev = NULL;
-	struct regulator_config config = { };
-	int error;
-	const struct of_device_id *match;
+अटल पूर्णांक da9210_i2c_probe(काष्ठा i2c_client *i2c)
+अणु
+	काष्ठा da9210 *chip;
+	काष्ठा device *dev = &i2c->dev;
+	काष्ठा da9210_pdata *pdata = dev_get_platdata(dev);
+	काष्ठा regulator_dev *rdev = शून्य;
+	काष्ठा regulator_config config = अणु पूर्ण;
+	पूर्णांक error;
+	स्थिर काष्ठा of_device_id *match;
 
-	if (i2c->dev.of_node && !pdata) {
+	अगर (i2c->dev.of_node && !pdata) अणु
 		match = of_match_device(of_match_ptr(da9210_dt_ids),
 						&i2c->dev);
-		if (!match) {
+		अगर (!match) अणु
 			dev_err(&i2c->dev, "Error: No device match found\n");
-			return -ENODEV;
-		}
-	}
+			वापस -ENODEV;
+		पूर्ण
+	पूर्ण
 
-	chip = devm_kzalloc(&i2c->dev, sizeof(struct da9210), GFP_KERNEL);
-	if (!chip)
-		return -ENOMEM;
+	chip = devm_kzalloc(&i2c->dev, माप(काष्ठा da9210), GFP_KERNEL);
+	अगर (!chip)
+		वापस -ENOMEM;
 
 	chip->regmap = devm_regmap_init_i2c(i2c, &da9210_regmap_config);
-	if (IS_ERR(chip->regmap)) {
+	अगर (IS_ERR(chip->regmap)) अणु
 		error = PTR_ERR(chip->regmap);
 		dev_err(&i2c->dev, "Failed to allocate register map: %d\n",
 			error);
-		return error;
-	}
+		वापस error;
+	पूर्ण
 
 	config.dev = &i2c->dev;
-	config.init_data = pdata ? &pdata->da9210_constraints :
+	config.init_data = pdata ? &pdata->da9210_स्थिरraपूर्णांकs :
 		of_get_regulator_init_data(dev, dev->of_node, &da9210_reg);
 	config.driver_data = chip;
 	config.regmap = chip->regmap;
 	config.of_node = dev->of_node;
 
-	/* Mask all interrupt sources to deassert interrupt line */
-	error = regmap_write(chip->regmap, DA9210_REG_MASK_A, ~0);
-	if (!error)
-		error = regmap_write(chip->regmap, DA9210_REG_MASK_B, ~0);
-	if (error) {
+	/* Mask all पूर्णांकerrupt sources to deनिश्चित पूर्णांकerrupt line */
+	error = regmap_ग_लिखो(chip->regmap, DA9210_REG_MASK_A, ~0);
+	अगर (!error)
+		error = regmap_ग_लिखो(chip->regmap, DA9210_REG_MASK_B, ~0);
+	अगर (error) अणु
 		dev_err(&i2c->dev, "Failed to write to mask reg: %d\n", error);
-		return error;
-	}
+		वापस error;
+	पूर्ण
 
-	rdev = devm_regulator_register(&i2c->dev, &da9210_reg, &config);
-	if (IS_ERR(rdev)) {
+	rdev = devm_regulator_रेजिस्टर(&i2c->dev, &da9210_reg, &config);
+	अगर (IS_ERR(rdev)) अणु
 		dev_err(&i2c->dev, "Failed to register DA9210 regulator\n");
-		return PTR_ERR(rdev);
-	}
+		वापस PTR_ERR(rdev);
+	पूर्ण
 
 	chip->rdev = rdev;
-	if (i2c->irq) {
-		error = devm_request_threaded_irq(&i2c->dev, i2c->irq, NULL,
+	अगर (i2c->irq) अणु
+		error = devm_request_thपढ़ोed_irq(&i2c->dev, i2c->irq, शून्य,
 						  da9210_irq_handler,
 						  IRQF_TRIGGER_LOW |
 						  IRQF_ONESHOT | IRQF_SHARED,
 						  "da9210", chip);
-		if (error) {
+		अगर (error) अणु
 			dev_err(&i2c->dev, "Failed to request IRQ%u: %d\n",
 				i2c->irq, error);
-			return error;
-		}
+			वापस error;
+		पूर्ण
 
 		error = regmap_update_bits(chip->regmap, DA9210_REG_MASK_B,
 					 DA9210_M_OVCURR | DA9210_M_NPWRGOOD |
 					 DA9210_M_TEMP_WARN |
 					 DA9210_M_TEMP_CRIT | DA9210_M_VMAX, 0);
-		if (error < 0) {
+		अगर (error < 0) अणु
 			dev_err(&i2c->dev, "Failed to update mask reg: %d\n",
 				error);
-			return error;
-		}
-	} else {
+			वापस error;
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		dev_warn(&i2c->dev, "No IRQ configured\n");
-	}
+	पूर्ण
 
 	i2c_set_clientdata(i2c, chip);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct i2c_device_id da9210_i2c_id[] = {
-	{"da9210", 0},
-	{},
-};
+अटल स्थिर काष्ठा i2c_device_id da9210_i2c_id[] = अणु
+	अणु"da9210", 0पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 
 MODULE_DEVICE_TABLE(i2c, da9210_i2c_id);
 
-static struct i2c_driver da9210_regulator_driver = {
-	.driver = {
+अटल काष्ठा i2c_driver da9210_regulator_driver = अणु
+	.driver = अणु
 		.name = "da9210",
 		.of_match_table = of_match_ptr(da9210_dt_ids),
-	},
+	पूर्ण,
 	.probe_new = da9210_i2c_probe,
 	.id_table = da9210_i2c_id,
-};
+पूर्ण;
 
 module_i2c_driver(da9210_regulator_driver);
 

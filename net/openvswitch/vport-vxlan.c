@@ -1,168 +1,169 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (c) 2014 Nicira, Inc.
  * Copyright (c) 2013 Cisco Systems, Inc.
  */
 
-#include <linux/kernel.h>
-#include <linux/skbuff.h>
-#include <linux/openvswitch.h>
-#include <linux/module.h>
-#include <net/udp.h>
-#include <net/ip_tunnels.h>
-#include <net/rtnetlink.h>
-#include <net/vxlan.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/skbuff.h>
+#समावेश <linux/खोलोvचयन.h>
+#समावेश <linux/module.h>
+#समावेश <net/udp.h>
+#समावेश <net/ip_tunnels.h>
+#समावेश <net/rtnetlink.h>
+#समावेश <net/vxlan.h>
 
-#include "datapath.h"
-#include "vport.h"
-#include "vport-netdev.h"
+#समावेश "datapath.h"
+#समावेश "vport.h"
+#समावेश "vport-netdev.h"
 
-static struct vport_ops ovs_vxlan_netdev_vport_ops;
+अटल काष्ठा vport_ops ovs_vxlan_netdev_vport_ops;
 
-static int vxlan_get_options(const struct vport *vport, struct sk_buff *skb)
-{
-	struct vxlan_dev *vxlan = netdev_priv(vport->dev);
+अटल पूर्णांक vxlan_get_options(स्थिर काष्ठा vport *vport, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा vxlan_dev *vxlan = netdev_priv(vport->dev);
 	__be16 dst_port = vxlan->cfg.dst_port;
 
-	if (nla_put_u16(skb, OVS_TUNNEL_ATTR_DST_PORT, ntohs(dst_port)))
-		return -EMSGSIZE;
+	अगर (nla_put_u16(skb, OVS_TUNNEL_ATTR_DST_PORT, ntohs(dst_port)))
+		वापस -EMSGSIZE;
 
-	if (vxlan->cfg.flags & VXLAN_F_GBP) {
-		struct nlattr *exts;
+	अगर (vxlan->cfg.flags & VXLAN_F_GBP) अणु
+		काष्ठा nlattr *exts;
 
 		exts = nla_nest_start_noflag(skb, OVS_TUNNEL_ATTR_EXTENSION);
-		if (!exts)
-			return -EMSGSIZE;
+		अगर (!exts)
+			वापस -EMSGSIZE;
 
-		if (vxlan->cfg.flags & VXLAN_F_GBP &&
+		अगर (vxlan->cfg.flags & VXLAN_F_GBP &&
 		    nla_put_flag(skb, OVS_VXLAN_EXT_GBP))
-			return -EMSGSIZE;
+			वापस -EMSGSIZE;
 
 		nla_nest_end(skb, exts);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct nla_policy exts_policy[OVS_VXLAN_EXT_MAX + 1] = {
-	[OVS_VXLAN_EXT_GBP]	= { .type = NLA_FLAG, },
-};
+अटल स्थिर काष्ठा nla_policy exts_policy[OVS_VXLAN_EXT_MAX + 1] = अणु
+	[OVS_VXLAN_EXT_GBP]	= अणु .type = NLA_FLAG, पूर्ण,
+पूर्ण;
 
-static int vxlan_configure_exts(struct vport *vport, struct nlattr *attr,
-				struct vxlan_config *conf)
-{
-	struct nlattr *exts[OVS_VXLAN_EXT_MAX + 1];
-	int err;
+अटल पूर्णांक vxlan_configure_exts(काष्ठा vport *vport, काष्ठा nlattr *attr,
+				काष्ठा vxlan_config *conf)
+अणु
+	काष्ठा nlattr *exts[OVS_VXLAN_EXT_MAX + 1];
+	पूर्णांक err;
 
-	if (nla_len(attr) < sizeof(struct nlattr))
-		return -EINVAL;
+	अगर (nla_len(attr) < माप(काष्ठा nlattr))
+		वापस -EINVAL;
 
 	err = nla_parse_nested_deprecated(exts, OVS_VXLAN_EXT_MAX, attr,
-					  exts_policy, NULL);
-	if (err < 0)
-		return err;
+					  exts_policy, शून्य);
+	अगर (err < 0)
+		वापस err;
 
-	if (exts[OVS_VXLAN_EXT_GBP])
+	अगर (exts[OVS_VXLAN_EXT_GBP])
 		conf->flags |= VXLAN_F_GBP;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct vport *vxlan_tnl_create(const struct vport_parms *parms)
-{
-	struct net *net = ovs_dp_get_net(parms->dp);
-	struct nlattr *options = parms->options;
-	struct net_device *dev;
-	struct vport *vport;
-	struct nlattr *a;
-	int err;
-	struct vxlan_config conf = {
+अटल काष्ठा vport *vxlan_tnl_create(स्थिर काष्ठा vport_parms *parms)
+अणु
+	काष्ठा net *net = ovs_dp_get_net(parms->dp);
+	काष्ठा nlattr *options = parms->options;
+	काष्ठा net_device *dev;
+	काष्ठा vport *vport;
+	काष्ठा nlattr *a;
+	पूर्णांक err;
+	काष्ठा vxlan_config conf = अणु
 		.no_share = true,
 		.flags = VXLAN_F_COLLECT_METADATA | VXLAN_F_UDP_ZERO_CSUM6_RX,
 		/* Don't restrict the packets that can be sent by MTU */
 		.mtu = IP_MAX_MTU,
-	};
+	पूर्ण;
 
-	if (!options) {
+	अगर (!options) अणु
 		err = -EINVAL;
-		goto error;
-	}
+		जाओ error;
+	पूर्ण
 
 	a = nla_find_nested(options, OVS_TUNNEL_ATTR_DST_PORT);
-	if (a && nla_len(a) == sizeof(u16)) {
+	अगर (a && nla_len(a) == माप(u16)) अणु
 		conf.dst_port = htons(nla_get_u16(a));
-	} else {
+	पूर्ण अन्यथा अणु
 		/* Require destination port from userspace. */
 		err = -EINVAL;
-		goto error;
-	}
+		जाओ error;
+	पूर्ण
 
 	vport = ovs_vport_alloc(0, &ovs_vxlan_netdev_vport_ops, parms);
-	if (IS_ERR(vport))
-		return vport;
+	अगर (IS_ERR(vport))
+		वापस vport;
 
 	a = nla_find_nested(options, OVS_TUNNEL_ATTR_EXTENSION);
-	if (a) {
+	अगर (a) अणु
 		err = vxlan_configure_exts(vport, a, &conf);
-		if (err) {
-			ovs_vport_free(vport);
-			goto error;
-		}
-	}
+		अगर (err) अणु
+			ovs_vport_मुक्त(vport);
+			जाओ error;
+		पूर्ण
+	पूर्ण
 
 	rtnl_lock();
 	dev = vxlan_dev_create(net, parms->name, NET_NAME_USER, &conf);
-	if (IS_ERR(dev)) {
+	अगर (IS_ERR(dev)) अणु
 		rtnl_unlock();
-		ovs_vport_free(vport);
-		return ERR_CAST(dev);
-	}
+		ovs_vport_मुक्त(vport);
+		वापस ERR_CAST(dev);
+	पूर्ण
 
-	err = dev_change_flags(dev, dev->flags | IFF_UP, NULL);
-	if (err < 0) {
+	err = dev_change_flags(dev, dev->flags | IFF_UP, शून्य);
+	अगर (err < 0) अणु
 		rtnl_delete_link(dev);
 		rtnl_unlock();
-		ovs_vport_free(vport);
-		goto error;
-	}
+		ovs_vport_मुक्त(vport);
+		जाओ error;
+	पूर्ण
 
 	rtnl_unlock();
-	return vport;
+	वापस vport;
 error:
-	return ERR_PTR(err);
-}
+	वापस ERR_PTR(err);
+पूर्ण
 
-static struct vport *vxlan_create(const struct vport_parms *parms)
-{
-	struct vport *vport;
+अटल काष्ठा vport *vxlan_create(स्थिर काष्ठा vport_parms *parms)
+अणु
+	काष्ठा vport *vport;
 
 	vport = vxlan_tnl_create(parms);
-	if (IS_ERR(vport))
-		return vport;
+	अगर (IS_ERR(vport))
+		वापस vport;
 
-	return ovs_netdev_link(vport, parms->name);
-}
+	वापस ovs_netdev_link(vport, parms->name);
+पूर्ण
 
-static struct vport_ops ovs_vxlan_netdev_vport_ops = {
+अटल काष्ठा vport_ops ovs_vxlan_netdev_vport_ops = अणु
 	.type			= OVS_VPORT_TYPE_VXLAN,
 	.create			= vxlan_create,
 	.destroy		= ovs_netdev_tunnel_destroy,
 	.get_options		= vxlan_get_options,
 	.send			= dev_queue_xmit,
-};
+पूर्ण;
 
-static int __init ovs_vxlan_tnl_init(void)
-{
-	return ovs_vport_ops_register(&ovs_vxlan_netdev_vport_ops);
-}
+अटल पूर्णांक __init ovs_vxlan_tnl_init(व्योम)
+अणु
+	वापस ovs_vport_ops_रेजिस्टर(&ovs_vxlan_netdev_vport_ops);
+पूर्ण
 
-static void __exit ovs_vxlan_tnl_exit(void)
-{
-	ovs_vport_ops_unregister(&ovs_vxlan_netdev_vport_ops);
-}
+अटल व्योम __निकास ovs_vxlan_tnl_निकास(व्योम)
+अणु
+	ovs_vport_ops_unरेजिस्टर(&ovs_vxlan_netdev_vport_ops);
+पूर्ण
 
 module_init(ovs_vxlan_tnl_init);
-module_exit(ovs_vxlan_tnl_exit);
+module_निकास(ovs_vxlan_tnl_निकास);
 
 MODULE_DESCRIPTION("OVS: VXLAN switching port");
 MODULE_LICENSE("GPL");

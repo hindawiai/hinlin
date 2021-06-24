@@ -1,51 +1,52 @@
-// SPDX-License-Identifier: GPL-2.0
-/* cavium_ptp.c - PTP 1588 clock on Cavium hardware
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+/* cavium_ptp.c - PTP 1588 घड़ी on Cavium hardware
  * Copyright (c) 2003-2015, 2017 Cavium, Inc.
  */
 
-#include <linux/device.h>
-#include <linux/module.h>
-#include <linux/timecounter.h>
-#include <linux/pci.h>
+#समावेश <linux/device.h>
+#समावेश <linux/module.h>
+#समावेश <linux/समयcounter.h>
+#समावेश <linux/pci.h>
 
-#include "cavium_ptp.h"
+#समावेश "cavium_ptp.h"
 
-#define DRV_NAME "cavium_ptp"
+#घोषणा DRV_NAME "cavium_ptp"
 
-#define PCI_DEVICE_ID_CAVIUM_PTP	0xA00C
-#define PCI_SUBSYS_DEVID_88XX_PTP	0xA10C
-#define PCI_SUBSYS_DEVID_81XX_PTP	0XA20C
-#define PCI_SUBSYS_DEVID_83XX_PTP	0xA30C
-#define PCI_DEVICE_ID_CAVIUM_RST	0xA00E
+#घोषणा PCI_DEVICE_ID_CAVIUM_PTP	0xA00C
+#घोषणा PCI_SUBSYS_DEVID_88XX_PTP	0xA10C
+#घोषणा PCI_SUBSYS_DEVID_81XX_PTP	0XA20C
+#घोषणा PCI_SUBSYS_DEVID_83XX_PTP	0xA30C
+#घोषणा PCI_DEVICE_ID_CAVIUM_RST	0xA00E
 
-#define PCI_PTP_BAR_NO	0
-#define PCI_RST_BAR_NO	0
+#घोषणा PCI_PTP_BAR_NO	0
+#घोषणा PCI_RST_BAR_NO	0
 
-#define PTP_CLOCK_CFG		0xF00ULL
-#define  PTP_CLOCK_CFG_PTP_EN	BIT(0)
-#define PTP_CLOCK_LO		0xF08ULL
-#define PTP_CLOCK_HI		0xF10ULL
-#define PTP_CLOCK_COMP		0xF18ULL
+#घोषणा PTP_CLOCK_CFG		0xF00ULL
+#घोषणा  PTP_CLOCK_CFG_PTP_EN	BIT(0)
+#घोषणा PTP_CLOCK_LO		0xF08ULL
+#घोषणा PTP_CLOCK_HI		0xF10ULL
+#घोषणा PTP_CLOCK_COMP		0xF18ULL
 
-#define RST_BOOT	0x1600ULL
-#define CLOCK_BASE_RATE	50000000ULL
+#घोषणा RST_BOOT	0x1600ULL
+#घोषणा CLOCK_BASE_RATE	50000000ULL
 
-static u64 ptp_cavium_clock_get(void)
-{
-	struct pci_dev *pdev;
-	void __iomem *base;
+अटल u64 ptp_cavium_घड़ी_get(व्योम)
+अणु
+	काष्ठा pci_dev *pdev;
+	व्योम __iomem *base;
 	u64 ret = CLOCK_BASE_RATE * 16;
 
 	pdev = pci_get_device(PCI_VENDOR_ID_CAVIUM,
-			      PCI_DEVICE_ID_CAVIUM_RST, NULL);
-	if (!pdev)
-		goto error;
+			      PCI_DEVICE_ID_CAVIUM_RST, शून्य);
+	अगर (!pdev)
+		जाओ error;
 
 	base = pci_ioremap_bar(pdev, PCI_RST_BAR_NO);
-	if (!base)
-		goto error_put_pdev;
+	अगर (!base)
+		जाओ error_put_pdev;
 
-	ret = CLOCK_BASE_RATE * ((readq(base + RST_BOOT) >> 33) & 0x3f);
+	ret = CLOCK_BASE_RATE * ((पढ़ोq(base + RST_BOOT) >> 33) & 0x3f);
 
 	iounmap(base);
 
@@ -53,212 +54,212 @@ error_put_pdev:
 	pci_dev_put(pdev);
 
 error:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-struct cavium_ptp *cavium_ptp_get(void)
-{
-	struct cavium_ptp *ptp;
-	struct pci_dev *pdev;
+काष्ठा cavium_ptp *cavium_ptp_get(व्योम)
+अणु
+	काष्ठा cavium_ptp *ptp;
+	काष्ठा pci_dev *pdev;
 
 	pdev = pci_get_device(PCI_VENDOR_ID_CAVIUM,
-			      PCI_DEVICE_ID_CAVIUM_PTP, NULL);
-	if (!pdev)
-		return ERR_PTR(-ENODEV);
+			      PCI_DEVICE_ID_CAVIUM_PTP, शून्य);
+	अगर (!pdev)
+		वापस ERR_PTR(-ENODEV);
 
 	ptp = pci_get_drvdata(pdev);
-	if (!ptp)
+	अगर (!ptp)
 		ptp = ERR_PTR(-EPROBE_DEFER);
-	if (IS_ERR(ptp))
+	अगर (IS_ERR(ptp))
 		pci_dev_put(pdev);
 
-	return ptp;
-}
+	वापस ptp;
+पूर्ण
 EXPORT_SYMBOL(cavium_ptp_get);
 
-void cavium_ptp_put(struct cavium_ptp *ptp)
-{
-	if (!ptp)
-		return;
+व्योम cavium_ptp_put(काष्ठा cavium_ptp *ptp)
+अणु
+	अगर (!ptp)
+		वापस;
 	pci_dev_put(ptp->pdev);
-}
+पूर्ण
 EXPORT_SYMBOL(cavium_ptp_put);
 
 /**
  * cavium_ptp_adjfine() - Adjust ptp frequency
- * @ptp_info: PTP clock info
+ * @ptp_info: PTP घड़ी info
  * @scaled_ppm: how much to adjust by, in parts per million, but with a
  *              16 bit binary fractional field
  */
-static int cavium_ptp_adjfine(struct ptp_clock_info *ptp_info, long scaled_ppm)
-{
-	struct cavium_ptp *clock =
-		container_of(ptp_info, struct cavium_ptp, ptp_info);
-	unsigned long flags;
+अटल पूर्णांक cavium_ptp_adjfine(काष्ठा ptp_घड़ी_info *ptp_info, दीर्घ scaled_ppm)
+अणु
+	काष्ठा cavium_ptp *घड़ी =
+		container_of(ptp_info, काष्ठा cavium_ptp, ptp_info);
+	अचिन्हित दीर्घ flags;
 	u64 comp;
 	u64 adj;
 	bool neg_adj = false;
 
-	if (scaled_ppm < 0) {
+	अगर (scaled_ppm < 0) अणु
 		neg_adj = true;
 		scaled_ppm = -scaled_ppm;
-	}
+	पूर्ण
 
-	/* The hardware adds the clock compensation value to the PTP clock
-	 * on every coprocessor clock cycle. Typical convention is that it
+	/* The hardware adds the घड़ी compensation value to the PTP घड़ी
+	 * on every coprocessor घड़ी cycle. Typical convention is that it
 	 * represent number of nanosecond betwen each cycle. In this
-	 * convention compensation value is in 64 bit fixed-point
+	 * convention compensation value is in 64 bit fixed-poपूर्णांक
 	 * representation where upper 32 bits are number of nanoseconds
 	 * and lower is fractions of nanosecond.
 	 * The scaled_ppm represent the ratio in "parts per bilion" by which the
 	 * compensation value should be corrected.
-	 * To calculate new compenstation value we use 64bit fixed point
-	 * arithmetic on following formula
+	 * To calculate new compenstation value we use 64bit fixed poपूर्णांक
+	 * arithmetic on following क्रमmula
 	 * comp = tbase + tbase * scaled_ppm / (1M * 2^16)
 	 * where tbase is the basic compensation value calculated initialy
 	 * in cavium_ptp_init() -> tbase = 1/Hz. Then we use endian
-	 * independent structure definition to write data to PTP register.
+	 * independent काष्ठाure definition to ग_लिखो data to PTP रेजिस्टर.
 	 */
-	comp = ((u64)1000000000ull << 32) / clock->clock_rate;
+	comp = ((u64)1000000000ull << 32) / घड़ी->घड़ी_rate;
 	adj = comp * scaled_ppm;
 	adj >>= 16;
-	adj = div_u64(adj, 1000000ull);
+	adj = भाग_u64(adj, 1000000ull);
 	comp = neg_adj ? comp - adj : comp + adj;
 
-	spin_lock_irqsave(&clock->spin_lock, flags);
-	writeq(comp, clock->reg_base + PTP_CLOCK_COMP);
-	spin_unlock_irqrestore(&clock->spin_lock, flags);
+	spin_lock_irqsave(&घड़ी->spin_lock, flags);
+	ग_लिखोq(comp, घड़ी->reg_base + PTP_CLOCK_COMP);
+	spin_unlock_irqrestore(&घड़ी->spin_lock, flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * cavium_ptp_adjtime() - Adjust ptp time
- * @ptp_info:   PTP clock info
+ * cavium_ptp_adjसमय() - Adjust ptp समय
+ * @ptp_info:   PTP घड़ी info
  * @delta: how much to adjust by, in nanosecs
  */
-static int cavium_ptp_adjtime(struct ptp_clock_info *ptp_info, s64 delta)
-{
-	struct cavium_ptp *clock =
-		container_of(ptp_info, struct cavium_ptp, ptp_info);
-	unsigned long flags;
+अटल पूर्णांक cavium_ptp_adjसमय(काष्ठा ptp_घड़ी_info *ptp_info, s64 delta)
+अणु
+	काष्ठा cavium_ptp *घड़ी =
+		container_of(ptp_info, काष्ठा cavium_ptp, ptp_info);
+	अचिन्हित दीर्घ flags;
 
-	spin_lock_irqsave(&clock->spin_lock, flags);
-	timecounter_adjtime(&clock->time_counter, delta);
-	spin_unlock_irqrestore(&clock->spin_lock, flags);
+	spin_lock_irqsave(&घड़ी->spin_lock, flags);
+	समयcounter_adjसमय(&घड़ी->समय_counter, delta);
+	spin_unlock_irqrestore(&घड़ी->spin_lock, flags);
 
-	/* Sync, for network driver to get latest value */
+	/* Sync, क्रम network driver to get latest value */
 	smp_mb();
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * cavium_ptp_gettime() - Get hardware clock time with adjustment
- * @ptp_info: PTP clock info
- * @ts:  timespec
+ * cavium_ptp_समय_लो() - Get hardware घड़ी समय with adjusपंचांगent
+ * @ptp_info: PTP घड़ी info
+ * @ts:  बारpec
  */
-static int cavium_ptp_gettime(struct ptp_clock_info *ptp_info,
-			      struct timespec64 *ts)
-{
-	struct cavium_ptp *clock =
-		container_of(ptp_info, struct cavium_ptp, ptp_info);
-	unsigned long flags;
+अटल पूर्णांक cavium_ptp_समय_लो(काष्ठा ptp_घड़ी_info *ptp_info,
+			      काष्ठा बारpec64 *ts)
+अणु
+	काष्ठा cavium_ptp *घड़ी =
+		container_of(ptp_info, काष्ठा cavium_ptp, ptp_info);
+	अचिन्हित दीर्घ flags;
 	u64 nsec;
 
-	spin_lock_irqsave(&clock->spin_lock, flags);
-	nsec = timecounter_read(&clock->time_counter);
-	spin_unlock_irqrestore(&clock->spin_lock, flags);
+	spin_lock_irqsave(&घड़ी->spin_lock, flags);
+	nsec = समयcounter_पढ़ो(&घड़ी->समय_counter);
+	spin_unlock_irqrestore(&घड़ी->spin_lock, flags);
 
-	*ts = ns_to_timespec64(nsec);
+	*ts = ns_to_बारpec64(nsec);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * cavium_ptp_settime() - Set hardware clock time. Reset adjustment
- * @ptp_info: PTP clock info
- * @ts:  timespec
+ * cavium_ptp_समय_रखो() - Set hardware घड़ी समय. Reset adjusपंचांगent
+ * @ptp_info: PTP घड़ी info
+ * @ts:  बारpec
  */
-static int cavium_ptp_settime(struct ptp_clock_info *ptp_info,
-			      const struct timespec64 *ts)
-{
-	struct cavium_ptp *clock =
-		container_of(ptp_info, struct cavium_ptp, ptp_info);
-	unsigned long flags;
+अटल पूर्णांक cavium_ptp_समय_रखो(काष्ठा ptp_घड़ी_info *ptp_info,
+			      स्थिर काष्ठा बारpec64 *ts)
+अणु
+	काष्ठा cavium_ptp *घड़ी =
+		container_of(ptp_info, काष्ठा cavium_ptp, ptp_info);
+	अचिन्हित दीर्घ flags;
 	u64 nsec;
 
-	nsec = timespec64_to_ns(ts);
+	nsec = बारpec64_to_ns(ts);
 
-	spin_lock_irqsave(&clock->spin_lock, flags);
-	timecounter_init(&clock->time_counter, &clock->cycle_counter, nsec);
-	spin_unlock_irqrestore(&clock->spin_lock, flags);
+	spin_lock_irqsave(&घड़ी->spin_lock, flags);
+	समयcounter_init(&घड़ी->समय_counter, &घड़ी->cycle_counter, nsec);
+	spin_unlock_irqrestore(&घड़ी->spin_lock, flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * cavium_ptp_enable() - Request to enable or disable an ancillary feature.
- * @ptp_info: PTP clock info
+ * @ptp_info: PTP घड़ी info
  * @rq:  request
  * @on:  is it on
  */
-static int cavium_ptp_enable(struct ptp_clock_info *ptp_info,
-			     struct ptp_clock_request *rq, int on)
-{
-	return -EOPNOTSUPP;
-}
+अटल पूर्णांक cavium_ptp_enable(काष्ठा ptp_घड़ी_info *ptp_info,
+			     काष्ठा ptp_घड़ी_request *rq, पूर्णांक on)
+अणु
+	वापस -EOPNOTSUPP;
+पूर्ण
 
-static u64 cavium_ptp_cc_read(const struct cyclecounter *cc)
-{
-	struct cavium_ptp *clock =
-		container_of(cc, struct cavium_ptp, cycle_counter);
+अटल u64 cavium_ptp_cc_पढ़ो(स्थिर काष्ठा cyclecounter *cc)
+अणु
+	काष्ठा cavium_ptp *घड़ी =
+		container_of(cc, काष्ठा cavium_ptp, cycle_counter);
 
-	return readq(clock->reg_base + PTP_CLOCK_HI);
-}
+	वापस पढ़ोq(घड़ी->reg_base + PTP_CLOCK_HI);
+पूर्ण
 
-static int cavium_ptp_probe(struct pci_dev *pdev,
-			    const struct pci_device_id *ent)
-{
-	struct device *dev = &pdev->dev;
-	struct cavium_ptp *clock;
-	struct cyclecounter *cc;
-	u64 clock_cfg;
-	u64 clock_comp;
-	int err;
+अटल पूर्णांक cavium_ptp_probe(काष्ठा pci_dev *pdev,
+			    स्थिर काष्ठा pci_device_id *ent)
+अणु
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा cavium_ptp *घड़ी;
+	काष्ठा cyclecounter *cc;
+	u64 घड़ी_cfg;
+	u64 घड़ी_comp;
+	पूर्णांक err;
 
-	clock = devm_kzalloc(dev, sizeof(*clock), GFP_KERNEL);
-	if (!clock) {
+	घड़ी = devm_kzalloc(dev, माप(*घड़ी), GFP_KERNEL);
+	अगर (!घड़ी) अणु
 		err = -ENOMEM;
-		goto error;
-	}
+		जाओ error;
+	पूर्ण
 
-	clock->pdev = pdev;
+	घड़ी->pdev = pdev;
 
 	err = pcim_enable_device(pdev);
-	if (err)
-		goto error_free;
+	अगर (err)
+		जाओ error_मुक्त;
 
 	err = pcim_iomap_regions(pdev, 1 << PCI_PTP_BAR_NO, pci_name(pdev));
-	if (err)
-		goto error_free;
+	अगर (err)
+		जाओ error_मुक्त;
 
-	clock->reg_base = pcim_iomap_table(pdev)[PCI_PTP_BAR_NO];
+	घड़ी->reg_base = pcim_iomap_table(pdev)[PCI_PTP_BAR_NO];
 
-	spin_lock_init(&clock->spin_lock);
+	spin_lock_init(&घड़ी->spin_lock);
 
-	cc = &clock->cycle_counter;
-	cc->read = cavium_ptp_cc_read;
+	cc = &घड़ी->cycle_counter;
+	cc->पढ़ो = cavium_ptp_cc_पढ़ो;
 	cc->mask = CYCLECOUNTER_MASK(64);
 	cc->mult = 1;
-	cc->shift = 0;
+	cc->shअगरt = 0;
 
-	timecounter_init(&clock->time_counter, &clock->cycle_counter,
-			 ktime_to_ns(ktime_get_real()));
+	समयcounter_init(&घड़ी->समय_counter, &घड़ी->cycle_counter,
+			 kसमय_प्रकारo_ns(kसमय_get_real()));
 
-	clock->clock_rate = ptp_cavium_clock_get();
+	घड़ी->घड़ी_rate = ptp_cavium_घड़ी_get();
 
-	clock->ptp_info = (struct ptp_clock_info) {
+	घड़ी->ptp_info = (काष्ठा ptp_घड़ी_info) अणु
 		.owner		= THIS_MODULE,
 		.name		= "ThunderX PTP",
 		.max_adj	= 1000000000ull,
@@ -266,79 +267,79 @@ static int cavium_ptp_probe(struct pci_dev *pdev,
 		.n_pins		= 0,
 		.pps		= 0,
 		.adjfine	= cavium_ptp_adjfine,
-		.adjtime	= cavium_ptp_adjtime,
-		.gettime64	= cavium_ptp_gettime,
-		.settime64	= cavium_ptp_settime,
+		.adjसमय	= cavium_ptp_adjसमय,
+		.समय_लो64	= cavium_ptp_समय_लो,
+		.समय_रखो64	= cavium_ptp_समय_रखो,
 		.enable		= cavium_ptp_enable,
-	};
+	पूर्ण;
 
-	clock_cfg = readq(clock->reg_base + PTP_CLOCK_CFG);
-	clock_cfg |= PTP_CLOCK_CFG_PTP_EN;
-	writeq(clock_cfg, clock->reg_base + PTP_CLOCK_CFG);
+	घड़ी_cfg = पढ़ोq(घड़ी->reg_base + PTP_CLOCK_CFG);
+	घड़ी_cfg |= PTP_CLOCK_CFG_PTP_EN;
+	ग_लिखोq(घड़ी_cfg, घड़ी->reg_base + PTP_CLOCK_CFG);
 
-	clock_comp = ((u64)1000000000ull << 32) / clock->clock_rate;
-	writeq(clock_comp, clock->reg_base + PTP_CLOCK_COMP);
+	घड़ी_comp = ((u64)1000000000ull << 32) / घड़ी->घड़ी_rate;
+	ग_लिखोq(घड़ी_comp, घड़ी->reg_base + PTP_CLOCK_COMP);
 
-	clock->ptp_clock = ptp_clock_register(&clock->ptp_info, dev);
-	if (IS_ERR(clock->ptp_clock)) {
-		err = PTR_ERR(clock->ptp_clock);
-		goto error_stop;
-	}
+	घड़ी->ptp_घड़ी = ptp_घड़ी_रेजिस्टर(&घड़ी->ptp_info, dev);
+	अगर (IS_ERR(घड़ी->ptp_घड़ी)) अणु
+		err = PTR_ERR(घड़ी->ptp_घड़ी);
+		जाओ error_stop;
+	पूर्ण
 
-	pci_set_drvdata(pdev, clock);
-	return 0;
+	pci_set_drvdata(pdev, घड़ी);
+	वापस 0;
 
 error_stop:
-	clock_cfg = readq(clock->reg_base + PTP_CLOCK_CFG);
-	clock_cfg &= ~PTP_CLOCK_CFG_PTP_EN;
-	writeq(clock_cfg, clock->reg_base + PTP_CLOCK_CFG);
+	घड़ी_cfg = पढ़ोq(घड़ी->reg_base + PTP_CLOCK_CFG);
+	घड़ी_cfg &= ~PTP_CLOCK_CFG_PTP_EN;
+	ग_लिखोq(घड़ी_cfg, घड़ी->reg_base + PTP_CLOCK_CFG);
 	pcim_iounmap_regions(pdev, 1 << PCI_PTP_BAR_NO);
 
-error_free:
-	devm_kfree(dev, clock);
+error_मुक्त:
+	devm_kमुक्त(dev, घड़ी);
 
 error:
-	/* For `cavium_ptp_get()` we need to differentiate between the case
-	 * when the core has not tried to probe this device and the case when
-	 * the probe failed.  In the later case we pretend that the
+	/* For `cavium_ptp_get()` we need to dअगरferentiate between the हाल
+	 * when the core has not tried to probe this device and the हाल when
+	 * the probe failed.  In the later हाल we pretend that the
 	 * initialization was successful and keep the error in
 	 * `dev->driver_data`.
 	 */
 	pci_set_drvdata(pdev, ERR_PTR(err));
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void cavium_ptp_remove(struct pci_dev *pdev)
-{
-	struct cavium_ptp *clock = pci_get_drvdata(pdev);
-	u64 clock_cfg;
+अटल व्योम cavium_ptp_हटाओ(काष्ठा pci_dev *pdev)
+अणु
+	काष्ठा cavium_ptp *घड़ी = pci_get_drvdata(pdev);
+	u64 घड़ी_cfg;
 
-	if (IS_ERR_OR_NULL(clock))
-		return;
+	अगर (IS_ERR_OR_शून्य(घड़ी))
+		वापस;
 
-	ptp_clock_unregister(clock->ptp_clock);
+	ptp_घड़ी_unरेजिस्टर(घड़ी->ptp_घड़ी);
 
-	clock_cfg = readq(clock->reg_base + PTP_CLOCK_CFG);
-	clock_cfg &= ~PTP_CLOCK_CFG_PTP_EN;
-	writeq(clock_cfg, clock->reg_base + PTP_CLOCK_CFG);
-}
+	घड़ी_cfg = पढ़ोq(घड़ी->reg_base + PTP_CLOCK_CFG);
+	घड़ी_cfg &= ~PTP_CLOCK_CFG_PTP_EN;
+	ग_लिखोq(घड़ी_cfg, घड़ी->reg_base + PTP_CLOCK_CFG);
+पूर्ण
 
-static const struct pci_device_id cavium_ptp_id_table[] = {
-	{ PCI_DEVICE_SUB(PCI_VENDOR_ID_CAVIUM, PCI_DEVICE_ID_CAVIUM_PTP,
-			PCI_VENDOR_ID_CAVIUM, PCI_SUBSYS_DEVID_88XX_PTP) },
-	{ PCI_DEVICE_SUB(PCI_VENDOR_ID_CAVIUM, PCI_DEVICE_ID_CAVIUM_PTP,
-			PCI_VENDOR_ID_CAVIUM, PCI_SUBSYS_DEVID_81XX_PTP) },
-	{ PCI_DEVICE_SUB(PCI_VENDOR_ID_CAVIUM, PCI_DEVICE_ID_CAVIUM_PTP,
-			PCI_VENDOR_ID_CAVIUM, PCI_SUBSYS_DEVID_83XX_PTP) },
-	{ 0, }
-};
+अटल स्थिर काष्ठा pci_device_id cavium_ptp_id_table[] = अणु
+	अणु PCI_DEVICE_SUB(PCI_VENDOR_ID_CAVIUM, PCI_DEVICE_ID_CAVIUM_PTP,
+			PCI_VENDOR_ID_CAVIUM, PCI_SUBSYS_DEVID_88XX_PTP) पूर्ण,
+	अणु PCI_DEVICE_SUB(PCI_VENDOR_ID_CAVIUM, PCI_DEVICE_ID_CAVIUM_PTP,
+			PCI_VENDOR_ID_CAVIUM, PCI_SUBSYS_DEVID_81XX_PTP) पूर्ण,
+	अणु PCI_DEVICE_SUB(PCI_VENDOR_ID_CAVIUM, PCI_DEVICE_ID_CAVIUM_PTP,
+			PCI_VENDOR_ID_CAVIUM, PCI_SUBSYS_DEVID_83XX_PTP) पूर्ण,
+	अणु 0, पूर्ण
+पूर्ण;
 
-static struct pci_driver cavium_ptp_driver = {
+अटल काष्ठा pci_driver cavium_ptp_driver = अणु
 	.name = DRV_NAME,
 	.id_table = cavium_ptp_id_table,
 	.probe = cavium_ptp_probe,
-	.remove = cavium_ptp_remove,
-};
+	.हटाओ = cavium_ptp_हटाओ,
+पूर्ण;
 
 module_pci_driver(cavium_ptp_driver);
 

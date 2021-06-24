@@ -1,26 +1,27 @@
-/* SPDX-License-Identifier: BSD-3-Clause OR GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: BSD-3-Clause OR GPL-2.0 */
 /* Copyright (c) 2019-2020 Marvell International Ltd. All rights reserved. */
 
-#ifndef _PRESTERA_H_
-#define _PRESTERA_H_
+#अगर_अघोषित _PRESTERA_H_
+#घोषणा _PRESTERA_H_
 
-#include <linux/notifier.h>
-#include <linux/skbuff.h>
-#include <linux/workqueue.h>
-#include <net/devlink.h>
-#include <uapi/linux/if_ether.h>
+#समावेश <linux/notअगरier.h>
+#समावेश <linux/skbuff.h>
+#समावेश <linux/workqueue.h>
+#समावेश <net/devlink.h>
+#समावेश <uapi/linux/अगर_ether.h>
 
-#define PRESTERA_DRV_NAME	"prestera"
+#घोषणा PRESTERA_DRV_NAME	"prestera"
 
-#define PRESTERA_DEFAULT_VID    1
+#घोषणा PRESTERA_DEFAULT_VID    1
 
-struct prestera_fw_rev {
+काष्ठा prestera_fw_rev अणु
 	u16 maj;
 	u16 min;
 	u16 sub;
-};
+पूर्ण;
 
-struct prestera_port_stats {
+काष्ठा prestera_port_stats अणु
 	u64 good_octets_received;
 	u64 bad_octets_received;
 	u64 mac_trans_error;
@@ -51,56 +52,56 @@ struct prestera_port_stats {
 	u64 sent_multiple;
 	u64 sent_deferred;
 	u64 good_octets_sent;
-};
+पूर्ण;
 
-struct prestera_port_caps {
+काष्ठा prestera_port_caps अणु
 	u64 supp_link_modes;
 	u8 supp_fec;
 	u8 type;
 	u8 transceiver;
-};
+पूर्ण;
 
-struct prestera_port {
-	struct net_device *dev;
-	struct prestera_switch *sw;
-	struct devlink_port dl_port;
+काष्ठा prestera_port अणु
+	काष्ठा net_device *dev;
+	काष्ठा prestera_चयन *sw;
+	काष्ठा devlink_port dl_port;
 	u32 id;
 	u32 hw_id;
 	u32 dev_id;
 	u16 fp_id;
 	u16 pvid;
-	bool autoneg;
+	bool स्वतःneg;
 	u64 adver_link_modes;
 	u8 adver_fec;
-	struct prestera_port_caps caps;
-	struct list_head list;
-	struct list_head vlans_list;
-	struct {
-		struct prestera_port_stats stats;
-		struct delayed_work caching_dw;
-	} cached_hw_stats;
-};
+	काष्ठा prestera_port_caps caps;
+	काष्ठा list_head list;
+	काष्ठा list_head vlans_list;
+	काष्ठा अणु
+		काष्ठा prestera_port_stats stats;
+		काष्ठा delayed_work caching_dw;
+	पूर्ण cached_hw_stats;
+पूर्ण;
 
-struct prestera_device {
-	struct device *dev;
+काष्ठा prestera_device अणु
+	काष्ठा device *dev;
 	u8 __iomem *ctl_regs;
 	u8 __iomem *pp_regs;
-	struct prestera_fw_rev fw_rev;
-	void *priv;
+	काष्ठा prestera_fw_rev fw_rev;
+	व्योम *priv;
 
 	/* called by device driver to handle received packets */
-	void (*recv_pkt)(struct prestera_device *dev);
+	व्योम (*recv_pkt)(काष्ठा prestera_device *dev);
 
 	/* called by device driver to pass event up to the higher layer */
-	int (*recv_msg)(struct prestera_device *dev, void *msg, size_t size);
+	पूर्णांक (*recv_msg)(काष्ठा prestera_device *dev, व्योम *msg, माप_प्रकार size);
 
 	/* called by higher layer to send request to the firmware */
-	int (*send_req)(struct prestera_device *dev, void *in_msg,
-			size_t in_size, void *out_msg, size_t out_size,
-			unsigned int wait);
-};
+	पूर्णांक (*send_req)(काष्ठा prestera_device *dev, व्योम *in_msg,
+			माप_प्रकार in_size, व्योम *out_msg, माप_प्रकार out_size,
+			अचिन्हित पूर्णांक रुको);
+पूर्ण;
 
-enum prestera_event_type {
+क्रमागत prestera_event_type अणु
 	PRESTERA_EVENT_TYPE_UNSPEC,
 
 	PRESTERA_EVENT_TYPE_PORT,
@@ -108,99 +109,99 @@ enum prestera_event_type {
 	PRESTERA_EVENT_TYPE_RXTX,
 
 	PRESTERA_EVENT_TYPE_MAX
-};
+पूर्ण;
 
-enum prestera_rxtx_event_id {
+क्रमागत prestera_rxtx_event_id अणु
 	PRESTERA_RXTX_EVENT_UNSPEC,
 	PRESTERA_RXTX_EVENT_RCV_PKT,
-};
+पूर्ण;
 
-enum prestera_port_event_id {
+क्रमागत prestera_port_event_id अणु
 	PRESTERA_PORT_EVENT_UNSPEC,
 	PRESTERA_PORT_EVENT_STATE_CHANGED,
-};
+पूर्ण;
 
-struct prestera_port_event {
+काष्ठा prestera_port_event अणु
 	u32 port_id;
-	union {
+	जोड़ अणु
 		u32 oper_state;
-	} data;
-};
+	पूर्ण data;
+पूर्ण;
 
-enum prestera_fdb_event_id {
+क्रमागत prestera_fdb_event_id अणु
 	PRESTERA_FDB_EVENT_UNSPEC,
 	PRESTERA_FDB_EVENT_LEARNED,
 	PRESTERA_FDB_EVENT_AGED,
-};
+पूर्ण;
 
-struct prestera_fdb_event {
+काष्ठा prestera_fdb_event अणु
 	u32 port_id;
 	u32 vid;
-	union {
+	जोड़ अणु
 		u8 mac[ETH_ALEN];
-	} data;
-};
+	पूर्ण data;
+पूर्ण;
 
-struct prestera_event {
+काष्ठा prestera_event अणु
 	u16 id;
-	union {
-		struct prestera_port_event port_evt;
-		struct prestera_fdb_event fdb_evt;
-	};
-};
+	जोड़ अणु
+		काष्ठा prestera_port_event port_evt;
+		काष्ठा prestera_fdb_event fdb_evt;
+	पूर्ण;
+पूर्ण;
 
-struct prestera_switchdev;
-struct prestera_rxtx;
+काष्ठा prestera_चयनdev;
+काष्ठा prestera_rxtx;
 
-struct prestera_switch {
-	struct prestera_device *dev;
-	struct prestera_switchdev *swdev;
-	struct prestera_rxtx *rxtx;
-	struct list_head event_handlers;
-	struct notifier_block netdev_nb;
-	char base_mac[ETH_ALEN];
-	struct list_head port_list;
+काष्ठा prestera_चयन अणु
+	काष्ठा prestera_device *dev;
+	काष्ठा prestera_चयनdev *swdev;
+	काष्ठा prestera_rxtx *rxtx;
+	काष्ठा list_head event_handlers;
+	काष्ठा notअगरier_block netdev_nb;
+	अक्षर base_mac[ETH_ALEN];
+	काष्ठा list_head port_list;
 	rwlock_t port_list_lock;
 	u32 port_count;
 	u32 mtu_min;
 	u32 mtu_max;
 	u8 id;
-};
+पूर्ण;
 
-struct prestera_rxtx_params {
+काष्ठा prestera_rxtx_params अणु
 	bool use_sdma;
 	u32 map_addr;
-};
+पूर्ण;
 
-#define prestera_dev(sw)		((sw)->dev->dev)
+#घोषणा prestera_dev(sw)		((sw)->dev->dev)
 
-static inline void prestera_write(const struct prestera_switch *sw,
-				  unsigned int reg, u32 val)
-{
-	writel(val, sw->dev->pp_regs + reg);
-}
+अटल अंतरभूत व्योम prestera_ग_लिखो(स्थिर काष्ठा prestera_चयन *sw,
+				  अचिन्हित पूर्णांक reg, u32 val)
+अणु
+	ग_लिखोl(val, sw->dev->pp_regs + reg);
+पूर्ण
 
-static inline u32 prestera_read(const struct prestera_switch *sw,
-				unsigned int reg)
-{
-	return readl(sw->dev->pp_regs + reg);
-}
+अटल अंतरभूत u32 prestera_पढ़ो(स्थिर काष्ठा prestera_चयन *sw,
+				अचिन्हित पूर्णांक reg)
+अणु
+	वापस पढ़ोl(sw->dev->pp_regs + reg);
+पूर्ण
 
-int prestera_device_register(struct prestera_device *dev);
-void prestera_device_unregister(struct prestera_device *dev);
+पूर्णांक prestera_device_रेजिस्टर(काष्ठा prestera_device *dev);
+व्योम prestera_device_unरेजिस्टर(काष्ठा prestera_device *dev);
 
-struct prestera_port *prestera_port_find_by_hwid(struct prestera_switch *sw,
+काष्ठा prestera_port *prestera_port_find_by_hwid(काष्ठा prestera_चयन *sw,
 						 u32 dev_id, u32 hw_id);
 
-int prestera_port_autoneg_set(struct prestera_port *port, bool enable,
+पूर्णांक prestera_port_स्वतःneg_set(काष्ठा prestera_port *port, bool enable,
 			      u64 adver_link_modes, u8 adver_fec);
 
-struct prestera_port *prestera_find_port(struct prestera_switch *sw, u32 id);
+काष्ठा prestera_port *prestera_find_port(काष्ठा prestera_चयन *sw, u32 id);
 
-struct prestera_port *prestera_port_dev_lower_find(struct net_device *dev);
+काष्ठा prestera_port *prestera_port_dev_lower_find(काष्ठा net_device *dev);
 
-int prestera_port_pvid_set(struct prestera_port *port, u16 vid);
+पूर्णांक prestera_port_pvid_set(काष्ठा prestera_port *port, u16 vid);
 
-bool prestera_netdev_check(const struct net_device *dev);
+bool prestera_netdev_check(स्थिर काष्ठा net_device *dev);
 
-#endif /* _PRESTERA_H_ */
+#पूर्ण_अगर /* _PRESTERA_H_ */

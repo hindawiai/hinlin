@@ -1,59 +1,60 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Ioctl to get a verity file's digest
  *
  * Copyright 2019 Google LLC
  */
 
-#include "fsverity_private.h"
+#समावेश "fsverity_private.h"
 
-#include <linux/uaccess.h>
+#समावेश <linux/uaccess.h>
 
 /**
  * fsverity_ioctl_measure() - get a verity file's digest
  * @filp: file to get digest of
- * @_uarg: user pointer to fsverity_digest
+ * @_uarg: user poपूर्णांकer to fsverity_digest
  *
- * Retrieve the file digest that the kernel is enforcing for reads from a verity
+ * Retrieve the file digest that the kernel is enक्रमcing क्रम पढ़ोs from a verity
  * file.  See the "FS_IOC_MEASURE_VERITY" section of
- * Documentation/filesystems/fsverity.rst for the documentation.
+ * Documentation/fileप्रणालीs/fsverity.rst क्रम the करोcumentation.
  *
- * Return: 0 on success, -errno on failure
+ * Return: 0 on success, -त्रुटि_सं on failure
  */
-int fsverity_ioctl_measure(struct file *filp, void __user *_uarg)
-{
-	const struct inode *inode = file_inode(filp);
-	struct fsverity_digest __user *uarg = _uarg;
-	const struct fsverity_info *vi;
-	const struct fsverity_hash_alg *hash_alg;
-	struct fsverity_digest arg;
+पूर्णांक fsverity_ioctl_measure(काष्ठा file *filp, व्योम __user *_uarg)
+अणु
+	स्थिर काष्ठा inode *inode = file_inode(filp);
+	काष्ठा fsverity_digest __user *uarg = _uarg;
+	स्थिर काष्ठा fsverity_info *vi;
+	स्थिर काष्ठा fsverity_hash_alg *hash_alg;
+	काष्ठा fsverity_digest arg;
 
 	vi = fsverity_get_info(inode);
-	if (!vi)
-		return -ENODATA; /* not a verity file */
+	अगर (!vi)
+		वापस -ENODATA; /* not a verity file */
 	hash_alg = vi->tree_params.hash_alg;
 
 	/*
-	 * The user specifies the digest_size their buffer has space for; we can
-	 * return the digest if it fits in the available space.  We write back
-	 * the actual size, which may be shorter than the user-specified size.
+	 * The user specअगरies the digest_size their buffer has space क्रम; we can
+	 * वापस the digest अगर it fits in the available space.  We ग_लिखो back
+	 * the actual size, which may be लघुer than the user-specअगरied size.
 	 */
 
-	if (get_user(arg.digest_size, &uarg->digest_size))
-		return -EFAULT;
-	if (arg.digest_size < hash_alg->digest_size)
-		return -EOVERFLOW;
+	अगर (get_user(arg.digest_size, &uarg->digest_size))
+		वापस -EFAULT;
+	अगर (arg.digest_size < hash_alg->digest_size)
+		वापस -EOVERFLOW;
 
-	memset(&arg, 0, sizeof(arg));
+	स_रखो(&arg, 0, माप(arg));
 	arg.digest_algorithm = hash_alg - fsverity_hash_algs;
 	arg.digest_size = hash_alg->digest_size;
 
-	if (copy_to_user(uarg, &arg, sizeof(arg)))
-		return -EFAULT;
+	अगर (copy_to_user(uarg, &arg, माप(arg)))
+		वापस -EFAULT;
 
-	if (copy_to_user(uarg->digest, vi->file_digest, hash_alg->digest_size))
-		return -EFAULT;
+	अगर (copy_to_user(uarg->digest, vi->file_digest, hash_alg->digest_size))
+		वापस -EFAULT;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(fsverity_ioctl_measure);

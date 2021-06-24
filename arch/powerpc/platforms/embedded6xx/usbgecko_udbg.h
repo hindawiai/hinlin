@@ -1,27 +1,28 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
- * arch/powerpc/platforms/embedded6xx/usbgecko_udbg.h
+ * arch/घातerpc/platक्रमms/embedded6xx/usbgecko_udbg.h
  *
- * udbg serial input/output routines for the USB Gecko adapter.
+ * udbg serial input/output routines क्रम the USB Gecko adapter.
  * Copyright (C) 2008-2009 The GameCube Linux Team
  * Copyright (C) 2008,2009 Albert Herranz
  */
 
-#ifndef __USBGECKO_UDBG_H
-#define __USBGECKO_UDBG_H
+#अगर_अघोषित __USBGECKO_UDBG_H
+#घोषणा __USBGECKO_UDBG_H
 
-#ifdef CONFIG_USBGECKO_UDBG
+#अगर_घोषित CONFIG_USBGECKO_UDBG
 
-extern void __init ug_udbg_init(void);
+बाह्य व्योम __init ug_udbg_init(व्योम);
 
-#else
+#अन्यथा
 
-static inline void __init ug_udbg_init(void)
-{
-}
+अटल अंतरभूत व्योम __init ug_udbg_init(व्योम)
+अणु
+पूर्ण
 
-#endif /* CONFIG_USBGECKO_UDBG */
+#पूर्ण_अगर /* CONFIG_USBGECKO_UDBG */
 
-void __init udbg_init_usbgecko(void);
+व्योम __init udbg_init_usbgecko(व्योम);
 
-#endif /* __USBGECKO_UDBG_H */
+#पूर्ण_अगर /* __USBGECKO_UDBG_H */

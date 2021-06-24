@@ -1,632 +1,633 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * (C) 2012-2013 by Pablo Neira Ayuso <pablo@netfilter.org>
  *
  * This software has been sponsored by Sophos Astaro <http://www.sophos.com>
  */
 
-#include <linux/kernel.h>
-#include <linux/init.h>
-#include <linux/module.h>
-#include <linux/netlink.h>
-#include <linux/netfilter.h>
-#include <linux/netfilter/nfnetlink.h>
-#include <linux/netfilter/nf_tables.h>
-#include <linux/netfilter/nf_tables_compat.h>
-#include <linux/netfilter/x_tables.h>
-#include <linux/netfilter_ipv4/ip_tables.h>
-#include <linux/netfilter_ipv6/ip6_tables.h>
-#include <linux/netfilter_bridge/ebtables.h>
-#include <linux/netfilter_arp/arp_tables.h>
-#include <net/netfilter/nf_tables.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/init.h>
+#समावेश <linux/module.h>
+#समावेश <linux/netlink.h>
+#समावेश <linux/netfilter.h>
+#समावेश <linux/netfilter/nfnetlink.h>
+#समावेश <linux/netfilter/nf_tables.h>
+#समावेश <linux/netfilter/nf_tables_compat.h>
+#समावेश <linux/netfilter/x_tables.h>
+#समावेश <linux/netfilter_ipv4/ip_tables.h>
+#समावेश <linux/netfilter_ipv6/ip6_tables.h>
+#समावेश <linux/netfilter_bridge/ebtables.h>
+#समावेश <linux/netfilter_arp/arp_tables.h>
+#समावेश <net/netfilter/nf_tables.h>
 
-/* Used for matches where *info is larger than X byte */
-#define NFT_MATCH_LARGE_THRESH	192
+/* Used क्रम matches where *info is larger than X byte */
+#घोषणा NFT_MATCH_LARGE_THRESH	192
 
-struct nft_xt_match_priv {
-	void *info;
-};
+काष्ठा nft_xt_match_priv अणु
+	व्योम *info;
+पूर्ण;
 
-static int nft_compat_chain_validate_dependency(const struct nft_ctx *ctx,
-						const char *tablename)
-{
-	enum nft_chain_types type = NFT_CHAIN_T_DEFAULT;
-	const struct nft_chain *chain = ctx->chain;
-	const struct nft_base_chain *basechain;
+अटल पूर्णांक nft_compat_chain_validate_dependency(स्थिर काष्ठा nft_ctx *ctx,
+						स्थिर अक्षर *tablename)
+अणु
+	क्रमागत nft_chain_types type = NFT_CHAIN_T_DEFAULT;
+	स्थिर काष्ठा nft_chain *chain = ctx->chain;
+	स्थिर काष्ठा nft_base_chain *basechain;
 
-	if (!tablename ||
+	अगर (!tablename ||
 	    !nft_is_base_chain(chain))
-		return 0;
+		वापस 0;
 
 	basechain = nft_base_chain(chain);
-	if (strcmp(tablename, "nat") == 0) {
-		if (ctx->family != NFPROTO_BRIDGE)
+	अगर (म_भेद(tablename, "nat") == 0) अणु
+		अगर (ctx->family != NFPROTO_BRIDGE)
 			type = NFT_CHAIN_T_NAT;
-		if (basechain->type->type != type)
-			return -EINVAL;
-	}
+		अगर (basechain->type->type != type)
+			वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-union nft_entry {
-	struct ipt_entry e4;
-	struct ip6t_entry e6;
-	struct ebt_entry ebt;
-	struct arpt_entry arp;
-};
+जोड़ nft_entry अणु
+	काष्ठा ipt_entry e4;
+	काष्ठा ip6t_entry e6;
+	काष्ठा ebt_entry ebt;
+	काष्ठा arpt_entry arp;
+पूर्ण;
 
-static inline void
-nft_compat_set_par(struct xt_action_param *par, void *xt, const void *xt_info)
-{
+अटल अंतरभूत व्योम
+nft_compat_set_par(काष्ठा xt_action_param *par, व्योम *xt, स्थिर व्योम *xt_info)
+अणु
 	par->target	= xt;
 	par->targinfo	= xt_info;
 	par->hotdrop	= false;
-}
+पूर्ण
 
-static void nft_target_eval_xt(const struct nft_expr *expr,
-			       struct nft_regs *regs,
-			       const struct nft_pktinfo *pkt)
-{
-	void *info = nft_expr_priv(expr);
-	struct xt_target *target = expr->ops->data;
-	struct sk_buff *skb = pkt->skb;
-	int ret;
+अटल व्योम nft_target_eval_xt(स्थिर काष्ठा nft_expr *expr,
+			       काष्ठा nft_regs *regs,
+			       स्थिर काष्ठा nft_pktinfo *pkt)
+अणु
+	व्योम *info = nft_expr_priv(expr);
+	काष्ठा xt_target *target = expr->ops->data;
+	काष्ठा sk_buff *skb = pkt->skb;
+	पूर्णांक ret;
 
-	nft_compat_set_par((struct xt_action_param *)&pkt->xt, target, info);
+	nft_compat_set_par((काष्ठा xt_action_param *)&pkt->xt, target, info);
 
 	ret = target->target(skb, &pkt->xt);
 
-	if (pkt->xt.hotdrop)
+	अगर (pkt->xt.hotdrop)
 		ret = NF_DROP;
 
-	switch (ret) {
-	case XT_CONTINUE:
+	चयन (ret) अणु
+	हाल XT_CONTINUE:
 		regs->verdict.code = NFT_CONTINUE;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		regs->verdict.code = ret;
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static void nft_target_eval_bridge(const struct nft_expr *expr,
-				   struct nft_regs *regs,
-				   const struct nft_pktinfo *pkt)
-{
-	void *info = nft_expr_priv(expr);
-	struct xt_target *target = expr->ops->data;
-	struct sk_buff *skb = pkt->skb;
-	int ret;
+अटल व्योम nft_target_eval_bridge(स्थिर काष्ठा nft_expr *expr,
+				   काष्ठा nft_regs *regs,
+				   स्थिर काष्ठा nft_pktinfo *pkt)
+अणु
+	व्योम *info = nft_expr_priv(expr);
+	काष्ठा xt_target *target = expr->ops->data;
+	काष्ठा sk_buff *skb = pkt->skb;
+	पूर्णांक ret;
 
-	nft_compat_set_par((struct xt_action_param *)&pkt->xt, target, info);
+	nft_compat_set_par((काष्ठा xt_action_param *)&pkt->xt, target, info);
 
 	ret = target->target(skb, &pkt->xt);
 
-	if (pkt->xt.hotdrop)
+	अगर (pkt->xt.hotdrop)
 		ret = NF_DROP;
 
-	switch (ret) {
-	case EBT_ACCEPT:
+	चयन (ret) अणु
+	हाल EBT_ACCEPT:
 		regs->verdict.code = NF_ACCEPT;
-		break;
-	case EBT_DROP:
+		अवरोध;
+	हाल EBT_DROP:
 		regs->verdict.code = NF_DROP;
-		break;
-	case EBT_CONTINUE:
+		अवरोध;
+	हाल EBT_CONTINUE:
 		regs->verdict.code = NFT_CONTINUE;
-		break;
-	case EBT_RETURN:
+		अवरोध;
+	हाल EBT_RETURN:
 		regs->verdict.code = NFT_RETURN;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		regs->verdict.code = ret;
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static const struct nla_policy nft_target_policy[NFTA_TARGET_MAX + 1] = {
-	[NFTA_TARGET_NAME]	= { .type = NLA_NUL_STRING },
-	[NFTA_TARGET_REV]	= { .type = NLA_U32 },
-	[NFTA_TARGET_INFO]	= { .type = NLA_BINARY },
-};
+अटल स्थिर काष्ठा nla_policy nft_target_policy[NFTA_TARGET_MAX + 1] = अणु
+	[NFTA_TARGET_NAME]	= अणु .type = NLA_NUL_STRING पूर्ण,
+	[NFTA_TARGET_REV]	= अणु .type = NLA_U32 पूर्ण,
+	[NFTA_TARGET_INFO]	= अणु .type = NLA_BINARY पूर्ण,
+पूर्ण;
 
-static void
-nft_target_set_tgchk_param(struct xt_tgchk_param *par,
-			   const struct nft_ctx *ctx,
-			   struct xt_target *target, void *info,
-			   union nft_entry *entry, u16 proto, bool inv)
-{
+अटल व्योम
+nft_target_set_tgchk_param(काष्ठा xt_tgchk_param *par,
+			   स्थिर काष्ठा nft_ctx *ctx,
+			   काष्ठा xt_target *target, व्योम *info,
+			   जोड़ nft_entry *entry, u16 proto, bool inv)
+अणु
 	par->net	= ctx->net;
 	par->table	= ctx->table->name;
-	switch (ctx->family) {
-	case AF_INET:
+	चयन (ctx->family) अणु
+	हाल AF_INET:
 		entry->e4.ip.proto = proto;
 		entry->e4.ip.invflags = inv ? IPT_INV_PROTO : 0;
-		break;
-	case AF_INET6:
-		if (proto)
+		अवरोध;
+	हाल AF_INET6:
+		अगर (proto)
 			entry->e6.ipv6.flags |= IP6T_F_PROTO;
 
 		entry->e6.ipv6.proto = proto;
 		entry->e6.ipv6.invflags = inv ? IP6T_INV_PROTO : 0;
-		break;
-	case NFPROTO_BRIDGE:
-		entry->ebt.ethproto = (__force __be16)proto;
+		अवरोध;
+	हाल NFPROTO_BRIDGE:
+		entry->ebt.ethproto = (__क्रमce __be16)proto;
 		entry->ebt.invflags = inv ? EBT_IPROTO : 0;
-		break;
-	case NFPROTO_ARP:
-		break;
-	}
+		अवरोध;
+	हाल NFPROTO_ARP:
+		अवरोध;
+	पूर्ण
 	par->entryinfo	= entry;
 	par->target	= target;
 	par->targinfo	= info;
-	if (nft_is_base_chain(ctx->chain)) {
-		const struct nft_base_chain *basechain =
+	अगर (nft_is_base_chain(ctx->chain)) अणु
+		स्थिर काष्ठा nft_base_chain *basechain =
 						nft_base_chain(ctx->chain);
-		const struct nf_hook_ops *ops = &basechain->ops;
+		स्थिर काष्ठा nf_hook_ops *ops = &basechain->ops;
 
 		par->hook_mask = 1 << ops->hooknum;
-	} else {
+	पूर्ण अन्यथा अणु
 		par->hook_mask = 0;
-	}
+	पूर्ण
 	par->family	= ctx->family;
 	par->nft_compat = true;
-}
+पूर्ण
 
-static void target_compat_from_user(struct xt_target *t, void *in, void *out)
-{
-	int pad;
+अटल व्योम target_compat_from_user(काष्ठा xt_target *t, व्योम *in, व्योम *out)
+अणु
+	पूर्णांक pad;
 
-	memcpy(out, in, t->targetsize);
-	pad = XT_ALIGN(t->targetsize) - t->targetsize;
-	if (pad > 0)
-		memset(out + t->targetsize, 0, pad);
-}
+	स_नकल(out, in, t->tarमाला_लोize);
+	pad = XT_ALIGN(t->tarमाला_लोize) - t->tarमाला_लोize;
+	अगर (pad > 0)
+		स_रखो(out + t->tarमाला_लोize, 0, pad);
+पूर्ण
 
-static const struct nla_policy nft_rule_compat_policy[NFTA_RULE_COMPAT_MAX + 1] = {
-	[NFTA_RULE_COMPAT_PROTO]	= { .type = NLA_U32 },
-	[NFTA_RULE_COMPAT_FLAGS]	= { .type = NLA_U32 },
-};
+अटल स्थिर काष्ठा nla_policy nft_rule_compat_policy[NFTA_RULE_COMPAT_MAX + 1] = अणु
+	[NFTA_RULE_COMPAT_PROTO]	= अणु .type = NLA_U32 पूर्ण,
+	[NFTA_RULE_COMPAT_FLAGS]	= अणु .type = NLA_U32 पूर्ण,
+पूर्ण;
 
-static int nft_parse_compat(const struct nlattr *attr, u16 *proto, bool *inv)
-{
-	struct nlattr *tb[NFTA_RULE_COMPAT_MAX+1];
+अटल पूर्णांक nft_parse_compat(स्थिर काष्ठा nlattr *attr, u16 *proto, bool *inv)
+अणु
+	काष्ठा nlattr *tb[NFTA_RULE_COMPAT_MAX+1];
 	u32 flags;
-	int err;
+	पूर्णांक err;
 
 	err = nla_parse_nested_deprecated(tb, NFTA_RULE_COMPAT_MAX, attr,
-					  nft_rule_compat_policy, NULL);
-	if (err < 0)
-		return err;
+					  nft_rule_compat_policy, शून्य);
+	अगर (err < 0)
+		वापस err;
 
-	if (!tb[NFTA_RULE_COMPAT_PROTO] || !tb[NFTA_RULE_COMPAT_FLAGS])
-		return -EINVAL;
+	अगर (!tb[NFTA_RULE_COMPAT_PROTO] || !tb[NFTA_RULE_COMPAT_FLAGS])
+		वापस -EINVAL;
 
 	flags = ntohl(nla_get_be32(tb[NFTA_RULE_COMPAT_FLAGS]));
-	if (flags & ~NFT_RULE_COMPAT_F_MASK)
-		return -EINVAL;
-	if (flags & NFT_RULE_COMPAT_F_INV)
+	अगर (flags & ~NFT_RULE_COMPAT_F_MASK)
+		वापस -EINVAL;
+	अगर (flags & NFT_RULE_COMPAT_F_INV)
 		*inv = true;
 
 	*proto = ntohl(nla_get_be32(tb[NFTA_RULE_COMPAT_PROTO]));
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void nft_compat_wait_for_destructors(void)
-{
-	/* xtables matches or targets can have side effects, e.g.
-	 * creation/destruction of /proc files.
+अटल व्योम nft_compat_रुको_क्रम_deकाष्ठाors(व्योम)
+अणु
+	/* xtables matches or tarमाला_लो can have side effects, e.g.
+	 * creation/deकाष्ठाion of /proc files.
 	 * The xt ->destroy functions are run asynchronously from
 	 * work queue.  If we have pending invocations we thus
-	 * need to wait for those to finish.
+	 * need to रुको क्रम those to finish.
 	 */
 	nf_tables_trans_destroy_flush_work();
-}
+पूर्ण
 
-static int
-nft_target_init(const struct nft_ctx *ctx, const struct nft_expr *expr,
-		const struct nlattr * const tb[])
-{
-	void *info = nft_expr_priv(expr);
-	struct xt_target *target = expr->ops->data;
-	struct xt_tgchk_param par;
-	size_t size = XT_ALIGN(nla_len(tb[NFTA_TARGET_INFO]));
+अटल पूर्णांक
+nft_target_init(स्थिर काष्ठा nft_ctx *ctx, स्थिर काष्ठा nft_expr *expr,
+		स्थिर काष्ठा nlattr * स्थिर tb[])
+अणु
+	व्योम *info = nft_expr_priv(expr);
+	काष्ठा xt_target *target = expr->ops->data;
+	काष्ठा xt_tgchk_param par;
+	माप_प्रकार size = XT_ALIGN(nla_len(tb[NFTA_TARGET_INFO]));
 	u16 proto = 0;
 	bool inv = false;
-	union nft_entry e = {};
-	int ret;
+	जोड़ nft_entry e = अणुपूर्ण;
+	पूर्णांक ret;
 
 	target_compat_from_user(target, nla_data(tb[NFTA_TARGET_INFO]), info);
 
-	if (ctx->nla[NFTA_RULE_COMPAT]) {
+	अगर (ctx->nla[NFTA_RULE_COMPAT]) अणु
 		ret = nft_parse_compat(ctx->nla[NFTA_RULE_COMPAT], &proto, &inv);
-		if (ret < 0)
-			return ret;
-	}
+		अगर (ret < 0)
+			वापस ret;
+	पूर्ण
 
 	nft_target_set_tgchk_param(&par, ctx, target, info, &e, proto, inv);
 
-	nft_compat_wait_for_destructors();
+	nft_compat_रुको_क्रम_deकाष्ठाors();
 
 	ret = xt_check_target(&par, size, proto, inv);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	/* The standard target cannot be used */
-	if (!target->target)
-		return -EINVAL;
+	अगर (!target->target)
+		वापस -EINVAL;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void __nft_mt_tg_destroy(struct module *me, const struct nft_expr *expr)
-{
+अटल व्योम __nft_mt_tg_destroy(काष्ठा module *me, स्थिर काष्ठा nft_expr *expr)
+अणु
 	module_put(me);
-	kfree(expr->ops);
-}
+	kमुक्त(expr->ops);
+पूर्ण
 
-static void
-nft_target_destroy(const struct nft_ctx *ctx, const struct nft_expr *expr)
-{
-	struct xt_target *target = expr->ops->data;
-	void *info = nft_expr_priv(expr);
-	struct module *me = target->me;
-	struct xt_tgdtor_param par;
+अटल व्योम
+nft_target_destroy(स्थिर काष्ठा nft_ctx *ctx, स्थिर काष्ठा nft_expr *expr)
+अणु
+	काष्ठा xt_target *target = expr->ops->data;
+	व्योम *info = nft_expr_priv(expr);
+	काष्ठा module *me = target->me;
+	काष्ठा xt_tgdtor_param par;
 
 	par.net = ctx->net;
 	par.target = target;
 	par.targinfo = info;
 	par.family = ctx->family;
-	if (par.target->destroy != NULL)
+	अगर (par.target->destroy != शून्य)
 		par.target->destroy(&par);
 
 	__nft_mt_tg_destroy(me, expr);
-}
+पूर्ण
 
-static int nft_extension_dump_info(struct sk_buff *skb, int attr,
-				   const void *info,
-				   unsigned int size, unsigned int user_size)
-{
-	unsigned int info_size, aligned_size = XT_ALIGN(size);
-	struct nlattr *nla;
+अटल पूर्णांक nft_extension_dump_info(काष्ठा sk_buff *skb, पूर्णांक attr,
+				   स्थिर व्योम *info,
+				   अचिन्हित पूर्णांक size, अचिन्हित पूर्णांक user_size)
+अणु
+	अचिन्हित पूर्णांक info_size, aligned_size = XT_ALIGN(size);
+	काष्ठा nlattr *nla;
 
 	nla = nla_reserve(skb, attr, aligned_size);
-	if (!nla)
-		return -1;
+	अगर (!nla)
+		वापस -1;
 
 	info_size = user_size ? : size;
-	memcpy(nla_data(nla), info, info_size);
-	memset(nla_data(nla) + info_size, 0, aligned_size - info_size);
+	स_नकल(nla_data(nla), info, info_size);
+	स_रखो(nla_data(nla) + info_size, 0, aligned_size - info_size);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int nft_target_dump(struct sk_buff *skb, const struct nft_expr *expr)
-{
-	const struct xt_target *target = expr->ops->data;
-	void *info = nft_expr_priv(expr);
+अटल पूर्णांक nft_target_dump(काष्ठा sk_buff *skb, स्थिर काष्ठा nft_expr *expr)
+अणु
+	स्थिर काष्ठा xt_target *target = expr->ops->data;
+	व्योम *info = nft_expr_priv(expr);
 
-	if (nla_put_string(skb, NFTA_TARGET_NAME, target->name) ||
+	अगर (nla_put_string(skb, NFTA_TARGET_NAME, target->name) ||
 	    nla_put_be32(skb, NFTA_TARGET_REV, htonl(target->revision)) ||
 	    nft_extension_dump_info(skb, NFTA_TARGET_INFO, info,
-				    target->targetsize, target->usersize))
-		goto nla_put_failure;
+				    target->tarमाला_लोize, target->usersize))
+		जाओ nla_put_failure;
 
-	return 0;
+	वापस 0;
 
 nla_put_failure:
-	return -1;
-}
+	वापस -1;
+पूर्ण
 
-static int nft_target_validate(const struct nft_ctx *ctx,
-			       const struct nft_expr *expr,
-			       const struct nft_data **data)
-{
-	struct xt_target *target = expr->ops->data;
-	unsigned int hook_mask = 0;
-	int ret;
+अटल पूर्णांक nft_target_validate(स्थिर काष्ठा nft_ctx *ctx,
+			       स्थिर काष्ठा nft_expr *expr,
+			       स्थिर काष्ठा nft_data **data)
+अणु
+	काष्ठा xt_target *target = expr->ops->data;
+	अचिन्हित पूर्णांक hook_mask = 0;
+	पूर्णांक ret;
 
-	if (nft_is_base_chain(ctx->chain)) {
-		const struct nft_base_chain *basechain =
+	अगर (nft_is_base_chain(ctx->chain)) अणु
+		स्थिर काष्ठा nft_base_chain *basechain =
 						nft_base_chain(ctx->chain);
-		const struct nf_hook_ops *ops = &basechain->ops;
+		स्थिर काष्ठा nf_hook_ops *ops = &basechain->ops;
 
 		hook_mask = 1 << ops->hooknum;
-		if (target->hooks && !(hook_mask & target->hooks))
-			return -EINVAL;
+		अगर (target->hooks && !(hook_mask & target->hooks))
+			वापस -EINVAL;
 
 		ret = nft_compat_chain_validate_dependency(ctx, target->table);
-		if (ret < 0)
-			return ret;
-	}
-	return 0;
-}
+		अगर (ret < 0)
+			वापस ret;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static void __nft_match_eval(const struct nft_expr *expr,
-			     struct nft_regs *regs,
-			     const struct nft_pktinfo *pkt,
-			     void *info)
-{
-	struct xt_match *match = expr->ops->data;
-	struct sk_buff *skb = pkt->skb;
+अटल व्योम __nft_match_eval(स्थिर काष्ठा nft_expr *expr,
+			     काष्ठा nft_regs *regs,
+			     स्थिर काष्ठा nft_pktinfo *pkt,
+			     व्योम *info)
+अणु
+	काष्ठा xt_match *match = expr->ops->data;
+	काष्ठा sk_buff *skb = pkt->skb;
 	bool ret;
 
-	nft_compat_set_par((struct xt_action_param *)&pkt->xt, match, info);
+	nft_compat_set_par((काष्ठा xt_action_param *)&pkt->xt, match, info);
 
-	ret = match->match(skb, (struct xt_action_param *)&pkt->xt);
+	ret = match->match(skb, (काष्ठा xt_action_param *)&pkt->xt);
 
-	if (pkt->xt.hotdrop) {
+	अगर (pkt->xt.hotdrop) अणु
 		regs->verdict.code = NF_DROP;
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	switch (ret ? 1 : 0) {
-	case 1:
+	चयन (ret ? 1 : 0) अणु
+	हाल 1:
 		regs->verdict.code = NFT_CONTINUE;
-		break;
-	case 0:
+		अवरोध;
+	हाल 0:
 		regs->verdict.code = NFT_BREAK;
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static void nft_match_large_eval(const struct nft_expr *expr,
-				 struct nft_regs *regs,
-				 const struct nft_pktinfo *pkt)
-{
-	struct nft_xt_match_priv *priv = nft_expr_priv(expr);
+अटल व्योम nft_match_large_eval(स्थिर काष्ठा nft_expr *expr,
+				 काष्ठा nft_regs *regs,
+				 स्थिर काष्ठा nft_pktinfo *pkt)
+अणु
+	काष्ठा nft_xt_match_priv *priv = nft_expr_priv(expr);
 
 	__nft_match_eval(expr, regs, pkt, priv->info);
-}
+पूर्ण
 
-static void nft_match_eval(const struct nft_expr *expr,
-			   struct nft_regs *regs,
-			   const struct nft_pktinfo *pkt)
-{
+अटल व्योम nft_match_eval(स्थिर काष्ठा nft_expr *expr,
+			   काष्ठा nft_regs *regs,
+			   स्थिर काष्ठा nft_pktinfo *pkt)
+अणु
 	__nft_match_eval(expr, regs, pkt, nft_expr_priv(expr));
-}
+पूर्ण
 
-static const struct nla_policy nft_match_policy[NFTA_MATCH_MAX + 1] = {
-	[NFTA_MATCH_NAME]	= { .type = NLA_NUL_STRING },
-	[NFTA_MATCH_REV]	= { .type = NLA_U32 },
-	[NFTA_MATCH_INFO]	= { .type = NLA_BINARY },
-};
+अटल स्थिर काष्ठा nla_policy nft_match_policy[NFTA_MATCH_MAX + 1] = अणु
+	[NFTA_MATCH_NAME]	= अणु .type = NLA_NUL_STRING पूर्ण,
+	[NFTA_MATCH_REV]	= अणु .type = NLA_U32 पूर्ण,
+	[NFTA_MATCH_INFO]	= अणु .type = NLA_BINARY पूर्ण,
+पूर्ण;
 
-/* struct xt_mtchk_param and xt_tgchk_param look very similar */
-static void
-nft_match_set_mtchk_param(struct xt_mtchk_param *par, const struct nft_ctx *ctx,
-			  struct xt_match *match, void *info,
-			  union nft_entry *entry, u16 proto, bool inv)
-{
+/* काष्ठा xt_mtchk_param and xt_tgchk_param look very similar */
+अटल व्योम
+nft_match_set_mtchk_param(काष्ठा xt_mtchk_param *par, स्थिर काष्ठा nft_ctx *ctx,
+			  काष्ठा xt_match *match, व्योम *info,
+			  जोड़ nft_entry *entry, u16 proto, bool inv)
+अणु
 	par->net	= ctx->net;
 	par->table	= ctx->table->name;
-	switch (ctx->family) {
-	case AF_INET:
+	चयन (ctx->family) अणु
+	हाल AF_INET:
 		entry->e4.ip.proto = proto;
 		entry->e4.ip.invflags = inv ? IPT_INV_PROTO : 0;
-		break;
-	case AF_INET6:
-		if (proto)
+		अवरोध;
+	हाल AF_INET6:
+		अगर (proto)
 			entry->e6.ipv6.flags |= IP6T_F_PROTO;
 
 		entry->e6.ipv6.proto = proto;
 		entry->e6.ipv6.invflags = inv ? IP6T_INV_PROTO : 0;
-		break;
-	case NFPROTO_BRIDGE:
-		entry->ebt.ethproto = (__force __be16)proto;
+		अवरोध;
+	हाल NFPROTO_BRIDGE:
+		entry->ebt.ethproto = (__क्रमce __be16)proto;
 		entry->ebt.invflags = inv ? EBT_IPROTO : 0;
-		break;
-	case NFPROTO_ARP:
-		break;
-	}
+		अवरोध;
+	हाल NFPROTO_ARP:
+		अवरोध;
+	पूर्ण
 	par->entryinfo	= entry;
 	par->match	= match;
 	par->matchinfo	= info;
-	if (nft_is_base_chain(ctx->chain)) {
-		const struct nft_base_chain *basechain =
+	अगर (nft_is_base_chain(ctx->chain)) अणु
+		स्थिर काष्ठा nft_base_chain *basechain =
 						nft_base_chain(ctx->chain);
-		const struct nf_hook_ops *ops = &basechain->ops;
+		स्थिर काष्ठा nf_hook_ops *ops = &basechain->ops;
 
 		par->hook_mask = 1 << ops->hooknum;
-	} else {
+	पूर्ण अन्यथा अणु
 		par->hook_mask = 0;
-	}
+	पूर्ण
 	par->family	= ctx->family;
 	par->nft_compat = true;
-}
+पूर्ण
 
-static void match_compat_from_user(struct xt_match *m, void *in, void *out)
-{
-	int pad;
+अटल व्योम match_compat_from_user(काष्ठा xt_match *m, व्योम *in, व्योम *out)
+अणु
+	पूर्णांक pad;
 
-	memcpy(out, in, m->matchsize);
+	स_नकल(out, in, m->matchsize);
 	pad = XT_ALIGN(m->matchsize) - m->matchsize;
-	if (pad > 0)
-		memset(out + m->matchsize, 0, pad);
-}
+	अगर (pad > 0)
+		स_रखो(out + m->matchsize, 0, pad);
+पूर्ण
 
-static int
-__nft_match_init(const struct nft_ctx *ctx, const struct nft_expr *expr,
-		 const struct nlattr * const tb[],
-		 void *info)
-{
-	struct xt_match *match = expr->ops->data;
-	struct xt_mtchk_param par;
-	size_t size = XT_ALIGN(nla_len(tb[NFTA_MATCH_INFO]));
+अटल पूर्णांक
+__nft_match_init(स्थिर काष्ठा nft_ctx *ctx, स्थिर काष्ठा nft_expr *expr,
+		 स्थिर काष्ठा nlattr * स्थिर tb[],
+		 व्योम *info)
+अणु
+	काष्ठा xt_match *match = expr->ops->data;
+	काष्ठा xt_mtchk_param par;
+	माप_प्रकार size = XT_ALIGN(nla_len(tb[NFTA_MATCH_INFO]));
 	u16 proto = 0;
 	bool inv = false;
-	union nft_entry e = {};
-	int ret;
+	जोड़ nft_entry e = अणुपूर्ण;
+	पूर्णांक ret;
 
 	match_compat_from_user(match, nla_data(tb[NFTA_MATCH_INFO]), info);
 
-	if (ctx->nla[NFTA_RULE_COMPAT]) {
+	अगर (ctx->nla[NFTA_RULE_COMPAT]) अणु
 		ret = nft_parse_compat(ctx->nla[NFTA_RULE_COMPAT], &proto, &inv);
-		if (ret < 0)
-			return ret;
-	}
+		अगर (ret < 0)
+			वापस ret;
+	पूर्ण
 
 	nft_match_set_mtchk_param(&par, ctx, match, info, &e, proto, inv);
 
-	nft_compat_wait_for_destructors();
+	nft_compat_रुको_क्रम_deकाष्ठाors();
 
-	return xt_check_match(&par, size, proto, inv);
-}
+	वापस xt_check_match(&par, size, proto, inv);
+पूर्ण
 
-static int
-nft_match_init(const struct nft_ctx *ctx, const struct nft_expr *expr,
-	       const struct nlattr * const tb[])
-{
-	return __nft_match_init(ctx, expr, tb, nft_expr_priv(expr));
-}
+अटल पूर्णांक
+nft_match_init(स्थिर काष्ठा nft_ctx *ctx, स्थिर काष्ठा nft_expr *expr,
+	       स्थिर काष्ठा nlattr * स्थिर tb[])
+अणु
+	वापस __nft_match_init(ctx, expr, tb, nft_expr_priv(expr));
+पूर्ण
 
-static int
-nft_match_large_init(const struct nft_ctx *ctx, const struct nft_expr *expr,
-		     const struct nlattr * const tb[])
-{
-	struct nft_xt_match_priv *priv = nft_expr_priv(expr);
-	struct xt_match *m = expr->ops->data;
-	int ret;
+अटल पूर्णांक
+nft_match_large_init(स्थिर काष्ठा nft_ctx *ctx, स्थिर काष्ठा nft_expr *expr,
+		     स्थिर काष्ठा nlattr * स्थिर tb[])
+अणु
+	काष्ठा nft_xt_match_priv *priv = nft_expr_priv(expr);
+	काष्ठा xt_match *m = expr->ops->data;
+	पूर्णांक ret;
 
-	priv->info = kmalloc(XT_ALIGN(m->matchsize), GFP_KERNEL);
-	if (!priv->info)
-		return -ENOMEM;
+	priv->info = kदो_स्मृति(XT_ALIGN(m->matchsize), GFP_KERNEL);
+	अगर (!priv->info)
+		वापस -ENOMEM;
 
 	ret = __nft_match_init(ctx, expr, tb, priv->info);
-	if (ret)
-		kfree(priv->info);
-	return ret;
-}
+	अगर (ret)
+		kमुक्त(priv->info);
+	वापस ret;
+पूर्ण
 
-static void
-__nft_match_destroy(const struct nft_ctx *ctx, const struct nft_expr *expr,
-		    void *info)
-{
-	struct xt_match *match = expr->ops->data;
-	struct module *me = match->me;
-	struct xt_mtdtor_param par;
+अटल व्योम
+__nft_match_destroy(स्थिर काष्ठा nft_ctx *ctx, स्थिर काष्ठा nft_expr *expr,
+		    व्योम *info)
+अणु
+	काष्ठा xt_match *match = expr->ops->data;
+	काष्ठा module *me = match->me;
+	काष्ठा xt_mtdtor_param par;
 
 	par.net = ctx->net;
 	par.match = match;
 	par.matchinfo = info;
 	par.family = ctx->family;
-	if (par.match->destroy != NULL)
+	अगर (par.match->destroy != शून्य)
 		par.match->destroy(&par);
 
 	__nft_mt_tg_destroy(me, expr);
-}
+पूर्ण
 
-static void
-nft_match_destroy(const struct nft_ctx *ctx, const struct nft_expr *expr)
-{
+अटल व्योम
+nft_match_destroy(स्थिर काष्ठा nft_ctx *ctx, स्थिर काष्ठा nft_expr *expr)
+अणु
 	__nft_match_destroy(ctx, expr, nft_expr_priv(expr));
-}
+पूर्ण
 
-static void
-nft_match_large_destroy(const struct nft_ctx *ctx, const struct nft_expr *expr)
-{
-	struct nft_xt_match_priv *priv = nft_expr_priv(expr);
+अटल व्योम
+nft_match_large_destroy(स्थिर काष्ठा nft_ctx *ctx, स्थिर काष्ठा nft_expr *expr)
+अणु
+	काष्ठा nft_xt_match_priv *priv = nft_expr_priv(expr);
 
 	__nft_match_destroy(ctx, expr, priv->info);
-	kfree(priv->info);
-}
+	kमुक्त(priv->info);
+पूर्ण
 
-static int __nft_match_dump(struct sk_buff *skb, const struct nft_expr *expr,
-			    void *info)
-{
-	struct xt_match *match = expr->ops->data;
+अटल पूर्णांक __nft_match_dump(काष्ठा sk_buff *skb, स्थिर काष्ठा nft_expr *expr,
+			    व्योम *info)
+अणु
+	काष्ठा xt_match *match = expr->ops->data;
 
-	if (nla_put_string(skb, NFTA_MATCH_NAME, match->name) ||
+	अगर (nla_put_string(skb, NFTA_MATCH_NAME, match->name) ||
 	    nla_put_be32(skb, NFTA_MATCH_REV, htonl(match->revision)) ||
 	    nft_extension_dump_info(skb, NFTA_MATCH_INFO, info,
 				    match->matchsize, match->usersize))
-		goto nla_put_failure;
+		जाओ nla_put_failure;
 
-	return 0;
+	वापस 0;
 
 nla_put_failure:
-	return -1;
-}
+	वापस -1;
+पूर्ण
 
-static int nft_match_dump(struct sk_buff *skb, const struct nft_expr *expr)
-{
-	return __nft_match_dump(skb, expr, nft_expr_priv(expr));
-}
+अटल पूर्णांक nft_match_dump(काष्ठा sk_buff *skb, स्थिर काष्ठा nft_expr *expr)
+अणु
+	वापस __nft_match_dump(skb, expr, nft_expr_priv(expr));
+पूर्ण
 
-static int nft_match_large_dump(struct sk_buff *skb, const struct nft_expr *e)
-{
-	struct nft_xt_match_priv *priv = nft_expr_priv(e);
+अटल पूर्णांक nft_match_large_dump(काष्ठा sk_buff *skb, स्थिर काष्ठा nft_expr *e)
+अणु
+	काष्ठा nft_xt_match_priv *priv = nft_expr_priv(e);
 
-	return __nft_match_dump(skb, e, priv->info);
-}
+	वापस __nft_match_dump(skb, e, priv->info);
+पूर्ण
 
-static int nft_match_validate(const struct nft_ctx *ctx,
-			      const struct nft_expr *expr,
-			      const struct nft_data **data)
-{
-	struct xt_match *match = expr->ops->data;
-	unsigned int hook_mask = 0;
-	int ret;
+अटल पूर्णांक nft_match_validate(स्थिर काष्ठा nft_ctx *ctx,
+			      स्थिर काष्ठा nft_expr *expr,
+			      स्थिर काष्ठा nft_data **data)
+अणु
+	काष्ठा xt_match *match = expr->ops->data;
+	अचिन्हित पूर्णांक hook_mask = 0;
+	पूर्णांक ret;
 
-	if (nft_is_base_chain(ctx->chain)) {
-		const struct nft_base_chain *basechain =
+	अगर (nft_is_base_chain(ctx->chain)) अणु
+		स्थिर काष्ठा nft_base_chain *basechain =
 						nft_base_chain(ctx->chain);
-		const struct nf_hook_ops *ops = &basechain->ops;
+		स्थिर काष्ठा nf_hook_ops *ops = &basechain->ops;
 
 		hook_mask = 1 << ops->hooknum;
-		if (match->hooks && !(hook_mask & match->hooks))
-			return -EINVAL;
+		अगर (match->hooks && !(hook_mask & match->hooks))
+			वापस -EINVAL;
 
 		ret = nft_compat_chain_validate_dependency(ctx, match->table);
-		if (ret < 0)
-			return ret;
-	}
-	return 0;
-}
+		अगर (ret < 0)
+			वापस ret;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int
-nfnl_compat_fill_info(struct sk_buff *skb, u32 portid, u32 seq, u32 type,
-		      int event, u16 family, const char *name,
-		      int rev, int target)
-{
-	struct nlmsghdr *nlh;
-	unsigned int flags = portid ? NLM_F_MULTI : 0;
+अटल पूर्णांक
+nfnl_compat_fill_info(काष्ठा sk_buff *skb, u32 portid, u32 seq, u32 type,
+		      पूर्णांक event, u16 family, स्थिर अक्षर *name,
+		      पूर्णांक rev, पूर्णांक target)
+अणु
+	काष्ठा nlmsghdr *nlh;
+	अचिन्हित पूर्णांक flags = portid ? NLM_F_MULTI : 0;
 
 	event = nfnl_msg_type(NFNL_SUBSYS_NFT_COMPAT, event);
 	nlh = nfnl_msg_put(skb, portid, seq, event, flags, family,
 			   NFNETLINK_V0, 0);
-	if (!nlh)
-		goto nlmsg_failure;
+	अगर (!nlh)
+		जाओ nlmsg_failure;
 
-	if (nla_put_string(skb, NFTA_COMPAT_NAME, name) ||
+	अगर (nla_put_string(skb, NFTA_COMPAT_NAME, name) ||
 	    nla_put_be32(skb, NFTA_COMPAT_REV, htonl(rev)) ||
 	    nla_put_be32(skb, NFTA_COMPAT_TYPE, htonl(target)))
-		goto nla_put_failure;
+		जाओ nla_put_failure;
 
 	nlmsg_end(skb, nlh);
-	return skb->len;
+	वापस skb->len;
 
 nlmsg_failure:
 nla_put_failure:
 	nlmsg_cancel(skb, nlh);
-	return -1;
-}
+	वापस -1;
+पूर्ण
 
-static int nfnl_compat_get_rcu(struct sk_buff *skb,
-			       const struct nfnl_info *info,
-			       const struct nlattr * const tb[])
-{
-	struct nfgenmsg *nfmsg;
-	const char *name, *fmt;
-	struct sk_buff *skb2;
-	int ret = 0, target;
+अटल पूर्णांक nfnl_compat_get_rcu(काष्ठा sk_buff *skb,
+			       स्थिर काष्ठा nfnl_info *info,
+			       स्थिर काष्ठा nlattr * स्थिर tb[])
+अणु
+	काष्ठा nfgenmsg *nfmsg;
+	स्थिर अक्षर *name, *fmt;
+	काष्ठा sk_buff *skb2;
+	पूर्णांक ret = 0, target;
 	u32 rev;
 
-	if (tb[NFTA_COMPAT_NAME] == NULL ||
-	    tb[NFTA_COMPAT_REV] == NULL ||
-	    tb[NFTA_COMPAT_TYPE] == NULL)
-		return -EINVAL;
+	अगर (tb[NFTA_COMPAT_NAME] == शून्य ||
+	    tb[NFTA_COMPAT_REV] == शून्य ||
+	    tb[NFTA_COMPAT_TYPE] == शून्य)
+		वापस -EINVAL;
 
 	name = nla_data(tb[NFTA_COMPAT_NAME]);
 	rev = ntohl(nla_get_be32(tb[NFTA_COMPAT_REV]));
@@ -634,121 +635,121 @@ static int nfnl_compat_get_rcu(struct sk_buff *skb,
 
 	nfmsg = nlmsg_data(info->nlh);
 
-	switch(nfmsg->nfgen_family) {
-	case AF_INET:
+	चयन(nfmsg->nfgen_family) अणु
+	हाल AF_INET:
 		fmt = "ipt_%s";
-		break;
-	case AF_INET6:
+		अवरोध;
+	हाल AF_INET6:
 		fmt = "ip6t_%s";
-		break;
-	case NFPROTO_BRIDGE:
+		अवरोध;
+	हाल NFPROTO_BRIDGE:
 		fmt = "ebt_%s";
-		break;
-	case NFPROTO_ARP:
+		अवरोध;
+	हाल NFPROTO_ARP:
 		fmt = "arpt_%s";
-		break;
-	default:
+		अवरोध;
+	शेष:
 		pr_err("nft_compat: unsupported protocol %d\n",
 			nfmsg->nfgen_family);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (!try_module_get(THIS_MODULE))
-		return -EINVAL;
+	अगर (!try_module_get(THIS_MODULE))
+		वापस -EINVAL;
 
-	rcu_read_unlock();
+	rcu_पढ़ो_unlock();
 	try_then_request_module(xt_find_revision(nfmsg->nfgen_family, name,
 						 rev, target, &ret),
 						 fmt, name);
-	if (ret < 0)
-		goto out_put;
+	अगर (ret < 0)
+		जाओ out_put;
 
 	skb2 = nlmsg_new(NLMSG_DEFAULT_SIZE, GFP_KERNEL);
-	if (skb2 == NULL) {
+	अगर (skb2 == शून्य) अणु
 		ret = -ENOMEM;
-		goto out_put;
-	}
+		जाओ out_put;
+	पूर्ण
 
-	/* include the best revision for this extension in the message */
-	if (nfnl_compat_fill_info(skb2, NETLINK_CB(skb).portid,
+	/* include the best revision क्रम this extension in the message */
+	अगर (nfnl_compat_fill_info(skb2, NETLINK_CB(skb).portid,
 				  info->nlh->nlmsg_seq,
 				  NFNL_MSG_TYPE(info->nlh->nlmsg_type),
 				  NFNL_MSG_COMPAT_GET,
 				  nfmsg->nfgen_family,
-				  name, ret, target) <= 0) {
-		kfree_skb(skb2);
-		goto out_put;
-	}
+				  name, ret, target) <= 0) अणु
+		kमुक्त_skb(skb2);
+		जाओ out_put;
+	पूर्ण
 
 	ret = netlink_unicast(info->sk, skb2, NETLINK_CB(skb).portid,
 			      MSG_DONTWAIT);
-	if (ret > 0)
+	अगर (ret > 0)
 		ret = 0;
 out_put:
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	module_put(THIS_MODULE);
-	return ret == -EAGAIN ? -ENOBUFS : ret;
-}
+	वापस ret == -EAGAIN ? -ENOBUFS : ret;
+पूर्ण
 
-static const struct nla_policy nfnl_compat_policy_get[NFTA_COMPAT_MAX+1] = {
-	[NFTA_COMPAT_NAME]	= { .type = NLA_NUL_STRING,
-				    .len = NFT_COMPAT_NAME_MAX-1 },
-	[NFTA_COMPAT_REV]	= { .type = NLA_U32 },
-	[NFTA_COMPAT_TYPE]	= { .type = NLA_U32 },
-};
+अटल स्थिर काष्ठा nla_policy nfnl_compat_policy_get[NFTA_COMPAT_MAX+1] = अणु
+	[NFTA_COMPAT_NAME]	= अणु .type = NLA_NUL_STRING,
+				    .len = NFT_COMPAT_NAME_MAX-1 पूर्ण,
+	[NFTA_COMPAT_REV]	= अणु .type = NLA_U32 पूर्ण,
+	[NFTA_COMPAT_TYPE]	= अणु .type = NLA_U32 पूर्ण,
+पूर्ण;
 
-static const struct nfnl_callback nfnl_nft_compat_cb[NFNL_MSG_COMPAT_MAX] = {
-	[NFNL_MSG_COMPAT_GET]	= {
+अटल स्थिर काष्ठा nfnl_callback nfnl_nft_compat_cb[NFNL_MSG_COMPAT_MAX] = अणु
+	[NFNL_MSG_COMPAT_GET]	= अणु
 		.call		= nfnl_compat_get_rcu,
 		.type		= NFNL_CB_RCU,
 		.attr_count	= NFTA_COMPAT_MAX,
 		.policy		= nfnl_compat_policy_get
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static const struct nfnetlink_subsystem nfnl_compat_subsys = {
+अटल स्थिर काष्ठा nfnetlink_subप्रणाली nfnl_compat_subsys = अणु
 	.name		= "nft-compat",
 	.subsys_id	= NFNL_SUBSYS_NFT_COMPAT,
 	.cb_count	= NFNL_MSG_COMPAT_MAX,
 	.cb		= nfnl_nft_compat_cb,
-};
+पूर्ण;
 
-static struct nft_expr_type nft_match_type;
+अटल काष्ठा nft_expr_type nft_match_type;
 
-static const struct nft_expr_ops *
-nft_match_select_ops(const struct nft_ctx *ctx,
-		     const struct nlattr * const tb[])
-{
-	struct nft_expr_ops *ops;
-	struct xt_match *match;
-	unsigned int matchsize;
-	char *mt_name;
+अटल स्थिर काष्ठा nft_expr_ops *
+nft_match_select_ops(स्थिर काष्ठा nft_ctx *ctx,
+		     स्थिर काष्ठा nlattr * स्थिर tb[])
+अणु
+	काष्ठा nft_expr_ops *ops;
+	काष्ठा xt_match *match;
+	अचिन्हित पूर्णांक matchsize;
+	अक्षर *mt_name;
 	u32 rev, family;
-	int err;
+	पूर्णांक err;
 
-	if (tb[NFTA_MATCH_NAME] == NULL ||
-	    tb[NFTA_MATCH_REV] == NULL ||
-	    tb[NFTA_MATCH_INFO] == NULL)
-		return ERR_PTR(-EINVAL);
+	अगर (tb[NFTA_MATCH_NAME] == शून्य ||
+	    tb[NFTA_MATCH_REV] == शून्य ||
+	    tb[NFTA_MATCH_INFO] == शून्य)
+		वापस ERR_PTR(-EINVAL);
 
 	mt_name = nla_data(tb[NFTA_MATCH_NAME]);
 	rev = ntohl(nla_get_be32(tb[NFTA_MATCH_REV]));
 	family = ctx->family;
 
 	match = xt_request_find_match(family, mt_name, rev);
-	if (IS_ERR(match))
-		return ERR_PTR(-ENOENT);
+	अगर (IS_ERR(match))
+		वापस ERR_PTR(-ENOENT);
 
-	if (match->matchsize > nla_len(tb[NFTA_MATCH_INFO])) {
+	अगर (match->matchsize > nla_len(tb[NFTA_MATCH_INFO])) अणु
 		err = -EINVAL;
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
-	ops = kzalloc(sizeof(struct nft_expr_ops), GFP_KERNEL);
-	if (!ops) {
+	ops = kzalloc(माप(काष्ठा nft_expr_ops), GFP_KERNEL);
+	अगर (!ops) अणु
 		err = -ENOMEM;
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
 	ops->type = &nft_match_type;
 	ops->eval = nft_match_eval;
@@ -759,159 +760,159 @@ nft_match_select_ops(const struct nft_ctx *ctx,
 	ops->data = match;
 
 	matchsize = NFT_EXPR_SIZE(XT_ALIGN(match->matchsize));
-	if (matchsize > NFT_MATCH_LARGE_THRESH) {
-		matchsize = NFT_EXPR_SIZE(sizeof(struct nft_xt_match_priv));
+	अगर (matchsize > NFT_MATCH_LARGE_THRESH) अणु
+		matchsize = NFT_EXPR_SIZE(माप(काष्ठा nft_xt_match_priv));
 
 		ops->eval = nft_match_large_eval;
 		ops->init = nft_match_large_init;
 		ops->destroy = nft_match_large_destroy;
 		ops->dump = nft_match_large_dump;
-	}
+	पूर्ण
 
 	ops->size = matchsize;
 
-	return ops;
+	वापस ops;
 err:
 	module_put(match->me);
-	return ERR_PTR(err);
-}
+	वापस ERR_PTR(err);
+पूर्ण
 
-static void nft_match_release_ops(const struct nft_expr_ops *ops)
-{
-	struct xt_match *match = ops->data;
+अटल व्योम nft_match_release_ops(स्थिर काष्ठा nft_expr_ops *ops)
+अणु
+	काष्ठा xt_match *match = ops->data;
 
 	module_put(match->me);
-	kfree(ops);
-}
+	kमुक्त(ops);
+पूर्ण
 
-static struct nft_expr_type nft_match_type __read_mostly = {
+अटल काष्ठा nft_expr_type nft_match_type __पढ़ो_mostly = अणु
 	.name		= "match",
 	.select_ops	= nft_match_select_ops,
 	.release_ops	= nft_match_release_ops,
 	.policy		= nft_match_policy,
 	.maxattr	= NFTA_MATCH_MAX,
 	.owner		= THIS_MODULE,
-};
+पूर्ण;
 
-static struct nft_expr_type nft_target_type;
+अटल काष्ठा nft_expr_type nft_target_type;
 
-static const struct nft_expr_ops *
-nft_target_select_ops(const struct nft_ctx *ctx,
-		      const struct nlattr * const tb[])
-{
-	struct nft_expr_ops *ops;
-	struct xt_target *target;
-	char *tg_name;
+अटल स्थिर काष्ठा nft_expr_ops *
+nft_target_select_ops(स्थिर काष्ठा nft_ctx *ctx,
+		      स्थिर काष्ठा nlattr * स्थिर tb[])
+अणु
+	काष्ठा nft_expr_ops *ops;
+	काष्ठा xt_target *target;
+	अक्षर *tg_name;
 	u32 rev, family;
-	int err;
+	पूर्णांक err;
 
-	if (tb[NFTA_TARGET_NAME] == NULL ||
-	    tb[NFTA_TARGET_REV] == NULL ||
-	    tb[NFTA_TARGET_INFO] == NULL)
-		return ERR_PTR(-EINVAL);
+	अगर (tb[NFTA_TARGET_NAME] == शून्य ||
+	    tb[NFTA_TARGET_REV] == शून्य ||
+	    tb[NFTA_TARGET_INFO] == शून्य)
+		वापस ERR_PTR(-EINVAL);
 
 	tg_name = nla_data(tb[NFTA_TARGET_NAME]);
 	rev = ntohl(nla_get_be32(tb[NFTA_TARGET_REV]));
 	family = ctx->family;
 
-	if (strcmp(tg_name, XT_ERROR_TARGET) == 0 ||
-	    strcmp(tg_name, XT_STANDARD_TARGET) == 0 ||
-	    strcmp(tg_name, "standard") == 0)
-		return ERR_PTR(-EINVAL);
+	अगर (म_भेद(tg_name, XT_ERROR_TARGET) == 0 ||
+	    म_भेद(tg_name, XT_STANDARD_TARGET) == 0 ||
+	    म_भेद(tg_name, "standard") == 0)
+		वापस ERR_PTR(-EINVAL);
 
 	target = xt_request_find_target(family, tg_name, rev);
-	if (IS_ERR(target))
-		return ERR_PTR(-ENOENT);
+	अगर (IS_ERR(target))
+		वापस ERR_PTR(-ENOENT);
 
-	if (!target->target) {
+	अगर (!target->target) अणु
 		err = -EINVAL;
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
-	if (target->targetsize > nla_len(tb[NFTA_TARGET_INFO])) {
+	अगर (target->tarमाला_लोize > nla_len(tb[NFTA_TARGET_INFO])) अणु
 		err = -EINVAL;
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
-	ops = kzalloc(sizeof(struct nft_expr_ops), GFP_KERNEL);
-	if (!ops) {
+	ops = kzalloc(माप(काष्ठा nft_expr_ops), GFP_KERNEL);
+	अगर (!ops) अणु
 		err = -ENOMEM;
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
 	ops->type = &nft_target_type;
-	ops->size = NFT_EXPR_SIZE(XT_ALIGN(target->targetsize));
+	ops->size = NFT_EXPR_SIZE(XT_ALIGN(target->tarमाला_लोize));
 	ops->init = nft_target_init;
 	ops->destroy = nft_target_destroy;
 	ops->dump = nft_target_dump;
 	ops->validate = nft_target_validate;
 	ops->data = target;
 
-	if (family == NFPROTO_BRIDGE)
+	अगर (family == NFPROTO_BRIDGE)
 		ops->eval = nft_target_eval_bridge;
-	else
+	अन्यथा
 		ops->eval = nft_target_eval_xt;
 
-	return ops;
+	वापस ops;
 err:
 	module_put(target->me);
-	return ERR_PTR(err);
-}
+	वापस ERR_PTR(err);
+पूर्ण
 
-static void nft_target_release_ops(const struct nft_expr_ops *ops)
-{
-	struct xt_target *target = ops->data;
+अटल व्योम nft_target_release_ops(स्थिर काष्ठा nft_expr_ops *ops)
+अणु
+	काष्ठा xt_target *target = ops->data;
 
 	module_put(target->me);
-	kfree(ops);
-}
+	kमुक्त(ops);
+पूर्ण
 
-static struct nft_expr_type nft_target_type __read_mostly = {
+अटल काष्ठा nft_expr_type nft_target_type __पढ़ो_mostly = अणु
 	.name		= "target",
 	.select_ops	= nft_target_select_ops,
 	.release_ops	= nft_target_release_ops,
 	.policy		= nft_target_policy,
 	.maxattr	= NFTA_TARGET_MAX,
 	.owner		= THIS_MODULE,
-};
+पूर्ण;
 
-static int __init nft_compat_module_init(void)
-{
-	int ret;
+अटल पूर्णांक __init nft_compat_module_init(व्योम)
+अणु
+	पूर्णांक ret;
 
-	ret = nft_register_expr(&nft_match_type);
-	if (ret < 0)
-		return ret;
+	ret = nft_रेजिस्टर_expr(&nft_match_type);
+	अगर (ret < 0)
+		वापस ret;
 
-	ret = nft_register_expr(&nft_target_type);
-	if (ret < 0)
-		goto err_match;
+	ret = nft_रेजिस्टर_expr(&nft_target_type);
+	अगर (ret < 0)
+		जाओ err_match;
 
-	ret = nfnetlink_subsys_register(&nfnl_compat_subsys);
-	if (ret < 0) {
+	ret = nfnetlink_subsys_रेजिस्टर(&nfnl_compat_subsys);
+	अगर (ret < 0) अणु
 		pr_err("nft_compat: cannot register with nfnetlink.\n");
-		goto err_target;
-	}
+		जाओ err_target;
+	पूर्ण
 
-	return ret;
+	वापस ret;
 err_target:
-	nft_unregister_expr(&nft_target_type);
+	nft_unरेजिस्टर_expr(&nft_target_type);
 err_match:
-	nft_unregister_expr(&nft_match_type);
-	return ret;
-}
+	nft_unरेजिस्टर_expr(&nft_match_type);
+	वापस ret;
+पूर्ण
 
-static void __exit nft_compat_module_exit(void)
-{
-	nfnetlink_subsys_unregister(&nfnl_compat_subsys);
-	nft_unregister_expr(&nft_target_type);
-	nft_unregister_expr(&nft_match_type);
-}
+अटल व्योम __निकास nft_compat_module_निकास(व्योम)
+अणु
+	nfnetlink_subsys_unरेजिस्टर(&nfnl_compat_subsys);
+	nft_unरेजिस्टर_expr(&nft_target_type);
+	nft_unरेजिस्टर_expr(&nft_match_type);
+पूर्ण
 
 MODULE_ALIAS_NFNL_SUBSYS(NFNL_SUBSYS_NFT_COMPAT);
 
 module_init(nft_compat_module_init);
-module_exit(nft_compat_module_exit);
+module_निकास(nft_compat_module_निकास);
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Pablo Neira Ayuso <pablo@netfilter.org>");

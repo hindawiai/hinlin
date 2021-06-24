@@ -1,99 +1,100 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 //
 // Copyright 2019 Google LLC.
 
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/of.h>
-#include <linux/platform_device.h>
-#include <linux/remoteproc.h>
-#include <linux/rpmsg/mtk_rpmsg.h>
-#include <linux/slab.h>
-#include <linux/workqueue.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/remoteproc.h>
+#समावेश <linux/rpmsg/mtk_rpmsg.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/workqueue.h>
 
-#include "rpmsg_internal.h"
+#समावेश "rpmsg_internal.h"
 
-struct mtk_rpmsg_rproc_subdev {
-	struct platform_device *pdev;
-	struct mtk_rpmsg_info *info;
-	struct rpmsg_endpoint *ns_ept;
-	struct rproc_subdev subdev;
+काष्ठा mtk_rpmsg_rproc_subdev अणु
+	काष्ठा platक्रमm_device *pdev;
+	काष्ठा mtk_rpmsg_info *info;
+	काष्ठा rpmsg_endpoपूर्णांक *ns_ept;
+	काष्ठा rproc_subdev subdev;
 
-	struct work_struct register_work;
-	struct list_head channels;
-	struct mutex channels_lock;
-};
+	काष्ठा work_काष्ठा रेजिस्टर_work;
+	काष्ठा list_head channels;
+	काष्ठा mutex channels_lock;
+पूर्ण;
 
-#define to_mtk_subdev(d) container_of(d, struct mtk_rpmsg_rproc_subdev, subdev)
+#घोषणा to_mtk_subdev(d) container_of(d, काष्ठा mtk_rpmsg_rproc_subdev, subdev)
 
-struct mtk_rpmsg_channel_info {
-	struct rpmsg_channel_info info;
-	bool registered;
-	struct list_head list;
-};
+काष्ठा mtk_rpmsg_channel_info अणु
+	काष्ठा rpmsg_channel_info info;
+	bool रेजिस्टरed;
+	काष्ठा list_head list;
+पूर्ण;
 
 /**
- * struct rpmsg_ns_msg - dynamic name service announcement message
+ * काष्ठा rpmsg_ns_msg - dynamic name service announcement message
  * @name: name of remote service that is published
  * @addr: address of remote service that is published
  *
  * This message is sent across to publish a new service. When we receive these
  * messages, an appropriate rpmsg channel (i.e device) is created. In turn, the
  * ->probe() handler of the appropriate rpmsg driver will be invoked
- *  (if/as-soon-as one is registered).
+ *  (अगर/as-soon-as one is रेजिस्टरed).
  */
-struct rpmsg_ns_msg {
-	char name[RPMSG_NAME_SIZE];
+काष्ठा rpmsg_ns_msg अणु
+	अक्षर name[RPMSG_NAME_SIZE];
 	u32 addr;
-} __packed;
+पूर्ण __packed;
 
-struct mtk_rpmsg_device {
-	struct rpmsg_device rpdev;
-	struct mtk_rpmsg_rproc_subdev *mtk_subdev;
-};
+काष्ठा mtk_rpmsg_device अणु
+	काष्ठा rpmsg_device rpdev;
+	काष्ठा mtk_rpmsg_rproc_subdev *mtk_subdev;
+पूर्ण;
 
-struct mtk_rpmsg_endpoint {
-	struct rpmsg_endpoint ept;
-	struct mtk_rpmsg_rproc_subdev *mtk_subdev;
-};
+काष्ठा mtk_rpmsg_endpoपूर्णांक अणु
+	काष्ठा rpmsg_endpoपूर्णांक ept;
+	काष्ठा mtk_rpmsg_rproc_subdev *mtk_subdev;
+पूर्ण;
 
-#define to_mtk_rpmsg_device(r) container_of(r, struct mtk_rpmsg_device, rpdev)
-#define to_mtk_rpmsg_endpoint(r) container_of(r, struct mtk_rpmsg_endpoint, ept)
+#घोषणा to_mtk_rpmsg_device(r) container_of(r, काष्ठा mtk_rpmsg_device, rpdev)
+#घोषणा to_mtk_rpmsg_endpoपूर्णांक(r) container_of(r, काष्ठा mtk_rpmsg_endpoपूर्णांक, ept)
 
-static const struct rpmsg_endpoint_ops mtk_rpmsg_endpoint_ops;
+अटल स्थिर काष्ठा rpmsg_endpoपूर्णांक_ops mtk_rpmsg_endpoपूर्णांक_ops;
 
-static void __mtk_ept_release(struct kref *kref)
-{
-	struct rpmsg_endpoint *ept = container_of(kref, struct rpmsg_endpoint,
+अटल व्योम __mtk_ept_release(काष्ठा kref *kref)
+अणु
+	काष्ठा rpmsg_endpoपूर्णांक *ept = container_of(kref, काष्ठा rpmsg_endpoपूर्णांक,
 						  refcount);
-	kfree(to_mtk_rpmsg_endpoint(ept));
-}
+	kमुक्त(to_mtk_rpmsg_endpoपूर्णांक(ept));
+पूर्ण
 
-static void mtk_rpmsg_ipi_handler(void *data, unsigned int len, void *priv)
-{
-	struct mtk_rpmsg_endpoint *mept = priv;
-	struct rpmsg_endpoint *ept = &mept->ept;
-	int ret;
+अटल व्योम mtk_rpmsg_ipi_handler(व्योम *data, अचिन्हित पूर्णांक len, व्योम *priv)
+अणु
+	काष्ठा mtk_rpmsg_endpoपूर्णांक *mept = priv;
+	काष्ठा rpmsg_endpoपूर्णांक *ept = &mept->ept;
+	पूर्णांक ret;
 
 	ret = (*ept->cb)(ept->rpdev, data, len, ept->priv, ept->addr);
-	if (ret)
+	अगर (ret)
 		dev_warn(&ept->rpdev->dev, "rpmsg handler return error = %d",
 			 ret);
-}
+पूर्ण
 
-static struct rpmsg_endpoint *
-__mtk_create_ept(struct mtk_rpmsg_rproc_subdev *mtk_subdev,
-		 struct rpmsg_device *rpdev, rpmsg_rx_cb_t cb, void *priv,
+अटल काष्ठा rpmsg_endpoपूर्णांक *
+__mtk_create_ept(काष्ठा mtk_rpmsg_rproc_subdev *mtk_subdev,
+		 काष्ठा rpmsg_device *rpdev, rpmsg_rx_cb_t cb, व्योम *priv,
 		 u32 id)
-{
-	struct mtk_rpmsg_endpoint *mept;
-	struct rpmsg_endpoint *ept;
-	struct platform_device *pdev = mtk_subdev->pdev;
-	int ret;
+अणु
+	काष्ठा mtk_rpmsg_endpoपूर्णांक *mept;
+	काष्ठा rpmsg_endpoपूर्णांक *ept;
+	काष्ठा platक्रमm_device *pdev = mtk_subdev->pdev;
+	पूर्णांक ret;
 
-	mept = kzalloc(sizeof(*mept), GFP_KERNEL);
-	if (!mept)
-		return NULL;
+	mept = kzalloc(माप(*mept), GFP_KERNEL);
+	अगर (!mept)
+		वापस शून्य;
 	mept->mtk_subdev = mtk_subdev;
 
 	ept = &mept->ept;
@@ -102,108 +103,108 @@ __mtk_create_ept(struct mtk_rpmsg_rproc_subdev *mtk_subdev,
 	ept->rpdev = rpdev;
 	ept->cb = cb;
 	ept->priv = priv;
-	ept->ops = &mtk_rpmsg_endpoint_ops;
+	ept->ops = &mtk_rpmsg_endpoपूर्णांक_ops;
 	ept->addr = id;
 
-	ret = mtk_subdev->info->register_ipi(pdev, id, mtk_rpmsg_ipi_handler,
+	ret = mtk_subdev->info->रेजिस्टर_ipi(pdev, id, mtk_rpmsg_ipi_handler,
 					     mept);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&pdev->dev, "IPI register failed, id = %d", id);
 		kref_put(&ept->refcount, __mtk_ept_release);
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
-	return ept;
-}
+	वापस ept;
+पूर्ण
 
-static struct rpmsg_endpoint *
-mtk_rpmsg_create_ept(struct rpmsg_device *rpdev, rpmsg_rx_cb_t cb, void *priv,
-		     struct rpmsg_channel_info chinfo)
-{
-	struct mtk_rpmsg_rproc_subdev *mtk_subdev =
+अटल काष्ठा rpmsg_endpoपूर्णांक *
+mtk_rpmsg_create_ept(काष्ठा rpmsg_device *rpdev, rpmsg_rx_cb_t cb, व्योम *priv,
+		     काष्ठा rpmsg_channel_info chinfo)
+अणु
+	काष्ठा mtk_rpmsg_rproc_subdev *mtk_subdev =
 		to_mtk_rpmsg_device(rpdev)->mtk_subdev;
 
-	return __mtk_create_ept(mtk_subdev, rpdev, cb, priv, chinfo.src);
-}
+	वापस __mtk_create_ept(mtk_subdev, rpdev, cb, priv, chinfo.src);
+पूर्ण
 
-static void mtk_rpmsg_destroy_ept(struct rpmsg_endpoint *ept)
-{
-	struct mtk_rpmsg_rproc_subdev *mtk_subdev =
-		to_mtk_rpmsg_endpoint(ept)->mtk_subdev;
+अटल व्योम mtk_rpmsg_destroy_ept(काष्ठा rpmsg_endpoपूर्णांक *ept)
+अणु
+	काष्ठा mtk_rpmsg_rproc_subdev *mtk_subdev =
+		to_mtk_rpmsg_endpoपूर्णांक(ept)->mtk_subdev;
 
-	mtk_subdev->info->unregister_ipi(mtk_subdev->pdev, ept->addr);
+	mtk_subdev->info->unरेजिस्टर_ipi(mtk_subdev->pdev, ept->addr);
 	kref_put(&ept->refcount, __mtk_ept_release);
-}
+पूर्ण
 
-static int mtk_rpmsg_send(struct rpmsg_endpoint *ept, void *data, int len)
-{
-	struct mtk_rpmsg_rproc_subdev *mtk_subdev =
-		to_mtk_rpmsg_endpoint(ept)->mtk_subdev;
+अटल पूर्णांक mtk_rpmsg_send(काष्ठा rpmsg_endpoपूर्णांक *ept, व्योम *data, पूर्णांक len)
+अणु
+	काष्ठा mtk_rpmsg_rproc_subdev *mtk_subdev =
+		to_mtk_rpmsg_endpoपूर्णांक(ept)->mtk_subdev;
 
-	return mtk_subdev->info->send_ipi(mtk_subdev->pdev, ept->addr, data,
+	वापस mtk_subdev->info->send_ipi(mtk_subdev->pdev, ept->addr, data,
 					  len, 0);
-}
+पूर्ण
 
-static int mtk_rpmsg_trysend(struct rpmsg_endpoint *ept, void *data, int len)
-{
-	struct mtk_rpmsg_rproc_subdev *mtk_subdev =
-		to_mtk_rpmsg_endpoint(ept)->mtk_subdev;
+अटल पूर्णांक mtk_rpmsg_trysend(काष्ठा rpmsg_endpoपूर्णांक *ept, व्योम *data, पूर्णांक len)
+अणु
+	काष्ठा mtk_rpmsg_rproc_subdev *mtk_subdev =
+		to_mtk_rpmsg_endpoपूर्णांक(ept)->mtk_subdev;
 
 	/*
-	 * TODO: This currently is same as mtk_rpmsg_send, and wait until SCP
+	 * TODO: This currently is same as mtk_rpmsg_send, and रुको until SCP
 	 * received the last command.
 	 */
-	return mtk_subdev->info->send_ipi(mtk_subdev->pdev, ept->addr, data,
+	वापस mtk_subdev->info->send_ipi(mtk_subdev->pdev, ept->addr, data,
 					  len, 0);
-}
+पूर्ण
 
-static const struct rpmsg_endpoint_ops mtk_rpmsg_endpoint_ops = {
+अटल स्थिर काष्ठा rpmsg_endpoपूर्णांक_ops mtk_rpmsg_endpoपूर्णांक_ops = अणु
 	.destroy_ept = mtk_rpmsg_destroy_ept,
 	.send = mtk_rpmsg_send,
 	.trysend = mtk_rpmsg_trysend,
-};
+पूर्ण;
 
-static void mtk_rpmsg_release_device(struct device *dev)
-{
-	struct rpmsg_device *rpdev = to_rpmsg_device(dev);
-	struct mtk_rpmsg_device *mdev = to_mtk_rpmsg_device(rpdev);
+अटल व्योम mtk_rpmsg_release_device(काष्ठा device *dev)
+अणु
+	काष्ठा rpmsg_device *rpdev = to_rpmsg_device(dev);
+	काष्ठा mtk_rpmsg_device *mdev = to_mtk_rpmsg_device(rpdev);
 
-	kfree(mdev);
-}
+	kमुक्त(mdev);
+पूर्ण
 
-static const struct rpmsg_device_ops mtk_rpmsg_device_ops = {
+अटल स्थिर काष्ठा rpmsg_device_ops mtk_rpmsg_device_ops = अणु
 	.create_ept = mtk_rpmsg_create_ept,
-};
+पूर्ण;
 
-static struct device_node *
-mtk_rpmsg_match_device_subnode(struct device_node *node, const char *channel)
-{
-	struct device_node *child;
-	const char *name;
-	int ret;
+अटल काष्ठा device_node *
+mtk_rpmsg_match_device_subnode(काष्ठा device_node *node, स्थिर अक्षर *channel)
+अणु
+	काष्ठा device_node *child;
+	स्थिर अक्षर *name;
+	पूर्णांक ret;
 
-	for_each_available_child_of_node(node, child) {
-		ret = of_property_read_string(child, "mtk,rpmsg-name", &name);
-		if (ret)
-			continue;
+	क्रम_each_available_child_of_node(node, child) अणु
+		ret = of_property_पढ़ो_string(child, "mtk,rpmsg-name", &name);
+		अगर (ret)
+			जारी;
 
-		if (strcmp(name, channel) == 0)
-			return child;
-	}
+		अगर (म_भेद(name, channel) == 0)
+			वापस child;
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static int mtk_rpmsg_register_device(struct mtk_rpmsg_rproc_subdev *mtk_subdev,
-				     struct rpmsg_channel_info *info)
-{
-	struct rpmsg_device *rpdev;
-	struct mtk_rpmsg_device *mdev;
-	struct platform_device *pdev = mtk_subdev->pdev;
+अटल पूर्णांक mtk_rpmsg_रेजिस्टर_device(काष्ठा mtk_rpmsg_rproc_subdev *mtk_subdev,
+				     काष्ठा rpmsg_channel_info *info)
+अणु
+	काष्ठा rpmsg_device *rpdev;
+	काष्ठा mtk_rpmsg_device *mdev;
+	काष्ठा platक्रमm_device *pdev = mtk_subdev->pdev;
 
-	mdev = kzalloc(sizeof(*mdev), GFP_KERNEL);
-	if (!mdev)
-		return -ENOMEM;
+	mdev = kzalloc(माप(*mdev), GFP_KERNEL);
+	अगर (!mdev)
+		वापस -ENOMEM;
 
 	mdev->mtk_subdev = mtk_subdev;
 
@@ -218,41 +219,41 @@ static int mtk_rpmsg_register_device(struct mtk_rpmsg_rproc_subdev *mtk_subdev,
 	rpdev->dev.parent = &pdev->dev;
 	rpdev->dev.release = mtk_rpmsg_release_device;
 
-	return rpmsg_register_device(rpdev);
-}
+	वापस rpmsg_रेजिस्टर_device(rpdev);
+पूर्ण
 
-static void mtk_register_device_work_function(struct work_struct *register_work)
-{
-	struct mtk_rpmsg_rproc_subdev *subdev = container_of(
-		register_work, struct mtk_rpmsg_rproc_subdev, register_work);
-	struct platform_device *pdev = subdev->pdev;
-	struct mtk_rpmsg_channel_info *info;
-	int ret;
+अटल व्योम mtk_रेजिस्टर_device_work_function(काष्ठा work_काष्ठा *रेजिस्टर_work)
+अणु
+	काष्ठा mtk_rpmsg_rproc_subdev *subdev = container_of(
+		रेजिस्टर_work, काष्ठा mtk_rpmsg_rproc_subdev, रेजिस्टर_work);
+	काष्ठा platक्रमm_device *pdev = subdev->pdev;
+	काष्ठा mtk_rpmsg_channel_info *info;
+	पूर्णांक ret;
 
 	mutex_lock(&subdev->channels_lock);
-	list_for_each_entry(info, &subdev->channels, list) {
-		if (info->registered)
-			continue;
+	list_क्रम_each_entry(info, &subdev->channels, list) अणु
+		अगर (info->रेजिस्टरed)
+			जारी;
 
-		ret = mtk_rpmsg_register_device(subdev, &info->info);
-		if (ret) {
+		ret = mtk_rpmsg_रेजिस्टर_device(subdev, &info->info);
+		अगर (ret) अणु
 			dev_err(&pdev->dev, "Can't create rpmsg_device\n");
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		info->registered = true;
-	}
+		info->रेजिस्टरed = true;
+	पूर्ण
 	mutex_unlock(&subdev->channels_lock);
-}
+पूर्ण
 
-static int mtk_rpmsg_create_device(struct mtk_rpmsg_rproc_subdev *mtk_subdev,
-				   char *name, u32 addr)
-{
-	struct mtk_rpmsg_channel_info *info;
+अटल पूर्णांक mtk_rpmsg_create_device(काष्ठा mtk_rpmsg_rproc_subdev *mtk_subdev,
+				   अक्षर *name, u32 addr)
+अणु
+	काष्ठा mtk_rpmsg_channel_info *info;
 
-	info = kzalloc(sizeof(*info), GFP_KERNEL);
-	if (!info)
-		return -ENOMEM;
+	info = kzalloc(माप(*info), GFP_KERNEL);
+	अगर (!info)
+		वापस -ENOMEM;
 
 	strscpy(info->info.name, name, RPMSG_NAME_SIZE);
 	info->info.src = addr;
@@ -261,126 +262,126 @@ static int mtk_rpmsg_create_device(struct mtk_rpmsg_rproc_subdev *mtk_subdev,
 	list_add(&info->list, &mtk_subdev->channels);
 	mutex_unlock(&mtk_subdev->channels_lock);
 
-	schedule_work(&mtk_subdev->register_work);
-	return 0;
-}
+	schedule_work(&mtk_subdev->रेजिस्टर_work);
+	वापस 0;
+पूर्ण
 
-static int mtk_rpmsg_ns_cb(struct rpmsg_device *rpdev, void *data, int len,
-			   void *priv, u32 src)
-{
-	struct rpmsg_ns_msg *msg = data;
-	struct mtk_rpmsg_rproc_subdev *mtk_subdev = priv;
-	struct device *dev = &mtk_subdev->pdev->dev;
+अटल पूर्णांक mtk_rpmsg_ns_cb(काष्ठा rpmsg_device *rpdev, व्योम *data, पूर्णांक len,
+			   व्योम *priv, u32 src)
+अणु
+	काष्ठा rpmsg_ns_msg *msg = data;
+	काष्ठा mtk_rpmsg_rproc_subdev *mtk_subdev = priv;
+	काष्ठा device *dev = &mtk_subdev->pdev->dev;
 
-	int ret;
+	पूर्णांक ret;
 
-	if (len != sizeof(*msg)) {
+	अगर (len != माप(*msg)) अणु
 		dev_err(dev, "malformed ns msg (%d)\n", len);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	/*
-	 * the name service ept does _not_ belong to a real rpmsg channel,
+	 * the name service ept करोes _not_ beदीर्घ to a real rpmsg channel,
 	 * and is handled by the rpmsg bus itself.
-	 * for sanity reasons, make sure a valid rpdev has _not_ sneaked
+	 * क्रम sanity reasons, make sure a valid rpdev has _not_ sneaked
 	 * in somehow.
 	 */
-	if (rpdev) {
+	अगर (rpdev) अणु
 		dev_err(dev, "anomaly: ns ept has an rpdev handle\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	/* don't trust the remote processor for null terminating the name */
+	/* करोn't trust the remote processor क्रम null terminating the name */
 	msg->name[RPMSG_NAME_SIZE - 1] = '\0';
 
 	dev_info(dev, "creating channel %s addr 0x%x\n", msg->name, msg->addr);
 
 	ret = mtk_rpmsg_create_device(mtk_subdev, msg->name, msg->addr);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev, "create rpmsg device failed\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mtk_rpmsg_prepare(struct rproc_subdev *subdev)
-{
-	struct mtk_rpmsg_rproc_subdev *mtk_subdev = to_mtk_subdev(subdev);
+अटल पूर्णांक mtk_rpmsg_prepare(काष्ठा rproc_subdev *subdev)
+अणु
+	काष्ठा mtk_rpmsg_rproc_subdev *mtk_subdev = to_mtk_subdev(subdev);
 
-	/* a dedicated endpoint handles the name service msgs */
-	if (mtk_subdev->info->ns_ipi_id >= 0) {
+	/* a dedicated endpoपूर्णांक handles the name service msgs */
+	अगर (mtk_subdev->info->ns_ipi_id >= 0) अणु
 		mtk_subdev->ns_ept =
-			__mtk_create_ept(mtk_subdev, NULL, mtk_rpmsg_ns_cb,
+			__mtk_create_ept(mtk_subdev, शून्य, mtk_rpmsg_ns_cb,
 					 mtk_subdev,
 					 mtk_subdev->info->ns_ipi_id);
-		if (!mtk_subdev->ns_ept) {
+		अगर (!mtk_subdev->ns_ept) अणु
 			dev_err(&mtk_subdev->pdev->dev,
 				"failed to create name service endpoint\n");
-			return -ENOMEM;
-		}
-	}
+			वापस -ENOMEM;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void mtk_rpmsg_unprepare(struct rproc_subdev *subdev)
-{
-	struct mtk_rpmsg_rproc_subdev *mtk_subdev = to_mtk_subdev(subdev);
+अटल व्योम mtk_rpmsg_unprepare(काष्ठा rproc_subdev *subdev)
+अणु
+	काष्ठा mtk_rpmsg_rproc_subdev *mtk_subdev = to_mtk_subdev(subdev);
 
-	if (mtk_subdev->ns_ept) {
+	अगर (mtk_subdev->ns_ept) अणु
 		mtk_rpmsg_destroy_ept(mtk_subdev->ns_ept);
-		mtk_subdev->ns_ept = NULL;
-	}
-}
+		mtk_subdev->ns_ept = शून्य;
+	पूर्ण
+पूर्ण
 
-static void mtk_rpmsg_stop(struct rproc_subdev *subdev, bool crashed)
-{
-	struct mtk_rpmsg_channel_info *info, *next;
-	struct mtk_rpmsg_rproc_subdev *mtk_subdev = to_mtk_subdev(subdev);
-	struct device *dev = &mtk_subdev->pdev->dev;
+अटल व्योम mtk_rpmsg_stop(काष्ठा rproc_subdev *subdev, bool crashed)
+अणु
+	काष्ठा mtk_rpmsg_channel_info *info, *next;
+	काष्ठा mtk_rpmsg_rproc_subdev *mtk_subdev = to_mtk_subdev(subdev);
+	काष्ठा device *dev = &mtk_subdev->pdev->dev;
 
 	/*
-	 * Destroy the name service endpoint here, to avoid new channel being
-	 * created after the rpmsg_unregister_device loop below.
+	 * Destroy the name service endpoपूर्णांक here, to aव्योम new channel being
+	 * created after the rpmsg_unरेजिस्टर_device loop below.
 	 */
-	if (mtk_subdev->ns_ept) {
+	अगर (mtk_subdev->ns_ept) अणु
 		mtk_rpmsg_destroy_ept(mtk_subdev->ns_ept);
-		mtk_subdev->ns_ept = NULL;
-	}
+		mtk_subdev->ns_ept = शून्य;
+	पूर्ण
 
-	cancel_work_sync(&mtk_subdev->register_work);
+	cancel_work_sync(&mtk_subdev->रेजिस्टर_work);
 
 	mutex_lock(&mtk_subdev->channels_lock);
-	list_for_each_entry(info, &mtk_subdev->channels, list) {
-		if (!info->registered)
-			continue;
-		if (rpmsg_unregister_device(dev, &info->info)) {
+	list_क्रम_each_entry(info, &mtk_subdev->channels, list) अणु
+		अगर (!info->रेजिस्टरed)
+			जारी;
+		अगर (rpmsg_unरेजिस्टर_device(dev, &info->info)) अणु
 			dev_warn(
 				dev,
 				"rpmsg_unregister_device failed for %s.%d.%d\n",
 				info->info.name, info->info.src,
 				info->info.dst);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	list_for_each_entry_safe(info, next,
-				 &mtk_subdev->channels, list) {
+	list_क्रम_each_entry_safe(info, next,
+				 &mtk_subdev->channels, list) अणु
 		list_del(&info->list);
-		kfree(info);
-	}
+		kमुक्त(info);
+	पूर्ण
 	mutex_unlock(&mtk_subdev->channels_lock);
-}
+पूर्ण
 
-struct rproc_subdev *
-mtk_rpmsg_create_rproc_subdev(struct platform_device *pdev,
-			      struct mtk_rpmsg_info *info)
-{
-	struct mtk_rpmsg_rproc_subdev *mtk_subdev;
+काष्ठा rproc_subdev *
+mtk_rpmsg_create_rproc_subdev(काष्ठा platक्रमm_device *pdev,
+			      काष्ठा mtk_rpmsg_info *info)
+अणु
+	काष्ठा mtk_rpmsg_rproc_subdev *mtk_subdev;
 
-	mtk_subdev = kzalloc(sizeof(*mtk_subdev), GFP_KERNEL);
-	if (!mtk_subdev)
-		return NULL;
+	mtk_subdev = kzalloc(माप(*mtk_subdev), GFP_KERNEL);
+	अगर (!mtk_subdev)
+		वापस शून्य;
 
 	mtk_subdev->pdev = pdev;
 	mtk_subdev->subdev.prepare = mtk_rpmsg_prepare;
@@ -388,20 +389,20 @@ mtk_rpmsg_create_rproc_subdev(struct platform_device *pdev,
 	mtk_subdev->subdev.unprepare = mtk_rpmsg_unprepare;
 	mtk_subdev->info = info;
 	INIT_LIST_HEAD(&mtk_subdev->channels);
-	INIT_WORK(&mtk_subdev->register_work,
-		  mtk_register_device_work_function);
+	INIT_WORK(&mtk_subdev->रेजिस्टर_work,
+		  mtk_रेजिस्टर_device_work_function);
 	mutex_init(&mtk_subdev->channels_lock);
 
-	return &mtk_subdev->subdev;
-}
+	वापस &mtk_subdev->subdev;
+पूर्ण
 EXPORT_SYMBOL_GPL(mtk_rpmsg_create_rproc_subdev);
 
-void mtk_rpmsg_destroy_rproc_subdev(struct rproc_subdev *subdev)
-{
-	struct mtk_rpmsg_rproc_subdev *mtk_subdev = to_mtk_subdev(subdev);
+व्योम mtk_rpmsg_destroy_rproc_subdev(काष्ठा rproc_subdev *subdev)
+अणु
+	काष्ठा mtk_rpmsg_rproc_subdev *mtk_subdev = to_mtk_subdev(subdev);
 
-	kfree(mtk_subdev);
-}
+	kमुक्त(mtk_subdev);
+पूर्ण
 EXPORT_SYMBOL_GPL(mtk_rpmsg_destroy_rproc_subdev);
 
 MODULE_LICENSE("GPL v2");

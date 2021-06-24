@@ -1,25 +1,26 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * Copyright (C) 2016 Linaro
  * Viresh Kumar <viresh.kumar@linaro.org>
  */
 
-#ifndef __CPUFREQ_DT_H__
-#define __CPUFREQ_DT_H__
+#अगर_अघोषित __CPUFREQ_DT_H__
+#घोषणा __CPUFREQ_DT_H__
 
-#include <linux/types.h>
+#समावेश <linux/types.h>
 
-struct cpufreq_policy;
+काष्ठा cpufreq_policy;
 
-struct cpufreq_dt_platform_data {
+काष्ठा cpufreq_dt_platक्रमm_data अणु
 	bool have_governor_per_policy;
 
-	unsigned int	(*get_intermediate)(struct cpufreq_policy *policy,
-					    unsigned int index);
-	int		(*target_intermediate)(struct cpufreq_policy *policy,
-					       unsigned int index);
-	int (*suspend)(struct cpufreq_policy *policy);
-	int (*resume)(struct cpufreq_policy *policy);
-};
+	अचिन्हित पूर्णांक	(*get_पूर्णांकermediate)(काष्ठा cpufreq_policy *policy,
+					    अचिन्हित पूर्णांक index);
+	पूर्णांक		(*target_पूर्णांकermediate)(काष्ठा cpufreq_policy *policy,
+					       अचिन्हित पूर्णांक index);
+	पूर्णांक (*suspend)(काष्ठा cpufreq_policy *policy);
+	पूर्णांक (*resume)(काष्ठा cpufreq_policy *policy);
+पूर्ण;
 
-#endif /* __CPUFREQ_DT_H__ */
+#पूर्ण_अगर /* __CPUFREQ_DT_H__ */

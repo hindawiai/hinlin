@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2015 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -23,230 +24,230 @@
  *
  */
 
-#ifndef __DC_HW_SEQUENCER_H__
-#define __DC_HW_SEQUENCER_H__
-#include "dc_types.h"
-#include "clock_source.h"
-#include "inc/hw/timing_generator.h"
-#include "inc/hw/opp.h"
-#include "inc/hw/link_encoder.h"
-#include "core_status.h"
+#अगर_अघोषित __DC_HW_SEQUENCER_H__
+#घोषणा __DC_HW_SEQUENCER_H__
+#समावेश "dc_types.h"
+#समावेश "clock_source.h"
+#समावेश "inc/hw/timing_generator.h"
+#समावेश "inc/hw/opp.h"
+#समावेश "inc/hw/link_encoder.h"
+#समावेश "core_status.h"
 
-enum vline_select {
+क्रमागत vline_select अणु
 	VLINE0,
 	VLINE1
-};
+पूर्ण;
 
-struct pipe_ctx;
-struct dc_state;
-struct dc_stream_status;
-struct dc_writeback_info;
-struct dchub_init_data;
-struct dc_static_screen_params;
-struct resource_pool;
-struct dc_phy_addr_space_config;
-struct dc_virtual_addr_space_config;
-struct dpp;
-struct dce_hwseq;
+काष्ठा pipe_ctx;
+काष्ठा dc_state;
+काष्ठा dc_stream_status;
+काष्ठा dc_ग_लिखोback_info;
+काष्ठा dchub_init_data;
+काष्ठा dc_अटल_screen_params;
+काष्ठा resource_pool;
+काष्ठा dc_phy_addr_space_config;
+काष्ठा dc_भव_addr_space_config;
+काष्ठा dpp;
+काष्ठा dce_hwseq;
 
-struct hw_sequencer_funcs {
-	void (*hardware_release)(struct dc *dc);
+काष्ठा hw_sequencer_funcs अणु
+	व्योम (*hardware_release)(काष्ठा dc *dc);
 	/* Embedded Display Related */
-	void (*edp_power_control)(struct dc_link *link, bool enable);
-	void (*edp_wait_for_hpd_ready)(struct dc_link *link, bool power_up);
-	void (*edp_wait_for_T12)(struct dc_link *link);
+	व्योम (*edp_घातer_control)(काष्ठा dc_link *link, bool enable);
+	व्योम (*edp_रुको_क्रम_hpd_पढ़ोy)(काष्ठा dc_link *link, bool घातer_up);
+	व्योम (*edp_रुको_क्रम_T12)(काष्ठा dc_link *link);
 
 	/* Pipe Programming Related */
-	void (*init_hw)(struct dc *dc);
-	void (*power_down_on_boot)(struct dc *dc);
-	void (*enable_accelerated_mode)(struct dc *dc,
-			struct dc_state *context);
-	enum dc_status (*apply_ctx_to_hw)(struct dc *dc,
-			struct dc_state *context);
-	void (*disable_plane)(struct dc *dc, struct pipe_ctx *pipe_ctx);
-	void (*apply_ctx_for_surface)(struct dc *dc,
-			const struct dc_stream_state *stream,
-			int num_planes, struct dc_state *context);
-	void (*program_front_end_for_ctx)(struct dc *dc,
-			struct dc_state *context);
-	void (*wait_for_pending_cleared)(struct dc *dc,
-			struct dc_state *context);
-	void (*post_unlock_program_front_end)(struct dc *dc,
-			struct dc_state *context);
-	void (*update_plane_addr)(const struct dc *dc,
-			struct pipe_ctx *pipe_ctx);
-	void (*update_dchub)(struct dce_hwseq *hws,
-			struct dchub_init_data *dh_data);
-	void (*wait_for_mpcc_disconnect)(struct dc *dc,
-			struct resource_pool *res_pool,
-			struct pipe_ctx *pipe_ctx);
-	void (*edp_backlight_control)(
-			struct dc_link *link,
+	व्योम (*init_hw)(काष्ठा dc *dc);
+	व्योम (*घातer_करोwn_on_boot)(काष्ठा dc *dc);
+	व्योम (*enable_accelerated_mode)(काष्ठा dc *dc,
+			काष्ठा dc_state *context);
+	क्रमागत dc_status (*apply_ctx_to_hw)(काष्ठा dc *dc,
+			काष्ठा dc_state *context);
+	व्योम (*disable_plane)(काष्ठा dc *dc, काष्ठा pipe_ctx *pipe_ctx);
+	व्योम (*apply_ctx_क्रम_surface)(काष्ठा dc *dc,
+			स्थिर काष्ठा dc_stream_state *stream,
+			पूर्णांक num_planes, काष्ठा dc_state *context);
+	व्योम (*program_front_end_क्रम_ctx)(काष्ठा dc *dc,
+			काष्ठा dc_state *context);
+	व्योम (*रुको_क्रम_pending_cleared)(काष्ठा dc *dc,
+			काष्ठा dc_state *context);
+	व्योम (*post_unlock_program_front_end)(काष्ठा dc *dc,
+			काष्ठा dc_state *context);
+	व्योम (*update_plane_addr)(स्थिर काष्ठा dc *dc,
+			काष्ठा pipe_ctx *pipe_ctx);
+	व्योम (*update_dchub)(काष्ठा dce_hwseq *hws,
+			काष्ठा dchub_init_data *dh_data);
+	व्योम (*रुको_क्रम_mpcc_disconnect)(काष्ठा dc *dc,
+			काष्ठा resource_pool *res_pool,
+			काष्ठा pipe_ctx *pipe_ctx);
+	व्योम (*edp_backlight_control)(
+			काष्ठा dc_link *link,
 			bool enable);
-	void (*program_triplebuffer)(const struct dc *dc,
-		struct pipe_ctx *pipe_ctx, bool enableTripleBuffer);
-	void (*update_pending_status)(struct pipe_ctx *pipe_ctx);
-	void (*power_down)(struct dc *dc);
+	व्योम (*program_triplebuffer)(स्थिर काष्ठा dc *dc,
+		काष्ठा pipe_ctx *pipe_ctx, bool enableTripleBuffer);
+	व्योम (*update_pending_status)(काष्ठा pipe_ctx *pipe_ctx);
+	व्योम (*घातer_करोwn)(काष्ठा dc *dc);
 
 	/* Pipe Lock Related */
-	void (*pipe_control_lock)(struct dc *dc,
-			struct pipe_ctx *pipe, bool lock);
-	void (*interdependent_update_lock)(struct dc *dc,
-			struct dc_state *context, bool lock);
-	void (*set_flip_control_gsl)(struct pipe_ctx *pipe_ctx,
+	व्योम (*pipe_control_lock)(काष्ठा dc *dc,
+			काष्ठा pipe_ctx *pipe, bool lock);
+	व्योम (*पूर्णांकerdependent_update_lock)(काष्ठा dc *dc,
+			काष्ठा dc_state *context, bool lock);
+	व्योम (*set_flip_control_gsl)(काष्ठा pipe_ctx *pipe_ctx,
 			bool flip_immediate);
-	void (*cursor_lock)(struct dc *dc, struct pipe_ctx *pipe, bool lock);
+	व्योम (*cursor_lock)(काष्ठा dc *dc, काष्ठा pipe_ctx *pipe, bool lock);
 
 	/* Timing Related */
-	void (*get_position)(struct pipe_ctx **pipe_ctx, int num_pipes,
-			struct crtc_position *position);
-	int (*get_vupdate_offset_from_vsync)(struct pipe_ctx *pipe_ctx);
-	void (*calc_vupdate_position)(
-			struct dc *dc,
-			struct pipe_ctx *pipe_ctx,
-			uint32_t *start_line,
-			uint32_t *end_line);
-	void (*enable_per_frame_crtc_position_reset)(struct dc *dc,
-			int group_size, struct pipe_ctx *grouped_pipes[]);
-	void (*enable_timing_synchronization)(struct dc *dc,
-			int group_index, int group_size,
-			struct pipe_ctx *grouped_pipes[]);
-	void (*enable_vblanks_synchronization)(struct dc *dc,
-			int group_index, int group_size,
-			struct pipe_ctx *grouped_pipes[]);
-	void (*setup_periodic_interrupt)(struct dc *dc,
-			struct pipe_ctx *pipe_ctx,
-			enum vline_select vline);
-	void (*set_drr)(struct pipe_ctx **pipe_ctx, int num_pipes,
-			struct dc_crtc_timing_adjust adjust);
-	void (*set_static_screen_control)(struct pipe_ctx **pipe_ctx,
-			int num_pipes,
-			const struct dc_static_screen_params *events);
-#ifndef TRIM_FSFT
-	bool (*optimize_timing_for_fsft)(struct dc *dc,
-			struct dc_crtc_timing *timing,
-			unsigned int max_input_rate_in_khz);
-#endif
+	व्योम (*get_position)(काष्ठा pipe_ctx **pipe_ctx, पूर्णांक num_pipes,
+			काष्ठा crtc_position *position);
+	पूर्णांक (*get_vupdate_offset_from_vsync)(काष्ठा pipe_ctx *pipe_ctx);
+	व्योम (*calc_vupdate_position)(
+			काष्ठा dc *dc,
+			काष्ठा pipe_ctx *pipe_ctx,
+			uपूर्णांक32_t *start_line,
+			uपूर्णांक32_t *end_line);
+	व्योम (*enable_per_frame_crtc_position_reset)(काष्ठा dc *dc,
+			पूर्णांक group_size, काष्ठा pipe_ctx *grouped_pipes[]);
+	व्योम (*enable_timing_synchronization)(काष्ठा dc *dc,
+			पूर्णांक group_index, पूर्णांक group_size,
+			काष्ठा pipe_ctx *grouped_pipes[]);
+	व्योम (*enable_vblanks_synchronization)(काष्ठा dc *dc,
+			पूर्णांक group_index, पूर्णांक group_size,
+			काष्ठा pipe_ctx *grouped_pipes[]);
+	व्योम (*setup_periodic_पूर्णांकerrupt)(काष्ठा dc *dc,
+			काष्ठा pipe_ctx *pipe_ctx,
+			क्रमागत vline_select vline);
+	व्योम (*set_drr)(काष्ठा pipe_ctx **pipe_ctx, पूर्णांक num_pipes,
+			काष्ठा dc_crtc_timing_adjust adjust);
+	व्योम (*set_अटल_screen_control)(काष्ठा pipe_ctx **pipe_ctx,
+			पूर्णांक num_pipes,
+			स्थिर काष्ठा dc_अटल_screen_params *events);
+#अगर_अघोषित TRIM_FSFT
+	bool (*optimize_timing_क्रम_fsft)(काष्ठा dc *dc,
+			काष्ठा dc_crtc_timing *timing,
+			अचिन्हित पूर्णांक max_input_rate_in_khz);
+#पूर्ण_अगर
 
 	/* Stream Related */
-	void (*enable_stream)(struct pipe_ctx *pipe_ctx);
-	void (*disable_stream)(struct pipe_ctx *pipe_ctx);
-	void (*blank_stream)(struct pipe_ctx *pipe_ctx);
-	void (*unblank_stream)(struct pipe_ctx *pipe_ctx,
-			struct dc_link_settings *link_settings);
+	व्योम (*enable_stream)(काष्ठा pipe_ctx *pipe_ctx);
+	व्योम (*disable_stream)(काष्ठा pipe_ctx *pipe_ctx);
+	व्योम (*blank_stream)(काष्ठा pipe_ctx *pipe_ctx);
+	व्योम (*unblank_stream)(काष्ठा pipe_ctx *pipe_ctx,
+			काष्ठा dc_link_settings *link_settings);
 
 	/* Bandwidth Related */
-	void (*prepare_bandwidth)(struct dc *dc, struct dc_state *context);
-	bool (*update_bandwidth)(struct dc *dc, struct dc_state *context);
-	void (*optimize_bandwidth)(struct dc *dc, struct dc_state *context);
+	व्योम (*prepare_bandwidth)(काष्ठा dc *dc, काष्ठा dc_state *context);
+	bool (*update_bandwidth)(काष्ठा dc *dc, काष्ठा dc_state *context);
+	व्योम (*optimize_bandwidth)(काष्ठा dc *dc, काष्ठा dc_state *context);
 
 	/* Infopacket Related */
-	void (*set_avmute)(struct pipe_ctx *pipe_ctx, bool enable);
-	void (*send_immediate_sdp_message)(
-			struct pipe_ctx *pipe_ctx,
-			const uint8_t *custom_sdp_message,
-			unsigned int sdp_message_size);
-	void (*update_info_frame)(struct pipe_ctx *pipe_ctx);
-	void (*set_dmdata_attributes)(struct pipe_ctx *pipe);
-	void (*program_dmdata_engine)(struct pipe_ctx *pipe_ctx);
-	bool (*dmdata_status_done)(struct pipe_ctx *pipe_ctx);
+	व्योम (*set_avmute)(काष्ठा pipe_ctx *pipe_ctx, bool enable);
+	व्योम (*send_immediate_sdp_message)(
+			काष्ठा pipe_ctx *pipe_ctx,
+			स्थिर uपूर्णांक8_t *custom_sdp_message,
+			अचिन्हित पूर्णांक sdp_message_size);
+	व्योम (*update_info_frame)(काष्ठा pipe_ctx *pipe_ctx);
+	व्योम (*set_dmdata_attributes)(काष्ठा pipe_ctx *pipe);
+	व्योम (*program_dmdata_engine)(काष्ठा pipe_ctx *pipe_ctx);
+	bool (*dmdata_status_करोne)(काष्ठा pipe_ctx *pipe_ctx);
 
 	/* Cursor Related */
-	void (*set_cursor_position)(struct pipe_ctx *pipe);
-	void (*set_cursor_attribute)(struct pipe_ctx *pipe);
-	void (*set_cursor_sdr_white_level)(struct pipe_ctx *pipe);
+	व्योम (*set_cursor_position)(काष्ठा pipe_ctx *pipe);
+	व्योम (*set_cursor_attribute)(काष्ठा pipe_ctx *pipe);
+	व्योम (*set_cursor_sdr_white_level)(काष्ठा pipe_ctx *pipe);
 
 	/* Colour Related */
-	void (*program_gamut_remap)(struct pipe_ctx *pipe_ctx);
-	void (*program_output_csc)(struct dc *dc, struct pipe_ctx *pipe_ctx,
-			enum dc_color_space colorspace,
-			uint16_t *matrix, int opp_id);
+	व्योम (*program_gamut_remap)(काष्ठा pipe_ctx *pipe_ctx);
+	व्योम (*program_output_csc)(काष्ठा dc *dc, काष्ठा pipe_ctx *pipe_ctx,
+			क्रमागत dc_color_space colorspace,
+			uपूर्णांक16_t *matrix, पूर्णांक opp_id);
 
 	/* VM Related */
-	int (*init_sys_ctx)(struct dce_hwseq *hws,
-			struct dc *dc,
-			struct dc_phy_addr_space_config *pa_config);
-	void (*init_vm_ctx)(struct dce_hwseq *hws,
-			struct dc *dc,
-			struct dc_virtual_addr_space_config *va_config,
-			int vmid);
+	पूर्णांक (*init_sys_ctx)(काष्ठा dce_hwseq *hws,
+			काष्ठा dc *dc,
+			काष्ठा dc_phy_addr_space_config *pa_config);
+	व्योम (*init_vm_ctx)(काष्ठा dce_hwseq *hws,
+			काष्ठा dc *dc,
+			काष्ठा dc_भव_addr_space_config *va_config,
+			पूर्णांक vmid);
 
 	/* Writeback Related */
-	void (*update_writeback)(struct dc *dc,
-			struct dc_writeback_info *wb_info,
-			struct dc_state *context);
-	void (*enable_writeback)(struct dc *dc,
-			struct dc_writeback_info *wb_info,
-			struct dc_state *context);
-	void (*disable_writeback)(struct dc *dc,
-			unsigned int dwb_pipe_inst);
+	व्योम (*update_ग_लिखोback)(काष्ठा dc *dc,
+			काष्ठा dc_ग_लिखोback_info *wb_info,
+			काष्ठा dc_state *context);
+	व्योम (*enable_ग_लिखोback)(काष्ठा dc *dc,
+			काष्ठा dc_ग_लिखोback_info *wb_info,
+			काष्ठा dc_state *context);
+	व्योम (*disable_ग_लिखोback)(काष्ठा dc *dc,
+			अचिन्हित पूर्णांक dwb_pipe_inst);
 
-	bool (*mmhubbub_warmup)(struct dc *dc,
-			unsigned int num_dwb,
-			struct dc_writeback_info *wb_info);
+	bool (*mmhubbub_warmup)(काष्ठा dc *dc,
+			अचिन्हित पूर्णांक num_dwb,
+			काष्ठा dc_ग_लिखोback_info *wb_info);
 
 	/* Clock Related */
-	enum dc_status (*set_clock)(struct dc *dc,
-			enum dc_clock_type clock_type,
-			uint32_t clk_khz, uint32_t stepping);
-	void (*get_clock)(struct dc *dc, enum dc_clock_type clock_type,
-			struct dc_clock_config *clock_cfg);
-	void (*optimize_pwr_state)(const struct dc *dc,
-			struct dc_state *context);
-	void (*exit_optimized_pwr_state)(const struct dc *dc,
-			struct dc_state *context);
+	क्रमागत dc_status (*set_घड़ी)(काष्ठा dc *dc,
+			क्रमागत dc_घड़ी_प्रकारype घड़ी_प्रकारype,
+			uपूर्णांक32_t clk_khz, uपूर्णांक32_t stepping);
+	व्योम (*get_घड़ी)(काष्ठा dc *dc, क्रमागत dc_घड़ी_प्रकारype घड़ी_प्रकारype,
+			काष्ठा dc_घड़ी_config *घड़ी_cfg);
+	व्योम (*optimize_pwr_state)(स्थिर काष्ठा dc *dc,
+			काष्ठा dc_state *context);
+	व्योम (*निकास_optimized_pwr_state)(स्थिर काष्ठा dc *dc,
+			काष्ठा dc_state *context);
 
 	/* Audio Related */
-	void (*enable_audio_stream)(struct pipe_ctx *pipe_ctx);
-	void (*disable_audio_stream)(struct pipe_ctx *pipe_ctx);
+	व्योम (*enable_audio_stream)(काष्ठा pipe_ctx *pipe_ctx);
+	व्योम (*disable_audio_stream)(काष्ठा pipe_ctx *pipe_ctx);
 
 	/* Stereo 3D Related */
-	void (*setup_stereo)(struct pipe_ctx *pipe_ctx, struct dc *dc);
+	व्योम (*setup_stereo)(काष्ठा pipe_ctx *pipe_ctx, काष्ठा dc *dc);
 
 	/* HW State Logging Related */
-	void (*log_hw_state)(struct dc *dc, struct dc_log_buffer_ctx *log_ctx);
-	void (*get_hw_state)(struct dc *dc, char *pBuf,
-			unsigned int bufSize, unsigned int mask);
-	void (*clear_status_bits)(struct dc *dc, unsigned int mask);
+	व्योम (*log_hw_state)(काष्ठा dc *dc, काष्ठा dc_log_buffer_ctx *log_ctx);
+	व्योम (*get_hw_state)(काष्ठा dc *dc, अक्षर *pBuf,
+			अचिन्हित पूर्णांक bufSize, अचिन्हित पूर्णांक mask);
+	व्योम (*clear_status_bits)(काष्ठा dc *dc, अचिन्हित पूर्णांक mask);
 
-	bool (*set_backlight_level)(struct pipe_ctx *pipe_ctx,
-			uint32_t backlight_pwm_u16_16,
-			uint32_t frame_ramp);
+	bool (*set_backlight_level)(काष्ठा pipe_ctx *pipe_ctx,
+			uपूर्णांक32_t backlight_pwm_u16_16,
+			uपूर्णांक32_t frame_ramp);
 
-	void (*set_abm_immediate_disable)(struct pipe_ctx *pipe_ctx);
+	व्योम (*set_abm_immediate_disable)(काष्ठा pipe_ctx *pipe_ctx);
 
-	void (*set_pipe)(struct pipe_ctx *pipe_ctx);
+	व्योम (*set_pipe)(काष्ठा pipe_ctx *pipe_ctx);
 
-	void (*get_dcc_en_bits)(struct dc *dc, int *dcc_en_bits);
+	व्योम (*get_dcc_en_bits)(काष्ठा dc *dc, पूर्णांक *dcc_en_bits);
 
 	/* Idle Optimization Related */
-	bool (*apply_idle_power_optimizations)(struct dc *dc, bool enable);
+	bool (*apply_idle_घातer_optimizations)(काष्ठा dc *dc, bool enable);
 
-	bool (*does_plane_fit_in_mall)(struct dc *dc, struct dc_plane_state *plane,
-			struct dc_cursor_attributes *cursor_attr);
+	bool (*करोes_plane_fit_in_mall)(काष्ठा dc *dc, काष्ठा dc_plane_state *plane,
+			काष्ठा dc_cursor_attributes *cursor_attr);
 
-	bool (*is_abm_supported)(struct dc *dc,
-			struct dc_state *context, struct dc_stream_state *stream);
+	bool (*is_abm_supported)(काष्ठा dc *dc,
+			काष्ठा dc_state *context, काष्ठा dc_stream_state *stream);
 
-	void (*set_disp_pattern_generator)(const struct dc *dc,
-			struct pipe_ctx *pipe_ctx,
-			enum controller_dp_test_pattern test_pattern,
-			enum controller_dp_color_space color_space,
-			enum dc_color_depth color_depth,
-			const struct tg_color *solid_color,
-			int width, int height, int offset);
-};
+	व्योम (*set_disp_pattern_generator)(स्थिर काष्ठा dc *dc,
+			काष्ठा pipe_ctx *pipe_ctx,
+			क्रमागत controller_dp_test_pattern test_pattern,
+			क्रमागत controller_dp_color_space color_space,
+			क्रमागत dc_color_depth color_depth,
+			स्थिर काष्ठा tg_color *solid_color,
+			पूर्णांक width, पूर्णांक height, पूर्णांक offset);
+पूर्ण;
 
-void color_space_to_black_color(
-	const struct dc *dc,
-	enum dc_color_space colorspace,
-	struct tg_color *black_color);
+व्योम color_space_to_black_color(
+	स्थिर काष्ठा dc *dc,
+	क्रमागत dc_color_space colorspace,
+	काष्ठा tg_color *black_color);
 
-bool hwss_wait_for_blank_complete(
-		struct timing_generator *tg);
+bool hwss_रुको_क्रम_blank_complete(
+		काष्ठा timing_generator *tg);
 
-const uint16_t *find_color_matrix(
-		enum dc_color_space color_space,
-		uint32_t *array_size);
+स्थिर uपूर्णांक16_t *find_color_matrix(
+		क्रमागत dc_color_space color_space,
+		uपूर्णांक32_t *array_size);
 
-#endif /* __DC_HW_SEQUENCER_H__ */
+#पूर्ण_अगर /* __DC_HW_SEQUENCER_H__ */

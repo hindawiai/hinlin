@@ -1,6 +1,7 @@
+<शैली गुरु>
 /*
- * Efika driver for the PSC of the Freescale MPC52xx
- * configured as AC97 interface
+ * Efika driver क्रम the PSC of the Freescale MPC52xx
+ * configured as AC97 पूर्णांकerface
  *
  * Copyright 2008 Jon Smirl, Digispeaker
  * Author: Jon Smirl <jonsmirl@gmail.com>
@@ -10,24 +11,24 @@
  * kind, whether express or implied.
  */
 
-#include <linux/init.h>
-#include <linux/module.h>
-#include <linux/interrupt.h>
-#include <linux/device.h>
-#include <linux/delay.h>
-#include <linux/of_device.h>
-#include <linux/of_platform.h>
-#include <linux/dma-mapping.h>
+#समावेश <linux/init.h>
+#समावेश <linux/module.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/device.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/of_platक्रमm.h>
+#समावेश <linux/dma-mapping.h>
 
-#include <sound/core.h>
-#include <sound/pcm.h>
-#include <sound/pcm_params.h>
-#include <sound/initval.h>
-#include <sound/soc.h>
+#समावेश <sound/core.h>
+#समावेश <sound/pcm.h>
+#समावेश <sound/pcm_params.h>
+#समावेश <sound/initval.h>
+#समावेश <sound/soc.h>
 
-#include "mpc5200_dma.h"
+#समावेश "mpc5200_dma.h"
 
-#define DRV_NAME "efika-audio-fabric"
+#घोषणा DRV_NAME "efika-audio-fabric"
 
 SND_SOC_DAILINK_DEFS(analog,
 	DAILINK_COMP_ARRAY(COMP_CPU("mpc5200-psc-ac97.0")),
@@ -41,50 +42,50 @@ SND_SOC_DAILINK_DEFS(iec958,
 				      "stac9766-hifi-IEC958")),
 	DAILINK_COMP_ARRAY(COMP_PLATFORM("mpc5200-pcm-audio")));
 
-static struct snd_soc_dai_link efika_fabric_dai[] = {
-{
+अटल काष्ठा snd_soc_dai_link efika_fabric_dai[] = अणु
+अणु
 	.name = "AC97",
 	.stream_name = "AC97 Analog",
 	SND_SOC_DAILINK_REG(analog),
-},
-{
+पूर्ण,
+अणु
 	.name = "AC97",
 	.stream_name = "AC97 IEC958",
 	SND_SOC_DAILINK_REG(iec958),
-},
-};
+पूर्ण,
+पूर्ण;
 
-static struct snd_soc_card card = {
+अटल काष्ठा snd_soc_card card = अणु
 	.name = "Efika",
 	.owner = THIS_MODULE,
 	.dai_link = efika_fabric_dai,
 	.num_links = ARRAY_SIZE(efika_fabric_dai),
-};
+पूर्ण;
 
-static __init int efika_fabric_init(void)
-{
-	struct platform_device *pdev;
-	int rc;
+अटल __init पूर्णांक efika_fabric_init(व्योम)
+अणु
+	काष्ठा platक्रमm_device *pdev;
+	पूर्णांक rc;
 
-	if (!of_machine_is_compatible("bplan,efika"))
-		return -ENODEV;
+	अगर (!of_machine_is_compatible("bplan,efika"))
+		वापस -ENODEV;
 
-	pdev = platform_device_alloc("soc-audio", 1);
-	if (!pdev) {
+	pdev = platक्रमm_device_alloc("soc-audio", 1);
+	अगर (!pdev) अणु
 		pr_err("efika_fabric_init: platform_device_alloc() failed\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	platform_set_drvdata(pdev, &card);
+	platक्रमm_set_drvdata(pdev, &card);
 
-	rc = platform_device_add(pdev);
-	if (rc) {
+	rc = platक्रमm_device_add(pdev);
+	अगर (rc) अणु
 		pr_err("efika_fabric_init: platform_device_add() failed\n");
-		platform_device_put(pdev);
-		return -ENODEV;
-	}
-	return 0;
-}
+		platक्रमm_device_put(pdev);
+		वापस -ENODEV;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 module_init(efika_fabric_init);
 

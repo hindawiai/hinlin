@@ -1,12 +1,13 @@
-#ifndef INSN_H
-#define INSN_H 1
+<शैली गुरु>
+#अगर_अघोषित INSN_H
+#घोषणा INSN_H 1
 
-struct perf_sample;
-struct machine;
-struct thread;
+काष्ठा perf_sample;
+काष्ठा machine;
+काष्ठा thपढ़ो;
 
-void arch_fetch_insn(struct perf_sample *sample,
-		     struct thread *thread,
-		     struct machine *machine);
+व्योम arch_fetch_insn(काष्ठा perf_sample *sample,
+		     काष्ठा thपढ़ो *thपढ़ो,
+		     काष्ठा machine *machine);
 
-#endif
+#पूर्ण_अगर

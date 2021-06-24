@@ -1,777 +1,778 @@
-#define _GNU_SOURCE
-#include <fcntl.h>
-#include <limits.h>
-#include <signal.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdbool.h>
-#include <string.h>
-#include <unistd.h>
+<शैली गुरु>
+#घोषणा _GNU_SOURCE
+#समावेश <fcntl.h>
+#समावेश <सीमा.स>
+#समावेश <संकेत.स>
+#समावेश <मानकपन.स>
+#समावेश <मानककोष.स>
+#समावेश <stdbool.h>
+#समावेश <माला.स>
+#समावेश <unistd.h>
 
-#include <sys/mman.h>
-#include <sys/wait.h>
+#समावेश <sys/mman.h>
+#समावेश <sys/रुको.h>
 
-#ifndef MADV_PAGEOUT
-#define MADV_PAGEOUT 21
-#endif
+#अगर_अघोषित MADV_PAGEOUT
+#घोषणा MADV_PAGEOUT 21
+#पूर्ण_अगर
 
-#define BASE_ADDR ((void *)(1UL << 30))
-static unsigned long hpage_pmd_size;
-static unsigned long page_size;
-static int hpage_pmd_nr;
+#घोषणा BASE_ADDR ((व्योम *)(1UL << 30))
+अटल अचिन्हित दीर्घ hpage_pmd_size;
+अटल अचिन्हित दीर्घ page_size;
+अटल पूर्णांक hpage_pmd_nr;
 
-#define THP_SYSFS "/sys/kernel/mm/transparent_hugepage/"
-#define PID_SMAPS "/proc/self/smaps"
+#घोषणा THP_SYSFS "/sys/kernel/mm/transparent_hugepage/"
+#घोषणा PID_SMAPS "/proc/self/smaps"
 
-enum thp_enabled {
+क्रमागत thp_enabled अणु
 	THP_ALWAYS,
 	THP_MADVISE,
 	THP_NEVER,
-};
+पूर्ण;
 
-static const char *thp_enabled_strings[] = {
+अटल स्थिर अक्षर *thp_enabled_strings[] = अणु
 	"always",
 	"madvise",
 	"never",
-	NULL
-};
+	शून्य
+पूर्ण;
 
-enum thp_defrag {
+क्रमागत thp_defrag अणु
 	THP_DEFRAG_ALWAYS,
 	THP_DEFRAG_DEFER,
 	THP_DEFRAG_DEFER_MADVISE,
 	THP_DEFRAG_MADVISE,
 	THP_DEFRAG_NEVER,
-};
+पूर्ण;
 
-static const char *thp_defrag_strings[] = {
+अटल स्थिर अक्षर *thp_defrag_strings[] = अणु
 	"always",
 	"defer",
 	"defer+madvise",
 	"madvise",
 	"never",
-	NULL
-};
+	शून्य
+पूर्ण;
 
-enum shmem_enabled {
+क्रमागत shmem_enabled अणु
 	SHMEM_ALWAYS,
 	SHMEM_WITHIN_SIZE,
 	SHMEM_ADVISE,
 	SHMEM_NEVER,
 	SHMEM_DENY,
 	SHMEM_FORCE,
-};
+पूर्ण;
 
-static const char *shmem_enabled_strings[] = {
+अटल स्थिर अक्षर *shmem_enabled_strings[] = अणु
 	"always",
 	"within_size",
 	"advise",
 	"never",
 	"deny",
 	"force",
-	NULL
-};
+	शून्य
+पूर्ण;
 
-struct khugepaged_settings {
+काष्ठा khugepaged_settings अणु
 	bool defrag;
-	unsigned int alloc_sleep_millisecs;
-	unsigned int scan_sleep_millisecs;
-	unsigned int max_ptes_none;
-	unsigned int max_ptes_swap;
-	unsigned int max_ptes_shared;
-	unsigned long pages_to_scan;
-};
+	अचिन्हित पूर्णांक alloc_sleep_millisecs;
+	अचिन्हित पूर्णांक scan_sleep_millisecs;
+	अचिन्हित पूर्णांक max_ptes_none;
+	अचिन्हित पूर्णांक max_ptes_swap;
+	अचिन्हित पूर्णांक max_ptes_shared;
+	अचिन्हित दीर्घ pages_to_scan;
+पूर्ण;
 
-struct settings {
-	enum thp_enabled thp_enabled;
-	enum thp_defrag thp_defrag;
-	enum shmem_enabled shmem_enabled;
+काष्ठा settings अणु
+	क्रमागत thp_enabled thp_enabled;
+	क्रमागत thp_defrag thp_defrag;
+	क्रमागत shmem_enabled shmem_enabled;
 	bool debug_cow;
 	bool use_zero_page;
-	struct khugepaged_settings khugepaged;
-};
+	काष्ठा khugepaged_settings khugepaged;
+पूर्ण;
 
-static struct settings default_settings = {
+अटल काष्ठा settings शेष_settings = अणु
 	.thp_enabled = THP_MADVISE,
 	.thp_defrag = THP_DEFRAG_ALWAYS,
 	.shmem_enabled = SHMEM_NEVER,
 	.debug_cow = 0,
 	.use_zero_page = 0,
-	.khugepaged = {
+	.khugepaged = अणु
 		.defrag = 1,
 		.alloc_sleep_millisecs = 10,
 		.scan_sleep_millisecs = 10,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static struct settings saved_settings;
-static bool skip_settings_restore;
+अटल काष्ठा settings saved_settings;
+अटल bool skip_settings_restore;
 
-static int exit_status;
+अटल पूर्णांक निकास_status;
 
-static void success(const char *msg)
-{
-	printf(" \e[32m%s\e[0m\n", msg);
-}
+अटल व्योम success(स्थिर अक्षर *msg)
+अणु
+	म_लिखो(" \e[32m%s\e[0m\n", msg);
+पूर्ण
 
-static void fail(const char *msg)
-{
-	printf(" \e[31m%s\e[0m\n", msg);
-	exit_status++;
-}
+अटल व्योम fail(स्थिर अक्षर *msg)
+अणु
+	म_लिखो(" \e[31m%s\e[0m\n", msg);
+	निकास_status++;
+पूर्ण
 
-static int read_file(const char *path, char *buf, size_t buflen)
-{
-	int fd;
-	ssize_t numread;
+अटल पूर्णांक पढ़ो_file(स्थिर अक्षर *path, अक्षर *buf, माप_प्रकार buflen)
+अणु
+	पूर्णांक fd;
+	sमाप_प्रकार numपढ़ो;
 
-	fd = open(path, O_RDONLY);
-	if (fd == -1)
-		return 0;
+	fd = खोलो(path, O_RDONLY);
+	अगर (fd == -1)
+		वापस 0;
 
-	numread = read(fd, buf, buflen - 1);
-	if (numread < 1) {
-		close(fd);
-		return 0;
-	}
+	numपढ़ो = पढ़ो(fd, buf, buflen - 1);
+	अगर (numपढ़ो < 1) अणु
+		बंद(fd);
+		वापस 0;
+	पूर्ण
 
-	buf[numread] = '\0';
-	close(fd);
+	buf[numपढ़ो] = '\0';
+	बंद(fd);
 
-	return (unsigned int) numread;
-}
+	वापस (अचिन्हित पूर्णांक) numपढ़ो;
+पूर्ण
 
-static int write_file(const char *path, const char *buf, size_t buflen)
-{
-	int fd;
-	ssize_t numwritten;
+अटल पूर्णांक ग_लिखो_file(स्थिर अक्षर *path, स्थिर अक्षर *buf, माप_प्रकार buflen)
+अणु
+	पूर्णांक fd;
+	sमाप_प्रकार numwritten;
 
-	fd = open(path, O_WRONLY);
-	if (fd == -1)
-		return 0;
+	fd = खोलो(path, O_WRONLY);
+	अगर (fd == -1)
+		वापस 0;
 
-	numwritten = write(fd, buf, buflen - 1);
-	close(fd);
-	if (numwritten < 1)
-		return 0;
+	numwritten = ग_लिखो(fd, buf, buflen - 1);
+	बंद(fd);
+	अगर (numwritten < 1)
+		वापस 0;
 
-	return (unsigned int) numwritten;
-}
+	वापस (अचिन्हित पूर्णांक) numwritten;
+पूर्ण
 
-static int read_string(const char *name, const char *strings[])
-{
-	char path[PATH_MAX];
-	char buf[256];
-	char *c;
-	int ret;
+अटल पूर्णांक पढ़ो_string(स्थिर अक्षर *name, स्थिर अक्षर *strings[])
+अणु
+	अक्षर path[PATH_MAX];
+	अक्षर buf[256];
+	अक्षर *c;
+	पूर्णांक ret;
 
-	ret = snprintf(path, PATH_MAX, THP_SYSFS "%s", name);
-	if (ret >= PATH_MAX) {
-		printf("%s: Pathname is too long\n", __func__);
-		exit(EXIT_FAILURE);
-	}
+	ret = snम_लिखो(path, PATH_MAX, THP_SYSFS "%s", name);
+	अगर (ret >= PATH_MAX) अणु
+		म_लिखो("%s: Pathname is too long\n", __func__);
+		निकास(निकास_त्रुटि);
+	पूर्ण
 
-	if (!read_file(path, buf, sizeof(buf))) {
-		perror(path);
-		exit(EXIT_FAILURE);
-	}
+	अगर (!पढ़ो_file(path, buf, माप(buf))) अणु
+		लिखो_त्रुटि(path);
+		निकास(निकास_त्रुटि);
+	पूर्ण
 
-	c = strchr(buf, '[');
-	if (!c) {
-		printf("%s: Parse failure\n", __func__);
-		exit(EXIT_FAILURE);
-	}
+	c = म_अक्षर(buf, '[');
+	अगर (!c) अणु
+		म_लिखो("%s: Parse failure\n", __func__);
+		निकास(निकास_त्रुटि);
+	पूर्ण
 
 	c++;
-	memmove(buf, c, sizeof(buf) - (c - buf));
+	स_हटाओ(buf, c, माप(buf) - (c - buf));
 
-	c = strchr(buf, ']');
-	if (!c) {
-		printf("%s: Parse failure\n", __func__);
-		exit(EXIT_FAILURE);
-	}
+	c = म_अक्षर(buf, ']');
+	अगर (!c) अणु
+		म_लिखो("%s: Parse failure\n", __func__);
+		निकास(निकास_त्रुटि);
+	पूर्ण
 	*c = '\0';
 
 	ret = 0;
-	while (strings[ret]) {
-		if (!strcmp(strings[ret], buf))
-			return ret;
+	जबतक (strings[ret]) अणु
+		अगर (!म_भेद(strings[ret], buf))
+			वापस ret;
 		ret++;
-	}
+	पूर्ण
 
-	printf("Failed to parse %s\n", name);
-	exit(EXIT_FAILURE);
-}
+	म_लिखो("Failed to parse %s\n", name);
+	निकास(निकास_त्रुटि);
+पूर्ण
 
-static void write_string(const char *name, const char *val)
-{
-	char path[PATH_MAX];
-	int ret;
+अटल व्योम ग_लिखो_string(स्थिर अक्षर *name, स्थिर अक्षर *val)
+अणु
+	अक्षर path[PATH_MAX];
+	पूर्णांक ret;
 
-	ret = snprintf(path, PATH_MAX, THP_SYSFS "%s", name);
-	if (ret >= PATH_MAX) {
-		printf("%s: Pathname is too long\n", __func__);
-		exit(EXIT_FAILURE);
-	}
+	ret = snम_लिखो(path, PATH_MAX, THP_SYSFS "%s", name);
+	अगर (ret >= PATH_MAX) अणु
+		म_लिखो("%s: Pathname is too long\n", __func__);
+		निकास(निकास_त्रुटि);
+	पूर्ण
 
-	if (!write_file(path, val, strlen(val) + 1)) {
-		perror(path);
-		exit(EXIT_FAILURE);
-	}
-}
+	अगर (!ग_लिखो_file(path, val, म_माप(val) + 1)) अणु
+		लिखो_त्रुटि(path);
+		निकास(निकास_त्रुटि);
+	पूर्ण
+पूर्ण
 
-static const unsigned long read_num(const char *name)
-{
-	char path[PATH_MAX];
-	char buf[21];
-	int ret;
+अटल स्थिर अचिन्हित दीर्घ पढ़ो_num(स्थिर अक्षर *name)
+अणु
+	अक्षर path[PATH_MAX];
+	अक्षर buf[21];
+	पूर्णांक ret;
 
-	ret = snprintf(path, PATH_MAX, THP_SYSFS "%s", name);
-	if (ret >= PATH_MAX) {
-		printf("%s: Pathname is too long\n", __func__);
-		exit(EXIT_FAILURE);
-	}
+	ret = snम_लिखो(path, PATH_MAX, THP_SYSFS "%s", name);
+	अगर (ret >= PATH_MAX) अणु
+		म_लिखो("%s: Pathname is too long\n", __func__);
+		निकास(निकास_त्रुटि);
+	पूर्ण
 
-	ret = read_file(path, buf, sizeof(buf));
-	if (ret < 0) {
-		perror("read_file(read_num)");
-		exit(EXIT_FAILURE);
-	}
+	ret = पढ़ो_file(path, buf, माप(buf));
+	अगर (ret < 0) अणु
+		लिखो_त्रुटि("read_file(read_num)");
+		निकास(निकास_त्रुटि);
+	पूर्ण
 
-	return strtoul(buf, NULL, 10);
-}
+	वापस म_से_अदीर्घ(buf, शून्य, 10);
+पूर्ण
 
-static void write_num(const char *name, unsigned long num)
-{
-	char path[PATH_MAX];
-	char buf[21];
-	int ret;
+अटल व्योम ग_लिखो_num(स्थिर अक्षर *name, अचिन्हित दीर्घ num)
+अणु
+	अक्षर path[PATH_MAX];
+	अक्षर buf[21];
+	पूर्णांक ret;
 
-	ret = snprintf(path, PATH_MAX, THP_SYSFS "%s", name);
-	if (ret >= PATH_MAX) {
-		printf("%s: Pathname is too long\n", __func__);
-		exit(EXIT_FAILURE);
-	}
+	ret = snम_लिखो(path, PATH_MAX, THP_SYSFS "%s", name);
+	अगर (ret >= PATH_MAX) अणु
+		म_लिखो("%s: Pathname is too long\n", __func__);
+		निकास(निकास_त्रुटि);
+	पूर्ण
 
-	sprintf(buf, "%ld", num);
-	if (!write_file(path, buf, strlen(buf) + 1)) {
-		perror(path);
-		exit(EXIT_FAILURE);
-	}
-}
+	प्र_लिखो(buf, "%ld", num);
+	अगर (!ग_लिखो_file(path, buf, म_माप(buf) + 1)) अणु
+		लिखो_त्रुटि(path);
+		निकास(निकास_त्रुटि);
+	पूर्ण
+पूर्ण
 
-static void write_settings(struct settings *settings)
-{
-	struct khugepaged_settings *khugepaged = &settings->khugepaged;
+अटल व्योम ग_लिखो_settings(काष्ठा settings *settings)
+अणु
+	काष्ठा khugepaged_settings *khugepaged = &settings->khugepaged;
 
-	write_string("enabled", thp_enabled_strings[settings->thp_enabled]);
-	write_string("defrag", thp_defrag_strings[settings->thp_defrag]);
-	write_string("shmem_enabled",
+	ग_लिखो_string("enabled", thp_enabled_strings[settings->thp_enabled]);
+	ग_लिखो_string("defrag", thp_defrag_strings[settings->thp_defrag]);
+	ग_लिखो_string("shmem_enabled",
 			shmem_enabled_strings[settings->shmem_enabled]);
-	write_num("debug_cow", settings->debug_cow);
-	write_num("use_zero_page", settings->use_zero_page);
+	ग_लिखो_num("debug_cow", settings->debug_cow);
+	ग_लिखो_num("use_zero_page", settings->use_zero_page);
 
-	write_num("khugepaged/defrag", khugepaged->defrag);
-	write_num("khugepaged/alloc_sleep_millisecs",
+	ग_लिखो_num("khugepaged/defrag", khugepaged->defrag);
+	ग_लिखो_num("khugepaged/alloc_sleep_millisecs",
 			khugepaged->alloc_sleep_millisecs);
-	write_num("khugepaged/scan_sleep_millisecs",
+	ग_लिखो_num("khugepaged/scan_sleep_millisecs",
 			khugepaged->scan_sleep_millisecs);
-	write_num("khugepaged/max_ptes_none", khugepaged->max_ptes_none);
-	write_num("khugepaged/max_ptes_swap", khugepaged->max_ptes_swap);
-	write_num("khugepaged/max_ptes_shared", khugepaged->max_ptes_shared);
-	write_num("khugepaged/pages_to_scan", khugepaged->pages_to_scan);
-}
+	ग_लिखो_num("khugepaged/max_ptes_none", khugepaged->max_ptes_none);
+	ग_लिखो_num("khugepaged/max_ptes_swap", khugepaged->max_ptes_swap);
+	ग_लिखो_num("khugepaged/max_ptes_shared", khugepaged->max_ptes_shared);
+	ग_लिखो_num("khugepaged/pages_to_scan", khugepaged->pages_to_scan);
+पूर्ण
 
-static void restore_settings(int sig)
-{
-	if (skip_settings_restore)
-		goto out;
+अटल व्योम restore_settings(पूर्णांक sig)
+अणु
+	अगर (skip_settings_restore)
+		जाओ out;
 
-	printf("Restore THP and khugepaged settings...");
-	write_settings(&saved_settings);
+	म_लिखो("Restore THP and khugepaged settings...");
+	ग_लिखो_settings(&saved_settings);
 	success("OK");
-	if (sig)
-		exit(EXIT_FAILURE);
+	अगर (sig)
+		निकास(निकास_त्रुटि);
 out:
-	exit(exit_status);
-}
+	निकास(निकास_status);
+पूर्ण
 
-static void save_settings(void)
-{
-	printf("Save THP and khugepaged settings...");
-	saved_settings = (struct settings) {
-		.thp_enabled = read_string("enabled", thp_enabled_strings),
-		.thp_defrag = read_string("defrag", thp_defrag_strings),
+अटल व्योम save_settings(व्योम)
+अणु
+	म_लिखो("Save THP and khugepaged settings...");
+	saved_settings = (काष्ठा settings) अणु
+		.thp_enabled = पढ़ो_string("enabled", thp_enabled_strings),
+		.thp_defrag = पढ़ो_string("defrag", thp_defrag_strings),
 		.shmem_enabled =
-			read_string("shmem_enabled", shmem_enabled_strings),
-		.debug_cow = read_num("debug_cow"),
-		.use_zero_page = read_num("use_zero_page"),
-	};
-	saved_settings.khugepaged = (struct khugepaged_settings) {
-		.defrag = read_num("khugepaged/defrag"),
+			पढ़ो_string("shmem_enabled", shmem_enabled_strings),
+		.debug_cow = पढ़ो_num("debug_cow"),
+		.use_zero_page = पढ़ो_num("use_zero_page"),
+	पूर्ण;
+	saved_settings.khugepaged = (काष्ठा khugepaged_settings) अणु
+		.defrag = पढ़ो_num("khugepaged/defrag"),
 		.alloc_sleep_millisecs =
-			read_num("khugepaged/alloc_sleep_millisecs"),
+			पढ़ो_num("khugepaged/alloc_sleep_millisecs"),
 		.scan_sleep_millisecs =
-			read_num("khugepaged/scan_sleep_millisecs"),
-		.max_ptes_none = read_num("khugepaged/max_ptes_none"),
-		.max_ptes_swap = read_num("khugepaged/max_ptes_swap"),
-		.max_ptes_shared = read_num("khugepaged/max_ptes_shared"),
-		.pages_to_scan = read_num("khugepaged/pages_to_scan"),
-	};
+			पढ़ो_num("khugepaged/scan_sleep_millisecs"),
+		.max_ptes_none = पढ़ो_num("khugepaged/max_ptes_none"),
+		.max_ptes_swap = पढ़ो_num("khugepaged/max_ptes_swap"),
+		.max_ptes_shared = पढ़ो_num("khugepaged/max_ptes_shared"),
+		.pages_to_scan = पढ़ो_num("khugepaged/pages_to_scan"),
+	पूर्ण;
 	success("OK");
 
-	signal(SIGTERM, restore_settings);
-	signal(SIGINT, restore_settings);
-	signal(SIGHUP, restore_settings);
-	signal(SIGQUIT, restore_settings);
-}
+	संकेत(संक_इति, restore_settings);
+	संकेत(संक_विघ्न, restore_settings);
+	संकेत(SIGHUP, restore_settings);
+	संकेत(SIGQUIT, restore_settings);
+पूर्ण
 
-static void adjust_settings(void)
-{
+अटल व्योम adjust_settings(व्योम)
+अणु
 
-	printf("Adjust settings...");
-	write_settings(&default_settings);
+	म_लिखो("Adjust settings...");
+	ग_लिखो_settings(&शेष_settings);
 	success("OK");
-}
+पूर्ण
 
-#define MAX_LINE_LENGTH 500
+#घोषणा MAX_LINE_LENGTH 500
 
-static bool check_for_pattern(FILE *fp, char *pattern, char *buf)
-{
-	while (fgets(buf, MAX_LINE_LENGTH, fp) != NULL) {
-		if (!strncmp(buf, pattern, strlen(pattern)))
-			return true;
-	}
-	return false;
-}
+अटल bool check_क्रम_pattern(खाता *fp, अक्षर *pattern, अक्षर *buf)
+अणु
+	जबतक (ख_माला_लो(buf, MAX_LINE_LENGTH, fp) != शून्य) अणु
+		अगर (!म_भेदन(buf, pattern, म_माप(pattern)))
+			वापस true;
+	पूर्ण
+	वापस false;
+पूर्ण
 
-static bool check_huge(void *addr)
-{
+अटल bool check_huge(व्योम *addr)
+अणु
 	bool thp = false;
-	int ret;
-	FILE *fp;
-	char buffer[MAX_LINE_LENGTH];
-	char addr_pattern[MAX_LINE_LENGTH];
+	पूर्णांक ret;
+	खाता *fp;
+	अक्षर buffer[MAX_LINE_LENGTH];
+	अक्षर addr_pattern[MAX_LINE_LENGTH];
 
-	ret = snprintf(addr_pattern, MAX_LINE_LENGTH, "%08lx-",
-		       (unsigned long) addr);
-	if (ret >= MAX_LINE_LENGTH) {
-		printf("%s: Pattern is too long\n", __func__);
-		exit(EXIT_FAILURE);
-	}
+	ret = snम_लिखो(addr_pattern, MAX_LINE_LENGTH, "%08lx-",
+		       (अचिन्हित दीर्घ) addr);
+	अगर (ret >= MAX_LINE_LENGTH) अणु
+		म_लिखो("%s: Pattern is too long\n", __func__);
+		निकास(निकास_त्रुटि);
+	पूर्ण
 
 
-	fp = fopen(PID_SMAPS, "r");
-	if (!fp) {
-		printf("%s: Failed to open file %s\n", __func__, PID_SMAPS);
-		exit(EXIT_FAILURE);
-	}
-	if (!check_for_pattern(fp, addr_pattern, buffer))
-		goto err_out;
+	fp = ख_खोलो(PID_SMAPS, "r");
+	अगर (!fp) अणु
+		म_लिखो("%s: Failed to open file %s\n", __func__, PID_SMAPS);
+		निकास(निकास_त्रुटि);
+	पूर्ण
+	अगर (!check_क्रम_pattern(fp, addr_pattern, buffer))
+		जाओ err_out;
 
-	ret = snprintf(addr_pattern, MAX_LINE_LENGTH, "AnonHugePages:%10ld kB",
+	ret = snम_लिखो(addr_pattern, MAX_LINE_LENGTH, "AnonHugePages:%10ld kB",
 		       hpage_pmd_size >> 10);
-	if (ret >= MAX_LINE_LENGTH) {
-		printf("%s: Pattern is too long\n", __func__);
-		exit(EXIT_FAILURE);
-	}
+	अगर (ret >= MAX_LINE_LENGTH) अणु
+		म_लिखो("%s: Pattern is too long\n", __func__);
+		निकास(निकास_त्रुटि);
+	पूर्ण
 	/*
 	 * Fetch the AnonHugePages: in the same block and check whether it got
 	 * the expected number of hugeepages next.
 	 */
-	if (!check_for_pattern(fp, "AnonHugePages:", buffer))
-		goto err_out;
+	अगर (!check_क्रम_pattern(fp, "AnonHugePages:", buffer))
+		जाओ err_out;
 
-	if (strncmp(buffer, addr_pattern, strlen(addr_pattern)))
-		goto err_out;
+	अगर (म_भेदन(buffer, addr_pattern, म_माप(addr_pattern)))
+		जाओ err_out;
 
 	thp = true;
 err_out:
-	fclose(fp);
-	return thp;
-}
+	ख_बंद(fp);
+	वापस thp;
+पूर्ण
 
 
-static bool check_swap(void *addr, unsigned long size)
-{
+अटल bool check_swap(व्योम *addr, अचिन्हित दीर्घ size)
+अणु
 	bool swap = false;
-	int ret;
-	FILE *fp;
-	char buffer[MAX_LINE_LENGTH];
-	char addr_pattern[MAX_LINE_LENGTH];
+	पूर्णांक ret;
+	खाता *fp;
+	अक्षर buffer[MAX_LINE_LENGTH];
+	अक्षर addr_pattern[MAX_LINE_LENGTH];
 
-	ret = snprintf(addr_pattern, MAX_LINE_LENGTH, "%08lx-",
-		       (unsigned long) addr);
-	if (ret >= MAX_LINE_LENGTH) {
-		printf("%s: Pattern is too long\n", __func__);
-		exit(EXIT_FAILURE);
-	}
+	ret = snम_लिखो(addr_pattern, MAX_LINE_LENGTH, "%08lx-",
+		       (अचिन्हित दीर्घ) addr);
+	अगर (ret >= MAX_LINE_LENGTH) अणु
+		म_लिखो("%s: Pattern is too long\n", __func__);
+		निकास(निकास_त्रुटि);
+	पूर्ण
 
 
-	fp = fopen(PID_SMAPS, "r");
-	if (!fp) {
-		printf("%s: Failed to open file %s\n", __func__, PID_SMAPS);
-		exit(EXIT_FAILURE);
-	}
-	if (!check_for_pattern(fp, addr_pattern, buffer))
-		goto err_out;
+	fp = ख_खोलो(PID_SMAPS, "r");
+	अगर (!fp) अणु
+		म_लिखो("%s: Failed to open file %s\n", __func__, PID_SMAPS);
+		निकास(निकास_त्रुटि);
+	पूर्ण
+	अगर (!check_क्रम_pattern(fp, addr_pattern, buffer))
+		जाओ err_out;
 
-	ret = snprintf(addr_pattern, MAX_LINE_LENGTH, "Swap:%19ld kB",
+	ret = snम_लिखो(addr_pattern, MAX_LINE_LENGTH, "Swap:%19ld kB",
 		       size >> 10);
-	if (ret >= MAX_LINE_LENGTH) {
-		printf("%s: Pattern is too long\n", __func__);
-		exit(EXIT_FAILURE);
-	}
+	अगर (ret >= MAX_LINE_LENGTH) अणु
+		म_लिखो("%s: Pattern is too long\n", __func__);
+		निकास(निकास_त्रुटि);
+	पूर्ण
 	/*
 	 * Fetch the Swap: in the same block and check whether it got
 	 * the expected number of hugeepages next.
 	 */
-	if (!check_for_pattern(fp, "Swap:", buffer))
-		goto err_out;
+	अगर (!check_क्रम_pattern(fp, "Swap:", buffer))
+		जाओ err_out;
 
-	if (strncmp(buffer, addr_pattern, strlen(addr_pattern)))
-		goto err_out;
+	अगर (म_भेदन(buffer, addr_pattern, म_माप(addr_pattern)))
+		जाओ err_out;
 
 	swap = true;
 err_out:
-	fclose(fp);
-	return swap;
-}
+	ख_बंद(fp);
+	वापस swap;
+पूर्ण
 
-static void *alloc_mapping(void)
-{
-	void *p;
+अटल व्योम *alloc_mapping(व्योम)
+अणु
+	व्योम *p;
 
 	p = mmap(BASE_ADDR, hpage_pmd_size, PROT_READ | PROT_WRITE,
 			MAP_ANONYMOUS | MAP_PRIVATE, -1, 0);
-	if (p != BASE_ADDR) {
-		printf("Failed to allocate VMA at %p\n", BASE_ADDR);
-		exit(EXIT_FAILURE);
-	}
+	अगर (p != BASE_ADDR) अणु
+		म_लिखो("Failed to allocate VMA at %p\n", BASE_ADDR);
+		निकास(निकास_त्रुटि);
+	पूर्ण
 
-	return p;
-}
+	वापस p;
+पूर्ण
 
-static void fill_memory(int *p, unsigned long start, unsigned long end)
-{
-	int i;
+अटल व्योम fill_memory(पूर्णांक *p, अचिन्हित दीर्घ start, अचिन्हित दीर्घ end)
+अणु
+	पूर्णांक i;
 
-	for (i = start / page_size; i < end / page_size; i++)
-		p[i * page_size / sizeof(*p)] = i + 0xdead0000;
-}
+	क्रम (i = start / page_size; i < end / page_size; i++)
+		p[i * page_size / माप(*p)] = i + 0xdead0000;
+पूर्ण
 
-static void validate_memory(int *p, unsigned long start, unsigned long end)
-{
-	int i;
+अटल व्योम validate_memory(पूर्णांक *p, अचिन्हित दीर्घ start, अचिन्हित दीर्घ end)
+अणु
+	पूर्णांक i;
 
-	for (i = start / page_size; i < end / page_size; i++) {
-		if (p[i * page_size / sizeof(*p)] != i + 0xdead0000) {
-			printf("Page %d is corrupted: %#x\n",
-					i, p[i * page_size / sizeof(*p)]);
-			exit(EXIT_FAILURE);
-		}
-	}
-}
+	क्रम (i = start / page_size; i < end / page_size; i++) अणु
+		अगर (p[i * page_size / माप(*p)] != i + 0xdead0000) अणु
+			म_लिखो("Page %d is corrupted: %#x\n",
+					i, p[i * page_size / माप(*p)]);
+			निकास(निकास_त्रुटि);
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-#define TICK 500000
-static bool wait_for_scan(const char *msg, char *p)
-{
-	int full_scans;
-	int timeout = 6; /* 3 seconds */
+#घोषणा TICK 500000
+अटल bool रुको_क्रम_scan(स्थिर अक्षर *msg, अक्षर *p)
+अणु
+	पूर्णांक full_scans;
+	पूर्णांक समयout = 6; /* 3 seconds */
 
 	/* Sanity check */
-	if (check_huge(p)) {
-		printf("Unexpected huge page\n");
-		exit(EXIT_FAILURE);
-	}
+	अगर (check_huge(p)) अणु
+		म_लिखो("Unexpected huge page\n");
+		निकास(निकास_त्रुटि);
+	पूर्ण
 
 	madvise(p, hpage_pmd_size, MADV_HUGEPAGE);
 
 	/* Wait until the second full_scan completed */
-	full_scans = read_num("khugepaged/full_scans") + 2;
+	full_scans = पढ़ो_num("khugepaged/full_scans") + 2;
 
-	printf("%s...", msg);
-	while (timeout--) {
-		if (check_huge(p))
-			break;
-		if (read_num("khugepaged/full_scans") >= full_scans)
-			break;
-		printf(".");
+	म_लिखो("%s...", msg);
+	जबतक (समयout--) अणु
+		अगर (check_huge(p))
+			अवरोध;
+		अगर (पढ़ो_num("khugepaged/full_scans") >= full_scans)
+			अवरोध;
+		म_लिखो(".");
 		usleep(TICK);
-	}
+	पूर्ण
 
 	madvise(p, hpage_pmd_size, MADV_NOHUGEPAGE);
 
-	return timeout == -1;
-}
+	वापस समयout == -1;
+पूर्ण
 
-static void alloc_at_fault(void)
-{
-	struct settings settings = default_settings;
-	char *p;
+अटल व्योम alloc_at_fault(व्योम)
+अणु
+	काष्ठा settings settings = शेष_settings;
+	अक्षर *p;
 
 	settings.thp_enabled = THP_ALWAYS;
-	write_settings(&settings);
+	ग_लिखो_settings(&settings);
 
 	p = alloc_mapping();
 	*p = 1;
-	printf("Allocate huge page on fault...");
-	if (check_huge(p))
+	म_लिखो("Allocate huge page on fault...");
+	अगर (check_huge(p))
 		success("OK");
-	else
+	अन्यथा
 		fail("Fail");
 
-	write_settings(&default_settings);
+	ग_लिखो_settings(&शेष_settings);
 
 	madvise(p, page_size, MADV_DONTNEED);
-	printf("Split huge PMD on MADV_DONTNEED...");
-	if (!check_huge(p))
+	म_लिखो("Split huge PMD on MADV_DONTNEED...");
+	अगर (!check_huge(p))
 		success("OK");
-	else
+	अन्यथा
 		fail("Fail");
 	munmap(p, hpage_pmd_size);
-}
+पूर्ण
 
-static void collapse_full(void)
-{
-	void *p;
+अटल व्योम collapse_full(व्योम)
+अणु
+	व्योम *p;
 
 	p = alloc_mapping();
 	fill_memory(p, 0, hpage_pmd_size);
-	if (wait_for_scan("Collapse fully populated PTE table", p))
+	अगर (रुको_क्रम_scan("Collapse fully populated PTE table", p))
 		fail("Timeout");
-	else if (check_huge(p))
+	अन्यथा अगर (check_huge(p))
 		success("OK");
-	else
+	अन्यथा
 		fail("Fail");
 	validate_memory(p, 0, hpage_pmd_size);
 	munmap(p, hpage_pmd_size);
-}
+पूर्ण
 
-static void collapse_empty(void)
-{
-	void *p;
+अटल व्योम collapse_empty(व्योम)
+अणु
+	व्योम *p;
 
 	p = alloc_mapping();
-	if (wait_for_scan("Do not collapse empty PTE table", p))
+	अगर (रुको_क्रम_scan("Do not collapse empty PTE table", p))
 		fail("Timeout");
-	else if (check_huge(p))
+	अन्यथा अगर (check_huge(p))
 		fail("Fail");
-	else
+	अन्यथा
 		success("OK");
 	munmap(p, hpage_pmd_size);
-}
+पूर्ण
 
-static void collapse_single_pte_entry(void)
-{
-	void *p;
+अटल व्योम collapse_single_pte_entry(व्योम)
+अणु
+	व्योम *p;
 
 	p = alloc_mapping();
 	fill_memory(p, 0, page_size);
-	if (wait_for_scan("Collapse PTE table with single PTE entry present", p))
+	अगर (रुको_क्रम_scan("Collapse PTE table with single PTE entry present", p))
 		fail("Timeout");
-	else if (check_huge(p))
+	अन्यथा अगर (check_huge(p))
 		success("OK");
-	else
+	अन्यथा
 		fail("Fail");
 	validate_memory(p, 0, page_size);
 	munmap(p, hpage_pmd_size);
-}
+पूर्ण
 
-static void collapse_max_ptes_none(void)
-{
-	int max_ptes_none = hpage_pmd_nr / 2;
-	struct settings settings = default_settings;
-	void *p;
+अटल व्योम collapse_max_ptes_none(व्योम)
+अणु
+	पूर्णांक max_ptes_none = hpage_pmd_nr / 2;
+	काष्ठा settings settings = शेष_settings;
+	व्योम *p;
 
 	settings.khugepaged.max_ptes_none = max_ptes_none;
-	write_settings(&settings);
+	ग_लिखो_settings(&settings);
 
 	p = alloc_mapping();
 
 	fill_memory(p, 0, (hpage_pmd_nr - max_ptes_none - 1) * page_size);
-	if (wait_for_scan("Do not collapse with max_ptes_none exceeded", p))
+	अगर (रुको_क्रम_scan("Do not collapse with max_ptes_none exceeded", p))
 		fail("Timeout");
-	else if (check_huge(p))
+	अन्यथा अगर (check_huge(p))
 		fail("Fail");
-	else
+	अन्यथा
 		success("OK");
 	validate_memory(p, 0, (hpage_pmd_nr - max_ptes_none - 1) * page_size);
 
 	fill_memory(p, 0, (hpage_pmd_nr - max_ptes_none) * page_size);
-	if (wait_for_scan("Collapse with max_ptes_none PTEs empty", p))
+	अगर (रुको_क्रम_scan("Collapse with max_ptes_none PTEs empty", p))
 		fail("Timeout");
-	else if (check_huge(p))
+	अन्यथा अगर (check_huge(p))
 		success("OK");
-	else
+	अन्यथा
 		fail("Fail");
 	validate_memory(p, 0, (hpage_pmd_nr - max_ptes_none) * page_size);
 
 	munmap(p, hpage_pmd_size);
-	write_settings(&default_settings);
-}
+	ग_लिखो_settings(&शेष_settings);
+पूर्ण
 
-static void collapse_swapin_single_pte(void)
-{
-	void *p;
+अटल व्योम collapse_swapin_single_pte(व्योम)
+अणु
+	व्योम *p;
 	p = alloc_mapping();
 	fill_memory(p, 0, hpage_pmd_size);
 
-	printf("Swapout one page...");
-	if (madvise(p, page_size, MADV_PAGEOUT)) {
-		perror("madvise(MADV_PAGEOUT)");
-		exit(EXIT_FAILURE);
-	}
-	if (check_swap(p, page_size)) {
+	म_लिखो("Swapout one page...");
+	अगर (madvise(p, page_size, MADV_PAGEOUT)) अणु
+		लिखो_त्रुटि("madvise(MADV_PAGEOUT)");
+		निकास(निकास_त्रुटि);
+	पूर्ण
+	अगर (check_swap(p, page_size)) अणु
 		success("OK");
-	} else {
+	पूर्ण अन्यथा अणु
 		fail("Fail");
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (wait_for_scan("Collapse with swapping in single PTE entry", p))
+	अगर (रुको_क्रम_scan("Collapse with swapping in single PTE entry", p))
 		fail("Timeout");
-	else if (check_huge(p))
+	अन्यथा अगर (check_huge(p))
 		success("OK");
-	else
+	अन्यथा
 		fail("Fail");
 	validate_memory(p, 0, hpage_pmd_size);
 out:
 	munmap(p, hpage_pmd_size);
-}
+पूर्ण
 
-static void collapse_max_ptes_swap(void)
-{
-	int max_ptes_swap = read_num("khugepaged/max_ptes_swap");
-	void *p;
+अटल व्योम collapse_max_ptes_swap(व्योम)
+अणु
+	पूर्णांक max_ptes_swap = पढ़ो_num("khugepaged/max_ptes_swap");
+	व्योम *p;
 
 	p = alloc_mapping();
 
 	fill_memory(p, 0, hpage_pmd_size);
-	printf("Swapout %d of %d pages...", max_ptes_swap + 1, hpage_pmd_nr);
-	if (madvise(p, (max_ptes_swap + 1) * page_size, MADV_PAGEOUT)) {
-		perror("madvise(MADV_PAGEOUT)");
-		exit(EXIT_FAILURE);
-	}
-	if (check_swap(p, (max_ptes_swap + 1) * page_size)) {
+	म_लिखो("Swapout %d of %d pages...", max_ptes_swap + 1, hpage_pmd_nr);
+	अगर (madvise(p, (max_ptes_swap + 1) * page_size, MADV_PAGEOUT)) अणु
+		लिखो_त्रुटि("madvise(MADV_PAGEOUT)");
+		निकास(निकास_त्रुटि);
+	पूर्ण
+	अगर (check_swap(p, (max_ptes_swap + 1) * page_size)) अणु
 		success("OK");
-	} else {
+	पूर्ण अन्यथा अणु
 		fail("Fail");
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (wait_for_scan("Do not collapse with max_ptes_swap exceeded", p))
+	अगर (रुको_क्रम_scan("Do not collapse with max_ptes_swap exceeded", p))
 		fail("Timeout");
-	else if (check_huge(p))
+	अन्यथा अगर (check_huge(p))
 		fail("Fail");
-	else
+	अन्यथा
 		success("OK");
 	validate_memory(p, 0, hpage_pmd_size);
 
 	fill_memory(p, 0, hpage_pmd_size);
-	printf("Swapout %d of %d pages...", max_ptes_swap, hpage_pmd_nr);
-	if (madvise(p, max_ptes_swap * page_size, MADV_PAGEOUT)) {
-		perror("madvise(MADV_PAGEOUT)");
-		exit(EXIT_FAILURE);
-	}
-	if (check_swap(p, max_ptes_swap * page_size)) {
+	म_लिखो("Swapout %d of %d pages...", max_ptes_swap, hpage_pmd_nr);
+	अगर (madvise(p, max_ptes_swap * page_size, MADV_PAGEOUT)) अणु
+		लिखो_त्रुटि("madvise(MADV_PAGEOUT)");
+		निकास(निकास_त्रुटि);
+	पूर्ण
+	अगर (check_swap(p, max_ptes_swap * page_size)) अणु
 		success("OK");
-	} else {
+	पूर्ण अन्यथा अणु
 		fail("Fail");
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (wait_for_scan("Collapse with max_ptes_swap pages swapped out", p))
+	अगर (रुको_क्रम_scan("Collapse with max_ptes_swap pages swapped out", p))
 		fail("Timeout");
-	else if (check_huge(p))
+	अन्यथा अगर (check_huge(p))
 		success("OK");
-	else
+	अन्यथा
 		fail("Fail");
 	validate_memory(p, 0, hpage_pmd_size);
 out:
 	munmap(p, hpage_pmd_size);
-}
+पूर्ण
 
-static void collapse_single_pte_entry_compound(void)
-{
-	void *p;
+अटल व्योम collapse_single_pte_entry_compound(व्योम)
+अणु
+	व्योम *p;
 
 	p = alloc_mapping();
 
-	printf("Allocate huge page...");
+	म_लिखो("Allocate huge page...");
 	madvise(p, hpage_pmd_size, MADV_HUGEPAGE);
 	fill_memory(p, 0, hpage_pmd_size);
-	if (check_huge(p))
+	अगर (check_huge(p))
 		success("OK");
-	else
+	अन्यथा
 		fail("Fail");
 	madvise(p, hpage_pmd_size, MADV_NOHUGEPAGE);
 
-	printf("Split huge page leaving single PTE mapping compound page...");
+	म_लिखो("Split huge page leaving single PTE mapping compound page...");
 	madvise(p + page_size, hpage_pmd_size - page_size, MADV_DONTNEED);
-	if (!check_huge(p))
+	अगर (!check_huge(p))
 		success("OK");
-	else
+	अन्यथा
 		fail("Fail");
 
-	if (wait_for_scan("Collapse PTE table with single PTE mapping compound page", p))
+	अगर (रुको_क्रम_scan("Collapse PTE table with single PTE mapping compound page", p))
 		fail("Timeout");
-	else if (check_huge(p))
+	अन्यथा अगर (check_huge(p))
 		success("OK");
-	else
+	अन्यथा
 		fail("Fail");
 	validate_memory(p, 0, page_size);
 	munmap(p, hpage_pmd_size);
-}
+पूर्ण
 
-static void collapse_full_of_compound(void)
-{
-	void *p;
+अटल व्योम collapse_full_of_compound(व्योम)
+अणु
+	व्योम *p;
 
 	p = alloc_mapping();
 
-	printf("Allocate huge page...");
+	म_लिखो("Allocate huge page...");
 	madvise(p, hpage_pmd_size, MADV_HUGEPAGE);
 	fill_memory(p, 0, hpage_pmd_size);
-	if (check_huge(p))
+	अगर (check_huge(p))
 		success("OK");
-	else
+	अन्यथा
 		fail("Fail");
 
-	printf("Split huge page leaving single PTE page table full of compound pages...");
+	म_लिखो("Split huge page leaving single PTE page table full of compound pages...");
 	madvise(p, page_size, MADV_NOHUGEPAGE);
 	madvise(p, hpage_pmd_size, MADV_NOHUGEPAGE);
-	if (!check_huge(p))
+	अगर (!check_huge(p))
 		success("OK");
-	else
+	अन्यथा
 		fail("Fail");
 
-	if (wait_for_scan("Collapse PTE table full of compound pages", p))
+	अगर (रुको_क्रम_scan("Collapse PTE table full of compound pages", p))
 		fail("Timeout");
-	else if (check_huge(p))
+	अन्यथा अगर (check_huge(p))
 		success("OK");
-	else
+	अन्यथा
 		fail("Fail");
 	validate_memory(p, 0, hpage_pmd_size);
 	munmap(p, hpage_pmd_size);
-}
+पूर्ण
 
-static void collapse_compound_extreme(void)
-{
-	void *p;
-	int i;
+अटल व्योम collapse_compound_extreme(व्योम)
+अणु
+	व्योम *p;
+	पूर्णांक i;
 
 	p = alloc_mapping();
-	for (i = 0; i < hpage_pmd_nr; i++) {
-		printf("\rConstruct PTE page table full of different PTE-mapped compound pages %3d/%d...",
+	क्रम (i = 0; i < hpage_pmd_nr; i++) अणु
+		म_लिखो("\rConstruct PTE page table full of different PTE-mapped compound pages %3d/%d...",
 				i + 1, hpage_pmd_nr);
 
 		madvise(BASE_ADDR, hpage_pmd_size, MADV_HUGEPAGE);
 		fill_memory(BASE_ADDR, 0, hpage_pmd_size);
-		if (!check_huge(BASE_ADDR)) {
-			printf("Failed to allocate huge page\n");
-			exit(EXIT_FAILURE);
-		}
+		अगर (!check_huge(BASE_ADDR)) अणु
+			म_लिखो("Failed to allocate huge page\n");
+			निकास(निकास_त्रुटि);
+		पूर्ण
 		madvise(BASE_ADDR, hpage_pmd_size, MADV_NOHUGEPAGE);
 
 		p = mremap(BASE_ADDR - i * page_size,
@@ -779,240 +780,240 @@ static void collapse_compound_extreme(void)
 				(i + 1) * page_size,
 				MREMAP_MAYMOVE | MREMAP_FIXED,
 				BASE_ADDR + 2 * hpage_pmd_size);
-		if (p == MAP_FAILED) {
-			perror("mremap+unmap");
-			exit(EXIT_FAILURE);
-		}
+		अगर (p == MAP_FAILED) अणु
+			लिखो_त्रुटि("mremap+unmap");
+			निकास(निकास_त्रुटि);
+		पूर्ण
 
 		p = mremap(BASE_ADDR + 2 * hpage_pmd_size,
 				(i + 1) * page_size,
 				(i + 1) * page_size + hpage_pmd_size,
 				MREMAP_MAYMOVE | MREMAP_FIXED,
 				BASE_ADDR - (i + 1) * page_size);
-		if (p == MAP_FAILED) {
-			perror("mremap+alloc");
-			exit(EXIT_FAILURE);
-		}
-	}
+		अगर (p == MAP_FAILED) अणु
+			लिखो_त्रुटि("mremap+alloc");
+			निकास(निकास_त्रुटि);
+		पूर्ण
+	पूर्ण
 
 	munmap(BASE_ADDR, hpage_pmd_size);
 	fill_memory(p, 0, hpage_pmd_size);
-	if (!check_huge(p))
+	अगर (!check_huge(p))
 		success("OK");
-	else
+	अन्यथा
 		fail("Fail");
 
-	if (wait_for_scan("Collapse PTE table full of different compound pages", p))
+	अगर (रुको_क्रम_scan("Collapse PTE table full of different compound pages", p))
 		fail("Timeout");
-	else if (check_huge(p))
+	अन्यथा अगर (check_huge(p))
 		success("OK");
-	else
+	अन्यथा
 		fail("Fail");
 
 	validate_memory(p, 0, hpage_pmd_size);
 	munmap(p, hpage_pmd_size);
-}
+पूर्ण
 
-static void collapse_fork(void)
-{
-	int wstatus;
-	void *p;
+अटल व्योम collapse_विभाजन(व्योम)
+अणु
+	पूर्णांक wstatus;
+	व्योम *p;
 
 	p = alloc_mapping();
 
-	printf("Allocate small page...");
+	म_लिखो("Allocate small page...");
 	fill_memory(p, 0, page_size);
-	if (!check_huge(p))
+	अगर (!check_huge(p))
 		success("OK");
-	else
+	अन्यथा
 		fail("Fail");
 
-	printf("Share small page over fork()...");
-	if (!fork()) {
-		/* Do not touch settings on child exit */
+	म_लिखो("Share small page over fork()...");
+	अगर (!विभाजन()) अणु
+		/* Do not touch settings on child निकास */
 		skip_settings_restore = true;
-		exit_status = 0;
+		निकास_status = 0;
 
-		if (!check_huge(p))
+		अगर (!check_huge(p))
 			success("OK");
-		else
+		अन्यथा
 			fail("Fail");
 
 		fill_memory(p, page_size, 2 * page_size);
 
-		if (wait_for_scan("Collapse PTE table with single page shared with parent process", p))
+		अगर (रुको_क्रम_scan("Collapse PTE table with single page shared with parent process", p))
 			fail("Timeout");
-		else if (check_huge(p))
+		अन्यथा अगर (check_huge(p))
 			success("OK");
-		else
+		अन्यथा
 			fail("Fail");
 
 		validate_memory(p, 0, page_size);
 		munmap(p, hpage_pmd_size);
-		exit(exit_status);
-	}
+		निकास(निकास_status);
+	पूर्ण
 
-	wait(&wstatus);
-	exit_status += WEXITSTATUS(wstatus);
+	रुको(&wstatus);
+	निकास_status += WEXITSTATUS(wstatus);
 
-	printf("Check if parent still has small page...");
-	if (!check_huge(p))
+	म_लिखो("Check if parent still has small page...");
+	अगर (!check_huge(p))
 		success("OK");
-	else
+	अन्यथा
 		fail("Fail");
 	validate_memory(p, 0, page_size);
 	munmap(p, hpage_pmd_size);
-}
+पूर्ण
 
-static void collapse_fork_compound(void)
-{
-	int wstatus;
-	void *p;
+अटल व्योम collapse_विभाजन_compound(व्योम)
+अणु
+	पूर्णांक wstatus;
+	व्योम *p;
 
 	p = alloc_mapping();
 
-	printf("Allocate huge page...");
+	म_लिखो("Allocate huge page...");
 	madvise(p, hpage_pmd_size, MADV_HUGEPAGE);
 	fill_memory(p, 0, hpage_pmd_size);
-	if (check_huge(p))
+	अगर (check_huge(p))
 		success("OK");
-	else
+	अन्यथा
 		fail("Fail");
 
-	printf("Share huge page over fork()...");
-	if (!fork()) {
-		/* Do not touch settings on child exit */
+	म_लिखो("Share huge page over fork()...");
+	अगर (!विभाजन()) अणु
+		/* Do not touch settings on child निकास */
 		skip_settings_restore = true;
-		exit_status = 0;
+		निकास_status = 0;
 
-		if (check_huge(p))
+		अगर (check_huge(p))
 			success("OK");
-		else
+		अन्यथा
 			fail("Fail");
 
-		printf("Split huge page PMD in child process...");
+		म_लिखो("Split huge page PMD in child process...");
 		madvise(p, page_size, MADV_NOHUGEPAGE);
 		madvise(p, hpage_pmd_size, MADV_NOHUGEPAGE);
-		if (!check_huge(p))
+		अगर (!check_huge(p))
 			success("OK");
-		else
+		अन्यथा
 			fail("Fail");
 		fill_memory(p, 0, page_size);
 
-		write_num("khugepaged/max_ptes_shared", hpage_pmd_nr - 1);
-		if (wait_for_scan("Collapse PTE table full of compound pages in child", p))
+		ग_लिखो_num("khugepaged/max_ptes_shared", hpage_pmd_nr - 1);
+		अगर (रुको_क्रम_scan("Collapse PTE table full of compound pages in child", p))
 			fail("Timeout");
-		else if (check_huge(p))
+		अन्यथा अगर (check_huge(p))
 			success("OK");
-		else
+		अन्यथा
 			fail("Fail");
-		write_num("khugepaged/max_ptes_shared",
-				default_settings.khugepaged.max_ptes_shared);
+		ग_लिखो_num("khugepaged/max_ptes_shared",
+				शेष_settings.khugepaged.max_ptes_shared);
 
 		validate_memory(p, 0, hpage_pmd_size);
 		munmap(p, hpage_pmd_size);
-		exit(exit_status);
-	}
+		निकास(निकास_status);
+	पूर्ण
 
-	wait(&wstatus);
-	exit_status += WEXITSTATUS(wstatus);
+	रुको(&wstatus);
+	निकास_status += WEXITSTATUS(wstatus);
 
-	printf("Check if parent still has huge page...");
-	if (check_huge(p))
+	म_लिखो("Check if parent still has huge page...");
+	अगर (check_huge(p))
 		success("OK");
-	else
+	अन्यथा
 		fail("Fail");
 	validate_memory(p, 0, hpage_pmd_size);
 	munmap(p, hpage_pmd_size);
-}
+पूर्ण
 
-static void collapse_max_ptes_shared()
-{
-	int max_ptes_shared = read_num("khugepaged/max_ptes_shared");
-	int wstatus;
-	void *p;
+अटल व्योम collapse_max_ptes_shared()
+अणु
+	पूर्णांक max_ptes_shared = पढ़ो_num("khugepaged/max_ptes_shared");
+	पूर्णांक wstatus;
+	व्योम *p;
 
 	p = alloc_mapping();
 
-	printf("Allocate huge page...");
+	म_लिखो("Allocate huge page...");
 	madvise(p, hpage_pmd_size, MADV_HUGEPAGE);
 	fill_memory(p, 0, hpage_pmd_size);
-	if (check_huge(p))
+	अगर (check_huge(p))
 		success("OK");
-	else
+	अन्यथा
 		fail("Fail");
 
-	printf("Share huge page over fork()...");
-	if (!fork()) {
-		/* Do not touch settings on child exit */
+	म_लिखो("Share huge page over fork()...");
+	अगर (!विभाजन()) अणु
+		/* Do not touch settings on child निकास */
 		skip_settings_restore = true;
-		exit_status = 0;
+		निकास_status = 0;
 
-		if (check_huge(p))
+		अगर (check_huge(p))
 			success("OK");
-		else
+		अन्यथा
 			fail("Fail");
 
-		printf("Trigger CoW on page %d of %d...",
+		म_लिखो("Trigger CoW on page %d of %d...",
 				hpage_pmd_nr - max_ptes_shared - 1, hpage_pmd_nr);
 		fill_memory(p, 0, (hpage_pmd_nr - max_ptes_shared - 1) * page_size);
-		if (!check_huge(p))
+		अगर (!check_huge(p))
 			success("OK");
-		else
+		अन्यथा
 			fail("Fail");
 
-		if (wait_for_scan("Do not collapse with max_ptes_shared exceeded", p))
+		अगर (रुको_क्रम_scan("Do not collapse with max_ptes_shared exceeded", p))
 			fail("Timeout");
-		else if (!check_huge(p))
+		अन्यथा अगर (!check_huge(p))
 			success("OK");
-		else
+		अन्यथा
 			fail("Fail");
 
-		printf("Trigger CoW on page %d of %d...",
+		म_लिखो("Trigger CoW on page %d of %d...",
 				hpage_pmd_nr - max_ptes_shared, hpage_pmd_nr);
 		fill_memory(p, 0, (hpage_pmd_nr - max_ptes_shared) * page_size);
-		if (!check_huge(p))
+		अगर (!check_huge(p))
 			success("OK");
-		else
+		अन्यथा
 			fail("Fail");
 
 
-		if (wait_for_scan("Collapse with max_ptes_shared PTEs shared", p))
+		अगर (रुको_क्रम_scan("Collapse with max_ptes_shared PTEs shared", p))
 			fail("Timeout");
-		else if (check_huge(p))
+		अन्यथा अगर (check_huge(p))
 			success("OK");
-		else
+		अन्यथा
 			fail("Fail");
 
 		validate_memory(p, 0, hpage_pmd_size);
 		munmap(p, hpage_pmd_size);
-		exit(exit_status);
-	}
+		निकास(निकास_status);
+	पूर्ण
 
-	wait(&wstatus);
-	exit_status += WEXITSTATUS(wstatus);
+	रुको(&wstatus);
+	निकास_status += WEXITSTATUS(wstatus);
 
-	printf("Check if parent still has huge page...");
-	if (check_huge(p))
+	म_लिखो("Check if parent still has huge page...");
+	अगर (check_huge(p))
 		success("OK");
-	else
+	अन्यथा
 		fail("Fail");
 	validate_memory(p, 0, hpage_pmd_size);
 	munmap(p, hpage_pmd_size);
-}
+पूर्ण
 
-int main(void)
-{
-	setbuf(stdout, NULL);
+पूर्णांक मुख्य(व्योम)
+अणु
+	रखो_बफ(मानक_निकास, शून्य);
 
 	page_size = getpagesize();
-	hpage_pmd_size = read_num("hpage_pmd_size");
+	hpage_pmd_size = पढ़ो_num("hpage_pmd_size");
 	hpage_pmd_nr = hpage_pmd_size / page_size;
 
-	default_settings.khugepaged.max_ptes_none = hpage_pmd_nr - 1;
-	default_settings.khugepaged.max_ptes_swap = hpage_pmd_nr / 8;
-	default_settings.khugepaged.max_ptes_shared = hpage_pmd_nr / 2;
-	default_settings.khugepaged.pages_to_scan = hpage_pmd_nr * 8;
+	शेष_settings.khugepaged.max_ptes_none = hpage_pmd_nr - 1;
+	शेष_settings.khugepaged.max_ptes_swap = hpage_pmd_nr / 8;
+	शेष_settings.khugepaged.max_ptes_shared = hpage_pmd_nr / 2;
+	शेष_settings.khugepaged.pages_to_scan = hpage_pmd_nr * 8;
 
 	save_settings();
 	adjust_settings();
@@ -1027,9 +1028,9 @@ int main(void)
 	collapse_single_pte_entry_compound();
 	collapse_full_of_compound();
 	collapse_compound_extreme();
-	collapse_fork();
-	collapse_fork_compound();
+	collapse_विभाजन();
+	collapse_विभाजन_compound();
 	collapse_max_ptes_shared();
 
 	restore_settings(0);
-}
+पूर्ण

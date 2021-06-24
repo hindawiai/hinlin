@@ -1,22 +1,23 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
- * linux/sound/rt5663.h -- Platform data for RT5663
+ * linux/sound/rt5663.h -- Platक्रमm data क्रम RT5663
  *
  * Copyright 2017 Realtek Semiconductor Corp.
  */
 
-#ifndef __LINUX_SND_RT5663_H
-#define __LINUX_SND_RT5663_H
+#अगर_अघोषित __LINUX_SND_RT5663_H
+#घोषणा __LINUX_SND_RT5663_H
 
-struct rt5663_platform_data {
-	unsigned int dc_offset_l_manual;
-	unsigned int dc_offset_r_manual;
-	unsigned int dc_offset_l_manual_mic;
-	unsigned int dc_offset_r_manual_mic;
+काष्ठा rt5663_platक्रमm_data अणु
+	अचिन्हित पूर्णांक dc_offset_l_manual;
+	अचिन्हित पूर्णांक dc_offset_r_manual;
+	अचिन्हित पूर्णांक dc_offset_l_manual_mic;
+	अचिन्हित पूर्णांक dc_offset_r_manual_mic;
 
-	unsigned int impedance_sensing_num;
-	unsigned int *impedance_sensing_table;
-};
+	अचिन्हित पूर्णांक impedance_sensing_num;
+	अचिन्हित पूर्णांक *impedance_sensing_table;
+पूर्ण;
 
-#endif
+#पूर्ण_अगर
 

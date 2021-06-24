@@ -1,11 +1,12 @@
-#ifndef _PERF_PARSE_SUBLEVEL_OPTIONS_H
-#define _PERF_PARSE_SUBLEVEL_OPTIONS_H
+<शैली गुरु>
+#अगर_अघोषित _PERF_PARSE_SUBLEVEL_OPTIONS_H
+#घोषणा _PERF_PARSE_SUBLEVEL_OPTIONS_H
 
-struct sublevel_option {
-	const char *name;
-	int *value_ptr;
-};
+काष्ठा sublevel_option अणु
+	स्थिर अक्षर *name;
+	पूर्णांक *value_ptr;
+पूर्ण;
 
-int perf_parse_sublevel_options(const char *str, struct sublevel_option *opts);
+पूर्णांक perf_parse_sublevel_options(स्थिर अक्षर *str, काष्ठा sublevel_option *opts);
 
-#endif
+#पूर्ण_अगर

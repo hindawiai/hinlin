@@ -1,266 +1,267 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  *	linux/arch/alpha/kernel/sys_cabriolet.c
  *
  *	Copyright (C) 1995 David A Rusling
  *	Copyright (C) 1996 Jay A Estabrook
- *	Copyright (C) 1998, 1999, 2000 Richard Henderson
+ *	Copyright (C) 1998, 1999, 2000 Riअक्षरd Henderson
  *
  * Code supporting the Cabriolet (AlphaPC64), EB66+, and EB164,
  * PC164 and LX164.
  */
 
-#include <linux/kernel.h>
-#include <linux/types.h>
-#include <linux/mm.h>
-#include <linux/sched.h>
-#include <linux/pci.h>
-#include <linux/init.h>
-#include <linux/bitops.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/types.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/init.h>
+#समावेश <linux/bitops.h>
 
-#include <asm/ptrace.h>
-#include <asm/dma.h>
-#include <asm/irq.h>
-#include <asm/mmu_context.h>
-#include <asm/io.h>
-#include <asm/core_apecs.h>
-#include <asm/core_cia.h>
-#include <asm/core_lca.h>
-#include <asm/tlbflush.h>
+#समावेश <यंत्र/ptrace.h>
+#समावेश <यंत्र/dma.h>
+#समावेश <यंत्र/irq.h>
+#समावेश <यंत्र/mmu_context.h>
+#समावेश <यंत्र/पन.स>
+#समावेश <यंत्र/core_apecs.h>
+#समावेश <यंत्र/core_cia.h>
+#समावेश <यंत्र/core_lca.h>
+#समावेश <यंत्र/tlbflush.h>
 
-#include "proto.h"
-#include "irq_impl.h"
-#include "pci_impl.h"
-#include "machvec_impl.h"
-#include "pc873xx.h"
+#समावेश "proto.h"
+#समावेश "irq_impl.h"
+#समावेश "pci_impl.h"
+#समावेश "machvec_impl.h"
+#समावेश "pc873xx.h"
 
-/* Note mask bit is true for DISABLED irqs.  */
-static unsigned long cached_irq_mask = ~0UL;
+/* Note mask bit is true क्रम DISABLED irqs.  */
+अटल अचिन्हित दीर्घ cached_irq_mask = ~0UL;
 
-static inline void
-cabriolet_update_irq_hw(unsigned int irq, unsigned long mask)
-{
-	int ofs = (irq - 16) / 8;
+अटल अंतरभूत व्योम
+cabriolet_update_irq_hw(अचिन्हित पूर्णांक irq, अचिन्हित दीर्घ mask)
+अणु
+	पूर्णांक ofs = (irq - 16) / 8;
 	outb(mask >> (16 + ofs * 8), 0x804 + ofs);
-}
+पूर्ण
 
-static inline void
-cabriolet_enable_irq(struct irq_data *d)
-{
+अटल अंतरभूत व्योम
+cabriolet_enable_irq(काष्ठा irq_data *d)
+अणु
 	cabriolet_update_irq_hw(d->irq, cached_irq_mask &= ~(1UL << d->irq));
-}
+पूर्ण
 
-static void
-cabriolet_disable_irq(struct irq_data *d)
-{
+अटल व्योम
+cabriolet_disable_irq(काष्ठा irq_data *d)
+अणु
 	cabriolet_update_irq_hw(d->irq, cached_irq_mask |= 1UL << d->irq);
-}
+पूर्ण
 
-static struct irq_chip cabriolet_irq_type = {
+अटल काष्ठा irq_chip cabriolet_irq_type = अणु
 	.name		= "CABRIOLET",
 	.irq_unmask	= cabriolet_enable_irq,
 	.irq_mask	= cabriolet_disable_irq,
 	.irq_mask_ack	= cabriolet_disable_irq,
-};
+पूर्ण;
 
-static void 
-cabriolet_device_interrupt(unsigned long v)
-{
-	unsigned long pld;
-	unsigned int i;
+अटल व्योम 
+cabriolet_device_पूर्णांकerrupt(अचिन्हित दीर्घ v)
+अणु
+	अचिन्हित दीर्घ pld;
+	अचिन्हित पूर्णांक i;
 
-	/* Read the interrupt summary registers */
+	/* Read the पूर्णांकerrupt summary रेजिस्टरs */
 	pld = inb(0x804) | (inb(0x805) << 8) | (inb(0x806) << 16);
 
 	/*
-	 * Now for every possible bit set, work through them and call
-	 * the appropriate interrupt handler.
+	 * Now क्रम every possible bit set, work through them and call
+	 * the appropriate पूर्णांकerrupt handler.
 	 */
-	while (pld) {
+	जबतक (pld) अणु
 		i = ffz(~pld);
 		pld &= pld - 1;	/* clear least bit set */
-		if (i == 4) {
-			isa_device_interrupt(v);
-		} else {
+		अगर (i == 4) अणु
+			isa_device_पूर्णांकerrupt(v);
+		पूर्ण अन्यथा अणु
 			handle_irq(16 + i);
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static void __init
-common_init_irq(void (*srm_dev_int)(unsigned long v))
-{
+अटल व्योम __init
+common_init_irq(व्योम (*srm_dev_पूर्णांक)(अचिन्हित दीर्घ v))
+अणु
 	init_i8259a_irqs();
 
-	if (alpha_using_srm) {
-		alpha_mv.device_interrupt = srm_dev_int;
+	अगर (alpha_using_srm) अणु
+		alpha_mv.device_पूर्णांकerrupt = srm_dev_पूर्णांक;
 		init_srm_irqs(35, 0);
-	}
-	else {
-		long i;
+	पूर्ण
+	अन्यथा अणु
+		दीर्घ i;
 
 		outb(0xff, 0x804);
 		outb(0xff, 0x805);
 		outb(0xff, 0x806);
 
-		for (i = 16; i < 35; ++i) {
+		क्रम (i = 16; i < 35; ++i) अणु
 			irq_set_chip_and_handler(i, &cabriolet_irq_type,
 						 handle_level_irq);
 			irq_set_status_flags(i, IRQ_LEVEL);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	common_init_isa_dma();
-	if (request_irq(16 + 4, no_action, 0, "isa-cascade", NULL))
+	अगर (request_irq(16 + 4, no_action, 0, "isa-cascade", शून्य))
 		pr_err("Failed to register isa-cascade interrupt\n");
-}
+पूर्ण
 
-#ifndef CONFIG_ALPHA_PC164
-static void __init
-cabriolet_init_irq(void)
-{
-	common_init_irq(srm_device_interrupt);
-}
-#endif
+#अगर_अघोषित CONFIG_ALPHA_PC164
+अटल व्योम __init
+cabriolet_init_irq(व्योम)
+अणु
+	common_init_irq(srm_device_पूर्णांकerrupt);
+पूर्ण
+#पूर्ण_अगर
 
-#if defined(CONFIG_ALPHA_GENERIC) || defined(CONFIG_ALPHA_PC164)
-/* In theory, the PC164 has the same interrupt hardware as the other
-   Cabriolet based systems.  However, something got screwed up late
-   in the development cycle which broke the interrupt masking hardware.
-   Repeat, it is not possible to mask and ack interrupts.  At all.
+#अगर defined(CONFIG_ALPHA_GENERIC) || defined(CONFIG_ALPHA_PC164)
+/* In theory, the PC164 has the same पूर्णांकerrupt hardware as the other
+   Cabriolet based प्रणालीs.  However, something got screwed up late
+   in the development cycle which broke the पूर्णांकerrupt masking hardware.
+   Repeat, it is not possible to mask and ack पूर्णांकerrupts.  At all.
 
-   In an attempt to work around this, while processing interrupts,
-   we do not allow the IPL to drop below what it is currently.  This
+   In an attempt to work around this, जबतक processing पूर्णांकerrupts,
+   we करो not allow the IPL to drop below what it is currently.  This
    prevents the possibility of recursion.  
 
-   ??? Another option might be to force all PCI devices to use edge
-   triggered rather than level triggered interrupts.  That might be
+   ??? Another option might be to क्रमce all PCI devices to use edge
+   triggered rather than level triggered पूर्णांकerrupts.  That might be
    too invasive though.  */
 
-static void
-pc164_srm_device_interrupt(unsigned long v)
-{
+अटल व्योम
+pc164_srm_device_पूर्णांकerrupt(अचिन्हित दीर्घ v)
+अणु
 	__min_ipl = getipl();
-	srm_device_interrupt(v);
+	srm_device_पूर्णांकerrupt(v);
 	__min_ipl = 0;
-}
+पूर्ण
 
-static void
-pc164_device_interrupt(unsigned long v)
-{
+अटल व्योम
+pc164_device_पूर्णांकerrupt(अचिन्हित दीर्घ v)
+अणु
 	__min_ipl = getipl();
-	cabriolet_device_interrupt(v);
+	cabriolet_device_पूर्णांकerrupt(v);
 	__min_ipl = 0;
-}
+पूर्ण
 
-static void __init
-pc164_init_irq(void)
-{
-	common_init_irq(pc164_srm_device_interrupt);
-}
-#endif
+अटल व्योम __init
+pc164_init_irq(व्योम)
+अणु
+	common_init_irq(pc164_srm_device_पूर्णांकerrupt);
+पूर्ण
+#पूर्ण_अगर
 
 /*
- * The EB66+ is very similar to the EB66 except that it does not have
+ * The EB66+ is very similar to the EB66 except that it करोes not have
  * the on-board NCR and Tulip chips.  In the code below, I have used
  * slot number to refer to the id select line and *not* the slot
- * number used in the EB66+ documentation.  However, in the table,
+ * number used in the EB66+ करोcumentation.  However, in the table,
  * I've given the slot number, the id select line and the Jxx number
- * that's printed on the board.  The interrupt pins from the PCI slots
- * are wired into 3 interrupt summary registers at 0x804, 0x805 and
+ * that's prपूर्णांकed on the board.  The पूर्णांकerrupt pins from the PCI slots
+ * are wired पूर्णांकo 3 पूर्णांकerrupt summary रेजिस्टरs at 0x804, 0x805 and
  * 0x806 ISA.
  *
- * In the table, -1 means don't assign an IRQ number.  This is usually
+ * In the table, -1 means करोn't assign an IRQ number.  This is usually
  * because it is the Saturn IO (SIO) PCI/ISA Bridge Chip.
  */
 
-static inline int
-eb66p_map_irq(const struct pci_dev *dev, u8 slot, u8 pin)
-{
-	static char irq_tab[5][5] = {
+अटल अंतरभूत पूर्णांक
+eb66p_map_irq(स्थिर काष्ठा pci_dev *dev, u8 slot, u8 pin)
+अणु
+	अटल अक्षर irq_tab[5][5] = अणु
 		/*INT  INTA  INTB  INTC   INTD */
-		{16+0, 16+0, 16+5,  16+9, 16+13},  /* IdSel 6,  slot 0, J25 */
-		{16+1, 16+1, 16+6, 16+10, 16+14},  /* IdSel 7,  slot 1, J26 */
-		{  -1,   -1,   -1,    -1,    -1},  /* IdSel 8,  SIO         */
-		{16+2, 16+2, 16+7, 16+11, 16+15},  /* IdSel 9,  slot 2, J27 */
-		{16+3, 16+3, 16+8, 16+12,  16+6}   /* IdSel 10, slot 3, J28 */
-	};
-	const long min_idsel = 6, max_idsel = 10, irqs_per_slot = 5;
-	return COMMON_TABLE_LOOKUP;
-}
+		अणु16+0, 16+0, 16+5,  16+9, 16+13पूर्ण,  /* IdSel 6,  slot 0, J25 */
+		अणु16+1, 16+1, 16+6, 16+10, 16+14पूर्ण,  /* IdSel 7,  slot 1, J26 */
+		अणु  -1,   -1,   -1,    -1,    -1पूर्ण,  /* IdSel 8,  SIO         */
+		अणु16+2, 16+2, 16+7, 16+11, 16+15पूर्ण,  /* IdSel 9,  slot 2, J27 */
+		अणु16+3, 16+3, 16+8, 16+12,  16+6पूर्ण   /* IdSel 10, slot 3, J28 */
+	पूर्ण;
+	स्थिर दीर्घ min_idsel = 6, max_idsel = 10, irqs_per_slot = 5;
+	वापस COMMON_TABLE_LOOKUP;
+पूर्ण
 
 
 /*
  * The AlphaPC64 is very similar to the EB66+ except that its slots
- * are numbered differently.  In the code below, I have used slot
+ * are numbered dअगरferently.  In the code below, I have used slot
  * number to refer to the id select line and *not* the slot number
- * used in the AlphaPC64 documentation.  However, in the table, I've
+ * used in the AlphaPC64 करोcumentation.  However, in the table, I've
  * given the slot number, the id select line and the Jxx number that's
- * printed on the board.  The interrupt pins from the PCI slots are
- * wired into 3 interrupt summary registers at 0x804, 0x805 and 0x806
+ * prपूर्णांकed on the board.  The पूर्णांकerrupt pins from the PCI slots are
+ * wired पूर्णांकo 3 पूर्णांकerrupt summary रेजिस्टरs at 0x804, 0x805 and 0x806
  * ISA.
  *
- * In the table, -1 means don't assign an IRQ number.  This is usually
+ * In the table, -1 means करोn't assign an IRQ number.  This is usually
  * because it is the Saturn IO (SIO) PCI/ISA Bridge Chip.
  */
 
-static inline int
-cabriolet_map_irq(const struct pci_dev *dev, u8 slot, u8 pin)
-{
-	static char irq_tab[5][5] = {
+अटल अंतरभूत पूर्णांक
+cabriolet_map_irq(स्थिर काष्ठा pci_dev *dev, u8 slot, u8 pin)
+अणु
+	अटल अक्षर irq_tab[5][5] = अणु
 		/*INT   INTA  INTB  INTC   INTD */
-		{ 16+2, 16+2, 16+7, 16+11, 16+15}, /* IdSel 5,  slot 2, J21 */
-		{ 16+0, 16+0, 16+5,  16+9, 16+13}, /* IdSel 6,  slot 0, J19 */
-		{ 16+1, 16+1, 16+6, 16+10, 16+14}, /* IdSel 7,  slot 1, J20 */
-		{   -1,   -1,   -1,    -1,    -1}, /* IdSel 8,  SIO         */
-		{ 16+3, 16+3, 16+8, 16+12, 16+16}  /* IdSel 9,  slot 3, J22 */
-	};
-	const long min_idsel = 5, max_idsel = 9, irqs_per_slot = 5;
-	return COMMON_TABLE_LOOKUP;
-}
+		अणु 16+2, 16+2, 16+7, 16+11, 16+15पूर्ण, /* IdSel 5,  slot 2, J21 */
+		अणु 16+0, 16+0, 16+5,  16+9, 16+13पूर्ण, /* IdSel 6,  slot 0, J19 */
+		अणु 16+1, 16+1, 16+6, 16+10, 16+14पूर्ण, /* IdSel 7,  slot 1, J20 */
+		अणु   -1,   -1,   -1,    -1,    -1पूर्ण, /* IdSel 8,  SIO         */
+		अणु 16+3, 16+3, 16+8, 16+12, 16+16पूर्ण  /* IdSel 9,  slot 3, J22 */
+	पूर्ण;
+	स्थिर दीर्घ min_idsel = 5, max_idsel = 9, irqs_per_slot = 5;
+	वापस COMMON_TABLE_LOOKUP;
+पूर्ण
 
-static inline void __init
-cabriolet_enable_ide(void)
-{
-	if (pc873xx_probe() == -1) {
-		printk(KERN_ERR "Probing for PC873xx Super IO chip failed.\n");
-	 } else {
-		printk(KERN_INFO "Found %s Super IO chip at 0x%x\n",
+अटल अंतरभूत व्योम __init
+cabriolet_enable_ide(व्योम)
+अणु
+	अगर (pc873xx_probe() == -1) अणु
+		prपूर्णांकk(KERN_ERR "Probing for PC873xx Super IO chip failed.\n");
+	 पूर्ण अन्यथा अणु
+		prपूर्णांकk(KERN_INFO "Found %s Super IO chip at 0x%x\n",
 			pc873xx_get_model(), pc873xx_get_base());
 
 		pc873xx_enable_ide();
-	}
-}
+	पूर्ण
+पूर्ण
 
-static inline void __init
-cabriolet_init_pci(void)
-{
+अटल अंतरभूत व्योम __init
+cabriolet_init_pci(व्योम)
+अणु
 	common_init_pci();
 	cabriolet_enable_ide();
-}
+पूर्ण
 
-static inline void __init
-cia_cab_init_pci(void)
-{
+अटल अंतरभूत व्योम __init
+cia_cab_init_pci(व्योम)
+अणु
 	cia_init_pci();
 	cabriolet_enable_ide();
-}
+पूर्ण
 
 /*
- * The PC164 and LX164 have 19 PCI interrupts, four from each of the four
+ * The PC164 and LX164 have 19 PCI पूर्णांकerrupts, four from each of the four
  * PCI slots, the SIO, PCI/IDE, and USB.
  * 
- * Each of the interrupts can be individually masked. This is
- * accomplished by setting the appropriate bit in the mask register.
+ * Each of the पूर्णांकerrupts can be inभागidually masked. This is
+ * accomplished by setting the appropriate bit in the mask रेजिस्टर.
  * A bit is set by writing a "1" to the desired position in the mask
- * register and cleared by writing a "0". There are 3 mask registers
+ * रेजिस्टर and cleared by writing a "0". There are 3 mask रेजिस्टरs
  * located at ISA address 804h, 805h and 806h.
  * 
- * An I/O read at ISA address 804h, 805h, 806h will return the
- * state of the 11 PCI interrupts and not the state of the MASKED
- * interrupts.
+ * An I/O पढ़ो at ISA address 804h, 805h, 806h will वापस the
+ * state of the 11 PCI पूर्णांकerrupts and not the state of the MASKED
+ * पूर्णांकerrupts.
  * 
- * Note: A write to I/O 804h, 805h, and 806h the mask register will be
+ * Note: A ग_लिखो to I/O 804h, 805h, and 806h the mask रेजिस्टर will be
  * updated.
  * 
  * 
@@ -275,7 +276,7 @@ cia_cab_init_pci(void)
  * 0x806   | Rsrv  | Rsrv  | Rsrv  | Rsrv  | Rsrv  |INTD3 | INTD2 | INTD1 |
  *         +--------------------------------------------------------------+
  *         * Rsrv = reserved bits
- *         Note: The mask register is write-only.
+ *         Note: The mask रेजिस्टर is ग_लिखो-only.
  * 
  * IdSel	
  *   5	 32 bit PCI option slot 2
@@ -288,37 +289,37 @@ cia_cab_init_pci(void)
  * 
  */
 
-static inline int
-alphapc164_map_irq(const struct pci_dev *dev, u8 slot, u8 pin)
-{
-	static char irq_tab[7][5] = {
+अटल अंतरभूत पूर्णांक
+alphapc164_map_irq(स्थिर काष्ठा pci_dev *dev, u8 slot, u8 pin)
+अणु
+	अटल अक्षर irq_tab[7][5] = अणु
 		/*INT   INTA  INTB   INTC   INTD */
-		{ 16+2, 16+2, 16+9,  16+13, 16+17}, /* IdSel  5, slot 2, J20 */
-		{ 16+0, 16+0, 16+7,  16+11, 16+15}, /* IdSel  6, slot 0, J29 */
-		{ 16+1, 16+1, 16+8,  16+12, 16+16}, /* IdSel  7, slot 1, J26 */
-		{   -1,   -1,   -1,    -1,    -1},  /* IdSel  8, SIO */
-		{ 16+3, 16+3, 16+10, 16+14, 16+18}, /* IdSel  9, slot 3, J19 */
-		{ 16+6, 16+6, 16+6,  16+6,  16+6},  /* IdSel 10, USB */
-		{ 16+5, 16+5, 16+5,  16+5,  16+5}   /* IdSel 11, IDE */
-	};
-	const long min_idsel = 5, max_idsel = 11, irqs_per_slot = 5;
-	return COMMON_TABLE_LOOKUP;
-}
+		अणु 16+2, 16+2, 16+9,  16+13, 16+17पूर्ण, /* IdSel  5, slot 2, J20 */
+		अणु 16+0, 16+0, 16+7,  16+11, 16+15पूर्ण, /* IdSel  6, slot 0, J29 */
+		अणु 16+1, 16+1, 16+8,  16+12, 16+16पूर्ण, /* IdSel  7, slot 1, J26 */
+		अणु   -1,   -1,   -1,    -1,    -1पूर्ण,  /* IdSel  8, SIO */
+		अणु 16+3, 16+3, 16+10, 16+14, 16+18पूर्ण, /* IdSel  9, slot 3, J19 */
+		अणु 16+6, 16+6, 16+6,  16+6,  16+6पूर्ण,  /* IdSel 10, USB */
+		अणु 16+5, 16+5, 16+5,  16+5,  16+5पूर्ण   /* IdSel 11, IDE */
+	पूर्ण;
+	स्थिर दीर्घ min_idsel = 5, max_idsel = 11, irqs_per_slot = 5;
+	वापस COMMON_TABLE_LOOKUP;
+पूर्ण
 
-static inline void __init
-alphapc164_init_pci(void)
-{
+अटल अंतरभूत व्योम __init
+alphapc164_init_pci(व्योम)
+अणु
 	cia_init_pci();
 	SMC93x_Init();
-}
+पूर्ण
 
 
 /*
  * The System Vector
  */
 
-#if defined(CONFIG_ALPHA_GENERIC) || defined(CONFIG_ALPHA_CABRIOLET)
-struct alpha_machine_vector cabriolet_mv __initmv = {
+#अगर defined(CONFIG_ALPHA_GENERIC) || defined(CONFIG_ALPHA_CABRIOLET)
+काष्ठा alpha_machine_vector cabriolet_mv __iniपंचांगv = अणु
 	.vector_name		= "Cabriolet",
 	DO_EV4_MMU,
 	DO_DEFAULT_RTC,
@@ -329,7 +330,7 @@ struct alpha_machine_vector cabriolet_mv __initmv = {
 	.min_mem_address	= APECS_AND_LCA_DEFAULT_MEM_BASE,
 
 	.nr_irqs		= 35,
-	.device_interrupt	= cabriolet_device_interrupt,
+	.device_पूर्णांकerrupt	= cabriolet_device_पूर्णांकerrupt,
 
 	.init_arch		= apecs_init_arch,
 	.init_irq		= cabriolet_init_irq,
@@ -337,14 +338,14 @@ struct alpha_machine_vector cabriolet_mv __initmv = {
 	.init_pci		= cabriolet_init_pci,
 	.pci_map_irq		= cabriolet_map_irq,
 	.pci_swizzle		= common_swizzle,
-};
-#ifndef CONFIG_ALPHA_EB64P
+पूर्ण;
+#अगर_अघोषित CONFIG_ALPHA_EB64P
 ALIAS_MV(cabriolet)
-#endif
-#endif
+#पूर्ण_अगर
+#पूर्ण_अगर
 
-#if defined(CONFIG_ALPHA_GENERIC) || defined(CONFIG_ALPHA_EB164)
-struct alpha_machine_vector eb164_mv __initmv = {
+#अगर defined(CONFIG_ALPHA_GENERIC) || defined(CONFIG_ALPHA_EB164)
+काष्ठा alpha_machine_vector eb164_mv __iniपंचांगv = अणु
 	.vector_name		= "EB164",
 	DO_EV5_MMU,
 	DO_DEFAULT_RTC,
@@ -355,21 +356,21 @@ struct alpha_machine_vector eb164_mv __initmv = {
 	.min_mem_address	= CIA_DEFAULT_MEM_BASE,
 
 	.nr_irqs		= 35,
-	.device_interrupt	= cabriolet_device_interrupt,
+	.device_पूर्णांकerrupt	= cabriolet_device_पूर्णांकerrupt,
 
 	.init_arch		= cia_init_arch,
 	.init_irq		= cabriolet_init_irq,
 	.init_rtc		= common_init_rtc,
 	.init_pci		= cia_cab_init_pci,
-	.kill_arch		= cia_kill_arch,
+	.समाप्त_arch		= cia_समाप्त_arch,
 	.pci_map_irq		= cabriolet_map_irq,
 	.pci_swizzle		= common_swizzle,
-};
+पूर्ण;
 ALIAS_MV(eb164)
-#endif
+#पूर्ण_अगर
 
-#if defined(CONFIG_ALPHA_GENERIC) || defined(CONFIG_ALPHA_EB66P)
-struct alpha_machine_vector eb66p_mv __initmv = {
+#अगर defined(CONFIG_ALPHA_GENERIC) || defined(CONFIG_ALPHA_EB66P)
+काष्ठा alpha_machine_vector eb66p_mv __iniपंचांगv = अणु
 	.vector_name		= "EB66+",
 	DO_EV4_MMU,
 	DO_DEFAULT_RTC,
@@ -380,7 +381,7 @@ struct alpha_machine_vector eb66p_mv __initmv = {
 	.min_mem_address	= APECS_AND_LCA_DEFAULT_MEM_BASE,
 
 	.nr_irqs		= 35,
-	.device_interrupt	= cabriolet_device_interrupt,
+	.device_पूर्णांकerrupt	= cabriolet_device_पूर्णांकerrupt,
 
 	.init_arch		= lca_init_arch,
 	.init_irq		= cabriolet_init_irq,
@@ -388,12 +389,12 @@ struct alpha_machine_vector eb66p_mv __initmv = {
 	.init_pci		= cabriolet_init_pci,
 	.pci_map_irq		= eb66p_map_irq,
 	.pci_swizzle		= common_swizzle,
-};
+पूर्ण;
 ALIAS_MV(eb66p)
-#endif
+#पूर्ण_अगर
 
-#if defined(CONFIG_ALPHA_GENERIC) || defined(CONFIG_ALPHA_LX164)
-struct alpha_machine_vector lx164_mv __initmv = {
+#अगर defined(CONFIG_ALPHA_GENERIC) || defined(CONFIG_ALPHA_LX164)
+काष्ठा alpha_machine_vector lx164_mv __iniपंचांगv = अणु
 	.vector_name		= "LX164",
 	DO_EV5_MMU,
 	DO_DEFAULT_RTC,
@@ -405,21 +406,21 @@ struct alpha_machine_vector lx164_mv __initmv = {
 	.pci_dac_offset		= PYXIS_DAC_OFFSET,
 
 	.nr_irqs		= 35,
-	.device_interrupt	= cabriolet_device_interrupt,
+	.device_पूर्णांकerrupt	= cabriolet_device_पूर्णांकerrupt,
 
 	.init_arch		= pyxis_init_arch,
 	.init_irq		= cabriolet_init_irq,
 	.init_rtc		= common_init_rtc,
 	.init_pci		= alphapc164_init_pci,
-	.kill_arch		= cia_kill_arch,
+	.समाप्त_arch		= cia_समाप्त_arch,
 	.pci_map_irq		= alphapc164_map_irq,
 	.pci_swizzle		= common_swizzle,
-};
+पूर्ण;
 ALIAS_MV(lx164)
-#endif
+#पूर्ण_अगर
 
-#if defined(CONFIG_ALPHA_GENERIC) || defined(CONFIG_ALPHA_PC164)
-struct alpha_machine_vector pc164_mv __initmv = {
+#अगर defined(CONFIG_ALPHA_GENERIC) || defined(CONFIG_ALPHA_PC164)
+काष्ठा alpha_machine_vector pc164_mv __iniपंचांगv = अणु
 	.vector_name		= "PC164",
 	DO_EV5_MMU,
 	DO_DEFAULT_RTC,
@@ -430,15 +431,15 @@ struct alpha_machine_vector pc164_mv __initmv = {
 	.min_mem_address	= CIA_DEFAULT_MEM_BASE,
 
 	.nr_irqs		= 35,
-	.device_interrupt	= pc164_device_interrupt,
+	.device_पूर्णांकerrupt	= pc164_device_पूर्णांकerrupt,
 
 	.init_arch		= cia_init_arch,
 	.init_irq		= pc164_init_irq,
 	.init_rtc		= common_init_rtc,
 	.init_pci		= alphapc164_init_pci,
-	.kill_arch		= cia_kill_arch,
+	.समाप्त_arch		= cia_समाप्त_arch,
 	.pci_map_irq		= alphapc164_map_irq,
 	.pci_swizzle		= common_swizzle,
-};
+पूर्ण;
 ALIAS_MV(pc164)
-#endif
+#पूर्ण_अगर

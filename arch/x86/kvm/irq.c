@@ -1,161 +1,162 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * irq.c: API for in kernel interrupt controller
+ * irq.c: API क्रम in kernel पूर्णांकerrupt controller
  * Copyright (c) 2007, Intel Corporation.
  * Copyright 2009 Red Hat, Inc. and/or its affiliates.
  *
  * Authors:
- *   Yaozu (Eddie) Dong <Eddie.dong@intel.com>
+ *   Yaozu (Eddie) Dong <Eddie.करोng@पूर्णांकel.com>
  */
 
-#include <linux/export.h>
-#include <linux/kvm_host.h>
+#समावेश <linux/export.h>
+#समावेश <linux/kvm_host.h>
 
-#include "irq.h"
-#include "i8254.h"
-#include "x86.h"
-#include "xen.h"
+#समावेश "irq.h"
+#समावेश "i8254.h"
+#समावेश "x86.h"
+#समावेश "xen.h"
 
 /*
- * check if there are pending timer events
+ * check अगर there are pending समयr events
  * to be processed.
  */
-int kvm_cpu_has_pending_timer(struct kvm_vcpu *vcpu)
-{
-	if (lapic_in_kernel(vcpu))
-		return apic_has_pending_timer(vcpu);
+पूर्णांक kvm_cpu_has_pending_समयr(काष्ठा kvm_vcpu *vcpu)
+अणु
+	अगर (lapic_in_kernel(vcpu))
+		वापस apic_has_pending_समयr(vcpu);
 
-	return 0;
-}
-EXPORT_SYMBOL(kvm_cpu_has_pending_timer);
-
-/*
- * check if there is a pending userspace external interrupt
- */
-static int pending_userspace_extint(struct kvm_vcpu *v)
-{
-	return v->arch.pending_external_vector != -1;
-}
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL(kvm_cpu_has_pending_समयr);
 
 /*
- * check if there is pending interrupt from
- * non-APIC source without intack.
+ * check अगर there is a pending userspace बाह्यal पूर्णांकerrupt
  */
-int kvm_cpu_has_extint(struct kvm_vcpu *v)
-{
+अटल पूर्णांक pending_userspace_extपूर्णांक(काष्ठा kvm_vcpu *v)
+अणु
+	वापस v->arch.pending_बाह्यal_vector != -1;
+पूर्ण
+
+/*
+ * check अगर there is pending पूर्णांकerrupt from
+ * non-APIC source without पूर्णांकack.
+ */
+पूर्णांक kvm_cpu_has_extपूर्णांक(काष्ठा kvm_vcpu *v)
+अणु
 	/*
-	 * FIXME: interrupt.injected represents an interrupt whose
-	 * side-effects have already been applied (e.g. bit from IRR
-	 * already moved to ISR). Therefore, it is incorrect to rely
-	 * on interrupt.injected to know if there is a pending
-	 * interrupt in the user-mode LAPIC.
+	 * FIXME: पूर्णांकerrupt.injected represents an पूर्णांकerrupt whose
+	 * side-effects have alपढ़ोy been applied (e.g. bit from IRR
+	 * alपढ़ोy moved to ISR). Thereक्रमe, it is incorrect to rely
+	 * on पूर्णांकerrupt.injected to know अगर there is a pending
+	 * पूर्णांकerrupt in the user-mode LAPIC.
 	 * This leads to nVMX/nSVM not be able to distinguish
-	 * if it should exit from L2 to L1 on EXTERNAL_INTERRUPT on
-	 * pending interrupt or should re-inject an injected
-	 * interrupt.
+	 * अगर it should निकास from L2 to L1 on EXTERNAL_INTERRUPT on
+	 * pending पूर्णांकerrupt or should re-inject an injected
+	 * पूर्णांकerrupt.
 	 */
-	if (!lapic_in_kernel(v))
-		return v->arch.interrupt.injected;
+	अगर (!lapic_in_kernel(v))
+		वापस v->arch.पूर्णांकerrupt.injected;
 
-	if (kvm_xen_has_interrupt(v))
-		return 1;
+	अगर (kvm_xen_has_पूर्णांकerrupt(v))
+		वापस 1;
 
-	if (!kvm_apic_accept_pic_intr(v))
-		return 0;
+	अगर (!kvm_apic_accept_pic_पूर्णांकr(v))
+		वापस 0;
 
-	if (irqchip_split(v->kvm))
-		return pending_userspace_extint(v);
-	else
-		return v->kvm->arch.vpic->output;
-}
-
-/*
- * check if there is injectable interrupt:
- * when virtual interrupt delivery enabled,
- * interrupt from apic will handled by hardware,
- * we don't need to check it here.
- */
-int kvm_cpu_has_injectable_intr(struct kvm_vcpu *v)
-{
-	if (kvm_cpu_has_extint(v))
-		return 1;
-
-	if (!is_guest_mode(v) && kvm_vcpu_apicv_active(v))
-		return 0;
-
-	return kvm_apic_has_interrupt(v) != -1; /* LAPIC */
-}
-EXPORT_SYMBOL_GPL(kvm_cpu_has_injectable_intr);
+	अगर (irqchip_split(v->kvm))
+		वापस pending_userspace_extपूर्णांक(v);
+	अन्यथा
+		वापस v->kvm->arch.vpic->output;
+पूर्ण
 
 /*
- * check if there is pending interrupt without
- * intack.
+ * check अगर there is injectable पूर्णांकerrupt:
+ * when भव पूर्णांकerrupt delivery enabled,
+ * पूर्णांकerrupt from apic will handled by hardware,
+ * we करोn't need to check it here.
  */
-int kvm_cpu_has_interrupt(struct kvm_vcpu *v)
-{
-	if (kvm_cpu_has_extint(v))
-		return 1;
+पूर्णांक kvm_cpu_has_injectable_पूर्णांकr(काष्ठा kvm_vcpu *v)
+अणु
+	अगर (kvm_cpu_has_extपूर्णांक(v))
+		वापस 1;
 
-	return kvm_apic_has_interrupt(v) != -1;	/* LAPIC */
-}
-EXPORT_SYMBOL_GPL(kvm_cpu_has_interrupt);
+	अगर (!is_guest_mode(v) && kvm_vcpu_apicv_active(v))
+		वापस 0;
+
+	वापस kvm_apic_has_पूर्णांकerrupt(v) != -1; /* LAPIC */
+पूर्ण
+EXPORT_SYMBOL_GPL(kvm_cpu_has_injectable_पूर्णांकr);
 
 /*
- * Read pending interrupt(from non-APIC source)
- * vector and intack.
+ * check अगर there is pending पूर्णांकerrupt without
+ * पूर्णांकack.
  */
-static int kvm_cpu_get_extint(struct kvm_vcpu *v)
-{
-	if (!kvm_cpu_has_extint(v)) {
+पूर्णांक kvm_cpu_has_पूर्णांकerrupt(काष्ठा kvm_vcpu *v)
+अणु
+	अगर (kvm_cpu_has_extपूर्णांक(v))
+		वापस 1;
+
+	वापस kvm_apic_has_पूर्णांकerrupt(v) != -1;	/* LAPIC */
+पूर्ण
+EXPORT_SYMBOL_GPL(kvm_cpu_has_पूर्णांकerrupt);
+
+/*
+ * Read pending पूर्णांकerrupt(from non-APIC source)
+ * vector and पूर्णांकack.
+ */
+अटल पूर्णांक kvm_cpu_get_extपूर्णांक(काष्ठा kvm_vcpu *v)
+अणु
+	अगर (!kvm_cpu_has_extपूर्णांक(v)) अणु
 		WARN_ON(!lapic_in_kernel(v));
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
-	if (!lapic_in_kernel(v))
-		return v->arch.interrupt.nr;
+	अगर (!lapic_in_kernel(v))
+		वापस v->arch.पूर्णांकerrupt.nr;
 
-	if (kvm_xen_has_interrupt(v))
-		return v->kvm->arch.xen.upcall_vector;
+	अगर (kvm_xen_has_पूर्णांकerrupt(v))
+		वापस v->kvm->arch.xen.upcall_vector;
 
-	if (irqchip_split(v->kvm)) {
-		int vector = v->arch.pending_external_vector;
+	अगर (irqchip_split(v->kvm)) अणु
+		पूर्णांक vector = v->arch.pending_बाह्यal_vector;
 
-		v->arch.pending_external_vector = -1;
-		return vector;
-	} else
-		return kvm_pic_read_irq(v->kvm); /* PIC */
-}
+		v->arch.pending_बाह्यal_vector = -1;
+		वापस vector;
+	पूर्ण अन्यथा
+		वापस kvm_pic_पढ़ो_irq(v->kvm); /* PIC */
+पूर्ण
 
 /*
- * Read pending interrupt vector and intack.
+ * Read pending पूर्णांकerrupt vector and पूर्णांकack.
  */
-int kvm_cpu_get_interrupt(struct kvm_vcpu *v)
-{
-	int vector = kvm_cpu_get_extint(v);
-	if (vector != -1)
-		return vector;			/* PIC */
+पूर्णांक kvm_cpu_get_पूर्णांकerrupt(काष्ठा kvm_vcpu *v)
+अणु
+	पूर्णांक vector = kvm_cpu_get_extपूर्णांक(v);
+	अगर (vector != -1)
+		वापस vector;			/* PIC */
 
-	return kvm_get_apic_interrupt(v);	/* APIC */
-}
-EXPORT_SYMBOL_GPL(kvm_cpu_get_interrupt);
+	वापस kvm_get_apic_पूर्णांकerrupt(v);	/* APIC */
+पूर्ण
+EXPORT_SYMBOL_GPL(kvm_cpu_get_पूर्णांकerrupt);
 
-void kvm_inject_pending_timer_irqs(struct kvm_vcpu *vcpu)
-{
-	if (lapic_in_kernel(vcpu))
-		kvm_inject_apic_timer_irqs(vcpu);
-}
-EXPORT_SYMBOL_GPL(kvm_inject_pending_timer_irqs);
+व्योम kvm_inject_pending_समयr_irqs(काष्ठा kvm_vcpu *vcpu)
+अणु
+	अगर (lapic_in_kernel(vcpu))
+		kvm_inject_apic_समयr_irqs(vcpu);
+पूर्ण
+EXPORT_SYMBOL_GPL(kvm_inject_pending_समयr_irqs);
 
-void __kvm_migrate_timers(struct kvm_vcpu *vcpu)
-{
-	__kvm_migrate_apic_timer(vcpu);
-	__kvm_migrate_pit_timer(vcpu);
-	static_call_cond(kvm_x86_migrate_timers)(vcpu);
-}
+व्योम __kvm_migrate_समयrs(काष्ठा kvm_vcpu *vcpu)
+अणु
+	__kvm_migrate_apic_समयr(vcpu);
+	__kvm_migrate_pit_समयr(vcpu);
+	अटल_call_cond(kvm_x86_migrate_समयrs)(vcpu);
+पूर्ण
 
-bool kvm_arch_irqfd_allowed(struct kvm *kvm, struct kvm_irqfd *args)
-{
+bool kvm_arch_irqfd_allowed(काष्ठा kvm *kvm, काष्ठा kvm_irqfd *args)
+अणु
 	bool resample = args->flags & KVM_IRQFD_FLAG_RESAMPLE;
 
-	return resample ? irqchip_kernel(kvm) : irqchip_in_kernel(kvm);
-}
+	वापस resample ? irqchip_kernel(kvm) : irqchip_in_kernel(kvm);
+पूर्ण

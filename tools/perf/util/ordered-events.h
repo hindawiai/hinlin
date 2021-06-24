@@ -1,77 +1,78 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __ORDERED_EVENTS_H
-#define __ORDERED_EVENTS_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __ORDERED_EVENTS_H
+#घोषणा __ORDERED_EVENTS_H
 
-#include <linux/types.h>
+#समावेश <linux/types.h>
 
-struct perf_sample;
+काष्ठा perf_sample;
 
-struct ordered_event {
-	u64			timestamp;
+काष्ठा ordered_event अणु
+	u64			बारtamp;
 	u64			file_offset;
-	union perf_event	*event;
-	struct list_head	list;
-};
+	जोड़ perf_event	*event;
+	काष्ठा list_head	list;
+पूर्ण;
 
-enum oe_flush {
+क्रमागत oe_flush अणु
 	OE_FLUSH__NONE,
 	OE_FLUSH__FINAL,
 	OE_FLUSH__ROUND,
 	OE_FLUSH__HALF,
 	OE_FLUSH__TOP,
 	OE_FLUSH__TIME,
-};
+पूर्ण;
 
-struct ordered_events;
+काष्ठा ordered_events;
 
-typedef int (*ordered_events__deliver_t)(struct ordered_events *oe,
-					 struct ordered_event *event);
+प्रकार पूर्णांक (*ordered_events__deliver_t)(काष्ठा ordered_events *oe,
+					 काष्ठा ordered_event *event);
 
-struct ordered_events_buffer {
-	struct list_head	list;
-	struct ordered_event	event[];
-};
+काष्ठा ordered_events_buffer अणु
+	काष्ठा list_head	list;
+	काष्ठा ordered_event	event[];
+पूर्ण;
 
-struct ordered_events {
+काष्ठा ordered_events अणु
 	u64				 last_flush;
 	u64				 next_flush;
-	u64				 max_timestamp;
+	u64				 max_बारtamp;
 	u64				 max_alloc_size;
 	u64				 cur_alloc_size;
-	struct list_head		 events;
-	struct list_head		 cache;
-	struct list_head		 to_free;
-	struct ordered_events_buffer	*buffer;
-	struct ordered_event		*last;
+	काष्ठा list_head		 events;
+	काष्ठा list_head		 cache;
+	काष्ठा list_head		 to_मुक्त;
+	काष्ठा ordered_events_buffer	*buffer;
+	काष्ठा ordered_event		*last;
 	ordered_events__deliver_t	 deliver;
-	int				 buffer_idx;
-	unsigned int			 nr_events;
-	enum oe_flush			 last_flush_type;
+	पूर्णांक				 buffer_idx;
+	अचिन्हित पूर्णांक			 nr_events;
+	क्रमागत oe_flush			 last_flush_type;
 	u32				 nr_unordered_events;
 	bool				 copy_on_queue;
-	void				*data;
-};
+	व्योम				*data;
+पूर्ण;
 
-int ordered_events__queue(struct ordered_events *oe, union perf_event *event,
-			  u64 timestamp, u64 file_offset);
-void ordered_events__delete(struct ordered_events *oe, struct ordered_event *event);
-int ordered_events__flush(struct ordered_events *oe, enum oe_flush how);
-int ordered_events__flush_time(struct ordered_events *oe, u64 timestamp);
-void ordered_events__init(struct ordered_events *oe, ordered_events__deliver_t deliver,
-			  void *data);
-void ordered_events__free(struct ordered_events *oe);
-void ordered_events__reinit(struct ordered_events *oe);
-u64 ordered_events__first_time(struct ordered_events *oe);
+पूर्णांक ordered_events__queue(काष्ठा ordered_events *oe, जोड़ perf_event *event,
+			  u64 बारtamp, u64 file_offset);
+व्योम ordered_events__delete(काष्ठा ordered_events *oe, काष्ठा ordered_event *event);
+पूर्णांक ordered_events__flush(काष्ठा ordered_events *oe, क्रमागत oe_flush how);
+पूर्णांक ordered_events__flush_समय(काष्ठा ordered_events *oe, u64 बारtamp);
+व्योम ordered_events__init(काष्ठा ordered_events *oe, ordered_events__deliver_t deliver,
+			  व्योम *data);
+व्योम ordered_events__मुक्त(काष्ठा ordered_events *oe);
+व्योम ordered_events__reinit(काष्ठा ordered_events *oe);
+u64 ordered_events__first_समय(काष्ठा ordered_events *oe);
 
-static inline
-void ordered_events__set_alloc_size(struct ordered_events *oe, u64 size)
-{
+अटल अंतरभूत
+व्योम ordered_events__set_alloc_size(काष्ठा ordered_events *oe, u64 size)
+अणु
 	oe->max_alloc_size = size;
-}
+पूर्ण
 
-static inline
-void ordered_events__set_copy_on_queue(struct ordered_events *oe, bool copy)
-{
+अटल अंतरभूत
+व्योम ordered_events__set_copy_on_queue(काष्ठा ordered_events *oe, bool copy)
+अणु
 	oe->copy_on_queue = copy;
-}
-#endif /* __ORDERED_EVENTS_H */
+पूर्ण
+#पूर्ण_अगर /* __ORDERED_EVENTS_H */

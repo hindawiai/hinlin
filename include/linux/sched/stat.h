@@ -1,40 +1,41 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _LINUX_SCHED_STAT_H
-#define _LINUX_SCHED_STAT_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _LINUX_SCHED_STAT_H
+#घोषणा _LINUX_SCHED_STAT_H
 
-#include <linux/percpu.h>
+#समावेश <linux/percpu.h>
 
 /*
- * Various counters maintained by the scheduler and fork(),
+ * Various counters मुख्यtained by the scheduler and विभाजन(),
  * exposed via /proc, sys.c or used by drivers via these APIs.
  *
  * ( Note that all these values are acquired without locking,
  *   so they can only be relied on in narrow circumstances. )
  */
 
-extern unsigned long total_forks;
-extern int nr_threads;
-DECLARE_PER_CPU(unsigned long, process_counts);
-extern int nr_processes(void);
-extern unsigned long nr_running(void);
-extern bool single_task_running(void);
-extern unsigned long nr_iowait(void);
-extern unsigned long nr_iowait_cpu(int cpu);
+बाह्य अचिन्हित दीर्घ total_विभाजनs;
+बाह्य पूर्णांक nr_thपढ़ोs;
+DECLARE_PER_CPU(अचिन्हित दीर्घ, process_counts);
+बाह्य पूर्णांक nr_processes(व्योम);
+बाह्य अचिन्हित दीर्घ nr_running(व्योम);
+बाह्य bool single_task_running(व्योम);
+बाह्य अचिन्हित दीर्घ nr_ioरुको(व्योम);
+बाह्य अचिन्हित दीर्घ nr_ioरुको_cpu(पूर्णांक cpu);
 
-static inline int sched_info_on(void)
-{
-#ifdef CONFIG_SCHEDSTATS
-	return 1;
-#elif defined(CONFIG_TASK_DELAY_ACCT)
-	extern int delayacct_on;
-	return delayacct_on;
-#else
-	return 0;
-#endif
-}
+अटल अंतरभूत पूर्णांक sched_info_on(व्योम)
+अणु
+#अगर_घोषित CONFIG_SCHEDSTATS
+	वापस 1;
+#या_अगर defined(CONFIG_TASK_DELAY_ACCT)
+	बाह्य पूर्णांक delayacct_on;
+	वापस delayacct_on;
+#अन्यथा
+	वापस 0;
+#पूर्ण_अगर
+पूर्ण
 
-#ifdef CONFIG_SCHEDSTATS
-void force_schedstat_enabled(void);
-#endif
+#अगर_घोषित CONFIG_SCHEDSTATS
+व्योम क्रमce_schedstat_enabled(व्योम);
+#पूर्ण_अगर
 
-#endif /* _LINUX_SCHED_STAT_H */
+#पूर्ण_अगर /* _LINUX_SCHED_STAT_H */

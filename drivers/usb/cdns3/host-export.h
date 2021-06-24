@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * Cadence USBSS and USBSSP DRD Driver - Host Export APIs
  *
@@ -6,22 +7,22 @@
  *
  * Authors: Peter Chen <peter.chen@nxp.com>
  */
-#ifndef __LINUX_CDNS3_HOST_EXPORT
-#define __LINUX_CDNS3_HOST_EXPORT
+#अगर_अघोषित __LINUX_CDNS3_HOST_EXPORT
+#घोषणा __LINUX_CDNS3_HOST_EXPORT
 
-#if IS_ENABLED(CONFIG_USB_CDNS_HOST)
+#अगर IS_ENABLED(CONFIG_USB_CDNS_HOST)
 
-int cdns_host_init(struct cdns *cdns);
+पूर्णांक cdns_host_init(काष्ठा cdns *cdns);
 
-#else
+#अन्यथा
 
-static inline int cdns_host_init(struct cdns *cdns)
-{
-	return -ENXIO;
-}
+अटल अंतरभूत पूर्णांक cdns_host_init(काष्ठा cdns *cdns)
+अणु
+	वापस -ENXIO;
+पूर्ण
 
-static inline void cdns_host_exit(struct cdns *cdns) { }
+अटल अंतरभूत व्योम cdns_host_निकास(काष्ठा cdns *cdns) अणु पूर्ण
 
-#endif /* USB_CDNS_HOST */
+#पूर्ण_अगर /* USB_CDNS_HOST */
 
-#endif /* __LINUX_CDNS3_HOST_EXPORT */
+#पूर्ण_अगर /* __LINUX_CDNS3_HOST_EXPORT */

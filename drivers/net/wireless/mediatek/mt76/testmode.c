@@ -1,40 +1,41 @@
-// SPDX-License-Identifier: ISC
+<शैली गुरु>
+// SPDX-License-Identअगरier: ISC
 /* Copyright (C) 2020 Felix Fietkau <nbd@nbd.name> */
-#include "mt76.h"
+#समावेश "mt76.h"
 
-static const struct nla_policy mt76_tm_policy[NUM_MT76_TM_ATTRS] = {
-	[MT76_TM_ATTR_RESET] = { .type = NLA_FLAG },
-	[MT76_TM_ATTR_STATE] = { .type = NLA_U8 },
-	[MT76_TM_ATTR_TX_COUNT] = { .type = NLA_U32 },
-	[MT76_TM_ATTR_TX_RATE_MODE] = { .type = NLA_U8 },
-	[MT76_TM_ATTR_TX_RATE_NSS] = { .type = NLA_U8 },
-	[MT76_TM_ATTR_TX_RATE_IDX] = { .type = NLA_U8 },
-	[MT76_TM_ATTR_TX_RATE_SGI] = { .type = NLA_U8 },
-	[MT76_TM_ATTR_TX_RATE_LDPC] = { .type = NLA_U8 },
-	[MT76_TM_ATTR_TX_RATE_STBC] = { .type = NLA_U8 },
-	[MT76_TM_ATTR_TX_LTF] = { .type = NLA_U8 },
-	[MT76_TM_ATTR_TX_ANTENNA] = { .type = NLA_U8 },
-	[MT76_TM_ATTR_TX_SPE_IDX] = { .type = NLA_U8 },
-	[MT76_TM_ATTR_TX_POWER_CONTROL] = { .type = NLA_U8 },
-	[MT76_TM_ATTR_TX_POWER] = { .type = NLA_NESTED },
-	[MT76_TM_ATTR_TX_DUTY_CYCLE] = { .type = NLA_U8 },
-	[MT76_TM_ATTR_TX_IPG] = { .type = NLA_U32 },
-	[MT76_TM_ATTR_TX_TIME] = { .type = NLA_U32 },
-	[MT76_TM_ATTR_FREQ_OFFSET] = { .type = NLA_U32 },
-};
+अटल स्थिर काष्ठा nla_policy mt76_पंचांग_policy[NUM_MT76_TM_ATTRS] = अणु
+	[MT76_TM_ATTR_RESET] = अणु .type = NLA_FLAG पूर्ण,
+	[MT76_TM_ATTR_STATE] = अणु .type = NLA_U8 पूर्ण,
+	[MT76_TM_ATTR_TX_COUNT] = अणु .type = NLA_U32 पूर्ण,
+	[MT76_TM_ATTR_TX_RATE_MODE] = अणु .type = NLA_U8 पूर्ण,
+	[MT76_TM_ATTR_TX_RATE_NSS] = अणु .type = NLA_U8 पूर्ण,
+	[MT76_TM_ATTR_TX_RATE_IDX] = अणु .type = NLA_U8 पूर्ण,
+	[MT76_TM_ATTR_TX_RATE_SGI] = अणु .type = NLA_U8 पूर्ण,
+	[MT76_TM_ATTR_TX_RATE_LDPC] = अणु .type = NLA_U8 पूर्ण,
+	[MT76_TM_ATTR_TX_RATE_STBC] = अणु .type = NLA_U8 पूर्ण,
+	[MT76_TM_ATTR_TX_LTF] = अणु .type = NLA_U8 पूर्ण,
+	[MT76_TM_ATTR_TX_ANTENNA] = अणु .type = NLA_U8 पूर्ण,
+	[MT76_TM_ATTR_TX_SPE_IDX] = अणु .type = NLA_U8 पूर्ण,
+	[MT76_TM_ATTR_TX_POWER_CONTROL] = अणु .type = NLA_U8 पूर्ण,
+	[MT76_TM_ATTR_TX_POWER] = अणु .type = NLA_NESTED पूर्ण,
+	[MT76_TM_ATTR_TX_DUTY_CYCLE] = अणु .type = NLA_U8 पूर्ण,
+	[MT76_TM_ATTR_TX_IPG] = अणु .type = NLA_U32 पूर्ण,
+	[MT76_TM_ATTR_TX_TIME] = अणु .type = NLA_U32 पूर्ण,
+	[MT76_TM_ATTR_FREQ_OFFSET] = अणु .type = NLA_U32 पूर्ण,
+पूर्ण;
 
-void mt76_testmode_tx_pending(struct mt76_phy *phy)
-{
-	struct mt76_testmode_data *td = &phy->test;
-	struct mt76_dev *dev = phy->dev;
-	struct mt76_wcid *wcid = &dev->global_wcid;
-	struct sk_buff *skb = td->tx_skb;
-	struct mt76_queue *q;
+व्योम mt76_tesपंचांगode_tx_pending(काष्ठा mt76_phy *phy)
+अणु
+	काष्ठा mt76_tesपंचांगode_data *td = &phy->test;
+	काष्ठा mt76_dev *dev = phy->dev;
+	काष्ठा mt76_wcid *wcid = &dev->global_wcid;
+	काष्ठा sk_buff *skb = td->tx_skb;
+	काष्ठा mt76_queue *q;
 	u16 tx_queued_limit;
-	int qid;
+	पूर्णांक qid;
 
-	if (!skb || !td->tx_pending)
-		return;
+	अगर (!skb || !td->tx_pending)
+		वापस;
 
 	qid = skb_get_queue_mapping(skb);
 	q = phy->q_tx[qid];
@@ -43,99 +44,99 @@ void mt76_testmode_tx_pending(struct mt76_phy *phy)
 
 	spin_lock_bh(&q->lock);
 
-	while (td->tx_pending > 0 &&
-	       td->tx_queued - td->tx_done < tx_queued_limit &&
-	       q->queued < q->ndesc / 2) {
-		int ret;
+	जबतक (td->tx_pending > 0 &&
+	       td->tx_queued - td->tx_करोne < tx_queued_limit &&
+	       q->queued < q->ndesc / 2) अणु
+		पूर्णांक ret;
 
 		ret = dev->queue_ops->tx_queue_skb(dev, q, skb_get(skb), wcid,
-						   NULL);
-		if (ret < 0)
-			break;
+						   शून्य);
+		अगर (ret < 0)
+			अवरोध;
 
 		td->tx_pending--;
 		td->tx_queued++;
-	}
+	पूर्ण
 
 	dev->queue_ops->kick(dev, q);
 
 	spin_unlock_bh(&q->lock);
-}
+पूर्ण
 
-static u32
-mt76_testmode_max_mpdu_len(struct mt76_phy *phy, u8 tx_rate_mode)
-{
-	switch (tx_rate_mode) {
-	case MT76_TM_TX_MODE_HT:
-		return IEEE80211_MAX_MPDU_LEN_HT_7935;
-	case MT76_TM_TX_MODE_VHT:
-	case MT76_TM_TX_MODE_HE_SU:
-	case MT76_TM_TX_MODE_HE_EXT_SU:
-	case MT76_TM_TX_MODE_HE_TB:
-	case MT76_TM_TX_MODE_HE_MU:
-		if (phy->sband_5g.sband.vht_cap.cap &
+अटल u32
+mt76_tesपंचांगode_max_mpdu_len(काष्ठा mt76_phy *phy, u8 tx_rate_mode)
+अणु
+	चयन (tx_rate_mode) अणु
+	हाल MT76_TM_TX_MODE_HT:
+		वापस IEEE80211_MAX_MPDU_LEN_HT_7935;
+	हाल MT76_TM_TX_MODE_VHT:
+	हाल MT76_TM_TX_MODE_HE_SU:
+	हाल MT76_TM_TX_MODE_HE_EXT_SU:
+	हाल MT76_TM_TX_MODE_HE_TB:
+	हाल MT76_TM_TX_MODE_HE_MU:
+		अगर (phy->sband_5g.sband.vht_cap.cap &
 		    IEEE80211_VHT_CAP_MAX_MPDU_LENGTH_7991)
-			return IEEE80211_MAX_MPDU_LEN_VHT_7991;
-		return IEEE80211_MAX_MPDU_LEN_VHT_11454;
-	case MT76_TM_TX_MODE_CCK:
-	case MT76_TM_TX_MODE_OFDM:
-	default:
-		return IEEE80211_MAX_FRAME_LEN;
-	}
-}
+			वापस IEEE80211_MAX_MPDU_LEN_VHT_7991;
+		वापस IEEE80211_MAX_MPDU_LEN_VHT_11454;
+	हाल MT76_TM_TX_MODE_CCK:
+	हाल MT76_TM_TX_MODE_OFDM:
+	शेष:
+		वापस IEEE80211_MAX_FRAME_LEN;
+	पूर्ण
+पूर्ण
 
-static void
-mt76_testmode_free_skb(struct mt76_phy *phy)
-{
-	struct mt76_testmode_data *td = &phy->test;
-	struct sk_buff *skb = td->tx_skb;
+अटल व्योम
+mt76_tesपंचांगode_मुक्त_skb(काष्ठा mt76_phy *phy)
+अणु
+	काष्ठा mt76_tesपंचांगode_data *td = &phy->test;
+	काष्ठा sk_buff *skb = td->tx_skb;
 
-	if (!skb)
-		return;
+	अगर (!skb)
+		वापस;
 
-	if (skb_has_frag_list(skb)) {
-		kfree_skb_list(skb_shinfo(skb)->frag_list);
-		skb_shinfo(skb)->frag_list = NULL;
-	}
+	अगर (skb_has_frag_list(skb)) अणु
+		kमुक्त_skb_list(skb_shinfo(skb)->frag_list);
+		skb_shinfo(skb)->frag_list = शून्य;
+	पूर्ण
 
-	dev_kfree_skb(skb);
-	td->tx_skb = NULL;
-}
+	dev_kमुक्त_skb(skb);
+	td->tx_skb = शून्य;
+पूर्ण
 
-int mt76_testmode_alloc_skb(struct mt76_phy *phy, u32 len)
-{
-#define MT_TXP_MAX_LEN	4095
+पूर्णांक mt76_tesपंचांगode_alloc_skb(काष्ठा mt76_phy *phy, u32 len)
+अणु
+#घोषणा MT_TXP_MAX_LEN	4095
 	u16 fc = IEEE80211_FTYPE_DATA | IEEE80211_STYPE_DATA |
 		 IEEE80211_FCTL_FROMDS;
-	struct mt76_testmode_data *td = &phy->test;
+	काष्ठा mt76_tesपंचांगode_data *td = &phy->test;
 	bool ext_phy = phy != &phy->dev->phy;
-	struct sk_buff **frag_tail, *head;
-	struct ieee80211_tx_info *info;
-	struct ieee80211_hdr *hdr;
+	काष्ठा sk_buff **frag_tail, *head;
+	काष्ठा ieee80211_tx_info *info;
+	काष्ठा ieee80211_hdr *hdr;
 	u32 max_len, head_len;
-	int nfrags, i;
+	पूर्णांक nfrags, i;
 
-	max_len = mt76_testmode_max_mpdu_len(phy, td->tx_rate_mode);
-	if (len > max_len)
+	max_len = mt76_tesपंचांगode_max_mpdu_len(phy, td->tx_rate_mode);
+	अगर (len > max_len)
 		len = max_len;
-	else if (len < sizeof(struct ieee80211_hdr))
-		len = sizeof(struct ieee80211_hdr);
+	अन्यथा अगर (len < माप(काष्ठा ieee80211_hdr))
+		len = माप(काष्ठा ieee80211_hdr);
 
 	nfrags = len / MT_TXP_MAX_LEN;
 	head_len = nfrags ? MT_TXP_MAX_LEN : len;
 
-	if (len > IEEE80211_MAX_FRAME_LEN)
+	अगर (len > IEEE80211_MAX_FRAME_LEN)
 		fc |= IEEE80211_STYPE_QOS_DATA;
 
 	head = alloc_skb(head_len, GFP_KERNEL);
-	if (!head)
-		return -ENOMEM;
+	अगर (!head)
+		वापस -ENOMEM;
 
 	hdr = __skb_put_zero(head, head_len);
 	hdr->frame_control = cpu_to_le16(fc);
-	memcpy(hdr->addr1, phy->macaddr, sizeof(phy->macaddr));
-	memcpy(hdr->addr2, phy->macaddr, sizeof(phy->macaddr));
-	memcpy(hdr->addr3, phy->macaddr, sizeof(phy->macaddr));
+	स_नकल(hdr->addr1, phy->macaddr, माप(phy->macaddr));
+	स_नकल(hdr->addr2, phy->macaddr, माप(phy->macaddr));
+	स_नकल(hdr->addr3, phy->macaddr, माप(phy->macaddr));
 	skb_set_queue_mapping(head, IEEE80211_AC_BE);
 
 	info = IEEE80211_SKB_CB(head);
@@ -143,60 +144,60 @@ int mt76_testmode_alloc_skb(struct mt76_phy *phy, u32 len)
 		      IEEE80211_TX_CTL_NO_ACK |
 		      IEEE80211_TX_CTL_NO_PS_BUFFER;
 
-	if (ext_phy)
+	अगर (ext_phy)
 		info->hw_queue |= MT_TX_HW_QUEUE_EXT_PHY;
 
 	frag_tail = &skb_shinfo(head)->frag_list;
 
-	for (i = 0; i < nfrags; i++) {
-		struct sk_buff *frag;
+	क्रम (i = 0; i < nfrags; i++) अणु
+		काष्ठा sk_buff *frag;
 		u16 frag_len;
 
-		if (i == nfrags - 1)
+		अगर (i == nfrags - 1)
 			frag_len = len % MT_TXP_MAX_LEN;
-		else
+		अन्यथा
 			frag_len = MT_TXP_MAX_LEN;
 
 		frag = alloc_skb(frag_len, GFP_KERNEL);
-		if (!frag)
-			return -ENOMEM;
+		अगर (!frag)
+			वापस -ENOMEM;
 
 		__skb_put_zero(frag, frag_len);
 		head->len += frag->len;
 		head->data_len += frag->len;
 
-		if (*frag_tail) {
+		अगर (*frag_tail) अणु
 			(*frag_tail)->next = frag;
 			frag_tail = &frag;
-		} else {
+		पूर्ण अन्यथा अणु
 			*frag_tail = frag;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	mt76_testmode_free_skb(phy);
+	mt76_tesपंचांगode_मुक्त_skb(phy);
 	td->tx_skb = head;
 
-	return 0;
-}
-EXPORT_SYMBOL(mt76_testmode_alloc_skb);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL(mt76_tesपंचांगode_alloc_skb);
 
-static int
-mt76_testmode_tx_init(struct mt76_phy *phy)
-{
-	struct mt76_testmode_data *td = &phy->test;
-	struct ieee80211_tx_info *info;
-	struct ieee80211_tx_rate *rate;
+अटल पूर्णांक
+mt76_tesपंचांगode_tx_init(काष्ठा mt76_phy *phy)
+अणु
+	काष्ठा mt76_tesपंचांगode_data *td = &phy->test;
+	काष्ठा ieee80211_tx_info *info;
+	काष्ठा ieee80211_tx_rate *rate;
 	u8 max_nss = hweight8(phy->antenna_mask);
-	int ret;
+	पूर्णांक ret;
 
-	ret = mt76_testmode_alloc_skb(phy, td->tx_mpdu_len);
-	if (ret)
-		return ret;
+	ret = mt76_tesपंचांगode_alloc_skb(phy, td->tx_mpdu_len);
+	अगर (ret)
+		वापस ret;
 
-	if (td->tx_rate_mode > MT76_TM_TX_MODE_VHT)
-		goto out;
+	अगर (td->tx_rate_mode > MT76_TM_TX_MODE_VHT)
+		जाओ out;
 
-	if (td->tx_antenna_mask)
+	अगर (td->tx_antenna_mask)
 		max_nss = min_t(u8, max_nss, hweight8(td->tx_antenna_mask));
 
 	info = IEEE80211_SKB_CB(td->tx_skb);
@@ -204,91 +205,91 @@ mt76_testmode_tx_init(struct mt76_phy *phy)
 	rate->count = 1;
 	rate->idx = td->tx_rate_idx;
 
-	switch (td->tx_rate_mode) {
-	case MT76_TM_TX_MODE_CCK:
-		if (phy->chandef.chan->band != NL80211_BAND_2GHZ)
-			return -EINVAL;
+	चयन (td->tx_rate_mode) अणु
+	हाल MT76_TM_TX_MODE_CCK:
+		अगर (phy->chandef.chan->band != NL80211_BAND_2GHZ)
+			वापस -EINVAL;
 
-		if (rate->idx > 4)
-			return -EINVAL;
-		break;
-	case MT76_TM_TX_MODE_OFDM:
-		if (phy->chandef.chan->band != NL80211_BAND_2GHZ)
-			break;
+		अगर (rate->idx > 4)
+			वापस -EINVAL;
+		अवरोध;
+	हाल MT76_TM_TX_MODE_OFDM:
+		अगर (phy->chandef.chan->band != NL80211_BAND_2GHZ)
+			अवरोध;
 
-		if (rate->idx > 8)
-			return -EINVAL;
+		अगर (rate->idx > 8)
+			वापस -EINVAL;
 
 		rate->idx += 4;
-		break;
-	case MT76_TM_TX_MODE_HT:
-		if (rate->idx > 8 * max_nss &&
+		अवरोध;
+	हाल MT76_TM_TX_MODE_HT:
+		अगर (rate->idx > 8 * max_nss &&
 			!(rate->idx == 32 &&
 			  phy->chandef.width >= NL80211_CHAN_WIDTH_40))
-			return -EINVAL;
+			वापस -EINVAL;
 
 		rate->flags |= IEEE80211_TX_RC_MCS;
-		break;
-	case MT76_TM_TX_MODE_VHT:
-		if (rate->idx > 9)
-			return -EINVAL;
+		अवरोध;
+	हाल MT76_TM_TX_MODE_VHT:
+		अगर (rate->idx > 9)
+			वापस -EINVAL;
 
-		if (td->tx_rate_nss > max_nss)
-			return -EINVAL;
+		अगर (td->tx_rate_nss > max_nss)
+			वापस -EINVAL;
 
 		ieee80211_rate_set_vht(rate, td->tx_rate_idx, td->tx_rate_nss);
 		rate->flags |= IEEE80211_TX_RC_VHT_MCS;
-		break;
-	default:
-		break;
-	}
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	if (td->tx_rate_sgi)
+	अगर (td->tx_rate_sgi)
 		rate->flags |= IEEE80211_TX_RC_SHORT_GI;
 
-	if (td->tx_rate_ldpc)
+	अगर (td->tx_rate_ldpc)
 		info->flags |= IEEE80211_TX_CTL_LDPC;
 
-	if (td->tx_rate_stbc)
+	अगर (td->tx_rate_stbc)
 		info->flags |= IEEE80211_TX_CTL_STBC;
 
-	if (td->tx_rate_mode >= MT76_TM_TX_MODE_HT) {
-		switch (phy->chandef.width) {
-		case NL80211_CHAN_WIDTH_40:
+	अगर (td->tx_rate_mode >= MT76_TM_TX_MODE_HT) अणु
+		चयन (phy->chandef.width) अणु
+		हाल NL80211_CHAN_WIDTH_40:
 			rate->flags |= IEEE80211_TX_RC_40_MHZ_WIDTH;
-			break;
-		case NL80211_CHAN_WIDTH_80:
+			अवरोध;
+		हाल NL80211_CHAN_WIDTH_80:
 			rate->flags |= IEEE80211_TX_RC_80_MHZ_WIDTH;
-			break;
-		case NL80211_CHAN_WIDTH_80P80:
-		case NL80211_CHAN_WIDTH_160:
+			अवरोध;
+		हाल NL80211_CHAN_WIDTH_80P80:
+		हाल NL80211_CHAN_WIDTH_160:
 			rate->flags |= IEEE80211_TX_RC_160_MHZ_WIDTH;
-			break;
-		default:
-			break;
-		}
-	}
+			अवरोध;
+		शेष:
+			अवरोध;
+		पूर्ण
+	पूर्ण
 out:
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void
-mt76_testmode_tx_start(struct mt76_phy *phy)
-{
-	struct mt76_testmode_data *td = &phy->test;
-	struct mt76_dev *dev = phy->dev;
+अटल व्योम
+mt76_tesपंचांगode_tx_start(काष्ठा mt76_phy *phy)
+अणु
+	काष्ठा mt76_tesपंचांगode_data *td = &phy->test;
+	काष्ठा mt76_dev *dev = phy->dev;
 
 	td->tx_queued = 0;
-	td->tx_done = 0;
+	td->tx_करोne = 0;
 	td->tx_pending = td->tx_count;
 	mt76_worker_schedule(&dev->tx_worker);
-}
+पूर्ण
 
-static void
-mt76_testmode_tx_stop(struct mt76_phy *phy)
-{
-	struct mt76_testmode_data *td = &phy->test;
-	struct mt76_dev *dev = phy->dev;
+अटल व्योम
+mt76_tesपंचांगode_tx_stop(काष्ठा mt76_phy *phy)
+अणु
+	काष्ठा mt76_tesपंचांगode_data *td = &phy->test;
+	काष्ठा mt76_dev *dev = phy->dev;
 
 	mt76_worker_disable(&dev->tx_worker);
 
@@ -296,311 +297,311 @@ mt76_testmode_tx_stop(struct mt76_phy *phy)
 
 	mt76_worker_enable(&dev->tx_worker);
 
-	wait_event_timeout(dev->tx_wait, td->tx_done == td->tx_queued,
+	रुको_event_समयout(dev->tx_रुको, td->tx_करोne == td->tx_queued,
 			   MT76_TM_TIMEOUT * HZ);
 
-	mt76_testmode_free_skb(phy);
-}
+	mt76_tesपंचांगode_मुक्त_skb(phy);
+पूर्ण
 
-static inline void
-mt76_testmode_param_set(struct mt76_testmode_data *td, u16 idx)
-{
+अटल अंतरभूत व्योम
+mt76_tesपंचांगode_param_set(काष्ठा mt76_tesपंचांगode_data *td, u16 idx)
+अणु
 	td->param_set[idx / 32] |= BIT(idx % 32);
-}
+पूर्ण
 
-static inline bool
-mt76_testmode_param_present(struct mt76_testmode_data *td, u16 idx)
-{
-	return td->param_set[idx / 32] & BIT(idx % 32);
-}
+अटल अंतरभूत bool
+mt76_tesपंचांगode_param_present(काष्ठा mt76_tesपंचांगode_data *td, u16 idx)
+अणु
+	वापस td->param_set[idx / 32] & BIT(idx % 32);
+पूर्ण
 
-static void
-mt76_testmode_init_defaults(struct mt76_phy *phy)
-{
-	struct mt76_testmode_data *td = &phy->test;
+अटल व्योम
+mt76_tesपंचांगode_init_शेषs(काष्ठा mt76_phy *phy)
+अणु
+	काष्ठा mt76_tesपंचांगode_data *td = &phy->test;
 
-	if (td->tx_mpdu_len > 0)
-		return;
+	अगर (td->tx_mpdu_len > 0)
+		वापस;
 
 	td->tx_mpdu_len = 1024;
 	td->tx_count = 1;
 	td->tx_rate_mode = MT76_TM_TX_MODE_OFDM;
 	td->tx_rate_nss = 1;
-}
+पूर्ण
 
-static int
-__mt76_testmode_set_state(struct mt76_phy *phy, enum mt76_testmode_state state)
-{
-	enum mt76_testmode_state prev_state = phy->test.state;
-	struct mt76_dev *dev = phy->dev;
-	int err;
+अटल पूर्णांक
+__mt76_tesपंचांगode_set_state(काष्ठा mt76_phy *phy, क्रमागत mt76_tesपंचांगode_state state)
+अणु
+	क्रमागत mt76_tesपंचांगode_state prev_state = phy->test.state;
+	काष्ठा mt76_dev *dev = phy->dev;
+	पूर्णांक err;
 
-	if (prev_state == MT76_TM_STATE_TX_FRAMES)
-		mt76_testmode_tx_stop(phy);
+	अगर (prev_state == MT76_TM_STATE_TX_FRAMES)
+		mt76_tesपंचांगode_tx_stop(phy);
 
-	if (state == MT76_TM_STATE_TX_FRAMES) {
-		err = mt76_testmode_tx_init(phy);
-		if (err)
-			return err;
-	}
+	अगर (state == MT76_TM_STATE_TX_FRAMES) अणु
+		err = mt76_tesपंचांगode_tx_init(phy);
+		अगर (err)
+			वापस err;
+	पूर्ण
 
 	err = dev->test_ops->set_state(phy, state);
-	if (err) {
-		if (state == MT76_TM_STATE_TX_FRAMES)
-			mt76_testmode_tx_stop(phy);
+	अगर (err) अणु
+		अगर (state == MT76_TM_STATE_TX_FRAMES)
+			mt76_tesपंचांगode_tx_stop(phy);
 
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	if (state == MT76_TM_STATE_TX_FRAMES)
-		mt76_testmode_tx_start(phy);
-	else if (state == MT76_TM_STATE_RX_FRAMES) {
-		memset(&phy->test.rx_stats, 0, sizeof(phy->test.rx_stats));
-	}
+	अगर (state == MT76_TM_STATE_TX_FRAMES)
+		mt76_tesपंचांगode_tx_start(phy);
+	अन्यथा अगर (state == MT76_TM_STATE_RX_FRAMES) अणु
+		स_रखो(&phy->test.rx_stats, 0, माप(phy->test.rx_stats));
+	पूर्ण
 
 	phy->test.state = state;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int mt76_testmode_set_state(struct mt76_phy *phy, enum mt76_testmode_state state)
-{
-	struct mt76_testmode_data *td = &phy->test;
-	struct ieee80211_hw *hw = phy->hw;
+पूर्णांक mt76_tesपंचांगode_set_state(काष्ठा mt76_phy *phy, क्रमागत mt76_tesपंचांगode_state state)
+अणु
+	काष्ठा mt76_tesपंचांगode_data *td = &phy->test;
+	काष्ठा ieee80211_hw *hw = phy->hw;
 
-	if (state == td->state && state == MT76_TM_STATE_OFF)
-		return 0;
+	अगर (state == td->state && state == MT76_TM_STATE_OFF)
+		वापस 0;
 
-	if (state > MT76_TM_STATE_OFF &&
+	अगर (state > MT76_TM_STATE_OFF &&
 	    (!test_bit(MT76_STATE_RUNNING, &phy->state) ||
 	     !(hw->conf.flags & IEEE80211_CONF_MONITOR)))
-		return -ENOTCONN;
+		वापस -ENOTCONN;
 
-	if (state != MT76_TM_STATE_IDLE &&
-	    td->state != MT76_TM_STATE_IDLE) {
-		int ret;
+	अगर (state != MT76_TM_STATE_IDLE &&
+	    td->state != MT76_TM_STATE_IDLE) अणु
+		पूर्णांक ret;
 
-		ret = __mt76_testmode_set_state(phy, MT76_TM_STATE_IDLE);
-		if (ret)
-			return ret;
-	}
+		ret = __mt76_tesपंचांगode_set_state(phy, MT76_TM_STATE_IDLE);
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	return __mt76_testmode_set_state(phy, state);
+	वापस __mt76_tesपंचांगode_set_state(phy, state);
 
-}
-EXPORT_SYMBOL(mt76_testmode_set_state);
+पूर्ण
+EXPORT_SYMBOL(mt76_tesपंचांगode_set_state);
 
-static int
-mt76_tm_get_u8(struct nlattr *attr, u8 *dest, u8 min, u8 max)
-{
+अटल पूर्णांक
+mt76_पंचांग_get_u8(काष्ठा nlattr *attr, u8 *dest, u8 min, u8 max)
+अणु
 	u8 val;
 
-	if (!attr)
-		return 0;
+	अगर (!attr)
+		वापस 0;
 
 	val = nla_get_u8(attr);
-	if (val < min || val > max)
-		return -EINVAL;
+	अगर (val < min || val > max)
+		वापस -EINVAL;
 
 	*dest = val;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int mt76_testmode_cmd(struct ieee80211_hw *hw, struct ieee80211_vif *vif,
-		      void *data, int len)
-{
-	struct mt76_phy *phy = hw->priv;
-	struct mt76_dev *dev = phy->dev;
-	struct mt76_testmode_data *td = &phy->test;
-	struct nlattr *tb[NUM_MT76_TM_ATTRS];
+पूर्णांक mt76_tesपंचांगode_cmd(काष्ठा ieee80211_hw *hw, काष्ठा ieee80211_vअगर *vअगर,
+		      व्योम *data, पूर्णांक len)
+अणु
+	काष्ठा mt76_phy *phy = hw->priv;
+	काष्ठा mt76_dev *dev = phy->dev;
+	काष्ठा mt76_tesपंचांगode_data *td = &phy->test;
+	काष्ठा nlattr *tb[NUM_MT76_TM_ATTRS];
 	bool ext_phy = phy != &dev->phy;
 	u32 state;
-	int err;
-	int i;
+	पूर्णांक err;
+	पूर्णांक i;
 
-	if (!dev->test_ops)
-		return -EOPNOTSUPP;
+	अगर (!dev->test_ops)
+		वापस -EOPNOTSUPP;
 
 	err = nla_parse_deprecated(tb, MT76_TM_ATTR_MAX, data, len,
-				   mt76_tm_policy, NULL);
-	if (err)
-		return err;
+				   mt76_पंचांग_policy, शून्य);
+	अगर (err)
+		वापस err;
 
 	err = -EINVAL;
 
 	mutex_lock(&dev->mutex);
 
-	if (tb[MT76_TM_ATTR_RESET]) {
-		mt76_testmode_set_state(phy, MT76_TM_STATE_OFF);
-		memset(td, 0, sizeof(*td));
-	}
+	अगर (tb[MT76_TM_ATTR_RESET]) अणु
+		mt76_tesपंचांगode_set_state(phy, MT76_TM_STATE_OFF);
+		स_रखो(td, 0, माप(*td));
+	पूर्ण
 
-	mt76_testmode_init_defaults(phy);
+	mt76_tesपंचांगode_init_शेषs(phy);
 
-	if (tb[MT76_TM_ATTR_TX_COUNT])
+	अगर (tb[MT76_TM_ATTR_TX_COUNT])
 		td->tx_count = nla_get_u32(tb[MT76_TM_ATTR_TX_COUNT]);
 
-	if (tb[MT76_TM_ATTR_TX_RATE_IDX])
+	अगर (tb[MT76_TM_ATTR_TX_RATE_IDX])
 		td->tx_rate_idx = nla_get_u8(tb[MT76_TM_ATTR_TX_RATE_IDX]);
 
-	if (mt76_tm_get_u8(tb[MT76_TM_ATTR_TX_RATE_MODE], &td->tx_rate_mode,
+	अगर (mt76_पंचांग_get_u8(tb[MT76_TM_ATTR_TX_RATE_MODE], &td->tx_rate_mode,
 			   0, MT76_TM_TX_MODE_MAX) ||
-	    mt76_tm_get_u8(tb[MT76_TM_ATTR_TX_RATE_NSS], &td->tx_rate_nss,
+	    mt76_पंचांग_get_u8(tb[MT76_TM_ATTR_TX_RATE_NSS], &td->tx_rate_nss,
 			   1, hweight8(phy->antenna_mask)) ||
-	    mt76_tm_get_u8(tb[MT76_TM_ATTR_TX_RATE_SGI], &td->tx_rate_sgi, 0, 2) ||
-	    mt76_tm_get_u8(tb[MT76_TM_ATTR_TX_RATE_LDPC], &td->tx_rate_ldpc, 0, 1) ||
-	    mt76_tm_get_u8(tb[MT76_TM_ATTR_TX_RATE_STBC], &td->tx_rate_stbc, 0, 1) ||
-	    mt76_tm_get_u8(tb[MT76_TM_ATTR_TX_LTF], &td->tx_ltf, 0, 2) ||
-	    mt76_tm_get_u8(tb[MT76_TM_ATTR_TX_ANTENNA], &td->tx_antenna_mask,
+	    mt76_पंचांग_get_u8(tb[MT76_TM_ATTR_TX_RATE_SGI], &td->tx_rate_sgi, 0, 2) ||
+	    mt76_पंचांग_get_u8(tb[MT76_TM_ATTR_TX_RATE_LDPC], &td->tx_rate_ldpc, 0, 1) ||
+	    mt76_पंचांग_get_u8(tb[MT76_TM_ATTR_TX_RATE_STBC], &td->tx_rate_stbc, 0, 1) ||
+	    mt76_पंचांग_get_u8(tb[MT76_TM_ATTR_TX_LTF], &td->tx_ltf, 0, 2) ||
+	    mt76_पंचांग_get_u8(tb[MT76_TM_ATTR_TX_ANTENNA], &td->tx_antenna_mask,
 			   1 << (ext_phy * 2), phy->antenna_mask << (ext_phy * 2)) ||
-	    mt76_tm_get_u8(tb[MT76_TM_ATTR_TX_SPE_IDX], &td->tx_spe_idx, 0, 27) ||
-	    mt76_tm_get_u8(tb[MT76_TM_ATTR_TX_DUTY_CYCLE],
+	    mt76_पंचांग_get_u8(tb[MT76_TM_ATTR_TX_SPE_IDX], &td->tx_spe_idx, 0, 27) ||
+	    mt76_पंचांग_get_u8(tb[MT76_TM_ATTR_TX_DUTY_CYCLE],
 			   &td->tx_duty_cycle, 0, 99) ||
-	    mt76_tm_get_u8(tb[MT76_TM_ATTR_TX_POWER_CONTROL],
-			   &td->tx_power_control, 0, 1))
-		goto out;
+	    mt76_पंचांग_get_u8(tb[MT76_TM_ATTR_TX_POWER_CONTROL],
+			   &td->tx_घातer_control, 0, 1))
+		जाओ out;
 
-	if (tb[MT76_TM_ATTR_TX_LENGTH]) {
+	अगर (tb[MT76_TM_ATTR_TX_LENGTH]) अणु
 		u32 val = nla_get_u32(tb[MT76_TM_ATTR_TX_LENGTH]);
 
-		if (val > mt76_testmode_max_mpdu_len(phy, td->tx_rate_mode) ||
-		    val < sizeof(struct ieee80211_hdr))
-			goto out;
+		अगर (val > mt76_tesपंचांगode_max_mpdu_len(phy, td->tx_rate_mode) ||
+		    val < माप(काष्ठा ieee80211_hdr))
+			जाओ out;
 
 		td->tx_mpdu_len = val;
-	}
+	पूर्ण
 
-	if (tb[MT76_TM_ATTR_TX_IPG])
+	अगर (tb[MT76_TM_ATTR_TX_IPG])
 		td->tx_ipg = nla_get_u32(tb[MT76_TM_ATTR_TX_IPG]);
 
-	if (tb[MT76_TM_ATTR_TX_TIME])
-		td->tx_time = nla_get_u32(tb[MT76_TM_ATTR_TX_TIME]);
+	अगर (tb[MT76_TM_ATTR_TX_TIME])
+		td->tx_समय = nla_get_u32(tb[MT76_TM_ATTR_TX_TIME]);
 
-	if (tb[MT76_TM_ATTR_FREQ_OFFSET])
+	अगर (tb[MT76_TM_ATTR_FREQ_OFFSET])
 		td->freq_offset = nla_get_u32(tb[MT76_TM_ATTR_FREQ_OFFSET]);
 
-	if (tb[MT76_TM_ATTR_STATE]) {
+	अगर (tb[MT76_TM_ATTR_STATE]) अणु
 		state = nla_get_u32(tb[MT76_TM_ATTR_STATE]);
-		if (state > MT76_TM_STATE_MAX)
-			goto out;
-	} else {
+		अगर (state > MT76_TM_STATE_MAX)
+			जाओ out;
+	पूर्ण अन्यथा अणु
 		state = td->state;
-	}
+	पूर्ण
 
-	if (tb[MT76_TM_ATTR_TX_POWER]) {
-		struct nlattr *cur;
-		int idx = 0;
-		int rem;
+	अगर (tb[MT76_TM_ATTR_TX_POWER]) अणु
+		काष्ठा nlattr *cur;
+		पूर्णांक idx = 0;
+		पूर्णांक rem;
 
-		nla_for_each_nested(cur, tb[MT76_TM_ATTR_TX_POWER], rem) {
-			if (nla_len(cur) != 1 ||
-			    idx >= ARRAY_SIZE(td->tx_power))
-				goto out;
+		nla_क्रम_each_nested(cur, tb[MT76_TM_ATTR_TX_POWER], rem) अणु
+			अगर (nla_len(cur) != 1 ||
+			    idx >= ARRAY_SIZE(td->tx_घातer))
+				जाओ out;
 
-			td->tx_power[idx++] = nla_get_u8(cur);
-		}
-	}
+			td->tx_घातer[idx++] = nla_get_u8(cur);
+		पूर्ण
+	पूर्ण
 
-	if (dev->test_ops->set_params) {
+	अगर (dev->test_ops->set_params) अणु
 		err = dev->test_ops->set_params(phy, tb, state);
-		if (err)
-			goto out;
-	}
+		अगर (err)
+			जाओ out;
+	पूर्ण
 
-	for (i = MT76_TM_ATTR_STATE; i < ARRAY_SIZE(tb); i++)
-		if (tb[i])
-			mt76_testmode_param_set(td, i);
+	क्रम (i = MT76_TM_ATTR_STATE; i < ARRAY_SIZE(tb); i++)
+		अगर (tb[i])
+			mt76_tesपंचांगode_param_set(td, i);
 
 	err = 0;
-	if (tb[MT76_TM_ATTR_STATE])
-		err = mt76_testmode_set_state(phy, state);
+	अगर (tb[MT76_TM_ATTR_STATE])
+		err = mt76_tesपंचांगode_set_state(phy, state);
 
 out:
 	mutex_unlock(&dev->mutex);
 
-	return err;
-}
-EXPORT_SYMBOL(mt76_testmode_cmd);
+	वापस err;
+पूर्ण
+EXPORT_SYMBOL(mt76_tesपंचांगode_cmd);
 
-static int
-mt76_testmode_dump_stats(struct mt76_phy *phy, struct sk_buff *msg)
-{
-	struct mt76_testmode_data *td = &phy->test;
-	struct mt76_dev *dev = phy->dev;
+अटल पूर्णांक
+mt76_tesपंचांगode_dump_stats(काष्ठा mt76_phy *phy, काष्ठा sk_buff *msg)
+अणु
+	काष्ठा mt76_tesपंचांगode_data *td = &phy->test;
+	काष्ठा mt76_dev *dev = phy->dev;
 	u64 rx_packets = 0;
 	u64 rx_fcs_error = 0;
-	int i;
+	पूर्णांक i;
 
-	for (i = 0; i < ARRAY_SIZE(td->rx_stats.packets); i++) {
+	क्रम (i = 0; i < ARRAY_SIZE(td->rx_stats.packets); i++) अणु
 		rx_packets += td->rx_stats.packets[i];
 		rx_fcs_error += td->rx_stats.fcs_error[i];
-	}
+	पूर्ण
 
-	if (nla_put_u32(msg, MT76_TM_STATS_ATTR_TX_PENDING, td->tx_pending) ||
+	अगर (nla_put_u32(msg, MT76_TM_STATS_ATTR_TX_PENDING, td->tx_pending) ||
 	    nla_put_u32(msg, MT76_TM_STATS_ATTR_TX_QUEUED, td->tx_queued) ||
-	    nla_put_u32(msg, MT76_TM_STATS_ATTR_TX_DONE, td->tx_done) ||
+	    nla_put_u32(msg, MT76_TM_STATS_ATTR_TX_DONE, td->tx_करोne) ||
 	    nla_put_u64_64bit(msg, MT76_TM_STATS_ATTR_RX_PACKETS, rx_packets,
 			      MT76_TM_STATS_ATTR_PAD) ||
 	    nla_put_u64_64bit(msg, MT76_TM_STATS_ATTR_RX_FCS_ERROR, rx_fcs_error,
 			      MT76_TM_STATS_ATTR_PAD))
-		return -EMSGSIZE;
+		वापस -EMSGSIZE;
 
-	if (dev->test_ops->dump_stats)
-		return dev->test_ops->dump_stats(phy, msg);
+	अगर (dev->test_ops->dump_stats)
+		वापस dev->test_ops->dump_stats(phy, msg);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int mt76_testmode_dump(struct ieee80211_hw *hw, struct sk_buff *msg,
-		       struct netlink_callback *cb, void *data, int len)
-{
-	struct mt76_phy *phy = hw->priv;
-	struct mt76_dev *dev = phy->dev;
-	struct mt76_testmode_data *td = &phy->test;
-	struct nlattr *tb[NUM_MT76_TM_ATTRS] = {};
-	int err = 0;
-	void *a;
-	int i;
+पूर्णांक mt76_tesपंचांगode_dump(काष्ठा ieee80211_hw *hw, काष्ठा sk_buff *msg,
+		       काष्ठा netlink_callback *cb, व्योम *data, पूर्णांक len)
+अणु
+	काष्ठा mt76_phy *phy = hw->priv;
+	काष्ठा mt76_dev *dev = phy->dev;
+	काष्ठा mt76_tesपंचांगode_data *td = &phy->test;
+	काष्ठा nlattr *tb[NUM_MT76_TM_ATTRS] = अणुपूर्ण;
+	पूर्णांक err = 0;
+	व्योम *a;
+	पूर्णांक i;
 
-	if (!dev->test_ops)
-		return -EOPNOTSUPP;
+	अगर (!dev->test_ops)
+		वापस -EOPNOTSUPP;
 
-	if (cb->args[2]++ > 0)
-		return -ENOENT;
+	अगर (cb->args[2]++ > 0)
+		वापस -ENOENT;
 
-	if (data) {
+	अगर (data) अणु
 		err = nla_parse_deprecated(tb, MT76_TM_ATTR_MAX, data, len,
-					   mt76_tm_policy, NULL);
-		if (err)
-			return err;
-	}
+					   mt76_पंचांग_policy, शून्य);
+		अगर (err)
+			वापस err;
+	पूर्ण
 
 	mutex_lock(&dev->mutex);
 
-	if (tb[MT76_TM_ATTR_STATS]) {
+	अगर (tb[MT76_TM_ATTR_STATS]) अणु
 		err = -EINVAL;
 
 		a = nla_nest_start(msg, MT76_TM_ATTR_STATS);
-		if (a) {
-			err = mt76_testmode_dump_stats(phy, msg);
+		अगर (a) अणु
+			err = mt76_tesपंचांगode_dump_stats(phy, msg);
 			nla_nest_end(msg, a);
-		}
+		पूर्ण
 
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	mt76_testmode_init_defaults(phy);
+	mt76_tesपंचांगode_init_शेषs(phy);
 
 	err = -EMSGSIZE;
-	if (nla_put_u32(msg, MT76_TM_ATTR_STATE, td->state))
-		goto out;
+	अगर (nla_put_u32(msg, MT76_TM_ATTR_STATE, td->state))
+		जाओ out;
 
-	if (dev->test_mtd.name &&
+	अगर (dev->test_mtd.name &&
 	    (nla_put_string(msg, MT76_TM_ATTR_MTD_PART, dev->test_mtd.name) ||
 	     nla_put_u32(msg, MT76_TM_ATTR_MTD_OFFSET, dev->test_mtd.offset)))
-		goto out;
+		जाओ out;
 
-	if (nla_put_u32(msg, MT76_TM_ATTR_TX_COUNT, td->tx_count) ||
+	अगर (nla_put_u32(msg, MT76_TM_ATTR_TX_COUNT, td->tx_count) ||
 	    nla_put_u32(msg, MT76_TM_ATTR_TX_LENGTH, td->tx_mpdu_len) ||
 	    nla_put_u8(msg, MT76_TM_ATTR_TX_RATE_MODE, td->tx_rate_mode) ||
 	    nla_put_u8(msg, MT76_TM_ATTR_TX_RATE_NSS, td->tx_rate_nss) ||
@@ -608,41 +609,41 @@ int mt76_testmode_dump(struct ieee80211_hw *hw, struct sk_buff *msg,
 	    nla_put_u8(msg, MT76_TM_ATTR_TX_RATE_SGI, td->tx_rate_sgi) ||
 	    nla_put_u8(msg, MT76_TM_ATTR_TX_RATE_LDPC, td->tx_rate_ldpc) ||
 	    nla_put_u8(msg, MT76_TM_ATTR_TX_RATE_STBC, td->tx_rate_stbc) ||
-	    (mt76_testmode_param_present(td, MT76_TM_ATTR_TX_LTF) &&
+	    (mt76_tesपंचांगode_param_present(td, MT76_TM_ATTR_TX_LTF) &&
 	     nla_put_u8(msg, MT76_TM_ATTR_TX_LTF, td->tx_ltf)) ||
-	    (mt76_testmode_param_present(td, MT76_TM_ATTR_TX_ANTENNA) &&
+	    (mt76_tesपंचांगode_param_present(td, MT76_TM_ATTR_TX_ANTENNA) &&
 	     nla_put_u8(msg, MT76_TM_ATTR_TX_ANTENNA, td->tx_antenna_mask)) ||
-	    (mt76_testmode_param_present(td, MT76_TM_ATTR_TX_SPE_IDX) &&
+	    (mt76_tesपंचांगode_param_present(td, MT76_TM_ATTR_TX_SPE_IDX) &&
 	     nla_put_u8(msg, MT76_TM_ATTR_TX_SPE_IDX, td->tx_spe_idx)) ||
-	    (mt76_testmode_param_present(td, MT76_TM_ATTR_TX_DUTY_CYCLE) &&
+	    (mt76_tesपंचांगode_param_present(td, MT76_TM_ATTR_TX_DUTY_CYCLE) &&
 	     nla_put_u8(msg, MT76_TM_ATTR_TX_DUTY_CYCLE, td->tx_duty_cycle)) ||
-	    (mt76_testmode_param_present(td, MT76_TM_ATTR_TX_IPG) &&
+	    (mt76_tesपंचांगode_param_present(td, MT76_TM_ATTR_TX_IPG) &&
 	     nla_put_u32(msg, MT76_TM_ATTR_TX_IPG, td->tx_ipg)) ||
-	    (mt76_testmode_param_present(td, MT76_TM_ATTR_TX_TIME) &&
-	     nla_put_u32(msg, MT76_TM_ATTR_TX_TIME, td->tx_time)) ||
-	    (mt76_testmode_param_present(td, MT76_TM_ATTR_TX_POWER_CONTROL) &&
-	     nla_put_u8(msg, MT76_TM_ATTR_TX_POWER_CONTROL, td->tx_power_control)) ||
-	    (mt76_testmode_param_present(td, MT76_TM_ATTR_FREQ_OFFSET) &&
+	    (mt76_tesपंचांगode_param_present(td, MT76_TM_ATTR_TX_TIME) &&
+	     nla_put_u32(msg, MT76_TM_ATTR_TX_TIME, td->tx_समय)) ||
+	    (mt76_tesपंचांगode_param_present(td, MT76_TM_ATTR_TX_POWER_CONTROL) &&
+	     nla_put_u8(msg, MT76_TM_ATTR_TX_POWER_CONTROL, td->tx_घातer_control)) ||
+	    (mt76_tesपंचांगode_param_present(td, MT76_TM_ATTR_FREQ_OFFSET) &&
 	     nla_put_u8(msg, MT76_TM_ATTR_FREQ_OFFSET, td->freq_offset)))
-		goto out;
+		जाओ out;
 
-	if (mt76_testmode_param_present(td, MT76_TM_ATTR_TX_POWER)) {
+	अगर (mt76_tesपंचांगode_param_present(td, MT76_TM_ATTR_TX_POWER)) अणु
 		a = nla_nest_start(msg, MT76_TM_ATTR_TX_POWER);
-		if (!a)
-			goto out;
+		अगर (!a)
+			जाओ out;
 
-		for (i = 0; i < ARRAY_SIZE(td->tx_power); i++)
-			if (nla_put_u8(msg, i, td->tx_power[i]))
-				goto out;
+		क्रम (i = 0; i < ARRAY_SIZE(td->tx_घातer); i++)
+			अगर (nla_put_u8(msg, i, td->tx_घातer[i]))
+				जाओ out;
 
 		nla_nest_end(msg, a);
-	}
+	पूर्ण
 
 	err = 0;
 
 out:
 	mutex_unlock(&dev->mutex);
 
-	return err;
-}
-EXPORT_SYMBOL(mt76_testmode_dump);
+	वापस err;
+पूर्ण
+EXPORT_SYMBOL(mt76_tesपंचांगode_dump);

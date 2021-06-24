@@ -1,229 +1,230 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  *  linux/kernel/reboot.c
  *
  *  Copyright (C) 2013  Linus Torvalds
  */
 
-#define pr_fmt(fmt)	"reboot: " fmt
+#घोषणा pr_fmt(fmt)	"reboot: " fmt
 
-#include <linux/ctype.h>
-#include <linux/export.h>
-#include <linux/kexec.h>
-#include <linux/kmod.h>
-#include <linux/kmsg_dump.h>
-#include <linux/reboot.h>
-#include <linux/suspend.h>
-#include <linux/syscalls.h>
-#include <linux/syscore_ops.h>
-#include <linux/uaccess.h>
+#समावेश <linux/प्रकार.स>
+#समावेश <linux/export.h>
+#समावेश <linux/kexec.h>
+#समावेश <linux/kmod.h>
+#समावेश <linux/kmsg_dump.h>
+#समावेश <linux/reboot.h>
+#समावेश <linux/suspend.h>
+#समावेश <linux/syscalls.h>
+#समावेश <linux/syscore_ops.h>
+#समावेश <linux/uaccess.h>
 
 /*
- * this indicates whether you can reboot with ctrl-alt-del: the default is yes
+ * this indicates whether you can reboot with ctrl-alt-del: the शेष is yes
  */
 
-int C_A_D = 1;
-struct pid *cad_pid;
+पूर्णांक C_A_D = 1;
+काष्ठा pid *cad_pid;
 EXPORT_SYMBOL(cad_pid);
 
-#if defined(CONFIG_ARM)
-#define DEFAULT_REBOOT_MODE		= REBOOT_HARD
-#else
-#define DEFAULT_REBOOT_MODE
-#endif
-enum reboot_mode reboot_mode DEFAULT_REBOOT_MODE;
-enum reboot_mode panic_reboot_mode = REBOOT_UNDEFINED;
+#अगर defined(CONFIG_ARM)
+#घोषणा DEFAULT_REBOOT_MODE		= REBOOT_HARD
+#अन्यथा
+#घोषणा DEFAULT_REBOOT_MODE
+#पूर्ण_अगर
+क्रमागत reboot_mode reboot_mode DEFAULT_REBOOT_MODE;
+क्रमागत reboot_mode panic_reboot_mode = REBOOT_UNDEFINED;
 
 /*
- * This variable is used privately to keep track of whether or not
- * reboot_type is still set to its default value (i.e., reboot= hasn't
+ * This variable is used निजीly to keep track of whether or not
+ * reboot_type is still set to its शेष value (i.e., reboot= hasn't
  * been set on the command line).  This is needed so that we can
- * suppress DMI scanning for reboot quirks.  Without it, it's
+ * suppress DMI scanning क्रम reboot quirks.  Without it, it's
  * impossible to override a faulty reboot quirk without recompiling.
  */
-int reboot_default = 1;
-int reboot_cpu;
-enum reboot_type reboot_type = BOOT_ACPI;
-int reboot_force;
+पूर्णांक reboot_शेष = 1;
+पूर्णांक reboot_cpu;
+क्रमागत reboot_type reboot_type = BOOT_ACPI;
+पूर्णांक reboot_क्रमce;
 
 /*
- * If set, this is used for preparing the system to power off.
+ * If set, this is used क्रम preparing the प्रणाली to घातer off.
  */
 
-void (*pm_power_off_prepare)(void);
-EXPORT_SYMBOL_GPL(pm_power_off_prepare);
+व्योम (*pm_घातer_off_prepare)(व्योम);
+EXPORT_SYMBOL_GPL(pm_घातer_off_prepare);
 
 /**
- *	emergency_restart - reboot the system
+ *	emergency_restart - reboot the प्रणाली
  *
- *	Without shutting down any hardware or taking any locks
- *	reboot the system.  This is called when we know we are in
- *	trouble so this is our best effort to reboot.  This is
- *	safe to call in interrupt context.
+ *	Without shutting करोwn any hardware or taking any locks
+ *	reboot the प्रणाली.  This is called when we know we are in
+ *	trouble so this is our best efक्रमt to reboot.  This is
+ *	safe to call in पूर्णांकerrupt context.
  */
-void emergency_restart(void)
-{
+व्योम emergency_restart(व्योम)
+अणु
 	kmsg_dump(KMSG_DUMP_EMERG);
 	machine_emergency_restart();
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(emergency_restart);
 
-void kernel_restart_prepare(char *cmd)
-{
-	blocking_notifier_call_chain(&reboot_notifier_list, SYS_RESTART, cmd);
-	system_state = SYSTEM_RESTART;
+व्योम kernel_restart_prepare(अक्षर *cmd)
+अणु
+	blocking_notअगरier_call_chain(&reboot_notअगरier_list, SYS_RESTART, cmd);
+	प्रणाली_state = SYSTEM_RESTART;
 	usermodehelper_disable();
-	device_shutdown();
-}
+	device_shutकरोwn();
+पूर्ण
 
 /**
- *	register_reboot_notifier - Register function to be called at reboot time
- *	@nb: Info about notifier function to be called
+ *	रेजिस्टर_reboot_notअगरier - Register function to be called at reboot समय
+ *	@nb: Info about notअगरier function to be called
  *
  *	Registers a function with the list of functions
- *	to be called at reboot time.
+ *	to be called at reboot समय.
  *
- *	Currently always returns zero, as blocking_notifier_chain_register()
- *	always returns zero.
+ *	Currently always वापसs zero, as blocking_notअगरier_chain_रेजिस्टर()
+ *	always वापसs zero.
  */
-int register_reboot_notifier(struct notifier_block *nb)
-{
-	return blocking_notifier_chain_register(&reboot_notifier_list, nb);
-}
-EXPORT_SYMBOL(register_reboot_notifier);
+पूर्णांक रेजिस्टर_reboot_notअगरier(काष्ठा notअगरier_block *nb)
+अणु
+	वापस blocking_notअगरier_chain_रेजिस्टर(&reboot_notअगरier_list, nb);
+पूर्ण
+EXPORT_SYMBOL(रेजिस्टर_reboot_notअगरier);
 
 /**
- *	unregister_reboot_notifier - Unregister previously registered reboot notifier
- *	@nb: Hook to be unregistered
+ *	unरेजिस्टर_reboot_notअगरier - Unरेजिस्टर previously रेजिस्टरed reboot notअगरier
+ *	@nb: Hook to be unरेजिस्टरed
  *
- *	Unregisters a previously registered reboot
- *	notifier function.
+ *	Unरेजिस्टरs a previously रेजिस्टरed reboot
+ *	notअगरier function.
  *
  *	Returns zero on success, or %-ENOENT on failure.
  */
-int unregister_reboot_notifier(struct notifier_block *nb)
-{
-	return blocking_notifier_chain_unregister(&reboot_notifier_list, nb);
-}
-EXPORT_SYMBOL(unregister_reboot_notifier);
+पूर्णांक unरेजिस्टर_reboot_notअगरier(काष्ठा notअगरier_block *nb)
+अणु
+	वापस blocking_notअगरier_chain_unरेजिस्टर(&reboot_notअगरier_list, nb);
+पूर्ण
+EXPORT_SYMBOL(unरेजिस्टर_reboot_notअगरier);
 
-static void devm_unregister_reboot_notifier(struct device *dev, void *res)
-{
-	WARN_ON(unregister_reboot_notifier(*(struct notifier_block **)res));
-}
+अटल व्योम devm_unरेजिस्टर_reboot_notअगरier(काष्ठा device *dev, व्योम *res)
+अणु
+	WARN_ON(unरेजिस्टर_reboot_notअगरier(*(काष्ठा notअगरier_block **)res));
+पूर्ण
 
-int devm_register_reboot_notifier(struct device *dev, struct notifier_block *nb)
-{
-	struct notifier_block **rcnb;
-	int ret;
+पूर्णांक devm_रेजिस्टर_reboot_notअगरier(काष्ठा device *dev, काष्ठा notअगरier_block *nb)
+अणु
+	काष्ठा notअगरier_block **rcnb;
+	पूर्णांक ret;
 
-	rcnb = devres_alloc(devm_unregister_reboot_notifier,
-			    sizeof(*rcnb), GFP_KERNEL);
-	if (!rcnb)
-		return -ENOMEM;
+	rcnb = devres_alloc(devm_unरेजिस्टर_reboot_notअगरier,
+			    माप(*rcnb), GFP_KERNEL);
+	अगर (!rcnb)
+		वापस -ENOMEM;
 
-	ret = register_reboot_notifier(nb);
-	if (!ret) {
+	ret = रेजिस्टर_reboot_notअगरier(nb);
+	अगर (!ret) अणु
 		*rcnb = nb;
 		devres_add(dev, rcnb);
-	} else {
-		devres_free(rcnb);
-	}
+	पूर्ण अन्यथा अणु
+		devres_मुक्त(rcnb);
+	पूर्ण
 
-	return ret;
-}
-EXPORT_SYMBOL(devm_register_reboot_notifier);
+	वापस ret;
+पूर्ण
+EXPORT_SYMBOL(devm_रेजिस्टर_reboot_notअगरier);
 
 /*
- *	Notifier list for kernel code which wants to be called
- *	to restart the system.
+ *	Notअगरier list क्रम kernel code which wants to be called
+ *	to restart the प्रणाली.
  */
-static ATOMIC_NOTIFIER_HEAD(restart_handler_list);
+अटल ATOMIC_NOTIFIER_HEAD(restart_handler_list);
 
 /**
- *	register_restart_handler - Register function to be called to reset
- *				   the system
+ *	रेजिस्टर_restart_handler - Register function to be called to reset
+ *				   the प्रणाली
  *	@nb: Info about handler function to be called
  *	@nb->priority:	Handler priority. Handlers should follow the
- *			following guidelines for setting priorities.
+ *			following guidelines क्रम setting priorities.
  *			0:	Restart handler of last resort,
  *				with limited restart capabilities
- *			128:	Default restart handler; use if no other
+ *			128:	Default restart handler; use अगर no other
  *				restart handler is expected to be available,
- *				and/or if restart functionality is
- *				sufficient to restart the entire system
+ *				and/or अगर restart functionality is
+ *				sufficient to restart the entire प्रणाली
  *			255:	Highest priority restart handler, will
  *				preempt all other restart handlers
  *
  *	Registers a function with code to be called to restart the
- *	system.
+ *	प्रणाली.
  *
  *	Registered functions will be called from machine_restart as last
- *	step of the restart sequence (if the architecture specific
- *	machine_restart function calls do_kernel_restart - see below
- *	for details).
- *	Registered functions are expected to restart the system immediately.
- *	If more than one function is registered, the restart handler priority
+ *	step of the restart sequence (अगर the architecture specअगरic
+ *	machine_restart function calls करो_kernel_restart - see below
+ *	क्रम details).
+ *	Registered functions are expected to restart the प्रणाली immediately.
+ *	If more than one function is रेजिस्टरed, the restart handler priority
  *	selects which function will be called first.
  *
- *	Restart handlers are expected to be registered from non-architecture
- *	code, typically from drivers. A typical use case would be a system
- *	where restart functionality is provided through a watchdog. Multiple
- *	restart handlers may exist; for example, one restart handler might
- *	restart the entire system, while another only restarts the CPU.
- *	In such cases, the restart handler which only restarts part of the
- *	hardware is expected to register with low priority to ensure that
- *	it only runs if no other means to restart the system is available.
+ *	Restart handlers are expected to be रेजिस्टरed from non-architecture
+ *	code, typically from drivers. A typical use हाल would be a प्रणाली
+ *	where restart functionality is provided through a watchकरोg. Multiple
+ *	restart handlers may exist; क्रम example, one restart handler might
+ *	restart the entire प्रणाली, जबतक another only restarts the CPU.
+ *	In such हालs, the restart handler which only restarts part of the
+ *	hardware is expected to रेजिस्टर with low priority to ensure that
+ *	it only runs अगर no other means to restart the प्रणाली is available.
  *
- *	Currently always returns zero, as atomic_notifier_chain_register()
- *	always returns zero.
+ *	Currently always वापसs zero, as atomic_notअगरier_chain_रेजिस्टर()
+ *	always वापसs zero.
  */
-int register_restart_handler(struct notifier_block *nb)
-{
-	return atomic_notifier_chain_register(&restart_handler_list, nb);
-}
-EXPORT_SYMBOL(register_restart_handler);
+पूर्णांक रेजिस्टर_restart_handler(काष्ठा notअगरier_block *nb)
+अणु
+	वापस atomic_notअगरier_chain_रेजिस्टर(&restart_handler_list, nb);
+पूर्ण
+EXPORT_SYMBOL(रेजिस्टर_restart_handler);
 
 /**
- *	unregister_restart_handler - Unregister previously registered
+ *	unरेजिस्टर_restart_handler - Unरेजिस्टर previously रेजिस्टरed
  *				     restart handler
- *	@nb: Hook to be unregistered
+ *	@nb: Hook to be unरेजिस्टरed
  *
- *	Unregisters a previously registered restart handler function.
+ *	Unरेजिस्टरs a previously रेजिस्टरed restart handler function.
  *
  *	Returns zero on success, or %-ENOENT on failure.
  */
-int unregister_restart_handler(struct notifier_block *nb)
-{
-	return atomic_notifier_chain_unregister(&restart_handler_list, nb);
-}
-EXPORT_SYMBOL(unregister_restart_handler);
+पूर्णांक unरेजिस्टर_restart_handler(काष्ठा notअगरier_block *nb)
+अणु
+	वापस atomic_notअगरier_chain_unरेजिस्टर(&restart_handler_list, nb);
+पूर्ण
+EXPORT_SYMBOL(unरेजिस्टर_restart_handler);
 
 /**
- *	do_kernel_restart - Execute kernel restart handler call chain
+ *	करो_kernel_restart - Execute kernel restart handler call chain
  *
- *	Calls functions registered with register_restart_handler.
+ *	Calls functions रेजिस्टरed with रेजिस्टर_restart_handler.
  *
  *	Expected to be called from machine_restart as last step of the restart
  *	sequence.
  *
- *	Restarts the system immediately if a restart handler function has been
- *	registered. Otherwise does nothing.
+ *	Restarts the प्रणाली immediately अगर a restart handler function has been
+ *	रेजिस्टरed. Otherwise करोes nothing.
  */
-void do_kernel_restart(char *cmd)
-{
-	atomic_notifier_call_chain(&restart_handler_list, reboot_mode, cmd);
-}
+व्योम करो_kernel_restart(अक्षर *cmd)
+अणु
+	atomic_notअगरier_call_chain(&restart_handler_list, reboot_mode, cmd);
+पूर्ण
 
-void migrate_to_reboot_cpu(void)
-{
+व्योम migrate_to_reboot_cpu(व्योम)
+अणु
 	/* The boot cpu is always logical cpu 0 */
-	int cpu = reboot_cpu;
+	पूर्णांक cpu = reboot_cpu;
 
 	cpu_hotplug_disable();
 
 	/* Make certain the cpu I'm about to reboot on is online */
-	if (!cpu_online(cpu))
+	अगर (!cpu_online(cpu))
 		cpu = cpumask_first(cpu_online_mask);
 
 	/* Prevent races with other tasks migrating this task */
@@ -231,584 +232,584 @@ void migrate_to_reboot_cpu(void)
 
 	/* Make certain I only run on the appropriate processor */
 	set_cpus_allowed_ptr(current, cpumask_of(cpu));
-}
+पूर्ण
 
 /**
- *	kernel_restart - reboot the system
- *	@cmd: pointer to buffer containing command to execute for restart
- *		or %NULL
+ *	kernel_restart - reboot the प्रणाली
+ *	@cmd: poपूर्णांकer to buffer containing command to execute क्रम restart
+ *		or %शून्य
  *
- *	Shutdown everything and perform a clean reboot.
- *	This is not safe to call in interrupt context.
+ *	Shutकरोwn everything and perक्रमm a clean reboot.
+ *	This is not safe to call in पूर्णांकerrupt context.
  */
-void kernel_restart(char *cmd)
-{
+व्योम kernel_restart(अक्षर *cmd)
+अणु
 	kernel_restart_prepare(cmd);
 	migrate_to_reboot_cpu();
-	syscore_shutdown();
-	if (!cmd)
+	syscore_shutकरोwn();
+	अगर (!cmd)
 		pr_emerg("Restarting system\n");
-	else
+	अन्यथा
 		pr_emerg("Restarting system with command '%s'\n", cmd);
 	kmsg_dump(KMSG_DUMP_SHUTDOWN);
 	machine_restart(cmd);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(kernel_restart);
 
-static void kernel_shutdown_prepare(enum system_states state)
-{
-	blocking_notifier_call_chain(&reboot_notifier_list,
-		(state == SYSTEM_HALT) ? SYS_HALT : SYS_POWER_OFF, NULL);
-	system_state = state;
+अटल व्योम kernel_shutकरोwn_prepare(क्रमागत प्रणाली_states state)
+अणु
+	blocking_notअगरier_call_chain(&reboot_notअगरier_list,
+		(state == SYSTEM_HALT) ? SYS_HALT : SYS_POWER_OFF, शून्य);
+	प्रणाली_state = state;
 	usermodehelper_disable();
-	device_shutdown();
-}
+	device_shutकरोwn();
+पूर्ण
 /**
- *	kernel_halt - halt the system
+ *	kernel_halt - halt the प्रणाली
  *
- *	Shutdown everything and perform a clean system halt.
+ *	Shutकरोwn everything and perक्रमm a clean प्रणाली halt.
  */
-void kernel_halt(void)
-{
-	kernel_shutdown_prepare(SYSTEM_HALT);
+व्योम kernel_halt(व्योम)
+अणु
+	kernel_shutकरोwn_prepare(SYSTEM_HALT);
 	migrate_to_reboot_cpu();
-	syscore_shutdown();
+	syscore_shutकरोwn();
 	pr_emerg("System halted\n");
 	kmsg_dump(KMSG_DUMP_SHUTDOWN);
 	machine_halt();
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(kernel_halt);
 
 /**
- *	kernel_power_off - power_off the system
+ *	kernel_घातer_off - घातer_off the प्रणाली
  *
- *	Shutdown everything and perform a clean system power_off.
+ *	Shutकरोwn everything and perक्रमm a clean प्रणाली घातer_off.
  */
-void kernel_power_off(void)
-{
-	kernel_shutdown_prepare(SYSTEM_POWER_OFF);
-	if (pm_power_off_prepare)
-		pm_power_off_prepare();
+व्योम kernel_घातer_off(व्योम)
+अणु
+	kernel_shutकरोwn_prepare(SYSTEM_POWER_OFF);
+	अगर (pm_घातer_off_prepare)
+		pm_घातer_off_prepare();
 	migrate_to_reboot_cpu();
-	syscore_shutdown();
+	syscore_shutकरोwn();
 	pr_emerg("Power down\n");
 	kmsg_dump(KMSG_DUMP_SHUTDOWN);
-	machine_power_off();
-}
-EXPORT_SYMBOL_GPL(kernel_power_off);
+	machine_घातer_off();
+पूर्ण
+EXPORT_SYMBOL_GPL(kernel_घातer_off);
 
-DEFINE_MUTEX(system_transition_mutex);
+DEFINE_MUTEX(प्रणाली_transition_mutex);
 
 /*
- * Reboot system call: for obvious reasons only root may call it,
- * and even root needs to set up some magic numbers in the registers
+ * Reboot प्रणाली call: क्रम obvious reasons only root may call it,
+ * and even root needs to set up some magic numbers in the रेजिस्टरs
  * so that some mistake won't make this reboot the whole machine.
  * You can also set the meaning of the ctrl-alt-del-key here.
  *
- * reboot doesn't sync: do that yourself before calling this.
+ * reboot करोesn't sync: करो that yourself beक्रमe calling this.
  */
-SYSCALL_DEFINE4(reboot, int, magic1, int, magic2, unsigned int, cmd,
-		void __user *, arg)
-{
-	struct pid_namespace *pid_ns = task_active_pid_ns(current);
-	char buffer[256];
-	int ret = 0;
+SYSCALL_DEFINE4(reboot, पूर्णांक, magic1, पूर्णांक, magic2, अचिन्हित पूर्णांक, cmd,
+		व्योम __user *, arg)
+अणु
+	काष्ठा pid_namespace *pid_ns = task_active_pid_ns(current);
+	अक्षर buffer[256];
+	पूर्णांक ret = 0;
 
-	/* We only trust the superuser with rebooting the system. */
-	if (!ns_capable(pid_ns->user_ns, CAP_SYS_BOOT))
-		return -EPERM;
+	/* We only trust the superuser with rebooting the प्रणाली. */
+	अगर (!ns_capable(pid_ns->user_ns, CAP_SYS_BOOT))
+		वापस -EPERM;
 
 	/* For safety, we require "magic" arguments. */
-	if (magic1 != LINUX_REBOOT_MAGIC1 ||
+	अगर (magic1 != LINUX_REBOOT_MAGIC1 ||
 			(magic2 != LINUX_REBOOT_MAGIC2 &&
 			magic2 != LINUX_REBOOT_MAGIC2A &&
 			magic2 != LINUX_REBOOT_MAGIC2B &&
 			magic2 != LINUX_REBOOT_MAGIC2C))
-		return -EINVAL;
+		वापस -EINVAL;
 
 	/*
 	 * If pid namespaces are enabled and the current task is in a child
 	 * pid_namespace, the command is handled by reboot_pid_ns() which will
-	 * call do_exit().
+	 * call करो_निकास().
 	 */
 	ret = reboot_pid_ns(pid_ns, cmd);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	/* Instead of trying to make the power_off code look like
-	 * halt when pm_power_off is not set do it the easy way.
+	/* Instead of trying to make the घातer_off code look like
+	 * halt when pm_घातer_off is not set करो it the easy way.
 	 */
-	if ((cmd == LINUX_REBOOT_CMD_POWER_OFF) && !pm_power_off)
+	अगर ((cmd == LINUX_REBOOT_CMD_POWER_OFF) && !pm_घातer_off)
 		cmd = LINUX_REBOOT_CMD_HALT;
 
-	mutex_lock(&system_transition_mutex);
-	switch (cmd) {
-	case LINUX_REBOOT_CMD_RESTART:
-		kernel_restart(NULL);
-		break;
+	mutex_lock(&प्रणाली_transition_mutex);
+	चयन (cmd) अणु
+	हाल LINUX_REBOOT_CMD_RESTART:
+		kernel_restart(शून्य);
+		अवरोध;
 
-	case LINUX_REBOOT_CMD_CAD_ON:
+	हाल LINUX_REBOOT_CMD_CAD_ON:
 		C_A_D = 1;
-		break;
+		अवरोध;
 
-	case LINUX_REBOOT_CMD_CAD_OFF:
+	हाल LINUX_REBOOT_CMD_CAD_OFF:
 		C_A_D = 0;
-		break;
+		अवरोध;
 
-	case LINUX_REBOOT_CMD_HALT:
+	हाल LINUX_REBOOT_CMD_HALT:
 		kernel_halt();
-		do_exit(0);
+		करो_निकास(0);
 		panic("cannot halt");
 
-	case LINUX_REBOOT_CMD_POWER_OFF:
-		kernel_power_off();
-		do_exit(0);
-		break;
+	हाल LINUX_REBOOT_CMD_POWER_OFF:
+		kernel_घातer_off();
+		करो_निकास(0);
+		अवरोध;
 
-	case LINUX_REBOOT_CMD_RESTART2:
-		ret = strncpy_from_user(&buffer[0], arg, sizeof(buffer) - 1);
-		if (ret < 0) {
+	हाल LINUX_REBOOT_CMD_RESTART2:
+		ret = म_नकलन_from_user(&buffer[0], arg, माप(buffer) - 1);
+		अगर (ret < 0) अणु
 			ret = -EFAULT;
-			break;
-		}
-		buffer[sizeof(buffer) - 1] = '\0';
+			अवरोध;
+		पूर्ण
+		buffer[माप(buffer) - 1] = '\0';
 
 		kernel_restart(buffer);
-		break;
+		अवरोध;
 
-#ifdef CONFIG_KEXEC_CORE
-	case LINUX_REBOOT_CMD_KEXEC:
+#अगर_घोषित CONFIG_KEXEC_CORE
+	हाल LINUX_REBOOT_CMD_KEXEC:
 		ret = kernel_kexec();
-		break;
-#endif
+		अवरोध;
+#पूर्ण_अगर
 
-#ifdef CONFIG_HIBERNATION
-	case LINUX_REBOOT_CMD_SW_SUSPEND:
+#अगर_घोषित CONFIG_HIBERNATION
+	हाल LINUX_REBOOT_CMD_SW_SUSPEND:
 		ret = hibernate();
-		break;
-#endif
+		अवरोध;
+#पूर्ण_अगर
 
-	default:
+	शेष:
 		ret = -EINVAL;
-		break;
-	}
-	mutex_unlock(&system_transition_mutex);
-	return ret;
-}
+		अवरोध;
+	पूर्ण
+	mutex_unlock(&प्रणाली_transition_mutex);
+	वापस ret;
+पूर्ण
 
-static void deferred_cad(struct work_struct *dummy)
-{
-	kernel_restart(NULL);
-}
+अटल व्योम deferred_cad(काष्ठा work_काष्ठा *dummy)
+अणु
+	kernel_restart(शून्य);
+पूर्ण
 
 /*
- * This function gets called by ctrl-alt-del - ie the keyboard interrupt.
- * As it's called within an interrupt, it may NOT sync: the only choice
+ * This function माला_लो called by ctrl-alt-del - ie the keyboard पूर्णांकerrupt.
+ * As it's called within an पूर्णांकerrupt, it may NOT sync: the only choice
  * is whether to reboot at once, or just ignore the ctrl-alt-del.
  */
-void ctrl_alt_del(void)
-{
-	static DECLARE_WORK(cad_work, deferred_cad);
+व्योम ctrl_alt_del(व्योम)
+अणु
+	अटल DECLARE_WORK(cad_work, deferred_cad);
 
-	if (C_A_D)
+	अगर (C_A_D)
 		schedule_work(&cad_work);
-	else
-		kill_cad_pid(SIGINT, 1);
-}
+	अन्यथा
+		समाप्त_cad_pid(संक_विघ्न, 1);
+पूर्ण
 
-char poweroff_cmd[POWEROFF_CMD_PATH_LEN] = "/sbin/poweroff";
-static const char reboot_cmd[] = "/sbin/reboot";
+अक्षर घातeroff_cmd[POWEROFF_CMD_PATH_LEN] = "/sbin/poweroff";
+अटल स्थिर अक्षर reboot_cmd[] = "/sbin/reboot";
 
-static int run_cmd(const char *cmd)
-{
-	char **argv;
-	static char *envp[] = {
+अटल पूर्णांक run_cmd(स्थिर अक्षर *cmd)
+अणु
+	अक्षर **argv;
+	अटल अक्षर *envp[] = अणु
 		"HOME=/",
 		"PATH=/sbin:/bin:/usr/sbin:/usr/bin",
-		NULL
-	};
-	int ret;
-	argv = argv_split(GFP_KERNEL, cmd, NULL);
-	if (argv) {
+		शून्य
+	पूर्ण;
+	पूर्णांक ret;
+	argv = argv_split(GFP_KERNEL, cmd, शून्य);
+	अगर (argv) अणु
 		ret = call_usermodehelper(argv[0], argv, envp, UMH_WAIT_EXEC);
-		argv_free(argv);
-	} else {
+		argv_मुक्त(argv);
+	पूर्ण अन्यथा अणु
 		ret = -ENOMEM;
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int __orderly_reboot(void)
-{
-	int ret;
+अटल पूर्णांक __orderly_reboot(व्योम)
+अणु
+	पूर्णांक ret;
 
 	ret = run_cmd(reboot_cmd);
 
-	if (ret) {
+	अगर (ret) अणु
 		pr_warn("Failed to start orderly reboot: forcing the issue\n");
 		emergency_sync();
-		kernel_restart(NULL);
-	}
+		kernel_restart(शून्य);
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int __orderly_poweroff(bool force)
-{
-	int ret;
+अटल पूर्णांक __orderly_घातeroff(bool क्रमce)
+अणु
+	पूर्णांक ret;
 
-	ret = run_cmd(poweroff_cmd);
+	ret = run_cmd(घातeroff_cmd);
 
-	if (ret && force) {
+	अगर (ret && क्रमce) अणु
 		pr_warn("Failed to start orderly shutdown: forcing the issue\n");
 
 		/*
 		 * I guess this should try to kick off some daemon to sync and
-		 * poweroff asap.  Or not even bother syncing if we're doing an
-		 * emergency shutdown?
+		 * घातeroff asap.  Or not even bother syncing अगर we're करोing an
+		 * emergency shutकरोwn?
 		 */
 		emergency_sync();
-		kernel_power_off();
-	}
+		kernel_घातer_off();
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static bool poweroff_force;
+अटल bool घातeroff_क्रमce;
 
-static void poweroff_work_func(struct work_struct *work)
-{
-	__orderly_poweroff(poweroff_force);
-}
+अटल व्योम घातeroff_work_func(काष्ठा work_काष्ठा *work)
+अणु
+	__orderly_घातeroff(घातeroff_क्रमce);
+पूर्ण
 
-static DECLARE_WORK(poweroff_work, poweroff_work_func);
+अटल DECLARE_WORK(घातeroff_work, घातeroff_work_func);
 
 /**
- * orderly_poweroff - Trigger an orderly system poweroff
- * @force: force poweroff if command execution fails
+ * orderly_घातeroff - Trigger an orderly प्रणाली घातeroff
+ * @क्रमce: क्रमce घातeroff अगर command execution fails
  *
- * This may be called from any context to trigger a system shutdown.
- * If the orderly shutdown fails, it will force an immediate shutdown.
+ * This may be called from any context to trigger a प्रणाली shutकरोwn.
+ * If the orderly shutकरोwn fails, it will क्रमce an immediate shutकरोwn.
  */
-void orderly_poweroff(bool force)
-{
-	if (force) /* do not override the pending "true" */
-		poweroff_force = true;
-	schedule_work(&poweroff_work);
-}
-EXPORT_SYMBOL_GPL(orderly_poweroff);
+व्योम orderly_घातeroff(bool क्रमce)
+अणु
+	अगर (क्रमce) /* करो not override the pending "true" */
+		घातeroff_क्रमce = true;
+	schedule_work(&घातeroff_work);
+पूर्ण
+EXPORT_SYMBOL_GPL(orderly_घातeroff);
 
-static void reboot_work_func(struct work_struct *work)
-{
+अटल व्योम reboot_work_func(काष्ठा work_काष्ठा *work)
+अणु
 	__orderly_reboot();
-}
+पूर्ण
 
-static DECLARE_WORK(reboot_work, reboot_work_func);
+अटल DECLARE_WORK(reboot_work, reboot_work_func);
 
 /**
- * orderly_reboot - Trigger an orderly system reboot
+ * orderly_reboot - Trigger an orderly प्रणाली reboot
  *
- * This may be called from any context to trigger a system reboot.
- * If the orderly reboot fails, it will force an immediate reboot.
+ * This may be called from any context to trigger a प्रणाली reboot.
+ * If the orderly reboot fails, it will क्रमce an immediate reboot.
  */
-void orderly_reboot(void)
-{
+व्योम orderly_reboot(व्योम)
+अणु
 	schedule_work(&reboot_work);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(orderly_reboot);
 
-static int __init reboot_setup(char *str)
-{
-	for (;;) {
-		enum reboot_mode *mode;
+अटल पूर्णांक __init reboot_setup(अक्षर *str)
+अणु
+	क्रम (;;) अणु
+		क्रमागत reboot_mode *mode;
 
 		/*
 		 * Having anything passed on the command line via
 		 * reboot= will cause us to disable DMI checking
 		 * below.
 		 */
-		reboot_default = 0;
+		reboot_शेष = 0;
 
-		if (!strncmp(str, "panic_", 6)) {
+		अगर (!म_भेदन(str, "panic_", 6)) अणु
 			mode = &panic_reboot_mode;
 			str += 6;
-		} else {
+		पूर्ण अन्यथा अणु
 			mode = &reboot_mode;
-		}
+		पूर्ण
 
-		switch (*str) {
-		case 'w':
+		चयन (*str) अणु
+		हाल 'w':
 			*mode = REBOOT_WARM;
-			break;
+			अवरोध;
 
-		case 'c':
+		हाल 'c':
 			*mode = REBOOT_COLD;
-			break;
+			अवरोध;
 
-		case 'h':
+		हाल 'h':
 			*mode = REBOOT_HARD;
-			break;
+			अवरोध;
 
-		case 's':
+		हाल 's':
 			/*
 			 * reboot_cpu is s[mp]#### with #### being the processor
-			 * to be used for rebooting. Skip 's' or 'smp' prefix.
+			 * to be used क्रम rebooting. Skip 's' or 'smp' prefix.
 			 */
 			str += str[1] == 'm' && str[2] == 'p' ? 3 : 1;
 
-			if (isdigit(str[0])) {
-				int cpu = simple_strtoul(str, NULL, 0);
+			अगर (है_अंक(str[0])) अणु
+				पूर्णांक cpu = simple_म_से_अदीर्घ(str, शून्य, 0);
 
-				if (cpu >= num_possible_cpus()) {
+				अगर (cpu >= num_possible_cpus()) अणु
 					pr_err("Ignoring the CPU number in reboot= option. "
 					"CPU %d exceeds possible cpu number %d\n",
 					cpu, num_possible_cpus());
-					break;
-				}
+					अवरोध;
+				पूर्ण
 				reboot_cpu = cpu;
-			} else
+			पूर्ण अन्यथा
 				*mode = REBOOT_SOFT;
-			break;
+			अवरोध;
 
-		case 'g':
+		हाल 'g':
 			*mode = REBOOT_GPIO;
-			break;
+			अवरोध;
 
-		case 'b':
-		case 'a':
-		case 'k':
-		case 't':
-		case 'e':
-		case 'p':
+		हाल 'b':
+		हाल 'a':
+		हाल 'k':
+		हाल 't':
+		हाल 'e':
+		हाल 'p':
 			reboot_type = *str;
-			break;
+			अवरोध;
 
-		case 'f':
-			reboot_force = 1;
-			break;
-		}
+		हाल 'f':
+			reboot_क्रमce = 1;
+			अवरोध;
+		पूर्ण
 
-		str = strchr(str, ',');
-		if (str)
+		str = म_अक्षर(str, ',');
+		अगर (str)
 			str++;
-		else
-			break;
-	}
-	return 1;
-}
+		अन्यथा
+			अवरोध;
+	पूर्ण
+	वापस 1;
+पूर्ण
 __setup("reboot=", reboot_setup);
 
-#ifdef CONFIG_SYSFS
+#अगर_घोषित CONFIG_SYSFS
 
-#define REBOOT_COLD_STR		"cold"
-#define REBOOT_WARM_STR		"warm"
-#define REBOOT_HARD_STR		"hard"
-#define REBOOT_SOFT_STR		"soft"
-#define REBOOT_GPIO_STR		"gpio"
-#define REBOOT_UNDEFINED_STR	"undefined"
+#घोषणा REBOOT_COLD_STR		"cold"
+#घोषणा REBOOT_WARM_STR		"warm"
+#घोषणा REBOOT_HARD_STR		"hard"
+#घोषणा REBOOT_SOFT_STR		"soft"
+#घोषणा REBOOT_GPIO_STR		"gpio"
+#घोषणा REBOOT_UNDEFINED_STR	"undefined"
 
-#define BOOT_TRIPLE_STR		"triple"
-#define BOOT_KBD_STR		"kbd"
-#define BOOT_BIOS_STR		"bios"
-#define BOOT_ACPI_STR		"acpi"
-#define BOOT_EFI_STR		"efi"
-#define BOOT_PCI_STR		"pci"
+#घोषणा BOOT_TRIPLE_STR		"triple"
+#घोषणा BOOT_KBD_STR		"kbd"
+#घोषणा BOOT_BIOS_STR		"bios"
+#घोषणा BOOT_ACPI_STR		"acpi"
+#घोषणा BOOT_EFI_STR		"efi"
+#घोषणा BOOT_PCI_STR		"pci"
 
-static ssize_t mode_show(struct kobject *kobj, struct kobj_attribute *attr, char *buf)
-{
-	const char *val;
+अटल sमाप_प्रकार mode_show(काष्ठा kobject *kobj, काष्ठा kobj_attribute *attr, अक्षर *buf)
+अणु
+	स्थिर अक्षर *val;
 
-	switch (reboot_mode) {
-	case REBOOT_COLD:
+	चयन (reboot_mode) अणु
+	हाल REBOOT_COLD:
 		val = REBOOT_COLD_STR;
-		break;
-	case REBOOT_WARM:
+		अवरोध;
+	हाल REBOOT_WARM:
 		val = REBOOT_WARM_STR;
-		break;
-	case REBOOT_HARD:
+		अवरोध;
+	हाल REBOOT_HARD:
 		val = REBOOT_HARD_STR;
-		break;
-	case REBOOT_SOFT:
+		अवरोध;
+	हाल REBOOT_SOFT:
 		val = REBOOT_SOFT_STR;
-		break;
-	case REBOOT_GPIO:
+		अवरोध;
+	हाल REBOOT_GPIO:
 		val = REBOOT_GPIO_STR;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		val = REBOOT_UNDEFINED_STR;
-	}
+	पूर्ण
 
-	return sprintf(buf, "%s\n", val);
-}
-static ssize_t mode_store(struct kobject *kobj, struct kobj_attribute *attr,
-			  const char *buf, size_t count)
-{
-	if (!capable(CAP_SYS_BOOT))
-		return -EPERM;
+	वापस प्र_लिखो(buf, "%s\n", val);
+पूर्ण
+अटल sमाप_प्रकार mode_store(काष्ठा kobject *kobj, काष्ठा kobj_attribute *attr,
+			  स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	अगर (!capable(CAP_SYS_BOOT))
+		वापस -EPERM;
 
-	if (!strncmp(buf, REBOOT_COLD_STR, strlen(REBOOT_COLD_STR)))
+	अगर (!म_भेदन(buf, REBOOT_COLD_STR, म_माप(REBOOT_COLD_STR)))
 		reboot_mode = REBOOT_COLD;
-	else if (!strncmp(buf, REBOOT_WARM_STR, strlen(REBOOT_WARM_STR)))
+	अन्यथा अगर (!म_भेदन(buf, REBOOT_WARM_STR, म_माप(REBOOT_WARM_STR)))
 		reboot_mode = REBOOT_WARM;
-	else if (!strncmp(buf, REBOOT_HARD_STR, strlen(REBOOT_HARD_STR)))
+	अन्यथा अगर (!म_भेदन(buf, REBOOT_HARD_STR, म_माप(REBOOT_HARD_STR)))
 		reboot_mode = REBOOT_HARD;
-	else if (!strncmp(buf, REBOOT_SOFT_STR, strlen(REBOOT_SOFT_STR)))
+	अन्यथा अगर (!म_भेदन(buf, REBOOT_SOFT_STR, म_माप(REBOOT_SOFT_STR)))
 		reboot_mode = REBOOT_SOFT;
-	else if (!strncmp(buf, REBOOT_GPIO_STR, strlen(REBOOT_GPIO_STR)))
+	अन्यथा अगर (!म_भेदन(buf, REBOOT_GPIO_STR, म_माप(REBOOT_GPIO_STR)))
 		reboot_mode = REBOOT_GPIO;
-	else
-		return -EINVAL;
+	अन्यथा
+		वापस -EINVAL;
 
-	reboot_default = 0;
+	reboot_शेष = 0;
 
-	return count;
-}
-static struct kobj_attribute reboot_mode_attr = __ATTR_RW(mode);
+	वापस count;
+पूर्ण
+अटल काष्ठा kobj_attribute reboot_mode_attr = __ATTR_RW(mode);
 
-#ifdef CONFIG_X86
-static ssize_t force_show(struct kobject *kobj, struct kobj_attribute *attr, char *buf)
-{
-	return sprintf(buf, "%d\n", reboot_force);
-}
-static ssize_t force_store(struct kobject *kobj, struct kobj_attribute *attr,
-			  const char *buf, size_t count)
-{
+#अगर_घोषित CONFIG_X86
+अटल sमाप_प्रकार क्रमce_show(काष्ठा kobject *kobj, काष्ठा kobj_attribute *attr, अक्षर *buf)
+अणु
+	वापस प्र_लिखो(buf, "%d\n", reboot_क्रमce);
+पूर्ण
+अटल sमाप_प्रकार क्रमce_store(काष्ठा kobject *kobj, काष्ठा kobj_attribute *attr,
+			  स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
 	bool res;
 
-	if (!capable(CAP_SYS_BOOT))
-		return -EPERM;
+	अगर (!capable(CAP_SYS_BOOT))
+		वापस -EPERM;
 
-	if (kstrtobool(buf, &res))
-		return -EINVAL;
+	अगर (kstrtobool(buf, &res))
+		वापस -EINVAL;
 
-	reboot_default = 0;
-	reboot_force = res;
+	reboot_शेष = 0;
+	reboot_क्रमce = res;
 
-	return count;
-}
-static struct kobj_attribute reboot_force_attr = __ATTR_RW(force);
+	वापस count;
+पूर्ण
+अटल काष्ठा kobj_attribute reboot_क्रमce_attr = __ATTR_RW(क्रमce);
 
-static ssize_t type_show(struct kobject *kobj, struct kobj_attribute *attr, char *buf)
-{
-	const char *val;
+अटल sमाप_प्रकार type_show(काष्ठा kobject *kobj, काष्ठा kobj_attribute *attr, अक्षर *buf)
+अणु
+	स्थिर अक्षर *val;
 
-	switch (reboot_type) {
-	case BOOT_TRIPLE:
+	चयन (reboot_type) अणु
+	हाल BOOT_TRIPLE:
 		val = BOOT_TRIPLE_STR;
-		break;
-	case BOOT_KBD:
+		अवरोध;
+	हाल BOOT_KBD:
 		val = BOOT_KBD_STR;
-		break;
-	case BOOT_BIOS:
+		अवरोध;
+	हाल BOOT_BIOS:
 		val = BOOT_BIOS_STR;
-		break;
-	case BOOT_ACPI:
+		अवरोध;
+	हाल BOOT_ACPI:
 		val = BOOT_ACPI_STR;
-		break;
-	case BOOT_EFI:
+		अवरोध;
+	हाल BOOT_EFI:
 		val = BOOT_EFI_STR;
-		break;
-	case BOOT_CF9_FORCE:
+		अवरोध;
+	हाल BOOT_CF9_FORCE:
 		val = BOOT_PCI_STR;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		val = REBOOT_UNDEFINED_STR;
-	}
+	पूर्ण
 
-	return sprintf(buf, "%s\n", val);
-}
-static ssize_t type_store(struct kobject *kobj, struct kobj_attribute *attr,
-			  const char *buf, size_t count)
-{
-	if (!capable(CAP_SYS_BOOT))
-		return -EPERM;
+	वापस प्र_लिखो(buf, "%s\n", val);
+पूर्ण
+अटल sमाप_प्रकार type_store(काष्ठा kobject *kobj, काष्ठा kobj_attribute *attr,
+			  स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	अगर (!capable(CAP_SYS_BOOT))
+		वापस -EPERM;
 
-	if (!strncmp(buf, BOOT_TRIPLE_STR, strlen(BOOT_TRIPLE_STR)))
+	अगर (!म_भेदन(buf, BOOT_TRIPLE_STR, म_माप(BOOT_TRIPLE_STR)))
 		reboot_type = BOOT_TRIPLE;
-	else if (!strncmp(buf, BOOT_KBD_STR, strlen(BOOT_KBD_STR)))
+	अन्यथा अगर (!म_भेदन(buf, BOOT_KBD_STR, म_माप(BOOT_KBD_STR)))
 		reboot_type = BOOT_KBD;
-	else if (!strncmp(buf, BOOT_BIOS_STR, strlen(BOOT_BIOS_STR)))
+	अन्यथा अगर (!म_भेदन(buf, BOOT_BIOS_STR, म_माप(BOOT_BIOS_STR)))
 		reboot_type = BOOT_BIOS;
-	else if (!strncmp(buf, BOOT_ACPI_STR, strlen(BOOT_ACPI_STR)))
+	अन्यथा अगर (!म_भेदन(buf, BOOT_ACPI_STR, म_माप(BOOT_ACPI_STR)))
 		reboot_type = BOOT_ACPI;
-	else if (!strncmp(buf, BOOT_EFI_STR, strlen(BOOT_EFI_STR)))
+	अन्यथा अगर (!म_भेदन(buf, BOOT_EFI_STR, म_माप(BOOT_EFI_STR)))
 		reboot_type = BOOT_EFI;
-	else if (!strncmp(buf, BOOT_PCI_STR, strlen(BOOT_PCI_STR)))
+	अन्यथा अगर (!म_भेदन(buf, BOOT_PCI_STR, म_माप(BOOT_PCI_STR)))
 		reboot_type = BOOT_CF9_FORCE;
-	else
-		return -EINVAL;
+	अन्यथा
+		वापस -EINVAL;
 
-	reboot_default = 0;
+	reboot_शेष = 0;
 
-	return count;
-}
-static struct kobj_attribute reboot_type_attr = __ATTR_RW(type);
-#endif
+	वापस count;
+पूर्ण
+अटल काष्ठा kobj_attribute reboot_type_attr = __ATTR_RW(type);
+#पूर्ण_अगर
 
-#ifdef CONFIG_SMP
-static ssize_t cpu_show(struct kobject *kobj, struct kobj_attribute *attr, char *buf)
-{
-	return sprintf(buf, "%d\n", reboot_cpu);
-}
-static ssize_t cpu_store(struct kobject *kobj, struct kobj_attribute *attr,
-			  const char *buf, size_t count)
-{
-	unsigned int cpunum;
-	int rc;
+#अगर_घोषित CONFIG_SMP
+अटल sमाप_प्रकार cpu_show(काष्ठा kobject *kobj, काष्ठा kobj_attribute *attr, अक्षर *buf)
+अणु
+	वापस प्र_लिखो(buf, "%d\n", reboot_cpu);
+पूर्ण
+अटल sमाप_प्रकार cpu_store(काष्ठा kobject *kobj, काष्ठा kobj_attribute *attr,
+			  स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	अचिन्हित पूर्णांक cpunum;
+	पूर्णांक rc;
 
-	if (!capable(CAP_SYS_BOOT))
-		return -EPERM;
+	अगर (!capable(CAP_SYS_BOOT))
+		वापस -EPERM;
 
-	rc = kstrtouint(buf, 0, &cpunum);
+	rc = kstrtouपूर्णांक(buf, 0, &cpunum);
 
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
-	if (cpunum >= num_possible_cpus())
-		return -ERANGE;
+	अगर (cpunum >= num_possible_cpus())
+		वापस -दुस्फल;
 
-	reboot_default = 0;
+	reboot_शेष = 0;
 	reboot_cpu = cpunum;
 
-	return count;
-}
-static struct kobj_attribute reboot_cpu_attr = __ATTR_RW(cpu);
-#endif
+	वापस count;
+पूर्ण
+अटल काष्ठा kobj_attribute reboot_cpu_attr = __ATTR_RW(cpu);
+#पूर्ण_अगर
 
-static struct attribute *reboot_attrs[] = {
+अटल काष्ठा attribute *reboot_attrs[] = अणु
 	&reboot_mode_attr.attr,
-#ifdef CONFIG_X86
-	&reboot_force_attr.attr,
+#अगर_घोषित CONFIG_X86
+	&reboot_क्रमce_attr.attr,
 	&reboot_type_attr.attr,
-#endif
-#ifdef CONFIG_SMP
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_SMP
 	&reboot_cpu_attr.attr,
-#endif
-	NULL,
-};
+#पूर्ण_अगर
+	शून्य,
+पूर्ण;
 
-static const struct attribute_group reboot_attr_group = {
+अटल स्थिर काष्ठा attribute_group reboot_attr_group = अणु
 	.attrs = reboot_attrs,
-};
+पूर्ण;
 
-static int __init reboot_ksysfs_init(void)
-{
-	struct kobject *reboot_kobj;
-	int ret;
+अटल पूर्णांक __init reboot_ksysfs_init(व्योम)
+अणु
+	काष्ठा kobject *reboot_kobj;
+	पूर्णांक ret;
 
 	reboot_kobj = kobject_create_and_add("reboot", kernel_kobj);
-	if (!reboot_kobj)
-		return -ENOMEM;
+	अगर (!reboot_kobj)
+		वापस -ENOMEM;
 
 	ret = sysfs_create_group(reboot_kobj, &reboot_attr_group);
-	if (ret) {
+	अगर (ret) अणु
 		kobject_put(reboot_kobj);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 late_initcall(reboot_ksysfs_init);
 
-#endif
+#पूर्ण_अगर

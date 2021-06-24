@@ -1,17 +1,18 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * Copyright (C) 2020 ARM Ltd.
  */
-#ifndef __ASM_VDSO_PROCESSOR_H
-#define __ASM_VDSO_PROCESSOR_H
+#अगर_अघोषित __ASM_VDSO_PROCESSOR_H
+#घोषणा __ASM_VDSO_PROCESSOR_H
 
-#ifndef __ASSEMBLY__
+#अगर_अघोषित __ASSEMBLY__
 
-static inline void cpu_relax(void)
-{
-	asm volatile("yield" ::: "memory");
-}
+अटल अंतरभूत व्योम cpu_relax(व्योम)
+अणु
+	यंत्र अस्थिर("yield" ::: "memory");
+पूर्ण
 
-#endif /* __ASSEMBLY__ */
+#पूर्ण_अगर /* __ASSEMBLY__ */
 
-#endif /* __ASM_VDSO_PROCESSOR_H */
+#पूर्ण_अगर /* __ASM_VDSO_PROCESSOR_H */

@@ -1,49 +1,50 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
- * FB driver for the TLS8204 LCD Controller
+ * FB driver क्रम the TLS8204 LCD Controller
  *
  * The display is monochrome and the video memory is RGB565.
  * Any pixel value except 0 turns the pixel on.
  *
  * Copyright (C) 2013 Noralf Tronnes
- * Copyright (C) 2014 Michael Hope (adapted for the TLS8204)
+ * Copyright (C) 2014 Michael Hope (adapted क्रम the TLS8204)
  */
 
-#include <linux/module.h>
-#include <linux/kernel.h>
-#include <linux/init.h>
-#include <linux/gpio/consumer.h>
-#include <linux/spi/spi.h>
-#include <linux/delay.h>
+#समावेश <linux/module.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/init.h>
+#समावेश <linux/gpio/consumer.h>
+#समावेश <linux/spi/spi.h>
+#समावेश <linux/delay.h>
 
-#include "fbtft.h"
+#समावेश "fbtft.h"
 
-#define DRVNAME		"fb_tls8204"
-#define WIDTH		84
-#define HEIGHT		48
-#define TXBUFLEN	WIDTH
+#घोषणा DRVNAME		"fb_tls8204"
+#घोषणा WIDTH		84
+#घोषणा HEIGHT		48
+#घोषणा TXBUFLEN	WIDTH
 
 /* gamma is used to control contrast in this driver */
-#define DEFAULT_GAMMA	"40"
+#घोषणा DEFAULT_GAMMA	"40"
 
-static unsigned int bs = 4;
-module_param(bs, uint, 0000);
+अटल अचिन्हित पूर्णांक bs = 4;
+module_param(bs, uपूर्णांक, 0000);
 MODULE_PARM_DESC(bs, "BS[2:0] Bias voltage level: 0-7 (default: 4)");
 
-static int init_display(struct fbtft_par *par)
-{
+अटल पूर्णांक init_display(काष्ठा fbtft_par *par)
+अणु
 	par->fbtftops.reset(par);
 
 	/* Enter extended command mode */
-	write_reg(par, 0x21);	/* 5:1  1
-				 * 2:0  PD - Powerdown control: chip is active
+	ग_लिखो_reg(par, 0x21);	/* 5:1  1
+				 * 2:0  PD - Powerकरोwn control: chip is active
 				 * 1:0  V  - Entry mode: horizontal addressing
-				 * 0:1  H  - Extended instruction set control:
+				 * 0:1  H  - Extended inकाष्ठाion set control:
 				 *	     extended
 				 */
 
-	/* H=1 Bias system */
-	write_reg(par, 0x10 | (bs & 0x7));
+	/* H=1 Bias प्रणाली */
+	ग_लिखो_reg(par, 0x10 | (bs & 0x7));
 				/* 4:1  1
 				 * 3:0  0
 				 * 2:x  BS2 - Bias System
@@ -52,88 +53,88 @@ static int init_display(struct fbtft_par *par)
 				 */
 
 	/* Set the address of the first display line. */
-	write_reg(par, 0x04 | (64 >> 6));
-	write_reg(par, 0x40 | (64 & 0x3F));
+	ग_लिखो_reg(par, 0x04 | (64 >> 6));
+	ग_लिखो_reg(par, 0x40 | (64 & 0x3F));
 
 	/* Enter H=0 standard command mode */
-	write_reg(par, 0x20);
+	ग_लिखो_reg(par, 0x20);
 
 	/* H=0 Display control */
-	write_reg(par, 0x08 | 4);
+	ग_लिखो_reg(par, 0x08 | 4);
 				/* 3:1  1
 				 * 2:1  D - DE: 10=normal mode
 				 * 1:0  0
 				 * 0:0  E
 				 */
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void set_addr_win(struct fbtft_par *par, int xs, int ys, int xe, int ye)
-{
+अटल व्योम set_addr_win(काष्ठा fbtft_par *par, पूर्णांक xs, पूर्णांक ys, पूर्णांक xe, पूर्णांक ye)
+अणु
 	/* H=0 Set X address of RAM */
-	write_reg(par, 0x80);	/* 7:1  1
+	ग_लिखो_reg(par, 0x80);	/* 7:1  1
 				 * 6-0: X[6:0] - 0x00
 				 */
 
 	/* H=0 Set Y address of RAM */
-	write_reg(par, 0x40);	/* 7:0  0
+	ग_लिखो_reg(par, 0x40);	/* 7:0  0
 				 * 6:1  1
 				 * 2-0: Y[2:0] - 0x0
 				 */
-}
+पूर्ण
 
-static int write_vmem(struct fbtft_par *par, size_t offset, size_t len)
-{
+अटल पूर्णांक ग_लिखो_vmem(काष्ठा fbtft_par *par, माप_प्रकार offset, माप_प्रकार len)
+अणु
 	u16 *vmem16 = (u16 *)par->info->screen_buffer;
-	int x, y, i;
-	int ret = 0;
+	पूर्णांक x, y, i;
+	पूर्णांक ret = 0;
 
-	for (y = 0; y < HEIGHT / 8; y++) {
+	क्रम (y = 0; y < HEIGHT / 8; y++) अणु
 		u8 *buf = par->txbuf.buf;
 		/* The display is 102x68 but the LCD is 84x48.
-		 * Set the write pointer at the start of each row.
+		 * Set the ग_लिखो poपूर्णांकer at the start of each row.
 		 */
 		gpiod_set_value(par->gpio.dc, 0);
-		write_reg(par, 0x80 | 0);
-		write_reg(par, 0x40 | y);
+		ग_लिखो_reg(par, 0x80 | 0);
+		ग_लिखो_reg(par, 0x40 | y);
 
-		for (x = 0; x < WIDTH; x++) {
+		क्रम (x = 0; x < WIDTH; x++) अणु
 			u8 ch = 0;
 
-			for (i = 0; i < 8 * WIDTH; i += WIDTH) {
+			क्रम (i = 0; i < 8 * WIDTH; i += WIDTH) अणु
 				ch >>= 1;
-				if (vmem16[(y * 8 * WIDTH) + i + x])
+				अगर (vmem16[(y * 8 * WIDTH) + i + x])
 					ch |= 0x80;
-			}
+			पूर्ण
 			*buf++ = ch;
-		}
+		पूर्ण
 		/* Write the row */
 		gpiod_set_value(par->gpio.dc, 1);
-		ret = par->fbtftops.write(par, par->txbuf.buf, WIDTH);
-		if (ret < 0) {
+		ret = par->fbtftops.ग_लिखो(par, par->txbuf.buf, WIDTH);
+		अगर (ret < 0) अणु
 			dev_err(par->info->device,
 				"write failed and returned: %d\n", ret);
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int set_gamma(struct fbtft_par *par, u32 *curves)
-{
+अटल पूर्णांक set_gamma(काष्ठा fbtft_par *par, u32 *curves)
+अणु
 	/* apply mask */
 	curves[0] &= 0x7F;
 
-	write_reg(par, 0x21); /* turn on extended instruction set */
-	write_reg(par, 0x80 | curves[0]);
-	write_reg(par, 0x20); /* turn off extended instruction set */
+	ग_लिखो_reg(par, 0x21); /* turn on extended inकाष्ठाion set */
+	ग_लिखो_reg(par, 0x80 | curves[0]);
+	ग_लिखो_reg(par, 0x20); /* turn off extended inकाष्ठाion set */
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct fbtft_display display = {
+अटल काष्ठा fbtft_display display = अणु
 	.regwidth = 8,
 	.width = WIDTH,
 	.height = HEIGHT,
@@ -141,14 +142,14 @@ static struct fbtft_display display = {
 	.gamma_num = 1,
 	.gamma_len = 1,
 	.gamma = DEFAULT_GAMMA,
-	.fbtftops = {
+	.fbtftops = अणु
 		.init_display = init_display,
 		.set_addr_win = set_addr_win,
-		.write_vmem = write_vmem,
+		.ग_लिखो_vmem = ग_लिखो_vmem,
 		.set_gamma = set_gamma,
-	},
+	पूर्ण,
 	.backlight = 1,
-};
+पूर्ण;
 
 FBTFT_REGISTER_DRIVER(DRVNAME, "teralane,tls8204", &display);
 

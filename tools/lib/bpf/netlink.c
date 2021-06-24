@@ -1,372 +1,373 @@
-// SPDX-License-Identifier: (LGPL-2.1 OR BSD-2-Clause)
+<शैली गुरु>
+// SPDX-License-Identअगरier: (LGPL-2.1 OR BSD-2-Clause)
 /* Copyright (c) 2018 Facebook */
 
-#include <stdlib.h>
-#include <memory.h>
-#include <unistd.h>
-#include <linux/bpf.h>
-#include <linux/rtnetlink.h>
-#include <sys/socket.h>
-#include <errno.h>
-#include <time.h>
+#समावेश <मानककोष.स>
+#समावेश <memory.h>
+#समावेश <unistd.h>
+#समावेश <linux/bpf.h>
+#समावेश <linux/rtnetlink.h>
+#समावेश <sys/socket.h>
+#समावेश <त्रुटिसं.स>
+#समावेश <समय.स>
 
-#include "bpf.h"
-#include "libbpf.h"
-#include "libbpf_internal.h"
-#include "nlattr.h"
+#समावेश "bpf.h"
+#समावेश "libbpf.h"
+#समावेश "libbpf_internal.h"
+#समावेश "nlattr.h"
 
-#ifndef SOL_NETLINK
-#define SOL_NETLINK 270
-#endif
+#अगर_अघोषित SOL_NETLINK
+#घोषणा SOL_NETLINK 270
+#पूर्ण_अगर
 
-typedef int (*libbpf_dump_nlmsg_t)(void *cookie, void *msg, struct nlattr **tb);
+प्रकार पूर्णांक (*libbpf_dump_nlmsg_t)(व्योम *cookie, व्योम *msg, काष्ठा nlattr **tb);
 
-typedef int (*__dump_nlmsg_t)(struct nlmsghdr *nlmsg, libbpf_dump_nlmsg_t,
-			      void *cookie);
+प्रकार पूर्णांक (*__dump_nlmsg_t)(काष्ठा nlmsghdr *nlmsg, libbpf_dump_nlmsg_t,
+			      व्योम *cookie);
 
-struct xdp_id_md {
-	int ifindex;
+काष्ठा xdp_id_md अणु
+	पूर्णांक अगरindex;
 	__u32 flags;
-	struct xdp_link_info info;
-};
+	काष्ठा xdp_link_info info;
+पूर्ण;
 
-static int libbpf_netlink_open(__u32 *nl_pid)
-{
-	struct sockaddr_nl sa;
+अटल पूर्णांक libbpf_netlink_खोलो(__u32 *nl_pid)
+अणु
+	काष्ठा sockaddr_nl sa;
 	socklen_t addrlen;
-	int one = 1, ret;
-	int sock;
+	पूर्णांक one = 1, ret;
+	पूर्णांक sock;
 
-	memset(&sa, 0, sizeof(sa));
+	स_रखो(&sa, 0, माप(sa));
 	sa.nl_family = AF_NETLINK;
 
 	sock = socket(AF_NETLINK, SOCK_RAW | SOCK_CLOEXEC, NETLINK_ROUTE);
-	if (sock < 0)
-		return -errno;
+	अगर (sock < 0)
+		वापस -त्रुटि_सं;
 
-	if (setsockopt(sock, SOL_NETLINK, NETLINK_EXT_ACK,
-		       &one, sizeof(one)) < 0) {
+	अगर (setsockopt(sock, SOL_NETLINK, NETLINK_EXT_ACK,
+		       &one, माप(one)) < 0) अणु
 		pr_warn("Netlink error reporting not supported\n");
-	}
+	पूर्ण
 
-	if (bind(sock, (struct sockaddr *)&sa, sizeof(sa)) < 0) {
-		ret = -errno;
-		goto cleanup;
-	}
+	अगर (bind(sock, (काष्ठा sockaddr *)&sa, माप(sa)) < 0) अणु
+		ret = -त्रुटि_सं;
+		जाओ cleanup;
+	पूर्ण
 
-	addrlen = sizeof(sa);
-	if (getsockname(sock, (struct sockaddr *)&sa, &addrlen) < 0) {
-		ret = -errno;
-		goto cleanup;
-	}
+	addrlen = माप(sa);
+	अगर (माला_लोockname(sock, (काष्ठा sockaddr *)&sa, &addrlen) < 0) अणु
+		ret = -त्रुटि_सं;
+		जाओ cleanup;
+	पूर्ण
 
-	if (addrlen != sizeof(sa)) {
+	अगर (addrlen != माप(sa)) अणु
 		ret = -LIBBPF_ERRNO__INTERNAL;
-		goto cleanup;
-	}
+		जाओ cleanup;
+	पूर्ण
 
 	*nl_pid = sa.nl_pid;
-	return sock;
+	वापस sock;
 
 cleanup:
-	close(sock);
-	return ret;
-}
+	बंद(sock);
+	वापस ret;
+पूर्ण
 
-static int bpf_netlink_recv(int sock, __u32 nl_pid, int seq,
+अटल पूर्णांक bpf_netlink_recv(पूर्णांक sock, __u32 nl_pid, पूर्णांक seq,
 			    __dump_nlmsg_t _fn, libbpf_dump_nlmsg_t fn,
-			    void *cookie)
-{
+			    व्योम *cookie)
+अणु
 	bool multipart = true;
-	struct nlmsgerr *err;
-	struct nlmsghdr *nh;
-	char buf[4096];
-	int len, ret;
+	काष्ठा nlmsgerr *err;
+	काष्ठा nlmsghdr *nh;
+	अक्षर buf[4096];
+	पूर्णांक len, ret;
 
-	while (multipart) {
+	जबतक (multipart) अणु
 		multipart = false;
-		len = recv(sock, buf, sizeof(buf), 0);
-		if (len < 0) {
-			ret = -errno;
-			goto done;
-		}
+		len = recv(sock, buf, माप(buf), 0);
+		अगर (len < 0) अणु
+			ret = -त्रुटि_सं;
+			जाओ करोne;
+		पूर्ण
 
-		if (len == 0)
-			break;
+		अगर (len == 0)
+			अवरोध;
 
-		for (nh = (struct nlmsghdr *)buf; NLMSG_OK(nh, len);
-		     nh = NLMSG_NEXT(nh, len)) {
-			if (nh->nlmsg_pid != nl_pid) {
+		क्रम (nh = (काष्ठा nlmsghdr *)buf; NLMSG_OK(nh, len);
+		     nh = NLMSG_NEXT(nh, len)) अणु
+			अगर (nh->nlmsg_pid != nl_pid) अणु
 				ret = -LIBBPF_ERRNO__WRNGPID;
-				goto done;
-			}
-			if (nh->nlmsg_seq != seq) {
+				जाओ करोne;
+			पूर्ण
+			अगर (nh->nlmsg_seq != seq) अणु
 				ret = -LIBBPF_ERRNO__INVSEQ;
-				goto done;
-			}
-			if (nh->nlmsg_flags & NLM_F_MULTI)
+				जाओ करोne;
+			पूर्ण
+			अगर (nh->nlmsg_flags & NLM_F_MULTI)
 				multipart = true;
-			switch (nh->nlmsg_type) {
-			case NLMSG_ERROR:
-				err = (struct nlmsgerr *)NLMSG_DATA(nh);
-				if (!err->error)
-					continue;
+			चयन (nh->nlmsg_type) अणु
+			हाल NLMSG_ERROR:
+				err = (काष्ठा nlmsgerr *)NLMSG_DATA(nh);
+				अगर (!err->error)
+					जारी;
 				ret = err->error;
 				libbpf_nla_dump_errormsg(nh);
-				goto done;
-			case NLMSG_DONE:
-				return 0;
-			default:
-				break;
-			}
-			if (_fn) {
+				जाओ करोne;
+			हाल NLMSG_DONE:
+				वापस 0;
+			शेष:
+				अवरोध;
+			पूर्ण
+			अगर (_fn) अणु
 				ret = _fn(nh, fn, cookie);
-				if (ret)
-					return ret;
-			}
-		}
-	}
+				अगर (ret)
+					वापस ret;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 	ret = 0;
-done:
-	return ret;
-}
+करोne:
+	वापस ret;
+पूर्ण
 
-static int __bpf_set_link_xdp_fd_replace(int ifindex, int fd, int old_fd,
+अटल पूर्णांक __bpf_set_link_xdp_fd_replace(पूर्णांक अगरindex, पूर्णांक fd, पूर्णांक old_fd,
 					 __u32 flags)
-{
-	int sock, seq = 0, ret;
-	struct nlattr *nla, *nla_xdp;
-	struct {
-		struct nlmsghdr  nh;
-		struct ifinfomsg ifinfo;
-		char             attrbuf[64];
-	} req;
+अणु
+	पूर्णांक sock, seq = 0, ret;
+	काष्ठा nlattr *nla, *nla_xdp;
+	काष्ठा अणु
+		काष्ठा nlmsghdr  nh;
+		काष्ठा अगरinfomsg अगरinfo;
+		अक्षर             attrbuf[64];
+	पूर्ण req;
 	__u32 nl_pid = 0;
 
-	sock = libbpf_netlink_open(&nl_pid);
-	if (sock < 0)
-		return sock;
+	sock = libbpf_netlink_खोलो(&nl_pid);
+	अगर (sock < 0)
+		वापस sock;
 
-	memset(&req, 0, sizeof(req));
-	req.nh.nlmsg_len = NLMSG_LENGTH(sizeof(struct ifinfomsg));
+	स_रखो(&req, 0, माप(req));
+	req.nh.nlmsg_len = NLMSG_LENGTH(माप(काष्ठा अगरinfomsg));
 	req.nh.nlmsg_flags = NLM_F_REQUEST | NLM_F_ACK;
 	req.nh.nlmsg_type = RTM_SETLINK;
 	req.nh.nlmsg_pid = 0;
 	req.nh.nlmsg_seq = ++seq;
-	req.ifinfo.ifi_family = AF_UNSPEC;
-	req.ifinfo.ifi_index = ifindex;
+	req.अगरinfo.अगरi_family = AF_UNSPEC;
+	req.अगरinfo.अगरi_index = अगरindex;
 
-	/* started nested attribute for XDP */
-	nla = (struct nlattr *)(((char *)&req)
+	/* started nested attribute क्रम XDP */
+	nla = (काष्ठा nlattr *)(((अक्षर *)&req)
 				+ NLMSG_ALIGN(req.nh.nlmsg_len));
 	nla->nla_type = NLA_F_NESTED | IFLA_XDP;
 	nla->nla_len = NLA_HDRLEN;
 
 	/* add XDP fd */
-	nla_xdp = (struct nlattr *)((char *)nla + nla->nla_len);
+	nla_xdp = (काष्ठा nlattr *)((अक्षर *)nla + nla->nla_len);
 	nla_xdp->nla_type = IFLA_XDP_FD;
-	nla_xdp->nla_len = NLA_HDRLEN + sizeof(int);
-	memcpy((char *)nla_xdp + NLA_HDRLEN, &fd, sizeof(fd));
+	nla_xdp->nla_len = NLA_HDRLEN + माप(पूर्णांक);
+	स_नकल((अक्षर *)nla_xdp + NLA_HDRLEN, &fd, माप(fd));
 	nla->nla_len += nla_xdp->nla_len;
 
-	/* if user passed in any flags, add those too */
-	if (flags) {
-		nla_xdp = (struct nlattr *)((char *)nla + nla->nla_len);
+	/* अगर user passed in any flags, add those too */
+	अगर (flags) अणु
+		nla_xdp = (काष्ठा nlattr *)((अक्षर *)nla + nla->nla_len);
 		nla_xdp->nla_type = IFLA_XDP_FLAGS;
-		nla_xdp->nla_len = NLA_HDRLEN + sizeof(flags);
-		memcpy((char *)nla_xdp + NLA_HDRLEN, &flags, sizeof(flags));
+		nla_xdp->nla_len = NLA_HDRLEN + माप(flags);
+		स_नकल((अक्षर *)nla_xdp + NLA_HDRLEN, &flags, माप(flags));
 		nla->nla_len += nla_xdp->nla_len;
-	}
+	पूर्ण
 
-	if (flags & XDP_FLAGS_REPLACE) {
-		nla_xdp = (struct nlattr *)((char *)nla + nla->nla_len);
+	अगर (flags & XDP_FLAGS_REPLACE) अणु
+		nla_xdp = (काष्ठा nlattr *)((अक्षर *)nla + nla->nla_len);
 		nla_xdp->nla_type = IFLA_XDP_EXPECTED_FD;
-		nla_xdp->nla_len = NLA_HDRLEN + sizeof(old_fd);
-		memcpy((char *)nla_xdp + NLA_HDRLEN, &old_fd, sizeof(old_fd));
+		nla_xdp->nla_len = NLA_HDRLEN + माप(old_fd);
+		स_नकल((अक्षर *)nla_xdp + NLA_HDRLEN, &old_fd, माप(old_fd));
 		nla->nla_len += nla_xdp->nla_len;
-	}
+	पूर्ण
 
 	req.nh.nlmsg_len += NLA_ALIGN(nla->nla_len);
 
-	if (send(sock, &req, req.nh.nlmsg_len, 0) < 0) {
-		ret = -errno;
-		goto cleanup;
-	}
-	ret = bpf_netlink_recv(sock, nl_pid, seq, NULL, NULL, NULL);
+	अगर (send(sock, &req, req.nh.nlmsg_len, 0) < 0) अणु
+		ret = -त्रुटि_सं;
+		जाओ cleanup;
+	पूर्ण
+	ret = bpf_netlink_recv(sock, nl_pid, seq, शून्य, शून्य, शून्य);
 
 cleanup:
-	close(sock);
-	return ret;
-}
+	बंद(sock);
+	वापस ret;
+पूर्ण
 
-int bpf_set_link_xdp_fd_opts(int ifindex, int fd, __u32 flags,
-			     const struct bpf_xdp_set_link_opts *opts)
-{
-	int old_fd = -1;
+पूर्णांक bpf_set_link_xdp_fd_opts(पूर्णांक अगरindex, पूर्णांक fd, __u32 flags,
+			     स्थिर काष्ठा bpf_xdp_set_link_opts *opts)
+अणु
+	पूर्णांक old_fd = -1;
 
-	if (!OPTS_VALID(opts, bpf_xdp_set_link_opts))
-		return -EINVAL;
+	अगर (!OPTS_VALID(opts, bpf_xdp_set_link_opts))
+		वापस -EINVAL;
 
-	if (OPTS_HAS(opts, old_fd)) {
+	अगर (OPTS_HAS(opts, old_fd)) अणु
 		old_fd = OPTS_GET(opts, old_fd, -1);
 		flags |= XDP_FLAGS_REPLACE;
-	}
+	पूर्ण
 
-	return __bpf_set_link_xdp_fd_replace(ifindex, fd,
+	वापस __bpf_set_link_xdp_fd_replace(अगरindex, fd,
 					     old_fd,
 					     flags);
-}
+पूर्ण
 
-int bpf_set_link_xdp_fd(int ifindex, int fd, __u32 flags)
-{
-	return __bpf_set_link_xdp_fd_replace(ifindex, fd, 0, flags);
-}
+पूर्णांक bpf_set_link_xdp_fd(पूर्णांक अगरindex, पूर्णांक fd, __u32 flags)
+अणु
+	वापस __bpf_set_link_xdp_fd_replace(अगरindex, fd, 0, flags);
+पूर्ण
 
-static int __dump_link_nlmsg(struct nlmsghdr *nlh,
-			     libbpf_dump_nlmsg_t dump_link_nlmsg, void *cookie)
-{
-	struct nlattr *tb[IFLA_MAX + 1], *attr;
-	struct ifinfomsg *ifi = NLMSG_DATA(nlh);
-	int len;
+अटल पूर्णांक __dump_link_nlmsg(काष्ठा nlmsghdr *nlh,
+			     libbpf_dump_nlmsg_t dump_link_nlmsg, व्योम *cookie)
+अणु
+	काष्ठा nlattr *tb[IFLA_MAX + 1], *attr;
+	काष्ठा अगरinfomsg *अगरi = NLMSG_DATA(nlh);
+	पूर्णांक len;
 
-	len = nlh->nlmsg_len - NLMSG_LENGTH(sizeof(*ifi));
-	attr = (struct nlattr *) ((void *) ifi + NLMSG_ALIGN(sizeof(*ifi)));
-	if (libbpf_nla_parse(tb, IFLA_MAX, attr, len, NULL) != 0)
-		return -LIBBPF_ERRNO__NLPARSE;
+	len = nlh->nlmsg_len - NLMSG_LENGTH(माप(*अगरi));
+	attr = (काष्ठा nlattr *) ((व्योम *) अगरi + NLMSG_ALIGN(माप(*अगरi)));
+	अगर (libbpf_nla_parse(tb, IFLA_MAX, attr, len, शून्य) != 0)
+		वापस -LIBBPF_ERRNO__NLPARSE;
 
-	return dump_link_nlmsg(cookie, ifi, tb);
-}
+	वापस dump_link_nlmsg(cookie, अगरi, tb);
+पूर्ण
 
-static int get_xdp_info(void *cookie, void *msg, struct nlattr **tb)
-{
-	struct nlattr *xdp_tb[IFLA_XDP_MAX + 1];
-	struct xdp_id_md *xdp_id = cookie;
-	struct ifinfomsg *ifinfo = msg;
-	int ret;
+अटल पूर्णांक get_xdp_info(व्योम *cookie, व्योम *msg, काष्ठा nlattr **tb)
+अणु
+	काष्ठा nlattr *xdp_tb[IFLA_XDP_MAX + 1];
+	काष्ठा xdp_id_md *xdp_id = cookie;
+	काष्ठा अगरinfomsg *अगरinfo = msg;
+	पूर्णांक ret;
 
-	if (xdp_id->ifindex && xdp_id->ifindex != ifinfo->ifi_index)
-		return 0;
+	अगर (xdp_id->अगरindex && xdp_id->अगरindex != अगरinfo->अगरi_index)
+		वापस 0;
 
-	if (!tb[IFLA_XDP])
-		return 0;
+	अगर (!tb[IFLA_XDP])
+		वापस 0;
 
-	ret = libbpf_nla_parse_nested(xdp_tb, IFLA_XDP_MAX, tb[IFLA_XDP], NULL);
-	if (ret)
-		return ret;
+	ret = libbpf_nla_parse_nested(xdp_tb, IFLA_XDP_MAX, tb[IFLA_XDP], शून्य);
+	अगर (ret)
+		वापस ret;
 
-	if (!xdp_tb[IFLA_XDP_ATTACHED])
-		return 0;
+	अगर (!xdp_tb[IFLA_XDP_ATTACHED])
+		वापस 0;
 
 	xdp_id->info.attach_mode = libbpf_nla_getattr_u8(
 		xdp_tb[IFLA_XDP_ATTACHED]);
 
-	if (xdp_id->info.attach_mode == XDP_ATTACHED_NONE)
-		return 0;
+	अगर (xdp_id->info.attach_mode == XDP_ATTACHED_NONE)
+		वापस 0;
 
-	if (xdp_tb[IFLA_XDP_PROG_ID])
+	अगर (xdp_tb[IFLA_XDP_PROG_ID])
 		xdp_id->info.prog_id = libbpf_nla_getattr_u32(
 			xdp_tb[IFLA_XDP_PROG_ID]);
 
-	if (xdp_tb[IFLA_XDP_SKB_PROG_ID])
+	अगर (xdp_tb[IFLA_XDP_SKB_PROG_ID])
 		xdp_id->info.skb_prog_id = libbpf_nla_getattr_u32(
 			xdp_tb[IFLA_XDP_SKB_PROG_ID]);
 
-	if (xdp_tb[IFLA_XDP_DRV_PROG_ID])
+	अगर (xdp_tb[IFLA_XDP_DRV_PROG_ID])
 		xdp_id->info.drv_prog_id = libbpf_nla_getattr_u32(
 			xdp_tb[IFLA_XDP_DRV_PROG_ID]);
 
-	if (xdp_tb[IFLA_XDP_HW_PROG_ID])
+	अगर (xdp_tb[IFLA_XDP_HW_PROG_ID])
 		xdp_id->info.hw_prog_id = libbpf_nla_getattr_u32(
 			xdp_tb[IFLA_XDP_HW_PROG_ID]);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int libbpf_nl_get_link(int sock, unsigned int nl_pid,
-			      libbpf_dump_nlmsg_t dump_link_nlmsg, void *cookie);
+अटल पूर्णांक libbpf_nl_get_link(पूर्णांक sock, अचिन्हित पूर्णांक nl_pid,
+			      libbpf_dump_nlmsg_t dump_link_nlmsg, व्योम *cookie);
 
-int bpf_get_link_xdp_info(int ifindex, struct xdp_link_info *info,
-			  size_t info_size, __u32 flags)
-{
-	struct xdp_id_md xdp_id = {};
-	int sock, ret;
+पूर्णांक bpf_get_link_xdp_info(पूर्णांक अगरindex, काष्ठा xdp_link_info *info,
+			  माप_प्रकार info_size, __u32 flags)
+अणु
+	काष्ठा xdp_id_md xdp_id = अणुपूर्ण;
+	पूर्णांक sock, ret;
 	__u32 nl_pid = 0;
 	__u32 mask;
 
-	if (flags & ~XDP_FLAGS_MASK || !info_size)
-		return -EINVAL;
+	अगर (flags & ~XDP_FLAGS_MASK || !info_size)
+		वापस -EINVAL;
 
-	/* Check whether the single {HW,DRV,SKB} mode is set */
+	/* Check whether the single अणुHW,DRV,SKBपूर्ण mode is set */
 	flags &= (XDP_FLAGS_SKB_MODE | XDP_FLAGS_DRV_MODE | XDP_FLAGS_HW_MODE);
 	mask = flags - 1;
-	if (flags && flags & mask)
-		return -EINVAL;
+	अगर (flags && flags & mask)
+		वापस -EINVAL;
 
-	sock = libbpf_netlink_open(&nl_pid);
-	if (sock < 0)
-		return sock;
+	sock = libbpf_netlink_खोलो(&nl_pid);
+	अगर (sock < 0)
+		वापस sock;
 
-	xdp_id.ifindex = ifindex;
+	xdp_id.अगरindex = अगरindex;
 	xdp_id.flags = flags;
 
 	ret = libbpf_nl_get_link(sock, nl_pid, get_xdp_info, &xdp_id);
-	if (!ret) {
-		size_t sz = min(info_size, sizeof(xdp_id.info));
+	अगर (!ret) अणु
+		माप_प्रकार sz = min(info_size, माप(xdp_id.info));
 
-		memcpy(info, &xdp_id.info, sz);
-		memset((void *) info + sz, 0, info_size - sz);
-	}
+		स_नकल(info, &xdp_id.info, sz);
+		स_रखो((व्योम *) info + sz, 0, info_size - sz);
+	पूर्ण
 
-	close(sock);
-	return ret;
-}
+	बंद(sock);
+	वापस ret;
+पूर्ण
 
-static __u32 get_xdp_id(struct xdp_link_info *info, __u32 flags)
-{
+अटल __u32 get_xdp_id(काष्ठा xdp_link_info *info, __u32 flags)
+अणु
 	flags &= XDP_FLAGS_MODES;
 
-	if (info->attach_mode != XDP_ATTACHED_MULTI && !flags)
-		return info->prog_id;
-	if (flags & XDP_FLAGS_DRV_MODE)
-		return info->drv_prog_id;
-	if (flags & XDP_FLAGS_HW_MODE)
-		return info->hw_prog_id;
-	if (flags & XDP_FLAGS_SKB_MODE)
-		return info->skb_prog_id;
+	अगर (info->attach_mode != XDP_ATTACHED_MULTI && !flags)
+		वापस info->prog_id;
+	अगर (flags & XDP_FLAGS_DRV_MODE)
+		वापस info->drv_prog_id;
+	अगर (flags & XDP_FLAGS_HW_MODE)
+		वापस info->hw_prog_id;
+	अगर (flags & XDP_FLAGS_SKB_MODE)
+		वापस info->skb_prog_id;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int bpf_get_link_xdp_id(int ifindex, __u32 *prog_id, __u32 flags)
-{
-	struct xdp_link_info info;
-	int ret;
+पूर्णांक bpf_get_link_xdp_id(पूर्णांक अगरindex, __u32 *prog_id, __u32 flags)
+अणु
+	काष्ठा xdp_link_info info;
+	पूर्णांक ret;
 
-	ret = bpf_get_link_xdp_info(ifindex, &info, sizeof(info), flags);
-	if (!ret)
+	ret = bpf_get_link_xdp_info(अगरindex, &info, माप(info), flags);
+	अगर (!ret)
 		*prog_id = get_xdp_id(&info, flags);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int libbpf_nl_get_link(int sock, unsigned int nl_pid,
-		       libbpf_dump_nlmsg_t dump_link_nlmsg, void *cookie)
-{
-	struct {
-		struct nlmsghdr nlh;
-		struct ifinfomsg ifm;
-	} req = {
-		.nlh.nlmsg_len = NLMSG_LENGTH(sizeof(struct ifinfomsg)),
+पूर्णांक libbpf_nl_get_link(पूर्णांक sock, अचिन्हित पूर्णांक nl_pid,
+		       libbpf_dump_nlmsg_t dump_link_nlmsg, व्योम *cookie)
+अणु
+	काष्ठा अणु
+		काष्ठा nlmsghdr nlh;
+		काष्ठा अगरinfomsg अगरm;
+	पूर्ण req = अणु
+		.nlh.nlmsg_len = NLMSG_LENGTH(माप(काष्ठा अगरinfomsg)),
 		.nlh.nlmsg_type = RTM_GETLINK,
 		.nlh.nlmsg_flags = NLM_F_DUMP | NLM_F_REQUEST,
-		.ifm.ifi_family = AF_PACKET,
-	};
-	int seq = time(NULL);
+		.अगरm.अगरi_family = AF_PACKET,
+	पूर्ण;
+	पूर्णांक seq = समय(शून्य);
 
 	req.nlh.nlmsg_seq = seq;
-	if (send(sock, &req, req.nlh.nlmsg_len, 0) < 0)
-		return -errno;
+	अगर (send(sock, &req, req.nlh.nlmsg_len, 0) < 0)
+		वापस -त्रुटि_सं;
 
-	return bpf_netlink_recv(sock, nl_pid, seq, __dump_link_nlmsg,
+	वापस bpf_netlink_recv(sock, nl_pid, seq, __dump_link_nlmsg,
 				dump_link_nlmsg, cookie);
-}
+पूर्ण

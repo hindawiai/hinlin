@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /* Atlantic Network Driver
  *
  * Copyright (C) 2014-2019 aQuantia Corporation
@@ -9,34 +10,34 @@
  * layer.
  */
 
-#ifndef AQ_HW_UTILS_H
-#define AQ_HW_UTILS_H
+#अगर_अघोषित AQ_HW_UTILS_H
+#घोषणा AQ_HW_UTILS_H
 
-#include <linux/iopoll.h>
+#समावेश <linux/iopoll.h>
 
-#include "aq_common.h"
+#समावेश "aq_common.h"
 
-#ifndef HIDWORD
-#define LODWORD(_qw)    ((u32)(_qw))
-#define HIDWORD(_qw)    ((u32)(((_qw) >> 32) & 0xffffffff))
-#endif
+#अगर_अघोषित HIDWORD
+#घोषणा LODWORD(_qw)    ((u32)(_qw))
+#घोषणा HIDWORD(_qw)    ((u32)(((_qw) >> 32) & 0xffffffff))
+#पूर्ण_अगर
 
-#define AQ_HW_SLEEP(_US_) mdelay(_US_)
+#घोषणा AQ_HW_SLEEP(_US_) mdelay(_US_)
 
-#define aq_pr_err(...) pr_err(AQ_CFG_DRV_NAME ": " __VA_ARGS__)
-#define aq_pr_trace(...) pr_info(AQ_CFG_DRV_NAME ": " __VA_ARGS__)
+#घोषणा aq_pr_err(...) pr_err(AQ_CFG_DRV_NAME ": " __VA_ARGS__)
+#घोषणा aq_pr_trace(...) pr_info(AQ_CFG_DRV_NAME ": " __VA_ARGS__)
 
-struct aq_hw_s;
+काष्ठा aq_hw_s;
 
-void aq_hw_write_reg_bit(struct aq_hw_s *aq_hw, u32 addr, u32 msk,
-			 u32 shift, u32 val);
-u32 aq_hw_read_reg_bit(struct aq_hw_s *aq_hw, u32 addr, u32 msk, u32 shift);
-u32 aq_hw_read_reg(struct aq_hw_s *hw, u32 reg);
-void aq_hw_write_reg(struct aq_hw_s *hw, u32 reg, u32 value);
-u64 aq_hw_read_reg64(struct aq_hw_s *hw, u32 reg);
-void aq_hw_write_reg64(struct aq_hw_s *hw, u32 reg, u64 value);
-int aq_hw_err_from_flags(struct aq_hw_s *hw);
-int aq_hw_num_tcs(struct aq_hw_s *hw);
-int aq_hw_q_per_tc(struct aq_hw_s *hw);
+व्योम aq_hw_ग_लिखो_reg_bit(काष्ठा aq_hw_s *aq_hw, u32 addr, u32 msk,
+			 u32 shअगरt, u32 val);
+u32 aq_hw_पढ़ो_reg_bit(काष्ठा aq_hw_s *aq_hw, u32 addr, u32 msk, u32 shअगरt);
+u32 aq_hw_पढ़ो_reg(काष्ठा aq_hw_s *hw, u32 reg);
+व्योम aq_hw_ग_लिखो_reg(काष्ठा aq_hw_s *hw, u32 reg, u32 value);
+u64 aq_hw_पढ़ो_reg64(काष्ठा aq_hw_s *hw, u32 reg);
+व्योम aq_hw_ग_लिखो_reg64(काष्ठा aq_hw_s *hw, u32 reg, u64 value);
+पूर्णांक aq_hw_err_from_flags(काष्ठा aq_hw_s *hw);
+पूर्णांक aq_hw_num_tcs(काष्ठा aq_hw_s *hw);
+पूर्णांक aq_hw_q_per_tc(काष्ठा aq_hw_s *hw);
 
-#endif /* AQ_HW_UTILS_H */
+#पूर्ण_अगर /* AQ_HW_UTILS_H */

@@ -1,88 +1,89 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (C) 2015 Jakub Kicinski <kubakici@wp.pl>
  */
 
-#include "mt7601u.h"
-#include "dma.h"
-#include "usb.h"
-#include "trace.h"
+#समावेश "mt7601u.h"
+#समावेश "dma.h"
+#समावेश "usb.h"
+#समावेश "trace.h"
 
-static int mt7601u_submit_rx_buf(struct mt7601u_dev *dev,
-				 struct mt7601u_dma_buf_rx *e, gfp_t gfp);
+अटल पूर्णांक mt7601u_submit_rx_buf(काष्ठा mt7601u_dev *dev,
+				 काष्ठा mt7601u_dma_buf_rx *e, gfp_t gfp);
 
-static unsigned int ieee80211_get_hdrlen_from_buf(const u8 *data, unsigned len)
-{
-	const struct ieee80211_hdr *hdr = (const struct ieee80211_hdr *)data;
-	unsigned int hdrlen;
+अटल अचिन्हित पूर्णांक ieee80211_get_hdrlen_from_buf(स्थिर u8 *data, अचिन्हित len)
+अणु
+	स्थिर काष्ठा ieee80211_hdr *hdr = (स्थिर काष्ठा ieee80211_hdr *)data;
+	अचिन्हित पूर्णांक hdrlen;
 
-	if (unlikely(len < 10))
-		return 0;
+	अगर (unlikely(len < 10))
+		वापस 0;
 	hdrlen = ieee80211_hdrlen(hdr->frame_control);
-	if (unlikely(hdrlen > len))
-		return 0;
-	return hdrlen;
-}
+	अगर (unlikely(hdrlen > len))
+		वापस 0;
+	वापस hdrlen;
+पूर्ण
 
-static struct sk_buff *
-mt7601u_rx_skb_from_seg(struct mt7601u_dev *dev, struct mt7601u_rxwi *rxwi,
-			void *data, u32 seg_len, u32 truesize, struct page *p)
-{
-	struct sk_buff *skb;
+अटल काष्ठा sk_buff *
+mt7601u_rx_skb_from_seg(काष्ठा mt7601u_dev *dev, काष्ठा mt7601u_rxwi *rxwi,
+			व्योम *data, u32 seg_len, u32 truesize, काष्ठा page *p)
+अणु
+	काष्ठा sk_buff *skb;
 	u32 true_len, hdr_len = 0, copy, frag;
 
 	skb = alloc_skb(p ? 128 : seg_len, GFP_ATOMIC);
-	if (!skb)
-		return NULL;
+	अगर (!skb)
+		वापस शून्य;
 
 	true_len = mt76_mac_process_rx(dev, skb, data, rxwi);
-	if (!true_len || true_len > seg_len)
-		goto bad_frame;
+	अगर (!true_len || true_len > seg_len)
+		जाओ bad_frame;
 
 	hdr_len = ieee80211_get_hdrlen_from_buf(data, true_len);
-	if (!hdr_len)
-		goto bad_frame;
+	अगर (!hdr_len)
+		जाओ bad_frame;
 
-	if (rxwi->rxinfo & cpu_to_le32(MT_RXINFO_L2PAD)) {
+	अगर (rxwi->rxinfo & cpu_to_le32(MT_RXINFO_L2PAD)) अणु
 		skb_put_data(skb, data, hdr_len);
 
 		data += hdr_len + 2;
 		true_len -= hdr_len;
 		hdr_len = 0;
-	}
+	पूर्ण
 
-	/* If not doing paged RX allocated skb will always have enough space */
+	/* If not करोing paged RX allocated skb will always have enough space */
 	copy = (true_len <= skb_tailroom(skb)) ? true_len : hdr_len + 8;
 	frag = true_len - copy;
 
 	skb_put_data(skb, data, copy);
 	data += copy;
 
-	if (frag) {
+	अगर (frag) अणु
 		skb_add_rx_frag(skb, 0, p, data - page_address(p),
 				frag, truesize);
 		get_page(p);
-	}
+	पूर्ण
 
-	return skb;
+	वापस skb;
 
 bad_frame:
 	dev_err_ratelimited(dev->dev, "Error: incorrect frame len:%u hdr:%u\n",
 			    true_len, hdr_len);
-	dev_kfree_skb(skb);
-	return NULL;
-}
+	dev_kमुक्त_skb(skb);
+	वापस शून्य;
+पूर्ण
 
-static void mt7601u_rx_process_seg(struct mt7601u_dev *dev, u8 *data,
-				   u32 seg_len, struct page *p,
-				   struct list_head *list)
-{
-	struct sk_buff *skb;
-	struct mt7601u_rxwi *rxwi;
+अटल व्योम mt7601u_rx_process_seg(काष्ठा mt7601u_dev *dev, u8 *data,
+				   u32 seg_len, काष्ठा page *p,
+				   काष्ठा list_head *list)
+अणु
+	काष्ठा sk_buff *skb;
+	काष्ठा mt7601u_rxwi *rxwi;
 	u32 fce_info, truesize = seg_len;
 
 	/* DMA_INFO field at the beginning of the segment contains only some of
-	 * the information, we need to read the FCE descriptor from the end.
+	 * the inक्रमmation, we need to पढ़ो the FCE descriptor from the end.
 	 */
 	fce_info = get_unaligned_le32(data + seg_len - MT_FCE_INFO_LEN);
 	seg_len -= MT_FCE_INFO_LEN;
@@ -90,93 +91,93 @@ static void mt7601u_rx_process_seg(struct mt7601u_dev *dev, u8 *data,
 	data += MT_DMA_HDR_LEN;
 	seg_len -= MT_DMA_HDR_LEN;
 
-	rxwi = (struct mt7601u_rxwi *) data;
-	data += sizeof(struct mt7601u_rxwi);
-	seg_len -= sizeof(struct mt7601u_rxwi);
+	rxwi = (काष्ठा mt7601u_rxwi *) data;
+	data += माप(काष्ठा mt7601u_rxwi);
+	seg_len -= माप(काष्ठा mt7601u_rxwi);
 
-	if (unlikely(rxwi->zero[0] || rxwi->zero[1] || rxwi->zero[2]))
+	अगर (unlikely(rxwi->zero[0] || rxwi->zero[1] || rxwi->zero[2]))
 		dev_err_once(dev->dev, "Error: RXWI zero fields are set\n");
-	if (unlikely(FIELD_GET(MT_RXD_INFO_TYPE, fce_info)))
+	अगर (unlikely(FIELD_GET(MT_RXD_INFO_TYPE, fce_info)))
 		dev_err_once(dev->dev, "Error: RX path seen a non-pkt urb\n");
 
 	trace_mt_rx(dev, rxwi, fce_info);
 
 	skb = mt7601u_rx_skb_from_seg(dev, rxwi, data, seg_len, truesize, p);
-	if (!skb)
-		return;
+	अगर (!skb)
+		वापस;
 
 	local_bh_disable();
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 
-	ieee80211_rx_list(dev->hw, NULL, skb, list);
+	ieee80211_rx_list(dev->hw, शून्य, skb, list);
 
-	rcu_read_unlock();
+	rcu_पढ़ो_unlock();
 	local_bh_enable();
-}
+पूर्ण
 
-static u16 mt7601u_rx_next_seg_len(u8 *data, u32 data_len)
-{
+अटल u16 mt7601u_rx_next_seg_len(u8 *data, u32 data_len)
+अणु
 	u32 min_seg_len = MT_DMA_HDR_LEN + MT_RX_INFO_LEN +
-		sizeof(struct mt7601u_rxwi) + MT_FCE_INFO_LEN;
+		माप(काष्ठा mt7601u_rxwi) + MT_FCE_INFO_LEN;
 	u16 dma_len = get_unaligned_le16(data);
 
-	if (data_len < min_seg_len ||
+	अगर (data_len < min_seg_len ||
 	    WARN_ON_ONCE(!dma_len) ||
 	    WARN_ON_ONCE(dma_len + MT_DMA_HDRS > data_len) ||
 	    WARN_ON_ONCE(dma_len & 0x3))
-		return 0;
+		वापस 0;
 
-	return MT_DMA_HDRS + dma_len;
-}
+	वापस MT_DMA_HDRS + dma_len;
+पूर्ण
 
-static void
-mt7601u_rx_process_entry(struct mt7601u_dev *dev, struct mt7601u_dma_buf_rx *e)
-{
+अटल व्योम
+mt7601u_rx_process_entry(काष्ठा mt7601u_dev *dev, काष्ठा mt7601u_dma_buf_rx *e)
+अणु
 	u32 seg_len, data_len = e->urb->actual_length;
 	u8 *data = page_address(e->p);
-	struct page *new_p = NULL;
+	काष्ठा page *new_p = शून्य;
 	LIST_HEAD(list);
-	int cnt = 0;
+	पूर्णांक cnt = 0;
 
-	if (!test_bit(MT7601U_STATE_INITIALIZED, &dev->state))
-		return;
+	अगर (!test_bit(MT7601U_STATE_INITIALIZED, &dev->state))
+		वापस;
 
-	/* Copy if there is very little data in the buffer. */
-	if (data_len > 512)
+	/* Copy अगर there is very little data in the buffer. */
+	अगर (data_len > 512)
 		new_p = dev_alloc_pages(MT_RX_ORDER);
 
-	while ((seg_len = mt7601u_rx_next_seg_len(data, data_len))) {
+	जबतक ((seg_len = mt7601u_rx_next_seg_len(data, data_len))) अणु
 		mt7601u_rx_process_seg(dev, data, seg_len,
-				       new_p ? e->p : NULL, &list);
+				       new_p ? e->p : शून्य, &list);
 
 		data_len -= seg_len;
 		data += seg_len;
 		cnt++;
-	}
+	पूर्ण
 
-	if (cnt > 1)
+	अगर (cnt > 1)
 		trace_mt_rx_dma_aggr(dev, cnt, !!new_p);
 
-	netif_receive_skb_list(&list);
+	netअगर_receive_skb_list(&list);
 
-	if (new_p) {
+	अगर (new_p) अणु
 		/* we have one extra ref from the allocator */
 		put_page(e->p);
 		e->p = new_p;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static struct mt7601u_dma_buf_rx *
-mt7601u_rx_get_pending_entry(struct mt7601u_dev *dev)
-{
-	struct mt7601u_rx_queue *q = &dev->rx_q;
-	struct mt7601u_dma_buf_rx *buf = NULL;
-	unsigned long flags;
+अटल काष्ठा mt7601u_dma_buf_rx *
+mt7601u_rx_get_pending_entry(काष्ठा mt7601u_dev *dev)
+अणु
+	काष्ठा mt7601u_rx_queue *q = &dev->rx_q;
+	काष्ठा mt7601u_dma_buf_rx *buf = शून्य;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&dev->rx_lock, flags);
 
-	if (!q->pending)
-		goto out;
+	अगर (!q->pending)
+		जाओ out;
 
 	buf = &q->e[q->start];
 	q->pending--;
@@ -184,223 +185,223 @@ mt7601u_rx_get_pending_entry(struct mt7601u_dev *dev)
 out:
 	spin_unlock_irqrestore(&dev->rx_lock, flags);
 
-	return buf;
-}
+	वापस buf;
+पूर्ण
 
-static void mt7601u_complete_rx(struct urb *urb)
-{
-	struct mt7601u_dev *dev = urb->context;
-	struct mt7601u_rx_queue *q = &dev->rx_q;
-	unsigned long flags;
+अटल व्योम mt7601u_complete_rx(काष्ठा urb *urb)
+अणु
+	काष्ठा mt7601u_dev *dev = urb->context;
+	काष्ठा mt7601u_rx_queue *q = &dev->rx_q;
+	अचिन्हित दीर्घ flags;
 
-	/* do no schedule rx tasklet if urb has been unlinked
-	 * or the device has been removed
+	/* करो no schedule rx tasklet अगर urb has been unlinked
+	 * or the device has been हटाओd
 	 */
-	switch (urb->status) {
-	case -ECONNRESET:
-	case -ESHUTDOWN:
-	case -ENOENT:
-	case -EPROTO:
-		return;
-	default:
+	चयन (urb->status) अणु
+	हाल -ECONNRESET:
+	हाल -ESHUTDOWN:
+	हाल -ENOENT:
+	हाल -EPROTO:
+		वापस;
+	शेष:
 		dev_err_ratelimited(dev->dev, "rx urb failed: %d\n",
 				    urb->status);
 		fallthrough;
-	case 0:
-		break;
-	}
+	हाल 0:
+		अवरोध;
+	पूर्ण
 
 	spin_lock_irqsave(&dev->rx_lock, flags);
-	if (WARN_ONCE(q->e[q->end].urb != urb, "RX urb mismatch"))
-		goto out;
+	अगर (WARN_ONCE(q->e[q->end].urb != urb, "RX urb mismatch"))
+		जाओ out;
 
 	q->end = (q->end + 1) % q->entries;
 	q->pending++;
 	tasklet_schedule(&dev->rx_tasklet);
 out:
 	spin_unlock_irqrestore(&dev->rx_lock, flags);
-}
+पूर्ण
 
-static void mt7601u_rx_tasklet(struct tasklet_struct *t)
-{
-	struct mt7601u_dev *dev = from_tasklet(dev, t, rx_tasklet);
-	struct mt7601u_dma_buf_rx *e;
+अटल व्योम mt7601u_rx_tasklet(काष्ठा tasklet_काष्ठा *t)
+अणु
+	काष्ठा mt7601u_dev *dev = from_tasklet(dev, t, rx_tasklet);
+	काष्ठा mt7601u_dma_buf_rx *e;
 
-	while ((e = mt7601u_rx_get_pending_entry(dev))) {
-		if (e->urb->status)
-			continue;
+	जबतक ((e = mt7601u_rx_get_pending_entry(dev))) अणु
+		अगर (e->urb->status)
+			जारी;
 
 		mt7601u_rx_process_entry(dev, e);
 		mt7601u_submit_rx_buf(dev, e, GFP_ATOMIC);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void mt7601u_complete_tx(struct urb *urb)
-{
-	struct mt7601u_tx_queue *q = urb->context;
-	struct mt7601u_dev *dev = q->dev;
-	struct sk_buff *skb;
-	unsigned long flags;
+अटल व्योम mt7601u_complete_tx(काष्ठा urb *urb)
+अणु
+	काष्ठा mt7601u_tx_queue *q = urb->context;
+	काष्ठा mt7601u_dev *dev = q->dev;
+	काष्ठा sk_buff *skb;
+	अचिन्हित दीर्घ flags;
 
-	switch (urb->status) {
-	case -ECONNRESET:
-	case -ESHUTDOWN:
-	case -ENOENT:
-	case -EPROTO:
-		return;
-	default:
+	चयन (urb->status) अणु
+	हाल -ECONNRESET:
+	हाल -ESHUTDOWN:
+	हाल -ENOENT:
+	हाल -EPROTO:
+		वापस;
+	शेष:
 		dev_err_ratelimited(dev->dev, "tx urb failed: %d\n",
 				    urb->status);
 		fallthrough;
-	case 0:
-		break;
-	}
+	हाल 0:
+		अवरोध;
+	पूर्ण
 
 	spin_lock_irqsave(&dev->tx_lock, flags);
-	if (WARN_ONCE(q->e[q->start].urb != urb, "TX urb mismatch"))
-		goto out;
+	अगर (WARN_ONCE(q->e[q->start].urb != urb, "TX urb mismatch"))
+		जाओ out;
 
 	skb = q->e[q->start].skb;
-	q->e[q->start].skb = NULL;
-	trace_mt_tx_dma_done(dev, skb);
+	q->e[q->start].skb = शून्य;
+	trace_mt_tx_dma_करोne(dev, skb);
 
-	__skb_queue_tail(&dev->tx_skb_done, skb);
+	__skb_queue_tail(&dev->tx_skb_करोne, skb);
 	tasklet_schedule(&dev->tx_tasklet);
 
-	if (q->used == q->entries - q->entries / 8)
+	अगर (q->used == q->entries - q->entries / 8)
 		ieee80211_wake_queue(dev->hw, skb_get_queue_mapping(skb));
 
 	q->start = (q->start + 1) % q->entries;
 	q->used--;
 out:
 	spin_unlock_irqrestore(&dev->tx_lock, flags);
-}
+पूर्ण
 
-static void mt7601u_tx_tasklet(struct tasklet_struct *t)
-{
-	struct mt7601u_dev *dev = from_tasklet(dev, t, tx_tasklet);
-	struct sk_buff_head skbs;
-	unsigned long flags;
+अटल व्योम mt7601u_tx_tasklet(काष्ठा tasklet_काष्ठा *t)
+अणु
+	काष्ठा mt7601u_dev *dev = from_tasklet(dev, t, tx_tasklet);
+	काष्ठा sk_buff_head skbs;
+	अचिन्हित दीर्घ flags;
 
 	__skb_queue_head_init(&skbs);
 
 	spin_lock_irqsave(&dev->tx_lock, flags);
 
 	set_bit(MT7601U_STATE_MORE_STATS, &dev->state);
-	if (!test_and_set_bit(MT7601U_STATE_READING_STATS, &dev->state))
+	अगर (!test_and_set_bit(MT7601U_STATE_READING_STATS, &dev->state))
 		queue_delayed_work(dev->stat_wq, &dev->stat_work,
-				   msecs_to_jiffies(10));
+				   msecs_to_jअगरfies(10));
 
-	skb_queue_splice_init(&dev->tx_skb_done, &skbs);
+	skb_queue_splice_init(&dev->tx_skb_करोne, &skbs);
 
 	spin_unlock_irqrestore(&dev->tx_lock, flags);
 
-	while (!skb_queue_empty(&skbs)) {
-		struct sk_buff *skb = __skb_dequeue(&skbs);
+	जबतक (!skb_queue_empty(&skbs)) अणु
+		काष्ठा sk_buff *skb = __skb_dequeue(&skbs);
 
 		mt7601u_tx_status(dev, skb);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int mt7601u_dma_submit_tx(struct mt7601u_dev *dev,
-				 struct sk_buff *skb, u8 ep)
-{
-	struct usb_device *usb_dev = mt7601u_to_usb_dev(dev);
-	unsigned snd_pipe = usb_sndbulkpipe(usb_dev, dev->out_eps[ep]);
-	struct mt7601u_dma_buf_tx *e;
-	struct mt7601u_tx_queue *q = &dev->tx_q[ep];
-	unsigned long flags;
-	int ret;
+अटल पूर्णांक mt7601u_dma_submit_tx(काष्ठा mt7601u_dev *dev,
+				 काष्ठा sk_buff *skb, u8 ep)
+अणु
+	काष्ठा usb_device *usb_dev = mt7601u_to_usb_dev(dev);
+	अचिन्हित snd_pipe = usb_sndbulkpipe(usb_dev, dev->out_eps[ep]);
+	काष्ठा mt7601u_dma_buf_tx *e;
+	काष्ठा mt7601u_tx_queue *q = &dev->tx_q[ep];
+	अचिन्हित दीर्घ flags;
+	पूर्णांक ret;
 
 	spin_lock_irqsave(&dev->tx_lock, flags);
 
-	if (WARN_ON(q->entries <= q->used)) {
+	अगर (WARN_ON(q->entries <= q->used)) अणु
 		ret = -ENOSPC;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	e = &q->e[q->end];
 	usb_fill_bulk_urb(e->urb, usb_dev, snd_pipe, skb->data, skb->len,
 			  mt7601u_complete_tx, q);
 	ret = usb_submit_urb(e->urb, GFP_ATOMIC);
-	if (ret) {
+	अगर (ret) अणु
 		/* Special-handle ENODEV from TX urb submission because it will
-		 * often be the first ENODEV we see after device is removed.
+		 * often be the first ENODEV we see after device is हटाओd.
 		 */
-		if (ret == -ENODEV)
+		अगर (ret == -ENODEV)
 			set_bit(MT7601U_STATE_REMOVED, &dev->state);
-		else
+		अन्यथा
 			dev_err(dev->dev, "Error: TX urb submit failed:%d\n",
 				ret);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	q->end = (q->end + 1) % q->entries;
 	q->used++;
 	e->skb = skb;
 
-	if (q->used >= q->entries)
+	अगर (q->used >= q->entries)
 		ieee80211_stop_queue(dev->hw, skb_get_queue_mapping(skb));
 out:
 	spin_unlock_irqrestore(&dev->tx_lock, flags);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-/* Map hardware Q to USB endpoint number */
-static u8 q2ep(u8 qid)
-{
+/* Map hardware Q to USB endpoपूर्णांक number */
+अटल u8 q2ep(u8 qid)
+अणु
 	/* TODO: take management packets to queue 5 */
-	return qid + 1;
-}
+	वापस qid + 1;
+पूर्ण
 
-/* Map USB endpoint number to Q id in the DMA engine */
-static enum mt76_qsel ep2dmaq(u8 ep)
-{
-	if (ep == 5)
-		return MT_QSEL_MGMT;
-	return MT_QSEL_EDCA;
-}
+/* Map USB endpoपूर्णांक number to Q id in the DMA engine */
+अटल क्रमागत mt76_qsel ep2dmaq(u8 ep)
+अणु
+	अगर (ep == 5)
+		वापस MT_QSEL_MGMT;
+	वापस MT_QSEL_EDCA;
+पूर्ण
 
-int mt7601u_dma_enqueue_tx(struct mt7601u_dev *dev, struct sk_buff *skb,
-			   struct mt76_wcid *wcid, int hw_q)
-{
+पूर्णांक mt7601u_dma_enqueue_tx(काष्ठा mt7601u_dev *dev, काष्ठा sk_buff *skb,
+			   काष्ठा mt76_wcid *wcid, पूर्णांक hw_q)
+अणु
 	u8 ep = q2ep(hw_q);
 	u32 dma_flags;
-	int ret;
+	पूर्णांक ret;
 
 	dma_flags = MT_TXD_PKT_INFO_80211;
-	if (wcid->hw_key_idx == 0xff)
+	अगर (wcid->hw_key_idx == 0xff)
 		dma_flags |= MT_TXD_PKT_INFO_WIV;
 
 	ret = mt7601u_dma_skb_wrap_pkt(skb, ep2dmaq(ep), dma_flags);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ret = mt7601u_dma_submit_tx(dev, skb, ep);
-	if (ret) {
-		ieee80211_free_txskb(dev->hw, skb);
-		return ret;
-	}
+	अगर (ret) अणु
+		ieee80211_मुक्त_txskb(dev->hw, skb);
+		वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void mt7601u_kill_rx(struct mt7601u_dev *dev)
-{
-	int i;
+अटल व्योम mt7601u_समाप्त_rx(काष्ठा mt7601u_dev *dev)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < dev->rx_q.entries; i++)
+	क्रम (i = 0; i < dev->rx_q.entries; i++)
 		usb_poison_urb(dev->rx_q.e[i].urb);
-}
+पूर्ण
 
-static int mt7601u_submit_rx_buf(struct mt7601u_dev *dev,
-				 struct mt7601u_dma_buf_rx *e, gfp_t gfp)
-{
-	struct usb_device *usb_dev = mt7601u_to_usb_dev(dev);
+अटल पूर्णांक mt7601u_submit_rx_buf(काष्ठा mt7601u_dev *dev,
+				 काष्ठा mt7601u_dma_buf_rx *e, gfp_t gfp)
+अणु
+	काष्ठा usb_device *usb_dev = mt7601u_to_usb_dev(dev);
 	u8 *buf = page_address(e->p);
-	unsigned pipe;
-	int ret;
+	अचिन्हित pipe;
+	पूर्णांक ret;
 
 	pipe = usb_rcvbulkpipe(usb_dev, dev->in_eps[MT_EP_IN_PKT_RX]);
 
@@ -409,142 +410,142 @@ static int mt7601u_submit_rx_buf(struct mt7601u_dev *dev,
 
 	trace_mt_submit_urb(dev, e->urb);
 	ret = usb_submit_urb(e->urb, gfp);
-	if (ret)
+	अगर (ret)
 		dev_err(dev->dev, "Error: submit RX URB failed:%d\n", ret);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int mt7601u_submit_rx(struct mt7601u_dev *dev)
-{
-	int i, ret;
+अटल पूर्णांक mt7601u_submit_rx(काष्ठा mt7601u_dev *dev)
+अणु
+	पूर्णांक i, ret;
 
-	for (i = 0; i < dev->rx_q.entries; i++) {
+	क्रम (i = 0; i < dev->rx_q.entries; i++) अणु
 		ret = mt7601u_submit_rx_buf(dev, &dev->rx_q.e[i], GFP_KERNEL);
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void mt7601u_free_rx(struct mt7601u_dev *dev)
-{
-	int i;
+अटल व्योम mt7601u_मुक्त_rx(काष्ठा mt7601u_dev *dev)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < dev->rx_q.entries; i++) {
-		__free_pages(dev->rx_q.e[i].p, MT_RX_ORDER);
-		usb_free_urb(dev->rx_q.e[i].urb);
-	}
-}
+	क्रम (i = 0; i < dev->rx_q.entries; i++) अणु
+		__मुक्त_pages(dev->rx_q.e[i].p, MT_RX_ORDER);
+		usb_मुक्त_urb(dev->rx_q.e[i].urb);
+	पूर्ण
+पूर्ण
 
-static int mt7601u_alloc_rx(struct mt7601u_dev *dev)
-{
-	int i;
+अटल पूर्णांक mt7601u_alloc_rx(काष्ठा mt7601u_dev *dev)
+अणु
+	पूर्णांक i;
 
-	memset(&dev->rx_q, 0, sizeof(dev->rx_q));
+	स_रखो(&dev->rx_q, 0, माप(dev->rx_q));
 	dev->rx_q.dev = dev;
 	dev->rx_q.entries = N_RX_ENTRIES;
 
-	for (i = 0; i < N_RX_ENTRIES; i++) {
+	क्रम (i = 0; i < N_RX_ENTRIES; i++) अणु
 		dev->rx_q.e[i].urb = usb_alloc_urb(0, GFP_KERNEL);
 		dev->rx_q.e[i].p = dev_alloc_pages(MT_RX_ORDER);
 
-		if (!dev->rx_q.e[i].urb || !dev->rx_q.e[i].p)
-			return -ENOMEM;
-	}
+		अगर (!dev->rx_q.e[i].urb || !dev->rx_q.e[i].p)
+			वापस -ENOMEM;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void mt7601u_free_tx_queue(struct mt7601u_tx_queue *q)
-{
-	int i;
+अटल व्योम mt7601u_मुक्त_tx_queue(काष्ठा mt7601u_tx_queue *q)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < q->entries; i++)  {
+	क्रम (i = 0; i < q->entries; i++)  अणु
 		usb_poison_urb(q->e[i].urb);
-		if (q->e[i].skb)
+		अगर (q->e[i].skb)
 			mt7601u_tx_status(q->dev, q->e[i].skb);
-		usb_free_urb(q->e[i].urb);
-	}
-}
+		usb_मुक्त_urb(q->e[i].urb);
+	पूर्ण
+पूर्ण
 
-static void mt7601u_free_tx(struct mt7601u_dev *dev)
-{
-	int i;
+अटल व्योम mt7601u_मुक्त_tx(काष्ठा mt7601u_dev *dev)
+अणु
+	पूर्णांक i;
 
-	if (!dev->tx_q)
-		return;
+	अगर (!dev->tx_q)
+		वापस;
 
-	for (i = 0; i < __MT_EP_OUT_MAX; i++)
-		mt7601u_free_tx_queue(&dev->tx_q[i]);
-}
+	क्रम (i = 0; i < __MT_EP_OUT_MAX; i++)
+		mt7601u_मुक्त_tx_queue(&dev->tx_q[i]);
+पूर्ण
 
-static int mt7601u_alloc_tx_queue(struct mt7601u_dev *dev,
-				  struct mt7601u_tx_queue *q)
-{
-	int i;
+अटल पूर्णांक mt7601u_alloc_tx_queue(काष्ठा mt7601u_dev *dev,
+				  काष्ठा mt7601u_tx_queue *q)
+अणु
+	पूर्णांक i;
 
 	q->dev = dev;
 	q->entries = N_TX_ENTRIES;
 
-	for (i = 0; i < N_TX_ENTRIES; i++) {
+	क्रम (i = 0; i < N_TX_ENTRIES; i++) अणु
 		q->e[i].urb = usb_alloc_urb(0, GFP_KERNEL);
-		if (!q->e[i].urb)
-			return -ENOMEM;
-	}
+		अगर (!q->e[i].urb)
+			वापस -ENOMEM;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mt7601u_alloc_tx(struct mt7601u_dev *dev)
-{
-	int i;
+अटल पूर्णांक mt7601u_alloc_tx(काष्ठा mt7601u_dev *dev)
+अणु
+	पूर्णांक i;
 
-	dev->tx_q = devm_kcalloc(dev->dev, __MT_EP_OUT_MAX,
-				 sizeof(*dev->tx_q), GFP_KERNEL);
-	if (!dev->tx_q)
-		return -ENOMEM;
+	dev->tx_q = devm_kसुस्मृति(dev->dev, __MT_EP_OUT_MAX,
+				 माप(*dev->tx_q), GFP_KERNEL);
+	अगर (!dev->tx_q)
+		वापस -ENOMEM;
 
-	for (i = 0; i < __MT_EP_OUT_MAX; i++)
-		if (mt7601u_alloc_tx_queue(dev, &dev->tx_q[i]))
-			return -ENOMEM;
+	क्रम (i = 0; i < __MT_EP_OUT_MAX; i++)
+		अगर (mt7601u_alloc_tx_queue(dev, &dev->tx_q[i]))
+			वापस -ENOMEM;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int mt7601u_dma_init(struct mt7601u_dev *dev)
-{
-	int ret = -ENOMEM;
+पूर्णांक mt7601u_dma_init(काष्ठा mt7601u_dev *dev)
+अणु
+	पूर्णांक ret = -ENOMEM;
 
 	tasklet_setup(&dev->tx_tasklet, mt7601u_tx_tasklet);
 	tasklet_setup(&dev->rx_tasklet, mt7601u_rx_tasklet);
 
 	ret = mt7601u_alloc_tx(dev);
-	if (ret)
-		goto err;
+	अगर (ret)
+		जाओ err;
 	ret = mt7601u_alloc_rx(dev);
-	if (ret)
-		goto err;
+	अगर (ret)
+		जाओ err;
 
 	ret = mt7601u_submit_rx(dev);
-	if (ret)
-		goto err;
+	अगर (ret)
+		जाओ err;
 
-	return 0;
+	वापस 0;
 err:
 	mt7601u_dma_cleanup(dev);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-void mt7601u_dma_cleanup(struct mt7601u_dev *dev)
-{
-	mt7601u_kill_rx(dev);
+व्योम mt7601u_dma_cleanup(काष्ठा mt7601u_dev *dev)
+अणु
+	mt7601u_समाप्त_rx(dev);
 
-	tasklet_kill(&dev->rx_tasklet);
+	tasklet_समाप्त(&dev->rx_tasklet);
 
-	mt7601u_free_rx(dev);
-	mt7601u_free_tx(dev);
+	mt7601u_मुक्त_rx(dev);
+	mt7601u_मुक्त_tx(dev);
 
-	tasklet_kill(&dev->tx_tasklet);
-}
+	tasklet_समाप्त(&dev->tx_tasklet);
+पूर्ण

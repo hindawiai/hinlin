@@ -1,25 +1,26 @@
-#ifndef __MEDIA_INFO_H__
-#define __MEDIA_INFO_H__
+<शैली गुरु>
+#अगर_अघोषित __MEDIA_INFO_H__
+#घोषणा __MEDIA_INFO_H__
 
-#ifndef MSM_MEDIA_ALIGN
-#define MSM_MEDIA_ALIGN(__sz, __align) (((__align) & ((__align) - 1)) ?\
+#अगर_अघोषित MSM_MEDIA_ALIGN
+#घोषणा MSM_MEDIA_ALIGN(__sz, __align) (((__align) & ((__align) - 1)) ?\
 	((((__sz) + (__align) - 1) / (__align)) * (__align)) :\
 	(((__sz) + (__align) - 1) & (~((__align) - 1))))
-#endif
+#पूर्ण_अगर
 
-#ifndef MSM_MEDIA_ROUNDUP
-#define MSM_MEDIA_ROUNDUP(__sz, __r) (((__sz) + ((__r) - 1)) / (__r))
-#endif
+#अगर_अघोषित MSM_MEDIA_ROUNDUP
+#घोषणा MSM_MEDIA_ROUNDUP(__sz, __r) (((__sz) + ((__r) - 1)) / (__r))
+#पूर्ण_अगर
 
-#ifndef MSM_MEDIA_MAX
-#define MSM_MEDIA_MAX(__a, __b) ((__a) > (__b)?(__a):(__b))
-#endif
+#अगर_अघोषित MSM_MEDIA_MAX
+#घोषणा MSM_MEDIA_MAX(__a, __b) ((__a) > (__b)?(__a):(__b))
+#पूर्ण_अगर
 
-enum color_fmts {
+क्रमागत color_fmts अणु
 	/* Venus NV12:
 	 * YUV 4:2:0 image with a plane of 8 bit Y samples followed
-	 * by an interleaved U/V plane containing 8 bit 2x2 subsampled
-	 * colour difference samples.
+	 * by an पूर्णांकerleaved U/V plane containing 8 bit 2x2 subsampled
+	 * colour dअगरference samples.
 	 *
 	 * <-------- Y/UV_Stride -------->
 	 * <------- Width ------->
@@ -56,8 +57,8 @@ enum color_fmts {
 
 	/* Venus NV21:
 	 * YUV 4:2:0 image with a plane of 8 bit Y samples followed
-	 * by an interleaved V/U plane containing 8 bit 2x2 subsampled
-	 * colour difference samples.
+	 * by an पूर्णांकerleaved V/U plane containing 8 bit 2x2 subsampled
+	 * colour dअगरference samples.
 	 *
 	 * <-------- Y/UV_Stride -------->
 	 * <------- Width ------->
@@ -95,8 +96,8 @@ enum color_fmts {
 	 * Two YUV 4:2:0 images/views one after the other
 	 * in a top-bottom layout, same as NV12
 	 * with a plane of 8 bit Y samples followed
-	 * by an interleaved U/V plane containing 8 bit 2x2 subsampled
-	 * colour difference samples.
+	 * by an पूर्णांकerleaved U/V plane containing 8 bit 2x2 subsampled
+	 * colour dअगरference samples.
 	 *
 	 *
 	 * <-------- Y/UV_Stride -------->
@@ -156,28 +157,28 @@ enum color_fmts {
 	 * (2) Venus NV12 UBWC Interlaced
 	 *
 	 * (1) Venus NV12 UBWC Progressive Buffer Format:
-	 * Compressed Macro-tile format for NV12.
+	 * Compressed Macro-tile क्रमmat क्रम NV12.
 	 * Contains 4 planes in the following order -
 	 * (A) Y_Meta_Plane
 	 * (B) Y_UBWC_Plane
 	 * (C) UV_Meta_Plane
 	 * (D) UV_UBWC_Plane
 	 *
-	 * Y_Meta_Plane consists of meta information to decode compressed
+	 * Y_Meta_Plane consists of meta inक्रमmation to decode compressed
 	 * tile data in Y_UBWC_Plane.
-	 * Y_UBWC_Plane consists of Y data in compressed macro-tile format.
+	 * Y_UBWC_Plane consists of Y data in compressed macro-tile क्रमmat.
 	 * UBWC decoder block will use the Y_Meta_Plane data together with
 	 * Y_UBWC_Plane data to produce loss-less uncompressed 8 bit Y samples.
 	 *
-	 * UV_Meta_Plane consists of meta information to decode compressed
+	 * UV_Meta_Plane consists of meta inक्रमmation to decode compressed
 	 * tile data in UV_UBWC_Plane.
-	 * UV_UBWC_Plane consists of UV data in compressed macro-tile format.
+	 * UV_UBWC_Plane consists of UV data in compressed macro-tile क्रमmat.
 	 * UBWC decoder block will use UV_Meta_Plane data together with
 	 * UV_UBWC_Plane data to produce loss-less uncompressed 8 bit 2x2
-	 * subsampled color difference samples.
+	 * subsampled color dअगरference samples.
 	 *
 	 * Each tile in Y_UBWC_Plane/UV_UBWC_Plane is independently decodable
-	 * and randomly accessible. There is no dependency between tiles.
+	 * and अक्रमomly accessible. There is no dependency between tiles.
 	 *
 	 * <----- Y_Meta_Stride ---->
 	 * <-------- Width ------>
@@ -244,7 +245,7 @@ enum color_fmts {
 	 *
 	 *
 	 * (2) Venus NV12 UBWC Interlaced Buffer Format:
-	 * Compressed Macro-tile format for NV12 interlaced.
+	 * Compressed Macro-tile क्रमmat क्रम NV12 पूर्णांकerlaced.
 	 * Contains 8 planes in the following order -
 	 * (A) Y_Meta_Top_Field_Plane
 	 * (B) Y_UBWC_Top_Field_Plane
@@ -254,46 +255,46 @@ enum color_fmts {
 	 * (F) Y_UBWC_Bottom_Field_Plane
 	 * (G) UV_Meta_Bottom_Field_Plane
 	 * (H) UV_UBWC_Bottom_Field_Plane
-	 * Y_Meta_Top_Field_Plane consists of meta information to decode
-	 * compressed tile data for Y_UBWC_Top_Field_Plane.
+	 * Y_Meta_Top_Field_Plane consists of meta inक्रमmation to decode
+	 * compressed tile data क्रम Y_UBWC_Top_Field_Plane.
 	 * Y_UBWC_Top_Field_Plane consists of Y data in compressed macro-tile
-	 * format for top field of an interlaced frame.
+	 * क्रमmat क्रम top field of an पूर्णांकerlaced frame.
 	 * UBWC decoder block will use the Y_Meta_Top_Field_Plane data together
 	 * with Y_UBWC_Top_Field_Plane data to produce loss-less uncompressed
-	 * 8 bit Y samples for top field of an interlaced frame.
+	 * 8 bit Y samples क्रम top field of an पूर्णांकerlaced frame.
 	 *
-	 * UV_Meta_Top_Field_Plane consists of meta information to decode
+	 * UV_Meta_Top_Field_Plane consists of meta inक्रमmation to decode
 	 * compressed tile data in UV_UBWC_Top_Field_Plane.
 	 * UV_UBWC_Top_Field_Plane consists of UV data in compressed macro-tile
-	 * format for top field of an interlaced frame.
+	 * क्रमmat क्रम top field of an पूर्णांकerlaced frame.
 	 * UBWC decoder block will use UV_Meta_Top_Field_Plane data together
 	 * with UV_UBWC_Top_Field_Plane data to produce loss-less uncompressed
-	 * 8 bit subsampled color difference samples for top field of an
-	 * interlaced frame.
+	 * 8 bit subsampled color dअगरference samples क्रम top field of an
+	 * पूर्णांकerlaced frame.
 	 *
 	 * Each tile in Y_UBWC_Top_Field_Plane/UV_UBWC_Top_Field_Plane is
-	 * independently decodable and randomly accessible. There is no
+	 * independently decodable and अक्रमomly accessible. There is no
 	 * dependency between tiles.
 	 *
-	 * Y_Meta_Bottom_Field_Plane consists of meta information to decode
-	 * compressed tile data for Y_UBWC_Bottom_Field_Plane.
+	 * Y_Meta_Bottom_Field_Plane consists of meta inक्रमmation to decode
+	 * compressed tile data क्रम Y_UBWC_Bottom_Field_Plane.
 	 * Y_UBWC_Bottom_Field_Plane consists of Y data in compressed macro-tile
-	 * format for bottom field of an interlaced frame.
+	 * क्रमmat क्रम bottom field of an पूर्णांकerlaced frame.
 	 * UBWC decoder block will use the Y_Meta_Bottom_Field_Plane data
 	 * together with Y_UBWC_Bottom_Field_Plane data to produce loss-less
-	 * uncompressed 8 bit Y samples for bottom field of an interlaced frame.
+	 * uncompressed 8 bit Y samples क्रम bottom field of an पूर्णांकerlaced frame.
 	 *
-	 * UV_Meta_Bottom_Field_Plane consists of meta information to decode
+	 * UV_Meta_Bottom_Field_Plane consists of meta inक्रमmation to decode
 	 * compressed tile data in UV_UBWC_Bottom_Field_Plane.
 	 * UV_UBWC_Bottom_Field_Plane consists of UV data in compressed
-	 * macro-tile format for bottom field of an interlaced frame.
+	 * macro-tile क्रमmat क्रम bottom field of an पूर्णांकerlaced frame.
 	 * UBWC decoder block will use UV_Meta_Bottom_Field_Plane data together
 	 * with UV_UBWC_Bottom_Field_Plane data to produce loss-less
-	 * uncompressed 8 bit subsampled color difference samples for bottom
-	 * field of an interlaced frame.
+	 * uncompressed 8 bit subsampled color dअगरference samples क्रम bottom
+	 * field of an पूर्णांकerlaced frame.
 	 *
 	 * Each tile in Y_UBWC_Bottom_Field_Plane/UV_UBWC_Bottom_Field_Plane is
-	 * independently decodable and randomly accessible. There is no
+	 * independently decodable and अक्रमomly accessible. There is no
 	 * dependency between tiles.
 	 *
 	 * <-----Y_TF_Meta_Stride---->
@@ -424,28 +425,28 @@ enum color_fmts {
 	 */
 	COLOR_FMT_NV12_UBWC,
 	/* Venus NV12 10-bit UBWC:
-	 * Compressed Macro-tile format for NV12.
+	 * Compressed Macro-tile क्रमmat क्रम NV12.
 	 * Contains 4 planes in the following order -
 	 * (A) Y_Meta_Plane
 	 * (B) Y_UBWC_Plane
 	 * (C) UV_Meta_Plane
 	 * (D) UV_UBWC_Plane
 	 *
-	 * Y_Meta_Plane consists of meta information to decode compressed
+	 * Y_Meta_Plane consists of meta inक्रमmation to decode compressed
 	 * tile data in Y_UBWC_Plane.
-	 * Y_UBWC_Plane consists of Y data in compressed macro-tile format.
+	 * Y_UBWC_Plane consists of Y data in compressed macro-tile क्रमmat.
 	 * UBWC decoder block will use the Y_Meta_Plane data together with
 	 * Y_UBWC_Plane data to produce loss-less uncompressed 10 bit Y samples.
 	 *
-	 * UV_Meta_Plane consists of meta information to decode compressed
+	 * UV_Meta_Plane consists of meta inक्रमmation to decode compressed
 	 * tile data in UV_UBWC_Plane.
-	 * UV_UBWC_Plane consists of UV data in compressed macro-tile format.
+	 * UV_UBWC_Plane consists of UV data in compressed macro-tile क्रमmat.
 	 * UBWC decoder block will use UV_Meta_Plane data together with
 	 * UV_UBWC_Plane data to produce loss-less uncompressed 10 bit 2x2
-	 * subsampled color difference samples.
+	 * subsampled color dअगरference samples.
 	 *
 	 * Each tile in Y_UBWC_Plane/UV_UBWC_Plane is independently decodable
-	 * and randomly accessible. There is no dependency between tiles.
+	 * and अक्रमomly accessible. There is no dependency between tiles.
 	 *
 	 * <----- Y_Meta_Stride ----->
 	 * <-------- Width ------>
@@ -512,7 +513,7 @@ enum color_fmts {
 	 *           + max(Extradata, Y_Stride * 48), 4096)
 	 */
 	COLOR_FMT_NV12_BPP10_UBWC,
-	/* Venus RGBA8888 format:
+	/* Venus RGBA8888 क्रमmat:
 	 * Contains 1 plane in the following order -
 	 * (A) RGBA plane
 	 *
@@ -539,7 +540,7 @@ enum color_fmts {
 	 * Total size = align(RGB_Plane_size + Extradata, 4096)
 	 */
 	COLOR_FMT_RGBA8888,
-	/* Venus RGBA8888 UBWC format:
+	/* Venus RGBA8888 UBWC क्रमmat:
 	 * Contains 2 planes in the following order -
 	 * (A) Meta plane
 	 * (B) RGBA plane
@@ -586,7 +587,7 @@ enum color_fmts {
 	 *		Extradata, 4096)
 	 */
 	COLOR_FMT_RGBA8888_UBWC,
-	/* Venus RGBA1010102 UBWC format:
+	/* Venus RGBA1010102 UBWC क्रमmat:
 	 * Contains 2 planes in the following order -
 	 * (A) Meta plane
 	 * (B) RGBA plane
@@ -633,7 +634,7 @@ enum color_fmts {
 	 *		Extradata, 4096)
 	 */
 	COLOR_FMT_RGBA1010102_UBWC,
-	/* Venus RGB565 UBWC format:
+	/* Venus RGB565 UBWC क्रमmat:
 	 * Contains 2 planes in the following order -
 	 * (A) Meta plane
 	 * (B) RGB plane
@@ -681,28 +682,28 @@ enum color_fmts {
 	 */
 	COLOR_FMT_RGB565_UBWC,
 	/* P010 UBWC:
-	 * Compressed Macro-tile format for NV12.
+	 * Compressed Macro-tile क्रमmat क्रम NV12.
 	 * Contains 4 planes in the following order -
 	 * (A) Y_Meta_Plane
 	 * (B) Y_UBWC_Plane
 	 * (C) UV_Meta_Plane
 	 * (D) UV_UBWC_Plane
 	 *
-	 * Y_Meta_Plane consists of meta information to decode compressed
+	 * Y_Meta_Plane consists of meta inक्रमmation to decode compressed
 	 * tile data in Y_UBWC_Plane.
-	 * Y_UBWC_Plane consists of Y data in compressed macro-tile format.
+	 * Y_UBWC_Plane consists of Y data in compressed macro-tile क्रमmat.
 	 * UBWC decoder block will use the Y_Meta_Plane data together with
 	 * Y_UBWC_Plane data to produce loss-less uncompressed 10 bit Y samples.
 	 *
-	 * UV_Meta_Plane consists of meta information to decode compressed
+	 * UV_Meta_Plane consists of meta inक्रमmation to decode compressed
 	 * tile data in UV_UBWC_Plane.
-	 * UV_UBWC_Plane consists of UV data in compressed macro-tile format.
+	 * UV_UBWC_Plane consists of UV data in compressed macro-tile क्रमmat.
 	 * UBWC decoder block will use UV_Meta_Plane data together with
 	 * UV_UBWC_Plane data to produce loss-less uncompressed 10 bit 2x2
-	 * subsampled color difference samples.
+	 * subsampled color dअगरference samples.
 	 *
 	 * Each tile in Y_UBWC_Plane/UV_UBWC_Plane is independently decodable
-	 * and randomly accessible. There is no dependency between tiles.
+	 * and अक्रमomly accessible. There is no dependency between tiles.
 	 *
 	 * <----- Y_Meta_Stride ----->
 	 * <-------- Width ------>
@@ -771,8 +772,8 @@ enum color_fmts {
 	COLOR_FMT_P010_UBWC,
 	/* Venus P010:
 	 * YUV 4:2:0 image with a plane of 10 bit Y samples followed
-	 * by an interleaved U/V plane containing 10 bit 2x2 subsampled
-	 * colour difference samples.
+	 * by an पूर्णांकerleaved U/V plane containing 10 bit 2x2 subsampled
+	 * colour dअगरference samples.
 	 *
 	 * <-------- Y/UV_Stride -------->
 	 * <------- Width ------->
@@ -806,48 +807,12 @@ enum color_fmts {
 	 *          + max(Extradata, Y_Stride * 8), 4096)
 	 */
 	COLOR_FMT_P010,
-};
+पूर्ण;
 
-#define COLOR_FMT_RGBA1010102_UBWC	COLOR_FMT_RGBA1010102_UBWC
-#define COLOR_FMT_RGB565_UBWC		COLOR_FMT_RGB565_UBWC
-#define COLOR_FMT_P010_UBWC		COLOR_FMT_P010_UBWC
-#define COLOR_FMT_P010		COLOR_FMT_P010
-
-/*
- * Function arguments:
- * @color_fmt
- * @width
- * Progressive: width
- * Interlaced: width
- */
-static unsigned int VENUS_Y_STRIDE(int color_fmt, int width)
-{
-	unsigned int stride = 0;
-
-	if (!width)
-		return 0;
-
-	switch (color_fmt) {
-	case COLOR_FMT_NV21:
-	case COLOR_FMT_NV12:
-	case COLOR_FMT_NV12_MVTB:
-	case COLOR_FMT_NV12_UBWC:
-		stride = MSM_MEDIA_ALIGN(width, 128);
-		break;
-	case COLOR_FMT_NV12_BPP10_UBWC:
-		stride = MSM_MEDIA_ALIGN(width, 192);
-		stride = MSM_MEDIA_ALIGN(stride * 4 / 3, 256);
-		break;
-	case COLOR_FMT_P010_UBWC:
-		stride = MSM_MEDIA_ALIGN(width * 2, 256);
-		break;
-	case COLOR_FMT_P010:
-		stride = MSM_MEDIA_ALIGN(width * 2, 128);
-		break;
-	}
-
-	return stride;
-}
+#घोषणा COLOR_FMT_RGBA1010102_UBWC	COLOR_FMT_RGBA1010102_UBWC
+#घोषणा COLOR_FMT_RGB565_UBWC		COLOR_FMT_RGB565_UBWC
+#घोषणा COLOR_FMT_P010_UBWC		COLOR_FMT_P010_UBWC
+#घोषणा COLOR_FMT_P010		COLOR_FMT_P010
 
 /*
  * Function arguments:
@@ -856,34 +821,70 @@ static unsigned int VENUS_Y_STRIDE(int color_fmt, int width)
  * Progressive: width
  * Interlaced: width
  */
-static unsigned int VENUS_UV_STRIDE(int color_fmt, int width)
-{
-	unsigned int stride = 0;
+अटल अचिन्हित पूर्णांक VENUS_Y_STRIDE(पूर्णांक color_fmt, पूर्णांक width)
+अणु
+	अचिन्हित पूर्णांक stride = 0;
 
-	if (!width)
-		return 0;
+	अगर (!width)
+		वापस 0;
 
-	switch (color_fmt) {
-	case COLOR_FMT_NV21:
-	case COLOR_FMT_NV12:
-	case COLOR_FMT_NV12_MVTB:
-	case COLOR_FMT_NV12_UBWC:
+	चयन (color_fmt) अणु
+	हाल COLOR_FMT_NV21:
+	हाल COLOR_FMT_NV12:
+	हाल COLOR_FMT_NV12_MVTB:
+	हाल COLOR_FMT_NV12_UBWC:
 		stride = MSM_MEDIA_ALIGN(width, 128);
-		break;
-	case COLOR_FMT_NV12_BPP10_UBWC:
+		अवरोध;
+	हाल COLOR_FMT_NV12_BPP10_UBWC:
 		stride = MSM_MEDIA_ALIGN(width, 192);
 		stride = MSM_MEDIA_ALIGN(stride * 4 / 3, 256);
-		break;
-	case COLOR_FMT_P010_UBWC:
+		अवरोध;
+	हाल COLOR_FMT_P010_UBWC:
 		stride = MSM_MEDIA_ALIGN(width * 2, 256);
-		break;
-	case COLOR_FMT_P010:
+		अवरोध;
+	हाल COLOR_FMT_P010:
 		stride = MSM_MEDIA_ALIGN(width * 2, 128);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return stride;
-}
+	वापस stride;
+पूर्ण
+
+/*
+ * Function arguments:
+ * @color_fmt
+ * @width
+ * Progressive: width
+ * Interlaced: width
+ */
+अटल अचिन्हित पूर्णांक VENUS_UV_STRIDE(पूर्णांक color_fmt, पूर्णांक width)
+अणु
+	अचिन्हित पूर्णांक stride = 0;
+
+	अगर (!width)
+		वापस 0;
+
+	चयन (color_fmt) अणु
+	हाल COLOR_FMT_NV21:
+	हाल COLOR_FMT_NV12:
+	हाल COLOR_FMT_NV12_MVTB:
+	हाल COLOR_FMT_NV12_UBWC:
+		stride = MSM_MEDIA_ALIGN(width, 128);
+		अवरोध;
+	हाल COLOR_FMT_NV12_BPP10_UBWC:
+		stride = MSM_MEDIA_ALIGN(width, 192);
+		stride = MSM_MEDIA_ALIGN(stride * 4 / 3, 256);
+		अवरोध;
+	हाल COLOR_FMT_P010_UBWC:
+		stride = MSM_MEDIA_ALIGN(width * 2, 256);
+		अवरोध;
+	हाल COLOR_FMT_P010:
+		stride = MSM_MEDIA_ALIGN(width * 2, 128);
+		अवरोध;
+	पूर्ण
+
+	वापस stride;
+पूर्ण
 
 /*
  * Function arguments:
@@ -892,29 +893,29 @@ static unsigned int VENUS_UV_STRIDE(int color_fmt, int width)
  * Progressive: height
  * Interlaced: (height+1)>>1
  */
-static unsigned int VENUS_Y_SCANLINES(int color_fmt, int height)
-{
-	unsigned int sclines = 0;
+अटल अचिन्हित पूर्णांक VENUS_Y_SCANLINES(पूर्णांक color_fmt, पूर्णांक height)
+अणु
+	अचिन्हित पूर्णांक sclines = 0;
 
-	if (!height)
-		return 0;
+	अगर (!height)
+		वापस 0;
 
-	switch (color_fmt) {
-	case COLOR_FMT_NV21:
-	case COLOR_FMT_NV12:
-	case COLOR_FMT_NV12_MVTB:
-	case COLOR_FMT_NV12_UBWC:
-	case COLOR_FMT_P010:
+	चयन (color_fmt) अणु
+	हाल COLOR_FMT_NV21:
+	हाल COLOR_FMT_NV12:
+	हाल COLOR_FMT_NV12_MVTB:
+	हाल COLOR_FMT_NV12_UBWC:
+	हाल COLOR_FMT_P010:
 		sclines = MSM_MEDIA_ALIGN(height, 32);
-		break;
-	case COLOR_FMT_NV12_BPP10_UBWC:
-	case COLOR_FMT_P010_UBWC:
+		अवरोध;
+	हाल COLOR_FMT_NV12_BPP10_UBWC:
+	हाल COLOR_FMT_P010_UBWC:
 		sclines = MSM_MEDIA_ALIGN(height, 16);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return sclines;
-}
+	वापस sclines;
+पूर्ण
 
 /*
  * Function arguments:
@@ -923,29 +924,29 @@ static unsigned int VENUS_Y_SCANLINES(int color_fmt, int height)
  * Progressive: height
  * Interlaced: (height+1)>>1
  */
-static unsigned int VENUS_UV_SCANLINES(int color_fmt, int height)
-{
-	unsigned int sclines = 0;
+अटल अचिन्हित पूर्णांक VENUS_UV_SCANLINES(पूर्णांक color_fmt, पूर्णांक height)
+अणु
+	अचिन्हित पूर्णांक sclines = 0;
 
-	if (!height)
-		return 0;
+	अगर (!height)
+		वापस 0;
 
-	switch (color_fmt) {
-	case COLOR_FMT_NV21:
-	case COLOR_FMT_NV12:
-	case COLOR_FMT_NV12_MVTB:
-	case COLOR_FMT_NV12_BPP10_UBWC:
-	case COLOR_FMT_P010_UBWC:
-	case COLOR_FMT_P010:
+	चयन (color_fmt) अणु
+	हाल COLOR_FMT_NV21:
+	हाल COLOR_FMT_NV12:
+	हाल COLOR_FMT_NV12_MVTB:
+	हाल COLOR_FMT_NV12_BPP10_UBWC:
+	हाल COLOR_FMT_P010_UBWC:
+	हाल COLOR_FMT_P010:
 		sclines = MSM_MEDIA_ALIGN((height + 1) >> 1, 16);
-		break;
-	case COLOR_FMT_NV12_UBWC:
+		अवरोध;
+	हाल COLOR_FMT_NV12_UBWC:
 		sclines = MSM_MEDIA_ALIGN((height + 1) >> 1, 32);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return sclines;
-}
+	वापस sclines;
+पूर्ण
 
 /*
  * Function arguments:
@@ -954,28 +955,28 @@ static unsigned int VENUS_UV_SCANLINES(int color_fmt, int height)
  * Progressive: width
  * Interlaced: width
  */
-static unsigned int VENUS_Y_META_STRIDE(int color_fmt, int width)
-{
-	int y_tile_width = 0, y_meta_stride;
+अटल अचिन्हित पूर्णांक VENUS_Y_META_STRIDE(पूर्णांक color_fmt, पूर्णांक width)
+अणु
+	पूर्णांक y_tile_width = 0, y_meta_stride;
 
-	if (!width)
-		return 0;
+	अगर (!width)
+		वापस 0;
 
-	switch (color_fmt) {
-	case COLOR_FMT_NV12_UBWC:
-	case COLOR_FMT_P010_UBWC:
+	चयन (color_fmt) अणु
+	हाल COLOR_FMT_NV12_UBWC:
+	हाल COLOR_FMT_P010_UBWC:
 		y_tile_width = 32;
-		break;
-	case COLOR_FMT_NV12_BPP10_UBWC:
+		अवरोध;
+	हाल COLOR_FMT_NV12_BPP10_UBWC:
 		y_tile_width = 48;
-		break;
-	default:
-		return 0;
-	}
+		अवरोध;
+	शेष:
+		वापस 0;
+	पूर्ण
 
 	y_meta_stride = MSM_MEDIA_ROUNDUP(width, y_tile_width);
-	return MSM_MEDIA_ALIGN(y_meta_stride, 64);
-}
+	वापस MSM_MEDIA_ALIGN(y_meta_stride, 64);
+पूर्ण
 
 /*
  * Function arguments:
@@ -984,28 +985,28 @@ static unsigned int VENUS_Y_META_STRIDE(int color_fmt, int width)
  * Progressive: height
  * Interlaced: (height+1)>>1
  */
-static unsigned int VENUS_Y_META_SCANLINES(int color_fmt, int height)
-{
-	int y_tile_height = 0, y_meta_scanlines;
+अटल अचिन्हित पूर्णांक VENUS_Y_META_SCANLINES(पूर्णांक color_fmt, पूर्णांक height)
+अणु
+	पूर्णांक y_tile_height = 0, y_meta_scanlines;
 
-	if (!height)
-		return 0;
+	अगर (!height)
+		वापस 0;
 
-	switch (color_fmt) {
-	case COLOR_FMT_NV12_UBWC:
+	चयन (color_fmt) अणु
+	हाल COLOR_FMT_NV12_UBWC:
 		y_tile_height = 8;
-		break;
-	case COLOR_FMT_NV12_BPP10_UBWC:
-	case COLOR_FMT_P010_UBWC:
+		अवरोध;
+	हाल COLOR_FMT_NV12_BPP10_UBWC:
+	हाल COLOR_FMT_P010_UBWC:
 		y_tile_height = 4;
-		break;
-	default:
-		return 0;
-	}
+		अवरोध;
+	शेष:
+		वापस 0;
+	पूर्ण
 
 	y_meta_scanlines = MSM_MEDIA_ROUNDUP(height, y_tile_height);
-	return MSM_MEDIA_ALIGN(y_meta_scanlines, 16);
-}
+	वापस MSM_MEDIA_ALIGN(y_meta_scanlines, 16);
+पूर्ण
 
 /*
  * Function arguments:
@@ -1014,28 +1015,28 @@ static unsigned int VENUS_Y_META_SCANLINES(int color_fmt, int height)
  * Progressive: width
  * Interlaced: width
  */
-static unsigned int VENUS_UV_META_STRIDE(int color_fmt, int width)
-{
-	int uv_tile_width = 0, uv_meta_stride;
+अटल अचिन्हित पूर्णांक VENUS_UV_META_STRIDE(पूर्णांक color_fmt, पूर्णांक width)
+अणु
+	पूर्णांक uv_tile_width = 0, uv_meta_stride;
 
-	if (!width)
-		return 0;
+	अगर (!width)
+		वापस 0;
 
-	switch (color_fmt) {
-	case COLOR_FMT_NV12_UBWC:
-	case COLOR_FMT_P010_UBWC:
+	चयन (color_fmt) अणु
+	हाल COLOR_FMT_NV12_UBWC:
+	हाल COLOR_FMT_P010_UBWC:
 		uv_tile_width = 16;
-		break;
-	case COLOR_FMT_NV12_BPP10_UBWC:
+		अवरोध;
+	हाल COLOR_FMT_NV12_BPP10_UBWC:
 		uv_tile_width = 24;
-		break;
-	default:
-		return 0;
-	}
+		अवरोध;
+	शेष:
+		वापस 0;
+	पूर्ण
 
 	uv_meta_stride = MSM_MEDIA_ROUNDUP((width+1)>>1, uv_tile_width);
-	return MSM_MEDIA_ALIGN(uv_meta_stride, 64);
-}
+	वापस MSM_MEDIA_ALIGN(uv_meta_stride, 64);
+पूर्ण
 
 /*
  * Function arguments:
@@ -1044,112 +1045,112 @@ static unsigned int VENUS_UV_META_STRIDE(int color_fmt, int width)
  * Progressive: height
  * Interlaced: (height+1)>>1
  */
-static unsigned int VENUS_UV_META_SCANLINES(int color_fmt, int height)
-{
-	int uv_tile_height = 0, uv_meta_scanlines;
+अटल अचिन्हित पूर्णांक VENUS_UV_META_SCANLINES(पूर्णांक color_fmt, पूर्णांक height)
+अणु
+	पूर्णांक uv_tile_height = 0, uv_meta_scanlines;
 
-	if (!height)
-		return 0;
+	अगर (!height)
+		वापस 0;
 
-	switch (color_fmt) {
-	case COLOR_FMT_NV12_UBWC:
+	चयन (color_fmt) अणु
+	हाल COLOR_FMT_NV12_UBWC:
 		uv_tile_height = 8;
-		break;
-	case COLOR_FMT_NV12_BPP10_UBWC:
-	case COLOR_FMT_P010_UBWC:
+		अवरोध;
+	हाल COLOR_FMT_NV12_BPP10_UBWC:
+	हाल COLOR_FMT_P010_UBWC:
 		uv_tile_height = 4;
-		break;
-	default:
-		return 0;
-	}
+		अवरोध;
+	शेष:
+		वापस 0;
+	पूर्ण
 
 	uv_meta_scanlines = MSM_MEDIA_ROUNDUP((height+1)>>1, uv_tile_height);
-	return MSM_MEDIA_ALIGN(uv_meta_scanlines, 16);
-}
+	वापस MSM_MEDIA_ALIGN(uv_meta_scanlines, 16);
+पूर्ण
 
-static unsigned int VENUS_RGB_STRIDE(int color_fmt, int width)
-{
-	unsigned int alignment = 0, bpp = 4;
+अटल अचिन्हित पूर्णांक VENUS_RGB_STRIDE(पूर्णांक color_fmt, पूर्णांक width)
+अणु
+	अचिन्हित पूर्णांक alignment = 0, bpp = 4;
 
-	if (!width)
-		return 0;
+	अगर (!width)
+		वापस 0;
 
-	switch (color_fmt) {
-	case COLOR_FMT_RGBA8888:
+	चयन (color_fmt) अणु
+	हाल COLOR_FMT_RGBA8888:
 		alignment = 128;
-		break;
-	case COLOR_FMT_RGB565_UBWC:
+		अवरोध;
+	हाल COLOR_FMT_RGB565_UBWC:
 		alignment = 256;
 		bpp = 2;
-		break;
-	case COLOR_FMT_RGBA8888_UBWC:
-	case COLOR_FMT_RGBA1010102_UBWC:
+		अवरोध;
+	हाल COLOR_FMT_RGBA8888_UBWC:
+	हाल COLOR_FMT_RGBA1010102_UBWC:
 		alignment = 256;
-		break;
-	default:
-		return 0;
-	}
+		अवरोध;
+	शेष:
+		वापस 0;
+	पूर्ण
 
-	return MSM_MEDIA_ALIGN(width * bpp, alignment);
-}
+	वापस MSM_MEDIA_ALIGN(width * bpp, alignment);
+पूर्ण
 
-static unsigned int VENUS_RGB_SCANLINES(int color_fmt, int height)
-{
-	unsigned int alignment = 0;
+अटल अचिन्हित पूर्णांक VENUS_RGB_SCANLINES(पूर्णांक color_fmt, पूर्णांक height)
+अणु
+	अचिन्हित पूर्णांक alignment = 0;
 
-	if (!height)
-		return 0;
+	अगर (!height)
+		वापस 0;
 
-	switch (color_fmt) {
-	case COLOR_FMT_RGBA8888:
+	चयन (color_fmt) अणु
+	हाल COLOR_FMT_RGBA8888:
 		alignment = 32;
-		break;
-	case COLOR_FMT_RGBA8888_UBWC:
-	case COLOR_FMT_RGBA1010102_UBWC:
-	case COLOR_FMT_RGB565_UBWC:
+		अवरोध;
+	हाल COLOR_FMT_RGBA8888_UBWC:
+	हाल COLOR_FMT_RGBA1010102_UBWC:
+	हाल COLOR_FMT_RGB565_UBWC:
 		alignment = 16;
-		break;
-	default:
-		return 0;
-	}
+		अवरोध;
+	शेष:
+		वापस 0;
+	पूर्ण
 
-	return MSM_MEDIA_ALIGN(height, alignment);
-}
+	वापस MSM_MEDIA_ALIGN(height, alignment);
+पूर्ण
 
-static unsigned int VENUS_RGB_META_STRIDE(int color_fmt, int width)
-{
-	int rgb_meta_stride;
+अटल अचिन्हित पूर्णांक VENUS_RGB_META_STRIDE(पूर्णांक color_fmt, पूर्णांक width)
+अणु
+	पूर्णांक rgb_meta_stride;
 
-	if (!width)
-		return 0;
+	अगर (!width)
+		वापस 0;
 
-	switch (color_fmt) {
-	case COLOR_FMT_RGBA8888_UBWC:
-	case COLOR_FMT_RGBA1010102_UBWC:
-	case COLOR_FMT_RGB565_UBWC:
+	चयन (color_fmt) अणु
+	हाल COLOR_FMT_RGBA8888_UBWC:
+	हाल COLOR_FMT_RGBA1010102_UBWC:
+	हाल COLOR_FMT_RGB565_UBWC:
 		rgb_meta_stride = MSM_MEDIA_ROUNDUP(width, 16);
-		return MSM_MEDIA_ALIGN(rgb_meta_stride, 64);
-	}
+		वापस MSM_MEDIA_ALIGN(rgb_meta_stride, 64);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static unsigned int VENUS_RGB_META_SCANLINES(int color_fmt, int height)
-{
-	int rgb_meta_scanlines;
+अटल अचिन्हित पूर्णांक VENUS_RGB_META_SCANLINES(पूर्णांक color_fmt, पूर्णांक height)
+अणु
+	पूर्णांक rgb_meta_scanlines;
 
-	if (!height)
-		return 0;
+	अगर (!height)
+		वापस 0;
 
-	switch (color_fmt) {
-	case COLOR_FMT_RGBA8888_UBWC:
-	case COLOR_FMT_RGBA1010102_UBWC:
-	case COLOR_FMT_RGB565_UBWC:
+	चयन (color_fmt) अणु
+	हाल COLOR_FMT_RGBA8888_UBWC:
+	हाल COLOR_FMT_RGBA1010102_UBWC:
+	हाल COLOR_FMT_RGB565_UBWC:
 		rgb_meta_scanlines = MSM_MEDIA_ROUNDUP(height, 4);
-		return MSM_MEDIA_ALIGN(rgb_meta_scanlines, 16);
-	}
+		वापस MSM_MEDIA_ALIGN(rgb_meta_scanlines, 16);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#endif
+#पूर्ण_अगर

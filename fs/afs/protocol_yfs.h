@@ -1,16 +1,17 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /* YFS protocol bits
  *
  * Copyright (C) 2018 Red Hat, Inc. All Rights Reserved.
  * Written by David Howells (dhowells@redhat.com)
  */
 
-#define YFS_FS_SERVICE	2500
-#define YFS_CM_SERVICE	2501
+#घोषणा YFS_FS_SERVICE	2500
+#घोषणा YFS_CM_SERVICE	2501
 
-#define YFSCBMAX	1024
+#घोषणा YFSCBMAX	1024
 
-enum YFS_CM_Operations {
+क्रमागत YFS_CM_Operations अणु
 	YFSCBProbe		= 206,	/* probe client */
 	YFSCBGetLock		= 207,	/* get contents of CM lock table */
 	YFSCBXStatsVersion	= 209,	/* get version of extended statistics */
@@ -24,22 +25,22 @@ enum YFS_CM_Operations {
 	YFSCBGetCellByNum	= 65537,
 	YFSCBTellMeAboutYourself = 65538, /* get client capabilities */
 	YFSCBCallBack		= 64204,
-};
+पूर्ण;
 
-enum YFS_FS_Operations {
+क्रमागत YFS_FS_Operations अणु
 	YFSFETCHACL		= 64131, /* YFS Fetch file AFS3 ACL */
 	YFSFETCHSTATUS		= 64132, /* YFS Fetch file status */
 	YFSSTOREACL		= 64134, /* YFS Store file AFS3 ACL */
 	YFSSTORESTATUS		= 64135, /* YFS Store file status */
-	YFSREMOVEFILE		= 64136, /* YFS Remove a file */
-	YFSCREATEFILE		= 64137, /* YFS Create a file */
+	YFSREMOVEखाता		= 64136, /* YFS Remove a file */
+	YFSCREATEखाता		= 64137, /* YFS Create a file */
 	YFSRENAME		= 64138, /* YFS Rename or move a file or directory */
 	YFSSYMLINK		= 64139, /* YFS Create a symbolic link */
 	YFSLINK			= 64140, /* YFS Create a hard link */
-	YFSMAKEDIR		= 64141, /* YFS Create a directory */
-	YFSREMOVEDIR		= 64142, /* YFS Remove a directory */
-	YFSGETVOLUMESTATUS	= 64149, /* YFS Get volume status information */
-	YFSSETVOLUMESTATUS	= 64150, /* YFS Set volume status information */
+	YFSMAKEसूची		= 64141, /* YFS Create a directory */
+	YFSREMOVEसूची		= 64142, /* YFS Remove a directory */
+	YFSGETVOLUMESTATUS	= 64149, /* YFS Get volume status inक्रमmation */
+	YFSSETVOLUMESTATUS	= 64150, /* YFS Set volume status inक्रमmation */
 	YFSSETLOCK		= 64156, /* YFS Request a file lock */
 	YFSEXTENDLOCK		= 64157, /* YFS Extend a file lock */
 	YFSRELEASELOCK		= 64158, /* YFS Release a file lock */
@@ -48,117 +49,117 @@ enum YFS_FS_Operations {
 	YFSFETCHOPAQUEACL	= 64168, /* YFS Fetch file YFS ACL */
 	YFSWHOAMI		= 64170,
 	YFSREMOVEACL		= 64171,
-	YFSREMOVEFILE2		= 64173,
+	YFSREMOVEखाता2		= 64173,
 	YFSSTOREOPAQUEACL2	= 64174,
 	YFSINLINEBULKSTATUS	= 64536, /* YFS Fetch multiple file statuses with errors */
 	YFSFETCHDATA64		= 64537, /* YFS Fetch file data */
 	YFSSTOREDATA64		= 64538, /* YFS Store file data */
 	YFSUPDATESYMLINK	= 64540,
-};
+पूर्ण;
 
-struct yfs_xdr_u64 {
+काष्ठा yfs_xdr_u64 अणु
 	__be32			msw;
 	__be32			lsw;
-} __packed;
+पूर्ण __packed;
 
-static inline u64 xdr_to_u64(const struct yfs_xdr_u64 x)
-{
-	return ((u64)ntohl(x.msw) << 32) | ntohl(x.lsw);
-}
+अटल अंतरभूत u64 xdr_to_u64(स्थिर काष्ठा yfs_xdr_u64 x)
+अणु
+	वापस ((u64)ntohl(x.msw) << 32) | ntohl(x.lsw);
+पूर्ण
 
-static inline struct yfs_xdr_u64 u64_to_xdr(const u64 x)
-{
-	return (struct yfs_xdr_u64){ .msw = htonl(x >> 32), .lsw = htonl(x) };
-}
+अटल अंतरभूत काष्ठा yfs_xdr_u64 u64_to_xdr(स्थिर u64 x)
+अणु
+	वापस (काष्ठा yfs_xdr_u64)अणु .msw = htonl(x >> 32), .lsw = htonl(x) पूर्ण;
+पूर्ण
 
-struct yfs_xdr_vnode {
-	struct yfs_xdr_u64	lo;
+काष्ठा yfs_xdr_vnode अणु
+	काष्ठा yfs_xdr_u64	lo;
 	__be32			hi;
 	__be32			unique;
-} __packed;
+पूर्ण __packed;
 
-struct yfs_xdr_YFSFid {
-	struct yfs_xdr_u64	volume;
-	struct yfs_xdr_vnode	vnode;
-} __packed;
+काष्ठा yfs_xdr_YFSFid अणु
+	काष्ठा yfs_xdr_u64	volume;
+	काष्ठा yfs_xdr_vnode	vnode;
+पूर्ण __packed;
 
 
-struct yfs_xdr_YFSFetchStatus {
+काष्ठा yfs_xdr_YFSFetchStatus अणु
 	__be32			type;
 	__be32			nlink;
-	struct yfs_xdr_u64	size;
-	struct yfs_xdr_u64	data_version;
-	struct yfs_xdr_u64	author;
-	struct yfs_xdr_u64	owner;
-	struct yfs_xdr_u64	group;
+	काष्ठा yfs_xdr_u64	size;
+	काष्ठा yfs_xdr_u64	data_version;
+	काष्ठा yfs_xdr_u64	author;
+	काष्ठा yfs_xdr_u64	owner;
+	काष्ठा yfs_xdr_u64	group;
 	__be32			mode;
 	__be32			caller_access;
 	__be32			anon_access;
-	struct yfs_xdr_vnode	parent;
+	काष्ठा yfs_xdr_vnode	parent;
 	__be32			data_access_protocol;
-	struct yfs_xdr_u64	mtime_client;
-	struct yfs_xdr_u64	mtime_server;
+	काष्ठा yfs_xdr_u64	mसमय_client;
+	काष्ठा yfs_xdr_u64	mसमय_server;
 	__be32			lock_count;
-	__be32			abort_code;
-} __packed;
+	__be32			पात_code;
+पूर्ण __packed;
 
-struct yfs_xdr_YFSCallBack {
+काष्ठा yfs_xdr_YFSCallBack अणु
 	__be32			version;
-	struct yfs_xdr_u64	expiration_time;
+	काष्ठा yfs_xdr_u64	expiration_समय;
 	__be32			type;
-} __packed;
+पूर्ण __packed;
 
-struct yfs_xdr_YFSStoreStatus {
+काष्ठा yfs_xdr_YFSStoreStatus अणु
 	__be32			mask;
 	__be32			mode;
-	struct yfs_xdr_u64	mtime_client;
-	struct yfs_xdr_u64	owner;
-	struct yfs_xdr_u64	group;
-} __packed;
+	काष्ठा yfs_xdr_u64	mसमय_client;
+	काष्ठा yfs_xdr_u64	owner;
+	काष्ठा yfs_xdr_u64	group;
+पूर्ण __packed;
 
-struct yfs_xdr_RPCFlags {
+काष्ठा yfs_xdr_RPCFlags अणु
 	__be32			rpc_flags;
-} __packed;
+पूर्ण __packed;
 
-struct yfs_xdr_YFSVolSync {
-	struct yfs_xdr_u64	vol_creation_date;
-	struct yfs_xdr_u64	vol_update_date;
-	struct yfs_xdr_u64	max_quota;
-	struct yfs_xdr_u64	blocks_in_use;
-	struct yfs_xdr_u64	blocks_avail;
-} __packed;
+काष्ठा yfs_xdr_YFSVolSync अणु
+	काष्ठा yfs_xdr_u64	vol_creation_date;
+	काष्ठा yfs_xdr_u64	vol_update_date;
+	काष्ठा yfs_xdr_u64	max_quota;
+	काष्ठा yfs_xdr_u64	blocks_in_use;
+	काष्ठा yfs_xdr_u64	blocks_avail;
+पूर्ण __packed;
 
-enum yfs_volume_type {
+क्रमागत yfs_volume_type अणु
 	yfs_volume_type_ro = 0,
 	yfs_volume_type_rw = 1,
-};
+पूर्ण;
 
-#define yfs_FVSOnline		0x1
-#define yfs_FVSInservice	0x2
-#define yfs_FVSBlessed		0x4
-#define yfs_FVSNeedsSalvage	0x8
+#घोषणा yfs_FVSOnline		0x1
+#घोषणा yfs_FVSInservice	0x2
+#घोषणा yfs_FVSBlessed		0x4
+#घोषणा yfs_FVSNeedsSalvage	0x8
 
-struct yfs_xdr_YFSFetchVolumeStatus {
-	struct yfs_xdr_u64	vid;
-	struct yfs_xdr_u64	parent_id;
+काष्ठा yfs_xdr_YFSFetchVolumeStatus अणु
+	काष्ठा yfs_xdr_u64	vid;
+	काष्ठा yfs_xdr_u64	parent_id;
 	__be32			flags;
 	__be32			type;
-	struct yfs_xdr_u64	max_quota;
-	struct yfs_xdr_u64	blocks_in_use;
-	struct yfs_xdr_u64	part_blocks_avail;
-	struct yfs_xdr_u64	part_max_blocks;
-	struct yfs_xdr_u64	vol_copy_date;
-	struct yfs_xdr_u64	vol_backup_date;
-} __packed;
+	काष्ठा yfs_xdr_u64	max_quota;
+	काष्ठा yfs_xdr_u64	blocks_in_use;
+	काष्ठा yfs_xdr_u64	part_blocks_avail;
+	काष्ठा yfs_xdr_u64	part_max_blocks;
+	काष्ठा yfs_xdr_u64	vol_copy_date;
+	काष्ठा yfs_xdr_u64	vol_backup_date;
+पूर्ण __packed;
 
-struct yfs_xdr_YFSStoreVolumeStatus {
+काष्ठा yfs_xdr_YFSStoreVolumeStatus अणु
 	__be32			mask;
-	struct yfs_xdr_u64	min_quota;
-	struct yfs_xdr_u64	max_quota;
-	struct yfs_xdr_u64	file_quota;
-} __packed;
+	काष्ठा yfs_xdr_u64	min_quota;
+	काष्ठा yfs_xdr_u64	max_quota;
+	काष्ठा yfs_xdr_u64	file_quota;
+पूर्ण __packed;
 
-enum yfs_lock_type {
+क्रमागत yfs_lock_type अणु
 	yfs_LockNone		= -1,
 	yfs_LockRead		= 0,
 	yfs_LockWrite		= 1,
@@ -167,4 +168,4 @@ enum yfs_lock_type {
 	yfs_LockMandatoryRead	= 0x100,
 	yfs_LockMandatoryWrite	= 0x101,
 	yfs_LockMandatoryExtend	= 0x102,
-};
+पूर्ण;

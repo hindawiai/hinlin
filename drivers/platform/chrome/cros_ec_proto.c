@@ -1,21 +1,22 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 // ChromeOS EC communication protocol helper functions
 //
 // Copyright (C) 2015 Google, Inc
 
-#include <linux/delay.h>
-#include <linux/device.h>
-#include <linux/module.h>
-#include <linux/platform_data/cros_ec_commands.h>
-#include <linux/platform_data/cros_ec_proto.h>
-#include <linux/slab.h>
-#include <asm/unaligned.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/device.h>
+#समावेश <linux/module.h>
+#समावेश <linux/platक्रमm_data/cros_ec_commands.h>
+#समावेश <linux/platक्रमm_data/cros_ec_proto.h>
+#समावेश <linux/slab.h>
+#समावेश <यंत्र/unaligned.h>
 
-#include "cros_ec_trace.h"
+#समावेश "cros_ec_trace.h"
 
-#define EC_COMMAND_RETRIES	50
+#घोषणा EC_COMMAND_RETRIES	50
 
-static const int cros_ec_error_map[] = {
+अटल स्थिर पूर्णांक cros_ec_error_map[] = अणु
 	[EC_RES_INVALID_COMMAND] = -EOPNOTSUPP,
 	[EC_RES_ERROR] = -EIO,
 	[EC_RES_INVALID_PARAM] = -EINVAL,
@@ -36,159 +37,159 @@ static const int cros_ec_error_map[] = {
 	[EC_RES_INVALID_HEADER_CRC] = -EBADMSG,
 	[EC_RES_INVALID_DATA_CRC] = -EBADMSG,
 	[EC_RES_DUP_UNAVAILABLE] = -ENODATA,
-};
+पूर्ण;
 
-static int cros_ec_map_error(uint32_t result)
-{
-	int ret = 0;
+अटल पूर्णांक cros_ec_map_error(uपूर्णांक32_t result)
+अणु
+	पूर्णांक ret = 0;
 
-	if (result != EC_RES_SUCCESS) {
-		if (result < ARRAY_SIZE(cros_ec_error_map) && cros_ec_error_map[result])
+	अगर (result != EC_RES_SUCCESS) अणु
+		अगर (result < ARRAY_SIZE(cros_ec_error_map) && cros_ec_error_map[result])
 			ret = cros_ec_error_map[result];
-		else
+		अन्यथा
 			ret = -EPROTO;
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int prepare_packet(struct cros_ec_device *ec_dev,
-			  struct cros_ec_command *msg)
-{
-	struct ec_host_request *request;
+अटल पूर्णांक prepare_packet(काष्ठा cros_ec_device *ec_dev,
+			  काष्ठा cros_ec_command *msg)
+अणु
+	काष्ठा ec_host_request *request;
 	u8 *out;
-	int i;
+	पूर्णांक i;
 	u8 csum = 0;
 
 	BUG_ON(ec_dev->proto_version != EC_HOST_REQUEST_VERSION);
-	BUG_ON(msg->outsize + sizeof(*request) > ec_dev->dout_size);
+	BUG_ON(msg->outsize + माप(*request) > ec_dev->करोut_size);
 
-	out = ec_dev->dout;
-	request = (struct ec_host_request *)out;
-	request->struct_version = EC_HOST_REQUEST_VERSION;
+	out = ec_dev->करोut;
+	request = (काष्ठा ec_host_request *)out;
+	request->काष्ठा_version = EC_HOST_REQUEST_VERSION;
 	request->checksum = 0;
 	request->command = msg->command;
 	request->command_version = msg->version;
 	request->reserved = 0;
 	request->data_len = msg->outsize;
 
-	for (i = 0; i < sizeof(*request); i++)
+	क्रम (i = 0; i < माप(*request); i++)
 		csum += out[i];
 
 	/* Copy data and update checksum */
-	memcpy(out + sizeof(*request), msg->data, msg->outsize);
-	for (i = 0; i < msg->outsize; i++)
+	स_नकल(out + माप(*request), msg->data, msg->outsize);
+	क्रम (i = 0; i < msg->outsize; i++)
 		csum += msg->data[i];
 
 	request->checksum = -csum;
 
-	return sizeof(*request) + msg->outsize;
-}
+	वापस माप(*request) + msg->outsize;
+पूर्ण
 
-static int send_command(struct cros_ec_device *ec_dev,
-			struct cros_ec_command *msg)
-{
-	int ret;
-	int (*xfer_fxn)(struct cros_ec_device *ec, struct cros_ec_command *msg);
+अटल पूर्णांक send_command(काष्ठा cros_ec_device *ec_dev,
+			काष्ठा cros_ec_command *msg)
+अणु
+	पूर्णांक ret;
+	पूर्णांक (*xfer_fxn)(काष्ठा cros_ec_device *ec, काष्ठा cros_ec_command *msg);
 
-	if (ec_dev->proto_version > 2)
+	अगर (ec_dev->proto_version > 2)
 		xfer_fxn = ec_dev->pkt_xfer;
-	else
+	अन्यथा
 		xfer_fxn = ec_dev->cmd_xfer;
 
-	if (!xfer_fxn) {
+	अगर (!xfer_fxn) अणु
 		/*
-		 * This error can happen if a communication error happened and
+		 * This error can happen अगर a communication error happened and
 		 * the EC is trying to use protocol v2, on an underlying
-		 * communication mechanism that does not support v2.
+		 * communication mechanism that करोes not support v2.
 		 */
 		dev_err_once(ec_dev->dev,
 			     "missing EC transfer API, cannot send command\n");
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
 	trace_cros_ec_request_start(msg);
 	ret = (*xfer_fxn)(ec_dev, msg);
-	trace_cros_ec_request_done(msg, ret);
-	if (msg->result == EC_RES_IN_PROGRESS) {
-		int i;
-		struct cros_ec_command *status_msg;
-		struct ec_response_get_comms_status *status;
+	trace_cros_ec_request_करोne(msg, ret);
+	अगर (msg->result == EC_RES_IN_PROGRESS) अणु
+		पूर्णांक i;
+		काष्ठा cros_ec_command *status_msg;
+		काष्ठा ec_response_get_comms_status *status;
 
-		status_msg = kmalloc(sizeof(*status_msg) + sizeof(*status),
+		status_msg = kदो_स्मृति(माप(*status_msg) + माप(*status),
 				     GFP_KERNEL);
-		if (!status_msg)
-			return -ENOMEM;
+		अगर (!status_msg)
+			वापस -ENOMEM;
 
 		status_msg->version = 0;
 		status_msg->command = EC_CMD_GET_COMMS_STATUS;
-		status_msg->insize = sizeof(*status);
+		status_msg->insize = माप(*status);
 		status_msg->outsize = 0;
 
 		/*
-		 * Query the EC's status until it's no longer busy or
+		 * Query the EC's status until it's no दीर्घer busy or
 		 * we encounter an error.
 		 */
-		for (i = 0; i < EC_COMMAND_RETRIES; i++) {
+		क्रम (i = 0; i < EC_COMMAND_RETRIES; i++) अणु
 			usleep_range(10000, 11000);
 
 			trace_cros_ec_request_start(status_msg);
 			ret = (*xfer_fxn)(ec_dev, status_msg);
-			trace_cros_ec_request_done(status_msg, ret);
-			if (ret == -EAGAIN)
-				continue;
-			if (ret < 0)
-				break;
+			trace_cros_ec_request_करोne(status_msg, ret);
+			अगर (ret == -EAGAIN)
+				जारी;
+			अगर (ret < 0)
+				अवरोध;
 
 			msg->result = status_msg->result;
-			if (status_msg->result != EC_RES_SUCCESS)
-				break;
+			अगर (status_msg->result != EC_RES_SUCCESS)
+				अवरोध;
 
-			status = (struct ec_response_get_comms_status *)
+			status = (काष्ठा ec_response_get_comms_status *)
 				 status_msg->data;
-			if (!(status->flags & EC_COMMS_STATUS_PROCESSING))
-				break;
-		}
+			अगर (!(status->flags & EC_COMMS_STATUS_PROCESSING))
+				अवरोध;
+		पूर्ण
 
-		kfree(status_msg);
-	}
+		kमुक्त(status_msg);
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
  * cros_ec_prepare_tx() - Prepare an outgoing message in the output buffer.
- * @ec_dev: Device to register.
- * @msg: Message to write.
+ * @ec_dev: Device to रेजिस्टर.
+ * @msg: Message to ग_लिखो.
  *
- * This is intended to be used by all ChromeOS EC drivers, but at present
+ * This is पूर्णांकended to be used by all ChromeOS EC drivers, but at present
  * only SPI uses it. Once LPC uses the same protocol it can start using it.
  * I2C could use it now, with a refactor of the existing code.
  *
  * Return: 0 on success or negative error code.
  */
-int cros_ec_prepare_tx(struct cros_ec_device *ec_dev,
-		       struct cros_ec_command *msg)
-{
+पूर्णांक cros_ec_prepare_tx(काष्ठा cros_ec_device *ec_dev,
+		       काष्ठा cros_ec_command *msg)
+अणु
 	u8 *out;
 	u8 csum;
-	int i;
+	पूर्णांक i;
 
-	if (ec_dev->proto_version > 2)
-		return prepare_packet(ec_dev, msg);
+	अगर (ec_dev->proto_version > 2)
+		वापस prepare_packet(ec_dev, msg);
 
 	BUG_ON(msg->outsize > EC_PROTO2_MAX_PARAM_SIZE);
-	out = ec_dev->dout;
+	out = ec_dev->करोut;
 	out[0] = EC_CMD_VERSION0 + msg->version;
 	out[1] = msg->command;
 	out[2] = msg->outsize;
 	csum = out[0] + out[1] + out[2];
-	for (i = 0; i < msg->outsize; i++)
+	क्रम (i = 0; i < msg->outsize; i++)
 		csum += out[EC_MSG_TX_HEADER_BYTES + i] = msg->data[i];
 	out[EC_MSG_TX_HEADER_BYTES + msg->outsize] = csum;
 
-	return EC_MSG_TX_PROTO_BYTES + msg->outsize;
-}
+	वापस EC_MSG_TX_PROTO_BYTES + msg->outsize;
+पूर्ण
 EXPORT_SYMBOL(cros_ec_prepare_tx);
 
 /**
@@ -196,27 +197,27 @@ EXPORT_SYMBOL(cros_ec_prepare_tx);
  * @ec_dev: EC device.
  * @msg: Message to check.
  *
- * This is used by ChromeOS EC drivers to check the ec_msg->result for
+ * This is used by ChromeOS EC drivers to check the ec_msg->result क्रम
  * errors and to warn about them.
  *
  * Return: 0 on success or negative error code.
  */
-int cros_ec_check_result(struct cros_ec_device *ec_dev,
-			 struct cros_ec_command *msg)
-{
-	switch (msg->result) {
-	case EC_RES_SUCCESS:
-		return 0;
-	case EC_RES_IN_PROGRESS:
+पूर्णांक cros_ec_check_result(काष्ठा cros_ec_device *ec_dev,
+			 काष्ठा cros_ec_command *msg)
+अणु
+	चयन (msg->result) अणु
+	हाल EC_RES_SUCCESS:
+		वापस 0;
+	हाल EC_RES_IN_PROGRESS:
 		dev_dbg(ec_dev->dev, "command 0x%02x in progress\n",
 			msg->command);
-		return -EAGAIN;
-	default:
+		वापस -EAGAIN;
+	शेष:
 		dev_dbg(ec_dev->dev, "command 0x%02x returned %d\n",
 			msg->command, msg->result);
-		return 0;
-	}
-}
+		वापस 0;
+	पूर्ण
+पूर्ण
 EXPORT_SYMBOL(cros_ec_check_result);
 
 /*
@@ -225,124 +226,124 @@ EXPORT_SYMBOL(cros_ec_check_result);
  * Get the mask of host events that cause wake from suspend.
  *
  * @ec_dev: EC device to call
- * @msg: message structure to use
- * @mask: result when function returns >=0.
+ * @msg: message काष्ठाure to use
+ * @mask: result when function वापसs >=0.
  *
  * LOCKING:
  * the caller has ec_dev->lock mutex, or the caller knows there is
  * no other command in progress.
  */
-static int cros_ec_get_host_event_wake_mask(struct cros_ec_device *ec_dev,
-					    struct cros_ec_command *msg,
-					    uint32_t *mask)
-{
-	struct ec_response_host_event_mask *r;
-	int ret;
+अटल पूर्णांक cros_ec_get_host_event_wake_mask(काष्ठा cros_ec_device *ec_dev,
+					    काष्ठा cros_ec_command *msg,
+					    uपूर्णांक32_t *mask)
+अणु
+	काष्ठा ec_response_host_event_mask *r;
+	पूर्णांक ret;
 
 	msg->command = EC_CMD_HOST_EVENT_GET_WAKE_MASK;
 	msg->version = 0;
 	msg->outsize = 0;
-	msg->insize = sizeof(*r);
+	msg->insize = माप(*r);
 
 	ret = send_command(ec_dev, msg);
-	if (ret >= 0) {
-		if (msg->result == EC_RES_INVALID_COMMAND)
-			return -EOPNOTSUPP;
-		if (msg->result != EC_RES_SUCCESS)
-			return -EPROTO;
-	}
-	if (ret > 0) {
-		r = (struct ec_response_host_event_mask *)msg->data;
+	अगर (ret >= 0) अणु
+		अगर (msg->result == EC_RES_INVALID_COMMAND)
+			वापस -EOPNOTSUPP;
+		अगर (msg->result != EC_RES_SUCCESS)
+			वापस -EPROTO;
+	पूर्ण
+	अगर (ret > 0) अणु
+		r = (काष्ठा ec_response_host_event_mask *)msg->data;
 		*mask = r->mask;
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int cros_ec_host_command_proto_query(struct cros_ec_device *ec_dev,
-					    int devidx,
-					    struct cros_ec_command *msg)
-{
+अटल पूर्णांक cros_ec_host_command_proto_query(काष्ठा cros_ec_device *ec_dev,
+					    पूर्णांक devidx,
+					    काष्ठा cros_ec_command *msg)
+अणु
 	/*
-	 * Try using v3+ to query for supported protocols. If this
+	 * Try using v3+ to query क्रम supported protocols. If this
 	 * command fails, fall back to v2. Returns the highest protocol
 	 * supported by the EC.
 	 * Also sets the max request/response/passthru size.
 	 */
-	int ret;
+	पूर्णांक ret;
 
-	if (!ec_dev->pkt_xfer)
-		return -EPROTONOSUPPORT;
+	अगर (!ec_dev->pkt_xfer)
+		वापस -EPROTONOSUPPORT;
 
-	memset(msg, 0, sizeof(*msg));
+	स_रखो(msg, 0, माप(*msg));
 	msg->command = EC_CMD_PASSTHRU_OFFSET(devidx) | EC_CMD_GET_PROTOCOL_INFO;
-	msg->insize = sizeof(struct ec_response_get_protocol_info);
+	msg->insize = माप(काष्ठा ec_response_get_protocol_info);
 
 	ret = send_command(ec_dev, msg);
 
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_dbg(ec_dev->dev,
 			"failed to check for EC[%d] protocol version: %d\n",
 			devidx, ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	if (devidx > 0 && msg->result == EC_RES_INVALID_COMMAND)
-		return -ENODEV;
-	else if (msg->result != EC_RES_SUCCESS)
-		return msg->result;
+	अगर (devidx > 0 && msg->result == EC_RES_INVALID_COMMAND)
+		वापस -ENODEV;
+	अन्यथा अगर (msg->result != EC_RES_SUCCESS)
+		वापस msg->result;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int cros_ec_host_command_proto_query_v2(struct cros_ec_device *ec_dev)
-{
-	struct cros_ec_command *msg;
-	struct ec_params_hello *hello_params;
-	struct ec_response_hello *hello_response;
-	int ret;
-	int len = max(sizeof(*hello_params), sizeof(*hello_response));
+अटल पूर्णांक cros_ec_host_command_proto_query_v2(काष्ठा cros_ec_device *ec_dev)
+अणु
+	काष्ठा cros_ec_command *msg;
+	काष्ठा ec_params_hello *hello_params;
+	काष्ठा ec_response_hello *hello_response;
+	पूर्णांक ret;
+	पूर्णांक len = max(माप(*hello_params), माप(*hello_response));
 
-	msg = kmalloc(sizeof(*msg) + len, GFP_KERNEL);
-	if (!msg)
-		return -ENOMEM;
+	msg = kदो_स्मृति(माप(*msg) + len, GFP_KERNEL);
+	अगर (!msg)
+		वापस -ENOMEM;
 
 	msg->version = 0;
 	msg->command = EC_CMD_HELLO;
-	hello_params = (struct ec_params_hello *)msg->data;
-	msg->outsize = sizeof(*hello_params);
-	hello_response = (struct ec_response_hello *)msg->data;
-	msg->insize = sizeof(*hello_response);
+	hello_params = (काष्ठा ec_params_hello *)msg->data;
+	msg->outsize = माप(*hello_params);
+	hello_response = (काष्ठा ec_response_hello *)msg->data;
+	msg->insize = माप(*hello_response);
 
 	hello_params->in_data = 0xa0b0c0d0;
 
 	ret = send_command(ec_dev, msg);
 
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_dbg(ec_dev->dev,
 			"EC failed to respond to v2 hello: %d\n",
 			ret);
-		goto exit;
-	} else if (msg->result != EC_RES_SUCCESS) {
+		जाओ निकास;
+	पूर्ण अन्यथा अगर (msg->result != EC_RES_SUCCESS) अणु
 		dev_err(ec_dev->dev,
 			"EC responded to v2 hello with error: %d\n",
 			msg->result);
 		ret = msg->result;
-		goto exit;
-	} else if (hello_response->out_data != 0xa1b2c3d4) {
+		जाओ निकास;
+	पूर्ण अन्यथा अगर (hello_response->out_data != 0xa1b2c3d4) अणु
 		dev_err(ec_dev->dev,
 			"EC responded to v2 hello with bad result: %u\n",
 			hello_response->out_data);
 		ret = -EBADMSG;
-		goto exit;
-	}
+		जाओ निकास;
+	पूर्ण
 
 	ret = 0;
 
- exit:
-	kfree(msg);
-	return ret;
-}
+ निकास:
+	kमुक्त(msg);
+	वापस ret;
+पूर्ण
 
 /*
  * cros_ec_get_host_command_version_mask
@@ -350,79 +351,79 @@ static int cros_ec_host_command_proto_query_v2(struct cros_ec_device *ec_dev)
  * Get the version mask of a given command.
  *
  * @ec_dev: EC device to call
- * @msg: message structure to use
+ * @msg: message काष्ठाure to use
  * @cmd: command to get the version of.
- * @mask: result when function returns 0.
+ * @mask: result when function वापसs 0.
  *
- * @return 0 on success, error code otherwise
+ * @वापस 0 on success, error code otherwise
  *
  * LOCKING:
  * the caller has ec_dev->lock mutex or the caller knows there is
  * no other command in progress.
  */
-static int cros_ec_get_host_command_version_mask(struct cros_ec_device *ec_dev,
+अटल पूर्णांक cros_ec_get_host_command_version_mask(काष्ठा cros_ec_device *ec_dev,
 	u16 cmd, u32 *mask)
-{
-	struct ec_params_get_cmd_versions *pver;
-	struct ec_response_get_cmd_versions *rver;
-	struct cros_ec_command *msg;
-	int ret;
+अणु
+	काष्ठा ec_params_get_cmd_versions *pver;
+	काष्ठा ec_response_get_cmd_versions *rver;
+	काष्ठा cros_ec_command *msg;
+	पूर्णांक ret;
 
-	msg = kmalloc(sizeof(*msg) + max(sizeof(*rver), sizeof(*pver)),
+	msg = kदो_स्मृति(माप(*msg) + max(माप(*rver), माप(*pver)),
 		      GFP_KERNEL);
-	if (!msg)
-		return -ENOMEM;
+	अगर (!msg)
+		वापस -ENOMEM;
 
 	msg->version = 0;
 	msg->command = EC_CMD_GET_CMD_VERSIONS;
-	msg->insize = sizeof(*rver);
-	msg->outsize = sizeof(*pver);
+	msg->insize = माप(*rver);
+	msg->outsize = माप(*pver);
 
-	pver = (struct ec_params_get_cmd_versions *)msg->data;
+	pver = (काष्ठा ec_params_get_cmd_versions *)msg->data;
 	pver->cmd = cmd;
 
 	ret = send_command(ec_dev, msg);
-	if (ret > 0) {
-		rver = (struct ec_response_get_cmd_versions *)msg->data;
+	अगर (ret > 0) अणु
+		rver = (काष्ठा ec_response_get_cmd_versions *)msg->data;
 		*mask = rver->version_mask;
-	}
+	पूर्ण
 
-	kfree(msg);
+	kमुक्त(msg);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
  * cros_ec_query_all() -  Query the protocol version supported by the
  *         ChromeOS EC.
- * @ec_dev: Device to register.
+ * @ec_dev: Device to रेजिस्टर.
  *
  * Return: 0 on success or negative error code.
  */
-int cros_ec_query_all(struct cros_ec_device *ec_dev)
-{
-	struct device *dev = ec_dev->dev;
-	struct cros_ec_command *proto_msg;
-	struct ec_response_get_protocol_info *proto_info;
+पूर्णांक cros_ec_query_all(काष्ठा cros_ec_device *ec_dev)
+अणु
+	काष्ठा device *dev = ec_dev->dev;
+	काष्ठा cros_ec_command *proto_msg;
+	काष्ठा ec_response_get_protocol_info *proto_info;
 	u32 ver_mask = 0;
-	int ret;
+	पूर्णांक ret;
 
-	proto_msg = kzalloc(sizeof(*proto_msg) + sizeof(*proto_info),
+	proto_msg = kzalloc(माप(*proto_msg) + माप(*proto_info),
 			    GFP_KERNEL);
-	if (!proto_msg)
-		return -ENOMEM;
+	अगर (!proto_msg)
+		वापस -ENOMEM;
 
 	/* First try sending with proto v3. */
 	ec_dev->proto_version = 3;
 	ret = cros_ec_host_command_proto_query(ec_dev, 0, proto_msg);
 
-	if (ret == 0) {
-		proto_info = (struct ec_response_get_protocol_info *)
+	अगर (ret == 0) अणु
+		proto_info = (काष्ठा ec_response_get_protocol_info *)
 			proto_msg->data;
 		ec_dev->max_request = proto_info->max_request_packet_size -
-			sizeof(struct ec_host_request);
+			माप(काष्ठा ec_host_request);
 		ec_dev->max_response = proto_info->max_response_packet_size -
-			sizeof(struct ec_host_response);
+			माप(काष्ठा ec_host_response);
 		ec_dev->proto_version =
 			min(EC_HOST_REQUEST_VERSION,
 					fls(proto_info->protocol_versions) - 1);
@@ -431,82 +432,82 @@ int cros_ec_query_all(struct cros_ec_device *ec_dev)
 			ec_dev->proto_version);
 
 		ec_dev->din_size = ec_dev->max_response +
-			sizeof(struct ec_host_response) +
+			माप(काष्ठा ec_host_response) +
 			EC_MAX_RESPONSE_OVERHEAD;
-		ec_dev->dout_size = ec_dev->max_request +
-			sizeof(struct ec_host_request) +
+		ec_dev->करोut_size = ec_dev->max_request +
+			माप(काष्ठा ec_host_request) +
 			EC_MAX_REQUEST_OVERHEAD;
 
 		/*
-		 * Check for PD
+		 * Check क्रम PD
 		 */
 		ret = cros_ec_host_command_proto_query(ec_dev, 1, proto_msg);
 
-		if (ret) {
+		अगर (ret) अणु
 			dev_dbg(ec_dev->dev, "no PD chip found: %d\n", ret);
 			ec_dev->max_passthru = 0;
-		} else {
+		पूर्ण अन्यथा अणु
 			dev_dbg(ec_dev->dev, "found PD chip\n");
 			ec_dev->max_passthru =
 				proto_info->max_request_packet_size -
-				sizeof(struct ec_host_request);
-		}
-	} else {
+				माप(काष्ठा ec_host_request);
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		/* Try querying with a v2 hello message. */
 		ec_dev->proto_version = 2;
 		ret = cros_ec_host_command_proto_query_v2(ec_dev);
 
-		if (ret == 0) {
+		अगर (ret == 0) अणु
 			/* V2 hello succeeded. */
 			dev_dbg(ec_dev->dev, "falling back to proto v2\n");
 
 			ec_dev->max_request = EC_PROTO2_MAX_PARAM_SIZE;
 			ec_dev->max_response = EC_PROTO2_MAX_PARAM_SIZE;
 			ec_dev->max_passthru = 0;
-			ec_dev->pkt_xfer = NULL;
+			ec_dev->pkt_xfer = शून्य;
 			ec_dev->din_size = EC_PROTO2_MSG_BYTES;
-			ec_dev->dout_size = EC_PROTO2_MSG_BYTES;
-		} else {
+			ec_dev->करोut_size = EC_PROTO2_MSG_BYTES;
+		पूर्ण अन्यथा अणु
 			/*
-			 * It's possible for a test to occur too early when
+			 * It's possible क्रम a test to occur too early when
 			 * the EC isn't listening. If this happens, we'll
 			 * test later when the first command is run.
 			 */
 			ec_dev->proto_version = EC_PROTO_VERSION_UNKNOWN;
 			dev_dbg(ec_dev->dev, "EC query failed: %d\n", ret);
-			goto exit;
-		}
-	}
+			जाओ निकास;
+		पूर्ण
+	पूर्ण
 
-	devm_kfree(dev, ec_dev->din);
-	devm_kfree(dev, ec_dev->dout);
+	devm_kमुक्त(dev, ec_dev->din);
+	devm_kमुक्त(dev, ec_dev->करोut);
 
 	ec_dev->din = devm_kzalloc(dev, ec_dev->din_size, GFP_KERNEL);
-	if (!ec_dev->din) {
+	अगर (!ec_dev->din) अणु
 		ret = -ENOMEM;
-		goto exit;
-	}
+		जाओ निकास;
+	पूर्ण
 
-	ec_dev->dout = devm_kzalloc(dev, ec_dev->dout_size, GFP_KERNEL);
-	if (!ec_dev->dout) {
-		devm_kfree(dev, ec_dev->din);
+	ec_dev->करोut = devm_kzalloc(dev, ec_dev->करोut_size, GFP_KERNEL);
+	अगर (!ec_dev->करोut) अणु
+		devm_kमुक्त(dev, ec_dev->din);
 		ret = -ENOMEM;
-		goto exit;
-	}
+		जाओ निकास;
+	पूर्ण
 
-	/* Probe if MKBP event is supported */
+	/* Probe अगर MKBP event is supported */
 	ret = cros_ec_get_host_command_version_mask(ec_dev,
 						    EC_CMD_GET_NEXT_EVENT,
 						    &ver_mask);
-	if (ret < 0 || ver_mask == 0)
+	अगर (ret < 0 || ver_mask == 0)
 		ec_dev->mkbp_event_supported = 0;
-	else
+	अन्यथा
 		ec_dev->mkbp_event_supported = fls(ver_mask);
 
 	dev_dbg(ec_dev->dev, "MKBP support version %u\n",
 		ec_dev->mkbp_event_supported - 1);
 
-	/* Probe if host sleep v1 is supported for S0ix failure detection. */
+	/* Probe अगर host sleep v1 is supported क्रम S0ix failure detection. */
 	ret = cros_ec_get_host_command_version_mask(ec_dev,
 						    EC_CMD_HOST_SLEEP_EVENT,
 						    &ver_mask);
@@ -515,15 +516,15 @@ int cros_ec_query_all(struct cros_ec_device *ec_dev)
 	/* Get host event wake mask. */
 	ret = cros_ec_get_host_event_wake_mask(ec_dev, proto_msg,
 					       &ec_dev->host_event_wake_mask);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		/*
-		 * If the EC doesn't support EC_CMD_HOST_EVENT_GET_WAKE_MASK,
-		 * use a reasonable default. Note that we ignore various
-		 * battery, AC status, and power-state events, because (a)
+		 * If the EC करोesn't support EC_CMD_HOST_EVENT_GET_WAKE_MASK,
+		 * use a reasonable शेष. Note that we ignore various
+		 * battery, AC status, and घातer-state events, because (a)
 		 * those can be quite common (e.g., when sitting at full
-		 * charge, on AC) and (b) these are not actionable wake events;
-		 * if anything, we'd like to continue suspending (to save
-		 * power), not wake up.
+		 * अक्षरge, on AC) and (b) these are not actionable wake events;
+		 * अगर anything, we'd like to जारी suspending (to save
+		 * घातer), not wake up.
 		 */
 		ec_dev->host_event_wake_mask = U32_MAX &
 			~(EC_HOST_EVENT_MASK(EC_HOST_EVENT_LID_CLOSED) |
@@ -537,93 +538,93 @@ int cros_ec_query_all(struct cros_ec_device *ec_dev)
 		 * Old ECs may not support this command. Complain about all
 		 * other errors.
 		 */
-		if (ret != -EOPNOTSUPP)
+		अगर (ret != -EOPNOTSUPP)
 			dev_err(ec_dev->dev,
 				"failed to retrieve wake mask: %d\n", ret);
-	}
+	पूर्ण
 
 	ret = 0;
 
-exit:
-	kfree(proto_msg);
-	return ret;
-}
+निकास:
+	kमुक्त(proto_msg);
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL(cros_ec_query_all);
 
 /**
  * cros_ec_cmd_xfer_status() - Send a command to the ChromeOS EC.
  * @ec_dev: EC device.
- * @msg: Message to write.
+ * @msg: Message to ग_लिखो.
  *
  * Call this to send a command to the ChromeOS EC. This should be used instead of calling the EC's
- * cmd_xfer() callback directly. It returns success status only if both the command was transmitted
+ * cmd_xfer() callback directly. It वापसs success status only अगर both the command was transmitted
  * successfully and the EC replied with success status.
  *
  * Return:
  * >=0 - The number of bytes transferred
  * <0 - Linux error code
  */
-int cros_ec_cmd_xfer_status(struct cros_ec_device *ec_dev,
-			    struct cros_ec_command *msg)
-{
-	int ret, mapped;
+पूर्णांक cros_ec_cmd_xfer_status(काष्ठा cros_ec_device *ec_dev,
+			    काष्ठा cros_ec_command *msg)
+अणु
+	पूर्णांक ret, mapped;
 
 	mutex_lock(&ec_dev->lock);
-	if (ec_dev->proto_version == EC_PROTO_VERSION_UNKNOWN) {
+	अगर (ec_dev->proto_version == EC_PROTO_VERSION_UNKNOWN) अणु
 		ret = cros_ec_query_all(ec_dev);
-		if (ret) {
+		अगर (ret) अणु
 			dev_err(ec_dev->dev,
 				"EC version unknown and query failed; aborting command\n");
 			mutex_unlock(&ec_dev->lock);
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
-	if (msg->insize > ec_dev->max_response) {
+	अगर (msg->insize > ec_dev->max_response) अणु
 		dev_dbg(ec_dev->dev, "clamping message receive buffer\n");
 		msg->insize = ec_dev->max_response;
-	}
+	पूर्ण
 
-	if (msg->command < EC_CMD_PASSTHRU_OFFSET(1)) {
-		if (msg->outsize > ec_dev->max_request) {
+	अगर (msg->command < EC_CMD_PASSTHRU_OFFSET(1)) अणु
+		अगर (msg->outsize > ec_dev->max_request) अणु
 			dev_err(ec_dev->dev,
 				"request of size %u is too big (max: %u)\n",
 				msg->outsize,
 				ec_dev->max_request);
 			mutex_unlock(&ec_dev->lock);
-			return -EMSGSIZE;
-		}
-	} else {
-		if (msg->outsize > ec_dev->max_passthru) {
+			वापस -EMSGSIZE;
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		अगर (msg->outsize > ec_dev->max_passthru) अणु
 			dev_err(ec_dev->dev,
 				"passthru rq of size %u is too big (max: %u)\n",
 				msg->outsize,
 				ec_dev->max_passthru);
 			mutex_unlock(&ec_dev->lock);
-			return -EMSGSIZE;
-		}
-	}
+			वापस -EMSGSIZE;
+		पूर्ण
+	पूर्ण
 
 	ret = send_command(ec_dev, msg);
 	mutex_unlock(&ec_dev->lock);
 
 	mapped = cros_ec_map_error(msg->result);
-	if (mapped) {
+	अगर (mapped) अणु
 		dev_dbg(ec_dev->dev, "Command result (err: %d [%d])\n",
 			msg->result, mapped);
 		ret = mapped;
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL(cros_ec_cmd_xfer_status);
 
-static int get_next_event_xfer(struct cros_ec_device *ec_dev,
-			       struct cros_ec_command *msg,
-			       struct ec_response_get_next_event_v1 *event,
-			       int version, uint32_t size)
-{
-	int ret;
+अटल पूर्णांक get_next_event_xfer(काष्ठा cros_ec_device *ec_dev,
+			       काष्ठा cros_ec_command *msg,
+			       काष्ठा ec_response_get_next_event_v1 *event,
+			       पूर्णांक version, uपूर्णांक32_t size)
+अणु
+	पूर्णांक ret;
 
 	msg->version = version;
 	msg->command = EC_CMD_GET_NEXT_EVENT;
@@ -631,271 +632,271 @@ static int get_next_event_xfer(struct cros_ec_device *ec_dev,
 	msg->outsize = 0;
 
 	ret = cros_ec_cmd_xfer_status(ec_dev, msg);
-	if (ret > 0) {
+	अगर (ret > 0) अणु
 		ec_dev->event_size = ret - 1;
 		ec_dev->event_data = *event;
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int get_next_event(struct cros_ec_device *ec_dev)
-{
-	struct {
-		struct cros_ec_command msg;
-		struct ec_response_get_next_event_v1 event;
-	} __packed buf;
-	struct cros_ec_command *msg = &buf.msg;
-	struct ec_response_get_next_event_v1 *event = &buf.event;
-	const int cmd_version = ec_dev->mkbp_event_supported - 1;
+अटल पूर्णांक get_next_event(काष्ठा cros_ec_device *ec_dev)
+अणु
+	काष्ठा अणु
+		काष्ठा cros_ec_command msg;
+		काष्ठा ec_response_get_next_event_v1 event;
+	पूर्ण __packed buf;
+	काष्ठा cros_ec_command *msg = &buf.msg;
+	काष्ठा ec_response_get_next_event_v1 *event = &buf.event;
+	स्थिर पूर्णांक cmd_version = ec_dev->mkbp_event_supported - 1;
 
-	memset(msg, 0, sizeof(*msg));
-	if (ec_dev->suspended) {
+	स_रखो(msg, 0, माप(*msg));
+	अगर (ec_dev->suspended) अणु
 		dev_dbg(ec_dev->dev, "Device suspended.\n");
-		return -EHOSTDOWN;
-	}
+		वापस -EHOSTDOWN;
+	पूर्ण
 
-	if (cmd_version == 0)
-		return get_next_event_xfer(ec_dev, msg, event, 0,
-				  sizeof(struct ec_response_get_next_event));
+	अगर (cmd_version == 0)
+		वापस get_next_event_xfer(ec_dev, msg, event, 0,
+				  माप(काष्ठा ec_response_get_next_event));
 
-	return get_next_event_xfer(ec_dev, msg, event, cmd_version,
-				sizeof(struct ec_response_get_next_event_v1));
-}
+	वापस get_next_event_xfer(ec_dev, msg, event, cmd_version,
+				माप(काष्ठा ec_response_get_next_event_v1));
+पूर्ण
 
-static int get_keyboard_state_event(struct cros_ec_device *ec_dev)
-{
-	u8 buffer[sizeof(struct cros_ec_command) +
-		  sizeof(ec_dev->event_data.data)];
-	struct cros_ec_command *msg = (struct cros_ec_command *)&buffer;
+अटल पूर्णांक get_keyboard_state_event(काष्ठा cros_ec_device *ec_dev)
+अणु
+	u8 buffer[माप(काष्ठा cros_ec_command) +
+		  माप(ec_dev->event_data.data)];
+	काष्ठा cros_ec_command *msg = (काष्ठा cros_ec_command *)&buffer;
 
 	msg->version = 0;
 	msg->command = EC_CMD_MKBP_STATE;
-	msg->insize = sizeof(ec_dev->event_data.data);
+	msg->insize = माप(ec_dev->event_data.data);
 	msg->outsize = 0;
 
 	ec_dev->event_size = cros_ec_cmd_xfer_status(ec_dev, msg);
 	ec_dev->event_data.event_type = EC_MKBP_EVENT_KEY_MATRIX;
-	memcpy(&ec_dev->event_data.data, msg->data,
-	       sizeof(ec_dev->event_data.data));
+	स_नकल(&ec_dev->event_data.data, msg->data,
+	       माप(ec_dev->event_data.data));
 
-	return ec_dev->event_size;
-}
+	वापस ec_dev->event_size;
+पूर्ण
 
 /**
  * cros_ec_get_next_event() - Fetch next event from the ChromeOS EC.
  * @ec_dev: Device to fetch event from.
- * @wake_event: Pointer to a bool set to true upon return if the event might be
- *              treated as a wake event. Ignored if null.
- * @has_more_events: Pointer to bool set to true if more than one event is
+ * @wake_event: Poपूर्णांकer to a bool set to true upon वापस अगर the event might be
+ *              treated as a wake event. Ignored अगर null.
+ * @has_more_events: Poपूर्णांकer to bool set to true अगर more than one event is
  *              pending.
  *              Some EC will set this flag to indicate cros_ec_get_next_event()
- *              can be called multiple times in a row.
- *              It is an optimization to prevent issuing a EC command for
- *              nothing or wait for another interrupt from the EC to process
+ *              can be called multiple बार in a row.
+ *              It is an optimization to prevent issuing a EC command क्रम
+ *              nothing or रुको क्रम another पूर्णांकerrupt from the EC to process
  *              the next message.
- *              Ignored if null.
+ *              Ignored अगर null.
  *
- * Return: negative error code on errors; 0 for no data; or else number of
+ * Return: negative error code on errors; 0 क्रम no data; or अन्यथा number of
  * bytes received (i.e., an event was retrieved successfully). Event types are
  * written out to @ec_dev->event_data.event_type on success.
  */
-int cros_ec_get_next_event(struct cros_ec_device *ec_dev,
+पूर्णांक cros_ec_get_next_event(काष्ठा cros_ec_device *ec_dev,
 			   bool *wake_event,
 			   bool *has_more_events)
-{
+अणु
 	u8 event_type;
 	u32 host_event;
-	int ret;
+	पूर्णांक ret;
 
 	/*
-	 * Default value for wake_event.
-	 * Wake up on keyboard event, wake up for spurious interrupt or link
+	 * Default value क्रम wake_event.
+	 * Wake up on keyboard event, wake up क्रम spurious पूर्णांकerrupt or link
 	 * error to the EC.
 	 */
-	if (wake_event)
+	अगर (wake_event)
 		*wake_event = true;
 
 	/*
-	 * Default value for has_more_events.
-	 * EC will raise another interrupt if AP does not process all events
+	 * Default value क्रम has_more_events.
+	 * EC will उठाओ another पूर्णांकerrupt अगर AP करोes not process all events
 	 * anyway.
 	 */
-	if (has_more_events)
+	अगर (has_more_events)
 		*has_more_events = false;
 
-	if (!ec_dev->mkbp_event_supported)
-		return get_keyboard_state_event(ec_dev);
+	अगर (!ec_dev->mkbp_event_supported)
+		वापस get_keyboard_state_event(ec_dev);
 
 	ret = get_next_event(ec_dev);
-	if (ret <= 0)
-		return ret;
+	अगर (ret <= 0)
+		वापस ret;
 
-	if (has_more_events)
+	अगर (has_more_events)
 		*has_more_events = ec_dev->event_data.event_type &
 			EC_MKBP_HAS_MORE_EVENTS;
 	ec_dev->event_data.event_type &= EC_MKBP_EVENT_TYPE_MASK;
 
-	if (wake_event) {
+	अगर (wake_event) अणु
 		event_type = ec_dev->event_data.event_type;
 		host_event = cros_ec_get_host_event(ec_dev);
 
 		/*
 		 * Sensor events need to be parsed by the sensor sub-device.
-		 * Defer them, and don't report the wakeup here.
+		 * Defer them, and करोn't report the wakeup here.
 		 */
-		if (event_type == EC_MKBP_EVENT_SENSOR_FIFO) {
+		अगर (event_type == EC_MKBP_EVENT_SENSOR_FIFO) अणु
 			*wake_event = false;
-		} else if (host_event) {
-			/* rtc_update_irq() already handles wakeup events. */
-			if (host_event & EC_HOST_EVENT_MASK(EC_HOST_EVENT_RTC))
+		पूर्ण अन्यथा अगर (host_event) अणु
+			/* rtc_update_irq() alपढ़ोy handles wakeup events. */
+			अगर (host_event & EC_HOST_EVENT_MASK(EC_HOST_EVENT_RTC))
 				*wake_event = false;
 			/* Masked host-events should not count as wake events. */
-			if (!(host_event & ec_dev->host_event_wake_mask))
+			अगर (!(host_event & ec_dev->host_event_wake_mask))
 				*wake_event = false;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL(cros_ec_get_next_event);
 
 /**
  * cros_ec_get_host_event() - Return a mask of event set by the ChromeOS EC.
  * @ec_dev: Device to fetch event from.
  *
- * When MKBP is supported, when the EC raises an interrupt, we collect the
- * events raised and call the functions in the ec notifier. This function
- * is a helper to know which events are raised.
+ * When MKBP is supported, when the EC उठाओs an पूर्णांकerrupt, we collect the
+ * events उठाओd and call the functions in the ec notअगरier. This function
+ * is a helper to know which events are उठाओd.
  *
- * Return: 0 on error or non-zero bitmask of one or more EC_HOST_EVENT_*.
+ * Return: 0 on error or non-zero biपंचांगask of one or more EC_HOST_EVENT_*.
  */
-u32 cros_ec_get_host_event(struct cros_ec_device *ec_dev)
-{
+u32 cros_ec_get_host_event(काष्ठा cros_ec_device *ec_dev)
+अणु
 	u32 host_event;
 
 	BUG_ON(!ec_dev->mkbp_event_supported);
 
-	if (ec_dev->event_data.event_type != EC_MKBP_EVENT_HOST_EVENT)
-		return 0;
+	अगर (ec_dev->event_data.event_type != EC_MKBP_EVENT_HOST_EVENT)
+		वापस 0;
 
-	if (ec_dev->event_size != sizeof(host_event)) {
+	अगर (ec_dev->event_size != माप(host_event)) अणु
 		dev_warn(ec_dev->dev, "Invalid host event size\n");
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	host_event = get_unaligned_le32(&ec_dev->event_data.data.host_event);
 
-	return host_event;
-}
+	वापस host_event;
+पूर्ण
 EXPORT_SYMBOL(cros_ec_get_host_event);
 
 /**
- * cros_ec_check_features() - Test for the presence of EC features
+ * cros_ec_check_features() - Test क्रम the presence of EC features
  *
- * @ec: EC device, does not have to be connected directly to the AP,
+ * @ec: EC device, करोes not have to be connected directly to the AP,
  *      can be daisy chained through another device.
  * @feature: One of ec_feature_code bit.
  *
  * Call this function to test whether the ChromeOS EC supports a feature.
  *
- * Return: 1 if supported, 0 if not
+ * Return: 1 अगर supported, 0 अगर not
  */
-int cros_ec_check_features(struct cros_ec_dev *ec, int feature)
-{
-	struct cros_ec_command *msg;
-	int ret;
+पूर्णांक cros_ec_check_features(काष्ठा cros_ec_dev *ec, पूर्णांक feature)
+अणु
+	काष्ठा cros_ec_command *msg;
+	पूर्णांक ret;
 
-	if (ec->features[0] == -1U && ec->features[1] == -1U) {
-		/* features bitmap not read yet */
-		msg = kzalloc(sizeof(*msg) + sizeof(ec->features), GFP_KERNEL);
-		if (!msg)
-			return -ENOMEM;
+	अगर (ec->features[0] == -1U && ec->features[1] == -1U) अणु
+		/* features biपंचांगap not पढ़ो yet */
+		msg = kzalloc(माप(*msg) + माप(ec->features), GFP_KERNEL);
+		अगर (!msg)
+			वापस -ENOMEM;
 
 		msg->command = EC_CMD_GET_FEATURES + ec->cmd_offset;
-		msg->insize = sizeof(ec->features);
+		msg->insize = माप(ec->features);
 
 		ret = cros_ec_cmd_xfer_status(ec->ec_dev, msg);
-		if (ret < 0) {
+		अगर (ret < 0) अणु
 			dev_warn(ec->dev, "cannot get EC features: %d/%d\n",
 				 ret, msg->result);
-			memset(ec->features, 0, sizeof(ec->features));
-		} else {
-			memcpy(ec->features, msg->data, sizeof(ec->features));
-		}
+			स_रखो(ec->features, 0, माप(ec->features));
+		पूर्ण अन्यथा अणु
+			स_नकल(ec->features, msg->data, माप(ec->features));
+		पूर्ण
 
 		dev_dbg(ec->dev, "EC features %08x %08x\n",
 			ec->features[0], ec->features[1]);
 
-		kfree(msg);
-	}
+		kमुक्त(msg);
+	पूर्ण
 
-	return ec->features[feature / 32] & EC_FEATURE_MASK_0(feature);
-}
+	वापस ec->features[feature / 32] & EC_FEATURE_MASK_0(feature);
+पूर्ण
 EXPORT_SYMBOL_GPL(cros_ec_check_features);
 
 /**
  * cros_ec_get_sensor_count() - Return the number of MEMS sensors supported.
  *
- * @ec: EC device, does not have to be connected directly to the AP,
+ * @ec: EC device, करोes not have to be connected directly to the AP,
  *      can be daisy chained through another device.
- * Return: < 0 in case of error.
+ * Return: < 0 in हाल of error.
  */
-int cros_ec_get_sensor_count(struct cros_ec_dev *ec)
-{
+पूर्णांक cros_ec_get_sensor_count(काष्ठा cros_ec_dev *ec)
+अणु
 	/*
 	 * Issue a command to get the number of sensor reported.
-	 * If not supported, check for legacy mode.
+	 * If not supported, check क्रम legacy mode.
 	 */
-	int ret, sensor_count;
-	struct ec_params_motion_sense *params;
-	struct ec_response_motion_sense *resp;
-	struct cros_ec_command *msg;
-	struct cros_ec_device *ec_dev = ec->ec_dev;
+	पूर्णांक ret, sensor_count;
+	काष्ठा ec_params_motion_sense *params;
+	काष्ठा ec_response_motion_sense *resp;
+	काष्ठा cros_ec_command *msg;
+	काष्ठा cros_ec_device *ec_dev = ec->ec_dev;
 	u8 status;
 
-	msg = kzalloc(sizeof(*msg) + max(sizeof(*params), sizeof(*resp)),
+	msg = kzalloc(माप(*msg) + max(माप(*params), माप(*resp)),
 		      GFP_KERNEL);
-	if (!msg)
-		return -ENOMEM;
+	अगर (!msg)
+		वापस -ENOMEM;
 
 	msg->version = 1;
 	msg->command = EC_CMD_MOTION_SENSE_CMD + ec->cmd_offset;
-	msg->outsize = sizeof(*params);
-	msg->insize = sizeof(*resp);
+	msg->outsize = माप(*params);
+	msg->insize = माप(*resp);
 
-	params = (struct ec_params_motion_sense *)msg->data;
+	params = (काष्ठा ec_params_motion_sense *)msg->data;
 	params->cmd = MOTIONSENSE_CMD_DUMP;
 
 	ret = cros_ec_cmd_xfer_status(ec->ec_dev, msg);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		sensor_count = ret;
-	} else {
-		resp = (struct ec_response_motion_sense *)msg->data;
+	पूर्ण अन्यथा अणु
+		resp = (काष्ठा ec_response_motion_sense *)msg->data;
 		sensor_count = resp->dump.sensor_count;
-	}
-	kfree(msg);
+	पूर्ण
+	kमुक्त(msg);
 
 	/*
-	 * Check legacy mode: Let's find out if sensors are accessible
-	 * via LPC interface.
+	 * Check legacy mode: Let's find out अगर sensors are accessible
+	 * via LPC पूर्णांकerface.
 	 */
-	if (sensor_count < 0 && ec->cmd_offset == 0 && ec_dev->cmd_readmem) {
-		ret = ec_dev->cmd_readmem(ec_dev, EC_MEMMAP_ACC_STATUS,
+	अगर (sensor_count < 0 && ec->cmd_offset == 0 && ec_dev->cmd_पढ़ोmem) अणु
+		ret = ec_dev->cmd_पढ़ोmem(ec_dev, EC_MEMMAP_ACC_STATUS,
 				1, &status);
-		if (ret >= 0 &&
-		    (status & EC_MEMMAP_ACC_STATUS_PRESENCE_BIT)) {
+		अगर (ret >= 0 &&
+		    (status & EC_MEMMAP_ACC_STATUS_PRESENCE_BIT)) अणु
 			/*
 			 * We have 2 sensors, one in the lid, one in the base.
 			 */
 			sensor_count = 2;
-		} else {
+		पूर्ण अन्यथा अणु
 			/*
-			 * EC uses LPC interface and no sensors are presented.
+			 * EC uses LPC पूर्णांकerface and no sensors are presented.
 			 */
 			sensor_count = 0;
-		}
-	}
-	return sensor_count;
-}
+		पूर्ण
+	पूर्ण
+	वापस sensor_count;
+पूर्ण
 EXPORT_SYMBOL_GPL(cros_ec_get_sensor_count);

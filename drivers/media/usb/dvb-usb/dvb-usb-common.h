@@ -1,54 +1,55 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /* dvb-usb-common.h is part of the DVB USB library.
  *
  * Copyright (C) 2004-5 Patrick Boettcher (patrick.boettcher@posteo.de)
- * see dvb-usb-init.c for copyright information.
+ * see dvb-usb-init.c क्रम copyright inक्रमmation.
  *
- * a header file containing prototypes and types for internal use of the dvb-usb-lib
+ * a header file containing prototypes and types क्रम पूर्णांकernal use of the dvb-usb-lib
  */
-#ifndef _DVB_USB_COMMON_H_
-#define _DVB_USB_COMMON_H_
+#अगर_अघोषित _DVB_USB_COMMON_H_
+#घोषणा _DVB_USB_COMMON_H_
 
-#define DVB_USB_LOG_PREFIX "dvb-usb"
-#include "dvb-usb.h"
+#घोषणा DVB_USB_LOG_PREFIX "dvb-usb"
+#समावेश "dvb-usb.h"
 
-extern int dvb_usb_debug;
-extern int dvb_usb_disable_rc_polling;
+बाह्य पूर्णांक dvb_usb_debug;
+बाह्य पूर्णांक dvb_usb_disable_rc_polling;
 
-#define deb_info(args...)  dprintk(dvb_usb_debug,0x001,args)
-#define deb_xfer(args...)  dprintk(dvb_usb_debug,0x002,args)
-#define deb_pll(args...)   dprintk(dvb_usb_debug,0x004,args)
-#define deb_ts(args...)    dprintk(dvb_usb_debug,0x008,args)
-#define deb_err(args...)   dprintk(dvb_usb_debug,0x010,args)
-#define deb_rc(args...)    dprintk(dvb_usb_debug,0x020,args)
-#define deb_fw(args...)    dprintk(dvb_usb_debug,0x040,args)
-#define deb_mem(args...)   dprintk(dvb_usb_debug,0x080,args)
-#define deb_uxfer(args...) dprintk(dvb_usb_debug,0x100,args)
+#घोषणा deb_info(args...)  dprपूर्णांकk(dvb_usb_debug,0x001,args)
+#घोषणा deb_xfer(args...)  dprपूर्णांकk(dvb_usb_debug,0x002,args)
+#घोषणा deb_pll(args...)   dprपूर्णांकk(dvb_usb_debug,0x004,args)
+#घोषणा deb_ts(args...)    dprपूर्णांकk(dvb_usb_debug,0x008,args)
+#घोषणा deb_err(args...)   dprपूर्णांकk(dvb_usb_debug,0x010,args)
+#घोषणा deb_rc(args...)    dprपूर्णांकk(dvb_usb_debug,0x020,args)
+#घोषणा deb_fw(args...)    dprपूर्णांकk(dvb_usb_debug,0x040,args)
+#घोषणा deb_mem(args...)   dprपूर्णांकk(dvb_usb_debug,0x080,args)
+#घोषणा deb_uxfer(args...) dprपूर्णांकk(dvb_usb_debug,0x100,args)
 
 /* commonly used  methods */
-int dvb_usb_download_firmware(struct usb_device *udev,
-			      const struct dvb_usb_device_properties *props);
+पूर्णांक dvb_usb_करोwnload_firmware(काष्ठा usb_device *udev,
+			      स्थिर काष्ठा dvb_usb_device_properties *props);
 
-extern int dvb_usb_device_power_ctrl(struct dvb_usb_device *d, int onoff);
+बाह्य पूर्णांक dvb_usb_device_घातer_ctrl(काष्ठा dvb_usb_device *d, पूर्णांक onoff);
 
-extern int usb_urb_init(struct usb_data_stream *stream, struct usb_data_stream_properties *props);
-extern int usb_urb_exit(struct usb_data_stream *stream);
-extern int usb_urb_submit(struct usb_data_stream *stream);
-extern int usb_urb_kill(struct usb_data_stream *stream);
+बाह्य पूर्णांक usb_urb_init(काष्ठा usb_data_stream *stream, काष्ठा usb_data_stream_properties *props);
+बाह्य पूर्णांक usb_urb_निकास(काष्ठा usb_data_stream *stream);
+बाह्य पूर्णांक usb_urb_submit(काष्ठा usb_data_stream *stream);
+बाह्य पूर्णांक usb_urb_समाप्त(काष्ठा usb_data_stream *stream);
 
-extern int dvb_usb_adapter_stream_init(struct dvb_usb_adapter *adap);
-extern int dvb_usb_adapter_stream_exit(struct dvb_usb_adapter *adap);
+बाह्य पूर्णांक dvb_usb_adapter_stream_init(काष्ठा dvb_usb_adapter *adap);
+बाह्य पूर्णांक dvb_usb_adapter_stream_निकास(काष्ठा dvb_usb_adapter *adap);
 
-extern int dvb_usb_i2c_init(struct dvb_usb_device *);
-extern int dvb_usb_i2c_exit(struct dvb_usb_device *);
+बाह्य पूर्णांक dvb_usb_i2c_init(काष्ठा dvb_usb_device *);
+बाह्य पूर्णांक dvb_usb_i2c_निकास(काष्ठा dvb_usb_device *);
 
-extern int dvb_usb_adapter_dvb_init(struct dvb_usb_adapter *adap,
-				    short *adapter_nums);
-extern int dvb_usb_adapter_dvb_exit(struct dvb_usb_adapter *adap);
-extern int dvb_usb_adapter_frontend_init(struct dvb_usb_adapter *adap);
-extern int dvb_usb_adapter_frontend_exit(struct dvb_usb_adapter *adap);
+बाह्य पूर्णांक dvb_usb_adapter_dvb_init(काष्ठा dvb_usb_adapter *adap,
+				    लघु *adapter_nums);
+बाह्य पूर्णांक dvb_usb_adapter_dvb_निकास(काष्ठा dvb_usb_adapter *adap);
+बाह्य पूर्णांक dvb_usb_adapter_frontend_init(काष्ठा dvb_usb_adapter *adap);
+बाह्य पूर्णांक dvb_usb_adapter_frontend_निकास(काष्ठा dvb_usb_adapter *adap);
 
-extern int dvb_usb_remote_init(struct dvb_usb_device *);
-extern int dvb_usb_remote_exit(struct dvb_usb_device *);
+बाह्य पूर्णांक dvb_usb_remote_init(काष्ठा dvb_usb_device *);
+बाह्य पूर्णांक dvb_usb_remote_निकास(काष्ठा dvb_usb_device *);
 
-#endif
+#पूर्ण_अगर

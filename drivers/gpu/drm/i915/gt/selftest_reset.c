@@ -1,88 +1,89 @@
-// SPDX-License-Identifier: MIT
+<शैली गुरु>
+// SPDX-License-Identअगरier: MIT
 /*
- * Copyright © 2018 Intel Corporation
+ * Copyright तऊ 2018 Intel Corporation
  */
 
-#include <linux/crc32.h>
+#समावेश <linux/crc32.h>
 
-#include "gem/i915_gem_stolen.h"
+#समावेश "gem/i915_gem_stolen.h"
 
-#include "i915_memcpy.h"
-#include "i915_selftest.h"
-#include "intel_gpu_commands.h"
-#include "selftests/igt_reset.h"
-#include "selftests/igt_atomic.h"
-#include "selftests/igt_spinner.h"
+#समावेश "i915_memcpy.h"
+#समावेश "i915_selftest.h"
+#समावेश "intel_gpu_commands.h"
+#समावेश "selftests/igt_reset.h"
+#समावेश "selftests/igt_atomic.h"
+#समावेश "selftests/igt_spinner.h"
 
-static int
-__igt_reset_stolen(struct intel_gt *gt,
-		   intel_engine_mask_t mask,
-		   const char *msg)
-{
-	struct i915_ggtt *ggtt = &gt->i915->ggtt;
-	const struct resource *dsm = &gt->i915->dsm;
-	resource_size_t num_pages, page;
-	struct intel_engine_cs *engine;
-	intel_wakeref_t wakeref;
-	enum intel_engine_id id;
-	struct igt_spinner spin;
-	long max, count;
-	void *tmp;
+अटल पूर्णांक
+__igt_reset_stolen(काष्ठा पूर्णांकel_gt *gt,
+		   पूर्णांकel_engine_mask_t mask,
+		   स्थिर अक्षर *msg)
+अणु
+	काष्ठा i915_ggtt *ggtt = &gt->i915->ggtt;
+	स्थिर काष्ठा resource *dsm = &gt->i915->dsm;
+	resource_माप_प्रकार num_pages, page;
+	काष्ठा पूर्णांकel_engine_cs *engine;
+	पूर्णांकel_wakeref_t wakeref;
+	क्रमागत पूर्णांकel_engine_id id;
+	काष्ठा igt_spinner spin;
+	दीर्घ max, count;
+	व्योम *पंचांगp;
 	u32 *crc;
-	int err;
+	पूर्णांक err;
 
-	if (!drm_mm_node_allocated(&ggtt->error_capture))
-		return 0;
+	अगर (!drm_mm_node_allocated(&ggtt->error_capture))
+		वापस 0;
 
 	num_pages = resource_size(dsm) >> PAGE_SHIFT;
-	if (!num_pages)
-		return 0;
+	अगर (!num_pages)
+		वापस 0;
 
-	crc = kmalloc_array(num_pages, sizeof(u32), GFP_KERNEL);
-	if (!crc)
-		return -ENOMEM;
+	crc = kदो_स्मृति_array(num_pages, माप(u32), GFP_KERNEL);
+	अगर (!crc)
+		वापस -ENOMEM;
 
-	tmp = kmalloc(PAGE_SIZE, GFP_KERNEL);
-	if (!tmp) {
+	पंचांगp = kदो_स्मृति(PAGE_SIZE, GFP_KERNEL);
+	अगर (!पंचांगp) अणु
 		err = -ENOMEM;
-		goto err_crc;
-	}
+		जाओ err_crc;
+	पूर्ण
 
 	igt_global_reset_lock(gt);
-	wakeref = intel_runtime_pm_get(gt->uncore->rpm);
+	wakeref = पूर्णांकel_runसमय_pm_get(gt->uncore->rpm);
 
 	err = igt_spinner_init(&spin, gt);
-	if (err)
-		goto err_lock;
+	अगर (err)
+		जाओ err_lock;
 
-	for_each_engine(engine, gt, id) {
-		struct intel_context *ce;
-		struct i915_request *rq;
+	क्रम_each_engine(engine, gt, id) अणु
+		काष्ठा पूर्णांकel_context *ce;
+		काष्ठा i915_request *rq;
 
-		if (!(mask & engine->mask))
-			continue;
+		अगर (!(mask & engine->mask))
+			जारी;
 
-		if (!intel_engine_can_store_dword(engine))
-			continue;
+		अगर (!पूर्णांकel_engine_can_store_dword(engine))
+			जारी;
 
-		ce = intel_context_create(engine);
-		if (IS_ERR(ce)) {
+		ce = पूर्णांकel_context_create(engine);
+		अगर (IS_ERR(ce)) अणु
 			err = PTR_ERR(ce);
-			goto err_spin;
-		}
+			जाओ err_spin;
+		पूर्ण
 		rq = igt_spinner_create_request(&spin, ce, MI_ARB_CHECK);
-		intel_context_put(ce);
-		if (IS_ERR(rq)) {
+		पूर्णांकel_context_put(ce);
+		अगर (IS_ERR(rq)) अणु
 			err = PTR_ERR(rq);
-			goto err_spin;
-		}
+			जाओ err_spin;
+		पूर्ण
 		i915_request_add(rq);
-	}
+	पूर्ण
 
-	for (page = 0; page < num_pages; page++) {
+	क्रम (page = 0; page < num_pages; page++) अणु
 		dma_addr_t dma = (dma_addr_t)dsm->start + (page << PAGE_SHIFT);
-		void __iomem *s;
-		void *in;
+		व्योम __iomem *s;
+		व्योम *in;
 
 		ggtt->vm.insert_page(&ggtt->vm, dma,
 				     ggtt->error_capture.start,
@@ -93,36 +94,36 @@ __igt_reset_stolen(struct intel_gt *gt,
 				      ggtt->error_capture.start,
 				      PAGE_SIZE);
 
-		if (!__drm_mm_interval_first(&gt->i915->mm.stolen,
+		अगर (!__drm_mm_पूर्णांकerval_first(&gt->i915->mm.stolen,
 					     page << PAGE_SHIFT,
 					     ((page + 1) << PAGE_SHIFT) - 1))
-			memset_io(s, STACK_MAGIC, PAGE_SIZE);
+			स_रखो_io(s, STACK_MAGIC, PAGE_SIZE);
 
-		in = (void __force *)s;
-		if (i915_memcpy_from_wc(tmp, in, PAGE_SIZE))
-			in = tmp;
+		in = (व्योम __क्रमce *)s;
+		अगर (i915_स_नकल_from_wc(पंचांगp, in, PAGE_SIZE))
+			in = पंचांगp;
 		crc[page] = crc32_le(0, in, PAGE_SIZE);
 
 		io_mapping_unmap(s);
-	}
+	पूर्ण
 	mb();
 	ggtt->vm.clear_range(&ggtt->vm, ggtt->error_capture.start, PAGE_SIZE);
 
-	if (mask == ALL_ENGINES) {
-		intel_gt_reset(gt, mask, NULL);
-	} else {
-		for_each_engine(engine, gt, id) {
-			if (mask & engine->mask)
-				intel_engine_reset(engine, NULL);
-		}
-	}
+	अगर (mask == ALL_ENGINES) अणु
+		पूर्णांकel_gt_reset(gt, mask, शून्य);
+	पूर्ण अन्यथा अणु
+		क्रम_each_engine(engine, gt, id) अणु
+			अगर (mask & engine->mask)
+				पूर्णांकel_engine_reset(engine, शून्य);
+		पूर्ण
+	पूर्ण
 
 	max = -1;
 	count = 0;
-	for (page = 0; page < num_pages; page++) {
+	क्रम (page = 0; page < num_pages; page++) अणु
 		dma_addr_t dma = (dma_addr_t)dsm->start + (page << PAGE_SHIFT);
-		void __iomem *s;
-		void *in;
+		व्योम __iomem *s;
+		व्योम *in;
 		u32 x;
 
 		ggtt->vm.insert_page(&ggtt->vm, dma,
@@ -134,255 +135,255 @@ __igt_reset_stolen(struct intel_gt *gt,
 				      ggtt->error_capture.start,
 				      PAGE_SIZE);
 
-		in = (void __force *)s;
-		if (i915_memcpy_from_wc(tmp, in, PAGE_SIZE))
-			in = tmp;
+		in = (व्योम __क्रमce *)s;
+		अगर (i915_स_नकल_from_wc(पंचांगp, in, PAGE_SIZE))
+			in = पंचांगp;
 		x = crc32_le(0, in, PAGE_SIZE);
 
-		if (x != crc[page] &&
-		    !__drm_mm_interval_first(&gt->i915->mm.stolen,
+		अगर (x != crc[page] &&
+		    !__drm_mm_पूर्णांकerval_first(&gt->i915->mm.stolen,
 					     page << PAGE_SHIFT,
-					     ((page + 1) << PAGE_SHIFT) - 1)) {
+					     ((page + 1) << PAGE_SHIFT) - 1)) अणु
 			pr_debug("unused stolen page %pa modified by GPU reset\n",
 				 &page);
-			if (count++ == 0)
+			अगर (count++ == 0)
 				igt_hexdump(in, PAGE_SIZE);
 			max = page;
-		}
+		पूर्ण
 
 		io_mapping_unmap(s);
-	}
+	पूर्ण
 	mb();
 	ggtt->vm.clear_range(&ggtt->vm, ggtt->error_capture.start, PAGE_SIZE);
 
-	if (count > 0) {
+	अगर (count > 0) अणु
 		pr_info("%s reset clobbered %ld pages of stolen, last clobber at page %ld\n",
 			msg, count, max);
-	}
-	if (max >= I915_GEM_STOLEN_BIAS >> PAGE_SHIFT) {
+	पूर्ण
+	अगर (max >= I915_GEM_STOLEN_BIAS >> PAGE_SHIFT) अणु
 		pr_err("%s reset clobbered unreserved area [above %x] of stolen; may cause severe faults\n",
 		       msg, I915_GEM_STOLEN_BIAS);
 		err = -EINVAL;
-	}
+	पूर्ण
 
 err_spin:
 	igt_spinner_fini(&spin);
 
 err_lock:
-	intel_runtime_pm_put(gt->uncore->rpm, wakeref);
+	पूर्णांकel_runसमय_pm_put(gt->uncore->rpm, wakeref);
 	igt_global_reset_unlock(gt);
 
-	kfree(tmp);
+	kमुक्त(पंचांगp);
 err_crc:
-	kfree(crc);
-	return err;
-}
+	kमुक्त(crc);
+	वापस err;
+पूर्ण
 
-static int igt_reset_device_stolen(void *arg)
-{
-	return __igt_reset_stolen(arg, ALL_ENGINES, "device");
-}
+अटल पूर्णांक igt_reset_device_stolen(व्योम *arg)
+अणु
+	वापस __igt_reset_stolen(arg, ALL_ENGINES, "device");
+पूर्ण
 
-static int igt_reset_engines_stolen(void *arg)
-{
-	struct intel_gt *gt = arg;
-	struct intel_engine_cs *engine;
-	enum intel_engine_id id;
-	int err;
+अटल पूर्णांक igt_reset_engines_stolen(व्योम *arg)
+अणु
+	काष्ठा पूर्णांकel_gt *gt = arg;
+	काष्ठा पूर्णांकel_engine_cs *engine;
+	क्रमागत पूर्णांकel_engine_id id;
+	पूर्णांक err;
 
-	if (!intel_has_reset_engine(gt))
-		return 0;
+	अगर (!पूर्णांकel_has_reset_engine(gt))
+		वापस 0;
 
-	for_each_engine(engine, gt, id) {
+	क्रम_each_engine(engine, gt, id) अणु
 		err = __igt_reset_stolen(gt, engine->mask, engine->name);
-		if (err)
-			return err;
-	}
+		अगर (err)
+			वापस err;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int igt_global_reset(void *arg)
-{
-	struct intel_gt *gt = arg;
-	unsigned int reset_count;
-	intel_wakeref_t wakeref;
-	int err = 0;
+अटल पूर्णांक igt_global_reset(व्योम *arg)
+अणु
+	काष्ठा पूर्णांकel_gt *gt = arg;
+	अचिन्हित पूर्णांक reset_count;
+	पूर्णांकel_wakeref_t wakeref;
+	पूर्णांक err = 0;
 
 	/* Check that we can issue a global GPU reset */
 
 	igt_global_reset_lock(gt);
-	wakeref = intel_runtime_pm_get(gt->uncore->rpm);
+	wakeref = पूर्णांकel_runसमय_pm_get(gt->uncore->rpm);
 
 	reset_count = i915_reset_count(&gt->i915->gpu_error);
 
-	intel_gt_reset(gt, ALL_ENGINES, NULL);
+	पूर्णांकel_gt_reset(gt, ALL_ENGINES, शून्य);
 
-	if (i915_reset_count(&gt->i915->gpu_error) == reset_count) {
+	अगर (i915_reset_count(&gt->i915->gpu_error) == reset_count) अणु
 		pr_err("No GPU reset recorded!\n");
 		err = -EINVAL;
-	}
+	पूर्ण
 
-	intel_runtime_pm_put(gt->uncore->rpm, wakeref);
+	पूर्णांकel_runसमय_pm_put(gt->uncore->rpm, wakeref);
 	igt_global_reset_unlock(gt);
 
-	if (intel_gt_is_wedged(gt))
+	अगर (पूर्णांकel_gt_is_wedged(gt))
 		err = -EIO;
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int igt_wedged_reset(void *arg)
-{
-	struct intel_gt *gt = arg;
-	intel_wakeref_t wakeref;
+अटल पूर्णांक igt_wedged_reset(व्योम *arg)
+अणु
+	काष्ठा पूर्णांकel_gt *gt = arg;
+	पूर्णांकel_wakeref_t wakeref;
 
 	/* Check that we can recover a wedged device with a GPU reset */
 
 	igt_global_reset_lock(gt);
-	wakeref = intel_runtime_pm_get(gt->uncore->rpm);
+	wakeref = पूर्णांकel_runसमय_pm_get(gt->uncore->rpm);
 
-	intel_gt_set_wedged(gt);
+	पूर्णांकel_gt_set_wedged(gt);
 
-	GEM_BUG_ON(!intel_gt_is_wedged(gt));
-	intel_gt_reset(gt, ALL_ENGINES, NULL);
+	GEM_BUG_ON(!पूर्णांकel_gt_is_wedged(gt));
+	पूर्णांकel_gt_reset(gt, ALL_ENGINES, शून्य);
 
-	intel_runtime_pm_put(gt->uncore->rpm, wakeref);
+	पूर्णांकel_runसमय_pm_put(gt->uncore->rpm, wakeref);
 	igt_global_reset_unlock(gt);
 
-	return intel_gt_is_wedged(gt) ? -EIO : 0;
-}
+	वापस पूर्णांकel_gt_is_wedged(gt) ? -EIO : 0;
+पूर्ण
 
-static int igt_atomic_reset(void *arg)
-{
-	struct intel_gt *gt = arg;
-	const typeof(*igt_atomic_phases) *p;
-	int err = 0;
+अटल पूर्णांक igt_atomic_reset(व्योम *arg)
+अणु
+	काष्ठा पूर्णांकel_gt *gt = arg;
+	स्थिर typeof(*igt_atomic_phases) *p;
+	पूर्णांक err = 0;
 
 	/* Check that the resets are usable from atomic context */
 
-	intel_gt_pm_get(gt);
+	पूर्णांकel_gt_pm_get(gt);
 	igt_global_reset_lock(gt);
 
-	/* Flush any requests before we get started and check basics */
-	if (!igt_force_reset(gt))
-		goto unlock;
+	/* Flush any requests beक्रमe we get started and check basics */
+	अगर (!igt_क्रमce_reset(gt))
+		जाओ unlock;
 
-	for (p = igt_atomic_phases; p->name; p++) {
-		intel_engine_mask_t awake;
+	क्रम (p = igt_atomic_phases; p->name; p++) अणु
+		पूर्णांकel_engine_mask_t awake;
 
 		GEM_TRACE("__intel_gt_reset under %s\n", p->name);
 
 		awake = reset_prepare(gt);
 		p->critical_section_begin();
 
-		err = __intel_gt_reset(gt, ALL_ENGINES);
+		err = __पूर्णांकel_gt_reset(gt, ALL_ENGINES);
 
 		p->critical_section_end();
 		reset_finish(gt, awake);
 
-		if (err) {
+		अगर (err) अणु
 			pr_err("__intel_gt_reset failed under %s\n", p->name);
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	/* As we poke around the guts, do a full reset before continuing. */
-	igt_force_reset(gt);
+	/* As we poke around the guts, करो a full reset beक्रमe continuing. */
+	igt_क्रमce_reset(gt);
 
 unlock:
 	igt_global_reset_unlock(gt);
-	intel_gt_pm_put(gt);
+	पूर्णांकel_gt_pm_put(gt);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int igt_atomic_engine_reset(void *arg)
-{
-	struct intel_gt *gt = arg;
-	const typeof(*igt_atomic_phases) *p;
-	struct intel_engine_cs *engine;
-	enum intel_engine_id id;
-	int err = 0;
+अटल पूर्णांक igt_atomic_engine_reset(व्योम *arg)
+अणु
+	काष्ठा पूर्णांकel_gt *gt = arg;
+	स्थिर typeof(*igt_atomic_phases) *p;
+	काष्ठा पूर्णांकel_engine_cs *engine;
+	क्रमागत पूर्णांकel_engine_id id;
+	पूर्णांक err = 0;
 
 	/* Check that the resets are usable from atomic context */
 
-	if (!intel_has_reset_engine(gt))
-		return 0;
+	अगर (!पूर्णांकel_has_reset_engine(gt))
+		वापस 0;
 
-	if (intel_uc_uses_guc_submission(&gt->uc))
-		return 0;
+	अगर (पूर्णांकel_uc_uses_guc_submission(&gt->uc))
+		वापस 0;
 
-	intel_gt_pm_get(gt);
+	पूर्णांकel_gt_pm_get(gt);
 	igt_global_reset_lock(gt);
 
-	/* Flush any requests before we get started and check basics */
-	if (!igt_force_reset(gt))
-		goto out_unlock;
+	/* Flush any requests beक्रमe we get started and check basics */
+	अगर (!igt_क्रमce_reset(gt))
+		जाओ out_unlock;
 
-	for_each_engine(engine, gt, id) {
-		struct tasklet_struct *t = &engine->execlists.tasklet;
+	क्रम_each_engine(engine, gt, id) अणु
+		काष्ठा tasklet_काष्ठा *t = &engine->execlists.tasklet;
 
-		if (t->func)
+		अगर (t->func)
 			tasklet_disable(t);
-		intel_engine_pm_get(engine);
+		पूर्णांकel_engine_pm_get(engine);
 
-		for (p = igt_atomic_phases; p->name; p++) {
+		क्रम (p = igt_atomic_phases; p->name; p++) अणु
 			GEM_TRACE("intel_engine_reset(%s) under %s\n",
 				  engine->name, p->name);
-			if (strcmp(p->name, "softirq"))
+			अगर (म_भेद(p->name, "softirq"))
 				local_bh_disable();
 
 			p->critical_section_begin();
-			err = __intel_engine_reset_bh(engine, NULL);
+			err = __पूर्णांकel_engine_reset_bh(engine, शून्य);
 			p->critical_section_end();
 
-			if (strcmp(p->name, "softirq"))
+			अगर (म_भेद(p->name, "softirq"))
 				local_bh_enable();
 
-			if (err) {
+			अगर (err) अणु
 				pr_err("intel_engine_reset(%s) failed under %s\n",
 				       engine->name, p->name);
-				break;
-			}
-		}
+				अवरोध;
+			पूर्ण
+		पूर्ण
 
-		intel_engine_pm_put(engine);
-		if (t->func) {
+		पूर्णांकel_engine_pm_put(engine);
+		अगर (t->func) अणु
 			tasklet_enable(t);
 			tasklet_hi_schedule(t);
-		}
-		if (err)
-			break;
-	}
+		पूर्ण
+		अगर (err)
+			अवरोध;
+	पूर्ण
 
-	/* As we poke around the guts, do a full reset before continuing. */
-	igt_force_reset(gt);
+	/* As we poke around the guts, करो a full reset beक्रमe continuing. */
+	igt_क्रमce_reset(gt);
 
 out_unlock:
 	igt_global_reset_unlock(gt);
-	intel_gt_pm_put(gt);
+	पूर्णांकel_gt_pm_put(gt);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-int intel_reset_live_selftests(struct drm_i915_private *i915)
-{
-	static const struct i915_subtest tests[] = {
+पूर्णांक पूर्णांकel_reset_live_selftests(काष्ठा drm_i915_निजी *i915)
+अणु
+	अटल स्थिर काष्ठा i915_subtest tests[] = अणु
 		SUBTEST(igt_global_reset), /* attempt to recover GPU first */
 		SUBTEST(igt_reset_device_stolen),
 		SUBTEST(igt_reset_engines_stolen),
 		SUBTEST(igt_wedged_reset),
 		SUBTEST(igt_atomic_reset),
 		SUBTEST(igt_atomic_engine_reset),
-	};
-	struct intel_gt *gt = &i915->gt;
+	पूर्ण;
+	काष्ठा पूर्णांकel_gt *gt = &i915->gt;
 
-	if (!intel_has_gpu_reset(gt))
-		return 0;
+	अगर (!पूर्णांकel_has_gpu_reset(gt))
+		वापस 0;
 
-	if (intel_gt_is_wedged(gt))
-		return -EIO; /* we're long past hope of a successful reset */
+	अगर (पूर्णांकel_gt_is_wedged(gt))
+		वापस -EIO; /* we're दीर्घ past hope of a successful reset */
 
-	return intel_gt_live_subtests(tests, gt);
-}
+	वापस पूर्णांकel_gt_live_subtests(tests, gt);
+पूर्ण

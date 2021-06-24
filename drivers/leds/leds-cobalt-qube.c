@@ -1,65 +1,66 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * Copyright 2006 - Florian Fainelli <florian@openwrt.org>
+ * Copyright 2006 - Florian Fainelli <florian@खोलोwrt.org>
  *
  * Control the Cobalt Qube/RaQ front LED
  */
-#include <linux/io.h>
-#include <linux/ioport.h>
-#include <linux/leds.h>
-#include <linux/module.h>
-#include <linux/platform_device.h>
-#include <linux/types.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/ioport.h>
+#समावेश <linux/leds.h>
+#समावेश <linux/module.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/types.h>
 
-#define LED_FRONT_LEFT	0x01
-#define LED_FRONT_RIGHT	0x02
+#घोषणा LED_FRONT_LEFT	0x01
+#घोषणा LED_FRONT_RIGHT	0x02
 
-static void __iomem *led_port;
-static u8 led_value;
+अटल व्योम __iomem *led_port;
+अटल u8 led_value;
 
-static void qube_front_led_set(struct led_classdev *led_cdev,
-			       enum led_brightness brightness)
-{
-	if (brightness)
+अटल व्योम qube_front_led_set(काष्ठा led_classdev *led_cdev,
+			       क्रमागत led_brightness brightness)
+अणु
+	अगर (brightness)
 		led_value = LED_FRONT_LEFT | LED_FRONT_RIGHT;
-	else
+	अन्यथा
 		led_value = ~(LED_FRONT_LEFT | LED_FRONT_RIGHT);
-	writeb(led_value, led_port);
-}
+	ग_लिखोb(led_value, led_port);
+पूर्ण
 
-static struct led_classdev qube_front_led = {
+अटल काष्ठा led_classdev qube_front_led = अणु
 	.name			= "qube::front",
 	.brightness		= LED_FULL,
 	.brightness_set		= qube_front_led_set,
-	.default_trigger	= "default-on",
-};
+	.शेष_trigger	= "default-on",
+पूर्ण;
 
-static int cobalt_qube_led_probe(struct platform_device *pdev)
-{
-	struct resource *res;
+अटल पूर्णांक cobalt_qube_led_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा resource *res;
 
-	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
-	if (!res)
-		return -EBUSY;
+	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
+	अगर (!res)
+		वापस -EBUSY;
 
 	led_port = devm_ioremap(&pdev->dev, res->start, resource_size(res));
-	if (!led_port)
-		return -ENOMEM;
+	अगर (!led_port)
+		वापस -ENOMEM;
 
 	led_value = LED_FRONT_LEFT | LED_FRONT_RIGHT;
-	writeb(led_value, led_port);
+	ग_लिखोb(led_value, led_port);
 
-	return devm_led_classdev_register(&pdev->dev, &qube_front_led);
-}
+	वापस devm_led_classdev_रेजिस्टर(&pdev->dev, &qube_front_led);
+पूर्ण
 
-static struct platform_driver cobalt_qube_led_driver = {
+अटल काष्ठा platक्रमm_driver cobalt_qube_led_driver = अणु
 	.probe	= cobalt_qube_led_probe,
-	.driver	= {
+	.driver	= अणु
 		.name	= "cobalt-qube-leds",
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-module_platform_driver(cobalt_qube_led_driver);
+module_platक्रमm_driver(cobalt_qube_led_driver);
 
 MODULE_LICENSE("GPL");
 MODULE_DESCRIPTION("Front LED support for Cobalt Server");

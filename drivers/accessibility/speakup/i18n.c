@@ -1,17 +1,18 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /* Internationalization implementation.  Includes definitions of English
- * string arrays, and the i18n pointer.
+ * string arrays, and the i18n poपूर्णांकer.
  */
 
-#include <linux/slab.h>		/* For kmalloc. */
-#include <linux/ctype.h>
-#include <linux/module.h>
-#include <linux/string.h>
-#include "speakup.h"
-#include "spk_priv.h"
+#समावेश <linux/slab.h>		/* For kदो_स्मृति. */
+#समावेश <linux/प्रकार.स>
+#समावेश <linux/module.h>
+#समावेश <linux/माला.स>
+#समावेश "speakup.h"
+#समावेश "spk_priv.h"
 
-static char *speakup_msgs[MSG_LAST_INDEX];
-static char *speakup_default_msgs[MSG_LAST_INDEX] = {
+अटल अक्षर *speakup_msgs[MSG_LAST_INDEX];
+अटल अक्षर *speakup_शेष_msgs[MSG_LAST_INDEX] = अणु
 	[MSG_BLANK] = "blank",
 	[MSG_IAM_ALIVE] = "I'm aLive!",
 	[MSG_YOU_KILLED_SPEAKUP] = "You killed speakup!",
@@ -57,7 +58,7 @@ static char *speakup_default_msgs[MSG_LAST_INDEX] = {
 	[MSG_CTRL] = "control-",
 	[MSG_DISJUNCTION] = "or",
 
-/* Messages with embedded format specifiers. */
+/* Messages with embedded क्रमmat specअगरiers. */
 	[MSG_POS_INFO] = "line %ld, col %ld, t t y %d",
 	[MSG_CHAR_INFO] = "hex %02x, decimal %d",
 	[MSG_REPEAT_DESC] = "times %d .",
@@ -243,16 +244,16 @@ static char *speakup_default_msgs[MSG_LAST_INDEX] = {
 	[MSG_KEYNAME_SETUP] = "setup",
 	[MSG_KEYNAME_SLEEP] = "sleep",
 	[MSG_KEYNAME_WAKEUP] = "wakeup",
-	[MSG_KEYNAME_FILE] = "file",
-	[MSG_KEYNAME_SENDFILE] = "send file",
-	[MSG_KEYNAME_DELFILE] = "delete file",
+	[MSG_KEYNAME_खाता] = "file",
+	[MSG_KEYNAME_SENDखाता] = "send file",
+	[MSG_KEYNAME_DELखाता] = "delete file",
 	[MSG_KEYNAME_XFER] = "transfer",
 	[MSG_KEYNAME_PROG1] = "prog1",
 	[MSG_KEYNAME_PROG2] = "prog2",
 	[MSG_KEYNAME_WWW] = "www",
 	[MSG_KEYNAME_MSDOS] = "msdos",
 	[MSG_KEYNAME_COFFEE] = "coffee",
-	[MSG_KEYNAME_DIRECTION] = "direction",
+	[MSG_KEYNAME_सूचीECTION] = "direction",
 	[MSG_KEYNAME_CYCLEWINDOWS] = "cycle windows",
 	[MSG_KEYNAME_MAIL] = "mail",
 	[MSG_KEYNAME_BOOKMARKS] = "bookmarks",
@@ -350,274 +351,274 @@ static char *speakup_default_msgs[MSG_LAST_INDEX] = {
 	[MSG_FUNCNAME_WORD_SAY_CURRENT] = "word, say current",
 	[MSG_FUNCNAME_WORD_SAY_NEXT] = "word, say next",
 	[MSG_FUNCNAME_WORD_SAY_PREVIOUS] = "word, say previous",
-};
+पूर्ण;
 
-static struct msg_group_t all_groups[] = {
-	{
+अटल काष्ठा msg_group_t all_groups[] = अणु
+	अणु
 		.name = "ctl_keys",
 		.start = MSG_CTL_START,
 		.end = MSG_CTL_END,
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "colors",
 		.start = MSG_COLORS_START,
 		.end = MSG_COLORS_END,
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "formatted",
 		.start = MSG_FORMATTED_START,
 		.end = MSG_FORMATTED_END,
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "function_names",
 		.start = MSG_FUNCNAMES_START,
 		.end = MSG_FUNCNAMES_END,
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "key_names",
 		.start = MSG_KEYNAMES_START,
 		.end = MSG_KEYNAMES_END,
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "announcements",
 		.start = MSG_ANNOUNCEMENTS_START,
 		.end = MSG_ANNOUNCEMENTS_END,
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "states",
 		.start = MSG_STATES_START,
 		.end = MSG_STATES_END,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static const  int num_groups = ARRAY_SIZE(all_groups);
+अटल स्थिर  पूर्णांक num_groups = ARRAY_SIZE(all_groups);
 
-char *spk_msg_get(enum msg_index_t index)
-{
-	return speakup_msgs[index];
-}
+अक्षर *spk_msg_get(क्रमागत msg_index_t index)
+अणु
+	वापस speakup_msgs[index];
+पूर्ण
 
 /*
- * Function: next_specifier
- * Finds the start of the next format specifier in the argument string.
- * Return value: pointer to start of format
- * specifier, or NULL if no specifier exists.
+ * Function: next_specअगरier
+ * Finds the start of the next क्रमmat specअगरier in the argument string.
+ * Return value: poपूर्णांकer to start of क्रमmat
+ * specअगरier, or शून्य अगर no specअगरier exists.
  */
-static char *next_specifier(char *input)
-{
-	int found = 0;
-	char *next_percent = input;
+अटल अक्षर *next_specअगरier(अक्षर *input)
+अणु
+	पूर्णांक found = 0;
+	अक्षर *next_percent = input;
 
-	while (next_percent && !found) {
-		next_percent = strchr(next_percent, '%');
-		if (next_percent) {
-			/* skip over doubled percent signs */
-			while (next_percent[0] == '%' &&
+	जबतक (next_percent && !found) अणु
+		next_percent = म_अक्षर(next_percent, '%');
+		अगर (next_percent) अणु
+			/* skip over द्विगुनd percent signs */
+			जबतक (next_percent[0] == '%' &&
 			       next_percent[1] == '%')
 				next_percent += 2;
-			if (*next_percent == '%')
+			अगर (*next_percent == '%')
 				found = 1;
-			else if (*next_percent == '\0')
-				next_percent = NULL;
-		}
-	}
+			अन्यथा अगर (*next_percent == '\0')
+				next_percent = शून्य;
+		पूर्ण
+	पूर्ण
 
-	return next_percent;
-}
+	वापस next_percent;
+पूर्ण
 
 /* Skip over 0 or more flags. */
-static char *skip_flags(char *input)
-{
-	while ((*input != '\0') && strchr(" 0+-#", *input))
+अटल अक्षर *skip_flags(अक्षर *input)
+अणु
+	जबतक ((*input != '\0') && म_अक्षर(" 0+-#", *input))
 		input++;
-	return input;
-}
+	वापस input;
+पूर्ण
 
-/* Skip over width.precision, if it exists. */
-static char *skip_width(char *input)
-{
-	while (isdigit(*input))
+/* Skip over width.precision, अगर it exists. */
+अटल अक्षर *skip_width(अक्षर *input)
+अणु
+	जबतक (है_अंक(*input))
 		input++;
-	if (*input == '.') {
+	अगर (*input == '.') अणु
 		input++;
-		while (isdigit(*input))
+		जबतक (है_अंक(*input))
 			input++;
-	}
-	return input;
-}
+	पूर्ण
+	वापस input;
+पूर्ण
 
 /*
  * Skip past the end of the conversion part.
- * Note that this code only accepts a handful of conversion specifiers:
+ * Note that this code only accepts a handful of conversion specअगरiers:
  * c d s x and ld.  Not accidental; these are exactly the ones used in
- * the default group of formatted messages.
+ * the शेष group of क्रमmatted messages.
  */
-static char *skip_conversion(char *input)
-{
-	if ((input[0] == 'l') && (input[1] == 'd'))
+अटल अक्षर *skip_conversion(अक्षर *input)
+अणु
+	अगर ((input[0] == 'l') && (input[1] == 'd'))
 		input += 2;
-	else if ((*input != '\0') && strchr("cdsx", *input))
+	अन्यथा अगर ((*input != '\0') && म_अक्षर("cdsx", *input))
 		input++;
-	return input;
-}
+	वापस input;
+पूर्ण
 
 /*
- * Function: find_specifier_end
- * Return a pointer to the end of the format specifier.
+ * Function: find_specअगरier_end
+ * Return a poपूर्णांकer to the end of the क्रमmat specअगरier.
  */
-static char *find_specifier_end(char *input)
-{
+अटल अक्षर *find_specअगरier_end(अक्षर *input)
+अणु
 	input++;		/* Advance over %. */
 	input = skip_flags(input);
 	input = skip_width(input);
 	input = skip_conversion(input);
-	return input;
-}
+	वापस input;
+पूर्ण
 
 /*
- * Function: compare_specifiers
- * Compare the format specifiers pointed to by *input1 and *input2.
- * Return true if they are the same, false otherwise.
- * Advance *input1 and *input2 so that they point to the character following
- * the end of the specifier.
+ * Function: compare_specअगरiers
+ * Compare the क्रमmat specअगरiers poपूर्णांकed to by *input1 and *input2.
+ * Return true अगर they are the same, false otherwise.
+ * Advance *input1 and *input2 so that they poपूर्णांक to the अक्षरacter following
+ * the end of the specअगरier.
  */
-static bool compare_specifiers(char **input1, char **input2)
-{
+अटल bool compare_specअगरiers(अक्षर **input1, अक्षर **input2)
+अणु
 	bool same = false;
-	char *end1 = find_specifier_end(*input1);
-	char *end2 = find_specifier_end(*input2);
-	size_t length1 = end1 - *input1;
-	size_t length2 = end2 - *input2;
+	अक्षर *end1 = find_specअगरier_end(*input1);
+	अक्षर *end2 = find_specअगरier_end(*input2);
+	माप_प्रकार length1 = end1 - *input1;
+	माप_प्रकार length2 = end2 - *input2;
 
-	if ((length1 == length2) && !memcmp(*input1, *input2, length1))
+	अगर ((length1 == length2) && !स_भेद(*input1, *input2, length1))
 		same = true;
 
 	*input1 = end1;
 	*input2 = end2;
-	return same;
-}
+	वापस same;
+पूर्ण
 
 /*
  * Function: fmt_validate
- * Check that two format strings contain the same number of format specifiers,
- * and that the order of specifiers is the same in both strings.
- * Return true if the condition holds, false if it doesn't.
+ * Check that two क्रमmat strings contain the same number of क्रमmat specअगरiers,
+ * and that the order of specअगरiers is the same in both strings.
+ * Return true अगर the condition holds, false अगर it करोesn't.
  */
-static bool fmt_validate(char *template, char *user)
-{
+अटल bool fmt_validate(अक्षर *ढाँचा, अक्षर *user)
+अणु
 	bool valid = true;
 	bool still_comparing = true;
-	char *template_ptr = template;
-	char *user_ptr = user;
+	अक्षर *ढाँचा_ptr = ढाँचा;
+	अक्षर *user_ptr = user;
 
-	while (still_comparing && valid) {
-		template_ptr = next_specifier(template_ptr);
-		user_ptr = next_specifier(user_ptr);
-		if (template_ptr && user_ptr) {
-			/* Both have at least one more specifier. */
-			valid = compare_specifiers(&template_ptr, &user_ptr);
-		} else {
-			/* No more format specifiers in one or both strings. */
+	जबतक (still_comparing && valid) अणु
+		ढाँचा_ptr = next_specअगरier(ढाँचा_ptr);
+		user_ptr = next_specअगरier(user_ptr);
+		अगर (ढाँचा_ptr && user_ptr) अणु
+			/* Both have at least one more specअगरier. */
+			valid = compare_specअगरiers(&ढाँचा_ptr, &user_ptr);
+		पूर्ण अन्यथा अणु
+			/* No more क्रमmat specअगरiers in one or both strings. */
 			still_comparing = false;
-			/* See if one has more specifiers than the other. */
-			if (template_ptr || user_ptr)
+			/* See अगर one has more specअगरiers than the other. */
+			अगर (ढाँचा_ptr || user_ptr)
 				valid = false;
-		}
-	}
-	return valid;
-}
+		पूर्ण
+	पूर्ण
+	वापस valid;
+पूर्ण
 
 /*
  * Function: msg_set
  * Description: Add a user-supplied message to the user_messages array.
- * The message text is copied to a memory area allocated with kmalloc.
+ * The message text is copied to a memory area allocated with kदो_स्मृति.
  * If the function fails, then user_messages is untouched.
  * Arguments:
  * - index: a message number, as found in i18n.h.
  * - text:  text of message.  Not NUL-terminated.
  * - length: number of bytes in text.
  * Failure conditions:
- * -EINVAL -  Invalid format specifiers in formatted message or illegal index.
+ * -EINVAL -  Invalid क्रमmat specअगरiers in क्रमmatted message or illegal index.
  * -ENOMEM -  Unable to allocate memory.
  */
-ssize_t spk_msg_set(enum msg_index_t index, char *text, size_t length)
-{
-	char *newstr = NULL;
-	unsigned long flags;
+sमाप_प्रकार spk_msg_set(क्रमागत msg_index_t index, अक्षर *text, माप_प्रकार length)
+अणु
+	अक्षर *newstr = शून्य;
+	अचिन्हित दीर्घ flags;
 
-	if ((index < MSG_FIRST_INDEX) || (index >= MSG_LAST_INDEX))
-		return -EINVAL;
+	अगर ((index < MSG_FIRST_INDEX) || (index >= MSG_LAST_INDEX))
+		वापस -EINVAL;
 
 	newstr = kmemdup_nul(text, length, GFP_KERNEL);
-	if (!newstr)
-		return -ENOMEM;
+	अगर (!newstr)
+		वापस -ENOMEM;
 
-	if (index >= MSG_FORMATTED_START &&
+	अगर (index >= MSG_FORMATTED_START &&
 	    index <= MSG_FORMATTED_END &&
-	    !fmt_validate(speakup_default_msgs[index], newstr)) {
-		kfree(newstr);
-		return -EINVAL;
-	}
+	    !fmt_validate(speakup_शेष_msgs[index], newstr)) अणु
+		kमुक्त(newstr);
+		वापस -EINVAL;
+	पूर्ण
 	spin_lock_irqsave(&speakup_info.spinlock, flags);
-	if (speakup_msgs[index] != speakup_default_msgs[index])
-		kfree(speakup_msgs[index]);
+	अगर (speakup_msgs[index] != speakup_शेष_msgs[index])
+		kमुक्त(speakup_msgs[index]);
 	speakup_msgs[index] = newstr;
 	spin_unlock_irqrestore(&speakup_info.spinlock, flags);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * Find a message group, given its name.  Return a pointer to the structure
- * if found, or NULL otherwise.
+ * Find a message group, given its name.  Return a poपूर्णांकer to the काष्ठाure
+ * अगर found, or शून्य otherwise.
  */
-struct msg_group_t *spk_find_msg_group(const char *group_name)
-{
-	struct msg_group_t *group = NULL;
-	int i;
+काष्ठा msg_group_t *spk_find_msg_group(स्थिर अक्षर *group_name)
+अणु
+	काष्ठा msg_group_t *group = शून्य;
+	पूर्णांक i;
 
-	for (i = 0; i < num_groups; i++) {
-		if (!strcmp(all_groups[i].name, group_name)) {
+	क्रम (i = 0; i < num_groups; i++) अणु
+		अगर (!म_भेद(all_groups[i].name, group_name)) अणु
 			group = &all_groups[i];
-			break;
-		}
-	}
-	return group;
-}
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	वापस group;
+पूर्ण
 
-void spk_reset_msg_group(struct msg_group_t *group)
-{
-	unsigned long flags;
-	enum msg_index_t i;
+व्योम spk_reset_msg_group(काष्ठा msg_group_t *group)
+अणु
+	अचिन्हित दीर्घ flags;
+	क्रमागत msg_index_t i;
 
 	spin_lock_irqsave(&speakup_info.spinlock, flags);
 
-	for (i = group->start; i <= group->end; i++) {
-		if (speakup_msgs[i] != speakup_default_msgs[i])
-			kfree(speakup_msgs[i]);
-		speakup_msgs[i] = speakup_default_msgs[i];
-	}
+	क्रम (i = group->start; i <= group->end; i++) अणु
+		अगर (speakup_msgs[i] != speakup_शेष_msgs[i])
+			kमुक्त(speakup_msgs[i]);
+		speakup_msgs[i] = speakup_शेष_msgs[i];
+	पूर्ण
 	spin_unlock_irqrestore(&speakup_info.spinlock, flags);
-}
+पूर्ण
 
-/* Called at initialization time, to establish default messages. */
-void spk_initialize_msgs(void)
-{
-	memcpy(speakup_msgs, speakup_default_msgs,
-	       sizeof(speakup_default_msgs));
-}
+/* Called at initialization समय, to establish शेष messages. */
+व्योम spk_initialize_msgs(व्योम)
+अणु
+	स_नकल(speakup_msgs, speakup_शेष_msgs,
+	       माप(speakup_शेष_msgs));
+पूर्ण
 
 /* Free user-supplied strings when module is unloaded: */
-void spk_free_user_msgs(void)
-{
-	enum msg_index_t index;
-	unsigned long flags;
+व्योम spk_मुक्त_user_msgs(व्योम)
+अणु
+	क्रमागत msg_index_t index;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&speakup_info.spinlock, flags);
-	for (index = MSG_FIRST_INDEX; index < MSG_LAST_INDEX; index++) {
-		if (speakup_msgs[index] != speakup_default_msgs[index]) {
-			kfree(speakup_msgs[index]);
-			speakup_msgs[index] = speakup_default_msgs[index];
-		}
-	}
+	क्रम (index = MSG_FIRST_INDEX; index < MSG_LAST_INDEX; index++) अणु
+		अगर (speakup_msgs[index] != speakup_शेष_msgs[index]) अणु
+			kमुक्त(speakup_msgs[index]);
+			speakup_msgs[index] = speakup_शेष_msgs[index];
+		पूर्ण
+	पूर्ण
 	spin_unlock_irqrestore(&speakup_info.spinlock, flags);
-}
+पूर्ण

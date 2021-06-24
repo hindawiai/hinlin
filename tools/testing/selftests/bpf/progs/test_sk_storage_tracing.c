@@ -1,95 +1,96 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /* Copyright (c) 2020 Facebook */
 
-#include <vmlinux.h>
-#include <bpf/bpf_tracing.h>
-#include <bpf/bpf_core_read.h>
-#include <bpf/bpf_helpers.h>
+#समावेश <vmlinux.h>
+#समावेश <bpf/bpf_tracing.h>
+#समावेश <bpf/bpf_core_पढ़ो.h>
+#समावेश <bpf/bpf_helpers.h>
 
-struct sk_stg {
+काष्ठा sk_stg अणु
 	__u32 pid;
-	__u32 last_notclose_state;
-	char comm[16];
-};
+	__u32 last_notबंद_state;
+	अक्षर comm[16];
+पूर्ण;
 
-struct {
-	__uint(type, BPF_MAP_TYPE_SK_STORAGE);
-	__uint(map_flags, BPF_F_NO_PREALLOC);
-	__type(key, int);
-	__type(value, struct sk_stg);
-} sk_stg_map SEC(".maps");
+काष्ठा अणु
+	__uपूर्णांक(type, BPF_MAP_TYPE_SK_STORAGE);
+	__uपूर्णांक(map_flags, BPF_F_NO_PREALLOC);
+	__type(key, पूर्णांक);
+	__type(value, काष्ठा sk_stg);
+पूर्ण sk_stg_map SEC(".maps");
 
 /* Testing delete */
-struct {
-	__uint(type, BPF_MAP_TYPE_SK_STORAGE);
-	__uint(map_flags, BPF_F_NO_PREALLOC);
-	__type(key, int);
-	__type(value, int);
-} del_sk_stg_map SEC(".maps");
+काष्ठा अणु
+	__uपूर्णांक(type, BPF_MAP_TYPE_SK_STORAGE);
+	__uपूर्णांक(map_flags, BPF_F_NO_PREALLOC);
+	__type(key, पूर्णांक);
+	__type(value, पूर्णांक);
+पूर्ण del_sk_stg_map SEC(".maps");
 
-char task_comm[16] = "";
+अक्षर task_comm[16] = "";
 
 SEC("tp_btf/inet_sock_set_state")
-int BPF_PROG(trace_inet_sock_set_state, struct sock *sk, int oldstate,
-	     int newstate)
-{
-	struct sk_stg *stg;
+पूर्णांक BPF_PROG(trace_inet_sock_set_state, काष्ठा sock *sk, पूर्णांक oldstate,
+	     पूर्णांक newstate)
+अणु
+	काष्ठा sk_stg *stg;
 
-	if (newstate == BPF_TCP_CLOSE)
-		return 0;
+	अगर (newstate == BPF_TCP_CLOSE)
+		वापस 0;
 
 	stg = bpf_sk_storage_get(&sk_stg_map, sk, 0,
 				 BPF_SK_STORAGE_GET_F_CREATE);
-	if (!stg)
-		return 0;
+	अगर (!stg)
+		वापस 0;
 
-	stg->last_notclose_state = newstate;
+	stg->last_notबंद_state = newstate;
 
 	bpf_sk_storage_delete(&del_sk_stg_map, sk);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void set_task_info(struct sock *sk)
-{
-	struct task_struct *task;
-	struct sk_stg *stg;
+अटल व्योम set_task_info(काष्ठा sock *sk)
+अणु
+	काष्ठा task_काष्ठा *task;
+	काष्ठा sk_stg *stg;
 
 	stg = bpf_sk_storage_get(&sk_stg_map, sk, 0,
 				 BPF_SK_STORAGE_GET_F_CREATE);
-	if (!stg)
-		return;
+	अगर (!stg)
+		वापस;
 
 	stg->pid = bpf_get_current_pid_tgid();
 
-	task = (struct task_struct *)bpf_get_current_task();
-	bpf_core_read_str(&stg->comm, sizeof(stg->comm), &task->comm);
-	bpf_core_read_str(&task_comm, sizeof(task_comm), &task->comm);
-}
+	task = (काष्ठा task_काष्ठा *)bpf_get_current_task();
+	bpf_core_पढ़ो_str(&stg->comm, माप(stg->comm), &task->comm);
+	bpf_core_पढ़ो_str(&task_comm, माप(task_comm), &task->comm);
+पूर्ण
 
 SEC("fentry/inet_csk_listen_start")
-int BPF_PROG(trace_inet_csk_listen_start, struct sock *sk, int backlog)
-{
+पूर्णांक BPF_PROG(trace_inet_csk_listen_start, काष्ठा sock *sk, पूर्णांक backlog)
+अणु
 	set_task_info(sk);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 SEC("fentry/tcp_connect")
-int BPF_PROG(trace_tcp_connect, struct sock *sk)
-{
+पूर्णांक BPF_PROG(trace_tcp_connect, काष्ठा sock *sk)
+अणु
 	set_task_info(sk);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 SEC("fexit/inet_csk_accept")
-int BPF_PROG(inet_csk_accept, struct sock *sk, int flags, int *err, bool kern,
-	     struct sock *accepted_sk)
-{
+पूर्णांक BPF_PROG(inet_csk_accept, काष्ठा sock *sk, पूर्णांक flags, पूर्णांक *err, bool kern,
+	     काष्ठा sock *accepted_sk)
+अणु
 	set_task_info(accepted_sk);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-char _license[] SEC("license") = "GPL";
+अक्षर _license[] SEC("license") = "GPL";

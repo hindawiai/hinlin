@@ -1,48 +1,49 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * INET		An implementation of the TCP/IP protocol suite for the LINUX
- *		operating system.  INET is implemented using the  BSD Socket
- *		interface as the means of communication with the user level.
+ * INET		An implementation of the TCP/IP protocol suite क्रम the LINUX
+ *		operating प्रणाली.  INET is implemented using the  BSD Socket
+ *		पूर्णांकerface as the means of communication with the user level.
  *
  *		IP/TCP/UDP checksumming routines
  *
  * Authors:	Jorge Cwik, <jorge@laser.satlink.net>
- *		Arnt Gulbrandsen, <agulbra@nvg.unit.no>
+ *		Arnt Gulbअक्रमsen, <agulbra@nvg.unit.no>
  *		Tom May, <ftom@netcom.com>
- *		Andreas Schwab, <schwab@issan.informatik.uni-dortmund.de>
+ *		Andreas Schwab, <schwab@issan.inक्रमmatik.uni-करोrपंचांगund.de>
  *		Lots of code moved from tcp.c and ip.c; see those files
- *		for more names.
+ *		क्रम more names.
  *
  * 03/02/96	Jes Sorensen, Andreas Schwab, Roman Hodek:
  *		Fixed some nasty bugs, causing some horrible crashes.
- *		A: At some points, the sum (%0) was used as
+ *		A: At some poपूर्णांकs, the sum (%0) was used as
  *		length-counter instead of the length counter
- *		(%1). Thanks to Roman Hodek for pointing this out.
- *		B: GCC seems to mess up if one uses too many
- *		data-registers to hold input values and one tries to
- *		specify d0 and d1 as scratch registers. Letting gcc
- *		choose these registers itself solves the problem.
+ *		(%1). Thanks to Roman Hodek क्रम poपूर्णांकing this out.
+ *		B: GCC seems to mess up अगर one uses too many
+ *		data-रेजिस्टरs to hold input values and one tries to
+ *		specअगरy d0 and d1 as scratch रेजिस्टरs. Letting gcc
+ *		choose these रेजिस्टरs itself solves the problem.
  *
  * 1998/8/31	Andreas Schwab:
  *		Zero out rest of buffer on exception in
  *		csum_partial_copy_from_user.
  */
 
-#include <linux/module.h>
-#include <net/checksum.h>
+#समावेश <linux/module.h>
+#समावेश <net/checksum.h>
 
 /*
- * computes a partial checksum, e.g. for TCP/UDP fragments
+ * computes a partial checksum, e.g. क्रम TCP/UDP fragments
  */
 
-__wsum csum_partial(const void *buff, int len, __wsum sum)
-{
-	unsigned long tmp1, tmp2;
+__wsum csum_partial(स्थिर व्योम *buff, पूर्णांक len, __wsum sum)
+अणु
+	अचिन्हित दीर्घ पंचांगp1, पंचांगp2;
 	  /*
 	   * Experiments with ethernet and slip connections show that buff
 	   * is aligned on either a 2-byte or 4-byte boundary.
 	   */
-	__asm__("movel %2,%3\n\t"
+	__यंत्र__("movel %2,%3\n\t"
 		"btst #1,%3\n\t"	/* Check alignment */
 		"jeq 2f\n\t"
 		"subql #2,%1\n\t"	/* buff%4==2: treat first word */
@@ -54,8 +55,8 @@ __wsum csum_partial(const void *buff, int len, __wsum sum)
 		"clrl %3\n\t"
 		"addxl %3,%0\n"		/* add X bit */
 	     "2:\t"
-		/* unrolled loop for the main part: do 8 longs at once */
-		"movel %1,%3\n\t"	/* save len in tmp1 */
+		/* unrolled loop क्रम the मुख्य part: करो 8 दीर्घs at once */
+		"movel %1,%3\n\t"	/* save len in पंचांगp1 */
 		"lsrl #5,%1\n\t"	/* len/32 */
 		"jeq 2f\n\t"		/* not enough... */
 		"subql #1,%1\n"
@@ -83,63 +84,63 @@ __wsum csum_partial(const void *buff, int len, __wsum sum)
 		"subql #1,%1\n\t"
 		"jcc 1b\n"
 	     "2:\t"
-		"movel %3,%1\n\t"	/* restore len from tmp1 */
-		"andw #0x1c,%3\n\t"	/* number of rest longs */
+		"movel %3,%1\n\t"	/* restore len from पंचांगp1 */
+		"andw #0x1c,%3\n\t"	/* number of rest दीर्घs */
 		"jeq 4f\n\t"
 		"lsrw #2,%3\n\t"
 		"subqw #1,%3\n"
 	     "3:\t"
-		/* loop for rest longs */
+		/* loop क्रम rest दीर्घs */
 		"movel %2@+,%4\n\t"
 		"addxl %4,%0\n\t"
 		"dbra %3,3b\n\t"
 		"clrl %4\n\t"
 		"addxl %4,%0\n"		/* add X bit */
 	     "4:\t"
-		/* now check for rest bytes that do not fit into longs */
+		/* now check क्रम rest bytes that करो not fit पूर्णांकo दीर्घs */
 		"andw #3,%1\n\t"
 		"jeq 7f\n\t"
-		"clrl %4\n\t"		/* clear tmp2 for rest bytes */
+		"clrl %4\n\t"		/* clear पंचांगp2 क्रम rest bytes */
 		"subqw #2,%1\n\t"
 		"jlt 5f\n\t"
 		"movew %2@+,%4\n\t"	/* have rest >= 2: get word */
-		"swap %4\n\t"		/* into bits 16..31 */
+		"swap %4\n\t"		/* पूर्णांकo bits 16..31 */
 		"tstw %1\n\t"		/* another byte? */
 		"jeq 6f\n"
 	     "5:\t"
 		"moveb %2@,%4\n\t"	/* have odd rest: get byte */
-		"lslw #8,%4\n\t"	/* into bits 8..15; 16..31 untouched */
+		"lslw #8,%4\n\t"	/* पूर्णांकo bits 8..15; 16..31 untouched */
 	     "6:\t"
-		"addl %4,%0\n\t"	/* now add rest long to sum */
+		"addl %4,%0\n\t"	/* now add rest दीर्घ to sum */
 		"clrl %4\n\t"
 		"addxl %4,%0\n"		/* add X bit */
 	     "7:\t"
 		: "=d" (sum), "=d" (len), "=a" (buff),
-		  "=&d" (tmp1), "=&d" (tmp2)
+		  "=&d" (पंचांगp1), "=&d" (पंचांगp2)
 		: "0" (sum), "1" (len), "2" (buff)
 	    );
-	return(sum);
-}
+	वापस(sum);
+पूर्ण
 
 EXPORT_SYMBOL(csum_partial);
 
 
 /*
- * copy from user space while checksumming, with exception handling.
+ * copy from user space जबतक checksumming, with exception handling.
  */
 
 __wsum
-csum_and_copy_from_user(const void __user *src, void *dst, int len)
-{
+csum_and_copy_from_user(स्थिर व्योम __user *src, व्योम *dst, पूर्णांक len)
+अणु
 	/*
-	 * GCC doesn't like more than 10 operands for the asm
-	 * statements so we have to use tmp2 for the error
+	 * GCC करोesn't like more than 10 opeअक्रमs क्रम the यंत्र
+	 * statements so we have to use पंचांगp2 क्रम the error
 	 * code.
 	 */
-	unsigned long tmp1, tmp2;
+	अचिन्हित दीर्घ पंचांगp1, पंचांगp2;
 	__wsum sum = ~0U;
 
-	__asm__("movel %2,%4\n\t"
+	__यंत्र__("movel %2,%4\n\t"
 		"btst #1,%4\n\t"	/* Check alignment */
 		"jeq 2f\n\t"
 		"subql #2,%1\n\t"	/* buff%4==2: treat first word */
@@ -154,8 +155,8 @@ csum_and_copy_from_user(const void __user *src, void *dst, int len)
 		"clrl %4\n\t"
 		"addxl %4,%0\n"		/* add X bit */
 	     "2:\t"
-		/* unrolled loop for the main part: do 8 longs at once */
-		"movel %1,%4\n\t"	/* save len in tmp1 */
+		/* unrolled loop क्रम the मुख्य part: करो 8 दीर्घs at once */
+		"movel %1,%4\n\t"	/* save len in पंचांगp1 */
 		"lsrl #5,%1\n\t"	/* len/32 */
 		"jeq 2f\n\t"		/* not enough... */
 		"subql #1,%1\n"
@@ -199,13 +200,13 @@ csum_and_copy_from_user(const void __user *src, void *dst, int len)
 		"subql #1,%1\n\t"
 		"jcc 1b\n"
 	     "2:\t"
-		"movel %4,%1\n\t"	/* restore len from tmp1 */
-		"andw #0x1c,%4\n\t"	/* number of rest longs */
+		"movel %4,%1\n\t"	/* restore len from पंचांगp1 */
+		"andw #0x1c,%4\n\t"	/* number of rest दीर्घs */
 		"jeq 4f\n\t"
 		"lsrw #2,%4\n\t"
 		"subqw #1,%4\n"
 	     "3:\n"
-		/* loop for rest longs */
+		/* loop क्रम rest दीर्घs */
 	     "19:\t"
 		"movesl %2@+,%5\n\t"
 		"addxl %5,%0\n\t"
@@ -214,31 +215,31 @@ csum_and_copy_from_user(const void __user *src, void *dst, int len)
 		"clrl %5\n\t"
 		"addxl %5,%0\n"		/* add X bit */
 	     "4:\t"
-		/* now check for rest bytes that do not fit into longs */
+		/* now check क्रम rest bytes that करो not fit पूर्णांकo दीर्घs */
 		"andw #3,%1\n\t"
 		"jeq 7f\n\t"
-		"clrl %5\n\t"		/* clear tmp2 for rest bytes */
+		"clrl %5\n\t"		/* clear पंचांगp2 क्रम rest bytes */
 		"subqw #2,%1\n\t"
 		"jlt 5f\n\t"
 	     "20:\t"
 		"movesw %2@+,%5\n\t"	/* have rest >= 2: get word */
 		"movew %5,%3@+\n\t"
-		"swap %5\n\t"		/* into bits 16..31 */
+		"swap %5\n\t"		/* पूर्णांकo bits 16..31 */
 		"tstw %1\n\t"		/* another byte? */
 		"jeq 6f\n"
 	     "5:\n"
 	     "21:\t"
 		"movesb %2@,%5\n\t"	/* have odd rest: get byte */
 		"moveb %5,%3@+\n\t"
-		"lslw #8,%5\n\t"	/* into bits 8..15; 16..31 untouched */
+		"lslw #8,%5\n\t"	/* पूर्णांकo bits 8..15; 16..31 untouched */
 	     "6:\t"
-		"addl %5,%0\n\t"	/* now add rest long to sum */
+		"addl %5,%0\n\t"	/* now add rest दीर्घ to sum */
 		"clrl %5\n\t"
 		"addxl %5,%0\n\t"	/* add X bit */
 	     "7:\t"
 		".section .fixup,\"ax\"\n"
 		".even\n"
-		/* If any exception occurs, return 0 */
+		/* If any exception occurs, वापस 0 */
 	     "90:\t"
 		"clrl %0\n"
 		"jra 7b\n"
@@ -258,26 +259,26 @@ csum_and_copy_from_user(const void __user *src, void *dst, int len)
 		".long 21b,90b\n"
 		".previous"
 		: "=d" (sum), "=d" (len), "=a" (src), "=a" (dst),
-		  "=&d" (tmp1), "=d" (tmp2)
+		  "=&d" (पंचांगp1), "=d" (पंचांगp2)
 		: "0" (sum), "1" (len), "2" (src), "3" (dst)
 	    );
 
-	return sum;
-}
+	वापस sum;
+पूर्ण
 
 EXPORT_SYMBOL(csum_and_copy_from_user);
 
 
 /*
- * copy from kernel space while checksumming, otherwise like csum_partial
+ * copy from kernel space जबतक checksumming, otherwise like csum_partial
  */
 
 __wsum
-csum_partial_copy_nocheck(const void *src, void *dst, int len)
-{
-	unsigned long tmp1, tmp2;
+csum_partial_copy_nocheck(स्थिर व्योम *src, व्योम *dst, पूर्णांक len)
+अणु
+	अचिन्हित दीर्घ पंचांगp1, पंचांगp2;
 	__wsum sum = 0;
-	__asm__("movel %2,%4\n\t"
+	__यंत्र__("movel %2,%4\n\t"
 		"btst #1,%4\n\t"	/* Check alignment */
 		"jeq 2f\n\t"
 		"subql #2,%1\n\t"	/* buff%4==2: treat first word */
@@ -291,8 +292,8 @@ csum_partial_copy_nocheck(const void *src, void *dst, int len)
 		"clrl %4\n\t"
 		"addxl %4,%0\n"		/* add X bit */
 	     "2:\t"
-		/* unrolled loop for the main part: do 8 longs at once */
-		"movel %1,%4\n\t"	/* save len in tmp1 */
+		/* unrolled loop क्रम the मुख्य part: करो 8 दीर्घs at once */
+		"movel %1,%4\n\t"	/* save len in पंचांगp1 */
 		"lsrl #5,%1\n\t"	/* len/32 */
 		"jeq 2f\n\t"		/* not enough... */
 		"subql #1,%1\n"
@@ -328,13 +329,13 @@ csum_partial_copy_nocheck(const void *src, void *dst, int len)
 		"subql #1,%1\n\t"
 		"jcc 1b\n"
 	     "2:\t"
-		"movel %4,%1\n\t"	/* restore len from tmp1 */
-		"andw #0x1c,%4\n\t"	/* number of rest longs */
+		"movel %4,%1\n\t"	/* restore len from पंचांगp1 */
+		"andw #0x1c,%4\n\t"	/* number of rest दीर्घs */
 		"jeq 4f\n\t"
 		"lsrw #2,%4\n\t"
 		"subqw #1,%4\n"
 	     "3:\t"
-		/* loop for rest longs */
+		/* loop क्रम rest दीर्घs */
 		"movel %2@+,%5\n\t"
 		"addxl %5,%0\n\t"
 		"movel %5,%3@+\n\t"
@@ -342,30 +343,30 @@ csum_partial_copy_nocheck(const void *src, void *dst, int len)
 		"clrl %5\n\t"
 		"addxl %5,%0\n"		/* add X bit */
 	     "4:\t"
-		/* now check for rest bytes that do not fit into longs */
+		/* now check क्रम rest bytes that करो not fit पूर्णांकo दीर्घs */
 		"andw #3,%1\n\t"
 		"jeq 7f\n\t"
-		"clrl %5\n\t"		/* clear tmp2 for rest bytes */
+		"clrl %5\n\t"		/* clear पंचांगp2 क्रम rest bytes */
 		"subqw #2,%1\n\t"
 		"jlt 5f\n\t"
 		"movew %2@+,%5\n\t"	/* have rest >= 2: get word */
 		"movew %5,%3@+\n\t"
-		"swap %5\n\t"		/* into bits 16..31 */
+		"swap %5\n\t"		/* पूर्णांकo bits 16..31 */
 		"tstw %1\n\t"		/* another byte? */
 		"jeq 6f\n"
 	     "5:\t"
 		"moveb %2@,%5\n\t"	/* have odd rest: get byte */
 		"moveb %5,%3@+\n\t"
-		"lslw #8,%5\n"		/* into bits 8..15; 16..31 untouched */
+		"lslw #8,%5\n"		/* पूर्णांकo bits 8..15; 16..31 untouched */
 	     "6:\t"
-		"addl %5,%0\n\t"	/* now add rest long to sum */
+		"addl %5,%0\n\t"	/* now add rest दीर्घ to sum */
 		"clrl %5\n\t"
 		"addxl %5,%0\n"		/* add X bit */
 	     "7:\t"
 		: "=d" (sum), "=d" (len), "=a" (src), "=a" (dst),
-		  "=&d" (tmp1), "=&d" (tmp2)
+		  "=&d" (पंचांगp1), "=&d" (पंचांगp2)
 		: "0" (sum), "1" (len), "2" (src), "3" (dst)
 	    );
-    return(sum);
-}
+    वापस(sum);
+पूर्ण
 EXPORT_SYMBOL(csum_partial_copy_nocheck);

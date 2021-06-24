@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
  * OpenRISC Linux
  *
@@ -12,51 +13,51 @@
  * et al.
  */
 
-#ifndef __ASM_OPENRISC_TLBFLUSH_H
-#define __ASM_OPENRISC_TLBFLUSH_H
+#अगर_अघोषित __ASM_OPENRISC_TLBFLUSH_H
+#घोषणा __ASM_OPENRISC_TLBFLUSH_H
 
-#include <linux/mm.h>
-#include <asm/processor.h>
-#include <asm/current.h>
-#include <linux/sched.h>
+#समावेश <linux/mm.h>
+#समावेश <यंत्र/processor.h>
+#समावेश <यंत्र/current.h>
+#समावेश <linux/sched.h>
 
 /*
- *  - flush_tlb() flushes the current mm struct TLBs
+ *  - flush_tlb() flushes the current mm काष्ठा TLBs
  *  - flush_tlb_all() flushes all processes TLBs
- *  - flush_tlb_mm(mm) flushes the specified mm context TLB's
+ *  - flush_tlb_mm(mm) flushes the specअगरied mm context TLB's
  *  - flush_tlb_page(vma, vmaddr) flushes one page
  *  - flush_tlb_range(mm, start, end) flushes a range of pages
  */
-extern void local_flush_tlb_all(void);
-extern void local_flush_tlb_mm(struct mm_struct *mm);
-extern void local_flush_tlb_page(struct vm_area_struct *vma,
-				 unsigned long addr);
-extern void local_flush_tlb_range(struct vm_area_struct *vma,
-				  unsigned long start,
-				  unsigned long end);
+बाह्य व्योम local_flush_tlb_all(व्योम);
+बाह्य व्योम local_flush_tlb_mm(काष्ठा mm_काष्ठा *mm);
+बाह्य व्योम local_flush_tlb_page(काष्ठा vm_area_काष्ठा *vma,
+				 अचिन्हित दीर्घ addr);
+बाह्य व्योम local_flush_tlb_range(काष्ठा vm_area_काष्ठा *vma,
+				  अचिन्हित दीर्घ start,
+				  अचिन्हित दीर्घ end);
 
-#ifndef CONFIG_SMP
-#define flush_tlb_all	local_flush_tlb_all
-#define flush_tlb_mm	local_flush_tlb_mm
-#define flush_tlb_page	local_flush_tlb_page
-#define flush_tlb_range	local_flush_tlb_range
-#else
-extern void flush_tlb_all(void);
-extern void flush_tlb_mm(struct mm_struct *mm);
-extern void flush_tlb_page(struct vm_area_struct *vma, unsigned long addr);
-extern void flush_tlb_range(struct vm_area_struct *vma, unsigned long start,
-			    unsigned long end);
-#endif
+#अगर_अघोषित CONFIG_SMP
+#घोषणा flush_tlb_all	local_flush_tlb_all
+#घोषणा flush_tlb_mm	local_flush_tlb_mm
+#घोषणा flush_tlb_page	local_flush_tlb_page
+#घोषणा flush_tlb_range	local_flush_tlb_range
+#अन्यथा
+बाह्य व्योम flush_tlb_all(व्योम);
+बाह्य व्योम flush_tlb_mm(काष्ठा mm_काष्ठा *mm);
+बाह्य व्योम flush_tlb_page(काष्ठा vm_area_काष्ठा *vma, अचिन्हित दीर्घ addr);
+बाह्य व्योम flush_tlb_range(काष्ठा vm_area_काष्ठा *vma, अचिन्हित दीर्घ start,
+			    अचिन्हित दीर्घ end);
+#पूर्ण_अगर
 
-static inline void flush_tlb(void)
-{
+अटल अंतरभूत व्योम flush_tlb(व्योम)
+अणु
 	flush_tlb_mm(current->mm);
-}
+पूर्ण
 
-static inline void flush_tlb_kernel_range(unsigned long start,
-					  unsigned long end)
-{
-	flush_tlb_range(NULL, start, end);
-}
+अटल अंतरभूत व्योम flush_tlb_kernel_range(अचिन्हित दीर्घ start,
+					  अचिन्हित दीर्घ end)
+अणु
+	flush_tlb_range(शून्य, start, end);
+पूर्ण
 
-#endif /* __ASM_OPENRISC_TLBFLUSH_H */
+#पूर्ण_अगर /* __ASM_OPENRISC_TLBFLUSH_H */

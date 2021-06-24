@@ -1,11 +1,12 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _LINUX_CLOSURE_H
-#define _LINUX_CLOSURE_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _LINUX_CLOSURE_H
+#घोषणा _LINUX_CLOSURE_H
 
-#include <linux/llist.h>
-#include <linux/sched.h>
-#include <linux/sched/task_stack.h>
-#include <linux/workqueue.h>
+#समावेश <linux/llist.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/sched/task_stack.h>
+#समावेश <linux/workqueue.h>
 
 /*
  * Closure is perhaps the most overused and abused term in computer science, but
@@ -15,115 +16,115 @@
  * What are closures?
  *
  * They embed a refcount. The basic idea is they count "things that are in
- * progress" - in flight bios, some other thread that's doing something else -
- * anything you might want to wait on.
+ * progress" - in flight bios, some other thपढ़ो that's करोing something अन्यथा -
+ * anything you might want to रुको on.
  *
  * The refcount may be manipulated with closure_get() and closure_put().
- * closure_put() is where many of the interesting things happen, when it causes
+ * closure_put() is where many of the पूर्णांकeresting things happen, when it causes
  * the refcount to go to 0.
  *
- * Closures can be used to wait on things both synchronously and asynchronously,
+ * Closures can be used to रुको on things both synchronously and asynchronously,
  * and synchronous and asynchronous use can be mixed without restriction. To
- * wait synchronously, use closure_sync() - you will sleep until your closure's
+ * रुको synchronously, use closure_sync() - you will sleep until your closure's
  * refcount hits 1.
  *
- * To wait asynchronously, use
- *   continue_at(cl, next_function, workqueue);
+ * To रुको asynchronously, use
+ *   जारी_at(cl, next_function, workqueue);
  *
  * passing it, as you might expect, the function to run when nothing is pending
  * and the workqueue to run that function out of.
  *
- * continue_at() also, critically, requires a 'return' immediately following the
- * location where this macro is referenced, to return to the calling function.
- * There's good reason for this.
+ * जारी_at() also, critically, requires a 'return' immediately following the
+ * location where this macro is referenced, to वापस to the calling function.
+ * There's good reason क्रम this.
  *
- * To use safely closures asynchronously, they must always have a refcount while
- * they are running owned by the thread that is running them. Otherwise, suppose
+ * To use safely closures asynchronously, they must always have a refcount जबतक
+ * they are running owned by the thपढ़ो that is running them. Otherwise, suppose
  * you submit some bios and wish to have a function run when they all complete:
  *
- * foo_endio(struct bio *bio)
- * {
+ * foo_endio(काष्ठा bio *bio)
+ * अणु
  *	closure_put(cl);
- * }
+ * पूर्ण
  *
  * closure_init(cl);
  *
- * do_stuff();
+ * करो_stuff();
  * closure_get(cl);
  * bio1->bi_endio = foo_endio;
  * bio_submit(bio1);
  *
- * do_more_stuff();
+ * करो_more_stuff();
  * closure_get(cl);
  * bio2->bi_endio = foo_endio;
  * bio_submit(bio2);
  *
- * continue_at(cl, complete_some_read, system_wq);
+ * जारी_at(cl, complete_some_पढ़ो, प्रणाली_wq);
  *
- * If closure's refcount started at 0, complete_some_read() could run before the
+ * If closure's refcount started at 0, complete_some_पढ़ो() could run beक्रमe the
  * second bio was submitted - which is almost always not what you want! More
- * importantly, it wouldn't be possible to say whether the original thread or
- * complete_some_read()'s thread owned the closure - and whatever state it was
+ * importantly, it wouldn't be possible to say whether the original thपढ़ो or
+ * complete_some_पढ़ो()'s thपढ़ो owned the closure - and whatever state it was
  * associated with!
  *
  * So, closure_init() initializes a closure's refcount to 1 - and when a
  * closure_fn is run, the refcount will be reset to 1 first.
  *
- * Then, the rule is - if you got the refcount with closure_get(), release it
+ * Then, the rule is - अगर you got the refcount with closure_get(), release it
  * with closure_put() (i.e, in a bio->bi_endio function). If you have a refcount
  * on a closure because you called closure_init() or you were run out of a
- * closure - _always_ use continue_at(). Doing so consistently will help
+ * closure - _always_ use जारी_at(). Doing so consistently will help
  * eliminate an entire class of particularly pernicious races.
  *
- * Lastly, you might have a wait list dedicated to a specific event, and have no
- * need for specifying the condition - you just want to wait until someone runs
- * closure_wake_up() on the appropriate wait list. In that case, just use
- * closure_wait(). It will return either true or false, depending on whether the
- * closure was already on a wait list or not - a closure can only be on one wait
- * list at a time.
+ * Lastly, you might have a रुको list dedicated to a specअगरic event, and have no
+ * need क्रम specअगरying the condition - you just want to रुको until someone runs
+ * closure_wake_up() on the appropriate रुको list. In that हाल, just use
+ * closure_रुको(). It will वापस either true or false, depending on whether the
+ * closure was alपढ़ोy on a रुको list or not - a closure can only be on one रुको
+ * list at a समय.
  *
  * Parents:
  *
  * closure_init() takes two arguments - it takes the closure to initialize, and
  * a (possibly null) parent.
  *
- * If parent is non null, the new closure will have a refcount for its lifetime;
+ * If parent is non null, the new closure will have a refcount क्रम its lअगरeसमय;
  * a closure is considered to be "finished" when its refcount hits 0 and the
  * function to run is null. Hence
  *
- * continue_at(cl, NULL, NULL);
+ * जारी_at(cl, शून्य, शून्य);
  *
- * returns up the (spaghetti) stack of closures, precisely like normal return
- * returns up the C stack. continue_at() with non null fn is better thought of
- * as doing a tail call.
+ * वापसs up the (spaghetti) stack of closures, precisely like normal वापस
+ * वापसs up the C stack. जारी_at() with non null fn is better thought of
+ * as करोing a tail call.
  *
  * All this implies that a closure should typically be embedded in a particular
- * struct (which its refcount will normally control the lifetime of), and that
- * struct can very much be thought of as a stack frame.
+ * काष्ठा (which its refcount will normally control the lअगरeसमय of), and that
+ * काष्ठा can very much be thought of as a stack frame.
  */
 
-struct closure;
-struct closure_syncer;
-typedef void (closure_fn) (struct closure *);
-extern struct dentry *bcache_debug;
+काष्ठा closure;
+काष्ठा closure_syncer;
+प्रकार व्योम (closure_fn) (काष्ठा closure *);
+बाह्य काष्ठा dentry *bcache_debug;
 
-struct closure_waitlist {
-	struct llist_head	list;
-};
+काष्ठा closure_रुकोlist अणु
+	काष्ठा llist_head	list;
+पूर्ण;
 
-enum closure_state {
+क्रमागत closure_state अणु
 	/*
-	 * CLOSURE_WAITING: Set iff the closure is on a waitlist. Must be set by
-	 * the thread that owns the closure, and cleared by the thread that's
+	 * CLOSURE_WAITING: Set अगरf the closure is on a रुकोlist. Must be set by
+	 * the thपढ़ो that owns the closure, and cleared by the thपढ़ो that's
 	 * waking up the closure.
 	 *
-	 * The rest are for debugging and don't affect behaviour:
+	 * The rest are क्रम debugging and करोn't affect behaviour:
 	 *
 	 * CLOSURE_RUNNING: Set when a closure is running (i.e. by
 	 * closure_init() and when closure_put() runs then next function), and
-	 * must be cleared before remaining hits 0. Primarily to help guard
+	 * must be cleared beक्रमe reमुख्यing hits 0. Primarily to help guard
 	 * against incorrect usage and accidentally transferring references.
-	 * continue_at() and closure_return() clear it for you, if you're doing
+	 * जारी_at() and closure_वापस() clear it क्रम you, अगर you're करोing
 	 * something unusual you can use closure_set_dead() which also helps
 	 * annotate where references are being transferred.
 	 */
@@ -132,247 +133,247 @@ enum closure_state {
 	CLOSURE_DESTRUCTOR	= (1U << 26),
 	CLOSURE_WAITING		= (1U << 28),
 	CLOSURE_RUNNING		= (1U << 30),
-};
+पूर्ण;
 
-#define CLOSURE_GUARD_MASK					\
+#घोषणा CLOSURE_GUARD_MASK					\
 	((CLOSURE_DESTRUCTOR|CLOSURE_WAITING|CLOSURE_RUNNING) << 1)
 
-#define CLOSURE_REMAINING_MASK		(CLOSURE_BITS_START - 1)
-#define CLOSURE_REMAINING_INITIALIZER	(1|CLOSURE_RUNNING)
+#घोषणा CLOSURE_REMAINING_MASK		(CLOSURE_BITS_START - 1)
+#घोषणा CLOSURE_REMAINING_INITIALIZER	(1|CLOSURE_RUNNING)
 
-struct closure {
-	union {
-		struct {
-			struct workqueue_struct *wq;
-			struct closure_syncer	*s;
-			struct llist_node	list;
+काष्ठा closure अणु
+	जोड़ अणु
+		काष्ठा अणु
+			काष्ठा workqueue_काष्ठा *wq;
+			काष्ठा closure_syncer	*s;
+			काष्ठा llist_node	list;
 			closure_fn		*fn;
-		};
-		struct work_struct	work;
-	};
+		पूर्ण;
+		काष्ठा work_काष्ठा	work;
+	पूर्ण;
 
-	struct closure		*parent;
+	काष्ठा closure		*parent;
 
-	atomic_t		remaining;
+	atomic_t		reमुख्यing;
 
-#ifdef CONFIG_BCACHE_CLOSURES_DEBUG
-#define CLOSURE_MAGIC_DEAD	0xc054dead
-#define CLOSURE_MAGIC_ALIVE	0xc054a11e
+#अगर_घोषित CONFIG_BCACHE_CLOSURES_DEBUG
+#घोषणा CLOSURE_MAGIC_DEAD	0xc054dead
+#घोषणा CLOSURE_MAGIC_ALIVE	0xc054a11e
 
-	unsigned int		magic;
-	struct list_head	all;
-	unsigned long		ip;
-	unsigned long		waiting_on;
-#endif
-};
+	अचिन्हित पूर्णांक		magic;
+	काष्ठा list_head	all;
+	अचिन्हित दीर्घ		ip;
+	अचिन्हित दीर्घ		रुकोing_on;
+#पूर्ण_अगर
+पूर्ण;
 
-void closure_sub(struct closure *cl, int v);
-void closure_put(struct closure *cl);
-void __closure_wake_up(struct closure_waitlist *list);
-bool closure_wait(struct closure_waitlist *list, struct closure *cl);
-void __closure_sync(struct closure *cl);
+व्योम closure_sub(काष्ठा closure *cl, पूर्णांक v);
+व्योम closure_put(काष्ठा closure *cl);
+व्योम __closure_wake_up(काष्ठा closure_रुकोlist *list);
+bool closure_रुको(काष्ठा closure_रुकोlist *list, काष्ठा closure *cl);
+व्योम __closure_sync(काष्ठा closure *cl);
 
 /**
- * closure_sync - sleep until a closure a closure has nothing left to wait on
+ * closure_sync - sleep until a closure a closure has nothing left to रुको on
  *
- * Sleeps until the refcount hits 1 - the thread that's running the closure owns
+ * Sleeps until the refcount hits 1 - the thपढ़ो that's running the closure owns
  * the last refcount.
  */
-static inline void closure_sync(struct closure *cl)
-{
-	if ((atomic_read(&cl->remaining) & CLOSURE_REMAINING_MASK) != 1)
+अटल अंतरभूत व्योम closure_sync(काष्ठा closure *cl)
+अणु
+	अगर ((atomic_पढ़ो(&cl->reमुख्यing) & CLOSURE_REMAINING_MASK) != 1)
 		__closure_sync(cl);
-}
+पूर्ण
 
-#ifdef CONFIG_BCACHE_CLOSURES_DEBUG
+#अगर_घोषित CONFIG_BCACHE_CLOSURES_DEBUG
 
-void closure_debug_init(void);
-void closure_debug_create(struct closure *cl);
-void closure_debug_destroy(struct closure *cl);
+व्योम closure_debug_init(व्योम);
+व्योम closure_debug_create(काष्ठा closure *cl);
+व्योम closure_debug_destroy(काष्ठा closure *cl);
 
-#else
+#अन्यथा
 
-static inline void closure_debug_init(void) {}
-static inline void closure_debug_create(struct closure *cl) {}
-static inline void closure_debug_destroy(struct closure *cl) {}
+अटल अंतरभूत व्योम closure_debug_init(व्योम) अणुपूर्ण
+अटल अंतरभूत व्योम closure_debug_create(काष्ठा closure *cl) अणुपूर्ण
+अटल अंतरभूत व्योम closure_debug_destroy(काष्ठा closure *cl) अणुपूर्ण
 
-#endif
+#पूर्ण_अगर
 
-static inline void closure_set_ip(struct closure *cl)
-{
-#ifdef CONFIG_BCACHE_CLOSURES_DEBUG
+अटल अंतरभूत व्योम closure_set_ip(काष्ठा closure *cl)
+अणु
+#अगर_घोषित CONFIG_BCACHE_CLOSURES_DEBUG
 	cl->ip = _THIS_IP_;
-#endif
-}
+#पूर्ण_अगर
+पूर्ण
 
-static inline void closure_set_ret_ip(struct closure *cl)
-{
-#ifdef CONFIG_BCACHE_CLOSURES_DEBUG
+अटल अंतरभूत व्योम closure_set_ret_ip(काष्ठा closure *cl)
+अणु
+#अगर_घोषित CONFIG_BCACHE_CLOSURES_DEBUG
 	cl->ip = _RET_IP_;
-#endif
-}
+#पूर्ण_अगर
+पूर्ण
 
-static inline void closure_set_waiting(struct closure *cl, unsigned long f)
-{
-#ifdef CONFIG_BCACHE_CLOSURES_DEBUG
-	cl->waiting_on = f;
-#endif
-}
+अटल अंतरभूत व्योम closure_set_रुकोing(काष्ठा closure *cl, अचिन्हित दीर्घ f)
+अणु
+#अगर_घोषित CONFIG_BCACHE_CLOSURES_DEBUG
+	cl->रुकोing_on = f;
+#पूर्ण_अगर
+पूर्ण
 
-static inline void closure_set_stopped(struct closure *cl)
-{
-	atomic_sub(CLOSURE_RUNNING, &cl->remaining);
-}
+अटल अंतरभूत व्योम closure_set_stopped(काष्ठा closure *cl)
+अणु
+	atomic_sub(CLOSURE_RUNNING, &cl->reमुख्यing);
+पूर्ण
 
-static inline void set_closure_fn(struct closure *cl, closure_fn *fn,
-				  struct workqueue_struct *wq)
-{
+अटल अंतरभूत व्योम set_closure_fn(काष्ठा closure *cl, closure_fn *fn,
+				  काष्ठा workqueue_काष्ठा *wq)
+अणु
 	closure_set_ip(cl);
 	cl->fn = fn;
 	cl->wq = wq;
 	/* between atomic_dec() in closure_put() */
-	smp_mb__before_atomic();
-}
+	smp_mb__beक्रमe_atomic();
+पूर्ण
 
-static inline void closure_queue(struct closure *cl)
-{
-	struct workqueue_struct *wq = cl->wq;
+अटल अंतरभूत व्योम closure_queue(काष्ठा closure *cl)
+अणु
+	काष्ठा workqueue_काष्ठा *wq = cl->wq;
 	/**
-	 * Changes made to closure, work_struct, or a couple of other structs
-	 * may cause work.func not pointing to the right location.
+	 * Changes made to closure, work_काष्ठा, or a couple of other काष्ठाs
+	 * may cause work.func not poपूर्णांकing to the right location.
 	 */
-	BUILD_BUG_ON(offsetof(struct closure, fn)
-		     != offsetof(struct work_struct, func));
-	if (wq) {
+	BUILD_BUG_ON(दुरत्व(काष्ठा closure, fn)
+		     != दुरत्व(काष्ठा work_काष्ठा, func));
+	अगर (wq) अणु
 		INIT_WORK(&cl->work, cl->work.func);
 		BUG_ON(!queue_work(wq, &cl->work));
-	} else
+	पूर्ण अन्यथा
 		cl->fn(cl);
-}
+पूर्ण
 
 /**
  * closure_get - increment a closure's refcount
  */
-static inline void closure_get(struct closure *cl)
-{
-#ifdef CONFIG_BCACHE_CLOSURES_DEBUG
-	BUG_ON((atomic_inc_return(&cl->remaining) &
+अटल अंतरभूत व्योम closure_get(काष्ठा closure *cl)
+अणु
+#अगर_घोषित CONFIG_BCACHE_CLOSURES_DEBUG
+	BUG_ON((atomic_inc_वापस(&cl->reमुख्यing) &
 		CLOSURE_REMAINING_MASK) <= 1);
-#else
-	atomic_inc(&cl->remaining);
-#endif
-}
+#अन्यथा
+	atomic_inc(&cl->reमुख्यing);
+#पूर्ण_अगर
+पूर्ण
 
 /**
  * closure_init - Initialize a closure, setting the refcount to 1
  * @cl:		closure to initialize
- * @parent:	parent of the new closure. cl will take a refcount on it for its
- *		lifetime; may be NULL.
+ * @parent:	parent of the new closure. cl will take a refcount on it क्रम its
+ *		lअगरeसमय; may be शून्य.
  */
-static inline void closure_init(struct closure *cl, struct closure *parent)
-{
-	memset(cl, 0, sizeof(struct closure));
+अटल अंतरभूत व्योम closure_init(काष्ठा closure *cl, काष्ठा closure *parent)
+अणु
+	स_रखो(cl, 0, माप(काष्ठा closure));
 	cl->parent = parent;
-	if (parent)
+	अगर (parent)
 		closure_get(parent);
 
-	atomic_set(&cl->remaining, CLOSURE_REMAINING_INITIALIZER);
+	atomic_set(&cl->reमुख्यing, CLOSURE_REMAINING_INITIALIZER);
 
 	closure_debug_create(cl);
 	closure_set_ip(cl);
-}
+पूर्ण
 
-static inline void closure_init_stack(struct closure *cl)
-{
-	memset(cl, 0, sizeof(struct closure));
-	atomic_set(&cl->remaining, CLOSURE_REMAINING_INITIALIZER);
-}
+अटल अंतरभूत व्योम closure_init_stack(काष्ठा closure *cl)
+अणु
+	स_रखो(cl, 0, माप(काष्ठा closure));
+	atomic_set(&cl->reमुख्यing, CLOSURE_REMAINING_INITIALIZER);
+पूर्ण
 
 /**
- * closure_wake_up - wake up all closures on a wait list,
+ * closure_wake_up - wake up all closures on a रुको list,
  *		     with memory barrier
  */
-static inline void closure_wake_up(struct closure_waitlist *list)
-{
-	/* Memory barrier for the wait list */
+अटल अंतरभूत व्योम closure_wake_up(काष्ठा closure_रुकोlist *list)
+अणु
+	/* Memory barrier क्रम the रुको list */
 	smp_mb();
 	__closure_wake_up(list);
-}
+पूर्ण
 
 /**
- * continue_at - jump to another function with barrier
+ * जारी_at - jump to another function with barrier
  *
- * After @cl is no longer waiting on anything (i.e. all outstanding refs have
+ * After @cl is no दीर्घer रुकोing on anything (i.e. all outstanding refs have
  * been dropped with closure_put()), it will resume execution at @fn running out
- * of @wq (or, if @wq is NULL, @fn will be called by closure_put() directly).
+ * of @wq (or, अगर @wq is शून्य, @fn will be called by closure_put() directly).
  *
- * This is because after calling continue_at() you no longer have a ref on @cl,
- * and whatever @cl owns may be freed out from under you - a running closure fn
- * has a ref on its own closure which continue_at() drops.
+ * This is because after calling जारी_at() you no दीर्घer have a ref on @cl,
+ * and whatever @cl owns may be मुक्तd out from under you - a running closure fn
+ * has a ref on its own closure which जारी_at() drops.
  *
- * Note you are expected to immediately return after using this macro.
+ * Note you are expected to immediately वापस after using this macro.
  */
-#define continue_at(_cl, _fn, _wq)					\
-do {									\
+#घोषणा जारी_at(_cl, _fn, _wq)					\
+करो अणु									\
 	set_closure_fn(_cl, _fn, _wq);					\
 	closure_sub(_cl, CLOSURE_RUNNING + 1);				\
-} while (0)
+पूर्ण जबतक (0)
 
 /**
- * closure_return - finish execution of a closure
+ * closure_वापस - finish execution of a closure
  *
  * This is used to indicate that @cl is finished: when all outstanding refs on
  * @cl have been dropped @cl's ref on its parent closure (as passed to
- * closure_init()) will be dropped, if one was specified - thus this can be
- * thought of as returning to the parent closure.
+ * closure_init()) will be dropped, अगर one was specअगरied - thus this can be
+ * thought of as वापसing to the parent closure.
  */
-#define closure_return(_cl)	continue_at((_cl), NULL, NULL)
+#घोषणा closure_वापस(_cl)	जारी_at((_cl), शून्य, शून्य)
 
 /**
- * continue_at_nobarrier - jump to another function without barrier
+ * जारी_at_nobarrier - jump to another function without barrier
  *
- * Causes @fn to be executed out of @cl, in @wq context (or called directly if
- * @wq is NULL).
+ * Causes @fn to be executed out of @cl, in @wq context (or called directly अगर
+ * @wq is शून्य).
  *
- * The ref the caller of continue_at_nobarrier() had on @cl is now owned by @fn,
- * thus it's not safe to touch anything protected by @cl after a
- * continue_at_nobarrier().
+ * The ref the caller of जारी_at_nobarrier() had on @cl is now owned by @fn,
+ * thus it's not safe to touch anything रक्षित by @cl after a
+ * जारी_at_nobarrier().
  */
-#define continue_at_nobarrier(_cl, _fn, _wq)				\
-do {									\
+#घोषणा जारी_at_nobarrier(_cl, _fn, _wq)				\
+करो अणु									\
 	set_closure_fn(_cl, _fn, _wq);					\
 	closure_queue(_cl);						\
-} while (0)
+पूर्ण जबतक (0)
 
 /**
- * closure_return_with_destructor - finish execution of a closure,
- *				    with destructor
+ * closure_वापस_with_deकाष्ठाor - finish execution of a closure,
+ *				    with deकाष्ठाor
  *
- * Works like closure_return(), except @destructor will be called when all
- * outstanding refs on @cl have been dropped; @destructor may be used to safely
- * free the memory occupied by @cl, and it is called with the ref on the parent
- * closure still held - so @destructor could safely return an item to a
- * freelist protected by @cl's parent.
+ * Works like closure_वापस(), except @deकाष्ठाor will be called when all
+ * outstanding refs on @cl have been dropped; @deकाष्ठाor may be used to safely
+ * मुक्त the memory occupied by @cl, and it is called with the ref on the parent
+ * closure still held - so @deकाष्ठाor could safely वापस an item to a
+ * मुक्तlist रक्षित by @cl's parent.
  */
-#define closure_return_with_destructor(_cl, _destructor)		\
-do {									\
-	set_closure_fn(_cl, _destructor, NULL);				\
+#घोषणा closure_वापस_with_deकाष्ठाor(_cl, _deकाष्ठाor)		\
+करो अणु									\
+	set_closure_fn(_cl, _deकाष्ठाor, शून्य);				\
 	closure_sub(_cl, CLOSURE_RUNNING - CLOSURE_DESTRUCTOR + 1);	\
-} while (0)
+पूर्ण जबतक (0)
 
 /**
  * closure_call - execute @fn out of a new, uninitialized closure
  *
  * Typically used when running out of one closure, and we want to run @fn
- * asynchronously out of a new closure - @parent will then wait for @cl to
+ * asynchronously out of a new closure - @parent will then रुको क्रम @cl to
  * finish.
  */
-static inline void closure_call(struct closure *cl, closure_fn fn,
-				struct workqueue_struct *wq,
-				struct closure *parent)
-{
+अटल अंतरभूत व्योम closure_call(काष्ठा closure *cl, closure_fn fn,
+				काष्ठा workqueue_काष्ठा *wq,
+				काष्ठा closure *parent)
+अणु
 	closure_init(cl, parent);
-	continue_at_nobarrier(cl, fn, wq);
-}
+	जारी_at_nobarrier(cl, fn, wq);
+पूर्ण
 
-#endif /* _LINUX_CLOSURE_H */
+#पूर्ण_अगर /* _LINUX_CLOSURE_H */

@@ -1,261 +1,262 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /******************************************************************************
  *
  *	(C)Copyright 1998,1999 SysKonnect,
- *	a business unit of Schneider & Koch & Co. Datensysteme GmbH.
+ *	a business unit of Schneider & Koch & Co. Datenप्रणालीe GmbH.
  *
- *	See the file "skfddi.c" for further information.
+ *	See the file "skfddi.c" क्रम further inक्रमmation.
  *
- *	The information in this file is provided "AS IS" without warranty.
+ *	The inक्रमmation in this file is provided "AS IS" without warranty.
  *
  ******************************************************************************/
 
 /*
- * Timer Driver for FBI board (timer chip 82C54)
+ * Timer Driver क्रम FBI board (समयr chip 82C54)
  */
 
 /*
- * Modifications:
+ * Modअगरications:
  *
  *	28-Jun-1994 sw	Edit v1.6.
- *			MCA: Added support for the SK-NET FDDI-FM2 adapter. The
- *			 following functions have been added(+) or modified(*):
- *			 hwt_start(*), hwt_stop(*), hwt_restart(*), hwt_read(*)
+ *			MCA: Added support क्रम the SK-NET FDDI-FM2 adapter. The
+ *			 following functions have been added(+) or modअगरied(*):
+ *			 hwt_start(*), hwt_stop(*), hwt_restart(*), hwt_पढ़ो(*)
  */
 
-#include "h/types.h"
-#include "h/fddi.h"
-#include "h/smc.h"
+#समावेश "h/types.h"
+#समावेश "h/fddi.h"
+#समावेश "h/smc.h"
 
 /*
  * Prototypes of local functions.
  */
 /* 28-Jun-1994 sw - Note: hwt_restart() is also used in module 'drvfbi.c'. */
-/*static void hwt_restart() ; */
+/*अटल व्योम hwt_restart() ; */
 
 /************************
  *
  *	hwt_start
  *
- *	Start hardware timer (clock ticks are 16us).
+ *	Start hardware समयr (घड़ी ticks are 16us).
  *
- *	void hwt_start(
- *		struct s_smc *smc,
- *		u_long time) ;
+ *	व्योम hwt_start(
+ *		काष्ठा s_smc *smc,
+ *		u_दीर्घ समय) ;
  * In
- *	smc - A pointer to the SMT Context structure.
+ *	smc - A poपूर्णांकer to the SMT Context काष्ठाure.
  *
- *	time - The time in units of 16us to load the timer with.
+ *	समय - The समय in units of 16us to load the समयr with.
  * Out
  *	Nothing.
  *
  ************************/
-#define	HWT_MAX	(65000)
+#घोषणा	HWT_MAX	(65000)
 
-void hwt_start(struct s_smc *smc, u_long time)
-{
-	u_short	cnt ;
+व्योम hwt_start(काष्ठा s_smc *smc, u_दीर्घ समय)
+अणु
+	u_लघु	cnt ;
 
-	if (time > HWT_MAX)
-		time = HWT_MAX ;
+	अगर (समय > HWT_MAX)
+		समय = HWT_MAX ;
 
-	smc->hw.t_start = time ;
+	smc->hw.t_start = समय ;
 	smc->hw.t_stop = 0L ;
 
-	cnt = (u_short)time ;
+	cnt = (u_लघु)समय ;
 	/*
-	 * if time < 16 us
-	 *	time = 16 us
+	 * अगर समय < 16 us
+	 *	समय = 16 us
 	 */
-	if (!cnt)
+	अगर (!cnt)
 		cnt++ ;
 
-	outpd(ADDR(B2_TI_INI), (u_long) cnt * 200) ;	/* Load timer value. */
-	outpw(ADDR(B2_TI_CRTL), TIM_START) ;		/* Start timer. */
+	outpd(ADDR(B2_TI_INI), (u_दीर्घ) cnt * 200) ;	/* Load समयr value. */
+	outpw(ADDR(B2_TI_CRTL), TIM_START) ;		/* Start समयr. */
 
-	smc->hw.timer_activ = TRUE ;
-}
+	smc->hw.समयr_activ = TRUE ;
+पूर्ण
 
 /************************
  *
  *	hwt_stop
  *
- *	Stop hardware timer.
+ *	Stop hardware समयr.
  *
- *	void hwt_stop(
- *		struct s_smc *smc) ;
+ *	व्योम hwt_stop(
+ *		काष्ठा s_smc *smc) ;
  * In
- *	smc - A pointer to the SMT Context structure.
+ *	smc - A poपूर्णांकer to the SMT Context काष्ठाure.
  * Out
  *	Nothing.
  *
  ************************/
-void hwt_stop(struct s_smc *smc)
-{
+व्योम hwt_stop(काष्ठा s_smc *smc)
+अणु
 	outpw(ADDR(B2_TI_CRTL), TIM_STOP) ;
 	outpw(ADDR(B2_TI_CRTL), TIM_CL_IRQ) ;
 
-	smc->hw.timer_activ = FALSE ;
-}
+	smc->hw.समयr_activ = FALSE ;
+पूर्ण
 
 /************************
  *
  *	hwt_init
  *
- *	Initialize hardware timer.
+ *	Initialize hardware समयr.
  *
- *	void hwt_init(
- *		struct s_smc *smc) ;
+ *	व्योम hwt_init(
+ *		काष्ठा s_smc *smc) ;
  * In
- *	smc - A pointer to the SMT Context structure.
+ *	smc - A poपूर्णांकer to the SMT Context काष्ठाure.
  * Out
  *	Nothing.
  *
  ************************/
-void hwt_init(struct s_smc *smc)
-{
+व्योम hwt_init(काष्ठा s_smc *smc)
+अणु
 	smc->hw.t_start = 0 ;
 	smc->hw.t_stop	= 0 ;
-	smc->hw.timer_activ = FALSE ;
+	smc->hw.समयr_activ = FALSE ;
 
 	hwt_restart(smc) ;
-}
+पूर्ण
 
 /************************
  *
  *	hwt_restart
  *
- *	Clear timer interrupt.
+ *	Clear समयr पूर्णांकerrupt.
  *
- *	void hwt_restart(
- *		struct s_smc *smc) ;
+ *	व्योम hwt_restart(
+ *		काष्ठा s_smc *smc) ;
  * In
- *	smc - A pointer to the SMT Context structure.
+ *	smc - A poपूर्णांकer to the SMT Context काष्ठाure.
  * Out
  *	Nothing.
  *
  ************************/
-void hwt_restart(struct s_smc *smc)
-{
+व्योम hwt_restart(काष्ठा s_smc *smc)
+अणु
 	hwt_stop(smc) ;
-}
+पूर्ण
 
 /************************
  *
- *	hwt_read
+ *	hwt_पढ़ो
  *
- *	Stop hardware timer and read time elapsed since last start.
+ *	Stop hardware समयr and पढ़ो समय elapsed since last start.
  *
- *	u_long hwt_read(smc) ;
+ *	u_दीर्घ hwt_पढ़ो(smc) ;
  * In
- *	smc - A pointer to the SMT Context structure.
+ *	smc - A poपूर्णांकer to the SMT Context काष्ठाure.
  * Out
- *	The elapsed time since last start in units of 16us.
+ *	The elapsed समय since last start in units of 16us.
  *
  ************************/
-u_long hwt_read(struct s_smc *smc)
-{
-	u_short	tr ;
-	u_long	is ;
+u_दीर्घ hwt_पढ़ो(काष्ठा s_smc *smc)
+अणु
+	u_लघु	tr ;
+	u_दीर्घ	is ;
 
-	if (smc->hw.timer_activ) {
+	अगर (smc->hw.समयr_activ) अणु
 		hwt_stop(smc) ;
-		tr = (u_short)((inpd(ADDR(B2_TI_VAL))/200) & 0xffff) ;
+		tr = (u_लघु)((inpd(ADDR(B2_TI_VAL))/200) & 0xffff) ;
 
 		is = GET_ISR() ;
-		/* Check if timer expired (or wraparound). */
-		if ((tr > smc->hw.t_start) || (is & IS_TIMINT)) {
+		/* Check अगर समयr expired (or wraparound). */
+		अगर ((tr > smc->hw.t_start) || (is & IS_TIMINT)) अणु
 			hwt_restart(smc) ;
 			smc->hw.t_stop = smc->hw.t_start ;
-		}
-		else
+		पूर्ण
+		अन्यथा
 			smc->hw.t_stop = smc->hw.t_start - tr ;
-	}
-	return smc->hw.t_stop;
-}
+	पूर्ण
+	वापस smc->hw.t_stop;
+पूर्ण
 
-#ifdef	PCI
+#अगर_घोषित	PCI
 /************************
  *
- *	hwt_quick_read
+ *	hwt_quick_पढ़ो
  *
- *	Stop hardware timer and read timer value and start the timer again.
+ *	Stop hardware समयr and पढ़ो समयr value and start the समयr again.
  *
- *	u_long hwt_read(smc) ;
+ *	u_दीर्घ hwt_पढ़ो(smc) ;
  * In
- *	smc - A pointer to the SMT Context structure.
+ *	smc - A poपूर्णांकer to the SMT Context काष्ठाure.
  * Out
- *	current timer value in units of 80ns.
+ *	current समयr value in units of 80ns.
  *
  ************************/
-u_long hwt_quick_read(struct s_smc *smc)
-{
-	u_long interval ;
-	u_long time ;
+u_दीर्घ hwt_quick_पढ़ो(काष्ठा s_smc *smc)
+अणु
+	u_दीर्घ पूर्णांकerval ;
+	u_दीर्घ समय ;
 
-	interval = inpd(ADDR(B2_TI_INI)) ;
+	पूर्णांकerval = inpd(ADDR(B2_TI_INI)) ;
 	outpw(ADDR(B2_TI_CRTL), TIM_STOP) ;
-	time = inpd(ADDR(B2_TI_VAL)) ;
-	outpd(ADDR(B2_TI_INI),time) ;
+	समय = inpd(ADDR(B2_TI_VAL)) ;
+	outpd(ADDR(B2_TI_INI),समय) ;
 	outpw(ADDR(B2_TI_CRTL), TIM_START) ;
-	outpd(ADDR(B2_TI_INI),interval) ;
+	outpd(ADDR(B2_TI_INI),पूर्णांकerval) ;
 
-	return time;
-}
+	वापस समय;
+पूर्ण
 
 /************************
  *
- *	hwt_wait_time(smc,start,duration)
+ *	hwt_रुको_समय(smc,start,duration)
  *
- *	This function returnes after the amount of time is elapsed
- *	since the start time.
+ *	This function वापसes after the amount of समय is elapsed
+ *	since the start समय.
  * 
- * para	start		start time
- *	duration	time to wait
+ * para	start		start समय
+ *	duration	समय to रुको
  *
- * NOTE: The function will return immediately, if the timer is not
+ * NOTE: The function will वापस immediately, अगर the समयr is not
  *	 started
  ************************/
-void hwt_wait_time(struct s_smc *smc, u_long start, long int duration)
-{
-	long	diff ;
-	long	interval ;
-	int	wrapped ;
+व्योम hwt_रुको_समय(काष्ठा s_smc *smc, u_दीर्घ start, दीर्घ पूर्णांक duration)
+अणु
+	दीर्घ	dअगरf ;
+	दीर्घ	पूर्णांकerval ;
+	पूर्णांक	wrapped ;
 
 	/*
-	 * check if timer is running
+	 * check अगर समयr is running
 	 */
-	if (smc->hw.timer_activ == FALSE ||
-		hwt_quick_read(smc) == hwt_quick_read(smc)) {
-		return ;
-	}
+	अगर (smc->hw.समयr_activ == FALSE ||
+		hwt_quick_पढ़ो(smc) == hwt_quick_पढ़ो(smc)) अणु
+		वापस ;
+	पूर्ण
 
-	interval = inpd(ADDR(B2_TI_INI)) ;
-	if (interval > duration) {
-		do {
-			diff = (long)(start - hwt_quick_read(smc)) ;
-			if (diff < 0) {
-				diff += interval ;
-			}
-		} while (diff <= duration) ;
-	}
-	else {
-		diff = interval ;
+	पूर्णांकerval = inpd(ADDR(B2_TI_INI)) ;
+	अगर (पूर्णांकerval > duration) अणु
+		करो अणु
+			dअगरf = (दीर्घ)(start - hwt_quick_पढ़ो(smc)) ;
+			अगर (dअगरf < 0) अणु
+				dअगरf += पूर्णांकerval ;
+			पूर्ण
+		पूर्ण जबतक (dअगरf <= duration) ;
+	पूर्ण
+	अन्यथा अणु
+		dअगरf = पूर्णांकerval ;
 		wrapped = 0 ;
-		do {
-			if (!wrapped) {
-				if (hwt_quick_read(smc) >= start) {
-					diff += interval ;
+		करो अणु
+			अगर (!wrapped) अणु
+				अगर (hwt_quick_पढ़ो(smc) >= start) अणु
+					dअगरf += पूर्णांकerval ;
 					wrapped = 1 ;
-				}
-			}
-			else {
-				if (hwt_quick_read(smc) < start) {
+				पूर्ण
+			पूर्ण
+			अन्यथा अणु
+				अगर (hwt_quick_पढ़ो(smc) < start) अणु
 					wrapped = 0 ;
-				}
-			}
-		} while (diff <= duration) ;
-	}
-}
-#endif
+				पूर्ण
+			पूर्ण
+		पूर्ण जबतक (dअगरf <= duration) ;
+	पूर्ण
+पूर्ण
+#पूर्ण_अगर
 

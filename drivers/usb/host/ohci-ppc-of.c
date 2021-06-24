@@ -1,50 +1,51 @@
-// SPDX-License-Identifier: GPL-1.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-1.0+
 /*
- * OHCI HCD (Host Controller Driver) for USB.
+ * OHCI HCD (Host Controller Driver) क्रम USB.
  *
  * (C) Copyright 1999 Roman Weissgaerber <weissg@vienna.at>
- * (C) Copyright 2000-2002 David Brownell <dbrownell@users.sourceforge.net>
+ * (C) Copyright 2000-2002 David Brownell <dbrownell@users.sourceक्रमge.net>
  * (C) Copyright 2002 Hewlett-Packard Company
  * (C) Copyright 2006 Sylvain Munaut <tnt@246tNt.com>
  *
- * Bus glue for OHCI HC on the of_platform bus
+ * Bus glue क्रम OHCI HC on the of_platक्रमm bus
  *
- * Modified for of_platform bus from ohci-sa1111.c
+ * Modअगरied क्रम of_platक्रमm bus from ohci-sa1111.c
  *
  * This file is licenced under the GPL.
  */
 
-#include <linux/signal.h>
-#include <linux/of_address.h>
-#include <linux/of_irq.h>
-#include <linux/of_platform.h>
+#समावेश <linux/संकेत.स>
+#समावेश <linux/of_address.h>
+#समावेश <linux/of_irq.h>
+#समावेश <linux/of_platक्रमm.h>
 
-#include <asm/prom.h>
+#समावेश <यंत्र/prom.h>
 
 
-static int
-ohci_ppc_of_start(struct usb_hcd *hcd)
-{
-	struct ohci_hcd	*ohci = hcd_to_ohci(hcd);
-	int		ret;
+अटल पूर्णांक
+ohci_ppc_of_start(काष्ठा usb_hcd *hcd)
+अणु
+	काष्ठा ohci_hcd	*ohci = hcd_to_ohci(hcd);
+	पूर्णांक		ret;
 
-	if ((ret = ohci_init(ohci)) < 0)
-		return ret;
+	अगर ((ret = ohci_init(ohci)) < 0)
+		वापस ret;
 
-	if ((ret = ohci_run(ohci)) < 0) {
+	अगर ((ret = ohci_run(ohci)) < 0) अणु
 		dev_err(hcd->self.controller, "can't start %s\n",
 			hcd->self.bus_name);
 		ohci_stop(hcd);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct hc_driver ohci_ppc_of_hc_driver = {
+अटल स्थिर काष्ठा hc_driver ohci_ppc_of_hc_driver = अणु
 	.description =		hcd_name,
 	.product_desc =		"OF OHCI",
-	.hcd_priv_size =	sizeof(struct ohci_hcd),
+	.hcd_priv_size =	माप(काष्ठा ohci_hcd),
 
 	/*
 	 * generic hardware linkage
@@ -53,18 +54,18 @@ static const struct hc_driver ohci_ppc_of_hc_driver = {
 	.flags =		HCD_USB11 | HCD_DMA | HCD_MEMORY,
 
 	/*
-	 * basic lifecycle operations
+	 * basic lअगरecycle operations
 	 */
 	.start =		ohci_ppc_of_start,
 	.stop =			ohci_stop,
-	.shutdown = 		ohci_shutdown,
+	.shutकरोwn = 		ohci_shutकरोwn,
 
 	/*
 	 * managing i/o requests and associated device resources
 	 */
 	.urb_enqueue =		ohci_urb_enqueue,
 	.urb_dequeue =		ohci_urb_dequeue,
-	.endpoint_disable =	ohci_endpoint_disable,
+	.endpoपूर्णांक_disable =	ohci_endpoपूर्णांक_disable,
 
 	/*
 	 * scheduling support
@@ -76,28 +77,28 @@ static const struct hc_driver ohci_ppc_of_hc_driver = {
 	 */
 	.hub_status_data =	ohci_hub_status_data,
 	.hub_control =		ohci_hub_control,
-#ifdef	CONFIG_PM
+#अगर_घोषित	CONFIG_PM
 	.bus_suspend =		ohci_bus_suspend,
 	.bus_resume =		ohci_bus_resume,
-#endif
+#पूर्ण_अगर
 	.start_port_reset =	ohci_start_port_reset,
-};
+पूर्ण;
 
 
-static int ohci_hcd_ppc_of_probe(struct platform_device *op)
-{
-	struct device_node *dn = op->dev.of_node;
-	struct usb_hcd *hcd;
-	struct ohci_hcd	*ohci;
-	struct resource res;
-	int irq;
+अटल पूर्णांक ohci_hcd_ppc_of_probe(काष्ठा platक्रमm_device *op)
+अणु
+	काष्ठा device_node *dn = op->dev.of_node;
+	काष्ठा usb_hcd *hcd;
+	काष्ठा ohci_hcd	*ohci;
+	काष्ठा resource res;
+	पूर्णांक irq;
 
-	int rv;
-	int is_bigendian;
-	struct device_node *np;
+	पूर्णांक rv;
+	पूर्णांक is_bigendian;
+	काष्ठा device_node *np;
 
-	if (usb_disabled())
-		return -ENODEV;
+	अगर (usb_disabled())
+		वापस -ENODEV;
 
 	is_bigendian =
 		of_device_is_compatible(dn, "ohci-bigendian") ||
@@ -106,131 +107,131 @@ static int ohci_hcd_ppc_of_probe(struct platform_device *op)
 	dev_dbg(&op->dev, "initializing PPC-OF USB Controller\n");
 
 	rv = of_address_to_resource(dn, 0, &res);
-	if (rv)
-		return rv;
+	अगर (rv)
+		वापस rv;
 
 	hcd = usb_create_hcd(&ohci_ppc_of_hc_driver, &op->dev, "PPC-OF USB");
-	if (!hcd)
-		return -ENOMEM;
+	अगर (!hcd)
+		वापस -ENOMEM;
 
 	hcd->rsrc_start = res.start;
 	hcd->rsrc_len = resource_size(&res);
 
 	hcd->regs = devm_ioremap_resource(&op->dev, &res);
-	if (IS_ERR(hcd->regs)) {
+	अगर (IS_ERR(hcd->regs)) अणु
 		rv = PTR_ERR(hcd->regs);
-		goto err_rmr;
-	}
+		जाओ err_rmr;
+	पूर्ण
 
 	irq = irq_of_parse_and_map(dn, 0);
-	if (irq == NO_IRQ) {
+	अगर (irq == NO_IRQ) अणु
 		dev_err(&op->dev, "%s: irq_of_parse_and_map failed\n",
-			__FILE__);
+			__खाता__);
 		rv = -EBUSY;
-		goto err_rmr;
-	}
+		जाओ err_rmr;
+	पूर्ण
 
 	ohci = hcd_to_ohci(hcd);
-	if (is_bigendian) {
+	अगर (is_bigendian) अणु
 		ohci->flags |= OHCI_QUIRK_BE_MMIO | OHCI_QUIRK_BE_DESC;
-		if (of_device_is_compatible(dn, "fsl,mpc5200-ohci"))
+		अगर (of_device_is_compatible(dn, "fsl,mpc5200-ohci"))
 			ohci->flags |= OHCI_QUIRK_FRAME_NO;
-		if (of_device_is_compatible(dn, "mpc5200-ohci"))
+		अगर (of_device_is_compatible(dn, "mpc5200-ohci"))
 			ohci->flags |= OHCI_QUIRK_FRAME_NO;
-	}
+	पूर्ण
 
 	ohci_hcd_init(ohci);
 
 	rv = usb_add_hcd(hcd, irq, 0);
-	if (rv == 0) {
+	अगर (rv == 0) अणु
 		device_wakeup_enable(hcd->self.controller);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	/* by now, 440epx is known to show usb_23 erratum */
-	np = of_find_compatible_node(NULL, NULL, "ibm,usb-ehci-440epx");
+	np = of_find_compatible_node(शून्य, शून्य, "ibm,usb-ehci-440epx");
 
-	/* Work around - At this point ohci_run has executed, the
+	/* Work around - At this poपूर्णांक ohci_run has executed, the
 	* controller is running, everything, the root ports, etc., is
 	* set up.  If the ehci driver is loaded, put the ohci core in
 	* the suspended state.  The ehci driver will bring it out of
-	* suspended state when / if a non-high speed USB device is
+	* suspended state when / अगर a non-high speed USB device is
 	* attached to the USB Host port.  If the ehci driver is not
-	* loaded, do nothing. request_mem_region is used to test if
+	* loaded, करो nothing. request_mem_region is used to test अगर
 	* the ehci driver is loaded.
 	*/
-	if (np !=  NULL) {
-		if (!of_address_to_resource(np, 0, &res)) {
-			if (!request_mem_region(res.start, 0x4, hcd_name)) {
-				writel_be((readl_be(&ohci->regs->control) |
+	अगर (np !=  शून्य) अणु
+		अगर (!of_address_to_resource(np, 0, &res)) अणु
+			अगर (!request_mem_region(res.start, 0x4, hcd_name)) अणु
+				ग_लिखोl_be((पढ़ोl_be(&ohci->regs->control) |
 					OHCI_USB_SUSPEND), &ohci->regs->control);
-					(void) readl_be(&ohci->regs->control);
-			} else
+					(व्योम) पढ़ोl_be(&ohci->regs->control);
+			पूर्ण अन्यथा
 				release_mem_region(res.start, 0x4);
-		} else
-			pr_debug("%s: cannot get ehci offset from fdt\n", __FILE__);
-	}
+		पूर्ण अन्यथा
+			pr_debug("%s: cannot get ehci offset from fdt\n", __खाता__);
+	पूर्ण
 
 	irq_dispose_mapping(irq);
 err_rmr:
  	usb_put_hcd(hcd);
 
-	return rv;
-}
+	वापस rv;
+पूर्ण
 
-static int ohci_hcd_ppc_of_remove(struct platform_device *op)
-{
-	struct usb_hcd *hcd = platform_get_drvdata(op);
+अटल पूर्णांक ohci_hcd_ppc_of_हटाओ(काष्ठा platक्रमm_device *op)
+अणु
+	काष्ठा usb_hcd *hcd = platक्रमm_get_drvdata(op);
 
 	dev_dbg(&op->dev, "stopping PPC-OF USB Controller\n");
 
-	usb_remove_hcd(hcd);
+	usb_हटाओ_hcd(hcd);
 
 	irq_dispose_mapping(hcd->irq);
 
 	usb_put_hcd(hcd);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct of_device_id ohci_hcd_ppc_of_match[] = {
-#ifdef CONFIG_USB_OHCI_HCD_PPC_OF_BE
-	{
+अटल स्थिर काष्ठा of_device_id ohci_hcd_ppc_of_match[] = अणु
+#अगर_घोषित CONFIG_USB_OHCI_HCD_PPC_OF_BE
+	अणु
 		.name = "usb",
 		.compatible = "ohci-bigendian",
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "usb",
 		.compatible = "ohci-be",
-	},
-#endif
-#ifdef CONFIG_USB_OHCI_HCD_PPC_OF_LE
-	{
+	पूर्ण,
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_USB_OHCI_HCD_PPC_OF_LE
+	अणु
 		.name = "usb",
 		.compatible = "ohci-littledian",
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "usb",
 		.compatible = "ohci-le",
-	},
-#endif
-	{},
-};
+	पूर्ण,
+#पूर्ण_अगर
+	अणुपूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, ohci_hcd_ppc_of_match);
 
-#if	!defined(CONFIG_USB_OHCI_HCD_PPC_OF_BE) && \
+#अगर	!defined(CONFIG_USB_OHCI_HCD_PPC_OF_BE) && \
 	!defined(CONFIG_USB_OHCI_HCD_PPC_OF_LE)
-#error "No endianness selected for ppc-of-ohci"
-#endif
+#त्रुटि "No endianness selected for ppc-of-ohci"
+#पूर्ण_अगर
 
 
-static struct platform_driver ohci_hcd_ppc_of_driver = {
+अटल काष्ठा platक्रमm_driver ohci_hcd_ppc_of_driver = अणु
 	.probe		= ohci_hcd_ppc_of_probe,
-	.remove		= ohci_hcd_ppc_of_remove,
-	.shutdown	= usb_hcd_platform_shutdown,
-	.driver = {
+	.हटाओ		= ohci_hcd_ppc_of_हटाओ,
+	.shutकरोwn	= usb_hcd_platक्रमm_shutकरोwn,
+	.driver = अणु
 		.name = "ppc-of-ohci",
 		.of_match_table = ohci_hcd_ppc_of_match,
-	},
-};
+	पूर्ण,
+पूर्ण;
 

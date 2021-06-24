@@ -1,241 +1,242 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * ICS backend for OPAL managed interrupts.
+ * ICS backend क्रम OPAL managed पूर्णांकerrupts.
  *
  * Copyright 2011 IBM Corp.
  */
 
-#undef DEBUG
+#अघोषित DEBUG
 
-#include <linux/types.h>
-#include <linux/kernel.h>
-#include <linux/irq.h>
-#include <linux/smp.h>
-#include <linux/interrupt.h>
-#include <linux/init.h>
-#include <linux/cpu.h>
-#include <linux/of.h>
-#include <linux/spinlock.h>
-#include <linux/msi.h>
+#समावेश <linux/types.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/irq.h>
+#समावेश <linux/smp.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/init.h>
+#समावेश <linux/cpu.h>
+#समावेश <linux/of.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/msi.h>
 
-#include <asm/prom.h>
-#include <asm/smp.h>
-#include <asm/machdep.h>
-#include <asm/irq.h>
-#include <asm/errno.h>
-#include <asm/xics.h>
-#include <asm/opal.h>
-#include <asm/firmware.h>
+#समावेश <यंत्र/prom.h>
+#समावेश <यंत्र/smp.h>
+#समावेश <यंत्र/machdep.h>
+#समावेश <यंत्र/irq.h>
+#समावेश <यंत्र/त्रुटिसं.स>
+#समावेश <यंत्र/xics.h>
+#समावेश <यंत्र/opal.h>
+#समावेश <यंत्र/firmware.h>
 
-static int ics_opal_mangle_server(int server)
-{
-	/* No link for now */
-	return server << 2;
-}
+अटल पूर्णांक ics_opal_mangle_server(पूर्णांक server)
+अणु
+	/* No link क्रम now */
+	वापस server << 2;
+पूर्ण
 
-static int ics_opal_unmangle_server(int server)
-{
-	/* No link for now */
-	return server >> 2;
-}
+अटल पूर्णांक ics_opal_unmangle_server(पूर्णांक server)
+अणु
+	/* No link क्रम now */
+	वापस server >> 2;
+पूर्ण
 
-static void ics_opal_unmask_irq(struct irq_data *d)
-{
-	unsigned int hw_irq = (unsigned int)irqd_to_hwirq(d);
-	int64_t rc;
-	int server;
+अटल व्योम ics_opal_unmask_irq(काष्ठा irq_data *d)
+अणु
+	अचिन्हित पूर्णांक hw_irq = (अचिन्हित पूर्णांक)irqd_to_hwirq(d);
+	पूर्णांक64_t rc;
+	पूर्णांक server;
 
 	pr_devel("ics-hal: unmask virq %d [hw 0x%x]\n", d->irq, hw_irq);
 
-	if (hw_irq == XICS_IPI || hw_irq == XICS_IRQ_SPURIOUS)
-		return;
+	अगर (hw_irq == XICS_IPI || hw_irq == XICS_IRQ_SPURIOUS)
+		वापस;
 
 	server = xics_get_irq_server(d->irq, irq_data_get_affinity_mask(d), 0);
 	server = ics_opal_mangle_server(server);
 
 	rc = opal_set_xive(hw_irq, server, DEFAULT_PRIORITY);
-	if (rc != OPAL_SUCCESS)
+	अगर (rc != OPAL_SUCCESS)
 		pr_err("%s: opal_set_xive(irq=%d [hw 0x%x] server=%x)"
 		       " error %lld\n",
 		       __func__, d->irq, hw_irq, server, rc);
-}
+पूर्ण
 
-static unsigned int ics_opal_startup(struct irq_data *d)
-{
-#ifdef CONFIG_PCI_MSI
+अटल अचिन्हित पूर्णांक ics_opal_startup(काष्ठा irq_data *d)
+अणु
+#अगर_घोषित CONFIG_PCI_MSI
 	/*
-	 * The generic MSI code returns with the interrupt disabled on the
-	 * card, using the MSI mask bits. Firmware doesn't appear to unmask
-	 * at that level, so we do it here by hand.
+	 * The generic MSI code वापसs with the पूर्णांकerrupt disabled on the
+	 * card, using the MSI mask bits. Firmware करोesn't appear to unmask
+	 * at that level, so we करो it here by hand.
 	 */
-	if (irq_data_get_msi_desc(d))
+	अगर (irq_data_get_msi_desc(d))
 		pci_msi_unmask_irq(d);
-#endif
+#पूर्ण_अगर
 
 	/* unmask it */
 	ics_opal_unmask_irq(d);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void ics_opal_mask_real_irq(unsigned int hw_irq)
-{
-	int server = ics_opal_mangle_server(xics_default_server);
-	int64_t rc;
+अटल व्योम ics_opal_mask_real_irq(अचिन्हित पूर्णांक hw_irq)
+अणु
+	पूर्णांक server = ics_opal_mangle_server(xics_शेष_server);
+	पूर्णांक64_t rc;
 
-	if (hw_irq == XICS_IPI)
-		return;
+	अगर (hw_irq == XICS_IPI)
+		वापस;
 
-	/* Have to set XIVE to 0xff to be able to remove a slot */
+	/* Have to set XIVE to 0xff to be able to हटाओ a slot */
 	rc = opal_set_xive(hw_irq, server, 0xff);
-	if (rc != OPAL_SUCCESS)
+	अगर (rc != OPAL_SUCCESS)
 		pr_err("%s: opal_set_xive(0xff) irq=%u returned %lld\n",
 		       __func__, hw_irq, rc);
-}
+पूर्ण
 
-static void ics_opal_mask_irq(struct irq_data *d)
-{
-	unsigned int hw_irq = (unsigned int)irqd_to_hwirq(d);
+अटल व्योम ics_opal_mask_irq(काष्ठा irq_data *d)
+अणु
+	अचिन्हित पूर्णांक hw_irq = (अचिन्हित पूर्णांक)irqd_to_hwirq(d);
 
 	pr_devel("ics-hal: mask virq %d [hw 0x%x]\n", d->irq, hw_irq);
 
-	if (hw_irq == XICS_IPI || hw_irq == XICS_IRQ_SPURIOUS)
-		return;
+	अगर (hw_irq == XICS_IPI || hw_irq == XICS_IRQ_SPURIOUS)
+		वापस;
 	ics_opal_mask_real_irq(hw_irq);
-}
+पूर्ण
 
-static int ics_opal_set_affinity(struct irq_data *d,
-				 const struct cpumask *cpumask,
-				 bool force)
-{
-	unsigned int hw_irq = (unsigned int)irqd_to_hwirq(d);
+अटल पूर्णांक ics_opal_set_affinity(काष्ठा irq_data *d,
+				 स्थिर काष्ठा cpumask *cpumask,
+				 bool क्रमce)
+अणु
+	अचिन्हित पूर्णांक hw_irq = (अचिन्हित पूर्णांक)irqd_to_hwirq(d);
 	__be16 oserver;
-	int16_t server;
-	int8_t priority;
-	int64_t rc;
-	int wanted_server;
+	पूर्णांक16_t server;
+	पूर्णांक8_t priority;
+	पूर्णांक64_t rc;
+	पूर्णांक wanted_server;
 
-	if (hw_irq == XICS_IPI || hw_irq == XICS_IRQ_SPURIOUS)
-		return -1;
+	अगर (hw_irq == XICS_IPI || hw_irq == XICS_IRQ_SPURIOUS)
+		वापस -1;
 
 	rc = opal_get_xive(hw_irq, &oserver, &priority);
-	if (rc != OPAL_SUCCESS) {
+	अगर (rc != OPAL_SUCCESS) अणु
 		pr_err("%s: opal_get_xive(irq=%d [hw 0x%x]) error %lld\n",
 		       __func__, d->irq, hw_irq, rc);
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 	server = be16_to_cpu(oserver);
 
 	wanted_server = xics_get_irq_server(d->irq, cpumask, 1);
-	if (wanted_server < 0) {
+	अगर (wanted_server < 0) अणु
 		pr_warn("%s: No online cpus in the mask %*pb for irq %d\n",
 			__func__, cpumask_pr_args(cpumask), d->irq);
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 	server = ics_opal_mangle_server(wanted_server);
 
 	pr_devel("ics-hal: set-affinity irq %d [hw 0x%x] server: 0x%x/0x%x\n",
 		 d->irq, hw_irq, wanted_server, server);
 
 	rc = opal_set_xive(hw_irq, server, priority);
-	if (rc != OPAL_SUCCESS) {
+	अगर (rc != OPAL_SUCCESS) अणु
 		pr_err("%s: opal_set_xive(irq=%d [hw 0x%x] server=%x)"
 		       " error %lld\n",
 		       __func__, d->irq, hw_irq, server, rc);
-		return -1;
-	}
-	return IRQ_SET_MASK_OK;
-}
+		वापस -1;
+	पूर्ण
+	वापस IRQ_SET_MASK_OK;
+पूर्ण
 
-static struct irq_chip ics_opal_irq_chip = {
+अटल काष्ठा irq_chip ics_opal_irq_chip = अणु
 	.name = "OPAL ICS",
 	.irq_startup = ics_opal_startup,
 	.irq_mask = ics_opal_mask_irq,
 	.irq_unmask = ics_opal_unmask_irq,
-	.irq_eoi = NULL, /* Patched at init time */
+	.irq_eoi = शून्य, /* Patched at init समय */
 	.irq_set_affinity = ics_opal_set_affinity,
 	.irq_set_type = xics_set_irq_type,
 	.irq_retrigger = xics_retrigger,
-};
+पूर्ण;
 
-static int ics_opal_map(struct ics *ics, unsigned int virq);
-static void ics_opal_mask_unknown(struct ics *ics, unsigned long vec);
-static long ics_opal_get_server(struct ics *ics, unsigned long vec);
+अटल पूर्णांक ics_opal_map(काष्ठा ics *ics, अचिन्हित पूर्णांक virq);
+अटल व्योम ics_opal_mask_unknown(काष्ठा ics *ics, अचिन्हित दीर्घ vec);
+अटल दीर्घ ics_opal_get_server(काष्ठा ics *ics, अचिन्हित दीर्घ vec);
 
-static int ics_opal_host_match(struct ics *ics, struct device_node *node)
-{
-	return 1;
-}
+अटल पूर्णांक ics_opal_host_match(काष्ठा ics *ics, काष्ठा device_node *node)
+अणु
+	वापस 1;
+पूर्ण
 
-/* Only one global & state struct ics */
-static struct ics ics_hal = {
+/* Only one global & state काष्ठा ics */
+अटल काष्ठा ics ics_hal = अणु
 	.map		= ics_opal_map,
 	.mask_unknown	= ics_opal_mask_unknown,
 	.get_server	= ics_opal_get_server,
 	.host_match	= ics_opal_host_match,
-};
+पूर्ण;
 
-static int ics_opal_map(struct ics *ics, unsigned int virq)
-{
-	unsigned int hw_irq = (unsigned int)virq_to_hw(virq);
-	int64_t rc;
+अटल पूर्णांक ics_opal_map(काष्ठा ics *ics, अचिन्हित पूर्णांक virq)
+अणु
+	अचिन्हित पूर्णांक hw_irq = (अचिन्हित पूर्णांक)virq_to_hw(virq);
+	पूर्णांक64_t rc;
 	__be16 server;
-	int8_t priority;
+	पूर्णांक8_t priority;
 
-	if (WARN_ON(hw_irq == XICS_IPI || hw_irq == XICS_IRQ_SPURIOUS))
-		return -EINVAL;
+	अगर (WARN_ON(hw_irq == XICS_IPI || hw_irq == XICS_IRQ_SPURIOUS))
+		वापस -EINVAL;
 
-	/* Check if HAL knows about this interrupt */
+	/* Check अगर HAL knows about this पूर्णांकerrupt */
 	rc = opal_get_xive(hw_irq, &server, &priority);
-	if (rc != OPAL_SUCCESS)
-		return -ENXIO;
+	अगर (rc != OPAL_SUCCESS)
+		वापस -ENXIO;
 
 	irq_set_chip_and_handler(virq, &ics_opal_irq_chip, handle_fasteoi_irq);
 	irq_set_chip_data(virq, &ics_hal);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void ics_opal_mask_unknown(struct ics *ics, unsigned long vec)
-{
-	int64_t rc;
+अटल व्योम ics_opal_mask_unknown(काष्ठा ics *ics, अचिन्हित दीर्घ vec)
+अणु
+	पूर्णांक64_t rc;
 	__be16 server;
-	int8_t priority;
+	पूर्णांक8_t priority;
 
-	/* Check if HAL knows about this interrupt */
+	/* Check अगर HAL knows about this पूर्णांकerrupt */
 	rc = opal_get_xive(vec, &server, &priority);
-	if (rc != OPAL_SUCCESS)
-		return;
+	अगर (rc != OPAL_SUCCESS)
+		वापस;
 
 	ics_opal_mask_real_irq(vec);
-}
+पूर्ण
 
-static long ics_opal_get_server(struct ics *ics, unsigned long vec)
-{
-	int64_t rc;
+अटल दीर्घ ics_opal_get_server(काष्ठा ics *ics, अचिन्हित दीर्घ vec)
+अणु
+	पूर्णांक64_t rc;
 	__be16 server;
-	int8_t priority;
+	पूर्णांक8_t priority;
 
-	/* Check if HAL knows about this interrupt */
+	/* Check अगर HAL knows about this पूर्णांकerrupt */
 	rc = opal_get_xive(vec, &server, &priority);
-	if (rc != OPAL_SUCCESS)
-		return -1;
-	return ics_opal_unmangle_server(be16_to_cpu(server));
-}
+	अगर (rc != OPAL_SUCCESS)
+		वापस -1;
+	वापस ics_opal_unmangle_server(be16_to_cpu(server));
+पूर्ण
 
-int __init ics_opal_init(void)
-{
-	if (!firmware_has_feature(FW_FEATURE_OPAL))
-		return -ENODEV;
+पूर्णांक __init ics_opal_init(व्योम)
+अणु
+	अगर (!firmware_has_feature(FW_FEATURE_OPAL))
+		वापस -ENODEV;
 
-	/* We need to patch our irq chip's EOI to point to the
+	/* We need to patch our irq chip's EOI to poपूर्णांक to the
 	 * right ICP
 	 */
 	ics_opal_irq_chip.irq_eoi = icp_ops->eoi;
 
 	/* Register ourselves */
-	xics_register_ics(&ics_hal);
+	xics_रेजिस्टर_ics(&ics_hal);
 
 	pr_info("ICS OPAL backend registered\n");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

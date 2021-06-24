@@ -1,183 +1,184 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * OMAP4-specific DPLL control functions
+ * OMAP4-specअगरic DPLL control functions
  *
  * Copyright (C) 2011 Texas Instruments, Inc.
  * Rajendra Nayak
  */
 
-#include <linux/kernel.h>
-#include <linux/errno.h>
-#include <linux/clk.h>
-#include <linux/io.h>
-#include <linux/bitops.h>
-#include <linux/clk/ti.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/clk.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/bitops.h>
+#समावेश <linux/clk/ti.h>
 
-#include "clock.h"
+#समावेश "clock.h"
 
 /*
  * Maximum DPLL input frequency (FINT) and output frequency (FOUT) that
- * can supported when using the DPLL low-power mode. Frequencies are
+ * can supported when using the DPLL low-घातer mode. Frequencies are
  * defined in OMAP4430/60 Public TRM section 3.6.3.3.2 "Enable Control,
  * Status, and Low-Power Operation Mode".
  */
-#define OMAP4_DPLL_LP_FINT_MAX	1000000
-#define OMAP4_DPLL_LP_FOUT_MAX	100000000
+#घोषणा OMAP4_DPLL_LP_Fपूर्णांक_उच्च	1000000
+#घोषणा OMAP4_DPLL_LP_FOUT_MAX	100000000
 
 /*
  * Bitfield declarations
  */
-#define OMAP4430_DPLL_CLKOUT_GATE_CTRL_MASK		BIT(8)
-#define OMAP4430_DPLL_CLKOUTX2_GATE_CTRL_MASK		BIT(10)
-#define OMAP4430_DPLL_REGM4XEN_MASK			BIT(11)
+#घोषणा OMAP4430_DPLL_CLKOUT_GATE_CTRL_MASK		BIT(8)
+#घोषणा OMAP4430_DPLL_CLKOUTX2_GATE_CTRL_MASK		BIT(10)
+#घोषणा OMAP4430_DPLL_REGM4XEN_MASK			BIT(11)
 
-/* Static rate multiplier for OMAP4 REGM4XEN clocks */
-#define OMAP4430_REGM4XEN_MULT				4
+/* Static rate multiplier क्रम OMAP4 REGM4XEN घड़ीs */
+#घोषणा OMAP4430_REGM4XEN_MULT				4
 
-static void omap4_dpllmx_allow_gatectrl(struct clk_hw_omap *clk)
-{
+अटल व्योम omap4_dpllmx_allow_gatectrl(काष्ठा clk_hw_omap *clk)
+अणु
 	u32 v;
 	u32 mask;
 
-	if (!clk)
-		return;
+	अगर (!clk)
+		वापस;
 
 	mask = clk->flags & CLOCK_CLKOUTX2 ?
 			OMAP4430_DPLL_CLKOUTX2_GATE_CTRL_MASK :
 			OMAP4430_DPLL_CLKOUT_GATE_CTRL_MASK;
 
-	v = ti_clk_ll_ops->clk_readl(&clk->clksel_reg);
+	v = ti_clk_ll_ops->clk_पढ़ोl(&clk->clksel_reg);
 	/* Clear the bit to allow gatectrl */
 	v &= ~mask;
-	ti_clk_ll_ops->clk_writel(v, &clk->clksel_reg);
-}
+	ti_clk_ll_ops->clk_ग_लिखोl(v, &clk->clksel_reg);
+पूर्ण
 
-static void omap4_dpllmx_deny_gatectrl(struct clk_hw_omap *clk)
-{
+अटल व्योम omap4_dpllmx_deny_gatectrl(काष्ठा clk_hw_omap *clk)
+अणु
 	u32 v;
 	u32 mask;
 
-	if (!clk)
-		return;
+	अगर (!clk)
+		वापस;
 
 	mask = clk->flags & CLOCK_CLKOUTX2 ?
 			OMAP4430_DPLL_CLKOUTX2_GATE_CTRL_MASK :
 			OMAP4430_DPLL_CLKOUT_GATE_CTRL_MASK;
 
-	v = ti_clk_ll_ops->clk_readl(&clk->clksel_reg);
+	v = ti_clk_ll_ops->clk_पढ़ोl(&clk->clksel_reg);
 	/* Set the bit to deny gatectrl */
 	v |= mask;
-	ti_clk_ll_ops->clk_writel(v, &clk->clksel_reg);
-}
+	ti_clk_ll_ops->clk_ग_लिखोl(v, &clk->clksel_reg);
+पूर्ण
 
-const struct clk_hw_omap_ops clkhwops_omap4_dpllmx = {
+स्थिर काष्ठा clk_hw_omap_ops clkhwops_omap4_dpllmx = अणु
 	.allow_idle	= omap4_dpllmx_allow_gatectrl,
 	.deny_idle      = omap4_dpllmx_deny_gatectrl,
-};
+पूर्ण;
 
 /**
- * omap4_dpll_lpmode_recalc - compute DPLL low-power setting
- * @dd: pointer to the dpll data structure
+ * omap4_dpll_lpmode_recalc - compute DPLL low-घातer setting
+ * @dd: poपूर्णांकer to the dpll data काष्ठाure
  *
- * Calculates if low-power mode can be enabled based upon the last
- * multiplier and divider values calculated. If low-power mode can be
- * enabled, then the bit to enable low-power mode is stored in the
+ * Calculates अगर low-घातer mode can be enabled based upon the last
+ * multiplier and भागider values calculated. If low-घातer mode can be
+ * enabled, then the bit to enable low-घातer mode is stored in the
  * last_rounded_lpmode variable. This implementation is based upon the
- * criteria for enabling low-power mode as described in the OMAP4430/60
+ * criteria क्रम enabling low-घातer mode as described in the OMAP4430/60
  * Public TRM section 3.6.3.3.2 "Enable Control, Status, and Low-Power
  * Operation Mode".
  */
-static void omap4_dpll_lpmode_recalc(struct dpll_data *dd)
-{
-	long fint, fout;
+अटल व्योम omap4_dpll_lpmode_recalc(काष्ठा dpll_data *dd)
+अणु
+	दीर्घ fपूर्णांक, fout;
 
-	fint = clk_hw_get_rate(dd->clk_ref) / (dd->last_rounded_n + 1);
-	fout = fint * dd->last_rounded_m;
+	fपूर्णांक = clk_hw_get_rate(dd->clk_ref) / (dd->last_rounded_n + 1);
+	fout = fपूर्णांक * dd->last_rounded_m;
 
-	if ((fint < OMAP4_DPLL_LP_FINT_MAX) && (fout < OMAP4_DPLL_LP_FOUT_MAX))
+	अगर ((fपूर्णांक < OMAP4_DPLL_LP_Fपूर्णांक_उच्च) && (fout < OMAP4_DPLL_LP_FOUT_MAX))
 		dd->last_rounded_lpmode = 1;
-	else
+	अन्यथा
 		dd->last_rounded_lpmode = 0;
-}
+पूर्ण
 
 /**
  * omap4_dpll_regm4xen_recalc - compute DPLL rate, considering REGM4XEN bit
- * @hw: pointer to the clock to compute the rate for
- * @parent_rate: clock rate of the DPLL parent
+ * @hw: poपूर्णांकer to the घड़ी to compute the rate क्रम
+ * @parent_rate: घड़ी rate of the DPLL parent
  *
- * Compute the output rate for the OMAP4 DPLL represented by @clk.
- * Takes the REGM4XEN bit into consideration, which is needed for the
- * OMAP4 ABE DPLL.  Returns the DPLL's output rate (before M-dividers)
+ * Compute the output rate क्रम the OMAP4 DPLL represented by @clk.
+ * Takes the REGM4XEN bit पूर्णांकo consideration, which is needed क्रम the
+ * OMAP4 ABE DPLL.  Returns the DPLL's output rate (beक्रमe M-भागiders)
  * upon success, or 0 upon error.
  */
-unsigned long omap4_dpll_regm4xen_recalc(struct clk_hw *hw,
-					 unsigned long parent_rate)
-{
-	struct clk_hw_omap *clk = to_clk_hw_omap(hw);
+अचिन्हित दीर्घ omap4_dpll_regm4xen_recalc(काष्ठा clk_hw *hw,
+					 अचिन्हित दीर्घ parent_rate)
+अणु
+	काष्ठा clk_hw_omap *clk = to_clk_hw_omap(hw);
 	u32 v;
-	unsigned long rate;
-	struct dpll_data *dd;
+	अचिन्हित दीर्घ rate;
+	काष्ठा dpll_data *dd;
 
-	if (!clk || !clk->dpll_data)
-		return 0;
+	अगर (!clk || !clk->dpll_data)
+		वापस 0;
 
 	dd = clk->dpll_data;
 
 	rate = omap2_get_dpll_rate(clk);
 
 	/* regm4xen adds a multiplier of 4 to DPLL calculations */
-	v = ti_clk_ll_ops->clk_readl(&dd->control_reg);
-	if (v & OMAP4430_DPLL_REGM4XEN_MASK)
+	v = ti_clk_ll_ops->clk_पढ़ोl(&dd->control_reg);
+	अगर (v & OMAP4430_DPLL_REGM4XEN_MASK)
 		rate *= OMAP4430_REGM4XEN_MULT;
 
-	return rate;
-}
+	वापस rate;
+पूर्ण
 
 /**
  * omap4_dpll_regm4xen_round_rate - round DPLL rate, considering REGM4XEN bit
- * @hw: struct hw_clk containing the struct clk * of the DPLL to round a rate for
+ * @hw: काष्ठा hw_clk containing the काष्ठा clk * of the DPLL to round a rate क्रम
  * @target_rate: the desired rate of the DPLL
- * @parent_rate: clock rate of the DPLL parent
+ * @parent_rate: घड़ी rate of the DPLL parent
  *
- * Compute the rate that would be programmed into the DPLL hardware
- * for @clk if set_rate() were to be provided with the rate
- * @target_rate.  Takes the REGM4XEN bit into consideration, which is
- * needed for the OMAP4 ABE DPLL.  Returns the rounded rate (before
- * M-dividers) upon success, -EINVAL if @clk is null or not a DPLL, or
- * ~0 if an error occurred in omap2_dpll_round_rate().
+ * Compute the rate that would be programmed पूर्णांकo the DPLL hardware
+ * क्रम @clk अगर set_rate() were to be provided with the rate
+ * @target_rate.  Takes the REGM4XEN bit पूर्णांकo consideration, which is
+ * needed क्रम the OMAP4 ABE DPLL.  Returns the rounded rate (beक्रमe
+ * M-भागiders) upon success, -EINVAL अगर @clk is null or not a DPLL, or
+ * ~0 अगर an error occurred in omap2_dpll_round_rate().
  */
-long omap4_dpll_regm4xen_round_rate(struct clk_hw *hw,
-				    unsigned long target_rate,
-				    unsigned long *parent_rate)
-{
-	struct clk_hw_omap *clk = to_clk_hw_omap(hw);
-	struct dpll_data *dd;
-	long r;
+दीर्घ omap4_dpll_regm4xen_round_rate(काष्ठा clk_hw *hw,
+				    अचिन्हित दीर्घ target_rate,
+				    अचिन्हित दीर्घ *parent_rate)
+अणु
+	काष्ठा clk_hw_omap *clk = to_clk_hw_omap(hw);
+	काष्ठा dpll_data *dd;
+	दीर्घ r;
 
-	if (!clk || !clk->dpll_data)
-		return -EINVAL;
+	अगर (!clk || !clk->dpll_data)
+		वापस -EINVAL;
 
 	dd = clk->dpll_data;
 
 	dd->last_rounded_m4xen = 0;
 
 	/*
-	 * First try to compute the DPLL configuration for
+	 * First try to compute the DPLL configuration क्रम
 	 * target rate without using the 4X multiplier.
 	 */
-	r = omap2_dpll_round_rate(hw, target_rate, NULL);
-	if (r != ~0)
-		goto out;
+	r = omap2_dpll_round_rate(hw, target_rate, शून्य);
+	अगर (r != ~0)
+		जाओ out;
 
 	/*
 	 * If we did not find a valid DPLL configuration, try again, but
-	 * this time see if using the 4X multiplier can help. Enabling the
-	 * 4X multiplier is equivalent to dividing the target rate by 4.
+	 * this समय see अगर using the 4X multiplier can help. Enabling the
+	 * 4X multiplier is equivalent to भागiding the target rate by 4.
 	 */
 	r = omap2_dpll_round_rate(hw, target_rate / OMAP4430_REGM4XEN_MULT,
-				  NULL);
-	if (r == ~0)
-		return r;
+				  शून्य);
+	अगर (r == ~0)
+		वापस r;
 
 	dd->last_rounded_rate *= OMAP4430_REGM4XEN_MULT;
 	dd->last_rounded_m4xen = 1;
@@ -185,42 +186,42 @@ long omap4_dpll_regm4xen_round_rate(struct clk_hw *hw,
 out:
 	omap4_dpll_lpmode_recalc(dd);
 
-	return dd->last_rounded_rate;
-}
+	वापस dd->last_rounded_rate;
+पूर्ण
 
 /**
- * omap4_dpll_regm4xen_determine_rate - determine rate for a DPLL
- * @hw: pointer to the clock to determine rate for
+ * omap4_dpll_regm4xen_determine_rate - determine rate क्रम a DPLL
+ * @hw: poपूर्णांकer to the घड़ी to determine rate क्रम
  * @req: target rate request
  *
- * Determines which DPLL mode to use for reaching a desired rate.
- * Checks whether the DPLL shall be in bypass or locked mode, and if
- * locked, calculates the M,N values for the DPLL via round-rate.
+ * Determines which DPLL mode to use क्रम reaching a desired rate.
+ * Checks whether the DPLL shall be in bypass or locked mode, and अगर
+ * locked, calculates the M,N values क्रम the DPLL via round-rate.
  * Returns 0 on success and a negative error value otherwise.
  */
-int omap4_dpll_regm4xen_determine_rate(struct clk_hw *hw,
-				       struct clk_rate_request *req)
-{
-	struct clk_hw_omap *clk = to_clk_hw_omap(hw);
-	struct dpll_data *dd;
+पूर्णांक omap4_dpll_regm4xen_determine_rate(काष्ठा clk_hw *hw,
+				       काष्ठा clk_rate_request *req)
+अणु
+	काष्ठा clk_hw_omap *clk = to_clk_hw_omap(hw);
+	काष्ठा dpll_data *dd;
 
-	if (!req->rate)
-		return -EINVAL;
+	अगर (!req->rate)
+		वापस -EINVAL;
 
 	dd = clk->dpll_data;
-	if (!dd)
-		return -EINVAL;
+	अगर (!dd)
+		वापस -EINVAL;
 
-	if (clk_hw_get_rate(dd->clk_bypass) == req->rate &&
-	    (dd->modes & (1 << DPLL_LOW_POWER_BYPASS))) {
+	अगर (clk_hw_get_rate(dd->clk_bypass) == req->rate &&
+	    (dd->modes & (1 << DPLL_LOW_POWER_BYPASS))) अणु
 		req->best_parent_hw = dd->clk_bypass;
-	} else {
+	पूर्ण अन्यथा अणु
 		req->rate = omap4_dpll_regm4xen_round_rate(hw, req->rate,
 						&req->best_parent_rate);
 		req->best_parent_hw = dd->clk_ref;
-	}
+	पूर्ण
 
 	req->best_parent_rate = req->rate;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

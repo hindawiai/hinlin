@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  *	linux/mm/mincore.c
  *
@@ -6,276 +7,276 @@
  */
 
 /*
- * The mincore() system call.
+ * The mincore() प्रणाली call.
  */
-#include <linux/pagemap.h>
-#include <linux/gfp.h>
-#include <linux/pagewalk.h>
-#include <linux/mman.h>
-#include <linux/syscalls.h>
-#include <linux/swap.h>
-#include <linux/swapops.h>
-#include <linux/shmem_fs.h>
-#include <linux/hugetlb.h>
-#include <linux/pgtable.h>
+#समावेश <linux/pagemap.h>
+#समावेश <linux/gfp.h>
+#समावेश <linux/pagewalk.h>
+#समावेश <linux/mman.h>
+#समावेश <linux/syscalls.h>
+#समावेश <linux/swap.h>
+#समावेश <linux/swapops.h>
+#समावेश <linux/shmem_fs.h>
+#समावेश <linux/hugetlb.h>
+#समावेश <linux/pgtable.h>
 
-#include <linux/uaccess.h>
+#समावेश <linux/uaccess.h>
 
-static int mincore_hugetlb(pte_t *pte, unsigned long hmask, unsigned long addr,
-			unsigned long end, struct mm_walk *walk)
-{
-#ifdef CONFIG_HUGETLB_PAGE
-	unsigned char present;
-	unsigned char *vec = walk->private;
+अटल पूर्णांक mincore_hugetlb(pte_t *pte, अचिन्हित दीर्घ hmask, अचिन्हित दीर्घ addr,
+			अचिन्हित दीर्घ end, काष्ठा mm_walk *walk)
+अणु
+#अगर_घोषित CONFIG_HUGETLB_PAGE
+	अचिन्हित अक्षर present;
+	अचिन्हित अक्षर *vec = walk->निजी;
 
 	/*
 	 * Hugepages under user process are always in RAM and never
 	 * swapped out, but theoretically it needs to be checked.
 	 */
 	present = pte && !huge_pte_none(huge_ptep_get(pte));
-	for (; addr != end; vec++, addr += PAGE_SIZE)
+	क्रम (; addr != end; vec++, addr += PAGE_SIZE)
 		*vec = present;
-	walk->private = vec;
-#else
+	walk->निजी = vec;
+#अन्यथा
 	BUG();
-#endif
-	return 0;
-}
+#पूर्ण_अगर
+	वापस 0;
+पूर्ण
 
 /*
  * Later we can get more picky about what "in core" means precisely.
- * For now, simply check to see if the page is in the page cache,
+ * For now, simply check to see अगर the page is in the page cache,
  * and is up to date; i.e. that no page-in operation would be required
- * at this time if an application were to map and access this page.
+ * at this समय अगर an application were to map and access this page.
  */
-static unsigned char mincore_page(struct address_space *mapping, pgoff_t index)
-{
-	unsigned char present = 0;
-	struct page *page;
+अटल अचिन्हित अक्षर mincore_page(काष्ठा address_space *mapping, pgoff_t index)
+अणु
+	अचिन्हित अक्षर present = 0;
+	काष्ठा page *page;
 
 	/*
-	 * When tmpfs swaps out a page from a file, any process mapping that
+	 * When पंचांगpfs swaps out a page from a file, any process mapping that
 	 * file will not get a swp_entry_t in its pte, but rather it is like
 	 * any other file mapping (ie. marked !present and faulted in with
-	 * tmpfs's .fault). So swapped out tmpfs mappings are tested here.
+	 * पंचांगpfs's .fault). So swapped out पंचांगpfs mappings are tested here.
 	 */
 	page = find_get_incore_page(mapping, index);
-	if (page) {
+	अगर (page) अणु
 		present = PageUptodate(page);
 		put_page(page);
-	}
+	पूर्ण
 
-	return present;
-}
+	वापस present;
+पूर्ण
 
-static int __mincore_unmapped_range(unsigned long addr, unsigned long end,
-				struct vm_area_struct *vma, unsigned char *vec)
-{
-	unsigned long nr = (end - addr) >> PAGE_SHIFT;
-	int i;
+अटल पूर्णांक __mincore_unmapped_range(अचिन्हित दीर्घ addr, अचिन्हित दीर्घ end,
+				काष्ठा vm_area_काष्ठा *vma, अचिन्हित अक्षर *vec)
+अणु
+	अचिन्हित दीर्घ nr = (end - addr) >> PAGE_SHIFT;
+	पूर्णांक i;
 
-	if (vma->vm_file) {
+	अगर (vma->vm_file) अणु
 		pgoff_t pgoff;
 
 		pgoff = linear_page_index(vma, addr);
-		for (i = 0; i < nr; i++, pgoff++)
+		क्रम (i = 0; i < nr; i++, pgoff++)
 			vec[i] = mincore_page(vma->vm_file->f_mapping, pgoff);
-	} else {
-		for (i = 0; i < nr; i++)
+	पूर्ण अन्यथा अणु
+		क्रम (i = 0; i < nr; i++)
 			vec[i] = 0;
-	}
-	return nr;
-}
+	पूर्ण
+	वापस nr;
+पूर्ण
 
-static int mincore_unmapped_range(unsigned long addr, unsigned long end,
-				   __always_unused int depth,
-				   struct mm_walk *walk)
-{
-	walk->private += __mincore_unmapped_range(addr, end,
-						  walk->vma, walk->private);
-	return 0;
-}
+अटल पूर्णांक mincore_unmapped_range(अचिन्हित दीर्घ addr, अचिन्हित दीर्घ end,
+				   __always_unused पूर्णांक depth,
+				   काष्ठा mm_walk *walk)
+अणु
+	walk->निजी += __mincore_unmapped_range(addr, end,
+						  walk->vma, walk->निजी);
+	वापस 0;
+पूर्ण
 
-static int mincore_pte_range(pmd_t *pmd, unsigned long addr, unsigned long end,
-			struct mm_walk *walk)
-{
+अटल पूर्णांक mincore_pte_range(pmd_t *pmd, अचिन्हित दीर्घ addr, अचिन्हित दीर्घ end,
+			काष्ठा mm_walk *walk)
+अणु
 	spinlock_t *ptl;
-	struct vm_area_struct *vma = walk->vma;
+	काष्ठा vm_area_काष्ठा *vma = walk->vma;
 	pte_t *ptep;
-	unsigned char *vec = walk->private;
-	int nr = (end - addr) >> PAGE_SHIFT;
+	अचिन्हित अक्षर *vec = walk->निजी;
+	पूर्णांक nr = (end - addr) >> PAGE_SHIFT;
 
 	ptl = pmd_trans_huge_lock(pmd, vma);
-	if (ptl) {
-		memset(vec, 1, nr);
+	अगर (ptl) अणु
+		स_रखो(vec, 1, nr);
 		spin_unlock(ptl);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (pmd_trans_unstable(pmd)) {
+	अगर (pmd_trans_unstable(pmd)) अणु
 		__mincore_unmapped_range(addr, end, vma, vec);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	ptep = pte_offset_map_lock(walk->mm, pmd, addr, &ptl);
-	for (; addr != end; ptep++, addr += PAGE_SIZE) {
+	क्रम (; addr != end; ptep++, addr += PAGE_SIZE) अणु
 		pte_t pte = *ptep;
 
-		if (pte_none(pte))
+		अगर (pte_none(pte))
 			__mincore_unmapped_range(addr, addr + PAGE_SIZE,
 						 vma, vec);
-		else if (pte_present(pte))
+		अन्यथा अगर (pte_present(pte))
 			*vec = 1;
-		else { /* pte is a swap entry */
+		अन्यथा अणु /* pte is a swap entry */
 			swp_entry_t entry = pte_to_swp_entry(pte);
 
-			if (non_swap_entry(entry)) {
+			अगर (non_swap_entry(entry)) अणु
 				/*
 				 * migration or hwpoison entries are always
 				 * uptodate
 				 */
 				*vec = 1;
-			} else {
-#ifdef CONFIG_SWAP
+			पूर्ण अन्यथा अणु
+#अगर_घोषित CONFIG_SWAP
 				*vec = mincore_page(swap_address_space(entry),
 						    swp_offset(entry));
-#else
+#अन्यथा
 				WARN_ON(1);
 				*vec = 1;
-#endif
-			}
-		}
+#पूर्ण_अगर
+			पूर्ण
+		पूर्ण
 		vec++;
-	}
+	पूर्ण
 	pte_unmap_unlock(ptep - 1, ptl);
 out:
-	walk->private += nr;
+	walk->निजी += nr;
 	cond_resched();
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static inline bool can_do_mincore(struct vm_area_struct *vma)
-{
-	if (vma_is_anonymous(vma))
-		return true;
-	if (!vma->vm_file)
-		return false;
+अटल अंतरभूत bool can_करो_mincore(काष्ठा vm_area_काष्ठा *vma)
+अणु
+	अगर (vma_is_anonymous(vma))
+		वापस true;
+	अगर (!vma->vm_file)
+		वापस false;
 	/*
-	 * Reveal pagecache information only for non-anonymous mappings that
-	 * correspond to the files the calling process could (if tried) open
-	 * for writing; otherwise we'd be including shared non-exclusive
-	 * mappings, which opens a side channel.
+	 * Reveal pagecache inक्रमmation only क्रम non-anonymous mappings that
+	 * correspond to the files the calling process could (अगर tried) खोलो
+	 * क्रम writing; otherwise we'd be including shared non-exclusive
+	 * mappings, which खोलोs a side channel.
 	 */
-	return inode_owner_or_capable(&init_user_ns,
+	वापस inode_owner_or_capable(&init_user_ns,
 				      file_inode(vma->vm_file)) ||
 	       file_permission(vma->vm_file, MAY_WRITE) == 0;
-}
+पूर्ण
 
-static const struct mm_walk_ops mincore_walk_ops = {
+अटल स्थिर काष्ठा mm_walk_ops mincore_walk_ops = अणु
 	.pmd_entry		= mincore_pte_range,
 	.pte_hole		= mincore_unmapped_range,
 	.hugetlb_entry		= mincore_hugetlb,
-};
+पूर्ण;
 
 /*
- * Do a chunk of "sys_mincore()". We've already checked
+ * Do a chunk of "sys_mincore()". We've alपढ़ोy checked
  * all the arguments, we hold the mmap semaphore: we should
- * just return the amount of info we're asked for.
+ * just वापस the amount of info we're asked क्रम.
  */
-static long do_mincore(unsigned long addr, unsigned long pages, unsigned char *vec)
-{
-	struct vm_area_struct *vma;
-	unsigned long end;
-	int err;
+अटल दीर्घ करो_mincore(अचिन्हित दीर्घ addr, अचिन्हित दीर्घ pages, अचिन्हित अक्षर *vec)
+अणु
+	काष्ठा vm_area_काष्ठा *vma;
+	अचिन्हित दीर्घ end;
+	पूर्णांक err;
 
 	vma = find_vma(current->mm, addr);
-	if (!vma || addr < vma->vm_start)
-		return -ENOMEM;
+	अगर (!vma || addr < vma->vm_start)
+		वापस -ENOMEM;
 	end = min(vma->vm_end, addr + (pages << PAGE_SHIFT));
-	if (!can_do_mincore(vma)) {
-		unsigned long pages = DIV_ROUND_UP(end - addr, PAGE_SIZE);
-		memset(vec, 1, pages);
-		return pages;
-	}
+	अगर (!can_करो_mincore(vma)) अणु
+		अचिन्हित दीर्घ pages = DIV_ROUND_UP(end - addr, PAGE_SIZE);
+		स_रखो(vec, 1, pages);
+		वापस pages;
+	पूर्ण
 	err = walk_page_range(vma->vm_mm, addr, end, &mincore_walk_ops, vec);
-	if (err < 0)
-		return err;
-	return (end - addr) >> PAGE_SHIFT;
-}
+	अगर (err < 0)
+		वापस err;
+	वापस (end - addr) >> PAGE_SHIFT;
+पूर्ण
 
 /*
- * The mincore(2) system call.
+ * The mincore(2) प्रणाली call.
  *
- * mincore() returns the memory residency status of the pages in the
- * current process's address space specified by [addr, addr + len).
- * The status is returned in a vector of bytes.  The least significant
- * bit of each byte is 1 if the referenced page is in memory, otherwise
+ * mincore() वापसs the memory residency status of the pages in the
+ * current process's address space specअगरied by [addr, addr + len).
+ * The status is वापसed in a vector of bytes.  The least signअगरicant
+ * bit of each byte is 1 अगर the referenced page is in memory, otherwise
  * it is zero.
  *
  * Because the status of a page can change after mincore() checks it
- * but before it returns to the application, the returned vector may
- * contain stale information.  Only locked pages are guaranteed to
- * remain in memory.
+ * but beक्रमe it वापसs to the application, the वापसed vector may
+ * contain stale inक्रमmation.  Only locked pages are guaranteed to
+ * reमुख्य in memory.
  *
- * return values:
+ * वापस values:
  *  zero    - success
- *  -EFAULT - vec points to an illegal address
+ *  -EFAULT - vec poपूर्णांकs to an illegal address
  *  -EINVAL - addr is not a multiple of PAGE_SIZE
  *  -ENOMEM - Addresses in the range [addr, addr + len] are
- *		invalid for the address space of this process, or
- *		specify one or more pages which are not currently
+ *		invalid क्रम the address space of this process, or
+ *		specअगरy one or more pages which are not currently
  *		mapped
  *  -EAGAIN - A kernel resource was temporarily unavailable.
  */
-SYSCALL_DEFINE3(mincore, unsigned long, start, size_t, len,
-		unsigned char __user *, vec)
-{
-	long retval;
-	unsigned long pages;
-	unsigned char *tmp;
+SYSCALL_DEFINE3(mincore, अचिन्हित दीर्घ, start, माप_प्रकार, len,
+		अचिन्हित अक्षर __user *, vec)
+अणु
+	दीर्घ retval;
+	अचिन्हित दीर्घ pages;
+	अचिन्हित अक्षर *पंचांगp;
 
 	start = untagged_addr(start);
 
 	/* Check the start address: needs to be page-aligned.. */
-	if (start & ~PAGE_MASK)
-		return -EINVAL;
+	अगर (start & ~PAGE_MASK)
+		वापस -EINVAL;
 
 	/* ..and we need to be passed a valid user-space range */
-	if (!access_ok((void __user *) start, len))
-		return -ENOMEM;
+	अगर (!access_ok((व्योम __user *) start, len))
+		वापस -ENOMEM;
 
-	/* This also avoids any overflows on PAGE_ALIGN */
+	/* This also aव्योमs any overflows on PAGE_ALIGN */
 	pages = len >> PAGE_SHIFT;
 	pages += (offset_in_page(len)) != 0;
 
-	if (!access_ok(vec, pages))
-		return -EFAULT;
+	अगर (!access_ok(vec, pages))
+		वापस -EFAULT;
 
-	tmp = (void *) __get_free_page(GFP_USER);
-	if (!tmp)
-		return -EAGAIN;
+	पंचांगp = (व्योम *) __get_मुक्त_page(GFP_USER);
+	अगर (!पंचांगp)
+		वापस -EAGAIN;
 
 	retval = 0;
-	while (pages) {
+	जबतक (pages) अणु
 		/*
 		 * Do at most PAGE_SIZE entries per iteration, due to
 		 * the temporary buffer size.
 		 */
-		mmap_read_lock(current->mm);
-		retval = do_mincore(start, min(pages, PAGE_SIZE), tmp);
-		mmap_read_unlock(current->mm);
+		mmap_पढ़ो_lock(current->mm);
+		retval = करो_mincore(start, min(pages, PAGE_SIZE), पंचांगp);
+		mmap_पढ़ो_unlock(current->mm);
 
-		if (retval <= 0)
-			break;
-		if (copy_to_user(vec, tmp, retval)) {
+		अगर (retval <= 0)
+			अवरोध;
+		अगर (copy_to_user(vec, पंचांगp, retval)) अणु
 			retval = -EFAULT;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		pages -= retval;
 		vec += retval;
 		start += retval << PAGE_SHIFT;
 		retval = 0;
-	}
-	free_page((unsigned long) tmp);
-	return retval;
-}
+	पूर्ण
+	मुक्त_page((अचिन्हित दीर्घ) पंचांगp);
+	वापस retval;
+पूर्ण

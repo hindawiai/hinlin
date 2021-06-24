@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Audio and Music Data Transmission Protocol (IEC 61883-6) streams
  * with Common Isochronous Packet (IEC 61883-1) headers
@@ -6,88 +7,88 @@
  * Copyright (c) Clemens Ladisch <clemens@ladisch.de>
  */
 
-#include <linux/device.h>
-#include <linux/err.h>
-#include <linux/firewire.h>
-#include <linux/firewire-constants.h>
-#include <linux/module.h>
-#include <linux/slab.h>
-#include <sound/pcm.h>
-#include <sound/pcm_params.h>
-#include "amdtp-stream.h"
+#समावेश <linux/device.h>
+#समावेश <linux/err.h>
+#समावेश <linux/firewire.h>
+#समावेश <linux/firewire-स्थिरants.h>
+#समावेश <linux/module.h>
+#समावेश <linux/slab.h>
+#समावेश <sound/pcm.h>
+#समावेश <sound/pcm_params.h>
+#समावेश "amdtp-stream.h"
 
-#define TICKS_PER_CYCLE		3072
-#define CYCLES_PER_SECOND	8000
-#define TICKS_PER_SECOND	(TICKS_PER_CYCLE * CYCLES_PER_SECOND)
+#घोषणा TICKS_PER_CYCLE		3072
+#घोषणा CYCLES_PER_SECOND	8000
+#घोषणा TICKS_PER_SECOND	(TICKS_PER_CYCLE * CYCLES_PER_SECOND)
 
-#define OHCI_MAX_SECOND		8
+#घोषणा OHCI_MAX_SECOND		8
 
-/* Always support Linux tracing subsystem. */
-#define CREATE_TRACE_POINTS
-#include "amdtp-stream-trace.h"
+/* Always support Linux tracing subप्रणाली. */
+#घोषणा CREATE_TRACE_POINTS
+#समावेश "amdtp-stream-trace.h"
 
-#define TRANSFER_DELAY_TICKS	0x2e00 /* 479.17 microseconds */
+#घोषणा TRANSFER_DELAY_TICKS	0x2e00 /* 479.17 microseconds */
 
 /* isochronous header parameters */
-#define ISO_DATA_LENGTH_SHIFT	16
-#define TAG_NO_CIP_HEADER	0
-#define TAG_CIP			1
+#घोषणा ISO_DATA_LENGTH_SHIFT	16
+#घोषणा TAG_NO_CIP_HEADER	0
+#घोषणा TAG_CIP			1
 
 /* common isochronous packet header parameters */
-#define CIP_EOH_SHIFT		31
-#define CIP_EOH			(1u << CIP_EOH_SHIFT)
-#define CIP_EOH_MASK		0x80000000
-#define CIP_SID_SHIFT		24
-#define CIP_SID_MASK		0x3f000000
-#define CIP_DBS_MASK		0x00ff0000
-#define CIP_DBS_SHIFT		16
-#define CIP_SPH_MASK		0x00000400
-#define CIP_SPH_SHIFT		10
-#define CIP_DBC_MASK		0x000000ff
-#define CIP_FMT_SHIFT		24
-#define CIP_FMT_MASK		0x3f000000
-#define CIP_FDF_MASK		0x00ff0000
-#define CIP_FDF_SHIFT		16
-#define CIP_SYT_MASK		0x0000ffff
-#define CIP_SYT_NO_INFO		0xffff
+#घोषणा CIP_EOH_SHIFT		31
+#घोषणा CIP_EOH			(1u << CIP_EOH_SHIFT)
+#घोषणा CIP_EOH_MASK		0x80000000
+#घोषणा CIP_SID_SHIFT		24
+#घोषणा CIP_SID_MASK		0x3f000000
+#घोषणा CIP_DBS_MASK		0x00ff0000
+#घोषणा CIP_DBS_SHIFT		16
+#घोषणा CIP_SPH_MASK		0x00000400
+#घोषणा CIP_SPH_SHIFT		10
+#घोषणा CIP_DBC_MASK		0x000000ff
+#घोषणा CIP_FMT_SHIFT		24
+#घोषणा CIP_FMT_MASK		0x3f000000
+#घोषणा CIP_FDF_MASK		0x00ff0000
+#घोषणा CIP_FDF_SHIFT		16
+#घोषणा CIP_SYT_MASK		0x0000ffff
+#घोषणा CIP_SYT_NO_INFO		0xffff
 
-/* Audio and Music transfer protocol specific parameters */
-#define CIP_FMT_AM		0x10
-#define AMDTP_FDF_NO_DATA	0xff
+/* Audio and Music transfer protocol specअगरic parameters */
+#घोषणा CIP_FMT_AM		0x10
+#घोषणा AMDTP_FDF_NO_DATA	0xff
 
 // For iso header, tstamp and 2 CIP header.
-#define IR_CTX_HEADER_SIZE_CIP		16
+#घोषणा IR_CTX_HEADER_SIZE_CIP		16
 // For iso header and tstamp.
-#define IR_CTX_HEADER_SIZE_NO_CIP	8
-#define HEADER_TSTAMP_MASK	0x0000ffff
+#घोषणा IR_CTX_HEADER_SIZE_NO_CIP	8
+#घोषणा HEADER_TSTAMP_MASK	0x0000ffff
 
-#define IT_PKT_HEADER_SIZE_CIP		8 // For 2 CIP header.
-#define IT_PKT_HEADER_SIZE_NO_CIP	0 // Nothing.
+#घोषणा IT_PKT_HEADER_SIZE_CIP		8 // For 2 CIP header.
+#घोषणा IT_PKT_HEADER_SIZE_NO_CIP	0 // Nothing.
 
-static void pcm_period_work(struct work_struct *work);
+अटल व्योम pcm_period_work(काष्ठा work_काष्ठा *work);
 
 /**
- * amdtp_stream_init - initialize an AMDTP stream structure
+ * amdtp_stream_init - initialize an AMDTP stream काष्ठाure
  * @s: the AMDTP stream to initialize
  * @unit: the target of the stream
  * @dir: the direction of stream
  * @flags: the packet transmission method to use
  * @fmt: the value of fmt field in CIP header
  * @process_ctx_payloads: callback handler to process payloads of isoc context
- * @protocol_size: the size to allocate newly for protocol
+ * @protocol_size: the size to allocate newly क्रम protocol
  */
-int amdtp_stream_init(struct amdtp_stream *s, struct fw_unit *unit,
-		      enum amdtp_stream_direction dir, enum cip_flags flags,
-		      unsigned int fmt,
+पूर्णांक amdtp_stream_init(काष्ठा amdtp_stream *s, काष्ठा fw_unit *unit,
+		      क्रमागत amdtp_stream_direction dir, क्रमागत cip_flags flags,
+		      अचिन्हित पूर्णांक fmt,
 		      amdtp_stream_process_ctx_payloads_t process_ctx_payloads,
-		      unsigned int protocol_size)
-{
-	if (process_ctx_payloads == NULL)
-		return -EINVAL;
+		      अचिन्हित पूर्णांक protocol_size)
+अणु
+	अगर (process_ctx_payloads == शून्य)
+		वापस -EINVAL;
 
 	s->protocol = kzalloc(protocol_size, GFP_KERNEL);
-	if (!s->protocol)
-		return -ENOMEM;
+	अगर (!s->protocol)
+		वापस -ENOMEM;
 
 	s->unit = unit;
 	s->direction = dir;
@@ -97,36 +98,36 @@ int amdtp_stream_init(struct amdtp_stream *s, struct fw_unit *unit,
 	INIT_WORK(&s->period_work, pcm_period_work);
 	s->packet_index = 0;
 
-	init_waitqueue_head(&s->callback_wait);
+	init_रुकोqueue_head(&s->callback_रुको);
 	s->callbacked = false;
 
 	s->fmt = fmt;
 	s->process_ctx_payloads = process_ctx_payloads;
 
-	if (dir == AMDTP_OUT_STREAM)
+	अगर (dir == AMDTP_OUT_STREAM)
 		s->ctx_data.rx.syt_override = -1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(amdtp_stream_init);
 
 /**
- * amdtp_stream_destroy - free stream resources
+ * amdtp_stream_destroy - मुक्त stream resources
  * @s: the AMDTP stream to destroy
  */
-void amdtp_stream_destroy(struct amdtp_stream *s)
-{
+व्योम amdtp_stream_destroy(काष्ठा amdtp_stream *s)
+अणु
 	/* Not initialized. */
-	if (s->protocol == NULL)
-		return;
+	अगर (s->protocol == शून्य)
+		वापस;
 
 	WARN_ON(amdtp_stream_running(s));
-	kfree(s->protocol);
+	kमुक्त(s->protocol);
 	mutex_destroy(&s->mutex);
-}
+पूर्ण
 EXPORT_SYMBOL(amdtp_stream_destroy);
 
-const unsigned int amdtp_syt_intervals[CIP_SFC_COUNT] = {
+स्थिर अचिन्हित पूर्णांक amdtp_syt_पूर्णांकervals[CIP_SFC_COUNT] = अणु
 	[CIP_SFC_32000]  =  8,
 	[CIP_SFC_44100]  =  8,
 	[CIP_SFC_48000]  =  8,
@@ -134,10 +135,10 @@ const unsigned int amdtp_syt_intervals[CIP_SFC_COUNT] = {
 	[CIP_SFC_96000]  = 16,
 	[CIP_SFC_176400] = 32,
 	[CIP_SFC_192000] = 32,
-};
-EXPORT_SYMBOL(amdtp_syt_intervals);
+पूर्ण;
+EXPORT_SYMBOL(amdtp_syt_पूर्णांकervals);
 
-const unsigned int amdtp_rate_table[CIP_SFC_COUNT] = {
+स्थिर अचिन्हित पूर्णांक amdtp_rate_table[CIP_SFC_COUNT] = अणु
 	[CIP_SFC_32000]  =  32000,
 	[CIP_SFC_44100]  =  44100,
 	[CIP_SFC_48000]  =  48000,
@@ -145,43 +146,43 @@ const unsigned int amdtp_rate_table[CIP_SFC_COUNT] = {
 	[CIP_SFC_96000]  =  96000,
 	[CIP_SFC_176400] = 176400,
 	[CIP_SFC_192000] = 192000,
-};
+पूर्ण;
 EXPORT_SYMBOL(amdtp_rate_table);
 
-static int apply_constraint_to_size(struct snd_pcm_hw_params *params,
-				    struct snd_pcm_hw_rule *rule)
-{
-	struct snd_interval *s = hw_param_interval(params, rule->var);
-	const struct snd_interval *r =
-		hw_param_interval_c(params, SNDRV_PCM_HW_PARAM_RATE);
-	struct snd_interval t = {0};
-	unsigned int step = 0;
-	int i;
+अटल पूर्णांक apply_स्थिरraपूर्णांक_to_size(काष्ठा snd_pcm_hw_params *params,
+				    काष्ठा snd_pcm_hw_rule *rule)
+अणु
+	काष्ठा snd_पूर्णांकerval *s = hw_param_पूर्णांकerval(params, rule->var);
+	स्थिर काष्ठा snd_पूर्णांकerval *r =
+		hw_param_पूर्णांकerval_c(params, SNDRV_PCM_HW_PARAM_RATE);
+	काष्ठा snd_पूर्णांकerval t = अणु0पूर्ण;
+	अचिन्हित पूर्णांक step = 0;
+	पूर्णांक i;
 
-	for (i = 0; i < CIP_SFC_COUNT; ++i) {
-		if (snd_interval_test(r, amdtp_rate_table[i]))
-			step = max(step, amdtp_syt_intervals[i]);
-	}
+	क्रम (i = 0; i < CIP_SFC_COUNT; ++i) अणु
+		अगर (snd_पूर्णांकerval_test(r, amdtp_rate_table[i]))
+			step = max(step, amdtp_syt_पूर्णांकervals[i]);
+	पूर्ण
 
 	t.min = roundup(s->min, step);
-	t.max = rounddown(s->max, step);
-	t.integer = 1;
+	t.max = roundकरोwn(s->max, step);
+	t.पूर्णांकeger = 1;
 
-	return snd_interval_refine(s, &t);
-}
+	वापस snd_पूर्णांकerval_refine(s, &t);
+पूर्ण
 
 /**
- * amdtp_stream_add_pcm_hw_constraints - add hw constraints for PCM substream
+ * amdtp_stream_add_pcm_hw_स्थिरraपूर्णांकs - add hw स्थिरraपूर्णांकs क्रम PCM substream
  * @s:		the AMDTP stream, which must be initialized.
- * @runtime:	the PCM substream runtime
+ * @runसमय:	the PCM substream runसमय
  */
-int amdtp_stream_add_pcm_hw_constraints(struct amdtp_stream *s,
-					struct snd_pcm_runtime *runtime)
-{
-	struct snd_pcm_hardware *hw = &runtime->hw;
-	unsigned int ctx_header_size;
-	unsigned int maximum_usec_per_period;
-	int err;
+पूर्णांक amdtp_stream_add_pcm_hw_स्थिरraपूर्णांकs(काष्ठा amdtp_stream *s,
+					काष्ठा snd_pcm_runसमय *runसमय)
+अणु
+	काष्ठा snd_pcm_hardware *hw = &runसमय->hw;
+	अचिन्हित पूर्णांक ctx_header_size;
+	अचिन्हित पूर्णांक maximum_usec_per_period;
+	पूर्णांक err;
 
 	hw->info = SNDRV_PCM_INFO_BATCH |
 		   SNDRV_PCM_INFO_BLOCK_TRANSFER |
@@ -192,74 +193,74 @@ int amdtp_stream_add_pcm_hw_constraints(struct amdtp_stream *s,
 
 	/* SNDRV_PCM_INFO_BATCH */
 	hw->periods_min = 2;
-	hw->periods_max = UINT_MAX;
+	hw->periods_max = अच_पूर्णांक_उच्च;
 
-	/* bytes for a frame */
+	/* bytes क्रम a frame */
 	hw->period_bytes_min = 4 * hw->channels_max;
 
 	/* Just to prevent from allocating much pages. */
 	hw->period_bytes_max = hw->period_bytes_min * 2048;
 	hw->buffer_bytes_max = hw->period_bytes_max * hw->periods_min;
 
-	// Linux driver for 1394 OHCI controller voluntarily flushes isoc
+	// Linux driver क्रम 1394 OHCI controller voluntarily flushes isoc
 	// context when total size of accumulated context header reaches
-	// PAGE_SIZE. This kicks work for the isoc context and brings
-	// callback in the middle of scheduled interrupts.
-	// Although AMDTP streams in the same domain use the same events per
+	// PAGE_SIZE. This kicks work क्रम the isoc context and brings
+	// callback in the middle of scheduled पूर्णांकerrupts.
+	// Although AMDTP streams in the same करोमुख्य use the same events per
 	// IRQ, use the largest size of context header between IT/IR contexts.
-	// Here, use the value of context header in IR context is for both
+	// Here, use the value of context header in IR context is क्रम both
 	// contexts.
-	if (!(s->flags & CIP_NO_HEADER))
+	अगर (!(s->flags & CIP_NO_HEADER))
 		ctx_header_size = IR_CTX_HEADER_SIZE_CIP;
-	else
+	अन्यथा
 		ctx_header_size = IR_CTX_HEADER_SIZE_NO_CIP;
 	maximum_usec_per_period = USEC_PER_SEC * PAGE_SIZE /
 				  CYCLES_PER_SECOND / ctx_header_size;
 
 	// In IEC 61883-6, one isoc packet can transfer events up to the value
-	// of syt interval. This comes from the interval of isoc cycle. As 1394
+	// of syt पूर्णांकerval. This comes from the पूर्णांकerval of isoc cycle. As 1394
 	// OHCI controller can generate hardware IRQ per isoc packet, the
-	// interval is 125 usec.
+	// पूर्णांकerval is 125 usec.
 	// However, there are two ways of transmission in IEC 61883-6; blocking
 	// and non-blocking modes. In blocking mode, the sequence of isoc packet
 	// includes 'empty' or 'NODATA' packets which include no event. In
 	// non-blocking mode, the number of events per packet is variable up to
-	// the syt interval.
+	// the syt पूर्णांकerval.
 	// Due to the above protocol design, the minimum PCM frames per
-	// interrupt should be double of the value of syt interval, thus it is
+	// पूर्णांकerrupt should be द्विगुन of the value of syt पूर्णांकerval, thus it is
 	// 250 usec.
-	err = snd_pcm_hw_constraint_minmax(runtime,
+	err = snd_pcm_hw_स्थिरraपूर्णांक_minmax(runसमय,
 					   SNDRV_PCM_HW_PARAM_PERIOD_TIME,
 					   250, maximum_usec_per_period);
-	if (err < 0)
-		goto end;
+	अगर (err < 0)
+		जाओ end;
 
-	/* Non-Blocking stream has no more constraints */
-	if (!(s->flags & CIP_BLOCKING))
-		goto end;
+	/* Non-Blocking stream has no more स्थिरraपूर्णांकs */
+	अगर (!(s->flags & CIP_BLOCKING))
+		जाओ end;
 
 	/*
 	 * One AMDTP packet can include some frames. In blocking mode, the
 	 * number equals to SYT_INTERVAL. So the number is 8, 16 or 32,
-	 * depending on its sampling rate. For accurate period interrupt, it's
+	 * depending on its sampling rate. For accurate period पूर्णांकerrupt, it's
 	 * preferrable to align period/buffer sizes to current SYT_INTERVAL.
 	 */
-	err = snd_pcm_hw_rule_add(runtime, 0, SNDRV_PCM_HW_PARAM_PERIOD_SIZE,
-				  apply_constraint_to_size, NULL,
+	err = snd_pcm_hw_rule_add(runसमय, 0, SNDRV_PCM_HW_PARAM_PERIOD_SIZE,
+				  apply_स्थिरraपूर्णांक_to_size, शून्य,
 				  SNDRV_PCM_HW_PARAM_PERIOD_SIZE,
 				  SNDRV_PCM_HW_PARAM_RATE, -1);
-	if (err < 0)
-		goto end;
-	err = snd_pcm_hw_rule_add(runtime, 0, SNDRV_PCM_HW_PARAM_BUFFER_SIZE,
-				  apply_constraint_to_size, NULL,
+	अगर (err < 0)
+		जाओ end;
+	err = snd_pcm_hw_rule_add(runसमय, 0, SNDRV_PCM_HW_PARAM_BUFFER_SIZE,
+				  apply_स्थिरraपूर्णांक_to_size, शून्य,
 				  SNDRV_PCM_HW_PARAM_BUFFER_SIZE,
 				  SNDRV_PCM_HW_PARAM_RATE, -1);
-	if (err < 0)
-		goto end;
+	अगर (err < 0)
+		जाओ end;
 end:
-	return err;
-}
-EXPORT_SYMBOL(amdtp_stream_add_pcm_hw_constraints);
+	वापस err;
+पूर्ण
+EXPORT_SYMBOL(amdtp_stream_add_pcm_hw_स्थिरraपूर्णांकs);
 
 /**
  * amdtp_stream_set_parameters - set stream parameters
@@ -267,233 +268,233 @@ EXPORT_SYMBOL(amdtp_stream_add_pcm_hw_constraints);
  * @rate: the sample rate
  * @data_block_quadlets: the size of a data block in quadlet unit
  *
- * The parameters must be set before the stream is started, and must not be
- * changed while the stream is running.
+ * The parameters must be set beक्रमe the stream is started, and must not be
+ * changed जबतक the stream is running.
  */
-int amdtp_stream_set_parameters(struct amdtp_stream *s, unsigned int rate,
-				unsigned int data_block_quadlets)
-{
-	unsigned int sfc;
+पूर्णांक amdtp_stream_set_parameters(काष्ठा amdtp_stream *s, अचिन्हित पूर्णांक rate,
+				अचिन्हित पूर्णांक data_block_quadlets)
+अणु
+	अचिन्हित पूर्णांक sfc;
 
-	for (sfc = 0; sfc < ARRAY_SIZE(amdtp_rate_table); ++sfc) {
-		if (amdtp_rate_table[sfc] == rate)
-			break;
-	}
-	if (sfc == ARRAY_SIZE(amdtp_rate_table))
-		return -EINVAL;
+	क्रम (sfc = 0; sfc < ARRAY_SIZE(amdtp_rate_table); ++sfc) अणु
+		अगर (amdtp_rate_table[sfc] == rate)
+			अवरोध;
+	पूर्ण
+	अगर (sfc == ARRAY_SIZE(amdtp_rate_table))
+		वापस -EINVAL;
 
 	s->sfc = sfc;
 	s->data_block_quadlets = data_block_quadlets;
-	s->syt_interval = amdtp_syt_intervals[sfc];
+	s->syt_पूर्णांकerval = amdtp_syt_पूर्णांकervals[sfc];
 
-	// default buffering in the device.
-	if (s->direction == AMDTP_OUT_STREAM) {
+	// शेष buffering in the device.
+	अगर (s->direction == AMDTP_OUT_STREAM) अणु
 		s->ctx_data.rx.transfer_delay =
 					TRANSFER_DELAY_TICKS - TICKS_PER_CYCLE;
 
-		if (s->flags & CIP_BLOCKING) {
-			// additional buffering needed to adjust for no-data
+		अगर (s->flags & CIP_BLOCKING) अणु
+			// additional buffering needed to adjust क्रम no-data
 			// packets.
 			s->ctx_data.rx.transfer_delay +=
-				TICKS_PER_SECOND * s->syt_interval / rate;
-		}
-	}
+				TICKS_PER_SECOND * s->syt_पूर्णांकerval / rate;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(amdtp_stream_set_parameters);
 
 /**
  * amdtp_stream_get_max_payload - get the stream's packet size
  * @s: the AMDTP stream
  *
- * This function must not be called before the stream has been configured
+ * This function must not be called beक्रमe the stream has been configured
  * with amdtp_stream_set_parameters().
  */
-unsigned int amdtp_stream_get_max_payload(struct amdtp_stream *s)
-{
-	unsigned int multiplier = 1;
-	unsigned int cip_header_size = 0;
+अचिन्हित पूर्णांक amdtp_stream_get_max_payload(काष्ठा amdtp_stream *s)
+अणु
+	अचिन्हित पूर्णांक multiplier = 1;
+	अचिन्हित पूर्णांक cip_header_size = 0;
 
-	if (s->flags & CIP_JUMBO_PAYLOAD)
+	अगर (s->flags & CIP_JUMBO_PAYLOAD)
 		multiplier = 5;
-	if (!(s->flags & CIP_NO_HEADER))
-		cip_header_size = sizeof(__be32) * 2;
+	अगर (!(s->flags & CIP_NO_HEADER))
+		cip_header_size = माप(__be32) * 2;
 
-	return cip_header_size +
-		s->syt_interval * s->data_block_quadlets * sizeof(__be32) * multiplier;
-}
+	वापस cip_header_size +
+		s->syt_पूर्णांकerval * s->data_block_quadlets * माप(__be32) * multiplier;
+पूर्ण
 EXPORT_SYMBOL(amdtp_stream_get_max_payload);
 
 /**
- * amdtp_stream_pcm_prepare - prepare PCM device for running
+ * amdtp_stream_pcm_prepare - prepare PCM device क्रम running
  * @s: the AMDTP stream
  *
  * This function should be called from the PCM device's .prepare callback.
  */
-void amdtp_stream_pcm_prepare(struct amdtp_stream *s)
-{
+व्योम amdtp_stream_pcm_prepare(काष्ठा amdtp_stream *s)
+अणु
 	cancel_work_sync(&s->period_work);
-	s->pcm_buffer_pointer = 0;
-	s->pcm_period_pointer = 0;
-}
+	s->pcm_buffer_poपूर्णांकer = 0;
+	s->pcm_period_poपूर्णांकer = 0;
+पूर्ण
 EXPORT_SYMBOL(amdtp_stream_pcm_prepare);
 
-static unsigned int calculate_data_blocks(unsigned int *data_block_state,
+अटल अचिन्हित पूर्णांक calculate_data_blocks(अचिन्हित पूर्णांक *data_block_state,
 				bool is_blocking, bool is_no_info,
-				unsigned int syt_interval, enum cip_sfc sfc)
-{
-	unsigned int data_blocks;
+				अचिन्हित पूर्णांक syt_पूर्णांकerval, क्रमागत cip_sfc sfc)
+अणु
+	अचिन्हित पूर्णांक data_blocks;
 
 	/* Blocking mode. */
-	if (is_blocking) {
-		/* This module generate empty packet for 'no data'. */
-		if (is_no_info)
+	अगर (is_blocking) अणु
+		/* This module generate empty packet क्रम 'no data'. */
+		अगर (is_no_info)
 			data_blocks = 0;
-		else
-			data_blocks = syt_interval;
+		अन्यथा
+			data_blocks = syt_पूर्णांकerval;
 	/* Non-blocking mode. */
-	} else {
-		if (!cip_sfc_is_base_44100(sfc)) {
-			// Sample_rate / 8000 is an integer, and precomputed.
+	पूर्ण अन्यथा अणु
+		अगर (!cip_sfc_is_base_44100(sfc)) अणु
+			// Sample_rate / 8000 is an पूर्णांकeger, and precomputed.
 			data_blocks = *data_block_state;
-		} else {
-			unsigned int phase = *data_block_state;
+		पूर्ण अन्यथा अणु
+			अचिन्हित पूर्णांक phase = *data_block_state;
 
 		/*
 		 * This calculates the number of data blocks per packet so that
 		 * 1) the overall rate is correct and exactly synchronized to
-		 *    the bus clock, and
+		 *    the bus घड़ी, and
 		 * 2) packets with a rounded-up number of blocks occur as early
 		 *    as possible in the sequence (to prevent underruns of the
 		 *    device's buffer).
 		 */
-			if (sfc == CIP_SFC_44100)
+			अगर (sfc == CIP_SFC_44100)
 				/* 6 6 5 6 5 6 5 ... */
 				data_blocks = 5 + ((phase & 1) ^
 						   (phase == 0 || phase >= 40));
-			else
+			अन्यथा
 				/* 12 11 11 11 11 ... or 23 22 22 22 22 ... */
 				data_blocks = 11 * (sfc >> 1) + (phase == 0);
-			if (++phase >= (80 >> (sfc >> 1)))
+			अगर (++phase >= (80 >> (sfc >> 1)))
 				phase = 0;
 			*data_block_state = phase;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return data_blocks;
-}
+	वापस data_blocks;
+पूर्ण
 
-static unsigned int calculate_syt_offset(unsigned int *last_syt_offset,
-			unsigned int *syt_offset_state, enum cip_sfc sfc)
-{
-	unsigned int syt_offset;
+अटल अचिन्हित पूर्णांक calculate_syt_offset(अचिन्हित पूर्णांक *last_syt_offset,
+			अचिन्हित पूर्णांक *syt_offset_state, क्रमागत cip_sfc sfc)
+अणु
+	अचिन्हित पूर्णांक syt_offset;
 
-	if (*last_syt_offset < TICKS_PER_CYCLE) {
-		if (!cip_sfc_is_base_44100(sfc))
+	अगर (*last_syt_offset < TICKS_PER_CYCLE) अणु
+		अगर (!cip_sfc_is_base_44100(sfc))
 			syt_offset = *last_syt_offset + *syt_offset_state;
-		else {
+		अन्यथा अणु
 		/*
-		 * The time, in ticks, of the n'th SYT_INTERVAL sample is:
+		 * The समय, in ticks, of the n'th SYT_INTERVAL sample is:
 		 *   n * SYT_INTERVAL * 24576000 / sample_rate
-		 * Modulo TICKS_PER_CYCLE, the difference between successive
+		 * Modulo TICKS_PER_CYCLE, the dअगरference between successive
 		 * elements is about 1386.23.  Rounding the results of this
-		 * formula to the SYT precision results in a sequence of
-		 * differences that begins with:
+		 * क्रमmula to the SYT precision results in a sequence of
+		 * dअगरferences that begins with:
 		 *   1386 1386 1387 1386 1386 1386 1387 1386 1386 1386 1387 ...
 		 * This code generates _exactly_ the same sequence.
 		 */
-			unsigned int phase = *syt_offset_state;
-			unsigned int index = phase % 13;
+			अचिन्हित पूर्णांक phase = *syt_offset_state;
+			अचिन्हित पूर्णांक index = phase % 13;
 
 			syt_offset = *last_syt_offset;
 			syt_offset += 1386 + ((index && !(index & 3)) ||
 					      phase == 146);
-			if (++phase >= 147)
+			अगर (++phase >= 147)
 				phase = 0;
 			*syt_offset_state = phase;
-		}
-	} else
+		पूर्ण
+	पूर्ण अन्यथा
 		syt_offset = *last_syt_offset - TICKS_PER_CYCLE;
 	*last_syt_offset = syt_offset;
 
-	if (syt_offset >= TICKS_PER_CYCLE)
+	अगर (syt_offset >= TICKS_PER_CYCLE)
 		syt_offset = CIP_SYT_NO_INFO;
 
-	return syt_offset;
-}
+	वापस syt_offset;
+पूर्ण
 
-static void update_pcm_pointers(struct amdtp_stream *s,
-				struct snd_pcm_substream *pcm,
-				unsigned int frames)
-{
-	unsigned int ptr;
+अटल व्योम update_pcm_poपूर्णांकers(काष्ठा amdtp_stream *s,
+				काष्ठा snd_pcm_substream *pcm,
+				अचिन्हित पूर्णांक frames)
+अणु
+	अचिन्हित पूर्णांक ptr;
 
-	ptr = s->pcm_buffer_pointer + frames;
-	if (ptr >= pcm->runtime->buffer_size)
-		ptr -= pcm->runtime->buffer_size;
-	WRITE_ONCE(s->pcm_buffer_pointer, ptr);
+	ptr = s->pcm_buffer_poपूर्णांकer + frames;
+	अगर (ptr >= pcm->runसमय->buffer_size)
+		ptr -= pcm->runसमय->buffer_size;
+	WRITE_ONCE(s->pcm_buffer_poपूर्णांकer, ptr);
 
-	s->pcm_period_pointer += frames;
-	if (s->pcm_period_pointer >= pcm->runtime->period_size) {
-		s->pcm_period_pointer -= pcm->runtime->period_size;
-		queue_work(system_highpri_wq, &s->period_work);
-	}
-}
+	s->pcm_period_poपूर्णांकer += frames;
+	अगर (s->pcm_period_poपूर्णांकer >= pcm->runसमय->period_size) अणु
+		s->pcm_period_poपूर्णांकer -= pcm->runसमय->period_size;
+		queue_work(प्रणाली_highpri_wq, &s->period_work);
+	पूर्ण
+पूर्ण
 
-static void pcm_period_work(struct work_struct *work)
-{
-	struct amdtp_stream *s = container_of(work, struct amdtp_stream,
+अटल व्योम pcm_period_work(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा amdtp_stream *s = container_of(work, काष्ठा amdtp_stream,
 					      period_work);
-	struct snd_pcm_substream *pcm = READ_ONCE(s->pcm);
+	काष्ठा snd_pcm_substream *pcm = READ_ONCE(s->pcm);
 
-	if (pcm)
+	अगर (pcm)
 		snd_pcm_period_elapsed(pcm);
-}
+पूर्ण
 
-static int queue_packet(struct amdtp_stream *s, struct fw_iso_packet *params,
+अटल पूर्णांक queue_packet(काष्ठा amdtp_stream *s, काष्ठा fw_iso_packet *params,
 			bool sched_irq)
-{
-	int err;
+अणु
+	पूर्णांक err;
 
-	params->interrupt = sched_irq;
+	params->पूर्णांकerrupt = sched_irq;
 	params->tag = s->tag;
 	params->sy = 0;
 
 	err = fw_iso_context_queue(s->context, params, &s->buffer.iso_buffer,
 				   s->buffer.packets[s->packet_index].offset);
-	if (err < 0) {
+	अगर (err < 0) अणु
 		dev_err(&s->unit->device, "queueing error: %d\n", err);
-		goto end;
-	}
+		जाओ end;
+	पूर्ण
 
-	if (++s->packet_index >= s->queue_size)
+	अगर (++s->packet_index >= s->queue_size)
 		s->packet_index = 0;
 end:
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static inline int queue_out_packet(struct amdtp_stream *s,
-				   struct fw_iso_packet *params, bool sched_irq)
-{
+अटल अंतरभूत पूर्णांक queue_out_packet(काष्ठा amdtp_stream *s,
+				   काष्ठा fw_iso_packet *params, bool sched_irq)
+अणु
 	params->skip =
 		!!(params->header_length == 0 && params->payload_length == 0);
-	return queue_packet(s, params, sched_irq);
-}
+	वापस queue_packet(s, params, sched_irq);
+पूर्ण
 
-static inline int queue_in_packet(struct amdtp_stream *s,
-				  struct fw_iso_packet *params)
-{
-	// Queue one packet for IR context.
+अटल अंतरभूत पूर्णांक queue_in_packet(काष्ठा amdtp_stream *s,
+				  काष्ठा fw_iso_packet *params)
+अणु
+	// Queue one packet क्रम IR context.
 	params->header_length = s->ctx_data.tx.ctx_header_size;
 	params->payload_length = s->ctx_data.tx.max_ctx_payload_length;
 	params->skip = false;
-	return queue_packet(s, params, false);
-}
+	वापस queue_packet(s, params, false);
+पूर्ण
 
-static void generate_cip_header(struct amdtp_stream *s, __be32 cip_header[2],
-			unsigned int data_block_counter, unsigned int syt)
-{
+अटल व्योम generate_cip_header(काष्ठा amdtp_stream *s, __be32 cip_header[2],
+			अचिन्हित पूर्णांक data_block_counter, अचिन्हित पूर्णांक syt)
+अणु
 	cip_header[0] = cpu_to_be32(READ_ONCE(s->source_node_id_field) |
 				(s->data_block_quadlets << CIP_DBS_SHIFT) |
 				((s->sph << CIP_SPH_SHIFT) & CIP_SPH_MASK) |
@@ -502,43 +503,43 @@ static void generate_cip_header(struct amdtp_stream *s, __be32 cip_header[2],
 			((s->fmt << CIP_FMT_SHIFT) & CIP_FMT_MASK) |
 			((s->ctx_data.rx.fdf << CIP_FDF_SHIFT) & CIP_FDF_MASK) |
 			(syt & CIP_SYT_MASK));
-}
+पूर्ण
 
-static void build_it_pkt_header(struct amdtp_stream *s, unsigned int cycle,
-				struct fw_iso_packet *params,
-				unsigned int data_blocks,
-				unsigned int data_block_counter,
-				unsigned int syt, unsigned int index)
-{
-	unsigned int payload_length;
+अटल व्योम build_it_pkt_header(काष्ठा amdtp_stream *s, अचिन्हित पूर्णांक cycle,
+				काष्ठा fw_iso_packet *params,
+				अचिन्हित पूर्णांक data_blocks,
+				अचिन्हित पूर्णांक data_block_counter,
+				अचिन्हित पूर्णांक syt, अचिन्हित पूर्णांक index)
+अणु
+	अचिन्हित पूर्णांक payload_length;
 	__be32 *cip_header;
 
-	payload_length = data_blocks * sizeof(__be32) * s->data_block_quadlets;
+	payload_length = data_blocks * माप(__be32) * s->data_block_quadlets;
 	params->payload_length = payload_length;
 
-	if (!(s->flags & CIP_NO_HEADER)) {
+	अगर (!(s->flags & CIP_NO_HEADER)) अणु
 		cip_header = (__be32 *)params->header;
 		generate_cip_header(s, cip_header, data_block_counter, syt);
-		params->header_length = 2 * sizeof(__be32);
+		params->header_length = 2 * माप(__be32);
 		payload_length += params->header_length;
-	} else {
-		cip_header = NULL;
-	}
+	पूर्ण अन्यथा अणु
+		cip_header = शून्य;
+	पूर्ण
 
 	trace_amdtp_packet(s, cycle, cip_header, payload_length, data_blocks,
 			   data_block_counter, s->packet_index, index);
-}
+पूर्ण
 
-static int check_cip_header(struct amdtp_stream *s, const __be32 *buf,
-			    unsigned int payload_length,
-			    unsigned int *data_blocks,
-			    unsigned int *data_block_counter, unsigned int *syt)
-{
+अटल पूर्णांक check_cip_header(काष्ठा amdtp_stream *s, स्थिर __be32 *buf,
+			    अचिन्हित पूर्णांक payload_length,
+			    अचिन्हित पूर्णांक *data_blocks,
+			    अचिन्हित पूर्णांक *data_block_counter, अचिन्हित पूर्णांक *syt)
+अणु
 	u32 cip_header[2];
-	unsigned int sph;
-	unsigned int fmt;
-	unsigned int fdf;
-	unsigned int dbc;
+	अचिन्हित पूर्णांक sph;
+	अचिन्हित पूर्णांक fmt;
+	अचिन्हित पूर्णांक fdf;
+	अचिन्हित पूर्णांक dbc;
 	bool lost;
 
 	cip_header[0] = be32_to_cpu(buf[0]);
@@ -548,183 +549,183 @@ static int check_cip_header(struct amdtp_stream *s, const __be32 *buf,
 	 * This module supports 'Two-quadlet CIP header with SYT field'.
 	 * For convenience, also check FMT field is AM824 or not.
 	 */
-	if ((((cip_header[0] & CIP_EOH_MASK) == CIP_EOH) ||
+	अगर ((((cip_header[0] & CIP_EOH_MASK) == CIP_EOH) ||
 	     ((cip_header[1] & CIP_EOH_MASK) != CIP_EOH)) &&
-	    (!(s->flags & CIP_HEADER_WITHOUT_EOH))) {
+	    (!(s->flags & CIP_HEADER_WITHOUT_EOH))) अणु
 		dev_info_ratelimited(&s->unit->device,
 				"Invalid CIP header for AMDTP: %08X:%08X\n",
 				cip_header[0], cip_header[1]);
-		return -EAGAIN;
-	}
+		वापस -EAGAIN;
+	पूर्ण
 
 	/* Check valid protocol or not. */
 	sph = (cip_header[0] & CIP_SPH_MASK) >> CIP_SPH_SHIFT;
 	fmt = (cip_header[1] & CIP_FMT_MASK) >> CIP_FMT_SHIFT;
-	if (sph != s->sph || fmt != s->fmt) {
+	अगर (sph != s->sph || fmt != s->fmt) अणु
 		dev_info_ratelimited(&s->unit->device,
 				     "Detect unexpected protocol: %08x %08x\n",
 				     cip_header[0], cip_header[1]);
-		return -EAGAIN;
-	}
+		वापस -EAGAIN;
+	पूर्ण
 
 	/* Calculate data blocks */
 	fdf = (cip_header[1] & CIP_FDF_MASK) >> CIP_FDF_SHIFT;
-	if (payload_length < sizeof(__be32) * 2 ||
-	    (fmt == CIP_FMT_AM && fdf == AMDTP_FDF_NO_DATA)) {
+	अगर (payload_length < माप(__be32) * 2 ||
+	    (fmt == CIP_FMT_AM && fdf == AMDTP_FDF_NO_DATA)) अणु
 		*data_blocks = 0;
-	} else {
-		unsigned int data_block_quadlets =
+	पूर्ण अन्यथा अणु
+		अचिन्हित पूर्णांक data_block_quadlets =
 				(cip_header[0] & CIP_DBS_MASK) >> CIP_DBS_SHIFT;
-		/* avoid division by zero */
-		if (data_block_quadlets == 0) {
+		/* aव्योम भागision by zero */
+		अगर (data_block_quadlets == 0) अणु
 			dev_err(&s->unit->device,
 				"Detect invalid value in dbs field: %08X\n",
 				cip_header[0]);
-			return -EPROTO;
-		}
-		if (s->flags & CIP_WRONG_DBS)
+			वापस -EPROTO;
+		पूर्ण
+		अगर (s->flags & CIP_WRONG_DBS)
 			data_block_quadlets = s->data_block_quadlets;
 
-		*data_blocks = (payload_length / sizeof(__be32) - 2) /
+		*data_blocks = (payload_length / माप(__be32) - 2) /
 							data_block_quadlets;
-	}
+	पूर्ण
 
 	/* Check data block counter continuity */
 	dbc = cip_header[0] & CIP_DBC_MASK;
-	if (*data_blocks == 0 && (s->flags & CIP_EMPTY_HAS_WRONG_DBC) &&
-	    *data_block_counter != UINT_MAX)
+	अगर (*data_blocks == 0 && (s->flags & CIP_EMPTY_HAS_WRONG_DBC) &&
+	    *data_block_counter != अच_पूर्णांक_उच्च)
 		dbc = *data_block_counter;
 
-	if ((dbc == 0x00 && (s->flags & CIP_SKIP_DBC_ZERO_CHECK)) ||
-	    *data_block_counter == UINT_MAX) {
+	अगर ((dbc == 0x00 && (s->flags & CIP_SKIP_DBC_ZERO_CHECK)) ||
+	    *data_block_counter == अच_पूर्णांक_उच्च) अणु
 		lost = false;
-	} else if (!(s->flags & CIP_DBC_IS_END_EVENT)) {
+	पूर्ण अन्यथा अगर (!(s->flags & CIP_DBC_IS_END_EVENT)) अणु
 		lost = dbc != *data_block_counter;
-	} else {
-		unsigned int dbc_interval;
+	पूर्ण अन्यथा अणु
+		अचिन्हित पूर्णांक dbc_पूर्णांकerval;
 
-		if (*data_blocks > 0 && s->ctx_data.tx.dbc_interval > 0)
-			dbc_interval = s->ctx_data.tx.dbc_interval;
-		else
-			dbc_interval = *data_blocks;
+		अगर (*data_blocks > 0 && s->ctx_data.tx.dbc_पूर्णांकerval > 0)
+			dbc_पूर्णांकerval = s->ctx_data.tx.dbc_पूर्णांकerval;
+		अन्यथा
+			dbc_पूर्णांकerval = *data_blocks;
 
-		lost = dbc != ((*data_block_counter + dbc_interval) & 0xff);
-	}
+		lost = dbc != ((*data_block_counter + dbc_पूर्णांकerval) & 0xff);
+	पूर्ण
 
-	if (lost) {
+	अगर (lost) अणु
 		dev_err(&s->unit->device,
 			"Detect discontinuity of CIP: %02X %02X\n",
 			*data_block_counter, dbc);
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
 	*data_block_counter = dbc;
 
 	*syt = cip_header[1] & CIP_SYT_MASK;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int parse_ir_ctx_header(struct amdtp_stream *s, unsigned int cycle,
-			       const __be32 *ctx_header,
-			       unsigned int *payload_length,
-			       unsigned int *data_blocks,
-			       unsigned int *data_block_counter,
-			       unsigned int *syt, unsigned int packet_index, unsigned int index)
-{
-	const __be32 *cip_header;
-	unsigned int cip_header_size;
-	int err;
+अटल पूर्णांक parse_ir_ctx_header(काष्ठा amdtp_stream *s, अचिन्हित पूर्णांक cycle,
+			       स्थिर __be32 *ctx_header,
+			       अचिन्हित पूर्णांक *payload_length,
+			       अचिन्हित पूर्णांक *data_blocks,
+			       अचिन्हित पूर्णांक *data_block_counter,
+			       अचिन्हित पूर्णांक *syt, अचिन्हित पूर्णांक packet_index, अचिन्हित पूर्णांक index)
+अणु
+	स्थिर __be32 *cip_header;
+	अचिन्हित पूर्णांक cip_header_size;
+	पूर्णांक err;
 
 	*payload_length = be32_to_cpu(ctx_header[0]) >> ISO_DATA_LENGTH_SHIFT;
 
-	if (!(s->flags & CIP_NO_HEADER))
+	अगर (!(s->flags & CIP_NO_HEADER))
 		cip_header_size = 8;
-	else
+	अन्यथा
 		cip_header_size = 0;
 
-	if (*payload_length > cip_header_size + s->ctx_data.tx.max_ctx_payload_length) {
+	अगर (*payload_length > cip_header_size + s->ctx_data.tx.max_ctx_payload_length) अणु
 		dev_err(&s->unit->device,
 			"Detect jumbo payload: %04x %04x\n",
 			*payload_length, cip_header_size + s->ctx_data.tx.max_ctx_payload_length);
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
-	if (cip_header_size > 0) {
+	अगर (cip_header_size > 0) अणु
 		cip_header = ctx_header + 2;
 		err = check_cip_header(s, cip_header, *payload_length,
 				       data_blocks, data_block_counter, syt);
-		if (err < 0)
-			return err;
-	} else {
-		cip_header = NULL;
+		अगर (err < 0)
+			वापस err;
+	पूर्ण अन्यथा अणु
+		cip_header = शून्य;
 		err = 0;
-		*data_blocks = *payload_length / sizeof(__be32) /
+		*data_blocks = *payload_length / माप(__be32) /
 			       s->data_block_quadlets;
 		*syt = 0;
 
-		if (*data_block_counter == UINT_MAX)
+		अगर (*data_block_counter == अच_पूर्णांक_उच्च)
 			*data_block_counter = 0;
-	}
+	पूर्ण
 
 	trace_amdtp_packet(s, cycle, cip_header, *payload_length, *data_blocks,
 			   *data_block_counter, packet_index, index);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-// In CYCLE_TIMER register of IEEE 1394, 7 bits are used to represent second. On
+// In CYCLE_TIMER रेजिस्टर of IEEE 1394, 7 bits are used to represent second. On
 // the other hand, in DMA descriptors of 1394 OHCI, 3 bits are used to represent
-// it. Thus, via Linux firewire subsystem, we can get the 3 bits for second.
-static inline u32 compute_cycle_count(__be32 ctx_header_tstamp)
-{
+// it. Thus, via Linux firewire subप्रणाली, we can get the 3 bits क्रम second.
+अटल अंतरभूत u32 compute_cycle_count(__be32 ctx_header_tstamp)
+अणु
 	u32 tstamp = be32_to_cpu(ctx_header_tstamp) & HEADER_TSTAMP_MASK;
-	return (((tstamp >> 13) & 0x07) * 8000) + (tstamp & 0x1fff);
-}
+	वापस (((tstamp >> 13) & 0x07) * 8000) + (tstamp & 0x1fff);
+पूर्ण
 
-static inline u32 increment_cycle_count(u32 cycle, unsigned int addend)
-{
+अटल अंतरभूत u32 increment_cycle_count(u32 cycle, अचिन्हित पूर्णांक addend)
+अणु
 	cycle += addend;
-	if (cycle >= OHCI_MAX_SECOND * CYCLES_PER_SECOND)
+	अगर (cycle >= OHCI_MAX_SECOND * CYCLES_PER_SECOND)
 		cycle -= OHCI_MAX_SECOND * CYCLES_PER_SECOND;
-	return cycle;
-}
+	वापस cycle;
+पूर्ण
 
-// Align to actual cycle count for the packet which is going to be scheduled.
+// Align to actual cycle count क्रम the packet which is going to be scheduled.
 // This module queued the same number of isochronous cycle as the size of queue
-// to kip isochronous cycle, therefore it's OK to just increment the cycle by
-// the size of queue for scheduled cycle.
-static inline u32 compute_it_cycle(const __be32 ctx_header_tstamp,
-				   unsigned int queue_size)
-{
+// to kip isochronous cycle, thereक्रमe it's OK to just increment the cycle by
+// the size of queue क्रम scheduled cycle.
+अटल अंतरभूत u32 compute_it_cycle(स्थिर __be32 ctx_header_tstamp,
+				   अचिन्हित पूर्णांक queue_size)
+अणु
 	u32 cycle = compute_cycle_count(ctx_header_tstamp);
-	return increment_cycle_count(cycle, queue_size);
-}
+	वापस increment_cycle_count(cycle, queue_size);
+पूर्ण
 
-static int generate_device_pkt_descs(struct amdtp_stream *s,
-				     struct pkt_desc *descs,
-				     const __be32 *ctx_header,
-				     unsigned int packets)
-{
-	unsigned int dbc = s->data_block_counter;
-	unsigned int packet_index = s->packet_index;
-	unsigned int queue_size = s->queue_size;
-	int i;
-	int err;
+अटल पूर्णांक generate_device_pkt_descs(काष्ठा amdtp_stream *s,
+				     काष्ठा pkt_desc *descs,
+				     स्थिर __be32 *ctx_header,
+				     अचिन्हित पूर्णांक packets)
+अणु
+	अचिन्हित पूर्णांक dbc = s->data_block_counter;
+	अचिन्हित पूर्णांक packet_index = s->packet_index;
+	अचिन्हित पूर्णांक queue_size = s->queue_size;
+	पूर्णांक i;
+	पूर्णांक err;
 
-	for (i = 0; i < packets; ++i) {
-		struct pkt_desc *desc = descs + i;
-		unsigned int cycle;
-		unsigned int payload_length;
-		unsigned int data_blocks;
-		unsigned int syt;
+	क्रम (i = 0; i < packets; ++i) अणु
+		काष्ठा pkt_desc *desc = descs + i;
+		अचिन्हित पूर्णांक cycle;
+		अचिन्हित पूर्णांक payload_length;
+		अचिन्हित पूर्णांक data_blocks;
+		अचिन्हित पूर्णांक syt;
 
 		cycle = compute_cycle_count(ctx_header[1]);
 
 		err = parse_ir_ctx_header(s, cycle, ctx_header, &payload_length,
 					  &data_blocks, &dbc, &syt, packet_index, i);
-		if (err < 0)
-			return err;
+		अगर (err < 0)
+			वापस err;
 
 		desc->cycle = cycle;
 		desc->syt = syt;
@@ -732,62 +733,62 @@ static int generate_device_pkt_descs(struct amdtp_stream *s,
 		desc->data_block_counter = dbc;
 		desc->ctx_payload = s->buffer.packets[packet_index].buffer;
 
-		if (!(s->flags & CIP_DBC_IS_END_EVENT))
+		अगर (!(s->flags & CIP_DBC_IS_END_EVENT))
 			dbc = (dbc + desc->data_blocks) & 0xff;
 
 		ctx_header +=
-			s->ctx_data.tx.ctx_header_size / sizeof(*ctx_header);
+			s->ctx_data.tx.ctx_header_size / माप(*ctx_header);
 
 		packet_index = (packet_index + 1) % queue_size;
-	}
+	पूर्ण
 
 	s->data_block_counter = dbc;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static unsigned int compute_syt(unsigned int syt_offset, unsigned int cycle,
-				unsigned int transfer_delay)
-{
-	unsigned int syt;
+अटल अचिन्हित पूर्णांक compute_syt(अचिन्हित पूर्णांक syt_offset, अचिन्हित पूर्णांक cycle,
+				अचिन्हित पूर्णांक transfer_delay)
+अणु
+	अचिन्हित पूर्णांक syt;
 
 	syt_offset += transfer_delay;
 	syt = ((cycle + syt_offset / TICKS_PER_CYCLE) << 12) |
 	      (syt_offset % TICKS_PER_CYCLE);
-	return syt & CIP_SYT_MASK;
-}
+	वापस syt & CIP_SYT_MASK;
+पूर्ण
 
-static void generate_pkt_descs(struct amdtp_stream *s, struct pkt_desc *descs,
-			       const __be32 *ctx_header, unsigned int packets,
-			       const struct seq_desc *seq_descs,
-			       unsigned int seq_size)
-{
-	unsigned int dbc = s->data_block_counter;
-	unsigned int seq_index = s->ctx_data.rx.seq_index;
-	int i;
+अटल व्योम generate_pkt_descs(काष्ठा amdtp_stream *s, काष्ठा pkt_desc *descs,
+			       स्थिर __be32 *ctx_header, अचिन्हित पूर्णांक packets,
+			       स्थिर काष्ठा seq_desc *seq_descs,
+			       अचिन्हित पूर्णांक seq_size)
+अणु
+	अचिन्हित पूर्णांक dbc = s->data_block_counter;
+	अचिन्हित पूर्णांक seq_index = s->ctx_data.rx.seq_index;
+	पूर्णांक i;
 
-	for (i = 0; i < packets; ++i) {
-		struct pkt_desc *desc = descs + i;
-		unsigned int index = (s->packet_index + i) % s->queue_size;
-		const struct seq_desc *seq = seq_descs + seq_index;
-		unsigned int syt;
+	क्रम (i = 0; i < packets; ++i) अणु
+		काष्ठा pkt_desc *desc = descs + i;
+		अचिन्हित पूर्णांक index = (s->packet_index + i) % s->queue_size;
+		स्थिर काष्ठा seq_desc *seq = seq_descs + seq_index;
+		अचिन्हित पूर्णांक syt;
 
 		desc->cycle = compute_it_cycle(*ctx_header, s->queue_size);
 
 		syt = seq->syt_offset;
-		if (syt != CIP_SYT_NO_INFO) {
+		अगर (syt != CIP_SYT_NO_INFO) अणु
 			syt = compute_syt(syt, desc->cycle,
 					  s->ctx_data.rx.transfer_delay);
-		}
+		पूर्ण
 		desc->syt = syt;
 		desc->data_blocks = seq->data_blocks;
 
-		if (s->flags & CIP_DBC_IS_END_EVENT)
+		अगर (s->flags & CIP_DBC_IS_END_EVENT)
 			dbc = (dbc + desc->data_blocks) & 0xff;
 
 		desc->data_block_counter = dbc;
 
-		if (!(s->flags & CIP_DBC_IS_END_EVENT))
+		अगर (!(s->flags & CIP_DBC_IS_END_EVENT))
 			dbc = (dbc + desc->data_blocks) & 0xff;
 
 		desc->ctx_payload = s->buffer.packets[index].buffer;
@@ -795,214 +796,214 @@ static void generate_pkt_descs(struct amdtp_stream *s, struct pkt_desc *descs,
 		seq_index = (seq_index + 1) % seq_size;
 
 		++ctx_header;
-	}
+	पूर्ण
 
 	s->data_block_counter = dbc;
 	s->ctx_data.rx.seq_index = seq_index;
-}
+पूर्ण
 
-static inline void cancel_stream(struct amdtp_stream *s)
-{
+अटल अंतरभूत व्योम cancel_stream(काष्ठा amdtp_stream *s)
+अणु
 	s->packet_index = -1;
-	if (in_interrupt())
-		amdtp_stream_pcm_abort(s);
-	WRITE_ONCE(s->pcm_buffer_pointer, SNDRV_PCM_POS_XRUN);
-}
+	अगर (in_पूर्णांकerrupt())
+		amdtp_stream_pcm_पात(s);
+	WRITE_ONCE(s->pcm_buffer_poपूर्णांकer, SNDRV_PCM_POS_XRUN);
+पूर्ण
 
-static void process_ctx_payloads(struct amdtp_stream *s,
-				 const struct pkt_desc *descs,
-				 unsigned int packets)
-{
-	struct snd_pcm_substream *pcm;
-	unsigned int pcm_frames;
+अटल व्योम process_ctx_payloads(काष्ठा amdtp_stream *s,
+				 स्थिर काष्ठा pkt_desc *descs,
+				 अचिन्हित पूर्णांक packets)
+अणु
+	काष्ठा snd_pcm_substream *pcm;
+	अचिन्हित पूर्णांक pcm_frames;
 
 	pcm = READ_ONCE(s->pcm);
 	pcm_frames = s->process_ctx_payloads(s, descs, packets, pcm);
-	if (pcm)
-		update_pcm_pointers(s, pcm, pcm_frames);
-}
+	अगर (pcm)
+		update_pcm_poपूर्णांकers(s, pcm, pcm_frames);
+पूर्ण
 
-static void out_stream_callback(struct fw_iso_context *context, u32 tstamp,
-				size_t header_length, void *header,
-				void *private_data)
-{
-	struct amdtp_stream *s = private_data;
-	const struct amdtp_domain *d = s->domain;
-	const __be32 *ctx_header = header;
-	unsigned int events_per_period = s->ctx_data.rx.events_per_period;
-	unsigned int event_count = s->ctx_data.rx.event_count;
-	unsigned int packets;
-	int i;
+अटल व्योम out_stream_callback(काष्ठा fw_iso_context *context, u32 tstamp,
+				माप_प्रकार header_length, व्योम *header,
+				व्योम *निजी_data)
+अणु
+	काष्ठा amdtp_stream *s = निजी_data;
+	स्थिर काष्ठा amdtp_करोमुख्य *d = s->करोमुख्य;
+	स्थिर __be32 *ctx_header = header;
+	अचिन्हित पूर्णांक events_per_period = s->ctx_data.rx.events_per_period;
+	अचिन्हित पूर्णांक event_count = s->ctx_data.rx.event_count;
+	अचिन्हित पूर्णांक packets;
+	पूर्णांक i;
 
-	if (s->packet_index < 0)
-		return;
+	अगर (s->packet_index < 0)
+		वापस;
 
 	// Calculate the number of packets in buffer and check XRUN.
-	packets = header_length / sizeof(*ctx_header);
+	packets = header_length / माप(*ctx_header);
 
 	generate_pkt_descs(s, s->pkt_descs, ctx_header, packets, d->seq_descs,
 			   d->seq_size);
 
 	process_ctx_payloads(s, s->pkt_descs, packets);
 
-	for (i = 0; i < packets; ++i) {
-		const struct pkt_desc *desc = s->pkt_descs + i;
-		unsigned int syt;
-		struct {
-			struct fw_iso_packet params;
-			__be32 header[IT_PKT_HEADER_SIZE_CIP / sizeof(__be32)];
-		} template = { {0}, {0} };
+	क्रम (i = 0; i < packets; ++i) अणु
+		स्थिर काष्ठा pkt_desc *desc = s->pkt_descs + i;
+		अचिन्हित पूर्णांक syt;
+		काष्ठा अणु
+			काष्ठा fw_iso_packet params;
+			__be32 header[IT_PKT_HEADER_SIZE_CIP / माप(__be32)];
+		पूर्ण ढाँचा = अणु अणु0पूर्ण, अणु0पूर्ण पूर्ण;
 		bool sched_irq = false;
 
-		if (s->ctx_data.rx.syt_override < 0)
+		अगर (s->ctx_data.rx.syt_override < 0)
 			syt = desc->syt;
-		else
+		अन्यथा
 			syt = s->ctx_data.rx.syt_override;
 
-		build_it_pkt_header(s, desc->cycle, &template.params,
+		build_it_pkt_header(s, desc->cycle, &ढाँचा.params,
 				    desc->data_blocks, desc->data_block_counter,
 				    syt, i);
 
-		if (s == s->domain->irq_target) {
+		अगर (s == s->करोमुख्य->irq_target) अणु
 			event_count += desc->data_blocks;
-			if (event_count >= events_per_period) {
+			अगर (event_count >= events_per_period) अणु
 				event_count -= events_per_period;
 				sched_irq = true;
-			}
-		}
+			पूर्ण
+		पूर्ण
 
-		if (queue_out_packet(s, &template.params, sched_irq) < 0) {
+		अगर (queue_out_packet(s, &ढाँचा.params, sched_irq) < 0) अणु
 			cancel_stream(s);
-			return;
-		}
-	}
+			वापस;
+		पूर्ण
+	पूर्ण
 
 	s->ctx_data.rx.event_count = event_count;
-}
+पूर्ण
 
-static void in_stream_callback(struct fw_iso_context *context, u32 tstamp,
-			       size_t header_length, void *header,
-			       void *private_data)
-{
-	struct amdtp_stream *s = private_data;
+अटल व्योम in_stream_callback(काष्ठा fw_iso_context *context, u32 tstamp,
+			       माप_प्रकार header_length, व्योम *header,
+			       व्योम *निजी_data)
+अणु
+	काष्ठा amdtp_stream *s = निजी_data;
 	__be32 *ctx_header = header;
-	unsigned int packets;
-	int i;
-	int err;
+	अचिन्हित पूर्णांक packets;
+	पूर्णांक i;
+	पूर्णांक err;
 
-	if (s->packet_index < 0)
-		return;
+	अगर (s->packet_index < 0)
+		वापस;
 
 	// Calculate the number of packets in buffer and check XRUN.
 	packets = header_length / s->ctx_data.tx.ctx_header_size;
 
 	err = generate_device_pkt_descs(s, s->pkt_descs, ctx_header, packets);
-	if (err < 0) {
-		if (err != -EAGAIN) {
+	अगर (err < 0) अणु
+		अगर (err != -EAGAIN) अणु
 			cancel_stream(s);
-			return;
-		}
-	} else {
+			वापस;
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		process_ctx_payloads(s, s->pkt_descs, packets);
-	}
+	पूर्ण
 
-	for (i = 0; i < packets; ++i) {
-		struct fw_iso_packet params = {0};
+	क्रम (i = 0; i < packets; ++i) अणु
+		काष्ठा fw_iso_packet params = अणु0पूर्ण;
 
-		if (queue_in_packet(s, &params) < 0) {
+		अगर (queue_in_packet(s, &params) < 0) अणु
 			cancel_stream(s);
-			return;
-		}
-	}
-}
+			वापस;
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static void pool_ideal_seq_descs(struct amdtp_domain *d, unsigned int packets)
-{
-	struct amdtp_stream *irq_target = d->irq_target;
-	unsigned int seq_tail = d->seq_tail;
-	unsigned int seq_size = d->seq_size;
-	unsigned int min_avail;
-	struct amdtp_stream *s;
+अटल व्योम pool_ideal_seq_descs(काष्ठा amdtp_करोमुख्य *d, अचिन्हित पूर्णांक packets)
+अणु
+	काष्ठा amdtp_stream *irq_target = d->irq_target;
+	अचिन्हित पूर्णांक seq_tail = d->seq_tail;
+	अचिन्हित पूर्णांक seq_size = d->seq_size;
+	अचिन्हित पूर्णांक min_avail;
+	काष्ठा amdtp_stream *s;
 
 	min_avail = d->seq_size;
-	list_for_each_entry(s, &d->streams, list) {
-		unsigned int seq_index;
-		unsigned int avail;
+	list_क्रम_each_entry(s, &d->streams, list) अणु
+		अचिन्हित पूर्णांक seq_index;
+		अचिन्हित पूर्णांक avail;
 
-		if (s->direction == AMDTP_IN_STREAM)
-			continue;
+		अगर (s->direction == AMDTP_IN_STREAM)
+			जारी;
 
 		seq_index = s->ctx_data.rx.seq_index;
 		avail = d->seq_tail;
-		if (seq_index > avail)
+		अगर (seq_index > avail)
 			avail += d->seq_size;
 		avail -= seq_index;
 
-		if (avail < min_avail)
+		अगर (avail < min_avail)
 			min_avail = avail;
-	}
+	पूर्ण
 
-	while (min_avail < packets) {
-		struct seq_desc *desc = d->seq_descs + seq_tail;
+	जबतक (min_avail < packets) अणु
+		काष्ठा seq_desc *desc = d->seq_descs + seq_tail;
 
 		desc->syt_offset = calculate_syt_offset(&d->last_syt_offset,
 					&d->syt_offset_state, irq_target->sfc);
 		desc->data_blocks = calculate_data_blocks(&d->data_block_state,
 				!!(irq_target->flags & CIP_BLOCKING),
 				desc->syt_offset == CIP_SYT_NO_INFO,
-				irq_target->syt_interval, irq_target->sfc);
+				irq_target->syt_पूर्णांकerval, irq_target->sfc);
 
 		++seq_tail;
 		seq_tail %= seq_size;
 
 		++min_avail;
-	}
+	पूर्ण
 
 	d->seq_tail = seq_tail;
-}
+पूर्ण
 
-static void irq_target_callback(struct fw_iso_context *context, u32 tstamp,
-				size_t header_length, void *header,
-				void *private_data)
-{
-	struct amdtp_stream *irq_target = private_data;
-	struct amdtp_domain *d = irq_target->domain;
-	unsigned int packets = header_length / sizeof(__be32);
-	struct amdtp_stream *s;
+अटल व्योम irq_target_callback(काष्ठा fw_iso_context *context, u32 tstamp,
+				माप_प्रकार header_length, व्योम *header,
+				व्योम *निजी_data)
+अणु
+	काष्ठा amdtp_stream *irq_target = निजी_data;
+	काष्ठा amdtp_करोमुख्य *d = irq_target->करोमुख्य;
+	अचिन्हित पूर्णांक packets = header_length / माप(__be32);
+	काष्ठा amdtp_stream *s;
 
 	// Record enough entries with extra 3 cycles at least.
 	pool_ideal_seq_descs(d, packets + 3);
 
 	out_stream_callback(context, tstamp, header_length, header, irq_target);
-	if (amdtp_streaming_error(irq_target))
-		goto error;
+	अगर (amdtp_streaming_error(irq_target))
+		जाओ error;
 
-	list_for_each_entry(s, &d->streams, list) {
-		if (s != irq_target && amdtp_stream_running(s)) {
+	list_क्रम_each_entry(s, &d->streams, list) अणु
+		अगर (s != irq_target && amdtp_stream_running(s)) अणु
 			fw_iso_context_flush_completions(s->context);
-			if (amdtp_streaming_error(s))
-				goto error;
-		}
-	}
+			अगर (amdtp_streaming_error(s))
+				जाओ error;
+		पूर्ण
+	पूर्ण
 
-	return;
+	वापस;
 error:
-	if (amdtp_stream_running(irq_target))
+	अगर (amdtp_stream_running(irq_target))
 		cancel_stream(irq_target);
 
-	list_for_each_entry(s, &d->streams, list) {
-		if (amdtp_stream_running(s))
+	list_क्रम_each_entry(s, &d->streams, list) अणु
+		अगर (amdtp_stream_running(s))
 			cancel_stream(s);
-	}
-}
+	पूर्ण
+पूर्ण
 
-// this is executed one time.
-static void amdtp_stream_first_callback(struct fw_iso_context *context,
-					u32 tstamp, size_t header_length,
-					void *header, void *private_data)
-{
-	struct amdtp_stream *s = private_data;
-	const __be32 *ctx_header = header;
+// this is executed one समय.
+अटल व्योम amdtp_stream_first_callback(काष्ठा fw_iso_context *context,
+					u32 tstamp, माप_प्रकार header_length,
+					व्योम *header, व्योम *निजी_data)
+अणु
+	काष्ठा amdtp_stream *s = निजी_data;
+	स्थिर __be32 *ctx_header = header;
 	u32 cycle;
 
 	/*
@@ -1010,25 +1011,25 @@ static void amdtp_stream_first_callback(struct fw_iso_context *context,
 	 * For out-stream, prepared to transmit first packet
 	 */
 	s->callbacked = true;
-	wake_up(&s->callback_wait);
+	wake_up(&s->callback_रुको);
 
-	if (s->direction == AMDTP_IN_STREAM) {
+	अगर (s->direction == AMDTP_IN_STREAM) अणु
 		cycle = compute_cycle_count(ctx_header[1]);
 
 		context->callback.sc = in_stream_callback;
-	} else {
+	पूर्ण अन्यथा अणु
 		cycle = compute_it_cycle(*ctx_header, s->queue_size);
 
-		if (s == s->domain->irq_target)
+		अगर (s == s->करोमुख्य->irq_target)
 			context->callback.sc = irq_target_callback;
-		else
+		अन्यथा
 			context->callback.sc = out_stream_callback;
-	}
+	पूर्ण
 
 	s->start_cycle = cycle;
 
 	context->callback.sc(context, tstamp, header_length, header, s);
-}
+पूर्ण
 
 /**
  * amdtp_stream_start - start transferring packets
@@ -1036,138 +1037,138 @@ static void amdtp_stream_first_callback(struct fw_iso_context *context,
  * @channel: the isochronous channel on the bus
  * @speed: firewire speed code
  * @start_cycle: the isochronous cycle to start the context. Start immediately
- *		 if negative value is given.
+ *		 अगर negative value is given.
  * @queue_size: The number of packets in the queue.
- * @idle_irq_interval: the interval to queue packet during initial state.
+ * @idle_irq_पूर्णांकerval: the पूर्णांकerval to queue packet during initial state.
  *
  * The stream cannot be started until it has been configured with
- * amdtp_stream_set_parameters() and it must be started before any PCM or MIDI
+ * amdtp_stream_set_parameters() and it must be started beक्रमe any PCM or MIDI
  * device can be started.
  */
-static int amdtp_stream_start(struct amdtp_stream *s, int channel, int speed,
-			      int start_cycle, unsigned int queue_size,
-			      unsigned int idle_irq_interval)
-{
-	bool is_irq_target = (s == s->domain->irq_target);
-	unsigned int ctx_header_size;
-	unsigned int max_ctx_payload_size;
-	enum dma_data_direction dir;
-	int type, tag, err;
+अटल पूर्णांक amdtp_stream_start(काष्ठा amdtp_stream *s, पूर्णांक channel, पूर्णांक speed,
+			      पूर्णांक start_cycle, अचिन्हित पूर्णांक queue_size,
+			      अचिन्हित पूर्णांक idle_irq_पूर्णांकerval)
+अणु
+	bool is_irq_target = (s == s->करोमुख्य->irq_target);
+	अचिन्हित पूर्णांक ctx_header_size;
+	अचिन्हित पूर्णांक max_ctx_payload_size;
+	क्रमागत dma_data_direction dir;
+	पूर्णांक type, tag, err;
 
 	mutex_lock(&s->mutex);
 
-	if (WARN_ON(amdtp_stream_running(s) ||
-		    (s->data_block_quadlets < 1))) {
+	अगर (WARN_ON(amdtp_stream_running(s) ||
+		    (s->data_block_quadlets < 1))) अणु
 		err = -EBADFD;
-		goto err_unlock;
-	}
+		जाओ err_unlock;
+	पूर्ण
 
-	if (s->direction == AMDTP_IN_STREAM) {
-		// NOTE: IT context should be used for constant IRQ.
-		if (is_irq_target) {
+	अगर (s->direction == AMDTP_IN_STREAM) अणु
+		// NOTE: IT context should be used क्रम स्थिरant IRQ.
+		अगर (is_irq_target) अणु
 			err = -EINVAL;
-			goto err_unlock;
-		}
+			जाओ err_unlock;
+		पूर्ण
 
-		s->data_block_counter = UINT_MAX;
-	} else {
+		s->data_block_counter = अच_पूर्णांक_उच्च;
+	पूर्ण अन्यथा अणु
 		s->data_block_counter = 0;
-	}
+	पूर्ण
 
 	// initialize packet buffer.
 	max_ctx_payload_size = amdtp_stream_get_max_payload(s);
-	if (s->direction == AMDTP_IN_STREAM) {
+	अगर (s->direction == AMDTP_IN_STREAM) अणु
 		dir = DMA_FROM_DEVICE;
 		type = FW_ISO_CONTEXT_RECEIVE;
-		if (!(s->flags & CIP_NO_HEADER)) {
+		अगर (!(s->flags & CIP_NO_HEADER)) अणु
 			max_ctx_payload_size -= 8;
 			ctx_header_size = IR_CTX_HEADER_SIZE_CIP;
-		} else {
+		पूर्ण अन्यथा अणु
 			ctx_header_size = IR_CTX_HEADER_SIZE_NO_CIP;
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		dir = DMA_TO_DEVICE;
 		type = FW_ISO_CONTEXT_TRANSMIT;
-		ctx_header_size = 0;	// No effect for IT context.
+		ctx_header_size = 0;	// No effect क्रम IT context.
 
-		if (!(s->flags & CIP_NO_HEADER))
+		अगर (!(s->flags & CIP_NO_HEADER))
 			max_ctx_payload_size -= IT_PKT_HEADER_SIZE_CIP;
-	}
+	पूर्ण
 
 	err = iso_packets_buffer_init(&s->buffer, s->unit, queue_size,
 				      max_ctx_payload_size, dir);
-	if (err < 0)
-		goto err_unlock;
+	अगर (err < 0)
+		जाओ err_unlock;
 	s->queue_size = queue_size;
 
 	s->context = fw_iso_context_create(fw_parent_device(s->unit)->card,
 					  type, channel, speed, ctx_header_size,
 					  amdtp_stream_first_callback, s);
-	if (IS_ERR(s->context)) {
+	अगर (IS_ERR(s->context)) अणु
 		err = PTR_ERR(s->context);
-		if (err == -EBUSY)
+		अगर (err == -EBUSY)
 			dev_err(&s->unit->device,
 				"no free stream on this controller\n");
-		goto err_buffer;
-	}
+		जाओ err_buffer;
+	पूर्ण
 
 	amdtp_stream_update(s);
 
-	if (s->direction == AMDTP_IN_STREAM) {
+	अगर (s->direction == AMDTP_IN_STREAM) अणु
 		s->ctx_data.tx.max_ctx_payload_length = max_ctx_payload_size;
 		s->ctx_data.tx.ctx_header_size = ctx_header_size;
-	}
+	पूर्ण
 
-	if (s->flags & CIP_NO_HEADER)
+	अगर (s->flags & CIP_NO_HEADER)
 		s->tag = TAG_NO_CIP_HEADER;
-	else
+	अन्यथा
 		s->tag = TAG_CIP;
 
-	s->pkt_descs = kcalloc(s->queue_size, sizeof(*s->pkt_descs),
+	s->pkt_descs = kसुस्मृति(s->queue_size, माप(*s->pkt_descs),
 			       GFP_KERNEL);
-	if (!s->pkt_descs) {
+	अगर (!s->pkt_descs) अणु
 		err = -ENOMEM;
-		goto err_context;
-	}
+		जाओ err_context;
+	पूर्ण
 
 	s->packet_index = 0;
-	do {
-		struct fw_iso_packet params;
+	करो अणु
+		काष्ठा fw_iso_packet params;
 
-		if (s->direction == AMDTP_IN_STREAM) {
+		अगर (s->direction == AMDTP_IN_STREAM) अणु
 			err = queue_in_packet(s, &params);
-		} else {
+		पूर्ण अन्यथा अणु
 			bool sched_irq = false;
 
 			params.header_length = 0;
 			params.payload_length = 0;
 
-			if (is_irq_target) {
+			अगर (is_irq_target) अणु
 				sched_irq = !((s->packet_index + 1) %
-					      idle_irq_interval);
-			}
+					      idle_irq_पूर्णांकerval);
+			पूर्ण
 
 			err = queue_out_packet(s, &params, sched_irq);
-		}
-		if (err < 0)
-			goto err_pkt_descs;
-	} while (s->packet_index > 0);
+		पूर्ण
+		अगर (err < 0)
+			जाओ err_pkt_descs;
+	पूर्ण जबतक (s->packet_index > 0);
 
 	/* NOTE: TAG1 matches CIP. This just affects in stream. */
 	tag = FW_ISO_CONTEXT_MATCH_TAG1;
-	if ((s->flags & CIP_EMPTY_WITH_TAG0) || (s->flags & CIP_NO_HEADER))
+	अगर ((s->flags & CIP_EMPTY_WITH_TAG0) || (s->flags & CIP_NO_HEADER))
 		tag |= FW_ISO_CONTEXT_MATCH_TAG0;
 
 	s->callbacked = false;
 	err = fw_iso_context_start(s->context, start_cycle, 0, tag);
-	if (err < 0)
-		goto err_pkt_descs;
+	अगर (err < 0)
+		जाओ err_pkt_descs;
 
 	mutex_unlock(&s->mutex);
 
-	return 0;
+	वापस 0;
 err_pkt_descs:
-	kfree(s->pkt_descs);
+	kमुक्त(s->pkt_descs);
 err_context:
 	fw_iso_context_destroy(s->context);
 	s->context = ERR_PTR(-1);
@@ -1176,259 +1177,259 @@ err_buffer:
 err_unlock:
 	mutex_unlock(&s->mutex);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /**
- * amdtp_domain_stream_pcm_pointer - get the PCM buffer position
- * @d: the AMDTP domain.
+ * amdtp_करोमुख्य_stream_pcm_poपूर्णांकer - get the PCM buffer position
+ * @d: the AMDTP करोमुख्य.
  * @s: the AMDTP stream that transports the PCM data
  *
  * Returns the current buffer position, in frames.
  */
-unsigned long amdtp_domain_stream_pcm_pointer(struct amdtp_domain *d,
-					      struct amdtp_stream *s)
-{
-	struct amdtp_stream *irq_target = d->irq_target;
+अचिन्हित दीर्घ amdtp_करोमुख्य_stream_pcm_poपूर्णांकer(काष्ठा amdtp_करोमुख्य *d,
+					      काष्ठा amdtp_stream *s)
+अणु
+	काष्ठा amdtp_stream *irq_target = d->irq_target;
 
-	if (irq_target && amdtp_stream_running(irq_target)) {
+	अगर (irq_target && amdtp_stream_running(irq_target)) अणु
 		// This function is called in software IRQ context of
 		// period_work or process context.
 		//
 		// When the software IRQ context was scheduled by software IRQ
-		// context of IT contexts, queued packets were already handled.
-		// Therefore, no need to flush the queue in buffer furthermore.
+		// context of IT contexts, queued packets were alपढ़ोy handled.
+		// Thereक्रमe, no need to flush the queue in buffer furthermore.
 		//
 		// When the process context reach here, some packets will be
-		// already queued in the buffer. These packets should be handled
-		// immediately to keep better granularity of PCM pointer.
+		// alपढ़ोy queued in the buffer. These packets should be handled
+		// immediately to keep better granularity of PCM poपूर्णांकer.
 		//
-		// Later, the process context will sometimes schedules software
+		// Later, the process context will someबार schedules software
 		// IRQ context of the period_work. Then, no need to flush the
 		// queue by the same reason as described in the above
-		if (current_work() != &s->period_work) {
+		अगर (current_work() != &s->period_work) अणु
 			// Queued packet should be processed without any kernel
 			// preemption to keep latency against bus cycle.
 			preempt_disable();
 			fw_iso_context_flush_completions(irq_target->context);
 			preempt_enable();
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return READ_ONCE(s->pcm_buffer_pointer);
-}
-EXPORT_SYMBOL_GPL(amdtp_domain_stream_pcm_pointer);
+	वापस READ_ONCE(s->pcm_buffer_poपूर्णांकer);
+पूर्ण
+EXPORT_SYMBOL_GPL(amdtp_करोमुख्य_stream_pcm_poपूर्णांकer);
 
 /**
- * amdtp_domain_stream_pcm_ack - acknowledge queued PCM frames
- * @d: the AMDTP domain.
+ * amdtp_करोमुख्य_stream_pcm_ack - acknowledge queued PCM frames
+ * @d: the AMDTP करोमुख्य.
  * @s: the AMDTP stream that transfers the PCM frames
  *
  * Returns zero always.
  */
-int amdtp_domain_stream_pcm_ack(struct amdtp_domain *d, struct amdtp_stream *s)
-{
-	struct amdtp_stream *irq_target = d->irq_target;
+पूर्णांक amdtp_करोमुख्य_stream_pcm_ack(काष्ठा amdtp_करोमुख्य *d, काष्ठा amdtp_stream *s)
+अणु
+	काष्ठा amdtp_stream *irq_target = d->irq_target;
 
-	// Process isochronous packets for recent isochronous cycle to handle
+	// Process isochronous packets क्रम recent isochronous cycle to handle
 	// queued PCM frames.
-	if (irq_target && amdtp_stream_running(irq_target)) {
+	अगर (irq_target && amdtp_stream_running(irq_target)) अणु
 		// Queued packet should be processed without any kernel
 		// preemption to keep latency against bus cycle.
 		preempt_disable();
 		fw_iso_context_flush_completions(irq_target->context);
 		preempt_enable();
-	}
+	पूर्ण
 
-	return 0;
-}
-EXPORT_SYMBOL_GPL(amdtp_domain_stream_pcm_ack);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL_GPL(amdtp_करोमुख्य_stream_pcm_ack);
 
 /**
  * amdtp_stream_update - update the stream after a bus reset
  * @s: the AMDTP stream
  */
-void amdtp_stream_update(struct amdtp_stream *s)
-{
+व्योम amdtp_stream_update(काष्ठा amdtp_stream *s)
+अणु
 	/* Precomputing. */
 	WRITE_ONCE(s->source_node_id_field,
                    (fw_parent_device(s->unit)->card->node_id << CIP_SID_SHIFT) & CIP_SID_MASK);
-}
+पूर्ण
 EXPORT_SYMBOL(amdtp_stream_update);
 
 /**
  * amdtp_stream_stop - stop sending packets
  * @s: the AMDTP stream to stop
  *
- * All PCM and MIDI devices of the stream must be stopped before the stream
+ * All PCM and MIDI devices of the stream must be stopped beक्रमe the stream
  * itself can be stopped.
  */
-static void amdtp_stream_stop(struct amdtp_stream *s)
-{
+अटल व्योम amdtp_stream_stop(काष्ठा amdtp_stream *s)
+अणु
 	mutex_lock(&s->mutex);
 
-	if (!amdtp_stream_running(s)) {
+	अगर (!amdtp_stream_running(s)) अणु
 		mutex_unlock(&s->mutex);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	cancel_work_sync(&s->period_work);
 	fw_iso_context_stop(s->context);
 	fw_iso_context_destroy(s->context);
 	s->context = ERR_PTR(-1);
 	iso_packets_buffer_destroy(&s->buffer, s->unit);
-	kfree(s->pkt_descs);
+	kमुक्त(s->pkt_descs);
 
 	s->callbacked = false;
 
 	mutex_unlock(&s->mutex);
-}
+पूर्ण
 
 /**
- * amdtp_stream_pcm_abort - abort the running PCM device
+ * amdtp_stream_pcm_पात - पात the running PCM device
  * @s: the AMDTP stream about to be stopped
  *
  * If the isochronous stream needs to be stopped asynchronously, call this
  * function first to stop the PCM device.
  */
-void amdtp_stream_pcm_abort(struct amdtp_stream *s)
-{
-	struct snd_pcm_substream *pcm;
+व्योम amdtp_stream_pcm_पात(काष्ठा amdtp_stream *s)
+अणु
+	काष्ठा snd_pcm_substream *pcm;
 
 	pcm = READ_ONCE(s->pcm);
-	if (pcm)
+	अगर (pcm)
 		snd_pcm_stop_xrun(pcm);
-}
-EXPORT_SYMBOL(amdtp_stream_pcm_abort);
+पूर्ण
+EXPORT_SYMBOL(amdtp_stream_pcm_पात);
 
 /**
- * amdtp_domain_init - initialize an AMDTP domain structure
- * @d: the AMDTP domain to initialize.
+ * amdtp_करोमुख्य_init - initialize an AMDTP करोमुख्य काष्ठाure
+ * @d: the AMDTP करोमुख्य to initialize.
  */
-int amdtp_domain_init(struct amdtp_domain *d)
-{
+पूर्णांक amdtp_करोमुख्य_init(काष्ठा amdtp_करोमुख्य *d)
+अणु
 	INIT_LIST_HEAD(&d->streams);
 
 	d->events_per_period = 0;
 
-	d->seq_descs = NULL;
+	d->seq_descs = शून्य;
 
-	return 0;
-}
-EXPORT_SYMBOL_GPL(amdtp_domain_init);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL_GPL(amdtp_करोमुख्य_init);
 
 /**
- * amdtp_domain_destroy - destroy an AMDTP domain structure
- * @d: the AMDTP domain to destroy.
+ * amdtp_करोमुख्य_destroy - destroy an AMDTP करोमुख्य काष्ठाure
+ * @d: the AMDTP करोमुख्य to destroy.
  */
-void amdtp_domain_destroy(struct amdtp_domain *d)
-{
-	// At present nothing to do.
-	return;
-}
-EXPORT_SYMBOL_GPL(amdtp_domain_destroy);
+व्योम amdtp_करोमुख्य_destroy(काष्ठा amdtp_करोमुख्य *d)
+अणु
+	// At present nothing to करो.
+	वापस;
+पूर्ण
+EXPORT_SYMBOL_GPL(amdtp_करोमुख्य_destroy);
 
 /**
- * amdtp_domain_add_stream - register isoc context into the domain.
- * @d: the AMDTP domain.
+ * amdtp_करोमुख्य_add_stream - रेजिस्टर isoc context पूर्णांकo the करोमुख्य.
+ * @d: the AMDTP करोमुख्य.
  * @s: the AMDTP stream.
  * @channel: the isochronous channel on the bus.
  * @speed: firewire speed code.
  */
-int amdtp_domain_add_stream(struct amdtp_domain *d, struct amdtp_stream *s,
-			    int channel, int speed)
-{
-	struct amdtp_stream *tmp;
+पूर्णांक amdtp_करोमुख्य_add_stream(काष्ठा amdtp_करोमुख्य *d, काष्ठा amdtp_stream *s,
+			    पूर्णांक channel, पूर्णांक speed)
+अणु
+	काष्ठा amdtp_stream *पंचांगp;
 
-	list_for_each_entry(tmp, &d->streams, list) {
-		if (s == tmp)
-			return -EBUSY;
-	}
+	list_क्रम_each_entry(पंचांगp, &d->streams, list) अणु
+		अगर (s == पंचांगp)
+			वापस -EBUSY;
+	पूर्ण
 
 	list_add(&s->list, &d->streams);
 
 	s->channel = channel;
 	s->speed = speed;
-	s->domain = d;
+	s->करोमुख्य = d;
 
-	return 0;
-}
-EXPORT_SYMBOL_GPL(amdtp_domain_add_stream);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL_GPL(amdtp_करोमुख्य_add_stream);
 
-static int get_current_cycle_time(struct fw_card *fw_card, int *cur_cycle)
-{
-	int generation;
-	int rcode;
+अटल पूर्णांक get_current_cycle_समय(काष्ठा fw_card *fw_card, पूर्णांक *cur_cycle)
+अणु
+	पूर्णांक generation;
+	पूर्णांक rcode;
 	__be32 reg;
 	u32 data;
 
 	// This is a request to local 1394 OHCI controller and expected to
-	// complete without any event waiting.
+	// complete without any event रुकोing.
 	generation = fw_card->generation;
 	smp_rmb();	// node_id vs. generation.
 	rcode = fw_run_transaction(fw_card, TCODE_READ_QUADLET_REQUEST,
 				   fw_card->node_id, generation, SCODE_100,
 				   CSR_REGISTER_BASE + CSR_CYCLE_TIME,
-				   &reg, sizeof(reg));
-	if (rcode != RCODE_COMPLETE)
-		return -EIO;
+				   &reg, माप(reg));
+	अगर (rcode != RCODE_COMPLETE)
+		वापस -EIO;
 
 	data = be32_to_cpu(reg);
 	*cur_cycle = data >> 12;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * amdtp_domain_start - start sending packets for isoc context in the domain.
- * @d: the AMDTP domain.
+ * amdtp_करोमुख्य_start - start sending packets क्रम isoc context in the करोमुख्य.
+ * @d: the AMDTP करोमुख्य.
  * @ir_delay_cycle: the cycle delay to start all IR contexts.
  */
-int amdtp_domain_start(struct amdtp_domain *d, unsigned int ir_delay_cycle)
-{
-	static const struct {
-		unsigned int data_block;
-		unsigned int syt_offset;
-	} *entry, initial_state[] = {
-		[CIP_SFC_32000]  = {  4, 3072 },
-		[CIP_SFC_48000]  = {  6, 1024 },
-		[CIP_SFC_96000]  = { 12, 1024 },
-		[CIP_SFC_192000] = { 24, 1024 },
-		[CIP_SFC_44100]  = {  0,   67 },
-		[CIP_SFC_88200]  = {  0,   67 },
-		[CIP_SFC_176400] = {  0,   67 },
-	};
-	unsigned int events_per_buffer = d->events_per_buffer;
-	unsigned int events_per_period = d->events_per_period;
-	unsigned int idle_irq_interval;
-	unsigned int queue_size;
-	struct amdtp_stream *s;
-	int cycle;
-	int err;
+पूर्णांक amdtp_करोमुख्य_start(काष्ठा amdtp_करोमुख्य *d, अचिन्हित पूर्णांक ir_delay_cycle)
+अणु
+	अटल स्थिर काष्ठा अणु
+		अचिन्हित पूर्णांक data_block;
+		अचिन्हित पूर्णांक syt_offset;
+	पूर्ण *entry, initial_state[] = अणु
+		[CIP_SFC_32000]  = अणु  4, 3072 पूर्ण,
+		[CIP_SFC_48000]  = अणु  6, 1024 पूर्ण,
+		[CIP_SFC_96000]  = अणु 12, 1024 पूर्ण,
+		[CIP_SFC_192000] = अणु 24, 1024 पूर्ण,
+		[CIP_SFC_44100]  = अणु  0,   67 पूर्ण,
+		[CIP_SFC_88200]  = अणु  0,   67 पूर्ण,
+		[CIP_SFC_176400] = अणु  0,   67 पूर्ण,
+	पूर्ण;
+	अचिन्हित पूर्णांक events_per_buffer = d->events_per_buffer;
+	अचिन्हित पूर्णांक events_per_period = d->events_per_period;
+	अचिन्हित पूर्णांक idle_irq_पूर्णांकerval;
+	अचिन्हित पूर्णांक queue_size;
+	काष्ठा amdtp_stream *s;
+	पूर्णांक cycle;
+	पूर्णांक err;
 
 	// Select an IT context as IRQ target.
-	list_for_each_entry(s, &d->streams, list) {
-		if (s->direction == AMDTP_OUT_STREAM)
-			break;
-	}
-	if (!s)
-		return -ENXIO;
+	list_क्रम_each_entry(s, &d->streams, list) अणु
+		अगर (s->direction == AMDTP_OUT_STREAM)
+			अवरोध;
+	पूर्ण
+	अगर (!s)
+		वापस -ENXIO;
 	d->irq_target = s;
 
-	// This is a case that AMDTP streams in domain run just for MIDI
+	// This is a हाल that AMDTP streams in करोमुख्य run just क्रम MIDI
 	// substream. Use the number of events equivalent to 10 msec as
-	// interval of hardware IRQ.
-	if (events_per_period == 0)
+	// पूर्णांकerval of hardware IRQ.
+	अगर (events_per_period == 0)
 		events_per_period = amdtp_rate_table[d->irq_target->sfc] / 100;
-	if (events_per_buffer == 0)
+	अगर (events_per_buffer == 0)
 		events_per_buffer = events_per_period * 3;
 
 	queue_size = DIV_ROUND_UP(CYCLES_PER_SECOND * events_per_buffer,
 				  amdtp_rate_table[d->irq_target->sfc]);
 
-	d->seq_descs = kcalloc(queue_size, sizeof(*d->seq_descs), GFP_KERNEL);
-	if (!d->seq_descs)
-		return -ENOMEM;
+	d->seq_descs = kसुस्मृति(queue_size, माप(*d->seq_descs), GFP_KERNEL);
+	अगर (!d->seq_descs)
+		वापस -ENOMEM;
 	d->seq_size = queue_size;
 	d->seq_tail = 0;
 
@@ -1437,97 +1438,97 @@ int amdtp_domain_start(struct amdtp_domain *d, unsigned int ir_delay_cycle)
 	d->syt_offset_state = entry->syt_offset;
 	d->last_syt_offset = TICKS_PER_CYCLE;
 
-	if (ir_delay_cycle > 0) {
-		struct fw_card *fw_card = fw_parent_device(s->unit)->card;
+	अगर (ir_delay_cycle > 0) अणु
+		काष्ठा fw_card *fw_card = fw_parent_device(s->unit)->card;
 
-		err = get_current_cycle_time(fw_card, &cycle);
-		if (err < 0)
-			goto error;
+		err = get_current_cycle_समय(fw_card, &cycle);
+		अगर (err < 0)
+			जाओ error;
 
 		// No need to care overflow in cycle field because of enough
 		// width.
 		cycle += ir_delay_cycle;
 
 		// Round up to sec field.
-		if ((cycle & 0x00001fff) >= CYCLES_PER_SECOND) {
-			unsigned int sec;
+		अगर ((cycle & 0x00001fff) >= CYCLES_PER_SECOND) अणु
+			अचिन्हित पूर्णांक sec;
 
 			// The sec field can overflow.
 			sec = (cycle & 0xffffe000) >> 13;
 			cycle = (++sec << 13) |
 				((cycle & 0x00001fff) / CYCLES_PER_SECOND);
-		}
+		पूर्ण
 
-		// In OHCI 1394 specification, lower 2 bits are available for
+		// In OHCI 1394 specअगरication, lower 2 bits are available क्रम
 		// sec field.
 		cycle &= 0x00007fff;
-	} else {
+	पूर्ण अन्यथा अणु
 		cycle = -1;
-	}
+	पूर्ण
 
-	list_for_each_entry(s, &d->streams, list) {
-		int cycle_match;
+	list_क्रम_each_entry(s, &d->streams, list) अणु
+		पूर्णांक cycle_match;
 
-		if (s->direction == AMDTP_IN_STREAM) {
+		अगर (s->direction == AMDTP_IN_STREAM) अणु
 			cycle_match = cycle;
-		} else {
+		पूर्ण अन्यथा अणु
 			// IT context starts immediately.
 			cycle_match = -1;
 			s->ctx_data.rx.seq_index = 0;
-		}
+		पूर्ण
 
-		if (s != d->irq_target) {
+		अगर (s != d->irq_target) अणु
 			err = amdtp_stream_start(s, s->channel, s->speed,
 						 cycle_match, queue_size, 0);
-			if (err < 0)
-				goto error;
-		}
-	}
+			अगर (err < 0)
+				जाओ error;
+		पूर्ण
+	पूर्ण
 
 	s = d->irq_target;
 	s->ctx_data.rx.events_per_period = events_per_period;
 	s->ctx_data.rx.event_count = 0;
 	s->ctx_data.rx.seq_index = 0;
 
-	idle_irq_interval = DIV_ROUND_UP(CYCLES_PER_SECOND * events_per_period,
+	idle_irq_पूर्णांकerval = DIV_ROUND_UP(CYCLES_PER_SECOND * events_per_period,
 					 amdtp_rate_table[d->irq_target->sfc]);
 	err = amdtp_stream_start(s, s->channel, s->speed, -1, queue_size,
-				 idle_irq_interval);
-	if (err < 0)
-		goto error;
+				 idle_irq_पूर्णांकerval);
+	अगर (err < 0)
+		जाओ error;
 
-	return 0;
+	वापस 0;
 error:
-	list_for_each_entry(s, &d->streams, list)
+	list_क्रम_each_entry(s, &d->streams, list)
 		amdtp_stream_stop(s);
-	kfree(d->seq_descs);
-	d->seq_descs = NULL;
-	return err;
-}
-EXPORT_SYMBOL_GPL(amdtp_domain_start);
+	kमुक्त(d->seq_descs);
+	d->seq_descs = शून्य;
+	वापस err;
+पूर्ण
+EXPORT_SYMBOL_GPL(amdtp_करोमुख्य_start);
 
 /**
- * amdtp_domain_stop - stop sending packets for isoc context in the same domain.
- * @d: the AMDTP domain to which the isoc contexts belong.
+ * amdtp_करोमुख्य_stop - stop sending packets क्रम isoc context in the same करोमुख्य.
+ * @d: the AMDTP करोमुख्य to which the isoc contexts beदीर्घ.
  */
-void amdtp_domain_stop(struct amdtp_domain *d)
-{
-	struct amdtp_stream *s, *next;
+व्योम amdtp_करोमुख्य_stop(काष्ठा amdtp_करोमुख्य *d)
+अणु
+	काष्ठा amdtp_stream *s, *next;
 
-	if (d->irq_target)
+	अगर (d->irq_target)
 		amdtp_stream_stop(d->irq_target);
 
-	list_for_each_entry_safe(s, next, &d->streams, list) {
+	list_क्रम_each_entry_safe(s, next, &d->streams, list) अणु
 		list_del(&s->list);
 
-		if (s != d->irq_target)
+		अगर (s != d->irq_target)
 			amdtp_stream_stop(s);
-	}
+	पूर्ण
 
 	d->events_per_period = 0;
-	d->irq_target = NULL;
+	d->irq_target = शून्य;
 
-	kfree(d->seq_descs);
-	d->seq_descs = NULL;
-}
-EXPORT_SYMBOL_GPL(amdtp_domain_stop);
+	kमुक्त(d->seq_descs);
+	d->seq_descs = शून्य;
+पूर्ण
+EXPORT_SYMBOL_GPL(amdtp_करोमुख्य_stop);

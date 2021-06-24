@@ -1,29 +1,30 @@
-/* SPDX-License-Identifier: MIT */
-#ifndef __NVKM_BIOS_PRIV_H__
-#define __NVKM_BIOS_PRIV_H__
-#define nvkm_bios(p) container_of((p), struct nvkm_bios, subdev)
-#include <subdev/bios.h>
+<शैली गुरु>
+/* SPDX-License-Identअगरier: MIT */
+#अगर_अघोषित __NVKM_BIOS_PRIV_H__
+#घोषणा __NVKM_BIOS_PRIV_H__
+#घोषणा nvkm_bios(p) container_of((p), काष्ठा nvkm_bios, subdev)
+#समावेश <subdev/मूलप्रण.स>
 
-struct nvbios_source {
-	const char *name;
-	void *(*init)(struct nvkm_bios *, const char *);
-	void  (*fini)(void *);
-	u32   (*read)(void *, u32 offset, u32 length, struct nvkm_bios *);
-	u32   (*size)(void *);
+काष्ठा nvbios_source अणु
+	स्थिर अक्षर *name;
+	व्योम *(*init)(काष्ठा nvkm_bios *, स्थिर अक्षर *);
+	व्योम  (*fini)(व्योम *);
+	u32   (*पढ़ो)(व्योम *, u32 offset, u32 length, काष्ठा nvkm_bios *);
+	u32   (*size)(व्योम *);
 	bool rw;
 	bool ignore_checksum;
 	bool no_pcir;
 	bool require_checksum;
-};
+पूर्ण;
 
-int nvbios_extend(struct nvkm_bios *, u32 length);
-int nvbios_shadow(struct nvkm_bios *);
+पूर्णांक nvbios_extend(काष्ठा nvkm_bios *, u32 length);
+पूर्णांक nvbios_shaकरोw(काष्ठा nvkm_bios *);
 
-extern const struct nvbios_source nvbios_rom;
-extern const struct nvbios_source nvbios_ramin;
-extern const struct nvbios_source nvbios_acpi_fast;
-extern const struct nvbios_source nvbios_acpi_slow;
-extern const struct nvbios_source nvbios_pcirom;
-extern const struct nvbios_source nvbios_platform;
-extern const struct nvbios_source nvbios_of;
-#endif
+बाह्य स्थिर काष्ठा nvbios_source nvbios_rom;
+बाह्य स्थिर काष्ठा nvbios_source nvbios_ramin;
+बाह्य स्थिर काष्ठा nvbios_source nvbios_acpi_fast;
+बाह्य स्थिर काष्ठा nvbios_source nvbios_acpi_slow;
+बाह्य स्थिर काष्ठा nvbios_source nvbios_pcirom;
+बाह्य स्थिर काष्ठा nvbios_source nvbios_platक्रमm;
+बाह्य स्थिर काष्ठा nvbios_source nvbios_of;
+#पूर्ण_अगर

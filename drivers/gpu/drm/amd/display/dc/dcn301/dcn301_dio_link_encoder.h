@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2020 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  *  and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -23,13 +24,13 @@
  *
  */
 
-#ifndef __DC_LINK_ENCODER__DCN301_H__
-#define __DC_LINK_ENCODER__DCN301_H__
+#अगर_अघोषित __DC_LINK_ENCODER__DCN301_H__
+#घोषणा __DC_LINK_ENCODER__DCN301_H__
 
-#include "dcn20/dcn20_link_encoder.h"
+#समावेश "dcn20/dcn20_link_encoder.h"
 
 
-#define LE_DCN301_REG_LIST(id)\
+#घोषणा LE_DCN301_REG_LIST(id)\
 	SRI(DIG_BE_CNTL, DIG, id), \
 	SRI(DIG_BE_EN_CNTL, DIG, id), \
 	SRI(TMDS_CTL_BITS, DIG, id), \
@@ -55,11 +56,11 @@
 	SRI(DP_DPHY_BS_SR_SWAP_CNTL, DP, id), \
 	SRI(DP_DPHY_HBR2_PATTERN_CONTROL, DP, id)
 
-#define LINK_ENCODER_MASK_SH_LIST_DCN301(mask_sh) \
+#घोषणा LINK_ENCODER_MASK_SH_LIST_DCN301(mask_sh) \
 	LINK_ENCODER_MASK_SH_LIST_DCN20(mask_sh),\
 	LE_SF(DIG0_TMDS_DCBALANCER_CONTROL, TMDS_SYNC_DCBAL_EN, mask_sh)
 
-#define DPCS_DCN301_MASK_SH_LIST(mask_sh)\
+#घोषणा DPCS_DCN301_MASK_SH_LIST(mask_sh)\
 	DPCS_DCN2_MASK_SH_LIST(mask_sh),\
 	LE_SF(DPCSTX0_DPCSTX_TX_CNTL, DPCS_TX_HDMI_FRL_MODE, mask_sh),\
 	LE_SF(DPCSTX0_DPCSTX_TX_CNTL, DPCS_TX_DATA_SWAP_10_BIT, mask_sh),\
@@ -67,16 +68,16 @@
 	LE_SF(RDPCSTX0_RDPCSTX_PHY_CNTL0, RDPCS_PHY_TX_VBOOST_LVL, mask_sh),\
 	LE_SF(RDPCSTX0_RDPCSTX_CLOCK_CNTL, RDPCS_TX_CLK_EN, mask_sh)
 
-void dcn301_link_encoder_construct(
-	struct dcn20_link_encoder *enc20,
-	const struct encoder_init_data *init_data,
-	const struct encoder_feature_support *enc_features,
-	const struct dcn10_link_enc_registers *link_regs,
-	const struct dcn10_link_enc_aux_registers *aux_regs,
-	const struct dcn10_link_enc_hpd_registers *hpd_regs,
-	const struct dcn10_link_enc_shift *link_shift,
-	const struct dcn10_link_enc_mask *link_mask);
+व्योम dcn301_link_encoder_स्थिरruct(
+	काष्ठा dcn20_link_encoder *enc20,
+	स्थिर काष्ठा encoder_init_data *init_data,
+	स्थिर काष्ठा encoder_feature_support *enc_features,
+	स्थिर काष्ठा dcn10_link_enc_रेजिस्टरs *link_regs,
+	स्थिर काष्ठा dcn10_link_enc_aux_रेजिस्टरs *aux_regs,
+	स्थिर काष्ठा dcn10_link_enc_hpd_रेजिस्टरs *hpd_regs,
+	स्थिर काष्ठा dcn10_link_enc_shअगरt *link_shअगरt,
+	स्थिर काष्ठा dcn10_link_enc_mask *link_mask);
 
-void enc3_hw_init(struct link_encoder *enc);
+व्योम enc3_hw_init(काष्ठा link_encoder *enc);
 
-#endif /* __DC_LINK_ENCODER__DCN301_H__ */
+#पूर्ण_अगर /* __DC_LINK_ENCODER__DCN301_H__ */

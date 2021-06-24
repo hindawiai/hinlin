@@ -1,36 +1,37 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  *
  * Copyright (C) Jonathan Naylor G4KLX (g4klx@g4klx.demon.co.uk)
  */
-#include <linux/errno.h>
-#include <linux/types.h>
-#include <linux/socket.h>
-#include <linux/in.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/timer.h>
-#include <linux/string.h>
-#include <linux/sockios.h>
-#include <linux/net.h>
-#include <linux/slab.h>
-#include <net/ax25.h>
-#include <linux/inet.h>
-#include <linux/netdevice.h>
-#include <linux/if_arp.h>
-#include <linux/skbuff.h>
-#include <net/sock.h>
-#include <linux/uaccess.h>
-#include <linux/fcntl.h>
-#include <linux/termios.h>	/* For TIOCINQ/OUTQ */
-#include <linux/mm.h>
-#include <linux/interrupt.h>
-#include <linux/notifier.h>
-#include <linux/proc_fs.h>
-#include <linux/stat.h>
-#include <linux/sysctl.h>
-#include <net/ip.h>
-#include <net/arp.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/types.h>
+#समावेश <linux/socket.h>
+#समावेश <linux/in.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/समयr.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/sockios.h>
+#समावेश <linux/net.h>
+#समावेश <linux/slab.h>
+#समावेश <net/ax25.h>
+#समावेश <linux/inet.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/अगर_arp.h>
+#समावेश <linux/skbuff.h>
+#समावेश <net/sock.h>
+#समावेश <linux/uaccess.h>
+#समावेश <linux/fcntl.h>
+#समावेश <linux/termios.h>	/* For TIOCINQ/OUTQ */
+#समावेश <linux/mm.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/notअगरier.h>
+#समावेश <linux/proc_fs.h>
+#समावेश <linux/स्थिति.स>
+#समावेश <linux/sysctl.h>
+#समावेश <net/ip.h>
+#समावेश <net/arp.h>
 
 /*
  *	IP over AX.25 encapsulation.
@@ -40,34 +41,34 @@
  *	Shove an AX.25 UI header on an IP packet and handle ARP
  */
 
-#ifdef CONFIG_INET
+#अगर_घोषित CONFIG_INET
 
-static int ax25_hard_header(struct sk_buff *skb, struct net_device *dev,
-			    unsigned short type, const void *daddr,
-			    const void *saddr, unsigned int len)
-{
-	unsigned char *buff;
+अटल पूर्णांक ax25_hard_header(काष्ठा sk_buff *skb, काष्ठा net_device *dev,
+			    अचिन्हित लघु type, स्थिर व्योम *daddr,
+			    स्थिर व्योम *saddr, अचिन्हित पूर्णांक len)
+अणु
+	अचिन्हित अक्षर *buff;
 
-	/* they sometimes come back to us... */
-	if (type == ETH_P_AX25)
-		return 0;
+	/* they someबार come back to us... */
+	अगर (type == ETH_P_AX25)
+		वापस 0;
 
 	/* header is an AX.25 UI frame from us to them */
 	buff = skb_push(skb, AX25_HEADER_LEN);
 	*buff++ = 0x00;	/* KISS DATA */
 
-	if (daddr != NULL)
-		memcpy(buff, daddr, dev->addr_len);	/* Address specified */
+	अगर (daddr != शून्य)
+		स_नकल(buff, daddr, dev->addr_len);	/* Address specअगरied */
 
 	buff[6] &= ~AX25_CBIT;
 	buff[6] &= ~AX25_EBIT;
 	buff[6] |= AX25_SSSID_SPARE;
 	buff    += AX25_ADDR_LEN;
 
-	if (saddr != NULL)
-		memcpy(buff, saddr, dev->addr_len);
-	else
-		memcpy(buff, dev->dev_addr, dev->addr_len);
+	अगर (saddr != शून्य)
+		स_नकल(buff, saddr, dev->addr_len);
+	अन्यथा
+		स_नकल(buff, dev->dev_addr, dev->addr_len);
 
 	buff[6] &= ~AX25_CBIT;
 	buff[6] |= AX25_EBIT;
@@ -77,88 +78,88 @@ static int ax25_hard_header(struct sk_buff *skb, struct net_device *dev,
 	*buff++  = AX25_UI;	/* UI */
 
 	/* Append a suitable AX.25 PID */
-	switch (type) {
-	case ETH_P_IP:
+	चयन (type) अणु
+	हाल ETH_P_IP:
 		*buff++ = AX25_P_IP;
-		break;
-	case ETH_P_ARP:
+		अवरोध;
+	हाल ETH_P_ARP:
 		*buff++ = AX25_P_ARP;
-		break;
-	default:
-		printk(KERN_ERR "AX.25: ax25_hard_header - wrong protocol type 0x%2.2x\n", type);
+		अवरोध;
+	शेष:
+		prपूर्णांकk(KERN_ERR "AX.25: ax25_hard_header - wrong protocol type 0x%2.2x\n", type);
 		*buff++ = 0;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	if (daddr != NULL)
-		return AX25_HEADER_LEN;
+	अगर (daddr != शून्य)
+		वापस AX25_HEADER_LEN;
 
-	return -AX25_HEADER_LEN;	/* Unfinished header */
-}
+	वापस -AX25_HEADER_LEN;	/* Unfinished header */
+पूर्ण
 
-netdev_tx_t ax25_ip_xmit(struct sk_buff *skb)
-{
-	struct sk_buff *ourskb;
-	unsigned char *bp  = skb->data;
+netdev_tx_t ax25_ip_xmit(काष्ठा sk_buff *skb)
+अणु
+	काष्ठा sk_buff *ourskb;
+	अचिन्हित अक्षर *bp  = skb->data;
 	ax25_route *route;
-	struct net_device *dev = NULL;
+	काष्ठा net_device *dev = शून्य;
 	ax25_address *src, *dst;
-	ax25_digi *digipeat = NULL;
+	ax25_digi *digipeat = शून्य;
 	ax25_dev *ax25_dev;
 	ax25_cb *ax25;
-	char ip_mode = ' ';
+	अक्षर ip_mode = ' ';
 
 	dst = (ax25_address *)(bp + 1);
 	src = (ax25_address *)(bp + 8);
 
 	ax25_route_lock_use();
-	route = ax25_get_route(dst, NULL);
-	if (route) {
+	route = ax25_get_route(dst, शून्य);
+	अगर (route) अणु
 		digipeat = route->digipeat;
 		dev = route->dev;
 		ip_mode = route->ip_mode;
-	}
+	पूर्ण
 
-	if (dev == NULL)
+	अगर (dev == शून्य)
 		dev = skb->dev;
 
-	if ((ax25_dev = ax25_dev_ax25dev(dev)) == NULL) {
-		kfree_skb(skb);
-		goto put;
-	}
+	अगर ((ax25_dev = ax25_dev_ax25dev(dev)) == शून्य) अणु
+		kमुक्त_skb(skb);
+		जाओ put;
+	पूर्ण
 
-	if (bp[16] == AX25_P_IP) {
-		if (ip_mode == 'V' || (ip_mode == ' ' && ax25_dev->values[AX25_VALUES_IPDEFMODE])) {
+	अगर (bp[16] == AX25_P_IP) अणु
+		अगर (ip_mode == 'V' || (ip_mode == ' ' && ax25_dev->values[AX25_VALUES_IPDEFMODE])) अणु
 			/*
 			 *	We copy the buffer and release the original thereby
 			 *	keeping it straight
 			 *
 			 *	Note: we report 1 back so the caller will
 			 *	not feed the frame direct to the physical device
-			 *	We don't want that to happen. (It won't be upset
+			 *	We करोn't want that to happen. (It won't be upset
 			 *	as we have pulled the frame from the queue by
-			 *	freeing it).
+			 *	मुक्तing it).
 			 *
-			 *	NB: TCP modifies buffers that are still
+			 *	NB: TCP modअगरies buffers that are still
 			 *	on a device queue, thus we use skb_copy()
 			 *      instead of using skb_clone() unless this
-			 *	gets fixed.
+			 *	माला_लो fixed.
 			 */
 
 			ax25_address src_c;
 			ax25_address dst_c;
 
-			if ((ourskb = skb_copy(skb, GFP_ATOMIC)) == NULL) {
-				kfree_skb(skb);
-				goto put;
-			}
+			अगर ((ourskb = skb_copy(skb, GFP_ATOMIC)) == शून्य) अणु
+				kमुक्त_skb(skb);
+				जाओ put;
+			पूर्ण
 
-			if (skb->sk != NULL)
+			अगर (skb->sk != शून्य)
 				skb_set_owner_w(ourskb, skb->sk);
 
-			kfree_skb(skb);
+			kमुक्त_skb(skb);
 			/* dl9sau: bugfix
-			 * after kfree_skb(), dst and src which were pointer
+			 * after kमुक्त_skb(), dst and src which were poपूर्णांकer
 			 * to bp which is part of skb->data would not be valid
 			 * anymore hope that after skb_pull(ourskb, ..) our
 			 * dsc_c and src_c will not become invalid
@@ -175,12 +176,12 @@ netdev_tx_t ax25_ip_xmit(struct sk_buff *skb)
 			    ax25_dev->values[AX25_VALUES_PACLEN],
 			    &src_c,
 			    &dst_c, digipeat, dev);
-			if (ax25) {
+			अगर (ax25) अणु
 				ax25_cb_put(ax25);
-			}
-			goto put;
-		}
-	}
+			पूर्ण
+			जाओ put;
+		पूर्ण
+	पूर्ण
 
 	bp[7]  &= ~AX25_CBIT;
 	bp[7]  &= ~AX25_EBIT;
@@ -192,57 +193,57 @@ netdev_tx_t ax25_ip_xmit(struct sk_buff *skb)
 
 	skb_pull(skb, AX25_KISS_HEADER_LEN);
 
-	if (digipeat != NULL) {
-		if ((ourskb = ax25_rt_build_path(skb, src, dst, route->digipeat)) == NULL) {
-			kfree_skb(skb);
-			goto put;
-		}
+	अगर (digipeat != शून्य) अणु
+		अगर ((ourskb = ax25_rt_build_path(skb, src, dst, route->digipeat)) == शून्य) अणु
+			kमुक्त_skb(skb);
+			जाओ put;
+		पूर्ण
 
 		skb = ourskb;
-	}
+	पूर्ण
 
 	ax25_queue_xmit(skb, dev);
 
 put:
 
 	ax25_route_lock_unuse();
-	return NETDEV_TX_OK;
-}
+	वापस NETDEV_TX_OK;
+पूर्ण
 
-#else	/* INET */
+#अन्यथा	/* INET */
 
-static int ax25_hard_header(struct sk_buff *skb, struct net_device *dev,
-			    unsigned short type, const void *daddr,
-			    const void *saddr, unsigned int len)
-{
-	return -AX25_HEADER_LEN;
-}
+अटल पूर्णांक ax25_hard_header(काष्ठा sk_buff *skb, काष्ठा net_device *dev,
+			    अचिन्हित लघु type, स्थिर व्योम *daddr,
+			    स्थिर व्योम *saddr, अचिन्हित पूर्णांक len)
+अणु
+	वापस -AX25_HEADER_LEN;
+पूर्ण
 
-netdev_tx_t ax25_ip_xmit(struct sk_buff *skb)
-{
-	kfree_skb(skb);
-	return NETDEV_TX_OK;
-}
-#endif
+netdev_tx_t ax25_ip_xmit(काष्ठा sk_buff *skb)
+अणु
+	kमुक्त_skb(skb);
+	वापस NETDEV_TX_OK;
+पूर्ण
+#पूर्ण_अगर
 
-static bool ax25_validate_header(const char *header, unsigned int len)
-{
+अटल bool ax25_validate_header(स्थिर अक्षर *header, अचिन्हित पूर्णांक len)
+अणु
 	ax25_digi digi;
 
-	if (!len)
-		return false;
+	अगर (!len)
+		वापस false;
 
-	if (header[0])
-		return true;
+	अगर (header[0])
+		वापस true;
 
-	return ax25_addr_parse(header + 1, len - 1, NULL, NULL, &digi, NULL,
-			       NULL);
-}
+	वापस ax25_addr_parse(header + 1, len - 1, शून्य, शून्य, &digi, शून्य,
+			       शून्य);
+पूर्ण
 
-const struct header_ops ax25_header_ops = {
+स्थिर काष्ठा header_ops ax25_header_ops = अणु
 	.create = ax25_hard_header,
 	.validate = ax25_validate_header,
-};
+पूर्ण;
 
 EXPORT_SYMBOL(ax25_header_ops);
 EXPORT_SYMBOL(ax25_ip_xmit);

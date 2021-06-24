@@ -1,151 +1,152 @@
+<शैली गुरु>
 /*
  * TI EDMA DMA engine driver
  *
  * Copyright 2012 Texas Instruments
  *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License as
+ * This program is मुक्त software; you can redistribute it and/or
+ * modअगरy it under the terms of the GNU General Public License as
  * published by the Free Software Foundation version 2.
  *
  * This program is distributed "as is" WITHOUT ANY WARRANTY of any
  * kind, whether express or implied; without even the implied warranty
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU General Public License क्रम more details.
  */
 
-#include <linux/dmaengine.h>
-#include <linux/dma-mapping.h>
-#include <linux/bitmap.h>
-#include <linux/err.h>
-#include <linux/init.h>
-#include <linux/interrupt.h>
-#include <linux/list.h>
-#include <linux/module.h>
-#include <linux/platform_device.h>
-#include <linux/slab.h>
-#include <linux/spinlock.h>
-#include <linux/of.h>
-#include <linux/of_dma.h>
-#include <linux/of_irq.h>
-#include <linux/of_address.h>
-#include <linux/of_device.h>
-#include <linux/pm_runtime.h>
+#समावेश <linux/dmaengine.h>
+#समावेश <linux/dma-mapping.h>
+#समावेश <linux/biपंचांगap.h>
+#समावेश <linux/err.h>
+#समावेश <linux/init.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/list.h>
+#समावेश <linux/module.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_dma.h>
+#समावेश <linux/of_irq.h>
+#समावेश <linux/of_address.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/pm_runसमय.स>
 
-#include <linux/platform_data/edma.h>
+#समावेश <linux/platक्रमm_data/edma.h>
 
-#include "../dmaengine.h"
-#include "../virt-dma.h"
+#समावेश "../dmaengine.h"
+#समावेश "../virt-dma.h"
 
 /* Offsets matching "struct edmacc_param" */
-#define PARM_OPT		0x00
-#define PARM_SRC		0x04
-#define PARM_A_B_CNT		0x08
-#define PARM_DST		0x0c
-#define PARM_SRC_DST_BIDX	0x10
-#define PARM_LINK_BCNTRLD	0x14
-#define PARM_SRC_DST_CIDX	0x18
-#define PARM_CCNT		0x1c
+#घोषणा PARM_OPT		0x00
+#घोषणा PARM_SRC		0x04
+#घोषणा PARM_A_B_CNT		0x08
+#घोषणा PARM_DST		0x0c
+#घोषणा PARM_SRC_DST_BIDX	0x10
+#घोषणा PARM_LINK_BCNTRLD	0x14
+#घोषणा PARM_SRC_DST_CIDX	0x18
+#घोषणा PARM_CCNT		0x1c
 
-#define PARM_SIZE		0x20
+#घोषणा PARM_SIZE		0x20
 
-/* Offsets for EDMA CC global channel registers and their shadows */
-#define SH_ER			0x00	/* 64 bits */
-#define SH_ECR			0x08	/* 64 bits */
-#define SH_ESR			0x10	/* 64 bits */
-#define SH_CER			0x18	/* 64 bits */
-#define SH_EER			0x20	/* 64 bits */
-#define SH_EECR			0x28	/* 64 bits */
-#define SH_EESR			0x30	/* 64 bits */
-#define SH_SER			0x38	/* 64 bits */
-#define SH_SECR			0x40	/* 64 bits */
-#define SH_IER			0x50	/* 64 bits */
-#define SH_IECR			0x58	/* 64 bits */
-#define SH_IESR			0x60	/* 64 bits */
-#define SH_IPR			0x68	/* 64 bits */
-#define SH_ICR			0x70	/* 64 bits */
-#define SH_IEVAL		0x78
-#define SH_QER			0x80
-#define SH_QEER			0x84
-#define SH_QEECR		0x88
-#define SH_QEESR		0x8c
-#define SH_QSER			0x90
-#define SH_QSECR		0x94
-#define SH_SIZE			0x200
+/* Offsets क्रम EDMA CC global channel रेजिस्टरs and their shaकरोws */
+#घोषणा SH_ER			0x00	/* 64 bits */
+#घोषणा SH_ECR			0x08	/* 64 bits */
+#घोषणा SH_ESR			0x10	/* 64 bits */
+#घोषणा SH_CER			0x18	/* 64 bits */
+#घोषणा SH_EER			0x20	/* 64 bits */
+#घोषणा SH_EECR			0x28	/* 64 bits */
+#घोषणा SH_EESR			0x30	/* 64 bits */
+#घोषणा SH_SER			0x38	/* 64 bits */
+#घोषणा SH_SECR			0x40	/* 64 bits */
+#घोषणा SH_IER			0x50	/* 64 bits */
+#घोषणा SH_IECR			0x58	/* 64 bits */
+#घोषणा SH_IESR			0x60	/* 64 bits */
+#घोषणा SH_IPR			0x68	/* 64 bits */
+#घोषणा SH_ICR			0x70	/* 64 bits */
+#घोषणा SH_IEVAL		0x78
+#घोषणा SH_QER			0x80
+#घोषणा SH_QEER			0x84
+#घोषणा SH_QEECR		0x88
+#घोषणा SH_QEESR		0x8c
+#घोषणा SH_QSER			0x90
+#घोषणा SH_QSECR		0x94
+#घोषणा SH_SIZE			0x200
 
-/* Offsets for EDMA CC global registers */
-#define EDMA_REV		0x0000
-#define EDMA_CCCFG		0x0004
-#define EDMA_QCHMAP		0x0200	/* 8 registers */
-#define EDMA_DMAQNUM		0x0240	/* 8 registers (4 on OMAP-L1xx) */
-#define EDMA_QDMAQNUM		0x0260
-#define EDMA_QUETCMAP		0x0280
-#define EDMA_QUEPRI		0x0284
-#define EDMA_EMR		0x0300	/* 64 bits */
-#define EDMA_EMCR		0x0308	/* 64 bits */
-#define EDMA_QEMR		0x0310
-#define EDMA_QEMCR		0x0314
-#define EDMA_CCERR		0x0318
-#define EDMA_CCERRCLR		0x031c
-#define EDMA_EEVAL		0x0320
-#define EDMA_DRAE		0x0340	/* 4 x 64 bits*/
-#define EDMA_QRAE		0x0380	/* 4 registers */
-#define EDMA_QUEEVTENTRY	0x0400	/* 2 x 16 registers */
-#define EDMA_QSTAT		0x0600	/* 2 registers */
-#define EDMA_QWMTHRA		0x0620
-#define EDMA_QWMTHRB		0x0624
-#define EDMA_CCSTAT		0x0640
+/* Offsets क्रम EDMA CC global रेजिस्टरs */
+#घोषणा EDMA_REV		0x0000
+#घोषणा EDMA_CCCFG		0x0004
+#घोषणा EDMA_QCHMAP		0x0200	/* 8 रेजिस्टरs */
+#घोषणा EDMA_DMAQNUM		0x0240	/* 8 रेजिस्टरs (4 on OMAP-L1xx) */
+#घोषणा EDMA_QDMAQNUM		0x0260
+#घोषणा EDMA_QUETCMAP		0x0280
+#घोषणा EDMA_QUEPRI		0x0284
+#घोषणा EDMA_EMR		0x0300	/* 64 bits */
+#घोषणा EDMA_EMCR		0x0308	/* 64 bits */
+#घोषणा EDMA_QEMR		0x0310
+#घोषणा EDMA_QEMCR		0x0314
+#घोषणा EDMA_CCERR		0x0318
+#घोषणा EDMA_CCERRCLR		0x031c
+#घोषणा EDMA_EEVAL		0x0320
+#घोषणा EDMA_DRAE		0x0340	/* 4 x 64 bits*/
+#घोषणा EDMA_QRAE		0x0380	/* 4 रेजिस्टरs */
+#घोषणा EDMA_QUEEVTENTRY	0x0400	/* 2 x 16 रेजिस्टरs */
+#घोषणा EDMA_QSTAT		0x0600	/* 2 रेजिस्टरs */
+#घोषणा EDMA_QWMTHRA		0x0620
+#घोषणा EDMA_QWMTHRB		0x0624
+#घोषणा EDMA_CCSTAT		0x0640
 
-#define EDMA_M			0x1000	/* global channel registers */
-#define EDMA_ECR		0x1008
-#define EDMA_ECRH		0x100C
-#define EDMA_SHADOW0		0x2000	/* 4 shadow regions */
-#define EDMA_PARM		0x4000	/* PaRAM entries */
+#घोषणा EDMA_M			0x1000	/* global channel रेजिस्टरs */
+#घोषणा EDMA_ECR		0x1008
+#घोषणा EDMA_ECRH		0x100C
+#घोषणा EDMA_SHADOW0		0x2000	/* 4 shaकरोw regions */
+#घोषणा EDMA_PARM		0x4000	/* PaRAM entries */
 
-#define PARM_OFFSET(param_no)	(EDMA_PARM + ((param_no) << 5))
+#घोषणा PARM_OFFSET(param_no)	(EDMA_PARM + ((param_no) << 5))
 
-#define EDMA_DCHMAP		0x0100  /* 64 registers */
+#घोषणा EDMA_DCHMAP		0x0100  /* 64 रेजिस्टरs */
 
-/* CCCFG register */
-#define GET_NUM_DMACH(x)	(x & 0x7) /* bits 0-2 */
-#define GET_NUM_QDMACH(x)	((x & 0x70) >> 4) /* bits 4-6 */
-#define GET_NUM_PAENTRY(x)	((x & 0x7000) >> 12) /* bits 12-14 */
-#define GET_NUM_EVQUE(x)	((x & 0x70000) >> 16) /* bits 16-18 */
-#define GET_NUM_REGN(x)		((x & 0x300000) >> 20) /* bits 20-21 */
-#define CHMAP_EXIST		BIT(24)
+/* CCCFG रेजिस्टर */
+#घोषणा GET_NUM_DMACH(x)	(x & 0x7) /* bits 0-2 */
+#घोषणा GET_NUM_QDMACH(x)	((x & 0x70) >> 4) /* bits 4-6 */
+#घोषणा GET_NUM_PAENTRY(x)	((x & 0x7000) >> 12) /* bits 12-14 */
+#घोषणा GET_NUM_EVQUE(x)	((x & 0x70000) >> 16) /* bits 16-18 */
+#घोषणा GET_NUM_REGN(x)		((x & 0x300000) >> 20) /* bits 20-21 */
+#घोषणा CHMAP_EXIST		BIT(24)
 
-/* CCSTAT register */
-#define EDMA_CCSTAT_ACTV	BIT(4)
+/* CCSTAT रेजिस्टर */
+#घोषणा EDMA_CCSTAT_ACTV	BIT(4)
 
 /*
  * Max of 20 segments per channel to conserve PaRAM slots
  * Also note that MAX_NR_SG should be atleast the no.of periods
- * that are required for ASoC, otherwise DMA prep calls will
+ * that are required क्रम ASoC, otherwise DMA prep calls will
  * fail. Today davinci-pcm is the only user of this driver and
- * requires atleast 17 slots, so we setup the default to 20.
+ * requires atleast 17 slots, so we setup the शेष to 20.
  */
-#define MAX_NR_SG		20
-#define EDMA_MAX_SLOTS		MAX_NR_SG
-#define EDMA_DESCRIPTORS	16
+#घोषणा MAX_NR_SG		20
+#घोषणा EDMA_MAX_SLOTS		MAX_NR_SG
+#घोषणा EDMA_DESCRIPTORS	16
 
-#define EDMA_CHANNEL_ANY		-1	/* for edma_alloc_channel() */
-#define EDMA_SLOT_ANY			-1	/* for edma_alloc_slot() */
-#define EDMA_CONT_PARAMS_ANY		 1001
-#define EDMA_CONT_PARAMS_FIXED_EXACT	 1002
-#define EDMA_CONT_PARAMS_FIXED_NOT_EXACT 1003
+#घोषणा EDMA_CHANNEL_ANY		-1	/* क्रम edma_alloc_channel() */
+#घोषणा EDMA_SLOT_ANY			-1	/* क्रम edma_alloc_slot() */
+#घोषणा EDMA_CONT_PARAMS_ANY		 1001
+#घोषणा EDMA_CONT_PARAMS_FIXED_EXACT	 1002
+#घोषणा EDMA_CONT_PARAMS_FIXED_NOT_EXACT 1003
 
 /*
- * 64bit array registers are split into two 32bit registers:
+ * 64bit array रेजिस्टरs are split पूर्णांकo two 32bit रेजिस्टरs:
  * reg0: channel/event 0-31
  * reg1: channel/event 32-63
  *
  * bit 5 in the channel number tells the array index (0/1)
- * bit 0-4 (0x1f) is the bit offset within the register
+ * bit 0-4 (0x1f) is the bit offset within the रेजिस्टर
  */
-#define EDMA_REG_ARRAY_INDEX(channel)	((channel) >> 5)
-#define EDMA_CHANNEL_BIT(channel)	(BIT((channel) & 0x1f))
+#घोषणा EDMA_REG_ARRAY_INDEX(channel)	((channel) >> 5)
+#घोषणा EDMA_CHANNEL_BIT(channel)	(BIT((channel) & 0x1f))
 
 /* PaRAM slots are laid out like this */
-struct edmacc_param {
+काष्ठा edmacc_param अणु
 	u32 opt;
 	u32 src;
 	u32 a_b_cnt;
@@ -154,640 +155,640 @@ struct edmacc_param {
 	u32 link_bcntrld;
 	u32 src_dst_cidx;
 	u32 ccnt;
-} __packed;
+पूर्ण __packed;
 
 /* fields in edmacc_param.opt */
-#define SAM		BIT(0)
-#define DAM		BIT(1)
-#define SYNCDIM		BIT(2)
-#define STATIC		BIT(3)
-#define EDMA_FWID	(0x07 << 8)
-#define TCCMODE		BIT(11)
-#define EDMA_TCC(t)	((t) << 12)
-#define TCINTEN		BIT(20)
-#define ITCINTEN	BIT(21)
-#define TCCHEN		BIT(22)
-#define ITCCHEN		BIT(23)
+#घोषणा SAM		BIT(0)
+#घोषणा DAM		BIT(1)
+#घोषणा SYNCDIM		BIT(2)
+#घोषणा STATIC		BIT(3)
+#घोषणा EDMA_FWID	(0x07 << 8)
+#घोषणा TCCMODE		BIT(11)
+#घोषणा EDMA_TCC(t)	((t) << 12)
+#घोषणा TCINTEN		BIT(20)
+#घोषणा ITCINTEN	BIT(21)
+#घोषणा TCCHEN		BIT(22)
+#घोषणा ITCCHEN		BIT(23)
 
-struct edma_pset {
+काष्ठा edma_pset अणु
 	u32				len;
 	dma_addr_t			addr;
-	struct edmacc_param		param;
-};
+	काष्ठा edmacc_param		param;
+पूर्ण;
 
-struct edma_desc {
-	struct virt_dma_desc		vdesc;
-	struct list_head		node;
-	enum dma_transfer_direction	direction;
-	int				cyclic;
+काष्ठा edma_desc अणु
+	काष्ठा virt_dma_desc		vdesc;
+	काष्ठा list_head		node;
+	क्रमागत dma_transfer_direction	direction;
+	पूर्णांक				cyclic;
 	bool				polled;
-	int				absync;
-	int				pset_nr;
-	struct edma_chan		*echan;
-	int				processed;
+	पूर्णांक				असलync;
+	पूर्णांक				pset_nr;
+	काष्ठा edma_chan		*echan;
+	पूर्णांक				processed;
 
 	/*
-	 * The following 4 elements are used for residue accounting.
+	 * The following 4 elements are used क्रम residue accounting.
 	 *
 	 * - processed_stat: the number of SG elements we have traversed
 	 * so far to cover accounting. This is updated directly to processed
 	 * during edma_callback and is always <= processed, because processed
 	 * refers to the number of pending transfer (programmed to EDMA
 	 * controller), where as processed_stat tracks number of transfers
-	 * accounted for so far.
+	 * accounted क्रम so far.
 	 *
-	 * - residue: The amount of bytes we have left to transfer for this desc
+	 * - residue: The amount of bytes we have left to transfer क्रम this desc
 	 *
 	 * - residue_stat: The residue in bytes of data we have covered
-	 * so far for accounting. This is updated directly to residue
+	 * so far क्रम accounting. This is updated directly to residue
 	 * during callbacks to keep it current.
 	 *
-	 * - sg_len: Tracks the length of the current intermediate transfer,
-	 * this is required to update the residue during intermediate transfer
+	 * - sg_len: Tracks the length of the current पूर्णांकermediate transfer,
+	 * this is required to update the residue during पूर्णांकermediate transfer
 	 * completion callback.
 	 */
-	int				processed_stat;
+	पूर्णांक				processed_stat;
 	u32				sg_len;
 	u32				residue;
 	u32				residue_stat;
 
-	struct edma_pset		pset[];
-};
+	काष्ठा edma_pset		pset[];
+पूर्ण;
 
-struct edma_cc;
+काष्ठा edma_cc;
 
-struct edma_tc {
-	struct device_node		*node;
+काष्ठा edma_tc अणु
+	काष्ठा device_node		*node;
 	u16				id;
-};
+पूर्ण;
 
-struct edma_chan {
-	struct virt_dma_chan		vchan;
-	struct list_head		node;
-	struct edma_desc		*edesc;
-	struct edma_cc			*ecc;
-	struct edma_tc			*tc;
-	int				ch_num;
+काष्ठा edma_chan अणु
+	काष्ठा virt_dma_chan		vchan;
+	काष्ठा list_head		node;
+	काष्ठा edma_desc		*edesc;
+	काष्ठा edma_cc			*ecc;
+	काष्ठा edma_tc			*tc;
+	पूर्णांक				ch_num;
 	bool				alloced;
 	bool				hw_triggered;
-	int				slot[EDMA_MAX_SLOTS];
-	int				missed;
-	struct dma_slave_config		cfg;
-};
+	पूर्णांक				slot[EDMA_MAX_SLOTS];
+	पूर्णांक				missed;
+	काष्ठा dma_slave_config		cfg;
+पूर्ण;
 
-struct edma_cc {
-	struct device			*dev;
-	struct edma_soc_info		*info;
-	void __iomem			*base;
-	int				id;
+काष्ठा edma_cc अणु
+	काष्ठा device			*dev;
+	काष्ठा edma_soc_info		*info;
+	व्योम __iomem			*base;
+	पूर्णांक				id;
 	bool				legacy_mode;
 
-	/* eDMA3 resource information */
-	unsigned			num_channels;
-	unsigned			num_qchannels;
-	unsigned			num_region;
-	unsigned			num_slots;
-	unsigned			num_tc;
+	/* eDMA3 resource inक्रमmation */
+	अचिन्हित			num_channels;
+	अचिन्हित			num_qchannels;
+	अचिन्हित			num_region;
+	अचिन्हित			num_slots;
+	अचिन्हित			num_tc;
 	bool				chmap_exist;
-	enum dma_event_q		default_queue;
+	क्रमागत dma_event_q		शेष_queue;
 
-	unsigned int			ccint;
-	unsigned int			ccerrint;
+	अचिन्हित पूर्णांक			ccपूर्णांक;
+	अचिन्हित पूर्णांक			ccerrपूर्णांक;
 
 	/*
-	 * The slot_inuse bit for each PaRAM slot is clear unless the slot is
-	 * in use by Linux or if it is allocated to be used by DSP.
+	 * The slot_inuse bit क्रम each PaRAM slot is clear unless the slot is
+	 * in use by Linux or अगर it is allocated to be used by DSP.
 	 */
-	unsigned long *slot_inuse;
+	अचिन्हित दीर्घ *slot_inuse;
 
 	/*
 	 * For tracking reserved channels used by DSP.
 	 * If the bit is cleared, the channel is allocated to be used by DSP
 	 * and Linux must not touch it.
 	 */
-	unsigned long *channels_mask;
+	अचिन्हित दीर्घ *channels_mask;
 
-	struct dma_device		dma_slave;
-	struct dma_device		*dma_memcpy;
-	struct edma_chan		*slave_chans;
-	struct edma_tc			*tc_list;
-	int				dummy_slot;
-};
+	काष्ठा dma_device		dma_slave;
+	काष्ठा dma_device		*dma_स_नकल;
+	काष्ठा edma_chan		*slave_chans;
+	काष्ठा edma_tc			*tc_list;
+	पूर्णांक				dummy_slot;
+पूर्ण;
 
 /* dummy param set used to (re)initialize parameter RAM slots */
-static const struct edmacc_param dummy_paramset = {
+अटल स्थिर काष्ठा edmacc_param dummy_paramset = अणु
 	.link_bcntrld = 0xffff,
 	.ccnt = 1,
-};
+पूर्ण;
 
-#define EDMA_BINDING_LEGACY	0
-#define EDMA_BINDING_TPCC	1
-static const u32 edma_binding_type[] = {
+#घोषणा EDMA_BINDING_LEGACY	0
+#घोषणा EDMA_BINDING_TPCC	1
+अटल स्थिर u32 edma_binding_type[] = अणु
 	[EDMA_BINDING_LEGACY] = EDMA_BINDING_LEGACY,
 	[EDMA_BINDING_TPCC] = EDMA_BINDING_TPCC,
-};
+पूर्ण;
 
-static const struct of_device_id edma_of_ids[] = {
-	{
+अटल स्थिर काष्ठा of_device_id edma_of_ids[] = अणु
+	अणु
 		.compatible = "ti,edma3",
 		.data = &edma_binding_type[EDMA_BINDING_LEGACY],
-	},
-	{
+	पूर्ण,
+	अणु
 		.compatible = "ti,edma3-tpcc",
 		.data = &edma_binding_type[EDMA_BINDING_TPCC],
-	},
-	{}
-};
+	पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, edma_of_ids);
 
-static const struct of_device_id edma_tptc_of_ids[] = {
-	{ .compatible = "ti,edma3-tptc", },
-	{}
-};
+अटल स्थिर काष्ठा of_device_id edma_tptc_of_ids[] = अणु
+	अणु .compatible = "ti,edma3-tptc", पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, edma_tptc_of_ids);
 
-static inline unsigned int edma_read(struct edma_cc *ecc, int offset)
-{
-	return (unsigned int)__raw_readl(ecc->base + offset);
-}
+अटल अंतरभूत अचिन्हित पूर्णांक edma_पढ़ो(काष्ठा edma_cc *ecc, पूर्णांक offset)
+अणु
+	वापस (अचिन्हित पूर्णांक)__raw_पढ़ोl(ecc->base + offset);
+पूर्ण
 
-static inline void edma_write(struct edma_cc *ecc, int offset, int val)
-{
-	__raw_writel(val, ecc->base + offset);
-}
+अटल अंतरभूत व्योम edma_ग_लिखो(काष्ठा edma_cc *ecc, पूर्णांक offset, पूर्णांक val)
+अणु
+	__raw_ग_लिखोl(val, ecc->base + offset);
+पूर्ण
 
-static inline void edma_modify(struct edma_cc *ecc, int offset, unsigned and,
-			       unsigned or)
-{
-	unsigned val = edma_read(ecc, offset);
+अटल अंतरभूत व्योम edma_modअगरy(काष्ठा edma_cc *ecc, पूर्णांक offset, अचिन्हित and,
+			       अचिन्हित or)
+अणु
+	अचिन्हित val = edma_पढ़ो(ecc, offset);
 
 	val &= and;
 	val |= or;
-	edma_write(ecc, offset, val);
-}
+	edma_ग_लिखो(ecc, offset, val);
+पूर्ण
 
-static inline void edma_and(struct edma_cc *ecc, int offset, unsigned and)
-{
-	unsigned val = edma_read(ecc, offset);
+अटल अंतरभूत व्योम edma_and(काष्ठा edma_cc *ecc, पूर्णांक offset, अचिन्हित and)
+अणु
+	अचिन्हित val = edma_पढ़ो(ecc, offset);
 
 	val &= and;
-	edma_write(ecc, offset, val);
-}
+	edma_ग_लिखो(ecc, offset, val);
+पूर्ण
 
-static inline void edma_or(struct edma_cc *ecc, int offset, unsigned or)
-{
-	unsigned val = edma_read(ecc, offset);
+अटल अंतरभूत व्योम edma_or(काष्ठा edma_cc *ecc, पूर्णांक offset, अचिन्हित or)
+अणु
+	अचिन्हित val = edma_पढ़ो(ecc, offset);
 
 	val |= or;
-	edma_write(ecc, offset, val);
-}
+	edma_ग_लिखो(ecc, offset, val);
+पूर्ण
 
-static inline unsigned int edma_read_array(struct edma_cc *ecc, int offset,
-					   int i)
-{
-	return edma_read(ecc, offset + (i << 2));
-}
+अटल अंतरभूत अचिन्हित पूर्णांक edma_पढ़ो_array(काष्ठा edma_cc *ecc, पूर्णांक offset,
+					   पूर्णांक i)
+अणु
+	वापस edma_पढ़ो(ecc, offset + (i << 2));
+पूर्ण
 
-static inline void edma_write_array(struct edma_cc *ecc, int offset, int i,
-				    unsigned val)
-{
-	edma_write(ecc, offset + (i << 2), val);
-}
+अटल अंतरभूत व्योम edma_ग_लिखो_array(काष्ठा edma_cc *ecc, पूर्णांक offset, पूर्णांक i,
+				    अचिन्हित val)
+अणु
+	edma_ग_लिखो(ecc, offset + (i << 2), val);
+पूर्ण
 
-static inline void edma_modify_array(struct edma_cc *ecc, int offset, int i,
-				     unsigned and, unsigned or)
-{
-	edma_modify(ecc, offset + (i << 2), and, or);
-}
+अटल अंतरभूत व्योम edma_modअगरy_array(काष्ठा edma_cc *ecc, पूर्णांक offset, पूर्णांक i,
+				     अचिन्हित and, अचिन्हित or)
+अणु
+	edma_modअगरy(ecc, offset + (i << 2), and, or);
+पूर्ण
 
-static inline void edma_or_array(struct edma_cc *ecc, int offset, int i,
-				 unsigned or)
-{
+अटल अंतरभूत व्योम edma_or_array(काष्ठा edma_cc *ecc, पूर्णांक offset, पूर्णांक i,
+				 अचिन्हित or)
+अणु
 	edma_or(ecc, offset + (i << 2), or);
-}
+पूर्ण
 
-static inline void edma_or_array2(struct edma_cc *ecc, int offset, int i, int j,
-				  unsigned or)
-{
+अटल अंतरभूत व्योम edma_or_array2(काष्ठा edma_cc *ecc, पूर्णांक offset, पूर्णांक i, पूर्णांक j,
+				  अचिन्हित or)
+अणु
 	edma_or(ecc, offset + ((i * 2 + j) << 2), or);
-}
+पूर्ण
 
-static inline void edma_write_array2(struct edma_cc *ecc, int offset, int i,
-				     int j, unsigned val)
-{
-	edma_write(ecc, offset + ((i * 2 + j) << 2), val);
-}
+अटल अंतरभूत व्योम edma_ग_लिखो_array2(काष्ठा edma_cc *ecc, पूर्णांक offset, पूर्णांक i,
+				     पूर्णांक j, अचिन्हित val)
+अणु
+	edma_ग_लिखो(ecc, offset + ((i * 2 + j) << 2), val);
+पूर्ण
 
-static inline unsigned int edma_shadow0_read(struct edma_cc *ecc, int offset)
-{
-	return edma_read(ecc, EDMA_SHADOW0 + offset);
-}
+अटल अंतरभूत अचिन्हित पूर्णांक edma_shaकरोw0_पढ़ो(काष्ठा edma_cc *ecc, पूर्णांक offset)
+अणु
+	वापस edma_पढ़ो(ecc, EDMA_SHADOW0 + offset);
+पूर्ण
 
-static inline unsigned int edma_shadow0_read_array(struct edma_cc *ecc,
-						   int offset, int i)
-{
-	return edma_read(ecc, EDMA_SHADOW0 + offset + (i << 2));
-}
+अटल अंतरभूत अचिन्हित पूर्णांक edma_shaकरोw0_पढ़ो_array(काष्ठा edma_cc *ecc,
+						   पूर्णांक offset, पूर्णांक i)
+अणु
+	वापस edma_पढ़ो(ecc, EDMA_SHADOW0 + offset + (i << 2));
+पूर्ण
 
-static inline void edma_shadow0_write(struct edma_cc *ecc, int offset,
-				      unsigned val)
-{
-	edma_write(ecc, EDMA_SHADOW0 + offset, val);
-}
+अटल अंतरभूत व्योम edma_shaकरोw0_ग_लिखो(काष्ठा edma_cc *ecc, पूर्णांक offset,
+				      अचिन्हित val)
+अणु
+	edma_ग_लिखो(ecc, EDMA_SHADOW0 + offset, val);
+पूर्ण
 
-static inline void edma_shadow0_write_array(struct edma_cc *ecc, int offset,
-					    int i, unsigned val)
-{
-	edma_write(ecc, EDMA_SHADOW0 + offset + (i << 2), val);
-}
+अटल अंतरभूत व्योम edma_shaकरोw0_ग_लिखो_array(काष्ठा edma_cc *ecc, पूर्णांक offset,
+					    पूर्णांक i, अचिन्हित val)
+अणु
+	edma_ग_लिखो(ecc, EDMA_SHADOW0 + offset + (i << 2), val);
+पूर्ण
 
-static inline unsigned int edma_param_read(struct edma_cc *ecc, int offset,
-					   int param_no)
-{
-	return edma_read(ecc, EDMA_PARM + offset + (param_no << 5));
-}
+अटल अंतरभूत अचिन्हित पूर्णांक edma_param_पढ़ो(काष्ठा edma_cc *ecc, पूर्णांक offset,
+					   पूर्णांक param_no)
+अणु
+	वापस edma_पढ़ो(ecc, EDMA_PARM + offset + (param_no << 5));
+पूर्ण
 
-static inline void edma_param_write(struct edma_cc *ecc, int offset,
-				    int param_no, unsigned val)
-{
-	edma_write(ecc, EDMA_PARM + offset + (param_no << 5), val);
-}
+अटल अंतरभूत व्योम edma_param_ग_लिखो(काष्ठा edma_cc *ecc, पूर्णांक offset,
+				    पूर्णांक param_no, अचिन्हित val)
+अणु
+	edma_ग_लिखो(ecc, EDMA_PARM + offset + (param_no << 5), val);
+पूर्ण
 
-static inline void edma_param_modify(struct edma_cc *ecc, int offset,
-				     int param_no, unsigned and, unsigned or)
-{
-	edma_modify(ecc, EDMA_PARM + offset + (param_no << 5), and, or);
-}
+अटल अंतरभूत व्योम edma_param_modअगरy(काष्ठा edma_cc *ecc, पूर्णांक offset,
+				     पूर्णांक param_no, अचिन्हित and, अचिन्हित or)
+अणु
+	edma_modअगरy(ecc, EDMA_PARM + offset + (param_no << 5), and, or);
+पूर्ण
 
-static inline void edma_param_and(struct edma_cc *ecc, int offset, int param_no,
-				  unsigned and)
-{
+अटल अंतरभूत व्योम edma_param_and(काष्ठा edma_cc *ecc, पूर्णांक offset, पूर्णांक param_no,
+				  अचिन्हित and)
+अणु
 	edma_and(ecc, EDMA_PARM + offset + (param_no << 5), and);
-}
+पूर्ण
 
-static inline void edma_param_or(struct edma_cc *ecc, int offset, int param_no,
-				 unsigned or)
-{
+अटल अंतरभूत व्योम edma_param_or(काष्ठा edma_cc *ecc, पूर्णांक offset, पूर्णांक param_no,
+				 अचिन्हित or)
+अणु
 	edma_or(ecc, EDMA_PARM + offset + (param_no << 5), or);
-}
+पूर्ण
 
-static void edma_assign_priority_to_queue(struct edma_cc *ecc, int queue_no,
-					  int priority)
-{
-	int bit = queue_no * 4;
+अटल व्योम edma_assign_priority_to_queue(काष्ठा edma_cc *ecc, पूर्णांक queue_no,
+					  पूर्णांक priority)
+अणु
+	पूर्णांक bit = queue_no * 4;
 
-	edma_modify(ecc, EDMA_QUEPRI, ~(0x7 << bit), ((priority & 0x7) << bit));
-}
+	edma_modअगरy(ecc, EDMA_QUEPRI, ~(0x7 << bit), ((priority & 0x7) << bit));
+पूर्ण
 
-static void edma_set_chmap(struct edma_chan *echan, int slot)
-{
-	struct edma_cc *ecc = echan->ecc;
-	int channel = EDMA_CHAN_SLOT(echan->ch_num);
+अटल व्योम edma_set_chmap(काष्ठा edma_chan *echan, पूर्णांक slot)
+अणु
+	काष्ठा edma_cc *ecc = echan->ecc;
+	पूर्णांक channel = EDMA_CHAN_SLOT(echan->ch_num);
 
-	if (ecc->chmap_exist) {
+	अगर (ecc->chmap_exist) अणु
 		slot = EDMA_CHAN_SLOT(slot);
-		edma_write_array(ecc, EDMA_DCHMAP, channel, (slot << 5));
-	}
-}
+		edma_ग_लिखो_array(ecc, EDMA_DCHMAP, channel, (slot << 5));
+	पूर्ण
+पूर्ण
 
-static void edma_setup_interrupt(struct edma_chan *echan, bool enable)
-{
-	struct edma_cc *ecc = echan->ecc;
-	int channel = EDMA_CHAN_SLOT(echan->ch_num);
-	int idx = EDMA_REG_ARRAY_INDEX(channel);
-	int ch_bit = EDMA_CHANNEL_BIT(channel);
+अटल व्योम edma_setup_पूर्णांकerrupt(काष्ठा edma_chan *echan, bool enable)
+अणु
+	काष्ठा edma_cc *ecc = echan->ecc;
+	पूर्णांक channel = EDMA_CHAN_SLOT(echan->ch_num);
+	पूर्णांक idx = EDMA_REG_ARRAY_INDEX(channel);
+	पूर्णांक ch_bit = EDMA_CHANNEL_BIT(channel);
 
-	if (enable) {
-		edma_shadow0_write_array(ecc, SH_ICR, idx, ch_bit);
-		edma_shadow0_write_array(ecc, SH_IESR, idx, ch_bit);
-	} else {
-		edma_shadow0_write_array(ecc, SH_IECR, idx, ch_bit);
-	}
-}
+	अगर (enable) अणु
+		edma_shaकरोw0_ग_लिखो_array(ecc, SH_ICR, idx, ch_bit);
+		edma_shaकरोw0_ग_लिखो_array(ecc, SH_IESR, idx, ch_bit);
+	पूर्ण अन्यथा अणु
+		edma_shaकरोw0_ग_लिखो_array(ecc, SH_IECR, idx, ch_bit);
+	पूर्ण
+पूर्ण
 
 /*
  * paRAM slot management functions
  */
-static void edma_write_slot(struct edma_cc *ecc, unsigned slot,
-			    const struct edmacc_param *param)
-{
+अटल व्योम edma_ग_लिखो_slot(काष्ठा edma_cc *ecc, अचिन्हित slot,
+			    स्थिर काष्ठा edmacc_param *param)
+अणु
 	slot = EDMA_CHAN_SLOT(slot);
-	if (slot >= ecc->num_slots)
-		return;
-	memcpy_toio(ecc->base + PARM_OFFSET(slot), param, PARM_SIZE);
-}
+	अगर (slot >= ecc->num_slots)
+		वापस;
+	स_नकल_toio(ecc->base + PARM_OFFSET(slot), param, PARM_SIZE);
+पूर्ण
 
-static int edma_read_slot(struct edma_cc *ecc, unsigned slot,
-			   struct edmacc_param *param)
-{
+अटल पूर्णांक edma_पढ़ो_slot(काष्ठा edma_cc *ecc, अचिन्हित slot,
+			   काष्ठा edmacc_param *param)
+अणु
 	slot = EDMA_CHAN_SLOT(slot);
-	if (slot >= ecc->num_slots)
-		return -EINVAL;
-	memcpy_fromio(param, ecc->base + PARM_OFFSET(slot), PARM_SIZE);
+	अगर (slot >= ecc->num_slots)
+		वापस -EINVAL;
+	स_नकल_fromio(param, ecc->base + PARM_OFFSET(slot), PARM_SIZE);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * edma_alloc_slot - allocate DMA parameter RAM
- * @ecc: pointer to edma_cc struct
- * @slot: specific slot to allocate; negative for "any unused slot"
+ * @ecc: poपूर्णांकer to edma_cc काष्ठा
+ * @slot: specअगरic slot to allocate; negative क्रम "any unused slot"
  *
  * This allocates a parameter RAM slot, initializing it to hold a
  * dummy transfer.  Slots allocated using this routine have not been
  * mapped to a hardware DMA channel, and will normally be used by
  * linking to them from a slot associated with a DMA channel.
  *
- * Normal use is to pass EDMA_SLOT_ANY as the @slot, but specific
+ * Normal use is to pass EDMA_SLOT_ANY as the @slot, but specअगरic
  * slots may be allocated on behalf of DSP firmware.
  *
- * Returns the number of the slot, else negative errno.
+ * Returns the number of the slot, अन्यथा negative त्रुटि_सं.
  */
-static int edma_alloc_slot(struct edma_cc *ecc, int slot)
-{
-	if (slot >= 0) {
+अटल पूर्णांक edma_alloc_slot(काष्ठा edma_cc *ecc, पूर्णांक slot)
+अणु
+	अगर (slot >= 0) अणु
 		slot = EDMA_CHAN_SLOT(slot);
-		/* Requesting entry paRAM slot for a HW triggered channel. */
-		if (ecc->chmap_exist && slot < ecc->num_channels)
+		/* Requesting entry paRAM slot क्रम a HW triggered channel. */
+		अगर (ecc->chmap_exist && slot < ecc->num_channels)
 			slot = EDMA_SLOT_ANY;
-	}
+	पूर्ण
 
-	if (slot < 0) {
-		if (ecc->chmap_exist)
+	अगर (slot < 0) अणु
+		अगर (ecc->chmap_exist)
 			slot = 0;
-		else
+		अन्यथा
 			slot = ecc->num_channels;
-		for (;;) {
+		क्रम (;;) अणु
 			slot = find_next_zero_bit(ecc->slot_inuse,
 						  ecc->num_slots,
 						  slot);
-			if (slot == ecc->num_slots)
-				return -ENOMEM;
-			if (!test_and_set_bit(slot, ecc->slot_inuse))
-				break;
-		}
-	} else if (slot >= ecc->num_slots) {
-		return -EINVAL;
-	} else if (test_and_set_bit(slot, ecc->slot_inuse)) {
-		return -EBUSY;
-	}
+			अगर (slot == ecc->num_slots)
+				वापस -ENOMEM;
+			अगर (!test_and_set_bit(slot, ecc->slot_inuse))
+				अवरोध;
+		पूर्ण
+	पूर्ण अन्यथा अगर (slot >= ecc->num_slots) अणु
+		वापस -EINVAL;
+	पूर्ण अन्यथा अगर (test_and_set_bit(slot, ecc->slot_inuse)) अणु
+		वापस -EBUSY;
+	पूर्ण
 
-	edma_write_slot(ecc, slot, &dummy_paramset);
+	edma_ग_लिखो_slot(ecc, slot, &dummy_paramset);
 
-	return EDMA_CTLR_CHAN(ecc->id, slot);
-}
+	वापस EDMA_CTLR_CHAN(ecc->id, slot);
+पूर्ण
 
-static void edma_free_slot(struct edma_cc *ecc, unsigned slot)
-{
+अटल व्योम edma_मुक्त_slot(काष्ठा edma_cc *ecc, अचिन्हित slot)
+अणु
 	slot = EDMA_CHAN_SLOT(slot);
-	if (slot >= ecc->num_slots)
-		return;
+	अगर (slot >= ecc->num_slots)
+		वापस;
 
-	edma_write_slot(ecc, slot, &dummy_paramset);
+	edma_ग_लिखो_slot(ecc, slot, &dummy_paramset);
 	clear_bit(slot, ecc->slot_inuse);
-}
+पूर्ण
 
 /**
  * edma_link - link one parameter RAM slot to another
- * @ecc: pointer to edma_cc struct
+ * @ecc: poपूर्णांकer to edma_cc काष्ठा
  * @from: parameter RAM slot originating the link
  * @to: parameter RAM slot which is the link target
  *
  * The originating slot should not be part of any active DMA transfer.
  */
-static void edma_link(struct edma_cc *ecc, unsigned from, unsigned to)
-{
-	if (unlikely(EDMA_CTLR(from) != EDMA_CTLR(to)))
+अटल व्योम edma_link(काष्ठा edma_cc *ecc, अचिन्हित from, अचिन्हित to)
+अणु
+	अगर (unlikely(EDMA_CTLR(from) != EDMA_CTLR(to)))
 		dev_warn(ecc->dev, "Ignoring eDMA instance for linking\n");
 
 	from = EDMA_CHAN_SLOT(from);
 	to = EDMA_CHAN_SLOT(to);
-	if (from >= ecc->num_slots || to >= ecc->num_slots)
-		return;
+	अगर (from >= ecc->num_slots || to >= ecc->num_slots)
+		वापस;
 
-	edma_param_modify(ecc, PARM_LINK_BCNTRLD, from, 0xffff0000,
+	edma_param_modअगरy(ecc, PARM_LINK_BCNTRLD, from, 0xffff0000,
 			  PARM_OFFSET(to));
-}
+पूर्ण
 
 /**
- * edma_get_position - returns the current transfer point
- * @ecc: pointer to edma_cc struct
+ * edma_get_position - वापसs the current transfer poपूर्णांक
+ * @ecc: poपूर्णांकer to edma_cc काष्ठा
  * @slot: parameter RAM slot being examined
  * @dst:  true selects the dest position, false the source
  *
  * Returns the position of the current active slot
  */
-static dma_addr_t edma_get_position(struct edma_cc *ecc, unsigned slot,
+अटल dma_addr_t edma_get_position(काष्ठा edma_cc *ecc, अचिन्हित slot,
 				    bool dst)
-{
+अणु
 	u32 offs;
 
 	slot = EDMA_CHAN_SLOT(slot);
 	offs = PARM_OFFSET(slot);
 	offs += dst ? PARM_DST : PARM_SRC;
 
-	return edma_read(ecc, offs);
-}
+	वापस edma_पढ़ो(ecc, offs);
+पूर्ण
 
 /*
  * Channels with event associations will be triggered by their hardware
  * events, and channels without such associations will be triggered by
- * software.  (At this writing there is no interface for using software
- * triggers except with channels that don't support hardware triggers.)
+ * software.  (At this writing there is no पूर्णांकerface क्रम using software
+ * triggers except with channels that करोn't support hardware triggers.)
  */
-static void edma_start(struct edma_chan *echan)
-{
-	struct edma_cc *ecc = echan->ecc;
-	int channel = EDMA_CHAN_SLOT(echan->ch_num);
-	int idx = EDMA_REG_ARRAY_INDEX(channel);
-	int ch_bit = EDMA_CHANNEL_BIT(channel);
+अटल व्योम edma_start(काष्ठा edma_chan *echan)
+अणु
+	काष्ठा edma_cc *ecc = echan->ecc;
+	पूर्णांक channel = EDMA_CHAN_SLOT(echan->ch_num);
+	पूर्णांक idx = EDMA_REG_ARRAY_INDEX(channel);
+	पूर्णांक ch_bit = EDMA_CHANNEL_BIT(channel);
 
-	if (!echan->hw_triggered) {
+	अगर (!echan->hw_triggered) अणु
 		/* EDMA channels without event association */
 		dev_dbg(ecc->dev, "ESR%d %08x\n", idx,
-			edma_shadow0_read_array(ecc, SH_ESR, idx));
-		edma_shadow0_write_array(ecc, SH_ESR, idx, ch_bit);
-	} else {
+			edma_shaकरोw0_पढ़ो_array(ecc, SH_ESR, idx));
+		edma_shaकरोw0_ग_लिखो_array(ecc, SH_ESR, idx, ch_bit);
+	पूर्ण अन्यथा अणु
 		/* EDMA channel with event association */
 		dev_dbg(ecc->dev, "ER%d %08x\n", idx,
-			edma_shadow0_read_array(ecc, SH_ER, idx));
+			edma_shaकरोw0_पढ़ो_array(ecc, SH_ER, idx));
 		/* Clear any pending event or error */
-		edma_write_array(ecc, EDMA_ECR, idx, ch_bit);
-		edma_write_array(ecc, EDMA_EMCR, idx, ch_bit);
+		edma_ग_लिखो_array(ecc, EDMA_ECR, idx, ch_bit);
+		edma_ग_लिखो_array(ecc, EDMA_EMCR, idx, ch_bit);
 		/* Clear any SER */
-		edma_shadow0_write_array(ecc, SH_SECR, idx, ch_bit);
-		edma_shadow0_write_array(ecc, SH_EESR, idx, ch_bit);
+		edma_shaकरोw0_ग_लिखो_array(ecc, SH_SECR, idx, ch_bit);
+		edma_shaकरोw0_ग_लिखो_array(ecc, SH_EESR, idx, ch_bit);
 		dev_dbg(ecc->dev, "EER%d %08x\n", idx,
-			edma_shadow0_read_array(ecc, SH_EER, idx));
-	}
-}
+			edma_shaकरोw0_पढ़ो_array(ecc, SH_EER, idx));
+	पूर्ण
+पूर्ण
 
-static void edma_stop(struct edma_chan *echan)
-{
-	struct edma_cc *ecc = echan->ecc;
-	int channel = EDMA_CHAN_SLOT(echan->ch_num);
-	int idx = EDMA_REG_ARRAY_INDEX(channel);
-	int ch_bit = EDMA_CHANNEL_BIT(channel);
+अटल व्योम edma_stop(काष्ठा edma_chan *echan)
+अणु
+	काष्ठा edma_cc *ecc = echan->ecc;
+	पूर्णांक channel = EDMA_CHAN_SLOT(echan->ch_num);
+	पूर्णांक idx = EDMA_REG_ARRAY_INDEX(channel);
+	पूर्णांक ch_bit = EDMA_CHANNEL_BIT(channel);
 
-	edma_shadow0_write_array(ecc, SH_EECR, idx, ch_bit);
-	edma_shadow0_write_array(ecc, SH_ECR, idx, ch_bit);
-	edma_shadow0_write_array(ecc, SH_SECR, idx, ch_bit);
-	edma_write_array(ecc, EDMA_EMCR, idx, ch_bit);
+	edma_shaकरोw0_ग_लिखो_array(ecc, SH_EECR, idx, ch_bit);
+	edma_shaकरोw0_ग_लिखो_array(ecc, SH_ECR, idx, ch_bit);
+	edma_shaकरोw0_ग_लिखो_array(ecc, SH_SECR, idx, ch_bit);
+	edma_ग_लिखो_array(ecc, EDMA_EMCR, idx, ch_bit);
 
-	/* clear possibly pending completion interrupt */
-	edma_shadow0_write_array(ecc, SH_ICR, idx, ch_bit);
+	/* clear possibly pending completion पूर्णांकerrupt */
+	edma_shaकरोw0_ग_लिखो_array(ecc, SH_ICR, idx, ch_bit);
 
 	dev_dbg(ecc->dev, "EER%d %08x\n", idx,
-		edma_shadow0_read_array(ecc, SH_EER, idx));
+		edma_shaकरोw0_पढ़ो_array(ecc, SH_EER, idx));
 
 	/* REVISIT:  consider guarding against inappropriate event
 	 * chaining by overwriting with dummy_paramset.
 	 */
-}
+पूर्ण
 
 /*
- * Temporarily disable EDMA hardware events on the specified channel,
+ * Temporarily disable EDMA hardware events on the specअगरied channel,
  * preventing them from triggering new transfers
  */
-static void edma_pause(struct edma_chan *echan)
-{
-	int channel = EDMA_CHAN_SLOT(echan->ch_num);
+अटल व्योम edma_छोड़ो(काष्ठा edma_chan *echan)
+अणु
+	पूर्णांक channel = EDMA_CHAN_SLOT(echan->ch_num);
 
-	edma_shadow0_write_array(echan->ecc, SH_EECR,
+	edma_shaकरोw0_ग_लिखो_array(echan->ecc, SH_EECR,
 				 EDMA_REG_ARRAY_INDEX(channel),
 				 EDMA_CHANNEL_BIT(channel));
-}
+पूर्ण
 
-/* Re-enable EDMA hardware events on the specified channel.  */
-static void edma_resume(struct edma_chan *echan)
-{
-	int channel = EDMA_CHAN_SLOT(echan->ch_num);
+/* Re-enable EDMA hardware events on the specअगरied channel.  */
+अटल व्योम edma_resume(काष्ठा edma_chan *echan)
+अणु
+	पूर्णांक channel = EDMA_CHAN_SLOT(echan->ch_num);
 
-	edma_shadow0_write_array(echan->ecc, SH_EESR,
+	edma_shaकरोw0_ग_लिखो_array(echan->ecc, SH_EESR,
 				 EDMA_REG_ARRAY_INDEX(channel),
 				 EDMA_CHANNEL_BIT(channel));
-}
+पूर्ण
 
-static void edma_trigger_channel(struct edma_chan *echan)
-{
-	struct edma_cc *ecc = echan->ecc;
-	int channel = EDMA_CHAN_SLOT(echan->ch_num);
-	int idx = EDMA_REG_ARRAY_INDEX(channel);
-	int ch_bit = EDMA_CHANNEL_BIT(channel);
+अटल व्योम edma_trigger_channel(काष्ठा edma_chan *echan)
+अणु
+	काष्ठा edma_cc *ecc = echan->ecc;
+	पूर्णांक channel = EDMA_CHAN_SLOT(echan->ch_num);
+	पूर्णांक idx = EDMA_REG_ARRAY_INDEX(channel);
+	पूर्णांक ch_bit = EDMA_CHANNEL_BIT(channel);
 
-	edma_shadow0_write_array(ecc, SH_ESR, idx, ch_bit);
+	edma_shaकरोw0_ग_लिखो_array(ecc, SH_ESR, idx, ch_bit);
 
 	dev_dbg(ecc->dev, "ESR%d %08x\n", idx,
-		edma_shadow0_read_array(ecc, SH_ESR, idx));
-}
+		edma_shaकरोw0_पढ़ो_array(ecc, SH_ESR, idx));
+पूर्ण
 
-static void edma_clean_channel(struct edma_chan *echan)
-{
-	struct edma_cc *ecc = echan->ecc;
-	int channel = EDMA_CHAN_SLOT(echan->ch_num);
-	int idx = EDMA_REG_ARRAY_INDEX(channel);
-	int ch_bit = EDMA_CHANNEL_BIT(channel);
+अटल व्योम edma_clean_channel(काष्ठा edma_chan *echan)
+अणु
+	काष्ठा edma_cc *ecc = echan->ecc;
+	पूर्णांक channel = EDMA_CHAN_SLOT(echan->ch_num);
+	पूर्णांक idx = EDMA_REG_ARRAY_INDEX(channel);
+	पूर्णांक ch_bit = EDMA_CHANNEL_BIT(channel);
 
 	dev_dbg(ecc->dev, "EMR%d %08x\n", idx,
-		edma_read_array(ecc, EDMA_EMR, idx));
-	edma_shadow0_write_array(ecc, SH_ECR, idx, ch_bit);
+		edma_पढ़ो_array(ecc, EDMA_EMR, idx));
+	edma_shaकरोw0_ग_लिखो_array(ecc, SH_ECR, idx, ch_bit);
 	/* Clear the corresponding EMR bits */
-	edma_write_array(ecc, EDMA_EMCR, idx, ch_bit);
+	edma_ग_लिखो_array(ecc, EDMA_EMCR, idx, ch_bit);
 	/* Clear any SER */
-	edma_shadow0_write_array(ecc, SH_SECR, idx, ch_bit);
-	edma_write(ecc, EDMA_CCERRCLR, BIT(16) | BIT(1) | BIT(0));
-}
+	edma_shaकरोw0_ग_लिखो_array(ecc, SH_SECR, idx, ch_bit);
+	edma_ग_लिखो(ecc, EDMA_CCERRCLR, BIT(16) | BIT(1) | BIT(0));
+पूर्ण
 
-/* Move channel to a specific event queue */
-static void edma_assign_channel_eventq(struct edma_chan *echan,
-				       enum dma_event_q eventq_no)
-{
-	struct edma_cc *ecc = echan->ecc;
-	int channel = EDMA_CHAN_SLOT(echan->ch_num);
-	int bit = (channel & 0x7) * 4;
+/* Move channel to a specअगरic event queue */
+अटल व्योम edma_assign_channel_eventq(काष्ठा edma_chan *echan,
+				       क्रमागत dma_event_q eventq_no)
+अणु
+	काष्ठा edma_cc *ecc = echan->ecc;
+	पूर्णांक channel = EDMA_CHAN_SLOT(echan->ch_num);
+	पूर्णांक bit = (channel & 0x7) * 4;
 
-	/* default to low priority queue */
-	if (eventq_no == EVENTQ_DEFAULT)
-		eventq_no = ecc->default_queue;
-	if (eventq_no >= ecc->num_tc)
-		return;
+	/* शेष to low priority queue */
+	अगर (eventq_no == EVENTQ_DEFAULT)
+		eventq_no = ecc->शेष_queue;
+	अगर (eventq_no >= ecc->num_tc)
+		वापस;
 
 	eventq_no &= 7;
-	edma_modify_array(ecc, EDMA_DMAQNUM, (channel >> 3), ~(0x7 << bit),
+	edma_modअगरy_array(ecc, EDMA_DMAQNUM, (channel >> 3), ~(0x7 << bit),
 			  eventq_no << bit);
-}
+पूर्ण
 
-static int edma_alloc_channel(struct edma_chan *echan,
-			      enum dma_event_q eventq_no)
-{
-	struct edma_cc *ecc = echan->ecc;
-	int channel = EDMA_CHAN_SLOT(echan->ch_num);
+अटल पूर्णांक edma_alloc_channel(काष्ठा edma_chan *echan,
+			      क्रमागत dma_event_q eventq_no)
+अणु
+	काष्ठा edma_cc *ecc = echan->ecc;
+	पूर्णांक channel = EDMA_CHAN_SLOT(echan->ch_num);
 
-	if (!test_bit(echan->ch_num, ecc->channels_mask)) {
+	अगर (!test_bit(echan->ch_num, ecc->channels_mask)) अणु
 		dev_err(ecc->dev, "Channel%d is reserved, can not be used!\n",
 			echan->ch_num);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	/* ensure access through shadow region 0 */
+	/* ensure access through shaकरोw region 0 */
 	edma_or_array2(ecc, EDMA_DRAE, 0, EDMA_REG_ARRAY_INDEX(channel),
 		       EDMA_CHANNEL_BIT(channel));
 
 	/* ensure no events are pending */
 	edma_stop(echan);
 
-	edma_setup_interrupt(echan, true);
+	edma_setup_पूर्णांकerrupt(echan, true);
 
 	edma_assign_channel_eventq(echan, eventq_no);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void edma_free_channel(struct edma_chan *echan)
-{
+अटल व्योम edma_मुक्त_channel(काष्ठा edma_chan *echan)
+अणु
 	/* ensure no events are pending */
 	edma_stop(echan);
-	/* REVISIT should probably take out of shadow region 0 */
-	edma_setup_interrupt(echan, false);
-}
+	/* REVISIT should probably take out of shaकरोw region 0 */
+	edma_setup_पूर्णांकerrupt(echan, false);
+पूर्ण
 
-static inline struct edma_cc *to_edma_cc(struct dma_device *d)
-{
-	return container_of(d, struct edma_cc, dma_slave);
-}
+अटल अंतरभूत काष्ठा edma_cc *to_edma_cc(काष्ठा dma_device *d)
+अणु
+	वापस container_of(d, काष्ठा edma_cc, dma_slave);
+पूर्ण
 
-static inline struct edma_chan *to_edma_chan(struct dma_chan *c)
-{
-	return container_of(c, struct edma_chan, vchan.chan);
-}
+अटल अंतरभूत काष्ठा edma_chan *to_edma_chan(काष्ठा dma_chan *c)
+अणु
+	वापस container_of(c, काष्ठा edma_chan, vchan.chan);
+पूर्ण
 
-static inline struct edma_desc *to_edma_desc(struct dma_async_tx_descriptor *tx)
-{
-	return container_of(tx, struct edma_desc, vdesc.tx);
-}
+अटल अंतरभूत काष्ठा edma_desc *to_edma_desc(काष्ठा dma_async_tx_descriptor *tx)
+अणु
+	वापस container_of(tx, काष्ठा edma_desc, vdesc.tx);
+पूर्ण
 
-static void edma_desc_free(struct virt_dma_desc *vdesc)
-{
-	kfree(container_of(vdesc, struct edma_desc, vdesc));
-}
+अटल व्योम edma_desc_मुक्त(काष्ठा virt_dma_desc *vdesc)
+अणु
+	kमुक्त(container_of(vdesc, काष्ठा edma_desc, vdesc));
+पूर्ण
 
 /* Dispatch a queued descriptor to the controller (caller holds lock) */
-static void edma_execute(struct edma_chan *echan)
-{
-	struct edma_cc *ecc = echan->ecc;
-	struct virt_dma_desc *vdesc;
-	struct edma_desc *edesc;
-	struct device *dev = echan->vchan.chan.device->dev;
-	int i, j, left, nslots;
+अटल व्योम edma_execute(काष्ठा edma_chan *echan)
+अणु
+	काष्ठा edma_cc *ecc = echan->ecc;
+	काष्ठा virt_dma_desc *vdesc;
+	काष्ठा edma_desc *edesc;
+	काष्ठा device *dev = echan->vchan.chan.device->dev;
+	पूर्णांक i, j, left, nslots;
 
-	if (!echan->edesc) {
-		/* Setup is needed for the first transfer */
+	अगर (!echan->edesc) अणु
+		/* Setup is needed क्रम the first transfer */
 		vdesc = vchan_next_desc(&echan->vchan);
-		if (!vdesc)
-			return;
+		अगर (!vdesc)
+			वापस;
 		list_del(&vdesc->node);
 		echan->edesc = to_edma_desc(&vdesc->tx);
-	}
+	पूर्ण
 
 	edesc = echan->edesc;
 
@@ -797,9 +798,9 @@ static void edma_execute(struct edma_chan *echan)
 	edesc->sg_len = 0;
 
 	/* Write descriptor PaRAM set(s) */
-	for (i = 0; i < nslots; i++) {
+	क्रम (i = 0; i < nslots; i++) अणु
 		j = i + edesc->processed;
-		edma_write_slot(ecc, echan->slot[i], &edesc->pset[j].param);
+		edma_ग_लिखो_slot(ecc, echan->slot[i], &edesc->pset[j].param);
 		edesc->sg_len += edesc->pset[j].len;
 		dev_vdbg(dev,
 			 "\n pset[%d]:\n"
@@ -822,30 +823,30 @@ static void edma_execute(struct edma_chan *echan)
 			 edesc->pset[j].param.src_dst_bidx,
 			 edesc->pset[j].param.src_dst_cidx,
 			 edesc->pset[j].param.link_bcntrld);
-		/* Link to the previous slot if not the last set */
-		if (i != (nslots - 1))
+		/* Link to the previous slot अगर not the last set */
+		अगर (i != (nslots - 1))
 			edma_link(ecc, echan->slot[i], echan->slot[i + 1]);
-	}
+	पूर्ण
 
 	edesc->processed += nslots;
 
 	/*
 	 * If this is either the last set in a set of SG-list transactions
 	 * then setup a link to the dummy slot, this results in all future
-	 * events being absorbed and that's OK because we're done
+	 * events being असलorbed and that's OK because we're करोne
 	 */
-	if (edesc->processed == edesc->pset_nr) {
-		if (edesc->cyclic)
+	अगर (edesc->processed == edesc->pset_nr) अणु
+		अगर (edesc->cyclic)
 			edma_link(ecc, echan->slot[nslots - 1], echan->slot[1]);
-		else
+		अन्यथा
 			edma_link(ecc, echan->slot[nslots - 1],
 				  echan->ecc->dummy_slot);
-	}
+	पूर्ण
 
-	if (echan->missed) {
+	अगर (echan->missed) अणु
 		/*
-		 * This happens due to setup times between intermediate
-		 * transfers in long SG lists which have to be broken up into
+		 * This happens due to setup बार between पूर्णांकermediate
+		 * transfers in दीर्घ SG lists which have to be broken up पूर्णांकo
 		 * transfers of MAX_NR_SG
 		 */
 		dev_dbg(dev, "missed event on channel %d\n", echan->ch_num);
@@ -854,93 +855,93 @@ static void edma_execute(struct edma_chan *echan)
 		edma_start(echan);
 		edma_trigger_channel(echan);
 		echan->missed = 0;
-	} else if (edesc->processed <= MAX_NR_SG) {
+	पूर्ण अन्यथा अगर (edesc->processed <= MAX_NR_SG) अणु
 		dev_dbg(dev, "first transfer starting on channel %d\n",
 			echan->ch_num);
 		edma_start(echan);
-	} else {
+	पूर्ण अन्यथा अणु
 		dev_dbg(dev, "chan: %d: completed %d elements, resuming\n",
 			echan->ch_num, edesc->processed);
 		edma_resume(echan);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int edma_terminate_all(struct dma_chan *chan)
-{
-	struct edma_chan *echan = to_edma_chan(chan);
-	unsigned long flags;
+अटल पूर्णांक edma_terminate_all(काष्ठा dma_chan *chan)
+अणु
+	काष्ठा edma_chan *echan = to_edma_chan(chan);
+	अचिन्हित दीर्घ flags;
 	LIST_HEAD(head);
 
 	spin_lock_irqsave(&echan->vchan.lock, flags);
 
 	/*
 	 * Stop DMA activity: we assume the callback will not be called
-	 * after edma_dma() returns (even if it does, it will see
-	 * echan->edesc is NULL and exit.)
+	 * after edma_dma() वापसs (even अगर it करोes, it will see
+	 * echan->edesc is शून्य and निकास.)
 	 */
-	if (echan->edesc) {
+	अगर (echan->edesc) अणु
 		edma_stop(echan);
-		/* Move the cyclic channel back to default queue */
-		if (!echan->tc && echan->edesc->cyclic)
+		/* Move the cyclic channel back to शेष queue */
+		अगर (!echan->tc && echan->edesc->cyclic)
 			edma_assign_channel_eventq(echan, EVENTQ_DEFAULT);
 
 		vchan_terminate_vdesc(&echan->edesc->vdesc);
-		echan->edesc = NULL;
-	}
+		echan->edesc = शून्य;
+	पूर्ण
 
 	vchan_get_all_descriptors(&echan->vchan, &head);
 	spin_unlock_irqrestore(&echan->vchan.lock, flags);
-	vchan_dma_desc_free_list(&echan->vchan, &head);
+	vchan_dma_desc_मुक्त_list(&echan->vchan, &head);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void edma_synchronize(struct dma_chan *chan)
-{
-	struct edma_chan *echan = to_edma_chan(chan);
+अटल व्योम edma_synchronize(काष्ठा dma_chan *chan)
+अणु
+	काष्ठा edma_chan *echan = to_edma_chan(chan);
 
 	vchan_synchronize(&echan->vchan);
-}
+पूर्ण
 
-static int edma_slave_config(struct dma_chan *chan,
-	struct dma_slave_config *cfg)
-{
-	struct edma_chan *echan = to_edma_chan(chan);
+अटल पूर्णांक edma_slave_config(काष्ठा dma_chan *chan,
+	काष्ठा dma_slave_config *cfg)
+अणु
+	काष्ठा edma_chan *echan = to_edma_chan(chan);
 
-	if (cfg->src_addr_width == DMA_SLAVE_BUSWIDTH_8_BYTES ||
+	अगर (cfg->src_addr_width == DMA_SLAVE_BUSWIDTH_8_BYTES ||
 	    cfg->dst_addr_width == DMA_SLAVE_BUSWIDTH_8_BYTES)
-		return -EINVAL;
+		वापस -EINVAL;
 
-	if (cfg->src_maxburst > chan->device->max_burst ||
+	अगर (cfg->src_maxburst > chan->device->max_burst ||
 	    cfg->dst_maxburst > chan->device->max_burst)
-		return -EINVAL;
+		वापस -EINVAL;
 
-	memcpy(&echan->cfg, cfg, sizeof(echan->cfg));
+	स_नकल(&echan->cfg, cfg, माप(echan->cfg));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int edma_dma_pause(struct dma_chan *chan)
-{
-	struct edma_chan *echan = to_edma_chan(chan);
+अटल पूर्णांक edma_dma_छोड़ो(काष्ठा dma_chan *chan)
+अणु
+	काष्ठा edma_chan *echan = to_edma_chan(chan);
 
-	if (!echan->edesc)
-		return -EINVAL;
+	अगर (!echan->edesc)
+		वापस -EINVAL;
 
-	edma_pause(echan);
-	return 0;
-}
+	edma_छोड़ो(echan);
+	वापस 0;
+पूर्ण
 
-static int edma_dma_resume(struct dma_chan *chan)
-{
-	struct edma_chan *echan = to_edma_chan(chan);
+अटल पूर्णांक edma_dma_resume(काष्ठा dma_chan *chan)
+अणु
+	काष्ठा edma_chan *echan = to_edma_chan(chan);
 
 	edma_resume(echan);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * A PaRAM set configuration abstraction used by other modes
+ * A PaRAM set configuration असलtraction used by other modes
  * @chan: Channel who's PaRAM set we're configuring
  * @pset: PaRAM set to initialize and setup.
  * @src_addr: Source address of the DMA
@@ -950,99 +951,99 @@ static int edma_dma_resume(struct dma_chan *chan)
  * @dma_length: Total length of the DMA transfer
  * @direction: Direction of the transfer
  */
-static int edma_config_pset(struct dma_chan *chan, struct edma_pset *epset,
+अटल पूर्णांक edma_config_pset(काष्ठा dma_chan *chan, काष्ठा edma_pset *epset,
 			    dma_addr_t src_addr, dma_addr_t dst_addr, u32 burst,
-			    unsigned int acnt, unsigned int dma_length,
-			    enum dma_transfer_direction direction)
-{
-	struct edma_chan *echan = to_edma_chan(chan);
-	struct device *dev = chan->device->dev;
-	struct edmacc_param *param = &epset->param;
-	int bcnt, ccnt, cidx;
-	int src_bidx, dst_bidx, src_cidx, dst_cidx;
-	int absync;
+			    अचिन्हित पूर्णांक acnt, अचिन्हित पूर्णांक dma_length,
+			    क्रमागत dma_transfer_direction direction)
+अणु
+	काष्ठा edma_chan *echan = to_edma_chan(chan);
+	काष्ठा device *dev = chan->device->dev;
+	काष्ठा edmacc_param *param = &epset->param;
+	पूर्णांक bcnt, ccnt, cidx;
+	पूर्णांक src_bidx, dst_bidx, src_cidx, dst_cidx;
+	पूर्णांक असलync;
 
-	/* src/dst_maxburst == 0 is the same case as src/dst_maxburst == 1 */
-	if (!burst)
+	/* src/dst_maxburst == 0 is the same हाल as src/dst_maxburst == 1 */
+	अगर (!burst)
 		burst = 1;
 	/*
-	 * If the maxburst is equal to the fifo width, use
-	 * A-synced transfers. This allows for large contiguous
+	 * If the maxburst is equal to the fअगरo width, use
+	 * A-synced transfers. This allows क्रम large contiguous
 	 * buffer transfers using only one PaRAM set.
 	 */
-	if (burst == 1) {
+	अगर (burst == 1) अणु
 		/*
-		 * For the A-sync case, bcnt and ccnt are the remainder
-		 * and quotient respectively of the division of:
+		 * For the A-sync हाल, bcnt and ccnt are the reमुख्यder
+		 * and quotient respectively of the भागision of:
 		 * (dma_length / acnt) by (SZ_64K -1). This is so
-		 * that in case bcnt over flows, we have ccnt to use.
+		 * that in हाल bcnt over flows, we have ccnt to use.
 		 * Note: In A-sync tranfer only, bcntrld is used, but it
-		 * only applies for sg_dma_len(sg) >= SZ_64K.
-		 * In this case, the best way adopted is- bccnt for the
-		 * first frame will be the remainder below. Then for
+		 * only applies क्रम sg_dma_len(sg) >= SZ_64K.
+		 * In this हाल, the best way aकरोpted is- bccnt क्रम the
+		 * first frame will be the reमुख्यder below. Then क्रम
 		 * every successive frame, bcnt will be SZ_64K-1. This
 		 * is assured as bcntrld = 0xffff in end of function.
 		 */
-		absync = false;
+		असलync = false;
 		ccnt = dma_length / acnt / (SZ_64K - 1);
 		bcnt = dma_length / acnt - ccnt * (SZ_64K - 1);
 		/*
-		 * If bcnt is non-zero, we have a remainder and hence an
+		 * If bcnt is non-zero, we have a reमुख्यder and hence an
 		 * extra frame to transfer, so increment ccnt.
 		 */
-		if (bcnt)
+		अगर (bcnt)
 			ccnt++;
-		else
+		अन्यथा
 			bcnt = SZ_64K - 1;
 		cidx = acnt;
-	} else {
+	पूर्ण अन्यथा अणु
 		/*
-		 * If maxburst is greater than the fifo address_width,
-		 * use AB-synced transfers where A count is the fifo
+		 * If maxburst is greater than the fअगरo address_width,
+		 * use AB-synced transfers where A count is the fअगरo
 		 * address_width and B count is the maxburst. In this
-		 * case, we are limited to transfers of C count frames
+		 * हाल, we are limited to transfers of C count frames
 		 * of (address_width * maxburst) where C count is limited
 		 * to SZ_64K-1. This places an upper bound on the length
 		 * of an SG segment that can be handled.
 		 */
-		absync = true;
+		असलync = true;
 		bcnt = burst;
 		ccnt = dma_length / (acnt * bcnt);
-		if (ccnt > (SZ_64K - 1)) {
+		अगर (ccnt > (SZ_64K - 1)) अणु
 			dev_err(dev, "Exceeded max SG segment size\n");
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 		cidx = acnt * bcnt;
-	}
+	पूर्ण
 
 	epset->len = dma_length;
 
-	if (direction == DMA_MEM_TO_DEV) {
+	अगर (direction == DMA_MEM_TO_DEV) अणु
 		src_bidx = acnt;
 		src_cidx = cidx;
 		dst_bidx = 0;
 		dst_cidx = 0;
 		epset->addr = src_addr;
-	} else if (direction == DMA_DEV_TO_MEM)  {
+	पूर्ण अन्यथा अगर (direction == DMA_DEV_TO_MEM)  अणु
 		src_bidx = 0;
 		src_cidx = 0;
 		dst_bidx = acnt;
 		dst_cidx = cidx;
 		epset->addr = dst_addr;
-	} else if (direction == DMA_MEM_TO_MEM)  {
+	पूर्ण अन्यथा अगर (direction == DMA_MEM_TO_MEM)  अणु
 		src_bidx = acnt;
 		src_cidx = cidx;
 		dst_bidx = acnt;
 		dst_cidx = cidx;
 		epset->addr = src_addr;
-	} else {
+	पूर्ण अन्यथा अणु
 		dev_err(dev, "%s: direction not implemented yet\n", __func__);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	param->opt = EDMA_TCC(EDMA_CHAN_SLOT(echan->ch_num));
 	/* Configure A or AB synchronized transfers */
-	if (absync)
+	अगर (असलync)
 		param->opt |= SYNCDIM;
 
 	param->src = src_addr;
@@ -1054,138 +1055,138 @@ static int edma_config_pset(struct dma_chan *chan, struct edma_pset *epset,
 	param->a_b_cnt = bcnt << 16 | acnt;
 	param->ccnt = ccnt;
 	/*
-	 * Only time when (bcntrld) auto reload is required is for
-	 * A-sync case, and in this case, a requirement of reload value
-	 * of SZ_64K-1 only is assured. 'link' is initially set to NULL
+	 * Only समय when (bcntrld) स्वतः reload is required is क्रम
+	 * A-sync हाल, and in this हाल, a requirement of reload value
+	 * of SZ_64K-1 only is assured. 'link' is initially set to शून्य
 	 * and then later will be populated by edma_execute.
 	 */
 	param->link_bcntrld = 0xffffffff;
-	return absync;
-}
+	वापस असलync;
+पूर्ण
 
-static struct dma_async_tx_descriptor *edma_prep_slave_sg(
-	struct dma_chan *chan, struct scatterlist *sgl,
-	unsigned int sg_len, enum dma_transfer_direction direction,
-	unsigned long tx_flags, void *context)
-{
-	struct edma_chan *echan = to_edma_chan(chan);
-	struct device *dev = chan->device->dev;
-	struct edma_desc *edesc;
+अटल काष्ठा dma_async_tx_descriptor *edma_prep_slave_sg(
+	काष्ठा dma_chan *chan, काष्ठा scatterlist *sgl,
+	अचिन्हित पूर्णांक sg_len, क्रमागत dma_transfer_direction direction,
+	अचिन्हित दीर्घ tx_flags, व्योम *context)
+अणु
+	काष्ठा edma_chan *echan = to_edma_chan(chan);
+	काष्ठा device *dev = chan->device->dev;
+	काष्ठा edma_desc *edesc;
 	dma_addr_t src_addr = 0, dst_addr = 0;
-	enum dma_slave_buswidth dev_width;
+	क्रमागत dma_slave_buswidth dev_width;
 	u32 burst;
-	struct scatterlist *sg;
-	int i, nslots, ret;
+	काष्ठा scatterlist *sg;
+	पूर्णांक i, nslots, ret;
 
-	if (unlikely(!echan || !sgl || !sg_len))
-		return NULL;
+	अगर (unlikely(!echan || !sgl || !sg_len))
+		वापस शून्य;
 
-	if (direction == DMA_DEV_TO_MEM) {
+	अगर (direction == DMA_DEV_TO_MEM) अणु
 		src_addr = echan->cfg.src_addr;
 		dev_width = echan->cfg.src_addr_width;
 		burst = echan->cfg.src_maxburst;
-	} else if (direction == DMA_MEM_TO_DEV) {
+	पूर्ण अन्यथा अगर (direction == DMA_MEM_TO_DEV) अणु
 		dst_addr = echan->cfg.dst_addr;
 		dev_width = echan->cfg.dst_addr_width;
 		burst = echan->cfg.dst_maxburst;
-	} else {
+	पूर्ण अन्यथा अणु
 		dev_err(dev, "%s: bad direction: %d\n", __func__, direction);
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
-	if (dev_width == DMA_SLAVE_BUSWIDTH_UNDEFINED) {
+	अगर (dev_width == DMA_SLAVE_BUSWIDTH_UNDEFINED) अणु
 		dev_err(dev, "%s: Undefined slave buswidth\n", __func__);
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
-	edesc = kzalloc(struct_size(edesc, pset, sg_len), GFP_ATOMIC);
-	if (!edesc)
-		return NULL;
+	edesc = kzalloc(काष्ठा_size(edesc, pset, sg_len), GFP_ATOMIC);
+	अगर (!edesc)
+		वापस शून्य;
 
 	edesc->pset_nr = sg_len;
 	edesc->residue = 0;
 	edesc->direction = direction;
 	edesc->echan = echan;
 
-	/* Allocate a PaRAM slot, if needed */
-	nslots = min_t(unsigned, MAX_NR_SG, sg_len);
+	/* Allocate a PaRAM slot, अगर needed */
+	nslots = min_t(अचिन्हित, MAX_NR_SG, sg_len);
 
-	for (i = 0; i < nslots; i++) {
-		if (echan->slot[i] < 0) {
+	क्रम (i = 0; i < nslots; i++) अणु
+		अगर (echan->slot[i] < 0) अणु
 			echan->slot[i] =
 				edma_alloc_slot(echan->ecc, EDMA_SLOT_ANY);
-			if (echan->slot[i] < 0) {
-				kfree(edesc);
+			अगर (echan->slot[i] < 0) अणु
+				kमुक्त(edesc);
 				dev_err(dev, "%s: Failed to allocate slot\n",
 					__func__);
-				return NULL;
-			}
-		}
-	}
+				वापस शून्य;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	/* Configure PaRAM sets for each SG */
-	for_each_sg(sgl, sg, sg_len, i) {
-		/* Get address for each SG */
-		if (direction == DMA_DEV_TO_MEM)
+	/* Configure PaRAM sets क्रम each SG */
+	क्रम_each_sg(sgl, sg, sg_len, i) अणु
+		/* Get address क्रम each SG */
+		अगर (direction == DMA_DEV_TO_MEM)
 			dst_addr = sg_dma_address(sg);
-		else
+		अन्यथा
 			src_addr = sg_dma_address(sg);
 
 		ret = edma_config_pset(chan, &edesc->pset[i], src_addr,
 				       dst_addr, burst, dev_width,
 				       sg_dma_len(sg), direction);
-		if (ret < 0) {
-			kfree(edesc);
-			return NULL;
-		}
+		अगर (ret < 0) अणु
+			kमुक्त(edesc);
+			वापस शून्य;
+		पूर्ण
 
-		edesc->absync = ret;
+		edesc->असलync = ret;
 		edesc->residue += sg_dma_len(sg);
 
-		if (i == sg_len - 1)
-			/* Enable completion interrupt */
+		अगर (i == sg_len - 1)
+			/* Enable completion पूर्णांकerrupt */
 			edesc->pset[i].param.opt |= TCINTEN;
-		else if (!((i+1) % MAX_NR_SG))
+		अन्यथा अगर (!((i+1) % MAX_NR_SG))
 			/*
-			 * Enable early completion interrupt for the
-			 * intermediateset. In this case the driver will be
-			 * notified when the paRAM set is submitted to TC. This
-			 * will allow more time to set up the next set of slots.
+			 * Enable early completion पूर्णांकerrupt क्रम the
+			 * पूर्णांकermediateset. In this हाल the driver will be
+			 * notअगरied when the paRAM set is submitted to TC. This
+			 * will allow more समय to set up the next set of slots.
 			 */
 			edesc->pset[i].param.opt |= (TCINTEN | TCCMODE);
-	}
+	पूर्ण
 	edesc->residue_stat = edesc->residue;
 
-	return vchan_tx_prep(&echan->vchan, &edesc->vdesc, tx_flags);
-}
+	वापस vchan_tx_prep(&echan->vchan, &edesc->vdesc, tx_flags);
+पूर्ण
 
-static struct dma_async_tx_descriptor *edma_prep_dma_memcpy(
-	struct dma_chan *chan, dma_addr_t dest, dma_addr_t src,
-	size_t len, unsigned long tx_flags)
-{
-	int ret, nslots;
-	struct edma_desc *edesc;
-	struct device *dev = chan->device->dev;
-	struct edma_chan *echan = to_edma_chan(chan);
-	unsigned int width, pset_len, array_size;
+अटल काष्ठा dma_async_tx_descriptor *edma_prep_dma_स_नकल(
+	काष्ठा dma_chan *chan, dma_addr_t dest, dma_addr_t src,
+	माप_प्रकार len, अचिन्हित दीर्घ tx_flags)
+अणु
+	पूर्णांक ret, nslots;
+	काष्ठा edma_desc *edesc;
+	काष्ठा device *dev = chan->device->dev;
+	काष्ठा edma_chan *echan = to_edma_chan(chan);
+	अचिन्हित पूर्णांक width, pset_len, array_size;
 
-	if (unlikely(!echan || !len))
-		return NULL;
+	अगर (unlikely(!echan || !len))
+		वापस शून्य;
 
 	/* Align the array size (acnt block) with the transfer properties */
-	switch (__ffs((src | dest | len))) {
-	case 0:
+	चयन (__ffs((src | dest | len))) अणु
+	हाल 0:
 		array_size = SZ_32K - 1;
-		break;
-	case 1:
+		अवरोध;
+	हाल 1:
 		array_size = SZ_32K - 2;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		array_size = SZ_32K - 4;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	if (len < SZ_64K) {
+	अगर (len < SZ_64K) अणु
 		/*
 		 * Transfer size less than 64K can be handled with one paRAM
 		 * slot and with one burst.
@@ -1194,30 +1195,30 @@ static struct dma_async_tx_descriptor *edma_prep_dma_memcpy(
 		width = len;
 		pset_len = len;
 		nslots = 1;
-	} else {
+	पूर्ण अन्यथा अणु
 		/*
 		 * Transfer size bigger than 64K will be handled with maximum of
 		 * two paRAM slots.
-		 * slot1: (full_length / 32767) times 32767 bytes bursts.
+		 * slot1: (full_length / 32767) बार 32767 bytes bursts.
 		 *	  ACNT = 32767, length1: (full_length / 32767) * 32767
-		 * slot2: the remaining amount of data after slot1.
+		 * slot2: the reमुख्यing amount of data after slot1.
 		 *	  ACNT = full_length - length1, length2 = ACNT
 		 *
 		 * When the full_length is multibple of 32767 one slot can be
 		 * used to complete the transfer.
 		 */
 		width = array_size;
-		pset_len = rounddown(len, width);
-		/* One slot is enough for lengths multiple of (SZ_32K -1) */
-		if (unlikely(pset_len == len))
+		pset_len = roundकरोwn(len, width);
+		/* One slot is enough क्रम lengths multiple of (SZ_32K -1) */
+		अगर (unlikely(pset_len == len))
 			nslots = 1;
-		else
+		अन्यथा
 			nslots = 2;
-	}
+	पूर्ण
 
-	edesc = kzalloc(struct_size(edesc, pset, nslots), GFP_ATOMIC);
-	if (!edesc)
-		return NULL;
+	edesc = kzalloc(काष्ठा_size(edesc, pset, nslots), GFP_ATOMIC);
+	अगर (!edesc)
+		वापस शून्य;
 
 	edesc->pset_nr = nslots;
 	edesc->residue = edesc->residue_stat = len;
@@ -1226,105 +1227,105 @@ static struct dma_async_tx_descriptor *edma_prep_dma_memcpy(
 
 	ret = edma_config_pset(chan, &edesc->pset[0], src, dest, 1,
 			       width, pset_len, DMA_MEM_TO_MEM);
-	if (ret < 0) {
-		kfree(edesc);
-		return NULL;
-	}
+	अगर (ret < 0) अणु
+		kमुक्त(edesc);
+		वापस शून्य;
+	पूर्ण
 
-	edesc->absync = ret;
+	edesc->असलync = ret;
 
 	edesc->pset[0].param.opt |= ITCCHEN;
-	if (nslots == 1) {
-		/* Enable transfer complete interrupt if requested */
-		if (tx_flags & DMA_PREP_INTERRUPT)
+	अगर (nslots == 1) अणु
+		/* Enable transfer complete पूर्णांकerrupt अगर requested */
+		अगर (tx_flags & DMA_PREP_INTERRUPT)
 			edesc->pset[0].param.opt |= TCINTEN;
-	} else {
-		/* Enable transfer complete chaining for the first slot */
+	पूर्ण अन्यथा अणु
+		/* Enable transfer complete chaining क्रम the first slot */
 		edesc->pset[0].param.opt |= TCCHEN;
 
-		if (echan->slot[1] < 0) {
+		अगर (echan->slot[1] < 0) अणु
 			echan->slot[1] = edma_alloc_slot(echan->ecc,
 							 EDMA_SLOT_ANY);
-			if (echan->slot[1] < 0) {
-				kfree(edesc);
+			अगर (echan->slot[1] < 0) अणु
+				kमुक्त(edesc);
 				dev_err(dev, "%s: Failed to allocate slot\n",
 					__func__);
-				return NULL;
-			}
-		}
+				वापस शून्य;
+			पूर्ण
+		पूर्ण
 		dest += pset_len;
 		src += pset_len;
 		pset_len = width = len % array_size;
 
 		ret = edma_config_pset(chan, &edesc->pset[1], src, dest, 1,
 				       width, pset_len, DMA_MEM_TO_MEM);
-		if (ret < 0) {
-			kfree(edesc);
-			return NULL;
-		}
+		अगर (ret < 0) अणु
+			kमुक्त(edesc);
+			वापस शून्य;
+		पूर्ण
 
 		edesc->pset[1].param.opt |= ITCCHEN;
-		/* Enable transfer complete interrupt if requested */
-		if (tx_flags & DMA_PREP_INTERRUPT)
+		/* Enable transfer complete पूर्णांकerrupt अगर requested */
+		अगर (tx_flags & DMA_PREP_INTERRUPT)
 			edesc->pset[1].param.opt |= TCINTEN;
-	}
+	पूर्ण
 
-	if (!(tx_flags & DMA_PREP_INTERRUPT))
+	अगर (!(tx_flags & DMA_PREP_INTERRUPT))
 		edesc->polled = true;
 
-	return vchan_tx_prep(&echan->vchan, &edesc->vdesc, tx_flags);
-}
+	वापस vchan_tx_prep(&echan->vchan, &edesc->vdesc, tx_flags);
+पूर्ण
 
-static struct dma_async_tx_descriptor *
-edma_prep_dma_interleaved(struct dma_chan *chan,
-			  struct dma_interleaved_template *xt,
-			  unsigned long tx_flags)
-{
-	struct device *dev = chan->device->dev;
-	struct edma_chan *echan = to_edma_chan(chan);
-	struct edmacc_param *param;
-	struct edma_desc *edesc;
-	size_t src_icg, dst_icg;
-	int src_bidx, dst_bidx;
+अटल काष्ठा dma_async_tx_descriptor *
+edma_prep_dma_पूर्णांकerleaved(काष्ठा dma_chan *chan,
+			  काष्ठा dma_पूर्णांकerleaved_ढाँचा *xt,
+			  अचिन्हित दीर्घ tx_flags)
+अणु
+	काष्ठा device *dev = chan->device->dev;
+	काष्ठा edma_chan *echan = to_edma_chan(chan);
+	काष्ठा edmacc_param *param;
+	काष्ठा edma_desc *edesc;
+	माप_प्रकार src_icg, dst_icg;
+	पूर्णांक src_bidx, dst_bidx;
 
 	/* Slave mode is not supported */
-	if (is_slave_direction(xt->dir))
-		return NULL;
+	अगर (is_slave_direction(xt->dir))
+		वापस शून्य;
 
-	if (xt->frame_size != 1 || xt->numf == 0)
-		return NULL;
+	अगर (xt->frame_size != 1 || xt->numf == 0)
+		वापस शून्य;
 
-	if (xt->sgl[0].size > SZ_64K || xt->numf > SZ_64K)
-		return NULL;
+	अगर (xt->sgl[0].size > SZ_64K || xt->numf > SZ_64K)
+		वापस शून्य;
 
 	src_icg = dmaengine_get_src_icg(xt, &xt->sgl[0]);
-	if (src_icg) {
+	अगर (src_icg) अणु
 		src_bidx = src_icg + xt->sgl[0].size;
-	} else if (xt->src_inc) {
+	पूर्ण अन्यथा अगर (xt->src_inc) अणु
 		src_bidx = xt->sgl[0].size;
-	} else {
+	पूर्ण अन्यथा अणु
 		dev_err(dev, "%s: SRC constant addressing is not supported\n",
 			__func__);
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
 	dst_icg = dmaengine_get_dst_icg(xt, &xt->sgl[0]);
-	if (dst_icg) {
+	अगर (dst_icg) अणु
 		dst_bidx = dst_icg + xt->sgl[0].size;
-	} else if (xt->dst_inc) {
+	पूर्ण अन्यथा अगर (xt->dst_inc) अणु
 		dst_bidx = xt->sgl[0].size;
-	} else {
+	पूर्ण अन्यथा अणु
 		dev_err(dev, "%s: DST constant addressing is not supported\n",
 			__func__);
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
-	if (src_bidx > SZ_64K || dst_bidx > SZ_64K)
-		return NULL;
+	अगर (src_bidx > SZ_64K || dst_bidx > SZ_64K)
+		वापस शून्य;
 
-	edesc = kzalloc(struct_size(edesc, pset, 1), GFP_ATOMIC);
-	if (!edesc)
-		return NULL;
+	edesc = kzalloc(काष्ठा_size(edesc, pset, 1), GFP_ATOMIC);
+	अगर (!edesc)
+		वापस शून्य;
 
 	edesc->direction = DMA_MEM_TO_MEM;
 	edesc->echan = echan;
@@ -1341,86 +1342,86 @@ edma_prep_dma_interleaved(struct dma_chan *chan,
 
 	param->opt = EDMA_TCC(EDMA_CHAN_SLOT(echan->ch_num));
 	param->opt |= ITCCHEN;
-	/* Enable transfer complete interrupt if requested */
-	if (tx_flags & DMA_PREP_INTERRUPT)
+	/* Enable transfer complete पूर्णांकerrupt अगर requested */
+	अगर (tx_flags & DMA_PREP_INTERRUPT)
 		param->opt |= TCINTEN;
-	else
+	अन्यथा
 		edesc->polled = true;
 
-	return vchan_tx_prep(&echan->vchan, &edesc->vdesc, tx_flags);
-}
+	वापस vchan_tx_prep(&echan->vchan, &edesc->vdesc, tx_flags);
+पूर्ण
 
-static struct dma_async_tx_descriptor *edma_prep_dma_cyclic(
-	struct dma_chan *chan, dma_addr_t buf_addr, size_t buf_len,
-	size_t period_len, enum dma_transfer_direction direction,
-	unsigned long tx_flags)
-{
-	struct edma_chan *echan = to_edma_chan(chan);
-	struct device *dev = chan->device->dev;
-	struct edma_desc *edesc;
+अटल काष्ठा dma_async_tx_descriptor *edma_prep_dma_cyclic(
+	काष्ठा dma_chan *chan, dma_addr_t buf_addr, माप_प्रकार buf_len,
+	माप_प्रकार period_len, क्रमागत dma_transfer_direction direction,
+	अचिन्हित दीर्घ tx_flags)
+अणु
+	काष्ठा edma_chan *echan = to_edma_chan(chan);
+	काष्ठा device *dev = chan->device->dev;
+	काष्ठा edma_desc *edesc;
 	dma_addr_t src_addr, dst_addr;
-	enum dma_slave_buswidth dev_width;
-	bool use_intermediate = false;
+	क्रमागत dma_slave_buswidth dev_width;
+	bool use_पूर्णांकermediate = false;
 	u32 burst;
-	int i, ret, nslots;
+	पूर्णांक i, ret, nslots;
 
-	if (unlikely(!echan || !buf_len || !period_len))
-		return NULL;
+	अगर (unlikely(!echan || !buf_len || !period_len))
+		वापस शून्य;
 
-	if (direction == DMA_DEV_TO_MEM) {
+	अगर (direction == DMA_DEV_TO_MEM) अणु
 		src_addr = echan->cfg.src_addr;
 		dst_addr = buf_addr;
 		dev_width = echan->cfg.src_addr_width;
 		burst = echan->cfg.src_maxburst;
-	} else if (direction == DMA_MEM_TO_DEV) {
+	पूर्ण अन्यथा अगर (direction == DMA_MEM_TO_DEV) अणु
 		src_addr = buf_addr;
 		dst_addr = echan->cfg.dst_addr;
 		dev_width = echan->cfg.dst_addr_width;
 		burst = echan->cfg.dst_maxburst;
-	} else {
+	पूर्ण अन्यथा अणु
 		dev_err(dev, "%s: bad direction: %d\n", __func__, direction);
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
-	if (dev_width == DMA_SLAVE_BUSWIDTH_UNDEFINED) {
+	अगर (dev_width == DMA_SLAVE_BUSWIDTH_UNDEFINED) अणु
 		dev_err(dev, "%s: Undefined slave buswidth\n", __func__);
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
-	if (unlikely(buf_len % period_len)) {
+	अगर (unlikely(buf_len % period_len)) अणु
 		dev_err(dev, "Period should be multiple of Buffer length\n");
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
 	nslots = (buf_len / period_len) + 1;
 
 	/*
-	 * Cyclic DMA users such as audio cannot tolerate delays introduced
-	 * by cases where the number of periods is more than the maximum
-	 * number of SGs the EDMA driver can handle at a time. For DMA types
+	 * Cyclic DMA users such as audio cannot tolerate delays पूर्णांकroduced
+	 * by हालs where the number of periods is more than the maximum
+	 * number of SGs the EDMA driver can handle at a समय. For DMA types
 	 * such as Slave SGs, such delays are tolerable and synchronized,
-	 * but the synchronization is difficult to achieve with Cyclic and
+	 * but the synchronization is dअगरficult to achieve with Cyclic and
 	 * cannot be guaranteed, so we error out early.
 	 */
-	if (nslots > MAX_NR_SG) {
+	अगर (nslots > MAX_NR_SG) अणु
 		/*
 		 * If the burst and period sizes are the same, we can put
-		 * the full buffer into a single period and activate
-		 * intermediate interrupts. This will produce interrupts
+		 * the full buffer पूर्णांकo a single period and activate
+		 * पूर्णांकermediate पूर्णांकerrupts. This will produce पूर्णांकerrupts
 		 * after each burst, which is also after each desired period.
 		 */
-		if (burst == period_len) {
+		अगर (burst == period_len) अणु
 			period_len = buf_len;
 			nslots = 2;
-			use_intermediate = true;
-		} else {
-			return NULL;
-		}
-	}
+			use_पूर्णांकermediate = true;
+		पूर्ण अन्यथा अणु
+			वापस शून्य;
+		पूर्ण
+	पूर्ण
 
-	edesc = kzalloc(struct_size(edesc, pset, nslots), GFP_ATOMIC);
-	if (!edesc)
-		return NULL;
+	edesc = kzalloc(काष्ठा_size(edesc, pset, nslots), GFP_ATOMIC);
+	अगर (!edesc)
+		वापस शून्य;
 
 	edesc->cyclic = 1;
 	edesc->pset_nr = nslots;
@@ -1431,36 +1432,36 @@ static struct dma_async_tx_descriptor *edma_prep_dma_cyclic(
 	dev_dbg(dev, "%s: channel=%d nslots=%d period_len=%zu buf_len=%zu\n",
 		__func__, echan->ch_num, nslots, period_len, buf_len);
 
-	for (i = 0; i < nslots; i++) {
-		/* Allocate a PaRAM slot, if needed */
-		if (echan->slot[i] < 0) {
+	क्रम (i = 0; i < nslots; i++) अणु
+		/* Allocate a PaRAM slot, अगर needed */
+		अगर (echan->slot[i] < 0) अणु
 			echan->slot[i] =
 				edma_alloc_slot(echan->ecc, EDMA_SLOT_ANY);
-			if (echan->slot[i] < 0) {
-				kfree(edesc);
+			अगर (echan->slot[i] < 0) अणु
+				kमुक्त(edesc);
 				dev_err(dev, "%s: Failed to allocate slot\n",
 					__func__);
-				return NULL;
-			}
-		}
+				वापस शून्य;
+			पूर्ण
+		पूर्ण
 
-		if (i == nslots - 1) {
-			memcpy(&edesc->pset[i], &edesc->pset[0],
-			       sizeof(edesc->pset[0]));
-			break;
-		}
+		अगर (i == nslots - 1) अणु
+			स_नकल(&edesc->pset[i], &edesc->pset[0],
+			       माप(edesc->pset[0]));
+			अवरोध;
+		पूर्ण
 
 		ret = edma_config_pset(chan, &edesc->pset[i], src_addr,
 				       dst_addr, burst, dev_width, period_len,
 				       direction);
-		if (ret < 0) {
-			kfree(edesc);
-			return NULL;
-		}
+		अगर (ret < 0) अणु
+			kमुक्त(edesc);
+			वापस शून्य;
+		पूर्ण
 
-		if (direction == DMA_DEV_TO_MEM)
+		अगर (direction == DMA_DEV_TO_MEM)
 			dst_addr += period_len;
-		else
+		अन्यथा
 			src_addr += period_len;
 
 		dev_vdbg(dev, "%s: Configure period %d of buf:\n", __func__, i);
@@ -1486,142 +1487,142 @@ static struct dma_async_tx_descriptor *edma_prep_dma_cyclic(
 			edesc->pset[i].param.src_dst_cidx,
 			edesc->pset[i].param.link_bcntrld);
 
-		edesc->absync = ret;
+		edesc->असलync = ret;
 
 		/*
-		 * Enable period interrupt only if it is requested
+		 * Enable period पूर्णांकerrupt only अगर it is requested
 		 */
-		if (tx_flags & DMA_PREP_INTERRUPT) {
+		अगर (tx_flags & DMA_PREP_INTERRUPT) अणु
 			edesc->pset[i].param.opt |= TCINTEN;
 
-			/* Also enable intermediate interrupts if necessary */
-			if (use_intermediate)
+			/* Also enable पूर्णांकermediate पूर्णांकerrupts अगर necessary */
+			अगर (use_पूर्णांकermediate)
 				edesc->pset[i].param.opt |= ITCINTEN;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	/* Place the cyclic channel to highest priority queue */
-	if (!echan->tc)
+	अगर (!echan->tc)
 		edma_assign_channel_eventq(echan, EVENTQ_0);
 
-	return vchan_tx_prep(&echan->vchan, &edesc->vdesc, tx_flags);
-}
+	वापस vchan_tx_prep(&echan->vchan, &edesc->vdesc, tx_flags);
+पूर्ण
 
-static void edma_completion_handler(struct edma_chan *echan)
-{
-	struct device *dev = echan->vchan.chan.device->dev;
-	struct edma_desc *edesc;
+अटल व्योम edma_completion_handler(काष्ठा edma_chan *echan)
+अणु
+	काष्ठा device *dev = echan->vchan.chan.device->dev;
+	काष्ठा edma_desc *edesc;
 
 	spin_lock(&echan->vchan.lock);
 	edesc = echan->edesc;
-	if (edesc) {
-		if (edesc->cyclic) {
+	अगर (edesc) अणु
+		अगर (edesc->cyclic) अणु
 			vchan_cyclic_callback(&edesc->vdesc);
 			spin_unlock(&echan->vchan.lock);
-			return;
-		} else if (edesc->processed == edesc->pset_nr) {
+			वापस;
+		पूर्ण अन्यथा अगर (edesc->processed == edesc->pset_nr) अणु
 			edesc->residue = 0;
 			edma_stop(echan);
 			vchan_cookie_complete(&edesc->vdesc);
-			echan->edesc = NULL;
+			echan->edesc = शून्य;
 
 			dev_dbg(dev, "Transfer completed on channel %d\n",
 				echan->ch_num);
-		} else {
+		पूर्ण अन्यथा अणु
 			dev_dbg(dev, "Sub transfer completed on channel %d\n",
 				echan->ch_num);
 
-			edma_pause(echan);
+			edma_छोड़ो(echan);
 
-			/* Update statistics for tx_status */
+			/* Update statistics क्रम tx_status */
 			edesc->residue -= edesc->sg_len;
 			edesc->residue_stat = edesc->residue;
 			edesc->processed_stat = edesc->processed;
-		}
+		पूर्ण
 		edma_execute(echan);
-	}
+	पूर्ण
 
 	spin_unlock(&echan->vchan.lock);
-}
+पूर्ण
 
-/* eDMA interrupt handler */
-static irqreturn_t dma_irq_handler(int irq, void *data)
-{
-	struct edma_cc *ecc = data;
-	int ctlr;
+/* eDMA पूर्णांकerrupt handler */
+अटल irqवापस_t dma_irq_handler(पूर्णांक irq, व्योम *data)
+अणु
+	काष्ठा edma_cc *ecc = data;
+	पूर्णांक ctlr;
 	u32 sh_ier;
 	u32 sh_ipr;
 	u32 bank;
 
 	ctlr = ecc->id;
-	if (ctlr < 0)
-		return IRQ_NONE;
+	अगर (ctlr < 0)
+		वापस IRQ_NONE;
 
 	dev_vdbg(ecc->dev, "dma_irq_handler\n");
 
-	sh_ipr = edma_shadow0_read_array(ecc, SH_IPR, 0);
-	if (!sh_ipr) {
-		sh_ipr = edma_shadow0_read_array(ecc, SH_IPR, 1);
-		if (!sh_ipr)
-			return IRQ_NONE;
-		sh_ier = edma_shadow0_read_array(ecc, SH_IER, 1);
+	sh_ipr = edma_shaकरोw0_पढ़ो_array(ecc, SH_IPR, 0);
+	अगर (!sh_ipr) अणु
+		sh_ipr = edma_shaकरोw0_पढ़ो_array(ecc, SH_IPR, 1);
+		अगर (!sh_ipr)
+			वापस IRQ_NONE;
+		sh_ier = edma_shaकरोw0_पढ़ो_array(ecc, SH_IER, 1);
 		bank = 1;
-	} else {
-		sh_ier = edma_shadow0_read_array(ecc, SH_IER, 0);
+	पूर्ण अन्यथा अणु
+		sh_ier = edma_shaकरोw0_पढ़ो_array(ecc, SH_IER, 0);
 		bank = 0;
-	}
+	पूर्ण
 
-	do {
+	करो अणु
 		u32 slot;
 		u32 channel;
 
 		slot = __ffs(sh_ipr);
 		sh_ipr &= ~(BIT(slot));
 
-		if (sh_ier & BIT(slot)) {
+		अगर (sh_ier & BIT(slot)) अणु
 			channel = (bank << 5) | slot;
 			/* Clear the corresponding IPR bits */
-			edma_shadow0_write_array(ecc, SH_ICR, bank, BIT(slot));
+			edma_shaकरोw0_ग_लिखो_array(ecc, SH_ICR, bank, BIT(slot));
 			edma_completion_handler(&ecc->slave_chans[channel]);
-		}
-	} while (sh_ipr);
+		पूर्ण
+	पूर्ण जबतक (sh_ipr);
 
-	edma_shadow0_write(ecc, SH_IEVAL, 1);
-	return IRQ_HANDLED;
-}
+	edma_shaकरोw0_ग_लिखो(ecc, SH_IEVAL, 1);
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static void edma_error_handler(struct edma_chan *echan)
-{
-	struct edma_cc *ecc = echan->ecc;
-	struct device *dev = echan->vchan.chan.device->dev;
-	struct edmacc_param p;
-	int err;
+अटल व्योम edma_error_handler(काष्ठा edma_chan *echan)
+अणु
+	काष्ठा edma_cc *ecc = echan->ecc;
+	काष्ठा device *dev = echan->vchan.chan.device->dev;
+	काष्ठा edmacc_param p;
+	पूर्णांक err;
 
-	if (!echan->edesc)
-		return;
+	अगर (!echan->edesc)
+		वापस;
 
 	spin_lock(&echan->vchan.lock);
 
-	err = edma_read_slot(ecc, echan->slot[0], &p);
+	err = edma_पढ़ो_slot(ecc, echan->slot[0], &p);
 
 	/*
 	 * Issue later based on missed flag which will be sure
 	 * to happen as:
-	 * (1) we finished transmitting an intermediate slot and
+	 * (1) we finished transmitting an पूर्णांकermediate slot and
 	 *     edma_execute is coming up.
 	 * (2) or we finished current transfer and issue will
 	 *     call edma_execute.
 	 *
 	 * Important note: issuing can be dangerous here and
-	 * lead to some nasty recursion when we are in a NULL
-	 * slot. So we avoid doing so and set the missed flag.
+	 * lead to some nasty recursion when we are in a शून्य
+	 * slot. So we aव्योम करोing so and set the missed flag.
 	 */
-	if (err || (p.a_b_cnt == 0 && p.ccnt == 0)) {
+	अगर (err || (p.a_b_cnt == 0 && p.ccnt == 0)) अणु
 		dev_dbg(dev, "Error on null slot, setting miss\n");
 		echan->missed = 1;
-	} else {
+	पूर्ण अन्यथा अणु
 		/*
-		 * The slot is already programmed but the event got
+		 * The slot is alपढ़ोy programmed but the event got
 		 * missed, so its safe to issue it here.
 		 */
 		dev_dbg(dev, "Missed event, TRIGGERING\n");
@@ -1629,126 +1630,126 @@ static void edma_error_handler(struct edma_chan *echan)
 		edma_stop(echan);
 		edma_start(echan);
 		edma_trigger_channel(echan);
-	}
+	पूर्ण
 	spin_unlock(&echan->vchan.lock);
-}
+पूर्ण
 
-static inline bool edma_error_pending(struct edma_cc *ecc)
-{
-	if (edma_read_array(ecc, EDMA_EMR, 0) ||
-	    edma_read_array(ecc, EDMA_EMR, 1) ||
-	    edma_read(ecc, EDMA_QEMR) || edma_read(ecc, EDMA_CCERR))
-		return true;
+अटल अंतरभूत bool edma_error_pending(काष्ठा edma_cc *ecc)
+अणु
+	अगर (edma_पढ़ो_array(ecc, EDMA_EMR, 0) ||
+	    edma_पढ़ो_array(ecc, EDMA_EMR, 1) ||
+	    edma_पढ़ो(ecc, EDMA_QEMR) || edma_पढ़ो(ecc, EDMA_CCERR))
+		वापस true;
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-/* eDMA error interrupt handler */
-static irqreturn_t dma_ccerr_handler(int irq, void *data)
-{
-	struct edma_cc *ecc = data;
-	int i, j;
-	int ctlr;
-	unsigned int cnt = 0;
-	unsigned int val;
+/* eDMA error पूर्णांकerrupt handler */
+अटल irqवापस_t dma_ccerr_handler(पूर्णांक irq, व्योम *data)
+अणु
+	काष्ठा edma_cc *ecc = data;
+	पूर्णांक i, j;
+	पूर्णांक ctlr;
+	अचिन्हित पूर्णांक cnt = 0;
+	अचिन्हित पूर्णांक val;
 
 	ctlr = ecc->id;
-	if (ctlr < 0)
-		return IRQ_NONE;
+	अगर (ctlr < 0)
+		वापस IRQ_NONE;
 
 	dev_vdbg(ecc->dev, "dma_ccerr_handler\n");
 
-	if (!edma_error_pending(ecc)) {
+	अगर (!edma_error_pending(ecc)) अणु
 		/*
-		 * The registers indicate no pending error event but the irq
+		 * The रेजिस्टरs indicate no pending error event but the irq
 		 * handler has been called.
-		 * Ask eDMA to re-evaluate the error registers.
+		 * Ask eDMA to re-evaluate the error रेजिस्टरs.
 		 */
 		dev_err(ecc->dev, "%s: Error interrupt without error event!\n",
 			__func__);
-		edma_write(ecc, EDMA_EEVAL, 1);
-		return IRQ_NONE;
-	}
+		edma_ग_लिखो(ecc, EDMA_EEVAL, 1);
+		वापस IRQ_NONE;
+	पूर्ण
 
-	while (1) {
-		/* Event missed register(s) */
-		for (j = 0; j < 2; j++) {
-			unsigned long emr;
+	जबतक (1) अणु
+		/* Event missed रेजिस्टर(s) */
+		क्रम (j = 0; j < 2; j++) अणु
+			अचिन्हित दीर्घ emr;
 
-			val = edma_read_array(ecc, EDMA_EMR, j);
-			if (!val)
-				continue;
+			val = edma_पढ़ो_array(ecc, EDMA_EMR, j);
+			अगर (!val)
+				जारी;
 
 			dev_dbg(ecc->dev, "EMR%d 0x%08x\n", j, val);
 			emr = val;
-			for (i = find_next_bit(&emr, 32, 0); i < 32;
-			     i = find_next_bit(&emr, 32, i + 1)) {
-				int k = (j << 5) + i;
+			क्रम (i = find_next_bit(&emr, 32, 0); i < 32;
+			     i = find_next_bit(&emr, 32, i + 1)) अणु
+				पूर्णांक k = (j << 5) + i;
 
 				/* Clear the corresponding EMR bits */
-				edma_write_array(ecc, EDMA_EMCR, j, BIT(i));
+				edma_ग_लिखो_array(ecc, EDMA_EMCR, j, BIT(i));
 				/* Clear any SER */
-				edma_shadow0_write_array(ecc, SH_SECR, j,
+				edma_shaकरोw0_ग_लिखो_array(ecc, SH_SECR, j,
 							 BIT(i));
 				edma_error_handler(&ecc->slave_chans[k]);
-			}
-		}
+			पूर्ण
+		पूर्ण
 
-		val = edma_read(ecc, EDMA_QEMR);
-		if (val) {
+		val = edma_पढ़ो(ecc, EDMA_QEMR);
+		अगर (val) अणु
 			dev_dbg(ecc->dev, "QEMR 0x%02x\n", val);
-			/* Not reported, just clear the interrupt reason. */
-			edma_write(ecc, EDMA_QEMCR, val);
-			edma_shadow0_write(ecc, SH_QSECR, val);
-		}
+			/* Not reported, just clear the पूर्णांकerrupt reason. */
+			edma_ग_लिखो(ecc, EDMA_QEMCR, val);
+			edma_shaकरोw0_ग_लिखो(ecc, SH_QSECR, val);
+		पूर्ण
 
-		val = edma_read(ecc, EDMA_CCERR);
-		if (val) {
+		val = edma_पढ़ो(ecc, EDMA_CCERR);
+		अगर (val) अणु
 			dev_warn(ecc->dev, "CCERR 0x%08x\n", val);
-			/* Not reported, just clear the interrupt reason. */
-			edma_write(ecc, EDMA_CCERRCLR, val);
-		}
+			/* Not reported, just clear the पूर्णांकerrupt reason. */
+			edma_ग_लिखो(ecc, EDMA_CCERRCLR, val);
+		पूर्ण
 
-		if (!edma_error_pending(ecc))
-			break;
+		अगर (!edma_error_pending(ecc))
+			अवरोध;
 		cnt++;
-		if (cnt > 10)
-			break;
-	}
-	edma_write(ecc, EDMA_EEVAL, 1);
-	return IRQ_HANDLED;
-}
+		अगर (cnt > 10)
+			अवरोध;
+	पूर्ण
+	edma_ग_लिखो(ecc, EDMA_EEVAL, 1);
+	वापस IRQ_HANDLED;
+पूर्ण
 
 /* Alloc channel resources */
-static int edma_alloc_chan_resources(struct dma_chan *chan)
-{
-	struct edma_chan *echan = to_edma_chan(chan);
-	struct edma_cc *ecc = echan->ecc;
-	struct device *dev = ecc->dev;
-	enum dma_event_q eventq_no = EVENTQ_DEFAULT;
-	int ret;
+अटल पूर्णांक edma_alloc_chan_resources(काष्ठा dma_chan *chan)
+अणु
+	काष्ठा edma_chan *echan = to_edma_chan(chan);
+	काष्ठा edma_cc *ecc = echan->ecc;
+	काष्ठा device *dev = ecc->dev;
+	क्रमागत dma_event_q eventq_no = EVENTQ_DEFAULT;
+	पूर्णांक ret;
 
-	if (echan->tc) {
+	अगर (echan->tc) अणु
 		eventq_no = echan->tc->id;
-	} else if (ecc->tc_list) {
-		/* memcpy channel */
-		echan->tc = &ecc->tc_list[ecc->info->default_queue];
+	पूर्ण अन्यथा अगर (ecc->tc_list) अणु
+		/* स_नकल channel */
+		echan->tc = &ecc->tc_list[ecc->info->शेष_queue];
 		eventq_no = echan->tc->id;
-	}
+	पूर्ण
 
 	ret = edma_alloc_channel(echan, eventq_no);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	echan->slot[0] = edma_alloc_slot(ecc, echan->ch_num);
-	if (echan->slot[0] < 0) {
+	अगर (echan->slot[0] < 0) अणु
 		dev_err(dev, "Entry slot allocation failed for channel %u\n",
 			EDMA_CHAN_SLOT(echan->ch_num));
 		ret = echan->slot[0];
-		goto err_slot;
-	}
+		जाओ err_slot;
+	पूर्ण
 
-	/* Set up channel -> slot mapping for the entry slot */
+	/* Set up channel -> slot mapping क्रम the entry slot */
 	edma_set_chmap(echan, echan->slot[0]);
 	echan->alloced = true;
 
@@ -1756,256 +1757,256 @@ static int edma_alloc_chan_resources(struct dma_chan *chan)
 		EDMA_CHAN_SLOT(echan->ch_num), chan->chan_id,
 		echan->hw_triggered ? "HW" : "SW");
 
-	return 0;
+	वापस 0;
 
 err_slot:
-	edma_free_channel(echan);
-	return ret;
-}
+	edma_मुक्त_channel(echan);
+	वापस ret;
+पूर्ण
 
 /* Free channel resources */
-static void edma_free_chan_resources(struct dma_chan *chan)
-{
-	struct edma_chan *echan = to_edma_chan(chan);
-	struct device *dev = echan->ecc->dev;
-	int i;
+अटल व्योम edma_मुक्त_chan_resources(काष्ठा dma_chan *chan)
+अणु
+	काष्ठा edma_chan *echan = to_edma_chan(chan);
+	काष्ठा device *dev = echan->ecc->dev;
+	पूर्णांक i;
 
 	/* Terminate transfers */
 	edma_stop(echan);
 
-	vchan_free_chan_resources(&echan->vchan);
+	vchan_मुक्त_chan_resources(&echan->vchan);
 
 	/* Free EDMA PaRAM slots */
-	for (i = 0; i < EDMA_MAX_SLOTS; i++) {
-		if (echan->slot[i] >= 0) {
-			edma_free_slot(echan->ecc, echan->slot[i]);
+	क्रम (i = 0; i < EDMA_MAX_SLOTS; i++) अणु
+		अगर (echan->slot[i] >= 0) अणु
+			edma_मुक्त_slot(echan->ecc, echan->slot[i]);
 			echan->slot[i] = -1;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	/* Set entry slot to the dummy slot */
 	edma_set_chmap(echan, echan->ecc->dummy_slot);
 
 	/* Free EDMA channel */
-	if (echan->alloced) {
-		edma_free_channel(echan);
+	अगर (echan->alloced) अणु
+		edma_मुक्त_channel(echan);
 		echan->alloced = false;
-	}
+	पूर्ण
 
-	echan->tc = NULL;
+	echan->tc = शून्य;
 	echan->hw_triggered = false;
 
 	dev_dbg(dev, "Free eDMA channel %d for virt channel %d\n",
 		EDMA_CHAN_SLOT(echan->ch_num), chan->chan_id);
-}
+पूर्ण
 
 /* Send pending descriptor to hardware */
-static void edma_issue_pending(struct dma_chan *chan)
-{
-	struct edma_chan *echan = to_edma_chan(chan);
-	unsigned long flags;
+अटल व्योम edma_issue_pending(काष्ठा dma_chan *chan)
+अणु
+	काष्ठा edma_chan *echan = to_edma_chan(chan);
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&echan->vchan.lock, flags);
-	if (vchan_issue_pending(&echan->vchan) && !echan->edesc)
+	अगर (vchan_issue_pending(&echan->vchan) && !echan->edesc)
 		edma_execute(echan);
 	spin_unlock_irqrestore(&echan->vchan.lock, flags);
-}
+पूर्ण
 
 /*
- * This limit exists to avoid a possible infinite loop when waiting for proof
- * that a particular transfer is completed. This limit can be hit if there
+ * This limit exists to aव्योम a possible infinite loop when रुकोing क्रम proof
+ * that a particular transfer is completed. This limit can be hit अगर there
  * are large bursts to/from slow devices or the CPU is never able to catch
  * the DMA hardware idle. On an AM335x transfering 48 bytes from the UART
  * RX-FIFO, as many as 55 loops have been seen.
  */
-#define EDMA_MAX_TR_WAIT_LOOPS 1000
+#घोषणा EDMA_MAX_TR_WAIT_LOOPS 1000
 
-static u32 edma_residue(struct edma_desc *edesc)
-{
+अटल u32 edma_residue(काष्ठा edma_desc *edesc)
+अणु
 	bool dst = edesc->direction == DMA_DEV_TO_MEM;
-	int loop_count = EDMA_MAX_TR_WAIT_LOOPS;
-	struct edma_chan *echan = edesc->echan;
-	struct edma_pset *pset = edesc->pset;
-	dma_addr_t done, pos, pos_old;
-	int channel = EDMA_CHAN_SLOT(echan->ch_num);
-	int idx = EDMA_REG_ARRAY_INDEX(channel);
-	int ch_bit = EDMA_CHANNEL_BIT(channel);
-	int event_reg;
-	int i;
+	पूर्णांक loop_count = EDMA_MAX_TR_WAIT_LOOPS;
+	काष्ठा edma_chan *echan = edesc->echan;
+	काष्ठा edma_pset *pset = edesc->pset;
+	dma_addr_t करोne, pos, pos_old;
+	पूर्णांक channel = EDMA_CHAN_SLOT(echan->ch_num);
+	पूर्णांक idx = EDMA_REG_ARRAY_INDEX(channel);
+	पूर्णांक ch_bit = EDMA_CHANNEL_BIT(channel);
+	पूर्णांक event_reg;
+	पूर्णांक i;
 
 	/*
-	 * We always read the dst/src position from the first RamPar
+	 * We always पढ़ो the dst/src position from the first RamPar
 	 * pset. That's the one which is active now.
 	 */
 	pos = edma_get_position(echan->ecc, echan->slot[0], dst);
 
 	/*
 	 * "pos" may represent a transfer request that is still being
-	 * processed by the EDMACC or EDMATC. We will busy wait until
+	 * processed by the EDMACC or EDMATC. We will busy रुको until
 	 * any one of the situations occurs:
-	 *   1. while and event is pending for the channel
+	 *   1. जबतक and event is pending क्रम the channel
 	 *   2. a position updated
 	 *   3. we hit the loop limit
 	 */
-	if (is_slave_direction(edesc->direction))
+	अगर (is_slave_direction(edesc->direction))
 		event_reg = SH_ER;
-	else
+	अन्यथा
 		event_reg = SH_ESR;
 
 	pos_old = pos;
-	while (edma_shadow0_read_array(echan->ecc, event_reg, idx) & ch_bit) {
+	जबतक (edma_shaकरोw0_पढ़ो_array(echan->ecc, event_reg, idx) & ch_bit) अणु
 		pos = edma_get_position(echan->ecc, echan->slot[0], dst);
-		if (pos != pos_old)
-			break;
+		अगर (pos != pos_old)
+			अवरोध;
 
-		if (!--loop_count) {
+		अगर (!--loop_count) अणु
 			dev_dbg_ratelimited(echan->vchan.chan.device->dev,
 				"%s: timeout waiting for PaRAM update\n",
 				__func__);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		cpu_relax();
-	}
+	पूर्ण
 
 	/*
 	 * Cyclic is simple. Just subtract pset[0].addr from pos.
 	 *
-	 * We never update edesc->residue in the cyclic case, so we
-	 * can tell the remaining room to the end of the circular
+	 * We never update edesc->residue in the cyclic हाल, so we
+	 * can tell the reमुख्यing room to the end of the circular
 	 * buffer.
 	 */
-	if (edesc->cyclic) {
-		done = pos - pset->addr;
-		edesc->residue_stat = edesc->residue - done;
-		return edesc->residue_stat;
-	}
+	अगर (edesc->cyclic) अणु
+		करोne = pos - pset->addr;
+		edesc->residue_stat = edesc->residue - करोne;
+		वापस edesc->residue_stat;
+	पूर्ण
 
 	/*
 	 * If the position is 0, then EDMA loaded the closing dummy slot, the
 	 * transfer is completed
 	 */
-	if (!pos)
-		return 0;
+	अगर (!pos)
+		वापस 0;
 	/*
 	 * For SG operation we catch up with the last processed
 	 * status.
 	 */
 	pset += edesc->processed_stat;
 
-	for (i = edesc->processed_stat; i < edesc->processed; i++, pset++) {
+	क्रम (i = edesc->processed_stat; i < edesc->processed; i++, pset++) अणु
 		/*
 		 * If we are inside this pset address range, we know
 		 * this is the active one. Get the current delta and
 		 * stop walking the psets.
 		 */
-		if (pos >= pset->addr && pos < pset->addr + pset->len)
-			return edesc->residue_stat - (pos - pset->addr);
+		अगर (pos >= pset->addr && pos < pset->addr + pset->len)
+			वापस edesc->residue_stat - (pos - pset->addr);
 
-		/* Otherwise mark it done and update residue_stat. */
+		/* Otherwise mark it करोne and update residue_stat. */
 		edesc->processed_stat++;
 		edesc->residue_stat -= pset->len;
-	}
-	return edesc->residue_stat;
-}
+	पूर्ण
+	वापस edesc->residue_stat;
+पूर्ण
 
 /* Check request completion status */
-static enum dma_status edma_tx_status(struct dma_chan *chan,
+अटल क्रमागत dma_status edma_tx_status(काष्ठा dma_chan *chan,
 				      dma_cookie_t cookie,
-				      struct dma_tx_state *txstate)
-{
-	struct edma_chan *echan = to_edma_chan(chan);
-	struct dma_tx_state txstate_tmp;
-	enum dma_status ret;
-	unsigned long flags;
+				      काष्ठा dma_tx_state *txstate)
+अणु
+	काष्ठा edma_chan *echan = to_edma_chan(chan);
+	काष्ठा dma_tx_state txstate_पंचांगp;
+	क्रमागत dma_status ret;
+	अचिन्हित दीर्घ flags;
 
 	ret = dma_cookie_status(chan, cookie, txstate);
 
-	if (ret == DMA_COMPLETE)
-		return ret;
+	अगर (ret == DMA_COMPLETE)
+		वापस ret;
 
-	/* Provide a dummy dma_tx_state for completion checking */
-	if (!txstate)
-		txstate = &txstate_tmp;
+	/* Provide a dummy dma_tx_state क्रम completion checking */
+	अगर (!txstate)
+		txstate = &txstate_पंचांगp;
 
 	spin_lock_irqsave(&echan->vchan.lock, flags);
-	if (echan->edesc && echan->edesc->vdesc.tx.cookie == cookie) {
+	अगर (echan->edesc && echan->edesc->vdesc.tx.cookie == cookie) अणु
 		txstate->residue = edma_residue(echan->edesc);
-	} else {
-		struct virt_dma_desc *vdesc = vchan_find_desc(&echan->vchan,
+	पूर्ण अन्यथा अणु
+		काष्ठा virt_dma_desc *vdesc = vchan_find_desc(&echan->vchan,
 							      cookie);
 
-		if (vdesc)
+		अगर (vdesc)
 			txstate->residue = to_edma_desc(&vdesc->tx)->residue;
-		else
+		अन्यथा
 			txstate->residue = 0;
-	}
+	पूर्ण
 
 	/*
-	 * Mark the cookie completed if the residue is 0 for non cyclic
+	 * Mark the cookie completed अगर the residue is 0 क्रम non cyclic
 	 * transfers
 	 */
-	if (ret != DMA_COMPLETE && !txstate->residue &&
+	अगर (ret != DMA_COMPLETE && !txstate->residue &&
 	    echan->edesc && echan->edesc->polled &&
-	    echan->edesc->vdesc.tx.cookie == cookie) {
+	    echan->edesc->vdesc.tx.cookie == cookie) अणु
 		edma_stop(echan);
 		vchan_cookie_complete(&echan->edesc->vdesc);
-		echan->edesc = NULL;
+		echan->edesc = शून्य;
 		edma_execute(echan);
 		ret = DMA_COMPLETE;
-	}
+	पूर्ण
 
 	spin_unlock_irqrestore(&echan->vchan.lock, flags);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static bool edma_is_memcpy_channel(int ch_num, s32 *memcpy_channels)
-{
-	if (!memcpy_channels)
-		return false;
-	while (*memcpy_channels != -1) {
-		if (*memcpy_channels == ch_num)
-			return true;
-		memcpy_channels++;
-	}
-	return false;
-}
+अटल bool edma_is_स_नकल_channel(पूर्णांक ch_num, s32 *स_नकल_channels)
+अणु
+	अगर (!स_नकल_channels)
+		वापस false;
+	जबतक (*स_नकल_channels != -1) अणु
+		अगर (*स_नकल_channels == ch_num)
+			वापस true;
+		स_नकल_channels++;
+	पूर्ण
+	वापस false;
+पूर्ण
 
-#define EDMA_DMA_BUSWIDTHS	(BIT(DMA_SLAVE_BUSWIDTH_1_BYTE) | \
+#घोषणा EDMA_DMA_BUSWIDTHS	(BIT(DMA_SLAVE_BUSWIDTH_1_BYTE) | \
 				 BIT(DMA_SLAVE_BUSWIDTH_2_BYTES) | \
 				 BIT(DMA_SLAVE_BUSWIDTH_3_BYTES) | \
 				 BIT(DMA_SLAVE_BUSWIDTH_4_BYTES))
 
-static void edma_dma_init(struct edma_cc *ecc, bool legacy_mode)
-{
-	struct dma_device *s_ddev = &ecc->dma_slave;
-	struct dma_device *m_ddev = NULL;
-	s32 *memcpy_channels = ecc->info->memcpy_channels;
-	int i, j;
+अटल व्योम edma_dma_init(काष्ठा edma_cc *ecc, bool legacy_mode)
+अणु
+	काष्ठा dma_device *s_ddev = &ecc->dma_slave;
+	काष्ठा dma_device *m_ddev = शून्य;
+	s32 *स_नकल_channels = ecc->info->स_नकल_channels;
+	पूर्णांक i, j;
 
 	dma_cap_zero(s_ddev->cap_mask);
 	dma_cap_set(DMA_SLAVE, s_ddev->cap_mask);
 	dma_cap_set(DMA_CYCLIC, s_ddev->cap_mask);
-	if (ecc->legacy_mode && !memcpy_channels) {
+	अगर (ecc->legacy_mode && !स_नकल_channels) अणु
 		dev_warn(ecc->dev,
 			 "Legacy memcpy is enabled, things might not work\n");
 
 		dma_cap_set(DMA_MEMCPY, s_ddev->cap_mask);
 		dma_cap_set(DMA_INTERLEAVE, s_ddev->cap_mask);
-		s_ddev->device_prep_dma_memcpy = edma_prep_dma_memcpy;
-		s_ddev->device_prep_interleaved_dma = edma_prep_dma_interleaved;
+		s_ddev->device_prep_dma_स_नकल = edma_prep_dma_स_नकल;
+		s_ddev->device_prep_पूर्णांकerleaved_dma = edma_prep_dma_पूर्णांकerleaved;
 		s_ddev->directions = BIT(DMA_MEM_TO_MEM);
-	}
+	पूर्ण
 
 	s_ddev->device_prep_slave_sg = edma_prep_slave_sg;
 	s_ddev->device_prep_dma_cyclic = edma_prep_dma_cyclic;
 	s_ddev->device_alloc_chan_resources = edma_alloc_chan_resources;
-	s_ddev->device_free_chan_resources = edma_free_chan_resources;
+	s_ddev->device_मुक्त_chan_resources = edma_मुक्त_chan_resources;
 	s_ddev->device_issue_pending = edma_issue_pending;
 	s_ddev->device_tx_status = edma_tx_status;
 	s_ddev->device_config = edma_slave_config;
-	s_ddev->device_pause = edma_dma_pause;
+	s_ddev->device_छोड़ो = edma_dma_छोड़ो;
 	s_ddev->device_resume = edma_dma_resume;
 	s_ddev->device_terminate_all = edma_terminate_all;
 	s_ddev->device_synchronize = edma_synchronize;
@@ -2014,32 +2015,32 @@ static void edma_dma_init(struct edma_cc *ecc, bool legacy_mode)
 	s_ddev->dst_addr_widths = EDMA_DMA_BUSWIDTHS;
 	s_ddev->directions |= (BIT(DMA_DEV_TO_MEM) | BIT(DMA_MEM_TO_DEV));
 	s_ddev->residue_granularity = DMA_RESIDUE_GRANULARITY_BURST;
-	s_ddev->max_burst = SZ_32K - 1; /* CIDX: 16bit signed */
+	s_ddev->max_burst = SZ_32K - 1; /* CIDX: 16bit चिन्हित */
 
 	s_ddev->dev = ecc->dev;
 	INIT_LIST_HEAD(&s_ddev->channels);
 
-	if (memcpy_channels) {
-		m_ddev = devm_kzalloc(ecc->dev, sizeof(*m_ddev), GFP_KERNEL);
-		if (!m_ddev) {
+	अगर (स_नकल_channels) अणु
+		m_ddev = devm_kzalloc(ecc->dev, माप(*m_ddev), GFP_KERNEL);
+		अगर (!m_ddev) अणु
 			dev_warn(ecc->dev, "memcpy is disabled due to OoM\n");
-			memcpy_channels = NULL;
-			goto ch_setup;
-		}
-		ecc->dma_memcpy = m_ddev;
+			स_नकल_channels = शून्य;
+			जाओ ch_setup;
+		पूर्ण
+		ecc->dma_स_नकल = m_ddev;
 
 		dma_cap_zero(m_ddev->cap_mask);
 		dma_cap_set(DMA_MEMCPY, m_ddev->cap_mask);
 		dma_cap_set(DMA_INTERLEAVE, m_ddev->cap_mask);
 
-		m_ddev->device_prep_dma_memcpy = edma_prep_dma_memcpy;
-		m_ddev->device_prep_interleaved_dma = edma_prep_dma_interleaved;
+		m_ddev->device_prep_dma_स_नकल = edma_prep_dma_स_नकल;
+		m_ddev->device_prep_पूर्णांकerleaved_dma = edma_prep_dma_पूर्णांकerleaved;
 		m_ddev->device_alloc_chan_resources = edma_alloc_chan_resources;
-		m_ddev->device_free_chan_resources = edma_free_chan_resources;
+		m_ddev->device_मुक्त_chan_resources = edma_मुक्त_chan_resources;
 		m_ddev->device_issue_pending = edma_issue_pending;
 		m_ddev->device_tx_status = edma_tx_status;
 		m_ddev->device_config = edma_slave_config;
-		m_ddev->device_pause = edma_dma_pause;
+		m_ddev->device_छोड़ो = edma_dma_छोड़ो;
 		m_ddev->device_resume = edma_dma_resume;
 		m_ddev->device_terminate_all = edma_terminate_all;
 		m_ddev->device_synchronize = edma_synchronize;
@@ -2051,37 +2052,37 @@ static void edma_dma_init(struct edma_cc *ecc, bool legacy_mode)
 
 		m_ddev->dev = ecc->dev;
 		INIT_LIST_HEAD(&m_ddev->channels);
-	} else if (!ecc->legacy_mode) {
+	पूर्ण अन्यथा अगर (!ecc->legacy_mode) अणु
 		dev_info(ecc->dev, "memcpy is disabled\n");
-	}
+	पूर्ण
 
 ch_setup:
-	for (i = 0; i < ecc->num_channels; i++) {
-		struct edma_chan *echan = &ecc->slave_chans[i];
+	क्रम (i = 0; i < ecc->num_channels; i++) अणु
+		काष्ठा edma_chan *echan = &ecc->slave_chans[i];
 		echan->ch_num = EDMA_CTLR_CHAN(ecc->id, i);
 		echan->ecc = ecc;
-		echan->vchan.desc_free = edma_desc_free;
+		echan->vchan.desc_मुक्त = edma_desc_मुक्त;
 
-		if (m_ddev && edma_is_memcpy_channel(i, memcpy_channels))
+		अगर (m_ddev && edma_is_स_नकल_channel(i, स_नकल_channels))
 			vchan_init(&echan->vchan, m_ddev);
-		else
+		अन्यथा
 			vchan_init(&echan->vchan, s_ddev);
 
 		INIT_LIST_HEAD(&echan->node);
-		for (j = 0; j < EDMA_MAX_SLOTS; j++)
+		क्रम (j = 0; j < EDMA_MAX_SLOTS; j++)
 			echan->slot[j] = -1;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int edma_setup_from_hw(struct device *dev, struct edma_soc_info *pdata,
-			      struct edma_cc *ecc)
-{
-	int i;
+अटल पूर्णांक edma_setup_from_hw(काष्ठा device *dev, काष्ठा edma_soc_info *pdata,
+			      काष्ठा edma_cc *ecc)
+अणु
+	पूर्णांक i;
 	u32 value, cccfg;
 	s8 (*queue_priority_map)[2];
 
-	/* Decode the eDMA3 configuration from CCCFG register */
-	cccfg = edma_read(ecc, EDMA_CCCFG);
+	/* Decode the eDMA3 configuration from CCCFG रेजिस्टर */
+	cccfg = edma_पढ़ो(ecc, EDMA_CCCFG);
 
 	value = GET_NUM_REGN(cccfg);
 	ecc->num_region = BIT(value);
@@ -2108,9 +2109,9 @@ static int edma_setup_from_hw(struct device *dev, struct edma_soc_info *pdata,
 	dev_dbg(dev, "num_tc: %u\n", ecc->num_tc);
 	dev_dbg(dev, "chmap_exist: %s\n", ecc->chmap_exist ? "yes" : "no");
 
-	/* Nothing need to be done if queue priority is provided */
-	if (pdata->queue_priority_mapping)
-		return 0;
+	/* Nothing need to be करोne अगर queue priority is provided */
+	अगर (pdata->queue_priority_mapping)
+		वापस 0;
 
 	/*
 	 * Configure TC/queue priority as follows:
@@ -2122,626 +2123,626 @@ static int edma_setup_from_hw(struct device *dev, struct edma_soc_info *pdata,
 	 * priority. So Q0 is the highest priority queue and the last queue has
 	 * the lowest priority.
 	 */
-	queue_priority_map = devm_kcalloc(dev, ecc->num_tc + 1, sizeof(s8),
+	queue_priority_map = devm_kसुस्मृति(dev, ecc->num_tc + 1, माप(s8),
 					  GFP_KERNEL);
-	if (!queue_priority_map)
-		return -ENOMEM;
+	अगर (!queue_priority_map)
+		वापस -ENOMEM;
 
-	for (i = 0; i < ecc->num_tc; i++) {
+	क्रम (i = 0; i < ecc->num_tc; i++) अणु
 		queue_priority_map[i][0] = i;
 		queue_priority_map[i][1] = i;
-	}
+	पूर्ण
 	queue_priority_map[i][0] = -1;
 	queue_priority_map[i][1] = -1;
 
 	pdata->queue_priority_mapping = queue_priority_map;
 	/* Default queue has the lowest priority */
-	pdata->default_queue = i - 1;
+	pdata->शेष_queue = i - 1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#if IS_ENABLED(CONFIG_OF)
-static int edma_xbar_event_map(struct device *dev, struct edma_soc_info *pdata,
-			       size_t sz)
-{
-	const char pname[] = "ti,edma-xbar-event-map";
-	struct resource res;
-	void __iomem *xbar;
+#अगर IS_ENABLED(CONFIG_OF)
+अटल पूर्णांक edma_xbar_event_map(काष्ठा device *dev, काष्ठा edma_soc_info *pdata,
+			       माप_प्रकार sz)
+अणु
+	स्थिर अक्षर pname[] = "ti,edma-xbar-event-map";
+	काष्ठा resource res;
+	व्योम __iomem *xbar;
 	s16 (*xbar_chans)[2];
-	size_t nelm = sz / sizeof(s16);
-	u32 shift, offset, mux;
-	int ret, i;
+	माप_प्रकार nelm = sz / माप(s16);
+	u32 shअगरt, offset, mux;
+	पूर्णांक ret, i;
 
-	xbar_chans = devm_kcalloc(dev, nelm + 2, sizeof(s16), GFP_KERNEL);
-	if (!xbar_chans)
-		return -ENOMEM;
+	xbar_chans = devm_kसुस्मृति(dev, nelm + 2, माप(s16), GFP_KERNEL);
+	अगर (!xbar_chans)
+		वापस -ENOMEM;
 
 	ret = of_address_to_resource(dev->of_node, 1, &res);
-	if (ret)
-		return -ENOMEM;
+	अगर (ret)
+		वापस -ENOMEM;
 
 	xbar = devm_ioremap(dev, res.start, resource_size(&res));
-	if (!xbar)
-		return -ENOMEM;
+	अगर (!xbar)
+		वापस -ENOMEM;
 
-	ret = of_property_read_u16_array(dev->of_node, pname, (u16 *)xbar_chans,
+	ret = of_property_पढ़ो_u16_array(dev->of_node, pname, (u16 *)xbar_chans,
 					 nelm);
-	if (ret)
-		return -EIO;
+	अगर (ret)
+		वापस -EIO;
 
-	/* Invalidate last entry for the other user of this mess */
+	/* Invalidate last entry क्रम the other user of this mess */
 	nelm >>= 1;
 	xbar_chans[nelm][0] = -1;
 	xbar_chans[nelm][1] = -1;
 
-	for (i = 0; i < nelm; i++) {
-		shift = (xbar_chans[i][1] & 0x03) << 3;
+	क्रम (i = 0; i < nelm; i++) अणु
+		shअगरt = (xbar_chans[i][1] & 0x03) << 3;
 		offset = xbar_chans[i][1] & 0xfffffffc;
-		mux = readl(xbar + offset);
-		mux &= ~(0xff << shift);
-		mux |= xbar_chans[i][0] << shift;
-		writel(mux, (xbar + offset));
-	}
+		mux = पढ़ोl(xbar + offset);
+		mux &= ~(0xff << shअगरt);
+		mux |= xbar_chans[i][0] << shअगरt;
+		ग_लिखोl(mux, (xbar + offset));
+	पूर्ण
 
-	pdata->xbar_chans = (const s16 (*)[2]) xbar_chans;
-	return 0;
-}
+	pdata->xbar_chans = (स्थिर s16 (*)[2]) xbar_chans;
+	वापस 0;
+पूर्ण
 
-static struct edma_soc_info *edma_setup_info_from_dt(struct device *dev,
+अटल काष्ठा edma_soc_info *edma_setup_info_from_dt(काष्ठा device *dev,
 						     bool legacy_mode)
-{
-	struct edma_soc_info *info;
-	struct property *prop;
-	int sz, ret;
+अणु
+	काष्ठा edma_soc_info *info;
+	काष्ठा property *prop;
+	पूर्णांक sz, ret;
 
-	info = devm_kzalloc(dev, sizeof(struct edma_soc_info), GFP_KERNEL);
-	if (!info)
-		return ERR_PTR(-ENOMEM);
+	info = devm_kzalloc(dev, माप(काष्ठा edma_soc_info), GFP_KERNEL);
+	अगर (!info)
+		वापस ERR_PTR(-ENOMEM);
 
-	if (legacy_mode) {
+	अगर (legacy_mode) अणु
 		prop = of_find_property(dev->of_node, "ti,edma-xbar-event-map",
 					&sz);
-		if (prop) {
+		अगर (prop) अणु
 			ret = edma_xbar_event_map(dev, info, sz);
-			if (ret)
-				return ERR_PTR(ret);
-		}
-		return info;
-	}
+			अगर (ret)
+				वापस ERR_PTR(ret);
+		पूर्ण
+		वापस info;
+	पूर्ण
 
-	/* Get the list of channels allocated to be used for memcpy */
+	/* Get the list of channels allocated to be used क्रम स_नकल */
 	prop = of_find_property(dev->of_node, "ti,edma-memcpy-channels", &sz);
-	if (prop) {
-		const char pname[] = "ti,edma-memcpy-channels";
-		size_t nelm = sz / sizeof(s32);
-		s32 *memcpy_ch;
+	अगर (prop) अणु
+		स्थिर अक्षर pname[] = "ti,edma-memcpy-channels";
+		माप_प्रकार nelm = sz / माप(s32);
+		s32 *स_नकल_ch;
 
-		memcpy_ch = devm_kcalloc(dev, nelm + 1, sizeof(s32),
+		स_नकल_ch = devm_kसुस्मृति(dev, nelm + 1, माप(s32),
 					 GFP_KERNEL);
-		if (!memcpy_ch)
-			return ERR_PTR(-ENOMEM);
+		अगर (!स_नकल_ch)
+			वापस ERR_PTR(-ENOMEM);
 
-		ret = of_property_read_u32_array(dev->of_node, pname,
-						 (u32 *)memcpy_ch, nelm);
-		if (ret)
-			return ERR_PTR(ret);
+		ret = of_property_पढ़ो_u32_array(dev->of_node, pname,
+						 (u32 *)स_नकल_ch, nelm);
+		अगर (ret)
+			वापस ERR_PTR(ret);
 
-		memcpy_ch[nelm] = -1;
-		info->memcpy_channels = memcpy_ch;
-	}
+		स_नकल_ch[nelm] = -1;
+		info->स_नकल_channels = स_नकल_ch;
+	पूर्ण
 
 	prop = of_find_property(dev->of_node, "ti,edma-reserved-slot-ranges",
 				&sz);
-	if (prop) {
-		const char pname[] = "ti,edma-reserved-slot-ranges";
-		u32 (*tmp)[2];
+	अगर (prop) अणु
+		स्थिर अक्षर pname[] = "ti,edma-reserved-slot-ranges";
+		u32 (*पंचांगp)[2];
 		s16 (*rsv_slots)[2];
-		size_t nelm = sz / sizeof(*tmp);
-		struct edma_rsv_info *rsv_info;
-		int i;
+		माप_प्रकार nelm = sz / माप(*पंचांगp);
+		काष्ठा edma_rsv_info *rsv_info;
+		पूर्णांक i;
 
-		if (!nelm)
-			return info;
+		अगर (!nelm)
+			वापस info;
 
-		tmp = kcalloc(nelm, sizeof(*tmp), GFP_KERNEL);
-		if (!tmp)
-			return ERR_PTR(-ENOMEM);
+		पंचांगp = kसुस्मृति(nelm, माप(*पंचांगp), GFP_KERNEL);
+		अगर (!पंचांगp)
+			वापस ERR_PTR(-ENOMEM);
 
-		rsv_info = devm_kzalloc(dev, sizeof(*rsv_info), GFP_KERNEL);
-		if (!rsv_info) {
-			kfree(tmp);
-			return ERR_PTR(-ENOMEM);
-		}
+		rsv_info = devm_kzalloc(dev, माप(*rsv_info), GFP_KERNEL);
+		अगर (!rsv_info) अणु
+			kमुक्त(पंचांगp);
+			वापस ERR_PTR(-ENOMEM);
+		पूर्ण
 
-		rsv_slots = devm_kcalloc(dev, nelm + 1, sizeof(*rsv_slots),
+		rsv_slots = devm_kसुस्मृति(dev, nelm + 1, माप(*rsv_slots),
 					 GFP_KERNEL);
-		if (!rsv_slots) {
-			kfree(tmp);
-			return ERR_PTR(-ENOMEM);
-		}
+		अगर (!rsv_slots) अणु
+			kमुक्त(पंचांगp);
+			वापस ERR_PTR(-ENOMEM);
+		पूर्ण
 
-		ret = of_property_read_u32_array(dev->of_node, pname,
-						 (u32 *)tmp, nelm * 2);
-		if (ret) {
-			kfree(tmp);
-			return ERR_PTR(ret);
-		}
+		ret = of_property_पढ़ो_u32_array(dev->of_node, pname,
+						 (u32 *)पंचांगp, nelm * 2);
+		अगर (ret) अणु
+			kमुक्त(पंचांगp);
+			वापस ERR_PTR(ret);
+		पूर्ण
 
-		for (i = 0; i < nelm; i++) {
-			rsv_slots[i][0] = tmp[i][0];
-			rsv_slots[i][1] = tmp[i][1];
-		}
+		क्रम (i = 0; i < nelm; i++) अणु
+			rsv_slots[i][0] = पंचांगp[i][0];
+			rsv_slots[i][1] = पंचांगp[i][1];
+		पूर्ण
 		rsv_slots[nelm][0] = -1;
 		rsv_slots[nelm][1] = -1;
 
 		info->rsv = rsv_info;
-		info->rsv->rsv_slots = (const s16 (*)[2])rsv_slots;
+		info->rsv->rsv_slots = (स्थिर s16 (*)[2])rsv_slots;
 
-		kfree(tmp);
-	}
+		kमुक्त(पंचांगp);
+	पूर्ण
 
-	return info;
-}
+	वापस info;
+पूर्ण
 
-static struct dma_chan *of_edma_xlate(struct of_phandle_args *dma_spec,
-				      struct of_dma *ofdma)
-{
-	struct edma_cc *ecc = ofdma->of_dma_data;
-	struct dma_chan *chan = NULL;
-	struct edma_chan *echan;
-	int i;
+अटल काष्ठा dma_chan *of_edma_xlate(काष्ठा of_phandle_args *dma_spec,
+				      काष्ठा of_dma *ofdma)
+अणु
+	काष्ठा edma_cc *ecc = ofdma->of_dma_data;
+	काष्ठा dma_chan *chan = शून्य;
+	काष्ठा edma_chan *echan;
+	पूर्णांक i;
 
-	if (!ecc || dma_spec->args_count < 1)
-		return NULL;
+	अगर (!ecc || dma_spec->args_count < 1)
+		वापस शून्य;
 
-	for (i = 0; i < ecc->num_channels; i++) {
+	क्रम (i = 0; i < ecc->num_channels; i++) अणु
 		echan = &ecc->slave_chans[i];
-		if (echan->ch_num == dma_spec->args[0]) {
+		अगर (echan->ch_num == dma_spec->args[0]) अणु
 			chan = &echan->vchan.chan;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	if (!chan)
-		return NULL;
+	अगर (!chan)
+		वापस शून्य;
 
-	if (echan->ecc->legacy_mode && dma_spec->args_count == 1)
-		goto out;
+	अगर (echan->ecc->legacy_mode && dma_spec->args_count == 1)
+		जाओ out;
 
-	if (!echan->ecc->legacy_mode && dma_spec->args_count == 2 &&
-	    dma_spec->args[1] < echan->ecc->num_tc) {
+	अगर (!echan->ecc->legacy_mode && dma_spec->args_count == 2 &&
+	    dma_spec->args[1] < echan->ecc->num_tc) अणु
 		echan->tc = &echan->ecc->tc_list[dma_spec->args[1]];
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	return NULL;
+	वापस शून्य;
 out:
 	/* The channel is going to be used as HW synchronized */
 	echan->hw_triggered = true;
-	return dma_get_slave_channel(chan);
-}
-#else
-static struct edma_soc_info *edma_setup_info_from_dt(struct device *dev,
+	वापस dma_get_slave_channel(chan);
+पूर्ण
+#अन्यथा
+अटल काष्ठा edma_soc_info *edma_setup_info_from_dt(काष्ठा device *dev,
 						     bool legacy_mode)
-{
-	return ERR_PTR(-EINVAL);
-}
+अणु
+	वापस ERR_PTR(-EINVAL);
+पूर्ण
 
-static struct dma_chan *of_edma_xlate(struct of_phandle_args *dma_spec,
-				      struct of_dma *ofdma)
-{
-	return NULL;
-}
-#endif
+अटल काष्ठा dma_chan *of_edma_xlate(काष्ठा of_phandle_args *dma_spec,
+				      काष्ठा of_dma *ofdma)
+अणु
+	वापस शून्य;
+पूर्ण
+#पूर्ण_अगर
 
-static bool edma_filter_fn(struct dma_chan *chan, void *param);
+अटल bool edma_filter_fn(काष्ठा dma_chan *chan, व्योम *param);
 
-static int edma_probe(struct platform_device *pdev)
-{
-	struct edma_soc_info	*info = pdev->dev.platform_data;
+अटल पूर्णांक edma_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा edma_soc_info	*info = pdev->dev.platक्रमm_data;
 	s8			(*queue_priority_mapping)[2];
-	const s16		(*reserved)[2];
-	int			i, irq;
-	char			*irq_name;
-	struct resource		*mem;
-	struct device_node	*node = pdev->dev.of_node;
-	struct device		*dev = &pdev->dev;
-	struct edma_cc		*ecc;
+	स्थिर s16		(*reserved)[2];
+	पूर्णांक			i, irq;
+	अक्षर			*irq_name;
+	काष्ठा resource		*mem;
+	काष्ठा device_node	*node = pdev->dev.of_node;
+	काष्ठा device		*dev = &pdev->dev;
+	काष्ठा edma_cc		*ecc;
 	bool			legacy_mode = true;
-	int ret;
+	पूर्णांक ret;
 
-	if (node) {
-		const struct of_device_id *match;
+	अगर (node) अणु
+		स्थिर काष्ठा of_device_id *match;
 
 		match = of_match_node(edma_of_ids, node);
-		if (match && (*(u32 *)match->data) == EDMA_BINDING_TPCC)
+		अगर (match && (*(u32 *)match->data) == EDMA_BINDING_TPCC)
 			legacy_mode = false;
 
 		info = edma_setup_info_from_dt(dev, legacy_mode);
-		if (IS_ERR(info)) {
+		अगर (IS_ERR(info)) अणु
 			dev_err(dev, "failed to get DT data\n");
-			return PTR_ERR(info);
-		}
-	}
+			वापस PTR_ERR(info);
+		पूर्ण
+	पूर्ण
 
-	if (!info)
-		return -ENODEV;
+	अगर (!info)
+		वापस -ENODEV;
 
 	ret = dma_set_mask_and_coherent(dev, DMA_BIT_MASK(32));
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	ecc = devm_kzalloc(dev, sizeof(*ecc), GFP_KERNEL);
-	if (!ecc)
-		return -ENOMEM;
+	ecc = devm_kzalloc(dev, माप(*ecc), GFP_KERNEL);
+	अगर (!ecc)
+		वापस -ENOMEM;
 
 	ecc->dev = dev;
 	ecc->id = pdev->id;
 	ecc->legacy_mode = legacy_mode;
 	/* When booting with DT the pdev->id is -1 */
-	if (ecc->id < 0)
+	अगर (ecc->id < 0)
 		ecc->id = 0;
 
-	mem = platform_get_resource_byname(pdev, IORESOURCE_MEM, "edma3_cc");
-	if (!mem) {
+	mem = platक्रमm_get_resource_byname(pdev, IORESOURCE_MEM, "edma3_cc");
+	अगर (!mem) अणु
 		dev_dbg(dev, "mem resource not found, using index 0\n");
-		mem = platform_get_resource(pdev, IORESOURCE_MEM, 0);
-		if (!mem) {
+		mem = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
+		अगर (!mem) अणु
 			dev_err(dev, "no mem resource?\n");
-			return -ENODEV;
-		}
-	}
+			वापस -ENODEV;
+		पूर्ण
+	पूर्ण
 	ecc->base = devm_ioremap_resource(dev, mem);
-	if (IS_ERR(ecc->base))
-		return PTR_ERR(ecc->base);
+	अगर (IS_ERR(ecc->base))
+		वापस PTR_ERR(ecc->base);
 
-	platform_set_drvdata(pdev, ecc);
+	platक्रमm_set_drvdata(pdev, ecc);
 
-	pm_runtime_enable(dev);
-	ret = pm_runtime_get_sync(dev);
-	if (ret < 0) {
+	pm_runसमय_enable(dev);
+	ret = pm_runसमय_get_sync(dev);
+	अगर (ret < 0) अणु
 		dev_err(dev, "pm_runtime_get_sync() failed\n");
-		pm_runtime_disable(dev);
-		return ret;
-	}
+		pm_runसमय_disable(dev);
+		वापस ret;
+	पूर्ण
 
 	/* Get eDMA3 configuration from IP */
 	ret = edma_setup_from_hw(dev, info, ecc);
-	if (ret)
-		goto err_disable_pm;
+	अगर (ret)
+		जाओ err_disable_pm;
 
-	/* Allocate memory based on the information we got from the IP */
-	ecc->slave_chans = devm_kcalloc(dev, ecc->num_channels,
-					sizeof(*ecc->slave_chans), GFP_KERNEL);
+	/* Allocate memory based on the inक्रमmation we got from the IP */
+	ecc->slave_chans = devm_kसुस्मृति(dev, ecc->num_channels,
+					माप(*ecc->slave_chans), GFP_KERNEL);
 
-	ecc->slot_inuse = devm_kcalloc(dev, BITS_TO_LONGS(ecc->num_slots),
-				       sizeof(unsigned long), GFP_KERNEL);
+	ecc->slot_inuse = devm_kसुस्मृति(dev, BITS_TO_LONGS(ecc->num_slots),
+				       माप(अचिन्हित दीर्घ), GFP_KERNEL);
 
-	ecc->channels_mask = devm_kcalloc(dev,
+	ecc->channels_mask = devm_kसुस्मृति(dev,
 					   BITS_TO_LONGS(ecc->num_channels),
-					   sizeof(unsigned long), GFP_KERNEL);
-	if (!ecc->slave_chans || !ecc->slot_inuse || !ecc->channels_mask) {
+					   माप(अचिन्हित दीर्घ), GFP_KERNEL);
+	अगर (!ecc->slave_chans || !ecc->slot_inuse || !ecc->channels_mask) अणु
 		ret = -ENOMEM;
-		goto err_disable_pm;
-	}
+		जाओ err_disable_pm;
+	पूर्ण
 
 	/* Mark all channels available initially */
-	bitmap_fill(ecc->channels_mask, ecc->num_channels);
+	biपंचांगap_fill(ecc->channels_mask, ecc->num_channels);
 
-	ecc->default_queue = info->default_queue;
+	ecc->शेष_queue = info->शेष_queue;
 
-	if (info->rsv) {
+	अगर (info->rsv) अणु
 		/* Set the reserved slots in inuse list */
 		reserved = info->rsv->rsv_slots;
-		if (reserved) {
-			for (i = 0; reserved[i][0] != -1; i++)
-				bitmap_set(ecc->slot_inuse, reserved[i][0],
+		अगर (reserved) अणु
+			क्रम (i = 0; reserved[i][0] != -1; i++)
+				biपंचांगap_set(ecc->slot_inuse, reserved[i][0],
 					   reserved[i][1]);
-		}
+		पूर्ण
 
-		/* Clear channels not usable for Linux */
+		/* Clear channels not usable क्रम Linux */
 		reserved = info->rsv->rsv_chans;
-		if (reserved) {
-			for (i = 0; reserved[i][0] != -1; i++)
-				bitmap_clear(ecc->channels_mask, reserved[i][0],
+		अगर (reserved) अणु
+			क्रम (i = 0; reserved[i][0] != -1; i++)
+				biपंचांगap_clear(ecc->channels_mask, reserved[i][0],
 					     reserved[i][1]);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	for (i = 0; i < ecc->num_slots; i++) {
+	क्रम (i = 0; i < ecc->num_slots; i++) अणु
 		/* Reset only unused - not reserved - paRAM slots */
-		if (!test_bit(i, ecc->slot_inuse))
-			edma_write_slot(ecc, i, &dummy_paramset);
-	}
+		अगर (!test_bit(i, ecc->slot_inuse))
+			edma_ग_लिखो_slot(ecc, i, &dummy_paramset);
+	पूर्ण
 
-	irq = platform_get_irq_byname(pdev, "edma3_ccint");
-	if (irq < 0 && node)
+	irq = platक्रमm_get_irq_byname(pdev, "edma3_ccint");
+	अगर (irq < 0 && node)
 		irq = irq_of_parse_and_map(node, 0);
 
-	if (irq >= 0) {
-		irq_name = devm_kasprintf(dev, GFP_KERNEL, "%s_ccint",
+	अगर (irq >= 0) अणु
+		irq_name = devm_kaप्र_लिखो(dev, GFP_KERNEL, "%s_ccint",
 					  dev_name(dev));
 		ret = devm_request_irq(dev, irq, dma_irq_handler, 0, irq_name,
 				       ecc);
-		if (ret) {
+		अगर (ret) अणु
 			dev_err(dev, "CCINT (%d) failed --> %d\n", irq, ret);
-			goto err_disable_pm;
-		}
-		ecc->ccint = irq;
-	}
+			जाओ err_disable_pm;
+		पूर्ण
+		ecc->ccपूर्णांक = irq;
+	पूर्ण
 
-	irq = platform_get_irq_byname(pdev, "edma3_ccerrint");
-	if (irq < 0 && node)
+	irq = platक्रमm_get_irq_byname(pdev, "edma3_ccerrint");
+	अगर (irq < 0 && node)
 		irq = irq_of_parse_and_map(node, 2);
 
-	if (irq >= 0) {
-		irq_name = devm_kasprintf(dev, GFP_KERNEL, "%s_ccerrint",
+	अगर (irq >= 0) अणु
+		irq_name = devm_kaप्र_लिखो(dev, GFP_KERNEL, "%s_ccerrint",
 					  dev_name(dev));
 		ret = devm_request_irq(dev, irq, dma_ccerr_handler, 0, irq_name,
 				       ecc);
-		if (ret) {
+		अगर (ret) अणु
 			dev_err(dev, "CCERRINT (%d) failed --> %d\n", irq, ret);
-			goto err_disable_pm;
-		}
-		ecc->ccerrint = irq;
-	}
+			जाओ err_disable_pm;
+		पूर्ण
+		ecc->ccerrपूर्णांक = irq;
+	पूर्ण
 
 	ecc->dummy_slot = edma_alloc_slot(ecc, EDMA_SLOT_ANY);
-	if (ecc->dummy_slot < 0) {
+	अगर (ecc->dummy_slot < 0) अणु
 		dev_err(dev, "Can't allocate PaRAM dummy slot\n");
 		ret = ecc->dummy_slot;
-		goto err_disable_pm;
-	}
+		जाओ err_disable_pm;
+	पूर्ण
 
 	queue_priority_mapping = info->queue_priority_mapping;
 
-	if (!ecc->legacy_mode) {
-		int lowest_priority = 0;
-		unsigned int array_max;
-		struct of_phandle_args tc_args;
+	अगर (!ecc->legacy_mode) अणु
+		पूर्णांक lowest_priority = 0;
+		अचिन्हित पूर्णांक array_max;
+		काष्ठा of_phandle_args tc_args;
 
-		ecc->tc_list = devm_kcalloc(dev, ecc->num_tc,
-					    sizeof(*ecc->tc_list), GFP_KERNEL);
-		if (!ecc->tc_list) {
+		ecc->tc_list = devm_kसुस्मृति(dev, ecc->num_tc,
+					    माप(*ecc->tc_list), GFP_KERNEL);
+		अगर (!ecc->tc_list) अणु
 			ret = -ENOMEM;
-			goto err_reg1;
-		}
+			जाओ err_reg1;
+		पूर्ण
 
-		for (i = 0;; i++) {
+		क्रम (i = 0;; i++) अणु
 			ret = of_parse_phandle_with_fixed_args(node, "ti,tptcs",
 							       1, i, &tc_args);
-			if (ret || i == ecc->num_tc)
-				break;
+			अगर (ret || i == ecc->num_tc)
+				अवरोध;
 
 			ecc->tc_list[i].node = tc_args.np;
 			ecc->tc_list[i].id = i;
 			queue_priority_mapping[i][1] = tc_args.args[0];
-			if (queue_priority_mapping[i][1] > lowest_priority) {
+			अगर (queue_priority_mapping[i][1] > lowest_priority) अणु
 				lowest_priority = queue_priority_mapping[i][1];
-				info->default_queue = i;
-			}
-		}
+				info->शेष_queue = i;
+			पूर्ण
+		पूर्ण
 
-		/* See if we have optional dma-channel-mask array */
+		/* See अगर we have optional dma-channel-mask array */
 		array_max = DIV_ROUND_UP(ecc->num_channels, BITS_PER_TYPE(u32));
-		ret = of_property_read_variable_u32_array(node,
+		ret = of_property_पढ़ो_variable_u32_array(node,
 						"dma-channel-mask",
 						(u32 *)ecc->channels_mask,
 						1, array_max);
-		if (ret > 0 && ret != array_max)
+		अगर (ret > 0 && ret != array_max)
 			dev_warn(dev, "dma-channel-mask is not complete.\n");
-		else if (ret == -EOVERFLOW || ret == -ENODATA)
+		अन्यथा अगर (ret == -EOVERFLOW || ret == -ENODATA)
 			dev_warn(dev,
 				 "dma-channel-mask is out of range or empty\n");
-	}
+	पूर्ण
 
 	/* Event queue priority mapping */
-	for (i = 0; queue_priority_mapping[i][0] != -1; i++)
+	क्रम (i = 0; queue_priority_mapping[i][0] != -1; i++)
 		edma_assign_priority_to_queue(ecc, queue_priority_mapping[i][0],
 					      queue_priority_mapping[i][1]);
 
-	edma_write_array2(ecc, EDMA_DRAE, 0, 0, 0x0);
-	edma_write_array2(ecc, EDMA_DRAE, 0, 1, 0x0);
-	edma_write_array(ecc, EDMA_QRAE, 0, 0x0);
+	edma_ग_लिखो_array2(ecc, EDMA_DRAE, 0, 0, 0x0);
+	edma_ग_लिखो_array2(ecc, EDMA_DRAE, 0, 1, 0x0);
+	edma_ग_लिखो_array(ecc, EDMA_QRAE, 0, 0x0);
 
 	ecc->info = info;
 
 	/* Init the dma device and channels */
 	edma_dma_init(ecc, legacy_mode);
 
-	for (i = 0; i < ecc->num_channels; i++) {
+	क्रम (i = 0; i < ecc->num_channels; i++) अणु
 		/* Do not touch reserved channels */
-		if (!test_bit(i, ecc->channels_mask))
-			continue;
+		अगर (!test_bit(i, ecc->channels_mask))
+			जारी;
 
-		/* Assign all channels to the default queue */
+		/* Assign all channels to the शेष queue */
 		edma_assign_channel_eventq(&ecc->slave_chans[i],
-					   info->default_queue);
+					   info->शेष_queue);
 		/* Set entry slot to the dummy slot */
 		edma_set_chmap(&ecc->slave_chans[i], ecc->dummy_slot);
-	}
+	पूर्ण
 
 	ecc->dma_slave.filter.map = info->slave_map;
 	ecc->dma_slave.filter.mapcnt = info->slavecnt;
 	ecc->dma_slave.filter.fn = edma_filter_fn;
 
-	ret = dma_async_device_register(&ecc->dma_slave);
-	if (ret) {
+	ret = dma_async_device_रेजिस्टर(&ecc->dma_slave);
+	अगर (ret) अणु
 		dev_err(dev, "slave ddev registration failed (%d)\n", ret);
-		goto err_reg1;
-	}
+		जाओ err_reg1;
+	पूर्ण
 
-	if (ecc->dma_memcpy) {
-		ret = dma_async_device_register(ecc->dma_memcpy);
-		if (ret) {
+	अगर (ecc->dma_स_नकल) अणु
+		ret = dma_async_device_रेजिस्टर(ecc->dma_स_नकल);
+		अगर (ret) अणु
 			dev_err(dev, "memcpy ddev registration failed (%d)\n",
 				ret);
-			dma_async_device_unregister(&ecc->dma_slave);
-			goto err_reg1;
-		}
-	}
+			dma_async_device_unरेजिस्टर(&ecc->dma_slave);
+			जाओ err_reg1;
+		पूर्ण
+	पूर्ण
 
-	if (node)
-		of_dma_controller_register(node, of_edma_xlate, ecc);
+	अगर (node)
+		of_dma_controller_रेजिस्टर(node, of_edma_xlate, ecc);
 
 	dev_info(dev, "TI EDMA DMA engine driver\n");
 
-	return 0;
+	वापस 0;
 
 err_reg1:
-	edma_free_slot(ecc, ecc->dummy_slot);
+	edma_मुक्त_slot(ecc, ecc->dummy_slot);
 err_disable_pm:
-	pm_runtime_put_sync(dev);
-	pm_runtime_disable(dev);
-	return ret;
-}
+	pm_runसमय_put_sync(dev);
+	pm_runसमय_disable(dev);
+	वापस ret;
+पूर्ण
 
-static void edma_cleanupp_vchan(struct dma_device *dmadev)
-{
-	struct edma_chan *echan, *_echan;
+अटल व्योम edma_cleanupp_vchan(काष्ठा dma_device *dmadev)
+अणु
+	काष्ठा edma_chan *echan, *_echan;
 
-	list_for_each_entry_safe(echan, _echan,
-			&dmadev->channels, vchan.chan.device_node) {
+	list_क्रम_each_entry_safe(echan, _echan,
+			&dmadev->channels, vchan.chan.device_node) अणु
 		list_del(&echan->vchan.chan.device_node);
-		tasklet_kill(&echan->vchan.task);
-	}
-}
+		tasklet_समाप्त(&echan->vchan.task);
+	पूर्ण
+पूर्ण
 
-static int edma_remove(struct platform_device *pdev)
-{
-	struct device *dev = &pdev->dev;
-	struct edma_cc *ecc = dev_get_drvdata(dev);
+अटल पूर्णांक edma_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा edma_cc *ecc = dev_get_drvdata(dev);
 
-	devm_free_irq(dev, ecc->ccint, ecc);
-	devm_free_irq(dev, ecc->ccerrint, ecc);
+	devm_मुक्त_irq(dev, ecc->ccपूर्णांक, ecc);
+	devm_मुक्त_irq(dev, ecc->ccerrपूर्णांक, ecc);
 
 	edma_cleanupp_vchan(&ecc->dma_slave);
 
-	if (dev->of_node)
-		of_dma_controller_free(dev->of_node);
-	dma_async_device_unregister(&ecc->dma_slave);
-	if (ecc->dma_memcpy)
-		dma_async_device_unregister(ecc->dma_memcpy);
-	edma_free_slot(ecc, ecc->dummy_slot);
-	pm_runtime_put_sync(dev);
-	pm_runtime_disable(dev);
+	अगर (dev->of_node)
+		of_dma_controller_मुक्त(dev->of_node);
+	dma_async_device_unरेजिस्टर(&ecc->dma_slave);
+	अगर (ecc->dma_स_नकल)
+		dma_async_device_unरेजिस्टर(ecc->dma_स_नकल);
+	edma_मुक्त_slot(ecc, ecc->dummy_slot);
+	pm_runसमय_put_sync(dev);
+	pm_runसमय_disable(dev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_PM_SLEEP
-static int edma_pm_suspend(struct device *dev)
-{
-	struct edma_cc *ecc = dev_get_drvdata(dev);
-	struct edma_chan *echan = ecc->slave_chans;
-	int i;
+#अगर_घोषित CONFIG_PM_SLEEP
+अटल पूर्णांक edma_pm_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा edma_cc *ecc = dev_get_drvdata(dev);
+	काष्ठा edma_chan *echan = ecc->slave_chans;
+	पूर्णांक i;
 
-	for (i = 0; i < ecc->num_channels; i++) {
-		if (echan[i].alloced)
-			edma_setup_interrupt(&echan[i], false);
-	}
+	क्रम (i = 0; i < ecc->num_channels; i++) अणु
+		अगर (echan[i].alloced)
+			edma_setup_पूर्णांकerrupt(&echan[i], false);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int edma_pm_resume(struct device *dev)
-{
-	struct edma_cc *ecc = dev_get_drvdata(dev);
-	struct edma_chan *echan = ecc->slave_chans;
-	int i;
+अटल पूर्णांक edma_pm_resume(काष्ठा device *dev)
+अणु
+	काष्ठा edma_cc *ecc = dev_get_drvdata(dev);
+	काष्ठा edma_chan *echan = ecc->slave_chans;
+	पूर्णांक i;
 	s8 (*queue_priority_mapping)[2];
 
 	/* re initialize dummy slot to dummy param set */
-	edma_write_slot(ecc, ecc->dummy_slot, &dummy_paramset);
+	edma_ग_लिखो_slot(ecc, ecc->dummy_slot, &dummy_paramset);
 
 	queue_priority_mapping = ecc->info->queue_priority_mapping;
 
 	/* Event queue priority mapping */
-	for (i = 0; queue_priority_mapping[i][0] != -1; i++)
+	क्रम (i = 0; queue_priority_mapping[i][0] != -1; i++)
 		edma_assign_priority_to_queue(ecc, queue_priority_mapping[i][0],
 					      queue_priority_mapping[i][1]);
 
-	for (i = 0; i < ecc->num_channels; i++) {
-		if (echan[i].alloced) {
-			/* ensure access through shadow region 0 */
+	क्रम (i = 0; i < ecc->num_channels; i++) अणु
+		अगर (echan[i].alloced) अणु
+			/* ensure access through shaकरोw region 0 */
 			edma_or_array2(ecc, EDMA_DRAE, 0,
 				       EDMA_REG_ARRAY_INDEX(i),
 				       EDMA_CHANNEL_BIT(i));
 
-			edma_setup_interrupt(&echan[i], true);
+			edma_setup_पूर्णांकerrupt(&echan[i], true);
 
-			/* Set up channel -> slot mapping for the entry slot */
+			/* Set up channel -> slot mapping क्रम the entry slot */
 			edma_set_chmap(&echan[i], echan[i].slot[0]);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
-#endif
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
-static const struct dev_pm_ops edma_pm_ops = {
+अटल स्थिर काष्ठा dev_pm_ops edma_pm_ops = अणु
 	SET_LATE_SYSTEM_SLEEP_PM_OPS(edma_pm_suspend, edma_pm_resume)
-};
+पूर्ण;
 
-static struct platform_driver edma_driver = {
+अटल काष्ठा platक्रमm_driver edma_driver = अणु
 	.probe		= edma_probe,
-	.remove		= edma_remove,
-	.driver = {
+	.हटाओ		= edma_हटाओ,
+	.driver = अणु
 		.name	= "edma",
 		.pm	= &edma_pm_ops,
 		.of_match_table = edma_of_ids,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static int edma_tptc_probe(struct platform_device *pdev)
-{
-	pm_runtime_enable(&pdev->dev);
-	return pm_runtime_get_sync(&pdev->dev);
-}
+अटल पूर्णांक edma_tptc_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	pm_runसमय_enable(&pdev->dev);
+	वापस pm_runसमय_get_sync(&pdev->dev);
+पूर्ण
 
-static struct platform_driver edma_tptc_driver = {
+अटल काष्ठा platक्रमm_driver edma_tptc_driver = अणु
 	.probe		= edma_tptc_probe,
-	.driver = {
+	.driver = अणु
 		.name	= "edma3-tptc",
 		.of_match_table = edma_tptc_of_ids,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static bool edma_filter_fn(struct dma_chan *chan, void *param)
-{
+अटल bool edma_filter_fn(काष्ठा dma_chan *chan, व्योम *param)
+अणु
 	bool match = false;
 
-	if (chan->device->dev->driver == &edma_driver.driver) {
-		struct edma_chan *echan = to_edma_chan(chan);
-		unsigned ch_req = *(unsigned *)param;
-		if (ch_req == echan->ch_num) {
+	अगर (chan->device->dev->driver == &edma_driver.driver) अणु
+		काष्ठा edma_chan *echan = to_edma_chan(chan);
+		अचिन्हित ch_req = *(अचिन्हित *)param;
+		अगर (ch_req == echan->ch_num) अणु
 			/* The channel is going to be used as HW synchronized */
 			echan->hw_triggered = true;
 			match = true;
-		}
-	}
-	return match;
-}
+		पूर्ण
+	पूर्ण
+	वापस match;
+पूर्ण
 
-static int edma_init(void)
-{
-	int ret;
+अटल पूर्णांक edma_init(व्योम)
+अणु
+	पूर्णांक ret;
 
-	ret = platform_driver_register(&edma_tptc_driver);
-	if (ret)
-		return ret;
+	ret = platक्रमm_driver_रेजिस्टर(&edma_tptc_driver);
+	अगर (ret)
+		वापस ret;
 
-	return platform_driver_register(&edma_driver);
-}
+	वापस platक्रमm_driver_रेजिस्टर(&edma_driver);
+पूर्ण
 subsys_initcall(edma_init);
 
-static void __exit edma_exit(void)
-{
-	platform_driver_unregister(&edma_driver);
-	platform_driver_unregister(&edma_tptc_driver);
-}
-module_exit(edma_exit);
+अटल व्योम __निकास edma_निकास(व्योम)
+अणु
+	platक्रमm_driver_unरेजिस्टर(&edma_driver);
+	platक्रमm_driver_unरेजिस्टर(&edma_tptc_driver);
+पूर्ण
+module_निकास(edma_निकास);
 
 MODULE_AUTHOR("Matt Porter <matt.porter@linaro.org>");
 MODULE_DESCRIPTION("TI EDMA DMA engine driver");

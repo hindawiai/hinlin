@@ -1,1 +1,2 @@
-#define EXPORT_SYMBOL(x)
+<शैली गुरु>
+#घोषणा EXPORT_SYMBOL(x)

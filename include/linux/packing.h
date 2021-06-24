@@ -1,49 +1,50 @@
-/* SPDX-License-Identifier: BSD-3-Clause
+<शैली गुरु>
+/* SPDX-License-Identअगरier: BSD-3-Clause
  * Copyright (c) 2016-2018, NXP Semiconductors
  * Copyright (c) 2018-2019, Vladimir Oltean <olteanv@gmail.com>
  */
-#ifndef _LINUX_PACKING_H
-#define _LINUX_PACKING_H
+#अगर_अघोषित _LINUX_PACKING_H
+#घोषणा _LINUX_PACKING_H
 
-#include <linux/types.h>
-#include <linux/bitops.h>
+#समावेश <linux/types.h>
+#समावेश <linux/bitops.h>
 
-#define QUIRK_MSB_ON_THE_RIGHT	BIT(0)
-#define QUIRK_LITTLE_ENDIAN	BIT(1)
-#define QUIRK_LSW32_IS_FIRST	BIT(2)
+#घोषणा QUIRK_MSB_ON_THE_RIGHT	BIT(0)
+#घोषणा QUIRK_LITTLE_ENDIAN	BIT(1)
+#घोषणा QUIRK_LSW32_IS_FIRST	BIT(2)
 
-enum packing_op {
+क्रमागत packing_op अणु
 	PACK,
 	UNPACK,
-};
+पूर्ण;
 
 /**
  * packing - Convert numbers (currently u64) between a packed and an unpacked
- *	     format. Unpacked means laid out in memory in the CPU's native
- *	     understanding of integers, while packed means anything else that
+ *	     क्रमmat. Unpacked means laid out in memory in the CPU's native
+ *	     understanding of पूर्णांकegers, जबतक packed means anything अन्यथा that
  *	     requires translation.
  *
- * @pbuf: Pointer to a buffer holding the packed value.
- * @uval: Pointer to an u64 holding the unpacked value.
- * @startbit: The index (in logical notation, compensated for quirks) where
+ * @pbuf: Poपूर्णांकer to a buffer holding the packed value.
+ * @uval: Poपूर्णांकer to an u64 holding the unpacked value.
+ * @startbit: The index (in logical notation, compensated क्रम quirks) where
  *	      the packed value starts within pbuf. Must be larger than, or
  *	      equal to, endbit.
- * @endbit: The index (in logical notation, compensated for quirks) where
+ * @endbit: The index (in logical notation, compensated क्रम quirks) where
  *	    the packed value ends within pbuf. Must be smaller than, or equal
  *	    to, startbit.
- * @op: If PACK, then uval will be treated as const pointer and copied (packed)
- *	into pbuf, between startbit and endbit.
- *	If UNPACK, then pbuf will be treated as const pointer and the logical
+ * @op: If PACK, then uval will be treated as स्थिर poपूर्णांकer and copied (packed)
+ *	पूर्णांकo pbuf, between startbit and endbit.
+ *	If UNPACK, then pbuf will be treated as स्थिर poपूर्णांकer and the logical
  *	value between startbit and endbit will be copied (unpacked) to uval.
  * @quirks: A bit mask of QUIRK_LITTLE_ENDIAN, QUIRK_LSW32_IS_FIRST and
  *	    QUIRK_MSB_ON_THE_RIGHT.
  *
- * Return: 0 on success, EINVAL or ERANGE if called incorrectly. Assuming
- *	   correct usage, return code may be discarded.
- *	   If op is PACK, pbuf is modified.
- *	   If op is UNPACK, uval is modified.
+ * Return: 0 on success, EINVAL or दुस्फल अगर called incorrectly. Assuming
+ *	   correct usage, वापस code may be discarded.
+ *	   If op is PACK, pbuf is modअगरied.
+ *	   If op is UNPACK, uval is modअगरied.
  */
-int packing(void *pbuf, u64 *uval, int startbit, int endbit, size_t pbuflen,
-	    enum packing_op op, u8 quirks);
+पूर्णांक packing(व्योम *pbuf, u64 *uval, पूर्णांक startbit, पूर्णांक endbit, माप_प्रकार pbuflen,
+	    क्रमागत packing_op op, u8 quirks);
 
-#endif
+#पूर्ण_अगर

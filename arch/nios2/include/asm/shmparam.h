@@ -1,10 +1,11 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * Copyright Altera Corporation (C) <2015>. All rights reserved
  */
-#ifndef _ASM_NIOS2_SHMPARAM_H
-#define _ASM_NIOS2_SHMPARAM_H
+#अगर_अघोषित _ASM_NIOS2_SHMPARAM_H
+#घोषणा _ASM_NIOS2_SHMPARAM_H
 
-#define	SHMLBA	CONFIG_NIOS2_DCACHE_SIZE
+#घोषणा	SHMLBA	CONFIG_NIOS2_DCACHE_SIZE
 
-#endif /* _ASM_NIOS2_SHMPARAM_H */
+#पूर्ण_अगर /* _ASM_NIOS2_SHMPARAM_H */

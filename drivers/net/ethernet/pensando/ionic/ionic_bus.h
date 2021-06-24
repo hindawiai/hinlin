@@ -1,16 +1,17 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-/* Copyright(c) 2017 - 2019 Pensando Systems, Inc */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+/* Copyright(c) 2017 - 2019 Pensanकरो Systems, Inc */
 
-#ifndef _IONIC_BUS_H_
-#define _IONIC_BUS_H_
+#अगर_अघोषित _IONIC_BUS_H_
+#घोषणा _IONIC_BUS_H_
 
-int ionic_bus_get_irq(struct ionic *ionic, unsigned int num);
-const char *ionic_bus_info(struct ionic *ionic);
-int ionic_bus_alloc_irq_vectors(struct ionic *ionic, unsigned int nintrs);
-void ionic_bus_free_irq_vectors(struct ionic *ionic);
-int ionic_bus_register_driver(void);
-void ionic_bus_unregister_driver(void);
-void __iomem *ionic_bus_map_dbpage(struct ionic *ionic, int page_num);
-void ionic_bus_unmap_dbpage(struct ionic *ionic, void __iomem *page);
+पूर्णांक ionic_bus_get_irq(काष्ठा ionic *ionic, अचिन्हित पूर्णांक num);
+स्थिर अक्षर *ionic_bus_info(काष्ठा ionic *ionic);
+पूर्णांक ionic_bus_alloc_irq_vectors(काष्ठा ionic *ionic, अचिन्हित पूर्णांक nपूर्णांकrs);
+व्योम ionic_bus_मुक्त_irq_vectors(काष्ठा ionic *ionic);
+पूर्णांक ionic_bus_रेजिस्टर_driver(व्योम);
+व्योम ionic_bus_unरेजिस्टर_driver(व्योम);
+व्योम __iomem *ionic_bus_map_dbpage(काष्ठा ionic *ionic, पूर्णांक page_num);
+व्योम ionic_bus_unmap_dbpage(काष्ठा ionic *ionic, व्योम __iomem *page);
 
-#endif /* _IONIC_BUS_H_ */
+#पूर्ण_अगर /* _IONIC_BUS_H_ */

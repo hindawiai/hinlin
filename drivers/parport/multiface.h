@@ -1,21 +1,22 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _MULTIFACE_H_
-#define _MULTIFACE_H_
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _MULTIFACE_H_
+#घोषणा _MULTIFACE_H_
 
 /*
- * Defines for SerialMaster, Multiface Card II and Multiface Card III
+ * Defines क्रम SerialMaster, Multअगरace Card II and Multअगरace Card III
  * The addresses given below are offsets to the board base address
  * 
- * 6.11.95 Joerg Dorchain (dorchain@mpi-sb.mpg.de)
+ * 6.11.95 Joerg Dorchain (करोrchain@mpi-sb.mpg.de)
  *
  */
 
-#define PIA_REG_PADWIDTH 255
+#घोषणा PIA_REG_PADWIDTH 255
 
-#define DUARTBASE 0x0000
-#define PITBASE   0x0100
-#define ROMBASE   0x0200
-#define PIABASE   0x4000
+#घोषणा DUARTBASE 0x0000
+#घोषणा PITBASE   0x0100
+#घोषणा ROMBASE   0x0200
+#घोषणा PIABASE   0x4000
 
-#endif
+#पूर्ण_अगर
 

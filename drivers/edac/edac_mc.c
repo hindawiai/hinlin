@@ -1,3 +1,4 @@
+<शैली गुरु>
 /*
  * edac_mc kernel module
  * (C) 2005, 2006 Linux Networx (http://lnxi.com)
@@ -5,98 +6,98 @@
  * GNU General Public License.
  *
  * Written by Thayne Harbaugh
- * Based on work by Dan Hollis <goemon at anime dot net> and others.
+ * Based on work by Dan Hollis <goemon at anime करोt net> and others.
  *	http://www.anime.net/~goemon/linux-ecc/
  *
- * Modified by Dave Peterson and Doug Thompson
+ * Modअगरied by Dave Peterson and Doug Thompson
  *
  */
 
-#include <linux/module.h>
-#include <linux/proc_fs.h>
-#include <linux/kernel.h>
-#include <linux/types.h>
-#include <linux/smp.h>
-#include <linux/init.h>
-#include <linux/sysctl.h>
-#include <linux/highmem.h>
-#include <linux/timer.h>
-#include <linux/slab.h>
-#include <linux/jiffies.h>
-#include <linux/spinlock.h>
-#include <linux/list.h>
-#include <linux/ctype.h>
-#include <linux/edac.h>
-#include <linux/bitops.h>
-#include <linux/uaccess.h>
-#include <asm/page.h>
-#include "edac_mc.h"
-#include "edac_module.h"
-#include <ras/ras_event.h>
+#समावेश <linux/module.h>
+#समावेश <linux/proc_fs.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/types.h>
+#समावेश <linux/smp.h>
+#समावेश <linux/init.h>
+#समावेश <linux/sysctl.h>
+#समावेश <linux/highस्मृति.स>
+#समावेश <linux/समयr.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/jअगरfies.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/list.h>
+#समावेश <linux/प्रकार.स>
+#समावेश <linux/edac.h>
+#समावेश <linux/bitops.h>
+#समावेश <linux/uaccess.h>
+#समावेश <यंत्र/page.h>
+#समावेश "edac_mc.h"
+#समावेश "edac_module.h"
+#समावेश <ras/ras_event.h>
 
-#ifdef CONFIG_EDAC_ATOMIC_SCRUB
-#include <asm/edac.h>
-#else
-#define edac_atomic_scrub(va, size) do { } while (0)
-#endif
+#अगर_घोषित CONFIG_EDAC_ATOMIC_SCRUB
+#समावेश <यंत्र/edac.h>
+#अन्यथा
+#घोषणा edac_atomic_scrub(va, size) करो अणु पूर्ण जबतक (0)
+#पूर्ण_अगर
 
-int edac_op_state = EDAC_OPSTATE_INVAL;
+पूर्णांक edac_op_state = EDAC_OPSTATE_INVAL;
 EXPORT_SYMBOL_GPL(edac_op_state);
 
 /* lock to memory controller's control array */
-static DEFINE_MUTEX(mem_ctls_mutex);
-static LIST_HEAD(mc_devices);
+अटल DEFINE_MUTEX(mem_ctls_mutex);
+अटल LIST_HEAD(mc_devices);
 
 /*
- * Used to lock EDAC MC to just one module, avoiding two drivers e. g.
- *	apei/ghes and i7core_edac to be used at the same time.
+ * Used to lock EDAC MC to just one module, aव्योमing two drivers e. g.
+ *	apei/ghes and i7core_edac to be used at the same समय.
  */
-static const char *edac_mc_owner;
+अटल स्थिर अक्षर *edac_mc_owner;
 
-static struct mem_ctl_info *error_desc_to_mci(struct edac_raw_error_desc *e)
-{
-	return container_of(e, struct mem_ctl_info, error_desc);
-}
+अटल काष्ठा mem_ctl_info *error_desc_to_mci(काष्ठा edac_raw_error_desc *e)
+अणु
+	वापस container_of(e, काष्ठा mem_ctl_info, error_desc);
+पूर्ण
 
-unsigned int edac_dimm_info_location(struct dimm_info *dimm, char *buf,
-				     unsigned int len)
-{
-	struct mem_ctl_info *mci = dimm->mci;
-	int i, n, count = 0;
-	char *p = buf;
+अचिन्हित पूर्णांक edac_dimm_info_location(काष्ठा dimm_info *dimm, अक्षर *buf,
+				     अचिन्हित पूर्णांक len)
+अणु
+	काष्ठा mem_ctl_info *mci = dimm->mci;
+	पूर्णांक i, n, count = 0;
+	अक्षर *p = buf;
 
-	for (i = 0; i < mci->n_layers; i++) {
-		n = snprintf(p, len, "%s %d ",
+	क्रम (i = 0; i < mci->n_layers; i++) अणु
+		n = snम_लिखो(p, len, "%s %d ",
 			      edac_layer_name[mci->layers[i].type],
 			      dimm->location[i]);
 		p += n;
 		len -= n;
 		count += n;
-		if (!len)
-			break;
-	}
+		अगर (!len)
+			अवरोध;
+	पूर्ण
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-#ifdef CONFIG_EDAC_DEBUG
+#अगर_घोषित CONFIG_EDAC_DEBUG
 
-static void edac_mc_dump_channel(struct rank_info *chan)
-{
+अटल व्योम edac_mc_dump_channel(काष्ठा rank_info *chan)
+अणु
 	edac_dbg(4, "  channel->chan_idx = %d\n", chan->chan_idx);
 	edac_dbg(4, "    channel = %p\n", chan);
 	edac_dbg(4, "    channel->csrow = %p\n", chan->csrow);
 	edac_dbg(4, "    channel->dimm = %p\n", chan->dimm);
-}
+पूर्ण
 
-static void edac_mc_dump_dimm(struct dimm_info *dimm)
-{
-	char location[80];
+अटल व्योम edac_mc_dump_dimm(काष्ठा dimm_info *dimm)
+अणु
+	अक्षर location[80];
 
-	if (!dimm->nr_pages)
-		return;
+	अगर (!dimm->nr_pages)
+		वापस;
 
-	edac_dimm_info_location(dimm, location, sizeof(location));
+	edac_dimm_info_location(dimm, location, माप(location));
 
 	edac_dbg(4, "%s%i: %smapped as virtual row %d, chan %d\n",
 		 dimm->mci->csbased ? "rank" : "dimm",
@@ -106,10 +107,10 @@ static void edac_mc_dump_dimm(struct dimm_info *dimm)
 	edac_dbg(4, "  dimm->nr_pages = 0x%x\n", dimm->nr_pages);
 	edac_dbg(4, "  dimm->grain = %d\n", dimm->grain);
 	edac_dbg(4, "  dimm->nr_pages = 0x%x\n", dimm->nr_pages);
-}
+पूर्ण
 
-static void edac_mc_dump_csrow(struct csrow_info *csrow)
-{
+अटल व्योम edac_mc_dump_csrow(काष्ठा csrow_info *csrow)
+अणु
 	edac_dbg(4, "csrow->csrow_idx = %d\n", csrow->csrow_idx);
 	edac_dbg(4, "  csrow = %p\n", csrow);
 	edac_dbg(4, "  csrow->first_page = 0x%lx\n", csrow->first_page);
@@ -118,10 +119,10 @@ static void edac_mc_dump_csrow(struct csrow_info *csrow)
 	edac_dbg(4, "  csrow->nr_channels = %d\n", csrow->nr_channels);
 	edac_dbg(4, "  csrow->channels = %p\n", csrow->channels);
 	edac_dbg(4, "  csrow->mci = %p\n", csrow->mci);
-}
+पूर्ण
 
-static void edac_mc_dump_mci(struct mem_ctl_info *mci)
-{
+अटल व्योम edac_mc_dump_mci(काष्ठा mem_ctl_info *mci)
+अणु
 	edac_dbg(3, "\tmci = %p\n", mci);
 	edac_dbg(3, "\tmci->mtype_cap = %lx\n", mci->mtype_cap);
 	edac_dbg(3, "\tmci->edac_ctl_cap = %lx\n", mci->edac_ctl_cap);
@@ -135,11 +136,11 @@ static void edac_mc_dump_mci(struct mem_ctl_info *mci)
 	edac_dbg(3, "\tmod_name:ctl_name = %s:%s\n",
 		 mci->mod_name, mci->ctl_name);
 	edac_dbg(3, "\tpvt_info = %p\n\n", mci->pvt_info);
-}
+पूर्ण
 
-#endif				/* CONFIG_EDAC_DEBUG */
+#पूर्ण_अगर				/* CONFIG_EDAC_DEBUG */
 
-const char * const edac_mem_types[] = {
+स्थिर अक्षर * स्थिर edac_mem_types[] = अणु
 	[MEM_EMPTY]	= "Empty",
 	[MEM_RESERVED]	= "Reserved",
 	[MEM_UNKNOWN]	= "Unknown",
@@ -166,171 +167,171 @@ const char * const edac_mem_types[] = {
 	[MEM_DDR5]	= "Unbuffered-DDR5",
 	[MEM_NVDIMM]	= "Non-volatile-RAM",
 	[MEM_WIO2]	= "Wide-IO-2",
-};
+पूर्ण;
 EXPORT_SYMBOL_GPL(edac_mem_types);
 
 /**
- * edac_align_ptr - Prepares the pointer offsets for a single-shot allocation
- * @p:		pointer to a pointer with the memory offset to be used. At
- *		return, this will be incremented to point to the next offset
- * @size:	Size of the data structure to be reserved
+ * edac_align_ptr - Prepares the poपूर्णांकer offsets क्रम a single-shot allocation
+ * @p:		poपूर्णांकer to a poपूर्णांकer with the memory offset to be used. At
+ *		वापस, this will be incremented to poपूर्णांक to the next offset
+ * @size:	Size of the data काष्ठाure to be reserved
  * @n_elems:	Number of elements that should be reserved
  *
- * If 'size' is a constant, the compiler will optimize this whole function
- * down to either a no-op or the addition of a constant to the value of '*p'.
+ * If 'size' is a स्थिरant, the compiler will optimize this whole function
+ * करोwn to either a no-op or the addition of a स्थिरant to the value of '*p'.
  *
- * The 'p' pointer is absolutely needed to keep the proper advancing
- * further in memory to the proper offsets when allocating the struct along
- * with its embedded structs, as edac_device_alloc_ctl_info() does it
- * above, for example.
+ * The 'p' poपूर्णांकer is असलolutely needed to keep the proper advancing
+ * further in memory to the proper offsets when allocating the काष्ठा aदीर्घ
+ * with its embedded काष्ठाs, as edac_device_alloc_ctl_info() करोes it
+ * above, क्रम example.
  *
- * At return, the pointer 'p' will be incremented to be used on a next call
+ * At वापस, the poपूर्णांकer 'p' will be incremented to be used on a next call
  * to this function.
  */
-void *edac_align_ptr(void **p, unsigned int size, int n_elems)
-{
-	unsigned int align, r;
-	void *ptr = *p;
+व्योम *edac_align_ptr(व्योम **p, अचिन्हित पूर्णांक size, पूर्णांक n_elems)
+अणु
+	अचिन्हित पूर्णांक align, r;
+	व्योम *ptr = *p;
 
 	*p += size * n_elems;
 
 	/*
-	 * 'p' can possibly be an unaligned item X such that sizeof(X) is
+	 * 'p' can possibly be an unaligned item X such that माप(X) is
 	 * 'size'.  Adjust 'p' so that its alignment is at least as
-	 * stringent as what the compiler would provide for X and return
+	 * stringent as what the compiler would provide क्रम X and वापस
 	 * the aligned result.
 	 * Here we assume that the alignment of a "long long" is the most
-	 * stringent alignment that the compiler will ever provide by default.
+	 * stringent alignment that the compiler will ever provide by शेष.
 	 * As far as I know, this is a reasonable assumption.
 	 */
-	if (size > sizeof(long))
-		align = sizeof(long long);
-	else if (size > sizeof(int))
-		align = sizeof(long);
-	else if (size > sizeof(short))
-		align = sizeof(int);
-	else if (size > sizeof(char))
-		align = sizeof(short);
-	else
-		return (char *)ptr;
+	अगर (size > माप(दीर्घ))
+		align = माप(दीर्घ दीर्घ);
+	अन्यथा अगर (size > माप(पूर्णांक))
+		align = माप(दीर्घ);
+	अन्यथा अगर (size > माप(लघु))
+		align = माप(पूर्णांक);
+	अन्यथा अगर (size > माप(अक्षर))
+		align = माप(लघु);
+	अन्यथा
+		वापस (अक्षर *)ptr;
 
-	r = (unsigned long)p % align;
+	r = (अचिन्हित दीर्घ)p % align;
 
-	if (r == 0)
-		return (char *)ptr;
+	अगर (r == 0)
+		वापस (अक्षर *)ptr;
 
 	*p += align - r;
 
-	return (void *)(((unsigned long)ptr) + align - r);
-}
+	वापस (व्योम *)(((अचिन्हित दीर्घ)ptr) + align - r);
+पूर्ण
 
-static void _edac_mc_free(struct mem_ctl_info *mci)
-{
+अटल व्योम _edac_mc_मुक्त(काष्ठा mem_ctl_info *mci)
+अणु
 	put_device(&mci->dev);
-}
+पूर्ण
 
-static void mci_release(struct device *dev)
-{
-	struct mem_ctl_info *mci = container_of(dev, struct mem_ctl_info, dev);
-	struct csrow_info *csr;
-	int i, chn, row;
+अटल व्योम mci_release(काष्ठा device *dev)
+अणु
+	काष्ठा mem_ctl_info *mci = container_of(dev, काष्ठा mem_ctl_info, dev);
+	काष्ठा csrow_info *csr;
+	पूर्णांक i, chn, row;
 
-	if (mci->dimms) {
-		for (i = 0; i < mci->tot_dimms; i++)
-			kfree(mci->dimms[i]);
-		kfree(mci->dimms);
-	}
+	अगर (mci->dimms) अणु
+		क्रम (i = 0; i < mci->tot_dimms; i++)
+			kमुक्त(mci->dimms[i]);
+		kमुक्त(mci->dimms);
+	पूर्ण
 
-	if (mci->csrows) {
-		for (row = 0; row < mci->nr_csrows; row++) {
+	अगर (mci->csrows) अणु
+		क्रम (row = 0; row < mci->nr_csrows; row++) अणु
 			csr = mci->csrows[row];
-			if (!csr)
-				continue;
+			अगर (!csr)
+				जारी;
 
-			if (csr->channels) {
-				for (chn = 0; chn < mci->num_cschannel; chn++)
-					kfree(csr->channels[chn]);
-				kfree(csr->channels);
-			}
-			kfree(csr);
-		}
-		kfree(mci->csrows);
-	}
-	kfree(mci);
-}
+			अगर (csr->channels) अणु
+				क्रम (chn = 0; chn < mci->num_cschannel; chn++)
+					kमुक्त(csr->channels[chn]);
+				kमुक्त(csr->channels);
+			पूर्ण
+			kमुक्त(csr);
+		पूर्ण
+		kमुक्त(mci->csrows);
+	पूर्ण
+	kमुक्त(mci);
+पूर्ण
 
-static int edac_mc_alloc_csrows(struct mem_ctl_info *mci)
-{
-	unsigned int tot_channels = mci->num_cschannel;
-	unsigned int tot_csrows = mci->nr_csrows;
-	unsigned int row, chn;
+अटल पूर्णांक edac_mc_alloc_csrows(काष्ठा mem_ctl_info *mci)
+अणु
+	अचिन्हित पूर्णांक tot_channels = mci->num_cschannel;
+	अचिन्हित पूर्णांक tot_csrows = mci->nr_csrows;
+	अचिन्हित पूर्णांक row, chn;
 
 	/*
-	 * Alocate and fill the csrow/channels structs
+	 * Alocate and fill the csrow/channels काष्ठाs
 	 */
-	mci->csrows = kcalloc(tot_csrows, sizeof(*mci->csrows), GFP_KERNEL);
-	if (!mci->csrows)
-		return -ENOMEM;
+	mci->csrows = kसुस्मृति(tot_csrows, माप(*mci->csrows), GFP_KERNEL);
+	अगर (!mci->csrows)
+		वापस -ENOMEM;
 
-	for (row = 0; row < tot_csrows; row++) {
-		struct csrow_info *csr;
+	क्रम (row = 0; row < tot_csrows; row++) अणु
+		काष्ठा csrow_info *csr;
 
-		csr = kzalloc(sizeof(**mci->csrows), GFP_KERNEL);
-		if (!csr)
-			return -ENOMEM;
+		csr = kzalloc(माप(**mci->csrows), GFP_KERNEL);
+		अगर (!csr)
+			वापस -ENOMEM;
 
 		mci->csrows[row] = csr;
 		csr->csrow_idx = row;
 		csr->mci = mci;
 		csr->nr_channels = tot_channels;
-		csr->channels = kcalloc(tot_channels, sizeof(*csr->channels),
+		csr->channels = kसुस्मृति(tot_channels, माप(*csr->channels),
 					GFP_KERNEL);
-		if (!csr->channels)
-			return -ENOMEM;
+		अगर (!csr->channels)
+			वापस -ENOMEM;
 
-		for (chn = 0; chn < tot_channels; chn++) {
-			struct rank_info *chan;
+		क्रम (chn = 0; chn < tot_channels; chn++) अणु
+			काष्ठा rank_info *chan;
 
-			chan = kzalloc(sizeof(**csr->channels), GFP_KERNEL);
-			if (!chan)
-				return -ENOMEM;
+			chan = kzalloc(माप(**csr->channels), GFP_KERNEL);
+			अगर (!chan)
+				वापस -ENOMEM;
 
 			csr->channels[chn] = chan;
 			chan->chan_idx = chn;
 			chan->csrow = csr;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int edac_mc_alloc_dimms(struct mem_ctl_info *mci)
-{
-	unsigned int pos[EDAC_MAX_LAYERS];
-	unsigned int row, chn, idx;
-	int layer;
-	void *p;
+अटल पूर्णांक edac_mc_alloc_dimms(काष्ठा mem_ctl_info *mci)
+अणु
+	अचिन्हित पूर्णांक pos[EDAC_MAX_LAYERS];
+	अचिन्हित पूर्णांक row, chn, idx;
+	पूर्णांक layer;
+	व्योम *p;
 
 	/*
-	 * Allocate and fill the dimm structs
+	 * Allocate and fill the dimm काष्ठाs
 	 */
-	mci->dimms  = kcalloc(mci->tot_dimms, sizeof(*mci->dimms), GFP_KERNEL);
-	if (!mci->dimms)
-		return -ENOMEM;
+	mci->dimms  = kसुस्मृति(mci->tot_dimms, माप(*mci->dimms), GFP_KERNEL);
+	अगर (!mci->dimms)
+		वापस -ENOMEM;
 
-	memset(&pos, 0, sizeof(pos));
+	स_रखो(&pos, 0, माप(pos));
 	row = 0;
 	chn = 0;
-	for (idx = 0; idx < mci->tot_dimms; idx++) {
-		struct dimm_info *dimm;
-		struct rank_info *chan;
-		int n, len;
+	क्रम (idx = 0; idx < mci->tot_dimms; idx++) अणु
+		काष्ठा dimm_info *dimm;
+		काष्ठा rank_info *chan;
+		पूर्णांक n, len;
 
 		chan = mci->csrows[row]->channels[chn];
 
-		dimm = kzalloc(sizeof(**mci->dimms), GFP_KERNEL);
-		if (!dimm)
-			return -ENOMEM;
+		dimm = kzalloc(माप(**mci->dimms), GFP_KERNEL);
+		अगर (!dimm)
+			वापस -ENOMEM;
 		mci->dimms[idx] = dimm;
 		dimm->mci = mci;
 		dimm->idx = idx;
@@ -338,22 +339,22 @@ static int edac_mc_alloc_dimms(struct mem_ctl_info *mci)
 		/*
 		 * Copy DIMM location and initialize it.
 		 */
-		len = sizeof(dimm->label);
+		len = माप(dimm->label);
 		p = dimm->label;
-		n = snprintf(p, len, "mc#%u", mci->mc_idx);
+		n = snम_लिखो(p, len, "mc#%u", mci->mc_idx);
 		p += n;
 		len -= n;
-		for (layer = 0; layer < mci->n_layers; layer++) {
-			n = snprintf(p, len, "%s#%u",
+		क्रम (layer = 0; layer < mci->n_layers; layer++) अणु
+			n = snम_लिखो(p, len, "%s#%u",
 				     edac_layer_name[mci->layers[layer].type],
 				     pos[layer]);
 			p += n;
 			len -= n;
 			dimm->location[layer] = pos[layer];
 
-			if (len <= 0)
-				break;
-		}
+			अगर (len <= 0)
+				अवरोध;
+		पूर्ण
 
 		/* Link it to the csrows old API data */
 		chan->dimm = dimm;
@@ -361,72 +362,72 @@ static int edac_mc_alloc_dimms(struct mem_ctl_info *mci)
 		dimm->cschannel = chn;
 
 		/* Increment csrow location */
-		if (mci->layers[0].is_virt_csrow) {
+		अगर (mci->layers[0].is_virt_csrow) अणु
 			chn++;
-			if (chn == mci->num_cschannel) {
+			अगर (chn == mci->num_cschannel) अणु
 				chn = 0;
 				row++;
-			}
-		} else {
+			पूर्ण
+		पूर्ण अन्यथा अणु
 			row++;
-			if (row == mci->nr_csrows) {
+			अगर (row == mci->nr_csrows) अणु
 				row = 0;
 				chn++;
-			}
-		}
+			पूर्ण
+		पूर्ण
 
 		/* Increment dimm location */
-		for (layer = mci->n_layers - 1; layer >= 0; layer--) {
+		क्रम (layer = mci->n_layers - 1; layer >= 0; layer--) अणु
 			pos[layer]++;
-			if (pos[layer] < mci->layers[layer].size)
-				break;
+			अगर (pos[layer] < mci->layers[layer].size)
+				अवरोध;
 			pos[layer] = 0;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-struct mem_ctl_info *edac_mc_alloc(unsigned int mc_num,
-				   unsigned int n_layers,
-				   struct edac_mc_layer *layers,
-				   unsigned int sz_pvt)
-{
-	struct mem_ctl_info *mci;
-	struct edac_mc_layer *layer;
-	unsigned int idx, size, tot_dimms = 1;
-	unsigned int tot_csrows = 1, tot_channels = 1;
-	void *pvt, *ptr = NULL;
+काष्ठा mem_ctl_info *edac_mc_alloc(अचिन्हित पूर्णांक mc_num,
+				   अचिन्हित पूर्णांक n_layers,
+				   काष्ठा edac_mc_layer *layers,
+				   अचिन्हित पूर्णांक sz_pvt)
+अणु
+	काष्ठा mem_ctl_info *mci;
+	काष्ठा edac_mc_layer *layer;
+	अचिन्हित पूर्णांक idx, size, tot_dimms = 1;
+	अचिन्हित पूर्णांक tot_csrows = 1, tot_channels = 1;
+	व्योम *pvt, *ptr = शून्य;
 	bool per_rank = false;
 
-	if (WARN_ON(n_layers > EDAC_MAX_LAYERS || n_layers == 0))
-		return NULL;
+	अगर (WARN_ON(n_layers > EDAC_MAX_LAYERS || n_layers == 0))
+		वापस शून्य;
 
 	/*
-	 * Calculate the total amount of dimms and csrows/cschannels while
+	 * Calculate the total amount of dimms and csrows/cschannels जबतक
 	 * in the old API emulation mode
 	 */
-	for (idx = 0; idx < n_layers; idx++) {
+	क्रम (idx = 0; idx < n_layers; idx++) अणु
 		tot_dimms *= layers[idx].size;
 
-		if (layers[idx].is_virt_csrow)
+		अगर (layers[idx].is_virt_csrow)
 			tot_csrows *= layers[idx].size;
-		else
+		अन्यथा
 			tot_channels *= layers[idx].size;
 
-		if (layers[idx].type == EDAC_MC_LAYER_CHIP_SELECT)
+		अगर (layers[idx].type == EDAC_MC_LAYER_CHIP_SELECT)
 			per_rank = true;
-	}
+	पूर्ण
 
 	/* Figure out the offsets of the various items from the start of an mc
-	 * structure.  We want the alignment of each item to be at least as
-	 * stringent as what the compiler would provide if we could simply
-	 * hardcode everything into a single struct.
+	 * काष्ठाure.  We want the alignment of each item to be at least as
+	 * stringent as what the compiler would provide अगर we could simply
+	 * hardcode everything पूर्णांकo a single काष्ठा.
 	 */
-	mci	= edac_align_ptr(&ptr, sizeof(*mci), 1);
-	layer	= edac_align_ptr(&ptr, sizeof(*layer), n_layers);
+	mci	= edac_align_ptr(&ptr, माप(*mci), 1);
+	layer	= edac_align_ptr(&ptr, माप(*layer), n_layers);
 	pvt	= edac_align_ptr(&ptr, sz_pvt, 1);
-	size	= ((unsigned long)pvt) + sz_pvt;
+	size	= ((अचिन्हित दीर्घ)pvt) + sz_pvt;
 
 	edac_dbg(1, "allocating %u bytes for mci data (%d %s, %d csrows/channels)\n",
 		 size,
@@ -435,56 +436,56 @@ struct mem_ctl_info *edac_mc_alloc(unsigned int mc_num,
 		 tot_csrows * tot_channels);
 
 	mci = kzalloc(size, GFP_KERNEL);
-	if (mci == NULL)
-		return NULL;
+	अगर (mci == शून्य)
+		वापस शून्य;
 
 	mci->dev.release = mci_release;
 	device_initialize(&mci->dev);
 
-	/* Adjust pointers so they point within the memory we just allocated
+	/* Adjust poपूर्णांकers so they poपूर्णांक within the memory we just allocated
 	 * rather than an imaginary chunk of memory located at address 0.
 	 */
-	layer = (struct edac_mc_layer *)(((char *)mci) + ((unsigned long)layer));
-	pvt = sz_pvt ? (((char *)mci) + ((unsigned long)pvt)) : NULL;
+	layer = (काष्ठा edac_mc_layer *)(((अक्षर *)mci) + ((अचिन्हित दीर्घ)layer));
+	pvt = sz_pvt ? (((अक्षर *)mci) + ((अचिन्हित दीर्घ)pvt)) : शून्य;
 
-	/* setup index and various internal pointers */
+	/* setup index and various पूर्णांकernal poपूर्णांकers */
 	mci->mc_idx = mc_num;
 	mci->tot_dimms = tot_dimms;
 	mci->pvt_info = pvt;
 	mci->n_layers = n_layers;
 	mci->layers = layer;
-	memcpy(mci->layers, layers, sizeof(*layer) * n_layers);
+	स_नकल(mci->layers, layers, माप(*layer) * n_layers);
 	mci->nr_csrows = tot_csrows;
 	mci->num_cschannel = tot_channels;
 	mci->csbased = per_rank;
 
-	if (edac_mc_alloc_csrows(mci))
-		goto error;
+	अगर (edac_mc_alloc_csrows(mci))
+		जाओ error;
 
-	if (edac_mc_alloc_dimms(mci))
-		goto error;
+	अगर (edac_mc_alloc_dimms(mci))
+		जाओ error;
 
 	mci->op_state = OP_ALLOC;
 
-	return mci;
+	वापस mci;
 
 error:
-	_edac_mc_free(mci);
+	_edac_mc_मुक्त(mci);
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 EXPORT_SYMBOL_GPL(edac_mc_alloc);
 
-void edac_mc_free(struct mem_ctl_info *mci)
-{
+व्योम edac_mc_मुक्त(काष्ठा mem_ctl_info *mci)
+अणु
 	edac_dbg(1, "\n");
 
-	_edac_mc_free(mci);
-}
-EXPORT_SYMBOL_GPL(edac_mc_free);
+	_edac_mc_मुक्त(mci);
+पूर्ण
+EXPORT_SYMBOL_GPL(edac_mc_मुक्त);
 
-bool edac_has_mcs(void)
-{
+bool edac_has_mcs(व्योम)
+अणु
 	bool ret;
 
 	mutex_lock(&mem_ctls_mutex);
@@ -493,249 +494,249 @@ bool edac_has_mcs(void)
 
 	mutex_unlock(&mem_ctls_mutex);
 
-	return !ret;
-}
+	वापस !ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(edac_has_mcs);
 
 /* Caller must hold mem_ctls_mutex */
-static struct mem_ctl_info *__find_mci_by_dev(struct device *dev)
-{
-	struct mem_ctl_info *mci;
-	struct list_head *item;
+अटल काष्ठा mem_ctl_info *__find_mci_by_dev(काष्ठा device *dev)
+अणु
+	काष्ठा mem_ctl_info *mci;
+	काष्ठा list_head *item;
 
 	edac_dbg(3, "\n");
 
-	list_for_each(item, &mc_devices) {
-		mci = list_entry(item, struct mem_ctl_info, link);
+	list_क्रम_each(item, &mc_devices) अणु
+		mci = list_entry(item, काष्ठा mem_ctl_info, link);
 
-		if (mci->pdev == dev)
-			return mci;
-	}
+		अगर (mci->pdev == dev)
+			वापस mci;
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
 /**
  * find_mci_by_dev
  *
- *	scan list of controllers looking for the one that manages
+ *	scan list of controllers looking क्रम the one that manages
  *	the 'dev' device
- * @dev: pointer to a struct device related with the MCI
+ * @dev: poपूर्णांकer to a काष्ठा device related with the MCI
  */
-struct mem_ctl_info *find_mci_by_dev(struct device *dev)
-{
-	struct mem_ctl_info *ret;
+काष्ठा mem_ctl_info *find_mci_by_dev(काष्ठा device *dev)
+अणु
+	काष्ठा mem_ctl_info *ret;
 
 	mutex_lock(&mem_ctls_mutex);
 	ret = __find_mci_by_dev(dev);
 	mutex_unlock(&mem_ctls_mutex);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(find_mci_by_dev);
 
 /*
  * edac_mc_workq_function
- *	performs the operation scheduled by a workq request
+ *	perक्रमms the operation scheduled by a workq request
  */
-static void edac_mc_workq_function(struct work_struct *work_req)
-{
-	struct delayed_work *d_work = to_delayed_work(work_req);
-	struct mem_ctl_info *mci = to_edac_mem_ctl_work(d_work);
+अटल व्योम edac_mc_workq_function(काष्ठा work_काष्ठा *work_req)
+अणु
+	काष्ठा delayed_work *d_work = to_delayed_work(work_req);
+	काष्ठा mem_ctl_info *mci = to_edac_mem_ctl_work(d_work);
 
 	mutex_lock(&mem_ctls_mutex);
 
-	if (mci->op_state != OP_RUNNING_POLL) {
+	अगर (mci->op_state != OP_RUNNING_POLL) अणु
 		mutex_unlock(&mem_ctls_mutex);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (edac_op_state == EDAC_OPSTATE_POLL)
+	अगर (edac_op_state == EDAC_OPSTATE_POLL)
 		mci->edac_check(mci);
 
 	mutex_unlock(&mem_ctls_mutex);
 
 	/* Queue ourselves again. */
-	edac_queue_work(&mci->work, msecs_to_jiffies(edac_mc_get_poll_msec()));
-}
+	edac_queue_work(&mci->work, msecs_to_jअगरfies(edac_mc_get_poll_msec()));
+पूर्ण
 
 /*
- * edac_mc_reset_delay_period(unsigned long value)
+ * edac_mc_reset_delay_period(अचिन्हित दीर्घ value)
  *
  *	user space has updated our poll period value, need to
  *	reset our workq delays
  */
-void edac_mc_reset_delay_period(unsigned long value)
-{
-	struct mem_ctl_info *mci;
-	struct list_head *item;
+व्योम edac_mc_reset_delay_period(अचिन्हित दीर्घ value)
+अणु
+	काष्ठा mem_ctl_info *mci;
+	काष्ठा list_head *item;
 
 	mutex_lock(&mem_ctls_mutex);
 
-	list_for_each(item, &mc_devices) {
-		mci = list_entry(item, struct mem_ctl_info, link);
+	list_क्रम_each(item, &mc_devices) अणु
+		mci = list_entry(item, काष्ठा mem_ctl_info, link);
 
-		if (mci->op_state == OP_RUNNING_POLL)
+		अगर (mci->op_state == OP_RUNNING_POLL)
 			edac_mod_work(&mci->work, value);
-	}
+	पूर्ण
 	mutex_unlock(&mem_ctls_mutex);
-}
+पूर्ण
 
 
 
 /* Return 0 on success, 1 on failure.
- * Before calling this function, caller must
+ * Beक्रमe calling this function, caller must
  * assign a unique value to mci->mc_idx.
  *
  *	locking model:
  *
  *		called with the mem_ctls_mutex lock held
  */
-static int add_mc_to_global_list(struct mem_ctl_info *mci)
-{
-	struct list_head *item, *insert_before;
-	struct mem_ctl_info *p;
+अटल पूर्णांक add_mc_to_global_list(काष्ठा mem_ctl_info *mci)
+अणु
+	काष्ठा list_head *item, *insert_beक्रमe;
+	काष्ठा mem_ctl_info *p;
 
-	insert_before = &mc_devices;
+	insert_beक्रमe = &mc_devices;
 
 	p = __find_mci_by_dev(mci->pdev);
-	if (unlikely(p != NULL))
-		goto fail0;
+	अगर (unlikely(p != शून्य))
+		जाओ fail0;
 
-	list_for_each(item, &mc_devices) {
-		p = list_entry(item, struct mem_ctl_info, link);
+	list_क्रम_each(item, &mc_devices) अणु
+		p = list_entry(item, काष्ठा mem_ctl_info, link);
 
-		if (p->mc_idx >= mci->mc_idx) {
-			if (unlikely(p->mc_idx == mci->mc_idx))
-				goto fail1;
+		अगर (p->mc_idx >= mci->mc_idx) अणु
+			अगर (unlikely(p->mc_idx == mci->mc_idx))
+				जाओ fail1;
 
-			insert_before = item;
-			break;
-		}
-	}
+			insert_beक्रमe = item;
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	list_add_tail_rcu(&mci->link, insert_before);
-	return 0;
+	list_add_tail_rcu(&mci->link, insert_beक्रमe);
+	वापस 0;
 
 fail0:
-	edac_printk(KERN_WARNING, EDAC_MC,
+	edac_prपूर्णांकk(KERN_WARNING, EDAC_MC,
 		"%s (%s) %s %s already assigned %d\n", dev_name(p->pdev),
 		edac_dev_name(mci), p->mod_name, p->ctl_name, p->mc_idx);
-	return 1;
+	वापस 1;
 
 fail1:
-	edac_printk(KERN_WARNING, EDAC_MC,
+	edac_prपूर्णांकk(KERN_WARNING, EDAC_MC,
 		"bug in low-level driver: attempt to assign\n"
 		"    duplicate mc_idx %d in %s()\n", p->mc_idx, __func__);
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-static int del_mc_from_global_list(struct mem_ctl_info *mci)
-{
+अटल पूर्णांक del_mc_from_global_list(काष्ठा mem_ctl_info *mci)
+अणु
 	list_del_rcu(&mci->link);
 
-	/* these are for safe removal of devices from global list while
+	/* these are क्रम safe removal of devices from global list जबतक
 	 * NMI handlers may be traversing list
 	 */
 	synchronize_rcu();
 	INIT_LIST_HEAD(&mci->link);
 
-	return list_empty(&mc_devices);
-}
+	वापस list_empty(&mc_devices);
+पूर्ण
 
-struct mem_ctl_info *edac_mc_find(int idx)
-{
-	struct mem_ctl_info *mci;
-	struct list_head *item;
+काष्ठा mem_ctl_info *edac_mc_find(पूर्णांक idx)
+अणु
+	काष्ठा mem_ctl_info *mci;
+	काष्ठा list_head *item;
 
 	mutex_lock(&mem_ctls_mutex);
 
-	list_for_each(item, &mc_devices) {
-		mci = list_entry(item, struct mem_ctl_info, link);
-		if (mci->mc_idx == idx)
-			goto unlock;
-	}
+	list_क्रम_each(item, &mc_devices) अणु
+		mci = list_entry(item, काष्ठा mem_ctl_info, link);
+		अगर (mci->mc_idx == idx)
+			जाओ unlock;
+	पूर्ण
 
-	mci = NULL;
+	mci = शून्य;
 unlock:
 	mutex_unlock(&mem_ctls_mutex);
-	return mci;
-}
+	वापस mci;
+पूर्ण
 EXPORT_SYMBOL(edac_mc_find);
 
-const char *edac_get_owner(void)
-{
-	return edac_mc_owner;
-}
+स्थिर अक्षर *edac_get_owner(व्योम)
+अणु
+	वापस edac_mc_owner;
+पूर्ण
 EXPORT_SYMBOL_GPL(edac_get_owner);
 
-/* FIXME - should a warning be printed if no error detection? correction? */
-int edac_mc_add_mc_with_groups(struct mem_ctl_info *mci,
-			       const struct attribute_group **groups)
-{
-	int ret = -EINVAL;
+/* FIXME - should a warning be prपूर्णांकed अगर no error detection? correction? */
+पूर्णांक edac_mc_add_mc_with_groups(काष्ठा mem_ctl_info *mci,
+			       स्थिर काष्ठा attribute_group **groups)
+अणु
+	पूर्णांक ret = -EINVAL;
 	edac_dbg(0, "\n");
 
-#ifdef CONFIG_EDAC_DEBUG
-	if (edac_debug_level >= 3)
+#अगर_घोषित CONFIG_EDAC_DEBUG
+	अगर (edac_debug_level >= 3)
 		edac_mc_dump_mci(mci);
 
-	if (edac_debug_level >= 4) {
-		struct dimm_info *dimm;
-		int i;
+	अगर (edac_debug_level >= 4) अणु
+		काष्ठा dimm_info *dimm;
+		पूर्णांक i;
 
-		for (i = 0; i < mci->nr_csrows; i++) {
-			struct csrow_info *csrow = mci->csrows[i];
+		क्रम (i = 0; i < mci->nr_csrows; i++) अणु
+			काष्ठा csrow_info *csrow = mci->csrows[i];
 			u32 nr_pages = 0;
-			int j;
+			पूर्णांक j;
 
-			for (j = 0; j < csrow->nr_channels; j++)
+			क्रम (j = 0; j < csrow->nr_channels; j++)
 				nr_pages += csrow->channels[j]->dimm->nr_pages;
-			if (!nr_pages)
-				continue;
+			अगर (!nr_pages)
+				जारी;
 			edac_mc_dump_csrow(csrow);
-			for (j = 0; j < csrow->nr_channels; j++)
-				if (csrow->channels[j]->dimm->nr_pages)
+			क्रम (j = 0; j < csrow->nr_channels; j++)
+				अगर (csrow->channels[j]->dimm->nr_pages)
 					edac_mc_dump_channel(csrow->channels[j]);
-		}
+		पूर्ण
 
-		mci_for_each_dimm(mci, dimm)
+		mci_क्रम_each_dimm(mci, dimm)
 			edac_mc_dump_dimm(dimm);
-	}
-#endif
+	पूर्ण
+#पूर्ण_अगर
 	mutex_lock(&mem_ctls_mutex);
 
-	if (edac_mc_owner && edac_mc_owner != mci->mod_name) {
+	अगर (edac_mc_owner && edac_mc_owner != mci->mod_name) अणु
 		ret = -EPERM;
-		goto fail0;
-	}
+		जाओ fail0;
+	पूर्ण
 
-	if (add_mc_to_global_list(mci))
-		goto fail0;
+	अगर (add_mc_to_global_list(mci))
+		जाओ fail0;
 
-	/* set load time so that error rate can be tracked */
-	mci->start_time = jiffies;
+	/* set load समय so that error rate can be tracked */
+	mci->start_समय = jअगरfies;
 
 	mci->bus = edac_get_sysfs_subsys();
 
-	if (edac_create_sysfs_mci_device(mci, groups)) {
-		edac_mc_printk(mci, KERN_WARNING,
+	अगर (edac_create_sysfs_mci_device(mci, groups)) अणु
+		edac_mc_prपूर्णांकk(mci, KERN_WARNING,
 			"failed to create sysfs device\n");
-		goto fail1;
-	}
+		जाओ fail1;
+	पूर्ण
 
-	if (mci->edac_check) {
+	अगर (mci->edac_check) अणु
 		mci->op_state = OP_RUNNING_POLL;
 
 		INIT_DELAYED_WORK(&mci->work, edac_mc_workq_function);
-		edac_queue_work(&mci->work, msecs_to_jiffies(edac_mc_get_poll_msec()));
+		edac_queue_work(&mci->work, msecs_to_jअगरfies(edac_mc_get_poll_msec()));
 
-	} else {
+	पूर्ण अन्यथा अणु
 		mci->op_state = OP_RUNNING_INTERRUPT;
-	}
+	पूर्ण
 
 	/* Report action taken */
-	edac_mc_printk(mci, KERN_INFO,
+	edac_mc_prपूर्णांकk(mci, KERN_INFO,
 		"Giving out device to module %s controller %s: DEV %s (%s)\n",
 		mci->mod_name, mci->ctl_name, mci->dev_name,
 		edac_op_state_to_string(mci->op_state));
@@ -743,171 +744,171 @@ int edac_mc_add_mc_with_groups(struct mem_ctl_info *mci,
 	edac_mc_owner = mci->mod_name;
 
 	mutex_unlock(&mem_ctls_mutex);
-	return 0;
+	वापस 0;
 
 fail1:
 	del_mc_from_global_list(mci);
 
 fail0:
 	mutex_unlock(&mem_ctls_mutex);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(edac_mc_add_mc_with_groups);
 
-struct mem_ctl_info *edac_mc_del_mc(struct device *dev)
-{
-	struct mem_ctl_info *mci;
+काष्ठा mem_ctl_info *edac_mc_del_mc(काष्ठा device *dev)
+अणु
+	काष्ठा mem_ctl_info *mci;
 
 	edac_dbg(0, "\n");
 
 	mutex_lock(&mem_ctls_mutex);
 
-	/* find the requested mci struct in the global list */
+	/* find the requested mci काष्ठा in the global list */
 	mci = __find_mci_by_dev(dev);
-	if (mci == NULL) {
+	अगर (mci == शून्य) अणु
 		mutex_unlock(&mem_ctls_mutex);
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
 	/* mark MCI offline: */
 	mci->op_state = OP_OFFLINE;
 
-	if (del_mc_from_global_list(mci))
-		edac_mc_owner = NULL;
+	अगर (del_mc_from_global_list(mci))
+		edac_mc_owner = शून्य;
 
 	mutex_unlock(&mem_ctls_mutex);
 
-	if (mci->edac_check)
+	अगर (mci->edac_check)
 		edac_stop_work(&mci->work);
 
-	/* remove from sysfs */
-	edac_remove_sysfs_mci_device(mci);
+	/* हटाओ from sysfs */
+	edac_हटाओ_sysfs_mci_device(mci);
 
-	edac_printk(KERN_INFO, EDAC_MC,
+	edac_prपूर्णांकk(KERN_INFO, EDAC_MC,
 		"Removed device %d for %s %s: DEV %s\n", mci->mc_idx,
 		mci->mod_name, mci->ctl_name, edac_dev_name(mci));
 
-	return mci;
-}
+	वापस mci;
+पूर्ण
 EXPORT_SYMBOL_GPL(edac_mc_del_mc);
 
-static void edac_mc_scrub_block(unsigned long page, unsigned long offset,
+अटल व्योम edac_mc_scrub_block(अचिन्हित दीर्घ page, अचिन्हित दीर्घ offset,
 				u32 size)
-{
-	struct page *pg;
-	void *virt_addr;
-	unsigned long flags = 0;
+अणु
+	काष्ठा page *pg;
+	व्योम *virt_addr;
+	अचिन्हित दीर्घ flags = 0;
 
 	edac_dbg(3, "\n");
 
 	/* ECC error page was not in our memory. Ignore it. */
-	if (!pfn_valid(page))
-		return;
+	अगर (!pfn_valid(page))
+		वापस;
 
-	/* Find the actual page structure then map it and fix */
+	/* Find the actual page काष्ठाure then map it and fix */
 	pg = pfn_to_page(page);
 
-	if (PageHighMem(pg))
+	अगर (PageHighMem(pg))
 		local_irq_save(flags);
 
 	virt_addr = kmap_atomic(pg);
 
-	/* Perform architecture specific atomic scrub operation */
+	/* Perक्रमm architecture specअगरic atomic scrub operation */
 	edac_atomic_scrub(virt_addr + offset, size);
 
 	/* Unmap and complete */
 	kunmap_atomic(virt_addr);
 
-	if (PageHighMem(pg))
+	अगर (PageHighMem(pg))
 		local_irq_restore(flags);
-}
+पूर्ण
 
-/* FIXME - should return -1 */
-int edac_mc_find_csrow_by_page(struct mem_ctl_info *mci, unsigned long page)
-{
-	struct csrow_info **csrows = mci->csrows;
-	int row, i, j, n;
+/* FIXME - should वापस -1 */
+पूर्णांक edac_mc_find_csrow_by_page(काष्ठा mem_ctl_info *mci, अचिन्हित दीर्घ page)
+अणु
+	काष्ठा csrow_info **csrows = mci->csrows;
+	पूर्णांक row, i, j, n;
 
 	edac_dbg(1, "MC%d: 0x%lx\n", mci->mc_idx, page);
 	row = -1;
 
-	for (i = 0; i < mci->nr_csrows; i++) {
-		struct csrow_info *csrow = csrows[i];
+	क्रम (i = 0; i < mci->nr_csrows; i++) अणु
+		काष्ठा csrow_info *csrow = csrows[i];
 		n = 0;
-		for (j = 0; j < csrow->nr_channels; j++) {
-			struct dimm_info *dimm = csrow->channels[j]->dimm;
+		क्रम (j = 0; j < csrow->nr_channels; j++) अणु
+			काष्ठा dimm_info *dimm = csrow->channels[j]->dimm;
 			n += dimm->nr_pages;
-		}
-		if (n == 0)
-			continue;
+		पूर्ण
+		अगर (n == 0)
+			जारी;
 
 		edac_dbg(3, "MC%d: first(0x%lx) page(0x%lx) last(0x%lx) mask(0x%lx)\n",
 			 mci->mc_idx,
 			 csrow->first_page, page, csrow->last_page,
 			 csrow->page_mask);
 
-		if ((page >= csrow->first_page) &&
+		अगर ((page >= csrow->first_page) &&
 		    (page <= csrow->last_page) &&
 		    ((page & csrow->page_mask) ==
-		     (csrow->first_page & csrow->page_mask))) {
+		     (csrow->first_page & csrow->page_mask))) अणु
 			row = i;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	if (row == -1)
-		edac_mc_printk(mci, KERN_ERR,
+	अगर (row == -1)
+		edac_mc_prपूर्णांकk(mci, KERN_ERR,
 			"could not look up page error address %lx\n",
-			(unsigned long)page);
+			(अचिन्हित दीर्घ)page);
 
-	return row;
-}
+	वापस row;
+पूर्ण
 EXPORT_SYMBOL_GPL(edac_mc_find_csrow_by_page);
 
-const char *edac_layer_name[] = {
+स्थिर अक्षर *edac_layer_name[] = अणु
 	[EDAC_MC_LAYER_BRANCH] = "branch",
 	[EDAC_MC_LAYER_CHANNEL] = "channel",
 	[EDAC_MC_LAYER_SLOT] = "slot",
 	[EDAC_MC_LAYER_CHIP_SELECT] = "csrow",
 	[EDAC_MC_LAYER_ALL_MEM] = "memory",
-};
+पूर्ण;
 EXPORT_SYMBOL_GPL(edac_layer_name);
 
-static void edac_inc_ce_error(struct edac_raw_error_desc *e)
-{
-	int pos[EDAC_MAX_LAYERS] = { e->top_layer, e->mid_layer, e->low_layer };
-	struct mem_ctl_info *mci = error_desc_to_mci(e);
-	struct dimm_info *dimm = edac_get_dimm(mci, pos[0], pos[1], pos[2]);
+अटल व्योम edac_inc_ce_error(काष्ठा edac_raw_error_desc *e)
+अणु
+	पूर्णांक pos[EDAC_MAX_LAYERS] = अणु e->top_layer, e->mid_layer, e->low_layer पूर्ण;
+	काष्ठा mem_ctl_info *mci = error_desc_to_mci(e);
+	काष्ठा dimm_info *dimm = edac_get_dimm(mci, pos[0], pos[1], pos[2]);
 
 	mci->ce_mc += e->error_count;
 
-	if (dimm)
+	अगर (dimm)
 		dimm->ce_count += e->error_count;
-	else
+	अन्यथा
 		mci->ce_noinfo_count += e->error_count;
-}
+पूर्ण
 
-static void edac_inc_ue_error(struct edac_raw_error_desc *e)
-{
-	int pos[EDAC_MAX_LAYERS] = { e->top_layer, e->mid_layer, e->low_layer };
-	struct mem_ctl_info *mci = error_desc_to_mci(e);
-	struct dimm_info *dimm = edac_get_dimm(mci, pos[0], pos[1], pos[2]);
+अटल व्योम edac_inc_ue_error(काष्ठा edac_raw_error_desc *e)
+अणु
+	पूर्णांक pos[EDAC_MAX_LAYERS] = अणु e->top_layer, e->mid_layer, e->low_layer पूर्ण;
+	काष्ठा mem_ctl_info *mci = error_desc_to_mci(e);
+	काष्ठा dimm_info *dimm = edac_get_dimm(mci, pos[0], pos[1], pos[2]);
 
 	mci->ue_mc += e->error_count;
 
-	if (dimm)
+	अगर (dimm)
 		dimm->ue_count += e->error_count;
-	else
+	अन्यथा
 		mci->ue_noinfo_count += e->error_count;
-}
+पूर्ण
 
-static void edac_ce_error(struct edac_raw_error_desc *e)
-{
-	struct mem_ctl_info *mci = error_desc_to_mci(e);
-	unsigned long remapped_page;
+अटल व्योम edac_ce_error(काष्ठा edac_raw_error_desc *e)
+अणु
+	काष्ठा mem_ctl_info *mci = error_desc_to_mci(e);
+	अचिन्हित दीर्घ remapped_page;
 
-	if (edac_mc_get_log_ce()) {
-		edac_mc_printk(mci, KERN_WARNING,
+	अगर (edac_mc_get_log_ce()) अणु
+		edac_mc_prपूर्णांकk(mci, KERN_WARNING,
 			"%d CE %s%son %s (%s page:0x%lx offset:0x%lx grain:%ld syndrome:0x%lx%s%s)\n",
 			e->error_count, e->msg,
 			*e->msg ? " " : "",
@@ -915,20 +916,20 @@ static void edac_ce_error(struct edac_raw_error_desc *e)
 			e->grain, e->syndrome,
 			*e->other_detail ? " - " : "",
 			e->other_detail);
-	}
+	पूर्ण
 
 	edac_inc_ce_error(e);
 
-	if (mci->scrub_mode == SCRUB_SW_SRC) {
+	अगर (mci->scrub_mode == SCRUB_SW_SRC) अणु
 		/*
 			* Some memory controllers (called MCs below) can remap
-			* memory so that it is still available at a different
-			* address when PCI devices map into memory.
-			* MC's that can't do this, lose the memory where PCI
+			* memory so that it is still available at a dअगरferent
+			* address when PCI devices map पूर्णांकo memory.
+			* MC's that can't करो this, lose the memory where PCI
 			* devices are mapped. This mapping is MC-dependent
-			* and so we call back into the MC driver for it to
+			* and so we call back पूर्णांकo the MC driver क्रम it to
 			* map the MC page to a physical (CPU) page which can
-			* then be mapped to a virtual page - which can then
+			* then be mapped to a भव page - which can then
 			* be scrubbed.
 			*/
 		remapped_page = mci->ctl_page_to_phys ?
@@ -936,15 +937,15 @@ static void edac_ce_error(struct edac_raw_error_desc *e)
 			e->page_frame_number;
 
 		edac_mc_scrub_block(remapped_page, e->offset_in_page, e->grain);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void edac_ue_error(struct edac_raw_error_desc *e)
-{
-	struct mem_ctl_info *mci = error_desc_to_mci(e);
+अटल व्योम edac_ue_error(काष्ठा edac_raw_error_desc *e)
+अणु
+	काष्ठा mem_ctl_info *mci = error_desc_to_mci(e);
 
-	if (edac_mc_get_log_ue()) {
-		edac_mc_printk(mci, KERN_WARNING,
+	अगर (edac_mc_get_log_ue()) अणु
+		edac_mc_prपूर्णांकk(mci, KERN_WARNING,
 			"%d UE %s%son %s (%s page:0x%lx offset:0x%lx grain:%ld%s%s)\n",
 			e->error_count, e->msg,
 			*e->msg ? " " : "",
@@ -952,11 +953,11 @@ static void edac_ue_error(struct edac_raw_error_desc *e)
 			e->grain,
 			*e->other_detail ? " - " : "",
 			e->other_detail);
-	}
+	पूर्ण
 
 	edac_inc_ue_error(e);
 
-	if (edac_mc_get_panic_on_ue()) {
+	अगर (edac_mc_get_panic_on_ue()) अणु
 		panic("UE %s%son %s (%s page:0x%lx offset:0x%lx grain:%ld%s%s)\n",
 			e->msg,
 			*e->msg ? " " : "",
@@ -964,79 +965,79 @@ static void edac_ue_error(struct edac_raw_error_desc *e)
 			e->grain,
 			*e->other_detail ? " - " : "",
 			e->other_detail);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void edac_inc_csrow(struct edac_raw_error_desc *e, int row, int chan)
-{
-	struct mem_ctl_info *mci = error_desc_to_mci(e);
-	enum hw_event_mc_err_type type = e->type;
+अटल व्योम edac_inc_csrow(काष्ठा edac_raw_error_desc *e, पूर्णांक row, पूर्णांक chan)
+अणु
+	काष्ठा mem_ctl_info *mci = error_desc_to_mci(e);
+	क्रमागत hw_event_mc_err_type type = e->type;
 	u16 count = e->error_count;
 
-	if (row < 0)
-		return;
+	अगर (row < 0)
+		वापस;
 
 	edac_dbg(4, "csrow/channel to increment: (%d,%d)\n", row, chan);
 
-	if (type == HW_EVENT_ERR_CORRECTED) {
+	अगर (type == HW_EVENT_ERR_CORRECTED) अणु
 		mci->csrows[row]->ce_count += count;
-		if (chan >= 0)
+		अगर (chan >= 0)
 			mci->csrows[row]->channels[chan]->ce_count += count;
-	} else {
+	पूर्ण अन्यथा अणु
 		mci->csrows[row]->ue_count += count;
-	}
-}
+	पूर्ण
+पूर्ण
 
-void edac_raw_mc_handle_error(struct edac_raw_error_desc *e)
-{
-	struct mem_ctl_info *mci = error_desc_to_mci(e);
+व्योम edac_raw_mc_handle_error(काष्ठा edac_raw_error_desc *e)
+अणु
+	काष्ठा mem_ctl_info *mci = error_desc_to_mci(e);
 	u8 grain_bits;
 
 	/* Sanity-check driver-supplied grain value. */
-	if (WARN_ON_ONCE(!e->grain))
+	अगर (WARN_ON_ONCE(!e->grain))
 		e->grain = 1;
 
-	grain_bits = fls_long(e->grain - 1);
+	grain_bits = fls_दीर्घ(e->grain - 1);
 
-	/* Report the error via the trace interface */
-	if (IS_ENABLED(CONFIG_RAS))
+	/* Report the error via the trace पूर्णांकerface */
+	अगर (IS_ENABLED(CONFIG_RAS))
 		trace_mc_event(e->type, e->msg, e->label, e->error_count,
 			       mci->mc_idx, e->top_layer, e->mid_layer,
 			       e->low_layer,
 			       (e->page_frame_number << PAGE_SHIFT) | e->offset_in_page,
 			       grain_bits, e->syndrome, e->other_detail);
 
-	if (e->type == HW_EVENT_ERR_CORRECTED)
+	अगर (e->type == HW_EVENT_ERR_CORRECTED)
 		edac_ce_error(e);
-	else
+	अन्यथा
 		edac_ue_error(e);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(edac_raw_mc_handle_error);
 
-void edac_mc_handle_error(const enum hw_event_mc_err_type type,
-			  struct mem_ctl_info *mci,
-			  const u16 error_count,
-			  const unsigned long page_frame_number,
-			  const unsigned long offset_in_page,
-			  const unsigned long syndrome,
-			  const int top_layer,
-			  const int mid_layer,
-			  const int low_layer,
-			  const char *msg,
-			  const char *other_detail)
-{
-	struct dimm_info *dimm;
-	char *p;
-	int row = -1, chan = -1;
-	int pos[EDAC_MAX_LAYERS] = { top_layer, mid_layer, low_layer };
-	int i, n_labels = 0;
-	struct edac_raw_error_desc *e = &mci->error_desc;
+व्योम edac_mc_handle_error(स्थिर क्रमागत hw_event_mc_err_type type,
+			  काष्ठा mem_ctl_info *mci,
+			  स्थिर u16 error_count,
+			  स्थिर अचिन्हित दीर्घ page_frame_number,
+			  स्थिर अचिन्हित दीर्घ offset_in_page,
+			  स्थिर अचिन्हित दीर्घ syndrome,
+			  स्थिर पूर्णांक top_layer,
+			  स्थिर पूर्णांक mid_layer,
+			  स्थिर पूर्णांक low_layer,
+			  स्थिर अक्षर *msg,
+			  स्थिर अक्षर *other_detail)
+अणु
+	काष्ठा dimm_info *dimm;
+	अक्षर *p;
+	पूर्णांक row = -1, chan = -1;
+	पूर्णांक pos[EDAC_MAX_LAYERS] = अणु top_layer, mid_layer, low_layer पूर्ण;
+	पूर्णांक i, n_labels = 0;
+	काष्ठा edac_raw_error_desc *e = &mci->error_desc;
 	bool any_memory = true;
 
 	edac_dbg(3, "MC%d\n", mci->mc_idx);
 
 	/* Fills the error report buffer */
-	memset(e, 0, sizeof (*e));
+	स_रखो(e, 0, माप (*e));
 	e->error_count = error_count;
 	e->type = type;
 	e->top_layer = top_layer;
@@ -1045,81 +1046,81 @@ void edac_mc_handle_error(const enum hw_event_mc_err_type type,
 	e->page_frame_number = page_frame_number;
 	e->offset_in_page = offset_in_page;
 	e->syndrome = syndrome;
-	/* need valid strings here for both: */
+	/* need valid strings here क्रम both: */
 	e->msg = msg ?: "";
 	e->other_detail = other_detail ?: "";
 
 	/*
-	 * Check if the event report is consistent and if the memory location is
+	 * Check अगर the event report is consistent and अगर the memory location is
 	 * known. If it is, the DIMM(s) label info will be filled and the DIMM's
 	 * error counters will be incremented.
 	 */
-	for (i = 0; i < mci->n_layers; i++) {
-		if (pos[i] >= (int)mci->layers[i].size) {
+	क्रम (i = 0; i < mci->n_layers; i++) अणु
+		अगर (pos[i] >= (पूर्णांक)mci->layers[i].size) अणु
 
-			edac_mc_printk(mci, KERN_ERR,
+			edac_mc_prपूर्णांकk(mci, KERN_ERR,
 				       "INTERNAL ERROR: %s value is out of range (%d >= %d)\n",
 				       edac_layer_name[mci->layers[i].type],
 				       pos[i], mci->layers[i].size);
 			/*
-			 * Instead of just returning it, let's use what's
+			 * Instead of just वापसing it, let's use what's
 			 * known about the error. The increment routines and
-			 * the DIMM filter logic will do the right thing by
-			 * pointing the likely damaged DIMMs.
+			 * the DIMM filter logic will करो the right thing by
+			 * poपूर्णांकing the likely damaged DIMMs.
 			 */
 			pos[i] = -1;
-		}
-		if (pos[i] >= 0)
+		पूर्ण
+		अगर (pos[i] >= 0)
 			any_memory = false;
-	}
+	पूर्ण
 
 	/*
 	 * Get the dimm label/grain that applies to the match criteria.
-	 * As the error algorithm may not be able to point to just one memory
+	 * As the error algorithm may not be able to poपूर्णांक to just one memory
 	 * stick, the logic here will get all possible labels that could
 	 * pottentially be affected by the error.
-	 * On FB-DIMM memory controllers, for uncorrected errors, it is common
+	 * On FB-DIMM memory controllers, क्रम uncorrected errors, it is common
 	 * to have only the MC channel and the MC dimm (also called "branch")
 	 * but the channel is not known, as the memory is arranged in pairs,
-	 * where each memory belongs to a separate channel within the same
+	 * where each memory beदीर्घs to a separate channel within the same
 	 * branch.
 	 */
 	p = e->label;
 	*p = '\0';
 
-	mci_for_each_dimm(mci, dimm) {
-		if (top_layer >= 0 && top_layer != dimm->location[0])
-			continue;
-		if (mid_layer >= 0 && mid_layer != dimm->location[1])
-			continue;
-		if (low_layer >= 0 && low_layer != dimm->location[2])
-			continue;
+	mci_क्रम_each_dimm(mci, dimm) अणु
+		अगर (top_layer >= 0 && top_layer != dimm->location[0])
+			जारी;
+		अगर (mid_layer >= 0 && mid_layer != dimm->location[1])
+			जारी;
+		अगर (low_layer >= 0 && low_layer != dimm->location[2])
+			जारी;
 
 		/* get the max grain, over the error match range */
-		if (dimm->grain > e->grain)
+		अगर (dimm->grain > e->grain)
 			e->grain = dimm->grain;
 
 		/*
 		 * If the error is memory-controller wide, there's no need to
-		 * seek for the affected DIMMs because the whole channel/memory
-		 * controller/... may be affected. Also, don't show errors for
+		 * seek क्रम the affected DIMMs because the whole channel/memory
+		 * controller/... may be affected. Also, करोn't show errors क्रम
 		 * empty DIMM slots.
 		 */
-		if (!dimm->nr_pages)
-			continue;
+		अगर (!dimm->nr_pages)
+			जारी;
 
 		n_labels++;
-		if (n_labels > EDAC_MAX_LABELS) {
+		अगर (n_labels > EDAC_MAX_LABELS) अणु
 			p = e->label;
 			*p = '\0';
-		} else {
-			if (p != e->label) {
-				strcpy(p, OTHER_LABEL);
-				p += strlen(OTHER_LABEL);
-			}
-			strcpy(p, dimm->label);
-			p += strlen(p);
-		}
+		पूर्ण अन्यथा अणु
+			अगर (p != e->label) अणु
+				म_नकल(p, OTHER_LABEL);
+				p += म_माप(OTHER_LABEL);
+			पूर्ण
+			म_नकल(p, dimm->label);
+			p += म_माप(p);
+		पूर्ण
 
 		/*
 		 * get csrow/channel of the DIMM, in order to allow
@@ -1128,38 +1129,38 @@ void edac_mc_handle_error(const enum hw_event_mc_err_type type,
 		edac_dbg(4, "%s csrows map: (%d,%d)\n",
 			mci->csbased ? "rank" : "dimm",
 			dimm->csrow, dimm->cschannel);
-		if (row == -1)
+		अगर (row == -1)
 			row = dimm->csrow;
-		else if (row >= 0 && row != dimm->csrow)
+		अन्यथा अगर (row >= 0 && row != dimm->csrow)
 			row = -2;
 
-		if (chan == -1)
+		अगर (chan == -1)
 			chan = dimm->cschannel;
-		else if (chan >= 0 && chan != dimm->cschannel)
+		अन्यथा अगर (chan >= 0 && chan != dimm->cschannel)
 			chan = -2;
-	}
+	पूर्ण
 
-	if (any_memory)
-		strcpy(e->label, "any memory");
-	else if (!*e->label)
-		strcpy(e->label, "unknown memory");
+	अगर (any_memory)
+		म_नकल(e->label, "any memory");
+	अन्यथा अगर (!*e->label)
+		म_नकल(e->label, "unknown memory");
 
 	edac_inc_csrow(e, row, chan);
 
 	/* Fill the RAM location data */
 	p = e->location;
 
-	for (i = 0; i < mci->n_layers; i++) {
-		if (pos[i] < 0)
-			continue;
+	क्रम (i = 0; i < mci->n_layers; i++) अणु
+		अगर (pos[i] < 0)
+			जारी;
 
-		p += sprintf(p, "%s:%d ",
+		p += प्र_लिखो(p, "%s:%d ",
 			     edac_layer_name[mci->layers[i].type],
 			     pos[i]);
-	}
-	if (p > e->location)
+	पूर्ण
+	अगर (p > e->location)
 		*(p - 1) = '\0';
 
 	edac_raw_mc_handle_error(e);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(edac_mc_handle_error);

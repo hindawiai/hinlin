@@ -1,71 +1,72 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- *  lzodefs.h -- architecture, OS and compiler specific defines
+ *  lzodefs.h -- architecture, OS and compiler specअगरic defines
  *
  *  Copyright (C) 1996-2012 Markus F.X.J. Oberhumer <markus@oberhumer.com>
  *
  *  The full LZO package can be found at:
- *  http://www.oberhumer.com/opensource/lzo/
+ *  http://www.oberhumer.com/खोलोsource/lzo/
  *
- *  Changed for Linux kernel use by:
+ *  Changed क्रम Linux kernel use by:
  *  Nitin Gupta <nitingupta910@gmail.com>
- *  Richard Purdie <rpurdie@openedhand.com>
+ *  Riअक्षरd Purdie <rpurdie@खोलोedhand.com>
  */
 
 
 /* Version
  * 0: original lzo version
- * 1: lzo with support for RLE
+ * 1: lzo with support क्रम RLE
  */
-#define LZO_VERSION 1
+#घोषणा LZO_VERSION 1
 
-#define COPY4(dst, src)	\
-		put_unaligned(get_unaligned((const u32 *)(src)), (u32 *)(dst))
-#if defined(CONFIG_X86_64) || defined(CONFIG_ARM64)
-#define COPY8(dst, src)	\
-		put_unaligned(get_unaligned((const u64 *)(src)), (u64 *)(dst))
-#else
-#define COPY8(dst, src)	\
+#घोषणा COPY4(dst, src)	\
+		put_unaligned(get_unaligned((स्थिर u32 *)(src)), (u32 *)(dst))
+#अगर defined(CONFIG_X86_64) || defined(CONFIG_ARM64)
+#घोषणा COPY8(dst, src)	\
+		put_unaligned(get_unaligned((स्थिर u64 *)(src)), (u64 *)(dst))
+#अन्यथा
+#घोषणा COPY8(dst, src)	\
 		COPY4(dst, src); COPY4((dst) + 4, (src) + 4)
-#endif
+#पूर्ण_अगर
 
-#if defined(__BIG_ENDIAN) && defined(__LITTLE_ENDIAN)
-#error "conflicting endian definitions"
-#elif defined(CONFIG_X86_64) || defined(CONFIG_ARM64)
-#define LZO_USE_CTZ64	1
-#define LZO_USE_CTZ32	1
-#define LZO_FAST_64BIT_MEMORY_ACCESS
-#elif defined(CONFIG_X86) || defined(CONFIG_PPC)
-#define LZO_USE_CTZ32	1
-#elif defined(CONFIG_ARM) && (__LINUX_ARM_ARCH__ >= 5)
-#define LZO_USE_CTZ32	1
-#endif
+#अगर defined(__BIG_ENDIAN) && defined(__LITTLE_ENDIAN)
+#त्रुटि "conflicting endian definitions"
+#या_अगर defined(CONFIG_X86_64) || defined(CONFIG_ARM64)
+#घोषणा LZO_USE_CTZ64	1
+#घोषणा LZO_USE_CTZ32	1
+#घोषणा LZO_FAST_64BIT_MEMORY_ACCESS
+#या_अगर defined(CONFIG_X86) || defined(CONFIG_PPC)
+#घोषणा LZO_USE_CTZ32	1
+#या_अगर defined(CONFIG_ARM) && (__LINUX_ARM_ARCH__ >= 5)
+#घोषणा LZO_USE_CTZ32	1
+#पूर्ण_अगर
 
-#define M1_MAX_OFFSET	0x0400
-#define M2_MAX_OFFSET	0x0800
-#define M3_MAX_OFFSET	0x4000
-#define M4_MAX_OFFSET_V0	0xbfff
-#define M4_MAX_OFFSET_V1	0xbffe
+#घोषणा M1_MAX_OFFSET	0x0400
+#घोषणा M2_MAX_OFFSET	0x0800
+#घोषणा M3_MAX_OFFSET	0x4000
+#घोषणा M4_MAX_OFFSET_V0	0xbfff
+#घोषणा M4_MAX_OFFSET_V1	0xbffe
 
-#define M1_MIN_LEN	2
-#define M1_MAX_LEN	2
-#define M2_MIN_LEN	3
-#define M2_MAX_LEN	8
-#define M3_MIN_LEN	3
-#define M3_MAX_LEN	33
-#define M4_MIN_LEN	3
-#define M4_MAX_LEN	9
+#घोषणा M1_MIN_LEN	2
+#घोषणा M1_MAX_LEN	2
+#घोषणा M2_MIN_LEN	3
+#घोषणा M2_MAX_LEN	8
+#घोषणा M3_MIN_LEN	3
+#घोषणा M3_MAX_LEN	33
+#घोषणा M4_MIN_LEN	3
+#घोषणा M4_MAX_LEN	9
 
-#define M1_MARKER	0
-#define M2_MARKER	64
-#define M3_MARKER	32
-#define M4_MARKER	16
+#घोषणा M1_MARKER	0
+#घोषणा M2_MARKER	64
+#घोषणा M3_MARKER	32
+#घोषणा M4_MARKER	16
 
-#define MIN_ZERO_RUN_LENGTH	4
-#define MAX_ZERO_RUN_LENGTH	(2047 + MIN_ZERO_RUN_LENGTH)
+#घोषणा MIN_ZERO_RUN_LENGTH	4
+#घोषणा MAX_ZERO_RUN_LENGTH	(2047 + MIN_ZERO_RUN_LENGTH)
 
-#define lzo_dict_t      unsigned short
-#define D_BITS		13
-#define D_SIZE		(1u << D_BITS)
-#define D_MASK		(D_SIZE - 1)
-#define D_HIGH		((D_MASK >> 1) + 1)
+#घोषणा lzo_dict_t      अचिन्हित लघु
+#घोषणा D_BITS		13
+#घोषणा D_SIZE		(1u << D_BITS)
+#घोषणा D_MASK		(D_SIZE - 1)
+#घोषणा D_HIGH		((D_MASK >> 1) + 1)

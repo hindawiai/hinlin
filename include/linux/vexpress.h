@@ -1,17 +1,18 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  *
  * Copyright (C) 2012 ARM Limited
  */
 
-#ifndef _LINUX_VEXPRESS_H
-#define _LINUX_VEXPRESS_H
+#अगर_अघोषित _LINUX_VEXPRESS_H
+#घोषणा _LINUX_VEXPRESS_H
 
-#include <linux/device.h>
-#include <linux/regmap.h>
+#समावेश <linux/device.h>
+#समावेश <linux/regmap.h>
 
 /* Config regmap API */
 
-struct regmap *devm_regmap_init_vexpress_config(struct device *dev);
+काष्ठा regmap *devm_regmap_init_vexpress_config(काष्ठा device *dev);
 
-#endif
+#पूर्ण_अगर

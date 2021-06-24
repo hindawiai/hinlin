@@ -1,22 +1,23 @@
+<शैली गुरु>
 /******************************************************************************
  * grant_table.c
  *
- * Granting foreign access to our memory reservation.
+ * Granting क्रमeign access to our memory reservation.
  *
  * Copyright (c) 2005-2006, Christopher Clark
  * Copyright (c) 2004-2005, K A Fraser
  *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License version 2
+ * This program is मुक्त software; you can redistribute it and/or
+ * modअगरy it under the terms of the GNU General Public License version 2
  * as published by the Free Software Foundation; or, when distributed
- * separately from the Linux kernel or incorporated into other
+ * separately from the Linux kernel or incorporated पूर्णांकo other
  * software packages, subject to the following license:
  *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a copy
  * of this source file (the "Software"), to deal in the Software without
- * restriction, including without limitation the rights to use, copy, modify,
+ * restriction, including without limitation the rights to use, copy, modअगरy,
  * merge, publish, distribute, sublicense, and/or sell copies of the Software,
- * and to permit persons to whom the Software is furnished to do so, subject to
+ * and to permit persons to whom the Software is furnished to करो so, subject to
  * the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
@@ -31,446 +32,446 @@
  * IN THE SOFTWARE.
  */
 
-#define pr_fmt(fmt) "xen:" KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) "xen:" KBUILD_MODNAME ": " fmt
 
-#include <linux/memblock.h>
-#include <linux/sched.h>
-#include <linux/mm.h>
-#include <linux/slab.h>
-#include <linux/vmalloc.h>
-#include <linux/uaccess.h>
-#include <linux/io.h>
-#include <linux/delay.h>
-#include <linux/hardirq.h>
-#include <linux/workqueue.h>
-#include <linux/ratelimit.h>
-#include <linux/moduleparam.h>
-#ifdef CONFIG_XEN_GRANT_DMA_ALLOC
-#include <linux/dma-mapping.h>
-#endif
+#समावेश <linux/memblock.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/vदो_स्मृति.h>
+#समावेश <linux/uaccess.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/delay.h>
+#समावेश <linux/hardirq.h>
+#समावेश <linux/workqueue.h>
+#समावेश <linux/ratelimit.h>
+#समावेश <linux/moduleparam.h>
+#अगर_घोषित CONFIG_XEN_GRANT_DMA_ALLOC
+#समावेश <linux/dma-mapping.h>
+#पूर्ण_अगर
 
-#include <xen/xen.h>
-#include <xen/interface/xen.h>
-#include <xen/page.h>
-#include <xen/grant_table.h>
-#include <xen/interface/memory.h>
-#include <xen/hvc-console.h>
-#include <xen/swiotlb-xen.h>
-#include <xen/balloon.h>
-#ifdef CONFIG_X86
-#include <asm/xen/cpuid.h>
-#endif
-#include <xen/mem-reservation.h>
-#include <asm/xen/hypercall.h>
-#include <asm/xen/interface.h>
+#समावेश <xen/xen.h>
+#समावेश <xen/पूर्णांकerface/xen.h>
+#समावेश <xen/page.h>
+#समावेश <xen/grant_table.h>
+#समावेश <xen/पूर्णांकerface/memory.h>
+#समावेश <xen/hvc-console.h>
+#समावेश <xen/swiotlb-xen.h>
+#समावेश <xen/balloon.h>
+#अगर_घोषित CONFIG_X86
+#समावेश <यंत्र/xen/cpuid.h>
+#पूर्ण_अगर
+#समावेश <xen/mem-reservation.h>
+#समावेश <यंत्र/xen/hypercall.h>
+#समावेश <यंत्र/xen/पूर्णांकerface.h>
 
-#include <asm/sync_bitops.h>
+#समावेश <यंत्र/sync_bitops.h>
 
 /* External tools reserve first few grant table entries. */
-#define NR_RESERVED_ENTRIES 8
-#define GNTTAB_LIST_END 0xffffffff
+#घोषणा NR_RESERVED_ENTRIES 8
+#घोषणा GNTTAB_LIST_END 0xffffffff
 
-static grant_ref_t **gnttab_list;
-static unsigned int nr_grant_frames;
-static int gnttab_free_count;
-static grant_ref_t gnttab_free_head;
-static DEFINE_SPINLOCK(gnttab_list_lock);
-struct grant_frames xen_auto_xlat_grant_frames;
-static unsigned int xen_gnttab_version;
-module_param_named(version, xen_gnttab_version, uint, 0);
+अटल grant_ref_t **gnttab_list;
+अटल अचिन्हित पूर्णांक nr_grant_frames;
+अटल पूर्णांक gnttab_मुक्त_count;
+अटल grant_ref_t gnttab_मुक्त_head;
+अटल DEFINE_SPINLOCK(gnttab_list_lock);
+काष्ठा grant_frames xen_स्वतः_xlat_grant_frames;
+अटल अचिन्हित पूर्णांक xen_gnttab_version;
+module_param_named(version, xen_gnttab_version, uपूर्णांक, 0);
 
-static union {
-	struct grant_entry_v1 *v1;
-	union grant_entry_v2 *v2;
-	void *addr;
-} gnttab_shared;
+अटल जोड़ अणु
+	काष्ठा grant_entry_v1 *v1;
+	जोड़ grant_entry_v2 *v2;
+	व्योम *addr;
+पूर्ण gnttab_shared;
 
-/*This is a structure of function pointers for grant table*/
-struct gnttab_ops {
+/*This is a काष्ठाure of function poपूर्णांकers क्रम grant table*/
+काष्ठा gnttab_ops अणु
 	/*
-	 * Version of the grant interface.
+	 * Version of the grant पूर्णांकerface.
 	 */
-	unsigned int version;
+	अचिन्हित पूर्णांक version;
 	/*
 	 * Grant refs per grant frame.
 	 */
-	unsigned int grefs_per_grant_frame;
+	अचिन्हित पूर्णांक grefs_per_grant_frame;
 	/*
-	 * Mapping a list of frames for storing grant entries. Frames parameter
+	 * Mapping a list of frames क्रम storing grant entries. Frames parameter
 	 * is used to store grant table address when grant table being setup,
 	 * nr_gframes is the number of frames to map grant table. Returning
 	 * GNTST_okay means success and negative value means failure.
 	 */
-	int (*map_frames)(xen_pfn_t *frames, unsigned int nr_gframes);
+	पूर्णांक (*map_frames)(xen_pfn_t *frames, अचिन्हित पूर्णांक nr_gframes);
 	/*
-	 * Release a list of frames which are mapped in map_frames for grant
+	 * Release a list of frames which are mapped in map_frames क्रम grant
 	 * entry status.
 	 */
-	void (*unmap_frames)(void);
+	व्योम (*unmap_frames)(व्योम);
 	/*
-	 * Introducing a valid entry into the grant table, granting the frame of
-	 * this grant entry to domain for accessing or transfering. Ref
-	 * parameter is reference of this introduced grant entry, domid is id of
-	 * granted domain, frame is the page frame to be granted, and flags is
+	 * Introducing a valid entry पूर्णांकo the grant table, granting the frame of
+	 * this grant entry to करोमुख्य क्रम accessing or transfering. Ref
+	 * parameter is reference of this पूर्णांकroduced grant entry, करोmid is id of
+	 * granted करोमुख्य, frame is the page frame to be granted, and flags is
 	 * status of the grant entry to be updated.
 	 */
-	void (*update_entry)(grant_ref_t ref, domid_t domid,
-			     unsigned long frame, unsigned flags);
+	व्योम (*update_entry)(grant_ref_t ref, करोmid_t करोmid,
+			     अचिन्हित दीर्घ frame, अचिन्हित flags);
 	/*
-	 * Stop granting a grant entry to domain for accessing. Ref parameter is
+	 * Stop granting a grant entry to करोमुख्य क्रम accessing. Ref parameter is
 	 * reference of a grant entry whose grant access will be stopped,
-	 * readonly is not in use in this function. If the grant entry is
-	 * currently mapped for reading or writing, just return failure(==0)
-	 * directly and don't tear down the grant access. Otherwise, stop grant
-	 * access for this entry and return success(==1).
+	 * पढ़ोonly is not in use in this function. If the grant entry is
+	 * currently mapped क्रम पढ़ोing or writing, just वापस failure(==0)
+	 * directly and करोn't tear करोwn the grant access. Otherwise, stop grant
+	 * access क्रम this entry and वापस success(==1).
 	 */
-	int (*end_foreign_access_ref)(grant_ref_t ref, int readonly);
+	पूर्णांक (*end_क्रमeign_access_ref)(grant_ref_t ref, पूर्णांक पढ़ोonly);
 	/*
-	 * Stop granting a grant entry to domain for transfer. Ref parameter is
+	 * Stop granting a grant entry to करोमुख्य क्रम transfer. Ref parameter is
 	 * reference of a grant entry whose grant transfer will be stopped. If
-	 * tranfer has not started, just reclaim the grant entry and return
-	 * failure(==0). Otherwise, wait for the transfer to complete and then
-	 * return the frame.
+	 * tranfer has not started, just reclaim the grant entry and वापस
+	 * failure(==0). Otherwise, रुको क्रम the transfer to complete and then
+	 * वापस the frame.
 	 */
-	unsigned long (*end_foreign_transfer_ref)(grant_ref_t ref);
+	अचिन्हित दीर्घ (*end_क्रमeign_transfer_ref)(grant_ref_t ref);
 	/*
 	 * Query the status of a grant entry. Ref parameter is reference of
-	 * queried grant entry, return value is the status of queried entry.
-	 * Detailed status(writing/reading) can be gotten from the return value
+	 * queried grant entry, वापस value is the status of queried entry.
+	 * Detailed status(writing/पढ़ोing) can be gotten from the वापस value
 	 * by bit operations.
 	 */
-	int (*query_foreign_access)(grant_ref_t ref);
-};
+	पूर्णांक (*query_क्रमeign_access)(grant_ref_t ref);
+पूर्ण;
 
-struct unmap_refs_callback_data {
-	struct completion completion;
-	int result;
-};
+काष्ठा unmap_refs_callback_data अणु
+	काष्ठा completion completion;
+	पूर्णांक result;
+पूर्ण;
 
-static const struct gnttab_ops *gnttab_interface;
+अटल स्थिर काष्ठा gnttab_ops *gnttab_पूर्णांकerface;
 
 /* This reflects status of grant entries, so act as a global value. */
-static grant_status_t *grstatus;
+अटल grant_status_t *grstatus;
 
-static struct gnttab_free_callback *gnttab_free_callback_list;
+अटल काष्ठा gnttab_मुक्त_callback *gnttab_मुक्त_callback_list;
 
-static int gnttab_expand(unsigned int req_entries);
+अटल पूर्णांक gnttab_expand(अचिन्हित पूर्णांक req_entries);
 
-#define RPP (PAGE_SIZE / sizeof(grant_ref_t))
-#define SPP (PAGE_SIZE / sizeof(grant_status_t))
+#घोषणा RPP (PAGE_SIZE / माप(grant_ref_t))
+#घोषणा SPP (PAGE_SIZE / माप(grant_status_t))
 
-static inline grant_ref_t *__gnttab_entry(grant_ref_t entry)
-{
-	return &gnttab_list[(entry) / RPP][(entry) % RPP];
-}
+अटल अंतरभूत grant_ref_t *__gnttab_entry(grant_ref_t entry)
+अणु
+	वापस &gnttab_list[(entry) / RPP][(entry) % RPP];
+पूर्ण
 /* This can be used as an l-value */
-#define gnttab_entry(entry) (*__gnttab_entry(entry))
+#घोषणा gnttab_entry(entry) (*__gnttab_entry(entry))
 
-static int get_free_entries(unsigned count)
-{
-	unsigned long flags;
-	int ref, rc = 0;
+अटल पूर्णांक get_मुक्त_entries(अचिन्हित count)
+अणु
+	अचिन्हित दीर्घ flags;
+	पूर्णांक ref, rc = 0;
 	grant_ref_t head;
 
 	spin_lock_irqsave(&gnttab_list_lock, flags);
 
-	if ((gnttab_free_count < count) &&
-	    ((rc = gnttab_expand(count - gnttab_free_count)) < 0)) {
+	अगर ((gnttab_मुक्त_count < count) &&
+	    ((rc = gnttab_expand(count - gnttab_मुक्त_count)) < 0)) अणु
 		spin_unlock_irqrestore(&gnttab_list_lock, flags);
-		return rc;
-	}
+		वापस rc;
+	पूर्ण
 
-	ref = head = gnttab_free_head;
-	gnttab_free_count -= count;
-	while (count-- > 1)
+	ref = head = gnttab_मुक्त_head;
+	gnttab_मुक्त_count -= count;
+	जबतक (count-- > 1)
 		head = gnttab_entry(head);
-	gnttab_free_head = gnttab_entry(head);
+	gnttab_मुक्त_head = gnttab_entry(head);
 	gnttab_entry(head) = GNTTAB_LIST_END;
 
 	spin_unlock_irqrestore(&gnttab_list_lock, flags);
 
-	return ref;
-}
+	वापस ref;
+पूर्ण
 
-static void do_free_callbacks(void)
-{
-	struct gnttab_free_callback *callback, *next;
+अटल व्योम करो_मुक्त_callbacks(व्योम)
+अणु
+	काष्ठा gnttab_मुक्त_callback *callback, *next;
 
-	callback = gnttab_free_callback_list;
-	gnttab_free_callback_list = NULL;
+	callback = gnttab_मुक्त_callback_list;
+	gnttab_मुक्त_callback_list = शून्य;
 
-	while (callback != NULL) {
+	जबतक (callback != शून्य) अणु
 		next = callback->next;
-		if (gnttab_free_count >= callback->count) {
-			callback->next = NULL;
+		अगर (gnttab_मुक्त_count >= callback->count) अणु
+			callback->next = शून्य;
 			callback->fn(callback->arg);
-		} else {
-			callback->next = gnttab_free_callback_list;
-			gnttab_free_callback_list = callback;
-		}
+		पूर्ण अन्यथा अणु
+			callback->next = gnttab_मुक्त_callback_list;
+			gnttab_मुक्त_callback_list = callback;
+		पूर्ण
 		callback = next;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static inline void check_free_callbacks(void)
-{
-	if (unlikely(gnttab_free_callback_list))
-		do_free_callbacks();
-}
+अटल अंतरभूत व्योम check_मुक्त_callbacks(व्योम)
+अणु
+	अगर (unlikely(gnttab_मुक्त_callback_list))
+		करो_मुक्त_callbacks();
+पूर्ण
 
-static void put_free_entry(grant_ref_t ref)
-{
-	unsigned long flags;
+अटल व्योम put_मुक्त_entry(grant_ref_t ref)
+अणु
+	अचिन्हित दीर्घ flags;
 	spin_lock_irqsave(&gnttab_list_lock, flags);
-	gnttab_entry(ref) = gnttab_free_head;
-	gnttab_free_head = ref;
-	gnttab_free_count++;
-	check_free_callbacks();
+	gnttab_entry(ref) = gnttab_मुक्त_head;
+	gnttab_मुक्त_head = ref;
+	gnttab_मुक्त_count++;
+	check_मुक्त_callbacks();
 	spin_unlock_irqrestore(&gnttab_list_lock, flags);
-}
+पूर्ण
 
 /*
  * Following applies to gnttab_update_entry_v1 and gnttab_update_entry_v2.
- * Introducing a valid entry into the grant table:
- *  1. Write ent->domid.
+ * Introducing a valid entry पूर्णांकo the grant table:
+ *  1. Write ent->करोmid.
  *  2. Write ent->frame:
  *      GTF_permit_access:   Frame to which access is permitted.
- *      GTF_accept_transfer: Pseudo-phys frame slot being filled by new
- *                           frame, or zero if none.
+ *      GTF_accept_transfer: Pseuकरो-phys frame slot being filled by new
+ *                           frame, or zero अगर none.
  *  3. Write memory barrier (WMB).
  *  4. Write ent->flags, inc. valid type.
  */
-static void gnttab_update_entry_v1(grant_ref_t ref, domid_t domid,
-				   unsigned long frame, unsigned flags)
-{
-	gnttab_shared.v1[ref].domid = domid;
+अटल व्योम gnttab_update_entry_v1(grant_ref_t ref, करोmid_t करोmid,
+				   अचिन्हित दीर्घ frame, अचिन्हित flags)
+अणु
+	gnttab_shared.v1[ref].करोmid = करोmid;
 	gnttab_shared.v1[ref].frame = frame;
 	wmb();
 	gnttab_shared.v1[ref].flags = flags;
-}
+पूर्ण
 
-static void gnttab_update_entry_v2(grant_ref_t ref, domid_t domid,
-				   unsigned long frame, unsigned int flags)
-{
-	gnttab_shared.v2[ref].hdr.domid = domid;
+अटल व्योम gnttab_update_entry_v2(grant_ref_t ref, करोmid_t करोmid,
+				   अचिन्हित दीर्घ frame, अचिन्हित पूर्णांक flags)
+अणु
+	gnttab_shared.v2[ref].hdr.करोmid = करोmid;
 	gnttab_shared.v2[ref].full_page.frame = frame;
 	wmb();	/* Hypervisor concurrent accesses. */
 	gnttab_shared.v2[ref].hdr.flags = GTF_permit_access | flags;
-}
+पूर्ण
 
 /*
- * Public grant-issuing interface functions
+ * Public grant-issuing पूर्णांकerface functions
  */
-void gnttab_grant_foreign_access_ref(grant_ref_t ref, domid_t domid,
-				     unsigned long frame, int readonly)
-{
-	gnttab_interface->update_entry(ref, domid, frame,
-			   GTF_permit_access | (readonly ? GTF_readonly : 0));
-}
-EXPORT_SYMBOL_GPL(gnttab_grant_foreign_access_ref);
+व्योम gnttab_grant_क्रमeign_access_ref(grant_ref_t ref, करोmid_t करोmid,
+				     अचिन्हित दीर्घ frame, पूर्णांक पढ़ोonly)
+अणु
+	gnttab_पूर्णांकerface->update_entry(ref, करोmid, frame,
+			   GTF_permit_access | (पढ़ोonly ? GTF_पढ़ोonly : 0));
+पूर्ण
+EXPORT_SYMBOL_GPL(gnttab_grant_क्रमeign_access_ref);
 
-int gnttab_grant_foreign_access(domid_t domid, unsigned long frame,
-				int readonly)
-{
-	int ref;
+पूर्णांक gnttab_grant_क्रमeign_access(करोmid_t करोmid, अचिन्हित दीर्घ frame,
+				पूर्णांक पढ़ोonly)
+अणु
+	पूर्णांक ref;
 
-	ref = get_free_entries(1);
-	if (unlikely(ref < 0))
-		return -ENOSPC;
+	ref = get_मुक्त_entries(1);
+	अगर (unlikely(ref < 0))
+		वापस -ENOSPC;
 
-	gnttab_grant_foreign_access_ref(ref, domid, frame, readonly);
+	gnttab_grant_क्रमeign_access_ref(ref, करोmid, frame, पढ़ोonly);
 
-	return ref;
-}
-EXPORT_SYMBOL_GPL(gnttab_grant_foreign_access);
+	वापस ref;
+पूर्ण
+EXPORT_SYMBOL_GPL(gnttab_grant_क्रमeign_access);
 
-static int gnttab_query_foreign_access_v1(grant_ref_t ref)
-{
-	return gnttab_shared.v1[ref].flags & (GTF_reading|GTF_writing);
-}
+अटल पूर्णांक gnttab_query_क्रमeign_access_v1(grant_ref_t ref)
+अणु
+	वापस gnttab_shared.v1[ref].flags & (GTF_पढ़ोing|GTF_writing);
+पूर्ण
 
-static int gnttab_query_foreign_access_v2(grant_ref_t ref)
-{
-	return grstatus[ref] & (GTF_reading|GTF_writing);
-}
+अटल पूर्णांक gnttab_query_क्रमeign_access_v2(grant_ref_t ref)
+अणु
+	वापस grstatus[ref] & (GTF_पढ़ोing|GTF_writing);
+पूर्ण
 
-int gnttab_query_foreign_access(grant_ref_t ref)
-{
-	return gnttab_interface->query_foreign_access(ref);
-}
-EXPORT_SYMBOL_GPL(gnttab_query_foreign_access);
+पूर्णांक gnttab_query_क्रमeign_access(grant_ref_t ref)
+अणु
+	वापस gnttab_पूर्णांकerface->query_क्रमeign_access(ref);
+पूर्ण
+EXPORT_SYMBOL_GPL(gnttab_query_क्रमeign_access);
 
-static int gnttab_end_foreign_access_ref_v1(grant_ref_t ref, int readonly)
-{
+अटल पूर्णांक gnttab_end_क्रमeign_access_ref_v1(grant_ref_t ref, पूर्णांक पढ़ोonly)
+अणु
 	u16 flags, nflags;
 	u16 *pflags;
 
 	pflags = &gnttab_shared.v1[ref].flags;
 	nflags = *pflags;
-	do {
+	करो अणु
 		flags = nflags;
-		if (flags & (GTF_reading|GTF_writing))
-			return 0;
-	} while ((nflags = sync_cmpxchg(pflags, flags, 0)) != flags);
+		अगर (flags & (GTF_पढ़ोing|GTF_writing))
+			वापस 0;
+	पूर्ण जबतक ((nflags = sync_cmpxchg(pflags, flags, 0)) != flags);
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-static int gnttab_end_foreign_access_ref_v2(grant_ref_t ref, int readonly)
-{
+अटल पूर्णांक gnttab_end_क्रमeign_access_ref_v2(grant_ref_t ref, पूर्णांक पढ़ोonly)
+अणु
 	gnttab_shared.v2[ref].hdr.flags = 0;
 	mb();	/* Concurrent access by hypervisor. */
-	if (grstatus[ref] & (GTF_reading|GTF_writing)) {
-		return 0;
-	} else {
+	अगर (grstatus[ref] & (GTF_पढ़ोing|GTF_writing)) अणु
+		वापस 0;
+	पूर्ण अन्यथा अणु
 		/*
-		 * The read of grstatus needs to have acquire semantics.
-		 *  On x86, reads already have that, and we just need to
+		 * The पढ़ो of grstatus needs to have acquire semantics.
+		 *  On x86, पढ़ोs alपढ़ोy have that, and we just need to
 		 * protect against compiler reorderings.
 		 * On other architectures we may need a full barrier.
 		 */
-#ifdef CONFIG_X86
+#अगर_घोषित CONFIG_X86
 		barrier();
-#else
+#अन्यथा
 		mb();
-#endif
-	}
+#पूर्ण_अगर
+	पूर्ण
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-static inline int _gnttab_end_foreign_access_ref(grant_ref_t ref, int readonly)
-{
-	return gnttab_interface->end_foreign_access_ref(ref, readonly);
-}
+अटल अंतरभूत पूर्णांक _gnttab_end_क्रमeign_access_ref(grant_ref_t ref, पूर्णांक पढ़ोonly)
+अणु
+	वापस gnttab_पूर्णांकerface->end_क्रमeign_access_ref(ref, पढ़ोonly);
+पूर्ण
 
-int gnttab_end_foreign_access_ref(grant_ref_t ref, int readonly)
-{
-	if (_gnttab_end_foreign_access_ref(ref, readonly))
-		return 1;
+पूर्णांक gnttab_end_क्रमeign_access_ref(grant_ref_t ref, पूर्णांक पढ़ोonly)
+अणु
+	अगर (_gnttab_end_क्रमeign_access_ref(ref, पढ़ोonly))
+		वापस 1;
 	pr_warn("WARNING: g.e. %#x still in use!\n", ref);
-	return 0;
-}
-EXPORT_SYMBOL_GPL(gnttab_end_foreign_access_ref);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL_GPL(gnttab_end_क्रमeign_access_ref);
 
-struct deferred_entry {
-	struct list_head list;
+काष्ठा deferred_entry अणु
+	काष्ठा list_head list;
 	grant_ref_t ref;
 	bool ro;
-	uint16_t warn_delay;
-	struct page *page;
-};
-static LIST_HEAD(deferred_list);
-static void gnttab_handle_deferred(struct timer_list *);
-static DEFINE_TIMER(deferred_timer, gnttab_handle_deferred);
+	uपूर्णांक16_t warn_delay;
+	काष्ठा page *page;
+पूर्ण;
+अटल LIST_HEAD(deferred_list);
+अटल व्योम gnttab_handle_deferred(काष्ठा समयr_list *);
+अटल DEFINE_TIMER(deferred_समयr, gnttab_handle_deferred);
 
-static void gnttab_handle_deferred(struct timer_list *unused)
-{
-	unsigned int nr = 10;
-	struct deferred_entry *first = NULL;
-	unsigned long flags;
+अटल व्योम gnttab_handle_deferred(काष्ठा समयr_list *unused)
+अणु
+	अचिन्हित पूर्णांक nr = 10;
+	काष्ठा deferred_entry *first = शून्य;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&gnttab_list_lock, flags);
-	while (nr--) {
-		struct deferred_entry *entry
+	जबतक (nr--) अणु
+		काष्ठा deferred_entry *entry
 			= list_first_entry(&deferred_list,
-					   struct deferred_entry, list);
+					   काष्ठा deferred_entry, list);
 
-		if (entry == first)
-			break;
+		अगर (entry == first)
+			अवरोध;
 		list_del(&entry->list);
 		spin_unlock_irqrestore(&gnttab_list_lock, flags);
-		if (_gnttab_end_foreign_access_ref(entry->ref, entry->ro)) {
-			put_free_entry(entry->ref);
-			if (entry->page) {
+		अगर (_gnttab_end_क्रमeign_access_ref(entry->ref, entry->ro)) अणु
+			put_मुक्त_entry(entry->ref);
+			अगर (entry->page) अणु
 				pr_debug("freeing g.e. %#x (pfn %#lx)\n",
 					 entry->ref, page_to_pfn(entry->page));
 				put_page(entry->page);
-			} else
+			पूर्ण अन्यथा
 				pr_info("freeing g.e. %#x\n", entry->ref);
-			kfree(entry);
-			entry = NULL;
-		} else {
-			if (!--entry->warn_delay)
+			kमुक्त(entry);
+			entry = शून्य;
+		पूर्ण अन्यथा अणु
+			अगर (!--entry->warn_delay)
 				pr_info("g.e. %#x still pending\n", entry->ref);
-			if (!first)
+			अगर (!first)
 				first = entry;
-		}
+		पूर्ण
 		spin_lock_irqsave(&gnttab_list_lock, flags);
-		if (entry)
+		अगर (entry)
 			list_add_tail(&entry->list, &deferred_list);
-		else if (list_empty(&deferred_list))
-			break;
-	}
-	if (!list_empty(&deferred_list) && !timer_pending(&deferred_timer)) {
-		deferred_timer.expires = jiffies + HZ;
-		add_timer(&deferred_timer);
-	}
+		अन्यथा अगर (list_empty(&deferred_list))
+			अवरोध;
+	पूर्ण
+	अगर (!list_empty(&deferred_list) && !समयr_pending(&deferred_समयr)) अणु
+		deferred_समयr.expires = jअगरfies + HZ;
+		add_समयr(&deferred_समयr);
+	पूर्ण
 	spin_unlock_irqrestore(&gnttab_list_lock, flags);
-}
+पूर्ण
 
-static void gnttab_add_deferred(grant_ref_t ref, bool readonly,
-				struct page *page)
-{
-	struct deferred_entry *entry = kmalloc(sizeof(*entry), GFP_ATOMIC);
-	const char *what = KERN_WARNING "leaking";
+अटल व्योम gnttab_add_deferred(grant_ref_t ref, bool पढ़ोonly,
+				काष्ठा page *page)
+अणु
+	काष्ठा deferred_entry *entry = kदो_स्मृति(माप(*entry), GFP_ATOMIC);
+	स्थिर अक्षर *what = KERN_WARNING "leaking";
 
-	if (entry) {
-		unsigned long flags;
+	अगर (entry) अणु
+		अचिन्हित दीर्घ flags;
 
 		entry->ref = ref;
-		entry->ro = readonly;
+		entry->ro = पढ़ोonly;
 		entry->page = page;
 		entry->warn_delay = 60;
 		spin_lock_irqsave(&gnttab_list_lock, flags);
 		list_add_tail(&entry->list, &deferred_list);
-		if (!timer_pending(&deferred_timer)) {
-			deferred_timer.expires = jiffies + HZ;
-			add_timer(&deferred_timer);
-		}
+		अगर (!समयr_pending(&deferred_समयr)) अणु
+			deferred_समयr.expires = jअगरfies + HZ;
+			add_समयr(&deferred_समयr);
+		पूर्ण
 		spin_unlock_irqrestore(&gnttab_list_lock, flags);
 		what = KERN_DEBUG "deferring";
-	}
-	printk("%s g.e. %#x (pfn %#lx)\n",
+	पूर्ण
+	prपूर्णांकk("%s g.e. %#x (pfn %#lx)\n",
 	       what, ref, page ? page_to_pfn(page) : -1);
-}
+पूर्ण
 
-void gnttab_end_foreign_access(grant_ref_t ref, int readonly,
-			       unsigned long page)
-{
-	if (gnttab_end_foreign_access_ref(ref, readonly)) {
-		put_free_entry(ref);
-		if (page != 0)
+व्योम gnttab_end_क्रमeign_access(grant_ref_t ref, पूर्णांक पढ़ोonly,
+			       अचिन्हित दीर्घ page)
+अणु
+	अगर (gnttab_end_क्रमeign_access_ref(ref, पढ़ोonly)) अणु
+		put_मुक्त_entry(ref);
+		अगर (page != 0)
 			put_page(virt_to_page(page));
-	} else
-		gnttab_add_deferred(ref, readonly,
-				    page ? virt_to_page(page) : NULL);
-}
-EXPORT_SYMBOL_GPL(gnttab_end_foreign_access);
+	पूर्ण अन्यथा
+		gnttab_add_deferred(ref, पढ़ोonly,
+				    page ? virt_to_page(page) : शून्य);
+पूर्ण
+EXPORT_SYMBOL_GPL(gnttab_end_क्रमeign_access);
 
-int gnttab_grant_foreign_transfer(domid_t domid, unsigned long pfn)
-{
-	int ref;
+पूर्णांक gnttab_grant_क्रमeign_transfer(करोmid_t करोmid, अचिन्हित दीर्घ pfn)
+अणु
+	पूर्णांक ref;
 
-	ref = get_free_entries(1);
-	if (unlikely(ref < 0))
-		return -ENOSPC;
-	gnttab_grant_foreign_transfer_ref(ref, domid, pfn);
+	ref = get_मुक्त_entries(1);
+	अगर (unlikely(ref < 0))
+		वापस -ENOSPC;
+	gnttab_grant_क्रमeign_transfer_ref(ref, करोmid, pfn);
 
-	return ref;
-}
-EXPORT_SYMBOL_GPL(gnttab_grant_foreign_transfer);
+	वापस ref;
+पूर्ण
+EXPORT_SYMBOL_GPL(gnttab_grant_क्रमeign_transfer);
 
-void gnttab_grant_foreign_transfer_ref(grant_ref_t ref, domid_t domid,
-				       unsigned long pfn)
-{
-	gnttab_interface->update_entry(ref, domid, pfn, GTF_accept_transfer);
-}
-EXPORT_SYMBOL_GPL(gnttab_grant_foreign_transfer_ref);
+व्योम gnttab_grant_क्रमeign_transfer_ref(grant_ref_t ref, करोmid_t करोmid,
+				       अचिन्हित दीर्घ pfn)
+अणु
+	gnttab_पूर्णांकerface->update_entry(ref, करोmid, pfn, GTF_accept_transfer);
+पूर्ण
+EXPORT_SYMBOL_GPL(gnttab_grant_क्रमeign_transfer_ref);
 
-static unsigned long gnttab_end_foreign_transfer_ref_v1(grant_ref_t ref)
-{
-	unsigned long frame;
+अटल अचिन्हित दीर्घ gnttab_end_क्रमeign_transfer_ref_v1(grant_ref_t ref)
+अणु
+	अचिन्हित दीर्घ frame;
 	u16           flags;
 	u16          *pflags;
 
@@ -478,30 +479,30 @@ static unsigned long gnttab_end_foreign_transfer_ref_v1(grant_ref_t ref)
 
 	/*
 	 * If a transfer is not even yet started, try to reclaim the grant
-	 * reference and return failure (== 0).
+	 * reference and वापस failure (== 0).
 	 */
-	while (!((flags = *pflags) & GTF_transfer_committed)) {
-		if (sync_cmpxchg(pflags, flags, 0) == flags)
-			return 0;
+	जबतक (!((flags = *pflags) & GTF_transfer_committed)) अणु
+		अगर (sync_cmpxchg(pflags, flags, 0) == flags)
+			वापस 0;
 		cpu_relax();
-	}
+	पूर्ण
 
-	/* If a transfer is in progress then wait until it is completed. */
-	while (!(flags & GTF_transfer_completed)) {
+	/* If a transfer is in progress then रुको until it is completed. */
+	जबतक (!(flags & GTF_transfer_completed)) अणु
 		flags = *pflags;
 		cpu_relax();
-	}
+	पूर्ण
 
-	rmb();	/* Read the frame number /after/ reading completion status. */
+	rmb();	/* Read the frame number /after/ पढ़ोing completion status. */
 	frame = gnttab_shared.v1[ref].frame;
 	BUG_ON(frame == 0);
 
-	return frame;
-}
+	वापस frame;
+पूर्ण
 
-static unsigned long gnttab_end_foreign_transfer_ref_v2(grant_ref_t ref)
-{
-	unsigned long frame;
+अटल अचिन्हित दीर्घ gnttab_end_क्रमeign_transfer_ref_v2(grant_ref_t ref)
+अणु
+	अचिन्हित दीर्घ frame;
 	u16           flags;
 	u16          *pflags;
 
@@ -509,824 +510,824 @@ static unsigned long gnttab_end_foreign_transfer_ref_v2(grant_ref_t ref)
 
 	/*
 	 * If a transfer is not even yet started, try to reclaim the grant
-	 * reference and return failure (== 0).
+	 * reference and वापस failure (== 0).
 	 */
-	while (!((flags = *pflags) & GTF_transfer_committed)) {
-		if (sync_cmpxchg(pflags, flags, 0) == flags)
-			return 0;
+	जबतक (!((flags = *pflags) & GTF_transfer_committed)) अणु
+		अगर (sync_cmpxchg(pflags, flags, 0) == flags)
+			वापस 0;
 		cpu_relax();
-	}
+	पूर्ण
 
-	/* If a transfer is in progress then wait until it is completed. */
-	while (!(flags & GTF_transfer_completed)) {
+	/* If a transfer is in progress then रुको until it is completed. */
+	जबतक (!(flags & GTF_transfer_completed)) अणु
 		flags = *pflags;
 		cpu_relax();
-	}
+	पूर्ण
 
-	rmb();  /* Read the frame number /after/ reading completion status. */
+	rmb();  /* Read the frame number /after/ पढ़ोing completion status. */
 	frame = gnttab_shared.v2[ref].full_page.frame;
 	BUG_ON(frame == 0);
 
-	return frame;
-}
+	वापस frame;
+पूर्ण
 
-unsigned long gnttab_end_foreign_transfer_ref(grant_ref_t ref)
-{
-	return gnttab_interface->end_foreign_transfer_ref(ref);
-}
-EXPORT_SYMBOL_GPL(gnttab_end_foreign_transfer_ref);
+अचिन्हित दीर्घ gnttab_end_क्रमeign_transfer_ref(grant_ref_t ref)
+अणु
+	वापस gnttab_पूर्णांकerface->end_क्रमeign_transfer_ref(ref);
+पूर्ण
+EXPORT_SYMBOL_GPL(gnttab_end_क्रमeign_transfer_ref);
 
-unsigned long gnttab_end_foreign_transfer(grant_ref_t ref)
-{
-	unsigned long frame = gnttab_end_foreign_transfer_ref(ref);
-	put_free_entry(ref);
-	return frame;
-}
-EXPORT_SYMBOL_GPL(gnttab_end_foreign_transfer);
+अचिन्हित दीर्घ gnttab_end_क्रमeign_transfer(grant_ref_t ref)
+अणु
+	अचिन्हित दीर्घ frame = gnttab_end_क्रमeign_transfer_ref(ref);
+	put_मुक्त_entry(ref);
+	वापस frame;
+पूर्ण
+EXPORT_SYMBOL_GPL(gnttab_end_क्रमeign_transfer);
 
-void gnttab_free_grant_reference(grant_ref_t ref)
-{
-	put_free_entry(ref);
-}
-EXPORT_SYMBOL_GPL(gnttab_free_grant_reference);
+व्योम gnttab_मुक्त_grant_reference(grant_ref_t ref)
+अणु
+	put_मुक्त_entry(ref);
+पूर्ण
+EXPORT_SYMBOL_GPL(gnttab_मुक्त_grant_reference);
 
-void gnttab_free_grant_references(grant_ref_t head)
-{
+व्योम gnttab_मुक्त_grant_references(grant_ref_t head)
+अणु
 	grant_ref_t ref;
-	unsigned long flags;
-	int count = 1;
-	if (head == GNTTAB_LIST_END)
-		return;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक count = 1;
+	अगर (head == GNTTAB_LIST_END)
+		वापस;
 	spin_lock_irqsave(&gnttab_list_lock, flags);
 	ref = head;
-	while (gnttab_entry(ref) != GNTTAB_LIST_END) {
+	जबतक (gnttab_entry(ref) != GNTTAB_LIST_END) अणु
 		ref = gnttab_entry(ref);
 		count++;
-	}
-	gnttab_entry(ref) = gnttab_free_head;
-	gnttab_free_head = head;
-	gnttab_free_count += count;
-	check_free_callbacks();
+	पूर्ण
+	gnttab_entry(ref) = gnttab_मुक्त_head;
+	gnttab_मुक्त_head = head;
+	gnttab_मुक्त_count += count;
+	check_मुक्त_callbacks();
 	spin_unlock_irqrestore(&gnttab_list_lock, flags);
-}
-EXPORT_SYMBOL_GPL(gnttab_free_grant_references);
+पूर्ण
+EXPORT_SYMBOL_GPL(gnttab_मुक्त_grant_references);
 
-int gnttab_alloc_grant_references(u16 count, grant_ref_t *head)
-{
-	int h = get_free_entries(count);
+पूर्णांक gnttab_alloc_grant_references(u16 count, grant_ref_t *head)
+अणु
+	पूर्णांक h = get_मुक्त_entries(count);
 
-	if (h < 0)
-		return -ENOSPC;
+	अगर (h < 0)
+		वापस -ENOSPC;
 
 	*head = h;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(gnttab_alloc_grant_references);
 
-int gnttab_empty_grant_references(const grant_ref_t *private_head)
-{
-	return (*private_head == GNTTAB_LIST_END);
-}
+पूर्णांक gnttab_empty_grant_references(स्थिर grant_ref_t *निजी_head)
+अणु
+	वापस (*निजी_head == GNTTAB_LIST_END);
+पूर्ण
 EXPORT_SYMBOL_GPL(gnttab_empty_grant_references);
 
-int gnttab_claim_grant_reference(grant_ref_t *private_head)
-{
-	grant_ref_t g = *private_head;
-	if (unlikely(g == GNTTAB_LIST_END))
-		return -ENOSPC;
-	*private_head = gnttab_entry(g);
-	return g;
-}
+पूर्णांक gnttab_claim_grant_reference(grant_ref_t *निजी_head)
+अणु
+	grant_ref_t g = *निजी_head;
+	अगर (unlikely(g == GNTTAB_LIST_END))
+		वापस -ENOSPC;
+	*निजी_head = gnttab_entry(g);
+	वापस g;
+पूर्ण
 EXPORT_SYMBOL_GPL(gnttab_claim_grant_reference);
 
-void gnttab_release_grant_reference(grant_ref_t *private_head,
+व्योम gnttab_release_grant_reference(grant_ref_t *निजी_head,
 				    grant_ref_t release)
-{
-	gnttab_entry(release) = *private_head;
-	*private_head = release;
-}
+अणु
+	gnttab_entry(release) = *निजी_head;
+	*निजी_head = release;
+पूर्ण
 EXPORT_SYMBOL_GPL(gnttab_release_grant_reference);
 
-void gnttab_request_free_callback(struct gnttab_free_callback *callback,
-				  void (*fn)(void *), void *arg, u16 count)
-{
-	unsigned long flags;
-	struct gnttab_free_callback *cb;
+व्योम gnttab_request_मुक्त_callback(काष्ठा gnttab_मुक्त_callback *callback,
+				  व्योम (*fn)(व्योम *), व्योम *arg, u16 count)
+अणु
+	अचिन्हित दीर्घ flags;
+	काष्ठा gnttab_मुक्त_callback *cb;
 
 	spin_lock_irqsave(&gnttab_list_lock, flags);
 
-	/* Check if the callback is already on the list */
-	cb = gnttab_free_callback_list;
-	while (cb) {
-		if (cb == callback)
-			goto out;
+	/* Check अगर the callback is alपढ़ोy on the list */
+	cb = gnttab_मुक्त_callback_list;
+	जबतक (cb) अणु
+		अगर (cb == callback)
+			जाओ out;
 		cb = cb->next;
-	}
+	पूर्ण
 
 	callback->fn = fn;
 	callback->arg = arg;
 	callback->count = count;
-	callback->next = gnttab_free_callback_list;
-	gnttab_free_callback_list = callback;
-	check_free_callbacks();
+	callback->next = gnttab_मुक्त_callback_list;
+	gnttab_मुक्त_callback_list = callback;
+	check_मुक्त_callbacks();
 out:
 	spin_unlock_irqrestore(&gnttab_list_lock, flags);
-}
-EXPORT_SYMBOL_GPL(gnttab_request_free_callback);
+पूर्ण
+EXPORT_SYMBOL_GPL(gnttab_request_मुक्त_callback);
 
-void gnttab_cancel_free_callback(struct gnttab_free_callback *callback)
-{
-	struct gnttab_free_callback **pcb;
-	unsigned long flags;
+व्योम gnttab_cancel_मुक्त_callback(काष्ठा gnttab_मुक्त_callback *callback)
+अणु
+	काष्ठा gnttab_मुक्त_callback **pcb;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&gnttab_list_lock, flags);
-	for (pcb = &gnttab_free_callback_list; *pcb; pcb = &(*pcb)->next) {
-		if (*pcb == callback) {
+	क्रम (pcb = &gnttab_मुक्त_callback_list; *pcb; pcb = &(*pcb)->next) अणु
+		अगर (*pcb == callback) अणु
 			*pcb = callback->next;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 	spin_unlock_irqrestore(&gnttab_list_lock, flags);
-}
-EXPORT_SYMBOL_GPL(gnttab_cancel_free_callback);
+पूर्ण
+EXPORT_SYMBOL_GPL(gnttab_cancel_मुक्त_callback);
 
-static unsigned int gnttab_frames(unsigned int frames, unsigned int align)
-{
-	return (frames * gnttab_interface->grefs_per_grant_frame + align - 1) /
+अटल अचिन्हित पूर्णांक gnttab_frames(अचिन्हित पूर्णांक frames, अचिन्हित पूर्णांक align)
+अणु
+	वापस (frames * gnttab_पूर्णांकerface->grefs_per_grant_frame + align - 1) /
 	       align;
-}
+पूर्ण
 
-static int grow_gnttab_list(unsigned int more_frames)
-{
-	unsigned int new_nr_grant_frames, extra_entries, i;
-	unsigned int nr_glist_frames, new_nr_glist_frames;
-	unsigned int grefs_per_frame;
+अटल पूर्णांक grow_gnttab_list(अचिन्हित पूर्णांक more_frames)
+अणु
+	अचिन्हित पूर्णांक new_nr_grant_frames, extra_entries, i;
+	अचिन्हित पूर्णांक nr_glist_frames, new_nr_glist_frames;
+	अचिन्हित पूर्णांक grefs_per_frame;
 
-	grefs_per_frame = gnttab_interface->grefs_per_grant_frame;
+	grefs_per_frame = gnttab_पूर्णांकerface->grefs_per_grant_frame;
 
 	new_nr_grant_frames = nr_grant_frames + more_frames;
 	extra_entries = more_frames * grefs_per_frame;
 
 	nr_glist_frames = gnttab_frames(nr_grant_frames, RPP);
 	new_nr_glist_frames = gnttab_frames(new_nr_grant_frames, RPP);
-	for (i = nr_glist_frames; i < new_nr_glist_frames; i++) {
-		gnttab_list[i] = (grant_ref_t *)__get_free_page(GFP_ATOMIC);
-		if (!gnttab_list[i])
-			goto grow_nomem;
-	}
+	क्रम (i = nr_glist_frames; i < new_nr_glist_frames; i++) अणु
+		gnttab_list[i] = (grant_ref_t *)__get_मुक्त_page(GFP_ATOMIC);
+		अगर (!gnttab_list[i])
+			जाओ grow_nomem;
+	पूर्ण
 
 
-	for (i = grefs_per_frame * nr_grant_frames;
+	क्रम (i = grefs_per_frame * nr_grant_frames;
 	     i < grefs_per_frame * new_nr_grant_frames - 1; i++)
 		gnttab_entry(i) = i + 1;
 
-	gnttab_entry(i) = gnttab_free_head;
-	gnttab_free_head = grefs_per_frame * nr_grant_frames;
-	gnttab_free_count += extra_entries;
+	gnttab_entry(i) = gnttab_मुक्त_head;
+	gnttab_मुक्त_head = grefs_per_frame * nr_grant_frames;
+	gnttab_मुक्त_count += extra_entries;
 
 	nr_grant_frames = new_nr_grant_frames;
 
-	check_free_callbacks();
+	check_मुक्त_callbacks();
 
-	return 0;
+	वापस 0;
 
 grow_nomem:
-	while (i-- > nr_glist_frames)
-		free_page((unsigned long) gnttab_list[i]);
-	return -ENOMEM;
-}
+	जबतक (i-- > nr_glist_frames)
+		मुक्त_page((अचिन्हित दीर्घ) gnttab_list[i]);
+	वापस -ENOMEM;
+पूर्ण
 
-static unsigned int __max_nr_grant_frames(void)
-{
-	struct gnttab_query_size query;
-	int rc;
+अटल अचिन्हित पूर्णांक __max_nr_grant_frames(व्योम)
+अणु
+	काष्ठा gnttab_query_size query;
+	पूर्णांक rc;
 
-	query.dom = DOMID_SELF;
+	query.करोm = DOMID_SELF;
 
 	rc = HYPERVISOR_grant_table_op(GNTTABOP_query_size, &query, 1);
-	if ((rc < 0) || (query.status != GNTST_okay))
-		return 4; /* Legacy max supported number of frames */
+	अगर ((rc < 0) || (query.status != GNTST_okay))
+		वापस 4; /* Legacy max supported number of frames */
 
-	return query.max_nr_frames;
-}
+	वापस query.max_nr_frames;
+पूर्ण
 
-unsigned int gnttab_max_grant_frames(void)
-{
-	unsigned int xen_max = __max_nr_grant_frames();
-	static unsigned int boot_max_nr_grant_frames;
+अचिन्हित पूर्णांक gnttab_max_grant_frames(व्योम)
+अणु
+	अचिन्हित पूर्णांक xen_max = __max_nr_grant_frames();
+	अटल अचिन्हित पूर्णांक boot_max_nr_grant_frames;
 
-	/* First time, initialize it properly. */
-	if (!boot_max_nr_grant_frames)
+	/* First समय, initialize it properly. */
+	अगर (!boot_max_nr_grant_frames)
 		boot_max_nr_grant_frames = __max_nr_grant_frames();
 
-	if (xen_max > boot_max_nr_grant_frames)
-		return boot_max_nr_grant_frames;
-	return xen_max;
-}
+	अगर (xen_max > boot_max_nr_grant_frames)
+		वापस boot_max_nr_grant_frames;
+	वापस xen_max;
+पूर्ण
 EXPORT_SYMBOL_GPL(gnttab_max_grant_frames);
 
-int gnttab_setup_auto_xlat_frames(phys_addr_t addr)
-{
+पूर्णांक gnttab_setup_स्वतः_xlat_frames(phys_addr_t addr)
+अणु
 	xen_pfn_t *pfn;
-	unsigned int max_nr_gframes = __max_nr_grant_frames();
-	unsigned int i;
-	void *vaddr;
+	अचिन्हित पूर्णांक max_nr_gframes = __max_nr_grant_frames();
+	अचिन्हित पूर्णांक i;
+	व्योम *vaddr;
 
-	if (xen_auto_xlat_grant_frames.count)
-		return -EINVAL;
+	अगर (xen_स्वतः_xlat_grant_frames.count)
+		वापस -EINVAL;
 
 	vaddr = xen_remap(addr, XEN_PAGE_SIZE * max_nr_gframes);
-	if (vaddr == NULL) {
+	अगर (vaddr == शून्य) अणु
 		pr_warn("Failed to ioremap gnttab share frames (addr=%pa)!\n",
 			&addr);
-		return -ENOMEM;
-	}
-	pfn = kcalloc(max_nr_gframes, sizeof(pfn[0]), GFP_KERNEL);
-	if (!pfn) {
+		वापस -ENOMEM;
+	पूर्ण
+	pfn = kसुस्मृति(max_nr_gframes, माप(pfn[0]), GFP_KERNEL);
+	अगर (!pfn) अणु
 		xen_unmap(vaddr);
-		return -ENOMEM;
-	}
-	for (i = 0; i < max_nr_gframes; i++)
+		वापस -ENOMEM;
+	पूर्ण
+	क्रम (i = 0; i < max_nr_gframes; i++)
 		pfn[i] = XEN_PFN_DOWN(addr) + i;
 
-	xen_auto_xlat_grant_frames.vaddr = vaddr;
-	xen_auto_xlat_grant_frames.pfn = pfn;
-	xen_auto_xlat_grant_frames.count = max_nr_gframes;
+	xen_स्वतः_xlat_grant_frames.vaddr = vaddr;
+	xen_स्वतः_xlat_grant_frames.pfn = pfn;
+	xen_स्वतः_xlat_grant_frames.count = max_nr_gframes;
 
-	return 0;
-}
-EXPORT_SYMBOL_GPL(gnttab_setup_auto_xlat_frames);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL_GPL(gnttab_setup_स्वतः_xlat_frames);
 
-void gnttab_free_auto_xlat_frames(void)
-{
-	if (!xen_auto_xlat_grant_frames.count)
-		return;
-	kfree(xen_auto_xlat_grant_frames.pfn);
-	xen_unmap(xen_auto_xlat_grant_frames.vaddr);
+व्योम gnttab_मुक्त_स्वतः_xlat_frames(व्योम)
+अणु
+	अगर (!xen_स्वतः_xlat_grant_frames.count)
+		वापस;
+	kमुक्त(xen_स्वतः_xlat_grant_frames.pfn);
+	xen_unmap(xen_स्वतः_xlat_grant_frames.vaddr);
 
-	xen_auto_xlat_grant_frames.pfn = NULL;
-	xen_auto_xlat_grant_frames.count = 0;
-	xen_auto_xlat_grant_frames.vaddr = NULL;
-}
-EXPORT_SYMBOL_GPL(gnttab_free_auto_xlat_frames);
+	xen_स्वतः_xlat_grant_frames.pfn = शून्य;
+	xen_स्वतः_xlat_grant_frames.count = 0;
+	xen_स्वतः_xlat_grant_frames.vaddr = शून्य;
+पूर्ण
+EXPORT_SYMBOL_GPL(gnttab_मुक्त_स्वतः_xlat_frames);
 
-int gnttab_pages_set_private(int nr_pages, struct page **pages)
-{
-	int i;
+पूर्णांक gnttab_pages_set_निजी(पूर्णांक nr_pages, काष्ठा page **pages)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < nr_pages; i++) {
-#if BITS_PER_LONG < 64
-		struct xen_page_foreign *foreign;
+	क्रम (i = 0; i < nr_pages; i++) अणु
+#अगर BITS_PER_LONG < 64
+		काष्ठा xen_page_क्रमeign *क्रमeign;
 
-		foreign = kzalloc(sizeof(*foreign), GFP_KERNEL);
-		if (!foreign)
-			return -ENOMEM;
+		क्रमeign = kzalloc(माप(*क्रमeign), GFP_KERNEL);
+		अगर (!क्रमeign)
+			वापस -ENOMEM;
 
-		set_page_private(pages[i], (unsigned long)foreign);
-#endif
+		set_page_निजी(pages[i], (अचिन्हित दीर्घ)क्रमeign);
+#पूर्ण_अगर
 		SetPagePrivate(pages[i]);
-	}
+	पूर्ण
 
-	return 0;
-}
-EXPORT_SYMBOL_GPL(gnttab_pages_set_private);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL_GPL(gnttab_pages_set_निजी);
 
 /**
- * gnttab_alloc_pages - alloc pages suitable for grant mapping into
+ * gnttab_alloc_pages - alloc pages suitable क्रम grant mapping पूर्णांकo
  * @nr_pages: number of pages to alloc
- * @pages: returns the pages
+ * @pages: वापसs the pages
  */
-int gnttab_alloc_pages(int nr_pages, struct page **pages)
-{
-	int ret;
+पूर्णांक gnttab_alloc_pages(पूर्णांक nr_pages, काष्ठा page **pages)
+अणु
+	पूर्णांक ret;
 
 	ret = xen_alloc_unpopulated_pages(nr_pages, pages);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	ret = gnttab_pages_set_private(nr_pages, pages);
-	if (ret < 0)
-		gnttab_free_pages(nr_pages, pages);
+	ret = gnttab_pages_set_निजी(nr_pages, pages);
+	अगर (ret < 0)
+		gnttab_मुक्त_pages(nr_pages, pages);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(gnttab_alloc_pages);
 
-#ifdef CONFIG_XEN_UNPOPULATED_ALLOC
-static inline void cache_init(struct gnttab_page_cache *cache)
-{
-	cache->pages = NULL;
-}
+#अगर_घोषित CONFIG_XEN_UNPOPULATED_ALLOC
+अटल अंतरभूत व्योम cache_init(काष्ठा gnttab_page_cache *cache)
+अणु
+	cache->pages = शून्य;
+पूर्ण
 
-static inline bool cache_empty(struct gnttab_page_cache *cache)
-{
-	return !cache->pages;
-}
+अटल अंतरभूत bool cache_empty(काष्ठा gnttab_page_cache *cache)
+अणु
+	वापस !cache->pages;
+पूर्ण
 
-static inline struct page *cache_deq(struct gnttab_page_cache *cache)
-{
-	struct page *page;
+अटल अंतरभूत काष्ठा page *cache_deq(काष्ठा gnttab_page_cache *cache)
+अणु
+	काष्ठा page *page;
 
 	page = cache->pages;
 	cache->pages = page->zone_device_data;
 
-	return page;
-}
+	वापस page;
+पूर्ण
 
-static inline void cache_enq(struct gnttab_page_cache *cache, struct page *page)
-{
+अटल अंतरभूत व्योम cache_enq(काष्ठा gnttab_page_cache *cache, काष्ठा page *page)
+अणु
 	page->zone_device_data = cache->pages;
 	cache->pages = page;
-}
-#else
-static inline void cache_init(struct gnttab_page_cache *cache)
-{
+पूर्ण
+#अन्यथा
+अटल अंतरभूत व्योम cache_init(काष्ठा gnttab_page_cache *cache)
+अणु
 	INIT_LIST_HEAD(&cache->pages);
-}
+पूर्ण
 
-static inline bool cache_empty(struct gnttab_page_cache *cache)
-{
-	return list_empty(&cache->pages);
-}
+अटल अंतरभूत bool cache_empty(काष्ठा gnttab_page_cache *cache)
+अणु
+	वापस list_empty(&cache->pages);
+पूर्ण
 
-static inline struct page *cache_deq(struct gnttab_page_cache *cache)
-{
-	struct page *page;
+अटल अंतरभूत काष्ठा page *cache_deq(काष्ठा gnttab_page_cache *cache)
+अणु
+	काष्ठा page *page;
 
-	page = list_first_entry(&cache->pages, struct page, lru);
+	page = list_first_entry(&cache->pages, काष्ठा page, lru);
 	list_del(&page->lru);
 
-	return page;
-}
+	वापस page;
+पूर्ण
 
-static inline void cache_enq(struct gnttab_page_cache *cache, struct page *page)
-{
+अटल अंतरभूत व्योम cache_enq(काष्ठा gnttab_page_cache *cache, काष्ठा page *page)
+अणु
 	list_add(&page->lru, &cache->pages);
-}
-#endif
+पूर्ण
+#पूर्ण_अगर
 
-void gnttab_page_cache_init(struct gnttab_page_cache *cache)
-{
+व्योम gnttab_page_cache_init(काष्ठा gnttab_page_cache *cache)
+अणु
 	spin_lock_init(&cache->lock);
 	cache_init(cache);
 	cache->num_pages = 0;
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(gnttab_page_cache_init);
 
-int gnttab_page_cache_get(struct gnttab_page_cache *cache, struct page **page)
-{
-	unsigned long flags;
+पूर्णांक gnttab_page_cache_get(काष्ठा gnttab_page_cache *cache, काष्ठा page **page)
+अणु
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&cache->lock, flags);
 
-	if (cache_empty(cache)) {
+	अगर (cache_empty(cache)) अणु
 		spin_unlock_irqrestore(&cache->lock, flags);
-		return gnttab_alloc_pages(1, page);
-	}
+		वापस gnttab_alloc_pages(1, page);
+	पूर्ण
 
 	page[0] = cache_deq(cache);
 	cache->num_pages--;
 
 	spin_unlock_irqrestore(&cache->lock, flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(gnttab_page_cache_get);
 
-void gnttab_page_cache_put(struct gnttab_page_cache *cache, struct page **page,
-			   unsigned int num)
-{
-	unsigned long flags;
-	unsigned int i;
+व्योम gnttab_page_cache_put(काष्ठा gnttab_page_cache *cache, काष्ठा page **page,
+			   अचिन्हित पूर्णांक num)
+अणु
+	अचिन्हित दीर्घ flags;
+	अचिन्हित पूर्णांक i;
 
 	spin_lock_irqsave(&cache->lock, flags);
 
-	for (i = 0; i < num; i++)
+	क्रम (i = 0; i < num; i++)
 		cache_enq(cache, page[i]);
 	cache->num_pages += num;
 
 	spin_unlock_irqrestore(&cache->lock, flags);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(gnttab_page_cache_put);
 
-void gnttab_page_cache_shrink(struct gnttab_page_cache *cache, unsigned int num)
-{
-	struct page *page[10];
-	unsigned int i = 0;
-	unsigned long flags;
+व्योम gnttab_page_cache_shrink(काष्ठा gnttab_page_cache *cache, अचिन्हित पूर्णांक num)
+अणु
+	काष्ठा page *page[10];
+	अचिन्हित पूर्णांक i = 0;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&cache->lock, flags);
 
-	while (cache->num_pages > num) {
+	जबतक (cache->num_pages > num) अणु
 		page[i] = cache_deq(cache);
 		cache->num_pages--;
-		if (++i == ARRAY_SIZE(page)) {
+		अगर (++i == ARRAY_SIZE(page)) अणु
 			spin_unlock_irqrestore(&cache->lock, flags);
-			gnttab_free_pages(i, page);
+			gnttab_मुक्त_pages(i, page);
 			i = 0;
 			spin_lock_irqsave(&cache->lock, flags);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	spin_unlock_irqrestore(&cache->lock, flags);
 
-	if (i != 0)
-		gnttab_free_pages(i, page);
-}
+	अगर (i != 0)
+		gnttab_मुक्त_pages(i, page);
+पूर्ण
 EXPORT_SYMBOL_GPL(gnttab_page_cache_shrink);
 
-void gnttab_pages_clear_private(int nr_pages, struct page **pages)
-{
-	int i;
+व्योम gnttab_pages_clear_निजी(पूर्णांक nr_pages, काष्ठा page **pages)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < nr_pages; i++) {
-		if (PagePrivate(pages[i])) {
-#if BITS_PER_LONG < 64
-			kfree((void *)page_private(pages[i]));
-#endif
+	क्रम (i = 0; i < nr_pages; i++) अणु
+		अगर (PagePrivate(pages[i])) अणु
+#अगर BITS_PER_LONG < 64
+			kमुक्त((व्योम *)page_निजी(pages[i]));
+#पूर्ण_अगर
 			ClearPagePrivate(pages[i]);
-		}
-	}
-}
-EXPORT_SYMBOL_GPL(gnttab_pages_clear_private);
+		पूर्ण
+	पूर्ण
+पूर्ण
+EXPORT_SYMBOL_GPL(gnttab_pages_clear_निजी);
 
 /**
- * gnttab_free_pages - free pages allocated by gnttab_alloc_pages()
- * @nr_pages; number of pages to free
+ * gnttab_मुक्त_pages - मुक्त pages allocated by gnttab_alloc_pages()
+ * @nr_pages; number of pages to मुक्त
  * @pages: the pages
  */
-void gnttab_free_pages(int nr_pages, struct page **pages)
-{
-	gnttab_pages_clear_private(nr_pages, pages);
-	xen_free_unpopulated_pages(nr_pages, pages);
-}
-EXPORT_SYMBOL_GPL(gnttab_free_pages);
+व्योम gnttab_मुक्त_pages(पूर्णांक nr_pages, काष्ठा page **pages)
+अणु
+	gnttab_pages_clear_निजी(nr_pages, pages);
+	xen_मुक्त_unpopulated_pages(nr_pages, pages);
+पूर्ण
+EXPORT_SYMBOL_GPL(gnttab_मुक्त_pages);
 
-#ifdef CONFIG_XEN_GRANT_DMA_ALLOC
+#अगर_घोषित CONFIG_XEN_GRANT_DMA_ALLOC
 /**
- * gnttab_dma_alloc_pages - alloc DMAable pages suitable for grant mapping into
+ * gnttab_dma_alloc_pages - alloc DMAable pages suitable क्रम grant mapping पूर्णांकo
  * @args: arguments to the function
  */
-int gnttab_dma_alloc_pages(struct gnttab_dma_alloc_args *args)
-{
-	unsigned long pfn, start_pfn;
-	size_t size;
-	int i, ret;
+पूर्णांक gnttab_dma_alloc_pages(काष्ठा gnttab_dma_alloc_args *args)
+अणु
+	अचिन्हित दीर्घ pfn, start_pfn;
+	माप_प्रकार size;
+	पूर्णांक i, ret;
 
 	size = args->nr_pages << PAGE_SHIFT;
-	if (args->coherent)
+	अगर (args->coherent)
 		args->vaddr = dma_alloc_coherent(args->dev, size,
 						 &args->dev_bus_addr,
 						 GFP_KERNEL | __GFP_NOWARN);
-	else
+	अन्यथा
 		args->vaddr = dma_alloc_wc(args->dev, size,
 					   &args->dev_bus_addr,
 					   GFP_KERNEL | __GFP_NOWARN);
-	if (!args->vaddr) {
+	अगर (!args->vaddr) अणु
 		pr_debug("Failed to allocate DMA buffer of size %zu\n", size);
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	start_pfn = __phys_to_pfn(args->dev_bus_addr);
-	for (pfn = start_pfn, i = 0; pfn < start_pfn + args->nr_pages;
-			pfn++, i++) {
-		struct page *page = pfn_to_page(pfn);
+	क्रम (pfn = start_pfn, i = 0; pfn < start_pfn + args->nr_pages;
+			pfn++, i++) अणु
+		काष्ठा page *page = pfn_to_page(pfn);
 
 		args->pages[i] = page;
 		args->frames[i] = xen_page_to_gfn(page);
 		xenmem_reservation_scrub_page(page);
-	}
+	पूर्ण
 
 	xenmem_reservation_va_mapping_reset(args->nr_pages, args->pages);
 
 	ret = xenmem_reservation_decrease(args->nr_pages, args->frames);
-	if (ret != args->nr_pages) {
+	अगर (ret != args->nr_pages) अणु
 		pr_debug("Failed to decrease reservation for DMA buffer\n");
 		ret = -EFAULT;
-		goto fail;
-	}
+		जाओ fail;
+	पूर्ण
 
-	ret = gnttab_pages_set_private(args->nr_pages, args->pages);
-	if (ret < 0)
-		goto fail;
+	ret = gnttab_pages_set_निजी(args->nr_pages, args->pages);
+	अगर (ret < 0)
+		जाओ fail;
 
-	return 0;
+	वापस 0;
 
 fail:
-	gnttab_dma_free_pages(args);
-	return ret;
-}
+	gnttab_dma_मुक्त_pages(args);
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(gnttab_dma_alloc_pages);
 
 /**
- * gnttab_dma_free_pages - free DMAable pages
+ * gnttab_dma_मुक्त_pages - मुक्त DMAable pages
  * @args: arguments to the function
  */
-int gnttab_dma_free_pages(struct gnttab_dma_alloc_args *args)
-{
-	size_t size;
-	int i, ret;
+पूर्णांक gnttab_dma_मुक्त_pages(काष्ठा gnttab_dma_alloc_args *args)
+अणु
+	माप_प्रकार size;
+	पूर्णांक i, ret;
 
-	gnttab_pages_clear_private(args->nr_pages, args->pages);
+	gnttab_pages_clear_निजी(args->nr_pages, args->pages);
 
-	for (i = 0; i < args->nr_pages; i++)
+	क्रम (i = 0; i < args->nr_pages; i++)
 		args->frames[i] = page_to_xen_pfn(args->pages[i]);
 
 	ret = xenmem_reservation_increase(args->nr_pages, args->frames);
-	if (ret != args->nr_pages) {
+	अगर (ret != args->nr_pages) अणु
 		pr_debug("Failed to increase reservation for DMA buffer\n");
 		ret = -EFAULT;
-	} else {
+	पूर्ण अन्यथा अणु
 		ret = 0;
-	}
+	पूर्ण
 
 	xenmem_reservation_va_mapping_update(args->nr_pages, args->pages,
 					     args->frames);
 
 	size = args->nr_pages << PAGE_SHIFT;
-	if (args->coherent)
-		dma_free_coherent(args->dev, size,
+	अगर (args->coherent)
+		dma_मुक्त_coherent(args->dev, size,
 				  args->vaddr, args->dev_bus_addr);
-	else
-		dma_free_wc(args->dev, size,
+	अन्यथा
+		dma_मुक्त_wc(args->dev, size,
 			    args->vaddr, args->dev_bus_addr);
-	return ret;
-}
-EXPORT_SYMBOL_GPL(gnttab_dma_free_pages);
-#endif
+	वापस ret;
+पूर्ण
+EXPORT_SYMBOL_GPL(gnttab_dma_मुक्त_pages);
+#पूर्ण_अगर
 
-/* Handling of paged out grant targets (GNTST_eagain) */
-#define MAX_DELAY 256
-static inline void
-gnttab_retry_eagain_gop(unsigned int cmd, void *gop, int16_t *status,
-						const char *func)
-{
-	unsigned delay = 1;
+/* Handling of paged out grant tarमाला_लो (GNTST_eagain) */
+#घोषणा MAX_DELAY 256
+अटल अंतरभूत व्योम
+gnttab_retry_eagain_gop(अचिन्हित पूर्णांक cmd, व्योम *gop, पूर्णांक16_t *status,
+						स्थिर अक्षर *func)
+अणु
+	अचिन्हित delay = 1;
 
-	do {
+	करो अणु
 		BUG_ON(HYPERVISOR_grant_table_op(cmd, gop, 1));
-		if (*status == GNTST_eagain)
+		अगर (*status == GNTST_eagain)
 			msleep(delay++);
-	} while ((*status == GNTST_eagain) && (delay < MAX_DELAY));
+	पूर्ण जबतक ((*status == GNTST_eagain) && (delay < MAX_DELAY));
 
-	if (delay >= MAX_DELAY) {
+	अगर (delay >= MAX_DELAY) अणु
 		pr_err("%s: %s eagain grant\n", func, current->comm);
 		*status = GNTST_bad_page;
-	}
-}
+	पूर्ण
+पूर्ण
 
-void gnttab_batch_map(struct gnttab_map_grant_ref *batch, unsigned count)
-{
-	struct gnttab_map_grant_ref *op;
+व्योम gnttab_batch_map(काष्ठा gnttab_map_grant_ref *batch, अचिन्हित count)
+अणु
+	काष्ठा gnttab_map_grant_ref *op;
 
-	if (HYPERVISOR_grant_table_op(GNTTABOP_map_grant_ref, batch, count))
+	अगर (HYPERVISOR_grant_table_op(GNTTABOP_map_grant_ref, batch, count))
 		BUG();
-	for (op = batch; op < batch + count; op++)
-		if (op->status == GNTST_eagain)
+	क्रम (op = batch; op < batch + count; op++)
+		अगर (op->status == GNTST_eagain)
 			gnttab_retry_eagain_gop(GNTTABOP_map_grant_ref, op,
 						&op->status, __func__);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(gnttab_batch_map);
 
-void gnttab_batch_copy(struct gnttab_copy *batch, unsigned count)
-{
-	struct gnttab_copy *op;
+व्योम gnttab_batch_copy(काष्ठा gnttab_copy *batch, अचिन्हित count)
+अणु
+	काष्ठा gnttab_copy *op;
 
-	if (HYPERVISOR_grant_table_op(GNTTABOP_copy, batch, count))
+	अगर (HYPERVISOR_grant_table_op(GNTTABOP_copy, batch, count))
 		BUG();
-	for (op = batch; op < batch + count; op++)
-		if (op->status == GNTST_eagain)
+	क्रम (op = batch; op < batch + count; op++)
+		अगर (op->status == GNTST_eagain)
 			gnttab_retry_eagain_gop(GNTTABOP_copy, op,
 						&op->status, __func__);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(gnttab_batch_copy);
 
-void gnttab_foreach_grant_in_range(struct page *page,
-				   unsigned int offset,
-				   unsigned int len,
+व्योम gnttab_क्रमeach_grant_in_range(काष्ठा page *page,
+				   अचिन्हित पूर्णांक offset,
+				   अचिन्हित पूर्णांक len,
 				   xen_grant_fn_t fn,
-				   void *data)
-{
-	unsigned int goffset;
-	unsigned int glen;
-	unsigned long xen_pfn;
+				   व्योम *data)
+अणु
+	अचिन्हित पूर्णांक goffset;
+	अचिन्हित पूर्णांक glen;
+	अचिन्हित दीर्घ xen_pfn;
 
-	len = min_t(unsigned int, PAGE_SIZE - offset, len);
+	len = min_t(अचिन्हित पूर्णांक, PAGE_SIZE - offset, len);
 	goffset = xen_offset_in_page(offset);
 
 	xen_pfn = page_to_xen_pfn(page) + XEN_PFN_DOWN(offset);
 
-	while (len) {
-		glen = min_t(unsigned int, XEN_PAGE_SIZE - goffset, len);
+	जबतक (len) अणु
+		glen = min_t(अचिन्हित पूर्णांक, XEN_PAGE_SIZE - goffset, len);
 		fn(pfn_to_gfn(xen_pfn), goffset, glen, data);
 
 		goffset = 0;
 		xen_pfn++;
 		len -= glen;
-	}
-}
-EXPORT_SYMBOL_GPL(gnttab_foreach_grant_in_range);
+	पूर्ण
+पूर्ण
+EXPORT_SYMBOL_GPL(gnttab_क्रमeach_grant_in_range);
 
-void gnttab_foreach_grant(struct page **pages,
-			  unsigned int nr_grefs,
+व्योम gnttab_क्रमeach_grant(काष्ठा page **pages,
+			  अचिन्हित पूर्णांक nr_grefs,
 			  xen_grant_fn_t fn,
-			  void *data)
-{
-	unsigned int goffset = 0;
-	unsigned long xen_pfn = 0;
-	unsigned int i;
+			  व्योम *data)
+अणु
+	अचिन्हित पूर्णांक goffset = 0;
+	अचिन्हित दीर्घ xen_pfn = 0;
+	अचिन्हित पूर्णांक i;
 
-	for (i = 0; i < nr_grefs; i++) {
-		if ((i % XEN_PFN_PER_PAGE) == 0) {
+	क्रम (i = 0; i < nr_grefs; i++) अणु
+		अगर ((i % XEN_PFN_PER_PAGE) == 0) अणु
 			xen_pfn = page_to_xen_pfn(pages[i / XEN_PFN_PER_PAGE]);
 			goffset = 0;
-		}
+		पूर्ण
 
 		fn(pfn_to_gfn(xen_pfn), goffset, XEN_PAGE_SIZE, data);
 
 		goffset += XEN_PAGE_SIZE;
 		xen_pfn++;
-	}
-}
+	पूर्ण
+पूर्ण
 
-int gnttab_map_refs(struct gnttab_map_grant_ref *map_ops,
-		    struct gnttab_map_grant_ref *kmap_ops,
-		    struct page **pages, unsigned int count)
-{
-	int i, ret;
+पूर्णांक gnttab_map_refs(काष्ठा gnttab_map_grant_ref *map_ops,
+		    काष्ठा gnttab_map_grant_ref *kmap_ops,
+		    काष्ठा page **pages, अचिन्हित पूर्णांक count)
+अणु
+	पूर्णांक i, ret;
 
 	ret = HYPERVISOR_grant_table_op(GNTTABOP_map_grant_ref, map_ops, count);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	for (i = 0; i < count; i++) {
-		switch (map_ops[i].status) {
-		case GNTST_okay:
-		{
-			struct xen_page_foreign *foreign;
+	क्रम (i = 0; i < count; i++) अणु
+		चयन (map_ops[i].status) अणु
+		हाल GNTST_okay:
+		अणु
+			काष्ठा xen_page_क्रमeign *क्रमeign;
 
 			SetPageForeign(pages[i]);
-			foreign = xen_page_foreign(pages[i]);
-			foreign->domid = map_ops[i].dom;
-			foreign->gref = map_ops[i].ref;
-			break;
-		}
+			क्रमeign = xen_page_क्रमeign(pages[i]);
+			क्रमeign->करोmid = map_ops[i].करोm;
+			क्रमeign->gref = map_ops[i].ref;
+			अवरोध;
+		पूर्ण
 
-		case GNTST_no_device_space:
+		हाल GNTST_no_device_space:
 			pr_warn_ratelimited("maptrack limit reached, can't map all guest pages\n");
-			break;
+			अवरोध;
 
-		case GNTST_eagain:
+		हाल GNTST_eagain:
 			/* Retry eagain maps */
 			gnttab_retry_eagain_gop(GNTTABOP_map_grant_ref,
 						map_ops + i,
 						&map_ops[i].status, __func__);
 			/* Test status in next loop iteration. */
 			i--;
-			break;
+			अवरोध;
 
-		default:
-			break;
-		}
-	}
+		शेष:
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	return set_foreign_p2m_mapping(map_ops, kmap_ops, pages, count);
-}
+	वापस set_क्रमeign_p2m_mapping(map_ops, kmap_ops, pages, count);
+पूर्ण
 EXPORT_SYMBOL_GPL(gnttab_map_refs);
 
-int gnttab_unmap_refs(struct gnttab_unmap_grant_ref *unmap_ops,
-		      struct gnttab_unmap_grant_ref *kunmap_ops,
-		      struct page **pages, unsigned int count)
-{
-	unsigned int i;
-	int ret;
+पूर्णांक gnttab_unmap_refs(काष्ठा gnttab_unmap_grant_ref *unmap_ops,
+		      काष्ठा gnttab_unmap_grant_ref *kunmap_ops,
+		      काष्ठा page **pages, अचिन्हित पूर्णांक count)
+अणु
+	अचिन्हित पूर्णांक i;
+	पूर्णांक ret;
 
 	ret = HYPERVISOR_grant_table_op(GNTTABOP_unmap_grant_ref, unmap_ops, count);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	for (i = 0; i < count; i++)
+	क्रम (i = 0; i < count; i++)
 		ClearPageForeign(pages[i]);
 
-	return clear_foreign_p2m_mapping(unmap_ops, kunmap_ops, pages, count);
-}
+	वापस clear_क्रमeign_p2m_mapping(unmap_ops, kunmap_ops, pages, count);
+पूर्ण
 EXPORT_SYMBOL_GPL(gnttab_unmap_refs);
 
-#define GNTTAB_UNMAP_REFS_DELAY 5
+#घोषणा GNTTAB_UNMAP_REFS_DELAY 5
 
-static void __gnttab_unmap_refs_async(struct gntab_unmap_queue_data* item);
+अटल व्योम __gnttab_unmap_refs_async(काष्ठा gntab_unmap_queue_data* item);
 
-static void gnttab_unmap_work(struct work_struct *work)
-{
-	struct gntab_unmap_queue_data
+अटल व्योम gnttab_unmap_work(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा gntab_unmap_queue_data
 		*unmap_data = container_of(work, 
-					   struct gntab_unmap_queue_data,
+					   काष्ठा gntab_unmap_queue_data,
 					   gnttab_work.work);
-	if (unmap_data->age != UINT_MAX)
+	अगर (unmap_data->age != अच_पूर्णांक_उच्च)
 		unmap_data->age++;
 	__gnttab_unmap_refs_async(unmap_data);
-}
+पूर्ण
 
-static void __gnttab_unmap_refs_async(struct gntab_unmap_queue_data* item)
-{
-	int ret;
-	int pc;
+अटल व्योम __gnttab_unmap_refs_async(काष्ठा gntab_unmap_queue_data* item)
+अणु
+	पूर्णांक ret;
+	पूर्णांक pc;
 
-	for (pc = 0; pc < item->count; pc++) {
-		if (page_count(item->pages[pc]) > 1) {
-			unsigned long delay = GNTTAB_UNMAP_REFS_DELAY * (item->age + 1);
+	क्रम (pc = 0; pc < item->count; pc++) अणु
+		अगर (page_count(item->pages[pc]) > 1) अणु
+			अचिन्हित दीर्घ delay = GNTTAB_UNMAP_REFS_DELAY * (item->age + 1);
 			schedule_delayed_work(&item->gnttab_work,
-					      msecs_to_jiffies(delay));
-			return;
-		}
-	}
+					      msecs_to_jअगरfies(delay));
+			वापस;
+		पूर्ण
+	पूर्ण
 
 	ret = gnttab_unmap_refs(item->unmap_ops, item->kunmap_ops,
 				item->pages, item->count);
-	item->done(ret, item);
-}
+	item->करोne(ret, item);
+पूर्ण
 
-void gnttab_unmap_refs_async(struct gntab_unmap_queue_data* item)
-{
+व्योम gnttab_unmap_refs_async(काष्ठा gntab_unmap_queue_data* item)
+अणु
 	INIT_DELAYED_WORK(&item->gnttab_work, gnttab_unmap_work);
 	item->age = 0;
 
 	__gnttab_unmap_refs_async(item);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(gnttab_unmap_refs_async);
 
-static void unmap_refs_callback(int result,
-		struct gntab_unmap_queue_data *data)
-{
-	struct unmap_refs_callback_data *d = data->data;
+अटल व्योम unmap_refs_callback(पूर्णांक result,
+		काष्ठा gntab_unmap_queue_data *data)
+अणु
+	काष्ठा unmap_refs_callback_data *d = data->data;
 
 	d->result = result;
 	complete(&d->completion);
-}
+पूर्ण
 
-int gnttab_unmap_refs_sync(struct gntab_unmap_queue_data *item)
-{
-	struct unmap_refs_callback_data data;
+पूर्णांक gnttab_unmap_refs_sync(काष्ठा gntab_unmap_queue_data *item)
+अणु
+	काष्ठा unmap_refs_callback_data data;
 
 	init_completion(&data.completion);
 	item->data = &data;
-	item->done = &unmap_refs_callback;
+	item->करोne = &unmap_refs_callback;
 	gnttab_unmap_refs_async(item);
-	wait_for_completion(&data.completion);
+	रुको_क्रम_completion(&data.completion);
 
-	return data.result;
-}
+	वापस data.result;
+पूर्ण
 EXPORT_SYMBOL_GPL(gnttab_unmap_refs_sync);
 
-static unsigned int nr_status_frames(unsigned int nr_grant_frames)
-{
-	return gnttab_frames(nr_grant_frames, SPP);
-}
+अटल अचिन्हित पूर्णांक nr_status_frames(अचिन्हित पूर्णांक nr_grant_frames)
+अणु
+	वापस gnttab_frames(nr_grant_frames, SPP);
+पूर्ण
 
-static int gnttab_map_frames_v1(xen_pfn_t *frames, unsigned int nr_gframes)
-{
-	int rc;
+अटल पूर्णांक gnttab_map_frames_v1(xen_pfn_t *frames, अचिन्हित पूर्णांक nr_gframes)
+अणु
+	पूर्णांक rc;
 
 	rc = arch_gnttab_map_shared(frames, nr_gframes,
 				    gnttab_max_grant_frames(),
 				    &gnttab_shared.addr);
 	BUG_ON(rc);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void gnttab_unmap_frames_v1(void)
-{
+अटल व्योम gnttab_unmap_frames_v1(व्योम)
+अणु
 	arch_gnttab_unmap(gnttab_shared.addr, nr_grant_frames);
-}
+पूर्ण
 
-static int gnttab_map_frames_v2(xen_pfn_t *frames, unsigned int nr_gframes)
-{
-	uint64_t *sframes;
-	unsigned int nr_sframes;
-	struct gnttab_get_status_frames getframes;
-	int rc;
+अटल पूर्णांक gnttab_map_frames_v2(xen_pfn_t *frames, अचिन्हित पूर्णांक nr_gframes)
+अणु
+	uपूर्णांक64_t *sframes;
+	अचिन्हित पूर्णांक nr_sframes;
+	काष्ठा gnttab_get_status_frames getframes;
+	पूर्णांक rc;
 
 	nr_sframes = nr_status_frames(nr_gframes);
 
-	/* No need for kzalloc as it is initialized in following hypercall
+	/* No need क्रम kzalloc as it is initialized in following hypercall
 	 * GNTTABOP_get_status_frames.
 	 */
-	sframes = kmalloc_array(nr_sframes, sizeof(uint64_t), GFP_ATOMIC);
-	if (!sframes)
-		return -ENOMEM;
+	sframes = kदो_स्मृति_array(nr_sframes, माप(uपूर्णांक64_t), GFP_ATOMIC);
+	अगर (!sframes)
+		वापस -ENOMEM;
 
-	getframes.dom        = DOMID_SELF;
+	getframes.करोm        = DOMID_SELF;
 	getframes.nr_frames  = nr_sframes;
 	set_xen_guest_handle(getframes.frame_list, sframes);
 
 	rc = HYPERVISOR_grant_table_op(GNTTABOP_get_status_frames,
 				       &getframes, 1);
-	if (rc == -ENOSYS) {
-		kfree(sframes);
-		return -ENOSYS;
-	}
+	अगर (rc == -ENOSYS) अणु
+		kमुक्त(sframes);
+		वापस -ENOSYS;
+	पूर्ण
 
 	BUG_ON(rc || getframes.status);
 
@@ -1334,274 +1335,274 @@ static int gnttab_map_frames_v2(xen_pfn_t *frames, unsigned int nr_gframes)
 				    nr_status_frames(gnttab_max_grant_frames()),
 				    &grstatus);
 	BUG_ON(rc);
-	kfree(sframes);
+	kमुक्त(sframes);
 
 	rc = arch_gnttab_map_shared(frames, nr_gframes,
 				    gnttab_max_grant_frames(),
 				    &gnttab_shared.addr);
 	BUG_ON(rc);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void gnttab_unmap_frames_v2(void)
-{
+अटल व्योम gnttab_unmap_frames_v2(व्योम)
+अणु
 	arch_gnttab_unmap(gnttab_shared.addr, nr_grant_frames);
 	arch_gnttab_unmap(grstatus, nr_status_frames(nr_grant_frames));
-}
+पूर्ण
 
-static int gnttab_map(unsigned int start_idx, unsigned int end_idx)
-{
-	struct gnttab_setup_table setup;
+अटल पूर्णांक gnttab_map(अचिन्हित पूर्णांक start_idx, अचिन्हित पूर्णांक end_idx)
+अणु
+	काष्ठा gnttab_setup_table setup;
 	xen_pfn_t *frames;
-	unsigned int nr_gframes = end_idx + 1;
-	int rc;
+	अचिन्हित पूर्णांक nr_gframes = end_idx + 1;
+	पूर्णांक rc;
 
-	if (xen_feature(XENFEAT_auto_translated_physmap)) {
-		struct xen_add_to_physmap xatp;
-		unsigned int i = end_idx;
+	अगर (xen_feature(XENFEAT_स्वतः_translated_physmap)) अणु
+		काष्ठा xen_add_to_physmap xatp;
+		अचिन्हित पूर्णांक i = end_idx;
 		rc = 0;
-		BUG_ON(xen_auto_xlat_grant_frames.count < nr_gframes);
+		BUG_ON(xen_स्वतः_xlat_grant_frames.count < nr_gframes);
 		/*
 		 * Loop backwards, so that the first hypercall has the largest
 		 * index, ensuring that the table will grow only once.
 		 */
-		do {
-			xatp.domid = DOMID_SELF;
+		करो अणु
+			xatp.करोmid = DOMID_SELF;
 			xatp.idx = i;
 			xatp.space = XENMAPSPACE_grant_table;
-			xatp.gpfn = xen_auto_xlat_grant_frames.pfn[i];
+			xatp.gpfn = xen_स्वतः_xlat_grant_frames.pfn[i];
 			rc = HYPERVISOR_memory_op(XENMEM_add_to_physmap, &xatp);
-			if (rc != 0) {
+			अगर (rc != 0) अणु
 				pr_warn("grant table add_to_physmap failed, err=%d\n",
 					rc);
-				break;
-			}
-		} while (i-- > start_idx);
+				अवरोध;
+			पूर्ण
+		पूर्ण जबतक (i-- > start_idx);
 
-		return rc;
-	}
+		वापस rc;
+	पूर्ण
 
-	/* No need for kzalloc as it is initialized in following hypercall
+	/* No need क्रम kzalloc as it is initialized in following hypercall
 	 * GNTTABOP_setup_table.
 	 */
-	frames = kmalloc_array(nr_gframes, sizeof(unsigned long), GFP_ATOMIC);
-	if (!frames)
-		return -ENOMEM;
+	frames = kदो_स्मृति_array(nr_gframes, माप(अचिन्हित दीर्घ), GFP_ATOMIC);
+	अगर (!frames)
+		वापस -ENOMEM;
 
-	setup.dom        = DOMID_SELF;
+	setup.करोm        = DOMID_SELF;
 	setup.nr_frames  = nr_gframes;
 	set_xen_guest_handle(setup.frame_list, frames);
 
 	rc = HYPERVISOR_grant_table_op(GNTTABOP_setup_table, &setup, 1);
-	if (rc == -ENOSYS) {
-		kfree(frames);
-		return -ENOSYS;
-	}
+	अगर (rc == -ENOSYS) अणु
+		kमुक्त(frames);
+		वापस -ENOSYS;
+	पूर्ण
 
 	BUG_ON(rc || setup.status);
 
-	rc = gnttab_interface->map_frames(frames, nr_gframes);
+	rc = gnttab_पूर्णांकerface->map_frames(frames, nr_gframes);
 
-	kfree(frames);
+	kमुक्त(frames);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static const struct gnttab_ops gnttab_v1_ops = {
+अटल स्थिर काष्ठा gnttab_ops gnttab_v1_ops = अणु
 	.version			= 1,
 	.grefs_per_grant_frame		= XEN_PAGE_SIZE /
-					  sizeof(struct grant_entry_v1),
+					  माप(काष्ठा grant_entry_v1),
 	.map_frames			= gnttab_map_frames_v1,
 	.unmap_frames			= gnttab_unmap_frames_v1,
 	.update_entry			= gnttab_update_entry_v1,
-	.end_foreign_access_ref		= gnttab_end_foreign_access_ref_v1,
-	.end_foreign_transfer_ref	= gnttab_end_foreign_transfer_ref_v1,
-	.query_foreign_access		= gnttab_query_foreign_access_v1,
-};
+	.end_क्रमeign_access_ref		= gnttab_end_क्रमeign_access_ref_v1,
+	.end_क्रमeign_transfer_ref	= gnttab_end_क्रमeign_transfer_ref_v1,
+	.query_क्रमeign_access		= gnttab_query_क्रमeign_access_v1,
+पूर्ण;
 
-static const struct gnttab_ops gnttab_v2_ops = {
+अटल स्थिर काष्ठा gnttab_ops gnttab_v2_ops = अणु
 	.version			= 2,
 	.grefs_per_grant_frame		= XEN_PAGE_SIZE /
-					  sizeof(union grant_entry_v2),
+					  माप(जोड़ grant_entry_v2),
 	.map_frames			= gnttab_map_frames_v2,
 	.unmap_frames			= gnttab_unmap_frames_v2,
 	.update_entry			= gnttab_update_entry_v2,
-	.end_foreign_access_ref		= gnttab_end_foreign_access_ref_v2,
-	.end_foreign_transfer_ref	= gnttab_end_foreign_transfer_ref_v2,
-	.query_foreign_access		= gnttab_query_foreign_access_v2,
-};
+	.end_क्रमeign_access_ref		= gnttab_end_क्रमeign_access_ref_v2,
+	.end_क्रमeign_transfer_ref	= gnttab_end_क्रमeign_transfer_ref_v2,
+	.query_क्रमeign_access		= gnttab_query_क्रमeign_access_v2,
+पूर्ण;
 
-static bool gnttab_need_v2(void)
-{
-#ifdef CONFIG_X86
-	uint32_t base, width;
+अटल bool gnttab_need_v2(व्योम)
+अणु
+#अगर_घोषित CONFIG_X86
+	uपूर्णांक32_t base, width;
 
-	if (xen_pv_domain()) {
+	अगर (xen_pv_करोमुख्य()) अणु
 		base = xen_cpuid_base();
-		if (cpuid_eax(base) < 5)
-			return false;	/* Information not available, use V1. */
+		अगर (cpuid_eax(base) < 5)
+			वापस false;	/* Inक्रमmation not available, use V1. */
 		width = cpuid_ebx(base + 5) &
 			XEN_CPUID_MACHINE_ADDRESS_WIDTH_MASK;
-		return width > 32 + PAGE_SHIFT;
-	}
-#endif
-	return !!(max_possible_pfn >> 32);
-}
+		वापस width > 32 + PAGE_SHIFT;
+	पूर्ण
+#पूर्ण_अगर
+	वापस !!(max_possible_pfn >> 32);
+पूर्ण
 
-static void gnttab_request_version(void)
-{
-	long rc;
-	struct gnttab_set_version gsv;
+अटल व्योम gnttab_request_version(व्योम)
+अणु
+	दीर्घ rc;
+	काष्ठा gnttab_set_version gsv;
 
-	if (gnttab_need_v2())
+	अगर (gnttab_need_v2())
 		gsv.version = 2;
-	else
+	अन्यथा
 		gsv.version = 1;
 
-	/* Boot parameter overrides automatic selection. */
-	if (xen_gnttab_version >= 1 && xen_gnttab_version <= 2)
+	/* Boot parameter overrides स्वतःmatic selection. */
+	अगर (xen_gnttab_version >= 1 && xen_gnttab_version <= 2)
 		gsv.version = xen_gnttab_version;
 
 	rc = HYPERVISOR_grant_table_op(GNTTABOP_set_version, &gsv, 1);
-	if (rc == 0 && gsv.version == 2)
-		gnttab_interface = &gnttab_v2_ops;
-	else
-		gnttab_interface = &gnttab_v1_ops;
+	अगर (rc == 0 && gsv.version == 2)
+		gnttab_पूर्णांकerface = &gnttab_v2_ops;
+	अन्यथा
+		gnttab_पूर्णांकerface = &gnttab_v1_ops;
 	pr_info("Grant tables using version %d layout\n",
-		gnttab_interface->version);
-}
+		gnttab_पूर्णांकerface->version);
+पूर्ण
 
-static int gnttab_setup(void)
-{
-	unsigned int max_nr_gframes;
+अटल पूर्णांक gnttab_setup(व्योम)
+अणु
+	अचिन्हित पूर्णांक max_nr_gframes;
 
 	max_nr_gframes = gnttab_max_grant_frames();
-	if (max_nr_gframes < nr_grant_frames)
-		return -ENOSYS;
+	अगर (max_nr_gframes < nr_grant_frames)
+		वापस -ENOSYS;
 
-	if (xen_feature(XENFEAT_auto_translated_physmap) && gnttab_shared.addr == NULL) {
-		gnttab_shared.addr = xen_auto_xlat_grant_frames.vaddr;
-		if (gnttab_shared.addr == NULL) {
+	अगर (xen_feature(XENFEAT_स्वतः_translated_physmap) && gnttab_shared.addr == शून्य) अणु
+		gnttab_shared.addr = xen_स्वतः_xlat_grant_frames.vaddr;
+		अगर (gnttab_shared.addr == शून्य) अणु
 			pr_warn("gnttab share frames is not mapped!\n");
-			return -ENOMEM;
-		}
-	}
-	return gnttab_map(0, nr_grant_frames - 1);
-}
+			वापस -ENOMEM;
+		पूर्ण
+	पूर्ण
+	वापस gnttab_map(0, nr_grant_frames - 1);
+पूर्ण
 
-int gnttab_resume(void)
-{
+पूर्णांक gnttab_resume(व्योम)
+अणु
 	gnttab_request_version();
-	return gnttab_setup();
-}
+	वापस gnttab_setup();
+पूर्ण
 
-int gnttab_suspend(void)
-{
-	if (!xen_feature(XENFEAT_auto_translated_physmap))
-		gnttab_interface->unmap_frames();
-	return 0;
-}
+पूर्णांक gnttab_suspend(व्योम)
+अणु
+	अगर (!xen_feature(XENFEAT_स्वतः_translated_physmap))
+		gnttab_पूर्णांकerface->unmap_frames();
+	वापस 0;
+पूर्ण
 
-static int gnttab_expand(unsigned int req_entries)
-{
-	int rc;
-	unsigned int cur, extra;
+अटल पूर्णांक gnttab_expand(अचिन्हित पूर्णांक req_entries)
+अणु
+	पूर्णांक rc;
+	अचिन्हित पूर्णांक cur, extra;
 
 	cur = nr_grant_frames;
-	extra = ((req_entries + gnttab_interface->grefs_per_grant_frame - 1) /
-		 gnttab_interface->grefs_per_grant_frame);
-	if (cur + extra > gnttab_max_grant_frames()) {
+	extra = ((req_entries + gnttab_पूर्णांकerface->grefs_per_grant_frame - 1) /
+		 gnttab_पूर्णांकerface->grefs_per_grant_frame);
+	अगर (cur + extra > gnttab_max_grant_frames()) अणु
 		pr_warn_ratelimited("xen/grant-table: max_grant_frames reached"
 				    " cur=%u extra=%u limit=%u"
 				    " gnttab_free_count=%u req_entries=%u\n",
 				    cur, extra, gnttab_max_grant_frames(),
-				    gnttab_free_count, req_entries);
-		return -ENOSPC;
-	}
+				    gnttab_मुक्त_count, req_entries);
+		वापस -ENOSPC;
+	पूर्ण
 
 	rc = gnttab_map(cur, cur + extra - 1);
-	if (rc == 0)
+	अगर (rc == 0)
 		rc = grow_gnttab_list(extra);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-int gnttab_init(void)
-{
-	int i;
-	unsigned long max_nr_grant_frames;
-	unsigned int max_nr_glist_frames, nr_glist_frames;
-	unsigned int nr_init_grefs;
-	int ret;
+पूर्णांक gnttab_init(व्योम)
+अणु
+	पूर्णांक i;
+	अचिन्हित दीर्घ max_nr_grant_frames;
+	अचिन्हित पूर्णांक max_nr_glist_frames, nr_glist_frames;
+	अचिन्हित पूर्णांक nr_init_grefs;
+	पूर्णांक ret;
 
 	gnttab_request_version();
 	max_nr_grant_frames = gnttab_max_grant_frames();
 	nr_grant_frames = 1;
 
-	/* Determine the maximum number of frames required for the
-	 * grant reference free list on the current hypervisor.
+	/* Determine the maximum number of frames required क्रम the
+	 * grant reference मुक्त list on the current hypervisor.
 	 */
 	max_nr_glist_frames = (max_nr_grant_frames *
-			       gnttab_interface->grefs_per_grant_frame / RPP);
+			       gnttab_पूर्णांकerface->grefs_per_grant_frame / RPP);
 
-	gnttab_list = kmalloc_array(max_nr_glist_frames,
-				    sizeof(grant_ref_t *),
+	gnttab_list = kदो_स्मृति_array(max_nr_glist_frames,
+				    माप(grant_ref_t *),
 				    GFP_KERNEL);
-	if (gnttab_list == NULL)
-		return -ENOMEM;
+	अगर (gnttab_list == शून्य)
+		वापस -ENOMEM;
 
 	nr_glist_frames = gnttab_frames(nr_grant_frames, RPP);
-	for (i = 0; i < nr_glist_frames; i++) {
-		gnttab_list[i] = (grant_ref_t *)__get_free_page(GFP_KERNEL);
-		if (gnttab_list[i] == NULL) {
+	क्रम (i = 0; i < nr_glist_frames; i++) अणु
+		gnttab_list[i] = (grant_ref_t *)__get_मुक्त_page(GFP_KERNEL);
+		अगर (gnttab_list[i] == शून्य) अणु
 			ret = -ENOMEM;
-			goto ini_nomem;
-		}
-	}
+			जाओ ini_nomem;
+		पूर्ण
+	पूर्ण
 
 	ret = arch_gnttab_init(max_nr_grant_frames,
 			       nr_status_frames(max_nr_grant_frames));
-	if (ret < 0)
-		goto ini_nomem;
+	अगर (ret < 0)
+		जाओ ini_nomem;
 
-	if (gnttab_setup() < 0) {
+	अगर (gnttab_setup() < 0) अणु
 		ret = -ENODEV;
-		goto ini_nomem;
-	}
+		जाओ ini_nomem;
+	पूर्ण
 
 	nr_init_grefs = nr_grant_frames *
-			gnttab_interface->grefs_per_grant_frame;
+			gnttab_पूर्णांकerface->grefs_per_grant_frame;
 
-	for (i = NR_RESERVED_ENTRIES; i < nr_init_grefs - 1; i++)
+	क्रम (i = NR_RESERVED_ENTRIES; i < nr_init_grefs - 1; i++)
 		gnttab_entry(i) = i + 1;
 
 	gnttab_entry(nr_init_grefs - 1) = GNTTAB_LIST_END;
-	gnttab_free_count = nr_init_grefs - NR_RESERVED_ENTRIES;
-	gnttab_free_head  = NR_RESERVED_ENTRIES;
+	gnttab_मुक्त_count = nr_init_grefs - NR_RESERVED_ENTRIES;
+	gnttab_मुक्त_head  = NR_RESERVED_ENTRIES;
 
-	printk("Grant table initialized\n");
-	return 0;
+	prपूर्णांकk("Grant table initialized\n");
+	वापस 0;
 
  ini_nomem:
-	for (i--; i >= 0; i--)
-		free_page((unsigned long)gnttab_list[i]);
-	kfree(gnttab_list);
-	return ret;
-}
+	क्रम (i--; i >= 0; i--)
+		मुक्त_page((अचिन्हित दीर्घ)gnttab_list[i]);
+	kमुक्त(gnttab_list);
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(gnttab_init);
 
-static int __gnttab_init(void)
-{
-	if (!xen_domain())
-		return -ENODEV;
+अटल पूर्णांक __gnttab_init(व्योम)
+अणु
+	अगर (!xen_करोमुख्य())
+		वापस -ENODEV;
 
-	/* Delay grant-table initialization in the PV on HVM case */
-	if (xen_hvm_domain() && !xen_pvh_domain())
-		return 0;
+	/* Delay grant-table initialization in the PV on HVM हाल */
+	अगर (xen_hvm_करोमुख्य() && !xen_pvh_करोमुख्य())
+		वापस 0;
 
-	return gnttab_init();
-}
+	वापस gnttab_init();
+पूर्ण
 /* Starts after core_initcall so that xen_pvh_gnttab_setup can be called
- * beforehand to initialize xen_auto_xlat_grant_frames. */
+ * beक्रमehand to initialize xen_स्वतः_xlat_grant_frames. */
 core_initcall_sync(__gnttab_init);

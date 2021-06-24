@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2012-15 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -23,11 +24,11 @@
  *
  */
 
-#ifndef __DAL_GRPH_OBJECT_ID_H__
-#define __DAL_GRPH_OBJECT_ID_H__
+#अगर_अघोषित __DAL_GRPH_OBJECT_ID_H__
+#घोषणा __DAL_GRPH_OBJECT_ID_H__
 
 /* Types of graphics objects */
-enum object_type {
+क्रमागत object_type अणु
 	OBJECT_TYPE_UNKNOWN  = 0,
 
 	/* Direct ATOM BIOS translation */
@@ -37,17 +38,17 @@ enum object_type {
 	OBJECT_TYPE_ROUTER,
 	OBJECT_TYPE_GENERIC,
 
-	/* Driver specific */
+	/* Driver specअगरic */
 	OBJECT_TYPE_AUDIO,
 	OBJECT_TYPE_CONTROLLER,
 	OBJECT_TYPE_CLOCK_SOURCE,
 	OBJECT_TYPE_ENGINE,
 
 	OBJECT_TYPE_COUNT
-};
+पूर्ण;
 
 /* Enumeration inside one type of graphics objects */
-enum object_enum_id {
+क्रमागत object_क्रमागत_id अणु
 	ENUM_ID_UNKNOWN = 0,
 	ENUM_ID_1,
 	ENUM_ID_2,
@@ -58,20 +59,20 @@ enum object_enum_id {
 	ENUM_ID_7,
 
 	ENUM_ID_COUNT
-};
+पूर्ण;
 
 /* Generic object ids */
-enum generic_id {
+क्रमागत generic_id अणु
 	GENERIC_ID_UNKNOWN = 0,
 	GENERIC_ID_MXM_OPM,
 	GENERIC_ID_GLSYNC,
 	GENERIC_ID_STEREO,
 
 	GENERIC_ID_COUNT
-};
+पूर्ण;
 
 /* Controller object ids */
-enum controller_id {
+क्रमागत controller_id अणु
 	CONTROLLER_ID_UNDEFINED = 0,
 	CONTROLLER_ID_D0,
 	CONTROLLER_ID_D1,
@@ -81,25 +82,25 @@ enum controller_id {
 	CONTROLLER_ID_D5,
 	CONTROLLER_ID_UNDERLAY0,
 	CONTROLLER_ID_MAX = CONTROLLER_ID_UNDERLAY0
-};
+पूर्ण;
 
-#define IS_UNDERLAY_CONTROLLER(ctrlr_id) (ctrlr_id >= CONTROLLER_ID_UNDERLAY0)
+#घोषणा IS_UNDERLAY_CONTROLLER(ctrlr_id) (ctrlr_id >= CONTROLLER_ID_UNDERLAY0)
 
 /*
  * ClockSource object ids.
- * We maintain the order matching (more or less) ATOM BIOS
+ * We मुख्यtain the order matching (more or less) ATOM BIOS
  * to improve optimized acquire
  */
-enum clock_source_id {
+क्रमागत घड़ी_source_id अणु
 	CLOCK_SOURCE_ID_UNDEFINED = 0,
 	CLOCK_SOURCE_ID_PLL0,
 	CLOCK_SOURCE_ID_PLL1,
 	CLOCK_SOURCE_ID_PLL2,
-	CLOCK_SOURCE_ID_EXTERNAL, /* ID (Phy) ref. clk. for DP */
+	CLOCK_SOURCE_ID_EXTERNAL, /* ID (Phy) ref. clk. क्रम DP */
 	CLOCK_SOURCE_ID_DCPLL,
 	CLOCK_SOURCE_ID_DFS,	/* DENTIST */
-	CLOCK_SOURCE_ID_VCE,	/* VCE does not need a real PLL */
-	/* Used to distinguish between programming pixel clock and ID (Phy) clock */
+	CLOCK_SOURCE_ID_VCE,	/* VCE करोes not need a real PLL */
+	/* Used to distinguish between programming pixel घड़ी and ID (Phy) घड़ी */
 	CLOCK_SOURCE_ID_DP_DTO,
 
 	CLOCK_SOURCE_COMBO_PHY_PLL0, /*combo PHY PLL defines (DC 11.2 and up)*/
@@ -109,10 +110,10 @@ enum clock_source_id {
 	CLOCK_SOURCE_COMBO_PHY_PLL4,
 	CLOCK_SOURCE_COMBO_PHY_PLL5,
 	CLOCK_SOURCE_COMBO_DISPLAY_PLL0
-};
+पूर्ण;
 
 /* Encoder object ids */
-enum encoder_id {
+क्रमागत encoder_id अणु
 	ENCODER_ID_UNKNOWN = 0,
 
 	/* Radeon Class Display Hardware */
@@ -123,7 +124,7 @@ enum encoder_id {
 	ENCODER_ID_INTERNAL_DAC2,	/* TV/CV DAC */
 
 	/* External Third Party Encoders */
-	ENCODER_ID_INTERNAL_LVTM1,	/* not used for Radeon */
+	ENCODER_ID_INTERNAL_LVTM1,	/* not used क्रम Radeon */
 	ENCODER_ID_INTERNAL_HDMI,
 
 	/* Kaledisope (KLDSCP) Class Display Hardware */
@@ -143,10 +144,10 @@ enum encoder_id {
 	ENCODER_ID_INTERNAL_WIRELESS,	/* Internal wireless display encoder */
 	ENCODER_ID_INTERNAL_UNIPHY3,
 	ENCODER_ID_INTERNAL_VIRTUAL,
-};
+पूर्ण;
 
 /* Connector object ids */
-enum connector_id {
+क्रमागत connector_id अणु
 	CONNECTOR_ID_UNKNOWN = 0,
 	CONNECTOR_ID_SINGLE_LINK_DVII = 1,
 	CONNECTOR_ID_DUAL_LINK_DVII = 2,
@@ -164,16 +165,16 @@ enum connector_id {
 	CONNECTOR_ID_MIRACAST = 23,
 
 	CONNECTOR_ID_VIRTUAL = 100
-};
+पूर्ण;
 
 /* Audio object ids */
-enum audio_id {
+क्रमागत audio_id अणु
 	AUDIO_ID_UNKNOWN = 0,
 	AUDIO_ID_INTERNAL_AZALIA
-};
+पूर्ण;
 
 /* Engine object ids */
-enum engine_id {
+क्रमागत engine_id अणु
 	ENGINE_ID_DIGA,
 	ENGINE_ID_DIGB,
 	ENGINE_ID_DIGC,
@@ -183,124 +184,124 @@ enum engine_id {
 	ENGINE_ID_DIGG,
 	ENGINE_ID_DACA,
 	ENGINE_ID_DACB,
-	ENGINE_ID_VCE,	/* wireless display pseudo-encoder */
+	ENGINE_ID_VCE,	/* wireless display pseuकरो-encoder */
 	ENGINE_ID_VIRTUAL,
 
 	ENGINE_ID_COUNT,
 	ENGINE_ID_UNKNOWN = (-1L)
-};
+पूर्ण;
 
-enum transmitter_color_depth {
+क्रमागत transmitter_color_depth अणु
 	TRANSMITTER_COLOR_DEPTH_24 = 0,  /* 8  bits */
 	TRANSMITTER_COLOR_DEPTH_30,      /* 10 bits */
 	TRANSMITTER_COLOR_DEPTH_36,      /* 12 bits */
 	TRANSMITTER_COLOR_DEPTH_48       /* 16 bits */
-};
+पूर्ण;
 
-enum dp_alt_mode {
+क्रमागत dp_alt_mode अणु
 	DP_Alt_mode__Unknown = 0,
 	DP_Alt_mode__Connect,
 	DP_Alt_mode__NoConnect,
-};
+पूर्ण;
 /*
  *****************************************************************************
- * graphics_object_id struct
+ * graphics_object_id काष्ठा
  *
- * graphics_object_id is a very simple struct wrapping 32bit Graphics
+ * graphics_object_id is a very simple काष्ठा wrapping 32bit Graphics
  * Object identication
  *
- * This struct should stay very simple
+ * This काष्ठा should stay very simple
  *  No dependencies at all (no includes)
- *  No debug messages or asserts
- *  No #ifndef and preprocessor directives
+ *  No debug messages or निश्चितs
+ *  No #अगर_अघोषित and preprocessor directives
  *  No grow in space (no more data member)
  *****************************************************************************
  */
 
-struct graphics_object_id {
-	uint32_t  id:8;
-	uint32_t  enum_id:4;
-	uint32_t  type:4;
-	uint32_t  reserved:16; /* for padding. total size should be u32 */
-};
+काष्ठा graphics_object_id अणु
+	uपूर्णांक32_t  id:8;
+	uपूर्णांक32_t  क्रमागत_id:4;
+	uपूर्णांक32_t  type:4;
+	uपूर्णांक32_t  reserved:16; /* क्रम padding. total size should be u32 */
+पूर्ण;
 
-/* some simple functions for convenient graphics_object_id handle */
+/* some simple functions क्रम convenient graphics_object_id handle */
 
-static inline struct graphics_object_id dal_graphics_object_id_init(
-	uint32_t id,
-	enum object_enum_id enum_id,
-	enum object_type type)
-{
-	struct graphics_object_id result = {
-		id, enum_id, type, 0
-	};
+अटल अंतरभूत काष्ठा graphics_object_id dal_graphics_object_id_init(
+	uपूर्णांक32_t id,
+	क्रमागत object_क्रमागत_id क्रमागत_id,
+	क्रमागत object_type type)
+अणु
+	काष्ठा graphics_object_id result = अणु
+		id, क्रमागत_id, type, 0
+	पूर्ण;
 
-	return result;
-}
+	वापस result;
+पूर्ण
 
-/* Based on internal data members memory layout */
-static inline uint32_t dal_graphics_object_id_to_uint(
-	struct graphics_object_id id)
-{
-	return id.id + (id.enum_id << 0x8) + (id.type << 0xc);
-}
+/* Based on पूर्णांकernal data members memory layout */
+अटल अंतरभूत uपूर्णांक32_t dal_graphics_object_id_to_uपूर्णांक(
+	काष्ठा graphics_object_id id)
+अणु
+	वापस id.id + (id.क्रमागत_id << 0x8) + (id.type << 0xc);
+पूर्ण
 
-static inline enum controller_id dal_graphics_object_id_get_controller_id(
-	struct graphics_object_id id)
-{
-	if (id.type == OBJECT_TYPE_CONTROLLER)
-		return (enum controller_id) id.id;
-	return CONTROLLER_ID_UNDEFINED;
-}
+अटल अंतरभूत क्रमागत controller_id dal_graphics_object_id_get_controller_id(
+	काष्ठा graphics_object_id id)
+अणु
+	अगर (id.type == OBJECT_TYPE_CONTROLLER)
+		वापस (क्रमागत controller_id) id.id;
+	वापस CONTROLLER_ID_UNDEFINED;
+पूर्ण
 
-static inline enum clock_source_id dal_graphics_object_id_get_clock_source_id(
-	struct graphics_object_id id)
-{
-	if (id.type == OBJECT_TYPE_CLOCK_SOURCE)
-		return (enum clock_source_id) id.id;
-	return CLOCK_SOURCE_ID_UNDEFINED;
-}
+अटल अंतरभूत क्रमागत घड़ी_source_id dal_graphics_object_id_get_घड़ी_source_id(
+	काष्ठा graphics_object_id id)
+अणु
+	अगर (id.type == OBJECT_TYPE_CLOCK_SOURCE)
+		वापस (क्रमागत घड़ी_source_id) id.id;
+	वापस CLOCK_SOURCE_ID_UNDEFINED;
+पूर्ण
 
-static inline enum encoder_id dal_graphics_object_id_get_encoder_id(
-	struct graphics_object_id id)
-{
-	if (id.type == OBJECT_TYPE_ENCODER)
-		return (enum encoder_id) id.id;
-	return ENCODER_ID_UNKNOWN;
-}
+अटल अंतरभूत क्रमागत encoder_id dal_graphics_object_id_get_encoder_id(
+	काष्ठा graphics_object_id id)
+अणु
+	अगर (id.type == OBJECT_TYPE_ENCODER)
+		वापस (क्रमागत encoder_id) id.id;
+	वापस ENCODER_ID_UNKNOWN;
+पूर्ण
 
-static inline enum connector_id dal_graphics_object_id_get_connector_id(
-	struct graphics_object_id id)
-{
-	if (id.type == OBJECT_TYPE_CONNECTOR)
-		return (enum connector_id) id.id;
-	return CONNECTOR_ID_UNKNOWN;
-}
+अटल अंतरभूत क्रमागत connector_id dal_graphics_object_id_get_connector_id(
+	काष्ठा graphics_object_id id)
+अणु
+	अगर (id.type == OBJECT_TYPE_CONNECTOR)
+		वापस (क्रमागत connector_id) id.id;
+	वापस CONNECTOR_ID_UNKNOWN;
+पूर्ण
 
-static inline enum audio_id dal_graphics_object_id_get_audio_id(
-	struct graphics_object_id id)
-{
-	if (id.type == OBJECT_TYPE_AUDIO)
-		return (enum audio_id) id.id;
-	return AUDIO_ID_UNKNOWN;
-}
+अटल अंतरभूत क्रमागत audio_id dal_graphics_object_id_get_audio_id(
+	काष्ठा graphics_object_id id)
+अणु
+	अगर (id.type == OBJECT_TYPE_AUDIO)
+		वापस (क्रमागत audio_id) id.id;
+	वापस AUDIO_ID_UNKNOWN;
+पूर्ण
 
-static inline enum engine_id dal_graphics_object_id_get_engine_id(
-	struct graphics_object_id id)
-{
-	if (id.type == OBJECT_TYPE_ENGINE)
-		return (enum engine_id) id.id;
-	return ENGINE_ID_UNKNOWN;
-}
+अटल अंतरभूत क्रमागत engine_id dal_graphics_object_id_get_engine_id(
+	काष्ठा graphics_object_id id)
+अणु
+	अगर (id.type == OBJECT_TYPE_ENGINE)
+		वापस (क्रमागत engine_id) id.id;
+	वापस ENGINE_ID_UNKNOWN;
+पूर्ण
 
-static inline bool dal_graphics_object_id_equal(
-	struct graphics_object_id id_1,
-	struct graphics_object_id id_2)
-{
-	if ((id_1.id == id_2.id) && (id_1.enum_id == id_2.enum_id) &&
-		(id_1.type == id_2.type)) {
-		return true;
-	}
-	return false;
-}
-#endif
+अटल अंतरभूत bool dal_graphics_object_id_equal(
+	काष्ठा graphics_object_id id_1,
+	काष्ठा graphics_object_id id_2)
+अणु
+	अगर ((id_1.id == id_2.id) && (id_1.क्रमागत_id == id_2.क्रमागत_id) &&
+		(id_1.type == id_2.type)) अणु
+		वापस true;
+	पूर्ण
+	वापस false;
+पूर्ण
+#पूर्ण_अगर

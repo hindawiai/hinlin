@@ -1,24 +1,25 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /* Flow Queue PIE discipline
  *
  * Copyright (C) 2019 Mohit P. Tahiliani <tahiliani@nitk.edu.in>
  * Copyright (C) 2019 Sachin D. Patil <sdp.sachin@gmail.com>
- * Copyright (C) 2019 V. Saicharan <vsaicharan1998@gmail.com>
+ * Copyright (C) 2019 V. Saiअक्षरan <vsaiअक्षरan1998@gmail.com>
  * Copyright (C) 2019 Mohit Bhasi <mohitbhasi1998@gmail.com>
  * Copyright (C) 2019 Leslie Monis <lesliemonis@gmail.com>
  * Copyright (C) 2019 Gautam Ramakrishnan <gautamramk@gmail.com>
  */
 
-#include <linux/jhash.h>
-#include <linux/sizes.h>
-#include <linux/vmalloc.h>
-#include <net/pkt_cls.h>
-#include <net/pie.h>
+#समावेश <linux/jhash.h>
+#समावेश <linux/sizes.h>
+#समावेश <linux/vदो_स्मृति.h>
+#समावेश <net/pkt_cls.h>
+#समावेश <net/pie.h>
 
 /* Flow Queue PIE
  *
  * Principles:
- *   - Packets are classified on flows.
+ *   - Packets are classअगरied on flows.
  *   - This is a Stochastic model (as we use a hash, several flows might
  *                                 be hashed to the same slot)
  *   - Each flow has a PIE managed queue.
@@ -26,39 +27,39 @@
  *     so that new flows have priority on old ones.
  *   - For a given flow, packets are not reordered.
  *   - Drops during enqueue only.
- *   - ECN capability is off by default.
- *   - ECN threshold (if ECN is enabled) is at 10% by default.
- *   - Uses timestamps to calculate queue delay by default.
+ *   - ECN capability is off by शेष.
+ *   - ECN threshold (अगर ECN is enabled) is at 10% by शेष.
+ *   - Uses बारtamps to calculate queue delay by शेष.
  */
 
 /**
- * struct fq_pie_flow - contains data for each flow
+ * काष्ठा fq_pie_flow - contains data क्रम each flow
  * @vars:	pie vars associated with the flow
- * @deficit:	number of remaining byte credits
+ * @deficit:	number of reमुख्यing byte credits
  * @backlog:	size of data in the flow
  * @qlen:	number of packets in the flow
- * @flowchain:	flowchain for the flow
+ * @flowchain:	flowchain क्रम the flow
  * @head:	first packet in the flow
  * @tail:	last packet in the flow
  */
-struct fq_pie_flow {
-	struct pie_vars vars;
+काष्ठा fq_pie_flow अणु
+	काष्ठा pie_vars vars;
 	s32 deficit;
 	u32 backlog;
 	u32 qlen;
-	struct list_head flowchain;
-	struct sk_buff *head;
-	struct sk_buff *tail;
-};
+	काष्ठा list_head flowchain;
+	काष्ठा sk_buff *head;
+	काष्ठा sk_buff *tail;
+पूर्ण;
 
-struct fq_pie_sched_data {
-	struct tcf_proto __rcu *filter_list; /* optional external classifier */
-	struct tcf_block *block;
-	struct fq_pie_flow *flows;
-	struct Qdisc *sch;
-	struct list_head old_flows;
-	struct list_head new_flows;
-	struct pie_params p_params;
+काष्ठा fq_pie_sched_data अणु
+	काष्ठा tcf_proto __rcu *filter_list; /* optional बाह्यal classअगरier */
+	काष्ठा tcf_block *block;
+	काष्ठा fq_pie_flow *flows;
+	काष्ठा Qdisc *sch;
+	काष्ठा list_head old_flows;
+	काष्ठा list_head new_flows;
+	काष्ठा pie_params p_params;
 	u32 ecn_prob;
 	u32 flows_cnt;
 	u32 quantum;
@@ -66,84 +67,84 @@ struct fq_pie_sched_data {
 	u32 new_flow_count;
 	u32 memory_usage;
 	u32 overmemory;
-	struct pie_stats stats;
-	struct timer_list adapt_timer;
-};
+	काष्ठा pie_stats stats;
+	काष्ठा समयr_list adapt_समयr;
+पूर्ण;
 
-static unsigned int fq_pie_hash(const struct fq_pie_sched_data *q,
-				struct sk_buff *skb)
-{
-	return reciprocal_scale(skb_get_hash(skb), q->flows_cnt);
-}
+अटल अचिन्हित पूर्णांक fq_pie_hash(स्थिर काष्ठा fq_pie_sched_data *q,
+				काष्ठा sk_buff *skb)
+अणु
+	वापस reciprocal_scale(skb_get_hash(skb), q->flows_cnt);
+पूर्ण
 
-static unsigned int fq_pie_classify(struct sk_buff *skb, struct Qdisc *sch,
-				    int *qerr)
-{
-	struct fq_pie_sched_data *q = qdisc_priv(sch);
-	struct tcf_proto *filter;
-	struct tcf_result res;
-	int result;
+अटल अचिन्हित पूर्णांक fq_pie_classअगरy(काष्ठा sk_buff *skb, काष्ठा Qdisc *sch,
+				    पूर्णांक *qerr)
+अणु
+	काष्ठा fq_pie_sched_data *q = qdisc_priv(sch);
+	काष्ठा tcf_proto *filter;
+	काष्ठा tcf_result res;
+	पूर्णांक result;
 
-	if (TC_H_MAJ(skb->priority) == sch->handle &&
+	अगर (TC_H_MAJ(skb->priority) == sch->handle &&
 	    TC_H_MIN(skb->priority) > 0 &&
 	    TC_H_MIN(skb->priority) <= q->flows_cnt)
-		return TC_H_MIN(skb->priority);
+		वापस TC_H_MIN(skb->priority);
 
 	filter = rcu_dereference_bh(q->filter_list);
-	if (!filter)
-		return fq_pie_hash(q, skb) + 1;
+	अगर (!filter)
+		वापस fq_pie_hash(q, skb) + 1;
 
 	*qerr = NET_XMIT_SUCCESS | __NET_XMIT_BYPASS;
-	result = tcf_classify(skb, filter, &res, false);
-	if (result >= 0) {
-#ifdef CONFIG_NET_CLS_ACT
-		switch (result) {
-		case TC_ACT_STOLEN:
-		case TC_ACT_QUEUED:
-		case TC_ACT_TRAP:
+	result = tcf_classअगरy(skb, filter, &res, false);
+	अगर (result >= 0) अणु
+#अगर_घोषित CONFIG_NET_CLS_ACT
+		चयन (result) अणु
+		हाल TC_ACT_STOLEN:
+		हाल TC_ACT_QUEUED:
+		हाल TC_ACT_TRAP:
 			*qerr = NET_XMIT_SUCCESS | __NET_XMIT_STOLEN;
 			fallthrough;
-		case TC_ACT_SHOT:
-			return 0;
-		}
-#endif
-		if (TC_H_MIN(res.classid) <= q->flows_cnt)
-			return TC_H_MIN(res.classid);
-	}
-	return 0;
-}
+		हाल TC_ACT_SHOT:
+			वापस 0;
+		पूर्ण
+#पूर्ण_अगर
+		अगर (TC_H_MIN(res.classid) <= q->flows_cnt)
+			वापस TC_H_MIN(res.classid);
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /* add skb to flow queue (tail add) */
-static inline void flow_queue_add(struct fq_pie_flow *flow,
-				  struct sk_buff *skb)
-{
-	if (!flow->head)
+अटल अंतरभूत व्योम flow_queue_add(काष्ठा fq_pie_flow *flow,
+				  काष्ठा sk_buff *skb)
+अणु
+	अगर (!flow->head)
 		flow->head = skb;
-	else
+	अन्यथा
 		flow->tail->next = skb;
 	flow->tail = skb;
-	skb->next = NULL;
-}
+	skb->next = शून्य;
+पूर्ण
 
-static int fq_pie_qdisc_enqueue(struct sk_buff *skb, struct Qdisc *sch,
-				struct sk_buff **to_free)
-{
-	struct fq_pie_sched_data *q = qdisc_priv(sch);
-	struct fq_pie_flow *sel_flow;
-	int ret;
+अटल पूर्णांक fq_pie_qdisc_enqueue(काष्ठा sk_buff *skb, काष्ठा Qdisc *sch,
+				काष्ठा sk_buff **to_मुक्त)
+अणु
+	काष्ठा fq_pie_sched_data *q = qdisc_priv(sch);
+	काष्ठा fq_pie_flow *sel_flow;
+	पूर्णांक ret;
 	u8 memory_limited = false;
 	u8 enqueue = false;
 	u32 pkt_len;
 	u32 idx;
 
-	/* Classifies packet into corresponding flow */
-	idx = fq_pie_classify(skb, sch, &ret);
-	if (idx == 0) {
-		if (ret & __NET_XMIT_BYPASS)
+	/* Classअगरies packet पूर्णांकo corresponding flow */
+	idx = fq_pie_classअगरy(skb, sch, &ret);
+	अगर (idx == 0) अणु
+		अगर (ret & __NET_XMIT_BYPASS)
 			qdisc_qstats_drop(sch);
-		__qdisc_drop(skb, to_free);
-		return ret;
-	}
+		__qdisc_drop(skb, to_मुक्त);
+		वापस ret;
+	पूर्ण
 	idx--;
 
 	sel_flow = &q->flows[idx];
@@ -151,30 +152,30 @@ static int fq_pie_qdisc_enqueue(struct sk_buff *skb, struct Qdisc *sch,
 	get_pie_cb(skb)->mem_usage = skb->truesize;
 	memory_limited = q->memory_usage > q->memory_limit + skb->truesize;
 
-	/* Checks if the qdisc is full */
-	if (unlikely(qdisc_qlen(sch) >= sch->limit)) {
+	/* Checks अगर the qdisc is full */
+	अगर (unlikely(qdisc_qlen(sch) >= sch->limit)) अणु
 		q->stats.overlimit++;
-		goto out;
-	} else if (unlikely(memory_limited)) {
+		जाओ out;
+	पूर्ण अन्यथा अगर (unlikely(memory_limited)) अणु
 		q->overmemory++;
-	}
+	पूर्ण
 
-	if (!pie_drop_early(sch, &q->p_params, &sel_flow->vars,
-			    sel_flow->backlog, skb->len)) {
+	अगर (!pie_drop_early(sch, &q->p_params, &sel_flow->vars,
+			    sel_flow->backlog, skb->len)) अणु
 		enqueue = true;
-	} else if (q->p_params.ecn &&
+	पूर्ण अन्यथा अगर (q->p_params.ecn &&
 		   sel_flow->vars.prob <= (MAX_PROB / 100) * q->ecn_prob &&
-		   INET_ECN_set_ce(skb)) {
-		/* If packet is ecn capable, mark it if drop probability
-		 * is lower than the parameter ecn_prob, else drop it.
+		   INET_ECN_set_ce(skb)) अणु
+		/* If packet is ecn capable, mark it अगर drop probability
+		 * is lower than the parameter ecn_prob, अन्यथा drop it.
 		 */
 		q->stats.ecn_mark++;
 		enqueue = true;
-	}
-	if (enqueue) {
-		/* Set enqueue time only when dq_rate_estimator is disabled. */
-		if (!q->p_params.dq_rate_estimator)
-			pie_set_enqueue_time(skb);
+	पूर्ण
+	अगर (enqueue) अणु
+		/* Set enqueue समय only when dq_rate_estimator is disabled. */
+		अगर (!q->p_params.dq_rate_estimator)
+			pie_set_enqueue_समय(skb);
 
 		pkt_len = qdisc_pkt_len(skb);
 		q->stats.packets_in++;
@@ -182,219 +183,219 @@ static int fq_pie_qdisc_enqueue(struct sk_buff *skb, struct Qdisc *sch,
 		sch->qstats.backlog += pkt_len;
 		sch->q.qlen++;
 		flow_queue_add(sel_flow, skb);
-		if (list_empty(&sel_flow->flowchain)) {
+		अगर (list_empty(&sel_flow->flowchain)) अणु
 			list_add_tail(&sel_flow->flowchain, &q->new_flows);
 			q->new_flow_count++;
 			sel_flow->deficit = q->quantum;
 			sel_flow->qlen = 0;
 			sel_flow->backlog = 0;
-		}
+		पूर्ण
 		sel_flow->qlen++;
 		sel_flow->backlog += pkt_len;
-		return NET_XMIT_SUCCESS;
-	}
+		वापस NET_XMIT_SUCCESS;
+	पूर्ण
 out:
 	q->stats.dropped++;
 	sel_flow->vars.accu_prob = 0;
-	__qdisc_drop(skb, to_free);
+	__qdisc_drop(skb, to_मुक्त);
 	qdisc_qstats_drop(sch);
-	return NET_XMIT_CN;
-}
+	वापस NET_XMIT_CN;
+पूर्ण
 
-static const struct nla_policy fq_pie_policy[TCA_FQ_PIE_MAX + 1] = {
-	[TCA_FQ_PIE_LIMIT]		= {.type = NLA_U32},
-	[TCA_FQ_PIE_FLOWS]		= {.type = NLA_U32},
-	[TCA_FQ_PIE_TARGET]		= {.type = NLA_U32},
-	[TCA_FQ_PIE_TUPDATE]		= {.type = NLA_U32},
-	[TCA_FQ_PIE_ALPHA]		= {.type = NLA_U32},
-	[TCA_FQ_PIE_BETA]		= {.type = NLA_U32},
-	[TCA_FQ_PIE_QUANTUM]		= {.type = NLA_U32},
-	[TCA_FQ_PIE_MEMORY_LIMIT]	= {.type = NLA_U32},
-	[TCA_FQ_PIE_ECN_PROB]		= {.type = NLA_U32},
-	[TCA_FQ_PIE_ECN]		= {.type = NLA_U32},
-	[TCA_FQ_PIE_BYTEMODE]		= {.type = NLA_U32},
-	[TCA_FQ_PIE_DQ_RATE_ESTIMATOR]	= {.type = NLA_U32},
-};
+अटल स्थिर काष्ठा nla_policy fq_pie_policy[TCA_FQ_PIE_MAX + 1] = अणु
+	[TCA_FQ_PIE_LIMIT]		= अणु.type = NLA_U32पूर्ण,
+	[TCA_FQ_PIE_FLOWS]		= अणु.type = NLA_U32पूर्ण,
+	[TCA_FQ_PIE_TARGET]		= अणु.type = NLA_U32पूर्ण,
+	[TCA_FQ_PIE_TUPDATE]		= अणु.type = NLA_U32पूर्ण,
+	[TCA_FQ_PIE_ALPHA]		= अणु.type = NLA_U32पूर्ण,
+	[TCA_FQ_PIE_BETA]		= अणु.type = NLA_U32पूर्ण,
+	[TCA_FQ_PIE_QUANTUM]		= अणु.type = NLA_U32पूर्ण,
+	[TCA_FQ_PIE_MEMORY_LIMIT]	= अणु.type = NLA_U32पूर्ण,
+	[TCA_FQ_PIE_ECN_PROB]		= अणु.type = NLA_U32पूर्ण,
+	[TCA_FQ_PIE_ECN]		= अणु.type = NLA_U32पूर्ण,
+	[TCA_FQ_PIE_BYTEMODE]		= अणु.type = NLA_U32पूर्ण,
+	[TCA_FQ_PIE_DQ_RATE_ESTIMATOR]	= अणु.type = NLA_U32पूर्ण,
+पूर्ण;
 
-static inline struct sk_buff *dequeue_head(struct fq_pie_flow *flow)
-{
-	struct sk_buff *skb = flow->head;
+अटल अंतरभूत काष्ठा sk_buff *dequeue_head(काष्ठा fq_pie_flow *flow)
+अणु
+	काष्ठा sk_buff *skb = flow->head;
 
 	flow->head = skb->next;
-	skb->next = NULL;
-	return skb;
-}
+	skb->next = शून्य;
+	वापस skb;
+पूर्ण
 
-static struct sk_buff *fq_pie_qdisc_dequeue(struct Qdisc *sch)
-{
-	struct fq_pie_sched_data *q = qdisc_priv(sch);
-	struct sk_buff *skb = NULL;
-	struct fq_pie_flow *flow;
-	struct list_head *head;
+अटल काष्ठा sk_buff *fq_pie_qdisc_dequeue(काष्ठा Qdisc *sch)
+अणु
+	काष्ठा fq_pie_sched_data *q = qdisc_priv(sch);
+	काष्ठा sk_buff *skb = शून्य;
+	काष्ठा fq_pie_flow *flow;
+	काष्ठा list_head *head;
 	u32 pkt_len;
 
 begin:
 	head = &q->new_flows;
-	if (list_empty(head)) {
+	अगर (list_empty(head)) अणु
 		head = &q->old_flows;
-		if (list_empty(head))
-			return NULL;
-	}
+		अगर (list_empty(head))
+			वापस शून्य;
+	पूर्ण
 
-	flow = list_first_entry(head, struct fq_pie_flow, flowchain);
+	flow = list_first_entry(head, काष्ठा fq_pie_flow, flowchain);
 	/* Flow has exhausted all its credits */
-	if (flow->deficit <= 0) {
+	अगर (flow->deficit <= 0) अणु
 		flow->deficit += q->quantum;
 		list_move_tail(&flow->flowchain, &q->old_flows);
-		goto begin;
-	}
+		जाओ begin;
+	पूर्ण
 
-	if (flow->head) {
+	अगर (flow->head) अणु
 		skb = dequeue_head(flow);
 		pkt_len = qdisc_pkt_len(skb);
 		sch->qstats.backlog -= pkt_len;
 		sch->q.qlen--;
 		qdisc_bstats_update(sch, skb);
-	}
+	पूर्ण
 
-	if (!skb) {
-		/* force a pass through old_flows to prevent starvation */
-		if (head == &q->new_flows && !list_empty(&q->old_flows))
+	अगर (!skb) अणु
+		/* क्रमce a pass through old_flows to prevent starvation */
+		अगर (head == &q->new_flows && !list_empty(&q->old_flows))
 			list_move_tail(&flow->flowchain, &q->old_flows);
-		else
+		अन्यथा
 			list_del_init(&flow->flowchain);
-		goto begin;
-	}
+		जाओ begin;
+	पूर्ण
 
 	flow->qlen--;
 	flow->deficit -= pkt_len;
 	flow->backlog -= pkt_len;
 	q->memory_usage -= get_pie_cb(skb)->mem_usage;
 	pie_process_dequeue(skb, &q->p_params, &flow->vars, flow->backlog);
-	return skb;
-}
+	वापस skb;
+पूर्ण
 
-static int fq_pie_change(struct Qdisc *sch, struct nlattr *opt,
-			 struct netlink_ext_ack *extack)
-{
-	struct fq_pie_sched_data *q = qdisc_priv(sch);
-	struct nlattr *tb[TCA_FQ_PIE_MAX + 1];
-	unsigned int len_dropped = 0;
-	unsigned int num_dropped = 0;
-	int err;
+अटल पूर्णांक fq_pie_change(काष्ठा Qdisc *sch, काष्ठा nlattr *opt,
+			 काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा fq_pie_sched_data *q = qdisc_priv(sch);
+	काष्ठा nlattr *tb[TCA_FQ_PIE_MAX + 1];
+	अचिन्हित पूर्णांक len_dropped = 0;
+	अचिन्हित पूर्णांक num_dropped = 0;
+	पूर्णांक err;
 
-	if (!opt)
-		return -EINVAL;
+	अगर (!opt)
+		वापस -EINVAL;
 
 	err = nla_parse_nested(tb, TCA_FQ_PIE_MAX, opt, fq_pie_policy, extack);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
 	sch_tree_lock(sch);
-	if (tb[TCA_FQ_PIE_LIMIT]) {
+	अगर (tb[TCA_FQ_PIE_LIMIT]) अणु
 		u32 limit = nla_get_u32(tb[TCA_FQ_PIE_LIMIT]);
 
 		q->p_params.limit = limit;
 		sch->limit = limit;
-	}
-	if (tb[TCA_FQ_PIE_FLOWS]) {
-		if (q->flows) {
+	पूर्ण
+	अगर (tb[TCA_FQ_PIE_FLOWS]) अणु
+		अगर (q->flows) अणु
 			NL_SET_ERR_MSG_MOD(extack,
 					   "Number of flows cannot be changed");
-			goto flow_error;
-		}
+			जाओ flow_error;
+		पूर्ण
 		q->flows_cnt = nla_get_u32(tb[TCA_FQ_PIE_FLOWS]);
-		if (!q->flows_cnt || q->flows_cnt > 65536) {
+		अगर (!q->flows_cnt || q->flows_cnt > 65536) अणु
 			NL_SET_ERR_MSG_MOD(extack,
 					   "Number of flows must range in [1..65536]");
-			goto flow_error;
-		}
-	}
+			जाओ flow_error;
+		पूर्ण
+	पूर्ण
 
-	/* convert from microseconds to pschedtime */
-	if (tb[TCA_FQ_PIE_TARGET]) {
+	/* convert from microseconds to pschedसमय */
+	अगर (tb[TCA_FQ_PIE_TARGET]) अणु
 		/* target is in us */
 		u32 target = nla_get_u32(tb[TCA_FQ_PIE_TARGET]);
 
-		/* convert to pschedtime */
+		/* convert to pschedसमय */
 		q->p_params.target =
 			PSCHED_NS2TICKS((u64)target * NSEC_PER_USEC);
-	}
+	पूर्ण
 
-	/* tupdate is in jiffies */
-	if (tb[TCA_FQ_PIE_TUPDATE])
+	/* tupdate is in jअगरfies */
+	अगर (tb[TCA_FQ_PIE_TUPDATE])
 		q->p_params.tupdate =
-			usecs_to_jiffies(nla_get_u32(tb[TCA_FQ_PIE_TUPDATE]));
+			usecs_to_jअगरfies(nla_get_u32(tb[TCA_FQ_PIE_TUPDATE]));
 
-	if (tb[TCA_FQ_PIE_ALPHA])
+	अगर (tb[TCA_FQ_PIE_ALPHA])
 		q->p_params.alpha = nla_get_u32(tb[TCA_FQ_PIE_ALPHA]);
 
-	if (tb[TCA_FQ_PIE_BETA])
+	अगर (tb[TCA_FQ_PIE_BETA])
 		q->p_params.beta = nla_get_u32(tb[TCA_FQ_PIE_BETA]);
 
-	if (tb[TCA_FQ_PIE_QUANTUM])
+	अगर (tb[TCA_FQ_PIE_QUANTUM])
 		q->quantum = nla_get_u32(tb[TCA_FQ_PIE_QUANTUM]);
 
-	if (tb[TCA_FQ_PIE_MEMORY_LIMIT])
+	अगर (tb[TCA_FQ_PIE_MEMORY_LIMIT])
 		q->memory_limit = nla_get_u32(tb[TCA_FQ_PIE_MEMORY_LIMIT]);
 
-	if (tb[TCA_FQ_PIE_ECN_PROB])
+	अगर (tb[TCA_FQ_PIE_ECN_PROB])
 		q->ecn_prob = nla_get_u32(tb[TCA_FQ_PIE_ECN_PROB]);
 
-	if (tb[TCA_FQ_PIE_ECN])
+	अगर (tb[TCA_FQ_PIE_ECN])
 		q->p_params.ecn = nla_get_u32(tb[TCA_FQ_PIE_ECN]);
 
-	if (tb[TCA_FQ_PIE_BYTEMODE])
+	अगर (tb[TCA_FQ_PIE_BYTEMODE])
 		q->p_params.bytemode = nla_get_u32(tb[TCA_FQ_PIE_BYTEMODE]);
 
-	if (tb[TCA_FQ_PIE_DQ_RATE_ESTIMATOR])
+	अगर (tb[TCA_FQ_PIE_DQ_RATE_ESTIMATOR])
 		q->p_params.dq_rate_estimator =
 			nla_get_u32(tb[TCA_FQ_PIE_DQ_RATE_ESTIMATOR]);
 
-	/* Drop excess packets if new limit is lower */
-	while (sch->q.qlen > sch->limit) {
-		struct sk_buff *skb = fq_pie_qdisc_dequeue(sch);
+	/* Drop excess packets अगर new limit is lower */
+	जबतक (sch->q.qlen > sch->limit) अणु
+		काष्ठा sk_buff *skb = fq_pie_qdisc_dequeue(sch);
 
 		len_dropped += qdisc_pkt_len(skb);
 		num_dropped += 1;
-		rtnl_kfree_skbs(skb, skb);
-	}
+		rtnl_kमुक्त_skbs(skb, skb);
+	पूर्ण
 	qdisc_tree_reduce_backlog(sch, num_dropped, len_dropped);
 
 	sch_tree_unlock(sch);
-	return 0;
+	वापस 0;
 
 flow_error:
 	sch_tree_unlock(sch);
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static void fq_pie_timer(struct timer_list *t)
-{
-	struct fq_pie_sched_data *q = from_timer(q, t, adapt_timer);
-	struct Qdisc *sch = q->sch;
-	spinlock_t *root_lock; /* to lock qdisc for probability calculations */
+अटल व्योम fq_pie_समयr(काष्ठा समयr_list *t)
+अणु
+	काष्ठा fq_pie_sched_data *q = from_समयr(q, t, adapt_समयr);
+	काष्ठा Qdisc *sch = q->sch;
+	spinlock_t *root_lock; /* to lock qdisc क्रम probability calculations */
 	u32 idx;
 
 	root_lock = qdisc_lock(qdisc_root_sleeping(sch));
 	spin_lock(root_lock);
 
-	for (idx = 0; idx < q->flows_cnt; idx++)
+	क्रम (idx = 0; idx < q->flows_cnt; idx++)
 		pie_calculate_probability(&q->p_params, &q->flows[idx].vars,
 					  q->flows[idx].backlog);
 
-	/* reset the timer to fire after 'tupdate' jiffies. */
-	if (q->p_params.tupdate)
-		mod_timer(&q->adapt_timer, jiffies + q->p_params.tupdate);
+	/* reset the समयr to fire after 'tupdate' jअगरfies. */
+	अगर (q->p_params.tupdate)
+		mod_समयr(&q->adapt_समयr, jअगरfies + q->p_params.tupdate);
 
 	spin_unlock(root_lock);
-}
+पूर्ण
 
-static int fq_pie_init(struct Qdisc *sch, struct nlattr *opt,
-		       struct netlink_ext_ack *extack)
-{
-	struct fq_pie_sched_data *q = qdisc_priv(sch);
-	int err;
+अटल पूर्णांक fq_pie_init(काष्ठा Qdisc *sch, काष्ठा nlattr *opt,
+		       काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा fq_pie_sched_data *q = qdisc_priv(sch);
+	पूर्णांक err;
 	u32 idx;
 
 	pie_params_init(&q->p_params);
@@ -408,59 +409,59 @@ static int fq_pie_init(struct Qdisc *sch, struct nlattr *opt,
 
 	INIT_LIST_HEAD(&q->new_flows);
 	INIT_LIST_HEAD(&q->old_flows);
-	timer_setup(&q->adapt_timer, fq_pie_timer, 0);
+	समयr_setup(&q->adapt_समयr, fq_pie_समयr, 0);
 
-	if (opt) {
+	अगर (opt) अणु
 		err = fq_pie_change(sch, opt, extack);
 
-		if (err)
-			return err;
-	}
+		अगर (err)
+			वापस err;
+	पूर्ण
 
 	err = tcf_block_get(&q->block, &q->filter_list, sch, extack);
-	if (err)
-		goto init_failure;
+	अगर (err)
+		जाओ init_failure;
 
-	q->flows = kvcalloc(q->flows_cnt, sizeof(struct fq_pie_flow),
+	q->flows = kvसुस्मृति(q->flows_cnt, माप(काष्ठा fq_pie_flow),
 			    GFP_KERNEL);
-	if (!q->flows) {
+	अगर (!q->flows) अणु
 		err = -ENOMEM;
-		goto init_failure;
-	}
-	for (idx = 0; idx < q->flows_cnt; idx++) {
-		struct fq_pie_flow *flow = q->flows + idx;
+		जाओ init_failure;
+	पूर्ण
+	क्रम (idx = 0; idx < q->flows_cnt; idx++) अणु
+		काष्ठा fq_pie_flow *flow = q->flows + idx;
 
 		INIT_LIST_HEAD(&flow->flowchain);
 		pie_vars_init(&flow->vars);
-	}
+	पूर्ण
 
-	mod_timer(&q->adapt_timer, jiffies + HZ / 2);
+	mod_समयr(&q->adapt_समयr, jअगरfies + HZ / 2);
 
-	return 0;
+	वापस 0;
 
 init_failure:
 	q->flows_cnt = 0;
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int fq_pie_dump(struct Qdisc *sch, struct sk_buff *skb)
-{
-	struct fq_pie_sched_data *q = qdisc_priv(sch);
-	struct nlattr *opts;
+अटल पूर्णांक fq_pie_dump(काष्ठा Qdisc *sch, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा fq_pie_sched_data *q = qdisc_priv(sch);
+	काष्ठा nlattr *opts;
 
 	opts = nla_nest_start(skb, TCA_OPTIONS);
-	if (!opts)
-		return -EMSGSIZE;
+	अगर (!opts)
+		वापस -EMSGSIZE;
 
-	/* convert target from pschedtime to us */
-	if (nla_put_u32(skb, TCA_FQ_PIE_LIMIT, sch->limit) ||
+	/* convert target from pschedसमय to us */
+	अगर (nla_put_u32(skb, TCA_FQ_PIE_LIMIT, sch->limit) ||
 	    nla_put_u32(skb, TCA_FQ_PIE_FLOWS, q->flows_cnt) ||
 	    nla_put_u32(skb, TCA_FQ_PIE_TARGET,
 			((u32)PSCHED_TICKS2NS(q->p_params.target)) /
 			NSEC_PER_USEC) ||
 	    nla_put_u32(skb, TCA_FQ_PIE_TUPDATE,
-			jiffies_to_usecs(q->p_params.tupdate)) ||
+			jअगरfies_to_usecs(q->p_params.tupdate)) ||
 	    nla_put_u32(skb, TCA_FQ_PIE_ALPHA, q->p_params.alpha) ||
 	    nla_put_u32(skb, TCA_FQ_PIE_BETA, q->p_params.beta) ||
 	    nla_put_u32(skb, TCA_FQ_PIE_QUANTUM, q->quantum) ||
@@ -470,19 +471,19 @@ static int fq_pie_dump(struct Qdisc *sch, struct sk_buff *skb)
 	    nla_put_u32(skb, TCA_FQ_PIE_BYTEMODE, q->p_params.bytemode) ||
 	    nla_put_u32(skb, TCA_FQ_PIE_DQ_RATE_ESTIMATOR,
 			q->p_params.dq_rate_estimator))
-		goto nla_put_failure;
+		जाओ nla_put_failure;
 
-	return nla_nest_end(skb, opts);
+	वापस nla_nest_end(skb, opts);
 
 nla_put_failure:
 	nla_nest_cancel(skb, opts);
-	return -EMSGSIZE;
-}
+	वापस -EMSGSIZE;
+पूर्ण
 
-static int fq_pie_dump_stats(struct Qdisc *sch, struct gnet_dump *d)
-{
-	struct fq_pie_sched_data *q = qdisc_priv(sch);
-	struct tc_fq_pie_xstats st = {
+अटल पूर्णांक fq_pie_dump_stats(काष्ठा Qdisc *sch, काष्ठा gnet_dump *d)
+अणु
+	काष्ठा fq_pie_sched_data *q = qdisc_priv(sch);
+	काष्ठा tc_fq_pie_xstats st = अणु
 		.packets_in	= q->stats.packets_in,
 		.overlimit	= q->stats.overlimit,
 		.overmemory	= q->overmemory,
@@ -490,54 +491,54 @@ static int fq_pie_dump_stats(struct Qdisc *sch, struct gnet_dump *d)
 		.ecn_mark	= q->stats.ecn_mark,
 		.new_flow_count = q->new_flow_count,
 		.memory_usage   = q->memory_usage,
-	};
-	struct list_head *pos;
+	पूर्ण;
+	काष्ठा list_head *pos;
 
 	sch_tree_lock(sch);
-	list_for_each(pos, &q->new_flows)
+	list_क्रम_each(pos, &q->new_flows)
 		st.new_flows_len++;
 
-	list_for_each(pos, &q->old_flows)
+	list_क्रम_each(pos, &q->old_flows)
 		st.old_flows_len++;
 	sch_tree_unlock(sch);
 
-	return gnet_stats_copy_app(d, &st, sizeof(st));
-}
+	वापस gnet_stats_copy_app(d, &st, माप(st));
+पूर्ण
 
-static void fq_pie_reset(struct Qdisc *sch)
-{
-	struct fq_pie_sched_data *q = qdisc_priv(sch);
+अटल व्योम fq_pie_reset(काष्ठा Qdisc *sch)
+अणु
+	काष्ठा fq_pie_sched_data *q = qdisc_priv(sch);
 	u32 idx;
 
 	INIT_LIST_HEAD(&q->new_flows);
 	INIT_LIST_HEAD(&q->old_flows);
-	for (idx = 0; idx < q->flows_cnt; idx++) {
-		struct fq_pie_flow *flow = q->flows + idx;
+	क्रम (idx = 0; idx < q->flows_cnt; idx++) अणु
+		काष्ठा fq_pie_flow *flow = q->flows + idx;
 
 		/* Removes all packets from flow */
-		rtnl_kfree_skbs(flow->head, flow->tail);
-		flow->head = NULL;
+		rtnl_kमुक्त_skbs(flow->head, flow->tail);
+		flow->head = शून्य;
 
 		INIT_LIST_HEAD(&flow->flowchain);
 		pie_vars_init(&flow->vars);
-	}
+	पूर्ण
 
 	sch->q.qlen = 0;
 	sch->qstats.backlog = 0;
-}
+पूर्ण
 
-static void fq_pie_destroy(struct Qdisc *sch)
-{
-	struct fq_pie_sched_data *q = qdisc_priv(sch);
+अटल व्योम fq_pie_destroy(काष्ठा Qdisc *sch)
+अणु
+	काष्ठा fq_pie_sched_data *q = qdisc_priv(sch);
 
 	tcf_block_put(q->block);
-	del_timer_sync(&q->adapt_timer);
-	kvfree(q->flows);
-}
+	del_समयr_sync(&q->adapt_समयr);
+	kvमुक्त(q->flows);
+पूर्ण
 
-static struct Qdisc_ops fq_pie_qdisc_ops __read_mostly = {
+अटल काष्ठा Qdisc_ops fq_pie_qdisc_ops __पढ़ो_mostly = अणु
 	.id		= "fq_pie",
-	.priv_size	= sizeof(struct fq_pie_sched_data),
+	.priv_size	= माप(काष्ठा fq_pie_sched_data),
 	.enqueue	= fq_pie_qdisc_enqueue,
 	.dequeue	= fq_pie_qdisc_dequeue,
 	.peek		= qdisc_peek_dequeued,
@@ -548,20 +549,20 @@ static struct Qdisc_ops fq_pie_qdisc_ops __read_mostly = {
 	.dump		= fq_pie_dump,
 	.dump_stats	= fq_pie_dump_stats,
 	.owner		= THIS_MODULE,
-};
+पूर्ण;
 
-static int __init fq_pie_module_init(void)
-{
-	return register_qdisc(&fq_pie_qdisc_ops);
-}
+अटल पूर्णांक __init fq_pie_module_init(व्योम)
+अणु
+	वापस रेजिस्टर_qdisc(&fq_pie_qdisc_ops);
+पूर्ण
 
-static void __exit fq_pie_module_exit(void)
-{
-	unregister_qdisc(&fq_pie_qdisc_ops);
-}
+अटल व्योम __निकास fq_pie_module_निकास(व्योम)
+अणु
+	unरेजिस्टर_qdisc(&fq_pie_qdisc_ops);
+पूर्ण
 
 module_init(fq_pie_module_init);
-module_exit(fq_pie_module_exit);
+module_निकास(fq_pie_module_निकास);
 
 MODULE_DESCRIPTION("Flow Queue Proportional Integral controller Enhanced (FQ-PIE)");
 MODULE_AUTHOR("Mohit P. Tahiliani");

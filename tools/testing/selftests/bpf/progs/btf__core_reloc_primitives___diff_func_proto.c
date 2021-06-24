@@ -1,3 +1,4 @@
-#include "core_reloc_types.h"
+<शैली गुरु>
+#समावेश "core_reloc_types.h"
 
-void f(struct core_reloc_primitives___diff_func_proto x) {}
+व्योम f(काष्ठा core_reloc_primitives___dअगरf_func_proto x) अणुपूर्ण

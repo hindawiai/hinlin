@@ -1,33 +1,34 @@
-// SPDX-License-Identifier: GPL-2.0
-/* Driver for Microtek Scanmaker X6 USB scanner, and possibly others.
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+/* Driver क्रम Microtek Scanmaker X6 USB scanner, and possibly others.
  *
- * (C) Copyright 2000 John Fremlin <vii@penguinpowered.com>
+ * (C) Copyright 2000 John Fremlin <vii@penguinघातered.com>
  * (C) Copyright 2000 Oliver Neukum <Oliver.Neukum@lrz.uni-muenchen.de>
  *
  * Parts shamelessly stolen from usb-storage and copyright by their
- * authors. Thanks to Matt Dharm for giving us permission!
+ * authors. Thanks to Matt Dharm क्रम giving us permission!
  *
  * This driver implements a SCSI host controller driver and a USB
- * device driver. To avoid confusion, all the USB related stuff is
+ * device driver. To aव्योम confusion, all the USB related stuff is
  * prefixed by mts_usb_ and all the SCSI stuff by mts_scsi_.
  *
- * Microtek (www.microtek.com) did not release the specifications for
+ * Microtek (www.microtek.com) did not release the specअगरications क्रम
  * their USB protocol to us, so we had to reverse engineer them. We
- * don't know for which models they are valid.
+ * करोn't know क्रम which models they are valid.
  *
- * The X6 USB has three bulk endpoints, one output (0x1) down which
+ * The X6 USB has three bulk endpoपूर्णांकs, one output (0x1) करोwn which
  * commands and outgoing data are sent, and two input: 0x82 from which
- * normal data is read from the scanner (in packets of maximum 32
- * bytes) and from which the status byte is read, and 0x83 from which
- * the results of a scan (or preview) are read in up to 64 * 1024 byte
- * chunks by the Windows driver. We don't know how much it is possible
- * to read at a time from 0x83.
+ * normal data is पढ़ो from the scanner (in packets of maximum 32
+ * bytes) and from which the status byte is पढ़ो, and 0x83 from which
+ * the results of a scan (or preview) are पढ़ो in up to 64 * 1024 byte
+ * chunks by the Winकरोws driver. We करोn't know how much it is possible
+ * to पढ़ो at a समय from 0x83.
  *
- * It seems possible to read (with URB transfers) everything from 0x82
- * in one go, without bothering to read in 32 byte chunks.
+ * It seems possible to पढ़ो (with URB transfers) everything from 0x82
+ * in one go, without bothering to पढ़ो in 32 byte chunks.
  *
- * There seems to be an optimisation of a further READ implicit if
- * you simply read from 0x83.
+ * There seems to be an optimisation of a further READ implicit अगर
+ * you simply पढ़ो from 0x83.
  *
  * Guessed protocol:
  *
@@ -46,10 +47,10 @@
  *
  * References:
  *
- * The SCSI command set for the scanner is available from
+ * The SCSI command set क्रम the scanner is available from
  *	ftp://ftp.microtek.com/microtek/devpack/
  *
- * Microtek NV sent us a more up to date version of the document. If
+ * Microtek NV sent us a more up to date version of the करोcument. If
  * you want it, just send mail.
  *
  * Status:
@@ -65,14 +66,14 @@
  *	20000417 fixed unload oops
  *	20000419 fixed READ IMAGE detection
  *	20000424 started conversion to use URBs
- *	20000502 handled short transfers as errors
- *	20000513 rename and organisation of functions (john)
- *	20000513 added IDs for all products supported by Windows driver (john)
+ *	20000502 handled लघु transfers as errors
+ *	20000513 नाम and organisation of functions (john)
+ *	20000513 added IDs क्रम all products supported by Winकरोws driver (john)
  *	20000514 Rewrote mts_scsi_queuecommand to use URBs (john)
  *	20000514 Version 0.0.8j
  *      20000514 Fix reporting of non-existent devices to SCSI layer (john)
  *	20000514 Added MTS_DEBUG_INT (john)
- *	20000514 Changed "usb-microtek" to "microtek" for consistency (john)
+ *	20000514 Changed "usb-microtek" to "microtek" क्रम consistency (john)
  *	20000514 Stupid bug fixes (john)
  *	20000514 Version 0.0.9j
  *	20000515 Put transfer context and URB in mts_desc (john)
@@ -81,16 +82,16 @@
  *      20000515 Fixed up URB allocation (clear URB on alloc) (john)
  *      20000515 Version 0.0.11j
  *	20000516 Removed unnecessary spinlock in mts_transfer_context (john)
- *	20000516 Removed unnecessary up on instance lock in mts_remove_nolock (john)
- *	20000516 Implemented (badly) scsi_abort (john)
+ *	20000516 Removed unnecessary up on instance lock in mts_हटाओ_nolock (john)
+ *	20000516 Implemented (badly) scsi_पात (john)
  *	20000516 Version 0.0.12j
- *      20000517 Hopefully removed mts_remove_nolock quasideadlock (john)
- *      20000517 Added mts_debug_dump to print ll USB info (john)
- *	20000518 Tweaks and documentation updates (john)
+ *      20000517 Hopefully हटाओd mts_हटाओ_nolock quasideadlock (john)
+ *      20000517 Added mts_debug_dump to prपूर्णांक ll USB info (john)
+ *	20000518 Tweaks and करोcumentation updates (john)
  *	20000518 Version 0.0.13j
- *	20000518 Cleaned up abort handling (john)
+ *	20000518 Cleaned up पात handling (john)
  *	20000523 Removed scsi_command and various scsi_..._resets (john)
- *	20000523 Added unlink URB on scsi_abort, now OHCI supports it (john)
+ *	20000523 Added unlink URB on scsi_पात, now OHCI supports it (john)
  *	20000523 Fixed last tiresome compile warning (john)
  *	20000523 Version 0.0.14j (though version 0.1 has come out?)
  *	20000602 Added primitive reset
@@ -99,281 +100,281 @@
  *	20000603 Version 0.2.1
  *	20000620 minor cosmetic changes
  *	20000620 Version 0.2.2
- *	20000822 Hopefully fixed deadlock in mts_remove_nolock()
+ *	20000822 Hopefully fixed deadlock in mts_हटाओ_nolock()
  *	20000822 Fixed minor race in mts_transfer_cleanup()
  *	20000822 Fixed deadlock on submission error in queuecommand
  *	20000822 Version 0.2.3
- *	20000913 Reduced module size if debugging is off
+ *	20000913 Reduced module size अगर debugging is off
  *	20000913 Version 0.2.4
- *      20010210 New abort logic
+ *      20010210 New पात logic
  *      20010210 Version 0.3.0
  *	20010217 Merged scatter/gather
  *	20010218 Version 0.4.0
  *	20010218 Cosmetic fixes
  *	20010218 Version 0.4.1
- *      20010306 Abort while using scatter/gather
+ *      20010306 Abort जबतक using scatter/gather
  *      20010306 Version 0.4.2
- *      20010311 Remove all timeouts and tidy up generally (john)
- *	20010320 check return value of scsi_register()
+ *      20010311 Remove all समयouts and tidy up generally (john)
+ *	20010320 check वापस value of scsi_रेजिस्टर()
  *	20010320 Version 0.4.3
- *	20010408 Identify version on module load.
+ *	20010408 Identअगरy version on module load.
  *	20011003 Fix multiple requests
  */
 
-#include <linux/module.h>
-#include <linux/kernel.h>
-#include <linux/signal.h>
-#include <linux/errno.h>
-#include <linux/random.h>
-#include <linux/poll.h>
-#include <linux/slab.h>
-#include <linux/spinlock.h>
-#include <linux/usb.h>
-#include <linux/proc_fs.h>
+#समावेश <linux/module.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/संकेत.स>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/अक्रमom.h>
+#समावेश <linux/poll.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/usb.h>
+#समावेश <linux/proc_fs.h>
 
-#include <linux/atomic.h>
-#include <linux/blkdev.h>
-#include "../../scsi/scsi.h"
-#include <scsi/scsi_host.h>
+#समावेश <linux/atomic.h>
+#समावेश <linux/blkdev.h>
+#समावेश "../../scsi/scsi.h"
+#समावेश <scsi/scsi_host.h>
 
-#include "microtek.h"
+#समावेश "microtek.h"
 
-#define DRIVER_AUTHOR "John Fremlin <vii@penguinpowered.com>, Oliver Neukum <Oliver.Neukum@lrz.uni-muenchen.de>"
-#define DRIVER_DESC "Microtek Scanmaker X6 USB scanner driver"
+#घोषणा DRIVER_AUTHOR "John Fremlin <vii@penguinpowered.com>, Oliver Neukum <Oliver.Neukum@lrz.uni-muenchen.de>"
+#घोषणा DRIVER_DESC "Microtek Scanmaker X6 USB scanner driver"
 
-/* Should we do debugging? */
+/* Should we करो debugging? */
 
-//#define MTS_DO_DEBUG
+//#घोषणा MTS_DO_DEBUG
 
-/* USB layer driver interface */
+/* USB layer driver पूर्णांकerface */
 
-static int mts_usb_probe(struct usb_interface *intf,
-			 const struct usb_device_id *id);
-static void mts_usb_disconnect(struct usb_interface *intf);
+अटल पूर्णांक mts_usb_probe(काष्ठा usb_पूर्णांकerface *पूर्णांकf,
+			 स्थिर काष्ठा usb_device_id *id);
+अटल व्योम mts_usb_disconnect(काष्ठा usb_पूर्णांकerface *पूर्णांकf);
 
-static const struct usb_device_id mts_usb_ids[];
+अटल स्थिर काष्ठा usb_device_id mts_usb_ids[];
 
-static struct usb_driver mts_usb_driver = {
+अटल काष्ठा usb_driver mts_usb_driver = अणु
 	.name =		"microtekX6",
 	.probe =	mts_usb_probe,
 	.disconnect =	mts_usb_disconnect,
 	.id_table =	mts_usb_ids,
-};
+पूर्ण;
 
 
 /* Internal driver stuff */
 
-#define MTS_VERSION	"0.4.3"
-#define MTS_NAME	"microtek usb (rev " MTS_VERSION "): "
+#घोषणा MTS_VERSION	"0.4.3"
+#घोषणा MTS_NAME	"microtek usb (rev " MTS_VERSION "): "
 
-#define MTS_WARNING(x...) \
-	printk( KERN_WARNING MTS_NAME x )
-#define MTS_ERROR(x...) \
-	printk( KERN_ERR MTS_NAME x )
-#define MTS_INT_ERROR(x...) \
+#घोषणा MTS_WARNING(x...) \
+	prपूर्णांकk( KERN_WARNING MTS_NAME x )
+#घोषणा MTS_ERROR(x...) \
+	prपूर्णांकk( KERN_ERR MTS_NAME x )
+#घोषणा MTS_INT_ERROR(x...) \
 	MTS_ERROR(x)
-#define MTS_MESSAGE(x...) \
-	printk( KERN_INFO MTS_NAME x )
+#घोषणा MTS_MESSAGE(x...) \
+	prपूर्णांकk( KERN_INFO MTS_NAME x )
 
-#if defined MTS_DO_DEBUG
+#अगर defined MTS_DO_DEBUG
 
-#define MTS_DEBUG(x...) \
-	printk( KERN_DEBUG MTS_NAME x )
+#घोषणा MTS_DEBUG(x...) \
+	prपूर्णांकk( KERN_DEBUG MTS_NAME x )
 
-#define MTS_DEBUG_GOT_HERE() \
-	MTS_DEBUG("got to %s:%d (%s)\n", __FILE__, (int)__LINE__, __func__ )
-#define MTS_DEBUG_INT() \
-	do { MTS_DEBUG_GOT_HERE(); \
-	     MTS_DEBUG("transfer = 0x%x context = 0x%x\n",(int)transfer,(int)context ); \
-	     MTS_DEBUG("status = 0x%x data-length = 0x%x sent = 0x%x\n",transfer->status,(int)context->data_length, (int)transfer->actual_length ); \
+#घोषणा MTS_DEBUG_GOT_HERE() \
+	MTS_DEBUG("got to %s:%d (%s)\n", __खाता__, (पूर्णांक)__LINE__, __func__ )
+#घोषणा MTS_DEBUG_INT() \
+	करो अणु MTS_DEBUG_GOT_HERE(); \
+	     MTS_DEBUG("transfer = 0x%x context = 0x%x\n",(पूर्णांक)transfer,(पूर्णांक)context ); \
+	     MTS_DEBUG("status = 0x%x data-length = 0x%x sent = 0x%x\n",transfer->status,(पूर्णांक)context->data_length, (पूर्णांक)transfer->actual_length ); \
              mts_debug_dump(context->instance);\
-	   } while(0)
-#else
+	   पूर्ण जबतक(0)
+#अन्यथा
 
-#define MTS_NUL_STATEMENT do { } while(0)
+#घोषणा MTS_NUL_STATEMENT करो अणु पूर्ण जबतक(0)
 
-#define MTS_DEBUG(x...)	MTS_NUL_STATEMENT
-#define MTS_DEBUG_GOT_HERE() MTS_NUL_STATEMENT
-#define MTS_DEBUG_INT() MTS_NUL_STATEMENT
+#घोषणा MTS_DEBUG(x...)	MTS_NUL_STATEMENT
+#घोषणा MTS_DEBUG_GOT_HERE() MTS_NUL_STATEMENT
+#घोषणा MTS_DEBUG_INT() MTS_NUL_STATEMENT
 
-#endif
+#पूर्ण_अगर
 
 
 
-#define MTS_INT_INIT()\
-	struct mts_transfer_context* context = (struct mts_transfer_context*)transfer->context; \
+#घोषणा MTS_INT_INIT()\
+	काष्ठा mts_transfer_context* context = (काष्ठा mts_transfer_context*)transfer->context; \
 	MTS_DEBUG_INT();\
 
-#ifdef MTS_DO_DEBUG
+#अगर_घोषित MTS_DO_DEBUG
 
-static inline void mts_debug_dump(struct mts_desc* desc) {
+अटल अंतरभूत व्योम mts_debug_dump(काष्ठा mts_desc* desc) अणु
 	MTS_DEBUG("desc at 0x%x: toggle = %02x%02x\n",
-		  (int)desc,
-		  (int)desc->usb_dev->toggle[1],(int)desc->usb_dev->toggle[0]
+		  (पूर्णांक)desc,
+		  (पूर्णांक)desc->usb_dev->toggle[1],(पूर्णांक)desc->usb_dev->toggle[0]
 		);
 	MTS_DEBUG("ep_out=%x ep_response=%x ep_image=%x\n",
 		  usb_sndbulkpipe(desc->usb_dev,desc->ep_out),
 		  usb_rcvbulkpipe(desc->usb_dev,desc->ep_response),
 		  usb_rcvbulkpipe(desc->usb_dev,desc->ep_image)
 		);
-}
+पूर्ण
 
 
-static inline void mts_show_command(struct scsi_cmnd *srb)
-{
-	char *what = NULL;
+अटल अंतरभूत व्योम mts_show_command(काष्ठा scsi_cmnd *srb)
+अणु
+	अक्षर *what = शून्य;
 
-	switch (srb->cmnd[0]) {
-	case TEST_UNIT_READY: what = "TEST_UNIT_READY"; break;
-	case REZERO_UNIT: what = "REZERO_UNIT"; break;
-	case REQUEST_SENSE: what = "REQUEST_SENSE"; break;
-	case FORMAT_UNIT: what = "FORMAT_UNIT"; break;
-	case READ_BLOCK_LIMITS: what = "READ_BLOCK_LIMITS"; break;
-	case REASSIGN_BLOCKS: what = "REASSIGN_BLOCKS"; break;
-	case READ_6: what = "READ_6"; break;
-	case WRITE_6: what = "WRITE_6"; break;
-	case SEEK_6: what = "SEEK_6"; break;
-	case READ_REVERSE: what = "READ_REVERSE"; break;
-	case WRITE_FILEMARKS: what = "WRITE_FILEMARKS"; break;
-	case SPACE: what = "SPACE"; break;
-	case INQUIRY: what = "INQUIRY"; break;
-	case RECOVER_BUFFERED_DATA: what = "RECOVER_BUFFERED_DATA"; break;
-	case MODE_SELECT: what = "MODE_SELECT"; break;
-	case RESERVE: what = "RESERVE"; break;
-	case RELEASE: what = "RELEASE"; break;
-	case COPY: what = "COPY"; break;
-	case ERASE: what = "ERASE"; break;
-	case MODE_SENSE: what = "MODE_SENSE"; break;
-	case START_STOP: what = "START_STOP"; break;
-	case RECEIVE_DIAGNOSTIC: what = "RECEIVE_DIAGNOSTIC"; break;
-	case SEND_DIAGNOSTIC: what = "SEND_DIAGNOSTIC"; break;
-	case ALLOW_MEDIUM_REMOVAL: what = "ALLOW_MEDIUM_REMOVAL"; break;
-	case SET_WINDOW: what = "SET_WINDOW"; break;
-	case READ_CAPACITY: what = "READ_CAPACITY"; break;
-	case READ_10: what = "READ_10"; break;
-	case WRITE_10: what = "WRITE_10"; break;
-	case SEEK_10: what = "SEEK_10"; break;
-	case WRITE_VERIFY: what = "WRITE_VERIFY"; break;
-	case VERIFY: what = "VERIFY"; break;
-	case SEARCH_HIGH: what = "SEARCH_HIGH"; break;
-	case SEARCH_EQUAL: what = "SEARCH_EQUAL"; break;
-	case SEARCH_LOW: what = "SEARCH_LOW"; break;
-	case SET_LIMITS: what = "SET_LIMITS"; break;
-	case READ_POSITION: what = "READ_POSITION"; break;
-	case SYNCHRONIZE_CACHE: what = "SYNCHRONIZE_CACHE"; break;
-	case LOCK_UNLOCK_CACHE: what = "LOCK_UNLOCK_CACHE"; break;
-	case READ_DEFECT_DATA: what = "READ_DEFECT_DATA"; break;
-	case MEDIUM_SCAN: what = "MEDIUM_SCAN"; break;
-	case COMPARE: what = "COMPARE"; break;
-	case COPY_VERIFY: what = "COPY_VERIFY"; break;
-	case WRITE_BUFFER: what = "WRITE_BUFFER"; break;
-	case READ_BUFFER: what = "READ_BUFFER"; break;
-	case UPDATE_BLOCK: what = "UPDATE_BLOCK"; break;
-	case READ_LONG: what = "READ_LONG"; break;
-	case WRITE_LONG: what = "WRITE_LONG"; break;
-	case CHANGE_DEFINITION: what = "CHANGE_DEFINITION"; break;
-	case WRITE_SAME: what = "WRITE_SAME"; break;
-	case READ_TOC: what = "READ_TOC"; break;
-	case LOG_SELECT: what = "LOG_SELECT"; break;
-	case LOG_SENSE: what = "LOG_SENSE"; break;
-	case MODE_SELECT_10: what = "MODE_SELECT_10"; break;
-	case MODE_SENSE_10: what = "MODE_SENSE_10"; break;
-	case MOVE_MEDIUM: what = "MOVE_MEDIUM"; break;
-	case READ_12: what = "READ_12"; break;
-	case WRITE_12: what = "WRITE_12"; break;
-	case WRITE_VERIFY_12: what = "WRITE_VERIFY_12"; break;
-	case SEARCH_HIGH_12: what = "SEARCH_HIGH_12"; break;
-	case SEARCH_EQUAL_12: what = "SEARCH_EQUAL_12"; break;
-	case SEARCH_LOW_12: what = "SEARCH_LOW_12"; break;
-	case READ_ELEMENT_STATUS: what = "READ_ELEMENT_STATUS"; break;
-	case SEND_VOLUME_TAG: what = "SEND_VOLUME_TAG"; break;
-	case WRITE_LONG_2: what = "WRITE_LONG_2"; break;
-	default:
+	चयन (srb->cmnd[0]) अणु
+	हाल TEST_UNIT_READY: what = "TEST_UNIT_READY"; अवरोध;
+	हाल REZERO_UNIT: what = "REZERO_UNIT"; अवरोध;
+	हाल REQUEST_SENSE: what = "REQUEST_SENSE"; अवरोध;
+	हाल FORMAT_UNIT: what = "FORMAT_UNIT"; अवरोध;
+	हाल READ_BLOCK_LIMITS: what = "READ_BLOCK_LIMITS"; अवरोध;
+	हाल REASSIGN_BLOCKS: what = "REASSIGN_BLOCKS"; अवरोध;
+	हाल READ_6: what = "READ_6"; अवरोध;
+	हाल WRITE_6: what = "WRITE_6"; अवरोध;
+	हाल SEEK_6: what = "SEEK_6"; अवरोध;
+	हाल READ_REVERSE: what = "READ_REVERSE"; अवरोध;
+	हाल WRITE_खाताMARKS: what = "WRITE_FILEMARKS"; अवरोध;
+	हाल SPACE: what = "SPACE"; अवरोध;
+	हाल INQUIRY: what = "INQUIRY"; अवरोध;
+	हाल RECOVER_BUFFERED_DATA: what = "RECOVER_BUFFERED_DATA"; अवरोध;
+	हाल MODE_SELECT: what = "MODE_SELECT"; अवरोध;
+	हाल RESERVE: what = "RESERVE"; अवरोध;
+	हाल RELEASE: what = "RELEASE"; अवरोध;
+	हाल COPY: what = "COPY"; अवरोध;
+	हाल ERASE: what = "ERASE"; अवरोध;
+	हाल MODE_SENSE: what = "MODE_SENSE"; अवरोध;
+	हाल START_STOP: what = "START_STOP"; अवरोध;
+	हाल RECEIVE_DIAGNOSTIC: what = "RECEIVE_DIAGNOSTIC"; अवरोध;
+	हाल SEND_DIAGNOSTIC: what = "SEND_DIAGNOSTIC"; अवरोध;
+	हाल ALLOW_MEDIUM_REMOVAL: what = "ALLOW_MEDIUM_REMOVAL"; अवरोध;
+	हाल SET_WINDOW: what = "SET_WINDOW"; अवरोध;
+	हाल READ_CAPACITY: what = "READ_CAPACITY"; अवरोध;
+	हाल READ_10: what = "READ_10"; अवरोध;
+	हाल WRITE_10: what = "WRITE_10"; अवरोध;
+	हाल SEEK_10: what = "SEEK_10"; अवरोध;
+	हाल WRITE_VERIFY: what = "WRITE_VERIFY"; अवरोध;
+	हाल VERIFY: what = "VERIFY"; अवरोध;
+	हाल SEARCH_HIGH: what = "SEARCH_HIGH"; अवरोध;
+	हाल SEARCH_EQUAL: what = "SEARCH_EQUAL"; अवरोध;
+	हाल SEARCH_LOW: what = "SEARCH_LOW"; अवरोध;
+	हाल SET_LIMITS: what = "SET_LIMITS"; अवरोध;
+	हाल READ_POSITION: what = "READ_POSITION"; अवरोध;
+	हाल SYNCHRONIZE_CACHE: what = "SYNCHRONIZE_CACHE"; अवरोध;
+	हाल LOCK_UNLOCK_CACHE: what = "LOCK_UNLOCK_CACHE"; अवरोध;
+	हाल READ_DEFECT_DATA: what = "READ_DEFECT_DATA"; अवरोध;
+	हाल MEDIUM_SCAN: what = "MEDIUM_SCAN"; अवरोध;
+	हाल COMPARE: what = "COMPARE"; अवरोध;
+	हाल COPY_VERIFY: what = "COPY_VERIFY"; अवरोध;
+	हाल WRITE_BUFFER: what = "WRITE_BUFFER"; अवरोध;
+	हाल READ_BUFFER: what = "READ_BUFFER"; अवरोध;
+	हाल UPDATE_BLOCK: what = "UPDATE_BLOCK"; अवरोध;
+	हाल READ_LONG: what = "READ_LONG"; अवरोध;
+	हाल WRITE_LONG: what = "WRITE_LONG"; अवरोध;
+	हाल CHANGE_DEFINITION: what = "CHANGE_DEFINITION"; अवरोध;
+	हाल WRITE_SAME: what = "WRITE_SAME"; अवरोध;
+	हाल READ_TOC: what = "READ_TOC"; अवरोध;
+	हाल LOG_SELECT: what = "LOG_SELECT"; अवरोध;
+	हाल LOG_SENSE: what = "LOG_SENSE"; अवरोध;
+	हाल MODE_SELECT_10: what = "MODE_SELECT_10"; अवरोध;
+	हाल MODE_SENSE_10: what = "MODE_SENSE_10"; अवरोध;
+	हाल MOVE_MEDIUM: what = "MOVE_MEDIUM"; अवरोध;
+	हाल READ_12: what = "READ_12"; अवरोध;
+	हाल WRITE_12: what = "WRITE_12"; अवरोध;
+	हाल WRITE_VERIFY_12: what = "WRITE_VERIFY_12"; अवरोध;
+	हाल SEARCH_HIGH_12: what = "SEARCH_HIGH_12"; अवरोध;
+	हाल SEARCH_EQUAL_12: what = "SEARCH_EQUAL_12"; अवरोध;
+	हाल SEARCH_LOW_12: what = "SEARCH_LOW_12"; अवरोध;
+	हाल READ_ELEMENT_STATUS: what = "READ_ELEMENT_STATUS"; अवरोध;
+	हाल SEND_VOLUME_TAG: what = "SEND_VOLUME_TAG"; अवरोध;
+	हाल WRITE_LONG_2: what = "WRITE_LONG_2"; अवरोध;
+	शेष:
 		MTS_DEBUG("can't decode command\n");
-		goto out;
-		break;
-	}
+		जाओ out;
+		अवरोध;
+	पूर्ण
 	MTS_DEBUG( "Command %s (%d bytes)\n", what, srb->cmd_len);
 
  out:
 	MTS_DEBUG( "  %10ph\n", srb->cmnd);
-}
+पूर्ण
 
-#else
+#अन्यथा
 
-static inline void mts_show_command(struct scsi_cmnd * dummy)
-{
-}
+अटल अंतरभूत व्योम mts_show_command(काष्ठा scsi_cmnd * dummy)
+अणु
+पूर्ण
 
-static inline void mts_debug_dump(struct mts_desc* dummy)
-{
-}
+अटल अंतरभूत व्योम mts_debug_dump(काष्ठा mts_desc* dummy)
+अणु
+पूर्ण
 
-#endif
+#पूर्ण_अगर
 
-static inline void mts_urb_abort(struct mts_desc* desc) {
+अटल अंतरभूत व्योम mts_urb_पात(काष्ठा mts_desc* desc) अणु
 	MTS_DEBUG_GOT_HERE();
 	mts_debug_dump(desc);
 
-	usb_kill_urb( desc->urb );
-}
+	usb_समाप्त_urb( desc->urb );
+पूर्ण
 
-static int mts_slave_alloc (struct scsi_device *s)
-{
+अटल पूर्णांक mts_slave_alloc (काष्ठा scsi_device *s)
+अणु
 	s->inquiry_len = 0x24;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mts_slave_configure (struct scsi_device *s)
-{
+अटल पूर्णांक mts_slave_configure (काष्ठा scsi_device *s)
+अणु
 	blk_queue_dma_alignment(s->request_queue, (512 - 1));
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mts_scsi_abort(struct scsi_cmnd *srb)
-{
-	struct mts_desc* desc = (struct mts_desc*)(srb->device->host->hostdata[0]);
+अटल पूर्णांक mts_scsi_पात(काष्ठा scsi_cmnd *srb)
+अणु
+	काष्ठा mts_desc* desc = (काष्ठा mts_desc*)(srb->device->host->hostdata[0]);
 
 	MTS_DEBUG_GOT_HERE();
 
-	mts_urb_abort(desc);
+	mts_urb_पात(desc);
 
-	return FAILED;
-}
+	वापस FAILED;
+पूर्ण
 
-static int mts_scsi_host_reset(struct scsi_cmnd *srb)
-{
-	struct mts_desc* desc = (struct mts_desc*)(srb->device->host->hostdata[0]);
-	int result;
+अटल पूर्णांक mts_scsi_host_reset(काष्ठा scsi_cmnd *srb)
+अणु
+	काष्ठा mts_desc* desc = (काष्ठा mts_desc*)(srb->device->host->hostdata[0]);
+	पूर्णांक result;
 
 	MTS_DEBUG_GOT_HERE();
 	mts_debug_dump(desc);
 
-	result = usb_lock_device_for_reset(desc->usb_dev, desc->usb_intf);
-	if (result == 0) {
+	result = usb_lock_device_क्रम_reset(desc->usb_dev, desc->usb_पूर्णांकf);
+	अगर (result == 0) अणु
 		result = usb_reset_device(desc->usb_dev);
 		usb_unlock_device(desc->usb_dev);
-	}
-	return result ? FAILED : SUCCESS;
-}
+	पूर्ण
+	वापस result ? FAILED : SUCCESS;
+पूर्ण
 
-static int
-mts_scsi_queuecommand(struct Scsi_Host *shost, struct scsi_cmnd *srb);
+अटल पूर्णांक
+mts_scsi_queuecommand(काष्ठा Scsi_Host *shost, काष्ठा scsi_cmnd *srb);
 
-static void mts_transfer_cleanup( struct urb *transfer );
-static void mts_do_sg(struct urb * transfer);
+अटल व्योम mts_transfer_cleanup( काष्ठा urb *transfer );
+अटल व्योम mts_करो_sg(काष्ठा urb * transfer);
 
-static inline
-void mts_int_submit_urb (struct urb* transfer,
-			int pipe,
-			void* data,
-			unsigned length,
+अटल अंतरभूत
+व्योम mts_पूर्णांक_submit_urb (काष्ठा urb* transfer,
+			पूर्णांक pipe,
+			व्योम* data,
+			अचिन्हित length,
 			usb_complete_t callback )
 /* Interrupt context! */
 
 /* Holding transfer->context->lock! */
-{
-	int res;
+अणु
+	पूर्णांक res;
 
 	MTS_INT_INIT();
 
@@ -387,204 +388,204 @@ void mts_int_submit_urb (struct urb* transfer,
 		);
 
 	res = usb_submit_urb( transfer, GFP_ATOMIC );
-	if ( unlikely(res) ) {
-		MTS_INT_ERROR( "could not submit URB! Error was %d\n",(int)res );
+	अगर ( unlikely(res) ) अणु
+		MTS_INT_ERROR( "could not submit URB! Error was %d\n",(पूर्णांक)res );
 		set_host_byte(context->srb, DID_ERROR);
 		mts_transfer_cleanup(transfer);
-	}
-}
+	पूर्ण
+पूर्ण
 
 
-static void mts_transfer_cleanup( struct urb *transfer )
+अटल व्योम mts_transfer_cleanup( काष्ठा urb *transfer )
 /* Interrupt context! */
-{
+अणु
 	MTS_INT_INIT();
 
-	if ( likely(context->final_callback != NULL) )
+	अगर ( likely(context->final_callback != शून्य) )
 		context->final_callback(context->srb);
-}
+पूर्ण
 
-static void mts_transfer_done( struct urb *transfer )
-{
+अटल व्योम mts_transfer_करोne( काष्ठा urb *transfer )
+अणु
 	MTS_INT_INIT();
 
 	context->srb->result &= MTS_SCSI_ERR_MASK;
-	context->srb->result |= (unsigned)(*context->scsi_status)<<1;
+	context->srb->result |= (अचिन्हित)(*context->scsi_status)<<1;
 
 	mts_transfer_cleanup(transfer);
-}
+पूर्ण
 
 
-static void mts_get_status( struct urb *transfer )
+अटल व्योम mts_get_status( काष्ठा urb *transfer )
 /* Interrupt context! */
-{
+अणु
 	MTS_INT_INIT();
 
-	mts_int_submit_urb(transfer,
+	mts_पूर्णांक_submit_urb(transfer,
 			   usb_rcvbulkpipe(context->instance->usb_dev,
 					   context->instance->ep_response),
 			   context->scsi_status,
 			   1,
-			   mts_transfer_done );
-}
+			   mts_transfer_करोne );
+पूर्ण
 
-static void mts_data_done( struct urb* transfer )
+अटल व्योम mts_data_करोne( काष्ठा urb* transfer )
 /* Interrupt context! */
-{
-	int status = transfer->status;
+अणु
+	पूर्णांक status = transfer->status;
 	MTS_INT_INIT();
 
-	if ( context->data_length != transfer->actual_length ) {
+	अगर ( context->data_length != transfer->actual_length ) अणु
 		scsi_set_resid(context->srb, context->data_length -
 			       transfer->actual_length);
-	} else if ( unlikely(status) ) {
+	पूर्ण अन्यथा अगर ( unlikely(status) ) अणु
 		set_host_byte(context->srb, (status == -ENOENT ? DID_ABORT : DID_ERROR));
-	}
+	पूर्ण
 
 	mts_get_status(transfer);
-}
+पूर्ण
 
 
-static void mts_command_done( struct urb *transfer )
+अटल व्योम mts_command_करोne( काष्ठा urb *transfer )
 /* Interrupt context! */
-{
-	int status = transfer->status;
+अणु
+	पूर्णांक status = transfer->status;
 	MTS_INT_INIT();
 
-	if ( unlikely(status) ) {
-	        if (status == -ENOENT) {
-		        /* We are being killed */
+	अगर ( unlikely(status) ) अणु
+	        अगर (status == -ENOENT) अणु
+		        /* We are being समाप्तed */
 			MTS_DEBUG_GOT_HERE();
 			set_host_byte(context->srb, DID_ABORT);
-                } else {
+                पूर्ण अन्यथा अणु
 		        /* A genuine error has occurred */
 			MTS_DEBUG_GOT_HERE();
 
 		        set_host_byte(context->srb, DID_ERROR);
-                }
+                पूर्ण
 		mts_transfer_cleanup(transfer);
 
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (context->srb->cmnd[0] == REQUEST_SENSE) {
-		mts_int_submit_urb(transfer,
+	अगर (context->srb->cmnd[0] == REQUEST_SENSE) अणु
+		mts_पूर्णांक_submit_urb(transfer,
 				   context->data_pipe,
 				   context->srb->sense_buffer,
 				   context->data_length,
-				   mts_data_done);
-	} else { if ( context->data ) {
-			mts_int_submit_urb(transfer,
+				   mts_data_करोne);
+	पूर्ण अन्यथा अणु अगर ( context->data ) अणु
+			mts_पूर्णांक_submit_urb(transfer,
 					   context->data_pipe,
 					   context->data,
 					   context->data_length,
 					   scsi_sg_count(context->srb) > 1 ?
-					           mts_do_sg : mts_data_done);
-		} else {
+					           mts_करो_sg : mts_data_करोne);
+		पूर्ण अन्यथा अणु
 			mts_get_status(transfer);
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static void mts_do_sg (struct urb* transfer)
-{
-	int status = transfer->status;
+अटल व्योम mts_करो_sg (काष्ठा urb* transfer)
+अणु
+	पूर्णांक status = transfer->status;
 	MTS_INT_INIT();
 
 	MTS_DEBUG("Processing fragment %d of %d\n", context->fragment,
 	                                          scsi_sg_count(context->srb));
 
-	if (unlikely(status)) {
+	अगर (unlikely(status)) अणु
                 set_host_byte(context->srb, (status == -ENOENT ? DID_ABORT : DID_ERROR));
 		mts_transfer_cleanup(transfer);
-        }
+        पूर्ण
 
 	context->curr_sg = sg_next(context->curr_sg);
-	mts_int_submit_urb(transfer,
+	mts_पूर्णांक_submit_urb(transfer,
 			   context->data_pipe,
 			   sg_virt(context->curr_sg),
 			   context->curr_sg->length,
 			   sg_is_last(context->curr_sg) ?
-			   mts_data_done : mts_do_sg);
-}
+			   mts_data_करोne : mts_करो_sg);
+पूर्ण
 
-static const u8 mts_read_image_sig[] = { 0x28, 00, 00, 00 };
-static const u8 mts_read_image_sig_len = 4;
-static const unsigned char mts_direction[256/8] = {
+अटल स्थिर u8 mts_पढ़ो_image_sig[] = अणु 0x28, 00, 00, 00 पूर्ण;
+अटल स्थिर u8 mts_पढ़ो_image_sig_len = 4;
+अटल स्थिर अचिन्हित अक्षर mts_direction[256/8] = अणु
 	0x28, 0x81, 0x14, 0x14, 0x20, 0x01, 0x90, 0x77,
 	0x0C, 0x20, 0x00, 0x04, 0x00, 0x00, 0x00, 0x00,
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x01,
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
-};
+पूर्ण;
 
 
-#define MTS_DIRECTION_IS_IN(x) ((mts_direction[x>>3] >> (x & 7)) & 1)
+#घोषणा MTS_सूचीECTION_IS_IN(x) ((mts_direction[x>>3] >> (x & 7)) & 1)
 
-static void
-mts_build_transfer_context(struct scsi_cmnd *srb, struct mts_desc* desc)
-{
-	int pipe;
+अटल व्योम
+mts_build_transfer_context(काष्ठा scsi_cmnd *srb, काष्ठा mts_desc* desc)
+अणु
+	पूर्णांक pipe;
 
 	MTS_DEBUG_GOT_HERE();
 
 	desc->context.instance = desc;
 	desc->context.srb = srb;
 
-	if (!scsi_bufflen(srb)) {
-		desc->context.data = NULL;
+	अगर (!scsi_bufflen(srb)) अणु
+		desc->context.data = शून्य;
 		desc->context.data_length = 0;
-		return;
-	} else {
+		वापस;
+	पूर्ण अन्यथा अणु
 		desc->context.curr_sg = scsi_sglist(srb);
 		desc->context.data = sg_virt(desc->context.curr_sg);
 		desc->context.data_length = desc->context.curr_sg->length;
-	}
+	पूर्ण
 
 
 	/* can't rely on srb->sc_data_direction */
 
 	/* Brutally ripped from usb-storage */
 
-	if ( !memcmp( srb->cmnd, mts_read_image_sig, mts_read_image_sig_len )
-) { 		pipe = usb_rcvbulkpipe(desc->usb_dev,desc->ep_image);
+	अगर ( !स_भेद( srb->cmnd, mts_पढ़ो_image_sig, mts_पढ़ो_image_sig_len )
+) अणु 		pipe = usb_rcvbulkpipe(desc->usb_dev,desc->ep_image);
 		MTS_DEBUG( "transferring from desc->ep_image == %d\n",
-			   (int)desc->ep_image );
-	} else if ( MTS_DIRECTION_IS_IN(srb->cmnd[0]) ) {
+			   (पूर्णांक)desc->ep_image );
+	पूर्ण अन्यथा अगर ( MTS_सूचीECTION_IS_IN(srb->cmnd[0]) ) अणु
 			pipe = usb_rcvbulkpipe(desc->usb_dev,desc->ep_response);
 			MTS_DEBUG( "transferring from desc->ep_response == %d\n",
-				   (int)desc->ep_response);
-	} else {
+				   (पूर्णांक)desc->ep_response);
+	पूर्ण अन्यथा अणु
 		MTS_DEBUG("transferring to desc->ep_out == %d\n",
-			  (int)desc->ep_out);
+			  (पूर्णांक)desc->ep_out);
 		pipe = usb_sndbulkpipe(desc->usb_dev,desc->ep_out);
-	}
+	पूर्ण
 	desc->context.data_pipe = pipe;
-}
+पूर्ण
 
 
-static int
-mts_scsi_queuecommand_lck(struct scsi_cmnd *srb, mts_scsi_cmnd_callback callback)
-{
-	struct mts_desc* desc = (struct mts_desc*)(srb->device->host->hostdata[0]);
-	int res;
+अटल पूर्णांक
+mts_scsi_queuecommand_lck(काष्ठा scsi_cmnd *srb, mts_scsi_cmnd_callback callback)
+अणु
+	काष्ठा mts_desc* desc = (काष्ठा mts_desc*)(srb->device->host->hostdata[0]);
+	पूर्णांक res;
 
 	MTS_DEBUG_GOT_HERE();
 	mts_show_command(srb);
 	mts_debug_dump(desc);
 
-	if ( srb->device->lun || srb->device->id || srb->device->channel ) {
+	अगर ( srb->device->lun || srb->device->id || srb->device->channel ) अणु
 
-		MTS_DEBUG("Command to LUN=%d ID=%d CHANNEL=%d from SCSI layer\n",(int)srb->device->lun,(int)srb->device->id, (int)srb->device->channel );
+		MTS_DEBUG("Command to LUN=%d ID=%d CHANNEL=%d from SCSI layer\n",(पूर्णांक)srb->device->lun,(पूर्णांक)srb->device->id, (पूर्णांक)srb->device->channel );
 
 		MTS_DEBUG("this device doesn't exist\n");
 
 		set_host_byte(srb, DID_BAD_TARGET);
 
-		if(likely(callback != NULL))
+		अगर(likely(callback != शून्य))
 			callback(srb);
 
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	
 	usb_fill_bulk_urb(desc->urb,
@@ -592,7 +593,7 @@ mts_scsi_queuecommand_lck(struct scsi_cmnd *srb, mts_scsi_cmnd_callback callback
 		      usb_sndbulkpipe(desc->usb_dev,desc->ep_out),
 		      srb->cmnd,
 		      srb->cmd_len,
-		      mts_command_done,
+		      mts_command_करोne,
 		      &desc->context
 		      );
 
@@ -603,26 +604,26 @@ mts_scsi_queuecommand_lck(struct scsi_cmnd *srb, mts_scsi_cmnd_callback callback
 	/* here we need ATOMIC as we are called with the iolock */
 	res=usb_submit_urb(desc->urb, GFP_ATOMIC);
 
-	if(unlikely(res)){
-		MTS_ERROR("error %d submitting URB\n",(int)res);
+	अगर(unlikely(res))अणु
+		MTS_ERROR("error %d submitting URB\n",(पूर्णांक)res);
 		set_host_byte(srb, DID_ERROR);
 
-		if(likely(callback != NULL))
+		अगर(likely(callback != शून्य))
 			callback(srb);
 
-	}
+	पूर्ण
 out:
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static DEF_SCSI_QCMD(mts_scsi_queuecommand)
+अटल DEF_SCSI_QCMD(mts_scsi_queuecommand)
 
-static struct scsi_host_template mts_scsi_host_template = {
+अटल काष्ठा scsi_host_ढाँचा mts_scsi_host_ढाँचा = अणु
 	.module			= THIS_MODULE,
 	.name			= "microtekX6",
 	.proc_name		= "microtekX6",
 	.queuecommand		= mts_scsi_queuecommand,
-	.eh_abort_handler	= mts_scsi_abort,
+	.eh_पात_handler	= mts_scsi_पात,
 	.eh_host_reset_handler	= mts_scsi_host_reset,
 	.sg_tablesize =		SG_ALL,
 	.can_queue =		1,
@@ -631,174 +632,174 @@ static struct scsi_host_template mts_scsi_host_template = {
 	.slave_alloc =		mts_slave_alloc,
 	.slave_configure =	mts_slave_configure,
 	.max_sectors=		256, /* 128 K */
-};
+पूर्ण;
 
 /* The entries of microtek_table must correspond, line-by-line to
    the entries of mts_supported_products[]. */
 
-static const struct usb_device_id mts_usb_ids[] =
-{
-	{ USB_DEVICE(0x4ce, 0x0300) },
-	{ USB_DEVICE(0x5da, 0x0094) },
-	{ USB_DEVICE(0x5da, 0x0099) },
-	{ USB_DEVICE(0x5da, 0x009a) },
-	{ USB_DEVICE(0x5da, 0x00a0) },
-	{ USB_DEVICE(0x5da, 0x00a3) },
-	{ USB_DEVICE(0x5da, 0x80a3) },
-	{ USB_DEVICE(0x5da, 0x80ac) },
-	{ USB_DEVICE(0x5da, 0x00b6) },
-	{ }						/* Terminating entry */
-};
+अटल स्थिर काष्ठा usb_device_id mts_usb_ids[] =
+अणु
+	अणु USB_DEVICE(0x4ce, 0x0300) पूर्ण,
+	अणु USB_DEVICE(0x5da, 0x0094) पूर्ण,
+	अणु USB_DEVICE(0x5da, 0x0099) पूर्ण,
+	अणु USB_DEVICE(0x5da, 0x009a) पूर्ण,
+	अणु USB_DEVICE(0x5da, 0x00a0) पूर्ण,
+	अणु USB_DEVICE(0x5da, 0x00a3) पूर्ण,
+	अणु USB_DEVICE(0x5da, 0x80a3) पूर्ण,
+	अणु USB_DEVICE(0x5da, 0x80ac) पूर्ण,
+	अणु USB_DEVICE(0x5da, 0x00b6) पूर्ण,
+	अणु पूर्ण						/* Terminating entry */
+पूर्ण;
 
 MODULE_DEVICE_TABLE (usb, mts_usb_ids);
 
 
-static int mts_usb_probe(struct usb_interface *intf,
-			 const struct usb_device_id *id)
-{
-	int i;
-	int ep_out = -1;
-	int ep_in_set[3]; /* this will break if we have more than three endpoints
+अटल पूर्णांक mts_usb_probe(काष्ठा usb_पूर्णांकerface *पूर्णांकf,
+			 स्थिर काष्ठा usb_device_id *id)
+अणु
+	पूर्णांक i;
+	पूर्णांक ep_out = -1;
+	पूर्णांक ep_in_set[3]; /* this will अवरोध अगर we have more than three endpoपूर्णांकs
 			   which is why we check */
-	int *ep_in_current = ep_in_set;
-	int err_retval = -ENOMEM;
+	पूर्णांक *ep_in_current = ep_in_set;
+	पूर्णांक err_retval = -ENOMEM;
 
-	struct mts_desc * new_desc;
-	struct usb_device *dev = interface_to_usbdev (intf);
+	काष्ठा mts_desc * new_desc;
+	काष्ठा usb_device *dev = पूर्णांकerface_to_usbdev (पूर्णांकf);
 
-	/* the current altsetting on the interface we're probing */
-	struct usb_host_interface *altsetting;
+	/* the current altsetting on the पूर्णांकerface we're probing */
+	काष्ठा usb_host_पूर्णांकerface *altsetting;
 
 	MTS_DEBUG_GOT_HERE();
-	MTS_DEBUG( "usb-device descriptor at %x\n", (int)dev );
+	MTS_DEBUG( "usb-device descriptor at %x\n", (पूर्णांक)dev );
 
 	MTS_DEBUG( "product id = 0x%x, vendor id = 0x%x\n",
 		   le16_to_cpu(dev->descriptor.idProduct),
-		   le16_to_cpu(dev->descriptor.idVendor) );
+		   le16_to_cpu(dev->descriptor.idVenकरोr) );
 
 	MTS_DEBUG_GOT_HERE();
 
-	/* the current altsetting on the interface we're probing */
-	altsetting = intf->cur_altsetting;
+	/* the current altsetting on the पूर्णांकerface we're probing */
+	altsetting = पूर्णांकf->cur_altsetting;
 
 
-	/* Check if the config is sane */
+	/* Check अगर the config is sane */
 
-	if ( altsetting->desc.bNumEndpoints != MTS_EP_TOTAL ) {
+	अगर ( altsetting->desc.bNumEndpoपूर्णांकs != MTS_EP_TOTAL ) अणु
 		MTS_WARNING( "expecting %d got %d endpoints! Bailing out.\n",
-			     (int)MTS_EP_TOTAL, (int)altsetting->desc.bNumEndpoints );
-		return -ENODEV;
-	}
+			     (पूर्णांक)MTS_EP_TOTAL, (पूर्णांक)altsetting->desc.bNumEndpoपूर्णांकs );
+		वापस -ENODEV;
+	पूर्ण
 
-	for( i = 0; i < altsetting->desc.bNumEndpoints; i++ ) {
-		if ((altsetting->endpoint[i].desc.bmAttributes &
-		     USB_ENDPOINT_XFERTYPE_MASK) != USB_ENDPOINT_XFER_BULK) {
+	क्रम( i = 0; i < altsetting->desc.bNumEndpoपूर्णांकs; i++ ) अणु
+		अगर ((altsetting->endpoपूर्णांक[i].desc.bmAttributes &
+		     USB_ENDPOINT_XFERTYPE_MASK) != USB_ENDPOINT_XFER_BULK) अणु
 
 			MTS_WARNING( "can only deal with bulk endpoints; endpoint %d is not bulk.\n",
-			     (int)altsetting->endpoint[i].desc.bEndpointAddress );
-		} else {
-			if (altsetting->endpoint[i].desc.bEndpointAddress &
-			    USB_DIR_IN)
+			     (पूर्णांक)altsetting->endpoपूर्णांक[i].desc.bEndpoपूर्णांकAddress );
+		पूर्ण अन्यथा अणु
+			अगर (altsetting->endpoपूर्णांक[i].desc.bEndpoपूर्णांकAddress &
+			    USB_सूची_IN)
 				*ep_in_current++
-					= altsetting->endpoint[i].desc.bEndpointAddress &
+					= altsetting->endpoपूर्णांक[i].desc.bEndpoपूर्णांकAddress &
 					USB_ENDPOINT_NUMBER_MASK;
-			else {
-				if ( ep_out != -1 ) {
+			अन्यथा अणु
+				अगर ( ep_out != -1 ) अणु
 					MTS_WARNING( "can only deal with one output endpoints. Bailing out." );
-					return -ENODEV;
-				}
+					वापस -ENODEV;
+				पूर्ण
 
-				ep_out = altsetting->endpoint[i].desc.bEndpointAddress &
+				ep_out = altsetting->endpoपूर्णांक[i].desc.bEndpoपूर्णांकAddress &
 					USB_ENDPOINT_NUMBER_MASK;
-			}
-		}
+			पूर्ण
+		पूर्ण
 
-	}
+	पूर्ण
 
-	if (ep_in_current != &ep_in_set[2]) {
+	अगर (ep_in_current != &ep_in_set[2]) अणु
 		MTS_WARNING("couldn't find two input bulk endpoints. Bailing out.\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	if ( ep_out == -1 ) {
+	अगर ( ep_out == -1 ) अणु
 		MTS_WARNING( "couldn't find an output bulk endpoint. Bailing out.\n" );
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
 
-	new_desc = kzalloc(sizeof(struct mts_desc), GFP_KERNEL);
-	if (!new_desc)
-		goto out;
+	new_desc = kzalloc(माप(काष्ठा mts_desc), GFP_KERNEL);
+	अगर (!new_desc)
+		जाओ out;
 
 	new_desc->urb = usb_alloc_urb(0, GFP_KERNEL);
-	if (!new_desc->urb)
-		goto out_kfree;
+	अगर (!new_desc->urb)
+		जाओ out_kमुक्त;
 
-	new_desc->context.scsi_status = kmalloc(1, GFP_KERNEL);
-	if (!new_desc->context.scsi_status)
-		goto out_free_urb;
+	new_desc->context.scsi_status = kदो_स्मृति(1, GFP_KERNEL);
+	अगर (!new_desc->context.scsi_status)
+		जाओ out_मुक्त_urb;
 
 	new_desc->usb_dev = dev;
-	new_desc->usb_intf = intf;
+	new_desc->usb_पूर्णांकf = पूर्णांकf;
 
-	/* endpoints */
+	/* endpoपूर्णांकs */
 	new_desc->ep_out = ep_out;
 	new_desc->ep_response = ep_in_set[0];
 	new_desc->ep_image = ep_in_set[1];
 
-	if ( new_desc->ep_out != MTS_EP_OUT )
+	अगर ( new_desc->ep_out != MTS_EP_OUT )
 		MTS_WARNING( "will this work? Command EP is not usually %d\n",
-			     (int)new_desc->ep_out );
+			     (पूर्णांक)new_desc->ep_out );
 
-	if ( new_desc->ep_response != MTS_EP_RESPONSE )
+	अगर ( new_desc->ep_response != MTS_EP_RESPONSE )
 		MTS_WARNING( "will this work? Response EP is not usually %d\n",
-			     (int)new_desc->ep_response );
+			     (पूर्णांक)new_desc->ep_response );
 
-	if ( new_desc->ep_image != MTS_EP_IMAGE )
+	अगर ( new_desc->ep_image != MTS_EP_IMAGE )
 		MTS_WARNING( "will this work? Image data EP is not usually %d\n",
-			     (int)new_desc->ep_image );
+			     (पूर्णांक)new_desc->ep_image );
 
-	new_desc->host = scsi_host_alloc(&mts_scsi_host_template,
-			sizeof(new_desc));
-	if (!new_desc->host)
-		goto out_kfree2;
+	new_desc->host = scsi_host_alloc(&mts_scsi_host_ढाँचा,
+			माप(new_desc));
+	अगर (!new_desc->host)
+		जाओ out_kमुक्त2;
 
-	new_desc->host->hostdata[0] = (unsigned long)new_desc;
-	if (scsi_add_host(new_desc->host, &dev->dev)) {
+	new_desc->host->hostdata[0] = (अचिन्हित दीर्घ)new_desc;
+	अगर (scsi_add_host(new_desc->host, &dev->dev)) अणु
 		err_retval = -EIO;
-		goto out_host_put;
-	}
+		जाओ out_host_put;
+	पूर्ण
 	scsi_scan_host(new_desc->host);
 
-	usb_set_intfdata(intf, new_desc);
-	return 0;
+	usb_set_पूर्णांकfdata(पूर्णांकf, new_desc);
+	वापस 0;
 
  out_host_put:
 	scsi_host_put(new_desc->host);
- out_kfree2:
-	kfree(new_desc->context.scsi_status);
- out_free_urb:
-	usb_free_urb(new_desc->urb);
- out_kfree:
-	kfree(new_desc);
+ out_kमुक्त2:
+	kमुक्त(new_desc->context.scsi_status);
+ out_मुक्त_urb:
+	usb_मुक्त_urb(new_desc->urb);
+ out_kमुक्त:
+	kमुक्त(new_desc);
  out:
-	return err_retval;
-}
+	वापस err_retval;
+पूर्ण
 
-static void mts_usb_disconnect (struct usb_interface *intf)
-{
-	struct mts_desc *desc = usb_get_intfdata(intf);
+अटल व्योम mts_usb_disconnect (काष्ठा usb_पूर्णांकerface *पूर्णांकf)
+अणु
+	काष्ठा mts_desc *desc = usb_get_पूर्णांकfdata(पूर्णांकf);
 
-	usb_set_intfdata(intf, NULL);
+	usb_set_पूर्णांकfdata(पूर्णांकf, शून्य);
 
-	usb_kill_urb(desc->urb);
-	scsi_remove_host(desc->host);
+	usb_समाप्त_urb(desc->urb);
+	scsi_हटाओ_host(desc->host);
 
 	scsi_host_put(desc->host);
-	usb_free_urb(desc->urb);
-	kfree(desc->context.scsi_status);
-	kfree(desc);
-}
+	usb_मुक्त_urb(desc->urb);
+	kमुक्त(desc->context.scsi_status);
+	kमुक्त(desc);
+पूर्ण
 
 module_usb_driver(mts_usb_driver);
 

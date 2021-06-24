@@ -1,282 +1,283 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * Kernel/userspace transport abstraction for Hyper-V util driver.
+ * Kernel/userspace transport असलtraction क्रम Hyper-V util driver.
  *
  * Copyright (C) 2015, Vitaly Kuznetsov <vkuznets@redhat.com>
  */
 
-#include <linux/slab.h>
-#include <linux/fs.h>
-#include <linux/poll.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/poll.h>
 
-#include "hyperv_vmbus.h"
-#include "hv_utils_transport.h"
+#समावेश "hyperv_vmbus.h"
+#समावेश "hv_utils_transport.h"
 
-static DEFINE_SPINLOCK(hvt_list_lock);
-static struct list_head hvt_list = LIST_HEAD_INIT(hvt_list);
+अटल DEFINE_SPINLOCK(hvt_list_lock);
+अटल काष्ठा list_head hvt_list = LIST_HEAD_INIT(hvt_list);
 
-static void hvt_reset(struct hvutil_transport *hvt)
-{
-	kfree(hvt->outmsg);
-	hvt->outmsg = NULL;
-	hvt->outmsg_len = 0;
-	if (hvt->on_reset)
+अटल व्योम hvt_reset(काष्ठा hvutil_transport *hvt)
+अणु
+	kमुक्त(hvt->ouपंचांगsg);
+	hvt->ouपंचांगsg = शून्य;
+	hvt->ouपंचांगsg_len = 0;
+	अगर (hvt->on_reset)
 		hvt->on_reset();
-}
+पूर्ण
 
-static ssize_t hvt_op_read(struct file *file, char __user *buf,
-			   size_t count, loff_t *ppos)
-{
-	struct hvutil_transport *hvt;
-	int ret;
+अटल sमाप_प्रकार hvt_op_पढ़ो(काष्ठा file *file, अक्षर __user *buf,
+			   माप_प्रकार count, loff_t *ppos)
+अणु
+	काष्ठा hvutil_transport *hvt;
+	पूर्णांक ret;
 
-	hvt = container_of(file->f_op, struct hvutil_transport, fops);
+	hvt = container_of(file->f_op, काष्ठा hvutil_transport, fops);
 
-	if (wait_event_interruptible(hvt->outmsg_q, hvt->outmsg_len > 0 ||
+	अगर (रुको_event_पूर्णांकerruptible(hvt->ouपंचांगsg_q, hvt->ouपंचांगsg_len > 0 ||
 				     hvt->mode != HVUTIL_TRANSPORT_CHARDEV))
-		return -EINTR;
+		वापस -EINTR;
 
 	mutex_lock(&hvt->lock);
 
-	if (hvt->mode == HVUTIL_TRANSPORT_DESTROY) {
+	अगर (hvt->mode == HVUTIL_TRANSPORT_DESTROY) अणु
 		ret = -EBADF;
-		goto out_unlock;
-	}
+		जाओ out_unlock;
+	पूर्ण
 
-	if (!hvt->outmsg) {
+	अगर (!hvt->ouपंचांगsg) अणु
 		ret = -EAGAIN;
-		goto out_unlock;
-	}
+		जाओ out_unlock;
+	पूर्ण
 
-	if (count < hvt->outmsg_len) {
+	अगर (count < hvt->ouपंचांगsg_len) अणु
 		ret = -EINVAL;
-		goto out_unlock;
-	}
+		जाओ out_unlock;
+	पूर्ण
 
-	if (!copy_to_user(buf, hvt->outmsg, hvt->outmsg_len))
-		ret = hvt->outmsg_len;
-	else
+	अगर (!copy_to_user(buf, hvt->ouपंचांगsg, hvt->ouपंचांगsg_len))
+		ret = hvt->ouपंचांगsg_len;
+	अन्यथा
 		ret = -EFAULT;
 
-	kfree(hvt->outmsg);
-	hvt->outmsg = NULL;
-	hvt->outmsg_len = 0;
+	kमुक्त(hvt->ouपंचांगsg);
+	hvt->ouपंचांगsg = शून्य;
+	hvt->ouपंचांगsg_len = 0;
 
-	if (hvt->on_read)
-		hvt->on_read();
-	hvt->on_read = NULL;
+	अगर (hvt->on_पढ़ो)
+		hvt->on_पढ़ो();
+	hvt->on_पढ़ो = शून्य;
 
 out_unlock:
 	mutex_unlock(&hvt->lock);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static ssize_t hvt_op_write(struct file *file, const char __user *buf,
-			    size_t count, loff_t *ppos)
-{
-	struct hvutil_transport *hvt;
+अटल sमाप_प्रकार hvt_op_ग_लिखो(काष्ठा file *file, स्थिर अक्षर __user *buf,
+			    माप_प्रकार count, loff_t *ppos)
+अणु
+	काष्ठा hvutil_transport *hvt;
 	u8 *inmsg;
-	int ret;
+	पूर्णांक ret;
 
-	hvt = container_of(file->f_op, struct hvutil_transport, fops);
+	hvt = container_of(file->f_op, काष्ठा hvutil_transport, fops);
 
 	inmsg = memdup_user(buf, count);
-	if (IS_ERR(inmsg))
-		return PTR_ERR(inmsg);
+	अगर (IS_ERR(inmsg))
+		वापस PTR_ERR(inmsg);
 
-	if (hvt->mode == HVUTIL_TRANSPORT_DESTROY)
+	अगर (hvt->mode == HVUTIL_TRANSPORT_DESTROY)
 		ret = -EBADF;
-	else
+	अन्यथा
 		ret = hvt->on_msg(inmsg, count);
 
-	kfree(inmsg);
+	kमुक्त(inmsg);
 
-	return ret ? ret : count;
-}
+	वापस ret ? ret : count;
+पूर्ण
 
-static __poll_t hvt_op_poll(struct file *file, poll_table *wait)
-{
-	struct hvutil_transport *hvt;
+अटल __poll_t hvt_op_poll(काष्ठा file *file, poll_table *रुको)
+अणु
+	काष्ठा hvutil_transport *hvt;
 
-	hvt = container_of(file->f_op, struct hvutil_transport, fops);
+	hvt = container_of(file->f_op, काष्ठा hvutil_transport, fops);
 
-	poll_wait(file, &hvt->outmsg_q, wait);
+	poll_रुको(file, &hvt->ouपंचांगsg_q, रुको);
 
-	if (hvt->mode == HVUTIL_TRANSPORT_DESTROY)
-		return EPOLLERR | EPOLLHUP;
+	अगर (hvt->mode == HVUTIL_TRANSPORT_DESTROY)
+		वापस EPOLLERR | EPOLLHUP;
 
-	if (hvt->outmsg_len > 0)
-		return EPOLLIN | EPOLLRDNORM;
+	अगर (hvt->ouपंचांगsg_len > 0)
+		वापस EPOLLIN | EPOLLRDNORM;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int hvt_op_open(struct inode *inode, struct file *file)
-{
-	struct hvutil_transport *hvt;
-	int ret = 0;
+अटल पूर्णांक hvt_op_खोलो(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	काष्ठा hvutil_transport *hvt;
+	पूर्णांक ret = 0;
 	bool issue_reset = false;
 
-	hvt = container_of(file->f_op, struct hvutil_transport, fops);
+	hvt = container_of(file->f_op, काष्ठा hvutil_transport, fops);
 
 	mutex_lock(&hvt->lock);
 
-	if (hvt->mode == HVUTIL_TRANSPORT_DESTROY) {
+	अगर (hvt->mode == HVUTIL_TRANSPORT_DESTROY) अणु
 		ret = -EBADF;
-	} else if (hvt->mode == HVUTIL_TRANSPORT_INIT) {
+	पूर्ण अन्यथा अगर (hvt->mode == HVUTIL_TRANSPORT_INIT) अणु
 		/*
-		 * Switching to CHARDEV mode. We switch bach to INIT when
-		 * device gets released.
+		 * Switching to CHARDEV mode. We चयन bach to INIT when
+		 * device माला_लो released.
 		 */
 		hvt->mode = HVUTIL_TRANSPORT_CHARDEV;
-	}
-	else if (hvt->mode == HVUTIL_TRANSPORT_NETLINK) {
+	पूर्ण
+	अन्यथा अगर (hvt->mode == HVUTIL_TRANSPORT_NETLINK) अणु
 		/*
-		 * We're switching from netlink communication to using char
+		 * We're चयनing from netlink communication to using अक्षर
 		 * device. Issue the reset first.
 		 */
 		issue_reset = true;
 		hvt->mode = HVUTIL_TRANSPORT_CHARDEV;
-	} else {
+	पूर्ण अन्यथा अणु
 		ret = -EBUSY;
-	}
+	पूर्ण
 
-	if (issue_reset)
+	अगर (issue_reset)
 		hvt_reset(hvt);
 
 	mutex_unlock(&hvt->lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void hvt_transport_free(struct hvutil_transport *hvt)
-{
-	misc_deregister(&hvt->mdev);
-	kfree(hvt->outmsg);
-	kfree(hvt);
-}
+अटल व्योम hvt_transport_मुक्त(काष्ठा hvutil_transport *hvt)
+अणु
+	misc_deरेजिस्टर(&hvt->mdev);
+	kमुक्त(hvt->ouपंचांगsg);
+	kमुक्त(hvt);
+पूर्ण
 
-static int hvt_op_release(struct inode *inode, struct file *file)
-{
-	struct hvutil_transport *hvt;
-	int mode_old;
+अटल पूर्णांक hvt_op_release(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	काष्ठा hvutil_transport *hvt;
+	पूर्णांक mode_old;
 
-	hvt = container_of(file->f_op, struct hvutil_transport, fops);
+	hvt = container_of(file->f_op, काष्ठा hvutil_transport, fops);
 
 	mutex_lock(&hvt->lock);
 	mode_old = hvt->mode;
-	if (hvt->mode != HVUTIL_TRANSPORT_DESTROY)
+	अगर (hvt->mode != HVUTIL_TRANSPORT_DESTROY)
 		hvt->mode = HVUTIL_TRANSPORT_INIT;
 	/*
-	 * Cleanup message buffers to avoid spurious messages when the daemon
+	 * Cleanup message buffers to aव्योम spurious messages when the daemon
 	 * connects back.
 	 */
 	hvt_reset(hvt);
 
-	if (mode_old == HVUTIL_TRANSPORT_DESTROY)
+	अगर (mode_old == HVUTIL_TRANSPORT_DESTROY)
 		complete(&hvt->release);
 
 	mutex_unlock(&hvt->lock);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void hvt_cn_callback(struct cn_msg *msg, struct netlink_skb_parms *nsp)
-{
-	struct hvutil_transport *hvt, *hvt_found = NULL;
+अटल व्योम hvt_cn_callback(काष्ठा cn_msg *msg, काष्ठा netlink_skb_parms *nsp)
+अणु
+	काष्ठा hvutil_transport *hvt, *hvt_found = शून्य;
 
 	spin_lock(&hvt_list_lock);
-	list_for_each_entry(hvt, &hvt_list, list) {
-		if (hvt->cn_id.idx == msg->id.idx &&
-		    hvt->cn_id.val == msg->id.val) {
+	list_क्रम_each_entry(hvt, &hvt_list, list) अणु
+		अगर (hvt->cn_id.idx == msg->id.idx &&
+		    hvt->cn_id.val == msg->id.val) अणु
 			hvt_found = hvt;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 	spin_unlock(&hvt_list_lock);
-	if (!hvt_found) {
+	अगर (!hvt_found) अणु
 		pr_warn("hvt_cn_callback: spurious message received!\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/*
 	 * Switching to NETLINK mode. Switching to CHARDEV happens when someone
-	 * opens the device.
+	 * खोलोs the device.
 	 */
 	mutex_lock(&hvt->lock);
-	if (hvt->mode == HVUTIL_TRANSPORT_INIT)
+	अगर (hvt->mode == HVUTIL_TRANSPORT_INIT)
 		hvt->mode = HVUTIL_TRANSPORT_NETLINK;
 
-	if (hvt->mode == HVUTIL_TRANSPORT_NETLINK)
+	अगर (hvt->mode == HVUTIL_TRANSPORT_NETLINK)
 		hvt_found->on_msg(msg->data, msg->len);
-	else
+	अन्यथा
 		pr_warn("hvt_cn_callback: unexpected netlink message!\n");
 	mutex_unlock(&hvt->lock);
-}
+पूर्ण
 
-int hvutil_transport_send(struct hvutil_transport *hvt, void *msg, int len,
-			  void (*on_read_cb)(void))
-{
-	struct cn_msg *cn_msg;
-	int ret = 0;
+पूर्णांक hvutil_transport_send(काष्ठा hvutil_transport *hvt, व्योम *msg, पूर्णांक len,
+			  व्योम (*on_पढ़ो_cb)(व्योम))
+अणु
+	काष्ठा cn_msg *cn_msg;
+	पूर्णांक ret = 0;
 
-	if (hvt->mode == HVUTIL_TRANSPORT_INIT ||
-	    hvt->mode == HVUTIL_TRANSPORT_DESTROY) {
-		return -EINVAL;
-	} else if (hvt->mode == HVUTIL_TRANSPORT_NETLINK) {
-		cn_msg = kzalloc(sizeof(*cn_msg) + len, GFP_ATOMIC);
-		if (!cn_msg)
-			return -ENOMEM;
+	अगर (hvt->mode == HVUTIL_TRANSPORT_INIT ||
+	    hvt->mode == HVUTIL_TRANSPORT_DESTROY) अणु
+		वापस -EINVAL;
+	पूर्ण अन्यथा अगर (hvt->mode == HVUTIL_TRANSPORT_NETLINK) अणु
+		cn_msg = kzalloc(माप(*cn_msg) + len, GFP_ATOMIC);
+		अगर (!cn_msg)
+			वापस -ENOMEM;
 		cn_msg->id.idx = hvt->cn_id.idx;
 		cn_msg->id.val = hvt->cn_id.val;
 		cn_msg->len = len;
-		memcpy(cn_msg->data, msg, len);
+		स_नकल(cn_msg->data, msg, len);
 		ret = cn_netlink_send(cn_msg, 0, 0, GFP_ATOMIC);
-		kfree(cn_msg);
+		kमुक्त(cn_msg);
 		/*
-		 * We don't know when netlink messages are delivered but unlike
+		 * We करोn't know when netlink messages are delivered but unlike
 		 * in CHARDEV mode we're not blocked and we can send next
 		 * messages right away.
 		 */
-		if (on_read_cb)
-			on_read_cb();
-		return ret;
-	}
+		अगर (on_पढ़ो_cb)
+			on_पढ़ो_cb();
+		वापस ret;
+	पूर्ण
 	/* HVUTIL_TRANSPORT_CHARDEV */
 	mutex_lock(&hvt->lock);
-	if (hvt->mode != HVUTIL_TRANSPORT_CHARDEV) {
+	अगर (hvt->mode != HVUTIL_TRANSPORT_CHARDEV) अणु
 		ret = -EINVAL;
-		goto out_unlock;
-	}
+		जाओ out_unlock;
+	पूर्ण
 
-	if (hvt->outmsg) {
+	अगर (hvt->ouपंचांगsg) अणु
 		/* Previous message wasn't received */
 		ret = -EFAULT;
-		goto out_unlock;
-	}
-	hvt->outmsg = kzalloc(len, GFP_KERNEL);
-	if (hvt->outmsg) {
-		memcpy(hvt->outmsg, msg, len);
-		hvt->outmsg_len = len;
-		hvt->on_read = on_read_cb;
-		wake_up_interruptible(&hvt->outmsg_q);
-	} else
+		जाओ out_unlock;
+	पूर्ण
+	hvt->ouपंचांगsg = kzalloc(len, GFP_KERNEL);
+	अगर (hvt->ouपंचांगsg) अणु
+		स_नकल(hvt->ouपंचांगsg, msg, len);
+		hvt->ouपंचांगsg_len = len;
+		hvt->on_पढ़ो = on_पढ़ो_cb;
+		wake_up_पूर्णांकerruptible(&hvt->ouपंचांगsg_q);
+	पूर्ण अन्यथा
 		ret = -ENOMEM;
 out_unlock:
 	mutex_unlock(&hvt->lock);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-struct hvutil_transport *hvutil_transport_init(const char *name,
+काष्ठा hvutil_transport *hvutil_transport_init(स्थिर अक्षर *name,
 					       u32 cn_idx, u32 cn_val,
-					       int (*on_msg)(void *, int),
-					       void (*on_reset)(void))
-{
-	struct hvutil_transport *hvt;
+					       पूर्णांक (*on_msg)(व्योम *, पूर्णांक),
+					       व्योम (*on_reset)(व्योम))
+अणु
+	काष्ठा hvutil_transport *hvt;
 
-	hvt = kzalloc(sizeof(*hvt), GFP_KERNEL);
-	if (!hvt)
-		return NULL;
+	hvt = kzalloc(माप(*hvt), GFP_KERNEL);
+	अगर (!hvt)
+		वापस शून्य;
 
 	hvt->cn_id.idx = cn_idx;
 	hvt->cn_id.val = cn_val;
@@ -285,15 +286,15 @@ struct hvutil_transport *hvutil_transport_init(const char *name,
 	hvt->mdev.name = name;
 
 	hvt->fops.owner = THIS_MODULE;
-	hvt->fops.read = hvt_op_read;
-	hvt->fops.write = hvt_op_write;
+	hvt->fops.पढ़ो = hvt_op_पढ़ो;
+	hvt->fops.ग_लिखो = hvt_op_ग_लिखो;
 	hvt->fops.poll = hvt_op_poll;
-	hvt->fops.open = hvt_op_open;
+	hvt->fops.खोलो = hvt_op_खोलो;
 	hvt->fops.release = hvt_op_release;
 
 	hvt->mdev.fops = &hvt->fops;
 
-	init_waitqueue_head(&hvt->outmsg_q);
+	init_रुकोqueue_head(&hvt->ouपंचांगsg_q);
 	mutex_init(&hvt->lock);
 	init_completion(&hvt->release);
 
@@ -304,47 +305,47 @@ struct hvutil_transport *hvutil_transport_init(const char *name,
 	hvt->on_msg = on_msg;
 	hvt->on_reset = on_reset;
 
-	if (misc_register(&hvt->mdev))
-		goto err_free_hvt;
+	अगर (misc_रेजिस्टर(&hvt->mdev))
+		जाओ err_मुक्त_hvt;
 
-	/* Use cn_id.idx/cn_id.val to determine if we need to setup netlink */
-	if (hvt->cn_id.idx > 0 && hvt->cn_id.val > 0 &&
+	/* Use cn_id.idx/cn_id.val to determine अगर we need to setup netlink */
+	अगर (hvt->cn_id.idx > 0 && hvt->cn_id.val > 0 &&
 	    cn_add_callback(&hvt->cn_id, name, hvt_cn_callback))
-		goto err_free_hvt;
+		जाओ err_मुक्त_hvt;
 
-	return hvt;
+	वापस hvt;
 
-err_free_hvt:
+err_मुक्त_hvt:
 	spin_lock(&hvt_list_lock);
 	list_del(&hvt->list);
 	spin_unlock(&hvt_list_lock);
-	kfree(hvt);
-	return NULL;
-}
+	kमुक्त(hvt);
+	वापस शून्य;
+पूर्ण
 
-void hvutil_transport_destroy(struct hvutil_transport *hvt)
-{
-	int mode_old;
+व्योम hvutil_transport_destroy(काष्ठा hvutil_transport *hvt)
+अणु
+	पूर्णांक mode_old;
 
 	mutex_lock(&hvt->lock);
 	mode_old = hvt->mode;
 	hvt->mode = HVUTIL_TRANSPORT_DESTROY;
-	wake_up_interruptible(&hvt->outmsg_q);
+	wake_up_पूर्णांकerruptible(&hvt->ouपंचांगsg_q);
 	mutex_unlock(&hvt->lock);
 
 	/*
-	 * In case we were in 'chardev' mode we still have an open fd so we
-	 * have to defer freeing the device. Netlink interface can be freed
+	 * In हाल we were in 'chardev' mode we still have an खोलो fd so we
+	 * have to defer मुक्तing the device. Netlink पूर्णांकerface can be मुक्तd
 	 * now.
 	 */
 	spin_lock(&hvt_list_lock);
 	list_del(&hvt->list);
 	spin_unlock(&hvt_list_lock);
-	if (hvt->cn_id.idx > 0 && hvt->cn_id.val > 0)
+	अगर (hvt->cn_id.idx > 0 && hvt->cn_id.val > 0)
 		cn_del_callback(&hvt->cn_id);
 
-	if (mode_old == HVUTIL_TRANSPORT_CHARDEV)
-		wait_for_completion(&hvt->release);
+	अगर (mode_old == HVUTIL_TRANSPORT_CHARDEV)
+		रुको_क्रम_completion(&hvt->release);
 
-	hvt_transport_free(hvt);
-}
+	hvt_transport_मुक्त(hvt);
+पूर्ण

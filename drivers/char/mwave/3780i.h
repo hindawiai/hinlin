@@ -1,13 +1,14 @@
+<शैली गुरु>
 /*
 *
-* 3780i.h -- declarations for 3780i.c
+* 3780i.h -- declarations क्रम 3780i.c
 *
 *
 * Written By: Mike Sullivan IBM Corporation
 *
 * Copyright (C) 1999 IBM Corporation
 *
-* This program is free software; you can redistribute it and/or modify
+* This program is मुक्त software; you can redistribute it and/or modअगरy
 * it under the terms of the GNU General Public License as published by
 * the Free Software Foundation; either version 2 of the License, or
 * (at your option) any later version.
@@ -15,22 +16,22 @@
 * This program is distributed in the hope that it will be useful,
 * but WITHOUT ANY WARRANTY; without even the implied warranty of
 * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-* GNU General Public License for more details.
+* GNU General Public License क्रम more details.
 *
 * NO WARRANTY
 * THE PROGRAM IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OR
 * CONDITIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED INCLUDING, WITHOUT
 * LIMITATION, ANY WARRANTIES OR CONDITIONS OF TITLE, NON-INFRINGEMENT,
 * MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE. Each Recipient is
-* solely responsible for determining the appropriateness of using and
+* solely responsible क्रम determining the appropriateness of using and
 * distributing the Program and assumes all risks associated with its
 * exercise of rights under this Agreement, including but not limited to
 * the risks and costs of program errors, damage to or loss of data,
-* programs or equipment, and unavailability or interruption of operations.
+* programs or equipment, and unavailability or पूर्णांकerruption of operations.
 *
 * DISCLAIMER OF LIABILITY
 * NEITHER RECIPIENT NOR ANY CONTRIBUTORS SHALL HAVE ANY LIABILITY FOR ANY
-* DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+* सूचीECT, INसूचीECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
 * DAMAGES (INCLUDING WITHOUT LIMITATION LOST PROFITS), HOWEVER CAUSED AND
 * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR
 * TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
@@ -38,321 +39,321 @@
 * HEREUNDER, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGES
 *
 * You should have received a copy of the GNU General Public License
-* along with this program; if not, write to the Free Software
+* aदीर्घ with this program; अगर not, ग_लिखो to the Free Software
 * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 *
 *
 * 10/23/2000 - Alpha Release
-*	First release to the public
+*	First release to the खुला
 */
 
-#ifndef _LINUX_3780I_H
-#define _LINUX_3780I_H
+#अगर_अघोषित _LINUX_3780I_H
+#घोषणा _LINUX_3780I_H
 
-#include <asm/io.h>
+#समावेश <यंत्र/पन.स>
 
 /* DSP I/O port offsets and definitions */
-#define DSP_IsaSlaveControl        0x0000	/* ISA slave control register */
-#define DSP_IsaSlaveStatus         0x0001	/* ISA slave status register */
-#define DSP_ConfigAddress          0x0002	/* General config address register */
-#define DSP_ConfigData             0x0003	/* General config data register */
-#define DSP_HBridgeControl         0x0002	/* HBridge control register */
-#define DSP_MsaAddrLow             0x0004	/* MSP System Address, low word */
-#define DSP_MsaAddrHigh            0x0006	/* MSP System Address, high word */
-#define DSP_MsaDataDSISHigh        0x0008	/* MSA data register: d-store word or high byte of i-store */
-#define DSP_MsaDataISLow           0x000A	/* MSA data register: low word of i-store */
-#define DSP_ReadAndClear           0x000C	/* MSA read and clear data register */
-#define DSP_Interrupt              0x000E	/* Interrupt register (IPC source) */
+#घोषणा DSP_IsaSlaveControl        0x0000	/* ISA slave control रेजिस्टर */
+#घोषणा DSP_IsaSlaveStatus         0x0001	/* ISA slave status रेजिस्टर */
+#घोषणा DSP_ConfigAddress          0x0002	/* General config address रेजिस्टर */
+#घोषणा DSP_ConfigData             0x0003	/* General config data रेजिस्टर */
+#घोषणा DSP_HBridgeControl         0x0002	/* HBridge control रेजिस्टर */
+#घोषणा DSP_MsaAddrLow             0x0004	/* MSP System Address, low word */
+#घोषणा DSP_MsaAddrHigh            0x0006	/* MSP System Address, high word */
+#घोषणा DSP_MsaDataDSISHigh        0x0008	/* MSA data रेजिस्टर: d-store word or high byte of i-store */
+#घोषणा DSP_MsaDataISLow           0x000A	/* MSA data रेजिस्टर: low word of i-store */
+#घोषणा DSP_ReadAndClear           0x000C	/* MSA पढ़ो and clear data रेजिस्टर */
+#घोषणा DSP_Interrupt              0x000E	/* Interrupt रेजिस्टर (IPC source) */
 
-typedef struct {
-	unsigned char ClockControl:1;	/* RW: Clock control: 0=normal, 1=stop 3780i clocks */
-	unsigned char SoftReset:1;	/* RW: Soft reset 0=normal, 1=soft reset active */
-	unsigned char ConfigMode:1;	/* RW: Configuration mode, 0=normal, 1=config mode */
-	unsigned char Reserved:5;	/* 0: Reserved */
-} DSP_ISA_SLAVE_CONTROL;
-
-
-typedef struct {
-	unsigned short EnableDspInt:1;	/* RW: Enable DSP to X86 ISA interrupt 0=mask it, 1=enable it */
-	unsigned short MemAutoInc:1;	/* RW: Memory address auto increment, 0=disable, 1=enable */
-	unsigned short IoAutoInc:1;	/* RW: I/O address auto increment, 0=disable, 1=enable */
-	unsigned short DiagnosticMode:1;	/* RW: Disgnostic mode 0=nromal, 1=diagnostic mode */
-	unsigned short IsaPacingTimer:12;	/* R: ISA access pacing timer: count of core cycles stolen */
-} DSP_HBRIDGE_CONTROL;
+प्रकार काष्ठा अणु
+	अचिन्हित अक्षर ClockControl:1;	/* RW: Clock control: 0=normal, 1=stop 3780i घड़ीs */
+	अचिन्हित अक्षर SoftReset:1;	/* RW: Soft reset 0=normal, 1=soft reset active */
+	अचिन्हित अक्षर ConfigMode:1;	/* RW: Configuration mode, 0=normal, 1=config mode */
+	अचिन्हित अक्षर Reserved:5;	/* 0: Reserved */
+पूर्ण DSP_ISA_SLAVE_CONTROL;
 
 
-/* DSP register indexes used with the configuration register address (index) register */
-#define DSP_UartCfg1Index          0x0003	/* UART config register 1 */
-#define DSP_UartCfg2Index          0x0004	/* UART config register 2 */
-#define DSP_HBridgeCfg1Index       0x0007	/* HBridge config register 1 */
-#define DSP_HBridgeCfg2Index       0x0008	/* HBridge config register 2 */
-#define DSP_BusMasterCfg1Index     0x0009	/* ISA bus master config register 1 */
-#define DSP_BusMasterCfg2Index     0x000A	/* ISA bus master config register 2 */
-#define DSP_IsaProtCfgIndex        0x000F	/* ISA protocol control register */
-#define DSP_PowerMgCfgIndex        0x0010	/* Low poser suspend/resume enable */
-#define DSP_HBusTimerCfgIndex      0x0011	/* HBUS timer load value */
-
-typedef struct {
-	unsigned char IrqActiveLow:1;	/* RW: IRQ active high or low: 0=high, 1=low */
-	unsigned char IrqPulse:1;	/* RW: IRQ pulse or level: 0=level, 1=pulse  */
-	unsigned char Irq:3;	/* RW: IRQ selection */
-	unsigned char BaseIO:2;	/* RW: Base I/O selection */
-	unsigned char Reserved:1;	/* 0: Reserved */
-} DSP_UART_CFG_1;
-
-typedef struct {
-	unsigned char Enable:1;	/* RW: Enable I/O and IRQ: 0=false, 1=true */
-	unsigned char Reserved:7;	/* 0: Reserved */
-} DSP_UART_CFG_2;
-
-typedef struct {
-	unsigned char IrqActiveLow:1;	/* RW: IRQ active high=0 or low=1 */
-	unsigned char IrqPulse:1;	/* RW: IRQ pulse=1 or level=0 */
-	unsigned char Irq:3;	/* RW: IRQ selection */
-	unsigned char AccessMode:1;	/* RW: 16-bit register access method 0=byte, 1=word */
-	unsigned char Reserved:2;	/* 0: Reserved */
-} DSP_HBRIDGE_CFG_1;
-
-typedef struct {
-	unsigned char Enable:1;	/* RW: enable I/O and IRQ: 0=false, 1=true */
-	unsigned char Reserved:7;	/* 0: Reserved */
-} DSP_HBRIDGE_CFG_2;
+प्रकार काष्ठा अणु
+	अचिन्हित लघु EnableDspInt:1;	/* RW: Enable DSP to X86 ISA पूर्णांकerrupt 0=mask it, 1=enable it */
+	अचिन्हित लघु MemAutoInc:1;	/* RW: Memory address स्वतः increment, 0=disable, 1=enable */
+	अचिन्हित लघु IoAutoInc:1;	/* RW: I/O address स्वतः increment, 0=disable, 1=enable */
+	अचिन्हित लघु DiagnosticMode:1;	/* RW: Disgnostic mode 0=nromal, 1=diagnostic mode */
+	अचिन्हित लघु IsaPacingTimer:12;	/* R: ISA access pacing समयr: count of core cycles stolen */
+पूर्ण DSP_HBRIDGE_CONTROL;
 
 
-typedef struct {
-	unsigned char Dma:3;	/* RW: DMA channel selection */
-	unsigned char NumTransfers:2;	/* RW: Maximum # of transfers once being granted the ISA bus */
-	unsigned char ReRequest:2;	/* RW: Minimum delay between releasing the ISA bus and requesting it again */
-	unsigned char MEMCS16:1;	/* RW: ISA signal MEMCS16: 0=disabled, 1=enabled */
-} DSP_BUSMASTER_CFG_1;
+/* DSP रेजिस्टर indexes used with the configuration रेजिस्टर address (index) रेजिस्टर */
+#घोषणा DSP_UartCfg1Index          0x0003	/* UART config रेजिस्टर 1 */
+#घोषणा DSP_UartCfg2Index          0x0004	/* UART config रेजिस्टर 2 */
+#घोषणा DSP_HBridgeCfg1Index       0x0007	/* HBridge config रेजिस्टर 1 */
+#घोषणा DSP_HBridgeCfg2Index       0x0008	/* HBridge config रेजिस्टर 2 */
+#घोषणा DSP_BusMasterCfg1Index     0x0009	/* ISA bus master config रेजिस्टर 1 */
+#घोषणा DSP_BusMasterCfg2Index     0x000A	/* ISA bus master config रेजिस्टर 2 */
+#घोषणा DSP_IsaProtCfgIndex        0x000F	/* ISA protocol control रेजिस्टर */
+#घोषणा DSP_PowerMgCfgIndex        0x0010	/* Low poser suspend/resume enable */
+#घोषणा DSP_HBusTimerCfgIndex      0x0011	/* HBUS समयr load value */
 
-typedef struct {
-	unsigned char IsaMemCmdWidth:2;	/* RW: ISA memory command width */
-	unsigned char Reserved:6;	/* 0: Reserved */
-} DSP_BUSMASTER_CFG_2;
+प्रकार काष्ठा अणु
+	अचिन्हित अक्षर IrqActiveLow:1;	/* RW: IRQ active high or low: 0=high, 1=low */
+	अचिन्हित अक्षर IrqPulse:1;	/* RW: IRQ pulse or level: 0=level, 1=pulse  */
+	अचिन्हित अक्षर Irq:3;	/* RW: IRQ selection */
+	अचिन्हित अक्षर BaseIO:2;	/* RW: Base I/O selection */
+	अचिन्हित अक्षर Reserved:1;	/* 0: Reserved */
+पूर्ण DSP_UART_CFG_1;
+
+प्रकार काष्ठा अणु
+	अचिन्हित अक्षर Enable:1;	/* RW: Enable I/O and IRQ: 0=false, 1=true */
+	अचिन्हित अक्षर Reserved:7;	/* 0: Reserved */
+पूर्ण DSP_UART_CFG_2;
+
+प्रकार काष्ठा अणु
+	अचिन्हित अक्षर IrqActiveLow:1;	/* RW: IRQ active high=0 or low=1 */
+	अचिन्हित अक्षर IrqPulse:1;	/* RW: IRQ pulse=1 or level=0 */
+	अचिन्हित अक्षर Irq:3;	/* RW: IRQ selection */
+	अचिन्हित अक्षर AccessMode:1;	/* RW: 16-bit रेजिस्टर access method 0=byte, 1=word */
+	अचिन्हित अक्षर Reserved:2;	/* 0: Reserved */
+पूर्ण DSP_HBRIDGE_CFG_1;
+
+प्रकार काष्ठा अणु
+	अचिन्हित अक्षर Enable:1;	/* RW: enable I/O and IRQ: 0=false, 1=true */
+	अचिन्हित अक्षर Reserved:7;	/* 0: Reserved */
+पूर्ण DSP_HBRIDGE_CFG_2;
 
 
-typedef struct {
-	unsigned char GateIOCHRDY:1;	/* RW: Enable IOCHRDY gating: 0=false, 1=true */
-	unsigned char Reserved:7;	/* 0: Reserved */
-} DSP_ISA_PROT_CFG;
+प्रकार काष्ठा अणु
+	अचिन्हित अक्षर Dma:3;	/* RW: DMA channel selection */
+	अचिन्हित अक्षर NumTransfers:2;	/* RW: Maximum # of transfers once being granted the ISA bus */
+	अचिन्हित अक्षर ReRequest:2;	/* RW: Minimum delay between releasing the ISA bus and requesting it again */
+	अचिन्हित अक्षर MEMCS16:1;	/* RW: ISA संकेत MEMCS16: 0=disabled, 1=enabled */
+पूर्ण DSP_BUSMASTER_CFG_1;
 
-typedef struct {
-	unsigned char Enable:1;	/* RW: Enable low power suspend/resume 0=false, 1=true */
-	unsigned char Reserved:7;	/* 0: Reserved */
-} DSP_POWER_MGMT_CFG;
-
-typedef struct {
-	unsigned char LoadValue:8;	/* RW: HBUS timer load value */
-} DSP_HBUS_TIMER_CFG;
+प्रकार काष्ठा अणु
+	अचिन्हित अक्षर IsaMemCmdWidth:2;	/* RW: ISA memory command width */
+	अचिन्हित अक्षर Reserved:6;	/* 0: Reserved */
+पूर्ण DSP_BUSMASTER_CFG_2;
 
 
+प्रकार काष्ठा अणु
+	अचिन्हित अक्षर GateIOCHRDY:1;	/* RW: Enable IOCHRDY gating: 0=false, 1=true */
+	अचिन्हित अक्षर Reserved:7;	/* 0: Reserved */
+पूर्ण DSP_ISA_PROT_CFG;
 
-/* DSP registers that exist in MSA I/O space */
-#define DSP_ChipID                 0x80000000
-#define DSP_MspBootDomain          0x80000580
-#define DSP_LBusTimeoutDisable     0x80000580
-#define DSP_ClockControl_1         0x8000058A
-#define DSP_ClockControl_2         0x8000058C
-#define DSP_ChipReset              0x80000588
-#define DSP_GpioModeControl_15_8   0x80000082
-#define DSP_GpioDriverEnable_15_8  0x80000076
-#define DSP_GpioOutputData_15_8    0x80000072
+प्रकार काष्ठा अणु
+	अचिन्हित अक्षर Enable:1;	/* RW: Enable low घातer suspend/resume 0=false, 1=true */
+	अचिन्हित अक्षर Reserved:7;	/* 0: Reserved */
+पूर्ण DSP_POWER_MGMT_CFG;
 
-typedef struct {
-	unsigned short NMI:1;	/* RW: non maskable interrupt */
-	unsigned short Halt:1;	/* RW: Halt MSP clock */
-	unsigned short ResetCore:1;	/* RW: Reset MSP core interface */
-	unsigned short Reserved:13;	/* 0: Reserved */
-} DSP_BOOT_DOMAIN;
+प्रकार काष्ठा अणु
+	अचिन्हित अक्षर LoadValue:8;	/* RW: HBUS समयr load value */
+पूर्ण DSP_HBUS_TIMER_CFG;
 
-typedef struct {
-	unsigned short DisableTimeout:1;	/* RW: Disable LBus timeout */
-	unsigned short Reserved:15;	/* 0: Reserved */
-} DSP_LBUS_TIMEOUT_DISABLE;
 
-typedef struct {
-	unsigned short Memory:1;	/* RW: Reset memory interface */
-	unsigned short SerialPort1:1;	/* RW: Reset serial port 1 interface */
-	unsigned short SerialPort2:1;	/* RW: Reset serial port 2 interface */
-	unsigned short SerialPort3:1;	/* RW: Reset serial port 3 interface */
-	unsigned short Gpio:1;	/* RW: Reset GPIO interface */
-	unsigned short Dma:1;	/* RW: Reset DMA interface */
-	unsigned short SoundBlaster:1;	/* RW: Reset soundblaster interface */
-	unsigned short Uart:1;	/* RW: Reset UART interface */
-	unsigned short Midi:1;	/* RW: Reset MIDI interface */
-	unsigned short IsaMaster:1;	/* RW: Reset ISA master interface */
-	unsigned short Reserved:6;	/* 0: Reserved */
-} DSP_CHIP_RESET;
 
-typedef struct {
-	unsigned short N_Divisor:6;	/* RW: (N) PLL output clock divisor */
-	unsigned short Reserved1:2;	/* 0: reserved */
-	unsigned short M_Multiplier:6;	/* RW: (M) PLL feedback clock multiplier */
-	unsigned short Reserved2:2;	/* 0: reserved */
-} DSP_CLOCK_CONTROL_1;
+/* DSP रेजिस्टरs that exist in MSA I/O space */
+#घोषणा DSP_ChipID                 0x80000000
+#घोषणा DSP_MspBootDoमुख्य          0x80000580
+#घोषणा DSP_LBusTimeoutDisable     0x80000580
+#घोषणा DSP_ClockControl_1         0x8000058A
+#घोषणा DSP_ClockControl_2         0x8000058C
+#घोषणा DSP_ChipReset              0x80000588
+#घोषणा DSP_GpioModeControl_15_8   0x80000082
+#घोषणा DSP_GpioDriverEnable_15_8  0x80000076
+#घोषणा DSP_GpioOutputData_15_8    0x80000072
 
-typedef struct {
-	unsigned short PllBypass:1;	/* RW: PLL Bypass */
-	unsigned short Reserved:15;	/* 0: Reserved */
-} DSP_CLOCK_CONTROL_2;
+प्रकार काष्ठा अणु
+	अचिन्हित लघु NMI:1;	/* RW: non maskable पूर्णांकerrupt */
+	अचिन्हित लघु Halt:1;	/* RW: Halt MSP घड़ी */
+	अचिन्हित लघु ResetCore:1;	/* RW: Reset MSP core पूर्णांकerface */
+	अचिन्हित लघु Reserved:13;	/* 0: Reserved */
+पूर्ण DSP_BOOT_DOMAIN;
 
-typedef struct {
-	unsigned short Latch8:1;
-	unsigned short Latch9:1;
-	unsigned short Latch10:1;
-	unsigned short Latch11:1;
-	unsigned short Latch12:1;
-	unsigned short Latch13:1;
-	unsigned short Latch14:1;
-	unsigned short Latch15:1;
-	unsigned short Mask8:1;
-	unsigned short Mask9:1;
-	unsigned short Mask10:1;
-	unsigned short Mask11:1;
-	unsigned short Mask12:1;
-	unsigned short Mask13:1;
-	unsigned short Mask14:1;
-	unsigned short Mask15:1;
-} DSP_GPIO_OUTPUT_DATA_15_8;
+प्रकार काष्ठा अणु
+	अचिन्हित लघु DisableTimeout:1;	/* RW: Disable LBus समयout */
+	अचिन्हित लघु Reserved:15;	/* 0: Reserved */
+पूर्ण DSP_LBUS_TIMEOUT_DISABLE;
 
-typedef struct {
-	unsigned short Enable8:1;
-	unsigned short Enable9:1;
-	unsigned short Enable10:1;
-	unsigned short Enable11:1;
-	unsigned short Enable12:1;
-	unsigned short Enable13:1;
-	unsigned short Enable14:1;
-	unsigned short Enable15:1;
-	unsigned short Mask8:1;
-	unsigned short Mask9:1;
-	unsigned short Mask10:1;
-	unsigned short Mask11:1;
-	unsigned short Mask12:1;
-	unsigned short Mask13:1;
-	unsigned short Mask14:1;
-	unsigned short Mask15:1;
-} DSP_GPIO_DRIVER_ENABLE_15_8;
+प्रकार काष्ठा अणु
+	अचिन्हित लघु Memory:1;	/* RW: Reset memory पूर्णांकerface */
+	अचिन्हित लघु SerialPort1:1;	/* RW: Reset serial port 1 पूर्णांकerface */
+	अचिन्हित लघु SerialPort2:1;	/* RW: Reset serial port 2 पूर्णांकerface */
+	अचिन्हित लघु SerialPort3:1;	/* RW: Reset serial port 3 पूर्णांकerface */
+	अचिन्हित लघु Gpio:1;	/* RW: Reset GPIO पूर्णांकerface */
+	अचिन्हित लघु Dma:1;	/* RW: Reset DMA पूर्णांकerface */
+	अचिन्हित लघु SoundBlaster:1;	/* RW: Reset soundblaster पूर्णांकerface */
+	अचिन्हित लघु Uart:1;	/* RW: Reset UART पूर्णांकerface */
+	अचिन्हित लघु Midi:1;	/* RW: Reset MIDI पूर्णांकerface */
+	अचिन्हित लघु IsaMaster:1;	/* RW: Reset ISA master पूर्णांकerface */
+	अचिन्हित लघु Reserved:6;	/* 0: Reserved */
+पूर्ण DSP_CHIP_RESET;
 
-typedef struct {
-	unsigned short GpioMode8:2;
-	unsigned short GpioMode9:2;
-	unsigned short GpioMode10:2;
-	unsigned short GpioMode11:2;
-	unsigned short GpioMode12:2;
-	unsigned short GpioMode13:2;
-	unsigned short GpioMode14:2;
-	unsigned short GpioMode15:2;
-} DSP_GPIO_MODE_15_8;
+प्रकार काष्ठा अणु
+	अचिन्हित लघु N_Divisor:6;	/* RW: (N) PLL output घड़ी भागisor */
+	अचिन्हित लघु Reserved1:2;	/* 0: reserved */
+	अचिन्हित लघु M_Multiplier:6;	/* RW: (M) PLL feedback घड़ी multiplier */
+	अचिन्हित लघु Reserved2:2;	/* 0: reserved */
+पूर्ण DSP_CLOCK_CONTROL_1;
+
+प्रकार काष्ठा अणु
+	अचिन्हित लघु PllBypass:1;	/* RW: PLL Bypass */
+	अचिन्हित लघु Reserved:15;	/* 0: Reserved */
+पूर्ण DSP_CLOCK_CONTROL_2;
+
+प्रकार काष्ठा अणु
+	अचिन्हित लघु Latch8:1;
+	अचिन्हित लघु Latch9:1;
+	अचिन्हित लघु Latch10:1;
+	अचिन्हित लघु Latch11:1;
+	अचिन्हित लघु Latch12:1;
+	अचिन्हित लघु Latch13:1;
+	अचिन्हित लघु Latch14:1;
+	अचिन्हित लघु Latch15:1;
+	अचिन्हित लघु Mask8:1;
+	अचिन्हित लघु Mask9:1;
+	अचिन्हित लघु Mask10:1;
+	अचिन्हित लघु Mask11:1;
+	अचिन्हित लघु Mask12:1;
+	अचिन्हित लघु Mask13:1;
+	अचिन्हित लघु Mask14:1;
+	अचिन्हित लघु Mask15:1;
+पूर्ण DSP_GPIO_OUTPUT_DATA_15_8;
+
+प्रकार काष्ठा अणु
+	अचिन्हित लघु Enable8:1;
+	अचिन्हित लघु Enable9:1;
+	अचिन्हित लघु Enable10:1;
+	अचिन्हित लघु Enable11:1;
+	अचिन्हित लघु Enable12:1;
+	अचिन्हित लघु Enable13:1;
+	अचिन्हित लघु Enable14:1;
+	अचिन्हित लघु Enable15:1;
+	अचिन्हित लघु Mask8:1;
+	अचिन्हित लघु Mask9:1;
+	अचिन्हित लघु Mask10:1;
+	अचिन्हित लघु Mask11:1;
+	अचिन्हित लघु Mask12:1;
+	अचिन्हित लघु Mask13:1;
+	अचिन्हित लघु Mask14:1;
+	अचिन्हित लघु Mask15:1;
+पूर्ण DSP_GPIO_DRIVER_ENABLE_15_8;
+
+प्रकार काष्ठा अणु
+	अचिन्हित लघु GpioMode8:2;
+	अचिन्हित लघु GpioMode9:2;
+	अचिन्हित लघु GpioMode10:2;
+	अचिन्हित लघु GpioMode11:2;
+	अचिन्हित लघु GpioMode12:2;
+	अचिन्हित लघु GpioMode13:2;
+	अचिन्हित लघु GpioMode14:2;
+	अचिन्हित लघु GpioMode15:2;
+पूर्ण DSP_GPIO_MODE_15_8;
 
 /* Component masks that are defined in dspmgr.h */
-#define MW_ADC_MASK    0x0001
-#define MW_AIC2_MASK   0x0006
-#define MW_MIDI_MASK   0x0008
-#define MW_CDDAC_MASK  0x8001
-#define MW_AIC1_MASK   0xE006
-#define MW_UART_MASK   0xE00A
-#define MW_ACI_MASK    0xE00B
+#घोषणा MW_ADC_MASK    0x0001
+#घोषणा MW_AIC2_MASK   0x0006
+#घोषणा MW_MIDI_MASK   0x0008
+#घोषणा MW_CDDAC_MASK  0x8001
+#घोषणा MW_AIC1_MASK   0xE006
+#घोषणा MW_UART_MASK   0xE00A
+#घोषणा MW_ACI_MASK    0xE00B
 
 /*
-* Definition of 3780i configuration structure.  Unless otherwise stated,
+* Definition of 3780i configuration काष्ठाure.  Unless otherwise stated,
 * these values are provided as input to the 3780i support layer.  At present,
-* the only values maintained by the 3780i support layer are the saved UART
-* registers.
+* the only values मुख्यtained by the 3780i support layer are the saved UART
+* रेजिस्टरs.
 */
-typedef struct _DSP_3780I_CONFIG_SETTINGS {
+प्रकार काष्ठा _DSP_3780I_CONFIG_SETTINGS अणु
 
-	/* Location of base configuration register */
-	unsigned short usBaseConfigIO;
+	/* Location of base configuration रेजिस्टर */
+	अचिन्हित लघु usBaseConfigIO;
 
-	/* Enables for various DSP components */
-	int bDSPEnabled;
-	int bModemEnabled;
-	int bInterruptClaimed;
+	/* Enables क्रम various DSP components */
+	पूर्णांक bDSPEnabled;
+	पूर्णांक bModemEnabled;
+	पूर्णांक bInterruptClaimed;
 
-	/* IRQ, DMA, and Base I/O addresses for various DSP components */
-	unsigned short usDspIrq;
-	unsigned short usDspDma;
-	unsigned short usDspBaseIO;
-	unsigned short usUartIrq;
-	unsigned short usUartBaseIO;
+	/* IRQ, DMA, and Base I/O addresses क्रम various DSP components */
+	अचिन्हित लघु usDspIrq;
+	अचिन्हित लघु usDspDma;
+	अचिन्हित लघु usDspBaseIO;
+	अचिन्हित लघु usUartIrq;
+	अचिन्हित लघु usUartBaseIO;
 
-	/* IRQ modes for various DSP components */
-	int bDspIrqActiveLow;
-	int bUartIrqActiveLow;
-	int bDspIrqPulse;
-	int bUartIrqPulse;
+	/* IRQ modes क्रम various DSP components */
+	पूर्णांक bDspIrqActiveLow;
+	पूर्णांक bUartIrqActiveLow;
+	पूर्णांक bDspIrqPulse;
+	पूर्णांक bUartIrqPulse;
 
 	/* Card abilities */
-	unsigned uIps;
-	unsigned uDStoreSize;
-	unsigned uIStoreSize;
-	unsigned uDmaBandwidth;
+	अचिन्हित uIps;
+	अचिन्हित uDStoreSize;
+	अचिन्हित uIStoreSize;
+	अचिन्हित uDmaBandwidth;
 
-	/* Adapter specific 3780i settings */
-	unsigned short usNumTransfers;
-	unsigned short usReRequest;
-	int bEnableMEMCS16;
-	unsigned short usIsaMemCmdWidth;
-	int bGateIOCHRDY;
-	int bEnablePwrMgmt;
-	unsigned short usHBusTimerLoadValue;
-	int bDisableLBusTimeout;
-	unsigned short usN_Divisor;
-	unsigned short usM_Multiplier;
-	int bPllBypass;
-	unsigned short usChipletEnable;	/* Used with the chip reset register to enable specific chiplets */
+	/* Adapter specअगरic 3780i settings */
+	अचिन्हित लघु usNumTransfers;
+	अचिन्हित लघु usReRequest;
+	पूर्णांक bEnableMEMCS16;
+	अचिन्हित लघु usIsaMemCmdWidth;
+	पूर्णांक bGateIOCHRDY;
+	पूर्णांक bEnablePwrMgmt;
+	अचिन्हित लघु usHBusTimerLoadValue;
+	पूर्णांक bDisableLBusTimeout;
+	अचिन्हित लघु usN_Divisor;
+	अचिन्हित लघु usM_Multiplier;
+	पूर्णांक bPllBypass;
+	अचिन्हित लघु usChipletEnable;	/* Used with the chip reset रेजिस्टर to enable specअगरic chiplets */
 
-	/* Saved UART registers. These are maintained by the 3780i support layer. */
-	int bUartSaved;		/* True after a successful save of the UART registers */
-	unsigned char ucIER;	/* Interrupt enable register */
-	unsigned char ucFCR;	/* FIFO control register */
-	unsigned char ucLCR;	/* Line control register */
-	unsigned char ucMCR;	/* Modem control register */
-	unsigned char ucSCR;	/* Scratch register */
-	unsigned char ucDLL;	/* Divisor latch, low byte */
-	unsigned char ucDLM;	/* Divisor latch, high byte */
-} DSP_3780I_CONFIG_SETTINGS;
+	/* Saved UART रेजिस्टरs. These are मुख्यtained by the 3780i support layer. */
+	पूर्णांक bUartSaved;		/* True after a successful save of the UART रेजिस्टरs */
+	अचिन्हित अक्षर ucIER;	/* Interrupt enable रेजिस्टर */
+	अचिन्हित अक्षर ucFCR;	/* FIFO control रेजिस्टर */
+	अचिन्हित अक्षर ucLCR;	/* Line control रेजिस्टर */
+	अचिन्हित अक्षर ucMCR;	/* Modem control रेजिस्टर */
+	अचिन्हित अक्षर ucSCR;	/* Scratch रेजिस्टर */
+	अचिन्हित अक्षर ucDLL;	/* Divisor latch, low byte */
+	अचिन्हित अक्षर ucDLM;	/* Divisor latch, high byte */
+पूर्ण DSP_3780I_CONFIG_SETTINGS;
 
 
 /* 3780i support functions */
-int dsp3780I_EnableDSP(DSP_3780I_CONFIG_SETTINGS * pSettings,
-                       unsigned short *pIrqMap,
-                       unsigned short *pDmaMap);
-int dsp3780I_DisableDSP(DSP_3780I_CONFIG_SETTINGS * pSettings);
-int dsp3780I_Reset(DSP_3780I_CONFIG_SETTINGS * pSettings);
-int dsp3780I_Run(DSP_3780I_CONFIG_SETTINGS * pSettings);
-int dsp3780I_ReadDStore(unsigned short usDspBaseIO, void __user *pvBuffer,
-                        unsigned uCount, unsigned long ulDSPAddr);
-int dsp3780I_ReadAndClearDStore(unsigned short usDspBaseIO,
-                                void __user *pvBuffer, unsigned uCount,
-                                unsigned long ulDSPAddr);
-int dsp3780I_WriteDStore(unsigned short usDspBaseIO, void __user *pvBuffer,
-                         unsigned uCount, unsigned long ulDSPAddr);
-int dsp3780I_ReadIStore(unsigned short usDspBaseIO, void __user *pvBuffer,
-                        unsigned uCount, unsigned long ulDSPAddr);
-int dsp3780I_WriteIStore(unsigned short usDspBaseIO, void __user *pvBuffer,
-                         unsigned uCount, unsigned long ulDSPAddr);
-unsigned short dsp3780I_ReadMsaCfg(unsigned short usDspBaseIO,
-                                   unsigned long ulMsaAddr);
-void dsp3780I_WriteMsaCfg(unsigned short usDspBaseIO,
-                          unsigned long ulMsaAddr, unsigned short usValue);
-int dsp3780I_GetIPCSource(unsigned short usDspBaseIO,
-                          unsigned short *pusIPCSource);
+पूर्णांक dsp3780I_EnableDSP(DSP_3780I_CONFIG_SETTINGS * pSettings,
+                       अचिन्हित लघु *pIrqMap,
+                       अचिन्हित लघु *pDmaMap);
+पूर्णांक dsp3780I_DisableDSP(DSP_3780I_CONFIG_SETTINGS * pSettings);
+पूर्णांक dsp3780I_Reset(DSP_3780I_CONFIG_SETTINGS * pSettings);
+पूर्णांक dsp3780I_Run(DSP_3780I_CONFIG_SETTINGS * pSettings);
+पूर्णांक dsp3780I_ReadDStore(अचिन्हित लघु usDspBaseIO, व्योम __user *pvBuffer,
+                        अचिन्हित uCount, अचिन्हित दीर्घ ulDSPAddr);
+पूर्णांक dsp3780I_ReadAndClearDStore(अचिन्हित लघु usDspBaseIO,
+                                व्योम __user *pvBuffer, अचिन्हित uCount,
+                                अचिन्हित दीर्घ ulDSPAddr);
+पूर्णांक dsp3780I_WriteDStore(अचिन्हित लघु usDspBaseIO, व्योम __user *pvBuffer,
+                         अचिन्हित uCount, अचिन्हित दीर्घ ulDSPAddr);
+पूर्णांक dsp3780I_ReadIStore(अचिन्हित लघु usDspBaseIO, व्योम __user *pvBuffer,
+                        अचिन्हित uCount, अचिन्हित दीर्घ ulDSPAddr);
+पूर्णांक dsp3780I_WriteIStore(अचिन्हित लघु usDspBaseIO, व्योम __user *pvBuffer,
+                         अचिन्हित uCount, अचिन्हित दीर्घ ulDSPAddr);
+अचिन्हित लघु dsp3780I_ReadMsaCfg(अचिन्हित लघु usDspBaseIO,
+                                   अचिन्हित दीर्घ ulMsaAddr);
+व्योम dsp3780I_WriteMsaCfg(अचिन्हित लघु usDspBaseIO,
+                          अचिन्हित दीर्घ ulMsaAddr, अचिन्हित लघु usValue);
+पूर्णांक dsp3780I_GetIPCSource(अचिन्हित लघु usDspBaseIO,
+                          अचिन्हित लघु *pusIPCSource);
 
 /* I/O port access macros */
-#define MKWORD(var) (*((unsigned short *)(&var)))
-#define MKBYTE(var) (*((unsigned char *)(&var)))
+#घोषणा MKWORD(var) (*((अचिन्हित लघु *)(&var)))
+#घोषणा MKBYTE(var) (*((अचिन्हित अक्षर *)(&var)))
 
-#define WriteMsaCfg(addr,value) dsp3780I_WriteMsaCfg(usDspBaseIO,addr,value)
-#define ReadMsaCfg(addr) dsp3780I_ReadMsaCfg(usDspBaseIO,addr)
-#define WriteGenCfg(index,value) dsp3780I_WriteGenCfg(usDspBaseIO,index,value)
-#define ReadGenCfg(index) dsp3780I_ReadGenCfg(usDspBaseIO,index)
+#घोषणा WriteMsaCfg(addr,value) dsp3780I_WriteMsaCfg(usDspBaseIO,addr,value)
+#घोषणा ReadMsaCfg(addr) dsp3780I_ReadMsaCfg(usDspBaseIO,addr)
+#घोषणा WriteGenCfg(index,value) dsp3780I_WriteGenCfg(usDspBaseIO,index,value)
+#घोषणा ReadGenCfg(index) dsp3780I_ReadGenCfg(usDspBaseIO,index)
 
-#define InWordDsp(index)          inw(usDspBaseIO+index)
-#define InByteDsp(index)          inb(usDspBaseIO+index)
-#define OutWordDsp(index,value)   outw(value,usDspBaseIO+index)
-#define OutByteDsp(index,value)   outb(value,usDspBaseIO+index)
+#घोषणा InWordDsp(index)          inw(usDspBaseIO+index)
+#घोषणा InByteDsp(index)          inb(usDspBaseIO+index)
+#घोषणा OutWordDsp(index,value)   outw(value,usDspBaseIO+index)
+#घोषणा OutByteDsp(index,value)   outb(value,usDspBaseIO+index)
 
-#endif
+#पूर्ण_अगर

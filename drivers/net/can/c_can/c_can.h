@@ -1,5 +1,6 @@
+<शैली गुरु>
 /*
- * CAN bus driver for Bosch C_CAN controller
+ * CAN bus driver क्रम Bosch C_CAN controller
  *
  * Copyright (C) 2010 ST Microelectronics
  * Bhupesh Sharma <bhupesh.sharma@st.com>
@@ -7,7 +8,7 @@
  * Borrowed heavily from the C_CAN driver originally written by:
  * Copyright (C) 2007
  * - Sascha Hauer, Marc Kleine-Budde, Pengutronix <s.hauer@pengutronix.de>
- * - Simon Kallweit, intefo AG <simon.kallweit@intefo.ch>
+ * - Simon Kallweit, पूर्णांकefo AG <simon.kallweit@पूर्णांकefo.ch>
  *
  * Bosch C_CAN controller is compliant to CAN protocol version 2.0 part A and B.
  * Bosch C_CAN user manual can be obtained from:
@@ -19,10 +20,10 @@
  * warranty of any kind, whether express or implied.
  */
 
-#ifndef C_CAN_H
-#define C_CAN_H
+#अगर_अघोषित C_CAN_H
+#घोषणा C_CAN_H
 
-enum reg {
+क्रमागत reg अणु
 	C_CAN_CTRL_REG = 0,
 	C_CAN_CTRL_EX_REG,
 	C_CAN_STS_REG,
@@ -63,9 +64,9 @@ enum reg {
 	C_CAN_MSGVAL1_REG,
 	C_CAN_MSGVAL2_REG,
 	C_CAN_FUNCTION_REG,
-};
+पूर्ण;
 
-static const u16 __maybe_unused reg_map_c_can[] = {
+अटल स्थिर u16 __maybe_unused reg_map_c_can[] = अणु
 	[C_CAN_CTRL_REG]	= 0x00,
 	[C_CAN_STS_REG]		= 0x02,
 	[C_CAN_ERR_CNT_REG]	= 0x04,
@@ -103,9 +104,9 @@ static const u16 __maybe_unused reg_map_c_can[] = {
 	[C_CAN_INTPND2_REG]	= 0xA2,
 	[C_CAN_MSGVAL1_REG]	= 0xB0,
 	[C_CAN_MSGVAL2_REG]	= 0xB2,
-};
+पूर्ण;
 
-static const u16 __maybe_unused reg_map_d_can[] = {
+अटल स्थिर u16 __maybe_unused reg_map_d_can[] = अणु
 	[C_CAN_CTRL_REG]	= 0x00,
 	[C_CAN_CTRL_EX_REG]	= 0x02,
 	[C_CAN_STS_REG]		= 0x04,
@@ -146,77 +147,77 @@ static const u16 __maybe_unused reg_map_d_can[] = {
 	[C_CAN_IF2_DATA2_REG]	= 0x132,
 	[C_CAN_IF2_DATA3_REG]	= 0x134,
 	[C_CAN_IF2_DATA4_REG]	= 0x136,
-};
+पूर्ण;
 
-enum c_can_dev_id {
+क्रमागत c_can_dev_id अणु
 	BOSCH_C_CAN,
 	BOSCH_D_CAN,
-};
+पूर्ण;
 
-struct raminit_bits {
+काष्ठा raminit_bits अणु
 	u8 start;
-	u8 done;
-};
+	u8 करोne;
+पूर्ण;
 
-struct c_can_driver_data {
-	enum c_can_dev_id id;
-	unsigned int msg_obj_num;
+काष्ठा c_can_driver_data अणु
+	क्रमागत c_can_dev_id id;
+	अचिन्हित पूर्णांक msg_obj_num;
 
-	/* RAMINIT register description. Optional. */
-	const struct raminit_bits *raminit_bits; /* Array of START/DONE bit positions */
+	/* RAMINIT रेजिस्टर description. Optional. */
+	स्थिर काष्ठा raminit_bits *raminit_bits; /* Array of START/DONE bit positions */
 	u8 raminit_num;		/* Number of CAN instances on the SoC */
 	bool raminit_pulse;	/* If set, sets and clears START bit (pulse) */
-};
+पूर्ण;
 
-/* Out of band RAMINIT register access via syscon regmap */
-struct c_can_raminit {
-	struct regmap *syscon;	/* for raminit ctrl. reg. access */
-	unsigned int reg;	/* register index within syscon */
-	struct raminit_bits bits;
+/* Out of band RAMINIT रेजिस्टर access via syscon regmap */
+काष्ठा c_can_raminit अणु
+	काष्ठा regmap *syscon;	/* क्रम raminit ctrl. reg. access */
+	अचिन्हित पूर्णांक reg;	/* रेजिस्टर index within syscon */
+	काष्ठा raminit_bits bits;
 	bool needs_pulse;
-};
+पूर्ण;
 
-/* c_can private data structure */
-struct c_can_priv {
-	struct can_priv can;	/* must be the first member */
-	struct napi_struct napi;
-	struct net_device *dev;
-	struct device *device;
-	unsigned int msg_obj_num;
-	unsigned int msg_obj_rx_num;
-	unsigned int msg_obj_tx_num;
-	unsigned int msg_obj_rx_first;
-	unsigned int msg_obj_rx_last;
-	unsigned int msg_obj_tx_first;
-	unsigned int msg_obj_tx_last;
+/* c_can निजी data काष्ठाure */
+काष्ठा c_can_priv अणु
+	काष्ठा can_priv can;	/* must be the first member */
+	काष्ठा napi_काष्ठा napi;
+	काष्ठा net_device *dev;
+	काष्ठा device *device;
+	अचिन्हित पूर्णांक msg_obj_num;
+	अचिन्हित पूर्णांक msg_obj_rx_num;
+	अचिन्हित पूर्णांक msg_obj_tx_num;
+	अचिन्हित पूर्णांक msg_obj_rx_first;
+	अचिन्हित पूर्णांक msg_obj_rx_last;
+	अचिन्हित पूर्णांक msg_obj_tx_first;
+	अचिन्हित पूर्णांक msg_obj_tx_last;
 	u32 msg_obj_rx_mask;
 	atomic_t tx_active;
 	atomic_t sie_pending;
-	unsigned long tx_dir;
-	int last_status;
-	u16 (*read_reg)(const struct c_can_priv *priv, enum reg index);
-	void (*write_reg)(const struct c_can_priv *priv, enum reg index, u16 val);
-	u32 (*read_reg32)(const struct c_can_priv *priv, enum reg index);
-	void (*write_reg32)(const struct c_can_priv *priv, enum reg index, u32 val);
-	void __iomem *base;
-	const u16 *regs;
-	void *priv;		/* for board-specific data */
-	enum c_can_dev_id type;
-	struct c_can_raminit raminit_sys;	/* RAMINIT via syscon regmap */
-	void (*raminit)(const struct c_can_priv *priv, bool enable);
+	अचिन्हित दीर्घ tx_dir;
+	पूर्णांक last_status;
+	u16 (*पढ़ो_reg)(स्थिर काष्ठा c_can_priv *priv, क्रमागत reg index);
+	व्योम (*ग_लिखो_reg)(स्थिर काष्ठा c_can_priv *priv, क्रमागत reg index, u16 val);
+	u32 (*पढ़ो_reg32)(स्थिर काष्ठा c_can_priv *priv, क्रमागत reg index);
+	व्योम (*ग_लिखो_reg32)(स्थिर काष्ठा c_can_priv *priv, क्रमागत reg index, u32 val);
+	व्योम __iomem *base;
+	स्थिर u16 *regs;
+	व्योम *priv;		/* क्रम board-specअगरic data */
+	क्रमागत c_can_dev_id type;
+	काष्ठा c_can_raminit raminit_sys;	/* RAMINIT via syscon regmap */
+	व्योम (*raminit)(स्थिर काष्ठा c_can_priv *priv, bool enable);
 	u32 comm_rcv_high;
 	u32 rxmasked;
 	u32 dlc[];
-};
+पूर्ण;
 
-struct net_device *alloc_c_can_dev(int msg_obj_num);
-void free_c_can_dev(struct net_device *dev);
-int register_c_can_dev(struct net_device *dev);
-void unregister_c_can_dev(struct net_device *dev);
+काष्ठा net_device *alloc_c_can_dev(पूर्णांक msg_obj_num);
+व्योम मुक्त_c_can_dev(काष्ठा net_device *dev);
+पूर्णांक रेजिस्टर_c_can_dev(काष्ठा net_device *dev);
+व्योम unरेजिस्टर_c_can_dev(काष्ठा net_device *dev);
 
-#ifdef CONFIG_PM
-int c_can_power_up(struct net_device *dev);
-int c_can_power_down(struct net_device *dev);
-#endif
+#अगर_घोषित CONFIG_PM
+पूर्णांक c_can_घातer_up(काष्ठा net_device *dev);
+पूर्णांक c_can_घातer_करोwn(काष्ठा net_device *dev);
+#पूर्ण_अगर
 
-#endif /* C_CAN_H */
+#पूर्ण_अगर /* C_CAN_H */

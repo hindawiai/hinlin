@@ -1,69 +1,70 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /* Copyright (C) 2018-2020, Intel Corporation. */
 
-#ifndef _ICE_FDIR_H_
-#define _ICE_FDIR_H_
+#अगर_अघोषित _ICE_Fसूची_H_
+#घोषणा _ICE_Fसूची_H_
 
-#define ICE_FDIR_TUN_PKT_OFF		50
-#define ICE_FDIR_MAX_RAW_PKT_SIZE	(512 + ICE_FDIR_TUN_PKT_OFF)
+#घोषणा ICE_Fसूची_TUN_PKT_OFF		50
+#घोषणा ICE_Fसूची_MAX_RAW_PKT_SIZE	(512 + ICE_Fसूची_TUN_PKT_OFF)
 
-/* macros for offsets into packets for flow director programming */
-#define ICE_IPV4_SRC_ADDR_OFFSET	26
-#define ICE_IPV4_DST_ADDR_OFFSET	30
-#define ICE_IPV4_TCP_SRC_PORT_OFFSET	34
-#define ICE_IPV4_TCP_DST_PORT_OFFSET	36
-#define ICE_IPV4_UDP_SRC_PORT_OFFSET	34
-#define ICE_IPV4_UDP_DST_PORT_OFFSET	36
-#define ICE_IPV4_SCTP_SRC_PORT_OFFSET	34
-#define ICE_IPV4_SCTP_DST_PORT_OFFSET	36
-#define ICE_IPV4_PROTO_OFFSET		23
-#define ICE_IPV6_SRC_ADDR_OFFSET	22
-#define ICE_IPV6_DST_ADDR_OFFSET	38
-#define ICE_IPV6_TCP_SRC_PORT_OFFSET	54
-#define ICE_IPV6_TCP_DST_PORT_OFFSET	56
-#define ICE_IPV6_UDP_SRC_PORT_OFFSET	54
-#define ICE_IPV6_UDP_DST_PORT_OFFSET	56
-#define ICE_IPV6_SCTP_SRC_PORT_OFFSET	54
-#define ICE_IPV6_SCTP_DST_PORT_OFFSET	56
-#define ICE_MAC_ETHTYPE_OFFSET		12
-#define ICE_IPV4_TOS_OFFSET		15
-#define ICE_IPV4_TTL_OFFSET		22
-#define ICE_IPV6_TC_OFFSET		14
-#define ICE_IPV6_HLIM_OFFSET		21
-#define ICE_IPV6_PROTO_OFFSET		20
-#define ICE_IPV4_GTPU_TEID_OFFSET	46
-#define ICE_IPV4_GTPU_QFI_OFFSET	56
-#define ICE_IPV4_L2TPV3_SESS_ID_OFFSET	34
-#define ICE_IPV6_L2TPV3_SESS_ID_OFFSET	54
-#define ICE_IPV4_ESP_SPI_OFFSET		34
-#define ICE_IPV6_ESP_SPI_OFFSET		54
-#define ICE_IPV4_AH_SPI_OFFSET		38
-#define ICE_IPV6_AH_SPI_OFFSET		58
-#define ICE_IPV4_NAT_T_ESP_SPI_OFFSET	42
-#define ICE_IPV6_NAT_T_ESP_SPI_OFFSET	62
+/* macros क्रम offsets पूर्णांकo packets क्रम flow director programming */
+#घोषणा ICE_IPV4_SRC_ADDR_OFFSET	26
+#घोषणा ICE_IPV4_DST_ADDR_OFFSET	30
+#घोषणा ICE_IPV4_TCP_SRC_PORT_OFFSET	34
+#घोषणा ICE_IPV4_TCP_DST_PORT_OFFSET	36
+#घोषणा ICE_IPV4_UDP_SRC_PORT_OFFSET	34
+#घोषणा ICE_IPV4_UDP_DST_PORT_OFFSET	36
+#घोषणा ICE_IPV4_SCTP_SRC_PORT_OFFSET	34
+#घोषणा ICE_IPV4_SCTP_DST_PORT_OFFSET	36
+#घोषणा ICE_IPV4_PROTO_OFFSET		23
+#घोषणा ICE_IPV6_SRC_ADDR_OFFSET	22
+#घोषणा ICE_IPV6_DST_ADDR_OFFSET	38
+#घोषणा ICE_IPV6_TCP_SRC_PORT_OFFSET	54
+#घोषणा ICE_IPV6_TCP_DST_PORT_OFFSET	56
+#घोषणा ICE_IPV6_UDP_SRC_PORT_OFFSET	54
+#घोषणा ICE_IPV6_UDP_DST_PORT_OFFSET	56
+#घोषणा ICE_IPV6_SCTP_SRC_PORT_OFFSET	54
+#घोषणा ICE_IPV6_SCTP_DST_PORT_OFFSET	56
+#घोषणा ICE_MAC_ETHTYPE_OFFSET		12
+#घोषणा ICE_IPV4_TOS_OFFSET		15
+#घोषणा ICE_IPV4_TTL_OFFSET		22
+#घोषणा ICE_IPV6_TC_OFFSET		14
+#घोषणा ICE_IPV6_HLIM_OFFSET		21
+#घोषणा ICE_IPV6_PROTO_OFFSET		20
+#घोषणा ICE_IPV4_GTPU_TEID_OFFSET	46
+#घोषणा ICE_IPV4_GTPU_QFI_OFFSET	56
+#घोषणा ICE_IPV4_L2TPV3_SESS_ID_OFFSET	34
+#घोषणा ICE_IPV6_L2TPV3_SESS_ID_OFFSET	54
+#घोषणा ICE_IPV4_ESP_SPI_OFFSET		34
+#घोषणा ICE_IPV6_ESP_SPI_OFFSET		54
+#घोषणा ICE_IPV4_AH_SPI_OFFSET		38
+#घोषणा ICE_IPV6_AH_SPI_OFFSET		58
+#घोषणा ICE_IPV4_NAT_T_ESP_SPI_OFFSET	42
+#घोषणा ICE_IPV6_NAT_T_ESP_SPI_OFFSET	62
 
-#define ICE_FDIR_MAX_FLTRS		16384
+#घोषणा ICE_Fसूची_MAX_FLTRS		16384
 
 /* IP v4 has 2 flag bits that enable fragment processing: DF and MF. DF
  * requests that the packet not be fragmented. MF indicates that a packet has
  * been fragmented.
  */
-#define ICE_FDIR_IPV4_PKT_FLAG_DF		0x20
+#घोषणा ICE_Fसूची_IPV4_PKT_FLAG_DF		0x20
 
-enum ice_fltr_prgm_desc_dest {
+क्रमागत ice_fltr_prgm_desc_dest अणु
 	ICE_FLTR_PRGM_DESC_DEST_DROP_PKT,
-	ICE_FLTR_PRGM_DESC_DEST_DIRECT_PKT_QINDEX,
-	ICE_FLTR_PRGM_DESC_DEST_DIRECT_PKT_QGROUP,
-	ICE_FLTR_PRGM_DESC_DEST_DIRECT_PKT_OTHER,
-};
+	ICE_FLTR_PRGM_DESC_DEST_सूचीECT_PKT_QINDEX,
+	ICE_FLTR_PRGM_DESC_DEST_सूचीECT_PKT_QGROUP,
+	ICE_FLTR_PRGM_DESC_DEST_सूचीECT_PKT_OTHER,
+पूर्ण;
 
-enum ice_fltr_prgm_desc_fd_status {
+क्रमागत ice_fltr_prgm_desc_fd_status अणु
 	ICE_FLTR_PRGM_DESC_FD_STATUS_NONE,
 	ICE_FLTR_PRGM_DESC_FD_STATUS_FD_ID,
-};
+पूर्ण;
 
 /* Flow Director (FD) Filter Programming descriptor */
-struct ice_fd_fltr_desc_ctx {
+काष्ठा ice_fd_fltr_desc_ctx अणु
 	u32 fdid;
 	u16 qindex;
 	u16 cnt_index;
@@ -87,17 +88,17 @@ struct ice_fd_fltr_desc_ctx {
 	u8 swap;
 	u8 fdid_prio;
 	u8 fdid_mdid;
-};
+पूर्ण;
 
-#define ICE_FLTR_PRGM_FLEX_WORD_SIZE	sizeof(__be16)
+#घोषणा ICE_FLTR_PRGM_FLEX_WORD_SIZE	माप(__be16)
 
-struct ice_rx_flow_userdef {
+काष्ठा ice_rx_flow_userdef अणु
 	u16 flex_word;
 	u16 flex_offset;
 	u16 flex_fltr;
-};
+पूर्ण;
 
-struct ice_fdir_v4 {
+काष्ठा ice_fdir_v4 अणु
 	__be32 dst_ip;
 	__be32 src_ip;
 	__be16 dst_port;
@@ -108,11 +109,11 @@ struct ice_fdir_v4 {
 	u8 ip_ver;
 	u8 proto;
 	u8 ttl;
-};
+पूर्ण;
 
-#define ICE_IPV6_ADDR_LEN_AS_U32		4
+#घोषणा ICE_IPV6_ADDR_LEN_AS_U32		4
 
-struct ice_fdir_v6 {
+काष्ठा ice_fdir_v6 अणु
 	__be32 dst_ip[ICE_IPV6_ADDR_LEN_AS_U32];
 	__be32 src_ip[ICE_IPV6_ADDR_LEN_AS_U32];
 	__be16 dst_port;
@@ -122,9 +123,9 @@ struct ice_fdir_v6 {
 	u8 tc;
 	u8 proto;
 	u8 hlim;
-};
+पूर्ण;
 
-struct ice_fdir_udp_gtp {
+काष्ठा ice_fdir_udp_gtp अणु
 	u8 flags;
 	u8 msg_type;
 	__be16 rsrvd_len;
@@ -140,38 +141,38 @@ struct ice_fdir_udp_gtp {
 		qfi:6;
 	u32 rsvrd;
 	u8 next_ext;
-};
+पूर्ण;
 
-struct ice_fdir_l2tpv3 {
+काष्ठा ice_fdir_l2tpv3 अणु
 	__be32 session_id;
-};
+पूर्ण;
 
-struct ice_fdir_extra {
+काष्ठा ice_fdir_extra अणु
 	u8 dst_mac[ETH_ALEN];	/* dest MAC address */
 	u8 src_mac[ETH_ALEN];	/* src MAC address */
-	__be16 ether_type;	/* for NON_IP_L2 */
+	__be16 ether_type;	/* क्रम NON_IP_L2 */
 	u32 usr_def[2];		/* user data */
 	__be16 vlan_type;	/* VLAN ethertype */
 	__be16 vlan_tag;	/* VLAN tag info */
-};
+पूर्ण;
 
-struct ice_fdir_fltr {
-	struct list_head fltr_node;
-	enum ice_fltr_ptype flow_type;
+काष्ठा ice_fdir_fltr अणु
+	काष्ठा list_head fltr_node;
+	क्रमागत ice_fltr_ptype flow_type;
 
-	union {
-		struct ice_fdir_v4 v4;
-		struct ice_fdir_v6 v6;
-	} ip, mask;
+	जोड़ अणु
+		काष्ठा ice_fdir_v4 v4;
+		काष्ठा ice_fdir_v6 v6;
+	पूर्ण ip, mask;
 
-	struct ice_fdir_udp_gtp gtpu_data;
-	struct ice_fdir_udp_gtp gtpu_mask;
+	काष्ठा ice_fdir_udp_gtp gtpu_data;
+	काष्ठा ice_fdir_udp_gtp gtpu_mask;
 
-	struct ice_fdir_l2tpv3 l2tpv3_data;
-	struct ice_fdir_l2tpv3 l2tpv3_mask;
+	काष्ठा ice_fdir_l2tpv3 l2tpv3_data;
+	काष्ठा ice_fdir_l2tpv3 l2tpv3_mask;
 
-	struct ice_fdir_extra ext_data;
-	struct ice_fdir_extra ext_mask;
+	काष्ठा ice_fdir_extra ext_data;
+	काष्ठा ice_fdir_extra ext_mask;
 
 	/* flex byte filter data */
 	__be16 flex_word;
@@ -190,35 +191,35 @@ struct ice_fdir_fltr {
 	u32 fltr_id;
 	u8 fdid_prio;
 	u8 comp_report;
-};
+पूर्ण;
 
-/* Dummy packet filter definition structure */
-struct ice_fdir_base_pkt {
-	enum ice_fltr_ptype flow;
+/* Dummy packet filter definition काष्ठाure */
+काष्ठा ice_fdir_base_pkt अणु
+	क्रमागत ice_fltr_ptype flow;
 	u16 pkt_len;
-	const u8 *pkt;
+	स्थिर u8 *pkt;
 	u16 tun_pkt_len;
-	const u8 *tun_pkt;
-};
+	स्थिर u8 *tun_pkt;
+पूर्ण;
 
-enum ice_status ice_alloc_fd_res_cntr(struct ice_hw *hw, u16 *cntr_id);
-enum ice_status ice_free_fd_res_cntr(struct ice_hw *hw, u16 cntr_id);
-enum ice_status
-ice_alloc_fd_guar_item(struct ice_hw *hw, u16 *cntr_id, u16 num_fltr);
-enum ice_status
-ice_alloc_fd_shrd_item(struct ice_hw *hw, u16 *cntr_id, u16 num_fltr);
-void
-ice_fdir_get_prgm_desc(struct ice_hw *hw, struct ice_fdir_fltr *input,
-		       struct ice_fltr_desc *fdesc, bool add);
-enum ice_status
-ice_fdir_get_gen_prgm_pkt(struct ice_hw *hw, struct ice_fdir_fltr *input,
+क्रमागत ice_status ice_alloc_fd_res_cntr(काष्ठा ice_hw *hw, u16 *cntr_id);
+क्रमागत ice_status ice_मुक्त_fd_res_cntr(काष्ठा ice_hw *hw, u16 cntr_id);
+क्रमागत ice_status
+ice_alloc_fd_guar_item(काष्ठा ice_hw *hw, u16 *cntr_id, u16 num_fltr);
+क्रमागत ice_status
+ice_alloc_fd_shrd_item(काष्ठा ice_hw *hw, u16 *cntr_id, u16 num_fltr);
+व्योम
+ice_fdir_get_prgm_desc(काष्ठा ice_hw *hw, काष्ठा ice_fdir_fltr *input,
+		       काष्ठा ice_fltr_desc *fdesc, bool add);
+क्रमागत ice_status
+ice_fdir_get_gen_prgm_pkt(काष्ठा ice_hw *hw, काष्ठा ice_fdir_fltr *input,
 			  u8 *pkt, bool frag, bool tun);
-int ice_get_fdir_cnt_all(struct ice_hw *hw);
-bool ice_fdir_is_dup_fltr(struct ice_hw *hw, struct ice_fdir_fltr *input);
-bool ice_fdir_has_frag(enum ice_fltr_ptype flow);
-struct ice_fdir_fltr *
-ice_fdir_find_fltr_by_idx(struct ice_hw *hw, u32 fltr_idx);
-void
-ice_fdir_update_cntrs(struct ice_hw *hw, enum ice_fltr_ptype flow, bool add);
-void ice_fdir_list_add_fltr(struct ice_hw *hw, struct ice_fdir_fltr *input);
-#endif /* _ICE_FDIR_H_ */
+पूर्णांक ice_get_fdir_cnt_all(काष्ठा ice_hw *hw);
+bool ice_fdir_is_dup_fltr(काष्ठा ice_hw *hw, काष्ठा ice_fdir_fltr *input);
+bool ice_fdir_has_frag(क्रमागत ice_fltr_ptype flow);
+काष्ठा ice_fdir_fltr *
+ice_fdir_find_fltr_by_idx(काष्ठा ice_hw *hw, u32 fltr_idx);
+व्योम
+ice_fdir_update_cntrs(काष्ठा ice_hw *hw, क्रमागत ice_fltr_ptype flow, bool add);
+व्योम ice_fdir_list_add_fltr(काष्ठा ice_hw *hw, काष्ठा ice_fdir_fltr *input);
+#पूर्ण_अगर /* _ICE_Fसूची_H_ */

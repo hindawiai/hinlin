@@ -1,140 +1,141 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright(c) 2017 Intel Corporation. All rights reserved.
  */
-#include <linux/pagemap.h>
-#include <linux/module.h>
-#include <linux/mount.h>
-#include <linux/pseudo_fs.h>
-#include <linux/magic.h>
-#include <linux/genhd.h>
-#include <linux/pfn_t.h>
-#include <linux/cdev.h>
-#include <linux/hash.h>
-#include <linux/slab.h>
-#include <linux/uio.h>
-#include <linux/dax.h>
-#include <linux/fs.h>
-#include "dax-private.h"
+#समावेश <linux/pagemap.h>
+#समावेश <linux/module.h>
+#समावेश <linux/mount.h>
+#समावेश <linux/pseuकरो_fs.h>
+#समावेश <linux/magic.h>
+#समावेश <linux/genhd.h>
+#समावेश <linux/pfn_t.h>
+#समावेश <linux/cdev.h>
+#समावेश <linux/hash.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/uपन.स>
+#समावेश <linux/dax.h>
+#समावेश <linux/fs.h>
+#समावेश "dax-private.h"
 
-static dev_t dax_devt;
+अटल dev_t dax_devt;
 DEFINE_STATIC_SRCU(dax_srcu);
-static struct vfsmount *dax_mnt;
-static DEFINE_IDA(dax_minor_ida);
-static struct kmem_cache *dax_cache __read_mostly;
-static struct super_block *dax_superblock __read_mostly;
+अटल काष्ठा vfsmount *dax_mnt;
+अटल DEFINE_IDA(dax_minor_ida);
+अटल काष्ठा kmem_cache *dax_cache __पढ़ो_mostly;
+अटल काष्ठा super_block *dax_superblock __पढ़ो_mostly;
 
-#define DAX_HASH_SIZE (PAGE_SIZE / sizeof(struct hlist_head))
-static struct hlist_head dax_host_list[DAX_HASH_SIZE];
-static DEFINE_SPINLOCK(dax_host_lock);
+#घोषणा DAX_HASH_SIZE (PAGE_SIZE / माप(काष्ठा hlist_head))
+अटल काष्ठा hlist_head dax_host_list[DAX_HASH_SIZE];
+अटल DEFINE_SPINLOCK(dax_host_lock);
 
-int dax_read_lock(void)
-{
-	return srcu_read_lock(&dax_srcu);
-}
-EXPORT_SYMBOL_GPL(dax_read_lock);
+पूर्णांक dax_पढ़ो_lock(व्योम)
+अणु
+	वापस srcu_पढ़ो_lock(&dax_srcu);
+पूर्ण
+EXPORT_SYMBOL_GPL(dax_पढ़ो_lock);
 
-void dax_read_unlock(int id)
-{
-	srcu_read_unlock(&dax_srcu, id);
-}
-EXPORT_SYMBOL_GPL(dax_read_unlock);
+व्योम dax_पढ़ो_unlock(पूर्णांक id)
+अणु
+	srcu_पढ़ो_unlock(&dax_srcu, id);
+पूर्ण
+EXPORT_SYMBOL_GPL(dax_पढ़ो_unlock);
 
-#ifdef CONFIG_BLOCK
-#include <linux/blkdev.h>
+#अगर_घोषित CONFIG_BLOCK
+#समावेश <linux/blkdev.h>
 
-int bdev_dax_pgoff(struct block_device *bdev, sector_t sector, size_t size,
+पूर्णांक bdev_dax_pgoff(काष्ठा block_device *bdev, sector_t sector, माप_प्रकार size,
 		pgoff_t *pgoff)
-{
+अणु
 	sector_t start_sect = bdev ? get_start_sect(bdev) : 0;
 	phys_addr_t phys_off = (start_sect + sector) * 512;
 
-	if (pgoff)
+	अगर (pgoff)
 		*pgoff = PHYS_PFN(phys_off);
-	if (phys_off % PAGE_SIZE || size % PAGE_SIZE)
-		return -EINVAL;
-	return 0;
-}
+	अगर (phys_off % PAGE_SIZE || size % PAGE_SIZE)
+		वापस -EINVAL;
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(bdev_dax_pgoff);
 
-#if IS_ENABLED(CONFIG_FS_DAX)
-struct dax_device *fs_dax_get_by_bdev(struct block_device *bdev)
-{
-	if (!blk_queue_dax(bdev->bd_disk->queue))
-		return NULL;
-	return dax_get_by_host(bdev->bd_disk->disk_name);
-}
+#अगर IS_ENABLED(CONFIG_FS_DAX)
+काष्ठा dax_device *fs_dax_get_by_bdev(काष्ठा block_device *bdev)
+अणु
+	अगर (!blk_queue_dax(bdev->bd_disk->queue))
+		वापस शून्य;
+	वापस dax_get_by_host(bdev->bd_disk->disk_name);
+पूर्ण
 EXPORT_SYMBOL_GPL(fs_dax_get_by_bdev);
-#endif
+#पूर्ण_अगर
 
-bool __generic_fsdax_supported(struct dax_device *dax_dev,
-		struct block_device *bdev, int blocksize, sector_t start,
+bool __generic_fsdax_supported(काष्ठा dax_device *dax_dev,
+		काष्ठा block_device *bdev, पूर्णांक blocksize, sector_t start,
 		sector_t sectors)
-{
+अणु
 	bool dax_enabled = false;
 	pgoff_t pgoff, pgoff_end;
-	char buf[BDEVNAME_SIZE];
-	void *kaddr, *end_kaddr;
+	अक्षर buf[BDEVNAME_SIZE];
+	व्योम *kaddr, *end_kaddr;
 	pfn_t pfn, end_pfn;
 	sector_t last_page;
-	long len, len2;
-	int err, id;
+	दीर्घ len, len2;
+	पूर्णांक err, id;
 
-	if (blocksize != PAGE_SIZE) {
+	अगर (blocksize != PAGE_SIZE) अणु
 		pr_info("%s: error: unsupported blocksize for dax\n",
 				bdevname(bdev, buf));
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
-	if (!dax_dev) {
+	अगर (!dax_dev) अणु
 		pr_debug("%s: error: dax unsupported by block device\n",
 				bdevname(bdev, buf));
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
 	err = bdev_dax_pgoff(bdev, start, PAGE_SIZE, &pgoff);
-	if (err) {
+	अगर (err) अणु
 		pr_info("%s: error: unaligned partition for dax\n",
 				bdevname(bdev, buf));
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
 	last_page = PFN_DOWN((start + sectors - 1) * 512) * PAGE_SIZE / 512;
 	err = bdev_dax_pgoff(bdev, last_page, PAGE_SIZE, &pgoff_end);
-	if (err) {
+	अगर (err) अणु
 		pr_info("%s: error: unaligned partition for dax\n",
 				bdevname(bdev, buf));
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
-	id = dax_read_lock();
+	id = dax_पढ़ो_lock();
 	len = dax_direct_access(dax_dev, pgoff, 1, &kaddr, &pfn);
 	len2 = dax_direct_access(dax_dev, pgoff_end, 1, &end_kaddr, &end_pfn);
 
-	if (len < 1 || len2 < 1) {
+	अगर (len < 1 || len2 < 1) अणु
 		pr_info("%s: error: dax access failed (%ld)\n",
 				bdevname(bdev, buf), len < 1 ? len : len2);
-		dax_read_unlock(id);
-		return false;
-	}
+		dax_पढ़ो_unlock(id);
+		वापस false;
+	पूर्ण
 
-	if (IS_ENABLED(CONFIG_FS_DAX_LIMITED) && pfn_t_special(pfn)) {
+	अगर (IS_ENABLED(CONFIG_FS_DAX_LIMITED) && pfn_t_special(pfn)) अणु
 		/*
 		 * An arch that has enabled the pmem api should also
 		 * have its drivers support pfn_t_devmap()
 		 *
 		 * This is a developer warning and should not trigger in
 		 * production. dax_flush() will crash since it depends
-		 * on being able to do (page_address(pfn_to_page())).
+		 * on being able to करो (page_address(pfn_to_page())).
 		 */
 		WARN_ON(IS_ENABLED(CONFIG_ARCH_HAS_PMEM_API));
 		dax_enabled = true;
-	} else if (pfn_t_devmap(pfn) && pfn_t_devmap(end_pfn)) {
-		struct dev_pagemap *pgmap, *end_pgmap;
+	पूर्ण अन्यथा अगर (pfn_t_devmap(pfn) && pfn_t_devmap(end_pfn)) अणु
+		काष्ठा dev_pagemap *pgmap, *end_pgmap;
 
-		pgmap = get_dev_pagemap(pfn_t_to_pfn(pfn), NULL);
-		end_pgmap = get_dev_pagemap(pfn_t_to_pfn(end_pfn), NULL);
-		if (pgmap && pgmap == end_pgmap && pgmap->type == MEMORY_DEVICE_FS_DAX
+		pgmap = get_dev_pagemap(pfn_t_to_pfn(pfn), शून्य);
+		end_pgmap = get_dev_pagemap(pfn_t_to_pfn(end_pfn), शून्य);
+		अगर (pgmap && pgmap == end_pgmap && pgmap->type == MEMORY_DEVICE_FS_DAX
 				&& pfn_t_to_page(pfn)->pgmap == pgmap
 				&& pfn_t_to_page(end_pfn)->pgmap == pgmap
 				&& pfn_t_to_pfn(pfn) == PHYS_PFN(__pa(kaddr))
@@ -143,301 +144,301 @@ bool __generic_fsdax_supported(struct dax_device *dax_dev,
 		put_dev_pagemap(pgmap);
 		put_dev_pagemap(end_pgmap);
 
-	}
-	dax_read_unlock(id);
+	पूर्ण
+	dax_पढ़ो_unlock(id);
 
-	if (!dax_enabled) {
+	अगर (!dax_enabled) अणु
 		pr_info("%s: error: dax support not enabled\n",
 				bdevname(bdev, buf));
-		return false;
-	}
-	return true;
-}
+		वापस false;
+	पूर्ण
+	वापस true;
+पूर्ण
 EXPORT_SYMBOL_GPL(__generic_fsdax_supported);
 
 /**
- * __bdev_dax_supported() - Check if the device supports dax for filesystem
+ * __bdev_dax_supported() - Check अगर the device supports dax क्रम fileप्रणाली
  * @bdev: block device to check
  * @blocksize: The block size of the device
  *
- * This is a library function for filesystems to check if the block device
+ * This is a library function क्रम fileप्रणालीs to check अगर the block device
  * can be mounted with dax option.
  *
- * Return: true if supported, false if unsupported
+ * Return: true अगर supported, false अगर unsupported
  */
-bool __bdev_dax_supported(struct block_device *bdev, int blocksize)
-{
-	struct dax_device *dax_dev;
-	struct request_queue *q;
-	char buf[BDEVNAME_SIZE];
+bool __bdev_dax_supported(काष्ठा block_device *bdev, पूर्णांक blocksize)
+अणु
+	काष्ठा dax_device *dax_dev;
+	काष्ठा request_queue *q;
+	अक्षर buf[BDEVNAME_SIZE];
 	bool ret;
-	int id;
+	पूर्णांक id;
 
 	q = bdev_get_queue(bdev);
-	if (!q || !blk_queue_dax(q)) {
+	अगर (!q || !blk_queue_dax(q)) अणु
 		pr_debug("%s: error: request queue doesn't support dax\n",
 				bdevname(bdev, buf));
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
 	dax_dev = dax_get_by_host(bdev->bd_disk->disk_name);
-	if (!dax_dev) {
+	अगर (!dax_dev) अणु
 		pr_debug("%s: error: device does not support dax\n",
 				bdevname(bdev, buf));
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
-	id = dax_read_lock();
+	id = dax_पढ़ो_lock();
 	ret = dax_supported(dax_dev, bdev, blocksize, 0,
-			i_size_read(bdev->bd_inode) / 512);
-	dax_read_unlock(id);
+			i_size_पढ़ो(bdev->bd_inode) / 512);
+	dax_पढ़ो_unlock(id);
 
 	put_dax(dax_dev);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(__bdev_dax_supported);
-#endif
+#पूर्ण_अगर
 
-enum dax_device_flags {
+क्रमागत dax_device_flags अणु
 	/* !alive + rcu grace period == no new operations / mappings */
 	DAXDEV_ALIVE,
 	/* gate whether dax_flush() calls the low level flush routine */
 	DAXDEV_WRITE_CACHE,
-	/* flag to check if device supports synchronous flush */
+	/* flag to check अगर device supports synchronous flush */
 	DAXDEV_SYNC,
-};
+पूर्ण;
 
 /**
- * struct dax_device - anchor object for dax services
+ * काष्ठा dax_device - anchor object क्रम dax services
  * @inode: core vfs
- * @cdev: optional character interface for "device dax"
- * @host: optional name for lookups where the device path is not available
- * @private: dax driver private data
+ * @cdev: optional अक्षरacter पूर्णांकerface क्रम "device dax"
+ * @host: optional name क्रम lookups where the device path is not available
+ * @निजी: dax driver निजी data
  * @flags: state and boolean properties
  */
-struct dax_device {
-	struct hlist_node list;
-	struct inode inode;
-	struct cdev cdev;
-	const char *host;
-	void *private;
-	unsigned long flags;
-	const struct dax_operations *ops;
-};
+काष्ठा dax_device अणु
+	काष्ठा hlist_node list;
+	काष्ठा inode inode;
+	काष्ठा cdev cdev;
+	स्थिर अक्षर *host;
+	व्योम *निजी;
+	अचिन्हित दीर्घ flags;
+	स्थिर काष्ठा dax_operations *ops;
+पूर्ण;
 
-static ssize_t write_cache_show(struct device *dev,
-		struct device_attribute *attr, char *buf)
-{
-	struct dax_device *dax_dev = dax_get_by_host(dev_name(dev));
-	ssize_t rc;
+अटल sमाप_प्रकार ग_लिखो_cache_show(काष्ठा device *dev,
+		काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा dax_device *dax_dev = dax_get_by_host(dev_name(dev));
+	sमाप_प्रकार rc;
 
 	WARN_ON_ONCE(!dax_dev);
-	if (!dax_dev)
-		return -ENXIO;
+	अगर (!dax_dev)
+		वापस -ENXIO;
 
-	rc = sprintf(buf, "%d\n", !!dax_write_cache_enabled(dax_dev));
+	rc = प्र_लिखो(buf, "%d\n", !!dax_ग_लिखो_cache_enabled(dax_dev));
 	put_dax(dax_dev);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static ssize_t write_cache_store(struct device *dev,
-		struct device_attribute *attr, const char *buf, size_t len)
-{
-	bool write_cache;
-	int rc = strtobool(buf, &write_cache);
-	struct dax_device *dax_dev = dax_get_by_host(dev_name(dev));
+अटल sमाप_प्रकार ग_लिखो_cache_store(काष्ठा device *dev,
+		काष्ठा device_attribute *attr, स्थिर अक्षर *buf, माप_प्रकार len)
+अणु
+	bool ग_लिखो_cache;
+	पूर्णांक rc = strtobool(buf, &ग_लिखो_cache);
+	काष्ठा dax_device *dax_dev = dax_get_by_host(dev_name(dev));
 
 	WARN_ON_ONCE(!dax_dev);
-	if (!dax_dev)
-		return -ENXIO;
+	अगर (!dax_dev)
+		वापस -ENXIO;
 
-	if (rc)
+	अगर (rc)
 		len = rc;
-	else
-		dax_write_cache(dax_dev, write_cache);
+	अन्यथा
+		dax_ग_लिखो_cache(dax_dev, ग_लिखो_cache);
 
 	put_dax(dax_dev);
-	return len;
-}
-static DEVICE_ATTR_RW(write_cache);
+	वापस len;
+पूर्ण
+अटल DEVICE_ATTR_RW(ग_लिखो_cache);
 
-static umode_t dax_visible(struct kobject *kobj, struct attribute *a, int n)
-{
-	struct device *dev = container_of(kobj, typeof(*dev), kobj);
-	struct dax_device *dax_dev = dax_get_by_host(dev_name(dev));
+अटल umode_t dax_visible(काष्ठा kobject *kobj, काष्ठा attribute *a, पूर्णांक n)
+अणु
+	काष्ठा device *dev = container_of(kobj, typeof(*dev), kobj);
+	काष्ठा dax_device *dax_dev = dax_get_by_host(dev_name(dev));
 
 	WARN_ON_ONCE(!dax_dev);
-	if (!dax_dev)
-		return 0;
+	अगर (!dax_dev)
+		वापस 0;
 
-#ifndef CONFIG_ARCH_HAS_PMEM_API
-	if (a == &dev_attr_write_cache.attr)
-		return 0;
-#endif
-	return a->mode;
-}
+#अगर_अघोषित CONFIG_ARCH_HAS_PMEM_API
+	अगर (a == &dev_attr_ग_लिखो_cache.attr)
+		वापस 0;
+#पूर्ण_अगर
+	वापस a->mode;
+पूर्ण
 
-static struct attribute *dax_attributes[] = {
-	&dev_attr_write_cache.attr,
-	NULL,
-};
+अटल काष्ठा attribute *dax_attributes[] = अणु
+	&dev_attr_ग_लिखो_cache.attr,
+	शून्य,
+पूर्ण;
 
-struct attribute_group dax_attribute_group = {
+काष्ठा attribute_group dax_attribute_group = अणु
 	.name = "dax",
 	.attrs = dax_attributes,
 	.is_visible = dax_visible,
-};
+पूर्ण;
 EXPORT_SYMBOL_GPL(dax_attribute_group);
 
 /**
- * dax_direct_access() - translate a device pgoff to an absolute pfn
+ * dax_direct_access() - translate a device pgoff to an असलolute pfn
  * @dax_dev: a dax_device instance representing the logical memory range
  * @pgoff: offset in pages from the start of the device to translate
  * @nr_pages: number of consecutive pages caller can handle relative to @pfn
- * @kaddr: output parameter that returns a virtual address mapping of pfn
- * @pfn: output parameter that returns an absolute pfn translation of @pgoff
+ * @kaddr: output parameter that वापसs a भव address mapping of pfn
+ * @pfn: output parameter that वापसs an असलolute pfn translation of @pgoff
  *
- * Return: negative errno if an error occurs, otherwise the number of
+ * Return: negative त्रुटि_सं अगर an error occurs, otherwise the number of
  * pages accessible at the device relative @pgoff.
  */
-long dax_direct_access(struct dax_device *dax_dev, pgoff_t pgoff, long nr_pages,
-		void **kaddr, pfn_t *pfn)
-{
-	long avail;
+दीर्घ dax_direct_access(काष्ठा dax_device *dax_dev, pgoff_t pgoff, दीर्घ nr_pages,
+		व्योम **kaddr, pfn_t *pfn)
+अणु
+	दीर्घ avail;
 
-	if (!dax_dev)
-		return -EOPNOTSUPP;
+	अगर (!dax_dev)
+		वापस -EOPNOTSUPP;
 
-	if (!dax_alive(dax_dev))
-		return -ENXIO;
+	अगर (!dax_alive(dax_dev))
+		वापस -ENXIO;
 
-	if (nr_pages < 0)
-		return nr_pages;
+	अगर (nr_pages < 0)
+		वापस nr_pages;
 
 	avail = dax_dev->ops->direct_access(dax_dev, pgoff, nr_pages,
 			kaddr, pfn);
-	if (!avail)
-		return -ERANGE;
-	return min(avail, nr_pages);
-}
+	अगर (!avail)
+		वापस -दुस्फल;
+	वापस min(avail, nr_pages);
+पूर्ण
 EXPORT_SYMBOL_GPL(dax_direct_access);
 
-bool dax_supported(struct dax_device *dax_dev, struct block_device *bdev,
-		int blocksize, sector_t start, sector_t len)
-{
-	if (!dax_dev)
-		return false;
+bool dax_supported(काष्ठा dax_device *dax_dev, काष्ठा block_device *bdev,
+		पूर्णांक blocksize, sector_t start, sector_t len)
+अणु
+	अगर (!dax_dev)
+		वापस false;
 
-	if (!dax_alive(dax_dev))
-		return false;
+	अगर (!dax_alive(dax_dev))
+		वापस false;
 
-	return dax_dev->ops->dax_supported(dax_dev, bdev, blocksize, start, len);
-}
+	वापस dax_dev->ops->dax_supported(dax_dev, bdev, blocksize, start, len);
+पूर्ण
 EXPORT_SYMBOL_GPL(dax_supported);
 
-size_t dax_copy_from_iter(struct dax_device *dax_dev, pgoff_t pgoff, void *addr,
-		size_t bytes, struct iov_iter *i)
-{
-	if (!dax_alive(dax_dev))
-		return 0;
+माप_प्रकार dax_copy_from_iter(काष्ठा dax_device *dax_dev, pgoff_t pgoff, व्योम *addr,
+		माप_प्रकार bytes, काष्ठा iov_iter *i)
+अणु
+	अगर (!dax_alive(dax_dev))
+		वापस 0;
 
-	return dax_dev->ops->copy_from_iter(dax_dev, pgoff, addr, bytes, i);
-}
+	वापस dax_dev->ops->copy_from_iter(dax_dev, pgoff, addr, bytes, i);
+पूर्ण
 EXPORT_SYMBOL_GPL(dax_copy_from_iter);
 
-size_t dax_copy_to_iter(struct dax_device *dax_dev, pgoff_t pgoff, void *addr,
-		size_t bytes, struct iov_iter *i)
-{
-	if (!dax_alive(dax_dev))
-		return 0;
+माप_प्रकार dax_copy_to_iter(काष्ठा dax_device *dax_dev, pgoff_t pgoff, व्योम *addr,
+		माप_प्रकार bytes, काष्ठा iov_iter *i)
+अणु
+	अगर (!dax_alive(dax_dev))
+		वापस 0;
 
-	return dax_dev->ops->copy_to_iter(dax_dev, pgoff, addr, bytes, i);
-}
+	वापस dax_dev->ops->copy_to_iter(dax_dev, pgoff, addr, bytes, i);
+पूर्ण
 EXPORT_SYMBOL_GPL(dax_copy_to_iter);
 
-int dax_zero_page_range(struct dax_device *dax_dev, pgoff_t pgoff,
-			size_t nr_pages)
-{
-	if (!dax_alive(dax_dev))
-		return -ENXIO;
+पूर्णांक dax_zero_page_range(काष्ठा dax_device *dax_dev, pgoff_t pgoff,
+			माप_प्रकार nr_pages)
+अणु
+	अगर (!dax_alive(dax_dev))
+		वापस -ENXIO;
 	/*
 	 * There are no callers that want to zero more than one page as of now.
-	 * Once users are there, this check can be removed after the
-	 * device mapper code has been updated to split ranges across targets.
+	 * Once users are there, this check can be हटाओd after the
+	 * device mapper code has been updated to split ranges across tarमाला_लो.
 	 */
-	if (nr_pages != 1)
-		return -EIO;
+	अगर (nr_pages != 1)
+		वापस -EIO;
 
-	return dax_dev->ops->zero_page_range(dax_dev, pgoff, nr_pages);
-}
+	वापस dax_dev->ops->zero_page_range(dax_dev, pgoff, nr_pages);
+पूर्ण
 EXPORT_SYMBOL_GPL(dax_zero_page_range);
 
-#ifdef CONFIG_ARCH_HAS_PMEM_API
-void arch_wb_cache_pmem(void *addr, size_t size);
-void dax_flush(struct dax_device *dax_dev, void *addr, size_t size)
-{
-	if (unlikely(!dax_write_cache_enabled(dax_dev)))
-		return;
+#अगर_घोषित CONFIG_ARCH_HAS_PMEM_API
+व्योम arch_wb_cache_pmem(व्योम *addr, माप_प्रकार size);
+व्योम dax_flush(काष्ठा dax_device *dax_dev, व्योम *addr, माप_प्रकार size)
+अणु
+	अगर (unlikely(!dax_ग_लिखो_cache_enabled(dax_dev)))
+		वापस;
 
 	arch_wb_cache_pmem(addr, size);
-}
-#else
-void dax_flush(struct dax_device *dax_dev, void *addr, size_t size)
-{
-}
-#endif
+पूर्ण
+#अन्यथा
+व्योम dax_flush(काष्ठा dax_device *dax_dev, व्योम *addr, माप_प्रकार size)
+अणु
+पूर्ण
+#पूर्ण_अगर
 EXPORT_SYMBOL_GPL(dax_flush);
 
-void dax_write_cache(struct dax_device *dax_dev, bool wc)
-{
-	if (wc)
+व्योम dax_ग_लिखो_cache(काष्ठा dax_device *dax_dev, bool wc)
+अणु
+	अगर (wc)
 		set_bit(DAXDEV_WRITE_CACHE, &dax_dev->flags);
-	else
+	अन्यथा
 		clear_bit(DAXDEV_WRITE_CACHE, &dax_dev->flags);
-}
-EXPORT_SYMBOL_GPL(dax_write_cache);
+पूर्ण
+EXPORT_SYMBOL_GPL(dax_ग_लिखो_cache);
 
-bool dax_write_cache_enabled(struct dax_device *dax_dev)
-{
-	return test_bit(DAXDEV_WRITE_CACHE, &dax_dev->flags);
-}
-EXPORT_SYMBOL_GPL(dax_write_cache_enabled);
+bool dax_ग_लिखो_cache_enabled(काष्ठा dax_device *dax_dev)
+अणु
+	वापस test_bit(DAXDEV_WRITE_CACHE, &dax_dev->flags);
+पूर्ण
+EXPORT_SYMBOL_GPL(dax_ग_लिखो_cache_enabled);
 
-bool __dax_synchronous(struct dax_device *dax_dev)
-{
-	return test_bit(DAXDEV_SYNC, &dax_dev->flags);
-}
+bool __dax_synchronous(काष्ठा dax_device *dax_dev)
+अणु
+	वापस test_bit(DAXDEV_SYNC, &dax_dev->flags);
+पूर्ण
 EXPORT_SYMBOL_GPL(__dax_synchronous);
 
-void __set_dax_synchronous(struct dax_device *dax_dev)
-{
+व्योम __set_dax_synchronous(काष्ठा dax_device *dax_dev)
+अणु
 	set_bit(DAXDEV_SYNC, &dax_dev->flags);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(__set_dax_synchronous);
 
-bool dax_alive(struct dax_device *dax_dev)
-{
-	lockdep_assert_held(&dax_srcu);
-	return test_bit(DAXDEV_ALIVE, &dax_dev->flags);
-}
+bool dax_alive(काष्ठा dax_device *dax_dev)
+अणु
+	lockdep_निश्चित_held(&dax_srcu);
+	वापस test_bit(DAXDEV_ALIVE, &dax_dev->flags);
+पूर्ण
 EXPORT_SYMBOL_GPL(dax_alive);
 
-static int dax_host_hash(const char *host)
-{
-	return hashlen_hash(hashlen_string("DAX", host)) % DAX_HASH_SIZE;
-}
+अटल पूर्णांक dax_host_hash(स्थिर अक्षर *host)
+अणु
+	वापस hashlen_hash(hashlen_string("DAX", host)) % DAX_HASH_SIZE;
+पूर्ण
 
 /*
  * Note, rcu is not protecting the liveness of dax_dev, rcu is ensuring
  * that any fault handlers or operations that might have seen
  * dax_alive(), have completed.  Any operations that start after
- * synchronize_srcu() has run will abort upon seeing !dax_alive().
+ * synchronize_srcu() has run will पात upon seeing !dax_alive().
  */
-void kill_dax(struct dax_device *dax_dev)
-{
-	if (!dax_dev)
-		return;
+व्योम समाप्त_dax(काष्ठा dax_device *dax_dev)
+अणु
+	अगर (!dax_dev)
+		वापस;
 
 	clear_bit(DAXDEV_ALIVE, &dax_dev->flags);
 
@@ -446,116 +447,116 @@ void kill_dax(struct dax_device *dax_dev)
 	spin_lock(&dax_host_lock);
 	hlist_del_init(&dax_dev->list);
 	spin_unlock(&dax_host_lock);
-}
-EXPORT_SYMBOL_GPL(kill_dax);
+पूर्ण
+EXPORT_SYMBOL_GPL(समाप्त_dax);
 
-void run_dax(struct dax_device *dax_dev)
-{
+व्योम run_dax(काष्ठा dax_device *dax_dev)
+अणु
 	set_bit(DAXDEV_ALIVE, &dax_dev->flags);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(run_dax);
 
-static struct inode *dax_alloc_inode(struct super_block *sb)
-{
-	struct dax_device *dax_dev;
-	struct inode *inode;
+अटल काष्ठा inode *dax_alloc_inode(काष्ठा super_block *sb)
+अणु
+	काष्ठा dax_device *dax_dev;
+	काष्ठा inode *inode;
 
 	dax_dev = kmem_cache_alloc(dax_cache, GFP_KERNEL);
-	if (!dax_dev)
-		return NULL;
+	अगर (!dax_dev)
+		वापस शून्य;
 
 	inode = &dax_dev->inode;
 	inode->i_rdev = 0;
-	return inode;
-}
+	वापस inode;
+पूर्ण
 
-static struct dax_device *to_dax_dev(struct inode *inode)
-{
-	return container_of(inode, struct dax_device, inode);
-}
+अटल काष्ठा dax_device *to_dax_dev(काष्ठा inode *inode)
+अणु
+	वापस container_of(inode, काष्ठा dax_device, inode);
+पूर्ण
 
-static void dax_free_inode(struct inode *inode)
-{
-	struct dax_device *dax_dev = to_dax_dev(inode);
-	kfree(dax_dev->host);
-	dax_dev->host = NULL;
-	if (inode->i_rdev)
-		ida_simple_remove(&dax_minor_ida, iminor(inode));
-	kmem_cache_free(dax_cache, dax_dev);
-}
+अटल व्योम dax_मुक्त_inode(काष्ठा inode *inode)
+अणु
+	काष्ठा dax_device *dax_dev = to_dax_dev(inode);
+	kमुक्त(dax_dev->host);
+	dax_dev->host = शून्य;
+	अगर (inode->i_rdev)
+		ida_simple_हटाओ(&dax_minor_ida, iminor(inode));
+	kmem_cache_मुक्त(dax_cache, dax_dev);
+पूर्ण
 
-static void dax_destroy_inode(struct inode *inode)
-{
-	struct dax_device *dax_dev = to_dax_dev(inode);
+अटल व्योम dax_destroy_inode(काष्ठा inode *inode)
+अणु
+	काष्ठा dax_device *dax_dev = to_dax_dev(inode);
 	WARN_ONCE(test_bit(DAXDEV_ALIVE, &dax_dev->flags),
 			"kill_dax() must be called before final iput()\n");
-}
+पूर्ण
 
-static const struct super_operations dax_sops = {
+अटल स्थिर काष्ठा super_operations dax_sops = अणु
 	.statfs = simple_statfs,
 	.alloc_inode = dax_alloc_inode,
 	.destroy_inode = dax_destroy_inode,
-	.free_inode = dax_free_inode,
+	.मुक्त_inode = dax_मुक्त_inode,
 	.drop_inode = generic_delete_inode,
-};
+पूर्ण;
 
-static int dax_init_fs_context(struct fs_context *fc)
-{
-	struct pseudo_fs_context *ctx = init_pseudo(fc, DAXFS_MAGIC);
-	if (!ctx)
-		return -ENOMEM;
+अटल पूर्णांक dax_init_fs_context(काष्ठा fs_context *fc)
+अणु
+	काष्ठा pseuकरो_fs_context *ctx = init_pseuकरो(fc, DAXFS_MAGIC);
+	अगर (!ctx)
+		वापस -ENOMEM;
 	ctx->ops = &dax_sops;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct file_system_type dax_fs_type = {
+अटल काष्ठा file_प्रणाली_type dax_fs_type = अणु
 	.name		= "dax",
 	.init_fs_context = dax_init_fs_context,
-	.kill_sb	= kill_anon_super,
-};
+	.समाप्त_sb	= समाप्त_anon_super,
+पूर्ण;
 
-static int dax_test(struct inode *inode, void *data)
-{
+अटल पूर्णांक dax_test(काष्ठा inode *inode, व्योम *data)
+अणु
 	dev_t devt = *(dev_t *) data;
 
-	return inode->i_rdev == devt;
-}
+	वापस inode->i_rdev == devt;
+पूर्ण
 
-static int dax_set(struct inode *inode, void *data)
-{
+अटल पूर्णांक dax_set(काष्ठा inode *inode, व्योम *data)
+अणु
 	dev_t devt = *(dev_t *) data;
 
 	inode->i_rdev = devt;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct dax_device *dax_dev_get(dev_t devt)
-{
-	struct dax_device *dax_dev;
-	struct inode *inode;
+अटल काष्ठा dax_device *dax_dev_get(dev_t devt)
+अणु
+	काष्ठा dax_device *dax_dev;
+	काष्ठा inode *inode;
 
 	inode = iget5_locked(dax_superblock, hash_32(devt + DAXFS_MAGIC, 31),
 			dax_test, dax_set, &devt);
 
-	if (!inode)
-		return NULL;
+	अगर (!inode)
+		वापस शून्य;
 
 	dax_dev = to_dax_dev(inode);
-	if (inode->i_state & I_NEW) {
+	अगर (inode->i_state & I_NEW) अणु
 		set_bit(DAXDEV_ALIVE, &dax_dev->flags);
 		inode->i_cdev = &dax_dev->cdev;
 		inode->i_mode = S_IFCHR;
 		inode->i_flags = S_DAX;
 		mapping_set_gfp_mask(&inode->i_data, GFP_USER);
 		unlock_new_inode(inode);
-	}
+	पूर्ण
 
-	return dax_dev;
-}
+	वापस dax_dev;
+पूर्ण
 
-static void dax_add_host(struct dax_device *dax_dev, const char *host)
-{
-	int hash;
+अटल व्योम dax_add_host(काष्ठा dax_device *dax_dev, स्थिर अक्षर *host)
+अणु
+	पूर्णांक hash;
 
 	/*
 	 * Unconditionally init dax_dev since it's coming from a
@@ -563,202 +564,202 @@ static void dax_add_host(struct dax_device *dax_dev, const char *host)
 	 */
 	INIT_HLIST_NODE(&dax_dev->list);
 	dax_dev->host = host;
-	if (!host)
-		return;
+	अगर (!host)
+		वापस;
 
 	hash = dax_host_hash(host);
 	spin_lock(&dax_host_lock);
 	hlist_add_head(&dax_dev->list, &dax_host_list[hash]);
 	spin_unlock(&dax_host_lock);
-}
+पूर्ण
 
-struct dax_device *alloc_dax(void *private, const char *__host,
-		const struct dax_operations *ops, unsigned long flags)
-{
-	struct dax_device *dax_dev;
-	const char *host;
+काष्ठा dax_device *alloc_dax(व्योम *निजी, स्थिर अक्षर *__host,
+		स्थिर काष्ठा dax_operations *ops, अचिन्हित दीर्घ flags)
+अणु
+	काष्ठा dax_device *dax_dev;
+	स्थिर अक्षर *host;
 	dev_t devt;
-	int minor;
+	पूर्णांक minor;
 
-	if (ops && !ops->zero_page_range) {
+	अगर (ops && !ops->zero_page_range) अणु
 		pr_debug("%s: error: device does not provide dax"
 			 " operation zero_page_range()\n",
 			 __host ? __host : "Unknown");
-		return ERR_PTR(-EINVAL);
-	}
+		वापस ERR_PTR(-EINVAL);
+	पूर्ण
 
 	host = kstrdup(__host, GFP_KERNEL);
-	if (__host && !host)
-		return ERR_PTR(-ENOMEM);
+	अगर (__host && !host)
+		वापस ERR_PTR(-ENOMEM);
 
 	minor = ida_simple_get(&dax_minor_ida, 0, MINORMASK+1, GFP_KERNEL);
-	if (minor < 0)
-		goto err_minor;
+	अगर (minor < 0)
+		जाओ err_minor;
 
 	devt = MKDEV(MAJOR(dax_devt), minor);
 	dax_dev = dax_dev_get(devt);
-	if (!dax_dev)
-		goto err_dev;
+	अगर (!dax_dev)
+		जाओ err_dev;
 
 	dax_add_host(dax_dev, host);
 	dax_dev->ops = ops;
-	dax_dev->private = private;
-	if (flags & DAXDEV_F_SYNC)
+	dax_dev->निजी = निजी;
+	अगर (flags & DAXDEV_F_SYNC)
 		set_dax_synchronous(dax_dev);
 
-	return dax_dev;
+	वापस dax_dev;
 
  err_dev:
-	ida_simple_remove(&dax_minor_ida, minor);
+	ida_simple_हटाओ(&dax_minor_ida, minor);
  err_minor:
-	kfree(host);
-	return ERR_PTR(-ENOMEM);
-}
+	kमुक्त(host);
+	वापस ERR_PTR(-ENOMEM);
+पूर्ण
 EXPORT_SYMBOL_GPL(alloc_dax);
 
-void put_dax(struct dax_device *dax_dev)
-{
-	if (!dax_dev)
-		return;
+व्योम put_dax(काष्ठा dax_device *dax_dev)
+अणु
+	अगर (!dax_dev)
+		वापस;
 	iput(&dax_dev->inode);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(put_dax);
 
 /**
- * dax_get_by_host() - temporary lookup mechanism for filesystem-dax
- * @host: alternate name for the device registered by a dax driver
+ * dax_get_by_host() - temporary lookup mechanism क्रम fileप्रणाली-dax
+ * @host: alternate name क्रम the device रेजिस्टरed by a dax driver
  */
-struct dax_device *dax_get_by_host(const char *host)
-{
-	struct dax_device *dax_dev, *found = NULL;
-	int hash, id;
+काष्ठा dax_device *dax_get_by_host(स्थिर अक्षर *host)
+अणु
+	काष्ठा dax_device *dax_dev, *found = शून्य;
+	पूर्णांक hash, id;
 
-	if (!host)
-		return NULL;
+	अगर (!host)
+		वापस शून्य;
 
 	hash = dax_host_hash(host);
 
-	id = dax_read_lock();
+	id = dax_पढ़ो_lock();
 	spin_lock(&dax_host_lock);
-	hlist_for_each_entry(dax_dev, &dax_host_list[hash], list) {
-		if (!dax_alive(dax_dev)
-				|| strcmp(host, dax_dev->host) != 0)
-			continue;
+	hlist_क्रम_each_entry(dax_dev, &dax_host_list[hash], list) अणु
+		अगर (!dax_alive(dax_dev)
+				|| म_भेद(host, dax_dev->host) != 0)
+			जारी;
 
-		if (igrab(&dax_dev->inode))
+		अगर (igrab(&dax_dev->inode))
 			found = dax_dev;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 	spin_unlock(&dax_host_lock);
-	dax_read_unlock(id);
+	dax_पढ़ो_unlock(id);
 
-	return found;
-}
+	वापस found;
+पूर्ण
 EXPORT_SYMBOL_GPL(dax_get_by_host);
 
 /**
- * inode_dax: convert a public inode into its dax_dev
- * @inode: An inode with i_cdev pointing to a dax_dev
+ * inode_dax: convert a खुला inode पूर्णांकo its dax_dev
+ * @inode: An inode with i_cdev poपूर्णांकing to a dax_dev
  *
- * Note this is not equivalent to to_dax_dev() which is for private
- * internal use where we know the inode filesystem type == dax_fs_type.
+ * Note this is not equivalent to to_dax_dev() which is क्रम निजी
+ * पूर्णांकernal use where we know the inode fileप्रणाली type == dax_fs_type.
  */
-struct dax_device *inode_dax(struct inode *inode)
-{
-	struct cdev *cdev = inode->i_cdev;
+काष्ठा dax_device *inode_dax(काष्ठा inode *inode)
+अणु
+	काष्ठा cdev *cdev = inode->i_cdev;
 
-	return container_of(cdev, struct dax_device, cdev);
-}
+	वापस container_of(cdev, काष्ठा dax_device, cdev);
+पूर्ण
 EXPORT_SYMBOL_GPL(inode_dax);
 
-struct inode *dax_inode(struct dax_device *dax_dev)
-{
-	return &dax_dev->inode;
-}
+काष्ठा inode *dax_inode(काष्ठा dax_device *dax_dev)
+अणु
+	वापस &dax_dev->inode;
+पूर्ण
 EXPORT_SYMBOL_GPL(dax_inode);
 
-void *dax_get_private(struct dax_device *dax_dev)
-{
-	if (!test_bit(DAXDEV_ALIVE, &dax_dev->flags))
-		return NULL;
-	return dax_dev->private;
-}
-EXPORT_SYMBOL_GPL(dax_get_private);
+व्योम *dax_get_निजी(काष्ठा dax_device *dax_dev)
+अणु
+	अगर (!test_bit(DAXDEV_ALIVE, &dax_dev->flags))
+		वापस शून्य;
+	वापस dax_dev->निजी;
+पूर्ण
+EXPORT_SYMBOL_GPL(dax_get_निजी);
 
-static void init_once(void *_dax_dev)
-{
-	struct dax_device *dax_dev = _dax_dev;
-	struct inode *inode = &dax_dev->inode;
+अटल व्योम init_once(व्योम *_dax_dev)
+अणु
+	काष्ठा dax_device *dax_dev = _dax_dev;
+	काष्ठा inode *inode = &dax_dev->inode;
 
-	memset(dax_dev, 0, sizeof(*dax_dev));
+	स_रखो(dax_dev, 0, माप(*dax_dev));
 	inode_init_once(inode);
-}
+पूर्ण
 
-static int dax_fs_init(void)
-{
-	int rc;
+अटल पूर्णांक dax_fs_init(व्योम)
+अणु
+	पूर्णांक rc;
 
-	dax_cache = kmem_cache_create("dax_cache", sizeof(struct dax_device), 0,
+	dax_cache = kmem_cache_create("dax_cache", माप(काष्ठा dax_device), 0,
 			(SLAB_HWCACHE_ALIGN|SLAB_RECLAIM_ACCOUNT|
 			 SLAB_MEM_SPREAD|SLAB_ACCOUNT),
 			init_once);
-	if (!dax_cache)
-		return -ENOMEM;
+	अगर (!dax_cache)
+		वापस -ENOMEM;
 
 	dax_mnt = kern_mount(&dax_fs_type);
-	if (IS_ERR(dax_mnt)) {
+	अगर (IS_ERR(dax_mnt)) अणु
 		rc = PTR_ERR(dax_mnt);
-		goto err_mount;
-	}
+		जाओ err_mount;
+	पूर्ण
 	dax_superblock = dax_mnt->mnt_sb;
 
-	return 0;
+	वापस 0;
 
  err_mount:
 	kmem_cache_destroy(dax_cache);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static void dax_fs_exit(void)
-{
+अटल व्योम dax_fs_निकास(व्योम)
+अणु
 	kern_unmount(dax_mnt);
 	kmem_cache_destroy(dax_cache);
-}
+पूर्ण
 
-static int __init dax_core_init(void)
-{
-	int rc;
+अटल पूर्णांक __init dax_core_init(व्योम)
+अणु
+	पूर्णांक rc;
 
 	rc = dax_fs_init();
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
 	rc = alloc_chrdev_region(&dax_devt, 0, MINORMASK+1, "dax");
-	if (rc)
-		goto err_chrdev;
+	अगर (rc)
+		जाओ err_chrdev;
 
 	rc = dax_bus_init();
-	if (rc)
-		goto err_bus;
-	return 0;
+	अगर (rc)
+		जाओ err_bus;
+	वापस 0;
 
 err_bus:
-	unregister_chrdev_region(dax_devt, MINORMASK+1);
+	unरेजिस्टर_chrdev_region(dax_devt, MINORMASK+1);
 err_chrdev:
-	dax_fs_exit();
-	return 0;
-}
+	dax_fs_निकास();
+	वापस 0;
+पूर्ण
 
-static void __exit dax_core_exit(void)
-{
-	dax_bus_exit();
-	unregister_chrdev_region(dax_devt, MINORMASK+1);
+अटल व्योम __निकास dax_core_निकास(व्योम)
+अणु
+	dax_bus_निकास();
+	unरेजिस्टर_chrdev_region(dax_devt, MINORMASK+1);
 	ida_destroy(&dax_minor_ida);
-	dax_fs_exit();
-}
+	dax_fs_निकास();
+पूर्ण
 
 MODULE_AUTHOR("Intel Corporation");
 MODULE_LICENSE("GPL v2");
 subsys_initcall(dax_core_init);
-module_exit(dax_core_exit);
+module_निकास(dax_core_निकास);

@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2018 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -20,55 +21,55 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  *
  */
-#ifndef __AMDGPU_GEM_H__
-#define __AMDGPU_GEM_H__
+#अगर_अघोषित __AMDGPU_GEM_H__
+#घोषणा __AMDGPU_GEM_H__
 
-#include <drm/amdgpu_drm.h>
-#include <drm/drm_gem.h>
+#समावेश <drm/amdgpu_drm.h>
+#समावेश <drm/drm_gem.h>
 
 /*
  * GEM.
  */
 
-#define AMDGPU_GEM_DOMAIN_MAX		0x3
-#define gem_to_amdgpu_bo(gobj) container_of((gobj), struct amdgpu_bo, tbo.base)
+#घोषणा AMDGPU_GEM_DOMAIN_MAX		0x3
+#घोषणा gem_to_amdgpu_bo(gobj) container_of((gobj), काष्ठा amdgpu_bo, tbo.base)
 
-unsigned long amdgpu_gem_timeout(uint64_t timeout_ns);
+अचिन्हित दीर्घ amdgpu_gem_समयout(uपूर्णांक64_t समयout_ns);
 
 /*
  * GEM objects.
  */
-void amdgpu_gem_force_release(struct amdgpu_device *adev);
-int amdgpu_gem_object_create(struct amdgpu_device *adev, unsigned long size,
-			     int alignment, u32 initial_domain,
-			     u64 flags, enum ttm_bo_type type,
-			     struct dma_resv *resv,
-			     struct drm_gem_object **obj);
+व्योम amdgpu_gem_क्रमce_release(काष्ठा amdgpu_device *adev);
+पूर्णांक amdgpu_gem_object_create(काष्ठा amdgpu_device *adev, अचिन्हित दीर्घ size,
+			     पूर्णांक alignment, u32 initial_करोमुख्य,
+			     u64 flags, क्रमागत tपंचांग_bo_type type,
+			     काष्ठा dma_resv *resv,
+			     काष्ठा drm_gem_object **obj);
 
-int amdgpu_mode_dumb_create(struct drm_file *file_priv,
-			    struct drm_device *dev,
-			    struct drm_mode_create_dumb *args);
-int amdgpu_mode_dumb_mmap(struct drm_file *filp,
-			  struct drm_device *dev,
-			  uint32_t handle, uint64_t *offset_p);
+पूर्णांक amdgpu_mode_dumb_create(काष्ठा drm_file *file_priv,
+			    काष्ठा drm_device *dev,
+			    काष्ठा drm_mode_create_dumb *args);
+पूर्णांक amdgpu_mode_dumb_mmap(काष्ठा drm_file *filp,
+			  काष्ठा drm_device *dev,
+			  uपूर्णांक32_t handle, uपूर्णांक64_t *offset_p);
 
-int amdgpu_gem_create_ioctl(struct drm_device *dev, void *data,
-			    struct drm_file *filp);
-int amdgpu_gem_info_ioctl(struct drm_device *dev, void *data,
-			  struct drm_file *filp);
-int amdgpu_gem_userptr_ioctl(struct drm_device *dev, void *data,
-			struct drm_file *filp);
-int amdgpu_gem_mmap_ioctl(struct drm_device *dev, void *data,
-			  struct drm_file *filp);
-int amdgpu_gem_wait_idle_ioctl(struct drm_device *dev, void *data,
-			      struct drm_file *filp);
-uint64_t amdgpu_gem_va_map_flags(struct amdgpu_device *adev, uint32_t flags);
-int amdgpu_gem_va_ioctl(struct drm_device *dev, void *data,
-			  struct drm_file *filp);
-int amdgpu_gem_op_ioctl(struct drm_device *dev, void *data,
-			struct drm_file *filp);
+पूर्णांक amdgpu_gem_create_ioctl(काष्ठा drm_device *dev, व्योम *data,
+			    काष्ठा drm_file *filp);
+पूर्णांक amdgpu_gem_info_ioctl(काष्ठा drm_device *dev, व्योम *data,
+			  काष्ठा drm_file *filp);
+पूर्णांक amdgpu_gem_userptr_ioctl(काष्ठा drm_device *dev, व्योम *data,
+			काष्ठा drm_file *filp);
+पूर्णांक amdgpu_gem_mmap_ioctl(काष्ठा drm_device *dev, व्योम *data,
+			  काष्ठा drm_file *filp);
+पूर्णांक amdgpu_gem_रुको_idle_ioctl(काष्ठा drm_device *dev, व्योम *data,
+			      काष्ठा drm_file *filp);
+uपूर्णांक64_t amdgpu_gem_va_map_flags(काष्ठा amdgpu_device *adev, uपूर्णांक32_t flags);
+पूर्णांक amdgpu_gem_va_ioctl(काष्ठा drm_device *dev, व्योम *data,
+			  काष्ठा drm_file *filp);
+पूर्णांक amdgpu_gem_op_ioctl(काष्ठा drm_device *dev, व्योम *data,
+			काष्ठा drm_file *filp);
 
-int amdgpu_gem_metadata_ioctl(struct drm_device *dev, void *data,
-				struct drm_file *filp);
+पूर्णांक amdgpu_gem_metadata_ioctl(काष्ठा drm_device *dev, व्योम *data,
+				काष्ठा drm_file *filp);
 
-#endif
+#पूर्ण_अगर

@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * xtsonic.c
  *
@@ -7,129 +8,129 @@
  *	Marc Gauthier <marc@linux-xtensa.org>
  *	Chris Zankel <chris@zankel.net>
  *
- * (C) 1996,1998 by Thomas Bogendoerfer (tsbogend@alpha.franken.de)
+ * (C) 1996,1998 by Thomas Bogenकरोerfer (tsbogend@alpha.franken.de)
  *
  * This driver is based on work from Andreas Busse, but most of
  * the code is rewritten.
  *
- * (C) 1995 by Andreas Busse (andy@waldorf-gmbh.de)
+ * (C) 1995 by Andreas Busse (andy@walकरोrf-gmbh.de)
  *
- * A driver for the onboard Sonic ethernet controller on the XT2000.
+ * A driver क्रम the onboard Sonic ethernet controller on the XT2000.
  */
 
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/types.h>
-#include <linux/fcntl.h>
-#include <linux/gfp.h>
-#include <linux/interrupt.h>
-#include <linux/init.h>
-#include <linux/ioport.h>
-#include <linux/in.h>
-#include <linux/string.h>
-#include <linux/delay.h>
-#include <linux/errno.h>
-#include <linux/netdevice.h>
-#include <linux/etherdevice.h>
-#include <linux/skbuff.h>
-#include <linux/platform_device.h>
-#include <linux/dma-mapping.h>
-#include <linux/slab.h>
-#include <linux/pgtable.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/types.h>
+#समावेश <linux/fcntl.h>
+#समावेश <linux/gfp.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/init.h>
+#समावेश <linux/ioport.h>
+#समावेश <linux/in.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/delay.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/etherdevice.h>
+#समावेश <linux/skbuff.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/dma-mapping.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/pgtable.h>
 
-#include <asm/io.h>
-#include <asm/dma.h>
+#समावेश <यंत्र/पन.स>
+#समावेश <यंत्र/dma.h>
 
-static char xtsonic_string[] = "xtsonic";
+अटल अक्षर xtsonic_string[] = "xtsonic";
 
-extern unsigned xtboard_nvram_valid(void);
-extern void xtboard_get_ether_addr(unsigned char *buf);
+बाह्य अचिन्हित xtboard_nvram_valid(व्योम);
+बाह्य व्योम xtboard_get_ether_addr(अचिन्हित अक्षर *buf);
 
-#include "sonic.h"
+#समावेश "sonic.h"
 
 /*
- * According to the documentation for the Sonic ethernet controller,
- * EOBC should be 760 words (1520 bytes) for 32-bit applications, and,
- * as such, 2 words less than the buffer size. The value for RBSIZE
+ * According to the करोcumentation क्रम the Sonic ethernet controller,
+ * EOBC should be 760 words (1520 bytes) क्रम 32-bit applications, and,
+ * as such, 2 words less than the buffer size. The value क्रम RBSIZE
  * defined in sonic.h, however is only 1520.
  *
  * (Note that in 16-bit configurations, EOBC is 759 words (1518 bytes) and
  * RBSIZE 1520 bytes)
  */
-#undef SONIC_RBSIZE
-#define SONIC_RBSIZE	1524
+#अघोषित SONIC_RBSIZE
+#घोषणा SONIC_RBSIZE	1524
 
 /*
- * The chip provides 256 byte register space.
+ * The chip provides 256 byte रेजिस्टर space.
  */
-#define SONIC_MEM_SIZE	0x100
+#घोषणा SONIC_MEM_SIZE	0x100
 
 /*
- * Macros to access SONIC registers
+ * Macros to access SONIC रेजिस्टरs
  */
-#define SONIC_READ(reg) \
-	(0xffff & *((volatile unsigned int *)dev->base_addr+reg))
+#घोषणा SONIC_READ(reg) \
+	(0xffff & *((अस्थिर अचिन्हित पूर्णांक *)dev->base_addr+reg))
 
-#define SONIC_WRITE(reg,val) \
-	*((volatile unsigned int *)dev->base_addr+reg) = val
+#घोषणा SONIC_WRITE(reg,val) \
+	*((अस्थिर अचिन्हित पूर्णांक *)dev->base_addr+reg) = val
 
 /*
  * We cannot use station (ethernet) address prefixes to detect the
  * sonic controller since these are board manufacturer depended.
- * So we check for known Silicon Revision IDs instead.
+ * So we check क्रम known Silicon Revision IDs instead.
  */
-static unsigned short known_revisions[] =
-{
+अटल अचिन्हित लघु known_revisions[] =
+अणु
 	0x101,			/* SONIC 83934 */
 	0xffff			/* end of list */
-};
+पूर्ण;
 
-static int xtsonic_open(struct net_device *dev)
-{
-	int retval;
+अटल पूर्णांक xtsonic_खोलो(काष्ठा net_device *dev)
+अणु
+	पूर्णांक retval;
 
-	retval = request_irq(dev->irq, sonic_interrupt, 0, "sonic", dev);
-	if (retval) {
-		printk(KERN_ERR "%s: unable to get IRQ %d.\n",
+	retval = request_irq(dev->irq, sonic_पूर्णांकerrupt, 0, "sonic", dev);
+	अगर (retval) अणु
+		prपूर्णांकk(KERN_ERR "%s: unable to get IRQ %d.\n",
 		       dev->name, dev->irq);
-		return -EAGAIN;
-	}
+		वापस -EAGAIN;
+	पूर्ण
 
-	retval = sonic_open(dev);
-	if (retval)
-		free_irq(dev->irq, dev);
-	return retval;
-}
+	retval = sonic_खोलो(dev);
+	अगर (retval)
+		मुक्त_irq(dev->irq, dev);
+	वापस retval;
+पूर्ण
 
-static int xtsonic_close(struct net_device *dev)
-{
-	int err;
-	err = sonic_close(dev);
-	free_irq(dev->irq, dev);
-	return err;
-}
+अटल पूर्णांक xtsonic_बंद(काष्ठा net_device *dev)
+अणु
+	पूर्णांक err;
+	err = sonic_बंद(dev);
+	मुक्त_irq(dev->irq, dev);
+	वापस err;
+पूर्ण
 
-static const struct net_device_ops xtsonic_netdev_ops = {
-	.ndo_open		= xtsonic_open,
-	.ndo_stop		= xtsonic_close,
-	.ndo_start_xmit		= sonic_send_packet,
-	.ndo_get_stats		= sonic_get_stats,
-	.ndo_set_rx_mode	= sonic_multicast_list,
-	.ndo_tx_timeout		= sonic_tx_timeout,
-	.ndo_validate_addr	= eth_validate_addr,
-	.ndo_set_mac_address	= eth_mac_addr,
-};
+अटल स्थिर काष्ठा net_device_ops xtsonic_netdev_ops = अणु
+	.nकरो_खोलो		= xtsonic_खोलो,
+	.nकरो_stop		= xtsonic_बंद,
+	.nकरो_start_xmit		= sonic_send_packet,
+	.nकरो_get_stats		= sonic_get_stats,
+	.nकरो_set_rx_mode	= sonic_multicast_list,
+	.nकरो_tx_समयout		= sonic_tx_समयout,
+	.nकरो_validate_addr	= eth_validate_addr,
+	.nकरो_set_mac_address	= eth_mac_addr,
+पूर्ण;
 
-static int __init sonic_probe1(struct net_device *dev)
-{
-	unsigned int silicon_revision;
-	struct sonic_local *lp = netdev_priv(dev);
-	unsigned int base_addr = dev->base_addr;
-	int i;
-	int err = 0;
+अटल पूर्णांक __init sonic_probe1(काष्ठा net_device *dev)
+अणु
+	अचिन्हित पूर्णांक silicon_revision;
+	काष्ठा sonic_local *lp = netdev_priv(dev);
+	अचिन्हित पूर्णांक base_addr = dev->base_addr;
+	पूर्णांक i;
+	पूर्णांक err = 0;
 
-	if (!request_mem_region(base_addr, 0x100, xtsonic_string))
-		return -EBUSY;
+	अगर (!request_mem_region(base_addr, 0x100, xtsonic_string))
+		वापस -EBUSY;
 
 	/*
 	 * get the Silicon Revision ID. If this is one of the known
@@ -138,18 +139,18 @@ static int __init sonic_probe1(struct net_device *dev)
 	 */
 	silicon_revision = SONIC_READ(SONIC_SR);
 	i = 0;
-	while ((known_revisions[i] != 0xffff) &&
+	जबतक ((known_revisions[i] != 0xffff) &&
 			(known_revisions[i] != silicon_revision))
 		i++;
 
-	if (known_revisions[i] == 0xffff) {
+	अगर (known_revisions[i] == 0xffff) अणु
 		pr_info("SONIC ethernet controller not found (0x%4x)\n",
 			silicon_revision);
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
 	/*
-	 * Put the sonic into software reset, then retrieve ethernet address.
+	 * Put the sonic पूर्णांकo software reset, then retrieve ethernet address.
 	 * Note: we are assuming that the boot-loader has initialized the cam.
 	 */
 	SONIC_WRITE(SONIC_CMD,SONIC_CR_RST);
@@ -161,20 +162,20 @@ static int __init sonic_probe1(struct net_device *dev)
 	SONIC_WRITE(SONIC_CMD,SONIC_CR_RST);
 	SONIC_WRITE(SONIC_CEP,0);
 
-	for (i=0; i<3; i++) {
-		unsigned int val = SONIC_READ(SONIC_CAP0-i);
+	क्रम (i=0; i<3; i++) अणु
+		अचिन्हित पूर्णांक val = SONIC_READ(SONIC_CAP0-i);
 		dev->dev_addr[i*2] = val;
 		dev->dev_addr[i*2+1] = val >> 8;
-	}
+	पूर्ण
 
-	lp->dma_bitmode = SONIC_BITMODE32;
+	lp->dma_biपंचांगode = SONIC_BITMODE32;
 
 	err = sonic_alloc_descriptors(dev);
-	if (err)
-		goto out;
+	अगर (err)
+		जाओ out;
 
 	dev->netdev_ops		= &xtsonic_netdev_ops;
-	dev->watchdog_timeo	= TX_TIMEOUT;
+	dev->watchकरोg_समयo	= TX_TIMEOUT;
 
 	/*
 	 * clear tally counter
@@ -183,92 +184,92 @@ static int __init sonic_probe1(struct net_device *dev)
 	SONIC_WRITE(SONIC_FAET,0xffff);
 	SONIC_WRITE(SONIC_MPT,0xffff);
 
-	return 0;
+	वापस 0;
 out:
 	release_region(dev->base_addr, SONIC_MEM_SIZE);
-	return err;
-}
+	वापस err;
+पूर्ण
 
 
 /*
- * Probe for a SONIC ethernet controller on an XT2000 board.
+ * Probe क्रम a SONIC ethernet controller on an XT2000 board.
  * Actually probing is superfluous but we're paranoid.
  */
 
-int xtsonic_probe(struct platform_device *pdev)
-{
-	struct net_device *dev;
-	struct sonic_local *lp;
-	struct resource *resmem, *resirq;
-	int err = 0;
+पूर्णांक xtsonic_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा net_device *dev;
+	काष्ठा sonic_local *lp;
+	काष्ठा resource *resmem, *resirq;
+	पूर्णांक err = 0;
 
-	if ((resmem = platform_get_resource(pdev, IORESOURCE_MEM, 0)) == NULL)
-		return -ENODEV;
+	अगर ((resmem = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0)) == शून्य)
+		वापस -ENODEV;
 
-	if ((resirq = platform_get_resource(pdev, IORESOURCE_IRQ, 0)) == NULL)
-		return -ENODEV;
+	अगर ((resirq = platक्रमm_get_resource(pdev, IORESOURCE_IRQ, 0)) == शून्य)
+		वापस -ENODEV;
 
-	if ((dev = alloc_etherdev(sizeof(struct sonic_local))) == NULL)
-		return -ENOMEM;
+	अगर ((dev = alloc_etherdev(माप(काष्ठा sonic_local))) == शून्य)
+		वापस -ENOMEM;
 
 	lp = netdev_priv(dev);
 	lp->device = &pdev->dev;
-	platform_set_drvdata(pdev, dev);
+	platक्रमm_set_drvdata(pdev, dev);
 	SET_NETDEV_DEV(dev, &pdev->dev);
 	netdev_boot_setup_check(dev);
 
 	dev->base_addr = resmem->start;
 	dev->irq = resirq->start;
 
-	if ((err = sonic_probe1(dev)))
-		goto out;
+	अगर ((err = sonic_probe1(dev)))
+		जाओ out;
 
 	pr_info("SONIC ethernet @%08lx, MAC %pM, IRQ %d\n",
 		dev->base_addr, dev->dev_addr, dev->irq);
 
 	sonic_msg_init(dev);
 
-	if ((err = register_netdev(dev)))
-		goto undo_probe1;
+	अगर ((err = रेजिस्टर_netdev(dev)))
+		जाओ unकरो_probe1;
 
-	return 0;
+	वापस 0;
 
-undo_probe1:
-	dma_free_coherent(lp->device,
-			  SIZEOF_SONIC_DESC * SONIC_BUS_SCALE(lp->dma_bitmode),
+unकरो_probe1:
+	dma_मुक्त_coherent(lp->device,
+			  SIZखातापूर्ण_SONIC_DESC * SONIC_BUS_SCALE(lp->dma_biपंचांगode),
 			  lp->descriptors, lp->descriptors_laddr);
 	release_region(dev->base_addr, SONIC_MEM_SIZE);
 out:
-	free_netdev(dev);
+	मुक्त_netdev(dev);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
 MODULE_DESCRIPTION("Xtensa XT2000 SONIC ethernet driver");
 
-#include "sonic.c"
+#समावेश "sonic.c"
 
-static int xtsonic_device_remove(struct platform_device *pdev)
-{
-	struct net_device *dev = platform_get_drvdata(pdev);
-	struct sonic_local *lp = netdev_priv(dev);
+अटल पूर्णांक xtsonic_device_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा net_device *dev = platक्रमm_get_drvdata(pdev);
+	काष्ठा sonic_local *lp = netdev_priv(dev);
 
-	unregister_netdev(dev);
-	dma_free_coherent(lp->device,
-			  SIZEOF_SONIC_DESC * SONIC_BUS_SCALE(lp->dma_bitmode),
+	unरेजिस्टर_netdev(dev);
+	dma_मुक्त_coherent(lp->device,
+			  SIZखातापूर्ण_SONIC_DESC * SONIC_BUS_SCALE(lp->dma_biपंचांगode),
 			  lp->descriptors, lp->descriptors_laddr);
 	release_region (dev->base_addr, SONIC_MEM_SIZE);
-	free_netdev(dev);
+	मुक्त_netdev(dev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct platform_driver xtsonic_driver = {
+अटल काष्ठा platक्रमm_driver xtsonic_driver = अणु
 	.probe = xtsonic_probe,
-	.remove = xtsonic_device_remove,
-	.driver = {
+	.हटाओ = xtsonic_device_हटाओ,
+	.driver = अणु
 		.name = xtsonic_string,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-module_platform_driver(xtsonic_driver);
+module_platक्रमm_driver(xtsonic_driver);

@@ -1,217 +1,218 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 //
 // Copyright (c) 2019 MediaTek Inc.
 
-#include <asm/barrier.h>
-#include <linux/clk.h>
-#include <linux/err.h>
-#include <linux/io.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/platform_device.h>
-#include <linux/remoteproc/mtk_scp.h>
+#समावेश <यंत्र/barrier.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/err.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/remoteproc/mtk_scp.h>
 
-#include "mtk_common.h"
+#समावेश "mtk_common.h"
 
 /**
- * scp_ipi_register() - register an ipi function
+ * scp_ipi_रेजिस्टर() - रेजिस्टर an ipi function
  *
- * @scp:	mtk_scp structure
+ * @scp:	mtk_scp काष्ठाure
  * @id:		IPI ID
  * @handler:	IPI handler
- * @priv:	private data for IPI handler
+ * @priv:	निजी data क्रम IPI handler
  *
- * Register an ipi function to receive ipi interrupt from SCP.
+ * Register an ipi function to receive ipi पूर्णांकerrupt from SCP.
  *
- * Returns 0 if ipi registers successfully, -error on error.
+ * Returns 0 अगर ipi रेजिस्टरs successfully, -error on error.
  */
-int scp_ipi_register(struct mtk_scp *scp,
+पूर्णांक scp_ipi_रेजिस्टर(काष्ठा mtk_scp *scp,
 		     u32 id,
 		     scp_ipi_handler_t handler,
-		     void *priv)
-{
-	if (!scp)
-		return -EPROBE_DEFER;
+		     व्योम *priv)
+अणु
+	अगर (!scp)
+		वापस -EPROBE_DEFER;
 
-	if (WARN_ON(id >= SCP_IPI_MAX) || WARN_ON(handler == NULL))
-		return -EINVAL;
+	अगर (WARN_ON(id >= SCP_IPI_MAX) || WARN_ON(handler == शून्य))
+		वापस -EINVAL;
 
 	scp_ipi_lock(scp, id);
 	scp->ipi_desc[id].handler = handler;
 	scp->ipi_desc[id].priv = priv;
 	scp_ipi_unlock(scp, id);
 
-	return 0;
-}
-EXPORT_SYMBOL_GPL(scp_ipi_register);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL_GPL(scp_ipi_रेजिस्टर);
 
 /**
- * scp_ipi_unregister() - unregister an ipi function
+ * scp_ipi_unरेजिस्टर() - unरेजिस्टर an ipi function
  *
- * @scp:	mtk_scp structure
+ * @scp:	mtk_scp काष्ठाure
  * @id:		IPI ID
  *
- * Unregister an ipi function to receive ipi interrupt from SCP.
+ * Unरेजिस्टर an ipi function to receive ipi पूर्णांकerrupt from SCP.
  */
-void scp_ipi_unregister(struct mtk_scp *scp, u32 id)
-{
-	if (!scp)
-		return;
+व्योम scp_ipi_unरेजिस्टर(काष्ठा mtk_scp *scp, u32 id)
+अणु
+	अगर (!scp)
+		वापस;
 
-	if (WARN_ON(id >= SCP_IPI_MAX))
-		return;
+	अगर (WARN_ON(id >= SCP_IPI_MAX))
+		वापस;
 
 	scp_ipi_lock(scp, id);
-	scp->ipi_desc[id].handler = NULL;
-	scp->ipi_desc[id].priv = NULL;
+	scp->ipi_desc[id].handler = शून्य;
+	scp->ipi_desc[id].priv = शून्य;
 	scp_ipi_unlock(scp, id);
-}
-EXPORT_SYMBOL_GPL(scp_ipi_unregister);
+पूर्ण
+EXPORT_SYMBOL_GPL(scp_ipi_unरेजिस्टर);
 
 /*
- * scp_memcpy_aligned() - Copy src to dst, where dst is in SCP SRAM region.
+ * scp_स_नकल_aligned() - Copy src to dst, where dst is in SCP SRAM region.
  *
- * @dst:	Pointer to the destination buffer, should be in SCP SRAM region.
- * @src:	Pointer to the source buffer.
+ * @dst:	Poपूर्णांकer to the destination buffer, should be in SCP SRAM region.
+ * @src:	Poपूर्णांकer to the source buffer.
  * @len:	Length of the source buffer to be copied.
  *
- * Since AP access of SCP SRAM don't support byte write, this always write a
- * full word at a time, and may cause some extra bytes to be written at the
+ * Since AP access of SCP SRAM करोn't support byte ग_लिखो, this always ग_लिखो a
+ * full word at a समय, and may cause some extra bytes to be written at the
  * beginning & ending of dst.
  */
-void scp_memcpy_aligned(void __iomem *dst, const void *src, unsigned int len)
-{
-	void __iomem *ptr;
+व्योम scp_स_नकल_aligned(व्योम __iomem *dst, स्थिर व्योम *src, अचिन्हित पूर्णांक len)
+अणु
+	व्योम __iomem *ptr;
 	u32 val;
-	unsigned int i = 0, remain;
+	अचिन्हित पूर्णांक i = 0, reमुख्य;
 
-	if (!IS_ALIGNED((unsigned long)dst, 4)) {
-		ptr = (void __iomem *)ALIGN_DOWN((unsigned long)dst, 4);
+	अगर (!IS_ALIGNED((अचिन्हित दीर्घ)dst, 4)) अणु
+		ptr = (व्योम __iomem *)ALIGN_DOWN((अचिन्हित दीर्घ)dst, 4);
 		i = 4 - (dst - ptr);
-		val = readl_relaxed(ptr);
-		memcpy((u8 *)&val + (4 - i), src, i);
-		writel_relaxed(val, ptr);
-	}
+		val = पढ़ोl_relaxed(ptr);
+		स_नकल((u8 *)&val + (4 - i), src, i);
+		ग_लिखोl_relaxed(val, ptr);
+	पूर्ण
 
-	__iowrite32_copy(dst + i, src + i, (len - i) / 4);
-	remain = (len - i) % 4;
+	__ioग_लिखो32_copy(dst + i, src + i, (len - i) / 4);
+	reमुख्य = (len - i) % 4;
 
-	if (remain > 0) {
-		val = readl_relaxed(dst + len - remain);
-		memcpy(&val, src + len - remain, remain);
-		writel_relaxed(val, dst + len - remain);
-	}
-}
-EXPORT_SYMBOL_GPL(scp_memcpy_aligned);
+	अगर (reमुख्य > 0) अणु
+		val = पढ़ोl_relaxed(dst + len - reमुख्य);
+		स_नकल(&val, src + len - reमुख्य, reमुख्य);
+		ग_लिखोl_relaxed(val, dst + len - reमुख्य);
+	पूर्ण
+पूर्ण
+EXPORT_SYMBOL_GPL(scp_स_नकल_aligned);
 
 /**
- * scp_ipi_lock() - Lock before operations of an IPI ID
+ * scp_ipi_lock() - Lock beक्रमe operations of an IPI ID
  *
- * @scp:	mtk_scp structure
+ * @scp:	mtk_scp काष्ठाure
  * @id:		IPI ID
  *
  * Note: This should not be used by drivers other than mtk_scp.
  */
-void scp_ipi_lock(struct mtk_scp *scp, u32 id)
-{
-	if (WARN_ON(id >= SCP_IPI_MAX))
-		return;
+व्योम scp_ipi_lock(काष्ठा mtk_scp *scp, u32 id)
+अणु
+	अगर (WARN_ON(id >= SCP_IPI_MAX))
+		वापस;
 	mutex_lock(&scp->ipi_desc[id].lock);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(scp_ipi_lock);
 
 /**
  * scp_ipi_lock() - Unlock after operations of an IPI ID
  *
- * @scp:	mtk_scp structure
+ * @scp:	mtk_scp काष्ठाure
  * @id:		IPI ID
  *
  * Note: This should not be used by drivers other than mtk_scp.
  */
-void scp_ipi_unlock(struct mtk_scp *scp, u32 id)
-{
-	if (WARN_ON(id >= SCP_IPI_MAX))
-		return;
+व्योम scp_ipi_unlock(काष्ठा mtk_scp *scp, u32 id)
+अणु
+	अगर (WARN_ON(id >= SCP_IPI_MAX))
+		वापस;
 	mutex_unlock(&scp->ipi_desc[id].lock);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(scp_ipi_unlock);
 
 /**
  * scp_ipi_send() - send data from AP to scp.
  *
- * @scp:	mtk_scp structure
+ * @scp:	mtk_scp काष्ठाure
  * @id:		IPI ID
  * @buf:	the data buffer
  * @len:	the data buffer length
- * @wait:	number of msecs to wait for ack. 0 to skip waiting.
+ * @रुको:	number of msecs to रुको क्रम ack. 0 to skip रुकोing.
  *
- * This function is thread-safe. When this function returns,
+ * This function is thपढ़ो-safe. When this function वापसs,
  * SCP has received the data and starts the processing.
- * When the processing completes, IPI handler registered
- * by scp_ipi_register will be called in interrupt context.
+ * When the processing completes, IPI handler रेजिस्टरed
+ * by scp_ipi_रेजिस्टर will be called in पूर्णांकerrupt context.
  *
- * Returns 0 if sending data successfully, -error on error.
+ * Returns 0 अगर sending data successfully, -error on error.
  **/
-int scp_ipi_send(struct mtk_scp *scp, u32 id, void *buf, unsigned int len,
-		 unsigned int wait)
-{
-	struct mtk_share_obj __iomem *send_obj = scp->send_buf;
-	unsigned long timeout;
-	int ret;
+पूर्णांक scp_ipi_send(काष्ठा mtk_scp *scp, u32 id, व्योम *buf, अचिन्हित पूर्णांक len,
+		 अचिन्हित पूर्णांक रुको)
+अणु
+	काष्ठा mtk_share_obj __iomem *send_obj = scp->send_buf;
+	अचिन्हित दीर्घ समयout;
+	पूर्णांक ret;
 
-	if (WARN_ON(id <= SCP_IPI_INIT) || WARN_ON(id >= SCP_IPI_MAX) ||
+	अगर (WARN_ON(id <= SCP_IPI_INIT) || WARN_ON(id >= SCP_IPI_MAX) ||
 	    WARN_ON(id == SCP_IPI_NS_SERVICE) ||
-	    WARN_ON(len > sizeof(send_obj->share_buf)) || WARN_ON(!buf))
-		return -EINVAL;
+	    WARN_ON(len > माप(send_obj->share_buf)) || WARN_ON(!buf))
+		वापस -EINVAL;
 
 	mutex_lock(&scp->send_lock);
 
 	ret = clk_prepare_enable(scp->clk);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(scp->dev, "failed to enable clock\n");
-		goto unlock_mutex;
-	}
+		जाओ unlock_mutex;
+	पूर्ण
 
 	 /* Wait until SCP receives the last command */
-	timeout = jiffies + msecs_to_jiffies(2000);
-	do {
-		if (time_after(jiffies, timeout)) {
+	समयout = jअगरfies + msecs_to_jअगरfies(2000);
+	करो अणु
+		अगर (समय_after(jअगरfies, समयout)) अणु
 			dev_err(scp->dev, "%s: IPI timeout!\n", __func__);
 			ret = -ETIMEDOUT;
-			goto clock_disable;
-		}
-	} while (readl(scp->reg_base + scp->data->host_to_scp_reg));
+			जाओ घड़ी_disable;
+		पूर्ण
+	पूर्ण जबतक (पढ़ोl(scp->reg_base + scp->data->host_to_scp_reg));
 
-	scp_memcpy_aligned(send_obj->share_buf, buf, len);
+	scp_स_नकल_aligned(send_obj->share_buf, buf, len);
 
-	writel(len, &send_obj->len);
-	writel(id, &send_obj->id);
+	ग_लिखोl(len, &send_obj->len);
+	ग_लिखोl(id, &send_obj->id);
 
 	scp->ipi_id_ack[id] = false;
 	/* send the command to SCP */
-	writel(scp->data->host_to_scp_int_bit,
+	ग_लिखोl(scp->data->host_to_scp_पूर्णांक_bit,
 	       scp->reg_base + scp->data->host_to_scp_reg);
 
-	if (wait) {
-		/* wait for SCP's ACK */
-		timeout = msecs_to_jiffies(wait);
-		ret = wait_event_timeout(scp->ack_wq,
+	अगर (रुको) अणु
+		/* रुको क्रम SCP's ACK */
+		समयout = msecs_to_jअगरfies(रुको);
+		ret = रुको_event_समयout(scp->ack_wq,
 					 scp->ipi_id_ack[id],
-					 timeout);
+					 समयout);
 		scp->ipi_id_ack[id] = false;
-		if (WARN(!ret, "scp ipi %d ack time out !", id))
+		अगर (WARN(!ret, "scp ipi %d ack time out !", id))
 			ret = -EIO;
-		else
+		अन्यथा
 			ret = 0;
-	}
+	पूर्ण
 
-clock_disable:
+घड़ी_disable:
 	clk_disable_unprepare(scp->clk);
 unlock_mutex:
 	mutex_unlock(&scp->send_lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(scp_ipi_send);
 
 MODULE_LICENSE("GPL v2");

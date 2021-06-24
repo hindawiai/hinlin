@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: (GPL-2.0 OR MPL-1.1)
+<शैली गुरु>
+// SPDX-License-Identअगरier: (GPL-2.0 OR MPL-1.1)
 /* src/prism2/driver/prism2mgmt.c
  *
  * Management request handler functions.
@@ -15,17 +16,17 @@
  *
  *   Software distributed under the License is distributed on an "AS
  *   IS" basis, WITHOUT WARRANTY OF ANY KIND, either express or
- *   implied. See the License for the specific language governing
+ *   implied. See the License क्रम the specअगरic language governing
  *   rights and limitations under the License.
  *
  *   Alternatively, the contents of this file may be used under the
  *   terms of the GNU Public License version 2 (the "GPL"), in which
- *   case the provisions of the GPL are applicable instead of the
+ *   हाल the provisions of the GPL are applicable instead of the
  *   above.  If you wish to allow the use of your version of this file
  *   only under the terms of the GPL and not to allow others to use
  *   your version of this file under the MPL, indicate your decision
  *   by deleting the provisions above and replace them with the notice
- *   and other provisions required by the GPL.  If you do not delete
+ *   and other provisions required by the GPL.  If you करो not delete
  *   the provisions above, a recipient may use your version of this
  *   file under either the MPL or the GPL.
  *
@@ -51,60 +52,60 @@
  * Most of these functions have two separate blocks of code that are
  * conditional on whether this is a station or an AP.  This is used
  * to separate out the STA and AP responses to these management primitives.
- * It's a choice (good, bad, indifferent?) to have the code in the same
+ * It's a choice (good, bad, indअगरferent?) to have the code in the same
  * place so it's clear that the same primitive is implemented in both
- * cases but has different behavior.
+ * हालs but has dअगरferent behavior.
  *
  * --------------------------------------------------------------------
  */
 
-#include <linux/if_arp.h>
-#include <linux/module.h>
-#include <linux/kernel.h>
-#include <linux/wait.h>
-#include <linux/sched.h>
-#include <linux/types.h>
-#include <linux/wireless.h>
-#include <linux/netdevice.h>
-#include <linux/delay.h>
-#include <linux/io.h>
-#include <asm/byteorder.h>
-#include <linux/random.h>
-#include <linux/usb.h>
-#include <linux/bitops.h>
+#समावेश <linux/अगर_arp.h>
+#समावेश <linux/module.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/रुको.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/types.h>
+#समावेश <linux/wireless.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/पन.स>
+#समावेश <यंत्र/byteorder.h>
+#समावेश <linux/अक्रमom.h>
+#समावेश <linux/usb.h>
+#समावेश <linux/bitops.h>
 
-#include "p80211types.h"
-#include "p80211hdr.h"
-#include "p80211mgmt.h"
-#include "p80211conv.h"
-#include "p80211msg.h"
-#include "p80211netdev.h"
-#include "p80211metadef.h"
-#include "p80211metastruct.h"
-#include "hfa384x.h"
-#include "prism2mgmt.h"
+#समावेश "p80211types.h"
+#समावेश "p80211hdr.h"
+#समावेश "p80211mgmt.h"
+#समावेश "p80211conv.h"
+#समावेश "p80211msg.h"
+#समावेश "p80211netdev.h"
+#समावेश "p80211metadef.h"
+#समावेश "p80211metastruct.h"
+#समावेश "hfa384x.h"
+#समावेश "prism2mgmt.h"
 
-/* Converts 802.11 format rate specifications to prism2 */
-static inline u16 p80211rate_to_p2bit(u32 rate)
-{
-	switch (rate & ~BIT(7)) {
-	case 2:
-		return BIT(0);
-	case 4:
-		return BIT(1);
-	case 11:
-		return BIT(2);
-	case 22:
-		return BIT(3);
-	default:
-		return 0;
-	}
-}
+/* Converts 802.11 क्रमmat rate specअगरications to prism2 */
+अटल अंतरभूत u16 p80211rate_to_p2bit(u32 rate)
+अणु
+	चयन (rate & ~BIT(7)) अणु
+	हाल 2:
+		वापस BIT(0);
+	हाल 4:
+		वापस BIT(1);
+	हाल 11:
+		वापस BIT(2);
+	हाल 22:
+		वापस BIT(3);
+	शेष:
+		वापस 0;
+	पूर्ण
+पूर्ण
 
 /*----------------------------------------------------------------
  * prism2mgmt_scan
  *
- * Initiate a scan for BSSs.
+ * Initiate a scan क्रम BSSs.
  *
  * This function corresponds to MLME-scan.request and part of
  * MLME-scan.confirm.  As far as I can tell in the standard, there
@@ -112,88 +113,88 @@ static inline u16 p80211rate_to_p2bit(u32 rate)
  * to handle in whatever state the driver/MAC happen to be.
  *
  * Arguments:
- *	wlandev		wlan device structure
+ *	wlandev		wlan device काष्ठाure
  *	msgp		ptr to msg buffer
  *
  * Returns:
- *	0	success and done
- *	<0	success, but we're waiting for something to finish.
- *	>0	an error occurred while handling the message.
+ *	0	success and करोne
+ *	<0	success, but we're रुकोing क्रम something to finish.
+ *	>0	an error occurred जबतक handling the message.
  * Side effects:
  *
  * Call context:
- *	process thread  (usually)
- *	interrupt
+ *	process thपढ़ो  (usually)
+ *	पूर्णांकerrupt
  *----------------------------------------------------------------
  */
-int prism2mgmt_scan(struct wlandevice *wlandev, void *msgp)
-{
-	int result = 0;
-	struct hfa384x *hw = wlandev->priv;
-	struct p80211msg_dot11req_scan *msg = msgp;
+पूर्णांक prism2mgmt_scan(काष्ठा wlandevice *wlandev, व्योम *msgp)
+अणु
+	पूर्णांक result = 0;
+	काष्ठा hfa384x *hw = wlandev->priv;
+	काष्ठा p80211msg_करोt11req_scan *msg = msgp;
 	u16 roamingmode, word;
-	int i, timeout;
-	int istmpenable = 0;
+	पूर्णांक i, समयout;
+	पूर्णांक isपंचांगpenable = 0;
 
-	struct hfa384x_host_scan_request_data scanreq;
+	काष्ठा hfa384x_host_scan_request_data scanreq;
 
 	/* gatekeeper check */
-	if (HFA384x_FIRMWARE_VERSION(hw->ident_sta_fw.major,
+	अगर (HFA384x_FIRMWARE_VERSION(hw->ident_sta_fw.major,
 				     hw->ident_sta_fw.minor,
 				     hw->ident_sta_fw.variant) <
-	    HFA384x_FIRMWARE_VERSION(1, 3, 2)) {
+	    HFA384x_FIRMWARE_VERSION(1, 3, 2)) अणु
 		netdev_err(wlandev->netdev,
 			   "HostScan not supported with current firmware (<1.3.2).\n");
 		result = 1;
 		msg->resultcode.data = P80211ENUM_resultcode_not_supported;
-		goto exit;
-	}
+		जाओ निकास;
+	पूर्ण
 
-	memset(&scanreq, 0, sizeof(scanreq));
+	स_रखो(&scanreq, 0, माप(scanreq));
 
 	/* save current roaming mode */
-	result = hfa384x_drvr_getconfig16(hw,
+	result = hfa384x_drvr_अ_लोonfig16(hw,
 					  HFA384x_RID_CNFROAMINGMODE,
 					  &roamingmode);
-	if (result) {
+	अगर (result) अणु
 		netdev_err(wlandev->netdev,
 			   "getconfig(ROAMMODE) failed. result=%d\n", result);
 		msg->resultcode.data =
 		    P80211ENUM_resultcode_implementation_failure;
-		goto exit;
-	}
+		जाओ निकास;
+	पूर्ण
 
-	/* drop into mode 3 for the scan */
+	/* drop पूर्णांकo mode 3 क्रम the scan */
 	result = hfa384x_drvr_setconfig16(hw,
 					  HFA384x_RID_CNFROAMINGMODE,
 					  HFA384x_ROAMMODE_HOSTSCAN_HOSTROAM);
-	if (result) {
+	अगर (result) अणु
 		netdev_err(wlandev->netdev,
 			   "setconfig(ROAMINGMODE) failed. result=%d\n",
 			   result);
 		msg->resultcode.data =
 		    P80211ENUM_resultcode_implementation_failure;
-		goto exit;
-	}
+		जाओ निकास;
+	पूर्ण
 
 	/* active or passive? */
-	if (HFA384x_FIRMWARE_VERSION(hw->ident_sta_fw.major,
+	अगर (HFA384x_FIRMWARE_VERSION(hw->ident_sta_fw.major,
 				     hw->ident_sta_fw.minor,
 				     hw->ident_sta_fw.variant) >
-	    HFA384x_FIRMWARE_VERSION(1, 5, 0)) {
-		if (msg->scantype.data != P80211ENUM_scantype_active)
-			word = msg->maxchanneltime.data;
-		else
+	    HFA384x_FIRMWARE_VERSION(1, 5, 0)) अणु
+		अगर (msg->scantype.data != P80211ENUM_scantype_active)
+			word = msg->maxchannelसमय.data;
+		अन्यथा
 			word = 0;
 
 		result =
 		    hfa384x_drvr_setconfig16(hw, HFA384x_RID_CNFPASSIVESCANCTRL,
 					     word);
-		if (result) {
+		अगर (result) अणु
 			netdev_warn(wlandev->netdev,
 				    "Passive scan not supported with current firmware.  (<1.5.1)\n");
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	/* set up the txrate to be 2MBPS. Should be fastest basicrate... */
 	word = HFA384x_RATEBIT_2;
@@ -201,251 +202,251 @@ int prism2mgmt_scan(struct wlandevice *wlandev, void *msgp)
 
 	/* set up the channel list */
 	word = 0;
-	for (i = 0; i < msg->channellist.data.len; i++) {
+	क्रम (i = 0; i < msg->channellist.data.len; i++) अणु
 		u8 channel = msg->channellist.data.data[i];
 
-		if (channel > 14)
-			continue;
+		अगर (channel > 14)
+			जारी;
 		/* channel 1 is BIT 0 ... channel 14 is BIT 13 */
 		word |= (1 << (channel - 1));
-	}
+	पूर्ण
 	scanreq.channel_list = cpu_to_le16(word);
 
-	/* set up the ssid, if present. */
+	/* set up the ssid, अगर present. */
 	scanreq.ssid.len = cpu_to_le16(msg->ssid.data.len);
-	memcpy(scanreq.ssid.data, msg->ssid.data.data, msg->ssid.data.len);
+	स_नकल(scanreq.ssid.data, msg->ssid.data.data, msg->ssid.data.len);
 
-	/* Enable the MAC port if it's not already enabled  */
-	result = hfa384x_drvr_getconfig16(hw, HFA384x_RID_PORTSTATUS, &word);
-	if (result) {
+	/* Enable the MAC port अगर it's not alपढ़ोy enabled  */
+	result = hfa384x_drvr_अ_लोonfig16(hw, HFA384x_RID_PORTSTATUS, &word);
+	अगर (result) अणु
 		netdev_err(wlandev->netdev,
 			   "getconfig(PORTSTATUS) failed. result=%d\n", result);
 		msg->resultcode.data =
 		    P80211ENUM_resultcode_implementation_failure;
-		goto exit;
-	}
-	if (word == HFA384x_PORTSTATUS_DISABLED) {
+		जाओ निकास;
+	पूर्ण
+	अगर (word == HFA384x_PORTSTATUS_DISABLED) अणु
 		__le16 wordbuf[17];
 
 		result = hfa384x_drvr_setconfig16(hw,
 						  HFA384x_RID_CNFROAMINGMODE,
 						  HFA384x_ROAMMODE_HOSTSCAN_HOSTROAM);
-		if (result) {
+		अगर (result) अणु
 			netdev_err(wlandev->netdev,
 				   "setconfig(ROAMINGMODE) failed. result=%d\n",
 				   result);
 			msg->resultcode.data =
 			    P80211ENUM_resultcode_implementation_failure;
-			goto exit;
-		}
-		/* Construct a bogus SSID and assign it to OwnSSID and
+			जाओ निकास;
+		पूर्ण
+		/* Conकाष्ठा a bogus SSID and assign it to OwnSSID and
 		 * DesiredSSID
 		 */
 		wordbuf[0] = cpu_to_le16(WLAN_SSID_MAXLEN);
-		get_random_bytes(&wordbuf[1], WLAN_SSID_MAXLEN);
+		get_अक्रमom_bytes(&wordbuf[1], WLAN_SSID_MAXLEN);
 		result = hfa384x_drvr_setconfig(hw, HFA384x_RID_CNFOWNSSID,
 						wordbuf,
 						HFA384x_RID_CNFOWNSSID_LEN);
-		if (result) {
+		अगर (result) अणु
 			netdev_err(wlandev->netdev, "Failed to set OwnSSID.\n");
 			msg->resultcode.data =
 			    P80211ENUM_resultcode_implementation_failure;
-			goto exit;
-		}
+			जाओ निकास;
+		पूर्ण
 		result = hfa384x_drvr_setconfig(hw, HFA384x_RID_CNFDESIREDSSID,
 						wordbuf,
 						HFA384x_RID_CNFDESIREDSSID_LEN);
-		if (result) {
+		अगर (result) अणु
 			netdev_err(wlandev->netdev,
 				   "Failed to set DesiredSSID.\n");
 			msg->resultcode.data =
 			    P80211ENUM_resultcode_implementation_failure;
-			goto exit;
-		}
+			जाओ निकास;
+		पूर्ण
 		/* bsstype */
 		result = hfa384x_drvr_setconfig16(hw,
 						  HFA384x_RID_CNFPORTTYPE,
 						  HFA384x_PORTTYPE_IBSS);
-		if (result) {
+		अगर (result) अणु
 			netdev_err(wlandev->netdev,
 				   "Failed to set CNFPORTTYPE.\n");
 			msg->resultcode.data =
 			    P80211ENUM_resultcode_implementation_failure;
-			goto exit;
-		}
+			जाओ निकास;
+		पूर्ण
 		/* ibss options */
 		result = hfa384x_drvr_setconfig16(hw,
 						  HFA384x_RID_CREATEIBSS,
 						  HFA384x_CREATEIBSS_JOINCREATEIBSS);
-		if (result) {
+		अगर (result) अणु
 			netdev_err(wlandev->netdev,
 				   "Failed to set CREATEIBSS.\n");
 			msg->resultcode.data =
 			    P80211ENUM_resultcode_implementation_failure;
-			goto exit;
-		}
+			जाओ निकास;
+		पूर्ण
 		result = hfa384x_drvr_enable(hw, 0);
-		if (result) {
+		अगर (result) अणु
 			netdev_err(wlandev->netdev,
 				   "drvr_enable(0) failed. result=%d\n",
 				   result);
 			msg->resultcode.data =
 			    P80211ENUM_resultcode_implementation_failure;
-			goto exit;
-		}
-		istmpenable = 1;
-	}
+			जाओ निकास;
+		पूर्ण
+		isपंचांगpenable = 1;
+	पूर्ण
 
-	/* Figure out our timeout first Kus, then HZ */
-	timeout = msg->channellist.data.len * msg->maxchanneltime.data;
-	timeout = (timeout * HZ) / 1000;
+	/* Figure out our समयout first Kus, then HZ */
+	समयout = msg->channellist.data.len * msg->maxchannelसमय.data;
+	समयout = (समयout * HZ) / 1000;
 
 	/* Issue the scan request */
-	hw->scanflag = 0;
+	hw->म_पूछोlag = 0;
 
 	result = hfa384x_drvr_setconfig(hw,
 					HFA384x_RID_HOSTSCAN, &scanreq,
-					sizeof(scanreq));
-	if (result) {
+					माप(scanreq));
+	अगर (result) अणु
 		netdev_err(wlandev->netdev,
 			   "setconfig(SCANREQUEST) failed. result=%d\n",
 			   result);
 		msg->resultcode.data =
 		    P80211ENUM_resultcode_implementation_failure;
-		goto exit;
-	}
+		जाओ निकास;
+	पूर्ण
 
 	/* sleep until info frame arrives */
-	wait_event_interruptible_timeout(hw->cmdq, hw->scanflag, timeout);
+	रुको_event_पूर्णांकerruptible_समयout(hw->cmdq, hw->म_पूछोlag, समयout);
 
 	msg->numbss.status = P80211ENUM_msgitem_status_data_ok;
-	if (hw->scanflag == -1)
-		hw->scanflag = 0;
+	अगर (hw->म_पूछोlag == -1)
+		hw->म_पूछोlag = 0;
 
-	msg->numbss.data = hw->scanflag;
+	msg->numbss.data = hw->म_पूछोlag;
 
-	hw->scanflag = 0;
+	hw->म_पूछोlag = 0;
 
-	/* Disable port if we temporarily enabled it. */
-	if (istmpenable) {
+	/* Disable port अगर we temporarily enabled it. */
+	अगर (isपंचांगpenable) अणु
 		result = hfa384x_drvr_disable(hw, 0);
-		if (result) {
+		अगर (result) अणु
 			netdev_err(wlandev->netdev,
 				   "drvr_disable(0) failed. result=%d\n",
 				   result);
 			msg->resultcode.data =
 			    P80211ENUM_resultcode_implementation_failure;
-			goto exit;
-		}
-	}
+			जाओ निकास;
+		पूर्ण
+	पूर्ण
 
 	/* restore original roaming mode */
 	result = hfa384x_drvr_setconfig16(hw, HFA384x_RID_CNFROAMINGMODE,
 					  roamingmode);
-	if (result) {
+	अगर (result) अणु
 		netdev_err(wlandev->netdev,
 			   "setconfig(ROAMMODE) failed. result=%d\n", result);
 		msg->resultcode.data =
 		    P80211ENUM_resultcode_implementation_failure;
-		goto exit;
-	}
+		जाओ निकास;
+	पूर्ण
 
 	result = 0;
 	msg->resultcode.data = P80211ENUM_resultcode_success;
 
-exit:
+निकास:
 	msg->resultcode.status = P80211ENUM_msgitem_status_data_ok;
 
-	return result;
-}
+	वापस result;
+पूर्ण
 
 /*----------------------------------------------------------------
  * prism2mgmt_scan_results
  *
- * Retrieve the BSS description for one of the BSSs identified in
+ * Retrieve the BSS description क्रम one of the BSSs identअगरied in
  * a scan.
  *
  * Arguments:
- *	wlandev		wlan device structure
+ *	wlandev		wlan device काष्ठाure
  *	msgp		ptr to msg buffer
  *
  * Returns:
- *	0	success and done
- *	<0	success, but we're waiting for something to finish.
- *	>0	an error occurred while handling the message.
+ *	0	success and करोne
+ *	<0	success, but we're रुकोing क्रम something to finish.
+ *	>0	an error occurred जबतक handling the message.
  * Side effects:
  *
  * Call context:
- *	process thread  (usually)
- *	interrupt
+ *	process thपढ़ो  (usually)
+ *	पूर्णांकerrupt
  *----------------------------------------------------------------
  */
-int prism2mgmt_scan_results(struct wlandevice *wlandev, void *msgp)
-{
-	int result = 0;
-	struct p80211msg_dot11req_scan_results *req;
-	struct hfa384x *hw = wlandev->priv;
-	struct hfa384x_hscan_result_sub *item = NULL;
+पूर्णांक prism2mgmt_scan_results(काष्ठा wlandevice *wlandev, व्योम *msgp)
+अणु
+	पूर्णांक result = 0;
+	काष्ठा p80211msg_करोt11req_scan_results *req;
+	काष्ठा hfa384x *hw = wlandev->priv;
+	काष्ठा hfa384x_hscan_result_sub *item = शून्य;
 
-	int count;
+	पूर्णांक count;
 
 	req = msgp;
 
 	req->resultcode.status = P80211ENUM_msgitem_status_data_ok;
 
-	if (!hw->scanresults) {
+	अगर (!hw->scanresults) अणु
 		netdev_err(wlandev->netdev,
 			   "dot11req_scan_results can only be used after a successful dot11req_scan.\n");
 		result = 2;
 		req->resultcode.data = P80211ENUM_resultcode_invalid_parameters;
-		goto exit;
-	}
+		जाओ निकास;
+	पूर्ण
 
 	count = (hw->scanresults->framelen - 3) / 32;
-	if (count > HFA384x_SCANRESULT_MAX)
+	अगर (count > HFA384x_SCANRESULT_MAX)
 		count = HFA384x_SCANRESULT_MAX;
 
-	if (req->bssindex.data >= count) {
+	अगर (req->bssindex.data >= count) अणु
 		netdev_dbg(wlandev->netdev,
 			   "requested index (%d) out of range (%d)\n",
 			   req->bssindex.data, count);
 		result = 2;
 		req->resultcode.data = P80211ENUM_resultcode_invalid_parameters;
-		goto exit;
-	}
+		जाओ निकास;
+	पूर्ण
 
 	item = &hw->scanresults->info.hscanresult.result[req->bssindex.data];
-	/* signal and noise */
-	req->signal.status = P80211ENUM_msgitem_status_data_ok;
+	/* संकेत and noise */
+	req->संकेत.status = P80211ENUM_msgitem_status_data_ok;
 	req->noise.status = P80211ENUM_msgitem_status_data_ok;
-	req->signal.data = le16_to_cpu(item->sl);
+	req->संकेत.data = le16_to_cpu(item->sl);
 	req->noise.data = le16_to_cpu(item->anl);
 
 	/* BSSID */
 	req->bssid.status = P80211ENUM_msgitem_status_data_ok;
 	req->bssid.data.len = WLAN_BSSID_LEN;
-	memcpy(req->bssid.data.data, item->bssid, WLAN_BSSID_LEN);
+	स_नकल(req->bssid.data.data, item->bssid, WLAN_BSSID_LEN);
 
 	/* SSID */
 	req->ssid.status = P80211ENUM_msgitem_status_data_ok;
 	req->ssid.data.len = le16_to_cpu(item->ssid.len);
 	req->ssid.data.len = min_t(u16, req->ssid.data.len, WLAN_SSID_MAXLEN);
-	memcpy(req->ssid.data.data, item->ssid.data, req->ssid.data.len);
+	स_नकल(req->ssid.data.data, item->ssid.data, req->ssid.data.len);
 
 	/* supported rates */
-	for (count = 0; count < 10; count++)
-		if (item->supprates[count] == 0)
-			break;
+	क्रम (count = 0; count < 10; count++)
+		अगर (item->supprates[count] == 0)
+			अवरोध;
 
-#define REQBASICRATE(N) \
-	do { \
-		if ((count >= (N)) && DOT11_RATE5_ISBASIC_GET(	\
-			item->supprates[(N) - 1])) { \
+#घोषणा REQBASICRATE(N) \
+	करो अणु \
+		अगर ((count >= (N)) && DOT11_RATE5_ISBASIC_GET(	\
+			item->supprates[(N) - 1])) अणु \
 			req->basicrate ## N .data = item->supprates[(N) - 1]; \
 			req->basicrate ## N .status = \
 				P80211ENUM_msgitem_status_data_ok; \
-		} \
-	} while (0)
+		पूर्ण \
+	पूर्ण जबतक (0)
 
 	REQBASICRATE(1);
 	REQBASICRATE(2);
@@ -456,14 +457,14 @@ int prism2mgmt_scan_results(struct wlandevice *wlandev, void *msgp)
 	REQBASICRATE(7);
 	REQBASICRATE(8);
 
-#define REQSUPPRATE(N) \
-	do { \
-		if (count >= (N)) {					\
+#घोषणा REQSUPPRATE(N) \
+	करो अणु \
+		अगर (count >= (N)) अणु					\
 			req->supprate ## N .data = item->supprates[(N) - 1]; \
 			req->supprate ## N .status = \
 				P80211ENUM_msgitem_status_data_ok; \
-		} \
-	} while (0)
+		पूर्ण \
+	पूर्ण जबतक (0)
 
 	REQSUPPRATE(1);
 	REQSUPPRATE(2);
@@ -476,17 +477,17 @@ int prism2mgmt_scan_results(struct wlandevice *wlandev, void *msgp)
 
 	/* beacon period */
 	req->beaconperiod.status = P80211ENUM_msgitem_status_data_ok;
-	req->beaconperiod.data = le16_to_cpu(item->bcnint);
+	req->beaconperiod.data = le16_to_cpu(item->bcnपूर्णांक);
 
-	/* timestamps */
-	req->timestamp.status = P80211ENUM_msgitem_status_data_ok;
-	req->timestamp.data = jiffies;
-	req->localtime.status = P80211ENUM_msgitem_status_data_ok;
-	req->localtime.data = jiffies;
+	/* बारtamps */
+	req->बारtamp.status = P80211ENUM_msgitem_status_data_ok;
+	req->बारtamp.data = jअगरfies;
+	req->स_स्थानीय.status = P80211ENUM_msgitem_status_data_ok;
+	req->स_स्थानीय.data = jअगरfies;
 
-	/* atim window */
-	req->ibssatimwindow.status = P80211ENUM_msgitem_status_data_ok;
-	req->ibssatimwindow.data = le16_to_cpu(item->atim);
+	/* atim winकरोw */
+	req->ibssatimwinकरोw.status = P80211ENUM_msgitem_status_data_ok;
+	req->ibssatimwinकरोw.data = le16_to_cpu(item->atim);
 
 	/* Channel */
 	req->dschannel.status = P80211ENUM_msgitem_status_data_ok;
@@ -512,241 +513,241 @@ int prism2mgmt_scan_results(struct wlandevice *wlandev, void *msgp)
 	/* bsstype */
 	req->bsstype.status = P80211ENUM_msgitem_status_data_ok;
 	req->bsstype.data = (WLAN_GET_MGMT_CAP_INFO_ESS(count)) ?
-	    P80211ENUM_bsstype_infrastructure : P80211ENUM_bsstype_independent;
+	    P80211ENUM_bsstype_infraकाष्ठाure : P80211ENUM_bsstype_independent;
 
 	result = 0;
 	req->resultcode.data = P80211ENUM_resultcode_success;
 
-exit:
-	return result;
-}
+निकास:
+	वापस result;
+पूर्ण
 
 /*----------------------------------------------------------------
  * prism2mgmt_start
  *
- * Start a BSS.  Any station can do this for IBSS, only AP for ESS.
+ * Start a BSS.  Any station can करो this क्रम IBSS, only AP क्रम ESS.
  *
  * Arguments:
- *	wlandev		wlan device structure
+ *	wlandev		wlan device काष्ठाure
  *	msgp		ptr to msg buffer
  *
  * Returns:
- *	0	success and done
- *	<0	success, but we're waiting for something to finish.
- *	>0	an error occurred while handling the message.
+ *	0	success and करोne
+ *	<0	success, but we're रुकोing क्रम something to finish.
+ *	>0	an error occurred जबतक handling the message.
  * Side effects:
  *
  * Call context:
- *	process thread  (usually)
- *	interrupt
+ *	process thपढ़ो  (usually)
+ *	पूर्णांकerrupt
  *----------------------------------------------------------------
  */
-int prism2mgmt_start(struct wlandevice *wlandev, void *msgp)
-{
-	int result = 0;
-	struct hfa384x *hw = wlandev->priv;
-	struct p80211msg_dot11req_start *msg = msgp;
+पूर्णांक prism2mgmt_start(काष्ठा wlandevice *wlandev, व्योम *msgp)
+अणु
+	पूर्णांक result = 0;
+	काष्ठा hfa384x *hw = wlandev->priv;
+	काष्ठा p80211msg_करोt11req_start *msg = msgp;
 
-	struct p80211pstrd *pstr;
+	काष्ठा p80211pstrd *pstr;
 	u8 bytebuf[80];
-	struct hfa384x_bytestr *p2bytestr = (struct hfa384x_bytestr *)bytebuf;
+	काष्ठा hfa384x_bytestr *p2bytestr = (काष्ठा hfa384x_bytestr *)bytebuf;
 	u16 word;
 
 	wlandev->macmode = WLAN_MACMODE_NONE;
 
 	/* Set the SSID */
-	memcpy(&wlandev->ssid, &msg->ssid.data, sizeof(msg->ssid.data));
+	स_नकल(&wlandev->ssid, &msg->ssid.data, माप(msg->ssid.data));
 
 	/*** ADHOC IBSS ***/
-	/* see if current f/w is less than 8c3 */
-	if (HFA384x_FIRMWARE_VERSION(hw->ident_sta_fw.major,
+	/* see अगर current f/w is less than 8c3 */
+	अगर (HFA384x_FIRMWARE_VERSION(hw->ident_sta_fw.major,
 				     hw->ident_sta_fw.minor,
 				     hw->ident_sta_fw.variant) <
-	    HFA384x_FIRMWARE_VERSION(0, 8, 3)) {
+	    HFA384x_FIRMWARE_VERSION(0, 8, 3)) अणु
 		/* Ad-Hoc not quite supported on Prism2 */
 		msg->resultcode.status = P80211ENUM_msgitem_status_data_ok;
 		msg->resultcode.data = P80211ENUM_resultcode_not_supported;
-		goto done;
-	}
+		जाओ करोne;
+	पूर्ण
 
 	msg->resultcode.status = P80211ENUM_msgitem_status_data_ok;
 
 	/*** STATION ***/
 	/* Set the REQUIRED config items */
 	/* SSID */
-	pstr = (struct p80211pstrd *)&msg->ssid.data;
+	pstr = (काष्ठा p80211pstrd *)&msg->ssid.data;
 	prism2mgmt_pstr2bytestr(p2bytestr, pstr);
 	result = hfa384x_drvr_setconfig(hw, HFA384x_RID_CNFOWNSSID,
 					bytebuf, HFA384x_RID_CNFOWNSSID_LEN);
-	if (result) {
+	अगर (result) अणु
 		netdev_err(wlandev->netdev, "Failed to set CnfOwnSSID\n");
-		goto failed;
-	}
+		जाओ failed;
+	पूर्ण
 	result = hfa384x_drvr_setconfig(hw, HFA384x_RID_CNFDESIREDSSID,
 					bytebuf,
 					HFA384x_RID_CNFDESIREDSSID_LEN);
-	if (result) {
+	अगर (result) अणु
 		netdev_err(wlandev->netdev, "Failed to set CnfDesiredSSID\n");
-		goto failed;
-	}
+		जाओ failed;
+	पूर्ण
 
-	/* bsstype - we use the default in the ap firmware */
+	/* bsstype - we use the शेष in the ap firmware */
 	/* IBSS port */
 	hfa384x_drvr_setconfig16(hw, HFA384x_RID_CNFPORTTYPE, 0);
 
 	/* beacon period */
 	word = msg->beaconperiod.data;
 	result = hfa384x_drvr_setconfig16(hw, HFA384x_RID_CNFAPBCNINT, word);
-	if (result) {
+	अगर (result) अणु
 		netdev_err(wlandev->netdev,
 			   "Failed to set beacon period=%d.\n", word);
-		goto failed;
-	}
+		जाओ failed;
+	पूर्ण
 
 	/* dschannel */
 	word = msg->dschannel.data;
 	result = hfa384x_drvr_setconfig16(hw, HFA384x_RID_CNFOWNCHANNEL, word);
-	if (result) {
+	अगर (result) अणु
 		netdev_err(wlandev->netdev,
 			   "Failed to set channel=%d.\n", word);
-		goto failed;
-	}
+		जाओ failed;
+	पूर्ण
 	/* Basic rates */
 	word = p80211rate_to_p2bit(msg->basicrate1.data);
-	if (msg->basicrate2.status == P80211ENUM_msgitem_status_data_ok)
+	अगर (msg->basicrate2.status == P80211ENUM_msgitem_status_data_ok)
 		word |= p80211rate_to_p2bit(msg->basicrate2.data);
 
-	if (msg->basicrate3.status == P80211ENUM_msgitem_status_data_ok)
+	अगर (msg->basicrate3.status == P80211ENUM_msgitem_status_data_ok)
 		word |= p80211rate_to_p2bit(msg->basicrate3.data);
 
-	if (msg->basicrate4.status == P80211ENUM_msgitem_status_data_ok)
+	अगर (msg->basicrate4.status == P80211ENUM_msgitem_status_data_ok)
 		word |= p80211rate_to_p2bit(msg->basicrate4.data);
 
-	if (msg->basicrate5.status == P80211ENUM_msgitem_status_data_ok)
+	अगर (msg->basicrate5.status == P80211ENUM_msgitem_status_data_ok)
 		word |= p80211rate_to_p2bit(msg->basicrate5.data);
 
-	if (msg->basicrate6.status == P80211ENUM_msgitem_status_data_ok)
+	अगर (msg->basicrate6.status == P80211ENUM_msgitem_status_data_ok)
 		word |= p80211rate_to_p2bit(msg->basicrate6.data);
 
-	if (msg->basicrate7.status == P80211ENUM_msgitem_status_data_ok)
+	अगर (msg->basicrate7.status == P80211ENUM_msgitem_status_data_ok)
 		word |= p80211rate_to_p2bit(msg->basicrate7.data);
 
-	if (msg->basicrate8.status == P80211ENUM_msgitem_status_data_ok)
+	अगर (msg->basicrate8.status == P80211ENUM_msgitem_status_data_ok)
 		word |= p80211rate_to_p2bit(msg->basicrate8.data);
 
 	result = hfa384x_drvr_setconfig16(hw, HFA384x_RID_CNFBASICRATES, word);
-	if (result) {
+	अगर (result) अणु
 		netdev_err(wlandev->netdev,
 			   "Failed to set basicrates=%d.\n", word);
-		goto failed;
-	}
+		जाओ failed;
+	पूर्ण
 
 	/* Operational rates (supprates and txratecontrol) */
 	word = p80211rate_to_p2bit(msg->operationalrate1.data);
-	if (msg->operationalrate2.status == P80211ENUM_msgitem_status_data_ok)
+	अगर (msg->operationalrate2.status == P80211ENUM_msgitem_status_data_ok)
 		word |= p80211rate_to_p2bit(msg->operationalrate2.data);
 
-	if (msg->operationalrate3.status == P80211ENUM_msgitem_status_data_ok)
+	अगर (msg->operationalrate3.status == P80211ENUM_msgitem_status_data_ok)
 		word |= p80211rate_to_p2bit(msg->operationalrate3.data);
 
-	if (msg->operationalrate4.status == P80211ENUM_msgitem_status_data_ok)
+	अगर (msg->operationalrate4.status == P80211ENUM_msgitem_status_data_ok)
 		word |= p80211rate_to_p2bit(msg->operationalrate4.data);
 
-	if (msg->operationalrate5.status == P80211ENUM_msgitem_status_data_ok)
+	अगर (msg->operationalrate5.status == P80211ENUM_msgitem_status_data_ok)
 		word |= p80211rate_to_p2bit(msg->operationalrate5.data);
 
-	if (msg->operationalrate6.status == P80211ENUM_msgitem_status_data_ok)
+	अगर (msg->operationalrate6.status == P80211ENUM_msgitem_status_data_ok)
 		word |= p80211rate_to_p2bit(msg->operationalrate6.data);
 
-	if (msg->operationalrate7.status == P80211ENUM_msgitem_status_data_ok)
+	अगर (msg->operationalrate7.status == P80211ENUM_msgitem_status_data_ok)
 		word |= p80211rate_to_p2bit(msg->operationalrate7.data);
 
-	if (msg->operationalrate8.status == P80211ENUM_msgitem_status_data_ok)
+	अगर (msg->operationalrate8.status == P80211ENUM_msgitem_status_data_ok)
 		word |= p80211rate_to_p2bit(msg->operationalrate8.data);
 
 	result = hfa384x_drvr_setconfig16(hw, HFA384x_RID_CNFSUPPRATES, word);
-	if (result) {
+	अगर (result) अणु
 		netdev_err(wlandev->netdev,
 			   "Failed to set supprates=%d.\n", word);
-		goto failed;
-	}
+		जाओ failed;
+	पूर्ण
 
 	result = hfa384x_drvr_setconfig16(hw, HFA384x_RID_TXRATECNTL, word);
-	if (result) {
+	अगर (result) अणु
 		netdev_err(wlandev->netdev, "Failed to set txrates=%d.\n",
 			   word);
-		goto failed;
-	}
+		जाओ failed;
+	पूर्ण
 
-	/* Set the macmode so the frame setup code knows what to do */
-	if (msg->bsstype.data == P80211ENUM_bsstype_independent) {
+	/* Set the macmode so the frame setup code knows what to करो */
+	अगर (msg->bsstype.data == P80211ENUM_bsstype_independent) अणु
 		wlandev->macmode = WLAN_MACMODE_IBSS_STA;
 		/* lets extend the data length a bit */
 		hfa384x_drvr_setconfig16(hw, HFA384x_RID_CNFMAXDATALEN, 2304);
-	}
+	पूर्ण
 
 	/* Enable the Port */
 	result = hfa384x_drvr_enable(hw, 0);
-	if (result) {
+	अगर (result) अणु
 		netdev_err(wlandev->netdev,
 			   "Enable macport failed, result=%d.\n", result);
-		goto failed;
-	}
+		जाओ failed;
+	पूर्ण
 
 	msg->resultcode.data = P80211ENUM_resultcode_success;
 
-	goto done;
+	जाओ करोne;
 failed:
 	netdev_dbg(wlandev->netdev,
 		   "Failed to set a config option, result=%d\n", result);
 	msg->resultcode.data = P80211ENUM_resultcode_invalid_parameters;
 
-done:
-	return 0;
-}
+करोne:
+	वापस 0;
+पूर्ण
 
 /*----------------------------------------------------------------
- * prism2mgmt_readpda
+ * prism2mgmt_पढ़ोpda
  *
  * Collect the PDA data and put it in the message.
  *
  * Arguments:
- *	wlandev		wlan device structure
+ *	wlandev		wlan device काष्ठाure
  *	msgp		ptr to msg buffer
  *
  * Returns:
- *	0	success and done
- *	<0	success, but we're waiting for something to finish.
- *	>0	an error occurred while handling the message.
+ *	0	success and करोne
+ *	<0	success, but we're रुकोing क्रम something to finish.
+ *	>0	an error occurred जबतक handling the message.
  * Side effects:
  *
  * Call context:
- *	process thread  (usually)
+ *	process thपढ़ो  (usually)
  *----------------------------------------------------------------
  */
-int prism2mgmt_readpda(struct wlandevice *wlandev, void *msgp)
-{
-	struct hfa384x *hw = wlandev->priv;
-	struct p80211msg_p2req_readpda *msg = msgp;
-	int result;
+पूर्णांक prism2mgmt_पढ़ोpda(काष्ठा wlandevice *wlandev, व्योम *msgp)
+अणु
+	काष्ठा hfa384x *hw = wlandev->priv;
+	काष्ठा p80211msg_p2req_पढ़ोpda *msg = msgp;
+	पूर्णांक result;
 
 	/* We only support collecting the PDA when in the FWLOAD
 	 * state.
 	 */
-	if (wlandev->msdstate != WLAN_MSD_FWLOAD) {
+	अगर (wlandev->msdstate != WLAN_MSD_FWLOAD) अणु
 		netdev_err(wlandev->netdev,
 			   "PDA may only be read in the fwload state.\n");
 		msg->resultcode.data =
 		    P80211ENUM_resultcode_implementation_failure;
 		msg->resultcode.status = P80211ENUM_msgitem_status_data_ok;
-	} else {
-		/*  Call drvr_readpda(), it handles the auxport enable
-		 *  and validating the returned PDA.
+	पूर्ण अन्यथा अणु
+		/*  Call drvr_पढ़ोpda(), it handles the auxport enable
+		 *  and validating the वापसed PDA.
 		 */
-		result = hfa384x_drvr_readpda(hw,
+		result = hfa384x_drvr_पढ़ोpda(hw,
 					      msg->pda.data,
 					      HFA384x_PDA_LEN_MAX);
-		if (result) {
+		अगर (result) अणु
 			netdev_err(wlandev->netdev,
 				   "hfa384x_drvr_readpda() failed, result=%d\n",
 				   result);
@@ -755,308 +756,308 @@ int prism2mgmt_readpda(struct wlandevice *wlandev, void *msgp)
 			    P80211ENUM_resultcode_implementation_failure;
 			msg->resultcode.status =
 			    P80211ENUM_msgitem_status_data_ok;
-			return 0;
-		}
+			वापस 0;
+		पूर्ण
 		msg->pda.status = P80211ENUM_msgitem_status_data_ok;
 		msg->resultcode.data = P80211ENUM_resultcode_success;
 		msg->resultcode.status = P80211ENUM_msgitem_status_data_ok;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*----------------------------------------------------------------
  * prism2mgmt_ramdl_state
  *
- * Establishes the beginning/end of a card RAM download session.
+ * Establishes the beginning/end of a card RAM करोwnload session.
  *
- * It is expected that the ramdl_write() function will be called
- * one or more times between the 'enable' and 'disable' calls to
+ * It is expected that the ramdl_ग_लिखो() function will be called
+ * one or more बार between the 'enable' and 'disable' calls to
  * this function.
  *
  * Note: This function should not be called when a mac comm port
  *       is active.
  *
  * Arguments:
- *	wlandev		wlan device structure
+ *	wlandev		wlan device काष्ठाure
  *	msgp		ptr to msg buffer
  *
  * Returns:
- *	0	success and done
- *	<0	success, but we're waiting for something to finish.
- *	>0	an error occurred while handling the message.
+ *	0	success and करोne
+ *	<0	success, but we're रुकोing क्रम something to finish.
+ *	>0	an error occurred जबतक handling the message.
  * Side effects:
  *
  * Call context:
- *	process thread  (usually)
+ *	process thपढ़ो  (usually)
  *----------------------------------------------------------------
  */
-int prism2mgmt_ramdl_state(struct wlandevice *wlandev, void *msgp)
-{
-	struct hfa384x *hw = wlandev->priv;
-	struct p80211msg_p2req_ramdl_state *msg = msgp;
+पूर्णांक prism2mgmt_ramdl_state(काष्ठा wlandevice *wlandev, व्योम *msgp)
+अणु
+	काष्ठा hfa384x *hw = wlandev->priv;
+	काष्ठा p80211msg_p2req_ramdl_state *msg = msgp;
 
-	if (wlandev->msdstate != WLAN_MSD_FWLOAD) {
+	अगर (wlandev->msdstate != WLAN_MSD_FWLOAD) अणु
 		netdev_err(wlandev->netdev,
 			   "ramdl_state(): may only be called in the fwload state.\n");
 		msg->resultcode.data =
 		    P80211ENUM_resultcode_implementation_failure;
 		msg->resultcode.status = P80211ENUM_msgitem_status_data_ok;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	/*
-	 ** Note: Interrupts are locked out if this is an AP and are NOT
-	 ** locked out if this is a station.
+	 ** Note: Interrupts are locked out अगर this is an AP and are NOT
+	 ** locked out अगर this is a station.
 	 */
 
 	msg->resultcode.status = P80211ENUM_msgitem_status_data_ok;
-	if (msg->enable.data == P80211ENUM_truth_true) {
-		if (hfa384x_drvr_ramdl_enable(hw, msg->exeaddr.data)) {
+	अगर (msg->enable.data == P80211ENUM_truth_true) अणु
+		अगर (hfa384x_drvr_ramdl_enable(hw, msg->exeaddr.data)) अणु
 			msg->resultcode.data =
 			    P80211ENUM_resultcode_implementation_failure;
-		} else {
+		पूर्ण अन्यथा अणु
 			msg->resultcode.data = P80211ENUM_resultcode_success;
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		hfa384x_drvr_ramdl_disable(hw);
 		msg->resultcode.data = P80211ENUM_resultcode_success;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*----------------------------------------------------------------
- * prism2mgmt_ramdl_write
+ * prism2mgmt_ramdl_ग_लिखो
  *
- * Writes a buffer to the card RAM using the download state.  This
- * is for writing code to card RAM.  To just read or write raw data
+ * Writes a buffer to the card RAM using the करोwnload state.  This
+ * is क्रम writing code to card RAM.  To just पढ़ो or ग_लिखो raw data
  * use the aux functions.
  *
  * Arguments:
- *	wlandev		wlan device structure
+ *	wlandev		wlan device काष्ठाure
  *	msgp		ptr to msg buffer
  *
  * Returns:
- *	0	success and done
- *	<0	success, but we're waiting for something to finish.
- *	>0	an error occurred while handling the message.
+ *	0	success and करोne
+ *	<0	success, but we're रुकोing क्रम something to finish.
+ *	>0	an error occurred जबतक handling the message.
  * Side effects:
  *
  * Call context:
- *	process thread  (usually)
+ *	process thपढ़ो  (usually)
  *----------------------------------------------------------------
  */
-int prism2mgmt_ramdl_write(struct wlandevice *wlandev, void *msgp)
-{
-	struct hfa384x *hw = wlandev->priv;
-	struct p80211msg_p2req_ramdl_write *msg = msgp;
+पूर्णांक prism2mgmt_ramdl_ग_लिखो(काष्ठा wlandevice *wlandev, व्योम *msgp)
+अणु
+	काष्ठा hfa384x *hw = wlandev->priv;
+	काष्ठा p80211msg_p2req_ramdl_ग_लिखो *msg = msgp;
 	u32 addr;
 	u32 len;
 	u8 *buf;
 
-	if (wlandev->msdstate != WLAN_MSD_FWLOAD) {
+	अगर (wlandev->msdstate != WLAN_MSD_FWLOAD) अणु
 		netdev_err(wlandev->netdev,
 			   "ramdl_write(): may only be called in the fwload state.\n");
 		msg->resultcode.data =
 		    P80211ENUM_resultcode_implementation_failure;
 		msg->resultcode.status = P80211ENUM_msgitem_status_data_ok;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	msg->resultcode.status = P80211ENUM_msgitem_status_data_ok;
 	/* first validate the length */
-	if (msg->len.data > sizeof(msg->data.data)) {
+	अगर (msg->len.data > माप(msg->data.data)) अणु
 		msg->resultcode.status =
 		    P80211ENUM_resultcode_invalid_parameters;
-		return 0;
-	}
-	/* call the hfa384x function to do the write */
+		वापस 0;
+	पूर्ण
+	/* call the hfa384x function to करो the ग_लिखो */
 	addr = msg->addr.data;
 	len = msg->len.data;
 	buf = msg->data.data;
-	if (hfa384x_drvr_ramdl_write(hw, addr, buf, len))
+	अगर (hfa384x_drvr_ramdl_ग_लिखो(hw, addr, buf, len))
 		msg->resultcode.data = P80211ENUM_resultcode_refused;
 
 	msg->resultcode.data = P80211ENUM_resultcode_success;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*----------------------------------------------------------------
  * prism2mgmt_flashdl_state
  *
- * Establishes the beginning/end of a card Flash download session.
+ * Establishes the beginning/end of a card Flash करोwnload session.
  *
- * It is expected that the flashdl_write() function will be called
- * one or more times between the 'enable' and 'disable' calls to
+ * It is expected that the flashdl_ग_लिखो() function will be called
+ * one or more बार between the 'enable' and 'disable' calls to
  * this function.
  *
  * Note: This function should not be called when a mac comm port
  *       is active.
  *
  * Arguments:
- *	wlandev		wlan device structure
+ *	wlandev		wlan device काष्ठाure
  *	msgp		ptr to msg buffer
  *
  * Returns:
- *	0	success and done
- *	<0	success, but we're waiting for something to finish.
- *	>0	an error occurred while handling the message.
+ *	0	success and करोne
+ *	<0	success, but we're रुकोing क्रम something to finish.
+ *	>0	an error occurred जबतक handling the message.
  * Side effects:
  *
  * Call context:
- *	process thread  (usually)
+ *	process thपढ़ो  (usually)
  *----------------------------------------------------------------
  */
-int prism2mgmt_flashdl_state(struct wlandevice *wlandev, void *msgp)
-{
-	int result = 0;
-	struct hfa384x *hw = wlandev->priv;
-	struct p80211msg_p2req_flashdl_state *msg = msgp;
+पूर्णांक prism2mgmt_flashdl_state(काष्ठा wlandevice *wlandev, व्योम *msgp)
+अणु
+	पूर्णांक result = 0;
+	काष्ठा hfa384x *hw = wlandev->priv;
+	काष्ठा p80211msg_p2req_flashdl_state *msg = msgp;
 
-	if (wlandev->msdstate != WLAN_MSD_FWLOAD) {
+	अगर (wlandev->msdstate != WLAN_MSD_FWLOAD) अणु
 		netdev_err(wlandev->netdev,
 			   "flashdl_state(): may only be called in the fwload state.\n");
 		msg->resultcode.data =
 		    P80211ENUM_resultcode_implementation_failure;
 		msg->resultcode.status = P80211ENUM_msgitem_status_data_ok;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	/*
-	 ** Note: Interrupts are locked out if this is an AP and are NOT
-	 ** locked out if this is a station.
+	 ** Note: Interrupts are locked out अगर this is an AP and are NOT
+	 ** locked out अगर this is a station.
 	 */
 
 	msg->resultcode.status = P80211ENUM_msgitem_status_data_ok;
-	if (msg->enable.data == P80211ENUM_truth_true) {
-		if (hfa384x_drvr_flashdl_enable(hw)) {
+	अगर (msg->enable.data == P80211ENUM_truth_true) अणु
+		अगर (hfa384x_drvr_flashdl_enable(hw)) अणु
 			msg->resultcode.data =
 			    P80211ENUM_resultcode_implementation_failure;
-		} else {
+		पूर्ण अन्यथा अणु
 			msg->resultcode.data = P80211ENUM_resultcode_success;
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		hfa384x_drvr_flashdl_disable(hw);
 		msg->resultcode.data = P80211ENUM_resultcode_success;
-		/* NOTE: At this point, the MAC is in the post-reset
+		/* NOTE: At this poपूर्णांक, the MAC is in the post-reset
 		 * state and the driver is in the fwload state.
-		 * We need to get the MAC back into the fwload
-		 * state.  To do this, we set the nsdstate to HWPRESENT
-		 * and then call the ifstate function to redo everything
-		 * that got us into the fwload state.
+		 * We need to get the MAC back पूर्णांकo the fwload
+		 * state.  To करो this, we set the nsdstate to HWPRESENT
+		 * and then call the अगरstate function to reकरो everything
+		 * that got us पूर्णांकo the fwload state.
 		 */
 		wlandev->msdstate = WLAN_MSD_HWPRESENT;
-		result = prism2sta_ifstate(wlandev, P80211ENUM_ifstate_fwload);
-		if (result != P80211ENUM_resultcode_success) {
+		result = prism2sta_अगरstate(wlandev, P80211ENUM_अगरstate_fwload);
+		अगर (result != P80211ENUM_resultcode_success) अणु
 			netdev_err(wlandev->netdev,
 				   "prism2sta_ifstate(fwload) failed, P80211ENUM_resultcode=%d\n",
 				   result);
 			msg->resultcode.data =
 			    P80211ENUM_resultcode_implementation_failure;
 			result = -1;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return result;
-}
+	वापस result;
+पूर्ण
 
 /*----------------------------------------------------------------
- * prism2mgmt_flashdl_write
+ * prism2mgmt_flashdl_ग_लिखो
  *
  *
  *
  * Arguments:
- *	wlandev		wlan device structure
+ *	wlandev		wlan device काष्ठाure
  *	msgp		ptr to msg buffer
  *
  * Returns:
- *	0	success and done
- *	<0	success, but we're waiting for something to finish.
- *	>0	an error occurred while handling the message.
+ *	0	success and करोne
+ *	<0	success, but we're रुकोing क्रम something to finish.
+ *	>0	an error occurred जबतक handling the message.
  * Side effects:
  *
  * Call context:
- *	process thread  (usually)
+ *	process thपढ़ो  (usually)
  *----------------------------------------------------------------
  */
-int prism2mgmt_flashdl_write(struct wlandevice *wlandev, void *msgp)
-{
-	struct hfa384x *hw = wlandev->priv;
-	struct p80211msg_p2req_flashdl_write *msg = msgp;
+पूर्णांक prism2mgmt_flashdl_ग_लिखो(काष्ठा wlandevice *wlandev, व्योम *msgp)
+अणु
+	काष्ठा hfa384x *hw = wlandev->priv;
+	काष्ठा p80211msg_p2req_flashdl_ग_लिखो *msg = msgp;
 	u32 addr;
 	u32 len;
 	u8 *buf;
 
-	if (wlandev->msdstate != WLAN_MSD_FWLOAD) {
+	अगर (wlandev->msdstate != WLAN_MSD_FWLOAD) अणु
 		netdev_err(wlandev->netdev,
 			   "flashdl_write(): may only be called in the fwload state.\n");
 		msg->resultcode.data =
 		    P80211ENUM_resultcode_implementation_failure;
 		msg->resultcode.status = P80211ENUM_msgitem_status_data_ok;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	/*
-	 ** Note: Interrupts are locked out if this is an AP and are NOT
-	 ** locked out if this is a station.
+	 ** Note: Interrupts are locked out अगर this is an AP and are NOT
+	 ** locked out अगर this is a station.
 	 */
 
 	msg->resultcode.status = P80211ENUM_msgitem_status_data_ok;
 	/* first validate the length */
-	if (msg->len.data > sizeof(msg->data.data)) {
+	अगर (msg->len.data > माप(msg->data.data)) अणु
 		msg->resultcode.status =
 		    P80211ENUM_resultcode_invalid_parameters;
-		return 0;
-	}
-	/* call the hfa384x function to do the write */
+		वापस 0;
+	पूर्ण
+	/* call the hfa384x function to करो the ग_लिखो */
 	addr = msg->addr.data;
 	len = msg->len.data;
 	buf = msg->data.data;
-	if (hfa384x_drvr_flashdl_write(hw, addr, buf, len))
+	अगर (hfa384x_drvr_flashdl_ग_लिखो(hw, addr, buf, len))
 		msg->resultcode.data = P80211ENUM_resultcode_refused;
 
 	msg->resultcode.data = P80211ENUM_resultcode_success;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*----------------------------------------------------------------
- * prism2mgmt_autojoin
+ * prism2mgmt_स्वतःjoin
  *
  * Associate with an ESS.
  *
  * Arguments:
- *	wlandev		wlan device structure
+ *	wlandev		wlan device काष्ठाure
  *	msgp		ptr to msg buffer
  *
  * Returns:
- *	0	success and done
- *	<0	success, but we're waiting for something to finish.
- *	>0	an error occurred while handling the message.
+ *	0	success and करोne
+ *	<0	success, but we're रुकोing क्रम something to finish.
+ *	>0	an error occurred जबतक handling the message.
  * Side effects:
  *
  * Call context:
- *	process thread  (usually)
- *	interrupt
+ *	process thपढ़ो  (usually)
+ *	पूर्णांकerrupt
  *----------------------------------------------------------------
  */
-int prism2mgmt_autojoin(struct wlandevice *wlandev, void *msgp)
-{
-	struct hfa384x *hw = wlandev->priv;
-	int result = 0;
+पूर्णांक prism2mgmt_स्वतःjoin(काष्ठा wlandevice *wlandev, व्योम *msgp)
+अणु
+	काष्ठा hfa384x *hw = wlandev->priv;
+	पूर्णांक result = 0;
 	u16 reg;
 	u16 port_type;
-	struct p80211msg_lnxreq_autojoin *msg = msgp;
-	struct p80211pstrd *pstr;
+	काष्ठा p80211msg_lnxreq_स्वतःjoin *msg = msgp;
+	काष्ठा p80211pstrd *pstr;
 	u8 bytebuf[256];
-	struct hfa384x_bytestr *p2bytestr = (struct hfa384x_bytestr *)bytebuf;
+	काष्ठा hfa384x_bytestr *p2bytestr = (काष्ठा hfa384x_bytestr *)bytebuf;
 
 	wlandev->macmode = WLAN_MACMODE_NONE;
 
 	/* Set the SSID */
-	memcpy(&wlandev->ssid, &msg->ssid.data, sizeof(msg->ssid.data));
+	स_नकल(&wlandev->ssid, &msg->ssid.data, माप(msg->ssid.data));
 
 	/* Disable the Port */
 	hfa384x_drvr_disable(hw, 0);
@@ -1066,16 +1067,16 @@ int prism2mgmt_autojoin(struct wlandevice *wlandev, void *msgp)
 	hfa384x_drvr_setconfig16(hw, HFA384x_RID_TXRATECNTL, 0x000f);
 
 	/* Set the auth type */
-	if (msg->authtype.data == P80211ENUM_authalg_sharedkey)
+	अगर (msg->authtype.data == P80211ENUM_authalg_sharedkey)
 		reg = HFA384x_CNFAUTHENTICATION_SHAREDKEY;
-	else
+	अन्यथा
 		reg = HFA384x_CNFAUTHENTICATION_OPENSYSTEM;
 
 	hfa384x_drvr_setconfig16(hw, HFA384x_RID_CNFAUTHENTICATION, reg);
 
 	/* Set the ssid */
-	memset(bytebuf, 0, 256);
-	pstr = (struct p80211pstrd *)&msg->ssid.data;
+	स_रखो(bytebuf, 0, 256);
+	pstr = (काष्ठा p80211pstrd *)&msg->ssid.data;
 	prism2mgmt_pstr2bytestr(p2bytestr, pstr);
 	result = hfa384x_drvr_setconfig(hw, HFA384x_RID_CNFDESIREDSSID,
 					bytebuf,
@@ -1091,266 +1092,266 @@ int prism2mgmt_autojoin(struct wlandevice *wlandev, void *msgp)
 	msg->resultcode.status = P80211ENUM_msgitem_status_data_ok;
 	msg->resultcode.data = P80211ENUM_resultcode_success;
 
-	return result;
-}
+	वापस result;
+पूर्ण
 
 /*----------------------------------------------------------------
- * prism2mgmt_wlansniff
+ * prism2mgmt_wlansnअगरf
  *
- * Start or stop sniffing.
+ * Start or stop snअगरfing.
  *
  * Arguments:
- *	wlandev		wlan device structure
+ *	wlandev		wlan device काष्ठाure
  *	msgp		ptr to msg buffer
  *
  * Returns:
- *	0	success and done
- *	<0	success, but we're waiting for something to finish.
- *	>0	an error occurred while handling the message.
+ *	0	success and करोne
+ *	<0	success, but we're रुकोing क्रम something to finish.
+ *	>0	an error occurred जबतक handling the message.
  * Side effects:
  *
  * Call context:
- *	process thread  (usually)
- *	interrupt
+ *	process thपढ़ो  (usually)
+ *	पूर्णांकerrupt
  *----------------------------------------------------------------
  */
-int prism2mgmt_wlansniff(struct wlandevice *wlandev, void *msgp)
-{
-	int result = 0;
-	struct p80211msg_lnxreq_wlansniff *msg = msgp;
+पूर्णांक prism2mgmt_wlansnअगरf(काष्ठा wlandevice *wlandev, व्योम *msgp)
+अणु
+	पूर्णांक result = 0;
+	काष्ठा p80211msg_lnxreq_wlansnअगरf *msg = msgp;
 
-	struct hfa384x *hw = wlandev->priv;
+	काष्ठा hfa384x *hw = wlandev->priv;
 	u16 word;
 
 	msg->resultcode.status = P80211ENUM_msgitem_status_data_ok;
-	switch (msg->enable.data) {
-	case P80211ENUM_truth_false:
+	चयन (msg->enable.data) अणु
+	हाल P80211ENUM_truth_false:
 		/* Confirm that we're in monitor mode */
-		if (wlandev->netdev->type == ARPHRD_ETHER) {
+		अगर (wlandev->netdev->type == ARPHRD_ETHER) अणु
 			msg->resultcode.data =
 			    P80211ENUM_resultcode_invalid_parameters;
-			return 0;
-		}
+			वापस 0;
+		पूर्ण
 		/* Disable monitor mode */
 		result = hfa384x_cmd_monitor(hw, HFA384x_MONITOR_DISABLE);
-		if (result) {
+		अगर (result) अणु
 			netdev_dbg(wlandev->netdev,
 				   "failed to disable monitor mode, result=%d\n",
 				   result);
-			goto failed;
-		}
+			जाओ failed;
+		पूर्ण
 		/* Disable port 0 */
 		result = hfa384x_drvr_disable(hw, 0);
-		if (result) {
+		अगर (result) अणु
 			netdev_dbg
 			(wlandev->netdev,
 			     "failed to disable port 0 after sniffing, result=%d\n",
 			     result);
-			goto failed;
-		}
+			जाओ failed;
+		पूर्ण
 		/* Clear the driver state */
 		wlandev->netdev->type = ARPHRD_ETHER;
 
 		/* Restore the wepflags */
 		result = hfa384x_drvr_setconfig16(hw,
 						  HFA384x_RID_CNFWEPFLAGS,
-						  hw->presniff_wepflags);
-		if (result) {
+						  hw->presnअगरf_wepflags);
+		अगर (result) अणु
 			netdev_dbg
 			    (wlandev->netdev,
 			     "failed to restore wepflags=0x%04x, result=%d\n",
-			     hw->presniff_wepflags, result);
-			goto failed;
-		}
+			     hw->presnअगरf_wepflags, result);
+			जाओ failed;
+		पूर्ण
 
-		/* Set the port to its prior type and enable (if necessary) */
-		if (hw->presniff_port_type != 0) {
-			word = hw->presniff_port_type;
+		/* Set the port to its prior type and enable (अगर necessary) */
+		अगर (hw->presnअगरf_port_type != 0) अणु
+			word = hw->presnअगरf_port_type;
 			result = hfa384x_drvr_setconfig16(hw,
 							  HFA384x_RID_CNFPORTTYPE,
 							  word);
-			if (result) {
+			अगर (result) अणु
 				netdev_dbg
 				    (wlandev->netdev,
 				     "failed to restore porttype, result=%d\n",
 				     result);
-				goto failed;
-			}
+				जाओ failed;
+			पूर्ण
 
 			/* Enable the port */
 			result = hfa384x_drvr_enable(hw, 0);
-			if (result) {
+			अगर (result) अणु
 				netdev_dbg(wlandev->netdev,
 					   "failed to enable port to presniff setting, result=%d\n",
 					   result);
-				goto failed;
-			}
-		} else {
+				जाओ failed;
+			पूर्ण
+		पूर्ण अन्यथा अणु
 			result = hfa384x_drvr_disable(hw, 0);
-		}
+		पूर्ण
 
 		netdev_info(wlandev->netdev, "monitor mode disabled\n");
 		msg->resultcode.data = P80211ENUM_resultcode_success;
-		return 0;
-	case P80211ENUM_truth_true:
-		/* Disable the port (if enabled), only check Port 0 */
-		if (hw->port_enabled[0]) {
-			if (wlandev->netdev->type == ARPHRD_ETHER) {
+		वापस 0;
+	हाल P80211ENUM_truth_true:
+		/* Disable the port (अगर enabled), only check Port 0 */
+		अगर (hw->port_enabled[0]) अणु
+			अगर (wlandev->netdev->type == ARPHRD_ETHER) अणु
 				/* Save macport 0 state */
-				result = hfa384x_drvr_getconfig16(hw,
+				result = hfa384x_drvr_अ_लोonfig16(hw,
 								  HFA384x_RID_CNFPORTTYPE,
-								  &hw->presniff_port_type);
-				if (result) {
+								  &hw->presnअगरf_port_type);
+				अगर (result) अणु
 					netdev_dbg
 					(wlandev->netdev,
 					     "failed to read porttype, result=%d\n",
 					     result);
-					goto failed;
-				}
+					जाओ failed;
+				पूर्ण
 				/* Save the wepflags state */
-				result = hfa384x_drvr_getconfig16(hw,
+				result = hfa384x_drvr_अ_लोonfig16(hw,
 								  HFA384x_RID_CNFWEPFLAGS,
-								  &hw->presniff_wepflags);
-				if (result) {
+								  &hw->presnअगरf_wepflags);
+				अगर (result) अणु
 					netdev_dbg
 					(wlandev->netdev,
 					     "failed to read wepflags, result=%d\n",
 					     result);
-					goto failed;
-				}
+					जाओ failed;
+				पूर्ण
 				hfa384x_drvr_stop(hw);
 				result = hfa384x_drvr_start(hw);
-				if (result) {
+				अगर (result) अणु
 					netdev_dbg(wlandev->netdev,
 						   "failed to restart the card for sniffing, result=%d\n",
 						   result);
-					goto failed;
-				}
-			} else {
+					जाओ failed;
+				पूर्ण
+			पूर्ण अन्यथा अणु
 				/* Disable the port */
 				result = hfa384x_drvr_disable(hw, 0);
-				if (result) {
+				अगर (result) अणु
 					netdev_dbg(wlandev->netdev,
 						   "failed to enable port for sniffing, result=%d\n",
 						   result);
-					goto failed;
-				}
-			}
-		} else {
-			hw->presniff_port_type = 0;
-		}
+					जाओ failed;
+				पूर्ण
+			पूर्ण
+		पूर्ण अन्यथा अणु
+			hw->presnअगरf_port_type = 0;
+		पूर्ण
 
-		/* Set the channel we wish to sniff  */
+		/* Set the channel we wish to snअगरf  */
 		word = msg->channel.data;
 		result = hfa384x_drvr_setconfig16(hw,
 						  HFA384x_RID_CNFOWNCHANNEL,
 						  word);
-		hw->sniff_channel = word;
+		hw->snअगरf_channel = word;
 
-		if (result) {
+		अगर (result) अणु
 			netdev_dbg(wlandev->netdev,
 				   "failed to set channel %d, result=%d\n",
 				   word, result);
-			goto failed;
-		}
+			जाओ failed;
+		पूर्ण
 
-		/* Now if we're already sniffing, we can skip the rest */
-		if (wlandev->netdev->type != ARPHRD_ETHER) {
+		/* Now अगर we're alपढ़ोy snअगरfing, we can skip the rest */
+		अगर (wlandev->netdev->type != ARPHRD_ETHER) अणु
 			/* Set the port type to pIbss */
 			word = HFA384x_PORTTYPE_PSUEDOIBSS;
 			result = hfa384x_drvr_setconfig16(hw,
 							  HFA384x_RID_CNFPORTTYPE,
 							  word);
-			if (result) {
+			अगर (result) अणु
 				netdev_dbg
 				    (wlandev->netdev,
 				     "failed to set porttype %d, result=%d\n",
 				     word, result);
-				goto failed;
-			}
-			if ((msg->keepwepflags.status ==
+				जाओ failed;
+			पूर्ण
+			अगर ((msg->keepwepflags.status ==
 			     P80211ENUM_msgitem_status_data_ok) &&
-			    (msg->keepwepflags.data != P80211ENUM_truth_true)) {
-				/* Set the wepflags for no decryption */
+			    (msg->keepwepflags.data != P80211ENUM_truth_true)) अणु
+				/* Set the wepflags क्रम no decryption */
 				word = HFA384x_WEPFLAGS_DISABLE_TXCRYPT |
 				    HFA384x_WEPFLAGS_DISABLE_RXCRYPT;
 				result =
 				    hfa384x_drvr_setconfig16(hw,
 							     HFA384x_RID_CNFWEPFLAGS,
 							     word);
-			}
+			पूर्ण
 
-			if (result) {
+			अगर (result) अणु
 				netdev_dbg
 				  (wlandev->netdev,
 				   "failed to set wepflags=0x%04x, result=%d\n",
 				   word, result);
-				goto failed;
-			}
-		}
+				जाओ failed;
+			पूर्ण
+		पूर्ण
 
 		/* Do we want to strip the FCS in monitor mode? */
-		if ((msg->stripfcs.status ==
+		अगर ((msg->stripfcs.status ==
 		     P80211ENUM_msgitem_status_data_ok) &&
-		    (msg->stripfcs.data == P80211ENUM_truth_true)) {
-			hw->sniff_fcs = 0;
-		} else {
-			hw->sniff_fcs = 1;
-		}
+		    (msg->stripfcs.data == P80211ENUM_truth_true)) अणु
+			hw->snअगरf_fcs = 0;
+		पूर्ण अन्यथा अणु
+			hw->snअगरf_fcs = 1;
+		पूर्ण
 
 		/* Do we want to truncate the packets? */
-		if (msg->packet_trunc.status ==
-		    P80211ENUM_msgitem_status_data_ok) {
-			hw->sniff_truncate = msg->packet_trunc.data;
-		} else {
-			hw->sniff_truncate = 0;
-		}
+		अगर (msg->packet_trunc.status ==
+		    P80211ENUM_msgitem_status_data_ok) अणु
+			hw->snअगरf_truncate = msg->packet_trunc.data;
+		पूर्ण अन्यथा अणु
+			hw->snअगरf_truncate = 0;
+		पूर्ण
 
 		/* Enable the port */
 		result = hfa384x_drvr_enable(hw, 0);
-		if (result) {
+		अगर (result) अणु
 			netdev_dbg
 			    (wlandev->netdev,
 			     "failed to enable port for sniffing, result=%d\n",
 			     result);
-			goto failed;
-		}
+			जाओ failed;
+		पूर्ण
 		/* Enable monitor mode */
 		result = hfa384x_cmd_monitor(hw, HFA384x_MONITOR_ENABLE);
-		if (result) {
+		अगर (result) अणु
 			netdev_dbg(wlandev->netdev,
 				   "failed to enable monitor mode, result=%d\n",
 				   result);
-			goto failed;
-		}
+			जाओ failed;
+		पूर्ण
 
-		if (wlandev->netdev->type == ARPHRD_ETHER)
+		अगर (wlandev->netdev->type == ARPHRD_ETHER)
 			netdev_info(wlandev->netdev, "monitor mode enabled\n");
 
 		/* Set the driver state */
 		/* Do we want the prism2 header? */
-		if ((msg->prismheader.status ==
+		अगर ((msg->prismheader.status ==
 		     P80211ENUM_msgitem_status_data_ok) &&
-		    (msg->prismheader.data == P80211ENUM_truth_true)) {
-			hw->sniffhdr = 0;
+		    (msg->prismheader.data == P80211ENUM_truth_true)) अणु
+			hw->snअगरfhdr = 0;
 			wlandev->netdev->type = ARPHRD_IEEE80211_PRISM;
-		} else if ((msg->wlanheader.status ==
+		पूर्ण अन्यथा अगर ((msg->wlanheader.status ==
 			    P80211ENUM_msgitem_status_data_ok) &&
-			   (msg->wlanheader.data == P80211ENUM_truth_true)) {
-			hw->sniffhdr = 1;
+			   (msg->wlanheader.data == P80211ENUM_truth_true)) अणु
+			hw->snअगरfhdr = 1;
 			wlandev->netdev->type = ARPHRD_IEEE80211_PRISM;
-		} else {
+		पूर्ण अन्यथा अणु
 			wlandev->netdev->type = ARPHRD_IEEE80211;
-		}
+		पूर्ण
 
 		msg->resultcode.data = P80211ENUM_resultcode_success;
-		return 0;
-	default:
+		वापस 0;
+	शेष:
 		msg->resultcode.data = P80211ENUM_resultcode_invalid_parameters;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 failed:
 	msg->resultcode.data = P80211ENUM_resultcode_refused;
-	return 0;
-}
+	वापस 0;
+पूर्ण

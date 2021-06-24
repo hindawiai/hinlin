@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
  * altera_uart.c -- Altera UART driver
  *
@@ -9,536 +10,536 @@
  * (C) Copyright 2010, Tobias Klauser <tklauser@distanz.ch>
  */
 
-#include <linux/kernel.h>
-#include <linux/init.h>
-#include <linux/timer.h>
-#include <linux/interrupt.h>
-#include <linux/module.h>
-#include <linux/console.h>
-#include <linux/tty.h>
-#include <linux/tty_flip.h>
-#include <linux/serial.h>
-#include <linux/serial_core.h>
-#include <linux/platform_device.h>
-#include <linux/of.h>
-#include <linux/io.h>
-#include <linux/altera_uart.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/init.h>
+#समावेश <linux/समयr.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/module.h>
+#समावेश <linux/console.h>
+#समावेश <linux/tty.h>
+#समावेश <linux/tty_flip.h>
+#समावेश <linux/serial.h>
+#समावेश <linux/serial_core.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/of.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/altera_uart.h>
 
-#define DRV_NAME "altera_uart"
-#define SERIAL_ALTERA_MAJOR 204
-#define SERIAL_ALTERA_MINOR 213
+#घोषणा DRV_NAME "altera_uart"
+#घोषणा SERIAL_ALTERA_MAJOR 204
+#घोषणा SERIAL_ALTERA_MINOR 213
 
 /*
- * Altera UART register definitions according to the Nios UART datasheet:
+ * Altera UART रेजिस्टर definitions according to the Nios UART datasheet:
  * http://www.altera.com/literature/ds/ds_nios_uart.pdf
  */
 
-#define ALTERA_UART_SIZE		32
+#घोषणा ALTERA_UART_SIZE		32
 
-#define ALTERA_UART_RXDATA_REG		0
-#define ALTERA_UART_TXDATA_REG		4
-#define ALTERA_UART_STATUS_REG		8
-#define ALTERA_UART_CONTROL_REG		12
-#define ALTERA_UART_DIVISOR_REG		16
-#define ALTERA_UART_EOP_REG		20
+#घोषणा ALTERA_UART_RXDATA_REG		0
+#घोषणा ALTERA_UART_TXDATA_REG		4
+#घोषणा ALTERA_UART_STATUS_REG		8
+#घोषणा ALTERA_UART_CONTROL_REG		12
+#घोषणा ALTERA_UART_DIVISOR_REG		16
+#घोषणा ALTERA_UART_EOP_REG		20
 
-#define ALTERA_UART_STATUS_PE_MSK	0x0001	/* parity error */
-#define ALTERA_UART_STATUS_FE_MSK	0x0002	/* framing error */
-#define ALTERA_UART_STATUS_BRK_MSK	0x0004	/* break */
-#define ALTERA_UART_STATUS_ROE_MSK	0x0008	/* RX overrun error */
-#define ALTERA_UART_STATUS_TOE_MSK	0x0010	/* TX overrun error */
-#define ALTERA_UART_STATUS_TMT_MSK	0x0020	/* TX shift register state */
-#define ALTERA_UART_STATUS_TRDY_MSK	0x0040	/* TX ready */
-#define ALTERA_UART_STATUS_RRDY_MSK	0x0080	/* RX ready */
-#define ALTERA_UART_STATUS_E_MSK	0x0100	/* exception condition */
-#define ALTERA_UART_STATUS_DCTS_MSK	0x0400	/* CTS logic-level change */
-#define ALTERA_UART_STATUS_CTS_MSK	0x0800	/* CTS logic state */
-#define ALTERA_UART_STATUS_EOP_MSK	0x1000	/* EOP written/read */
+#घोषणा ALTERA_UART_STATUS_PE_MSK	0x0001	/* parity error */
+#घोषणा ALTERA_UART_STATUS_FE_MSK	0x0002	/* framing error */
+#घोषणा ALTERA_UART_STATUS_BRK_MSK	0x0004	/* अवरोध */
+#घोषणा ALTERA_UART_STATUS_ROE_MSK	0x0008	/* RX overrun error */
+#घोषणा ALTERA_UART_STATUS_TOE_MSK	0x0010	/* TX overrun error */
+#घोषणा ALTERA_UART_STATUS_TMT_MSK	0x0020	/* TX shअगरt रेजिस्टर state */
+#घोषणा ALTERA_UART_STATUS_TRDY_MSK	0x0040	/* TX पढ़ोy */
+#घोषणा ALTERA_UART_STATUS_RRDY_MSK	0x0080	/* RX पढ़ोy */
+#घोषणा ALTERA_UART_STATUS_E_MSK	0x0100	/* exception condition */
+#घोषणा ALTERA_UART_STATUS_DCTS_MSK	0x0400	/* CTS logic-level change */
+#घोषणा ALTERA_UART_STATUS_CTS_MSK	0x0800	/* CTS logic state */
+#घोषणा ALTERA_UART_STATUS_EOP_MSK	0x1000	/* EOP written/पढ़ो */
 
-						/* Enable interrupt on... */
-#define ALTERA_UART_CONTROL_PE_MSK	0x0001	/* ...parity error */
-#define ALTERA_UART_CONTROL_FE_MSK	0x0002	/* ...framing error */
-#define ALTERA_UART_CONTROL_BRK_MSK	0x0004	/* ...break */
-#define ALTERA_UART_CONTROL_ROE_MSK	0x0008	/* ...RX overrun */
-#define ALTERA_UART_CONTROL_TOE_MSK	0x0010	/* ...TX overrun */
-#define ALTERA_UART_CONTROL_TMT_MSK	0x0020	/* ...TX shift register empty */
-#define ALTERA_UART_CONTROL_TRDY_MSK	0x0040	/* ...TX ready */
-#define ALTERA_UART_CONTROL_RRDY_MSK	0x0080	/* ...RX ready */
-#define ALTERA_UART_CONTROL_E_MSK	0x0100	/* ...exception*/
+						/* Enable पूर्णांकerrupt on... */
+#घोषणा ALTERA_UART_CONTROL_PE_MSK	0x0001	/* ...parity error */
+#घोषणा ALTERA_UART_CONTROL_FE_MSK	0x0002	/* ...framing error */
+#घोषणा ALTERA_UART_CONTROL_BRK_MSK	0x0004	/* ...अवरोध */
+#घोषणा ALTERA_UART_CONTROL_ROE_MSK	0x0008	/* ...RX overrun */
+#घोषणा ALTERA_UART_CONTROL_TOE_MSK	0x0010	/* ...TX overrun */
+#घोषणा ALTERA_UART_CONTROL_TMT_MSK	0x0020	/* ...TX shअगरt रेजिस्टर empty */
+#घोषणा ALTERA_UART_CONTROL_TRDY_MSK	0x0040	/* ...TX पढ़ोy */
+#घोषणा ALTERA_UART_CONTROL_RRDY_MSK	0x0080	/* ...RX पढ़ोy */
+#घोषणा ALTERA_UART_CONTROL_E_MSK	0x0100	/* ...exception*/
 
-#define ALTERA_UART_CONTROL_TRBK_MSK	0x0200	/* TX break */
-#define ALTERA_UART_CONTROL_DCTS_MSK	0x0400	/* Interrupt on CTS change */
-#define ALTERA_UART_CONTROL_RTS_MSK	0x0800	/* RTS signal */
-#define ALTERA_UART_CONTROL_EOP_MSK	0x1000	/* Interrupt on EOP */
+#घोषणा ALTERA_UART_CONTROL_TRBK_MSK	0x0200	/* TX अवरोध */
+#घोषणा ALTERA_UART_CONTROL_DCTS_MSK	0x0400	/* Interrupt on CTS change */
+#घोषणा ALTERA_UART_CONTROL_RTS_MSK	0x0800	/* RTS संकेत */
+#घोषणा ALTERA_UART_CONTROL_EOP_MSK	0x1000	/* Interrupt on EOP */
 
 /*
- * Local per-uart structure.
+ * Local per-uart काष्ठाure.
  */
-struct altera_uart {
-	struct uart_port port;
-	struct timer_list tmr;
-	unsigned int sigs;	/* Local copy of line sigs */
-	unsigned short imr;	/* Local IMR mirror */
-};
+काष्ठा altera_uart अणु
+	काष्ठा uart_port port;
+	काष्ठा समयr_list पंचांगr;
+	अचिन्हित पूर्णांक sigs;	/* Local copy of line sigs */
+	अचिन्हित लघु imr;	/* Local IMR mirror */
+पूर्ण;
 
-static u32 altera_uart_readl(struct uart_port *port, int reg)
-{
-	return readl(port->membase + (reg << port->regshift));
-}
+अटल u32 altera_uart_पढ़ोl(काष्ठा uart_port *port, पूर्णांक reg)
+अणु
+	वापस पढ़ोl(port->membase + (reg << port->regshअगरt));
+पूर्ण
 
-static void altera_uart_writel(struct uart_port *port, u32 dat, int reg)
-{
-	writel(dat, port->membase + (reg << port->regshift));
-}
+अटल व्योम altera_uart_ग_लिखोl(काष्ठा uart_port *port, u32 dat, पूर्णांक reg)
+अणु
+	ग_लिखोl(dat, port->membase + (reg << port->regshअगरt));
+पूर्ण
 
-static unsigned int altera_uart_tx_empty(struct uart_port *port)
-{
-	return (altera_uart_readl(port, ALTERA_UART_STATUS_REG) &
+अटल अचिन्हित पूर्णांक altera_uart_tx_empty(काष्ठा uart_port *port)
+अणु
+	वापस (altera_uart_पढ़ोl(port, ALTERA_UART_STATUS_REG) &
 		ALTERA_UART_STATUS_TMT_MSK) ? TIOCSER_TEMT : 0;
-}
+पूर्ण
 
-static unsigned int altera_uart_get_mctrl(struct uart_port *port)
-{
-	struct altera_uart *pp = container_of(port, struct altera_uart, port);
-	unsigned int sigs;
+अटल अचिन्हित पूर्णांक altera_uart_get_mctrl(काष्ठा uart_port *port)
+अणु
+	काष्ठा altera_uart *pp = container_of(port, काष्ठा altera_uart, port);
+	अचिन्हित पूर्णांक sigs;
 
-	sigs = (altera_uart_readl(port, ALTERA_UART_STATUS_REG) &
+	sigs = (altera_uart_पढ़ोl(port, ALTERA_UART_STATUS_REG) &
 	     ALTERA_UART_STATUS_CTS_MSK) ? TIOCM_CTS : 0;
 	sigs |= (pp->sigs & TIOCM_RTS);
 
-	return sigs;
-}
+	वापस sigs;
+पूर्ण
 
-static void altera_uart_update_ctrl_reg(struct altera_uart *pp)
-{
-	unsigned short imr = pp->imr;
+अटल व्योम altera_uart_update_ctrl_reg(काष्ठा altera_uart *pp)
+अणु
+	अचिन्हित लघु imr = pp->imr;
 
 	/*
-	 * If the device doesn't have an irq, ensure that the irq bits are
+	 * If the device करोesn't have an irq, ensure that the irq bits are
 	 * masked out to keep the irq line inactive.
 	 */
-	if (!pp->port.irq)
+	अगर (!pp->port.irq)
 		imr &= ALTERA_UART_CONTROL_TRBK_MSK | ALTERA_UART_CONTROL_RTS_MSK;
 
-	altera_uart_writel(&pp->port, imr, ALTERA_UART_CONTROL_REG);
-}
+	altera_uart_ग_लिखोl(&pp->port, imr, ALTERA_UART_CONTROL_REG);
+पूर्ण
 
-static void altera_uart_set_mctrl(struct uart_port *port, unsigned int sigs)
-{
-	struct altera_uart *pp = container_of(port, struct altera_uart, port);
+अटल व्योम altera_uart_set_mctrl(काष्ठा uart_port *port, अचिन्हित पूर्णांक sigs)
+अणु
+	काष्ठा altera_uart *pp = container_of(port, काष्ठा altera_uart, port);
 
 	pp->sigs = sigs;
-	if (sigs & TIOCM_RTS)
+	अगर (sigs & TIOCM_RTS)
 		pp->imr |= ALTERA_UART_CONTROL_RTS_MSK;
-	else
+	अन्यथा
 		pp->imr &= ~ALTERA_UART_CONTROL_RTS_MSK;
 	altera_uart_update_ctrl_reg(pp);
-}
+पूर्ण
 
-static void altera_uart_start_tx(struct uart_port *port)
-{
-	struct altera_uart *pp = container_of(port, struct altera_uart, port);
+अटल व्योम altera_uart_start_tx(काष्ठा uart_port *port)
+अणु
+	काष्ठा altera_uart *pp = container_of(port, काष्ठा altera_uart, port);
 
 	pp->imr |= ALTERA_UART_CONTROL_TRDY_MSK;
 	altera_uart_update_ctrl_reg(pp);
-}
+पूर्ण
 
-static void altera_uart_stop_tx(struct uart_port *port)
-{
-	struct altera_uart *pp = container_of(port, struct altera_uart, port);
+अटल व्योम altera_uart_stop_tx(काष्ठा uart_port *port)
+अणु
+	काष्ठा altera_uart *pp = container_of(port, काष्ठा altera_uart, port);
 
 	pp->imr &= ~ALTERA_UART_CONTROL_TRDY_MSK;
 	altera_uart_update_ctrl_reg(pp);
-}
+पूर्ण
 
-static void altera_uart_stop_rx(struct uart_port *port)
-{
-	struct altera_uart *pp = container_of(port, struct altera_uart, port);
+अटल व्योम altera_uart_stop_rx(काष्ठा uart_port *port)
+अणु
+	काष्ठा altera_uart *pp = container_of(port, काष्ठा altera_uart, port);
 
 	pp->imr &= ~ALTERA_UART_CONTROL_RRDY_MSK;
 	altera_uart_update_ctrl_reg(pp);
-}
+पूर्ण
 
-static void altera_uart_break_ctl(struct uart_port *port, int break_state)
-{
-	struct altera_uart *pp = container_of(port, struct altera_uart, port);
-	unsigned long flags;
+अटल व्योम altera_uart_अवरोध_ctl(काष्ठा uart_port *port, पूर्णांक अवरोध_state)
+अणु
+	काष्ठा altera_uart *pp = container_of(port, काष्ठा altera_uart, port);
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&port->lock, flags);
-	if (break_state == -1)
+	अगर (अवरोध_state == -1)
 		pp->imr |= ALTERA_UART_CONTROL_TRBK_MSK;
-	else
+	अन्यथा
 		pp->imr &= ~ALTERA_UART_CONTROL_TRBK_MSK;
 	altera_uart_update_ctrl_reg(pp);
 	spin_unlock_irqrestore(&port->lock, flags);
-}
+पूर्ण
 
-static void altera_uart_set_termios(struct uart_port *port,
-				    struct ktermios *termios,
-				    struct ktermios *old)
-{
-	unsigned long flags;
-	unsigned int baud, baudclk;
+अटल व्योम altera_uart_set_termios(काष्ठा uart_port *port,
+				    काष्ठा ktermios *termios,
+				    काष्ठा ktermios *old)
+अणु
+	अचिन्हित दीर्घ flags;
+	अचिन्हित पूर्णांक baud, baudclk;
 
 	baud = uart_get_baud_rate(port, termios, old, 0, 4000000);
 	baudclk = port->uartclk / baud;
 
-	if (old)
+	अगर (old)
 		tty_termios_copy_hw(termios, old);
 	tty_termios_encode_baud_rate(termios, baud, baud);
 
 	spin_lock_irqsave(&port->lock, flags);
-	uart_update_timeout(port, termios->c_cflag, baud);
-	altera_uart_writel(port, baudclk, ALTERA_UART_DIVISOR_REG);
+	uart_update_समयout(port, termios->c_cflag, baud);
+	altera_uart_ग_लिखोl(port, baudclk, ALTERA_UART_DIVISOR_REG);
 	spin_unlock_irqrestore(&port->lock, flags);
 
 	/*
-	 * FIXME: port->read_status_mask and port->ignore_status_mask
-	 * need to be initialized based on termios settings for
+	 * FIXME: port->पढ़ो_status_mask and port->ignore_status_mask
+	 * need to be initialized based on termios settings क्रम
 	 * INPCK, IGNBRK, IGNPAR, PARMRK, BRKINT
 	 */
-}
+पूर्ण
 
-static void altera_uart_rx_chars(struct altera_uart *pp)
-{
-	struct uart_port *port = &pp->port;
-	unsigned char ch, flag;
-	unsigned short status;
+अटल व्योम altera_uart_rx_अक्षरs(काष्ठा altera_uart *pp)
+अणु
+	काष्ठा uart_port *port = &pp->port;
+	अचिन्हित अक्षर ch, flag;
+	अचिन्हित लघु status;
 
-	while ((status = altera_uart_readl(port, ALTERA_UART_STATUS_REG)) &
-	       ALTERA_UART_STATUS_RRDY_MSK) {
-		ch = altera_uart_readl(port, ALTERA_UART_RXDATA_REG);
+	जबतक ((status = altera_uart_पढ़ोl(port, ALTERA_UART_STATUS_REG)) &
+	       ALTERA_UART_STATUS_RRDY_MSK) अणु
+		ch = altera_uart_पढ़ोl(port, ALTERA_UART_RXDATA_REG);
 		flag = TTY_NORMAL;
 		port->icount.rx++;
 
-		if (status & ALTERA_UART_STATUS_E_MSK) {
-			altera_uart_writel(port, status,
+		अगर (status & ALTERA_UART_STATUS_E_MSK) अणु
+			altera_uart_ग_लिखोl(port, status,
 					   ALTERA_UART_STATUS_REG);
 
-			if (status & ALTERA_UART_STATUS_BRK_MSK) {
+			अगर (status & ALTERA_UART_STATUS_BRK_MSK) अणु
 				port->icount.brk++;
-				if (uart_handle_break(port))
-					continue;
-			} else if (status & ALTERA_UART_STATUS_PE_MSK) {
+				अगर (uart_handle_अवरोध(port))
+					जारी;
+			पूर्ण अन्यथा अगर (status & ALTERA_UART_STATUS_PE_MSK) अणु
 				port->icount.parity++;
-			} else if (status & ALTERA_UART_STATUS_ROE_MSK) {
+			पूर्ण अन्यथा अगर (status & ALTERA_UART_STATUS_ROE_MSK) अणु
 				port->icount.overrun++;
-			} else if (status & ALTERA_UART_STATUS_FE_MSK) {
+			पूर्ण अन्यथा अगर (status & ALTERA_UART_STATUS_FE_MSK) अणु
 				port->icount.frame++;
-			}
+			पूर्ण
 
-			status &= port->read_status_mask;
+			status &= port->पढ़ो_status_mask;
 
-			if (status & ALTERA_UART_STATUS_BRK_MSK)
+			अगर (status & ALTERA_UART_STATUS_BRK_MSK)
 				flag = TTY_BREAK;
-			else if (status & ALTERA_UART_STATUS_PE_MSK)
+			अन्यथा अगर (status & ALTERA_UART_STATUS_PE_MSK)
 				flag = TTY_PARITY;
-			else if (status & ALTERA_UART_STATUS_FE_MSK)
+			अन्यथा अगर (status & ALTERA_UART_STATUS_FE_MSK)
 				flag = TTY_FRAME;
-		}
+		पूर्ण
 
-		if (uart_handle_sysrq_char(port, ch))
-			continue;
-		uart_insert_char(port, status, ALTERA_UART_STATUS_ROE_MSK, ch,
+		अगर (uart_handle_sysrq_अक्षर(port, ch))
+			जारी;
+		uart_insert_अक्षर(port, status, ALTERA_UART_STATUS_ROE_MSK, ch,
 				 flag);
-	}
+	पूर्ण
 
 	tty_flip_buffer_push(&port->state->port);
-}
+पूर्ण
 
-static void altera_uart_tx_chars(struct altera_uart *pp)
-{
-	struct uart_port *port = &pp->port;
-	struct circ_buf *xmit = &port->state->xmit;
+अटल व्योम altera_uart_tx_अक्षरs(काष्ठा altera_uart *pp)
+अणु
+	काष्ठा uart_port *port = &pp->port;
+	काष्ठा circ_buf *xmit = &port->state->xmit;
 
-	if (port->x_char) {
-		/* Send special char - probably flow control */
-		altera_uart_writel(port, port->x_char, ALTERA_UART_TXDATA_REG);
-		port->x_char = 0;
+	अगर (port->x_अक्षर) अणु
+		/* Send special अक्षर - probably flow control */
+		altera_uart_ग_लिखोl(port, port->x_अक्षर, ALTERA_UART_TXDATA_REG);
+		port->x_अक्षर = 0;
 		port->icount.tx++;
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	while (altera_uart_readl(port, ALTERA_UART_STATUS_REG) &
-	       ALTERA_UART_STATUS_TRDY_MSK) {
-		if (xmit->head == xmit->tail)
-			break;
-		altera_uart_writel(port, xmit->buf[xmit->tail],
+	जबतक (altera_uart_पढ़ोl(port, ALTERA_UART_STATUS_REG) &
+	       ALTERA_UART_STATUS_TRDY_MSK) अणु
+		अगर (xmit->head == xmit->tail)
+			अवरोध;
+		altera_uart_ग_लिखोl(port, xmit->buf[xmit->tail],
 		       ALTERA_UART_TXDATA_REG);
 		xmit->tail = (xmit->tail + 1) & (UART_XMIT_SIZE - 1);
 		port->icount.tx++;
-	}
+	पूर्ण
 
-	if (uart_circ_chars_pending(xmit) < WAKEUP_CHARS)
-		uart_write_wakeup(port);
+	अगर (uart_circ_अक्षरs_pending(xmit) < WAKEUP_CHARS)
+		uart_ग_लिखो_wakeup(port);
 
-	if (xmit->head == xmit->tail) {
+	अगर (xmit->head == xmit->tail) अणु
 		pp->imr &= ~ALTERA_UART_CONTROL_TRDY_MSK;
 		altera_uart_update_ctrl_reg(pp);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static irqreturn_t altera_uart_interrupt(int irq, void *data)
-{
-	struct uart_port *port = data;
-	struct altera_uart *pp = container_of(port, struct altera_uart, port);
-	unsigned int isr;
+अटल irqवापस_t altera_uart_पूर्णांकerrupt(पूर्णांक irq, व्योम *data)
+अणु
+	काष्ठा uart_port *port = data;
+	काष्ठा altera_uart *pp = container_of(port, काष्ठा altera_uart, port);
+	अचिन्हित पूर्णांक isr;
 
-	isr = altera_uart_readl(port, ALTERA_UART_STATUS_REG) & pp->imr;
+	isr = altera_uart_पढ़ोl(port, ALTERA_UART_STATUS_REG) & pp->imr;
 
 	spin_lock(&port->lock);
-	if (isr & ALTERA_UART_STATUS_RRDY_MSK)
-		altera_uart_rx_chars(pp);
-	if (isr & ALTERA_UART_STATUS_TRDY_MSK)
-		altera_uart_tx_chars(pp);
+	अगर (isr & ALTERA_UART_STATUS_RRDY_MSK)
+		altera_uart_rx_अक्षरs(pp);
+	अगर (isr & ALTERA_UART_STATUS_TRDY_MSK)
+		altera_uart_tx_अक्षरs(pp);
 	spin_unlock(&port->lock);
 
-	return IRQ_RETVAL(isr);
-}
+	वापस IRQ_RETVAL(isr);
+पूर्ण
 
-static void altera_uart_timer(struct timer_list *t)
-{
-	struct altera_uart *pp = from_timer(pp, t, tmr);
-	struct uart_port *port = &pp->port;
+अटल व्योम altera_uart_समयr(काष्ठा समयr_list *t)
+अणु
+	काष्ठा altera_uart *pp = from_समयr(pp, t, पंचांगr);
+	काष्ठा uart_port *port = &pp->port;
 
-	altera_uart_interrupt(0, port);
-	mod_timer(&pp->tmr, jiffies + uart_poll_timeout(port));
-}
+	altera_uart_पूर्णांकerrupt(0, port);
+	mod_समयr(&pp->पंचांगr, jअगरfies + uart_poll_समयout(port));
+पूर्ण
 
-static void altera_uart_config_port(struct uart_port *port, int flags)
-{
+अटल व्योम altera_uart_config_port(काष्ठा uart_port *port, पूर्णांक flags)
+अणु
 	port->type = PORT_ALTERA_UART;
 
-	/* Clear mask, so no surprise interrupts. */
-	altera_uart_writel(port, 0, ALTERA_UART_CONTROL_REG);
-	/* Clear status register */
-	altera_uart_writel(port, 0, ALTERA_UART_STATUS_REG);
-}
+	/* Clear mask, so no surprise पूर्णांकerrupts. */
+	altera_uart_ग_लिखोl(port, 0, ALTERA_UART_CONTROL_REG);
+	/* Clear status रेजिस्टर */
+	altera_uart_ग_लिखोl(port, 0, ALTERA_UART_STATUS_REG);
+पूर्ण
 
-static int altera_uart_startup(struct uart_port *port)
-{
-	struct altera_uart *pp = container_of(port, struct altera_uart, port);
-	unsigned long flags;
+अटल पूर्णांक altera_uart_startup(काष्ठा uart_port *port)
+अणु
+	काष्ठा altera_uart *pp = container_of(port, काष्ठा altera_uart, port);
+	अचिन्हित दीर्घ flags;
 
-	if (!port->irq) {
-		timer_setup(&pp->tmr, altera_uart_timer, 0);
-		mod_timer(&pp->tmr, jiffies + uart_poll_timeout(port));
-	} else {
-		int ret;
+	अगर (!port->irq) अणु
+		समयr_setup(&pp->पंचांगr, altera_uart_समयr, 0);
+		mod_समयr(&pp->पंचांगr, jअगरfies + uart_poll_समयout(port));
+	पूर्ण अन्यथा अणु
+		पूर्णांक ret;
 
-		ret = request_irq(port->irq, altera_uart_interrupt, 0,
+		ret = request_irq(port->irq, altera_uart_पूर्णांकerrupt, 0,
 				DRV_NAME, port);
-		if (ret) {
+		अगर (ret) अणु
 			pr_err(DRV_NAME ": unable to attach Altera UART %d "
 			       "interrupt vector=%d\n", port->line, port->irq);
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
 	spin_lock_irqsave(&port->lock, flags);
 
-	/* Enable RX interrupts now */
+	/* Enable RX पूर्णांकerrupts now */
 	pp->imr = ALTERA_UART_CONTROL_RRDY_MSK;
 	altera_uart_update_ctrl_reg(pp);
 
 	spin_unlock_irqrestore(&port->lock, flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void altera_uart_shutdown(struct uart_port *port)
-{
-	struct altera_uart *pp = container_of(port, struct altera_uart, port);
-	unsigned long flags;
+अटल व्योम altera_uart_shutकरोwn(काष्ठा uart_port *port)
+अणु
+	काष्ठा altera_uart *pp = container_of(port, काष्ठा altera_uart, port);
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&port->lock, flags);
 
-	/* Disable all interrupts now */
+	/* Disable all पूर्णांकerrupts now */
 	pp->imr = 0;
 	altera_uart_update_ctrl_reg(pp);
 
 	spin_unlock_irqrestore(&port->lock, flags);
 
-	if (port->irq)
-		free_irq(port->irq, port);
-	else
-		del_timer_sync(&pp->tmr);
-}
+	अगर (port->irq)
+		मुक्त_irq(port->irq, port);
+	अन्यथा
+		del_समयr_sync(&pp->पंचांगr);
+पूर्ण
 
-static const char *altera_uart_type(struct uart_port *port)
-{
-	return (port->type == PORT_ALTERA_UART) ? "Altera UART" : NULL;
-}
+अटल स्थिर अक्षर *altera_uart_type(काष्ठा uart_port *port)
+अणु
+	वापस (port->type == PORT_ALTERA_UART) ? "Altera UART" : शून्य;
+पूर्ण
 
-static int altera_uart_request_port(struct uart_port *port)
-{
+अटल पूर्णांक altera_uart_request_port(काष्ठा uart_port *port)
+अणु
 	/* UARTs always present */
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void altera_uart_release_port(struct uart_port *port)
-{
+अटल व्योम altera_uart_release_port(काष्ठा uart_port *port)
+अणु
 	/* Nothing to release... */
-}
+पूर्ण
 
-static int altera_uart_verify_port(struct uart_port *port,
-				   struct serial_struct *ser)
-{
-	if ((ser->type != PORT_UNKNOWN) && (ser->type != PORT_ALTERA_UART))
-		return -EINVAL;
-	return 0;
-}
+अटल पूर्णांक altera_uart_verअगरy_port(काष्ठा uart_port *port,
+				   काष्ठा serial_काष्ठा *ser)
+अणु
+	अगर ((ser->type != PORT_UNKNOWN) && (ser->type != PORT_ALTERA_UART))
+		वापस -EINVAL;
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_CONSOLE_POLL
-static int altera_uart_poll_get_char(struct uart_port *port)
-{
-	while (!(altera_uart_readl(port, ALTERA_UART_STATUS_REG) &
+#अगर_घोषित CONFIG_CONSOLE_POLL
+अटल पूर्णांक altera_uart_poll_get_अक्षर(काष्ठा uart_port *port)
+अणु
+	जबतक (!(altera_uart_पढ़ोl(port, ALTERA_UART_STATUS_REG) &
 		 ALTERA_UART_STATUS_RRDY_MSK))
 		cpu_relax();
 
-	return altera_uart_readl(port, ALTERA_UART_RXDATA_REG);
-}
+	वापस altera_uart_पढ़ोl(port, ALTERA_UART_RXDATA_REG);
+पूर्ण
 
-static void altera_uart_poll_put_char(struct uart_port *port, unsigned char c)
-{
-	while (!(altera_uart_readl(port, ALTERA_UART_STATUS_REG) &
+अटल व्योम altera_uart_poll_put_अक्षर(काष्ठा uart_port *port, अचिन्हित अक्षर c)
+अणु
+	जबतक (!(altera_uart_पढ़ोl(port, ALTERA_UART_STATUS_REG) &
 		 ALTERA_UART_STATUS_TRDY_MSK))
 		cpu_relax();
 
-	altera_uart_writel(port, c, ALTERA_UART_TXDATA_REG);
-}
-#endif
+	altera_uart_ग_लिखोl(port, c, ALTERA_UART_TXDATA_REG);
+पूर्ण
+#पूर्ण_अगर
 
 /*
  *	Define the basic serial functions we support.
  */
-static const struct uart_ops altera_uart_ops = {
+अटल स्थिर काष्ठा uart_ops altera_uart_ops = अणु
 	.tx_empty	= altera_uart_tx_empty,
 	.get_mctrl	= altera_uart_get_mctrl,
 	.set_mctrl	= altera_uart_set_mctrl,
 	.start_tx	= altera_uart_start_tx,
 	.stop_tx	= altera_uart_stop_tx,
 	.stop_rx	= altera_uart_stop_rx,
-	.break_ctl	= altera_uart_break_ctl,
+	.अवरोध_ctl	= altera_uart_अवरोध_ctl,
 	.startup	= altera_uart_startup,
-	.shutdown	= altera_uart_shutdown,
+	.shutकरोwn	= altera_uart_shutकरोwn,
 	.set_termios	= altera_uart_set_termios,
 	.type		= altera_uart_type,
 	.request_port	= altera_uart_request_port,
 	.release_port	= altera_uart_release_port,
 	.config_port	= altera_uart_config_port,
-	.verify_port	= altera_uart_verify_port,
-#ifdef CONFIG_CONSOLE_POLL
-	.poll_get_char	= altera_uart_poll_get_char,
-	.poll_put_char	= altera_uart_poll_put_char,
-#endif
-};
+	.verअगरy_port	= altera_uart_verअगरy_port,
+#अगर_घोषित CONFIG_CONSOLE_POLL
+	.poll_get_अक्षर	= altera_uart_poll_get_अक्षर,
+	.poll_put_अक्षर	= altera_uart_poll_put_अक्षर,
+#पूर्ण_अगर
+पूर्ण;
 
-static struct altera_uart altera_uart_ports[CONFIG_SERIAL_ALTERA_UART_MAXPORTS];
+अटल काष्ठा altera_uart altera_uart_ports[CONFIG_SERIAL_ALTERA_UART_MAXPORTS];
 
-#if defined(CONFIG_SERIAL_ALTERA_UART_CONSOLE)
+#अगर defined(CONFIG_SERIAL_ALTERA_UART_CONSOLE)
 
-static void altera_uart_console_putc(struct uart_port *port, int c)
-{
-	while (!(altera_uart_readl(port, ALTERA_UART_STATUS_REG) &
+अटल व्योम altera_uart_console_अ_दो(काष्ठा uart_port *port, पूर्णांक c)
+अणु
+	जबतक (!(altera_uart_पढ़ोl(port, ALTERA_UART_STATUS_REG) &
 		 ALTERA_UART_STATUS_TRDY_MSK))
 		cpu_relax();
 
-	altera_uart_writel(port, c, ALTERA_UART_TXDATA_REG);
-}
+	altera_uart_ग_लिखोl(port, c, ALTERA_UART_TXDATA_REG);
+पूर्ण
 
-static void altera_uart_console_write(struct console *co, const char *s,
-				      unsigned int count)
-{
-	struct uart_port *port = &(altera_uart_ports + co->index)->port;
+अटल व्योम altera_uart_console_ग_लिखो(काष्ठा console *co, स्थिर अक्षर *s,
+				      अचिन्हित पूर्णांक count)
+अणु
+	काष्ठा uart_port *port = &(altera_uart_ports + co->index)->port;
 
-	uart_console_write(port, s, count, altera_uart_console_putc);
-}
+	uart_console_ग_लिखो(port, s, count, altera_uart_console_अ_दो);
+पूर्ण
 
-static int __init altera_uart_console_setup(struct console *co, char *options)
-{
-	struct uart_port *port;
-	int baud = CONFIG_SERIAL_ALTERA_UART_BAUDRATE;
-	int bits = 8;
-	int parity = 'n';
-	int flow = 'n';
+अटल पूर्णांक __init altera_uart_console_setup(काष्ठा console *co, अक्षर *options)
+अणु
+	काष्ठा uart_port *port;
+	पूर्णांक baud = CONFIG_SERIAL_ALTERA_UART_BAUDRATE;
+	पूर्णांक bits = 8;
+	पूर्णांक parity = 'n';
+	पूर्णांक flow = 'n';
 
-	if (co->index < 0 || co->index >= CONFIG_SERIAL_ALTERA_UART_MAXPORTS)
-		return -EINVAL;
+	अगर (co->index < 0 || co->index >= CONFIG_SERIAL_ALTERA_UART_MAXPORTS)
+		वापस -EINVAL;
 	port = &altera_uart_ports[co->index].port;
-	if (!port->membase)
-		return -ENODEV;
+	अगर (!port->membase)
+		वापस -ENODEV;
 
-	if (options)
+	अगर (options)
 		uart_parse_options(options, &baud, &parity, &bits, &flow);
 
-	return uart_set_options(port, co, baud, parity, bits, flow);
-}
+	वापस uart_set_options(port, co, baud, parity, bits, flow);
+पूर्ण
 
-static struct uart_driver altera_uart_driver;
+अटल काष्ठा uart_driver altera_uart_driver;
 
-static struct console altera_uart_console = {
+अटल काष्ठा console altera_uart_console = अणु
 	.name	= "ttyAL",
-	.write	= altera_uart_console_write,
+	.ग_लिखो	= altera_uart_console_ग_लिखो,
 	.device	= uart_console_device,
 	.setup	= altera_uart_console_setup,
 	.flags	= CON_PRINTBUFFER,
 	.index	= -1,
 	.data	= &altera_uart_driver,
-};
+पूर्ण;
 
-static int __init altera_uart_console_init(void)
-{
-	register_console(&altera_uart_console);
-	return 0;
-}
+अटल पूर्णांक __init altera_uart_console_init(व्योम)
+अणु
+	रेजिस्टर_console(&altera_uart_console);
+	वापस 0;
+पूर्ण
 
 console_initcall(altera_uart_console_init);
 
-#define	ALTERA_UART_CONSOLE	(&altera_uart_console)
+#घोषणा	ALTERA_UART_CONSOLE	(&altera_uart_console)
 
-static void altera_uart_earlycon_write(struct console *co, const char *s,
-				       unsigned int count)
-{
-	struct earlycon_device *dev = co->data;
+अटल व्योम altera_uart_earlycon_ग_लिखो(काष्ठा console *co, स्थिर अक्षर *s,
+				       अचिन्हित पूर्णांक count)
+अणु
+	काष्ठा earlycon_device *dev = co->data;
 
-	uart_console_write(&dev->port, s, count, altera_uart_console_putc);
-}
+	uart_console_ग_लिखो(&dev->port, s, count, altera_uart_console_अ_दो);
+पूर्ण
 
-static int __init altera_uart_earlycon_setup(struct earlycon_device *dev,
-					     const char *options)
-{
-	struct uart_port *port = &dev->port;
+अटल पूर्णांक __init altera_uart_earlycon_setup(काष्ठा earlycon_device *dev,
+					     स्थिर अक्षर *options)
+अणु
+	काष्ठा uart_port *port = &dev->port;
 
-	if (!port->membase)
-		return -ENODEV;
+	अगर (!port->membase)
+		वापस -ENODEV;
 
-	/* Enable RX interrupts now */
-	altera_uart_writel(port, ALTERA_UART_CONTROL_RRDY_MSK,
+	/* Enable RX पूर्णांकerrupts now */
+	altera_uart_ग_लिखोl(port, ALTERA_UART_CONTROL_RRDY_MSK,
 			   ALTERA_UART_CONTROL_REG);
 
-	if (dev->baud) {
-		unsigned int baudclk = port->uartclk / dev->baud;
+	अगर (dev->baud) अणु
+		अचिन्हित पूर्णांक baudclk = port->uartclk / dev->baud;
 
-		altera_uart_writel(port, baudclk, ALTERA_UART_DIVISOR_REG);
-	}
+		altera_uart_ग_लिखोl(port, baudclk, ALTERA_UART_DIVISOR_REG);
+	पूर्ण
 
-	dev->con->write = altera_uart_earlycon_write;
-	return 0;
-}
+	dev->con->ग_लिखो = altera_uart_earlycon_ग_लिखो;
+	वापस 0;
+पूर्ण
 
 OF_EARLYCON_DECLARE(uart, "altr,uart-1.0", altera_uart_earlycon_setup);
 
-#else
+#अन्यथा
 
-#define	ALTERA_UART_CONSOLE	NULL
+#घोषणा	ALTERA_UART_CONSOLE	शून्य
 
-#endif /* CONFIG_SERIAL_ALTERA_UART_CONSOLE */
+#पूर्ण_अगर /* CONFIG_SERIAL_ALTERA_UART_CONSOLE */
 
 /*
- *	Define the altera_uart UART driver structure.
+ *	Define the altera_uart UART driver काष्ठाure.
  */
-static struct uart_driver altera_uart_driver = {
+अटल काष्ठा uart_driver altera_uart_driver = अणु
 	.owner		= THIS_MODULE,
 	.driver_name	= DRV_NAME,
 	.dev_name	= "ttyAL",
@@ -546,61 +547,61 @@ static struct uart_driver altera_uart_driver = {
 	.minor		= SERIAL_ALTERA_MINOR,
 	.nr		= CONFIG_SERIAL_ALTERA_UART_MAXPORTS,
 	.cons		= ALTERA_UART_CONSOLE,
-};
+पूर्ण;
 
-static int altera_uart_probe(struct platform_device *pdev)
-{
-	struct altera_uart_platform_uart *platp = dev_get_platdata(&pdev->dev);
-	struct uart_port *port;
-	struct resource *res_mem;
-	struct resource *res_irq;
-	int i = pdev->id;
-	int ret;
+अटल पूर्णांक altera_uart_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा altera_uart_platक्रमm_uart *platp = dev_get_platdata(&pdev->dev);
+	काष्ठा uart_port *port;
+	काष्ठा resource *res_mem;
+	काष्ठा resource *res_irq;
+	पूर्णांक i = pdev->id;
+	पूर्णांक ret;
 
-	/* if id is -1 scan for a free id and use that one */
-	if (i == -1) {
-		for (i = 0; i < CONFIG_SERIAL_ALTERA_UART_MAXPORTS; i++)
-			if (altera_uart_ports[i].port.mapbase == 0)
-				break;
-	}
+	/* अगर id is -1 scan क्रम a मुक्त id and use that one */
+	अगर (i == -1) अणु
+		क्रम (i = 0; i < CONFIG_SERIAL_ALTERA_UART_MAXPORTS; i++)
+			अगर (altera_uart_ports[i].port.mapbase == 0)
+				अवरोध;
+	पूर्ण
 
-	if (i < 0 || i >= CONFIG_SERIAL_ALTERA_UART_MAXPORTS)
-		return -EINVAL;
+	अगर (i < 0 || i >= CONFIG_SERIAL_ALTERA_UART_MAXPORTS)
+		वापस -EINVAL;
 
 	port = &altera_uart_ports[i].port;
 
-	res_mem = platform_get_resource(pdev, IORESOURCE_MEM, 0);
-	if (res_mem)
+	res_mem = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
+	अगर (res_mem)
 		port->mapbase = res_mem->start;
-	else if (platp)
+	अन्यथा अगर (platp)
 		port->mapbase = platp->mapbase;
-	else
-		return -EINVAL;
+	अन्यथा
+		वापस -EINVAL;
 
-	res_irq = platform_get_resource(pdev, IORESOURCE_IRQ, 0);
-	if (res_irq)
+	res_irq = platक्रमm_get_resource(pdev, IORESOURCE_IRQ, 0);
+	अगर (res_irq)
 		port->irq = res_irq->start;
-	else if (platp)
+	अन्यथा अगर (platp)
 		port->irq = platp->irq;
 
-	/* Check platform data first so we can override device node data */
-	if (platp)
+	/* Check platक्रमm data first so we can override device node data */
+	अगर (platp)
 		port->uartclk = platp->uartclk;
-	else {
-		ret = of_property_read_u32(pdev->dev.of_node, "clock-frequency",
+	अन्यथा अणु
+		ret = of_property_पढ़ो_u32(pdev->dev.of_node, "clock-frequency",
 					   &port->uartclk);
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
 	port->membase = ioremap(port->mapbase, ALTERA_UART_SIZE);
-	if (!port->membase)
-		return -ENOMEM;
+	अगर (!port->membase)
+		वापस -ENOMEM;
 
-	if (platp)
-		port->regshift = platp->bus_shift;
-	else
-		port->regshift = 0;
+	अगर (platp)
+		port->regshअगरt = platp->bus_shअगरt;
+	अन्यथा
+		port->regshअगरt = 0;
 
 	port->line = i;
 	port->type = PORT_ALTERA_UART;
@@ -609,65 +610,65 @@ static int altera_uart_probe(struct platform_device *pdev)
 	port->flags = UPF_BOOT_AUTOCONF;
 	port->dev = &pdev->dev;
 
-	platform_set_drvdata(pdev, port);
+	platक्रमm_set_drvdata(pdev, port);
 
 	uart_add_one_port(&altera_uart_driver, port);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int altera_uart_remove(struct platform_device *pdev)
-{
-	struct uart_port *port = platform_get_drvdata(pdev);
+अटल पूर्णांक altera_uart_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा uart_port *port = platक्रमm_get_drvdata(pdev);
 
-	if (port) {
-		uart_remove_one_port(&altera_uart_driver, port);
+	अगर (port) अणु
+		uart_हटाओ_one_port(&altera_uart_driver, port);
 		port->mapbase = 0;
 		iounmap(port->membase);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_OF
-static const struct of_device_id altera_uart_match[] = {
-	{ .compatible = "ALTR,uart-1.0", },
-	{ .compatible = "altr,uart-1.0", },
-	{},
-};
+#अगर_घोषित CONFIG_OF
+अटल स्थिर काष्ठा of_device_id altera_uart_match[] = अणु
+	अणु .compatible = "ALTR,uart-1.0", पूर्ण,
+	अणु .compatible = "altr,uart-1.0", पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, altera_uart_match);
-#endif /* CONFIG_OF */
+#पूर्ण_अगर /* CONFIG_OF */
 
-static struct platform_driver altera_uart_platform_driver = {
+अटल काष्ठा platक्रमm_driver altera_uart_platक्रमm_driver = अणु
 	.probe	= altera_uart_probe,
-	.remove	= altera_uart_remove,
-	.driver	= {
+	.हटाओ	= altera_uart_हटाओ,
+	.driver	= अणु
 		.name		= DRV_NAME,
 		.of_match_table	= of_match_ptr(altera_uart_match),
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static int __init altera_uart_init(void)
-{
-	int rc;
+अटल पूर्णांक __init altera_uart_init(व्योम)
+अणु
+	पूर्णांक rc;
 
-	rc = uart_register_driver(&altera_uart_driver);
-	if (rc)
-		return rc;
-	rc = platform_driver_register(&altera_uart_platform_driver);
-	if (rc)
-		uart_unregister_driver(&altera_uart_driver);
-	return rc;
-}
+	rc = uart_रेजिस्टर_driver(&altera_uart_driver);
+	अगर (rc)
+		वापस rc;
+	rc = platक्रमm_driver_रेजिस्टर(&altera_uart_platक्रमm_driver);
+	अगर (rc)
+		uart_unरेजिस्टर_driver(&altera_uart_driver);
+	वापस rc;
+पूर्ण
 
-static void __exit altera_uart_exit(void)
-{
-	platform_driver_unregister(&altera_uart_platform_driver);
-	uart_unregister_driver(&altera_uart_driver);
-}
+अटल व्योम __निकास altera_uart_निकास(व्योम)
+अणु
+	platक्रमm_driver_unरेजिस्टर(&altera_uart_platक्रमm_driver);
+	uart_unरेजिस्टर_driver(&altera_uart_driver);
+पूर्ण
 
 module_init(altera_uart_init);
-module_exit(altera_uart_exit);
+module_निकास(altera_uart_निकास);
 
 MODULE_DESCRIPTION("Altera UART driver");
 MODULE_AUTHOR("Thomas Chou <thomas@wytron.com.tw>");

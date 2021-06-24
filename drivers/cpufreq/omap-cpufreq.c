@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- *  CPU frequency scaling for OMAP using OPP information
+ *  CPU frequency scaling क्रम OMAP using OPP inक्रमmation
  *
  *  Copyright (C) 2005 Nokia Corporation
  *  Written by Tony Lindgren <tony@atomide.com>
@@ -11,190 +12,190 @@
  * - OMAP3/4 support by Rajendra Nayak, Santosh Shilimkar
  */
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include <linux/types.h>
-#include <linux/kernel.h>
-#include <linux/sched.h>
-#include <linux/cpufreq.h>
-#include <linux/delay.h>
-#include <linux/init.h>
-#include <linux/err.h>
-#include <linux/clk.h>
-#include <linux/io.h>
-#include <linux/pm_opp.h>
-#include <linux/cpu.h>
-#include <linux/module.h>
-#include <linux/platform_device.h>
-#include <linux/regulator/consumer.h>
+#समावेश <linux/types.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/cpufreq.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/init.h>
+#समावेश <linux/err.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/pm_opp.h>
+#समावेश <linux/cpu.h>
+#समावेश <linux/module.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/regulator/consumer.h>
 
-#include <asm/smp_plat.h>
-#include <asm/cpu.h>
+#समावेश <यंत्र/smp_plat.h>
+#समावेश <यंत्र/cpu.h>
 
 /* OPP tolerance in percentage */
-#define	OPP_TOLERANCE	4
+#घोषणा	OPP_TOLERANCE	4
 
-static struct cpufreq_frequency_table *freq_table;
-static atomic_t freq_table_users = ATOMIC_INIT(0);
-static struct device *mpu_dev;
-static struct regulator *mpu_reg;
+अटल काष्ठा cpufreq_frequency_table *freq_table;
+अटल atomic_t freq_table_users = ATOMIC_INIT(0);
+अटल काष्ठा device *mpu_dev;
+अटल काष्ठा regulator *mpu_reg;
 
-static int omap_target(struct cpufreq_policy *policy, unsigned int index)
-{
-	int r, ret;
-	struct dev_pm_opp *opp;
-	unsigned long freq, volt = 0, volt_old = 0, tol = 0;
-	unsigned int old_freq, new_freq;
+अटल पूर्णांक omap_target(काष्ठा cpufreq_policy *policy, अचिन्हित पूर्णांक index)
+अणु
+	पूर्णांक r, ret;
+	काष्ठा dev_pm_opp *opp;
+	अचिन्हित दीर्घ freq, volt = 0, volt_old = 0, tol = 0;
+	अचिन्हित पूर्णांक old_freq, new_freq;
 
 	old_freq = policy->cur;
 	new_freq = freq_table[index].frequency;
 
 	freq = new_freq * 1000;
 	ret = clk_round_rate(policy->clk, freq);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_warn(mpu_dev,
 			 "CPUfreq: Cannot find matching frequency for %lu\n",
 			 freq);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 	freq = ret;
 
-	if (mpu_reg) {
-		opp = dev_pm_opp_find_freq_ceil(mpu_dev, &freq);
-		if (IS_ERR(opp)) {
+	अगर (mpu_reg) अणु
+		opp = dev_pm_opp_find_freq_उच्चमान(mpu_dev, &freq);
+		अगर (IS_ERR(opp)) अणु
 			dev_err(mpu_dev, "%s: unable to find MPU OPP for %d\n",
 				__func__, new_freq);
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 		volt = dev_pm_opp_get_voltage(opp);
 		dev_pm_opp_put(opp);
 		tol = volt * OPP_TOLERANCE / 100;
 		volt_old = regulator_get_voltage(mpu_reg);
-	}
+	पूर्ण
 
 	dev_dbg(mpu_dev, "cpufreq-omap: %u MHz, %ld mV --> %u MHz, %ld mV\n", 
 		old_freq / 1000, volt_old ? volt_old / 1000 : -1,
 		new_freq / 1000, volt ? volt / 1000 : -1);
 
-	/* scaling up?  scale voltage before frequency */
-	if (mpu_reg && (new_freq > old_freq)) {
+	/* scaling up?  scale voltage beक्रमe frequency */
+	अगर (mpu_reg && (new_freq > old_freq)) अणु
 		r = regulator_set_voltage(mpu_reg, volt - tol, volt + tol);
-		if (r < 0) {
+		अगर (r < 0) अणु
 			dev_warn(mpu_dev, "%s: unable to scale voltage up.\n",
 				 __func__);
-			return r;
-		}
-	}
+			वापस r;
+		पूर्ण
+	पूर्ण
 
 	ret = clk_set_rate(policy->clk, new_freq * 1000);
 
-	/* scaling down?  scale voltage after frequency */
-	if (mpu_reg && (new_freq < old_freq)) {
+	/* scaling करोwn?  scale voltage after frequency */
+	अगर (mpu_reg && (new_freq < old_freq)) अणु
 		r = regulator_set_voltage(mpu_reg, volt - tol, volt + tol);
-		if (r < 0) {
+		अगर (r < 0) अणु
 			dev_warn(mpu_dev, "%s: unable to scale voltage down.\n",
 				 __func__);
 			clk_set_rate(policy->clk, old_freq * 1000);
-			return r;
-		}
-	}
+			वापस r;
+		पूर्ण
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static inline void freq_table_free(void)
-{
-	if (atomic_dec_and_test(&freq_table_users))
-		dev_pm_opp_free_cpufreq_table(mpu_dev, &freq_table);
-}
+अटल अंतरभूत व्योम freq_table_मुक्त(व्योम)
+अणु
+	अगर (atomic_dec_and_test(&freq_table_users))
+		dev_pm_opp_मुक्त_cpufreq_table(mpu_dev, &freq_table);
+पूर्ण
 
-static int omap_cpu_init(struct cpufreq_policy *policy)
-{
-	int result;
+अटल पूर्णांक omap_cpu_init(काष्ठा cpufreq_policy *policy)
+अणु
+	पूर्णांक result;
 
-	policy->clk = clk_get(NULL, "cpufreq_ck");
-	if (IS_ERR(policy->clk))
-		return PTR_ERR(policy->clk);
+	policy->clk = clk_get(शून्य, "cpufreq_ck");
+	अगर (IS_ERR(policy->clk))
+		वापस PTR_ERR(policy->clk);
 
-	if (!freq_table) {
+	अगर (!freq_table) अणु
 		result = dev_pm_opp_init_cpufreq_table(mpu_dev, &freq_table);
-		if (result) {
+		अगर (result) अणु
 			dev_err(mpu_dev,
 				"%s: cpu%d: failed creating freq table[%d]\n",
 				__func__, policy->cpu, result);
 			clk_put(policy->clk);
-			return result;
-		}
-	}
+			वापस result;
+		पूर्ण
+	पूर्ण
 
-	atomic_inc_return(&freq_table_users);
+	atomic_inc_वापस(&freq_table_users);
 
-	/* FIXME: what's the actual transition time? */
+	/* FIXME: what's the actual transition समय? */
 	cpufreq_generic_init(policy, freq_table, 300 * 1000);
-	dev_pm_opp_of_register_em(mpu_dev, policy->cpus);
+	dev_pm_opp_of_रेजिस्टर_em(mpu_dev, policy->cpus);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int omap_cpu_exit(struct cpufreq_policy *policy)
-{
-	freq_table_free();
+अटल पूर्णांक omap_cpu_निकास(काष्ठा cpufreq_policy *policy)
+अणु
+	freq_table_मुक्त();
 	clk_put(policy->clk);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct cpufreq_driver omap_driver = {
+अटल काष्ठा cpufreq_driver omap_driver = अणु
 	.flags		= CPUFREQ_NEED_INITIAL_FREQ_CHECK,
-	.verify		= cpufreq_generic_frequency_table_verify,
+	.verअगरy		= cpufreq_generic_frequency_table_verअगरy,
 	.target_index	= omap_target,
 	.get		= cpufreq_generic_get,
 	.init		= omap_cpu_init,
-	.exit		= omap_cpu_exit,
+	.निकास		= omap_cpu_निकास,
 	.name		= "omap",
 	.attr		= cpufreq_generic_attr,
-};
+पूर्ण;
 
-static int omap_cpufreq_probe(struct platform_device *pdev)
-{
+अटल पूर्णांक omap_cpufreq_probe(काष्ठा platक्रमm_device *pdev)
+अणु
 	mpu_dev = get_cpu_device(0);
-	if (!mpu_dev) {
+	अगर (!mpu_dev) अणु
 		pr_warn("%s: unable to get the MPU device\n", __func__);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	mpu_reg = regulator_get(mpu_dev, "vcc");
-	if (IS_ERR(mpu_reg)) {
+	अगर (IS_ERR(mpu_reg)) अणु
 		pr_warn("%s: unable to get MPU regulator\n", __func__);
-		mpu_reg = NULL;
-	} else {
+		mpu_reg = शून्य;
+	पूर्ण अन्यथा अणु
 		/* 
 		 * Ensure physical regulator is present.
 		 * (e.g. could be dummy regulator.)
 		 */
-		if (regulator_get_voltage(mpu_reg) < 0) {
+		अगर (regulator_get_voltage(mpu_reg) < 0) अणु
 			pr_warn("%s: physical regulator not present for MPU\n",
 				__func__);
 			regulator_put(mpu_reg);
-			mpu_reg = NULL;
-		}
-	}
+			mpu_reg = शून्य;
+		पूर्ण
+	पूर्ण
 
-	return cpufreq_register_driver(&omap_driver);
-}
+	वापस cpufreq_रेजिस्टर_driver(&omap_driver);
+पूर्ण
 
-static int omap_cpufreq_remove(struct platform_device *pdev)
-{
-	return cpufreq_unregister_driver(&omap_driver);
-}
+अटल पूर्णांक omap_cpufreq_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	वापस cpufreq_unरेजिस्टर_driver(&omap_driver);
+पूर्ण
 
-static struct platform_driver omap_cpufreq_platdrv = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver omap_cpufreq_platdrv = अणु
+	.driver = अणु
 		.name	= "omap-cpufreq",
-	},
+	पूर्ण,
 	.probe		= omap_cpufreq_probe,
-	.remove		= omap_cpufreq_remove,
-};
-module_platform_driver(omap_cpufreq_platdrv);
+	.हटाओ		= omap_cpufreq_हटाओ,
+पूर्ण;
+module_platक्रमm_driver(omap_cpufreq_platdrv);
 
 MODULE_DESCRIPTION("cpufreq driver for OMAP SoCs");
 MODULE_LICENSE("GPL");

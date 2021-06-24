@@ -1,74 +1,75 @@
-// SPDX-License-Identifier: LGPL-2.1
+<शैली गुरु>
+// SPDX-License-Identअगरier: LGPL-2.1
 /*
  * Copyright (C) 2009 Red Hat Inc, Steven Rostedt <srostedt@redhat.com>
  */
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <stdint.h>
+#समावेश <मानकपन.स>
+#समावेश <मानककोष.स>
+#समावेश <माला.स>
+#समावेश <मानक_निवेशt.h>
 
-#include "event-parse.h"
-#include "trace-seq.h"
+#समावेश "event-parse.h"
+#समावेश "trace-seq.h"
 
-#ifdef HAVE_UDIS86
+#अगर_घोषित HAVE_UDIS86
 
-#include <udis86.h>
+#समावेश <udis86.h>
 
-static ud_t ud;
+अटल ud_t ud;
 
-static void init_disassembler(void)
-{
+अटल व्योम init_disassembler(व्योम)
+अणु
 	ud_init(&ud);
 	ud_set_syntax(&ud, UD_SYN_ATT);
-}
+पूर्ण
 
-static const char *disassemble(unsigned char *insn, int len, uint64_t rip,
-			       int cr0_pe, int eflags_vm,
-			       int cs_d, int cs_l)
-{
-	int mode;
+अटल स्थिर अक्षर *disassemble(अचिन्हित अक्षर *insn, पूर्णांक len, uपूर्णांक64_t rip,
+			       पूर्णांक cr0_pe, पूर्णांक eflags_vm,
+			       पूर्णांक cs_d, पूर्णांक cs_l)
+अणु
+	पूर्णांक mode;
 
-	if (!cr0_pe)
+	अगर (!cr0_pe)
 		mode = 16;
-	else if (eflags_vm)
+	अन्यथा अगर (eflags_vm)
 		mode = 16;
-	else if (cs_l)
+	अन्यथा अगर (cs_l)
 		mode = 64;
-	else if (cs_d)
+	अन्यथा अगर (cs_d)
 		mode = 32;
-	else
+	अन्यथा
 		mode = 16;
 
 	ud_set_pc(&ud, rip);
 	ud_set_mode(&ud, mode);
 	ud_set_input_buffer(&ud, insn, len);
 	ud_disassemble(&ud);
-	return ud_insn_asm(&ud);
-}
+	वापस ud_insn_यंत्र(&ud);
+पूर्ण
 
-#else
+#अन्यथा
 
-static void init_disassembler(void)
-{
-}
+अटल व्योम init_disassembler(व्योम)
+अणु
+पूर्ण
 
-static const char *disassemble(unsigned char *insn, int len, uint64_t rip,
-			       int cr0_pe, int eflags_vm,
-			       int cs_d, int cs_l)
-{
-	static char out[15*3+1];
-	int i;
+अटल स्थिर अक्षर *disassemble(अचिन्हित अक्षर *insn, पूर्णांक len, uपूर्णांक64_t rip,
+			       पूर्णांक cr0_pe, पूर्णांक eflags_vm,
+			       पूर्णांक cs_d, पूर्णांक cs_l)
+अणु
+	अटल अक्षर out[15*3+1];
+	पूर्णांक i;
 
-	for (i = 0; i < len; ++i)
-		sprintf(out + i * 3, "%02x ", insn[i]);
+	क्रम (i = 0; i < len; ++i)
+		प्र_लिखो(out + i * 3, "%02x ", insn[i]);
 	out[len*3-1] = '\0';
-	return out;
-}
+	वापस out;
+पूर्ण
 
-#endif
+#पूर्ण_अगर
 
 
-#define VMX_EXIT_REASONS			\
+#घोषणा VMX_EXIT_REASONS			\
 	_ER(EXCEPTION_NMI,	 0)		\
 	_ER(EXTERNAL_INTERRUPT,	 1)		\
 	_ER(TRIPLE_FAULT,	 2)		\
@@ -115,7 +116,7 @@ static const char *disassemble(unsigned char *insn, int len, uint64_t rip,
 	_ER(XSAVES,		 63)		\
 	_ER(XRSTORS,		 64)
 
-#define SVM_EXIT_REASONS \
+#घोषणा SVM_EXIT_REASONS \
 	_ER(EXIT_READ_CR0,	0x000)		\
 	_ER(EXIT_READ_CR3,	0x003)		\
 	_ER(EXIT_READ_CR4,	0x004)		\
@@ -208,195 +209,195 @@ static const char *disassemble(unsigned char *insn, int len, uint64_t rip,
 	_ER(EXIT_AVIC_UNACCELERATED_ACCESS,	0x402)	\
 	_ER(EXIT_ERR,		-1)
 
-#define _ER(reason, val)	{ #reason, val },
-struct str_values {
-	const char	*str;
-	int		val;
-};
+#घोषणा _ER(reason, val)	अणु #reason, val पूर्ण,
+काष्ठा str_values अणु
+	स्थिर अक्षर	*str;
+	पूर्णांक		val;
+पूर्ण;
 
-static struct str_values vmx_exit_reasons[] = {
+अटल काष्ठा str_values vmx_निकास_reasons[] = अणु
 	VMX_EXIT_REASONS
-	{ NULL, -1}
-};
+	अणु शून्य, -1पूर्ण
+पूर्ण;
 
-static struct str_values svm_exit_reasons[] = {
+अटल काष्ठा str_values svm_निकास_reasons[] = अणु
 	SVM_EXIT_REASONS
-	{ NULL, -1}
-};
+	अणु शून्य, -1पूर्ण
+पूर्ण;
 
-static struct isa_exit_reasons {
-	unsigned isa;
-	struct str_values *strings;
-} isa_exit_reasons[] = {
-	{ .isa = 1, .strings = vmx_exit_reasons },
-	{ .isa = 2, .strings = svm_exit_reasons },
-	{ }
-};
+अटल काष्ठा isa_निकास_reasons अणु
+	अचिन्हित isa;
+	काष्ठा str_values *strings;
+पूर्ण isa_निकास_reasons[] = अणु
+	अणु .isa = 1, .strings = vmx_निकास_reasons पूर्ण,
+	अणु .isa = 2, .strings = svm_निकास_reasons पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 
-static const char *find_exit_reason(unsigned isa, int val)
-{
-	struct str_values *strings = NULL;
-	int i;
+अटल स्थिर अक्षर *find_निकास_reason(अचिन्हित isa, पूर्णांक val)
+अणु
+	काष्ठा str_values *strings = शून्य;
+	पूर्णांक i;
 
-	for (i = 0; isa_exit_reasons[i].strings; ++i)
-		if (isa_exit_reasons[i].isa == isa) {
-			strings = isa_exit_reasons[i].strings;
-			break;
-		}
-	if (!strings)
-		return "UNKNOWN-ISA";
-	for (i = 0; strings[i].str; i++)
-		if (strings[i].val == val)
-			break;
+	क्रम (i = 0; isa_निकास_reasons[i].strings; ++i)
+		अगर (isa_निकास_reasons[i].isa == isa) अणु
+			strings = isa_निकास_reasons[i].strings;
+			अवरोध;
+		पूर्ण
+	अगर (!strings)
+		वापस "UNKNOWN-ISA";
+	क्रम (i = 0; strings[i].str; i++)
+		अगर (strings[i].val == val)
+			अवरोध;
 
-	return strings[i].str;
-}
+	वापस strings[i].str;
+पूर्ण
 
-static int print_exit_reason(struct trace_seq *s, struct tep_record *record,
-			     struct tep_event *event, const char *field)
-{
-	unsigned long long isa;
-	unsigned long long val;
-	const char *reason;
+अटल पूर्णांक prपूर्णांक_निकास_reason(काष्ठा trace_seq *s, काष्ठा tep_record *record,
+			     काष्ठा tep_event *event, स्थिर अक्षर *field)
+अणु
+	अचिन्हित दीर्घ दीर्घ isa;
+	अचिन्हित दीर्घ दीर्घ val;
+	स्थिर अक्षर *reason;
 
-	if (tep_get_field_val(s, event, field, record, &val, 1) < 0)
-		return -1;
+	अगर (tep_get_field_val(s, event, field, record, &val, 1) < 0)
+		वापस -1;
 
-	if (tep_get_field_val(s, event, "isa", record, &isa, 0) < 0)
+	अगर (tep_get_field_val(s, event, "isa", record, &isa, 0) < 0)
 		isa = 1;
 
-	reason = find_exit_reason(isa, val);
-	if (reason)
-		trace_seq_printf(s, "reason %s", reason);
-	else
-		trace_seq_printf(s, "reason UNKNOWN (%llu)", val);
-	return 0;
-}
+	reason = find_निकास_reason(isa, val);
+	अगर (reason)
+		trace_seq_म_लिखो(s, "reason %s", reason);
+	अन्यथा
+		trace_seq_म_लिखो(s, "reason UNKNOWN (%llu)", val);
+	वापस 0;
+पूर्ण
 
-static int kvm_exit_handler(struct trace_seq *s, struct tep_record *record,
-			    struct tep_event *event, void *context)
-{
-	unsigned long long info1 = 0, info2 = 0;
+अटल पूर्णांक kvm_निकास_handler(काष्ठा trace_seq *s, काष्ठा tep_record *record,
+			    काष्ठा tep_event *event, व्योम *context)
+अणु
+	अचिन्हित दीर्घ दीर्घ info1 = 0, info2 = 0;
 
-	if (print_exit_reason(s, record, event, "exit_reason") < 0)
-		return -1;
+	अगर (prपूर्णांक_निकास_reason(s, record, event, "exit_reason") < 0)
+		वापस -1;
 
-	tep_print_num_field(s, " rip 0x%lx", event, "guest_rip", record, 1);
+	tep_prपूर्णांक_num_field(s, " rip 0x%lx", event, "guest_rip", record, 1);
 
-	if (tep_get_field_val(s, event, "info1", record, &info1, 0) >= 0
+	अगर (tep_get_field_val(s, event, "info1", record, &info1, 0) >= 0
 	    && tep_get_field_val(s, event, "info2", record, &info2, 0) >= 0)
-		trace_seq_printf(s, " info %llx %llx", info1, info2);
+		trace_seq_म_लिखो(s, " info %llx %llx", info1, info2);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#define KVM_EMUL_INSN_F_CR0_PE (1 << 0)
-#define KVM_EMUL_INSN_F_EFL_VM (1 << 1)
-#define KVM_EMUL_INSN_F_CS_D   (1 << 2)
-#define KVM_EMUL_INSN_F_CS_L   (1 << 3)
+#घोषणा KVM_EMUL_INSN_F_CR0_PE (1 << 0)
+#घोषणा KVM_EMUL_INSN_F_EFL_VM (1 << 1)
+#घोषणा KVM_EMUL_INSN_F_CS_D   (1 << 2)
+#घोषणा KVM_EMUL_INSN_F_CS_L   (1 << 3)
 
-static int kvm_emulate_insn_handler(struct trace_seq *s,
-				    struct tep_record *record,
-				    struct tep_event *event, void *context)
-{
-	unsigned long long rip, csbase, len, flags, failed;
-	int llen;
-	uint8_t *insn;
-	const char *disasm;
+अटल पूर्णांक kvm_emulate_insn_handler(काष्ठा trace_seq *s,
+				    काष्ठा tep_record *record,
+				    काष्ठा tep_event *event, व्योम *context)
+अणु
+	अचिन्हित दीर्घ दीर्घ rip, csbase, len, flags, failed;
+	पूर्णांक llen;
+	uपूर्णांक8_t *insn;
+	स्थिर अक्षर *disयंत्र;
 
-	if (tep_get_field_val(s, event, "rip", record, &rip, 1) < 0)
-		return -1;
+	अगर (tep_get_field_val(s, event, "rip", record, &rip, 1) < 0)
+		वापस -1;
 
-	if (tep_get_field_val(s, event, "csbase", record, &csbase, 1) < 0)
-		return -1;
+	अगर (tep_get_field_val(s, event, "csbase", record, &csbase, 1) < 0)
+		वापस -1;
 
-	if (tep_get_field_val(s, event, "len", record, &len, 1) < 0)
-		return -1;
+	अगर (tep_get_field_val(s, event, "len", record, &len, 1) < 0)
+		वापस -1;
 
-	if (tep_get_field_val(s, event, "flags", record, &flags, 1) < 0)
-		return -1;
+	अगर (tep_get_field_val(s, event, "flags", record, &flags, 1) < 0)
+		वापस -1;
 
-	if (tep_get_field_val(s, event, "failed", record, &failed, 1) < 0)
-		return -1;
+	अगर (tep_get_field_val(s, event, "failed", record, &failed, 1) < 0)
+		वापस -1;
 
 	insn = tep_get_field_raw(s, event, "insn", record, &llen, 1);
-	if (!insn)
-		return -1;
+	अगर (!insn)
+		वापस -1;
 
-	disasm = disassemble(insn, len, rip,
+	disयंत्र = disassemble(insn, len, rip,
 			     flags & KVM_EMUL_INSN_F_CR0_PE,
 			     flags & KVM_EMUL_INSN_F_EFL_VM,
 			     flags & KVM_EMUL_INSN_F_CS_D,
 			     flags & KVM_EMUL_INSN_F_CS_L);
 
-	trace_seq_printf(s, "%llx:%llx: %s%s", csbase, rip, disasm,
+	trace_seq_म_लिखो(s, "%llx:%llx: %s%s", csbase, rip, disयंत्र,
 			 failed ? " FAIL" : "");
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
-static int kvm_nested_vmexit_inject_handler(struct trace_seq *s, struct tep_record *record,
-					    struct tep_event *event, void *context)
-{
-	if (print_exit_reason(s, record, event, "exit_code") < 0)
-		return -1;
+अटल पूर्णांक kvm_nested_vmनिकास_inject_handler(काष्ठा trace_seq *s, काष्ठा tep_record *record,
+					    काष्ठा tep_event *event, व्योम *context)
+अणु
+	अगर (prपूर्णांक_निकास_reason(s, record, event, "exit_code") < 0)
+		वापस -1;
 
-	tep_print_num_field(s, " info1 %llx", event, "exit_info1", record, 1);
-	tep_print_num_field(s, " info2 %llx", event, "exit_info2", record, 1);
-	tep_print_num_field(s, " int_info %llx", event, "exit_int_info", record, 1);
-	tep_print_num_field(s, " int_info_err %llx", event, "exit_int_info_err", record, 1);
+	tep_prपूर्णांक_num_field(s, " info1 %llx", event, "exit_info1", record, 1);
+	tep_prपूर्णांक_num_field(s, " info2 %llx", event, "exit_info2", record, 1);
+	tep_prपूर्णांक_num_field(s, " int_info %llx", event, "exit_int_info", record, 1);
+	tep_prपूर्णांक_num_field(s, " int_info_err %llx", event, "exit_int_info_err", record, 1);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int kvm_nested_vmexit_handler(struct trace_seq *s, struct tep_record *record,
-				     struct tep_event *event, void *context)
-{
-	tep_print_num_field(s, "rip %llx ", event, "rip", record, 1);
+अटल पूर्णांक kvm_nested_vmनिकास_handler(काष्ठा trace_seq *s, काष्ठा tep_record *record,
+				     काष्ठा tep_event *event, व्योम *context)
+अणु
+	tep_prपूर्णांक_num_field(s, "rip %llx ", event, "rip", record, 1);
 
-	return kvm_nested_vmexit_inject_handler(s, record, event, context);
-}
+	वापस kvm_nested_vmनिकास_inject_handler(s, record, event, context);
+पूर्ण
 
-union kvm_mmu_page_role {
-	unsigned word;
-	struct {
-		unsigned level:4;
-		unsigned cr4_pae:1;
-		unsigned quadrant:2;
-		unsigned direct:1;
-		unsigned access:3;
-		unsigned invalid:1;
-		unsigned nxe:1;
-		unsigned cr0_wp:1;
-		unsigned smep_and_not_wp:1;
-		unsigned smap_and_not_wp:1;
-		unsigned pad_for_nice_hex_output:8;
-		unsigned smm:8;
-	};
-};
+जोड़ kvm_mmu_page_role अणु
+	अचिन्हित word;
+	काष्ठा अणु
+		अचिन्हित level:4;
+		अचिन्हित cr4_pae:1;
+		अचिन्हित quadrant:2;
+		अचिन्हित direct:1;
+		अचिन्हित access:3;
+		अचिन्हित invalid:1;
+		अचिन्हित nxe:1;
+		अचिन्हित cr0_wp:1;
+		अचिन्हित smep_and_not_wp:1;
+		अचिन्हित smap_and_not_wp:1;
+		अचिन्हित pad_क्रम_nice_hex_output:8;
+		अचिन्हित smm:8;
+	पूर्ण;
+पूर्ण;
 
-static int kvm_mmu_print_role(struct trace_seq *s, struct tep_record *record,
-			      struct tep_event *event, void *context)
-{
-	unsigned long long val;
-	static const char *access_str[] = {
+अटल पूर्णांक kvm_mmu_prपूर्णांक_role(काष्ठा trace_seq *s, काष्ठा tep_record *record,
+			      काष्ठा tep_event *event, व्योम *context)
+अणु
+	अचिन्हित दीर्घ दीर्घ val;
+	अटल स्थिर अक्षर *access_str[] = अणु
 		"---", "--x", "w--", "w-x", "-u-", "-ux", "wu-", "wux"
-	};
-	union kvm_mmu_page_role role;
+	पूर्ण;
+	जोड़ kvm_mmu_page_role role;
 
-	if (tep_get_field_val(s, event, "role", record, &val, 1) < 0)
-		return -1;
+	अगर (tep_get_field_val(s, event, "role", record, &val, 1) < 0)
+		वापस -1;
 
-	role.word = (int)val;
+	role.word = (पूर्णांक)val;
 
 	/*
-	 * We can only use the structure if file is of the same
+	 * We can only use the काष्ठाure अगर file is of the same
 	 * endianness.
 	 */
-	if (tep_is_file_bigendian(event->tep) ==
-	    tep_is_local_bigendian(event->tep)) {
+	अगर (tep_is_file_bigendian(event->tep) ==
+	    tep_is_local_bigendian(event->tep)) अणु
 
-		trace_seq_printf(s, "%u q%u%s %s%s %spae %snxe %swp%s%s%s",
+		trace_seq_म_लिखो(s, "%u q%u%s %s%s %spae %snxe %swp%s%s%s",
 				 role.level,
 				 role.quadrant,
 				 role.direct ? " direct" : "",
@@ -408,120 +409,120 @@ static int kvm_mmu_print_role(struct trace_seq *s, struct tep_record *record,
 				 role.smep_and_not_wp ? " smep" : "",
 				 role.smap_and_not_wp ? " smap" : "",
 				 role.smm ? " smm" : "");
-	} else
-		trace_seq_printf(s, "WORD: %08x", role.word);
+	पूर्ण अन्यथा
+		trace_seq_म_लिखो(s, "WORD: %08x", role.word);
 
-	tep_print_num_field(s, " root %u ",  event,
+	tep_prपूर्णांक_num_field(s, " root %u ",  event,
 			    "root_count", record, 1);
 
-	if (tep_get_field_val(s, event, "unsync", record, &val, 1) < 0)
-		return -1;
+	अगर (tep_get_field_val(s, event, "unsync", record, &val, 1) < 0)
+		वापस -1;
 
-	trace_seq_printf(s, "%s%c",  val ? "unsync" : "sync", 0);
-	return 0;
-}
+	trace_seq_म_लिखो(s, "%s%c",  val ? "unsync" : "sync", 0);
+	वापस 0;
+पूर्ण
 
-static int kvm_mmu_get_page_handler(struct trace_seq *s,
-				    struct tep_record *record,
-				    struct tep_event *event, void *context)
-{
-	unsigned long long val;
+अटल पूर्णांक kvm_mmu_get_page_handler(काष्ठा trace_seq *s,
+				    काष्ठा tep_record *record,
+				    काष्ठा tep_event *event, व्योम *context)
+अणु
+	अचिन्हित दीर्घ दीर्घ val;
 
-	if (tep_get_field_val(s, event, "created", record, &val, 1) < 0)
-		return -1;
+	अगर (tep_get_field_val(s, event, "created", record, &val, 1) < 0)
+		वापस -1;
 
-	trace_seq_printf(s, "%s ", val ? "new" : "existing");
+	trace_seq_म_लिखो(s, "%s ", val ? "new" : "existing");
 
-	if (tep_get_field_val(s, event, "gfn", record, &val, 1) < 0)
-		return -1;
+	अगर (tep_get_field_val(s, event, "gfn", record, &val, 1) < 0)
+		वापस -1;
 
-	trace_seq_printf(s, "sp gfn %llx ", val);
-	return kvm_mmu_print_role(s, record, event, context);
-}
+	trace_seq_म_लिखो(s, "sp gfn %llx ", val);
+	वापस kvm_mmu_prपूर्णांक_role(s, record, event, context);
+पूर्ण
 
-#define PT_WRITABLE_SHIFT 1
-#define PT_WRITABLE_MASK (1ULL << PT_WRITABLE_SHIFT)
+#घोषणा PT_WRITABLE_SHIFT 1
+#घोषणा PT_WRITABLE_MASK (1ULL << PT_WRITABLE_SHIFT)
 
-static unsigned long long
-process_is_writable_pte(struct trace_seq *s, unsigned long long *args)
-{
-	unsigned long pte = args[0];
-	return pte & PT_WRITABLE_MASK;
-}
+अटल अचिन्हित दीर्घ दीर्घ
+process_is_writable_pte(काष्ठा trace_seq *s, अचिन्हित दीर्घ दीर्घ *args)
+अणु
+	अचिन्हित दीर्घ pte = args[0];
+	वापस pte & PT_WRITABLE_MASK;
+पूर्ण
 
-int TEP_PLUGIN_LOADER(struct tep_handle *tep)
-{
+पूर्णांक TEP_PLUGIN_LOADER(काष्ठा tep_handle *tep)
+अणु
 	init_disassembler();
 
-	tep_register_event_handler(tep, -1, "kvm", "kvm_exit",
-				   kvm_exit_handler, NULL);
+	tep_रेजिस्टर_event_handler(tep, -1, "kvm", "kvm_exit",
+				   kvm_निकास_handler, शून्य);
 
-	tep_register_event_handler(tep, -1, "kvm", "kvm_emulate_insn",
-				   kvm_emulate_insn_handler, NULL);
+	tep_रेजिस्टर_event_handler(tep, -1, "kvm", "kvm_emulate_insn",
+				   kvm_emulate_insn_handler, शून्य);
 
-	tep_register_event_handler(tep, -1, "kvm", "kvm_nested_vmexit",
-				   kvm_nested_vmexit_handler, NULL);
+	tep_रेजिस्टर_event_handler(tep, -1, "kvm", "kvm_nested_vmexit",
+				   kvm_nested_vmनिकास_handler, शून्य);
 
-	tep_register_event_handler(tep, -1, "kvm", "kvm_nested_vmexit_inject",
-				   kvm_nested_vmexit_inject_handler, NULL);
+	tep_रेजिस्टर_event_handler(tep, -1, "kvm", "kvm_nested_vmexit_inject",
+				   kvm_nested_vmनिकास_inject_handler, शून्य);
 
-	tep_register_event_handler(tep, -1, "kvmmmu", "kvm_mmu_get_page",
-				   kvm_mmu_get_page_handler, NULL);
+	tep_रेजिस्टर_event_handler(tep, -1, "kvmmmu", "kvm_mmu_get_page",
+				   kvm_mmu_get_page_handler, शून्य);
 
-	tep_register_event_handler(tep, -1, "kvmmmu", "kvm_mmu_sync_page",
-				   kvm_mmu_print_role, NULL);
+	tep_रेजिस्टर_event_handler(tep, -1, "kvmmmu", "kvm_mmu_sync_page",
+				   kvm_mmu_prपूर्णांक_role, शून्य);
 
-	tep_register_event_handler(tep, -1,
+	tep_रेजिस्टर_event_handler(tep, -1,
 				   "kvmmmu", "kvm_mmu_unsync_page",
-				   kvm_mmu_print_role, NULL);
+				   kvm_mmu_prपूर्णांक_role, शून्य);
 
-	tep_register_event_handler(tep, -1, "kvmmmu", "kvm_mmu_zap_page",
-				   kvm_mmu_print_role, NULL);
+	tep_रेजिस्टर_event_handler(tep, -1, "kvmmmu", "kvm_mmu_zap_page",
+				   kvm_mmu_prपूर्णांक_role, शून्य);
 
-	tep_register_event_handler(tep, -1, "kvmmmu",
-			"kvm_mmu_prepare_zap_page", kvm_mmu_print_role,
-			NULL);
+	tep_रेजिस्टर_event_handler(tep, -1, "kvmmmu",
+			"kvm_mmu_prepare_zap_page", kvm_mmu_prपूर्णांक_role,
+			शून्य);
 
-	tep_register_print_function(tep,
+	tep_रेजिस्टर_prपूर्णांक_function(tep,
 				    process_is_writable_pte,
 				    TEP_FUNC_ARG_INT,
 				    "is_writable_pte",
 				    TEP_FUNC_ARG_LONG,
 				    TEP_FUNC_ARG_VOID);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void TEP_PLUGIN_UNLOADER(struct tep_handle *tep)
-{
-	tep_unregister_event_handler(tep, -1, "kvm", "kvm_exit",
-				     kvm_exit_handler, NULL);
+व्योम TEP_PLUGIN_UNLOADER(काष्ठा tep_handle *tep)
+अणु
+	tep_unरेजिस्टर_event_handler(tep, -1, "kvm", "kvm_exit",
+				     kvm_निकास_handler, शून्य);
 
-	tep_unregister_event_handler(tep, -1, "kvm", "kvm_emulate_insn",
-				     kvm_emulate_insn_handler, NULL);
+	tep_unरेजिस्टर_event_handler(tep, -1, "kvm", "kvm_emulate_insn",
+				     kvm_emulate_insn_handler, शून्य);
 
-	tep_unregister_event_handler(tep, -1, "kvm", "kvm_nested_vmexit",
-				     kvm_nested_vmexit_handler, NULL);
+	tep_unरेजिस्टर_event_handler(tep, -1, "kvm", "kvm_nested_vmexit",
+				     kvm_nested_vmनिकास_handler, शून्य);
 
-	tep_unregister_event_handler(tep, -1, "kvm", "kvm_nested_vmexit_inject",
-				     kvm_nested_vmexit_inject_handler, NULL);
+	tep_unरेजिस्टर_event_handler(tep, -1, "kvm", "kvm_nested_vmexit_inject",
+				     kvm_nested_vmनिकास_inject_handler, शून्य);
 
-	tep_unregister_event_handler(tep, -1, "kvmmmu", "kvm_mmu_get_page",
-				     kvm_mmu_get_page_handler, NULL);
+	tep_unरेजिस्टर_event_handler(tep, -1, "kvmmmu", "kvm_mmu_get_page",
+				     kvm_mmu_get_page_handler, शून्य);
 
-	tep_unregister_event_handler(tep, -1, "kvmmmu", "kvm_mmu_sync_page",
-				     kvm_mmu_print_role, NULL);
+	tep_unरेजिस्टर_event_handler(tep, -1, "kvmmmu", "kvm_mmu_sync_page",
+				     kvm_mmu_prपूर्णांक_role, शून्य);
 
-	tep_unregister_event_handler(tep, -1,
+	tep_unरेजिस्टर_event_handler(tep, -1,
 				     "kvmmmu", "kvm_mmu_unsync_page",
-				     kvm_mmu_print_role, NULL);
+				     kvm_mmu_prपूर्णांक_role, शून्य);
 
-	tep_unregister_event_handler(tep, -1, "kvmmmu", "kvm_mmu_zap_page",
-				     kvm_mmu_print_role, NULL);
+	tep_unरेजिस्टर_event_handler(tep, -1, "kvmmmu", "kvm_mmu_zap_page",
+				     kvm_mmu_prपूर्णांक_role, शून्य);
 
-	tep_unregister_event_handler(tep, -1, "kvmmmu",
-			"kvm_mmu_prepare_zap_page", kvm_mmu_print_role,
-			NULL);
+	tep_unरेजिस्टर_event_handler(tep, -1, "kvmmmu",
+			"kvm_mmu_prepare_zap_page", kvm_mmu_prपूर्णांक_role,
+			शून्य);
 
-	tep_unregister_print_function(tep, process_is_writable_pte,
+	tep_unरेजिस्टर_prपूर्णांक_function(tep, process_is_writable_pte,
 				      "is_writable_pte");
-}
+पूर्ण

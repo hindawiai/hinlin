@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * vdso_full_test.c: Sample code to test all the timers.
+ * vdso_full_test.c: Sample code to test all the समयrs.
  * Copyright (c) 2019 Arm Ltd.
  *
  * Compile with:
@@ -8,138 +9,138 @@
  *
  */
 
-#include <stdint.h>
-#include <elf.h>
-#include <stdio.h>
-#include <time.h>
-#include <sys/auxv.h>
-#include <sys/time.h>
-#define _GNU_SOURCE
-#include <unistd.h>
-#include <sys/syscall.h>
+#समावेश <मानक_निवेशt.h>
+#समावेश <elf.h>
+#समावेश <मानकपन.स>
+#समावेश <समय.स>
+#समावेश <sys/auxv.h>
+#समावेश <sys/समय.स>
+#घोषणा _GNU_SOURCE
+#समावेश <unistd.h>
+#समावेश <sys/syscall.h>
 
-#include "../kselftest.h"
-#include "vdso_config.h"
+#समावेश "../kselftest.h"
+#समावेश "vdso_config.h"
 
-extern void *vdso_sym(const char *version, const char *name);
-extern void vdso_init_from_sysinfo_ehdr(uintptr_t base);
-extern void vdso_init_from_auxv(void *auxv);
+बाह्य व्योम *vdso_sym(स्थिर अक्षर *version, स्थिर अक्षर *name);
+बाह्य व्योम vdso_init_from_sysinfo_ehdr(uपूर्णांकptr_t base);
+बाह्य व्योम vdso_init_from_auxv(व्योम *auxv);
 
-static const char *version;
-static const char **name;
+अटल स्थिर अक्षर *version;
+अटल स्थिर अक्षर **name;
 
-typedef long (*vdso_gettimeofday_t)(struct timeval *tv, struct timezone *tz);
-typedef long (*vdso_clock_gettime_t)(clockid_t clk_id, struct timespec *ts);
-typedef long (*vdso_clock_getres_t)(clockid_t clk_id, struct timespec *ts);
-typedef time_t (*vdso_time_t)(time_t *t);
+प्रकार दीर्घ (*vdso_समय_लोofday_t)(काष्ठा समयval *tv, काष्ठा समयzone *tz);
+प्रकार दीर्घ (*vdso_घड़ी_समय_लो_t)(घड़ीid_t clk_id, काष्ठा बारpec *ts);
+प्रकार दीर्घ (*vdso_घड़ी_getres_t)(घड़ीid_t clk_id, काष्ठा बारpec *ts);
+प्रकार समय_प्रकार (*vdso_समय_प्रकार)(समय_प्रकार *t);
 
-static int vdso_test_gettimeofday(void)
-{
-	/* Find gettimeofday. */
-	vdso_gettimeofday_t vdso_gettimeofday =
-		(vdso_gettimeofday_t)vdso_sym(version, name[0]);
+अटल पूर्णांक vdso_test_समय_लोofday(व्योम)
+अणु
+	/* Find समय_लोofday. */
+	vdso_समय_लोofday_t vdso_समय_लोofday =
+		(vdso_समय_लोofday_t)vdso_sym(version, name[0]);
 
-	if (!vdso_gettimeofday) {
-		printf("Could not find %s\n", name[0]);
-		return KSFT_SKIP;
-	}
+	अगर (!vdso_समय_लोofday) अणु
+		म_लिखो("Could not find %s\n", name[0]);
+		वापस KSFT_SKIP;
+	पूर्ण
 
-	struct timeval tv;
-	long ret = vdso_gettimeofday(&tv, 0);
+	काष्ठा समयval tv;
+	दीर्घ ret = vdso_समय_लोofday(&tv, 0);
 
-	if (ret == 0) {
-		printf("The time is %lld.%06lld\n",
-		       (long long)tv.tv_sec, (long long)tv.tv_usec);
-	} else {
-		printf("%s failed\n", name[0]);
-		return KSFT_FAIL;
-	}
+	अगर (ret == 0) अणु
+		म_लिखो("The time is %lld.%06lld\n",
+		       (दीर्घ दीर्घ)tv.tv_sec, (दीर्घ दीर्घ)tv.tv_usec);
+	पूर्ण अन्यथा अणु
+		म_लिखो("%s failed\n", name[0]);
+		वापस KSFT_FAIL;
+	पूर्ण
 
-	return KSFT_PASS;
-}
+	वापस KSFT_PASS;
+पूर्ण
 
-static int vdso_test_clock_gettime(clockid_t clk_id)
-{
-	/* Find clock_gettime. */
-	vdso_clock_gettime_t vdso_clock_gettime =
-		(vdso_clock_gettime_t)vdso_sym(version, name[1]);
+अटल पूर्णांक vdso_test_घड़ी_समय_लो(घड़ीid_t clk_id)
+अणु
+	/* Find घड़ी_समय_लो. */
+	vdso_घड़ी_समय_लो_t vdso_घड़ी_समय_लो =
+		(vdso_घड़ी_समय_लो_t)vdso_sym(version, name[1]);
 
-	if (!vdso_clock_gettime) {
-		printf("Could not find %s\n", name[1]);
-		return KSFT_SKIP;
-	}
+	अगर (!vdso_घड़ी_समय_लो) अणु
+		म_लिखो("Could not find %s\n", name[1]);
+		वापस KSFT_SKIP;
+	पूर्ण
 
-	struct timespec ts;
-	long ret = vdso_clock_gettime(clk_id, &ts);
+	काष्ठा बारpec ts;
+	दीर्घ ret = vdso_घड़ी_समय_लो(clk_id, &ts);
 
-	if (ret == 0) {
-		printf("The time is %lld.%06lld\n",
-		       (long long)ts.tv_sec, (long long)ts.tv_nsec);
-	} else {
-		printf("%s failed\n", name[1]);
-		return KSFT_FAIL;
-	}
+	अगर (ret == 0) अणु
+		म_लिखो("The time is %lld.%06lld\n",
+		       (दीर्घ दीर्घ)ts.tv_sec, (दीर्घ दीर्घ)ts.tv_nsec);
+	पूर्ण अन्यथा अणु
+		म_लिखो("%s failed\n", name[1]);
+		वापस KSFT_FAIL;
+	पूर्ण
 
-	return KSFT_PASS;
-}
+	वापस KSFT_PASS;
+पूर्ण
 
-static int vdso_test_time(void)
-{
-	/* Find time. */
-	vdso_time_t vdso_time =
-		(vdso_time_t)vdso_sym(version, name[2]);
+अटल पूर्णांक vdso_test_समय(व्योम)
+अणु
+	/* Find समय. */
+	vdso_समय_प्रकार vdso_समय =
+		(vdso_समय_प्रकार)vdso_sym(version, name[2]);
 
-	if (!vdso_time) {
-		printf("Could not find %s\n", name[2]);
-		return KSFT_SKIP;
-	}
+	अगर (!vdso_समय) अणु
+		म_लिखो("Could not find %s\n", name[2]);
+		वापस KSFT_SKIP;
+	पूर्ण
 
-	long ret = vdso_time(NULL);
+	दीर्घ ret = vdso_समय(शून्य);
 
-	if (ret > 0) {
-		printf("The time in hours since January 1, 1970 is %lld\n",
-				(long long)(ret / 3600));
-	} else {
-		printf("%s failed\n", name[2]);
-		return KSFT_FAIL;
-	}
+	अगर (ret > 0) अणु
+		म_लिखो("The time in hours since January 1, 1970 is %lld\n",
+				(दीर्घ दीर्घ)(ret / 3600));
+	पूर्ण अन्यथा अणु
+		म_लिखो("%s failed\n", name[2]);
+		वापस KSFT_FAIL;
+	पूर्ण
 
-	return KSFT_PASS;
-}
+	वापस KSFT_PASS;
+पूर्ण
 
-static int vdso_test_clock_getres(clockid_t clk_id)
-{
-	/* Find clock_getres. */
-	vdso_clock_getres_t vdso_clock_getres =
-		(vdso_clock_getres_t)vdso_sym(version, name[3]);
+अटल पूर्णांक vdso_test_घड़ी_getres(घड़ीid_t clk_id)
+अणु
+	/* Find घड़ी_getres. */
+	vdso_घड़ी_getres_t vdso_घड़ी_getres =
+		(vdso_घड़ी_getres_t)vdso_sym(version, name[3]);
 
-	if (!vdso_clock_getres) {
-		printf("Could not find %s\n", name[3]);
-		return KSFT_SKIP;
-	}
+	अगर (!vdso_घड़ी_getres) अणु
+		म_लिखो("Could not find %s\n", name[3]);
+		वापस KSFT_SKIP;
+	पूर्ण
 
-	struct timespec ts, sys_ts;
-	long ret = vdso_clock_getres(clk_id, &ts);
+	काष्ठा बारpec ts, sys_ts;
+	दीर्घ ret = vdso_घड़ी_getres(clk_id, &ts);
 
-	if (ret == 0) {
-		printf("The resolution is %lld %lld\n",
-		       (long long)ts.tv_sec, (long long)ts.tv_nsec);
-	} else {
-		printf("%s failed\n", name[3]);
-		return KSFT_FAIL;
-	}
+	अगर (ret == 0) अणु
+		म_लिखो("The resolution is %lld %lld\n",
+		       (दीर्घ दीर्घ)ts.tv_sec, (दीर्घ दीर्घ)ts.tv_nsec);
+	पूर्ण अन्यथा अणु
+		म_लिखो("%s failed\n", name[3]);
+		वापस KSFT_FAIL;
+	पूर्ण
 
-	ret = syscall(SYS_clock_getres, clk_id, &sys_ts);
+	ret = syscall(SYS_घड़ी_getres, clk_id, &sys_ts);
 
-	if ((sys_ts.tv_sec != ts.tv_sec) || (sys_ts.tv_nsec != ts.tv_nsec)) {
-		printf("%s failed\n", name[3]);
-		return KSFT_FAIL;
-	}
+	अगर ((sys_ts.tv_sec != ts.tv_sec) || (sys_ts.tv_nsec != ts.tv_nsec)) अणु
+		म_लिखो("%s failed\n", name[3]);
+		वापस KSFT_FAIL;
+	पूर्ण
 
-	return KSFT_PASS;
-}
+	वापस KSFT_PASS;
+पूर्ण
 
-const char *vdso_clock_name[12] = {
+स्थिर अक्षर *vdso_घड़ी_name[12] = अणु
 	"CLOCK_REALTIME",
 	"CLOCK_MONOTONIC",
 	"CLOCK_PROCESS_CPUTIME_ID",
@@ -152,93 +153,93 @@ const char *vdso_clock_name[12] = {
 	"CLOCK_BOOTTIME_ALARM",
 	"CLOCK_SGI_CYCLE",
 	"CLOCK_TAI",
-};
+पूर्ण;
 
 /*
- * This function calls vdso_test_clock_gettime and vdso_test_clock_getres
- * with different values for clock_id.
+ * This function calls vdso_test_घड़ी_समय_लो and vdso_test_घड़ी_getres
+ * with dअगरferent values क्रम घड़ी_id.
  */
-static inline int vdso_test_clock(clockid_t clock_id)
-{
-	int ret0, ret1;
+अटल अंतरभूत पूर्णांक vdso_test_घड़ी(घड़ीid_t घड़ी_id)
+अणु
+	पूर्णांक ret0, ret1;
 
-	ret0 = vdso_test_clock_gettime(clock_id);
+	ret0 = vdso_test_घड़ी_समय_लो(घड़ी_id);
 	/* A skipped test is considered passed */
-	if (ret0 == KSFT_SKIP)
+	अगर (ret0 == KSFT_SKIP)
 		ret0 = KSFT_PASS;
 
-	ret1 = vdso_test_clock_getres(clock_id);
+	ret1 = vdso_test_घड़ी_getres(घड़ी_id);
 	/* A skipped test is considered passed */
-	if (ret1 == KSFT_SKIP)
+	अगर (ret1 == KSFT_SKIP)
 		ret1 = KSFT_PASS;
 
 	ret0 += ret1;
 
-	printf("clock_id: %s", vdso_clock_name[clock_id]);
+	म_लिखो("clock_id: %s", vdso_घड़ी_name[घड़ी_id]);
 
-	if (ret0 > 0)
-		printf(" [FAIL]\n");
-	else
-		printf(" [PASS]\n");
+	अगर (ret0 > 0)
+		म_लिखो(" [FAIL]\n");
+	अन्यथा
+		म_लिखो(" [PASS]\n");
 
-	return ret0;
-}
+	वापस ret0;
+पूर्ण
 
-int main(int argc, char **argv)
-{
-	unsigned long sysinfo_ehdr = getauxval(AT_SYSINFO_EHDR);
-	int ret;
+पूर्णांक मुख्य(पूर्णांक argc, अक्षर **argv)
+अणु
+	अचिन्हित दीर्घ sysinfo_ehdr = getauxval(AT_SYSINFO_EHDR);
+	पूर्णांक ret;
 
-	if (!sysinfo_ehdr) {
-		printf("AT_SYSINFO_EHDR is not present!\n");
-		return KSFT_SKIP;
-	}
+	अगर (!sysinfo_ehdr) अणु
+		म_लिखो("AT_SYSINFO_EHDR is not present!\n");
+		वापस KSFT_SKIP;
+	पूर्ण
 
 	version = versions[VDSO_VERSION];
-	name = (const char **)&names[VDSO_NAMES];
+	name = (स्थिर अक्षर **)&names[VDSO_NAMES];
 
-	printf("[vDSO kselftest] VDSO_VERSION: %s\n", version);
+	म_लिखो("[vDSO kselftest] VDSO_VERSION: %s\n", version);
 
 	vdso_init_from_sysinfo_ehdr(getauxval(AT_SYSINFO_EHDR));
 
-	ret = vdso_test_gettimeofday();
+	ret = vdso_test_समय_लोofday();
 
-#if _POSIX_TIMERS > 0
+#अगर _POSIX_TIMERS > 0
 
-#ifdef CLOCK_REALTIME
-	ret += vdso_test_clock(CLOCK_REALTIME);
-#endif
+#अगर_घोषित CLOCK_REALTIME
+	ret += vdso_test_घड़ी(CLOCK_REALTIME);
+#पूर्ण_अगर
 
-#ifdef CLOCK_BOOTTIME
-	ret += vdso_test_clock(CLOCK_BOOTTIME);
-#endif
+#अगर_घोषित CLOCK_BOOTTIME
+	ret += vdso_test_घड़ी(CLOCK_BOOTTIME);
+#पूर्ण_अगर
 
-#ifdef CLOCK_TAI
-	ret += vdso_test_clock(CLOCK_TAI);
-#endif
+#अगर_घोषित CLOCK_TAI
+	ret += vdso_test_घड़ी(CLOCK_TAI);
+#पूर्ण_अगर
 
-#ifdef CLOCK_REALTIME_COARSE
-	ret += vdso_test_clock(CLOCK_REALTIME_COARSE);
-#endif
+#अगर_घोषित CLOCK_REALTIME_COARSE
+	ret += vdso_test_घड़ी(CLOCK_REALTIME_COARSE);
+#पूर्ण_अगर
 
-#ifdef CLOCK_MONOTONIC
-	ret += vdso_test_clock(CLOCK_MONOTONIC);
-#endif
+#अगर_घोषित CLOCK_MONOTONIC
+	ret += vdso_test_घड़ी(CLOCK_MONOTONIC);
+#पूर्ण_अगर
 
-#ifdef CLOCK_MONOTONIC_RAW
-	ret += vdso_test_clock(CLOCK_MONOTONIC_RAW);
-#endif
+#अगर_घोषित CLOCK_MONOTONIC_RAW
+	ret += vdso_test_घड़ी(CLOCK_MONOTONIC_RAW);
+#पूर्ण_अगर
 
-#ifdef CLOCK_MONOTONIC_COARSE
-	ret += vdso_test_clock(CLOCK_MONOTONIC_COARSE);
-#endif
+#अगर_घोषित CLOCK_MONOTONIC_COARSE
+	ret += vdso_test_घड़ी(CLOCK_MONOTONIC_COARSE);
+#पूर्ण_अगर
 
-#endif
+#पूर्ण_अगर
 
-	ret += vdso_test_time();
+	ret += vdso_test_समय();
 
-	if (ret > 0)
-		return KSFT_FAIL;
+	अगर (ret > 0)
+		वापस KSFT_FAIL;
 
-	return KSFT_PASS;
-}
+	वापस KSFT_PASS;
+पूर्ण

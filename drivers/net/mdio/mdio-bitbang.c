@@ -1,140 +1,141 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Bitbanged MDIO support.
  *
- * Author: Scott Wood <scottwood@freescale.com>
+ * Author: Scott Wood <scottwood@मुक्तscale.com>
  * Copyright (c) 2007 Freescale Semiconductor
  *
  * Based on CPM2 MDIO code which is:
  *
  * Copyright (c) 2003 Intracom S.A.
- *  by Pantelis Antoniou <panto@intracom.gr>
+ *  by Pantelis Antoniou <panto@पूर्णांकracom.gr>
  *
  * 2005 (c) MontaVista Software, Inc.
  * Vitaly Bordug <vbordug@ru.mvista.com>
  */
 
-#include <linux/delay.h>
-#include <linux/mdio-bitbang.h>
-#include <linux/module.h>
-#include <linux/types.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/mdio-bitbang.h>
+#समावेश <linux/module.h>
+#समावेश <linux/types.h>
 
-#define MDIO_READ 2
-#define MDIO_WRITE 1
+#घोषणा MDIO_READ 2
+#घोषणा MDIO_WRITE 1
 
-#define MDIO_C45 (1<<15)
-#define MDIO_C45_ADDR (MDIO_C45 | 0)
-#define MDIO_C45_READ (MDIO_C45 | 3)
-#define MDIO_C45_WRITE (MDIO_C45 | 1)
+#घोषणा MDIO_C45 (1<<15)
+#घोषणा MDIO_C45_ADDR (MDIO_C45 | 0)
+#घोषणा MDIO_C45_READ (MDIO_C45 | 3)
+#घोषणा MDIO_C45_WRITE (MDIO_C45 | 1)
 
-#define MDIO_SETUP_TIME 10
-#define MDIO_HOLD_TIME 10
+#घोषणा MDIO_SETUP_TIME 10
+#घोषणा MDIO_HOLD_TIME 10
 
-/* Minimum MDC period is 400 ns, plus some margin for error.  MDIO_DELAY
- * is done twice per period.
+/* Minimum MDC period is 400 ns, plus some margin क्रम error.  MDIO_DELAY
+ * is करोne twice per period.
  */
-#define MDIO_DELAY 250
+#घोषणा MDIO_DELAY 250
 
 /* The PHY may take up to 300 ns to produce data, plus some margin
- * for error.
+ * क्रम error.
  */
-#define MDIO_READ_DELAY 350
+#घोषणा MDIO_READ_DELAY 350
 
-/* MDIO must already be configured as output. */
-static void mdiobb_send_bit(struct mdiobb_ctrl *ctrl, int val)
-{
-	const struct mdiobb_ops *ops = ctrl->ops;
+/* MDIO must alपढ़ोy be configured as output. */
+अटल व्योम mdiobb_send_bit(काष्ठा mdiobb_ctrl *ctrl, पूर्णांक val)
+अणु
+	स्थिर काष्ठा mdiobb_ops *ops = ctrl->ops;
 
 	ops->set_mdio_data(ctrl, val);
 	ndelay(MDIO_DELAY);
 	ops->set_mdc(ctrl, 1);
 	ndelay(MDIO_DELAY);
 	ops->set_mdc(ctrl, 0);
-}
+पूर्ण
 
-/* MDIO must already be configured as input. */
-static int mdiobb_get_bit(struct mdiobb_ctrl *ctrl)
-{
-	const struct mdiobb_ops *ops = ctrl->ops;
+/* MDIO must alपढ़ोy be configured as input. */
+अटल पूर्णांक mdiobb_get_bit(काष्ठा mdiobb_ctrl *ctrl)
+अणु
+	स्थिर काष्ठा mdiobb_ops *ops = ctrl->ops;
 
 	ndelay(MDIO_DELAY);
 	ops->set_mdc(ctrl, 1);
 	ndelay(MDIO_READ_DELAY);
 	ops->set_mdc(ctrl, 0);
 
-	return ops->get_mdio_data(ctrl);
-}
+	वापस ops->get_mdio_data(ctrl);
+पूर्ण
 
-/* MDIO must already be configured as output. */
-static void mdiobb_send_num(struct mdiobb_ctrl *ctrl, u16 val, int bits)
-{
-	int i;
+/* MDIO must alपढ़ोy be configured as output. */
+अटल व्योम mdiobb_send_num(काष्ठा mdiobb_ctrl *ctrl, u16 val, पूर्णांक bits)
+अणु
+	पूर्णांक i;
 
-	for (i = bits - 1; i >= 0; i--)
+	क्रम (i = bits - 1; i >= 0; i--)
 		mdiobb_send_bit(ctrl, (val >> i) & 1);
-}
+पूर्ण
 
-/* MDIO must already be configured as input. */
-static u16 mdiobb_get_num(struct mdiobb_ctrl *ctrl, int bits)
-{
-	int i;
+/* MDIO must alपढ़ोy be configured as input. */
+अटल u16 mdiobb_get_num(काष्ठा mdiobb_ctrl *ctrl, पूर्णांक bits)
+अणु
+	पूर्णांक i;
 	u16 ret = 0;
 
-	for (i = bits - 1; i >= 0; i--) {
+	क्रम (i = bits - 1; i >= 0; i--) अणु
 		ret <<= 1;
 		ret |= mdiobb_get_bit(ctrl);
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /* Utility to send the preamble, address, and
- * register (common to read and write).
+ * रेजिस्टर (common to पढ़ो and ग_लिखो).
  */
-static void mdiobb_cmd(struct mdiobb_ctrl *ctrl, int op, u8 phy, u8 reg)
-{
-	const struct mdiobb_ops *ops = ctrl->ops;
-	int i;
+अटल व्योम mdiobb_cmd(काष्ठा mdiobb_ctrl *ctrl, पूर्णांक op, u8 phy, u8 reg)
+अणु
+	स्थिर काष्ठा mdiobb_ops *ops = ctrl->ops;
+	पूर्णांक i;
 
 	ops->set_mdio_dir(ctrl, 1);
 
 	/*
-	 * Send a 32 bit preamble ('1's) with an extra '1' bit for good
+	 * Send a 32 bit preamble ('1's) with an extra '1' bit क्रम good
 	 * measure.  The IEEE spec says this is a PHY optional
-	 * requirement.  The AMD 79C874 requires one after power up and
+	 * requirement.  The AMD 79C874 requires one after घातer up and
 	 * one after a MII communications error.  This means that we are
-	 * doing more preambles than we need, but it is safer and will be
+	 * करोing more preambles than we need, but it is safer and will be
 	 * much more robust.
 	 */
 
-	for (i = 0; i < 32; i++)
+	क्रम (i = 0; i < 32; i++)
 		mdiobb_send_bit(ctrl, 1);
 
-	/* send the start bit (01) and the read opcode (10) or write (01).
-	   Clause 45 operation uses 00 for the start and 11, 10 for
-	   read/write */
+	/* send the start bit (01) and the पढ़ो opcode (10) or ग_लिखो (01).
+	   Clause 45 operation uses 00 क्रम the start and 11, 10 क्रम
+	   पढ़ो/ग_लिखो */
 	mdiobb_send_bit(ctrl, 0);
-	if (op & MDIO_C45)
+	अगर (op & MDIO_C45)
 		mdiobb_send_bit(ctrl, 0);
-	else
+	अन्यथा
 		mdiobb_send_bit(ctrl, 1);
 	mdiobb_send_bit(ctrl, (op >> 1) & 1);
 	mdiobb_send_bit(ctrl, (op >> 0) & 1);
 
 	mdiobb_send_num(ctrl, phy, 5);
 	mdiobb_send_num(ctrl, reg, 5);
-}
+पूर्ण
 
-/* In clause 45 mode all commands are prefixed by MDIO_ADDR to specify the
-   lower 16 bits of the 21 bit address. This transfer is done identically to a
-   MDIO_WRITE except for a different code. To enable clause 45 mode or
-   MII_ADDR_C45 into the address. Theoretically clause 45 and normal devices
+/* In clause 45 mode all commands are prefixed by MDIO_ADDR to specअगरy the
+   lower 16 bits of the 21 bit address. This transfer is करोne identically to a
+   MDIO_WRITE except क्रम a dअगरferent code. To enable clause 45 mode or
+   MII_ADDR_C45 पूर्णांकo the address. Theoretically clause 45 and normal devices
    can exist on the same bus. Normal devices should ignore the MDIO_ADDR
    phase. */
-static int mdiobb_cmd_addr(struct mdiobb_ctrl *ctrl, int phy, u32 addr)
-{
-	unsigned int dev_addr = (addr >> 16) & 0x1F;
-	unsigned int reg = addr & 0xFFFF;
+अटल पूर्णांक mdiobb_cmd_addr(काष्ठा mdiobb_ctrl *ctrl, पूर्णांक phy, u32 addr)
+अणु
+	अचिन्हित पूर्णांक dev_addr = (addr >> 16) & 0x1F;
+	अचिन्हित पूर्णांक reg = addr & 0xFFFF;
 	mdiobb_cmd(ctrl, MDIO_C45_ADDR, phy, dev_addr);
 
 	/* send the turnaround (10) */
@@ -146,51 +147,51 @@ static int mdiobb_cmd_addr(struct mdiobb_ctrl *ctrl, int phy, u32 addr)
 	ctrl->ops->set_mdio_dir(ctrl, 0);
 	mdiobb_get_bit(ctrl);
 
-	return dev_addr;
-}
+	वापस dev_addr;
+पूर्ण
 
-int mdiobb_read(struct mii_bus *bus, int phy, int reg)
-{
-	struct mdiobb_ctrl *ctrl = bus->priv;
-	int ret, i;
+पूर्णांक mdiobb_पढ़ो(काष्ठा mii_bus *bus, पूर्णांक phy, पूर्णांक reg)
+अणु
+	काष्ठा mdiobb_ctrl *ctrl = bus->priv;
+	पूर्णांक ret, i;
 
-	if (reg & MII_ADDR_C45) {
+	अगर (reg & MII_ADDR_C45) अणु
 		reg = mdiobb_cmd_addr(ctrl, phy, reg);
 		mdiobb_cmd(ctrl, MDIO_C45_READ, phy, reg);
-	} else
-		mdiobb_cmd(ctrl, ctrl->op_c22_read, phy, reg);
+	पूर्ण अन्यथा
+		mdiobb_cmd(ctrl, ctrl->op_c22_पढ़ो, phy, reg);
 
 	ctrl->ops->set_mdio_dir(ctrl, 0);
 
-	/* check the turnaround bit: the PHY should be driving it to zero, if this
+	/* check the turnaround bit: the PHY should be driving it to zero, अगर this
 	 * PHY is listed in phy_ignore_ta_mask as having broken TA, skip that
 	 */
-	if (mdiobb_get_bit(ctrl) != 0 &&
-	    !(bus->phy_ignore_ta_mask & (1 << phy))) {
+	अगर (mdiobb_get_bit(ctrl) != 0 &&
+	    !(bus->phy_ignore_ta_mask & (1 << phy))) अणु
 		/* PHY didn't drive TA low -- flush any bits it
 		 * may be trying to send.
 		 */
-		for (i = 0; i < 32; i++)
+		क्रम (i = 0; i < 32; i++)
 			mdiobb_get_bit(ctrl);
 
-		return 0xffff;
-	}
+		वापस 0xffff;
+	पूर्ण
 
 	ret = mdiobb_get_num(ctrl, 16);
 	mdiobb_get_bit(ctrl);
-	return ret;
-}
-EXPORT_SYMBOL(mdiobb_read);
+	वापस ret;
+पूर्ण
+EXPORT_SYMBOL(mdiobb_पढ़ो);
 
-int mdiobb_write(struct mii_bus *bus, int phy, int reg, u16 val)
-{
-	struct mdiobb_ctrl *ctrl = bus->priv;
+पूर्णांक mdiobb_ग_लिखो(काष्ठा mii_bus *bus, पूर्णांक phy, पूर्णांक reg, u16 val)
+अणु
+	काष्ठा mdiobb_ctrl *ctrl = bus->priv;
 
-	if (reg & MII_ADDR_C45) {
+	अगर (reg & MII_ADDR_C45) अणु
 		reg = mdiobb_cmd_addr(ctrl, phy, reg);
 		mdiobb_cmd(ctrl, MDIO_C45_WRITE, phy, reg);
-	} else
-		mdiobb_cmd(ctrl, ctrl->op_c22_write, phy, reg);
+	पूर्ण अन्यथा
+		mdiobb_cmd(ctrl, ctrl->op_c22_ग_लिखो, phy, reg);
 
 	/* send the turnaround (10) */
 	mdiobb_send_bit(ctrl, 1);
@@ -200,39 +201,39 @@ int mdiobb_write(struct mii_bus *bus, int phy, int reg, u16 val)
 
 	ctrl->ops->set_mdio_dir(ctrl, 0);
 	mdiobb_get_bit(ctrl);
-	return 0;
-}
-EXPORT_SYMBOL(mdiobb_write);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL(mdiobb_ग_लिखो);
 
-struct mii_bus *alloc_mdio_bitbang(struct mdiobb_ctrl *ctrl)
-{
-	struct mii_bus *bus;
+काष्ठा mii_bus *alloc_mdio_bitbang(काष्ठा mdiobb_ctrl *ctrl)
+अणु
+	काष्ठा mii_bus *bus;
 
 	bus = mdiobus_alloc();
-	if (!bus)
-		return NULL;
+	अगर (!bus)
+		वापस शून्य;
 
 	__module_get(ctrl->ops->owner);
 
-	bus->read = mdiobb_read;
-	bus->write = mdiobb_write;
+	bus->पढ़ो = mdiobb_पढ़ो;
+	bus->ग_लिखो = mdiobb_ग_लिखो;
 	bus->priv = ctrl;
-	if (!ctrl->override_op_c22) {
-		ctrl->op_c22_read = MDIO_READ;
-		ctrl->op_c22_write = MDIO_WRITE;
-	}
+	अगर (!ctrl->override_op_c22) अणु
+		ctrl->op_c22_पढ़ो = MDIO_READ;
+		ctrl->op_c22_ग_लिखो = MDIO_WRITE;
+	पूर्ण
 
-	return bus;
-}
+	वापस bus;
+पूर्ण
 EXPORT_SYMBOL(alloc_mdio_bitbang);
 
-void free_mdio_bitbang(struct mii_bus *bus)
-{
-	struct mdiobb_ctrl *ctrl = bus->priv;
+व्योम मुक्त_mdio_bitbang(काष्ठा mii_bus *bus)
+अणु
+	काष्ठा mdiobb_ctrl *ctrl = bus->priv;
 
 	module_put(ctrl->ops->owner);
-	mdiobus_free(bus);
-}
-EXPORT_SYMBOL(free_mdio_bitbang);
+	mdiobus_मुक्त(bus);
+पूर्ण
+EXPORT_SYMBOL(मुक्त_mdio_bitbang);
 
 MODULE_LICENSE("GPL v2");

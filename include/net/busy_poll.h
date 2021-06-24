@@ -1,163 +1,164 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * net busy poll support
  * Copyright(c) 2013 Intel Corporation.
  *
  * Author: Eliezer Tamir
  *
- * Contact Information:
- * e1000-devel Mailing List <e1000-devel@lists.sourceforge.net>
+ * Contact Inक्रमmation:
+ * e1000-devel Mailing List <e1000-devel@lists.sourceक्रमge.net>
  */
 
-#ifndef _LINUX_NET_BUSY_POLL_H
-#define _LINUX_NET_BUSY_POLL_H
+#अगर_अघोषित _LINUX_NET_BUSY_POLL_H
+#घोषणा _LINUX_NET_BUSY_POLL_H
 
-#include <linux/netdevice.h>
-#include <linux/sched/clock.h>
-#include <linux/sched/signal.h>
-#include <net/ip.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/sched/घड़ी.h>
+#समावेश <linux/sched/संकेत.स>
+#समावेश <net/ip.h>
 
 /*		0 - Reserved to indicate value not set
- *     1..NR_CPUS - Reserved for sender_cpu
- *  NR_CPUS+1..~0 - Region available for NAPI IDs
+ *     1..NR_CPUS - Reserved क्रम sender_cpu
+ *  NR_CPUS+1..~0 - Region available क्रम NAPI IDs
  */
-#define MIN_NAPI_ID ((unsigned int)(NR_CPUS + 1))
+#घोषणा MIN_NAPI_ID ((अचिन्हित पूर्णांक)(NR_CPUS + 1))
 
-#define BUSY_POLL_BUDGET 8
+#घोषणा BUSY_POLL_BUDGET 8
 
-#ifdef CONFIG_NET_RX_BUSY_POLL
+#अगर_घोषित CONFIG_NET_RX_BUSY_POLL
 
-struct napi_struct;
-extern unsigned int sysctl_net_busy_read __read_mostly;
-extern unsigned int sysctl_net_busy_poll __read_mostly;
+काष्ठा napi_काष्ठा;
+बाह्य अचिन्हित पूर्णांक sysctl_net_busy_पढ़ो __पढ़ो_mostly;
+बाह्य अचिन्हित पूर्णांक sysctl_net_busy_poll __पढ़ो_mostly;
 
-static inline bool net_busy_loop_on(void)
-{
-	return sysctl_net_busy_poll;
-}
+अटल अंतरभूत bool net_busy_loop_on(व्योम)
+अणु
+	वापस sysctl_net_busy_poll;
+पूर्ण
 
-static inline bool sk_can_busy_loop(const struct sock *sk)
-{
-	return sk->sk_ll_usec && !signal_pending(current);
-}
+अटल अंतरभूत bool sk_can_busy_loop(स्थिर काष्ठा sock *sk)
+अणु
+	वापस sk->sk_ll_usec && !संकेत_pending(current);
+पूर्ण
 
-bool sk_busy_loop_end(void *p, unsigned long start_time);
+bool sk_busy_loop_end(व्योम *p, अचिन्हित दीर्घ start_समय);
 
-void napi_busy_loop(unsigned int napi_id,
-		    bool (*loop_end)(void *, unsigned long),
-		    void *loop_end_arg, bool prefer_busy_poll, u16 budget);
+व्योम napi_busy_loop(अचिन्हित पूर्णांक napi_id,
+		    bool (*loop_end)(व्योम *, अचिन्हित दीर्घ),
+		    व्योम *loop_end_arg, bool prefer_busy_poll, u16 budget);
 
-#else /* CONFIG_NET_RX_BUSY_POLL */
-static inline unsigned long net_busy_loop_on(void)
-{
-	return 0;
-}
+#अन्यथा /* CONFIG_NET_RX_BUSY_POLL */
+अटल अंतरभूत अचिन्हित दीर्घ net_busy_loop_on(व्योम)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline bool sk_can_busy_loop(struct sock *sk)
-{
-	return false;
-}
+अटल अंतरभूत bool sk_can_busy_loop(काष्ठा sock *sk)
+अणु
+	वापस false;
+पूर्ण
 
-#endif /* CONFIG_NET_RX_BUSY_POLL */
+#पूर्ण_अगर /* CONFIG_NET_RX_BUSY_POLL */
 
-static inline unsigned long busy_loop_current_time(void)
-{
-#ifdef CONFIG_NET_RX_BUSY_POLL
-	return (unsigned long)(local_clock() >> 10);
-#else
-	return 0;
-#endif
-}
+अटल अंतरभूत अचिन्हित दीर्घ busy_loop_current_समय(व्योम)
+अणु
+#अगर_घोषित CONFIG_NET_RX_BUSY_POLL
+	वापस (अचिन्हित दीर्घ)(local_घड़ी() >> 10);
+#अन्यथा
+	वापस 0;
+#पूर्ण_अगर
+पूर्ण
 
 /* in poll/select we use the global sysctl_net_ll_poll value */
-static inline bool busy_loop_timeout(unsigned long start_time)
-{
-#ifdef CONFIG_NET_RX_BUSY_POLL
-	unsigned long bp_usec = READ_ONCE(sysctl_net_busy_poll);
+अटल अंतरभूत bool busy_loop_समयout(अचिन्हित दीर्घ start_समय)
+अणु
+#अगर_घोषित CONFIG_NET_RX_BUSY_POLL
+	अचिन्हित दीर्घ bp_usec = READ_ONCE(sysctl_net_busy_poll);
 
-	if (bp_usec) {
-		unsigned long end_time = start_time + bp_usec;
-		unsigned long now = busy_loop_current_time();
+	अगर (bp_usec) अणु
+		अचिन्हित दीर्घ end_समय = start_समय + bp_usec;
+		अचिन्हित दीर्घ now = busy_loop_current_समय();
 
-		return time_after(now, end_time);
-	}
-#endif
-	return true;
-}
+		वापस समय_after(now, end_समय);
+	पूर्ण
+#पूर्ण_अगर
+	वापस true;
+पूर्ण
 
-static inline bool sk_busy_loop_timeout(struct sock *sk,
-					unsigned long start_time)
-{
-#ifdef CONFIG_NET_RX_BUSY_POLL
-	unsigned long bp_usec = READ_ONCE(sk->sk_ll_usec);
+अटल अंतरभूत bool sk_busy_loop_समयout(काष्ठा sock *sk,
+					अचिन्हित दीर्घ start_समय)
+अणु
+#अगर_घोषित CONFIG_NET_RX_BUSY_POLL
+	अचिन्हित दीर्घ bp_usec = READ_ONCE(sk->sk_ll_usec);
 
-	if (bp_usec) {
-		unsigned long end_time = start_time + bp_usec;
-		unsigned long now = busy_loop_current_time();
+	अगर (bp_usec) अणु
+		अचिन्हित दीर्घ end_समय = start_समय + bp_usec;
+		अचिन्हित दीर्घ now = busy_loop_current_समय();
 
-		return time_after(now, end_time);
-	}
-#endif
-	return true;
-}
+		वापस समय_after(now, end_समय);
+	पूर्ण
+#पूर्ण_अगर
+	वापस true;
+पूर्ण
 
-static inline void sk_busy_loop(struct sock *sk, int nonblock)
-{
-#ifdef CONFIG_NET_RX_BUSY_POLL
-	unsigned int napi_id = READ_ONCE(sk->sk_napi_id);
+अटल अंतरभूत व्योम sk_busy_loop(काष्ठा sock *sk, पूर्णांक nonblock)
+अणु
+#अगर_घोषित CONFIG_NET_RX_BUSY_POLL
+	अचिन्हित पूर्णांक napi_id = READ_ONCE(sk->sk_napi_id);
 
-	if (napi_id >= MIN_NAPI_ID)
-		napi_busy_loop(napi_id, nonblock ? NULL : sk_busy_loop_end, sk,
+	अगर (napi_id >= MIN_NAPI_ID)
+		napi_busy_loop(napi_id, nonblock ? शून्य : sk_busy_loop_end, sk,
 			       READ_ONCE(sk->sk_prefer_busy_poll),
 			       READ_ONCE(sk->sk_busy_poll_budget) ?: BUSY_POLL_BUDGET);
-#endif
-}
+#पूर्ण_अगर
+पूर्ण
 
 /* used in the NIC receive handler to mark the skb */
-static inline void skb_mark_napi_id(struct sk_buff *skb,
-				    struct napi_struct *napi)
-{
-#ifdef CONFIG_NET_RX_BUSY_POLL
-	/* If the skb was already marked with a valid NAPI ID, avoid overwriting
+अटल अंतरभूत व्योम skb_mark_napi_id(काष्ठा sk_buff *skb,
+				    काष्ठा napi_काष्ठा *napi)
+अणु
+#अगर_घोषित CONFIG_NET_RX_BUSY_POLL
+	/* If the skb was alपढ़ोy marked with a valid NAPI ID, aव्योम overwriting
 	 * it.
 	 */
-	if (skb->napi_id < MIN_NAPI_ID)
+	अगर (skb->napi_id < MIN_NAPI_ID)
 		skb->napi_id = napi->napi_id;
-#endif
-}
+#पूर्ण_अगर
+पूर्ण
 
 /* used in the protocol hanlder to propagate the napi_id to the socket */
-static inline void sk_mark_napi_id(struct sock *sk, const struct sk_buff *skb)
-{
-#ifdef CONFIG_NET_RX_BUSY_POLL
+अटल अंतरभूत व्योम sk_mark_napi_id(काष्ठा sock *sk, स्थिर काष्ठा sk_buff *skb)
+अणु
+#अगर_घोषित CONFIG_NET_RX_BUSY_POLL
 	WRITE_ONCE(sk->sk_napi_id, skb->napi_id);
-#endif
+#पूर्ण_अगर
 	sk_rx_queue_set(sk, skb);
-}
+पूर्ण
 
-static inline void __sk_mark_napi_id_once(struct sock *sk, unsigned int napi_id)
-{
-#ifdef CONFIG_NET_RX_BUSY_POLL
-	if (!READ_ONCE(sk->sk_napi_id))
+अटल अंतरभूत व्योम __sk_mark_napi_id_once(काष्ठा sock *sk, अचिन्हित पूर्णांक napi_id)
+अणु
+#अगर_घोषित CONFIG_NET_RX_BUSY_POLL
+	अगर (!READ_ONCE(sk->sk_napi_id))
 		WRITE_ONCE(sk->sk_napi_id, napi_id);
-#endif
-}
+#पूर्ण_अगर
+पूर्ण
 
-/* variant used for unconnected sockets */
-static inline void sk_mark_napi_id_once(struct sock *sk,
-					const struct sk_buff *skb)
-{
-#ifdef CONFIG_NET_RX_BUSY_POLL
+/* variant used क्रम unconnected sockets */
+अटल अंतरभूत व्योम sk_mark_napi_id_once(काष्ठा sock *sk,
+					स्थिर काष्ठा sk_buff *skb)
+अणु
+#अगर_घोषित CONFIG_NET_RX_BUSY_POLL
 	__sk_mark_napi_id_once(sk, skb->napi_id);
-#endif
-}
+#पूर्ण_अगर
+पूर्ण
 
-static inline void sk_mark_napi_id_once_xdp(struct sock *sk,
-					    const struct xdp_buff *xdp)
-{
-#ifdef CONFIG_NET_RX_BUSY_POLL
+अटल अंतरभूत व्योम sk_mark_napi_id_once_xdp(काष्ठा sock *sk,
+					    स्थिर काष्ठा xdp_buff *xdp)
+अणु
+#अगर_घोषित CONFIG_NET_RX_BUSY_POLL
 	__sk_mark_napi_id_once(sk, xdp->rxq->napi_id);
-#endif
-}
+#पूर्ण_अगर
+पूर्ण
 
-#endif /* _LINUX_NET_BUSY_POLL_H */
+#पूर्ण_अगर /* _LINUX_NET_BUSY_POLL_H */

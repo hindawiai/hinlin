@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * Rockchip SoC DP (Display Port) interface driver.
+ * Rockchip SoC DP (Display Port) पूर्णांकerface driver.
  *
  * Copyright (C) Fuzhou Rockchip Electronics Co., Ltd.
  * Author: Andy Yan <andy.yan@rock-chips.com>
@@ -8,238 +9,238 @@
  *         Jeff Chen <jeff.chen@rock-chips.com>
  */
 
-#include <linux/component.h>
-#include <linux/mfd/syscon.h>
-#include <linux/of_device.h>
-#include <linux/of_graph.h>
-#include <linux/regmap.h>
-#include <linux/reset.h>
-#include <linux/clk.h>
+#समावेश <linux/component.h>
+#समावेश <linux/mfd/syscon.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/of_graph.h>
+#समावेश <linux/regmap.h>
+#समावेश <linux/reset.h>
+#समावेश <linux/clk.h>
 
-#include <video/of_videomode.h>
-#include <video/videomode.h>
+#समावेश <video/of_videomode.h>
+#समावेश <video/videomode.h>
 
-#include <drm/drm_atomic.h>
-#include <drm/drm_atomic_helper.h>
-#include <drm/bridge/analogix_dp.h>
-#include <drm/drm_dp_helper.h>
-#include <drm/drm_of.h>
-#include <drm/drm_panel.h>
-#include <drm/drm_probe_helper.h>
-#include <drm/drm_simple_kms_helper.h>
+#समावेश <drm/drm_atomic.h>
+#समावेश <drm/drm_atomic_helper.h>
+#समावेश <drm/bridge/analogix_dp.h>
+#समावेश <drm/drm_dp_helper.h>
+#समावेश <drm/drm_of.h>
+#समावेश <drm/drm_panel.h>
+#समावेश <drm/drm_probe_helper.h>
+#समावेश <drm/drm_simple_kms_helper.h>
 
-#include "rockchip_drm_drv.h"
-#include "rockchip_drm_vop.h"
+#समावेश "rockchip_drm_drv.h"
+#समावेश "rockchip_drm_vop.h"
 
-#define RK3288_GRF_SOC_CON6		0x25c
-#define RK3288_EDP_LCDC_SEL		BIT(5)
-#define RK3399_GRF_SOC_CON20		0x6250
-#define RK3399_EDP_LCDC_SEL		BIT(5)
+#घोषणा RK3288_GRF_SOC_CON6		0x25c
+#घोषणा RK3288_EDP_LCDC_SEL		BIT(5)
+#घोषणा RK3399_GRF_SOC_CON20		0x6250
+#घोषणा RK3399_EDP_LCDC_SEL		BIT(5)
 
-#define HIWORD_UPDATE(val, mask)	(val | (mask) << 16)
+#घोषणा HIWORD_UPDATE(val, mask)	(val | (mask) << 16)
 
-#define PSR_WAIT_LINE_FLAG_TIMEOUT_MS	100
+#घोषणा PSR_WAIT_LINE_FLAG_TIMEOUT_MS	100
 
-#define to_dp(nm)	container_of(nm, struct rockchip_dp_device, nm)
+#घोषणा to_dp(nm)	container_of(nm, काष्ठा rockchip_dp_device, nm)
 
 /**
- * struct rockchip_dp_chip_data - splite the grf setting of kind of chips
- * @lcdsel_grf_reg: grf register offset of lcdc select
- * @lcdsel_big: reg value of selecting vop big for eDP
- * @lcdsel_lit: reg value of selecting vop little for eDP
- * @chip_type: specific chip type
+ * काष्ठा rockchip_dp_chip_data - splite the grf setting of kind of chips
+ * @lcdsel_grf_reg: grf रेजिस्टर offset of lcdc select
+ * @lcdsel_big: reg value of selecting vop big क्रम eDP
+ * @lcdsel_lit: reg value of selecting vop little क्रम eDP
+ * @chip_type: specअगरic chip type
  */
-struct rockchip_dp_chip_data {
+काष्ठा rockchip_dp_chip_data अणु
 	u32	lcdsel_grf_reg;
 	u32	lcdsel_big;
 	u32	lcdsel_lit;
 	u32	chip_type;
-};
+पूर्ण;
 
-struct rockchip_dp_device {
-	struct drm_device        *drm_dev;
-	struct device            *dev;
-	struct drm_encoder       encoder;
-	struct drm_display_mode  mode;
+काष्ठा rockchip_dp_device अणु
+	काष्ठा drm_device        *drm_dev;
+	काष्ठा device            *dev;
+	काष्ठा drm_encoder       encoder;
+	काष्ठा drm_display_mode  mode;
 
-	struct clk               *pclk;
-	struct clk               *grfclk;
-	struct regmap            *grf;
-	struct reset_control     *rst;
+	काष्ठा clk               *pclk;
+	काष्ठा clk               *grfclk;
+	काष्ठा regmap            *grf;
+	काष्ठा reset_control     *rst;
 
-	const struct rockchip_dp_chip_data *data;
+	स्थिर काष्ठा rockchip_dp_chip_data *data;
 
-	struct analogix_dp_device *adp;
-	struct analogix_dp_plat_data plat_data;
-};
+	काष्ठा analogix_dp_device *adp;
+	काष्ठा analogix_dp_plat_data plat_data;
+पूर्ण;
 
-static int rockchip_dp_pre_init(struct rockchip_dp_device *dp)
-{
-	reset_control_assert(dp->rst);
+अटल पूर्णांक rockchip_dp_pre_init(काष्ठा rockchip_dp_device *dp)
+अणु
+	reset_control_निश्चित(dp->rst);
 	usleep_range(10, 20);
-	reset_control_deassert(dp->rst);
+	reset_control_deनिश्चित(dp->rst);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int rockchip_dp_poweron_start(struct analogix_dp_plat_data *plat_data)
-{
-	struct rockchip_dp_device *dp = to_dp(plat_data);
-	int ret;
+अटल पूर्णांक rockchip_dp_घातeron_start(काष्ठा analogix_dp_plat_data *plat_data)
+अणु
+	काष्ठा rockchip_dp_device *dp = to_dp(plat_data);
+	पूर्णांक ret;
 
 	ret = clk_prepare_enable(dp->pclk);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		DRM_DEV_ERROR(dp->dev, "failed to enable pclk %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	ret = rockchip_dp_pre_init(dp);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		DRM_DEV_ERROR(dp->dev, "failed to dp pre init %d\n", ret);
 		clk_disable_unprepare(dp->pclk);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int rockchip_dp_powerdown(struct analogix_dp_plat_data *plat_data)
-{
-	struct rockchip_dp_device *dp = to_dp(plat_data);
+अटल पूर्णांक rockchip_dp_घातerकरोwn(काष्ठा analogix_dp_plat_data *plat_data)
+अणु
+	काष्ठा rockchip_dp_device *dp = to_dp(plat_data);
 
 	clk_disable_unprepare(dp->pclk);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int rockchip_dp_get_modes(struct analogix_dp_plat_data *plat_data,
-				 struct drm_connector *connector)
-{
-	struct drm_display_info *di = &connector->display_info;
-	/* VOP couldn't output YUV video format for eDP rightly */
+अटल पूर्णांक rockchip_dp_get_modes(काष्ठा analogix_dp_plat_data *plat_data,
+				 काष्ठा drm_connector *connector)
+अणु
+	काष्ठा drm_display_info *di = &connector->display_info;
+	/* VOP couldn't output YUV video क्रमmat क्रम eDP rightly */
 	u32 mask = DRM_COLOR_FORMAT_YCRCB444 | DRM_COLOR_FORMAT_YCRCB422;
 
-	if ((di->color_formats & mask)) {
+	अगर ((di->color_क्रमmats & mask)) अणु
 		DRM_DEBUG_KMS("Swapping display color format from YUV to RGB\n");
-		di->color_formats &= ~mask;
-		di->color_formats |= DRM_COLOR_FORMAT_RGB444;
+		di->color_क्रमmats &= ~mask;
+		di->color_क्रमmats |= DRM_COLOR_FORMAT_RGB444;
 		di->bpc = 8;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static bool
-rockchip_dp_drm_encoder_mode_fixup(struct drm_encoder *encoder,
-				   const struct drm_display_mode *mode,
-				   struct drm_display_mode *adjusted_mode)
-{
-	/* do nothing */
-	return true;
-}
+अटल bool
+rockchip_dp_drm_encoder_mode_fixup(काष्ठा drm_encoder *encoder,
+				   स्थिर काष्ठा drm_display_mode *mode,
+				   काष्ठा drm_display_mode *adjusted_mode)
+अणु
+	/* करो nothing */
+	वापस true;
+पूर्ण
 
-static void rockchip_dp_drm_encoder_mode_set(struct drm_encoder *encoder,
-					     struct drm_display_mode *mode,
-					     struct drm_display_mode *adjusted)
-{
-	/* do nothing */
-}
+अटल व्योम rockchip_dp_drm_encoder_mode_set(काष्ठा drm_encoder *encoder,
+					     काष्ठा drm_display_mode *mode,
+					     काष्ठा drm_display_mode *adjusted)
+अणु
+	/* करो nothing */
+पूर्ण
 
-static
-struct drm_crtc *rockchip_dp_drm_get_new_crtc(struct drm_encoder *encoder,
-					      struct drm_atomic_state *state)
-{
-	struct drm_connector *connector;
-	struct drm_connector_state *conn_state;
+अटल
+काष्ठा drm_crtc *rockchip_dp_drm_get_new_crtc(काष्ठा drm_encoder *encoder,
+					      काष्ठा drm_atomic_state *state)
+अणु
+	काष्ठा drm_connector *connector;
+	काष्ठा drm_connector_state *conn_state;
 
-	connector = drm_atomic_get_new_connector_for_encoder(state, encoder);
-	if (!connector)
-		return NULL;
+	connector = drm_atomic_get_new_connector_क्रम_encoder(state, encoder);
+	अगर (!connector)
+		वापस शून्य;
 
 	conn_state = drm_atomic_get_new_connector_state(state, connector);
-	if (!conn_state)
-		return NULL;
+	अगर (!conn_state)
+		वापस शून्य;
 
-	return conn_state->crtc;
-}
+	वापस conn_state->crtc;
+पूर्ण
 
-static void rockchip_dp_drm_encoder_enable(struct drm_encoder *encoder,
-					   struct drm_atomic_state *state)
-{
-	struct rockchip_dp_device *dp = to_dp(encoder);
-	struct drm_crtc *crtc;
-	struct drm_crtc_state *old_crtc_state;
-	int ret;
+अटल व्योम rockchip_dp_drm_encoder_enable(काष्ठा drm_encoder *encoder,
+					   काष्ठा drm_atomic_state *state)
+अणु
+	काष्ठा rockchip_dp_device *dp = to_dp(encoder);
+	काष्ठा drm_crtc *crtc;
+	काष्ठा drm_crtc_state *old_crtc_state;
+	पूर्णांक ret;
 	u32 val;
 
 	crtc = rockchip_dp_drm_get_new_crtc(encoder, state);
-	if (!crtc)
-		return;
+	अगर (!crtc)
+		वापस;
 
 	old_crtc_state = drm_atomic_get_old_crtc_state(state, crtc);
-	/* Coming back from self refresh, nothing to do */
-	if (old_crtc_state && old_crtc_state->self_refresh_active)
-		return;
+	/* Coming back from self refresh, nothing to करो */
+	अगर (old_crtc_state && old_crtc_state->self_refresh_active)
+		वापस;
 
-	ret = drm_of_encoder_active_endpoint_id(dp->dev->of_node, encoder);
-	if (ret < 0)
-		return;
+	ret = drm_of_encoder_active_endpoपूर्णांक_id(dp->dev->of_node, encoder);
+	अगर (ret < 0)
+		वापस;
 
-	if (ret)
+	अगर (ret)
 		val = dp->data->lcdsel_lit;
-	else
+	अन्यथा
 		val = dp->data->lcdsel_big;
 
 	DRM_DEV_DEBUG(dp->dev, "vop %s output to dp\n", (ret) ? "LIT" : "BIG");
 
 	ret = clk_prepare_enable(dp->grfclk);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		DRM_DEV_ERROR(dp->dev, "failed to enable grfclk %d\n", ret);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	ret = regmap_write(dp->grf, dp->data->lcdsel_grf_reg, val);
-	if (ret != 0)
+	ret = regmap_ग_लिखो(dp->grf, dp->data->lcdsel_grf_reg, val);
+	अगर (ret != 0)
 		DRM_DEV_ERROR(dp->dev, "Could not write to GRF: %d\n", ret);
 
 	clk_disable_unprepare(dp->grfclk);
-}
+पूर्ण
 
-static void rockchip_dp_drm_encoder_disable(struct drm_encoder *encoder,
-					    struct drm_atomic_state *state)
-{
-	struct rockchip_dp_device *dp = to_dp(encoder);
-	struct drm_crtc *crtc;
-	struct drm_crtc_state *new_crtc_state = NULL;
-	int ret;
+अटल व्योम rockchip_dp_drm_encoder_disable(काष्ठा drm_encoder *encoder,
+					    काष्ठा drm_atomic_state *state)
+अणु
+	काष्ठा rockchip_dp_device *dp = to_dp(encoder);
+	काष्ठा drm_crtc *crtc;
+	काष्ठा drm_crtc_state *new_crtc_state = शून्य;
+	पूर्णांक ret;
 
 	crtc = rockchip_dp_drm_get_new_crtc(encoder, state);
-	/* No crtc means we're doing a full shutdown */
-	if (!crtc)
-		return;
+	/* No crtc means we're करोing a full shutकरोwn */
+	अगर (!crtc)
+		वापस;
 
 	new_crtc_state = drm_atomic_get_new_crtc_state(state, crtc);
-	/* If we're not entering self-refresh, no need to wait for vact */
-	if (!new_crtc_state || !new_crtc_state->self_refresh_active)
-		return;
+	/* If we're not entering self-refresh, no need to रुको क्रम vact */
+	अगर (!new_crtc_state || !new_crtc_state->self_refresh_active)
+		वापस;
 
-	ret = rockchip_drm_wait_vact_end(crtc, PSR_WAIT_LINE_FLAG_TIMEOUT_MS);
-	if (ret)
+	ret = rockchip_drm_रुको_vact_end(crtc, PSR_WAIT_LINE_FLAG_TIMEOUT_MS);
+	अगर (ret)
 		DRM_DEV_ERROR(dp->dev, "line flag irq timed out\n");
-}
+पूर्ण
 
-static int
-rockchip_dp_drm_encoder_atomic_check(struct drm_encoder *encoder,
-				      struct drm_crtc_state *crtc_state,
-				      struct drm_connector_state *conn_state)
-{
-	struct rockchip_crtc_state *s = to_rockchip_crtc_state(crtc_state);
-	struct drm_display_info *di = &conn_state->connector->display_info;
+अटल पूर्णांक
+rockchip_dp_drm_encoder_atomic_check(काष्ठा drm_encoder *encoder,
+				      काष्ठा drm_crtc_state *crtc_state,
+				      काष्ठा drm_connector_state *conn_state)
+अणु
+	काष्ठा rockchip_crtc_state *s = to_rockchip_crtc_state(crtc_state);
+	काष्ठा drm_display_info *di = &conn_state->connector->display_info;
 
 	/*
-	 * The hardware IC designed that VOP must output the RGB10 video
-	 * format to eDP controller, and if eDP panel only support RGB8,
-	 * then eDP controller should cut down the video data, not via VOP
+	 * The hardware IC deचिन्हित that VOP must output the RGB10 video
+	 * क्रमmat to eDP controller, and अगर eDP panel only support RGB8,
+	 * then eDP controller should cut करोwn the video data, not via VOP
 	 * controller, that's why we need to hardcode the VOP output mode
 	 * to RGA10 here.
 	 */
@@ -248,59 +249,59 @@ rockchip_dp_drm_encoder_atomic_check(struct drm_encoder *encoder,
 	s->output_type = DRM_MODE_CONNECTOR_eDP;
 	s->output_bpc = di->bpc;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct drm_encoder_helper_funcs rockchip_dp_encoder_helper_funcs = {
+अटल काष्ठा drm_encoder_helper_funcs rockchip_dp_encoder_helper_funcs = अणु
 	.mode_fixup = rockchip_dp_drm_encoder_mode_fixup,
 	.mode_set = rockchip_dp_drm_encoder_mode_set,
 	.atomic_enable = rockchip_dp_drm_encoder_enable,
 	.atomic_disable = rockchip_dp_drm_encoder_disable,
 	.atomic_check = rockchip_dp_drm_encoder_atomic_check,
-};
+पूर्ण;
 
-static int rockchip_dp_of_probe(struct rockchip_dp_device *dp)
-{
-	struct device *dev = dp->dev;
-	struct device_node *np = dev->of_node;
+अटल पूर्णांक rockchip_dp_of_probe(काष्ठा rockchip_dp_device *dp)
+अणु
+	काष्ठा device *dev = dp->dev;
+	काष्ठा device_node *np = dev->of_node;
 
 	dp->grf = syscon_regmap_lookup_by_phandle(np, "rockchip,grf");
-	if (IS_ERR(dp->grf)) {
+	अगर (IS_ERR(dp->grf)) अणु
 		DRM_DEV_ERROR(dev, "failed to get rockchip,grf property\n");
-		return PTR_ERR(dp->grf);
-	}
+		वापस PTR_ERR(dp->grf);
+	पूर्ण
 
 	dp->grfclk = devm_clk_get(dev, "grf");
-	if (PTR_ERR(dp->grfclk) == -ENOENT) {
-		dp->grfclk = NULL;
-	} else if (PTR_ERR(dp->grfclk) == -EPROBE_DEFER) {
-		return -EPROBE_DEFER;
-	} else if (IS_ERR(dp->grfclk)) {
+	अगर (PTR_ERR(dp->grfclk) == -ENOENT) अणु
+		dp->grfclk = शून्य;
+	पूर्ण अन्यथा अगर (PTR_ERR(dp->grfclk) == -EPROBE_DEFER) अणु
+		वापस -EPROBE_DEFER;
+	पूर्ण अन्यथा अगर (IS_ERR(dp->grfclk)) अणु
 		DRM_DEV_ERROR(dev, "failed to get grf clock\n");
-		return PTR_ERR(dp->grfclk);
-	}
+		वापस PTR_ERR(dp->grfclk);
+	पूर्ण
 
 	dp->pclk = devm_clk_get(dev, "pclk");
-	if (IS_ERR(dp->pclk)) {
+	अगर (IS_ERR(dp->pclk)) अणु
 		DRM_DEV_ERROR(dev, "failed to get pclk property\n");
-		return PTR_ERR(dp->pclk);
-	}
+		वापस PTR_ERR(dp->pclk);
+	पूर्ण
 
 	dp->rst = devm_reset_control_get(dev, "dp");
-	if (IS_ERR(dp->rst)) {
+	अगर (IS_ERR(dp->rst)) अणु
 		DRM_DEV_ERROR(dev, "failed to get dp reset control\n");
-		return PTR_ERR(dp->rst);
-	}
+		वापस PTR_ERR(dp->rst);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int rockchip_dp_drm_create_encoder(struct rockchip_dp_device *dp)
-{
-	struct drm_encoder *encoder = &dp->encoder;
-	struct drm_device *drm_dev = dp->drm_dev;
-	struct device *dev = dp->dev;
-	int ret;
+अटल पूर्णांक rockchip_dp_drm_create_encoder(काष्ठा rockchip_dp_device *dp)
+अणु
+	काष्ठा drm_encoder *encoder = &dp->encoder;
+	काष्ठा drm_device *drm_dev = dp->drm_dev;
+	काष्ठा device *dev = dp->dev;
+	पूर्णांक ret;
 
 	encoder->possible_crtcs = drm_of_find_possible_crtcs(drm_dev,
 							     dev->of_node);
@@ -308,165 +309,165 @@ static int rockchip_dp_drm_create_encoder(struct rockchip_dp_device *dp)
 
 	ret = drm_simple_encoder_init(drm_dev, encoder,
 				      DRM_MODE_ENCODER_TMDS);
-	if (ret) {
+	अगर (ret) अणु
 		DRM_ERROR("failed to initialize encoder with drm\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	drm_encoder_helper_add(encoder, &rockchip_dp_encoder_helper_funcs);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int rockchip_dp_bind(struct device *dev, struct device *master,
-			    void *data)
-{
-	struct rockchip_dp_device *dp = dev_get_drvdata(dev);
-	struct drm_device *drm_dev = data;
-	int ret;
+अटल पूर्णांक rockchip_dp_bind(काष्ठा device *dev, काष्ठा device *master,
+			    व्योम *data)
+अणु
+	काष्ठा rockchip_dp_device *dp = dev_get_drvdata(dev);
+	काष्ठा drm_device *drm_dev = data;
+	पूर्णांक ret;
 
 	dp->drm_dev = drm_dev;
 
 	ret = rockchip_dp_drm_create_encoder(dp);
-	if (ret) {
+	अगर (ret) अणु
 		DRM_ERROR("failed to create drm encoder\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	dp->plat_data.encoder = &dp->encoder;
 
 	ret = analogix_dp_bind(dp->adp, drm_dev);
-	if (ret)
-		goto err_cleanup_encoder;
+	अगर (ret)
+		जाओ err_cleanup_encoder;
 
-	return 0;
+	वापस 0;
 err_cleanup_encoder:
 	dp->encoder.funcs->destroy(&dp->encoder);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void rockchip_dp_unbind(struct device *dev, struct device *master,
-			       void *data)
-{
-	struct rockchip_dp_device *dp = dev_get_drvdata(dev);
+अटल व्योम rockchip_dp_unbind(काष्ठा device *dev, काष्ठा device *master,
+			       व्योम *data)
+अणु
+	काष्ठा rockchip_dp_device *dp = dev_get_drvdata(dev);
 
 	analogix_dp_unbind(dp->adp);
 	dp->encoder.funcs->destroy(&dp->encoder);
-}
+पूर्ण
 
-static const struct component_ops rockchip_dp_component_ops = {
+अटल स्थिर काष्ठा component_ops rockchip_dp_component_ops = अणु
 	.bind = rockchip_dp_bind,
 	.unbind = rockchip_dp_unbind,
-};
+पूर्ण;
 
-static int rockchip_dp_probe(struct platform_device *pdev)
-{
-	struct device *dev = &pdev->dev;
-	const struct rockchip_dp_chip_data *dp_data;
-	struct drm_panel *panel = NULL;
-	struct rockchip_dp_device *dp;
-	int ret;
+अटल पूर्णांक rockchip_dp_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device *dev = &pdev->dev;
+	स्थिर काष्ठा rockchip_dp_chip_data *dp_data;
+	काष्ठा drm_panel *panel = शून्य;
+	काष्ठा rockchip_dp_device *dp;
+	पूर्णांक ret;
 
 	dp_data = of_device_get_match_data(dev);
-	if (!dp_data)
-		return -ENODEV;
+	अगर (!dp_data)
+		वापस -ENODEV;
 
-	ret = drm_of_find_panel_or_bridge(dev->of_node, 1, 0, &panel, NULL);
-	if (ret < 0)
-		return ret;
+	ret = drm_of_find_panel_or_bridge(dev->of_node, 1, 0, &panel, शून्य);
+	अगर (ret < 0)
+		वापस ret;
 
-	dp = devm_kzalloc(dev, sizeof(*dp), GFP_KERNEL);
-	if (!dp)
-		return -ENOMEM;
+	dp = devm_kzalloc(dev, माप(*dp), GFP_KERNEL);
+	अगर (!dp)
+		वापस -ENOMEM;
 
 	dp->dev = dev;
 	dp->adp = ERR_PTR(-ENODEV);
 	dp->data = dp_data;
 	dp->plat_data.panel = panel;
 	dp->plat_data.dev_type = dp->data->chip_type;
-	dp->plat_data.power_on_start = rockchip_dp_poweron_start;
-	dp->plat_data.power_off = rockchip_dp_powerdown;
+	dp->plat_data.घातer_on_start = rockchip_dp_घातeron_start;
+	dp->plat_data.घातer_off = rockchip_dp_घातerकरोwn;
 	dp->plat_data.get_modes = rockchip_dp_get_modes;
 
 	ret = rockchip_dp_of_probe(dp);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	platform_set_drvdata(pdev, dp);
+	platक्रमm_set_drvdata(pdev, dp);
 
 	dp->adp = analogix_dp_probe(dev, &dp->plat_data);
-	if (IS_ERR(dp->adp))
-		return PTR_ERR(dp->adp);
+	अगर (IS_ERR(dp->adp))
+		वापस PTR_ERR(dp->adp);
 
-	return component_add(dev, &rockchip_dp_component_ops);
-}
+	वापस component_add(dev, &rockchip_dp_component_ops);
+पूर्ण
 
-static int rockchip_dp_remove(struct platform_device *pdev)
-{
-	struct rockchip_dp_device *dp = platform_get_drvdata(pdev);
+अटल पूर्णांक rockchip_dp_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा rockchip_dp_device *dp = platक्रमm_get_drvdata(pdev);
 
 	component_del(&pdev->dev, &rockchip_dp_component_ops);
-	analogix_dp_remove(dp->adp);
+	analogix_dp_हटाओ(dp->adp);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_PM_SLEEP
-static int rockchip_dp_suspend(struct device *dev)
-{
-	struct rockchip_dp_device *dp = dev_get_drvdata(dev);
+#अगर_घोषित CONFIG_PM_SLEEP
+अटल पूर्णांक rockchip_dp_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा rockchip_dp_device *dp = dev_get_drvdata(dev);
 
-	if (IS_ERR(dp->adp))
-		return 0;
+	अगर (IS_ERR(dp->adp))
+		वापस 0;
 
-	return analogix_dp_suspend(dp->adp);
-}
+	वापस analogix_dp_suspend(dp->adp);
+पूर्ण
 
-static int rockchip_dp_resume(struct device *dev)
-{
-	struct rockchip_dp_device *dp = dev_get_drvdata(dev);
+अटल पूर्णांक rockchip_dp_resume(काष्ठा device *dev)
+अणु
+	काष्ठा rockchip_dp_device *dp = dev_get_drvdata(dev);
 
-	if (IS_ERR(dp->adp))
-		return 0;
+	अगर (IS_ERR(dp->adp))
+		वापस 0;
 
-	return analogix_dp_resume(dp->adp);
-}
-#endif
+	वापस analogix_dp_resume(dp->adp);
+पूर्ण
+#पूर्ण_अगर
 
-static const struct dev_pm_ops rockchip_dp_pm_ops = {
-#ifdef CONFIG_PM_SLEEP
+अटल स्थिर काष्ठा dev_pm_ops rockchip_dp_pm_ops = अणु
+#अगर_घोषित CONFIG_PM_SLEEP
 	.suspend_late = rockchip_dp_suspend,
 	.resume_early = rockchip_dp_resume,
-#endif
-};
+#पूर्ण_अगर
+पूर्ण;
 
-static const struct rockchip_dp_chip_data rk3399_edp = {
+अटल स्थिर काष्ठा rockchip_dp_chip_data rk3399_edp = अणु
 	.lcdsel_grf_reg = RK3399_GRF_SOC_CON20,
 	.lcdsel_big = HIWORD_UPDATE(0, RK3399_EDP_LCDC_SEL),
 	.lcdsel_lit = HIWORD_UPDATE(RK3399_EDP_LCDC_SEL, RK3399_EDP_LCDC_SEL),
 	.chip_type = RK3399_EDP,
-};
+पूर्ण;
 
-static const struct rockchip_dp_chip_data rk3288_dp = {
+अटल स्थिर काष्ठा rockchip_dp_chip_data rk3288_dp = अणु
 	.lcdsel_grf_reg = RK3288_GRF_SOC_CON6,
 	.lcdsel_big = HIWORD_UPDATE(0, RK3288_EDP_LCDC_SEL),
 	.lcdsel_lit = HIWORD_UPDATE(RK3288_EDP_LCDC_SEL, RK3288_EDP_LCDC_SEL),
 	.chip_type = RK3288_DP,
-};
+पूर्ण;
 
-static const struct of_device_id rockchip_dp_dt_ids[] = {
-	{.compatible = "rockchip,rk3288-dp", .data = &rk3288_dp },
-	{.compatible = "rockchip,rk3399-edp", .data = &rk3399_edp },
-	{}
-};
+अटल स्थिर काष्ठा of_device_id rockchip_dp_dt_ids[] = अणु
+	अणु.compatible = "rockchip,rk3288-dp", .data = &rk3288_dp पूर्ण,
+	अणु.compatible = "rockchip,rk3399-edp", .data = &rk3399_edp पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, rockchip_dp_dt_ids);
 
-struct platform_driver rockchip_dp_driver = {
+काष्ठा platक्रमm_driver rockchip_dp_driver = अणु
 	.probe = rockchip_dp_probe,
-	.remove = rockchip_dp_remove,
-	.driver = {
+	.हटाओ = rockchip_dp_हटाओ,
+	.driver = अणु
 		   .name = "rockchip-dp",
 		   .pm = &rockchip_dp_pm_ops,
 		   .of_match_table = of_match_ptr(rockchip_dp_dt_ids),
-	},
-};
+	पूर्ण,
+पूर्ण;

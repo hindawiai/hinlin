@@ -1,125 +1,126 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * Toshiba e740 PCMCIA specific routines.
+ * Toshiba e740 PCMCIA specअगरic routines.
  *
  * (c) 2004 Ian Molton <spyro@f2s.com>
  */
 
-#include <linux/init.h>
-#include <linux/module.h>
-#include <linux/kernel.h>
-#include <linux/errno.h>
-#include <linux/gpio.h>
-#include <linux/interrupt.h>
-#include <linux/platform_device.h>
+#समावेश <linux/init.h>
+#समावेश <linux/module.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/gpपन.स>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/platक्रमm_device.h>
 
-#include <mach/eseries-gpio.h>
+#समावेश <mach/eseries-gpपन.स>
 
-#include <asm/irq.h>
-#include <asm/mach-types.h>
+#समावेश <यंत्र/irq.h>
+#समावेश <यंत्र/mach-types.h>
 
-#include "soc_common.h"
+#समावेश "soc_common.h"
 
-static int e740_pcmcia_hw_init(struct soc_pcmcia_socket *skt)
-{
-	if (skt->nr == 0) {
+अटल पूर्णांक e740_pcmcia_hw_init(काष्ठा soc_pcmcia_socket *skt)
+अणु
+	अगर (skt->nr == 0) अणु
 		skt->stat[SOC_STAT_CD].gpio = GPIO_E740_PCMCIA_CD0;
 		skt->stat[SOC_STAT_CD].name = "CF card detect";
 		skt->stat[SOC_STAT_RDY].gpio = GPIO_E740_PCMCIA_RDY0;
 		skt->stat[SOC_STAT_RDY].name = "CF ready";
-	} else {
+	पूर्ण अन्यथा अणु
 		skt->stat[SOC_STAT_CD].gpio = GPIO_E740_PCMCIA_CD1;
 		skt->stat[SOC_STAT_CD].name = "Wifi switch";
 		skt->stat[SOC_STAT_RDY].gpio = GPIO_E740_PCMCIA_RDY1;
 		skt->stat[SOC_STAT_RDY].name = "Wifi ready";
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void e740_pcmcia_socket_state(struct soc_pcmcia_socket *skt,
-					struct pcmcia_state *state)
-{
+अटल व्योम e740_pcmcia_socket_state(काष्ठा soc_pcmcia_socket *skt,
+					काष्ठा pcmcia_state *state)
+अणु
 	state->vs_3v  = 1;
 	state->vs_Xv  = 0;
-}
+पूर्ण
 
-static int e740_pcmcia_configure_socket(struct soc_pcmcia_socket *skt,
-					const socket_state_t *state)
-{
-	if (state->flags & SS_RESET) {
-		if (skt->nr == 0)
+अटल पूर्णांक e740_pcmcia_configure_socket(काष्ठा soc_pcmcia_socket *skt,
+					स्थिर socket_state_t *state)
+अणु
+	अगर (state->flags & SS_RESET) अणु
+		अगर (skt->nr == 0)
 			gpio_set_value(GPIO_E740_PCMCIA_RST0, 1);
-		else
+		अन्यथा
 			gpio_set_value(GPIO_E740_PCMCIA_RST1, 1);
-	} else {
-		if (skt->nr == 0)
+	पूर्ण अन्यथा अणु
+		अगर (skt->nr == 0)
 			gpio_set_value(GPIO_E740_PCMCIA_RST0, 0);
-		else
+		अन्यथा
 			gpio_set_value(GPIO_E740_PCMCIA_RST1, 0);
-	}
+	पूर्ण
 
-	switch (state->Vcc) {
-	case 0:	/* Socket off */
-		if (skt->nr == 0)
+	चयन (state->Vcc) अणु
+	हाल 0:	/* Socket off */
+		अगर (skt->nr == 0)
 			gpio_set_value(GPIO_E740_PCMCIA_PWR0, 0);
-		else
+		अन्यथा
 			gpio_set_value(GPIO_E740_PCMCIA_PWR1, 1);
-		break;
-	case 50:
-	case 33: /* socket on */
-		if (skt->nr == 0)
+		अवरोध;
+	हाल 50:
+	हाल 33: /* socket on */
+		अगर (skt->nr == 0)
 			gpio_set_value(GPIO_E740_PCMCIA_PWR0, 1);
-		else
+		अन्यथा
 			gpio_set_value(GPIO_E740_PCMCIA_PWR1, 0);
-		break;
-	default:
-		printk(KERN_ERR "e740_cs: Unsupported Vcc: %d\n", state->Vcc);
-	}
+		अवरोध;
+	शेष:
+		prपूर्णांकk(KERN_ERR "e740_cs: Unsupported Vcc: %d\n", state->Vcc);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct pcmcia_low_level e740_pcmcia_ops = {
+अटल काष्ठा pcmcia_low_level e740_pcmcia_ops = अणु
 	.owner            = THIS_MODULE,
 	.hw_init          = e740_pcmcia_hw_init,
 	.socket_state     = e740_pcmcia_socket_state,
 	.configure_socket = e740_pcmcia_configure_socket,
 	.nr               = 2,
-};
+पूर्ण;
 
-static struct platform_device *e740_pcmcia_device;
+अटल काष्ठा platक्रमm_device *e740_pcmcia_device;
 
-static int __init e740_pcmcia_init(void)
-{
-	int ret;
+अटल पूर्णांक __init e740_pcmcia_init(व्योम)
+अणु
+	पूर्णांक ret;
 
-	if (!machine_is_e740())
-		return -ENODEV;
+	अगर (!machine_is_e740())
+		वापस -ENODEV;
 
-	e740_pcmcia_device = platform_device_alloc("pxa2xx-pcmcia", -1);
-	if (!e740_pcmcia_device)
-		return -ENOMEM;
+	e740_pcmcia_device = platक्रमm_device_alloc("pxa2xx-pcmcia", -1);
+	अगर (!e740_pcmcia_device)
+		वापस -ENOMEM;
 
-	ret = platform_device_add_data(e740_pcmcia_device, &e740_pcmcia_ops,
-					sizeof(e740_pcmcia_ops));
+	ret = platक्रमm_device_add_data(e740_pcmcia_device, &e740_pcmcia_ops,
+					माप(e740_pcmcia_ops));
 
-	if (!ret)
-		ret = platform_device_add(e740_pcmcia_device);
+	अगर (!ret)
+		ret = platक्रमm_device_add(e740_pcmcia_device);
 
-	if (ret)
-		platform_device_put(e740_pcmcia_device);
+	अगर (ret)
+		platक्रमm_device_put(e740_pcmcia_device);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void __exit e740_pcmcia_exit(void)
-{
-	platform_device_unregister(e740_pcmcia_device);
-}
+अटल व्योम __निकास e740_pcmcia_निकास(व्योम)
+अणु
+	platक्रमm_device_unरेजिस्टर(e740_pcmcia_device);
+पूर्ण
 
 module_init(e740_pcmcia_init);
-module_exit(e740_pcmcia_exit);
+module_निकास(e740_pcmcia_निकास);
 
 MODULE_LICENSE("GPL v2");
 MODULE_AUTHOR("Ian Molton <spyro@f2s.com>");

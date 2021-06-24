@@ -1,20 +1,21 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 
-#ifndef _ASM_SECCOMP_H
-#define _ASM_SECCOMP_H
+#अगर_अघोषित _ASM_SECCOMP_H
+#घोषणा _ASM_SECCOMP_H
 
-#include <asm/unistd.h>
+#समावेश <यंत्र/unistd.h>
 
-#include <asm-generic/seccomp.h>
+#समावेश <यंत्र-generic/seccomp.h>
 
-#ifdef CONFIG_64BIT
+#अगर_घोषित CONFIG_64BIT
 # define SECCOMP_ARCH_NATIVE		AUDIT_ARCH_RISCV64
 # define SECCOMP_ARCH_NATIVE_NR		NR_syscalls
 # define SECCOMP_ARCH_NATIVE_NAME	"riscv64"
-#else /* !CONFIG_64BIT */
+#अन्यथा /* !CONFIG_64BIT */
 # define SECCOMP_ARCH_NATIVE		AUDIT_ARCH_RISCV32
 # define SECCOMP_ARCH_NATIVE_NR		NR_syscalls
 # define SECCOMP_ARCH_NATIVE_NAME	"riscv32"
-#endif
+#पूर्ण_अगर
 
-#endif /* _ASM_SECCOMP_H */
+#पूर्ण_अगर /* _ASM_SECCOMP_H */

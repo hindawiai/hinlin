@@ -1,233 +1,234 @@
-// SPDX-License-Identifier: (GPL-2.0-only OR BSD-2-Clause)
+<शैली गुरु>
+// SPDX-License-Identअगरier: (GPL-2.0-only OR BSD-2-Clause)
 /* Copyright (C) 2020 Facebook */
-#include <errno.h>
-#include <stdbool.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-#include <bpf/bpf.h>
+#समावेश <त्रुटिसं.स>
+#समावेश <stdbool.h>
+#समावेश <मानकपन.स>
+#समावेश <मानककोष.स>
+#समावेश <माला.स>
+#समावेश <unistd.h>
+#समावेश <bpf/bpf.h>
 
-#include "main.h"
-#include "skeleton/pid_iter.h"
+#समावेश "main.h"
+#समावेश "skeleton/pid_iter.h"
 
-#ifdef BPFTOOL_WITHOUT_SKELETONS
+#अगर_घोषित BPFTOOL_WITHOUT_SKELETONS
 
-int build_obj_refs_table(struct obj_refs_table *table, enum bpf_obj_type type)
-{
-	return -ENOTSUP;
-}
-void delete_obj_refs_table(struct obj_refs_table *table) {}
-void emit_obj_refs_plain(struct obj_refs_table *table, __u32 id, const char *prefix) {}
-void emit_obj_refs_json(struct obj_refs_table *table, __u32 id, json_writer_t *json_writer) {}
+पूर्णांक build_obj_refs_table(काष्ठा obj_refs_table *table, क्रमागत bpf_obj_type type)
+अणु
+	वापस -ENOTSUP;
+पूर्ण
+व्योम delete_obj_refs_table(काष्ठा obj_refs_table *table) अणुपूर्ण
+व्योम emit_obj_refs_plain(काष्ठा obj_refs_table *table, __u32 id, स्थिर अक्षर *prefix) अणुपूर्ण
+व्योम emit_obj_refs_json(काष्ठा obj_refs_table *table, __u32 id, json_ग_लिखोr_t *json_ग_लिखोr) अणुपूर्ण
 
-#else /* BPFTOOL_WITHOUT_SKELETONS */
+#अन्यथा /* BPFTOOL_WITHOUT_SKELETONS */
 
-#include "pid_iter.skel.h"
+#समावेश "pid_iter.skel.h"
 
-static void add_ref(struct obj_refs_table *table, struct pid_iter_entry *e)
-{
-	struct obj_refs *refs;
-	struct obj_ref *ref;
-	void *tmp;
-	int i;
+अटल व्योम add_ref(काष्ठा obj_refs_table *table, काष्ठा pid_iter_entry *e)
+अणु
+	काष्ठा obj_refs *refs;
+	काष्ठा obj_ref *ref;
+	व्योम *पंचांगp;
+	पूर्णांक i;
 
-	hash_for_each_possible(table->table, refs, node, e->id) {
-		if (refs->id != e->id)
-			continue;
+	hash_क्रम_each_possible(table->table, refs, node, e->id) अणु
+		अगर (refs->id != e->id)
+			जारी;
 
-		for (i = 0; i < refs->ref_cnt; i++) {
-			if (refs->refs[i].pid == e->pid)
-				return;
-		}
+		क्रम (i = 0; i < refs->ref_cnt; i++) अणु
+			अगर (refs->refs[i].pid == e->pid)
+				वापस;
+		पूर्ण
 
-		tmp = realloc(refs->refs, (refs->ref_cnt + 1) * sizeof(*ref));
-		if (!tmp) {
+		पंचांगp = पुनः_स्मृति(refs->refs, (refs->ref_cnt + 1) * माप(*ref));
+		अगर (!पंचांगp) अणु
 			p_err("failed to re-alloc memory for ID %u, PID %d, COMM %s...",
 			      e->id, e->pid, e->comm);
-			return;
-		}
-		refs->refs = tmp;
+			वापस;
+		पूर्ण
+		refs->refs = पंचांगp;
 		ref = &refs->refs[refs->ref_cnt];
 		ref->pid = e->pid;
-		memcpy(ref->comm, e->comm, sizeof(ref->comm));
+		स_नकल(ref->comm, e->comm, माप(ref->comm));
 		refs->ref_cnt++;
 
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/* new ref */
-	refs = calloc(1, sizeof(*refs));
-	if (!refs) {
+	refs = सुस्मृति(1, माप(*refs));
+	अगर (!refs) अणु
 		p_err("failed to alloc memory for ID %u, PID %d, COMM %s...",
 		      e->id, e->pid, e->comm);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	refs->id = e->id;
-	refs->refs = malloc(sizeof(*refs->refs));
-	if (!refs->refs) {
-		free(refs);
+	refs->refs = दो_स्मृति(माप(*refs->refs));
+	अगर (!refs->refs) अणु
+		मुक्त(refs);
 		p_err("failed to alloc memory for ID %u, PID %d, COMM %s...",
 		      e->id, e->pid, e->comm);
-		return;
-	}
+		वापस;
+	पूर्ण
 	ref = &refs->refs[0];
 	ref->pid = e->pid;
-	memcpy(ref->comm, e->comm, sizeof(ref->comm));
+	स_नकल(ref->comm, e->comm, माप(ref->comm));
 	refs->ref_cnt = 1;
 	hash_add(table->table, &refs->node, e->id);
-}
+पूर्ण
 
-static int __printf(2, 0)
-libbpf_print_none(__maybe_unused enum libbpf_print_level level,
-		  __maybe_unused const char *format,
-		  __maybe_unused va_list args)
-{
-	return 0;
-}
+अटल पूर्णांक __म_लिखो(2, 0)
+libbpf_prपूर्णांक_none(__maybe_unused क्रमागत libbpf_prपूर्णांक_level level,
+		  __maybe_unused स्थिर अक्षर *क्रमmat,
+		  __maybe_unused बहु_सूची args)
+अणु
+	वापस 0;
+पूर्ण
 
-int build_obj_refs_table(struct obj_refs_table *table, enum bpf_obj_type type)
-{
-	struct pid_iter_entry *e;
-	char buf[4096 / sizeof(*e) * sizeof(*e)];
-	struct pid_iter_bpf *skel;
-	int err, ret, fd = -1, i;
-	libbpf_print_fn_t default_print;
+पूर्णांक build_obj_refs_table(काष्ठा obj_refs_table *table, क्रमागत bpf_obj_type type)
+अणु
+	काष्ठा pid_iter_entry *e;
+	अक्षर buf[4096 / माप(*e) * माप(*e)];
+	काष्ठा pid_iter_bpf *skel;
+	पूर्णांक err, ret, fd = -1, i;
+	libbpf_prपूर्णांक_fn_t शेष_prपूर्णांक;
 
 	hash_init(table->table);
 	set_max_rlimit();
 
-	skel = pid_iter_bpf__open();
-	if (!skel) {
+	skel = pid_iter_bpf__खोलो();
+	अगर (!skel) अणु
 		p_err("failed to open PID iterator skeleton");
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
 	skel->rodata->obj_type = type;
 
-	/* we don't want output polluted with libbpf errors if bpf_iter is not
+	/* we करोn't want output polluted with libbpf errors अगर bpf_iter is not
 	 * supported
 	 */
-	default_print = libbpf_set_print(libbpf_print_none);
+	शेष_prपूर्णांक = libbpf_set_prपूर्णांक(libbpf_prपूर्णांक_none);
 	err = pid_iter_bpf__load(skel);
-	libbpf_set_print(default_print);
-	if (err) {
-		/* too bad, kernel doesn't support BPF iterators yet */
+	libbpf_set_prपूर्णांक(शेष_prपूर्णांक);
+	अगर (err) अणु
+		/* too bad, kernel करोesn't support BPF iterators yet */
 		err = 0;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 	err = pid_iter_bpf__attach(skel);
-	if (err) {
-		/* if we loaded above successfully, attach has to succeed */
+	अगर (err) अणु
+		/* अगर we loaded above successfully, attach has to succeed */
 		p_err("failed to attach PID iterator: %d", err);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	fd = bpf_iter_create(bpf_link__fd(skel->links.iter));
-	if (fd < 0) {
-		err = -errno;
+	अगर (fd < 0) अणु
+		err = -त्रुटि_सं;
 		p_err("failed to create PID iterator session: %d", err);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	while (true) {
-		ret = read(fd, buf, sizeof(buf));
-		if (ret < 0) {
-			if (errno == EAGAIN)
-				continue;
-			err = -errno;
+	जबतक (true) अणु
+		ret = पढ़ो(fd, buf, माप(buf));
+		अगर (ret < 0) अणु
+			अगर (त्रुटि_सं == EAGAIN)
+				जारी;
+			err = -त्रुटि_सं;
 			p_err("failed to read PID iterator output: %d", err);
-			goto out;
-		}
-		if (ret == 0)
-			break;
-		if (ret % sizeof(*e)) {
+			जाओ out;
+		पूर्ण
+		अगर (ret == 0)
+			अवरोध;
+		अगर (ret % माप(*e)) अणु
 			err = -EINVAL;
 			p_err("invalid PID iterator output format");
-			goto out;
-		}
-		ret /= sizeof(*e);
+			जाओ out;
+		पूर्ण
+		ret /= माप(*e);
 
-		e = (void *)buf;
-		for (i = 0; i < ret; i++, e++) {
+		e = (व्योम *)buf;
+		क्रम (i = 0; i < ret; i++, e++) अणु
 			add_ref(table, e);
-		}
-	}
+		पूर्ण
+	पूर्ण
 	err = 0;
 out:
-	if (fd >= 0)
-		close(fd);
+	अगर (fd >= 0)
+		बंद(fd);
 	pid_iter_bpf__destroy(skel);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-void delete_obj_refs_table(struct obj_refs_table *table)
-{
-	struct obj_refs *refs;
-	struct hlist_node *tmp;
-	unsigned int bkt;
+व्योम delete_obj_refs_table(काष्ठा obj_refs_table *table)
+अणु
+	काष्ठा obj_refs *refs;
+	काष्ठा hlist_node *पंचांगp;
+	अचिन्हित पूर्णांक bkt;
 
-	hash_for_each_safe(table->table, bkt, tmp, refs, node) {
+	hash_क्रम_each_safe(table->table, bkt, पंचांगp, refs, node) अणु
 		hash_del(&refs->node);
-		free(refs->refs);
-		free(refs);
-	}
-}
+		मुक्त(refs->refs);
+		मुक्त(refs);
+	पूर्ण
+पूर्ण
 
-void emit_obj_refs_json(struct obj_refs_table *table, __u32 id,
-			json_writer_t *json_writer)
-{
-	struct obj_refs *refs;
-	struct obj_ref *ref;
-	int i;
+व्योम emit_obj_refs_json(काष्ठा obj_refs_table *table, __u32 id,
+			json_ग_लिखोr_t *json_ग_लिखोr)
+अणु
+	काष्ठा obj_refs *refs;
+	काष्ठा obj_ref *ref;
+	पूर्णांक i;
 
-	if (hash_empty(table->table))
-		return;
+	अगर (hash_empty(table->table))
+		वापस;
 
-	hash_for_each_possible(table->table, refs, node, id) {
-		if (refs->id != id)
-			continue;
-		if (refs->ref_cnt == 0)
-			break;
+	hash_क्रम_each_possible(table->table, refs, node, id) अणु
+		अगर (refs->id != id)
+			जारी;
+		अगर (refs->ref_cnt == 0)
+			अवरोध;
 
-		jsonw_name(json_writer, "pids");
-		jsonw_start_array(json_writer);
-		for (i = 0; i < refs->ref_cnt; i++) {
+		jsonw_name(json_ग_लिखोr, "pids");
+		jsonw_start_array(json_ग_लिखोr);
+		क्रम (i = 0; i < refs->ref_cnt; i++) अणु
 			ref = &refs->refs[i];
-			jsonw_start_object(json_writer);
-			jsonw_int_field(json_writer, "pid", ref->pid);
-			jsonw_string_field(json_writer, "comm", ref->comm);
-			jsonw_end_object(json_writer);
-		}
-		jsonw_end_array(json_writer);
-		break;
-	}
-}
+			jsonw_start_object(json_ग_लिखोr);
+			jsonw_पूर्णांक_field(json_ग_लिखोr, "pid", ref->pid);
+			jsonw_string_field(json_ग_लिखोr, "comm", ref->comm);
+			jsonw_end_object(json_ग_लिखोr);
+		पूर्ण
+		jsonw_end_array(json_ग_लिखोr);
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-void emit_obj_refs_plain(struct obj_refs_table *table, __u32 id, const char *prefix)
-{
-	struct obj_refs *refs;
-	struct obj_ref *ref;
-	int i;
+व्योम emit_obj_refs_plain(काष्ठा obj_refs_table *table, __u32 id, स्थिर अक्षर *prefix)
+अणु
+	काष्ठा obj_refs *refs;
+	काष्ठा obj_ref *ref;
+	पूर्णांक i;
 
-	if (hash_empty(table->table))
-		return;
+	अगर (hash_empty(table->table))
+		वापस;
 
-	hash_for_each_possible(table->table, refs, node, id) {
-		if (refs->id != id)
-			continue;
-		if (refs->ref_cnt == 0)
-			break;
+	hash_क्रम_each_possible(table->table, refs, node, id) अणु
+		अगर (refs->id != id)
+			जारी;
+		अगर (refs->ref_cnt == 0)
+			अवरोध;
 
-		printf("%s", prefix);
-		for (i = 0; i < refs->ref_cnt; i++) {
+		म_लिखो("%s", prefix);
+		क्रम (i = 0; i < refs->ref_cnt; i++) अणु
 			ref = &refs->refs[i];
-			printf("%s%s(%d)", i == 0 ? "" : ", ", ref->comm, ref->pid);
-		}
-		break;
-	}
-}
+			म_लिखो("%s%s(%d)", i == 0 ? "" : ", ", ref->comm, ref->pid);
+		पूर्ण
+		अवरोध;
+	पूर्ण
+पूर्ण
 
 
-#endif
+#पूर्ण_अगर

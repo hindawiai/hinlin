@@ -1,22 +1,23 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 //
 // imx53 pinctrl driver based on imx pinmux core
 //
 // Copyright (C) 2012 Freescale Semiconductor, Inc.
 // Copyright (C) 2012 Linaro, Inc.
 //
-// Author: Dong Aisheng <dong.aisheng@linaro.org>
+// Author: Dong Aisheng <करोng.aisheng@linaro.org>
 
-#include <linux/err.h>
-#include <linux/init.h>
-#include <linux/io.h>
-#include <linux/of.h>
-#include <linux/of_device.h>
-#include <linux/pinctrl/pinctrl.h>
+#समावेश <linux/err.h>
+#समावेश <linux/init.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/of.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/pinctrl/pinctrl.h>
 
-#include "pinctrl-imx.h"
+#समावेश "pinctrl-imx.h"
 
-enum imx53_pads {
+क्रमागत imx53_pads अणु
 	MX53_PAD_RESERVE0 = 0,
 	MX53_PAD_RESERVE1 = 1,
 	MX53_PAD_RESERVE2 = 2,
@@ -136,8 +137,8 @@ enum imx53_pads {
 	MX53_PAD_EIM_DA13 = 116,
 	MX53_PAD_EIM_DA14 = 117,
 	MX53_PAD_EIM_DA15 = 118,
-	MX53_PAD_NANDF_WE_B = 119,
-	MX53_PAD_NANDF_RE_B = 120,
+	MX53_PAD_न_अंकDF_WE_B = 119,
+	MX53_PAD_न_अंकDF_RE_B = 120,
 	MX53_PAD_EIM_WAIT = 121,
 	MX53_PAD_RESERVE8 = 122,
 	MX53_PAD_LVDS1_TX3_P = 123,
@@ -155,14 +156,14 @@ enum imx53_pads {
 	MX53_PAD_GPIO_12 = 135,
 	MX53_PAD_GPIO_13 = 136,
 	MX53_PAD_GPIO_14 = 137,
-	MX53_PAD_NANDF_CLE = 138,
-	MX53_PAD_NANDF_ALE = 139,
-	MX53_PAD_NANDF_WP_B = 140,
-	MX53_PAD_NANDF_RB0 = 141,
-	MX53_PAD_NANDF_CS0 = 142,
-	MX53_PAD_NANDF_CS1 = 143,
-	MX53_PAD_NANDF_CS2 = 144,
-	MX53_PAD_NANDF_CS3 = 145,
+	MX53_PAD_न_अंकDF_CLE = 138,
+	MX53_PAD_न_अंकDF_ALE = 139,
+	MX53_PAD_न_अंकDF_WP_B = 140,
+	MX53_PAD_न_अंकDF_RB0 = 141,
+	MX53_PAD_न_अंकDF_CS0 = 142,
+	MX53_PAD_न_अंकDF_CS1 = 143,
+	MX53_PAD_न_अंकDF_CS2 = 144,
+	MX53_PAD_न_अंकDF_CS3 = 145,
 	MX53_PAD_FEC_MDIO = 146,
 	MX53_PAD_FEC_REF_CLK = 147,
 	MX53_PAD_FEC_RX_ER = 148,
@@ -227,10 +228,10 @@ enum imx53_pads {
 	MX53_PAD_GPIO_16 = 207,
 	MX53_PAD_GPIO_17 = 208,
 	MX53_PAD_GPIO_18 = 209,
-};
+पूर्ण;
 
-/* Pad names for the pinmux subsystem */
-static const struct pinctrl_pin_desc imx53_pinctrl_pads[] = {
+/* Pad names क्रम the pinmux subप्रणाली */
+अटल स्थिर काष्ठा pinctrl_pin_desc imx53_pinctrl_pads[] = अणु
 	IMX_PINCTRL_PIN(MX53_PAD_RESERVE0),
 	IMX_PINCTRL_PIN(MX53_PAD_RESERVE1),
 	IMX_PINCTRL_PIN(MX53_PAD_RESERVE2),
@@ -350,8 +351,8 @@ static const struct pinctrl_pin_desc imx53_pinctrl_pads[] = {
 	IMX_PINCTRL_PIN(MX53_PAD_EIM_DA13),
 	IMX_PINCTRL_PIN(MX53_PAD_EIM_DA14),
 	IMX_PINCTRL_PIN(MX53_PAD_EIM_DA15),
-	IMX_PINCTRL_PIN(MX53_PAD_NANDF_WE_B),
-	IMX_PINCTRL_PIN(MX53_PAD_NANDF_RE_B),
+	IMX_PINCTRL_PIN(MX53_PAD_न_अंकDF_WE_B),
+	IMX_PINCTRL_PIN(MX53_PAD_न_अंकDF_RE_B),
 	IMX_PINCTRL_PIN(MX53_PAD_EIM_WAIT),
 	IMX_PINCTRL_PIN(MX53_PAD_RESERVE8),
 	IMX_PINCTRL_PIN(MX53_PAD_LVDS1_TX3_P),
@@ -369,14 +370,14 @@ static const struct pinctrl_pin_desc imx53_pinctrl_pads[] = {
 	IMX_PINCTRL_PIN(MX53_PAD_GPIO_12),
 	IMX_PINCTRL_PIN(MX53_PAD_GPIO_13),
 	IMX_PINCTRL_PIN(MX53_PAD_GPIO_14),
-	IMX_PINCTRL_PIN(MX53_PAD_NANDF_CLE),
-	IMX_PINCTRL_PIN(MX53_PAD_NANDF_ALE),
-	IMX_PINCTRL_PIN(MX53_PAD_NANDF_WP_B),
-	IMX_PINCTRL_PIN(MX53_PAD_NANDF_RB0),
-	IMX_PINCTRL_PIN(MX53_PAD_NANDF_CS0),
-	IMX_PINCTRL_PIN(MX53_PAD_NANDF_CS1),
-	IMX_PINCTRL_PIN(MX53_PAD_NANDF_CS2),
-	IMX_PINCTRL_PIN(MX53_PAD_NANDF_CS3),
+	IMX_PINCTRL_PIN(MX53_PAD_न_अंकDF_CLE),
+	IMX_PINCTRL_PIN(MX53_PAD_न_अंकDF_ALE),
+	IMX_PINCTRL_PIN(MX53_PAD_न_अंकDF_WP_B),
+	IMX_PINCTRL_PIN(MX53_PAD_न_अंकDF_RB0),
+	IMX_PINCTRL_PIN(MX53_PAD_न_अंकDF_CS0),
+	IMX_PINCTRL_PIN(MX53_PAD_न_अंकDF_CS1),
+	IMX_PINCTRL_PIN(MX53_PAD_न_अंकDF_CS2),
+	IMX_PINCTRL_PIN(MX53_PAD_न_अंकDF_CS3),
 	IMX_PINCTRL_PIN(MX53_PAD_FEC_MDIO),
 	IMX_PINCTRL_PIN(MX53_PAD_FEC_REF_CLK),
 	IMX_PINCTRL_PIN(MX53_PAD_FEC_RX_ER),
@@ -441,35 +442,35 @@ static const struct pinctrl_pin_desc imx53_pinctrl_pads[] = {
 	IMX_PINCTRL_PIN(MX53_PAD_GPIO_16),
 	IMX_PINCTRL_PIN(MX53_PAD_GPIO_17),
 	IMX_PINCTRL_PIN(MX53_PAD_GPIO_18),
-};
+पूर्ण;
 
-static const struct imx_pinctrl_soc_info imx53_pinctrl_info = {
+अटल स्थिर काष्ठा imx_pinctrl_soc_info imx53_pinctrl_info = अणु
 	.pins = imx53_pinctrl_pads,
 	.npins = ARRAY_SIZE(imx53_pinctrl_pads),
 	.gpr_compatible = "fsl,imx53-iomuxc-gpr",
-};
+पूर्ण;
 
-static const struct of_device_id imx53_pinctrl_of_match[] = {
-	{ .compatible = "fsl,imx53-iomuxc", },
-	{ /* sentinel */ }
-};
+अटल स्थिर काष्ठा of_device_id imx53_pinctrl_of_match[] = अणु
+	अणु .compatible = "fsl,imx53-iomuxc", पूर्ण,
+	अणु /* sentinel */ पूर्ण
+पूर्ण;
 
-static int imx53_pinctrl_probe(struct platform_device *pdev)
-{
-	return imx_pinctrl_probe(pdev, &imx53_pinctrl_info);
-}
+अटल पूर्णांक imx53_pinctrl_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	वापस imx_pinctrl_probe(pdev, &imx53_pinctrl_info);
+पूर्ण
 
-static struct platform_driver imx53_pinctrl_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver imx53_pinctrl_driver = अणु
+	.driver = अणु
 		.name = "imx53-pinctrl",
 		.of_match_table = imx53_pinctrl_of_match,
 		.suppress_bind_attrs = true,
-	},
+	पूर्ण,
 	.probe = imx53_pinctrl_probe,
-};
+पूर्ण;
 
-static int __init imx53_pinctrl_init(void)
-{
-	return platform_driver_register(&imx53_pinctrl_driver);
-}
+अटल पूर्णांक __init imx53_pinctrl_init(व्योम)
+अणु
+	वापस platक्रमm_driver_रेजिस्टर(&imx53_pinctrl_driver);
+पूर्ण
 arch_initcall(imx53_pinctrl_init);

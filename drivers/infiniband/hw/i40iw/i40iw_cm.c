@@ -1,3 +1,4 @@
+<शैली गुरु>
 /*******************************************************************************
 *
 * Copyright (c) 2015-2016 Intel Corporation.  All rights reserved.
@@ -5,20 +6,20 @@
 * This software is available to you under a choice of one of two
 * licenses.  You may choose to be licensed under the terms of the GNU
 * General Public License (GPL) Version 2, available from the file
-* COPYING in the main directory of this source tree, or the
+* COPYING in the मुख्य directory of this source tree, or the
 * OpenFabrics.org BSD license below:
 *
-*   Redistribution and use in source and binary forms, with or
-*   without modification, are permitted provided that the following
+*   Redistribution and use in source and binary क्रमms, with or
+*   without modअगरication, are permitted provided that the following
 *   conditions are met:
 *
 *    - Redistributions of source code must retain the above
 *	copyright notice, this list of conditions and the following
 *	disclaimer.
 *
-*    - Redistributions in binary form must reproduce the above
+*    - Redistributions in binary क्रमm must reproduce the above
 *	copyright notice, this list of conditions and the following
-*	disclaimer in the documentation and/or other materials
+*	disclaimer in the करोcumentation and/or other materials
 *	provided with the distribution.
 *
 * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
@@ -32,54 +33,54 @@
 *
 *******************************************************************************/
 
-#include <linux/atomic.h>
-#include <linux/ip.h>
-#include <linux/tcp.h>
-#include <linux/init.h>
-#include <linux/if_arp.h>
-#include <linux/if_vlan.h>
-#include <linux/notifier.h>
-#include <linux/net.h>
-#include <linux/types.h>
-#include <linux/timer.h>
-#include <linux/time.h>
-#include <linux/delay.h>
-#include <linux/etherdevice.h>
-#include <linux/netdevice.h>
-#include <linux/random.h>
-#include <linux/list.h>
-#include <linux/threads.h>
-#include <linux/highmem.h>
-#include <net/arp.h>
-#include <net/ndisc.h>
-#include <net/neighbour.h>
-#include <net/route.h>
-#include <net/addrconf.h>
-#include <net/ip6_route.h>
-#include <net/ip_fib.h>
-#include <net/secure_seq.h>
-#include <net/tcp.h>
-#include <asm/checksum.h>
+#समावेश <linux/atomic.h>
+#समावेश <linux/ip.h>
+#समावेश <linux/tcp.h>
+#समावेश <linux/init.h>
+#समावेश <linux/अगर_arp.h>
+#समावेश <linux/अगर_vlan.h>
+#समावेश <linux/notअगरier.h>
+#समावेश <linux/net.h>
+#समावेश <linux/types.h>
+#समावेश <linux/समयr.h>
+#समावेश <linux/समय.स>
+#समावेश <linux/delay.h>
+#समावेश <linux/etherdevice.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/अक्रमom.h>
+#समावेश <linux/list.h>
+#समावेश <linux/thपढ़ोs.h>
+#समावेश <linux/highस्मृति.स>
+#समावेश <net/arp.h>
+#समावेश <net/ndisc.h>
+#समावेश <net/neighbour.h>
+#समावेश <net/route.h>
+#समावेश <net/addrconf.h>
+#समावेश <net/ip6_route.h>
+#समावेश <net/ip_fib.h>
+#समावेश <net/secure_seq.h>
+#समावेश <net/tcp.h>
+#समावेश <यंत्र/checksum.h>
 
-#include "i40iw.h"
+#समावेश "i40iw.h"
 
-static void i40iw_rem_ref_cm_node(struct i40iw_cm_node *);
-static void i40iw_cm_post_event(struct i40iw_cm_event *event);
-static void i40iw_disconnect_worker(struct work_struct *work);
+अटल व्योम i40iw_rem_ref_cm_node(काष्ठा i40iw_cm_node *);
+अटल व्योम i40iw_cm_post_event(काष्ठा i40iw_cm_event *event);
+अटल व्योम i40iw_disconnect_worker(काष्ठा work_काष्ठा *work);
 
 /**
- * i40iw_free_sqbuf - put back puda buffer if refcount = 0
- * @vsi: pointer to vsi structure
- * @bufp: puda buffer to free
+ * i40iw_मुक्त_sqbuf - put back puda buffer अगर refcount = 0
+ * @vsi: poपूर्णांकer to vsi काष्ठाure
+ * @bufp: puda buffer to मुक्त
  */
-void i40iw_free_sqbuf(struct i40iw_sc_vsi *vsi, void *bufp)
-{
-	struct i40iw_puda_buf *buf = (struct i40iw_puda_buf *)bufp;
-	struct i40iw_puda_rsrc *ilq = vsi->ilq;
+व्योम i40iw_मुक्त_sqbuf(काष्ठा i40iw_sc_vsi *vsi, व्योम *bufp)
+अणु
+	काष्ठा i40iw_puda_buf *buf = (काष्ठा i40iw_puda_buf *)bufp;
+	काष्ठा i40iw_puda_rsrc *ilq = vsi->ilq;
 
-	if (!atomic_dec_return(&buf->refcount))
+	अगर (!atomic_dec_वापस(&buf->refcount))
 		i40iw_puda_ret_bufpool(ilq, buf);
-}
+पूर्ण
 
 /**
  * i40iw_derive_hw_ird_setting - Calculate IRD
@@ -87,33 +88,33 @@ void i40iw_free_sqbuf(struct i40iw_sc_vsi *vsi, void *bufp)
  * @cm_ird: IRD of connection's node
  *
  * The ird from the connection is rounded to a supported HW
- * setting (2,8,32,64) and then encoded for ird_size field of
+ * setting (2,8,32,64) and then encoded क्रम ird_size field of
  * qp_ctx
  */
-static u8 i40iw_derive_hw_ird_setting(u16 cm_ird)
-{
+अटल u8 i40iw_derive_hw_ird_setting(u16 cm_ird)
+अणु
 	u8 encoded_ird_size;
 
 	/* ird_size field is encoded in qp_ctx */
-	switch (cm_ird ? roundup_pow_of_two(cm_ird) : 0) {
-	case I40IW_HW_IRD_SETTING_64:
+	चयन (cm_ird ? roundup_घात_of_two(cm_ird) : 0) अणु
+	हाल I40IW_HW_IRD_SETTING_64:
 		encoded_ird_size = 3;
-		break;
-	case I40IW_HW_IRD_SETTING_32:
-	case I40IW_HW_IRD_SETTING_16:
+		अवरोध;
+	हाल I40IW_HW_IRD_SETTING_32:
+	हाल I40IW_HW_IRD_SETTING_16:
 		encoded_ird_size = 2;
-		break;
-	case I40IW_HW_IRD_SETTING_8:
-	case I40IW_HW_IRD_SETTING_4:
+		अवरोध;
+	हाल I40IW_HW_IRD_SETTING_8:
+	हाल I40IW_HW_IRD_SETTING_4:
 		encoded_ird_size = 1;
-		break;
-	case I40IW_HW_IRD_SETTING_2:
-	default:
+		अवरोध;
+	हाल I40IW_HW_IRD_SETTING_2:
+	शेष:
 		encoded_ird_size = 0;
-		break;
-	}
-	return encoded_ird_size;
-}
+		अवरोध;
+	पूर्ण
+	वापस encoded_ird_size;
+पूर्ण
 
 /**
  * i40iw_record_ird_ord - Record IRD/ORD passed in
@@ -121,57 +122,57 @@ static u8 i40iw_derive_hw_ird_setting(u16 cm_ird)
  * @conn_ird: connection IRD
  * @conn_ord: connection ORD
  */
-static void i40iw_record_ird_ord(struct i40iw_cm_node *cm_node, u32 conn_ird,
+अटल व्योम i40iw_record_ird_ord(काष्ठा i40iw_cm_node *cm_node, u32 conn_ird,
 				 u32 conn_ord)
-{
-	if (conn_ird > I40IW_MAX_IRD_SIZE)
+अणु
+	अगर (conn_ird > I40IW_MAX_IRD_SIZE)
 		conn_ird = I40IW_MAX_IRD_SIZE;
 
-	if (conn_ord > I40IW_MAX_ORD_SIZE)
+	अगर (conn_ord > I40IW_MAX_ORD_SIZE)
 		conn_ord = I40IW_MAX_ORD_SIZE;
-	else if (!conn_ord && cm_node->send_rdma0_op == SEND_RDMA_READ_ZERO)
+	अन्यथा अगर (!conn_ord && cm_node->send_rdma0_op == SEND_RDMA_READ_ZERO)
 		conn_ord = 1;
 
 	cm_node->ird_size = conn_ird;
 	cm_node->ord_size = conn_ord;
-}
+पूर्ण
 
 /**
  * i40iw_copy_ip_ntohl - change network to host ip
  * @dst: host ip
  * @src: big endian
  */
-void i40iw_copy_ip_ntohl(u32 *dst, __be32 *src)
-{
+व्योम i40iw_copy_ip_ntohl(u32 *dst, __be32 *src)
+अणु
 	*dst++ = ntohl(*src++);
 	*dst++ = ntohl(*src++);
 	*dst++ = ntohl(*src++);
 	*dst = ntohl(*src);
-}
+पूर्ण
 
 /**
  * i40iw_copy_ip_htonl - change host addr to network ip
  * @dst: host ip
  * @src: little endian
  */
-static inline void i40iw_copy_ip_htonl(__be32 *dst, u32 *src)
-{
+अटल अंतरभूत व्योम i40iw_copy_ip_htonl(__be32 *dst, u32 *src)
+अणु
 	*dst++ = htonl(*src++);
 	*dst++ = htonl(*src++);
 	*dst++ = htonl(*src++);
 	*dst = htonl(*src);
-}
+पूर्ण
 
 /**
- * i40iw_fill_sockaddr4 - get addr info for passive connection
+ * i40iw_fill_sockaddr4 - get addr info क्रम passive connection
  * @cm_node: connection's node
  * @event: upper layer's cm event
  */
-static inline void i40iw_fill_sockaddr4(struct i40iw_cm_node *cm_node,
-					struct iw_cm_event *event)
-{
-	struct sockaddr_in *laddr = (struct sockaddr_in *)&event->local_addr;
-	struct sockaddr_in *raddr = (struct sockaddr_in *)&event->remote_addr;
+अटल अंतरभूत व्योम i40iw_fill_sockaddr4(काष्ठा i40iw_cm_node *cm_node,
+					काष्ठा iw_cm_event *event)
+अणु
+	काष्ठा sockaddr_in *laddr = (काष्ठा sockaddr_in *)&event->local_addr;
+	काष्ठा sockaddr_in *raddr = (काष्ठा sockaddr_in *)&event->remote_addr;
 
 	laddr->sin_family = AF_INET;
 	raddr->sin_family = AF_INET;
@@ -181,18 +182,18 @@ static inline void i40iw_fill_sockaddr4(struct i40iw_cm_node *cm_node,
 
 	laddr->sin_addr.s_addr = htonl(cm_node->loc_addr[0]);
 	raddr->sin_addr.s_addr = htonl(cm_node->rem_addr[0]);
-}
+पूर्ण
 
 /**
- * i40iw_fill_sockaddr6 - get ipv6 addr info for passive side
+ * i40iw_fill_sockaddr6 - get ipv6 addr info क्रम passive side
  * @cm_node: connection's node
  * @event: upper layer's cm event
  */
-static inline void i40iw_fill_sockaddr6(struct i40iw_cm_node *cm_node,
-					struct iw_cm_event *event)
-{
-	struct sockaddr_in6 *laddr6 = (struct sockaddr_in6 *)&event->local_addr;
-	struct sockaddr_in6 *raddr6 = (struct sockaddr_in6 *)&event->remote_addr;
+अटल अंतरभूत व्योम i40iw_fill_sockaddr6(काष्ठा i40iw_cm_node *cm_node,
+					काष्ठा iw_cm_event *event)
+अणु
+	काष्ठा sockaddr_in6 *laddr6 = (काष्ठा sockaddr_in6 *)&event->local_addr;
+	काष्ठा sockaddr_in6 *raddr6 = (काष्ठा sockaddr_in6 *)&event->remote_addr;
 
 	laddr6->sin6_family = AF_INET6;
 	raddr6->sin6_family = AF_INET6;
@@ -204,115 +205,115 @@ static inline void i40iw_fill_sockaddr6(struct i40iw_cm_node *cm_node,
 			    cm_node->loc_addr);
 	i40iw_copy_ip_htonl(raddr6->sin6_addr.in6_u.u6_addr32,
 			    cm_node->rem_addr);
-}
+पूर्ण
 
 /**
  * i40iw_get_addr_info
  * @cm_node: contains ip/tcp info
  * @cm_info: to get a copy of the cm_node ip/tcp info
 */
-static void i40iw_get_addr_info(struct i40iw_cm_node *cm_node,
-				struct i40iw_cm_info *cm_info)
-{
+अटल व्योम i40iw_get_addr_info(काष्ठा i40iw_cm_node *cm_node,
+				काष्ठा i40iw_cm_info *cm_info)
+अणु
 	cm_info->ipv4 = cm_node->ipv4;
 	cm_info->vlan_id = cm_node->vlan_id;
-	memcpy(cm_info->loc_addr, cm_node->loc_addr, sizeof(cm_info->loc_addr));
-	memcpy(cm_info->rem_addr, cm_node->rem_addr, sizeof(cm_info->rem_addr));
+	स_नकल(cm_info->loc_addr, cm_node->loc_addr, माप(cm_info->loc_addr));
+	स_नकल(cm_info->rem_addr, cm_node->rem_addr, माप(cm_info->rem_addr));
 	cm_info->loc_port = cm_node->loc_port;
 	cm_info->rem_port = cm_node->rem_port;
 	cm_info->user_pri = cm_node->user_pri;
-}
+पूर्ण
 
 /**
- * i40iw_get_cmevent_info - for cm event upcall
+ * i40iw_get_cmevent_info - क्रम cm event upcall
  * @cm_node: connection's node
- * @cm_id: upper layers cm struct for the event
+ * @cm_id: upper layers cm काष्ठा क्रम the event
  * @event: upper layer's cm event
  */
-static inline void i40iw_get_cmevent_info(struct i40iw_cm_node *cm_node,
-					  struct iw_cm_id *cm_id,
-					  struct iw_cm_event *event)
-{
-	memcpy(&event->local_addr, &cm_id->m_local_addr,
-	       sizeof(event->local_addr));
-	memcpy(&event->remote_addr, &cm_id->m_remote_addr,
-	       sizeof(event->remote_addr));
-	if (cm_node) {
-		event->private_data = (void *)cm_node->pdata_buf;
-		event->private_data_len = (u8)cm_node->pdata.size;
+अटल अंतरभूत व्योम i40iw_get_cmevent_info(काष्ठा i40iw_cm_node *cm_node,
+					  काष्ठा iw_cm_id *cm_id,
+					  काष्ठा iw_cm_event *event)
+अणु
+	स_नकल(&event->local_addr, &cm_id->m_local_addr,
+	       माप(event->local_addr));
+	स_नकल(&event->remote_addr, &cm_id->m_remote_addr,
+	       माप(event->remote_addr));
+	अगर (cm_node) अणु
+		event->निजी_data = (व्योम *)cm_node->pdata_buf;
+		event->निजी_data_len = (u8)cm_node->pdata.size;
 		event->ird = cm_node->ird_size;
 		event->ord = cm_node->ord_size;
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
  * i40iw_send_cm_event - upcall cm's event handler
  * @cm_node: connection's node
- * @cm_id: upper layer's cm info struct
+ * @cm_id: upper layer's cm info काष्ठा
  * @type: Event type to indicate
- * @status: status for the event type
+ * @status: status क्रम the event type
  */
-static int i40iw_send_cm_event(struct i40iw_cm_node *cm_node,
-			       struct iw_cm_id *cm_id,
-			       enum iw_cm_event_type type,
-			       int status)
-{
-	struct iw_cm_event event;
+अटल पूर्णांक i40iw_send_cm_event(काष्ठा i40iw_cm_node *cm_node,
+			       काष्ठा iw_cm_id *cm_id,
+			       क्रमागत iw_cm_event_type type,
+			       पूर्णांक status)
+अणु
+	काष्ठा iw_cm_event event;
 
-	memset(&event, 0, sizeof(event));
+	स_रखो(&event, 0, माप(event));
 	event.event = type;
 	event.status = status;
-	switch (type) {
-	case IW_CM_EVENT_CONNECT_REQUEST:
-		if (cm_node->ipv4)
+	चयन (type) अणु
+	हाल IW_CM_EVENT_CONNECT_REQUEST:
+		अगर (cm_node->ipv4)
 			i40iw_fill_sockaddr4(cm_node, &event);
-		else
+		अन्यथा
 			i40iw_fill_sockaddr6(cm_node, &event);
-		event.provider_data = (void *)cm_node;
-		event.private_data = (void *)cm_node->pdata_buf;
-		event.private_data_len = (u8)cm_node->pdata.size;
+		event.provider_data = (व्योम *)cm_node;
+		event.निजी_data = (व्योम *)cm_node->pdata_buf;
+		event.निजी_data_len = (u8)cm_node->pdata.size;
 		event.ird = cm_node->ird_size;
-		break;
-	case IW_CM_EVENT_CONNECT_REPLY:
+		अवरोध;
+	हाल IW_CM_EVENT_CONNECT_REPLY:
 		i40iw_get_cmevent_info(cm_node, cm_id, &event);
-		break;
-	case IW_CM_EVENT_ESTABLISHED:
+		अवरोध;
+	हाल IW_CM_EVENT_ESTABLISHED:
 		event.ird = cm_node->ird_size;
 		event.ord = cm_node->ord_size;
-		break;
-	case IW_CM_EVENT_DISCONNECT:
-		break;
-	case IW_CM_EVENT_CLOSE:
-		break;
-	default:
+		अवरोध;
+	हाल IW_CM_EVENT_DISCONNECT:
+		अवरोध;
+	हाल IW_CM_EVENT_CLOSE:
+		अवरोध;
+	शेष:
 		i40iw_pr_err("event type received type = %d\n", type);
-		return -1;
-	}
-	return cm_id->event_handler(cm_id, &event);
-}
+		वापस -1;
+	पूर्ण
+	वापस cm_id->event_handler(cm_id, &event);
+पूर्ण
 
 /**
  * i40iw_create_event - create cm event
  * @cm_node: connection's node
  * @type: Event type to generate
  */
-static struct i40iw_cm_event *i40iw_create_event(struct i40iw_cm_node *cm_node,
-						 enum i40iw_cm_event_type type)
-{
-	struct i40iw_cm_event *event;
+अटल काष्ठा i40iw_cm_event *i40iw_create_event(काष्ठा i40iw_cm_node *cm_node,
+						 क्रमागत i40iw_cm_event_type type)
+अणु
+	काष्ठा i40iw_cm_event *event;
 
-	if (!cm_node->cm_id)
-		return NULL;
+	अगर (!cm_node->cm_id)
+		वापस शून्य;
 
-	event = kzalloc(sizeof(*event), GFP_ATOMIC);
+	event = kzalloc(माप(*event), GFP_ATOMIC);
 
-	if (!event)
-		return NULL;
+	अगर (!event)
+		वापस शून्य;
 
 	event->type = type;
 	event->cm_node = cm_node;
-	memcpy(event->cm_info.rem_addr, cm_node->rem_addr, sizeof(event->cm_info.rem_addr));
-	memcpy(event->cm_info.loc_addr, cm_node->loc_addr, sizeof(event->cm_info.loc_addr));
+	स_नकल(event->cm_info.rem_addr, cm_node->rem_addr, माप(event->cm_info.rem_addr));
+	स_नकल(event->cm_info.loc_addr, cm_node->loc_addr, माप(event->cm_info.loc_addr));
 	event->cm_info.rem_port = cm_node->rem_port;
 	event->cm_info.loc_port = cm_node->loc_port;
 	event->cm_info.cm_id = cm_node->cm_id;
@@ -327,62 +328,62 @@ static struct i40iw_cm_event *i40iw_create_event(struct i40iw_cm_node *cm_node,
 		    event->cm_info.rem_addr);
 
 	i40iw_cm_post_event(event);
-	return event;
-}
+	वापस event;
+पूर्ण
 
 /**
- * i40iw_free_retrans_entry - free send entry
+ * i40iw_मुक्त_retrans_entry - मुक्त send entry
  * @cm_node: connection's node
  */
-static void i40iw_free_retrans_entry(struct i40iw_cm_node *cm_node)
-{
-	struct i40iw_device *iwdev = cm_node->iwdev;
-	struct i40iw_timer_entry *send_entry;
+अटल व्योम i40iw_मुक्त_retrans_entry(काष्ठा i40iw_cm_node *cm_node)
+अणु
+	काष्ठा i40iw_device *iwdev = cm_node->iwdev;
+	काष्ठा i40iw_समयr_entry *send_entry;
 
 	send_entry = cm_node->send_entry;
-	if (send_entry) {
-		cm_node->send_entry = NULL;
-		i40iw_free_sqbuf(&iwdev->vsi, (void *)send_entry->sqbuf);
-		kfree(send_entry);
+	अगर (send_entry) अणु
+		cm_node->send_entry = शून्य;
+		i40iw_मुक्त_sqbuf(&iwdev->vsi, (व्योम *)send_entry->sqbuf);
+		kमुक्त(send_entry);
 		atomic_dec(&cm_node->ref_count);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
- * i40iw_cleanup_retrans_entry - free send entry with lock
+ * i40iw_cleanup_retrans_entry - मुक्त send entry with lock
  * @cm_node: connection's node
  */
-static void i40iw_cleanup_retrans_entry(struct i40iw_cm_node *cm_node)
-{
-	unsigned long flags;
+अटल व्योम i40iw_cleanup_retrans_entry(काष्ठा i40iw_cm_node *cm_node)
+अणु
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&cm_node->retrans_list_lock, flags);
-	i40iw_free_retrans_entry(cm_node);
+	i40iw_मुक्त_retrans_entry(cm_node);
 	spin_unlock_irqrestore(&cm_node->retrans_list_lock, flags);
-}
+पूर्ण
 
 /**
- * i40iw_form_cm_frame - get a free packet and build frame
+ * i40iw_क्रमm_cm_frame - get a मुक्त packet and build frame
  * @cm_node: connection's node ionfo to use in frame
- * @options: pointer to options info
- * @hdr: pointer mpa header
- * @pdata: pointer to private data
+ * @options: poपूर्णांकer to options info
+ * @hdr: poपूर्णांकer mpa header
+ * @pdata: poपूर्णांकer to निजी data
  * @flags:  indicates FIN or ACK
  */
-static struct i40iw_puda_buf *i40iw_form_cm_frame(struct i40iw_cm_node *cm_node,
-						  struct i40iw_kmem_info *options,
-						  struct i40iw_kmem_info *hdr,
-						  struct i40iw_kmem_info *pdata,
+अटल काष्ठा i40iw_puda_buf *i40iw_क्रमm_cm_frame(काष्ठा i40iw_cm_node *cm_node,
+						  काष्ठा i40iw_kmem_info *options,
+						  काष्ठा i40iw_kmem_info *hdr,
+						  काष्ठा i40iw_kmem_info *pdata,
 						  u8 flags)
-{
-	struct i40iw_puda_buf *sqbuf;
-	struct i40iw_sc_vsi *vsi = &cm_node->iwdev->vsi;
+अणु
+	काष्ठा i40iw_puda_buf *sqbuf;
+	काष्ठा i40iw_sc_vsi *vsi = &cm_node->iwdev->vsi;
 	u8 *buf;
 
-	struct tcphdr *tcph;
-	struct iphdr *iph;
-	struct ipv6hdr *ip6h;
-	struct ethhdr *ethh;
+	काष्ठा tcphdr *tcph;
+	काष्ठा iphdr *iph;
+	काष्ठा ipv6hdr *ip6h;
+	काष्ठा ethhdr *ethh;
 	u16 packetsize;
 	u16 eth_hlen = ETH_HLEN;
 	u32 opts_len = 0;
@@ -391,57 +392,57 @@ static struct i40iw_puda_buf *i40iw_form_cm_frame(struct i40iw_cm_node *cm_node,
 	u16 vtag;
 
 	sqbuf = i40iw_puda_get_bufpool(vsi->ilq);
-	if (!sqbuf)
-		return NULL;
+	अगर (!sqbuf)
+		वापस शून्य;
 	buf = sqbuf->mem.va;
 
-	if (options)
+	अगर (options)
 		opts_len = (u32)options->size;
 
-	if (hdr)
+	अगर (hdr)
 		hdr_len = hdr->size;
 
-	if (pdata)
+	अगर (pdata)
 		pd_len = pdata->size;
 
-	if (cm_node->vlan_id <= VLAN_VID_MASK)
+	अगर (cm_node->vlan_id <= VLAN_VID_MASK)
 		eth_hlen += 4;
 
-	if (cm_node->ipv4)
-		packetsize = sizeof(*iph) + sizeof(*tcph);
-	else
-		packetsize = sizeof(*ip6h) + sizeof(*tcph);
+	अगर (cm_node->ipv4)
+		packetsize = माप(*iph) + माप(*tcph);
+	अन्यथा
+		packetsize = माप(*ip6h) + माप(*tcph);
 	packetsize += opts_len + hdr_len + pd_len;
 
-	memset(buf, 0x00, eth_hlen + packetsize);
+	स_रखो(buf, 0x00, eth_hlen + packetsize);
 
 	sqbuf->totallen = packetsize + eth_hlen;
 	sqbuf->maclen = eth_hlen;
-	sqbuf->tcphlen = sizeof(*tcph) + opts_len;
-	sqbuf->scratch = (void *)cm_node;
+	sqbuf->tcphlen = माप(*tcph) + opts_len;
+	sqbuf->scratch = (व्योम *)cm_node;
 
-	ethh = (struct ethhdr *)buf;
+	ethh = (काष्ठा ethhdr *)buf;
 	buf += eth_hlen;
 
-	if (cm_node->ipv4) {
+	अगर (cm_node->ipv4) अणु
 		sqbuf->ipv4 = true;
 
-		iph = (struct iphdr *)buf;
-		buf += sizeof(*iph);
-		tcph = (struct tcphdr *)buf;
-		buf += sizeof(*tcph);
+		iph = (काष्ठा iphdr *)buf;
+		buf += माप(*iph);
+		tcph = (काष्ठा tcphdr *)buf;
+		buf += माप(*tcph);
 
 		ether_addr_copy(ethh->h_dest, cm_node->rem_mac);
 		ether_addr_copy(ethh->h_source, cm_node->loc_mac);
-		if (cm_node->vlan_id <= VLAN_VID_MASK) {
-			((struct vlan_ethhdr *)ethh)->h_vlan_proto = htons(ETH_P_8021Q);
+		अगर (cm_node->vlan_id <= VLAN_VID_MASK) अणु
+			((काष्ठा vlan_ethhdr *)ethh)->h_vlan_proto = htons(ETH_P_8021Q);
 			vtag = (cm_node->user_pri << VLAN_PRIO_SHIFT) | cm_node->vlan_id;
-			((struct vlan_ethhdr *)ethh)->h_vlan_TCI = htons(vtag);
+			((काष्ठा vlan_ethhdr *)ethh)->h_vlan_TCI = htons(vtag);
 
-			((struct vlan_ethhdr *)ethh)->h_vlan_encapsulated_proto = htons(ETH_P_IP);
-		} else {
+			((काष्ठा vlan_ethhdr *)ethh)->h_vlan_encapsulated_proto = htons(ETH_P_IP);
+		पूर्ण अन्यथा अणु
 			ethh->h_proto = htons(ETH_P_IP);
-		}
+		पूर्ण
 
 		iph->version = IPVERSION;
 		iph->ihl = 5;	/* 5 * 4Byte words, IP headr len */
@@ -454,116 +455,116 @@ static struct i40iw_puda_buf *i40iw_form_cm_frame(struct i40iw_cm_node *cm_node,
 		iph->protocol = IPPROTO_TCP;
 		iph->saddr = htonl(cm_node->loc_addr[0]);
 		iph->daddr = htonl(cm_node->rem_addr[0]);
-	} else {
+	पूर्ण अन्यथा अणु
 		sqbuf->ipv4 = false;
-		ip6h = (struct ipv6hdr *)buf;
-		buf += sizeof(*ip6h);
-		tcph = (struct tcphdr *)buf;
-		buf += sizeof(*tcph);
+		ip6h = (काष्ठा ipv6hdr *)buf;
+		buf += माप(*ip6h);
+		tcph = (काष्ठा tcphdr *)buf;
+		buf += माप(*tcph);
 
 		ether_addr_copy(ethh->h_dest, cm_node->rem_mac);
 		ether_addr_copy(ethh->h_source, cm_node->loc_mac);
-		if (cm_node->vlan_id <= VLAN_VID_MASK) {
-			((struct vlan_ethhdr *)ethh)->h_vlan_proto = htons(ETH_P_8021Q);
+		अगर (cm_node->vlan_id <= VLAN_VID_MASK) अणु
+			((काष्ठा vlan_ethhdr *)ethh)->h_vlan_proto = htons(ETH_P_8021Q);
 			vtag = (cm_node->user_pri << VLAN_PRIO_SHIFT) | cm_node->vlan_id;
-			((struct vlan_ethhdr *)ethh)->h_vlan_TCI = htons(vtag);
-			((struct vlan_ethhdr *)ethh)->h_vlan_encapsulated_proto = htons(ETH_P_IPV6);
-		} else {
+			((काष्ठा vlan_ethhdr *)ethh)->h_vlan_TCI = htons(vtag);
+			((काष्ठा vlan_ethhdr *)ethh)->h_vlan_encapsulated_proto = htons(ETH_P_IPV6);
+		पूर्ण अन्यथा अणु
 			ethh->h_proto = htons(ETH_P_IPV6);
-		}
+		पूर्ण
 		ip6h->version = 6;
 		ip6h->priority = cm_node->tos >> 4;
 		ip6h->flow_lbl[0] = cm_node->tos << 4;
 		ip6h->flow_lbl[1] = 0;
 		ip6h->flow_lbl[2] = 0;
-		ip6h->payload_len = htons(packetsize - sizeof(*ip6h));
+		ip6h->payload_len = htons(packetsize - माप(*ip6h));
 		ip6h->nexthdr = 6;
 		ip6h->hop_limit = 128;
 		i40iw_copy_ip_htonl(ip6h->saddr.in6_u.u6_addr32,
 				    cm_node->loc_addr);
 		i40iw_copy_ip_htonl(ip6h->daddr.in6_u.u6_addr32,
 				    cm_node->rem_addr);
-	}
+	पूर्ण
 
 	tcph->source = htons(cm_node->loc_port);
 	tcph->dest = htons(cm_node->rem_port);
 
 	tcph->seq = htonl(cm_node->tcp_cntxt.loc_seq_num);
 
-	if (flags & SET_ACK) {
+	अगर (flags & SET_ACK) अणु
 		cm_node->tcp_cntxt.loc_ack_num = cm_node->tcp_cntxt.rcv_nxt;
 		tcph->ack_seq = htonl(cm_node->tcp_cntxt.loc_ack_num);
 		tcph->ack = 1;
-	} else {
+	पूर्ण अन्यथा अणु
 		tcph->ack_seq = 0;
-	}
+	पूर्ण
 
-	if (flags & SET_SYN) {
+	अगर (flags & SET_SYN) अणु
 		cm_node->tcp_cntxt.loc_seq_num++;
 		tcph->syn = 1;
-	} else {
+	पूर्ण अन्यथा अणु
 		cm_node->tcp_cntxt.loc_seq_num += hdr_len + pd_len;
-	}
+	पूर्ण
 
-	if (flags & SET_FIN) {
+	अगर (flags & SET_FIN) अणु
 		cm_node->tcp_cntxt.loc_seq_num++;
 		tcph->fin = 1;
-	}
+	पूर्ण
 
-	if (flags & SET_RST)
+	अगर (flags & SET_RST)
 		tcph->rst = 1;
 
-	tcph->doff = (u16)((sizeof(*tcph) + opts_len + 3) >> 2);
-	sqbuf->tcphlen = tcph->doff << 2;
-	tcph->window = htons(cm_node->tcp_cntxt.rcv_wnd);
+	tcph->करोff = (u16)((माप(*tcph) + opts_len + 3) >> 2);
+	sqbuf->tcphlen = tcph->करोff << 2;
+	tcph->winकरोw = htons(cm_node->tcp_cntxt.rcv_wnd);
 	tcph->urg_ptr = 0;
 
-	if (opts_len) {
-		memcpy(buf, options->addr, opts_len);
+	अगर (opts_len) अणु
+		स_नकल(buf, options->addr, opts_len);
 		buf += opts_len;
-	}
+	पूर्ण
 
-	if (hdr_len) {
-		memcpy(buf, hdr->addr, hdr_len);
+	अगर (hdr_len) अणु
+		स_नकल(buf, hdr->addr, hdr_len);
 		buf += hdr_len;
-	}
+	पूर्ण
 
-	if (pdata && pdata->addr)
-		memcpy(buf, pdata->addr, pdata->size);
+	अगर (pdata && pdata->addr)
+		स_नकल(buf, pdata->addr, pdata->size);
 
 	atomic_set(&sqbuf->refcount, 1);
 
-	return sqbuf;
-}
+	वापस sqbuf;
+पूर्ण
 
 /**
  * i40iw_send_reset - Send RST packet
  * @cm_node: connection's node
  */
-int i40iw_send_reset(struct i40iw_cm_node *cm_node)
-{
-	struct i40iw_puda_buf *sqbuf;
-	int flags = SET_RST | SET_ACK;
+पूर्णांक i40iw_send_reset(काष्ठा i40iw_cm_node *cm_node)
+अणु
+	काष्ठा i40iw_puda_buf *sqbuf;
+	पूर्णांक flags = SET_RST | SET_ACK;
 
-	sqbuf = i40iw_form_cm_frame(cm_node, NULL, NULL, NULL, flags);
-	if (!sqbuf) {
+	sqbuf = i40iw_क्रमm_cm_frame(cm_node, शून्य, शून्य, शून्य, flags);
+	अगर (!sqbuf) अणु
 		i40iw_pr_err("no sqbuf\n");
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
-	return i40iw_schedule_cm_timer(cm_node, sqbuf, I40IW_TIMER_TYPE_SEND, 0, 1);
-}
+	वापस i40iw_schedule_cm_समयr(cm_node, sqbuf, I40IW_TIMER_TYPE_SEND, 0, 1);
+पूर्ण
 
 /**
- * i40iw_active_open_err - send event for active side cm error
+ * i40iw_active_खोलो_err - send event क्रम active side cm error
  * @cm_node: connection's node
  * @reset: Flag to send reset or not
  */
-static void i40iw_active_open_err(struct i40iw_cm_node *cm_node, bool reset)
-{
+अटल व्योम i40iw_active_खोलो_err(काष्ठा i40iw_cm_node *cm_node, bool reset)
+अणु
 	i40iw_cleanup_retrans_entry(cm_node);
 	cm_node->cm_core->stats_connect_errs++;
-	if (reset) {
+	अगर (reset) अणु
 		i40iw_debug(cm_node->dev,
 			    I40IW_DEBUG_CM,
 			    "%s cm_node=%p state=%d\n",
@@ -572,19 +573,19 @@ static void i40iw_active_open_err(struct i40iw_cm_node *cm_node, bool reset)
 			    cm_node->state);
 		atomic_inc(&cm_node->ref_count);
 		i40iw_send_reset(cm_node);
-	}
+	पूर्ण
 
 	cm_node->state = I40IW_CM_STATE_CLOSED;
 	i40iw_create_event(cm_node, I40IW_CM_EVENT_ABORTED);
-}
+पूर्ण
 
 /**
- * i40iw_passive_open_err - handle passive side cm error
+ * i40iw_passive_खोलो_err - handle passive side cm error
  * @cm_node: connection's node
- * @reset: send reset or just free cm_node
+ * @reset: send reset or just मुक्त cm_node
  */
-static void i40iw_passive_open_err(struct i40iw_cm_node *cm_node, bool reset)
-{
+अटल व्योम i40iw_passive_खोलो_err(काष्ठा i40iw_cm_node *cm_node, bool reset)
+अणु
 	i40iw_cleanup_retrans_entry(cm_node);
 	cm_node->cm_core->stats_passive_errs++;
 	cm_node->state = I40IW_CM_STATE_CLOSED;
@@ -594,66 +595,66 @@ static void i40iw_passive_open_err(struct i40iw_cm_node *cm_node, bool reset)
 		    __func__,
 		    cm_node,
 		    cm_node->state);
-	if (reset)
+	अगर (reset)
 		i40iw_send_reset(cm_node);
-	else
+	अन्यथा
 		i40iw_rem_ref_cm_node(cm_node);
-}
+पूर्ण
 
 /**
  * i40iw_event_connect_error - to create connect error event
- * @event: cm information for connect event
+ * @event: cm inक्रमmation क्रम connect event
  */
-static void i40iw_event_connect_error(struct i40iw_cm_event *event)
-{
-	struct i40iw_qp *iwqp;
-	struct iw_cm_id *cm_id;
+अटल व्योम i40iw_event_connect_error(काष्ठा i40iw_cm_event *event)
+अणु
+	काष्ठा i40iw_qp *iwqp;
+	काष्ठा iw_cm_id *cm_id;
 
 	cm_id = event->cm_node->cm_id;
-	if (!cm_id)
-		return;
+	अगर (!cm_id)
+		वापस;
 
 	iwqp = cm_id->provider_data;
 
-	if (!iwqp || !iwqp->iwdev)
-		return;
+	अगर (!iwqp || !iwqp->iwdev)
+		वापस;
 
-	iwqp->cm_id = NULL;
-	cm_id->provider_data = NULL;
+	iwqp->cm_id = शून्य;
+	cm_id->provider_data = शून्य;
 	i40iw_send_cm_event(event->cm_node, cm_id,
 			    IW_CM_EVENT_CONNECT_REPLY,
 			    -ECONNRESET);
 	cm_id->rem_ref(cm_id);
 	i40iw_rem_ref_cm_node(event->cm_node);
-}
+पूर्ण
 
 /**
  * i40iw_process_options
  * @cm_node: connection's node
- * @optionsloc: point to start of options
+ * @optionsloc: poपूर्णांक to start of options
  * @optionsize: size of all options
- * @syn_packet: flag if syn packet
+ * @syn_packet: flag अगर syn packet
  */
-static int i40iw_process_options(struct i40iw_cm_node *cm_node,
+अटल पूर्णांक i40iw_process_options(काष्ठा i40iw_cm_node *cm_node,
 				 u8 *optionsloc,
 				 u32 optionsize,
 				 u32 syn_packet)
-{
-	u32 tmp;
+अणु
+	u32 पंचांगp;
 	u32 offset = 0;
-	union all_known_options *all_options;
-	char got_mss_option = 0;
+	जोड़ all_known_options *all_options;
+	अक्षर got_mss_option = 0;
 
-	while (offset < optionsize) {
-		all_options = (union all_known_options *)(optionsloc + offset);
-		switch (all_options->as_base.optionnum) {
-		case OPTION_NUMBER_END:
+	जबतक (offset < optionsize) अणु
+		all_options = (जोड़ all_known_options *)(optionsloc + offset);
+		चयन (all_options->as_base.optionnum) अणु
+		हाल OPTION_NUMBER_END:
 			offset = optionsize;
-			break;
-		case OPTION_NUMBER_NONE:
+			अवरोध;
+		हाल OPTION_NUMBER_NONE:
 			offset += 1;
-			continue;
-		case OPTION_NUMBER_MSS:
+			जारी;
+		हाल OPTION_NUMBER_MSS:
 			i40iw_debug(cm_node->dev,
 				    I40IW_DEBUG_CM,
 				    "%s: MSS Length: %d Offset: %d Size: %d\n",
@@ -662,109 +663,109 @@ static int i40iw_process_options(struct i40iw_cm_node *cm_node,
 				    offset,
 				    optionsize);
 			got_mss_option = 1;
-			if (all_options->as_mss.length != 4)
-				return -1;
-			tmp = ntohs(all_options->as_mss.mss);
-			if (tmp > 0 && tmp < cm_node->tcp_cntxt.mss)
-				cm_node->tcp_cntxt.mss = tmp;
-			break;
-		case OPTION_NUMBER_WINDOW_SCALE:
+			अगर (all_options->as_mss.length != 4)
+				वापस -1;
+			पंचांगp = ntohs(all_options->as_mss.mss);
+			अगर (पंचांगp > 0 && पंचांगp < cm_node->tcp_cntxt.mss)
+				cm_node->tcp_cntxt.mss = पंचांगp;
+			अवरोध;
+		हाल OPTION_NUMBER_WINDOW_SCALE:
 			cm_node->tcp_cntxt.snd_wscale =
-			    all_options->as_windowscale.shiftcount;
-			break;
-		default:
+			    all_options->as_winकरोwscale.shअगरtcount;
+			अवरोध;
+		शेष:
 			i40iw_debug(cm_node->dev,
 				    I40IW_DEBUG_CM,
 				    "TCP Option not understood: %x\n",
 				    all_options->as_base.optionnum);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		offset += all_options->as_base.length;
-	}
-	if (!got_mss_option && syn_packet)
+	पूर्ण
+	अगर (!got_mss_option && syn_packet)
 		cm_node->tcp_cntxt.mss = I40IW_CM_DEFAULT_MSS;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * i40iw_handle_tcp_options -
  * @cm_node: connection's node
- * @tcph: pointer tcp header
+ * @tcph: poपूर्णांकer tcp header
  * @optionsize: size of options rcvd
  * @passive: active or passive flag
  */
-static int i40iw_handle_tcp_options(struct i40iw_cm_node *cm_node,
-				    struct tcphdr *tcph,
-				    int optionsize,
-				    int passive)
-{
+अटल पूर्णांक i40iw_handle_tcp_options(काष्ठा i40iw_cm_node *cm_node,
+				    काष्ठा tcphdr *tcph,
+				    पूर्णांक optionsize,
+				    पूर्णांक passive)
+अणु
 	u8 *optionsloc = (u8 *)&tcph[1];
 
-	if (optionsize) {
-		if (i40iw_process_options(cm_node,
+	अगर (optionsize) अणु
+		अगर (i40iw_process_options(cm_node,
 					  optionsloc,
 					  optionsize,
-					  (u32)tcph->syn)) {
+					  (u32)tcph->syn)) अणु
 			i40iw_debug(cm_node->dev,
 				    I40IW_DEBUG_CM,
 				    "%s: Node %p, Sending RESET\n",
 				    __func__,
 				    cm_node);
-			if (passive)
-				i40iw_passive_open_err(cm_node, true);
-			else
-				i40iw_active_open_err(cm_node, true);
-			return -1;
-		}
-	}
+			अगर (passive)
+				i40iw_passive_खोलो_err(cm_node, true);
+			अन्यथा
+				i40iw_active_खोलो_err(cm_node, true);
+			वापस -1;
+		पूर्ण
+	पूर्ण
 
-	cm_node->tcp_cntxt.snd_wnd = ntohs(tcph->window) <<
+	cm_node->tcp_cntxt.snd_wnd = ntohs(tcph->winकरोw) <<
 	    cm_node->tcp_cntxt.snd_wscale;
 
-	if (cm_node->tcp_cntxt.snd_wnd > cm_node->tcp_cntxt.max_snd_wnd)
+	अगर (cm_node->tcp_cntxt.snd_wnd > cm_node->tcp_cntxt.max_snd_wnd)
 		cm_node->tcp_cntxt.max_snd_wnd = cm_node->tcp_cntxt.snd_wnd;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * i40iw_build_mpa_v1 - build a MPA V1 frame
  * @cm_node: connection's node
  * @start_addr: MPA frame start address
- * @mpa_key: to do read0 or write0
+ * @mpa_key: to करो पढ़ो0 or ग_लिखो0
  */
-static void i40iw_build_mpa_v1(struct i40iw_cm_node *cm_node,
-			       void *start_addr,
+अटल व्योम i40iw_build_mpa_v1(काष्ठा i40iw_cm_node *cm_node,
+			       व्योम *start_addr,
 			       u8 mpa_key)
-{
-	struct ietf_mpa_v1 *mpa_frame = (struct ietf_mpa_v1 *)start_addr;
+अणु
+	काष्ठा ietf_mpa_v1 *mpa_frame = (काष्ठा ietf_mpa_v1 *)start_addr;
 
-	switch (mpa_key) {
-	case MPA_KEY_REQUEST:
-		memcpy(mpa_frame->key, IEFT_MPA_KEY_REQ, IETF_MPA_KEY_SIZE);
-		break;
-	case MPA_KEY_REPLY:
-		memcpy(mpa_frame->key, IEFT_MPA_KEY_REP, IETF_MPA_KEY_SIZE);
-		break;
-	default:
-		break;
-	}
+	चयन (mpa_key) अणु
+	हाल MPA_KEY_REQUEST:
+		स_नकल(mpa_frame->key, IEFT_MPA_KEY_REQ, IETF_MPA_KEY_SIZE);
+		अवरोध;
+	हाल MPA_KEY_REPLY:
+		स_नकल(mpa_frame->key, IEFT_MPA_KEY_REP, IETF_MPA_KEY_SIZE);
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
 	mpa_frame->flags = IETF_MPA_FLAGS_CRC;
 	mpa_frame->rev = cm_node->mpa_frame_rev;
 	mpa_frame->priv_data_len = htons(cm_node->pdata.size);
-}
+पूर्ण
 
 /**
  * i40iw_build_mpa_v2 - build a MPA V2 frame
  * @cm_node: connection's node
  * @start_addr: buffer start address
- * @mpa_key: to do read0 or write0
+ * @mpa_key: to करो पढ़ो0 or ग_लिखो0
  */
-static void i40iw_build_mpa_v2(struct i40iw_cm_node *cm_node,
-			       void *start_addr,
+अटल व्योम i40iw_build_mpa_v2(काष्ठा i40iw_cm_node *cm_node,
+			       व्योम *start_addr,
 			       u8 mpa_key)
-{
-	struct ietf_mpa_v2 *mpa_frame = (struct ietf_mpa_v2 *)start_addr;
-	struct ietf_rtr_msg *rtr_msg = &mpa_frame->rtr_msg;
+अणु
+	काष्ठा ietf_mpa_v2 *mpa_frame = (काष्ठा ietf_mpa_v2 *)start_addr;
+	काष्ठा ietf_rtr_msg *rtr_msg = &mpa_frame->rtr_msg;
 	u16 ctrl_ird, ctrl_ord;
 
 	/* initialize the upper 5 bytes of the frame */
@@ -773,114 +774,114 @@ static void i40iw_build_mpa_v2(struct i40iw_cm_node *cm_node,
 	mpa_frame->priv_data_len += htons(IETF_RTR_MSG_SIZE);
 
 	/* initialize RTR msg */
-	if (cm_node->mpav2_ird_ord == IETF_NO_IRD_ORD) {
+	अगर (cm_node->mpav2_ird_ord == IETF_NO_IRD_ORD) अणु
 		ctrl_ird = IETF_NO_IRD_ORD;
 		ctrl_ord = IETF_NO_IRD_ORD;
-	} else {
+	पूर्ण अन्यथा अणु
 		ctrl_ird = (cm_node->ird_size > IETF_NO_IRD_ORD) ?
 			IETF_NO_IRD_ORD : cm_node->ird_size;
 		ctrl_ord = (cm_node->ord_size > IETF_NO_IRD_ORD) ?
 			IETF_NO_IRD_ORD : cm_node->ord_size;
-	}
+	पूर्ण
 
 	ctrl_ird |= IETF_PEER_TO_PEER;
 
-	switch (mpa_key) {
-	case MPA_KEY_REQUEST:
+	चयन (mpa_key) अणु
+	हाल MPA_KEY_REQUEST:
 		ctrl_ord |= IETF_RDMA0_WRITE;
 		ctrl_ord |= IETF_RDMA0_READ;
-		break;
-	case MPA_KEY_REPLY:
-		switch (cm_node->send_rdma0_op) {
-		case SEND_RDMA_WRITE_ZERO:
+		अवरोध;
+	हाल MPA_KEY_REPLY:
+		चयन (cm_node->send_rdma0_op) अणु
+		हाल SEND_RDMA_WRITE_ZERO:
 			ctrl_ord |= IETF_RDMA0_WRITE;
-			break;
-		case SEND_RDMA_READ_ZERO:
+			अवरोध;
+		हाल SEND_RDMA_READ_ZERO:
 			ctrl_ord |= IETF_RDMA0_READ;
-			break;
-		}
-		break;
-	default:
-		break;
-	}
+			अवरोध;
+		पूर्ण
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
 	rtr_msg->ctrl_ird = htons(ctrl_ird);
 	rtr_msg->ctrl_ord = htons(ctrl_ord);
-}
+पूर्ण
 
 /**
- * i40iw_cm_build_mpa_frame - build mpa frame for mpa version 1 or version 2
+ * i40iw_cm_build_mpa_frame - build mpa frame क्रम mpa version 1 or version 2
  * @cm_node: connection's node
  * @mpa: mpa: data buffer
- * @mpa_key: to do read0 or write0
+ * @mpa_key: to करो पढ़ो0 or ग_लिखो0
  */
-static int i40iw_cm_build_mpa_frame(struct i40iw_cm_node *cm_node,
-				    struct i40iw_kmem_info *mpa,
+अटल पूर्णांक i40iw_cm_build_mpa_frame(काष्ठा i40iw_cm_node *cm_node,
+				    काष्ठा i40iw_kmem_info *mpa,
 				    u8 mpa_key)
-{
-	int hdr_len = 0;
+अणु
+	पूर्णांक hdr_len = 0;
 
-	switch (cm_node->mpa_frame_rev) {
-	case IETF_MPA_V1:
-		hdr_len = sizeof(struct ietf_mpa_v1);
+	चयन (cm_node->mpa_frame_rev) अणु
+	हाल IETF_MPA_V1:
+		hdr_len = माप(काष्ठा ietf_mpa_v1);
 		i40iw_build_mpa_v1(cm_node, mpa->addr, mpa_key);
-		break;
-	case IETF_MPA_V2:
-		hdr_len = sizeof(struct ietf_mpa_v2);
+		अवरोध;
+	हाल IETF_MPA_V2:
+		hdr_len = माप(काष्ठा ietf_mpa_v2);
 		i40iw_build_mpa_v2(cm_node, mpa->addr, mpa_key);
-		break;
-	default:
-		break;
-	}
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	return hdr_len;
-}
+	वापस hdr_len;
+पूर्ण
 
 /**
  * i40iw_send_mpa_request - active node send mpa request to passive node
  * @cm_node: connection's node
  */
-static int i40iw_send_mpa_request(struct i40iw_cm_node *cm_node)
-{
-	struct i40iw_puda_buf *sqbuf;
+अटल पूर्णांक i40iw_send_mpa_request(काष्ठा i40iw_cm_node *cm_node)
+अणु
+	काष्ठा i40iw_puda_buf *sqbuf;
 
-	if (!cm_node) {
+	अगर (!cm_node) अणु
 		i40iw_pr_err("cm_node == NULL\n");
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
 	cm_node->mpa_hdr.addr = &cm_node->mpa_frame;
 	cm_node->mpa_hdr.size = i40iw_cm_build_mpa_frame(cm_node,
 							 &cm_node->mpa_hdr,
 							 MPA_KEY_REQUEST);
-	if (!cm_node->mpa_hdr.size) {
+	अगर (!cm_node->mpa_hdr.size) अणु
 		i40iw_pr_err("mpa size = %d\n", cm_node->mpa_hdr.size);
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
-	sqbuf = i40iw_form_cm_frame(cm_node,
-				    NULL,
+	sqbuf = i40iw_क्रमm_cm_frame(cm_node,
+				    शून्य,
 				    &cm_node->mpa_hdr,
 				    &cm_node->pdata,
 				    SET_ACK);
-	if (!sqbuf) {
+	अगर (!sqbuf) अणु
 		i40iw_pr_err("sq_buf == NULL\n");
-		return -1;
-	}
-	return i40iw_schedule_cm_timer(cm_node, sqbuf, I40IW_TIMER_TYPE_SEND, 1, 0);
-}
+		वापस -1;
+	पूर्ण
+	वापस i40iw_schedule_cm_समयr(cm_node, sqbuf, I40IW_TIMER_TYPE_SEND, 1, 0);
+पूर्ण
 
 /**
  * i40iw_send_mpa_reject -
  * @cm_node: connection's node
- * @pdata: reject data for connection
+ * @pdata: reject data क्रम connection
  * @plen: length of reject data
  */
-static int i40iw_send_mpa_reject(struct i40iw_cm_node *cm_node,
-				 const void *pdata,
+अटल पूर्णांक i40iw_send_mpa_reject(काष्ठा i40iw_cm_node *cm_node,
+				 स्थिर व्योम *pdata,
 				 u8 plen)
-{
-	struct i40iw_puda_buf *sqbuf;
-	struct i40iw_kmem_info priv_info;
+अणु
+	काष्ठा i40iw_puda_buf *sqbuf;
+	काष्ठा i40iw_kmem_info priv_info;
 
 	cm_node->mpa_hdr.addr = &cm_node->mpa_frame;
 	cm_node->mpa_hdr.size = i40iw_cm_build_mpa_frame(cm_node,
@@ -888,92 +889,92 @@ static int i40iw_send_mpa_reject(struct i40iw_cm_node *cm_node,
 							 MPA_KEY_REPLY);
 
 	cm_node->mpa_frame.flags |= IETF_MPA_FLAGS_REJECT;
-	priv_info.addr = (void *)pdata;
+	priv_info.addr = (व्योम *)pdata;
 	priv_info.size = plen;
 
-	sqbuf = i40iw_form_cm_frame(cm_node,
-				    NULL,
+	sqbuf = i40iw_क्रमm_cm_frame(cm_node,
+				    शून्य,
 				    &cm_node->mpa_hdr,
 				    &priv_info,
 				    SET_ACK | SET_FIN);
-	if (!sqbuf) {
+	अगर (!sqbuf) अणु
 		i40iw_pr_err("no sqbuf\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 	cm_node->state = I40IW_CM_STATE_FIN_WAIT1;
-	return i40iw_schedule_cm_timer(cm_node, sqbuf, I40IW_TIMER_TYPE_SEND, 1, 0);
-}
+	वापस i40iw_schedule_cm_समयr(cm_node, sqbuf, I40IW_TIMER_TYPE_SEND, 1, 0);
+पूर्ण
 
 /**
  * i40iw_parse_mpa - process an IETF MPA frame
  * @cm_node: connection's node
- * @buffer: Data pointer
- * @type: to return accept or reject
+ * @buffer: Data poपूर्णांकer
+ * @type: to वापस accept or reject
  * @len: Len of mpa buffer
  */
-static int i40iw_parse_mpa(struct i40iw_cm_node *cm_node, u8 *buffer, u32 *type, u32 len)
-{
-	struct ietf_mpa_v1 *mpa_frame;
-	struct ietf_mpa_v2 *mpa_v2_frame;
-	struct ietf_rtr_msg *rtr_msg;
-	int mpa_hdr_len;
-	int priv_data_len;
+अटल पूर्णांक i40iw_parse_mpa(काष्ठा i40iw_cm_node *cm_node, u8 *buffer, u32 *type, u32 len)
+अणु
+	काष्ठा ietf_mpa_v1 *mpa_frame;
+	काष्ठा ietf_mpa_v2 *mpa_v2_frame;
+	काष्ठा ietf_rtr_msg *rtr_msg;
+	पूर्णांक mpa_hdr_len;
+	पूर्णांक priv_data_len;
 
 	*type = I40IW_MPA_REQUEST_ACCEPT;
 
-	if (len < sizeof(struct ietf_mpa_v1)) {
+	अगर (len < माप(काष्ठा ietf_mpa_v1)) अणु
 		i40iw_pr_err("ietf buffer small (%x)\n", len);
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
-	mpa_frame = (struct ietf_mpa_v1 *)buffer;
-	mpa_hdr_len = sizeof(struct ietf_mpa_v1);
+	mpa_frame = (काष्ठा ietf_mpa_v1 *)buffer;
+	mpa_hdr_len = माप(काष्ठा ietf_mpa_v1);
 	priv_data_len = ntohs(mpa_frame->priv_data_len);
 
-	if (priv_data_len > IETF_MAX_PRIV_DATA_LEN) {
+	अगर (priv_data_len > IETF_MAX_PRIV_DATA_LEN) अणु
 		i40iw_pr_err("large pri_data %d\n", priv_data_len);
-		return -1;
-	}
-	if (mpa_frame->rev != IETF_MPA_V1 && mpa_frame->rev != IETF_MPA_V2) {
+		वापस -1;
+	पूर्ण
+	अगर (mpa_frame->rev != IETF_MPA_V1 && mpa_frame->rev != IETF_MPA_V2) अणु
 		i40iw_pr_err("unsupported mpa rev = %d\n", mpa_frame->rev);
-		return -1;
-	}
-	if (mpa_frame->rev > cm_node->mpa_frame_rev) {
+		वापस -1;
+	पूर्ण
+	अगर (mpa_frame->rev > cm_node->mpa_frame_rev) अणु
 		i40iw_pr_err("rev %d\n", mpa_frame->rev);
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 	cm_node->mpa_frame_rev = mpa_frame->rev;
 
-	if (cm_node->state != I40IW_CM_STATE_MPAREQ_SENT) {
-		if (memcmp(mpa_frame->key, IEFT_MPA_KEY_REQ, IETF_MPA_KEY_SIZE)) {
+	अगर (cm_node->state != I40IW_CM_STATE_MPAREQ_SENT) अणु
+		अगर (स_भेद(mpa_frame->key, IEFT_MPA_KEY_REQ, IETF_MPA_KEY_SIZE)) अणु
 			i40iw_pr_err("Unexpected MPA Key received\n");
-			return -1;
-		}
-	} else {
-		if (memcmp(mpa_frame->key, IEFT_MPA_KEY_REP, IETF_MPA_KEY_SIZE)) {
+			वापस -1;
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		अगर (स_भेद(mpa_frame->key, IEFT_MPA_KEY_REP, IETF_MPA_KEY_SIZE)) अणु
 			i40iw_pr_err("Unexpected MPA Key received\n");
-			return -1;
-		}
-	}
+			वापस -1;
+		पूर्ण
+	पूर्ण
 
-	if (priv_data_len + mpa_hdr_len > len) {
+	अगर (priv_data_len + mpa_hdr_len > len) अणु
 		i40iw_pr_err("ietf buffer len(%x + %x != %x)\n",
 			     priv_data_len, mpa_hdr_len, len);
-		return -1;
-	}
-	if (len > MAX_CM_BUFFER) {
+		वापस -1;
+	पूर्ण
+	अगर (len > MAX_CM_BUFFER) अणु
 		i40iw_pr_err("ietf buffer large len = %d\n", len);
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
-	switch (mpa_frame->rev) {
-	case IETF_MPA_V2:{
+	चयन (mpa_frame->rev) अणु
+	हाल IETF_MPA_V2:अणु
 			u16 ird_size;
 			u16 ord_size;
 			u16 ctrl_ord;
 			u16 ctrl_ird;
 
-			mpa_v2_frame = (struct ietf_mpa_v2 *)buffer;
+			mpa_v2_frame = (काष्ठा ietf_mpa_v2 *)buffer;
 			mpa_hdr_len += IETF_RTR_MSG_SIZE;
 			rtr_msg = &mpa_v2_frame->rtr_msg;
 
@@ -983,437 +984,437 @@ static int i40iw_parse_mpa(struct i40iw_cm_node *cm_node, u8 *buffer, u32 *type,
 			ird_size = ctrl_ird & IETF_NO_IRD_ORD;
 			ord_size = ctrl_ord & IETF_NO_IRD_ORD;
 
-			if (!(ctrl_ird & IETF_PEER_TO_PEER))
-				return -1;
+			अगर (!(ctrl_ird & IETF_PEER_TO_PEER))
+				वापस -1;
 
-			if (ird_size == IETF_NO_IRD_ORD || ord_size == IETF_NO_IRD_ORD) {
+			अगर (ird_size == IETF_NO_IRD_ORD || ord_size == IETF_NO_IRD_ORD) अणु
 				cm_node->mpav2_ird_ord = IETF_NO_IRD_ORD;
-				goto negotiate_done;
-			}
+				जाओ negotiate_करोne;
+			पूर्ण
 
-			if (cm_node->state != I40IW_CM_STATE_MPAREQ_SENT) {
+			अगर (cm_node->state != I40IW_CM_STATE_MPAREQ_SENT) अणु
 				/* responder */
-				if (!ord_size && (ctrl_ord & IETF_RDMA0_READ))
+				अगर (!ord_size && (ctrl_ord & IETF_RDMA0_READ))
 					cm_node->ird_size = 1;
-				if (cm_node->ord_size > ird_size)
+				अगर (cm_node->ord_size > ird_size)
 					cm_node->ord_size = ird_size;
-			} else {
+			पूर्ण अन्यथा अणु
 				/* initiator */
-				if (!ird_size && (ctrl_ord & IETF_RDMA0_READ))
-					return -1;
-				if (cm_node->ord_size > ird_size)
+				अगर (!ird_size && (ctrl_ord & IETF_RDMA0_READ))
+					वापस -1;
+				अगर (cm_node->ord_size > ird_size)
 					cm_node->ord_size = ird_size;
 
-				if (cm_node->ird_size < ord_size)
+				अगर (cm_node->ird_size < ord_size)
 					/* no resources available */
-					return -1;
-			}
+					वापस -1;
+			पूर्ण
 
-negotiate_done:
-			if (ctrl_ord & IETF_RDMA0_READ)
+negotiate_करोne:
+			अगर (ctrl_ord & IETF_RDMA0_READ)
 				cm_node->send_rdma0_op = SEND_RDMA_READ_ZERO;
-			else if (ctrl_ord & IETF_RDMA0_WRITE)
+			अन्यथा अगर (ctrl_ord & IETF_RDMA0_WRITE)
 				cm_node->send_rdma0_op = SEND_RDMA_WRITE_ZERO;
-			else	/* Not supported RDMA0 operation */
-				return -1;
+			अन्यथा	/* Not supported RDMA0 operation */
+				वापस -1;
 			i40iw_debug(cm_node->dev, I40IW_DEBUG_CM,
 				    "MPAV2: Negotiated ORD: %d, IRD: %d\n",
 				    cm_node->ord_size, cm_node->ird_size);
-			break;
-		}
-		break;
-	case IETF_MPA_V1:
-	default:
-		break;
-	}
+			अवरोध;
+		पूर्ण
+		अवरोध;
+	हाल IETF_MPA_V1:
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	memcpy(cm_node->pdata_buf, buffer + mpa_hdr_len, priv_data_len);
+	स_नकल(cm_node->pdata_buf, buffer + mpa_hdr_len, priv_data_len);
 	cm_node->pdata.size = priv_data_len;
 
-	if (mpa_frame->flags & IETF_MPA_FLAGS_REJECT)
+	अगर (mpa_frame->flags & IETF_MPA_FLAGS_REJECT)
 		*type = I40IW_MPA_REQUEST_REJECT;
 
-	if (mpa_frame->flags & IETF_MPA_FLAGS_MARKERS)
+	अगर (mpa_frame->flags & IETF_MPA_FLAGS_MARKERS)
 		cm_node->snd_mark_en = true;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * i40iw_schedule_cm_timer
+ * i40iw_schedule_cm_समयr
  * @cm_node: connection's node
  * @sqbuf: buffer to send
- * @type: if it is send or close
- * @send_retrans: if rexmits to be done
- * @close_when_complete: is cm_node to be removed
+ * @type: अगर it is send or बंद
+ * @send_retrans: अगर rexmits to be करोne
+ * @बंद_when_complete: is cm_node to be हटाओd
  *
- * note - cm_node needs to be protected before calling this. Encase in:
+ * note - cm_node needs to be रक्षित beक्रमe calling this. Enहाल in:
  *		i40iw_rem_ref_cm_node(cm_core, cm_node);
- *		i40iw_schedule_cm_timer(...)
+ *		i40iw_schedule_cm_समयr(...)
  *		atomic_inc(&cm_node->ref_count);
  */
-int i40iw_schedule_cm_timer(struct i40iw_cm_node *cm_node,
-			    struct i40iw_puda_buf *sqbuf,
-			    enum i40iw_timer_type type,
-			    int send_retrans,
-			    int close_when_complete)
-{
-	struct i40iw_sc_vsi *vsi = &cm_node->iwdev->vsi;
-	struct i40iw_cm_core *cm_core = cm_node->cm_core;
-	struct i40iw_timer_entry *new_send;
-	int ret = 0;
-	u32 was_timer_set;
-	unsigned long flags;
+पूर्णांक i40iw_schedule_cm_समयr(काष्ठा i40iw_cm_node *cm_node,
+			    काष्ठा i40iw_puda_buf *sqbuf,
+			    क्रमागत i40iw_समयr_type type,
+			    पूर्णांक send_retrans,
+			    पूर्णांक बंद_when_complete)
+अणु
+	काष्ठा i40iw_sc_vsi *vsi = &cm_node->iwdev->vsi;
+	काष्ठा i40iw_cm_core *cm_core = cm_node->cm_core;
+	काष्ठा i40iw_समयr_entry *new_send;
+	पूर्णांक ret = 0;
+	u32 was_समयr_set;
+	अचिन्हित दीर्घ flags;
 
-	new_send = kzalloc(sizeof(*new_send), GFP_ATOMIC);
-	if (!new_send) {
-		if (type != I40IW_TIMER_TYPE_CLOSE)
-			i40iw_free_sqbuf(vsi, (void *)sqbuf);
-		return -ENOMEM;
-	}
+	new_send = kzalloc(माप(*new_send), GFP_ATOMIC);
+	अगर (!new_send) अणु
+		अगर (type != I40IW_TIMER_TYPE_CLOSE)
+			i40iw_मुक्त_sqbuf(vsi, (व्योम *)sqbuf);
+		वापस -ENOMEM;
+	पूर्ण
 	new_send->retrycount = I40IW_DEFAULT_RETRYS;
 	new_send->retranscount = I40IW_DEFAULT_RETRANS;
 	new_send->sqbuf = sqbuf;
-	new_send->timetosend = jiffies;
+	new_send->समयtosend = jअगरfies;
 	new_send->type = type;
 	new_send->send_retrans = send_retrans;
-	new_send->close_when_complete = close_when_complete;
+	new_send->बंद_when_complete = बंद_when_complete;
 
-	if (type == I40IW_TIMER_TYPE_CLOSE) {
-		new_send->timetosend += (HZ / 10);
-		if (cm_node->close_entry) {
-			kfree(new_send);
+	अगर (type == I40IW_TIMER_TYPE_CLOSE) अणु
+		new_send->समयtosend += (HZ / 10);
+		अगर (cm_node->बंद_entry) अणु
+			kमुक्त(new_send);
 			i40iw_pr_err("already close entry\n");
-			return -EINVAL;
-		}
-		cm_node->close_entry = new_send;
-	}
+			वापस -EINVAL;
+		पूर्ण
+		cm_node->बंद_entry = new_send;
+	पूर्ण
 
-	if (type == I40IW_TIMER_TYPE_SEND) {
+	अगर (type == I40IW_TIMER_TYPE_SEND) अणु
 		spin_lock_irqsave(&cm_node->retrans_list_lock, flags);
 		cm_node->send_entry = new_send;
 		atomic_inc(&cm_node->ref_count);
 		spin_unlock_irqrestore(&cm_node->retrans_list_lock, flags);
-		new_send->timetosend = jiffies + I40IW_RETRY_TIMEOUT;
+		new_send->समयtosend = jअगरfies + I40IW_RETRY_TIMEOUT;
 
 		atomic_inc(&sqbuf->refcount);
 		i40iw_puda_send_buf(vsi->ilq, sqbuf);
-		if (!send_retrans) {
+		अगर (!send_retrans) अणु
 			i40iw_cleanup_retrans_entry(cm_node);
-			if (close_when_complete)
+			अगर (बंद_when_complete)
 				i40iw_rem_ref_cm_node(cm_node);
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
 	spin_lock_irqsave(&cm_core->ht_lock, flags);
-	was_timer_set = timer_pending(&cm_core->tcp_timer);
+	was_समयr_set = समयr_pending(&cm_core->tcp_समयr);
 
-	if (!was_timer_set) {
-		cm_core->tcp_timer.expires = new_send->timetosend;
-		add_timer(&cm_core->tcp_timer);
-	}
+	अगर (!was_समयr_set) अणु
+		cm_core->tcp_समयr.expires = new_send->समयtosend;
+		add_समयr(&cm_core->tcp_समयr);
+	पूर्ण
 	spin_unlock_irqrestore(&cm_core->ht_lock, flags);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
  * i40iw_retrans_expired - Could not rexmit the packet
  * @cm_node: connection's node
  */
-static void i40iw_retrans_expired(struct i40iw_cm_node *cm_node)
-{
-	struct iw_cm_id *cm_id = cm_node->cm_id;
-	enum i40iw_cm_node_state state = cm_node->state;
+अटल व्योम i40iw_retrans_expired(काष्ठा i40iw_cm_node *cm_node)
+अणु
+	काष्ठा iw_cm_id *cm_id = cm_node->cm_id;
+	क्रमागत i40iw_cm_node_state state = cm_node->state;
 
 	cm_node->state = I40IW_CM_STATE_CLOSED;
-	switch (state) {
-	case I40IW_CM_STATE_SYN_RCVD:
-	case I40IW_CM_STATE_CLOSING:
+	चयन (state) अणु
+	हाल I40IW_CM_STATE_SYN_RCVD:
+	हाल I40IW_CM_STATE_CLOSING:
 		i40iw_rem_ref_cm_node(cm_node);
-		break;
-	case I40IW_CM_STATE_FIN_WAIT1:
-	case I40IW_CM_STATE_LAST_ACK:
-		if (cm_node->cm_id)
+		अवरोध;
+	हाल I40IW_CM_STATE_FIN_WAIT1:
+	हाल I40IW_CM_STATE_LAST_ACK:
+		अगर (cm_node->cm_id)
 			cm_id->rem_ref(cm_id);
 		i40iw_send_reset(cm_node);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		atomic_inc(&cm_node->ref_count);
 		i40iw_send_reset(cm_node);
 		i40iw_create_event(cm_node, I40IW_CM_EVENT_ABORTED);
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
 /**
- * i40iw_handle_close_entry - for handling retry/timeouts
+ * i40iw_handle_बंद_entry - क्रम handling retry/समयouts
  * @cm_node: connection's node
- * @rem_node: flag for remove cm_node
+ * @rem_node: flag क्रम हटाओ cm_node
  */
-static void i40iw_handle_close_entry(struct i40iw_cm_node *cm_node, u32 rem_node)
-{
-	struct i40iw_timer_entry *close_entry = cm_node->close_entry;
-	struct iw_cm_id *cm_id = cm_node->cm_id;
-	struct i40iw_qp *iwqp;
-	unsigned long flags;
+अटल व्योम i40iw_handle_बंद_entry(काष्ठा i40iw_cm_node *cm_node, u32 rem_node)
+अणु
+	काष्ठा i40iw_समयr_entry *बंद_entry = cm_node->बंद_entry;
+	काष्ठा iw_cm_id *cm_id = cm_node->cm_id;
+	काष्ठा i40iw_qp *iwqp;
+	अचिन्हित दीर्घ flags;
 
-	if (!close_entry)
-		return;
-	iwqp = (struct i40iw_qp *)close_entry->sqbuf;
-	if (iwqp) {
+	अगर (!बंद_entry)
+		वापस;
+	iwqp = (काष्ठा i40iw_qp *)बंद_entry->sqbuf;
+	अगर (iwqp) अणु
 		spin_lock_irqsave(&iwqp->lock, flags);
-		if (iwqp->cm_id) {
+		अगर (iwqp->cm_id) अणु
 			iwqp->hw_tcp_state = I40IW_TCP_STATE_CLOSED;
 			iwqp->hw_iwarp_state = I40IW_QP_STATE_ERROR;
 			iwqp->last_aeq = I40IW_AE_RESET_SENT;
 			iwqp->ibqp_state = IB_QPS_ERR;
 			spin_unlock_irqrestore(&iwqp->lock, flags);
 			i40iw_cm_disconn(iwqp);
-		} else {
+		पूर्ण अन्यथा अणु
 			spin_unlock_irqrestore(&iwqp->lock, flags);
-		}
-	} else if (rem_node) {
+		पूर्ण
+	पूर्ण अन्यथा अगर (rem_node) अणु
 		/* TIME_WAIT state */
 		i40iw_rem_ref_cm_node(cm_node);
-	}
-	if (cm_id)
+	पूर्ण
+	अगर (cm_id)
 		cm_id->rem_ref(cm_id);
-	kfree(close_entry);
-	cm_node->close_entry = NULL;
-}
+	kमुक्त(बंद_entry);
+	cm_node->बंद_entry = शून्य;
+पूर्ण
 
 /**
- * i40iw_build_timer_list - Add cm_nodes to timer list
- * @timer_list: ptr to timer list
+ * i40iw_build_समयr_list - Add cm_nodes to समयr list
+ * @समयr_list: ptr to समयr list
  * @hte: ptr to accelerated or non-accelerated list
  */
-static void i40iw_build_timer_list(struct list_head *timer_list,
-				   struct list_head *hte)
-{
-	struct i40iw_cm_node *cm_node;
-	struct list_head *list_core_temp, *list_node;
+अटल व्योम i40iw_build_समयr_list(काष्ठा list_head *समयr_list,
+				   काष्ठा list_head *hte)
+अणु
+	काष्ठा i40iw_cm_node *cm_node;
+	काष्ठा list_head *list_core_temp, *list_node;
 
-	list_for_each_safe(list_node, list_core_temp, hte) {
-		cm_node = container_of(list_node, struct i40iw_cm_node, list);
-		if (cm_node->close_entry || cm_node->send_entry) {
+	list_क्रम_each_safe(list_node, list_core_temp, hte) अणु
+		cm_node = container_of(list_node, काष्ठा i40iw_cm_node, list);
+		अगर (cm_node->बंद_entry || cm_node->send_entry) अणु
 			atomic_inc(&cm_node->ref_count);
-			list_add(&cm_node->timer_entry, timer_list);
-		}
-	}
-}
+			list_add(&cm_node->समयr_entry, समयr_list);
+		पूर्ण
+	पूर्ण
+पूर्ण
 
 /**
- * i40iw_cm_timer_tick - system's timer expired callback
- * @t: Timer instance to fetch the cm_core pointer from
+ * i40iw_cm_समयr_tick - प्रणाली's समयr expired callback
+ * @t: Timer instance to fetch the cm_core poपूर्णांकer from
  */
-static void i40iw_cm_timer_tick(struct timer_list *t)
-{
-	unsigned long nexttimeout = jiffies + I40IW_LONG_TIME;
-	struct i40iw_cm_node *cm_node;
-	struct i40iw_timer_entry *send_entry, *close_entry;
-	struct list_head *list_core_temp;
-	struct i40iw_sc_vsi *vsi;
-	struct list_head *list_node;
-	struct i40iw_cm_core *cm_core = from_timer(cm_core, t, tcp_timer);
-	u32 settimer = 0;
-	unsigned long timetosend;
-	unsigned long flags;
+अटल व्योम i40iw_cm_समयr_tick(काष्ठा समयr_list *t)
+अणु
+	अचिन्हित दीर्घ nextसमयout = jअगरfies + I40IW_LONG_TIME;
+	काष्ठा i40iw_cm_node *cm_node;
+	काष्ठा i40iw_समयr_entry *send_entry, *बंद_entry;
+	काष्ठा list_head *list_core_temp;
+	काष्ठा i40iw_sc_vsi *vsi;
+	काष्ठा list_head *list_node;
+	काष्ठा i40iw_cm_core *cm_core = from_समयr(cm_core, t, tcp_समयr);
+	u32 समय_रखोr = 0;
+	अचिन्हित दीर्घ समयtosend;
+	अचिन्हित दीर्घ flags;
 
-	struct list_head timer_list;
+	काष्ठा list_head समयr_list;
 
-	INIT_LIST_HEAD(&timer_list);
+	INIT_LIST_HEAD(&समयr_list);
 
 	spin_lock_irqsave(&cm_core->ht_lock, flags);
-	i40iw_build_timer_list(&timer_list, &cm_core->non_accelerated_list);
-	i40iw_build_timer_list(&timer_list, &cm_core->accelerated_list);
+	i40iw_build_समयr_list(&समयr_list, &cm_core->non_accelerated_list);
+	i40iw_build_समयr_list(&समयr_list, &cm_core->accelerated_list);
 	spin_unlock_irqrestore(&cm_core->ht_lock, flags);
 
-	list_for_each_safe(list_node, list_core_temp, &timer_list) {
+	list_क्रम_each_safe(list_node, list_core_temp, &समयr_list) अणु
 		cm_node = container_of(list_node,
-				       struct i40iw_cm_node,
-				       timer_entry);
-		close_entry = cm_node->close_entry;
+				       काष्ठा i40iw_cm_node,
+				       समयr_entry);
+		बंद_entry = cm_node->बंद_entry;
 
-		if (close_entry) {
-			if (time_after(close_entry->timetosend, jiffies)) {
-				if (nexttimeout > close_entry->timetosend ||
-				    !settimer) {
-					nexttimeout = close_entry->timetosend;
-					settimer = 1;
-				}
-			} else {
-				i40iw_handle_close_entry(cm_node, 1);
-			}
-		}
+		अगर (बंद_entry) अणु
+			अगर (समय_after(बंद_entry->समयtosend, jअगरfies)) अणु
+				अगर (nextसमयout > बंद_entry->समयtosend ||
+				    !समय_रखोr) अणु
+					nextसमयout = बंद_entry->समयtosend;
+					समय_रखोr = 1;
+				पूर्ण
+			पूर्ण अन्यथा अणु
+				i40iw_handle_बंद_entry(cm_node, 1);
+			पूर्ण
+		पूर्ण
 
 		spin_lock_irqsave(&cm_node->retrans_list_lock, flags);
 
 		send_entry = cm_node->send_entry;
-		if (!send_entry)
-			goto done;
-		if (time_after(send_entry->timetosend, jiffies)) {
-			if (cm_node->state != I40IW_CM_STATE_OFFLOADED) {
-				if ((nexttimeout > send_entry->timetosend) ||
-				    !settimer) {
-					nexttimeout = send_entry->timetosend;
-					settimer = 1;
-				}
-			} else {
-				i40iw_free_retrans_entry(cm_node);
-			}
-			goto done;
-		}
+		अगर (!send_entry)
+			जाओ करोne;
+		अगर (समय_after(send_entry->समयtosend, jअगरfies)) अणु
+			अगर (cm_node->state != I40IW_CM_STATE_OFFLOADED) अणु
+				अगर ((nextसमयout > send_entry->समयtosend) ||
+				    !समय_रखोr) अणु
+					nextसमयout = send_entry->समयtosend;
+					समय_रखोr = 1;
+				पूर्ण
+			पूर्ण अन्यथा अणु
+				i40iw_मुक्त_retrans_entry(cm_node);
+			पूर्ण
+			जाओ करोne;
+		पूर्ण
 
-		if ((cm_node->state == I40IW_CM_STATE_OFFLOADED) ||
-		    (cm_node->state == I40IW_CM_STATE_CLOSED)) {
-			i40iw_free_retrans_entry(cm_node);
-			goto done;
-		}
+		अगर ((cm_node->state == I40IW_CM_STATE_OFFLOADED) ||
+		    (cm_node->state == I40IW_CM_STATE_CLOSED)) अणु
+			i40iw_मुक्त_retrans_entry(cm_node);
+			जाओ करोne;
+		पूर्ण
 
-		if (!send_entry->retranscount || !send_entry->retrycount) {
-			i40iw_free_retrans_entry(cm_node);
+		अगर (!send_entry->retranscount || !send_entry->retrycount) अणु
+			i40iw_मुक्त_retrans_entry(cm_node);
 
 			spin_unlock_irqrestore(&cm_node->retrans_list_lock, flags);
 			i40iw_retrans_expired(cm_node);
 			cm_node->state = I40IW_CM_STATE_CLOSED;
 			spin_lock_irqsave(&cm_node->retrans_list_lock, flags);
-			goto done;
-		}
+			जाओ करोne;
+		पूर्ण
 		spin_unlock_irqrestore(&cm_node->retrans_list_lock, flags);
 
 		vsi = &cm_node->iwdev->vsi;
 
-		if (!cm_node->ack_rcvd) {
+		अगर (!cm_node->ack_rcvd) अणु
 			atomic_inc(&send_entry->sqbuf->refcount);
 			i40iw_puda_send_buf(vsi->ilq, send_entry->sqbuf);
 			cm_node->cm_core->stats_pkt_retrans++;
-		}
+		पूर्ण
 		spin_lock_irqsave(&cm_node->retrans_list_lock, flags);
-		if (send_entry->send_retrans) {
+		अगर (send_entry->send_retrans) अणु
 			send_entry->retranscount--;
-			timetosend = (I40IW_RETRY_TIMEOUT <<
+			समयtosend = (I40IW_RETRY_TIMEOUT <<
 				      (I40IW_DEFAULT_RETRANS -
 				       send_entry->retranscount));
 
-			send_entry->timetosend = jiffies +
-			    min(timetosend, I40IW_MAX_TIMEOUT);
-			if (nexttimeout > send_entry->timetosend || !settimer) {
-				nexttimeout = send_entry->timetosend;
-				settimer = 1;
-			}
-		} else {
-			int close_when_complete;
+			send_entry->समयtosend = jअगरfies +
+			    min(समयtosend, I40IW_MAX_TIMEOUT);
+			अगर (nextसमयout > send_entry->समयtosend || !समय_रखोr) अणु
+				nextसमयout = send_entry->समयtosend;
+				समय_रखोr = 1;
+			पूर्ण
+		पूर्ण अन्यथा अणु
+			पूर्णांक बंद_when_complete;
 
-			close_when_complete = send_entry->close_when_complete;
+			बंद_when_complete = send_entry->बंद_when_complete;
 			i40iw_debug(cm_node->dev,
 				    I40IW_DEBUG_CM,
 				    "cm_node=%p state=%d\n",
 				    cm_node,
 				    cm_node->state);
-			i40iw_free_retrans_entry(cm_node);
-			if (close_when_complete)
+			i40iw_मुक्त_retrans_entry(cm_node);
+			अगर (बंद_when_complete)
 				i40iw_rem_ref_cm_node(cm_node);
-		}
-done:
+		पूर्ण
+करोne:
 		spin_unlock_irqrestore(&cm_node->retrans_list_lock, flags);
 		i40iw_rem_ref_cm_node(cm_node);
-	}
+	पूर्ण
 
-	if (settimer) {
+	अगर (समय_रखोr) अणु
 		spin_lock_irqsave(&cm_core->ht_lock, flags);
-		if (!timer_pending(&cm_core->tcp_timer)) {
-			cm_core->tcp_timer.expires = nexttimeout;
-			add_timer(&cm_core->tcp_timer);
-		}
+		अगर (!समयr_pending(&cm_core->tcp_समयr)) अणु
+			cm_core->tcp_समयr.expires = nextसमयout;
+			add_समयr(&cm_core->tcp_समयr);
+		पूर्ण
 		spin_unlock_irqrestore(&cm_core->ht_lock, flags);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
  * i40iw_send_syn - send SYN packet
  * @cm_node: connection's node
  * @sendack: flag to set ACK bit or not
  */
-int i40iw_send_syn(struct i40iw_cm_node *cm_node, u32 sendack)
-{
-	struct i40iw_puda_buf *sqbuf;
-	int flags = SET_SYN;
-	char optionsbuffer[sizeof(struct option_mss) +
-			   sizeof(struct option_windowscale) +
-			   sizeof(struct option_base) + TCP_OPTIONS_PADDING];
-	struct i40iw_kmem_info opts;
+पूर्णांक i40iw_send_syn(काष्ठा i40iw_cm_node *cm_node, u32 sendack)
+अणु
+	काष्ठा i40iw_puda_buf *sqbuf;
+	पूर्णांक flags = SET_SYN;
+	अक्षर optionsbuffer[माप(काष्ठा option_mss) +
+			   माप(काष्ठा option_winकरोwscale) +
+			   माप(काष्ठा option_base) + TCP_OPTIONS_PADDING];
+	काष्ठा i40iw_kmem_info opts;
 
-	int optionssize = 0;
+	पूर्णांक optionssize = 0;
 	/* Sending MSS option */
-	union all_known_options *options;
+	जोड़ all_known_options *options;
 
 	opts.addr = optionsbuffer;
-	if (!cm_node) {
+	अगर (!cm_node) अणु
 		i40iw_pr_err("no cm_node\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	options = (union all_known_options *)&optionsbuffer[optionssize];
+	options = (जोड़ all_known_options *)&optionsbuffer[optionssize];
 	options->as_mss.optionnum = OPTION_NUMBER_MSS;
-	options->as_mss.length = sizeof(struct option_mss);
+	options->as_mss.length = माप(काष्ठा option_mss);
 	options->as_mss.mss = htons(cm_node->tcp_cntxt.mss);
-	optionssize += sizeof(struct option_mss);
+	optionssize += माप(काष्ठा option_mss);
 
-	options = (union all_known_options *)&optionsbuffer[optionssize];
-	options->as_windowscale.optionnum = OPTION_NUMBER_WINDOW_SCALE;
-	options->as_windowscale.length = sizeof(struct option_windowscale);
-	options->as_windowscale.shiftcount = cm_node->tcp_cntxt.rcv_wscale;
-	optionssize += sizeof(struct option_windowscale);
-	options = (union all_known_options *)&optionsbuffer[optionssize];
+	options = (जोड़ all_known_options *)&optionsbuffer[optionssize];
+	options->as_winकरोwscale.optionnum = OPTION_NUMBER_WINDOW_SCALE;
+	options->as_winकरोwscale.length = माप(काष्ठा option_winकरोwscale);
+	options->as_winकरोwscale.shअगरtcount = cm_node->tcp_cntxt.rcv_wscale;
+	optionssize += माप(काष्ठा option_winकरोwscale);
+	options = (जोड़ all_known_options *)&optionsbuffer[optionssize];
 	options->as_end = OPTION_NUMBER_END;
 	optionssize += 1;
 
-	if (sendack)
+	अगर (sendack)
 		flags |= SET_ACK;
 
 	opts.size = optionssize;
 
-	sqbuf = i40iw_form_cm_frame(cm_node, &opts, NULL, NULL, flags);
-	if (!sqbuf) {
+	sqbuf = i40iw_क्रमm_cm_frame(cm_node, &opts, शून्य, शून्य, flags);
+	अगर (!sqbuf) अणु
 		i40iw_pr_err("no sqbuf\n");
-		return -1;
-	}
-	return i40iw_schedule_cm_timer(cm_node, sqbuf, I40IW_TIMER_TYPE_SEND, 1, 0);
-}
+		वापस -1;
+	पूर्ण
+	वापस i40iw_schedule_cm_समयr(cm_node, sqbuf, I40IW_TIMER_TYPE_SEND, 1, 0);
+पूर्ण
 
 /**
  * i40iw_send_ack - Send ACK packet
  * @cm_node: connection's node
  */
-static void i40iw_send_ack(struct i40iw_cm_node *cm_node)
-{
-	struct i40iw_puda_buf *sqbuf;
-	struct i40iw_sc_vsi *vsi = &cm_node->iwdev->vsi;
+अटल व्योम i40iw_send_ack(काष्ठा i40iw_cm_node *cm_node)
+अणु
+	काष्ठा i40iw_puda_buf *sqbuf;
+	काष्ठा i40iw_sc_vsi *vsi = &cm_node->iwdev->vsi;
 
-	sqbuf = i40iw_form_cm_frame(cm_node, NULL, NULL, NULL, SET_ACK);
-	if (sqbuf)
+	sqbuf = i40iw_क्रमm_cm_frame(cm_node, शून्य, शून्य, शून्य, SET_ACK);
+	अगर (sqbuf)
 		i40iw_puda_send_buf(vsi->ilq, sqbuf);
-	else
+	अन्यथा
 		i40iw_pr_err("no sqbuf\n");
-}
+पूर्ण
 
 /**
  * i40iw_send_fin - Send FIN pkt
  * @cm_node: connection's node
  */
-static int i40iw_send_fin(struct i40iw_cm_node *cm_node)
-{
-	struct i40iw_puda_buf *sqbuf;
+अटल पूर्णांक i40iw_send_fin(काष्ठा i40iw_cm_node *cm_node)
+अणु
+	काष्ठा i40iw_puda_buf *sqbuf;
 
-	sqbuf = i40iw_form_cm_frame(cm_node, NULL, NULL, NULL, SET_ACK | SET_FIN);
-	if (!sqbuf) {
+	sqbuf = i40iw_क्रमm_cm_frame(cm_node, शून्य, शून्य, शून्य, SET_ACK | SET_FIN);
+	अगर (!sqbuf) अणु
 		i40iw_pr_err("no sqbuf\n");
-		return -1;
-	}
-	return i40iw_schedule_cm_timer(cm_node, sqbuf, I40IW_TIMER_TYPE_SEND, 1, 0);
-}
+		वापस -1;
+	पूर्ण
+	वापस i40iw_schedule_cm_समयr(cm_node, sqbuf, I40IW_TIMER_TYPE_SEND, 1, 0);
+पूर्ण
 
 /**
  * i40iw_find_node - find a cm node that matches the reference cm node
@@ -1423,480 +1424,480 @@ static int i40iw_send_fin(struct i40iw_cm_node *cm_node)
  * @loc_port: local tcp port num
  * @loc_addr: loc ip addr
  * @add_refcnt: flag to increment refcount of cm_node
- * @accelerated_list: flag for accelerated vs non-accelerated list to search
+ * @accelerated_list: flag क्रम accelerated vs non-accelerated list to search
  */
-struct i40iw_cm_node *i40iw_find_node(struct i40iw_cm_core *cm_core,
+काष्ठा i40iw_cm_node *i40iw_find_node(काष्ठा i40iw_cm_core *cm_core,
 				      u16 rem_port,
 				      u32 *rem_addr,
 				      u16 loc_port,
 				      u32 *loc_addr,
 				      bool add_refcnt,
 				      bool accelerated_list)
-{
-	struct list_head *hte;
-	struct i40iw_cm_node *cm_node;
-	unsigned long flags;
+अणु
+	काष्ठा list_head *hte;
+	काष्ठा i40iw_cm_node *cm_node;
+	अचिन्हित दीर्घ flags;
 
 	hte = accelerated_list ?
 	      &cm_core->accelerated_list : &cm_core->non_accelerated_list;
 
 	/* walk list and find cm_node associated with this session ID */
 	spin_lock_irqsave(&cm_core->ht_lock, flags);
-	list_for_each_entry(cm_node, hte, list) {
-		if (!memcmp(cm_node->loc_addr, loc_addr, sizeof(cm_node->loc_addr)) &&
+	list_क्रम_each_entry(cm_node, hte, list) अणु
+		अगर (!स_भेद(cm_node->loc_addr, loc_addr, माप(cm_node->loc_addr)) &&
 		    (cm_node->loc_port == loc_port) &&
-		    !memcmp(cm_node->rem_addr, rem_addr, sizeof(cm_node->rem_addr)) &&
-		    (cm_node->rem_port == rem_port)) {
-			if (add_refcnt)
+		    !स_भेद(cm_node->rem_addr, rem_addr, माप(cm_node->rem_addr)) &&
+		    (cm_node->rem_port == rem_port)) अणु
+			अगर (add_refcnt)
 				atomic_inc(&cm_node->ref_count);
 			spin_unlock_irqrestore(&cm_core->ht_lock, flags);
-			return cm_node;
-		}
-	}
+			वापस cm_node;
+		पूर्ण
+	पूर्ण
 	spin_unlock_irqrestore(&cm_core->ht_lock, flags);
 
 	/* no owner node */
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
 /**
  * i40iw_find_listener - find a cm node listening on this addr-port pair
  * @cm_core: cm's core
  * @dst_port: listener tcp port num
  * @dst_addr: listener ip addr
- * @vlan_id: vlan id for the given address
+ * @vlan_id: vlan id क्रम the given address
  * @listener_state: state to match with listen node's
  */
-static struct i40iw_cm_listener *i40iw_find_listener(
-						     struct i40iw_cm_core *cm_core,
+अटल काष्ठा i40iw_cm_listener *i40iw_find_listener(
+						     काष्ठा i40iw_cm_core *cm_core,
 						     u32 *dst_addr,
 						     u16 dst_port,
 						     u16 vlan_id,
-						     enum i40iw_cm_listener_state
+						     क्रमागत i40iw_cm_listener_state
 						     listener_state)
-{
-	struct i40iw_cm_listener *listen_node;
-	static const u32 ip_zero[4] = { 0, 0, 0, 0 };
+अणु
+	काष्ठा i40iw_cm_listener *listen_node;
+	अटल स्थिर u32 ip_zero[4] = अणु 0, 0, 0, 0 पूर्ण;
 	u32 listen_addr[4];
 	u16 listen_port;
-	unsigned long flags;
+	अचिन्हित दीर्घ flags;
 
 	/* walk list and find cm_node associated with this session ID */
 	spin_lock_irqsave(&cm_core->listen_list_lock, flags);
-	list_for_each_entry(listen_node, &cm_core->listen_nodes, list) {
-		memcpy(listen_addr, listen_node->loc_addr, sizeof(listen_addr));
+	list_क्रम_each_entry(listen_node, &cm_core->listen_nodes, list) अणु
+		स_नकल(listen_addr, listen_node->loc_addr, माप(listen_addr));
 		listen_port = listen_node->loc_port;
-		/* compare node pair, return node handle if a match */
-		if ((!memcmp(listen_addr, dst_addr, sizeof(listen_addr)) ||
-		     !memcmp(listen_addr, ip_zero, sizeof(listen_addr))) &&
+		/* compare node pair, वापस node handle अगर a match */
+		अगर ((!स_भेद(listen_addr, dst_addr, माप(listen_addr)) ||
+		     !स_भेद(listen_addr, ip_zero, माप(listen_addr))) &&
 		     (listen_port == dst_port) &&
-		     (listener_state & listen_node->listener_state)) {
+		     (listener_state & listen_node->listener_state)) अणु
 			atomic_inc(&listen_node->ref_count);
 			spin_unlock_irqrestore(&cm_core->listen_list_lock, flags);
-			return listen_node;
-		}
-	}
+			वापस listen_node;
+		पूर्ण
+	पूर्ण
 	spin_unlock_irqrestore(&cm_core->listen_list_lock, flags);
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
 /**
  * i40iw_add_hte_node - add a cm node to the hash table
  * @cm_core: cm's core
  * @cm_node: connection's node
  */
-static void i40iw_add_hte_node(struct i40iw_cm_core *cm_core,
-			       struct i40iw_cm_node *cm_node)
-{
-	unsigned long flags;
+अटल व्योम i40iw_add_hte_node(काष्ठा i40iw_cm_core *cm_core,
+			       काष्ठा i40iw_cm_node *cm_node)
+अणु
+	अचिन्हित दीर्घ flags;
 
-	if (!cm_node || !cm_core) {
+	अगर (!cm_node || !cm_core) अणु
 		i40iw_pr_err("cm_node or cm_core == NULL\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	spin_lock_irqsave(&cm_core->ht_lock, flags);
 	list_add_tail(&cm_node->list, &cm_core->non_accelerated_list);
 	spin_unlock_irqrestore(&cm_core->ht_lock, flags);
-}
+पूर्ण
 
 /**
  * i40iw_find_port - find port that matches reference port
  * @hte: ptr to accelerated or non-accelerated list
  * @port: port number to locate
  */
-static bool i40iw_find_port(struct list_head *hte, u16 port)
-{
-	struct i40iw_cm_node *cm_node;
+अटल bool i40iw_find_port(काष्ठा list_head *hte, u16 port)
+अणु
+	काष्ठा i40iw_cm_node *cm_node;
 
-	list_for_each_entry(cm_node, hte, list) {
-		if (cm_node->loc_port == port)
-			return true;
-	}
-	return false;
-}
+	list_क्रम_each_entry(cm_node, hte, list) अणु
+		अगर (cm_node->loc_port == port)
+			वापस true;
+	पूर्ण
+	वापस false;
+पूर्ण
 
 /**
- * i40iw_port_in_use - determine if port is in use
+ * i40iw_port_in_use - determine अगर port is in use
  * @cm_core: cm's core
  * @port: port number
  */
-bool i40iw_port_in_use(struct i40iw_cm_core *cm_core, u16 port)
-{
-	struct i40iw_cm_listener *listen_node;
-	unsigned long flags;
+bool i40iw_port_in_use(काष्ठा i40iw_cm_core *cm_core, u16 port)
+अणु
+	काष्ठा i40iw_cm_listener *listen_node;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&cm_core->ht_lock, flags);
-	if (i40iw_find_port(&cm_core->accelerated_list, port) ||
-	    i40iw_find_port(&cm_core->non_accelerated_list, port)) {
+	अगर (i40iw_find_port(&cm_core->accelerated_list, port) ||
+	    i40iw_find_port(&cm_core->non_accelerated_list, port)) अणु
 		spin_unlock_irqrestore(&cm_core->ht_lock, flags);
-		return true;
-	}
+		वापस true;
+	पूर्ण
 	spin_unlock_irqrestore(&cm_core->ht_lock, flags);
 
 	spin_lock_irqsave(&cm_core->listen_list_lock, flags);
-	list_for_each_entry(listen_node, &cm_core->listen_nodes, list) {
-		if (listen_node->loc_port == port) {
+	list_क्रम_each_entry(listen_node, &cm_core->listen_nodes, list) अणु
+		अगर (listen_node->loc_port == port) अणु
 			spin_unlock_irqrestore(&cm_core->listen_list_lock, flags);
-			return true;
-		}
-	}
+			वापस true;
+		पूर्ण
+	पूर्ण
 	spin_unlock_irqrestore(&cm_core->listen_list_lock, flags);
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
 /**
  * i40iw_del_multiple_qhash - Remove qhash and child listens
  * @iwdev: iWarp device
- * @cm_info: CM info for parent listen node
+ * @cm_info: CM info क्रम parent listen node
  * @cm_parent_listen_node: The parent listen node
  */
-static enum i40iw_status_code i40iw_del_multiple_qhash(
-						       struct i40iw_device *iwdev,
-						       struct i40iw_cm_info *cm_info,
-						       struct i40iw_cm_listener *cm_parent_listen_node)
-{
-	struct i40iw_cm_listener *child_listen_node;
-	enum i40iw_status_code ret = I40IW_ERR_CONFIG;
-	struct list_head *pos, *tpos;
-	unsigned long flags;
+अटल क्रमागत i40iw_status_code i40iw_del_multiple_qhash(
+						       काष्ठा i40iw_device *iwdev,
+						       काष्ठा i40iw_cm_info *cm_info,
+						       काष्ठा i40iw_cm_listener *cm_parent_listen_node)
+अणु
+	काष्ठा i40iw_cm_listener *child_listen_node;
+	क्रमागत i40iw_status_code ret = I40IW_ERR_CONFIG;
+	काष्ठा list_head *pos, *tpos;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&iwdev->cm_core.listen_list_lock, flags);
-	list_for_each_safe(pos, tpos, &cm_parent_listen_node->child_listen_list) {
-		child_listen_node = list_entry(pos, struct i40iw_cm_listener, child_listen_list);
-		if (child_listen_node->ipv4)
+	list_क्रम_each_safe(pos, tpos, &cm_parent_listen_node->child_listen_list) अणु
+		child_listen_node = list_entry(pos, काष्ठा i40iw_cm_listener, child_listen_list);
+		अगर (child_listen_node->ipv4)
 			i40iw_debug(&iwdev->sc_dev,
 				    I40IW_DEBUG_CM,
 				    "removing child listen for IP=%pI4, port=%d, vlan=%d\n",
 				    child_listen_node->loc_addr,
 				    child_listen_node->loc_port,
 				    child_listen_node->vlan_id);
-		else
+		अन्यथा
 			i40iw_debug(&iwdev->sc_dev, I40IW_DEBUG_CM,
 				    "removing child listen for IP=%pI6, port=%d, vlan=%d\n",
 				    child_listen_node->loc_addr,
 				    child_listen_node->loc_port,
 				    child_listen_node->vlan_id);
 		list_del(pos);
-		memcpy(cm_info->loc_addr, child_listen_node->loc_addr,
-		       sizeof(cm_info->loc_addr));
+		स_नकल(cm_info->loc_addr, child_listen_node->loc_addr,
+		       माप(cm_info->loc_addr));
 		cm_info->vlan_id = child_listen_node->vlan_id;
-		if (child_listen_node->qhash_set) {
+		अगर (child_listen_node->qhash_set) अणु
 			ret = i40iw_manage_qhash(iwdev, cm_info,
 						 I40IW_QHASH_TYPE_TCP_SYN,
 						 I40IW_QHASH_MANAGE_TYPE_DELETE,
-						 NULL, false);
+						 शून्य, false);
 			child_listen_node->qhash_set = false;
-		} else {
+		पूर्ण अन्यथा अणु
 			ret = I40IW_SUCCESS;
-		}
+		पूर्ण
 		i40iw_debug(&iwdev->sc_dev,
 			    I40IW_DEBUG_CM,
 			    "freed pointer = %p\n",
 			    child_listen_node);
-		kfree(child_listen_node);
+		kमुक्त(child_listen_node);
 		cm_parent_listen_node->cm_core->stats_listen_nodes_destroyed++;
-	}
+	पूर्ण
 	spin_unlock_irqrestore(&iwdev->cm_core.listen_list_lock, flags);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
  * i40iw_netdev_vlan_ipv6 - Gets the netdev and vlan
  * @addr: local IPv6 address
- * @vlan_id: vlan id for the given IPv6 address
+ * @vlan_id: vlan id क्रम the given IPv6 address
  *
  * Returns the net_device of the IPv6 address and also sets the
- * vlan id for that address.
+ * vlan id क्रम that address.
  */
-static struct net_device *i40iw_netdev_vlan_ipv6(u32 *addr, u16 *vlan_id)
-{
-	struct net_device *ip_dev = NULL;
-	struct in6_addr laddr6;
+अटल काष्ठा net_device *i40iw_netdev_vlan_ipv6(u32 *addr, u16 *vlan_id)
+अणु
+	काष्ठा net_device *ip_dev = शून्य;
+	काष्ठा in6_addr laddr6;
 
-	if (!IS_ENABLED(CONFIG_IPV6))
-		return NULL;
+	अगर (!IS_ENABLED(CONFIG_IPV6))
+		वापस शून्य;
 	i40iw_copy_ip_htonl(laddr6.in6_u.u6_addr32, addr);
-	if (vlan_id)
+	अगर (vlan_id)
 		*vlan_id = I40IW_NO_VLAN;
-	rcu_read_lock();
-	for_each_netdev_rcu(&init_net, ip_dev) {
-		if (ipv6_chk_addr(&init_net, &laddr6, ip_dev, 1)) {
-			if (vlan_id)
+	rcu_पढ़ो_lock();
+	क्रम_each_netdev_rcu(&init_net, ip_dev) अणु
+		अगर (ipv6_chk_addr(&init_net, &laddr6, ip_dev, 1)) अणु
+			अगर (vlan_id)
 				*vlan_id = rdma_vlan_dev_vlan_id(ip_dev);
-			break;
-		}
-	}
-	rcu_read_unlock();
-	return ip_dev;
-}
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	rcu_पढ़ो_unlock();
+	वापस ip_dev;
+पूर्ण
 
 /**
- * i40iw_get_vlan_ipv4 - Returns the vlan_id for IPv4 address
+ * i40iw_get_vlan_ipv4 - Returns the vlan_id क्रम IPv4 address
  * @addr: local IPv4 address
  */
-static u16 i40iw_get_vlan_ipv4(u32 *addr)
-{
-	struct net_device *netdev;
+अटल u16 i40iw_get_vlan_ipv4(u32 *addr)
+अणु
+	काष्ठा net_device *netdev;
 	u16 vlan_id = I40IW_NO_VLAN;
 
 	netdev = ip_dev_find(&init_net, htonl(addr[0]));
-	if (netdev) {
+	अगर (netdev) अणु
 		vlan_id = rdma_vlan_dev_vlan_id(netdev);
 		dev_put(netdev);
-	}
-	return vlan_id;
-}
+	पूर्ण
+	वापस vlan_id;
+पूर्ण
 
 /**
- * i40iw_add_mqh_6 - Adds multiple qhashes for IPv6
+ * i40iw_add_mqh_6 - Adds multiple qhashes क्रम IPv6
  * @iwdev: iWarp device
- * @cm_info: CM info for parent listen node
+ * @cm_info: CM info क्रम parent listen node
  * @cm_parent_listen_node: The parent listen node
  *
- * Adds a qhash and a child listen node for every IPv6 address
+ * Adds a qhash and a child listen node क्रम every IPv6 address
  * on the adapter and adds the associated qhash filter
  */
-static enum i40iw_status_code i40iw_add_mqh_6(struct i40iw_device *iwdev,
-					      struct i40iw_cm_info *cm_info,
-					      struct i40iw_cm_listener *cm_parent_listen_node)
-{
-	struct net_device *ip_dev;
-	struct inet6_dev *idev;
-	struct inet6_ifaddr *ifp, *tmp;
-	enum i40iw_status_code ret = 0;
-	struct i40iw_cm_listener *child_listen_node;
-	unsigned long flags;
+अटल क्रमागत i40iw_status_code i40iw_add_mqh_6(काष्ठा i40iw_device *iwdev,
+					      काष्ठा i40iw_cm_info *cm_info,
+					      काष्ठा i40iw_cm_listener *cm_parent_listen_node)
+अणु
+	काष्ठा net_device *ip_dev;
+	काष्ठा inet6_dev *idev;
+	काष्ठा inet6_अगरaddr *अगरp, *पंचांगp;
+	क्रमागत i40iw_status_code ret = 0;
+	काष्ठा i40iw_cm_listener *child_listen_node;
+	अचिन्हित दीर्घ flags;
 
 	rtnl_lock();
-	for_each_netdev(&init_net, ip_dev) {
-		if ((((rdma_vlan_dev_vlan_id(ip_dev) < I40IW_NO_VLAN) &&
+	क्रम_each_netdev(&init_net, ip_dev) अणु
+		अगर ((((rdma_vlan_dev_vlan_id(ip_dev) < I40IW_NO_VLAN) &&
 		      (rdma_vlan_dev_real_dev(ip_dev) == iwdev->netdev)) ||
-		     (ip_dev == iwdev->netdev)) && (ip_dev->flags & IFF_UP)) {
+		     (ip_dev == iwdev->netdev)) && (ip_dev->flags & IFF_UP)) अणु
 			idev = __in6_dev_get(ip_dev);
-			if (!idev) {
+			अगर (!idev) अणु
 				i40iw_pr_err("idev == NULL\n");
-				break;
-			}
-			list_for_each_entry_safe(ifp, tmp, &idev->addr_list, if_list) {
+				अवरोध;
+			पूर्ण
+			list_क्रम_each_entry_safe(अगरp, पंचांगp, &idev->addr_list, अगर_list) अणु
 				i40iw_debug(&iwdev->sc_dev,
 					    I40IW_DEBUG_CM,
 					    "IP=%pI6, vlan_id=%d, MAC=%pM\n",
-					    &ifp->addr,
+					    &अगरp->addr,
 					    rdma_vlan_dev_vlan_id(ip_dev),
 					    ip_dev->dev_addr);
 				child_listen_node =
-					kzalloc(sizeof(*child_listen_node), GFP_ATOMIC);
+					kzalloc(माप(*child_listen_node), GFP_ATOMIC);
 				i40iw_debug(&iwdev->sc_dev,
 					    I40IW_DEBUG_CM,
 					    "Allocating child listener %p\n",
 					    child_listen_node);
-				if (!child_listen_node) {
+				अगर (!child_listen_node) अणु
 					ret = I40IW_ERR_NO_MEMORY;
-					goto exit;
-				}
+					जाओ निकास;
+				पूर्ण
 				cm_info->vlan_id = rdma_vlan_dev_vlan_id(ip_dev);
 				cm_parent_listen_node->vlan_id = cm_info->vlan_id;
 
-				memcpy(child_listen_node, cm_parent_listen_node,
-				       sizeof(*child_listen_node));
+				स_नकल(child_listen_node, cm_parent_listen_node,
+				       माप(*child_listen_node));
 
 				i40iw_copy_ip_ntohl(child_listen_node->loc_addr,
-						    ifp->addr.in6_u.u6_addr32);
-				memcpy(cm_info->loc_addr, child_listen_node->loc_addr,
-				       sizeof(cm_info->loc_addr));
+						    अगरp->addr.in6_u.u6_addr32);
+				स_नकल(cm_info->loc_addr, child_listen_node->loc_addr,
+				       माप(cm_info->loc_addr));
 
 				ret = i40iw_manage_qhash(iwdev, cm_info,
 							 I40IW_QHASH_TYPE_TCP_SYN,
 							 I40IW_QHASH_MANAGE_TYPE_ADD,
-							 NULL, true);
-				if (!ret) {
+							 शून्य, true);
+				अगर (!ret) अणु
 					child_listen_node->qhash_set = true;
 					spin_lock_irqsave(&iwdev->cm_core.listen_list_lock, flags);
 					list_add(&child_listen_node->child_listen_list,
 						 &cm_parent_listen_node->child_listen_list);
 					spin_unlock_irqrestore(&iwdev->cm_core.listen_list_lock, flags);
 					cm_parent_listen_node->cm_core->stats_listen_nodes_created++;
-				} else {
-					kfree(child_listen_node);
-				}
-			}
-		}
-	}
-exit:
+				पूर्ण अन्यथा अणु
+					kमुक्त(child_listen_node);
+				पूर्ण
+			पूर्ण
+		पूर्ण
+	पूर्ण
+निकास:
 	rtnl_unlock();
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * i40iw_add_mqh_4 - Adds multiple qhashes for IPv4
+ * i40iw_add_mqh_4 - Adds multiple qhashes क्रम IPv4
  * @iwdev: iWarp device
- * @cm_info: CM info for parent listen node
+ * @cm_info: CM info क्रम parent listen node
  * @cm_parent_listen_node: The parent listen node
  *
- * Adds a qhash and a child listen node for every IPv4 address
+ * Adds a qhash and a child listen node क्रम every IPv4 address
  * on the adapter and adds the associated qhash filter
  */
-static enum i40iw_status_code i40iw_add_mqh_4(
-				struct i40iw_device *iwdev,
-				struct i40iw_cm_info *cm_info,
-				struct i40iw_cm_listener *cm_parent_listen_node)
-{
-	struct net_device *dev;
-	struct in_device *idev;
-	struct i40iw_cm_listener *child_listen_node;
-	enum i40iw_status_code ret = 0;
-	unsigned long flags;
+अटल क्रमागत i40iw_status_code i40iw_add_mqh_4(
+				काष्ठा i40iw_device *iwdev,
+				काष्ठा i40iw_cm_info *cm_info,
+				काष्ठा i40iw_cm_listener *cm_parent_listen_node)
+अणु
+	काष्ठा net_device *dev;
+	काष्ठा in_device *idev;
+	काष्ठा i40iw_cm_listener *child_listen_node;
+	क्रमागत i40iw_status_code ret = 0;
+	अचिन्हित दीर्घ flags;
 
 	rtnl_lock();
-	for_each_netdev(&init_net, dev) {
-		if ((((rdma_vlan_dev_vlan_id(dev) < I40IW_NO_VLAN) &&
+	क्रम_each_netdev(&init_net, dev) अणु
+		अगर ((((rdma_vlan_dev_vlan_id(dev) < I40IW_NO_VLAN) &&
 		      (rdma_vlan_dev_real_dev(dev) == iwdev->netdev)) ||
-		    (dev == iwdev->netdev)) && (dev->flags & IFF_UP)) {
-			const struct in_ifaddr *ifa;
+		    (dev == iwdev->netdev)) && (dev->flags & IFF_UP)) अणु
+			स्थिर काष्ठा in_अगरaddr *अगरa;
 
 			idev = in_dev_get(dev);
 
-			in_dev_for_each_ifa_rtnl(ifa, idev) {
+			in_dev_क्रम_each_अगरa_rtnl(अगरa, idev) अणु
 				i40iw_debug(&iwdev->sc_dev,
 					    I40IW_DEBUG_CM,
 					    "Allocating child CM Listener forIP=%pI4, vlan_id=%d, MAC=%pM\n",
-					    &ifa->ifa_address,
+					    &अगरa->अगरa_address,
 					    rdma_vlan_dev_vlan_id(dev),
 					    dev->dev_addr);
-				child_listen_node = kzalloc(sizeof(*child_listen_node), GFP_KERNEL);
+				child_listen_node = kzalloc(माप(*child_listen_node), GFP_KERNEL);
 				cm_parent_listen_node->cm_core->stats_listen_nodes_created++;
 				i40iw_debug(&iwdev->sc_dev,
 					    I40IW_DEBUG_CM,
 					    "Allocating child listener %p\n",
 					    child_listen_node);
-				if (!child_listen_node) {
+				अगर (!child_listen_node) अणु
 					in_dev_put(idev);
 					ret = I40IW_ERR_NO_MEMORY;
-					goto exit;
-				}
+					जाओ निकास;
+				पूर्ण
 				cm_info->vlan_id = rdma_vlan_dev_vlan_id(dev);
 				cm_parent_listen_node->vlan_id = cm_info->vlan_id;
-				memcpy(child_listen_node,
+				स_नकल(child_listen_node,
 				       cm_parent_listen_node,
-				       sizeof(*child_listen_node));
+				       माप(*child_listen_node));
 
-				child_listen_node->loc_addr[0] = ntohl(ifa->ifa_address);
-				memcpy(cm_info->loc_addr, child_listen_node->loc_addr,
-				       sizeof(cm_info->loc_addr));
+				child_listen_node->loc_addr[0] = ntohl(अगरa->अगरa_address);
+				स_नकल(cm_info->loc_addr, child_listen_node->loc_addr,
+				       माप(cm_info->loc_addr));
 
 				ret = i40iw_manage_qhash(iwdev,
 							 cm_info,
 							 I40IW_QHASH_TYPE_TCP_SYN,
 							 I40IW_QHASH_MANAGE_TYPE_ADD,
-							 NULL,
+							 शून्य,
 							 true);
-				if (!ret) {
+				अगर (!ret) अणु
 					child_listen_node->qhash_set = true;
 					spin_lock_irqsave(&iwdev->cm_core.listen_list_lock, flags);
 					list_add(&child_listen_node->child_listen_list,
 						 &cm_parent_listen_node->child_listen_list);
 					spin_unlock_irqrestore(&iwdev->cm_core.listen_list_lock, flags);
-				} else {
-					kfree(child_listen_node);
+				पूर्ण अन्यथा अणु
+					kमुक्त(child_listen_node);
 					cm_parent_listen_node->cm_core->stats_listen_nodes_created--;
-				}
-			}
+				पूर्ण
+			पूर्ण
 
 			in_dev_put(idev);
-		}
-	}
-exit:
+		पूर्ण
+	पूर्ण
+निकास:
 	rtnl_unlock();
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
  * i40iw_dec_refcnt_listen - delete listener and associated cm nodes
  * @cm_core: cm's core
  * @listener: passive connection's listener
- * @free_hanging_nodes: to free associated cm_nodes
+ * @मुक्त_hanging_nodes: to मुक्त associated cm_nodes
  * @apbvt_del: flag to delete the apbvt
  */
-static int i40iw_dec_refcnt_listen(struct i40iw_cm_core *cm_core,
-				   struct i40iw_cm_listener *listener,
-				   int free_hanging_nodes, bool apbvt_del)
-{
-	int ret = -EINVAL;
-	int err = 0;
-	struct list_head *list_pos;
-	struct list_head *list_temp;
-	struct i40iw_cm_node *cm_node;
-	struct list_head reset_list;
-	struct i40iw_cm_info nfo;
-	struct i40iw_cm_node *loopback;
-	enum i40iw_cm_node_state old_state;
-	unsigned long flags;
+अटल पूर्णांक i40iw_dec_refcnt_listen(काष्ठा i40iw_cm_core *cm_core,
+				   काष्ठा i40iw_cm_listener *listener,
+				   पूर्णांक मुक्त_hanging_nodes, bool apbvt_del)
+अणु
+	पूर्णांक ret = -EINVAL;
+	पूर्णांक err = 0;
+	काष्ठा list_head *list_pos;
+	काष्ठा list_head *list_temp;
+	काष्ठा i40iw_cm_node *cm_node;
+	काष्ठा list_head reset_list;
+	काष्ठा i40iw_cm_info nfo;
+	काष्ठा i40iw_cm_node *loopback;
+	क्रमागत i40iw_cm_node_state old_state;
+	अचिन्हित दीर्घ flags;
 
-	/* free non-accelerated child nodes for this listener */
+	/* मुक्त non-accelerated child nodes क्रम this listener */
 	INIT_LIST_HEAD(&reset_list);
-	if (free_hanging_nodes) {
+	अगर (मुक्त_hanging_nodes) अणु
 		spin_lock_irqsave(&cm_core->ht_lock, flags);
-		list_for_each_safe(list_pos,
-				   list_temp, &cm_core->non_accelerated_list) {
-			cm_node = container_of(list_pos, struct i40iw_cm_node, list);
-			if ((cm_node->listener == listener) &&
-			    !cm_node->accelerated) {
+		list_क्रम_each_safe(list_pos,
+				   list_temp, &cm_core->non_accelerated_list) अणु
+			cm_node = container_of(list_pos, काष्ठा i40iw_cm_node, list);
+			अगर ((cm_node->listener == listener) &&
+			    !cm_node->accelerated) अणु
 				atomic_inc(&cm_node->ref_count);
 				list_add(&cm_node->reset_entry, &reset_list);
-			}
-		}
+			पूर्ण
+		पूर्ण
 		spin_unlock_irqrestore(&cm_core->ht_lock, flags);
-	}
+	पूर्ण
 
-	list_for_each_safe(list_pos, list_temp, &reset_list) {
-		cm_node = container_of(list_pos, struct i40iw_cm_node, reset_entry);
+	list_क्रम_each_safe(list_pos, list_temp, &reset_list) अणु
+		cm_node = container_of(list_pos, काष्ठा i40iw_cm_node, reset_entry);
 		loopback = cm_node->loopbackpartner;
-		if (cm_node->state >= I40IW_CM_STATE_FIN_WAIT1) {
+		अगर (cm_node->state >= I40IW_CM_STATE_FIN_WAIT1) अणु
 			i40iw_rem_ref_cm_node(cm_node);
-		} else {
-			if (!loopback) {
+		पूर्ण अन्यथा अणु
+			अगर (!loopback) अणु
 				i40iw_cleanup_retrans_entry(cm_node);
 				err = i40iw_send_reset(cm_node);
-				if (err) {
+				अगर (err) अणु
 					cm_node->state = I40IW_CM_STATE_CLOSED;
 					i40iw_pr_err("send reset\n");
-				} else {
+				पूर्ण अन्यथा अणु
 					old_state = cm_node->state;
 					cm_node->state = I40IW_CM_STATE_LISTENER_DESTROYED;
-					if (old_state != I40IW_CM_STATE_MPAREQ_RCVD)
+					अगर (old_state != I40IW_CM_STATE_MPAREQ_RCVD)
 						i40iw_rem_ref_cm_node(cm_node);
-				}
-			} else {
-				struct i40iw_cm_event event;
+				पूर्ण
+			पूर्ण अन्यथा अणु
+				काष्ठा i40iw_cm_event event;
 
 				event.cm_node = loopback;
-				memcpy(event.cm_info.rem_addr,
-				       loopback->rem_addr, sizeof(event.cm_info.rem_addr));
-				memcpy(event.cm_info.loc_addr,
-				       loopback->loc_addr, sizeof(event.cm_info.loc_addr));
+				स_नकल(event.cm_info.rem_addr,
+				       loopback->rem_addr, माप(event.cm_info.rem_addr));
+				स_नकल(event.cm_info.loc_addr,
+				       loopback->loc_addr, माप(event.cm_info.loc_addr));
 				event.cm_info.rem_port = loopback->rem_port;
 				event.cm_info.loc_port = loopback->loc_port;
 				event.cm_info.cm_id = loopback->cm_id;
@@ -1906,59 +1907,59 @@ static int i40iw_dec_refcnt_listen(struct i40iw_cm_core *cm_core,
 				i40iw_event_connect_error(&event);
 				cm_node->state = I40IW_CM_STATE_LISTENER_DESTROYED;
 				i40iw_rem_ref_cm_node(cm_node);
-			}
-		}
-	}
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	if (!atomic_dec_return(&listener->ref_count)) {
+	अगर (!atomic_dec_वापस(&listener->ref_count)) अणु
 		spin_lock_irqsave(&cm_core->listen_list_lock, flags);
 		list_del(&listener->list);
 		spin_unlock_irqrestore(&cm_core->listen_list_lock, flags);
 
-		if (listener->iwdev) {
-			if (apbvt_del)
+		अगर (listener->iwdev) अणु
+			अगर (apbvt_del)
 				i40iw_manage_apbvt(listener->iwdev,
 						   listener->loc_port,
 						   I40IW_MANAGE_APBVT_DEL);
 
-			memcpy(nfo.loc_addr, listener->loc_addr, sizeof(nfo.loc_addr));
+			स_नकल(nfo.loc_addr, listener->loc_addr, माप(nfo.loc_addr));
 			nfo.loc_port = listener->loc_port;
 			nfo.ipv4 = listener->ipv4;
 			nfo.vlan_id = listener->vlan_id;
 			nfo.user_pri = listener->user_pri;
 
-			if (!list_empty(&listener->child_listen_list)) {
+			अगर (!list_empty(&listener->child_listen_list)) अणु
 				i40iw_del_multiple_qhash(listener->iwdev, &nfo, listener);
-			} else {
-				if (listener->qhash_set)
+			पूर्ण अन्यथा अणु
+				अगर (listener->qhash_set)
 					i40iw_manage_qhash(listener->iwdev,
 							   &nfo,
 							   I40IW_QHASH_TYPE_TCP_SYN,
 							   I40IW_QHASH_MANAGE_TYPE_DELETE,
-							   NULL,
+							   शून्य,
 							   false);
-			}
-		}
+			पूर्ण
+		पूर्ण
 
 		cm_core->stats_listen_destroyed++;
-		kfree(listener);
+		kमुक्त(listener);
 		cm_core->stats_listen_nodes_destroyed++;
-		listener = NULL;
+		listener = शून्य;
 		ret = 0;
-	}
+	पूर्ण
 
-	if (listener) {
-		if (atomic_read(&listener->pend_accepts_cnt) > 0)
+	अगर (listener) अणु
+		अगर (atomic_पढ़ो(&listener->pend_accepts_cnt) > 0)
 			i40iw_debug(cm_core->dev,
 				    I40IW_DEBUG_CM,
 				    "%s: listener (%p) pending accepts=%u\n",
 				    __func__,
 				    listener,
-				    atomic_read(&listener->pend_accepts_cnt));
-	}
+				    atomic_पढ़ो(&listener->pend_accepts_cnt));
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
  * i40iw_cm_del_listen - delete a linstener
@@ -1966,144 +1967,144 @@ static int i40iw_dec_refcnt_listen(struct i40iw_cm_core *cm_core,
   * @listener: passive connection's listener
  * @apbvt_del: flag to delete apbvt
  */
-static int i40iw_cm_del_listen(struct i40iw_cm_core *cm_core,
-			       struct i40iw_cm_listener *listener,
+अटल पूर्णांक i40iw_cm_del_listen(काष्ठा i40iw_cm_core *cm_core,
+			       काष्ठा i40iw_cm_listener *listener,
 			       bool apbvt_del)
-{
+अणु
 	listener->listener_state = I40IW_CM_LISTENER_PASSIVE_STATE;
-	listener->cm_id = NULL;	/* going to be destroyed pretty soon */
-	return i40iw_dec_refcnt_listen(cm_core, listener, 1, apbvt_del);
-}
+	listener->cm_id = शून्य;	/* going to be destroyed pretty soon */
+	वापस i40iw_dec_refcnt_listen(cm_core, listener, 1, apbvt_del);
+पूर्ण
 
 /**
  * i40iw_addr_resolve_neigh - resolve neighbor address
- * @iwdev: iwarp device structure
+ * @iwdev: iwarp device काष्ठाure
  * @src_ip: local ip address
  * @dst_ip: remote ip address
- * @arpindex: if there is an arp entry
+ * @arpindex: अगर there is an arp entry
  */
-static int i40iw_addr_resolve_neigh(struct i40iw_device *iwdev,
+अटल पूर्णांक i40iw_addr_resolve_neigh(काष्ठा i40iw_device *iwdev,
 				    u32 src_ip,
 				    u32 dst_ip,
-				    int arpindex)
-{
-	struct rtable *rt;
-	struct neighbour *neigh;
-	int rc = arpindex;
+				    पूर्णांक arpindex)
+अणु
+	काष्ठा rtable *rt;
+	काष्ठा neighbour *neigh;
+	पूर्णांक rc = arpindex;
 	__be32 dst_ipaddr = htonl(dst_ip);
 	__be32 src_ipaddr = htonl(src_ip);
 
 	rt = ip_route_output(&init_net, dst_ipaddr, src_ipaddr, 0, 0);
-	if (IS_ERR(rt)) {
+	अगर (IS_ERR(rt)) अणु
 		i40iw_pr_err("ip_route_output\n");
-		return rc;
-	}
+		वापस rc;
+	पूर्ण
 
 	neigh = dst_neigh_lookup(&rt->dst, &dst_ipaddr);
 
-	rcu_read_lock();
-	if (neigh) {
-		if (neigh->nud_state & NUD_VALID) {
-			if (arpindex >= 0) {
-				if (ether_addr_equal(iwdev->arp_table[arpindex].mac_addr,
+	rcu_पढ़ो_lock();
+	अगर (neigh) अणु
+		अगर (neigh->nud_state & NUD_VALID) अणु
+			अगर (arpindex >= 0) अणु
+				अगर (ether_addr_equal(iwdev->arp_table[arpindex].mac_addr,
 						     neigh->ha))
 					/* Mac address same as arp table */
-					goto resolve_neigh_exit;
+					जाओ resolve_neigh_निकास;
 				i40iw_manage_arp_cache(iwdev,
 						       iwdev->arp_table[arpindex].mac_addr,
 						       &dst_ip,
 						       true,
 						       I40IW_ARP_DELETE);
-			}
+			पूर्ण
 
 			i40iw_manage_arp_cache(iwdev, neigh->ha, &dst_ip, true, I40IW_ARP_ADD);
-			rc = i40iw_arp_table(iwdev, &dst_ip, true, NULL, I40IW_ARP_RESOLVE);
-		} else {
-			neigh_event_send(neigh, NULL);
-		}
-	}
- resolve_neigh_exit:
+			rc = i40iw_arp_table(iwdev, &dst_ip, true, शून्य, I40IW_ARP_RESOLVE);
+		पूर्ण अन्यथा अणु
+			neigh_event_send(neigh, शून्य);
+		पूर्ण
+	पूर्ण
+ resolve_neigh_निकास:
 
-	rcu_read_unlock();
-	if (neigh)
+	rcu_पढ़ो_unlock();
+	अगर (neigh)
 		neigh_release(neigh);
 
 	ip_rt_put(rt);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
 /*
  * i40iw_get_dst_ipv6
  */
-static struct dst_entry *i40iw_get_dst_ipv6(struct sockaddr_in6 *src_addr,
-					    struct sockaddr_in6 *dst_addr)
-{
-	struct dst_entry *dst;
-	struct flowi6 fl6;
+अटल काष्ठा dst_entry *i40iw_get_dst_ipv6(काष्ठा sockaddr_in6 *src_addr,
+					    काष्ठा sockaddr_in6 *dst_addr)
+अणु
+	काष्ठा dst_entry *dst;
+	काष्ठा flowi6 fl6;
 
-	memset(&fl6, 0, sizeof(fl6));
+	स_रखो(&fl6, 0, माप(fl6));
 	fl6.daddr = dst_addr->sin6_addr;
 	fl6.saddr = src_addr->sin6_addr;
-	if (ipv6_addr_type(&fl6.daddr) & IPV6_ADDR_LINKLOCAL)
-		fl6.flowi6_oif = dst_addr->sin6_scope_id;
+	अगर (ipv6_addr_type(&fl6.daddr) & IPV6_ADDR_LINKLOCAL)
+		fl6.flowi6_oअगर = dst_addr->sin6_scope_id;
 
-	dst = ip6_route_output(&init_net, NULL, &fl6);
-	return dst;
-}
+	dst = ip6_route_output(&init_net, शून्य, &fl6);
+	वापस dst;
+पूर्ण
 
 /**
  * i40iw_addr_resolve_neigh_ipv6 - resolve neighbor ipv6 address
- * @iwdev: iwarp device structure
+ * @iwdev: iwarp device काष्ठाure
  * @src: source ip address
  * @dest: remote ip address
- * @arpindex: if there is an arp entry
+ * @arpindex: अगर there is an arp entry
  */
-static int i40iw_addr_resolve_neigh_ipv6(struct i40iw_device *iwdev,
+अटल पूर्णांक i40iw_addr_resolve_neigh_ipv6(काष्ठा i40iw_device *iwdev,
 					 u32 *src,
 					 u32 *dest,
-					 int arpindex)
-{
-	struct neighbour *neigh;
-	int rc = arpindex;
-	struct dst_entry *dst;
-	struct sockaddr_in6 dst_addr;
-	struct sockaddr_in6 src_addr;
+					 पूर्णांक arpindex)
+अणु
+	काष्ठा neighbour *neigh;
+	पूर्णांक rc = arpindex;
+	काष्ठा dst_entry *dst;
+	काष्ठा sockaddr_in6 dst_addr;
+	काष्ठा sockaddr_in6 src_addr;
 
-	memset(&dst_addr, 0, sizeof(dst_addr));
+	स_रखो(&dst_addr, 0, माप(dst_addr));
 	dst_addr.sin6_family = AF_INET6;
 	i40iw_copy_ip_htonl(dst_addr.sin6_addr.in6_u.u6_addr32, dest);
-	memset(&src_addr, 0, sizeof(src_addr));
+	स_रखो(&src_addr, 0, माप(src_addr));
 	src_addr.sin6_family = AF_INET6;
 	i40iw_copy_ip_htonl(src_addr.sin6_addr.in6_u.u6_addr32, src);
 	dst = i40iw_get_dst_ipv6(&src_addr, &dst_addr);
-	if (!dst || dst->error) {
-		if (dst) {
+	अगर (!dst || dst->error) अणु
+		अगर (dst) अणु
 			i40iw_pr_err("ip6_route_output returned dst->error = %d\n",
 				     dst->error);
 			dst_release(dst);
-		}
-		return rc;
-	}
+		पूर्ण
+		वापस rc;
+	पूर्ण
 
 	neigh = dst_neigh_lookup(dst, dst_addr.sin6_addr.in6_u.u6_addr32);
 
-	rcu_read_lock();
-	if (neigh) {
+	rcu_पढ़ो_lock();
+	अगर (neigh) अणु
 		i40iw_debug(&iwdev->sc_dev, I40IW_DEBUG_CM, "dst_neigh_lookup MAC=%pM\n", neigh->ha);
-		if (neigh->nud_state & NUD_VALID) {
-			if (arpindex >= 0) {
-				if (ether_addr_equal
+		अगर (neigh->nud_state & NUD_VALID) अणु
+			अगर (arpindex >= 0) अणु
+				अगर (ether_addr_equal
 				    (iwdev->arp_table[arpindex].mac_addr,
-				     neigh->ha)) {
+				     neigh->ha)) अणु
 					/* Mac address same as in arp table */
-					goto resolve_neigh_exit6;
-				}
+					जाओ resolve_neigh_निकास6;
+				पूर्ण
 				i40iw_manage_arp_cache(iwdev,
 						       iwdev->arp_table[arpindex].mac_addr,
 						       dest,
 						       false,
 						       I40IW_ARP_DELETE);
-			}
+			पूर्ण
 			i40iw_manage_arp_cache(iwdev,
 					       neigh->ha,
 					       dest,
@@ -2112,76 +2113,76 @@ static int i40iw_addr_resolve_neigh_ipv6(struct i40iw_device *iwdev,
 			rc = i40iw_arp_table(iwdev,
 					     dest,
 					     false,
-					     NULL,
+					     शून्य,
 					     I40IW_ARP_RESOLVE);
-		} else {
-			neigh_event_send(neigh, NULL);
-		}
-	}
+		पूर्ण अन्यथा अणु
+			neigh_event_send(neigh, शून्य);
+		पूर्ण
+	पूर्ण
 
- resolve_neigh_exit6:
-	rcu_read_unlock();
-	if (neigh)
+ resolve_neigh_निकास6:
+	rcu_पढ़ो_unlock();
+	अगर (neigh)
 		neigh_release(neigh);
 	dst_release(dst);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
 /**
- * i40iw_ipv4_is_loopback - check if loopback
+ * i40iw_ipv4_is_loopback - check अगर loopback
  * @loc_addr: local addr to compare
  * @rem_addr: remote address
  */
-static bool i40iw_ipv4_is_loopback(u32 loc_addr, u32 rem_addr)
-{
-	return ipv4_is_loopback(htonl(rem_addr)) || (loc_addr == rem_addr);
-}
+अटल bool i40iw_ipv4_is_loopback(u32 loc_addr, u32 rem_addr)
+अणु
+	वापस ipv4_is_loopback(htonl(rem_addr)) || (loc_addr == rem_addr);
+पूर्ण
 
 /**
- * i40iw_ipv6_is_loopback - check if loopback
+ * i40iw_ipv6_is_loopback - check अगर loopback
  * @loc_addr: local addr to compare
  * @rem_addr: remote address
  */
-static bool i40iw_ipv6_is_loopback(u32 *loc_addr, u32 *rem_addr)
-{
-	struct in6_addr raddr6;
+अटल bool i40iw_ipv6_is_loopback(u32 *loc_addr, u32 *rem_addr)
+अणु
+	काष्ठा in6_addr raddr6;
 
 	i40iw_copy_ip_htonl(raddr6.in6_u.u6_addr32, rem_addr);
-	return !memcmp(loc_addr, rem_addr, 16) || ipv6_addr_loopback(&raddr6);
-}
+	वापस !स_भेद(loc_addr, rem_addr, 16) || ipv6_addr_loopback(&raddr6);
+पूर्ण
 
 /**
  * i40iw_make_cm_node - create a new instance of a cm node
  * @cm_core: cm's core
- * @iwdev: iwarp device structure
- * @cm_info: quad info for connection
+ * @iwdev: iwarp device काष्ठाure
+ * @cm_info: quad info क्रम connection
  * @listener: passive connection's listener
  */
-static struct i40iw_cm_node *i40iw_make_cm_node(
-				   struct i40iw_cm_core *cm_core,
-				   struct i40iw_device *iwdev,
-				   struct i40iw_cm_info *cm_info,
-				   struct i40iw_cm_listener *listener)
-{
-	struct i40iw_cm_node *cm_node;
-	int oldarpindex;
-	int arpindex;
-	struct net_device *netdev = iwdev->netdev;
+अटल काष्ठा i40iw_cm_node *i40iw_make_cm_node(
+				   काष्ठा i40iw_cm_core *cm_core,
+				   काष्ठा i40iw_device *iwdev,
+				   काष्ठा i40iw_cm_info *cm_info,
+				   काष्ठा i40iw_cm_listener *listener)
+अणु
+	काष्ठा i40iw_cm_node *cm_node;
+	पूर्णांक oldarpindex;
+	पूर्णांक arpindex;
+	काष्ठा net_device *netdev = iwdev->netdev;
 
-	/* create an hte and cm_node for this instance */
-	cm_node = kzalloc(sizeof(*cm_node), GFP_ATOMIC);
-	if (!cm_node)
-		return NULL;
+	/* create an hte and cm_node क्रम this instance */
+	cm_node = kzalloc(माप(*cm_node), GFP_ATOMIC);
+	अगर (!cm_node)
+		वापस शून्य;
 
-	/* set our node specific transport info */
+	/* set our node specअगरic transport info */
 	cm_node->ipv4 = cm_info->ipv4;
 	cm_node->vlan_id = cm_info->vlan_id;
-	if ((cm_node->vlan_id == I40IW_NO_VLAN) && iwdev->dcb)
+	अगर ((cm_node->vlan_id == I40IW_NO_VLAN) && iwdev->dcb)
 		cm_node->vlan_id = 0;
 	cm_node->tos = cm_info->tos;
 	cm_node->user_pri = cm_info->user_pri;
-	if (listener) {
-		if (listener->tos != cm_info->tos)
+	अगर (listener) अणु
+		अगर (listener->tos != cm_info->tos)
 			i40iw_debug(&iwdev->sc_dev, I40IW_DEBUG_DCB,
 				    "application TOS[%d] and remote client TOS[%d] mismatch\n",
 				     listener->tos, cm_info->tos);
@@ -2189,9 +2190,9 @@ static struct i40iw_cm_node *i40iw_make_cm_node(
 		cm_node->user_pri = rt_tos2priority(cm_node->tos);
 		i40iw_debug(&iwdev->sc_dev, I40IW_DEBUG_DCB, "listener: TOS:[%d] UP:[%d]\n",
 			    cm_node->tos, cm_node->user_pri);
-	}
-	memcpy(cm_node->loc_addr, cm_info->loc_addr, sizeof(cm_node->loc_addr));
-	memcpy(cm_node->rem_addr, cm_info->rem_addr, sizeof(cm_node->rem_addr));
+	पूर्ण
+	स_नकल(cm_node->loc_addr, cm_info->loc_addr, माप(cm_node->loc_addr));
+	स_नकल(cm_node->rem_addr, cm_info->rem_addr, माप(cm_node->rem_addr));
 	cm_node->loc_port = cm_info->loc_port;
 	cm_node->rem_port = cm_info->rem_port;
 
@@ -2213,347 +2214,347 @@ static struct i40iw_cm_node *i40iw_make_cm_node(
 	cm_node->tcp_cntxt.rcv_wscale = I40IW_CM_DEFAULT_RCV_WND_SCALE;
 	cm_node->tcp_cntxt.rcv_wnd =
 			I40IW_CM_DEFAULT_RCV_WND_SCALED >> I40IW_CM_DEFAULT_RCV_WND_SCALE;
-	if (cm_node->ipv4) {
+	अगर (cm_node->ipv4) अणु
 		cm_node->tcp_cntxt.loc_seq_num = secure_tcp_seq(htonl(cm_node->loc_addr[0]),
 							htonl(cm_node->rem_addr[0]),
 							htons(cm_node->loc_port),
 							htons(cm_node->rem_port));
 		cm_node->tcp_cntxt.mss = iwdev->vsi.mtu - I40IW_MTU_TO_MSS_IPV4;
-	} else if (IS_ENABLED(CONFIG_IPV6)) {
-		__be32 loc[4] = {
+	पूर्ण अन्यथा अगर (IS_ENABLED(CONFIG_IPV6)) अणु
+		__be32 loc[4] = अणु
 			htonl(cm_node->loc_addr[0]), htonl(cm_node->loc_addr[1]),
 			htonl(cm_node->loc_addr[2]), htonl(cm_node->loc_addr[3])
-		};
-		__be32 rem[4] = {
+		पूर्ण;
+		__be32 rem[4] = अणु
 			htonl(cm_node->rem_addr[0]), htonl(cm_node->rem_addr[1]),
 			htonl(cm_node->rem_addr[2]), htonl(cm_node->rem_addr[3])
-		};
+		पूर्ण;
 		cm_node->tcp_cntxt.loc_seq_num = secure_tcpv6_seq(loc, rem,
 							htons(cm_node->loc_port),
 							htons(cm_node->rem_port));
 		cm_node->tcp_cntxt.mss = iwdev->vsi.mtu - I40IW_MTU_TO_MSS_IPV6;
-	}
+	पूर्ण
 
 	cm_node->iwdev = iwdev;
 	cm_node->dev = &iwdev->sc_dev;
 
-	if ((cm_node->ipv4 &&
+	अगर ((cm_node->ipv4 &&
 	     i40iw_ipv4_is_loopback(cm_node->loc_addr[0], cm_node->rem_addr[0])) ||
 	     (!cm_node->ipv4 && i40iw_ipv6_is_loopback(cm_node->loc_addr,
-						       cm_node->rem_addr))) {
+						       cm_node->rem_addr))) अणु
 		arpindex = i40iw_arp_table(iwdev,
 					   cm_node->rem_addr,
 					   false,
-					   NULL,
+					   शून्य,
 					   I40IW_ARP_RESOLVE);
-	} else {
+	पूर्ण अन्यथा अणु
 		oldarpindex = i40iw_arp_table(iwdev,
 					      cm_node->rem_addr,
 					      false,
-					      NULL,
+					      शून्य,
 					      I40IW_ARP_RESOLVE);
-		if (cm_node->ipv4)
+		अगर (cm_node->ipv4)
 			arpindex = i40iw_addr_resolve_neigh(iwdev,
 							    cm_info->loc_addr[0],
 							    cm_info->rem_addr[0],
 							    oldarpindex);
-		else if (IS_ENABLED(CONFIG_IPV6))
+		अन्यथा अगर (IS_ENABLED(CONFIG_IPV6))
 			arpindex = i40iw_addr_resolve_neigh_ipv6(iwdev,
 								 cm_info->loc_addr,
 								 cm_info->rem_addr,
 								 oldarpindex);
-		else
+		अन्यथा
 			arpindex = -EINVAL;
-	}
-	if (arpindex < 0) {
+	पूर्ण
+	अगर (arpindex < 0) अणु
 		i40iw_pr_err("cm_node arpindex\n");
-		kfree(cm_node);
-		return NULL;
-	}
+		kमुक्त(cm_node);
+		वापस शून्य;
+	पूर्ण
 	ether_addr_copy(cm_node->rem_mac, iwdev->arp_table[arpindex].mac_addr);
 	i40iw_add_hte_node(cm_core, cm_node);
 	cm_core->stats_nodes_created++;
-	return cm_node;
-}
+	वापस cm_node;
+पूर्ण
 
 /**
  * i40iw_rem_ref_cm_node - destroy an instance of a cm node
  * @cm_node: connection's node
  */
-static void i40iw_rem_ref_cm_node(struct i40iw_cm_node *cm_node)
-{
-	struct i40iw_cm_core *cm_core = cm_node->cm_core;
-	struct i40iw_qp *iwqp;
-	struct i40iw_cm_info nfo;
-	unsigned long flags;
+अटल व्योम i40iw_rem_ref_cm_node(काष्ठा i40iw_cm_node *cm_node)
+अणु
+	काष्ठा i40iw_cm_core *cm_core = cm_node->cm_core;
+	काष्ठा i40iw_qp *iwqp;
+	काष्ठा i40iw_cm_info nfo;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&cm_node->cm_core->ht_lock, flags);
-	if (atomic_dec_return(&cm_node->ref_count)) {
+	अगर (atomic_dec_वापस(&cm_node->ref_count)) अणु
 		spin_unlock_irqrestore(&cm_node->cm_core->ht_lock, flags);
-		return;
-	}
+		वापस;
+	पूर्ण
 	list_del(&cm_node->list);
 	spin_unlock_irqrestore(&cm_node->cm_core->ht_lock, flags);
 
-	/* if the node is destroyed before connection was accelerated */
-	if (!cm_node->accelerated && cm_node->accept_pend) {
+	/* अगर the node is destroyed beक्रमe connection was accelerated */
+	अगर (!cm_node->accelerated && cm_node->accept_pend) अणु
 		pr_err("node destroyed before established\n");
 		atomic_dec(&cm_node->listener->pend_accepts_cnt);
-	}
-	if (cm_node->close_entry)
-		i40iw_handle_close_entry(cm_node, 0);
-	if (cm_node->listener) {
+	पूर्ण
+	अगर (cm_node->बंद_entry)
+		i40iw_handle_बंद_entry(cm_node, 0);
+	अगर (cm_node->listener) अणु
 		i40iw_dec_refcnt_listen(cm_core, cm_node->listener, 0, true);
-	} else {
-		if (cm_node->apbvt_set) {
+	पूर्ण अन्यथा अणु
+		अगर (cm_node->apbvt_set) अणु
 			i40iw_manage_apbvt(cm_node->iwdev,
 					   cm_node->loc_port,
 					   I40IW_MANAGE_APBVT_DEL);
 			cm_node->apbvt_set = 0;
-		}
+		पूर्ण
 		i40iw_get_addr_info(cm_node, &nfo);
-		if (cm_node->qhash_set) {
+		अगर (cm_node->qhash_set) अणु
 			i40iw_manage_qhash(cm_node->iwdev,
 					   &nfo,
 					   I40IW_QHASH_TYPE_TCP_ESTABLISHED,
 					   I40IW_QHASH_MANAGE_TYPE_DELETE,
-					   NULL,
+					   शून्य,
 					   false);
 			cm_node->qhash_set = 0;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	iwqp = cm_node->iwqp;
-	if (iwqp) {
-		iwqp->cm_node = NULL;
+	अगर (iwqp) अणु
+		iwqp->cm_node = शून्य;
 		i40iw_qp_rem_ref(&iwqp->ibqp);
-		cm_node->iwqp = NULL;
-	} else if (cm_node->qhash_set) {
+		cm_node->iwqp = शून्य;
+	पूर्ण अन्यथा अगर (cm_node->qhash_set) अणु
 		i40iw_get_addr_info(cm_node, &nfo);
 		i40iw_manage_qhash(cm_node->iwdev,
 				   &nfo,
 				   I40IW_QHASH_TYPE_TCP_ESTABLISHED,
 				   I40IW_QHASH_MANAGE_TYPE_DELETE,
-				   NULL,
+				   शून्य,
 				   false);
 		cm_node->qhash_set = 0;
-	}
+	पूर्ण
 
 	cm_node->cm_core->stats_nodes_destroyed++;
-	kfree(cm_node);
-}
+	kमुक्त(cm_node);
+पूर्ण
 
 /**
  * i40iw_handle_fin_pkt - FIN packet received
  * @cm_node: connection's node
  */
-static void i40iw_handle_fin_pkt(struct i40iw_cm_node *cm_node)
-{
+अटल व्योम i40iw_handle_fin_pkt(काष्ठा i40iw_cm_node *cm_node)
+अणु
 	u32 ret;
 
-	switch (cm_node->state) {
-	case I40IW_CM_STATE_SYN_RCVD:
-	case I40IW_CM_STATE_SYN_SENT:
-	case I40IW_CM_STATE_ESTABLISHED:
-	case I40IW_CM_STATE_MPAREJ_RCVD:
+	चयन (cm_node->state) अणु
+	हाल I40IW_CM_STATE_SYN_RCVD:
+	हाल I40IW_CM_STATE_SYN_SENT:
+	हाल I40IW_CM_STATE_ESTABLISHED:
+	हाल I40IW_CM_STATE_MPAREJ_RCVD:
 		cm_node->tcp_cntxt.rcv_nxt++;
 		i40iw_cleanup_retrans_entry(cm_node);
 		cm_node->state = I40IW_CM_STATE_LAST_ACK;
 		i40iw_send_fin(cm_node);
-		break;
-	case I40IW_CM_STATE_MPAREQ_SENT:
+		अवरोध;
+	हाल I40IW_CM_STATE_MPAREQ_SENT:
 		i40iw_create_event(cm_node, I40IW_CM_EVENT_ABORTED);
 		cm_node->tcp_cntxt.rcv_nxt++;
 		i40iw_cleanup_retrans_entry(cm_node);
 		cm_node->state = I40IW_CM_STATE_CLOSED;
 		atomic_inc(&cm_node->ref_count);
 		i40iw_send_reset(cm_node);
-		break;
-	case I40IW_CM_STATE_FIN_WAIT1:
+		अवरोध;
+	हाल I40IW_CM_STATE_FIN_WAIT1:
 		cm_node->tcp_cntxt.rcv_nxt++;
 		i40iw_cleanup_retrans_entry(cm_node);
 		cm_node->state = I40IW_CM_STATE_CLOSING;
 		i40iw_send_ack(cm_node);
 		/*
-		 * Wait for ACK as this is simultaneous close.
-		 * After we receive ACK, do not send anything.
+		 * Wait क्रम ACK as this is simultaneous बंद.
+		 * After we receive ACK, करो not send anything.
 		 * Just rm the node.
 		 */
-		break;
-	case I40IW_CM_STATE_FIN_WAIT2:
+		अवरोध;
+	हाल I40IW_CM_STATE_FIN_WAIT2:
 		cm_node->tcp_cntxt.rcv_nxt++;
 		i40iw_cleanup_retrans_entry(cm_node);
 		cm_node->state = I40IW_CM_STATE_TIME_WAIT;
 		i40iw_send_ack(cm_node);
 		ret =
-		    i40iw_schedule_cm_timer(cm_node, NULL, I40IW_TIMER_TYPE_CLOSE, 1, 0);
-		if (ret)
+		    i40iw_schedule_cm_समयr(cm_node, शून्य, I40IW_TIMER_TYPE_CLOSE, 1, 0);
+		अगर (ret)
 			i40iw_pr_err("node %p state = %d\n", cm_node, cm_node->state);
-		break;
-	case I40IW_CM_STATE_TIME_WAIT:
+		अवरोध;
+	हाल I40IW_CM_STATE_TIME_WAIT:
 		cm_node->tcp_cntxt.rcv_nxt++;
 		i40iw_cleanup_retrans_entry(cm_node);
 		cm_node->state = I40IW_CM_STATE_CLOSED;
 		i40iw_rem_ref_cm_node(cm_node);
-		break;
-	case I40IW_CM_STATE_OFFLOADED:
-	default:
+		अवरोध;
+	हाल I40IW_CM_STATE_OFFLOADED:
+	शेष:
 		i40iw_pr_err("bad state node %p state = %d\n", cm_node, cm_node->state);
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
 /**
  * i40iw_handle_rst_pkt - process received RST packet
  * @cm_node: connection's node
  * @rbuf: receive buffer
  */
-static void i40iw_handle_rst_pkt(struct i40iw_cm_node *cm_node,
-				 struct i40iw_puda_buf *rbuf)
-{
+अटल व्योम i40iw_handle_rst_pkt(काष्ठा i40iw_cm_node *cm_node,
+				 काष्ठा i40iw_puda_buf *rbuf)
+अणु
 	i40iw_cleanup_retrans_entry(cm_node);
-	switch (cm_node->state) {
-	case I40IW_CM_STATE_SYN_SENT:
-	case I40IW_CM_STATE_MPAREQ_SENT:
-		switch (cm_node->mpa_frame_rev) {
-		case IETF_MPA_V2:
+	चयन (cm_node->state) अणु
+	हाल I40IW_CM_STATE_SYN_SENT:
+	हाल I40IW_CM_STATE_MPAREQ_SENT:
+		चयन (cm_node->mpa_frame_rev) अणु
+		हाल IETF_MPA_V2:
 			cm_node->mpa_frame_rev = IETF_MPA_V1;
-			/* send a syn and goto syn sent state */
+			/* send a syn and जाओ syn sent state */
 			cm_node->state = I40IW_CM_STATE_SYN_SENT;
-			if (i40iw_send_syn(cm_node, 0))
-				i40iw_active_open_err(cm_node, false);
-			break;
-		case IETF_MPA_V1:
-		default:
-			i40iw_active_open_err(cm_node, false);
-			break;
-		}
-		break;
-	case I40IW_CM_STATE_MPAREQ_RCVD:
+			अगर (i40iw_send_syn(cm_node, 0))
+				i40iw_active_खोलो_err(cm_node, false);
+			अवरोध;
+		हाल IETF_MPA_V1:
+		शेष:
+			i40iw_active_खोलो_err(cm_node, false);
+			अवरोध;
+		पूर्ण
+		अवरोध;
+	हाल I40IW_CM_STATE_MPAREQ_RCVD:
 		atomic_inc(&cm_node->passive_state);
-		break;
-	case I40IW_CM_STATE_ESTABLISHED:
-	case I40IW_CM_STATE_SYN_RCVD:
-	case I40IW_CM_STATE_LISTENING:
+		अवरोध;
+	हाल I40IW_CM_STATE_ESTABLISHED:
+	हाल I40IW_CM_STATE_SYN_RCVD:
+	हाल I40IW_CM_STATE_LISTENING:
 		i40iw_pr_err("Bad state state = %d\n", cm_node->state);
-		i40iw_passive_open_err(cm_node, false);
-		break;
-	case I40IW_CM_STATE_OFFLOADED:
-		i40iw_active_open_err(cm_node, false);
-		break;
-	case I40IW_CM_STATE_CLOSED:
-		break;
-	case I40IW_CM_STATE_FIN_WAIT2:
-	case I40IW_CM_STATE_FIN_WAIT1:
-	case I40IW_CM_STATE_LAST_ACK:
+		i40iw_passive_खोलो_err(cm_node, false);
+		अवरोध;
+	हाल I40IW_CM_STATE_OFFLOADED:
+		i40iw_active_खोलो_err(cm_node, false);
+		अवरोध;
+	हाल I40IW_CM_STATE_CLOSED:
+		अवरोध;
+	हाल I40IW_CM_STATE_FIN_WAIT2:
+	हाल I40IW_CM_STATE_FIN_WAIT1:
+	हाल I40IW_CM_STATE_LAST_ACK:
 		cm_node->cm_id->rem_ref(cm_node->cm_id);
 		fallthrough;
-	case I40IW_CM_STATE_TIME_WAIT:
+	हाल I40IW_CM_STATE_TIME_WAIT:
 		cm_node->state = I40IW_CM_STATE_CLOSED;
 		i40iw_rem_ref_cm_node(cm_node);
-		break;
-	default:
-		break;
-	}
-}
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
+पूर्ण
 
 /**
  * i40iw_handle_rcv_mpa - Process a recv'd mpa buffer
  * @cm_node: connection's node
  * @rbuf: receive buffer
  */
-static void i40iw_handle_rcv_mpa(struct i40iw_cm_node *cm_node,
-				 struct i40iw_puda_buf *rbuf)
-{
-	int ret;
-	int datasize = rbuf->datalen;
+अटल व्योम i40iw_handle_rcv_mpa(काष्ठा i40iw_cm_node *cm_node,
+				 काष्ठा i40iw_puda_buf *rbuf)
+अणु
+	पूर्णांक ret;
+	पूर्णांक datasize = rbuf->datalen;
 	u8 *dataloc = rbuf->data;
 
-	enum i40iw_cm_event_type type = I40IW_CM_EVENT_UNKNOWN;
+	क्रमागत i40iw_cm_event_type type = I40IW_CM_EVENT_UNKNOWN;
 	u32 res_type;
 
 	ret = i40iw_parse_mpa(cm_node, dataloc, &res_type, datasize);
-	if (ret) {
-		if (cm_node->state == I40IW_CM_STATE_MPAREQ_SENT)
-			i40iw_active_open_err(cm_node, true);
-		else
-			i40iw_passive_open_err(cm_node, true);
-		return;
-	}
+	अगर (ret) अणु
+		अगर (cm_node->state == I40IW_CM_STATE_MPAREQ_SENT)
+			i40iw_active_खोलो_err(cm_node, true);
+		अन्यथा
+			i40iw_passive_खोलो_err(cm_node, true);
+		वापस;
+	पूर्ण
 
-	switch (cm_node->state) {
-	case I40IW_CM_STATE_ESTABLISHED:
-		if (res_type == I40IW_MPA_REQUEST_REJECT)
+	चयन (cm_node->state) अणु
+	हाल I40IW_CM_STATE_ESTABLISHED:
+		अगर (res_type == I40IW_MPA_REQUEST_REJECT)
 			i40iw_pr_err("state for reject\n");
 		cm_node->state = I40IW_CM_STATE_MPAREQ_RCVD;
 		type = I40IW_CM_EVENT_MPA_REQ;
 		i40iw_send_ack(cm_node);	/* ACK received MPA request */
 		atomic_set(&cm_node->passive_state,
 			   I40IW_PASSIVE_STATE_INDICATED);
-		break;
-	case I40IW_CM_STATE_MPAREQ_SENT:
+		अवरोध;
+	हाल I40IW_CM_STATE_MPAREQ_SENT:
 		i40iw_cleanup_retrans_entry(cm_node);
-		if (res_type == I40IW_MPA_REQUEST_REJECT) {
+		अगर (res_type == I40IW_MPA_REQUEST_REJECT) अणु
 			type = I40IW_CM_EVENT_MPA_REJECT;
 			cm_node->state = I40IW_CM_STATE_MPAREJ_RCVD;
-		} else {
+		पूर्ण अन्यथा अणु
 			type = I40IW_CM_EVENT_CONNECTED;
 			cm_node->state = I40IW_CM_STATE_OFFLOADED;
-		}
+		पूर्ण
 		i40iw_send_ack(cm_node);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		pr_err("%s wrong cm_node state =%d\n", __func__, cm_node->state);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 	i40iw_create_event(cm_node, type);
-}
+पूर्ण
 
 /**
  * i40iw_indicate_pkt_err - Send up err event to cm
  * @cm_node: connection's node
  */
-static void i40iw_indicate_pkt_err(struct i40iw_cm_node *cm_node)
-{
-	switch (cm_node->state) {
-	case I40IW_CM_STATE_SYN_SENT:
-	case I40IW_CM_STATE_MPAREQ_SENT:
-		i40iw_active_open_err(cm_node, true);
-		break;
-	case I40IW_CM_STATE_ESTABLISHED:
-	case I40IW_CM_STATE_SYN_RCVD:
-		i40iw_passive_open_err(cm_node, true);
-		break;
-	case I40IW_CM_STATE_OFFLOADED:
-	default:
-		break;
-	}
-}
+अटल व्योम i40iw_indicate_pkt_err(काष्ठा i40iw_cm_node *cm_node)
+अणु
+	चयन (cm_node->state) अणु
+	हाल I40IW_CM_STATE_SYN_SENT:
+	हाल I40IW_CM_STATE_MPAREQ_SENT:
+		i40iw_active_खोलो_err(cm_node, true);
+		अवरोध;
+	हाल I40IW_CM_STATE_ESTABLISHED:
+	हाल I40IW_CM_STATE_SYN_RCVD:
+		i40iw_passive_खोलो_err(cm_node, true);
+		अवरोध;
+	हाल I40IW_CM_STATE_OFFLOADED:
+	शेष:
+		अवरोध;
+	पूर्ण
+पूर्ण
 
 /**
- * i40iw_check_syn - Check for error on received syn ack
+ * i40iw_check_syn - Check क्रम error on received syn ack
  * @cm_node: connection's node
- * @tcph: pointer tcp header
+ * @tcph: poपूर्णांकer tcp header
  */
-static int i40iw_check_syn(struct i40iw_cm_node *cm_node, struct tcphdr *tcph)
-{
-	int err = 0;
+अटल पूर्णांक i40iw_check_syn(काष्ठा i40iw_cm_node *cm_node, काष्ठा tcphdr *tcph)
+अणु
+	पूर्णांक err = 0;
 
-	if (ntohl(tcph->ack_seq) != cm_node->tcp_cntxt.loc_seq_num) {
+	अगर (ntohl(tcph->ack_seq) != cm_node->tcp_cntxt.loc_seq_num) अणु
 		err = 1;
-		i40iw_active_open_err(cm_node, true);
-	}
-	return err;
-}
+		i40iw_active_खोलो_err(cm_node, true);
+	पूर्ण
+	वापस err;
+पूर्ण
 
 /**
- * i40iw_check_seq - check seq numbers if OK
+ * i40iw_check_seq - check seq numbers अगर OK
  * @cm_node: connection's node
- * @tcph: pointer tcp header
+ * @tcph: poपूर्णांकer tcp header
  */
-static int i40iw_check_seq(struct i40iw_cm_node *cm_node, struct tcphdr *tcph)
-{
-	int err = 0;
+अटल पूर्णांक i40iw_check_seq(काष्ठा i40iw_cm_node *cm_node, काष्ठा tcphdr *tcph)
+अणु
+	पूर्णांक err = 0;
 	u32 seq;
 	u32 ack_seq;
 	u32 loc_seq_num = cm_node->tcp_cntxt.loc_seq_num;
@@ -2563,54 +2564,54 @@ static int i40iw_check_seq(struct i40iw_cm_node *cm_node, struct tcphdr *tcph)
 	seq = ntohl(tcph->seq);
 	ack_seq = ntohl(tcph->ack_seq);
 	rcv_wnd = cm_node->tcp_cntxt.rcv_wnd;
-	if (ack_seq != loc_seq_num)
+	अगर (ack_seq != loc_seq_num)
 		err = -1;
-	else if (!between(seq, rcv_nxt, (rcv_nxt + rcv_wnd)))
+	अन्यथा अगर (!between(seq, rcv_nxt, (rcv_nxt + rcv_wnd)))
 		err = -1;
-	if (err) {
+	अगर (err) अणु
 		i40iw_pr_err("seq number\n");
 		i40iw_indicate_pkt_err(cm_node);
-	}
-	return err;
-}
+	पूर्ण
+	वापस err;
+पूर्ण
 
 /**
- * i40iw_handle_syn_pkt - is for Passive node
+ * i40iw_handle_syn_pkt - is क्रम Passive node
  * @cm_node: connection's node
  * @rbuf: receive buffer
  */
-static void i40iw_handle_syn_pkt(struct i40iw_cm_node *cm_node,
-				 struct i40iw_puda_buf *rbuf)
-{
-	struct tcphdr *tcph = (struct tcphdr *)rbuf->tcph;
-	int ret;
+अटल व्योम i40iw_handle_syn_pkt(काष्ठा i40iw_cm_node *cm_node,
+				 काष्ठा i40iw_puda_buf *rbuf)
+अणु
+	काष्ठा tcphdr *tcph = (काष्ठा tcphdr *)rbuf->tcph;
+	पूर्णांक ret;
 	u32 inc_sequence;
-	int optionsize;
-	struct i40iw_cm_info nfo;
+	पूर्णांक optionsize;
+	काष्ठा i40iw_cm_info nfo;
 
-	optionsize = (tcph->doff << 2) - sizeof(struct tcphdr);
+	optionsize = (tcph->करोff << 2) - माप(काष्ठा tcphdr);
 	inc_sequence = ntohl(tcph->seq);
 
-	switch (cm_node->state) {
-	case I40IW_CM_STATE_SYN_SENT:
-	case I40IW_CM_STATE_MPAREQ_SENT:
-		/* Rcvd syn on active open connection */
-		i40iw_active_open_err(cm_node, 1);
-		break;
-	case I40IW_CM_STATE_LISTENING:
+	चयन (cm_node->state) अणु
+	हाल I40IW_CM_STATE_SYN_SENT:
+	हाल I40IW_CM_STATE_MPAREQ_SENT:
+		/* Rcvd syn on active खोलो connection */
+		i40iw_active_खोलो_err(cm_node, 1);
+		अवरोध;
+	हाल I40IW_CM_STATE_LISTENING:
 		/* Passive OPEN */
-		if (atomic_read(&cm_node->listener->pend_accepts_cnt) >
-		    cm_node->listener->backlog) {
+		अगर (atomic_पढ़ो(&cm_node->listener->pend_accepts_cnt) >
+		    cm_node->listener->backlog) अणु
 			cm_node->cm_core->stats_backlog_drops++;
-			i40iw_passive_open_err(cm_node, false);
-			break;
-		}
+			i40iw_passive_खोलो_err(cm_node, false);
+			अवरोध;
+		पूर्ण
 		ret = i40iw_handle_tcp_options(cm_node, tcph, optionsize, 1);
-		if (ret) {
-			i40iw_passive_open_err(cm_node, false);
+		अगर (ret) अणु
+			i40iw_passive_खोलो_err(cm_node, false);
 			/* drop pkt */
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		cm_node->tcp_cntxt.rcv_nxt = inc_sequence + 1;
 		cm_node->accept_pend = 1;
 		atomic_inc(&cm_node->listener->pend_accepts_cnt);
@@ -2621,277 +2622,277 @@ static void i40iw_handle_syn_pkt(struct i40iw_cm_node *cm_node,
 					 &nfo,
 					 I40IW_QHASH_TYPE_TCP_ESTABLISHED,
 					 I40IW_QHASH_MANAGE_TYPE_ADD,
-					 (void *)cm_node,
+					 (व्योम *)cm_node,
 					 false);
 		cm_node->qhash_set = true;
-		break;
-	case I40IW_CM_STATE_CLOSED:
+		अवरोध;
+	हाल I40IW_CM_STATE_CLOSED:
 		i40iw_cleanup_retrans_entry(cm_node);
 		atomic_inc(&cm_node->ref_count);
 		i40iw_send_reset(cm_node);
-		break;
-	case I40IW_CM_STATE_OFFLOADED:
-	case I40IW_CM_STATE_ESTABLISHED:
-	case I40IW_CM_STATE_FIN_WAIT1:
-	case I40IW_CM_STATE_FIN_WAIT2:
-	case I40IW_CM_STATE_MPAREQ_RCVD:
-	case I40IW_CM_STATE_LAST_ACK:
-	case I40IW_CM_STATE_CLOSING:
-	case I40IW_CM_STATE_UNKNOWN:
-	default:
-		break;
-	}
-}
+		अवरोध;
+	हाल I40IW_CM_STATE_OFFLOADED:
+	हाल I40IW_CM_STATE_ESTABLISHED:
+	हाल I40IW_CM_STATE_FIN_WAIT1:
+	हाल I40IW_CM_STATE_FIN_WAIT2:
+	हाल I40IW_CM_STATE_MPAREQ_RCVD:
+	हाल I40IW_CM_STATE_LAST_ACK:
+	हाल I40IW_CM_STATE_CLOSING:
+	हाल I40IW_CM_STATE_UNKNOWN:
+	शेष:
+		अवरोध;
+	पूर्ण
+पूर्ण
 
 /**
  * i40iw_handle_synack_pkt - Process SYN+ACK packet (active side)
  * @cm_node: connection's node
  * @rbuf: receive buffer
  */
-static void i40iw_handle_synack_pkt(struct i40iw_cm_node *cm_node,
-				    struct i40iw_puda_buf *rbuf)
-{
-	struct tcphdr *tcph = (struct tcphdr *)rbuf->tcph;
-	int ret;
+अटल व्योम i40iw_handle_synack_pkt(काष्ठा i40iw_cm_node *cm_node,
+				    काष्ठा i40iw_puda_buf *rbuf)
+अणु
+	काष्ठा tcphdr *tcph = (काष्ठा tcphdr *)rbuf->tcph;
+	पूर्णांक ret;
 	u32 inc_sequence;
-	int optionsize;
+	पूर्णांक optionsize;
 
-	optionsize = (tcph->doff << 2) - sizeof(struct tcphdr);
+	optionsize = (tcph->करोff << 2) - माप(काष्ठा tcphdr);
 	inc_sequence = ntohl(tcph->seq);
-	switch (cm_node->state) {
-	case I40IW_CM_STATE_SYN_SENT:
+	चयन (cm_node->state) अणु
+	हाल I40IW_CM_STATE_SYN_SENT:
 		i40iw_cleanup_retrans_entry(cm_node);
-		/* active open */
-		if (i40iw_check_syn(cm_node, tcph)) {
+		/* active खोलो */
+		अगर (i40iw_check_syn(cm_node, tcph)) अणु
 			i40iw_pr_err("check syn fail\n");
-			return;
-		}
+			वापस;
+		पूर्ण
 		cm_node->tcp_cntxt.rem_ack_num = ntohl(tcph->ack_seq);
 		/* setup options */
 		ret = i40iw_handle_tcp_options(cm_node, tcph, optionsize, 0);
-		if (ret) {
+		अगर (ret) अणु
 			i40iw_debug(cm_node->dev,
 				    I40IW_DEBUG_CM,
 				    "cm_node=%p tcp_options failed\n",
 				    cm_node);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		i40iw_cleanup_retrans_entry(cm_node);
 		cm_node->tcp_cntxt.rcv_nxt = inc_sequence + 1;
-		i40iw_send_ack(cm_node);	/* ACK  for the syn_ack */
+		i40iw_send_ack(cm_node);	/* ACK  क्रम the syn_ack */
 		ret = i40iw_send_mpa_request(cm_node);
-		if (ret) {
+		अगर (ret) अणु
 			i40iw_debug(cm_node->dev,
 				    I40IW_DEBUG_CM,
 				    "cm_node=%p i40iw_send_mpa_request failed\n",
 				    cm_node);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		cm_node->state = I40IW_CM_STATE_MPAREQ_SENT;
-		break;
-	case I40IW_CM_STATE_MPAREQ_RCVD:
-		i40iw_passive_open_err(cm_node, true);
-		break;
-	case I40IW_CM_STATE_LISTENING:
+		अवरोध;
+	हाल I40IW_CM_STATE_MPAREQ_RCVD:
+		i40iw_passive_खोलो_err(cm_node, true);
+		अवरोध;
+	हाल I40IW_CM_STATE_LISTENING:
 		cm_node->tcp_cntxt.loc_seq_num = ntohl(tcph->ack_seq);
 		i40iw_cleanup_retrans_entry(cm_node);
 		cm_node->state = I40IW_CM_STATE_CLOSED;
 		i40iw_send_reset(cm_node);
-		break;
-	case I40IW_CM_STATE_CLOSED:
+		अवरोध;
+	हाल I40IW_CM_STATE_CLOSED:
 		cm_node->tcp_cntxt.loc_seq_num = ntohl(tcph->ack_seq);
 		i40iw_cleanup_retrans_entry(cm_node);
 		atomic_inc(&cm_node->ref_count);
 		i40iw_send_reset(cm_node);
-		break;
-	case I40IW_CM_STATE_ESTABLISHED:
-	case I40IW_CM_STATE_FIN_WAIT1:
-	case I40IW_CM_STATE_FIN_WAIT2:
-	case I40IW_CM_STATE_LAST_ACK:
-	case I40IW_CM_STATE_OFFLOADED:
-	case I40IW_CM_STATE_CLOSING:
-	case I40IW_CM_STATE_UNKNOWN:
-	case I40IW_CM_STATE_MPAREQ_SENT:
-	default:
-		break;
-	}
-}
+		अवरोध;
+	हाल I40IW_CM_STATE_ESTABLISHED:
+	हाल I40IW_CM_STATE_FIN_WAIT1:
+	हाल I40IW_CM_STATE_FIN_WAIT2:
+	हाल I40IW_CM_STATE_LAST_ACK:
+	हाल I40IW_CM_STATE_OFFLOADED:
+	हाल I40IW_CM_STATE_CLOSING:
+	हाल I40IW_CM_STATE_UNKNOWN:
+	हाल I40IW_CM_STATE_MPAREQ_SENT:
+	शेष:
+		अवरोध;
+	पूर्ण
+पूर्ण
 
 /**
  * i40iw_handle_ack_pkt - process packet with ACK
  * @cm_node: connection's node
  * @rbuf: receive buffer
  */
-static int i40iw_handle_ack_pkt(struct i40iw_cm_node *cm_node,
-				struct i40iw_puda_buf *rbuf)
-{
-	struct tcphdr *tcph = (struct tcphdr *)rbuf->tcph;
+अटल पूर्णांक i40iw_handle_ack_pkt(काष्ठा i40iw_cm_node *cm_node,
+				काष्ठा i40iw_puda_buf *rbuf)
+अणु
+	काष्ठा tcphdr *tcph = (काष्ठा tcphdr *)rbuf->tcph;
 	u32 inc_sequence;
-	int ret = 0;
-	int optionsize;
+	पूर्णांक ret = 0;
+	पूर्णांक optionsize;
 	u32 datasize = rbuf->datalen;
 
-	optionsize = (tcph->doff << 2) - sizeof(struct tcphdr);
+	optionsize = (tcph->करोff << 2) - माप(काष्ठा tcphdr);
 
-	if (i40iw_check_seq(cm_node, tcph))
-		return -EINVAL;
+	अगर (i40iw_check_seq(cm_node, tcph))
+		वापस -EINVAL;
 
 	inc_sequence = ntohl(tcph->seq);
-	switch (cm_node->state) {
-	case I40IW_CM_STATE_SYN_RCVD:
+	चयन (cm_node->state) अणु
+	हाल I40IW_CM_STATE_SYN_RCVD:
 		i40iw_cleanup_retrans_entry(cm_node);
 		ret = i40iw_handle_tcp_options(cm_node, tcph, optionsize, 1);
-		if (ret)
-			break;
+		अगर (ret)
+			अवरोध;
 		cm_node->tcp_cntxt.rem_ack_num = ntohl(tcph->ack_seq);
 		cm_node->state = I40IW_CM_STATE_ESTABLISHED;
-		if (datasize) {
+		अगर (datasize) अणु
 			cm_node->tcp_cntxt.rcv_nxt = inc_sequence + datasize;
 			i40iw_handle_rcv_mpa(cm_node, rbuf);
-		}
-		break;
-	case I40IW_CM_STATE_ESTABLISHED:
+		पूर्ण
+		अवरोध;
+	हाल I40IW_CM_STATE_ESTABLISHED:
 		i40iw_cleanup_retrans_entry(cm_node);
-		if (datasize) {
+		अगर (datasize) अणु
 			cm_node->tcp_cntxt.rcv_nxt = inc_sequence + datasize;
 			i40iw_handle_rcv_mpa(cm_node, rbuf);
-		}
-		break;
-	case I40IW_CM_STATE_MPAREQ_SENT:
+		पूर्ण
+		अवरोध;
+	हाल I40IW_CM_STATE_MPAREQ_SENT:
 		cm_node->tcp_cntxt.rem_ack_num = ntohl(tcph->ack_seq);
-		if (datasize) {
+		अगर (datasize) अणु
 			cm_node->tcp_cntxt.rcv_nxt = inc_sequence + datasize;
 			cm_node->ack_rcvd = false;
 			i40iw_handle_rcv_mpa(cm_node, rbuf);
-		} else {
+		पूर्ण अन्यथा अणु
 			cm_node->ack_rcvd = true;
-		}
-		break;
-	case I40IW_CM_STATE_LISTENING:
+		पूर्ण
+		अवरोध;
+	हाल I40IW_CM_STATE_LISTENING:
 		i40iw_cleanup_retrans_entry(cm_node);
 		cm_node->state = I40IW_CM_STATE_CLOSED;
 		i40iw_send_reset(cm_node);
-		break;
-	case I40IW_CM_STATE_CLOSED:
+		अवरोध;
+	हाल I40IW_CM_STATE_CLOSED:
 		i40iw_cleanup_retrans_entry(cm_node);
 		atomic_inc(&cm_node->ref_count);
 		i40iw_send_reset(cm_node);
-		break;
-	case I40IW_CM_STATE_LAST_ACK:
-	case I40IW_CM_STATE_CLOSING:
+		अवरोध;
+	हाल I40IW_CM_STATE_LAST_ACK:
+	हाल I40IW_CM_STATE_CLOSING:
 		i40iw_cleanup_retrans_entry(cm_node);
 		cm_node->state = I40IW_CM_STATE_CLOSED;
-		if (!cm_node->accept_pend)
+		अगर (!cm_node->accept_pend)
 			cm_node->cm_id->rem_ref(cm_node->cm_id);
 		i40iw_rem_ref_cm_node(cm_node);
-		break;
-	case I40IW_CM_STATE_FIN_WAIT1:
+		अवरोध;
+	हाल I40IW_CM_STATE_FIN_WAIT1:
 		i40iw_cleanup_retrans_entry(cm_node);
 		cm_node->state = I40IW_CM_STATE_FIN_WAIT2;
-		break;
-	case I40IW_CM_STATE_SYN_SENT:
-	case I40IW_CM_STATE_FIN_WAIT2:
-	case I40IW_CM_STATE_OFFLOADED:
-	case I40IW_CM_STATE_MPAREQ_RCVD:
-	case I40IW_CM_STATE_UNKNOWN:
-	default:
+		अवरोध;
+	हाल I40IW_CM_STATE_SYN_SENT:
+	हाल I40IW_CM_STATE_FIN_WAIT2:
+	हाल I40IW_CM_STATE_OFFLOADED:
+	हाल I40IW_CM_STATE_MPAREQ_RCVD:
+	हाल I40IW_CM_STATE_UNKNOWN:
+	शेष:
 		i40iw_cleanup_retrans_entry(cm_node);
-		break;
-	}
-	return ret;
-}
+		अवरोध;
+	पूर्ण
+	वापस ret;
+पूर्ण
 
 /**
  * i40iw_process_packet - process cm packet
  * @cm_node: connection's node
  * @rbuf: receive buffer
  */
-static void i40iw_process_packet(struct i40iw_cm_node *cm_node,
-				 struct i40iw_puda_buf *rbuf)
-{
-	enum i40iw_tcpip_pkt_type pkt_type = I40IW_PKT_TYPE_UNKNOWN;
-	struct tcphdr *tcph = (struct tcphdr *)rbuf->tcph;
+अटल व्योम i40iw_process_packet(काष्ठा i40iw_cm_node *cm_node,
+				 काष्ठा i40iw_puda_buf *rbuf)
+अणु
+	क्रमागत i40iw_tcpip_pkt_type pkt_type = I40IW_PKT_TYPE_UNKNOWN;
+	काष्ठा tcphdr *tcph = (काष्ठा tcphdr *)rbuf->tcph;
 	u32 fin_set = 0;
-	int ret;
+	पूर्णांक ret;
 
-	if (tcph->rst) {
+	अगर (tcph->rst) अणु
 		pkt_type = I40IW_PKT_TYPE_RST;
-	} else if (tcph->syn) {
+	पूर्ण अन्यथा अगर (tcph->syn) अणु
 		pkt_type = I40IW_PKT_TYPE_SYN;
-		if (tcph->ack)
+		अगर (tcph->ack)
 			pkt_type = I40IW_PKT_TYPE_SYNACK;
-	} else if (tcph->ack) {
+	पूर्ण अन्यथा अगर (tcph->ack) अणु
 		pkt_type = I40IW_PKT_TYPE_ACK;
-	}
-	if (tcph->fin)
+	पूर्ण
+	अगर (tcph->fin)
 		fin_set = 1;
 
-	switch (pkt_type) {
-	case I40IW_PKT_TYPE_SYN:
+	चयन (pkt_type) अणु
+	हाल I40IW_PKT_TYPE_SYN:
 		i40iw_handle_syn_pkt(cm_node, rbuf);
-		break;
-	case I40IW_PKT_TYPE_SYNACK:
+		अवरोध;
+	हाल I40IW_PKT_TYPE_SYNACK:
 		i40iw_handle_synack_pkt(cm_node, rbuf);
-		break;
-	case I40IW_PKT_TYPE_ACK:
+		अवरोध;
+	हाल I40IW_PKT_TYPE_ACK:
 		ret = i40iw_handle_ack_pkt(cm_node, rbuf);
-		if (fin_set && !ret)
+		अगर (fin_set && !ret)
 			i40iw_handle_fin_pkt(cm_node);
-		break;
-	case I40IW_PKT_TYPE_RST:
+		अवरोध;
+	हाल I40IW_PKT_TYPE_RST:
 		i40iw_handle_rst_pkt(cm_node, rbuf);
-		break;
-	default:
-		if (fin_set &&
-		    (!i40iw_check_seq(cm_node, (struct tcphdr *)rbuf->tcph)))
+		अवरोध;
+	शेष:
+		अगर (fin_set &&
+		    (!i40iw_check_seq(cm_node, (काष्ठा tcphdr *)rbuf->tcph)))
 			i40iw_handle_fin_pkt(cm_node);
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
 /**
  * i40iw_make_listen_node - create a listen node with params
  * @cm_core: cm's core
- * @iwdev: iwarp device structure
- * @cm_info: quad info for connection
+ * @iwdev: iwarp device काष्ठाure
+ * @cm_info: quad info क्रम connection
  */
-static struct i40iw_cm_listener *i40iw_make_listen_node(
-					struct i40iw_cm_core *cm_core,
-					struct i40iw_device *iwdev,
-					struct i40iw_cm_info *cm_info)
-{
-	struct i40iw_cm_listener *listener;
-	unsigned long flags;
+अटल काष्ठा i40iw_cm_listener *i40iw_make_listen_node(
+					काष्ठा i40iw_cm_core *cm_core,
+					काष्ठा i40iw_device *iwdev,
+					काष्ठा i40iw_cm_info *cm_info)
+अणु
+	काष्ठा i40iw_cm_listener *listener;
+	अचिन्हित दीर्घ flags;
 
 	/* cannot have multiple matching listeners */
 	listener = i40iw_find_listener(cm_core, cm_info->loc_addr,
 				       cm_info->loc_port,
 				       cm_info->vlan_id,
 				       I40IW_CM_LISTENER_EITHER_STATE);
-	if (listener &&
-	    (listener->listener_state == I40IW_CM_LISTENER_ACTIVE_STATE)) {
+	अगर (listener &&
+	    (listener->listener_state == I40IW_CM_LISTENER_ACTIVE_STATE)) अणु
 		atomic_dec(&listener->ref_count);
 		i40iw_debug(cm_core->dev,
 			    I40IW_DEBUG_CM,
 			    "Not creating listener since it already exists\n");
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
-	if (!listener) {
+	अगर (!listener) अणु
 		/* create a CM listen node (1/2 node to compare incoming traffic to) */
-		listener = kzalloc(sizeof(*listener), GFP_KERNEL);
-		if (!listener)
-			return NULL;
+		listener = kzalloc(माप(*listener), GFP_KERNEL);
+		अगर (!listener)
+			वापस शून्य;
 		cm_core->stats_listen_nodes_created++;
-		memcpy(listener->loc_addr, cm_info->loc_addr, sizeof(listener->loc_addr));
+		स_नकल(listener->loc_addr, cm_info->loc_addr, माप(listener->loc_addr));
 		listener->loc_port = cm_info->loc_port;
 
 		INIT_LIST_HEAD(&listener->child_listen_list);
 
 		atomic_set(&listener->ref_count, 1);
-	} else {
+	पूर्ण अन्यथा अणु
 		listener->reused_node = 1;
-	}
+	पूर्ण
 
 	listener->cm_id = cm_info->cm_id;
 	listener->ipv4 = cm_info->ipv4;
@@ -2903,57 +2904,57 @@ static struct i40iw_cm_listener *i40iw_make_listen_node(
 	listener->backlog = cm_info->backlog;
 	listener->listener_state = I40IW_CM_LISTENER_ACTIVE_STATE;
 
-	if (!listener->reused_node) {
+	अगर (!listener->reused_node) अणु
 		spin_lock_irqsave(&cm_core->listen_list_lock, flags);
 		list_add(&listener->list, &cm_core->listen_nodes);
 		spin_unlock_irqrestore(&cm_core->listen_list_lock, flags);
-	}
+	पूर्ण
 
-	return listener;
-}
+	वापस listener;
+पूर्ण
 
 /**
  * i40iw_create_cm_node - make a connection node with params
  * @cm_core: cm's core
- * @iwdev: iwarp device structure
+ * @iwdev: iwarp device काष्ठाure
  * @conn_param: upper layer connection parameters
- * @cm_info: quad info for connection
+ * @cm_info: quad info क्रम connection
  */
-static struct i40iw_cm_node *i40iw_create_cm_node(
-					struct i40iw_cm_core *cm_core,
-					struct i40iw_device *iwdev,
-					struct iw_cm_conn_param *conn_param,
-					struct i40iw_cm_info *cm_info)
-{
-	struct i40iw_cm_node *cm_node;
-	struct i40iw_cm_listener *loopback_remotelistener;
-	struct i40iw_cm_node *loopback_remotenode;
-	struct i40iw_cm_info loopback_cm_info;
+अटल काष्ठा i40iw_cm_node *i40iw_create_cm_node(
+					काष्ठा i40iw_cm_core *cm_core,
+					काष्ठा i40iw_device *iwdev,
+					काष्ठा iw_cm_conn_param *conn_param,
+					काष्ठा i40iw_cm_info *cm_info)
+अणु
+	काष्ठा i40iw_cm_node *cm_node;
+	काष्ठा i40iw_cm_listener *loopback_remotelistener;
+	काष्ठा i40iw_cm_node *loopback_remotenode;
+	काष्ठा i40iw_cm_info loopback_cm_info;
 
-	u16 private_data_len = conn_param->private_data_len;
-	const void *private_data = conn_param->private_data;
+	u16 निजी_data_len = conn_param->निजी_data_len;
+	स्थिर व्योम *निजी_data = conn_param->निजी_data;
 
 	/* create a CM connection node */
-	cm_node = i40iw_make_cm_node(cm_core, iwdev, cm_info, NULL);
-	if (!cm_node)
-		return ERR_PTR(-ENOMEM);
+	cm_node = i40iw_make_cm_node(cm_core, iwdev, cm_info, शून्य);
+	अगर (!cm_node)
+		वापस ERR_PTR(-ENOMEM);
 	/* set our node side to client (active) side */
 	cm_node->tcp_cntxt.client = 1;
 	cm_node->tcp_cntxt.rcv_wscale = I40IW_CM_DEFAULT_RCV_WND_SCALE;
 
 	i40iw_record_ird_ord(cm_node, conn_param->ird, conn_param->ord);
 
-	if (!memcmp(cm_info->loc_addr, cm_info->rem_addr, sizeof(cm_info->loc_addr))) {
+	अगर (!स_भेद(cm_info->loc_addr, cm_info->rem_addr, माप(cm_info->loc_addr))) अणु
 		loopback_remotelistener = i40iw_find_listener(
 						cm_core,
 						cm_info->rem_addr,
 						cm_node->rem_port,
 						cm_node->vlan_id,
 						I40IW_CM_LISTENER_ACTIVE_STATE);
-		if (!loopback_remotelistener) {
+		अगर (!loopback_remotelistener) अणु
 			i40iw_rem_ref_cm_node(cm_node);
-			return ERR_PTR(-ECONNREFUSED);
-		} else {
+			वापस ERR_PTR(-ECONNREFUSED);
+		पूर्ण अन्यथा अणु
 			loopback_cm_info = *cm_info;
 			loopback_cm_info.loc_port = cm_info->rem_port;
 			loopback_cm_info.rem_port = cm_info->loc_port;
@@ -2963,20 +2964,20 @@ static struct i40iw_cm_node *i40iw_create_cm_node(
 								 iwdev,
 								 &loopback_cm_info,
 								 loopback_remotelistener);
-			if (!loopback_remotenode) {
+			अगर (!loopback_remotenode) अणु
 				i40iw_rem_ref_cm_node(cm_node);
-				return ERR_PTR(-ENOMEM);
-			}
+				वापस ERR_PTR(-ENOMEM);
+			पूर्ण
 			cm_core->stats_loopbacks++;
 			loopback_remotenode->loopbackpartner = cm_node;
 			loopback_remotenode->tcp_cntxt.rcv_wscale =
 				I40IW_CM_DEFAULT_RCV_WND_SCALE;
 			cm_node->loopbackpartner = loopback_remotenode;
-			memcpy(loopback_remotenode->pdata_buf, private_data,
-			       private_data_len);
-			loopback_remotenode->pdata.size = private_data_len;
+			स_नकल(loopback_remotenode->pdata_buf, निजी_data,
+			       निजी_data_len);
+			loopback_remotenode->pdata.size = निजी_data_len;
 
-			if (loopback_remotenode->ord_size > cm_node->ird_size)
+			अगर (loopback_remotenode->ord_size > cm_node->ird_size)
 				loopback_remotenode->ord_size =
 					cm_node->ird_size;
 
@@ -2992,63 +2993,63 @@ static struct i40iw_cm_node *i40iw_create_cm_node(
 			loopback_remotenode->tcp_cntxt.snd_wnd = cm_node->tcp_cntxt.rcv_wnd;
 			cm_node->tcp_cntxt.snd_wscale = loopback_remotenode->tcp_cntxt.rcv_wscale;
 			loopback_remotenode->tcp_cntxt.snd_wscale = cm_node->tcp_cntxt.rcv_wscale;
-		}
-		return cm_node;
-	}
+		पूर्ण
+		वापस cm_node;
+	पूर्ण
 
-	cm_node->pdata.size = private_data_len;
+	cm_node->pdata.size = निजी_data_len;
 	cm_node->pdata.addr = cm_node->pdata_buf;
 
-	memcpy(cm_node->pdata_buf, private_data, private_data_len);
+	स_नकल(cm_node->pdata_buf, निजी_data, निजी_data_len);
 
 	cm_node->state = I40IW_CM_STATE_SYN_SENT;
-	return cm_node;
-}
+	वापस cm_node;
+पूर्ण
 
 /**
- * i40iw_cm_reject - reject and teardown a connection
+ * i40iw_cm_reject - reject and tearकरोwn a connection
  * @cm_node: connection's node
- * @pdata: ptr to private data for reject
- * @plen: size of private data
+ * @pdata: ptr to निजी data क्रम reject
+ * @plen: size of निजी data
  */
-static int i40iw_cm_reject(struct i40iw_cm_node *cm_node, const void *pdata, u8 plen)
-{
-	int ret = 0;
-	int err;
-	int passive_state;
-	struct iw_cm_id *cm_id = cm_node->cm_id;
-	struct i40iw_cm_node *loopback = cm_node->loopbackpartner;
+अटल पूर्णांक i40iw_cm_reject(काष्ठा i40iw_cm_node *cm_node, स्थिर व्योम *pdata, u8 plen)
+अणु
+	पूर्णांक ret = 0;
+	पूर्णांक err;
+	पूर्णांक passive_state;
+	काष्ठा iw_cm_id *cm_id = cm_node->cm_id;
+	काष्ठा i40iw_cm_node *loopback = cm_node->loopbackpartner;
 
-	if (cm_node->tcp_cntxt.client)
-		return ret;
+	अगर (cm_node->tcp_cntxt.client)
+		वापस ret;
 	i40iw_cleanup_retrans_entry(cm_node);
 
-	if (!loopback) {
-		passive_state = atomic_inc_return(&cm_node->passive_state);
-		if (passive_state == I40IW_SEND_RESET_EVENT) {
+	अगर (!loopback) अणु
+		passive_state = atomic_inc_वापस(&cm_node->passive_state);
+		अगर (passive_state == I40IW_SEND_RESET_EVENT) अणु
 			cm_node->state = I40IW_CM_STATE_CLOSED;
 			i40iw_rem_ref_cm_node(cm_node);
-		} else {
-			if (cm_node->state == I40IW_CM_STATE_LISTENER_DESTROYED) {
+		पूर्ण अन्यथा अणु
+			अगर (cm_node->state == I40IW_CM_STATE_LISTENER_DESTROYED) अणु
 				i40iw_rem_ref_cm_node(cm_node);
-			} else {
+			पूर्ण अन्यथा अणु
 				ret = i40iw_send_mpa_reject(cm_node, pdata, plen);
-				if (ret) {
+				अगर (ret) अणु
 					cm_node->state = I40IW_CM_STATE_CLOSED;
 					err = i40iw_send_reset(cm_node);
-					if (err)
+					अगर (err)
 						i40iw_pr_err("send reset failed\n");
-				} else {
+				पूर्ण अन्यथा अणु
 					cm_id->add_ref(cm_id);
-				}
-			}
-		}
-	} else {
-		cm_node->cm_id = NULL;
-		if (cm_node->state == I40IW_CM_STATE_LISTENER_DESTROYED) {
+				पूर्ण
+			पूर्ण
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		cm_node->cm_id = शून्य;
+		अगर (cm_node->state == I40IW_CM_STATE_LISTENER_DESTROYED) अणु
 			i40iw_rem_ref_cm_node(cm_node);
 			i40iw_rem_ref_cm_node(loopback);
-		} else {
+		पूर्ण अन्यथा अणु
 			ret = i40iw_send_cm_event(loopback,
 						  loopback->cm_id,
 						  IW_CM_EVENT_CONNECT_REPLY,
@@ -3059,97 +3060,97 @@ static int i40iw_cm_reject(struct i40iw_cm_node *cm_node, const void *pdata, u8 
 			cm_id = loopback->cm_id;
 			i40iw_rem_ref_cm_node(loopback);
 			cm_id->rem_ref(cm_id);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * i40iw_cm_close - close of cm connection
+ * i40iw_cm_बंद - बंद of cm connection
  * @cm_node: connection's node
  */
-static int i40iw_cm_close(struct i40iw_cm_node *cm_node)
-{
-	int ret = 0;
+अटल पूर्णांक i40iw_cm_बंद(काष्ठा i40iw_cm_node *cm_node)
+अणु
+	पूर्णांक ret = 0;
 
-	if (!cm_node)
-		return -EINVAL;
+	अगर (!cm_node)
+		वापस -EINVAL;
 
-	switch (cm_node->state) {
-	case I40IW_CM_STATE_SYN_RCVD:
-	case I40IW_CM_STATE_SYN_SENT:
-	case I40IW_CM_STATE_ONE_SIDE_ESTABLISHED:
-	case I40IW_CM_STATE_ESTABLISHED:
-	case I40IW_CM_STATE_ACCEPTING:
-	case I40IW_CM_STATE_MPAREQ_SENT:
-	case I40IW_CM_STATE_MPAREQ_RCVD:
+	चयन (cm_node->state) अणु
+	हाल I40IW_CM_STATE_SYN_RCVD:
+	हाल I40IW_CM_STATE_SYN_SENT:
+	हाल I40IW_CM_STATE_ONE_SIDE_ESTABLISHED:
+	हाल I40IW_CM_STATE_ESTABLISHED:
+	हाल I40IW_CM_STATE_ACCEPTING:
+	हाल I40IW_CM_STATE_MPAREQ_SENT:
+	हाल I40IW_CM_STATE_MPAREQ_RCVD:
 		i40iw_cleanup_retrans_entry(cm_node);
 		i40iw_send_reset(cm_node);
-		break;
-	case I40IW_CM_STATE_CLOSE_WAIT:
+		अवरोध;
+	हाल I40IW_CM_STATE_CLOSE_WAIT:
 		cm_node->state = I40IW_CM_STATE_LAST_ACK;
 		i40iw_send_fin(cm_node);
-		break;
-	case I40IW_CM_STATE_FIN_WAIT1:
-	case I40IW_CM_STATE_FIN_WAIT2:
-	case I40IW_CM_STATE_LAST_ACK:
-	case I40IW_CM_STATE_TIME_WAIT:
-	case I40IW_CM_STATE_CLOSING:
+		अवरोध;
+	हाल I40IW_CM_STATE_FIN_WAIT1:
+	हाल I40IW_CM_STATE_FIN_WAIT2:
+	हाल I40IW_CM_STATE_LAST_ACK:
+	हाल I40IW_CM_STATE_TIME_WAIT:
+	हाल I40IW_CM_STATE_CLOSING:
 		ret = -1;
-		break;
-	case I40IW_CM_STATE_LISTENING:
+		अवरोध;
+	हाल I40IW_CM_STATE_LISTENING:
 		i40iw_cleanup_retrans_entry(cm_node);
 		i40iw_send_reset(cm_node);
-		break;
-	case I40IW_CM_STATE_MPAREJ_RCVD:
-	case I40IW_CM_STATE_UNKNOWN:
-	case I40IW_CM_STATE_INITED:
-	case I40IW_CM_STATE_CLOSED:
-	case I40IW_CM_STATE_LISTENER_DESTROYED:
+		अवरोध;
+	हाल I40IW_CM_STATE_MPAREJ_RCVD:
+	हाल I40IW_CM_STATE_UNKNOWN:
+	हाल I40IW_CM_STATE_INITED:
+	हाल I40IW_CM_STATE_CLOSED:
+	हाल I40IW_CM_STATE_LISTENER_DESTROYED:
 		i40iw_rem_ref_cm_node(cm_node);
-		break;
-	case I40IW_CM_STATE_OFFLOADED:
-		if (cm_node->send_entry)
+		अवरोध;
+	हाल I40IW_CM_STATE_OFFLOADED:
+		अगर (cm_node->send_entry)
 			i40iw_pr_err("send_entry\n");
 		i40iw_rem_ref_cm_node(cm_node);
-		break;
-	}
-	return ret;
-}
+		अवरोध;
+	पूर्ण
+	वापस ret;
+पूर्ण
 
 /**
  * i40iw_receive_ilq - recv an ETHERNET packet, and process it
  * through CM
- * @vsi: pointer to the vsi structure
+ * @vsi: poपूर्णांकer to the vsi काष्ठाure
  * @rbuf: receive buffer
  */
-void i40iw_receive_ilq(struct i40iw_sc_vsi *vsi, struct i40iw_puda_buf *rbuf)
-{
-	struct i40iw_cm_node *cm_node;
-	struct i40iw_cm_listener *listener;
-	struct iphdr *iph;
-	struct ipv6hdr *ip6h;
-	struct tcphdr *tcph;
-	struct i40iw_cm_info cm_info;
-	struct i40iw_sc_dev *dev = vsi->dev;
-	struct i40iw_device *iwdev = (struct i40iw_device *)dev->back_dev;
-	struct i40iw_cm_core *cm_core = &iwdev->cm_core;
-	struct vlan_ethhdr *ethh;
+व्योम i40iw_receive_ilq(काष्ठा i40iw_sc_vsi *vsi, काष्ठा i40iw_puda_buf *rbuf)
+अणु
+	काष्ठा i40iw_cm_node *cm_node;
+	काष्ठा i40iw_cm_listener *listener;
+	काष्ठा iphdr *iph;
+	काष्ठा ipv6hdr *ip6h;
+	काष्ठा tcphdr *tcph;
+	काष्ठा i40iw_cm_info cm_info;
+	काष्ठा i40iw_sc_dev *dev = vsi->dev;
+	काष्ठा i40iw_device *iwdev = (काष्ठा i40iw_device *)dev->back_dev;
+	काष्ठा i40iw_cm_core *cm_core = &iwdev->cm_core;
+	काष्ठा vlan_ethhdr *ethh;
 	u16 vtag;
 
-	/* if vlan, then maclen = 18 else 14 */
-	iph = (struct iphdr *)rbuf->iph;
-	memset(&cm_info, 0, sizeof(cm_info));
+	/* अगर vlan, then maclen = 18 अन्यथा 14 */
+	iph = (काष्ठा iphdr *)rbuf->iph;
+	स_रखो(&cm_info, 0, माप(cm_info));
 
 	i40iw_debug_buf(dev,
 			I40IW_DEBUG_ILQ,
 			"RECEIVE ILQ BUFFER",
 			rbuf->mem.va,
 			rbuf->totallen);
-	ethh = (struct vlan_ethhdr *)rbuf->mem.va;
+	ethh = (काष्ठा vlan_ethhdr *)rbuf->mem.va;
 
-	if (ethh->h_vlan_proto == htons(ETH_P_8021Q)) {
+	अगर (ethh->h_vlan_proto == htons(ETH_P_8021Q)) अणु
 		vtag = ntohs(ethh->h_vlan_TCI);
 		cm_info.user_pri = (vtag & VLAN_PRIO_MASK) >> VLAN_PRIO_SHIFT;
 		cm_info.vlan_id = vtag & VLAN_VID_MASK;
@@ -3158,25 +3159,25 @@ void i40iw_receive_ilq(struct i40iw_sc_vsi *vsi, struct i40iw_puda_buf *rbuf)
 			    "%s vlan_id=%d\n",
 			    __func__,
 			    cm_info.vlan_id);
-	} else {
+	पूर्ण अन्यथा अणु
 		cm_info.vlan_id = I40IW_NO_VLAN;
-	}
-	tcph = (struct tcphdr *)rbuf->tcph;
+	पूर्ण
+	tcph = (काष्ठा tcphdr *)rbuf->tcph;
 
-	if (rbuf->ipv4) {
+	अगर (rbuf->ipv4) अणु
 		cm_info.loc_addr[0] = ntohl(iph->daddr);
 		cm_info.rem_addr[0] = ntohl(iph->saddr);
 		cm_info.ipv4 = true;
 		cm_info.tos = iph->tos;
-	} else {
-		ip6h = (struct ipv6hdr *)rbuf->iph;
+	पूर्ण अन्यथा अणु
+		ip6h = (काष्ठा ipv6hdr *)rbuf->iph;
 		i40iw_copy_ip_ntohl(cm_info.loc_addr,
 				    ip6h->daddr.in6_u.u6_addr32);
 		i40iw_copy_ip_ntohl(cm_info.rem_addr,
 				    ip6h->saddr.in6_u.u6_addr32);
 		cm_info.ipv4 = false;
 		cm_info.tos = (ip6h->priority << 4) | (ip6h->flow_lbl[0] >> 4);
-	}
+	पूर्ण
 	cm_info.loc_port = ntohs(tcph->dest);
 	cm_info.rem_port = ntohs(tcph->source);
 	cm_node = i40iw_find_node(cm_core,
@@ -3187,58 +3188,58 @@ void i40iw_receive_ilq(struct i40iw_sc_vsi *vsi, struct i40iw_puda_buf *rbuf)
 				  true,
 				  false);
 
-	if (!cm_node) {
-		/* Only type of packet accepted are for */
-		/* the PASSIVE open (syn only) */
-		if (!tcph->syn || tcph->ack)
-			return;
+	अगर (!cm_node) अणु
+		/* Only type of packet accepted are क्रम */
+		/* the PASSIVE खोलो (syn only) */
+		अगर (!tcph->syn || tcph->ack)
+			वापस;
 		listener =
 		    i40iw_find_listener(cm_core,
 					cm_info.loc_addr,
 					cm_info.loc_port,
 					cm_info.vlan_id,
 					I40IW_CM_LISTENER_ACTIVE_STATE);
-		if (!listener) {
-			cm_info.cm_id = NULL;
+		अगर (!listener) अणु
+			cm_info.cm_id = शून्य;
 			i40iw_debug(cm_core->dev,
 				    I40IW_DEBUG_CM,
 				    "%s no listener found\n",
 				    __func__);
-			return;
-		}
+			वापस;
+		पूर्ण
 		cm_info.cm_id = listener->cm_id;
 		cm_node = i40iw_make_cm_node(cm_core, iwdev, &cm_info, listener);
-		if (!cm_node) {
+		अगर (!cm_node) अणु
 			i40iw_debug(cm_core->dev,
 				    I40IW_DEBUG_CM,
 				    "%s allocate node failed\n",
 				    __func__);
 			atomic_dec(&listener->ref_count);
-			return;
-		}
-		if (!tcph->rst && !tcph->fin) {
+			वापस;
+		पूर्ण
+		अगर (!tcph->rst && !tcph->fin) अणु
 			cm_node->state = I40IW_CM_STATE_LISTENING;
-		} else {
+		पूर्ण अन्यथा अणु
 			i40iw_rem_ref_cm_node(cm_node);
-			return;
-		}
+			वापस;
+		पूर्ण
 		atomic_inc(&cm_node->ref_count);
-	} else if (cm_node->state == I40IW_CM_STATE_OFFLOADED) {
+	पूर्ण अन्यथा अगर (cm_node->state == I40IW_CM_STATE_OFFLOADED) अणु
 		i40iw_rem_ref_cm_node(cm_node);
-		return;
-	}
+		वापस;
+	पूर्ण
 	i40iw_process_packet(cm_node, rbuf);
 	i40iw_rem_ref_cm_node(cm_node);
-}
+पूर्ण
 
 /**
  * i40iw_setup_cm_core - allocate a top level instance of a cm
  * core
- * @iwdev: iwarp device structure
+ * @iwdev: iwarp device काष्ठाure
  */
-int i40iw_setup_cm_core(struct i40iw_device *iwdev)
-{
-	struct i40iw_cm_core *cm_core = &iwdev->cm_core;
+पूर्णांक i40iw_setup_cm_core(काष्ठा i40iw_device *iwdev)
+अणु
+	काष्ठा i40iw_cm_core *cm_core = &iwdev->cm_core;
 
 	cm_core->iwdev = iwdev;
 	cm_core->dev = &iwdev->sc_dev;
@@ -3247,7 +3248,7 @@ int i40iw_setup_cm_core(struct i40iw_device *iwdev)
 	INIT_LIST_HEAD(&cm_core->non_accelerated_list);
 	INIT_LIST_HEAD(&cm_core->listen_nodes);
 
-	timer_setup(&cm_core->tcp_timer, i40iw_cm_timer_tick, 0);
+	समयr_setup(&cm_core->tcp_समयr, i40iw_cm_समयr_tick, 0);
 
 	spin_lock_init(&cm_core->ht_lock);
 	spin_lock_init(&cm_core->listen_list_lock);
@@ -3255,54 +3256,54 @@ int i40iw_setup_cm_core(struct i40iw_device *iwdev)
 
 	cm_core->event_wq = alloc_ordered_workqueue("iwewq",
 						    WQ_MEM_RECLAIM);
-	if (!cm_core->event_wq)
-		goto error;
+	अगर (!cm_core->event_wq)
+		जाओ error;
 
 	cm_core->disconn_wq = alloc_ordered_workqueue("iwdwq",
 						      WQ_MEM_RECLAIM);
-	if (!cm_core->disconn_wq)
-		goto error;
+	अगर (!cm_core->disconn_wq)
+		जाओ error;
 
-	return 0;
+	वापस 0;
 error:
 	i40iw_cleanup_cm_core(&iwdev->cm_core);
 
-	return -ENOMEM;
-}
+	वापस -ENOMEM;
+पूर्ण
 
 /**
  * i40iw_cleanup_cm_core - deallocate a top level instance of a
  * cm core
  * @cm_core: cm's core
  */
-void i40iw_cleanup_cm_core(struct i40iw_cm_core *cm_core)
-{
-	unsigned long flags;
+व्योम i40iw_cleanup_cm_core(काष्ठा i40iw_cm_core *cm_core)
+अणु
+	अचिन्हित दीर्घ flags;
 
-	if (!cm_core)
-		return;
+	अगर (!cm_core)
+		वापस;
 
 	spin_lock_irqsave(&cm_core->ht_lock, flags);
-	if (timer_pending(&cm_core->tcp_timer))
-		del_timer_sync(&cm_core->tcp_timer);
+	अगर (समयr_pending(&cm_core->tcp_समयr))
+		del_समयr_sync(&cm_core->tcp_समयr);
 	spin_unlock_irqrestore(&cm_core->ht_lock, flags);
 
-	if (cm_core->event_wq)
+	अगर (cm_core->event_wq)
 		destroy_workqueue(cm_core->event_wq);
-	if (cm_core->disconn_wq)
+	अगर (cm_core->disconn_wq)
 		destroy_workqueue(cm_core->disconn_wq);
-}
+पूर्ण
 
 /**
  * i40iw_init_tcp_ctx - setup qp context
  * @cm_node: connection's node
- * @tcp_info: offload info for tcp
- * @iwqp: associate qp for the connection
+ * @tcp_info: offload info क्रम tcp
+ * @iwqp: associate qp क्रम the connection
  */
-static void i40iw_init_tcp_ctx(struct i40iw_cm_node *cm_node,
-			       struct i40iw_tcp_offload_info *tcp_info,
-			       struct i40iw_qp *iwqp)
-{
+अटल व्योम i40iw_init_tcp_ctx(काष्ठा i40iw_cm_node *cm_node,
+			       काष्ठा i40iw_tcp_offload_info *tcp_info,
+			       काष्ठा i40iw_qp *iwqp)
+अणु
 	tcp_info->ipv4 = cm_node->ipv4;
 	tcp_info->drop_ooo_seg = true;
 	tcp_info->wscale = true;
@@ -3328,18 +3329,18 @@ static void i40iw_init_tcp_ctx(struct i40iw_cm_node *cm_node,
 	tcp_info->cwnd = cpu_to_le32(2 * cm_node->tcp_cntxt.mss);
 	tcp_info->snd_wl1 = cpu_to_le32(cm_node->tcp_cntxt.rcv_nxt);
 	tcp_info->snd_wl2 = cpu_to_le32(cm_node->tcp_cntxt.loc_seq_num);
-	tcp_info->max_snd_window = cpu_to_le32(cm_node->tcp_cntxt.max_snd_wnd);
+	tcp_info->max_snd_winकरोw = cpu_to_le32(cm_node->tcp_cntxt.max_snd_wnd);
 	tcp_info->rcv_wnd = cpu_to_le32(cm_node->tcp_cntxt.rcv_wnd <<
 					cm_node->tcp_cntxt.rcv_wscale);
 
 	tcp_info->flow_label = 0;
 	tcp_info->snd_mss = cpu_to_le32(((u32)cm_node->tcp_cntxt.mss));
-	if (cm_node->vlan_id <= VLAN_VID_MASK) {
+	अगर (cm_node->vlan_id <= VLAN_VID_MASK) अणु
 		tcp_info->insert_vlan_tag = true;
 		tcp_info->vlan_tag = cpu_to_le16(((u16)cm_node->user_pri << I40IW_VLAN_PRIO_SHIFT) |
 						  cm_node->vlan_id);
-	}
-	if (cm_node->ipv4) {
+	पूर्ण
+	अगर (cm_node->ipv4) अणु
 		tcp_info->src_port = cpu_to_le16(cm_node->loc_port);
 		tcp_info->dst_port = cpu_to_le16(cm_node->rem_port);
 
@@ -3350,9 +3351,9 @@ static void i40iw_init_tcp_ctx(struct i40iw_cm_node *cm_node,
 							 iwqp->iwdev,
 							 &tcp_info->dest_ip_addr3,
 							 true,
-							 NULL,
+							 शून्य,
 							 I40IW_ARP_RESOLVE));
-	} else {
+	पूर्ण अन्यथा अणु
 		tcp_info->src_port = cpu_to_le16(cm_node->loc_port);
 		tcp_info->dst_port = cpu_to_le16(cm_node->rem_port);
 		tcp_info->dest_ip_addr0 = cpu_to_le32(cm_node->rem_addr[0]);
@@ -3368,26 +3369,26 @@ static void i40iw_init_tcp_ctx(struct i40iw_cm_node *cm_node,
 							 iwqp->iwdev,
 							 &tcp_info->dest_ip_addr0,
 							 false,
-							 NULL,
+							 शून्य,
 							 I40IW_ARP_RESOLVE));
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
- * i40iw_cm_init_tsa_conn - setup qp for RTS
- * @iwqp: associate qp for the connection
+ * i40iw_cm_init_tsa_conn - setup qp क्रम RTS
+ * @iwqp: associate qp क्रम the connection
  * @cm_node: connection's node
  */
-static void i40iw_cm_init_tsa_conn(struct i40iw_qp *iwqp,
-				   struct i40iw_cm_node *cm_node)
-{
-	struct i40iw_tcp_offload_info tcp_info;
-	struct i40iwarp_offload_info *iwarp_info;
-	struct i40iw_qp_host_ctx_info *ctx_info;
-	struct i40iw_device *iwdev = iwqp->iwdev;
-	struct i40iw_sc_dev *dev = &iwqp->iwdev->sc_dev;
+अटल व्योम i40iw_cm_init_tsa_conn(काष्ठा i40iw_qp *iwqp,
+				   काष्ठा i40iw_cm_node *cm_node)
+अणु
+	काष्ठा i40iw_tcp_offload_info tcp_info;
+	काष्ठा i40iwarp_offload_info *iwarp_info;
+	काष्ठा i40iw_qp_host_ctx_info *ctx_info;
+	काष्ठा i40iw_device *iwdev = iwqp->iwdev;
+	काष्ठा i40iw_sc_dev *dev = &iwqp->iwdev->sc_dev;
 
-	memset(&tcp_info, 0x00, sizeof(struct i40iw_tcp_offload_info));
+	स_रखो(&tcp_info, 0x00, माप(काष्ठा i40iw_tcp_offload_info));
 	iwarp_info = &iwqp->iwarp_info;
 	ctx_info = &iwqp->ctx_info;
 
@@ -3398,7 +3399,7 @@ static void i40iw_cm_init_tsa_conn(struct i40iw_qp *iwqp,
 	iwarp_info->ord_size = cm_node->ord_size;
 	iwarp_info->ird_size = i40iw_derive_hw_ird_setting(cm_node->ird_size);
 
-	if (iwarp_info->ord_size == 1)
+	अगर (iwarp_info->ord_size == 1)
 		iwarp_info->ord_size = 2;
 
 	iwarp_info->rd_enable = true;
@@ -3413,11 +3414,11 @@ static void i40iw_cm_init_tsa_conn(struct i40iw_qp *iwqp,
 	ctx_info->user_pri = cm_node->user_pri;
 
 	i40iw_init_tcp_ctx(cm_node, &tcp_info, iwqp);
-	if (cm_node->snd_mark_en) {
+	अगर (cm_node->snd_mark_en) अणु
 		iwarp_info->snd_mark_en = true;
 		iwarp_info->snd_mark_offset = (tcp_info.snd_nxt &
 				SNDMARKER_SEQNMASK) + cm_node->lsmm_size;
-	}
+	पूर्ण
 
 	cm_node->state = I40IW_CM_STATE_OFFLOADED;
 	tcp_info.tcp_state = I40IW_TCP_STATE_ESTABLISHED;
@@ -3426,114 +3427,114 @@ static void i40iw_cm_init_tsa_conn(struct i40iw_qp *iwqp,
 
 	dev->iw_priv_qp_ops->qp_setctx(&iwqp->sc_qp, (u64 *)(iwqp->host_ctx.va), ctx_info);
 
-	/* once tcp_info is set, no need to do it again */
+	/* once tcp_info is set, no need to करो it again */
 	ctx_info->tcp_info_valid = false;
 	ctx_info->iwarp_info_valid = false;
 	ctx_info->add_to_qoslist = false;
-}
+पूर्ण
 
 /**
- * i40iw_cm_disconn - when a connection is being closed
- * @iwqp: associate qp for the connection
+ * i40iw_cm_disconn - when a connection is being बंदd
+ * @iwqp: associate qp क्रम the connection
  */
-void i40iw_cm_disconn(struct i40iw_qp *iwqp)
-{
-	struct disconn_work *work;
-	struct i40iw_device *iwdev = iwqp->iwdev;
-	struct i40iw_cm_core *cm_core = &iwdev->cm_core;
-	unsigned long flags;
+व्योम i40iw_cm_disconn(काष्ठा i40iw_qp *iwqp)
+अणु
+	काष्ठा disconn_work *work;
+	काष्ठा i40iw_device *iwdev = iwqp->iwdev;
+	काष्ठा i40iw_cm_core *cm_core = &iwdev->cm_core;
+	अचिन्हित दीर्घ flags;
 
-	work = kzalloc(sizeof(*work), GFP_ATOMIC);
-	if (!work)
-		return;	/* Timer will clean up */
+	work = kzalloc(माप(*work), GFP_ATOMIC);
+	अगर (!work)
+		वापस;	/* Timer will clean up */
 
 	spin_lock_irqsave(&iwdev->qptable_lock, flags);
-	if (!iwdev->qp_table[iwqp->ibqp.qp_num]) {
+	अगर (!iwdev->qp_table[iwqp->ibqp.qp_num]) अणु
 		spin_unlock_irqrestore(&iwdev->qptable_lock, flags);
 		i40iw_debug(&iwdev->sc_dev, I40IW_DEBUG_CM,
 			    "%s qp_id %d is already freed\n",
 			     __func__, iwqp->ibqp.qp_num);
-		kfree(work);
-		return;
-	}
+		kमुक्त(work);
+		वापस;
+	पूर्ण
 	i40iw_qp_add_ref(&iwqp->ibqp);
 	spin_unlock_irqrestore(&iwdev->qptable_lock, flags);
 
 	work->iwqp = iwqp;
 	INIT_WORK(&work->work, i40iw_disconnect_worker);
 	queue_work(cm_core->disconn_wq, &work->work);
-	return;
-}
+	वापस;
+पूर्ण
 
 /**
- * i40iw_qp_disconnect - free qp and close cm
- * @iwqp: associate qp for the connection
+ * i40iw_qp_disconnect - मुक्त qp and बंद cm
+ * @iwqp: associate qp क्रम the connection
  */
-static void i40iw_qp_disconnect(struct i40iw_qp *iwqp)
-{
-	struct i40iw_device *iwdev;
-	struct i40iw_ib_device *iwibdev;
+अटल व्योम i40iw_qp_disconnect(काष्ठा i40iw_qp *iwqp)
+अणु
+	काष्ठा i40iw_device *iwdev;
+	काष्ठा i40iw_ib_device *iwibdev;
 
 	iwdev = to_iwdev(iwqp->ibqp.device);
-	if (!iwdev) {
+	अगर (!iwdev) अणु
 		i40iw_pr_err("iwdev == NULL\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	iwibdev = iwdev->iwibdev;
 
-	if (iwqp->active_conn) {
+	अगर (iwqp->active_conn) अणु
 		/* indicate this connection is NOT active */
 		iwqp->active_conn = 0;
-	} else {
-		/* Need to free the Last Streaming Mode Message */
-		if (iwqp->ietf_mem.va) {
-			if (iwqp->lsmm_mr)
+	पूर्ण अन्यथा अणु
+		/* Need to मुक्त the Last Streaming Mode Message */
+		अगर (iwqp->ietf_mem.va) अणु
+			अगर (iwqp->lsmm_mr)
 				iwibdev->ibdev.ops.dereg_mr(iwqp->lsmm_mr,
-							    NULL);
-			i40iw_free_dma_mem(iwdev->sc_dev.hw, &iwqp->ietf_mem);
-		}
-	}
+							    शून्य);
+			i40iw_मुक्त_dma_mem(iwdev->sc_dev.hw, &iwqp->ietf_mem);
+		पूर्ण
+	पूर्ण
 
-	/* close the CM node down if it is still active */
-	if (iwqp->cm_node) {
+	/* बंद the CM node करोwn अगर it is still active */
+	अगर (iwqp->cm_node) अणु
 		i40iw_debug(&iwdev->sc_dev, I40IW_DEBUG_CM, "%s Call close API\n", __func__);
-		i40iw_cm_close(iwqp->cm_node);
-	}
-}
+		i40iw_cm_बंद(iwqp->cm_node);
+	पूर्ण
+पूर्ण
 
 /**
- * i40iw_cm_disconn_true - called by worker thread to disconnect qp
- * @iwqp: associate qp for the connection
+ * i40iw_cm_disconn_true - called by worker thपढ़ो to disconnect qp
+ * @iwqp: associate qp क्रम the connection
  */
-static void i40iw_cm_disconn_true(struct i40iw_qp *iwqp)
-{
-	struct iw_cm_id *cm_id;
-	struct i40iw_device *iwdev;
-	struct i40iw_sc_qp *qp = &iwqp->sc_qp;
+अटल व्योम i40iw_cm_disconn_true(काष्ठा i40iw_qp *iwqp)
+अणु
+	काष्ठा iw_cm_id *cm_id;
+	काष्ठा i40iw_device *iwdev;
+	काष्ठा i40iw_sc_qp *qp = &iwqp->sc_qp;
 	u16 last_ae;
 	u8 original_hw_tcp_state;
 	u8 original_ibqp_state;
-	int disconn_status = 0;
-	int issue_disconn = 0;
-	int issue_close = 0;
-	int issue_flush = 0;
-	struct ib_event ibevent;
-	unsigned long flags;
-	int ret;
+	पूर्णांक disconn_status = 0;
+	पूर्णांक issue_disconn = 0;
+	पूर्णांक issue_बंद = 0;
+	पूर्णांक issue_flush = 0;
+	काष्ठा ib_event ibevent;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक ret;
 
-	if (!iwqp) {
+	अगर (!iwqp) अणु
 		i40iw_pr_err("iwqp == NULL\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	spin_lock_irqsave(&iwqp->lock, flags);
 	cm_id = iwqp->cm_id;
-	/* make sure we havent already closed this connection */
-	if (!cm_id) {
+	/* make sure we havent alपढ़ोy बंदd this connection */
+	अगर (!cm_id) अणु
 		spin_unlock_irqrestore(&iwqp->lock, flags);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	iwdev = to_iwdev(iwqp->ibqp.device);
 
@@ -3541,219 +3542,219 @@ static void i40iw_cm_disconn_true(struct i40iw_qp *iwqp)
 	original_ibqp_state = iwqp->ibqp_state;
 	last_ae = iwqp->last_aeq;
 
-	if (qp->term_flags) {
+	अगर (qp->term_flags) अणु
 		issue_disconn = 1;
-		issue_close = 1;
-		iwqp->cm_id = NULL;
-		/*When term timer expires after cm_timer, don't want
-		 *terminate-handler to issue cm_disconn which can re-free
+		issue_बंद = 1;
+		iwqp->cm_id = शून्य;
+		/*When term समयr expires after cm_समयr, करोn't want
+		 *terminate-handler to issue cm_disconn which can re-मुक्त
 		 *a QP even after its refcnt=0.
 		 */
-		i40iw_terminate_del_timer(qp);
-		if (!iwqp->flush_issued) {
+		i40iw_terminate_del_समयr(qp);
+		अगर (!iwqp->flush_issued) अणु
 			iwqp->flush_issued = 1;
 			issue_flush = 1;
-		}
-	} else if ((original_hw_tcp_state == I40IW_TCP_STATE_CLOSE_WAIT) ||
+		पूर्ण
+	पूर्ण अन्यथा अगर ((original_hw_tcp_state == I40IW_TCP_STATE_CLOSE_WAIT) ||
 		   ((original_ibqp_state == IB_QPS_RTS) &&
-		    (last_ae == I40IW_AE_LLP_CONNECTION_RESET))) {
+		    (last_ae == I40IW_AE_LLP_CONNECTION_RESET))) अणु
 		issue_disconn = 1;
-		if (last_ae == I40IW_AE_LLP_CONNECTION_RESET)
+		अगर (last_ae == I40IW_AE_LLP_CONNECTION_RESET)
 			disconn_status = -ECONNRESET;
-	}
+	पूर्ण
 
-	if (((original_hw_tcp_state == I40IW_TCP_STATE_CLOSED) ||
+	अगर (((original_hw_tcp_state == I40IW_TCP_STATE_CLOSED) ||
 	     (original_hw_tcp_state == I40IW_TCP_STATE_TIME_WAIT) ||
 	     (last_ae == I40IW_AE_RDMAP_ROE_BAD_LLP_CLOSE) ||
 	     (last_ae == I40IW_AE_LLP_CONNECTION_RESET) ||
-	      iwdev->reset)) {
-		issue_close = 1;
-		iwqp->cm_id = NULL;
-		if (!iwqp->flush_issued) {
+	      iwdev->reset)) अणु
+		issue_बंद = 1;
+		iwqp->cm_id = शून्य;
+		अगर (!iwqp->flush_issued) अणु
 			iwqp->flush_issued = 1;
 			issue_flush = 1;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	spin_unlock_irqrestore(&iwqp->lock, flags);
-	if (issue_flush && !iwqp->destroyed) {
+	अगर (issue_flush && !iwqp->destroyed) अणु
 		/* Flush the queues */
 		i40iw_flush_wqes(iwdev, iwqp);
 
-		if (qp->term_flags && iwqp->ibqp.event_handler) {
+		अगर (qp->term_flags && iwqp->ibqp.event_handler) अणु
 			ibevent.device = iwqp->ibqp.device;
 			ibevent.event = (qp->eventtype == TERM_EVENT_QP_FATAL) ?
 					IB_EVENT_QP_FATAL : IB_EVENT_QP_ACCESS_ERR;
 			ibevent.element.qp = &iwqp->ibqp;
 			iwqp->ibqp.event_handler(&ibevent, iwqp->ibqp.qp_context);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (cm_id && cm_id->event_handler) {
-		if (issue_disconn) {
-			ret = i40iw_send_cm_event(NULL,
+	अगर (cm_id && cm_id->event_handler) अणु
+		अगर (issue_disconn) अणु
+			ret = i40iw_send_cm_event(शून्य,
 						  cm_id,
 						  IW_CM_EVENT_DISCONNECT,
 						  disconn_status);
 
-			if (ret)
+			अगर (ret)
 				i40iw_debug(&iwdev->sc_dev,
 					    I40IW_DEBUG_CM,
 					    "disconnect event failed %s: - cm_id = %p\n",
 					    __func__, cm_id);
-		}
-		if (issue_close) {
+		पूर्ण
+		अगर (issue_बंद) अणु
 			i40iw_qp_disconnect(iwqp);
 			cm_id->provider_data = iwqp;
-			ret = i40iw_send_cm_event(NULL, cm_id, IW_CM_EVENT_CLOSE, 0);
-			if (ret)
+			ret = i40iw_send_cm_event(शून्य, cm_id, IW_CM_EVENT_CLOSE, 0);
+			अगर (ret)
 				i40iw_debug(&iwdev->sc_dev,
 					    I40IW_DEBUG_CM,
 					    "close event failed %s: - cm_id = %p\n",
 					    __func__, cm_id);
 			cm_id->rem_ref(cm_id);
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
 /**
- * i40iw_disconnect_worker - worker for connection close
- * @work: points or disconn structure
+ * i40iw_disconnect_worker - worker क्रम connection बंद
+ * @work: poपूर्णांकs or disconn काष्ठाure
  */
-static void i40iw_disconnect_worker(struct work_struct *work)
-{
-	struct disconn_work *dwork = container_of(work, struct disconn_work, work);
-	struct i40iw_qp *iwqp = dwork->iwqp;
+अटल व्योम i40iw_disconnect_worker(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा disconn_work *dwork = container_of(work, काष्ठा disconn_work, work);
+	काष्ठा i40iw_qp *iwqp = dwork->iwqp;
 
-	kfree(dwork);
+	kमुक्त(dwork);
 	i40iw_cm_disconn_true(iwqp);
 	i40iw_qp_rem_ref(&iwqp->ibqp);
-}
+पूर्ण
 
 /**
- * i40iw_accept - registered call for connection to be accepted
- * @cm_id: cm information for passive connection
+ * i40iw_accept - रेजिस्टरed call क्रम connection to be accepted
+ * @cm_id: cm inक्रमmation क्रम passive connection
  * @conn_param: accpet parameters
  */
-int i40iw_accept(struct iw_cm_id *cm_id, struct iw_cm_conn_param *conn_param)
-{
-	struct ib_qp *ibqp;
-	struct i40iw_qp *iwqp;
-	struct i40iw_device *iwdev;
-	struct i40iw_sc_dev *dev;
-	struct i40iw_cm_core *cm_core;
-	struct i40iw_cm_node *cm_node;
-	struct ib_qp_attr attr;
-	int passive_state;
-	struct ib_mr *ibmr;
-	struct i40iw_pd *iwpd;
+पूर्णांक i40iw_accept(काष्ठा iw_cm_id *cm_id, काष्ठा iw_cm_conn_param *conn_param)
+अणु
+	काष्ठा ib_qp *ibqp;
+	काष्ठा i40iw_qp *iwqp;
+	काष्ठा i40iw_device *iwdev;
+	काष्ठा i40iw_sc_dev *dev;
+	काष्ठा i40iw_cm_core *cm_core;
+	काष्ठा i40iw_cm_node *cm_node;
+	काष्ठा ib_qp_attr attr;
+	पूर्णांक passive_state;
+	काष्ठा ib_mr *ibmr;
+	काष्ठा i40iw_pd *iwpd;
 	u16 buf_len = 0;
-	struct i40iw_kmem_info accept;
-	enum i40iw_status_code status;
+	काष्ठा i40iw_kmem_info accept;
+	क्रमागत i40iw_status_code status;
 	u64 tagged_offset;
-	unsigned long flags;
+	अचिन्हित दीर्घ flags;
 
-	memset(&attr, 0, sizeof(attr));
+	स_रखो(&attr, 0, माप(attr));
 	ibqp = i40iw_get_qp(cm_id->device, conn_param->qpn);
-	if (!ibqp)
-		return -EINVAL;
+	अगर (!ibqp)
+		वापस -EINVAL;
 
 	iwqp = to_iwqp(ibqp);
 	iwdev = iwqp->iwdev;
 	dev = &iwdev->sc_dev;
 	cm_core = &iwdev->cm_core;
-	cm_node = (struct i40iw_cm_node *)cm_id->provider_data;
+	cm_node = (काष्ठा i40iw_cm_node *)cm_id->provider_data;
 
-	if (((struct sockaddr_in *)&cm_id->local_addr)->sin_family == AF_INET) {
+	अगर (((काष्ठा sockaddr_in *)&cm_id->local_addr)->sin_family == AF_INET) अणु
 		cm_node->ipv4 = true;
 		cm_node->vlan_id = i40iw_get_vlan_ipv4(cm_node->loc_addr);
-	} else {
+	पूर्ण अन्यथा अणु
 		cm_node->ipv4 = false;
 		i40iw_netdev_vlan_ipv6(cm_node->loc_addr, &cm_node->vlan_id);
-	}
+	पूर्ण
 	i40iw_debug(cm_node->dev,
 		    I40IW_DEBUG_CM,
 		    "Accept vlan_id=%d\n",
 		    cm_node->vlan_id);
-	if (cm_node->state == I40IW_CM_STATE_LISTENER_DESTROYED) {
-		if (cm_node->loopbackpartner)
+	अगर (cm_node->state == I40IW_CM_STATE_LISTENER_DESTROYED) अणु
+		अगर (cm_node->loopbackpartner)
 			i40iw_rem_ref_cm_node(cm_node->loopbackpartner);
 		i40iw_rem_ref_cm_node(cm_node);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	passive_state = atomic_inc_return(&cm_node->passive_state);
-	if (passive_state == I40IW_SEND_RESET_EVENT) {
+	passive_state = atomic_inc_वापस(&cm_node->passive_state);
+	अगर (passive_state == I40IW_SEND_RESET_EVENT) अणु
 		i40iw_rem_ref_cm_node(cm_node);
-		return -ECONNRESET;
-	}
+		वापस -ECONNRESET;
+	पूर्ण
 
 	cm_node->cm_core->stats_accepts++;
-	iwqp->cm_node = (void *)cm_node;
+	iwqp->cm_node = (व्योम *)cm_node;
 	cm_node->iwqp = iwqp;
 
-	buf_len = conn_param->private_data_len + I40IW_MAX_IETF_SIZE;
+	buf_len = conn_param->निजी_data_len + I40IW_MAX_IETF_SIZE;
 
 	status = i40iw_allocate_dma_mem(dev->hw, &iwqp->ietf_mem, buf_len, 1);
 
-	if (status)
-		return -ENOMEM;
-	cm_node->pdata.size = conn_param->private_data_len;
+	अगर (status)
+		वापस -ENOMEM;
+	cm_node->pdata.size = conn_param->निजी_data_len;
 	accept.addr = iwqp->ietf_mem.va;
 	accept.size = i40iw_cm_build_mpa_frame(cm_node, &accept, MPA_KEY_REPLY);
-	memcpy(accept.addr + accept.size, conn_param->private_data,
-	       conn_param->private_data_len);
+	स_नकल(accept.addr + accept.size, conn_param->निजी_data,
+	       conn_param->निजी_data_len);
 
 	/* setup our first outgoing iWarp send WQE (the IETF frame response) */
-	if ((cm_node->ipv4 &&
+	अगर ((cm_node->ipv4 &&
 	     !i40iw_ipv4_is_loopback(cm_node->loc_addr[0], cm_node->rem_addr[0])) ||
 	    (!cm_node->ipv4 &&
-	     !i40iw_ipv6_is_loopback(cm_node->loc_addr, cm_node->rem_addr))) {
+	     !i40iw_ipv6_is_loopback(cm_node->loc_addr, cm_node->rem_addr))) अणु
 		iwpd = iwqp->iwpd;
-		tagged_offset = (uintptr_t)iwqp->ietf_mem.va;
+		tagged_offset = (uपूर्णांकptr_t)iwqp->ietf_mem.va;
 		ibmr = i40iw_reg_phys_mr(&iwpd->ibpd,
 					 iwqp->ietf_mem.pa,
 					 buf_len,
 					 IB_ACCESS_LOCAL_WRITE,
 					 &tagged_offset);
-		if (IS_ERR(ibmr)) {
-			i40iw_free_dma_mem(dev->hw, &iwqp->ietf_mem);
-			return -ENOMEM;
-		}
+		अगर (IS_ERR(ibmr)) अणु
+			i40iw_मुक्त_dma_mem(dev->hw, &iwqp->ietf_mem);
+			वापस -ENOMEM;
+		पूर्ण
 
 		ibmr->pd = &iwpd->ibpd;
 		ibmr->device = iwpd->ibpd.device;
 		iwqp->lsmm_mr = ibmr;
-		if (iwqp->page)
+		अगर (iwqp->page)
 			iwqp->sc_qp.qp_uk.sq_base = kmap(iwqp->page);
 		dev->iw_priv_qp_ops->qp_send_lsmm(&iwqp->sc_qp,
 							iwqp->ietf_mem.va,
-							(accept.size + conn_param->private_data_len),
+							(accept.size + conn_param->निजी_data_len),
 							ibmr->lkey);
 
-	} else {
-		if (iwqp->page)
+	पूर्ण अन्यथा अणु
+		अगर (iwqp->page)
 			iwqp->sc_qp.qp_uk.sq_base = kmap(iwqp->page);
-		dev->iw_priv_qp_ops->qp_send_lsmm(&iwqp->sc_qp, NULL, 0, 0);
-	}
+		dev->iw_priv_qp_ops->qp_send_lsmm(&iwqp->sc_qp, शून्य, 0, 0);
+	पूर्ण
 
-	if (iwqp->page)
+	अगर (iwqp->page)
 		kunmap(iwqp->page);
 
 	iwqp->cm_id = cm_id;
 	cm_node->cm_id = cm_id;
 
-	cm_id->provider_data = (void *)iwqp;
+	cm_id->provider_data = (व्योम *)iwqp;
 	iwqp->active_conn = 0;
 
-	cm_node->lsmm_size = accept.size + conn_param->private_data_len;
+	cm_node->lsmm_size = accept.size + conn_param->निजी_data_len;
 	i40iw_cm_init_tsa_conn(iwqp, cm_node);
 	cm_id->add_ref(cm_id);
 	i40iw_qp_add_ref(&iwqp->ibqp);
 
 	attr.qp_state = IB_QPS_RTS;
 	cm_node->qhash_set = false;
-	i40iw_modify_qp(&iwqp->ibqp, &attr, IB_QP_STATE, NULL);
+	i40iw_modअगरy_qp(&iwqp->ibqp, &attr, IB_QP_STATE, शून्य);
 
 	cm_node->accelerated = true;
 	spin_lock_irqsave(&cm_core->ht_lock, flags);
@@ -3762,110 +3763,110 @@ int i40iw_accept(struct iw_cm_id *cm_id, struct iw_cm_conn_param *conn_param)
 
 	status =
 		i40iw_send_cm_event(cm_node, cm_id, IW_CM_EVENT_ESTABLISHED, 0);
-	if (status)
+	अगर (status)
 		i40iw_debug(dev, I40IW_DEBUG_CM, "error sending cm event - ESTABLISHED\n");
 
-	if (cm_node->loopbackpartner) {
-		cm_node->loopbackpartner->pdata.size = conn_param->private_data_len;
+	अगर (cm_node->loopbackpartner) अणु
+		cm_node->loopbackpartner->pdata.size = conn_param->निजी_data_len;
 
 		/* copy entire MPA frame to our cm_node's frame */
-		memcpy(cm_node->loopbackpartner->pdata_buf,
-		       conn_param->private_data,
-		       conn_param->private_data_len);
+		स_नकल(cm_node->loopbackpartner->pdata_buf,
+		       conn_param->निजी_data,
+		       conn_param->निजी_data_len);
 		i40iw_create_event(cm_node->loopbackpartner, I40IW_CM_EVENT_CONNECTED);
-	}
+	पूर्ण
 
-	if (cm_node->accept_pend) {
+	अगर (cm_node->accept_pend) अणु
 		atomic_dec(&cm_node->listener->pend_accepts_cnt);
 		cm_node->accept_pend = 0;
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /**
- * i40iw_reject - registered call for connection to be rejected
- * @cm_id: cm information for passive connection
- * @pdata: private data to be sent
- * @pdata_len: private data length
+ * i40iw_reject - रेजिस्टरed call क्रम connection to be rejected
+ * @cm_id: cm inक्रमmation क्रम passive connection
+ * @pdata: निजी data to be sent
+ * @pdata_len: निजी data length
  */
-int i40iw_reject(struct iw_cm_id *cm_id, const void *pdata, u8 pdata_len)
-{
-	struct i40iw_device *iwdev;
-	struct i40iw_cm_node *cm_node;
-	struct i40iw_cm_node *loopback;
+पूर्णांक i40iw_reject(काष्ठा iw_cm_id *cm_id, स्थिर व्योम *pdata, u8 pdata_len)
+अणु
+	काष्ठा i40iw_device *iwdev;
+	काष्ठा i40iw_cm_node *cm_node;
+	काष्ठा i40iw_cm_node *loopback;
 
-	cm_node = (struct i40iw_cm_node *)cm_id->provider_data;
+	cm_node = (काष्ठा i40iw_cm_node *)cm_id->provider_data;
 	loopback = cm_node->loopbackpartner;
 	cm_node->cm_id = cm_id;
 	cm_node->pdata.size = pdata_len;
 
 	iwdev = to_iwdev(cm_id->device);
-	if (!iwdev)
-		return -EINVAL;
+	अगर (!iwdev)
+		वापस -EINVAL;
 	cm_node->cm_core->stats_rejects++;
 
-	if (pdata_len + sizeof(struct ietf_mpa_v2) > MAX_CM_BUFFER)
-		return -EINVAL;
+	अगर (pdata_len + माप(काष्ठा ietf_mpa_v2) > MAX_CM_BUFFER)
+		वापस -EINVAL;
 
-	if (loopback) {
-		memcpy(&loopback->pdata_buf, pdata, pdata_len);
+	अगर (loopback) अणु
+		स_नकल(&loopback->pdata_buf, pdata, pdata_len);
 		loopback->pdata.size = pdata_len;
-	}
+	पूर्ण
 
-	return i40iw_cm_reject(cm_node, pdata, pdata_len);
-}
+	वापस i40iw_cm_reject(cm_node, pdata, pdata_len);
+पूर्ण
 
 /**
- * i40iw_connect - registered call for connection to be established
- * @cm_id: cm information for passive connection
- * @conn_param: Information about the connection
+ * i40iw_connect - रेजिस्टरed call क्रम connection to be established
+ * @cm_id: cm inक्रमmation क्रम passive connection
+ * @conn_param: Inक्रमmation about the connection
  */
-int i40iw_connect(struct iw_cm_id *cm_id, struct iw_cm_conn_param *conn_param)
-{
-	struct ib_qp *ibqp;
-	struct i40iw_qp *iwqp;
-	struct i40iw_device *iwdev;
-	struct i40iw_cm_node *cm_node;
-	struct i40iw_cm_info cm_info;
-	struct sockaddr_in *laddr;
-	struct sockaddr_in *raddr;
-	struct sockaddr_in6 *laddr6;
-	struct sockaddr_in6 *raddr6;
-	int ret = 0;
+पूर्णांक i40iw_connect(काष्ठा iw_cm_id *cm_id, काष्ठा iw_cm_conn_param *conn_param)
+अणु
+	काष्ठा ib_qp *ibqp;
+	काष्ठा i40iw_qp *iwqp;
+	काष्ठा i40iw_device *iwdev;
+	काष्ठा i40iw_cm_node *cm_node;
+	काष्ठा i40iw_cm_info cm_info;
+	काष्ठा sockaddr_in *laddr;
+	काष्ठा sockaddr_in *raddr;
+	काष्ठा sockaddr_in6 *laddr6;
+	काष्ठा sockaddr_in6 *raddr6;
+	पूर्णांक ret = 0;
 
 	ibqp = i40iw_get_qp(cm_id->device, conn_param->qpn);
-	if (!ibqp)
-		return -EINVAL;
+	अगर (!ibqp)
+		वापस -EINVAL;
 	iwqp = to_iwqp(ibqp);
-	if (!iwqp)
-		return -EINVAL;
+	अगर (!iwqp)
+		वापस -EINVAL;
 	iwdev = to_iwdev(iwqp->ibqp.device);
-	if (!iwdev)
-		return -EINVAL;
+	अगर (!iwdev)
+		वापस -EINVAL;
 
-	laddr = (struct sockaddr_in *)&cm_id->m_local_addr;
-	raddr = (struct sockaddr_in *)&cm_id->m_remote_addr;
-	laddr6 = (struct sockaddr_in6 *)&cm_id->m_local_addr;
-	raddr6 = (struct sockaddr_in6 *)&cm_id->m_remote_addr;
+	laddr = (काष्ठा sockaddr_in *)&cm_id->m_local_addr;
+	raddr = (काष्ठा sockaddr_in *)&cm_id->m_remote_addr;
+	laddr6 = (काष्ठा sockaddr_in6 *)&cm_id->m_local_addr;
+	raddr6 = (काष्ठा sockaddr_in6 *)&cm_id->m_remote_addr;
 
-	if (!(laddr->sin_port) || !(raddr->sin_port))
-		return -EINVAL;
+	अगर (!(laddr->sin_port) || !(raddr->sin_port))
+		वापस -EINVAL;
 
 	iwqp->active_conn = 1;
-	iwqp->cm_id = NULL;
+	iwqp->cm_id = शून्य;
 	cm_id->provider_data = iwqp;
 
-	/* set up the connection params for the node */
-	if (cm_id->remote_addr.ss_family == AF_INET) {
+	/* set up the connection params क्रम the node */
+	अगर (cm_id->remote_addr.ss_family == AF_INET) अणु
 		cm_info.ipv4 = true;
-		memset(cm_info.loc_addr, 0, sizeof(cm_info.loc_addr));
-		memset(cm_info.rem_addr, 0, sizeof(cm_info.rem_addr));
+		स_रखो(cm_info.loc_addr, 0, माप(cm_info.loc_addr));
+		स_रखो(cm_info.rem_addr, 0, माप(cm_info.rem_addr));
 		cm_info.loc_addr[0] = ntohl(laddr->sin_addr.s_addr);
 		cm_info.rem_addr[0] = ntohl(raddr->sin_addr.s_addr);
 		cm_info.loc_port = ntohs(laddr->sin_port);
 		cm_info.rem_port = ntohs(raddr->sin_port);
 		cm_info.vlan_id = i40iw_get_vlan_ipv4(cm_info.loc_addr);
-	} else {
+	पूर्ण अन्यथा अणु
 		cm_info.ipv4 = false;
 		i40iw_copy_ip_ntohl(cm_info.loc_addr,
 				    laddr6->sin6_addr.in6_u.u6_addr32);
@@ -3874,7 +3875,7 @@ int i40iw_connect(struct iw_cm_id *cm_id, struct iw_cm_conn_param *conn_param)
 		cm_info.loc_port = ntohs(laddr6->sin6_port);
 		cm_info.rem_port = ntohs(raddr6->sin6_port);
 		i40iw_netdev_vlan_ipv6(cm_info.loc_addr, &cm_info.vlan_id);
-	}
+	पूर्ण
 	cm_info.cm_id = cm_id;
 	cm_info.tos = cm_id->tos;
 	cm_info.user_pri = rt_tos2priority(cm_id->tos);
@@ -3884,29 +3885,29 @@ int i40iw_connect(struct iw_cm_id *cm_id, struct iw_cm_conn_param *conn_param)
 	cm_node = i40iw_create_cm_node(&iwdev->cm_core, iwdev,
 				       conn_param, &cm_info);
 
-	if (IS_ERR(cm_node)) {
+	अगर (IS_ERR(cm_node)) अणु
 		ret = PTR_ERR(cm_node);
 		cm_id->rem_ref(cm_id);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	if ((cm_info.ipv4 && (laddr->sin_addr.s_addr != raddr->sin_addr.s_addr)) ||
-	    (!cm_info.ipv4 && memcmp(laddr6->sin6_addr.in6_u.u6_addr32,
+	अगर ((cm_info.ipv4 && (laddr->sin_addr.s_addr != raddr->sin_addr.s_addr)) ||
+	    (!cm_info.ipv4 && स_भेद(laddr6->sin6_addr.in6_u.u6_addr32,
 				     raddr6->sin6_addr.in6_u.u6_addr32,
-				     sizeof(laddr6->sin6_addr.in6_u.u6_addr32)))) {
-		if (i40iw_manage_qhash(iwdev, &cm_info, I40IW_QHASH_TYPE_TCP_ESTABLISHED,
-				       I40IW_QHASH_MANAGE_TYPE_ADD, NULL, true)) {
+				     माप(laddr6->sin6_addr.in6_u.u6_addr32)))) अणु
+		अगर (i40iw_manage_qhash(iwdev, &cm_info, I40IW_QHASH_TYPE_TCP_ESTABLISHED,
+				       I40IW_QHASH_MANAGE_TYPE_ADD, शून्य, true)) अणु
 			ret = -EINVAL;
-			goto err;
-		}
+			जाओ err;
+		पूर्ण
 		cm_node->qhash_set = true;
-	}
+	पूर्ण
 
-	if (i40iw_manage_apbvt(iwdev, cm_info.loc_port,
-			       I40IW_MANAGE_APBVT_ADD)) {
+	अगर (i40iw_manage_apbvt(iwdev, cm_info.loc_port,
+			       I40IW_MANAGE_APBVT_ADD)) अणु
 		ret =  -EINVAL;
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
 	cm_node->apbvt_set = true;
 	iwqp->cm_node = cm_node;
@@ -3914,18 +3915,18 @@ int i40iw_connect(struct iw_cm_id *cm_id, struct iw_cm_conn_param *conn_param)
 	iwqp->cm_id = cm_id;
 	i40iw_qp_add_ref(&iwqp->ibqp);
 
-	if (cm_node->state != I40IW_CM_STATE_OFFLOADED) {
+	अगर (cm_node->state != I40IW_CM_STATE_OFFLOADED) अणु
 		cm_node->state = I40IW_CM_STATE_SYN_SENT;
 		ret = i40iw_send_syn(cm_node, 0);
-		if (ret)
-			goto err;
-	}
+		अगर (ret)
+			जाओ err;
+	पूर्ण
 
-	if (cm_node->loopbackpartner) {
+	अगर (cm_node->loopbackpartner) अणु
 		cm_node->loopbackpartner->state = I40IW_CM_STATE_MPAREQ_RCVD;
 		i40iw_create_event(cm_node->loopbackpartner,
 				   I40IW_CM_EVENT_MPA_REQ);
-	}
+	पूर्ण
 
 	i40iw_debug(cm_node->dev,
 		    I40IW_DEBUG_CM,
@@ -3934,15 +3935,15 @@ int i40iw_connect(struct iw_cm_id *cm_id, struct iw_cm_conn_param *conn_param)
 		    cm_node,
 		    cm_node->cm_id);
 
-	return 0;
+	वापस 0;
 
 err:
-	if (cm_info.ipv4)
+	अगर (cm_info.ipv4)
 		i40iw_debug(&iwdev->sc_dev,
 			    I40IW_DEBUG_CM,
 			    "Api - connect() FAILED: dest addr=%pI4",
 			    cm_info.rem_addr);
-	else
+	अन्यथा
 		i40iw_debug(&iwdev->sc_dev,
 			    I40IW_DEBUG_CM,
 			    "Api - connect() FAILED: dest addr=%pI6",
@@ -3951,60 +3952,60 @@ err:
 	i40iw_rem_ref_cm_node(cm_node);
 	cm_id->rem_ref(cm_id);
 	iwdev->cm_core.stats_connect_errs++;
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * i40iw_create_listen - registered call creating listener
- * @cm_id: cm information for passive connection
+ * i40iw_create_listen - रेजिस्टरed call creating listener
+ * @cm_id: cm inक्रमmation क्रम passive connection
  * @backlog: to max accept pending count
  */
-int i40iw_create_listen(struct iw_cm_id *cm_id, int backlog)
-{
-	struct i40iw_device *iwdev;
-	struct i40iw_cm_listener *cm_listen_node;
-	struct i40iw_cm_info cm_info;
-	enum i40iw_status_code ret;
-	struct sockaddr_in *laddr;
-	struct sockaddr_in6 *laddr6;
+पूर्णांक i40iw_create_listen(काष्ठा iw_cm_id *cm_id, पूर्णांक backlog)
+अणु
+	काष्ठा i40iw_device *iwdev;
+	काष्ठा i40iw_cm_listener *cm_listen_node;
+	काष्ठा i40iw_cm_info cm_info;
+	क्रमागत i40iw_status_code ret;
+	काष्ठा sockaddr_in *laddr;
+	काष्ठा sockaddr_in6 *laddr6;
 	bool wildcard = false;
 
 	iwdev = to_iwdev(cm_id->device);
-	if (!iwdev)
-		return -EINVAL;
+	अगर (!iwdev)
+		वापस -EINVAL;
 
-	laddr = (struct sockaddr_in *)&cm_id->m_local_addr;
-	laddr6 = (struct sockaddr_in6 *)&cm_id->m_local_addr;
-	memset(&cm_info, 0, sizeof(cm_info));
-	if (laddr->sin_family == AF_INET) {
+	laddr = (काष्ठा sockaddr_in *)&cm_id->m_local_addr;
+	laddr6 = (काष्ठा sockaddr_in6 *)&cm_id->m_local_addr;
+	स_रखो(&cm_info, 0, माप(cm_info));
+	अगर (laddr->sin_family == AF_INET) अणु
 		cm_info.ipv4 = true;
 		cm_info.loc_addr[0] = ntohl(laddr->sin_addr.s_addr);
 		cm_info.loc_port = ntohs(laddr->sin_port);
 
-		if (laddr->sin_addr.s_addr != INADDR_ANY)
+		अगर (laddr->sin_addr.s_addr != INADDR_ANY)
 			cm_info.vlan_id = i40iw_get_vlan_ipv4(cm_info.loc_addr);
-		else
+		अन्यथा
 			wildcard = true;
 
-	} else {
+	पूर्ण अन्यथा अणु
 		cm_info.ipv4 = false;
 		i40iw_copy_ip_ntohl(cm_info.loc_addr,
 				    laddr6->sin6_addr.in6_u.u6_addr32);
 		cm_info.loc_port = ntohs(laddr6->sin6_port);
-		if (ipv6_addr_type(&laddr6->sin6_addr) != IPV6_ADDR_ANY)
+		अगर (ipv6_addr_type(&laddr6->sin6_addr) != IPV6_ADDR_ANY)
 			i40iw_netdev_vlan_ipv6(cm_info.loc_addr,
 					       &cm_info.vlan_id);
-		else
+		अन्यथा
 			wildcard = true;
-	}
+	पूर्ण
 	cm_info.backlog = backlog;
 	cm_info.cm_id = cm_id;
 
 	cm_listen_node = i40iw_make_listen_node(&iwdev->cm_core, iwdev, &cm_info);
-	if (!cm_listen_node) {
+	अगर (!cm_listen_node) अणु
 		i40iw_pr_err("cm_listen_node == NULL\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	cm_id->provider_data = cm_listen_node;
 
@@ -4012,109 +4013,109 @@ int i40iw_create_listen(struct iw_cm_id *cm_id, int backlog)
 	cm_listen_node->user_pri = rt_tos2priority(cm_id->tos);
 	cm_info.user_pri = cm_listen_node->user_pri;
 
-	if (!cm_listen_node->reused_node) {
-		if (wildcard) {
-			if (cm_info.ipv4)
+	अगर (!cm_listen_node->reused_node) अणु
+		अगर (wildcard) अणु
+			अगर (cm_info.ipv4)
 				ret = i40iw_add_mqh_4(iwdev,
 						      &cm_info,
 						      cm_listen_node);
-			else
+			अन्यथा
 				ret = i40iw_add_mqh_6(iwdev,
 						      &cm_info,
 						      cm_listen_node);
-			if (ret)
-				goto error;
+			अगर (ret)
+				जाओ error;
 
 			ret = i40iw_manage_apbvt(iwdev,
 						 cm_info.loc_port,
 						 I40IW_MANAGE_APBVT_ADD);
 
-			if (ret)
-				goto error;
-		} else {
+			अगर (ret)
+				जाओ error;
+		पूर्ण अन्यथा अणु
 			ret = i40iw_manage_qhash(iwdev,
 						 &cm_info,
 						 I40IW_QHASH_TYPE_TCP_SYN,
 						 I40IW_QHASH_MANAGE_TYPE_ADD,
-						 NULL,
+						 शून्य,
 						 true);
-			if (ret)
-				goto error;
+			अगर (ret)
+				जाओ error;
 			cm_listen_node->qhash_set = true;
 			ret = i40iw_manage_apbvt(iwdev,
 						 cm_info.loc_port,
 						 I40IW_MANAGE_APBVT_ADD);
-			if (ret)
-				goto error;
-		}
-	}
+			अगर (ret)
+				जाओ error;
+		पूर्ण
+	पूर्ण
 	cm_id->add_ref(cm_id);
 	cm_listen_node->cm_core->stats_listen_created++;
-	return 0;
+	वापस 0;
  error:
-	i40iw_cm_del_listen(&iwdev->cm_core, (void *)cm_listen_node, false);
-	return -EINVAL;
-}
+	i40iw_cm_del_listen(&iwdev->cm_core, (व्योम *)cm_listen_node, false);
+	वापस -EINVAL;
+पूर्ण
 
 /**
- * i40iw_destroy_listen - registered call to destroy listener
- * @cm_id: cm information for passive connection
+ * i40iw_destroy_listen - रेजिस्टरed call to destroy listener
+ * @cm_id: cm inक्रमmation क्रम passive connection
  */
-int i40iw_destroy_listen(struct iw_cm_id *cm_id)
-{
-	struct i40iw_device *iwdev;
+पूर्णांक i40iw_destroy_listen(काष्ठा iw_cm_id *cm_id)
+अणु
+	काष्ठा i40iw_device *iwdev;
 
 	iwdev = to_iwdev(cm_id->device);
-	if (cm_id->provider_data)
+	अगर (cm_id->provider_data)
 		i40iw_cm_del_listen(&iwdev->cm_core, cm_id->provider_data, true);
-	else
+	अन्यथा
 		i40iw_pr_err("cm_id->provider_data was NULL\n");
 
 	cm_id->rem_ref(cm_id);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * i40iw_cm_event_connected - handle connected active node
- * @event: the info for cm_node of connection
+ * @event: the info क्रम cm_node of connection
  */
-static void i40iw_cm_event_connected(struct i40iw_cm_event *event)
-{
-	struct i40iw_qp *iwqp;
-	struct i40iw_device *iwdev;
-	struct i40iw_cm_core *cm_core;
-	struct i40iw_cm_node *cm_node;
-	struct i40iw_sc_dev *dev;
-	struct ib_qp_attr attr;
-	struct iw_cm_id *cm_id;
-	unsigned long flags;
-	int status;
-	bool read0;
+अटल व्योम i40iw_cm_event_connected(काष्ठा i40iw_cm_event *event)
+अणु
+	काष्ठा i40iw_qp *iwqp;
+	काष्ठा i40iw_device *iwdev;
+	काष्ठा i40iw_cm_core *cm_core;
+	काष्ठा i40iw_cm_node *cm_node;
+	काष्ठा i40iw_sc_dev *dev;
+	काष्ठा ib_qp_attr attr;
+	काष्ठा iw_cm_id *cm_id;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक status;
+	bool पढ़ो0;
 
 	cm_node = event->cm_node;
 	cm_id = cm_node->cm_id;
-	iwqp = (struct i40iw_qp *)cm_id->provider_data;
+	iwqp = (काष्ठा i40iw_qp *)cm_id->provider_data;
 	iwdev = to_iwdev(iwqp->ibqp.device);
 	dev = &iwdev->sc_dev;
 	cm_core = &iwdev->cm_core;
 
-	if (iwqp->destroyed) {
+	अगर (iwqp->destroyed) अणु
 		status = -ETIMEDOUT;
-		goto error;
-	}
+		जाओ error;
+	पूर्ण
 	i40iw_cm_init_tsa_conn(iwqp, cm_node);
-	read0 = (cm_node->send_rdma0_op == SEND_RDMA_READ_ZERO);
-	if (iwqp->page)
+	पढ़ो0 = (cm_node->send_rdma0_op == SEND_RDMA_READ_ZERO);
+	अगर (iwqp->page)
 		iwqp->sc_qp.qp_uk.sq_base = kmap(iwqp->page);
-	dev->iw_priv_qp_ops->qp_send_rtt(&iwqp->sc_qp, read0);
-	if (iwqp->page)
+	dev->iw_priv_qp_ops->qp_send_rtt(&iwqp->sc_qp, पढ़ो0);
+	अगर (iwqp->page)
 		kunmap(iwqp->page);
 
-	memset(&attr, 0, sizeof(attr));
+	स_रखो(&attr, 0, माप(attr));
 	attr.qp_state = IB_QPS_RTS;
 	cm_node->qhash_set = false;
-	i40iw_modify_qp(&iwqp->ibqp, &attr, IB_QP_STATE, NULL);
+	i40iw_modअगरy_qp(&iwqp->ibqp, &attr, IB_QP_STATE, शून्य);
 
 	cm_node->accelerated = true;
 	spin_lock_irqsave(&cm_core->ht_lock, flags);
@@ -4122,298 +4123,298 @@ static void i40iw_cm_event_connected(struct i40iw_cm_event *event)
 	spin_unlock_irqrestore(&cm_core->ht_lock, flags);
 	status = i40iw_send_cm_event(cm_node, cm_id, IW_CM_EVENT_CONNECT_REPLY,
 				     0);
-	if (status)
+	अगर (status)
 		i40iw_debug(dev, I40IW_DEBUG_CM, "error sending cm event - CONNECT_REPLY\n");
 
-	return;
+	वापस;
 
 error:
-	iwqp->cm_id = NULL;
-	cm_id->provider_data = NULL;
+	iwqp->cm_id = शून्य;
+	cm_id->provider_data = शून्य;
 	i40iw_send_cm_event(event->cm_node,
 			    cm_id,
 			    IW_CM_EVENT_CONNECT_REPLY,
 			    status);
 	cm_id->rem_ref(cm_id);
 	i40iw_rem_ref_cm_node(event->cm_node);
-}
+पूर्ण
 
 /**
  * i40iw_cm_event_reset - handle reset
- * @event: the info for cm_node of connection
+ * @event: the info क्रम cm_node of connection
  */
-static void i40iw_cm_event_reset(struct i40iw_cm_event *event)
-{
-	struct i40iw_cm_node *cm_node = event->cm_node;
-	struct iw_cm_id   *cm_id = cm_node->cm_id;
-	struct i40iw_qp *iwqp;
+अटल व्योम i40iw_cm_event_reset(काष्ठा i40iw_cm_event *event)
+अणु
+	काष्ठा i40iw_cm_node *cm_node = event->cm_node;
+	काष्ठा iw_cm_id   *cm_id = cm_node->cm_id;
+	काष्ठा i40iw_qp *iwqp;
 
-	if (!cm_id)
-		return;
+	अगर (!cm_id)
+		वापस;
 
 	iwqp = cm_id->provider_data;
-	if (!iwqp)
-		return;
+	अगर (!iwqp)
+		वापस;
 
 	i40iw_debug(cm_node->dev,
 		    I40IW_DEBUG_CM,
 		    "reset event %p - cm_id = %p\n",
 		     event->cm_node, cm_id);
-	iwqp->cm_id = NULL;
+	iwqp->cm_id = शून्य;
 
 	i40iw_send_cm_event(cm_node, cm_node->cm_id, IW_CM_EVENT_DISCONNECT, -ECONNRESET);
 	i40iw_send_cm_event(cm_node, cm_node->cm_id, IW_CM_EVENT_CLOSE, 0);
-}
+पूर्ण
 
 /**
- * i40iw_cm_event_handler - worker thread callback to send event to cm upper layer
- * @work: pointer of cm event info.
+ * i40iw_cm_event_handler - worker thपढ़ो callback to send event to cm upper layer
+ * @work: poपूर्णांकer of cm event info.
  */
-static void i40iw_cm_event_handler(struct work_struct *work)
-{
-	struct i40iw_cm_event *event = container_of(work,
-						    struct i40iw_cm_event,
+अटल व्योम i40iw_cm_event_handler(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा i40iw_cm_event *event = container_of(work,
+						    काष्ठा i40iw_cm_event,
 						    event_work);
-	struct i40iw_cm_node *cm_node;
+	काष्ठा i40iw_cm_node *cm_node;
 
-	if (!event || !event->cm_node || !event->cm_node->cm_core)
-		return;
+	अगर (!event || !event->cm_node || !event->cm_node->cm_core)
+		वापस;
 
 	cm_node = event->cm_node;
 
-	switch (event->type) {
-	case I40IW_CM_EVENT_MPA_REQ:
+	चयन (event->type) अणु
+	हाल I40IW_CM_EVENT_MPA_REQ:
 		i40iw_send_cm_event(cm_node,
 				    cm_node->cm_id,
 				    IW_CM_EVENT_CONNECT_REQUEST,
 				    0);
-		break;
-	case I40IW_CM_EVENT_RESET:
+		अवरोध;
+	हाल I40IW_CM_EVENT_RESET:
 		i40iw_cm_event_reset(event);
-		break;
-	case I40IW_CM_EVENT_CONNECTED:
-		if (!event->cm_node->cm_id ||
+		अवरोध;
+	हाल I40IW_CM_EVENT_CONNECTED:
+		अगर (!event->cm_node->cm_id ||
 		    (event->cm_node->state != I40IW_CM_STATE_OFFLOADED))
-			break;
+			अवरोध;
 		i40iw_cm_event_connected(event);
-		break;
-	case I40IW_CM_EVENT_MPA_REJECT:
-		if (!event->cm_node->cm_id ||
+		अवरोध;
+	हाल I40IW_CM_EVENT_MPA_REJECT:
+		अगर (!event->cm_node->cm_id ||
 		    (cm_node->state == I40IW_CM_STATE_OFFLOADED))
-			break;
+			अवरोध;
 		i40iw_send_cm_event(cm_node,
 				    cm_node->cm_id,
 				    IW_CM_EVENT_CONNECT_REPLY,
 				    -ECONNREFUSED);
-		break;
-	case I40IW_CM_EVENT_ABORTED:
-		if (!event->cm_node->cm_id ||
+		अवरोध;
+	हाल I40IW_CM_EVENT_ABORTED:
+		अगर (!event->cm_node->cm_id ||
 		    (event->cm_node->state == I40IW_CM_STATE_OFFLOADED))
-			break;
+			अवरोध;
 		i40iw_event_connect_error(event);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		i40iw_pr_err("event type = %d\n", event->type);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	event->cm_info.cm_id->rem_ref(event->cm_info.cm_id);
 	i40iw_rem_ref_cm_node(event->cm_node);
-	kfree(event);
-}
+	kमुक्त(event);
+पूर्ण
 
 /**
- * i40iw_cm_post_event - queue event request for worker thread
- * @event: cm node's info for up event call
+ * i40iw_cm_post_event - queue event request क्रम worker thपढ़ो
+ * @event: cm node's info क्रम up event call
  */
-static void i40iw_cm_post_event(struct i40iw_cm_event *event)
-{
+अटल व्योम i40iw_cm_post_event(काष्ठा i40iw_cm_event *event)
+अणु
 	atomic_inc(&event->cm_node->ref_count);
 	event->cm_info.cm_id->add_ref(event->cm_info.cm_id);
 	INIT_WORK(&event->event_work, i40iw_cm_event_handler);
 
 	queue_work(event->cm_node->cm_core->event_wq, &event->event_work);
-}
+पूर्ण
 
 /**
- * i40iw_qhash_ctrl - enable/disable qhash for list
- * @iwdev: device pointer
+ * i40iw_qhash_ctrl - enable/disable qhash क्रम list
+ * @iwdev: device poपूर्णांकer
  * @parent_listen_node: parent listen node
  * @nfo: cm info node
- * @ipaddr: Pointer to IPv4 or IPv6 address
+ * @ipaddr: Poपूर्णांकer to IPv4 or IPv6 address
  * @ipv4: flag indicating IPv4 when true
- * @ifup: flag indicating interface up when true
+ * @अगरup: flag indicating पूर्णांकerface up when true
  *
- * Enables or disables the qhash for the node in the child
+ * Enables or disables the qhash क्रम the node in the child
  * listen list that matches ipaddr. If no matching IP was found
  * it will allocate and add a new child listen node to the
  * parent listen node. The listen_list_lock is assumed to be
  * held when called.
  */
-static void i40iw_qhash_ctrl(struct i40iw_device *iwdev,
-			     struct i40iw_cm_listener *parent_listen_node,
-			     struct i40iw_cm_info *nfo,
-			     u32 *ipaddr, bool ipv4, bool ifup)
-{
-	struct list_head *child_listen_list = &parent_listen_node->child_listen_list;
-	struct i40iw_cm_listener *child_listen_node;
-	struct list_head *pos, *tpos;
-	enum i40iw_status_code ret;
+अटल व्योम i40iw_qhash_ctrl(काष्ठा i40iw_device *iwdev,
+			     काष्ठा i40iw_cm_listener *parent_listen_node,
+			     काष्ठा i40iw_cm_info *nfo,
+			     u32 *ipaddr, bool ipv4, bool अगरup)
+अणु
+	काष्ठा list_head *child_listen_list = &parent_listen_node->child_listen_list;
+	काष्ठा i40iw_cm_listener *child_listen_node;
+	काष्ठा list_head *pos, *tpos;
+	क्रमागत i40iw_status_code ret;
 	bool node_allocated = false;
-	enum i40iw_quad_hash_manage_type op =
-		ifup ? I40IW_QHASH_MANAGE_TYPE_ADD : I40IW_QHASH_MANAGE_TYPE_DELETE;
+	क्रमागत i40iw_quad_hash_manage_type op =
+		अगरup ? I40IW_QHASH_MANAGE_TYPE_ADD : I40IW_QHASH_MANAGE_TYPE_DELETE;
 
-	list_for_each_safe(pos, tpos, child_listen_list) {
+	list_क्रम_each_safe(pos, tpos, child_listen_list) अणु
 		child_listen_node =
 			list_entry(pos,
-				   struct i40iw_cm_listener,
+				   काष्ठा i40iw_cm_listener,
 				   child_listen_list);
-		if (!memcmp(child_listen_node->loc_addr, ipaddr, ipv4 ? 4 : 16))
-			goto set_qhash;
-	}
+		अगर (!स_भेद(child_listen_node->loc_addr, ipaddr, ipv4 ? 4 : 16))
+			जाओ set_qhash;
+	पूर्ण
 
-	/* if not found then add a child listener if interface is going up */
-	if (!ifup)
-		return;
+	/* अगर not found then add a child listener अगर पूर्णांकerface is going up */
+	अगर (!अगरup)
+		वापस;
 	child_listen_node = kmemdup(parent_listen_node,
-			sizeof(*child_listen_node), GFP_ATOMIC);
-	if (!child_listen_node)
-		return;
+			माप(*child_listen_node), GFP_ATOMIC);
+	अगर (!child_listen_node)
+		वापस;
 	node_allocated = true;
 
-	memcpy(child_listen_node->loc_addr, ipaddr,  ipv4 ? 4 : 16);
+	स_नकल(child_listen_node->loc_addr, ipaddr,  ipv4 ? 4 : 16);
 
 set_qhash:
-	memcpy(nfo->loc_addr,
+	स_नकल(nfo->loc_addr,
 	       child_listen_node->loc_addr,
-	       sizeof(nfo->loc_addr));
+	       माप(nfo->loc_addr));
 	nfo->vlan_id = child_listen_node->vlan_id;
 	ret = i40iw_manage_qhash(iwdev, nfo,
 				 I40IW_QHASH_TYPE_TCP_SYN,
 				 op,
-				 NULL, false);
-	if (!ret) {
-		child_listen_node->qhash_set = ifup;
-		if (node_allocated)
+				 शून्य, false);
+	अगर (!ret) अणु
+		child_listen_node->qhash_set = अगरup;
+		अगर (node_allocated)
 			list_add(&child_listen_node->child_listen_list,
 				 &parent_listen_node->child_listen_list);
-	} else if (node_allocated) {
-		kfree(child_listen_node);
-	}
-}
+	पूर्ण अन्यथा अगर (node_allocated) अणु
+		kमुक्त(child_listen_node);
+	पूर्ण
+पूर्ण
 
 /**
- * i40iw_cm_teardown_connections - teardown QPs
- * @iwdev: device pointer
- * @ipaddr: Pointer to IPv4 or IPv6 address
+ * i40iw_cm_tearकरोwn_connections - tearकरोwn QPs
+ * @iwdev: device poपूर्णांकer
+ * @ipaddr: Poपूर्णांकer to IPv4 or IPv6 address
  * @nfo: cm info node
  * @disconnect_all: flag indicating disconnect all QPs
- * teardown QPs where source or destination addr matches ip addr
+ * tearकरोwn QPs where source or destination addr matches ip addr
  */
-void i40iw_cm_teardown_connections(struct i40iw_device *iwdev, u32 *ipaddr,
-				   struct i40iw_cm_info *nfo,
+व्योम i40iw_cm_tearकरोwn_connections(काष्ठा i40iw_device *iwdev, u32 *ipaddr,
+				   काष्ठा i40iw_cm_info *nfo,
 				   bool disconnect_all)
-{
-	struct i40iw_cm_core *cm_core = &iwdev->cm_core;
-	struct list_head *list_core_temp;
-	struct list_head *list_node;
-	struct i40iw_cm_node *cm_node;
-	unsigned long flags;
-	struct list_head teardown_list;
-	struct ib_qp_attr attr;
+अणु
+	काष्ठा i40iw_cm_core *cm_core = &iwdev->cm_core;
+	काष्ठा list_head *list_core_temp;
+	काष्ठा list_head *list_node;
+	काष्ठा i40iw_cm_node *cm_node;
+	अचिन्हित दीर्घ flags;
+	काष्ठा list_head tearकरोwn_list;
+	काष्ठा ib_qp_attr attr;
 
-	INIT_LIST_HEAD(&teardown_list);
+	INIT_LIST_HEAD(&tearकरोwn_list);
 	spin_lock_irqsave(&cm_core->ht_lock, flags);
-	list_for_each_safe(list_node, list_core_temp,
-			   &cm_core->accelerated_list) {
-		cm_node = container_of(list_node, struct i40iw_cm_node, list);
-		if (disconnect_all ||
+	list_क्रम_each_safe(list_node, list_core_temp,
+			   &cm_core->accelerated_list) अणु
+		cm_node = container_of(list_node, काष्ठा i40iw_cm_node, list);
+		अगर (disconnect_all ||
 		    (nfo->vlan_id == cm_node->vlan_id &&
-		    (!memcmp(cm_node->loc_addr, ipaddr, nfo->ipv4 ? 4 : 16) ||
-		     !memcmp(cm_node->rem_addr, ipaddr, nfo->ipv4 ? 4 : 16)))) {
+		    (!स_भेद(cm_node->loc_addr, ipaddr, nfo->ipv4 ? 4 : 16) ||
+		     !स_भेद(cm_node->rem_addr, ipaddr, nfo->ipv4 ? 4 : 16)))) अणु
 			atomic_inc(&cm_node->ref_count);
-			list_add(&cm_node->teardown_entry, &teardown_list);
-		}
-	}
-	list_for_each_safe(list_node, list_core_temp,
-			   &cm_core->non_accelerated_list) {
-		cm_node = container_of(list_node, struct i40iw_cm_node, list);
-		if (disconnect_all ||
+			list_add(&cm_node->tearकरोwn_entry, &tearकरोwn_list);
+		पूर्ण
+	पूर्ण
+	list_क्रम_each_safe(list_node, list_core_temp,
+			   &cm_core->non_accelerated_list) अणु
+		cm_node = container_of(list_node, काष्ठा i40iw_cm_node, list);
+		अगर (disconnect_all ||
 		    (nfo->vlan_id == cm_node->vlan_id &&
-		    (!memcmp(cm_node->loc_addr, ipaddr, nfo->ipv4 ? 4 : 16) ||
-		     !memcmp(cm_node->rem_addr, ipaddr, nfo->ipv4 ? 4 : 16)))) {
+		    (!स_भेद(cm_node->loc_addr, ipaddr, nfo->ipv4 ? 4 : 16) ||
+		     !स_भेद(cm_node->rem_addr, ipaddr, nfo->ipv4 ? 4 : 16)))) अणु
 			atomic_inc(&cm_node->ref_count);
-			list_add(&cm_node->teardown_entry, &teardown_list);
-		}
-	}
+			list_add(&cm_node->tearकरोwn_entry, &tearकरोwn_list);
+		पूर्ण
+	पूर्ण
 	spin_unlock_irqrestore(&cm_core->ht_lock, flags);
 
-	list_for_each_safe(list_node, list_core_temp, &teardown_list) {
-		cm_node = container_of(list_node, struct i40iw_cm_node,
-				       teardown_entry);
+	list_क्रम_each_safe(list_node, list_core_temp, &tearकरोwn_list) अणु
+		cm_node = container_of(list_node, काष्ठा i40iw_cm_node,
+				       tearकरोwn_entry);
 		attr.qp_state = IB_QPS_ERR;
-		i40iw_modify_qp(&cm_node->iwqp->ibqp, &attr, IB_QP_STATE, NULL);
-		if (iwdev->reset)
+		i40iw_modअगरy_qp(&cm_node->iwqp->ibqp, &attr, IB_QP_STATE, शून्य);
+		अगर (iwdev->reset)
 			i40iw_cm_disconn(cm_node->iwqp);
 		i40iw_rem_ref_cm_node(cm_node);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
- * i40iw_if_notify - process an ifdown on an interface
- * @iwdev: device pointer
- * @netdev: network interface device structure
- * @ipaddr: Pointer to IPv4 or IPv6 address
+ * i40iw_अगर_notअगरy - process an अगरकरोwn on an पूर्णांकerface
+ * @iwdev: device poपूर्णांकer
+ * @netdev: network पूर्णांकerface device काष्ठाure
+ * @ipaddr: Poपूर्णांकer to IPv4 or IPv6 address
  * @ipv4: flag indicating IPv4 when true
- * @ifup: flag indicating interface up when true
+ * @अगरup: flag indicating पूर्णांकerface up when true
  */
-void i40iw_if_notify(struct i40iw_device *iwdev, struct net_device *netdev,
-		     u32 *ipaddr, bool ipv4, bool ifup)
-{
-	struct i40iw_cm_core *cm_core = &iwdev->cm_core;
-	unsigned long flags;
-	struct i40iw_cm_listener *listen_node;
-	static const u32 ip_zero[4] = { 0, 0, 0, 0 };
-	struct i40iw_cm_info nfo;
+व्योम i40iw_अगर_notअगरy(काष्ठा i40iw_device *iwdev, काष्ठा net_device *netdev,
+		     u32 *ipaddr, bool ipv4, bool अगरup)
+अणु
+	काष्ठा i40iw_cm_core *cm_core = &iwdev->cm_core;
+	अचिन्हित दीर्घ flags;
+	काष्ठा i40iw_cm_listener *listen_node;
+	अटल स्थिर u32 ip_zero[4] = अणु 0, 0, 0, 0 पूर्ण;
+	काष्ठा i40iw_cm_info nfo;
 	u16 vlan_id = rdma_vlan_dev_vlan_id(netdev);
-	enum i40iw_status_code ret;
-	enum i40iw_quad_hash_manage_type op =
-		ifup ? I40IW_QHASH_MANAGE_TYPE_ADD : I40IW_QHASH_MANAGE_TYPE_DELETE;
+	क्रमागत i40iw_status_code ret;
+	क्रमागत i40iw_quad_hash_manage_type op =
+		अगरup ? I40IW_QHASH_MANAGE_TYPE_ADD : I40IW_QHASH_MANAGE_TYPE_DELETE;
 
 	nfo.vlan_id = vlan_id;
 	nfo.ipv4 = ipv4;
 
-	/* Disable or enable qhash for listeners */
+	/* Disable or enable qhash क्रम listeners */
 	spin_lock_irqsave(&cm_core->listen_list_lock, flags);
-	list_for_each_entry(listen_node, &cm_core->listen_nodes, list) {
-		if (vlan_id == listen_node->vlan_id &&
-		    (!memcmp(listen_node->loc_addr, ipaddr, ipv4 ? 4 : 16) ||
-		    !memcmp(listen_node->loc_addr, ip_zero, ipv4 ? 4 : 16))) {
-			memcpy(nfo.loc_addr, listen_node->loc_addr,
-			       sizeof(nfo.loc_addr));
+	list_क्रम_each_entry(listen_node, &cm_core->listen_nodes, list) अणु
+		अगर (vlan_id == listen_node->vlan_id &&
+		    (!स_भेद(listen_node->loc_addr, ipaddr, ipv4 ? 4 : 16) ||
+		    !स_भेद(listen_node->loc_addr, ip_zero, ipv4 ? 4 : 16))) अणु
+			स_नकल(nfo.loc_addr, listen_node->loc_addr,
+			       माप(nfo.loc_addr));
 			nfo.loc_port = listen_node->loc_port;
 			nfo.user_pri = listen_node->user_pri;
-			if (!list_empty(&listen_node->child_listen_list)) {
+			अगर (!list_empty(&listen_node->child_listen_list)) अणु
 				i40iw_qhash_ctrl(iwdev,
 						 listen_node,
 						 &nfo,
-						 ipaddr, ipv4, ifup);
-			} else if (memcmp(listen_node->loc_addr, ip_zero,
-					  ipv4 ? 4 : 16)) {
+						 ipaddr, ipv4, अगरup);
+			पूर्ण अन्यथा अगर (स_भेद(listen_node->loc_addr, ip_zero,
+					  ipv4 ? 4 : 16)) अणु
 				ret = i40iw_manage_qhash(iwdev,
 							 &nfo,
 							 I40IW_QHASH_TYPE_TCP_SYN,
 							 op,
-							 NULL,
+							 शून्य,
 							 false);
-				if (!ret)
-					listen_node->qhash_set = ifup;
-			}
-		}
-	}
+				अगर (!ret)
+					listen_node->qhash_set = अगरup;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 	spin_unlock_irqrestore(&cm_core->listen_list_lock, flags);
 
-	/* teardown connected qp's on ifdown */
-	if (!ifup)
-		i40iw_cm_teardown_connections(iwdev, ipaddr, &nfo, false);
-}
+	/* tearकरोwn connected qp's on अगरकरोwn */
+	अगर (!अगरup)
+		i40iw_cm_tearकरोwn_connections(iwdev, ipaddr, &nfo, false);
+पूर्ण

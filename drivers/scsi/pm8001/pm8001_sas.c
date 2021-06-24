@@ -1,23 +1,24 @@
+<शैली गुरु>
 /*
  * PMC-Sierra PM8001/8081/8088/8089 SAS/SATA based host adapters driver
  *
  * Copyright (c) 2008-2009 USI Co., Ltd.
  * All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
+ * Redistribution and use in source and binary क्रमms, with or without
+ * modअगरication, are permitted provided that the following conditions
  * are met:
  * 1. Redistributions of source code must retain the above copyright
  *    notice, this list of conditions, and the following disclaimer,
- *    without modification.
- * 2. Redistributions in binary form must reproduce at minimum a disclaimer
+ *    without modअगरication.
+ * 2. Redistributions in binary क्रमm must reproduce at minimum a disclaimer
  *    substantially similar to the "NO WARRANTY" disclaimer below
  *    ("Disclaimer") and any redistribution must be conditioned upon
- *    including a substantially similar Disclaimer requirement for further
+ *    including a substantially similar Disclaimer requirement क्रम further
  *    binary redistribution.
  * 3. Neither the names of the above-listed copyright holders nor the names
- *    of any contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
+ *    of any contributors may be used to enकरोrse or promote products derived
+ *    from this software without specअगरic prior written permission.
  *
  * Alternatively, this software may be distributed under the terms of the
  * GNU General Public License ("GPL") version 2 as published by the Free
@@ -38,202 +39,202 @@
  *
  */
 
-#include <linux/slab.h>
-#include "pm8001_sas.h"
+#समावेश <linux/slab.h>
+#समावेश "pm8001_sas.h"
 
 /**
- * pm8001_find_tag - from sas task to find out  tag that belongs to this task
+ * pm8001_find_tag - from sas task to find out  tag that beदीर्घs to this task
  * @task: the task sent to the LLDD
  * @tag: the found tag associated with the task
  */
-static int pm8001_find_tag(struct sas_task *task, u32 *tag)
-{
-	if (task->lldd_task) {
-		struct pm8001_ccb_info *ccb;
+अटल पूर्णांक pm8001_find_tag(काष्ठा sas_task *task, u32 *tag)
+अणु
+	अगर (task->lldd_task) अणु
+		काष्ठा pm8001_ccb_info *ccb;
 		ccb = task->lldd_task;
 		*tag = ccb->ccb_tag;
-		return 1;
-	}
-	return 0;
-}
+		वापस 1;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /**
-  * pm8001_tag_free - free the no more needed tag
-  * @pm8001_ha: our hba struct
+  * pm8001_tag_मुक्त - मुक्त the no more needed tag
+  * @pm8001_ha: our hba काष्ठा
   * @tag: the found tag associated with the task
   */
-void pm8001_tag_free(struct pm8001_hba_info *pm8001_ha, u32 tag)
-{
-	void *bitmap = pm8001_ha->tags;
-	clear_bit(tag, bitmap);
-}
+व्योम pm8001_tag_मुक्त(काष्ठा pm8001_hba_info *pm8001_ha, u32 tag)
+अणु
+	व्योम *biपंचांगap = pm8001_ha->tags;
+	clear_bit(tag, biपंचांगap);
+पूर्ण
 
 /**
-  * pm8001_tag_alloc - allocate a empty tag for task used.
-  * @pm8001_ha: our hba struct
+  * pm8001_tag_alloc - allocate a empty tag क्रम task used.
+  * @pm8001_ha: our hba काष्ठा
   * @tag_out: the found empty tag .
   */
-inline int pm8001_tag_alloc(struct pm8001_hba_info *pm8001_ha, u32 *tag_out)
-{
-	unsigned int tag;
-	void *bitmap = pm8001_ha->tags;
-	unsigned long flags;
+अंतरभूत पूर्णांक pm8001_tag_alloc(काष्ठा pm8001_hba_info *pm8001_ha, u32 *tag_out)
+अणु
+	अचिन्हित पूर्णांक tag;
+	व्योम *biपंचांगap = pm8001_ha->tags;
+	अचिन्हित दीर्घ flags;
 
-	spin_lock_irqsave(&pm8001_ha->bitmap_lock, flags);
-	tag = find_first_zero_bit(bitmap, pm8001_ha->tags_num);
-	if (tag >= pm8001_ha->tags_num) {
-		spin_unlock_irqrestore(&pm8001_ha->bitmap_lock, flags);
-		return -SAS_QUEUE_FULL;
-	}
-	set_bit(tag, bitmap);
-	spin_unlock_irqrestore(&pm8001_ha->bitmap_lock, flags);
+	spin_lock_irqsave(&pm8001_ha->biपंचांगap_lock, flags);
+	tag = find_first_zero_bit(biपंचांगap, pm8001_ha->tags_num);
+	अगर (tag >= pm8001_ha->tags_num) अणु
+		spin_unlock_irqrestore(&pm8001_ha->biपंचांगap_lock, flags);
+		वापस -SAS_QUEUE_FULL;
+	पूर्ण
+	set_bit(tag, biपंचांगap);
+	spin_unlock_irqrestore(&pm8001_ha->biपंचांगap_lock, flags);
 	*tag_out = tag;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void pm8001_tag_init(struct pm8001_hba_info *pm8001_ha)
-{
-	int i;
-	for (i = 0; i < pm8001_ha->tags_num; ++i)
-		pm8001_tag_free(pm8001_ha, i);
-}
+व्योम pm8001_tag_init(काष्ठा pm8001_hba_info *pm8001_ha)
+अणु
+	पूर्णांक i;
+	क्रम (i = 0; i < pm8001_ha->tags_num; ++i)
+		pm8001_tag_मुक्त(pm8001_ha, i);
+पूर्ण
 
  /**
-  * pm8001_mem_alloc - allocate memory for pm8001.
+  * pm8001_mem_alloc - allocate memory क्रम pm8001.
   * @pdev: pci device.
-  * @virt_addr: the allocated virtual address
+  * @virt_addr: the allocated भव address
   * @pphys_addr_hi: the physical address high byte address.
   * @pphys_addr_lo: the physical address low byte address.
   * @mem_size: memory size.
   */
-int pm8001_mem_alloc(struct pci_dev *pdev, void **virt_addr,
+पूर्णांक pm8001_mem_alloc(काष्ठा pci_dev *pdev, व्योम **virt_addr,
 	dma_addr_t *pphys_addr, u32 *pphys_addr_hi,
 	u32 *pphys_addr_lo, u32 mem_size, u32 align)
-{
+अणु
 	caddr_t mem_virt_alloc;
 	dma_addr_t mem_dma_handle;
 	u64 phys_align;
 	u64 align_offset = 0;
-	if (align)
+	अगर (align)
 		align_offset = (dma_addr_t)align - 1;
 	mem_virt_alloc = dma_alloc_coherent(&pdev->dev, mem_size + align,
 					    &mem_dma_handle, GFP_KERNEL);
-	if (!mem_virt_alloc) {
+	अगर (!mem_virt_alloc) अणु
 		pr_err("pm80xx: memory allocation error\n");
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 	*pphys_addr = mem_dma_handle;
 	phys_align = (*pphys_addr + align_offset) & ~align_offset;
-	*virt_addr = (void *)mem_virt_alloc + phys_align - *pphys_addr;
+	*virt_addr = (व्योम *)mem_virt_alloc + phys_align - *pphys_addr;
 	*pphys_addr_hi = upper_32_bits(phys_align);
 	*pphys_addr_lo = lower_32_bits(phys_align);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
-  * pm8001_find_ha_by_dev - from domain device which come from sas layer to
-  * find out our hba struct.
-  * @dev: the domain device which from sas layer.
+  * pm8001_find_ha_by_dev - from करोमुख्य device which come from sas layer to
+  * find out our hba काष्ठा.
+  * @dev: the करोमुख्य device which from sas layer.
   */
-static
-struct pm8001_hba_info *pm8001_find_ha_by_dev(struct domain_device *dev)
-{
-	struct sas_ha_struct *sha = dev->port->ha;
-	struct pm8001_hba_info *pm8001_ha = sha->lldd_ha;
-	return pm8001_ha;
-}
+अटल
+काष्ठा pm8001_hba_info *pm8001_find_ha_by_dev(काष्ठा करोमुख्य_device *dev)
+अणु
+	काष्ठा sas_ha_काष्ठा *sha = dev->port->ha;
+	काष्ठा pm8001_hba_info *pm8001_ha = sha->lldd_ha;
+	वापस pm8001_ha;
+पूर्ण
 
 /**
-  * pm8001_phy_control - this function should be registered to
-  * sas_domain_function_template to provide libsas used, note: this is just
-  * control the HBA phy rather than other expander phy if you want control
+  * pm8001_phy_control - this function should be रेजिस्टरed to
+  * sas_करोमुख्य_function_ढाँचा to provide libsas used, note: this is just
+  * control the HBA phy rather than other expander phy अगर you want control
   * other phy, you should use SMP command.
   * @sas_phy: which phy in HBA phys.
   * @func: the operation.
-  * @funcdata: always NULL.
+  * @funcdata: always शून्य.
   */
-int pm8001_phy_control(struct asd_sas_phy *sas_phy, enum phy_func func,
-	void *funcdata)
-{
-	int rc = 0, phy_id = sas_phy->id;
-	struct pm8001_hba_info *pm8001_ha = NULL;
-	struct sas_phy_linkrates *rates;
-	struct pm8001_phy *phy;
+पूर्णांक pm8001_phy_control(काष्ठा asd_sas_phy *sas_phy, क्रमागत phy_func func,
+	व्योम *funcdata)
+अणु
+	पूर्णांक rc = 0, phy_id = sas_phy->id;
+	काष्ठा pm8001_hba_info *pm8001_ha = शून्य;
+	काष्ठा sas_phy_linkrates *rates;
+	काष्ठा pm8001_phy *phy;
 	DECLARE_COMPLETION_ONSTACK(completion);
-	unsigned long flags;
+	अचिन्हित दीर्घ flags;
 	pm8001_ha = sas_phy->ha->lldd_ha;
 	phy = &pm8001_ha->phy[phy_id];
 	pm8001_ha->phy[phy_id].enable_completion = &completion;
-	switch (func) {
-	case PHY_FUNC_SET_LINK_RATE:
+	चयन (func) अणु
+	हाल PHY_FUNC_SET_LINK_RATE:
 		rates = funcdata;
-		if (rates->minimum_linkrate) {
+		अगर (rates->minimum_linkrate) अणु
 			pm8001_ha->phy[phy_id].minimum_linkrate =
 				rates->minimum_linkrate;
-		}
-		if (rates->maximum_linkrate) {
+		पूर्ण
+		अगर (rates->maximum_linkrate) अणु
 			pm8001_ha->phy[phy_id].maximum_linkrate =
 				rates->maximum_linkrate;
-		}
-		if (pm8001_ha->phy[phy_id].phy_state ==  PHY_LINK_DISABLE) {
+		पूर्ण
+		अगर (pm8001_ha->phy[phy_id].phy_state ==  PHY_LINK_DISABLE) अणु
 			PM8001_CHIP_DISP->phy_start_req(pm8001_ha, phy_id);
-			wait_for_completion(&completion);
-		}
+			रुको_क्रम_completion(&completion);
+		पूर्ण
 		PM8001_CHIP_DISP->phy_ctl_req(pm8001_ha, phy_id,
 					      PHY_LINK_RESET);
-		break;
-	case PHY_FUNC_HARD_RESET:
-		if (pm8001_ha->phy[phy_id].phy_state == PHY_LINK_DISABLE) {
+		अवरोध;
+	हाल PHY_FUNC_HARD_RESET:
+		अगर (pm8001_ha->phy[phy_id].phy_state == PHY_LINK_DISABLE) अणु
 			PM8001_CHIP_DISP->phy_start_req(pm8001_ha, phy_id);
-			wait_for_completion(&completion);
-		}
+			रुको_क्रम_completion(&completion);
+		पूर्ण
 		PM8001_CHIP_DISP->phy_ctl_req(pm8001_ha, phy_id,
 					      PHY_HARD_RESET);
-		break;
-	case PHY_FUNC_LINK_RESET:
-		if (pm8001_ha->phy[phy_id].phy_state == PHY_LINK_DISABLE) {
+		अवरोध;
+	हाल PHY_FUNC_LINK_RESET:
+		अगर (pm8001_ha->phy[phy_id].phy_state == PHY_LINK_DISABLE) अणु
 			PM8001_CHIP_DISP->phy_start_req(pm8001_ha, phy_id);
-			wait_for_completion(&completion);
-		}
+			रुको_क्रम_completion(&completion);
+		पूर्ण
 		PM8001_CHIP_DISP->phy_ctl_req(pm8001_ha, phy_id,
 					      PHY_LINK_RESET);
-		break;
-	case PHY_FUNC_RELEASE_SPINUP_HOLD:
+		अवरोध;
+	हाल PHY_FUNC_RELEASE_SPINUP_HOLD:
 		PM8001_CHIP_DISP->phy_ctl_req(pm8001_ha, phy_id,
 					      PHY_LINK_RESET);
-		break;
-	case PHY_FUNC_DISABLE:
-		if (pm8001_ha->chip_id != chip_8001) {
-			if (pm8001_ha->phy[phy_id].phy_state ==
-				PHY_STATE_LINK_UP_SPCV) {
+		अवरोध;
+	हाल PHY_FUNC_DISABLE:
+		अगर (pm8001_ha->chip_id != chip_8001) अणु
+			अगर (pm8001_ha->phy[phy_id].phy_state ==
+				PHY_STATE_LINK_UP_SPCV) अणु
 				sas_phy_disconnected(&phy->sas_phy);
-				sas_notify_phy_event(&phy->sas_phy,
+				sas_notअगरy_phy_event(&phy->sas_phy,
 					PHYE_LOSS_OF_SIGNAL, GFP_KERNEL);
 				phy->phy_attached = 0;
-			}
-		} else {
-			if (pm8001_ha->phy[phy_id].phy_state ==
-				PHY_STATE_LINK_UP_SPC) {
+			पूर्ण
+		पूर्ण अन्यथा अणु
+			अगर (pm8001_ha->phy[phy_id].phy_state ==
+				PHY_STATE_LINK_UP_SPC) अणु
 				sas_phy_disconnected(&phy->sas_phy);
-				sas_notify_phy_event(&phy->sas_phy,
+				sas_notअगरy_phy_event(&phy->sas_phy,
 					PHYE_LOSS_OF_SIGNAL, GFP_KERNEL);
 				phy->phy_attached = 0;
-			}
-		}
+			पूर्ण
+		पूर्ण
 		PM8001_CHIP_DISP->phy_stop_req(pm8001_ha, phy_id);
-		break;
-	case PHY_FUNC_GET_EVENTS:
+		अवरोध;
+	हाल PHY_FUNC_GET_EVENTS:
 		spin_lock_irqsave(&pm8001_ha->lock, flags);
-		if (pm8001_ha->chip_id == chip_8001) {
-			if (-1 == pm8001_bar4_shift(pm8001_ha,
-					(phy_id < 4) ? 0x30000 : 0x40000)) {
+		अगर (pm8001_ha->chip_id == chip_8001) अणु
+			अगर (-1 == pm8001_bar4_shअगरt(pm8001_ha,
+					(phy_id < 4) ? 0x30000 : 0x40000)) अणु
 				spin_unlock_irqrestore(&pm8001_ha->lock, flags);
-				return -EINVAL;
-			}
-		}
-		{
-			struct sas_phy *phy = sas_phy->phy;
-			uint32_t *qp = (uint32_t *)(((char *)
+				वापस -EINVAL;
+			पूर्ण
+		पूर्ण
+		अणु
+			काष्ठा sas_phy *phy = sas_phy->phy;
+			uपूर्णांक32_t *qp = (uपूर्णांक32_t *)(((अक्षर *)
 				pm8001_ha->io_mem[2].memvirtaddr)
 				+ 0x1034 + (0x4000 * (phy_id & 3)));
 
@@ -241,815 +242,815 @@ int pm8001_phy_control(struct asd_sas_phy *sas_phy, enum phy_func func,
 			phy->running_disparity_error_count = qp[1];
 			phy->loss_of_dword_sync_count = qp[3];
 			phy->phy_reset_problem_count = qp[4];
-		}
-		if (pm8001_ha->chip_id == chip_8001)
-			pm8001_bar4_shift(pm8001_ha, 0);
+		पूर्ण
+		अगर (pm8001_ha->chip_id == chip_8001)
+			pm8001_bar4_shअगरt(pm8001_ha, 0);
 		spin_unlock_irqrestore(&pm8001_ha->lock, flags);
-		return 0;
-	default:
+		वापस 0;
+	शेष:
 		pm8001_dbg(pm8001_ha, DEVIO, "func 0x%x\n", func);
 		rc = -EOPNOTSUPP;
-	}
+	पूर्ण
 	msleep(300);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
 /**
   * pm8001_scan_start - we should enable all HBA phys by sending the phy_start
   * command to HBA.
   * @shost: the scsi host data.
   */
-void pm8001_scan_start(struct Scsi_Host *shost)
-{
-	int i;
-	struct pm8001_hba_info *pm8001_ha;
-	struct sas_ha_struct *sha = SHOST_TO_SAS_HA(shost);
+व्योम pm8001_scan_start(काष्ठा Scsi_Host *shost)
+अणु
+	पूर्णांक i;
+	काष्ठा pm8001_hba_info *pm8001_ha;
+	काष्ठा sas_ha_काष्ठा *sha = SHOST_TO_SAS_HA(shost);
 	DECLARE_COMPLETION_ONSTACK(completion);
 	pm8001_ha = sha->lldd_ha;
 	/* SAS_RE_INITIALIZATION not available in SPCv/ve */
-	if (pm8001_ha->chip_id == chip_8001)
+	अगर (pm8001_ha->chip_id == chip_8001)
 		PM8001_CHIP_DISP->sas_re_init_req(pm8001_ha);
-	for (i = 0; i < pm8001_ha->chip->n_phy; ++i) {
+	क्रम (i = 0; i < pm8001_ha->chip->n_phy; ++i) अणु
 		pm8001_ha->phy[i].enable_completion = &completion;
 		PM8001_CHIP_DISP->phy_start_req(pm8001_ha, i);
-		wait_for_completion(&completion);
+		रुको_क्रम_completion(&completion);
 		msleep(300);
-	}
-}
+	पूर्ण
+पूर्ण
 
-int pm8001_scan_finished(struct Scsi_Host *shost, unsigned long time)
-{
-	struct sas_ha_struct *ha = SHOST_TO_SAS_HA(shost);
+पूर्णांक pm8001_scan_finished(काष्ठा Scsi_Host *shost, अचिन्हित दीर्घ समय)
+अणु
+	काष्ठा sas_ha_काष्ठा *ha = SHOST_TO_SAS_HA(shost);
 
-	/* give the phy enabling interrupt event time to come in (1s
+	/* give the phy enabling पूर्णांकerrupt event समय to come in (1s
 	* is empirically about all it takes) */
-	if (time < HZ)
-		return 0;
-	/* Wait for discovery to finish */
+	अगर (समय < HZ)
+		वापस 0;
+	/* Wait क्रम discovery to finish */
 	sas_drain_work(ha);
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
 /**
-  * pm8001_task_prep_smp - the dispatcher function, prepare data for smp task
-  * @pm8001_ha: our hba card information
+  * pm8001_task_prep_smp - the dispatcher function, prepare data क्रम smp task
+  * @pm8001_ha: our hba card inक्रमmation
   * @ccb: the ccb which attached to smp task
   */
-static int pm8001_task_prep_smp(struct pm8001_hba_info *pm8001_ha,
-	struct pm8001_ccb_info *ccb)
-{
-	return PM8001_CHIP_DISP->smp_req(pm8001_ha, ccb);
-}
+अटल पूर्णांक pm8001_task_prep_smp(काष्ठा pm8001_hba_info *pm8001_ha,
+	काष्ठा pm8001_ccb_info *ccb)
+अणु
+	वापस PM8001_CHIP_DISP->smp_req(pm8001_ha, ccb);
+पूर्ण
 
-u32 pm8001_get_ncq_tag(struct sas_task *task, u32 *tag)
-{
-	struct ata_queued_cmd *qc = task->uldd_task;
-	if (qc) {
-		if (qc->tf.command == ATA_CMD_FPDMA_WRITE ||
+u32 pm8001_get_ncq_tag(काष्ठा sas_task *task, u32 *tag)
+अणु
+	काष्ठा ata_queued_cmd *qc = task->uldd_task;
+	अगर (qc) अणु
+		अगर (qc->tf.command == ATA_CMD_FPDMA_WRITE ||
 		    qc->tf.command == ATA_CMD_FPDMA_READ ||
 		    qc->tf.command == ATA_CMD_FPDMA_RECV ||
 		    qc->tf.command == ATA_CMD_FPDMA_SEND ||
-		    qc->tf.command == ATA_CMD_NCQ_NON_DATA) {
+		    qc->tf.command == ATA_CMD_NCQ_NON_DATA) अणु
 			*tag = qc->tag;
-			return 1;
-		}
-	}
-	return 0;
-}
+			वापस 1;
+		पूर्ण
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /**
-  * pm8001_task_prep_ata - the dispatcher function, prepare data for sata task
-  * @pm8001_ha: our hba card information
+  * pm8001_task_prep_ata - the dispatcher function, prepare data क्रम sata task
+  * @pm8001_ha: our hba card inक्रमmation
   * @ccb: the ccb which attached to sata task
   */
-static int pm8001_task_prep_ata(struct pm8001_hba_info *pm8001_ha,
-	struct pm8001_ccb_info *ccb)
-{
-	return PM8001_CHIP_DISP->sata_req(pm8001_ha, ccb);
-}
+अटल पूर्णांक pm8001_task_prep_ata(काष्ठा pm8001_hba_info *pm8001_ha,
+	काष्ठा pm8001_ccb_info *ccb)
+अणु
+	वापस PM8001_CHIP_DISP->sata_req(pm8001_ha, ccb);
+पूर्ण
 
 /**
-  * pm8001_task_prep_ssp_tm - the dispatcher function, prepare task management data
-  * @pm8001_ha: our hba card information
+  * pm8001_task_prep_ssp_पंचांग - the dispatcher function, prepare task management data
+  * @pm8001_ha: our hba card inक्रमmation
   * @ccb: the ccb which attached to TM
-  * @tmf: the task management IU
+  * @पंचांगf: the task management IU
   */
-static int pm8001_task_prep_ssp_tm(struct pm8001_hba_info *pm8001_ha,
-	struct pm8001_ccb_info *ccb, struct pm8001_tmf_task *tmf)
-{
-	return PM8001_CHIP_DISP->ssp_tm_req(pm8001_ha, ccb, tmf);
-}
+अटल पूर्णांक pm8001_task_prep_ssp_पंचांग(काष्ठा pm8001_hba_info *pm8001_ha,
+	काष्ठा pm8001_ccb_info *ccb, काष्ठा pm8001_पंचांगf_task *पंचांगf)
+अणु
+	वापस PM8001_CHIP_DISP->ssp_पंचांग_req(pm8001_ha, ccb, पंचांगf);
+पूर्ण
 
 /**
-  * pm8001_task_prep_ssp - the dispatcher function,prepare ssp data for ssp task
-  * @pm8001_ha: our hba card information
+  * pm8001_task_prep_ssp - the dispatcher function,prepare ssp data क्रम ssp task
+  * @pm8001_ha: our hba card inक्रमmation
   * @ccb: the ccb which attached to ssp task
   */
-static int pm8001_task_prep_ssp(struct pm8001_hba_info *pm8001_ha,
-	struct pm8001_ccb_info *ccb)
-{
-	return PM8001_CHIP_DISP->ssp_io_req(pm8001_ha, ccb);
-}
+अटल पूर्णांक pm8001_task_prep_ssp(काष्ठा pm8001_hba_info *pm8001_ha,
+	काष्ठा pm8001_ccb_info *ccb)
+अणु
+	वापस PM8001_CHIP_DISP->ssp_io_req(pm8001_ha, ccb);
+पूर्ण
 
  /* Find the local port id that's attached to this device */
-static int sas_find_local_port_id(struct domain_device *dev)
-{
-	struct domain_device *pdev = dev->parent;
+अटल पूर्णांक sas_find_local_port_id(काष्ठा करोमुख्य_device *dev)
+अणु
+	काष्ठा करोमुख्य_device *pdev = dev->parent;
 
 	/* Directly attached device */
-	if (!pdev)
-		return dev->port->id;
-	while (pdev) {
-		struct domain_device *pdev_p = pdev->parent;
-		if (!pdev_p)
-			return pdev->port->id;
+	अगर (!pdev)
+		वापस dev->port->id;
+	जबतक (pdev) अणु
+		काष्ठा करोमुख्य_device *pdev_p = pdev->parent;
+		अगर (!pdev_p)
+			वापस pdev->port->id;
 		pdev = pdev->parent;
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-#define DEV_IS_GONE(pm8001_dev)	\
+#घोषणा DEV_IS_GONE(pm8001_dev)	\
 	((!pm8001_dev || (pm8001_dev->dev_type == SAS_PHY_UNUSED)))
 /**
   * pm8001_task_exec - queue the task(ssp, smp && ata) to the hardware.
   * @task: the task to be execute.
   * @gfp_flags: gfp_flags.
-  * @is_tmf: if it is task management task.
-  * @tmf: the task management IU
+  * @is_पंचांगf: अगर it is task management task.
+  * @पंचांगf: the task management IU
   */
-static int pm8001_task_exec(struct sas_task *task,
-	gfp_t gfp_flags, int is_tmf, struct pm8001_tmf_task *tmf)
-{
-	struct domain_device *dev = task->dev;
-	struct pm8001_hba_info *pm8001_ha;
-	struct pm8001_device *pm8001_dev;
-	struct pm8001_port *port = NULL;
-	struct sas_task *t = task;
-	struct pm8001_ccb_info *ccb;
+अटल पूर्णांक pm8001_task_exec(काष्ठा sas_task *task,
+	gfp_t gfp_flags, पूर्णांक is_पंचांगf, काष्ठा pm8001_पंचांगf_task *पंचांगf)
+अणु
+	काष्ठा करोमुख्य_device *dev = task->dev;
+	काष्ठा pm8001_hba_info *pm8001_ha;
+	काष्ठा pm8001_device *pm8001_dev;
+	काष्ठा pm8001_port *port = शून्य;
+	काष्ठा sas_task *t = task;
+	काष्ठा pm8001_ccb_info *ccb;
 	u32 tag = 0xdeadbeef, rc = 0, n_elem = 0;
-	unsigned long flags = 0;
-	enum sas_protocol task_proto = t->task_proto;
+	अचिन्हित दीर्घ flags = 0;
+	क्रमागत sas_protocol task_proto = t->task_proto;
 
-	if (!dev->port) {
-		struct task_status_struct *tsm = &t->task_status;
+	अगर (!dev->port) अणु
+		काष्ठा task_status_काष्ठा *tsm = &t->task_status;
 		tsm->resp = SAS_TASK_UNDELIVERED;
 		tsm->stat = SAS_PHY_DOWN;
-		if (dev->dev_type != SAS_SATA_DEV)
-			t->task_done(t);
-		return 0;
-	}
+		अगर (dev->dev_type != SAS_SATA_DEV)
+			t->task_करोne(t);
+		वापस 0;
+	पूर्ण
 	pm8001_ha = pm8001_find_ha_by_dev(task->dev);
-	if (pm8001_ha->controller_fatal_error) {
-		struct task_status_struct *ts = &t->task_status;
+	अगर (pm8001_ha->controller_fatal_error) अणु
+		काष्ठा task_status_काष्ठा *ts = &t->task_status;
 
 		ts->resp = SAS_TASK_UNDELIVERED;
-		t->task_done(t);
-		return 0;
-	}
+		t->task_करोne(t);
+		वापस 0;
+	पूर्ण
 	pm8001_dbg(pm8001_ha, IO, "pm8001_task_exec device\n");
 	spin_lock_irqsave(&pm8001_ha->lock, flags);
-	do {
+	करो अणु
 		dev = t->dev;
 		pm8001_dev = dev->lldd_dev;
 		port = &pm8001_ha->port[sas_find_local_port_id(dev)];
-		if (DEV_IS_GONE(pm8001_dev) || !port->port_attached) {
-			if (sas_protocol_ata(task_proto)) {
-				struct task_status_struct *ts = &t->task_status;
+		अगर (DEV_IS_GONE(pm8001_dev) || !port->port_attached) अणु
+			अगर (sas_protocol_ata(task_proto)) अणु
+				काष्ठा task_status_काष्ठा *ts = &t->task_status;
 				ts->resp = SAS_TASK_UNDELIVERED;
 				ts->stat = SAS_PHY_DOWN;
 
 				spin_unlock_irqrestore(&pm8001_ha->lock, flags);
-				t->task_done(t);
+				t->task_करोne(t);
 				spin_lock_irqsave(&pm8001_ha->lock, flags);
-				continue;
-			} else {
-				struct task_status_struct *ts = &t->task_status;
+				जारी;
+			पूर्ण अन्यथा अणु
+				काष्ठा task_status_काष्ठा *ts = &t->task_status;
 				ts->resp = SAS_TASK_UNDELIVERED;
 				ts->stat = SAS_PHY_DOWN;
-				t->task_done(t);
-				continue;
-			}
-		}
+				t->task_करोne(t);
+				जारी;
+			पूर्ण
+		पूर्ण
 		rc = pm8001_tag_alloc(pm8001_ha, &tag);
-		if (rc)
-			goto err_out;
+		अगर (rc)
+			जाओ err_out;
 		ccb = &pm8001_ha->ccb_info[tag];
 
-		if (!sas_protocol_ata(task_proto)) {
-			if (t->num_scatter) {
+		अगर (!sas_protocol_ata(task_proto)) अणु
+			अगर (t->num_scatter) अणु
 				n_elem = dma_map_sg(pm8001_ha->dev,
 					t->scatter,
 					t->num_scatter,
 					t->data_dir);
-				if (!n_elem) {
+				अगर (!n_elem) अणु
 					rc = -ENOMEM;
-					goto err_out_tag;
-				}
-			}
-		} else {
+					जाओ err_out_tag;
+				पूर्ण
+			पूर्ण
+		पूर्ण अन्यथा अणु
 			n_elem = t->num_scatter;
-		}
+		पूर्ण
 
 		t->lldd_task = ccb;
 		ccb->n_elem = n_elem;
 		ccb->ccb_tag = tag;
 		ccb->task = t;
 		ccb->device = pm8001_dev;
-		switch (task_proto) {
-		case SAS_PROTOCOL_SMP:
+		चयन (task_proto) अणु
+		हाल SAS_PROTOCOL_SMP:
 			atomic_inc(&pm8001_dev->running_req);
 			rc = pm8001_task_prep_smp(pm8001_ha, ccb);
-			break;
-		case SAS_PROTOCOL_SSP:
+			अवरोध;
+		हाल SAS_PROTOCOL_SSP:
 			atomic_inc(&pm8001_dev->running_req);
-			if (is_tmf)
-				rc = pm8001_task_prep_ssp_tm(pm8001_ha,
-					ccb, tmf);
-			else
+			अगर (is_पंचांगf)
+				rc = pm8001_task_prep_ssp_पंचांग(pm8001_ha,
+					ccb, पंचांगf);
+			अन्यथा
 				rc = pm8001_task_prep_ssp(pm8001_ha, ccb);
-			break;
-		case SAS_PROTOCOL_SATA:
-		case SAS_PROTOCOL_STP:
+			अवरोध;
+		हाल SAS_PROTOCOL_SATA:
+		हाल SAS_PROTOCOL_STP:
 			atomic_inc(&pm8001_dev->running_req);
 			rc = pm8001_task_prep_ata(pm8001_ha, ccb);
-			break;
-		default:
-			dev_printk(KERN_ERR, pm8001_ha->dev,
+			अवरोध;
+		शेष:
+			dev_prपूर्णांकk(KERN_ERR, pm8001_ha->dev,
 				"unknown sas_task proto: 0x%x\n", task_proto);
 			rc = -EINVAL;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		if (rc) {
+		अगर (rc) अणु
 			pm8001_dbg(pm8001_ha, IO, "rc is %x\n", rc);
 			atomic_dec(&pm8001_dev->running_req);
-			goto err_out_tag;
-		}
+			जाओ err_out_tag;
+		पूर्ण
 		/* TODO: select normal or high priority */
 		spin_lock(&t->task_state_lock);
 		t->task_state_flags |= SAS_TASK_AT_INITIATOR;
 		spin_unlock(&t->task_state_lock);
-	} while (0);
+	पूर्ण जबतक (0);
 	rc = 0;
-	goto out_done;
+	जाओ out_करोne;
 
 err_out_tag:
-	pm8001_tag_free(pm8001_ha, tag);
+	pm8001_tag_मुक्त(pm8001_ha, tag);
 err_out:
-	dev_printk(KERN_ERR, pm8001_ha->dev, "pm8001 exec failed[%d]!\n", rc);
-	if (!sas_protocol_ata(task_proto))
-		if (n_elem)
+	dev_prपूर्णांकk(KERN_ERR, pm8001_ha->dev, "pm8001 exec failed[%d]!\n", rc);
+	अगर (!sas_protocol_ata(task_proto))
+		अगर (n_elem)
 			dma_unmap_sg(pm8001_ha->dev, t->scatter, t->num_scatter,
 				t->data_dir);
-out_done:
+out_करोne:
 	spin_unlock_irqrestore(&pm8001_ha->lock, flags);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
 /**
-  * pm8001_queue_command - register for upper layer used, all IO commands sent
-  * to HBA are from this interface.
+  * pm8001_queue_command - रेजिस्टर क्रम upper layer used, all IO commands sent
+  * to HBA are from this पूर्णांकerface.
   * @task: the task to be execute.
   * @gfp_flags: gfp_flags
   */
-int pm8001_queue_command(struct sas_task *task, gfp_t gfp_flags)
-{
-	return pm8001_task_exec(task, gfp_flags, 0, NULL);
-}
+पूर्णांक pm8001_queue_command(काष्ठा sas_task *task, gfp_t gfp_flags)
+अणु
+	वापस pm8001_task_exec(task, gfp_flags, 0, शून्य);
+पूर्ण
 
 /**
-  * pm8001_ccb_task_free - free the sg for ssp and smp command, free the ccb.
-  * @pm8001_ha: our hba card information
+  * pm8001_ccb_task_मुक्त - मुक्त the sg क्रम ssp and smp command, मुक्त the ccb.
+  * @pm8001_ha: our hba card inक्रमmation
   * @ccb: the ccb which attached to ssp task
-  * @task: the task to be free.
+  * @task: the task to be मुक्त.
   * @ccb_idx: ccb index.
   */
-void pm8001_ccb_task_free(struct pm8001_hba_info *pm8001_ha,
-	struct sas_task *task, struct pm8001_ccb_info *ccb, u32 ccb_idx)
-{
-	if (!ccb->task)
-		return;
-	if (!sas_protocol_ata(task->task_proto))
-		if (ccb->n_elem)
+व्योम pm8001_ccb_task_मुक्त(काष्ठा pm8001_hba_info *pm8001_ha,
+	काष्ठा sas_task *task, काष्ठा pm8001_ccb_info *ccb, u32 ccb_idx)
+अणु
+	अगर (!ccb->task)
+		वापस;
+	अगर (!sas_protocol_ata(task->task_proto))
+		अगर (ccb->n_elem)
 			dma_unmap_sg(pm8001_ha->dev, task->scatter,
 				task->num_scatter, task->data_dir);
 
-	switch (task->task_proto) {
-	case SAS_PROTOCOL_SMP:
+	चयन (task->task_proto) अणु
+	हाल SAS_PROTOCOL_SMP:
 		dma_unmap_sg(pm8001_ha->dev, &task->smp_task.smp_resp, 1,
 			DMA_FROM_DEVICE);
 		dma_unmap_sg(pm8001_ha->dev, &task->smp_task.smp_req, 1,
 			DMA_TO_DEVICE);
-		break;
+		अवरोध;
 
-	case SAS_PROTOCOL_SATA:
-	case SAS_PROTOCOL_STP:
-	case SAS_PROTOCOL_SSP:
-	default:
-		/* do nothing */
-		break;
-	}
-	task->lldd_task = NULL;
-	ccb->task = NULL;
+	हाल SAS_PROTOCOL_SATA:
+	हाल SAS_PROTOCOL_STP:
+	हाल SAS_PROTOCOL_SSP:
+	शेष:
+		/* करो nothing */
+		अवरोध;
+	पूर्ण
+	task->lldd_task = शून्य;
+	ccb->task = शून्य;
 	ccb->ccb_tag = 0xFFFFFFFF;
-	ccb->open_retry = 0;
-	pm8001_tag_free(pm8001_ha, ccb_idx);
-}
+	ccb->खोलो_retry = 0;
+	pm8001_tag_मुक्त(pm8001_ha, ccb_idx);
+पूर्ण
 
  /**
   * pm8001_alloc_dev - find a empty pm8001_device
-  * @pm8001_ha: our hba card information
+  * @pm8001_ha: our hba card inक्रमmation
   */
-static struct pm8001_device *pm8001_alloc_dev(struct pm8001_hba_info *pm8001_ha)
-{
+अटल काष्ठा pm8001_device *pm8001_alloc_dev(काष्ठा pm8001_hba_info *pm8001_ha)
+अणु
 	u32 dev;
-	for (dev = 0; dev < PM8001_MAX_DEVICES; dev++) {
-		if (pm8001_ha->devices[dev].dev_type == SAS_PHY_UNUSED) {
+	क्रम (dev = 0; dev < PM8001_MAX_DEVICES; dev++) अणु
+		अगर (pm8001_ha->devices[dev].dev_type == SAS_PHY_UNUSED) अणु
 			pm8001_ha->devices[dev].id = dev;
-			return &pm8001_ha->devices[dev];
-		}
-	}
-	if (dev == PM8001_MAX_DEVICES) {
+			वापस &pm8001_ha->devices[dev];
+		पूर्ण
+	पूर्ण
+	अगर (dev == PM8001_MAX_DEVICES) अणु
 		pm8001_dbg(pm8001_ha, FAIL,
 			   "max support %d devices, ignore ..\n",
 			   PM8001_MAX_DEVICES);
-	}
-	return NULL;
-}
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 /**
   * pm8001_find_dev - find a matching pm8001_device
-  * @pm8001_ha: our hba card information
+  * @pm8001_ha: our hba card inक्रमmation
   * @device_id: device ID to match against
   */
-struct pm8001_device *pm8001_find_dev(struct pm8001_hba_info *pm8001_ha,
+काष्ठा pm8001_device *pm8001_find_dev(काष्ठा pm8001_hba_info *pm8001_ha,
 					u32 device_id)
-{
+अणु
 	u32 dev;
-	for (dev = 0; dev < PM8001_MAX_DEVICES; dev++) {
-		if (pm8001_ha->devices[dev].device_id == device_id)
-			return &pm8001_ha->devices[dev];
-	}
-	if (dev == PM8001_MAX_DEVICES) {
+	क्रम (dev = 0; dev < PM8001_MAX_DEVICES; dev++) अणु
+		अगर (pm8001_ha->devices[dev].device_id == device_id)
+			वापस &pm8001_ha->devices[dev];
+	पूर्ण
+	अगर (dev == PM8001_MAX_DEVICES) अणु
 		pm8001_dbg(pm8001_ha, FAIL, "NO MATCHING DEVICE FOUND !!!\n");
-	}
-	return NULL;
-}
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
-void pm8001_free_dev(struct pm8001_device *pm8001_dev)
-{
+व्योम pm8001_मुक्त_dev(काष्ठा pm8001_device *pm8001_dev)
+अणु
 	u32 id = pm8001_dev->id;
-	memset(pm8001_dev, 0, sizeof(*pm8001_dev));
+	स_रखो(pm8001_dev, 0, माप(*pm8001_dev));
 	pm8001_dev->id = id;
 	pm8001_dev->dev_type = SAS_PHY_UNUSED;
 	pm8001_dev->device_id = PM8001_MAX_DEVICES;
-	pm8001_dev->sas_device = NULL;
-}
+	pm8001_dev->sas_device = शून्य;
+पूर्ण
 
 /**
-  * pm8001_dev_found_notify - libsas notify a device is found.
-  * @dev: the device structure which sas layer used.
+  * pm8001_dev_found_notअगरy - libsas notअगरy a device is found.
+  * @dev: the device काष्ठाure which sas layer used.
   *
-  * when libsas find a sas domain device, it should tell the LLDD that
-  * device is found, and then LLDD register this device to HBA firmware
+  * when libsas find a sas करोमुख्य device, it should tell the LLDD that
+  * device is found, and then LLDD रेजिस्टर this device to HBA firmware
   * by the command "OPC_INB_REG_DEV", after that the HBA will assign a
-  * device ID(according to device's sas address) and returned it to LLDD. From
-  * now on, we communicate with HBA FW with the device ID which HBA assigned
-  * rather than sas address. it is the necessary step for our HBA but it is
-  * the optional for other HBA driver.
+  * device ID(according to device's sas address) and वापसed it to LLDD. From
+  * now on, we communicate with HBA FW with the device ID which HBA asचिन्हित
+  * rather than sas address. it is the necessary step क्रम our HBA but it is
+  * the optional क्रम other HBA driver.
   */
-static int pm8001_dev_found_notify(struct domain_device *dev)
-{
-	unsigned long flags = 0;
-	int res = 0;
-	struct pm8001_hba_info *pm8001_ha = NULL;
-	struct domain_device *parent_dev = dev->parent;
-	struct pm8001_device *pm8001_device;
+अटल पूर्णांक pm8001_dev_found_notअगरy(काष्ठा करोमुख्य_device *dev)
+अणु
+	अचिन्हित दीर्घ flags = 0;
+	पूर्णांक res = 0;
+	काष्ठा pm8001_hba_info *pm8001_ha = शून्य;
+	काष्ठा करोमुख्य_device *parent_dev = dev->parent;
+	काष्ठा pm8001_device *pm8001_device;
 	DECLARE_COMPLETION_ONSTACK(completion);
 	u32 flag = 0;
 	pm8001_ha = pm8001_find_ha_by_dev(dev);
 	spin_lock_irqsave(&pm8001_ha->lock, flags);
 
 	pm8001_device = pm8001_alloc_dev(pm8001_ha);
-	if (!pm8001_device) {
+	अगर (!pm8001_device) अणु
 		res = -1;
-		goto found_out;
-	}
+		जाओ found_out;
+	पूर्ण
 	pm8001_device->sas_device = dev;
 	dev->lldd_dev = pm8001_device;
 	pm8001_device->dev_type = dev->dev_type;
 	pm8001_device->dcompletion = &completion;
-	if (parent_dev && dev_is_expander(parent_dev->dev_type)) {
-		int phy_id;
-		struct ex_phy *phy;
-		for (phy_id = 0; phy_id < parent_dev->ex_dev.num_phys;
-		phy_id++) {
+	अगर (parent_dev && dev_is_expander(parent_dev->dev_type)) अणु
+		पूर्णांक phy_id;
+		काष्ठा ex_phy *phy;
+		क्रम (phy_id = 0; phy_id < parent_dev->ex_dev.num_phys;
+		phy_id++) अणु
 			phy = &parent_dev->ex_dev.ex_phy[phy_id];
-			if (SAS_ADDR(phy->attached_sas_addr)
-				== SAS_ADDR(dev->sas_addr)) {
+			अगर (SAS_ADDR(phy->attached_sas_addr)
+				== SAS_ADDR(dev->sas_addr)) अणु
 				pm8001_device->attached_phy = phy_id;
-				break;
-			}
-		}
-		if (phy_id == parent_dev->ex_dev.num_phys) {
+				अवरोध;
+			पूर्ण
+		पूर्ण
+		अगर (phy_id == parent_dev->ex_dev.num_phys) अणु
 			pm8001_dbg(pm8001_ha, FAIL,
 				   "Error: no attached dev:%016llx at ex:%016llx.\n",
 				   SAS_ADDR(dev->sas_addr),
 				   SAS_ADDR(parent_dev->sas_addr));
 			res = -1;
-		}
-	} else {
-		if (dev->dev_type == SAS_SATA_DEV) {
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		अगर (dev->dev_type == SAS_SATA_DEV) अणु
 			pm8001_device->attached_phy =
-				dev->rphy->identify.phy_identifier;
+				dev->rphy->identअगरy.phy_identअगरier;
 			flag = 1; /* directly sata */
-		}
-	} /*register this device to HBA*/
+		पूर्ण
+	पूर्ण /*रेजिस्टर this device to HBA*/
 	pm8001_dbg(pm8001_ha, DISC, "Found device\n");
 	PM8001_CHIP_DISP->reg_dev_req(pm8001_ha, pm8001_device, flag);
 	spin_unlock_irqrestore(&pm8001_ha->lock, flags);
-	wait_for_completion(&completion);
-	if (dev->dev_type == SAS_END_DEVICE)
+	रुको_क्रम_completion(&completion);
+	अगर (dev->dev_type == SAS_END_DEVICE)
 		msleep(50);
 	pm8001_ha->flags = PM8001F_RUN_TIME;
-	return 0;
+	वापस 0;
 found_out:
 	spin_unlock_irqrestore(&pm8001_ha->lock, flags);
-	return res;
-}
+	वापस res;
+पूर्ण
 
-int pm8001_dev_found(struct domain_device *dev)
-{
-	return pm8001_dev_found_notify(dev);
-}
+पूर्णांक pm8001_dev_found(काष्ठा करोमुख्य_device *dev)
+अणु
+	वापस pm8001_dev_found_notअगरy(dev);
+पूर्ण
 
-void pm8001_task_done(struct sas_task *task)
-{
-	if (!del_timer(&task->slow_task->timer))
-		return;
+व्योम pm8001_task_करोne(काष्ठा sas_task *task)
+अणु
+	अगर (!del_समयr(&task->slow_task->समयr))
+		वापस;
 	complete(&task->slow_task->completion);
-}
+पूर्ण
 
-static void pm8001_tmf_timedout(struct timer_list *t)
-{
-	struct sas_task_slow *slow = from_timer(slow, t, timer);
-	struct sas_task *task = slow->task;
+अटल व्योम pm8001_पंचांगf_समयकरोut(काष्ठा समयr_list *t)
+अणु
+	काष्ठा sas_task_slow *slow = from_समयr(slow, t, समयr);
+	काष्ठा sas_task *task = slow->task;
 
 	task->task_state_flags |= SAS_TASK_STATE_ABORTED;
 	complete(&task->slow_task->completion);
-}
+पूर्ण
 
-#define PM8001_TASK_TIMEOUT 20
+#घोषणा PM8001_TASK_TIMEOUT 20
 /**
-  * pm8001_exec_internal_tmf_task - execute some task management commands.
+  * pm8001_exec_पूर्णांकernal_पंचांगf_task - execute some task management commands.
   * @dev: the wanted device.
-  * @tmf: which task management wanted to be take.
+  * @पंचांगf: which task management wanted to be take.
   * @para_len: para_len.
   * @parameter: ssp task parameter.
   *
-  * when errors or exception happened, we may want to do something, for example
-  * abort the issued task which result in this execption, it is done by calling
-  * this function, note it is also with the task execute interface.
+  * when errors or exception happened, we may want to करो something, क्रम example
+  * पात the issued task which result in this execption, it is करोne by calling
+  * this function, note it is also with the task execute पूर्णांकerface.
   */
-static int pm8001_exec_internal_tmf_task(struct domain_device *dev,
-	void *parameter, u32 para_len, struct pm8001_tmf_task *tmf)
-{
-	int res, retry;
-	struct sas_task *task = NULL;
-	struct pm8001_hba_info *pm8001_ha = pm8001_find_ha_by_dev(dev);
-	struct pm8001_device *pm8001_dev = dev->lldd_dev;
+अटल पूर्णांक pm8001_exec_पूर्णांकernal_पंचांगf_task(काष्ठा करोमुख्य_device *dev,
+	व्योम *parameter, u32 para_len, काष्ठा pm8001_पंचांगf_task *पंचांगf)
+अणु
+	पूर्णांक res, retry;
+	काष्ठा sas_task *task = शून्य;
+	काष्ठा pm8001_hba_info *pm8001_ha = pm8001_find_ha_by_dev(dev);
+	काष्ठा pm8001_device *pm8001_dev = dev->lldd_dev;
 	DECLARE_COMPLETION_ONSTACK(completion_setstate);
 
-	for (retry = 0; retry < 3; retry++) {
+	क्रम (retry = 0; retry < 3; retry++) अणु
 		task = sas_alloc_slow_task(GFP_KERNEL);
-		if (!task)
-			return -ENOMEM;
+		अगर (!task)
+			वापस -ENOMEM;
 
 		task->dev = dev;
 		task->task_proto = dev->tproto;
-		memcpy(&task->ssp_task, parameter, para_len);
-		task->task_done = pm8001_task_done;
-		task->slow_task->timer.function = pm8001_tmf_timedout;
-		task->slow_task->timer.expires = jiffies + PM8001_TASK_TIMEOUT*HZ;
-		add_timer(&task->slow_task->timer);
+		स_नकल(&task->ssp_task, parameter, para_len);
+		task->task_करोne = pm8001_task_करोne;
+		task->slow_task->समयr.function = pm8001_पंचांगf_समयकरोut;
+		task->slow_task->समयr.expires = jअगरfies + PM8001_TASK_TIMEOUT*HZ;
+		add_समयr(&task->slow_task->समयr);
 
-		res = pm8001_task_exec(task, GFP_KERNEL, 1, tmf);
+		res = pm8001_task_exec(task, GFP_KERNEL, 1, पंचांगf);
 
-		if (res) {
-			del_timer(&task->slow_task->timer);
+		अगर (res) अणु
+			del_समयr(&task->slow_task->समयr);
 			pm8001_dbg(pm8001_ha, FAIL, "Executing internal task failed\n");
-			goto ex_err;
-		}
-		wait_for_completion(&task->slow_task->completion);
-		if (pm8001_ha->chip_id != chip_8001) {
+			जाओ ex_err;
+		पूर्ण
+		रुको_क्रम_completion(&task->slow_task->completion);
+		अगर (pm8001_ha->chip_id != chip_8001) अणु
 			pm8001_dev->setds_completion = &completion_setstate;
 			PM8001_CHIP_DISP->set_dev_state_req(pm8001_ha,
 				pm8001_dev, DS_OPERATIONAL);
-			wait_for_completion(&completion_setstate);
-		}
+			रुको_क्रम_completion(&completion_setstate);
+		पूर्ण
 		res = -TMF_RESP_FUNC_FAILED;
-		/* Even TMF timed out, return direct. */
-		if ((task->task_state_flags & SAS_TASK_STATE_ABORTED)) {
-			if (!(task->task_state_flags & SAS_TASK_STATE_DONE)) {
+		/* Even TMF समयd out, वापस direct. */
+		अगर ((task->task_state_flags & SAS_TASK_STATE_ABORTED)) अणु
+			अगर (!(task->task_state_flags & SAS_TASK_STATE_DONE)) अणु
 				pm8001_dbg(pm8001_ha, FAIL,
 					   "TMF task[%x]timeout.\n",
-					   tmf->tmf);
-				goto ex_err;
-			}
-		}
+					   पंचांगf->पंचांगf);
+				जाओ ex_err;
+			पूर्ण
+		पूर्ण
 
-		if (task->task_status.resp == SAS_TASK_COMPLETE &&
-			task->task_status.stat == SAM_STAT_GOOD) {
+		अगर (task->task_status.resp == SAS_TASK_COMPLETE &&
+			task->task_status.stat == SAM_STAT_GOOD) अणु
 			res = TMF_RESP_FUNC_COMPLETE;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		if (task->task_status.resp == SAS_TASK_COMPLETE &&
-		task->task_status.stat == SAS_DATA_UNDERRUN) {
-			/* no error, but return the number of bytes of
+		अगर (task->task_status.resp == SAS_TASK_COMPLETE &&
+		task->task_status.stat == SAS_DATA_UNDERRUN) अणु
+			/* no error, but वापस the number of bytes of
 			* underrun */
 			res = task->task_status.residual;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		if (task->task_status.resp == SAS_TASK_COMPLETE &&
-			task->task_status.stat == SAS_DATA_OVERRUN) {
+		अगर (task->task_status.resp == SAS_TASK_COMPLETE &&
+			task->task_status.stat == SAS_DATA_OVERRUN) अणु
 			pm8001_dbg(pm8001_ha, FAIL, "Blocked task error.\n");
 			res = -EMSGSIZE;
-			break;
-		} else {
+			अवरोध;
+		पूर्ण अन्यथा अणु
 			pm8001_dbg(pm8001_ha, EH,
 				   " Task to dev %016llx response:0x%x status 0x%x\n",
 				   SAS_ADDR(dev->sas_addr),
 				   task->task_status.resp,
 				   task->task_status.stat);
-			sas_free_task(task);
-			task = NULL;
-		}
-	}
+			sas_मुक्त_task(task);
+			task = शून्य;
+		पूर्ण
+	पूर्ण
 ex_err:
-	BUG_ON(retry == 3 && task != NULL);
-	sas_free_task(task);
-	return res;
-}
+	BUG_ON(retry == 3 && task != शून्य);
+	sas_मुक्त_task(task);
+	वापस res;
+पूर्ण
 
-static int
-pm8001_exec_internal_task_abort(struct pm8001_hba_info *pm8001_ha,
-	struct pm8001_device *pm8001_dev, struct domain_device *dev, u32 flag,
+अटल पूर्णांक
+pm8001_exec_पूर्णांकernal_task_पात(काष्ठा pm8001_hba_info *pm8001_ha,
+	काष्ठा pm8001_device *pm8001_dev, काष्ठा करोमुख्य_device *dev, u32 flag,
 	u32 task_tag)
-{
-	int res, retry;
+अणु
+	पूर्णांक res, retry;
 	u32 ccb_tag;
-	struct pm8001_ccb_info *ccb;
-	struct sas_task *task = NULL;
+	काष्ठा pm8001_ccb_info *ccb;
+	काष्ठा sas_task *task = शून्य;
 
-	for (retry = 0; retry < 3; retry++) {
+	क्रम (retry = 0; retry < 3; retry++) अणु
 		task = sas_alloc_slow_task(GFP_KERNEL);
-		if (!task)
-			return -ENOMEM;
+		अगर (!task)
+			वापस -ENOMEM;
 
 		task->dev = dev;
 		task->task_proto = dev->tproto;
-		task->task_done = pm8001_task_done;
-		task->slow_task->timer.function = pm8001_tmf_timedout;
-		task->slow_task->timer.expires = jiffies + PM8001_TASK_TIMEOUT * HZ;
-		add_timer(&task->slow_task->timer);
+		task->task_करोne = pm8001_task_करोne;
+		task->slow_task->समयr.function = pm8001_पंचांगf_समयकरोut;
+		task->slow_task->समयr.expires = jअगरfies + PM8001_TASK_TIMEOUT * HZ;
+		add_समयr(&task->slow_task->समयr);
 
 		res = pm8001_tag_alloc(pm8001_ha, &ccb_tag);
-		if (res)
-			goto ex_err;
+		अगर (res)
+			जाओ ex_err;
 		ccb = &pm8001_ha->ccb_info[ccb_tag];
 		ccb->device = pm8001_dev;
 		ccb->ccb_tag = ccb_tag;
 		ccb->task = task;
 		ccb->n_elem = 0;
 
-		res = PM8001_CHIP_DISP->task_abort(pm8001_ha,
+		res = PM8001_CHIP_DISP->task_पात(pm8001_ha,
 			pm8001_dev, flag, task_tag, ccb_tag);
 
-		if (res) {
-			del_timer(&task->slow_task->timer);
+		अगर (res) अणु
+			del_समयr(&task->slow_task->समयr);
 			pm8001_dbg(pm8001_ha, FAIL, "Executing internal task failed\n");
-			goto ex_err;
-		}
-		wait_for_completion(&task->slow_task->completion);
+			जाओ ex_err;
+		पूर्ण
+		रुको_क्रम_completion(&task->slow_task->completion);
 		res = TMF_RESP_FUNC_FAILED;
-		/* Even TMF timed out, return direct. */
-		if ((task->task_state_flags & SAS_TASK_STATE_ABORTED)) {
-			if (!(task->task_state_flags & SAS_TASK_STATE_DONE)) {
+		/* Even TMF समयd out, वापस direct. */
+		अगर ((task->task_state_flags & SAS_TASK_STATE_ABORTED)) अणु
+			अगर (!(task->task_state_flags & SAS_TASK_STATE_DONE)) अणु
 				pm8001_dbg(pm8001_ha, FAIL,
 					   "TMF task timeout.\n");
-				goto ex_err;
-			}
-		}
+				जाओ ex_err;
+			पूर्ण
+		पूर्ण
 
-		if (task->task_status.resp == SAS_TASK_COMPLETE &&
-			task->task_status.stat == SAM_STAT_GOOD) {
+		अगर (task->task_status.resp == SAS_TASK_COMPLETE &&
+			task->task_status.stat == SAM_STAT_GOOD) अणु
 			res = TMF_RESP_FUNC_COMPLETE;
-			break;
+			अवरोध;
 
-		} else {
+		पूर्ण अन्यथा अणु
 			pm8001_dbg(pm8001_ha, EH,
 				   " Task to dev %016llx response: 0x%x status 0x%x\n",
 				   SAS_ADDR(dev->sas_addr),
 				   task->task_status.resp,
 				   task->task_status.stat);
-			sas_free_task(task);
-			task = NULL;
-		}
-	}
+			sas_मुक्त_task(task);
+			task = शून्य;
+		पूर्ण
+	पूर्ण
 ex_err:
-	BUG_ON(retry == 3 && task != NULL);
-	sas_free_task(task);
-	return res;
-}
+	BUG_ON(retry == 3 && task != शून्य);
+	sas_मुक्त_task(task);
+	वापस res;
+पूर्ण
 
 /**
-  * pm8001_dev_gone_notify - see the comments for "pm8001_dev_found_notify"
-  * @dev: the device structure which sas layer used.
+  * pm8001_dev_gone_notअगरy - see the comments क्रम "pm8001_dev_found_notify"
+  * @dev: the device काष्ठाure which sas layer used.
   */
-static void pm8001_dev_gone_notify(struct domain_device *dev)
-{
-	unsigned long flags = 0;
-	struct pm8001_hba_info *pm8001_ha;
-	struct pm8001_device *pm8001_dev = dev->lldd_dev;
+अटल व्योम pm8001_dev_gone_notअगरy(काष्ठा करोमुख्य_device *dev)
+अणु
+	अचिन्हित दीर्घ flags = 0;
+	काष्ठा pm8001_hba_info *pm8001_ha;
+	काष्ठा pm8001_device *pm8001_dev = dev->lldd_dev;
 
 	pm8001_ha = pm8001_find_ha_by_dev(dev);
 	spin_lock_irqsave(&pm8001_ha->lock, flags);
-	if (pm8001_dev) {
+	अगर (pm8001_dev) अणु
 		u32 device_id = pm8001_dev->device_id;
 
 		pm8001_dbg(pm8001_ha, DISC, "found dev[%d:%x] is gone.\n",
 			   pm8001_dev->device_id, pm8001_dev->dev_type);
-		if (atomic_read(&pm8001_dev->running_req)) {
+		अगर (atomic_पढ़ो(&pm8001_dev->running_req)) अणु
 			spin_unlock_irqrestore(&pm8001_ha->lock, flags);
-			pm8001_exec_internal_task_abort(pm8001_ha, pm8001_dev,
+			pm8001_exec_पूर्णांकernal_task_पात(pm8001_ha, pm8001_dev,
 							dev, 1, 0);
-			while (atomic_read(&pm8001_dev->running_req))
+			जबतक (atomic_पढ़ो(&pm8001_dev->running_req))
 				msleep(20);
 			spin_lock_irqsave(&pm8001_ha->lock, flags);
-		}
+		पूर्ण
 		PM8001_CHIP_DISP->dereg_dev_req(pm8001_ha, device_id);
-		pm8001_free_dev(pm8001_dev);
-	} else {
+		pm8001_मुक्त_dev(pm8001_dev);
+	पूर्ण अन्यथा अणु
 		pm8001_dbg(pm8001_ha, DISC, "Found dev has gone.\n");
-	}
-	dev->lldd_dev = NULL;
+	पूर्ण
+	dev->lldd_dev = शून्य;
 	spin_unlock_irqrestore(&pm8001_ha->lock, flags);
-}
+पूर्ण
 
-void pm8001_dev_gone(struct domain_device *dev)
-{
-	pm8001_dev_gone_notify(dev);
-}
+व्योम pm8001_dev_gone(काष्ठा करोमुख्य_device *dev)
+अणु
+	pm8001_dev_gone_notअगरy(dev);
+पूर्ण
 
-static int pm8001_issue_ssp_tmf(struct domain_device *dev,
-	u8 *lun, struct pm8001_tmf_task *tmf)
-{
-	struct sas_ssp_task ssp_task;
-	if (!(dev->tproto & SAS_PROTOCOL_SSP))
-		return TMF_RESP_FUNC_ESUPP;
+अटल पूर्णांक pm8001_issue_ssp_पंचांगf(काष्ठा करोमुख्य_device *dev,
+	u8 *lun, काष्ठा pm8001_पंचांगf_task *पंचांगf)
+अणु
+	काष्ठा sas_ssp_task ssp_task;
+	अगर (!(dev->tproto & SAS_PROTOCOL_SSP))
+		वापस TMF_RESP_FUNC_ESUPP;
 
-	memcpy((u8 *)&ssp_task.LUN, lun, 8);
-	return pm8001_exec_internal_tmf_task(dev, &ssp_task, sizeof(ssp_task),
-		tmf);
-}
+	स_नकल((u8 *)&ssp_task.LUN, lun, 8);
+	वापस pm8001_exec_पूर्णांकernal_पंचांगf_task(dev, &ssp_task, माप(ssp_task),
+		पंचांगf);
+पूर्ण
 
 /* retry commands by ha, by task and/or by device */
-void pm8001_open_reject_retry(
-	struct pm8001_hba_info *pm8001_ha,
-	struct sas_task *task_to_close,
-	struct pm8001_device *device_to_close)
-{
-	int i;
-	unsigned long flags;
+व्योम pm8001_खोलो_reject_retry(
+	काष्ठा pm8001_hba_info *pm8001_ha,
+	काष्ठा sas_task *task_to_बंद,
+	काष्ठा pm8001_device *device_to_बंद)
+अणु
+	पूर्णांक i;
+	अचिन्हित दीर्घ flags;
 
-	if (pm8001_ha == NULL)
-		return;
+	अगर (pm8001_ha == शून्य)
+		वापस;
 
 	spin_lock_irqsave(&pm8001_ha->lock, flags);
 
-	for (i = 0; i < PM8001_MAX_CCB; i++) {
-		struct sas_task *task;
-		struct task_status_struct *ts;
-		struct pm8001_device *pm8001_dev;
-		unsigned long flags1;
+	क्रम (i = 0; i < PM8001_MAX_CCB; i++) अणु
+		काष्ठा sas_task *task;
+		काष्ठा task_status_काष्ठा *ts;
+		काष्ठा pm8001_device *pm8001_dev;
+		अचिन्हित दीर्घ flags1;
 		u32 tag;
-		struct pm8001_ccb_info *ccb = &pm8001_ha->ccb_info[i];
+		काष्ठा pm8001_ccb_info *ccb = &pm8001_ha->ccb_info[i];
 
 		pm8001_dev = ccb->device;
-		if (!pm8001_dev || (pm8001_dev->dev_type == SAS_PHY_UNUSED))
-			continue;
-		if (!device_to_close) {
-			uintptr_t d = (uintptr_t)pm8001_dev
-					- (uintptr_t)&pm8001_ha->devices;
-			if (((d % sizeof(*pm8001_dev)) != 0)
-			 || ((d / sizeof(*pm8001_dev)) >= PM8001_MAX_DEVICES))
-				continue;
-		} else if (pm8001_dev != device_to_close)
-			continue;
+		अगर (!pm8001_dev || (pm8001_dev->dev_type == SAS_PHY_UNUSED))
+			जारी;
+		अगर (!device_to_बंद) अणु
+			uपूर्णांकptr_t d = (uपूर्णांकptr_t)pm8001_dev
+					- (uपूर्णांकptr_t)&pm8001_ha->devices;
+			अगर (((d % माप(*pm8001_dev)) != 0)
+			 || ((d / माप(*pm8001_dev)) >= PM8001_MAX_DEVICES))
+				जारी;
+		पूर्ण अन्यथा अगर (pm8001_dev != device_to_बंद)
+			जारी;
 		tag = ccb->ccb_tag;
-		if (!tag || (tag == 0xFFFFFFFF))
-			continue;
+		अगर (!tag || (tag == 0xFFFFFFFF))
+			जारी;
 		task = ccb->task;
-		if (!task || !task->task_done)
-			continue;
-		if (task_to_close && (task != task_to_close))
-			continue;
+		अगर (!task || !task->task_करोne)
+			जारी;
+		अगर (task_to_बंद && (task != task_to_बंद))
+			जारी;
 		ts = &task->task_status;
 		ts->resp = SAS_TASK_COMPLETE;
 		/* Force the midlayer to retry */
 		ts->stat = SAS_OPEN_REJECT;
-		ts->open_rej_reason = SAS_OREJ_RSVD_RETRY;
-		if (pm8001_dev)
+		ts->खोलो_rej_reason = SAS_OREJ_RSVD_RETRY;
+		अगर (pm8001_dev)
 			atomic_dec(&pm8001_dev->running_req);
 		spin_lock_irqsave(&task->task_state_lock, flags1);
 		task->task_state_flags &= ~SAS_TASK_STATE_PENDING;
 		task->task_state_flags &= ~SAS_TASK_AT_INITIATOR;
 		task->task_state_flags |= SAS_TASK_STATE_DONE;
-		if (unlikely((task->task_state_flags
-				& SAS_TASK_STATE_ABORTED))) {
+		अगर (unlikely((task->task_state_flags
+				& SAS_TASK_STATE_ABORTED))) अणु
 			spin_unlock_irqrestore(&task->task_state_lock,
 				flags1);
-			pm8001_ccb_task_free(pm8001_ha, task, ccb, tag);
-		} else {
+			pm8001_ccb_task_मुक्त(pm8001_ha, task, ccb, tag);
+		पूर्ण अन्यथा अणु
 			spin_unlock_irqrestore(&task->task_state_lock,
 				flags1);
-			pm8001_ccb_task_free(pm8001_ha, task, ccb, tag);
-			mb();/* in order to force CPU ordering */
+			pm8001_ccb_task_मुक्त(pm8001_ha, task, ccb, tag);
+			mb();/* in order to क्रमce CPU ordering */
 			spin_unlock_irqrestore(&pm8001_ha->lock, flags);
-			task->task_done(task);
+			task->task_करोne(task);
 			spin_lock_irqsave(&pm8001_ha->lock, flags);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	spin_unlock_irqrestore(&pm8001_ha->lock, flags);
-}
+पूर्ण
 
 /**
  * pm8001_I_T_nexus_reset()
-  * Standard mandates link reset for ATA  (type 0) and hard reset for
-  * SSP (type 1) , only for RECOVERY
-  * @dev: the device structure for the device to reset.
+  * Standard mandates link reset क्रम ATA  (type 0) and hard reset क्रम
+  * SSP (type 1) , only क्रम RECOVERY
+  * @dev: the device काष्ठाure क्रम the device to reset.
   */
-int pm8001_I_T_nexus_reset(struct domain_device *dev)
-{
-	int rc = TMF_RESP_FUNC_FAILED;
-	struct pm8001_device *pm8001_dev;
-	struct pm8001_hba_info *pm8001_ha;
-	struct sas_phy *phy;
+पूर्णांक pm8001_I_T_nexus_reset(काष्ठा करोमुख्य_device *dev)
+अणु
+	पूर्णांक rc = TMF_RESP_FUNC_FAILED;
+	काष्ठा pm8001_device *pm8001_dev;
+	काष्ठा pm8001_hba_info *pm8001_ha;
+	काष्ठा sas_phy *phy;
 
-	if (!dev || !dev->lldd_dev)
-		return -ENODEV;
+	अगर (!dev || !dev->lldd_dev)
+		वापस -ENODEV;
 
 	pm8001_dev = dev->lldd_dev;
 	pm8001_ha = pm8001_find_ha_by_dev(dev);
 	phy = sas_get_local_phy(dev);
 
-	if (dev_is_sata(dev)) {
-		if (scsi_is_sas_phy_local(phy)) {
+	अगर (dev_is_sata(dev)) अणु
+		अगर (scsi_is_sas_phy_local(phy)) अणु
 			rc = 0;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 		rc = sas_phy_reset(phy, 1);
-		if (rc) {
+		अगर (rc) अणु
 			pm8001_dbg(pm8001_ha, EH,
 				   "phy reset failed for device %x\n"
 				   "with rc %d\n", pm8001_dev->device_id, rc);
 			rc = TMF_RESP_FUNC_FAILED;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 		msleep(2000);
-		rc = pm8001_exec_internal_task_abort(pm8001_ha, pm8001_dev,
+		rc = pm8001_exec_पूर्णांकernal_task_पात(pm8001_ha, pm8001_dev,
 						     dev, 1, 0);
-		if (rc) {
+		अगर (rc) अणु
 			pm8001_dbg(pm8001_ha, EH, "task abort failed %x\n"
 				   "with rc %d\n", pm8001_dev->device_id, rc);
 			rc = TMF_RESP_FUNC_FAILED;
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		rc = sas_phy_reset(phy, 1);
 		msleep(2000);
-	}
+	पूर्ण
 	pm8001_dbg(pm8001_ha, EH, " for device[%x]:rc=%d\n",
 		   pm8001_dev->device_id, rc);
  out:
 	sas_put_local_phy(phy);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
 /*
 * This function handle the IT_NEXUS_XXX event or completion
-* status code for SSP/SATA/SMP I/O request.
+* status code क्रम SSP/SATA/SMP I/O request.
 */
-int pm8001_I_T_nexus_event_handler(struct domain_device *dev)
-{
-	int rc = TMF_RESP_FUNC_FAILED;
-	struct pm8001_device *pm8001_dev;
-	struct pm8001_hba_info *pm8001_ha;
-	struct sas_phy *phy;
+पूर्णांक pm8001_I_T_nexus_event_handler(काष्ठा करोमुख्य_device *dev)
+अणु
+	पूर्णांक rc = TMF_RESP_FUNC_FAILED;
+	काष्ठा pm8001_device *pm8001_dev;
+	काष्ठा pm8001_hba_info *pm8001_ha;
+	काष्ठा sas_phy *phy;
 
-	if (!dev || !dev->lldd_dev)
-		return -1;
+	अगर (!dev || !dev->lldd_dev)
+		वापस -1;
 
 	pm8001_dev = dev->lldd_dev;
 	pm8001_ha = pm8001_find_ha_by_dev(dev);
@@ -1058,19 +1059,19 @@ int pm8001_I_T_nexus_event_handler(struct domain_device *dev)
 
 	phy = sas_get_local_phy(dev);
 
-	if (dev_is_sata(dev)) {
+	अगर (dev_is_sata(dev)) अणु
 		DECLARE_COMPLETION_ONSTACK(completion_setstate);
-		if (scsi_is_sas_phy_local(phy)) {
+		अगर (scsi_is_sas_phy_local(phy)) अणु
 			rc = 0;
-			goto out;
-		}
-		/* send internal ssp/sata/smp abort command to FW */
-		rc = pm8001_exec_internal_task_abort(pm8001_ha, pm8001_dev,
+			जाओ out;
+		पूर्ण
+		/* send पूर्णांकernal ssp/sata/smp पात command to FW */
+		rc = pm8001_exec_पूर्णांकernal_task_पात(pm8001_ha, pm8001_dev,
 						     dev, 1, 0);
 		msleep(100);
 
-		/* deregister the target device */
-		pm8001_dev_gone_notify(dev);
+		/* deरेजिस्टर the target device */
+		pm8001_dev_gone_notअगरy(dev);
 		msleep(200);
 
 		/*send phy reset to hard reset target */
@@ -1078,165 +1079,165 @@ int pm8001_I_T_nexus_event_handler(struct domain_device *dev)
 		msleep(2000);
 		pm8001_dev->setds_completion = &completion_setstate;
 
-		wait_for_completion(&completion_setstate);
-	} else {
-		/* send internal ssp/sata/smp abort command to FW */
-		rc = pm8001_exec_internal_task_abort(pm8001_ha, pm8001_dev,
+		रुको_क्रम_completion(&completion_setstate);
+	पूर्ण अन्यथा अणु
+		/* send पूर्णांकernal ssp/sata/smp पात command to FW */
+		rc = pm8001_exec_पूर्णांकernal_task_पात(pm8001_ha, pm8001_dev,
 						     dev, 1, 0);
 		msleep(100);
 
-		/* deregister the target device */
-		pm8001_dev_gone_notify(dev);
+		/* deरेजिस्टर the target device */
+		pm8001_dev_gone_notअगरy(dev);
 		msleep(200);
 
 		/*send phy reset to hard reset target */
 		rc = sas_phy_reset(phy, 1);
 		msleep(2000);
-	}
+	पूर्ण
 	pm8001_dbg(pm8001_ha, EH, " for device[%x]:rc=%d\n",
 		   pm8001_dev->device_id, rc);
 out:
 	sas_put_local_phy(phy);
 
-	return rc;
-}
-/* mandatory SAM-3, the task reset the specified LUN*/
-int pm8001_lu_reset(struct domain_device *dev, u8 *lun)
-{
-	int rc = TMF_RESP_FUNC_FAILED;
-	struct pm8001_tmf_task tmf_task;
-	struct pm8001_device *pm8001_dev = dev->lldd_dev;
-	struct pm8001_hba_info *pm8001_ha = pm8001_find_ha_by_dev(dev);
+	वापस rc;
+पूर्ण
+/* mandatory SAM-3, the task reset the specअगरied LUN*/
+पूर्णांक pm8001_lu_reset(काष्ठा करोमुख्य_device *dev, u8 *lun)
+अणु
+	पूर्णांक rc = TMF_RESP_FUNC_FAILED;
+	काष्ठा pm8001_पंचांगf_task पंचांगf_task;
+	काष्ठा pm8001_device *pm8001_dev = dev->lldd_dev;
+	काष्ठा pm8001_hba_info *pm8001_ha = pm8001_find_ha_by_dev(dev);
 	DECLARE_COMPLETION_ONSTACK(completion_setstate);
-	if (dev_is_sata(dev)) {
-		struct sas_phy *phy = sas_get_local_phy(dev);
-		rc = pm8001_exec_internal_task_abort(pm8001_ha, pm8001_dev,
+	अगर (dev_is_sata(dev)) अणु
+		काष्ठा sas_phy *phy = sas_get_local_phy(dev);
+		rc = pm8001_exec_पूर्णांकernal_task_पात(pm8001_ha, pm8001_dev,
 						     dev, 1, 0);
 		rc = sas_phy_reset(phy, 1);
 		sas_put_local_phy(phy);
 		pm8001_dev->setds_completion = &completion_setstate;
 		rc = PM8001_CHIP_DISP->set_dev_state_req(pm8001_ha,
 			pm8001_dev, DS_OPERATIONAL);
-		wait_for_completion(&completion_setstate);
-	} else {
-		tmf_task.tmf = TMF_LU_RESET;
-		rc = pm8001_issue_ssp_tmf(dev, lun, &tmf_task);
-	}
+		रुको_क्रम_completion(&completion_setstate);
+	पूर्ण अन्यथा अणु
+		पंचांगf_task.पंचांगf = TMF_LU_RESET;
+		rc = pm8001_issue_ssp_पंचांगf(dev, lun, &पंचांगf_task);
+	पूर्ण
 	/* If failed, fall-through I_T_Nexus reset */
 	pm8001_dbg(pm8001_ha, EH, "for device[%x]:rc=%d\n",
 		   pm8001_dev->device_id, rc);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
 /* optional SAM-3 */
-int pm8001_query_task(struct sas_task *task)
-{
+पूर्णांक pm8001_query_task(काष्ठा sas_task *task)
+अणु
 	u32 tag = 0xdeadbeef;
-	struct scsi_lun lun;
-	struct pm8001_tmf_task tmf_task;
-	int rc = TMF_RESP_FUNC_FAILED;
-	if (unlikely(!task || !task->lldd_task || !task->dev))
-		return rc;
+	काष्ठा scsi_lun lun;
+	काष्ठा pm8001_पंचांगf_task पंचांगf_task;
+	पूर्णांक rc = TMF_RESP_FUNC_FAILED;
+	अगर (unlikely(!task || !task->lldd_task || !task->dev))
+		वापस rc;
 
-	if (task->task_proto & SAS_PROTOCOL_SSP) {
-		struct scsi_cmnd *cmnd = task->uldd_task;
-		struct domain_device *dev = task->dev;
-		struct pm8001_hba_info *pm8001_ha =
+	अगर (task->task_proto & SAS_PROTOCOL_SSP) अणु
+		काष्ठा scsi_cmnd *cmnd = task->uldd_task;
+		काष्ठा करोमुख्य_device *dev = task->dev;
+		काष्ठा pm8001_hba_info *pm8001_ha =
 			pm8001_find_ha_by_dev(dev);
 
-		int_to_scsilun(cmnd->device->lun, &lun);
+		पूर्णांक_to_scsilun(cmnd->device->lun, &lun);
 		rc = pm8001_find_tag(task, &tag);
-		if (rc == 0) {
+		अगर (rc == 0) अणु
 			rc = TMF_RESP_FUNC_FAILED;
-			return rc;
-		}
+			वापस rc;
+		पूर्ण
 		pm8001_dbg(pm8001_ha, EH, "Query:[%16ph]\n", cmnd->cmnd);
-		tmf_task.tmf = 	TMF_QUERY_TASK;
-		tmf_task.tag_of_task_to_be_managed = tag;
+		पंचांगf_task.पंचांगf = 	TMF_QUERY_TASK;
+		पंचांगf_task.tag_of_task_to_be_managed = tag;
 
-		rc = pm8001_issue_ssp_tmf(dev, lun.scsi_lun, &tmf_task);
-		switch (rc) {
+		rc = pm8001_issue_ssp_पंचांगf(dev, lun.scsi_lun, &पंचांगf_task);
+		चयन (rc) अणु
 		/* The task is still in Lun, release it then */
-		case TMF_RESP_FUNC_SUCC:
+		हाल TMF_RESP_FUNC_SUCC:
 			pm8001_dbg(pm8001_ha, EH,
 				   "The task is still in Lun\n");
-			break;
+			अवरोध;
 		/* The task is not in Lun or failed, reset the phy */
-		case TMF_RESP_FUNC_FAILED:
-		case TMF_RESP_FUNC_COMPLETE:
+		हाल TMF_RESP_FUNC_FAILED:
+		हाल TMF_RESP_FUNC_COMPLETE:
 			pm8001_dbg(pm8001_ha, EH,
 				   "The task is not in Lun or failed, reset the phy\n");
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 	pr_err("pm80xx: rc= %d\n", rc);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-/*  mandatory SAM-3, still need free task/ccb info, abort the specified task */
-int pm8001_abort_task(struct sas_task *task)
-{
-	unsigned long flags;
+/*  mandatory SAM-3, still need मुक्त task/ccb info, पात the specअगरied task */
+पूर्णांक pm8001_पात_task(काष्ठा sas_task *task)
+अणु
+	अचिन्हित दीर्घ flags;
 	u32 tag;
-	struct domain_device *dev ;
-	struct pm8001_hba_info *pm8001_ha;
-	struct scsi_lun lun;
-	struct pm8001_device *pm8001_dev;
-	struct pm8001_tmf_task tmf_task;
-	int rc = TMF_RESP_FUNC_FAILED, ret;
+	काष्ठा करोमुख्य_device *dev ;
+	काष्ठा pm8001_hba_info *pm8001_ha;
+	काष्ठा scsi_lun lun;
+	काष्ठा pm8001_device *pm8001_dev;
+	काष्ठा pm8001_पंचांगf_task पंचांगf_task;
+	पूर्णांक rc = TMF_RESP_FUNC_FAILED, ret;
 	u32 phy_id;
-	struct sas_task_slow slow_task;
+	काष्ठा sas_task_slow slow_task;
 
-	if (unlikely(!task || !task->lldd_task || !task->dev))
-		return TMF_RESP_FUNC_FAILED;
+	अगर (unlikely(!task || !task->lldd_task || !task->dev))
+		वापस TMF_RESP_FUNC_FAILED;
 
 	dev = task->dev;
 	pm8001_dev = dev->lldd_dev;
 	pm8001_ha = pm8001_find_ha_by_dev(dev);
 	phy_id = pm8001_dev->attached_phy;
 
-	if (PM8001_CHIP_DISP->fatal_errors(pm8001_ha)) {
+	अगर (PM8001_CHIP_DISP->fatal_errors(pm8001_ha)) अणु
 		// If the controller is seeing fatal errors
-		// abort task will not get a response from the controller
-		return TMF_RESP_FUNC_FAILED;
-	}
+		// पात task will not get a response from the controller
+		वापस TMF_RESP_FUNC_FAILED;
+	पूर्ण
 
 	ret = pm8001_find_tag(task, &tag);
-	if (ret == 0) {
+	अगर (ret == 0) अणु
 		pm8001_info(pm8001_ha, "no tag for task:%p\n", task);
-		return TMF_RESP_FUNC_FAILED;
-	}
+		वापस TMF_RESP_FUNC_FAILED;
+	पूर्ण
 	spin_lock_irqsave(&task->task_state_lock, flags);
-	if (task->task_state_flags & SAS_TASK_STATE_DONE) {
+	अगर (task->task_state_flags & SAS_TASK_STATE_DONE) अणु
 		spin_unlock_irqrestore(&task->task_state_lock, flags);
-		return TMF_RESP_FUNC_COMPLETE;
-	}
+		वापस TMF_RESP_FUNC_COMPLETE;
+	पूर्ण
 	task->task_state_flags |= SAS_TASK_STATE_ABORTED;
-	if (task->slow_task == NULL) {
+	अगर (task->slow_task == शून्य) अणु
 		init_completion(&slow_task.completion);
 		task->slow_task = &slow_task;
-	}
+	पूर्ण
 	spin_unlock_irqrestore(&task->task_state_lock, flags);
-	if (task->task_proto & SAS_PROTOCOL_SSP) {
-		struct scsi_cmnd *cmnd = task->uldd_task;
-		int_to_scsilun(cmnd->device->lun, &lun);
-		tmf_task.tmf = TMF_ABORT_TASK;
-		tmf_task.tag_of_task_to_be_managed = tag;
-		rc = pm8001_issue_ssp_tmf(dev, lun.scsi_lun, &tmf_task);
-		pm8001_exec_internal_task_abort(pm8001_ha, pm8001_dev,
+	अगर (task->task_proto & SAS_PROTOCOL_SSP) अणु
+		काष्ठा scsi_cmnd *cmnd = task->uldd_task;
+		पूर्णांक_to_scsilun(cmnd->device->lun, &lun);
+		पंचांगf_task.पंचांगf = TMF_ABORT_TASK;
+		पंचांगf_task.tag_of_task_to_be_managed = tag;
+		rc = pm8001_issue_ssp_पंचांगf(dev, lun.scsi_lun, &पंचांगf_task);
+		pm8001_exec_पूर्णांकernal_task_पात(pm8001_ha, pm8001_dev,
 			pm8001_dev->sas_device, 0, tag);
-	} else if (task->task_proto & SAS_PROTOCOL_SATA ||
-		task->task_proto & SAS_PROTOCOL_STP) {
-		if (pm8001_ha->chip_id == chip_8006) {
+	पूर्ण अन्यथा अगर (task->task_proto & SAS_PROTOCOL_SATA ||
+		task->task_proto & SAS_PROTOCOL_STP) अणु
+		अगर (pm8001_ha->chip_id == chip_8006) अणु
 			DECLARE_COMPLETION_ONSTACK(completion_reset);
 			DECLARE_COMPLETION_ONSTACK(completion);
-			struct pm8001_phy *phy = pm8001_ha->phy + phy_id;
+			काष्ठा pm8001_phy *phy = pm8001_ha->phy + phy_id;
 
 			/* 1. Set Device state as Recovery */
 			pm8001_dev->setds_completion = &completion;
 			PM8001_CHIP_DISP->set_dev_state_req(pm8001_ha,
 				pm8001_dev, DS_IN_RECOVERY);
-			wait_for_completion(&completion);
+			रुको_क्रम_completion(&completion);
 
 			/* 2. Send Phy Control Hard Reset */
 			reinit_completion(&completion);
@@ -1246,113 +1247,113 @@ int pm8001_abort_task(struct sas_task *task)
 			phy->reset_completion = &completion_reset;
 			ret = PM8001_CHIP_DISP->phy_ctl_req(pm8001_ha, phy_id,
 				PHY_HARD_RESET);
-			if (ret) {
-				phy->enable_completion = NULL;
-				phy->reset_completion = NULL;
-				goto out;
-			}
+			अगर (ret) अणु
+				phy->enable_completion = शून्य;
+				phy->reset_completion = शून्य;
+				जाओ out;
+			पूर्ण
 
-			/* In the case of the reset timeout/fail we still
-			 * abort the command at the firmware. The assumption
-			 * here is that the drive is off doing something so
+			/* In the हाल of the reset समयout/fail we still
+			 * पात the command at the firmware. The assumption
+			 * here is that the drive is off करोing something so
 			 * that it's not processing requests, and we want to
-			 * avoid getting a completion for this and either
+			 * aव्योम getting a completion क्रम this and either
 			 * leaking the task in libsas or losing the race and
-			 * getting a double free.
+			 * getting a द्विगुन मुक्त.
 			 */
 			pm8001_dbg(pm8001_ha, MSG,
 				   "Waiting for local phy ctl\n");
-			ret = wait_for_completion_timeout(&completion,
+			ret = रुको_क्रम_completion_समयout(&completion,
 					PM8001_TASK_TIMEOUT * HZ);
-			if (!ret || !phy->reset_success) {
-				phy->enable_completion = NULL;
-				phy->reset_completion = NULL;
-			} else {
-				/* 3. Wait for Port Reset complete or
+			अगर (!ret || !phy->reset_success) अणु
+				phy->enable_completion = शून्य;
+				phy->reset_completion = शून्य;
+			पूर्ण अन्यथा अणु
+				/* 3. Wait क्रम Port Reset complete or
 				 * Port reset TMO
 				 */
 				pm8001_dbg(pm8001_ha, MSG,
 					   "Waiting for Port reset\n");
-				ret = wait_for_completion_timeout(
+				ret = रुको_क्रम_completion_समयout(
 					&completion_reset,
 					PM8001_TASK_TIMEOUT * HZ);
-				if (!ret)
-					phy->reset_completion = NULL;
+				अगर (!ret)
+					phy->reset_completion = शून्य;
 				WARN_ON(phy->port_reset_status ==
 						PORT_RESET_TMO);
-				if (phy->port_reset_status == PORT_RESET_TMO) {
-					pm8001_dev_gone_notify(dev);
-					goto out;
-				}
-			}
+				अगर (phy->port_reset_status == PORT_RESET_TMO) अणु
+					pm8001_dev_gone_notअगरy(dev);
+					जाओ out;
+				पूर्ण
+			पूर्ण
 
 			/*
 			 * 4. SATA Abort ALL
-			 * we wait for the task to be aborted so that the task
-			 * is removed from the ccb. on success the caller is
-			 * going to free the task.
+			 * we रुको क्रम the task to be पातed so that the task
+			 * is हटाओd from the ccb. on success the caller is
+			 * going to मुक्त the task.
 			 */
-			ret = pm8001_exec_internal_task_abort(pm8001_ha,
+			ret = pm8001_exec_पूर्णांकernal_task_पात(pm8001_ha,
 				pm8001_dev, pm8001_dev->sas_device, 1, tag);
-			if (ret)
-				goto out;
-			ret = wait_for_completion_timeout(
+			अगर (ret)
+				जाओ out;
+			ret = रुको_क्रम_completion_समयout(
 				&task->slow_task->completion,
 				PM8001_TASK_TIMEOUT * HZ);
-			if (!ret)
-				goto out;
+			अगर (!ret)
+				जाओ out;
 
 			/* 5. Set Device State as Operational */
 			reinit_completion(&completion);
 			pm8001_dev->setds_completion = &completion;
 			PM8001_CHIP_DISP->set_dev_state_req(pm8001_ha,
 				pm8001_dev, DS_OPERATIONAL);
-			wait_for_completion(&completion);
-		} else {
-			rc = pm8001_exec_internal_task_abort(pm8001_ha,
+			रुको_क्रम_completion(&completion);
+		पूर्ण अन्यथा अणु
+			rc = pm8001_exec_पूर्णांकernal_task_पात(pm8001_ha,
 				pm8001_dev, pm8001_dev->sas_device, 0, tag);
-		}
+		पूर्ण
 		rc = TMF_RESP_FUNC_COMPLETE;
-	} else if (task->task_proto & SAS_PROTOCOL_SMP) {
+	पूर्ण अन्यथा अगर (task->task_proto & SAS_PROTOCOL_SMP) अणु
 		/* SMP */
-		rc = pm8001_exec_internal_task_abort(pm8001_ha, pm8001_dev,
+		rc = pm8001_exec_पूर्णांकernal_task_पात(pm8001_ha, pm8001_dev,
 			pm8001_dev->sas_device, 0, tag);
 
-	}
+	पूर्ण
 out:
 	spin_lock_irqsave(&task->task_state_lock, flags);
-	if (task->slow_task == &slow_task)
-		task->slow_task = NULL;
+	अगर (task->slow_task == &slow_task)
+		task->slow_task = शून्य;
 	spin_unlock_irqrestore(&task->task_state_lock, flags);
-	if (rc != TMF_RESP_FUNC_COMPLETE)
+	अगर (rc != TMF_RESP_FUNC_COMPLETE)
 		pm8001_info(pm8001_ha, "rc= %d\n", rc);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-int pm8001_abort_task_set(struct domain_device *dev, u8 *lun)
-{
-	struct pm8001_tmf_task tmf_task;
+पूर्णांक pm8001_पात_task_set(काष्ठा करोमुख्य_device *dev, u8 *lun)
+अणु
+	काष्ठा pm8001_पंचांगf_task पंचांगf_task;
 
-	tmf_task.tmf = TMF_ABORT_TASK_SET;
-	return pm8001_issue_ssp_tmf(dev, lun, &tmf_task);
-}
+	पंचांगf_task.पंचांगf = TMF_ABORT_TASK_SET;
+	वापस pm8001_issue_ssp_पंचांगf(dev, lun, &पंचांगf_task);
+पूर्ण
 
-int pm8001_clear_aca(struct domain_device *dev, u8 *lun)
-{
-	struct pm8001_tmf_task tmf_task;
+पूर्णांक pm8001_clear_aca(काष्ठा करोमुख्य_device *dev, u8 *lun)
+अणु
+	काष्ठा pm8001_पंचांगf_task पंचांगf_task;
 
-	tmf_task.tmf = TMF_CLEAR_ACA;
-	return pm8001_issue_ssp_tmf(dev, lun, &tmf_task);
-}
+	पंचांगf_task.पंचांगf = TMF_CLEAR_ACA;
+	वापस pm8001_issue_ssp_पंचांगf(dev, lun, &पंचांगf_task);
+पूर्ण
 
-int pm8001_clear_task_set(struct domain_device *dev, u8 *lun)
-{
-	struct pm8001_tmf_task tmf_task;
-	struct pm8001_device *pm8001_dev = dev->lldd_dev;
-	struct pm8001_hba_info *pm8001_ha = pm8001_find_ha_by_dev(dev);
+पूर्णांक pm8001_clear_task_set(काष्ठा करोमुख्य_device *dev, u8 *lun)
+अणु
+	काष्ठा pm8001_पंचांगf_task पंचांगf_task;
+	काष्ठा pm8001_device *pm8001_dev = dev->lldd_dev;
+	काष्ठा pm8001_hba_info *pm8001_ha = pm8001_find_ha_by_dev(dev);
 
 	pm8001_dbg(pm8001_ha, EH, "I_T_L_Q clear task set[%x]\n",
 		   pm8001_dev->device_id);
-	tmf_task.tmf = TMF_CLEAR_TASK_SET;
-	return pm8001_issue_ssp_tmf(dev, lun, &tmf_task);
-}
+	पंचांगf_task.पंचांगf = TMF_CLEAR_TASK_SET;
+	वापस pm8001_issue_ssp_पंचांगf(dev, lun, &पंचांगf_task);
+पूर्ण

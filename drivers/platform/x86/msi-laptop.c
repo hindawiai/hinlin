@@ -1,263 +1,264 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*-*-linux-c-*-*/
 
 /*
-  Copyright (C) 2006 Lennart Poettering <mzxreary (at) 0pointer (dot) de>
+  Copyright (C) 2006 Lennart Poettering <mzxreary (at) 0poपूर्णांकer (करोt) de>
 
  */
 
 /*
  * msi-laptop.c - MSI S270 laptop support. This laptop is sold under
- * various brands, including "Cytron/TCM/Medion/Tchibo MD96100".
+ * various bअक्रमs, including "Cytron/TCM/Medion/Tchibo MD96100".
  *
  * Driver also supports S271, S420 models.
  *
- * This driver exports a few files in /sys/devices/platform/msi-laptop-pf/:
+ * This driver exports a few files in /sys/devices/platक्रमm/msi-laptop-pf/:
  *
- *   lcd_level - Screen brightness: contains a single integer in the
+ *   lcd_level - Screen brightness: contains a single पूर्णांकeger in the
  *   range 0..8. (rw)
  *
- *   auto_brightness - Enable automatic brightness control: contains
+ *   स्वतः_brightness - Enable स्वतःmatic brightness control: contains
  *   either 0 or 1. If set to 1 the hardware adjusts the screen
- *   brightness automatically when the power cord is
+ *   brightness स्वतःmatically when the घातer cord is
  *   plugged/unplugged. (rw)
  *
- *   wlan - WLAN subsystem enabled: contains either 0 or 1. (ro)
+ *   wlan - WLAN subप्रणाली enabled: contains either 0 or 1. (ro)
  *
- *   bluetooth - Bluetooth subsystem enabled: contains either 0 or 1
- *   Please note that this file is constantly 0 if no Bluetooth
+ *   bluetooth - Bluetooth subप्रणाली enabled: contains either 0 or 1
+ *   Please note that this file is स्थिरantly 0 अगर no Bluetooth
  *   hardware is available. (ro)
  *
- * In addition to these platform device attributes the driver
- * registers itself in the Linux backlight control subsystem and is
+ * In addition to these platक्रमm device attributes the driver
+ * रेजिस्टरs itself in the Linux backlight control subप्रणाली and is
  * available to userspace under /sys/class/backlight/msi-laptop-bl/.
  *
  * This driver might work on other laptops produced by MSI. If you
- * want to try it you can pass force=1 as argument to the module which
- * will force it to load even when the DMI data doesn't identify the
+ * want to try it you can pass क्रमce=1 as argument to the module which
+ * will क्रमce it to load even when the DMI data करोesn't identअगरy the
  * laptop as MSI S270. YMMV.
  */
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include <linux/module.h>
-#include <linux/kernel.h>
-#include <linux/init.h>
-#include <linux/acpi.h>
-#include <linux/dmi.h>
-#include <linux/backlight.h>
-#include <linux/platform_device.h>
-#include <linux/rfkill.h>
-#include <linux/i8042.h>
-#include <linux/input.h>
-#include <linux/input/sparse-keymap.h>
-#include <acpi/video.h>
+#समावेश <linux/module.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/init.h>
+#समावेश <linux/acpi.h>
+#समावेश <linux/dmi.h>
+#समावेश <linux/backlight.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/rfसमाप्त.h>
+#समावेश <linux/i8042.h>
+#समावेश <linux/input.h>
+#समावेश <linux/input/sparse-keymap.h>
+#समावेश <acpi/video.h>
 
-#define MSI_DRIVER_VERSION "0.5"
+#घोषणा MSI_DRIVER_VERSION "0.5"
 
-#define MSI_LCD_LEVEL_MAX 9
+#घोषणा MSI_LCD_LEVEL_MAX 9
 
-#define MSI_EC_COMMAND_WIRELESS 0x10
-#define MSI_EC_COMMAND_LCD_LEVEL 0x11
+#घोषणा MSI_EC_COMMAND_WIRELESS 0x10
+#घोषणा MSI_EC_COMMAND_LCD_LEVEL 0x11
 
-#define MSI_STANDARD_EC_COMMAND_ADDRESS	0x2e
-#define MSI_STANDARD_EC_BLUETOOTH_MASK	(1 << 0)
-#define MSI_STANDARD_EC_WEBCAM_MASK	(1 << 1)
-#define MSI_STANDARD_EC_WLAN_MASK	(1 << 3)
-#define MSI_STANDARD_EC_3G_MASK		(1 << 4)
+#घोषणा MSI_STANDARD_EC_COMMAND_ADDRESS	0x2e
+#घोषणा MSI_STANDARD_EC_BLUETOOTH_MASK	(1 << 0)
+#घोषणा MSI_STANDARD_EC_WEBCAM_MASK	(1 << 1)
+#घोषणा MSI_STANDARD_EC_WLAN_MASK	(1 << 3)
+#घोषणा MSI_STANDARD_EC_3G_MASK		(1 << 4)
 
 /* For set SCM load flag to disable BIOS fn key */
-#define MSI_STANDARD_EC_SCM_LOAD_ADDRESS	0x2d
-#define MSI_STANDARD_EC_SCM_LOAD_MASK		(1 << 0)
+#घोषणा MSI_STANDARD_EC_SCM_LOAD_ADDRESS	0x2d
+#घोषणा MSI_STANDARD_EC_SCM_LOAD_MASK		(1 << 0)
 
-#define MSI_STANDARD_EC_FUNCTIONS_ADDRESS	0xe4
+#घोषणा MSI_STANDARD_EC_FUNCTIONS_ADDRESS	0xe4
 /* Power LED is orange - Turbo mode */
-#define MSI_STANDARD_EC_TURBO_MASK		(1 << 1)
+#घोषणा MSI_STANDARD_EC_TURBO_MASK		(1 << 1)
 /* Power LED is green - ECO mode */
-#define MSI_STANDARD_EC_ECO_MASK		(1 << 3)
+#घोषणा MSI_STANDARD_EC_ECO_MASK		(1 << 3)
 /* Touchpad is turned on */
-#define MSI_STANDARD_EC_TOUCHPAD_MASK		(1 << 4)
+#घोषणा MSI_STANDARD_EC_TOUCHPAD_MASK		(1 << 4)
 /* If this bit != bit 1, turbo mode can't be toggled */
-#define MSI_STANDARD_EC_TURBO_COOLDOWN_MASK	(1 << 7)
+#घोषणा MSI_STANDARD_EC_TURBO_COOLDOWN_MASK	(1 << 7)
 
-#define MSI_STANDARD_EC_FAN_ADDRESS		0x33
+#घोषणा MSI_STANDARD_EC_FAN_ADDRESS		0x33
 /* If zero, fan rotates at maximal speed */
-#define MSI_STANDARD_EC_AUTOFAN_MASK		(1 << 0)
+#घोषणा MSI_STANDARD_EC_AUTOFAN_MASK		(1 << 0)
 
-#ifdef CONFIG_PM_SLEEP
-static int msi_laptop_resume(struct device *device);
-#endif
-static SIMPLE_DEV_PM_OPS(msi_laptop_pm, NULL, msi_laptop_resume);
+#अगर_घोषित CONFIG_PM_SLEEP
+अटल पूर्णांक msi_laptop_resume(काष्ठा device *device);
+#पूर्ण_अगर
+अटल SIMPLE_DEV_PM_OPS(msi_laptop_pm, शून्य, msi_laptop_resume);
 
-#define MSI_STANDARD_EC_DEVICES_EXISTS_ADDRESS	0x2f
+#घोषणा MSI_STANDARD_EC_DEVICES_EXISTS_ADDRESS	0x2f
 
-static bool force;
-module_param(force, bool, 0);
-MODULE_PARM_DESC(force, "Force driver load, ignore DMI data");
+अटल bool क्रमce;
+module_param(क्रमce, bool, 0);
+MODULE_PARM_DESC(क्रमce, "Force driver load, ignore DMI data");
 
-static int auto_brightness;
-module_param(auto_brightness, int, 0);
-MODULE_PARM_DESC(auto_brightness, "Enable automatic brightness control (0: disabled; 1: enabled; 2: don't touch)");
+अटल पूर्णांक स्वतः_brightness;
+module_param(स्वतः_brightness, पूर्णांक, 0);
+MODULE_PARM_DESC(स्वतः_brightness, "Enable automatic brightness control (0: disabled; 1: enabled; 2: don't touch)");
 
-static const struct key_entry msi_laptop_keymap[] = {
-	{KE_KEY, KEY_TOUCHPAD_ON, {KEY_TOUCHPAD_ON} },	/* Touch Pad On */
-	{KE_KEY, KEY_TOUCHPAD_OFF, {KEY_TOUCHPAD_OFF} },/* Touch Pad On */
-	{KE_END, 0}
-};
+अटल स्थिर काष्ठा key_entry msi_laptop_keymap[] = अणु
+	अणुKE_KEY, KEY_TOUCHPAD_ON, अणुKEY_TOUCHPAD_ONपूर्ण पूर्ण,	/* Touch Pad On */
+	अणुKE_KEY, KEY_TOUCHPAD_OFF, अणुKEY_TOUCHPAD_OFFपूर्ण पूर्ण,/* Touch Pad On */
+	अणुKE_END, 0पूर्ण
+पूर्ण;
 
-static struct input_dev *msi_laptop_input_dev;
+अटल काष्ठा input_dev *msi_laptop_input_dev;
 
-static int wlan_s, bluetooth_s, threeg_s;
-static int threeg_exists;
-static struct rfkill *rfk_wlan, *rfk_bluetooth, *rfk_threeg;
+अटल पूर्णांक wlan_s, bluetooth_s, threeg_s;
+अटल पूर्णांक threeg_exists;
+अटल काष्ठा rfसमाप्त *rfk_wlan, *rfk_bluetooth, *rfk_threeg;
 
 /* MSI laptop quirks */
-struct quirk_entry {
+काष्ठा quirk_entry अणु
 	bool old_ec_model;
 
 	/* Some MSI 3G netbook only have one fn key to control
-	 * Wlan/Bluetooth/3G, those netbook will load the SCM (windows app) to
+	 * Wlan/Bluetooth/3G, those netbook will load the SCM (winकरोws app) to
 	 * disable the original Wlan/Bluetooth control by BIOS when user press
 	 * fn key, then control Wlan/Bluetooth/3G by SCM (software control by
 	 * OS). Without SCM, user cann't on/off 3G module on those 3G netbook.
-	 * On Linux, msi-laptop driver will do the same thing to disable the
+	 * On Linux, msi-laptop driver will करो the same thing to disable the
 	 * original BIOS control, then might need use HAL or other userland
-	 * application to do the software control that simulate with SCM.
+	 * application to करो the software control that simulate with SCM.
 	 * e.g. MSI N034 netbook
 	 */
 	bool load_scm_model;
 
-	/* Some MSI laptops need delay before reading from EC */
+	/* Some MSI laptops need delay beक्रमe पढ़ोing from EC */
 	bool ec_delay;
 
 	/* Some MSI Wind netbooks (e.g. MSI Wind U100) need loading SCM to get
 	 * some features working (e.g. ECO mode), but we cannot change
-	 * Wlan/Bluetooth state in software and we can only read its state.
+	 * Wlan/Bluetooth state in software and we can only पढ़ो its state.
 	 */
-	bool ec_read_only;
-};
+	bool ec_पढ़ो_only;
+पूर्ण;
 
-static struct quirk_entry *quirks;
+अटल काष्ठा quirk_entry *quirks;
 
 /* Hardware access */
 
-static int set_lcd_level(int level)
-{
+अटल पूर्णांक set_lcd_level(पूर्णांक level)
+अणु
 	u8 buf[2];
 
-	if (level < 0 || level >= MSI_LCD_LEVEL_MAX)
-		return -EINVAL;
+	अगर (level < 0 || level >= MSI_LCD_LEVEL_MAX)
+		वापस -EINVAL;
 
 	buf[0] = 0x80;
 	buf[1] = (u8) (level*31);
 
-	return ec_transaction(MSI_EC_COMMAND_LCD_LEVEL, buf, sizeof(buf),
-			      NULL, 0);
-}
+	वापस ec_transaction(MSI_EC_COMMAND_LCD_LEVEL, buf, माप(buf),
+			      शून्य, 0);
+पूर्ण
 
-static int get_lcd_level(void)
-{
+अटल पूर्णांक get_lcd_level(व्योम)
+अणु
 	u8 wdata = 0, rdata;
-	int result;
+	पूर्णांक result;
 
 	result = ec_transaction(MSI_EC_COMMAND_LCD_LEVEL, &wdata, 1,
 				&rdata, 1);
-	if (result < 0)
-		return result;
+	अगर (result < 0)
+		वापस result;
 
-	return (int) rdata / 31;
-}
+	वापस (पूर्णांक) rdata / 31;
+पूर्ण
 
-static int get_auto_brightness(void)
-{
+अटल पूर्णांक get_स्वतः_brightness(व्योम)
+अणु
 	u8 wdata = 4, rdata;
-	int result;
+	पूर्णांक result;
 
 	result = ec_transaction(MSI_EC_COMMAND_LCD_LEVEL, &wdata, 1,
 				&rdata, 1);
-	if (result < 0)
-		return result;
+	अगर (result < 0)
+		वापस result;
 
-	return !!(rdata & 8);
-}
+	वापस !!(rdata & 8);
+पूर्ण
 
-static int set_auto_brightness(int enable)
-{
+अटल पूर्णांक set_स्वतः_brightness(पूर्णांक enable)
+अणु
 	u8 wdata[2], rdata;
-	int result;
+	पूर्णांक result;
 
 	wdata[0] = 4;
 
 	result = ec_transaction(MSI_EC_COMMAND_LCD_LEVEL, wdata, 1,
 				&rdata, 1);
-	if (result < 0)
-		return result;
+	अगर (result < 0)
+		वापस result;
 
 	wdata[0] = 0x84;
 	wdata[1] = (rdata & 0xF7) | (enable ? 8 : 0);
 
-	return ec_transaction(MSI_EC_COMMAND_LCD_LEVEL, wdata, 2,
-			      NULL, 0);
-}
+	वापस ec_transaction(MSI_EC_COMMAND_LCD_LEVEL, wdata, 2,
+			      शून्य, 0);
+पूर्ण
 
-static ssize_t set_device_state(const char *buf, size_t count, u8 mask)
-{
-	int status;
+अटल sमाप_प्रकार set_device_state(स्थिर अक्षर *buf, माप_प्रकार count, u8 mask)
+अणु
+	पूर्णांक status;
 	u8 wdata = 0, rdata;
-	int result;
+	पूर्णांक result;
 
-	if (sscanf(buf, "%i", &status) != 1 || (status < 0 || status > 1))
-		return -EINVAL;
+	अगर (माला_पूछो(buf, "%i", &status) != 1 || (status < 0 || status > 1))
+		वापस -EINVAL;
 
-	if (quirks->ec_read_only)
-		return -EOPNOTSUPP;
+	अगर (quirks->ec_पढ़ो_only)
+		वापस -EOPNOTSUPP;
 
-	/* read current device state */
-	result = ec_read(MSI_STANDARD_EC_COMMAND_ADDRESS, &rdata);
-	if (result < 0)
-		return result;
+	/* पढ़ो current device state */
+	result = ec_पढ़ो(MSI_STANDARD_EC_COMMAND_ADDRESS, &rdata);
+	अगर (result < 0)
+		वापस result;
 
-	if (!!(rdata & mask) != status) {
+	अगर (!!(rdata & mask) != status) अणु
 		/* reverse device bit */
-		if (rdata & mask)
+		अगर (rdata & mask)
 			wdata = rdata & ~mask;
-		else
+		अन्यथा
 			wdata = rdata | mask;
 
-		result = ec_write(MSI_STANDARD_EC_COMMAND_ADDRESS, wdata);
-		if (result < 0)
-			return result;
-	}
+		result = ec_ग_लिखो(MSI_STANDARD_EC_COMMAND_ADDRESS, wdata);
+		अगर (result < 0)
+			वापस result;
+	पूर्ण
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static int get_wireless_state(int *wlan, int *bluetooth)
-{
+अटल पूर्णांक get_wireless_state(पूर्णांक *wlan, पूर्णांक *bluetooth)
+अणु
 	u8 wdata = 0, rdata;
-	int result;
+	पूर्णांक result;
 
 	result = ec_transaction(MSI_EC_COMMAND_WIRELESS, &wdata, 1, &rdata, 1);
-	if (result < 0)
-		return result;
+	अगर (result < 0)
+		वापस result;
 
-	if (wlan)
+	अगर (wlan)
 		*wlan = !!(rdata & 8);
 
-	if (bluetooth)
+	अगर (bluetooth)
 		*bluetooth = !!(rdata & 128);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int get_wireless_state_ec_standard(void)
-{
+अटल पूर्णांक get_wireless_state_ec_standard(व्योम)
+अणु
 	u8 rdata;
-	int result;
+	पूर्णांक result;
 
-	result = ec_read(MSI_STANDARD_EC_COMMAND_ADDRESS, &rdata);
-	if (result < 0)
-		return result;
+	result = ec_पढ़ो(MSI_STANDARD_EC_COMMAND_ADDRESS, &rdata);
+	अगर (result < 0)
+		वापस result;
 
 	wlan_s = !!(rdata & MSI_STANDARD_EC_WLAN_MASK);
 
@@ -265,902 +266,902 @@ static int get_wireless_state_ec_standard(void)
 
 	threeg_s = !!(rdata & MSI_STANDARD_EC_3G_MASK);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int get_threeg_exists(void)
-{
+अटल पूर्णांक get_threeg_exists(व्योम)
+अणु
 	u8 rdata;
-	int result;
+	पूर्णांक result;
 
-	result = ec_read(MSI_STANDARD_EC_DEVICES_EXISTS_ADDRESS, &rdata);
-	if (result < 0)
-		return result;
+	result = ec_पढ़ो(MSI_STANDARD_EC_DEVICES_EXISTS_ADDRESS, &rdata);
+	अगर (result < 0)
+		वापस result;
 
 	threeg_exists = !!(rdata & MSI_STANDARD_EC_3G_MASK);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* Backlight device stuff */
 
-static int bl_get_brightness(struct backlight_device *b)
-{
-	return get_lcd_level();
-}
+अटल पूर्णांक bl_get_brightness(काष्ठा backlight_device *b)
+अणु
+	वापस get_lcd_level();
+पूर्ण
 
 
-static int bl_update_status(struct backlight_device *b)
-{
-	return set_lcd_level(b->props.brightness);
-}
+अटल पूर्णांक bl_update_status(काष्ठा backlight_device *b)
+अणु
+	वापस set_lcd_level(b->props.brightness);
+पूर्ण
 
-static const struct backlight_ops msibl_ops = {
+अटल स्थिर काष्ठा backlight_ops msibl_ops = अणु
 	.get_brightness = bl_get_brightness,
 	.update_status  = bl_update_status,
-};
+पूर्ण;
 
-static struct backlight_device *msibl_device;
+अटल काष्ठा backlight_device *msibl_device;
 
-/* Platform device */
+/* Platक्रमm device */
 
-static ssize_t show_wlan(struct device *dev,
-	struct device_attribute *attr, char *buf)
-{
+अटल sमाप_प्रकार show_wlan(काष्ठा device *dev,
+	काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
 
-	int ret, enabled = 0;
+	पूर्णांक ret, enabled = 0;
 
-	if (quirks->old_ec_model) {
-		ret = get_wireless_state(&enabled, NULL);
-	} else {
+	अगर (quirks->old_ec_model) अणु
+		ret = get_wireless_state(&enabled, शून्य);
+	पूर्ण अन्यथा अणु
 		ret = get_wireless_state_ec_standard();
 		enabled = wlan_s;
-	}
-	if (ret < 0)
-		return ret;
+	पूर्ण
+	अगर (ret < 0)
+		वापस ret;
 
-	return sprintf(buf, "%i\n", enabled);
-}
+	वापस प्र_लिखो(buf, "%i\n", enabled);
+पूर्ण
 
-static ssize_t store_wlan(struct device *dev,
-	struct device_attribute *attr, const char *buf, size_t count)
-{
-	return set_device_state(buf, count, MSI_STANDARD_EC_WLAN_MASK);
-}
+अटल sमाप_प्रकार store_wlan(काष्ठा device *dev,
+	काष्ठा device_attribute *attr, स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	वापस set_device_state(buf, count, MSI_STANDARD_EC_WLAN_MASK);
+पूर्ण
 
-static ssize_t show_bluetooth(struct device *dev,
-	struct device_attribute *attr, char *buf)
-{
+अटल sमाप_प्रकार show_bluetooth(काष्ठा device *dev,
+	काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
 
-	int ret, enabled = 0;
+	पूर्णांक ret, enabled = 0;
 
-	if (quirks->old_ec_model) {
-		ret = get_wireless_state(NULL, &enabled);
-	} else {
+	अगर (quirks->old_ec_model) अणु
+		ret = get_wireless_state(शून्य, &enabled);
+	पूर्ण अन्यथा अणु
 		ret = get_wireless_state_ec_standard();
 		enabled = bluetooth_s;
-	}
-	if (ret < 0)
-		return ret;
+	पूर्ण
+	अगर (ret < 0)
+		वापस ret;
 
-	return sprintf(buf, "%i\n", enabled);
-}
+	वापस प्र_लिखो(buf, "%i\n", enabled);
+पूर्ण
 
-static ssize_t store_bluetooth(struct device *dev,
-	struct device_attribute *attr, const char *buf, size_t count)
-{
-	return set_device_state(buf, count, MSI_STANDARD_EC_BLUETOOTH_MASK);
-}
+अटल sमाप_प्रकार store_bluetooth(काष्ठा device *dev,
+	काष्ठा device_attribute *attr, स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	वापस set_device_state(buf, count, MSI_STANDARD_EC_BLUETOOTH_MASK);
+पूर्ण
 
-static ssize_t show_threeg(struct device *dev,
-	struct device_attribute *attr, char *buf)
-{
+अटल sमाप_प्रकार show_threeg(काष्ठा device *dev,
+	काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
 
-	int ret;
+	पूर्णांक ret;
 
 	/* old msi ec not support 3G */
-	if (quirks->old_ec_model)
-		return -ENODEV;
+	अगर (quirks->old_ec_model)
+		वापस -ENODEV;
 
 	ret = get_wireless_state_ec_standard();
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	return sprintf(buf, "%i\n", threeg_s);
-}
+	वापस प्र_लिखो(buf, "%i\n", threeg_s);
+पूर्ण
 
-static ssize_t store_threeg(struct device *dev,
-	struct device_attribute *attr, const char *buf, size_t count)
-{
-	return set_device_state(buf, count, MSI_STANDARD_EC_3G_MASK);
-}
+अटल sमाप_प्रकार store_threeg(काष्ठा device *dev,
+	काष्ठा device_attribute *attr, स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	वापस set_device_state(buf, count, MSI_STANDARD_EC_3G_MASK);
+पूर्ण
 
-static ssize_t show_lcd_level(struct device *dev,
-	struct device_attribute *attr, char *buf)
-{
+अटल sमाप_प्रकार show_lcd_level(काष्ठा device *dev,
+	काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
 
-	int ret;
+	पूर्णांक ret;
 
 	ret = get_lcd_level();
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	return sprintf(buf, "%i\n", ret);
-}
+	वापस प्र_लिखो(buf, "%i\n", ret);
+पूर्ण
 
-static ssize_t store_lcd_level(struct device *dev,
-	struct device_attribute *attr, const char *buf, size_t count)
-{
+अटल sमाप_प्रकार store_lcd_level(काष्ठा device *dev,
+	काष्ठा device_attribute *attr, स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
 
-	int level, ret;
+	पूर्णांक level, ret;
 
-	if (sscanf(buf, "%i", &level) != 1 ||
+	अगर (माला_पूछो(buf, "%i", &level) != 1 ||
 	    (level < 0 || level >= MSI_LCD_LEVEL_MAX))
-		return -EINVAL;
+		वापस -EINVAL;
 
 	ret = set_lcd_level(level);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static ssize_t show_auto_brightness(struct device *dev,
-	struct device_attribute *attr, char *buf)
-{
+अटल sमाप_प्रकार show_स्वतः_brightness(काष्ठा device *dev,
+	काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
 
-	int ret;
+	पूर्णांक ret;
 
-	ret = get_auto_brightness();
-	if (ret < 0)
-		return ret;
+	ret = get_स्वतः_brightness();
+	अगर (ret < 0)
+		वापस ret;
 
-	return sprintf(buf, "%i\n", ret);
-}
+	वापस प्र_लिखो(buf, "%i\n", ret);
+पूर्ण
 
-static ssize_t store_auto_brightness(struct device *dev,
-	struct device_attribute *attr, const char *buf, size_t count)
-{
+अटल sमाप_प्रकार store_स्वतः_brightness(काष्ठा device *dev,
+	काष्ठा device_attribute *attr, स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
 
-	int enable, ret;
+	पूर्णांक enable, ret;
 
-	if (sscanf(buf, "%i", &enable) != 1 || (enable != (enable & 1)))
-		return -EINVAL;
+	अगर (माला_पूछो(buf, "%i", &enable) != 1 || (enable != (enable & 1)))
+		वापस -EINVAL;
 
-	ret = set_auto_brightness(enable);
-	if (ret < 0)
-		return ret;
+	ret = set_स्वतः_brightness(enable);
+	अगर (ret < 0)
+		वापस ret;
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static ssize_t show_touchpad(struct device *dev,
-	struct device_attribute *attr, char *buf)
-{
-
-	u8 rdata;
-	int result;
-
-	result = ec_read(MSI_STANDARD_EC_FUNCTIONS_ADDRESS, &rdata);
-	if (result < 0)
-		return result;
-
-	return sprintf(buf, "%i\n", !!(rdata & MSI_STANDARD_EC_TOUCHPAD_MASK));
-}
-
-static ssize_t show_turbo(struct device *dev,
-	struct device_attribute *attr, char *buf)
-{
+अटल sमाप_प्रकार show_touchpad(काष्ठा device *dev,
+	काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
 
 	u8 rdata;
-	int result;
+	पूर्णांक result;
 
-	result = ec_read(MSI_STANDARD_EC_FUNCTIONS_ADDRESS, &rdata);
-	if (result < 0)
-		return result;
+	result = ec_पढ़ो(MSI_STANDARD_EC_FUNCTIONS_ADDRESS, &rdata);
+	अगर (result < 0)
+		वापस result;
 
-	return sprintf(buf, "%i\n", !!(rdata & MSI_STANDARD_EC_TURBO_MASK));
-}
+	वापस प्र_लिखो(buf, "%i\n", !!(rdata & MSI_STANDARD_EC_TOUCHPAD_MASK));
+पूर्ण
 
-static ssize_t show_eco(struct device *dev,
-	struct device_attribute *attr, char *buf)
-{
-
-	u8 rdata;
-	int result;
-
-	result = ec_read(MSI_STANDARD_EC_FUNCTIONS_ADDRESS, &rdata);
-	if (result < 0)
-		return result;
-
-	return sprintf(buf, "%i\n", !!(rdata & MSI_STANDARD_EC_ECO_MASK));
-}
-
-static ssize_t show_turbo_cooldown(struct device *dev,
-	struct device_attribute *attr, char *buf)
-{
+अटल sमाप_प्रकार show_turbo(काष्ठा device *dev,
+	काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
 
 	u8 rdata;
-	int result;
+	पूर्णांक result;
 
-	result = ec_read(MSI_STANDARD_EC_FUNCTIONS_ADDRESS, &rdata);
-	if (result < 0)
-		return result;
+	result = ec_पढ़ो(MSI_STANDARD_EC_FUNCTIONS_ADDRESS, &rdata);
+	अगर (result < 0)
+		वापस result;
 
-	return sprintf(buf, "%i\n", (!!(rdata & MSI_STANDARD_EC_TURBO_MASK)) |
+	वापस प्र_लिखो(buf, "%i\n", !!(rdata & MSI_STANDARD_EC_TURBO_MASK));
+पूर्ण
+
+अटल sमाप_प्रकार show_eco(काष्ठा device *dev,
+	काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+
+	u8 rdata;
+	पूर्णांक result;
+
+	result = ec_पढ़ो(MSI_STANDARD_EC_FUNCTIONS_ADDRESS, &rdata);
+	अगर (result < 0)
+		वापस result;
+
+	वापस प्र_लिखो(buf, "%i\n", !!(rdata & MSI_STANDARD_EC_ECO_MASK));
+पूर्ण
+
+अटल sमाप_प्रकार show_turbo_coolकरोwn(काष्ठा device *dev,
+	काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+
+	u8 rdata;
+	पूर्णांक result;
+
+	result = ec_पढ़ो(MSI_STANDARD_EC_FUNCTIONS_ADDRESS, &rdata);
+	अगर (result < 0)
+		वापस result;
+
+	वापस प्र_लिखो(buf, "%i\n", (!!(rdata & MSI_STANDARD_EC_TURBO_MASK)) |
 		(!!(rdata & MSI_STANDARD_EC_TURBO_COOLDOWN_MASK) << 1));
-}
+पूर्ण
 
-static ssize_t show_auto_fan(struct device *dev,
-	struct device_attribute *attr, char *buf)
-{
+अटल sमाप_प्रकार show_स्वतः_fan(काष्ठा device *dev,
+	काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
 
 	u8 rdata;
-	int result;
+	पूर्णांक result;
 
-	result = ec_read(MSI_STANDARD_EC_FAN_ADDRESS, &rdata);
-	if (result < 0)
-		return result;
+	result = ec_पढ़ो(MSI_STANDARD_EC_FAN_ADDRESS, &rdata);
+	अगर (result < 0)
+		वापस result;
 
-	return sprintf(buf, "%i\n", !!(rdata & MSI_STANDARD_EC_AUTOFAN_MASK));
-}
+	वापस प्र_लिखो(buf, "%i\n", !!(rdata & MSI_STANDARD_EC_AUTOFAN_MASK));
+पूर्ण
 
-static ssize_t store_auto_fan(struct device *dev,
-	struct device_attribute *attr, const char *buf, size_t count)
-{
+अटल sमाप_प्रकार store_स्वतः_fan(काष्ठा device *dev,
+	काष्ठा device_attribute *attr, स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
 
-	int enable, result;
+	पूर्णांक enable, result;
 
-	if (sscanf(buf, "%i", &enable) != 1 || (enable != (enable & 1)))
-		return -EINVAL;
+	अगर (माला_पूछो(buf, "%i", &enable) != 1 || (enable != (enable & 1)))
+		वापस -EINVAL;
 
-	result = ec_write(MSI_STANDARD_EC_FAN_ADDRESS, enable);
-	if (result < 0)
-		return result;
+	result = ec_ग_लिखो(MSI_STANDARD_EC_FAN_ADDRESS, enable);
+	अगर (result < 0)
+		वापस result;
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static DEVICE_ATTR(lcd_level, 0644, show_lcd_level, store_lcd_level);
-static DEVICE_ATTR(auto_brightness, 0644, show_auto_brightness,
-		   store_auto_brightness);
-static DEVICE_ATTR(bluetooth, 0444, show_bluetooth, NULL);
-static DEVICE_ATTR(wlan, 0444, show_wlan, NULL);
-static DEVICE_ATTR(threeg, 0444, show_threeg, NULL);
-static DEVICE_ATTR(touchpad, 0444, show_touchpad, NULL);
-static DEVICE_ATTR(turbo_mode, 0444, show_turbo, NULL);
-static DEVICE_ATTR(eco_mode, 0444, show_eco, NULL);
-static DEVICE_ATTR(turbo_cooldown, 0444, show_turbo_cooldown, NULL);
-static DEVICE_ATTR(auto_fan, 0644, show_auto_fan, store_auto_fan);
+अटल DEVICE_ATTR(lcd_level, 0644, show_lcd_level, store_lcd_level);
+अटल DEVICE_ATTR(स्वतः_brightness, 0644, show_स्वतः_brightness,
+		   store_स्वतः_brightness);
+अटल DEVICE_ATTR(bluetooth, 0444, show_bluetooth, शून्य);
+अटल DEVICE_ATTR(wlan, 0444, show_wlan, शून्य);
+अटल DEVICE_ATTR(threeg, 0444, show_threeg, शून्य);
+अटल DEVICE_ATTR(touchpad, 0444, show_touchpad, शून्य);
+अटल DEVICE_ATTR(turbo_mode, 0444, show_turbo, शून्य);
+अटल DEVICE_ATTR(eco_mode, 0444, show_eco, शून्य);
+अटल DEVICE_ATTR(turbo_coolकरोwn, 0444, show_turbo_coolकरोwn, शून्य);
+अटल DEVICE_ATTR(स्वतः_fan, 0644, show_स्वतः_fan, store_स्वतः_fan);
 
-static struct attribute *msipf_attributes[] = {
+अटल काष्ठा attribute *msipf_attributes[] = अणु
 	&dev_attr_bluetooth.attr,
 	&dev_attr_wlan.attr,
 	&dev_attr_touchpad.attr,
 	&dev_attr_turbo_mode.attr,
 	&dev_attr_eco_mode.attr,
-	&dev_attr_turbo_cooldown.attr,
-	&dev_attr_auto_fan.attr,
-	NULL
-};
+	&dev_attr_turbo_coolकरोwn.attr,
+	&dev_attr_स्वतः_fan.attr,
+	शून्य
+पूर्ण;
 
-static struct attribute *msipf_old_attributes[] = {
+अटल काष्ठा attribute *msipf_old_attributes[] = अणु
 	&dev_attr_lcd_level.attr,
-	&dev_attr_auto_brightness.attr,
-	NULL
-};
+	&dev_attr_स्वतः_brightness.attr,
+	शून्य
+पूर्ण;
 
-static const struct attribute_group msipf_attribute_group = {
+अटल स्थिर काष्ठा attribute_group msipf_attribute_group = अणु
 	.attrs = msipf_attributes
-};
+पूर्ण;
 
-static const struct attribute_group msipf_old_attribute_group = {
+अटल स्थिर काष्ठा attribute_group msipf_old_attribute_group = अणु
 	.attrs = msipf_old_attributes
-};
+पूर्ण;
 
-static struct platform_driver msipf_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver msipf_driver = अणु
+	.driver = अणु
 		.name = "msi-laptop-pf",
 		.pm = &msi_laptop_pm,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static struct platform_device *msipf_device;
+अटल काष्ठा platक्रमm_device *msipf_device;
 
 /* Initialization */
 
-static struct quirk_entry quirk_old_ec_model = {
+अटल काष्ठा quirk_entry quirk_old_ec_model = अणु
 	.old_ec_model = true,
-};
+पूर्ण;
 
-static struct quirk_entry quirk_load_scm_model = {
+अटल काष्ठा quirk_entry quirk_load_scm_model = अणु
 	.load_scm_model = true,
 	.ec_delay = true,
-};
+पूर्ण;
 
-static struct quirk_entry quirk_load_scm_ro_model = {
+अटल काष्ठा quirk_entry quirk_load_scm_ro_model = अणु
 	.load_scm_model = true,
-	.ec_read_only = true,
-};
+	.ec_पढ़ो_only = true,
+पूर्ण;
 
-static int dmi_check_cb(const struct dmi_system_id *dmi)
-{
+अटल पूर्णांक dmi_check_cb(स्थिर काष्ठा dmi_प्रणाली_id *dmi)
+अणु
 	pr_info("Identified laptop model '%s'\n", dmi->ident);
 
 	quirks = dmi->driver_data;
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-static const struct dmi_system_id msi_dmi_table[] __initconst = {
-	{
+अटल स्थिर काष्ठा dmi_प्रणाली_id msi_dmi_table[] __initस्थिर = अणु
+	अणु
 		.ident = "MSI S270",
-		.matches = {
+		.matches = अणु
 			DMI_MATCH(DMI_SYS_VENDOR, "MICRO-STAR INT'L CO.,LTD"),
 			DMI_MATCH(DMI_PRODUCT_NAME, "MS-1013"),
 			DMI_MATCH(DMI_PRODUCT_VERSION, "0131"),
 			DMI_MATCH(DMI_CHASSIS_VENDOR,
 				  "MICRO-STAR INT'L CO.,LTD")
-		},
+		पूर्ण,
 		.driver_data = &quirk_old_ec_model,
 		.callback = dmi_check_cb
-	},
-	{
+	पूर्ण,
+	अणु
 		.ident = "MSI S271",
-		.matches = {
+		.matches = अणु
 			DMI_MATCH(DMI_SYS_VENDOR, "Micro-Star International"),
 			DMI_MATCH(DMI_PRODUCT_NAME, "MS-1058"),
 			DMI_MATCH(DMI_PRODUCT_VERSION, "0581"),
 			DMI_MATCH(DMI_BOARD_NAME, "MS-1058")
-		},
+		पूर्ण,
 		.driver_data = &quirk_old_ec_model,
 		.callback = dmi_check_cb
-	},
-	{
+	पूर्ण,
+	अणु
 		.ident = "MSI S420",
-		.matches = {
+		.matches = अणु
 			DMI_MATCH(DMI_SYS_VENDOR, "Micro-Star International"),
 			DMI_MATCH(DMI_PRODUCT_NAME, "MS-1412"),
 			DMI_MATCH(DMI_BOARD_VENDOR, "MSI"),
 			DMI_MATCH(DMI_BOARD_NAME, "MS-1412")
-		},
+		पूर्ण,
 		.driver_data = &quirk_old_ec_model,
 		.callback = dmi_check_cb
-	},
-	{
+	पूर्ण,
+	अणु
 		.ident = "Medion MD96100",
-		.matches = {
+		.matches = अणु
 			DMI_MATCH(DMI_SYS_VENDOR, "NOTEBOOK"),
 			DMI_MATCH(DMI_PRODUCT_NAME, "SAM2000"),
 			DMI_MATCH(DMI_PRODUCT_VERSION, "0131"),
 			DMI_MATCH(DMI_CHASSIS_VENDOR,
 				  "MICRO-STAR INT'L CO.,LTD")
-		},
+		पूर्ण,
 		.driver_data = &quirk_old_ec_model,
 		.callback = dmi_check_cb
-	},
-	{
+	पूर्ण,
+	अणु
 		.ident = "MSI N034",
-		.matches = {
+		.matches = अणु
 			DMI_MATCH(DMI_SYS_VENDOR,
 				"MICRO-STAR INTERNATIONAL CO., LTD"),
 			DMI_MATCH(DMI_PRODUCT_NAME, "MS-N034"),
 			DMI_MATCH(DMI_CHASSIS_VENDOR,
 			"MICRO-STAR INTERNATIONAL CO., LTD")
-		},
+		पूर्ण,
 		.driver_data = &quirk_load_scm_model,
 		.callback = dmi_check_cb
-	},
-	{
+	पूर्ण,
+	अणु
 		.ident = "MSI N051",
-		.matches = {
+		.matches = अणु
 			DMI_MATCH(DMI_SYS_VENDOR,
 				"MICRO-STAR INTERNATIONAL CO., LTD"),
 			DMI_MATCH(DMI_PRODUCT_NAME, "MS-N051"),
 			DMI_MATCH(DMI_CHASSIS_VENDOR,
 			"MICRO-STAR INTERNATIONAL CO., LTD")
-		},
+		पूर्ण,
 		.driver_data = &quirk_load_scm_model,
 		.callback = dmi_check_cb
-	},
-	{
+	पूर्ण,
+	अणु
 		.ident = "MSI N014",
-		.matches = {
+		.matches = अणु
 			DMI_MATCH(DMI_SYS_VENDOR,
 				"MICRO-STAR INTERNATIONAL CO., LTD"),
 			DMI_MATCH(DMI_PRODUCT_NAME, "MS-N014"),
-		},
+		पूर्ण,
 		.driver_data = &quirk_load_scm_model,
 		.callback = dmi_check_cb
-	},
-	{
+	पूर्ण,
+	अणु
 		.ident = "MSI CR620",
-		.matches = {
+		.matches = अणु
 			DMI_MATCH(DMI_SYS_VENDOR,
 				"Micro-Star International"),
 			DMI_MATCH(DMI_PRODUCT_NAME, "CR620"),
-		},
+		पूर्ण,
 		.driver_data = &quirk_load_scm_model,
 		.callback = dmi_check_cb
-	},
-	{
+	पूर्ण,
+	अणु
 		.ident = "MSI U270",
-		.matches = {
+		.matches = अणु
 			DMI_MATCH(DMI_SYS_VENDOR,
 				"Micro-Star International Co., Ltd."),
 			DMI_MATCH(DMI_PRODUCT_NAME, "U270 series"),
-		},
+		पूर्ण,
 		.driver_data = &quirk_load_scm_model,
 		.callback = dmi_check_cb
-	},
-	{
+	पूर्ण,
+	अणु
 		.ident = "MSI U90/U100",
-		.matches = {
+		.matches = अणु
 			DMI_MATCH(DMI_SYS_VENDOR,
 				"MICRO-STAR INTERNATIONAL CO., LTD"),
 			DMI_MATCH(DMI_PRODUCT_NAME, "U90/U100"),
-		},
+		पूर्ण,
 		.driver_data = &quirk_load_scm_ro_model,
 		.callback = dmi_check_cb
-	},
-	{ }
-};
+	पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 
-static int rfkill_bluetooth_set(void *data, bool blocked)
-{
+अटल पूर्णांक rfसमाप्त_bluetooth_set(व्योम *data, bool blocked)
+अणु
 	/* Do something with blocked...*/
 	/*
 	 * blocked == false is on
 	 * blocked == true is off
 	 */
-	int result = set_device_state(blocked ? "0" : "1", 0,
+	पूर्णांक result = set_device_state(blocked ? "0" : "1", 0,
 			MSI_STANDARD_EC_BLUETOOTH_MASK);
 
-	return min(result, 0);
-}
+	वापस min(result, 0);
+पूर्ण
 
-static int rfkill_wlan_set(void *data, bool blocked)
-{
-	int result = set_device_state(blocked ? "0" : "1", 0,
+अटल पूर्णांक rfसमाप्त_wlan_set(व्योम *data, bool blocked)
+अणु
+	पूर्णांक result = set_device_state(blocked ? "0" : "1", 0,
 			MSI_STANDARD_EC_WLAN_MASK);
 
-	return min(result, 0);
-}
+	वापस min(result, 0);
+पूर्ण
 
-static int rfkill_threeg_set(void *data, bool blocked)
-{
-	int result = set_device_state(blocked ? "0" : "1", 0,
+अटल पूर्णांक rfसमाप्त_threeg_set(व्योम *data, bool blocked)
+अणु
+	पूर्णांक result = set_device_state(blocked ? "0" : "1", 0,
 			MSI_STANDARD_EC_3G_MASK);
 
-	return min(result, 0);
-}
+	वापस min(result, 0);
+पूर्ण
 
-static const struct rfkill_ops rfkill_bluetooth_ops = {
-	.set_block = rfkill_bluetooth_set
-};
+अटल स्थिर काष्ठा rfसमाप्त_ops rfसमाप्त_bluetooth_ops = अणु
+	.set_block = rfसमाप्त_bluetooth_set
+पूर्ण;
 
-static const struct rfkill_ops rfkill_wlan_ops = {
-	.set_block = rfkill_wlan_set
-};
+अटल स्थिर काष्ठा rfसमाप्त_ops rfसमाप्त_wlan_ops = अणु
+	.set_block = rfसमाप्त_wlan_set
+पूर्ण;
 
-static const struct rfkill_ops rfkill_threeg_ops = {
-	.set_block = rfkill_threeg_set
-};
+अटल स्थिर काष्ठा rfसमाप्त_ops rfसमाप्त_threeg_ops = अणु
+	.set_block = rfसमाप्त_threeg_set
+पूर्ण;
 
-static void rfkill_cleanup(void)
-{
-	if (rfk_bluetooth) {
-		rfkill_unregister(rfk_bluetooth);
-		rfkill_destroy(rfk_bluetooth);
-	}
+अटल व्योम rfसमाप्त_cleanup(व्योम)
+अणु
+	अगर (rfk_bluetooth) अणु
+		rfसमाप्त_unरेजिस्टर(rfk_bluetooth);
+		rfसमाप्त_destroy(rfk_bluetooth);
+	पूर्ण
 
-	if (rfk_threeg) {
-		rfkill_unregister(rfk_threeg);
-		rfkill_destroy(rfk_threeg);
-	}
+	अगर (rfk_threeg) अणु
+		rfसमाप्त_unरेजिस्टर(rfk_threeg);
+		rfसमाप्त_destroy(rfk_threeg);
+	पूर्ण
 
-	if (rfk_wlan) {
-		rfkill_unregister(rfk_wlan);
-		rfkill_destroy(rfk_wlan);
-	}
-}
+	अगर (rfk_wlan) अणु
+		rfसमाप्त_unरेजिस्टर(rfk_wlan);
+		rfसमाप्त_destroy(rfk_wlan);
+	पूर्ण
+पूर्ण
 
-static bool msi_rfkill_set_state(struct rfkill *rfkill, bool blocked)
-{
-	if (quirks->ec_read_only)
-		return rfkill_set_hw_state(rfkill, blocked);
-	else
-		return rfkill_set_sw_state(rfkill, blocked);
-}
+अटल bool msi_rfसमाप्त_set_state(काष्ठा rfसमाप्त *rfसमाप्त, bool blocked)
+अणु
+	अगर (quirks->ec_पढ़ो_only)
+		वापस rfसमाप्त_set_hw_state(rfसमाप्त, blocked);
+	अन्यथा
+		वापस rfसमाप्त_set_sw_state(rfसमाप्त, blocked);
+पूर्ण
 
-static void msi_update_rfkill(struct work_struct *ignored)
-{
+अटल व्योम msi_update_rfसमाप्त(काष्ठा work_काष्ठा *ignored)
+अणु
 	get_wireless_state_ec_standard();
 
-	if (rfk_wlan)
-		msi_rfkill_set_state(rfk_wlan, !wlan_s);
-	if (rfk_bluetooth)
-		msi_rfkill_set_state(rfk_bluetooth, !bluetooth_s);
-	if (rfk_threeg)
-		msi_rfkill_set_state(rfk_threeg, !threeg_s);
-}
-static DECLARE_DELAYED_WORK(msi_rfkill_dwork, msi_update_rfkill);
-static DECLARE_WORK(msi_rfkill_work, msi_update_rfkill);
+	अगर (rfk_wlan)
+		msi_rfसमाप्त_set_state(rfk_wlan, !wlan_s);
+	अगर (rfk_bluetooth)
+		msi_rfसमाप्त_set_state(rfk_bluetooth, !bluetooth_s);
+	अगर (rfk_threeg)
+		msi_rfसमाप्त_set_state(rfk_threeg, !threeg_s);
+पूर्ण
+अटल DECLARE_DELAYED_WORK(msi_rfसमाप्त_dwork, msi_update_rfसमाप्त);
+अटल DECLARE_WORK(msi_rfसमाप्त_work, msi_update_rfसमाप्त);
 
-static void msi_send_touchpad_key(struct work_struct *ignored)
-{
+अटल व्योम msi_send_touchpad_key(काष्ठा work_काष्ठा *ignored)
+अणु
 	u8 rdata;
-	int result;
+	पूर्णांक result;
 
-	result = ec_read(MSI_STANDARD_EC_FUNCTIONS_ADDRESS, &rdata);
-	if (result < 0)
-		return;
+	result = ec_पढ़ो(MSI_STANDARD_EC_FUNCTIONS_ADDRESS, &rdata);
+	अगर (result < 0)
+		वापस;
 
 	sparse_keymap_report_event(msi_laptop_input_dev,
 		(rdata & MSI_STANDARD_EC_TOUCHPAD_MASK) ?
 		KEY_TOUCHPAD_ON : KEY_TOUCHPAD_OFF, 1, true);
-}
-static DECLARE_DELAYED_WORK(msi_touchpad_dwork, msi_send_touchpad_key);
-static DECLARE_WORK(msi_touchpad_work, msi_send_touchpad_key);
+पूर्ण
+अटल DECLARE_DELAYED_WORK(msi_touchpad_dwork, msi_send_touchpad_key);
+अटल DECLARE_WORK(msi_touchpad_work, msi_send_touchpad_key);
 
-static bool msi_laptop_i8042_filter(unsigned char data, unsigned char str,
-				struct serio *port)
-{
-	static bool extended;
+अटल bool msi_laptop_i8042_filter(अचिन्हित अक्षर data, अचिन्हित अक्षर str,
+				काष्ठा serio *port)
+अणु
+	अटल bool extended;
 
-	if (str & I8042_STR_AUXDATA)
-		return false;
+	अगर (str & I8042_STR_AUXDATA)
+		वापस false;
 
 	/* 0x54 wwan, 0x62 bluetooth, 0x76 wlan, 0xE4 touchpad toggle*/
-	if (unlikely(data == 0xe0)) {
+	अगर (unlikely(data == 0xe0)) अणु
 		extended = true;
-		return false;
-	} else if (unlikely(extended)) {
+		वापस false;
+	पूर्ण अन्यथा अगर (unlikely(extended)) अणु
 		extended = false;
-		switch (data) {
-		case 0xE4:
-			if (quirks->ec_delay) {
+		चयन (data) अणु
+		हाल 0xE4:
+			अगर (quirks->ec_delay) अणु
 				schedule_delayed_work(&msi_touchpad_dwork,
-					round_jiffies_relative(0.5 * HZ));
-			} else
+					round_jअगरfies_relative(0.5 * HZ));
+			पूर्ण अन्यथा
 				schedule_work(&msi_touchpad_work);
-			break;
-		case 0x54:
-		case 0x62:
-		case 0x76:
-			if (quirks->ec_delay) {
-				schedule_delayed_work(&msi_rfkill_dwork,
-					round_jiffies_relative(0.5 * HZ));
-			} else
-				schedule_work(&msi_rfkill_work);
-			break;
-		}
-	}
+			अवरोध;
+		हाल 0x54:
+		हाल 0x62:
+		हाल 0x76:
+			अगर (quirks->ec_delay) अणु
+				schedule_delayed_work(&msi_rfसमाप्त_dwork,
+					round_jअगरfies_relative(0.5 * HZ));
+			पूर्ण अन्यथा
+				schedule_work(&msi_rfसमाप्त_work);
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static void msi_init_rfkill(struct work_struct *ignored)
-{
-	if (rfk_wlan) {
-		rfkill_set_sw_state(rfk_wlan, !wlan_s);
-		rfkill_wlan_set(NULL, !wlan_s);
-	}
-	if (rfk_bluetooth) {
-		rfkill_set_sw_state(rfk_bluetooth, !bluetooth_s);
-		rfkill_bluetooth_set(NULL, !bluetooth_s);
-	}
-	if (rfk_threeg) {
-		rfkill_set_sw_state(rfk_threeg, !threeg_s);
-		rfkill_threeg_set(NULL, !threeg_s);
-	}
-}
-static DECLARE_DELAYED_WORK(msi_rfkill_init, msi_init_rfkill);
+अटल व्योम msi_init_rfसमाप्त(काष्ठा work_काष्ठा *ignored)
+अणु
+	अगर (rfk_wlan) अणु
+		rfसमाप्त_set_sw_state(rfk_wlan, !wlan_s);
+		rfसमाप्त_wlan_set(शून्य, !wlan_s);
+	पूर्ण
+	अगर (rfk_bluetooth) अणु
+		rfसमाप्त_set_sw_state(rfk_bluetooth, !bluetooth_s);
+		rfसमाप्त_bluetooth_set(शून्य, !bluetooth_s);
+	पूर्ण
+	अगर (rfk_threeg) अणु
+		rfसमाप्त_set_sw_state(rfk_threeg, !threeg_s);
+		rfसमाप्त_threeg_set(शून्य, !threeg_s);
+	पूर्ण
+पूर्ण
+अटल DECLARE_DELAYED_WORK(msi_rfसमाप्त_init, msi_init_rfसमाप्त);
 
-static int rfkill_init(struct platform_device *sdev)
-{
-	/* add rfkill */
-	int retval;
+अटल पूर्णांक rfसमाप्त_init(काष्ठा platक्रमm_device *sdev)
+अणु
+	/* add rfसमाप्त */
+	पूर्णांक retval;
 
 	/* keep the hardware wireless state */
 	get_wireless_state_ec_standard();
 
-	rfk_bluetooth = rfkill_alloc("msi-bluetooth", &sdev->dev,
+	rfk_bluetooth = rfसमाप्त_alloc("msi-bluetooth", &sdev->dev,
 				RFKILL_TYPE_BLUETOOTH,
-				&rfkill_bluetooth_ops, NULL);
-	if (!rfk_bluetooth) {
+				&rfसमाप्त_bluetooth_ops, शून्य);
+	अगर (!rfk_bluetooth) अणु
 		retval = -ENOMEM;
-		goto err_bluetooth;
-	}
-	retval = rfkill_register(rfk_bluetooth);
-	if (retval)
-		goto err_bluetooth;
+		जाओ err_bluetooth;
+	पूर्ण
+	retval = rfसमाप्त_रेजिस्टर(rfk_bluetooth);
+	अगर (retval)
+		जाओ err_bluetooth;
 
-	rfk_wlan = rfkill_alloc("msi-wlan", &sdev->dev, RFKILL_TYPE_WLAN,
-				&rfkill_wlan_ops, NULL);
-	if (!rfk_wlan) {
+	rfk_wlan = rfसमाप्त_alloc("msi-wlan", &sdev->dev, RFKILL_TYPE_WLAN,
+				&rfसमाप्त_wlan_ops, शून्य);
+	अगर (!rfk_wlan) अणु
 		retval = -ENOMEM;
-		goto err_wlan;
-	}
-	retval = rfkill_register(rfk_wlan);
-	if (retval)
-		goto err_wlan;
+		जाओ err_wlan;
+	पूर्ण
+	retval = rfसमाप्त_रेजिस्टर(rfk_wlan);
+	अगर (retval)
+		जाओ err_wlan;
 
-	if (threeg_exists) {
-		rfk_threeg = rfkill_alloc("msi-threeg", &sdev->dev,
-				RFKILL_TYPE_WWAN, &rfkill_threeg_ops, NULL);
-		if (!rfk_threeg) {
+	अगर (threeg_exists) अणु
+		rfk_threeg = rfसमाप्त_alloc("msi-threeg", &sdev->dev,
+				RFKILL_TYPE_WWAN, &rfसमाप्त_threeg_ops, शून्य);
+		अगर (!rfk_threeg) अणु
 			retval = -ENOMEM;
-			goto err_threeg;
-		}
-		retval = rfkill_register(rfk_threeg);
-		if (retval)
-			goto err_threeg;
-	}
+			जाओ err_threeg;
+		पूर्ण
+		retval = rfसमाप्त_रेजिस्टर(rfk_threeg);
+		अगर (retval)
+			जाओ err_threeg;
+	पूर्ण
 
-	/* schedule to run rfkill state initial */
-	if (quirks->ec_delay) {
-		schedule_delayed_work(&msi_rfkill_init,
-			round_jiffies_relative(1 * HZ));
-	} else
-		schedule_work(&msi_rfkill_work);
+	/* schedule to run rfसमाप्त state initial */
+	अगर (quirks->ec_delay) अणु
+		schedule_delayed_work(&msi_rfसमाप्त_init,
+			round_jअगरfies_relative(1 * HZ));
+	पूर्ण अन्यथा
+		schedule_work(&msi_rfसमाप्त_work);
 
-	return 0;
+	वापस 0;
 
 err_threeg:
-	rfkill_destroy(rfk_threeg);
-	if (rfk_wlan)
-		rfkill_unregister(rfk_wlan);
+	rfसमाप्त_destroy(rfk_threeg);
+	अगर (rfk_wlan)
+		rfसमाप्त_unरेजिस्टर(rfk_wlan);
 err_wlan:
-	rfkill_destroy(rfk_wlan);
-	if (rfk_bluetooth)
-		rfkill_unregister(rfk_bluetooth);
+	rfसमाप्त_destroy(rfk_wlan);
+	अगर (rfk_bluetooth)
+		rfसमाप्त_unरेजिस्टर(rfk_bluetooth);
 err_bluetooth:
-	rfkill_destroy(rfk_bluetooth);
+	rfसमाप्त_destroy(rfk_bluetooth);
 
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
-#ifdef CONFIG_PM_SLEEP
-static int msi_laptop_resume(struct device *device)
-{
+#अगर_घोषित CONFIG_PM_SLEEP
+अटल पूर्णांक msi_laptop_resume(काष्ठा device *device)
+अणु
 	u8 data;
-	int result;
+	पूर्णांक result;
 
-	if (!quirks->load_scm_model)
-		return 0;
+	अगर (!quirks->load_scm_model)
+		वापस 0;
 
 	/* set load SCM to disable hardware control by fn key */
-	result = ec_read(MSI_STANDARD_EC_SCM_LOAD_ADDRESS, &data);
-	if (result < 0)
-		return result;
+	result = ec_पढ़ो(MSI_STANDARD_EC_SCM_LOAD_ADDRESS, &data);
+	अगर (result < 0)
+		वापस result;
 
-	result = ec_write(MSI_STANDARD_EC_SCM_LOAD_ADDRESS,
+	result = ec_ग_लिखो(MSI_STANDARD_EC_SCM_LOAD_ADDRESS,
 		data | MSI_STANDARD_EC_SCM_LOAD_MASK);
-	if (result < 0)
-		return result;
+	अगर (result < 0)
+		वापस result;
 
-	return 0;
-}
-#endif
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
-static int __init msi_laptop_input_setup(void)
-{
-	int err;
+अटल पूर्णांक __init msi_laptop_input_setup(व्योम)
+अणु
+	पूर्णांक err;
 
 	msi_laptop_input_dev = input_allocate_device();
-	if (!msi_laptop_input_dev)
-		return -ENOMEM;
+	अगर (!msi_laptop_input_dev)
+		वापस -ENOMEM;
 
 	msi_laptop_input_dev->name = "MSI Laptop hotkeys";
 	msi_laptop_input_dev->phys = "msi-laptop/input0";
 	msi_laptop_input_dev->id.bustype = BUS_HOST;
 
 	err = sparse_keymap_setup(msi_laptop_input_dev,
-		msi_laptop_keymap, NULL);
-	if (err)
-		goto err_free_dev;
+		msi_laptop_keymap, शून्य);
+	अगर (err)
+		जाओ err_मुक्त_dev;
 
-	err = input_register_device(msi_laptop_input_dev);
-	if (err)
-		goto err_free_dev;
+	err = input_रेजिस्टर_device(msi_laptop_input_dev);
+	अगर (err)
+		जाओ err_मुक्त_dev;
 
-	return 0;
+	वापस 0;
 
-err_free_dev:
-	input_free_device(msi_laptop_input_dev);
-	return err;
-}
+err_मुक्त_dev:
+	input_मुक्त_device(msi_laptop_input_dev);
+	वापस err;
+पूर्ण
 
-static int __init load_scm_model_init(struct platform_device *sdev)
-{
+अटल पूर्णांक __init load_scm_model_init(काष्ठा platक्रमm_device *sdev)
+अणु
 	u8 data;
-	int result;
+	पूर्णांक result;
 
-	if (!quirks->ec_read_only) {
-		/* allow userland write sysfs file  */
+	अगर (!quirks->ec_पढ़ो_only) अणु
+		/* allow userland ग_लिखो sysfs file  */
 		dev_attr_bluetooth.store = store_bluetooth;
 		dev_attr_wlan.store = store_wlan;
 		dev_attr_threeg.store = store_threeg;
 		dev_attr_bluetooth.attr.mode |= S_IWUSR;
 		dev_attr_wlan.attr.mode |= S_IWUSR;
 		dev_attr_threeg.attr.mode |= S_IWUSR;
-	}
+	पूर्ण
 
 	/* disable hardware control by fn key */
-	result = ec_read(MSI_STANDARD_EC_SCM_LOAD_ADDRESS, &data);
-	if (result < 0)
-		return result;
+	result = ec_पढ़ो(MSI_STANDARD_EC_SCM_LOAD_ADDRESS, &data);
+	अगर (result < 0)
+		वापस result;
 
-	result = ec_write(MSI_STANDARD_EC_SCM_LOAD_ADDRESS,
+	result = ec_ग_लिखो(MSI_STANDARD_EC_SCM_LOAD_ADDRESS,
 		data | MSI_STANDARD_EC_SCM_LOAD_MASK);
-	if (result < 0)
-		return result;
+	अगर (result < 0)
+		वापस result;
 
-	/* initial rfkill */
-	result = rfkill_init(sdev);
-	if (result < 0)
-		goto fail_rfkill;
+	/* initial rfसमाप्त */
+	result = rfसमाप्त_init(sdev);
+	अगर (result < 0)
+		जाओ fail_rfसमाप्त;
 
 	/* setup input device */
 	result = msi_laptop_input_setup();
-	if (result)
-		goto fail_input;
+	अगर (result)
+		जाओ fail_input;
 
 	result = i8042_install_filter(msi_laptop_i8042_filter);
-	if (result) {
+	अगर (result) अणु
 		pr_err("Unable to install key filter\n");
-		goto fail_filter;
-	}
+		जाओ fail_filter;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 fail_filter:
-	input_unregister_device(msi_laptop_input_dev);
+	input_unरेजिस्टर_device(msi_laptop_input_dev);
 
 fail_input:
-	rfkill_cleanup();
+	rfसमाप्त_cleanup();
 
-fail_rfkill:
+fail_rfसमाप्त:
 
-	return result;
+	वापस result;
 
-}
+पूर्ण
 
-static int __init msi_init(void)
-{
-	int ret;
+अटल पूर्णांक __init msi_init(व्योम)
+अणु
+	पूर्णांक ret;
 
-	if (acpi_disabled)
-		return -ENODEV;
+	अगर (acpi_disabled)
+		वापस -ENODEV;
 
-	dmi_check_system(msi_dmi_table);
-	if (!quirks)
-		/* quirks may be NULL if no match in DMI table */
+	dmi_check_प्रणाली(msi_dmi_table);
+	अगर (!quirks)
+		/* quirks may be शून्य अगर no match in DMI table */
 		quirks = &quirk_load_scm_model;
-	if (force)
+	अगर (क्रमce)
 		quirks = &quirk_old_ec_model;
 
-	if (!quirks->old_ec_model)
+	अगर (!quirks->old_ec_model)
 		get_threeg_exists();
 
-	if (auto_brightness < 0 || auto_brightness > 2)
-		return -EINVAL;
+	अगर (स्वतः_brightness < 0 || स्वतः_brightness > 2)
+		वापस -EINVAL;
 
 	/* Register backlight stuff */
 
-	if (quirks->old_ec_model ||
-	    acpi_video_get_backlight_type() == acpi_backlight_vendor) {
-		struct backlight_properties props;
-		memset(&props, 0, sizeof(struct backlight_properties));
+	अगर (quirks->old_ec_model ||
+	    acpi_video_get_backlight_type() == acpi_backlight_venकरोr) अणु
+		काष्ठा backlight_properties props;
+		स_रखो(&props, 0, माप(काष्ठा backlight_properties));
 		props.type = BACKLIGHT_PLATFORM;
 		props.max_brightness = MSI_LCD_LEVEL_MAX - 1;
-		msibl_device = backlight_device_register("msi-laptop-bl", NULL,
-							 NULL, &msibl_ops,
+		msibl_device = backlight_device_रेजिस्टर("msi-laptop-bl", शून्य,
+							 शून्य, &msibl_ops,
 							 &props);
-		if (IS_ERR(msibl_device))
-			return PTR_ERR(msibl_device);
-	}
+		अगर (IS_ERR(msibl_device))
+			वापस PTR_ERR(msibl_device);
+	पूर्ण
 
-	ret = platform_driver_register(&msipf_driver);
-	if (ret)
-		goto fail_backlight;
+	ret = platक्रमm_driver_रेजिस्टर(&msipf_driver);
+	अगर (ret)
+		जाओ fail_backlight;
 
-	/* Register platform stuff */
+	/* Register platक्रमm stuff */
 
-	msipf_device = platform_device_alloc("msi-laptop-pf", -1);
-	if (!msipf_device) {
+	msipf_device = platक्रमm_device_alloc("msi-laptop-pf", -1);
+	अगर (!msipf_device) अणु
 		ret = -ENOMEM;
-		goto fail_platform_driver;
-	}
+		जाओ fail_platक्रमm_driver;
+	पूर्ण
 
-	ret = platform_device_add(msipf_device);
-	if (ret)
-		goto fail_device_add;
+	ret = platक्रमm_device_add(msipf_device);
+	अगर (ret)
+		जाओ fail_device_add;
 
-	if (quirks->load_scm_model && (load_scm_model_init(msipf_device) < 0)) {
+	अगर (quirks->load_scm_model && (load_scm_model_init(msipf_device) < 0)) अणु
 		ret = -EINVAL;
-		goto fail_scm_model_init;
-	}
+		जाओ fail_scm_model_init;
+	पूर्ण
 
 	ret = sysfs_create_group(&msipf_device->dev.kobj,
 				 &msipf_attribute_group);
-	if (ret)
-		goto fail_create_group;
+	अगर (ret)
+		जाओ fail_create_group;
 
-	if (!quirks->old_ec_model) {
-		if (threeg_exists)
+	अगर (!quirks->old_ec_model) अणु
+		अगर (threeg_exists)
 			ret = device_create_file(&msipf_device->dev,
 						&dev_attr_threeg);
-		if (ret)
-			goto fail_create_attr;
-	} else {
+		अगर (ret)
+			जाओ fail_create_attr;
+	पूर्ण अन्यथा अणु
 		ret = sysfs_create_group(&msipf_device->dev.kobj,
 					 &msipf_old_attribute_group);
-		if (ret)
-			goto fail_create_attr;
+		अगर (ret)
+			जाओ fail_create_attr;
 
-		/* Disable automatic brightness control by default because
-		 * this module was probably loaded to do brightness control in
+		/* Disable स्वतःmatic brightness control by शेष because
+		 * this module was probably loaded to करो brightness control in
 		 * software. */
 
-		if (auto_brightness != 2)
-			set_auto_brightness(auto_brightness);
-	}
+		अगर (स्वतः_brightness != 2)
+			set_स्वतः_brightness(स्वतः_brightness);
+	पूर्ण
 
 	pr_info("driver " MSI_DRIVER_VERSION " successfully loaded\n");
 
-	return 0;
+	वापस 0;
 
 fail_create_attr:
-	sysfs_remove_group(&msipf_device->dev.kobj, &msipf_attribute_group);
+	sysfs_हटाओ_group(&msipf_device->dev.kobj, &msipf_attribute_group);
 fail_create_group:
-	if (quirks->load_scm_model) {
-		i8042_remove_filter(msi_laptop_i8042_filter);
-		cancel_delayed_work_sync(&msi_rfkill_dwork);
-		cancel_work_sync(&msi_rfkill_work);
-		rfkill_cleanup();
-	}
+	अगर (quirks->load_scm_model) अणु
+		i8042_हटाओ_filter(msi_laptop_i8042_filter);
+		cancel_delayed_work_sync(&msi_rfसमाप्त_dwork);
+		cancel_work_sync(&msi_rfसमाप्त_work);
+		rfसमाप्त_cleanup();
+	पूर्ण
 fail_scm_model_init:
-	platform_device_del(msipf_device);
+	platक्रमm_device_del(msipf_device);
 fail_device_add:
-	platform_device_put(msipf_device);
-fail_platform_driver:
-	platform_driver_unregister(&msipf_driver);
+	platक्रमm_device_put(msipf_device);
+fail_platक्रमm_driver:
+	platक्रमm_driver_unरेजिस्टर(&msipf_driver);
 fail_backlight:
-	backlight_device_unregister(msibl_device);
+	backlight_device_unरेजिस्टर(msibl_device);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void __exit msi_cleanup(void)
-{
-	if (quirks->load_scm_model) {
-		i8042_remove_filter(msi_laptop_i8042_filter);
-		input_unregister_device(msi_laptop_input_dev);
-		cancel_delayed_work_sync(&msi_rfkill_dwork);
-		cancel_work_sync(&msi_rfkill_work);
-		rfkill_cleanup();
-	}
+अटल व्योम __निकास msi_cleanup(व्योम)
+अणु
+	अगर (quirks->load_scm_model) अणु
+		i8042_हटाओ_filter(msi_laptop_i8042_filter);
+		input_unरेजिस्टर_device(msi_laptop_input_dev);
+		cancel_delayed_work_sync(&msi_rfसमाप्त_dwork);
+		cancel_work_sync(&msi_rfसमाप्त_work);
+		rfसमाप्त_cleanup();
+	पूर्ण
 
-	sysfs_remove_group(&msipf_device->dev.kobj, &msipf_attribute_group);
-	if (!quirks->old_ec_model && threeg_exists)
-		device_remove_file(&msipf_device->dev, &dev_attr_threeg);
-	platform_device_unregister(msipf_device);
-	platform_driver_unregister(&msipf_driver);
-	backlight_device_unregister(msibl_device);
+	sysfs_हटाओ_group(&msipf_device->dev.kobj, &msipf_attribute_group);
+	अगर (!quirks->old_ec_model && threeg_exists)
+		device_हटाओ_file(&msipf_device->dev, &dev_attr_threeg);
+	platक्रमm_device_unरेजिस्टर(msipf_device);
+	platक्रमm_driver_unरेजिस्टर(&msipf_driver);
+	backlight_device_unरेजिस्टर(msibl_device);
 
-	if (quirks->old_ec_model) {
-		/* Enable automatic brightness control again */
-		if (auto_brightness != 2)
-			set_auto_brightness(1);
-	}
+	अगर (quirks->old_ec_model) अणु
+		/* Enable स्वतःmatic brightness control again */
+		अगर (स्वतः_brightness != 2)
+			set_स्वतः_brightness(1);
+	पूर्ण
 
 	pr_info("driver unloaded\n");
-}
+पूर्ण
 
 module_init(msi_init);
-module_exit(msi_cleanup);
+module_निकास(msi_cleanup);
 
 MODULE_AUTHOR("Lennart Poettering");
 MODULE_DESCRIPTION("MSI Laptop Support");

@@ -1,122 +1,123 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _LINUX_FRONTSWAP_H
-#define _LINUX_FRONTSWAP_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _LINUX_FRONTSWAP_H
+#घोषणा _LINUX_FRONTSWAP_H
 
-#include <linux/swap.h>
-#include <linux/mm.h>
-#include <linux/bitops.h>
-#include <linux/jump_label.h>
+#समावेश <linux/swap.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/bitops.h>
+#समावेश <linux/jump_label.h>
 
 /*
  * Return code to denote that requested number of
  * frontswap pages are unused(moved to page cache).
  * Used in shmem_unuse and try_to_unuse.
  */
-#define FRONTSWAP_PAGES_UNUSED	2
+#घोषणा FRONTSWAP_PAGES_UNUSED	2
 
-struct frontswap_ops {
-	void (*init)(unsigned); /* this swap type was just swapon'ed */
-	int (*store)(unsigned, pgoff_t, struct page *); /* store a page */
-	int (*load)(unsigned, pgoff_t, struct page *); /* load a page */
-	void (*invalidate_page)(unsigned, pgoff_t); /* page no longer needed */
-	void (*invalidate_area)(unsigned); /* swap type just swapoff'ed */
-	struct frontswap_ops *next; /* private pointer to next ops */
-};
+काष्ठा frontswap_ops अणु
+	व्योम (*init)(अचिन्हित); /* this swap type was just swapon'ed */
+	पूर्णांक (*store)(अचिन्हित, pgoff_t, काष्ठा page *); /* store a page */
+	पूर्णांक (*load)(अचिन्हित, pgoff_t, काष्ठा page *); /* load a page */
+	व्योम (*invalidate_page)(अचिन्हित, pgoff_t); /* page no दीर्घer needed */
+	व्योम (*invalidate_area)(अचिन्हित); /* swap type just swapoff'ed */
+	काष्ठा frontswap_ops *next; /* निजी poपूर्णांकer to next ops */
+पूर्ण;
 
-extern void frontswap_register_ops(struct frontswap_ops *ops);
-extern void frontswap_shrink(unsigned long);
-extern unsigned long frontswap_curr_pages(void);
-extern void frontswap_writethrough(bool);
-#define FRONTSWAP_HAS_EXCLUSIVE_GETS
-extern void frontswap_tmem_exclusive_gets(bool);
+बाह्य व्योम frontswap_रेजिस्टर_ops(काष्ठा frontswap_ops *ops);
+बाह्य व्योम frontswap_shrink(अचिन्हित दीर्घ);
+बाह्य अचिन्हित दीर्घ frontswap_curr_pages(व्योम);
+बाह्य व्योम frontswap_ग_लिखोthrough(bool);
+#घोषणा FRONTSWAP_HAS_EXCLUSIVE_GETS
+बाह्य व्योम frontswap_पंचांगem_exclusive_माला_लो(bool);
 
-extern bool __frontswap_test(struct swap_info_struct *, pgoff_t);
-extern void __frontswap_init(unsigned type, unsigned long *map);
-extern int __frontswap_store(struct page *page);
-extern int __frontswap_load(struct page *page);
-extern void __frontswap_invalidate_page(unsigned, pgoff_t);
-extern void __frontswap_invalidate_area(unsigned);
+बाह्य bool __frontswap_test(काष्ठा swap_info_काष्ठा *, pgoff_t);
+बाह्य व्योम __frontswap_init(अचिन्हित type, अचिन्हित दीर्घ *map);
+बाह्य पूर्णांक __frontswap_store(काष्ठा page *page);
+बाह्य पूर्णांक __frontswap_load(काष्ठा page *page);
+बाह्य व्योम __frontswap_invalidate_page(अचिन्हित, pgoff_t);
+बाह्य व्योम __frontswap_invalidate_area(अचिन्हित);
 
-#ifdef CONFIG_FRONTSWAP
-extern struct static_key_false frontswap_enabled_key;
+#अगर_घोषित CONFIG_FRONTSWAP
+बाह्य काष्ठा अटल_key_false frontswap_enabled_key;
 
-static inline bool frontswap_enabled(void)
-{
-	return static_branch_unlikely(&frontswap_enabled_key);
-}
+अटल अंतरभूत bool frontswap_enabled(व्योम)
+अणु
+	वापस अटल_branch_unlikely(&frontswap_enabled_key);
+पूर्ण
 
-static inline bool frontswap_test(struct swap_info_struct *sis, pgoff_t offset)
-{
-	return __frontswap_test(sis, offset);
-}
+अटल अंतरभूत bool frontswap_test(काष्ठा swap_info_काष्ठा *sis, pgoff_t offset)
+अणु
+	वापस __frontswap_test(sis, offset);
+पूर्ण
 
-static inline void frontswap_map_set(struct swap_info_struct *p,
-				     unsigned long *map)
-{
+अटल अंतरभूत व्योम frontswap_map_set(काष्ठा swap_info_काष्ठा *p,
+				     अचिन्हित दीर्घ *map)
+अणु
 	p->frontswap_map = map;
-}
+पूर्ण
 
-static inline unsigned long *frontswap_map_get(struct swap_info_struct *p)
-{
-	return p->frontswap_map;
-}
-#else
-/* all inline routines become no-ops and all externs are ignored */
+अटल अंतरभूत अचिन्हित दीर्घ *frontswap_map_get(काष्ठा swap_info_काष्ठा *p)
+अणु
+	वापस p->frontswap_map;
+पूर्ण
+#अन्यथा
+/* all अंतरभूत routines become no-ops and all बाह्यs are ignored */
 
-static inline bool frontswap_enabled(void)
-{
-	return false;
-}
+अटल अंतरभूत bool frontswap_enabled(व्योम)
+अणु
+	वापस false;
+पूर्ण
 
-static inline bool frontswap_test(struct swap_info_struct *sis, pgoff_t offset)
-{
-	return false;
-}
+अटल अंतरभूत bool frontswap_test(काष्ठा swap_info_काष्ठा *sis, pgoff_t offset)
+अणु
+	वापस false;
+पूर्ण
 
-static inline void frontswap_map_set(struct swap_info_struct *p,
-				     unsigned long *map)
-{
-}
+अटल अंतरभूत व्योम frontswap_map_set(काष्ठा swap_info_काष्ठा *p,
+				     अचिन्हित दीर्घ *map)
+अणु
+पूर्ण
 
-static inline unsigned long *frontswap_map_get(struct swap_info_struct *p)
-{
-	return NULL;
-}
-#endif
+अटल अंतरभूत अचिन्हित दीर्घ *frontswap_map_get(काष्ठा swap_info_काष्ठा *p)
+अणु
+	वापस शून्य;
+पूर्ण
+#पूर्ण_अगर
 
-static inline int frontswap_store(struct page *page)
-{
-	if (frontswap_enabled())
-		return __frontswap_store(page);
+अटल अंतरभूत पूर्णांक frontswap_store(काष्ठा page *page)
+अणु
+	अगर (frontswap_enabled())
+		वापस __frontswap_store(page);
 
-	return -1;
-}
+	वापस -1;
+पूर्ण
 
-static inline int frontswap_load(struct page *page)
-{
-	if (frontswap_enabled())
-		return __frontswap_load(page);
+अटल अंतरभूत पूर्णांक frontswap_load(काष्ठा page *page)
+अणु
+	अगर (frontswap_enabled())
+		वापस __frontswap_load(page);
 
-	return -1;
-}
+	वापस -1;
+पूर्ण
 
-static inline void frontswap_invalidate_page(unsigned type, pgoff_t offset)
-{
-	if (frontswap_enabled())
+अटल अंतरभूत व्योम frontswap_invalidate_page(अचिन्हित type, pgoff_t offset)
+अणु
+	अगर (frontswap_enabled())
 		__frontswap_invalidate_page(type, offset);
-}
+पूर्ण
 
-static inline void frontswap_invalidate_area(unsigned type)
-{
-	if (frontswap_enabled())
+अटल अंतरभूत व्योम frontswap_invalidate_area(अचिन्हित type)
+अणु
+	अगर (frontswap_enabled())
 		__frontswap_invalidate_area(type);
-}
+पूर्ण
 
-static inline void frontswap_init(unsigned type, unsigned long *map)
-{
-#ifdef CONFIG_FRONTSWAP
+अटल अंतरभूत व्योम frontswap_init(अचिन्हित type, अचिन्हित दीर्घ *map)
+अणु
+#अगर_घोषित CONFIG_FRONTSWAP
 	__frontswap_init(type, map);
-#endif
-}
+#पूर्ण_अगर
+पूर्ण
 
-#endif /* _LINUX_FRONTSWAP_H */
+#पूर्ण_अगर /* _LINUX_FRONTSWAP_H */

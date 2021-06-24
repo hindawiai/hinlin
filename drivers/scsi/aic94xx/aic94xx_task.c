@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Aic94xx SAS/SATA Tasks
  *
@@ -6,381 +7,381 @@
  * Copyright (C) 2005 Luben Tuikov <luben_tuikov@adaptec.com>
  */
 
-#include <linux/spinlock.h>
-#include "aic94xx.h"
-#include "aic94xx_sas.h"
-#include "aic94xx_hwi.h"
+#समावेश <linux/spinlock.h>
+#समावेश "aic94xx.h"
+#समावेश "aic94xx_sas.h"
+#समावेश "aic94xx_hwi.h"
 
-static void asd_unbuild_ata_ascb(struct asd_ascb *a);
-static void asd_unbuild_smp_ascb(struct asd_ascb *a);
-static void asd_unbuild_ssp_ascb(struct asd_ascb *a);
+अटल व्योम asd_unbuild_ata_ascb(काष्ठा asd_ascb *a);
+अटल व्योम asd_unbuild_smp_ascb(काष्ठा asd_ascb *a);
+अटल व्योम asd_unbuild_ssp_ascb(काष्ठा asd_ascb *a);
 
-static void asd_can_dequeue(struct asd_ha_struct *asd_ha, int num)
-{
-	unsigned long flags;
+अटल व्योम asd_can_dequeue(काष्ठा asd_ha_काष्ठा *asd_ha, पूर्णांक num)
+अणु
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&asd_ha->seq.pend_q_lock, flags);
 	asd_ha->seq.can_queue += num;
 	spin_unlock_irqrestore(&asd_ha->seq.pend_q_lock, flags);
-}
+पूर्ण
 
 /* DMA_... to our direction translation.
  */
-static const u8 data_dir_flags[] = {
-	[DMA_BIDIRECTIONAL]	= DATA_DIR_BYRECIPIENT,	/* UNSPECIFIED */
-	[DMA_TO_DEVICE]		= DATA_DIR_OUT,		/* OUTBOUND */
-	[DMA_FROM_DEVICE]	= DATA_DIR_IN,		/* INBOUND */
-	[DMA_NONE]		= DATA_DIR_NONE,	/* NO TRANSFER */
-};
+अटल स्थिर u8 data_dir_flags[] = अणु
+	[DMA_BIसूचीECTIONAL]	= DATA_सूची_BYRECIPIENT,	/* UNSPECIFIED */
+	[DMA_TO_DEVICE]		= DATA_सूची_OUT,		/* OUTBOUND */
+	[DMA_FROM_DEVICE]	= DATA_सूची_IN,		/* INBOUND */
+	[DMA_NONE]		= DATA_सूची_NONE,	/* NO TRANSFER */
+पूर्ण;
 
-static int asd_map_scatterlist(struct sas_task *task,
-			       struct sg_el *sg_arr,
+अटल पूर्णांक asd_map_scatterlist(काष्ठा sas_task *task,
+			       काष्ठा sg_el *sg_arr,
 			       gfp_t gfp_flags)
-{
-	struct asd_ascb *ascb = task->lldd_task;
-	struct asd_ha_struct *asd_ha = ascb->ha;
-	struct scatterlist *sc;
-	int num_sg, res;
+अणु
+	काष्ठा asd_ascb *ascb = task->lldd_task;
+	काष्ठा asd_ha_काष्ठा *asd_ha = ascb->ha;
+	काष्ठा scatterlist *sc;
+	पूर्णांक num_sg, res;
 
-	if (task->data_dir == DMA_NONE)
-		return 0;
+	अगर (task->data_dir == DMA_NONE)
+		वापस 0;
 
-	if (task->num_scatter == 0) {
-		void *p = task->scatter;
+	अगर (task->num_scatter == 0) अणु
+		व्योम *p = task->scatter;
 		dma_addr_t dma = dma_map_single(&asd_ha->pcidev->dev, p,
 						task->total_xfer_len,
 						task->data_dir);
 		sg_arr[0].bus_addr = cpu_to_le64((u64)dma);
 		sg_arr[0].size = cpu_to_le32(task->total_xfer_len);
 		sg_arr[0].flags |= ASD_SG_EL_LIST_EOL;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	/* STP tasks come from libata which has already mapped
+	/* STP tasks come from libata which has alपढ़ोy mapped
 	 * the SG list */
-	if (sas_protocol_ata(task->task_proto))
+	अगर (sas_protocol_ata(task->task_proto))
 		num_sg = task->num_scatter;
-	else
+	अन्यथा
 		num_sg = dma_map_sg(&asd_ha->pcidev->dev, task->scatter,
 				    task->num_scatter, task->data_dir);
-	if (num_sg == 0)
-		return -ENOMEM;
+	अगर (num_sg == 0)
+		वापस -ENOMEM;
 
-	if (num_sg > 3) {
-		int i;
+	अगर (num_sg > 3) अणु
+		पूर्णांक i;
 
 		ascb->sg_arr = asd_alloc_coherent(asd_ha,
-						  num_sg*sizeof(struct sg_el),
+						  num_sg*माप(काष्ठा sg_el),
 						  gfp_flags);
-		if (!ascb->sg_arr) {
+		अगर (!ascb->sg_arr) अणु
 			res = -ENOMEM;
-			goto err_unmap;
-		}
-		for_each_sg(task->scatter, sc, num_sg, i) {
-			struct sg_el *sg =
-				&((struct sg_el *)ascb->sg_arr->vaddr)[i];
+			जाओ err_unmap;
+		पूर्ण
+		क्रम_each_sg(task->scatter, sc, num_sg, i) अणु
+			काष्ठा sg_el *sg =
+				&((काष्ठा sg_el *)ascb->sg_arr->vaddr)[i];
 			sg->bus_addr = cpu_to_le64((u64)sg_dma_address(sc));
 			sg->size = cpu_to_le32((u32)sg_dma_len(sc));
-			if (i == num_sg-1)
+			अगर (i == num_sg-1)
 				sg->flags |= ASD_SG_EL_LIST_EOL;
-		}
+		पूर्ण
 
-		for_each_sg(task->scatter, sc, 2, i) {
+		क्रम_each_sg(task->scatter, sc, 2, i) अणु
 			sg_arr[i].bus_addr =
 				cpu_to_le64((u64)sg_dma_address(sc));
 			sg_arr[i].size = cpu_to_le32((u32)sg_dma_len(sc));
-		}
-		sg_arr[1].next_sg_offs = 2 * sizeof(*sg_arr);
+		पूर्ण
+		sg_arr[1].next_sg_offs = 2 * माप(*sg_arr);
 		sg_arr[1].flags |= ASD_SG_EL_LIST_EOS;
 
-		memset(&sg_arr[2], 0, sizeof(*sg_arr));
+		स_रखो(&sg_arr[2], 0, माप(*sg_arr));
 		sg_arr[2].bus_addr=cpu_to_le64((u64)ascb->sg_arr->dma_handle);
-	} else {
-		int i;
-		for_each_sg(task->scatter, sc, num_sg, i) {
+	पूर्ण अन्यथा अणु
+		पूर्णांक i;
+		क्रम_each_sg(task->scatter, sc, num_sg, i) अणु
 			sg_arr[i].bus_addr =
 				cpu_to_le64((u64)sg_dma_address(sc));
 			sg_arr[i].size = cpu_to_le32((u32)sg_dma_len(sc));
-		}
+		पूर्ण
 		sg_arr[i-1].flags |= ASD_SG_EL_LIST_EOL;
-	}
+	पूर्ण
 
-	return 0;
+	वापस 0;
 err_unmap:
-	if (sas_protocol_ata(task->task_proto))
+	अगर (sas_protocol_ata(task->task_proto))
 		dma_unmap_sg(&asd_ha->pcidev->dev, task->scatter,
 			     task->num_scatter, task->data_dir);
-	return res;
-}
+	वापस res;
+पूर्ण
 
-static void asd_unmap_scatterlist(struct asd_ascb *ascb)
-{
-	struct asd_ha_struct *asd_ha = ascb->ha;
-	struct sas_task *task = ascb->uldd_task;
+अटल व्योम asd_unmap_scatterlist(काष्ठा asd_ascb *ascb)
+अणु
+	काष्ठा asd_ha_काष्ठा *asd_ha = ascb->ha;
+	काष्ठा sas_task *task = ascb->uldd_task;
 
-	if (task->data_dir == DMA_NONE)
-		return;
+	अगर (task->data_dir == DMA_NONE)
+		वापस;
 
-	if (task->num_scatter == 0) {
+	अगर (task->num_scatter == 0) अणु
 		dma_addr_t dma = (dma_addr_t)
 		       le64_to_cpu(ascb->scb->ssp_task.sg_element[0].bus_addr);
 		dma_unmap_single(&ascb->ha->pcidev->dev, dma,
 				 task->total_xfer_len, task->data_dir);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	asd_free_coherent(asd_ha, ascb->sg_arr);
-	if (task->task_proto != SAS_PROTOCOL_STP)
+	asd_मुक्त_coherent(asd_ha, ascb->sg_arr);
+	अगर (task->task_proto != SAS_PROTOCOL_STP)
 		dma_unmap_sg(&asd_ha->pcidev->dev, task->scatter,
 			     task->num_scatter, task->data_dir);
-}
+पूर्ण
 
 /* ---------- Task complete tasklet ---------- */
 
-static void asd_get_response_tasklet(struct asd_ascb *ascb,
-				     struct done_list_struct *dl)
-{
-	struct asd_ha_struct *asd_ha = ascb->ha;
-	struct sas_task *task = ascb->uldd_task;
-	struct task_status_struct *ts = &task->task_status;
-	unsigned long flags;
-	struct tc_resp_sb_struct {
+अटल व्योम asd_get_response_tasklet(काष्ठा asd_ascb *ascb,
+				     काष्ठा करोne_list_काष्ठा *dl)
+अणु
+	काष्ठा asd_ha_काष्ठा *asd_ha = ascb->ha;
+	काष्ठा sas_task *task = ascb->uldd_task;
+	काष्ठा task_status_काष्ठा *ts = &task->task_status;
+	अचिन्हित दीर्घ flags;
+	काष्ठा tc_resp_sb_काष्ठा अणु
 		__le16 index_escb;
 		u8     len_lsb;
 		u8     flags;
-	} __attribute__ ((packed)) *resp_sb = (void *) dl->status_block;
+	पूर्ण __attribute__ ((packed)) *resp_sb = (व्योम *) dl->status_block;
 
-/* 	int  size   = ((resp_sb->flags & 7) << 8) | resp_sb->len_lsb; */
-	int  edb_id = ((resp_sb->flags & 0x70) >> 4)-1;
-	struct asd_ascb *escb;
-	struct asd_dma_tok *edb;
-	void *r;
+/* 	पूर्णांक  size   = ((resp_sb->flags & 7) << 8) | resp_sb->len_lsb; */
+	पूर्णांक  edb_id = ((resp_sb->flags & 0x70) >> 4)-1;
+	काष्ठा asd_ascb *escb;
+	काष्ठा asd_dma_tok *edb;
+	व्योम *r;
 
 	spin_lock_irqsave(&asd_ha->seq.tc_index_lock, flags);
 	escb = asd_tc_index_find(&asd_ha->seq,
-				 (int)le16_to_cpu(resp_sb->index_escb));
+				 (पूर्णांक)le16_to_cpu(resp_sb->index_escb));
 	spin_unlock_irqrestore(&asd_ha->seq.tc_index_lock, flags);
 
-	if (!escb) {
+	अगर (!escb) अणु
 		ASD_DPRINTK("Uh-oh! No escb for this dl?!\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	ts->buf_valid_size = 0;
 	edb = asd_ha->seq.edb_arr[edb_id + escb->edb_index];
 	r = edb->vaddr;
-	if (task->task_proto == SAS_PROTOCOL_SSP) {
-		struct ssp_response_iu *iu =
-			r + 16 + sizeof(struct ssp_frame_hdr);
+	अगर (task->task_proto == SAS_PROTOCOL_SSP) अणु
+		काष्ठा ssp_response_iu *iu =
+			r + 16 + माप(काष्ठा ssp_frame_hdr);
 
 		ts->residual = le32_to_cpu(*(__le32 *)r);
 
 		sas_ssp_task_response(&asd_ha->pcidev->dev, task, iu);
-	}  else {
-		struct ata_task_resp *resp = (void *) &ts->buf[0];
+	पूर्ण  अन्यथा अणु
+		काष्ठा ata_task_resp *resp = (व्योम *) &ts->buf[0];
 
 		ts->residual = le32_to_cpu(*(__le32 *)r);
 
-		if (SAS_STATUS_BUF_SIZE >= sizeof(*resp)) {
+		अगर (SAS_STATUS_BUF_SIZE >= माप(*resp)) अणु
 			resp->frame_len = le16_to_cpu(*(__le16 *)(r+6));
-			memcpy(&resp->ending_fis[0], r+16, ATA_RESP_FIS_SIZE);
-			ts->buf_valid_size = sizeof(*resp);
-		}
-	}
+			स_नकल(&resp->ending_fis[0], r+16, ATA_RESP_FIS_SIZE);
+			ts->buf_valid_size = माप(*resp);
+		पूर्ण
+	पूर्ण
 
 	asd_invalidate_edb(escb, edb_id);
-}
+पूर्ण
 
-static void asd_task_tasklet_complete(struct asd_ascb *ascb,
-				      struct done_list_struct *dl)
-{
-	struct sas_task *task = ascb->uldd_task;
-	struct task_status_struct *ts = &task->task_status;
-	unsigned long flags;
+अटल व्योम asd_task_tasklet_complete(काष्ठा asd_ascb *ascb,
+				      काष्ठा करोne_list_काष्ठा *dl)
+अणु
+	काष्ठा sas_task *task = ascb->uldd_task;
+	काष्ठा task_status_काष्ठा *ts = &task->task_status;
+	अचिन्हित दीर्घ flags;
 	u8 opcode = dl->opcode;
 
 	asd_can_dequeue(ascb->ha, 1);
 
 Again:
-	switch (opcode) {
-	case TC_NO_ERROR:
+	चयन (opcode) अणु
+	हाल TC_NO_ERROR:
 		ts->resp = SAS_TASK_COMPLETE;
 		ts->stat = SAM_STAT_GOOD;
-		break;
-	case TC_UNDERRUN:
+		अवरोध;
+	हाल TC_UNDERRUN:
 		ts->resp = SAS_TASK_COMPLETE;
 		ts->stat = SAS_DATA_UNDERRUN;
 		ts->residual = le32_to_cpu(*(__le32 *)dl->status_block);
-		break;
-	case TC_OVERRUN:
+		अवरोध;
+	हाल TC_OVERRUN:
 		ts->resp = SAS_TASK_COMPLETE;
 		ts->stat = SAS_DATA_OVERRUN;
 		ts->residual = 0;
-		break;
-	case TC_SSP_RESP:
-	case TC_ATA_RESP:
+		अवरोध;
+	हाल TC_SSP_RESP:
+	हाल TC_ATA_RESP:
 		ts->resp = SAS_TASK_COMPLETE;
 		ts->stat = SAS_PROTO_RESPONSE;
 		asd_get_response_tasklet(ascb, dl);
-		break;
-	case TF_OPEN_REJECT:
+		अवरोध;
+	हाल TF_OPEN_REJECT:
 		ts->resp = SAS_TASK_UNDELIVERED;
 		ts->stat = SAS_OPEN_REJECT;
-		if (dl->status_block[1] & 2)
-			ts->open_rej_reason = 1 + dl->status_block[2];
-		else if (dl->status_block[1] & 1)
-			ts->open_rej_reason = (dl->status_block[2] >> 4)+10;
-		else
-			ts->open_rej_reason = SAS_OREJ_UNKNOWN;
-		break;
-	case TF_OPEN_TO:
+		अगर (dl->status_block[1] & 2)
+			ts->खोलो_rej_reason = 1 + dl->status_block[2];
+		अन्यथा अगर (dl->status_block[1] & 1)
+			ts->खोलो_rej_reason = (dl->status_block[2] >> 4)+10;
+		अन्यथा
+			ts->खोलो_rej_reason = SAS_OREJ_UNKNOWN;
+		अवरोध;
+	हाल TF_OPEN_TO:
 		ts->resp = SAS_TASK_UNDELIVERED;
 		ts->stat = SAS_OPEN_TO;
-		break;
-	case TF_PHY_DOWN:
-	case TU_PHY_DOWN:
+		अवरोध;
+	हाल TF_PHY_DOWN:
+	हाल TU_PHY_DOWN:
 		ts->resp = SAS_TASK_UNDELIVERED;
 		ts->stat = SAS_PHY_DOWN;
-		break;
-	case TI_PHY_DOWN:
+		अवरोध;
+	हाल TI_PHY_DOWN:
 		ts->resp = SAS_TASK_COMPLETE;
 		ts->stat = SAS_PHY_DOWN;
-		break;
-	case TI_BREAK:
-	case TI_PROTO_ERR:
-	case TI_NAK:
-	case TI_ACK_NAK_TO:
-	case TF_SMP_XMIT_RCV_ERR:
-	case TC_ATA_R_ERR_RECV:
+		अवरोध;
+	हाल TI_BREAK:
+	हाल TI_PROTO_ERR:
+	हाल TI_NAK:
+	हाल TI_ACK_NAK_TO:
+	हाल TF_SMP_XMIT_RCV_ERR:
+	हाल TC_ATA_R_ERR_RECV:
 		ts->resp = SAS_TASK_COMPLETE;
 		ts->stat = SAS_INTERRUPTED;
-		break;
-	case TF_BREAK:
-	case TU_BREAK:
-	case TU_ACK_NAK_TO:
-	case TF_SMPRSP_TO:
+		अवरोध;
+	हाल TF_BREAK:
+	हाल TU_BREAK:
+	हाल TU_ACK_NAK_TO:
+	हाल TF_SMPRSP_TO:
 		ts->resp = SAS_TASK_UNDELIVERED;
 		ts->stat = SAS_DEV_NO_RESPONSE;
-		break;
-	case TF_NAK_RECV:
+		अवरोध;
+	हाल TF_NAK_RECV:
 		ts->resp = SAS_TASK_COMPLETE;
 		ts->stat = SAS_NAK_R_ERR;
-		break;
-	case TA_I_T_NEXUS_LOSS:
+		अवरोध;
+	हाल TA_I_T_NEXUS_LOSS:
 		opcode = dl->status_block[0];
-		goto Again;
-	case TF_INV_CONN_HANDLE:
+		जाओ Again;
+	हाल TF_INV_CONN_HANDLE:
 		ts->resp = SAS_TASK_UNDELIVERED;
 		ts->stat = SAS_DEVICE_UNKNOWN;
-		break;
-	case TF_REQUESTED_N_PENDING:
+		अवरोध;
+	हाल TF_REQUESTED_N_PENDING:
 		ts->resp = SAS_TASK_UNDELIVERED;
 		ts->stat = SAS_PENDING;
-		break;
-	case TC_TASK_CLEARED:
-	case TA_ON_REQ:
+		अवरोध;
+	हाल TC_TASK_CLEARED:
+	हाल TA_ON_REQ:
 		ts->resp = SAS_TASK_COMPLETE;
 		ts->stat = SAS_ABORTED_TASK;
-		break;
+		अवरोध;
 
-	case TF_NO_SMP_CONN:
-	case TF_TMF_NO_CTX:
-	case TF_TMF_NO_TAG:
-	case TF_TMF_TAG_FREE:
-	case TF_TMF_TASK_DONE:
-	case TF_TMF_NO_CONN_HANDLE:
-	case TF_IRTT_TO:
-	case TF_IU_SHORT:
-	case TF_DATA_OFFS_ERR:
+	हाल TF_NO_SMP_CONN:
+	हाल TF_TMF_NO_CTX:
+	हाल TF_TMF_NO_TAG:
+	हाल TF_TMF_TAG_FREE:
+	हाल TF_TMF_TASK_DONE:
+	हाल TF_TMF_NO_CONN_HANDLE:
+	हाल TF_IRTT_TO:
+	हाल TF_IU_SHORT:
+	हाल TF_DATA_OFFS_ERR:
 		ts->resp = SAS_TASK_UNDELIVERED;
 		ts->stat = SAS_DEV_NO_RESPONSE;
-		break;
+		अवरोध;
 
-	case TC_LINK_ADM_RESP:
-	case TC_CONTROL_PHY:
-	case TC_RESUME:
-	case TC_PARTIAL_SG_LIST:
-	default:
+	हाल TC_LINK_ADM_RESP:
+	हाल TC_CONTROL_PHY:
+	हाल TC_RESUME:
+	हाल TC_PARTIAL_SG_LIST:
+	शेष:
 		ASD_DPRINTK("%s: dl opcode: 0x%x?\n", __func__, opcode);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	switch (task->task_proto) {
-	case SAS_PROTOCOL_SATA:
-	case SAS_PROTOCOL_STP:
+	चयन (task->task_proto) अणु
+	हाल SAS_PROTOCOL_SATA:
+	हाल SAS_PROTOCOL_STP:
 		asd_unbuild_ata_ascb(ascb);
-		break;
-	case SAS_PROTOCOL_SMP:
+		अवरोध;
+	हाल SAS_PROTOCOL_SMP:
 		asd_unbuild_smp_ascb(ascb);
-		break;
-	case SAS_PROTOCOL_SSP:
+		अवरोध;
+	हाल SAS_PROTOCOL_SSP:
 		asd_unbuild_ssp_ascb(ascb);
-		break;
-	default:
-		break;
-	}
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
 
 	spin_lock_irqsave(&task->task_state_lock, flags);
 	task->task_state_flags &= ~SAS_TASK_STATE_PENDING;
 	task->task_state_flags &= ~SAS_TASK_AT_INITIATOR;
 	task->task_state_flags |= SAS_TASK_STATE_DONE;
-	if (unlikely((task->task_state_flags & SAS_TASK_STATE_ABORTED))) {
-		struct completion *completion = ascb->completion;
+	अगर (unlikely((task->task_state_flags & SAS_TASK_STATE_ABORTED))) अणु
+		काष्ठा completion *completion = ascb->completion;
 		spin_unlock_irqrestore(&task->task_state_lock, flags);
 		ASD_DPRINTK("task 0x%p done with opcode 0x%x resp 0x%x "
 			    "stat 0x%x but aborted by upper layer!\n",
 			    task, opcode, ts->resp, ts->stat);
-		if (completion)
+		अगर (completion)
 			complete(completion);
-	} else {
+	पूर्ण अन्यथा अणु
 		spin_unlock_irqrestore(&task->task_state_lock, flags);
-		task->lldd_task = NULL;
-		asd_ascb_free(ascb);
+		task->lldd_task = शून्य;
+		asd_ascb_मुक्त(ascb);
 		mb();
-		task->task_done(task);
-	}
-}
+		task->task_करोne(task);
+	पूर्ण
+पूर्ण
 
 /* ---------- ATA ---------- */
 
-static int asd_build_ata_ascb(struct asd_ascb *ascb, struct sas_task *task,
+अटल पूर्णांक asd_build_ata_ascb(काष्ठा asd_ascb *ascb, काष्ठा sas_task *task,
 			      gfp_t gfp_flags)
-{
-	struct domain_device *dev = task->dev;
-	struct scb *scb;
+अणु
+	काष्ठा करोमुख्य_device *dev = task->dev;
+	काष्ठा scb *scb;
 	u8     flags;
-	int    res = 0;
+	पूर्णांक    res = 0;
 
 	scb = ascb->scb;
 
-	if (unlikely(task->ata_task.device_control_reg_update))
+	अगर (unlikely(task->ata_task.device_control_reg_update))
 		scb->header.opcode = CONTROL_ATA_DEV;
-	else if (dev->sata_dev.class == ATA_DEV_ATAPI)
+	अन्यथा अगर (dev->sata_dev.class == ATA_DEV_ATAPI)
 		scb->header.opcode = INITIATE_ATAPI_TASK;
-	else
+	अन्यथा
 		scb->header.opcode = INITIATE_ATA_TASK;
 
 	scb->ata_task.proto_conn_rate = (1 << 5); /* STP */
-	if (dev->port->oob_mode == SAS_OOB_MODE)
+	अगर (dev->port->oob_mode == SAS_OOB_MODE)
 		scb->ata_task.proto_conn_rate |= dev->linkrate;
 
 	scb->ata_task.total_xfer_len = cpu_to_le32(task->total_xfer_len);
 	scb->ata_task.fis = task->ata_task.fis;
-	if (likely(!task->ata_task.device_control_reg_update))
+	अगर (likely(!task->ata_task.device_control_reg_update))
 		scb->ata_task.fis.flags |= 0x80; /* C=1: update ATA cmd reg */
 	scb->ata_task.fis.flags &= 0xF0; /* PM_PORT field shall be 0 */
-	if (dev->sata_dev.class == ATA_DEV_ATAPI)
-		memcpy(scb->ata_task.atapi_packet, task->ata_task.atapi_packet,
+	अगर (dev->sata_dev.class == ATA_DEV_ATAPI)
+		स_नकल(scb->ata_task.atapi_packet, task->ata_task.atapi_packet,
 		       16);
 	scb->ata_task.sister_scb = cpu_to_le16(0xFFFF);
 	scb->ata_task.conn_handle = cpu_to_le16(
-		(u16)(unsigned long)dev->lldd_dev);
+		(u16)(अचिन्हित दीर्घ)dev->lldd_dev);
 
-	if (likely(!task->ata_task.device_control_reg_update)) {
+	अगर (likely(!task->ata_task.device_control_reg_update)) अणु
 		flags = 0;
-		if (task->ata_task.dma_xfer)
+		अगर (task->ata_task.dma_xfer)
 			flags |= DATA_XFER_MODE_DMA;
-		if (task->ata_task.use_ncq &&
+		अगर (task->ata_task.use_ncq &&
 		    dev->sata_dev.class != ATA_DEV_ATAPI)
 			flags |= ATA_Q_TYPE_NCQ;
 		flags |= data_dir_flags[task->data_dir];
@@ -389,34 +390,34 @@ static int asd_build_ata_ascb(struct asd_ascb *ascb, struct sas_task *task,
 		scb->ata_task.retry_count = task->ata_task.retry_count;
 
 		flags = 0;
-		if (task->ata_task.set_affil_pol)
+		अगर (task->ata_task.set_affil_pol)
 			flags |= SET_AFFIL_POLICY;
-		if (task->ata_task.stp_affil_pol)
+		अगर (task->ata_task.stp_affil_pol)
 			flags |= STP_AFFIL_POLICY;
 		scb->ata_task.flags = flags;
-	}
+	पूर्ण
 	ascb->tasklet_complete = asd_task_tasklet_complete;
 
-	if (likely(!task->ata_task.device_control_reg_update))
+	अगर (likely(!task->ata_task.device_control_reg_update))
 		res = asd_map_scatterlist(task, scb->ata_task.sg_element,
 					  gfp_flags);
 
-	return res;
-}
+	वापस res;
+पूर्ण
 
-static void asd_unbuild_ata_ascb(struct asd_ascb *a)
-{
+अटल व्योम asd_unbuild_ata_ascb(काष्ठा asd_ascb *a)
+अणु
 	asd_unmap_scatterlist(a);
-}
+पूर्ण
 
 /* ---------- SMP ---------- */
 
-static int asd_build_smp_ascb(struct asd_ascb *ascb, struct sas_task *task,
+अटल पूर्णांक asd_build_smp_ascb(काष्ठा asd_ascb *ascb, काष्ठा sas_task *task,
 			      gfp_t gfp_flags)
-{
-	struct asd_ha_struct *asd_ha = ascb->ha;
-	struct domain_device *dev = task->dev;
-	struct scb *scb;
+अणु
+	काष्ठा asd_ha_काष्ठा *asd_ha = ascb->ha;
+	काष्ठा करोमुख्य_device *dev = task->dev;
+	काष्ठा scb *scb;
 
 	dma_map_sg(&asd_ha->pcidev->dev, &task->smp_task.smp_req, 1,
 		   DMA_TO_DEVICE);
@@ -441,32 +442,32 @@ static int asd_build_smp_ascb(struct asd_ascb *ascb, struct sas_task *task,
 
 	scb->smp_task.sister_scb = cpu_to_le16(0xFFFF);
 	scb->smp_task.conn_handle = cpu_to_le16((u16)
-						(unsigned long)dev->lldd_dev);
+						(अचिन्हित दीर्घ)dev->lldd_dev);
 
 	ascb->tasklet_complete = asd_task_tasklet_complete;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void asd_unbuild_smp_ascb(struct asd_ascb *a)
-{
-	struct sas_task *task = a->uldd_task;
+अटल व्योम asd_unbuild_smp_ascb(काष्ठा asd_ascb *a)
+अणु
+	काष्ठा sas_task *task = a->uldd_task;
 
 	BUG_ON(!task);
 	dma_unmap_sg(&a->ha->pcidev->dev, &task->smp_task.smp_req, 1,
 		     DMA_TO_DEVICE);
 	dma_unmap_sg(&a->ha->pcidev->dev, &task->smp_task.smp_resp, 1,
 		     DMA_FROM_DEVICE);
-}
+पूर्ण
 
 /* ---------- SSP ---------- */
 
-static int asd_build_ssp_ascb(struct asd_ascb *ascb, struct sas_task *task,
+अटल पूर्णांक asd_build_ssp_ascb(काष्ठा asd_ascb *ascb, काष्ठा sas_task *task,
 			      gfp_t gfp_flags)
-{
-	struct domain_device *dev = task->dev;
-	struct scb *scb;
-	int    res = 0;
+अणु
+	काष्ठा करोमुख्य_device *dev = task->dev;
+	काष्ठा scb *scb;
+	पूर्णांक    res = 0;
 
 	scb = ascb->scb;
 
@@ -476,23 +477,23 @@ static int asd_build_ssp_ascb(struct asd_ascb *ascb, struct sas_task *task,
 	scb->ssp_task.proto_conn_rate |= dev->linkrate;
 	scb->ssp_task.total_xfer_len = cpu_to_le32(task->total_xfer_len);
 	scb->ssp_task.ssp_frame.frame_type = SSP_DATA;
-	memcpy(scb->ssp_task.ssp_frame.hashed_dest_addr, dev->hashed_sas_addr,
+	स_नकल(scb->ssp_task.ssp_frame.hashed_dest_addr, dev->hashed_sas_addr,
 	       HASHED_SAS_ADDR_SIZE);
-	memcpy(scb->ssp_task.ssp_frame.hashed_src_addr,
+	स_नकल(scb->ssp_task.ssp_frame.hashed_src_addr,
 	       dev->port->ha->hashed_sas_addr, HASHED_SAS_ADDR_SIZE);
 	scb->ssp_task.ssp_frame.tptt = cpu_to_be16(0xFFFF);
 
-	memcpy(scb->ssp_task.ssp_cmd.lun, task->ssp_task.LUN, 8);
-	if (task->ssp_task.enable_first_burst)
+	स_नकल(scb->ssp_task.ssp_cmd.lun, task->ssp_task.LUN, 8);
+	अगर (task->ssp_task.enable_first_burst)
 		scb->ssp_task.ssp_cmd.efb_prio_attr |= EFB_MASK;
 	scb->ssp_task.ssp_cmd.efb_prio_attr |= (task->ssp_task.task_prio << 3);
 	scb->ssp_task.ssp_cmd.efb_prio_attr |= (task->ssp_task.task_attr & 7);
-	memcpy(scb->ssp_task.ssp_cmd.cdb, task->ssp_task.cmd->cmnd,
+	स_नकल(scb->ssp_task.ssp_cmd.cdb, task->ssp_task.cmd->cmnd,
 	       task->ssp_task.cmd->cmd_len);
 
 	scb->ssp_task.sister_scb = cpu_to_le16(0xFFFF);
 	scb->ssp_task.conn_handle = cpu_to_le16(
-		(u16)(unsigned long)dev->lldd_dev);
+		(u16)(अचिन्हित दीर्घ)dev->lldd_dev);
 	scb->ssp_task.data_dir = data_dir_flags[task->data_dir];
 	scb->ssp_task.retry_count = scb->ssp_task.retry_count;
 
@@ -500,127 +501,127 @@ static int asd_build_ssp_ascb(struct asd_ascb *ascb, struct sas_task *task,
 
 	res = asd_map_scatterlist(task, scb->ssp_task.sg_element, gfp_flags);
 
-	return res;
-}
+	वापस res;
+पूर्ण
 
-static void asd_unbuild_ssp_ascb(struct asd_ascb *a)
-{
+अटल व्योम asd_unbuild_ssp_ascb(काष्ठा asd_ascb *a)
+अणु
 	asd_unmap_scatterlist(a);
-}
+पूर्ण
 
 /* ---------- Execute Task ---------- */
 
-static int asd_can_queue(struct asd_ha_struct *asd_ha, int num)
-{
-	int res = 0;
-	unsigned long flags;
+अटल पूर्णांक asd_can_queue(काष्ठा asd_ha_काष्ठा *asd_ha, पूर्णांक num)
+अणु
+	पूर्णांक res = 0;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&asd_ha->seq.pend_q_lock, flags);
-	if ((asd_ha->seq.can_queue - num) < 0)
+	अगर ((asd_ha->seq.can_queue - num) < 0)
 		res = -SAS_QUEUE_FULL;
-	else
+	अन्यथा
 		asd_ha->seq.can_queue -= num;
 	spin_unlock_irqrestore(&asd_ha->seq.pend_q_lock, flags);
 
-	return res;
-}
+	वापस res;
+पूर्ण
 
-int asd_execute_task(struct sas_task *task, gfp_t gfp_flags)
-{
-	int res = 0;
+पूर्णांक asd_execute_task(काष्ठा sas_task *task, gfp_t gfp_flags)
+अणु
+	पूर्णांक res = 0;
 	LIST_HEAD(alist);
-	struct sas_task *t = task;
-	struct asd_ascb *ascb = NULL, *a;
-	struct asd_ha_struct *asd_ha = task->dev->port->ha->lldd_ha;
-	unsigned long flags;
+	काष्ठा sas_task *t = task;
+	काष्ठा asd_ascb *ascb = शून्य, *a;
+	काष्ठा asd_ha_काष्ठा *asd_ha = task->dev->port->ha->lldd_ha;
+	अचिन्हित दीर्घ flags;
 
 	res = asd_can_queue(asd_ha, 1);
-	if (res)
-		return res;
+	अगर (res)
+		वापस res;
 
 	res = 1;
 	ascb = asd_ascb_alloc_list(asd_ha, &res, gfp_flags);
-	if (res) {
+	अगर (res) अणु
 		res = -ENOMEM;
-		goto out_err;
-	}
+		जाओ out_err;
+	पूर्ण
 
 	__list_add(&alist, ascb->list.prev, &ascb->list);
-	list_for_each_entry(a, &alist, list) {
+	list_क्रम_each_entry(a, &alist, list) अणु
 		a->uldd_task = t;
 		t->lldd_task = a;
-		break;
-	}
-	list_for_each_entry(a, &alist, list) {
+		अवरोध;
+	पूर्ण
+	list_क्रम_each_entry(a, &alist, list) अणु
 		t = a->uldd_task;
-		a->uldd_timer = 1;
-		if (t->task_proto & SAS_PROTOCOL_STP)
+		a->uldd_समयr = 1;
+		अगर (t->task_proto & SAS_PROTOCOL_STP)
 			t->task_proto = SAS_PROTOCOL_STP;
-		switch (t->task_proto) {
-		case SAS_PROTOCOL_SATA:
-		case SAS_PROTOCOL_STP:
+		चयन (t->task_proto) अणु
+		हाल SAS_PROTOCOL_SATA:
+		हाल SAS_PROTOCOL_STP:
 			res = asd_build_ata_ascb(a, t, gfp_flags);
-			break;
-		case SAS_PROTOCOL_SMP:
+			अवरोध;
+		हाल SAS_PROTOCOL_SMP:
 			res = asd_build_smp_ascb(a, t, gfp_flags);
-			break;
-		case SAS_PROTOCOL_SSP:
+			अवरोध;
+		हाल SAS_PROTOCOL_SSP:
 			res = asd_build_ssp_ascb(a, t, gfp_flags);
-			break;
-		default:
-			asd_printk("unknown sas_task proto: 0x%x\n",
+			अवरोध;
+		शेष:
+			asd_prपूर्णांकk("unknown sas_task proto: 0x%x\n",
 				   t->task_proto);
 			res = -ENOMEM;
-			break;
-		}
-		if (res)
-			goto out_err_unmap;
+			अवरोध;
+		पूर्ण
+		अगर (res)
+			जाओ out_err_unmap;
 
 		spin_lock_irqsave(&t->task_state_lock, flags);
 		t->task_state_flags |= SAS_TASK_AT_INITIATOR;
 		spin_unlock_irqrestore(&t->task_state_lock, flags);
-	}
+	पूर्ण
 	list_del_init(&alist);
 
 	res = asd_post_ascb_list(asd_ha, ascb, 1);
-	if (unlikely(res)) {
-		a = NULL;
+	अगर (unlikely(res)) अणु
+		a = शून्य;
 		__list_add(&alist, ascb->list.prev, &ascb->list);
-		goto out_err_unmap;
-	}
+		जाओ out_err_unmap;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 out_err_unmap:
-	{
-		struct asd_ascb *b = a;
-		list_for_each_entry(a, &alist, list) {
-			if (a == b)
-				break;
+	अणु
+		काष्ठा asd_ascb *b = a;
+		list_क्रम_each_entry(a, &alist, list) अणु
+			अगर (a == b)
+				अवरोध;
 			t = a->uldd_task;
 			spin_lock_irqsave(&t->task_state_lock, flags);
 			t->task_state_flags &= ~SAS_TASK_AT_INITIATOR;
 			spin_unlock_irqrestore(&t->task_state_lock, flags);
-			switch (t->task_proto) {
-			case SAS_PROTOCOL_SATA:
-			case SAS_PROTOCOL_STP:
+			चयन (t->task_proto) अणु
+			हाल SAS_PROTOCOL_SATA:
+			हाल SAS_PROTOCOL_STP:
 				asd_unbuild_ata_ascb(a);
-				break;
-			case SAS_PROTOCOL_SMP:
+				अवरोध;
+			हाल SAS_PROTOCOL_SMP:
 				asd_unbuild_smp_ascb(a);
-				break;
-			case SAS_PROTOCOL_SSP:
+				अवरोध;
+			हाल SAS_PROTOCOL_SSP:
 				asd_unbuild_ssp_ascb(a);
-				break;
-			default:
-				break;
-			}
-			t->lldd_task = NULL;
-		}
-	}
+				अवरोध;
+			शेष:
+				अवरोध;
+			पूर्ण
+			t->lldd_task = शून्य;
+		पूर्ण
+	पूर्ण
 	list_del_init(&alist);
 out_err:
-	if (ascb)
-		asd_ascb_free_list(ascb);
+	अगर (ascb)
+		asd_ascb_मुक्त_list(ascb);
 	asd_can_dequeue(asd_ha, 1);
-	return res;
-}
+	वापस res;
+पूर्ण

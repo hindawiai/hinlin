@@ -1,10 +1,11 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * Copyright (c) 2012 The Chromium OS Authors. All rights reserved.
  *
  * kselftest_harness.h: simple C unit test helper.
  *
- * See documentation in Documentation/dev-tools/kselftest.rst
+ * See करोcumentation in Documentation/dev-tools/kselftest.rst
  *
  * API inspired by code.google.com/p/googletest
  */
@@ -14,130 +15,130 @@
  *
  * .. code-block:: c
  *
- *    #include "../kselftest_harness.h"
+ *    #समावेश "../kselftest_harness.h"
  *
- *    TEST(standalone_test) {
- *      do_some_stuff;
- *      EXPECT_GT(10, stuff) {
+ *    TEST(standalone_test) अणु
+ *      करो_some_stuff;
+ *      EXPECT_GT(10, stuff) अणु
  *         stuff_state_t state;
- *         enumerate_stuff_state(&state);
+ *         क्रमागतerate_stuff_state(&state);
  *         TH_LOG("expectation failed with state: %s", state.msg);
- *      }
+ *      पूर्ण
  *      more_stuff;
- *      ASSERT_NE(some_stuff, NULL) TH_LOG("how did it happen?!");
+ *      ASSERT_NE(some_stuff, शून्य) TH_LOG("how did it happen?!");
  *      last_stuff;
  *      EXPECT_EQ(0, last_stuff);
- *    }
+ *    पूर्ण
  *
- *    FIXTURE(my_fixture) {
+ *    FIXTURE(my_fixture) अणु
  *      mytype_t *data;
- *      int awesomeness_level;
- *    };
- *    FIXTURE_SETUP(my_fixture) {
+ *      पूर्णांक awesomeness_level;
+ *    पूर्ण;
+ *    FIXTURE_SETUP(my_fixture) अणु
  *      self->data = mytype_new();
- *      ASSERT_NE(NULL, self->data);
- *    }
- *    FIXTURE_TEARDOWN(my_fixture) {
- *      mytype_free(self->data);
- *    }
- *    TEST_F(my_fixture, data_is_good) {
+ *      ASSERT_NE(शून्य, self->data);
+ *    पूर्ण
+ *    FIXTURE_TEARDOWN(my_fixture) अणु
+ *      mytype_मुक्त(self->data);
+ *    पूर्ण
+ *    TEST_F(my_fixture, data_is_good) अणु
  *      EXPECT_EQ(1, is_my_data_good(self->data));
- *    }
+ *    पूर्ण
  *
  *    TEST_HARNESS_MAIN
  */
 
-#ifndef __KSELFTEST_HARNESS_H
-#define __KSELFTEST_HARNESS_H
+#अगर_अघोषित __KSELFTEST_HARNESS_H
+#घोषणा __KSELFTEST_HARNESS_H
 
-#ifndef _GNU_SOURCE
-#define _GNU_SOURCE
-#endif
-#include <asm/types.h>
-#include <errno.h>
-#include <stdbool.h>
-#include <stdint.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <sys/mman.h>
-#include <sys/types.h>
-#include <sys/wait.h>
-#include <unistd.h>
+#अगर_अघोषित _GNU_SOURCE
+#घोषणा _GNU_SOURCE
+#पूर्ण_अगर
+#समावेश <यंत्र/types.h>
+#समावेश <त्रुटिसं.स>
+#समावेश <stdbool.h>
+#समावेश <मानक_निवेशt.h>
+#समावेश <मानकपन.स>
+#समावेश <मानककोष.स>
+#समावेश <माला.स>
+#समावेश <sys/mman.h>
+#समावेश <sys/types.h>
+#समावेश <sys/रुको.h>
+#समावेश <unistd.h>
 
-#include "kselftest.h"
+#समावेश "kselftest.h"
 
-#define TEST_TIMEOUT_DEFAULT 30
+#घोषणा TEST_TIMEOUT_DEFAULT 30
 
 /* Utilities exposed to the test definitions */
-#ifndef TH_LOG_STREAM
-#  define TH_LOG_STREAM stderr
-#endif
+#अगर_अघोषित TH_LOG_STREAM
+#  define TH_LOG_STREAM मानक_त्रुटि
+#पूर्ण_अगर
 
-#ifndef TH_LOG_ENABLED
+#अगर_अघोषित TH_LOG_ENABLED
 #  define TH_LOG_ENABLED 1
-#endif
+#पूर्ण_अगर
 
 /**
  * TH_LOG()
  *
- * @fmt: format string
+ * @fmt: क्रमmat string
  * @...: optional arguments
  *
  * .. code-block:: c
  *
- *     TH_LOG(format, ...)
+ *     TH_LOG(क्रमmat, ...)
  *
- * Optional debug logging function available for use in tests.
+ * Optional debug logging function available क्रम use in tests.
  * Logging may be enabled or disabled by defining TH_LOG_ENABLED.
- * E.g., #define TH_LOG_ENABLED 1
+ * E.g., #घोषणा TH_LOG_ENABLED 1
  *
- * If no definition is provided, logging is enabled by default.
+ * If no definition is provided, logging is enabled by शेष.
  *
- * If there is no way to print an error message for the process running the
- * test (e.g. not allowed to write to stderr), it is still possible to get the
- * ASSERT_* number for which the test failed.  This behavior can be enabled by
- * writing `_metadata->no_print = true;` before the check sequence that is
- * unable to print.  When an error occur, instead of printing an error message
- * and calling `abort(3)`, the test process call `_exit(2)` with the assert
- * number as argument, which is then printed by the parent process.
+ * If there is no way to prपूर्णांक an error message क्रम the process running the
+ * test (e.g. not allowed to ग_लिखो to मानक_त्रुटि), it is still possible to get the
+ * ASSERT_* number क्रम which the test failed.  This behavior can be enabled by
+ * writing `_metadata->no_prपूर्णांक = true;` beक्रमe the check sequence that is
+ * unable to prपूर्णांक.  When an error occur, instead of prपूर्णांकing an error message
+ * and calling `पात(3)`, the test process call `_निकास(2)` with the निश्चित
+ * number as argument, which is then prपूर्णांकed by the parent process.
  */
-#define TH_LOG(fmt, ...) do { \
-	if (TH_LOG_ENABLED) \
+#घोषणा TH_LOG(fmt, ...) करो अणु \
+	अगर (TH_LOG_ENABLED) \
 		__TH_LOG(fmt, ##__VA_ARGS__); \
-} while (0)
+पूर्ण जबतक (0)
 
-/* Unconditional logger for internal use. */
-#define __TH_LOG(fmt, ...) \
-		fprintf(TH_LOG_STREAM, "# %s:%d:%s:" fmt "\n", \
-			__FILE__, __LINE__, _metadata->name, ##__VA_ARGS__)
+/* Unconditional logger क्रम पूर्णांकernal use. */
+#घोषणा __TH_LOG(fmt, ...) \
+		ख_लिखो(TH_LOG_STREAM, "# %s:%d:%s:" fmt "\n", \
+			__खाता__, __LINE__, _metadata->name, ##__VA_ARGS__)
 
 /**
  * SKIP()
  *
  * @statement: statement to run after reporting SKIP
- * @fmt: format string
+ * @fmt: क्रमmat string
  * @...: optional arguments
  *
  * .. code-block:: c
  *
  *     SKIP(statement, fmt, ...);
  *
- * This forces a "pass" after reporting why something is being skipped
+ * This क्रमces a "pass" after reporting why something is being skipped
  * and runs "statement", which is usually "return" or "goto skip".
  */
-#define SKIP(statement, fmt, ...) do { \
-	snprintf(_metadata->results->reason, \
-		 sizeof(_metadata->results->reason), fmt, ##__VA_ARGS__); \
-	if (TH_LOG_ENABLED) { \
-		fprintf(TH_LOG_STREAM, "#      SKIP      %s\n", \
+#घोषणा SKIP(statement, fmt, ...) करो अणु \
+	snम_लिखो(_metadata->results->reason, \
+		 माप(_metadata->results->reason), fmt, ##__VA_ARGS__); \
+	अगर (TH_LOG_ENABLED) अणु \
+		ख_लिखो(TH_LOG_STREAM, "#      SKIP      %s\n", \
 			_metadata->results->reason); \
-	} \
+	पूर्ण \
 	_metadata->passed = 1; \
 	_metadata->skip = 1; \
 	_metadata->trigger = 0; \
 	statement; \
-} while (0)
+पूर्ण जबतक (0)
 
 /**
  * TEST() - Defines the test function and creates the registration
@@ -147,59 +148,59 @@
  *
  * .. code-block:: c
  *
- *     TEST(name) { implementation }
+ *     TEST(name) अणु implementation पूर्ण
  *
  * Defines a test by name.
  * Names must be unique and tests must not be run in parallel.  The
  * implementation containing block is a function and scoping should be treated
- * as such.  Returning early may be performed with a bare "return;" statement.
+ * as such.  Returning early may be perक्रमmed with a bare "return;" statement.
  *
- * EXPECT_* and ASSERT_* are valid in a TEST() { } context.
+ * EXPECT_* and ASSERT_* are valid in a TEST() अणु पूर्ण context.
  */
-#define TEST(test_name) __TEST_IMPL(test_name, -1)
+#घोषणा TEST(test_name) __TEST_IMPL(test_name, -1)
 
 /**
  * TEST_SIGNAL()
  *
  * @test_name: test name
- * @signal: signal number
+ * @संकेत: संकेत number
  *
  * .. code-block:: c
  *
- *     TEST_SIGNAL(name, signal) { implementation }
+ *     TEST_SIGNAL(name, संकेत) अणु implementation पूर्ण
  *
- * Defines a test by name and the expected term signal.
+ * Defines a test by name and the expected term संकेत.
  * Names must be unique and tests must not be run in parallel.  The
  * implementation containing block is a function and scoping should be treated
- * as such.  Returning early may be performed with a bare "return;" statement.
+ * as such.  Returning early may be perक्रमmed with a bare "return;" statement.
  *
- * EXPECT_* and ASSERT_* are valid in a TEST() { } context.
+ * EXPECT_* and ASSERT_* are valid in a TEST() अणु पूर्ण context.
  */
-#define TEST_SIGNAL(test_name, signal) __TEST_IMPL(test_name, signal)
+#घोषणा TEST_SIGNAL(test_name, संकेत) __TEST_IMPL(test_name, संकेत)
 
-#define __TEST_IMPL(test_name, _signal) \
-	static void test_name(struct __test_metadata *_metadata); \
-	static inline void wrapper_##test_name( \
-		struct __test_metadata *_metadata, \
-		struct __fixture_variant_metadata *variant) \
-	{ \
+#घोषणा __TEST_IMPL(test_name, _संकेत) \
+	अटल व्योम test_name(काष्ठा __test_metadata *_metadata); \
+	अटल अंतरभूत व्योम wrapper_##test_name( \
+		काष्ठा __test_metadata *_metadata, \
+		काष्ठा __fixture_variant_metadata *variant) \
+	अणु \
 		test_name(_metadata); \
-	} \
-	static struct __test_metadata _##test_name##_object = \
-		{ .name = #test_name, \
+	पूर्ण \
+	अटल काष्ठा __test_metadata _##test_name##_object = \
+		अणु .name = #test_name, \
 		  .fn = &wrapper_##test_name, \
 		  .fixture = &_fixture_global, \
-		  .termsig = _signal, \
-		  .timeout = TEST_TIMEOUT_DEFAULT, }; \
-	static void __attribute__((constructor)) _register_##test_name(void) \
-	{ \
-		__register_test(&_##test_name##_object); \
-	} \
-	static void test_name( \
-		struct __test_metadata __attribute__((unused)) *_metadata)
+		  .termsig = _संकेत, \
+		  .समयout = TEST_TIMEOUT_DEFAULT, पूर्ण; \
+	अटल व्योम __attribute__((स्थिरructor)) _रेजिस्टर_##test_name(व्योम) \
+	अणु \
+		__रेजिस्टर_test(&_##test_name##_object); \
+	पूर्ण \
+	अटल व्योम test_name( \
+		काष्ठा __test_metadata __attribute__((unused)) *_metadata)
 
 /**
- * FIXTURE_DATA() - Wraps the struct name so we have one less
+ * FIXTURE_DATA() - Wraps the काष्ठा name so we have one less
  * argument to pass around
  *
  * @datatype_name: datatype name
@@ -213,59 +214,59 @@
  * is needed.  In general, this should not be needed unless
  * the *self* is being passed to a helper directly.
  */
-#define FIXTURE_DATA(datatype_name) struct _test_data_##datatype_name
+#घोषणा FIXTURE_DATA(datatype_name) काष्ठा _test_data_##datatype_name
 
 /**
  * FIXTURE() - Called once per fixture to setup the data and
- * register
+ * रेजिस्टर
  *
  * @fixture_name: fixture name
  *
  * .. code-block:: c
  *
- *     FIXTURE(fixture_name) {
+ *     FIXTURE(fixture_name) अणु
  *       type property1;
  *       ...
- *     };
+ *     पूर्ण;
  *
  * Defines the data provided to TEST_F()-defined tests as *self*.  It should be
  * populated and cleaned up using FIXTURE_SETUP() and FIXTURE_TEARDOWN().
  */
-#define FIXTURE(fixture_name) \
+#घोषणा FIXTURE(fixture_name) \
 	FIXTURE_VARIANT(fixture_name); \
-	static struct __fixture_metadata _##fixture_name##_fixture_object = \
-		{ .name =  #fixture_name, }; \
-	static void __attribute__((constructor)) \
-	_register_##fixture_name##_data(void) \
-	{ \
-		__register_fixture(&_##fixture_name##_fixture_object); \
-	} \
+	अटल काष्ठा __fixture_metadata _##fixture_name##_fixture_object = \
+		अणु .name =  #fixture_name, पूर्ण; \
+	अटल व्योम __attribute__((स्थिरructor)) \
+	_रेजिस्टर_##fixture_name##_data(व्योम) \
+	अणु \
+		__रेजिस्टर_fixture(&_##fixture_name##_fixture_object); \
+	पूर्ण \
 	FIXTURE_DATA(fixture_name)
 
 /**
- * FIXTURE_SETUP() - Prepares the setup function for the fixture.
+ * FIXTURE_SETUP() - Prepares the setup function क्रम the fixture.
  * *_metadata* is included so that EXPECT_* and ASSERT_* work correctly.
  *
  * @fixture_name: fixture name
  *
  * .. code-block:: c
  *
- *     FIXTURE_SETUP(fixture_name) { implementation }
+ *     FIXTURE_SETUP(fixture_name) अणु implementation पूर्ण
  *
- * Populates the required "setup" function for a fixture.  An instance of the
- * datatype defined with FIXTURE_DATA() will be exposed as *self* for the
+ * Populates the required "setup" function क्रम a fixture.  An instance of the
+ * datatype defined with FIXTURE_DATA() will be exposed as *self* क्रम the
  * implementation.
  *
- * ASSERT_* are valid for use in this context and will prempt the execution
+ * ASSERT_* are valid क्रम use in this context and will prempt the execution
  * of any dependent fixture tests.
  *
- * A bare "return;" statement may be used to return early.
+ * A bare "return;" statement may be used to वापस early.
  */
-#define FIXTURE_SETUP(fixture_name) \
-	void fixture_name##_setup( \
-		struct __test_metadata __attribute__((unused)) *_metadata, \
+#घोषणा FIXTURE_SETUP(fixture_name) \
+	व्योम fixture_name##_setup( \
+		काष्ठा __test_metadata __attribute__((unused)) *_metadata, \
 		FIXTURE_DATA(fixture_name) __attribute__((unused)) *self, \
-		const FIXTURE_VARIANT(fixture_name) \
+		स्थिर FIXTURE_VARIANT(fixture_name) \
 			__attribute__((unused)) *variant)
 
 /**
@@ -276,17 +277,17 @@
  *
  * .. code-block:: c
  *
- *     FIXTURE_TEARDOWN(fixture_name) { implementation }
+ *     FIXTURE_TEARDOWN(fixture_name) अणु implementation पूर्ण
  *
- * Populates the required "teardown" function for a fixture.  An instance of the
- * datatype defined with FIXTURE_DATA() will be exposed as *self* for the
+ * Populates the required "teardown" function क्रम a fixture.  An instance of the
+ * datatype defined with FIXTURE_DATA() will be exposed as *self* क्रम the
  * implementation to clean up.
  *
- * A bare "return;" statement may be used to return early.
+ * A bare "return;" statement may be used to वापस early.
  */
-#define FIXTURE_TEARDOWN(fixture_name) \
-	void fixture_name##_teardown( \
-		struct __test_metadata __attribute__((unused)) *_metadata, \
+#घोषणा FIXTURE_TEARDOWN(fixture_name) \
+	व्योम fixture_name##_tearकरोwn( \
+		काष्ठा __test_metadata __attribute__((unused)) *_metadata, \
 		FIXTURE_DATA(fixture_name) __attribute__((unused)) *self)
 
 /**
@@ -297,114 +298,114 @@
  *
  * .. code-block:: c
  *
- *     FIXTURE_VARIANT(fixture_name) {
+ *     FIXTURE_VARIANT(fixture_name) अणु
  *       type property1;
  *       ...
- *     };
+ *     पूर्ण;
  *
- * Defines type of constant parameters provided to FIXTURE_SETUP() and TEST_F()
- * as *variant*. Variants allow the same tests to be run with different
+ * Defines type of स्थिरant parameters provided to FIXTURE_SETUP() and TEST_F()
+ * as *variant*. Variants allow the same tests to be run with dअगरferent
  * arguments.
  */
-#define FIXTURE_VARIANT(fixture_name) struct _fixture_variant_##fixture_name
+#घोषणा FIXTURE_VARIANT(fixture_name) काष्ठा _fixture_variant_##fixture_name
 
 /**
  * FIXTURE_VARIANT_ADD() - Called once per fixture
- * variant to setup and register the data
+ * variant to setup and रेजिस्टर the data
  *
  * @fixture_name: fixture name
  * @variant_name: name of the parameter set
  *
  * .. code-block:: c
  *
- *     FIXTURE_VARIANT_ADD(fixture_name, variant_name) {
+ *     FIXTURE_VARIANT_ADD(fixture_name, variant_name) अणु
  *       .property1 = val1,
  *       ...
- *     };
+ *     पूर्ण;
  *
  * Defines a variant of the test fixture, provided to FIXTURE_SETUP() and
- * TEST_F() as *variant*. Tests of each fixture will be run once for each
+ * TEST_F() as *variant*. Tests of each fixture will be run once क्रम each
  * variant.
  */
-#define FIXTURE_VARIANT_ADD(fixture_name, variant_name) \
-	extern FIXTURE_VARIANT(fixture_name) \
+#घोषणा FIXTURE_VARIANT_ADD(fixture_name, variant_name) \
+	बाह्य FIXTURE_VARIANT(fixture_name) \
 		_##fixture_name##_##variant_name##_variant; \
-	static struct __fixture_variant_metadata \
+	अटल काष्ठा __fixture_variant_metadata \
 		_##fixture_name##_##variant_name##_object = \
-		{ .name = #variant_name, \
-		  .data = &_##fixture_name##_##variant_name##_variant}; \
-	static void __attribute__((constructor)) \
-		_register_##fixture_name##_##variant_name(void) \
-	{ \
-		__register_fixture_variant(&_##fixture_name##_fixture_object, \
+		अणु .name = #variant_name, \
+		  .data = &_##fixture_name##_##variant_name##_variantपूर्ण; \
+	अटल व्योम __attribute__((स्थिरructor)) \
+		_रेजिस्टर_##fixture_name##_##variant_name(व्योम) \
+	अणु \
+		__रेजिस्टर_fixture_variant(&_##fixture_name##_fixture_object, \
 			&_##fixture_name##_##variant_name##_object);	\
-	} \
+	पूर्ण \
 	FIXTURE_VARIANT(fixture_name) \
 		_##fixture_name##_##variant_name##_variant =
 
 /**
- * TEST_F() - Emits test registration and helpers for
- * fixture-based test cases
+ * TEST_F() - Emits test registration and helpers क्रम
+ * fixture-based test हालs
  *
  * @fixture_name: fixture name
  * @test_name: test name
  *
  * .. code-block:: c
  *
- *     TEST_F(fixture, name) { implementation }
+ *     TEST_F(fixture, name) अणु implementation पूर्ण
  *
- * Defines a test that depends on a fixture (e.g., is part of a test case).
+ * Defines a test that depends on a fixture (e.g., is part of a test हाल).
  * Very similar to TEST() except that *self* is the setup instance of fixture's
- * datatype exposed for use by the implementation.
+ * datatype exposed क्रम use by the implementation.
  *
  * Warning: use of ASSERT_* here will skip TEARDOWN.
  */
-/* TODO(wad) register fixtures on dedicated test lists. */
-#define TEST_F(fixture_name, test_name) \
+/* TODO(wad) रेजिस्टर fixtures on dedicated test lists. */
+#घोषणा TEST_F(fixture_name, test_name) \
 	__TEST_F_IMPL(fixture_name, test_name, -1, TEST_TIMEOUT_DEFAULT)
 
-#define TEST_F_SIGNAL(fixture_name, test_name, signal) \
-	__TEST_F_IMPL(fixture_name, test_name, signal, TEST_TIMEOUT_DEFAULT)
+#घोषणा TEST_F_SIGNAL(fixture_name, test_name, संकेत) \
+	__TEST_F_IMPL(fixture_name, test_name, संकेत, TEST_TIMEOUT_DEFAULT)
 
-#define TEST_F_TIMEOUT(fixture_name, test_name, timeout) \
-	__TEST_F_IMPL(fixture_name, test_name, -1, timeout)
+#घोषणा TEST_F_TIMEOUT(fixture_name, test_name, समयout) \
+	__TEST_F_IMPL(fixture_name, test_name, -1, समयout)
 
-#define __TEST_F_IMPL(fixture_name, test_name, signal, tmout) \
-	static void fixture_name##_##test_name( \
-		struct __test_metadata *_metadata, \
+#घोषणा __TEST_F_IMPL(fixture_name, test_name, संकेत, पंचांगout) \
+	अटल व्योम fixture_name##_##test_name( \
+		काष्ठा __test_metadata *_metadata, \
 		FIXTURE_DATA(fixture_name) *self, \
-		const FIXTURE_VARIANT(fixture_name) *variant); \
-	static inline void wrapper_##fixture_name##_##test_name( \
-		struct __test_metadata *_metadata, \
-		struct __fixture_variant_metadata *variant) \
-	{ \
-		/* fixture data is alloced, setup, and torn down per call. */ \
+		स्थिर FIXTURE_VARIANT(fixture_name) *variant); \
+	अटल अंतरभूत व्योम wrapper_##fixture_name##_##test_name( \
+		काष्ठा __test_metadata *_metadata, \
+		काष्ठा __fixture_variant_metadata *variant) \
+	अणु \
+		/* fixture data is alloced, setup, and torn करोwn per call. */ \
 		FIXTURE_DATA(fixture_name) self; \
-		memset(&self, 0, sizeof(FIXTURE_DATA(fixture_name))); \
+		स_रखो(&self, 0, माप(FIXTURE_DATA(fixture_name))); \
 		fixture_name##_setup(_metadata, &self, variant->data); \
 		/* Let setup failure terminate early. */ \
-		if (!_metadata->passed) \
-			return; \
+		अगर (!_metadata->passed) \
+			वापस; \
 		fixture_name##_##test_name(_metadata, &self, variant->data); \
-		fixture_name##_teardown(_metadata, &self); \
-	} \
-	static struct __test_metadata \
-		      _##fixture_name##_##test_name##_object = { \
+		fixture_name##_tearकरोwn(_metadata, &self); \
+	पूर्ण \
+	अटल काष्ठा __test_metadata \
+		      _##fixture_name##_##test_name##_object = अणु \
 		.name = #test_name, \
 		.fn = &wrapper_##fixture_name##_##test_name, \
 		.fixture = &_##fixture_name##_fixture_object, \
-		.termsig = signal, \
-		.timeout = tmout, \
-	 }; \
-	static void __attribute__((constructor)) \
-			_register_##fixture_name##_##test_name(void) \
-	{ \
-		__register_test(&_##fixture_name##_##test_name##_object); \
-	} \
-	static void fixture_name##_##test_name( \
-		struct __test_metadata __attribute__((unused)) *_metadata, \
+		.termsig = संकेत, \
+		.समयout = पंचांगout, \
+	 पूर्ण; \
+	अटल व्योम __attribute__((स्थिरructor)) \
+			_रेजिस्टर_##fixture_name##_##test_name(व्योम) \
+	अणु \
+		__रेजिस्टर_test(&_##fixture_name##_##test_name##_object); \
+	पूर्ण \
+	अटल व्योम fixture_name##_##test_name( \
+		काष्ठा __test_metadata __attribute__((unused)) *_metadata, \
 		FIXTURE_DATA(fixture_name) __attribute__((unused)) *self, \
-		const FIXTURE_VARIANT(fixture_name) \
+		स्थिर FIXTURE_VARIANT(fixture_name) \
 			__attribute__((unused)) *variant)
 
 /**
@@ -414,25 +415,25 @@
  *
  *     TEST_HARNESS_MAIN
  *
- * Use once to append a main() to the test file.
+ * Use once to append a मुख्य() to the test file.
  */
-#define TEST_HARNESS_MAIN \
-	static void __attribute__((constructor)) \
-	__constructor_order_last(void) \
-	{ \
-		if (!__constructor_order) \
-			__constructor_order = _CONSTRUCTOR_ORDER_BACKWARD; \
-	} \
-	int main(int argc, char **argv) { \
-		return test_harness_run(argc, argv); \
-	}
+#घोषणा TEST_HARNESS_MAIN \
+	अटल व्योम __attribute__((स्थिरructor)) \
+	__स्थिरructor_order_last(व्योम) \
+	अणु \
+		अगर (!__स्थिरructor_order) \
+			__स्थिरructor_order = _CONSTRUCTOR_ORDER_BACKWARD; \
+	पूर्ण \
+	पूर्णांक मुख्य(पूर्णांक argc, अक्षर **argv) अणु \
+		वापस test_harness_run(argc, argv); \
+	पूर्ण
 
 /**
- * DOC: operators
+ * DOC: चालकs
  *
- * Operators for use in TEST() and TEST_F().
+ * Operators क्रम use in TEST() and TEST_F().
  * ASSERT_* calls will stop test execution immediately.
- * EXPECT_* calls will emit a failure warning, note it, and continue.
+ * EXPECT_* calls will emit a failure warning, note it, and जारी.
  */
 
 /**
@@ -443,7 +444,7 @@
  *
  * ASSERT_EQ(expected, measured): expected == measured
  */
-#define ASSERT_EQ(expected, seen) \
+#घोषणा ASSERT_EQ(expected, seen) \
 	__EXPECT(expected, #expected, seen, #seen, ==, 1)
 
 /**
@@ -454,7 +455,7 @@
  *
  * ASSERT_NE(expected, measured): expected != measured
  */
-#define ASSERT_NE(expected, seen) \
+#घोषणा ASSERT_NE(expected, seen) \
 	__EXPECT(expected, #expected, seen, #seen, !=, 1)
 
 /**
@@ -465,7 +466,7 @@
  *
  * ASSERT_LT(expected, measured): expected < measured
  */
-#define ASSERT_LT(expected, seen) \
+#घोषणा ASSERT_LT(expected, seen) \
 	__EXPECT(expected, #expected, seen, #seen, <, 1)
 
 /**
@@ -476,7 +477,7 @@
  *
  * ASSERT_LE(expected, measured): expected <= measured
  */
-#define ASSERT_LE(expected, seen) \
+#घोषणा ASSERT_LE(expected, seen) \
 	__EXPECT(expected, #expected, seen, #seen, <=, 1)
 
 /**
@@ -487,7 +488,7 @@
  *
  * ASSERT_GT(expected, measured): expected > measured
  */
-#define ASSERT_GT(expected, seen) \
+#घोषणा ASSERT_GT(expected, seen) \
 	__EXPECT(expected, #expected, seen, #seen, >, 1)
 
 /**
@@ -498,18 +499,18 @@
  *
  * ASSERT_GE(expected, measured): expected >= measured
  */
-#define ASSERT_GE(expected, seen) \
+#घोषणा ASSERT_GE(expected, seen) \
 	__EXPECT(expected, #expected, seen, #seen, >=, 1)
 
 /**
- * ASSERT_NULL()
+ * ASSERT_शून्य()
  *
  * @seen: measured value
  *
- * ASSERT_NULL(measured): NULL == measured
+ * ASSERT_शून्य(measured): शून्य == measured
  */
-#define ASSERT_NULL(seen) \
-	__EXPECT(NULL, "NULL", seen, #seen, ==, 1)
+#घोषणा ASSERT_शून्य(seen) \
+	__EXPECT(शून्य, "NULL", seen, #seen, ==, 1)
 
 /**
  * ASSERT_TRUE()
@@ -518,7 +519,7 @@
  *
  * ASSERT_TRUE(measured): measured != 0
  */
-#define ASSERT_TRUE(seen) \
+#घोषणा ASSERT_TRUE(seen) \
 	__EXPECT(0, "0", seen, #seen, !=, 1)
 
 /**
@@ -528,7 +529,7 @@
  *
  * ASSERT_FALSE(measured): measured == 0
  */
-#define ASSERT_FALSE(seen) \
+#घोषणा ASSERT_FALSE(seen) \
 	__EXPECT(0, "0", seen, #seen, ==, 1)
 
 /**
@@ -537,9 +538,9 @@
  * @expected: expected value
  * @seen: measured value
  *
- * ASSERT_STREQ(expected, measured): !strcmp(expected, measured)
+ * ASSERT_STREQ(expected, measured): !म_भेद(expected, measured)
  */
-#define ASSERT_STREQ(expected, seen) \
+#घोषणा ASSERT_STREQ(expected, seen) \
 	__EXPECT_STR(expected, seen, ==, 1)
 
 /**
@@ -548,9 +549,9 @@
  * @expected: expected value
  * @seen: measured value
  *
- * ASSERT_STRNE(expected, measured): strcmp(expected, measured)
+ * ASSERT_STRNE(expected, measured): म_भेद(expected, measured)
  */
-#define ASSERT_STRNE(expected, seen) \
+#घोषणा ASSERT_STRNE(expected, seen) \
 	__EXPECT_STR(expected, seen, !=, 1)
 
 /**
@@ -561,7 +562,7 @@
  *
  * EXPECT_EQ(expected, measured): expected == measured
  */
-#define EXPECT_EQ(expected, seen) \
+#घोषणा EXPECT_EQ(expected, seen) \
 	__EXPECT(expected, #expected, seen, #seen, ==, 0)
 
 /**
@@ -572,7 +573,7 @@
  *
  * EXPECT_NE(expected, measured): expected != measured
  */
-#define EXPECT_NE(expected, seen) \
+#घोषणा EXPECT_NE(expected, seen) \
 	__EXPECT(expected, #expected, seen, #seen, !=, 0)
 
 /**
@@ -583,7 +584,7 @@
  *
  * EXPECT_LT(expected, measured): expected < measured
  */
-#define EXPECT_LT(expected, seen) \
+#घोषणा EXPECT_LT(expected, seen) \
 	__EXPECT(expected, #expected, seen, #seen, <, 0)
 
 /**
@@ -594,7 +595,7 @@
  *
  * EXPECT_LE(expected, measured): expected <= measured
  */
-#define EXPECT_LE(expected, seen) \
+#घोषणा EXPECT_LE(expected, seen) \
 	__EXPECT(expected, #expected, seen, #seen, <=, 0)
 
 /**
@@ -605,7 +606,7 @@
  *
  * EXPECT_GT(expected, measured): expected > measured
  */
-#define EXPECT_GT(expected, seen) \
+#घोषणा EXPECT_GT(expected, seen) \
 	__EXPECT(expected, #expected, seen, #seen, >, 0)
 
 /**
@@ -616,18 +617,18 @@
  *
  * EXPECT_GE(expected, measured): expected >= measured
  */
-#define EXPECT_GE(expected, seen) \
+#घोषणा EXPECT_GE(expected, seen) \
 	__EXPECT(expected, #expected, seen, #seen, >=, 0)
 
 /**
- * EXPECT_NULL()
+ * EXPECT_शून्य()
  *
  * @seen: measured value
  *
- * EXPECT_NULL(measured): NULL == measured
+ * EXPECT_शून्य(measured): शून्य == measured
  */
-#define EXPECT_NULL(seen) \
-	__EXPECT(NULL, "NULL", seen, #seen, ==, 0)
+#घोषणा EXPECT_शून्य(seen) \
+	__EXPECT(शून्य, "NULL", seen, #seen, ==, 0)
 
 /**
  * EXPECT_TRUE()
@@ -636,7 +637,7 @@
  *
  * EXPECT_TRUE(measured): 0 != measured
  */
-#define EXPECT_TRUE(seen) \
+#घोषणा EXPECT_TRUE(seen) \
 	__EXPECT(0, "0", seen, #seen, !=, 0)
 
 /**
@@ -646,7 +647,7 @@
  *
  * EXPECT_FALSE(measured): 0 == measured
  */
-#define EXPECT_FALSE(seen) \
+#घोषणा EXPECT_FALSE(seen) \
 	__EXPECT(0, "0", seen, #seen, ==, 0)
 
 /**
@@ -655,9 +656,9 @@
  * @expected: expected value
  * @seen: measured value
  *
- * EXPECT_STREQ(expected, measured): !strcmp(expected, measured)
+ * EXPECT_STREQ(expected, measured): !म_भेद(expected, measured)
  */
-#define EXPECT_STREQ(expected, seen) \
+#घोषणा EXPECT_STREQ(expected, seen) \
 	__EXPECT_STR(expected, seen, ==, 0)
 
 /**
@@ -666,403 +667,403 @@
  * @expected: expected value
  * @seen: measured value
  *
- * EXPECT_STRNE(expected, measured): strcmp(expected, measured)
+ * EXPECT_STRNE(expected, measured): म_भेद(expected, measured)
  */
-#define EXPECT_STRNE(expected, seen) \
+#घोषणा EXPECT_STRNE(expected, seen) \
 	__EXPECT_STR(expected, seen, !=, 0)
 
-#define ARRAY_SIZE(a)	(sizeof(a) / sizeof(a[0]))
+#घोषणा ARRAY_SIZE(a)	(माप(a) / माप(a[0]))
 
 /* Support an optional handler after and ASSERT_* or EXPECT_*.  The approach is
- * not thread-safe, but it should be fine in most sane test scenarios.
+ * not thपढ़ो-safe, but it should be fine in most sane test scenarios.
  *
- * Using __bail(), which optionally abort()s, is the easiest way to early
- * return while still providing an optional block to the API consumer.
+ * Using __bail(), which optionally पात()s, is the easiest way to early
+ * वापस जबतक still providing an optional block to the API consumer.
  */
-#define OPTIONAL_HANDLER(_assert) \
-	for (; _metadata->trigger; _metadata->trigger = \
-			__bail(_assert, _metadata->no_print, _metadata->step))
+#घोषणा OPTIONAL_HANDLER(_निश्चित) \
+	क्रम (; _metadata->trigger; _metadata->trigger = \
+			__bail(_निश्चित, _metadata->no_prपूर्णांक, _metadata->step))
 
-#define __INC_STEP(_metadata) \
-	/* Keep "step" below 255 (which is used for "SKIP" reporting). */	\
-	if (_metadata->passed && _metadata->step < 253) \
+#घोषणा __INC_STEP(_metadata) \
+	/* Keep "step" below 255 (which is used क्रम "SKIP" reporting). */	\
+	अगर (_metadata->passed && _metadata->step < 253) \
 		_metadata->step++;
 
-#define is_signed_type(var)       (!!(((__typeof__(var))(-1)) < (__typeof__(var))1))
+#घोषणा is_चिन्हित_type(var)       (!!(((__typeof__(var))(-1)) < (__typeof__(var))1))
 
-#define __EXPECT(_expected, _expected_str, _seen, _seen_str, _t, _assert) do { \
-	/* Avoid multiple evaluation of the cases */ \
+#घोषणा __EXPECT(_expected, _expected_str, _seen, _seen_str, _t, _निश्चित) करो अणु \
+	/* Aव्योम multiple evaluation of the हालs */ \
 	__typeof__(_expected) __exp = (_expected); \
 	__typeof__(_seen) __seen = (_seen); \
-	if (_assert) __INC_STEP(_metadata); \
-	if (!(__exp _t __seen)) { \
-		/* Report with actual signedness to avoid weird output. */ \
-		switch (is_signed_type(__exp) * 2 + is_signed_type(__seen)) { \
-		case 0: { \
-			unsigned long long __exp_print = (uintptr_t)__exp; \
-			unsigned long long __seen_print = (uintptr_t)__seen; \
+	अगर (_निश्चित) __INC_STEP(_metadata); \
+	अगर (!(__exp _t __seen)) अणु \
+		/* Report with actual चिन्हितness to aव्योम weird output. */ \
+		चयन (is_चिन्हित_type(__exp) * 2 + is_चिन्हित_type(__seen)) अणु \
+		हाल 0: अणु \
+			अचिन्हित दीर्घ दीर्घ __exp_prपूर्णांक = (uपूर्णांकptr_t)__exp; \
+			अचिन्हित दीर्घ दीर्घ __seen_prपूर्णांक = (uपूर्णांकptr_t)__seen; \
 			__TH_LOG("Expected %s (%llu) %s %s (%llu)", \
-				 _expected_str, __exp_print, #_t, \
-				 _seen_str, __seen_print); \
-			break; \
-			} \
-		case 1: { \
-			unsigned long long __exp_print = (uintptr_t)__exp; \
-			long long __seen_print = (intptr_t)__seen; \
+				 _expected_str, __exp_prपूर्णांक, #_t, \
+				 _seen_str, __seen_prपूर्णांक); \
+			अवरोध; \
+			पूर्ण \
+		हाल 1: अणु \
+			अचिन्हित दीर्घ दीर्घ __exp_prपूर्णांक = (uपूर्णांकptr_t)__exp; \
+			दीर्घ दीर्घ __seen_prपूर्णांक = (पूर्णांकptr_t)__seen; \
 			__TH_LOG("Expected %s (%llu) %s %s (%lld)", \
-				 _expected_str, __exp_print, #_t, \
-				 _seen_str, __seen_print); \
-			break; \
-			} \
-		case 2: { \
-			long long __exp_print = (intptr_t)__exp; \
-			unsigned long long __seen_print = (uintptr_t)__seen; \
+				 _expected_str, __exp_prपूर्णांक, #_t, \
+				 _seen_str, __seen_prपूर्णांक); \
+			अवरोध; \
+			पूर्ण \
+		हाल 2: अणु \
+			दीर्घ दीर्घ __exp_prपूर्णांक = (पूर्णांकptr_t)__exp; \
+			अचिन्हित दीर्घ दीर्घ __seen_prपूर्णांक = (uपूर्णांकptr_t)__seen; \
 			__TH_LOG("Expected %s (%lld) %s %s (%llu)", \
-				 _expected_str, __exp_print, #_t, \
-				 _seen_str, __seen_print); \
-			break; \
-			} \
-		case 3: { \
-			long long __exp_print = (intptr_t)__exp; \
-			long long __seen_print = (intptr_t)__seen; \
+				 _expected_str, __exp_prपूर्णांक, #_t, \
+				 _seen_str, __seen_prपूर्णांक); \
+			अवरोध; \
+			पूर्ण \
+		हाल 3: अणु \
+			दीर्घ दीर्घ __exp_prपूर्णांक = (पूर्णांकptr_t)__exp; \
+			दीर्घ दीर्घ __seen_prपूर्णांक = (पूर्णांकptr_t)__seen; \
 			__TH_LOG("Expected %s (%lld) %s %s (%lld)", \
-				 _expected_str, __exp_print, #_t, \
-				 _seen_str, __seen_print); \
-			break; \
-			} \
-		} \
+				 _expected_str, __exp_prपूर्णांक, #_t, \
+				 _seen_str, __seen_prपूर्णांक); \
+			अवरोध; \
+			पूर्ण \
+		पूर्ण \
 		_metadata->passed = 0; \
 		/* Ensure the optional handler is triggered */ \
 		_metadata->trigger = 1; \
-	} \
-} while (0); OPTIONAL_HANDLER(_assert)
+	पूर्ण \
+पूर्ण जबतक (0); OPTIONAL_HANDLER(_निश्चित)
 
-#define __EXPECT_STR(_expected, _seen, _t, _assert) do { \
-	const char *__exp = (_expected); \
-	const char *__seen = (_seen); \
-	if (_assert) __INC_STEP(_metadata); \
-	if (!(strcmp(__exp, __seen) _t 0))  { \
+#घोषणा __EXPECT_STR(_expected, _seen, _t, _निश्चित) करो अणु \
+	स्थिर अक्षर *__exp = (_expected); \
+	स्थिर अक्षर *__seen = (_seen); \
+	अगर (_निश्चित) __INC_STEP(_metadata); \
+	अगर (!(म_भेद(__exp, __seen) _t 0))  अणु \
 		__TH_LOG("Expected '%s' %s '%s'.", __exp, #_t, __seen); \
 		_metadata->passed = 0; \
 		_metadata->trigger = 1; \
-	} \
-} while (0); OPTIONAL_HANDLER(_assert)
+	पूर्ण \
+पूर्ण जबतक (0); OPTIONAL_HANDLER(_निश्चित)
 
 /* List helpers */
-#define __LIST_APPEND(head, item) \
-{ \
+#घोषणा __LIST_APPEND(head, item) \
+अणु \
 	/* Circular linked list where only prev is circular. */ \
-	if (head == NULL) { \
+	अगर (head == शून्य) अणु \
 		head = item; \
-		item->next = NULL; \
+		item->next = शून्य; \
 		item->prev = item; \
-		return;	\
-	} \
-	if (__constructor_order == _CONSTRUCTOR_ORDER_FORWARD) { \
-		item->next = NULL; \
+		वापस;	\
+	पूर्ण \
+	अगर (__स्थिरructor_order == _CONSTRUCTOR_ORDER_FORWARD) अणु \
+		item->next = शून्य; \
 		item->prev = head->prev; \
 		item->prev->next = item; \
 		head->prev = item; \
-	} else { \
+	पूर्ण अन्यथा अणु \
 		item->next = head; \
 		item->next->prev = item; \
 		item->prev = item; \
 		head = item; \
-	} \
-}
+	पूर्ण \
+पूर्ण
 
-struct __test_results {
-	char reason[1024];	/* Reason for test result */
-};
+काष्ठा __test_results अणु
+	अक्षर reason[1024];	/* Reason क्रम test result */
+पूर्ण;
 
-struct __test_metadata;
-struct __fixture_variant_metadata;
+काष्ठा __test_metadata;
+काष्ठा __fixture_variant_metadata;
 
-/* Contains all the information about a fixture. */
-struct __fixture_metadata {
-	const char *name;
-	struct __test_metadata *tests;
-	struct __fixture_variant_metadata *variant;
-	struct __fixture_metadata *prev, *next;
-} _fixture_global __attribute__((unused)) = {
+/* Contains all the inक्रमmation about a fixture. */
+काष्ठा __fixture_metadata अणु
+	स्थिर अक्षर *name;
+	काष्ठा __test_metadata *tests;
+	काष्ठा __fixture_variant_metadata *variant;
+	काष्ठा __fixture_metadata *prev, *next;
+पूर्ण _fixture_global __attribute__((unused)) = अणु
 	.name = "global",
 	.prev = &_fixture_global,
-};
+पूर्ण;
 
-static struct __fixture_metadata *__fixture_list = &_fixture_global;
-static int __constructor_order;
+अटल काष्ठा __fixture_metadata *__fixture_list = &_fixture_global;
+अटल पूर्णांक __स्थिरructor_order;
 
-#define _CONSTRUCTOR_ORDER_FORWARD   1
-#define _CONSTRUCTOR_ORDER_BACKWARD -1
+#घोषणा _CONSTRUCTOR_ORDER_FORWARD   1
+#घोषणा _CONSTRUCTOR_ORDER_BACKWARD -1
 
-static inline void __register_fixture(struct __fixture_metadata *f)
-{
+अटल अंतरभूत व्योम __रेजिस्टर_fixture(काष्ठा __fixture_metadata *f)
+अणु
 	__LIST_APPEND(__fixture_list, f);
-}
+पूर्ण
 
-struct __fixture_variant_metadata {
-	const char *name;
-	const void *data;
-	struct __fixture_variant_metadata *prev, *next;
-};
+काष्ठा __fixture_variant_metadata अणु
+	स्थिर अक्षर *name;
+	स्थिर व्योम *data;
+	काष्ठा __fixture_variant_metadata *prev, *next;
+पूर्ण;
 
-static inline void
-__register_fixture_variant(struct __fixture_metadata *f,
-			   struct __fixture_variant_metadata *variant)
-{
+अटल अंतरभूत व्योम
+__रेजिस्टर_fixture_variant(काष्ठा __fixture_metadata *f,
+			   काष्ठा __fixture_variant_metadata *variant)
+अणु
 	__LIST_APPEND(f->variant, variant);
-}
+पूर्ण
 
-/* Contains all the information for test execution and status checking. */
-struct __test_metadata {
-	const char *name;
-	void (*fn)(struct __test_metadata *,
-		   struct __fixture_variant_metadata *);
+/* Contains all the inक्रमmation क्रम test execution and status checking. */
+काष्ठा __test_metadata अणु
+	स्थिर अक्षर *name;
+	व्योम (*fn)(काष्ठा __test_metadata *,
+		   काष्ठा __fixture_variant_metadata *);
 	pid_t pid;	/* pid of test when being run */
-	struct __fixture_metadata *fixture;
-	int termsig;
-	int passed;
-	int skip;	/* did SKIP get used? */
-	int trigger; /* extra handler after the evaluation */
-	int timeout;	/* seconds to wait for test timeout */
-	bool timed_out;	/* did this test timeout instead of exiting? */
+	काष्ठा __fixture_metadata *fixture;
+	पूर्णांक termsig;
+	पूर्णांक passed;
+	पूर्णांक skip;	/* did SKIP get used? */
+	पूर्णांक trigger; /* extra handler after the evaluation */
+	पूर्णांक समयout;	/* seconds to रुको क्रम test समयout */
+	bool समयd_out;	/* did this test समयout instead of निकासing? */
 	__u8 step;
-	bool no_print; /* manual trigger when TH_LOG_STREAM is not available */
-	struct __test_results *results;
-	struct __test_metadata *prev, *next;
-};
+	bool no_prपूर्णांक; /* manual trigger when TH_LOG_STREAM is not available */
+	काष्ठा __test_results *results;
+	काष्ठा __test_metadata *prev, *next;
+पूर्ण;
 
 /*
- * Since constructors are called in reverse order, reverse the test
+ * Since स्थिरructors are called in reverse order, reverse the test
  * list so tests are run in source declaration order.
- * https://gcc.gnu.org/onlinedocs/gccint/Initialization.html
- * However, it seems not all toolchains do this correctly, so use
- * __constructor_order to detect which direction is called first
+ * https://gcc.gnu.org/onlineकरोcs/gccपूर्णांक/Initialization.hपंचांगl
+ * However, it seems not all toolchains करो this correctly, so use
+ * __स्थिरructor_order to detect which direction is called first
  * and adjust list building logic to get things running in the right
  * direction.
  */
-static inline void __register_test(struct __test_metadata *t)
-{
+अटल अंतरभूत व्योम __रेजिस्टर_test(काष्ठा __test_metadata *t)
+अणु
 	__LIST_APPEND(t->fixture->tests, t);
-}
+पूर्ण
 
-static inline int __bail(int for_realz, bool no_print, __u8 step)
-{
-	if (for_realz) {
-		if (no_print)
-			_exit(step);
-		abort();
-	}
-	return 0;
-}
+अटल अंतरभूत पूर्णांक __bail(पूर्णांक क्रम_realz, bool no_prपूर्णांक, __u8 step)
+अणु
+	अगर (क्रम_realz) अणु
+		अगर (no_prपूर्णांक)
+			_निकास(step);
+		पात();
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-struct __test_metadata *__active_test;
-static void __timeout_handler(int sig, siginfo_t *info, void *ucontext)
-{
-	struct __test_metadata *t = __active_test;
+काष्ठा __test_metadata *__active_test;
+अटल व्योम __समयout_handler(पूर्णांक sig, siginfo_t *info, व्योम *ucontext)
+अणु
+	काष्ठा __test_metadata *t = __active_test;
 
 	/* Sanity check handler execution environment. */
-	if (!t) {
-		fprintf(TH_LOG_STREAM,
+	अगर (!t) अणु
+		ख_लिखो(TH_LOG_STREAM,
 			"# no active test in SIGALRM handler!?\n");
-		abort();
-	}
-	if (sig != SIGALRM || sig != info->si_signo) {
-		fprintf(TH_LOG_STREAM,
+		पात();
+	पूर्ण
+	अगर (sig != SIGALRM || sig != info->si_signo) अणु
+		ख_लिखो(TH_LOG_STREAM,
 			"# %s: SIGALRM handler caught signal %d!?\n",
 			t->name, sig != SIGALRM ? sig : info->si_signo);
-		abort();
-	}
+		पात();
+	पूर्ण
 
-	t->timed_out = true;
-	kill(t->pid, SIGKILL);
-}
+	t->समयd_out = true;
+	समाप्त(t->pid, SIGKILL);
+पूर्ण
 
-void __wait_for_test(struct __test_metadata *t)
-{
-	struct sigaction action = {
-		.sa_sigaction = __timeout_handler,
+व्योम __रुको_क्रम_test(काष्ठा __test_metadata *t)
+अणु
+	काष्ठा sigaction action = अणु
+		.sa_sigaction = __समयout_handler,
 		.sa_flags = SA_SIGINFO,
-	};
-	struct sigaction saved_action;
-	int status;
+	पूर्ण;
+	काष्ठा sigaction saved_action;
+	पूर्णांक status;
 
-	if (sigaction(SIGALRM, &action, &saved_action)) {
+	अगर (sigaction(SIGALRM, &action, &saved_action)) अणु
 		t->passed = 0;
-		fprintf(TH_LOG_STREAM,
+		ख_लिखो(TH_LOG_STREAM,
 			"# %s: unable to install SIGALRM handler\n",
 			t->name);
-		return;
-	}
+		वापस;
+	पूर्ण
 	__active_test = t;
-	t->timed_out = false;
-	alarm(t->timeout);
-	waitpid(t->pid, &status, 0);
+	t->समयd_out = false;
+	alarm(t->समयout);
+	रुकोpid(t->pid, &status, 0);
 	alarm(0);
-	if (sigaction(SIGALRM, &saved_action, NULL)) {
+	अगर (sigaction(SIGALRM, &saved_action, शून्य)) अणु
 		t->passed = 0;
-		fprintf(TH_LOG_STREAM,
+		ख_लिखो(TH_LOG_STREAM,
 			"# %s: unable to uninstall SIGALRM handler\n",
 			t->name);
-		return;
-	}
-	__active_test = NULL;
+		वापस;
+	पूर्ण
+	__active_test = शून्य;
 
-	if (t->timed_out) {
+	अगर (t->समयd_out) अणु
 		t->passed = 0;
-		fprintf(TH_LOG_STREAM,
+		ख_लिखो(TH_LOG_STREAM,
 			"# %s: Test terminated by timeout\n", t->name);
-	} else if (WIFEXITED(status)) {
-		if (t->termsig != -1) {
+	पूर्ण अन्यथा अगर (WIFEXITED(status)) अणु
+		अगर (t->termsig != -1) अणु
 			t->passed = 0;
-			fprintf(TH_LOG_STREAM,
+			ख_लिखो(TH_LOG_STREAM,
 				"# %s: Test exited normally instead of by signal (code: %d)\n",
 				t->name,
 				WEXITSTATUS(status));
-		} else {
-			switch (WEXITSTATUS(status)) {
+		पूर्ण अन्यथा अणु
+			चयन (WEXITSTATUS(status)) अणु
 			/* Success */
-			case 0:
+			हाल 0:
 				t->passed = 1;
-				break;
+				अवरोध;
 			/* SKIP */
-			case 255:
+			हाल 255:
 				t->passed = 1;
 				t->skip = 1;
-				break;
+				अवरोध;
 			/* Other failure, assume step report. */
-			default:
+			शेष:
 				t->passed = 0;
-				fprintf(TH_LOG_STREAM,
+				ख_लिखो(TH_LOG_STREAM,
 					"# %s: Test failed at step #%d\n",
 					t->name,
 					WEXITSTATUS(status));
-			}
-		}
-	} else if (WIFSIGNALED(status)) {
+			पूर्ण
+		पूर्ण
+	पूर्ण अन्यथा अगर (WIFSIGNALED(status)) अणु
 		t->passed = 0;
-		if (WTERMSIG(status) == SIGABRT) {
-			fprintf(TH_LOG_STREAM,
+		अगर (WTERMSIG(status) == SIGABRT) अणु
+			ख_लिखो(TH_LOG_STREAM,
 				"# %s: Test terminated by assertion\n",
 				t->name);
-		} else if (WTERMSIG(status) == t->termsig) {
+		पूर्ण अन्यथा अगर (WTERMSIG(status) == t->termsig) अणु
 			t->passed = 1;
-		} else {
-			fprintf(TH_LOG_STREAM,
+		पूर्ण अन्यथा अणु
+			ख_लिखो(TH_LOG_STREAM,
 				"# %s: Test terminated unexpectedly by signal %d\n",
 				t->name,
 				WTERMSIG(status));
-		}
-	} else {
-		fprintf(TH_LOG_STREAM,
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		ख_लिखो(TH_LOG_STREAM,
 			"# %s: Test ended in some other way [%u]\n",
 			t->name,
 			status);
-	}
-}
+	पूर्ण
+पूर्ण
 
-void __run_test(struct __fixture_metadata *f,
-		struct __fixture_variant_metadata *variant,
-		struct __test_metadata *t)
-{
-	/* reset test struct */
+व्योम __run_test(काष्ठा __fixture_metadata *f,
+		काष्ठा __fixture_variant_metadata *variant,
+		काष्ठा __test_metadata *t)
+अणु
+	/* reset test काष्ठा */
 	t->passed = 1;
 	t->skip = 0;
 	t->trigger = 0;
 	t->step = 0;
-	t->no_print = 0;
-	memset(t->results->reason, 0, sizeof(t->results->reason));
+	t->no_prपूर्णांक = 0;
+	स_रखो(t->results->reason, 0, माप(t->results->reason));
 
-	ksft_print_msg(" RUN           %s%s%s.%s ...\n",
+	ksft_prपूर्णांक_msg(" RUN           %s%s%s.%s ...\n",
 	       f->name, variant->name[0] ? "." : "", variant->name, t->name);
 
-	/* Make sure output buffers are flushed before fork */
-	fflush(stdout);
-	fflush(stderr);
+	/* Make sure output buffers are flushed beक्रमe विभाजन */
+	ख_साफ(मानक_निकास);
+	ख_साफ(मानक_त्रुटि);
 
-	t->pid = fork();
-	if (t->pid < 0) {
-		ksft_print_msg("ERROR SPAWNING TEST CHILD\n");
+	t->pid = विभाजन();
+	अगर (t->pid < 0) अणु
+		ksft_prपूर्णांक_msg("ERROR SPAWNING TEST CHILD\n");
 		t->passed = 0;
-	} else if (t->pid == 0) {
+	पूर्ण अन्यथा अगर (t->pid == 0) अणु
 		t->fn(t, variant);
-		if (t->skip)
-			_exit(255);
-		/* Pass is exit 0 */
-		if (t->passed)
-			_exit(0);
-		/* Something else happened, report the step. */
-		_exit(t->step);
-	} else {
-		__wait_for_test(t);
-	}
-	ksft_print_msg("         %4s  %s%s%s.%s\n", t->passed ? "OK" : "FAIL",
+		अगर (t->skip)
+			_निकास(255);
+		/* Pass is निकास 0 */
+		अगर (t->passed)
+			_निकास(0);
+		/* Something अन्यथा happened, report the step. */
+		_निकास(t->step);
+	पूर्ण अन्यथा अणु
+		__रुको_क्रम_test(t);
+	पूर्ण
+	ksft_prपूर्णांक_msg("         %4s  %s%s%s.%s\n", t->passed ? "OK" : "FAIL",
 	       f->name, variant->name[0] ? "." : "", variant->name, t->name);
 
-	if (t->skip)
+	अगर (t->skip)
 		ksft_test_result_skip("%s\n", t->results->reason[0] ?
 					t->results->reason : "unknown");
-	else
+	अन्यथा
 		ksft_test_result(t->passed, "%s%s%s.%s\n",
 			f->name, variant->name[0] ? "." : "", variant->name, t->name);
-}
+पूर्ण
 
-static int test_harness_run(int __attribute__((unused)) argc,
-			    char __attribute__((unused)) **argv)
-{
-	struct __fixture_variant_metadata no_variant = { .name = "", };
-	struct __fixture_variant_metadata *v;
-	struct __fixture_metadata *f;
-	struct __test_results *results;
-	struct __test_metadata *t;
-	int ret = 0;
-	unsigned int case_count = 0, test_count = 0;
-	unsigned int count = 0;
-	unsigned int pass_count = 0;
+अटल पूर्णांक test_harness_run(पूर्णांक __attribute__((unused)) argc,
+			    अक्षर __attribute__((unused)) **argv)
+अणु
+	काष्ठा __fixture_variant_metadata no_variant = अणु .name = "", पूर्ण;
+	काष्ठा __fixture_variant_metadata *v;
+	काष्ठा __fixture_metadata *f;
+	काष्ठा __test_results *results;
+	काष्ठा __test_metadata *t;
+	पूर्णांक ret = 0;
+	अचिन्हित पूर्णांक हाल_count = 0, test_count = 0;
+	अचिन्हित पूर्णांक count = 0;
+	अचिन्हित पूर्णांक pass_count = 0;
 
-	for (f = __fixture_list; f; f = f->next) {
-		for (v = f->variant ?: &no_variant; v; v = v->next) {
-			case_count++;
-			for (t = f->tests; t; t = t->next)
+	क्रम (f = __fixture_list; f; f = f->next) अणु
+		क्रम (v = f->variant ?: &no_variant; v; v = v->next) अणु
+			हाल_count++;
+			क्रम (t = f->tests; t; t = t->next)
 				test_count++;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	results = mmap(NULL, sizeof(*results), PROT_READ | PROT_WRITE,
+	results = mmap(शून्य, माप(*results), PROT_READ | PROT_WRITE,
 		       MAP_SHARED | MAP_ANONYMOUS, -1, 0);
 
-	ksft_print_header();
+	ksft_prपूर्णांक_header();
 	ksft_set_plan(test_count);
-	ksft_print_msg("Starting %u tests from %u test cases.\n",
-	       test_count, case_count);
-	for (f = __fixture_list; f; f = f->next) {
-		for (v = f->variant ?: &no_variant; v; v = v->next) {
-			for (t = f->tests; t; t = t->next) {
+	ksft_prपूर्णांक_msg("Starting %u tests from %u test cases.\n",
+	       test_count, हाल_count);
+	क्रम (f = __fixture_list; f; f = f->next) अणु
+		क्रम (v = f->variant ?: &no_variant; v; v = v->next) अणु
+			क्रम (t = f->tests; t; t = t->next) अणु
 				count++;
 				t->results = results;
 				__run_test(f, v, t);
-				t->results = NULL;
-				if (t->passed)
+				t->results = शून्य;
+				अगर (t->passed)
 					pass_count++;
-				else
+				अन्यथा
 					ret = 1;
-			}
-		}
-	}
-	munmap(results, sizeof(*results));
+			पूर्ण
+		पूर्ण
+	पूर्ण
+	munmap(results, माप(*results));
 
-	ksft_print_msg("%s: %u / %u tests passed.\n", ret ? "FAILED" : "PASSED",
+	ksft_prपूर्णांक_msg("%s: %u / %u tests passed.\n", ret ? "FAILED" : "PASSED",
 			pass_count, count);
-	ksft_exit(ret == 0);
+	ksft_निकास(ret == 0);
 
 	/* unreachable */
-	return KSFT_FAIL;
-}
+	वापस KSFT_FAIL;
+पूर्ण
 
-static void __attribute__((constructor)) __constructor_order_first(void)
-{
-	if (!__constructor_order)
-		__constructor_order = _CONSTRUCTOR_ORDER_FORWARD;
-}
+अटल व्योम __attribute__((स्थिरructor)) __स्थिरructor_order_first(व्योम)
+अणु
+	अगर (!__स्थिरructor_order)
+		__स्थिरructor_order = _CONSTRUCTOR_ORDER_FORWARD;
+पूर्ण
 
-#endif  /* __KSELFTEST_HARNESS_H */
+#पूर्ण_अगर  /* __KSELFTEST_HARNESS_H */

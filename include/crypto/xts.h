@@ -1,47 +1,48 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _CRYPTO_XTS_H
-#define _CRYPTO_XTS_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _CRYPTO_XTS_H
+#घोषणा _CRYPTO_XTS_H
 
-#include <crypto/b128ops.h>
-#include <crypto/internal/skcipher.h>
-#include <linux/fips.h>
+#समावेश <crypto/b128ops.h>
+#समावेश <crypto/पूर्णांकernal/skcipher.h>
+#समावेश <linux/fips.h>
 
-#define XTS_BLOCK_SIZE 16
+#घोषणा XTS_BLOCK_SIZE 16
 
-static inline int xts_check_key(struct crypto_tfm *tfm,
-				const u8 *key, unsigned int keylen)
-{
+अटल अंतरभूत पूर्णांक xts_check_key(काष्ठा crypto_tfm *tfm,
+				स्थिर u8 *key, अचिन्हित पूर्णांक keylen)
+अणु
 	/*
-	 * key consists of keys of equal size concatenated, therefore
+	 * key consists of keys of equal size concatenated, thereक्रमe
 	 * the length must be even.
 	 */
-	if (keylen % 2)
-		return -EINVAL;
+	अगर (keylen % 2)
+		वापस -EINVAL;
 
 	/* ensure that the AES and tweak key are not identical */
-	if (fips_enabled && !crypto_memneq(key, key + (keylen / 2), keylen / 2))
-		return -EINVAL;
+	अगर (fips_enabled && !crypto_memneq(key, key + (keylen / 2), keylen / 2))
+		वापस -EINVAL;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static inline int xts_verify_key(struct crypto_skcipher *tfm,
-				 const u8 *key, unsigned int keylen)
-{
+अटल अंतरभूत पूर्णांक xts_verअगरy_key(काष्ठा crypto_skcipher *tfm,
+				 स्थिर u8 *key, अचिन्हित पूर्णांक keylen)
+अणु
 	/*
-	 * key consists of keys of equal size concatenated, therefore
+	 * key consists of keys of equal size concatenated, thereक्रमe
 	 * the length must be even.
 	 */
-	if (keylen % 2)
-		return -EINVAL;
+	अगर (keylen % 2)
+		वापस -EINVAL;
 
 	/* ensure that the AES and tweak key are not identical */
-	if ((fips_enabled || (crypto_skcipher_get_flags(tfm) &
+	अगर ((fips_enabled || (crypto_skcipher_get_flags(tfm) &
 			      CRYPTO_TFM_REQ_FORBID_WEAK_KEYS)) &&
 	    !crypto_memneq(key, key + (keylen / 2), keylen / 2))
-		return -EINVAL;
+		वापस -EINVAL;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#endif  /* _CRYPTO_XTS_H */
+#पूर्ण_अगर  /* _CRYPTO_XTS_H */

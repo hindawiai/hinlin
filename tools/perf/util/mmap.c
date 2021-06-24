@@ -1,352 +1,353 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * Copyright (C) 2011-2017, Red Hat Inc, Arnaldo Carvalho de Melo <acme@redhat.com>
+ * Copyright (C) 2011-2017, Red Hat Inc, Arnalकरो Carvalho de Melo <acme@redhat.com>
  *
- * Parts came from evlist.c builtin-{top,stat,record}.c, see those files for further
+ * Parts came from evlist.c builtin-अणुtop,stat,recordपूर्ण.c, see those files क्रम further
  * copyright notes.
  */
 
-#include <sys/mman.h>
-#include <inttypes.h>
-#include <asm/bug.h>
-#include <linux/zalloc.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h> // sysconf()
-#include <perf/mmap.h>
-#ifdef HAVE_LIBNUMA_SUPPORT
-#include <numaif.h>
-#endif
-#include "cpumap.h"
-#include "debug.h"
-#include "event.h"
-#include "mmap.h"
-#include "../perf.h"
-#include <internal/lib.h> /* page_size */
-#include <linux/bitmap.h>
+#समावेश <sys/mman.h>
+#समावेश <पूर्णांकtypes.h>
+#समावेश <यंत्र/bug.h>
+#समावेश <linux/zभाग.स>
+#समावेश <मानककोष.स>
+#समावेश <माला.स>
+#समावेश <unistd.h> // sysconf()
+#समावेश <perf/mmap.h>
+#अगर_घोषित HAVE_LIBNUMA_SUPPORT
+#समावेश <numaअगर.h>
+#पूर्ण_अगर
+#समावेश "cpumap.h"
+#समावेश "debug.h"
+#समावेश "event.h"
+#समावेश "mmap.h"
+#समावेश "../perf.h"
+#समावेश <पूर्णांकernal/lib.h> /* page_size */
+#समावेश <linux/biपंचांगap.h>
 
-#define MASK_SIZE 1023
-void mmap_cpu_mask__scnprintf(struct mmap_cpu_mask *mask, const char *tag)
-{
-	char buf[MASK_SIZE + 1];
-	size_t len;
+#घोषणा MASK_SIZE 1023
+व्योम mmap_cpu_mask__scnम_लिखो(काष्ठा mmap_cpu_mask *mask, स्थिर अक्षर *tag)
+अणु
+	अक्षर buf[MASK_SIZE + 1];
+	माप_प्रकार len;
 
-	len = bitmap_scnprintf(mask->bits, mask->nbits, buf, MASK_SIZE);
+	len = biपंचांगap_scnम_लिखो(mask->bits, mask->nbits, buf, MASK_SIZE);
 	buf[len] = '\0';
 	pr_debug("%p: %s mask[%zd]: %s\n", mask, tag, mask->nbits, buf);
-}
+पूर्ण
 
-size_t mmap__mmap_len(struct mmap *map)
-{
-	return perf_mmap__mmap_len(&map->core);
-}
+माप_प्रकार mmap__mmap_len(काष्ठा mmap *map)
+अणु
+	वापस perf_mmap__mmap_len(&map->core);
+पूर्ण
 
-int __weak auxtrace_mmap__mmap(struct auxtrace_mmap *mm __maybe_unused,
-			       struct auxtrace_mmap_params *mp __maybe_unused,
-			       void *userpg __maybe_unused,
-			       int fd __maybe_unused)
-{
-	return 0;
-}
+पूर्णांक __weak auxtrace_mmap__mmap(काष्ठा auxtrace_mmap *mm __maybe_unused,
+			       काष्ठा auxtrace_mmap_params *mp __maybe_unused,
+			       व्योम *userpg __maybe_unused,
+			       पूर्णांक fd __maybe_unused)
+अणु
+	वापस 0;
+पूर्ण
 
-void __weak auxtrace_mmap__munmap(struct auxtrace_mmap *mm __maybe_unused)
-{
-}
+व्योम __weak auxtrace_mmap__munmap(काष्ठा auxtrace_mmap *mm __maybe_unused)
+अणु
+पूर्ण
 
-void __weak auxtrace_mmap_params__init(struct auxtrace_mmap_params *mp __maybe_unused,
+व्योम __weak auxtrace_mmap_params__init(काष्ठा auxtrace_mmap_params *mp __maybe_unused,
 				       off_t auxtrace_offset __maybe_unused,
-				       unsigned int auxtrace_pages __maybe_unused,
-				       bool auxtrace_overwrite __maybe_unused)
-{
-}
+				       अचिन्हित पूर्णांक auxtrace_pages __maybe_unused,
+				       bool auxtrace_overग_लिखो __maybe_unused)
+अणु
+पूर्ण
 
-void __weak auxtrace_mmap_params__set_idx(struct auxtrace_mmap_params *mp __maybe_unused,
-					  struct evlist *evlist __maybe_unused,
-					  int idx __maybe_unused,
+व्योम __weak auxtrace_mmap_params__set_idx(काष्ठा auxtrace_mmap_params *mp __maybe_unused,
+					  काष्ठा evlist *evlist __maybe_unused,
+					  पूर्णांक idx __maybe_unused,
 					  bool per_cpu __maybe_unused)
-{
-}
+अणु
+पूर्ण
 
-#ifdef HAVE_AIO_SUPPORT
-static int perf_mmap__aio_enabled(struct mmap *map)
-{
-	return map->aio.nr_cblocks > 0;
-}
+#अगर_घोषित HAVE_AIO_SUPPORT
+अटल पूर्णांक perf_mmap__aio_enabled(काष्ठा mmap *map)
+अणु
+	वापस map->aio.nr_cblocks > 0;
+पूर्ण
 
-#ifdef HAVE_LIBNUMA_SUPPORT
-static int perf_mmap__aio_alloc(struct mmap *map, int idx)
-{
-	map->aio.data[idx] = mmap(NULL, mmap__mmap_len(map), PROT_READ|PROT_WRITE,
+#अगर_घोषित HAVE_LIBNUMA_SUPPORT
+अटल पूर्णांक perf_mmap__aio_alloc(काष्ठा mmap *map, पूर्णांक idx)
+अणु
+	map->aio.data[idx] = mmap(शून्य, mmap__mmap_len(map), PROT_READ|PROT_WRITE,
 				  MAP_PRIVATE|MAP_ANONYMOUS, 0, 0);
-	if (map->aio.data[idx] == MAP_FAILED) {
-		map->aio.data[idx] = NULL;
-		return -1;
-	}
+	अगर (map->aio.data[idx] == MAP_FAILED) अणु
+		map->aio.data[idx] = शून्य;
+		वापस -1;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void perf_mmap__aio_free(struct mmap *map, int idx)
-{
-	if (map->aio.data[idx]) {
+अटल व्योम perf_mmap__aio_मुक्त(काष्ठा mmap *map, पूर्णांक idx)
+अणु
+	अगर (map->aio.data[idx]) अणु
 		munmap(map->aio.data[idx], mmap__mmap_len(map));
-		map->aio.data[idx] = NULL;
-	}
-}
+		map->aio.data[idx] = शून्य;
+	पूर्ण
+पूर्ण
 
-static int perf_mmap__aio_bind(struct mmap *map, int idx, int cpu, int affinity)
-{
-	void *data;
-	size_t mmap_len;
-	unsigned long *node_mask;
-	unsigned long node_index;
-	int err = 0;
+अटल पूर्णांक perf_mmap__aio_bind(काष्ठा mmap *map, पूर्णांक idx, पूर्णांक cpu, पूर्णांक affinity)
+अणु
+	व्योम *data;
+	माप_प्रकार mmap_len;
+	अचिन्हित दीर्घ *node_mask;
+	अचिन्हित दीर्घ node_index;
+	पूर्णांक err = 0;
 
-	if (affinity != PERF_AFFINITY_SYS && cpu__max_node() > 1) {
+	अगर (affinity != PERF_AFFINITY_SYS && cpu__max_node() > 1) अणु
 		data = map->aio.data[idx];
 		mmap_len = mmap__mmap_len(map);
 		node_index = cpu__get_node(cpu);
-		node_mask = bitmap_alloc(node_index + 1);
-		if (!node_mask) {
+		node_mask = biपंचांगap_alloc(node_index + 1);
+		अगर (!node_mask) अणु
 			pr_err("Failed to allocate node mask for mbind: error %m\n");
-			return -1;
-		}
+			वापस -1;
+		पूर्ण
 		set_bit(node_index, node_mask);
-		if (mbind(data, mmap_len, MPOL_BIND, node_mask, node_index + 1 + 1, 0)) {
+		अगर (mbind(data, mmap_len, MPOL_BIND, node_mask, node_index + 1 + 1, 0)) अणु
 			pr_err("Failed to bind [%p-%p] AIO buffer to node %lu: error %m\n",
 				data, data + mmap_len, node_index);
 			err = -1;
-		}
-		bitmap_free(node_mask);
-	}
+		पूर्ण
+		biपंचांगap_मुक्त(node_mask);
+	पूर्ण
 
-	return err;
-}
-#else /* !HAVE_LIBNUMA_SUPPORT */
-static int perf_mmap__aio_alloc(struct mmap *map, int idx)
-{
-	map->aio.data[idx] = malloc(mmap__mmap_len(map));
-	if (map->aio.data[idx] == NULL)
-		return -1;
+	वापस err;
+पूर्ण
+#अन्यथा /* !HAVE_LIBNUMA_SUPPORT */
+अटल पूर्णांक perf_mmap__aio_alloc(काष्ठा mmap *map, पूर्णांक idx)
+अणु
+	map->aio.data[idx] = दो_स्मृति(mmap__mmap_len(map));
+	अगर (map->aio.data[idx] == शून्य)
+		वापस -1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void perf_mmap__aio_free(struct mmap *map, int idx)
-{
-	zfree(&(map->aio.data[idx]));
-}
+अटल व्योम perf_mmap__aio_मुक्त(काष्ठा mmap *map, पूर्णांक idx)
+अणु
+	zमुक्त(&(map->aio.data[idx]));
+पूर्ण
 
-static int perf_mmap__aio_bind(struct mmap *map __maybe_unused, int idx __maybe_unused,
-		int cpu __maybe_unused, int affinity __maybe_unused)
-{
-	return 0;
-}
-#endif
+अटल पूर्णांक perf_mmap__aio_bind(काष्ठा mmap *map __maybe_unused, पूर्णांक idx __maybe_unused,
+		पूर्णांक cpu __maybe_unused, पूर्णांक affinity __maybe_unused)
+अणु
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
-static int perf_mmap__aio_mmap(struct mmap *map, struct mmap_params *mp)
-{
-	int delta_max, i, prio, ret;
+अटल पूर्णांक perf_mmap__aio_mmap(काष्ठा mmap *map, काष्ठा mmap_params *mp)
+अणु
+	पूर्णांक delta_max, i, prio, ret;
 
 	map->aio.nr_cblocks = mp->nr_cblocks;
-	if (map->aio.nr_cblocks) {
-		map->aio.aiocb = calloc(map->aio.nr_cblocks, sizeof(struct aiocb *));
-		if (!map->aio.aiocb) {
+	अगर (map->aio.nr_cblocks) अणु
+		map->aio.aiocb = सुस्मृति(map->aio.nr_cblocks, माप(काष्ठा aiocb *));
+		अगर (!map->aio.aiocb) अणु
 			pr_debug2("failed to allocate aiocb for data buffer, error %m\n");
-			return -1;
-		}
-		map->aio.cblocks = calloc(map->aio.nr_cblocks, sizeof(struct aiocb));
-		if (!map->aio.cblocks) {
+			वापस -1;
+		पूर्ण
+		map->aio.cblocks = सुस्मृति(map->aio.nr_cblocks, माप(काष्ठा aiocb));
+		अगर (!map->aio.cblocks) अणु
 			pr_debug2("failed to allocate cblocks for data buffer, error %m\n");
-			return -1;
-		}
-		map->aio.data = calloc(map->aio.nr_cblocks, sizeof(void *));
-		if (!map->aio.data) {
+			वापस -1;
+		पूर्ण
+		map->aio.data = सुस्मृति(map->aio.nr_cblocks, माप(व्योम *));
+		अगर (!map->aio.data) अणु
 			pr_debug2("failed to allocate data buffer, error %m\n");
-			return -1;
-		}
+			वापस -1;
+		पूर्ण
 		delta_max = sysconf(_SC_AIO_PRIO_DELTA_MAX);
-		for (i = 0; i < map->aio.nr_cblocks; ++i) {
+		क्रम (i = 0; i < map->aio.nr_cblocks; ++i) अणु
 			ret = perf_mmap__aio_alloc(map, i);
-			if (ret == -1) {
+			अगर (ret == -1) अणु
 				pr_debug2("failed to allocate data buffer area, error %m");
-				return -1;
-			}
+				वापस -1;
+			पूर्ण
 			ret = perf_mmap__aio_bind(map, i, map->core.cpu, mp->affinity);
-			if (ret == -1)
-				return -1;
+			अगर (ret == -1)
+				वापस -1;
 			/*
-			 * Use cblock.aio_fildes value different from -1
-			 * to denote started aio write operation on the
+			 * Use cblock.aio_fildes value dअगरferent from -1
+			 * to denote started aio ग_लिखो operation on the
 			 * cblock so it requires explicit record__aio_sync()
 			 * call prior the cblock may be reused again.
 			 */
 			map->aio.cblocks[i].aio_fildes = -1;
 			/*
 			 * Allocate cblocks with priority delta to have
-			 * faster aio write system calls because queued requests
+			 * faster aio ग_लिखो प्रणाली calls because queued requests
 			 * are kept in separate per-prio queues and adding
-			 * a new request will iterate thru shorter per-prio
+			 * a new request will iterate thru लघुer per-prio
 			 * list. Blocks with numbers higher than
 			 *  _SC_AIO_PRIO_DELTA_MAX go with priority 0.
 			 */
 			prio = delta_max - i;
 			map->aio.cblocks[i].aio_reqprio = prio >= 0 ? prio : 0;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void perf_mmap__aio_munmap(struct mmap *map)
-{
-	int i;
+अटल व्योम perf_mmap__aio_munmap(काष्ठा mmap *map)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < map->aio.nr_cblocks; ++i)
-		perf_mmap__aio_free(map, i);
-	if (map->aio.data)
-		zfree(&map->aio.data);
-	zfree(&map->aio.cblocks);
-	zfree(&map->aio.aiocb);
-}
-#else /* !HAVE_AIO_SUPPORT */
-static int perf_mmap__aio_enabled(struct mmap *map __maybe_unused)
-{
-	return 0;
-}
+	क्रम (i = 0; i < map->aio.nr_cblocks; ++i)
+		perf_mmap__aio_मुक्त(map, i);
+	अगर (map->aio.data)
+		zमुक्त(&map->aio.data);
+	zमुक्त(&map->aio.cblocks);
+	zमुक्त(&map->aio.aiocb);
+पूर्ण
+#अन्यथा /* !HAVE_AIO_SUPPORT */
+अटल पूर्णांक perf_mmap__aio_enabled(काष्ठा mmap *map __maybe_unused)
+अणु
+	वापस 0;
+पूर्ण
 
-static int perf_mmap__aio_mmap(struct mmap *map __maybe_unused,
-			       struct mmap_params *mp __maybe_unused)
-{
-	return 0;
-}
+अटल पूर्णांक perf_mmap__aio_mmap(काष्ठा mmap *map __maybe_unused,
+			       काष्ठा mmap_params *mp __maybe_unused)
+अणु
+	वापस 0;
+पूर्ण
 
-static void perf_mmap__aio_munmap(struct mmap *map __maybe_unused)
-{
-}
-#endif
+अटल व्योम perf_mmap__aio_munmap(काष्ठा mmap *map __maybe_unused)
+अणु
+पूर्ण
+#पूर्ण_अगर
 
-void mmap__munmap(struct mmap *map)
-{
-	bitmap_free(map->affinity_mask.bits);
+व्योम mmap__munmap(काष्ठा mmap *map)
+अणु
+	biपंचांगap_मुक्त(map->affinity_mask.bits);
 
 	perf_mmap__aio_munmap(map);
-	if (map->data != NULL) {
+	अगर (map->data != शून्य) अणु
 		munmap(map->data, mmap__mmap_len(map));
-		map->data = NULL;
-	}
+		map->data = शून्य;
+	पूर्ण
 	auxtrace_mmap__munmap(&map->auxtrace_mmap);
-}
+पूर्ण
 
-static void build_node_mask(int node, struct mmap_cpu_mask *mask)
-{
-	int c, cpu, nr_cpus;
-	const struct perf_cpu_map *cpu_map = NULL;
+अटल व्योम build_node_mask(पूर्णांक node, काष्ठा mmap_cpu_mask *mask)
+अणु
+	पूर्णांक c, cpu, nr_cpus;
+	स्थिर काष्ठा perf_cpu_map *cpu_map = शून्य;
 
 	cpu_map = cpu_map__online();
-	if (!cpu_map)
-		return;
+	अगर (!cpu_map)
+		वापस;
 
 	nr_cpus = perf_cpu_map__nr(cpu_map);
-	for (c = 0; c < nr_cpus; c++) {
+	क्रम (c = 0; c < nr_cpus; c++) अणु
 		cpu = cpu_map->map[c]; /* map c index to online cpu index */
-		if (cpu__get_node(cpu) == node)
+		अगर (cpu__get_node(cpu) == node)
 			set_bit(cpu, mask->bits);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int perf_mmap__setup_affinity_mask(struct mmap *map, struct mmap_params *mp)
-{
+अटल पूर्णांक perf_mmap__setup_affinity_mask(काष्ठा mmap *map, काष्ठा mmap_params *mp)
+अणु
 	map->affinity_mask.nbits = cpu__max_cpu();
-	map->affinity_mask.bits = bitmap_alloc(map->affinity_mask.nbits);
-	if (!map->affinity_mask.bits)
-		return -1;
+	map->affinity_mask.bits = biपंचांगap_alloc(map->affinity_mask.nbits);
+	अगर (!map->affinity_mask.bits)
+		वापस -1;
 
-	if (mp->affinity == PERF_AFFINITY_NODE && cpu__max_node() > 1)
+	अगर (mp->affinity == PERF_AFFINITY_NODE && cpu__max_node() > 1)
 		build_node_mask(cpu__get_node(map->core.cpu), &map->affinity_mask);
-	else if (mp->affinity == PERF_AFFINITY_CPU)
+	अन्यथा अगर (mp->affinity == PERF_AFFINITY_CPU)
 		set_bit(map->core.cpu, map->affinity_mask.bits);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int mmap__mmap(struct mmap *map, struct mmap_params *mp, int fd, int cpu)
-{
-	if (perf_mmap__mmap(&map->core, &mp->core, fd, cpu)) {
+पूर्णांक mmap__mmap(काष्ठा mmap *map, काष्ठा mmap_params *mp, पूर्णांक fd, पूर्णांक cpu)
+अणु
+	अगर (perf_mmap__mmap(&map->core, &mp->core, fd, cpu)) अणु
 		pr_debug2("failed to mmap perf event ring buffer, error %d\n",
-			  errno);
-		return -1;
-	}
+			  त्रुटि_सं);
+		वापस -1;
+	पूर्ण
 
-	if (mp->affinity != PERF_AFFINITY_SYS &&
-		perf_mmap__setup_affinity_mask(map, mp)) {
+	अगर (mp->affinity != PERF_AFFINITY_SYS &&
+		perf_mmap__setup_affinity_mask(map, mp)) अणु
 		pr_debug2("failed to alloc mmap affinity mask, error %d\n",
-			  errno);
-		return -1;
-	}
+			  त्रुटि_सं);
+		वापस -1;
+	पूर्ण
 
-	if (verbose == 2)
-		mmap_cpu_mask__scnprintf(&map->affinity_mask, "mmap");
+	अगर (verbose == 2)
+		mmap_cpu_mask__scnम_लिखो(&map->affinity_mask, "mmap");
 
 	map->core.flush = mp->flush;
 
 	map->comp_level = mp->comp_level;
 
-	if (map->comp_level && !perf_mmap__aio_enabled(map)) {
-		map->data = mmap(NULL, mmap__mmap_len(map), PROT_READ|PROT_WRITE,
+	अगर (map->comp_level && !perf_mmap__aio_enabled(map)) अणु
+		map->data = mmap(शून्य, mmap__mmap_len(map), PROT_READ|PROT_WRITE,
 				 MAP_PRIVATE|MAP_ANONYMOUS, 0, 0);
-		if (map->data == MAP_FAILED) {
+		अगर (map->data == MAP_FAILED) अणु
 			pr_debug2("failed to mmap data buffer, error %d\n",
-					errno);
-			map->data = NULL;
-			return -1;
-		}
-	}
+					त्रुटि_सं);
+			map->data = शून्य;
+			वापस -1;
+		पूर्ण
+	पूर्ण
 
-	if (auxtrace_mmap__mmap(&map->auxtrace_mmap,
+	अगर (auxtrace_mmap__mmap(&map->auxtrace_mmap,
 				&mp->auxtrace_mp, map->core.base, fd))
-		return -1;
+		वापस -1;
 
-	return perf_mmap__aio_mmap(map, mp);
-}
+	वापस perf_mmap__aio_mmap(map, mp);
+पूर्ण
 
-int perf_mmap__push(struct mmap *md, void *to,
-		    int push(struct mmap *map, void *to, void *buf, size_t size))
-{
-	u64 head = perf_mmap__read_head(&md->core);
-	unsigned char *data = md->core.base + page_size;
-	unsigned long size;
-	void *buf;
-	int rc = 0;
+पूर्णांक perf_mmap__push(काष्ठा mmap *md, व्योम *to,
+		    पूर्णांक push(काष्ठा mmap *map, व्योम *to, व्योम *buf, माप_प्रकार size))
+अणु
+	u64 head = perf_mmap__पढ़ो_head(&md->core);
+	अचिन्हित अक्षर *data = md->core.base + page_size;
+	अचिन्हित दीर्घ size;
+	व्योम *buf;
+	पूर्णांक rc = 0;
 
-	rc = perf_mmap__read_init(&md->core);
-	if (rc < 0)
-		return (rc == -EAGAIN) ? 1 : -1;
+	rc = perf_mmap__पढ़ो_init(&md->core);
+	अगर (rc < 0)
+		वापस (rc == -EAGAIN) ? 1 : -1;
 
 	size = md->core.end - md->core.start;
 
-	if ((md->core.start & md->core.mask) + size != (md->core.end & md->core.mask)) {
+	अगर ((md->core.start & md->core.mask) + size != (md->core.end & md->core.mask)) अणु
 		buf = &data[md->core.start & md->core.mask];
 		size = md->core.mask + 1 - (md->core.start & md->core.mask);
 		md->core.start += size;
 
-		if (push(md, to, buf, size) < 0) {
+		अगर (push(md, to, buf, size) < 0) अणु
 			rc = -1;
-			goto out;
-		}
-	}
+			जाओ out;
+		पूर्ण
+	पूर्ण
 
 	buf = &data[md->core.start & md->core.mask];
 	size = md->core.end - md->core.start;
 	md->core.start += size;
 
-	if (push(md, to, buf, size) < 0) {
+	अगर (push(md, to, buf, size) < 0) अणु
 		rc = -1;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	md->core.prev = head;
 	perf_mmap__consume(&md->core);
 out:
-	return rc;
-}
+	वापस rc;
+पूर्ण

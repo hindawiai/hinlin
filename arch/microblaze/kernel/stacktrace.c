@@ -1,31 +1,32 @@
+<शैली गुरु>
 /*
- * Stack trace support for Microblaze.
+ * Stack trace support क्रम Microblaze.
  *
  * Copyright (C) 2009 Michal Simek <monstr@monstr.eu>
  * Copyright (C) 2009 PetaLogix
  *
  * This file is subject to the terms and conditions of the GNU General Public
- * License. See the file "COPYING" in the main directory of this archive
- * for more details.
+ * License. See the file "COPYING" in the मुख्य directory of this archive
+ * क्रम more details.
  */
 
-#include <linux/export.h>
-#include <linux/sched.h>
-#include <linux/stacktrace.h>
-#include <linux/thread_info.h>
-#include <linux/ptrace.h>
-#include <asm/unwind.h>
+#समावेश <linux/export.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/stacktrace.h>
+#समावेश <linux/thपढ़ो_info.h>
+#समावेश <linux/ptrace.h>
+#समावेश <यंत्र/unwind.h>
 
-void save_stack_trace(struct stack_trace *trace)
-{
+व्योम save_stack_trace(काष्ठा stack_trace *trace)
+अणु
 	/* Exclude our helper functions from the trace*/
 	trace->skip += 2;
-	microblaze_unwind(NULL, trace, "");
-}
+	microblaze_unwind(शून्य, trace, "");
+पूर्ण
 EXPORT_SYMBOL_GPL(save_stack_trace);
 
-void save_stack_trace_tsk(struct task_struct *tsk, struct stack_trace *trace)
-{
+व्योम save_stack_trace_tsk(काष्ठा task_काष्ठा *tsk, काष्ठा stack_trace *trace)
+अणु
 	microblaze_unwind(tsk, trace, "");
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(save_stack_trace_tsk);

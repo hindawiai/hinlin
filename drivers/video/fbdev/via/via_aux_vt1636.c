@@ -1,31 +1,32 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Copyright 2011 Florian Tobias Schandinat <FlorianSchandinat@gmx.de>
  */
 /*
- * driver for VIA VT1636 LVDS Transmitter
+ * driver क्रम VIA VT1636 LVDS Transmitter
  */
 
-#include <linux/slab.h>
-#include "via_aux.h"
+#समावेश <linux/slab.h>
+#समावेश "via_aux.h"
 
 
-static const char *name = "VT1636 LVDS Transmitter";
+अटल स्थिर अक्षर *name = "VT1636 LVDS Transmitter";
 
 
-void via_aux_vt1636_probe(struct via_aux_bus *bus)
-{
-	struct via_aux_drv drv = {
+व्योम via_aux_vt1636_probe(काष्ठा via_aux_bus *bus)
+अणु
+	काष्ठा via_aux_drv drv = अणु
 		.bus	=	bus,
 		.addr	=	0x40,
-		.name	=	name};
-	/* check vendor id and device id */
-	const u8 id[] = {0x06, 0x11, 0x45, 0x33}, len = ARRAY_SIZE(id);
-	u8 tmp[ARRAY_SIZE(id)];
+		.name	=	nameपूर्ण;
+	/* check venकरोr id and device id */
+	स्थिर u8 id[] = अणु0x06, 0x11, 0x45, 0x33पूर्ण, len = ARRAY_SIZE(id);
+	u8 पंचांगp[ARRAY_SIZE(id)];
 
-	if (!via_aux_read(&drv, 0x00, tmp, len) || memcmp(id, tmp, len))
-		return;
+	अगर (!via_aux_पढ़ो(&drv, 0x00, पंचांगp, len) || स_भेद(id, पंचांगp, len))
+		वापस;
 
-	printk(KERN_INFO "viafb: Found %s\n", name);
+	prपूर्णांकk(KERN_INFO "viafb: Found %s\n", name);
 	via_aux_add(&drv);
-}
+पूर्ण

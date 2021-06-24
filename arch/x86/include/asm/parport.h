@@ -1,11 +1,12 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _ASM_X86_PARPORT_H
-#define _ASM_X86_PARPORT_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _ASM_X86_PARPORT_H
+#घोषणा _ASM_X86_PARPORT_H
 
-static int parport_pc_find_isa_ports(int autoirq, int autodma);
-static int parport_pc_find_nonpci_ports(int autoirq, int autodma)
-{
-	return parport_pc_find_isa_ports(autoirq, autodma);
-}
+अटल पूर्णांक parport_pc_find_isa_ports(पूर्णांक स्वतःirq, पूर्णांक स्वतःdma);
+अटल पूर्णांक parport_pc_find_nonpci_ports(पूर्णांक स्वतःirq, पूर्णांक स्वतःdma)
+अणु
+	वापस parport_pc_find_isa_ports(स्वतःirq, स्वतःdma);
+पूर्ण
 
-#endif /* _ASM_X86_PARPORT_H */
+#पूर्ण_अगर /* _ASM_X86_PARPORT_H */

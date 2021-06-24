@@ -1,5 +1,6 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
-/* Asymmetric public-key algorithm definitions
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* Asymmetric खुला-key algorithm definitions
  *
  * See Documentation/crypto/asymmetric-keys.rst
  *
@@ -7,80 +8,80 @@
  * Written by David Howells (dhowells@redhat.com)
  */
 
-#ifndef _LINUX_PUBLIC_KEY_H
-#define _LINUX_PUBLIC_KEY_H
+#अगर_अघोषित _LINUX_PUBLIC_KEY_H
+#घोषणा _LINUX_PUBLIC_KEY_H
 
-#include <linux/keyctl.h>
-#include <linux/oid_registry.h>
+#समावेश <linux/keyctl.h>
+#समावेश <linux/oid_registry.h>
 
 /*
- * Cryptographic data for the public-key subtype of the asymmetric key type.
+ * Cryptographic data क्रम the खुला-key subtype of the asymmetric key type.
  *
- * Note that this may include private part of the key as well as the public
+ * Note that this may include निजी part of the key as well as the खुला
  * part.
  */
-struct public_key {
-	void *key;
+काष्ठा खुला_key अणु
+	व्योम *key;
 	u32 keylen;
-	enum OID algo;
-	void *params;
+	क्रमागत OID algo;
+	व्योम *params;
 	u32 paramlen;
-	bool key_is_private;
-	const char *id_type;
-	const char *pkey_algo;
-};
+	bool key_is_निजी;
+	स्थिर अक्षर *id_type;
+	स्थिर अक्षर *pkey_algo;
+पूर्ण;
 
-extern void public_key_free(struct public_key *key);
+बाह्य व्योम खुला_key_मुक्त(काष्ठा खुला_key *key);
 
 /*
  * Public key cryptography signature data
  */
-struct public_key_signature {
-	struct asymmetric_key_id *auth_ids[2];
+काष्ठा खुला_key_signature अणु
+	काष्ठा asymmetric_key_id *auth_ids[2];
 	u8 *s;			/* Signature */
 	u32 s_size;		/* Number of bytes in signature */
 	u8 *digest;
 	u8 digest_size;		/* Number of bytes in digest */
-	const char *pkey_algo;
-	const char *hash_algo;
-	const char *encoding;
-	const void *data;
-	unsigned int data_size;
-};
+	स्थिर अक्षर *pkey_algo;
+	स्थिर अक्षर *hash_algo;
+	स्थिर अक्षर *encoding;
+	स्थिर व्योम *data;
+	अचिन्हित पूर्णांक data_size;
+पूर्ण;
 
-extern void public_key_signature_free(struct public_key_signature *sig);
+बाह्य व्योम खुला_key_signature_मुक्त(काष्ठा खुला_key_signature *sig);
 
-extern struct asymmetric_key_subtype public_key_subtype;
+बाह्य काष्ठा asymmetric_key_subtype खुला_key_subtype;
 
-struct key;
-struct key_type;
-union key_payload;
+काष्ठा key;
+काष्ठा key_type;
+जोड़ key_payload;
 
-extern int restrict_link_by_signature(struct key *dest_keyring,
-				      const struct key_type *type,
-				      const union key_payload *payload,
-				      struct key *trust_keyring);
+बाह्य पूर्णांक restrict_link_by_signature(काष्ठा key *dest_keyring,
+				      स्थिर काष्ठा key_type *type,
+				      स्थिर जोड़ key_payload *payload,
+				      काष्ठा key *trust_keyring);
 
-extern int restrict_link_by_key_or_keyring(struct key *dest_keyring,
-					   const struct key_type *type,
-					   const union key_payload *payload,
-					   struct key *trusted);
+बाह्य पूर्णांक restrict_link_by_key_or_keyring(काष्ठा key *dest_keyring,
+					   स्थिर काष्ठा key_type *type,
+					   स्थिर जोड़ key_payload *payload,
+					   काष्ठा key *trusted);
 
-extern int restrict_link_by_key_or_keyring_chain(struct key *trust_keyring,
-						 const struct key_type *type,
-						 const union key_payload *payload,
-						 struct key *trusted);
+बाह्य पूर्णांक restrict_link_by_key_or_keyring_chain(काष्ठा key *trust_keyring,
+						 स्थिर काष्ठा key_type *type,
+						 स्थिर जोड़ key_payload *payload,
+						 काष्ठा key *trusted);
 
-extern int query_asymmetric_key(const struct kernel_pkey_params *,
-				struct kernel_pkey_query *);
+बाह्य पूर्णांक query_asymmetric_key(स्थिर काष्ठा kernel_pkey_params *,
+				काष्ठा kernel_pkey_query *);
 
-extern int encrypt_blob(struct kernel_pkey_params *, const void *, void *);
-extern int decrypt_blob(struct kernel_pkey_params *, const void *, void *);
-extern int create_signature(struct kernel_pkey_params *, const void *, void *);
-extern int verify_signature(const struct key *,
-			    const struct public_key_signature *);
+बाह्य पूर्णांक encrypt_blob(काष्ठा kernel_pkey_params *, स्थिर व्योम *, व्योम *);
+बाह्य पूर्णांक decrypt_blob(काष्ठा kernel_pkey_params *, स्थिर व्योम *, व्योम *);
+बाह्य पूर्णांक create_signature(काष्ठा kernel_pkey_params *, स्थिर व्योम *, व्योम *);
+बाह्य पूर्णांक verअगरy_signature(स्थिर काष्ठा key *,
+			    स्थिर काष्ठा खुला_key_signature *);
 
-int public_key_verify_signature(const struct public_key *pkey,
-				const struct public_key_signature *sig);
+पूर्णांक खुला_key_verअगरy_signature(स्थिर काष्ठा खुला_key *pkey,
+				स्थिर काष्ठा खुला_key_signature *sig);
 
-#endif /* _LINUX_PUBLIC_KEY_H */
+#पूर्ण_अगर /* _LINUX_PUBLIC_KEY_H */

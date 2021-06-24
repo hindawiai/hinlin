@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- *  HID driver for Waltop devices not fully compliant with HID standard
+ *  HID driver क्रम Waltop devices not fully compliant with HID standard
  *
  *  Copyright (c) 2010 Nikolai Kondrashov
  */
@@ -8,21 +9,21 @@
 /*
  */
 
-#include <linux/device.h>
-#include <linux/hid.h>
-#include <linux/module.h>
+#समावेश <linux/device.h>
+#समावेश <linux/hid.h>
+#समावेश <linux/module.h>
 
-#include "hid-ids.h"
+#समावेश "hid-ids.h"
 
 /*
  * There exists an official driver on the manufacturer's website, which
- * wasn't submitted to the kernel, for some reason. The official driver
- * doesn't seem to support extra features of some tablets, like wheels.
+ * wasn't submitted to the kernel, क्रम some reason. The official driver
+ * करोesn't seem to support extra features of some tablets, like wheels.
  *
  * It shows that the feature report ID 2 could be used to control any waltop
- * tablet input mode, switching it between "default", "tablet" and "ink".
+ * tablet input mode, चयनing it between "default", "tablet" and "ink".
  *
- * This driver only uses "default" mode for all the supported tablets. This
+ * This driver only uses "default" mode क्रम all the supported tablets. This
  * mode tries to be HID-compatible (not very successfully), but cripples the
  * resolution of some tablets.
  *
@@ -32,18 +33,18 @@
  *
  * The purpose of the "ink" mode is unknown.
  *
- * The feature reports needed for switching to each mode are these:
+ * The feature reports needed क्रम चयनing to each mode are these:
  *
- * 02 16 00     default
+ * 02 16 00     शेष
  * 02 16 01     tablet
  * 02 16 02     ink
  */
 
 /* Size of the original report descriptor of Slim Tablet 5.8 inch */
-#define SLIM_TABLET_5_8_INCH_RDESC_ORIG_SIZE	222
+#घोषणा SLIM_TABLET_5_8_INCH_RDESC_ORIG_SIZE	222
 
 /* Fixed Slim Tablet 5.8 inch descriptor */
-static __u8 slim_tablet_5_8_inch_rdesc_fixed[] = {
+अटल __u8 slim_tablet_5_8_inch_rdesc_fixed[] = अणु
 	0x05, 0x0D,         /*  Usage Page (Digitizer),             */
 	0x09, 0x02,         /*  Usage (Pen),                        */
 	0xA1, 0x01,         /*  Collection (Application),           */
@@ -88,13 +89,13 @@ static __u8 slim_tablet_5_8_inch_rdesc_fixed[] = {
 	0x81, 0x02,         /*          Input (Variable),           */
 	0xC0,               /*      End Collection,                 */
 	0xC0                /*  End Collection                      */
-};
+पूर्ण;
 
 /* Size of the original report descriptor of Slim Tablet 12.1 inch */
-#define SLIM_TABLET_12_1_INCH_RDESC_ORIG_SIZE	269
+#घोषणा SLIM_TABLET_12_1_INCH_RDESC_ORIG_SIZE	269
 
 /* Fixed Slim Tablet 12.1 inch descriptor */
-static __u8 slim_tablet_12_1_inch_rdesc_fixed[] = {
+अटल __u8 slim_tablet_12_1_inch_rdesc_fixed[] = अणु
 	0x05, 0x0D,         /*  Usage Page (Digitizer),             */
 	0x09, 0x02,         /*  Usage (Pen),                        */
 	0xA1, 0x01,         /*  Collection (Application),           */
@@ -139,13 +140,13 @@ static __u8 slim_tablet_12_1_inch_rdesc_fixed[] = {
 	0x81, 0x02,         /*          Input (Variable),           */
 	0xC0,               /*      End Collection,                 */
 	0xC0                /*  End Collection                      */
-};
+पूर्ण;
 
 /* Size of the original report descriptor of Q Pad */
-#define Q_PAD_RDESC_ORIG_SIZE	241
+#घोषणा Q_PAD_RDESC_ORIG_SIZE	241
 
 /* Fixed Q Pad descriptor */
-static __u8 q_pad_rdesc_fixed[] = {
+अटल __u8 q_pad_rdesc_fixed[] = अणु
 	0x05, 0x0D,         /*  Usage Page (Digitizer),             */
 	0x09, 0x02,         /*  Usage (Pen),                        */
 	0xA1, 0x01,         /*  Collection (Application),           */
@@ -190,15 +191,15 @@ static __u8 q_pad_rdesc_fixed[] = {
 	0x81, 0x02,         /*          Input (Variable),           */
 	0xC0,               /*      End Collection,                 */
 	0xC0                /*  End Collection                      */
-};
+पूर्ण;
 
 /* Size of the original report descriptor of tablet with PID 0038 */
-#define PID_0038_RDESC_ORIG_SIZE	241
+#घोषणा PID_0038_RDESC_ORIG_SIZE	241
 
 /*
- * Fixed report descriptor for tablet with PID 0038.
+ * Fixed report descriptor क्रम tablet with PID 0038.
  */
-static __u8 pid_0038_rdesc_fixed[] = {
+अटल __u8 pid_0038_rdesc_fixed[] = अणु
 	0x05, 0x0D,         /*  Usage Page (Digitizer),             */
 	0x09, 0x02,         /*  Usage (Pen),                        */
 	0xA1, 0x01,         /*  Collection (Application),           */
@@ -243,13 +244,13 @@ static __u8 pid_0038_rdesc_fixed[] = {
 	0x81, 0x02,         /*          Input (Variable),           */
 	0xC0,               /*      End Collection,                 */
 	0xC0                /*  End Collection                      */
-};
+पूर्ण;
 
 /* Size of the original report descriptor of Media Tablet 10.6 inch */
-#define MEDIA_TABLET_10_6_INCH_RDESC_ORIG_SIZE	300
+#घोषणा MEDIA_TABLET_10_6_INCH_RDESC_ORIG_SIZE	300
 
 /* Fixed Media Tablet 10.6 inch descriptor */
-static __u8 media_tablet_10_6_inch_rdesc_fixed[] = {
+अटल __u8 media_tablet_10_6_inch_rdesc_fixed[] = अणु
 	0x05, 0x0D,         /*  Usage Page (Digitizer),             */
 	0x09, 0x02,         /*  Usage (Pen),                        */
 	0xA1, 0x01,         /*  Collection (Application),           */
@@ -298,7 +299,7 @@ static __u8 media_tablet_10_6_inch_rdesc_fixed[] = {
 	0x09, 0x02,         /*  Usage (Mouse),                      */
 	0xA1, 0x01,         /*  Collection (Application),           */
 	0x85, 0x01,         /*      Report ID (1),                  */
-	0x09, 0x01,         /*      Usage (Pointer),                */
+	0x09, 0x01,         /*      Usage (Poपूर्णांकer),                */
 	0xA0,               /*      Collection (Physical),          */
 	0x75, 0x08,         /*          Report Size (8),            */
 	0x95, 0x03,         /*          Report Count (3),           */
@@ -356,13 +357,13 @@ static __u8 media_tablet_10_6_inch_rdesc_fixed[] = {
 	0x95, 0x35,         /*      Report Count (53),              */
 	0x81, 0x03,         /*      Input (Constant, Variable),     */
 	0xC0                /*  End Collection                      */
-};
+पूर्ण;
 
 /* Size of the original report descriptor of Media Tablet 14.1 inch */
-#define MEDIA_TABLET_14_1_INCH_RDESC_ORIG_SIZE	309
+#घोषणा MEDIA_TABLET_14_1_INCH_RDESC_ORIG_SIZE	309
 
 /* Fixed Media Tablet 14.1 inch descriptor */
-static __u8 media_tablet_14_1_inch_rdesc_fixed[] = {
+अटल __u8 media_tablet_14_1_inch_rdesc_fixed[] = अणु
 	0x05, 0x0D,         /*  Usage Page (Digitizer),             */
 	0x09, 0x02,         /*  Usage (Pen),                        */
 	0xA1, 0x01,         /*  Collection (Application),           */
@@ -411,7 +412,7 @@ static __u8 media_tablet_14_1_inch_rdesc_fixed[] = {
 	0x09, 0x02,         /*  Usage (Mouse),                      */
 	0xA1, 0x01,         /*  Collection (Application),           */
 	0x85, 0x01,         /*      Report ID (1),                  */
-	0x09, 0x01,         /*      Usage (Pointer),                */
+	0x09, 0x01,         /*      Usage (Poपूर्णांकer),                */
 	0xA0,               /*      Collection (Physical),          */
 	0x75, 0x08,         /*          Report Size (8),            */
 	0x95, 0x03,         /*          Report Count (3),           */
@@ -467,13 +468,13 @@ static __u8 media_tablet_14_1_inch_rdesc_fixed[] = {
 	0x75, 0x05,         /*      Report Size (5),                */
 	0x81, 0x03,         /*      Input (Constant, Variable),     */
 	0xC0                /*  End Collection                      */
-};
+पूर्ण;
 
 /* Size of the original report descriptor of Sirius Battery Free Tablet */
-#define SIRIUS_BATTERY_FREE_TABLET_RDESC_ORIG_SIZE	335
+#घोषणा SIRIUS_BATTERY_FREE_TABLET_RDESC_ORIG_SIZE	335
 
 /* Fixed Sirius Battery Free Tablet descriptor */
-static __u8 sirius_battery_free_tablet_rdesc_fixed[] = {
+अटल __u8 sirius_battery_मुक्त_tablet_rdesc_fixed[] = अणु
 	0x05, 0x0D,         /*  Usage Page (Digitizer),             */
 	0x09, 0x02,         /*  Usage (Pen),                        */
 	0xA1, 0x01,         /*  Collection (Application),           */
@@ -540,7 +541,7 @@ static __u8 sirius_battery_free_tablet_rdesc_fixed[] = {
 	0x09, 0x02,         /*  Usage (Mouse),                      */
 	0xA1, 0x01,         /*  Collection (Application),           */
 	0x85, 0x01,         /*      Report ID (1),                  */
-	0x09, 0x01,         /*      Usage (Pointer),                */
+	0x09, 0x01,         /*      Usage (Poपूर्णांकer),                */
 	0xA0,               /*      Collection (Physical),          */
 	0x75, 0x08,         /*          Report Size (8),            */
 	0x95, 0x03,         /*          Report Count (3),           */
@@ -597,81 +598,81 @@ static __u8 sirius_battery_free_tablet_rdesc_fixed[] = {
 	0x95, 0x03,         /*      Report Count (3),               */
 	0x81, 0x03,         /*      Input (Constant, Variable),     */
 	0xC0                /*  End Collection                      */
-};
+पूर्ण;
 
-static __u8 *waltop_report_fixup(struct hid_device *hdev, __u8 *rdesc,
-		unsigned int *rsize)
-{
-	switch (hdev->product) {
-	case USB_DEVICE_ID_WALTOP_SLIM_TABLET_5_8_INCH:
-		if (*rsize == SLIM_TABLET_5_8_INCH_RDESC_ORIG_SIZE) {
+अटल __u8 *waltop_report_fixup(काष्ठा hid_device *hdev, __u8 *rdesc,
+		अचिन्हित पूर्णांक *rsize)
+अणु
+	चयन (hdev->product) अणु
+	हाल USB_DEVICE_ID_WALTOP_SLIM_TABLET_5_8_INCH:
+		अगर (*rsize == SLIM_TABLET_5_8_INCH_RDESC_ORIG_SIZE) अणु
 			rdesc = slim_tablet_5_8_inch_rdesc_fixed;
-			*rsize = sizeof(slim_tablet_5_8_inch_rdesc_fixed);
-		}
-		break;
-	case USB_DEVICE_ID_WALTOP_SLIM_TABLET_12_1_INCH:
-		if (*rsize == SLIM_TABLET_12_1_INCH_RDESC_ORIG_SIZE) {
+			*rsize = माप(slim_tablet_5_8_inch_rdesc_fixed);
+		पूर्ण
+		अवरोध;
+	हाल USB_DEVICE_ID_WALTOP_SLIM_TABLET_12_1_INCH:
+		अगर (*rsize == SLIM_TABLET_12_1_INCH_RDESC_ORIG_SIZE) अणु
 			rdesc = slim_tablet_12_1_inch_rdesc_fixed;
-			*rsize = sizeof(slim_tablet_12_1_inch_rdesc_fixed);
-		}
-		break;
-	case USB_DEVICE_ID_WALTOP_Q_PAD:
-		if (*rsize == Q_PAD_RDESC_ORIG_SIZE) {
+			*rsize = माप(slim_tablet_12_1_inch_rdesc_fixed);
+		पूर्ण
+		अवरोध;
+	हाल USB_DEVICE_ID_WALTOP_Q_PAD:
+		अगर (*rsize == Q_PAD_RDESC_ORIG_SIZE) अणु
 			rdesc = q_pad_rdesc_fixed;
-			*rsize = sizeof(q_pad_rdesc_fixed);
-		}
-		break;
-	case USB_DEVICE_ID_WALTOP_PID_0038:
-		if (*rsize == PID_0038_RDESC_ORIG_SIZE) {
+			*rsize = माप(q_pad_rdesc_fixed);
+		पूर्ण
+		अवरोध;
+	हाल USB_DEVICE_ID_WALTOP_PID_0038:
+		अगर (*rsize == PID_0038_RDESC_ORIG_SIZE) अणु
 			rdesc = pid_0038_rdesc_fixed;
-			*rsize = sizeof(pid_0038_rdesc_fixed);
-		}
-		break;
-	case USB_DEVICE_ID_WALTOP_MEDIA_TABLET_10_6_INCH:
-		if (*rsize == MEDIA_TABLET_10_6_INCH_RDESC_ORIG_SIZE) {
+			*rsize = माप(pid_0038_rdesc_fixed);
+		पूर्ण
+		अवरोध;
+	हाल USB_DEVICE_ID_WALTOP_MEDIA_TABLET_10_6_INCH:
+		अगर (*rsize == MEDIA_TABLET_10_6_INCH_RDESC_ORIG_SIZE) अणु
 			rdesc = media_tablet_10_6_inch_rdesc_fixed;
-			*rsize = sizeof(media_tablet_10_6_inch_rdesc_fixed);
-		}
-		break;
-	case USB_DEVICE_ID_WALTOP_MEDIA_TABLET_14_1_INCH:
-		if (*rsize == MEDIA_TABLET_14_1_INCH_RDESC_ORIG_SIZE) {
+			*rsize = माप(media_tablet_10_6_inch_rdesc_fixed);
+		पूर्ण
+		अवरोध;
+	हाल USB_DEVICE_ID_WALTOP_MEDIA_TABLET_14_1_INCH:
+		अगर (*rsize == MEDIA_TABLET_14_1_INCH_RDESC_ORIG_SIZE) अणु
 			rdesc = media_tablet_14_1_inch_rdesc_fixed;
-			*rsize = sizeof(media_tablet_14_1_inch_rdesc_fixed);
-		}
-		break;
-	case USB_DEVICE_ID_WALTOP_SIRIUS_BATTERY_FREE_TABLET:
-		if (*rsize == SIRIUS_BATTERY_FREE_TABLET_RDESC_ORIG_SIZE) {
-			rdesc = sirius_battery_free_tablet_rdesc_fixed;
-			*rsize = sizeof(sirius_battery_free_tablet_rdesc_fixed);
-		}
-		break;
-	}
-	return rdesc;
-}
+			*rsize = माप(media_tablet_14_1_inch_rdesc_fixed);
+		पूर्ण
+		अवरोध;
+	हाल USB_DEVICE_ID_WALTOP_SIRIUS_BATTERY_FREE_TABLET:
+		अगर (*rsize == SIRIUS_BATTERY_FREE_TABLET_RDESC_ORIG_SIZE) अणु
+			rdesc = sirius_battery_मुक्त_tablet_rdesc_fixed;
+			*rsize = माप(sirius_battery_मुक्त_tablet_rdesc_fixed);
+		पूर्ण
+		अवरोध;
+	पूर्ण
+	वापस rdesc;
+पूर्ण
 
-static int waltop_raw_event(struct hid_device *hdev, struct hid_report *report,
-		     u8 *data, int size)
-{
+अटल पूर्णांक waltop_raw_event(काष्ठा hid_device *hdev, काष्ठा hid_report *report,
+		     u8 *data, पूर्णांक size)
+अणु
 	/* If this is a pen input report */
-	if (report->type == HID_INPUT_REPORT && report->id == 16 && size >= 8) {
+	अगर (report->type == HID_INPUT_REPORT && report->id == 16 && size >= 8) अणु
 		/*
 		 * Ignore reported pressure when a barrel button is pressed,
 		 * because it is rarely correct.
 		 */
 
 		/* If a barrel button is pressed */
-		if ((data[1] & 0xF) > 1) {
+		अगर ((data[1] & 0xF) > 1) अणु
 			/* Report zero pressure */
 			data[6] = 0;
 			data[7] = 0;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	/* If this is a pen input report of Sirius Battery Free Tablet */
-	if (hdev->product == USB_DEVICE_ID_WALTOP_SIRIUS_BATTERY_FREE_TABLET &&
+	अगर (hdev->product == USB_DEVICE_ID_WALTOP_SIRIUS_BATTERY_FREE_TABLET &&
 	    report->type == HID_INPUT_REPORT &&
 	    report->id == 16 &&
-	    size == 10) {
+	    size == 10) अणु
 		/*
 		 * The tablet reports tilt as roughly sin(a)*21 (18 means 60
 		 * degrees).
@@ -679,10 +680,10 @@ static int waltop_raw_event(struct hid_device *hdev, struct hid_report *report,
 		 * This array stores angles as radians * 100, corresponding to
 		 * reported values up to 60 degrees, as expected by userspace.
 		 */
-		static const s8 tilt_to_radians[] = {
+		अटल स्थिर s8 tilt_to_radians[] = अणु
 			0, 5, 10, 14, 19, 24, 29, 34, 40, 45,
 			50, 56, 62, 68, 74, 81, 88, 96, 105
-		};
+		पूर्ण;
 
 		s8 tilt_x = (s8)data[8];
 		s8 tilt_y = (s8)data[9];
@@ -703,43 +704,43 @@ static int waltop_raw_event(struct hid_device *hdev, struct hid_report *report,
 		 * This effectively clamps reported tilt to 60 degrees - the
 		 * range expected by userspace
 		 */
-		if (tilt_x > ARRAY_SIZE(tilt_to_radians) - 1)
+		अगर (tilt_x > ARRAY_SIZE(tilt_to_radians) - 1)
 			tilt_x = ARRAY_SIZE(tilt_to_radians) - 1;
-		if (tilt_y > ARRAY_SIZE(tilt_to_radians) - 1)
+		अगर (tilt_y > ARRAY_SIZE(tilt_to_radians) - 1)
 			tilt_y = ARRAY_SIZE(tilt_to_radians) - 1;
 
 		data[8] = tilt_to_radians[tilt_x] * sign_x;
 		data[9] = tilt_to_radians[tilt_y] * sign_y;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct hid_device_id waltop_devices[] = {
-	{ HID_USB_DEVICE(USB_VENDOR_ID_WALTOP,
-				USB_DEVICE_ID_WALTOP_SLIM_TABLET_5_8_INCH) },
-	{ HID_USB_DEVICE(USB_VENDOR_ID_WALTOP,
-				USB_DEVICE_ID_WALTOP_SLIM_TABLET_12_1_INCH) },
-	{ HID_USB_DEVICE(USB_VENDOR_ID_WALTOP,
-				USB_DEVICE_ID_WALTOP_Q_PAD) },
-	{ HID_USB_DEVICE(USB_VENDOR_ID_WALTOP,
-				USB_DEVICE_ID_WALTOP_PID_0038) },
-	{ HID_USB_DEVICE(USB_VENDOR_ID_WALTOP,
-				USB_DEVICE_ID_WALTOP_MEDIA_TABLET_10_6_INCH) },
-	{ HID_USB_DEVICE(USB_VENDOR_ID_WALTOP,
-				USB_DEVICE_ID_WALTOP_MEDIA_TABLET_14_1_INCH) },
-	{ HID_USB_DEVICE(USB_VENDOR_ID_WALTOP,
-			 USB_DEVICE_ID_WALTOP_SIRIUS_BATTERY_FREE_TABLET) },
-	{ }
-};
+अटल स्थिर काष्ठा hid_device_id waltop_devices[] = अणु
+	अणु HID_USB_DEVICE(USB_VENDOR_ID_WALTOP,
+				USB_DEVICE_ID_WALTOP_SLIM_TABLET_5_8_INCH) पूर्ण,
+	अणु HID_USB_DEVICE(USB_VENDOR_ID_WALTOP,
+				USB_DEVICE_ID_WALTOP_SLIM_TABLET_12_1_INCH) पूर्ण,
+	अणु HID_USB_DEVICE(USB_VENDOR_ID_WALTOP,
+				USB_DEVICE_ID_WALTOP_Q_PAD) पूर्ण,
+	अणु HID_USB_DEVICE(USB_VENDOR_ID_WALTOP,
+				USB_DEVICE_ID_WALTOP_PID_0038) पूर्ण,
+	अणु HID_USB_DEVICE(USB_VENDOR_ID_WALTOP,
+				USB_DEVICE_ID_WALTOP_MEDIA_TABLET_10_6_INCH) पूर्ण,
+	अणु HID_USB_DEVICE(USB_VENDOR_ID_WALTOP,
+				USB_DEVICE_ID_WALTOP_MEDIA_TABLET_14_1_INCH) पूर्ण,
+	अणु HID_USB_DEVICE(USB_VENDOR_ID_WALTOP,
+			 USB_DEVICE_ID_WALTOP_SIRIUS_BATTERY_FREE_TABLET) पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(hid, waltop_devices);
 
-static struct hid_driver waltop_driver = {
+अटल काष्ठा hid_driver waltop_driver = अणु
 	.name = "waltop",
 	.id_table = waltop_devices,
 	.report_fixup = waltop_report_fixup,
 	.raw_event = waltop_raw_event,
-};
+पूर्ण;
 module_hid_driver(waltop_driver);
 
 MODULE_LICENSE("GPL");

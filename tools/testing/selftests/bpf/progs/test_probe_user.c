@@ -1,26 +1,27 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 
-#include <linux/ptrace.h>
-#include <linux/bpf.h>
+#समावेश <linux/ptrace.h>
+#समावेश <linux/bpf.h>
 
-#include <netinet/in.h>
+#समावेश <netinet/in.h>
 
-#include <bpf/bpf_helpers.h>
-#include <bpf/bpf_tracing.h>
+#समावेश <bpf/bpf_helpers.h>
+#समावेश <bpf/bpf_tracing.h>
 
-static struct sockaddr_in old;
+अटल काष्ठा sockaddr_in old;
 
 SEC("kprobe/__sys_connect")
-int BPF_KPROBE(handle_sys_connect)
-{
-	void *ptr = (void *)PT_REGS_PARM2(ctx);
-	struct sockaddr_in new;
+पूर्णांक BPF_KPROBE(handle_sys_connect)
+अणु
+	व्योम *ptr = (व्योम *)PT_REGS_PARM2(ctx);
+	काष्ठा sockaddr_in new;
 
-	bpf_probe_read_user(&old, sizeof(old), ptr);
-	__builtin_memset(&new, 0xab, sizeof(new));
-	bpf_probe_write_user(ptr, &new, sizeof(new));
+	bpf_probe_पढ़ो_user(&old, माप(old), ptr);
+	__builtin_स_रखो(&new, 0xab, माप(new));
+	bpf_probe_ग_लिखो_user(ptr, &new, माप(new));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-char _license[] SEC("license") = "GPL";
+अक्षर _license[] SEC("license") = "GPL";

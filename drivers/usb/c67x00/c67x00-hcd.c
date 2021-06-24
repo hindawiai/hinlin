@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
  * c67x00-hcd.c: Cypress C67X00 USB Host Controller Driver
  *
@@ -7,33 +8,33 @@
  *    based on multiple host controller drivers inside the linux kernel.
  */
 
-#include <linux/device.h>
-#include <linux/platform_device.h>
-#include <linux/usb.h>
+#समावेश <linux/device.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/usb.h>
 
-#include "c67x00.h"
-#include "c67x00-hcd.h"
+#समावेश "c67x00.h"
+#समावेश "c67x00-hcd.h"
 
 /* --------------------------------------------------------------------------
  * Root Hub Support
  */
 
-static __u8 c67x00_hub_des[] = {
+अटल __u8 c67x00_hub_des[] = अणु
 	0x09,			/*  __u8  bLength; */
 	USB_DT_HUB,		/*  __u8  bDescriptorType; Hub-descriptor */
 	0x02,			/*  __u8  bNbrPorts; */
 	0x00,			/* __u16  wHubCharacteristics; */
-	0x00,			/*   (per-port OC, no power switching) */
+	0x00,			/*   (per-port OC, no घातer चयनing) */
 	0x32,			/*  __u8  bPwrOn2pwrGood; 2ms */
 	0x00,			/*  __u8  bHubContrCurrent; 0 mA */
 	0x00,			/*  __u8  DeviceRemovable; ** 7 Ports max ** */
 	0xff,			/*  __u8  PortPwrCtrlMask; ** 7 ports max ** */
-};
+पूर्ण;
 
-static void c67x00_hub_reset_host_port(struct c67x00_sie *sie, int port)
-{
-	struct c67x00_hcd *c67x00 = sie->private_data;
-	unsigned long flags;
+अटल व्योम c67x00_hub_reset_host_port(काष्ठा c67x00_sie *sie, पूर्णांक port)
+अणु
+	काष्ठा c67x00_hcd *c67x00 = sie->निजी_data;
+	अचिन्हित दीर्घ flags;
 
 	c67x00_ll_husb_reset(sie, port);
 
@@ -42,187 +43,187 @@ static void c67x00_hub_reset_host_port(struct c67x00_sie *sie, int port)
 	spin_unlock_irqrestore(&c67x00->lock, flags);
 
 	c67x00_ll_set_husb_eot(sie->dev, DEFAULT_EOT);
-}
+पूर्ण
 
-static int c67x00_hub_status_data(struct usb_hcd *hcd, char *buf)
-{
-	struct c67x00_hcd *c67x00 = hcd_to_c67x00_hcd(hcd);
-	struct c67x00_sie *sie = c67x00->sie;
+अटल पूर्णांक c67x00_hub_status_data(काष्ठा usb_hcd *hcd, अक्षर *buf)
+अणु
+	काष्ठा c67x00_hcd *c67x00 = hcd_to_c67x00_hcd(hcd);
+	काष्ठा c67x00_sie *sie = c67x00->sie;
 	u16 status;
-	int i;
+	पूर्णांक i;
 
 	*buf = 0;
 	status = c67x00_ll_usb_get_status(sie);
-	for (i = 0; i < C67X00_PORTS; i++)
-		if (status & PORT_CONNECT_CHANGE(i))
+	क्रम (i = 0; i < C67X00_PORTS; i++)
+		अगर (status & PORT_CONNECT_CHANGE(i))
 			*buf |= (1 << i);
 
 	/* bit 0 denotes hub change, b1..n port change */
 	*buf <<= 1;
 
-	return !!*buf;
-}
+	वापस !!*buf;
+पूर्ण
 
-static int c67x00_hub_control(struct usb_hcd *hcd, u16 typeReq, u16 wValue,
-			      u16 wIndex, char *buf, u16 wLength)
-{
-	struct c67x00_hcd *c67x00 = hcd_to_c67x00_hcd(hcd);
-	struct c67x00_sie *sie = c67x00->sie;
+अटल पूर्णांक c67x00_hub_control(काष्ठा usb_hcd *hcd, u16 typeReq, u16 wValue,
+			      u16 wIndex, अक्षर *buf, u16 wLength)
+अणु
+	काष्ठा c67x00_hcd *c67x00 = hcd_to_c67x00_hcd(hcd);
+	काष्ठा c67x00_sie *sie = c67x00->sie;
 	u16 status, usb_status;
-	int len = 0;
-	unsigned int port = wIndex-1;
+	पूर्णांक len = 0;
+	अचिन्हित पूर्णांक port = wIndex-1;
 	u16 wPortChange, wPortStatus;
 
-	switch (typeReq) {
+	चयन (typeReq) अणु
 
-	case GetHubStatus:
+	हाल GetHubStatus:
 		*(__le32 *) buf = cpu_to_le32(0);
-		len = 4;		/* hub power */
-		break;
+		len = 4;		/* hub घातer */
+		अवरोध;
 
-	case GetPortStatus:
-		if (wIndex > C67X00_PORTS)
-			return -EPIPE;
+	हाल GetPortStatus:
+		अगर (wIndex > C67X00_PORTS)
+			वापस -EPIPE;
 
 		status = c67x00_ll_usb_get_status(sie);
 		usb_status = c67x00_ll_get_usb_ctl(sie);
 
 		wPortChange = 0;
-		if (status & PORT_CONNECT_CHANGE(port))
+		अगर (status & PORT_CONNECT_CHANGE(port))
 			wPortChange |= USB_PORT_STAT_C_CONNECTION;
 
 		wPortStatus = USB_PORT_STAT_POWER;
-		if (!(status & PORT_SE0_STATUS(port)))
+		अगर (!(status & PORT_SE0_STATUS(port)))
 			wPortStatus |= USB_PORT_STAT_CONNECTION;
-		if (usb_status & LOW_SPEED_PORT(port)) {
+		अगर (usb_status & LOW_SPEED_PORT(port)) अणु
 			wPortStatus |= USB_PORT_STAT_LOW_SPEED;
 			c67x00->low_speed_ports |= (1 << port);
-		} else
+		पूर्ण अन्यथा
 			c67x00->low_speed_ports &= ~(1 << port);
 
-		if (usb_status & SOF_EOP_EN(port))
+		अगर (usb_status & SOF_EOP_EN(port))
 			wPortStatus |= USB_PORT_STAT_ENABLE;
 
 		*(__le16 *) buf = cpu_to_le16(wPortStatus);
 		*(__le16 *) (buf + 2) = cpu_to_le16(wPortChange);
 		len = 4;
-		break;
+		अवरोध;
 
-	case SetHubFeature:	/* We don't implement these */
-	case ClearHubFeature:
-		switch (wValue) {
-		case C_HUB_OVER_CURRENT:
-		case C_HUB_LOCAL_POWER:
+	हाल SetHubFeature:	/* We करोn't implement these */
+	हाल ClearHubFeature:
+		चयन (wValue) अणु
+		हाल C_HUB_OVER_CURRENT:
+		हाल C_HUB_LOCAL_POWER:
 			len = 0;
-			break;
+			अवरोध;
 
-		default:
-			return -EPIPE;
-		}
-		break;
+		शेष:
+			वापस -EPIPE;
+		पूर्ण
+		अवरोध;
 
-	case SetPortFeature:
-		if (wIndex > C67X00_PORTS)
-			return -EPIPE;
+	हाल SetPortFeature:
+		अगर (wIndex > C67X00_PORTS)
+			वापस -EPIPE;
 
-		switch (wValue) {
-		case USB_PORT_FEAT_SUSPEND:
+		चयन (wValue) अणु
+		हाल USB_PORT_FEAT_SUSPEND:
 			dev_dbg(c67x00_hcd_dev(c67x00),
 				"SetPortFeature %d (SUSPEND)\n", port);
 			len = 0;
-			break;
+			अवरोध;
 
-		case USB_PORT_FEAT_RESET:
+		हाल USB_PORT_FEAT_RESET:
 			c67x00_hub_reset_host_port(sie, port);
 			len = 0;
-			break;
+			अवरोध;
 
-		case USB_PORT_FEAT_POWER:
+		हाल USB_PORT_FEAT_POWER:
 			/* Power always enabled */
 			len = 0;
-			break;
+			अवरोध;
 
-		default:
+		शेष:
 			dev_dbg(c67x00_hcd_dev(c67x00),
 				"%s: SetPortFeature %d (0x%04x) Error!\n",
 				__func__, port, wValue);
-			return -EPIPE;
-		}
-		break;
+			वापस -EPIPE;
+		पूर्ण
+		अवरोध;
 
-	case ClearPortFeature:
-		if (wIndex > C67X00_PORTS)
-			return -EPIPE;
+	हाल ClearPortFeature:
+		अगर (wIndex > C67X00_PORTS)
+			वापस -EPIPE;
 
-		switch (wValue) {
-		case USB_PORT_FEAT_ENABLE:
+		चयन (wValue) अणु
+		हाल USB_PORT_FEAT_ENABLE:
 			/* Reset the port so that the c67x00 also notices the
 			 * disconnect */
 			c67x00_hub_reset_host_port(sie, port);
 			len = 0;
-			break;
+			अवरोध;
 
-		case USB_PORT_FEAT_C_ENABLE:
+		हाल USB_PORT_FEAT_C_ENABLE:
 			dev_dbg(c67x00_hcd_dev(c67x00),
 				"ClearPortFeature (%d): C_ENABLE\n", port);
 			len = 0;
-			break;
+			अवरोध;
 
-		case USB_PORT_FEAT_SUSPEND:
+		हाल USB_PORT_FEAT_SUSPEND:
 			dev_dbg(c67x00_hcd_dev(c67x00),
 				"ClearPortFeature (%d): SUSPEND\n", port);
 			len = 0;
-			break;
+			अवरोध;
 
-		case USB_PORT_FEAT_C_SUSPEND:
+		हाल USB_PORT_FEAT_C_SUSPEND:
 			dev_dbg(c67x00_hcd_dev(c67x00),
 				"ClearPortFeature (%d): C_SUSPEND\n", port);
 			len = 0;
-			break;
+			अवरोध;
 
-		case USB_PORT_FEAT_POWER:
+		हाल USB_PORT_FEAT_POWER:
 			dev_dbg(c67x00_hcd_dev(c67x00),
 				"ClearPortFeature (%d): POWER\n", port);
-			return -EPIPE;
+			वापस -EPIPE;
 
-		case USB_PORT_FEAT_C_CONNECTION:
+		हाल USB_PORT_FEAT_C_CONNECTION:
 			c67x00_ll_usb_clear_status(sie,
 						   PORT_CONNECT_CHANGE(port));
 			len = 0;
-			break;
+			अवरोध;
 
-		case USB_PORT_FEAT_C_OVER_CURRENT:
+		हाल USB_PORT_FEAT_C_OVER_CURRENT:
 			dev_dbg(c67x00_hcd_dev(c67x00),
 				"ClearPortFeature (%d): OVER_CURRENT\n", port);
 			len = 0;
-			break;
+			अवरोध;
 
-		case USB_PORT_FEAT_C_RESET:
+		हाल USB_PORT_FEAT_C_RESET:
 			dev_dbg(c67x00_hcd_dev(c67x00),
 				"ClearPortFeature (%d): C_RESET\n", port);
 			len = 0;
-			break;
+			अवरोध;
 
-		default:
+		शेष:
 			dev_dbg(c67x00_hcd_dev(c67x00),
 				"%s: ClearPortFeature %d (0x%04x) Error!\n",
 				__func__, port, wValue);
-			return -EPIPE;
-		}
-		break;
+			वापस -EPIPE;
+		पूर्ण
+		अवरोध;
 
-	case GetHubDescriptor:
-		len = min_t(unsigned int, sizeof(c67x00_hub_des), wLength);
-		memcpy(buf, c67x00_hub_des, len);
-		break;
+	हाल GetHubDescriptor:
+		len = min_t(अचिन्हित पूर्णांक, माप(c67x00_hub_des), wLength);
+		स_नकल(buf, c67x00_hub_des, len);
+		अवरोध;
 
-	default:
+	शेष:
 		dev_dbg(c67x00_hcd_dev(c67x00), "%s: unknown\n", __func__);
-		return -EPIPE;
-	}
+		वापस -EPIPE;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* ---------------------------------------------------------------------
  * Main part of host controller driver
@@ -231,74 +232,74 @@ static int c67x00_hub_control(struct usb_hcd *hcd, u16 typeReq, u16 wValue,
 /*
  * c67x00_hcd_irq
  *
- * This function is called from the interrupt handler in c67x00-drv.c
+ * This function is called from the पूर्णांकerrupt handler in c67x00-drv.c
  */
-static void c67x00_hcd_irq(struct c67x00_sie *sie, u16 int_status, u16 msg)
-{
-	struct c67x00_hcd *c67x00 = sie->private_data;
-	struct usb_hcd *hcd = c67x00_hcd_to_hcd(c67x00);
+अटल व्योम c67x00_hcd_irq(काष्ठा c67x00_sie *sie, u16 पूर्णांक_status, u16 msg)
+अणु
+	काष्ठा c67x00_hcd *c67x00 = sie->निजी_data;
+	काष्ठा usb_hcd *hcd = c67x00_hcd_to_hcd(c67x00);
 
 	/* Handle sie message flags */
-	if (msg) {
-		if (msg & HUSB_TDListDone)
+	अगर (msg) अणु
+		अगर (msg & HUSB_TDListDone)
 			c67x00_sched_kick(c67x00);
-		else
+		अन्यथा
 			dev_warn(c67x00_hcd_dev(c67x00),
 				 "Unknown SIE msg flag(s): 0x%04x\n", msg);
-	}
+	पूर्ण
 
-	if (unlikely(hcd->state == HC_STATE_HALT))
-		return;
+	अगर (unlikely(hcd->state == HC_STATE_HALT))
+		वापस;
 
-	if (!HCD_HW_ACCESSIBLE(hcd))
-		return;
+	अगर (!HCD_HW_ACCESSIBLE(hcd))
+		वापस;
 
 	/* Handle Start of frame events */
-	if (int_status & SOFEOP_FLG(sie->sie_num)) {
+	अगर (पूर्णांक_status & SOFEOP_FLG(sie->sie_num)) अणु
 		c67x00_ll_usb_clear_status(sie, SOF_EOP_IRQ_FLG);
 		c67x00_sched_kick(c67x00);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
  * c67x00_hcd_start: Host controller start hook
  */
-static int c67x00_hcd_start(struct usb_hcd *hcd)
-{
+अटल पूर्णांक c67x00_hcd_start(काष्ठा usb_hcd *hcd)
+अणु
 	hcd->uses_new_polling = 1;
 	hcd->state = HC_STATE_RUNNING;
 	set_bit(HCD_FLAG_POLL_RH, &hcd->flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * c67x00_hcd_stop: Host controller stop hook
  */
-static void c67x00_hcd_stop(struct usb_hcd *hcd)
-{
-	/* Nothing to do */
-}
+अटल व्योम c67x00_hcd_stop(काष्ठा usb_hcd *hcd)
+अणु
+	/* Nothing to करो */
+पूर्ण
 
-static int c67x00_hcd_get_frame(struct usb_hcd *hcd)
-{
-	struct c67x00_hcd *c67x00 = hcd_to_c67x00_hcd(hcd);
+अटल पूर्णांक c67x00_hcd_get_frame(काष्ठा usb_hcd *hcd)
+अणु
+	काष्ठा c67x00_hcd *c67x00 = hcd_to_c67x00_hcd(hcd);
 	u16 temp_val;
 
 	dev_dbg(c67x00_hcd_dev(c67x00), "%s\n", __func__);
 	temp_val = c67x00_ll_husb_get_frame(c67x00->sie);
 	temp_val &= HOST_FRAME_MASK;
-	return temp_val ? (temp_val - 1) : HOST_FRAME_MASK;
-}
+	वापस temp_val ? (temp_val - 1) : HOST_FRAME_MASK;
+पूर्ण
 
-static const struct hc_driver c67x00_hc_driver = {
+अटल स्थिर काष्ठा hc_driver c67x00_hc_driver = अणु
 	.description	= "c67x00-hcd",
 	.product_desc	= "Cypress C67X00 Host Controller",
-	.hcd_priv_size	= sizeof(struct c67x00_hcd),
+	.hcd_priv_size	= माप(काष्ठा c67x00_hcd),
 	.flags		= HCD_USB11 | HCD_MEMORY,
 
 	/*
-	 * basic lifecycle operations
+	 * basic lअगरecycle operations
 	 */
 	.start		= c67x00_hcd_start,
 	.stop		= c67x00_hcd_stop,
@@ -308,7 +309,7 @@ static const struct hc_driver c67x00_hc_driver = {
 	 */
 	.urb_enqueue	= c67x00_urb_enqueue,
 	.urb_dequeue	= c67x00_urb_dequeue,
-	.endpoint_disable = c67x00_endpoint_disable,
+	.endpoपूर्णांक_disable = c67x00_endpoपूर्णांक_disable,
 
 	/*
 	 * scheduling support
@@ -320,27 +321,27 @@ static const struct hc_driver c67x00_hc_driver = {
 	 */
 	.hub_status_data = c67x00_hub_status_data,
 	.hub_control	= c67x00_hub_control,
-};
+पूर्ण;
 
 /* ---------------------------------------------------------------------
- * Setup/Teardown routines
+ * Setup/Tearकरोwn routines
  */
 
-int c67x00_hcd_probe(struct c67x00_sie *sie)
-{
-	struct c67x00_hcd *c67x00;
-	struct usb_hcd *hcd;
-	unsigned long flags;
-	int retval;
+पूर्णांक c67x00_hcd_probe(काष्ठा c67x00_sie *sie)
+अणु
+	काष्ठा c67x00_hcd *c67x00;
+	काष्ठा usb_hcd *hcd;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक retval;
 
-	if (usb_disabled())
-		return -ENODEV;
+	अगर (usb_disabled())
+		वापस -ENODEV;
 
 	hcd = usb_create_hcd(&c67x00_hc_driver, sie_dev(sie), "c67x00_sie");
-	if (!hcd) {
+	अगर (!hcd) अणु
 		retval = -ENOMEM;
-		goto err0;
-	}
+		जाओ err0;
+	पूर्ण
 	c67x00 = hcd_to_c67x00_hcd(hcd);
 
 	spin_lock_init(&c67x00->lock);
@@ -358,42 +359,42 @@ int c67x00_hcd_probe(struct c67x00_sie *sie)
 
 	c67x00_ll_husb_init_host_port(sie);
 
-	init_completion(&c67x00->endpoint_disable);
+	init_completion(&c67x00->endpoपूर्णांक_disable);
 	retval = c67x00_sched_start_scheduler(c67x00);
-	if (retval)
-		goto err1;
+	अगर (retval)
+		जाओ err1;
 
 	retval = usb_add_hcd(hcd, 0, 0);
-	if (retval) {
+	अगर (retval) अणु
 		dev_dbg(sie_dev(sie), "%s: usb_add_hcd returned %d\n",
 			__func__, retval);
-		goto err2;
-	}
+		जाओ err2;
+	पूर्ण
 
 	device_wakeup_enable(hcd->self.controller);
 
 	spin_lock_irqsave(&sie->lock, flags);
-	sie->private_data = c67x00;
+	sie->निजी_data = c67x00;
 	sie->irq = c67x00_hcd_irq;
 	spin_unlock_irqrestore(&sie->lock, flags);
 
-	return retval;
+	वापस retval;
 
  err2:
 	c67x00_sched_stop_scheduler(c67x00);
  err1:
 	usb_put_hcd(hcd);
  err0:
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
 /* may be called with controller, bus, and devices active */
-void c67x00_hcd_remove(struct c67x00_sie *sie)
-{
-	struct c67x00_hcd *c67x00 = sie->private_data;
-	struct usb_hcd *hcd = c67x00_hcd_to_hcd(c67x00);
+व्योम c67x00_hcd_हटाओ(काष्ठा c67x00_sie *sie)
+अणु
+	काष्ठा c67x00_hcd *c67x00 = sie->निजी_data;
+	काष्ठा usb_hcd *hcd = c67x00_hcd_to_hcd(c67x00);
 
 	c67x00_sched_stop_scheduler(c67x00);
-	usb_remove_hcd(hcd);
+	usb_हटाओ_hcd(hcd);
 	usb_put_hcd(hcd);
-}
+पूर्ण

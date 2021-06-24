@@ -1,455 +1,456 @@
+<शैली गुरु>
 /*
  * Copyright (C) 2011 Red Hat, Inc.
  *
  * This file is released under the GPL.
  */
-#include "dm-transaction-manager.h"
-#include "dm-space-map.h"
-#include "dm-space-map-disk.h"
-#include "dm-space-map-metadata.h"
-#include "dm-persistent-data-internal.h"
+#समावेश "dm-transaction-manager.h"
+#समावेश "dm-space-map.h"
+#समावेश "dm-space-map-disk.h"
+#समावेश "dm-space-map-metadata.h"
+#समावेश "dm-persistent-data-internal.h"
 
-#include <linux/export.h>
-#include <linux/mutex.h>
-#include <linux/hash.h>
-#include <linux/slab.h>
-#include <linux/device-mapper.h>
+#समावेश <linux/export.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/hash.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/device-mapper.h>
 
-#define DM_MSG_PREFIX "transaction manager"
+#घोषणा DM_MSG_PREFIX "transaction manager"
 
 /*----------------------------------------------------------------*/
 
-#define PREFETCH_SIZE 128
-#define PREFETCH_BITS 7
-#define PREFETCH_SENTINEL ((dm_block_t) -1ULL)
+#घोषणा PREFETCH_SIZE 128
+#घोषणा PREFETCH_BITS 7
+#घोषणा PREFETCH_SENTINEL ((dm_block_t) -1ULL)
 
-struct prefetch_set {
-	struct mutex lock;
+काष्ठा prefetch_set अणु
+	काष्ठा mutex lock;
 	dm_block_t blocks[PREFETCH_SIZE];
-};
+पूर्ण;
 
-static unsigned prefetch_hash(dm_block_t b)
-{
-	return hash_64(b, PREFETCH_BITS);
-}
+अटल अचिन्हित prefetch_hash(dm_block_t b)
+अणु
+	वापस hash_64(b, PREFETCH_BITS);
+पूर्ण
 
-static void prefetch_wipe(struct prefetch_set *p)
-{
-	unsigned i;
-	for (i = 0; i < PREFETCH_SIZE; i++)
+अटल व्योम prefetch_wipe(काष्ठा prefetch_set *p)
+अणु
+	अचिन्हित i;
+	क्रम (i = 0; i < PREFETCH_SIZE; i++)
 		p->blocks[i] = PREFETCH_SENTINEL;
-}
+पूर्ण
 
-static void prefetch_init(struct prefetch_set *p)
-{
+अटल व्योम prefetch_init(काष्ठा prefetch_set *p)
+अणु
 	mutex_init(&p->lock);
 	prefetch_wipe(p);
-}
+पूर्ण
 
-static void prefetch_add(struct prefetch_set *p, dm_block_t b)
-{
-	unsigned h = prefetch_hash(b);
+अटल व्योम prefetch_add(काष्ठा prefetch_set *p, dm_block_t b)
+अणु
+	अचिन्हित h = prefetch_hash(b);
 
 	mutex_lock(&p->lock);
-	if (p->blocks[h] == PREFETCH_SENTINEL)
+	अगर (p->blocks[h] == PREFETCH_SENTINEL)
 		p->blocks[h] = b;
 
 	mutex_unlock(&p->lock);
-}
+पूर्ण
 
-static void prefetch_issue(struct prefetch_set *p, struct dm_block_manager *bm)
-{
-	unsigned i;
+अटल व्योम prefetch_issue(काष्ठा prefetch_set *p, काष्ठा dm_block_manager *bm)
+अणु
+	अचिन्हित i;
 
 	mutex_lock(&p->lock);
 
-	for (i = 0; i < PREFETCH_SIZE; i++)
-		if (p->blocks[i] != PREFETCH_SENTINEL) {
+	क्रम (i = 0; i < PREFETCH_SIZE; i++)
+		अगर (p->blocks[i] != PREFETCH_SENTINEL) अणु
 			dm_bm_prefetch(bm, p->blocks[i]);
 			p->blocks[i] = PREFETCH_SENTINEL;
-		}
+		पूर्ण
 
 	mutex_unlock(&p->lock);
-}
+पूर्ण
 
 /*----------------------------------------------------------------*/
 
-struct shadow_info {
-	struct hlist_node hlist;
+काष्ठा shaकरोw_info अणु
+	काष्ठा hlist_node hlist;
 	dm_block_t where;
-};
+पूर्ण;
 
 /*
- * It would be nice if we scaled with the size of transaction.
+ * It would be nice अगर we scaled with the size of transaction.
  */
-#define DM_HASH_SIZE 256
-#define DM_HASH_MASK (DM_HASH_SIZE - 1)
+#घोषणा DM_HASH_SIZE 256
+#घोषणा DM_HASH_MASK (DM_HASH_SIZE - 1)
 
-struct dm_transaction_manager {
-	int is_clone;
-	struct dm_transaction_manager *real;
+काष्ठा dm_transaction_manager अणु
+	पूर्णांक is_clone;
+	काष्ठा dm_transaction_manager *real;
 
-	struct dm_block_manager *bm;
-	struct dm_space_map *sm;
+	काष्ठा dm_block_manager *bm;
+	काष्ठा dm_space_map *sm;
 
 	spinlock_t lock;
-	struct hlist_head buckets[DM_HASH_SIZE];
+	काष्ठा hlist_head buckets[DM_HASH_SIZE];
 
-	struct prefetch_set prefetches;
-};
+	काष्ठा prefetch_set prefetches;
+पूर्ण;
 
 /*----------------------------------------------------------------*/
 
-static int is_shadow(struct dm_transaction_manager *tm, dm_block_t b)
-{
-	int r = 0;
-	unsigned bucket = dm_hash_block(b, DM_HASH_MASK);
-	struct shadow_info *si;
+अटल पूर्णांक is_shaकरोw(काष्ठा dm_transaction_manager *पंचांग, dm_block_t b)
+अणु
+	पूर्णांक r = 0;
+	अचिन्हित bucket = dm_hash_block(b, DM_HASH_MASK);
+	काष्ठा shaकरोw_info *si;
 
-	spin_lock(&tm->lock);
-	hlist_for_each_entry(si, tm->buckets + bucket, hlist)
-		if (si->where == b) {
+	spin_lock(&पंचांग->lock);
+	hlist_क्रम_each_entry(si, पंचांग->buckets + bucket, hlist)
+		अगर (si->where == b) अणु
 			r = 1;
-			break;
-		}
-	spin_unlock(&tm->lock);
+			अवरोध;
+		पूर्ण
+	spin_unlock(&पंचांग->lock);
 
-	return r;
-}
+	वापस r;
+पूर्ण
 
 /*
- * This can silently fail if there's no memory.  We're ok with this since
- * creating redundant shadows causes no harm.
+ * This can silently fail अगर there's no memory.  We're ok with this since
+ * creating redundant shaकरोws causes no harm.
  */
-static void insert_shadow(struct dm_transaction_manager *tm, dm_block_t b)
-{
-	unsigned bucket;
-	struct shadow_info *si;
+अटल व्योम insert_shaकरोw(काष्ठा dm_transaction_manager *पंचांग, dm_block_t b)
+अणु
+	अचिन्हित bucket;
+	काष्ठा shaकरोw_info *si;
 
-	si = kmalloc(sizeof(*si), GFP_NOIO);
-	if (si) {
+	si = kदो_स्मृति(माप(*si), GFP_NOIO);
+	अगर (si) अणु
 		si->where = b;
 		bucket = dm_hash_block(b, DM_HASH_MASK);
-		spin_lock(&tm->lock);
-		hlist_add_head(&si->hlist, tm->buckets + bucket);
-		spin_unlock(&tm->lock);
-	}
-}
+		spin_lock(&पंचांग->lock);
+		hlist_add_head(&si->hlist, पंचांग->buckets + bucket);
+		spin_unlock(&पंचांग->lock);
+	पूर्ण
+पूर्ण
 
-static void wipe_shadow_table(struct dm_transaction_manager *tm)
-{
-	struct shadow_info *si;
-	struct hlist_node *tmp;
-	struct hlist_head *bucket;
-	int i;
+अटल व्योम wipe_shaकरोw_table(काष्ठा dm_transaction_manager *पंचांग)
+अणु
+	काष्ठा shaकरोw_info *si;
+	काष्ठा hlist_node *पंचांगp;
+	काष्ठा hlist_head *bucket;
+	पूर्णांक i;
 
-	spin_lock(&tm->lock);
-	for (i = 0; i < DM_HASH_SIZE; i++) {
-		bucket = tm->buckets + i;
-		hlist_for_each_entry_safe(si, tmp, bucket, hlist)
-			kfree(si);
+	spin_lock(&पंचांग->lock);
+	क्रम (i = 0; i < DM_HASH_SIZE; i++) अणु
+		bucket = पंचांग->buckets + i;
+		hlist_क्रम_each_entry_safe(si, पंचांगp, bucket, hlist)
+			kमुक्त(si);
 
 		INIT_HLIST_HEAD(bucket);
-	}
+	पूर्ण
 
-	spin_unlock(&tm->lock);
-}
+	spin_unlock(&पंचांग->lock);
+पूर्ण
 
 /*----------------------------------------------------------------*/
 
-static struct dm_transaction_manager *dm_tm_create(struct dm_block_manager *bm,
-						   struct dm_space_map *sm)
-{
-	int i;
-	struct dm_transaction_manager *tm;
+अटल काष्ठा dm_transaction_manager *dm_पंचांग_create(काष्ठा dm_block_manager *bm,
+						   काष्ठा dm_space_map *sm)
+अणु
+	पूर्णांक i;
+	काष्ठा dm_transaction_manager *पंचांग;
 
-	tm = kmalloc(sizeof(*tm), GFP_KERNEL);
-	if (!tm)
-		return ERR_PTR(-ENOMEM);
+	पंचांग = kदो_स्मृति(माप(*पंचांग), GFP_KERNEL);
+	अगर (!पंचांग)
+		वापस ERR_PTR(-ENOMEM);
 
-	tm->is_clone = 0;
-	tm->real = NULL;
-	tm->bm = bm;
-	tm->sm = sm;
+	पंचांग->is_clone = 0;
+	पंचांग->real = शून्य;
+	पंचांग->bm = bm;
+	पंचांग->sm = sm;
 
-	spin_lock_init(&tm->lock);
-	for (i = 0; i < DM_HASH_SIZE; i++)
-		INIT_HLIST_HEAD(tm->buckets + i);
+	spin_lock_init(&पंचांग->lock);
+	क्रम (i = 0; i < DM_HASH_SIZE; i++)
+		INIT_HLIST_HEAD(पंचांग->buckets + i);
 
-	prefetch_init(&tm->prefetches);
+	prefetch_init(&पंचांग->prefetches);
 
-	return tm;
-}
+	वापस पंचांग;
+पूर्ण
 
-struct dm_transaction_manager *dm_tm_create_non_blocking_clone(struct dm_transaction_manager *real)
-{
-	struct dm_transaction_manager *tm;
+काष्ठा dm_transaction_manager *dm_पंचांग_create_non_blocking_clone(काष्ठा dm_transaction_manager *real)
+अणु
+	काष्ठा dm_transaction_manager *पंचांग;
 
-	tm = kmalloc(sizeof(*tm), GFP_KERNEL);
-	if (tm) {
-		tm->is_clone = 1;
-		tm->real = real;
-	}
+	पंचांग = kदो_स्मृति(माप(*पंचांग), GFP_KERNEL);
+	अगर (पंचांग) अणु
+		पंचांग->is_clone = 1;
+		पंचांग->real = real;
+	पूर्ण
 
-	return tm;
-}
-EXPORT_SYMBOL_GPL(dm_tm_create_non_blocking_clone);
+	वापस पंचांग;
+पूर्ण
+EXPORT_SYMBOL_GPL(dm_पंचांग_create_non_blocking_clone);
 
-void dm_tm_destroy(struct dm_transaction_manager *tm)
-{
-	if (!tm->is_clone)
-		wipe_shadow_table(tm);
+व्योम dm_पंचांग_destroy(काष्ठा dm_transaction_manager *पंचांग)
+अणु
+	अगर (!पंचांग->is_clone)
+		wipe_shaकरोw_table(पंचांग);
 
-	kfree(tm);
-}
-EXPORT_SYMBOL_GPL(dm_tm_destroy);
+	kमुक्त(पंचांग);
+पूर्ण
+EXPORT_SYMBOL_GPL(dm_पंचांग_destroy);
 
-int dm_tm_pre_commit(struct dm_transaction_manager *tm)
-{
-	int r;
+पूर्णांक dm_पंचांग_pre_commit(काष्ठा dm_transaction_manager *पंचांग)
+अणु
+	पूर्णांक r;
 
-	if (tm->is_clone)
-		return -EWOULDBLOCK;
+	अगर (पंचांग->is_clone)
+		वापस -EWOULDBLOCK;
 
-	r = dm_sm_commit(tm->sm);
-	if (r < 0)
-		return r;
+	r = dm_sm_commit(पंचांग->sm);
+	अगर (r < 0)
+		वापस r;
 
-	return dm_bm_flush(tm->bm);
-}
-EXPORT_SYMBOL_GPL(dm_tm_pre_commit);
+	वापस dm_bm_flush(पंचांग->bm);
+पूर्ण
+EXPORT_SYMBOL_GPL(dm_पंचांग_pre_commit);
 
-int dm_tm_commit(struct dm_transaction_manager *tm, struct dm_block *root)
-{
-	if (tm->is_clone)
-		return -EWOULDBLOCK;
+पूर्णांक dm_पंचांग_commit(काष्ठा dm_transaction_manager *पंचांग, काष्ठा dm_block *root)
+अणु
+	अगर (पंचांग->is_clone)
+		वापस -EWOULDBLOCK;
 
-	wipe_shadow_table(tm);
+	wipe_shaकरोw_table(पंचांग);
 	dm_bm_unlock(root);
 
-	return dm_bm_flush(tm->bm);
-}
-EXPORT_SYMBOL_GPL(dm_tm_commit);
+	वापस dm_bm_flush(पंचांग->bm);
+पूर्ण
+EXPORT_SYMBOL_GPL(dm_पंचांग_commit);
 
-int dm_tm_new_block(struct dm_transaction_manager *tm,
-		    struct dm_block_validator *v,
-		    struct dm_block **result)
-{
-	int r;
+पूर्णांक dm_पंचांग_new_block(काष्ठा dm_transaction_manager *पंचांग,
+		    काष्ठा dm_block_validator *v,
+		    काष्ठा dm_block **result)
+अणु
+	पूर्णांक r;
 	dm_block_t new_block;
 
-	if (tm->is_clone)
-		return -EWOULDBLOCK;
+	अगर (पंचांग->is_clone)
+		वापस -EWOULDBLOCK;
 
-	r = dm_sm_new_block(tm->sm, &new_block);
-	if (r < 0)
-		return r;
+	r = dm_sm_new_block(पंचांग->sm, &new_block);
+	अगर (r < 0)
+		वापस r;
 
-	r = dm_bm_write_lock_zero(tm->bm, new_block, v, result);
-	if (r < 0) {
-		dm_sm_dec_block(tm->sm, new_block);
-		return r;
-	}
+	r = dm_bm_ग_लिखो_lock_zero(पंचांग->bm, new_block, v, result);
+	अगर (r < 0) अणु
+		dm_sm_dec_block(पंचांग->sm, new_block);
+		वापस r;
+	पूर्ण
 
 	/*
-	 * New blocks count as shadows in that they don't need to be
-	 * shadowed again.
+	 * New blocks count as shaकरोws in that they करोn't need to be
+	 * shaकरोwed again.
 	 */
-	insert_shadow(tm, new_block);
+	insert_shaकरोw(पंचांग, new_block);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __shadow_block(struct dm_transaction_manager *tm, dm_block_t orig,
-			  struct dm_block_validator *v,
-			  struct dm_block **result)
-{
-	int r;
+अटल पूर्णांक __shaकरोw_block(काष्ठा dm_transaction_manager *पंचांग, dm_block_t orig,
+			  काष्ठा dm_block_validator *v,
+			  काष्ठा dm_block **result)
+अणु
+	पूर्णांक r;
 	dm_block_t new;
-	struct dm_block *orig_block;
+	काष्ठा dm_block *orig_block;
 
-	r = dm_sm_new_block(tm->sm, &new);
-	if (r < 0)
-		return r;
+	r = dm_sm_new_block(पंचांग->sm, &new);
+	अगर (r < 0)
+		वापस r;
 
-	r = dm_sm_dec_block(tm->sm, orig);
-	if (r < 0)
-		return r;
+	r = dm_sm_dec_block(पंचांग->sm, orig);
+	अगर (r < 0)
+		वापस r;
 
-	r = dm_bm_read_lock(tm->bm, orig, v, &orig_block);
-	if (r < 0)
-		return r;
+	r = dm_bm_पढ़ो_lock(पंचांग->bm, orig, v, &orig_block);
+	अगर (r < 0)
+		वापस r;
 
 	/*
 	 * It would be tempting to use dm_bm_unlock_move here, but some
-	 * code, such as the space maps, keeps using the old data structures
+	 * code, such as the space maps, keeps using the old data काष्ठाures
 	 * secure in the knowledge they won't be changed until the next
-	 * transaction.  Using unlock_move would force a synchronous read
-	 * since the old block would no longer be in the cache.
+	 * transaction.  Using unlock_move would क्रमce a synchronous पढ़ो
+	 * since the old block would no दीर्घer be in the cache.
 	 */
-	r = dm_bm_write_lock_zero(tm->bm, new, v, result);
-	if (r) {
+	r = dm_bm_ग_लिखो_lock_zero(पंचांग->bm, new, v, result);
+	अगर (r) अणु
 		dm_bm_unlock(orig_block);
-		return r;
-	}
+		वापस r;
+	पूर्ण
 
-	memcpy(dm_block_data(*result), dm_block_data(orig_block),
-	       dm_bm_block_size(tm->bm));
+	स_नकल(dm_block_data(*result), dm_block_data(orig_block),
+	       dm_bm_block_size(पंचांग->bm));
 
 	dm_bm_unlock(orig_block);
-	return r;
-}
+	वापस r;
+पूर्ण
 
-int dm_tm_shadow_block(struct dm_transaction_manager *tm, dm_block_t orig,
-		       struct dm_block_validator *v, struct dm_block **result,
-		       int *inc_children)
-{
-	int r;
+पूर्णांक dm_पंचांग_shaकरोw_block(काष्ठा dm_transaction_manager *पंचांग, dm_block_t orig,
+		       काष्ठा dm_block_validator *v, काष्ठा dm_block **result,
+		       पूर्णांक *inc_children)
+अणु
+	पूर्णांक r;
 
-	if (tm->is_clone)
-		return -EWOULDBLOCK;
+	अगर (पंचांग->is_clone)
+		वापस -EWOULDBLOCK;
 
-	r = dm_sm_count_is_more_than_one(tm->sm, orig, inc_children);
-	if (r < 0)
-		return r;
+	r = dm_sm_count_is_more_than_one(पंचांग->sm, orig, inc_children);
+	अगर (r < 0)
+		वापस r;
 
-	if (is_shadow(tm, orig) && !*inc_children)
-		return dm_bm_write_lock(tm->bm, orig, v, result);
+	अगर (is_shaकरोw(पंचांग, orig) && !*inc_children)
+		वापस dm_bm_ग_लिखो_lock(पंचांग->bm, orig, v, result);
 
-	r = __shadow_block(tm, orig, v, result);
-	if (r < 0)
-		return r;
-	insert_shadow(tm, dm_block_location(*result));
+	r = __shaकरोw_block(पंचांग, orig, v, result);
+	अगर (r < 0)
+		वापस r;
+	insert_shaकरोw(पंचांग, dm_block_location(*result));
 
-	return r;
-}
-EXPORT_SYMBOL_GPL(dm_tm_shadow_block);
+	वापस r;
+पूर्ण
+EXPORT_SYMBOL_GPL(dm_पंचांग_shaकरोw_block);
 
-int dm_tm_read_lock(struct dm_transaction_manager *tm, dm_block_t b,
-		    struct dm_block_validator *v,
-		    struct dm_block **blk)
-{
-	if (tm->is_clone) {
-		int r = dm_bm_read_try_lock(tm->real->bm, b, v, blk);
+पूर्णांक dm_पंचांग_पढ़ो_lock(काष्ठा dm_transaction_manager *पंचांग, dm_block_t b,
+		    काष्ठा dm_block_validator *v,
+		    काष्ठा dm_block **blk)
+अणु
+	अगर (पंचांग->is_clone) अणु
+		पूर्णांक r = dm_bm_पढ़ो_try_lock(पंचांग->real->bm, b, v, blk);
 
-		if (r == -EWOULDBLOCK)
-			prefetch_add(&tm->real->prefetches, b);
+		अगर (r == -EWOULDBLOCK)
+			prefetch_add(&पंचांग->real->prefetches, b);
 
-		return r;
-	}
+		वापस r;
+	पूर्ण
 
-	return dm_bm_read_lock(tm->bm, b, v, blk);
-}
-EXPORT_SYMBOL_GPL(dm_tm_read_lock);
+	वापस dm_bm_पढ़ो_lock(पंचांग->bm, b, v, blk);
+पूर्ण
+EXPORT_SYMBOL_GPL(dm_पंचांग_पढ़ो_lock);
 
-void dm_tm_unlock(struct dm_transaction_manager *tm, struct dm_block *b)
-{
+व्योम dm_पंचांग_unlock(काष्ठा dm_transaction_manager *पंचांग, काष्ठा dm_block *b)
+अणु
 	dm_bm_unlock(b);
-}
-EXPORT_SYMBOL_GPL(dm_tm_unlock);
+पूर्ण
+EXPORT_SYMBOL_GPL(dm_पंचांग_unlock);
 
-void dm_tm_inc(struct dm_transaction_manager *tm, dm_block_t b)
-{
+व्योम dm_पंचांग_inc(काष्ठा dm_transaction_manager *पंचांग, dm_block_t b)
+अणु
 	/*
-	 * The non-blocking clone doesn't support this.
+	 * The non-blocking clone करोesn't support this.
 	 */
-	BUG_ON(tm->is_clone);
+	BUG_ON(पंचांग->is_clone);
 
-	dm_sm_inc_block(tm->sm, b);
-}
-EXPORT_SYMBOL_GPL(dm_tm_inc);
+	dm_sm_inc_block(पंचांग->sm, b);
+पूर्ण
+EXPORT_SYMBOL_GPL(dm_पंचांग_inc);
 
-void dm_tm_dec(struct dm_transaction_manager *tm, dm_block_t b)
-{
+व्योम dm_पंचांग_dec(काष्ठा dm_transaction_manager *पंचांग, dm_block_t b)
+अणु
 	/*
-	 * The non-blocking clone doesn't support this.
+	 * The non-blocking clone करोesn't support this.
 	 */
-	BUG_ON(tm->is_clone);
+	BUG_ON(पंचांग->is_clone);
 
-	dm_sm_dec_block(tm->sm, b);
-}
-EXPORT_SYMBOL_GPL(dm_tm_dec);
+	dm_sm_dec_block(पंचांग->sm, b);
+पूर्ण
+EXPORT_SYMBOL_GPL(dm_पंचांग_dec);
 
-int dm_tm_ref(struct dm_transaction_manager *tm, dm_block_t b,
-	      uint32_t *result)
-{
-	if (tm->is_clone)
-		return -EWOULDBLOCK;
+पूर्णांक dm_पंचांग_ref(काष्ठा dm_transaction_manager *पंचांग, dm_block_t b,
+	      uपूर्णांक32_t *result)
+अणु
+	अगर (पंचांग->is_clone)
+		वापस -EWOULDBLOCK;
 
-	return dm_sm_get_count(tm->sm, b, result);
-}
+	वापस dm_sm_get_count(पंचांग->sm, b, result);
+पूर्ण
 
-struct dm_block_manager *dm_tm_get_bm(struct dm_transaction_manager *tm)
-{
-	return tm->bm;
-}
+काष्ठा dm_block_manager *dm_पंचांग_get_bm(काष्ठा dm_transaction_manager *पंचांग)
+अणु
+	वापस पंचांग->bm;
+पूर्ण
 
-void dm_tm_issue_prefetches(struct dm_transaction_manager *tm)
-{
-	prefetch_issue(&tm->prefetches, tm->bm);
-}
-EXPORT_SYMBOL_GPL(dm_tm_issue_prefetches);
+व्योम dm_पंचांग_issue_prefetches(काष्ठा dm_transaction_manager *पंचांग)
+अणु
+	prefetch_issue(&पंचांग->prefetches, पंचांग->bm);
+पूर्ण
+EXPORT_SYMBOL_GPL(dm_पंचांग_issue_prefetches);
 
 /*----------------------------------------------------------------*/
 
-static int dm_tm_create_internal(struct dm_block_manager *bm,
+अटल पूर्णांक dm_पंचांग_create_पूर्णांकernal(काष्ठा dm_block_manager *bm,
 				 dm_block_t sb_location,
-				 struct dm_transaction_manager **tm,
-				 struct dm_space_map **sm,
-				 int create,
-				 void *sm_root, size_t sm_len)
-{
-	int r;
+				 काष्ठा dm_transaction_manager **पंचांग,
+				 काष्ठा dm_space_map **sm,
+				 पूर्णांक create,
+				 व्योम *sm_root, माप_प्रकार sm_len)
+अणु
+	पूर्णांक r;
 
 	*sm = dm_sm_metadata_init();
-	if (IS_ERR(*sm))
-		return PTR_ERR(*sm);
+	अगर (IS_ERR(*sm))
+		वापस PTR_ERR(*sm);
 
-	*tm = dm_tm_create(bm, *sm);
-	if (IS_ERR(*tm)) {
+	*पंचांग = dm_पंचांग_create(bm, *sm);
+	अगर (IS_ERR(*पंचांग)) अणु
 		dm_sm_destroy(*sm);
-		return PTR_ERR(*tm);
-	}
+		वापस PTR_ERR(*पंचांग);
+	पूर्ण
 
-	if (create) {
-		r = dm_sm_metadata_create(*sm, *tm, dm_bm_nr_blocks(bm),
+	अगर (create) अणु
+		r = dm_sm_metadata_create(*sm, *पंचांग, dm_bm_nr_blocks(bm),
 					  sb_location);
-		if (r) {
+		अगर (r) अणु
 			DMERR("couldn't create metadata space map");
-			goto bad;
-		}
+			जाओ bad;
+		पूर्ण
 
-	} else {
-		r = dm_sm_metadata_open(*sm, *tm, sm_root, sm_len);
-		if (r) {
+	पूर्ण अन्यथा अणु
+		r = dm_sm_metadata_खोलो(*sm, *पंचांग, sm_root, sm_len);
+		अगर (r) अणु
 			DMERR("couldn't open metadata space map");
-			goto bad;
-		}
-	}
+			जाओ bad;
+		पूर्ण
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 bad:
-	dm_tm_destroy(*tm);
+	dm_पंचांग_destroy(*पंचांग);
 	dm_sm_destroy(*sm);
-	return r;
-}
+	वापस r;
+पूर्ण
 
-int dm_tm_create_with_sm(struct dm_block_manager *bm, dm_block_t sb_location,
-			 struct dm_transaction_manager **tm,
-			 struct dm_space_map **sm)
-{
-	return dm_tm_create_internal(bm, sb_location, tm, sm, 1, NULL, 0);
-}
-EXPORT_SYMBOL_GPL(dm_tm_create_with_sm);
+पूर्णांक dm_पंचांग_create_with_sm(काष्ठा dm_block_manager *bm, dm_block_t sb_location,
+			 काष्ठा dm_transaction_manager **पंचांग,
+			 काष्ठा dm_space_map **sm)
+अणु
+	वापस dm_पंचांग_create_पूर्णांकernal(bm, sb_location, पंचांग, sm, 1, शून्य, 0);
+पूर्ण
+EXPORT_SYMBOL_GPL(dm_पंचांग_create_with_sm);
 
-int dm_tm_open_with_sm(struct dm_block_manager *bm, dm_block_t sb_location,
-		       void *sm_root, size_t root_len,
-		       struct dm_transaction_manager **tm,
-		       struct dm_space_map **sm)
-{
-	return dm_tm_create_internal(bm, sb_location, tm, sm, 0, sm_root, root_len);
-}
-EXPORT_SYMBOL_GPL(dm_tm_open_with_sm);
+पूर्णांक dm_पंचांग_खोलो_with_sm(काष्ठा dm_block_manager *bm, dm_block_t sb_location,
+		       व्योम *sm_root, माप_प्रकार root_len,
+		       काष्ठा dm_transaction_manager **पंचांग,
+		       काष्ठा dm_space_map **sm)
+अणु
+	वापस dm_पंचांग_create_पूर्णांकernal(bm, sb_location, पंचांग, sm, 0, sm_root, root_len);
+पूर्ण
+EXPORT_SYMBOL_GPL(dm_पंचांग_खोलो_with_sm);
 
 /*----------------------------------------------------------------*/

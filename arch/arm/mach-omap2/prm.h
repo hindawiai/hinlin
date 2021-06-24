@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * OMAP2/3/4 Power/Reset Management (PRM) bitfield definitions
  *
@@ -7,40 +8,40 @@
  *
  * Paul Walmsley
  */
-#ifndef __ARCH_ARM_MACH_OMAP2_PRM_H
-#define __ARCH_ARM_MACH_OMAP2_PRM_H
+#अगर_अघोषित __ARCH_ARM_MACH_OMAP2_PRM_H
+#घोषणा __ARCH_ARM_MACH_OMAP2_PRM_H
 
-#include "prcm-common.h"
+#समावेश "prcm-common.h"
 
-# ifndef __ASSEMBLER__
-extern struct omap_domain_base prm_base;
-extern u16 prm_features;
-extern void omap2_set_globals_prm(void __iomem *prm);
-int omap_prcm_init(void);
-int omap2_prm_base_init(void);
-int omap2_prcm_base_init(void);
-# endif
+# अगरndef __ASSEMBLER__
+बाह्य काष्ठा omap_करोमुख्य_base prm_base;
+बाह्य u16 prm_features;
+बाह्य व्योम omap2_set_globals_prm(व्योम __iomem *prm);
+पूर्णांक omap_prcm_init(व्योम);
+पूर्णांक omap2_prm_base_init(व्योम);
+पूर्णांक omap2_prcm_base_init(व्योम);
+# endअगर
 
 /*
  * prm_features flag values
  *
  * PRM_HAS_IO_WAKEUP: has IO wakeup capability
- * PRM_HAS_VOLTAGE: has voltage domains
+ * PRM_HAS_VOLTAGE: has voltage करोमुख्यs
  */
-#define PRM_HAS_IO_WAKEUP	BIT(0)
-#define PRM_HAS_VOLTAGE		BIT(1)
+#घोषणा PRM_HAS_IO_WAKEUP	BIT(0)
+#घोषणा PRM_HAS_VOLTAGE		BIT(1)
 
 /*
- * MAX_MODULE_SOFTRESET_WAIT: Maximum microseconds to wait for OMAP
+ * MAX_MODULE_SOFTRESET_WAIT: Maximum microseconds to रुको क्रम OMAP
  * module to softreset
  */
-#define MAX_MODULE_SOFTRESET_WAIT		10000
+#घोषणा MAX_MODULE_SOFTRESET_WAIT		10000
 
 /*
- * MAX_MODULE_HARDRESET_WAIT: Maximum microseconds to wait for an OMAP
- * submodule to exit hardreset
+ * MAX_MODULE_HARDRESET_WAIT: Maximum microseconds to रुको क्रम an OMAP
+ * submodule to निकास hardreset
  */
-#define MAX_MODULE_HARDRESET_WAIT		10000
+#घोषणा MAX_MODULE_HARDRESET_WAIT		10000
 
 /*
  * Register bitfields
@@ -55,7 +56,7 @@ int omap2_prcm_base_init(void);
  *	 PM_PWSTST_DSS, PM_PWSTST_CAM, PM_PWSTST_PER, PM_PWSTST_EMU,
  *	 PM_PWSTST_NEON
  */
-#define OMAP_INTRANSITION_MASK				(1 << 20)
+#घोषणा OMAP_INTRANSITION_MASK				(1 << 20)
 
 
 /*
@@ -67,8 +68,8 @@ int omap2_prcm_base_init(void);
  *	 PM_PWSTST_DSS, PM_PWSTST_CAM, PM_PWSTST_PER, PM_PWSTST_EMU,
  *	 PM_PWSTST_NEON
  */
-#define OMAP_POWERSTATEST_SHIFT				0
-#define OMAP_POWERSTATEST_MASK				(0x3 << 0)
+#घोषणा OMAP_POWERSTATEST_SHIFT				0
+#घोषणा OMAP_POWERSTATEST_MASK				(0x3 << 0)
 
 /*
  * 24XX: PM_PWSTCTRL_MPU, PM_PWSTCTRL_CORE, PM_PWSTCTRL_GFX,
@@ -80,103 +81,103 @@ int omap2_prcm_base_init(void);
  *	 PM_PWSTCTRL_GFX, PM_PWSTCTRL_DSS, PM_PWSTCTRL_CAM, PM_PWSTCTRL_PER,
  *	 PM_PWSTCTRL_NEON shared bits
  */
-#define OMAP_POWERSTATE_SHIFT				0
-#define OMAP_POWERSTATE_MASK				(0x3 << 0)
+#घोषणा OMAP_POWERSTATE_SHIFT				0
+#घोषणा OMAP_POWERSTATE_MASK				(0x3 << 0)
 
 /*
  * Standardized OMAP reset source bits
  *
- * To the extent these happen to match the hardware register bit
- * shifts, it's purely coincidental.  Used by omap-wdt.c.
+ * To the extent these happen to match the hardware रेजिस्टर bit
+ * shअगरts, it's purely coincidental.  Used by omap-wdt.c.
  * OMAP_UNKNOWN_RST_SRC_ID_SHIFT is a special value, used whenever
- * there are any bits remaining in the global PRM_RSTST register that
- * haven't been identified, or when the PRM code for the current SoC
- * doesn't know how to interpret the register.
+ * there are any bits reमुख्यing in the global PRM_RSTST रेजिस्टर that
+ * haven't been identअगरied, or when the PRM code क्रम the current SoC
+ * करोesn't know how to पूर्णांकerpret the रेजिस्टर.
  */
-#define OMAP_GLOBAL_COLD_RST_SRC_ID_SHIFT			0
-#define OMAP_GLOBAL_WARM_RST_SRC_ID_SHIFT			1
-#define OMAP_SECU_VIOL_RST_SRC_ID_SHIFT				2
-#define OMAP_MPU_WD_RST_SRC_ID_SHIFT				3
-#define OMAP_SECU_WD_RST_SRC_ID_SHIFT				4
-#define OMAP_EXTWARM_RST_SRC_ID_SHIFT				5
-#define OMAP_VDD_MPU_VM_RST_SRC_ID_SHIFT			6
-#define OMAP_VDD_IVA_VM_RST_SRC_ID_SHIFT			7
-#define OMAP_VDD_CORE_VM_RST_SRC_ID_SHIFT			8
-#define OMAP_ICEPICK_RST_SRC_ID_SHIFT				9
-#define OMAP_ICECRUSHER_RST_SRC_ID_SHIFT			10
-#define OMAP_C2C_RST_SRC_ID_SHIFT				11
-#define OMAP_UNKNOWN_RST_SRC_ID_SHIFT				12
+#घोषणा OMAP_GLOBAL_COLD_RST_SRC_ID_SHIFT			0
+#घोषणा OMAP_GLOBAL_WARM_RST_SRC_ID_SHIFT			1
+#घोषणा OMAP_SECU_VIOL_RST_SRC_ID_SHIFT				2
+#घोषणा OMAP_MPU_WD_RST_SRC_ID_SHIFT				3
+#घोषणा OMAP_SECU_WD_RST_SRC_ID_SHIFT				4
+#घोषणा OMAP_EXTWARM_RST_SRC_ID_SHIFT				5
+#घोषणा OMAP_VDD_MPU_VM_RST_SRC_ID_SHIFT			6
+#घोषणा OMAP_VDD_IVA_VM_RST_SRC_ID_SHIFT			7
+#घोषणा OMAP_VDD_CORE_VM_RST_SRC_ID_SHIFT			8
+#घोषणा OMAP_ICEPICK_RST_SRC_ID_SHIFT				9
+#घोषणा OMAP_ICECRUSHER_RST_SRC_ID_SHIFT			10
+#घोषणा OMAP_C2C_RST_SRC_ID_SHIFT				11
+#घोषणा OMAP_UNKNOWN_RST_SRC_ID_SHIFT				12
 
-#ifndef __ASSEMBLER__
+#अगर_अघोषित __ASSEMBLER__
 
 /**
- * struct prm_reset_src_map - map register bitshifts to standard bitshifts
- * @reg_shift: bitshift in the PRM reset source register
- * @std_shift: bitshift equivalent in the standard reset source list
+ * काष्ठा prm_reset_src_map - map रेजिस्टर bitshअगरts to standard bitshअगरts
+ * @reg_shअगरt: bitshअगरt in the PRM reset source रेजिस्टर
+ * @std_shअगरt: bitshअगरt equivalent in the standard reset source list
  *
- * The fields are signed because -1 is used as a terminator.
+ * The fields are चिन्हित because -1 is used as a terminator.
  */
-struct prm_reset_src_map {
-	s8 reg_shift;
-	s8 std_shift;
-};
+काष्ठा prm_reset_src_map अणु
+	s8 reg_shअगरt;
+	s8 std_shअगरt;
+पूर्ण;
 
 /**
- * struct prm_ll_data - fn ptrs to per-SoC PRM function implementations
- * @read_reset_sources: ptr to the SoC PRM-specific get_reset_source impl
+ * काष्ठा prm_ll_data - fn ptrs to per-SoC PRM function implementations
+ * @पढ़ो_reset_sources: ptr to the SoC PRM-specअगरic get_reset_source impl
  * @was_any_context_lost_old: ptr to the SoC PRM context loss test fn
  * @clear_context_loss_flags_old: ptr to the SoC PRM context loss flag clear fn
  * @late_init: ptr to the late init function
- * @assert_hardreset: ptr to the SoC PRM hardreset assert impl
- * @deassert_hardreset: ptr to the SoC PRM hardreset deassert impl
+ * @निश्चित_hardreset: ptr to the SoC PRM hardreset निश्चित impl
+ * @deनिश्चित_hardreset: ptr to the SoC PRM hardreset deनिश्चित impl
  *
  * XXX @was_any_context_lost_old and @clear_context_loss_flags_old are
  * deprecated.
  */
-struct prm_ll_data {
-	u32 (*read_reset_sources)(void);
+काष्ठा prm_ll_data अणु
+	u32 (*पढ़ो_reset_sources)(व्योम);
 	bool (*was_any_context_lost_old)(u8 part, s16 inst, u16 idx);
-	void (*clear_context_loss_flags_old)(u8 part, s16 inst, u16 idx);
-	int (*late_init)(void);
-	int (*assert_hardreset)(u8 shift, u8 part, s16 prm_mod, u16 offset);
-	int (*deassert_hardreset)(u8 shift, u8 st_shift, u8 part, s16 prm_mod,
+	व्योम (*clear_context_loss_flags_old)(u8 part, s16 inst, u16 idx);
+	पूर्णांक (*late_init)(व्योम);
+	पूर्णांक (*निश्चित_hardreset)(u8 shअगरt, u8 part, s16 prm_mod, u16 offset);
+	पूर्णांक (*deनिश्चित_hardreset)(u8 shअगरt, u8 st_shअगरt, u8 part, s16 prm_mod,
 				  u16 offset, u16 st_offset);
-	int (*is_hardreset_asserted)(u8 shift, u8 part, s16 prm_mod,
+	पूर्णांक (*is_hardreset_निश्चितed)(u8 shअगरt, u8 part, s16 prm_mod,
 				     u16 offset);
-	void (*reset_system)(void);
-	int (*clear_mod_irqs)(s16 module, u8 regs, u32 wkst_mask);
-	u32 (*vp_check_txdone)(u8 vp_id);
-	void (*vp_clear_txdone)(u8 vp_id);
-};
+	व्योम (*reset_प्रणाली)(व्योम);
+	पूर्णांक (*clear_mod_irqs)(s16 module, u8 regs, u32 wkst_mask);
+	u32 (*vp_check_txकरोne)(u8 vp_id);
+	व्योम (*vp_clear_txकरोne)(u8 vp_id);
+पूर्ण;
 
-extern int prm_register(struct prm_ll_data *pld);
-extern int prm_unregister(struct prm_ll_data *pld);
+बाह्य पूर्णांक prm_रेजिस्टर(काष्ठा prm_ll_data *pld);
+बाह्य पूर्णांक prm_unरेजिस्टर(काष्ठा prm_ll_data *pld);
 
-int omap_prm_assert_hardreset(u8 shift, u8 part, s16 prm_mod, u16 offset);
-int omap_prm_deassert_hardreset(u8 shift, u8 st_shift, u8 part, s16 prm_mod,
+पूर्णांक omap_prm_निश्चित_hardreset(u8 shअगरt, u8 part, s16 prm_mod, u16 offset);
+पूर्णांक omap_prm_deनिश्चित_hardreset(u8 shअगरt, u8 st_shअगरt, u8 part, s16 prm_mod,
 				u16 offset, u16 st_offset);
-int omap_prm_is_hardreset_asserted(u8 shift, u8 part, s16 prm_mod, u16 offset);
-extern u32 prm_read_reset_sources(void);
-extern bool prm_was_any_context_lost_old(u8 part, s16 inst, u16 idx);
-extern void prm_clear_context_loss_flags_old(u8 part, s16 inst, u16 idx);
-void omap_prm_reset_system(void);
+पूर्णांक omap_prm_is_hardreset_निश्चितed(u8 shअगरt, u8 part, s16 prm_mod, u16 offset);
+बाह्य u32 prm_पढ़ो_reset_sources(व्योम);
+बाह्य bool prm_was_any_context_lost_old(u8 part, s16 inst, u16 idx);
+बाह्य व्योम prm_clear_context_loss_flags_old(u8 part, s16 inst, u16 idx);
+व्योम omap_prm_reset_प्रणाली(व्योम);
 
-void omap_prm_reconfigure_io_chain(void);
-int omap_prm_clear_mod_irqs(s16 module, u8 regs, u32 wkst_mask);
+व्योम omap_prm_reconfigure_io_chain(व्योम);
+पूर्णांक omap_prm_clear_mod_irqs(s16 module, u8 regs, u32 wkst_mask);
 
 /*
- * Voltage Processor (VP) identifiers
+ * Voltage Processor (VP) identअगरiers
  */
-#define OMAP3_VP_VDD_MPU_ID	0
-#define OMAP3_VP_VDD_CORE_ID	1
-#define OMAP4_VP_VDD_CORE_ID	0
-#define OMAP4_VP_VDD_IVA_ID	1
-#define OMAP4_VP_VDD_MPU_ID	2
+#घोषणा OMAP3_VP_VDD_MPU_ID	0
+#घोषणा OMAP3_VP_VDD_CORE_ID	1
+#घोषणा OMAP4_VP_VDD_CORE_ID	0
+#घोषणा OMAP4_VP_VDD_IVA_ID	1
+#घोषणा OMAP4_VP_VDD_MPU_ID	2
 
-u32 omap_prm_vp_check_txdone(u8 vp_id);
-void omap_prm_vp_clear_txdone(u8 vp_id);
+u32 omap_prm_vp_check_txकरोne(u8 vp_id);
+व्योम omap_prm_vp_clear_txकरोne(u8 vp_id);
 
-#endif
+#पूर्ण_अगर
 
 
-#endif
+#पूर्ण_अगर

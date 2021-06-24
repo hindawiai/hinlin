@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /* drivers/video/backlight/ili9320.c
  *
  * ILI9320 LCD controller driver core.
@@ -8,28 +9,28 @@
  *	Ben Dooks <ben@simtec.co.uk>
 */
 
-#include <linux/delay.h>
-#include <linux/err.h>
-#include <linux/fb.h>
-#include <linux/init.h>
-#include <linux/lcd.h>
-#include <linux/module.h>
-#include <linux/slab.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/err.h>
+#समावेश <linux/fb.h>
+#समावेश <linux/init.h>
+#समावेश <linux/lcd.h>
+#समावेश <linux/module.h>
+#समावेश <linux/slab.h>
 
-#include <linux/spi/spi.h>
+#समावेश <linux/spi/spi.h>
 
-#include <video/ili9320.h>
+#समावेश <video/ili9320.h>
 
-#include "ili9320.h"
+#समावेश "ili9320.h"
 
 
-static inline int ili9320_write_spi(struct ili9320 *ili,
-				    unsigned int reg,
-				    unsigned int value)
-{
-	struct ili9320_spi *spi = &ili->access.spi;
-	unsigned char *addr = spi->buffer_addr;
-	unsigned char *data = spi->buffer_data;
+अटल अंतरभूत पूर्णांक ili9320_ग_लिखो_spi(काष्ठा ili9320 *ili,
+				    अचिन्हित पूर्णांक reg,
+				    अचिन्हित पूर्णांक value)
+अणु
+	काष्ठा ili9320_spi *spi = &ili->access.spi;
+	अचिन्हित अक्षर *addr = spi->buffer_addr;
+	अचिन्हित अक्षर *data = spi->buffer_data;
 
 	/* spi message consits of:
 	 * first byte: ID and operation
@@ -45,36 +46,36 @@ static inline int ili9320_write_spi(struct ili9320 *ili,
 	data[1] = value >> 8;
 	data[2] = value;
 
-	return spi_sync(spi->dev, &spi->message);
-}
+	वापस spi_sync(spi->dev, &spi->message);
+पूर्ण
 
-int ili9320_write(struct ili9320 *ili, unsigned int reg, unsigned int value)
-{
+पूर्णांक ili9320_ग_लिखो(काष्ठा ili9320 *ili, अचिन्हित पूर्णांक reg, अचिन्हित पूर्णांक value)
+अणु
 	dev_dbg(ili->dev, "write: reg=%02x, val=%04x\n", reg, value);
-	return ili->write(ili, reg, value);
-}
-EXPORT_SYMBOL_GPL(ili9320_write);
+	वापस ili->ग_लिखो(ili, reg, value);
+पूर्ण
+EXPORT_SYMBOL_GPL(ili9320_ग_लिखो);
 
-int ili9320_write_regs(struct ili9320 *ili,
-		       const struct ili9320_reg *values,
-		       int nr_values)
-{
-	int index;
-	int ret;
+पूर्णांक ili9320_ग_लिखो_regs(काष्ठा ili9320 *ili,
+		       स्थिर काष्ठा ili9320_reg *values,
+		       पूर्णांक nr_values)
+अणु
+	पूर्णांक index;
+	पूर्णांक ret;
 
-	for (index = 0; index < nr_values; index++, values++) {
-		ret = ili9320_write(ili, values->address, values->value);
-		if (ret != 0)
-			return ret;
-	}
+	क्रम (index = 0; index < nr_values; index++, values++) अणु
+		ret = ili9320_ग_लिखो(ili, values->address, values->value);
+		अगर (ret != 0)
+			वापस ret;
+	पूर्ण
 
-	return 0;
-}
-EXPORT_SYMBOL_GPL(ili9320_write_regs);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL_GPL(ili9320_ग_लिखो_regs);
 
-static void ili9320_reset(struct ili9320 *lcd)
-{
-	struct ili9320_platdata *cfg = lcd->platdata;
+अटल व्योम ili9320_reset(काष्ठा ili9320 *lcd)
+अणु
+	काष्ठा ili9320_platdata *cfg = lcd->platdata;
 
 	cfg->reset(1);
 	mdelay(50);
@@ -84,99 +85,99 @@ static void ili9320_reset(struct ili9320 *lcd)
 
 	cfg->reset(1);
 	mdelay(100);
-}
+पूर्ण
 
-static inline int ili9320_init_chip(struct ili9320 *lcd)
-{
-	int ret;
+अटल अंतरभूत पूर्णांक ili9320_init_chip(काष्ठा ili9320 *lcd)
+अणु
+	पूर्णांक ret;
 
 	ili9320_reset(lcd);
 
 	ret = lcd->client->init(lcd, lcd->platdata);
-	if (ret != 0) {
+	अगर (ret != 0) अणु
 		dev_err(lcd->dev, "failed to initialise display\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	lcd->initialised = 1;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static inline int ili9320_power_on(struct ili9320 *lcd)
-{
-	if (!lcd->initialised)
+अटल अंतरभूत पूर्णांक ili9320_घातer_on(काष्ठा ili9320 *lcd)
+अणु
+	अगर (!lcd->initialised)
 		ili9320_init_chip(lcd);
 
 	lcd->display1 |= (ILI9320_DISPLAY1_D(3) | ILI9320_DISPLAY1_BASEE);
-	ili9320_write(lcd, ILI9320_DISPLAY1, lcd->display1);
+	ili9320_ग_लिखो(lcd, ILI9320_DISPLAY1, lcd->display1);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static inline int ili9320_power_off(struct ili9320 *lcd)
-{
+अटल अंतरभूत पूर्णांक ili9320_घातer_off(काष्ठा ili9320 *lcd)
+अणु
 	lcd->display1 &= ~(ILI9320_DISPLAY1_D(3) | ILI9320_DISPLAY1_BASEE);
-	ili9320_write(lcd, ILI9320_DISPLAY1, lcd->display1);
+	ili9320_ग_लिखो(lcd, ILI9320_DISPLAY1, lcd->display1);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#define POWER_IS_ON(pwr)	((pwr) <= FB_BLANK_NORMAL)
+#घोषणा POWER_IS_ON(pwr)	((pwr) <= FB_BLANK_NORMAL)
 
-static int ili9320_power(struct ili9320 *lcd, int power)
-{
-	int ret = 0;
+अटल पूर्णांक ili9320_घातer(काष्ठा ili9320 *lcd, पूर्णांक घातer)
+अणु
+	पूर्णांक ret = 0;
 
-	dev_dbg(lcd->dev, "power %d => %d\n", lcd->power, power);
+	dev_dbg(lcd->dev, "power %d => %d\n", lcd->घातer, घातer);
 
-	if (POWER_IS_ON(power) && !POWER_IS_ON(lcd->power))
-		ret = ili9320_power_on(lcd);
-	else if (!POWER_IS_ON(power) && POWER_IS_ON(lcd->power))
-		ret = ili9320_power_off(lcd);
+	अगर (POWER_IS_ON(घातer) && !POWER_IS_ON(lcd->घातer))
+		ret = ili9320_घातer_on(lcd);
+	अन्यथा अगर (!POWER_IS_ON(घातer) && POWER_IS_ON(lcd->घातer))
+		ret = ili9320_घातer_off(lcd);
 
-	if (ret == 0)
-		lcd->power = power;
-	else
-		dev_warn(lcd->dev, "failed to set power mode %d\n", power);
+	अगर (ret == 0)
+		lcd->घातer = घातer;
+	अन्यथा
+		dev_warn(lcd->dev, "failed to set power mode %d\n", घातer);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static inline struct ili9320 *to_our_lcd(struct lcd_device *lcd)
-{
-	return lcd_get_data(lcd);
-}
+अटल अंतरभूत काष्ठा ili9320 *to_our_lcd(काष्ठा lcd_device *lcd)
+अणु
+	वापस lcd_get_data(lcd);
+पूर्ण
 
-static int ili9320_set_power(struct lcd_device *ld, int power)
-{
-	struct ili9320 *lcd = to_our_lcd(ld);
+अटल पूर्णांक ili9320_set_घातer(काष्ठा lcd_device *ld, पूर्णांक घातer)
+अणु
+	काष्ठा ili9320 *lcd = to_our_lcd(ld);
 
-	return ili9320_power(lcd, power);
-}
+	वापस ili9320_घातer(lcd, घातer);
+पूर्ण
 
-static int ili9320_get_power(struct lcd_device *ld)
-{
-	struct ili9320 *lcd = to_our_lcd(ld);
+अटल पूर्णांक ili9320_get_घातer(काष्ठा lcd_device *ld)
+अणु
+	काष्ठा ili9320 *lcd = to_our_lcd(ld);
 
-	return lcd->power;
-}
+	वापस lcd->घातer;
+पूर्ण
 
-static struct lcd_ops ili9320_ops = {
-	.get_power	= ili9320_get_power,
-	.set_power	= ili9320_set_power,
-};
+अटल काष्ठा lcd_ops ili9320_ops = अणु
+	.get_घातer	= ili9320_get_घातer,
+	.set_घातer	= ili9320_set_घातer,
+पूर्ण;
 
-static void ili9320_setup_spi(struct ili9320 *ili,
-					struct spi_device *dev)
-{
-	struct ili9320_spi *spi = &ili->access.spi;
+अटल व्योम ili9320_setup_spi(काष्ठा ili9320 *ili,
+					काष्ठा spi_device *dev)
+अणु
+	काष्ठा ili9320_spi *spi = &ili->access.spi;
 
-	ili->write = ili9320_write_spi;
+	ili->ग_लिखो = ili9320_ग_लिखो_spi;
 	spi->dev = dev;
 
 	/* fill the two messages we are going to use to send the data
 	 * with, the first the address followed by the data. The datasheet
-	 * says they should be done as two distinct cycles of the SPI CS line.
+	 * says they should be करोne as two distinct cycles of the SPI CS line.
 	 */
 
 	spi->xfer[0].tx_buf = spi->buffer_addr;
@@ -190,110 +191,110 @@ static void ili9320_setup_spi(struct ili9320 *ili,
 	spi_message_init(&spi->message);
 	spi_message_add_tail(&spi->xfer[0], &spi->message);
 	spi_message_add_tail(&spi->xfer[1], &spi->message);
-}
+पूर्ण
 
-int ili9320_probe_spi(struct spi_device *spi,
-				struct ili9320_client *client)
-{
-	struct ili9320_platdata *cfg = dev_get_platdata(&spi->dev);
-	struct device *dev = &spi->dev;
-	struct ili9320 *ili;
-	struct lcd_device *lcd;
-	int ret = 0;
+पूर्णांक ili9320_probe_spi(काष्ठा spi_device *spi,
+				काष्ठा ili9320_client *client)
+अणु
+	काष्ठा ili9320_platdata *cfg = dev_get_platdata(&spi->dev);
+	काष्ठा device *dev = &spi->dev;
+	काष्ठा ili9320 *ili;
+	काष्ठा lcd_device *lcd;
+	पूर्णांक ret = 0;
 
-	/* verify we where given some information */
+	/* verअगरy we where given some inक्रमmation */
 
-	if (cfg == NULL) {
+	अगर (cfg == शून्य) अणु
 		dev_err(dev, "no platform data supplied\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (cfg->hsize <= 0 || cfg->vsize <= 0 || cfg->reset == NULL) {
+	अगर (cfg->hsize <= 0 || cfg->vsize <= 0 || cfg->reset == शून्य) अणु
 		dev_err(dev, "invalid platform data supplied\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	/* allocate and initialse our state */
 
-	ili = devm_kzalloc(&spi->dev, sizeof(struct ili9320), GFP_KERNEL);
-	if (ili == NULL)
-		return -ENOMEM;
+	ili = devm_kzalloc(&spi->dev, माप(काष्ठा ili9320), GFP_KERNEL);
+	अगर (ili == शून्य)
+		वापस -ENOMEM;
 
 	ili->access.spi.id = ILI9320_SPI_IDCODE | ILI9320_SPI_ID(1);
 
 	ili->dev = dev;
 	ili->client = client;
-	ili->power = FB_BLANK_POWERDOWN;
+	ili->घातer = FB_BLANK_POWERDOWN;
 	ili->platdata = cfg;
 
 	spi_set_drvdata(spi, ili);
 
 	ili9320_setup_spi(ili, spi);
 
-	lcd = devm_lcd_device_register(&spi->dev, "ili9320", dev, ili,
+	lcd = devm_lcd_device_रेजिस्टर(&spi->dev, "ili9320", dev, ili,
 					&ili9320_ops);
-	if (IS_ERR(lcd)) {
+	अगर (IS_ERR(lcd)) अणु
 		dev_err(dev, "failed to register lcd device\n");
-		return PTR_ERR(lcd);
-	}
+		वापस PTR_ERR(lcd);
+	पूर्ण
 
 	ili->lcd = lcd;
 
 	dev_info(dev, "initialising %s\n", client->name);
 
-	ret = ili9320_power(ili, FB_BLANK_UNBLANK);
-	if (ret != 0) {
+	ret = ili9320_घातer(ili, FB_BLANK_UNBLANK);
+	अगर (ret != 0) अणु
 		dev_err(dev, "failed to set lcd power state\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(ili9320_probe_spi);
 
-int ili9320_remove(struct ili9320 *ili)
-{
-	ili9320_power(ili, FB_BLANK_POWERDOWN);
-	return 0;
-}
-EXPORT_SYMBOL_GPL(ili9320_remove);
+पूर्णांक ili9320_हटाओ(काष्ठा ili9320 *ili)
+अणु
+	ili9320_घातer(ili, FB_BLANK_POWERDOWN);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL_GPL(ili9320_हटाओ);
 
-#ifdef CONFIG_PM_SLEEP
-int ili9320_suspend(struct ili9320 *lcd)
-{
-	int ret;
+#अगर_घोषित CONFIG_PM_SLEEP
+पूर्णांक ili9320_suspend(काष्ठा ili9320 *lcd)
+अणु
+	पूर्णांक ret;
 
-	ret = ili9320_power(lcd, FB_BLANK_POWERDOWN);
+	ret = ili9320_घातer(lcd, FB_BLANK_POWERDOWN);
 
-	if (lcd->platdata->suspend == ILI9320_SUSPEND_DEEP) {
-		ili9320_write(lcd, ILI9320_POWER1, lcd->power1 |
+	अगर (lcd->platdata->suspend == ILI9320_SUSPEND_DEEP) अणु
+		ili9320_ग_लिखो(lcd, ILI9320_POWER1, lcd->घातer1 |
 			      ILI9320_POWER1_SLP |
 			      ILI9320_POWER1_DSTB);
 		lcd->initialised = 0;
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(ili9320_suspend);
 
-int ili9320_resume(struct ili9320 *lcd)
-{
-	dev_info(lcd->dev, "resuming from power state %d\n", lcd->power);
+पूर्णांक ili9320_resume(काष्ठा ili9320 *lcd)
+अणु
+	dev_info(lcd->dev, "resuming from power state %d\n", lcd->घातer);
 
-	if (lcd->platdata->suspend == ILI9320_SUSPEND_DEEP)
-		ili9320_write(lcd, ILI9320_POWER1, 0x00);
+	अगर (lcd->platdata->suspend == ILI9320_SUSPEND_DEEP)
+		ili9320_ग_लिखो(lcd, ILI9320_POWER1, 0x00);
 
-	return ili9320_power(lcd, FB_BLANK_UNBLANK);
-}
+	वापस ili9320_घातer(lcd, FB_BLANK_UNBLANK);
+पूर्ण
 EXPORT_SYMBOL_GPL(ili9320_resume);
-#endif
+#पूर्ण_अगर
 
-/* Power down all displays on reboot, poweroff or halt */
-void ili9320_shutdown(struct ili9320 *lcd)
-{
-	ili9320_power(lcd, FB_BLANK_POWERDOWN);
-}
-EXPORT_SYMBOL_GPL(ili9320_shutdown);
+/* Power करोwn all displays on reboot, घातeroff or halt */
+व्योम ili9320_shutकरोwn(काष्ठा ili9320 *lcd)
+अणु
+	ili9320_घातer(lcd, FB_BLANK_POWERDOWN);
+पूर्ण
+EXPORT_SYMBOL_GPL(ili9320_shutकरोwn);
 
 MODULE_AUTHOR("Ben Dooks <ben-linux@fluff.org>");
 MODULE_DESCRIPTION("ILI9320 LCD Driver");

@@ -1,139 +1,140 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
  * Mediatek 8250 driver.
  *
- * Copyright (c) 2014 MundoReader S.L.
+ * Copyright (c) 2014 MunकरोReader S.L.
  * Author: Matthias Brugger <matthias.bgg@gmail.com>
  */
-#include <linux/clk.h>
-#include <linux/io.h>
-#include <linux/module.h>
-#include <linux/of_irq.h>
-#include <linux/of_platform.h>
-#include <linux/pinctrl/consumer.h>
-#include <linux/platform_device.h>
-#include <linux/pm_runtime.h>
-#include <linux/serial_8250.h>
-#include <linux/serial_reg.h>
-#include <linux/console.h>
-#include <linux/dma-mapping.h>
-#include <linux/tty.h>
-#include <linux/tty_flip.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/module.h>
+#समावेश <linux/of_irq.h>
+#समावेश <linux/of_platक्रमm.h>
+#समावेश <linux/pinctrl/consumer.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/pm_runसमय.स>
+#समावेश <linux/serial_8250.h>
+#समावेश <linux/serial_reg.h>
+#समावेश <linux/console.h>
+#समावेश <linux/dma-mapping.h>
+#समावेश <linux/tty.h>
+#समावेश <linux/tty_flip.h>
 
-#include "8250.h"
+#समावेश "8250.h"
 
-#define MTK_UART_HIGHS		0x09	/* Highspeed register */
-#define MTK_UART_SAMPLE_COUNT	0x0a	/* Sample count register */
-#define MTK_UART_SAMPLE_POINT	0x0b	/* Sample point register */
-#define MTK_UART_RATE_FIX	0x0d	/* UART Rate Fix Register */
-#define MTK_UART_ESCAPE_DAT	0x10	/* Escape Character register */
-#define MTK_UART_ESCAPE_EN	0x11	/* Escape Enable register */
-#define MTK_UART_DMA_EN		0x13	/* DMA Enable register */
-#define MTK_UART_RXTRI_AD	0x14	/* RX Trigger address */
-#define MTK_UART_FRACDIV_L	0x15	/* Fractional divider LSB address */
-#define MTK_UART_FRACDIV_M	0x16	/* Fractional divider MSB address */
-#define MTK_UART_DEBUG0	0x18
-#define MTK_UART_IER_XOFFI	0x20	/* Enable XOFF character interrupt */
-#define MTK_UART_IER_RTSI	0x40	/* Enable RTS Modem status interrupt */
-#define MTK_UART_IER_CTSI	0x80	/* Enable CTS Modem status interrupt */
+#घोषणा MTK_UART_HIGHS		0x09	/* Highspeed रेजिस्टर */
+#घोषणा MTK_UART_SAMPLE_COUNT	0x0a	/* Sample count रेजिस्टर */
+#घोषणा MTK_UART_SAMPLE_POINT	0x0b	/* Sample poपूर्णांक रेजिस्टर */
+#घोषणा MTK_UART_RATE_FIX	0x0d	/* UART Rate Fix Register */
+#घोषणा MTK_UART_ESCAPE_DAT	0x10	/* Escape Character रेजिस्टर */
+#घोषणा MTK_UART_ESCAPE_EN	0x11	/* Escape Enable रेजिस्टर */
+#घोषणा MTK_UART_DMA_EN		0x13	/* DMA Enable रेजिस्टर */
+#घोषणा MTK_UART_RXTRI_AD	0x14	/* RX Trigger address */
+#घोषणा MTK_UART_FRACDIV_L	0x15	/* Fractional भागider LSB address */
+#घोषणा MTK_UART_FRACDIV_M	0x16	/* Fractional भागider MSB address */
+#घोषणा MTK_UART_DEBUG0	0x18
+#घोषणा MTK_UART_IER_XOFFI	0x20	/* Enable XOFF अक्षरacter पूर्णांकerrupt */
+#घोषणा MTK_UART_IER_RTSI	0x40	/* Enable RTS Modem status पूर्णांकerrupt */
+#घोषणा MTK_UART_IER_CTSI	0x80	/* Enable CTS Modem status पूर्णांकerrupt */
 
-#define MTK_UART_EFR_EN		0x10	/* Enable enhancement feature */
-#define MTK_UART_EFR_RTS	0x40	/* Enable hardware rx flow control */
-#define MTK_UART_EFR_CTS	0x80	/* Enable hardware tx flow control */
-#define MTK_UART_EFR_NO_SW_FC	0x0	/* no sw flow control */
-#define MTK_UART_EFR_XON1_XOFF1	0xa	/* XON1/XOFF1 as sw flow control */
-#define MTK_UART_EFR_XON2_XOFF2	0x5	/* XON2/XOFF2 as sw flow control */
-#define MTK_UART_EFR_SW_FC_MASK	0xf	/* Enable CTS Modem status interrupt */
-#define MTK_UART_EFR_HW_FC	(MTK_UART_EFR_RTS | MTK_UART_EFR_CTS)
-#define MTK_UART_DMA_EN_TX	0x2
-#define MTK_UART_DMA_EN_RX	0x5
+#घोषणा MTK_UART_EFR_EN		0x10	/* Enable enhancement feature */
+#घोषणा MTK_UART_EFR_RTS	0x40	/* Enable hardware rx flow control */
+#घोषणा MTK_UART_EFR_CTS	0x80	/* Enable hardware tx flow control */
+#घोषणा MTK_UART_EFR_NO_SW_FC	0x0	/* no sw flow control */
+#घोषणा MTK_UART_EFR_XON1_XOFF1	0xa	/* XON1/XOFF1 as sw flow control */
+#घोषणा MTK_UART_EFR_XON2_XOFF2	0x5	/* XON2/XOFF2 as sw flow control */
+#घोषणा MTK_UART_EFR_SW_FC_MASK	0xf	/* Enable CTS Modem status पूर्णांकerrupt */
+#घोषणा MTK_UART_EFR_HW_FC	(MTK_UART_EFR_RTS | MTK_UART_EFR_CTS)
+#घोषणा MTK_UART_DMA_EN_TX	0x2
+#घोषणा MTK_UART_DMA_EN_RX	0x5
 
-#define MTK_UART_ESCAPE_CHAR	0x77	/* Escape char added under sw fc */
-#define MTK_UART_RX_SIZE	0x8000
-#define MTK_UART_TX_TRIGGER	1
-#define MTK_UART_RX_TRIGGER	MTK_UART_RX_SIZE
+#घोषणा MTK_UART_ESCAPE_CHAR	0x77	/* Escape अक्षर added under sw fc */
+#घोषणा MTK_UART_RX_SIZE	0x8000
+#घोषणा MTK_UART_TX_TRIGGER	1
+#घोषणा MTK_UART_RX_TRIGGER	MTK_UART_RX_SIZE
 
-#ifdef CONFIG_SERIAL_8250_DMA
-enum dma_rx_status {
+#अगर_घोषित CONFIG_SERIAL_8250_DMA
+क्रमागत dma_rx_status अणु
 	DMA_RX_START = 0,
 	DMA_RX_RUNNING = 1,
 	DMA_RX_SHUTDOWN = 2,
-};
-#endif
+पूर्ण;
+#पूर्ण_अगर
 
-struct mtk8250_data {
-	int			line;
-	unsigned int		rx_pos;
-	unsigned int		clk_count;
-	struct clk		*uart_clk;
-	struct clk		*bus_clk;
-	struct uart_8250_dma	*dma;
-#ifdef CONFIG_SERIAL_8250_DMA
-	enum dma_rx_status	rx_status;
-#endif
-	int			rx_wakeup_irq;
-};
+काष्ठा mtk8250_data अणु
+	पूर्णांक			line;
+	अचिन्हित पूर्णांक		rx_pos;
+	अचिन्हित पूर्णांक		clk_count;
+	काष्ठा clk		*uart_clk;
+	काष्ठा clk		*bus_clk;
+	काष्ठा uart_8250_dma	*dma;
+#अगर_घोषित CONFIG_SERIAL_8250_DMA
+	क्रमागत dma_rx_status	rx_status;
+#पूर्ण_अगर
+	पूर्णांक			rx_wakeup_irq;
+पूर्ण;
 
 /* flow control mode */
-enum {
+क्रमागत अणु
 	MTK_UART_FC_NONE,
 	MTK_UART_FC_SW,
 	MTK_UART_FC_HW,
-};
+पूर्ण;
 
-#ifdef CONFIG_SERIAL_8250_DMA
-static void mtk8250_rx_dma(struct uart_8250_port *up);
+#अगर_घोषित CONFIG_SERIAL_8250_DMA
+अटल व्योम mtk8250_rx_dma(काष्ठा uart_8250_port *up);
 
-static void mtk8250_dma_rx_complete(void *param)
-{
-	struct uart_8250_port *up = param;
-	struct uart_8250_dma *dma = up->dma;
-	struct mtk8250_data *data = up->port.private_data;
-	struct tty_port *tty_port = &up->port.state->port;
-	struct dma_tx_state state;
-	int copied, total, cnt;
-	unsigned char *ptr;
+अटल व्योम mtk8250_dma_rx_complete(व्योम *param)
+अणु
+	काष्ठा uart_8250_port *up = param;
+	काष्ठा uart_8250_dma *dma = up->dma;
+	काष्ठा mtk8250_data *data = up->port.निजी_data;
+	काष्ठा tty_port *tty_port = &up->port.state->port;
+	काष्ठा dma_tx_state state;
+	पूर्णांक copied, total, cnt;
+	अचिन्हित अक्षर *ptr;
 
-	if (data->rx_status == DMA_RX_SHUTDOWN)
-		return;
+	अगर (data->rx_status == DMA_RX_SHUTDOWN)
+		वापस;
 
 	dmaengine_tx_status(dma->rxchan, dma->rx_cookie, &state);
 	total = dma->rx_size - state.residue;
 	cnt = total;
 
-	if ((data->rx_pos + cnt) > dma->rx_size)
+	अगर ((data->rx_pos + cnt) > dma->rx_size)
 		cnt = dma->rx_size - data->rx_pos;
 
-	ptr = (unsigned char *)(data->rx_pos + dma->rx_buf);
+	ptr = (अचिन्हित अक्षर *)(data->rx_pos + dma->rx_buf);
 	copied = tty_insert_flip_string(tty_port, ptr, cnt);
 	data->rx_pos += cnt;
 
-	if (total > cnt) {
-		ptr = (unsigned char *)(dma->rx_buf);
+	अगर (total > cnt) अणु
+		ptr = (अचिन्हित अक्षर *)(dma->rx_buf);
 		cnt = total - cnt;
 		copied += tty_insert_flip_string(tty_port, ptr, cnt);
 		data->rx_pos = cnt;
-	}
+	पूर्ण
 
 	up->port.icount.rx += copied;
 
 	tty_flip_buffer_push(tty_port);
 
 	mtk8250_rx_dma(up);
-}
+पूर्ण
 
-static void mtk8250_rx_dma(struct uart_8250_port *up)
-{
-	struct uart_8250_dma *dma = up->dma;
-	struct dma_async_tx_descriptor	*desc;
+अटल व्योम mtk8250_rx_dma(काष्ठा uart_8250_port *up)
+अणु
+	काष्ठा uart_8250_dma *dma = up->dma;
+	काष्ठा dma_async_tx_descriptor	*desc;
 
 	desc = dmaengine_prep_slave_single(dma->rxchan, dma->rx_addr,
 					   dma->rx_size, DMA_DEV_TO_MEM,
 					   DMA_PREP_INTERRUPT | DMA_CTRL_ACK);
-	if (!desc) {
+	अगर (!desc) अणु
 		pr_err("failed to prepare rx slave single\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	desc->callback = mtk8250_dma_rx_complete;
 	desc->callback_param = up;
@@ -141,21 +142,21 @@ static void mtk8250_rx_dma(struct uart_8250_port *up)
 	dma->rx_cookie = dmaengine_submit(desc);
 
 	dma_async_issue_pending(dma->rxchan);
-}
+पूर्ण
 
-static void mtk8250_dma_enable(struct uart_8250_port *up)
-{
-	struct uart_8250_dma *dma = up->dma;
-	struct mtk8250_data *data = up->port.private_data;
-	int lcr = serial_in(up, UART_LCR);
+अटल व्योम mtk8250_dma_enable(काष्ठा uart_8250_port *up)
+अणु
+	काष्ठा uart_8250_dma *dma = up->dma;
+	काष्ठा mtk8250_data *data = up->port.निजी_data;
+	पूर्णांक lcr = serial_in(up, UART_LCR);
 
-	if (data->rx_status != DMA_RX_START)
-		return;
+	अगर (data->rx_status != DMA_RX_START)
+		वापस;
 
-	dma->rxconf.src_port_window_size	= dma->rx_size;
+	dma->rxconf.src_port_winकरोw_size	= dma->rx_size;
 	dma->rxconf.src_addr				= dma->rx_addr;
 
-	dma->txconf.dst_port_window_size	= UART_XMIT_SIZE;
+	dma->txconf.dst_port_winकरोw_size	= UART_XMIT_SIZE;
 	dma->txconf.dst_addr				= dma->tx_addr;
 
 	serial_out(up, UART_FCR, UART_FCR_ENABLE_FIFO | UART_FCR_CLEAR_RCVR |
@@ -167,83 +168,83 @@ static void mtk8250_dma_enable(struct uart_8250_port *up)
 	serial_out(up, UART_EFR, UART_EFR_ECB);
 	serial_out(up, UART_LCR, lcr);
 
-	if (dmaengine_slave_config(dma->rxchan, &dma->rxconf) != 0)
+	अगर (dmaengine_slave_config(dma->rxchan, &dma->rxconf) != 0)
 		pr_err("failed to configure rx dma channel\n");
-	if (dmaengine_slave_config(dma->txchan, &dma->txconf) != 0)
+	अगर (dmaengine_slave_config(dma->txchan, &dma->txconf) != 0)
 		pr_err("failed to configure tx dma channel\n");
 
 	data->rx_status = DMA_RX_RUNNING;
 	data->rx_pos = 0;
 	mtk8250_rx_dma(up);
-}
-#endif
+पूर्ण
+#पूर्ण_अगर
 
-static int mtk8250_startup(struct uart_port *port)
-{
-#ifdef CONFIG_SERIAL_8250_DMA
-	struct uart_8250_port *up = up_to_u8250p(port);
-	struct mtk8250_data *data = port->private_data;
+अटल पूर्णांक mtk8250_startup(काष्ठा uart_port *port)
+अणु
+#अगर_घोषित CONFIG_SERIAL_8250_DMA
+	काष्ठा uart_8250_port *up = up_to_u8250p(port);
+	काष्ठा mtk8250_data *data = port->निजी_data;
 
-	/* disable DMA for console */
-	if (uart_console(port))
-		up->dma = NULL;
+	/* disable DMA क्रम console */
+	अगर (uart_console(port))
+		up->dma = शून्य;
 
-	if (up->dma) {
+	अगर (up->dma) अणु
 		data->rx_status = DMA_RX_START;
 		uart_circ_clear(&port->state->xmit);
-	}
-#endif
-	memset(&port->icount, 0, sizeof(port->icount));
+	पूर्ण
+#पूर्ण_अगर
+	स_रखो(&port->icount, 0, माप(port->icount));
 
-	return serial8250_do_startup(port);
-}
+	वापस serial8250_करो_startup(port);
+पूर्ण
 
-static void mtk8250_shutdown(struct uart_port *port)
-{
-#ifdef CONFIG_SERIAL_8250_DMA
-	struct uart_8250_port *up = up_to_u8250p(port);
-	struct mtk8250_data *data = port->private_data;
+अटल व्योम mtk8250_shutकरोwn(काष्ठा uart_port *port)
+अणु
+#अगर_घोषित CONFIG_SERIAL_8250_DMA
+	काष्ठा uart_8250_port *up = up_to_u8250p(port);
+	काष्ठा mtk8250_data *data = port->निजी_data;
 
-	if (up->dma)
+	अगर (up->dma)
 		data->rx_status = DMA_RX_SHUTDOWN;
-#endif
+#पूर्ण_अगर
 
-	return serial8250_do_shutdown(port);
-}
+	वापस serial8250_करो_shutकरोwn(port);
+पूर्ण
 
-static void mtk8250_disable_intrs(struct uart_8250_port *up, int mask)
-{
+अटल व्योम mtk8250_disable_पूर्णांकrs(काष्ठा uart_8250_port *up, पूर्णांक mask)
+अणु
 	serial_out(up, UART_IER, serial_in(up, UART_IER) & (~mask));
-}
+पूर्ण
 
-static void mtk8250_enable_intrs(struct uart_8250_port *up, int mask)
-{
+अटल व्योम mtk8250_enable_पूर्णांकrs(काष्ठा uart_8250_port *up, पूर्णांक mask)
+अणु
 	serial_out(up, UART_IER, serial_in(up, UART_IER) | mask);
-}
+पूर्ण
 
-static void mtk8250_set_flow_ctrl(struct uart_8250_port *up, int mode)
-{
-	struct uart_port *port = &up->port;
-	int lcr = serial_in(up, UART_LCR);
+अटल व्योम mtk8250_set_flow_ctrl(काष्ठा uart_8250_port *up, पूर्णांक mode)
+अणु
+	काष्ठा uart_port *port = &up->port;
+	पूर्णांक lcr = serial_in(up, UART_LCR);
 
 	serial_out(up, UART_LCR, UART_LCR_CONF_MODE_B);
 	serial_out(up, UART_EFR, UART_EFR_ECB);
 	serial_out(up, UART_LCR, lcr);
 	lcr = serial_in(up, UART_LCR);
 
-	switch (mode) {
-	case MTK_UART_FC_NONE:
+	चयन (mode) अणु
+	हाल MTK_UART_FC_NONE:
 		serial_out(up, MTK_UART_ESCAPE_DAT, MTK_UART_ESCAPE_CHAR);
 		serial_out(up, MTK_UART_ESCAPE_EN, 0x00);
 		serial_out(up, UART_LCR, UART_LCR_CONF_MODE_B);
 		serial_out(up, UART_EFR, serial_in(up, UART_EFR) &
 			(~(MTK_UART_EFR_HW_FC | MTK_UART_EFR_SW_FC_MASK)));
 		serial_out(up, UART_LCR, lcr);
-		mtk8250_disable_intrs(up, MTK_UART_IER_XOFFI |
+		mtk8250_disable_पूर्णांकrs(up, MTK_UART_IER_XOFFI |
 			MTK_UART_IER_RTSI | MTK_UART_IER_CTSI);
-		break;
+		अवरोध;
 
-	case MTK_UART_FC_HW:
+	हाल MTK_UART_FC_HW:
 		serial_out(up, MTK_UART_ESCAPE_DAT, MTK_UART_ESCAPE_CHAR);
 		serial_out(up, MTK_UART_ESCAPE_EN, 0x00);
 		serial_out(up, UART_MCR, UART_MCR_RTS);
@@ -255,11 +256,11 @@ static void mtk8250_set_flow_ctrl(struct uart_8250_port *up, int mode)
 			(~(MTK_UART_EFR_HW_FC | MTK_UART_EFR_SW_FC_MASK))));
 
 		serial_out(up, UART_LCR, lcr);
-		mtk8250_disable_intrs(up, MTK_UART_IER_XOFFI);
-		mtk8250_enable_intrs(up, MTK_UART_IER_CTSI | MTK_UART_IER_RTSI);
-		break;
+		mtk8250_disable_पूर्णांकrs(up, MTK_UART_IER_XOFFI);
+		mtk8250_enable_पूर्णांकrs(up, MTK_UART_IER_CTSI | MTK_UART_IER_RTSI);
+		अवरोध;
 
-	case MTK_UART_FC_SW:	/*MTK software flow control */
+	हाल MTK_UART_FC_SW:	/*MTK software flow control */
 		serial_out(up, MTK_UART_ESCAPE_DAT, MTK_UART_ESCAPE_CHAR);
 		serial_out(up, MTK_UART_ESCAPE_EN, 0x01);
 		serial_out(up, UART_LCR, UART_LCR_CONF_MODE_B);
@@ -272,417 +273,417 @@ static void mtk8250_set_flow_ctrl(struct uart_8250_port *up, int mode)
 		serial_out(up, UART_XON1, START_CHAR(port->state->port.tty));
 		serial_out(up, UART_XOFF1, STOP_CHAR(port->state->port.tty));
 		serial_out(up, UART_LCR, lcr);
-		mtk8250_disable_intrs(up, MTK_UART_IER_CTSI|MTK_UART_IER_RTSI);
-		mtk8250_enable_intrs(up, MTK_UART_IER_XOFFI);
-		break;
-	default:
-		break;
-	}
-}
+		mtk8250_disable_पूर्णांकrs(up, MTK_UART_IER_CTSI|MTK_UART_IER_RTSI);
+		mtk8250_enable_पूर्णांकrs(up, MTK_UART_IER_XOFFI);
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static void
-mtk8250_set_termios(struct uart_port *port, struct ktermios *termios,
-			struct ktermios *old)
-{
-	unsigned short fraction_L_mapping[] = {
+अटल व्योम
+mtk8250_set_termios(काष्ठा uart_port *port, काष्ठा ktermios *termios,
+			काष्ठा ktermios *old)
+अणु
+	अचिन्हित लघु fraction_L_mapping[] = अणु
 		0, 1, 0x5, 0x15, 0x55, 0x57, 0x57, 0x77, 0x7F, 0xFF, 0xFF
-	};
-	unsigned short fraction_M_mapping[] = {
+	पूर्ण;
+	अचिन्हित लघु fraction_M_mapping[] = अणु
 		0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 3
-	};
-	struct uart_8250_port *up = up_to_u8250p(port);
-	unsigned int baud, quot, fraction;
-	unsigned long flags;
-	int mode;
+	पूर्ण;
+	काष्ठा uart_8250_port *up = up_to_u8250p(port);
+	अचिन्हित पूर्णांक baud, quot, fraction;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक mode;
 
-#ifdef CONFIG_SERIAL_8250_DMA
-	if (up->dma) {
-		if (uart_console(port)) {
-			devm_kfree(up->port.dev, up->dma);
-			up->dma = NULL;
-		} else {
+#अगर_घोषित CONFIG_SERIAL_8250_DMA
+	अगर (up->dma) अणु
+		अगर (uart_console(port)) अणु
+			devm_kमुक्त(up->port.dev, up->dma);
+			up->dma = शून्य;
+		पूर्ण अन्यथा अणु
 			mtk8250_dma_enable(up);
-		}
-	}
-#endif
+		पूर्ण
+	पूर्ण
+#पूर्ण_अगर
 
 	/*
-	 * Store the requested baud rate before calling the generic 8250
+	 * Store the requested baud rate beक्रमe calling the generic 8250
 	 * set_termios method. Standard 8250 port expects bauds to be
-	 * no higher than (uartclk / 16) so the baud will be clamped if it
-	 * gets out of that bound. Mediatek 8250 port supports speed
-	 * higher than that, therefore we'll get original baud rate back
+	 * no higher than (uartclk / 16) so the baud will be clamped अगर it
+	 * माला_लो out of that bound. Mediatek 8250 port supports speed
+	 * higher than that, thereक्रमe we'll get original baud rate back
 	 * after calling the generic set_termios method and recalculate
 	 * the speed later in this method.
 	 */
 	baud = tty_termios_baud_rate(termios);
 
-	serial8250_do_set_termios(port, termios, NULL);
+	serial8250_करो_set_termios(port, termios, शून्य);
 
 	tty_termios_encode_baud_rate(termios, baud, baud);
 
 	/*
-	 * Mediatek UARTs use an extra highspeed register (MTK_UART_HIGHS)
+	 * Mediatek UARTs use an extra highspeed रेजिस्टर (MTK_UART_HIGHS)
 	 *
-	 * We need to recalcualte the quot register, as the claculation depends
-	 * on the vaule in the highspeed register.
+	 * We need to recalcualte the quot रेजिस्टर, as the claculation depends
+	 * on the vaule in the highspeed रेजिस्टर.
 	 *
 	 * Some baudrates are not supported by the chip, so we use the next
 	 * lower rate supported and update termios c_flag.
 	 *
-	 * If highspeed register is set to 3, we need to specify sample count
-	 * and sample point to increase accuracy. If not, we reset the
-	 * registers to their default values.
+	 * If highspeed रेजिस्टर is set to 3, we need to specअगरy sample count
+	 * and sample poपूर्णांक to increase accuracy. If not, we reset the
+	 * रेजिस्टरs to their शेष values.
 	 */
 	baud = uart_get_baud_rate(port, termios, old,
 				  port->uartclk / 16 / UART_DIV_MAX,
 				  port->uartclk);
 
-	if (baud < 115200) {
+	अगर (baud < 115200) अणु
 		serial_port_out(port, MTK_UART_HIGHS, 0x0);
-		quot = uart_get_divisor(port, baud);
-	} else {
+		quot = uart_get_भागisor(port, baud);
+	पूर्ण अन्यथा अणु
 		serial_port_out(port, MTK_UART_HIGHS, 0x3);
 		quot = DIV_ROUND_UP(port->uartclk, 256 * baud);
-	}
+	पूर्ण
 
 	/*
 	 * Ok, we're now changing the port state.  Do it with
-	 * interrupts disabled.
+	 * पूर्णांकerrupts disabled.
 	 */
 	spin_lock_irqsave(&port->lock, flags);
 
 	/*
-	 * Update the per-port timeout.
+	 * Update the per-port समयout.
 	 */
-	uart_update_timeout(port, termios->c_cflag, baud);
+	uart_update_समयout(port, termios->c_cflag, baud);
 
 	/* set DLAB we have cval saved in up->lcr from the call to the core */
 	serial_port_out(port, UART_LCR, up->lcr | UART_LCR_DLAB);
-	serial_dl_write(up, quot);
+	serial_dl_ग_लिखो(up, quot);
 
 	/* reset DLAB */
 	serial_port_out(port, UART_LCR, up->lcr);
 
-	if (baud >= 115200) {
-		unsigned int tmp;
+	अगर (baud >= 115200) अणु
+		अचिन्हित पूर्णांक पंचांगp;
 
-		tmp = (port->uartclk / (baud *  quot)) - 1;
-		serial_port_out(port, MTK_UART_SAMPLE_COUNT, tmp);
+		पंचांगp = (port->uartclk / (baud *  quot)) - 1;
+		serial_port_out(port, MTK_UART_SAMPLE_COUNT, पंचांगp);
 		serial_port_out(port, MTK_UART_SAMPLE_POINT,
-					(tmp >> 1) - 1);
+					(पंचांगp >> 1) - 1);
 
-		/*count fraction to set fractoin register */
+		/*count fraction to set fractoin रेजिस्टर */
 		fraction = ((port->uartclk  * 100) / baud / quot) % 100;
 		fraction = DIV_ROUND_CLOSEST(fraction, 10);
 		serial_port_out(port, MTK_UART_FRACDIV_L,
 						fraction_L_mapping[fraction]);
 		serial_port_out(port, MTK_UART_FRACDIV_M,
 						fraction_M_mapping[fraction]);
-	} else {
+	पूर्ण अन्यथा अणु
 		serial_port_out(port, MTK_UART_SAMPLE_COUNT, 0x00);
 		serial_port_out(port, MTK_UART_SAMPLE_POINT, 0xff);
 		serial_port_out(port, MTK_UART_FRACDIV_L, 0x00);
 		serial_port_out(port, MTK_UART_FRACDIV_M, 0x00);
-	}
+	पूर्ण
 
-	if ((termios->c_cflag & CRTSCTS) && (!(termios->c_iflag & CRTSCTS)))
+	अगर ((termios->c_cflag & CRTSCTS) && (!(termios->c_अगरlag & CRTSCTS)))
 		mode = MTK_UART_FC_HW;
-	else if (termios->c_iflag & CRTSCTS)
+	अन्यथा अगर (termios->c_अगरlag & CRTSCTS)
 		mode = MTK_UART_FC_SW;
-	else
+	अन्यथा
 		mode = MTK_UART_FC_NONE;
 
 	mtk8250_set_flow_ctrl(up, mode);
 
-	if (uart_console(port))
+	अगर (uart_console(port))
 		up->port.cons->cflag = termios->c_cflag;
 
 	spin_unlock_irqrestore(&port->lock, flags);
-	/* Don't rewrite B0 */
-	if (tty_termios_baud_rate(termios))
+	/* Don't reग_लिखो B0 */
+	अगर (tty_termios_baud_rate(termios))
 		tty_termios_encode_baud_rate(termios, baud, baud);
-}
+पूर्ण
 
-static int __maybe_unused mtk8250_runtime_suspend(struct device *dev)
-{
-	struct mtk8250_data *data = dev_get_drvdata(dev);
-	struct uart_8250_port *up = serial8250_get_port(data->line);
+अटल पूर्णांक __maybe_unused mtk8250_runसमय_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा mtk8250_data *data = dev_get_drvdata(dev);
+	काष्ठा uart_8250_port *up = serial8250_get_port(data->line);
 
-	/* wait until UART in idle status */
-	while
+	/* रुको until UART in idle status */
+	जबतक
 		(serial_in(up, MTK_UART_DEBUG0));
 
-	if (data->clk_count == 0U) {
+	अगर (data->clk_count == 0U) अणु
 		dev_dbg(dev, "%s clock count is 0\n", __func__);
-	} else {
+	पूर्ण अन्यथा अणु
 		clk_disable_unprepare(data->bus_clk);
 		data->clk_count--;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __maybe_unused mtk8250_runtime_resume(struct device *dev)
-{
-	struct mtk8250_data *data = dev_get_drvdata(dev);
-	int err;
+अटल पूर्णांक __maybe_unused mtk8250_runसमय_resume(काष्ठा device *dev)
+अणु
+	काष्ठा mtk8250_data *data = dev_get_drvdata(dev);
+	पूर्णांक err;
 
-	if (data->clk_count > 0U) {
+	अगर (data->clk_count > 0U) अणु
 		dev_dbg(dev, "%s clock count is %d\n", __func__,
 			data->clk_count);
-	} else {
+	पूर्ण अन्यथा अणु
 		err = clk_prepare_enable(data->bus_clk);
-		if (err) {
+		अगर (err) अणु
 			dev_warn(dev, "Can't enable bus clock\n");
-			return err;
-		}
+			वापस err;
+		पूर्ण
 		data->clk_count++;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void
-mtk8250_do_pm(struct uart_port *port, unsigned int state, unsigned int old)
-{
-	if (!state)
-		if (!mtk8250_runtime_resume(port->dev))
-			pm_runtime_get_sync(port->dev);
+अटल व्योम
+mtk8250_करो_pm(काष्ठा uart_port *port, अचिन्हित पूर्णांक state, अचिन्हित पूर्णांक old)
+अणु
+	अगर (!state)
+		अगर (!mtk8250_runसमय_resume(port->dev))
+			pm_runसमय_get_sync(port->dev);
 
-	serial8250_do_pm(port, state, old);
+	serial8250_करो_pm(port, state, old);
 
-	if (state)
-		if (!pm_runtime_put_sync_suspend(port->dev))
-			mtk8250_runtime_suspend(port->dev);
-}
+	अगर (state)
+		अगर (!pm_runसमय_put_sync_suspend(port->dev))
+			mtk8250_runसमय_suspend(port->dev);
+पूर्ण
 
-#ifdef CONFIG_SERIAL_8250_DMA
-static bool mtk8250_dma_filter(struct dma_chan *chan, void *param)
-{
-	return false;
-}
-#endif
+#अगर_घोषित CONFIG_SERIAL_8250_DMA
+अटल bool mtk8250_dma_filter(काष्ठा dma_chan *chan, व्योम *param)
+अणु
+	वापस false;
+पूर्ण
+#पूर्ण_अगर
 
-static int mtk8250_probe_of(struct platform_device *pdev, struct uart_port *p,
-			   struct mtk8250_data *data)
-{
-#ifdef CONFIG_SERIAL_8250_DMA
-	int dmacnt;
-#endif
+अटल पूर्णांक mtk8250_probe_of(काष्ठा platक्रमm_device *pdev, काष्ठा uart_port *p,
+			   काष्ठा mtk8250_data *data)
+अणु
+#अगर_घोषित CONFIG_SERIAL_8250_DMA
+	पूर्णांक dmacnt;
+#पूर्ण_अगर
 
 	data->uart_clk = devm_clk_get(&pdev->dev, "baud");
-	if (IS_ERR(data->uart_clk)) {
+	अगर (IS_ERR(data->uart_clk)) अणु
 		/*
 		 * For compatibility with older device trees try unnamed
 		 * clk when no baud clk can be found.
 		 */
-		data->uart_clk = devm_clk_get(&pdev->dev, NULL);
-		if (IS_ERR(data->uart_clk)) {
+		data->uart_clk = devm_clk_get(&pdev->dev, शून्य);
+		अगर (IS_ERR(data->uart_clk)) अणु
 			dev_warn(&pdev->dev, "Can't get uart clock\n");
-			return PTR_ERR(data->uart_clk);
-		}
+			वापस PTR_ERR(data->uart_clk);
+		पूर्ण
 
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	data->bus_clk = devm_clk_get(&pdev->dev, "bus");
-	if (IS_ERR(data->bus_clk))
-		return PTR_ERR(data->bus_clk);
+	अगर (IS_ERR(data->bus_clk))
+		वापस PTR_ERR(data->bus_clk);
 
-	data->dma = NULL;
-#ifdef CONFIG_SERIAL_8250_DMA
+	data->dma = शून्य;
+#अगर_घोषित CONFIG_SERIAL_8250_DMA
 	dmacnt = of_property_count_strings(pdev->dev.of_node, "dma-names");
-	if (dmacnt == 2) {
-		data->dma = devm_kzalloc(&pdev->dev, sizeof(*data->dma),
+	अगर (dmacnt == 2) अणु
+		data->dma = devm_kzalloc(&pdev->dev, माप(*data->dma),
 					 GFP_KERNEL);
-		if (!data->dma)
-			return -ENOMEM;
+		अगर (!data->dma)
+			वापस -ENOMEM;
 
 		data->dma->fn = mtk8250_dma_filter;
 		data->dma->rx_size = MTK_UART_RX_SIZE;
 		data->dma->rxconf.src_maxburst = MTK_UART_RX_TRIGGER;
 		data->dma->txconf.dst_maxburst = MTK_UART_TX_TRIGGER;
-	}
-#endif
+	पूर्ण
+#पूर्ण_अगर
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mtk8250_probe(struct platform_device *pdev)
-{
-	struct uart_8250_port uart = {};
-	struct mtk8250_data *data;
-	struct resource *regs;
-	int irq, err;
+अटल पूर्णांक mtk8250_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा uart_8250_port uart = अणुपूर्ण;
+	काष्ठा mtk8250_data *data;
+	काष्ठा resource *regs;
+	पूर्णांक irq, err;
 
-	irq = platform_get_irq(pdev, 0);
-	if (irq < 0)
-		return irq;
+	irq = platक्रमm_get_irq(pdev, 0);
+	अगर (irq < 0)
+		वापस irq;
 
-	regs = platform_get_resource(pdev, IORESOURCE_MEM, 0);
-	if (!regs) {
+	regs = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
+	अगर (!regs) अणु
 		dev_err(&pdev->dev, "no registers defined\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	uart.port.membase = devm_ioremap(&pdev->dev, regs->start,
 					 resource_size(regs));
-	if (!uart.port.membase)
-		return -ENOMEM;
+	अगर (!uart.port.membase)
+		वापस -ENOMEM;
 
-	data = devm_kzalloc(&pdev->dev, sizeof(*data), GFP_KERNEL);
-	if (!data)
-		return -ENOMEM;
+	data = devm_kzalloc(&pdev->dev, माप(*data), GFP_KERNEL);
+	अगर (!data)
+		वापस -ENOMEM;
 
 	data->clk_count = 0;
 
-	if (pdev->dev.of_node) {
+	अगर (pdev->dev.of_node) अणु
 		err = mtk8250_probe_of(pdev, &uart.port, data);
-		if (err)
-			return err;
-	} else
-		return -ENODEV;
+		अगर (err)
+			वापस err;
+	पूर्ण अन्यथा
+		वापस -ENODEV;
 
 	spin_lock_init(&uart.port.lock);
 	uart.port.mapbase = regs->start;
 	uart.port.irq = irq;
-	uart.port.pm = mtk8250_do_pm;
+	uart.port.pm = mtk8250_करो_pm;
 	uart.port.type = PORT_16550;
 	uart.port.flags = UPF_BOOT_AUTOCONF | UPF_FIXED_PORT;
 	uart.port.dev = &pdev->dev;
 	uart.port.iotype = UPIO_MEM32;
-	uart.port.regshift = 2;
-	uart.port.private_data = data;
-	uart.port.shutdown = mtk8250_shutdown;
+	uart.port.regshअगरt = 2;
+	uart.port.निजी_data = data;
+	uart.port.shutकरोwn = mtk8250_shutकरोwn;
 	uart.port.startup = mtk8250_startup;
 	uart.port.set_termios = mtk8250_set_termios;
 	uart.port.uartclk = clk_get_rate(data->uart_clk);
-#ifdef CONFIG_SERIAL_8250_DMA
-	if (data->dma)
+#अगर_घोषित CONFIG_SERIAL_8250_DMA
+	अगर (data->dma)
 		uart.dma = data->dma;
-#endif
+#पूर्ण_अगर
 
 	/* Disable Rate Fix function */
-	writel(0x0, uart.port.membase +
-			(MTK_UART_RATE_FIX << uart.port.regshift));
+	ग_लिखोl(0x0, uart.port.membase +
+			(MTK_UART_RATE_FIX << uart.port.regshअगरt));
 
-	platform_set_drvdata(pdev, data);
+	platक्रमm_set_drvdata(pdev, data);
 
-	pm_runtime_enable(&pdev->dev);
-	err = mtk8250_runtime_resume(&pdev->dev);
-	if (err)
-		goto err_pm_disable;
+	pm_runसमय_enable(&pdev->dev);
+	err = mtk8250_runसमय_resume(&pdev->dev);
+	अगर (err)
+		जाओ err_pm_disable;
 
-	data->line = serial8250_register_8250_port(&uart);
-	if (data->line < 0) {
+	data->line = serial8250_रेजिस्टर_8250_port(&uart);
+	अगर (data->line < 0) अणु
 		err = data->line;
-		goto err_pm_disable;
-	}
+		जाओ err_pm_disable;
+	पूर्ण
 
-	data->rx_wakeup_irq = platform_get_irq_optional(pdev, 1);
+	data->rx_wakeup_irq = platक्रमm_get_irq_optional(pdev, 1);
 
-	return 0;
+	वापस 0;
 
 err_pm_disable:
-	pm_runtime_disable(&pdev->dev);
+	pm_runसमय_disable(&pdev->dev);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int mtk8250_remove(struct platform_device *pdev)
-{
-	struct mtk8250_data *data = platform_get_drvdata(pdev);
+अटल पूर्णांक mtk8250_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा mtk8250_data *data = platक्रमm_get_drvdata(pdev);
 
-	pm_runtime_get_sync(&pdev->dev);
+	pm_runसमय_get_sync(&pdev->dev);
 
-	serial8250_unregister_port(data->line);
+	serial8250_unरेजिस्टर_port(data->line);
 
-	pm_runtime_disable(&pdev->dev);
-	pm_runtime_put_noidle(&pdev->dev);
+	pm_runसमय_disable(&pdev->dev);
+	pm_runसमय_put_noidle(&pdev->dev);
 
-	if (!pm_runtime_status_suspended(&pdev->dev))
-		mtk8250_runtime_suspend(&pdev->dev);
+	अगर (!pm_runसमय_status_suspended(&pdev->dev))
+		mtk8250_runसमय_suspend(&pdev->dev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __maybe_unused mtk8250_suspend(struct device *dev)
-{
-	struct mtk8250_data *data = dev_get_drvdata(dev);
-	int irq = data->rx_wakeup_irq;
-	int err;
+अटल पूर्णांक __maybe_unused mtk8250_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा mtk8250_data *data = dev_get_drvdata(dev);
+	पूर्णांक irq = data->rx_wakeup_irq;
+	पूर्णांक err;
 
 	serial8250_suspend_port(data->line);
 
 	pinctrl_pm_select_sleep_state(dev);
-	if (irq >= 0) {
+	अगर (irq >= 0) अणु
 		err = enable_irq_wake(irq);
-		if (err) {
+		अगर (err) अणु
 			dev_err(dev,
 				"failed to enable irq wake on IRQ %d: %d\n",
 				irq, err);
-			pinctrl_pm_select_default_state(dev);
+			pinctrl_pm_select_शेष_state(dev);
 			serial8250_resume_port(data->line);
-			return err;
-		}
-	}
+			वापस err;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __maybe_unused mtk8250_resume(struct device *dev)
-{
-	struct mtk8250_data *data = dev_get_drvdata(dev);
-	int irq = data->rx_wakeup_irq;
+अटल पूर्णांक __maybe_unused mtk8250_resume(काष्ठा device *dev)
+अणु
+	काष्ठा mtk8250_data *data = dev_get_drvdata(dev);
+	पूर्णांक irq = data->rx_wakeup_irq;
 
-	if (irq >= 0)
+	अगर (irq >= 0)
 		disable_irq_wake(irq);
-	pinctrl_pm_select_default_state(dev);
+	pinctrl_pm_select_शेष_state(dev);
 
 	serial8250_resume_port(data->line);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct dev_pm_ops mtk8250_pm_ops = {
+अटल स्थिर काष्ठा dev_pm_ops mtk8250_pm_ops = अणु
 	SET_SYSTEM_SLEEP_PM_OPS(mtk8250_suspend, mtk8250_resume)
-	SET_RUNTIME_PM_OPS(mtk8250_runtime_suspend, mtk8250_runtime_resume,
-				NULL)
-};
+	SET_RUNTIME_PM_OPS(mtk8250_runसमय_suspend, mtk8250_runसमय_resume,
+				शून्य)
+पूर्ण;
 
-static const struct of_device_id mtk8250_of_match[] = {
-	{ .compatible = "mediatek,mt6577-uart" },
-	{ /* Sentinel */ }
-};
+अटल स्थिर काष्ठा of_device_id mtk8250_of_match[] = अणु
+	अणु .compatible = "mediatek,mt6577-uart" पूर्ण,
+	अणु /* Sentinel */ पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, mtk8250_of_match);
 
-static struct platform_driver mtk8250_platform_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver mtk8250_platक्रमm_driver = अणु
+	.driver = अणु
 		.name		= "mt6577-uart",
 		.pm		= &mtk8250_pm_ops,
 		.of_match_table	= mtk8250_of_match,
-	},
+	पूर्ण,
 	.probe			= mtk8250_probe,
-	.remove			= mtk8250_remove,
-};
-module_platform_driver(mtk8250_platform_driver);
+	.हटाओ			= mtk8250_हटाओ,
+पूर्ण;
+module_platक्रमm_driver(mtk8250_platक्रमm_driver);
 
-#ifdef CONFIG_SERIAL_8250_CONSOLE
-static int __init early_mtk8250_setup(struct earlycon_device *device,
-					const char *options)
-{
-	if (!device->port.membase)
-		return -ENODEV;
+#अगर_घोषित CONFIG_SERIAL_8250_CONSOLE
+अटल पूर्णांक __init early_mtk8250_setup(काष्ठा earlycon_device *device,
+					स्थिर अक्षर *options)
+अणु
+	अगर (!device->port.membase)
+		वापस -ENODEV;
 
 	device->port.iotype = UPIO_MEM32;
-	device->port.regshift = 2;
+	device->port.regshअगरt = 2;
 
-	return early_serial8250_setup(device, NULL);
-}
+	वापस early_serial8250_setup(device, शून्य);
+पूर्ण
 
 OF_EARLYCON_DECLARE(mtk8250, "mediatek,mt6577-uart", early_mtk8250_setup);
-#endif
+#पूर्ण_अगर
 
 MODULE_AUTHOR("Matthias Brugger");
 MODULE_LICENSE("GPL");

@@ -1,7 +1,8 @@
+<शैली गुरु>
 /*
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the main directory of this archive
- * for more details.
+ * License.  See the file "COPYING" in the मुख्य directory of this archive
+ * क्रम more details.
  *
  * Copyright (C) 1995, 96, 97, 98, 99, 2001 by Ralf Baechle
  * Copyright (C) 1999 Silicon Graphics, Inc.
@@ -9,97 +10,97 @@
  * Copyright (C) 2002 Maciej W. Rozycki
  * Copyright (C) 2014 Imagination Technologies Ltd.
  */
-#ifndef _ASM_CHECKSUM_H
-#define _ASM_CHECKSUM_H
+#अगर_अघोषित _ASM_CHECKSUM_H
+#घोषणा _ASM_CHECKSUM_H
 
-#ifdef CONFIG_GENERIC_CSUM
-#include <asm-generic/checksum.h>
-#else
+#अगर_घोषित CONFIG_GENERIC_CSUM
+#समावेश <यंत्र-generic/checksum.h>
+#अन्यथा
 
-#include <linux/in6.h>
+#समावेश <linux/in6.h>
 
-#include <linux/uaccess.h>
+#समावेश <linux/uaccess.h>
 
 /*
  * computes the checksum of a memory block at buff, length len,
  * and adds in "sum" (32-bit)
  *
- * returns a 32-bit number suitable for feeding into itself
+ * वापसs a 32-bit number suitable क्रम feeding पूर्णांकo itself
  * or csum_tcpudp_magic
  *
  * this function must be called with even lengths, except
- * for the last fragment, which may be odd
+ * क्रम the last fragment, which may be odd
  *
  * it's best to have buff aligned on a 32-bit boundary
  */
-__wsum csum_partial(const void *buff, int len, __wsum sum);
+__wsum csum_partial(स्थिर व्योम *buff, पूर्णांक len, __wsum sum);
 
-__wsum __csum_partial_copy_from_user(const void __user *src, void *dst, int len);
-__wsum __csum_partial_copy_to_user(const void *src, void __user *dst, int len);
+__wsum __csum_partial_copy_from_user(स्थिर व्योम __user *src, व्योम *dst, पूर्णांक len);
+__wsum __csum_partial_copy_to_user(स्थिर व्योम *src, व्योम __user *dst, पूर्णांक len);
 
-#define _HAVE_ARCH_COPY_AND_CSUM_FROM_USER
-static inline
-__wsum csum_and_copy_from_user(const void __user *src, void *dst, int len)
-{
+#घोषणा _HAVE_ARCH_COPY_AND_CSUM_FROM_USER
+अटल अंतरभूत
+__wsum csum_and_copy_from_user(स्थिर व्योम __user *src, व्योम *dst, पूर्णांक len)
+अणु
 	might_fault();
-	if (!access_ok(src, len))
-		return 0;
-	return __csum_partial_copy_from_user(src, dst, len);
-}
+	अगर (!access_ok(src, len))
+		वापस 0;
+	वापस __csum_partial_copy_from_user(src, dst, len);
+पूर्ण
 
 /*
  * Copy and checksum to user
  */
-#define HAVE_CSUM_COPY_USER
-static inline
-__wsum csum_and_copy_to_user(const void *src, void __user *dst, int len)
-{
+#घोषणा HAVE_CSUM_COPY_USER
+अटल अंतरभूत
+__wsum csum_and_copy_to_user(स्थिर व्योम *src, व्योम __user *dst, पूर्णांक len)
+अणु
 	might_fault();
-	if (!access_ok(dst, len))
-		return 0;
-	return __csum_partial_copy_to_user(src, dst, len);
-}
+	अगर (!access_ok(dst, len))
+		वापस 0;
+	वापस __csum_partial_copy_to_user(src, dst, len);
+पूर्ण
 
 /*
  * the same as csum_partial, but copies from user space (but on MIPS
  * we have just one address space, so this is identical to the above)
  */
-#define _HAVE_ARCH_CSUM_AND_COPY
-__wsum __csum_partial_copy_nocheck(const void *src, void *dst, int len);
-static inline __wsum csum_partial_copy_nocheck(const void *src, void *dst, int len)
-{
-	return __csum_partial_copy_nocheck(src, dst, len);
-}
+#घोषणा _HAVE_ARCH_CSUM_AND_COPY
+__wsum __csum_partial_copy_nocheck(स्थिर व्योम *src, व्योम *dst, पूर्णांक len);
+अटल अंतरभूत __wsum csum_partial_copy_nocheck(स्थिर व्योम *src, व्योम *dst, पूर्णांक len)
+अणु
+	वापस __csum_partial_copy_nocheck(src, dst, len);
+पूर्ण
 
 /*
- *	Fold a partial checksum without adding pseudo headers
+ *	Fold a partial checksum without adding pseuकरो headers
  */
-static inline __sum16 csum_fold(__wsum csum)
-{
-	u32 sum = (__force u32)csum;
+अटल अंतरभूत __sum16 csum_fold(__wsum csum)
+अणु
+	u32 sum = (__क्रमce u32)csum;
 
 	sum += (sum << 16);
-	csum = (__force __wsum)(sum < (__force u32)csum);
+	csum = (__क्रमce __wsum)(sum < (__क्रमce u32)csum);
 	sum >>= 16;
-	sum += (__force u32)csum;
+	sum += (__क्रमce u32)csum;
 
-	return (__force __sum16)~sum;
-}
-#define csum_fold csum_fold
+	वापस (__क्रमce __sum16)~sum;
+पूर्ण
+#घोषणा csum_fold csum_fold
 
 /*
- *	This is a version of ip_compute_csum() optimized for IP headers,
+ *	This is a version of ip_compute_csum() optimized क्रम IP headers,
  *	which always checksum on 4 octet boundaries.
  *
- *	By Jorge Cwik <jorge@laser.satlink.net>, adapted for linux by
- *	Arnt Gulbrandsen.
+ *	By Jorge Cwik <jorge@laser.satlink.net>, adapted क्रम linux by
+ *	Arnt Gulbअक्रमsen.
  */
-static inline __sum16 ip_fast_csum(const void *iph, unsigned int ihl)
-{
-	const unsigned int *word = iph;
-	const unsigned int *stop = word + ihl;
-	unsigned int csum;
-	int carry;
+अटल अंतरभूत __sum16 ip_fast_csum(स्थिर व्योम *iph, अचिन्हित पूर्णांक ihl)
+अणु
+	स्थिर अचिन्हित पूर्णांक *word = iph;
+	स्थिर अचिन्हित पूर्णांक *stop = word + ihl;
+	अचिन्हित पूर्णांक csum;
+	पूर्णांक carry;
 
 	csum = word[0];
 	csum += word[1];
@@ -115,27 +116,27 @@ static inline __sum16 ip_fast_csum(const void *iph, unsigned int ihl)
 	csum += carry;
 
 	word += 4;
-	do {
+	करो अणु
 		csum += *word;
 		carry = (csum < *word);
 		csum += carry;
 		word++;
-	} while (word != stop);
+	पूर्ण जबतक (word != stop);
 
-	return csum_fold(csum);
-}
-#define ip_fast_csum ip_fast_csum
+	वापस csum_fold(csum);
+पूर्ण
+#घोषणा ip_fast_csum ip_fast_csum
 
-static inline __wsum csum_tcpudp_nofold(__be32 saddr, __be32 daddr,
+अटल अंतरभूत __wsum csum_tcpudp_nofold(__be32 saddr, __be32 daddr,
 					__u32 len, __u8 proto,
 					__wsum sum)
-{
-	unsigned long tmp = (__force unsigned long)sum;
+अणु
+	अचिन्हित दीर्घ पंचांगp = (__क्रमce अचिन्हित दीर्घ)sum;
 
-	__asm__(
+	__यंत्र__(
 	"	.set	push		# csum_tcpudp_nofold\n"
 	"	.set	noat		\n"
-#ifdef CONFIG_32BIT
+#अगर_घोषित CONFIG_32BIT
 	"	addu	%0, %2		\n"
 	"	sltu	$1, %0, %2	\n"
 	"	addu	%0, $1		\n"
@@ -147,8 +148,8 @@ static inline __wsum csum_tcpudp_nofold(__be32 saddr, __be32 daddr,
 	"	addu	%0, %4		\n"
 	"	sltu	$1, %0, %4	\n"
 	"	addu	%0, $1		\n"
-#endif
-#ifdef CONFIG_64BIT
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_64BIT
 	"	daddu	%0, %2		\n"
 	"	daddu	%0, %3		\n"
 	"	daddu	%0, %4		\n"
@@ -157,40 +158,40 @@ static inline __wsum csum_tcpudp_nofold(__be32 saddr, __be32 daddr,
 	"	sltu	$1, %0, $1	\n"
 	"	dsra32	%0, %0, 0	\n"
 	"	addu	%0, $1		\n"
-#endif
+#पूर्ण_अगर
 	"	.set	pop"
-	: "=r" (tmp)
-	: "0" ((__force unsigned long)daddr),
-	  "r" ((__force unsigned long)saddr),
-#ifdef __MIPSEL__
+	: "=r" (पंचांगp)
+	: "0" ((__क्रमce अचिन्हित दीर्घ)daddr),
+	  "r" ((__क्रमce अचिन्हित दीर्घ)saddr),
+#अगर_घोषित __MIPSEL__
 	  "r" ((proto + len) << 8),
-#else
+#अन्यथा
 	  "r" (proto + len),
-#endif
-	  "r" ((__force unsigned long)sum));
+#पूर्ण_अगर
+	  "r" ((__क्रमce अचिन्हित दीर्घ)sum));
 
-	return (__force __wsum)tmp;
-}
-#define csum_tcpudp_nofold csum_tcpudp_nofold
+	वापस (__क्रमce __wsum)पंचांगp;
+पूर्ण
+#घोषणा csum_tcpudp_nofold csum_tcpudp_nofold
 
 /*
- * this routine is used for miscellaneous IP-like checksums, mainly
+ * this routine is used क्रम miscellaneous IP-like checksums, मुख्यly
  * in icmp.c
  */
-static inline __sum16 ip_compute_csum(const void *buff, int len)
-{
-	return csum_fold(csum_partial(buff, len, 0));
-}
+अटल अंतरभूत __sum16 ip_compute_csum(स्थिर व्योम *buff, पूर्णांक len)
+अणु
+	वापस csum_fold(csum_partial(buff, len, 0));
+पूर्ण
 
-#define _HAVE_ARCH_IPV6_CSUM
-static __inline__ __sum16 csum_ipv6_magic(const struct in6_addr *saddr,
-					  const struct in6_addr *daddr,
+#घोषणा _HAVE_ARCH_IPV6_CSUM
+अटल __अंतरभूत__ __sum16 csum_ipv6_magic(स्थिर काष्ठा in6_addr *saddr,
+					  स्थिर काष्ठा in6_addr *daddr,
 					  __u32 len, __u8 proto,
 					  __wsum sum)
-{
-	__wsum tmp;
+अणु
+	__wsum पंचांगp;
 
-	__asm__(
+	__यंत्र__(
 	"	.set	push		# csum_ipv6_magic\n"
 	"	.set	noreorder	\n"
 	"	.set	noat		\n"
@@ -242,14 +243,14 @@ static __inline__ __sum16 csum_ipv6_magic(const struct in6_addr *saddr,
 
 	"	addu	%0, $1		# Add final carry\n"
 	"	.set	pop"
-	: "=&r" (sum), "=&r" (tmp)
+	: "=&r" (sum), "=&r" (पंचांगp)
 	: "r" (saddr), "r" (daddr),
 	  "0" (htonl(len)), "r" (htonl(proto)), "r" (sum));
 
-	return csum_fold(sum);
-}
+	वापस csum_fold(sum);
+पूर्ण
 
-#include <asm-generic/checksum.h>
-#endif /* CONFIG_GENERIC_CSUM */
+#समावेश <यंत्र-generic/checksum.h>
+#पूर्ण_अगर /* CONFIG_GENERIC_CSUM */
 
-#endif /* _ASM_CHECKSUM_H */
+#पूर्ण_अगर /* _ASM_CHECKSUM_H */

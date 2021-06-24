@@ -1,266 +1,267 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Copyright (C) 2015-2019 Jason A. Donenfeld <Jason@zx2c4.com>. All Rights Reserved.
  */
 
-#include "queueing.h"
-#include "socket.h"
-#include "timers.h"
-#include "device.h"
-#include "ratelimiter.h"
-#include "peer.h"
-#include "messages.h"
+#समावेश "queueing.h"
+#समावेश "socket.h"
+#समावेश "timers.h"
+#समावेश "device.h"
+#समावेश "ratelimiter.h"
+#समावेश "peer.h"
+#समावेश "messages.h"
 
-#include <linux/module.h>
-#include <linux/rtnetlink.h>
-#include <linux/inet.h>
-#include <linux/netdevice.h>
-#include <linux/inetdevice.h>
-#include <linux/if_arp.h>
-#include <linux/icmp.h>
-#include <linux/suspend.h>
-#include <net/icmp.h>
-#include <net/rtnetlink.h>
-#include <net/ip_tunnels.h>
-#include <net/addrconf.h>
+#समावेश <linux/module.h>
+#समावेश <linux/rtnetlink.h>
+#समावेश <linux/inet.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/inetdevice.h>
+#समावेश <linux/अगर_arp.h>
+#समावेश <linux/icmp.h>
+#समावेश <linux/suspend.h>
+#समावेश <net/icmp.h>
+#समावेश <net/rtnetlink.h>
+#समावेश <net/ip_tunnels.h>
+#समावेश <net/addrconf.h>
 
-static LIST_HEAD(device_list);
+अटल LIST_HEAD(device_list);
 
-static int wg_open(struct net_device *dev)
-{
-	struct in_device *dev_v4 = __in_dev_get_rtnl(dev);
-	struct inet6_dev *dev_v6 = __in6_dev_get(dev);
-	struct wg_device *wg = netdev_priv(dev);
-	struct wg_peer *peer;
-	int ret;
+अटल पूर्णांक wg_खोलो(काष्ठा net_device *dev)
+अणु
+	काष्ठा in_device *dev_v4 = __in_dev_get_rtnl(dev);
+	काष्ठा inet6_dev *dev_v6 = __in6_dev_get(dev);
+	काष्ठा wg_device *wg = netdev_priv(dev);
+	काष्ठा wg_peer *peer;
+	पूर्णांक ret;
 
-	if (dev_v4) {
-		/* At some point we might put this check near the ip_rt_send_
-		 * redirect call of ip_forward in net/ipv4/ip_forward.c, similar
+	अगर (dev_v4) अणु
+		/* At some poपूर्णांक we might put this check near the ip_rt_send_
+		 * redirect call of ip_क्रमward in net/ipv4/ip_क्रमward.c, similar
 		 * to the current secpath check.
 		 */
-		IN_DEV_CONF_SET(dev_v4, SEND_REDIRECTS, false);
-		IPV4_DEVCONF_ALL(dev_net(dev), SEND_REDIRECTS) = false;
-	}
-	if (dev_v6)
+		IN_DEV_CONF_SET(dev_v4, SEND_REसूचीECTS, false);
+		IPV4_DEVCONF_ALL(dev_net(dev), SEND_REसूचीECTS) = false;
+	पूर्ण
+	अगर (dev_v6)
 		dev_v6->cnf.addr_gen_mode = IN6_ADDR_GEN_MODE_NONE;
 
 	mutex_lock(&wg->device_update_lock);
 	ret = wg_socket_init(wg, wg->incoming_port);
-	if (ret < 0)
-		goto out;
-	list_for_each_entry(peer, &wg->peer_list, peer_list) {
+	अगर (ret < 0)
+		जाओ out;
+	list_क्रम_each_entry(peer, &wg->peer_list, peer_list) अणु
 		wg_packet_send_staged_packets(peer);
-		if (peer->persistent_keepalive_interval)
+		अगर (peer->persistent_keepalive_पूर्णांकerval)
 			wg_packet_send_keepalive(peer);
-	}
+	पूर्ण
 out:
 	mutex_unlock(&wg->device_update_lock);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-#ifdef CONFIG_PM_SLEEP
-static int wg_pm_notification(struct notifier_block *nb, unsigned long action,
-			      void *data)
-{
-	struct wg_device *wg;
-	struct wg_peer *peer;
+#अगर_घोषित CONFIG_PM_SLEEP
+अटल पूर्णांक wg_pm_notअगरication(काष्ठा notअगरier_block *nb, अचिन्हित दीर्घ action,
+			      व्योम *data)
+अणु
+	काष्ठा wg_device *wg;
+	काष्ठा wg_peer *peer;
 
-	/* If the machine is constantly suspending and resuming, as part of
+	/* If the machine is स्थिरantly suspending and resuming, as part of
 	 * its normal operation rather than as a somewhat rare event, then we
-	 * don't actually want to clear keys.
+	 * करोn't actually want to clear keys.
 	 */
-	if (IS_ENABLED(CONFIG_PM_AUTOSLEEP) || IS_ENABLED(CONFIG_ANDROID))
-		return 0;
+	अगर (IS_ENABLED(CONFIG_PM_AUTOSLEEP) || IS_ENABLED(CONFIG_ANDROID))
+		वापस 0;
 
-	if (action != PM_HIBERNATION_PREPARE && action != PM_SUSPEND_PREPARE)
-		return 0;
+	अगर (action != PM_HIBERNATION_PREPARE && action != PM_SUSPEND_PREPARE)
+		वापस 0;
 
 	rtnl_lock();
-	list_for_each_entry(wg, &device_list, device_list) {
+	list_क्रम_each_entry(wg, &device_list, device_list) अणु
 		mutex_lock(&wg->device_update_lock);
-		list_for_each_entry(peer, &wg->peer_list, peer_list) {
-			del_timer(&peer->timer_zero_key_material);
+		list_क्रम_each_entry(peer, &wg->peer_list, peer_list) अणु
+			del_समयr(&peer->समयr_zero_key_material);
 			wg_noise_handshake_clear(&peer->handshake);
 			wg_noise_keypairs_clear(&peer->keypairs);
-		}
+		पूर्ण
 		mutex_unlock(&wg->device_update_lock);
-	}
+	पूर्ण
 	rtnl_unlock();
 	rcu_barrier();
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct notifier_block pm_notifier = { .notifier_call = wg_pm_notification };
-#endif
+अटल काष्ठा notअगरier_block pm_notअगरier = अणु .notअगरier_call = wg_pm_notअगरication पूर्ण;
+#पूर्ण_अगर
 
-static int wg_stop(struct net_device *dev)
-{
-	struct wg_device *wg = netdev_priv(dev);
-	struct wg_peer *peer;
+अटल पूर्णांक wg_stop(काष्ठा net_device *dev)
+अणु
+	काष्ठा wg_device *wg = netdev_priv(dev);
+	काष्ठा wg_peer *peer;
 
 	mutex_lock(&wg->device_update_lock);
-	list_for_each_entry(peer, &wg->peer_list, peer_list) {
+	list_क्रम_each_entry(peer, &wg->peer_list, peer_list) अणु
 		wg_packet_purge_staged_packets(peer);
-		wg_timers_stop(peer);
+		wg_समयrs_stop(peer);
 		wg_noise_handshake_clear(&peer->handshake);
 		wg_noise_keypairs_clear(&peer->keypairs);
 		wg_noise_reset_last_sent_handshake(&peer->last_sent_handshake);
-	}
+	पूर्ण
 	mutex_unlock(&wg->device_update_lock);
 	skb_queue_purge(&wg->incoming_handshakes);
-	wg_socket_reinit(wg, NULL, NULL);
-	return 0;
-}
+	wg_socket_reinit(wg, शून्य, शून्य);
+	वापस 0;
+पूर्ण
 
-static netdev_tx_t wg_xmit(struct sk_buff *skb, struct net_device *dev)
-{
-	struct wg_device *wg = netdev_priv(dev);
-	struct sk_buff_head packets;
-	struct wg_peer *peer;
-	struct sk_buff *next;
+अटल netdev_tx_t wg_xmit(काष्ठा sk_buff *skb, काष्ठा net_device *dev)
+अणु
+	काष्ठा wg_device *wg = netdev_priv(dev);
+	काष्ठा sk_buff_head packets;
+	काष्ठा wg_peer *peer;
+	काष्ठा sk_buff *next;
 	sa_family_t family;
 	u32 mtu;
-	int ret;
+	पूर्णांक ret;
 
-	if (unlikely(!wg_check_packet_protocol(skb))) {
+	अगर (unlikely(!wg_check_packet_protocol(skb))) अणु
 		ret = -EPROTONOSUPPORT;
 		net_dbg_ratelimited("%s: Invalid IP packet\n", dev->name);
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
 	peer = wg_allowedips_lookup_dst(&wg->peer_allowedips, skb);
-	if (unlikely(!peer)) {
+	अगर (unlikely(!peer)) अणु
 		ret = -ENOKEY;
-		if (skb->protocol == htons(ETH_P_IP))
+		अगर (skb->protocol == htons(ETH_P_IP))
 			net_dbg_ratelimited("%s: No peer has allowed IPs matching %pI4\n",
 					    dev->name, &ip_hdr(skb)->daddr);
-		else if (skb->protocol == htons(ETH_P_IPV6))
+		अन्यथा अगर (skb->protocol == htons(ETH_P_IPV6))
 			net_dbg_ratelimited("%s: No peer has allowed IPs matching %pI6\n",
 					    dev->name, &ipv6_hdr(skb)->daddr);
-		goto err_icmp;
-	}
+		जाओ err_icmp;
+	पूर्ण
 
-	family = READ_ONCE(peer->endpoint.addr.sa_family);
-	if (unlikely(family != AF_INET && family != AF_INET6)) {
+	family = READ_ONCE(peer->endpoपूर्णांक.addr.sa_family);
+	अगर (unlikely(family != AF_INET && family != AF_INET6)) अणु
 		ret = -EDESTADDRREQ;
 		net_dbg_ratelimited("%s: No valid endpoint has been configured or discovered for peer %llu\n",
-				    dev->name, peer->internal_id);
-		goto err_peer;
-	}
+				    dev->name, peer->पूर्णांकernal_id);
+		जाओ err_peer;
+	पूर्ण
 
 	mtu = skb_dst(skb) ? dst_mtu(skb_dst(skb)) : dev->mtu;
 
 	__skb_queue_head_init(&packets);
-	if (!skb_is_gso(skb)) {
+	अगर (!skb_is_gso(skb)) अणु
 		skb_mark_not_on_list(skb);
-	} else {
-		struct sk_buff *segs = skb_gso_segment(skb, 0);
+	पूर्ण अन्यथा अणु
+		काष्ठा sk_buff *segs = skb_gso_segment(skb, 0);
 
-		if (IS_ERR(segs)) {
+		अगर (IS_ERR(segs)) अणु
 			ret = PTR_ERR(segs);
-			goto err_peer;
-		}
-		dev_kfree_skb(skb);
+			जाओ err_peer;
+		पूर्ण
+		dev_kमुक्त_skb(skb);
 		skb = segs;
-	}
+	पूर्ण
 
-	skb_list_walk_safe(skb, skb, next) {
+	skb_list_walk_safe(skb, skb, next) अणु
 		skb_mark_not_on_list(skb);
 
 		skb = skb_share_check(skb, GFP_ATOMIC);
-		if (unlikely(!skb))
-			continue;
+		अगर (unlikely(!skb))
+			जारी;
 
-		/* We only need to keep the original dst around for icmp,
-		 * so at this point we're in a position to drop it.
+		/* We only need to keep the original dst around क्रम icmp,
+		 * so at this poपूर्णांक we're in a position to drop it.
 		 */
 		skb_dst_drop(skb);
 
 		PACKET_CB(skb)->mtu = mtu;
 
 		__skb_queue_tail(&packets, skb);
-	}
+	पूर्ण
 
 	spin_lock_bh(&peer->staged_packet_queue.lock);
 	/* If the queue is getting too big, we start removing the oldest packets
-	 * until it's small again. We do this before adding the new packet, so
-	 * we don't remove GSO segments that are in excess.
+	 * until it's small again. We करो this beक्रमe adding the new packet, so
+	 * we करोn't हटाओ GSO segments that are in excess.
 	 */
-	while (skb_queue_len(&peer->staged_packet_queue) > MAX_STAGED_PACKETS) {
-		dev_kfree_skb(__skb_dequeue(&peer->staged_packet_queue));
+	जबतक (skb_queue_len(&peer->staged_packet_queue) > MAX_STAGED_PACKETS) अणु
+		dev_kमुक्त_skb(__skb_dequeue(&peer->staged_packet_queue));
 		++dev->stats.tx_dropped;
-	}
+	पूर्ण
 	skb_queue_splice_tail(&packets, &peer->staged_packet_queue);
 	spin_unlock_bh(&peer->staged_packet_queue.lock);
 
 	wg_packet_send_staged_packets(peer);
 
 	wg_peer_put(peer);
-	return NETDEV_TX_OK;
+	वापस NETDEV_TX_OK;
 
 err_peer:
 	wg_peer_put(peer);
 err_icmp:
-	if (skb->protocol == htons(ETH_P_IP))
-		icmp_ndo_send(skb, ICMP_DEST_UNREACH, ICMP_HOST_UNREACH, 0);
-	else if (skb->protocol == htons(ETH_P_IPV6))
-		icmpv6_ndo_send(skb, ICMPV6_DEST_UNREACH, ICMPV6_ADDR_UNREACH, 0);
+	अगर (skb->protocol == htons(ETH_P_IP))
+		icmp_nकरो_send(skb, ICMP_DEST_UNREACH, ICMP_HOST_UNREACH, 0);
+	अन्यथा अगर (skb->protocol == htons(ETH_P_IPV6))
+		icmpv6_nकरो_send(skb, ICMPV6_DEST_UNREACH, ICMPV6_ADDR_UNREACH, 0);
 err:
 	++dev->stats.tx_errors;
-	kfree_skb(skb);
-	return ret;
-}
+	kमुक्त_skb(skb);
+	वापस ret;
+पूर्ण
 
-static const struct net_device_ops netdev_ops = {
-	.ndo_open		= wg_open,
-	.ndo_stop		= wg_stop,
-	.ndo_start_xmit		= wg_xmit,
-	.ndo_get_stats64	= dev_get_tstats64
-};
+अटल स्थिर काष्ठा net_device_ops netdev_ops = अणु
+	.nकरो_खोलो		= wg_खोलो,
+	.nकरो_stop		= wg_stop,
+	.nकरो_start_xmit		= wg_xmit,
+	.nकरो_get_stats64	= dev_get_tstats64
+पूर्ण;
 
-static void wg_destruct(struct net_device *dev)
-{
-	struct wg_device *wg = netdev_priv(dev);
+अटल व्योम wg_deकाष्ठा(काष्ठा net_device *dev)
+अणु
+	काष्ठा wg_device *wg = netdev_priv(dev);
 
 	rtnl_lock();
 	list_del(&wg->device_list);
 	rtnl_unlock();
 	mutex_lock(&wg->device_update_lock);
-	rcu_assign_pointer(wg->creating_net, NULL);
+	rcu_assign_poपूर्णांकer(wg->creating_net, शून्य);
 	wg->incoming_port = 0;
-	wg_socket_reinit(wg, NULL, NULL);
+	wg_socket_reinit(wg, शून्य, शून्य);
 	/* The final references are cleared in the below calls to destroy_workqueue. */
-	wg_peer_remove_all(wg);
+	wg_peer_हटाओ_all(wg);
 	destroy_workqueue(wg->handshake_receive_wq);
 	destroy_workqueue(wg->handshake_send_wq);
 	destroy_workqueue(wg->packet_crypt_wq);
-	wg_packet_queue_free(&wg->decrypt_queue);
-	wg_packet_queue_free(&wg->encrypt_queue);
-	rcu_barrier(); /* Wait for all the peers to be actually freed. */
+	wg_packet_queue_मुक्त(&wg->decrypt_queue);
+	wg_packet_queue_मुक्त(&wg->encrypt_queue);
+	rcu_barrier(); /* Wait क्रम all the peers to be actually मुक्तd. */
 	wg_ratelimiter_uninit();
-	memzero_explicit(&wg->static_identity, sizeof(wg->static_identity));
+	memzero_explicit(&wg->अटल_identity, माप(wg->अटल_identity));
 	skb_queue_purge(&wg->incoming_handshakes);
-	free_percpu(dev->tstats);
-	free_percpu(wg->incoming_handshakes_worker);
-	kvfree(wg->index_hashtable);
-	kvfree(wg->peer_hashtable);
+	मुक्त_percpu(dev->tstats);
+	मुक्त_percpu(wg->incoming_handshakes_worker);
+	kvमुक्त(wg->index_hashtable);
+	kvमुक्त(wg->peer_hashtable);
 	mutex_unlock(&wg->device_update_lock);
 
 	pr_debug("%s: Interface destroyed\n", dev->name);
-	free_netdev(dev);
-}
+	मुक्त_netdev(dev);
+पूर्ण
 
-static const struct device_type device_type = { .name = KBUILD_MODNAME };
+अटल स्थिर काष्ठा device_type device_type = अणु .name = KBUILD_MODNAME पूर्ण;
 
-static void wg_setup(struct net_device *dev)
-{
-	struct wg_device *wg = netdev_priv(dev);
-	enum { WG_NETDEV_FEATURES = NETIF_F_HW_CSUM | NETIF_F_RXCSUM |
+अटल व्योम wg_setup(काष्ठा net_device *dev)
+अणु
+	काष्ठा wg_device *wg = netdev_priv(dev);
+	क्रमागत अणु WG_NETDEV_FEATURES = NETIF_F_HW_CSUM | NETIF_F_RXCSUM |
 				    NETIF_F_SG | NETIF_F_GSO |
-				    NETIF_F_GSO_SOFTWARE | NETIF_F_HIGHDMA };
-	const int overhead = MESSAGE_MINIMUM_LENGTH + sizeof(struct udphdr) +
-			     max(sizeof(struct ipv6hdr), sizeof(struct iphdr));
+				    NETIF_F_GSO_SOFTWARE | NETIF_F_HIGHDMA पूर्ण;
+	स्थिर पूर्णांक overhead = MESSAGE_MINIMUM_LENGTH + माप(काष्ठा udphdr) +
+			     max(माप(काष्ठा ipv6hdr), माप(काष्ठा iphdr));
 
 	dev->netdev_ops = &netdev_ops;
 	dev->header_ops = &ip_tunnel_header_ops;
@@ -276,26 +277,26 @@ static void wg_setup(struct net_device *dev)
 	dev->hw_features |= WG_NETDEV_FEATURES;
 	dev->hw_enc_features |= WG_NETDEV_FEATURES;
 	dev->mtu = ETH_DATA_LEN - overhead;
-	dev->max_mtu = round_down(INT_MAX, MESSAGE_PADDING_MULTIPLE) - overhead;
+	dev->max_mtu = round_करोwn(पूर्णांक_उच्च, MESSAGE_PADDING_MULTIPLE) - overhead;
 
 	SET_NETDEV_DEVTYPE(dev, &device_type);
 
-	/* We need to keep the dst around in case of icmp replies. */
-	netif_keep_dst(dev);
+	/* We need to keep the dst around in हाल of icmp replies. */
+	netअगर_keep_dst(dev);
 
-	memset(wg, 0, sizeof(*wg));
+	स_रखो(wg, 0, माप(*wg));
 	wg->dev = dev;
-}
+पूर्ण
 
-static int wg_newlink(struct net *src_net, struct net_device *dev,
-		      struct nlattr *tb[], struct nlattr *data[],
-		      struct netlink_ext_ack *extack)
-{
-	struct wg_device *wg = netdev_priv(dev);
-	int ret = -ENOMEM;
+अटल पूर्णांक wg_newlink(काष्ठा net *src_net, काष्ठा net_device *dev,
+		      काष्ठा nlattr *tb[], काष्ठा nlattr *data[],
+		      काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा wg_device *wg = netdev_priv(dev);
+	पूर्णांक ret = -ENOMEM;
 
-	rcu_assign_pointer(wg->creating_net, src_net);
-	init_rwsem(&wg->static_identity.lock);
+	rcu_assign_poपूर्णांकer(wg->creating_net, src_net);
+	init_rwsem(&wg->अटल_identity.lock);
 	mutex_init(&wg->socket_update_lock);
 	mutex_init(&wg->device_update_lock);
 	skb_queue_head_init(&wg->incoming_handshakes);
@@ -305,153 +306,153 @@ static int wg_newlink(struct net *src_net, struct net_device *dev,
 	wg->device_update_gen = 1;
 
 	wg->peer_hashtable = wg_pubkey_hashtable_alloc();
-	if (!wg->peer_hashtable)
-		return ret;
+	अगर (!wg->peer_hashtable)
+		वापस ret;
 
 	wg->index_hashtable = wg_index_hashtable_alloc();
-	if (!wg->index_hashtable)
-		goto err_free_peer_hashtable;
+	अगर (!wg->index_hashtable)
+		जाओ err_मुक्त_peer_hashtable;
 
-	dev->tstats = netdev_alloc_pcpu_stats(struct pcpu_sw_netstats);
-	if (!dev->tstats)
-		goto err_free_index_hashtable;
+	dev->tstats = netdev_alloc_pcpu_stats(काष्ठा pcpu_sw_netstats);
+	अगर (!dev->tstats)
+		जाओ err_मुक्त_index_hashtable;
 
 	wg->incoming_handshakes_worker =
 		wg_packet_percpu_multicore_worker_alloc(
 				wg_packet_handshake_receive_worker, wg);
-	if (!wg->incoming_handshakes_worker)
-		goto err_free_tstats;
+	अगर (!wg->incoming_handshakes_worker)
+		जाओ err_मुक्त_tstats;
 
 	wg->handshake_receive_wq = alloc_workqueue("wg-kex-%s",
 			WQ_CPU_INTENSIVE | WQ_FREEZABLE, 0, dev->name);
-	if (!wg->handshake_receive_wq)
-		goto err_free_incoming_handshakes;
+	अगर (!wg->handshake_receive_wq)
+		जाओ err_मुक्त_incoming_handshakes;
 
 	wg->handshake_send_wq = alloc_workqueue("wg-kex-%s",
 			WQ_UNBOUND | WQ_FREEZABLE, 0, dev->name);
-	if (!wg->handshake_send_wq)
-		goto err_destroy_handshake_receive;
+	अगर (!wg->handshake_send_wq)
+		जाओ err_destroy_handshake_receive;
 
 	wg->packet_crypt_wq = alloc_workqueue("wg-crypt-%s",
 			WQ_CPU_INTENSIVE | WQ_MEM_RECLAIM, 0, dev->name);
-	if (!wg->packet_crypt_wq)
-		goto err_destroy_handshake_send;
+	अगर (!wg->packet_crypt_wq)
+		जाओ err_destroy_handshake_send;
 
 	ret = wg_packet_queue_init(&wg->encrypt_queue, wg_packet_encrypt_worker,
 				   MAX_QUEUED_PACKETS);
-	if (ret < 0)
-		goto err_destroy_packet_crypt;
+	अगर (ret < 0)
+		जाओ err_destroy_packet_crypt;
 
 	ret = wg_packet_queue_init(&wg->decrypt_queue, wg_packet_decrypt_worker,
 				   MAX_QUEUED_PACKETS);
-	if (ret < 0)
-		goto err_free_encrypt_queue;
+	अगर (ret < 0)
+		जाओ err_मुक्त_encrypt_queue;
 
 	ret = wg_ratelimiter_init();
-	if (ret < 0)
-		goto err_free_decrypt_queue;
+	अगर (ret < 0)
+		जाओ err_मुक्त_decrypt_queue;
 
-	ret = register_netdevice(dev);
-	if (ret < 0)
-		goto err_uninit_ratelimiter;
+	ret = रेजिस्टर_netdevice(dev);
+	अगर (ret < 0)
+		जाओ err_uninit_ratelimiter;
 
 	list_add(&wg->device_list, &device_list);
 
-	/* We wait until the end to assign priv_destructor, so that
-	 * register_netdevice doesn't call it for us if it fails.
+	/* We रुको until the end to assign priv_deकाष्ठाor, so that
+	 * रेजिस्टर_netdevice करोesn't call it क्रम us अगर it fails.
 	 */
-	dev->priv_destructor = wg_destruct;
+	dev->priv_deकाष्ठाor = wg_deकाष्ठा;
 
 	pr_debug("%s: Interface created\n", dev->name);
-	return ret;
+	वापस ret;
 
 err_uninit_ratelimiter:
 	wg_ratelimiter_uninit();
-err_free_decrypt_queue:
-	wg_packet_queue_free(&wg->decrypt_queue);
-err_free_encrypt_queue:
-	wg_packet_queue_free(&wg->encrypt_queue);
+err_मुक्त_decrypt_queue:
+	wg_packet_queue_मुक्त(&wg->decrypt_queue);
+err_मुक्त_encrypt_queue:
+	wg_packet_queue_मुक्त(&wg->encrypt_queue);
 err_destroy_packet_crypt:
 	destroy_workqueue(wg->packet_crypt_wq);
 err_destroy_handshake_send:
 	destroy_workqueue(wg->handshake_send_wq);
 err_destroy_handshake_receive:
 	destroy_workqueue(wg->handshake_receive_wq);
-err_free_incoming_handshakes:
-	free_percpu(wg->incoming_handshakes_worker);
-err_free_tstats:
-	free_percpu(dev->tstats);
-err_free_index_hashtable:
-	kvfree(wg->index_hashtable);
-err_free_peer_hashtable:
-	kvfree(wg->peer_hashtable);
-	return ret;
-}
+err_मुक्त_incoming_handshakes:
+	मुक्त_percpu(wg->incoming_handshakes_worker);
+err_मुक्त_tstats:
+	मुक्त_percpu(dev->tstats);
+err_मुक्त_index_hashtable:
+	kvमुक्त(wg->index_hashtable);
+err_मुक्त_peer_hashtable:
+	kvमुक्त(wg->peer_hashtable);
+	वापस ret;
+पूर्ण
 
-static struct rtnl_link_ops link_ops __read_mostly = {
+अटल काष्ठा rtnl_link_ops link_ops __पढ़ो_mostly = अणु
 	.kind			= KBUILD_MODNAME,
-	.priv_size		= sizeof(struct wg_device),
+	.priv_size		= माप(काष्ठा wg_device),
 	.setup			= wg_setup,
 	.newlink		= wg_newlink,
-};
+पूर्ण;
 
-static void wg_netns_pre_exit(struct net *net)
-{
-	struct wg_device *wg;
+अटल व्योम wg_netns_pre_निकास(काष्ठा net *net)
+अणु
+	काष्ठा wg_device *wg;
 
 	rtnl_lock();
-	list_for_each_entry(wg, &device_list, device_list) {
-		if (rcu_access_pointer(wg->creating_net) == net) {
+	list_क्रम_each_entry(wg, &device_list, device_list) अणु
+		अगर (rcu_access_poपूर्णांकer(wg->creating_net) == net) अणु
 			pr_debug("%s: Creating namespace exiting\n", wg->dev->name);
-			netif_carrier_off(wg->dev);
+			netअगर_carrier_off(wg->dev);
 			mutex_lock(&wg->device_update_lock);
-			rcu_assign_pointer(wg->creating_net, NULL);
-			wg_socket_reinit(wg, NULL, NULL);
+			rcu_assign_poपूर्णांकer(wg->creating_net, शून्य);
+			wg_socket_reinit(wg, शून्य, शून्य);
 			mutex_unlock(&wg->device_update_lock);
-		}
-	}
+		पूर्ण
+	पूर्ण
 	rtnl_unlock();
-}
+पूर्ण
 
-static struct pernet_operations pernet_ops = {
-	.pre_exit = wg_netns_pre_exit
-};
+अटल काष्ठा pernet_operations pernet_ops = अणु
+	.pre_निकास = wg_netns_pre_निकास
+पूर्ण;
 
-int __init wg_device_init(void)
-{
-	int ret;
+पूर्णांक __init wg_device_init(व्योम)
+अणु
+	पूर्णांक ret;
 
-#ifdef CONFIG_PM_SLEEP
-	ret = register_pm_notifier(&pm_notifier);
-	if (ret)
-		return ret;
-#endif
+#अगर_घोषित CONFIG_PM_SLEEP
+	ret = रेजिस्टर_pm_notअगरier(&pm_notअगरier);
+	अगर (ret)
+		वापस ret;
+#पूर्ण_अगर
 
-	ret = register_pernet_device(&pernet_ops);
-	if (ret)
-		goto error_pm;
+	ret = रेजिस्टर_pernet_device(&pernet_ops);
+	अगर (ret)
+		जाओ error_pm;
 
-	ret = rtnl_link_register(&link_ops);
-	if (ret)
-		goto error_pernet;
+	ret = rtnl_link_रेजिस्टर(&link_ops);
+	अगर (ret)
+		जाओ error_pernet;
 
-	return 0;
+	वापस 0;
 
 error_pernet:
-	unregister_pernet_device(&pernet_ops);
+	unरेजिस्टर_pernet_device(&pernet_ops);
 error_pm:
-#ifdef CONFIG_PM_SLEEP
-	unregister_pm_notifier(&pm_notifier);
-#endif
-	return ret;
-}
+#अगर_घोषित CONFIG_PM_SLEEP
+	unरेजिस्टर_pm_notअगरier(&pm_notअगरier);
+#पूर्ण_अगर
+	वापस ret;
+पूर्ण
 
-void wg_device_uninit(void)
-{
-	rtnl_link_unregister(&link_ops);
-	unregister_pernet_device(&pernet_ops);
-#ifdef CONFIG_PM_SLEEP
-	unregister_pm_notifier(&pm_notifier);
-#endif
+व्योम wg_device_uninit(व्योम)
+अणु
+	rtnl_link_unरेजिस्टर(&link_ops);
+	unरेजिस्टर_pernet_device(&pernet_ops);
+#अगर_घोषित CONFIG_PM_SLEEP
+	unरेजिस्टर_pm_notअगरier(&pm_notअगरier);
+#पूर्ण_अगर
 	rcu_barrier();
-}
+पूर्ण

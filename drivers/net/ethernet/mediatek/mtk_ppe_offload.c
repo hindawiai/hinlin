@@ -1,281 +1,282 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  *  Copyright (C) 2020 Felix Fietkau <nbd@nbd.name>
  */
 
-#include <linux/if_ether.h>
-#include <linux/rhashtable.h>
-#include <linux/ip.h>
-#include <net/flow_offload.h>
-#include <net/pkt_cls.h>
-#include <net/dsa.h>
-#include "mtk_eth_soc.h"
+#समावेश <linux/अगर_ether.h>
+#समावेश <linux/rhashtable.h>
+#समावेश <linux/ip.h>
+#समावेश <net/flow_offload.h>
+#समावेश <net/pkt_cls.h>
+#समावेश <net/dsa.h>
+#समावेश "mtk_eth_soc.h"
 
-struct mtk_flow_data {
-	struct ethhdr eth;
+काष्ठा mtk_flow_data अणु
+	काष्ठा ethhdr eth;
 
-	union {
-		struct {
+	जोड़ अणु
+		काष्ठा अणु
 			__be32 src_addr;
 			__be32 dst_addr;
-		} v4;
-	};
+		पूर्ण v4;
+	पूर्ण;
 
 	__be16 src_port;
 	__be16 dst_port;
 
-	struct {
+	काष्ठा अणु
 		u16 id;
 		__be16 proto;
 		u8 num;
-	} vlan;
-	struct {
+	पूर्ण vlan;
+	काष्ठा अणु
 		u16 sid;
 		u8 num;
-	} pppoe;
-};
+	पूर्ण pppoe;
+पूर्ण;
 
-struct mtk_flow_entry {
-	struct rhash_head node;
-	unsigned long cookie;
+काष्ठा mtk_flow_entry अणु
+	काष्ठा rhash_head node;
+	अचिन्हित दीर्घ cookie;
 	u16 hash;
-};
+पूर्ण;
 
-static const struct rhashtable_params mtk_flow_ht_params = {
-	.head_offset = offsetof(struct mtk_flow_entry, node),
-	.key_offset = offsetof(struct mtk_flow_entry, cookie),
-	.key_len = sizeof(unsigned long),
-	.automatic_shrinking = true,
-};
+अटल स्थिर काष्ठा rhashtable_params mtk_flow_ht_params = अणु
+	.head_offset = दुरत्व(काष्ठा mtk_flow_entry, node),
+	.key_offset = दुरत्व(काष्ठा mtk_flow_entry, cookie),
+	.key_len = माप(अचिन्हित दीर्घ),
+	.स्वतःmatic_shrinking = true,
+पूर्ण;
 
-static u32
-mtk_eth_timestamp(struct mtk_eth *eth)
-{
-	return mtk_r32(eth, 0x0010) & MTK_FOE_IB1_BIND_TIMESTAMP;
-}
+अटल u32
+mtk_eth_बारtamp(काष्ठा mtk_eth *eth)
+अणु
+	वापस mtk_r32(eth, 0x0010) & MTK_FOE_IB1_BIND_TIMESTAMP;
+पूर्ण
 
-static int
-mtk_flow_set_ipv4_addr(struct mtk_foe_entry *foe, struct mtk_flow_data *data,
+अटल पूर्णांक
+mtk_flow_set_ipv4_addr(काष्ठा mtk_foe_entry *foe, काष्ठा mtk_flow_data *data,
 		       bool egress)
-{
-	return mtk_foe_entry_set_ipv4_tuple(foe, egress,
+अणु
+	वापस mtk_foe_entry_set_ipv4_tuple(foe, egress,
 					    data->v4.src_addr, data->src_port,
 					    data->v4.dst_addr, data->dst_port);
-}
+पूर्ण
 
-static void
-mtk_flow_offload_mangle_eth(const struct flow_action_entry *act, void *eth)
-{
-	void *dest = eth + act->mangle.offset;
-	const void *src = &act->mangle.val;
+अटल व्योम
+mtk_flow_offload_mangle_eth(स्थिर काष्ठा flow_action_entry *act, व्योम *eth)
+अणु
+	व्योम *dest = eth + act->mangle.offset;
+	स्थिर व्योम *src = &act->mangle.val;
 
-	if (act->mangle.offset > 8)
-		return;
+	अगर (act->mangle.offset > 8)
+		वापस;
 
-	if (act->mangle.mask == 0xffff) {
+	अगर (act->mangle.mask == 0xffff) अणु
 		src += 2;
 		dest += 2;
-	}
+	पूर्ण
 
-	memcpy(dest, src, act->mangle.mask ? 2 : 4);
-}
+	स_नकल(dest, src, act->mangle.mask ? 2 : 4);
+पूर्ण
 
 
-static int
-mtk_flow_mangle_ports(const struct flow_action_entry *act,
-		      struct mtk_flow_data *data)
-{
+अटल पूर्णांक
+mtk_flow_mangle_ports(स्थिर काष्ठा flow_action_entry *act,
+		      काष्ठा mtk_flow_data *data)
+अणु
 	u32 val = ntohl(act->mangle.val);
 
-	switch (act->mangle.offset) {
-	case 0:
-		if (act->mangle.mask == ~htonl(0xffff))
+	चयन (act->mangle.offset) अणु
+	हाल 0:
+		अगर (act->mangle.mask == ~htonl(0xffff))
 			data->dst_port = cpu_to_be16(val);
-		else
+		अन्यथा
 			data->src_port = cpu_to_be16(val >> 16);
-		break;
-	case 2:
+		अवरोध;
+	हाल 2:
 		data->dst_port = cpu_to_be16(val);
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-mtk_flow_mangle_ipv4(const struct flow_action_entry *act,
-		     struct mtk_flow_data *data)
-{
+अटल पूर्णांक
+mtk_flow_mangle_ipv4(स्थिर काष्ठा flow_action_entry *act,
+		     काष्ठा mtk_flow_data *data)
+अणु
 	__be32 *dest;
 
-	switch (act->mangle.offset) {
-	case offsetof(struct iphdr, saddr):
+	चयन (act->mangle.offset) अणु
+	हाल दुरत्व(काष्ठा iphdr, saddr):
 		dest = &data->v4.src_addr;
-		break;
-	case offsetof(struct iphdr, daddr):
+		अवरोध;
+	हाल दुरत्व(काष्ठा iphdr, daddr):
 		dest = &data->v4.dst_addr;
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	memcpy(dest, &act->mangle.val, sizeof(u32));
+	स_नकल(dest, &act->mangle.val, माप(u32));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-mtk_flow_get_dsa_port(struct net_device **dev)
-{
-#if IS_ENABLED(CONFIG_NET_DSA)
-	struct dsa_port *dp;
+अटल पूर्णांक
+mtk_flow_get_dsa_port(काष्ठा net_device **dev)
+अणु
+#अगर IS_ENABLED(CONFIG_NET_DSA)
+	काष्ठा dsa_port *dp;
 
 	dp = dsa_port_from_netdev(*dev);
-	if (IS_ERR(dp))
-		return -ENODEV;
+	अगर (IS_ERR(dp))
+		वापस -ENODEV;
 
-	if (dp->cpu_dp->tag_ops->proto != DSA_TAG_PROTO_MTK)
-		return -ENODEV;
+	अगर (dp->cpu_dp->tag_ops->proto != DSA_TAG_PROTO_MTK)
+		वापस -ENODEV;
 
 	*dev = dp->cpu_dp->master;
 
-	return dp->index;
-#else
-	return -ENODEV;
-#endif
-}
+	वापस dp->index;
+#अन्यथा
+	वापस -ENODEV;
+#पूर्ण_अगर
+पूर्ण
 
-static int
-mtk_flow_set_output_device(struct mtk_eth *eth, struct mtk_foe_entry *foe,
-			   struct net_device *dev)
-{
-	int pse_port, dsa_port;
+अटल पूर्णांक
+mtk_flow_set_output_device(काष्ठा mtk_eth *eth, काष्ठा mtk_foe_entry *foe,
+			   काष्ठा net_device *dev)
+अणु
+	पूर्णांक pse_port, dsa_port;
 
 	dsa_port = mtk_flow_get_dsa_port(&dev);
-	if (dsa_port >= 0)
+	अगर (dsa_port >= 0)
 		mtk_foe_entry_set_dsa(foe, dsa_port);
 
-	if (dev == eth->netdev[0])
+	अगर (dev == eth->netdev[0])
 		pse_port = 1;
-	else if (dev == eth->netdev[1])
+	अन्यथा अगर (dev == eth->netdev[1])
 		pse_port = 2;
-	else
-		return -EOPNOTSUPP;
+	अन्यथा
+		वापस -EOPNOTSUPP;
 
 	mtk_foe_entry_set_pse_port(foe, pse_port);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-mtk_flow_offload_replace(struct mtk_eth *eth, struct flow_cls_offload *f)
-{
-	struct flow_rule *rule = flow_cls_offload_flow_rule(f);
-	struct flow_action_entry *act;
-	struct mtk_flow_data data = {};
-	struct mtk_foe_entry foe;
-	struct net_device *odev = NULL;
-	struct mtk_flow_entry *entry;
-	int offload_type = 0;
+अटल पूर्णांक
+mtk_flow_offload_replace(काष्ठा mtk_eth *eth, काष्ठा flow_cls_offload *f)
+अणु
+	काष्ठा flow_rule *rule = flow_cls_offload_flow_rule(f);
+	काष्ठा flow_action_entry *act;
+	काष्ठा mtk_flow_data data = अणुपूर्ण;
+	काष्ठा mtk_foe_entry foe;
+	काष्ठा net_device *odev = शून्य;
+	काष्ठा mtk_flow_entry *entry;
+	पूर्णांक offload_type = 0;
 	u16 addr_type = 0;
-	u32 timestamp;
+	u32 बारtamp;
 	u8 l4proto = 0;
-	int err = 0;
-	int hash;
-	int i;
+	पूर्णांक err = 0;
+	पूर्णांक hash;
+	पूर्णांक i;
 
-	if (flow_rule_match_key(rule, FLOW_DISSECTOR_KEY_META)) {
-		struct flow_match_meta match;
+	अगर (flow_rule_match_key(rule, FLOW_DISSECTOR_KEY_META)) अणु
+		काष्ठा flow_match_meta match;
 
 		flow_rule_match_meta(rule, &match);
-	} else {
-		return -EOPNOTSUPP;
-	}
+	पूर्ण अन्यथा अणु
+		वापस -EOPNOTSUPP;
+	पूर्ण
 
-	if (flow_rule_match_key(rule, FLOW_DISSECTOR_KEY_CONTROL)) {
-		struct flow_match_control match;
+	अगर (flow_rule_match_key(rule, FLOW_DISSECTOR_KEY_CONTROL)) अणु
+		काष्ठा flow_match_control match;
 
 		flow_rule_match_control(rule, &match);
 		addr_type = match.key->addr_type;
-	} else {
-		return -EOPNOTSUPP;
-	}
+	पूर्ण अन्यथा अणु
+		वापस -EOPNOTSUPP;
+	पूर्ण
 
-	if (flow_rule_match_key(rule, FLOW_DISSECTOR_KEY_BASIC)) {
-		struct flow_match_basic match;
+	अगर (flow_rule_match_key(rule, FLOW_DISSECTOR_KEY_BASIC)) अणु
+		काष्ठा flow_match_basic match;
 
 		flow_rule_match_basic(rule, &match);
 		l4proto = match.key->ip_proto;
-	} else {
-		return -EOPNOTSUPP;
-	}
+	पूर्ण अन्यथा अणु
+		वापस -EOPNOTSUPP;
+	पूर्ण
 
-	flow_action_for_each(i, act, &rule->action) {
-		switch (act->id) {
-		case FLOW_ACTION_MANGLE:
-			if (act->mangle.htype == FLOW_ACT_MANGLE_HDR_TYPE_ETH)
+	flow_action_क्रम_each(i, act, &rule->action) अणु
+		चयन (act->id) अणु
+		हाल FLOW_ACTION_MANGLE:
+			अगर (act->mangle.htype == FLOW_ACT_MANGLE_HDR_TYPE_ETH)
 				mtk_flow_offload_mangle_eth(act, &data.eth);
-			break;
-		case FLOW_ACTION_REDIRECT:
+			अवरोध;
+		हाल FLOW_ACTION_REसूचीECT:
 			odev = act->dev;
-			break;
-		case FLOW_ACTION_CSUM:
-			break;
-		case FLOW_ACTION_VLAN_PUSH:
-			if (data.vlan.num == 1 ||
+			अवरोध;
+		हाल FLOW_ACTION_CSUM:
+			अवरोध;
+		हाल FLOW_ACTION_VLAN_PUSH:
+			अगर (data.vlan.num == 1 ||
 			    act->vlan.proto != htons(ETH_P_8021Q))
-				return -EOPNOTSUPP;
+				वापस -EOPNOTSUPP;
 
 			data.vlan.id = act->vlan.vid;
 			data.vlan.proto = act->vlan.proto;
 			data.vlan.num++;
-			break;
-		case FLOW_ACTION_VLAN_POP:
-			break;
-		case FLOW_ACTION_PPPOE_PUSH:
-			if (data.pppoe.num == 1)
-				return -EOPNOTSUPP;
+			अवरोध;
+		हाल FLOW_ACTION_VLAN_POP:
+			अवरोध;
+		हाल FLOW_ACTION_PPPOE_PUSH:
+			अगर (data.pppoe.num == 1)
+				वापस -EOPNOTSUPP;
 
 			data.pppoe.sid = act->pppoe.sid;
 			data.pppoe.num++;
-			break;
-		default:
-			return -EOPNOTSUPP;
-		}
-	}
+			अवरोध;
+		शेष:
+			वापस -EOPNOTSUPP;
+		पूर्ण
+	पूर्ण
 
-	switch (addr_type) {
-	case FLOW_DISSECTOR_KEY_IPV4_ADDRS:
+	चयन (addr_type) अणु
+	हाल FLOW_DISSECTOR_KEY_IPV4_ADDRS:
 		offload_type = MTK_PPE_PKT_TYPE_IPV4_HNAPT;
-		break;
-	default:
-		return -EOPNOTSUPP;
-	}
+		अवरोध;
+	शेष:
+		वापस -EOPNOTSUPP;
+	पूर्ण
 
-	if (!is_valid_ether_addr(data.eth.h_source) ||
+	अगर (!is_valid_ether_addr(data.eth.h_source) ||
 	    !is_valid_ether_addr(data.eth.h_dest))
-		return -EINVAL;
+		वापस -EINVAL;
 
 	err = mtk_foe_entry_prepare(&foe, offload_type, l4proto, 0,
 				    data.eth.h_source,
 				    data.eth.h_dest);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	if (flow_rule_match_key(rule, FLOW_DISSECTOR_KEY_PORTS)) {
-		struct flow_match_ports ports;
+	अगर (flow_rule_match_key(rule, FLOW_DISSECTOR_KEY_PORTS)) अणु
+		काष्ठा flow_match_ports ports;
 
 		flow_rule_match_ports(rule, &ports);
 		data.src_port = ports.key->src;
 		data.dst_port = ports.key->dst;
-	} else {
-		return -EOPNOTSUPP;
-	}
+	पूर्ण अन्यथा अणु
+		वापस -EOPNOTSUPP;
+	पूर्ण
 
-	if (addr_type == FLOW_DISSECTOR_KEY_IPV4_ADDRS) {
-		struct flow_match_ipv4_addrs addrs;
+	अगर (addr_type == FLOW_DISSECTOR_KEY_IPV4_ADDRS) अणु
+		काष्ठा flow_match_ipv4_addrs addrs;
 
 		flow_rule_match_ipv4_addrs(rule, &addrs);
 
@@ -283,213 +284,213 @@ mtk_flow_offload_replace(struct mtk_eth *eth, struct flow_cls_offload *f)
 		data.v4.dst_addr = addrs.key->dst;
 
 		mtk_flow_set_ipv4_addr(&foe, &data, false);
-	}
+	पूर्ण
 
-	flow_action_for_each(i, act, &rule->action) {
-		if (act->id != FLOW_ACTION_MANGLE)
-			continue;
+	flow_action_क्रम_each(i, act, &rule->action) अणु
+		अगर (act->id != FLOW_ACTION_MANGLE)
+			जारी;
 
-		switch (act->mangle.htype) {
-		case FLOW_ACT_MANGLE_HDR_TYPE_TCP:
-		case FLOW_ACT_MANGLE_HDR_TYPE_UDP:
+		चयन (act->mangle.htype) अणु
+		हाल FLOW_ACT_MANGLE_HDR_TYPE_TCP:
+		हाल FLOW_ACT_MANGLE_HDR_TYPE_UDP:
 			err = mtk_flow_mangle_ports(act, &data);
-			break;
-		case FLOW_ACT_MANGLE_HDR_TYPE_IP4:
+			अवरोध;
+		हाल FLOW_ACT_MANGLE_HDR_TYPE_IP4:
 			err = mtk_flow_mangle_ipv4(act, &data);
-			break;
-		case FLOW_ACT_MANGLE_HDR_TYPE_ETH:
+			अवरोध;
+		हाल FLOW_ACT_MANGLE_HDR_TYPE_ETH:
 			/* handled earlier */
-			break;
-		default:
-			return -EOPNOTSUPP;
-		}
+			अवरोध;
+		शेष:
+			वापस -EOPNOTSUPP;
+		पूर्ण
 
-		if (err)
-			return err;
-	}
+		अगर (err)
+			वापस err;
+	पूर्ण
 
-	if (addr_type == FLOW_DISSECTOR_KEY_IPV4_ADDRS) {
+	अगर (addr_type == FLOW_DISSECTOR_KEY_IPV4_ADDRS) अणु
 		err = mtk_flow_set_ipv4_addr(&foe, &data, true);
-		if (err)
-			return err;
-	}
+		अगर (err)
+			वापस err;
+	पूर्ण
 
-	if (data.vlan.num == 1) {
-		if (data.vlan.proto != htons(ETH_P_8021Q))
-			return -EOPNOTSUPP;
+	अगर (data.vlan.num == 1) अणु
+		अगर (data.vlan.proto != htons(ETH_P_8021Q))
+			वापस -EOPNOTSUPP;
 
 		mtk_foe_entry_set_vlan(&foe, data.vlan.id);
-	}
-	if (data.pppoe.num == 1)
+	पूर्ण
+	अगर (data.pppoe.num == 1)
 		mtk_foe_entry_set_pppoe(&foe, data.pppoe.sid);
 
 	err = mtk_flow_set_output_device(eth, &foe, odev);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	entry = kzalloc(sizeof(*entry), GFP_KERNEL);
-	if (!entry)
-		return -ENOMEM;
+	entry = kzalloc(माप(*entry), GFP_KERNEL);
+	अगर (!entry)
+		वापस -ENOMEM;
 
 	entry->cookie = f->cookie;
-	timestamp = mtk_eth_timestamp(eth);
-	hash = mtk_foe_entry_commit(&eth->ppe, &foe, timestamp);
-	if (hash < 0) {
+	बारtamp = mtk_eth_बारtamp(eth);
+	hash = mtk_foe_entry_commit(&eth->ppe, &foe, बारtamp);
+	अगर (hash < 0) अणु
 		err = hash;
-		goto free;
-	}
+		जाओ मुक्त;
+	पूर्ण
 
 	entry->hash = hash;
 	err = rhashtable_insert_fast(&eth->flow_table, &entry->node,
 				     mtk_flow_ht_params);
-	if (err < 0)
-		goto clear_flow;
+	अगर (err < 0)
+		जाओ clear_flow;
 
-	return 0;
+	वापस 0;
 clear_flow:
 	mtk_foe_entry_clear(&eth->ppe, hash);
-free:
-	kfree(entry);
-	return err;
-}
+मुक्त:
+	kमुक्त(entry);
+	वापस err;
+पूर्ण
 
-static int
-mtk_flow_offload_destroy(struct mtk_eth *eth, struct flow_cls_offload *f)
-{
-	struct mtk_flow_entry *entry;
+अटल पूर्णांक
+mtk_flow_offload_destroy(काष्ठा mtk_eth *eth, काष्ठा flow_cls_offload *f)
+अणु
+	काष्ठा mtk_flow_entry *entry;
 
 	entry = rhashtable_lookup(&eth->flow_table, &f->cookie,
 				  mtk_flow_ht_params);
-	if (!entry)
-		return -ENOENT;
+	अगर (!entry)
+		वापस -ENOENT;
 
 	mtk_foe_entry_clear(&eth->ppe, entry->hash);
-	rhashtable_remove_fast(&eth->flow_table, &entry->node,
+	rhashtable_हटाओ_fast(&eth->flow_table, &entry->node,
 			       mtk_flow_ht_params);
-	kfree(entry);
+	kमुक्त(entry);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-mtk_flow_offload_stats(struct mtk_eth *eth, struct flow_cls_offload *f)
-{
-	struct mtk_flow_entry *entry;
-	int timestamp;
+अटल पूर्णांक
+mtk_flow_offload_stats(काष्ठा mtk_eth *eth, काष्ठा flow_cls_offload *f)
+अणु
+	काष्ठा mtk_flow_entry *entry;
+	पूर्णांक बारtamp;
 	u32 idle;
 
 	entry = rhashtable_lookup(&eth->flow_table, &f->cookie,
 				  mtk_flow_ht_params);
-	if (!entry)
-		return -ENOENT;
+	अगर (!entry)
+		वापस -ENOENT;
 
-	timestamp = mtk_foe_entry_timestamp(&eth->ppe, entry->hash);
-	if (timestamp < 0)
-		return -ETIMEDOUT;
+	बारtamp = mtk_foe_entry_बारtamp(&eth->ppe, entry->hash);
+	अगर (बारtamp < 0)
+		वापस -ETIMEDOUT;
 
-	idle = mtk_eth_timestamp(eth) - timestamp;
-	f->stats.lastused = jiffies - idle * HZ;
+	idle = mtk_eth_बारtamp(eth) - बारtamp;
+	f->stats.lastused = jअगरfies - idle * HZ;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static DEFINE_MUTEX(mtk_flow_offload_mutex);
+अटल DEFINE_MUTEX(mtk_flow_offload_mutex);
 
-static int
-mtk_eth_setup_tc_block_cb(enum tc_setup_type type, void *type_data, void *cb_priv)
-{
-	struct flow_cls_offload *cls = type_data;
-	struct net_device *dev = cb_priv;
-	struct mtk_mac *mac = netdev_priv(dev);
-	struct mtk_eth *eth = mac->hw;
-	int err;
+अटल पूर्णांक
+mtk_eth_setup_tc_block_cb(क्रमागत tc_setup_type type, व्योम *type_data, व्योम *cb_priv)
+अणु
+	काष्ठा flow_cls_offload *cls = type_data;
+	काष्ठा net_device *dev = cb_priv;
+	काष्ठा mtk_mac *mac = netdev_priv(dev);
+	काष्ठा mtk_eth *eth = mac->hw;
+	पूर्णांक err;
 
-	if (!tc_can_offload(dev))
-		return -EOPNOTSUPP;
+	अगर (!tc_can_offload(dev))
+		वापस -EOPNOTSUPP;
 
-	if (type != TC_SETUP_CLSFLOWER)
-		return -EOPNOTSUPP;
+	अगर (type != TC_SETUP_CLSFLOWER)
+		वापस -EOPNOTSUPP;
 
 	mutex_lock(&mtk_flow_offload_mutex);
-	switch (cls->command) {
-	case FLOW_CLS_REPLACE:
+	चयन (cls->command) अणु
+	हाल FLOW_CLS_REPLACE:
 		err = mtk_flow_offload_replace(eth, cls);
-		break;
-	case FLOW_CLS_DESTROY:
+		अवरोध;
+	हाल FLOW_CLS_DESTROY:
 		err = mtk_flow_offload_destroy(eth, cls);
-		break;
-	case FLOW_CLS_STATS:
+		अवरोध;
+	हाल FLOW_CLS_STATS:
 		err = mtk_flow_offload_stats(eth, cls);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		err = -EOPNOTSUPP;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 	mutex_unlock(&mtk_flow_offload_mutex);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int
-mtk_eth_setup_tc_block(struct net_device *dev, struct flow_block_offload *f)
-{
-	struct mtk_mac *mac = netdev_priv(dev);
-	struct mtk_eth *eth = mac->hw;
-	static LIST_HEAD(block_cb_list);
-	struct flow_block_cb *block_cb;
+अटल पूर्णांक
+mtk_eth_setup_tc_block(काष्ठा net_device *dev, काष्ठा flow_block_offload *f)
+अणु
+	काष्ठा mtk_mac *mac = netdev_priv(dev);
+	काष्ठा mtk_eth *eth = mac->hw;
+	अटल LIST_HEAD(block_cb_list);
+	काष्ठा flow_block_cb *block_cb;
 	flow_setup_cb_t *cb;
 
-	if (!eth->ppe.foe_table)
-		return -EOPNOTSUPP;
+	अगर (!eth->ppe.foe_table)
+		वापस -EOPNOTSUPP;
 
-	if (f->binder_type != FLOW_BLOCK_BINDER_TYPE_CLSACT_INGRESS)
-		return -EOPNOTSUPP;
+	अगर (f->binder_type != FLOW_BLOCK_BINDER_TYPE_CLSACT_INGRESS)
+		वापस -EOPNOTSUPP;
 
 	cb = mtk_eth_setup_tc_block_cb;
 	f->driver_block_list = &block_cb_list;
 
-	switch (f->command) {
-	case FLOW_BLOCK_BIND:
+	चयन (f->command) अणु
+	हाल FLOW_BLOCK_BIND:
 		block_cb = flow_block_cb_lookup(f->block, cb, dev);
-		if (block_cb) {
+		अगर (block_cb) अणु
 			flow_block_cb_incref(block_cb);
-			return 0;
-		}
-		block_cb = flow_block_cb_alloc(cb, dev, dev, NULL);
-		if (IS_ERR(block_cb))
-			return PTR_ERR(block_cb);
+			वापस 0;
+		पूर्ण
+		block_cb = flow_block_cb_alloc(cb, dev, dev, शून्य);
+		अगर (IS_ERR(block_cb))
+			वापस PTR_ERR(block_cb);
 
 		flow_block_cb_add(block_cb, f);
 		list_add_tail(&block_cb->driver_list, &block_cb_list);
-		return 0;
-	case FLOW_BLOCK_UNBIND:
+		वापस 0;
+	हाल FLOW_BLOCK_UNBIND:
 		block_cb = flow_block_cb_lookup(f->block, cb, dev);
-		if (!block_cb)
-			return -ENOENT;
+		अगर (!block_cb)
+			वापस -ENOENT;
 
-		if (flow_block_cb_decref(block_cb)) {
-			flow_block_cb_remove(block_cb, f);
+		अगर (flow_block_cb_decref(block_cb)) अणु
+			flow_block_cb_हटाओ(block_cb, f);
 			list_del(&block_cb->driver_list);
-		}
-		return 0;
-	default:
-		return -EOPNOTSUPP;
-	}
-}
+		पूर्ण
+		वापस 0;
+	शेष:
+		वापस -EOPNOTSUPP;
+	पूर्ण
+पूर्ण
 
-int mtk_eth_setup_tc(struct net_device *dev, enum tc_setup_type type,
-		     void *type_data)
-{
-	if (type == TC_SETUP_FT)
-		return mtk_eth_setup_tc_block(dev, type_data);
+पूर्णांक mtk_eth_setup_tc(काष्ठा net_device *dev, क्रमागत tc_setup_type type,
+		     व्योम *type_data)
+अणु
+	अगर (type == TC_SETUP_FT)
+		वापस mtk_eth_setup_tc_block(dev, type_data);
 
-	return -EOPNOTSUPP;
-}
+	वापस -EOPNOTSUPP;
+पूर्ण
 
-int mtk_eth_offload_init(struct mtk_eth *eth)
-{
-	if (!eth->ppe.foe_table)
-		return 0;
+पूर्णांक mtk_eth_offload_init(काष्ठा mtk_eth *eth)
+अणु
+	अगर (!eth->ppe.foe_table)
+		वापस 0;
 
-	return rhashtable_init(&eth->flow_table, &mtk_flow_ht_params);
-}
+	वापस rhashtable_init(&eth->flow_table, &mtk_flow_ht_params);
+पूर्ण

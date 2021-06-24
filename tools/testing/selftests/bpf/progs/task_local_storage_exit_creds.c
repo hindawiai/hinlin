@@ -1,32 +1,33 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /* Copyright (c) 2021 Facebook */
 
-#include "vmlinux.h"
-#include <bpf/bpf_helpers.h>
-#include <bpf/bpf_tracing.h>
+#समावेश "vmlinux.h"
+#समावेश <bpf/bpf_helpers.h>
+#समावेश <bpf/bpf_tracing.h>
 
-char _license[] SEC("license") = "GPL";
+अक्षर _license[] SEC("license") = "GPL";
 
-struct {
-	__uint(type, BPF_MAP_TYPE_TASK_STORAGE);
-	__uint(map_flags, BPF_F_NO_PREALLOC);
-	__type(key, int);
+काष्ठा अणु
+	__uपूर्णांक(type, BPF_MAP_TYPE_TASK_STORAGE);
+	__uपूर्णांक(map_flags, BPF_F_NO_PREALLOC);
+	__type(key, पूर्णांक);
 	__type(value, __u64);
-} task_storage SEC(".maps");
+पूर्ण task_storage SEC(".maps");
 
-int valid_ptr_count = 0;
-int null_ptr_count = 0;
+पूर्णांक valid_ptr_count = 0;
+पूर्णांक null_ptr_count = 0;
 
 SEC("fentry/exit_creds")
-int BPF_PROG(trace_exit_creds, struct task_struct *task)
-{
+पूर्णांक BPF_PROG(trace_निकास_creds, काष्ठा task_काष्ठा *task)
+अणु
 	__u64 *ptr;
 
 	ptr = bpf_task_storage_get(&task_storage, task, 0,
 				   BPF_LOCAL_STORAGE_GET_F_CREATE);
-	if (ptr)
+	अगर (ptr)
 		__sync_fetch_and_add(&valid_ptr_count, 1);
-	else
+	अन्यथा
 		__sync_fetch_and_add(&null_ptr_count, 1);
-	return 0;
-}
+	वापस 0;
+पूर्ण

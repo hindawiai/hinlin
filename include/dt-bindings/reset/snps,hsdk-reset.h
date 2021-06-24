@@ -1,17 +1,18 @@
+<शैली गुरु>
 /**
- * This header provides index for the HSDK reset controller.
+ * This header provides index क्रम the HSDK reset controller.
  */
-#ifndef _DT_BINDINGS_RESET_CONTROLLER_SNPS_HSDK
-#define _DT_BINDINGS_RESET_CONTROLLER_SNPS_HSDK
+#अगर_अघोषित _DT_BINDINGS_RESET_CONTROLLER_SNPS_HSDK
+#घोषणा _DT_BINDINGS_RESET_CONTROLLER_SNPS_HSDK
 
-#define HSDK_APB_RESET	0
-#define HSDK_AXI_RESET	1
-#define HSDK_ETH_RESET	2
-#define HSDK_USB_RESET	3
-#define HSDK_SDIO_RESET	4
-#define HSDK_HDMI_RESET	5
-#define HSDK_GFX_RESET	6
-#define HSDK_DMAC_RESET	7
-#define HSDK_EBI_RESET	8
+#घोषणा HSDK_APB_RESET	0
+#घोषणा HSDK_AXI_RESET	1
+#घोषणा HSDK_ETH_RESET	2
+#घोषणा HSDK_USB_RESET	3
+#घोषणा HSDK_SDIO_RESET	4
+#घोषणा HSDK_HDMI_RESET	5
+#घोषणा HSDK_GFX_RESET	6
+#घोषणा HSDK_DMAC_RESET	7
+#घोषणा HSDK_EBI_RESET	8
 
-#endif /*_DT_BINDINGS_RESET_CONTROLLER_SNPS_HSDK*/
+#पूर्ण_अगर /*_DT_BINDINGS_RESET_CONTROLLER_SNPS_HSDK*/

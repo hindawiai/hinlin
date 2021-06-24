@@ -1,36 +1,37 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef LINUX_SPI_MAX7301_H
-#define LINUX_SPI_MAX7301_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित LINUX_SPI_MAX7301_H
+#घोषणा LINUX_SPI_MAX7301_H
 
-#include <linux/gpio.h>
+#समावेश <linux/gpपन.स>
 
 /*
- * Some registers must be read back to modify.
- * To save time we cache them here in memory
+ * Some रेजिस्टरs must be पढ़ो back to modअगरy.
+ * To save समय we cache them here in memory
  */
-struct max7301 {
-	struct mutex	lock;
+काष्ठा max7301 अणु
+	काष्ठा mutex	lock;
 	u8		port_config[8];	/* field 0 is unused */
 	u32		out_level;	/* cached output levels */
 	u32		input_pullup_active;
-	struct gpio_chip chip;
-	struct device *dev;
-	int (*write)(struct device *dev, unsigned int reg, unsigned int val);
-	int (*read)(struct device *dev, unsigned int reg);
-};
+	काष्ठा gpio_chip chip;
+	काष्ठा device *dev;
+	पूर्णांक (*ग_लिखो)(काष्ठा device *dev, अचिन्हित पूर्णांक reg, अचिन्हित पूर्णांक val);
+	पूर्णांक (*पढ़ो)(काष्ठा device *dev, अचिन्हित पूर्णांक reg);
+पूर्ण;
 
-struct max7301_platform_data {
-	/* number assigned to the first GPIO */
-	unsigned	base;
+काष्ठा max7301_platक्रमm_data अणु
+	/* number asचिन्हित to the first GPIO */
+	अचिन्हित	base;
 	/*
-	 * bitmask controlling the pullup configuration,
+	 * biपंचांगask controlling the pullup configuration,
 	 *
 	 * _note_ the 4 lowest bits are unused, because the first 4
 	 * ports of the controller are not used, too.
 	 */
 	u32		input_pullup_active;
-};
+पूर्ण;
 
-extern int __max730x_remove(struct device *dev);
-extern int __max730x_probe(struct max7301 *ts);
-#endif
+बाह्य पूर्णांक __max730x_हटाओ(काष्ठा device *dev);
+बाह्य पूर्णांक __max730x_probe(काष्ठा max7301 *ts);
+#पूर्ण_अगर

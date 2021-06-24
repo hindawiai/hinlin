@@ -1,65 +1,66 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
- * Copyright (c) 2020 Bernd Edlinger <bernd.edlinger@hotmail.de>
+ * Copyright (c) 2020 Bernd Edlinger <bernd.edlinger@hoपंचांगail.de>
  * All rights reserved.
  *
  * Check whether /proc/$pid/mem can be accessed without causing deadlocks
- * when de_thread is blocked with ->cred_guard_mutex held.
+ * when de_thपढ़ो is blocked with ->cred_guard_mutex held.
  */
 
-#include "../kselftest_harness.h"
-#include <stdio.h>
-#include <fcntl.h>
-#include <pthread.h>
-#include <signal.h>
-#include <unistd.h>
-#include <sys/ptrace.h>
+#समावेश "../kselftest_harness.h"
+#समावेश <मानकपन.स>
+#समावेश <fcntl.h>
+#समावेश <pthपढ़ो.h>
+#समावेश <संकेत.स>
+#समावेश <unistd.h>
+#समावेश <sys/ptrace.h>
 
-static void *thread(void *arg)
-{
+अटल व्योम *thपढ़ो(व्योम *arg)
+अणु
 	ptrace(PTRACE_TRACEME, 0, 0L, 0L);
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
 TEST(vmaccess)
-{
-	int f, pid = fork();
-	char mm[64];
+अणु
+	पूर्णांक f, pid = विभाजन();
+	अक्षर mm[64];
 
-	if (!pid) {
-		pthread_t pt;
+	अगर (!pid) अणु
+		pthपढ़ो_t pt;
 
-		pthread_create(&pt, NULL, thread, NULL);
-		pthread_join(pt, NULL);
-		execlp("true", "true", NULL);
-	}
+		pthपढ़ो_create(&pt, शून्य, thपढ़ो, शून्य);
+		pthपढ़ो_join(pt, शून्य);
+		execlp("true", "true", शून्य);
+	पूर्ण
 
 	sleep(1);
-	sprintf(mm, "/proc/%d/mem", pid);
-	f = open(mm, O_RDONLY);
+	प्र_लिखो(mm, "/proc/%d/mem", pid);
+	f = खोलो(mm, O_RDONLY);
 	ASSERT_GE(f, 0);
-	close(f);
-	f = kill(pid, SIGCONT);
+	बंद(f);
+	f = समाप्त(pid, SIGCONT);
 	ASSERT_EQ(f, 0);
-}
+पूर्ण
 
 TEST(attach)
-{
-	int s, k, pid = fork();
+अणु
+	पूर्णांक s, k, pid = विभाजन();
 
-	if (!pid) {
-		pthread_t pt;
+	अगर (!pid) अणु
+		pthपढ़ो_t pt;
 
-		pthread_create(&pt, NULL, thread, NULL);
-		pthread_join(pt, NULL);
-		execlp("sleep", "sleep", "2", NULL);
-	}
+		pthपढ़ो_create(&pt, शून्य, thपढ़ो, शून्य);
+		pthपढ़ो_join(pt, शून्य);
+		execlp("sleep", "sleep", "2", शून्य);
+	पूर्ण
 
 	sleep(1);
 	k = ptrace(PTRACE_ATTACH, pid, 0L, 0L);
-	ASSERT_EQ(errno, EAGAIN);
+	ASSERT_EQ(त्रुटि_सं, EAGAIN);
 	ASSERT_EQ(k, -1);
-	k = waitpid(-1, &s, WNOHANG);
+	k = रुकोpid(-1, &s, WNOHANG);
 	ASSERT_NE(k, -1);
 	ASSERT_NE(k, 0);
 	ASSERT_NE(k, pid);
@@ -68,19 +69,19 @@ TEST(attach)
 	sleep(1);
 	k = ptrace(PTRACE_ATTACH, pid, 0L, 0L);
 	ASSERT_EQ(k, 0);
-	k = waitpid(-1, &s, 0);
+	k = रुकोpid(-1, &s, 0);
 	ASSERT_EQ(k, pid);
 	ASSERT_EQ(WIFSTOPPED(s), 1);
 	ASSERT_EQ(WSTOPSIG(s), SIGSTOP);
 	k = ptrace(PTRACE_DETACH, pid, 0L, 0L);
 	ASSERT_EQ(k, 0);
-	k = waitpid(-1, &s, 0);
+	k = रुकोpid(-1, &s, 0);
 	ASSERT_EQ(k, pid);
 	ASSERT_EQ(WIFEXITED(s), 1);
 	ASSERT_EQ(WEXITSTATUS(s), 0);
-	k = waitpid(-1, NULL, 0);
+	k = रुकोpid(-1, शून्य, 0);
 	ASSERT_EQ(k, -1);
-	ASSERT_EQ(errno, ECHILD);
-}
+	ASSERT_EQ(त्रुटि_सं, ECHILD);
+पूर्ण
 
 TEST_HARNESS_MAIN

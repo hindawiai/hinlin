@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * Copyright (C) 2013 Texas Instruments Inc
  *
@@ -10,19 +11,19 @@
  *     Martin Bugge <marbugge@cisco.com>
  */
 
-#ifndef THS7353_H
-#define THS7353_H
+#अगर_अघोषित THS7353_H
+#घोषणा THS7353_H
 
 /**
- * struct ths7303_platform_data - Platform dependent data
- * @ch_1: Bias value for channel one.
- * @ch_2: Bias value for channel two.
- * @ch_3: Bias value for channel three.
+ * काष्ठा ths7303_platक्रमm_data - Platक्रमm dependent data
+ * @ch_1: Bias value क्रम channel one.
+ * @ch_2: Bias value क्रम channel two.
+ * @ch_3: Bias value क्रम channel three.
  */
-struct ths7303_platform_data {
+काष्ठा ths7303_platक्रमm_data अणु
 	u8 ch_1;
 	u8 ch_2;
 	u8 ch_3;
-};
+पूर्ण;
 
-#endif
+#पूर्ण_अगर

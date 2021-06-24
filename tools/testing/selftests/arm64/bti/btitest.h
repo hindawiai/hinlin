@@ -1,23 +1,24 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * Copyright (C) 2019  Arm Limited
  * Original author: Dave Martin <Dave.Martin@arm.com>
  */
 
-#ifndef BTITEST_H
-#define BTITEST_H
+#अगर_अघोषित BTITEST_H
+#घोषणा BTITEST_H
 
-/* Trampolines for calling the test stubs: */
-void call_using_br_x0(void (*)(void));
-void call_using_br_x16(void (*)(void));
-void call_using_blr(void (*)(void));
+/* Trampolines क्रम calling the test stubs: */
+व्योम call_using_br_x0(व्योम (*)(व्योम));
+व्योम call_using_br_x16(व्योम (*)(व्योम));
+व्योम call_using_blr(व्योम (*)(व्योम));
 
 /* Test stubs: */
-void nohint_func(void);
-void bti_none_func(void);
-void bti_c_func(void);
-void bti_j_func(void);
-void bti_jc_func(void);
-void paciasp_func(void);
+व्योम nohपूर्णांक_func(व्योम);
+व्योम bti_none_func(व्योम);
+व्योम bti_c_func(व्योम);
+व्योम bti_j_func(व्योम);
+व्योम bti_jc_func(व्योम);
+व्योम paciasp_func(व्योम);
 
-#endif /* !BTITEST_H */
+#पूर्ण_अगर /* !BTITEST_H */

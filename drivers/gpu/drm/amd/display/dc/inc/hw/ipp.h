@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2017 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -23,92 +24,92 @@
  *
  */
 
-#ifndef __DAL_IPP_H__
-#define __DAL_IPP_H__
+#अगर_अघोषित __DAL_IPP_H__
+#घोषणा __DAL_IPP_H__
 
-#include "hw_shared.h"
-#include "dc_hw_types.h"
+#समावेश "hw_shared.h"
+#समावेश "dc_hw_types.h"
 
-#define MAXTRIX_COEFFICIENTS_NUMBER 12
-#define MAXTRIX_COEFFICIENTS_WRAP_NUMBER (MAXTRIX_COEFFICIENTS_NUMBER + 4)
-#define MAX_OVL_MATRIX_COUNT 12
+#घोषणा MAXTRIX_COEFFICIENTS_NUMBER 12
+#घोषणा MAXTRIX_COEFFICIENTS_WRAP_NUMBER (MAXTRIX_COEFFICIENTS_NUMBER + 4)
+#घोषणा MAX_OVL_MATRIX_COUNT 12
 
 /* IPP RELATED */
-struct input_pixel_processor {
-	struct  dc_context *ctx;
-	unsigned int inst;
-	const struct ipp_funcs *funcs;
-};
+काष्ठा input_pixel_processor अणु
+	काष्ठा  dc_context *ctx;
+	अचिन्हित पूर्णांक inst;
+	स्थिर काष्ठा ipp_funcs *funcs;
+पूर्ण;
 
-enum ipp_prescale_mode {
+क्रमागत ipp_prescale_mode अणु
 	IPP_PRESCALE_MODE_BYPASS,
 	IPP_PRESCALE_MODE_FIXED_SIGNED,
 	IPP_PRESCALE_MODE_FLOAT_SIGNED,
 	IPP_PRESCALE_MODE_FIXED_UNSIGNED,
 	IPP_PRESCALE_MODE_FLOAT_UNSIGNED
-};
+पूर्ण;
 
-struct ipp_prescale_params {
-	enum ipp_prescale_mode mode;
-	uint16_t bias;
-	uint16_t scale;
-};
+काष्ठा ipp_prescale_params अणु
+	क्रमागत ipp_prescale_mode mode;
+	uपूर्णांक16_t bias;
+	uपूर्णांक16_t scale;
+पूर्ण;
 
 
 
-enum ovl_color_space {
+क्रमागत ovl_color_space अणु
 	OVL_COLOR_SPACE_UNKNOWN = 0,
 	OVL_COLOR_SPACE_RGB,
 	OVL_COLOR_SPACE_YUV601,
 	OVL_COLOR_SPACE_YUV709
-};
+पूर्ण;
 
 
-struct ipp_funcs {
+काष्ठा ipp_funcs अणु
 
 	/*** cursor ***/
-	void (*ipp_cursor_set_position)(
-		struct input_pixel_processor *ipp,
-		const struct dc_cursor_position *position,
-		const struct dc_cursor_mi_param *param);
+	व्योम (*ipp_cursor_set_position)(
+		काष्ठा input_pixel_processor *ipp,
+		स्थिर काष्ठा dc_cursor_position *position,
+		स्थिर काष्ठा dc_cursor_mi_param *param);
 
-	void (*ipp_cursor_set_attributes)(
-		struct input_pixel_processor *ipp,
-		const struct dc_cursor_attributes *attributes);
+	व्योम (*ipp_cursor_set_attributes)(
+		काष्ठा input_pixel_processor *ipp,
+		स्थिर काष्ठा dc_cursor_attributes *attributes);
 
 	/*** setup input pixel processing ***/
 
 	/* put the entire pixel processor to bypass */
-	void (*ipp_full_bypass)(
-			struct input_pixel_processor *ipp);
+	व्योम (*ipp_full_bypass)(
+			काष्ठा input_pixel_processor *ipp);
 
-	/* setup ipp to expand/convert input to pixel processor internal format */
-	void (*ipp_setup)(
-		struct input_pixel_processor *ipp,
-		enum surface_pixel_format format,
-		enum expansion_mode mode,
-		struct dc_csc_transform input_csc_color_matrix,
-		enum dc_color_space input_color_space);
+	/* setup ipp to expand/convert input to pixel processor पूर्णांकernal क्रमmat */
+	व्योम (*ipp_setup)(
+		काष्ठा input_pixel_processor *ipp,
+		क्रमागत surface_pixel_क्रमmat क्रमmat,
+		क्रमागत expansion_mode mode,
+		काष्ठा dc_csc_transक्रमm input_csc_color_matrix,
+		क्रमागत dc_color_space input_color_space);
 
-	/* DCE function to setup IPP.  TODO: see if we can consolidate to setup */
-	void (*ipp_program_prescale)(
-			struct input_pixel_processor *ipp,
-			struct ipp_prescale_params *params);
+	/* DCE function to setup IPP.  TODO: see अगर we can consolidate to setup */
+	व्योम (*ipp_program_prescale)(
+			काष्ठा input_pixel_processor *ipp,
+			काष्ठा ipp_prescale_params *params);
 
-	void (*ipp_program_input_lut)(
-			struct input_pixel_processor *ipp,
-			const struct dc_gamma *gamma);
+	व्योम (*ipp_program_input_lut)(
+			काष्ठा input_pixel_processor *ipp,
+			स्थिर काष्ठा dc_gamma *gamma);
 
 	/*** DEGAMMA RELATED ***/
-	void (*ipp_set_degamma)(
-		struct input_pixel_processor *ipp,
-		enum ipp_degamma_mode mode);
+	व्योम (*ipp_set_degamma)(
+		काष्ठा input_pixel_processor *ipp,
+		क्रमागत ipp_degamma_mode mode);
 
-	void (*ipp_program_degamma_pwl)(
-		struct input_pixel_processor *ipp,
-		const struct pwl_params *params);
+	व्योम (*ipp_program_degamma_pwl)(
+		काष्ठा input_pixel_processor *ipp,
+		स्थिर काष्ठा pwl_params *params);
 
-	void (*ipp_destroy)(struct input_pixel_processor **ipp);
-};
+	व्योम (*ipp_destroy)(काष्ठा input_pixel_processor **ipp);
+पूर्ण;
 
-#endif /* __DAL_IPP_H__ */
+#पूर्ण_अगर /* __DAL_IPP_H__ */

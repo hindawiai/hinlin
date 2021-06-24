@@ -1,24 +1,25 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- * linux/include/asm-sh/timex.h
+ * linux/include/यंत्र-sh/समयx.h
  *
- * sh architecture timex specifications
+ * sh architecture समयx specअगरications
  */
-#ifndef __ASM_SH_TIMEX_H
-#define __ASM_SH_TIMEX_H
+#अगर_अघोषित __ASM_SH_TIMEX_H
+#घोषणा __ASM_SH_TIMEX_H
 
 /*
- * Only parts using the legacy CPG code for their clock framework
+ * Only parts using the legacy CPG code क्रम their घड़ी framework
  * implementation need to define their own Pclk value. If provided, this
- * can be used for accurately setting CLOCK_TICK_RATE, otherwise we
+ * can be used क्रम accurately setting CLOCK_TICK_RATE, otherwise we
  * simply fall back on the i8253 PIT value.
  */
-#ifdef CONFIG_SH_PCLK_FREQ
-#define CLOCK_TICK_RATE		(CONFIG_SH_PCLK_FREQ / 4) /* Underlying HZ */
-#else
-#define CLOCK_TICK_RATE		1193180
-#endif
+#अगर_घोषित CONFIG_SH_PCLK_FREQ
+#घोषणा CLOCK_TICK_RATE		(CONFIG_SH_PCLK_FREQ / 4) /* Underlying HZ */
+#अन्यथा
+#घोषणा CLOCK_TICK_RATE		1193180
+#पूर्ण_अगर
 
-#include <asm-generic/timex.h>
+#समावेश <यंत्र-generic/समयx.h>
 
-#endif /* __ASM_SH_TIMEX_H */
+#पूर्ण_अगर /* __ASM_SH_TIMEX_H */

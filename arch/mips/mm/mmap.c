@@ -1,88 +1,89 @@
+<शैली गुरु>
 /*
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the main directory of this archive
- * for more details.
+ * License.  See the file "COPYING" in the मुख्य directory of this archive
+ * क्रम more details.
  *
  * Copyright (C) 2011 Wind River Systems,
  *   written by Ralf Baechle <ralf@linux-mips.org>
  */
-#include <linux/compiler.h>
-#include <linux/elf-randomize.h>
-#include <linux/errno.h>
-#include <linux/mm.h>
-#include <linux/mman.h>
-#include <linux/export.h>
-#include <linux/personality.h>
-#include <linux/random.h>
-#include <linux/sched/signal.h>
-#include <linux/sched/mm.h>
+#समावेश <linux/compiler.h>
+#समावेश <linux/elf-अक्रमomize.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/mm.h>
+#समावेश <linux/mman.h>
+#समावेश <linux/export.h>
+#समावेश <linux/personality.h>
+#समावेश <linux/अक्रमom.h>
+#समावेश <linux/sched/संकेत.स>
+#समावेश <linux/sched/mm.h>
 
-unsigned long shm_align_mask = PAGE_SIZE - 1;	/* Sane caches */
+अचिन्हित दीर्घ shm_align_mask = PAGE_SIZE - 1;	/* Sane caches */
 EXPORT_SYMBOL(shm_align_mask);
 
-#define COLOUR_ALIGN(addr, pgoff)				\
+#घोषणा COLOUR_ALIGN(addr, pgoff)				\
 	((((addr) + shm_align_mask) & ~shm_align_mask) +	\
 	 (((pgoff) << PAGE_SHIFT) & shm_align_mask))
 
-enum mmap_allocation_direction {UP, DOWN};
+क्रमागत mmap_allocation_direction अणुUP, DOWNपूर्ण;
 
-static unsigned long arch_get_unmapped_area_common(struct file *filp,
-	unsigned long addr0, unsigned long len, unsigned long pgoff,
-	unsigned long flags, enum mmap_allocation_direction dir)
-{
-	struct mm_struct *mm = current->mm;
-	struct vm_area_struct *vma;
-	unsigned long addr = addr0;
-	int do_color_align;
-	struct vm_unmapped_area_info info;
+अटल अचिन्हित दीर्घ arch_get_unmapped_area_common(काष्ठा file *filp,
+	अचिन्हित दीर्घ addr0, अचिन्हित दीर्घ len, अचिन्हित दीर्घ pgoff,
+	अचिन्हित दीर्घ flags, क्रमागत mmap_allocation_direction dir)
+अणु
+	काष्ठा mm_काष्ठा *mm = current->mm;
+	काष्ठा vm_area_काष्ठा *vma;
+	अचिन्हित दीर्घ addr = addr0;
+	पूर्णांक करो_color_align;
+	काष्ठा vm_unmapped_area_info info;
 
-	if (unlikely(len > TASK_SIZE))
-		return -ENOMEM;
+	अगर (unlikely(len > TASK_SIZE))
+		वापस -ENOMEM;
 
-	if (flags & MAP_FIXED) {
+	अगर (flags & MAP_FIXED) अणु
 		/* Even MAP_FIXED mappings must reside within TASK_SIZE */
-		if (TASK_SIZE - len < addr)
-			return -EINVAL;
+		अगर (TASK_SIZE - len < addr)
+			वापस -EINVAL;
 
 		/*
-		 * We do not accept a shared mapping if it would violate
-		 * cache aliasing constraints.
+		 * We करो not accept a shared mapping अगर it would violate
+		 * cache aliasing स्थिरraपूर्णांकs.
 		 */
-		if ((flags & MAP_SHARED) &&
+		अगर ((flags & MAP_SHARED) &&
 		    ((addr - (pgoff << PAGE_SHIFT)) & shm_align_mask))
-			return -EINVAL;
-		return addr;
-	}
+			वापस -EINVAL;
+		वापस addr;
+	पूर्ण
 
-	do_color_align = 0;
-	if (filp || (flags & MAP_SHARED))
-		do_color_align = 1;
+	करो_color_align = 0;
+	अगर (filp || (flags & MAP_SHARED))
+		करो_color_align = 1;
 
-	/* requesting a specific address */
-	if (addr) {
-		if (do_color_align)
+	/* requesting a specअगरic address */
+	अगर (addr) अणु
+		अगर (करो_color_align)
 			addr = COLOUR_ALIGN(addr, pgoff);
-		else
+		अन्यथा
 			addr = PAGE_ALIGN(addr);
 
 		vma = find_vma(mm, addr);
-		if (TASK_SIZE - len >= addr &&
+		अगर (TASK_SIZE - len >= addr &&
 		    (!vma || addr + len <= vm_start_gap(vma)))
-			return addr;
-	}
+			वापस addr;
+	पूर्ण
 
 	info.length = len;
-	info.align_mask = do_color_align ? (PAGE_MASK & shm_align_mask) : 0;
+	info.align_mask = करो_color_align ? (PAGE_MASK & shm_align_mask) : 0;
 	info.align_offset = pgoff << PAGE_SHIFT;
 
-	if (dir == DOWN) {
+	अगर (dir == DOWN) अणु
 		info.flags = VM_UNMAPPED_AREA_TOPDOWN;
 		info.low_limit = PAGE_SIZE;
 		info.high_limit = mm->mmap_base;
 		addr = vm_unmapped_area(&info);
 
-		if (!(addr & ~PAGE_MASK))
-			return addr;
+		अगर (!(addr & ~PAGE_MASK))
+			वापस addr;
 
 		/*
 		 * A failed mmap() very likely causes application failure,
@@ -90,40 +91,40 @@ static unsigned long arch_get_unmapped_area_common(struct file *filp,
 		 * can happen with large stack limits and large mmap()
 		 * allocations.
 		 */
-	}
+	पूर्ण
 
 	info.flags = 0;
 	info.low_limit = mm->mmap_base;
 	info.high_limit = TASK_SIZE;
-	return vm_unmapped_area(&info);
-}
+	वापस vm_unmapped_area(&info);
+पूर्ण
 
-unsigned long arch_get_unmapped_area(struct file *filp, unsigned long addr0,
-	unsigned long len, unsigned long pgoff, unsigned long flags)
-{
-	return arch_get_unmapped_area_common(filp,
+अचिन्हित दीर्घ arch_get_unmapped_area(काष्ठा file *filp, अचिन्हित दीर्घ addr0,
+	अचिन्हित दीर्घ len, अचिन्हित दीर्घ pgoff, अचिन्हित दीर्घ flags)
+अणु
+	वापस arch_get_unmapped_area_common(filp,
 			addr0, len, pgoff, flags, UP);
-}
+पूर्ण
 
 /*
  * There is no need to export this but sched.h declares the function as
- * extern so making it static here results in an error.
+ * बाह्य so making it अटल here results in an error.
  */
-unsigned long arch_get_unmapped_area_topdown(struct file *filp,
-	unsigned long addr0, unsigned long len, unsigned long pgoff,
-	unsigned long flags)
-{
-	return arch_get_unmapped_area_common(filp,
+अचिन्हित दीर्घ arch_get_unmapped_area_topकरोwn(काष्ठा file *filp,
+	अचिन्हित दीर्घ addr0, अचिन्हित दीर्घ len, अचिन्हित दीर्घ pgoff,
+	अचिन्हित दीर्घ flags)
+अणु
+	वापस arch_get_unmapped_area_common(filp,
 			addr0, len, pgoff, flags, DOWN);
-}
+पूर्ण
 
-bool __virt_addr_valid(const volatile void *kaddr)
-{
-	unsigned long vaddr = (unsigned long)kaddr;
+bool __virt_addr_valid(स्थिर अस्थिर व्योम *kaddr)
+अणु
+	अचिन्हित दीर्घ vaddr = (अचिन्हित दीर्घ)kaddr;
 
-	if ((vaddr < PAGE_OFFSET) || (vaddr >= MAP_BASE))
-		return false;
+	अगर ((vaddr < PAGE_OFFSET) || (vaddr >= MAP_BASE))
+		वापस false;
 
-	return pfn_valid(PFN_DOWN(virt_to_phys(kaddr)));
-}
+	वापस pfn_valid(PFN_DOWN(virt_to_phys(kaddr)));
+पूर्ण
 EXPORT_SYMBOL_GPL(__virt_addr_valid);

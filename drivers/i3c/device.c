@@ -1,203 +1,204 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Copyright (C) 2018 Cadence Design Systems Inc.
  *
  * Author: Boris Brezillon <boris.brezillon@bootlin.com>
  */
 
-#include <linux/atomic.h>
-#include <linux/bug.h>
-#include <linux/completion.h>
-#include <linux/device.h>
-#include <linux/mutex.h>
-#include <linux/slab.h>
+#समावेश <linux/atomic.h>
+#समावेश <linux/bug.h>
+#समावेश <linux/completion.h>
+#समावेश <linux/device.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/slab.h>
 
-#include "internals.h"
+#समावेश "internals.h"
 
 /**
- * i3c_device_do_priv_xfers() - do I3C SDR private transfers directed to a
- *				specific device
+ * i3c_device_करो_priv_xfers() - करो I3C SDR निजी transfers directed to a
+ *				specअगरic device
  *
- * @dev: device with which the transfers should be done
+ * @dev: device with which the transfers should be करोne
  * @xfers: array of transfers
  * @nxfers: number of transfers
  *
- * Initiate one or several private SDR transfers with @dev.
+ * Initiate one or several निजी SDR transfers with @dev.
  *
  * This function can sleep and thus cannot be called in atomic context.
  *
- * Return: 0 in case of success, a negative error core otherwise.
+ * Return: 0 in हाल of success, a negative error core otherwise.
  */
-int i3c_device_do_priv_xfers(struct i3c_device *dev,
-			     struct i3c_priv_xfer *xfers,
-			     int nxfers)
-{
-	int ret, i;
+पूर्णांक i3c_device_करो_priv_xfers(काष्ठा i3c_device *dev,
+			     काष्ठा i3c_priv_xfer *xfers,
+			     पूर्णांक nxfers)
+अणु
+	पूर्णांक ret, i;
 
-	if (nxfers < 1)
-		return 0;
+	अगर (nxfers < 1)
+		वापस 0;
 
-	for (i = 0; i < nxfers; i++) {
-		if (!xfers[i].len || !xfers[i].data.in)
-			return -EINVAL;
-	}
+	क्रम (i = 0; i < nxfers; i++) अणु
+		अगर (!xfers[i].len || !xfers[i].data.in)
+			वापस -EINVAL;
+	पूर्ण
 
 	i3c_bus_normaluse_lock(dev->bus);
-	ret = i3c_dev_do_priv_xfers_locked(dev->desc, xfers, nxfers);
+	ret = i3c_dev_करो_priv_xfers_locked(dev->desc, xfers, nxfers);
 	i3c_bus_normaluse_unlock(dev->bus);
 
-	return ret;
-}
-EXPORT_SYMBOL_GPL(i3c_device_do_priv_xfers);
+	वापस ret;
+पूर्ण
+EXPORT_SYMBOL_GPL(i3c_device_करो_priv_xfers);
 
 /**
- * i3c_device_get_info() - get I3C device information
+ * i3c_device_get_info() - get I3C device inक्रमmation
  *
- * @dev: device we want information on
- * @info: the information object to fill in
+ * @dev: device we want inक्रमmation on
+ * @info: the inक्रमmation object to fill in
  *
  * Retrieve I3C dev info.
  */
-void i3c_device_get_info(struct i3c_device *dev,
-			 struct i3c_device_info *info)
-{
-	if (!info)
-		return;
+व्योम i3c_device_get_info(काष्ठा i3c_device *dev,
+			 काष्ठा i3c_device_info *info)
+अणु
+	अगर (!info)
+		वापस;
 
 	i3c_bus_normaluse_lock(dev->bus);
-	if (dev->desc)
+	अगर (dev->desc)
 		*info = dev->desc->info;
 	i3c_bus_normaluse_unlock(dev->bus);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(i3c_device_get_info);
 
 /**
- * i3c_device_disable_ibi() - Disable IBIs coming from a specific device
+ * i3c_device_disable_ibi() - Disable IBIs coming from a specअगरic device
  * @dev: device on which IBIs should be disabled
  *
- * This function disable IBIs coming from a specific device and wait for
+ * This function disable IBIs coming from a specअगरic device and रुको क्रम
  * all pending IBIs to be processed.
  *
- * Return: 0 in case of success, a negative error core otherwise.
+ * Return: 0 in हाल of success, a negative error core otherwise.
  */
-int i3c_device_disable_ibi(struct i3c_device *dev)
-{
-	int ret = -ENOENT;
+पूर्णांक i3c_device_disable_ibi(काष्ठा i3c_device *dev)
+अणु
+	पूर्णांक ret = -ENOENT;
 
 	i3c_bus_normaluse_lock(dev->bus);
-	if (dev->desc) {
+	अगर (dev->desc) अणु
 		mutex_lock(&dev->desc->ibi_lock);
 		ret = i3c_dev_disable_ibi_locked(dev->desc);
 		mutex_unlock(&dev->desc->ibi_lock);
-	}
+	पूर्ण
 	i3c_bus_normaluse_unlock(dev->bus);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(i3c_device_disable_ibi);
 
 /**
- * i3c_device_enable_ibi() - Enable IBIs coming from a specific device
+ * i3c_device_enable_ibi() - Enable IBIs coming from a specअगरic device
  * @dev: device on which IBIs should be enabled
  *
- * This function enable IBIs coming from a specific device and wait for
+ * This function enable IBIs coming from a specअगरic device and रुको क्रम
  * all pending IBIs to be processed. This should be called on a device
  * where i3c_device_request_ibi() has succeeded.
  *
- * Note that IBIs from this device might be received before this function
- * returns to its caller.
+ * Note that IBIs from this device might be received beक्रमe this function
+ * वापसs to its caller.
  *
- * Return: 0 in case of success, a negative error core otherwise.
+ * Return: 0 in हाल of success, a negative error core otherwise.
  */
-int i3c_device_enable_ibi(struct i3c_device *dev)
-{
-	int ret = -ENOENT;
+पूर्णांक i3c_device_enable_ibi(काष्ठा i3c_device *dev)
+अणु
+	पूर्णांक ret = -ENOENT;
 
 	i3c_bus_normaluse_lock(dev->bus);
-	if (dev->desc) {
+	अगर (dev->desc) अणु
 		mutex_lock(&dev->desc->ibi_lock);
 		ret = i3c_dev_enable_ibi_locked(dev->desc);
 		mutex_unlock(&dev->desc->ibi_lock);
-	}
+	पूर्ण
 	i3c_bus_normaluse_unlock(dev->bus);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(i3c_device_enable_ibi);
 
 /**
  * i3c_device_request_ibi() - Request an IBI
- * @dev: device for which we should enable IBIs
- * @req: setup requested for this IBI
+ * @dev: device क्रम which we should enable IBIs
+ * @req: setup requested क्रम this IBI
  *
- * This function is responsible for pre-allocating all resources needed to
- * process IBIs coming from @dev. When this function returns, the IBI is not
+ * This function is responsible क्रम pre-allocating all resources needed to
+ * process IBIs coming from @dev. When this function वापसs, the IBI is not
  * enabled until i3c_device_enable_ibi() is called.
  *
- * Return: 0 in case of success, a negative error core otherwise.
+ * Return: 0 in हाल of success, a negative error core otherwise.
  */
-int i3c_device_request_ibi(struct i3c_device *dev,
-			   const struct i3c_ibi_setup *req)
-{
-	int ret = -ENOENT;
+पूर्णांक i3c_device_request_ibi(काष्ठा i3c_device *dev,
+			   स्थिर काष्ठा i3c_ibi_setup *req)
+अणु
+	पूर्णांक ret = -ENOENT;
 
-	if (!req->handler || !req->num_slots)
-		return -EINVAL;
+	अगर (!req->handler || !req->num_slots)
+		वापस -EINVAL;
 
 	i3c_bus_normaluse_lock(dev->bus);
-	if (dev->desc) {
+	अगर (dev->desc) अणु
 		mutex_lock(&dev->desc->ibi_lock);
 		ret = i3c_dev_request_ibi_locked(dev->desc, req);
 		mutex_unlock(&dev->desc->ibi_lock);
-	}
+	पूर्ण
 	i3c_bus_normaluse_unlock(dev->bus);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(i3c_device_request_ibi);
 
 /**
- * i3c_device_free_ibi() - Free all resources needed for IBI handling
+ * i3c_device_मुक्त_ibi() - Free all resources needed क्रम IBI handling
  * @dev: device on which you want to release IBI resources
  *
- * This function is responsible for de-allocating resources previously
+ * This function is responsible क्रम de-allocating resources previously
  * allocated by i3c_device_request_ibi(). It should be called after disabling
  * IBIs with i3c_device_disable_ibi().
  */
-void i3c_device_free_ibi(struct i3c_device *dev)
-{
+व्योम i3c_device_मुक्त_ibi(काष्ठा i3c_device *dev)
+अणु
 	i3c_bus_normaluse_lock(dev->bus);
-	if (dev->desc) {
+	अगर (dev->desc) अणु
 		mutex_lock(&dev->desc->ibi_lock);
-		i3c_dev_free_ibi_locked(dev->desc);
+		i3c_dev_मुक्त_ibi_locked(dev->desc);
 		mutex_unlock(&dev->desc->ibi_lock);
-	}
+	पूर्ण
 	i3c_bus_normaluse_unlock(dev->bus);
-}
-EXPORT_SYMBOL_GPL(i3c_device_free_ibi);
+पूर्ण
+EXPORT_SYMBOL_GPL(i3c_device_मुक्त_ibi);
 
 /**
  * i3cdev_to_dev() - Returns the device embedded in @i3cdev
  * @i3cdev: I3C device
  *
- * Return: a pointer to a device object.
+ * Return: a poपूर्णांकer to a device object.
  */
-struct device *i3cdev_to_dev(struct i3c_device *i3cdev)
-{
-	return &i3cdev->dev;
-}
+काष्ठा device *i3cdev_to_dev(काष्ठा i3c_device *i3cdev)
+अणु
+	वापस &i3cdev->dev;
+पूर्ण
 EXPORT_SYMBOL_GPL(i3cdev_to_dev);
 
 /**
  * dev_to_i3cdev() - Returns the I3C device containing @dev
  * @dev: device object
  *
- * Return: a pointer to an I3C device object.
+ * Return: a poपूर्णांकer to an I3C device object.
  */
-struct i3c_device *dev_to_i3cdev(struct device *dev)
-{
-	return container_of(dev, struct i3c_device, dev);
-}
+काष्ठा i3c_device *dev_to_i3cdev(काष्ठा device *dev)
+अणु
+	वापस container_of(dev, काष्ठा i3c_device, dev);
+पूर्ण
 EXPORT_SYMBOL_GPL(dev_to_i3cdev);
 
 /**
@@ -205,14 +206,14 @@ EXPORT_SYMBOL_GPL(dev_to_i3cdev);
  * @i3cdev: I3C device
  * @id_table: I3C device match table
  *
- * Return: a pointer to an i3c_device_id object or NULL if there's no match.
+ * Return: a poपूर्णांकer to an i3c_device_id object or शून्य अगर there's no match.
  */
-const struct i3c_device_id *
-i3c_device_match_id(struct i3c_device *i3cdev,
-		    const struct i3c_device_id *id_table)
-{
-	struct i3c_device_info devinfo;
-	const struct i3c_device_id *id;
+स्थिर काष्ठा i3c_device_id *
+i3c_device_match_id(काष्ठा i3c_device *i3cdev,
+		    स्थिर काष्ठा i3c_device_id *id_table)
+अणु
+	काष्ठा i3c_device_info devinfo;
+	स्थिर काष्ठा i3c_device_id *id;
 	u16 manuf, part, ext_info;
 	bool rndpid;
 
@@ -223,63 +224,63 @@ i3c_device_match_id(struct i3c_device *i3cdev,
 	ext_info = I3C_PID_EXTRA_INFO(devinfo.pid);
 	rndpid = I3C_PID_RND_LOWER_32BITS(devinfo.pid);
 
-	for (id = id_table; id->match_flags != 0; id++) {
-		if ((id->match_flags & I3C_MATCH_DCR) &&
+	क्रम (id = id_table; id->match_flags != 0; id++) अणु
+		अगर ((id->match_flags & I3C_MATCH_DCR) &&
 		    id->dcr != devinfo.dcr)
-			continue;
+			जारी;
 
-		if ((id->match_flags & I3C_MATCH_MANUF) &&
+		अगर ((id->match_flags & I3C_MATCH_MANUF) &&
 		    id->manuf_id != manuf)
-			continue;
+			जारी;
 
-		if ((id->match_flags & I3C_MATCH_PART) &&
+		अगर ((id->match_flags & I3C_MATCH_PART) &&
 		    (rndpid || id->part_id != part))
-			continue;
+			जारी;
 
-		if ((id->match_flags & I3C_MATCH_EXTRA_INFO) &&
+		अगर ((id->match_flags & I3C_MATCH_EXTRA_INFO) &&
 		    (rndpid || id->extra_info != ext_info))
-			continue;
+			जारी;
 
-		return id;
-	}
+		वापस id;
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 EXPORT_SYMBOL_GPL(i3c_device_match_id);
 
 /**
- * i3c_driver_register_with_owner() - register an I3C device driver
+ * i3c_driver_रेजिस्टर_with_owner() - रेजिस्टर an I3C device driver
  *
- * @drv: driver to register
+ * @drv: driver to रेजिस्टर
  * @owner: module that owns this driver
  *
  * Register @drv to the core.
  *
- * Return: 0 in case of success, a negative error core otherwise.
+ * Return: 0 in हाल of success, a negative error core otherwise.
  */
-int i3c_driver_register_with_owner(struct i3c_driver *drv, struct module *owner)
-{
+पूर्णांक i3c_driver_रेजिस्टर_with_owner(काष्ठा i3c_driver *drv, काष्ठा module *owner)
+अणु
 	drv->driver.owner = owner;
 	drv->driver.bus = &i3c_bus_type;
 
-	if (!drv->probe) {
+	अगर (!drv->probe) अणु
 		pr_err("Trying to register an i3c driver without probe callback\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return driver_register(&drv->driver);
-}
-EXPORT_SYMBOL_GPL(i3c_driver_register_with_owner);
+	वापस driver_रेजिस्टर(&drv->driver);
+पूर्ण
+EXPORT_SYMBOL_GPL(i3c_driver_रेजिस्टर_with_owner);
 
 /**
- * i3c_driver_unregister() - unregister an I3C device driver
+ * i3c_driver_unरेजिस्टर() - unरेजिस्टर an I3C device driver
  *
- * @drv: driver to unregister
+ * @drv: driver to unरेजिस्टर
  *
- * Unregister @drv.
+ * Unरेजिस्टर @drv.
  */
-void i3c_driver_unregister(struct i3c_driver *drv)
-{
-	driver_unregister(&drv->driver);
-}
-EXPORT_SYMBOL_GPL(i3c_driver_unregister);
+व्योम i3c_driver_unरेजिस्टर(काष्ठा i3c_driver *drv)
+अणु
+	driver_unरेजिस्टर(&drv->driver);
+पूर्ण
+EXPORT_SYMBOL_GPL(i3c_driver_unरेजिस्टर);

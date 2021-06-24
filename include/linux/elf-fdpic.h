@@ -1,47 +1,48 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /* FDPIC ELF load map
  *
  * Copyright (C) 2003 Red Hat, Inc. All Rights Reserved.
  * Written by David Howells (dhowells@redhat.com)
  */
 
-#ifndef _LINUX_ELF_FDPIC_H
-#define _LINUX_ELF_FDPIC_H
+#अगर_अघोषित _LINUX_ELF_FDPIC_H
+#घोषणा _LINUX_ELF_FDPIC_H
 
-#include <uapi/linux/elf-fdpic.h>
+#समावेश <uapi/linux/elf-fdpic.h>
 
 /*
- * binfmt binary parameters structure
+ * binfmt binary parameters काष्ठाure
  */
-struct elf_fdpic_params {
-	struct elfhdr			hdr;		/* ref copy of ELF header */
-	struct elf_phdr			*phdrs;		/* ref copy of PT_PHDR table */
-	struct elf32_fdpic_loadmap	*loadmap;	/* loadmap to be passed to userspace */
-	unsigned long			elfhdr_addr;	/* mapped ELF header user address */
-	unsigned long			ph_addr;	/* mapped PT_PHDR user address */
-	unsigned long			map_addr;	/* mapped loadmap user address */
-	unsigned long			entry_addr;	/* mapped entry user address */
-	unsigned long			stack_size;	/* stack size requested (PT_GNU_STACK) */
-	unsigned long			dynamic_addr;	/* mapped PT_DYNAMIC user address */
-	unsigned long			load_addr;	/* user address at which to map binary */
-	unsigned long			flags;
-#define ELF_FDPIC_FLAG_ARRANGEMENT	0x0000000f	/* PT_LOAD arrangement flags */
-#define ELF_FDPIC_FLAG_INDEPENDENT	0x00000000	/* PT_LOADs can be put anywhere */
-#define ELF_FDPIC_FLAG_HONOURVADDR	0x00000001	/* PT_LOAD.vaddr must be honoured */
-#define ELF_FDPIC_FLAG_CONSTDISP	0x00000002	/* PT_LOADs require constant
+काष्ठा elf_fdpic_params अणु
+	काष्ठा elfhdr			hdr;		/* ref copy of ELF header */
+	काष्ठा elf_phdr			*phdrs;		/* ref copy of PT_PHDR table */
+	काष्ठा elf32_fdpic_loadmap	*loadmap;	/* loadmap to be passed to userspace */
+	अचिन्हित दीर्घ			elfhdr_addr;	/* mapped ELF header user address */
+	अचिन्हित दीर्घ			ph_addr;	/* mapped PT_PHDR user address */
+	अचिन्हित दीर्घ			map_addr;	/* mapped loadmap user address */
+	अचिन्हित दीर्घ			entry_addr;	/* mapped entry user address */
+	अचिन्हित दीर्घ			stack_size;	/* stack size requested (PT_GNU_STACK) */
+	अचिन्हित दीर्घ			dynamic_addr;	/* mapped PT_DYNAMIC user address */
+	अचिन्हित दीर्घ			load_addr;	/* user address at which to map binary */
+	अचिन्हित दीर्घ			flags;
+#घोषणा ELF_FDPIC_FLAG_ARRANGEMENT	0x0000000f	/* PT_LOAD arrangement flags */
+#घोषणा ELF_FDPIC_FLAG_INDEPENDENT	0x00000000	/* PT_LOADs can be put anywhere */
+#घोषणा ELF_FDPIC_FLAG_HONOURVADDR	0x00000001	/* PT_LOAD.vaddr must be honoured */
+#घोषणा ELF_FDPIC_FLAG_CONSTDISP	0x00000002	/* PT_LOADs require स्थिरant
 							 * displacement */
-#define ELF_FDPIC_FLAG_CONTIGUOUS	0x00000003	/* PT_LOADs should be contiguous */
-#define ELF_FDPIC_FLAG_EXEC_STACK	0x00000010	/* T if stack to be executable */
-#define ELF_FDPIC_FLAG_NOEXEC_STACK	0x00000020	/* T if stack not to be executable */
-#define ELF_FDPIC_FLAG_EXECUTABLE	0x00000040	/* T if this object is the executable */
-#define ELF_FDPIC_FLAG_PRESENT		0x80000000	/* T if this object is present */
-};
+#घोषणा ELF_FDPIC_FLAG_CONTIGUOUS	0x00000003	/* PT_LOADs should be contiguous */
+#घोषणा ELF_FDPIC_FLAG_EXEC_STACK	0x00000010	/* T अगर stack to be executable */
+#घोषणा ELF_FDPIC_FLAG_NOEXEC_STACK	0x00000020	/* T अगर stack not to be executable */
+#घोषणा ELF_FDPIC_FLAG_EXECUTABLE	0x00000040	/* T अगर this object is the executable */
+#घोषणा ELF_FDPIC_FLAG_PRESENT		0x80000000	/* T अगर this object is present */
+पूर्ण;
 
-#ifdef CONFIG_MMU
-extern void elf_fdpic_arch_lay_out_mm(struct elf_fdpic_params *exec_params,
-				      struct elf_fdpic_params *interp_params,
-				      unsigned long *start_stack,
-				      unsigned long *start_brk);
-#endif
+#अगर_घोषित CONFIG_MMU
+बाह्य व्योम elf_fdpic_arch_lay_out_mm(काष्ठा elf_fdpic_params *exec_params,
+				      काष्ठा elf_fdpic_params *पूर्णांकerp_params,
+				      अचिन्हित दीर्घ *start_stack,
+				      अचिन्हित दीर्घ *start_brk);
+#पूर्ण_अगर
 
-#endif /* _LINUX_ELF_FDPIC_H */
+#पूर्ण_अगर /* _LINUX_ELF_FDPIC_H */

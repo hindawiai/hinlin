@@ -1,68 +1,69 @@
-/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
-#ifndef _ASM_MSGBUF_H
-#define _ASM_MSGBUF_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
+#अगर_अघोषित _ASM_MSGBUF_H
+#घोषणा _ASM_MSGBUF_H
 
-#include <asm/ipcbuf.h>
+#समावेश <यंत्र/ipcbuf.h>
 
 /*
- * The msqid64_ds structure for the MIPS architecture.
- * Note extra padding because this structure is passed back and forth
+ * The msqid64_ds काष्ठाure क्रम the MIPS architecture.
+ * Note extra padding because this काष्ठाure is passed back and क्रमth
  * between kernel and user space.
  *
- * Pad space is left for:
- * - 2 miscellaneous unsigned long values
+ * Pad space is left क्रम:
+ * - 2 miscellaneous अचिन्हित दीर्घ values
  */
 
-#if defined(__mips64)
-struct msqid64_ds {
-	struct ipc64_perm msg_perm;
-	long msg_stime;			/* last msgsnd time */
-	long msg_rtime;			/* last msgrcv time */
-	long msg_ctime;			/* last change time */
-	unsigned long  msg_cbytes;	/* current number of bytes on queue */
-	unsigned long  msg_qnum;	/* number of messages in queue */
-	unsigned long  msg_qbytes;	/* max number of bytes on queue */
+#अगर defined(__mips64)
+काष्ठा msqid64_ds अणु
+	काष्ठा ipc64_perm msg_perm;
+	दीर्घ msg_sसमय;			/* last msgsnd समय */
+	दीर्घ msg_rसमय;			/* last msgrcv समय */
+	दीर्घ msg_स_समय;			/* last change समय */
+	अचिन्हित दीर्घ  msg_cbytes;	/* current number of bytes on queue */
+	अचिन्हित दीर्घ  msg_qnum;	/* number of messages in queue */
+	अचिन्हित दीर्घ  msg_qbytes;	/* max number of bytes on queue */
 	__kernel_pid_t msg_lspid;	/* pid of last msgsnd */
 	__kernel_pid_t msg_lrpid;	/* last receive pid */
-	unsigned long  __unused4;
-	unsigned long  __unused5;
-};
-#elif defined (__MIPSEB__)
-struct msqid64_ds {
-	struct ipc64_perm msg_perm;
-	unsigned long  msg_stime_high;
-	unsigned long  msg_stime;	/* last msgsnd time */
-	unsigned long  msg_rtime_high;
-	unsigned long  msg_rtime;	/* last msgrcv time */
-	unsigned long  msg_ctime_high;
-	unsigned long  msg_ctime;	/* last change time */
-	unsigned long  msg_cbytes;	/* current number of bytes on queue */
-	unsigned long  msg_qnum;	/* number of messages in queue */
-	unsigned long  msg_qbytes;	/* max number of bytes on queue */
+	अचिन्हित दीर्घ  __unused4;
+	अचिन्हित दीर्घ  __unused5;
+पूर्ण;
+#या_अगर defined (__MIPSEB__)
+काष्ठा msqid64_ds अणु
+	काष्ठा ipc64_perm msg_perm;
+	अचिन्हित दीर्घ  msg_sसमय_high;
+	अचिन्हित दीर्घ  msg_sसमय;	/* last msgsnd समय */
+	अचिन्हित दीर्घ  msg_rसमय_high;
+	अचिन्हित दीर्घ  msg_rसमय;	/* last msgrcv समय */
+	अचिन्हित दीर्घ  msg_स_समय_high;
+	अचिन्हित दीर्घ  msg_स_समय;	/* last change समय */
+	अचिन्हित दीर्घ  msg_cbytes;	/* current number of bytes on queue */
+	अचिन्हित दीर्घ  msg_qnum;	/* number of messages in queue */
+	अचिन्हित दीर्घ  msg_qbytes;	/* max number of bytes on queue */
 	__kernel_pid_t msg_lspid;	/* pid of last msgsnd */
 	__kernel_pid_t msg_lrpid;	/* last receive pid */
-	unsigned long  __unused4;
-	unsigned long  __unused5;
-};
-#elif defined (__MIPSEL__)
-struct msqid64_ds {
-	struct ipc64_perm msg_perm;
-	unsigned long  msg_stime;	/* last msgsnd time */
-	unsigned long  msg_stime_high;
-	unsigned long  msg_rtime;	/* last msgrcv time */
-	unsigned long  msg_rtime_high;
-	unsigned long  msg_ctime;	/* last change time */
-	unsigned long  msg_ctime_high;
-	unsigned long  msg_cbytes;	/* current number of bytes on queue */
-	unsigned long  msg_qnum;	/* number of messages in queue */
-	unsigned long  msg_qbytes;	/* max number of bytes on queue */
+	अचिन्हित दीर्घ  __unused4;
+	अचिन्हित दीर्घ  __unused5;
+पूर्ण;
+#या_अगर defined (__MIPSEL__)
+काष्ठा msqid64_ds अणु
+	काष्ठा ipc64_perm msg_perm;
+	अचिन्हित दीर्घ  msg_sसमय;	/* last msgsnd समय */
+	अचिन्हित दीर्घ  msg_sसमय_high;
+	अचिन्हित दीर्घ  msg_rसमय;	/* last msgrcv समय */
+	अचिन्हित दीर्घ  msg_rसमय_high;
+	अचिन्हित दीर्घ  msg_स_समय;	/* last change समय */
+	अचिन्हित दीर्घ  msg_स_समय_high;
+	अचिन्हित दीर्घ  msg_cbytes;	/* current number of bytes on queue */
+	अचिन्हित दीर्घ  msg_qnum;	/* number of messages in queue */
+	अचिन्हित दीर्घ  msg_qbytes;	/* max number of bytes on queue */
 	__kernel_pid_t msg_lspid;	/* pid of last msgsnd */
 	__kernel_pid_t msg_lrpid;	/* last receive pid */
-	unsigned long  __unused4;
-	unsigned long  __unused5;
-};
-#else
+	अचिन्हित दीर्घ  __unused4;
+	अचिन्हित दीर्घ  __unused5;
+पूर्ण;
+#अन्यथा
 #warning no endianess set
-#endif
+#पूर्ण_अगर
 
-#endif /* _ASM_MSGBUF_H */
+#पूर्ण_अगर /* _ASM_MSGBUF_H */

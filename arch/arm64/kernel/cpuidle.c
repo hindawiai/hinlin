@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * ARM64 CPU idle arch support
  *
@@ -6,100 +7,100 @@
  * Author: Lorenzo Pieralisi <lorenzo.pieralisi@arm.com>
  */
 
-#include <linux/acpi.h>
-#include <linux/cpuidle.h>
-#include <linux/cpu_pm.h>
-#include <linux/of.h>
-#include <linux/of_device.h>
-#include <linux/psci.h>
+#समावेश <linux/acpi.h>
+#समावेश <linux/cpuidle.h>
+#समावेश <linux/cpu_pm.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/psci.h>
 
-#include <asm/cpuidle.h>
-#include <asm/cpu_ops.h>
+#समावेश <यंत्र/cpuidle.h>
+#समावेश <यंत्र/cpu_ops.h>
 
-int arm_cpuidle_init(unsigned int cpu)
-{
-	const struct cpu_operations *ops = get_cpu_ops(cpu);
-	int ret = -EOPNOTSUPP;
+पूर्णांक arm_cpuidle_init(अचिन्हित पूर्णांक cpu)
+अणु
+	स्थिर काष्ठा cpu_operations *ops = get_cpu_ops(cpu);
+	पूर्णांक ret = -EOPNOTSUPP;
 
-	if (ops && ops->cpu_suspend && ops->cpu_init_idle)
+	अगर (ops && ops->cpu_suspend && ops->cpu_init_idle)
 		ret = ops->cpu_init_idle(cpu);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * arm_cpuidle_suspend() - function to enter a low-power idle state
+ * arm_cpuidle_suspend() - function to enter a low-घातer idle state
  * @index: argument to pass to CPU suspend operations
  *
- * Return: 0 on success, -EOPNOTSUPP if CPU suspend hook not initialized, CPU
+ * Return: 0 on success, -EOPNOTSUPP अगर CPU suspend hook not initialized, CPU
  * operations back-end error code otherwise.
  */
-int arm_cpuidle_suspend(int index)
-{
-	int cpu = smp_processor_id();
-	const struct cpu_operations *ops = get_cpu_ops(cpu);
+पूर्णांक arm_cpuidle_suspend(पूर्णांक index)
+अणु
+	पूर्णांक cpu = smp_processor_id();
+	स्थिर काष्ठा cpu_operations *ops = get_cpu_ops(cpu);
 
-	return ops->cpu_suspend(index);
-}
+	वापस ops->cpu_suspend(index);
+पूर्ण
 
-#ifdef CONFIG_ACPI
+#अगर_घोषित CONFIG_ACPI
 
-#include <acpi/processor.h>
+#समावेश <acpi/processor.h>
 
-#define ARM64_LPI_IS_RETENTION_STATE(arch_flags) (!(arch_flags))
+#घोषणा ARM64_LPI_IS_RETENTION_STATE(arch_flags) (!(arch_flags))
 
-static int psci_acpi_cpu_init_idle(unsigned int cpu)
-{
-	int i, count;
-	struct acpi_lpi_state *lpi;
-	struct acpi_processor *pr = per_cpu(processors, cpu);
+अटल पूर्णांक psci_acpi_cpu_init_idle(अचिन्हित पूर्णांक cpu)
+अणु
+	पूर्णांक i, count;
+	काष्ठा acpi_lpi_state *lpi;
+	काष्ठा acpi_processor *pr = per_cpu(processors, cpu);
 
 	/*
 	 * If the PSCI cpu_suspend function hook has not been initialized
 	 * idle states must not be enabled, so bail out
 	 */
-	if (!psci_ops.cpu_suspend)
-		return -EOPNOTSUPP;
+	अगर (!psci_ops.cpu_suspend)
+		वापस -EOPNOTSUPP;
 
-	if (unlikely(!pr || !pr->flags.has_lpi))
-		return -EINVAL;
+	अगर (unlikely(!pr || !pr->flags.has_lpi))
+		वापस -EINVAL;
 
-	count = pr->power.count - 1;
-	if (count <= 0)
-		return -ENODEV;
+	count = pr->घातer.count - 1;
+	अगर (count <= 0)
+		वापस -ENODEV;
 
-	for (i = 0; i < count; i++) {
+	क्रम (i = 0; i < count; i++) अणु
 		u32 state;
 
-		lpi = &pr->power.lpi_states[i + 1];
+		lpi = &pr->घातer.lpi_states[i + 1];
 		/*
-		 * Only bits[31:0] represent a PSCI power_state while
-		 * bits[63:32] must be 0x0 as per ARM ACPI FFH Specification
+		 * Only bits[31:0] represent a PSCI घातer_state जबतक
+		 * bits[63:32] must be 0x0 as per ARM ACPI FFH Specअगरication
 		 */
 		state = lpi->address;
-		if (!psci_power_state_is_valid(state)) {
+		अगर (!psci_घातer_state_is_valid(state)) अणु
 			pr_warn("Invalid PSCI power state %#x\n", state);
-			return -EINVAL;
-		}
-	}
+			वापस -EINVAL;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int acpi_processor_ffh_lpi_probe(unsigned int cpu)
-{
-	return psci_acpi_cpu_init_idle(cpu);
-}
+पूर्णांक acpi_processor_ffh_lpi_probe(अचिन्हित पूर्णांक cpu)
+अणु
+	वापस psci_acpi_cpu_init_idle(cpu);
+पूर्ण
 
-int acpi_processor_ffh_lpi_enter(struct acpi_lpi_state *lpi)
-{
+पूर्णांक acpi_processor_ffh_lpi_enter(काष्ठा acpi_lpi_state *lpi)
+अणु
 	u32 state = lpi->address;
 
-	if (ARM64_LPI_IS_RETENTION_STATE(lpi->arch_flags))
-		return CPU_PM_CPU_IDLE_ENTER_RETENTION_PARAM(psci_cpu_suspend_enter,
+	अगर (ARM64_LPI_IS_RETENTION_STATE(lpi->arch_flags))
+		वापस CPU_PM_CPU_IDLE_ENTER_RETENTION_PARAM(psci_cpu_suspend_enter,
 						lpi->index, state);
-	else
-		return CPU_PM_CPU_IDLE_ENTER_PARAM(psci_cpu_suspend_enter,
+	अन्यथा
+		वापस CPU_PM_CPU_IDLE_ENTER_PARAM(psci_cpu_suspend_enter,
 					     lpi->index, state);
-}
-#endif
+पूर्ण
+#पूर्ण_अगर

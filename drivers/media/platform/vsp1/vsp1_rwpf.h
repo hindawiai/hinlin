@@ -1,89 +1,90 @@
-/* SPDX-License-Identifier: GPL-2.0+ */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0+ */
 /*
  * vsp1_rwpf.h  --  R-Car VSP1 Read and Write Pixel Formatters
  *
  * Copyright (C) 2013-2014 Renesas Electronics Corporation
  *
- * Contact: Laurent Pinchart (laurent.pinchart@ideasonboard.com)
+ * Contact: Laurent Pinअक्षरt (laurent.pinअक्षरt@ideasonboard.com)
  */
-#ifndef __VSP1_RWPF_H__
-#define __VSP1_RWPF_H__
+#अगर_अघोषित __VSP1_RWPF_H__
+#घोषणा __VSP1_RWPF_H__
 
-#include <linux/spinlock.h>
+#समावेश <linux/spinlock.h>
 
-#include <media/media-entity.h>
-#include <media/v4l2-ctrls.h>
-#include <media/v4l2-subdev.h>
+#समावेश <media/media-entity.h>
+#समावेश <media/v4l2-ctrls.h>
+#समावेश <media/v4l2-subdev.h>
 
-#include "vsp1.h"
-#include "vsp1_entity.h"
+#समावेश "vsp1.h"
+#समावेश "vsp1_entity.h"
 
-#define RWPF_PAD_SINK				0
-#define RWPF_PAD_SOURCE				1
+#घोषणा RWPF_PAD_SINK				0
+#घोषणा RWPF_PAD_SOURCE				1
 
-struct v4l2_ctrl;
-struct vsp1_dl_manager;
-struct vsp1_rwpf;
-struct vsp1_video;
+काष्ठा v4l2_ctrl;
+काष्ठा vsp1_dl_manager;
+काष्ठा vsp1_rwpf;
+काष्ठा vsp1_video;
 
-struct vsp1_rwpf_memory {
+काष्ठा vsp1_rwpf_memory अणु
 	dma_addr_t addr[3];
-};
+पूर्ण;
 
-struct vsp1_rwpf {
-	struct vsp1_entity entity;
-	struct v4l2_ctrl_handler ctrls;
+काष्ठा vsp1_rwpf अणु
+	काष्ठा vsp1_entity entity;
+	काष्ठा v4l2_ctrl_handler ctrls;
 
-	struct vsp1_video *video;
+	काष्ठा vsp1_video *video;
 
-	unsigned int max_width;
-	unsigned int max_height;
+	अचिन्हित पूर्णांक max_width;
+	अचिन्हित पूर्णांक max_height;
 
-	struct v4l2_pix_format_mplane format;
-	const struct vsp1_format_info *fmtinfo;
-	unsigned int brx_input;
+	काष्ठा v4l2_pix_क्रमmat_mplane क्रमmat;
+	स्थिर काष्ठा vsp1_क्रमmat_info *fmtinfo;
+	अचिन्हित पूर्णांक brx_input;
 
-	unsigned int alpha;
+	अचिन्हित पूर्णांक alpha;
 
 	u32 mult_alpha;
 	u32 outfmt;
 
-	struct {
+	काष्ठा अणु
 		spinlock_t lock;
-		struct {
-			struct v4l2_ctrl *vflip;
-			struct v4l2_ctrl *hflip;
-			struct v4l2_ctrl *rotate;
-		} ctrls;
-		unsigned int pending;
-		unsigned int active;
+		काष्ठा अणु
+			काष्ठा v4l2_ctrl *vflip;
+			काष्ठा v4l2_ctrl *hflip;
+			काष्ठा v4l2_ctrl *rotate;
+		पूर्ण ctrls;
+		अचिन्हित पूर्णांक pending;
+		अचिन्हित पूर्णांक active;
 		bool rotate;
-	} flip;
+	पूर्ण flip;
 
-	struct vsp1_rwpf_memory mem;
-	bool writeback;
+	काष्ठा vsp1_rwpf_memory mem;
+	bool ग_लिखोback;
 
-	struct vsp1_dl_manager *dlm;
-};
+	काष्ठा vsp1_dl_manager *dlm;
+पूर्ण;
 
-static inline struct vsp1_rwpf *to_rwpf(struct v4l2_subdev *subdev)
-{
-	return container_of(subdev, struct vsp1_rwpf, entity.subdev);
-}
+अटल अंतरभूत काष्ठा vsp1_rwpf *to_rwpf(काष्ठा v4l2_subdev *subdev)
+अणु
+	वापस container_of(subdev, काष्ठा vsp1_rwpf, entity.subdev);
+पूर्ण
 
-static inline struct vsp1_rwpf *entity_to_rwpf(struct vsp1_entity *entity)
-{
-	return container_of(entity, struct vsp1_rwpf, entity);
-}
+अटल अंतरभूत काष्ठा vsp1_rwpf *entity_to_rwpf(काष्ठा vsp1_entity *entity)
+अणु
+	वापस container_of(entity, काष्ठा vsp1_rwpf, entity);
+पूर्ण
 
-struct vsp1_rwpf *vsp1_rpf_create(struct vsp1_device *vsp1, unsigned int index);
-struct vsp1_rwpf *vsp1_wpf_create(struct vsp1_device *vsp1, unsigned int index);
+काष्ठा vsp1_rwpf *vsp1_rpf_create(काष्ठा vsp1_device *vsp1, अचिन्हित पूर्णांक index);
+काष्ठा vsp1_rwpf *vsp1_wpf_create(काष्ठा vsp1_device *vsp1, अचिन्हित पूर्णांक index);
 
-int vsp1_rwpf_init_ctrls(struct vsp1_rwpf *rwpf, unsigned int ncontrols);
+पूर्णांक vsp1_rwpf_init_ctrls(काष्ठा vsp1_rwpf *rwpf, अचिन्हित पूर्णांक ncontrols);
 
-extern const struct v4l2_subdev_pad_ops vsp1_rwpf_pad_ops;
+बाह्य स्थिर काष्ठा v4l2_subdev_pad_ops vsp1_rwpf_pad_ops;
 
-struct v4l2_rect *vsp1_rwpf_get_crop(struct vsp1_rwpf *rwpf,
-				     struct v4l2_subdev_pad_config *config);
+काष्ठा v4l2_rect *vsp1_rwpf_get_crop(काष्ठा vsp1_rwpf *rwpf,
+				     काष्ठा v4l2_subdev_pad_config *config);
 
-#endif /* __VSP1_RWPF_H__ */
+#पूर्ण_अगर /* __VSP1_RWPF_H__ */

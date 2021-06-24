@@ -1,225 +1,226 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * Integrator/AP timer driver
+ * Integrator/AP समयr driver
  * Copyright (C) 2000-2003 Deep Blue Solutions Ltd
  * Copyright (c) 2014, Linaro Limited
  */
 
-#include <linux/clk.h>
-#include <linux/clocksource.h>
-#include <linux/of_irq.h>
-#include <linux/of_address.h>
-#include <linux/of_platform.h>
-#include <linux/clockchips.h>
-#include <linux/interrupt.h>
-#include <linux/sched_clock.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/घड़ीsource.h>
+#समावेश <linux/of_irq.h>
+#समावेश <linux/of_address.h>
+#समावेश <linux/of_platक्रमm.h>
+#समावेश <linux/घड़ीchips.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/sched_घड़ी.h>
 
-#include "timer-sp.h"
+#समावेश "timer-sp.h"
 
-static void __iomem * sched_clk_base;
+अटल व्योम __iomem * sched_clk_base;
 
-static u64 notrace integrator_read_sched_clock(void)
-{
-	return -readl(sched_clk_base + TIMER_VALUE);
-}
+अटल u64 notrace पूर्णांकegrator_पढ़ो_sched_घड़ी(व्योम)
+अणु
+	वापस -पढ़ोl(sched_clk_base + TIMER_VALUE);
+पूर्ण
 
-static int __init integrator_clocksource_init(unsigned long inrate,
-					      void __iomem *base)
-{
+अटल पूर्णांक __init पूर्णांकegrator_घड़ीsource_init(अचिन्हित दीर्घ inrate,
+					      व्योम __iomem *base)
+अणु
 	u32 ctrl = TIMER_CTRL_ENABLE | TIMER_CTRL_PERIODIC;
-	unsigned long rate = inrate;
-	int ret;
+	अचिन्हित दीर्घ rate = inrate;
+	पूर्णांक ret;
 
-	if (rate >= 1500000) {
+	अगर (rate >= 1500000) अणु
 		rate /= 16;
 		ctrl |= TIMER_CTRL_DIV16;
-	}
+	पूर्ण
 
-	writel(0xffff, base + TIMER_LOAD);
-	writel(ctrl, base + TIMER_CTRL);
+	ग_लिखोl(0xffff, base + TIMER_LOAD);
+	ग_लिखोl(ctrl, base + TIMER_CTRL);
 
-	ret = clocksource_mmio_init(base + TIMER_VALUE, "timer2",
-				    rate, 200, 16, clocksource_mmio_readl_down);
-	if (ret)
-		return ret;
+	ret = घड़ीsource_mmio_init(base + TIMER_VALUE, "timer2",
+				    rate, 200, 16, घड़ीsource_mmio_पढ़ोl_करोwn);
+	अगर (ret)
+		वापस ret;
 
 	sched_clk_base = base;
-	sched_clock_register(integrator_read_sched_clock, 16, rate);
+	sched_घड़ी_रेजिस्टर(पूर्णांकegrator_पढ़ो_sched_घड़ी, 16, rate);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static unsigned long timer_reload;
-static void __iomem * clkevt_base;
+अटल अचिन्हित दीर्घ समयr_reload;
+अटल व्योम __iomem * clkevt_base;
 
 /*
- * IRQ handler for the timer
+ * IRQ handler क्रम the समयr
  */
-static irqreturn_t integrator_timer_interrupt(int irq, void *dev_id)
-{
-	struct clock_event_device *evt = dev_id;
+अटल irqवापस_t पूर्णांकegrator_समयr_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा घड़ी_event_device *evt = dev_id;
 
-	/* clear the interrupt */
-	writel(1, clkevt_base + TIMER_INTCLR);
+	/* clear the पूर्णांकerrupt */
+	ग_लिखोl(1, clkevt_base + TIMER_INTCLR);
 
 	evt->event_handler(evt);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static int clkevt_shutdown(struct clock_event_device *evt)
-{
-	u32 ctrl = readl(clkevt_base + TIMER_CTRL) & ~TIMER_CTRL_ENABLE;
+अटल पूर्णांक clkevt_shutकरोwn(काष्ठा घड़ी_event_device *evt)
+अणु
+	u32 ctrl = पढ़ोl(clkevt_base + TIMER_CTRL) & ~TIMER_CTRL_ENABLE;
 
-	/* Disable timer */
-	writel(ctrl, clkevt_base + TIMER_CTRL);
-	return 0;
-}
+	/* Disable समयr */
+	ग_लिखोl(ctrl, clkevt_base + TIMER_CTRL);
+	वापस 0;
+पूर्ण
 
-static int clkevt_set_oneshot(struct clock_event_device *evt)
-{
-	u32 ctrl = readl(clkevt_base + TIMER_CTRL) &
+अटल पूर्णांक clkevt_set_oneshot(काष्ठा घड़ी_event_device *evt)
+अणु
+	u32 ctrl = पढ़ोl(clkevt_base + TIMER_CTRL) &
 		   ~(TIMER_CTRL_ENABLE | TIMER_CTRL_PERIODIC);
 
-	/* Leave the timer disabled, .set_next_event will enable it */
-	writel(ctrl, clkevt_base + TIMER_CTRL);
-	return 0;
-}
+	/* Leave the समयr disabled, .set_next_event will enable it */
+	ग_लिखोl(ctrl, clkevt_base + TIMER_CTRL);
+	वापस 0;
+पूर्ण
 
-static int clkevt_set_periodic(struct clock_event_device *evt)
-{
-	u32 ctrl = readl(clkevt_base + TIMER_CTRL) & ~TIMER_CTRL_ENABLE;
+अटल पूर्णांक clkevt_set_periodic(काष्ठा घड़ी_event_device *evt)
+अणु
+	u32 ctrl = पढ़ोl(clkevt_base + TIMER_CTRL) & ~TIMER_CTRL_ENABLE;
 
-	/* Disable timer */
-	writel(ctrl, clkevt_base + TIMER_CTRL);
+	/* Disable समयr */
+	ग_लिखोl(ctrl, clkevt_base + TIMER_CTRL);
 
-	/* Enable the timer and start the periodic tick */
-	writel(timer_reload, clkevt_base + TIMER_LOAD);
+	/* Enable the समयr and start the periodic tick */
+	ग_लिखोl(समयr_reload, clkevt_base + TIMER_LOAD);
 	ctrl |= TIMER_CTRL_PERIODIC | TIMER_CTRL_ENABLE;
-	writel(ctrl, clkevt_base + TIMER_CTRL);
-	return 0;
-}
+	ग_लिखोl(ctrl, clkevt_base + TIMER_CTRL);
+	वापस 0;
+पूर्ण
 
-static int clkevt_set_next_event(unsigned long next, struct clock_event_device *evt)
-{
-	unsigned long ctrl = readl(clkevt_base + TIMER_CTRL);
+अटल पूर्णांक clkevt_set_next_event(अचिन्हित दीर्घ next, काष्ठा घड़ी_event_device *evt)
+अणु
+	अचिन्हित दीर्घ ctrl = पढ़ोl(clkevt_base + TIMER_CTRL);
 
-	writel(ctrl & ~TIMER_CTRL_ENABLE, clkevt_base + TIMER_CTRL);
-	writel(next, clkevt_base + TIMER_LOAD);
-	writel(ctrl | TIMER_CTRL_ENABLE, clkevt_base + TIMER_CTRL);
+	ग_लिखोl(ctrl & ~TIMER_CTRL_ENABLE, clkevt_base + TIMER_CTRL);
+	ग_लिखोl(next, clkevt_base + TIMER_LOAD);
+	ग_लिखोl(ctrl | TIMER_CTRL_ENABLE, clkevt_base + TIMER_CTRL);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct clock_event_device integrator_clockevent = {
+अटल काष्ठा घड़ी_event_device पूर्णांकegrator_घड़ीevent = अणु
 	.name			= "timer1",
 	.features		= CLOCK_EVT_FEAT_PERIODIC |
 				  CLOCK_EVT_FEAT_ONESHOT,
-	.set_state_shutdown	= clkevt_shutdown,
+	.set_state_shutकरोwn	= clkevt_shutकरोwn,
 	.set_state_periodic	= clkevt_set_periodic,
 	.set_state_oneshot	= clkevt_set_oneshot,
-	.tick_resume		= clkevt_shutdown,
+	.tick_resume		= clkevt_shutकरोwn,
 	.set_next_event		= clkevt_set_next_event,
 	.rating			= 300,
-};
+पूर्ण;
 
-static int integrator_clockevent_init(unsigned long inrate,
-				      void __iomem *base, int irq)
-{
-	unsigned long rate = inrate;
-	unsigned int ctrl = 0;
-	int ret;
+अटल पूर्णांक पूर्णांकegrator_घड़ीevent_init(अचिन्हित दीर्घ inrate,
+				      व्योम __iomem *base, पूर्णांक irq)
+अणु
+	अचिन्हित दीर्घ rate = inrate;
+	अचिन्हित पूर्णांक ctrl = 0;
+	पूर्णांक ret;
 
 	clkevt_base = base;
-	/* Calculate and program a divisor */
-	if (rate > 0x100000 * HZ) {
+	/* Calculate and program a भागisor */
+	अगर (rate > 0x100000 * HZ) अणु
 		rate /= 256;
 		ctrl |= TIMER_CTRL_DIV256;
-	} else if (rate > 0x10000 * HZ) {
+	पूर्ण अन्यथा अगर (rate > 0x10000 * HZ) अणु
 		rate /= 16;
 		ctrl |= TIMER_CTRL_DIV16;
-	}
-	timer_reload = rate / HZ;
-	writel(ctrl, clkevt_base + TIMER_CTRL);
+	पूर्ण
+	समयr_reload = rate / HZ;
+	ग_लिखोl(ctrl, clkevt_base + TIMER_CTRL);
 
-	ret = request_irq(irq, integrator_timer_interrupt,
+	ret = request_irq(irq, पूर्णांकegrator_समयr_पूर्णांकerrupt,
 			  IRQF_TIMER | IRQF_IRQPOLL, "timer",
-			  &integrator_clockevent);
-	if (ret)
-		return ret;
+			  &पूर्णांकegrator_घड़ीevent);
+	अगर (ret)
+		वापस ret;
 
-	clockevents_config_and_register(&integrator_clockevent,
+	घड़ीevents_config_and_रेजिस्टर(&पूर्णांकegrator_घड़ीevent,
 					rate,
 					1,
 					0xffffU);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __init integrator_ap_timer_init_of(struct device_node *node)
-{
-	const char *path;
-	void __iomem *base;
-	int err;
-	int irq;
-	struct clk *clk;
-	unsigned long rate;
-	struct device_node *alias_node;
+अटल पूर्णांक __init पूर्णांकegrator_ap_समयr_init_of(काष्ठा device_node *node)
+अणु
+	स्थिर अक्षर *path;
+	व्योम __iomem *base;
+	पूर्णांक err;
+	पूर्णांक irq;
+	काष्ठा clk *clk;
+	अचिन्हित दीर्घ rate;
+	काष्ठा device_node *alias_node;
 
 	base = of_io_request_and_map(node, 0, "integrator-timer");
-	if (IS_ERR(base))
-		return PTR_ERR(base);
+	अगर (IS_ERR(base))
+		वापस PTR_ERR(base);
 
 	clk = of_clk_get(node, 0);
-	if (IS_ERR(clk)) {
+	अगर (IS_ERR(clk)) अणु
 		pr_err("No clock for %pOFn\n", node);
-		return PTR_ERR(clk);
-	}
+		वापस PTR_ERR(clk);
+	पूर्ण
 	clk_prepare_enable(clk);
 	rate = clk_get_rate(clk);
-	writel(0, base + TIMER_CTRL);
+	ग_लिखोl(0, base + TIMER_CTRL);
 
-	err = of_property_read_string(of_aliases,
+	err = of_property_पढ़ो_string(of_aliases,
 				"arm,timer-primary", &path);
-	if (err) {
+	अगर (err) अणु
 		pr_warn("Failed to read property\n");
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
 	alias_node = of_find_node_by_path(path);
 
 	/*
-	 * The pointer is used as an identifier not as a pointer, we
+	 * The poपूर्णांकer is used as an identअगरier not as a poपूर्णांकer, we
 	 * can drop the refcount on the of__node immediately after
 	 * getting it.
 	 */
 	of_node_put(alias_node);
 
-	if (node == alias_node)
-		/* The primary timer lacks IRQ, use as clocksource */
-		return integrator_clocksource_init(rate, base);
+	अगर (node == alias_node)
+		/* The primary समयr lacks IRQ, use as घड़ीsource */
+		वापस पूर्णांकegrator_घड़ीsource_init(rate, base);
 
-	err = of_property_read_string(of_aliases,
+	err = of_property_पढ़ो_string(of_aliases,
 				"arm,timer-secondary", &path);
-	if (err) {
+	अगर (err) अणु
 		pr_warn("Failed to read property\n");
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
 	alias_node = of_find_node_by_path(path);
 
 	of_node_put(alias_node);
 
-	if (node == alias_node) {
-		/* The secondary timer will drive the clock event */
+	अगर (node == alias_node) अणु
+		/* The secondary समयr will drive the घड़ी event */
 		irq = irq_of_parse_and_map(node, 0);
-		return integrator_clockevent_init(rate, base, irq);
-	}
+		वापस पूर्णांकegrator_घड़ीevent_init(rate, base, irq);
+	पूर्ण
 
 	pr_info("Timer @%p unused\n", base);
 	clk_disable_unprepare(clk);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-TIMER_OF_DECLARE(integrator_ap_timer, "arm,integrator-timer",
-		       integrator_ap_timer_init_of);
+TIMER_OF_DECLARE(पूर्णांकegrator_ap_समयr, "arm,integrator-timer",
+		       पूर्णांकegrator_ap_समयr_init_of);

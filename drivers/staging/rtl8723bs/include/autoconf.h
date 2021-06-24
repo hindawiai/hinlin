@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /******************************************************************************
  *
  * Copyright(c) 2007 - 2012 Realtek Corporation. All rights reserved.
@@ -6,45 +7,45 @@
  ******************************************************************************/
 
 /*
- * Automatically generated C config: don't edit
+ * Automatically generated C config: करोn't edit
  */
 
 /*
  * Functions Config
  */
 
-#ifndef CONFIG_WIRELESS_EXT
-#error CONFIG_WIRELESS_EXT needs to be enabled for this driver to work
-#endif
+#अगर_अघोषित CONFIG_WIRELESS_EXT
+#त्रुटि CONFIG_WIRELESS_EXT needs to be enabled क्रम this driver to work
+#पूर्ण_अगर
 
 /*
  * Auto Config Section
  */
-#define LPS_RPWM_WAIT_MS 300
-#ifndef DISABLE_BB_RF
-#define DISABLE_BB_RF	0
-#endif
+#घोषणा LPS_RPWM_WAIT_MS 300
+#अगर_अघोषित DISABLE_BB_RF
+#घोषणा DISABLE_BB_RF	0
+#पूर्ण_अगर
 
-#if DISABLE_BB_RF
-	#define HAL_MAC_ENABLE	0
-	#define HAL_BB_ENABLE		0
-	#define HAL_RF_ENABLE		0
-#else
-	#define HAL_MAC_ENABLE	1
-	#define HAL_BB_ENABLE		1
-	#define HAL_RF_ENABLE		1
-#endif
+#अगर DISABLE_BB_RF
+	#घोषणा HAL_MAC_ENABLE	0
+	#घोषणा HAL_BB_ENABLE		0
+	#घोषणा HAL_RF_ENABLE		0
+#अन्यथा
+	#घोषणा HAL_MAC_ENABLE	1
+	#घोषणा HAL_BB_ENABLE		1
+	#घोषणा HAL_RF_ENABLE		1
+#पूर्ण_अगर
 
 /*
- * Platform dependent
+ * Platक्रमm dependent
  */
-#define WAKEUP_GPIO_IDX	12	/* WIFI Chip Side */
+#घोषणा WAKEUP_GPIO_IDX	12	/* WIFI Chip Side */
 
 /*
  * Debug Related Config
  */
 
-#define DBG	0	/*  for ODM & BTCOEX debug */
+#घोषणा DBG	0	/*  क्रम ODM & BTCOEX debug */
 
 /* define DBG_XMIT_BUF */
 /* define DBG_XMIT_BUF_EXT */

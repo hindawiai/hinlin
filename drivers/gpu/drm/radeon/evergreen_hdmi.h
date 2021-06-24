@@ -1,15 +1,16 @@
-/* evergreen_hdmi.h -- Private header for radeon driver -*- linux-c -*-
+<शैली गुरु>
+/* evergreen_hdmi.h -- Private header क्रम radeon driver -*- linux-c -*-
  *
  * Copyright 2008 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
- * Copyright 2009 Christian König.
+ * Copyright 2009 Christian Kथघnig.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice (including the next
  * paragraph) shall be included in all copies or substantial portions of the
@@ -25,45 +26,45 @@
  *
  */
 
-#ifndef __EVERGREEN_HDMI_H__
-#define __EVERGREEN_HDMI_H__
+#अगर_अघोषित __EVERGREEN_HDMI_H__
+#घोषणा __EVERGREEN_HDMI_H__
 
-struct cea_sa;
-struct cea_sad;
-struct drm_connector;
-struct drm_display_mode;
-struct drm_encoder;
-struct r600_audio_pin;
-struct radeon_crtc;
-struct radeon_device;
-struct radeon_hdmi_acr;
+काष्ठा cea_sa;
+काष्ठा cea_sad;
+काष्ठा drm_connector;
+काष्ठा drm_display_mode;
+काष्ठा drm_encoder;
+काष्ठा r600_audio_pin;
+काष्ठा radeon_crtc;
+काष्ठा radeon_device;
+काष्ठा radeon_hdmi_acr;
 
-void evergreen_hdmi_write_sad_regs(struct drm_encoder *encoder,
-				   struct cea_sad *sads, int sad_count);
-void evergreen_set_avi_packet(struct radeon_device *rdev, u32 offset,
-			      unsigned char *buffer, size_t size);
-void evergreen_hdmi_update_acr(struct drm_encoder *encoder, long offset,
-			       const struct radeon_hdmi_acr *acr);
-void evergreen_hdmi_enable(struct drm_encoder *encoder, bool enable);
-void evergreen_dp_enable(struct drm_encoder *encoder, bool enable);
+व्योम evergreen_hdmi_ग_लिखो_sad_regs(काष्ठा drm_encoder *encoder,
+				   काष्ठा cea_sad *sads, पूर्णांक sad_count);
+व्योम evergreen_set_avi_packet(काष्ठा radeon_device *rdev, u32 offset,
+			      अचिन्हित अक्षर *buffer, माप_प्रकार size);
+व्योम evergreen_hdmi_update_acr(काष्ठा drm_encoder *encoder, दीर्घ offset,
+			       स्थिर काष्ठा radeon_hdmi_acr *acr);
+व्योम evergreen_hdmi_enable(काष्ठा drm_encoder *encoder, bool enable);
+व्योम evergreen_dp_enable(काष्ठा drm_encoder *encoder, bool enable);
 
-void dce4_audio_enable(struct radeon_device *rdev, struct r600_audio_pin *pin,
+व्योम dce4_audio_enable(काष्ठा radeon_device *rdev, काष्ठा r600_audio_pin *pin,
 		       u8 enable_mask);
-void dce4_afmt_hdmi_write_speaker_allocation(struct drm_encoder *encoder,
-					     u8 *sadb, int sad_count);
-void dce4_afmt_dp_write_speaker_allocation(struct drm_encoder *encoder,
-					   u8 *sadb, int sad_count);
-void dce4_afmt_write_latency_fields(struct drm_encoder *encoder,
-				    struct drm_connector *connector,
-				    struct drm_display_mode *mode);
-void dce4_hdmi_audio_set_dto(struct radeon_device *rdev,
-			     struct radeon_crtc *crtc, unsigned int clock);
-void dce4_dp_audio_set_dto(struct radeon_device *rdev,
-			   struct radeon_crtc *crtc, unsigned int clock);
-void dce4_set_vbi_packet(struct drm_encoder *encoder, u32 offset);
-void dce4_hdmi_set_color_depth(struct drm_encoder *encoder,
-			       u32 offset, int bpc);
-void dce4_set_audio_packet(struct drm_encoder *encoder, u32 offset);
-void dce4_set_mute(struct drm_encoder *encoder, u32 offset, bool mute);
+व्योम dce4_afmt_hdmi_ग_लिखो_speaker_allocation(काष्ठा drm_encoder *encoder,
+					     u8 *sadb, पूर्णांक sad_count);
+व्योम dce4_afmt_dp_ग_लिखो_speaker_allocation(काष्ठा drm_encoder *encoder,
+					   u8 *sadb, पूर्णांक sad_count);
+व्योम dce4_afmt_ग_लिखो_latency_fields(काष्ठा drm_encoder *encoder,
+				    काष्ठा drm_connector *connector,
+				    काष्ठा drm_display_mode *mode);
+व्योम dce4_hdmi_audio_set_dto(काष्ठा radeon_device *rdev,
+			     काष्ठा radeon_crtc *crtc, अचिन्हित पूर्णांक घड़ी);
+व्योम dce4_dp_audio_set_dto(काष्ठा radeon_device *rdev,
+			   काष्ठा radeon_crtc *crtc, अचिन्हित पूर्णांक घड़ी);
+व्योम dce4_set_vbi_packet(काष्ठा drm_encoder *encoder, u32 offset);
+व्योम dce4_hdmi_set_color_depth(काष्ठा drm_encoder *encoder,
+			       u32 offset, पूर्णांक bpc);
+व्योम dce4_set_audio_packet(काष्ठा drm_encoder *encoder, u32 offset);
+व्योम dce4_set_mute(काष्ठा drm_encoder *encoder, u32 offset, bool mute);
 
-#endif				/* __EVERGREEN_HDMI_H__ */
+#पूर्ण_अगर				/* __EVERGREEN_HDMI_H__ */

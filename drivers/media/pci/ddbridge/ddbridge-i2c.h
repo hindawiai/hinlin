@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * ddbridge-i2c.h: Digital Devices bridge i2c driver
  *
@@ -6,107 +7,107 @@
  *                         Ralph Metzler <rjkm@metzlerbros.de>
  *                         Marcus Metzler <mocm@metzlerbros.de>
  *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License
+ * This program is मुक्त software; you can redistribute it and/or
+ * modअगरy it under the terms of the GNU General Public License
  * version 2 only, as published by the Free Software Foundation.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU General Public License क्रम more details.
  */
 
-#ifndef __DDBRIDGE_I2C_H__
-#define __DDBRIDGE_I2C_H__
+#अगर_अघोषित __DDBRIDGE_I2C_H__
+#घोषणा __DDBRIDGE_I2C_H__
 
-#include <linux/i2c.h>
+#समावेश <linux/i2c.h>
 
-#include "ddbridge.h"
-
-/******************************************************************************/
-
-void ddb_i2c_release(struct ddb *dev);
-int ddb_i2c_init(struct ddb *dev);
+#समावेश "ddbridge.h"
 
 /******************************************************************************/
 
-static int __maybe_unused i2c_io(struct i2c_adapter *adapter, u8 adr,
+व्योम ddb_i2c_release(काष्ठा ddb *dev);
+पूर्णांक ddb_i2c_init(काष्ठा ddb *dev);
+
+/******************************************************************************/
+
+अटल पूर्णांक __maybe_unused i2c_io(काष्ठा i2c_adapter *adapter, u8 adr,
 				 u8 *wbuf, u32 wlen, u8 *rbuf, u32 rlen)
-{
-	struct i2c_msg msgs[2] = { { .addr = adr,  .flags = 0,
-				     .buf  = wbuf, .len   = wlen },
-				   { .addr = adr,  .flags = I2C_M_RD,
-				     .buf  = rbuf, .len   = rlen } };
+अणु
+	काष्ठा i2c_msg msgs[2] = अणु अणु .addr = adr,  .flags = 0,
+				     .buf  = wbuf, .len   = wlen पूर्ण,
+				   अणु .addr = adr,  .flags = I2C_M_RD,
+				     .buf  = rbuf, .len   = rlen पूर्ण पूर्ण;
 
-	return (i2c_transfer(adapter, msgs, 2) == 2) ? 0 : -1;
-}
+	वापस (i2c_transfer(adapter, msgs, 2) == 2) ? 0 : -1;
+पूर्ण
 
-static int __maybe_unused i2c_write(struct i2c_adapter *adap, u8 adr,
-				    u8 *data, int len)
-{
-	struct i2c_msg msg = { .addr = adr, .flags = 0,
-			       .buf = data, .len = len };
+अटल पूर्णांक __maybe_unused i2c_ग_लिखो(काष्ठा i2c_adapter *adap, u8 adr,
+				    u8 *data, पूर्णांक len)
+अणु
+	काष्ठा i2c_msg msg = अणु .addr = adr, .flags = 0,
+			       .buf = data, .len = len पूर्ण;
 
-	return (i2c_transfer(adap, &msg, 1) == 1) ? 0 : -1;
-}
+	वापस (i2c_transfer(adap, &msg, 1) == 1) ? 0 : -1;
+पूर्ण
 
-static int __maybe_unused i2c_read(struct i2c_adapter *adapter, u8 adr, u8 *val)
-{
-	struct i2c_msg msgs[1] = { { .addr = adr, .flags = I2C_M_RD,
-				     .buf  = val, .len   = 1 } };
+अटल पूर्णांक __maybe_unused i2c_पढ़ो(काष्ठा i2c_adapter *adapter, u8 adr, u8 *val)
+अणु
+	काष्ठा i2c_msg msgs[1] = अणु अणु .addr = adr, .flags = I2C_M_RD,
+				     .buf  = val, .len   = 1 पूर्ण पूर्ण;
 
-	return (i2c_transfer(adapter, msgs, 1) == 1) ? 0 : -1;
-}
+	वापस (i2c_transfer(adapter, msgs, 1) == 1) ? 0 : -1;
+पूर्ण
 
-static int __maybe_unused i2c_read_regs(struct i2c_adapter *adapter,
+अटल पूर्णांक __maybe_unused i2c_पढ़ो_regs(काष्ठा i2c_adapter *adapter,
 					u8 adr, u8 reg, u8 *val, u8 len)
-{
-	struct i2c_msg msgs[2] = { { .addr = adr,  .flags = 0,
-				     .buf  = &reg, .len   = 1 },
-				   { .addr = adr,  .flags = I2C_M_RD,
-				     .buf  = val,  .len   = len } };
+अणु
+	काष्ठा i2c_msg msgs[2] = अणु अणु .addr = adr,  .flags = 0,
+				     .buf  = &reg, .len   = 1 पूर्ण,
+				   अणु .addr = adr,  .flags = I2C_M_RD,
+				     .buf  = val,  .len   = len पूर्ण पूर्ण;
 
-	return (i2c_transfer(adapter, msgs, 2) == 2) ? 0 : -1;
-}
+	वापस (i2c_transfer(adapter, msgs, 2) == 2) ? 0 : -1;
+पूर्ण
 
-static int __maybe_unused i2c_read_regs16(struct i2c_adapter *adapter,
+अटल पूर्णांक __maybe_unused i2c_पढ़ो_regs16(काष्ठा i2c_adapter *adapter,
 					  u8 adr, u16 reg, u8 *val, u8 len)
-{
-	u8 msg[2] = { reg >> 8, reg & 0xff };
-	struct i2c_msg msgs[2] = { { .addr = adr, .flags = 0,
-				     .buf  = msg, .len   = 2 },
-				   { .addr = adr, .flags = I2C_M_RD,
-				     .buf  = val, .len   = len } };
+अणु
+	u8 msg[2] = अणु reg >> 8, reg & 0xff पूर्ण;
+	काष्ठा i2c_msg msgs[2] = अणु अणु .addr = adr, .flags = 0,
+				     .buf  = msg, .len   = 2 पूर्ण,
+				   अणु .addr = adr, .flags = I2C_M_RD,
+				     .buf  = val, .len   = len पूर्ण पूर्ण;
 
-	return (i2c_transfer(adapter, msgs, 2) == 2) ? 0 : -1;
-}
+	वापस (i2c_transfer(adapter, msgs, 2) == 2) ? 0 : -1;
+पूर्ण
 
-static int __maybe_unused i2c_write_reg16(struct i2c_adapter *adap,
+अटल पूर्णांक __maybe_unused i2c_ग_लिखो_reg16(काष्ठा i2c_adapter *adap,
 					  u8 adr, u16 reg, u8 val)
-{
-	u8 msg[3] = { reg >> 8, reg & 0xff, val };
+अणु
+	u8 msg[3] = अणु reg >> 8, reg & 0xff, val पूर्ण;
 
-	return i2c_write(adap, adr, msg, 3);
-}
+	वापस i2c_ग_लिखो(adap, adr, msg, 3);
+पूर्ण
 
-static int __maybe_unused i2c_write_reg(struct i2c_adapter *adap,
+अटल पूर्णांक __maybe_unused i2c_ग_लिखो_reg(काष्ठा i2c_adapter *adap,
 					u8 adr, u8 reg, u8 val)
-{
-	u8 msg[2] = { reg, val };
+अणु
+	u8 msg[2] = अणु reg, val पूर्ण;
 
-	return i2c_write(adap, adr, msg, 2);
-}
+	वापस i2c_ग_लिखो(adap, adr, msg, 2);
+पूर्ण
 
-static int __maybe_unused i2c_read_reg16(struct i2c_adapter *adapter,
+अटल पूर्णांक __maybe_unused i2c_पढ़ो_reg16(काष्ठा i2c_adapter *adapter,
 					 u8 adr, u16 reg, u8 *val)
-{
-	return i2c_read_regs16(adapter, adr, reg, val, 1);
-}
+अणु
+	वापस i2c_पढ़ो_regs16(adapter, adr, reg, val, 1);
+पूर्ण
 
-static int __maybe_unused i2c_read_reg(struct i2c_adapter *adapter,
+अटल पूर्णांक __maybe_unused i2c_पढ़ो_reg(काष्ठा i2c_adapter *adapter,
 				       u8 adr, u8 reg, u8 *val)
-{
-	return i2c_read_regs(adapter, adr, reg, val, 1);
-}
+अणु
+	वापस i2c_पढ़ो_regs(adapter, adr, reg, val, 1);
+पूर्ण
 
-#endif /* __DDBRIDGE_I2C_H__ */
+#पूर्ण_अगर /* __DDBRIDGE_I2C_H__ */

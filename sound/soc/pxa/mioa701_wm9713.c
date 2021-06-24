@@ -1,10 +1,11 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * Handles the Mitac mioa701 SoC system
+ * Handles the Mitac mioa701 SoC प्रणाली
  *
  * Copyright (C) 2008 Robert Jarzmik
  *
- * This is a little schema of the sound interconnections :
+ * This is a little schema of the sound पूर्णांकerconnections :
  *
  *    Sagem X200                 Wolfson WM9713
  *    +--------+             +-------------------+      Rear Speaker
@@ -28,107 +29,107 @@
  *                           +-------------------+        ---
  */
 
-#include <linux/module.h>
-#include <linux/moduleparam.h>
-#include <linux/platform_device.h>
+#समावेश <linux/module.h>
+#समावेश <linux/moduleparam.h>
+#समावेश <linux/platक्रमm_device.h>
 
-#include <asm/mach-types.h>
-#include <mach/audio.h>
+#समावेश <यंत्र/mach-types.h>
+#समावेश <mach/audपन.स>
 
-#include <sound/core.h>
-#include <sound/pcm.h>
-#include <sound/soc.h>
-#include <sound/initval.h>
-#include <sound/ac97_codec.h>
+#समावेश <sound/core.h>
+#समावेश <sound/pcm.h>
+#समावेश <sound/soc.h>
+#समावेश <sound/initval.h>
+#समावेश <sound/ac97_codec.h>
 
-#include "../codecs/wm9713.h"
+#समावेश "../codecs/wm9713.h"
 
-#define AC97_GPIO_PULL		0x58
+#घोषणा AC97_GPIO_PULL		0x58
 
-/* Use GPIO8 for rear speaker amplifier */
-static int rear_amp_power(struct snd_soc_component *component, int power)
-{
-	unsigned short reg;
+/* Use GPIO8 क्रम rear speaker amplअगरier */
+अटल पूर्णांक rear_amp_घातer(काष्ठा snd_soc_component *component, पूर्णांक घातer)
+अणु
+	अचिन्हित लघु reg;
 
-	if (power) {
-		reg = snd_soc_component_read(component, AC97_GPIO_CFG);
-		snd_soc_component_write(component, AC97_GPIO_CFG, reg | 0x0100);
-		reg = snd_soc_component_read(component, AC97_GPIO_PULL);
-		snd_soc_component_write(component, AC97_GPIO_PULL, reg | (1<<15));
-	} else {
-		reg = snd_soc_component_read(component, AC97_GPIO_CFG);
-		snd_soc_component_write(component, AC97_GPIO_CFG, reg & ~0x0100);
-		reg = snd_soc_component_read(component, AC97_GPIO_PULL);
-		snd_soc_component_write(component, AC97_GPIO_PULL, reg & ~(1<<15));
-	}
+	अगर (घातer) अणु
+		reg = snd_soc_component_पढ़ो(component, AC97_GPIO_CFG);
+		snd_soc_component_ग_लिखो(component, AC97_GPIO_CFG, reg | 0x0100);
+		reg = snd_soc_component_पढ़ो(component, AC97_GPIO_PULL);
+		snd_soc_component_ग_लिखो(component, AC97_GPIO_PULL, reg | (1<<15));
+	पूर्ण अन्यथा अणु
+		reg = snd_soc_component_पढ़ो(component, AC97_GPIO_CFG);
+		snd_soc_component_ग_लिखो(component, AC97_GPIO_CFG, reg & ~0x0100);
+		reg = snd_soc_component_पढ़ो(component, AC97_GPIO_PULL);
+		snd_soc_component_ग_लिखो(component, AC97_GPIO_PULL, reg & ~(1<<15));
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int rear_amp_event(struct snd_soc_dapm_widget *widget,
-			  struct snd_kcontrol *kctl, int event)
-{
-	struct snd_soc_card *card = widget->dapm->card;
-	struct snd_soc_pcm_runtime *rtd;
-	struct snd_soc_component *component;
+अटल पूर्णांक rear_amp_event(काष्ठा snd_soc_dapm_widget *widget,
+			  काष्ठा snd_kcontrol *kctl, पूर्णांक event)
+अणु
+	काष्ठा snd_soc_card *card = widget->dapm->card;
+	काष्ठा snd_soc_pcm_runसमय *rtd;
+	काष्ठा snd_soc_component *component;
 
-	rtd = snd_soc_get_pcm_runtime(card, &card->dai_link[0]);
+	rtd = snd_soc_get_pcm_runसमय(card, &card->dai_link[0]);
 	component = asoc_rtd_to_codec(rtd, 0)->component;
-	return rear_amp_power(component, SND_SOC_DAPM_EVENT_ON(event));
-}
+	वापस rear_amp_घातer(component, SND_SOC_DAPM_EVENT_ON(event));
+पूर्ण
 
-/* mioa701 machine dapm widgets */
-static const struct snd_soc_dapm_widget mioa701_dapm_widgets[] = {
-	SND_SOC_DAPM_SPK("Front Speaker", NULL),
+/* mioa701 machine dapm widमाला_लो */
+अटल स्थिर काष्ठा snd_soc_dapm_widget mioa701_dapm_widमाला_लो[] = अणु
+	SND_SOC_DAPM_SPK("Front Speaker", शून्य),
 	SND_SOC_DAPM_SPK("Rear Speaker", rear_amp_event),
-	SND_SOC_DAPM_MIC("Headset", NULL),
-	SND_SOC_DAPM_LINE("GSM Line Out", NULL),
-	SND_SOC_DAPM_LINE("GSM Line In", NULL),
-	SND_SOC_DAPM_MIC("Headset Mic", NULL),
-	SND_SOC_DAPM_MIC("Front Mic", NULL),
-};
+	SND_SOC_DAPM_MIC("Headset", शून्य),
+	SND_SOC_DAPM_LINE("GSM Line Out", शून्य),
+	SND_SOC_DAPM_LINE("GSM Line In", शून्य),
+	SND_SOC_DAPM_MIC("Headset Mic", शून्य),
+	SND_SOC_DAPM_MIC("Front Mic", शून्य),
+पूर्ण;
 
-static const struct snd_soc_dapm_route audio_map[] = {
+अटल स्थिर काष्ठा snd_soc_dapm_route audio_map[] = अणु
 	/* Call Mic */
-	{"Mic Bias", NULL, "Front Mic"},
-	{"MIC1", NULL, "Mic Bias"},
+	अणु"Mic Bias", शून्य, "Front Mic"पूर्ण,
+	अणु"MIC1", शून्य, "Mic Bias"पूर्ण,
 
 	/* Headset Mic */
-	{"LINEL", NULL, "Headset Mic"},
-	{"LINER", NULL, "Headset Mic"},
+	अणु"LINEL", शून्य, "Headset Mic"पूर्ण,
+	अणु"LINER", शून्य, "Headset Mic"पूर्ण,
 
 	/* GSM Module */
-	{"MONOIN", NULL, "GSM Line Out"},
-	{"PCBEEP", NULL, "GSM Line Out"},
-	{"GSM Line In", NULL, "MONO"},
+	अणु"MONOIN", शून्य, "GSM Line Out"पूर्ण,
+	अणु"PCBEEP", शून्य, "GSM Line Out"पूर्ण,
+	अणु"GSM Line In", शून्य, "MONO"पूर्ण,
 
 	/* headphone connected to HPL, HPR */
-	{"Headset", NULL, "HPL"},
-	{"Headset", NULL, "HPR"},
+	अणु"Headset", शून्य, "HPL"पूर्ण,
+	अणु"Headset", शून्य, "HPR"पूर्ण,
 
 	/* front speaker connected to HPL, OUT3 */
-	{"Front Speaker", NULL, "HPL"},
-	{"Front Speaker", NULL, "OUT3"},
+	अणु"Front Speaker", शून्य, "HPL"पूर्ण,
+	अणु"Front Speaker", शून्य, "OUT3"पूर्ण,
 
 	/* rear speaker connected to SPKL, SPKR */
-	{"Rear Speaker", NULL, "SPKL"},
-	{"Rear Speaker", NULL, "SPKR"},
-};
+	अणु"Rear Speaker", शून्य, "SPKL"पूर्ण,
+	अणु"Rear Speaker", शून्य, "SPKR"पूर्ण,
+पूर्ण;
 
-static int mioa701_wm9713_init(struct snd_soc_pcm_runtime *rtd)
-{
-	struct snd_soc_component *component = asoc_rtd_to_codec(rtd, 0)->component;
+अटल पूर्णांक mioa701_wm9713_init(काष्ठा snd_soc_pcm_runसमय *rtd)
+अणु
+	काष्ठा snd_soc_component *component = asoc_rtd_to_codec(rtd, 0)->component;
 
-	/* Prepare GPIO8 for rear speaker amplifier */
+	/* Prepare GPIO8 क्रम rear speaker amplअगरier */
 	snd_soc_component_update_bits(component, AC97_GPIO_CFG, 0x100, 0x100);
 
 	/* Prepare MIC input */
 	snd_soc_component_update_bits(component, AC97_3D_CONTROL, 0xc000, 0xc000);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct snd_soc_ops mioa701_ops;
+अटल काष्ठा snd_soc_ops mioa701_ops;
 
 SND_SOC_DAILINK_DEFS(ac97,
 	DAILINK_COMP_ARRAY(COMP_CPU("pxa2xx-ac97")),
@@ -140,61 +141,61 @@ SND_SOC_DAILINK_DEFS(ac97_aux,
 	DAILINK_COMP_ARRAY(COMP_CODEC("wm9713-codec", "wm9713-aux")),
 	DAILINK_COMP_ARRAY(COMP_PLATFORM("pxa-pcm-audio")));
 
-static struct snd_soc_dai_link mioa701_dai[] = {
-	{
+अटल काष्ठा snd_soc_dai_link mioa701_dai[] = अणु
+	अणु
 		.name = "AC97",
 		.stream_name = "AC97 HiFi",
 		.init = mioa701_wm9713_init,
 		.ops = &mioa701_ops,
 		SND_SOC_DAILINK_REG(ac97),
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "AC97 Aux",
 		.stream_name = "AC97 Aux",
 		.ops = &mioa701_ops,
 		SND_SOC_DAILINK_REG(ac97_aux),
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static struct snd_soc_card mioa701 = {
+अटल काष्ठा snd_soc_card mioa701 = अणु
 	.name = "MioA701",
 	.owner = THIS_MODULE,
 	.dai_link = mioa701_dai,
 	.num_links = ARRAY_SIZE(mioa701_dai),
 
-	.dapm_widgets = mioa701_dapm_widgets,
-	.num_dapm_widgets = ARRAY_SIZE(mioa701_dapm_widgets),
+	.dapm_widमाला_लो = mioa701_dapm_widमाला_लो,
+	.num_dapm_widमाला_लो = ARRAY_SIZE(mioa701_dapm_widमाला_लो),
 	.dapm_routes = audio_map,
 	.num_dapm_routes = ARRAY_SIZE(audio_map),
-};
+पूर्ण;
 
-static int mioa701_wm9713_probe(struct platform_device *pdev)
-{
-	int rc;
+अटल पूर्णांक mioa701_wm9713_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	पूर्णांक rc;
 
-	if (!machine_is_mioa701())
-		return -ENODEV;
+	अगर (!machine_is_mioa701())
+		वापस -ENODEV;
 
 	mioa701.dev = &pdev->dev;
-	rc = devm_snd_soc_register_card(&pdev->dev, &mioa701);
-	if (!rc)
+	rc = devm_snd_soc_रेजिस्टर_card(&pdev->dev, &mioa701);
+	अगर (!rc)
 		dev_warn(&pdev->dev, "Be warned that incorrect mixers/muxes setup will "
 			 "lead to overheating and possible destruction of your device."
 			 " Do not use without a good knowledge of mio's board design!\n");
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static struct platform_driver mioa701_wm9713_driver = {
+अटल काष्ठा platक्रमm_driver mioa701_wm9713_driver = अणु
 	.probe		= mioa701_wm9713_probe,
-	.driver		= {
+	.driver		= अणु
 		.name		= "mioa701-wm9713",
 		.pm     = &snd_soc_pm_ops,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-module_platform_driver(mioa701_wm9713_driver);
+module_platक्रमm_driver(mioa701_wm9713_driver);
 
-/* Module information */
+/* Module inक्रमmation */
 MODULE_AUTHOR("Robert Jarzmik (rjarzmik@free.fr)");
 MODULE_DESCRIPTION("ALSA SoC WM9713 MIO A701");
 MODULE_LICENSE("GPL");

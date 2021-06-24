@@ -1,60 +1,61 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  */
 
-#include <linux/init.h>
-#include <linux/usb.h>
+#समावेश <linux/init.h>
+#समावेश <linux/usb.h>
 
-#include <sound/core.h>
-#include <sound/info.h>
-#include <sound/pcm.h>
+#समावेश <sound/core.h>
+#समावेश <sound/info.h>
+#समावेश <sound/pcm.h>
 
-#include "usbaudio.h"
-#include "helper.h"
-#include "card.h"
-#include "endpoint.h"
-#include "proc.h"
+#समावेश "usbaudio.h"
+#समावेश "helper.h"
+#समावेश "card.h"
+#समावेश "endpoint.h"
+#समावेश "proc.h"
 
-/* convert our full speed USB rate into sampling rate in Hz */
-static inline unsigned get_full_speed_hz(unsigned int usb_rate)
-{
-	return (usb_rate * 125 + (1 << 12)) >> 13;
-}
+/* convert our full speed USB rate पूर्णांकo sampling rate in Hz */
+अटल अंतरभूत अचिन्हित get_full_speed_hz(अचिन्हित पूर्णांक usb_rate)
+अणु
+	वापस (usb_rate * 125 + (1 << 12)) >> 13;
+पूर्ण
 
-/* convert our high speed USB rate into sampling rate in Hz */
-static inline unsigned get_high_speed_hz(unsigned int usb_rate)
-{
-	return (usb_rate * 125 + (1 << 9)) >> 10;
-}
+/* convert our high speed USB rate पूर्णांकo sampling rate in Hz */
+अटल अंतरभूत अचिन्हित get_high_speed_hz(अचिन्हित पूर्णांक usb_rate)
+अणु
+	वापस (usb_rate * 125 + (1 << 9)) >> 10;
+पूर्ण
 
 /*
  * common proc files to show the usb device info
  */
-static void proc_audio_usbbus_read(struct snd_info_entry *entry, struct snd_info_buffer *buffer)
-{
-	struct snd_usb_audio *chip = entry->private_data;
-	if (!atomic_read(&chip->shutdown))
-		snd_iprintf(buffer, "%03d/%03d\n", chip->dev->bus->busnum, chip->dev->devnum);
-}
+अटल व्योम proc_audio_usbbus_पढ़ो(काष्ठा snd_info_entry *entry, काष्ठा snd_info_buffer *buffer)
+अणु
+	काष्ठा snd_usb_audio *chip = entry->निजी_data;
+	अगर (!atomic_पढ़ो(&chip->shutकरोwn))
+		snd_iम_लिखो(buffer, "%03d/%03d\n", chip->dev->bus->busnum, chip->dev->devnum);
+पूर्ण
 
-static void proc_audio_usbid_read(struct snd_info_entry *entry, struct snd_info_buffer *buffer)
-{
-	struct snd_usb_audio *chip = entry->private_data;
-	if (!atomic_read(&chip->shutdown))
-		snd_iprintf(buffer, "%04x:%04x\n", 
+अटल व्योम proc_audio_usbid_पढ़ो(काष्ठा snd_info_entry *entry, काष्ठा snd_info_buffer *buffer)
+अणु
+	काष्ठा snd_usb_audio *chip = entry->निजी_data;
+	अगर (!atomic_पढ़ो(&chip->shutकरोwn))
+		snd_iम_लिखो(buffer, "%04x:%04x\n", 
 			    USB_ID_VENDOR(chip->usb_id),
 			    USB_ID_PRODUCT(chip->usb_id));
-}
+पूर्ण
 
-void snd_usb_audio_create_proc(struct snd_usb_audio *chip)
-{
+व्योम snd_usb_audio_create_proc(काष्ठा snd_usb_audio *chip)
+अणु
 	snd_card_ro_proc_new(chip->card, "usbbus", chip,
-			     proc_audio_usbbus_read);
+			     proc_audio_usbbus_पढ़ो);
 	snd_card_ro_proc_new(chip->card, "usbid", chip,
-			     proc_audio_usbid_read);
-}
+			     proc_audio_usbid_पढ़ो);
+पूर्ण
 
-static const char * const channel_labels[] = {
+अटल स्थिर अक्षर * स्थिर channel_labels[] = अणु
 	[SNDRV_CHMAP_NA]	= "N/A",
 	[SNDRV_CHMAP_MONO]	= "MONO",
 	[SNDRV_CHMAP_FL]	= "FL",
@@ -84,154 +85,154 @@ static const char * const channel_labels[] = {
 	[SNDRV_CHMAP_BC]	= "BC",
 	[SNDRV_CHMAP_RLC]	= "RLC",
 	[SNDRV_CHMAP_RRC]	= "RRC",
-};
+पूर्ण;
 
 /*
- * proc interface for list the supported pcm formats
+ * proc पूर्णांकerface क्रम list the supported pcm क्रमmats
  */
-static void proc_dump_substream_formats(struct snd_usb_substream *subs, struct snd_info_buffer *buffer)
-{
-	struct audioformat *fp;
-	static const char * const sync_types[4] = {
+अटल व्योम proc_dump_substream_क्रमmats(काष्ठा snd_usb_substream *subs, काष्ठा snd_info_buffer *buffer)
+अणु
+	काष्ठा audioक्रमmat *fp;
+	अटल स्थिर अक्षर * स्थिर sync_types[4] = अणु
 		"NONE", "ASYNC", "ADAPTIVE", "SYNC"
-	};
+	पूर्ण;
 
-	list_for_each_entry(fp, &subs->fmt_list, list) {
-		snd_pcm_format_t fmt;
+	list_क्रम_each_entry(fp, &subs->fmt_list, list) अणु
+		snd_pcm_क्रमmat_t fmt;
 
-		snd_iprintf(buffer, "  Interface %d\n", fp->iface);
-		snd_iprintf(buffer, "    Altset %d\n", fp->altsetting);
-		snd_iprintf(buffer, "    Format:");
-		pcm_for_each_format(fmt)
-			if (fp->formats & pcm_format_to_bits(fmt))
-				snd_iprintf(buffer, " %s",
-					    snd_pcm_format_name(fmt));
-		snd_iprintf(buffer, "\n");
-		snd_iprintf(buffer, "    Channels: %d\n", fp->channels);
-		snd_iprintf(buffer, "    Endpoint: 0x%02x (%d %s) (%s)\n",
-			    fp->endpoint,
-			    fp->endpoint & USB_ENDPOINT_NUMBER_MASK,
-			    fp->endpoint & USB_DIR_IN ? "IN" : "OUT",
+		snd_iम_लिखो(buffer, "  Interface %d\n", fp->अगरace);
+		snd_iम_लिखो(buffer, "    Altset %d\n", fp->altsetting);
+		snd_iम_लिखो(buffer, "    Format:");
+		pcm_क्रम_each_क्रमmat(fmt)
+			अगर (fp->क्रमmats & pcm_क्रमmat_to_bits(fmt))
+				snd_iम_लिखो(buffer, " %s",
+					    snd_pcm_क्रमmat_name(fmt));
+		snd_iम_लिखो(buffer, "\n");
+		snd_iम_लिखो(buffer, "    Channels: %d\n", fp->channels);
+		snd_iम_लिखो(buffer, "    Endpoint: 0x%02x (%d %s) (%s)\n",
+			    fp->endpoपूर्णांक,
+			    fp->endpoपूर्णांक & USB_ENDPOINT_NUMBER_MASK,
+			    fp->endpoपूर्णांक & USB_सूची_IN ? "IN" : "OUT",
 			    sync_types[(fp->ep_attr & USB_ENDPOINT_SYNCTYPE) >> 2]);
-		if (fp->rates & SNDRV_PCM_RATE_CONTINUOUS) {
-			snd_iprintf(buffer, "    Rates: %d - %d (continuous)\n",
+		अगर (fp->rates & SNDRV_PCM_RATE_CONTINUOUS) अणु
+			snd_iम_लिखो(buffer, "    Rates: %d - %d (continuous)\n",
 				    fp->rate_min, fp->rate_max);
-		} else {
-			unsigned int i;
-			snd_iprintf(buffer, "    Rates: ");
-			for (i = 0; i < fp->nr_rates; i++) {
-				if (i > 0)
-					snd_iprintf(buffer, ", ");
-				snd_iprintf(buffer, "%d", fp->rate_table[i]);
-			}
-			snd_iprintf(buffer, "\n");
-		}
-		if (subs->speed != USB_SPEED_FULL)
-			snd_iprintf(buffer, "    Data packet interval: %d us\n",
-				    125 * (1 << fp->datainterval));
-		snd_iprintf(buffer, "    Bits: %d\n", fp->fmt_bits);
+		पूर्ण अन्यथा अणु
+			अचिन्हित पूर्णांक i;
+			snd_iम_लिखो(buffer, "    Rates: ");
+			क्रम (i = 0; i < fp->nr_rates; i++) अणु
+				अगर (i > 0)
+					snd_iम_लिखो(buffer, ", ");
+				snd_iम_लिखो(buffer, "%d", fp->rate_table[i]);
+			पूर्ण
+			snd_iम_लिखो(buffer, "\n");
+		पूर्ण
+		अगर (subs->speed != USB_SPEED_FULL)
+			snd_iम_लिखो(buffer, "    Data packet interval: %d us\n",
+				    125 * (1 << fp->dataपूर्णांकerval));
+		snd_iम_लिखो(buffer, "    Bits: %d\n", fp->fmt_bits);
 
-		if (fp->dsd_raw)
-			snd_iprintf(buffer, "    DSD raw: DOP=%d, bitrev=%d\n",
-				    fp->dsd_dop, fp->dsd_bitrev);
+		अगर (fp->dsd_raw)
+			snd_iम_लिखो(buffer, "    DSD raw: DOP=%d, bitrev=%d\n",
+				    fp->dsd_करोp, fp->dsd_bitrev);
 
-		if (fp->chmap) {
-			const struct snd_pcm_chmap_elem *map = fp->chmap;
-			int c;
+		अगर (fp->chmap) अणु
+			स्थिर काष्ठा snd_pcm_chmap_elem *map = fp->chmap;
+			पूर्णांक c;
 
-			snd_iprintf(buffer, "    Channel map:");
-			for (c = 0; c < map->channels; c++) {
-				if (map->map[c] >= ARRAY_SIZE(channel_labels) ||
+			snd_iम_लिखो(buffer, "    Channel map:");
+			क्रम (c = 0; c < map->channels; c++) अणु
+				अगर (map->map[c] >= ARRAY_SIZE(channel_labels) ||
 				    !channel_labels[map->map[c]])
-					snd_iprintf(buffer, " --");
-				else
-					snd_iprintf(buffer, " %s",
+					snd_iम_लिखो(buffer, " --");
+				अन्यथा
+					snd_iम_लिखो(buffer, " %s",
 						    channel_labels[map->map[c]]);
-			}
-			snd_iprintf(buffer, "\n");
-		}
+			पूर्ण
+			snd_iम_लिखो(buffer, "\n");
+		पूर्ण
 
-		if (fp->sync_ep) {
-			snd_iprintf(buffer, "    Sync Endpoint: 0x%02x (%d %s)\n",
+		अगर (fp->sync_ep) अणु
+			snd_iम_लिखो(buffer, "    Sync Endpoint: 0x%02x (%d %s)\n",
 				    fp->sync_ep,
 				    fp->sync_ep & USB_ENDPOINT_NUMBER_MASK,
-				    fp->sync_ep & USB_DIR_IN ? "IN" : "OUT");
-			snd_iprintf(buffer, "    Sync EP Interface: %d\n",
-				    fp->sync_iface);
-			snd_iprintf(buffer, "    Sync EP Altset: %d\n",
+				    fp->sync_ep & USB_सूची_IN ? "IN" : "OUT");
+			snd_iम_लिखो(buffer, "    Sync EP Interface: %d\n",
+				    fp->sync_अगरace);
+			snd_iम_लिखो(buffer, "    Sync EP Altset: %d\n",
 				    fp->sync_altsetting);
-			snd_iprintf(buffer, "    Implicit Feedback Mode: %s\n",
+			snd_iम_लिखो(buffer, "    Implicit Feedback Mode: %s\n",
 				    fp->implicit_fb ? "Yes" : "No");
-		}
+		पूर्ण
 
-		// snd_iprintf(buffer, "    Max Packet Size = %d\n", fp->maxpacksize);
-		// snd_iprintf(buffer, "    EP Attribute = %#x\n", fp->attributes);
-	}
-}
+		// snd_iम_लिखो(buffer, "    Max Packet Size = %d\n", fp->maxpacksize);
+		// snd_iम_लिखो(buffer, "    EP Attribute = %#x\n", fp->attributes);
+	पूर्ण
+पूर्ण
 
-static void proc_dump_ep_status(struct snd_usb_substream *subs,
-				struct snd_usb_endpoint *data_ep,
-				struct snd_usb_endpoint *sync_ep,
-				struct snd_info_buffer *buffer)
-{
-	if (!data_ep)
-		return;
-	snd_iprintf(buffer, "    Packet Size = %d\n", data_ep->curpacksize);
-	snd_iprintf(buffer, "    Momentary freq = %u Hz (%#x.%04x)\n",
+अटल व्योम proc_dump_ep_status(काष्ठा snd_usb_substream *subs,
+				काष्ठा snd_usb_endpoपूर्णांक *data_ep,
+				काष्ठा snd_usb_endpoपूर्णांक *sync_ep,
+				काष्ठा snd_info_buffer *buffer)
+अणु
+	अगर (!data_ep)
+		वापस;
+	snd_iम_लिखो(buffer, "    Packet Size = %d\n", data_ep->curpacksize);
+	snd_iम_लिखो(buffer, "    Momentary freq = %u Hz (%#x.%04x)\n",
 		    subs->speed == USB_SPEED_FULL
 		    ? get_full_speed_hz(data_ep->freqm)
 		    : get_high_speed_hz(data_ep->freqm),
 		    data_ep->freqm >> 16, data_ep->freqm & 0xffff);
-	if (sync_ep && data_ep->freqshift != INT_MIN) {
-		int res = 16 - data_ep->freqshift;
-		snd_iprintf(buffer, "    Feedback Format = %d.%d\n",
+	अगर (sync_ep && data_ep->freqshअगरt != पूर्णांक_न्यून) अणु
+		पूर्णांक res = 16 - data_ep->freqshअगरt;
+		snd_iम_लिखो(buffer, "    Feedback Format = %d.%d\n",
 			    (sync_ep->syncmaxsize > 3 ? 32 : 24) - res, res);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void proc_dump_substream_status(struct snd_usb_audio *chip,
-				       struct snd_usb_substream *subs,
-				       struct snd_info_buffer *buffer)
-{
+अटल व्योम proc_dump_substream_status(काष्ठा snd_usb_audio *chip,
+				       काष्ठा snd_usb_substream *subs,
+				       काष्ठा snd_info_buffer *buffer)
+अणु
 	mutex_lock(&chip->mutex);
-	if (subs->running) {
-		snd_iprintf(buffer, "  Status: Running\n");
-		if (subs->cur_audiofmt) {
-			snd_iprintf(buffer, "    Interface = %d\n", subs->cur_audiofmt->iface);
-			snd_iprintf(buffer, "    Altset = %d\n", subs->cur_audiofmt->altsetting);
-		}
-		proc_dump_ep_status(subs, subs->data_endpoint, subs->sync_endpoint, buffer);
-	} else {
-		snd_iprintf(buffer, "  Status: Stop\n");
-	}
+	अगर (subs->running) अणु
+		snd_iम_लिखो(buffer, "  Status: Running\n");
+		अगर (subs->cur_audiofmt) अणु
+			snd_iम_लिखो(buffer, "    Interface = %d\n", subs->cur_audiofmt->अगरace);
+			snd_iम_लिखो(buffer, "    Altset = %d\n", subs->cur_audiofmt->altsetting);
+		पूर्ण
+		proc_dump_ep_status(subs, subs->data_endpoपूर्णांक, subs->sync_endpoपूर्णांक, buffer);
+	पूर्ण अन्यथा अणु
+		snd_iम_लिखो(buffer, "  Status: Stop\n");
+	पूर्ण
 	mutex_unlock(&chip->mutex);
-}
+पूर्ण
 
-static void proc_pcm_format_read(struct snd_info_entry *entry, struct snd_info_buffer *buffer)
-{
-	struct snd_usb_stream *stream = entry->private_data;
-	struct snd_usb_audio *chip = stream->chip;
+अटल व्योम proc_pcm_क्रमmat_पढ़ो(काष्ठा snd_info_entry *entry, काष्ठा snd_info_buffer *buffer)
+अणु
+	काष्ठा snd_usb_stream *stream = entry->निजी_data;
+	काष्ठा snd_usb_audio *chip = stream->chip;
 
-	snd_iprintf(buffer, "%s : %s\n", chip->card->longname, stream->pcm->name);
+	snd_iम_लिखो(buffer, "%s : %s\n", chip->card->दीर्घname, stream->pcm->name);
 
-	if (stream->substream[SNDRV_PCM_STREAM_PLAYBACK].num_formats) {
-		snd_iprintf(buffer, "\nPlayback:\n");
+	अगर (stream->substream[SNDRV_PCM_STREAM_PLAYBACK].num_क्रमmats) अणु
+		snd_iम_लिखो(buffer, "\nPlayback:\n");
 		proc_dump_substream_status(chip, &stream->substream[SNDRV_PCM_STREAM_PLAYBACK], buffer);
-		proc_dump_substream_formats(&stream->substream[SNDRV_PCM_STREAM_PLAYBACK], buffer);
-	}
-	if (stream->substream[SNDRV_PCM_STREAM_CAPTURE].num_formats) {
-		snd_iprintf(buffer, "\nCapture:\n");
+		proc_dump_substream_क्रमmats(&stream->substream[SNDRV_PCM_STREAM_PLAYBACK], buffer);
+	पूर्ण
+	अगर (stream->substream[SNDRV_PCM_STREAM_CAPTURE].num_क्रमmats) अणु
+		snd_iम_लिखो(buffer, "\nCapture:\n");
 		proc_dump_substream_status(chip, &stream->substream[SNDRV_PCM_STREAM_CAPTURE], buffer);
-		proc_dump_substream_formats(&stream->substream[SNDRV_PCM_STREAM_CAPTURE], buffer);
-	}
-}
+		proc_dump_substream_क्रमmats(&stream->substream[SNDRV_PCM_STREAM_CAPTURE], buffer);
+	पूर्ण
+पूर्ण
 
-void snd_usb_proc_pcm_format_add(struct snd_usb_stream *stream)
-{
-	char name[32];
-	struct snd_card *card = stream->chip->card;
+व्योम snd_usb_proc_pcm_क्रमmat_add(काष्ठा snd_usb_stream *stream)
+अणु
+	अक्षर name[32];
+	काष्ठा snd_card *card = stream->chip->card;
 
-	sprintf(name, "stream%d", stream->pcm_index);
-	snd_card_ro_proc_new(card, name, stream, proc_pcm_format_read);
-}
+	प्र_लिखो(name, "stream%d", stream->pcm_index);
+	snd_card_ro_proc_new(card, name, stream, proc_pcm_क्रमmat_पढ़ो);
+पूर्ण
 

@@ -1,63 +1,64 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * fireworks_command.c - a part of driver for Fireworks based devices
+ * fireworks_command.c - a part of driver क्रम Fireworks based devices
  *
  * Copyright (c) 2013-2014 Takashi Sakamoto
  */
 
-#include "./fireworks.h"
+#समावेश "./fireworks.h"
 
 /*
  * This driver uses transaction version 1 or later to use extended hardware
- * information. Then too old devices are not available.
+ * inक्रमmation. Then too old devices are not available.
  *
  * Each commands are not required to have continuous sequence numbers. This
  * number is just used to match command and response.
  *
- * This module support a part of commands. Please see FFADO if you want to see
- * whole commands. But there are some commands which FFADO don't implement.
+ * This module support a part of commands. Please see FFADO अगर you want to see
+ * whole commands. But there are some commands which FFADO करोn't implement.
  *
  * Fireworks also supports AV/C general commands and AV/C Stream Format
- * Information commands. But this module don't use them.
+ * Inक्रमmation commands. But this module करोn't use them.
  */
 
-#define KERNEL_SEQNUM_MIN	(SND_EFW_TRANSACTION_USER_SEQNUM_MAX + 2)
-#define KERNEL_SEQNUM_MAX	((u32)~0)
+#घोषणा KERNEL_SEQNUM_MIN	(SND_EFW_TRANSACTION_USER_SEQNUM_MAX + 2)
+#घोषणा KERNEL_SEQNUM_MAX	((u32)~0)
 
-/* for clock source and sampling rate */
-struct efc_clock {
+/* क्रम घड़ी source and sampling rate */
+काष्ठा efc_घड़ी अणु
 	u32 source;
 	u32 sampling_rate;
 	u32 index;
-};
+पूर्ण;
 
 /* command categories */
-enum efc_category {
+क्रमागत efc_category अणु
 	EFC_CAT_HWINFO		= 0,
 	EFC_CAT_TRANSPORT	= 2,
 	EFC_CAT_HWCTL		= 3,
-};
+पूर्ण;
 
 /* hardware info category commands */
-enum efc_cmd_hwinfo {
+क्रमागत efc_cmd_hwinfo अणु
 	EFC_CMD_HWINFO_GET_CAPS		= 0,
 	EFC_CMD_HWINFO_GET_POLLED	= 1,
 	EFC_CMD_HWINFO_SET_RESP_ADDR	= 2
-};
+पूर्ण;
 
-enum efc_cmd_transport {
+क्रमागत efc_cmd_transport अणु
 	EFC_CMD_TRANSPORT_SET_TX_MODE	= 0
-};
+पूर्ण;
 
 /* hardware control category commands */
-enum efc_cmd_hwctl {
+क्रमागत efc_cmd_hwctl अणु
 	EFC_CMD_HWCTL_SET_CLOCK		= 0,
 	EFC_CMD_HWCTL_GET_CLOCK		= 1,
 	EFC_CMD_HWCTL_IDENTIFY		= 5
-};
+पूर्ण;
 
-/* return values in response */
-enum efr_status {
+/* वापस values in response */
+क्रमागत efr_status अणु
 	EFR_STATUS_OK			= 0,
 	EFR_STATUS_BAD			= 1,
 	EFR_STATUS_BAD_COMMAND		= 2,
@@ -75,9 +76,9 @@ enum efr_status {
 	EFR_STATUS_BAD_LED		= 14,
 	EFR_STATUS_BAD_PARAMETER	= 15,
 	EFR_STATUS_INCOMPLETE		= 0x80000000
-};
+पूर्ण;
 
-static const char *const efr_status_names[] = {
+अटल स्थिर अक्षर *स्थिर efr_status_names[] = अणु
 	[EFR_STATUS_OK]			= "OK",
 	[EFR_STATUS_BAD]		= "bad",
 	[EFR_STATUS_BAD_COMMAND]	= "bad command",
@@ -95,43 +96,43 @@ static const char *const efr_status_names[] = {
 	[EFR_STATUS_BAD_LED]		= "bad LED",
 	[EFR_STATUS_BAD_PARAMETER]	= "bad parameter",
 	[EFR_STATUS_BAD_PARAMETER + 1]	= "incomplete"
-};
+पूर्ण;
 
-static int
-efw_transaction(struct snd_efw *efw, unsigned int category,
-		unsigned int command,
-		const __be32 *params, unsigned int param_bytes,
-		const __be32 *resp, unsigned int resp_bytes)
-{
-	struct snd_efw_transaction *header;
+अटल पूर्णांक
+efw_transaction(काष्ठा snd_efw *efw, अचिन्हित पूर्णांक category,
+		अचिन्हित पूर्णांक command,
+		स्थिर __be32 *params, अचिन्हित पूर्णांक param_bytes,
+		स्थिर __be32 *resp, अचिन्हित पूर्णांक resp_bytes)
+अणु
+	काष्ठा snd_efw_transaction *header;
 	__be32 *buf;
 	u32 seqnum;
-	unsigned int buf_bytes, cmd_bytes;
-	int err;
+	अचिन्हित पूर्णांक buf_bytes, cmd_bytes;
+	पूर्णांक err;
 
 	/* calculate buffer size*/
-	buf_bytes = sizeof(struct snd_efw_transaction) +
+	buf_bytes = माप(काष्ठा snd_efw_transaction) +
 		    max(param_bytes, resp_bytes);
 
 	/* keep buffer */
 	buf = kzalloc(buf_bytes, GFP_KERNEL);
-	if (buf == NULL)
-		return -ENOMEM;
+	अगर (buf == शून्य)
+		वापस -ENOMEM;
 
 	/* to keep consistency of sequence number */
 	spin_lock(&efw->lock);
-	if ((efw->seqnum < KERNEL_SEQNUM_MIN) ||
+	अगर ((efw->seqnum < KERNEL_SEQNUM_MIN) ||
 	    (efw->seqnum >= KERNEL_SEQNUM_MAX - 2))
 		efw->seqnum = KERNEL_SEQNUM_MIN;
-	else
+	अन्यथा
 		efw->seqnum += 2;
 	seqnum = efw->seqnum;
 	spin_unlock(&efw->lock);
 
 	/* fill transaction header fields */
-	cmd_bytes = sizeof(struct snd_efw_transaction) + param_bytes;
-	header = (struct snd_efw_transaction *)buf;
-	header->length	 = cpu_to_be32(cmd_bytes / sizeof(__be32));
+	cmd_bytes = माप(काष्ठा snd_efw_transaction) + param_bytes;
+	header = (काष्ठा snd_efw_transaction *)buf;
+	header->length	 = cpu_to_be32(cmd_bytes / माप(__be32));
 	header->version	 = cpu_to_be32(1);
 	header->seqnum	 = cpu_to_be32(seqnum);
 	header->category = cpu_to_be32(category);
@@ -139,92 +140,92 @@ efw_transaction(struct snd_efw *efw, unsigned int category,
 	header->status	 = 0;
 
 	/* fill transaction command parameters */
-	memcpy(header->params, params, param_bytes);
+	स_नकल(header->params, params, param_bytes);
 
 	err = snd_efw_transaction_run(efw->unit, buf, cmd_bytes,
 				      buf, buf_bytes);
-	if (err < 0)
-		goto end;
+	अगर (err < 0)
+		जाओ end;
 
 	/* check transaction header fields */
-	if ((be32_to_cpu(header->version) < 1) ||
+	अगर ((be32_to_cpu(header->version) < 1) ||
 	    (be32_to_cpu(header->category) != category) ||
 	    (be32_to_cpu(header->command) != command) ||
-	    (be32_to_cpu(header->status) != EFR_STATUS_OK)) {
+	    (be32_to_cpu(header->status) != EFR_STATUS_OK)) अणु
 		dev_err(&efw->unit->device, "EFW command failed [%u/%u]: %s\n",
 			be32_to_cpu(header->category),
 			be32_to_cpu(header->command),
 			efr_status_names[be32_to_cpu(header->status)]);
 		err = -EIO;
-		goto end;
-	}
+		जाओ end;
+	पूर्ण
 
-	if (resp == NULL)
-		goto end;
+	अगर (resp == शून्य)
+		जाओ end;
 
 	/* fill transaction response parameters */
-	memset((void *)resp, 0, resp_bytes);
-	resp_bytes = min_t(unsigned int, resp_bytes,
-			   be32_to_cpu(header->length) * sizeof(__be32) -
-				sizeof(struct snd_efw_transaction));
-	memcpy((void *)resp, &buf[6], resp_bytes);
+	स_रखो((व्योम *)resp, 0, resp_bytes);
+	resp_bytes = min_t(अचिन्हित पूर्णांक, resp_bytes,
+			   be32_to_cpu(header->length) * माप(__be32) -
+				माप(काष्ठा snd_efw_transaction));
+	स_नकल((व्योम *)resp, &buf[6], resp_bytes);
 end:
-	kfree(buf);
-	return err;
-}
+	kमुक्त(buf);
+	वापस err;
+पूर्ण
 
 /*
- * The address in host system for transaction response is changable when the
- * device supports. struct hwinfo.flags includes its flag. The default is
+ * The address in host प्रणाली क्रम transaction response is changable when the
+ * device supports. काष्ठा hwinfo.flags includes its flag. The शेष is
  * MEMORY_SPACE_EFW_RESPONSE.
  */
-int snd_efw_command_set_resp_addr(struct snd_efw *efw,
+पूर्णांक snd_efw_command_set_resp_addr(काष्ठा snd_efw *efw,
 				  u16 addr_high, u32 addr_low)
-{
+अणु
 	__be32 addr[2];
 
 	addr[0] = cpu_to_be32(addr_high);
 	addr[1] = cpu_to_be32(addr_low);
 
-	if (!efw->resp_addr_changable)
-		return -ENOSYS;
+	अगर (!efw->resp_addr_changable)
+		वापस -ENOSYS;
 
-	return efw_transaction(efw, EFC_CAT_HWCTL,
+	वापस efw_transaction(efw, EFC_CAT_HWCTL,
 			       EFC_CMD_HWINFO_SET_RESP_ADDR,
-			       addr, sizeof(addr), NULL, 0);
-}
+			       addr, माप(addr), शून्य, 0);
+पूर्ण
 
 /*
- * This is for timestamp processing. In Windows mode, all 32bit fields of second
- * CIP header in AMDTP transmit packet is used for 'presentation timestamp'. In
+ * This is क्रम बारtamp processing. In Winकरोws mode, all 32bit fields of second
+ * CIP header in AMDTP transmit packet is used क्रम 'presentation timestamp'. In
  * 'no data' packet the value of this field is 0x90ffffff.
  */
-int snd_efw_command_set_tx_mode(struct snd_efw *efw,
-				enum snd_efw_transport_mode mode)
-{
+पूर्णांक snd_efw_command_set_tx_mode(काष्ठा snd_efw *efw,
+				क्रमागत snd_efw_transport_mode mode)
+अणु
 	__be32 param = cpu_to_be32(mode);
-	return efw_transaction(efw, EFC_CAT_TRANSPORT,
+	वापस efw_transaction(efw, EFC_CAT_TRANSPORT,
 			       EFC_CMD_TRANSPORT_SET_TX_MODE,
-			       &param, sizeof(param), NULL, 0);
-}
+			       &param, माप(param), शून्य, 0);
+पूर्ण
 
-int snd_efw_command_get_hwinfo(struct snd_efw *efw,
-			       struct snd_efw_hwinfo *hwinfo)
-{
-	int err;
+पूर्णांक snd_efw_command_get_hwinfo(काष्ठा snd_efw *efw,
+			       काष्ठा snd_efw_hwinfo *hwinfo)
+अणु
+	पूर्णांक err;
 
 	err  = efw_transaction(efw, EFC_CAT_HWINFO,
 			       EFC_CMD_HWINFO_GET_CAPS,
-			       NULL, 0, (__be32 *)hwinfo, sizeof(*hwinfo));
-	if (err < 0)
-		goto end;
+			       शून्य, 0, (__be32 *)hwinfo, माप(*hwinfo));
+	अगर (err < 0)
+		जाओ end;
 
 	be32_to_cpus(&hwinfo->flags);
 	be32_to_cpus(&hwinfo->guid_hi);
 	be32_to_cpus(&hwinfo->guid_lo);
 	be32_to_cpus(&hwinfo->type);
 	be32_to_cpus(&hwinfo->version);
-	be32_to_cpus(&hwinfo->supported_clocks);
+	be32_to_cpus(&hwinfo->supported_घड़ीs);
 	be32_to_cpus(&hwinfo->amdtp_rx_pcm_channels);
 	be32_to_cpus(&hwinfo->amdtp_tx_pcm_channels);
 	be32_to_cpus(&hwinfo->phys_out);
@@ -246,126 +247,126 @@ int snd_efw_command_get_hwinfo(struct snd_efw *efw,
 	be32_to_cpus(&hwinfo->amdtp_tx_pcm_channels_4x);
 
 	/* ensure terminated */
-	hwinfo->vendor_name[HWINFO_NAME_SIZE_BYTES - 1] = '\0';
+	hwinfo->venकरोr_name[HWINFO_NAME_SIZE_BYTES - 1] = '\0';
 	hwinfo->model_name[HWINFO_NAME_SIZE_BYTES  - 1] = '\0';
 end:
-	return err;
-}
+	वापस err;
+पूर्ण
 
-int snd_efw_command_get_phys_meters(struct snd_efw *efw,
-				    struct snd_efw_phys_meters *meters,
-				    unsigned int len)
-{
+पूर्णांक snd_efw_command_get_phys_meters(काष्ठा snd_efw *efw,
+				    काष्ठा snd_efw_phys_meters *meters,
+				    अचिन्हित पूर्णांक len)
+अणु
 	u32 *buf = (u32 *)meters;
-	unsigned int i;
-	int err;
+	अचिन्हित पूर्णांक i;
+	पूर्णांक err;
 
 	err = efw_transaction(efw, EFC_CAT_HWINFO,
 			      EFC_CMD_HWINFO_GET_POLLED,
-			      NULL, 0, (__be32 *)meters, len);
-	if (err >= 0)
-		for (i = 0; i < len / sizeof(u32); i++)
+			      शून्य, 0, (__be32 *)meters, len);
+	अगर (err >= 0)
+		क्रम (i = 0; i < len / माप(u32); i++)
 			be32_to_cpus(&buf[i]);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int
-command_get_clock(struct snd_efw *efw, struct efc_clock *clock)
-{
-	int err;
+अटल पूर्णांक
+command_get_घड़ी(काष्ठा snd_efw *efw, काष्ठा efc_घड़ी *घड़ी)
+अणु
+	पूर्णांक err;
 
 	err = efw_transaction(efw, EFC_CAT_HWCTL,
 			      EFC_CMD_HWCTL_GET_CLOCK,
-			      NULL, 0,
-			      (__be32 *)clock, sizeof(struct efc_clock));
-	if (err >= 0) {
-		be32_to_cpus(&clock->source);
-		be32_to_cpus(&clock->sampling_rate);
-		be32_to_cpus(&clock->index);
-	}
+			      शून्य, 0,
+			      (__be32 *)घड़ी, माप(काष्ठा efc_घड़ी));
+	अगर (err >= 0) अणु
+		be32_to_cpus(&घड़ी->source);
+		be32_to_cpus(&घड़ी->sampling_rate);
+		be32_to_cpus(&घड़ी->index);
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-/* give UINT_MAX if set nothing */
-static int
-command_set_clock(struct snd_efw *efw,
-		  unsigned int source, unsigned int rate)
-{
-	struct efc_clock clock = {0};
-	int err;
+/* give अच_पूर्णांक_उच्च अगर set nothing */
+अटल पूर्णांक
+command_set_घड़ी(काष्ठा snd_efw *efw,
+		  अचिन्हित पूर्णांक source, अचिन्हित पूर्णांक rate)
+अणु
+	काष्ठा efc_घड़ी घड़ी = अणु0पूर्ण;
+	पूर्णांक err;
 
 	/* check arguments */
-	if ((source == UINT_MAX) && (rate == UINT_MAX)) {
+	अगर ((source == अच_पूर्णांक_उच्च) && (rate == अच_पूर्णांक_उच्च)) अणु
 		err = -EINVAL;
-		goto end;
-	}
+		जाओ end;
+	पूर्ण
 
 	/* get current status */
-	err = command_get_clock(efw, &clock);
-	if (err < 0)
-		goto end;
+	err = command_get_घड़ी(efw, &घड़ी);
+	अगर (err < 0)
+		जाओ end;
 
 	/* no need */
-	if ((clock.source == source) && (clock.sampling_rate == rate))
-		goto end;
+	अगर ((घड़ी.source == source) && (घड़ी.sampling_rate == rate))
+		जाओ end;
 
 	/* set params */
-	if ((source != UINT_MAX) && (clock.source != source))
-		clock.source = source;
-	if ((rate != UINT_MAX) && (clock.sampling_rate != rate))
-		clock.sampling_rate = rate;
-	clock.index = 0;
+	अगर ((source != अच_पूर्णांक_उच्च) && (घड़ी.source != source))
+		घड़ी.source = source;
+	अगर ((rate != अच_पूर्णांक_उच्च) && (घड़ी.sampling_rate != rate))
+		घड़ी.sampling_rate = rate;
+	घड़ी.index = 0;
 
-	cpu_to_be32s(&clock.source);
-	cpu_to_be32s(&clock.sampling_rate);
-	cpu_to_be32s(&clock.index);
+	cpu_to_be32s(&घड़ी.source);
+	cpu_to_be32s(&घड़ी.sampling_rate);
+	cpu_to_be32s(&घड़ी.index);
 
 	err = efw_transaction(efw, EFC_CAT_HWCTL,
 			      EFC_CMD_HWCTL_SET_CLOCK,
-			      (__be32 *)&clock, sizeof(struct efc_clock),
-			      NULL, 0);
-	if (err < 0)
-		goto end;
+			      (__be32 *)&घड़ी, माप(काष्ठा efc_घड़ी),
+			      शून्य, 0);
+	अगर (err < 0)
+		जाओ end;
 
 	/*
-	 * With firmware version 5.8, just after changing clock state, these
+	 * With firmware version 5.8, just after changing घड़ी state, these
 	 * parameters are not immediately retrieved by get command. In my
 	 * trial, there needs to be 100msec to get changed parameters.
 	 */
 	msleep(150);
 end:
-	return err;
-}
+	वापस err;
+पूर्ण
 
-int snd_efw_command_get_clock_source(struct snd_efw *efw,
-				     enum snd_efw_clock_source *source)
-{
-	int err;
-	struct efc_clock clock = {0};
+पूर्णांक snd_efw_command_get_घड़ी_source(काष्ठा snd_efw *efw,
+				     क्रमागत snd_efw_घड़ी_source *source)
+अणु
+	पूर्णांक err;
+	काष्ठा efc_घड़ी घड़ी = अणु0पूर्ण;
 
-	err = command_get_clock(efw, &clock);
-	if (err >= 0)
-		*source = clock.source;
+	err = command_get_घड़ी(efw, &घड़ी);
+	अगर (err >= 0)
+		*source = घड़ी.source;
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-int snd_efw_command_get_sampling_rate(struct snd_efw *efw, unsigned int *rate)
-{
-	int err;
-	struct efc_clock clock = {0};
+पूर्णांक snd_efw_command_get_sampling_rate(काष्ठा snd_efw *efw, अचिन्हित पूर्णांक *rate)
+अणु
+	पूर्णांक err;
+	काष्ठा efc_घड़ी घड़ी = अणु0पूर्ण;
 
-	err = command_get_clock(efw, &clock);
-	if (err >= 0)
-		*rate = clock.sampling_rate;
+	err = command_get_घड़ी(efw, &घड़ी);
+	अगर (err >= 0)
+		*rate = घड़ी.sampling_rate;
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-int snd_efw_command_set_sampling_rate(struct snd_efw *efw, unsigned int rate)
-{
-	return command_set_clock(efw, UINT_MAX, rate);
-}
+पूर्णांक snd_efw_command_set_sampling_rate(काष्ठा snd_efw *efw, अचिन्हित पूर्णांक rate)
+अणु
+	वापस command_set_घड़ी(efw, अच_पूर्णांक_उच्च, rate);
+पूर्ण
 

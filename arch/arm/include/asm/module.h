@@ -1,13 +1,14 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _ASM_ARM_MODULE_H
-#define _ASM_ARM_MODULE_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _ASM_ARM_MODULE_H
+#घोषणा _ASM_ARM_MODULE_H
 
-#include <asm-generic/module.h>
+#समावेश <यंत्र-generic/module.h>
 
-struct unwind_table;
+काष्ठा unwind_table;
 
-#ifdef CONFIG_ARM_UNWIND
-enum {
+#अगर_घोषित CONFIG_ARM_UNWIND
+क्रमागत अणु
 	ARM_SEC_INIT,
 	ARM_SEC_DEVINIT,
 	ARM_SEC_CORE,
@@ -16,36 +17,36 @@ enum {
 	ARM_SEC_HOT,
 	ARM_SEC_UNLIKELY,
 	ARM_SEC_MAX,
-};
-#endif
+पूर्ण;
+#पूर्ण_अगर
 
-struct mod_plt_sec {
-	struct elf32_shdr	*plt;
-	int			plt_count;
-};
+काष्ठा mod_plt_sec अणु
+	काष्ठा elf32_shdr	*plt;
+	पूर्णांक			plt_count;
+पूर्ण;
 
-struct mod_arch_specific {
-#ifdef CONFIG_ARM_UNWIND
-	struct unwind_table *unwind[ARM_SEC_MAX];
-#endif
-#ifdef CONFIG_ARM_MODULE_PLTS
-	struct mod_plt_sec	core;
-	struct mod_plt_sec	init;
-#endif
-};
+काष्ठा mod_arch_specअगरic अणु
+#अगर_घोषित CONFIG_ARM_UNWIND
+	काष्ठा unwind_table *unwind[ARM_SEC_MAX];
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_ARM_MODULE_PLTS
+	काष्ठा mod_plt_sec	core;
+	काष्ठा mod_plt_sec	init;
+#पूर्ण_अगर
+पूर्ण;
 
-struct module;
-u32 get_module_plt(struct module *mod, unsigned long loc, Elf32_Addr val);
+काष्ठा module;
+u32 get_module_plt(काष्ठा module *mod, अचिन्हित दीर्घ loc, Elf32_Addr val);
 
-#ifdef CONFIG_THUMB2_KERNEL
-#define HAVE_ARCH_KALLSYMS_SYMBOL_VALUE
-static inline unsigned long kallsyms_symbol_value(const Elf_Sym *sym)
-{
-	if (ELF_ST_TYPE(sym->st_info) == STT_FUNC)
-		return sym->st_value & ~1;
+#अगर_घोषित CONFIG_THUMB2_KERNEL
+#घोषणा HAVE_ARCH_KALLSYMS_SYMBOL_VALUE
+अटल अंतरभूत अचिन्हित दीर्घ kallsyms_symbol_value(स्थिर Elf_Sym *sym)
+अणु
+	अगर (ELF_ST_TYPE(sym->st_info) == STT_FUNC)
+		वापस sym->st_value & ~1;
 
-	return sym->st_value;
-}
-#endif
+	वापस sym->st_value;
+पूर्ण
+#पूर्ण_अगर
 
-#endif /* _ASM_ARM_MODULE_H */
+#पूर्ण_अगर /* _ASM_ARM_MODULE_H */

@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * arch/arm/plat-pxa/include/plat/mfp.h
  *
@@ -10,13 +11,13 @@
  *            initial version
  */
 
-#ifndef __ASM_PLAT_MFP_H
-#define __ASM_PLAT_MFP_H
+#अगर_अघोषित __ASM_PLAT_MFP_H
+#घोषणा __ASM_PLAT_MFP_H
 
-#define mfp_to_gpio(m)	((m) % 256)
+#घोषणा mfp_to_gpio(m)	((m) % 256)
 
 /* list of all the configurable MFP pins */
-enum {
+क्रमागत अणु
 	MFP_PIN_INVALID = -1,
 
 	MFP_PIN_GPIO0 = 0,
@@ -236,7 +237,7 @@ enum {
 
 	MFP_PIN_ULPI_STP,
 	MFP_PIN_ULPI_NXT,
-	MFP_PIN_ULPI_DIR,
+	MFP_PIN_ULPI_सूची,
 
 	MFP_PIN_nXCVREN,
 	MFP_PIN_DF_CLE_nOE,
@@ -321,10 +322,10 @@ enum {
 	MFP_PIN_CLK_REQ,
 
 	MFP_PIN_MAX,
-};
+पूर्ण;
 
 /*
- * a possible MFP configuration is represented by a 32-bit integer
+ * a possible MFP configuration is represented by a 32-bit पूर्णांकeger
  *
  * bit  0.. 9 - MFP Pin Number (1024 Pins Maximum)
  * bit 10..12 - Alternate Function Selection
@@ -335,101 +336,101 @@ enum {
  *
  * to facilitate the definition, the following macros are provided
  *
- * MFP_CFG_DEFAULT - default MFP configuration value, with
+ * MFP_CFG_DEFAULT - शेष MFP configuration value, with
  * 		  alternate function = 0,
  * 		  drive strength = fast 3mA (MFP_DS03X)
- * 		  low power mode = default
+ * 		  low घातer mode = शेष
  * 		  edge detection = none
  *
- * MFP_CFG	- default MFPR value with alternate function
- * MFP_CFG_DRV	- default MFPR value with alternate function and
+ * MFP_CFG	- शेष MFPR value with alternate function
+ * MFP_CFG_DRV	- शेष MFPR value with alternate function and
  * 		  pin drive strength
- * MFP_CFG_LPM	- default MFPR value with alternate function and
- * 		  low power mode
- * MFP_CFG_X	- default MFPR value with alternate function,
- * 		  pin drive strength and low power mode
+ * MFP_CFG_LPM	- शेष MFPR value with alternate function and
+ * 		  low घातer mode
+ * MFP_CFG_X	- शेष MFPR value with alternate function,
+ * 		  pin drive strength and low घातer mode
  */
 
-typedef unsigned long mfp_cfg_t;
+प्रकार अचिन्हित दीर्घ mfp_cfg_t;
 
-#define MFP_PIN(x)		((x) & 0x3ff)
+#घोषणा MFP_PIN(x)		((x) & 0x3ff)
 
-#define MFP_AF0			(0x0 << 10)
-#define MFP_AF1			(0x1 << 10)
-#define MFP_AF2			(0x2 << 10)
-#define MFP_AF3			(0x3 << 10)
-#define MFP_AF4			(0x4 << 10)
-#define MFP_AF5			(0x5 << 10)
-#define MFP_AF6			(0x6 << 10)
-#define MFP_AF7			(0x7 << 10)
-#define MFP_AF_MASK		(0x7 << 10)
-#define MFP_AF(x)		(((x) >> 10) & 0x7)
+#घोषणा MFP_AF0			(0x0 << 10)
+#घोषणा MFP_AF1			(0x1 << 10)
+#घोषणा MFP_AF2			(0x2 << 10)
+#घोषणा MFP_AF3			(0x3 << 10)
+#घोषणा MFP_AF4			(0x4 << 10)
+#घोषणा MFP_AF5			(0x5 << 10)
+#घोषणा MFP_AF6			(0x6 << 10)
+#घोषणा MFP_AF7			(0x7 << 10)
+#घोषणा MFP_AF_MASK		(0x7 << 10)
+#घोषणा MFP_AF(x)		(((x) >> 10) & 0x7)
 
-#define MFP_DS01X		(0x0 << 13)
-#define MFP_DS02X		(0x1 << 13)
-#define MFP_DS03X		(0x2 << 13)
-#define MFP_DS04X		(0x3 << 13)
-#define MFP_DS06X		(0x4 << 13)
-#define MFP_DS08X		(0x5 << 13)
-#define MFP_DS10X		(0x6 << 13)
-#define MFP_DS13X		(0x7 << 13)
-#define MFP_DS_MASK		(0x7 << 13)
-#define MFP_DS(x)		(((x) >> 13) & 0x7)
+#घोषणा MFP_DS01X		(0x0 << 13)
+#घोषणा MFP_DS02X		(0x1 << 13)
+#घोषणा MFP_DS03X		(0x2 << 13)
+#घोषणा MFP_DS04X		(0x3 << 13)
+#घोषणा MFP_DS06X		(0x4 << 13)
+#घोषणा MFP_DS08X		(0x5 << 13)
+#घोषणा MFP_DS10X		(0x6 << 13)
+#घोषणा MFP_DS13X		(0x7 << 13)
+#घोषणा MFP_DS_MASK		(0x7 << 13)
+#घोषणा MFP_DS(x)		(((x) >> 13) & 0x7)
 
-#define MFP_LPM_DEFAULT		(0x0 << 16)
-#define MFP_LPM_DRIVE_LOW	(0x1 << 16)
-#define MFP_LPM_DRIVE_HIGH	(0x2 << 16)
-#define MFP_LPM_PULL_LOW	(0x3 << 16)
-#define MFP_LPM_PULL_HIGH	(0x4 << 16)
-#define MFP_LPM_FLOAT		(0x5 << 16)
-#define MFP_LPM_INPUT		(0x6 << 16)
-#define MFP_LPM_STATE_MASK	(0x7 << 16)
-#define MFP_LPM_STATE(x)	(((x) >> 16) & 0x7)
+#घोषणा MFP_LPM_DEFAULT		(0x0 << 16)
+#घोषणा MFP_LPM_DRIVE_LOW	(0x1 << 16)
+#घोषणा MFP_LPM_DRIVE_HIGH	(0x2 << 16)
+#घोषणा MFP_LPM_PULL_LOW	(0x3 << 16)
+#घोषणा MFP_LPM_PULL_HIGH	(0x4 << 16)
+#घोषणा MFP_LPM_FLOAT		(0x5 << 16)
+#घोषणा MFP_LPM_INPUT		(0x6 << 16)
+#घोषणा MFP_LPM_STATE_MASK	(0x7 << 16)
+#घोषणा MFP_LPM_STATE(x)	(((x) >> 16) & 0x7)
 
-#define MFP_LPM_EDGE_NONE	(0x0 << 19)
-#define MFP_LPM_EDGE_RISE	(0x1 << 19)
-#define MFP_LPM_EDGE_FALL	(0x2 << 19)
-#define MFP_LPM_EDGE_BOTH	(0x3 << 19)
-#define MFP_LPM_EDGE_MASK	(0x3 << 19)
-#define MFP_LPM_EDGE(x)		(((x) >> 19) & 0x3)
+#घोषणा MFP_LPM_EDGE_NONE	(0x0 << 19)
+#घोषणा MFP_LPM_EDGE_RISE	(0x1 << 19)
+#घोषणा MFP_LPM_EDGE_FALL	(0x2 << 19)
+#घोषणा MFP_LPM_EDGE_BOTH	(0x3 << 19)
+#घोषणा MFP_LPM_EDGE_MASK	(0x3 << 19)
+#घोषणा MFP_LPM_EDGE(x)		(((x) >> 19) & 0x3)
 
-#define MFP_PULL_NONE		(0x0 << 21)
-#define MFP_PULL_LOW		(0x1 << 21)
-#define MFP_PULL_HIGH		(0x2 << 21)
-#define MFP_PULL_BOTH		(0x3 << 21)
-#define MFP_PULL_FLOAT		(0x4 << 21)
-#define MFP_PULL_MASK		(0x7 << 21)
-#define MFP_PULL(x)		(((x) >> 21) & 0x7)
+#घोषणा MFP_PULL_NONE		(0x0 << 21)
+#घोषणा MFP_PULL_LOW		(0x1 << 21)
+#घोषणा MFP_PULL_HIGH		(0x2 << 21)
+#घोषणा MFP_PULL_BOTH		(0x3 << 21)
+#घोषणा MFP_PULL_FLOAT		(0x4 << 21)
+#घोषणा MFP_PULL_MASK		(0x7 << 21)
+#घोषणा MFP_PULL(x)		(((x) >> 21) & 0x7)
 
-#define MFP_CFG_DEFAULT		(MFP_AF0 | MFP_DS03X | MFP_LPM_DEFAULT |\
+#घोषणा MFP_CFG_DEFAULT		(MFP_AF0 | MFP_DS03X | MFP_LPM_DEFAULT |\
 				 MFP_LPM_EDGE_NONE | MFP_PULL_NONE)
 
-#define MFP_CFG(pin, af)		\
+#घोषणा MFP_CFG(pin, af)		\
 	((MFP_CFG_DEFAULT & ~MFP_AF_MASK) |\
 	 (MFP_PIN(MFP_PIN_##pin) | MFP_##af))
 
-#define MFP_CFG_DRV(pin, af, drv)	\
+#घोषणा MFP_CFG_DRV(pin, af, drv)	\
 	((MFP_CFG_DEFAULT & ~(MFP_AF_MASK | MFP_DS_MASK)) |\
 	 (MFP_PIN(MFP_PIN_##pin) | MFP_##af | MFP_##drv))
 
-#define MFP_CFG_LPM(pin, af, lpm)	\
+#घोषणा MFP_CFG_LPM(pin, af, lpm)	\
 	((MFP_CFG_DEFAULT & ~(MFP_AF_MASK | MFP_LPM_STATE_MASK)) |\
 	 (MFP_PIN(MFP_PIN_##pin) | MFP_##af | MFP_LPM_##lpm))
 
-#define MFP_CFG_X(pin, af, drv, lpm)	\
+#घोषणा MFP_CFG_X(pin, af, drv, lpm)	\
 	((MFP_CFG_DEFAULT & ~(MFP_AF_MASK | MFP_DS_MASK | MFP_LPM_STATE_MASK)) |\
 	 (MFP_PIN(MFP_PIN_##pin) | MFP_##af | MFP_##drv | MFP_LPM_##lpm))
 
-#if defined(CONFIG_PXA3xx) || defined(CONFIG_ARCH_MMP)
+#अगर defined(CONFIG_PXA3xx) || defined(CONFIG_ARCH_MMP)
 /*
- * each MFP pin will have a MFPR register, since the offset of the
- * register varies between processors, the processor specific code
+ * each MFP pin will have a MFPR रेजिस्टर, since the offset of the
+ * रेजिस्टर varies between processors, the processor specअगरic code
  * should initialize the pin offsets by mfp_init()
  *
- * mfp_init_base() - accepts a virtual base for all MFPR registers and
- * initialize the MFP table to a default state
+ * mfp_init_base() - accepts a भव base क्रम all MFPR रेजिस्टरs and
+ * initialize the MFP table to a शेष state
  *
- * mfp_init_addr() - accepts a table of "mfp_addr_map" structure, which
+ * mfp_init_addr() - accepts a table of "mfp_addr_map" काष्ठाure, which
  * represents a range of MFP pins from "start" to "end", with the offset
  * beginning at "offset", to define a single pin, let "end" = -1.
  *
@@ -437,36 +438,36 @@ typedef unsigned long mfp_cfg_t;
  *
  * MFP_ADDR_X() to define a range of pins
  * MFP_ADDR()   to define a single pin
- * MFP_ADDR_END to signal the end of pin offset definitions
+ * MFP_ADDR_END to संकेत the end of pin offset definitions
  */
-struct mfp_addr_map {
-	unsigned int	start;
-	unsigned int	end;
-	unsigned long	offset;
-};
+काष्ठा mfp_addr_map अणु
+	अचिन्हित पूर्णांक	start;
+	अचिन्हित पूर्णांक	end;
+	अचिन्हित दीर्घ	offset;
+पूर्ण;
 
-#define MFP_ADDR_X(start, end, offset) \
-	{ MFP_PIN_##start, MFP_PIN_##end, offset }
+#घोषणा MFP_ADDR_X(start, end, offset) \
+	अणु MFP_PIN_##start, MFP_PIN_##end, offset पूर्ण
 
-#define MFP_ADDR(pin, offset) \
-	{ MFP_PIN_##pin, -1, offset }
+#घोषणा MFP_ADDR(pin, offset) \
+	अणु MFP_PIN_##pin, -1, offset पूर्ण
 
-#define MFP_ADDR_END	{ MFP_PIN_INVALID, 0 }
+#घोषणा MFP_ADDR_END	अणु MFP_PIN_INVALID, 0 पूर्ण
 
-void __init mfp_init_base(void __iomem *mfpr_base);
-void __init mfp_init_addr(struct mfp_addr_map *map);
+व्योम __init mfp_init_base(व्योम __iomem *mfpr_base);
+व्योम __init mfp_init_addr(काष्ठा mfp_addr_map *map);
 
 /*
- * mfp_{read, write}()	- for direct read/write access to the MFPR register
- * mfp_config()		- for configuring a group of MFPR registers
- * mfp_config_lpm()	- configuring all low power MFPR registers for suspend
- * mfp_config_run()	- configuring all run time  MFPR registers after resume
+ * mfp_अणुपढ़ो, ग_लिखोपूर्ण()	- क्रम direct पढ़ो/ग_लिखो access to the MFPR रेजिस्टर
+ * mfp_config()		- क्रम configuring a group of MFPR रेजिस्टरs
+ * mfp_config_lpm()	- configuring all low घातer MFPR रेजिस्टरs क्रम suspend
+ * mfp_config_run()	- configuring all run समय  MFPR रेजिस्टरs after resume
  */
-unsigned long mfp_read(int mfp);
-void mfp_write(int mfp, unsigned long mfpr_val);
-void mfp_config(unsigned long *mfp_cfgs, int num);
-void mfp_config_run(void);
-void mfp_config_lpm(void);
-#endif /* CONFIG_PXA3xx || CONFIG_ARCH_MMP */
+अचिन्हित दीर्घ mfp_पढ़ो(पूर्णांक mfp);
+व्योम mfp_ग_लिखो(पूर्णांक mfp, अचिन्हित दीर्घ mfpr_val);
+व्योम mfp_config(अचिन्हित दीर्घ *mfp_cfgs, पूर्णांक num);
+व्योम mfp_config_run(व्योम);
+व्योम mfp_config_lpm(व्योम);
+#पूर्ण_अगर /* CONFIG_PXA3xx || CONFIG_ARCH_MMP */
 
-#endif /* __ASM_PLAT_MFP_H */
+#पूर्ण_अगर /* __ASM_PLAT_MFP_H */

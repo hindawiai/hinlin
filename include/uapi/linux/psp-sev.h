@@ -1,24 +1,25 @@
-/* SPDX-License-Identifier: GPL-2.0-only WITH Linux-syscall-note */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only WITH Linux-syscall-note */
 /*
- * Userspace interface for AMD Secure Encrypted Virtualization (SEV)
- * platform management commands.
+ * Userspace पूर्णांकerface क्रम AMD Secure Encrypted Virtualization (SEV)
+ * platक्रमm management commands.
  *
  * Copyright (C) 2016-2017 Advanced Micro Devices, Inc.
  *
  * Author: Brijesh Singh <brijesh.singh@amd.com>
  *
- * SEV API specification is available at: https://developer.amd.com/sev/
+ * SEV API specअगरication is available at: https://developer.amd.com/sev/
  */
 
-#ifndef __PSP_SEV_USER_H__
-#define __PSP_SEV_USER_H__
+#अगर_अघोषित __PSP_SEV_USER_H__
+#घोषणा __PSP_SEV_USER_H__
 
-#include <linux/types.h>
+#समावेश <linux/types.h>
 
 /**
- * SEV platform commands
+ * SEV platक्रमm commands
  */
-enum {
+क्रमागत अणु
 	SEV_FACTORY_RESET = 0,
 	SEV_PLATFORM_STATUS,
 	SEV_PEK_GEN,
@@ -30,12 +31,12 @@ enum {
 	SEV_GET_ID2,
 
 	SEV_MAX,
-};
+पूर्ण;
 
 /**
  * SEV Firmware status code
  */
-typedef enum {
+प्रकार क्रमागत अणु
 	SEV_RET_SUCCESS = 0,
 	SEV_RET_INVALID_PLATFORM_STATE,
 	SEV_RET_INVALID_GUEST_STATE,
@@ -62,105 +63,105 @@ typedef enum {
 	SEV_RET_RESOURCE_LIMIT,
 	SEV_RET_SECURE_DATA_INVALID,
 	SEV_RET_MAX,
-} sev_ret_code;
+पूर्ण sev_ret_code;
 
 /**
- * struct sev_user_data_status - PLATFORM_STATUS command parameters
+ * काष्ठा sev_user_data_status - PLATFORM_STATUS command parameters
  *
  * @major: major API version
  * @minor: minor API version
- * @state: platform state
- * @flags: platform config flags
- * @build: firmware build id for API version
+ * @state: platक्रमm state
+ * @flags: platक्रमm config flags
+ * @build: firmware build id क्रम API version
  * @guest_count: number of active guests
  */
-struct sev_user_data_status {
+काष्ठा sev_user_data_status अणु
 	__u8 api_major;				/* Out */
 	__u8 api_minor;				/* Out */
 	__u8 state;				/* Out */
 	__u32 flags;				/* Out */
 	__u8 build;				/* Out */
 	__u32 guest_count;			/* Out */
-} __packed;
+पूर्ण __packed;
 
-#define SEV_STATUS_FLAGS_CONFIG_ES	0x0100
+#घोषणा SEV_STATUS_FLAGS_CONFIG_ES	0x0100
 
 /**
- * struct sev_user_data_pek_csr - PEK_CSR command parameters
+ * काष्ठा sev_user_data_pek_csr - PEK_CSR command parameters
  *
- * @address: PEK certificate chain
- * @length: length of certificate
+ * @address: PEK certअगरicate chain
+ * @length: length of certअगरicate
  */
-struct sev_user_data_pek_csr {
+काष्ठा sev_user_data_pek_csr अणु
 	__u64 address;				/* In */
 	__u32 length;				/* In/Out */
-} __packed;
+पूर्ण __packed;
 
 /**
- * struct sev_user_data_cert_import - PEK_CERT_IMPORT command parameters
+ * काष्ठा sev_user_data_cert_import - PEK_CERT_IMPORT command parameters
  *
- * @pek_address: PEK certificate chain
- * @pek_len: length of PEK certificate
- * @oca_address: OCA certificate chain
- * @oca_len: length of OCA certificate
+ * @pek_address: PEK certअगरicate chain
+ * @pek_len: length of PEK certअगरicate
+ * @oca_address: OCA certअगरicate chain
+ * @oca_len: length of OCA certअगरicate
  */
-struct sev_user_data_pek_cert_import {
+काष्ठा sev_user_data_pek_cert_import अणु
 	__u64 pek_cert_address;			/* In */
 	__u32 pek_cert_len;			/* In */
 	__u64 oca_cert_address;			/* In */
 	__u32 oca_cert_len;			/* In */
-} __packed;
+पूर्ण __packed;
 
 /**
- * struct sev_user_data_pdh_cert_export - PDH_CERT_EXPORT command parameters
+ * काष्ठा sev_user_data_pdh_cert_export - PDH_CERT_EXPORT command parameters
  *
- * @pdh_address: PDH certificate address
- * @pdh_len: length of PDH certificate
- * @cert_chain_address: PDH certificate chain
- * @cert_chain_len: length of PDH certificate chain
+ * @pdh_address: PDH certअगरicate address
+ * @pdh_len: length of PDH certअगरicate
+ * @cert_chain_address: PDH certअगरicate chain
+ * @cert_chain_len: length of PDH certअगरicate chain
  */
-struct sev_user_data_pdh_cert_export {
+काष्ठा sev_user_data_pdh_cert_export अणु
 	__u64 pdh_cert_address;			/* In */
 	__u32 pdh_cert_len;			/* In/Out */
 	__u64 cert_chain_address;		/* In */
 	__u32 cert_chain_len;			/* In/Out */
-} __packed;
+पूर्ण __packed;
 
 /**
- * struct sev_user_data_get_id - GET_ID command parameters (deprecated)
+ * काष्ठा sev_user_data_get_id - GET_ID command parameters (deprecated)
  *
  * @socket1: Buffer to pass unique ID of first socket
  * @socket2: Buffer to pass unique ID of second socket
  */
-struct sev_user_data_get_id {
+काष्ठा sev_user_data_get_id अणु
 	__u8 socket1[64];			/* Out */
 	__u8 socket2[64];			/* Out */
-} __packed;
+पूर्ण __packed;
 
 /**
- * struct sev_user_data_get_id2 - GET_ID command parameters
+ * काष्ठा sev_user_data_get_id2 - GET_ID command parameters
  * @address: Buffer to store unique ID
  * @length: length of the unique ID
  */
-struct sev_user_data_get_id2 {
+काष्ठा sev_user_data_get_id2 अणु
 	__u64 address;				/* In */
 	__u32 length;				/* In/Out */
-} __packed;
+पूर्ण __packed;
 
 /**
- * struct sev_issue_cmd - SEV ioctl parameters
+ * काष्ठा sev_issue_cmd - SEV ioctl parameters
  *
  * @cmd: SEV commands to execute
- * @opaque: pointer to the command structure
- * @error: SEV FW return code on failure
+ * @opaque: poपूर्णांकer to the command काष्ठाure
+ * @error: SEV FW वापस code on failure
  */
-struct sev_issue_cmd {
+काष्ठा sev_issue_cmd अणु
 	__u32 cmd;				/* In */
 	__u64 data;				/* In */
 	__u32 error;				/* Out */
-} __packed;
+पूर्ण __packed;
 
-#define SEV_IOC_TYPE		'S'
-#define SEV_ISSUE_CMD	_IOWR(SEV_IOC_TYPE, 0x0, struct sev_issue_cmd)
+#घोषणा SEV_IOC_TYPE		'S'
+#घोषणा SEV_ISSUE_CMD	_IOWR(SEV_IOC_TYPE, 0x0, काष्ठा sev_issue_cmd)
 
-#endif /* __PSP_USER_SEV_H */
+#पूर्ण_अगर /* __PSP_USER_SEV_H */

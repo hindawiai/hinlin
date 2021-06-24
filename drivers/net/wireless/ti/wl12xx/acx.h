@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * This file is part of wl12xx
  *
@@ -6,13 +7,13 @@
  * Copyright (C) 2008-2010 Nokia Corporation
  */
 
-#ifndef __WL12XX_ACX_H__
-#define __WL12XX_ACX_H__
+#अगर_अघोषित __WL12XX_ACX_H__
+#घोषणा __WL12XX_ACX_H__
 
-#include "../wlcore/wlcore.h"
-#include "../wlcore/acx.h"
+#समावेश "../wlcore/wlcore.h"
+#समावेश "../wlcore/acx.h"
 
-#define WL12XX_ACX_ALL_EVENTS_VECTOR	(WL1271_ACX_INTR_WATCHDOG      | \
+#घोषणा WL12XX_ACX_ALL_EVENTS_VECTOR	(WL1271_ACX_INTR_WATCHDOG      | \
 					WL1271_ACX_INTR_INIT_COMPLETE | \
 					WL1271_ACX_INTR_EVENT_A       | \
 					WL1271_ACX_INTR_EVENT_B       | \
@@ -20,41 +21,41 @@
 					WL1271_ACX_INTR_HW_AVAILABLE  | \
 					WL1271_ACX_INTR_DATA)
 
-#define WL12XX_INTR_MASK		(WL1271_ACX_INTR_WATCHDOG      | \
+#घोषणा WL12XX_INTR_MASK		(WL1271_ACX_INTR_WATCHDOG      | \
 					WL1271_ACX_INTR_EVENT_A       | \
 					WL1271_ACX_INTR_EVENT_B       | \
 					WL1271_ACX_INTR_HW_AVAILABLE  | \
 					WL1271_ACX_INTR_DATA)
 
-struct wl1271_acx_host_config_bitmap {
-	struct acx_header header;
+काष्ठा wl1271_acx_host_config_biपंचांगap अणु
+	काष्ठा acx_header header;
 
-	__le32 host_cfg_bitmap;
-} __packed;
+	__le32 host_cfg_biपंचांगap;
+पूर्ण __packed;
 
-struct wl12xx_acx_tx_statistics {
-	__le32 internal_desc_overflow;
-}  __packed;
+काष्ठा wl12xx_acx_tx_statistics अणु
+	__le32 पूर्णांकernal_desc_overflow;
+पूर्ण  __packed;
 
-struct wl12xx_acx_rx_statistics {
+काष्ठा wl12xx_acx_rx_statistics अणु
 	__le32 out_of_mem;
 	__le32 hdr_overflow;
 	__le32 hw_stuck;
 	__le32 dropped;
 	__le32 fcs_err;
-	__le32 xfr_hint_trig;
+	__le32 xfr_hपूर्णांक_trig;
 	__le32 path_reset;
 	__le32 reset_counter;
-} __packed;
+पूर्ण __packed;
 
-struct wl12xx_acx_dma_statistics {
+काष्ठा wl12xx_acx_dma_statistics अणु
 	__le32 rx_requested;
 	__le32 rx_errors;
 	__le32 tx_requested;
 	__le32 tx_errors;
-}  __packed;
+पूर्ण  __packed;
 
-struct wl12xx_acx_isr_statistics {
+काष्ठा wl12xx_acx_isr_statistics अणु
 	/* host command complete */
 	__le32 cmd_cmplt;
 
@@ -80,13 +81,13 @@ struct wl12xx_acx_isr_statistics {
 	__le32 tx_procs;
 
 	/* (INT_STS_ND & INT_TRIG_DECRYPT_DONE) */
-	__le32 decrypt_done;
+	__le32 decrypt_करोne;
 
 	/* (INT_STS_ND & INT_TRIG_DMA0) */
-	__le32 dma0_done;
+	__le32 dma0_करोne;
 
 	/* (INT_STS_ND & INT_TRIG_DMA1) */
-	__le32 dma1_done;
+	__le32 dma1_करोne;
 
 	/* (INT_STS_ND & INT_TRIG_TX_EXC_CMPLT) */
 	__le32 tx_exch_complete;
@@ -111,47 +112,47 @@ struct wl12xx_acx_isr_statistics {
 
 	/* (INT_STS_ND & INT_TRIG_LOW_RSSI) */
 	__le32 low_rssi;
-} __packed;
+पूर्ण __packed;
 
-struct wl12xx_acx_wep_statistics {
+काष्ठा wl12xx_acx_wep_statistics अणु
 	/* WEP address keys configured */
 	__le32 addr_key_count;
 
-	/* default keys configured */
-	__le32 default_key_count;
+	/* शेष keys configured */
+	__le32 शेष_key_count;
 
 	__le32 reserved;
 
-	/* number of times that WEP key not found on lookup */
+	/* number of बार that WEP key not found on lookup */
 	__le32 key_not_found;
 
-	/* number of times that WEP key decryption failed */
+	/* number of बार that WEP key decryption failed */
 	__le32 decrypt_fail;
 
 	/* WEP packets decrypted */
 	__le32 packets;
 
-	/* WEP decrypt interrupts */
-	__le32 interrupt;
-} __packed;
+	/* WEP decrypt पूर्णांकerrupts */
+	__le32 पूर्णांकerrupt;
+पूर्ण __packed;
 
-#define ACX_MISSED_BEACONS_SPREAD 10
+#घोषणा ACX_MISSED_BEACONS_SPREAD 10
 
-struct wl12xx_acx_pwr_statistics {
-	/* the amount of enters into power save mode (both PD & ELP) */
+काष्ठा wl12xx_acx_pwr_statistics अणु
+	/* the amount of enters पूर्णांकo घातer save mode (both PD & ELP) */
 	__le32 ps_enter;
 
-	/* the amount of enters into ELP mode */
+	/* the amount of enters पूर्णांकo ELP mode */
 	__le32 elp_enter;
 
-	/* the amount of missing beacon interrupts to the host */
+	/* the amount of missing beacon पूर्णांकerrupts to the host */
 	__le32 missing_bcns;
 
-	/* the amount of wake on host-access times */
+	/* the amount of wake on host-access बार */
 	__le32 wake_on_host;
 
-	/* the amount of wake on timer-expire */
-	__le32 wake_on_timer_exp;
+	/* the amount of wake on समयr-expire */
+	__le32 wake_on_समयr_exp;
 
 	/* the number of packets that were transmitted with PS bit set */
 	__le32 tx_with_ps;
@@ -162,54 +163,54 @@ struct wl12xx_acx_pwr_statistics {
 	/* the number of received beacons */
 	__le32 rcvd_beacons;
 
-	/* the number of entering into PowerOn (power save off) */
-	__le32 power_save_off;
+	/* the number of entering पूर्णांकo PowerOn (घातer save off) */
+	__le32 घातer_save_off;
 
-	/* the number of entries into power save mode */
+	/* the number of entries पूर्णांकo घातer save mode */
 	__le16 enable_ps;
 
 	/*
-	 * the number of exits from power save, not including failed PS
+	 * the number of निकासs from घातer save, not including failed PS
 	 * transitions
 	 */
 	__le16 disable_ps;
 
 	/*
-	 * the number of times the TSF counter was adjusted because
-	 * of drift
+	 * the number of बार the TSF counter was adjusted because
+	 * of drअगरt
 	 */
 	__le32 fix_tsf_ps;
 
-	/* Gives statistics about the spread continuous missed beacons.
-	 * The 16 LSB are dedicated for the PS mode.
-	 * The 16 MSB are dedicated for the PS mode.
-	 * cont_miss_bcns_spread[0] - single missed beacon.
-	 * cont_miss_bcns_spread[1] - two continuous missed beacons.
-	 * cont_miss_bcns_spread[2] - three continuous missed beacons.
+	/* Gives statistics about the spपढ़ो continuous missed beacons.
+	 * The 16 LSB are dedicated क्रम the PS mode.
+	 * The 16 MSB are dedicated क्रम the PS mode.
+	 * cont_miss_bcns_spपढ़ो[0] - single missed beacon.
+	 * cont_miss_bcns_spपढ़ो[1] - two continuous missed beacons.
+	 * cont_miss_bcns_spपढ़ो[2] - three continuous missed beacons.
 	 * ...
-	 * cont_miss_bcns_spread[9] - ten and more continuous missed beacons.
+	 * cont_miss_bcns_spपढ़ो[9] - ten and more continuous missed beacons.
 	*/
-	__le32 cont_miss_bcns_spread[ACX_MISSED_BEACONS_SPREAD];
+	__le32 cont_miss_bcns_spपढ़ो[ACX_MISSED_BEACONS_SPREAD];
 
 	/* the number of beacons in awake mode */
 	__le32 rcvd_awake_beacons;
-} __packed;
+पूर्ण __packed;
 
-struct wl12xx_acx_mic_statistics {
+काष्ठा wl12xx_acx_mic_statistics अणु
 	__le32 rx_pkts;
 	__le32 calc_failure;
-} __packed;
+पूर्ण __packed;
 
-struct wl12xx_acx_aes_statistics {
+काष्ठा wl12xx_acx_aes_statistics अणु
 	__le32 encrypt_fail;
 	__le32 decrypt_fail;
 	__le32 encrypt_packets;
 	__le32 decrypt_packets;
-	__le32 encrypt_interrupt;
-	__le32 decrypt_interrupt;
-} __packed;
+	__le32 encrypt_पूर्णांकerrupt;
+	__le32 decrypt_पूर्णांकerrupt;
+पूर्ण __packed;
 
-struct wl12xx_acx_event_statistics {
+काष्ठा wl12xx_acx_event_statistics अणु
 	__le32 heart_beat;
 	__le32 calibration;
 	__le32 rx_mismatch;
@@ -218,42 +219,42 @@ struct wl12xx_acx_event_statistics {
 	__le32 oom_late;
 	__le32 phy_transmit_error;
 	__le32 tx_stuck;
-} __packed;
+पूर्ण __packed;
 
-struct wl12xx_acx_ps_statistics {
-	__le32 pspoll_timeouts;
-	__le32 upsd_timeouts;
-	__le32 upsd_max_sptime;
+काष्ठा wl12xx_acx_ps_statistics अणु
+	__le32 pspoll_समयouts;
+	__le32 upsd_समयouts;
+	__le32 upsd_max_spसमय;
 	__le32 upsd_max_apturn;
 	__le32 pspoll_max_apturn;
 	__le32 pspoll_utilization;
 	__le32 upsd_utilization;
-} __packed;
+पूर्ण __packed;
 
-struct wl12xx_acx_rxpipe_statistics {
+काष्ठा wl12xx_acx_rxpipe_statistics अणु
 	__le32 rx_prep_beacon_drop;
-	__le32 descr_host_int_trig_rx_data;
-	__le32 beacon_buffer_thres_host_int_trig_rx_data;
-	__le32 missed_beacon_host_int_trig_rx_data;
-	__le32 tx_xfr_host_int_trig_rx_data;
-} __packed;
+	__le32 descr_host_पूर्णांक_trig_rx_data;
+	__le32 beacon_buffer_thres_host_पूर्णांक_trig_rx_data;
+	__le32 missed_beacon_host_पूर्णांक_trig_rx_data;
+	__le32 tx_xfr_host_पूर्णांक_trig_rx_data;
+पूर्ण __packed;
 
-struct wl12xx_acx_statistics {
-	struct acx_header header;
+काष्ठा wl12xx_acx_statistics अणु
+	काष्ठा acx_header header;
 
-	struct wl12xx_acx_tx_statistics tx;
-	struct wl12xx_acx_rx_statistics rx;
-	struct wl12xx_acx_dma_statistics dma;
-	struct wl12xx_acx_isr_statistics isr;
-	struct wl12xx_acx_wep_statistics wep;
-	struct wl12xx_acx_pwr_statistics pwr;
-	struct wl12xx_acx_aes_statistics aes;
-	struct wl12xx_acx_mic_statistics mic;
-	struct wl12xx_acx_event_statistics event;
-	struct wl12xx_acx_ps_statistics ps;
-	struct wl12xx_acx_rxpipe_statistics rxpipe;
-} __packed;
+	काष्ठा wl12xx_acx_tx_statistics tx;
+	काष्ठा wl12xx_acx_rx_statistics rx;
+	काष्ठा wl12xx_acx_dma_statistics dma;
+	काष्ठा wl12xx_acx_isr_statistics isr;
+	काष्ठा wl12xx_acx_wep_statistics wep;
+	काष्ठा wl12xx_acx_pwr_statistics pwr;
+	काष्ठा wl12xx_acx_aes_statistics aes;
+	काष्ठा wl12xx_acx_mic_statistics mic;
+	काष्ठा wl12xx_acx_event_statistics event;
+	काष्ठा wl12xx_acx_ps_statistics ps;
+	काष्ठा wl12xx_acx_rxpipe_statistics rxpipe;
+पूर्ण __packed;
 
-int wl1271_acx_host_if_cfg_bitmap(struct wl1271 *wl, u32 host_cfg_bitmap);
+पूर्णांक wl1271_acx_host_अगर_cfg_biपंचांगap(काष्ठा wl1271 *wl, u32 host_cfg_biपंचांगap);
 
-#endif /* __WL12XX_ACX_H__ */
+#पूर्ण_अगर /* __WL12XX_ACX_H__ */

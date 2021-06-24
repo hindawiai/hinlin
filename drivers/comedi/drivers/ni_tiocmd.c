@@ -1,8 +1,9 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
- * Command support for NI general purpose counters
+ * Command support क्रम NI general purpose counters
  *
- * Copyright (C) 2006 Frank Mori Hess <fmhess@users.sourceforge.net>
+ * Copyright (C) 2006 Frank Mori Hess <fmhess@users.sourceक्रमge.net>
  */
 
 /*
@@ -12,13 +13,13 @@
  *         Herman.Bruyninckx@mech.kuleuven.ac.be,
  *         Wim.Meeussen@mech.kuleuven.ac.be,
  *         Klaas.Gadeyne@mech.kuleuven.ac.be,
- *         Frank Mori Hess <fmhess@users.sourceforge.net>
+ *         Frank Mori Hess <fmhess@users.sourceक्रमge.net>
  * Updated: Fri, 11 Apr 2008 12:32:35 +0100
  * Status: works
  *
  * This module is not used directly by end-users.  Rather, it
- * is used by other drivers (for example ni_660x and ni_pcimio)
- * to provide command support for NI's general purpose counters.
+ * is used by other drivers (क्रम example ni_660x and ni_pcimio)
+ * to provide command support क्रम NI's general purpose counters.
  * It was originally split out of ni_tio.c to stop the 'ni_tio'
  * module depending on the 'mite' module.
  *
@@ -30,221 +31,221 @@
  * TODO: Support use of both banks X and Y
  */
 
-#include <linux/module.h>
-#include "ni_tio_internal.h"
-#include "mite.h"
-#include "ni_routes.h"
+#समावेश <linux/module.h>
+#समावेश "ni_tio_internal.h"
+#समावेश "mite.h"
+#समावेश "ni_routes.h"
 
-static void ni_tio_configure_dma(struct ni_gpct *counter,
-				 bool enable, bool read)
-{
-	struct ni_gpct_device *counter_dev = counter->counter_dev;
-	unsigned int cidx = counter->counter_index;
-	unsigned int mask;
-	unsigned int bits;
+अटल व्योम ni_tio_configure_dma(काष्ठा ni_gpct *counter,
+				 bool enable, bool पढ़ो)
+अणु
+	काष्ठा ni_gpct_device *counter_dev = counter->counter_dev;
+	अचिन्हित पूर्णांक cidx = counter->counter_index;
+	अचिन्हित पूर्णांक mask;
+	अचिन्हित पूर्णांक bits;
 
 	mask = GI_READ_ACKS_IRQ | GI_WRITE_ACKS_IRQ;
 	bits = 0;
 
-	if (enable) {
-		if (read)
+	अगर (enable) अणु
+		अगर (पढ़ो)
 			bits |= GI_READ_ACKS_IRQ;
-		else
+		अन्यथा
 			bits |= GI_WRITE_ACKS_IRQ;
-	}
+	पूर्ण
 	ni_tio_set_bits(counter, NITIO_INPUT_SEL_REG(cidx), mask, bits);
 
-	switch (counter_dev->variant) {
-	case ni_gpct_variant_e_series:
-		break;
-	case ni_gpct_variant_m_series:
-	case ni_gpct_variant_660x:
+	चयन (counter_dev->variant) अणु
+	हाल ni_gpct_variant_e_series:
+		अवरोध;
+	हाल ni_gpct_variant_m_series:
+	हाल ni_gpct_variant_660x:
 		mask = GI_DMA_ENABLE | GI_DMA_INT_ENA | GI_DMA_WRITE;
 		bits = 0;
 
-		if (enable)
+		अगर (enable)
 			bits |= GI_DMA_ENABLE | GI_DMA_INT_ENA;
-		if (!read)
+		अगर (!पढ़ो)
 			bits |= GI_DMA_WRITE;
 		ni_tio_set_bits(counter, NITIO_DMA_CFG_REG(cidx), mask, bits);
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static int ni_tio_input_inttrig(struct comedi_device *dev,
-				struct comedi_subdevice *s,
-				unsigned int trig_num)
-{
-	struct ni_gpct *counter = s->private;
-	struct comedi_cmd *cmd = &s->async->cmd;
-	unsigned long flags;
-	int ret = 0;
+अटल पूर्णांक ni_tio_input_पूर्णांकtrig(काष्ठा comedi_device *dev,
+				काष्ठा comedi_subdevice *s,
+				अचिन्हित पूर्णांक trig_num)
+अणु
+	काष्ठा ni_gpct *counter = s->निजी;
+	काष्ठा comedi_cmd *cmd = &s->async->cmd;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक ret = 0;
 
-	if (trig_num != cmd->start_arg)
-		return -EINVAL;
+	अगर (trig_num != cmd->start_arg)
+		वापस -EINVAL;
 
 	spin_lock_irqsave(&counter->lock, flags);
-	if (counter->mite_chan)
+	अगर (counter->mite_chan)
 		mite_dma_arm(counter->mite_chan);
-	else
+	अन्यथा
 		ret = -EIO;
 	spin_unlock_irqrestore(&counter->lock, flags);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 	ret = ni_tio_arm(counter, true, NI_GPCT_ARM_IMMEDIATE);
-	s->async->inttrig = NULL;
+	s->async->पूर्णांकtrig = शून्य;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int ni_tio_input_cmd(struct comedi_subdevice *s)
-{
-	struct ni_gpct *counter = s->private;
-	struct ni_gpct_device *counter_dev = counter->counter_dev;
-	const struct ni_route_tables *routing_tables =
+अटल पूर्णांक ni_tio_input_cmd(काष्ठा comedi_subdevice *s)
+अणु
+	काष्ठा ni_gpct *counter = s->निजी;
+	काष्ठा ni_gpct_device *counter_dev = counter->counter_dev;
+	स्थिर काष्ठा ni_route_tables *routing_tables =
 		counter_dev->routing_tables;
-	unsigned int cidx = counter->counter_index;
-	struct comedi_async *async = s->async;
-	struct comedi_cmd *cmd = &async->cmd;
-	int ret = 0;
+	अचिन्हित पूर्णांक cidx = counter->counter_index;
+	काष्ठा comedi_async *async = s->async;
+	काष्ठा comedi_cmd *cmd = &async->cmd;
+	पूर्णांक ret = 0;
 
-	/* write alloc the entire buffer */
-	comedi_buf_write_alloc(s, async->prealloc_bufsz);
+	/* ग_लिखो alloc the entire buffer */
+	comedi_buf_ग_लिखो_alloc(s, async->pपुनः_स्मृति_bufsz);
 	counter->mite_chan->dir = COMEDI_INPUT;
-	switch (counter_dev->variant) {
-	case ni_gpct_variant_m_series:
-	case ni_gpct_variant_660x:
+	चयन (counter_dev->variant) अणु
+	हाल ni_gpct_variant_m_series:
+	हाल ni_gpct_variant_660x:
 		mite_prep_dma(counter->mite_chan, 32, 32);
-		break;
-	case ni_gpct_variant_e_series:
+		अवरोध;
+	हाल ni_gpct_variant_e_series:
 		mite_prep_dma(counter->mite_chan, 16, 32);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 	ni_tio_set_bits(counter, NITIO_CMD_REG(cidx), GI_SAVE_TRACE, 0);
 	ni_tio_configure_dma(counter, true, true);
 
-	if (cmd->start_src == TRIG_INT) {
-		async->inttrig = &ni_tio_input_inttrig;
-	} else {	/* TRIG_NOW || TRIG_EXT || TRIG_OTHER */
-		async->inttrig = NULL;
+	अगर (cmd->start_src == TRIG_INT) अणु
+		async->पूर्णांकtrig = &ni_tio_input_पूर्णांकtrig;
+	पूर्ण अन्यथा अणु	/* TRIG_NOW || TRIG_EXT || TRIG_OTHER */
+		async->पूर्णांकtrig = शून्य;
 		mite_dma_arm(counter->mite_chan);
 
-		if (cmd->start_src == TRIG_NOW)
+		अगर (cmd->start_src == TRIG_NOW)
 			ret = ni_tio_arm(counter, true, NI_GPCT_ARM_IMMEDIATE);
-		else if (cmd->start_src == TRIG_EXT) {
-			int reg = CR_CHAN(cmd->start_arg);
+		अन्यथा अगर (cmd->start_src == TRIG_EXT) अणु
+			पूर्णांक reg = CR_CHAN(cmd->start_arg);
 
-			if (reg >= NI_NAMES_BASE) {
+			अगर (reg >= NI_NAMES_BASE) अणु
 				/* using a device-global name. lookup reg */
 				reg = ni_get_reg_value(reg,
 						       NI_CtrArmStartTrigger(cidx),
 						       routing_tables);
-				/* mark this as a raw register value */
+				/* mark this as a raw रेजिस्टर value */
 				reg |= NI_GPCT_HW_ARM;
-			}
+			पूर्ण
 			ret = ni_tio_arm(counter, true, reg);
-		}
-	}
-	return ret;
-}
+		पूर्ण
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static int ni_tio_output_cmd(struct comedi_subdevice *s)
-{
-	struct ni_gpct *counter = s->private;
+अटल पूर्णांक ni_tio_output_cmd(काष्ठा comedi_subdevice *s)
+अणु
+	काष्ठा ni_gpct *counter = s->निजी;
 
 	dev_err(counter->counter_dev->dev->class_dev,
 		"output commands not yet implemented.\n");
-	return -ENOTSUPP;
-}
+	वापस -ENOTSUPP;
+पूर्ण
 
-static int ni_tio_cmd_setup(struct comedi_subdevice *s)
-{
-	struct comedi_cmd *cmd = &s->async->cmd;
-	struct ni_gpct *counter = s->private;
-	unsigned int cidx = counter->counter_index;
-	const struct ni_route_tables *routing_tables =
+अटल पूर्णांक ni_tio_cmd_setup(काष्ठा comedi_subdevice *s)
+अणु
+	काष्ठा comedi_cmd *cmd = &s->async->cmd;
+	काष्ठा ni_gpct *counter = s->निजी;
+	अचिन्हित पूर्णांक cidx = counter->counter_index;
+	स्थिर काष्ठा ni_route_tables *routing_tables =
 		counter->counter_dev->routing_tables;
-	int set_gate_source = 0;
-	unsigned int gate_source;
-	int retval = 0;
+	पूर्णांक set_gate_source = 0;
+	अचिन्हित पूर्णांक gate_source;
+	पूर्णांक retval = 0;
 
-	if (cmd->scan_begin_src == TRIG_EXT) {
+	अगर (cmd->scan_begin_src == TRIG_EXT) अणु
 		set_gate_source = 1;
 		gate_source = cmd->scan_begin_arg;
-	} else if (cmd->convert_src == TRIG_EXT) {
+	पूर्ण अन्यथा अगर (cmd->convert_src == TRIG_EXT) अणु
 		set_gate_source = 1;
 		gate_source = cmd->convert_arg;
-	}
-	if (set_gate_source) {
-		if (CR_CHAN(gate_source) >= NI_NAMES_BASE) {
-			/* Lookup and use the real register values */
-			int reg = ni_get_reg_value(CR_CHAN(gate_source),
+	पूर्ण
+	अगर (set_gate_source) अणु
+		अगर (CR_CHAN(gate_source) >= NI_NAMES_BASE) अणु
+			/* Lookup and use the real रेजिस्टर values */
+			पूर्णांक reg = ni_get_reg_value(CR_CHAN(gate_source),
 						   NI_CtrGate(cidx),
 						   routing_tables);
-			if (reg < 0)
-				return -EINVAL;
+			अगर (reg < 0)
+				वापस -EINVAL;
 			retval = ni_tio_set_gate_src_raw(counter, 0, reg);
-		} else {
+		पूर्ण अन्यथा अणु
 			/*
-			 * This function must be used separately since it does
-			 * not expect real register values and attempts to
-			 * convert these to real register values.
+			 * This function must be used separately since it करोes
+			 * not expect real रेजिस्टर values and attempts to
+			 * convert these to real रेजिस्टर values.
 			 */
 			retval = ni_tio_set_gate_src(counter, 0, gate_source);
-		}
-	}
-	if (cmd->flags & CMDF_WAKE_EOS) {
+		पूर्ण
+	पूर्ण
+	अगर (cmd->flags & CMDF_WAKE_EOS) अणु
 		ni_tio_set_bits(counter, NITIO_INT_ENA_REG(cidx),
 				GI_GATE_INTERRUPT_ENABLE(cidx),
 				GI_GATE_INTERRUPT_ENABLE(cidx));
-	}
-	return retval;
-}
+	पूर्ण
+	वापस retval;
+पूर्ण
 
-int ni_tio_cmd(struct comedi_device *dev, struct comedi_subdevice *s)
-{
-	struct ni_gpct *counter = s->private;
-	struct comedi_async *async = s->async;
-	struct comedi_cmd *cmd = &async->cmd;
-	int retval = 0;
-	unsigned long flags;
+पूर्णांक ni_tio_cmd(काष्ठा comedi_device *dev, काष्ठा comedi_subdevice *s)
+अणु
+	काष्ठा ni_gpct *counter = s->निजी;
+	काष्ठा comedi_async *async = s->async;
+	काष्ठा comedi_cmd *cmd = &async->cmd;
+	पूर्णांक retval = 0;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&counter->lock, flags);
-	if (!counter->mite_chan) {
+	अगर (!counter->mite_chan) अणु
 		dev_err(counter->counter_dev->dev->class_dev,
 			"commands only supported with DMA.  ");
 		dev_err(counter->counter_dev->dev->class_dev,
 			"Interrupt-driven commands not yet implemented.\n");
 		retval = -EIO;
-	} else {
+	पूर्ण अन्यथा अणु
 		retval = ni_tio_cmd_setup(s);
-		if (retval == 0) {
-			if (cmd->flags & CMDF_WRITE)
+		अगर (retval == 0) अणु
+			अगर (cmd->flags & CMDF_WRITE)
 				retval = ni_tio_output_cmd(s);
-			else
+			अन्यथा
 				retval = ni_tio_input_cmd(s);
-		}
-	}
+		पूर्ण
+	पूर्ण
 	spin_unlock_irqrestore(&counter->lock, flags);
-	return retval;
-}
+	वापस retval;
+पूर्ण
 EXPORT_SYMBOL_GPL(ni_tio_cmd);
 
-int ni_tio_cmdtest(struct comedi_device *dev,
-		   struct comedi_subdevice *s,
-		   struct comedi_cmd *cmd)
-{
-	struct ni_gpct *counter = s->private;
-	unsigned int cidx = counter->counter_index;
-	const struct ni_route_tables *routing_tables =
+पूर्णांक ni_tio_cmdtest(काष्ठा comedi_device *dev,
+		   काष्ठा comedi_subdevice *s,
+		   काष्ठा comedi_cmd *cmd)
+अणु
+	काष्ठा ni_gpct *counter = s->निजी;
+	अचिन्हित पूर्णांक cidx = counter->counter_index;
+	स्थिर काष्ठा ni_route_tables *routing_tables =
 		counter->counter_dev->routing_tables;
-	int err = 0;
-	unsigned int sources;
+	पूर्णांक err = 0;
+	अचिन्हित पूर्णांक sources;
 
-	/* Step 1 : check if triggers are trivially valid */
+	/* Step 1 : check अगर triggers are trivially valid */
 
 	sources = TRIG_NOW | TRIG_INT | TRIG_OTHER;
-	if (ni_tio_counting_mode_registers_present(counter->counter_dev))
+	अगर (ni_tio_counting_mode_रेजिस्टरs_present(counter->counter_dev))
 		sources |= TRIG_EXT;
 	err |= comedi_check_trigger_src(&cmd->start_src, sources);
 
@@ -255,8 +256,8 @@ int ni_tio_cmdtest(struct comedi_device *dev,
 	err |= comedi_check_trigger_src(&cmd->scan_end_src, TRIG_COUNT);
 	err |= comedi_check_trigger_src(&cmd->stop_src, TRIG_NONE);
 
-	if (err)
-		return 1;
+	अगर (err)
+		वापस 1;
 
 	/* Step 2a : make sure trigger sources are unique */
 
@@ -266,25 +267,25 @@ int ni_tio_cmdtest(struct comedi_device *dev,
 
 	/* Step 2b : and mutually compatible */
 
-	if (cmd->convert_src != TRIG_NOW && cmd->scan_begin_src != TRIG_FOLLOW)
+	अगर (cmd->convert_src != TRIG_NOW && cmd->scan_begin_src != TRIG_FOLLOW)
 		err |= -EINVAL;
 
-	if (err)
-		return 2;
+	अगर (err)
+		वापस 2;
 
-	/* Step 3: check if arguments are trivially valid */
+	/* Step 3: check अगर arguments are trivially valid */
 
-	switch (cmd->start_src) {
-	case TRIG_NOW:
-	case TRIG_INT:
-	case TRIG_OTHER:
+	चयन (cmd->start_src) अणु
+	हाल TRIG_NOW:
+	हाल TRIG_INT:
+	हाल TRIG_OTHER:
 		err |= comedi_check_trigger_arg_is(&cmd->start_arg, 0);
-		break;
-	case TRIG_EXT:
+		अवरोध;
+	हाल TRIG_EXT:
 		/* start_arg is the start_trigger passed to ni_tio_arm() */
 		/*
-		 * This should be done, but we don't yet know the actual
-		 * register values.  These should be tested and then documented
+		 * This should be करोne, but we करोn't yet know the actual
+		 * रेजिस्टर values.  These should be tested and then करोcumented
 		 * in the ni_route_values/ni_*.csv files, with indication of
 		 * who/when/which/how these were tested.
 		 * When at least a e/m/660x series have been tested, this code
@@ -294,23 +295,23 @@ int ni_tio_cmdtest(struct comedi_device *dev,
 		 *			    NI_CtrArmStartTrigger(cidx),
 		 *			    routing_tables);
 		 */
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	/*
 	 * It seems that convention is to allow either scan_begin_arg or
-	 * convert_arg to specify the Gate source, with scan_begin_arg taking
+	 * convert_arg to specअगरy the Gate source, with scan_begin_arg taking
 	 * precedence.
 	 */
-	if (cmd->scan_begin_src != TRIG_EXT)
+	अगर (cmd->scan_begin_src != TRIG_EXT)
 		err |= comedi_check_trigger_arg_is(&cmd->scan_begin_arg, 0);
-	else
+	अन्यथा
 		err |= ni_check_trigger_arg(CR_CHAN(cmd->scan_begin_arg),
 					    NI_CtrGate(cidx), routing_tables);
 
-	if (cmd->convert_src != TRIG_EXT)
+	अगर (cmd->convert_src != TRIG_EXT)
 		err |= comedi_check_trigger_arg_is(&cmd->convert_arg, 0);
-	else
+	अन्यथा
 		err |= ni_check_trigger_arg(CR_CHAN(cmd->convert_arg),
 					    NI_CtrGate(cidx), routing_tables);
 
@@ -318,192 +319,192 @@ int ni_tio_cmdtest(struct comedi_device *dev,
 					   cmd->chanlist_len);
 	err |= comedi_check_trigger_arg_is(&cmd->stop_arg, 0);
 
-	if (err)
-		return 3;
+	अगर (err)
+		वापस 3;
 
 	/* Step 4: fix up any arguments */
 
-	/* Step 5: check channel list if it exists */
+	/* Step 5: check channel list अगर it exists */
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(ni_tio_cmdtest);
 
-int ni_tio_cancel(struct ni_gpct *counter)
-{
-	unsigned int cidx = counter->counter_index;
-	unsigned long flags;
+पूर्णांक ni_tio_cancel(काष्ठा ni_gpct *counter)
+अणु
+	अचिन्हित पूर्णांक cidx = counter->counter_index;
+	अचिन्हित दीर्घ flags;
 
 	ni_tio_arm(counter, false, 0);
 	spin_lock_irqsave(&counter->lock, flags);
-	if (counter->mite_chan)
+	अगर (counter->mite_chan)
 		mite_dma_disarm(counter->mite_chan);
 	spin_unlock_irqrestore(&counter->lock, flags);
 	ni_tio_configure_dma(counter, false, false);
 
 	ni_tio_set_bits(counter, NITIO_INT_ENA_REG(cidx),
 			GI_GATE_INTERRUPT_ENABLE(cidx), 0x0);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(ni_tio_cancel);
 
-static int should_ack_gate(struct ni_gpct *counter)
-{
-	unsigned long flags;
-	int retval = 0;
+अटल पूर्णांक should_ack_gate(काष्ठा ni_gpct *counter)
+अणु
+	अचिन्हित दीर्घ flags;
+	पूर्णांक retval = 0;
 
-	switch (counter->counter_dev->variant) {
-	case ni_gpct_variant_m_series:
-	case ni_gpct_variant_660x:
+	चयन (counter->counter_dev->variant) अणु
+	हाल ni_gpct_variant_m_series:
+	हाल ni_gpct_variant_660x:
 		/*
-		 * not sure if 660x really supports gate interrupts
-		 * (the bits are not listed in register-level manual)
+		 * not sure अगर 660x really supports gate पूर्णांकerrupts
+		 * (the bits are not listed in रेजिस्टर-level manual)
 		 */
-		return 1;
-	case ni_gpct_variant_e_series:
+		वापस 1;
+	हाल ni_gpct_variant_e_series:
 		/*
-		 * During buffered input counter operation for e-series,
-		 * the gate interrupt is acked automatically by the dma
+		 * During buffered input counter operation क्रम e-series,
+		 * the gate पूर्णांकerrupt is acked स्वतःmatically by the dma
 		 * controller, due to the Gi_Read/Write_Acknowledges_IRQ
-		 * bits in the input select register.
+		 * bits in the input select रेजिस्टर.
 		 */
 		spin_lock_irqsave(&counter->lock, flags);
-		{
-			if (!counter->mite_chan ||
+		अणु
+			अगर (!counter->mite_chan ||
 			    counter->mite_chan->dir != COMEDI_INPUT ||
-			    (mite_done(counter->mite_chan))) {
+			    (mite_करोne(counter->mite_chan))) अणु
 				retval = 1;
-			}
-		}
+			पूर्ण
+		पूर्ण
 		spin_unlock_irqrestore(&counter->lock, flags);
-		break;
-	}
-	return retval;
-}
+		अवरोध;
+	पूर्ण
+	वापस retval;
+पूर्ण
 
-static void ni_tio_acknowledge_and_confirm(struct ni_gpct *counter,
-					   int *gate_error,
-					   int *tc_error,
-					   int *perm_stale_data)
-{
-	unsigned int cidx = counter->counter_index;
-	const unsigned short gxx_status = ni_tio_read(counter,
+अटल व्योम ni_tio_acknowledge_and_confirm(काष्ठा ni_gpct *counter,
+					   पूर्णांक *gate_error,
+					   पूर्णांक *tc_error,
+					   पूर्णांक *perm_stale_data)
+अणु
+	अचिन्हित पूर्णांक cidx = counter->counter_index;
+	स्थिर अचिन्हित लघु gxx_status = ni_tio_पढ़ो(counter,
 						NITIO_SHARED_STATUS_REG(cidx));
-	const unsigned short gi_status = ni_tio_read(counter,
+	स्थिर अचिन्हित लघु gi_status = ni_tio_पढ़ो(counter,
 						NITIO_STATUS_REG(cidx));
-	unsigned int ack = 0;
+	अचिन्हित पूर्णांक ack = 0;
 
-	if (gate_error)
+	अगर (gate_error)
 		*gate_error = 0;
-	if (tc_error)
+	अगर (tc_error)
 		*tc_error = 0;
-	if (perm_stale_data)
+	अगर (perm_stale_data)
 		*perm_stale_data = 0;
 
-	if (gxx_status & GI_GATE_ERROR(cidx)) {
+	अगर (gxx_status & GI_GATE_ERROR(cidx)) अणु
 		ack |= GI_GATE_ERROR_CONFIRM(cidx);
-		if (gate_error) {
+		अगर (gate_error) अणु
 			/*
-			 * 660x don't support automatic acknowledgment
-			 * of gate interrupt via dma read/write
+			 * 660x करोn't support स्वतःmatic acknowledgment
+			 * of gate पूर्णांकerrupt via dma पढ़ो/ग_लिखो
 			 * and report bogus gate errors
 			 */
-			if (counter->counter_dev->variant !=
+			अगर (counter->counter_dev->variant !=
 			    ni_gpct_variant_660x)
 				*gate_error = 1;
-		}
-	}
-	if (gxx_status & GI_TC_ERROR(cidx)) {
+		पूर्ण
+	पूर्ण
+	अगर (gxx_status & GI_TC_ERROR(cidx)) अणु
 		ack |= GI_TC_ERROR_CONFIRM(cidx);
-		if (tc_error)
+		अगर (tc_error)
 			*tc_error = 1;
-	}
-	if (gi_status & GI_TC)
+	पूर्ण
+	अगर (gi_status & GI_TC)
 		ack |= GI_TC_INTERRUPT_ACK;
-	if (gi_status & GI_GATE_INTERRUPT) {
-		if (should_ack_gate(counter))
+	अगर (gi_status & GI_GATE_INTERRUPT) अणु
+		अगर (should_ack_gate(counter))
 			ack |= GI_GATE_INTERRUPT_ACK;
-	}
-	if (ack)
-		ni_tio_write(counter, ack, NITIO_INT_ACK_REG(cidx));
-	if (ni_tio_get_soft_copy(counter, NITIO_MODE_REG(cidx)) &
-	    GI_LOADING_ON_GATE) {
-		if (ni_tio_read(counter, NITIO_STATUS2_REG(cidx)) &
-		    GI_PERMANENT_STALE(cidx)) {
+	पूर्ण
+	अगर (ack)
+		ni_tio_ग_लिखो(counter, ack, NITIO_INT_ACK_REG(cidx));
+	अगर (ni_tio_get_soft_copy(counter, NITIO_MODE_REG(cidx)) &
+	    GI_LOADING_ON_GATE) अणु
+		अगर (ni_tio_पढ़ो(counter, NITIO_STATUS2_REG(cidx)) &
+		    GI_PERMANENT_STALE(cidx)) अणु
 			dev_info(counter->counter_dev->dev->class_dev,
 				 "%s: Gi_Permanent_Stale_Data detected.\n",
 				 __func__);
-			if (perm_stale_data)
+			अगर (perm_stale_data)
 				*perm_stale_data = 1;
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-void ni_tio_acknowledge(struct ni_gpct *counter)
-{
-	ni_tio_acknowledge_and_confirm(counter, NULL, NULL, NULL);
-}
+व्योम ni_tio_acknowledge(काष्ठा ni_gpct *counter)
+अणु
+	ni_tio_acknowledge_and_confirm(counter, शून्य, शून्य, शून्य);
+पूर्ण
 EXPORT_SYMBOL_GPL(ni_tio_acknowledge);
 
-void ni_tio_handle_interrupt(struct ni_gpct *counter,
-			     struct comedi_subdevice *s)
-{
-	unsigned int cidx = counter->counter_index;
-	unsigned long flags;
-	int gate_error;
-	int tc_error;
-	int perm_stale_data;
+व्योम ni_tio_handle_पूर्णांकerrupt(काष्ठा ni_gpct *counter,
+			     काष्ठा comedi_subdevice *s)
+अणु
+	अचिन्हित पूर्णांक cidx = counter->counter_index;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक gate_error;
+	पूर्णांक tc_error;
+	पूर्णांक perm_stale_data;
 
 	ni_tio_acknowledge_and_confirm(counter, &gate_error, &tc_error,
 				       &perm_stale_data);
-	if (gate_error) {
+	अगर (gate_error) अणु
 		dev_notice(counter->counter_dev->dev->class_dev,
 			   "%s: Gi_Gate_Error detected.\n", __func__);
 		s->async->events |= COMEDI_CB_OVERFLOW;
-	}
-	if (perm_stale_data)
+	पूर्ण
+	अगर (perm_stale_data)
 		s->async->events |= COMEDI_CB_ERROR;
-	switch (counter->counter_dev->variant) {
-	case ni_gpct_variant_m_series:
-	case ni_gpct_variant_660x:
-		if (ni_tio_read(counter, NITIO_DMA_STATUS_REG(cidx)) &
-		    GI_DRQ_ERROR) {
+	चयन (counter->counter_dev->variant) अणु
+	हाल ni_gpct_variant_m_series:
+	हाल ni_gpct_variant_660x:
+		अगर (ni_tio_पढ़ो(counter, NITIO_DMA_STATUS_REG(cidx)) &
+		    GI_DRQ_ERROR) अणु
 			dev_notice(counter->counter_dev->dev->class_dev,
 				   "%s: Gi_DRQ_Error detected.\n", __func__);
 			s->async->events |= COMEDI_CB_OVERFLOW;
-		}
-		break;
-	case ni_gpct_variant_e_series:
-		break;
-	}
+		पूर्ण
+		अवरोध;
+	हाल ni_gpct_variant_e_series:
+		अवरोध;
+	पूर्ण
 	spin_lock_irqsave(&counter->lock, flags);
-	if (counter->mite_chan)
+	अगर (counter->mite_chan)
 		mite_ack_linkc(counter->mite_chan, s, true);
 	spin_unlock_irqrestore(&counter->lock, flags);
-}
-EXPORT_SYMBOL_GPL(ni_tio_handle_interrupt);
+पूर्ण
+EXPORT_SYMBOL_GPL(ni_tio_handle_पूर्णांकerrupt);
 
-void ni_tio_set_mite_channel(struct ni_gpct *counter,
-			     struct mite_channel *mite_chan)
-{
-	unsigned long flags;
+व्योम ni_tio_set_mite_channel(काष्ठा ni_gpct *counter,
+			     काष्ठा mite_channel *mite_chan)
+अणु
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&counter->lock, flags);
 	counter->mite_chan = mite_chan;
 	spin_unlock_irqrestore(&counter->lock, flags);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(ni_tio_set_mite_channel);
 
-static int __init ni_tiocmd_init_module(void)
-{
-	return 0;
-}
+अटल पूर्णांक __init ni_tiocmd_init_module(व्योम)
+अणु
+	वापस 0;
+पूर्ण
 module_init(ni_tiocmd_init_module);
 
-static void __exit ni_tiocmd_cleanup_module(void)
-{
-}
-module_exit(ni_tiocmd_cleanup_module);
+अटल व्योम __निकास ni_tiocmd_cleanup_module(व्योम)
+अणु
+पूर्ण
+module_निकास(ni_tiocmd_cleanup_module);
 
 MODULE_AUTHOR("Comedi <comedi@comedi.org>");
 MODULE_DESCRIPTION("Comedi command support for NI general-purpose counters");

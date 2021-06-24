@@ -1,112 +1,113 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * Pinctrl GPIO driver for Intel Baytrail
+ * Pinctrl GPIO driver क्रम Intel Baytrail
  *
  * Copyright (c) 2012-2013, Intel Corporation
- * Author: Mathias Nyman <mathias.nyman@linux.intel.com>
+ * Author: Mathias Nyman <mathias.nyman@linux.पूर्णांकel.com>
  */
 
-#include <linux/acpi.h>
-#include <linux/bitops.h>
-#include <linux/gpio/driver.h>
-#include <linux/init.h>
-#include <linux/interrupt.h>
-#include <linux/io.h>
-#include <linux/kernel.h>
-#include <linux/types.h>
-#include <linux/platform_device.h>
-#include <linux/pm_runtime.h>
-#include <linux/property.h>
-#include <linux/seq_file.h>
+#समावेश <linux/acpi.h>
+#समावेश <linux/bitops.h>
+#समावेश <linux/gpio/driver.h>
+#समावेश <linux/init.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/kernel.h>
+#समावेश <linux/types.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/pm_runसमय.स>
+#समावेश <linux/property.h>
+#समावेश <linux/seq_file.h>
 
-#include <linux/pinctrl/pinctrl.h>
-#include <linux/pinctrl/pinmux.h>
-#include <linux/pinctrl/pinconf.h>
-#include <linux/pinctrl/pinconf-generic.h>
+#समावेश <linux/pinctrl/pinctrl.h>
+#समावेश <linux/pinctrl/pinmux.h>
+#समावेश <linux/pinctrl/pinconf.h>
+#समावेश <linux/pinctrl/pinconf-generic.h>
 
-#include "pinctrl-intel.h"
+#समावेश "pinctrl-intel.h"
 
-/* memory mapped register offsets */
-#define BYT_CONF0_REG		0x000
-#define BYT_CONF1_REG		0x004
-#define BYT_VAL_REG		0x008
-#define BYT_DFT_REG		0x00c
-#define BYT_INT_STAT_REG	0x800
-#define BYT_DEBOUNCE_REG	0x9d0
+/* memory mapped रेजिस्टर offsets */
+#घोषणा BYT_CONF0_REG		0x000
+#घोषणा BYT_CONF1_REG		0x004
+#घोषणा BYT_VAL_REG		0x008
+#घोषणा BYT_DFT_REG		0x00c
+#घोषणा BYT_INT_STAT_REG	0x800
+#घोषणा BYT_DEBOUNCE_REG	0x9d0
 
-/* BYT_CONF0_REG register bits */
-#define BYT_IODEN		BIT(31)
-#define BYT_DIRECT_IRQ_EN	BIT(27)
-#define BYT_TRIG_MASK		GENMASK(26, 24)
-#define BYT_TRIG_NEG		BIT(26)
-#define BYT_TRIG_POS		BIT(25)
-#define BYT_TRIG_LVL		BIT(24)
-#define BYT_DEBOUNCE_EN		BIT(20)
-#define BYT_GLITCH_FILTER_EN	BIT(19)
-#define BYT_GLITCH_F_SLOW_CLK	BIT(17)
-#define BYT_GLITCH_F_FAST_CLK	BIT(16)
-#define BYT_PULL_STR_SHIFT	9
-#define BYT_PULL_STR_MASK	GENMASK(10, 9)
-#define BYT_PULL_STR_2K		(0 << BYT_PULL_STR_SHIFT)
-#define BYT_PULL_STR_10K	(1 << BYT_PULL_STR_SHIFT)
-#define BYT_PULL_STR_20K	(2 << BYT_PULL_STR_SHIFT)
-#define BYT_PULL_STR_40K	(3 << BYT_PULL_STR_SHIFT)
-#define BYT_PULL_ASSIGN_SHIFT	7
-#define BYT_PULL_ASSIGN_MASK	GENMASK(8, 7)
-#define BYT_PULL_ASSIGN_UP	(1 << BYT_PULL_ASSIGN_SHIFT)
-#define BYT_PULL_ASSIGN_DOWN	(2 << BYT_PULL_ASSIGN_SHIFT)
-#define BYT_PIN_MUX		GENMASK(2, 0)
+/* BYT_CONF0_REG रेजिस्टर bits */
+#घोषणा BYT_IODEN		BIT(31)
+#घोषणा BYT_सूचीECT_IRQ_EN	BIT(27)
+#घोषणा BYT_TRIG_MASK		GENMASK(26, 24)
+#घोषणा BYT_TRIG_NEG		BIT(26)
+#घोषणा BYT_TRIG_POS		BIT(25)
+#घोषणा BYT_TRIG_LVL		BIT(24)
+#घोषणा BYT_DEBOUNCE_EN		BIT(20)
+#घोषणा BYT_GLITCH_FILTER_EN	BIT(19)
+#घोषणा BYT_GLITCH_F_SLOW_CLK	BIT(17)
+#घोषणा BYT_GLITCH_F_FAST_CLK	BIT(16)
+#घोषणा BYT_PULL_STR_SHIFT	9
+#घोषणा BYT_PULL_STR_MASK	GENMASK(10, 9)
+#घोषणा BYT_PULL_STR_2K		(0 << BYT_PULL_STR_SHIFT)
+#घोषणा BYT_PULL_STR_10K	(1 << BYT_PULL_STR_SHIFT)
+#घोषणा BYT_PULL_STR_20K	(2 << BYT_PULL_STR_SHIFT)
+#घोषणा BYT_PULL_STR_40K	(3 << BYT_PULL_STR_SHIFT)
+#घोषणा BYT_PULL_ASSIGN_SHIFT	7
+#घोषणा BYT_PULL_ASSIGN_MASK	GENMASK(8, 7)
+#घोषणा BYT_PULL_ASSIGN_UP	(1 << BYT_PULL_ASSIGN_SHIFT)
+#घोषणा BYT_PULL_ASSIGN_DOWN	(2 << BYT_PULL_ASSIGN_SHIFT)
+#घोषणा BYT_PIN_MUX		GENMASK(2, 0)
 
-/* BYT_VAL_REG register bits */
-#define BYT_DIR_MASK		GENMASK(2, 1)
-#define BYT_INPUT_EN		BIT(2)  /* 0: input enabled (active low)*/
-#define BYT_OUTPUT_EN		BIT(1)  /* 0: output enabled (active low)*/
-#define BYT_LEVEL		BIT(0)
+/* BYT_VAL_REG रेजिस्टर bits */
+#घोषणा BYT_सूची_MASK		GENMASK(2, 1)
+#घोषणा BYT_INPUT_EN		BIT(2)  /* 0: input enabled (active low)*/
+#घोषणा BYT_OUTPUT_EN		BIT(1)  /* 0: output enabled (active low)*/
+#घोषणा BYT_LEVEL		BIT(0)
 
-#define BYT_CONF0_RESTORE_MASK	(BYT_DIRECT_IRQ_EN | BYT_TRIG_MASK | BYT_PIN_MUX)
-#define BYT_VAL_RESTORE_MASK	(BYT_DIR_MASK | BYT_LEVEL)
+#घोषणा BYT_CONF0_RESTORE_MASK	(BYT_सूचीECT_IRQ_EN | BYT_TRIG_MASK | BYT_PIN_MUX)
+#घोषणा BYT_VAL_RESTORE_MASK	(BYT_सूची_MASK | BYT_LEVEL)
 
 /* BYT_DEBOUNCE_REG bits */
-#define BYT_DEBOUNCE_PULSE_MASK		GENMASK(2, 0)
-#define BYT_DEBOUNCE_PULSE_375US	1
-#define BYT_DEBOUNCE_PULSE_750US	2
-#define BYT_DEBOUNCE_PULSE_1500US	3
-#define BYT_DEBOUNCE_PULSE_3MS		4
-#define BYT_DEBOUNCE_PULSE_6MS		5
-#define BYT_DEBOUNCE_PULSE_12MS		6
-#define BYT_DEBOUNCE_PULSE_24MS		7
+#घोषणा BYT_DEBOUNCE_PULSE_MASK		GENMASK(2, 0)
+#घोषणा BYT_DEBOUNCE_PULSE_375US	1
+#घोषणा BYT_DEBOUNCE_PULSE_750US	2
+#घोषणा BYT_DEBOUNCE_PULSE_1500US	3
+#घोषणा BYT_DEBOUNCE_PULSE_3MS		4
+#घोषणा BYT_DEBOUNCE_PULSE_6MS		5
+#घोषणा BYT_DEBOUNCE_PULSE_12MS		6
+#घोषणा BYT_DEBOUNCE_PULSE_24MS		7
 
-#define BYT_NGPIO_SCORE		102
-#define BYT_NGPIO_NCORE		28
-#define BYT_NGPIO_SUS		44
+#घोषणा BYT_NGPIO_SCORE		102
+#घोषणा BYT_NGPIO_NCORE		28
+#घोषणा BYT_NGPIO_SUS		44
 
-#define BYT_SCORE_ACPI_UID	"1"
-#define BYT_NCORE_ACPI_UID	"2"
-#define BYT_SUS_ACPI_UID	"3"
+#घोषणा BYT_SCORE_ACPI_UID	"1"
+#घोषणा BYT_NCORE_ACPI_UID	"2"
+#घोषणा BYT_SUS_ACPI_UID	"3"
 
 /*
- * This is the function value most pins have for GPIO muxing. If the value
- * differs from the default one, it must be explicitly mentioned. Otherwise, the
- * pin control implementation will set the muxing value to default GPIO if it
- * does not find a match for the requested function.
+ * This is the function value most pins have क्रम GPIO muxing. If the value
+ * dअगरfers from the शेष one, it must be explicitly mentioned. Otherwise, the
+ * pin control implementation will set the muxing value to शेष GPIO अगर it
+ * करोes not find a match क्रम the requested function.
  */
-#define BYT_DEFAULT_GPIO_MUX	0
-#define BYT_ALTER_GPIO_MUX	1
+#घोषणा BYT_DEFAULT_GPIO_MUX	0
+#घोषणा BYT_ALTER_GPIO_MUX	1
 
-struct intel_pad_context {
+काष्ठा पूर्णांकel_pad_context अणु
 	u32 conf0;
 	u32 val;
-};
+पूर्ण;
 
-#define COMMUNITY(p, n, map)		\
-	{				\
+#घोषणा COMMUNITY(p, n, map)		\
+	अणु				\
 		.pin_base	= (p),	\
 		.npins		= (n),	\
 		.pad_map	= (map),\
-	}
+	पूर्ण
 
 /* SCORE pins, aka GPIOC_<pin_no> or GPIO_S0_SC[<pin_no>] */
-static const struct pinctrl_pin_desc byt_score_pins[] = {
+अटल स्थिर काष्ठा pinctrl_pin_desc byt_score_pins[] = अणु
 	PINCTRL_PIN(0, "SATA_GP0"),
 	PINCTRL_PIN(1, "SATA_GP1"),
 	PINCTRL_PIN(2, "SATA_LED#"),
@@ -209,9 +210,9 @@ static const struct pinctrl_pin_desc byt_score_pins[] = {
 	PINCTRL_PIN(99, "PMC_PLT_CLK3"),
 	PINCTRL_PIN(100, "PMC_PLT_CLK4"),
 	PINCTRL_PIN(101, "PMC_PLT_CLK5"),
-};
+पूर्ण;
 
-static const unsigned int byt_score_pins_map[BYT_NGPIO_SCORE] = {
+अटल स्थिर अचिन्हित पूर्णांक byt_score_pins_map[BYT_NGPIO_SCORE] = अणु
 	85, 89, 93, 96, 99, 102, 98, 101, 34, 37,
 	36, 38, 39, 35, 40, 84, 62, 61, 64, 59,
 	54, 56, 60, 55, 63, 57, 51, 50, 53, 47,
@@ -223,58 +224,58 @@ static const unsigned int byt_score_pins_map[BYT_NGPIO_SCORE] = {
 	31, 30, 29, 27, 25, 28, 26, 23, 21, 20,
 	24, 22, 5, 3, 10, 11, 106, 87, 91, 104,
 	97, 100,
-};
+पूर्ण;
 
 /* SCORE groups */
-static const unsigned int byt_score_uart1_pins[] = { 70, 71, 72, 73 };
-static const unsigned int byt_score_uart2_pins[] = { 74, 75, 76, 77 };
+अटल स्थिर अचिन्हित पूर्णांक byt_score_uart1_pins[] = अणु 70, 71, 72, 73 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक byt_score_uart2_pins[] = अणु 74, 75, 76, 77 पूर्ण;
 
-static const unsigned int byt_score_pwm0_pins[] = { 94 };
-static const unsigned int byt_score_pwm1_pins[] = { 95 };
+अटल स्थिर अचिन्हित पूर्णांक byt_score_pwm0_pins[] = अणु 94 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक byt_score_pwm1_pins[] = अणु 95 पूर्ण;
 
-static const unsigned int byt_score_sio_spi_pins[] = { 66, 67, 68, 69 };
+अटल स्थिर अचिन्हित पूर्णांक byt_score_sio_spi_pins[] = अणु 66, 67, 68, 69 पूर्ण;
 
-static const unsigned int byt_score_i2c5_pins[] = { 88, 89 };
-static const unsigned int byt_score_i2c6_pins[] = { 90, 91 };
-static const unsigned int byt_score_i2c4_pins[] = { 86, 87 };
-static const unsigned int byt_score_i2c3_pins[] = { 84, 85 };
-static const unsigned int byt_score_i2c2_pins[] = { 82, 83 };
-static const unsigned int byt_score_i2c1_pins[] = { 80, 81 };
-static const unsigned int byt_score_i2c0_pins[] = { 78, 79 };
+अटल स्थिर अचिन्हित पूर्णांक byt_score_i2c5_pins[] = अणु 88, 89 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक byt_score_i2c6_pins[] = अणु 90, 91 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक byt_score_i2c4_pins[] = अणु 86, 87 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक byt_score_i2c3_pins[] = अणु 84, 85 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक byt_score_i2c2_pins[] = अणु 82, 83 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक byt_score_i2c1_pins[] = अणु 80, 81 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक byt_score_i2c0_pins[] = अणु 78, 79 पूर्ण;
 
-static const unsigned int byt_score_ssp0_pins[] = { 8, 9, 10, 11 };
-static const unsigned int byt_score_ssp1_pins[] = { 12, 13, 14, 15 };
-static const unsigned int byt_score_ssp2_pins[] = { 62, 63, 64, 65 };
+अटल स्थिर अचिन्हित पूर्णांक byt_score_ssp0_pins[] = अणु 8, 9, 10, 11 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक byt_score_ssp1_pins[] = अणु 12, 13, 14, 15 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक byt_score_ssp2_pins[] = अणु 62, 63, 64, 65 पूर्ण;
 
-static const unsigned int byt_score_sdcard_pins[] = {
+अटल स्थिर अचिन्हित पूर्णांक byt_score_sdcard_pins[] = अणु
 	7, 33, 34, 35, 36, 37, 38, 39, 40, 41,
-};
-static const unsigned int byt_score_sdcard_mux_values[] = {
+पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक byt_score_sdcard_mux_values[] = अणु
 	2, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-};
+पूर्ण;
 
-static const unsigned int byt_score_sdio_pins[] = { 27, 28, 29, 30, 31, 32 };
+अटल स्थिर अचिन्हित पूर्णांक byt_score_sdio_pins[] = अणु 27, 28, 29, 30, 31, 32 पूर्ण;
 
-static const unsigned int byt_score_emmc_pins[] = {
+अटल स्थिर अचिन्हित पूर्णांक byt_score_emmc_pins[] = अणु
 	16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26,
-};
+पूर्ण;
 
-static const unsigned int byt_score_ilb_lpc_pins[] = {
+अटल स्थिर अचिन्हित पूर्णांक byt_score_ilb_lpc_pins[] = अणु
 	42, 43, 44, 45, 46, 47, 48, 49, 50,
-};
+पूर्ण;
 
-static const unsigned int byt_score_sata_pins[] = { 0, 1, 2 };
+अटल स्थिर अचिन्हित पूर्णांक byt_score_sata_pins[] = अणु 0, 1, 2 पूर्ण;
 
-static const unsigned int byt_score_plt_clk0_pins[] = { 96 };
-static const unsigned int byt_score_plt_clk1_pins[] = { 97 };
-static const unsigned int byt_score_plt_clk2_pins[] = { 98 };
-static const unsigned int byt_score_plt_clk3_pins[] = { 99 };
-static const unsigned int byt_score_plt_clk4_pins[] = { 100 };
-static const unsigned int byt_score_plt_clk5_pins[] = { 101 };
+अटल स्थिर अचिन्हित पूर्णांक byt_score_plt_clk0_pins[] = अणु 96 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक byt_score_plt_clk1_pins[] = अणु 97 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक byt_score_plt_clk2_pins[] = अणु 98 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक byt_score_plt_clk3_pins[] = अणु 99 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक byt_score_plt_clk4_pins[] = अणु 100 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक byt_score_plt_clk5_pins[] = अणु 101 पूर्ण;
 
-static const unsigned int byt_score_smbus_pins[] = { 51, 52, 53 };
+अटल स्थिर अचिन्हित पूर्णांक byt_score_smbus_pins[] = अणु 51, 52, 53 पूर्ण;
 
-static const struct intel_pingroup byt_score_groups[] = {
+अटल स्थिर काष्ठा पूर्णांकel_pingroup byt_score_groups[] = अणु
 	PIN_GROUP("uart1_grp", byt_score_uart1_pins, 1),
 	PIN_GROUP("uart2_grp", byt_score_uart2_pins, 1),
 	PIN_GROUP("pwm0_grp", byt_score_pwm0_pins, 1),
@@ -302,42 +303,42 @@ static const struct intel_pingroup byt_score_groups[] = {
 	PIN_GROUP("plt_clk4_grp", byt_score_plt_clk4_pins, 1),
 	PIN_GROUP("plt_clk5_grp", byt_score_plt_clk5_pins, 1),
 	PIN_GROUP("smbus_grp", byt_score_smbus_pins, 1),
-};
+पूर्ण;
 
-static const char * const byt_score_uart_groups[] = {
+अटल स्थिर अक्षर * स्थिर byt_score_uart_groups[] = अणु
 	"uart1_grp", "uart2_grp",
-};
-static const char * const byt_score_pwm_groups[] = {
+पूर्ण;
+अटल स्थिर अक्षर * स्थिर byt_score_pwm_groups[] = अणु
 	"pwm0_grp", "pwm1_grp",
-};
-static const char * const byt_score_ssp_groups[] = {
+पूर्ण;
+अटल स्थिर अक्षर * स्थिर byt_score_ssp_groups[] = अणु
 	"ssp0_grp", "ssp1_grp", "ssp2_grp",
-};
-static const char * const byt_score_spi_groups[] = { "sio_spi_grp" };
-static const char * const byt_score_i2c_groups[] = {
+पूर्ण;
+अटल स्थिर अक्षर * स्थिर byt_score_spi_groups[] = अणु "sio_spi_grp" पूर्ण;
+अटल स्थिर अक्षर * स्थिर byt_score_i2c_groups[] = अणु
 	"i2c0_grp", "i2c1_grp", "i2c2_grp", "i2c3_grp", "i2c4_grp", "i2c5_grp",
 	"i2c6_grp",
-};
-static const char * const byt_score_sdcard_groups[] = { "sdcard_grp" };
-static const char * const byt_score_sdio_groups[] = { "sdio_grp" };
-static const char * const byt_score_emmc_groups[] = { "emmc_grp" };
-static const char * const byt_score_lpc_groups[] = { "lpc_grp" };
-static const char * const byt_score_sata_groups[] = { "sata_grp" };
-static const char * const byt_score_plt_clk_groups[] = {
+पूर्ण;
+अटल स्थिर अक्षर * स्थिर byt_score_sdcard_groups[] = अणु "sdcard_grp" पूर्ण;
+अटल स्थिर अक्षर * स्थिर byt_score_sdio_groups[] = अणु "sdio_grp" पूर्ण;
+अटल स्थिर अक्षर * स्थिर byt_score_emmc_groups[] = अणु "emmc_grp" पूर्ण;
+अटल स्थिर अक्षर * स्थिर byt_score_lpc_groups[] = अणु "lpc_grp" पूर्ण;
+अटल स्थिर अक्षर * स्थिर byt_score_sata_groups[] = अणु "sata_grp" पूर्ण;
+अटल स्थिर अक्षर * स्थिर byt_score_plt_clk_groups[] = अणु
 	"plt_clk0_grp", "plt_clk1_grp", "plt_clk2_grp", "plt_clk3_grp",
 	"plt_clk4_grp", "plt_clk5_grp",
-};
-static const char * const byt_score_smbus_groups[] = { "smbus_grp" };
-static const char * const byt_score_gpio_groups[] = {
+पूर्ण;
+अटल स्थिर अक्षर * स्थिर byt_score_smbus_groups[] = अणु "smbus_grp" पूर्ण;
+अटल स्थिर अक्षर * स्थिर byt_score_gpio_groups[] = अणु
 	"uart1_grp", "uart2_grp", "pwm0_grp", "pwm1_grp", "ssp0_grp",
 	"ssp1_grp", "ssp2_grp", "sio_spi_grp", "i2c0_grp", "i2c1_grp",
 	"i2c2_grp", "i2c3_grp", "i2c4_grp", "i2c5_grp", "i2c6_grp",
 	"sdcard_grp", "sdio_grp", "emmc_grp", "lpc_grp", "sata_grp",
 	"plt_clk0_grp", "plt_clk1_grp", "plt_clk2_grp", "plt_clk3_grp",
 	"plt_clk4_grp", "plt_clk5_grp", "smbus_grp",
-};
+पूर्ण;
 
-static const struct intel_function byt_score_functions[] = {
+अटल स्थिर काष्ठा पूर्णांकel_function byt_score_functions[] = अणु
 	FUNCTION("uart", byt_score_uart_groups),
 	FUNCTION("pwm", byt_score_pwm_groups),
 	FUNCTION("ssp", byt_score_ssp_groups),
@@ -351,13 +352,13 @@ static const struct intel_function byt_score_functions[] = {
 	FUNCTION("plt_clk", byt_score_plt_clk_groups),
 	FUNCTION("smbus", byt_score_smbus_groups),
 	FUNCTION("gpio", byt_score_gpio_groups),
-};
+पूर्ण;
 
-static const struct intel_community byt_score_communities[] = {
+अटल स्थिर काष्ठा पूर्णांकel_community byt_score_communities[] = अणु
 	COMMUNITY(0, BYT_NGPIO_SCORE, byt_score_pins_map),
-};
+पूर्ण;
 
-static const struct intel_pinctrl_soc_data byt_score_soc_data = {
+अटल स्थिर काष्ठा पूर्णांकel_pinctrl_soc_data byt_score_soc_data = अणु
 	.uid		= BYT_SCORE_ACPI_UID,
 	.pins		= byt_score_pins,
 	.npins		= ARRAY_SIZE(byt_score_pins),
@@ -367,10 +368,10 @@ static const struct intel_pinctrl_soc_data byt_score_soc_data = {
 	.nfunctions	= ARRAY_SIZE(byt_score_functions),
 	.communities	= byt_score_communities,
 	.ncommunities	= ARRAY_SIZE(byt_score_communities),
-};
+पूर्ण;
 
 /* SUS pins, aka GPIOS_<pin_no> or GPIO_S5[<pin_no>]  */
-static const struct pinctrl_pin_desc byt_sus_pins[] = {
+अटल स्थिर काष्ठा pinctrl_pin_desc byt_sus_pins[] = अणु
 	PINCTRL_PIN(0, "GPIO_S50"),
 	PINCTRL_PIN(1, "GPIO_S51"),
 	PINCTRL_PIN(2, "GPIO_S52"),
@@ -415,62 +416,62 @@ static const struct pinctrl_pin_desc byt_sus_pins[] = {
 	PINCTRL_PIN(41, "USB_ULPI_NXT"),
 	PINCTRL_PIN(42, "USB_ULPI_STP"),
 	PINCTRL_PIN(43, "USB_ULPI_REFCLK"),
-};
+पूर्ण;
 
-static const unsigned int byt_sus_pins_map[BYT_NGPIO_SUS] = {
+अटल स्थिर अचिन्हित पूर्णांक byt_sus_pins_map[BYT_NGPIO_SUS] = अणु
 	29, 33, 30, 31, 32, 34, 36, 35, 38, 37,
 	18, 7, 11, 20, 17, 1, 8, 10, 19, 12,
 	0, 2, 23, 39, 28, 27, 22, 21, 24, 25,
 	26, 51, 56, 54, 49, 55, 48, 57, 50, 58,
 	52, 53, 59, 40,
-};
+पूर्ण;
 
-static const unsigned int byt_sus_usb_over_current_pins[] = { 19, 20 };
-static const unsigned int byt_sus_usb_over_current_mode_values[] = { 0, 0 };
-static const unsigned int byt_sus_usb_over_current_gpio_mode_values[] = { 1, 1 };
+अटल स्थिर अचिन्हित पूर्णांक byt_sus_usb_over_current_pins[] = अणु 19, 20 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक byt_sus_usb_over_current_mode_values[] = अणु 0, 0 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक byt_sus_usb_over_current_gpio_mode_values[] = अणु 1, 1 पूर्ण;
 
-static const unsigned int byt_sus_usb_ulpi_pins[] = {
+अटल स्थिर अचिन्हित पूर्णांक byt_sus_usb_ulpi_pins[] = अणु
 	14, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43,
-};
-static const unsigned int byt_sus_usb_ulpi_mode_values[] = {
+पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक byt_sus_usb_ulpi_mode_values[] = अणु
 	2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-};
-static const unsigned int byt_sus_usb_ulpi_gpio_mode_values[] = {
+पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक byt_sus_usb_ulpi_gpio_mode_values[] = अणु
 	1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-};
+पूर्ण;
 
-static const unsigned int byt_sus_pcu_spi_pins[] = { 21 };
-static const unsigned int byt_sus_pcu_spi_mode_values[] = { 0 };
-static const unsigned int byt_sus_pcu_spi_gpio_mode_values[] = { 1 };
+अटल स्थिर अचिन्हित पूर्णांक byt_sus_pcu_spi_pins[] = अणु 21 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक byt_sus_pcu_spi_mode_values[] = अणु 0 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक byt_sus_pcu_spi_gpio_mode_values[] = अणु 1 पूर्ण;
 
-static const struct intel_pingroup byt_sus_groups[] = {
+अटल स्थिर काष्ठा पूर्णांकel_pingroup byt_sus_groups[] = अणु
 	PIN_GROUP("usb_oc_grp", byt_sus_usb_over_current_pins, byt_sus_usb_over_current_mode_values),
 	PIN_GROUP("usb_ulpi_grp", byt_sus_usb_ulpi_pins, byt_sus_usb_ulpi_mode_values),
 	PIN_GROUP("pcu_spi_grp", byt_sus_pcu_spi_pins, byt_sus_pcu_spi_mode_values),
 	PIN_GROUP("usb_oc_grp_gpio", byt_sus_usb_over_current_pins, byt_sus_usb_over_current_gpio_mode_values),
 	PIN_GROUP("usb_ulpi_grp_gpio", byt_sus_usb_ulpi_pins, byt_sus_usb_ulpi_gpio_mode_values),
 	PIN_GROUP("pcu_spi_grp_gpio", byt_sus_pcu_spi_pins, byt_sus_pcu_spi_gpio_mode_values),
-};
+पूर्ण;
 
-static const char * const byt_sus_usb_groups[] = {
+अटल स्थिर अक्षर * स्थिर byt_sus_usb_groups[] = अणु
 	"usb_oc_grp", "usb_ulpi_grp",
-};
-static const char * const byt_sus_spi_groups[] = { "pcu_spi_grp" };
-static const char * const byt_sus_gpio_groups[] = {
+पूर्ण;
+अटल स्थिर अक्षर * स्थिर byt_sus_spi_groups[] = अणु "pcu_spi_grp" पूर्ण;
+अटल स्थिर अक्षर * स्थिर byt_sus_gpio_groups[] = अणु
 	"usb_oc_grp_gpio", "usb_ulpi_grp_gpio", "pcu_spi_grp_gpio",
-};
+पूर्ण;
 
-static const struct intel_function byt_sus_functions[] = {
+अटल स्थिर काष्ठा पूर्णांकel_function byt_sus_functions[] = अणु
 	FUNCTION("usb", byt_sus_usb_groups),
 	FUNCTION("spi", byt_sus_spi_groups),
 	FUNCTION("gpio", byt_sus_gpio_groups),
-};
+पूर्ण;
 
-static const struct intel_community byt_sus_communities[] = {
+अटल स्थिर काष्ठा पूर्णांकel_community byt_sus_communities[] = अणु
 	COMMUNITY(0, BYT_NGPIO_SUS, byt_sus_pins_map),
-};
+पूर्ण;
 
-static const struct intel_pinctrl_soc_data byt_sus_soc_data = {
+अटल स्थिर काष्ठा पूर्णांकel_pinctrl_soc_data byt_sus_soc_data = अणु
 	.uid		= BYT_SUS_ACPI_UID,
 	.pins		= byt_sus_pins,
 	.npins		= ARRAY_SIZE(byt_sus_pins),
@@ -480,9 +481,9 @@ static const struct intel_pinctrl_soc_data byt_sus_soc_data = {
 	.nfunctions	= ARRAY_SIZE(byt_sus_functions),
 	.communities	= byt_sus_communities,
 	.ncommunities	= ARRAY_SIZE(byt_sus_communities),
-};
+पूर्ण;
 
-static const struct pinctrl_pin_desc byt_ncore_pins[] = {
+अटल स्थिर काष्ठा pinctrl_pin_desc byt_ncore_pins[] = अणु
 	PINCTRL_PIN(0, "HV_DDI0_HPD"),
 	PINCTRL_PIN(1, "HV_DDI0_DDC_SDA"),
 	PINCTRL_PIN(2, "HV_DDI0_DDC_SCL"),
@@ -511,793 +512,793 @@ static const struct pinctrl_pin_desc byt_ncore_pins[] = {
 	PINCTRL_PIN(25, "GP_CAMERASB10"),
 	PINCTRL_PIN(26, "GP_CAMERASB11"),
 	PINCTRL_PIN(27, "GP_INTD_DSI_TE2"),
-};
+पूर्ण;
 
-static const unsigned int byt_ncore_pins_map[BYT_NGPIO_NCORE] = {
+अटल स्थिर अचिन्हित पूर्णांक byt_ncore_pins_map[BYT_NGPIO_NCORE] = अणु
 	19, 18, 17, 20, 21, 22, 24, 25, 23, 16,
 	14, 15, 12, 26, 27, 1, 4, 8, 11, 0,
 	3, 6, 10, 13, 2, 5, 9, 7,
-};
+पूर्ण;
 
-static const struct intel_community byt_ncore_communities[] = {
+अटल स्थिर काष्ठा पूर्णांकel_community byt_ncore_communities[] = अणु
 	COMMUNITY(0, BYT_NGPIO_NCORE, byt_ncore_pins_map),
-};
+पूर्ण;
 
-static const struct intel_pinctrl_soc_data byt_ncore_soc_data = {
+अटल स्थिर काष्ठा पूर्णांकel_pinctrl_soc_data byt_ncore_soc_data = अणु
 	.uid		= BYT_NCORE_ACPI_UID,
 	.pins		= byt_ncore_pins,
 	.npins		= ARRAY_SIZE(byt_ncore_pins),
 	.communities	= byt_ncore_communities,
 	.ncommunities	= ARRAY_SIZE(byt_ncore_communities),
-};
+पूर्ण;
 
-static const struct intel_pinctrl_soc_data *byt_soc_data[] = {
+अटल स्थिर काष्ठा पूर्णांकel_pinctrl_soc_data *byt_soc_data[] = अणु
 	&byt_score_soc_data,
 	&byt_sus_soc_data,
 	&byt_ncore_soc_data,
-	NULL
-};
+	शून्य
+पूर्ण;
 
-static DEFINE_RAW_SPINLOCK(byt_lock);
+अटल DEFINE_RAW_SPINLOCK(byt_lock);
 
-static struct intel_community *byt_get_community(struct intel_pinctrl *vg,
-						 unsigned int pin)
-{
-	struct intel_community *comm;
-	int i;
+अटल काष्ठा पूर्णांकel_community *byt_get_community(काष्ठा पूर्णांकel_pinctrl *vg,
+						 अचिन्हित पूर्णांक pin)
+अणु
+	काष्ठा पूर्णांकel_community *comm;
+	पूर्णांक i;
 
-	for (i = 0; i < vg->ncommunities; i++) {
+	क्रम (i = 0; i < vg->ncommunities; i++) अणु
 		comm = vg->communities + i;
-		if (pin < comm->pin_base + comm->npins && pin >= comm->pin_base)
-			return comm;
-	}
+		अगर (pin < comm->pin_base + comm->npins && pin >= comm->pin_base)
+			वापस comm;
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static void __iomem *byt_gpio_reg(struct intel_pinctrl *vg, unsigned int offset,
-				  int reg)
-{
-	struct intel_community *comm = byt_get_community(vg, offset);
+अटल व्योम __iomem *byt_gpio_reg(काष्ठा पूर्णांकel_pinctrl *vg, अचिन्हित पूर्णांक offset,
+				  पूर्णांक reg)
+अणु
+	काष्ठा पूर्णांकel_community *comm = byt_get_community(vg, offset);
 	u32 reg_offset;
 
-	if (!comm)
-		return NULL;
+	अगर (!comm)
+		वापस शून्य;
 
 	offset -= comm->pin_base;
-	switch (reg) {
-	case BYT_INT_STAT_REG:
+	चयन (reg) अणु
+	हाल BYT_INT_STAT_REG:
 		reg_offset = (offset / 32) * 4;
-		break;
-	case BYT_DEBOUNCE_REG:
+		अवरोध;
+	हाल BYT_DEBOUNCE_REG:
 		reg_offset = 0;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		reg_offset = comm->pad_map[offset] * 16;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return comm->pad_regs + reg_offset + reg;
-}
+	वापस comm->pad_regs + reg_offset + reg;
+पूर्ण
 
-static int byt_get_groups_count(struct pinctrl_dev *pctldev)
-{
-	struct intel_pinctrl *vg = pinctrl_dev_get_drvdata(pctldev);
+अटल पूर्णांक byt_get_groups_count(काष्ठा pinctrl_dev *pctldev)
+अणु
+	काष्ठा पूर्णांकel_pinctrl *vg = pinctrl_dev_get_drvdata(pctldev);
 
-	return vg->soc->ngroups;
-}
+	वापस vg->soc->ngroups;
+पूर्ण
 
-static const char *byt_get_group_name(struct pinctrl_dev *pctldev,
-				      unsigned int selector)
-{
-	struct intel_pinctrl *vg = pinctrl_dev_get_drvdata(pctldev);
+अटल स्थिर अक्षर *byt_get_group_name(काष्ठा pinctrl_dev *pctldev,
+				      अचिन्हित पूर्णांक selector)
+अणु
+	काष्ठा पूर्णांकel_pinctrl *vg = pinctrl_dev_get_drvdata(pctldev);
 
-	return vg->soc->groups[selector].name;
-}
+	वापस vg->soc->groups[selector].name;
+पूर्ण
 
-static int byt_get_group_pins(struct pinctrl_dev *pctldev,
-			      unsigned int selector,
-			      const unsigned int **pins,
-			      unsigned int *num_pins)
-{
-	struct intel_pinctrl *vg = pinctrl_dev_get_drvdata(pctldev);
+अटल पूर्णांक byt_get_group_pins(काष्ठा pinctrl_dev *pctldev,
+			      अचिन्हित पूर्णांक selector,
+			      स्थिर अचिन्हित पूर्णांक **pins,
+			      अचिन्हित पूर्णांक *num_pins)
+अणु
+	काष्ठा पूर्णांकel_pinctrl *vg = pinctrl_dev_get_drvdata(pctldev);
 
 	*pins		= vg->soc->groups[selector].pins;
 	*num_pins	= vg->soc->groups[selector].npins;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct pinctrl_ops byt_pinctrl_ops = {
+अटल स्थिर काष्ठा pinctrl_ops byt_pinctrl_ops = अणु
 	.get_groups_count	= byt_get_groups_count,
 	.get_group_name		= byt_get_group_name,
 	.get_group_pins		= byt_get_group_pins,
-};
+पूर्ण;
 
-static int byt_get_functions_count(struct pinctrl_dev *pctldev)
-{
-	struct intel_pinctrl *vg = pinctrl_dev_get_drvdata(pctldev);
+अटल पूर्णांक byt_get_functions_count(काष्ठा pinctrl_dev *pctldev)
+अणु
+	काष्ठा पूर्णांकel_pinctrl *vg = pinctrl_dev_get_drvdata(pctldev);
 
-	return vg->soc->nfunctions;
-}
+	वापस vg->soc->nfunctions;
+पूर्ण
 
-static const char *byt_get_function_name(struct pinctrl_dev *pctldev,
-					 unsigned int selector)
-{
-	struct intel_pinctrl *vg = pinctrl_dev_get_drvdata(pctldev);
+अटल स्थिर अक्षर *byt_get_function_name(काष्ठा pinctrl_dev *pctldev,
+					 अचिन्हित पूर्णांक selector)
+अणु
+	काष्ठा पूर्णांकel_pinctrl *vg = pinctrl_dev_get_drvdata(pctldev);
 
-	return vg->soc->functions[selector].name;
-}
+	वापस vg->soc->functions[selector].name;
+पूर्ण
 
-static int byt_get_function_groups(struct pinctrl_dev *pctldev,
-				   unsigned int selector,
-				   const char * const **groups,
-				   unsigned int *num_groups)
-{
-	struct intel_pinctrl *vg = pinctrl_dev_get_drvdata(pctldev);
+अटल पूर्णांक byt_get_function_groups(काष्ठा pinctrl_dev *pctldev,
+				   अचिन्हित पूर्णांक selector,
+				   स्थिर अक्षर * स्थिर **groups,
+				   अचिन्हित पूर्णांक *num_groups)
+अणु
+	काष्ठा पूर्णांकel_pinctrl *vg = pinctrl_dev_get_drvdata(pctldev);
 
 	*groups		= vg->soc->functions[selector].groups;
 	*num_groups	= vg->soc->functions[selector].ngroups;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void byt_set_group_simple_mux(struct intel_pinctrl *vg,
-				     const struct intel_pingroup group,
-				     unsigned int func)
-{
-	unsigned long flags;
-	int i;
+अटल व्योम byt_set_group_simple_mux(काष्ठा पूर्णांकel_pinctrl *vg,
+				     स्थिर काष्ठा पूर्णांकel_pingroup group,
+				     अचिन्हित पूर्णांक func)
+अणु
+	अचिन्हित दीर्घ flags;
+	पूर्णांक i;
 
 	raw_spin_lock_irqsave(&byt_lock, flags);
 
-	for (i = 0; i < group.npins; i++) {
-		void __iomem *padcfg0;
+	क्रम (i = 0; i < group.npins; i++) अणु
+		व्योम __iomem *padcfg0;
 		u32 value;
 
 		padcfg0 = byt_gpio_reg(vg, group.pins[i], BYT_CONF0_REG);
-		if (!padcfg0) {
+		अगर (!padcfg0) अणु
 			dev_warn(vg->dev,
 				 "Group %s, pin %i not muxed (no padcfg0)\n",
 				 group.name, i);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		value = readl(padcfg0);
+		value = पढ़ोl(padcfg0);
 		value &= ~BYT_PIN_MUX;
 		value |= func;
-		writel(value, padcfg0);
-	}
+		ग_लिखोl(value, padcfg0);
+	पूर्ण
 
 	raw_spin_unlock_irqrestore(&byt_lock, flags);
-}
+पूर्ण
 
-static void byt_set_group_mixed_mux(struct intel_pinctrl *vg,
-				    const struct intel_pingroup group,
-				    const unsigned int *func)
-{
-	unsigned long flags;
-	int i;
+अटल व्योम byt_set_group_mixed_mux(काष्ठा पूर्णांकel_pinctrl *vg,
+				    स्थिर काष्ठा पूर्णांकel_pingroup group,
+				    स्थिर अचिन्हित पूर्णांक *func)
+अणु
+	अचिन्हित दीर्घ flags;
+	पूर्णांक i;
 
 	raw_spin_lock_irqsave(&byt_lock, flags);
 
-	for (i = 0; i < group.npins; i++) {
-		void __iomem *padcfg0;
+	क्रम (i = 0; i < group.npins; i++) अणु
+		व्योम __iomem *padcfg0;
 		u32 value;
 
 		padcfg0 = byt_gpio_reg(vg, group.pins[i], BYT_CONF0_REG);
-		if (!padcfg0) {
+		अगर (!padcfg0) अणु
 			dev_warn(vg->dev,
 				 "Group %s, pin %i not muxed (no padcfg0)\n",
 				 group.name, i);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		value = readl(padcfg0);
+		value = पढ़ोl(padcfg0);
 		value &= ~BYT_PIN_MUX;
 		value |= func[i];
-		writel(value, padcfg0);
-	}
+		ग_लिखोl(value, padcfg0);
+	पूर्ण
 
 	raw_spin_unlock_irqrestore(&byt_lock, flags);
-}
+पूर्ण
 
-static int byt_set_mux(struct pinctrl_dev *pctldev, unsigned int func_selector,
-		       unsigned int group_selector)
-{
-	struct intel_pinctrl *vg = pinctrl_dev_get_drvdata(pctldev);
-	const struct intel_function func = vg->soc->functions[func_selector];
-	const struct intel_pingroup group = vg->soc->groups[group_selector];
+अटल पूर्णांक byt_set_mux(काष्ठा pinctrl_dev *pctldev, अचिन्हित पूर्णांक func_selector,
+		       अचिन्हित पूर्णांक group_selector)
+अणु
+	काष्ठा पूर्णांकel_pinctrl *vg = pinctrl_dev_get_drvdata(pctldev);
+	स्थिर काष्ठा पूर्णांकel_function func = vg->soc->functions[func_selector];
+	स्थिर काष्ठा पूर्णांकel_pingroup group = vg->soc->groups[group_selector];
 
-	if (group.modes)
+	अगर (group.modes)
 		byt_set_group_mixed_mux(vg, group, group.modes);
-	else if (!strcmp(func.name, "gpio"))
+	अन्यथा अगर (!म_भेद(func.name, "gpio"))
 		byt_set_group_simple_mux(vg, group, BYT_DEFAULT_GPIO_MUX);
-	else
+	अन्यथा
 		byt_set_group_simple_mux(vg, group, group.mode);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static u32 byt_get_gpio_mux(struct intel_pinctrl *vg, unsigned int offset)
-{
+अटल u32 byt_get_gpio_mux(काष्ठा पूर्णांकel_pinctrl *vg, अचिन्हित पूर्णांक offset)
+अणु
 	/* SCORE pin 92-93 */
-	if (!strcmp(vg->soc->uid, BYT_SCORE_ACPI_UID) &&
+	अगर (!म_भेद(vg->soc->uid, BYT_SCORE_ACPI_UID) &&
 	    offset >= 92 && offset <= 93)
-		return BYT_ALTER_GPIO_MUX;
+		वापस BYT_ALTER_GPIO_MUX;
 
 	/* SUS pin 11-21 */
-	if (!strcmp(vg->soc->uid, BYT_SUS_ACPI_UID) &&
+	अगर (!म_भेद(vg->soc->uid, BYT_SUS_ACPI_UID) &&
 	    offset >= 11 && offset <= 21)
-		return BYT_ALTER_GPIO_MUX;
+		वापस BYT_ALTER_GPIO_MUX;
 
-	return BYT_DEFAULT_GPIO_MUX;
-}
+	वापस BYT_DEFAULT_GPIO_MUX;
+पूर्ण
 
-static void byt_gpio_clear_triggering(struct intel_pinctrl *vg, unsigned int offset)
-{
-	void __iomem *reg = byt_gpio_reg(vg, offset, BYT_CONF0_REG);
-	unsigned long flags;
+अटल व्योम byt_gpio_clear_triggering(काष्ठा पूर्णांकel_pinctrl *vg, अचिन्हित पूर्णांक offset)
+अणु
+	व्योम __iomem *reg = byt_gpio_reg(vg, offset, BYT_CONF0_REG);
+	अचिन्हित दीर्घ flags;
 	u32 value;
 
 	raw_spin_lock_irqsave(&byt_lock, flags);
-	value = readl(reg);
+	value = पढ़ोl(reg);
 
-	/* Do not clear direct-irq enabled IRQs (from gpio_disable_free) */
-	if (value & BYT_DIRECT_IRQ_EN)
-		/* nothing to do */ ;
-	else
+	/* Do not clear direct-irq enabled IRQs (from gpio_disable_मुक्त) */
+	अगर (value & BYT_सूचीECT_IRQ_EN)
+		/* nothing to करो */ ;
+	अन्यथा
 		value &= ~(BYT_TRIG_POS | BYT_TRIG_NEG | BYT_TRIG_LVL);
 
-	writel(value, reg);
+	ग_लिखोl(value, reg);
 	raw_spin_unlock_irqrestore(&byt_lock, flags);
-}
+पूर्ण
 
-static int byt_gpio_request_enable(struct pinctrl_dev *pctl_dev,
-				   struct pinctrl_gpio_range *range,
-				   unsigned int offset)
-{
-	struct intel_pinctrl *vg = pinctrl_dev_get_drvdata(pctl_dev);
-	void __iomem *reg = byt_gpio_reg(vg, offset, BYT_CONF0_REG);
+अटल पूर्णांक byt_gpio_request_enable(काष्ठा pinctrl_dev *pctl_dev,
+				   काष्ठा pinctrl_gpio_range *range,
+				   अचिन्हित पूर्णांक offset)
+अणु
+	काष्ठा पूर्णांकel_pinctrl *vg = pinctrl_dev_get_drvdata(pctl_dev);
+	व्योम __iomem *reg = byt_gpio_reg(vg, offset, BYT_CONF0_REG);
 	u32 value, gpio_mux;
-	unsigned long flags;
+	अचिन्हित दीर्घ flags;
 
 	raw_spin_lock_irqsave(&byt_lock, flags);
 
 	/*
-	 * In most cases, func pin mux 000 means GPIO function.
+	 * In most हालs, func pin mux 000 means GPIO function.
 	 * But, some pins may have func pin mux 001 represents
 	 * GPIO function.
 	 *
 	 * Because there are devices out there where some pins were not
 	 * configured correctly we allow changing the mux value from
-	 * request (but print out warning about that).
+	 * request (but prपूर्णांक out warning about that).
 	 */
-	value = readl(reg) & BYT_PIN_MUX;
+	value = पढ़ोl(reg) & BYT_PIN_MUX;
 	gpio_mux = byt_get_gpio_mux(vg, offset);
-	if (gpio_mux != value) {
-		value = readl(reg) & ~BYT_PIN_MUX;
+	अगर (gpio_mux != value) अणु
+		value = पढ़ोl(reg) & ~BYT_PIN_MUX;
 		value |= gpio_mux;
-		writel(value, reg);
+		ग_लिखोl(value, reg);
 
 		dev_warn(vg->dev, FW_BUG "pin %u forcibly re-configured as GPIO\n", offset);
-	}
+	पूर्ण
 
 	raw_spin_unlock_irqrestore(&byt_lock, flags);
 
-	pm_runtime_get(vg->dev);
+	pm_runसमय_get(vg->dev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void byt_gpio_disable_free(struct pinctrl_dev *pctl_dev,
-				  struct pinctrl_gpio_range *range,
-				  unsigned int offset)
-{
-	struct intel_pinctrl *vg = pinctrl_dev_get_drvdata(pctl_dev);
+अटल व्योम byt_gpio_disable_मुक्त(काष्ठा pinctrl_dev *pctl_dev,
+				  काष्ठा pinctrl_gpio_range *range,
+				  अचिन्हित पूर्णांक offset)
+अणु
+	काष्ठा पूर्णांकel_pinctrl *vg = pinctrl_dev_get_drvdata(pctl_dev);
 
 	byt_gpio_clear_triggering(vg, offset);
-	pm_runtime_put(vg->dev);
-}
+	pm_runसमय_put(vg->dev);
+पूर्ण
 
-static void byt_gpio_direct_irq_check(struct intel_pinctrl *vg,
-				      unsigned int offset)
-{
-	void __iomem *conf_reg = byt_gpio_reg(vg, offset, BYT_CONF0_REG);
+अटल व्योम byt_gpio_direct_irq_check(काष्ठा पूर्णांकel_pinctrl *vg,
+				      अचिन्हित पूर्णांक offset)
+अणु
+	व्योम __iomem *conf_reg = byt_gpio_reg(vg, offset, BYT_CONF0_REG);
 
 	/*
-	 * Before making any direction modifications, do a check if gpio is set
-	 * for direct IRQ. On Bay Trail, setting GPIO to output does not make
-	 * sense, so let's at least inform the caller before they shoot
+	 * Beक्रमe making any direction modअगरications, करो a check अगर gpio is set
+	 * क्रम direct IRQ. On Bay Trail, setting GPIO to output करोes not make
+	 * sense, so let's at least inक्रमm the caller beक्रमe they shoot
 	 * themselves in the foot.
 	 */
-	if (readl(conf_reg) & BYT_DIRECT_IRQ_EN)
+	अगर (पढ़ोl(conf_reg) & BYT_सूचीECT_IRQ_EN)
 		dev_info_once(vg->dev, "Potential Error: Setting GPIO with direct_irq_en to output");
-}
+पूर्ण
 
-static int byt_gpio_set_direction(struct pinctrl_dev *pctl_dev,
-				  struct pinctrl_gpio_range *range,
-				  unsigned int offset,
+अटल पूर्णांक byt_gpio_set_direction(काष्ठा pinctrl_dev *pctl_dev,
+				  काष्ठा pinctrl_gpio_range *range,
+				  अचिन्हित पूर्णांक offset,
 				  bool input)
-{
-	struct intel_pinctrl *vg = pinctrl_dev_get_drvdata(pctl_dev);
-	void __iomem *val_reg = byt_gpio_reg(vg, offset, BYT_VAL_REG);
-	unsigned long flags;
+अणु
+	काष्ठा पूर्णांकel_pinctrl *vg = pinctrl_dev_get_drvdata(pctl_dev);
+	व्योम __iomem *val_reg = byt_gpio_reg(vg, offset, BYT_VAL_REG);
+	अचिन्हित दीर्घ flags;
 	u32 value;
 
 	raw_spin_lock_irqsave(&byt_lock, flags);
 
-	value = readl(val_reg);
-	value &= ~BYT_DIR_MASK;
-	if (input)
+	value = पढ़ोl(val_reg);
+	value &= ~BYT_सूची_MASK;
+	अगर (input)
 		value |= BYT_OUTPUT_EN;
-	else
+	अन्यथा
 		byt_gpio_direct_irq_check(vg, offset);
 
-	writel(value, val_reg);
+	ग_लिखोl(value, val_reg);
 
 	raw_spin_unlock_irqrestore(&byt_lock, flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct pinmux_ops byt_pinmux_ops = {
+अटल स्थिर काष्ठा pinmux_ops byt_pinmux_ops = अणु
 	.get_functions_count	= byt_get_functions_count,
 	.get_function_name	= byt_get_function_name,
 	.get_function_groups	= byt_get_function_groups,
 	.set_mux		= byt_set_mux,
 	.gpio_request_enable	= byt_gpio_request_enable,
-	.gpio_disable_free	= byt_gpio_disable_free,
+	.gpio_disable_मुक्त	= byt_gpio_disable_मुक्त,
 	.gpio_set_direction	= byt_gpio_set_direction,
-};
+पूर्ण;
 
-static void byt_get_pull_strength(u32 reg, u16 *strength)
-{
-	switch (reg & BYT_PULL_STR_MASK) {
-	case BYT_PULL_STR_2K:
+अटल व्योम byt_get_pull_strength(u32 reg, u16 *strength)
+अणु
+	चयन (reg & BYT_PULL_STR_MASK) अणु
+	हाल BYT_PULL_STR_2K:
 		*strength = 2000;
-		break;
-	case BYT_PULL_STR_10K:
+		अवरोध;
+	हाल BYT_PULL_STR_10K:
 		*strength = 10000;
-		break;
-	case BYT_PULL_STR_20K:
+		अवरोध;
+	हाल BYT_PULL_STR_20K:
 		*strength = 20000;
-		break;
-	case BYT_PULL_STR_40K:
+		अवरोध;
+	हाल BYT_PULL_STR_40K:
 		*strength = 40000;
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static int byt_set_pull_strength(u32 *reg, u16 strength)
-{
+अटल पूर्णांक byt_set_pull_strength(u32 *reg, u16 strength)
+अणु
 	*reg &= ~BYT_PULL_STR_MASK;
 
-	switch (strength) {
-	case 2000:
+	चयन (strength) अणु
+	हाल 2000:
 		*reg |= BYT_PULL_STR_2K;
-		break;
-	case 10000:
+		अवरोध;
+	हाल 10000:
 		*reg |= BYT_PULL_STR_10K;
-		break;
-	case 20000:
+		अवरोध;
+	हाल 20000:
 		*reg |= BYT_PULL_STR_20K;
-		break;
-	case 40000:
+		अवरोध;
+	हाल 40000:
 		*reg |= BYT_PULL_STR_40K;
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int byt_pin_config_get(struct pinctrl_dev *pctl_dev, unsigned int offset,
-			      unsigned long *config)
-{
-	struct intel_pinctrl *vg = pinctrl_dev_get_drvdata(pctl_dev);
-	enum pin_config_param param = pinconf_to_config_param(*config);
-	void __iomem *conf_reg = byt_gpio_reg(vg, offset, BYT_CONF0_REG);
-	void __iomem *val_reg = byt_gpio_reg(vg, offset, BYT_VAL_REG);
-	void __iomem *db_reg = byt_gpio_reg(vg, offset, BYT_DEBOUNCE_REG);
-	unsigned long flags;
+अटल पूर्णांक byt_pin_config_get(काष्ठा pinctrl_dev *pctl_dev, अचिन्हित पूर्णांक offset,
+			      अचिन्हित दीर्घ *config)
+अणु
+	काष्ठा पूर्णांकel_pinctrl *vg = pinctrl_dev_get_drvdata(pctl_dev);
+	क्रमागत pin_config_param param = pinconf_to_config_param(*config);
+	व्योम __iomem *conf_reg = byt_gpio_reg(vg, offset, BYT_CONF0_REG);
+	व्योम __iomem *val_reg = byt_gpio_reg(vg, offset, BYT_VAL_REG);
+	व्योम __iomem *db_reg = byt_gpio_reg(vg, offset, BYT_DEBOUNCE_REG);
+	अचिन्हित दीर्घ flags;
 	u32 conf, pull, val, debounce;
 	u16 arg = 0;
 
 	raw_spin_lock_irqsave(&byt_lock, flags);
-	conf = readl(conf_reg);
+	conf = पढ़ोl(conf_reg);
 	pull = conf & BYT_PULL_ASSIGN_MASK;
-	val = readl(val_reg);
+	val = पढ़ोl(val_reg);
 	raw_spin_unlock_irqrestore(&byt_lock, flags);
 
-	switch (param) {
-	case PIN_CONFIG_BIAS_DISABLE:
-		if (pull)
-			return -EINVAL;
-		break;
-	case PIN_CONFIG_BIAS_PULL_DOWN:
+	चयन (param) अणु
+	हाल PIN_CONFIG_BIAS_DISABLE:
+		अगर (pull)
+			वापस -EINVAL;
+		अवरोध;
+	हाल PIN_CONFIG_BIAS_PULL_DOWN:
 		/* Pull assignment is only applicable in input mode */
-		if ((val & BYT_INPUT_EN) || pull != BYT_PULL_ASSIGN_DOWN)
-			return -EINVAL;
+		अगर ((val & BYT_INPUT_EN) || pull != BYT_PULL_ASSIGN_DOWN)
+			वापस -EINVAL;
 
 		byt_get_pull_strength(conf, &arg);
 
-		break;
-	case PIN_CONFIG_BIAS_PULL_UP:
+		अवरोध;
+	हाल PIN_CONFIG_BIAS_PULL_UP:
 		/* Pull assignment is only applicable in input mode */
-		if ((val & BYT_INPUT_EN) || pull != BYT_PULL_ASSIGN_UP)
-			return -EINVAL;
+		अगर ((val & BYT_INPUT_EN) || pull != BYT_PULL_ASSIGN_UP)
+			वापस -EINVAL;
 
 		byt_get_pull_strength(conf, &arg);
 
-		break;
-	case PIN_CONFIG_INPUT_DEBOUNCE:
-		if (!(conf & BYT_DEBOUNCE_EN))
-			return -EINVAL;
+		अवरोध;
+	हाल PIN_CONFIG_INPUT_DEBOUNCE:
+		अगर (!(conf & BYT_DEBOUNCE_EN))
+			वापस -EINVAL;
 
 		raw_spin_lock_irqsave(&byt_lock, flags);
-		debounce = readl(db_reg);
+		debounce = पढ़ोl(db_reg);
 		raw_spin_unlock_irqrestore(&byt_lock, flags);
 
-		switch (debounce & BYT_DEBOUNCE_PULSE_MASK) {
-		case BYT_DEBOUNCE_PULSE_375US:
+		चयन (debounce & BYT_DEBOUNCE_PULSE_MASK) अणु
+		हाल BYT_DEBOUNCE_PULSE_375US:
 			arg = 375;
-			break;
-		case BYT_DEBOUNCE_PULSE_750US:
+			अवरोध;
+		हाल BYT_DEBOUNCE_PULSE_750US:
 			arg = 750;
-			break;
-		case BYT_DEBOUNCE_PULSE_1500US:
+			अवरोध;
+		हाल BYT_DEBOUNCE_PULSE_1500US:
 			arg = 1500;
-			break;
-		case BYT_DEBOUNCE_PULSE_3MS:
+			अवरोध;
+		हाल BYT_DEBOUNCE_PULSE_3MS:
 			arg = 3000;
-			break;
-		case BYT_DEBOUNCE_PULSE_6MS:
+			अवरोध;
+		हाल BYT_DEBOUNCE_PULSE_6MS:
 			arg = 6000;
-			break;
-		case BYT_DEBOUNCE_PULSE_12MS:
+			अवरोध;
+		हाल BYT_DEBOUNCE_PULSE_12MS:
 			arg = 12000;
-			break;
-		case BYT_DEBOUNCE_PULSE_24MS:
+			अवरोध;
+		हाल BYT_DEBOUNCE_PULSE_24MS:
 			arg = 24000;
-			break;
-		default:
-			return -EINVAL;
-		}
+			अवरोध;
+		शेष:
+			वापस -EINVAL;
+		पूर्ण
 
-		break;
-	default:
-		return -ENOTSUPP;
-	}
+		अवरोध;
+	शेष:
+		वापस -ENOTSUPP;
+	पूर्ण
 
 	*config = pinconf_to_config_packed(param, arg);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int byt_pin_config_set(struct pinctrl_dev *pctl_dev,
-			      unsigned int offset,
-			      unsigned long *configs,
-			      unsigned int num_configs)
-{
-	struct intel_pinctrl *vg = pinctrl_dev_get_drvdata(pctl_dev);
-	unsigned int param, arg;
-	void __iomem *conf_reg = byt_gpio_reg(vg, offset, BYT_CONF0_REG);
-	void __iomem *val_reg = byt_gpio_reg(vg, offset, BYT_VAL_REG);
-	void __iomem *db_reg = byt_gpio_reg(vg, offset, BYT_DEBOUNCE_REG);
-	unsigned long flags;
+अटल पूर्णांक byt_pin_config_set(काष्ठा pinctrl_dev *pctl_dev,
+			      अचिन्हित पूर्णांक offset,
+			      अचिन्हित दीर्घ *configs,
+			      अचिन्हित पूर्णांक num_configs)
+अणु
+	काष्ठा पूर्णांकel_pinctrl *vg = pinctrl_dev_get_drvdata(pctl_dev);
+	अचिन्हित पूर्णांक param, arg;
+	व्योम __iomem *conf_reg = byt_gpio_reg(vg, offset, BYT_CONF0_REG);
+	व्योम __iomem *val_reg = byt_gpio_reg(vg, offset, BYT_VAL_REG);
+	व्योम __iomem *db_reg = byt_gpio_reg(vg, offset, BYT_DEBOUNCE_REG);
+	अचिन्हित दीर्घ flags;
 	u32 conf, val, debounce;
-	int i, ret = 0;
+	पूर्णांक i, ret = 0;
 
 	raw_spin_lock_irqsave(&byt_lock, flags);
 
-	conf = readl(conf_reg);
-	val = readl(val_reg);
+	conf = पढ़ोl(conf_reg);
+	val = पढ़ोl(val_reg);
 
-	for (i = 0; i < num_configs; i++) {
+	क्रम (i = 0; i < num_configs; i++) अणु
 		param = pinconf_to_config_param(configs[i]);
 		arg = pinconf_to_config_argument(configs[i]);
 
-		switch (param) {
-		case PIN_CONFIG_BIAS_DISABLE:
+		चयन (param) अणु
+		हाल PIN_CONFIG_BIAS_DISABLE:
 			conf &= ~BYT_PULL_ASSIGN_MASK;
-			break;
-		case PIN_CONFIG_BIAS_PULL_DOWN:
-			/* Set default strength value in case none is given */
-			if (arg == 1)
+			अवरोध;
+		हाल PIN_CONFIG_BIAS_PULL_DOWN:
+			/* Set शेष strength value in हाल none is given */
+			अगर (arg == 1)
 				arg = 2000;
 
 			/*
 			 * Pull assignment is only applicable in input mode. If
 			 * chip is not in input mode, set it and warn about it.
 			 */
-			if (val & BYT_INPUT_EN) {
+			अगर (val & BYT_INPUT_EN) अणु
 				val &= ~BYT_INPUT_EN;
-				writel(val, val_reg);
+				ग_लिखोl(val, val_reg);
 				dev_warn(vg->dev,
 					 "pin %u forcibly set to input mode\n",
 					 offset);
-			}
+			पूर्ण
 
 			conf &= ~BYT_PULL_ASSIGN_MASK;
 			conf |= BYT_PULL_ASSIGN_DOWN;
 			ret = byt_set_pull_strength(&conf, arg);
 
-			break;
-		case PIN_CONFIG_BIAS_PULL_UP:
-			/* Set default strength value in case none is given */
-			if (arg == 1)
+			अवरोध;
+		हाल PIN_CONFIG_BIAS_PULL_UP:
+			/* Set शेष strength value in हाल none is given */
+			अगर (arg == 1)
 				arg = 2000;
 
 			/*
 			 * Pull assignment is only applicable in input mode. If
 			 * chip is not in input mode, set it and warn about it.
 			 */
-			if (val & BYT_INPUT_EN) {
+			अगर (val & BYT_INPUT_EN) अणु
 				val &= ~BYT_INPUT_EN;
-				writel(val, val_reg);
+				ग_लिखोl(val, val_reg);
 				dev_warn(vg->dev,
 					 "pin %u forcibly set to input mode\n",
 					 offset);
-			}
+			पूर्ण
 
 			conf &= ~BYT_PULL_ASSIGN_MASK;
 			conf |= BYT_PULL_ASSIGN_UP;
 			ret = byt_set_pull_strength(&conf, arg);
 
-			break;
-		case PIN_CONFIG_INPUT_DEBOUNCE:
-			debounce = readl(db_reg);
+			अवरोध;
+		हाल PIN_CONFIG_INPUT_DEBOUNCE:
+			debounce = पढ़ोl(db_reg);
 
-			if (arg)
+			अगर (arg)
 				conf |= BYT_DEBOUNCE_EN;
-			else
+			अन्यथा
 				conf &= ~BYT_DEBOUNCE_EN;
 
-			switch (arg) {
-			case 375:
+			चयन (arg) अणु
+			हाल 375:
 				debounce &= ~BYT_DEBOUNCE_PULSE_MASK;
 				debounce |= BYT_DEBOUNCE_PULSE_375US;
-				break;
-			case 750:
+				अवरोध;
+			हाल 750:
 				debounce &= ~BYT_DEBOUNCE_PULSE_MASK;
 				debounce |= BYT_DEBOUNCE_PULSE_750US;
-				break;
-			case 1500:
+				अवरोध;
+			हाल 1500:
 				debounce &= ~BYT_DEBOUNCE_PULSE_MASK;
 				debounce |= BYT_DEBOUNCE_PULSE_1500US;
-				break;
-			case 3000:
+				अवरोध;
+			हाल 3000:
 				debounce &= ~BYT_DEBOUNCE_PULSE_MASK;
 				debounce |= BYT_DEBOUNCE_PULSE_3MS;
-				break;
-			case 6000:
+				अवरोध;
+			हाल 6000:
 				debounce &= ~BYT_DEBOUNCE_PULSE_MASK;
 				debounce |= BYT_DEBOUNCE_PULSE_6MS;
-				break;
-			case 12000:
+				अवरोध;
+			हाल 12000:
 				debounce &= ~BYT_DEBOUNCE_PULSE_MASK;
 				debounce |= BYT_DEBOUNCE_PULSE_12MS;
-				break;
-			case 24000:
+				अवरोध;
+			हाल 24000:
 				debounce &= ~BYT_DEBOUNCE_PULSE_MASK;
 				debounce |= BYT_DEBOUNCE_PULSE_24MS;
-				break;
-			default:
-				if (arg)
+				अवरोध;
+			शेष:
+				अगर (arg)
 					ret = -EINVAL;
-				break;
-			}
+				अवरोध;
+			पूर्ण
 
-			if (!ret)
-				writel(debounce, db_reg);
-			break;
-		default:
+			अगर (!ret)
+				ग_लिखोl(debounce, db_reg);
+			अवरोध;
+		शेष:
 			ret = -ENOTSUPP;
-		}
+		पूर्ण
 
-		if (ret)
-			break;
-	}
+		अगर (ret)
+			अवरोध;
+	पूर्ण
 
-	if (!ret)
-		writel(conf, conf_reg);
+	अगर (!ret)
+		ग_लिखोl(conf, conf_reg);
 
 	raw_spin_unlock_irqrestore(&byt_lock, flags);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const struct pinconf_ops byt_pinconf_ops = {
+अटल स्थिर काष्ठा pinconf_ops byt_pinconf_ops = अणु
 	.is_generic	= true,
 	.pin_config_get	= byt_pin_config_get,
 	.pin_config_set	= byt_pin_config_set,
-};
+पूर्ण;
 
-static const struct pinctrl_desc byt_pinctrl_desc = {
+अटल स्थिर काष्ठा pinctrl_desc byt_pinctrl_desc = अणु
 	.pctlops	= &byt_pinctrl_ops,
 	.pmxops		= &byt_pinmux_ops,
 	.confops	= &byt_pinconf_ops,
 	.owner		= THIS_MODULE,
-};
+पूर्ण;
 
-static int byt_gpio_get(struct gpio_chip *chip, unsigned int offset)
-{
-	struct intel_pinctrl *vg = gpiochip_get_data(chip);
-	void __iomem *reg = byt_gpio_reg(vg, offset, BYT_VAL_REG);
-	unsigned long flags;
+अटल पूर्णांक byt_gpio_get(काष्ठा gpio_chip *chip, अचिन्हित पूर्णांक offset)
+अणु
+	काष्ठा पूर्णांकel_pinctrl *vg = gpiochip_get_data(chip);
+	व्योम __iomem *reg = byt_gpio_reg(vg, offset, BYT_VAL_REG);
+	अचिन्हित दीर्घ flags;
 	u32 val;
 
 	raw_spin_lock_irqsave(&byt_lock, flags);
-	val = readl(reg);
+	val = पढ़ोl(reg);
 	raw_spin_unlock_irqrestore(&byt_lock, flags);
 
-	return !!(val & BYT_LEVEL);
-}
+	वापस !!(val & BYT_LEVEL);
+पूर्ण
 
-static void byt_gpio_set(struct gpio_chip *chip, unsigned int offset, int value)
-{
-	struct intel_pinctrl *vg = gpiochip_get_data(chip);
-	void __iomem *reg = byt_gpio_reg(vg, offset, BYT_VAL_REG);
-	unsigned long flags;
+अटल व्योम byt_gpio_set(काष्ठा gpio_chip *chip, अचिन्हित पूर्णांक offset, पूर्णांक value)
+अणु
+	काष्ठा पूर्णांकel_pinctrl *vg = gpiochip_get_data(chip);
+	व्योम __iomem *reg = byt_gpio_reg(vg, offset, BYT_VAL_REG);
+	अचिन्हित दीर्घ flags;
 	u32 old_val;
 
-	if (!reg)
-		return;
+	अगर (!reg)
+		वापस;
 
 	raw_spin_lock_irqsave(&byt_lock, flags);
-	old_val = readl(reg);
-	if (value)
-		writel(old_val | BYT_LEVEL, reg);
-	else
-		writel(old_val & ~BYT_LEVEL, reg);
+	old_val = पढ़ोl(reg);
+	अगर (value)
+		ग_लिखोl(old_val | BYT_LEVEL, reg);
+	अन्यथा
+		ग_लिखोl(old_val & ~BYT_LEVEL, reg);
 	raw_spin_unlock_irqrestore(&byt_lock, flags);
-}
+पूर्ण
 
-static int byt_gpio_get_direction(struct gpio_chip *chip, unsigned int offset)
-{
-	struct intel_pinctrl *vg = gpiochip_get_data(chip);
-	void __iomem *reg = byt_gpio_reg(vg, offset, BYT_VAL_REG);
-	unsigned long flags;
+अटल पूर्णांक byt_gpio_get_direction(काष्ठा gpio_chip *chip, अचिन्हित पूर्णांक offset)
+अणु
+	काष्ठा पूर्णांकel_pinctrl *vg = gpiochip_get_data(chip);
+	व्योम __iomem *reg = byt_gpio_reg(vg, offset, BYT_VAL_REG);
+	अचिन्हित दीर्घ flags;
 	u32 value;
 
-	if (!reg)
-		return -EINVAL;
+	अगर (!reg)
+		वापस -EINVAL;
 
 	raw_spin_lock_irqsave(&byt_lock, flags);
-	value = readl(reg);
+	value = पढ़ोl(reg);
 	raw_spin_unlock_irqrestore(&byt_lock, flags);
 
-	if (!(value & BYT_OUTPUT_EN))
-		return GPIO_LINE_DIRECTION_OUT;
-	if (!(value & BYT_INPUT_EN))
-		return GPIO_LINE_DIRECTION_IN;
+	अगर (!(value & BYT_OUTPUT_EN))
+		वापस GPIO_LINE_सूचीECTION_OUT;
+	अगर (!(value & BYT_INPUT_EN))
+		वापस GPIO_LINE_सूचीECTION_IN;
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static int byt_gpio_direction_input(struct gpio_chip *chip, unsigned int offset)
-{
-	struct intel_pinctrl *vg = gpiochip_get_data(chip);
-	void __iomem *val_reg = byt_gpio_reg(vg, offset, BYT_VAL_REG);
-	unsigned long flags;
+अटल पूर्णांक byt_gpio_direction_input(काष्ठा gpio_chip *chip, अचिन्हित पूर्णांक offset)
+अणु
+	काष्ठा पूर्णांकel_pinctrl *vg = gpiochip_get_data(chip);
+	व्योम __iomem *val_reg = byt_gpio_reg(vg, offset, BYT_VAL_REG);
+	अचिन्हित दीर्घ flags;
 	u32 reg;
 
 	raw_spin_lock_irqsave(&byt_lock, flags);
 
-	reg = readl(val_reg);
-	reg &= ~BYT_DIR_MASK;
+	reg = पढ़ोl(val_reg);
+	reg &= ~BYT_सूची_MASK;
 	reg |= BYT_OUTPUT_EN;
-	writel(reg, val_reg);
+	ग_लिखोl(reg, val_reg);
 
 	raw_spin_unlock_irqrestore(&byt_lock, flags);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * Note despite the temptation this MUST NOT be converted into a call to
- * pinctrl_gpio_direction_output() + byt_gpio_set() that does not work this
- * MUST be done as a single BYT_VAL_REG register write.
- * See the commit message of the commit adding this comment for details.
+ * Note despite the temptation this MUST NOT be converted पूर्णांकo a call to
+ * pinctrl_gpio_direction_output() + byt_gpio_set() that करोes not work this
+ * MUST be करोne as a single BYT_VAL_REG रेजिस्टर ग_लिखो.
+ * See the commit message of the commit adding this comment क्रम details.
  */
-static int byt_gpio_direction_output(struct gpio_chip *chip,
-				     unsigned int offset, int value)
-{
-	struct intel_pinctrl *vg = gpiochip_get_data(chip);
-	void __iomem *val_reg = byt_gpio_reg(vg, offset, BYT_VAL_REG);
-	unsigned long flags;
+अटल पूर्णांक byt_gpio_direction_output(काष्ठा gpio_chip *chip,
+				     अचिन्हित पूर्णांक offset, पूर्णांक value)
+अणु
+	काष्ठा पूर्णांकel_pinctrl *vg = gpiochip_get_data(chip);
+	व्योम __iomem *val_reg = byt_gpio_reg(vg, offset, BYT_VAL_REG);
+	अचिन्हित दीर्घ flags;
 	u32 reg;
 
 	raw_spin_lock_irqsave(&byt_lock, flags);
 
 	byt_gpio_direct_irq_check(vg, offset);
 
-	reg = readl(val_reg);
-	reg &= ~BYT_DIR_MASK;
-	if (value)
+	reg = पढ़ोl(val_reg);
+	reg &= ~BYT_सूची_MASK;
+	अगर (value)
 		reg |= BYT_LEVEL;
-	else
+	अन्यथा
 		reg &= ~BYT_LEVEL;
 
-	writel(reg, val_reg);
+	ग_लिखोl(reg, val_reg);
 
 	raw_spin_unlock_irqrestore(&byt_lock, flags);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void byt_gpio_dbg_show(struct seq_file *s, struct gpio_chip *chip)
-{
-	struct intel_pinctrl *vg = gpiochip_get_data(chip);
-	int i;
+अटल व्योम byt_gpio_dbg_show(काष्ठा seq_file *s, काष्ठा gpio_chip *chip)
+अणु
+	काष्ठा पूर्णांकel_pinctrl *vg = gpiochip_get_data(chip);
+	पूर्णांक i;
 	u32 conf0, val;
 
-	for (i = 0; i < vg->soc->npins; i++) {
-		const struct intel_community *comm;
-		const char *pull_str = NULL;
-		const char *pull = NULL;
-		void __iomem *reg;
-		unsigned long flags;
-		const char *label;
-		unsigned int pin;
+	क्रम (i = 0; i < vg->soc->npins; i++) अणु
+		स्थिर काष्ठा पूर्णांकel_community *comm;
+		स्थिर अक्षर *pull_str = शून्य;
+		स्थिर अक्षर *pull = शून्य;
+		व्योम __iomem *reg;
+		अचिन्हित दीर्घ flags;
+		स्थिर अक्षर *label;
+		अचिन्हित पूर्णांक pin;
 
 		raw_spin_lock_irqsave(&byt_lock, flags);
 		pin = vg->soc->pins[i].number;
 		reg = byt_gpio_reg(vg, pin, BYT_CONF0_REG);
-		if (!reg) {
-			seq_printf(s,
+		अगर (!reg) अणु
+			seq_म_लिखो(s,
 				   "Could not retrieve pin %i conf0 reg\n",
 				   pin);
 			raw_spin_unlock_irqrestore(&byt_lock, flags);
-			continue;
-		}
-		conf0 = readl(reg);
+			जारी;
+		पूर्ण
+		conf0 = पढ़ोl(reg);
 
 		reg = byt_gpio_reg(vg, pin, BYT_VAL_REG);
-		if (!reg) {
-			seq_printf(s,
+		अगर (!reg) अणु
+			seq_म_लिखो(s,
 				   "Could not retrieve pin %i val reg\n", pin);
 			raw_spin_unlock_irqrestore(&byt_lock, flags);
-			continue;
-		}
-		val = readl(reg);
+			जारी;
+		पूर्ण
+		val = पढ़ोl(reg);
 		raw_spin_unlock_irqrestore(&byt_lock, flags);
 
 		comm = byt_get_community(vg, pin);
-		if (!comm) {
-			seq_printf(s,
+		अगर (!comm) अणु
+			seq_म_लिखो(s,
 				   "Could not get community for pin %i\n", pin);
-			continue;
-		}
+			जारी;
+		पूर्ण
 		label = gpiochip_is_requested(chip, i);
-		if (!label)
+		अगर (!label)
 			label = "Unrequested";
 
-		switch (conf0 & BYT_PULL_ASSIGN_MASK) {
-		case BYT_PULL_ASSIGN_UP:
+		चयन (conf0 & BYT_PULL_ASSIGN_MASK) अणु
+		हाल BYT_PULL_ASSIGN_UP:
 			pull = "up";
-			break;
-		case BYT_PULL_ASSIGN_DOWN:
+			अवरोध;
+		हाल BYT_PULL_ASSIGN_DOWN:
 			pull = "down";
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		switch (conf0 & BYT_PULL_STR_MASK) {
-		case BYT_PULL_STR_2K:
+		चयन (conf0 & BYT_PULL_STR_MASK) अणु
+		हाल BYT_PULL_STR_2K:
 			pull_str = "2k";
-			break;
-		case BYT_PULL_STR_10K:
+			अवरोध;
+		हाल BYT_PULL_STR_10K:
 			pull_str = "10k";
-			break;
-		case BYT_PULL_STR_20K:
+			अवरोध;
+		हाल BYT_PULL_STR_20K:
 			pull_str = "20k";
-			break;
-		case BYT_PULL_STR_40K:
+			अवरोध;
+		हाल BYT_PULL_STR_40K:
 			pull_str = "40k";
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		seq_printf(s,
+		seq_म_लिखो(s,
 			   " gpio-%-3d (%-20.20s) %s %s %s pad-%-3d offset:0x%03x mux:%d %s%s%s",
 			   pin,
 			   label,
@@ -1310,22 +1311,22 @@ static void byt_gpio_dbg_show(struct seq_file *s, struct gpio_chip *chip)
 			   conf0 & BYT_TRIG_POS ? " rise" : "     ",
 			   conf0 & BYT_TRIG_LVL ? " level" : "      ");
 
-		if (pull && pull_str)
-			seq_printf(s, " %-4s %-3s", pull, pull_str);
-		else
-			seq_puts(s, "          ");
+		अगर (pull && pull_str)
+			seq_म_लिखो(s, " %-4s %-3s", pull, pull_str);
+		अन्यथा
+			seq_माला_दो(s, "          ");
 
-		if (conf0 & BYT_IODEN)
-			seq_puts(s, " open-drain");
+		अगर (conf0 & BYT_IODEN)
+			seq_माला_दो(s, " open-drain");
 
-		seq_puts(s, "\n");
-	}
-}
+		seq_माला_दो(s, "\n");
+	पूर्ण
+पूर्ण
 
-static const struct gpio_chip byt_gpio_chip = {
+अटल स्थिर काष्ठा gpio_chip byt_gpio_chip = अणु
 	.owner			= THIS_MODULE,
 	.request		= gpiochip_generic_request,
-	.free			= gpiochip_generic_free,
+	.मुक्त			= gpiochip_generic_मुक्त,
 	.get_direction		= byt_gpio_get_direction,
 	.direction_input	= byt_gpio_direction_input,
 	.direction_output	= byt_gpio_direction_output,
@@ -1333,225 +1334,225 @@ static const struct gpio_chip byt_gpio_chip = {
 	.set			= byt_gpio_set,
 	.set_config		= gpiochip_generic_config,
 	.dbg_show		= byt_gpio_dbg_show,
-};
+पूर्ण;
 
-static void byt_irq_ack(struct irq_data *d)
-{
-	struct gpio_chip *gc = irq_data_get_irq_chip_data(d);
-	struct intel_pinctrl *vg = gpiochip_get_data(gc);
-	unsigned int offset = irqd_to_hwirq(d);
-	void __iomem *reg;
+अटल व्योम byt_irq_ack(काष्ठा irq_data *d)
+अणु
+	काष्ठा gpio_chip *gc = irq_data_get_irq_chip_data(d);
+	काष्ठा पूर्णांकel_pinctrl *vg = gpiochip_get_data(gc);
+	अचिन्हित पूर्णांक offset = irqd_to_hwirq(d);
+	व्योम __iomem *reg;
 
 	reg = byt_gpio_reg(vg, offset, BYT_INT_STAT_REG);
-	if (!reg)
-		return;
+	अगर (!reg)
+		वापस;
 
 	raw_spin_lock(&byt_lock);
-	writel(BIT(offset % 32), reg);
+	ग_लिखोl(BIT(offset % 32), reg);
 	raw_spin_unlock(&byt_lock);
-}
+पूर्ण
 
-static void byt_irq_mask(struct irq_data *d)
-{
-	struct gpio_chip *gc = irq_data_get_irq_chip_data(d);
-	struct intel_pinctrl *vg = gpiochip_get_data(gc);
+अटल व्योम byt_irq_mask(काष्ठा irq_data *d)
+अणु
+	काष्ठा gpio_chip *gc = irq_data_get_irq_chip_data(d);
+	काष्ठा पूर्णांकel_pinctrl *vg = gpiochip_get_data(gc);
 
 	byt_gpio_clear_triggering(vg, irqd_to_hwirq(d));
-}
+पूर्ण
 
-static void byt_irq_unmask(struct irq_data *d)
-{
-	struct gpio_chip *gc = irq_data_get_irq_chip_data(d);
-	struct intel_pinctrl *vg = gpiochip_get_data(gc);
-	unsigned int offset = irqd_to_hwirq(d);
-	unsigned long flags;
-	void __iomem *reg;
+अटल व्योम byt_irq_unmask(काष्ठा irq_data *d)
+अणु
+	काष्ठा gpio_chip *gc = irq_data_get_irq_chip_data(d);
+	काष्ठा पूर्णांकel_pinctrl *vg = gpiochip_get_data(gc);
+	अचिन्हित पूर्णांक offset = irqd_to_hwirq(d);
+	अचिन्हित दीर्घ flags;
+	व्योम __iomem *reg;
 	u32 value;
 
 	reg = byt_gpio_reg(vg, offset, BYT_CONF0_REG);
-	if (!reg)
-		return;
+	अगर (!reg)
+		वापस;
 
 	raw_spin_lock_irqsave(&byt_lock, flags);
-	value = readl(reg);
+	value = पढ़ोl(reg);
 
-	switch (irqd_get_trigger_type(d)) {
-	case IRQ_TYPE_LEVEL_HIGH:
+	चयन (irqd_get_trigger_type(d)) अणु
+	हाल IRQ_TYPE_LEVEL_HIGH:
 		value |= BYT_TRIG_LVL;
 		fallthrough;
-	case IRQ_TYPE_EDGE_RISING:
+	हाल IRQ_TYPE_EDGE_RISING:
 		value |= BYT_TRIG_POS;
-		break;
-	case IRQ_TYPE_LEVEL_LOW:
+		अवरोध;
+	हाल IRQ_TYPE_LEVEL_LOW:
 		value |= BYT_TRIG_LVL;
 		fallthrough;
-	case IRQ_TYPE_EDGE_FALLING:
+	हाल IRQ_TYPE_EDGE_FALLING:
 		value |= BYT_TRIG_NEG;
-		break;
-	case IRQ_TYPE_EDGE_BOTH:
+		अवरोध;
+	हाल IRQ_TYPE_EDGE_BOTH:
 		value |= (BYT_TRIG_NEG | BYT_TRIG_POS);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	writel(value, reg);
+	ग_लिखोl(value, reg);
 
 	raw_spin_unlock_irqrestore(&byt_lock, flags);
-}
+पूर्ण
 
-static int byt_irq_type(struct irq_data *d, unsigned int type)
-{
-	struct intel_pinctrl *vg = gpiochip_get_data(irq_data_get_irq_chip_data(d));
+अटल पूर्णांक byt_irq_type(काष्ठा irq_data *d, अचिन्हित पूर्णांक type)
+अणु
+	काष्ठा पूर्णांकel_pinctrl *vg = gpiochip_get_data(irq_data_get_irq_chip_data(d));
 	u32 offset = irqd_to_hwirq(d);
 	u32 value;
-	unsigned long flags;
-	void __iomem *reg = byt_gpio_reg(vg, offset, BYT_CONF0_REG);
+	अचिन्हित दीर्घ flags;
+	व्योम __iomem *reg = byt_gpio_reg(vg, offset, BYT_CONF0_REG);
 
-	if (!reg || offset >= vg->chip.ngpio)
-		return -EINVAL;
+	अगर (!reg || offset >= vg->chip.ngpio)
+		वापस -EINVAL;
 
 	raw_spin_lock_irqsave(&byt_lock, flags);
-	value = readl(reg);
+	value = पढ़ोl(reg);
 
-	WARN(value & BYT_DIRECT_IRQ_EN,
+	WARN(value & BYT_सूचीECT_IRQ_EN,
 	     "Bad pad config for io mode, force direct_irq_en bit clearing");
 
 	/* For level trigges the BYT_TRIG_POS and BYT_TRIG_NEG bits
 	 * are used to indicate high and low level triggering
 	 */
-	value &= ~(BYT_DIRECT_IRQ_EN | BYT_TRIG_POS | BYT_TRIG_NEG |
+	value &= ~(BYT_सूचीECT_IRQ_EN | BYT_TRIG_POS | BYT_TRIG_NEG |
 		   BYT_TRIG_LVL);
 	/* Enable glitch filtering */
 	value |= BYT_GLITCH_FILTER_EN | BYT_GLITCH_F_SLOW_CLK |
 		 BYT_GLITCH_F_FAST_CLK;
 
-	writel(value, reg);
+	ग_लिखोl(value, reg);
 
-	if (type & IRQ_TYPE_EDGE_BOTH)
+	अगर (type & IRQ_TYPE_EDGE_BOTH)
 		irq_set_handler_locked(d, handle_edge_irq);
-	else if (type & IRQ_TYPE_LEVEL_MASK)
+	अन्यथा अगर (type & IRQ_TYPE_LEVEL_MASK)
 		irq_set_handler_locked(d, handle_level_irq);
 
 	raw_spin_unlock_irqrestore(&byt_lock, flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void byt_gpio_irq_handler(struct irq_desc *desc)
-{
-	struct irq_data *data = irq_desc_get_irq_data(desc);
-	struct intel_pinctrl *vg = gpiochip_get_data(irq_desc_get_handler_data(desc));
-	struct irq_chip *chip = irq_data_get_irq_chip(data);
+अटल व्योम byt_gpio_irq_handler(काष्ठा irq_desc *desc)
+अणु
+	काष्ठा irq_data *data = irq_desc_get_irq_data(desc);
+	काष्ठा पूर्णांकel_pinctrl *vg = gpiochip_get_data(irq_desc_get_handler_data(desc));
+	काष्ठा irq_chip *chip = irq_data_get_irq_chip(data);
 	u32 base, pin;
-	void __iomem *reg;
-	unsigned long pending;
-	unsigned int virq;
+	व्योम __iomem *reg;
+	अचिन्हित दीर्घ pending;
+	अचिन्हित पूर्णांक virq;
 
-	/* check from GPIO controller which pin triggered the interrupt */
-	for (base = 0; base < vg->chip.ngpio; base += 32) {
+	/* check from GPIO controller which pin triggered the पूर्णांकerrupt */
+	क्रम (base = 0; base < vg->chip.ngpio; base += 32) अणु
 		reg = byt_gpio_reg(vg, base, BYT_INT_STAT_REG);
 
-		if (!reg) {
+		अगर (!reg) अणु
 			dev_warn(vg->dev,
 				 "Pin %i: could not retrieve interrupt status register\n",
 				 base);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
 		raw_spin_lock(&byt_lock);
-		pending = readl(reg);
+		pending = पढ़ोl(reg);
 		raw_spin_unlock(&byt_lock);
-		for_each_set_bit(pin, &pending, 32) {
-			virq = irq_find_mapping(vg->chip.irq.domain, base + pin);
+		क्रम_each_set_bit(pin, &pending, 32) अणु
+			virq = irq_find_mapping(vg->chip.irq.करोमुख्य, base + pin);
 			generic_handle_irq(virq);
-		}
-	}
+		पूर्ण
+	पूर्ण
 	chip->irq_eoi(data);
-}
+पूर्ण
 
-static void byt_init_irq_valid_mask(struct gpio_chip *chip,
-				    unsigned long *valid_mask,
-				    unsigned int ngpios)
-{
-	struct intel_pinctrl *vg = gpiochip_get_data(chip);
-	void __iomem *reg;
+अटल व्योम byt_init_irq_valid_mask(काष्ठा gpio_chip *chip,
+				    अचिन्हित दीर्घ *valid_mask,
+				    अचिन्हित पूर्णांक ngpios)
+अणु
+	काष्ठा पूर्णांकel_pinctrl *vg = gpiochip_get_data(chip);
+	व्योम __iomem *reg;
 	u32 value;
-	int i;
+	पूर्णांक i;
 
 	/*
-	 * Clear interrupt triggers for all pins that are GPIOs and
-	 * do not use direct IRQ mode. This will prevent spurious
-	 * interrupts from misconfigured pins.
+	 * Clear पूर्णांकerrupt triggers क्रम all pins that are GPIOs and
+	 * करो not use direct IRQ mode. This will prevent spurious
+	 * पूर्णांकerrupts from misconfigured pins.
 	 */
-	for (i = 0; i < vg->soc->npins; i++) {
-		unsigned int pin = vg->soc->pins[i].number;
+	क्रम (i = 0; i < vg->soc->npins; i++) अणु
+		अचिन्हित पूर्णांक pin = vg->soc->pins[i].number;
 
 		reg = byt_gpio_reg(vg, pin, BYT_CONF0_REG);
-		if (!reg) {
+		अगर (!reg) अणु
 			dev_warn(vg->dev,
 				 "Pin %i: could not retrieve conf0 register\n",
 				 i);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		value = readl(reg);
-		if (value & BYT_DIRECT_IRQ_EN) {
+		value = पढ़ोl(reg);
+		अगर (value & BYT_सूचीECT_IRQ_EN) अणु
 			clear_bit(i, valid_mask);
 			dev_dbg(vg->dev, "excluding GPIO %d from IRQ domain\n", i);
-		} else if ((value & BYT_PIN_MUX) == byt_get_gpio_mux(vg, i)) {
+		पूर्ण अन्यथा अगर ((value & BYT_PIN_MUX) == byt_get_gpio_mux(vg, i)) अणु
 			byt_gpio_clear_triggering(vg, i);
 			dev_dbg(vg->dev, "disabling GPIO %d\n", i);
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static int byt_gpio_irq_init_hw(struct gpio_chip *chip)
-{
-	struct intel_pinctrl *vg = gpiochip_get_data(chip);
-	void __iomem *reg;
+अटल पूर्णांक byt_gpio_irq_init_hw(काष्ठा gpio_chip *chip)
+अणु
+	काष्ठा पूर्णांकel_pinctrl *vg = gpiochip_get_data(chip);
+	व्योम __iomem *reg;
 	u32 base, value;
 
-	/* clear interrupt status trigger registers */
-	for (base = 0; base < vg->soc->npins; base += 32) {
+	/* clear पूर्णांकerrupt status trigger रेजिस्टरs */
+	क्रम (base = 0; base < vg->soc->npins; base += 32) अणु
 		reg = byt_gpio_reg(vg, base, BYT_INT_STAT_REG);
 
-		if (!reg) {
+		अगर (!reg) अणु
 			dev_warn(vg->dev,
 				 "Pin %i: could not retrieve irq status reg\n",
 				 base);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		writel(0xffffffff, reg);
-		/* make sure trigger bits are cleared, if not then a pin
+		ग_लिखोl(0xffffffff, reg);
+		/* make sure trigger bits are cleared, अगर not then a pin
 		   might be misconfigured in bios */
-		value = readl(reg);
-		if (value)
+		value = पढ़ोl(reg);
+		अगर (value)
 			dev_err(vg->dev,
 				"GPIO interrupt error, pins misconfigured. INT_STAT%u: 0x%08x\n",
 				base / 32, value);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int byt_gpio_add_pin_ranges(struct gpio_chip *chip)
-{
-	struct intel_pinctrl *vg = gpiochip_get_data(chip);
-	struct device *dev = vg->dev;
-	int ret;
+अटल पूर्णांक byt_gpio_add_pin_ranges(काष्ठा gpio_chip *chip)
+अणु
+	काष्ठा पूर्णांकel_pinctrl *vg = gpiochip_get_data(chip);
+	काष्ठा device *dev = vg->dev;
+	पूर्णांक ret;
 
 	ret = gpiochip_add_pin_range(chip, dev_name(dev), 0, 0, vg->soc->npins);
-	if (ret)
+	अगर (ret)
 		dev_err(dev, "failed to add GPIO pin range\n");
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int byt_gpio_probe(struct intel_pinctrl *vg)
-{
-	struct platform_device *pdev = to_platform_device(vg->dev);
-	struct gpio_chip *gc;
-	int irq, ret;
+अटल पूर्णांक byt_gpio_probe(काष्ठा पूर्णांकel_pinctrl *vg)
+अणु
+	काष्ठा platक्रमm_device *pdev = to_platक्रमm_device(vg->dev);
+	काष्ठा gpio_chip *gc;
+	पूर्णांक irq, ret;
 
 	/* Set up gpio chip */
 	vg->chip	= byt_gpio_chip;
@@ -1563,17 +1564,17 @@ static int byt_gpio_probe(struct intel_pinctrl *vg)
 	gc->parent	= vg->dev;
 	gc->ngpio	= vg->soc->npins;
 
-#ifdef CONFIG_PM_SLEEP
-	vg->context.pads = devm_kcalloc(vg->dev, gc->ngpio, sizeof(*vg->context.pads),
+#अगर_घोषित CONFIG_PM_SLEEP
+	vg->context.pads = devm_kसुस्मृति(vg->dev, gc->ngpio, माप(*vg->context.pads),
 					GFP_KERNEL);
-	if (!vg->context.pads)
-		return -ENOMEM;
-#endif
+	अगर (!vg->context.pads)
+		वापस -ENOMEM;
+#पूर्ण_अगर
 
-	/* set up interrupts  */
-	irq = platform_get_irq_optional(pdev, 0);
-	if (irq > 0) {
-		struct gpio_irq_chip *girq;
+	/* set up पूर्णांकerrupts  */
+	irq = platक्रमm_get_irq_optional(pdev, 0);
+	अगर (irq > 0) अणु
+		काष्ठा gpio_irq_chip *girq;
 
 		vg->irqchip.name = "BYT-GPIO",
 		vg->irqchip.irq_ack = byt_irq_ack,
@@ -1588,213 +1589,213 @@ static int byt_gpio_probe(struct intel_pinctrl *vg)
 		girq->init_valid_mask = byt_init_irq_valid_mask;
 		girq->parent_handler = byt_gpio_irq_handler;
 		girq->num_parents = 1;
-		girq->parents = devm_kcalloc(vg->dev, girq->num_parents,
-					     sizeof(*girq->parents), GFP_KERNEL);
-		if (!girq->parents)
-			return -ENOMEM;
+		girq->parents = devm_kसुस्मृति(vg->dev, girq->num_parents,
+					     माप(*girq->parents), GFP_KERNEL);
+		अगर (!girq->parents)
+			वापस -ENOMEM;
 		girq->parents[0] = irq;
-		girq->default_type = IRQ_TYPE_NONE;
+		girq->शेष_type = IRQ_TYPE_NONE;
 		girq->handler = handle_bad_irq;
-	}
+	पूर्ण
 
 	ret = devm_gpiochip_add_data(vg->dev, gc, vg);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(vg->dev, "failed adding byt-gpio chip\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int byt_set_soc_data(struct intel_pinctrl *vg,
-			    const struct intel_pinctrl_soc_data *soc)
-{
-	struct platform_device *pdev = to_platform_device(vg->dev);
-	int i;
+अटल पूर्णांक byt_set_soc_data(काष्ठा पूर्णांकel_pinctrl *vg,
+			    स्थिर काष्ठा पूर्णांकel_pinctrl_soc_data *soc)
+अणु
+	काष्ठा platक्रमm_device *pdev = to_platक्रमm_device(vg->dev);
+	पूर्णांक i;
 
 	vg->soc = soc;
 
 	vg->ncommunities = vg->soc->ncommunities;
-	vg->communities = devm_kcalloc(vg->dev, vg->ncommunities,
-				       sizeof(*vg->communities), GFP_KERNEL);
-	if (!vg->communities)
-		return -ENOMEM;
+	vg->communities = devm_kसुस्मृति(vg->dev, vg->ncommunities,
+				       माप(*vg->communities), GFP_KERNEL);
+	अगर (!vg->communities)
+		वापस -ENOMEM;
 
-	for (i = 0; i < vg->soc->ncommunities; i++) {
-		struct intel_community *comm = vg->communities + i;
+	क्रम (i = 0; i < vg->soc->ncommunities; i++) अणु
+		काष्ठा पूर्णांकel_community *comm = vg->communities + i;
 
 		*comm = vg->soc->communities[i];
 
-		comm->pad_regs = devm_platform_ioremap_resource(pdev, 0);
-		if (IS_ERR(comm->pad_regs))
-			return PTR_ERR(comm->pad_regs);
-	}
+		comm->pad_regs = devm_platक्रमm_ioremap_resource(pdev, 0);
+		अगर (IS_ERR(comm->pad_regs))
+			वापस PTR_ERR(comm->pad_regs);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct acpi_device_id byt_gpio_acpi_match[] = {
-	{ "INT33B2", (kernel_ulong_t)byt_soc_data },
-	{ "INT33FC", (kernel_ulong_t)byt_soc_data },
-	{ }
-};
+अटल स्थिर काष्ठा acpi_device_id byt_gpio_acpi_match[] = अणु
+	अणु "INT33B2", (kernel_uदीर्घ_t)byt_soc_data पूर्ण,
+	अणु "INT33FC", (kernel_uदीर्घ_t)byt_soc_data पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 
-static int byt_pinctrl_probe(struct platform_device *pdev)
-{
-	const struct intel_pinctrl_soc_data *soc_data;
-	struct device *dev = &pdev->dev;
-	struct intel_pinctrl *vg;
-	int ret;
+अटल पूर्णांक byt_pinctrl_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	स्थिर काष्ठा पूर्णांकel_pinctrl_soc_data *soc_data;
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा पूर्णांकel_pinctrl *vg;
+	पूर्णांक ret;
 
-	soc_data = intel_pinctrl_get_soc_data(pdev);
-	if (IS_ERR(soc_data))
-		return PTR_ERR(soc_data);
+	soc_data = पूर्णांकel_pinctrl_get_soc_data(pdev);
+	अगर (IS_ERR(soc_data))
+		वापस PTR_ERR(soc_data);
 
-	vg = devm_kzalloc(dev, sizeof(*vg), GFP_KERNEL);
-	if (!vg)
-		return -ENOMEM;
+	vg = devm_kzalloc(dev, माप(*vg), GFP_KERNEL);
+	अगर (!vg)
+		वापस -ENOMEM;
 
 	vg->dev = dev;
 	ret = byt_set_soc_data(vg, soc_data);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev, "failed to set soc data\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	vg->pctldesc		= byt_pinctrl_desc;
 	vg->pctldesc.name	= dev_name(dev);
 	vg->pctldesc.pins	= vg->soc->pins;
 	vg->pctldesc.npins	= vg->soc->npins;
 
-	vg->pctldev = devm_pinctrl_register(dev, &vg->pctldesc, vg);
-	if (IS_ERR(vg->pctldev)) {
+	vg->pctldev = devm_pinctrl_रेजिस्टर(dev, &vg->pctldesc, vg);
+	अगर (IS_ERR(vg->pctldev)) अणु
 		dev_err(dev, "failed to register pinctrl driver\n");
-		return PTR_ERR(vg->pctldev);
-	}
+		वापस PTR_ERR(vg->pctldev);
+	पूर्ण
 
 	ret = byt_gpio_probe(vg);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	platform_set_drvdata(pdev, vg);
-	pm_runtime_enable(dev);
+	platक्रमm_set_drvdata(pdev, vg);
+	pm_runसमय_enable(dev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_PM_SLEEP
-static int byt_gpio_suspend(struct device *dev)
-{
-	struct intel_pinctrl *vg = dev_get_drvdata(dev);
-	unsigned long flags;
-	int i;
+#अगर_घोषित CONFIG_PM_SLEEP
+अटल पूर्णांक byt_gpio_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा पूर्णांकel_pinctrl *vg = dev_get_drvdata(dev);
+	अचिन्हित दीर्घ flags;
+	पूर्णांक i;
 
 	raw_spin_lock_irqsave(&byt_lock, flags);
 
-	for (i = 0; i < vg->soc->npins; i++) {
-		void __iomem *reg;
+	क्रम (i = 0; i < vg->soc->npins; i++) अणु
+		व्योम __iomem *reg;
 		u32 value;
-		unsigned int pin = vg->soc->pins[i].number;
+		अचिन्हित पूर्णांक pin = vg->soc->pins[i].number;
 
 		reg = byt_gpio_reg(vg, pin, BYT_CONF0_REG);
-		if (!reg) {
+		अगर (!reg) अणु
 			dev_warn(vg->dev,
 				 "Pin %i: could not retrieve conf0 register\n",
 				 i);
-			continue;
-		}
-		value = readl(reg) & BYT_CONF0_RESTORE_MASK;
+			जारी;
+		पूर्ण
+		value = पढ़ोl(reg) & BYT_CONF0_RESTORE_MASK;
 		vg->context.pads[i].conf0 = value;
 
 		reg = byt_gpio_reg(vg, pin, BYT_VAL_REG);
-		value = readl(reg) & BYT_VAL_RESTORE_MASK;
+		value = पढ़ोl(reg) & BYT_VAL_RESTORE_MASK;
 		vg->context.pads[i].val = value;
-	}
+	पूर्ण
 
 	raw_spin_unlock_irqrestore(&byt_lock, flags);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int byt_gpio_resume(struct device *dev)
-{
-	struct intel_pinctrl *vg = dev_get_drvdata(dev);
-	unsigned long flags;
-	int i;
+अटल पूर्णांक byt_gpio_resume(काष्ठा device *dev)
+अणु
+	काष्ठा पूर्णांकel_pinctrl *vg = dev_get_drvdata(dev);
+	अचिन्हित दीर्घ flags;
+	पूर्णांक i;
 
 	raw_spin_lock_irqsave(&byt_lock, flags);
 
-	for (i = 0; i < vg->soc->npins; i++) {
-		void __iomem *reg;
+	क्रम (i = 0; i < vg->soc->npins; i++) अणु
+		व्योम __iomem *reg;
 		u32 value;
-		unsigned int pin = vg->soc->pins[i].number;
+		अचिन्हित पूर्णांक pin = vg->soc->pins[i].number;
 
 		reg = byt_gpio_reg(vg, pin, BYT_CONF0_REG);
-		if (!reg) {
+		अगर (!reg) अणु
 			dev_warn(vg->dev,
 				 "Pin %i: could not retrieve conf0 register\n",
 				 i);
-			continue;
-		}
-		value = readl(reg);
-		if ((value & BYT_CONF0_RESTORE_MASK) !=
-		     vg->context.pads[i].conf0) {
+			जारी;
+		पूर्ण
+		value = पढ़ोl(reg);
+		अगर ((value & BYT_CONF0_RESTORE_MASK) !=
+		     vg->context.pads[i].conf0) अणु
 			value &= ~BYT_CONF0_RESTORE_MASK;
 			value |= vg->context.pads[i].conf0;
-			writel(value, reg);
+			ग_लिखोl(value, reg);
 			dev_info(dev, "restored pin %d conf0 %#08x", i, value);
-		}
+		पूर्ण
 
 		reg = byt_gpio_reg(vg, pin, BYT_VAL_REG);
-		value = readl(reg);
-		if ((value & BYT_VAL_RESTORE_MASK) !=
-		     vg->context.pads[i].val) {
+		value = पढ़ोl(reg);
+		अगर ((value & BYT_VAL_RESTORE_MASK) !=
+		     vg->context.pads[i].val) अणु
 			u32 v;
 
 			v = value & ~BYT_VAL_RESTORE_MASK;
 			v |= vg->context.pads[i].val;
-			if (v != value) {
-				writel(v, reg);
+			अगर (v != value) अणु
+				ग_लिखोl(v, reg);
 				dev_dbg(dev, "restored pin %d val %#08x\n",
 					i, v);
-			}
-		}
-	}
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
 	raw_spin_unlock_irqrestore(&byt_lock, flags);
-	return 0;
-}
-#endif
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
-#ifdef CONFIG_PM
-static int byt_gpio_runtime_suspend(struct device *dev)
-{
-	return 0;
-}
+#अगर_घोषित CONFIG_PM
+अटल पूर्णांक byt_gpio_runसमय_suspend(काष्ठा device *dev)
+अणु
+	वापस 0;
+पूर्ण
 
-static int byt_gpio_runtime_resume(struct device *dev)
-{
-	return 0;
-}
-#endif
+अटल पूर्णांक byt_gpio_runसमय_resume(काष्ठा device *dev)
+अणु
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
-static const struct dev_pm_ops byt_gpio_pm_ops = {
+अटल स्थिर काष्ठा dev_pm_ops byt_gpio_pm_ops = अणु
 	SET_LATE_SYSTEM_SLEEP_PM_OPS(byt_gpio_suspend, byt_gpio_resume)
-	SET_RUNTIME_PM_OPS(byt_gpio_runtime_suspend, byt_gpio_runtime_resume,
-			   NULL)
-};
+	SET_RUNTIME_PM_OPS(byt_gpio_runसमय_suspend, byt_gpio_runसमय_resume,
+			   शून्य)
+पूर्ण;
 
-static struct platform_driver byt_gpio_driver = {
+अटल काष्ठा platक्रमm_driver byt_gpio_driver = अणु
 	.probe          = byt_pinctrl_probe,
-	.driver         = {
+	.driver         = अणु
 		.name			= "byt_gpio",
 		.pm			= &byt_gpio_pm_ops,
 		.acpi_match_table	= byt_gpio_acpi_match,
 		.suppress_bind_attrs	= true,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static int __init byt_gpio_init(void)
-{
-	return platform_driver_register(&byt_gpio_driver);
-}
+अटल पूर्णांक __init byt_gpio_init(व्योम)
+अणु
+	वापस platक्रमm_driver_रेजिस्टर(&byt_gpio_driver);
+पूर्ण
 subsys_initcall(byt_gpio_init);

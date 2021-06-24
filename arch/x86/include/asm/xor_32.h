@@ -1,35 +1,36 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
-#ifndef _ASM_X86_XOR_32_H
-#define _ASM_X86_XOR_32_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+#अगर_अघोषित _ASM_X86_XOR_32_H
+#घोषणा _ASM_X86_XOR_32_H
 
 /*
- * Optimized RAID-5 checksumming functions for MMX.
+ * Optimized RAID-5 checksumming functions क्रम MMX.
  */
 
 /*
- * High-speed RAID5 checksumming functions utilizing MMX instructions.
+ * High-speed RAID5 checksumming functions utilizing MMX inकाष्ठाions.
  * Copyright (C) 1998 Ingo Molnar.
  */
 
-#define LD(x, y)	"       movq   8*("#x")(%1), %%mm"#y"   ;\n"
-#define ST(x, y)	"       movq %%mm"#y",   8*("#x")(%1)   ;\n"
-#define XO1(x, y)	"       pxor   8*("#x")(%2), %%mm"#y"   ;\n"
-#define XO2(x, y)	"       pxor   8*("#x")(%3), %%mm"#y"   ;\n"
-#define XO3(x, y)	"       pxor   8*("#x")(%4), %%mm"#y"   ;\n"
-#define XO4(x, y)	"       pxor   8*("#x")(%5), %%mm"#y"   ;\n"
+#घोषणा LD(x, y)	"       movq   8*("#x")(%1), %%mm"#y"   ;\n"
+#घोषणा ST(x, y)	"       movq %%mm"#y",   8*("#x")(%1)   ;\n"
+#घोषणा XO1(x, y)	"       pxor   8*("#x")(%2), %%mm"#y"   ;\n"
+#घोषणा XO2(x, y)	"       pxor   8*("#x")(%3), %%mm"#y"   ;\n"
+#घोषणा XO3(x, y)	"       pxor   8*("#x")(%4), %%mm"#y"   ;\n"
+#घोषणा XO4(x, y)	"       pxor   8*("#x")(%5), %%mm"#y"   ;\n"
 
-#include <asm/fpu/api.h>
+#समावेश <यंत्र/fpu/api.h>
 
-static void
-xor_pII_mmx_2(unsigned long bytes, unsigned long *p1, unsigned long *p2)
-{
-	unsigned long lines = bytes >> 7;
+अटल व्योम
+xor_pII_mmx_2(अचिन्हित दीर्घ bytes, अचिन्हित दीर्घ *p1, अचिन्हित दीर्घ *p2)
+अणु
+	अचिन्हित दीर्घ lines = bytes >> 7;
 
 	kernel_fpu_begin();
 
-	asm volatile(
-#undef BLOCK
-#define BLOCK(i)				\
+	यंत्र अस्थिर(
+#अघोषित BLOCK
+#घोषणा BLOCK(i)				\
 	LD(i, 0)				\
 		LD(i + 1, 1)			\
 			LD(i + 2, 2)		\
@@ -61,19 +62,19 @@ xor_pII_mmx_2(unsigned long bytes, unsigned long *p1, unsigned long *p2)
 	: "memory");
 
 	kernel_fpu_end();
-}
+पूर्ण
 
-static void
-xor_pII_mmx_3(unsigned long bytes, unsigned long *p1, unsigned long *p2,
-	      unsigned long *p3)
-{
-	unsigned long lines = bytes >> 7;
+अटल व्योम
+xor_pII_mmx_3(अचिन्हित दीर्घ bytes, अचिन्हित दीर्घ *p1, अचिन्हित दीर्घ *p2,
+	      अचिन्हित दीर्घ *p3)
+अणु
+	अचिन्हित दीर्घ lines = bytes >> 7;
 
 	kernel_fpu_begin();
 
-	asm volatile(
-#undef BLOCK
-#define BLOCK(i)				\
+	यंत्र अस्थिर(
+#अघोषित BLOCK
+#घोषणा BLOCK(i)				\
 	LD(i, 0)				\
 		LD(i + 1, 1)			\
 			LD(i + 2, 2)		\
@@ -110,19 +111,19 @@ xor_pII_mmx_3(unsigned long bytes, unsigned long *p1, unsigned long *p2,
 	: "memory");
 
 	kernel_fpu_end();
-}
+पूर्ण
 
-static void
-xor_pII_mmx_4(unsigned long bytes, unsigned long *p1, unsigned long *p2,
-	      unsigned long *p3, unsigned long *p4)
-{
-	unsigned long lines = bytes >> 7;
+अटल व्योम
+xor_pII_mmx_4(अचिन्हित दीर्घ bytes, अचिन्हित दीर्घ *p1, अचिन्हित दीर्घ *p2,
+	      अचिन्हित दीर्घ *p3, अचिन्हित दीर्घ *p4)
+अणु
+	अचिन्हित दीर्घ lines = bytes >> 7;
 
 	kernel_fpu_begin();
 
-	asm volatile(
-#undef BLOCK
-#define BLOCK(i)				\
+	यंत्र अस्थिर(
+#अघोषित BLOCK
+#घोषणा BLOCK(i)				\
 	LD(i, 0)				\
 		LD(i + 1, 1)			\
 			LD(i + 2, 2)		\
@@ -164,28 +165,28 @@ xor_pII_mmx_4(unsigned long bytes, unsigned long *p1, unsigned long *p2,
 	: "memory");
 
 	kernel_fpu_end();
-}
+पूर्ण
 
 
-static void
-xor_pII_mmx_5(unsigned long bytes, unsigned long *p1, unsigned long *p2,
-	      unsigned long *p3, unsigned long *p4, unsigned long *p5)
-{
-	unsigned long lines = bytes >> 7;
+अटल व्योम
+xor_pII_mmx_5(अचिन्हित दीर्घ bytes, अचिन्हित दीर्घ *p1, अचिन्हित दीर्घ *p2,
+	      अचिन्हित दीर्घ *p3, अचिन्हित दीर्घ *p4, अचिन्हित दीर्घ *p5)
+अणु
+	अचिन्हित दीर्घ lines = bytes >> 7;
 
 	kernel_fpu_begin();
 
-	/* Make sure GCC forgets anything it knows about p4 or p5,
-	   such that it won't pass to the asm volatile below a
-	   register that is shared with any other variable.  That's
-	   because we modify p4 and p5 there, but we can't mark them
-	   as read/write, otherwise we'd overflow the 10-asm-operands
+	/* Make sure GCC क्रममाला_लो anything it knows about p4 or p5,
+	   such that it won't pass to the यंत्र अस्थिर below a
+	   रेजिस्टर that is shared with any other variable.  That's
+	   because we modअगरy p4 and p5 there, but we can't mark them
+	   as पढ़ो/ग_लिखो, otherwise we'd overflow the 10-यंत्र-opeअक्रमs
 	   limit of GCC < 3.1.  */
-	asm("" : "+r" (p4), "+r" (p5));
+	यंत्र("" : "+r" (p4), "+r" (p5));
 
-	asm volatile(
-#undef BLOCK
-#define BLOCK(i)				\
+	यंत्र अस्थिर(
+#अघोषित BLOCK
+#घोषणा BLOCK(i)				\
 	LD(i, 0)				\
 		LD(i + 1, 1)			\
 			LD(i + 2, 2)		\
@@ -231,30 +232,30 @@ xor_pII_mmx_5(unsigned long bytes, unsigned long *p1, unsigned long *p2,
 	: "r" (p4), "r" (p5)
 	: "memory");
 
-	/* p4 and p5 were modified, and now the variables are dead.
-	   Clobber them just to be sure nobody does something stupid
+	/* p4 and p5 were modअगरied, and now the variables are dead.
+	   Clobber them just to be sure nobody करोes something stupid
 	   like assuming they have some legal value.  */
-	asm("" : "=r" (p4), "=r" (p5));
+	यंत्र("" : "=r" (p4), "=r" (p5));
 
 	kernel_fpu_end();
-}
+पूर्ण
 
-#undef LD
-#undef XO1
-#undef XO2
-#undef XO3
-#undef XO4
-#undef ST
-#undef BLOCK
+#अघोषित LD
+#अघोषित XO1
+#अघोषित XO2
+#अघोषित XO3
+#अघोषित XO4
+#अघोषित ST
+#अघोषित BLOCK
 
-static void
-xor_p5_mmx_2(unsigned long bytes, unsigned long *p1, unsigned long *p2)
-{
-	unsigned long lines = bytes >> 6;
+अटल व्योम
+xor_p5_mmx_2(अचिन्हित दीर्घ bytes, अचिन्हित दीर्घ *p1, अचिन्हित दीर्घ *p2)
+अणु
+	अचिन्हित दीर्घ lines = bytes >> 6;
 
 	kernel_fpu_begin();
 
-	asm volatile(
+	यंत्र अस्थिर(
 	" .align 32	             ;\n"
 	" 1:                         ;\n"
 	"       movq   (%1), %%mm0   ;\n"
@@ -292,17 +293,17 @@ xor_p5_mmx_2(unsigned long bytes, unsigned long *p1, unsigned long *p2)
 	: "memory");
 
 	kernel_fpu_end();
-}
+पूर्ण
 
-static void
-xor_p5_mmx_3(unsigned long bytes, unsigned long *p1, unsigned long *p2,
-	     unsigned long *p3)
-{
-	unsigned long lines = bytes >> 6;
+अटल व्योम
+xor_p5_mmx_3(अचिन्हित दीर्घ bytes, अचिन्हित दीर्घ *p1, अचिन्हित दीर्घ *p2,
+	     अचिन्हित दीर्घ *p3)
+अणु
+	अचिन्हित दीर्घ lines = bytes >> 6;
 
 	kernel_fpu_begin();
 
-	asm volatile(
+	यंत्र अस्थिर(
 	" .align 32,0x90             ;\n"
 	" 1:                         ;\n"
 	"       movq   (%1), %%mm0   ;\n"
@@ -349,17 +350,17 @@ xor_p5_mmx_3(unsigned long bytes, unsigned long *p1, unsigned long *p2,
 	: "memory" );
 
 	kernel_fpu_end();
-}
+पूर्ण
 
-static void
-xor_p5_mmx_4(unsigned long bytes, unsigned long *p1, unsigned long *p2,
-	     unsigned long *p3, unsigned long *p4)
-{
-	unsigned long lines = bytes >> 6;
+अटल व्योम
+xor_p5_mmx_4(अचिन्हित दीर्घ bytes, अचिन्हित दीर्घ *p1, अचिन्हित दीर्घ *p2,
+	     अचिन्हित दीर्घ *p3, अचिन्हित दीर्घ *p4)
+अणु
+	अचिन्हित दीर्घ lines = bytes >> 6;
 
 	kernel_fpu_begin();
 
-	asm volatile(
+	यंत्र अस्थिर(
 	" .align 32,0x90             ;\n"
 	" 1:                         ;\n"
 	"       movq   (%1), %%mm0   ;\n"
@@ -415,25 +416,25 @@ xor_p5_mmx_4(unsigned long bytes, unsigned long *p1, unsigned long *p2,
 	: "memory");
 
 	kernel_fpu_end();
-}
+पूर्ण
 
-static void
-xor_p5_mmx_5(unsigned long bytes, unsigned long *p1, unsigned long *p2,
-	     unsigned long *p3, unsigned long *p4, unsigned long *p5)
-{
-	unsigned long lines = bytes >> 6;
+अटल व्योम
+xor_p5_mmx_5(अचिन्हित दीर्घ bytes, अचिन्हित दीर्घ *p1, अचिन्हित दीर्घ *p2,
+	     अचिन्हित दीर्घ *p3, अचिन्हित दीर्घ *p4, अचिन्हित दीर्घ *p5)
+अणु
+	अचिन्हित दीर्घ lines = bytes >> 6;
 
 	kernel_fpu_begin();
 
-	/* Make sure GCC forgets anything it knows about p4 or p5,
-	   such that it won't pass to the asm volatile below a
-	   register that is shared with any other variable.  That's
-	   because we modify p4 and p5 there, but we can't mark them
-	   as read/write, otherwise we'd overflow the 10-asm-operands
+	/* Make sure GCC क्रममाला_लो anything it knows about p4 or p5,
+	   such that it won't pass to the यंत्र अस्थिर below a
+	   रेजिस्टर that is shared with any other variable.  That's
+	   because we modअगरy p4 and p5 there, but we can't mark them
+	   as पढ़ो/ग_लिखो, otherwise we'd overflow the 10-यंत्र-opeअक्रमs
 	   limit of GCC < 3.1.  */
-	asm("" : "+r" (p4), "+r" (p5));
+	यंत्र("" : "+r" (p4), "+r" (p5));
 
-	asm volatile(
+	यंत्र अस्थिर(
 	" .align 32,0x90             ;\n"
 	" 1:                         ;\n"
 	"       movq   (%1), %%mm0   ;\n"
@@ -497,63 +498,63 @@ xor_p5_mmx_5(unsigned long bytes, unsigned long *p1, unsigned long *p2,
 	: "r" (p4), "r" (p5)
 	: "memory");
 
-	/* p4 and p5 were modified, and now the variables are dead.
-	   Clobber them just to be sure nobody does something stupid
+	/* p4 and p5 were modअगरied, and now the variables are dead.
+	   Clobber them just to be sure nobody करोes something stupid
 	   like assuming they have some legal value.  */
-	asm("" : "=r" (p4), "=r" (p5));
+	यंत्र("" : "=r" (p4), "=r" (p5));
 
 	kernel_fpu_end();
-}
+पूर्ण
 
-static struct xor_block_template xor_block_pII_mmx = {
+अटल काष्ठा xor_block_ढाँचा xor_block_pII_mmx = अणु
 	.name = "pII_mmx",
-	.do_2 = xor_pII_mmx_2,
-	.do_3 = xor_pII_mmx_3,
-	.do_4 = xor_pII_mmx_4,
-	.do_5 = xor_pII_mmx_5,
-};
+	.करो_2 = xor_pII_mmx_2,
+	.करो_3 = xor_pII_mmx_3,
+	.करो_4 = xor_pII_mmx_4,
+	.करो_5 = xor_pII_mmx_5,
+पूर्ण;
 
-static struct xor_block_template xor_block_p5_mmx = {
+अटल काष्ठा xor_block_ढाँचा xor_block_p5_mmx = अणु
 	.name = "p5_mmx",
-	.do_2 = xor_p5_mmx_2,
-	.do_3 = xor_p5_mmx_3,
-	.do_4 = xor_p5_mmx_4,
-	.do_5 = xor_p5_mmx_5,
-};
+	.करो_2 = xor_p5_mmx_2,
+	.करो_3 = xor_p5_mmx_3,
+	.करो_4 = xor_p5_mmx_4,
+	.करो_5 = xor_p5_mmx_5,
+पूर्ण;
 
-static struct xor_block_template xor_block_pIII_sse = {
+अटल काष्ठा xor_block_ढाँचा xor_block_pIII_sse = अणु
 	.name = "pIII_sse",
-	.do_2 = xor_sse_2,
-	.do_3 = xor_sse_3,
-	.do_4 = xor_sse_4,
-	.do_5 = xor_sse_5,
-};
+	.करो_2 = xor_sse_2,
+	.करो_3 = xor_sse_3,
+	.करो_4 = xor_sse_4,
+	.करो_5 = xor_sse_5,
+पूर्ण;
 
 /* Also try the AVX routines */
-#include <asm/xor_avx.h>
+#समावेश <यंत्र/xor_avx.h>
 
 /* Also try the generic routines.  */
-#include <asm-generic/xor.h>
+#समावेश <यंत्र-generic/xor.h>
 
-/* We force the use of the SSE xor block because it can write around L2.
-   We may also be able to load into the L1 only depending on how the cpu
+/* We क्रमce the use of the SSE xor block because it can ग_लिखो around L2.
+   We may also be able to load पूर्णांकo the L1 only depending on how the cpu
    deals with a load to a line that is being prefetched.  */
-#undef XOR_TRY_TEMPLATES
-#define XOR_TRY_TEMPLATES				\
-do {							\
+#अघोषित XOR_TRY_TEMPLATES
+#घोषणा XOR_TRY_TEMPLATES				\
+करो अणु							\
 	AVX_XOR_SPEED;					\
-	if (boot_cpu_has(X86_FEATURE_XMM)) {				\
+	अगर (boot_cpu_has(X86_FEATURE_XMM)) अणु				\
 		xor_speed(&xor_block_pIII_sse);		\
 		xor_speed(&xor_block_sse_pf64);		\
-	} else if (boot_cpu_has(X86_FEATURE_MMX)) {	\
+	पूर्ण अन्यथा अगर (boot_cpu_has(X86_FEATURE_MMX)) अणु	\
 		xor_speed(&xor_block_pII_mmx);		\
 		xor_speed(&xor_block_p5_mmx);		\
-	} else {					\
+	पूर्ण अन्यथा अणु					\
 		xor_speed(&xor_block_8regs);		\
 		xor_speed(&xor_block_8regs_p);		\
 		xor_speed(&xor_block_32regs);		\
 		xor_speed(&xor_block_32regs_p);		\
-	}						\
-} while (0)
+	पूर्ण						\
+पूर्ण जबतक (0)
 
-#endif /* _ASM_X86_XOR_32_H */
+#पूर्ण_अगर /* _ASM_X86_XOR_32_H */

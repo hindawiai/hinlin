@@ -1,20 +1,21 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * wm8997.h  --  WM8997 ALSA SoC Audio driver
  *
  * Copyright 2012 Wolfson Microelectronics plc
  *
- * Author: Mark Brown <broonie@opensource.wolfsonmicro.com>
+ * Author: Mark Brown <broonie@खोलोsource.wolfsonmicro.com>
  */
 
-#ifndef _WM8997_H
-#define _WM8997_H
+#अगर_अघोषित _WM8997_H
+#घोषणा _WM8997_H
 
-#include "arizona.h"
+#समावेश "arizona.h"
 
-#define WM8997_FLL1        1
-#define WM8997_FLL2        2
-#define WM8997_FLL1_REFCLK 3
-#define WM8997_FLL2_REFCLK 4
+#घोषणा WM8997_FLL1        1
+#घोषणा WM8997_FLL2        2
+#घोषणा WM8997_FLL1_REFCLK 3
+#घोषणा WM8997_FLL2_REFCLK 4
 
-#endif
+#पूर्ण_अगर

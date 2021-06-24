@@ -1,170 +1,171 @@
-// SPDX-License-Identifier: BSD-3-Clause OR GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: BSD-3-Clause OR GPL-2.0
 /******************************************************************************
  *
- * Module Name: osunixdir - Unix directory access interfaces
+ * Module Name: osunixdir - Unix directory access पूर्णांकerfaces
  *
  * Copyright (C) 2000 - 2021, Intel Corp.
  *
  *****************************************************************************/
 
-#include <acpi/acpi.h>
+#समावेश <acpi/acpi.h>
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <dirent.h>
-#include <fnmatch.h>
-#include <ctype.h>
-#include <sys/stat.h>
+#समावेश <मानकपन.स>
+#समावेश <मानककोष.स>
+#समावेश <माला.स>
+#समावेश <dirent.h>
+#समावेश <fnmatch.h>
+#समावेश <प्रकार.स>
+#समावेश <sys/स्थिति.स>
 
 /*
- * Allocated structure returned from os_open_directory
+ * Allocated काष्ठाure वापसed from os_खोलो_directory
  */
-typedef struct external_find_info {
-	char *dir_pathname;
-	DIR *dir_ptr;
-	char temp_buffer[256];
-	char *wildcard_spec;
-	char requested_file_type;
+प्रकार काष्ठा बाह्यal_find_info अणु
+	अक्षर *dir_pathname;
+	सूची *dir_ptr;
+	अक्षर temp_buffer[256];
+	अक्षर *wildcard_spec;
+	अक्षर requested_file_type;
 
-} external_find_info;
+पूर्ण बाह्यal_find_info;
 
 /*******************************************************************************
  *
- * FUNCTION:    acpi_os_open_directory
+ * FUNCTION:    acpi_os_खोलो_directory
  *
  * PARAMETERS:  dir_pathname        - Full pathname to the directory
- *              wildcard_spec       - string of the form "*.c", etc.
+ *              wildcard_spec       - string of the क्रमm "*.c", etc.
  *
  * RETURN:      A directory "handle" to be used in subsequent search operations.
- *              NULL returned on failure.
+ *              शून्य वापसed on failure.
  *
- * DESCRIPTION: Open a directory in preparation for a wildcard search
+ * DESCRIPTION: Open a directory in preparation क्रम a wildcard search
  *
  ******************************************************************************/
 
-void *acpi_os_open_directory(char *dir_pathname,
-			     char *wildcard_spec, char requested_file_type)
-{
-	struct external_find_info *external_info;
-	DIR *dir;
+व्योम *acpi_os_खोलो_directory(अक्षर *dir_pathname,
+			     अक्षर *wildcard_spec, अक्षर requested_file_type)
+अणु
+	काष्ठा बाह्यal_find_info *बाह्यal_info;
+	सूची *dir;
 
-	/* Allocate the info struct that will be returned to the caller */
+	/* Allocate the info काष्ठा that will be वापसed to the caller */
 
-	external_info = calloc(1, sizeof(struct external_find_info));
-	if (!external_info) {
-		return (NULL);
-	}
+	बाह्यal_info = सुस्मृति(1, माप(काष्ठा बाह्यal_find_info));
+	अगर (!बाह्यal_info) अणु
+		वापस (शून्य);
+	पूर्ण
 
 	/* Get the directory stream */
 
-	dir = opendir(dir_pathname);
-	if (!dir) {
-		fprintf(stderr, "Cannot open directory - %s\n", dir_pathname);
-		free(external_info);
-		return (NULL);
-	}
+	dir = सूची_खोलो(dir_pathname);
+	अगर (!dir) अणु
+		ख_लिखो(मानक_त्रुटि, "Cannot open directory - %s\n", dir_pathname);
+		मुक्त(बाह्यal_info);
+		वापस (शून्य);
+	पूर्ण
 
-	/* Save the info in the return structure */
+	/* Save the info in the वापस काष्ठाure */
 
-	external_info->wildcard_spec = wildcard_spec;
-	external_info->requested_file_type = requested_file_type;
-	external_info->dir_pathname = dir_pathname;
-	external_info->dir_ptr = dir;
-	return (external_info);
-}
+	बाह्यal_info->wildcard_spec = wildcard_spec;
+	बाह्यal_info->requested_file_type = requested_file_type;
+	बाह्यal_info->dir_pathname = dir_pathname;
+	बाह्यal_info->dir_ptr = dir;
+	वापस (बाह्यal_info);
+पूर्ण
 
 /*******************************************************************************
  *
  * FUNCTION:    acpi_os_get_next_filename
  *
- * PARAMETERS:  dir_handle          - Created via acpi_os_open_directory
+ * PARAMETERS:  dir_handle          - Created via acpi_os_खोलो_directory
  *
- * RETURN:      Next filename matched. NULL if no more matches.
+ * RETURN:      Next filename matched. शून्य अगर no more matches.
  *
  * DESCRIPTION: Get the next file in the directory that matches the wildcard
- *              specification.
+ *              specअगरication.
  *
  ******************************************************************************/
 
-char *acpi_os_get_next_filename(void *dir_handle)
-{
-	struct external_find_info *external_info = dir_handle;
-	struct dirent *dir_entry;
-	char *temp_str;
-	int str_len;
-	struct stat temp_stat;
-	int err;
+अक्षर *acpi_os_get_next_filename(व्योम *dir_handle)
+अणु
+	काष्ठा बाह्यal_find_info *बाह्यal_info = dir_handle;
+	काष्ठा dirent *dir_entry;
+	अक्षर *temp_str;
+	पूर्णांक str_len;
+	काष्ठा stat temp_stat;
+	पूर्णांक err;
 
-	while ((dir_entry = readdir(external_info->dir_ptr))) {
-		if (!fnmatch
-		    (external_info->wildcard_spec, dir_entry->d_name, 0)) {
-			if (dir_entry->d_name[0] == '.') {
-				continue;
-			}
+	जबतक ((dir_entry = सूची_पढ़ो(बाह्यal_info->dir_ptr))) अणु
+		अगर (!fnmatch
+		    (बाह्यal_info->wildcard_spec, dir_entry->d_name, 0)) अणु
+			अगर (dir_entry->d_name[0] == '.') अणु
+				जारी;
+			पूर्ण
 
-			str_len = strlen(dir_entry->d_name) +
-			    strlen(external_info->dir_pathname) + 2;
+			str_len = म_माप(dir_entry->d_name) +
+			    म_माप(बाह्यal_info->dir_pathname) + 2;
 
-			temp_str = calloc(str_len, 1);
-			if (!temp_str) {
-				fprintf(stderr,
+			temp_str = सुस्मृति(str_len, 1);
+			अगर (!temp_str) अणु
+				ख_लिखो(मानक_त्रुटि,
 					"Could not allocate buffer for temporary string\n");
-				return (NULL);
-			}
+				वापस (शून्य);
+			पूर्ण
 
-			strcpy(temp_str, external_info->dir_pathname);
-			strcat(temp_str, "/");
-			strcat(temp_str, dir_entry->d_name);
+			म_नकल(temp_str, बाह्यal_info->dir_pathname);
+			म_जोड़ो(temp_str, "/");
+			म_जोड़ो(temp_str, dir_entry->d_name);
 
 			err = stat(temp_str, &temp_stat);
-			if (err == -1) {
-				fprintf(stderr,
+			अगर (err == -1) अणु
+				ख_लिखो(मानक_त्रुटि,
 					"Cannot stat file (should not happen) - %s\n",
 					temp_str);
-				free(temp_str);
-				return (NULL);
-			}
+				मुक्त(temp_str);
+				वापस (शून्य);
+			पूर्ण
 
-			free(temp_str);
+			मुक्त(temp_str);
 
-			if ((S_ISDIR(temp_stat.st_mode)
-			     && (external_info->requested_file_type ==
-				 REQUEST_DIR_ONLY))
-			    || ((!S_ISDIR(temp_stat.st_mode)
-				 && external_info->requested_file_type ==
-				 REQUEST_FILE_ONLY))) {
+			अगर ((S_ISसूची(temp_stat.st_mode)
+			     && (बाह्यal_info->requested_file_type ==
+				 REQUEST_सूची_ONLY))
+			    || ((!S_ISसूची(temp_stat.st_mode)
+				 && बाह्यal_info->requested_file_type ==
+				 REQUEST_खाता_ONLY))) अणु
 
-				/* copy to a temp buffer because dir_entry struct is on the stack */
+				/* copy to a temp buffer because dir_entry काष्ठा is on the stack */
 
-				strcpy(external_info->temp_buffer,
+				म_नकल(बाह्यal_info->temp_buffer,
 				       dir_entry->d_name);
-				return (external_info->temp_buffer);
-			}
-		}
-	}
+				वापस (बाह्यal_info->temp_buffer);
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	return (NULL);
-}
+	वापस (शून्य);
+पूर्ण
 
 /*******************************************************************************
  *
- * FUNCTION:    acpi_os_close_directory
+ * FUNCTION:    acpi_os_बंद_directory
  *
- * PARAMETERS:  dir_handle          - Created via acpi_os_open_directory
+ * PARAMETERS:  dir_handle          - Created via acpi_os_खोलो_directory
  *
  * RETURN:      None.
  *
- * DESCRIPTION: Close the open directory and cleanup.
+ * DESCRIPTION: Close the खोलो directory and cleanup.
  *
  ******************************************************************************/
 
-void acpi_os_close_directory(void *dir_handle)
-{
-	struct external_find_info *external_info = dir_handle;
+व्योम acpi_os_बंद_directory(व्योम *dir_handle)
+अणु
+	काष्ठा बाह्यal_find_info *बाह्यal_info = dir_handle;
 
-	/* Close the directory and free allocations */
+	/* Close the directory and मुक्त allocations */
 
-	closedir(external_info->dir_ptr);
-	free(dir_handle);
-}
+	बंद_सूची(बाह्यal_info->dir_ptr);
+	मुक्त(dir_handle);
+पूर्ण

@@ -1,195 +1,196 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /****************************************************************************
- * Driver for Solarflare network controllers and boards
+ * Driver क्रम Solarflare network controllers and boards
  * Copyright 2005-2006 Fen Systems Ltd.
  * Copyright 2006-2013 Solarflare Communications Inc.
  */
 
-#include <linux/bitops.h>
-#include <linux/delay.h>
-#include <linux/interrupt.h>
-#include <linux/pci.h>
-#include <linux/module.h>
-#include <linux/seq_file.h>
-#include <linux/cpu_rmap.h>
-#include "net_driver.h"
-#include "bitfield.h"
-#include "efx.h"
-#include "nic.h"
-#include "farch_regs.h"
-#include "io.h"
-#include "workarounds.h"
+#समावेश <linux/bitops.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/module.h>
+#समावेश <linux/seq_file.h>
+#समावेश <linux/cpu_rmap.h>
+#समावेश "net_driver.h"
+#समावेश "bitfield.h"
+#समावेश "efx.h"
+#समावेश "nic.h"
+#समावेश "farch_regs.h"
+#समावेश "io.h"
+#समावेश "workarounds.h"
 
 /**************************************************************************
  *
  * Generic buffer handling
- * These buffers are used for interrupt status, MAC stats, etc.
+ * These buffers are used क्रम पूर्णांकerrupt status, MAC stats, etc.
  *
  **************************************************************************/
 
-int ef4_nic_alloc_buffer(struct ef4_nic *efx, struct ef4_buffer *buffer,
-			 unsigned int len, gfp_t gfp_flags)
-{
+पूर्णांक ef4_nic_alloc_buffer(काष्ठा ef4_nic *efx, काष्ठा ef4_buffer *buffer,
+			 अचिन्हित पूर्णांक len, gfp_t gfp_flags)
+अणु
 	buffer->addr = dma_alloc_coherent(&efx->pci_dev->dev, len,
 					  &buffer->dma_addr, gfp_flags);
-	if (!buffer->addr)
-		return -ENOMEM;
+	अगर (!buffer->addr)
+		वापस -ENOMEM;
 	buffer->len = len;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void ef4_nic_free_buffer(struct ef4_nic *efx, struct ef4_buffer *buffer)
-{
-	if (buffer->addr) {
-		dma_free_coherent(&efx->pci_dev->dev, buffer->len,
+व्योम ef4_nic_मुक्त_buffer(काष्ठा ef4_nic *efx, काष्ठा ef4_buffer *buffer)
+अणु
+	अगर (buffer->addr) अणु
+		dma_मुक्त_coherent(&efx->pci_dev->dev, buffer->len,
 				  buffer->addr, buffer->dma_addr);
-		buffer->addr = NULL;
-	}
-}
+		buffer->addr = शून्य;
+	पूर्ण
+पूर्ण
 
 /* Check whether an event is present in the eventq at the current
- * read pointer.  Only useful for self-test.
+ * पढ़ो poपूर्णांकer.  Only useful क्रम self-test.
  */
-bool ef4_nic_event_present(struct ef4_channel *channel)
-{
-	return ef4_event_present(ef4_event(channel, channel->eventq_read_ptr));
-}
+bool ef4_nic_event_present(काष्ठा ef4_channel *channel)
+अणु
+	वापस ef4_event_present(ef4_event(channel, channel->eventq_पढ़ो_ptr));
+पूर्ण
 
-void ef4_nic_event_test_start(struct ef4_channel *channel)
-{
+व्योम ef4_nic_event_test_start(काष्ठा ef4_channel *channel)
+अणु
 	channel->event_test_cpu = -1;
 	smp_wmb();
 	channel->efx->type->ev_test_generate(channel);
-}
+पूर्ण
 
-int ef4_nic_irq_test_start(struct ef4_nic *efx)
-{
+पूर्णांक ef4_nic_irq_test_start(काष्ठा ef4_nic *efx)
+अणु
 	efx->last_irq_cpu = -1;
 	smp_wmb();
-	return efx->type->irq_test_generate(efx);
-}
+	वापस efx->type->irq_test_generate(efx);
+पूर्ण
 
-/* Hook interrupt handler(s)
- * Try MSI and then legacy interrupts.
+/* Hook पूर्णांकerrupt handler(s)
+ * Try MSI and then legacy पूर्णांकerrupts.
  */
-int ef4_nic_init_interrupt(struct ef4_nic *efx)
-{
-	struct ef4_channel *channel;
-	unsigned int n_irqs;
-	int rc;
+पूर्णांक ef4_nic_init_पूर्णांकerrupt(काष्ठा ef4_nic *efx)
+अणु
+	काष्ठा ef4_channel *channel;
+	अचिन्हित पूर्णांक n_irqs;
+	पूर्णांक rc;
 
-	if (!EF4_INT_MODE_USE_MSI(efx)) {
+	अगर (!EF4_INT_MODE_USE_MSI(efx)) अणु
 		rc = request_irq(efx->legacy_irq,
 				 efx->type->irq_handle_legacy, IRQF_SHARED,
 				 efx->name, efx);
-		if (rc) {
-			netif_err(efx, drv, efx->net_dev,
+		अगर (rc) अणु
+			netअगर_err(efx, drv, efx->net_dev,
 				  "failed to hook legacy IRQ %d\n",
 				  efx->pci_dev->irq);
-			goto fail1;
-		}
-		return 0;
-	}
+			जाओ fail1;
+		पूर्ण
+		वापस 0;
+	पूर्ण
 
-#ifdef CONFIG_RFS_ACCEL
-	if (efx->interrupt_mode == EF4_INT_MODE_MSIX) {
+#अगर_घोषित CONFIG_RFS_ACCEL
+	अगर (efx->पूर्णांकerrupt_mode == EF4_INT_MODE_MSIX) अणु
 		efx->net_dev->rx_cpu_rmap =
 			alloc_irq_cpu_rmap(efx->n_rx_channels);
-		if (!efx->net_dev->rx_cpu_rmap) {
+		अगर (!efx->net_dev->rx_cpu_rmap) अणु
 			rc = -ENOMEM;
-			goto fail1;
-		}
-	}
-#endif
+			जाओ fail1;
+		पूर्ण
+	पूर्ण
+#पूर्ण_अगर
 
-	/* Hook MSI or MSI-X interrupt */
+	/* Hook MSI or MSI-X पूर्णांकerrupt */
 	n_irqs = 0;
-	ef4_for_each_channel(channel, efx) {
+	ef4_क्रम_each_channel(channel, efx) अणु
 		rc = request_irq(channel->irq, efx->type->irq_handle_msi,
 				 IRQF_PROBE_SHARED, /* Not shared */
 				 efx->msi_context[channel->channel].name,
 				 &efx->msi_context[channel->channel]);
-		if (rc) {
-			netif_err(efx, drv, efx->net_dev,
+		अगर (rc) अणु
+			netअगर_err(efx, drv, efx->net_dev,
 				  "failed to hook IRQ %d\n", channel->irq);
-			goto fail2;
-		}
+			जाओ fail2;
+		पूर्ण
 		++n_irqs;
 
-#ifdef CONFIG_RFS_ACCEL
-		if (efx->interrupt_mode == EF4_INT_MODE_MSIX &&
-		    channel->channel < efx->n_rx_channels) {
+#अगर_घोषित CONFIG_RFS_ACCEL
+		अगर (efx->पूर्णांकerrupt_mode == EF4_INT_MODE_MSIX &&
+		    channel->channel < efx->n_rx_channels) अणु
 			rc = irq_cpu_rmap_add(efx->net_dev->rx_cpu_rmap,
 					      channel->irq);
-			if (rc)
-				goto fail2;
-		}
-#endif
-	}
+			अगर (rc)
+				जाओ fail2;
+		पूर्ण
+#पूर्ण_अगर
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
  fail2:
-#ifdef CONFIG_RFS_ACCEL
-	free_irq_cpu_rmap(efx->net_dev->rx_cpu_rmap);
-	efx->net_dev->rx_cpu_rmap = NULL;
-#endif
-	ef4_for_each_channel(channel, efx) {
-		if (n_irqs-- == 0)
-			break;
-		free_irq(channel->irq, &efx->msi_context[channel->channel]);
-	}
+#अगर_घोषित CONFIG_RFS_ACCEL
+	मुक्त_irq_cpu_rmap(efx->net_dev->rx_cpu_rmap);
+	efx->net_dev->rx_cpu_rmap = शून्य;
+#पूर्ण_अगर
+	ef4_क्रम_each_channel(channel, efx) अणु
+		अगर (n_irqs-- == 0)
+			अवरोध;
+		मुक्त_irq(channel->irq, &efx->msi_context[channel->channel]);
+	पूर्ण
  fail1:
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-void ef4_nic_fini_interrupt(struct ef4_nic *efx)
-{
-	struct ef4_channel *channel;
+व्योम ef4_nic_fini_पूर्णांकerrupt(काष्ठा ef4_nic *efx)
+अणु
+	काष्ठा ef4_channel *channel;
 
-#ifdef CONFIG_RFS_ACCEL
-	free_irq_cpu_rmap(efx->net_dev->rx_cpu_rmap);
-	efx->net_dev->rx_cpu_rmap = NULL;
-#endif
+#अगर_घोषित CONFIG_RFS_ACCEL
+	मुक्त_irq_cpu_rmap(efx->net_dev->rx_cpu_rmap);
+	efx->net_dev->rx_cpu_rmap = शून्य;
+#पूर्ण_अगर
 
-	if (EF4_INT_MODE_USE_MSI(efx)) {
-		/* Disable MSI/MSI-X interrupts */
-		ef4_for_each_channel(channel, efx)
-			free_irq(channel->irq,
+	अगर (EF4_INT_MODE_USE_MSI(efx)) अणु
+		/* Disable MSI/MSI-X पूर्णांकerrupts */
+		ef4_क्रम_each_channel(channel, efx)
+			मुक्त_irq(channel->irq,
 				 &efx->msi_context[channel->channel]);
-	} else {
-		/* Disable legacy interrupt */
-		free_irq(efx->legacy_irq, efx);
-	}
-}
+	पूर्ण अन्यथा अणु
+		/* Disable legacy पूर्णांकerrupt */
+		मुक्त_irq(efx->legacy_irq, efx);
+	पूर्ण
+पूर्ण
 
 /* Register dump */
 
-#define REGISTER_REVISION_FA	1
-#define REGISTER_REVISION_FB	2
-#define REGISTER_REVISION_FC	3
-#define REGISTER_REVISION_FZ	3	/* last Falcon arch revision */
-#define REGISTER_REVISION_ED	4
-#define REGISTER_REVISION_EZ	4	/* latest EF10 revision */
+#घोषणा REGISTER_REVISION_FA	1
+#घोषणा REGISTER_REVISION_FB	2
+#घोषणा REGISTER_REVISION_FC	3
+#घोषणा REGISTER_REVISION_FZ	3	/* last Falcon arch revision */
+#घोषणा REGISTER_REVISION_ED	4
+#घोषणा REGISTER_REVISION_EZ	4	/* latest EF10 revision */
 
-struct ef4_nic_reg {
+काष्ठा ef4_nic_reg अणु
 	u32 offset:24;
 	u32 min_revision:3, max_revision:3;
-};
+पूर्ण;
 
-#define REGISTER(name, arch, min_rev, max_rev) {			\
+#घोषणा REGISTER(name, arch, min_rev, max_rev) अणु			\
 	arch ## R_ ## min_rev ## max_rev ## _ ## name,			\
 	REGISTER_REVISION_ ## arch ## min_rev,				\
 	REGISTER_REVISION_ ## arch ## max_rev				\
-}
-#define REGISTER_AA(name) REGISTER(name, F, A, A)
-#define REGISTER_AB(name) REGISTER(name, F, A, B)
-#define REGISTER_AZ(name) REGISTER(name, F, A, Z)
-#define REGISTER_BB(name) REGISTER(name, F, B, B)
-#define REGISTER_BZ(name) REGISTER(name, F, B, Z)
-#define REGISTER_CZ(name) REGISTER(name, F, C, Z)
+पूर्ण
+#घोषणा REGISTER_AA(name) REGISTER(name, F, A, A)
+#घोषणा REGISTER_AB(name) REGISTER(name, F, A, B)
+#घोषणा REGISTER_AZ(name) REGISTER(name, F, A, Z)
+#घोषणा REGISTER_BB(name) REGISTER(name, F, B, B)
+#घोषणा REGISTER_BZ(name) REGISTER(name, F, B, Z)
+#घोषणा REGISTER_CZ(name) REGISTER(name, F, C, Z)
 
-static const struct ef4_nic_reg ef4_nic_regs[] = {
+अटल स्थिर काष्ठा ef4_nic_reg ef4_nic_regs[] = अणु
 	REGISTER_AZ(ADR_REGION),
 	REGISTER_AZ(INT_EN_KER),
 	REGISTER_BZ(INT_EN_CHAR),
@@ -206,7 +207,7 @@ static const struct ef4_nic_reg ef4_nic_regs[] = {
 	REGISTER_AB(EE_VPD_CFG0),
 	/* EE_VPD_SW_CNTL and EE_VPD_SW_DATA are not used */
 	/* PMBX_DBG_IADDR and PBMX_DBG_IDATA are indirect */
-	/* PCIE_CORE_INDIRECT is indirect */
+	/* PCIE_CORE_INसूचीECT is indirect */
 	REGISTER_AB(NIC_STAT),
 	REGISTER_AB(GPIO_CTL),
 	REGISTER_AB(GLB_CTL),
@@ -294,42 +295,42 @@ static const struct ef4_nic_reg ef4_nic_regs[] = {
 	REGISTER_AB(XX_TXDRV_CTL),
 	/* XX_PRBS_CTL, XX_PRBS_CHK and XX_PRBS_ERR are not used */
 	/* XX_CORE_STAT is partly RC */
-};
+पूर्ण;
 
-struct ef4_nic_reg_table {
+काष्ठा ef4_nic_reg_table अणु
 	u32 offset:24;
 	u32 min_revision:3, max_revision:3;
 	u32 step:6, rows:21;
-};
+पूर्ण;
 
-#define REGISTER_TABLE_DIMENSIONS(_, offset, arch, min_rev, max_rev, step, rows) { \
+#घोषणा REGISTER_TABLE_DIMENSIONS(_, offset, arch, min_rev, max_rev, step, rows) अणु \
 	offset,								\
 	REGISTER_REVISION_ ## arch ## min_rev,				\
 	REGISTER_REVISION_ ## arch ## max_rev,				\
 	step, rows							\
-}
-#define REGISTER_TABLE(name, arch, min_rev, max_rev)			\
+पूर्ण
+#घोषणा REGISTER_TABLE(name, arch, min_rev, max_rev)			\
 	REGISTER_TABLE_DIMENSIONS(					\
 		name, arch ## R_ ## min_rev ## max_rev ## _ ## name,	\
 		arch, min_rev, max_rev,					\
 		arch ## R_ ## min_rev ## max_rev ## _ ## name ## _STEP,	\
 		arch ## R_ ## min_rev ## max_rev ## _ ## name ## _ROWS)
-#define REGISTER_TABLE_AA(name) REGISTER_TABLE(name, F, A, A)
-#define REGISTER_TABLE_AZ(name) REGISTER_TABLE(name, F, A, Z)
-#define REGISTER_TABLE_BB(name) REGISTER_TABLE(name, F, B, B)
-#define REGISTER_TABLE_BZ(name) REGISTER_TABLE(name, F, B, Z)
-#define REGISTER_TABLE_BB_CZ(name)					\
+#घोषणा REGISTER_TABLE_AA(name) REGISTER_TABLE(name, F, A, A)
+#घोषणा REGISTER_TABLE_AZ(name) REGISTER_TABLE(name, F, A, Z)
+#घोषणा REGISTER_TABLE_BB(name) REGISTER_TABLE(name, F, B, B)
+#घोषणा REGISTER_TABLE_BZ(name) REGISTER_TABLE(name, F, B, Z)
+#घोषणा REGISTER_TABLE_BB_CZ(name)					\
 	REGISTER_TABLE_DIMENSIONS(name, FR_BZ_ ## name, F, B, B,	\
 				  FR_BZ_ ## name ## _STEP,		\
 				  FR_BB_ ## name ## _ROWS),		\
 	REGISTER_TABLE_DIMENSIONS(name, FR_BZ_ ## name, F, C, Z,	\
 				  FR_BZ_ ## name ## _STEP,		\
 				  FR_CZ_ ## name ## _ROWS)
-#define REGISTER_TABLE_CZ(name) REGISTER_TABLE(name, F, C, Z)
+#घोषणा REGISTER_TABLE_CZ(name) REGISTER_TABLE(name, F, C, Z)
 
-static const struct ef4_nic_reg_table ef4_nic_reg_tables[] = {
+अटल स्थिर काष्ठा ef4_nic_reg_table ef4_nic_reg_tables[] = अणु
 	/* DRIVER is not used */
-	/* EVQ_RPTR, TIMER_COMMAND, USR_EV and {RX,TX}_DESC_UPD are WO */
+	/* EVQ_RPTR, TIMER_COMMAND, USR_EV and अणुRX,TXपूर्ण_DESC_UPD are WO */
 	REGISTER_TABLE_BB(TX_IPFIL_TBL),
 	REGISTER_TABLE_BB(TX_SRC_MAC_TBL),
 	REGISTER_TABLE_AA(RX_DESC_PTR_TBL_KER),
@@ -338,10 +339,10 @@ static const struct ef4_nic_reg_table ef4_nic_reg_tables[] = {
 	REGISTER_TABLE_BB_CZ(TX_DESC_PTR_TBL),
 	REGISTER_TABLE_AA(EVQ_PTR_TBL_KER),
 	REGISTER_TABLE_BB_CZ(EVQ_PTR_TBL),
-	/* We can't reasonably read all of the buffer table (up to 8MB!).
+	/* We can't reasonably पढ़ो all of the buffer table (up to 8MB!).
 	 * However this driver will only use a few entries.  Reading
-	 * 1K entries allows for some expansion of queue count and
-	 * size before we need to change the version. */
+	 * 1K entries allows क्रम some expansion of queue count and
+	 * size beक्रमe we need to change the version. */
 	REGISTER_TABLE_DIMENSIONS(BUF_FULL_TBL_KER, FR_AA_BUF_FULL_TBL_KER,
 				  F, A, A, 8, 1024),
 	REGISTER_TABLE_DIMENSIONS(BUF_FULL_TBL, FR_BZ_BUF_FULL_TBL,
@@ -349,176 +350,176 @@ static const struct ef4_nic_reg_table ef4_nic_reg_tables[] = {
 	REGISTER_TABLE_CZ(RX_MAC_FILTER_TBL0),
 	REGISTER_TABLE_BB_CZ(TIMER_TBL),
 	REGISTER_TABLE_BB_CZ(TX_PACE_TBL),
-	REGISTER_TABLE_BZ(RX_INDIRECTION_TBL),
+	REGISTER_TABLE_BZ(RX_INसूचीECTION_TBL),
 	/* TX_FILTER_TBL0 is huge and not used by this driver */
 	REGISTER_TABLE_CZ(TX_MAC_FILTER_TBL0),
 	REGISTER_TABLE_CZ(MC_TREG_SMEM),
 	/* MSIX_PBA_TABLE is not mapped */
 	/* SRM_DBG is not mapped (and is redundant with BUF_FLL_TBL) */
 	REGISTER_TABLE_BZ(RX_FILTER_TBL0),
-};
+पूर्ण;
 
-size_t ef4_nic_get_regs_len(struct ef4_nic *efx)
-{
-	const struct ef4_nic_reg *reg;
-	const struct ef4_nic_reg_table *table;
-	size_t len = 0;
+माप_प्रकार ef4_nic_get_regs_len(काष्ठा ef4_nic *efx)
+अणु
+	स्थिर काष्ठा ef4_nic_reg *reg;
+	स्थिर काष्ठा ef4_nic_reg_table *table;
+	माप_प्रकार len = 0;
 
-	for (reg = ef4_nic_regs;
+	क्रम (reg = ef4_nic_regs;
 	     reg < ef4_nic_regs + ARRAY_SIZE(ef4_nic_regs);
 	     reg++)
-		if (efx->type->revision >= reg->min_revision &&
+		अगर (efx->type->revision >= reg->min_revision &&
 		    efx->type->revision <= reg->max_revision)
-			len += sizeof(ef4_oword_t);
+			len += माप(ef4_oword_t);
 
-	for (table = ef4_nic_reg_tables;
+	क्रम (table = ef4_nic_reg_tables;
 	     table < ef4_nic_reg_tables + ARRAY_SIZE(ef4_nic_reg_tables);
 	     table++)
-		if (efx->type->revision >= table->min_revision &&
+		अगर (efx->type->revision >= table->min_revision &&
 		    efx->type->revision <= table->max_revision)
-			len += table->rows * min_t(size_t, table->step, 16);
+			len += table->rows * min_t(माप_प्रकार, table->step, 16);
 
-	return len;
-}
+	वापस len;
+पूर्ण
 
-void ef4_nic_get_regs(struct ef4_nic *efx, void *buf)
-{
-	const struct ef4_nic_reg *reg;
-	const struct ef4_nic_reg_table *table;
+व्योम ef4_nic_get_regs(काष्ठा ef4_nic *efx, व्योम *buf)
+अणु
+	स्थिर काष्ठा ef4_nic_reg *reg;
+	स्थिर काष्ठा ef4_nic_reg_table *table;
 
-	for (reg = ef4_nic_regs;
+	क्रम (reg = ef4_nic_regs;
 	     reg < ef4_nic_regs + ARRAY_SIZE(ef4_nic_regs);
-	     reg++) {
-		if (efx->type->revision >= reg->min_revision &&
-		    efx->type->revision <= reg->max_revision) {
-			ef4_reado(efx, (ef4_oword_t *)buf, reg->offset);
-			buf += sizeof(ef4_oword_t);
-		}
-	}
+	     reg++) अणु
+		अगर (efx->type->revision >= reg->min_revision &&
+		    efx->type->revision <= reg->max_revision) अणु
+			ef4_पढ़ोo(efx, (ef4_oword_t *)buf, reg->offset);
+			buf += माप(ef4_oword_t);
+		पूर्ण
+	पूर्ण
 
-	for (table = ef4_nic_reg_tables;
+	क्रम (table = ef4_nic_reg_tables;
 	     table < ef4_nic_reg_tables + ARRAY_SIZE(ef4_nic_reg_tables);
-	     table++) {
-		size_t size, i;
+	     table++) अणु
+		माप_प्रकार size, i;
 
-		if (!(efx->type->revision >= table->min_revision &&
+		अगर (!(efx->type->revision >= table->min_revision &&
 		      efx->type->revision <= table->max_revision))
-			continue;
+			जारी;
 
-		size = min_t(size_t, table->step, 16);
+		size = min_t(माप_प्रकार, table->step, 16);
 
-		for (i = 0; i < table->rows; i++) {
-			switch (table->step) {
-			case 4: /* 32-bit SRAM */
-				ef4_readd(efx, buf, table->offset + 4 * i);
-				break;
-			case 8: /* 64-bit SRAM */
-				ef4_sram_readq(efx,
+		क्रम (i = 0; i < table->rows; i++) अणु
+			चयन (table->step) अणु
+			हाल 4: /* 32-bit SRAM */
+				ef4_पढ़ोd(efx, buf, table->offset + 4 * i);
+				अवरोध;
+			हाल 8: /* 64-bit SRAM */
+				ef4_sram_पढ़ोq(efx,
 					       efx->membase + table->offset,
 					       buf, i);
-				break;
-			case 16: /* 128-bit-readable register */
-				ef4_reado_table(efx, buf, table->offset, i);
-				break;
-			case 32: /* 128-bit register, interleaved */
-				ef4_reado_table(efx, buf, table->offset, 2 * i);
-				break;
-			default:
+				अवरोध;
+			हाल 16: /* 128-bit-पढ़ोable रेजिस्टर */
+				ef4_पढ़ोo_table(efx, buf, table->offset, i);
+				अवरोध;
+			हाल 32: /* 128-bit रेजिस्टर, पूर्णांकerleaved */
+				ef4_पढ़ोo_table(efx, buf, table->offset, 2 * i);
+				अवरोध;
+			शेष:
 				WARN_ON(1);
-				return;
-			}
+				वापस;
+			पूर्ण
 			buf += size;
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
 /**
- * ef4_nic_describe_stats - Describe supported statistics for ethtool
- * @desc: Array of &struct ef4_hw_stat_desc describing the statistics
+ * ef4_nic_describe_stats - Describe supported statistics क्रम ethtool
+ * @desc: Array of &काष्ठा ef4_hw_stat_desc describing the statistics
  * @count: Length of the @desc array
- * @mask: Bitmask of which elements of @desc are enabled
- * @names: Buffer to copy names to, or %NULL.  The names are copied
- *	starting at intervals of %ETH_GSTRING_LEN bytes.
+ * @mask: Biपंचांगask of which elements of @desc are enabled
+ * @names: Buffer to copy names to, or %शून्य.  The names are copied
+ *	starting at पूर्णांकervals of %ETH_GSTRING_LEN bytes.
  *
  * Returns the number of visible statistics, i.e. the number of set
- * bits in the first @count bits of @mask for which a name is defined.
+ * bits in the first @count bits of @mask क्रम which a name is defined.
  */
-size_t ef4_nic_describe_stats(const struct ef4_hw_stat_desc *desc, size_t count,
-			      const unsigned long *mask, u8 *names)
-{
-	size_t visible = 0;
-	size_t index;
+माप_प्रकार ef4_nic_describe_stats(स्थिर काष्ठा ef4_hw_stat_desc *desc, माप_प्रकार count,
+			      स्थिर अचिन्हित दीर्घ *mask, u8 *names)
+अणु
+	माप_प्रकार visible = 0;
+	माप_प्रकार index;
 
-	for_each_set_bit(index, mask, count) {
-		if (desc[index].name) {
-			if (names) {
+	क्रम_each_set_bit(index, mask, count) अणु
+		अगर (desc[index].name) अणु
+			अगर (names) अणु
 				strlcpy(names, desc[index].name,
 					ETH_GSTRING_LEN);
 				names += ETH_GSTRING_LEN;
-			}
+			पूर्ण
 			++visible;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return visible;
-}
+	वापस visible;
+पूर्ण
 
 /**
  * ef4_nic_update_stats - Convert statistics DMA buffer to array of u64
- * @desc: Array of &struct ef4_hw_stat_desc describing the DMA buffer
+ * @desc: Array of &काष्ठा ef4_hw_stat_desc describing the DMA buffer
  *	layout.  DMA widths of 0, 16, 32 and 64 are supported; where
- *	the width is specified as 0 the corresponding element of
+ *	the width is specअगरied as 0 the corresponding element of
  *	@stats is not updated.
  * @count: Length of the @desc array
- * @mask: Bitmask of which elements of @desc are enabled
+ * @mask: Biपंचांगask of which elements of @desc are enabled
  * @stats: Buffer to update with the converted statistics.  The length
  *	of this array must be at least @count.
  * @dma_buf: DMA buffer containing hardware statistics
  * @accumulate: If set, the converted values will be added rather than
  *	directly stored to the corresponding elements of @stats
  */
-void ef4_nic_update_stats(const struct ef4_hw_stat_desc *desc, size_t count,
-			  const unsigned long *mask,
-			  u64 *stats, const void *dma_buf, bool accumulate)
-{
-	size_t index;
+व्योम ef4_nic_update_stats(स्थिर काष्ठा ef4_hw_stat_desc *desc, माप_प्रकार count,
+			  स्थिर अचिन्हित दीर्घ *mask,
+			  u64 *stats, स्थिर व्योम *dma_buf, bool accumulate)
+अणु
+	माप_प्रकार index;
 
-	for_each_set_bit(index, mask, count) {
-		if (desc[index].dma_width) {
-			const void *addr = dma_buf + desc[index].offset;
+	क्रम_each_set_bit(index, mask, count) अणु
+		अगर (desc[index].dma_width) अणु
+			स्थिर व्योम *addr = dma_buf + desc[index].offset;
 			u64 val;
 
-			switch (desc[index].dma_width) {
-			case 16:
+			चयन (desc[index].dma_width) अणु
+			हाल 16:
 				val = le16_to_cpup((__le16 *)addr);
-				break;
-			case 32:
+				अवरोध;
+			हाल 32:
 				val = le32_to_cpup((__le32 *)addr);
-				break;
-			case 64:
+				अवरोध;
+			हाल 64:
 				val = le64_to_cpup((__le64 *)addr);
-				break;
-			default:
+				अवरोध;
+			शेष:
 				WARN_ON(1);
 				val = 0;
-				break;
-			}
+				अवरोध;
+			पूर्ण
 
-			if (accumulate)
+			अगर (accumulate)
 				stats[index] += val;
-			else
+			अन्यथा
 				stats[index] = val;
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-void ef4_nic_fix_nodesc_drop_stat(struct ef4_nic *efx, u64 *rx_nodesc_drops)
-{
-	/* if down, or this is the first update after coming up */
-	if (!(efx->net_dev->flags & IFF_UP) || !efx->rx_nodesc_drops_prev_state)
-		efx->rx_nodesc_drops_while_down +=
+व्योम ef4_nic_fix_nodesc_drop_stat(काष्ठा ef4_nic *efx, u64 *rx_nodesc_drops)
+अणु
+	/* अगर करोwn, or this is the first update after coming up */
+	अगर (!(efx->net_dev->flags & IFF_UP) || !efx->rx_nodesc_drops_prev_state)
+		efx->rx_nodesc_drops_जबतक_करोwn +=
 			*rx_nodesc_drops - efx->rx_nodesc_drops_total;
 	efx->rx_nodesc_drops_total = *rx_nodesc_drops;
 	efx->rx_nodesc_drops_prev_state = !!(efx->net_dev->flags & IFF_UP);
-	*rx_nodesc_drops -= efx->rx_nodesc_drops_while_down;
-}
+	*rx_nodesc_drops -= efx->rx_nodesc_drops_जबतक_करोwn;
+पूर्ण

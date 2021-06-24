@@ -1,23 +1,24 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#undef TRACE_SYSTEM
-#define TRACE_SYSTEM v4l2
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अघोषित TRACE_SYSTEM
+#घोषणा TRACE_SYSTEM v4l2
 
-#if !defined(_TRACE_V4L2_H) || defined(TRACE_HEADER_MULTI_READ)
-#define _TRACE_V4L2_H
+#अगर !defined(_TRACE_V4L2_H) || defined(TRACE_HEADER_MULTI_READ)
+#घोषणा _TRACE_V4L2_H
 
-#include <linux/tracepoint.h>
-#include <media/videobuf2-v4l2.h>
+#समावेश <linux/tracepoपूर्णांक.h>
+#समावेश <media/videobuf2-v4l2.h>
 
-/* Enums require being exported to userspace, for user tool parsing */
-#undef EM
-#undef EMe
-#define EM(a, b)	TRACE_DEFINE_ENUM(a);
-#define EMe(a, b)	TRACE_DEFINE_ENUM(a);
+/* Enums require being exported to userspace, क्रम user tool parsing */
+#अघोषित EM
+#अघोषित EMe
+#घोषणा EM(a, b)	TRACE_DEFINE_ENUM(a);
+#घोषणा EMe(a, b)	TRACE_DEFINE_ENUM(a);
 
-#define show_type(type)							\
-	__print_symbolic(type, SHOW_TYPE)
+#घोषणा show_type(type)							\
+	__prपूर्णांक_symbolic(type, SHOW_TYPE)
 
-#define SHOW_TYPE							\
+#घोषणा SHOW_TYPE							\
 	EM( V4L2_BUF_TYPE_VIDEO_CAPTURE,	"VIDEO_CAPTURE" )	\
 	EM( V4L2_BUF_TYPE_VIDEO_OUTPUT,		"VIDEO_OUTPUT" )	\
 	EM( V4L2_BUF_TYPE_VIDEO_OVERLAY,	"VIDEO_OVERLAY" )	\
@@ -35,10 +36,10 @@
 
 SHOW_TYPE
 
-#define show_field(field)						\
-	__print_symbolic(field, SHOW_FIELD)
+#घोषणा show_field(field)						\
+	__prपूर्णांक_symbolic(field, SHOW_FIELD)
 
-#define SHOW_FIELD							\
+#घोषणा SHOW_FIELD							\
 	EM( V4L2_FIELD_ANY,		"ANY" )				\
 	EM( V4L2_FIELD_NONE,		"NONE" )			\
 	EM( V4L2_FIELD_TOP,		"TOP" )				\
@@ -53,73 +54,73 @@ SHOW_TYPE
 SHOW_FIELD
 
 /*
- * Now redefine the EM() and EMe() macros to map the enums to the strings
- * that will be printed in the output.
+ * Now redefine the EM() and EMe() macros to map the क्रमागतs to the strings
+ * that will be prपूर्णांकed in the output.
  */
-#undef EM
-#undef EMe
-#define EM(a, b)	{a, b},
-#define EMe(a, b)	{a, b}
+#अघोषित EM
+#अघोषित EMe
+#घोषणा EM(a, b)	अणुa, bपूर्ण,
+#घोषणा EMe(a, b)	अणुa, bपूर्ण
 
-/* V4L2_TC_TYPE_* are macros, not defines, they do not need processing */
+/* V4L2_TC_TYPE_* are macros, not defines, they करो not need processing */
 
-#define show_timecode_type(type)					\
-	__print_symbolic(type,						\
-		{ V4L2_TC_TYPE_24FPS,		"24FPS" },		\
-		{ V4L2_TC_TYPE_25FPS,		"25FPS" },		\
-		{ V4L2_TC_TYPE_30FPS,		"30FPS" },		\
-		{ V4L2_TC_TYPE_50FPS,		"50FPS" },		\
-		{ V4L2_TC_TYPE_60FPS,		"60FPS" })
+#घोषणा show_समयcode_type(type)					\
+	__prपूर्णांक_symbolic(type,						\
+		अणु V4L2_TC_TYPE_24FPS,		"24FPS" पूर्ण,		\
+		अणु V4L2_TC_TYPE_25FPS,		"25FPS" पूर्ण,		\
+		अणु V4L2_TC_TYPE_30FPS,		"30FPS" पूर्ण,		\
+		अणु V4L2_TC_TYPE_50FPS,		"50FPS" पूर्ण,		\
+		अणु V4L2_TC_TYPE_60FPS,		"60FPS" पूर्ण)
 
-#define show_flags(flags)						      \
-	__print_flags(flags, "|",					      \
-		{ V4L2_BUF_FLAG_MAPPED,		     "MAPPED" },	      \
-		{ V4L2_BUF_FLAG_QUEUED,		     "QUEUED" },	      \
-		{ V4L2_BUF_FLAG_DONE,		     "DONE" },		      \
-		{ V4L2_BUF_FLAG_KEYFRAME,	     "KEYFRAME" },	      \
-		{ V4L2_BUF_FLAG_PFRAME,		     "PFRAME" },	      \
-		{ V4L2_BUF_FLAG_BFRAME,		     "BFRAME" },	      \
-		{ V4L2_BUF_FLAG_ERROR,		     "ERROR" },		      \
-		{ V4L2_BUF_FLAG_TIMECODE,	     "TIMECODE" },	      \
-		{ V4L2_BUF_FLAG_PREPARED,	     "PREPARED" },	      \
-		{ V4L2_BUF_FLAG_NO_CACHE_INVALIDATE, "NO_CACHE_INVALIDATE" }, \
-		{ V4L2_BUF_FLAG_NO_CACHE_CLEAN,	     "NO_CACHE_CLEAN" },      \
-		{ V4L2_BUF_FLAG_TIMESTAMP_MASK,	     "TIMESTAMP_MASK" },      \
-		{ V4L2_BUF_FLAG_TIMESTAMP_UNKNOWN,   "TIMESTAMP_UNKNOWN" },   \
-		{ V4L2_BUF_FLAG_TIMESTAMP_MONOTONIC, "TIMESTAMP_MONOTONIC" }, \
-		{ V4L2_BUF_FLAG_TIMESTAMP_COPY,	     "TIMESTAMP_COPY" },      \
-		{ V4L2_BUF_FLAG_LAST,                "LAST" })
+#घोषणा show_flags(flags)						      \
+	__prपूर्णांक_flags(flags, "|",					      \
+		अणु V4L2_BUF_FLAG_MAPPED,		     "MAPPED" पूर्ण,	      \
+		अणु V4L2_BUF_FLAG_QUEUED,		     "QUEUED" पूर्ण,	      \
+		अणु V4L2_BUF_FLAG_DONE,		     "DONE" पूर्ण,		      \
+		अणु V4L2_BUF_FLAG_KEYFRAME,	     "KEYFRAME" पूर्ण,	      \
+		अणु V4L2_BUF_FLAG_PFRAME,		     "PFRAME" पूर्ण,	      \
+		अणु V4L2_BUF_FLAG_BFRAME,		     "BFRAME" पूर्ण,	      \
+		अणु V4L2_BUF_FLAG_ERROR,		     "ERROR" पूर्ण,		      \
+		अणु V4L2_BUF_FLAG_TIMECODE,	     "TIMECODE" पूर्ण,	      \
+		अणु V4L2_BUF_FLAG_PREPARED,	     "PREPARED" पूर्ण,	      \
+		अणु V4L2_BUF_FLAG_NO_CACHE_INVALIDATE, "NO_CACHE_INVALIDATE" पूर्ण, \
+		अणु V4L2_BUF_FLAG_NO_CACHE_CLEAN,	     "NO_CACHE_CLEAN" पूर्ण,      \
+		अणु V4L2_BUF_FLAG_TIMESTAMP_MASK,	     "TIMESTAMP_MASK" पूर्ण,      \
+		अणु V4L2_BUF_FLAG_TIMESTAMP_UNKNOWN,   "TIMESTAMP_UNKNOWN" पूर्ण,   \
+		अणु V4L2_BUF_FLAG_TIMESTAMP_MONOTONIC, "TIMESTAMP_MONOTONIC" पूर्ण, \
+		अणु V4L2_BUF_FLAG_TIMESTAMP_COPY,	     "TIMESTAMP_COPY" पूर्ण,      \
+		अणु V4L2_BUF_FLAG_LAST,                "LAST" पूर्ण)
 
-#define show_timecode_flags(flags)					  \
-	__print_flags(flags, "|",					  \
-		{ V4L2_TC_FLAG_DROPFRAME,       "DROPFRAME" },		  \
-		{ V4L2_TC_FLAG_COLORFRAME,      "COLORFRAME" },		  \
-		{ V4L2_TC_USERBITS_USERDEFINED,	"USERBITS_USERDEFINED" }, \
-		{ V4L2_TC_USERBITS_8BITCHARS,	"USERBITS_8BITCHARS" })
+#घोषणा show_समयcode_flags(flags)					  \
+	__prपूर्णांक_flags(flags, "|",					  \
+		अणु V4L2_TC_FLAG_DROPFRAME,       "DROPFRAME" पूर्ण,		  \
+		अणु V4L2_TC_FLAG_COLORFRAME,      "COLORFRAME" पूर्ण,		  \
+		अणु V4L2_TC_USERBITS_USERDEFINED,	"USERBITS_USERDEFINED" पूर्ण, \
+		अणु V4L2_TC_USERBITS_8BITCHARS,	"USERBITS_8BITCHARS" पूर्ण)
 
 DECLARE_EVENT_CLASS(v4l2_event_class,
-	TP_PROTO(int minor, struct v4l2_buffer *buf),
+	TP_PROTO(पूर्णांक minor, काष्ठा v4l2_buffer *buf),
 
 	TP_ARGS(minor, buf),
 
 	TP_STRUCT__entry(
-		__field(int, minor)
+		__field(पूर्णांक, minor)
 		__field(u32, index)
 		__field(u32, type)
 		__field(u32, bytesused)
 		__field(u32, flags)
 		__field(u32, field)
-		__field(s64, timestamp)
-		__field(u32, timecode_type)
-		__field(u32, timecode_flags)
-		__field(u8, timecode_frames)
-		__field(u8, timecode_seconds)
-		__field(u8, timecode_minutes)
-		__field(u8, timecode_hours)
-		__field(u8, timecode_userbits0)
-		__field(u8, timecode_userbits1)
-		__field(u8, timecode_userbits2)
-		__field(u8, timecode_userbits3)
+		__field(s64, बारtamp)
+		__field(u32, समयcode_type)
+		__field(u32, समयcode_flags)
+		__field(u8, समयcode_frames)
+		__field(u8, समयcode_seconds)
+		__field(u8, समयcode_minutes)
+		__field(u8, समयcode_hours)
+		__field(u8, समयcode_userbits0)
+		__field(u8, समयcode_userbits1)
+		__field(u8, समयcode_userbits2)
+		__field(u8, समयcode_userbits3)
 		__field(u32, sequence)
 	),
 
@@ -130,21 +131,21 @@ DECLARE_EVENT_CLASS(v4l2_event_class,
 		__entry->bytesused = buf->bytesused;
 		__entry->flags = buf->flags;
 		__entry->field = buf->field;
-		__entry->timestamp = v4l2_buffer_get_timestamp(buf);
-		__entry->timecode_type = buf->timecode.type;
-		__entry->timecode_flags = buf->timecode.flags;
-		__entry->timecode_frames = buf->timecode.frames;
-		__entry->timecode_seconds = buf->timecode.seconds;
-		__entry->timecode_minutes = buf->timecode.minutes;
-		__entry->timecode_hours = buf->timecode.hours;
-		__entry->timecode_userbits0 = buf->timecode.userbits[0];
-		__entry->timecode_userbits1 = buf->timecode.userbits[1];
-		__entry->timecode_userbits2 = buf->timecode.userbits[2];
-		__entry->timecode_userbits3 = buf->timecode.userbits[3];
+		__entry->बारtamp = v4l2_buffer_get_बारtamp(buf);
+		__entry->समयcode_type = buf->समयcode.type;
+		__entry->समयcode_flags = buf->समयcode.flags;
+		__entry->समयcode_frames = buf->समयcode.frames;
+		__entry->समयcode_seconds = buf->समयcode.seconds;
+		__entry->समयcode_minutes = buf->समयcode.minutes;
+		__entry->समयcode_hours = buf->समयcode.hours;
+		__entry->समयcode_userbits0 = buf->समयcode.userbits[0];
+		__entry->समयcode_userbits1 = buf->समयcode.userbits[1];
+		__entry->समयcode_userbits2 = buf->समयcode.userbits[2];
+		__entry->समयcode_userbits3 = buf->समयcode.userbits[3];
 		__entry->sequence = buf->sequence;
 	),
 
-	TP_printk("minor = %d, index = %u, type = %s, bytesused = %u, "
+	TP_prपूर्णांकk("minor = %d, index = %u, type = %s, bytesused = %u, "
 		  "flags = %s, field = %s, timestamp = %llu, "
 		  "timecode = { type = %s, flags = %s, frames = %u, "
 		  "seconds = %u, minutes = %u, hours = %u, "
@@ -153,116 +154,116 @@ DECLARE_EVENT_CLASS(v4l2_event_class,
 		  __entry->bytesused,
 		  show_flags(__entry->flags),
 		  show_field(__entry->field),
-		  __entry->timestamp,
-		  show_timecode_type(__entry->timecode_type),
-		  show_timecode_flags(__entry->timecode_flags),
-		  __entry->timecode_frames,
-		  __entry->timecode_seconds,
-		  __entry->timecode_minutes,
-		  __entry->timecode_hours,
-		  __entry->timecode_userbits0,
-		  __entry->timecode_userbits1,
-		  __entry->timecode_userbits2,
-		  __entry->timecode_userbits3,
+		  __entry->बारtamp,
+		  show_समयcode_type(__entry->समयcode_type),
+		  show_समयcode_flags(__entry->समयcode_flags),
+		  __entry->समयcode_frames,
+		  __entry->समयcode_seconds,
+		  __entry->समयcode_minutes,
+		  __entry->समयcode_hours,
+		  __entry->समयcode_userbits0,
+		  __entry->समयcode_userbits1,
+		  __entry->समयcode_userbits2,
+		  __entry->समयcode_userbits3,
 		  __entry->sequence
 	)
 )
 
 DEFINE_EVENT(v4l2_event_class, v4l2_dqbuf,
-	TP_PROTO(int minor, struct v4l2_buffer *buf),
+	TP_PROTO(पूर्णांक minor, काष्ठा v4l2_buffer *buf),
 	TP_ARGS(minor, buf)
 );
 
 DEFINE_EVENT(v4l2_event_class, v4l2_qbuf,
-	TP_PROTO(int minor, struct v4l2_buffer *buf),
+	TP_PROTO(पूर्णांक minor, काष्ठा v4l2_buffer *buf),
 	TP_ARGS(minor, buf)
 );
 
 DECLARE_EVENT_CLASS(vb2_v4l2_event_class,
-	TP_PROTO(struct vb2_queue *q, struct vb2_buffer *vb),
+	TP_PROTO(काष्ठा vb2_queue *q, काष्ठा vb2_buffer *vb),
 	TP_ARGS(q, vb),
 
 	TP_STRUCT__entry(
-		__field(int, minor)
+		__field(पूर्णांक, minor)
 		__field(u32, flags)
 		__field(u32, field)
-		__field(u64, timestamp)
-		__field(u32, timecode_type)
-		__field(u32, timecode_flags)
-		__field(u8, timecode_frames)
-		__field(u8, timecode_seconds)
-		__field(u8, timecode_minutes)
-		__field(u8, timecode_hours)
-		__field(u8, timecode_userbits0)
-		__field(u8, timecode_userbits1)
-		__field(u8, timecode_userbits2)
-		__field(u8, timecode_userbits3)
+		__field(u64, बारtamp)
+		__field(u32, समयcode_type)
+		__field(u32, समयcode_flags)
+		__field(u8, समयcode_frames)
+		__field(u8, समयcode_seconds)
+		__field(u8, समयcode_minutes)
+		__field(u8, समयcode_hours)
+		__field(u8, समयcode_userbits0)
+		__field(u8, समयcode_userbits1)
+		__field(u8, समयcode_userbits2)
+		__field(u8, समयcode_userbits3)
 		__field(u32, sequence)
 	),
 
 	TP_fast_assign(
-		struct vb2_v4l2_buffer *vbuf = to_vb2_v4l2_buffer(vb);
-		struct v4l2_fh *owner = q->owner;
+		काष्ठा vb2_v4l2_buffer *vbuf = to_vb2_v4l2_buffer(vb);
+		काष्ठा v4l2_fh *owner = q->owner;
 
 		__entry->minor = owner ? owner->vdev->minor : -1;
 		__entry->flags = vbuf->flags;
 		__entry->field = vbuf->field;
-		__entry->timestamp = vb->timestamp;
-		__entry->timecode_type = vbuf->timecode.type;
-		__entry->timecode_flags = vbuf->timecode.flags;
-		__entry->timecode_frames = vbuf->timecode.frames;
-		__entry->timecode_seconds = vbuf->timecode.seconds;
-		__entry->timecode_minutes = vbuf->timecode.minutes;
-		__entry->timecode_hours = vbuf->timecode.hours;
-		__entry->timecode_userbits0 = vbuf->timecode.userbits[0];
-		__entry->timecode_userbits1 = vbuf->timecode.userbits[1];
-		__entry->timecode_userbits2 = vbuf->timecode.userbits[2];
-		__entry->timecode_userbits3 = vbuf->timecode.userbits[3];
+		__entry->बारtamp = vb->बारtamp;
+		__entry->समयcode_type = vbuf->समयcode.type;
+		__entry->समयcode_flags = vbuf->समयcode.flags;
+		__entry->समयcode_frames = vbuf->समयcode.frames;
+		__entry->समयcode_seconds = vbuf->समयcode.seconds;
+		__entry->समयcode_minutes = vbuf->समयcode.minutes;
+		__entry->समयcode_hours = vbuf->समयcode.hours;
+		__entry->समयcode_userbits0 = vbuf->समयcode.userbits[0];
+		__entry->समयcode_userbits1 = vbuf->समयcode.userbits[1];
+		__entry->समयcode_userbits2 = vbuf->समयcode.userbits[2];
+		__entry->समयcode_userbits3 = vbuf->समयcode.userbits[3];
 		__entry->sequence = vbuf->sequence;
 	),
 
-	TP_printk("minor=%d flags = %s, field = %s, "
+	TP_prपूर्णांकk("minor=%d flags = %s, field = %s, "
 		  "timestamp = %llu, timecode = { type = %s, flags = %s, "
 		  "frames = %u, seconds = %u, minutes = %u, hours = %u, "
 		  "userbits = { %u %u %u %u } }, sequence = %u", __entry->minor,
 		  show_flags(__entry->flags),
 		  show_field(__entry->field),
-		  __entry->timestamp,
-		  show_timecode_type(__entry->timecode_type),
-		  show_timecode_flags(__entry->timecode_flags),
-		  __entry->timecode_frames,
-		  __entry->timecode_seconds,
-		  __entry->timecode_minutes,
-		  __entry->timecode_hours,
-		  __entry->timecode_userbits0,
-		  __entry->timecode_userbits1,
-		  __entry->timecode_userbits2,
-		  __entry->timecode_userbits3,
+		  __entry->बारtamp,
+		  show_समयcode_type(__entry->समयcode_type),
+		  show_समयcode_flags(__entry->समयcode_flags),
+		  __entry->समयcode_frames,
+		  __entry->समयcode_seconds,
+		  __entry->समयcode_minutes,
+		  __entry->समयcode_hours,
+		  __entry->समयcode_userbits0,
+		  __entry->समयcode_userbits1,
+		  __entry->समयcode_userbits2,
+		  __entry->समयcode_userbits3,
 		  __entry->sequence
 	)
 )
 
-DEFINE_EVENT(vb2_v4l2_event_class, vb2_v4l2_buf_done,
-	TP_PROTO(struct vb2_queue *q, struct vb2_buffer *vb),
+DEFINE_EVENT(vb2_v4l2_event_class, vb2_v4l2_buf_करोne,
+	TP_PROTO(काष्ठा vb2_queue *q, काष्ठा vb2_buffer *vb),
 	TP_ARGS(q, vb)
 );
 
 DEFINE_EVENT(vb2_v4l2_event_class, vb2_v4l2_buf_queue,
-	TP_PROTO(struct vb2_queue *q, struct vb2_buffer *vb),
+	TP_PROTO(काष्ठा vb2_queue *q, काष्ठा vb2_buffer *vb),
 	TP_ARGS(q, vb)
 );
 
 DEFINE_EVENT(vb2_v4l2_event_class, vb2_v4l2_dqbuf,
-	TP_PROTO(struct vb2_queue *q, struct vb2_buffer *vb),
+	TP_PROTO(काष्ठा vb2_queue *q, काष्ठा vb2_buffer *vb),
 	TP_ARGS(q, vb)
 );
 
 DEFINE_EVENT(vb2_v4l2_event_class, vb2_v4l2_qbuf,
-	TP_PROTO(struct vb2_queue *q, struct vb2_buffer *vb),
+	TP_PROTO(काष्ठा vb2_queue *q, काष्ठा vb2_buffer *vb),
 	TP_ARGS(q, vb)
 );
 
-#endif /* if !defined(_TRACE_V4L2_H) || defined(TRACE_HEADER_MULTI_READ) */
+#पूर्ण_अगर /* अगर !defined(_TRACE_V4L2_H) || defined(TRACE_HEADER_MULTI_READ) */
 
 /* This part must be outside protection */
-#include <trace/define_trace.h>
+#समावेश <trace/define_trace.h>

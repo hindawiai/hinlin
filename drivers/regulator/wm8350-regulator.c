@@ -1,29 +1,30 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 //
-// wm8350.c  --  Voltage and current regulation for the Wolfson WM8350 PMIC
+// wm8350.c  --  Voltage and current regulation क्रम the Wolfson WM8350 PMIC
 //
 // Copyright 2007, 2008 Wolfson Microelectronics PLC.
 //
 // Author: Liam Girdwood
 //         linux@wolfsonmicro.com
 
-#include <linux/module.h>
-#include <linux/moduleparam.h>
-#include <linux/init.h>
-#include <linux/bitops.h>
-#include <linux/err.h>
-#include <linux/i2c.h>
-#include <linux/mfd/wm8350/core.h>
-#include <linux/mfd/wm8350/pmic.h>
-#include <linux/platform_device.h>
-#include <linux/regulator/driver.h>
-#include <linux/regulator/machine.h>
+#समावेश <linux/module.h>
+#समावेश <linux/moduleparam.h>
+#समावेश <linux/init.h>
+#समावेश <linux/bitops.h>
+#समावेश <linux/err.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/mfd/wm8350/core.h>
+#समावेश <linux/mfd/wm8350/pmic.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/regulator/driver.h>
+#समावेश <linux/regulator/machine.h>
 
-/* Maximum value possible for VSEL */
-#define WM8350_DCDC_MAX_VSEL 0x66
+/* Maximum value possible क्रम VSEL */
+#घोषणा WM8350_DCDC_MAX_VSEL 0x66
 
 /* Microamps */
-static const unsigned int isink_cur[] = {
+अटल स्थिर अचिन्हित पूर्णांक isink_cur[] = अणु
 	4,
 	5,
 	6,
@@ -88,19 +89,19 @@ static const unsigned int isink_cur[] = {
 	157820,
 	187681,
 	223191
-};
+पूर्ण;
 
 /* turn on ISINK followed by DCDC */
-static int wm8350_isink_enable(struct regulator_dev *rdev)
-{
-	struct wm8350 *wm8350 = rdev_get_drvdata(rdev);
-	int isink = rdev_get_id(rdev);
+अटल पूर्णांक wm8350_isink_enable(काष्ठा regulator_dev *rdev)
+अणु
+	काष्ठा wm8350 *wm8350 = rdev_get_drvdata(rdev);
+	पूर्णांक isink = rdev_get_id(rdev);
 
-	switch (isink) {
-	case WM8350_ISINK_A:
-		switch (wm8350->pmic.isink_A_dcdc) {
-		case WM8350_DCDC_2:
-		case WM8350_DCDC_5:
+	चयन (isink) अणु
+	हाल WM8350_ISINK_A:
+		चयन (wm8350->pmic.isink_A_dcdc) अणु
+		हाल WM8350_DCDC_2:
+		हाल WM8350_DCDC_5:
 			wm8350_set_bits(wm8350, WM8350_POWER_MGMT_7,
 					WM8350_CS1_ENA);
 			wm8350_set_bits(wm8350, WM8350_CSA_FLASH_CONTROL,
@@ -108,15 +109,15 @@ static int wm8350_isink_enable(struct regulator_dev *rdev)
 			wm8350_set_bits(wm8350, WM8350_DCDC_LDO_REQUESTED,
 					1 << (wm8350->pmic.isink_A_dcdc -
 					      WM8350_DCDC_1));
-			break;
-		default:
-			return -EINVAL;
-		}
-		break;
-	case WM8350_ISINK_B:
-		switch (wm8350->pmic.isink_B_dcdc) {
-		case WM8350_DCDC_2:
-		case WM8350_DCDC_5:
+			अवरोध;
+		शेष:
+			वापस -EINVAL;
+		पूर्ण
+		अवरोध;
+	हाल WM8350_ISINK_B:
+		चयन (wm8350->pmic.isink_B_dcdc) अणु
+		हाल WM8350_DCDC_2:
+		हाल WM8350_DCDC_5:
 			wm8350_set_bits(wm8350, WM8350_POWER_MGMT_7,
 					WM8350_CS2_ENA);
 			wm8350_set_bits(wm8350, WM8350_CSB_FLASH_CONTROL,
@@ -124,753 +125,753 @@ static int wm8350_isink_enable(struct regulator_dev *rdev)
 			wm8350_set_bits(wm8350, WM8350_DCDC_LDO_REQUESTED,
 					1 << (wm8350->pmic.isink_B_dcdc -
 					      WM8350_DCDC_1));
-			break;
-		default:
-			return -EINVAL;
-		}
-		break;
-	default:
-		return -EINVAL;
-	}
-	return 0;
-}
+			अवरोध;
+		शेष:
+			वापस -EINVAL;
+		पूर्ण
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int wm8350_isink_disable(struct regulator_dev *rdev)
-{
-	struct wm8350 *wm8350 = rdev_get_drvdata(rdev);
-	int isink = rdev_get_id(rdev);
+अटल पूर्णांक wm8350_isink_disable(काष्ठा regulator_dev *rdev)
+अणु
+	काष्ठा wm8350 *wm8350 = rdev_get_drvdata(rdev);
+	पूर्णांक isink = rdev_get_id(rdev);
 
-	switch (isink) {
-	case WM8350_ISINK_A:
-		switch (wm8350->pmic.isink_A_dcdc) {
-		case WM8350_DCDC_2:
-		case WM8350_DCDC_5:
+	चयन (isink) अणु
+	हाल WM8350_ISINK_A:
+		चयन (wm8350->pmic.isink_A_dcdc) अणु
+		हाल WM8350_DCDC_2:
+		हाल WM8350_DCDC_5:
 			wm8350_clear_bits(wm8350, WM8350_DCDC_LDO_REQUESTED,
 					  1 << (wm8350->pmic.isink_A_dcdc -
 						WM8350_DCDC_1));
 			wm8350_clear_bits(wm8350, WM8350_POWER_MGMT_7,
 					  WM8350_CS1_ENA);
-			break;
-		default:
-			return -EINVAL;
-		}
-		break;
-	case WM8350_ISINK_B:
-		switch (wm8350->pmic.isink_B_dcdc) {
-		case WM8350_DCDC_2:
-		case WM8350_DCDC_5:
+			अवरोध;
+		शेष:
+			वापस -EINVAL;
+		पूर्ण
+		अवरोध;
+	हाल WM8350_ISINK_B:
+		चयन (wm8350->pmic.isink_B_dcdc) अणु
+		हाल WM8350_DCDC_2:
+		हाल WM8350_DCDC_5:
 			wm8350_clear_bits(wm8350, WM8350_DCDC_LDO_REQUESTED,
 					  1 << (wm8350->pmic.isink_B_dcdc -
 						WM8350_DCDC_1));
 			wm8350_clear_bits(wm8350, WM8350_POWER_MGMT_7,
 					  WM8350_CS2_ENA);
-			break;
-		default:
-			return -EINVAL;
-		}
-		break;
-	default:
-		return -EINVAL;
-	}
-	return 0;
-}
+			अवरोध;
+		शेष:
+			वापस -EINVAL;
+		पूर्ण
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int wm8350_isink_is_enabled(struct regulator_dev *rdev)
-{
-	struct wm8350 *wm8350 = rdev_get_drvdata(rdev);
-	int isink = rdev_get_id(rdev);
+अटल पूर्णांक wm8350_isink_is_enabled(काष्ठा regulator_dev *rdev)
+अणु
+	काष्ठा wm8350 *wm8350 = rdev_get_drvdata(rdev);
+	पूर्णांक isink = rdev_get_id(rdev);
 
-	switch (isink) {
-	case WM8350_ISINK_A:
-		return wm8350_reg_read(wm8350, WM8350_CURRENT_SINK_DRIVER_A) &
+	चयन (isink) अणु
+	हाल WM8350_ISINK_A:
+		वापस wm8350_reg_पढ़ो(wm8350, WM8350_CURRENT_SINK_DRIVER_A) &
 		    0x8000;
-	case WM8350_ISINK_B:
-		return wm8350_reg_read(wm8350, WM8350_CURRENT_SINK_DRIVER_B) &
+	हाल WM8350_ISINK_B:
+		वापस wm8350_reg_पढ़ो(wm8350, WM8350_CURRENT_SINK_DRIVER_B) &
 		    0x8000;
-	}
-	return -EINVAL;
-}
+	पूर्ण
+	वापस -EINVAL;
+पूर्ण
 
-static int wm8350_isink_enable_time(struct regulator_dev *rdev)
-{
-	struct wm8350 *wm8350 = rdev_get_drvdata(rdev);
-	int isink = rdev_get_id(rdev);
-	int reg;
+अटल पूर्णांक wm8350_isink_enable_समय(काष्ठा regulator_dev *rdev)
+अणु
+	काष्ठा wm8350 *wm8350 = rdev_get_drvdata(rdev);
+	पूर्णांक isink = rdev_get_id(rdev);
+	पूर्णांक reg;
 
-	switch (isink) {
-	case WM8350_ISINK_A:
-		reg = wm8350_reg_read(wm8350, WM8350_CSA_FLASH_CONTROL);
-		break;
-	case WM8350_ISINK_B:
-		reg = wm8350_reg_read(wm8350, WM8350_CSB_FLASH_CONTROL);
-		break;
-	default:
-		return -EINVAL;
-	}
+	चयन (isink) अणु
+	हाल WM8350_ISINK_A:
+		reg = wm8350_reg_पढ़ो(wm8350, WM8350_CSA_FLASH_CONTROL);
+		अवरोध;
+	हाल WM8350_ISINK_B:
+		reg = wm8350_reg_पढ़ो(wm8350, WM8350_CSB_FLASH_CONTROL);
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	if (reg & WM8350_CS1_FLASH_MODE) {
-		switch (reg & WM8350_CS1_ON_RAMP_MASK) {
-		case 0:
-			return 0;
-		case 1:
-			return 1950;
-		case 2:
-			return 3910;
-		case 3:
-			return 7800;
-		}
-	} else {
-		switch (reg & WM8350_CS1_ON_RAMP_MASK) {
-		case 0:
-			return 0;
-		case 1:
-			return 250000;
-		case 2:
-			return 500000;
-		case 3:
-			return 1000000;
-		}
-	}
+	अगर (reg & WM8350_CS1_FLASH_MODE) अणु
+		चयन (reg & WM8350_CS1_ON_RAMP_MASK) अणु
+		हाल 0:
+			वापस 0;
+		हाल 1:
+			वापस 1950;
+		हाल 2:
+			वापस 3910;
+		हाल 3:
+			वापस 7800;
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		चयन (reg & WM8350_CS1_ON_RAMP_MASK) अणु
+		हाल 0:
+			वापस 0;
+		हाल 1:
+			वापस 250000;
+		हाल 2:
+			वापस 500000;
+		हाल 3:
+			वापस 1000000;
+		पूर्ण
+	पूर्ण
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
 
-int wm8350_isink_set_flash(struct wm8350 *wm8350, int isink, u16 mode,
+पूर्णांक wm8350_isink_set_flash(काष्ठा wm8350 *wm8350, पूर्णांक isink, u16 mode,
 			   u16 trigger, u16 duration, u16 on_ramp, u16 off_ramp,
 			   u16 drive)
-{
-	switch (isink) {
-	case WM8350_ISINK_A:
-		wm8350_reg_write(wm8350, WM8350_CSA_FLASH_CONTROL,
+अणु
+	चयन (isink) अणु
+	हाल WM8350_ISINK_A:
+		wm8350_reg_ग_लिखो(wm8350, WM8350_CSA_FLASH_CONTROL,
 				 (mode ? WM8350_CS1_FLASH_MODE : 0) |
 				 (trigger ? WM8350_CS1_TRIGSRC : 0) |
 				 duration | on_ramp | off_ramp | drive);
-		break;
-	case WM8350_ISINK_B:
-		wm8350_reg_write(wm8350, WM8350_CSB_FLASH_CONTROL,
+		अवरोध;
+	हाल WM8350_ISINK_B:
+		wm8350_reg_ग_लिखो(wm8350, WM8350_CSB_FLASH_CONTROL,
 				 (mode ? WM8350_CS2_FLASH_MODE : 0) |
 				 (trigger ? WM8350_CS2_TRIGSRC : 0) |
 				 duration | on_ramp | off_ramp | drive);
-		break;
-	default:
-		return -EINVAL;
-	}
-	return 0;
-}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(wm8350_isink_set_flash);
 
-static int wm8350_dcdc_set_suspend_voltage(struct regulator_dev *rdev, int uV)
-{
-	struct wm8350 *wm8350 = rdev_get_drvdata(rdev);
-	int sel, volt_reg, dcdc = rdev_get_id(rdev);
+अटल पूर्णांक wm8350_dcdc_set_suspend_voltage(काष्ठा regulator_dev *rdev, पूर्णांक uV)
+अणु
+	काष्ठा wm8350 *wm8350 = rdev_get_drvdata(rdev);
+	पूर्णांक sel, volt_reg, dcdc = rdev_get_id(rdev);
 	u16 val;
 
 	dev_dbg(wm8350->dev, "%s %d mV %d\n", __func__, dcdc, uV / 1000);
 
-	switch (dcdc) {
-	case WM8350_DCDC_1:
+	चयन (dcdc) अणु
+	हाल WM8350_DCDC_1:
 		volt_reg = WM8350_DCDC1_LOW_POWER;
-		break;
-	case WM8350_DCDC_3:
+		अवरोध;
+	हाल WM8350_DCDC_3:
 		volt_reg = WM8350_DCDC3_LOW_POWER;
-		break;
-	case WM8350_DCDC_4:
+		अवरोध;
+	हाल WM8350_DCDC_4:
 		volt_reg = WM8350_DCDC4_LOW_POWER;
-		break;
-	case WM8350_DCDC_6:
+		अवरोध;
+	हाल WM8350_DCDC_6:
 		volt_reg = WM8350_DCDC6_LOW_POWER;
-		break;
-	case WM8350_DCDC_2:
-	case WM8350_DCDC_5:
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	हाल WM8350_DCDC_2:
+	हाल WM8350_DCDC_5:
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
 	sel = regulator_map_voltage_linear(rdev, uV, uV);
-	if (sel < 0)
-		return sel;
+	अगर (sel < 0)
+		वापस sel;
 
 	/* all DCDCs have same mV bits */
-	val = wm8350_reg_read(wm8350, volt_reg) & ~WM8350_DC1_VSEL_MASK;
-	wm8350_reg_write(wm8350, volt_reg, val | sel);
-	return 0;
-}
+	val = wm8350_reg_पढ़ो(wm8350, volt_reg) & ~WM8350_DC1_VSEL_MASK;
+	wm8350_reg_ग_लिखो(wm8350, volt_reg, val | sel);
+	वापस 0;
+पूर्ण
 
-static int wm8350_dcdc_set_suspend_enable(struct regulator_dev *rdev)
-{
-	struct wm8350 *wm8350 = rdev_get_drvdata(rdev);
-	int dcdc = rdev_get_id(rdev);
+अटल पूर्णांक wm8350_dcdc_set_suspend_enable(काष्ठा regulator_dev *rdev)
+अणु
+	काष्ठा wm8350 *wm8350 = rdev_get_drvdata(rdev);
+	पूर्णांक dcdc = rdev_get_id(rdev);
 	u16 val;
 
-	switch (dcdc) {
-	case WM8350_DCDC_1:
-		val = wm8350_reg_read(wm8350, WM8350_DCDC1_LOW_POWER)
+	चयन (dcdc) अणु
+	हाल WM8350_DCDC_1:
+		val = wm8350_reg_पढ़ो(wm8350, WM8350_DCDC1_LOW_POWER)
 			& ~WM8350_DCDC_HIB_MODE_MASK;
-		wm8350_reg_write(wm8350, WM8350_DCDC1_LOW_POWER,
+		wm8350_reg_ग_लिखो(wm8350, WM8350_DCDC1_LOW_POWER,
 			val | wm8350->pmic.dcdc1_hib_mode);
-		break;
-	case WM8350_DCDC_3:
-		val = wm8350_reg_read(wm8350, WM8350_DCDC3_LOW_POWER)
+		अवरोध;
+	हाल WM8350_DCDC_3:
+		val = wm8350_reg_पढ़ो(wm8350, WM8350_DCDC3_LOW_POWER)
 			& ~WM8350_DCDC_HIB_MODE_MASK;
-		wm8350_reg_write(wm8350, WM8350_DCDC3_LOW_POWER,
+		wm8350_reg_ग_लिखो(wm8350, WM8350_DCDC3_LOW_POWER,
 			val | wm8350->pmic.dcdc3_hib_mode);
-		break;
-	case WM8350_DCDC_4:
-		val = wm8350_reg_read(wm8350, WM8350_DCDC4_LOW_POWER)
+		अवरोध;
+	हाल WM8350_DCDC_4:
+		val = wm8350_reg_पढ़ो(wm8350, WM8350_DCDC4_LOW_POWER)
 			& ~WM8350_DCDC_HIB_MODE_MASK;
-		wm8350_reg_write(wm8350, WM8350_DCDC4_LOW_POWER,
+		wm8350_reg_ग_लिखो(wm8350, WM8350_DCDC4_LOW_POWER,
 			val | wm8350->pmic.dcdc4_hib_mode);
-		break;
-	case WM8350_DCDC_6:
-		val = wm8350_reg_read(wm8350, WM8350_DCDC6_LOW_POWER)
+		अवरोध;
+	हाल WM8350_DCDC_6:
+		val = wm8350_reg_पढ़ो(wm8350, WM8350_DCDC6_LOW_POWER)
 			& ~WM8350_DCDC_HIB_MODE_MASK;
-		wm8350_reg_write(wm8350, WM8350_DCDC6_LOW_POWER,
+		wm8350_reg_ग_लिखो(wm8350, WM8350_DCDC6_LOW_POWER,
 			val | wm8350->pmic.dcdc6_hib_mode);
-		break;
-	case WM8350_DCDC_2:
-	case WM8350_DCDC_5:
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	हाल WM8350_DCDC_2:
+	हाल WM8350_DCDC_5:
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int wm8350_dcdc_set_suspend_disable(struct regulator_dev *rdev)
-{
-	struct wm8350 *wm8350 = rdev_get_drvdata(rdev);
-	int dcdc = rdev_get_id(rdev);
+अटल पूर्णांक wm8350_dcdc_set_suspend_disable(काष्ठा regulator_dev *rdev)
+अणु
+	काष्ठा wm8350 *wm8350 = rdev_get_drvdata(rdev);
+	पूर्णांक dcdc = rdev_get_id(rdev);
 	u16 val;
 
-	switch (dcdc) {
-	case WM8350_DCDC_1:
-		val = wm8350_reg_read(wm8350, WM8350_DCDC1_LOW_POWER);
+	चयन (dcdc) अणु
+	हाल WM8350_DCDC_1:
+		val = wm8350_reg_पढ़ो(wm8350, WM8350_DCDC1_LOW_POWER);
 		wm8350->pmic.dcdc1_hib_mode = val & WM8350_DCDC_HIB_MODE_MASK;
-		wm8350_reg_write(wm8350, WM8350_DCDC1_LOW_POWER,
+		wm8350_reg_ग_लिखो(wm8350, WM8350_DCDC1_LOW_POWER,
 				 val | WM8350_DCDC_HIB_MODE_DIS);
-		break;
-	case WM8350_DCDC_3:
-		val = wm8350_reg_read(wm8350, WM8350_DCDC3_LOW_POWER);
+		अवरोध;
+	हाल WM8350_DCDC_3:
+		val = wm8350_reg_पढ़ो(wm8350, WM8350_DCDC3_LOW_POWER);
 		wm8350->pmic.dcdc3_hib_mode = val & WM8350_DCDC_HIB_MODE_MASK;
-		wm8350_reg_write(wm8350, WM8350_DCDC3_LOW_POWER,
+		wm8350_reg_ग_लिखो(wm8350, WM8350_DCDC3_LOW_POWER,
 				 val | WM8350_DCDC_HIB_MODE_DIS);
-		break;
-	case WM8350_DCDC_4:
-		val = wm8350_reg_read(wm8350, WM8350_DCDC4_LOW_POWER);
+		अवरोध;
+	हाल WM8350_DCDC_4:
+		val = wm8350_reg_पढ़ो(wm8350, WM8350_DCDC4_LOW_POWER);
 		wm8350->pmic.dcdc4_hib_mode = val & WM8350_DCDC_HIB_MODE_MASK;
-		wm8350_reg_write(wm8350, WM8350_DCDC4_LOW_POWER,
+		wm8350_reg_ग_लिखो(wm8350, WM8350_DCDC4_LOW_POWER,
 				 val | WM8350_DCDC_HIB_MODE_DIS);
-		break;
-	case WM8350_DCDC_6:
-		val = wm8350_reg_read(wm8350, WM8350_DCDC6_LOW_POWER);
+		अवरोध;
+	हाल WM8350_DCDC_6:
+		val = wm8350_reg_पढ़ो(wm8350, WM8350_DCDC6_LOW_POWER);
 		wm8350->pmic.dcdc6_hib_mode = val & WM8350_DCDC_HIB_MODE_MASK;
-		wm8350_reg_write(wm8350, WM8350_DCDC6_LOW_POWER,
+		wm8350_reg_ग_लिखो(wm8350, WM8350_DCDC6_LOW_POWER,
 				 val | WM8350_DCDC_HIB_MODE_DIS);
-		break;
-	case WM8350_DCDC_2:
-	case WM8350_DCDC_5:
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	हाल WM8350_DCDC_2:
+	हाल WM8350_DCDC_5:
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int wm8350_dcdc25_set_suspend_enable(struct regulator_dev *rdev)
-{
-	struct wm8350 *wm8350 = rdev_get_drvdata(rdev);
-	int dcdc = rdev_get_id(rdev);
+अटल पूर्णांक wm8350_dcdc25_set_suspend_enable(काष्ठा regulator_dev *rdev)
+अणु
+	काष्ठा wm8350 *wm8350 = rdev_get_drvdata(rdev);
+	पूर्णांक dcdc = rdev_get_id(rdev);
 	u16 val;
 
-	switch (dcdc) {
-	case WM8350_DCDC_2:
-		val = wm8350_reg_read(wm8350, WM8350_DCDC2_CONTROL)
+	चयन (dcdc) अणु
+	हाल WM8350_DCDC_2:
+		val = wm8350_reg_पढ़ो(wm8350, WM8350_DCDC2_CONTROL)
 		    & ~WM8350_DC2_HIB_MODE_MASK;
-		wm8350_reg_write(wm8350, WM8350_DCDC2_CONTROL, val |
+		wm8350_reg_ग_लिखो(wm8350, WM8350_DCDC2_CONTROL, val |
 		    (WM8350_DC2_HIB_MODE_ACTIVE << WM8350_DC2_HIB_MODE_SHIFT));
-		break;
-	case WM8350_DCDC_5:
-		val = wm8350_reg_read(wm8350, WM8350_DCDC5_CONTROL)
+		अवरोध;
+	हाल WM8350_DCDC_5:
+		val = wm8350_reg_पढ़ो(wm8350, WM8350_DCDC5_CONTROL)
 		    & ~WM8350_DC5_HIB_MODE_MASK;
-		wm8350_reg_write(wm8350, WM8350_DCDC5_CONTROL, val |
+		wm8350_reg_ग_लिखो(wm8350, WM8350_DCDC5_CONTROL, val |
 		    (WM8350_DC5_HIB_MODE_ACTIVE << WM8350_DC5_HIB_MODE_SHIFT));
-		break;
-	default:
-		return -EINVAL;
-	}
-	return 0;
-}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int wm8350_dcdc25_set_suspend_disable(struct regulator_dev *rdev)
-{
-	struct wm8350 *wm8350 = rdev_get_drvdata(rdev);
-	int dcdc = rdev_get_id(rdev);
+अटल पूर्णांक wm8350_dcdc25_set_suspend_disable(काष्ठा regulator_dev *rdev)
+अणु
+	काष्ठा wm8350 *wm8350 = rdev_get_drvdata(rdev);
+	पूर्णांक dcdc = rdev_get_id(rdev);
 	u16 val;
 
-	switch (dcdc) {
-	case WM8350_DCDC_2:
-		val = wm8350_reg_read(wm8350, WM8350_DCDC2_CONTROL)
+	चयन (dcdc) अणु
+	हाल WM8350_DCDC_2:
+		val = wm8350_reg_पढ़ो(wm8350, WM8350_DCDC2_CONTROL)
 		    & ~WM8350_DC2_HIB_MODE_MASK;
-		wm8350_reg_write(wm8350, WM8350_DCDC2_CONTROL, val |
+		wm8350_reg_ग_लिखो(wm8350, WM8350_DCDC2_CONTROL, val |
 		    (WM8350_DC2_HIB_MODE_DISABLE << WM8350_DC2_HIB_MODE_SHIFT));
-		break;
-	case WM8350_DCDC_5:
-		val = wm8350_reg_read(wm8350, WM8350_DCDC5_CONTROL)
+		अवरोध;
+	हाल WM8350_DCDC_5:
+		val = wm8350_reg_पढ़ो(wm8350, WM8350_DCDC5_CONTROL)
 		    & ~WM8350_DC5_HIB_MODE_MASK;
-		wm8350_reg_write(wm8350, WM8350_DCDC5_CONTROL, val |
+		wm8350_reg_ग_लिखो(wm8350, WM8350_DCDC5_CONTROL, val |
 		    (WM8350_DC5_HIB_MODE_DISABLE << WM8350_DC5_HIB_MODE_SHIFT));
-		break;
-	default:
-		return -EINVAL;
-	}
-	return 0;
-}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int wm8350_dcdc_set_suspend_mode(struct regulator_dev *rdev,
-	unsigned int mode)
-{
-	struct wm8350 *wm8350 = rdev_get_drvdata(rdev);
-	int dcdc = rdev_get_id(rdev);
+अटल पूर्णांक wm8350_dcdc_set_suspend_mode(काष्ठा regulator_dev *rdev,
+	अचिन्हित पूर्णांक mode)
+अणु
+	काष्ठा wm8350 *wm8350 = rdev_get_drvdata(rdev);
+	पूर्णांक dcdc = rdev_get_id(rdev);
 	u16 *hib_mode;
 
-	switch (dcdc) {
-	case WM8350_DCDC_1:
+	चयन (dcdc) अणु
+	हाल WM8350_DCDC_1:
 		hib_mode = &wm8350->pmic.dcdc1_hib_mode;
-		break;
-	case WM8350_DCDC_3:
+		अवरोध;
+	हाल WM8350_DCDC_3:
 		hib_mode = &wm8350->pmic.dcdc3_hib_mode;
-		break;
-	case WM8350_DCDC_4:
+		अवरोध;
+	हाल WM8350_DCDC_4:
 		hib_mode = &wm8350->pmic.dcdc4_hib_mode;
-		break;
-	case WM8350_DCDC_6:
+		अवरोध;
+	हाल WM8350_DCDC_6:
 		hib_mode = &wm8350->pmic.dcdc6_hib_mode;
-		break;
-	case WM8350_DCDC_2:
-	case WM8350_DCDC_5:
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	हाल WM8350_DCDC_2:
+	हाल WM8350_DCDC_5:
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	switch (mode) {
-	case REGULATOR_MODE_NORMAL:
+	चयन (mode) अणु
+	हाल REGULATOR_MODE_NORMAL:
 		*hib_mode = WM8350_DCDC_HIB_MODE_IMAGE;
-		break;
-	case REGULATOR_MODE_IDLE:
+		अवरोध;
+	हाल REGULATOR_MODE_IDLE:
 		*hib_mode = WM8350_DCDC_HIB_MODE_STANDBY;
-		break;
-	case REGULATOR_MODE_STANDBY:
+		अवरोध;
+	हाल REGULATOR_MODE_STANDBY:
 		*hib_mode = WM8350_DCDC_HIB_MODE_LDO_IM;
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct linear_range wm8350_ldo_ranges[] = {
+अटल स्थिर काष्ठा linear_range wm8350_lकरो_ranges[] = अणु
 	REGULATOR_LINEAR_RANGE(900000, 0, 15, 50000),
 	REGULATOR_LINEAR_RANGE(1800000, 16, 31, 100000),
-};
+पूर्ण;
 
-static int wm8350_ldo_set_suspend_voltage(struct regulator_dev *rdev, int uV)
-{
-	struct wm8350 *wm8350 = rdev_get_drvdata(rdev);
-	int sel, volt_reg, ldo = rdev_get_id(rdev);
+अटल पूर्णांक wm8350_lकरो_set_suspend_voltage(काष्ठा regulator_dev *rdev, पूर्णांक uV)
+अणु
+	काष्ठा wm8350 *wm8350 = rdev_get_drvdata(rdev);
+	पूर्णांक sel, volt_reg, lकरो = rdev_get_id(rdev);
 	u16 val;
 
-	dev_dbg(wm8350->dev, "%s %d mV %d\n", __func__, ldo, uV / 1000);
+	dev_dbg(wm8350->dev, "%s %d mV %d\n", __func__, lकरो, uV / 1000);
 
-	switch (ldo) {
-	case WM8350_LDO_1:
+	चयन (lकरो) अणु
+	हाल WM8350_LDO_1:
 		volt_reg = WM8350_LDO1_LOW_POWER;
-		break;
-	case WM8350_LDO_2:
+		अवरोध;
+	हाल WM8350_LDO_2:
 		volt_reg = WM8350_LDO2_LOW_POWER;
-		break;
-	case WM8350_LDO_3:
+		अवरोध;
+	हाल WM8350_LDO_3:
 		volt_reg = WM8350_LDO3_LOW_POWER;
-		break;
-	case WM8350_LDO_4:
+		अवरोध;
+	हाल WM8350_LDO_4:
 		volt_reg = WM8350_LDO4_LOW_POWER;
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
 	sel = regulator_map_voltage_linear_range(rdev, uV, uV);
-	if (sel < 0)
-		return sel;
+	अगर (sel < 0)
+		वापस sel;
 
 	/* all LDOs have same mV bits */
-	val = wm8350_reg_read(wm8350, volt_reg) & ~WM8350_LDO1_VSEL_MASK;
-	wm8350_reg_write(wm8350, volt_reg, val | sel);
-	return 0;
-}
+	val = wm8350_reg_पढ़ो(wm8350, volt_reg) & ~WM8350_LDO1_VSEL_MASK;
+	wm8350_reg_ग_लिखो(wm8350, volt_reg, val | sel);
+	वापस 0;
+पूर्ण
 
-static int wm8350_ldo_set_suspend_enable(struct regulator_dev *rdev)
-{
-	struct wm8350 *wm8350 = rdev_get_drvdata(rdev);
-	int volt_reg, ldo = rdev_get_id(rdev);
+अटल पूर्णांक wm8350_lकरो_set_suspend_enable(काष्ठा regulator_dev *rdev)
+अणु
+	काष्ठा wm8350 *wm8350 = rdev_get_drvdata(rdev);
+	पूर्णांक volt_reg, lकरो = rdev_get_id(rdev);
 	u16 val;
 
-	switch (ldo) {
-	case WM8350_LDO_1:
+	चयन (lकरो) अणु
+	हाल WM8350_LDO_1:
 		volt_reg = WM8350_LDO1_LOW_POWER;
-		break;
-	case WM8350_LDO_2:
+		अवरोध;
+	हाल WM8350_LDO_2:
 		volt_reg = WM8350_LDO2_LOW_POWER;
-		break;
-	case WM8350_LDO_3:
+		अवरोध;
+	हाल WM8350_LDO_3:
 		volt_reg = WM8350_LDO3_LOW_POWER;
-		break;
-	case WM8350_LDO_4:
+		अवरोध;
+	हाल WM8350_LDO_4:
 		volt_reg = WM8350_LDO4_LOW_POWER;
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
 	/* all LDOs have same mV bits */
-	val = wm8350_reg_read(wm8350, volt_reg) & ~WM8350_LDO1_HIB_MODE_MASK;
-	wm8350_reg_write(wm8350, volt_reg, val);
-	return 0;
-}
+	val = wm8350_reg_पढ़ो(wm8350, volt_reg) & ~WM8350_LDO1_HIB_MODE_MASK;
+	wm8350_reg_ग_लिखो(wm8350, volt_reg, val);
+	वापस 0;
+पूर्ण
 
-static int wm8350_ldo_set_suspend_disable(struct regulator_dev *rdev)
-{
-	struct wm8350 *wm8350 = rdev_get_drvdata(rdev);
-	int volt_reg, ldo = rdev_get_id(rdev);
+अटल पूर्णांक wm8350_lकरो_set_suspend_disable(काष्ठा regulator_dev *rdev)
+अणु
+	काष्ठा wm8350 *wm8350 = rdev_get_drvdata(rdev);
+	पूर्णांक volt_reg, lकरो = rdev_get_id(rdev);
 	u16 val;
 
-	switch (ldo) {
-	case WM8350_LDO_1:
+	चयन (lकरो) अणु
+	हाल WM8350_LDO_1:
 		volt_reg = WM8350_LDO1_LOW_POWER;
-		break;
-	case WM8350_LDO_2:
+		अवरोध;
+	हाल WM8350_LDO_2:
 		volt_reg = WM8350_LDO2_LOW_POWER;
-		break;
-	case WM8350_LDO_3:
+		अवरोध;
+	हाल WM8350_LDO_3:
 		volt_reg = WM8350_LDO3_LOW_POWER;
-		break;
-	case WM8350_LDO_4:
+		अवरोध;
+	हाल WM8350_LDO_4:
 		volt_reg = WM8350_LDO4_LOW_POWER;
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
 	/* all LDOs have same mV bits */
-	val = wm8350_reg_read(wm8350, volt_reg) & ~WM8350_LDO1_HIB_MODE_MASK;
-	wm8350_reg_write(wm8350, volt_reg, val | WM8350_LDO1_HIB_MODE_DIS);
-	return 0;
-}
+	val = wm8350_reg_पढ़ो(wm8350, volt_reg) & ~WM8350_LDO1_HIB_MODE_MASK;
+	wm8350_reg_ग_लिखो(wm8350, volt_reg, val | WM8350_LDO1_HIB_MODE_DIS);
+	वापस 0;
+पूर्ण
 
-int wm8350_dcdc_set_slot(struct wm8350 *wm8350, int dcdc, u16 start,
+पूर्णांक wm8350_dcdc_set_slot(काष्ठा wm8350 *wm8350, पूर्णांक dcdc, u16 start,
 			 u16 stop, u16 fault)
-{
-	int slot_reg;
+अणु
+	पूर्णांक slot_reg;
 	u16 val;
 
 	dev_dbg(wm8350->dev, "%s %d start %d stop %d\n",
 		__func__, dcdc, start, stop);
 
 	/* slot valid ? */
-	if (start > 15 || stop > 15)
-		return -EINVAL;
+	अगर (start > 15 || stop > 15)
+		वापस -EINVAL;
 
-	switch (dcdc) {
-	case WM8350_DCDC_1:
+	चयन (dcdc) अणु
+	हाल WM8350_DCDC_1:
 		slot_reg = WM8350_DCDC1_TIMEOUTS;
-		break;
-	case WM8350_DCDC_2:
+		अवरोध;
+	हाल WM8350_DCDC_2:
 		slot_reg = WM8350_DCDC2_TIMEOUTS;
-		break;
-	case WM8350_DCDC_3:
+		अवरोध;
+	हाल WM8350_DCDC_3:
 		slot_reg = WM8350_DCDC3_TIMEOUTS;
-		break;
-	case WM8350_DCDC_4:
+		अवरोध;
+	हाल WM8350_DCDC_4:
 		slot_reg = WM8350_DCDC4_TIMEOUTS;
-		break;
-	case WM8350_DCDC_5:
+		अवरोध;
+	हाल WM8350_DCDC_5:
 		slot_reg = WM8350_DCDC5_TIMEOUTS;
-		break;
-	case WM8350_DCDC_6:
+		अवरोध;
+	हाल WM8350_DCDC_6:
 		slot_reg = WM8350_DCDC6_TIMEOUTS;
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	val = wm8350_reg_read(wm8350, slot_reg) &
+	val = wm8350_reg_पढ़ो(wm8350, slot_reg) &
 	    ~(WM8350_DC1_ENSLOT_MASK | WM8350_DC1_SDSLOT_MASK |
 	      WM8350_DC1_ERRACT_MASK);
-	wm8350_reg_write(wm8350, slot_reg,
+	wm8350_reg_ग_लिखो(wm8350, slot_reg,
 			 val | (start << WM8350_DC1_ENSLOT_SHIFT) |
 			 (stop << WM8350_DC1_SDSLOT_SHIFT) |
 			 (fault << WM8350_DC1_ERRACT_SHIFT));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(wm8350_dcdc_set_slot);
 
-int wm8350_ldo_set_slot(struct wm8350 *wm8350, int ldo, u16 start, u16 stop)
-{
-	int slot_reg;
+पूर्णांक wm8350_lकरो_set_slot(काष्ठा wm8350 *wm8350, पूर्णांक lकरो, u16 start, u16 stop)
+अणु
+	पूर्णांक slot_reg;
 	u16 val;
 
 	dev_dbg(wm8350->dev, "%s %d start %d stop %d\n",
-		__func__, ldo, start, stop);
+		__func__, lकरो, start, stop);
 
 	/* slot valid ? */
-	if (start > 15 || stop > 15)
-		return -EINVAL;
+	अगर (start > 15 || stop > 15)
+		वापस -EINVAL;
 
-	switch (ldo) {
-	case WM8350_LDO_1:
+	चयन (lकरो) अणु
+	हाल WM8350_LDO_1:
 		slot_reg = WM8350_LDO1_TIMEOUTS;
-		break;
-	case WM8350_LDO_2:
+		अवरोध;
+	हाल WM8350_LDO_2:
 		slot_reg = WM8350_LDO2_TIMEOUTS;
-		break;
-	case WM8350_LDO_3:
+		अवरोध;
+	हाल WM8350_LDO_3:
 		slot_reg = WM8350_LDO3_TIMEOUTS;
-		break;
-	case WM8350_LDO_4:
+		अवरोध;
+	हाल WM8350_LDO_4:
 		slot_reg = WM8350_LDO4_TIMEOUTS;
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	val = wm8350_reg_read(wm8350, slot_reg) & ~WM8350_LDO1_SDSLOT_MASK;
-	wm8350_reg_write(wm8350, slot_reg, val | ((start << 10) | (stop << 6)));
-	return 0;
-}
-EXPORT_SYMBOL_GPL(wm8350_ldo_set_slot);
+	val = wm8350_reg_पढ़ो(wm8350, slot_reg) & ~WM8350_LDO1_SDSLOT_MASK;
+	wm8350_reg_ग_लिखो(wm8350, slot_reg, val | ((start << 10) | (stop << 6)));
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL_GPL(wm8350_lकरो_set_slot);
 
-int wm8350_dcdc25_set_mode(struct wm8350 *wm8350, int dcdc, u16 mode,
+पूर्णांक wm8350_dcdc25_set_mode(काष्ठा wm8350 *wm8350, पूर्णांक dcdc, u16 mode,
 			   u16 ilim, u16 ramp, u16 feedback)
-{
+अणु
 	u16 val;
 
 	dev_dbg(wm8350->dev, "%s %d mode: %s %s\n", __func__, dcdc,
 		mode ? "normal" : "boost", ilim ? "low" : "normal");
 
-	switch (dcdc) {
-	case WM8350_DCDC_2:
-		val = wm8350_reg_read(wm8350, WM8350_DCDC2_CONTROL)
+	चयन (dcdc) अणु
+	हाल WM8350_DCDC_2:
+		val = wm8350_reg_पढ़ो(wm8350, WM8350_DCDC2_CONTROL)
 		    & ~(WM8350_DC2_MODE_MASK | WM8350_DC2_ILIM_MASK |
 			WM8350_DC2_RMP_MASK | WM8350_DC2_FBSRC_MASK);
-		wm8350_reg_write(wm8350, WM8350_DCDC2_CONTROL, val |
+		wm8350_reg_ग_लिखो(wm8350, WM8350_DCDC2_CONTROL, val |
 				 (mode << WM8350_DC2_MODE_SHIFT) |
 				 (ilim << WM8350_DC2_ILIM_SHIFT) |
 				 (ramp << WM8350_DC2_RMP_SHIFT) |
 				 (feedback << WM8350_DC2_FBSRC_SHIFT));
-		break;
-	case WM8350_DCDC_5:
-		val = wm8350_reg_read(wm8350, WM8350_DCDC5_CONTROL)
+		अवरोध;
+	हाल WM8350_DCDC_5:
+		val = wm8350_reg_पढ़ो(wm8350, WM8350_DCDC5_CONTROL)
 		    & ~(WM8350_DC5_MODE_MASK | WM8350_DC5_ILIM_MASK |
 			WM8350_DC5_RMP_MASK | WM8350_DC5_FBSRC_MASK);
-		wm8350_reg_write(wm8350, WM8350_DCDC5_CONTROL, val |
+		wm8350_reg_ग_लिखो(wm8350, WM8350_DCDC5_CONTROL, val |
 				 (mode << WM8350_DC5_MODE_SHIFT) |
 				 (ilim << WM8350_DC5_ILIM_SHIFT) |
 				 (ramp << WM8350_DC5_RMP_SHIFT) |
 				 (feedback << WM8350_DC5_FBSRC_SHIFT));
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(wm8350_dcdc25_set_mode);
 
-static int force_continuous_enable(struct wm8350 *wm8350, int dcdc, int enable)
-{
-	int reg = 0, ret;
+अटल पूर्णांक क्रमce_continuous_enable(काष्ठा wm8350 *wm8350, पूर्णांक dcdc, पूर्णांक enable)
+अणु
+	पूर्णांक reg = 0, ret;
 
-	switch (dcdc) {
-	case WM8350_DCDC_1:
+	चयन (dcdc) अणु
+	हाल WM8350_DCDC_1:
 		reg = WM8350_DCDC1_FORCE_PWM;
-		break;
-	case WM8350_DCDC_3:
+		अवरोध;
+	हाल WM8350_DCDC_3:
 		reg = WM8350_DCDC3_FORCE_PWM;
-		break;
-	case WM8350_DCDC_4:
+		अवरोध;
+	हाल WM8350_DCDC_4:
 		reg = WM8350_DCDC4_FORCE_PWM;
-		break;
-	case WM8350_DCDC_6:
+		अवरोध;
+	हाल WM8350_DCDC_6:
 		reg = WM8350_DCDC6_FORCE_PWM;
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	if (enable)
+	अगर (enable)
 		ret = wm8350_set_bits(wm8350, reg,
 			WM8350_DCDC1_FORCE_PWM_ENA);
-	else
+	अन्यथा
 		ret = wm8350_clear_bits(wm8350, reg,
 			WM8350_DCDC1_FORCE_PWM_ENA);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int wm8350_dcdc_set_mode(struct regulator_dev *rdev, unsigned int mode)
-{
-	struct wm8350 *wm8350 = rdev_get_drvdata(rdev);
-	int dcdc = rdev_get_id(rdev);
+अटल पूर्णांक wm8350_dcdc_set_mode(काष्ठा regulator_dev *rdev, अचिन्हित पूर्णांक mode)
+अणु
+	काष्ठा wm8350 *wm8350 = rdev_get_drvdata(rdev);
+	पूर्णांक dcdc = rdev_get_id(rdev);
 	u16 val;
 
-	if (dcdc < WM8350_DCDC_1 || dcdc > WM8350_DCDC_6)
-		return -EINVAL;
+	अगर (dcdc < WM8350_DCDC_1 || dcdc > WM8350_DCDC_6)
+		वापस -EINVAL;
 
-	if (dcdc == WM8350_DCDC_2 || dcdc == WM8350_DCDC_5)
-		return -EINVAL;
+	अगर (dcdc == WM8350_DCDC_2 || dcdc == WM8350_DCDC_5)
+		वापस -EINVAL;
 
 	val = 1 << (dcdc - WM8350_DCDC_1);
 
-	switch (mode) {
-	case REGULATOR_MODE_FAST:
-		/* force continuous mode */
+	चयन (mode) अणु
+	हाल REGULATOR_MODE_FAST:
+		/* क्रमce continuous mode */
 		wm8350_set_bits(wm8350, WM8350_DCDC_ACTIVE_OPTIONS, val);
 		wm8350_clear_bits(wm8350, WM8350_DCDC_SLEEP_OPTIONS, val);
-		force_continuous_enable(wm8350, dcdc, 1);
-		break;
-	case REGULATOR_MODE_NORMAL:
+		क्रमce_continuous_enable(wm8350, dcdc, 1);
+		अवरोध;
+	हाल REGULATOR_MODE_NORMAL:
 		/* active / pulse skipping */
 		wm8350_set_bits(wm8350, WM8350_DCDC_ACTIVE_OPTIONS, val);
 		wm8350_clear_bits(wm8350, WM8350_DCDC_SLEEP_OPTIONS, val);
-		force_continuous_enable(wm8350, dcdc, 0);
-		break;
-	case REGULATOR_MODE_IDLE:
+		क्रमce_continuous_enable(wm8350, dcdc, 0);
+		अवरोध;
+	हाल REGULATOR_MODE_IDLE:
 		/* standby mode */
-		force_continuous_enable(wm8350, dcdc, 0);
+		क्रमce_continuous_enable(wm8350, dcdc, 0);
 		wm8350_clear_bits(wm8350, WM8350_DCDC_SLEEP_OPTIONS, val);
 		wm8350_clear_bits(wm8350, WM8350_DCDC_ACTIVE_OPTIONS, val);
-		break;
-	case REGULATOR_MODE_STANDBY:
+		अवरोध;
+	हाल REGULATOR_MODE_STANDBY:
 		/* LDO mode */
-		force_continuous_enable(wm8350, dcdc, 0);
+		क्रमce_continuous_enable(wm8350, dcdc, 0);
 		wm8350_set_bits(wm8350, WM8350_DCDC_SLEEP_OPTIONS, val);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static unsigned int wm8350_dcdc_get_mode(struct regulator_dev *rdev)
-{
-	struct wm8350 *wm8350 = rdev_get_drvdata(rdev);
-	int dcdc = rdev_get_id(rdev);
-	u16 mask, sleep, active, force;
-	int mode = REGULATOR_MODE_NORMAL;
-	int reg;
+अटल अचिन्हित पूर्णांक wm8350_dcdc_get_mode(काष्ठा regulator_dev *rdev)
+अणु
+	काष्ठा wm8350 *wm8350 = rdev_get_drvdata(rdev);
+	पूर्णांक dcdc = rdev_get_id(rdev);
+	u16 mask, sleep, active, क्रमce;
+	पूर्णांक mode = REGULATOR_MODE_NORMAL;
+	पूर्णांक reg;
 
-	switch (dcdc) {
-	case WM8350_DCDC_1:
+	चयन (dcdc) अणु
+	हाल WM8350_DCDC_1:
 		reg = WM8350_DCDC1_FORCE_PWM;
-		break;
-	case WM8350_DCDC_3:
+		अवरोध;
+	हाल WM8350_DCDC_3:
 		reg = WM8350_DCDC3_FORCE_PWM;
-		break;
-	case WM8350_DCDC_4:
+		अवरोध;
+	हाल WM8350_DCDC_4:
 		reg = WM8350_DCDC4_FORCE_PWM;
-		break;
-	case WM8350_DCDC_6:
+		अवरोध;
+	हाल WM8350_DCDC_6:
 		reg = WM8350_DCDC6_FORCE_PWM;
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
 	mask = 1 << (dcdc - WM8350_DCDC_1);
-	active = wm8350_reg_read(wm8350, WM8350_DCDC_ACTIVE_OPTIONS) & mask;
-	force = wm8350_reg_read(wm8350, reg) & WM8350_DCDC1_FORCE_PWM_ENA;
-	sleep = wm8350_reg_read(wm8350, WM8350_DCDC_SLEEP_OPTIONS) & mask;
+	active = wm8350_reg_पढ़ो(wm8350, WM8350_DCDC_ACTIVE_OPTIONS) & mask;
+	क्रमce = wm8350_reg_पढ़ो(wm8350, reg) & WM8350_DCDC1_FORCE_PWM_ENA;
+	sleep = wm8350_reg_पढ़ो(wm8350, WM8350_DCDC_SLEEP_OPTIONS) & mask;
 
 	dev_dbg(wm8350->dev, "mask %x active %x sleep %x force %x",
-		mask, active, sleep, force);
+		mask, active, sleep, क्रमce);
 
-	if (active && !sleep) {
-		if (force)
+	अगर (active && !sleep) अणु
+		अगर (क्रमce)
 			mode = REGULATOR_MODE_FAST;
-		else
+		अन्यथा
 			mode = REGULATOR_MODE_NORMAL;
-	} else if (!active && !sleep)
+	पूर्ण अन्यथा अगर (!active && !sleep)
 		mode = REGULATOR_MODE_IDLE;
-	else if (sleep)
+	अन्यथा अगर (sleep)
 		mode = REGULATOR_MODE_STANDBY;
 
-	return mode;
-}
+	वापस mode;
+पूर्ण
 
-static unsigned int wm8350_ldo_get_mode(struct regulator_dev *rdev)
-{
-	return REGULATOR_MODE_NORMAL;
-}
+अटल अचिन्हित पूर्णांक wm8350_lकरो_get_mode(काष्ठा regulator_dev *rdev)
+अणु
+	वापस REGULATOR_MODE_NORMAL;
+पूर्ण
 
-struct wm8350_dcdc_efficiency {
-	int uA_load_min;
-	int uA_load_max;
-	unsigned int mode;
-};
+काष्ठा wm8350_dcdc_efficiency अणु
+	पूर्णांक uA_load_min;
+	पूर्णांक uA_load_max;
+	अचिन्हित पूर्णांक mode;
+पूर्ण;
 
-static const struct wm8350_dcdc_efficiency dcdc1_6_efficiency[] = {
-	{0, 10000, REGULATOR_MODE_STANDBY},       /* 0 - 10mA - LDO */
-	{10000, 100000, REGULATOR_MODE_IDLE},     /* 10mA - 100mA - Standby */
-	{100000, 1000000, REGULATOR_MODE_NORMAL}, /* > 100mA - Active */
-	{-1, -1, REGULATOR_MODE_NORMAL},
-};
+अटल स्थिर काष्ठा wm8350_dcdc_efficiency dcdc1_6_efficiency[] = अणु
+	अणु0, 10000, REGULATOR_MODE_STANDBYपूर्ण,       /* 0 - 10mA - LDO */
+	अणु10000, 100000, REGULATOR_MODE_IDLEपूर्ण,     /* 10mA - 100mA - Standby */
+	अणु100000, 1000000, REGULATOR_MODE_NORMALपूर्ण, /* > 100mA - Active */
+	अणु-1, -1, REGULATOR_MODE_NORMALपूर्ण,
+पूर्ण;
 
-static const struct wm8350_dcdc_efficiency dcdc3_4_efficiency[] = {
-	{0, 10000, REGULATOR_MODE_STANDBY},      /* 0 - 10mA - LDO */
-	{10000, 100000, REGULATOR_MODE_IDLE},    /* 10mA - 100mA - Standby */
-	{100000, 800000, REGULATOR_MODE_NORMAL}, /* > 100mA - Active */
-	{-1, -1, REGULATOR_MODE_NORMAL},
-};
+अटल स्थिर काष्ठा wm8350_dcdc_efficiency dcdc3_4_efficiency[] = अणु
+	अणु0, 10000, REGULATOR_MODE_STANDBYपूर्ण,      /* 0 - 10mA - LDO */
+	अणु10000, 100000, REGULATOR_MODE_IDLEपूर्ण,    /* 10mA - 100mA - Standby */
+	अणु100000, 800000, REGULATOR_MODE_NORMALपूर्ण, /* > 100mA - Active */
+	अणु-1, -1, REGULATOR_MODE_NORMALपूर्ण,
+पूर्ण;
 
-static unsigned int get_mode(int uA, const struct wm8350_dcdc_efficiency *eff)
-{
-	int i = 0;
+अटल अचिन्हित पूर्णांक get_mode(पूर्णांक uA, स्थिर काष्ठा wm8350_dcdc_efficiency *eff)
+अणु
+	पूर्णांक i = 0;
 
-	while (eff[i].uA_load_min != -1) {
-		if (uA >= eff[i].uA_load_min && uA <= eff[i].uA_load_max)
-			return eff[i].mode;
+	जबतक (eff[i].uA_load_min != -1) अणु
+		अगर (uA >= eff[i].uA_load_min && uA <= eff[i].uA_load_max)
+			वापस eff[i].mode;
 		i++;
-	}
-	return REGULATOR_MODE_NORMAL;
-}
+	पूर्ण
+	वापस REGULATOR_MODE_NORMAL;
+पूर्ण
 
-/* Query the regulator for it's most efficient mode @ uV,uA
+/* Query the regulator क्रम it's most efficient mode @ uV,uA
  * WM8350 regulator efficiency is pretty similar over
- * different input and output uV.
+ * dअगरferent input and output uV.
  */
-static unsigned int wm8350_dcdc_get_optimum_mode(struct regulator_dev *rdev,
-						 int input_uV, int output_uV,
-						 int output_uA)
-{
-	int dcdc = rdev_get_id(rdev), mode;
+अटल अचिन्हित पूर्णांक wm8350_dcdc_get_optimum_mode(काष्ठा regulator_dev *rdev,
+						 पूर्णांक input_uV, पूर्णांक output_uV,
+						 पूर्णांक output_uA)
+अणु
+	पूर्णांक dcdc = rdev_get_id(rdev), mode;
 
-	switch (dcdc) {
-	case WM8350_DCDC_1:
-	case WM8350_DCDC_6:
+	चयन (dcdc) अणु
+	हाल WM8350_DCDC_1:
+	हाल WM8350_DCDC_6:
 		mode = get_mode(output_uA, dcdc1_6_efficiency);
-		break;
-	case WM8350_DCDC_3:
-	case WM8350_DCDC_4:
+		अवरोध;
+	हाल WM8350_DCDC_3:
+	हाल WM8350_DCDC_4:
 		mode = get_mode(output_uA, dcdc3_4_efficiency);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		mode = REGULATOR_MODE_NORMAL;
-		break;
-	}
-	return mode;
-}
+		अवरोध;
+	पूर्ण
+	वापस mode;
+पूर्ण
 
-static const struct regulator_ops wm8350_dcdc_ops = {
+अटल स्थिर काष्ठा regulator_ops wm8350_dcdc_ops = अणु
 	.set_voltage_sel = regulator_set_voltage_sel_regmap,
 	.get_voltage_sel = regulator_get_voltage_sel_regmap,
 	.list_voltage = regulator_list_voltage_linear,
@@ -885,17 +886,17 @@ static const struct regulator_ops wm8350_dcdc_ops = {
 	.set_suspend_enable = wm8350_dcdc_set_suspend_enable,
 	.set_suspend_disable = wm8350_dcdc_set_suspend_disable,
 	.set_suspend_mode = wm8350_dcdc_set_suspend_mode,
-};
+पूर्ण;
 
-static const struct regulator_ops wm8350_dcdc2_5_ops = {
+अटल स्थिर काष्ठा regulator_ops wm8350_dcdc2_5_ops = अणु
 	.enable = regulator_enable_regmap,
 	.disable = regulator_disable_regmap,
 	.is_enabled = regulator_is_enabled_regmap,
 	.set_suspend_enable = wm8350_dcdc25_set_suspend_enable,
 	.set_suspend_disable = wm8350_dcdc25_set_suspend_disable,
-};
+पूर्ण;
 
-static const struct regulator_ops wm8350_ldo_ops = {
+अटल स्थिर काष्ठा regulator_ops wm8350_lकरो_ops = अणु
 	.map_voltage = regulator_map_voltage_linear_range,
 	.set_voltage_sel = regulator_set_voltage_sel_regmap,
 	.get_voltage_sel = regulator_get_voltage_sel_regmap,
@@ -903,23 +904,23 @@ static const struct regulator_ops wm8350_ldo_ops = {
 	.enable = regulator_enable_regmap,
 	.disable = regulator_disable_regmap,
 	.is_enabled = regulator_is_enabled_regmap,
-	.get_mode = wm8350_ldo_get_mode,
-	.set_suspend_voltage = wm8350_ldo_set_suspend_voltage,
-	.set_suspend_enable = wm8350_ldo_set_suspend_enable,
-	.set_suspend_disable = wm8350_ldo_set_suspend_disable,
-};
+	.get_mode = wm8350_lकरो_get_mode,
+	.set_suspend_voltage = wm8350_lकरो_set_suspend_voltage,
+	.set_suspend_enable = wm8350_lकरो_set_suspend_enable,
+	.set_suspend_disable = wm8350_lकरो_set_suspend_disable,
+पूर्ण;
 
-static const struct regulator_ops wm8350_isink_ops = {
+अटल स्थिर काष्ठा regulator_ops wm8350_isink_ops = अणु
 	.set_current_limit = regulator_set_current_limit_regmap,
 	.get_current_limit = regulator_get_current_limit_regmap,
 	.enable = wm8350_isink_enable,
 	.disable = wm8350_isink_disable,
 	.is_enabled = wm8350_isink_is_enabled,
-	.enable_time = wm8350_isink_enable_time,
-};
+	.enable_समय = wm8350_isink_enable_समय,
+पूर्ण;
 
-static const struct regulator_desc wm8350_reg[NUM_WM8350_REGULATORS] = {
-	{
+अटल स्थिर काष्ठा regulator_desc wm8350_reg[NUM_WM8350_REGULATORS] = अणु
+	अणु
 		.name = "DCDC1",
 		.id = WM8350_DCDC_1,
 		.ops = &wm8350_dcdc_ops,
@@ -933,8 +934,8 @@ static const struct regulator_desc wm8350_reg[NUM_WM8350_REGULATORS] = {
 		.enable_reg = WM8350_DCDC_LDO_REQUESTED,
 		.enable_mask = WM8350_DC1_ENA,
 		.owner = THIS_MODULE,
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "DCDC2",
 		.id = WM8350_DCDC_2,
 		.ops = &wm8350_dcdc2_5_ops,
@@ -943,8 +944,8 @@ static const struct regulator_desc wm8350_reg[NUM_WM8350_REGULATORS] = {
 		.enable_reg = WM8350_DCDC_LDO_REQUESTED,
 		.enable_mask = WM8350_DC2_ENA,
 		.owner = THIS_MODULE,
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "DCDC3",
 		.id = WM8350_DCDC_3,
 		.ops = &wm8350_dcdc_ops,
@@ -958,8 +959,8 @@ static const struct regulator_desc wm8350_reg[NUM_WM8350_REGULATORS] = {
 		.enable_reg = WM8350_DCDC_LDO_REQUESTED,
 		.enable_mask = WM8350_DC3_ENA,
 		.owner = THIS_MODULE,
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "DCDC4",
 		.id = WM8350_DCDC_4,
 		.ops = &wm8350_dcdc_ops,
@@ -973,8 +974,8 @@ static const struct regulator_desc wm8350_reg[NUM_WM8350_REGULATORS] = {
 		.enable_reg = WM8350_DCDC_LDO_REQUESTED,
 		.enable_mask = WM8350_DC4_ENA,
 		.owner = THIS_MODULE,
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "DCDC5",
 		.id = WM8350_DCDC_5,
 		.ops = &wm8350_dcdc2_5_ops,
@@ -983,8 +984,8 @@ static const struct regulator_desc wm8350_reg[NUM_WM8350_REGULATORS] = {
 		.enable_reg = WM8350_DCDC_LDO_REQUESTED,
 		.enable_mask = WM8350_DC5_ENA,
 		.owner = THIS_MODULE,
-	 },
-	{
+	 पूर्ण,
+	अणु
 		.name = "DCDC6",
 		.id = WM8350_DCDC_6,
 		.ops = &wm8350_dcdc_ops,
@@ -998,68 +999,68 @@ static const struct regulator_desc wm8350_reg[NUM_WM8350_REGULATORS] = {
 		.enable_reg = WM8350_DCDC_LDO_REQUESTED,
 		.enable_mask = WM8350_DC6_ENA,
 		.owner = THIS_MODULE,
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "LDO1",
 		.id = WM8350_LDO_1,
-		.ops = &wm8350_ldo_ops,
+		.ops = &wm8350_lकरो_ops,
 		.irq = WM8350_IRQ_UV_LDO1,
 		.type = REGULATOR_VOLTAGE,
 		.n_voltages = WM8350_LDO1_VSEL_MASK + 1,
-		.linear_ranges = wm8350_ldo_ranges,
-		.n_linear_ranges = ARRAY_SIZE(wm8350_ldo_ranges),
+		.linear_ranges = wm8350_lकरो_ranges,
+		.n_linear_ranges = ARRAY_SIZE(wm8350_lकरो_ranges),
 		.vsel_reg = WM8350_LDO1_CONTROL,
 		.vsel_mask = WM8350_LDO1_VSEL_MASK,
 		.enable_reg = WM8350_DCDC_LDO_REQUESTED,
 		.enable_mask = WM8350_LDO1_ENA,
 		.owner = THIS_MODULE,
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "LDO2",
 		.id = WM8350_LDO_2,
-		.ops = &wm8350_ldo_ops,
+		.ops = &wm8350_lकरो_ops,
 		.irq = WM8350_IRQ_UV_LDO2,
 		.type = REGULATOR_VOLTAGE,
 		.n_voltages = WM8350_LDO2_VSEL_MASK + 1,
-		.linear_ranges = wm8350_ldo_ranges,
-		.n_linear_ranges = ARRAY_SIZE(wm8350_ldo_ranges),
+		.linear_ranges = wm8350_lकरो_ranges,
+		.n_linear_ranges = ARRAY_SIZE(wm8350_lकरो_ranges),
 		.vsel_reg = WM8350_LDO2_CONTROL,
 		.vsel_mask = WM8350_LDO2_VSEL_MASK,
 		.enable_reg = WM8350_DCDC_LDO_REQUESTED,
 		.enable_mask = WM8350_LDO2_ENA,
 		.owner = THIS_MODULE,
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "LDO3",
 		.id = WM8350_LDO_3,
-		.ops = &wm8350_ldo_ops,
+		.ops = &wm8350_lकरो_ops,
 		.irq = WM8350_IRQ_UV_LDO3,
 		.type = REGULATOR_VOLTAGE,
 		.n_voltages = WM8350_LDO3_VSEL_MASK + 1,
-		.linear_ranges = wm8350_ldo_ranges,
-		.n_linear_ranges = ARRAY_SIZE(wm8350_ldo_ranges),
+		.linear_ranges = wm8350_lकरो_ranges,
+		.n_linear_ranges = ARRAY_SIZE(wm8350_lकरो_ranges),
 		.vsel_reg = WM8350_LDO3_CONTROL,
 		.vsel_mask = WM8350_LDO3_VSEL_MASK,
 		.enable_reg = WM8350_DCDC_LDO_REQUESTED,
 		.enable_mask = WM8350_LDO3_ENA,
 		.owner = THIS_MODULE,
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "LDO4",
 		.id = WM8350_LDO_4,
-		.ops = &wm8350_ldo_ops,
+		.ops = &wm8350_lकरो_ops,
 		.irq = WM8350_IRQ_UV_LDO4,
 		.type = REGULATOR_VOLTAGE,
 		.n_voltages = WM8350_LDO4_VSEL_MASK + 1,
-		.linear_ranges = wm8350_ldo_ranges,
-		.n_linear_ranges = ARRAY_SIZE(wm8350_ldo_ranges),
+		.linear_ranges = wm8350_lकरो_ranges,
+		.n_linear_ranges = ARRAY_SIZE(wm8350_lकरो_ranges),
 		.vsel_reg = WM8350_LDO4_CONTROL,
 		.vsel_mask = WM8350_LDO4_VSEL_MASK,
 		.enable_reg = WM8350_DCDC_LDO_REQUESTED,
 		.enable_mask = WM8350_LDO4_ENA,
 		.owner = THIS_MODULE,
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "ISINKA",
 		.id = WM8350_ISINK_A,
 		.ops = &wm8350_isink_ops,
@@ -1070,8 +1071,8 @@ static const struct regulator_desc wm8350_reg[NUM_WM8350_REGULATORS] = {
 		.n_current_limits = ARRAY_SIZE(isink_cur),
 		.csel_reg = WM8350_CURRENT_SINK_DRIVER_A,
 		.csel_mask = WM8350_CS1_ISEL_MASK,
-	 },
-	{
+	 पूर्ण,
+	अणु
 		.name = "ISINKB",
 		.id = WM8350_ISINK_B,
 		.ops = &wm8350_isink_ops,
@@ -1082,249 +1083,249 @@ static const struct regulator_desc wm8350_reg[NUM_WM8350_REGULATORS] = {
 		.n_current_limits = ARRAY_SIZE(isink_cur),
 		.csel_reg = WM8350_CURRENT_SINK_DRIVER_B,
 		.csel_mask = WM8350_CS2_ISEL_MASK,
-	 },
-};
+	 पूर्ण,
+पूर्ण;
 
-static irqreturn_t pmic_uv_handler(int irq, void *data)
-{
-	struct regulator_dev *rdev = (struct regulator_dev *)data;
+अटल irqवापस_t pmic_uv_handler(पूर्णांक irq, व्योम *data)
+अणु
+	काष्ठा regulator_dev *rdev = (काष्ठा regulator_dev *)data;
 
-	if (irq == WM8350_IRQ_CS1 || irq == WM8350_IRQ_CS2)
-		regulator_notifier_call_chain(rdev,
+	अगर (irq == WM8350_IRQ_CS1 || irq == WM8350_IRQ_CS2)
+		regulator_notअगरier_call_chain(rdev,
 					      REGULATOR_EVENT_REGULATION_OUT,
-					      NULL);
-	else
-		regulator_notifier_call_chain(rdev,
+					      शून्य);
+	अन्यथा
+		regulator_notअगरier_call_chain(rdev,
 					      REGULATOR_EVENT_UNDER_VOLTAGE,
-					      NULL);
+					      शून्य);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static int wm8350_regulator_probe(struct platform_device *pdev)
-{
-	struct wm8350 *wm8350 = dev_get_drvdata(&pdev->dev);
-	struct regulator_config config = { };
-	struct regulator_dev *rdev;
-	int ret;
+अटल पूर्णांक wm8350_regulator_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा wm8350 *wm8350 = dev_get_drvdata(&pdev->dev);
+	काष्ठा regulator_config config = अणु पूर्ण;
+	काष्ठा regulator_dev *rdev;
+	पूर्णांक ret;
 	u16 val;
 
-	if (pdev->id < WM8350_DCDC_1 || pdev->id > WM8350_ISINK_B)
-		return -ENODEV;
+	अगर (pdev->id < WM8350_DCDC_1 || pdev->id > WM8350_ISINK_B)
+		वापस -ENODEV;
 
-	/* do any regulatior specific init */
-	switch (pdev->id) {
-	case WM8350_DCDC_1:
-		val = wm8350_reg_read(wm8350, WM8350_DCDC1_LOW_POWER);
+	/* करो any regulatior specअगरic init */
+	चयन (pdev->id) अणु
+	हाल WM8350_DCDC_1:
+		val = wm8350_reg_पढ़ो(wm8350, WM8350_DCDC1_LOW_POWER);
 		wm8350->pmic.dcdc1_hib_mode = val & WM8350_DCDC_HIB_MODE_MASK;
-		break;
-	case WM8350_DCDC_3:
-		val = wm8350_reg_read(wm8350, WM8350_DCDC3_LOW_POWER);
+		अवरोध;
+	हाल WM8350_DCDC_3:
+		val = wm8350_reg_पढ़ो(wm8350, WM8350_DCDC3_LOW_POWER);
 		wm8350->pmic.dcdc3_hib_mode = val & WM8350_DCDC_HIB_MODE_MASK;
-		break;
-	case WM8350_DCDC_4:
-		val = wm8350_reg_read(wm8350, WM8350_DCDC4_LOW_POWER);
+		अवरोध;
+	हाल WM8350_DCDC_4:
+		val = wm8350_reg_पढ़ो(wm8350, WM8350_DCDC4_LOW_POWER);
 		wm8350->pmic.dcdc4_hib_mode = val & WM8350_DCDC_HIB_MODE_MASK;
-		break;
-	case WM8350_DCDC_6:
-		val = wm8350_reg_read(wm8350, WM8350_DCDC6_LOW_POWER);
+		अवरोध;
+	हाल WM8350_DCDC_6:
+		val = wm8350_reg_पढ़ो(wm8350, WM8350_DCDC6_LOW_POWER);
 		wm8350->pmic.dcdc6_hib_mode = val & WM8350_DCDC_HIB_MODE_MASK;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	config.dev = &pdev->dev;
 	config.init_data = dev_get_platdata(&pdev->dev);
 	config.driver_data = dev_get_drvdata(&pdev->dev);
 	config.regmap = wm8350->regmap;
 
-	/* register regulator */
-	rdev = devm_regulator_register(&pdev->dev, &wm8350_reg[pdev->id],
+	/* रेजिस्टर regulator */
+	rdev = devm_regulator_रेजिस्टर(&pdev->dev, &wm8350_reg[pdev->id],
 				       &config);
-	if (IS_ERR(rdev)) {
+	अगर (IS_ERR(rdev)) अणु
 		dev_err(&pdev->dev, "failed to register %s\n",
 			wm8350_reg[pdev->id].name);
-		return PTR_ERR(rdev);
-	}
+		वापस PTR_ERR(rdev);
+	पूर्ण
 
-	/* register regulator IRQ */
-	ret = wm8350_register_irq(wm8350, wm8350_reg[pdev->id].irq,
+	/* रेजिस्टर regulator IRQ */
+	ret = wm8350_रेजिस्टर_irq(wm8350, wm8350_reg[pdev->id].irq,
 				  pmic_uv_handler, 0, "UV", rdev);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(&pdev->dev, "failed to register regulator %s IRQ\n",
 			wm8350_reg[pdev->id].name);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int wm8350_regulator_remove(struct platform_device *pdev)
-{
-	struct regulator_dev *rdev = platform_get_drvdata(pdev);
-	struct wm8350 *wm8350 = rdev_get_drvdata(rdev);
+अटल पूर्णांक wm8350_regulator_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा regulator_dev *rdev = platक्रमm_get_drvdata(pdev);
+	काष्ठा wm8350 *wm8350 = rdev_get_drvdata(rdev);
 
-	wm8350_free_irq(wm8350, wm8350_reg[pdev->id].irq, rdev);
+	wm8350_मुक्त_irq(wm8350, wm8350_reg[pdev->id].irq, rdev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int wm8350_register_regulator(struct wm8350 *wm8350, int reg,
-			      struct regulator_init_data *initdata)
-{
-	struct platform_device *pdev;
-	int ret;
-	if (reg < 0 || reg >= NUM_WM8350_REGULATORS)
-		return -EINVAL;
+पूर्णांक wm8350_रेजिस्टर_regulator(काष्ठा wm8350 *wm8350, पूर्णांक reg,
+			      काष्ठा regulator_init_data *initdata)
+अणु
+	काष्ठा platक्रमm_device *pdev;
+	पूर्णांक ret;
+	अगर (reg < 0 || reg >= NUM_WM8350_REGULATORS)
+		वापस -EINVAL;
 
-	if (wm8350->pmic.pdev[reg])
-		return -EBUSY;
+	अगर (wm8350->pmic.pdev[reg])
+		वापस -EBUSY;
 
-	if (reg >= WM8350_DCDC_1 && reg <= WM8350_DCDC_6 &&
+	अगर (reg >= WM8350_DCDC_1 && reg <= WM8350_DCDC_6 &&
 	    reg > wm8350->pmic.max_dcdc)
-		return -ENODEV;
-	if (reg >= WM8350_ISINK_A && reg <= WM8350_ISINK_B &&
+		वापस -ENODEV;
+	अगर (reg >= WM8350_ISINK_A && reg <= WM8350_ISINK_B &&
 	    reg > wm8350->pmic.max_isink)
-		return -ENODEV;
+		वापस -ENODEV;
 
-	pdev = platform_device_alloc("wm8350-regulator", reg);
-	if (!pdev)
-		return -ENOMEM;
+	pdev = platक्रमm_device_alloc("wm8350-regulator", reg);
+	अगर (!pdev)
+		वापस -ENOMEM;
 
 	wm8350->pmic.pdev[reg] = pdev;
 
 	initdata->driver_data = wm8350;
 
-	pdev->dev.platform_data = initdata;
+	pdev->dev.platक्रमm_data = initdata;
 	pdev->dev.parent = wm8350->dev;
-	platform_set_drvdata(pdev, wm8350);
+	platक्रमm_set_drvdata(pdev, wm8350);
 
-	ret = platform_device_add(pdev);
+	ret = platक्रमm_device_add(pdev);
 
-	if (ret != 0) {
+	अगर (ret != 0) अणु
 		dev_err(wm8350->dev, "Failed to register regulator %d: %d\n",
 			reg, ret);
-		platform_device_put(pdev);
-		wm8350->pmic.pdev[reg] = NULL;
-	}
+		platक्रमm_device_put(pdev);
+		wm8350->pmic.pdev[reg] = शून्य;
+	पूर्ण
 
-	return ret;
-}
-EXPORT_SYMBOL_GPL(wm8350_register_regulator);
+	वापस ret;
+पूर्ण
+EXPORT_SYMBOL_GPL(wm8350_रेजिस्टर_regulator);
 
 /**
- * wm8350_register_led - Register a WM8350 LED output
+ * wm8350_रेजिस्टर_led - Register a WM8350 LED output
  *
  * @wm8350: The WM8350 device to configure.
  * @lednum: LED device index to create.
- * @dcdc: The DCDC to use for the LED.
- * @isink: The ISINK to use for the LED.
- * @pdata: Configuration for the LED.
+ * @dcdc: The DCDC to use क्रम the LED.
+ * @isink: The ISINK to use क्रम the LED.
+ * @pdata: Configuration क्रम the LED.
  *
  * The WM8350 supports the use of an ISINK together with a DCDC to
- * provide a power-efficient LED driver.  This function registers the
- * regulators and instantiates the platform device for a LED.  The
- * operating modes for the LED regulators must be configured using
+ * provide a घातer-efficient LED driver.  This function रेजिस्टरs the
+ * regulators and instantiates the platक्रमm device क्रम a LED.  The
+ * operating modes क्रम the LED regulators must be configured using
  * wm8350_isink_set_flash(), wm8350_dcdc25_set_mode() and
  * wm8350_dcdc_set_slot() prior to calling this function.
  */
-int wm8350_register_led(struct wm8350 *wm8350, int lednum, int dcdc, int isink,
-			struct wm8350_led_platform_data *pdata)
-{
-	struct wm8350_led *led;
-	struct platform_device *pdev;
-	int ret;
+पूर्णांक wm8350_रेजिस्टर_led(काष्ठा wm8350 *wm8350, पूर्णांक lednum, पूर्णांक dcdc, पूर्णांक isink,
+			काष्ठा wm8350_led_platक्रमm_data *pdata)
+अणु
+	काष्ठा wm8350_led *led;
+	काष्ठा platक्रमm_device *pdev;
+	पूर्णांक ret;
 
-	if (lednum >= ARRAY_SIZE(wm8350->pmic.led) || lednum < 0) {
+	अगर (lednum >= ARRAY_SIZE(wm8350->pmic.led) || lednum < 0) अणु
 		dev_err(wm8350->dev, "Invalid LED index %d\n", lednum);
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
 	led = &wm8350->pmic.led[lednum];
 
-	if (led->pdev) {
+	अगर (led->pdev) अणु
 		dev_err(wm8350->dev, "LED %d already allocated\n", lednum);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	pdev = platform_device_alloc("wm8350-led", lednum);
-	if (pdev == NULL) {
+	pdev = platक्रमm_device_alloc("wm8350-led", lednum);
+	अगर (pdev == शून्य) अणु
 		dev_err(wm8350->dev, "Failed to allocate LED %d\n", lednum);
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	led->isink_consumer.dev_name = dev_name(&pdev->dev);
 	led->isink_consumer.supply = "led_isink";
 	led->isink_init.num_consumer_supplies = 1;
 	led->isink_init.consumer_supplies = &led->isink_consumer;
-	led->isink_init.constraints.min_uA = 0;
-	led->isink_init.constraints.max_uA = pdata->max_uA;
-	led->isink_init.constraints.valid_ops_mask
+	led->isink_init.स्थिरraपूर्णांकs.min_uA = 0;
+	led->isink_init.स्थिरraपूर्णांकs.max_uA = pdata->max_uA;
+	led->isink_init.स्थिरraपूर्णांकs.valid_ops_mask
 		= REGULATOR_CHANGE_CURRENT | REGULATOR_CHANGE_STATUS;
-	led->isink_init.constraints.valid_modes_mask = REGULATOR_MODE_NORMAL;
-	ret = wm8350_register_regulator(wm8350, isink, &led->isink_init);
-	if (ret != 0) {
-		platform_device_put(pdev);
-		return ret;
-	}
+	led->isink_init.स्थिरraपूर्णांकs.valid_modes_mask = REGULATOR_MODE_NORMAL;
+	ret = wm8350_रेजिस्टर_regulator(wm8350, isink, &led->isink_init);
+	अगर (ret != 0) अणु
+		platक्रमm_device_put(pdev);
+		वापस ret;
+	पूर्ण
 
 	led->dcdc_consumer.dev_name = dev_name(&pdev->dev);
 	led->dcdc_consumer.supply = "led_vcc";
 	led->dcdc_init.num_consumer_supplies = 1;
 	led->dcdc_init.consumer_supplies = &led->dcdc_consumer;
-	led->dcdc_init.constraints.valid_modes_mask = REGULATOR_MODE_NORMAL;
-	led->dcdc_init.constraints.valid_ops_mask =  REGULATOR_CHANGE_STATUS;
-	ret = wm8350_register_regulator(wm8350, dcdc, &led->dcdc_init);
-	if (ret != 0) {
-		platform_device_put(pdev);
-		return ret;
-	}
+	led->dcdc_init.स्थिरraपूर्णांकs.valid_modes_mask = REGULATOR_MODE_NORMAL;
+	led->dcdc_init.स्थिरraपूर्णांकs.valid_ops_mask =  REGULATOR_CHANGE_STATUS;
+	ret = wm8350_रेजिस्टर_regulator(wm8350, dcdc, &led->dcdc_init);
+	अगर (ret != 0) अणु
+		platक्रमm_device_put(pdev);
+		वापस ret;
+	पूर्ण
 
-	switch (isink) {
-	case WM8350_ISINK_A:
+	चयन (isink) अणु
+	हाल WM8350_ISINK_A:
 		wm8350->pmic.isink_A_dcdc = dcdc;
-		break;
-	case WM8350_ISINK_B:
+		अवरोध;
+	हाल WM8350_ISINK_B:
 		wm8350->pmic.isink_B_dcdc = dcdc;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	pdev->dev.platform_data = pdata;
+	pdev->dev.platक्रमm_data = pdata;
 	pdev->dev.parent = wm8350->dev;
-	ret = platform_device_add(pdev);
-	if (ret != 0) {
+	ret = platक्रमm_device_add(pdev);
+	अगर (ret != 0) अणु
 		dev_err(wm8350->dev, "Failed to register LED %d: %d\n",
 			lednum, ret);
-		platform_device_put(pdev);
-		return ret;
-	}
+		platक्रमm_device_put(pdev);
+		वापस ret;
+	पूर्ण
 
 	led->pdev = pdev;
 
-	return 0;
-}
-EXPORT_SYMBOL_GPL(wm8350_register_led);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL_GPL(wm8350_रेजिस्टर_led);
 
-static struct platform_driver wm8350_regulator_driver = {
+अटल काष्ठा platक्रमm_driver wm8350_regulator_driver = अणु
 	.probe = wm8350_regulator_probe,
-	.remove = wm8350_regulator_remove,
-	.driver		= {
+	.हटाओ = wm8350_regulator_हटाओ,
+	.driver		= अणु
 		.name	= "wm8350-regulator",
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static int __init wm8350_regulator_init(void)
-{
-	return platform_driver_register(&wm8350_regulator_driver);
-}
+अटल पूर्णांक __init wm8350_regulator_init(व्योम)
+अणु
+	वापस platक्रमm_driver_रेजिस्टर(&wm8350_regulator_driver);
+पूर्ण
 subsys_initcall(wm8350_regulator_init);
 
-static void __exit wm8350_regulator_exit(void)
-{
-	platform_driver_unregister(&wm8350_regulator_driver);
-}
-module_exit(wm8350_regulator_exit);
+अटल व्योम __निकास wm8350_regulator_निकास(व्योम)
+अणु
+	platक्रमm_driver_unरेजिस्टर(&wm8350_regulator_driver);
+पूर्ण
+module_निकास(wm8350_regulator_निकास);
 
-/* Module information */
+/* Module inक्रमmation */
 MODULE_AUTHOR("Liam Girdwood");
 MODULE_DESCRIPTION("WM8350 voltage and current regulator driver");
 MODULE_LICENSE("GPL");

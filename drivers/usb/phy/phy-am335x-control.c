@@ -1,192 +1,193 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <linux/module.h>
-#include <linux/platform_device.h>
-#include <linux/err.h>
-#include <linux/of.h>
-#include <linux/io.h>
-#include <linux/delay.h>
-#include <linux/usb/otg.h>
-#include "phy-am335x-control.h"
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <linux/module.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/err.h>
+#समावेश <linux/of.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/delay.h>
+#समावेश <linux/usb/otg.h>
+#समावेश "phy-am335x-control.h"
 
-struct am335x_control_usb {
-	struct device *dev;
-	void __iomem *phy_reg;
-	void __iomem *wkup;
+काष्ठा am335x_control_usb अणु
+	काष्ठा device *dev;
+	व्योम __iomem *phy_reg;
+	व्योम __iomem *wkup;
 	spinlock_t lock;
-	struct phy_control phy_ctrl;
-};
+	काष्ठा phy_control phy_ctrl;
+पूर्ण;
 
-#define AM335X_USB0_CTRL		0x0
-#define AM335X_USB1_CTRL		0x8
-#define AM335x_USB_WKUP			0x0
+#घोषणा AM335X_USB0_CTRL		0x0
+#घोषणा AM335X_USB1_CTRL		0x8
+#घोषणा AM335x_USB_WKUP			0x0
 
-#define USBPHY_CM_PWRDN		(1 << 0)
-#define USBPHY_OTG_PWRDN	(1 << 1)
-#define USBPHY_OTGVDET_EN	(1 << 19)
-#define USBPHY_OTGSESSEND_EN	(1 << 20)
+#घोषणा USBPHY_CM_PWRDN		(1 << 0)
+#घोषणा USBPHY_OTG_PWRDN	(1 << 1)
+#घोषणा USBPHY_OTGVDET_EN	(1 << 19)
+#घोषणा USBPHY_OTGSESSEND_EN	(1 << 20)
 
-#define AM335X_PHY0_WK_EN	(1 << 0)
-#define AM335X_PHY1_WK_EN	(1 << 8)
+#घोषणा AM335X_PHY0_WK_EN	(1 << 0)
+#घोषणा AM335X_PHY1_WK_EN	(1 << 8)
 
-static void am335x_phy_wkup(struct  phy_control *phy_ctrl, u32 id, bool on)
-{
-	struct am335x_control_usb *usb_ctrl;
+अटल व्योम am335x_phy_wkup(काष्ठा  phy_control *phy_ctrl, u32 id, bool on)
+अणु
+	काष्ठा am335x_control_usb *usb_ctrl;
 	u32 val;
 	u32 reg;
 
-	usb_ctrl = container_of(phy_ctrl, struct am335x_control_usb, phy_ctrl);
+	usb_ctrl = container_of(phy_ctrl, काष्ठा am335x_control_usb, phy_ctrl);
 
-	switch (id) {
-	case 0:
+	चयन (id) अणु
+	हाल 0:
 		reg = AM335X_PHY0_WK_EN;
-		break;
-	case 1:
+		अवरोध;
+	हाल 1:
 		reg = AM335X_PHY1_WK_EN;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		WARN_ON(1);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	spin_lock(&usb_ctrl->lock);
-	val = readl(usb_ctrl->wkup);
+	val = पढ़ोl(usb_ctrl->wkup);
 
-	if (on)
+	अगर (on)
 		val |= reg;
-	else
+	अन्यथा
 		val &= ~reg;
 
-	writel(val, usb_ctrl->wkup);
+	ग_लिखोl(val, usb_ctrl->wkup);
 	spin_unlock(&usb_ctrl->lock);
-}
+पूर्ण
 
-static void am335x_phy_power(struct phy_control *phy_ctrl, u32 id,
-				enum usb_dr_mode dr_mode, bool on)
-{
-	struct am335x_control_usb *usb_ctrl;
+अटल व्योम am335x_phy_घातer(काष्ठा phy_control *phy_ctrl, u32 id,
+				क्रमागत usb_dr_mode dr_mode, bool on)
+अणु
+	काष्ठा am335x_control_usb *usb_ctrl;
 	u32 val;
 	u32 reg;
 
-	usb_ctrl = container_of(phy_ctrl, struct am335x_control_usb, phy_ctrl);
+	usb_ctrl = container_of(phy_ctrl, काष्ठा am335x_control_usb, phy_ctrl);
 
-	switch (id) {
-	case 0:
+	चयन (id) अणु
+	हाल 0:
 		reg = AM335X_USB0_CTRL;
-		break;
-	case 1:
+		अवरोध;
+	हाल 1:
 		reg = AM335X_USB1_CTRL;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		WARN_ON(1);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	val = readl(usb_ctrl->phy_reg + reg);
-	if (on) {
-		if (dr_mode == USB_DR_MODE_HOST) {
+	val = पढ़ोl(usb_ctrl->phy_reg + reg);
+	अगर (on) अणु
+		अगर (dr_mode == USB_DR_MODE_HOST) अणु
 			val &= ~(USBPHY_CM_PWRDN | USBPHY_OTG_PWRDN |
 					USBPHY_OTGVDET_EN);
 			val |= USBPHY_OTGSESSEND_EN;
-		} else {
+		पूर्ण अन्यथा अणु
 			val &= ~(USBPHY_CM_PWRDN | USBPHY_OTG_PWRDN);
 			val |= USBPHY_OTGVDET_EN | USBPHY_OTGSESSEND_EN;
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		val |= USBPHY_CM_PWRDN | USBPHY_OTG_PWRDN;
-	}
+	पूर्ण
 
-	writel(val, usb_ctrl->phy_reg + reg);
+	ग_लिखोl(val, usb_ctrl->phy_reg + reg);
 
 	/*
-	 * Give the PHY ~1ms to complete the power up operation.
-	 * Tests have shown unstable behaviour if other USB PHY related
-	 * registers are written too shortly after such a transition.
+	 * Give the PHY ~1ms to complete the घातer up operation.
+	 * Tests have shown unstable behaviour अगर other USB PHY related
+	 * रेजिस्टरs are written too लघुly after such a transition.
 	 */
-	if (on)
+	अगर (on)
 		mdelay(1);
-}
+पूर्ण
 
-static const struct phy_control ctrl_am335x = {
-	.phy_power = am335x_phy_power,
+अटल स्थिर काष्ठा phy_control ctrl_am335x = अणु
+	.phy_घातer = am335x_phy_घातer,
 	.phy_wkup = am335x_phy_wkup,
-};
+पूर्ण;
 
-static const struct of_device_id omap_control_usb_id_table[] = {
-	{ .compatible = "ti,am335x-usb-ctrl-module", .data = &ctrl_am335x },
-	{}
-};
+अटल स्थिर काष्ठा of_device_id omap_control_usb_id_table[] = अणु
+	अणु .compatible = "ti,am335x-usb-ctrl-module", .data = &ctrl_am335x पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, omap_control_usb_id_table);
 
-static struct platform_driver am335x_control_driver;
-static int match(struct device *dev, const void *data)
-{
-	const struct device_node *node = (const struct device_node *)data;
-	return dev->of_node == node &&
+अटल काष्ठा platक्रमm_driver am335x_control_driver;
+अटल पूर्णांक match(काष्ठा device *dev, स्थिर व्योम *data)
+अणु
+	स्थिर काष्ठा device_node *node = (स्थिर काष्ठा device_node *)data;
+	वापस dev->of_node == node &&
 		dev->driver == &am335x_control_driver.driver;
-}
+पूर्ण
 
-struct phy_control *am335x_get_phy_control(struct device *dev)
-{
-	struct device_node *node;
-	struct am335x_control_usb *ctrl_usb;
+काष्ठा phy_control *am335x_get_phy_control(काष्ठा device *dev)
+अणु
+	काष्ठा device_node *node;
+	काष्ठा am335x_control_usb *ctrl_usb;
 
 	node = of_parse_phandle(dev->of_node, "ti,ctrl_mod", 0);
-	if (!node)
-		return NULL;
+	अगर (!node)
+		वापस शून्य;
 
-	dev = bus_find_device(&platform_bus_type, NULL, node, match);
+	dev = bus_find_device(&platक्रमm_bus_type, शून्य, node, match);
 	of_node_put(node);
-	if (!dev)
-		return NULL;
+	अगर (!dev)
+		वापस शून्य;
 
 	ctrl_usb = dev_get_drvdata(dev);
 	put_device(dev);
-	if (!ctrl_usb)
-		return NULL;
-	return &ctrl_usb->phy_ctrl;
-}
+	अगर (!ctrl_usb)
+		वापस शून्य;
+	वापस &ctrl_usb->phy_ctrl;
+पूर्ण
 EXPORT_SYMBOL_GPL(am335x_get_phy_control);
 
-static int am335x_control_usb_probe(struct platform_device *pdev)
-{
-	struct am335x_control_usb *ctrl_usb;
-	const struct of_device_id *of_id;
-	const struct phy_control *phy_ctrl;
+अटल पूर्णांक am335x_control_usb_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा am335x_control_usb *ctrl_usb;
+	स्थिर काष्ठा of_device_id *of_id;
+	स्थिर काष्ठा phy_control *phy_ctrl;
 
 	of_id = of_match_node(omap_control_usb_id_table, pdev->dev.of_node);
-	if (!of_id)
-		return -EINVAL;
+	अगर (!of_id)
+		वापस -EINVAL;
 
 	phy_ctrl = of_id->data;
 
-	ctrl_usb = devm_kzalloc(&pdev->dev, sizeof(*ctrl_usb), GFP_KERNEL);
-	if (!ctrl_usb)
-		return -ENOMEM;
+	ctrl_usb = devm_kzalloc(&pdev->dev, माप(*ctrl_usb), GFP_KERNEL);
+	अगर (!ctrl_usb)
+		वापस -ENOMEM;
 
 	ctrl_usb->dev = &pdev->dev;
 
-	ctrl_usb->phy_reg = devm_platform_ioremap_resource_byname(pdev, "phy_ctrl");
-	if (IS_ERR(ctrl_usb->phy_reg))
-		return PTR_ERR(ctrl_usb->phy_reg);
+	ctrl_usb->phy_reg = devm_platक्रमm_ioremap_resource_byname(pdev, "phy_ctrl");
+	अगर (IS_ERR(ctrl_usb->phy_reg))
+		वापस PTR_ERR(ctrl_usb->phy_reg);
 
-	ctrl_usb->wkup = devm_platform_ioremap_resource_byname(pdev, "wakeup");
-	if (IS_ERR(ctrl_usb->wkup))
-		return PTR_ERR(ctrl_usb->wkup);
+	ctrl_usb->wkup = devm_platक्रमm_ioremap_resource_byname(pdev, "wakeup");
+	अगर (IS_ERR(ctrl_usb->wkup))
+		वापस PTR_ERR(ctrl_usb->wkup);
 
 	spin_lock_init(&ctrl_usb->lock);
 	ctrl_usb->phy_ctrl = *phy_ctrl;
 
 	dev_set_drvdata(ctrl_usb->dev, ctrl_usb);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct platform_driver am335x_control_driver = {
+अटल काष्ठा platक्रमm_driver am335x_control_driver = अणु
 	.probe		= am335x_control_usb_probe,
-	.driver		= {
+	.driver		= अणु
 		.name	= "am335x-control-usb",
 		.of_match_table = omap_control_usb_id_table,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-module_platform_driver(am335x_control_driver);
+module_platक्रमm_driver(am335x_control_driver);
 MODULE_LICENSE("GPL v2");

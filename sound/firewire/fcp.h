@@ -1,34 +1,35 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef SOUND_FIREWIRE_FCP_H_INCLUDED
-#define SOUND_FIREWIRE_FCP_H_INCLUDED
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित SOUND_FIREWIRE_FCP_H_INCLUDED
+#घोषणा SOUND_FIREWIRE_FCP_H_INCLUDED
 
-#define	AVC_PLUG_INFO_BUF_BYTES	4
+#घोषणा	AVC_PLUG_INFO_BUF_BYTES	4
 
-struct fw_unit;
+काष्ठा fw_unit;
 
 /*
- * AV/C Digital Interface Command Set General Specification 4.2
+ * AV/C Digital Interface Command Set General Specअगरication 4.2
  * (Sep 2004, 1394TA)
  */
-enum avc_general_plug_dir {
-	AVC_GENERAL_PLUG_DIR_IN		= 0,
-	AVC_GENERAL_PLUG_DIR_OUT	= 1,
-	AVC_GENERAL_PLUG_DIR_COUNT
-};
-int avc_general_set_sig_fmt(struct fw_unit *unit, unsigned int rate,
-			    enum avc_general_plug_dir dir,
-			    unsigned short plug);
-int avc_general_get_sig_fmt(struct fw_unit *unit, unsigned int *rate,
-			    enum avc_general_plug_dir dir,
-			    unsigned short plug);
-int avc_general_get_plug_info(struct fw_unit *unit, unsigned int subunit_type,
-			      unsigned int subunit_id, unsigned int subfunction,
+क्रमागत avc_general_plug_dir अणु
+	AVC_GENERAL_PLUG_सूची_IN		= 0,
+	AVC_GENERAL_PLUG_सूची_OUT	= 1,
+	AVC_GENERAL_PLUG_सूची_COUNT
+पूर्ण;
+पूर्णांक avc_general_set_sig_fmt(काष्ठा fw_unit *unit, अचिन्हित पूर्णांक rate,
+			    क्रमागत avc_general_plug_dir dir,
+			    अचिन्हित लघु plug);
+पूर्णांक avc_general_get_sig_fmt(काष्ठा fw_unit *unit, अचिन्हित पूर्णांक *rate,
+			    क्रमागत avc_general_plug_dir dir,
+			    अचिन्हित लघु plug);
+पूर्णांक avc_general_get_plug_info(काष्ठा fw_unit *unit, अचिन्हित पूर्णांक subunit_type,
+			      अचिन्हित पूर्णांक subunit_id, अचिन्हित पूर्णांक subfunction,
 			      u8 info[AVC_PLUG_INFO_BUF_BYTES]);
 
-int fcp_avc_transaction(struct fw_unit *unit,
-			const void *command, unsigned int command_size,
-			void *response, unsigned int response_size,
-			unsigned int response_match_bytes);
-void fcp_bus_reset(struct fw_unit *unit);
+पूर्णांक fcp_avc_transaction(काष्ठा fw_unit *unit,
+			स्थिर व्योम *command, अचिन्हित पूर्णांक command_size,
+			व्योम *response, अचिन्हित पूर्णांक response_size,
+			अचिन्हित पूर्णांक response_match_bytes);
+व्योम fcp_bus_reset(काष्ठा fw_unit *unit);
 
-#endif
+#पूर्ण_अगर

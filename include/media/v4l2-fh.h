@@ -1,161 +1,162 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * v4l2-fh.h
  *
- * V4L2 file handle. Store per file handle data for the V4L2
- * framework. Using file handles is optional for the drivers.
+ * V4L2 file handle. Store per file handle data क्रम the V4L2
+ * framework. Using file handles is optional क्रम the drivers.
  *
  * Copyright (C) 2009--2010 Nokia Corporation.
  *
  * Contact: Sakari Ailus <sakari.ailus@iki.fi>
  */
 
-#ifndef V4L2_FH_H
-#define V4L2_FH_H
+#अगर_अघोषित V4L2_FH_H
+#घोषणा V4L2_FH_H
 
-#include <linux/fs.h>
-#include <linux/kconfig.h>
-#include <linux/list.h>
-#include <linux/videodev2.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/kconfig.h>
+#समावेश <linux/list.h>
+#समावेश <linux/videodev2.h>
 
-struct video_device;
-struct v4l2_ctrl_handler;
+काष्ठा video_device;
+काष्ठा v4l2_ctrl_handler;
 
 /**
- * struct v4l2_fh - Describes a V4L2 file handler
+ * काष्ठा v4l2_fh - Describes a V4L2 file handler
  *
  * @list: list of file handlers
- * @vdev: pointer to &struct video_device
- * @ctrl_handler: pointer to &struct v4l2_ctrl_handler
- * @prio: priority of the file handler, as defined by &enum v4l2_priority
+ * @vdev: poपूर्णांकer to &काष्ठा video_device
+ * @ctrl_handler: poपूर्णांकer to &काष्ठा v4l2_ctrl_handler
+ * @prio: priority of the file handler, as defined by &क्रमागत v4l2_priority
  *
- * @wait: event' s wait queue
+ * @रुको: event' s रुको queue
  * @subscribe_lock: serialise changes to the subscribed list; guarantee that
  *		    the add and del event callbacks are orderly called
  * @subscribed: list of subscribed events
- * @available: list of events waiting to be dequeued
+ * @available: list of events रुकोing to be dequeued
  * @navailable: number of available events at @available list
  * @sequence: event sequence number
  *
- * @m2m_ctx: pointer to &struct v4l2_m2m_ctx
+ * @m2m_ctx: poपूर्णांकer to &काष्ठा v4l2_m2m_ctx
  */
-struct v4l2_fh {
-	struct list_head	list;
-	struct video_device	*vdev;
-	struct v4l2_ctrl_handler *ctrl_handler;
-	enum v4l2_priority	prio;
+काष्ठा v4l2_fh अणु
+	काष्ठा list_head	list;
+	काष्ठा video_device	*vdev;
+	काष्ठा v4l2_ctrl_handler *ctrl_handler;
+	क्रमागत v4l2_priority	prio;
 
 	/* Events */
-	wait_queue_head_t	wait;
-	struct mutex		subscribe_lock;
-	struct list_head	subscribed;
-	struct list_head	available;
-	unsigned int		navailable;
+	रुको_queue_head_t	रुको;
+	काष्ठा mutex		subscribe_lock;
+	काष्ठा list_head	subscribed;
+	काष्ठा list_head	available;
+	अचिन्हित पूर्णांक		navailable;
 	u32			sequence;
 
-	struct v4l2_m2m_ctx	*m2m_ctx;
-};
+	काष्ठा v4l2_m2m_ctx	*m2m_ctx;
+पूर्ण;
 
 /**
  * v4l2_fh_init - Initialise the file handle.
  *
- * @fh: pointer to &struct v4l2_fh
- * @vdev: pointer to &struct video_device
+ * @fh: poपूर्णांकer to &काष्ठा v4l2_fh
+ * @vdev: poपूर्णांकer to &काष्ठा video_device
  *
  * Parts of the V4L2 framework using the
  * file handles should be initialised in this function. Must be called
- * from driver's v4l2_file_operations->open\(\) handler if the driver
- * uses &struct v4l2_fh.
+ * from driver's v4l2_file_operations->खोलो\(\) handler अगर the driver
+ * uses &काष्ठा v4l2_fh.
  */
-void v4l2_fh_init(struct v4l2_fh *fh, struct video_device *vdev);
+व्योम v4l2_fh_init(काष्ठा v4l2_fh *fh, काष्ठा video_device *vdev);
 
 /**
  * v4l2_fh_add - Add the fh to the list of file handles on a video_device.
  *
- * @fh: pointer to &struct v4l2_fh
+ * @fh: poपूर्णांकer to &काष्ठा v4l2_fh
  *
  * .. note::
  *    The @fh file handle must be initialised first.
  */
-void v4l2_fh_add(struct v4l2_fh *fh);
+व्योम v4l2_fh_add(काष्ठा v4l2_fh *fh);
 
 /**
- * v4l2_fh_open - Ancillary routine that can be used as the open\(\) op
+ * v4l2_fh_खोलो - Ancillary routine that can be used as the खोलो\(\) op
  *	of v4l2_file_operations.
  *
- * @filp: pointer to struct file
+ * @filp: poपूर्णांकer to काष्ठा file
  *
- * It allocates a v4l2_fh and inits and adds it to the &struct video_device
- * associated with the file pointer.
+ * It allocates a v4l2_fh and inits and adds it to the &काष्ठा video_device
+ * associated with the file poपूर्णांकer.
  */
-int v4l2_fh_open(struct file *filp);
+पूर्णांक v4l2_fh_खोलो(काष्ठा file *filp);
 
 /**
  * v4l2_fh_del - Remove file handle from the list of file handles.
  *
- * @fh: pointer to &struct v4l2_fh
+ * @fh: poपूर्णांकer to &काष्ठा v4l2_fh
  *
- * On error filp->private_data will be %NULL, otherwise it will point to
- * the &struct v4l2_fh.
+ * On error filp->निजी_data will be %शून्य, otherwise it will poपूर्णांक to
+ * the &काष्ठा v4l2_fh.
  *
  * .. note::
- *    Must be called in v4l2_file_operations->release\(\) handler if the driver
- *    uses &struct v4l2_fh.
+ *    Must be called in v4l2_file_operations->release\(\) handler अगर the driver
+ *    uses &काष्ठा v4l2_fh.
  */
-void v4l2_fh_del(struct v4l2_fh *fh);
+व्योम v4l2_fh_del(काष्ठा v4l2_fh *fh);
 
 /**
- * v4l2_fh_exit - Release resources related to a file handle.
+ * v4l2_fh_निकास - Release resources related to a file handle.
  *
- * @fh: pointer to &struct v4l2_fh
+ * @fh: poपूर्णांकer to &काष्ठा v4l2_fh
  *
  * Parts of the V4L2 framework using the v4l2_fh must release their
  * resources here, too.
  *
  * .. note::
- *    Must be called in v4l2_file_operations->release\(\) handler if the
- *    driver uses &struct v4l2_fh.
+ *    Must be called in v4l2_file_operations->release\(\) handler अगर the
+ *    driver uses &काष्ठा v4l2_fh.
  */
-void v4l2_fh_exit(struct v4l2_fh *fh);
+व्योम v4l2_fh_निकास(काष्ठा v4l2_fh *fh);
 
 /**
  * v4l2_fh_release - Ancillary routine that can be used as the release\(\) op
  *	of v4l2_file_operations.
  *
- * @filp: pointer to struct file
+ * @filp: poपूर्णांकer to काष्ठा file
  *
- * It deletes and exits the v4l2_fh associated with the file pointer and
- * frees it. It will do nothing if filp->private_data (the pointer to the
- * v4l2_fh struct) is %NULL.
+ * It deletes and निकासs the v4l2_fh associated with the file poपूर्णांकer and
+ * मुक्तs it. It will करो nothing अगर filp->निजी_data (the poपूर्णांकer to the
+ * v4l2_fh काष्ठा) is %शून्य.
  *
- * This function always returns 0.
+ * This function always वापसs 0.
  */
-int v4l2_fh_release(struct file *filp);
+पूर्णांक v4l2_fh_release(काष्ठा file *filp);
 
 /**
- * v4l2_fh_is_singular - Returns 1 if this filehandle is the only filehandle
- *	 opened for the associated video_device.
+ * v4l2_fh_is_singular - Returns 1 अगर this filehandle is the only filehandle
+ *	 खोलोed क्रम the associated video_device.
  *
- * @fh: pointer to &struct v4l2_fh
+ * @fh: poपूर्णांकer to &काष्ठा v4l2_fh
  *
- * If @fh is NULL, then it returns 0.
+ * If @fh is शून्य, then it वापसs 0.
  */
-int v4l2_fh_is_singular(struct v4l2_fh *fh);
+पूर्णांक v4l2_fh_is_singular(काष्ठा v4l2_fh *fh);
 
 /**
- * v4l2_fh_is_singular_file - Returns 1 if this filehandle is the only
- *	filehandle opened for the associated video_device.
+ * v4l2_fh_is_singular_file - Returns 1 अगर this filehandle is the only
+ *	filehandle खोलोed क्रम the associated video_device.
  *
- * @filp: pointer to struct file
+ * @filp: poपूर्णांकer to काष्ठा file
  *
  * This is a helper function variant of v4l2_fh_is_singular() with uses
- * struct file as argument.
+ * काष्ठा file as argument.
  *
- * If filp->private_data is %NULL, then it will return 0.
+ * If filp->निजी_data is %शून्य, then it will वापस 0.
  */
-static inline int v4l2_fh_is_singular_file(struct file *filp)
-{
-	return v4l2_fh_is_singular(filp->private_data);
-}
+अटल अंतरभूत पूर्णांक v4l2_fh_is_singular_file(काष्ठा file *filp)
+अणु
+	वापस v4l2_fh_is_singular(filp->निजी_data);
+पूर्ण
 
-#endif /* V4L2_EVENT_H */
+#पूर्ण_अगर /* V4L2_EVENT_H */

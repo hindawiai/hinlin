@@ -1,226 +1,227 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * Support for Compaq iPAQ H3100 and H3600 handheld computers (common code)
+ * Support क्रम Compaq iPAQ H3100 and H3600 handheld computers (common code)
  *
  * Copyright (c) 2000,1 Compaq Computer Corporation. (Author: Jamey Hicks)
  * Copyright (c) 2009 Dmitry Artamonow <mad_soft@inbox.ru>
  */
 
-#include <linux/kernel.h>
-#include <linux/gpio/machine.h>
-#include <linux/gpio.h>
-#include <linux/gpio_keys.h>
-#include <linux/input.h>
-#include <linux/mtd/mtd.h>
-#include <linux/mtd/partitions.h>
-#include <linux/platform_data/gpio-htc-egpio.h>
-#include <linux/platform_data/sa11x0-serial.h>
-#include <linux/platform_device.h>
-#include <linux/serial_core.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/gpio/machine.h>
+#समावेश <linux/gpपन.स>
+#समावेश <linux/gpio_keys.h>
+#समावेश <linux/input.h>
+#समावेश <linux/mtd/mtd.h>
+#समावेश <linux/mtd/partitions.h>
+#समावेश <linux/platक्रमm_data/gpio-htc-egpपन.स>
+#समावेश <linux/platक्रमm_data/sa11x0-serial.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/serial_core.h>
 
-#include <asm/mach/flash.h>
-#include <asm/mach/map.h>
+#समावेश <यंत्र/mach/flash.h>
+#समावेश <यंत्र/mach/map.h>
 
-#include <mach/h3xxx.h>
-#include <mach/irqs.h>
+#समावेश <mach/h3xxx.h>
+#समावेश <mach/irqs.h>
 
-#include "generic.h"
+#समावेश "generic.h"
 
 /*
  * H3xxx flash support
  */
-static struct mtd_partition h3xxx_partitions[] = {
-	{
+अटल काष्ठा mtd_partition h3xxx_partitions[] = अणु
+	अणु
 		.name		= "H3XXX boot firmware",
 		.size		= 0x00040000,
 		.offset		= 0,
-		.mask_flags	= MTD_WRITEABLE,  /* force read-only */
-	}, {
+		.mask_flags	= MTD_WRITEABLE,  /* क्रमce पढ़ो-only */
+	पूर्ण, अणु
 		.name		= "H3XXX rootfs",
 		.size		= MTDPART_SIZ_FULL,
 		.offset		= 0x00040000,
-	}
-};
+	पूर्ण
+पूर्ण;
 
-static void h3xxx_set_vpp(int vpp)
-{
+अटल व्योम h3xxx_set_vpp(पूर्णांक vpp)
+अणु
 	gpio_set_value(H3XXX_EGPIO_VPP_ON, vpp);
-}
+पूर्ण
 
-static int h3xxx_flash_init(void)
-{
-	int err = gpio_request(H3XXX_EGPIO_VPP_ON, "Flash Vpp");
-	if (err) {
+अटल पूर्णांक h3xxx_flash_init(व्योम)
+अणु
+	पूर्णांक err = gpio_request(H3XXX_EGPIO_VPP_ON, "Flash Vpp");
+	अगर (err) अणु
 		pr_err("%s: can't request H3XXX_EGPIO_VPP_ON\n", __func__);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
 	err = gpio_direction_output(H3XXX_EGPIO_VPP_ON, 0);
-	if (err)
-		gpio_free(H3XXX_EGPIO_VPP_ON);
+	अगर (err)
+		gpio_मुक्त(H3XXX_EGPIO_VPP_ON);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void h3xxx_flash_exit(void)
-{
-	gpio_free(H3XXX_EGPIO_VPP_ON);
-}
+अटल व्योम h3xxx_flash_निकास(व्योम)
+अणु
+	gpio_मुक्त(H3XXX_EGPIO_VPP_ON);
+पूर्ण
 
-static struct flash_platform_data h3xxx_flash_data = {
+अटल काष्ठा flash_platक्रमm_data h3xxx_flash_data = अणु
 	.map_name	= "cfi_probe",
 	.set_vpp	= h3xxx_set_vpp,
 	.init		= h3xxx_flash_init,
-	.exit		= h3xxx_flash_exit,
+	.निकास		= h3xxx_flash_निकास,
 	.parts		= h3xxx_partitions,
 	.nr_parts	= ARRAY_SIZE(h3xxx_partitions),
-};
+पूर्ण;
 
-static struct resource h3xxx_flash_resource =
+अटल काष्ठा resource h3xxx_flash_resource =
 	DEFINE_RES_MEM(SA1100_CS0_PHYS, SZ_32M);
 
 
 /*
  * H3xxx uart support
  */
-static void h3xxx_uart_pm(struct uart_port *port, u_int state, u_int oldstate)
-{
-	if (port->mapbase == _Ser3UTCR0) {
-		if (!gpio_request(H3XXX_EGPIO_RS232_ON, "RS232 transceiver")) {
+अटल व्योम h3xxx_uart_pm(काष्ठा uart_port *port, u_पूर्णांक state, u_पूर्णांक oldstate)
+अणु
+	अगर (port->mapbase == _Ser3UTCR0) अणु
+		अगर (!gpio_request(H3XXX_EGPIO_RS232_ON, "RS232 transceiver")) अणु
 			gpio_direction_output(H3XXX_EGPIO_RS232_ON, !state);
-			gpio_free(H3XXX_EGPIO_RS232_ON);
-		} else {
+			gpio_मुक्त(H3XXX_EGPIO_RS232_ON);
+		पूर्ण अन्यथा अणु
 			pr_err("%s: can't request H3XXX_EGPIO_RS232_ON\n",
 				__func__);
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
 /*
- * Enable/Disable wake up events for this serial port.
+ * Enable/Disable wake up events क्रम this serial port.
  * Obviously, we only support this on the normal COM port.
  */
-static int h3xxx_uart_set_wake(struct uart_port *port, u_int enable)
-{
-	int err = -EINVAL;
+अटल पूर्णांक h3xxx_uart_set_wake(काष्ठा uart_port *port, u_पूर्णांक enable)
+अणु
+	पूर्णांक err = -EINVAL;
 
-	if (port->mapbase == _Ser3UTCR0) {
-		if (enable)
+	अगर (port->mapbase == _Ser3UTCR0) अणु
+		अगर (enable)
 			PWER |= PWER_GPIO23 | PWER_GPIO25; /* DCD and CTS */
-		else
+		अन्यथा
 			PWER &= ~(PWER_GPIO23 | PWER_GPIO25); /* DCD and CTS */
 		err = 0;
-	}
-	return err;
-}
+	पूर्ण
+	वापस err;
+पूर्ण
 
-static struct sa1100_port_fns h3xxx_port_fns __initdata = {
+अटल काष्ठा sa1100_port_fns h3xxx_port_fns __initdata = अणु
 	.pm		= h3xxx_uart_pm,
 	.set_wake	= h3xxx_uart_set_wake,
-};
+पूर्ण;
 
-static struct gpiod_lookup_table h3xxx_uart3_gpio_table = {
+अटल काष्ठा gpiod_lookup_table h3xxx_uart3_gpio_table = अणु
 	.dev_id = "sa11x0-uart.3",
-	.table = {
+	.table = अणु
 		GPIO_LOOKUP("gpio", H3XXX_GPIO_COM_DCD, "dcd", GPIO_ACTIVE_LOW),
 		GPIO_LOOKUP("gpio", H3XXX_GPIO_COM_CTS, "cts", GPIO_ACTIVE_LOW),
 		GPIO_LOOKUP("gpio", H3XXX_GPIO_COM_RTS, "rts", GPIO_ACTIVE_LOW),
-		{ },
-	},
-};
+		अणु पूर्ण,
+	पूर्ण,
+पूर्ण;
 
 /*
  * EGPIO
  */
 
-static struct resource egpio_resources[] = {
+अटल काष्ठा resource egpio_resources[] = अणु
 	[0] = DEFINE_RES_MEM(H3600_EGPIO_PHYS, 0x4),
-};
+पूर्ण;
 
-static struct htc_egpio_chip egpio_chips[] = {
-	[0] = {
+अटल काष्ठा htc_egpio_chip egpio_chips[] = अणु
+	[0] = अणु
 		.reg_start	= 0,
 		.gpio_base	= H3XXX_EGPIO_BASE,
 		.num_gpios	= 16,
 		.direction	= HTC_EGPIO_OUTPUT,
 		.initial_values	= 0x0080, /* H3XXX_EGPIO_RS232_ON */
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static struct htc_egpio_platform_data egpio_info = {
+अटल काष्ठा htc_egpio_platक्रमm_data egpio_info = अणु
 	.reg_width	= 16,
 	.bus_width	= 16,
 	.chip		= egpio_chips,
 	.num_chips	= ARRAY_SIZE(egpio_chips),
-};
+पूर्ण;
 
-static struct platform_device h3xxx_egpio = {
+अटल काष्ठा platक्रमm_device h3xxx_egpio = अणु
 	.name		= "htc-egpio",
 	.id		= -1,
 	.resource	= egpio_resources,
 	.num_resources	= ARRAY_SIZE(egpio_resources),
-	.dev		= {
-		.platform_data = &egpio_info,
-	},
-};
+	.dev		= अणु
+		.platक्रमm_data = &egpio_info,
+	पूर्ण,
+पूर्ण;
 
 /*
  * GPIO keys
  */
 
-static struct gpio_keys_button h3xxx_button_table[] = {
-	{
+अटल काष्ठा gpio_keys_button h3xxx_button_table[] = अणु
+	अणु
 		.code		= KEY_POWER,
 		.gpio		= H3XXX_GPIO_PWR_BUTTON,
 		.desc		= "Power Button",
 		.active_low	= 1,
 		.type		= EV_KEY,
 		.wakeup		= 1,
-	}, {
+	पूर्ण, अणु
 		.code		= KEY_ENTER,
 		.gpio		= H3XXX_GPIO_ACTION_BUTTON,
 		.active_low	= 1,
 		.desc		= "Action button",
 		.type		= EV_KEY,
 		.wakeup		= 0,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static struct gpio_keys_platform_data h3xxx_keys_data = {
+अटल काष्ठा gpio_keys_platक्रमm_data h3xxx_keys_data = अणु
 	.buttons  = h3xxx_button_table,
 	.nbuttons = ARRAY_SIZE(h3xxx_button_table),
-};
+पूर्ण;
 
-static struct platform_device h3xxx_keys = {
+अटल काष्ठा platक्रमm_device h3xxx_keys = अणु
 	.name	= "gpio-keys",
 	.id	= -1,
-	.dev	= {
-		.platform_data = &h3xxx_keys_data,
-	},
-};
+	.dev	= अणु
+		.platक्रमm_data = &h3xxx_keys_data,
+	पूर्ण,
+पूर्ण;
 
-static struct resource h3xxx_micro_resources[] = {
+अटल काष्ठा resource h3xxx_micro_resources[] = अणु
 	DEFINE_RES_MEM(0x80010000, SZ_4K),
 	DEFINE_RES_MEM(0x80020000, SZ_4K),
 	DEFINE_RES_IRQ(IRQ_Ser1UART),
-};
+पूर्ण;
 
-struct platform_device h3xxx_micro_asic = {
+काष्ठा platक्रमm_device h3xxx_micro_asic = अणु
 	.name = "ipaq-h3xxx-micro",
 	.id = -1,
 	.resource = h3xxx_micro_resources,
 	.num_resources = ARRAY_SIZE(h3xxx_micro_resources),
-};
+पूर्ण;
 
-static struct platform_device *h3xxx_devices[] = {
+अटल काष्ठा platक्रमm_device *h3xxx_devices[] = अणु
 	&h3xxx_egpio,
 	&h3xxx_keys,
 	&h3xxx_micro_asic,
-};
+पूर्ण;
 
-static struct gpiod_lookup_table h3xxx_pcmcia_gpio_table = {
+अटल काष्ठा gpiod_lookup_table h3xxx_pcmcia_gpio_table = अणु
 	.dev_id = "sa11x0-pcmcia",
-	.table = {
+	.table = अणु
 		GPIO_LOOKUP("gpio", H3XXX_GPIO_PCMCIA_CD0,
 			    "pcmcia0-detect", GPIO_ACTIVE_LOW),
 		GPIO_LOOKUP("gpio", H3XXX_GPIO_PCMCIA_IRQ0,
@@ -229,51 +230,51 @@ static struct gpiod_lookup_table h3xxx_pcmcia_gpio_table = {
 			    "pcmcia1-detect", GPIO_ACTIVE_LOW),
 		GPIO_LOOKUP("gpio", H3XXX_GPIO_PCMCIA_IRQ1,
 			    "pcmcia1-ready", GPIO_ACTIVE_HIGH),
-		{ },
-	},
-};
+		अणु पूर्ण,
+	पूर्ण,
+पूर्ण;
 
-void __init h3xxx_mach_init(void)
-{
+व्योम __init h3xxx_mach_init(व्योम)
+अणु
 	gpiod_add_lookup_table(&h3xxx_pcmcia_gpio_table);
 	gpiod_add_lookup_table(&h3xxx_uart3_gpio_table);
-	sa1100_register_uart_fns(&h3xxx_port_fns);
-	sa11x0_register_mtd(&h3xxx_flash_data, &h3xxx_flash_resource, 1);
-	platform_add_devices(h3xxx_devices, ARRAY_SIZE(h3xxx_devices));
-}
+	sa1100_रेजिस्टर_uart_fns(&h3xxx_port_fns);
+	sa11x0_रेजिस्टर_mtd(&h3xxx_flash_data, &h3xxx_flash_resource, 1);
+	platक्रमm_add_devices(h3xxx_devices, ARRAY_SIZE(h3xxx_devices));
+पूर्ण
 
-static struct map_desc h3600_io_desc[] __initdata = {
-	{	/* static memory bank 2  CS#2 */
-		.virtual	=  H3600_BANK_2_VIRT,
+अटल काष्ठा map_desc h3600_io_desc[] __initdata = अणु
+	अणु	/* अटल memory bank 2  CS#2 */
+		.भव	=  H3600_BANK_2_VIRT,
 		.pfn		= __phys_to_pfn(SA1100_CS2_PHYS),
 		.length		= 0x02800000,
 		.type		= MT_DEVICE
-	}, {	/* static memory bank 4  CS#4 */
-		.virtual	=  H3600_BANK_4_VIRT,
+	पूर्ण, अणु	/* अटल memory bank 4  CS#4 */
+		.भव	=  H3600_BANK_4_VIRT,
 		.pfn		= __phys_to_pfn(SA1100_CS4_PHYS),
 		.length		= 0x00800000,
 		.type		= MT_DEVICE
-	}, {	/* EGPIO 0		CS#5 */
-		.virtual	=  H3600_EGPIO_VIRT,
+	पूर्ण, अणु	/* EGPIO 0		CS#5 */
+		.भव	=  H3600_EGPIO_VIRT,
 		.pfn		= __phys_to_pfn(H3600_EGPIO_PHYS),
 		.length		= 0x01000000,
 		.type		= MT_DEVICE
-	}
-};
+	पूर्ण
+पूर्ण;
 
 /*
  * Common map_io initialization
  */
 
-void __init h3xxx_map_io(void)
-{
+व्योम __init h3xxx_map_io(व्योम)
+अणु
 	sa1100_map_io();
 	iotable_init(h3600_io_desc, ARRAY_SIZE(h3600_io_desc));
 
-	sa1100_register_uart(0, 3); /* Common serial port */
-//	sa1100_register_uart(1, 1); /* Microcontroller on 3100/3600 */
+	sa1100_रेजिस्टर_uart(0, 3); /* Common serial port */
+//	sa1100_रेजिस्टर_uart(1, 1); /* Microcontroller on 3100/3600 */
 
-	/* Ensure those pins are outputs and driving low  */
+	/* Ensure those pins are outमाला_दो and driving low  */
 	PPDR |= PPC_TXD4 | PPC_SCLK | PPC_SFRM;
 	PPSR &= ~(PPC_TXD4 | PPC_SCLK | PPC_SFRM);
 
@@ -282,7 +283,7 @@ void __init h3xxx_map_io(void)
 	PCFR = PCFR_OPDE;
 	PSDR = 0;
 
-	GPCR = 0x0fffffff;	/* All outputs are set low by default */
+	GPCR = 0x0fffffff;	/* All outमाला_दो are set low by शेष */
 	GPDR = 0;		/* Configure all GPIOs as input */
-}
+पूर्ण
 

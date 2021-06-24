@@ -1,83 +1,84 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <linux/init.h>
-#include <linux/pci.h>
-#include <linux/range.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <linux/init.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/range.h>
 
-#include "bus_numa.h"
+#समावेश "bus_numa.h"
 
 LIST_HEAD(pci_root_infos);
 
-static struct pci_root_info *x86_find_pci_root_info(int bus)
-{
-	struct pci_root_info *info;
+अटल काष्ठा pci_root_info *x86_find_pci_root_info(पूर्णांक bus)
+अणु
+	काष्ठा pci_root_info *info;
 
-	list_for_each_entry(info, &pci_root_infos, list)
-		if (info->busn.start == bus)
-			return info;
+	list_क्रम_each_entry(info, &pci_root_infos, list)
+		अगर (info->busn.start == bus)
+			वापस info;
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-int x86_pci_root_bus_node(int bus)
-{
-	struct pci_root_info *info = x86_find_pci_root_info(bus);
+पूर्णांक x86_pci_root_bus_node(पूर्णांक bus)
+अणु
+	काष्ठा pci_root_info *info = x86_find_pci_root_info(bus);
 
-	if (!info)
-		return NUMA_NO_NODE;
+	अगर (!info)
+		वापस NUMA_NO_NODE;
 
-	return info->node;
-}
+	वापस info->node;
+पूर्ण
 
-void x86_pci_root_bus_resources(int bus, struct list_head *resources)
-{
-	struct pci_root_info *info = x86_find_pci_root_info(bus);
-	struct pci_root_res *root_res;
-	struct resource_entry *window;
+व्योम x86_pci_root_bus_resources(पूर्णांक bus, काष्ठा list_head *resources)
+अणु
+	काष्ठा pci_root_info *info = x86_find_pci_root_info(bus);
+	काष्ठा pci_root_res *root_res;
+	काष्ठा resource_entry *winकरोw;
 	bool found = false;
 
-	if (!info)
-		goto default_resources;
+	अगर (!info)
+		जाओ शेष_resources;
 
-	printk(KERN_DEBUG "PCI: root bus %02x: hardware-probed resources\n",
+	prपूर्णांकk(KERN_DEBUG "PCI: root bus %02x: hardware-probed resources\n",
 	       bus);
 
-	/* already added by acpi ? */
-	resource_list_for_each_entry(window, resources)
-		if (window->res->flags & IORESOURCE_BUS) {
+	/* alपढ़ोy added by acpi ? */
+	resource_list_क्रम_each_entry(winकरोw, resources)
+		अगर (winकरोw->res->flags & IORESOURCE_BUS) अणु
 			found = true;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-	if (!found)
+	अगर (!found)
 		pci_add_resource(resources, &info->busn);
 
-	list_for_each_entry(root_res, &info->resources, list)
+	list_क्रम_each_entry(root_res, &info->resources, list)
 		pci_add_resource(resources, &root_res->res);
 
-	return;
+	वापस;
 
-default_resources:
+शेष_resources:
 	/*
-	 * We don't have any host bridge aperture information from the
+	 * We करोn't have any host bridge aperture inक्रमmation from the
 	 * "native host bridge drivers," e.g., amd_bus or broadcom_bus,
-	 * so fall back to the defaults historically used by pci_create_bus().
+	 * so fall back to the शेषs historically used by pci_create_bus().
 	 */
-	printk(KERN_DEBUG "PCI: root bus %02x: using default resources\n", bus);
+	prपूर्णांकk(KERN_DEBUG "PCI: root bus %02x: using default resources\n", bus);
 	pci_add_resource(resources, &ioport_resource);
 	pci_add_resource(resources, &iomem_resource);
-}
+पूर्ण
 
-struct pci_root_info __init *alloc_pci_root_info(int bus_min, int bus_max,
-						 int node, int link)
-{
-	struct pci_root_info *info;
+काष्ठा pci_root_info __init *alloc_pci_root_info(पूर्णांक bus_min, पूर्णांक bus_max,
+						 पूर्णांक node, पूर्णांक link)
+अणु
+	काष्ठा pci_root_info *info;
 
-	info = kzalloc(sizeof(*info), GFP_KERNEL);
+	info = kzalloc(माप(*info), GFP_KERNEL);
 
-	if (!info)
-		return info;
+	अगर (!info)
+		वापस info;
 
-	sprintf(info->name, "PCI Bus #%02x", bus_min);
+	प्र_लिखो(info->name, "PCI Bus #%02x", bus_min);
 
 	INIT_LIST_HEAD(&info->resources);
 	info->busn.name  = info->name;
@@ -89,52 +90,52 @@ struct pci_root_info __init *alloc_pci_root_info(int bus_min, int bus_max,
 
 	list_add_tail(&info->list, &pci_root_infos);
 
-	return info;
-}
+	वापस info;
+पूर्ण
 
-void update_res(struct pci_root_info *info, resource_size_t start,
-		resource_size_t end, unsigned long flags, int merge)
-{
-	struct resource *res;
-	struct pci_root_res *root_res;
+व्योम update_res(काष्ठा pci_root_info *info, resource_माप_प्रकार start,
+		resource_माप_प्रकार end, अचिन्हित दीर्घ flags, पूर्णांक merge)
+अणु
+	काष्ठा resource *res;
+	काष्ठा pci_root_res *root_res;
 
-	if (start > end)
-		return;
+	अगर (start > end)
+		वापस;
 
-	if (start == MAX_RESOURCE)
-		return;
+	अगर (start == MAX_RESOURCE)
+		वापस;
 
-	if (!merge)
-		goto addit;
+	अगर (!merge)
+		जाओ addit;
 
 	/* try to merge it with old one */
-	list_for_each_entry(root_res, &info->resources, list) {
-		resource_size_t final_start, final_end;
-		resource_size_t common_start, common_end;
+	list_क्रम_each_entry(root_res, &info->resources, list) अणु
+		resource_माप_प्रकार final_start, final_end;
+		resource_माप_प्रकार common_start, common_end;
 
 		res = &root_res->res;
-		if (res->flags != flags)
-			continue;
+		अगर (res->flags != flags)
+			जारी;
 
 		common_start = max(res->start, start);
 		common_end = min(res->end, end);
-		if (common_start > common_end + 1)
-			continue;
+		अगर (common_start > common_end + 1)
+			जारी;
 
 		final_start = min(res->start, start);
 		final_end = max(res->end, end);
 
 		res->start = final_start;
 		res->end = final_end;
-		return;
-	}
+		वापस;
+	पूर्ण
 
 addit:
 
 	/* need to add that */
-	root_res = kzalloc(sizeof(*root_res), GFP_KERNEL);
-	if (!root_res)
-		return;
+	root_res = kzalloc(माप(*root_res), GFP_KERNEL);
+	अगर (!root_res)
+		वापस;
 
 	res = &root_res->res;
 	res->name = info->name;
@@ -143,4 +144,4 @@ addit:
 	res->end = end;
 
 	list_add_tail(&root_res->list, &info->resources);
-}
+पूर्ण

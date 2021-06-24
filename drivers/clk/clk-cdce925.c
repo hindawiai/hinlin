@@ -1,7 +1,8 @@
+<शैली गुरु>
 /*
- * Driver for TI Multi PLL CDCE913/925/937/949 clock synthesizer
+ * Driver क्रम TI Multi PLL CDCE913/925/937/949 घड़ी synthesizer
  *
- * This driver always connects the Y1 to the input clock, Y2/Y3 to PLL1,
+ * This driver always connects the Y1 to the input घड़ी, Y2/Y3 to PLL1,
  * Y4/Y5 to PLL2, and so on. PLL frequency is set on a first-come-first-serve
  * basis. Clients can directly request any frequency that the chip can
  * deliver using the standard clk framework. In addition, the device can
@@ -10,526 +11,526 @@
  * Copyright (C) 2014, Topic Embedded Products
  * Licenced under GPL
  */
-#include <linux/clk.h>
-#include <linux/clk-provider.h>
-#include <linux/delay.h>
-#include <linux/module.h>
-#include <linux/i2c.h>
-#include <linux/regmap.h>
-#include <linux/regulator/consumer.h>
-#include <linux/slab.h>
-#include <linux/gcd.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/clk-provider.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/module.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/regmap.h>
+#समावेश <linux/regulator/consumer.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/gcd.h>
 
-/* Each chip has different number of PLLs and outputs, for example:
- * The CECE925 has 2 PLLs which can be routed through dividers to 5 outputs.
- * Model this as 2 PLL clocks which are parents to the outputs.
+/* Each chip has dअगरferent number of PLLs and outमाला_दो, क्रम example:
+ * The CECE925 has 2 PLLs which can be routed through भागiders to 5 outमाला_दो.
+ * Model this as 2 PLL घड़ीs which are parents to the outमाला_दो.
  */
 
-enum {
+क्रमागत अणु
 	CDCE913,
 	CDCE925,
 	CDCE937,
 	CDCE949,
-};
+पूर्ण;
 
-struct clk_cdce925_chip_info {
-	int num_plls;
-	int num_outputs;
-};
+काष्ठा clk_cdce925_chip_info अणु
+	पूर्णांक num_plls;
+	पूर्णांक num_outमाला_दो;
+पूर्ण;
 
-static const struct clk_cdce925_chip_info clk_cdce925_chip_info_tbl[] = {
-	[CDCE913] = { .num_plls = 1, .num_outputs = 3 },
-	[CDCE925] = { .num_plls = 2, .num_outputs = 5 },
-	[CDCE937] = { .num_plls = 3, .num_outputs = 7 },
-	[CDCE949] = { .num_plls = 4, .num_outputs = 9 },
-};
+अटल स्थिर काष्ठा clk_cdce925_chip_info clk_cdce925_chip_info_tbl[] = अणु
+	[CDCE913] = अणु .num_plls = 1, .num_outमाला_दो = 3 पूर्ण,
+	[CDCE925] = अणु .num_plls = 2, .num_outमाला_दो = 5 पूर्ण,
+	[CDCE937] = अणु .num_plls = 3, .num_outमाला_दो = 7 पूर्ण,
+	[CDCE949] = अणु .num_plls = 4, .num_outमाला_दो = 9 पूर्ण,
+पूर्ण;
 
-#define MAX_NUMBER_OF_PLLS	4
-#define MAX_NUMBER_OF_OUTPUTS	9
+#घोषणा MAX_NUMBER_OF_PLLS	4
+#घोषणा MAX_NUMBER_OF_OUTPUTS	9
 
-#define CDCE925_REG_GLOBAL1	0x01
-#define CDCE925_REG_Y1SPIPDIVH	0x02
-#define CDCE925_REG_PDIVL	0x03
-#define CDCE925_REG_XCSEL	0x05
+#घोषणा CDCE925_REG_GLOBAL1	0x01
+#घोषणा CDCE925_REG_Y1SPIPDIVH	0x02
+#घोषणा CDCE925_REG_PDIVL	0x03
+#घोषणा CDCE925_REG_XCSEL	0x05
 /* PLL parameters start at 0x10, steps of 0x10 */
-#define CDCE925_OFFSET_PLL	0x10
-/* Add CDCE925_OFFSET_PLL * (pll) to these registers before sending */
-#define CDCE925_PLL_MUX_OUTPUTS	0x14
-#define CDCE925_PLL_MULDIV	0x18
+#घोषणा CDCE925_OFFSET_PLL	0x10
+/* Add CDCE925_OFFSET_PLL * (pll) to these रेजिस्टरs beक्रमe sending */
+#घोषणा CDCE925_PLL_MUX_OUTPUTS	0x14
+#घोषणा CDCE925_PLL_MULDIV	0x18
 
-#define CDCE925_PLL_FREQUENCY_MIN	 80000000ul
-#define CDCE925_PLL_FREQUENCY_MAX	230000000ul
-struct clk_cdce925_chip;
+#घोषणा CDCE925_PLL_FREQUENCY_MIN	 80000000ul
+#घोषणा CDCE925_PLL_FREQUENCY_MAX	230000000ul
+काष्ठा clk_cdce925_chip;
 
-struct clk_cdce925_output {
-	struct clk_hw hw;
-	struct clk_cdce925_chip *chip;
+काष्ठा clk_cdce925_output अणु
+	काष्ठा clk_hw hw;
+	काष्ठा clk_cdce925_chip *chip;
 	u8 index;
-	u16 pdiv; /* 1..127 for Y2-Y9; 1..1023 for Y1 */
-};
-#define to_clk_cdce925_output(_hw) \
-	container_of(_hw, struct clk_cdce925_output, hw)
+	u16 pभाग; /* 1..127 क्रम Y2-Y9; 1..1023 क्रम Y1 */
+पूर्ण;
+#घोषणा to_clk_cdce925_output(_hw) \
+	container_of(_hw, काष्ठा clk_cdce925_output, hw)
 
-struct clk_cdce925_pll {
-	struct clk_hw hw;
-	struct clk_cdce925_chip *chip;
+काष्ठा clk_cdce925_pll अणु
+	काष्ठा clk_hw hw;
+	काष्ठा clk_cdce925_chip *chip;
 	u8 index;
 	u16 m;   /* 1..511 */
 	u16 n;   /* 1..4095 */
-};
-#define to_clk_cdce925_pll(_hw)	container_of(_hw, struct clk_cdce925_pll, hw)
+पूर्ण;
+#घोषणा to_clk_cdce925_pll(_hw)	container_of(_hw, काष्ठा clk_cdce925_pll, hw)
 
-struct clk_cdce925_chip {
-	struct regmap *regmap;
-	struct i2c_client *i2c_client;
-	const struct clk_cdce925_chip_info *chip_info;
-	struct clk_cdce925_pll pll[MAX_NUMBER_OF_PLLS];
-	struct clk_cdce925_output clk[MAX_NUMBER_OF_OUTPUTS];
-};
+काष्ठा clk_cdce925_chip अणु
+	काष्ठा regmap *regmap;
+	काष्ठा i2c_client *i2c_client;
+	स्थिर काष्ठा clk_cdce925_chip_info *chip_info;
+	काष्ठा clk_cdce925_pll pll[MAX_NUMBER_OF_PLLS];
+	काष्ठा clk_cdce925_output clk[MAX_NUMBER_OF_OUTPUTS];
+पूर्ण;
 
 /* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
 
-static unsigned long cdce925_pll_calculate_rate(unsigned long parent_rate,
+अटल अचिन्हित दीर्घ cdce925_pll_calculate_rate(अचिन्हित दीर्घ parent_rate,
 	u16 n, u16 m)
-{
-	if ((!m || !n) || (m == n))
-		return parent_rate; /* In bypass mode runs at same frequency */
-	return mult_frac(parent_rate, (unsigned long)n, (unsigned long)m);
-}
+अणु
+	अगर ((!m || !n) || (m == n))
+		वापस parent_rate; /* In bypass mode runs at same frequency */
+	वापस mult_frac(parent_rate, (अचिन्हित दीर्घ)n, (अचिन्हित दीर्घ)m);
+पूर्ण
 
-static unsigned long cdce925_pll_recalc_rate(struct clk_hw *hw,
-		unsigned long parent_rate)
-{
-	/* Output frequency of PLL is Fout = (Fin/Pdiv)*(N/M) */
-	struct clk_cdce925_pll *data = to_clk_cdce925_pll(hw);
+अटल अचिन्हित दीर्घ cdce925_pll_recalc_rate(काष्ठा clk_hw *hw,
+		अचिन्हित दीर्घ parent_rate)
+अणु
+	/* Output frequency of PLL is Fout = (Fin/Pभाग)*(N/M) */
+	काष्ठा clk_cdce925_pll *data = to_clk_cdce925_pll(hw);
 
-	return cdce925_pll_calculate_rate(parent_rate, data->n, data->m);
-}
+	वापस cdce925_pll_calculate_rate(parent_rate, data->n, data->m);
+पूर्ण
 
-static void cdce925_pll_find_rate(unsigned long rate,
-		unsigned long parent_rate, u16 *n, u16 *m)
-{
-	unsigned long un;
-	unsigned long um;
-	unsigned long g;
+अटल व्योम cdce925_pll_find_rate(अचिन्हित दीर्घ rate,
+		अचिन्हित दीर्घ parent_rate, u16 *n, u16 *m)
+अणु
+	अचिन्हित दीर्घ un;
+	अचिन्हित दीर्घ um;
+	अचिन्हित दीर्घ g;
 
-	if (rate <= parent_rate) {
+	अगर (rate <= parent_rate) अणु
 		/* Can always deliver parent_rate in bypass mode */
 		rate = parent_rate;
 		*n = 0;
 		*m = 0;
-	} else {
+	पूर्ण अन्यथा अणु
 		/* In PLL mode, need to apply min/max range */
-		if (rate < CDCE925_PLL_FREQUENCY_MIN)
+		अगर (rate < CDCE925_PLL_FREQUENCY_MIN)
 			rate = CDCE925_PLL_FREQUENCY_MIN;
-		else if (rate > CDCE925_PLL_FREQUENCY_MAX)
+		अन्यथा अगर (rate > CDCE925_PLL_FREQUENCY_MAX)
 			rate = CDCE925_PLL_FREQUENCY_MAX;
 
 		g = gcd(rate, parent_rate);
 		um = parent_rate / g;
 		un = rate / g;
 		/* When outside hw range, reduce to fit (rounding errors) */
-		while ((un > 4095) || (um > 511)) {
+		जबतक ((un > 4095) || (um > 511)) अणु
 			un >>= 1;
 			um >>= 1;
-		}
-		if (un == 0)
+		पूर्ण
+		अगर (un == 0)
 			un = 1;
-		if (um == 0)
+		अगर (um == 0)
 			um = 1;
 
 		*n = un;
 		*m = um;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static long cdce925_pll_round_rate(struct clk_hw *hw, unsigned long rate,
-		unsigned long *parent_rate)
-{
+अटल दीर्घ cdce925_pll_round_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
+		अचिन्हित दीर्घ *parent_rate)
+अणु
 	u16 n, m;
 
 	cdce925_pll_find_rate(rate, *parent_rate, &n, &m);
-	return (long)cdce925_pll_calculate_rate(*parent_rate, n, m);
-}
+	वापस (दीर्घ)cdce925_pll_calculate_rate(*parent_rate, n, m);
+पूर्ण
 
-static int cdce925_pll_set_rate(struct clk_hw *hw, unsigned long rate,
-		unsigned long parent_rate)
-{
-	struct clk_cdce925_pll *data = to_clk_cdce925_pll(hw);
+अटल पूर्णांक cdce925_pll_set_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
+		अचिन्हित दीर्घ parent_rate)
+अणु
+	काष्ठा clk_cdce925_pll *data = to_clk_cdce925_pll(hw);
 
-	if (!rate || (rate == parent_rate)) {
+	अगर (!rate || (rate == parent_rate)) अणु
 		data->m = 0; /* Bypass mode */
 		data->n = 0;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	if ((rate < CDCE925_PLL_FREQUENCY_MIN) ||
-		(rate > CDCE925_PLL_FREQUENCY_MAX)) {
+	अगर ((rate < CDCE925_PLL_FREQUENCY_MIN) ||
+		(rate > CDCE925_PLL_FREQUENCY_MAX)) अणु
 		pr_debug("%s: rate %lu outside PLL range.\n", __func__, rate);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (rate < parent_rate) {
+	अगर (rate < parent_rate) अणु
 		pr_debug("%s: rate %lu less than parent rate %lu.\n", __func__,
 			rate, parent_rate);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	cdce925_pll_find_rate(rate, parent_rate, &data->n, &data->m);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
-/* calculate p = max(0, 4 - int(log2 (n/m))) */
-static u8 cdce925_pll_calc_p(u16 n, u16 m)
-{
+/* calculate p = max(0, 4 - पूर्णांक(log2 (n/m))) */
+अटल u8 cdce925_pll_calc_p(u16 n, u16 m)
+अणु
 	u8 p;
 	u16 r = n / m;
 
-	if (r >= 16)
-		return 0;
+	अगर (r >= 16)
+		वापस 0;
 	p = 4;
-	while (r > 1) {
+	जबतक (r > 1) अणु
 		r >>= 1;
 		--p;
-	}
-	return p;
-}
+	पूर्ण
+	वापस p;
+पूर्ण
 
-/* Returns VCO range bits for VCO1_0_RANGE */
-static u8 cdce925_pll_calc_range_bits(struct clk_hw *hw, u16 n, u16 m)
-{
-	struct clk *parent = clk_get_parent(hw->clk);
-	unsigned long rate = clk_get_rate(parent);
+/* Returns VCO range bits क्रम VCO1_0_RANGE */
+अटल u8 cdce925_pll_calc_range_bits(काष्ठा clk_hw *hw, u16 n, u16 m)
+अणु
+	काष्ठा clk *parent = clk_get_parent(hw->clk);
+	अचिन्हित दीर्घ rate = clk_get_rate(parent);
 
-	rate = mult_frac(rate, (unsigned long)n, (unsigned long)m);
-	if (rate >= 175000000)
-		return 0x3;
-	if (rate >= 150000000)
-		return 0x02;
-	if (rate >= 125000000)
-		return 0x01;
-	return 0x00;
-}
+	rate = mult_frac(rate, (अचिन्हित दीर्घ)n, (अचिन्हित दीर्घ)m);
+	अगर (rate >= 175000000)
+		वापस 0x3;
+	अगर (rate >= 150000000)
+		वापस 0x02;
+	अगर (rate >= 125000000)
+		वापस 0x01;
+	वापस 0x00;
+पूर्ण
 
-/* I2C clock, hence everything must happen in (un)prepare because this
+/* I2C घड़ी, hence everything must happen in (un)prepare because this
  * may sleep */
-static int cdce925_pll_prepare(struct clk_hw *hw)
-{
-	struct clk_cdce925_pll *data = to_clk_cdce925_pll(hw);
+अटल पूर्णांक cdce925_pll_prepare(काष्ठा clk_hw *hw)
+अणु
+	काष्ठा clk_cdce925_pll *data = to_clk_cdce925_pll(hw);
 	u16 n = data->n;
 	u16 m = data->m;
 	u16 r;
 	u8 q;
 	u8 p;
 	u16 nn;
-	u8 pll[4]; /* Bits are spread out over 4 byte registers */
+	u8 pll[4]; /* Bits are spपढ़ो out over 4 byte रेजिस्टरs */
 	u8 reg_ofs = data->index * CDCE925_OFFSET_PLL;
-	unsigned i;
+	अचिन्हित i;
 
-	if ((!m || !n) || (m == n)) {
+	अगर ((!m || !n) || (m == n)) अणु
 		/* Set PLL mux to bypass mode, leave the rest as is */
 		regmap_update_bits(data->chip->regmap,
 			reg_ofs + CDCE925_PLL_MUX_OUTPUTS, 0x80, 0x80);
-	} else {
+	पूर्ण अन्यथा अणु
 		/* According to data sheet: */
-		/* p = max(0, 4 - int(log2 (n/m))) */
+		/* p = max(0, 4 - पूर्णांक(log2 (n/m))) */
 		p = cdce925_pll_calc_p(n, m);
 		/* nn = n * 2^p */
 		nn = n * BIT(p);
-		/* q = int(nn/m) */
+		/* q = पूर्णांक(nn/m) */
 		q = nn / m;
-		if ((q < 16) || (q > 63)) {
+		अगर ((q < 16) || (q > 63)) अणु
 			pr_debug("%s invalid q=%d\n", __func__, q);
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 		r = nn - (m*q);
-		if (r > 511) {
+		अगर (r > 511) अणु
 			pr_debug("%s invalid r=%d\n", __func__, r);
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 		pr_debug("%s n=%d m=%d p=%d q=%d r=%d\n", __func__,
 			n, m, p, q, r);
-		/* encode into register bits */
+		/* encode पूर्णांकo रेजिस्टर bits */
 		pll[0] = n >> 4;
 		pll[1] = ((n & 0x0F) << 4) | ((r >> 5) & 0x0F);
 		pll[2] = ((r & 0x1F) << 3) | ((q >> 3) & 0x07);
 		pll[3] = ((q & 0x07) << 5) | (p << 2) |
 				cdce925_pll_calc_range_bits(hw, n, m);
-		/* Write to registers */
-		for (i = 0; i < ARRAY_SIZE(pll); ++i)
-			regmap_write(data->chip->regmap,
+		/* Write to रेजिस्टरs */
+		क्रम (i = 0; i < ARRAY_SIZE(pll); ++i)
+			regmap_ग_लिखो(data->chip->regmap,
 				reg_ofs + CDCE925_PLL_MULDIV + i, pll[i]);
 		/* Enable PLL */
 		regmap_update_bits(data->chip->regmap,
 			reg_ofs + CDCE925_PLL_MUX_OUTPUTS, 0x80, 0x00);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void cdce925_pll_unprepare(struct clk_hw *hw)
-{
-	struct clk_cdce925_pll *data = to_clk_cdce925_pll(hw);
+अटल व्योम cdce925_pll_unprepare(काष्ठा clk_hw *hw)
+अणु
+	काष्ठा clk_cdce925_pll *data = to_clk_cdce925_pll(hw);
 	u8 reg_ofs = data->index * CDCE925_OFFSET_PLL;
 
 	regmap_update_bits(data->chip->regmap,
 			reg_ofs + CDCE925_PLL_MUX_OUTPUTS, 0x80, 0x80);
-}
+पूर्ण
 
-static const struct clk_ops cdce925_pll_ops = {
+अटल स्थिर काष्ठा clk_ops cdce925_pll_ops = अणु
 	.prepare = cdce925_pll_prepare,
 	.unprepare = cdce925_pll_unprepare,
 	.recalc_rate = cdce925_pll_recalc_rate,
 	.round_rate = cdce925_pll_round_rate,
 	.set_rate = cdce925_pll_set_rate,
-};
+पूर्ण;
 
 
-static void cdce925_clk_set_pdiv(struct clk_cdce925_output *data, u16 pdiv)
-{
-	switch (data->index) {
-	case 0:
+अटल व्योम cdce925_clk_set_pभाग(काष्ठा clk_cdce925_output *data, u16 pभाग)
+अणु
+	चयन (data->index) अणु
+	हाल 0:
 		regmap_update_bits(data->chip->regmap,
 			CDCE925_REG_Y1SPIPDIVH,
-			0x03, (pdiv >> 8) & 0x03);
-		regmap_write(data->chip->regmap, 0x03, pdiv & 0xFF);
-		break;
-	case 1:
-		regmap_update_bits(data->chip->regmap, 0x16, 0x7F, pdiv);
-		break;
-	case 2:
-		regmap_update_bits(data->chip->regmap, 0x17, 0x7F, pdiv);
-		break;
-	case 3:
-		regmap_update_bits(data->chip->regmap, 0x26, 0x7F, pdiv);
-		break;
-	case 4:
-		regmap_update_bits(data->chip->regmap, 0x27, 0x7F, pdiv);
-		break;
-	case 5:
-		regmap_update_bits(data->chip->regmap, 0x36, 0x7F, pdiv);
-		break;
-	case 6:
-		regmap_update_bits(data->chip->regmap, 0x37, 0x7F, pdiv);
-		break;
-	case 7:
-		regmap_update_bits(data->chip->regmap, 0x46, 0x7F, pdiv);
-		break;
-	case 8:
-		regmap_update_bits(data->chip->regmap, 0x47, 0x7F, pdiv);
-		break;
-	}
-}
+			0x03, (pभाग >> 8) & 0x03);
+		regmap_ग_लिखो(data->chip->regmap, 0x03, pभाग & 0xFF);
+		अवरोध;
+	हाल 1:
+		regmap_update_bits(data->chip->regmap, 0x16, 0x7F, pभाग);
+		अवरोध;
+	हाल 2:
+		regmap_update_bits(data->chip->regmap, 0x17, 0x7F, pभाग);
+		अवरोध;
+	हाल 3:
+		regmap_update_bits(data->chip->regmap, 0x26, 0x7F, pभाग);
+		अवरोध;
+	हाल 4:
+		regmap_update_bits(data->chip->regmap, 0x27, 0x7F, pभाग);
+		अवरोध;
+	हाल 5:
+		regmap_update_bits(data->chip->regmap, 0x36, 0x7F, pभाग);
+		अवरोध;
+	हाल 6:
+		regmap_update_bits(data->chip->regmap, 0x37, 0x7F, pभाग);
+		अवरोध;
+	हाल 7:
+		regmap_update_bits(data->chip->regmap, 0x46, 0x7F, pभाग);
+		अवरोध;
+	हाल 8:
+		regmap_update_bits(data->chip->regmap, 0x47, 0x7F, pभाग);
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static void cdce925_clk_activate(struct clk_cdce925_output *data)
-{
-	switch (data->index) {
-	case 0:
+अटल व्योम cdce925_clk_activate(काष्ठा clk_cdce925_output *data)
+अणु
+	चयन (data->index) अणु
+	हाल 0:
 		regmap_update_bits(data->chip->regmap,
 			CDCE925_REG_Y1SPIPDIVH, 0x0c, 0x0c);
-		break;
-	case 1:
-	case 2:
+		अवरोध;
+	हाल 1:
+	हाल 2:
 		regmap_update_bits(data->chip->regmap, 0x14, 0x03, 0x03);
-		break;
-	case 3:
-	case 4:
+		अवरोध;
+	हाल 3:
+	हाल 4:
 		regmap_update_bits(data->chip->regmap, 0x24, 0x03, 0x03);
-		break;
-	case 5:
-	case 6:
+		अवरोध;
+	हाल 5:
+	हाल 6:
 		regmap_update_bits(data->chip->regmap, 0x34, 0x03, 0x03);
-		break;
-	case 7:
-	case 8:
+		अवरोध;
+	हाल 7:
+	हाल 8:
 		regmap_update_bits(data->chip->regmap, 0x44, 0x03, 0x03);
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static int cdce925_clk_prepare(struct clk_hw *hw)
-{
-	struct clk_cdce925_output *data = to_clk_cdce925_output(hw);
+अटल पूर्णांक cdce925_clk_prepare(काष्ठा clk_hw *hw)
+अणु
+	काष्ठा clk_cdce925_output *data = to_clk_cdce925_output(hw);
 
-	cdce925_clk_set_pdiv(data, data->pdiv);
+	cdce925_clk_set_pभाग(data, data->pभाग);
 	cdce925_clk_activate(data);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void cdce925_clk_unprepare(struct clk_hw *hw)
-{
-	struct clk_cdce925_output *data = to_clk_cdce925_output(hw);
+अटल व्योम cdce925_clk_unprepare(काष्ठा clk_hw *hw)
+अणु
+	काष्ठा clk_cdce925_output *data = to_clk_cdce925_output(hw);
 
-	/* Disable clock by setting divider to "0" */
-	cdce925_clk_set_pdiv(data, 0);
-}
+	/* Disable घड़ी by setting भागider to "0" */
+	cdce925_clk_set_pभाग(data, 0);
+पूर्ण
 
-static unsigned long cdce925_clk_recalc_rate(struct clk_hw *hw,
-		unsigned long parent_rate)
-{
-	struct clk_cdce925_output *data = to_clk_cdce925_output(hw);
+अटल अचिन्हित दीर्घ cdce925_clk_recalc_rate(काष्ठा clk_hw *hw,
+		अचिन्हित दीर्घ parent_rate)
+अणु
+	काष्ठा clk_cdce925_output *data = to_clk_cdce925_output(hw);
 
-	if (data->pdiv)
-		return parent_rate / data->pdiv;
-	return 0;
-}
+	अगर (data->pभाग)
+		वापस parent_rate / data->pभाग;
+	वापस 0;
+पूर्ण
 
-static u16 cdce925_calc_divider(unsigned long rate,
-		unsigned long parent_rate)
-{
-	unsigned long divider;
+अटल u16 cdce925_calc_भागider(अचिन्हित दीर्घ rate,
+		अचिन्हित दीर्घ parent_rate)
+अणु
+	अचिन्हित दीर्घ भागider;
 
-	if (!rate)
-		return 0;
-	if (rate >= parent_rate)
-		return 1;
+	अगर (!rate)
+		वापस 0;
+	अगर (rate >= parent_rate)
+		वापस 1;
 
-	divider = DIV_ROUND_CLOSEST(parent_rate, rate);
-	if (divider > 0x7F)
-		divider = 0x7F;
+	भागider = DIV_ROUND_CLOSEST(parent_rate, rate);
+	अगर (भागider > 0x7F)
+		भागider = 0x7F;
 
-	return (u16)divider;
-}
+	वापस (u16)भागider;
+पूर्ण
 
-static unsigned long cdce925_clk_best_parent_rate(
-	struct clk_hw *hw, unsigned long rate)
-{
-	struct clk *pll = clk_get_parent(hw->clk);
-	struct clk *root = clk_get_parent(pll);
-	unsigned long root_rate = clk_get_rate(root);
-	unsigned long best_rate_error = rate;
-	u16 pdiv_min;
-	u16 pdiv_max;
-	u16 pdiv_best;
-	u16 pdiv_now;
+अटल अचिन्हित दीर्घ cdce925_clk_best_parent_rate(
+	काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate)
+अणु
+	काष्ठा clk *pll = clk_get_parent(hw->clk);
+	काष्ठा clk *root = clk_get_parent(pll);
+	अचिन्हित दीर्घ root_rate = clk_get_rate(root);
+	अचिन्हित दीर्घ best_rate_error = rate;
+	u16 pभाग_min;
+	u16 pभाग_max;
+	u16 pभाग_best;
+	u16 pभाग_now;
 
-	if (root_rate % rate == 0)
-		return root_rate; /* Don't need the PLL, use bypass */
+	अगर (root_rate % rate == 0)
+		वापस root_rate; /* Don't need the PLL, use bypass */
 
-	pdiv_min = (u16)max(1ul, DIV_ROUND_UP(CDCE925_PLL_FREQUENCY_MIN, rate));
-	pdiv_max = (u16)min(127ul, CDCE925_PLL_FREQUENCY_MAX / rate);
+	pभाग_min = (u16)max(1ul, DIV_ROUND_UP(CDCE925_PLL_FREQUENCY_MIN, rate));
+	pभाग_max = (u16)min(127ul, CDCE925_PLL_FREQUENCY_MAX / rate);
 
-	if (pdiv_min > pdiv_max)
-		return 0; /* No can do? */
+	अगर (pभाग_min > pभाग_max)
+		वापस 0; /* No can करो? */
 
-	pdiv_best = pdiv_min;
-	for (pdiv_now = pdiv_min; pdiv_now < pdiv_max; ++pdiv_now) {
-		unsigned long target_rate = rate * pdiv_now;
-		long pll_rate = clk_round_rate(pll, target_rate);
-		unsigned long actual_rate;
-		unsigned long rate_error;
+	pभाग_best = pभाग_min;
+	क्रम (pभाग_now = pभाग_min; pभाग_now < pभाग_max; ++pभाग_now) अणु
+		अचिन्हित दीर्घ target_rate = rate * pभाग_now;
+		दीर्घ pll_rate = clk_round_rate(pll, target_rate);
+		अचिन्हित दीर्घ actual_rate;
+		अचिन्हित दीर्घ rate_error;
 
-		if (pll_rate <= 0)
-			continue;
-		actual_rate = pll_rate / pdiv_now;
-		rate_error = abs((long)actual_rate - (long)rate);
-		if (rate_error < best_rate_error) {
-			pdiv_best = pdiv_now;
+		अगर (pll_rate <= 0)
+			जारी;
+		actual_rate = pll_rate / pभाग_now;
+		rate_error = असल((दीर्घ)actual_rate - (दीर्घ)rate);
+		अगर (rate_error < best_rate_error) अणु
+			pभाग_best = pभाग_now;
 			best_rate_error = rate_error;
-		}
+		पूर्ण
 		/* TODO: Consider PLL frequency based on smaller n/m values
-		 * and pick the better one if the error is equal */
-	}
+		 * and pick the better one अगर the error is equal */
+	पूर्ण
 
-	return rate * pdiv_best;
-}
+	वापस rate * pभाग_best;
+पूर्ण
 
-static long cdce925_clk_round_rate(struct clk_hw *hw, unsigned long rate,
-		unsigned long *parent_rate)
-{
-	unsigned long l_parent_rate = *parent_rate;
-	u16 divider = cdce925_calc_divider(rate, l_parent_rate);
+अटल दीर्घ cdce925_clk_round_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
+		अचिन्हित दीर्घ *parent_rate)
+अणु
+	अचिन्हित दीर्घ l_parent_rate = *parent_rate;
+	u16 भागider = cdce925_calc_भागider(rate, l_parent_rate);
 
-	if (l_parent_rate / divider != rate) {
+	अगर (l_parent_rate / भागider != rate) अणु
 		l_parent_rate = cdce925_clk_best_parent_rate(hw, rate);
-		divider = cdce925_calc_divider(rate, l_parent_rate);
+		भागider = cdce925_calc_भागider(rate, l_parent_rate);
 		*parent_rate = l_parent_rate;
-	}
+	पूर्ण
 
-	if (divider)
-		return (long)(l_parent_rate / divider);
-	return 0;
-}
+	अगर (भागider)
+		वापस (दीर्घ)(l_parent_rate / भागider);
+	वापस 0;
+पूर्ण
 
-static int cdce925_clk_set_rate(struct clk_hw *hw, unsigned long rate,
-		unsigned long parent_rate)
-{
-	struct clk_cdce925_output *data = to_clk_cdce925_output(hw);
+अटल पूर्णांक cdce925_clk_set_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
+		अचिन्हित दीर्घ parent_rate)
+अणु
+	काष्ठा clk_cdce925_output *data = to_clk_cdce925_output(hw);
 
-	data->pdiv = cdce925_calc_divider(rate, parent_rate);
+	data->pभाग = cdce925_calc_भागider(rate, parent_rate);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct clk_ops cdce925_clk_ops = {
+अटल स्थिर काष्ठा clk_ops cdce925_clk_ops = अणु
 	.prepare = cdce925_clk_prepare,
 	.unprepare = cdce925_clk_unprepare,
 	.recalc_rate = cdce925_clk_recalc_rate,
 	.round_rate = cdce925_clk_round_rate,
 	.set_rate = cdce925_clk_set_rate,
-};
+पूर्ण;
 
 
-static u16 cdce925_y1_calc_divider(unsigned long rate,
-		unsigned long parent_rate)
-{
-	unsigned long divider;
+अटल u16 cdce925_y1_calc_भागider(अचिन्हित दीर्घ rate,
+		अचिन्हित दीर्घ parent_rate)
+अणु
+	अचिन्हित दीर्घ भागider;
 
-	if (!rate)
-		return 0;
-	if (rate >= parent_rate)
-		return 1;
+	अगर (!rate)
+		वापस 0;
+	अगर (rate >= parent_rate)
+		वापस 1;
 
-	divider = DIV_ROUND_CLOSEST(parent_rate, rate);
-	if (divider > 0x3FF) /* Y1 has 10-bit divider */
-		divider = 0x3FF;
+	भागider = DIV_ROUND_CLOSEST(parent_rate, rate);
+	अगर (भागider > 0x3FF) /* Y1 has 10-bit भागider */
+		भागider = 0x3FF;
 
-	return (u16)divider;
-}
+	वापस (u16)भागider;
+पूर्ण
 
-static long cdce925_clk_y1_round_rate(struct clk_hw *hw, unsigned long rate,
-		unsigned long *parent_rate)
-{
-	unsigned long l_parent_rate = *parent_rate;
-	u16 divider = cdce925_y1_calc_divider(rate, l_parent_rate);
+अटल दीर्घ cdce925_clk_y1_round_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
+		अचिन्हित दीर्घ *parent_rate)
+अणु
+	अचिन्हित दीर्घ l_parent_rate = *parent_rate;
+	u16 भागider = cdce925_y1_calc_भागider(rate, l_parent_rate);
 
-	if (divider)
-		return (long)(l_parent_rate / divider);
-	return 0;
-}
+	अगर (भागider)
+		वापस (दीर्घ)(l_parent_rate / भागider);
+	वापस 0;
+पूर्ण
 
-static int cdce925_clk_y1_set_rate(struct clk_hw *hw, unsigned long rate,
-		unsigned long parent_rate)
-{
-	struct clk_cdce925_output *data = to_clk_cdce925_output(hw);
+अटल पूर्णांक cdce925_clk_y1_set_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
+		अचिन्हित दीर्घ parent_rate)
+अणु
+	काष्ठा clk_cdce925_output *data = to_clk_cdce925_output(hw);
 
-	data->pdiv = cdce925_y1_calc_divider(rate, parent_rate);
+	data->pभाग = cdce925_y1_calc_भागider(rate, parent_rate);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct clk_ops cdce925_clk_y1_ops = {
+अटल स्थिर काष्ठा clk_ops cdce925_clk_y1_ops = अणु
 	.prepare = cdce925_clk_prepare,
 	.unprepare = cdce925_clk_unprepare,
 	.recalc_rate = cdce925_clk_recalc_rate,
 	.round_rate = cdce925_clk_y1_round_rate,
 	.set_rate = cdce925_clk_y1_set_rate,
-};
+पूर्ण;
 
-#define CDCE925_I2C_COMMAND_BLOCK_TRANSFER	0x00
-#define CDCE925_I2C_COMMAND_BYTE_TRANSFER	0x80
+#घोषणा CDCE925_I2C_COMMAND_BLOCK_TRANSFER	0x00
+#घोषणा CDCE925_I2C_COMMAND_BYTE_TRANSFER	0x80
 
-static int cdce925_regmap_i2c_write(
-	void *context, const void *data, size_t count)
-{
-	struct device *dev = context;
-	struct i2c_client *i2c = to_i2c_client(dev);
-	int ret;
+अटल पूर्णांक cdce925_regmap_i2c_ग_लिखो(
+	व्योम *context, स्थिर व्योम *data, माप_प्रकार count)
+अणु
+	काष्ठा device *dev = context;
+	काष्ठा i2c_client *i2c = to_i2c_client(dev);
+	पूर्णांक ret;
 	u8 reg_data[2];
 
-	if (count != 2)
-		return -ENOTSUPP;
+	अगर (count != 2)
+		वापस -ENOTSUPP;
 
 	/* First byte is command code */
 	reg_data[0] = CDCE925_I2C_COMMAND_BYTE_TRANSFER | ((u8 *)data)[0];
@@ -539,39 +540,39 @@ static int cdce925_regmap_i2c_write(
 			reg_data[0], reg_data[1]);
 
 	ret = i2c_master_send(i2c, reg_data, count);
-	if (likely(ret == count))
-		return 0;
-	else if (ret < 0)
-		return ret;
-	else
-		return -EIO;
-}
+	अगर (likely(ret == count))
+		वापस 0;
+	अन्यथा अगर (ret < 0)
+		वापस ret;
+	अन्यथा
+		वापस -EIO;
+पूर्ण
 
-static int cdce925_regmap_i2c_read(void *context,
-	   const void *reg, size_t reg_size, void *val, size_t val_size)
-{
-	struct device *dev = context;
-	struct i2c_client *i2c = to_i2c_client(dev);
-	struct i2c_msg xfer[2];
-	int ret;
+अटल पूर्णांक cdce925_regmap_i2c_पढ़ो(व्योम *context,
+	   स्थिर व्योम *reg, माप_प्रकार reg_size, व्योम *val, माप_प्रकार val_size)
+अणु
+	काष्ठा device *dev = context;
+	काष्ठा i2c_client *i2c = to_i2c_client(dev);
+	काष्ठा i2c_msg xfer[2];
+	पूर्णांक ret;
 	u8 reg_data[2];
 
-	if (reg_size != 1)
-		return -ENOTSUPP;
+	अगर (reg_size != 1)
+		वापस -ENOTSUPP;
 
 	xfer[0].addr = i2c->addr;
 	xfer[0].flags = 0;
 	xfer[0].buf = reg_data;
-	if (val_size == 1) {
+	अगर (val_size == 1) अणु
 		reg_data[0] =
 			CDCE925_I2C_COMMAND_BYTE_TRANSFER | ((u8 *)reg)[0];
 		xfer[0].len = 1;
-	} else {
+	पूर्ण अन्यथा अणु
 		reg_data[0] =
 			CDCE925_I2C_COMMAND_BLOCK_TRANSFER | ((u8 *)reg)[0];
 		reg_data[1] = val_size;
 		xfer[0].len = 2;
-	}
+	पूर्ण
 
 	xfer[1].addr = i2c->addr;
 	xfer[1].flags = I2C_M_RD;
@@ -579,121 +580,121 @@ static int cdce925_regmap_i2c_read(void *context,
 	xfer[1].buf = val;
 
 	ret = i2c_transfer(i2c->adapter, xfer, 2);
-	if (likely(ret == 2)) {
+	अगर (likely(ret == 2)) अणु
 		dev_dbg(&i2c->dev, "%s(%zu, %zu) %#x %#x\n", __func__,
 				reg_size, val_size, reg_data[0], *((u8 *)val));
-		return 0;
-	} else if (ret < 0)
-		return ret;
-	else
-		return -EIO;
-}
+		वापस 0;
+	पूर्ण अन्यथा अगर (ret < 0)
+		वापस ret;
+	अन्यथा
+		वापस -EIO;
+पूर्ण
 
-static struct clk_hw *
-of_clk_cdce925_get(struct of_phandle_args *clkspec, void *_data)
-{
-	struct clk_cdce925_chip *data = _data;
-	unsigned int idx = clkspec->args[0];
+अटल काष्ठा clk_hw *
+of_clk_cdce925_get(काष्ठा of_phandle_args *clkspec, व्योम *_data)
+अणु
+	काष्ठा clk_cdce925_chip *data = _data;
+	अचिन्हित पूर्णांक idx = clkspec->args[0];
 
-	if (idx >= ARRAY_SIZE(data->clk)) {
+	अगर (idx >= ARRAY_SIZE(data->clk)) अणु
 		pr_err("%s: invalid index %u\n", __func__, idx);
-		return ERR_PTR(-EINVAL);
-	}
+		वापस ERR_PTR(-EINVAL);
+	पूर्ण
 
-	return &data->clk[idx].hw;
-}
+	वापस &data->clk[idx].hw;
+पूर्ण
 
-static void cdce925_regulator_disable(void *regulator)
-{
+अटल व्योम cdce925_regulator_disable(व्योम *regulator)
+अणु
 	regulator_disable(regulator);
-}
+पूर्ण
 
-static int cdce925_regulator_enable(struct device *dev, const char *name)
-{
-	struct regulator *regulator;
-	int err;
+अटल पूर्णांक cdce925_regulator_enable(काष्ठा device *dev, स्थिर अक्षर *name)
+अणु
+	काष्ठा regulator *regulator;
+	पूर्णांक err;
 
 	regulator = devm_regulator_get(dev, name);
-	if (IS_ERR(regulator))
-		return PTR_ERR(regulator);
+	अगर (IS_ERR(regulator))
+		वापस PTR_ERR(regulator);
 
 	err = regulator_enable(regulator);
-	if (err) {
+	अगर (err) अणु
 		dev_err(dev, "Failed to enable %s: %d\n", name, err);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	return devm_add_action_or_reset(dev, cdce925_regulator_disable,
+	वापस devm_add_action_or_reset(dev, cdce925_regulator_disable,
 					regulator);
-}
+पूर्ण
 
-/* The CDCE925 uses a funky way to read/write registers. Bulk mode is
+/* The CDCE925 uses a funky way to पढ़ो/ग_लिखो रेजिस्टरs. Bulk mode is
  * just weird, so just use the single byte mode exclusively. */
-static struct regmap_bus regmap_cdce925_bus = {
-	.write = cdce925_regmap_i2c_write,
-	.read = cdce925_regmap_i2c_read,
-};
+अटल काष्ठा regmap_bus regmap_cdce925_bus = अणु
+	.ग_लिखो = cdce925_regmap_i2c_ग_लिखो,
+	.पढ़ो = cdce925_regmap_i2c_पढ़ो,
+पूर्ण;
 
-static int cdce925_probe(struct i2c_client *client,
-		const struct i2c_device_id *id)
-{
-	struct clk_cdce925_chip *data;
-	struct device_node *node = client->dev.of_node;
-	const char *parent_name;
-	const char *pll_clk_name[MAX_NUMBER_OF_PLLS] = {NULL,};
-	struct clk_init_data init;
+अटल पूर्णांक cdce925_probe(काष्ठा i2c_client *client,
+		स्थिर काष्ठा i2c_device_id *id)
+अणु
+	काष्ठा clk_cdce925_chip *data;
+	काष्ठा device_node *node = client->dev.of_node;
+	स्थिर अक्षर *parent_name;
+	स्थिर अक्षर *pll_clk_name[MAX_NUMBER_OF_PLLS] = अणुशून्य,पूर्ण;
+	काष्ठा clk_init_data init;
 	u32 value;
-	int i;
-	int err;
-	struct device_node *np_output;
-	char child_name[6];
-	struct regmap_config config = {
+	पूर्णांक i;
+	पूर्णांक err;
+	काष्ठा device_node *np_output;
+	अक्षर child_name[6];
+	काष्ठा regmap_config config = अणु
 		.name = "configuration0",
 		.reg_bits = 8,
 		.val_bits = 8,
 		.cache_type = REGCACHE_RBTREE,
-	};
+	पूर्ण;
 
 	dev_dbg(&client->dev, "%s\n", __func__);
 
 	err = cdce925_regulator_enable(&client->dev, "vdd");
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	err = cdce925_regulator_enable(&client->dev, "vddout");
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	data = devm_kzalloc(&client->dev, sizeof(*data), GFP_KERNEL);
-	if (!data)
-		return -ENOMEM;
+	data = devm_kzalloc(&client->dev, माप(*data), GFP_KERNEL);
+	अगर (!data)
+		वापस -ENOMEM;
 
 	data->i2c_client = client;
 	data->chip_info = &clk_cdce925_chip_info_tbl[id->driver_data];
-	config.max_register = CDCE925_OFFSET_PLL +
+	config.max_रेजिस्टर = CDCE925_OFFSET_PLL +
 		data->chip_info->num_plls * 0x10 - 1;
 	data->regmap = devm_regmap_init(&client->dev, &regmap_cdce925_bus,
 			&client->dev, &config);
-	if (IS_ERR(data->regmap)) {
+	अगर (IS_ERR(data->regmap)) अणु
 		dev_err(&client->dev, "failed to allocate register map\n");
-		return PTR_ERR(data->regmap);
-	}
+		वापस PTR_ERR(data->regmap);
+	पूर्ण
 	i2c_set_clientdata(client, data);
 
 	parent_name = of_clk_get_parent_name(node, 0);
-	if (!parent_name) {
+	अगर (!parent_name) अणु
 		dev_err(&client->dev, "missing parent clock\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 	dev_dbg(&client->dev, "parent is: %s\n", parent_name);
 
-	if (of_property_read_u32(node, "xtal-load-pf", &value) == 0)
-		regmap_write(data->regmap,
+	अगर (of_property_पढ़ो_u32(node, "xtal-load-pf", &value) == 0)
+		regmap_ग_लिखो(data->regmap,
 			CDCE925_REG_XCSEL, (value << 3) & 0xF8);
 	/* PWDN bit */
 	regmap_update_bits(data->regmap, CDCE925_REG_GLOBAL1, BIT(4), 0);
 
-	/* Set input source for Y1 to be the XTAL */
+	/* Set input source क्रम Y1 to be the XTAL */
 	regmap_update_bits(data->regmap, 0x02, BIT(7), 0);
 
 	init.ops = &cdce925_pll_ops;
@@ -701,34 +702,34 @@ static int cdce925_probe(struct i2c_client *client,
 	init.parent_names = &parent_name;
 	init.num_parents = 1;
 
-	/* Register PLL clocks */
-	for (i = 0; i < data->chip_info->num_plls; ++i) {
-		pll_clk_name[i] = kasprintf(GFP_KERNEL, "%pOFn.pll%d",
+	/* Register PLL घड़ीs */
+	क्रम (i = 0; i < data->chip_info->num_plls; ++i) अणु
+		pll_clk_name[i] = kaप्र_लिखो(GFP_KERNEL, "%pOFn.pll%d",
 			client->dev.of_node, i);
 		init.name = pll_clk_name[i];
 		data->pll[i].chip = data;
 		data->pll[i].hw.init = &init;
 		data->pll[i].index = i;
-		err = devm_clk_hw_register(&client->dev, &data->pll[i].hw);
-		if (err) {
+		err = devm_clk_hw_रेजिस्टर(&client->dev, &data->pll[i].hw);
+		अगर (err) अणु
 			dev_err(&client->dev, "Failed register PLL %d\n", i);
-			goto error;
-		}
-		sprintf(child_name, "PLL%d", i+1);
+			जाओ error;
+		पूर्ण
+		प्र_लिखो(child_name, "PLL%d", i+1);
 		np_output = of_get_child_by_name(node, child_name);
-		if (!np_output)
-			continue;
-		if (!of_property_read_u32(np_output,
-			"clock-frequency", &value)) {
+		अगर (!np_output)
+			जारी;
+		अगर (!of_property_पढ़ो_u32(np_output,
+			"clock-frequency", &value)) अणु
 			err = clk_set_rate(data->pll[i].hw.clk, value);
-			if (err)
+			अगर (err)
 				dev_err(&client->dev,
 					"unable to set PLL frequency %ud\n",
 					value);
-		}
-		if (!of_property_read_u32(np_output,
-			"spread-spectrum", &value)) {
-			u8 flag = of_property_read_bool(np_output,
+		पूर्ण
+		अगर (!of_property_पढ़ो_u32(np_output,
+			"spread-spectrum", &value)) अणु
+			u8 flag = of_property_पढ़ो_bool(np_output,
 				"spread-spectrum-center") ? 0x80 : 0x00;
 			regmap_update_bits(data->regmap,
 				0x16 + (i*CDCE925_OFFSET_PLL),
@@ -736,110 +737,110 @@ static int cdce925_probe(struct i2c_client *client,
 			regmap_update_bits(data->regmap,
 				0x12 + (i*CDCE925_OFFSET_PLL),
 				0x07, value & 0x07);
-		}
+		पूर्ण
 		of_node_put(np_output);
-	}
+	पूर्ण
 
-	/* Register output clock Y1 */
+	/* Register output घड़ी Y1 */
 	init.ops = &cdce925_clk_y1_ops;
 	init.flags = 0;
 	init.num_parents = 1;
 	init.parent_names = &parent_name; /* Mux Y1 to input */
-	init.name = kasprintf(GFP_KERNEL, "%pOFn.Y1", client->dev.of_node);
+	init.name = kaप्र_लिखो(GFP_KERNEL, "%pOFn.Y1", client->dev.of_node);
 	data->clk[0].chip = data;
 	data->clk[0].hw.init = &init;
 	data->clk[0].index = 0;
-	data->clk[0].pdiv = 1;
-	err = devm_clk_hw_register(&client->dev, &data->clk[0].hw);
-	kfree(init.name); /* clock framework made a copy of the name */
-	if (err) {
+	data->clk[0].pभाग = 1;
+	err = devm_clk_hw_रेजिस्टर(&client->dev, &data->clk[0].hw);
+	kमुक्त(init.name); /* घड़ी framework made a copy of the name */
+	अगर (err) अणु
 		dev_err(&client->dev, "clock registration Y1 failed\n");
-		goto error;
-	}
+		जाओ error;
+	पूर्ण
 
-	/* Register output clocks Y2 .. Y5*/
+	/* Register output घड़ीs Y2 .. Y5*/
 	init.ops = &cdce925_clk_ops;
 	init.flags = CLK_SET_RATE_PARENT;
 	init.num_parents = 1;
-	for (i = 1; i < data->chip_info->num_outputs; ++i) {
-		init.name = kasprintf(GFP_KERNEL, "%pOFn.Y%d",
+	क्रम (i = 1; i < data->chip_info->num_outमाला_दो; ++i) अणु
+		init.name = kaप्र_लिखो(GFP_KERNEL, "%pOFn.Y%d",
 			client->dev.of_node, i+1);
 		data->clk[i].chip = data;
 		data->clk[i].hw.init = &init;
 		data->clk[i].index = i;
-		data->clk[i].pdiv = 1;
-		switch (i) {
-		case 1:
-		case 2:
+		data->clk[i].pभाग = 1;
+		चयन (i) अणु
+		हाल 1:
+		हाल 2:
 			/* Mux Y2/3 to PLL1 */
 			init.parent_names = &pll_clk_name[0];
-			break;
-		case 3:
-		case 4:
+			अवरोध;
+		हाल 3:
+		हाल 4:
 			/* Mux Y4/5 to PLL2 */
 			init.parent_names = &pll_clk_name[1];
-			break;
-		case 5:
-		case 6:
+			अवरोध;
+		हाल 5:
+		हाल 6:
 			/* Mux Y6/7 to PLL3 */
 			init.parent_names = &pll_clk_name[2];
-			break;
-		case 7:
-		case 8:
+			अवरोध;
+		हाल 7:
+		हाल 8:
 			/* Mux Y8/9 to PLL4 */
 			init.parent_names = &pll_clk_name[3];
-			break;
-		}
-		err = devm_clk_hw_register(&client->dev, &data->clk[i].hw);
-		kfree(init.name); /* clock framework made a copy of the name */
-		if (err) {
+			अवरोध;
+		पूर्ण
+		err = devm_clk_hw_रेजिस्टर(&client->dev, &data->clk[i].hw);
+		kमुक्त(init.name); /* घड़ी framework made a copy of the name */
+		अगर (err) अणु
 			dev_err(&client->dev, "clock registration failed\n");
-			goto error;
-		}
-	}
+			जाओ error;
+		पूर्ण
+	पूर्ण
 
-	/* Register the output clocks */
+	/* Register the output घड़ीs */
 	err = of_clk_add_hw_provider(client->dev.of_node, of_clk_cdce925_get,
 				  data);
-	if (err)
+	अगर (err)
 		dev_err(&client->dev, "unable to add OF clock provider\n");
 
 	err = 0;
 
 error:
-	for (i = 0; i < data->chip_info->num_plls; ++i)
-		/* clock framework made a copy of the name */
-		kfree(pll_clk_name[i]);
+	क्रम (i = 0; i < data->chip_info->num_plls; ++i)
+		/* घड़ी framework made a copy of the name */
+		kमुक्त(pll_clk_name[i]);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static const struct i2c_device_id cdce925_id[] = {
-	{ "cdce913", CDCE913 },
-	{ "cdce925", CDCE925 },
-	{ "cdce937", CDCE937 },
-	{ "cdce949", CDCE949 },
-	{ }
-};
+अटल स्थिर काष्ठा i2c_device_id cdce925_id[] = अणु
+	अणु "cdce913", CDCE913 पूर्ण,
+	अणु "cdce925", CDCE925 पूर्ण,
+	अणु "cdce937", CDCE937 पूर्ण,
+	अणु "cdce949", CDCE949 पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(i2c, cdce925_id);
 
-static const struct of_device_id clk_cdce925_of_match[] = {
-	{ .compatible = "ti,cdce913" },
-	{ .compatible = "ti,cdce925" },
-	{ .compatible = "ti,cdce937" },
-	{ .compatible = "ti,cdce949" },
-	{ },
-};
+अटल स्थिर काष्ठा of_device_id clk_cdce925_of_match[] = अणु
+	अणु .compatible = "ti,cdce913" पूर्ण,
+	अणु .compatible = "ti,cdce925" पूर्ण,
+	अणु .compatible = "ti,cdce937" पूर्ण,
+	अणु .compatible = "ti,cdce949" पूर्ण,
+	अणु पूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, clk_cdce925_of_match);
 
-static struct i2c_driver cdce925_driver = {
-	.driver = {
+अटल काष्ठा i2c_driver cdce925_driver = अणु
+	.driver = अणु
 		.name = "cdce925",
 		.of_match_table = of_match_ptr(clk_cdce925_of_match),
-	},
+	पूर्ण,
 	.probe		= cdce925_probe,
 	.id_table	= cdce925_id,
-};
+पूर्ण;
 module_i2c_driver(cdce925_driver);
 
 MODULE_AUTHOR("Mike Looijmans <mike.looijmans@topic.nl>");

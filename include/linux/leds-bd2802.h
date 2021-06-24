@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * leds-bd2802.h - RGB LED Driver
  *
@@ -7,15 +8,15 @@
  *
  * Datasheet: http://www.rohm.com/products/databook/driver/pdf/bd2802gu-e.pdf
  */
-#ifndef _LEDS_BD2802_H_
-#define _LEDS_BD2802_H_
+#अगर_अघोषित _LEDS_BD2802_H_
+#घोषणा _LEDS_BD2802_H_
 
-struct bd2802_led_platform_data{
-	u8	rgb_time;
-};
+काष्ठा bd2802_led_platक्रमm_dataअणु
+	u8	rgb_समय;
+पूर्ण;
 
-#define RGB_TIME(slopedown, slopeup, waveform) \
-	((slopedown) << 6 | (slopeup) << 4 | (waveform))
+#घोषणा RGB_TIME(slopeकरोwn, slopeup, waveक्रमm) \
+	((slopeकरोwn) << 6 | (slopeup) << 4 | (waveक्रमm))
 
-#endif /* _LEDS_BD2802_H_ */
+#पूर्ण_अगर /* _LEDS_BD2802_H_ */
 

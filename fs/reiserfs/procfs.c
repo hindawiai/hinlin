@@ -1,3 +1,4 @@
+<शैली गुरु>
 /* -*- linux-c -*- */
 
 /* fs/reiserfs/procfs.c */
@@ -6,73 +7,73 @@
  * Copyright 2000 by Hans Reiser, licensing governed by reiserfs/README
  */
 
-/* proc info support a la one created by Sizif@Botik.RU for PGC */
+/* proc info support a la one created by Sizअगर@Botik.RU क्रम PGC */
 
-#include <linux/module.h>
-#include <linux/time.h>
-#include <linux/seq_file.h>
-#include <linux/uaccess.h>
-#include "reiserfs.h"
-#include <linux/init.h>
-#include <linux/proc_fs.h>
-#include <linux/blkdev.h>
+#समावेश <linux/module.h>
+#समावेश <linux/समय.स>
+#समावेश <linux/seq_file.h>
+#समावेश <linux/uaccess.h>
+#समावेश "reiserfs.h"
+#समावेश <linux/init.h>
+#समावेश <linux/proc_fs.h>
+#समावेश <linux/blkdev.h>
 
 /*
  * LOCKING:
  *
- * These guys are evicted from procfs as the very first step in ->kill_sb().
+ * These guys are evicted from procfs as the very first step in ->समाप्त_sb().
  *
  */
 
-static int show_version(struct seq_file *m, void *unused)
-{
-	struct super_block *sb = m->private;
-	char *format;
+अटल पूर्णांक show_version(काष्ठा seq_file *m, व्योम *unused)
+अणु
+	काष्ठा super_block *sb = m->निजी;
+	अक्षर *क्रमmat;
 
-	if (REISERFS_SB(sb)->s_properties & (1 << REISERFS_3_6)) {
-		format = "3.6";
-	} else if (REISERFS_SB(sb)->s_properties & (1 << REISERFS_3_5)) {
-		format = "3.5";
-	} else {
-		format = "unknown";
-	}
+	अगर (REISERFS_SB(sb)->s_properties & (1 << REISERFS_3_6)) अणु
+		क्रमmat = "3.6";
+	पूर्ण अन्यथा अगर (REISERFS_SB(sb)->s_properties & (1 << REISERFS_3_5)) अणु
+		क्रमmat = "3.5";
+	पूर्ण अन्यथा अणु
+		क्रमmat = "unknown";
+	पूर्ण
 
-	seq_printf(m, "%s format\twith checks %s\n", format,
-#if defined( CONFIG_REISERFS_CHECK )
+	seq_म_लिखो(m, "%s format\twith checks %s\n", क्रमmat,
+#अगर defined( CONFIG_REISERFS_CHECK )
 		   "on"
-#else
+#अन्यथा
 		   "off"
-#endif
+#पूर्ण_अगर
 	    );
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#define SF( x ) ( r -> x )
-#define SFP( x ) SF( s_proc_info_data.x )
-#define SFPL( x ) SFP( x[ level ] )
-#define SFPF( x ) SFP( scan_bitmap.x )
-#define SFPJ( x ) SFP( journal.x )
+#घोषणा SF( x ) ( r -> x )
+#घोषणा SFP( x ) SF( s_proc_info_data.x )
+#घोषणा SFPL( x ) SFP( x[ level ] )
+#घोषणा SFPF( x ) SFP( scan_biपंचांगap.x )
+#घोषणा SFPJ( x ) SFP( journal.x )
 
-#define D2C( x ) le16_to_cpu( x )
-#define D4C( x ) le32_to_cpu( x )
-#define DF( x ) D2C( rs -> s_v1.x )
-#define DFL( x ) D4C( rs -> s_v1.x )
+#घोषणा D2C( x ) le16_to_cpu( x )
+#घोषणा D4C( x ) le32_to_cpu( x )
+#घोषणा DF( x ) D2C( rs -> s_v1.x )
+#घोषणा DFL( x ) D4C( rs -> s_v1.x )
 
-#define objectid_map( s, rs ) (old_format_only (s) ?				\
-                         (__le32 *)((struct reiserfs_super_block_v1 *)rs + 1) :	\
+#घोषणा objectid_map( s, rs ) (old_क्रमmat_only (s) ?				\
+                         (__le32 *)((काष्ठा reiserfs_super_block_v1 *)rs + 1) :	\
 			 (__le32 *)(rs + 1))
-#define MAP( i ) D4C( objectid_map( sb, rs )[ i ] )
+#घोषणा MAP( i ) D4C( objectid_map( sb, rs )[ i ] )
 
-#define DJF( x ) le32_to_cpu( rs -> x )
-#define DJP( x ) le32_to_cpu( jp -> x )
-#define JF( x ) ( r -> s_journal -> x )
+#घोषणा DJF( x ) le32_to_cpu( rs -> x )
+#घोषणा DJP( x ) le32_to_cpu( jp -> x )
+#घोषणा JF( x ) ( r -> s_journal -> x )
 
-static int show_super(struct seq_file *m, void *unused)
-{
-	struct super_block *sb = m->private;
-	struct reiserfs_sb_info *r = REISERFS_SB(sb);
+अटल पूर्णांक show_super(काष्ठा seq_file *m, व्योम *unused)
+अणु
+	काष्ठा super_block *sb = m->निजी;
+	काष्ठा reiserfs_sb_info *r = REISERFS_SB(sb);
 
-	seq_printf(m, "state: \t%s\n"
+	seq_म_लिखो(m, "state: \t%s\n"
 		   "mount options: \t%s%s%s%s%s%s%s%s%s%s%s\n"
 		   "gen. counter: \t%i\n"
 		   "s_disk_reads: \t%i\n"
@@ -114,29 +115,29 @@ static int show_super(struct seq_file *m, void *unused)
 		   "SMALL_TAILS " : "NO_TAILS ",
 		   replay_only(sb) ? "REPLAY_ONLY " : "",
 		   convert_reiserfs(sb) ? "CONV " : "",
-		   atomic_read(&r->s_generation_counter),
-		   SF(s_disk_reads), SF(s_disk_writes), SF(s_fix_nodes),
-		   SF(s_do_balance), SF(s_unneeded_left_neighbor),
-		   SF(s_good_search_by_key_reada), SF(s_bmaps),
+		   atomic_पढ़ो(&r->s_generation_counter),
+		   SF(s_disk_पढ़ोs), SF(s_disk_ग_लिखोs), SF(s_fix_nodes),
+		   SF(s_करो_balance), SF(s_unneeded_left_neighbor),
+		   SF(s_good_search_by_key_पढ़ोa), SF(s_bmaps),
 		   SF(s_bmaps_without_search), SF(s_direct2indirect),
-		   SF(s_indirect2direct), SFP(max_hash_collisions), SFP(breads),
-		   SFP(bread_miss), SFP(search_by_key),
+		   SF(s_indirect2direct), SFP(max_hash_collisions), SFP(bपढ़ोs),
+		   SFP(bपढ़ो_miss), SFP(search_by_key),
 		   SFP(search_by_key_fs_changed), SFP(search_by_key_restarted),
-		   SFP(insert_item_restarted), SFP(paste_into_item_restarted),
+		   SFP(insert_item_restarted), SFP(paste_पूर्णांकo_item_restarted),
 		   SFP(cut_from_item_restarted),
 		   SFP(delete_solid_item_restarted), SFP(delete_item_restarted),
 		   SFP(leaked_oid), SFP(leaves_removable));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int show_per_level(struct seq_file *m, void *unused)
-{
-	struct super_block *sb = m->private;
-	struct reiserfs_sb_info *r = REISERFS_SB(sb);
-	int level;
+अटल पूर्णांक show_per_level(काष्ठा seq_file *m, व्योम *unused)
+अणु
+	काष्ठा super_block *sb = m->निजी;
+	काष्ठा reiserfs_sb_info *r = REISERFS_SB(sb);
+	पूर्णांक level;
 
-	seq_printf(m, "level\t"
+	seq_म_लिखो(m, "level\t"
 		   "     balances"
 		   " [sbk:  reads"
 		   "   fs_changed"
@@ -151,8 +152,8 @@ static int show_per_level(struct seq_file *m, void *unused)
 		   "     get_neig"
 		   " get_neig_res" "  need_l_neig" "  need_r_neig" "\n");
 
-	for (level = 0; level < MAX_HEIGHT; ++level) {
-		seq_printf(m, "%i\t"
+	क्रम (level = 0; level < MAX_HEIGHT; ++level) अणु
+		seq_म_लिखो(m, "%i\t"
 			   " %12lu"
 			   " %12lu"
 			   " %12lu"
@@ -171,12 +172,12 @@ static int show_per_level(struct seq_file *m, void *unused)
 			   "\n",
 			   level,
 			   SFPL(balance_at),
-			   SFPL(sbk_read_at),
+			   SFPL(sbk_पढ़ो_at),
 			   SFPL(sbk_fs_changed),
 			   SFPL(sbk_restarted),
-			   SFPL(free_at),
+			   SFPL(मुक्त_at),
 			   SFPL(items_at),
-			   SFPL(can_node_be_removed),
+			   SFPL(can_node_be_हटाओd),
 			   SFPL(lnum),
 			   SFPL(rnum),
 			   SFPL(lbytes),
@@ -185,16 +186,16 @@ static int show_per_level(struct seq_file *m, void *unused)
 			   SFPL(get_neighbors_restart),
 			   SFPL(need_l_neighbor), SFPL(need_r_neighbor)
 		    );
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int show_bitmap(struct seq_file *m, void *unused)
-{
-	struct super_block *sb = m->private;
-	struct reiserfs_sb_info *r = REISERFS_SB(sb);
+अटल पूर्णांक show_biपंचांगap(काष्ठा seq_file *m, व्योम *unused)
+अणु
+	काष्ठा super_block *sb = m->निजी;
+	काष्ठा reiserfs_sb_info *r = REISERFS_SB(sb);
 
-	seq_printf(m, "free_block: %lu\n"
+	seq_म_लिखो(m, "free_block: %lu\n"
 		   "  scan_bitmap:"
 		   "          wait"
 		   "          bmap"
@@ -211,26 +212,26 @@ static int show_bitmap(struct seq_file *m, void *unused)
 		   " %14lu"
 		   " %14lu"
 		   "\n",
-		   SFP(free_block),
+		   SFP(मुक्त_block),
 		   SFPF(call),
-		   SFPF(wait),
+		   SFPF(रुको),
 		   SFPF(bmap),
 		   SFPF(retry),
 		   SFPF(stolen),
-		   SFPF(in_journal_hint), SFPF(in_journal_nohint));
+		   SFPF(in_journal_hपूर्णांक), SFPF(in_journal_nohपूर्णांक));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int show_on_disk_super(struct seq_file *m, void *unused)
-{
-	struct super_block *sb = m->private;
-	struct reiserfs_sb_info *sb_info = REISERFS_SB(sb);
-	struct reiserfs_super_block *rs = sb_info->s_rs;
-	int hash_code = DFL(s_hash_function_code);
+अटल पूर्णांक show_on_disk_super(काष्ठा seq_file *m, व्योम *unused)
+अणु
+	काष्ठा super_block *sb = m->निजी;
+	काष्ठा reiserfs_sb_info *sb_info = REISERFS_SB(sb);
+	काष्ठा reiserfs_super_block *rs = sb_info->s_rs;
+	पूर्णांक hash_code = DFL(s_hash_function_code);
 	__u32 flags = DJF(s_flags);
 
-	seq_printf(m, "block_count: \t%i\n"
+	seq_म_लिखो(m, "block_count: \t%i\n"
 		   "free_blocks: \t%i\n"
 		   "root_block: \t%i\n"
 		   "blocksize: \t%i\n"
@@ -246,7 +247,7 @@ static int show_on_disk_super(struct seq_file *m, void *unused)
 		   "flags: \t%x[%s]\n"
 		   "reserved_for_journal: \t%i\n",
 		   DFL(s_block_count),
-		   DFL(s_free_blocks),
+		   DFL(s_मुक्त_blocks),
 		   DFL(s_root_block),
 		   DF(s_blocksize),
 		   DF(s_oid_maxsize),
@@ -261,57 +262,57 @@ static int show_on_disk_super(struct seq_file *m, void *unused)
 		   DF(s_tree_height),
 		   DF(s_bmap_nr),
 		   DF(s_version), flags, (flags & reiserfs_attrs_cleared)
-		   ? "attrs_cleared" : "", DF(s_reserved_for_journal));
+		   ? "attrs_cleared" : "", DF(s_reserved_क्रम_journal));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int show_oidmap(struct seq_file *m, void *unused)
-{
-	struct super_block *sb = m->private;
-	struct reiserfs_sb_info *sb_info = REISERFS_SB(sb);
-	struct reiserfs_super_block *rs = sb_info->s_rs;
-	unsigned int mapsize = le16_to_cpu(rs->s_v1.s_oid_cursize);
-	unsigned long total_used = 0;
-	int i;
+अटल पूर्णांक show_oidmap(काष्ठा seq_file *m, व्योम *unused)
+अणु
+	काष्ठा super_block *sb = m->निजी;
+	काष्ठा reiserfs_sb_info *sb_info = REISERFS_SB(sb);
+	काष्ठा reiserfs_super_block *rs = sb_info->s_rs;
+	अचिन्हित पूर्णांक mapsize = le16_to_cpu(rs->s_v1.s_oid_cursize);
+	अचिन्हित दीर्घ total_used = 0;
+	पूर्णांक i;
 
-	for (i = 0; i < mapsize; ++i) {
+	क्रम (i = 0; i < mapsize; ++i) अणु
 		__u32 right;
 
 		right = (i == mapsize - 1) ? MAX_KEY_OBJECTID : MAP(i + 1);
-		seq_printf(m, "%s: [ %x .. %x )\n",
+		seq_म_लिखो(m, "%s: [ %x .. %x )\n",
 			   (i & 1) ? "free" : "used", MAP(i), right);
-		if (!(i & 1)) {
+		अगर (!(i & 1)) अणु
 			total_used += right - MAP(i);
-		}
-	}
-#if defined( REISERFS_USE_OIDMAPF )
-	if (sb_info->oidmap.use_file && (sb_info->oidmap.mapf != NULL)) {
+		पूर्ण
+	पूर्ण
+#अगर defined( REISERFS_USE_OIDMAPF )
+	अगर (sb_info->oidmap.use_file && (sb_info->oidmap.mapf != शून्य)) अणु
 		loff_t size = file_inode(sb_info->oidmap.mapf)->i_size;
-		total_used += size / sizeof(reiserfs_oidinterval_d_t);
-	}
-#endif
-	seq_printf(m, "total: \t%i [%i/%i] used: %lu [exact]\n",
+		total_used += size / माप(reiserfs_oidपूर्णांकerval_d_t);
+	पूर्ण
+#पूर्ण_अगर
+	seq_म_लिखो(m, "total: \t%i [%i/%i] used: %lu [exact]\n",
 		   mapsize,
 		   mapsize, le16_to_cpu(rs->s_v1.s_oid_maxsize), total_used);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static time64_t ktime_mono_to_real_seconds(time64_t mono)
-{
-	ktime_t kt = ktime_set(mono, NSEC_PER_SEC/2);
+अटल समय64_t kसमय_mono_to_real_seconds(समय64_t mono)
+अणु
+	kसमय_प्रकार kt = kसमय_set(mono, NSEC_PER_SEC/2);
 
-	return ktime_divns(ktime_mono_to_real(kt), NSEC_PER_SEC);
-}
+	वापस kसमय_भागns(kसमय_mono_to_real(kt), NSEC_PER_SEC);
+पूर्ण
 
-static int show_journal(struct seq_file *m, void *unused)
-{
-	struct super_block *sb = m->private;
-	struct reiserfs_sb_info *r = REISERFS_SB(sb);
-	struct reiserfs_super_block *rs = r->s_rs;
-	struct journal_params *jp = &rs->s_v1.s_journal;
+अटल पूर्णांक show_journal(काष्ठा seq_file *m, व्योम *unused)
+अणु
+	काष्ठा super_block *sb = m->निजी;
+	काष्ठा reiserfs_sb_info *r = REISERFS_SB(sb);
+	काष्ठा reiserfs_super_block *rs = r->s_rs;
+	काष्ठा journal_params *jp = &rs->s_v1.s_journal;
 
-	seq_printf(m,		/* on-disk fields */
+	seq_म_लिखो(m,		/* on-disk fields */
 		   "jp_journal_1st_block: \t%i\n"
 		   "jp_journal_dev: \t%pg[%x]\n"
 		   "jp_journal_size: \t%i\n"
@@ -369,122 +370,122 @@ static int show_journal(struct seq_file *m, void *unused)
 		   JF(j_start),
 		   JF(j_len),
 		   JF(j_len_alloc),
-		   atomic_read(&r->s_journal->j_wcount),
+		   atomic_पढ़ो(&r->s_journal->j_wcount),
 		   JF(j_bcount),
 		   JF(j_first_unflushed_offset),
 		   JF(j_last_flush_trans_id),
-		   ktime_mono_to_real_seconds(JF(j_trans_start_time)),
-		   JF(j_list_bitmap_index),
-		   JF(j_must_wait),
+		   kसमय_mono_to_real_seconds(JF(j_trans_start_समय)),
+		   JF(j_list_biपंचांगap_index),
+		   JF(j_must_रुको),
 		   JF(j_next_full_flush),
 		   JF(j_next_async_flush),
 		   JF(j_cnode_used),
-		   JF(j_cnode_free),
+		   JF(j_cnode_मुक्त),
 		   SFPJ(in_journal),
-		   SFPJ(in_journal_bitmap),
+		   SFPJ(in_journal_biपंचांगap),
 		   SFPJ(in_journal_reusable),
 		   SFPJ(lock_journal),
-		   SFPJ(lock_journal_wait),
+		   SFPJ(lock_journal_रुको),
 		   SFPJ(journal_being),
-		   SFPJ(journal_relock_writers),
+		   SFPJ(journal_relock_ग_लिखोrs),
 		   SFPJ(journal_relock_wcount),
 		   SFPJ(mark_dirty),
-		   SFPJ(mark_dirty_already),
+		   SFPJ(mark_dirty_alपढ़ोy),
 		   SFPJ(mark_dirty_notjournal),
 		   SFPJ(restore_prepared), SFPJ(prepare), SFPJ(prepare_retry)
 	    );
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct proc_dir_entry *proc_info_root = NULL;
-static const char proc_info_root_name[] = "fs/reiserfs";
+अटल काष्ठा proc_dir_entry *proc_info_root = शून्य;
+अटल स्थिर अक्षर proc_info_root_name[] = "fs/reiserfs";
 
-static void add_file(struct super_block *sb, char *name,
-		     int (*func) (struct seq_file *, void *))
-{
+अटल व्योम add_file(काष्ठा super_block *sb, अक्षर *name,
+		     पूर्णांक (*func) (काष्ठा seq_file *, व्योम *))
+अणु
 	proc_create_single_data(name, 0, REISERFS_SB(sb)->procdir, func, sb);
-}
+पूर्ण
 
-int reiserfs_proc_info_init(struct super_block *sb)
-{
-	char b[BDEVNAME_SIZE];
-	char *s;
+पूर्णांक reiserfs_proc_info_init(काष्ठा super_block *sb)
+अणु
+	अक्षर b[BDEVNAME_SIZE];
+	अक्षर *s;
 
 	/* Some block devices use /'s */
 	strlcpy(b, sb->s_id, BDEVNAME_SIZE);
-	s = strchr(b, '/');
-	if (s)
+	s = म_अक्षर(b, '/');
+	अगर (s)
 		*s = '!';
 
 	spin_lock_init(&__PINFO(sb).lock);
-	REISERFS_SB(sb)->procdir = proc_mkdir_data(b, 0, proc_info_root, sb);
-	if (REISERFS_SB(sb)->procdir) {
+	REISERFS_SB(sb)->procdir = proc_सूची_गढ़ो_data(b, 0, proc_info_root, sb);
+	अगर (REISERFS_SB(sb)->procdir) अणु
 		add_file(sb, "version", show_version);
 		add_file(sb, "super", show_super);
 		add_file(sb, "per-level", show_per_level);
-		add_file(sb, "bitmap", show_bitmap);
+		add_file(sb, "bitmap", show_biपंचांगap);
 		add_file(sb, "on-disk-super", show_on_disk_super);
 		add_file(sb, "oidmap", show_oidmap);
 		add_file(sb, "journal", show_journal);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 	reiserfs_warning(sb, "cannot create /proc/%s/%s",
 			 proc_info_root_name, b);
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-int reiserfs_proc_info_done(struct super_block *sb)
-{
-	struct proc_dir_entry *de = REISERFS_SB(sb)->procdir;
-	if (de) {
-		char b[BDEVNAME_SIZE];
-		char *s;
+पूर्णांक reiserfs_proc_info_करोne(काष्ठा super_block *sb)
+अणु
+	काष्ठा proc_dir_entry *de = REISERFS_SB(sb)->procdir;
+	अगर (de) अणु
+		अक्षर b[BDEVNAME_SIZE];
+		अक्षर *s;
 
 		/* Some block devices use /'s */
 		strlcpy(b, sb->s_id, BDEVNAME_SIZE);
-		s = strchr(b, '/');
-		if (s)
+		s = म_अक्षर(b, '/');
+		अगर (s)
 			*s = '!';
 
-		remove_proc_subtree(b, proc_info_root);
-		REISERFS_SB(sb)->procdir = NULL;
-	}
-	return 0;
-}
+		हटाओ_proc_subtree(b, proc_info_root);
+		REISERFS_SB(sb)->procdir = शून्य;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-int reiserfs_proc_info_global_init(void)
-{
-	if (proc_info_root == NULL) {
-		proc_info_root = proc_mkdir(proc_info_root_name, NULL);
-		if (!proc_info_root) {
-			reiserfs_warning(NULL, "cannot create /proc/%s",
+पूर्णांक reiserfs_proc_info_global_init(व्योम)
+अणु
+	अगर (proc_info_root == शून्य) अणु
+		proc_info_root = proc_सूची_गढ़ो(proc_info_root_name, शून्य);
+		अगर (!proc_info_root) अणु
+			reiserfs_warning(शून्य, "cannot create /proc/%s",
 					 proc_info_root_name);
-			return 1;
-		}
-	}
-	return 0;
-}
+			वापस 1;
+		पूर्ण
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-int reiserfs_proc_info_global_done(void)
-{
-	if (proc_info_root != NULL) {
-		proc_info_root = NULL;
-		remove_proc_entry(proc_info_root_name, NULL);
-	}
-	return 0;
-}
+पूर्णांक reiserfs_proc_info_global_करोne(व्योम)
+अणु
+	अगर (proc_info_root != शून्य) अणु
+		proc_info_root = शून्य;
+		हटाओ_proc_entry(proc_info_root_name, शून्य);
+	पूर्ण
+	वापस 0;
+पूर्ण
 /*
  * Revision 1.1.8.2  2001/07/15 17:08:42  god
  *  . use get_super() in procfs.c
- *  . remove remove_save_link() from reiserfs_do_truncate()
+ *  . हटाओ हटाओ_save_link() from reiserfs_करो_truncate()
  *
  * I accept terms and conditions stated in the Legal Agreement
- * (available at http://www.namesys.com/legalese.html)
+ * (available at http://www.namesys.com/legalese.hपंचांगl)
  *
  * Revision 1.1.8.1  2001/07/11 16:48:50  god
  * proc info support
  *
  * I accept terms and conditions stated in the Legal Agreement
- * (available at http://www.namesys.com/legalese.html)
+ * (available at http://www.namesys.com/legalese.hपंचांगl)
  *
  */

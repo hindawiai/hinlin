@@ -1,15 +1,16 @@
-// SPDX-License-Identifier: GPL-2.0
-#include "au8820.h"
-#include "au88x0.h"
-static const struct pci_device_id snd_vortex_ids[] = {
-	{PCI_VDEVICE(AUREAL, PCI_DEVICE_ID_AUREAL_VORTEX_1), 0,},
-	{0,}
-};
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश "au8820.h"
+#समावेश "au88x0.h"
+अटल स्थिर काष्ठा pci_device_id snd_vortex_ids[] = अणु
+	अणुPCI_VDEVICE(AUREAL, PCI_DEVICE_ID_AUREAL_VORTEX_1), 0,पूर्ण,
+	अणु0,पूर्ण
+पूर्ण;
 
-#include "au88x0_synth.c"
-#include "au88x0_core.c"
-#include "au88x0_pcm.c"
-#include "au88x0_mpu401.c"
-#include "au88x0_game.c"
-#include "au88x0_mixer.c"
-#include "au88x0.c"
+#समावेश "au88x0_synth.c"
+#समावेश "au88x0_core.c"
+#समावेश "au88x0_pcm.c"
+#समावेश "au88x0_mpu401.c"
+#समावेश "au88x0_game.c"
+#समावेश "au88x0_mixer.c"
+#समावेश "au88x0.c"

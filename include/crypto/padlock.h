@@ -1,24 +1,25 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
- * Driver for VIA PadLock
+ * Driver क्रम VIA PadLock
  *
  * Copyright (c) 2004 Michal Ludvig <michal@logix.cz>
  */
 
-#ifndef _CRYPTO_PADLOCK_H
-#define _CRYPTO_PADLOCK_H
+#अगर_अघोषित _CRYPTO_PADLOCK_H
+#घोषणा _CRYPTO_PADLOCK_H
 
-#define PADLOCK_ALIGNMENT 16
+#घोषणा PADLOCK_ALIGNMENT 16
 
-#define PFX	KBUILD_MODNAME ": "
+#घोषणा PFX	KBUILD_MODNAME ": "
 
-#define PADLOCK_CRA_PRIORITY	300
-#define PADLOCK_COMPOSITE_PRIORITY 400
+#घोषणा PADLOCK_CRA_PRIORITY	300
+#घोषणा PADLOCK_COMPOSITE_PRIORITY 400
 
-#ifdef CONFIG_64BIT
-#define STACK_ALIGN 16
-#else
-#define STACK_ALIGN 4
-#endif
+#अगर_घोषित CONFIG_64BIT
+#घोषणा STACK_ALIGN 16
+#अन्यथा
+#घोषणा STACK_ALIGN 4
+#पूर्ण_अगर
 
-#endif	/* _CRYPTO_PADLOCK_H */
+#पूर्ण_अगर	/* _CRYPTO_PADLOCK_H */

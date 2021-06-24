@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2016 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -23,21 +24,21 @@
  *
  */
 
-#ifndef __DC_HWSS_DCN10_DEBUG_H__
-#define __DC_HWSS_DCN10_DEBUG_H__
+#अगर_अघोषित __DC_HWSS_DCN10_DEBUG_H__
+#घोषणा __DC_HWSS_DCN10_DEBUG_H__
 
-#include "core_types.h"
+#समावेश "core_types.h"
 
-struct dc;
+काष्ठा dc;
 
-void dcn10_clear_status_bits(struct dc *dc, unsigned int mask);
+व्योम dcn10_clear_status_bits(काष्ठा dc *dc, अचिन्हित पूर्णांक mask);
 
-void dcn10_log_hw_state(struct dc *dc,
-		struct dc_log_buffer_ctx *log_ctx);
+व्योम dcn10_log_hw_state(काष्ठा dc *dc,
+		काष्ठा dc_log_buffer_ctx *log_ctx);
 
-void dcn10_get_hw_state(struct dc *dc,
-		char *pBuf,
-		unsigned int bufSize,
-		unsigned int mask);
+व्योम dcn10_get_hw_state(काष्ठा dc *dc,
+		अक्षर *pBuf,
+		अचिन्हित पूर्णांक bufSize,
+		अचिन्हित पूर्णांक mask);
 
-#endif /* __DC_HWSS_DCN10_DEBUG_H__ */
+#पूर्ण_अगर /* __DC_HWSS_DCN10_DEBUG_H__ */

@@ -1,23 +1,24 @@
+<शैली गुरु>
 /*
  * Copyright (c) 2013-2015, Mellanox Technologies. All rights reserved.
  *
  * This software is available to you under a choice of one of two
  * licenses.  You may choose to be licensed under the terms of the GNU
  * General Public License (GPL) Version 2, available from the file
- * COPYING in the main directory of this source tree, or the
+ * COPYING in the मुख्य directory of this source tree, or the
  * OpenIB.org BSD license below:
  *
- *     Redistribution and use in source and binary forms, with or
- *     without modification, are permitted provided that the following
+ *     Redistribution and use in source and binary क्रमms, with or
+ *     without modअगरication, are permitted provided that the following
  *     conditions are met:
  *
  *      - Redistributions of source code must retain the above
  *        copyright notice, this list of conditions and the following
  *        disclaimer.
  *
- *      - Redistributions in binary form must reproduce the above
+ *      - Redistributions in binary क्रमm must reproduce the above
  *        copyright notice, this list of conditions and the following
- *        disclaimer in the documentation and/or other materials
+ *        disclaimer in the करोcumentation and/or other materials
  *        provided with the distribution.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
@@ -30,41 +31,41 @@
  * SOFTWARE.
  */
 
-#ifndef MLX5_CORE_CQ_H
-#define MLX5_CORE_CQ_H
+#अगर_अघोषित MLX5_CORE_CQ_H
+#घोषणा MLX5_CORE_CQ_H
 
-#include <linux/mlx5/driver.h>
-#include <linux/refcount.h>
+#समावेश <linux/mlx5/driver.h>
+#समावेश <linux/refcount.h>
 
-struct mlx5_core_cq {
+काष्ठा mlx5_core_cq अणु
 	u32			cqn;
-	int			cqe_sz;
+	पूर्णांक			cqe_sz;
 	__be32		       *set_ci_db;
 	__be32		       *arm_db;
-	struct mlx5_uars_page  *uar;
+	काष्ठा mlx5_uars_page  *uar;
 	refcount_t		refcount;
-	struct completion	free;
-	unsigned		vector;
-	unsigned int		irqn;
-	void (*comp)(struct mlx5_core_cq *cq, struct mlx5_eqe *eqe);
-	void (*event)		(struct mlx5_core_cq *, enum mlx5_event);
+	काष्ठा completion	मुक्त;
+	अचिन्हित		vector;
+	अचिन्हित पूर्णांक		irqn;
+	व्योम (*comp)(काष्ठा mlx5_core_cq *cq, काष्ठा mlx5_eqe *eqe);
+	व्योम (*event)		(काष्ठा mlx5_core_cq *, क्रमागत mlx5_event);
 	u32			cons_index;
-	unsigned		arm_sn;
-	struct mlx5_rsc_debug	*dbg;
-	int			pid;
-	struct {
-		struct list_head list;
-		void (*comp)(struct mlx5_core_cq *cq, struct mlx5_eqe *eqe);
-		void		*priv;
-	} tasklet_ctx;
-	int			reset_notify_added;
-	struct list_head	reset_notify;
-	struct mlx5_eq_comp	*eq;
+	अचिन्हित		arm_sn;
+	काष्ठा mlx5_rsc_debug	*dbg;
+	पूर्णांक			pid;
+	काष्ठा अणु
+		काष्ठा list_head list;
+		व्योम (*comp)(काष्ठा mlx5_core_cq *cq, काष्ठा mlx5_eqe *eqe);
+		व्योम		*priv;
+	पूर्ण tasklet_ctx;
+	पूर्णांक			reset_notअगरy_added;
+	काष्ठा list_head	reset_notअगरy;
+	काष्ठा mlx5_eq_comp	*eq;
 	u16 uid;
-};
+पूर्ण;
 
 
-enum {
+क्रमागत अणु
 	MLX5_CQE_SYNDROME_LOCAL_LENGTH_ERR		= 0x01,
 	MLX5_CQE_SYNDROME_LOCAL_QP_OP_ERR		= 0x02,
 	MLX5_CQE_SYNDROME_LOCAL_PROT_ERR		= 0x04,
@@ -78,9 +79,9 @@ enum {
 	MLX5_CQE_SYNDROME_TRANSPORT_RETRY_EXC_ERR	= 0x15,
 	MLX5_CQE_SYNDROME_RNR_RETRY_EXC_ERR		= 0x16,
 	MLX5_CQE_SYNDROME_REMOTE_ABORTED_ERR		= 0x22,
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	MLX5_CQE_OWNER_MASK	= 1,
 	MLX5_CQE_REQ		= 0,
 	MLX5_CQE_RESP_WR_IMM	= 1,
@@ -88,71 +89,71 @@ enum {
 	MLX5_CQE_RESP_SEND_IMM	= 3,
 	MLX5_CQE_RESP_SEND_INV	= 4,
 	MLX5_CQE_RESIZE_CQ	= 5,
-	MLX5_CQE_SIG_ERR	= 12,
+	MLX5_CQE_संक_त्रुटि	= 12,
 	MLX5_CQE_REQ_ERR	= 13,
 	MLX5_CQE_RESP_ERR	= 14,
 	MLX5_CQE_INVALID	= 15,
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	MLX5_CQ_MODIFY_PERIOD	= 1 << 0,
 	MLX5_CQ_MODIFY_COUNT	= 1 << 1,
 	MLX5_CQ_MODIFY_OVERRUN	= 1 << 2,
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	MLX5_CQ_OPMOD_RESIZE		= 1,
 	MLX5_MODIFY_CQ_MASK_LOG_SIZE	= 1 << 0,
 	MLX5_MODIFY_CQ_MASK_PG_OFFSET	= 1 << 1,
 	MLX5_MODIFY_CQ_MASK_PG_SIZE	= 1 << 2,
-};
+पूर्ण;
 
-struct mlx5_cq_modify_params {
-	int	type;
-	union {
-		struct {
+काष्ठा mlx5_cq_modअगरy_params अणु
+	पूर्णांक	type;
+	जोड़ अणु
+		काष्ठा अणु
 			u32	page_offset;
 			u8	log_cq_size;
-		} resize;
+		पूर्ण resize;
 
-		struct {
-		} moder;
+		काष्ठा अणु
+		पूर्ण moder;
 
-		struct {
-		} mapping;
-	} params;
-};
+		काष्ठा अणु
+		पूर्ण mapping;
+	पूर्ण params;
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	CQE_STRIDE_64 = 0,
 	CQE_STRIDE_128 = 1,
 	CQE_STRIDE_128_PAD = 2,
-};
+पूर्ण;
 
-#define MLX5_MAX_CQ_PERIOD (BIT(__mlx5_bit_sz(cqc, cq_period)) - 1)
-#define MLX5_MAX_CQ_COUNT (BIT(__mlx5_bit_sz(cqc, cq_max_count)) - 1)
+#घोषणा MLX5_MAX_CQ_PERIOD (BIT(__mlx5_bit_sz(cqc, cq_period)) - 1)
+#घोषणा MLX5_MAX_CQ_COUNT (BIT(__mlx5_bit_sz(cqc, cq_max_count)) - 1)
 
-static inline int cqe_sz_to_mlx_sz(u8 size, int padding_128_en)
-{
-	return padding_128_en ? CQE_STRIDE_128_PAD :
+अटल अंतरभूत पूर्णांक cqe_sz_to_mlx_sz(u8 size, पूर्णांक padding_128_en)
+अणु
+	वापस padding_128_en ? CQE_STRIDE_128_PAD :
 				size == 64 ? CQE_STRIDE_64 : CQE_STRIDE_128;
-}
+पूर्ण
 
-static inline void mlx5_cq_set_ci(struct mlx5_core_cq *cq)
-{
+अटल अंतरभूत व्योम mlx5_cq_set_ci(काष्ठा mlx5_core_cq *cq)
+अणु
 	*cq->set_ci_db = cpu_to_be32(cq->cons_index & 0xffffff);
-}
+पूर्ण
 
-enum {
+क्रमागत अणु
 	MLX5_CQ_DB_REQ_NOT_SOL		= 1 << 24,
 	MLX5_CQ_DB_REQ_NOT		= 0 << 24
-};
+पूर्ण;
 
-static inline void mlx5_cq_arm(struct mlx5_core_cq *cq, u32 cmd,
-			       void __iomem *uar_page,
+अटल अंतरभूत व्योम mlx5_cq_arm(काष्ठा mlx5_core_cq *cq, u32 cmd,
+			       व्योम __iomem *uar_page,
 			       u32 cons_index)
-{
-	__be32 doorbell[2];
+अणु
+	__be32 करोorbell[2];
 	u32 sn;
 	u32 ci;
 
@@ -161,45 +162,45 @@ static inline void mlx5_cq_arm(struct mlx5_core_cq *cq, u32 cmd,
 
 	*cq->arm_db = cpu_to_be32(sn << 28 | cmd | ci);
 
-	/* Make sure that the doorbell record in host memory is
-	 * written before ringing the doorbell via PCI MMIO.
+	/* Make sure that the करोorbell record in host memory is
+	 * written beक्रमe ringing the करोorbell via PCI MMIO.
 	 */
 	wmb();
 
-	doorbell[0] = cpu_to_be32(sn << 28 | cmd | ci);
-	doorbell[1] = cpu_to_be32(cq->cqn);
+	करोorbell[0] = cpu_to_be32(sn << 28 | cmd | ci);
+	करोorbell[1] = cpu_to_be32(cq->cqn);
 
-	mlx5_write64(doorbell, uar_page + MLX5_CQ_DOORBELL);
-}
+	mlx5_ग_लिखो64(करोorbell, uar_page + MLX5_CQ_DOORBELL);
+पूर्ण
 
-static inline void mlx5_cq_hold(struct mlx5_core_cq *cq)
-{
+अटल अंतरभूत व्योम mlx5_cq_hold(काष्ठा mlx5_core_cq *cq)
+अणु
 	refcount_inc(&cq->refcount);
-}
+पूर्ण
 
-static inline void mlx5_cq_put(struct mlx5_core_cq *cq)
-{
-	if (refcount_dec_and_test(&cq->refcount))
-		complete(&cq->free);
-}
+अटल अंतरभूत व्योम mlx5_cq_put(काष्ठा mlx5_core_cq *cq)
+अणु
+	अगर (refcount_dec_and_test(&cq->refcount))
+		complete(&cq->मुक्त);
+पूर्ण
 
-int mlx5_core_create_cq(struct mlx5_core_dev *dev, struct mlx5_core_cq *cq,
-			u32 *in, int inlen, u32 *out, int outlen);
-int mlx5_core_destroy_cq(struct mlx5_core_dev *dev, struct mlx5_core_cq *cq);
-int mlx5_core_query_cq(struct mlx5_core_dev *dev, struct mlx5_core_cq *cq,
+पूर्णांक mlx5_core_create_cq(काष्ठा mlx5_core_dev *dev, काष्ठा mlx5_core_cq *cq,
+			u32 *in, पूर्णांक inlen, u32 *out, पूर्णांक outlen);
+पूर्णांक mlx5_core_destroy_cq(काष्ठा mlx5_core_dev *dev, काष्ठा mlx5_core_cq *cq);
+पूर्णांक mlx5_core_query_cq(काष्ठा mlx5_core_dev *dev, काष्ठा mlx5_core_cq *cq,
 		       u32 *out);
-int mlx5_core_modify_cq(struct mlx5_core_dev *dev, struct mlx5_core_cq *cq,
-			u32 *in, int inlen);
-int mlx5_core_modify_cq_moderation(struct mlx5_core_dev *dev,
-				   struct mlx5_core_cq *cq, u16 cq_period,
+पूर्णांक mlx5_core_modअगरy_cq(काष्ठा mlx5_core_dev *dev, काष्ठा mlx5_core_cq *cq,
+			u32 *in, पूर्णांक inlen);
+पूर्णांक mlx5_core_modअगरy_cq_moderation(काष्ठा mlx5_core_dev *dev,
+				   काष्ठा mlx5_core_cq *cq, u16 cq_period,
 				   u16 cq_max_count);
-static inline void mlx5_dump_err_cqe(struct mlx5_core_dev *dev,
-				     struct mlx5_err_cqe *err_cqe)
-{
-	print_hex_dump(KERN_WARNING, "", DUMP_PREFIX_OFFSET, 16, 1, err_cqe,
-		       sizeof(*err_cqe), false);
-}
-int mlx5_debug_cq_add(struct mlx5_core_dev *dev, struct mlx5_core_cq *cq);
-void mlx5_debug_cq_remove(struct mlx5_core_dev *dev, struct mlx5_core_cq *cq);
+अटल अंतरभूत व्योम mlx5_dump_err_cqe(काष्ठा mlx5_core_dev *dev,
+				     काष्ठा mlx5_err_cqe *err_cqe)
+अणु
+	prपूर्णांक_hex_dump(KERN_WARNING, "", DUMP_PREFIX_OFFSET, 16, 1, err_cqe,
+		       माप(*err_cqe), false);
+पूर्ण
+पूर्णांक mlx5_debug_cq_add(काष्ठा mlx5_core_dev *dev, काष्ठा mlx5_core_cq *cq);
+व्योम mlx5_debug_cq_हटाओ(काष्ठा mlx5_core_dev *dev, काष्ठा mlx5_core_cq *cq);
 
-#endif /* MLX5_CORE_CQ_H */
+#पूर्ण_अगर /* MLX5_CORE_CQ_H */

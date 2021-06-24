@@ -1,74 +1,75 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  *
  * Copyright (C) Jonathan Naylor G4KLX (g4klx@g4klx.demon.co.uk)
  * Copyright (C) Joerg Reuter DL1BKE (jreuter@yaina.de)
  */
-#include <linux/errno.h>
-#include <linux/types.h>
-#include <linux/socket.h>
-#include <linux/in.h>
-#include <linux/kernel.h>
-#include <linux/timer.h>
-#include <linux/string.h>
-#include <linux/sockios.h>
-#include <linux/net.h>
-#include <net/ax25.h>
-#include <linux/inet.h>
-#include <linux/netdevice.h>
-#include <linux/skbuff.h>
-#include <net/sock.h>
-#include <net/tcp_states.h>
-#include <linux/uaccess.h>
-#include <linux/fcntl.h>
-#include <linux/mm.h>
-#include <linux/interrupt.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/types.h>
+#समावेश <linux/socket.h>
+#समावेश <linux/in.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/समयr.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/sockios.h>
+#समावेश <linux/net.h>
+#समावेश <net/ax25.h>
+#समावेश <linux/inet.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/skbuff.h>
+#समावेश <net/sock.h>
+#समावेश <net/tcp_states.h>
+#समावेश <linux/uaccess.h>
+#समावेश <linux/fcntl.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/पूर्णांकerrupt.h>
 
 /*
- *	State machine for state 1, Awaiting Connection State.
- *	The handling of the timer(s) is in file ax25_ds_timer.c.
+ *	State machine क्रम state 1, Aरुकोing Connection State.
+ *	The handling of the समयr(s) is in file ax25_ds_समयr.c.
  *	Handling of state 0 and connection release is in ax25.c.
  */
-static int ax25_ds_state1_machine(ax25_cb *ax25, struct sk_buff *skb, int frametype, int pf, int type)
-{
-	switch (frametype) {
-	case AX25_SABM:
+अटल पूर्णांक ax25_ds_state1_machine(ax25_cb *ax25, काष्ठा sk_buff *skb, पूर्णांक frametype, पूर्णांक pf, पूर्णांक type)
+अणु
+	चयन (frametype) अणु
+	हाल AX25_SABM:
 		ax25->modulus = AX25_MODULUS;
-		ax25->window  = ax25->ax25_dev->values[AX25_VALUES_WINDOW];
+		ax25->winकरोw  = ax25->ax25_dev->values[AX25_VALUES_WINDOW];
 		ax25_send_control(ax25, AX25_UA, pf, AX25_RESPONSE);
-		break;
+		अवरोध;
 
-	case AX25_SABME:
+	हाल AX25_SABME:
 		ax25->modulus = AX25_EMODULUS;
-		ax25->window  =  ax25->ax25_dev->values[AX25_VALUES_EWINDOW];
+		ax25->winकरोw  =  ax25->ax25_dev->values[AX25_VALUES_EWINDOW];
 		ax25_send_control(ax25, AX25_UA, pf, AX25_RESPONSE);
-		break;
+		अवरोध;
 
-	case AX25_DISC:
+	हाल AX25_DISC:
 		ax25_send_control(ax25, AX25_DM, pf, AX25_RESPONSE);
-		break;
+		अवरोध;
 
-	case AX25_UA:
+	हाल AX25_UA:
 		ax25_calculate_rtt(ax25);
-		ax25_stop_t1timer(ax25);
-		ax25_start_t3timer(ax25);
-		ax25_start_idletimer(ax25);
+		ax25_stop_t1समयr(ax25);
+		ax25_start_t3समयr(ax25);
+		ax25_start_idleसमयr(ax25);
 		ax25->vs      = 0;
 		ax25->va      = 0;
 		ax25->vr      = 0;
 		ax25->state   = AX25_STATE_3;
 		ax25->n2count = 0;
-		if (ax25->sk != NULL) {
+		अगर (ax25->sk != शून्य) अणु
 			bh_lock_sock(ax25->sk);
 			ax25->sk->sk_state = TCP_ESTABLISHED;
 			/*
 			 * For WAIT_SABM connections we will produce an accept
-			 * ready socket here
+			 * पढ़ोy socket here
 			 */
-			if (!sock_flag(ax25->sk, SOCK_DEAD))
+			अगर (!sock_flag(ax25->sk, SOCK_DEAD))
 				ax25->sk->sk_state_change(ax25->sk);
 			bh_unlock_sock(ax25->sk);
-		}
+		पूर्ण
 		ax25_dama_on(ax25);
 
 		/* according to DK4EG's spec we are required to
@@ -76,223 +77,223 @@ static int ax25_ds_state1_machine(ax25_cb *ax25, struct sk_buff *skb, int framet
 		 */
 
 		ax25_std_enquiry_response(ax25);
-		break;
+		अवरोध;
 
-	case AX25_DM:
-		if (pf)
+	हाल AX25_DM:
+		अगर (pf)
 			ax25_disconnect(ax25, ECONNREFUSED);
-		break;
+		अवरोध;
 
-	default:
-		if (pf)
+	शेष:
+		अगर (pf)
 			ax25_send_control(ax25, AX25_SABM, AX25_POLLON, AX25_COMMAND);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- *	State machine for state 2, Awaiting Release State.
- *	The handling of the timer(s) is in file ax25_ds_timer.c
+ *	State machine क्रम state 2, Aरुकोing Release State.
+ *	The handling of the समयr(s) is in file ax25_ds_समयr.c
  *	Handling of state 0 and connection release is in ax25.c.
  */
-static int ax25_ds_state2_machine(ax25_cb *ax25, struct sk_buff *skb, int frametype, int pf, int type)
-{
-	switch (frametype) {
-	case AX25_SABM:
-	case AX25_SABME:
+अटल पूर्णांक ax25_ds_state2_machine(ax25_cb *ax25, काष्ठा sk_buff *skb, पूर्णांक frametype, पूर्णांक pf, पूर्णांक type)
+अणु
+	चयन (frametype) अणु
+	हाल AX25_SABM:
+	हाल AX25_SABME:
 		ax25_send_control(ax25, AX25_DISC, AX25_POLLON, AX25_COMMAND);
 		ax25_dama_off(ax25);
-		break;
+		अवरोध;
 
-	case AX25_DISC:
+	हाल AX25_DISC:
 		ax25_send_control(ax25, AX25_UA, pf, AX25_RESPONSE);
 		ax25_dama_off(ax25);
 		ax25_disconnect(ax25, 0);
-		break;
+		अवरोध;
 
-	case AX25_DM:
-	case AX25_UA:
-		if (pf) {
+	हाल AX25_DM:
+	हाल AX25_UA:
+		अगर (pf) अणु
 			ax25_dama_off(ax25);
 			ax25_disconnect(ax25, 0);
-		}
-		break;
+		पूर्ण
+		अवरोध;
 
-	case AX25_I:
-	case AX25_REJ:
-	case AX25_RNR:
-	case AX25_RR:
-		if (pf) {
+	हाल AX25_I:
+	हाल AX25_REJ:
+	हाल AX25_RNR:
+	हाल AX25_RR:
+		अगर (pf) अणु
 			ax25_send_control(ax25, AX25_DISC, AX25_POLLON, AX25_COMMAND);
 			ax25_dama_off(ax25);
-		}
-		break;
+		पूर्ण
+		अवरोध;
 
-	default:
-		break;
-	}
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- *	State machine for state 3, Connected State.
- *	The handling of the timer(s) is in file ax25_timer.c
+ *	State machine क्रम state 3, Connected State.
+ *	The handling of the समयr(s) is in file ax25_समयr.c
  *	Handling of state 0 and connection release is in ax25.c.
  */
-static int ax25_ds_state3_machine(ax25_cb *ax25, struct sk_buff *skb, int frametype, int ns, int nr, int pf, int type)
-{
-	int queued = 0;
+अटल पूर्णांक ax25_ds_state3_machine(ax25_cb *ax25, काष्ठा sk_buff *skb, पूर्णांक frametype, पूर्णांक ns, पूर्णांक nr, पूर्णांक pf, पूर्णांक type)
+अणु
+	पूर्णांक queued = 0;
 
-	switch (frametype) {
-	case AX25_SABM:
-	case AX25_SABME:
-		if (frametype == AX25_SABM) {
+	चयन (frametype) अणु
+	हाल AX25_SABM:
+	हाल AX25_SABME:
+		अगर (frametype == AX25_SABM) अणु
 			ax25->modulus   = AX25_MODULUS;
-			ax25->window    = ax25->ax25_dev->values[AX25_VALUES_WINDOW];
-		} else {
+			ax25->winकरोw    = ax25->ax25_dev->values[AX25_VALUES_WINDOW];
+		पूर्ण अन्यथा अणु
 			ax25->modulus   = AX25_EMODULUS;
-			ax25->window    = ax25->ax25_dev->values[AX25_VALUES_EWINDOW];
-		}
+			ax25->winकरोw    = ax25->ax25_dev->values[AX25_VALUES_EWINDOW];
+		पूर्ण
 		ax25_send_control(ax25, AX25_UA, pf, AX25_RESPONSE);
-		ax25_stop_t1timer(ax25);
-		ax25_start_t3timer(ax25);
-		ax25_start_idletimer(ax25);
+		ax25_stop_t1समयr(ax25);
+		ax25_start_t3समयr(ax25);
+		ax25_start_idleसमयr(ax25);
 		ax25->condition = 0x00;
 		ax25->vs        = 0;
 		ax25->va        = 0;
 		ax25->vr        = 0;
 		ax25_requeue_frames(ax25);
 		ax25_dama_on(ax25);
-		break;
+		अवरोध;
 
-	case AX25_DISC:
+	हाल AX25_DISC:
 		ax25_send_control(ax25, AX25_UA, pf, AX25_RESPONSE);
 		ax25_dama_off(ax25);
 		ax25_disconnect(ax25, 0);
-		break;
+		अवरोध;
 
-	case AX25_DM:
+	हाल AX25_DM:
 		ax25_dama_off(ax25);
 		ax25_disconnect(ax25, ECONNRESET);
-		break;
+		अवरोध;
 
-	case AX25_RR:
-	case AX25_RNR:
-		if (frametype == AX25_RR)
+	हाल AX25_RR:
+	हाल AX25_RNR:
+		अगर (frametype == AX25_RR)
 			ax25->condition &= ~AX25_COND_PEER_RX_BUSY;
-		else
+		अन्यथा
 			ax25->condition |= AX25_COND_PEER_RX_BUSY;
 
-		if (ax25_validate_nr(ax25, nr)) {
-			if (ax25_check_iframes_acked(ax25, nr))
+		अगर (ax25_validate_nr(ax25, nr)) अणु
+			अगर (ax25_check_अगरrames_acked(ax25, nr))
 				ax25->n2count=0;
-			if (type == AX25_COMMAND && pf)
+			अगर (type == AX25_COMMAND && pf)
 				ax25_ds_enquiry_response(ax25);
-		} else {
+		पूर्ण अन्यथा अणु
 			ax25_ds_nr_error_recovery(ax25);
 			ax25->state = AX25_STATE_1;
-		}
-		break;
+		पूर्ण
+		अवरोध;
 
-	case AX25_REJ:
+	हाल AX25_REJ:
 		ax25->condition &= ~AX25_COND_PEER_RX_BUSY;
 
-		if (ax25_validate_nr(ax25, nr)) {
-			if (ax25->va != nr)
+		अगर (ax25_validate_nr(ax25, nr)) अणु
+			अगर (ax25->va != nr)
 				ax25->n2count=0;
 
 			ax25_frames_acked(ax25, nr);
 			ax25_calculate_rtt(ax25);
-			ax25_stop_t1timer(ax25);
-			ax25_start_t3timer(ax25);
+			ax25_stop_t1समयr(ax25);
+			ax25_start_t3समयr(ax25);
 			ax25_requeue_frames(ax25);
 
-			if (type == AX25_COMMAND && pf)
+			अगर (type == AX25_COMMAND && pf)
 				ax25_ds_enquiry_response(ax25);
-		} else {
+		पूर्ण अन्यथा अणु
 			ax25_ds_nr_error_recovery(ax25);
 			ax25->state = AX25_STATE_1;
-		}
-		break;
+		पूर्ण
+		अवरोध;
 
-	case AX25_I:
-		if (!ax25_validate_nr(ax25, nr)) {
+	हाल AX25_I:
+		अगर (!ax25_validate_nr(ax25, nr)) अणु
 			ax25_ds_nr_error_recovery(ax25);
 			ax25->state = AX25_STATE_1;
-			break;
-		}
-		if (ax25->condition & AX25_COND_PEER_RX_BUSY) {
+			अवरोध;
+		पूर्ण
+		अगर (ax25->condition & AX25_COND_PEER_RX_BUSY) अणु
 			ax25_frames_acked(ax25, nr);
 			ax25->n2count = 0;
-		} else {
-			if (ax25_check_iframes_acked(ax25, nr))
+		पूर्ण अन्यथा अणु
+			अगर (ax25_check_अगरrames_acked(ax25, nr))
 				ax25->n2count = 0;
-		}
-		if (ax25->condition & AX25_COND_OWN_RX_BUSY) {
-			if (pf) ax25_ds_enquiry_response(ax25);
-			break;
-		}
-		if (ns == ax25->vr) {
+		पूर्ण
+		अगर (ax25->condition & AX25_COND_OWN_RX_BUSY) अणु
+			अगर (pf) ax25_ds_enquiry_response(ax25);
+			अवरोध;
+		पूर्ण
+		अगर (ns == ax25->vr) अणु
 			ax25->vr = (ax25->vr + 1) % ax25->modulus;
-			queued = ax25_rx_iframe(ax25, skb);
-			if (ax25->condition & AX25_COND_OWN_RX_BUSY)
+			queued = ax25_rx_अगरrame(ax25, skb);
+			अगर (ax25->condition & AX25_COND_OWN_RX_BUSY)
 				ax25->vr = ns;	/* ax25->vr - 1 */
 			ax25->condition &= ~AX25_COND_REJECT;
-			if (pf) {
+			अगर (pf) अणु
 				ax25_ds_enquiry_response(ax25);
-			} else {
-				if (!(ax25->condition & AX25_COND_ACK_PENDING)) {
+			पूर्ण अन्यथा अणु
+				अगर (!(ax25->condition & AX25_COND_ACK_PENDING)) अणु
 					ax25->condition |= AX25_COND_ACK_PENDING;
-					ax25_start_t2timer(ax25);
-				}
-			}
-		} else {
-			if (ax25->condition & AX25_COND_REJECT) {
-				if (pf) ax25_ds_enquiry_response(ax25);
-			} else {
+					ax25_start_t2समयr(ax25);
+				पूर्ण
+			पूर्ण
+		पूर्ण अन्यथा अणु
+			अगर (ax25->condition & AX25_COND_REJECT) अणु
+				अगर (pf) ax25_ds_enquiry_response(ax25);
+			पूर्ण अन्यथा अणु
 				ax25->condition |= AX25_COND_REJECT;
 				ax25_ds_enquiry_response(ax25);
 				ax25->condition &= ~AX25_COND_ACK_PENDING;
-			}
-		}
-		break;
+			पूर्ण
+		पूर्ण
+		अवरोध;
 
-	case AX25_FRMR:
-	case AX25_ILLEGAL:
+	हाल AX25_FRMR:
+	हाल AX25_ILLEGAL:
 		ax25_ds_establish_data_link(ax25);
 		ax25->state = AX25_STATE_1;
-		break;
+		अवरोध;
 
-	default:
-		break;
-	}
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	return queued;
-}
+	वापस queued;
+पूर्ण
 
 /*
- *	Higher level upcall for a LAPB frame
+ *	Higher level upcall क्रम a LAPB frame
  */
-int ax25_ds_frame_in(ax25_cb *ax25, struct sk_buff *skb, int type)
-{
-	int queued = 0, frametype, ns, nr, pf;
+पूर्णांक ax25_ds_frame_in(ax25_cb *ax25, काष्ठा sk_buff *skb, पूर्णांक type)
+अणु
+	पूर्णांक queued = 0, frametype, ns, nr, pf;
 
 	frametype = ax25_decode(ax25, skb, &ns, &nr, &pf);
 
-	switch (ax25->state) {
-	case AX25_STATE_1:
+	चयन (ax25->state) अणु
+	हाल AX25_STATE_1:
 		queued = ax25_ds_state1_machine(ax25, skb, frametype, pf, type);
-		break;
-	case AX25_STATE_2:
+		अवरोध;
+	हाल AX25_STATE_2:
 		queued = ax25_ds_state2_machine(ax25, skb, frametype, pf, type);
-		break;
-	case AX25_STATE_3:
+		अवरोध;
+	हाल AX25_STATE_3:
 		queued = ax25_ds_state3_machine(ax25, skb, frametype, ns, nr, pf, type);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return queued;
-}
+	वापस queued;
+पूर्ण

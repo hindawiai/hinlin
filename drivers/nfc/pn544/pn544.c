@@ -1,159 +1,160 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * HCI based Driver for NXP PN544 NFC Chip
+ * HCI based Driver क्रम NXP PN544 NFC Chip
  *
  * Copyright (C) 2012  Intel Corporation. All rights reserved.
  */
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include <linux/delay.h>
-#include <linux/slab.h>
-#include <linux/module.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/module.h>
 
-#include <linux/nfc.h>
-#include <net/nfc/hci.h>
-#include <net/nfc/llc.h>
+#समावेश <linux/nfc.h>
+#समावेश <net/nfc/hci.h>
+#समावेश <net/nfc/llc.h>
 
-#include "pn544.h"
+#समावेश "pn544.h"
 
 /* Timing restrictions (ms) */
-#define PN544_HCI_RESETVEN_TIME		30
+#घोषणा PN544_HCI_RESETVEN_TIME		30
 
-enum pn544_state {
+क्रमागत pn544_state अणु
 	PN544_ST_COLD,
 	PN544_ST_FW_READY,
 	PN544_ST_READY,
-};
+पूर्ण;
 
-#define FULL_VERSION_LEN 11
+#घोषणा FULL_VERSION_LEN 11
 
 /* Proprietary commands */
-#define PN544_WRITE		0x3f
-#define PN544_TEST_SWP		0x21
+#घोषणा PN544_WRITE		0x3f
+#घोषणा PN544_TEST_SWP		0x21
 
-/* Proprietary gates, events, commands and registers */
+/* Proprietary gates, events, commands and रेजिस्टरs */
 
-/* NFC_HCI_RF_READER_A_GATE additional registers and commands */
-#define PN544_RF_READER_A_AUTO_ACTIVATION			0x10
-#define PN544_RF_READER_A_CMD_CONTINUE_ACTIVATION		0x12
-#define PN544_MIFARE_CMD					0x21
+/* NFC_HCI_RF_READER_A_GATE additional रेजिस्टरs and commands */
+#घोषणा PN544_RF_READER_A_AUTO_ACTIVATION			0x10
+#घोषणा PN544_RF_READER_A_CMD_CONTINUE_ACTIVATION		0x12
+#घोषणा PN544_MIFARE_CMD					0x21
 
-/* Commands that apply to all RF readers */
-#define PN544_RF_READER_CMD_PRESENCE_CHECK	0x30
-#define PN544_RF_READER_CMD_ACTIVATE_NEXT	0x32
+/* Commands that apply to all RF पढ़ोers */
+#घोषणा PN544_RF_READER_CMD_PRESENCE_CHECK	0x30
+#घोषणा PN544_RF_READER_CMD_ACTIVATE_NEXT	0x32
 
-/* NFC_HCI_ID_MGMT_GATE additional registers */
-#define PN544_ID_MGMT_FULL_VERSION_SW		0x10
+/* NFC_HCI_ID_MGMT_GATE additional रेजिस्टरs */
+#घोषणा PN544_ID_MGMT_FULL_VERSION_SW		0x10
 
-#define PN544_RF_READER_ISO15693_GATE		0x12
+#घोषणा PN544_RF_READER_ISO15693_GATE		0x12
 
-#define PN544_RF_READER_F_GATE			0x14
-#define PN544_FELICA_ID				0x04
-#define PN544_FELICA_RAW			0x20
+#घोषणा PN544_RF_READER_F_GATE			0x14
+#घोषणा PN544_FELICA_ID				0x04
+#घोषणा PN544_FELICA_RAW			0x20
 
-#define PN544_RF_READER_JEWEL_GATE		0x15
-#define PN544_JEWEL_RAW_CMD			0x23
+#घोषणा PN544_RF_READER_JEWEL_GATE		0x15
+#घोषणा PN544_JEWEL_RAW_CMD			0x23
 
-#define PN544_RF_READER_NFCIP1_INITIATOR_GATE	0x30
-#define PN544_RF_READER_NFCIP1_TARGET_GATE	0x31
+#घोषणा PN544_RF_READER_NFCIP1_INITIATOR_GATE	0x30
+#घोषणा PN544_RF_READER_NFCIP1_TARGET_GATE	0x31
 
-#define PN544_SYS_MGMT_GATE			0x90
-#define PN544_SYS_MGMT_INFO_NOTIFICATION	0x02
+#घोषणा PN544_SYS_MGMT_GATE			0x90
+#घोषणा PN544_SYS_MGMT_INFO_NOTIFICATION	0x02
 
-#define PN544_POLLING_LOOP_MGMT_GATE		0x94
-#define PN544_DEP_MODE				0x01
-#define PN544_DEP_ATR_REQ			0x02
-#define PN544_DEP_ATR_RES			0x03
-#define PN544_DEP_MERGE				0x0D
-#define PN544_PL_RDPHASES			0x06
-#define PN544_PL_EMULATION			0x07
-#define PN544_PL_NFCT_DEACTIVATED		0x09
+#घोषणा PN544_POLLING_LOOP_MGMT_GATE		0x94
+#घोषणा PN544_DEP_MODE				0x01
+#घोषणा PN544_DEP_ATR_REQ			0x02
+#घोषणा PN544_DEP_ATR_RES			0x03
+#घोषणा PN544_DEP_MERGE				0x0D
+#घोषणा PN544_PL_RDPHASES			0x06
+#घोषणा PN544_PL_EMULATION			0x07
+#घोषणा PN544_PL_NFCT_DEACTIVATED		0x09
 
-#define PN544_SWP_MGMT_GATE			0xA0
-#define PN544_SWP_DEFAULT_MODE			0x01
+#घोषणा PN544_SWP_MGMT_GATE			0xA0
+#घोषणा PN544_SWP_DEFAULT_MODE			0x01
 
-#define PN544_NFC_WI_MGMT_GATE			0xA1
-#define PN544_NFC_ESE_DEFAULT_MODE		0x01
+#घोषणा PN544_NFC_WI_MGMT_GATE			0xA1
+#घोषणा PN544_NFC_ESE_DEFAULT_MODE		0x01
 
-#define PN544_HCI_EVT_SND_DATA			0x01
-#define PN544_HCI_EVT_ACTIVATED			0x02
-#define PN544_HCI_EVT_DEACTIVATED		0x03
-#define PN544_HCI_EVT_RCV_DATA			0x04
-#define PN544_HCI_EVT_CONTINUE_MI		0x05
-#define PN544_HCI_EVT_SWITCH_MODE		0x03
+#घोषणा PN544_HCI_EVT_SND_DATA			0x01
+#घोषणा PN544_HCI_EVT_ACTIVATED			0x02
+#घोषणा PN544_HCI_EVT_DEACTIVATED		0x03
+#घोषणा PN544_HCI_EVT_RCV_DATA			0x04
+#घोषणा PN544_HCI_EVT_CONTINUE_MI		0x05
+#घोषणा PN544_HCI_EVT_SWITCH_MODE		0x03
 
-#define PN544_HCI_CMD_ATTREQUEST		0x12
-#define PN544_HCI_CMD_CONTINUE_ACTIVATION	0x13
+#घोषणा PN544_HCI_CMD_ATTREQUEST		0x12
+#घोषणा PN544_HCI_CMD_CONTINUE_ACTIVATION	0x13
 
-static struct nfc_hci_gate pn544_gates[] = {
-	{NFC_HCI_ADMIN_GATE, NFC_HCI_INVALID_PIPE},
-	{NFC_HCI_LOOPBACK_GATE, NFC_HCI_INVALID_PIPE},
-	{NFC_HCI_ID_MGMT_GATE, NFC_HCI_INVALID_PIPE},
-	{NFC_HCI_LINK_MGMT_GATE, NFC_HCI_INVALID_PIPE},
-	{NFC_HCI_RF_READER_B_GATE, NFC_HCI_INVALID_PIPE},
-	{NFC_HCI_RF_READER_A_GATE, NFC_HCI_INVALID_PIPE},
-	{PN544_SYS_MGMT_GATE, NFC_HCI_INVALID_PIPE},
-	{PN544_SWP_MGMT_GATE, NFC_HCI_INVALID_PIPE},
-	{PN544_POLLING_LOOP_MGMT_GATE, NFC_HCI_INVALID_PIPE},
-	{PN544_NFC_WI_MGMT_GATE, NFC_HCI_INVALID_PIPE},
-	{PN544_RF_READER_F_GATE, NFC_HCI_INVALID_PIPE},
-	{PN544_RF_READER_JEWEL_GATE, NFC_HCI_INVALID_PIPE},
-	{PN544_RF_READER_ISO15693_GATE, NFC_HCI_INVALID_PIPE},
-	{PN544_RF_READER_NFCIP1_INITIATOR_GATE, NFC_HCI_INVALID_PIPE},
-	{PN544_RF_READER_NFCIP1_TARGET_GATE, NFC_HCI_INVALID_PIPE}
-};
+अटल काष्ठा nfc_hci_gate pn544_gates[] = अणु
+	अणुNFC_HCI_ADMIN_GATE, NFC_HCI_INVALID_PIPEपूर्ण,
+	अणुNFC_HCI_LOOPBACK_GATE, NFC_HCI_INVALID_PIPEपूर्ण,
+	अणुNFC_HCI_ID_MGMT_GATE, NFC_HCI_INVALID_PIPEपूर्ण,
+	अणुNFC_HCI_LINK_MGMT_GATE, NFC_HCI_INVALID_PIPEपूर्ण,
+	अणुNFC_HCI_RF_READER_B_GATE, NFC_HCI_INVALID_PIPEपूर्ण,
+	अणुNFC_HCI_RF_READER_A_GATE, NFC_HCI_INVALID_PIPEपूर्ण,
+	अणुPN544_SYS_MGMT_GATE, NFC_HCI_INVALID_PIPEपूर्ण,
+	अणुPN544_SWP_MGMT_GATE, NFC_HCI_INVALID_PIPEपूर्ण,
+	अणुPN544_POLLING_LOOP_MGMT_GATE, NFC_HCI_INVALID_PIPEपूर्ण,
+	अणुPN544_NFC_WI_MGMT_GATE, NFC_HCI_INVALID_PIPEपूर्ण,
+	अणुPN544_RF_READER_F_GATE, NFC_HCI_INVALID_PIPEपूर्ण,
+	अणुPN544_RF_READER_JEWEL_GATE, NFC_HCI_INVALID_PIPEपूर्ण,
+	अणुPN544_RF_READER_ISO15693_GATE, NFC_HCI_INVALID_PIPEपूर्ण,
+	अणुPN544_RF_READER_NFCIP1_INITIATOR_GATE, NFC_HCI_INVALID_PIPEपूर्ण,
+	अणुPN544_RF_READER_NFCIP1_TARGET_GATE, NFC_HCI_INVALID_PIPEपूर्ण
+पूर्ण;
 
-/* Largest headroom needed for outgoing custom commands */
-#define PN544_CMDS_HEADROOM	2
+/* Largest headroom needed क्रम outgoing custom commands */
+#घोषणा PN544_CMDS_HEADROOM	2
 
-struct pn544_hci_info {
-	struct nfc_phy_ops *phy_ops;
-	void *phy_id;
+काष्ठा pn544_hci_info अणु
+	काष्ठा nfc_phy_ops *phy_ops;
+	व्योम *phy_id;
 
-	struct nfc_hci_dev *hdev;
+	काष्ठा nfc_hci_dev *hdev;
 
-	enum pn544_state state;
+	क्रमागत pn544_state state;
 
-	struct mutex info_lock;
+	काष्ठा mutex info_lock;
 
-	int async_cb_type;
+	पूर्णांक async_cb_type;
 	data_exchange_cb_t async_cb;
-	void *async_cb_context;
+	व्योम *async_cb_context;
 
-	fw_download_t fw_download;
-};
+	fw_करोwnload_t fw_करोwnload;
+पूर्ण;
 
-static int pn544_hci_open(struct nfc_hci_dev *hdev)
-{
-	struct pn544_hci_info *info = nfc_hci_get_clientdata(hdev);
-	int r = 0;
+अटल पूर्णांक pn544_hci_खोलो(काष्ठा nfc_hci_dev *hdev)
+अणु
+	काष्ठा pn544_hci_info *info = nfc_hci_get_clientdata(hdev);
+	पूर्णांक r = 0;
 
 	mutex_lock(&info->info_lock);
 
-	if (info->state != PN544_ST_COLD) {
+	अगर (info->state != PN544_ST_COLD) अणु
 		r = -EBUSY;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	r = info->phy_ops->enable(info->phy_id);
 
-	if (r == 0)
+	अगर (r == 0)
 		info->state = PN544_ST_READY;
 
 out:
 	mutex_unlock(&info->info_lock);
-	return r;
-}
+	वापस r;
+पूर्ण
 
-static void pn544_hci_close(struct nfc_hci_dev *hdev)
-{
-	struct pn544_hci_info *info = nfc_hci_get_clientdata(hdev);
+अटल व्योम pn544_hci_बंद(काष्ठा nfc_hci_dev *hdev)
+अणु
+	काष्ठा pn544_hci_info *info = nfc_hci_get_clientdata(hdev);
 
 	mutex_lock(&info->info_lock);
 
-	if (info->state == PN544_ST_COLD)
-		goto out;
+	अगर (info->state == PN544_ST_COLD)
+		जाओ out;
 
 	info->phy_ops->disable(info->phy_id);
 
@@ -161,483 +162,483 @@ static void pn544_hci_close(struct nfc_hci_dev *hdev)
 
 out:
 	mutex_unlock(&info->info_lock);
-}
+पूर्ण
 
-static int pn544_hci_ready(struct nfc_hci_dev *hdev)
-{
-	struct sk_buff *skb;
-	static struct hw_config {
+अटल पूर्णांक pn544_hci_पढ़ोy(काष्ठा nfc_hci_dev *hdev)
+अणु
+	काष्ठा sk_buff *skb;
+	अटल काष्ठा hw_config अणु
 		u8 adr[2];
 		u8 value;
-	} hw_config[] = {
-		{{0x9f, 0x9a}, 0x00},
+	पूर्ण hw_config[] = अणु
+		अणुअणु0x9f, 0x9aपूर्ण, 0x00पूर्ण,
 
-		{{0x98, 0x10}, 0xbc},
+		अणुअणु0x98, 0x10पूर्ण, 0xbcपूर्ण,
 
-		{{0x9e, 0x71}, 0x00},
+		अणुअणु0x9e, 0x71पूर्ण, 0x00पूर्ण,
 
-		{{0x98, 0x09}, 0x00},
+		अणुअणु0x98, 0x09पूर्ण, 0x00पूर्ण,
 
-		{{0x9e, 0xb4}, 0x00},
+		अणुअणु0x9e, 0xb4पूर्ण, 0x00पूर्ण,
 
-		{{0x9c, 0x01}, 0x08},
+		अणुअणु0x9c, 0x01पूर्ण, 0x08पूर्ण,
 
-		{{0x9e, 0xaa}, 0x01},
+		अणुअणु0x9e, 0xaaपूर्ण, 0x01पूर्ण,
 
-		{{0x9b, 0xd1}, 0x17},
-		{{0x9b, 0xd2}, 0x58},
-		{{0x9b, 0xd3}, 0x10},
-		{{0x9b, 0xd4}, 0x47},
-		{{0x9b, 0xd5}, 0x0c},
-		{{0x9b, 0xd6}, 0x37},
-		{{0x9b, 0xdd}, 0x33},
+		अणुअणु0x9b, 0xd1पूर्ण, 0x17पूर्ण,
+		अणुअणु0x9b, 0xd2पूर्ण, 0x58पूर्ण,
+		अणुअणु0x9b, 0xd3पूर्ण, 0x10पूर्ण,
+		अणुअणु0x9b, 0xd4पूर्ण, 0x47पूर्ण,
+		अणुअणु0x9b, 0xd5पूर्ण, 0x0cपूर्ण,
+		अणुअणु0x9b, 0xd6पूर्ण, 0x37पूर्ण,
+		अणुअणु0x9b, 0xddपूर्ण, 0x33पूर्ण,
 
-		{{0x9b, 0x84}, 0x00},
-		{{0x99, 0x81}, 0x79},
-		{{0x99, 0x31}, 0x79},
+		अणुअणु0x9b, 0x84पूर्ण, 0x00पूर्ण,
+		अणुअणु0x99, 0x81पूर्ण, 0x79पूर्ण,
+		अणुअणु0x99, 0x31पूर्ण, 0x79पूर्ण,
 
-		{{0x98, 0x00}, 0x3f},
+		अणुअणु0x98, 0x00पूर्ण, 0x3fपूर्ण,
 
-		{{0x9f, 0x09}, 0x02},
+		अणुअणु0x9f, 0x09पूर्ण, 0x02पूर्ण,
 
-		{{0x9f, 0x0a}, 0x05},
+		अणुअणु0x9f, 0x0aपूर्ण, 0x05पूर्ण,
 
-		{{0x9e, 0xd1}, 0xa1},
-		{{0x99, 0x23}, 0x01},
+		अणुअणु0x9e, 0xd1पूर्ण, 0xa1पूर्ण,
+		अणुअणु0x99, 0x23पूर्ण, 0x01पूर्ण,
 
-		{{0x9e, 0x74}, 0x00},
-		{{0x9e, 0x90}, 0x00},
-		{{0x9f, 0x28}, 0x10},
+		अणुअणु0x9e, 0x74पूर्ण, 0x00पूर्ण,
+		अणुअणु0x9e, 0x90पूर्ण, 0x00पूर्ण,
+		अणुअणु0x9f, 0x28पूर्ण, 0x10पूर्ण,
 
-		{{0x9f, 0x35}, 0x04},
+		अणुअणु0x9f, 0x35पूर्ण, 0x04पूर्ण,
 
-		{{0x9f, 0x36}, 0x11},
+		अणुअणु0x9f, 0x36पूर्ण, 0x11पूर्ण,
 
-		{{0x9c, 0x31}, 0x00},
+		अणुअणु0x9c, 0x31पूर्ण, 0x00पूर्ण,
 
-		{{0x9c, 0x32}, 0x00},
+		अणुअणु0x9c, 0x32पूर्ण, 0x00पूर्ण,
 
-		{{0x9c, 0x19}, 0x0a},
+		अणुअणु0x9c, 0x19पूर्ण, 0x0aपूर्ण,
 
-		{{0x9c, 0x1a}, 0x0a},
+		अणुअणु0x9c, 0x1aपूर्ण, 0x0aपूर्ण,
 
-		{{0x9c, 0x0c}, 0x00},
+		अणुअणु0x9c, 0x0cपूर्ण, 0x00पूर्ण,
 
-		{{0x9c, 0x0d}, 0x00},
+		अणुअणु0x9c, 0x0dपूर्ण, 0x00पूर्ण,
 
-		{{0x9c, 0x12}, 0x00},
+		अणुअणु0x9c, 0x12पूर्ण, 0x00पूर्ण,
 
-		{{0x9c, 0x13}, 0x00},
+		अणुअणु0x9c, 0x13पूर्ण, 0x00पूर्ण,
 
-		{{0x98, 0xa2}, 0x09},
+		अणुअणु0x98, 0xa2पूर्ण, 0x09पूर्ण,
 
-		{{0x98, 0x93}, 0x00},
+		अणुअणु0x98, 0x93पूर्ण, 0x00पूर्ण,
 
-		{{0x98, 0x7d}, 0x08},
-		{{0x98, 0x7e}, 0x00},
-		{{0x9f, 0xc8}, 0x00},
-	};
-	struct hw_config *p = hw_config;
-	int count = ARRAY_SIZE(hw_config);
-	struct sk_buff *res_skb;
+		अणुअणु0x98, 0x7dपूर्ण, 0x08पूर्ण,
+		अणुअणु0x98, 0x7eपूर्ण, 0x00पूर्ण,
+		अणुअणु0x9f, 0xc8पूर्ण, 0x00पूर्ण,
+	पूर्ण;
+	काष्ठा hw_config *p = hw_config;
+	पूर्णांक count = ARRAY_SIZE(hw_config);
+	काष्ठा sk_buff *res_skb;
 	u8 param[4];
-	int r;
+	पूर्णांक r;
 
 	param[0] = 0;
-	while (count--) {
+	जबतक (count--) अणु
 		param[1] = p->adr[0];
 		param[2] = p->adr[1];
 		param[3] = p->value;
 
 		r = nfc_hci_send_cmd(hdev, PN544_SYS_MGMT_GATE, PN544_WRITE,
 				     param, 4, &res_skb);
-		if (r < 0)
-			return r;
+		अगर (r < 0)
+			वापस r;
 
-		if (res_skb->len != 1) {
-			kfree_skb(res_skb);
-			return -EPROTO;
-		}
+		अगर (res_skb->len != 1) अणु
+			kमुक्त_skb(res_skb);
+			वापस -EPROTO;
+		पूर्ण
 
-		if (res_skb->data[0] != p->value) {
-			kfree_skb(res_skb);
-			return -EIO;
-		}
+		अगर (res_skb->data[0] != p->value) अणु
+			kमुक्त_skb(res_skb);
+			वापस -EIO;
+		पूर्ण
 
-		kfree_skb(res_skb);
+		kमुक्त_skb(res_skb);
 
 		p++;
-	}
+	पूर्ण
 
 	param[0] = NFC_HCI_UICC_HOST_ID;
 	r = nfc_hci_set_param(hdev, NFC_HCI_ADMIN_GATE,
 			      NFC_HCI_ADMIN_WHITELIST, param, 1);
-	if (r < 0)
-		return r;
+	अगर (r < 0)
+		वापस r;
 
 	param[0] = 0x3d;
 	r = nfc_hci_set_param(hdev, PN544_SYS_MGMT_GATE,
 			      PN544_SYS_MGMT_INFO_NOTIFICATION, param, 1);
-	if (r < 0)
-		return r;
+	अगर (r < 0)
+		वापस r;
 
 	param[0] = 0x0;
 	r = nfc_hci_set_param(hdev, NFC_HCI_RF_READER_A_GATE,
 			      PN544_RF_READER_A_AUTO_ACTIVATION, param, 1);
-	if (r < 0)
-		return r;
+	अगर (r < 0)
+		वापस r;
 
 	r = nfc_hci_send_event(hdev, NFC_HCI_RF_READER_A_GATE,
-			       NFC_HCI_EVT_END_OPERATION, NULL, 0);
-	if (r < 0)
-		return r;
+			       NFC_HCI_EVT_END_OPERATION, शून्य, 0);
+	अगर (r < 0)
+		वापस r;
 
 	param[0] = 0x1;
 	r = nfc_hci_set_param(hdev, PN544_POLLING_LOOP_MGMT_GATE,
 			      PN544_PL_NFCT_DEACTIVATED, param, 1);
-	if (r < 0)
-		return r;
+	अगर (r < 0)
+		वापस r;
 
 	param[0] = 0x0;
 	r = nfc_hci_set_param(hdev, PN544_POLLING_LOOP_MGMT_GATE,
 			      PN544_PL_RDPHASES, param, 1);
-	if (r < 0)
-		return r;
+	अगर (r < 0)
+		वापस r;
 
 	r = nfc_hci_get_param(hdev, NFC_HCI_ID_MGMT_GATE,
 			      PN544_ID_MGMT_FULL_VERSION_SW, &skb);
-	if (r < 0)
-		return r;
+	अगर (r < 0)
+		वापस r;
 
-	if (skb->len != FULL_VERSION_LEN) {
-		kfree_skb(skb);
-		return -EINVAL;
-	}
+	अगर (skb->len != FULL_VERSION_LEN) अणु
+		kमुक्त_skb(skb);
+		वापस -EINVAL;
+	पूर्ण
 
-	print_hex_dump(KERN_DEBUG, "FULL VERSION SOFTWARE INFO: ",
+	prपूर्णांक_hex_dump(KERN_DEBUG, "FULL VERSION SOFTWARE INFO: ",
 		       DUMP_PREFIX_NONE, 16, 1,
 		       skb->data, FULL_VERSION_LEN, false);
 
-	kfree_skb(skb);
+	kमुक्त_skb(skb);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int pn544_hci_xmit(struct nfc_hci_dev *hdev, struct sk_buff *skb)
-{
-	struct pn544_hci_info *info = nfc_hci_get_clientdata(hdev);
+अटल पूर्णांक pn544_hci_xmit(काष्ठा nfc_hci_dev *hdev, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा pn544_hci_info *info = nfc_hci_get_clientdata(hdev);
 
-	return info->phy_ops->write(info->phy_id, skb);
-}
+	वापस info->phy_ops->ग_लिखो(info->phy_id, skb);
+पूर्ण
 
-static int pn544_hci_start_poll(struct nfc_hci_dev *hdev,
-				u32 im_protocols, u32 tm_protocols)
-{
+अटल पूर्णांक pn544_hci_start_poll(काष्ठा nfc_hci_dev *hdev,
+				u32 im_protocols, u32 पंचांग_protocols)
+अणु
 	u8 phases = 0;
-	int r;
+	पूर्णांक r;
 	u8 duration[2];
 	u8 activated;
 	u8 i_mode = 0x3f; /* Enable all supported modes */
 	u8 t_mode = 0x0f;
-	u8 t_merge = 0x01; /* Enable merge by default */
+	u8 t_merge = 0x01; /* Enable merge by शेष */
 
 	pr_info(DRIVER_DESC ": %s protocols 0x%x 0x%x\n",
-		__func__, im_protocols, tm_protocols);
+		__func__, im_protocols, पंचांग_protocols);
 
 	r = nfc_hci_send_event(hdev, NFC_HCI_RF_READER_A_GATE,
-			       NFC_HCI_EVT_END_OPERATION, NULL, 0);
-	if (r < 0)
-		return r;
+			       NFC_HCI_EVT_END_OPERATION, शून्य, 0);
+	अगर (r < 0)
+		वापस r;
 
 	duration[0] = 0x18;
 	duration[1] = 0x6a;
 	r = nfc_hci_set_param(hdev, PN544_POLLING_LOOP_MGMT_GATE,
 			      PN544_PL_EMULATION, duration, 2);
-	if (r < 0)
-		return r;
+	अगर (r < 0)
+		वापस r;
 
 	activated = 0;
 	r = nfc_hci_set_param(hdev, PN544_POLLING_LOOP_MGMT_GATE,
 			      PN544_PL_NFCT_DEACTIVATED, &activated, 1);
-	if (r < 0)
-		return r;
+	अगर (r < 0)
+		वापस r;
 
-	if (im_protocols & (NFC_PROTO_ISO14443_MASK | NFC_PROTO_MIFARE_MASK |
+	अगर (im_protocols & (NFC_PROTO_ISO14443_MASK | NFC_PROTO_MIFARE_MASK |
 			 NFC_PROTO_JEWEL_MASK))
 		phases |= 1;		/* Type A */
-	if (im_protocols & NFC_PROTO_FELICA_MASK) {
+	अगर (im_protocols & NFC_PROTO_FELICA_MASK) अणु
 		phases |= (1 << 2);	/* Type F 212 */
 		phases |= (1 << 3);	/* Type F 424 */
-	}
+	पूर्ण
 
 	phases |= (1 << 5);		/* NFC active */
 
 	r = nfc_hci_set_param(hdev, PN544_POLLING_LOOP_MGMT_GATE,
 			      PN544_PL_RDPHASES, &phases, 1);
-	if (r < 0)
-		return r;
+	अगर (r < 0)
+		वापस r;
 
-	if ((im_protocols | tm_protocols) & NFC_PROTO_NFC_DEP_MASK) {
+	अगर ((im_protocols | पंचांग_protocols) & NFC_PROTO_NFC_DEP_MASK) अणु
 		hdev->gb = nfc_get_local_general_bytes(hdev->ndev,
 							&hdev->gb_len);
 		pr_debug("generate local bytes %p\n", hdev->gb);
-		if (hdev->gb == NULL || hdev->gb_len == 0) {
+		अगर (hdev->gb == शून्य || hdev->gb_len == 0) अणु
 			im_protocols &= ~NFC_PROTO_NFC_DEP_MASK;
-			tm_protocols &= ~NFC_PROTO_NFC_DEP_MASK;
-		}
-	}
+			पंचांग_protocols &= ~NFC_PROTO_NFC_DEP_MASK;
+		पूर्ण
+	पूर्ण
 
-	if (im_protocols & NFC_PROTO_NFC_DEP_MASK) {
+	अगर (im_protocols & NFC_PROTO_NFC_DEP_MASK) अणु
 		r = nfc_hci_send_event(hdev,
 				PN544_RF_READER_NFCIP1_INITIATOR_GATE,
-				NFC_HCI_EVT_END_OPERATION, NULL, 0);
-		if (r < 0)
-			return r;
+				NFC_HCI_EVT_END_OPERATION, शून्य, 0);
+		अगर (r < 0)
+			वापस r;
 
 		r = nfc_hci_set_param(hdev,
 				PN544_RF_READER_NFCIP1_INITIATOR_GATE,
 				PN544_DEP_MODE, &i_mode, 1);
-		if (r < 0)
-			return r;
+		अगर (r < 0)
+			वापस r;
 
 		r = nfc_hci_set_param(hdev,
 				PN544_RF_READER_NFCIP1_INITIATOR_GATE,
 				PN544_DEP_ATR_REQ, hdev->gb, hdev->gb_len);
-		if (r < 0)
-			return r;
+		अगर (r < 0)
+			वापस r;
 
 		r = nfc_hci_send_event(hdev,
 				PN544_RF_READER_NFCIP1_INITIATOR_GATE,
-				NFC_HCI_EVT_READER_REQUESTED, NULL, 0);
-		if (r < 0)
+				NFC_HCI_EVT_READER_REQUESTED, शून्य, 0);
+		अगर (r < 0)
 			nfc_hci_send_event(hdev,
 					PN544_RF_READER_NFCIP1_INITIATOR_GATE,
-					NFC_HCI_EVT_END_OPERATION, NULL, 0);
-	}
+					NFC_HCI_EVT_END_OPERATION, शून्य, 0);
+	पूर्ण
 
-	if (tm_protocols & NFC_PROTO_NFC_DEP_MASK) {
+	अगर (पंचांग_protocols & NFC_PROTO_NFC_DEP_MASK) अणु
 		r = nfc_hci_set_param(hdev, PN544_RF_READER_NFCIP1_TARGET_GATE,
 				PN544_DEP_MODE, &t_mode, 1);
-		if (r < 0)
-			return r;
+		अगर (r < 0)
+			वापस r;
 
 		r = nfc_hci_set_param(hdev, PN544_RF_READER_NFCIP1_TARGET_GATE,
 				PN544_DEP_ATR_RES, hdev->gb, hdev->gb_len);
-		if (r < 0)
-			return r;
+		अगर (r < 0)
+			वापस r;
 
 		r = nfc_hci_set_param(hdev, PN544_RF_READER_NFCIP1_TARGET_GATE,
 				PN544_DEP_MERGE, &t_merge, 1);
-		if (r < 0)
-			return r;
-	}
+		अगर (r < 0)
+			वापस r;
+	पूर्ण
 
 	r = nfc_hci_send_event(hdev, NFC_HCI_RF_READER_A_GATE,
-			       NFC_HCI_EVT_READER_REQUESTED, NULL, 0);
-	if (r < 0)
+			       NFC_HCI_EVT_READER_REQUESTED, शून्य, 0);
+	अगर (r < 0)
 		nfc_hci_send_event(hdev, NFC_HCI_RF_READER_A_GATE,
-				   NFC_HCI_EVT_END_OPERATION, NULL, 0);
+				   NFC_HCI_EVT_END_OPERATION, शून्य, 0);
 
-	return r;
-}
+	वापस r;
+पूर्ण
 
-static int pn544_hci_dep_link_up(struct nfc_hci_dev *hdev,
-				struct nfc_target *target, u8 comm_mode,
-				u8 *gb, size_t gb_len)
-{
-	struct sk_buff *rgb_skb = NULL;
-	int r;
+अटल पूर्णांक pn544_hci_dep_link_up(काष्ठा nfc_hci_dev *hdev,
+				काष्ठा nfc_target *target, u8 comm_mode,
+				u8 *gb, माप_प्रकार gb_len)
+अणु
+	काष्ठा sk_buff *rgb_skb = शून्य;
+	पूर्णांक r;
 
-	r = nfc_hci_get_param(hdev, target->hci_reader_gate,
+	r = nfc_hci_get_param(hdev, target->hci_पढ़ोer_gate,
 				PN544_DEP_ATR_RES, &rgb_skb);
-	if (r < 0)
-		return r;
+	अगर (r < 0)
+		वापस r;
 
-	if (rgb_skb->len == 0 || rgb_skb->len > NFC_GB_MAXSIZE) {
+	अगर (rgb_skb->len == 0 || rgb_skb->len > NFC_GB_MAXSIZE) अणु
 		r = -EPROTO;
-		goto exit;
-	}
-	print_hex_dump(KERN_DEBUG, "remote gb: ", DUMP_PREFIX_OFFSET,
+		जाओ निकास;
+	पूर्ण
+	prपूर्णांक_hex_dump(KERN_DEBUG, "remote gb: ", DUMP_PREFIX_OFFSET,
 			16, 1, rgb_skb->data, rgb_skb->len, true);
 
 	r = nfc_set_remote_general_bytes(hdev->ndev, rgb_skb->data,
 						rgb_skb->len);
 
-	if (r == 0)
+	अगर (r == 0)
 		r = nfc_dep_link_is_up(hdev->ndev, target->idx, comm_mode,
 					NFC_RF_INITIATOR);
-exit:
-	kfree_skb(rgb_skb);
-	return r;
-}
+निकास:
+	kमुक्त_skb(rgb_skb);
+	वापस r;
+पूर्ण
 
-static int pn544_hci_dep_link_down(struct nfc_hci_dev *hdev)
-{
+अटल पूर्णांक pn544_hci_dep_link_करोwn(काष्ठा nfc_hci_dev *hdev)
+अणु
 
-	return nfc_hci_send_event(hdev, PN544_RF_READER_NFCIP1_INITIATOR_GATE,
-					NFC_HCI_EVT_END_OPERATION, NULL, 0);
-}
+	वापस nfc_hci_send_event(hdev, PN544_RF_READER_NFCIP1_INITIATOR_GATE,
+					NFC_HCI_EVT_END_OPERATION, शून्य, 0);
+पूर्ण
 
-static int pn544_hci_target_from_gate(struct nfc_hci_dev *hdev, u8 gate,
-				      struct nfc_target *target)
-{
-	switch (gate) {
-	case PN544_RF_READER_F_GATE:
+अटल पूर्णांक pn544_hci_target_from_gate(काष्ठा nfc_hci_dev *hdev, u8 gate,
+				      काष्ठा nfc_target *target)
+अणु
+	चयन (gate) अणु
+	हाल PN544_RF_READER_F_GATE:
 		target->supported_protocols = NFC_PROTO_FELICA_MASK;
-		break;
-	case PN544_RF_READER_JEWEL_GATE:
+		अवरोध;
+	हाल PN544_RF_READER_JEWEL_GATE:
 		target->supported_protocols = NFC_PROTO_JEWEL_MASK;
 		target->sens_res = 0x0c00;
-		break;
-	case PN544_RF_READER_NFCIP1_INITIATOR_GATE:
+		अवरोध;
+	हाल PN544_RF_READER_NFCIP1_INITIATOR_GATE:
 		target->supported_protocols = NFC_PROTO_NFC_DEP_MASK;
-		break;
-	default:
-		return -EPROTO;
-	}
+		अवरोध;
+	शेष:
+		वापस -EPROTO;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int pn544_hci_complete_target_discovered(struct nfc_hci_dev *hdev,
+अटल पूर्णांक pn544_hci_complete_target_discovered(काष्ठा nfc_hci_dev *hdev,
 						u8 gate,
-						struct nfc_target *target)
-{
-	struct sk_buff *uid_skb;
-	int r = 0;
+						काष्ठा nfc_target *target)
+अणु
+	काष्ठा sk_buff *uid_skb;
+	पूर्णांक r = 0;
 
-	if (gate == PN544_RF_READER_NFCIP1_INITIATOR_GATE)
-		return r;
+	अगर (gate == PN544_RF_READER_NFCIP1_INITIATOR_GATE)
+		वापस r;
 
-	if (target->supported_protocols & NFC_PROTO_NFC_DEP_MASK) {
+	अगर (target->supported_protocols & NFC_PROTO_NFC_DEP_MASK) अणु
 		r = nfc_hci_send_cmd(hdev,
 			PN544_RF_READER_NFCIP1_INITIATOR_GATE,
-			PN544_HCI_CMD_CONTINUE_ACTIVATION, NULL, 0, NULL);
-		if (r < 0)
-			return r;
+			PN544_HCI_CMD_CONTINUE_ACTIVATION, शून्य, 0, शून्य);
+		अगर (r < 0)
+			वापस r;
 
-		target->hci_reader_gate = PN544_RF_READER_NFCIP1_INITIATOR_GATE;
-	} else if (target->supported_protocols & NFC_PROTO_MIFARE_MASK) {
-		if (target->nfcid1_len != 4 && target->nfcid1_len != 7 &&
+		target->hci_पढ़ोer_gate = PN544_RF_READER_NFCIP1_INITIATOR_GATE;
+	पूर्ण अन्यथा अगर (target->supported_protocols & NFC_PROTO_MIFARE_MASK) अणु
+		अगर (target->nfcid1_len != 4 && target->nfcid1_len != 7 &&
 		    target->nfcid1_len != 10)
-			return -EPROTO;
+			वापस -EPROTO;
 
 		r = nfc_hci_send_cmd(hdev, NFC_HCI_RF_READER_A_GATE,
 				     PN544_RF_READER_CMD_ACTIVATE_NEXT,
-				     target->nfcid1, target->nfcid1_len, NULL);
-	} else if (target->supported_protocols & NFC_PROTO_FELICA_MASK) {
+				     target->nfcid1, target->nfcid1_len, शून्य);
+	पूर्ण अन्यथा अगर (target->supported_protocols & NFC_PROTO_FELICA_MASK) अणु
 		r = nfc_hci_get_param(hdev, PN544_RF_READER_F_GATE,
 				      PN544_FELICA_ID, &uid_skb);
-		if (r < 0)
-			return r;
+		अगर (r < 0)
+			वापस r;
 
-		if (uid_skb->len != 8) {
-			kfree_skb(uid_skb);
-			return -EPROTO;
-		}
+		अगर (uid_skb->len != 8) अणु
+			kमुक्त_skb(uid_skb);
+			वापस -EPROTO;
+		पूर्ण
 
 		/* Type F NFC-DEP IDm has prefix 0x01FE */
-		if ((uid_skb->data[0] == 0x01) && (uid_skb->data[1] == 0xfe)) {
-			kfree_skb(uid_skb);
+		अगर ((uid_skb->data[0] == 0x01) && (uid_skb->data[1] == 0xfe)) अणु
+			kमुक्त_skb(uid_skb);
 			r = nfc_hci_send_cmd(hdev,
 					PN544_RF_READER_NFCIP1_INITIATOR_GATE,
 					PN544_HCI_CMD_CONTINUE_ACTIVATION,
-					NULL, 0, NULL);
-			if (r < 0)
-				return r;
+					शून्य, 0, शून्य);
+			अगर (r < 0)
+				वापस r;
 
 			target->supported_protocols = NFC_PROTO_NFC_DEP_MASK;
-			target->hci_reader_gate =
+			target->hci_पढ़ोer_gate =
 				PN544_RF_READER_NFCIP1_INITIATOR_GATE;
-		} else {
+		पूर्ण अन्यथा अणु
 			r = nfc_hci_send_cmd(hdev, PN544_RF_READER_F_GATE,
 					     PN544_RF_READER_CMD_ACTIVATE_NEXT,
-					     uid_skb->data, uid_skb->len, NULL);
-			kfree_skb(uid_skb);
-		}
-	} else if (target->supported_protocols & NFC_PROTO_ISO14443_MASK) {
+					     uid_skb->data, uid_skb->len, शून्य);
+			kमुक्त_skb(uid_skb);
+		पूर्ण
+	पूर्ण अन्यथा अगर (target->supported_protocols & NFC_PROTO_ISO14443_MASK) अणु
 		/*
-		 * TODO: maybe other ISO 14443 require some kind of continue
-		 * activation, but for now we've seen only this one below.
+		 * TODO: maybe other ISO 14443 require some kind of जारी
+		 * activation, but क्रम now we've seen only this one below.
 		 */
-		if (target->sens_res == 0x4403)	/* Type 4 Mifare DESFire */
+		अगर (target->sens_res == 0x4403)	/* Type 4 Mअगरare DESFire */
 			r = nfc_hci_send_cmd(hdev, NFC_HCI_RF_READER_A_GATE,
 			      PN544_RF_READER_A_CMD_CONTINUE_ACTIVATION,
-			      NULL, 0, NULL);
-	}
+			      शून्य, 0, शून्य);
+	पूर्ण
 
-	return r;
-}
+	वापस r;
+पूर्ण
 
-#define PN544_CB_TYPE_READER_F 1
+#घोषणा PN544_CB_TYPE_READER_F 1
 
-static void pn544_hci_data_exchange_cb(void *context, struct sk_buff *skb,
-				       int err)
-{
-	struct pn544_hci_info *info = context;
+अटल व्योम pn544_hci_data_exchange_cb(व्योम *context, काष्ठा sk_buff *skb,
+				       पूर्णांक err)
+अणु
+	काष्ठा pn544_hci_info *info = context;
 
-	switch (info->async_cb_type) {
-	case PN544_CB_TYPE_READER_F:
-		if (err == 0)
+	चयन (info->async_cb_type) अणु
+	हाल PN544_CB_TYPE_READER_F:
+		अगर (err == 0)
 			skb_pull(skb, 1);
 		info->async_cb(info->async_cb_context, skb, err);
-		break;
-	default:
-		if (err == 0)
-			kfree_skb(skb);
-		break;
-	}
-}
+		अवरोध;
+	शेष:
+		अगर (err == 0)
+			kमुक्त_skb(skb);
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-#define MIFARE_CMD_AUTH_KEY_A	0x60
-#define MIFARE_CMD_AUTH_KEY_B	0x61
-#define MIFARE_CMD_HEADER	2
-#define MIFARE_UID_LEN		4
-#define MIFARE_KEY_LEN		6
-#define MIFARE_CMD_LEN		12
+#घोषणा MIFARE_CMD_AUTH_KEY_A	0x60
+#घोषणा MIFARE_CMD_AUTH_KEY_B	0x61
+#घोषणा MIFARE_CMD_HEADER	2
+#घोषणा MIFARE_UID_LEN		4
+#घोषणा MIFARE_KEY_LEN		6
+#घोषणा MIFARE_CMD_LEN		12
 /*
  * Returns:
  * <= 0: driver handled the data exchange
- *    1: driver doesn't especially handle, please do standard processing
+ *    1: driver करोesn't especially handle, please करो standard processing
  */
-static int pn544_hci_im_transceive(struct nfc_hci_dev *hdev,
-				   struct nfc_target *target,
-				   struct sk_buff *skb, data_exchange_cb_t cb,
-				   void *cb_context)
-{
-	struct pn544_hci_info *info = nfc_hci_get_clientdata(hdev);
+अटल पूर्णांक pn544_hci_im_transceive(काष्ठा nfc_hci_dev *hdev,
+				   काष्ठा nfc_target *target,
+				   काष्ठा sk_buff *skb, data_exchange_cb_t cb,
+				   व्योम *cb_context)
+अणु
+	काष्ठा pn544_hci_info *info = nfc_hci_get_clientdata(hdev);
 
 	pr_info(DRIVER_DESC ": %s for gate=%d\n", __func__,
-		target->hci_reader_gate);
+		target->hci_पढ़ोer_gate);
 
-	switch (target->hci_reader_gate) {
-	case NFC_HCI_RF_READER_A_GATE:
-		if (target->supported_protocols & NFC_PROTO_MIFARE_MASK) {
+	चयन (target->hci_पढ़ोer_gate) अणु
+	हाल NFC_HCI_RF_READER_A_GATE:
+		अगर (target->supported_protocols & NFC_PROTO_MIFARE_MASK) अणु
 			/*
-			 * It seems that pn544 is inverting key and UID for
+			 * It seems that pn544 is inverting key and UID क्रम
 			 * MIFARE authentication commands.
 			 */
-			if (skb->len == MIFARE_CMD_LEN &&
+			अगर (skb->len == MIFARE_CMD_LEN &&
 			    (skb->data[0] == MIFARE_CMD_AUTH_KEY_A ||
-			     skb->data[0] == MIFARE_CMD_AUTH_KEY_B)) {
+			     skb->data[0] == MIFARE_CMD_AUTH_KEY_B)) अणु
 				u8 uid[MIFARE_UID_LEN];
 				u8 *data = skb->data + MIFARE_CMD_HEADER;
 
-				memcpy(uid, data + MIFARE_KEY_LEN,
+				स_नकल(uid, data + MIFARE_KEY_LEN,
 				       MIFARE_UID_LEN);
-				memmove(data + MIFARE_UID_LEN, data,
+				स_हटाओ(data + MIFARE_UID_LEN, data,
 					MIFARE_KEY_LEN);
-				memcpy(data, uid, MIFARE_UID_LEN);
-			}
+				स_नकल(data, uid, MIFARE_UID_LEN);
+			पूर्ण
 
-			return nfc_hci_send_cmd_async(hdev,
-						      target->hci_reader_gate,
+			वापस nfc_hci_send_cmd_async(hdev,
+						      target->hci_पढ़ोer_gate,
 						      PN544_MIFARE_CMD,
 						      skb->data, skb->len,
 						      cb, cb_context);
-		} else
-			return 1;
-	case PN544_RF_READER_F_GATE:
+		पूर्ण अन्यथा
+			वापस 1;
+	हाल PN544_RF_READER_F_GATE:
 		*(u8 *)skb_push(skb, 1) = 0;
 		*(u8 *)skb_push(skb, 1) = 0;
 
@@ -645,292 +646,292 @@ static int pn544_hci_im_transceive(struct nfc_hci_dev *hdev,
 		info->async_cb = cb;
 		info->async_cb_context = cb_context;
 
-		return nfc_hci_send_cmd_async(hdev, target->hci_reader_gate,
+		वापस nfc_hci_send_cmd_async(hdev, target->hci_पढ़ोer_gate,
 					      PN544_FELICA_RAW, skb->data,
 					      skb->len,
 					      pn544_hci_data_exchange_cb, info);
-	case PN544_RF_READER_JEWEL_GATE:
-		return nfc_hci_send_cmd_async(hdev, target->hci_reader_gate,
+	हाल PN544_RF_READER_JEWEL_GATE:
+		वापस nfc_hci_send_cmd_async(hdev, target->hci_पढ़ोer_gate,
 					      PN544_JEWEL_RAW_CMD, skb->data,
 					      skb->len, cb, cb_context);
-	case PN544_RF_READER_NFCIP1_INITIATOR_GATE:
+	हाल PN544_RF_READER_NFCIP1_INITIATOR_GATE:
 		*(u8 *)skb_push(skb, 1) = 0;
 
-		return nfc_hci_send_event(hdev, target->hci_reader_gate,
+		वापस nfc_hci_send_event(hdev, target->hci_पढ़ोer_gate,
 					PN544_HCI_EVT_SND_DATA, skb->data,
 					skb->len);
-	default:
-		return 1;
-	}
-}
+	शेष:
+		वापस 1;
+	पूर्ण
+पूर्ण
 
-static int pn544_hci_tm_send(struct nfc_hci_dev *hdev, struct sk_buff *skb)
-{
-	int r;
+अटल पूर्णांक pn544_hci_पंचांग_send(काष्ठा nfc_hci_dev *hdev, काष्ठा sk_buff *skb)
+अणु
+	पूर्णांक r;
 
-	/* Set default false for multiple information chaining */
+	/* Set शेष false क्रम multiple inक्रमmation chaining */
 	*(u8 *)skb_push(skb, 1) = 0;
 
 	r = nfc_hci_send_event(hdev, PN544_RF_READER_NFCIP1_TARGET_GATE,
 			       PN544_HCI_EVT_SND_DATA, skb->data, skb->len);
 
-	kfree_skb(skb);
+	kमुक्त_skb(skb);
 
-	return r;
-}
+	वापस r;
+पूर्ण
 
-static int pn544_hci_check_presence(struct nfc_hci_dev *hdev,
-				   struct nfc_target *target)
-{
+अटल पूर्णांक pn544_hci_check_presence(काष्ठा nfc_hci_dev *hdev,
+				   काष्ठा nfc_target *target)
+अणु
 	pr_debug("supported protocol %d\n", target->supported_protocols);
-	if (target->supported_protocols & (NFC_PROTO_ISO14443_MASK |
-					NFC_PROTO_ISO14443_B_MASK)) {
-		return nfc_hci_send_cmd(hdev, target->hci_reader_gate,
+	अगर (target->supported_protocols & (NFC_PROTO_ISO14443_MASK |
+					NFC_PROTO_ISO14443_B_MASK)) अणु
+		वापस nfc_hci_send_cmd(hdev, target->hci_पढ़ोer_gate,
 					PN544_RF_READER_CMD_PRESENCE_CHECK,
-					NULL, 0, NULL);
-	} else if (target->supported_protocols & NFC_PROTO_MIFARE_MASK) {
-		if (target->nfcid1_len != 4 && target->nfcid1_len != 7 &&
+					शून्य, 0, शून्य);
+	पूर्ण अन्यथा अगर (target->supported_protocols & NFC_PROTO_MIFARE_MASK) अणु
+		अगर (target->nfcid1_len != 4 && target->nfcid1_len != 7 &&
 		    target->nfcid1_len != 10)
-			return -EOPNOTSUPP;
+			वापस -EOPNOTSUPP;
 
-		return nfc_hci_send_cmd(hdev, NFC_HCI_RF_READER_A_GATE,
+		वापस nfc_hci_send_cmd(hdev, NFC_HCI_RF_READER_A_GATE,
 				     PN544_RF_READER_CMD_ACTIVATE_NEXT,
-				     target->nfcid1, target->nfcid1_len, NULL);
-	} else if (target->supported_protocols & (NFC_PROTO_JEWEL_MASK |
-						NFC_PROTO_FELICA_MASK)) {
-		return -EOPNOTSUPP;
-	} else if (target->supported_protocols & NFC_PROTO_NFC_DEP_MASK) {
-		return nfc_hci_send_cmd(hdev, target->hci_reader_gate,
+				     target->nfcid1, target->nfcid1_len, शून्य);
+	पूर्ण अन्यथा अगर (target->supported_protocols & (NFC_PROTO_JEWEL_MASK |
+						NFC_PROTO_FELICA_MASK)) अणु
+		वापस -EOPNOTSUPP;
+	पूर्ण अन्यथा अगर (target->supported_protocols & NFC_PROTO_NFC_DEP_MASK) अणु
+		वापस nfc_hci_send_cmd(hdev, target->hci_पढ़ोer_gate,
 					PN544_HCI_CMD_ATTREQUEST,
-					NULL, 0, NULL);
-	}
+					शून्य, 0, शून्य);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * Returns:
  * <= 0: driver handled the event, skb consumed
- *    1: driver does not handle the event, please do standard processing
+ *    1: driver करोes not handle the event, please करो standard processing
  */
-static int pn544_hci_event_received(struct nfc_hci_dev *hdev, u8 pipe, u8 event,
-				    struct sk_buff *skb)
-{
-	struct sk_buff *rgb_skb = NULL;
+अटल पूर्णांक pn544_hci_event_received(काष्ठा nfc_hci_dev *hdev, u8 pipe, u8 event,
+				    काष्ठा sk_buff *skb)
+अणु
+	काष्ठा sk_buff *rgb_skb = शून्य;
 	u8 gate = hdev->pipes[pipe].gate;
-	int r;
+	पूर्णांक r;
 
 	pr_debug("hci event %d\n", event);
-	switch (event) {
-	case PN544_HCI_EVT_ACTIVATED:
-		if (gate == PN544_RF_READER_NFCIP1_INITIATOR_GATE) {
+	चयन (event) अणु
+	हाल PN544_HCI_EVT_ACTIVATED:
+		अगर (gate == PN544_RF_READER_NFCIP1_INITIATOR_GATE) अणु
 			r = nfc_hci_target_discovered(hdev, gate);
-		} else if (gate == PN544_RF_READER_NFCIP1_TARGET_GATE) {
+		पूर्ण अन्यथा अगर (gate == PN544_RF_READER_NFCIP1_TARGET_GATE) अणु
 			r = nfc_hci_get_param(hdev, gate, PN544_DEP_ATR_REQ,
 					      &rgb_skb);
-			if (r < 0)
-				goto exit;
+			अगर (r < 0)
+				जाओ निकास;
 
-			r = nfc_tm_activated(hdev->ndev, NFC_PROTO_NFC_DEP_MASK,
+			r = nfc_पंचांग_activated(hdev->ndev, NFC_PROTO_NFC_DEP_MASK,
 					     NFC_COMM_PASSIVE, rgb_skb->data,
 					     rgb_skb->len);
 
-			kfree_skb(rgb_skb);
-		} else {
+			kमुक्त_skb(rgb_skb);
+		पूर्ण अन्यथा अणु
 			r = -EINVAL;
-		}
-		break;
-	case PN544_HCI_EVT_DEACTIVATED:
+		पूर्ण
+		अवरोध;
+	हाल PN544_HCI_EVT_DEACTIVATED:
 		r = nfc_hci_send_event(hdev, gate, NFC_HCI_EVT_END_OPERATION,
-				       NULL, 0);
-		break;
-	case PN544_HCI_EVT_RCV_DATA:
-		if (skb->len < 2) {
+				       शून्य, 0);
+		अवरोध;
+	हाल PN544_HCI_EVT_RCV_DATA:
+		अगर (skb->len < 2) अणु
 			r = -EPROTO;
-			goto exit;
-		}
+			जाओ निकास;
+		पूर्ण
 
-		if (skb->data[0] != 0) {
+		अगर (skb->data[0] != 0) अणु
 			pr_debug("data0 %d\n", skb->data[0]);
 			r = -EPROTO;
-			goto exit;
-		}
+			जाओ निकास;
+		पूर्ण
 
 		skb_pull(skb, 2);
-		return nfc_tm_data_received(hdev->ndev, skb);
-	default:
-		return 1;
-	}
+		वापस nfc_पंचांग_data_received(hdev->ndev, skb);
+	शेष:
+		वापस 1;
+	पूर्ण
 
-exit:
-	kfree_skb(skb);
+निकास:
+	kमुक्त_skb(skb);
 
-	return r;
-}
+	वापस r;
+पूर्ण
 
-static int pn544_hci_fw_download(struct nfc_hci_dev *hdev,
-				 const char *firmware_name)
-{
-	struct pn544_hci_info *info = nfc_hci_get_clientdata(hdev);
+अटल पूर्णांक pn544_hci_fw_करोwnload(काष्ठा nfc_hci_dev *hdev,
+				 स्थिर अक्षर *firmware_name)
+अणु
+	काष्ठा pn544_hci_info *info = nfc_hci_get_clientdata(hdev);
 
-	if (info->fw_download == NULL)
-		return -ENOTSUPP;
+	अगर (info->fw_करोwnload == शून्य)
+		वापस -ENOTSUPP;
 
-	return info->fw_download(info->phy_id, firmware_name, hdev->sw_romlib);
-}
+	वापस info->fw_करोwnload(info->phy_id, firmware_name, hdev->sw_romlib);
+पूर्ण
 
-static int pn544_hci_discover_se(struct nfc_hci_dev *hdev)
-{
+अटल पूर्णांक pn544_hci_discover_se(काष्ठा nfc_hci_dev *hdev)
+अणु
 	u32 se_idx = 0;
 	u8 ese_mode = 0x01; /* Default mode */
-	struct sk_buff *res_skb;
-	int r;
+	काष्ठा sk_buff *res_skb;
+	पूर्णांक r;
 
 	r = nfc_hci_send_cmd(hdev, PN544_SYS_MGMT_GATE, PN544_TEST_SWP,
-			     NULL, 0, &res_skb);
+			     शून्य, 0, &res_skb);
 
-	if (r == 0) {
-		if (res_skb->len == 2 && res_skb->data[0] == 0x00)
+	अगर (r == 0) अणु
+		अगर (res_skb->len == 2 && res_skb->data[0] == 0x00)
 			nfc_add_se(hdev->ndev, se_idx++, NFC_SE_UICC);
 
-		kfree_skb(res_skb);
-	}
+		kमुक्त_skb(res_skb);
+	पूर्ण
 
 	r = nfc_hci_send_event(hdev, PN544_NFC_WI_MGMT_GATE,
 				PN544_HCI_EVT_SWITCH_MODE,
 				&ese_mode, 1);
-	if (r == 0)
+	अगर (r == 0)
 		nfc_add_se(hdev->ndev, se_idx++, NFC_SE_EMBEDDED);
 
-	return !se_idx;
-}
+	वापस !se_idx;
+पूर्ण
 
-#define PN544_SE_MODE_OFF	0x00
-#define PN544_SE_MODE_ON	0x01
-static int pn544_hci_enable_se(struct nfc_hci_dev *hdev, u32 se_idx)
-{
-	struct nfc_se *se;
+#घोषणा PN544_SE_MODE_OFF	0x00
+#घोषणा PN544_SE_MODE_ON	0x01
+अटल पूर्णांक pn544_hci_enable_se(काष्ठा nfc_hci_dev *hdev, u32 se_idx)
+अणु
+	काष्ठा nfc_se *se;
 	u8 enable = PN544_SE_MODE_ON;
-	static struct uicc_gatelist {
+	अटल काष्ठा uicc_gatelist अणु
 		u8 head;
 		u8 adr[2];
 		u8 value;
-	} uicc_gatelist[] = {
-		{0x00, {0x9e, 0xd9}, 0x23},
-		{0x00, {0x9e, 0xda}, 0x21},
-		{0x00, {0x9e, 0xdb}, 0x22},
-		{0x00, {0x9e, 0xdc}, 0x24},
-	};
-	struct uicc_gatelist *p = uicc_gatelist;
-	int count = ARRAY_SIZE(uicc_gatelist);
-	struct sk_buff *res_skb;
-	int r;
+	पूर्ण uicc_gatelist[] = अणु
+		अणु0x00, अणु0x9e, 0xd9पूर्ण, 0x23पूर्ण,
+		अणु0x00, अणु0x9e, 0xdaपूर्ण, 0x21पूर्ण,
+		अणु0x00, अणु0x9e, 0xdbपूर्ण, 0x22पूर्ण,
+		अणु0x00, अणु0x9e, 0xdcपूर्ण, 0x24पूर्ण,
+	पूर्ण;
+	काष्ठा uicc_gatelist *p = uicc_gatelist;
+	पूर्णांक count = ARRAY_SIZE(uicc_gatelist);
+	काष्ठा sk_buff *res_skb;
+	पूर्णांक r;
 
 	se = nfc_find_se(hdev->ndev, se_idx);
 
-	switch (se->type) {
-	case NFC_SE_UICC:
-		while (count--) {
+	चयन (se->type) अणु
+	हाल NFC_SE_UICC:
+		जबतक (count--) अणु
 			r = nfc_hci_send_cmd(hdev, PN544_SYS_MGMT_GATE,
 					PN544_WRITE, (u8 *)p, 4, &res_skb);
-			if (r < 0)
-				return r;
+			अगर (r < 0)
+				वापस r;
 
-			if (res_skb->len != 1) {
-				kfree_skb(res_skb);
-				return -EPROTO;
-			}
+			अगर (res_skb->len != 1) अणु
+				kमुक्त_skb(res_skb);
+				वापस -EPROTO;
+			पूर्ण
 
-			if (res_skb->data[0] != p->value) {
-				kfree_skb(res_skb);
-				return -EIO;
-			}
+			अगर (res_skb->data[0] != p->value) अणु
+				kमुक्त_skb(res_skb);
+				वापस -EIO;
+			पूर्ण
 
-			kfree_skb(res_skb);
+			kमुक्त_skb(res_skb);
 
 			p++;
-		}
+		पूर्ण
 
-		return nfc_hci_set_param(hdev, PN544_SWP_MGMT_GATE,
+		वापस nfc_hci_set_param(hdev, PN544_SWP_MGMT_GATE,
 			      PN544_SWP_DEFAULT_MODE, &enable, 1);
-	case NFC_SE_EMBEDDED:
-		return nfc_hci_set_param(hdev, PN544_NFC_WI_MGMT_GATE,
+	हाल NFC_SE_EMBEDDED:
+		वापस nfc_hci_set_param(hdev, PN544_NFC_WI_MGMT_GATE,
 			      PN544_NFC_ESE_DEFAULT_MODE, &enable, 1);
 
-	default:
-		return -EINVAL;
-	}
-}
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+पूर्ण
 
-static int pn544_hci_disable_se(struct nfc_hci_dev *hdev, u32 se_idx)
-{
-	struct nfc_se *se;
+अटल पूर्णांक pn544_hci_disable_se(काष्ठा nfc_hci_dev *hdev, u32 se_idx)
+अणु
+	काष्ठा nfc_se *se;
 	u8 disable = PN544_SE_MODE_OFF;
 
 	se = nfc_find_se(hdev->ndev, se_idx);
 
-	switch (se->type) {
-	case NFC_SE_UICC:
-		return nfc_hci_set_param(hdev, PN544_SWP_MGMT_GATE,
+	चयन (se->type) अणु
+	हाल NFC_SE_UICC:
+		वापस nfc_hci_set_param(hdev, PN544_SWP_MGMT_GATE,
 			      PN544_SWP_DEFAULT_MODE, &disable, 1);
-	case NFC_SE_EMBEDDED:
-		return nfc_hci_set_param(hdev, PN544_NFC_WI_MGMT_GATE,
+	हाल NFC_SE_EMBEDDED:
+		वापस nfc_hci_set_param(hdev, PN544_NFC_WI_MGMT_GATE,
 			      PN544_NFC_ESE_DEFAULT_MODE, &disable, 1);
-	default:
-		return -EINVAL;
-	}
-}
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+पूर्ण
 
-static struct nfc_hci_ops pn544_hci_ops = {
-	.open = pn544_hci_open,
-	.close = pn544_hci_close,
-	.hci_ready = pn544_hci_ready,
+अटल काष्ठा nfc_hci_ops pn544_hci_ops = अणु
+	.खोलो = pn544_hci_खोलो,
+	.बंद = pn544_hci_बंद,
+	.hci_पढ़ोy = pn544_hci_पढ़ोy,
 	.xmit = pn544_hci_xmit,
 	.start_poll = pn544_hci_start_poll,
 	.dep_link_up = pn544_hci_dep_link_up,
-	.dep_link_down = pn544_hci_dep_link_down,
+	.dep_link_करोwn = pn544_hci_dep_link_करोwn,
 	.target_from_gate = pn544_hci_target_from_gate,
 	.complete_target_discovered = pn544_hci_complete_target_discovered,
 	.im_transceive = pn544_hci_im_transceive,
-	.tm_send = pn544_hci_tm_send,
+	.पंचांग_send = pn544_hci_पंचांग_send,
 	.check_presence = pn544_hci_check_presence,
 	.event_received = pn544_hci_event_received,
-	.fw_download = pn544_hci_fw_download,
+	.fw_करोwnload = pn544_hci_fw_करोwnload,
 	.discover_se = pn544_hci_discover_se,
 	.enable_se = pn544_hci_enable_se,
 	.disable_se = pn544_hci_disable_se,
-};
+पूर्ण;
 
-int pn544_hci_probe(void *phy_id, struct nfc_phy_ops *phy_ops, char *llc_name,
-		    int phy_headroom, int phy_tailroom, int phy_payload,
-		    fw_download_t fw_download, struct nfc_hci_dev **hdev)
-{
-	struct pn544_hci_info *info;
+पूर्णांक pn544_hci_probe(व्योम *phy_id, काष्ठा nfc_phy_ops *phy_ops, अक्षर *llc_name,
+		    पूर्णांक phy_headroom, पूर्णांक phy_tailroom, पूर्णांक phy_payload,
+		    fw_करोwnload_t fw_करोwnload, काष्ठा nfc_hci_dev **hdev)
+अणु
+	काष्ठा pn544_hci_info *info;
 	u32 protocols;
-	struct nfc_hci_init_data init_data;
-	int r;
+	काष्ठा nfc_hci_init_data init_data;
+	पूर्णांक r;
 
-	info = kzalloc(sizeof(struct pn544_hci_info), GFP_KERNEL);
-	if (!info) {
+	info = kzalloc(माप(काष्ठा pn544_hci_info), GFP_KERNEL);
+	अगर (!info) अणु
 		r = -ENOMEM;
-		goto err_info_alloc;
-	}
+		जाओ err_info_alloc;
+	पूर्ण
 
 	info->phy_ops = phy_ops;
 	info->phy_id = phy_id;
-	info->fw_download = fw_download;
+	info->fw_करोwnload = fw_करोwnload;
 	info->state = PN544_ST_COLD;
 	mutex_init(&info->info_lock);
 
 	init_data.gate_count = ARRAY_SIZE(pn544_gates);
 
-	memcpy(init_data.gates, pn544_gates, sizeof(pn544_gates));
+	स_नकल(init_data.gates, pn544_gates, माप(pn544_gates));
 
 	/*
 	 * TODO: Session id must include the driver name + some bus addr
 	 * persistent info to discriminate 2 identical chips
 	 */
-	strcpy(init_data.session_id, "ID544HCI");
+	म_नकल(init_data.session_id, "ID544HCI");
 
 	protocols = NFC_PROTO_JEWEL_MASK |
 		    NFC_PROTO_MIFARE_MASK |
@@ -943,42 +944,42 @@ int pn544_hci_probe(void *phy_id, struct nfc_phy_ops *phy_ops, char *llc_name,
 					     protocols, llc_name,
 					     phy_headroom + PN544_CMDS_HEADROOM,
 					     phy_tailroom, phy_payload);
-	if (!info->hdev) {
+	अगर (!info->hdev) अणु
 		pr_err("Cannot allocate nfc hdev\n");
 		r = -ENOMEM;
-		goto err_alloc_hdev;
-	}
+		जाओ err_alloc_hdev;
+	पूर्ण
 
 	nfc_hci_set_clientdata(info->hdev, info);
 
-	r = nfc_hci_register_device(info->hdev);
-	if (r)
-		goto err_regdev;
+	r = nfc_hci_रेजिस्टर_device(info->hdev);
+	अगर (r)
+		जाओ err_regdev;
 
 	*hdev = info->hdev;
 
-	return 0;
+	वापस 0;
 
 err_regdev:
-	nfc_hci_free_device(info->hdev);
+	nfc_hci_मुक्त_device(info->hdev);
 
 err_alloc_hdev:
-	kfree(info);
+	kमुक्त(info);
 
 err_info_alloc:
-	return r;
-}
+	वापस r;
+पूर्ण
 EXPORT_SYMBOL(pn544_hci_probe);
 
-void pn544_hci_remove(struct nfc_hci_dev *hdev)
-{
-	struct pn544_hci_info *info = nfc_hci_get_clientdata(hdev);
+व्योम pn544_hci_हटाओ(काष्ठा nfc_hci_dev *hdev)
+अणु
+	काष्ठा pn544_hci_info *info = nfc_hci_get_clientdata(hdev);
 
-	nfc_hci_unregister_device(hdev);
-	nfc_hci_free_device(hdev);
-	kfree(info);
-}
-EXPORT_SYMBOL(pn544_hci_remove);
+	nfc_hci_unरेजिस्टर_device(hdev);
+	nfc_hci_मुक्त_device(hdev);
+	kमुक्त(info);
+पूर्ण
+EXPORT_SYMBOL(pn544_hci_हटाओ);
 
 MODULE_LICENSE("GPL");
 MODULE_DESCRIPTION(DRIVER_DESC);

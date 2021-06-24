@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  *  Copyright (c) 1999-2001 Vojtech Pavlik
  *
@@ -10,66 +11,66 @@
  */
 
 /*
- * Inport (ATI XL and Microsoft) busmouse driver for Linux
+ * Inport (ATI XL and Microsoft) busmouse driver क्रम Linux
  */
 
 /*
  */
 
-#include <linux/module.h>
-#include <linux/ioport.h>
-#include <linux/init.h>
-#include <linux/interrupt.h>
-#include <linux/input.h>
+#समावेश <linux/module.h>
+#समावेश <linux/ioport.h>
+#समावेश <linux/init.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/input.h>
 
-#include <asm/io.h>
-#include <asm/irq.h>
+#समावेश <यंत्र/पन.स>
+#समावेश <यंत्र/irq.h>
 
 MODULE_AUTHOR("Vojtech Pavlik <vojtech@ucw.cz>");
 MODULE_DESCRIPTION("Inport (ATI XL and Microsoft) busmouse driver");
 MODULE_LICENSE("GPL");
 
-#define INPORT_BASE		0x23c
-#define INPORT_EXTENT		4
+#घोषणा INPORT_BASE		0x23c
+#घोषणा INPORT_EXTENT		4
 
-#define INPORT_CONTROL_PORT	INPORT_BASE + 0
-#define INPORT_DATA_PORT	INPORT_BASE + 1
-#define INPORT_SIGNATURE_PORT	INPORT_BASE + 2
+#घोषणा INPORT_CONTROL_PORT	INPORT_BASE + 0
+#घोषणा INPORT_DATA_PORT	INPORT_BASE + 1
+#घोषणा INPORT_SIGNATURE_PORT	INPORT_BASE + 2
 
-#define INPORT_REG_BTNS	0x00
-#define INPORT_REG_X		0x01
-#define INPORT_REG_Y		0x02
-#define INPORT_REG_MODE		0x07
-#define INPORT_RESET		0x80
+#घोषणा INPORT_REG_BTNS	0x00
+#घोषणा INPORT_REG_X		0x01
+#घोषणा INPORT_REG_Y		0x02
+#घोषणा INPORT_REG_MODE		0x07
+#घोषणा INPORT_RESET		0x80
 
-#ifdef CONFIG_MOUSE_ATIXL
-#define INPORT_NAME		"ATI XL Mouse"
-#define INPORT_VENDOR		0x0002
-#define INPORT_SPEED_30HZ	0x01
-#define INPORT_SPEED_50HZ	0x02
-#define INPORT_SPEED_100HZ	0x03
-#define INPORT_SPEED_200HZ	0x04
-#define INPORT_MODE_BASE	INPORT_SPEED_100HZ
-#define INPORT_MODE_IRQ		0x08
-#else
-#define INPORT_NAME		"Microsoft InPort Mouse"
-#define INPORT_VENDOR		0x0001
-#define INPORT_MODE_BASE	0x10
-#define INPORT_MODE_IRQ		0x01
-#endif
-#define INPORT_MODE_HOLD	0x20
+#अगर_घोषित CONFIG_MOUSE_ATIXL
+#घोषणा INPORT_NAME		"ATI XL Mouse"
+#घोषणा INPORT_VENDOR		0x0002
+#घोषणा INPORT_SPEED_30HZ	0x01
+#घोषणा INPORT_SPEED_50HZ	0x02
+#घोषणा INPORT_SPEED_100HZ	0x03
+#घोषणा INPORT_SPEED_200HZ	0x04
+#घोषणा INPORT_MODE_BASE	INPORT_SPEED_100HZ
+#घोषणा INPORT_MODE_IRQ		0x08
+#अन्यथा
+#घोषणा INPORT_NAME		"Microsoft InPort Mouse"
+#घोषणा INPORT_VENDOR		0x0001
+#घोषणा INPORT_MODE_BASE	0x10
+#घोषणा INPORT_MODE_IRQ		0x01
+#पूर्ण_अगर
+#घोषणा INPORT_MODE_HOLD	0x20
 
-#define INPORT_IRQ		5
+#घोषणा INPORT_IRQ		5
 
-static int inport_irq = INPORT_IRQ;
-module_param_hw_named(irq, inport_irq, uint, irq, 0);
+अटल पूर्णांक inport_irq = INPORT_IRQ;
+module_param_hw_named(irq, inport_irq, uपूर्णांक, irq, 0);
 MODULE_PARM_DESC(irq, "IRQ number (5=default)");
 
-static struct input_dev *inport_dev;
+अटल काष्ठा input_dev *inport_dev;
 
-static irqreturn_t inport_interrupt(int irq, void *dev_id)
-{
-	unsigned char buttons;
+अटल irqवापस_t inport_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id)
+अणु
+	अचिन्हित अक्षर buttons;
 
 	outb(INPORT_REG_MODE, INPORT_CONTROL_PORT);
 	outb(INPORT_MODE_HOLD | INPORT_MODE_IRQ | INPORT_MODE_BASE, INPORT_DATA_PORT);
@@ -91,56 +92,56 @@ static irqreturn_t inport_interrupt(int irq, void *dev_id)
 	outb(INPORT_MODE_IRQ | INPORT_MODE_BASE, INPORT_DATA_PORT);
 
 	input_sync(inport_dev);
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static int inport_open(struct input_dev *dev)
-{
-	if (request_irq(inport_irq, inport_interrupt, 0, "inport", NULL))
-		return -EBUSY;
+अटल पूर्णांक inport_खोलो(काष्ठा input_dev *dev)
+अणु
+	अगर (request_irq(inport_irq, inport_पूर्णांकerrupt, 0, "inport", शून्य))
+		वापस -EBUSY;
 	outb(INPORT_REG_MODE, INPORT_CONTROL_PORT);
 	outb(INPORT_MODE_IRQ | INPORT_MODE_BASE, INPORT_DATA_PORT);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void inport_close(struct input_dev *dev)
-{
+अटल व्योम inport_बंद(काष्ठा input_dev *dev)
+अणु
 	outb(INPORT_REG_MODE, INPORT_CONTROL_PORT);
 	outb(INPORT_MODE_BASE, INPORT_DATA_PORT);
-	free_irq(inport_irq, NULL);
-}
+	मुक्त_irq(inport_irq, शून्य);
+पूर्ण
 
-static int __init inport_init(void)
-{
-	unsigned char a, b, c;
-	int err;
+अटल पूर्णांक __init inport_init(व्योम)
+अणु
+	अचिन्हित अक्षर a, b, c;
+	पूर्णांक err;
 
-	if (!request_region(INPORT_BASE, INPORT_EXTENT, "inport")) {
-		printk(KERN_ERR "inport.c: Can't allocate ports at %#x\n", INPORT_BASE);
-		return -EBUSY;
-	}
+	अगर (!request_region(INPORT_BASE, INPORT_EXTENT, "inport")) अणु
+		prपूर्णांकk(KERN_ERR "inport.c: Can't allocate ports at %#x\n", INPORT_BASE);
+		वापस -EBUSY;
+	पूर्ण
 
 	a = inb(INPORT_SIGNATURE_PORT);
 	b = inb(INPORT_SIGNATURE_PORT);
 	c = inb(INPORT_SIGNATURE_PORT);
-	if (a == b || a != c) {
-		printk(KERN_INFO "inport.c: Didn't find InPort mouse at %#x\n", INPORT_BASE);
+	अगर (a == b || a != c) अणु
+		prपूर्णांकk(KERN_INFO "inport.c: Didn't find InPort mouse at %#x\n", INPORT_BASE);
 		err = -ENODEV;
-		goto err_release_region;
-	}
+		जाओ err_release_region;
+	पूर्ण
 
 	inport_dev = input_allocate_device();
-	if (!inport_dev) {
-		printk(KERN_ERR "inport.c: Not enough memory for input device\n");
+	अगर (!inport_dev) अणु
+		prपूर्णांकk(KERN_ERR "inport.c: Not enough memory for input device\n");
 		err = -ENOMEM;
-		goto err_release_region;
-	}
+		जाओ err_release_region;
+	पूर्ण
 
 	inport_dev->name = INPORT_NAME;
 	inport_dev->phys = "isa023c/input0";
 	inport_dev->id.bustype = BUS_ISA;
-	inport_dev->id.vendor  = INPORT_VENDOR;
+	inport_dev->id.venकरोr  = INPORT_VENDOR;
 	inport_dev->id.product = 0x0001;
 	inport_dev->id.version = 0x0100;
 
@@ -149,32 +150,32 @@ static int __init inport_init(void)
 		BIT_MASK(BTN_MIDDLE) | BIT_MASK(BTN_RIGHT);
 	inport_dev->relbit[0] = BIT_MASK(REL_X) | BIT_MASK(REL_Y);
 
-	inport_dev->open  = inport_open;
-	inport_dev->close = inport_close;
+	inport_dev->खोलो  = inport_खोलो;
+	inport_dev->बंद = inport_बंद;
 
 	outb(INPORT_RESET, INPORT_CONTROL_PORT);
 	outb(INPORT_REG_MODE, INPORT_CONTROL_PORT);
 	outb(INPORT_MODE_BASE, INPORT_DATA_PORT);
 
-	err = input_register_device(inport_dev);
-	if (err)
-		goto err_free_dev;
+	err = input_रेजिस्टर_device(inport_dev);
+	अगर (err)
+		जाओ err_मुक्त_dev;
 
-	return 0;
+	वापस 0;
 
- err_free_dev:
-	input_free_device(inport_dev);
+ err_मुक्त_dev:
+	input_मुक्त_device(inport_dev);
  err_release_region:
 	release_region(INPORT_BASE, INPORT_EXTENT);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void __exit inport_exit(void)
-{
-	input_unregister_device(inport_dev);
+अटल व्योम __निकास inport_निकास(व्योम)
+अणु
+	input_unरेजिस्टर_device(inport_dev);
 	release_region(INPORT_BASE, INPORT_EXTENT);
-}
+पूर्ण
 
 module_init(inport_init);
-module_exit(inport_exit);
+module_निकास(inport_निकास);

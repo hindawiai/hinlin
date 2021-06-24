@@ -1,40 +1,41 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/debugfs.h>
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/debugfs.h>
 
-#include "drbd_int.h"
+#समावेश "drbd_int.h"
 
-#ifdef CONFIG_DEBUG_FS
-void __init drbd_debugfs_init(void);
-void drbd_debugfs_cleanup(void);
+#अगर_घोषित CONFIG_DEBUG_FS
+व्योम __init drbd_debugfs_init(व्योम);
+व्योम drbd_debugfs_cleanup(व्योम);
 
-void drbd_debugfs_resource_add(struct drbd_resource *resource);
-void drbd_debugfs_resource_cleanup(struct drbd_resource *resource);
+व्योम drbd_debugfs_resource_add(काष्ठा drbd_resource *resource);
+व्योम drbd_debugfs_resource_cleanup(काष्ठा drbd_resource *resource);
 
-void drbd_debugfs_connection_add(struct drbd_connection *connection);
-void drbd_debugfs_connection_cleanup(struct drbd_connection *connection);
+व्योम drbd_debugfs_connection_add(काष्ठा drbd_connection *connection);
+व्योम drbd_debugfs_connection_cleanup(काष्ठा drbd_connection *connection);
 
-void drbd_debugfs_device_add(struct drbd_device *device);
-void drbd_debugfs_device_cleanup(struct drbd_device *device);
+व्योम drbd_debugfs_device_add(काष्ठा drbd_device *device);
+व्योम drbd_debugfs_device_cleanup(काष्ठा drbd_device *device);
 
-void drbd_debugfs_peer_device_add(struct drbd_peer_device *peer_device);
-void drbd_debugfs_peer_device_cleanup(struct drbd_peer_device *peer_device);
-#else
+व्योम drbd_debugfs_peer_device_add(काष्ठा drbd_peer_device *peer_device);
+व्योम drbd_debugfs_peer_device_cleanup(काष्ठा drbd_peer_device *peer_device);
+#अन्यथा
 
-static inline void __init drbd_debugfs_init(void) { }
-static inline void drbd_debugfs_cleanup(void) { }
+अटल अंतरभूत व्योम __init drbd_debugfs_init(व्योम) अणु पूर्ण
+अटल अंतरभूत व्योम drbd_debugfs_cleanup(व्योम) अणु पूर्ण
 
-static inline void drbd_debugfs_resource_add(struct drbd_resource *resource) { }
-static inline void drbd_debugfs_resource_cleanup(struct drbd_resource *resource) { }
+अटल अंतरभूत व्योम drbd_debugfs_resource_add(काष्ठा drbd_resource *resource) अणु पूर्ण
+अटल अंतरभूत व्योम drbd_debugfs_resource_cleanup(काष्ठा drbd_resource *resource) अणु पूर्ण
 
-static inline void drbd_debugfs_connection_add(struct drbd_connection *connection) { }
-static inline void drbd_debugfs_connection_cleanup(struct drbd_connection *connection) { }
+अटल अंतरभूत व्योम drbd_debugfs_connection_add(काष्ठा drbd_connection *connection) अणु पूर्ण
+अटल अंतरभूत व्योम drbd_debugfs_connection_cleanup(काष्ठा drbd_connection *connection) अणु पूर्ण
 
-static inline void drbd_debugfs_device_add(struct drbd_device *device) { }
-static inline void drbd_debugfs_device_cleanup(struct drbd_device *device) { }
+अटल अंतरभूत व्योम drbd_debugfs_device_add(काष्ठा drbd_device *device) अणु पूर्ण
+अटल अंतरभूत व्योम drbd_debugfs_device_cleanup(काष्ठा drbd_device *device) अणु पूर्ण
 
-static inline void drbd_debugfs_peer_device_add(struct drbd_peer_device *peer_device) { }
-static inline void drbd_debugfs_peer_device_cleanup(struct drbd_peer_device *peer_device) { }
+अटल अंतरभूत व्योम drbd_debugfs_peer_device_add(काष्ठा drbd_peer_device *peer_device) अणु पूर्ण
+अटल अंतरभूत व्योम drbd_debugfs_peer_device_cleanup(काष्ठा drbd_peer_device *peer_device) अणु पूर्ण
 
-#endif
+#पूर्ण_अगर

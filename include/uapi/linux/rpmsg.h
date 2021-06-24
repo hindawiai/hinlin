@@ -1,36 +1,37 @@
-/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
 /*
  * Copyright (c) 2016, Linaro Ltd.
  */
 
-#ifndef _UAPI_RPMSG_H_
-#define _UAPI_RPMSG_H_
+#अगर_अघोषित _UAPI_RPMSG_H_
+#घोषणा _UAPI_RPMSG_H_
 
-#include <linux/ioctl.h>
-#include <linux/types.h>
+#समावेश <linux/ioctl.h>
+#समावेश <linux/types.h>
 
-#define RPMSG_ADDR_ANY		0xFFFFFFFF
+#घोषणा RPMSG_ADDR_ANY		0xFFFFFFFF
 
 /**
- * struct rpmsg_endpoint_info - endpoint info representation
+ * काष्ठा rpmsg_endpoपूर्णांक_info - endpoपूर्णांक info representation
  * @name: name of service
- * @src: local address. To set to RPMSG_ADDR_ANY if not used.
- * @dst: destination address. To set to RPMSG_ADDR_ANY if not used.
+ * @src: local address. To set to RPMSG_ADDR_ANY अगर not used.
+ * @dst: destination address. To set to RPMSG_ADDR_ANY अगर not used.
  */
-struct rpmsg_endpoint_info {
-	char name[32];
+काष्ठा rpmsg_endpoपूर्णांक_info अणु
+	अक्षर name[32];
 	__u32 src;
 	__u32 dst;
-};
+पूर्ण;
 
 /**
- * Instantiate a new rmpsg char device endpoint.
+ * Instantiate a new rmpsg अक्षर device endpoपूर्णांक.
  */
-#define RPMSG_CREATE_EPT_IOCTL	_IOW(0xb5, 0x1, struct rpmsg_endpoint_info)
+#घोषणा RPMSG_CREATE_EPT_IOCTL	_IOW(0xb5, 0x1, काष्ठा rpmsg_endpoपूर्णांक_info)
 
 /**
- * Destroy a rpmsg char device endpoint created by the RPMSG_CREATE_EPT_IOCTL.
+ * Destroy a rpmsg अक्षर device endpoपूर्णांक created by the RPMSG_CREATE_EPT_IOCTL.
  */
-#define RPMSG_DESTROY_EPT_IOCTL	_IO(0xb5, 0x2)
+#घोषणा RPMSG_DESTROY_EPT_IOCTL	_IO(0xb5, 0x2)
 
-#endif
+#पूर्ण_अगर

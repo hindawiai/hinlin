@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2015 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -21,30 +22,30 @@
  *
  */
 
-#include <linux/mm.h>
-#include <linux/slab.h>
-#include <linux/device.h>
-#include <linux/delay.h>
-#include <linux/errno.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/device.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/त्रुटिसं.स>
 
-#include "acp_gfx_if.h"
+#समावेश "acp_gfx_if.h"
 
-#define ACP_MODE_I2S	0
-#define ACP_MODE_AZ	1
+#घोषणा ACP_MODE_I2S	0
+#घोषणा ACP_MODE_AZ	1
 
-#define mmACP_AZALIA_I2S_SELECT 0x51d4
+#घोषणा mmACP_AZALIA_I2S_SELECT 0x51d4
 
-int amd_acp_hw_init(struct cgs_device *cgs_device,
-		    unsigned acp_version_major, unsigned acp_version_minor)
-{
-	unsigned int acp_mode = ACP_MODE_I2S;
+पूर्णांक amd_acp_hw_init(काष्ठा cgs_device *cgs_device,
+		    अचिन्हित acp_version_major, अचिन्हित acp_version_minor)
+अणु
+	अचिन्हित पूर्णांक acp_mode = ACP_MODE_I2S;
 
-	if ((acp_version_major == 2) && (acp_version_minor == 2))
-		acp_mode = cgs_read_register(cgs_device,
+	अगर ((acp_version_major == 2) && (acp_version_minor == 2))
+		acp_mode = cgs_पढ़ो_रेजिस्टर(cgs_device,
 					mmACP_AZALIA_I2S_SELECT);
 
-	if (acp_mode != ACP_MODE_I2S)
-		return -ENODEV;
+	अगर (acp_mode != ACP_MODE_I2S)
+		वापस -ENODEV;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

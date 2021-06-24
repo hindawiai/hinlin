@@ -1,392 +1,393 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * PCI searching functions
  *
  * Copyright (C) 1993 -- 1997 Drew Eckhardt, Frederic Potter,
  *					David Mosberger-Tang
  * Copyright (C) 1997 -- 2000 Martin Mares <mj@ucw.cz>
- * Copyright (C) 2003 -- 2004 Greg Kroah-Hartman <greg@kroah.com>
+ * Copyright (C) 2003 -- 2004 Greg Kroah-Harपंचांगan <greg@kroah.com>
  */
 
-#include <linux/pci.h>
-#include <linux/slab.h>
-#include <linux/module.h>
-#include <linux/interrupt.h>
-#include "pci.h"
+#समावेश <linux/pci.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/module.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश "pci.h"
 
 DECLARE_RWSEM(pci_bus_sem);
 
 /*
- * pci_for_each_dma_alias - Iterate over DMA aliases for a device
- * @pdev: starting downstream device
- * @fn: function to call for each alias
+ * pci_क्रम_each_dma_alias - Iterate over DMA aliases क्रम a device
+ * @pdev: starting करोwnstream device
+ * @fn: function to call क्रम each alias
  * @data: opaque data to pass to @fn
  *
- * Starting @pdev, walk up the bus calling @fn for each possible alias
+ * Starting @pdev, walk up the bus calling @fn क्रम each possible alias
  * of @pdev at the root bus.
  */
-int pci_for_each_dma_alias(struct pci_dev *pdev,
-			   int (*fn)(struct pci_dev *pdev,
-				     u16 alias, void *data), void *data)
-{
-	struct pci_bus *bus;
-	int ret;
+पूर्णांक pci_क्रम_each_dma_alias(काष्ठा pci_dev *pdev,
+			   पूर्णांक (*fn)(काष्ठा pci_dev *pdev,
+				     u16 alias, व्योम *data), व्योम *data)
+अणु
+	काष्ठा pci_bus *bus;
+	पूर्णांक ret;
 
 	/*
-	 * The device may have an explicit alias requester ID for DMA where the
+	 * The device may have an explicit alias requester ID क्रम DMA where the
 	 * requester is on another PCI bus.
 	 */
 	pdev = pci_real_dma_dev(pdev);
 
 	ret = fn(pdev, pci_dev_id(pdev), data);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	/*
-	 * If the device is broken and uses an alias requester ID for
+	 * If the device is broken and uses an alias requester ID क्रम
 	 * DMA, iterate over that too.
 	 */
-	if (unlikely(pdev->dma_alias_mask)) {
-		unsigned int devfn;
+	अगर (unlikely(pdev->dma_alias_mask)) अणु
+		अचिन्हित पूर्णांक devfn;
 
-		for_each_set_bit(devfn, pdev->dma_alias_mask, MAX_NR_DEVFNS) {
+		क्रम_each_set_bit(devfn, pdev->dma_alias_mask, MAX_NR_DEVFNS) अणु
 			ret = fn(pdev, PCI_DEVID(pdev->bus->number, devfn),
 				 data);
-			if (ret)
-				return ret;
-		}
-	}
+			अगर (ret)
+				वापस ret;
+		पूर्ण
+	पूर्ण
 
-	for (bus = pdev->bus; !pci_is_root_bus(bus); bus = bus->parent) {
-		struct pci_dev *tmp;
+	क्रम (bus = pdev->bus; !pci_is_root_bus(bus); bus = bus->parent) अणु
+		काष्ठा pci_dev *पंचांगp;
 
-		/* Skip virtual buses */
-		if (!bus->self)
-			continue;
+		/* Skip भव buses */
+		अगर (!bus->self)
+			जारी;
 
-		tmp = bus->self;
+		पंचांगp = bus->self;
 
 		/* stop at bridge where translation unit is associated */
-		if (tmp->dev_flags & PCI_DEV_FLAGS_BRIDGE_XLATE_ROOT)
-			return ret;
+		अगर (पंचांगp->dev_flags & PCI_DEV_FLAGS_BRIDGE_XLATE_ROOT)
+			वापस ret;
 
 		/*
-		 * PCIe-to-PCI/X bridges alias transactions from downstream
+		 * PCIe-to-PCI/X bridges alias transactions from करोwnstream
 		 * devices using the subordinate bus number (PCI Express to
-		 * PCI/PCI-X Bridge Spec, rev 1.0, sec 2.3).  For all cases
+		 * PCI/PCI-X Bridge Spec, rev 1.0, sec 2.3).  For all हालs
 		 * where the upstream bus is PCI/X we alias to the bridge
 		 * (there are various conditions in the previous reference
 		 * where the bridge may take ownership of transactions, even
-		 * when the secondary interface is PCI-X).
+		 * when the secondary पूर्णांकerface is PCI-X).
 		 */
-		if (pci_is_pcie(tmp)) {
-			switch (pci_pcie_type(tmp)) {
-			case PCI_EXP_TYPE_ROOT_PORT:
-			case PCI_EXP_TYPE_UPSTREAM:
-			case PCI_EXP_TYPE_DOWNSTREAM:
-				continue;
-			case PCI_EXP_TYPE_PCI_BRIDGE:
-				ret = fn(tmp,
-					 PCI_DEVID(tmp->subordinate->number,
+		अगर (pci_is_pcie(पंचांगp)) अणु
+			चयन (pci_pcie_type(पंचांगp)) अणु
+			हाल PCI_EXP_TYPE_ROOT_PORT:
+			हाल PCI_EXP_TYPE_UPSTREAM:
+			हाल PCI_EXP_TYPE_DOWNSTREAM:
+				जारी;
+			हाल PCI_EXP_TYPE_PCI_BRIDGE:
+				ret = fn(पंचांगp,
+					 PCI_DEVID(पंचांगp->subordinate->number,
 						   PCI_DEVFN(0, 0)), data);
-				if (ret)
-					return ret;
-				continue;
-			case PCI_EXP_TYPE_PCIE_BRIDGE:
-				ret = fn(tmp, pci_dev_id(tmp), data);
-				if (ret)
-					return ret;
-				continue;
-			}
-		} else {
-			if (tmp->dev_flags & PCI_DEV_FLAG_PCIE_BRIDGE_ALIAS)
-				ret = fn(tmp,
-					 PCI_DEVID(tmp->subordinate->number,
+				अगर (ret)
+					वापस ret;
+				जारी;
+			हाल PCI_EXP_TYPE_PCIE_BRIDGE:
+				ret = fn(पंचांगp, pci_dev_id(पंचांगp), data);
+				अगर (ret)
+					वापस ret;
+				जारी;
+			पूर्ण
+		पूर्ण अन्यथा अणु
+			अगर (पंचांगp->dev_flags & PCI_DEV_FLAG_PCIE_BRIDGE_ALIAS)
+				ret = fn(पंचांगp,
+					 PCI_DEVID(पंचांगp->subordinate->number,
 						   PCI_DEVFN(0, 0)), data);
-			else
-				ret = fn(tmp, pci_dev_id(tmp), data);
-			if (ret)
-				return ret;
-		}
-	}
+			अन्यथा
+				ret = fn(पंचांगp, pci_dev_id(पंचांगp), data);
+			अगर (ret)
+				वापस ret;
+		पूर्ण
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static struct pci_bus *pci_do_find_bus(struct pci_bus *bus, unsigned char busnr)
-{
-	struct pci_bus *child;
-	struct pci_bus *tmp;
+अटल काष्ठा pci_bus *pci_करो_find_bus(काष्ठा pci_bus *bus, अचिन्हित अक्षर busnr)
+अणु
+	काष्ठा pci_bus *child;
+	काष्ठा pci_bus *पंचांगp;
 
-	if (bus->number == busnr)
-		return bus;
+	अगर (bus->number == busnr)
+		वापस bus;
 
-	list_for_each_entry(tmp, &bus->children, node) {
-		child = pci_do_find_bus(tmp, busnr);
-		if (child)
-			return child;
-	}
-	return NULL;
-}
+	list_क्रम_each_entry(पंचांगp, &bus->children, node) अणु
+		child = pci_करो_find_bus(पंचांगp, busnr);
+		अगर (child)
+			वापस child;
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
 /**
- * pci_find_bus - locate PCI bus from a given domain and bus number
- * @domain: number of PCI domain to search
+ * pci_find_bus - locate PCI bus from a given करोमुख्य and bus number
+ * @करोमुख्य: number of PCI करोमुख्य to search
  * @busnr: number of desired PCI bus
  *
- * Given a PCI bus number and domain number, the desired PCI bus is located
- * in the global list of PCI buses.  If the bus is found, a pointer to its
- * data structure is returned.  If no bus is found, %NULL is returned.
+ * Given a PCI bus number and करोमुख्य number, the desired PCI bus is located
+ * in the global list of PCI buses.  If the bus is found, a poपूर्णांकer to its
+ * data काष्ठाure is वापसed.  If no bus is found, %शून्य is वापसed.
  */
-struct pci_bus *pci_find_bus(int domain, int busnr)
-{
-	struct pci_bus *bus = NULL;
-	struct pci_bus *tmp_bus;
+काष्ठा pci_bus *pci_find_bus(पूर्णांक करोमुख्य, पूर्णांक busnr)
+अणु
+	काष्ठा pci_bus *bus = शून्य;
+	काष्ठा pci_bus *पंचांगp_bus;
 
-	while ((bus = pci_find_next_bus(bus)) != NULL)  {
-		if (pci_domain_nr(bus) != domain)
-			continue;
-		tmp_bus = pci_do_find_bus(bus, busnr);
-		if (tmp_bus)
-			return tmp_bus;
-	}
-	return NULL;
-}
+	जबतक ((bus = pci_find_next_bus(bus)) != शून्य)  अणु
+		अगर (pci_करोमुख्य_nr(bus) != करोमुख्य)
+			जारी;
+		पंचांगp_bus = pci_करो_find_bus(bus, busnr);
+		अगर (पंचांगp_bus)
+			वापस पंचांगp_bus;
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 EXPORT_SYMBOL(pci_find_bus);
 
 /**
- * pci_find_next_bus - begin or continue searching for a PCI bus
- * @from: Previous PCI bus found, or %NULL for new search.
+ * pci_find_next_bus - begin or जारी searching क्रम a PCI bus
+ * @from: Previous PCI bus found, or %शून्य क्रम new search.
  *
  * Iterates through the list of known PCI buses.  A new search is
- * initiated by passing %NULL as the @from argument.  Otherwise if
- * @from is not %NULL, searches continue from next device on the
+ * initiated by passing %शून्य as the @from argument.  Otherwise अगर
+ * @from is not %शून्य, searches जारी from next device on the
  * global list.
  */
-struct pci_bus *pci_find_next_bus(const struct pci_bus *from)
-{
-	struct list_head *n;
-	struct pci_bus *b = NULL;
+काष्ठा pci_bus *pci_find_next_bus(स्थिर काष्ठा pci_bus *from)
+अणु
+	काष्ठा list_head *n;
+	काष्ठा pci_bus *b = शून्य;
 
-	down_read(&pci_bus_sem);
+	करोwn_पढ़ो(&pci_bus_sem);
 	n = from ? from->node.next : pci_root_buses.next;
-	if (n != &pci_root_buses)
-		b = list_entry(n, struct pci_bus, node);
-	up_read(&pci_bus_sem);
-	return b;
-}
+	अगर (n != &pci_root_buses)
+		b = list_entry(n, काष्ठा pci_bus, node);
+	up_पढ़ो(&pci_bus_sem);
+	वापस b;
+पूर्ण
 EXPORT_SYMBOL(pci_find_next_bus);
 
 /**
- * pci_get_slot - locate PCI device for a given PCI slot
+ * pci_get_slot - locate PCI device क्रम a given PCI slot
  * @bus: PCI bus on which desired PCI device resides
  * @devfn: encodes number of PCI slot in which the desired PCI
  * device resides and the logical device number within that slot
- * in case of multi-function devices.
+ * in हाल of multi-function devices.
  *
  * Given a PCI bus and slot/function number, the desired PCI device
  * is located in the list of PCI devices.
  * If the device is found, its reference count is increased and this
- * function returns a pointer to its data structure.  The caller must
+ * function वापसs a poपूर्णांकer to its data काष्ठाure.  The caller must
  * decrement the reference count by calling pci_dev_put().
- * If no device is found, %NULL is returned.
+ * If no device is found, %शून्य is वापसed.
  */
-struct pci_dev *pci_get_slot(struct pci_bus *bus, unsigned int devfn)
-{
-	struct pci_dev *dev;
+काष्ठा pci_dev *pci_get_slot(काष्ठा pci_bus *bus, अचिन्हित पूर्णांक devfn)
+अणु
+	काष्ठा pci_dev *dev;
 
-	down_read(&pci_bus_sem);
+	करोwn_पढ़ो(&pci_bus_sem);
 
-	list_for_each_entry(dev, &bus->devices, bus_list) {
-		if (dev->devfn == devfn)
-			goto out;
-	}
+	list_क्रम_each_entry(dev, &bus->devices, bus_list) अणु
+		अगर (dev->devfn == devfn)
+			जाओ out;
+	पूर्ण
 
-	dev = NULL;
+	dev = शून्य;
  out:
 	pci_dev_get(dev);
-	up_read(&pci_bus_sem);
-	return dev;
-}
+	up_पढ़ो(&pci_bus_sem);
+	वापस dev;
+पूर्ण
 EXPORT_SYMBOL(pci_get_slot);
 
 /**
- * pci_get_domain_bus_and_slot - locate PCI device for a given PCI domain (segment), bus, and slot
- * @domain: PCI domain/segment on which the PCI device resides.
+ * pci_get_करोमुख्य_bus_and_slot - locate PCI device क्रम a given PCI करोमुख्य (segment), bus, and slot
+ * @करोमुख्य: PCI करोमुख्य/segment on which the PCI device resides.
  * @bus: PCI bus on which desired PCI device resides
  * @devfn: encodes number of PCI slot in which the desired PCI device
- * resides and the logical device number within that slot in case of
+ * resides and the logical device number within that slot in हाल of
  * multi-function devices.
  *
- * Given a PCI domain, bus, and slot/function number, the desired PCI
+ * Given a PCI करोमुख्य, bus, and slot/function number, the desired PCI
  * device is located in the list of PCI devices. If the device is
- * found, its reference count is increased and this function returns a
- * pointer to its data structure.  The caller must decrement the
+ * found, its reference count is increased and this function वापसs a
+ * poपूर्णांकer to its data काष्ठाure.  The caller must decrement the
  * reference count by calling pci_dev_put().  If no device is found,
- * %NULL is returned.
+ * %शून्य is वापसed.
  */
-struct pci_dev *pci_get_domain_bus_and_slot(int domain, unsigned int bus,
-					    unsigned int devfn)
-{
-	struct pci_dev *dev = NULL;
+काष्ठा pci_dev *pci_get_करोमुख्य_bus_and_slot(पूर्णांक करोमुख्य, अचिन्हित पूर्णांक bus,
+					    अचिन्हित पूर्णांक devfn)
+अणु
+	काष्ठा pci_dev *dev = शून्य;
 
-	for_each_pci_dev(dev) {
-		if (pci_domain_nr(dev->bus) == domain &&
+	क्रम_each_pci_dev(dev) अणु
+		अगर (pci_करोमुख्य_nr(dev->bus) == करोमुख्य &&
 		    (dev->bus->number == bus && dev->devfn == devfn))
-			return dev;
-	}
-	return NULL;
-}
-EXPORT_SYMBOL(pci_get_domain_bus_and_slot);
+			वापस dev;
+	पूर्ण
+	वापस शून्य;
+पूर्ण
+EXPORT_SYMBOL(pci_get_करोमुख्य_bus_and_slot);
 
-static int match_pci_dev_by_id(struct device *dev, const void *data)
-{
-	struct pci_dev *pdev = to_pci_dev(dev);
-	const struct pci_device_id *id = data;
+अटल पूर्णांक match_pci_dev_by_id(काष्ठा device *dev, स्थिर व्योम *data)
+अणु
+	काष्ठा pci_dev *pdev = to_pci_dev(dev);
+	स्थिर काष्ठा pci_device_id *id = data;
 
-	if (pci_match_one_device(id, pdev))
-		return 1;
-	return 0;
-}
+	अगर (pci_match_one_device(id, pdev))
+		वापस 1;
+	वापस 0;
+पूर्ण
 
 /*
- * pci_get_dev_by_id - begin or continue searching for a PCI device by id
- * @id: pointer to struct pci_device_id to match for the device
- * @from: Previous PCI device found in search, or %NULL for new search.
+ * pci_get_dev_by_id - begin or जारी searching क्रम a PCI device by id
+ * @id: poपूर्णांकer to काष्ठा pci_device_id to match क्रम the device
+ * @from: Previous PCI device found in search, or %शून्य क्रम new search.
  *
  * Iterates through the list of known PCI devices.  If a PCI device is found
- * with a matching id a pointer to its device structure is returned, and the
- * reference count to the device is incremented.  Otherwise, %NULL is returned.
- * A new search is initiated by passing %NULL as the @from argument.  Otherwise
- * if @from is not %NULL, searches continue from next device on the global
- * list.  The reference count for @from is always decremented if it is not
- * %NULL.
+ * with a matching id a poपूर्णांकer to its device काष्ठाure is वापसed, and the
+ * reference count to the device is incremented.  Otherwise, %शून्य is वापसed.
+ * A new search is initiated by passing %शून्य as the @from argument.  Otherwise
+ * अगर @from is not %शून्य, searches जारी from next device on the global
+ * list.  The reference count क्रम @from is always decremented अगर it is not
+ * %शून्य.
  *
- * This is an internal function for use by the other search functions in
+ * This is an पूर्णांकernal function क्रम use by the other search functions in
  * this file.
  */
-static struct pci_dev *pci_get_dev_by_id(const struct pci_device_id *id,
-					 struct pci_dev *from)
-{
-	struct device *dev;
-	struct device *dev_start = NULL;
-	struct pci_dev *pdev = NULL;
+अटल काष्ठा pci_dev *pci_get_dev_by_id(स्थिर काष्ठा pci_device_id *id,
+					 काष्ठा pci_dev *from)
+अणु
+	काष्ठा device *dev;
+	काष्ठा device *dev_start = शून्य;
+	काष्ठा pci_dev *pdev = शून्य;
 
-	if (from)
+	अगर (from)
 		dev_start = &from->dev;
-	dev = bus_find_device(&pci_bus_type, dev_start, (void *)id,
+	dev = bus_find_device(&pci_bus_type, dev_start, (व्योम *)id,
 			      match_pci_dev_by_id);
-	if (dev)
+	अगर (dev)
 		pdev = to_pci_dev(dev);
 	pci_dev_put(from);
-	return pdev;
-}
+	वापस pdev;
+पूर्ण
 
 /**
- * pci_get_subsys - begin or continue searching for a PCI device by vendor/subvendor/device/subdevice id
- * @vendor: PCI vendor id to match, or %PCI_ANY_ID to match all vendor ids
+ * pci_get_subsys - begin or जारी searching क्रम a PCI device by venकरोr/subvenकरोr/device/subdevice id
+ * @venकरोr: PCI venकरोr id to match, or %PCI_ANY_ID to match all venकरोr ids
  * @device: PCI device id to match, or %PCI_ANY_ID to match all device ids
- * @ss_vendor: PCI subsystem vendor id to match, or %PCI_ANY_ID to match all vendor ids
- * @ss_device: PCI subsystem device id to match, or %PCI_ANY_ID to match all device ids
- * @from: Previous PCI device found in search, or %NULL for new search.
+ * @ss_venकरोr: PCI subप्रणाली venकरोr id to match, or %PCI_ANY_ID to match all venकरोr ids
+ * @ss_device: PCI subप्रणाली device id to match, or %PCI_ANY_ID to match all device ids
+ * @from: Previous PCI device found in search, or %शून्य क्रम new search.
  *
  * Iterates through the list of known PCI devices.  If a PCI device is found
- * with a matching @vendor, @device, @ss_vendor and @ss_device, a pointer to its
- * device structure is returned, and the reference count to the device is
- * incremented.  Otherwise, %NULL is returned.  A new search is initiated by
- * passing %NULL as the @from argument.  Otherwise if @from is not %NULL,
- * searches continue from next device on the global list.
- * The reference count for @from is always decremented if it is not %NULL.
+ * with a matching @venकरोr, @device, @ss_venकरोr and @ss_device, a poपूर्णांकer to its
+ * device काष्ठाure is वापसed, and the reference count to the device is
+ * incremented.  Otherwise, %शून्य is वापसed.  A new search is initiated by
+ * passing %शून्य as the @from argument.  Otherwise अगर @from is not %शून्य,
+ * searches जारी from next device on the global list.
+ * The reference count क्रम @from is always decremented अगर it is not %शून्य.
  */
-struct pci_dev *pci_get_subsys(unsigned int vendor, unsigned int device,
-			       unsigned int ss_vendor, unsigned int ss_device,
-			       struct pci_dev *from)
-{
-	struct pci_device_id id = {
-		.vendor = vendor,
+काष्ठा pci_dev *pci_get_subsys(अचिन्हित पूर्णांक venकरोr, अचिन्हित पूर्णांक device,
+			       अचिन्हित पूर्णांक ss_venकरोr, अचिन्हित पूर्णांक ss_device,
+			       काष्ठा pci_dev *from)
+अणु
+	काष्ठा pci_device_id id = अणु
+		.venकरोr = venकरोr,
 		.device = device,
-		.subvendor = ss_vendor,
+		.subvenकरोr = ss_venकरोr,
 		.subdevice = ss_device,
-	};
+	पूर्ण;
 
-	return pci_get_dev_by_id(&id, from);
-}
+	वापस pci_get_dev_by_id(&id, from);
+पूर्ण
 EXPORT_SYMBOL(pci_get_subsys);
 
 /**
- * pci_get_device - begin or continue searching for a PCI device by vendor/device id
- * @vendor: PCI vendor id to match, or %PCI_ANY_ID to match all vendor ids
+ * pci_get_device - begin or जारी searching क्रम a PCI device by venकरोr/device id
+ * @venकरोr: PCI venकरोr id to match, or %PCI_ANY_ID to match all venकरोr ids
  * @device: PCI device id to match, or %PCI_ANY_ID to match all device ids
- * @from: Previous PCI device found in search, or %NULL for new search.
+ * @from: Previous PCI device found in search, or %शून्य क्रम new search.
  *
  * Iterates through the list of known PCI devices.  If a PCI device is
- * found with a matching @vendor and @device, the reference count to the
- * device is incremented and a pointer to its device structure is returned.
- * Otherwise, %NULL is returned.  A new search is initiated by passing %NULL
- * as the @from argument.  Otherwise if @from is not %NULL, searches continue
- * from next device on the global list.  The reference count for @from is
- * always decremented if it is not %NULL.
+ * found with a matching @venकरोr and @device, the reference count to the
+ * device is incremented and a poपूर्णांकer to its device काष्ठाure is वापसed.
+ * Otherwise, %शून्य is वापसed.  A new search is initiated by passing %शून्य
+ * as the @from argument.  Otherwise अगर @from is not %शून्य, searches जारी
+ * from next device on the global list.  The reference count क्रम @from is
+ * always decremented अगर it is not %शून्य.
  */
-struct pci_dev *pci_get_device(unsigned int vendor, unsigned int device,
-			       struct pci_dev *from)
-{
-	return pci_get_subsys(vendor, device, PCI_ANY_ID, PCI_ANY_ID, from);
-}
+काष्ठा pci_dev *pci_get_device(अचिन्हित पूर्णांक venकरोr, अचिन्हित पूर्णांक device,
+			       काष्ठा pci_dev *from)
+अणु
+	वापस pci_get_subsys(venकरोr, device, PCI_ANY_ID, PCI_ANY_ID, from);
+पूर्ण
 EXPORT_SYMBOL(pci_get_device);
 
 /**
- * pci_get_class - begin or continue searching for a PCI device by class
- * @class: search for a PCI device with this class designation
- * @from: Previous PCI device found in search, or %NULL for new search.
+ * pci_get_class - begin or जारी searching क्रम a PCI device by class
+ * @class: search क्रम a PCI device with this class designation
+ * @from: Previous PCI device found in search, or %शून्य क्रम new search.
  *
  * Iterates through the list of known PCI devices.  If a PCI device is
  * found with a matching @class, the reference count to the device is
- * incremented and a pointer to its device structure is returned.
- * Otherwise, %NULL is returned.
- * A new search is initiated by passing %NULL as the @from argument.
- * Otherwise if @from is not %NULL, searches continue from next device
- * on the global list.  The reference count for @from is always decremented
- * if it is not %NULL.
+ * incremented and a poपूर्णांकer to its device काष्ठाure is वापसed.
+ * Otherwise, %शून्य is वापसed.
+ * A new search is initiated by passing %शून्य as the @from argument.
+ * Otherwise अगर @from is not %शून्य, searches जारी from next device
+ * on the global list.  The reference count क्रम @from is always decremented
+ * अगर it is not %शून्य.
  */
-struct pci_dev *pci_get_class(unsigned int class, struct pci_dev *from)
-{
-	struct pci_device_id id = {
-		.vendor = PCI_ANY_ID,
+काष्ठा pci_dev *pci_get_class(अचिन्हित पूर्णांक class, काष्ठा pci_dev *from)
+अणु
+	काष्ठा pci_device_id id = अणु
+		.venकरोr = PCI_ANY_ID,
 		.device = PCI_ANY_ID,
-		.subvendor = PCI_ANY_ID,
+		.subvenकरोr = PCI_ANY_ID,
 		.subdevice = PCI_ANY_ID,
 		.class_mask = PCI_ANY_ID,
 		.class = class,
-	};
+	पूर्ण;
 
-	return pci_get_dev_by_id(&id, from);
-}
+	वापस pci_get_dev_by_id(&id, from);
+पूर्ण
 EXPORT_SYMBOL(pci_get_class);
 
 /**
- * pci_dev_present - Returns 1 if device matching the device list is present, 0 if not.
- * @ids: A pointer to a null terminated list of struct pci_device_id structures
+ * pci_dev_present - Returns 1 अगर device matching the device list is present, 0 अगर not.
+ * @ids: A poपूर्णांकer to a null terminated list of काष्ठा pci_device_id काष्ठाures
  * that describe the type of PCI device the caller is trying to find.
  *
- * Obvious fact: You do not have a reference to any device that might be found
- * by this function, so if that device is removed from the system right after
+ * Obvious fact: You करो not have a reference to any device that might be found
+ * by this function, so अगर that device is हटाओd from the प्रणाली right after
  * this function is finished, the value will be stale.  Use this function to
- * find devices that are usually built into a system, or for a general hint as
- * to if another device happens to be present at this specific moment in time.
+ * find devices that are usually built पूर्णांकo a प्रणाली, or क्रम a general hपूर्णांक as
+ * to अगर another device happens to be present at this specअगरic moment in समय.
  */
-int pci_dev_present(const struct pci_device_id *ids)
-{
-	struct pci_dev *found = NULL;
+पूर्णांक pci_dev_present(स्थिर काष्ठा pci_device_id *ids)
+अणु
+	काष्ठा pci_dev *found = शून्य;
 
-	while (ids->vendor || ids->subvendor || ids->class_mask) {
-		found = pci_get_dev_by_id(ids, NULL);
-		if (found) {
+	जबतक (ids->venकरोr || ids->subvenकरोr || ids->class_mask) अणु
+		found = pci_get_dev_by_id(ids, शून्य);
+		अगर (found) अणु
 			pci_dev_put(found);
-			return 1;
-		}
+			वापस 1;
+		पूर्ण
 		ids++;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(pci_dev_present);

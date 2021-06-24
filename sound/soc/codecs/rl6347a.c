@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * rl6347a.c - RL6347A class device shared support
  *
@@ -7,79 +8,79 @@
  * Author: Oder Chiou <oder_chiou@realtek.com>
  */
 
-#include <linux/module.h>
-#include <linux/i2c.h>
-#include <linux/regmap.h>
+#समावेश <linux/module.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/regmap.h>
 
-#include "rl6347a.h"
+#समावेश "rl6347a.h"
 
-int rl6347a_hw_write(void *context, unsigned int reg, unsigned int value)
-{
-	struct i2c_client *client = context;
-	struct rl6347a_priv *rl6347a = i2c_get_clientdata(client);
+पूर्णांक rl6347a_hw_ग_लिखो(व्योम *context, अचिन्हित पूर्णांक reg, अचिन्हित पूर्णांक value)
+अणु
+	काष्ठा i2c_client *client = context;
+	काष्ठा rl6347a_priv *rl6347a = i2c_get_clientdata(client);
 	u8 data[4];
-	int ret, i;
+	पूर्णांक ret, i;
 
-	/* handle index registers */
-	if (reg <= 0xff) {
-		rl6347a_hw_write(client, RL6347A_COEF_INDEX, reg);
-		for (i = 0; i < rl6347a->index_cache_size; i++) {
-			if (reg == rl6347a->index_cache[i].reg) {
+	/* handle index रेजिस्टरs */
+	अगर (reg <= 0xff) अणु
+		rl6347a_hw_ग_लिखो(client, RL6347A_COEF_INDEX, reg);
+		क्रम (i = 0; i < rl6347a->index_cache_size; i++) अणु
+			अगर (reg == rl6347a->index_cache[i].reg) अणु
 				rl6347a->index_cache[i].def = value;
-				break;
-			}
+				अवरोध;
+			पूर्ण
 
-		}
+		पूर्ण
 		reg = RL6347A_PROC_COEF;
-	}
+	पूर्ण
 
 	data[0] = (reg >> 24) & 0xff;
 	data[1] = (reg >> 16) & 0xff;
 	/*
 	 * 4 bit VID: reg should be 0
 	 * 12 bit VID: value should be 0
-	 * So we use an OR operator to handle it rather than use if condition.
+	 * So we use an OR चालक to handle it rather than use अगर condition.
 	 */
 	data[2] = ((reg >> 8) & 0xff) | ((value >> 8) & 0xff);
 	data[3] = value & 0xff;
 
 	ret = i2c_master_send(client, data, 4);
 
-	if (ret == 4)
-		return 0;
-	else
+	अगर (ret == 4)
+		वापस 0;
+	अन्यथा
 		dev_err(&client->dev, "I2C error %d\n", ret);
-	if (ret < 0)
-		return ret;
-	else
-		return -EIO;
-}
-EXPORT_SYMBOL_GPL(rl6347a_hw_write);
+	अगर (ret < 0)
+		वापस ret;
+	अन्यथा
+		वापस -EIO;
+पूर्ण
+EXPORT_SYMBOL_GPL(rl6347a_hw_ग_लिखो);
 
-int rl6347a_hw_read(void *context, unsigned int reg, unsigned int *value)
-{
-	struct i2c_client *client = context;
-	struct i2c_msg xfer[2];
-	int ret;
+पूर्णांक rl6347a_hw_पढ़ो(व्योम *context, अचिन्हित पूर्णांक reg, अचिन्हित पूर्णांक *value)
+अणु
+	काष्ठा i2c_client *client = context;
+	काष्ठा i2c_msg xfer[2];
+	पूर्णांक ret;
 	__be32 be_reg, buf = 0x0;
-	unsigned int index, vid;
+	अचिन्हित पूर्णांक index, vid;
 
-	/* handle index registers */
-	if (reg <= 0xff) {
-		rl6347a_hw_write(client, RL6347A_COEF_INDEX, reg);
+	/* handle index रेजिस्टरs */
+	अगर (reg <= 0xff) अणु
+		rl6347a_hw_ग_लिखो(client, RL6347A_COEF_INDEX, reg);
 		reg = RL6347A_PROC_COEF;
-	}
+	पूर्ण
 
 	reg = reg | 0x80000;
 	vid = (reg >> 8) & 0xfff;
 
-	if (AC_VERB_GET_AMP_GAIN_MUTE == (vid & 0xf00)) {
+	अगर (AC_VERB_GET_AMP_GAIN_MUTE == (vid & 0xf00)) अणु
 		index = (reg >> 8) & 0xf;
 		reg = (reg & ~0xf0f) | index;
-	}
+	पूर्ण
 	be_reg = cpu_to_be32(reg);
 
-	/* Write register */
+	/* Write रेजिस्टर */
 	xfer[0].addr = client->addr;
 	xfer[0].flags = 0;
 	xfer[0].len = 4;
@@ -92,16 +93,16 @@ int rl6347a_hw_read(void *context, unsigned int reg, unsigned int *value)
 	xfer[1].buf = (u8 *)&buf;
 
 	ret = i2c_transfer(client->adapter, xfer, 2);
-	if (ret < 0)
-		return ret;
-	else if (ret != 2)
-		return -EIO;
+	अगर (ret < 0)
+		वापस ret;
+	अन्यथा अगर (ret != 2)
+		वापस -EIO;
 
 	*value = be32_to_cpu(buf);
 
-	return 0;
-}
-EXPORT_SYMBOL_GPL(rl6347a_hw_read);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL_GPL(rl6347a_hw_पढ़ो);
 
 MODULE_DESCRIPTION("RL6347A class device shared support");
 MODULE_AUTHOR("Oder Chiou <oder_chiou@realtek.com>");

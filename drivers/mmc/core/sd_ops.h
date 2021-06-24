@@ -1,28 +1,29 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
  *  linux/drivers/mmc/core/sd_ops.h
  *
  *  Copyright 2006-2007 Pierre Ossman
  */
 
-#ifndef _MMC_SD_OPS_H
-#define _MMC_SD_OPS_H
+#अगर_अघोषित _MMC_SD_OPS_H
+#घोषणा _MMC_SD_OPS_H
 
-#include <linux/types.h>
+#समावेश <linux/types.h>
 
-struct mmc_card;
-struct mmc_host;
+काष्ठा mmc_card;
+काष्ठा mmc_host;
 
-int mmc_app_set_bus_width(struct mmc_card *card, int width);
-int mmc_send_app_op_cond(struct mmc_host *host, u32 ocr, u32 *rocr);
-int mmc_send_if_cond(struct mmc_host *host, u32 ocr);
-int mmc_send_if_cond_pcie(struct mmc_host *host, u32 ocr);
-int mmc_send_relative_addr(struct mmc_host *host, unsigned int *rca);
-int mmc_app_send_scr(struct mmc_card *card);
-int mmc_sd_switch(struct mmc_card *card, int mode, int group,
+पूर्णांक mmc_app_set_bus_width(काष्ठा mmc_card *card, पूर्णांक width);
+पूर्णांक mmc_send_app_op_cond(काष्ठा mmc_host *host, u32 ocr, u32 *rocr);
+पूर्णांक mmc_send_अगर_cond(काष्ठा mmc_host *host, u32 ocr);
+पूर्णांक mmc_send_अगर_cond_pcie(काष्ठा mmc_host *host, u32 ocr);
+पूर्णांक mmc_send_relative_addr(काष्ठा mmc_host *host, अचिन्हित पूर्णांक *rca);
+पूर्णांक mmc_app_send_scr(काष्ठा mmc_card *card);
+पूर्णांक mmc_sd_चयन(काष्ठा mmc_card *card, पूर्णांक mode, पूर्णांक group,
 	u8 value, u8 *resp);
-int mmc_app_sd_status(struct mmc_card *card, void *ssr);
-int mmc_app_cmd(struct mmc_host *host, struct mmc_card *card);
+पूर्णांक mmc_app_sd_status(काष्ठा mmc_card *card, व्योम *ssr);
+पूर्णांक mmc_app_cmd(काष्ठा mmc_host *host, काष्ठा mmc_card *card);
 
-#endif
+#पूर्ण_अगर
 

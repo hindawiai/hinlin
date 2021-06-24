@@ -1,86 +1,87 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef ARCH_PERF_REGS_H
-#define ARCH_PERF_REGS_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित ARCH_PERF_REGS_H
+#घोषणा ARCH_PERF_REGS_H
 
-#include <stdlib.h>
-#include <linux/types.h>
-#include <asm/perf_regs.h>
+#समावेश <मानककोष.स>
+#समावेश <linux/types.h>
+#समावेश <यंत्र/perf_regs.h>
 
-void perf_regs_load(u64 *regs);
+व्योम perf_regs_load(u64 *regs);
 
-#define PERF_REGS_MAX PERF_REG_X86_XMM_MAX
-#ifndef HAVE_ARCH_X86_64_SUPPORT
-#define PERF_REGS_MASK ((1ULL << PERF_REG_X86_32_MAX) - 1)
-#define PERF_SAMPLE_REGS_ABI PERF_SAMPLE_REGS_ABI_32
-#else
-#define REG_NOSUPPORT ((1ULL << PERF_REG_X86_DS) | \
+#घोषणा PERF_REGS_MAX PERF_REG_X86_XMM_MAX
+#अगर_अघोषित HAVE_ARCH_X86_64_SUPPORT
+#घोषणा PERF_REGS_MASK ((1ULL << PERF_REG_X86_32_MAX) - 1)
+#घोषणा PERF_SAMPLE_REGS_ABI PERF_SAMPLE_REGS_ABI_32
+#अन्यथा
+#घोषणा REG_NOSUPPORT ((1ULL << PERF_REG_X86_DS) | \
 		       (1ULL << PERF_REG_X86_ES) | \
 		       (1ULL << PERF_REG_X86_FS) | \
 		       (1ULL << PERF_REG_X86_GS))
-#define PERF_REGS_MASK (((1ULL << PERF_REG_X86_64_MAX) - 1) & ~REG_NOSUPPORT)
-#define PERF_SAMPLE_REGS_ABI PERF_SAMPLE_REGS_ABI_64
-#endif
-#define PERF_REG_IP PERF_REG_X86_IP
-#define PERF_REG_SP PERF_REG_X86_SP
+#घोषणा PERF_REGS_MASK (((1ULL << PERF_REG_X86_64_MAX) - 1) & ~REG_NOSUPPORT)
+#घोषणा PERF_SAMPLE_REGS_ABI PERF_SAMPLE_REGS_ABI_64
+#पूर्ण_अगर
+#घोषणा PERF_REG_IP PERF_REG_X86_IP
+#घोषणा PERF_REG_SP PERF_REG_X86_SP
 
-static inline const char *__perf_reg_name(int id)
-{
-	switch (id) {
-	case PERF_REG_X86_AX:
-		return "AX";
-	case PERF_REG_X86_BX:
-		return "BX";
-	case PERF_REG_X86_CX:
-		return "CX";
-	case PERF_REG_X86_DX:
-		return "DX";
-	case PERF_REG_X86_SI:
-		return "SI";
-	case PERF_REG_X86_DI:
-		return "DI";
-	case PERF_REG_X86_BP:
-		return "BP";
-	case PERF_REG_X86_SP:
-		return "SP";
-	case PERF_REG_X86_IP:
-		return "IP";
-	case PERF_REG_X86_FLAGS:
-		return "FLAGS";
-	case PERF_REG_X86_CS:
-		return "CS";
-	case PERF_REG_X86_SS:
-		return "SS";
-	case PERF_REG_X86_DS:
-		return "DS";
-	case PERF_REG_X86_ES:
-		return "ES";
-	case PERF_REG_X86_FS:
-		return "FS";
-	case PERF_REG_X86_GS:
-		return "GS";
-#ifdef HAVE_ARCH_X86_64_SUPPORT
-	case PERF_REG_X86_R8:
-		return "R8";
-	case PERF_REG_X86_R9:
-		return "R9";
-	case PERF_REG_X86_R10:
-		return "R10";
-	case PERF_REG_X86_R11:
-		return "R11";
-	case PERF_REG_X86_R12:
-		return "R12";
-	case PERF_REG_X86_R13:
-		return "R13";
-	case PERF_REG_X86_R14:
-		return "R14";
-	case PERF_REG_X86_R15:
-		return "R15";
-#endif /* HAVE_ARCH_X86_64_SUPPORT */
+अटल अंतरभूत स्थिर अक्षर *__perf_reg_name(पूर्णांक id)
+अणु
+	चयन (id) अणु
+	हाल PERF_REG_X86_AX:
+		वापस "AX";
+	हाल PERF_REG_X86_BX:
+		वापस "BX";
+	हाल PERF_REG_X86_CX:
+		वापस "CX";
+	हाल PERF_REG_X86_DX:
+		वापस "DX";
+	हाल PERF_REG_X86_SI:
+		वापस "SI";
+	हाल PERF_REG_X86_DI:
+		वापस "DI";
+	हाल PERF_REG_X86_BP:
+		वापस "BP";
+	हाल PERF_REG_X86_SP:
+		वापस "SP";
+	हाल PERF_REG_X86_IP:
+		वापस "IP";
+	हाल PERF_REG_X86_FLAGS:
+		वापस "FLAGS";
+	हाल PERF_REG_X86_CS:
+		वापस "CS";
+	हाल PERF_REG_X86_SS:
+		वापस "SS";
+	हाल PERF_REG_X86_DS:
+		वापस "DS";
+	हाल PERF_REG_X86_ES:
+		वापस "ES";
+	हाल PERF_REG_X86_FS:
+		वापस "FS";
+	हाल PERF_REG_X86_GS:
+		वापस "GS";
+#अगर_घोषित HAVE_ARCH_X86_64_SUPPORT
+	हाल PERF_REG_X86_R8:
+		वापस "R8";
+	हाल PERF_REG_X86_R9:
+		वापस "R9";
+	हाल PERF_REG_X86_R10:
+		वापस "R10";
+	हाल PERF_REG_X86_R11:
+		वापस "R11";
+	हाल PERF_REG_X86_R12:
+		वापस "R12";
+	हाल PERF_REG_X86_R13:
+		वापस "R13";
+	हाल PERF_REG_X86_R14:
+		वापस "R14";
+	हाल PERF_REG_X86_R15:
+		वापस "R15";
+#पूर्ण_अगर /* HAVE_ARCH_X86_64_SUPPORT */
 
-#define XMM(x) \
-	case PERF_REG_X86_XMM ## x:	\
-	case PERF_REG_X86_XMM ## x + 1:	\
-		return "XMM" #x;
+#घोषणा XMM(x) \
+	हाल PERF_REG_X86_XMM ## x:	\
+	हाल PERF_REG_X86_XMM ## x + 1:	\
+		वापस "XMM" #x;
 	XMM(0)
 	XMM(1)
 	XMM(2)
@@ -97,12 +98,12 @@ static inline const char *__perf_reg_name(int id)
 	XMM(13)
 	XMM(14)
 	XMM(15)
-#undef XMM
-	default:
-		return NULL;
-	}
+#अघोषित XMM
+	शेष:
+		वापस शून्य;
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-#endif /* ARCH_PERF_REGS_H */
+#पूर्ण_अगर /* ARCH_PERF_REGS_H */

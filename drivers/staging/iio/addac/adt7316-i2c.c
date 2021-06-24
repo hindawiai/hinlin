@@ -1,146 +1,147 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
- * I2C bus driver for ADT7316/7/8 ADT7516/7/9 digital temperature
+ * I2C bus driver क्रम ADT7316/7/8 ADT7516/7/9 digital temperature
  * sensor, ADC and DAC
  *
  * Copyright 2010 Analog Devices Inc.
  */
 
-#include <linux/device.h>
-#include <linux/kernel.h>
-#include <linux/i2c.h>
-#include <linux/interrupt.h>
-#include <linux/module.h>
+#समावेश <linux/device.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/module.h>
 
-#include "adt7316.h"
+#समावेश "adt7316.h"
 
 /*
- * adt7316 register access by I2C
+ * adt7316 रेजिस्टर access by I2C
  */
-static int adt7316_i2c_read(void *client, u8 reg, u8 *data)
-{
-	struct i2c_client *cl = client;
-	int ret;
+अटल पूर्णांक adt7316_i2c_पढ़ो(व्योम *client, u8 reg, u8 *data)
+अणु
+	काष्ठा i2c_client *cl = client;
+	पूर्णांक ret;
 
-	ret = i2c_smbus_write_byte(cl, reg);
-	if (ret < 0) {
+	ret = i2c_smbus_ग_लिखो_byte(cl, reg);
+	अगर (ret < 0) अणु
 		dev_err(&cl->dev, "I2C fail to select reg\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	ret = i2c_smbus_read_byte(client);
-	if (ret < 0) {
+	ret = i2c_smbus_पढ़ो_byte(client);
+	अगर (ret < 0) अणु
 		dev_err(&cl->dev, "I2C read error\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	*data = ret;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int adt7316_i2c_write(void *client, u8 reg, u8 data)
-{
-	struct i2c_client *cl = client;
-	int ret;
+अटल पूर्णांक adt7316_i2c_ग_लिखो(व्योम *client, u8 reg, u8 data)
+अणु
+	काष्ठा i2c_client *cl = client;
+	पूर्णांक ret;
 
-	ret = i2c_smbus_write_byte_data(cl, reg, data);
-	if (ret < 0)
+	ret = i2c_smbus_ग_लिखो_byte_data(cl, reg, data);
+	अगर (ret < 0)
 		dev_err(&cl->dev, "I2C write error\n");
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int adt7316_i2c_multi_read(void *client, u8 reg, u8 count, u8 *data)
-{
-	struct i2c_client *cl = client;
-	int i, ret;
+अटल पूर्णांक adt7316_i2c_multi_पढ़ो(व्योम *client, u8 reg, u8 count, u8 *data)
+अणु
+	काष्ठा i2c_client *cl = client;
+	पूर्णांक i, ret;
 
-	if (count > ADT7316_REG_MAX_ADDR)
+	अगर (count > ADT7316_REG_MAX_ADDR)
 		count = ADT7316_REG_MAX_ADDR;
 
-	for (i = 0; i < count; i++) {
-		ret = adt7316_i2c_read(cl, reg, &data[i]);
-		if (ret < 0) {
+	क्रम (i = 0; i < count; i++) अणु
+		ret = adt7316_i2c_पढ़ो(cl, reg, &data[i]);
+		अगर (ret < 0) अणु
 			dev_err(&cl->dev, "I2C multi read error\n");
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int adt7316_i2c_multi_write(void *client, u8 reg, u8 count, u8 *data)
-{
-	struct i2c_client *cl = client;
-	int i, ret;
+अटल पूर्णांक adt7316_i2c_multi_ग_लिखो(व्योम *client, u8 reg, u8 count, u8 *data)
+अणु
+	काष्ठा i2c_client *cl = client;
+	पूर्णांक i, ret;
 
-	if (count > ADT7316_REG_MAX_ADDR)
+	अगर (count > ADT7316_REG_MAX_ADDR)
 		count = ADT7316_REG_MAX_ADDR;
 
-	for (i = 0; i < count; i++) {
-		ret = adt7316_i2c_write(cl, reg, data[i]);
-		if (ret < 0) {
+	क्रम (i = 0; i < count; i++) अणु
+		ret = adt7316_i2c_ग_लिखो(cl, reg, data[i]);
+		अगर (ret < 0) अणु
 			dev_err(&cl->dev, "I2C multi write error\n");
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * device probe and remove
+ * device probe and हटाओ
  */
 
-static int adt7316_i2c_probe(struct i2c_client *client,
-			     const struct i2c_device_id *id)
-{
-	struct adt7316_bus bus = {
+अटल पूर्णांक adt7316_i2c_probe(काष्ठा i2c_client *client,
+			     स्थिर काष्ठा i2c_device_id *id)
+अणु
+	काष्ठा adt7316_bus bus = अणु
 		.client = client,
 		.irq = client->irq,
-		.read = adt7316_i2c_read,
-		.write = adt7316_i2c_write,
-		.multi_read = adt7316_i2c_multi_read,
-		.multi_write = adt7316_i2c_multi_write,
-	};
+		.पढ़ो = adt7316_i2c_पढ़ो,
+		.ग_लिखो = adt7316_i2c_ग_लिखो,
+		.multi_पढ़ो = adt7316_i2c_multi_पढ़ो,
+		.multi_ग_लिखो = adt7316_i2c_multi_ग_लिखो,
+	पूर्ण;
 
-	return adt7316_probe(&client->dev, &bus, id->name);
-}
+	वापस adt7316_probe(&client->dev, &bus, id->name);
+पूर्ण
 
-static const struct i2c_device_id adt7316_i2c_id[] = {
-	{ "adt7316", 0 },
-	{ "adt7317", 0 },
-	{ "adt7318", 0 },
-	{ "adt7516", 0 },
-	{ "adt7517", 0 },
-	{ "adt7519", 0 },
-	{ }
-};
+अटल स्थिर काष्ठा i2c_device_id adt7316_i2c_id[] = अणु
+	अणु "adt7316", 0 पूर्ण,
+	अणु "adt7317", 0 पूर्ण,
+	अणु "adt7318", 0 पूर्ण,
+	अणु "adt7516", 0 पूर्ण,
+	अणु "adt7517", 0 पूर्ण,
+	अणु "adt7519", 0 पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 
 MODULE_DEVICE_TABLE(i2c, adt7316_i2c_id);
 
-static const struct of_device_id adt7316_of_match[] = {
-	{ .compatible = "adi,adt7316" },
-	{ .compatible = "adi,adt7317" },
-	{ .compatible = "adi,adt7318" },
-	{ .compatible = "adi,adt7516" },
-	{ .compatible = "adi,adt7517" },
-	{ .compatible = "adi,adt7519" },
-	{ },
-};
+अटल स्थिर काष्ठा of_device_id adt7316_of_match[] = अणु
+	अणु .compatible = "adi,adt7316" पूर्ण,
+	अणु .compatible = "adi,adt7317" पूर्ण,
+	अणु .compatible = "adi,adt7318" पूर्ण,
+	अणु .compatible = "adi,adt7516" पूर्ण,
+	अणु .compatible = "adi,adt7517" पूर्ण,
+	अणु .compatible = "adi,adt7519" पूर्ण,
+	अणु पूर्ण,
+पूर्ण;
 
 MODULE_DEVICE_TABLE(of, adt7316_of_match);
 
-static struct i2c_driver adt7316_driver = {
-	.driver = {
+अटल काष्ठा i2c_driver adt7316_driver = अणु
+	.driver = अणु
 		.name = "adt7316",
 		.of_match_table = adt7316_of_match,
 		.pm = ADT7316_PM_OPS,
-	},
+	पूर्ण,
 	.probe = adt7316_i2c_probe,
 	.id_table = adt7316_i2c_id,
-};
+पूर्ण;
 module_i2c_driver(adt7316_driver);
 
 MODULE_AUTHOR("Sonic Zhang <sonic.zhang@analog.com>");

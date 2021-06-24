@@ -1,548 +1,549 @@
+<शैली गुरु>
 /*
  * Copyright (c) 2004-2011 Atheros Communications Inc.
  * Copyright (c) 2011-2012 Qualcomm Atheros, Inc.
  *
- * Permission to use, copy, modify, and/or distribute this software for any
+ * Permission to use, copy, modअगरy, and/or distribute this software क्रम any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
  * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
  * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
- * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * ANY SPECIAL, सूचीECT, INसूचीECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
  * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include "core.h"
-#include "hif-ops.h"
-#include "target.h"
-#include "debug.h"
+#समावेश "core.h"
+#समावेश "hif-ops.h"
+#समावेश "target.h"
+#समावेश "debug.h"
 
-int ath6kl_bmi_done(struct ath6kl *ar)
-{
-	int ret;
+पूर्णांक ath6kl_bmi_करोne(काष्ठा ath6kl *ar)
+अणु
+	पूर्णांक ret;
 	u32 cid = BMI_DONE;
 
-	if (ar->bmi.done_sent) {
+	अगर (ar->bmi.करोne_sent) अणु
 		ath6kl_dbg(ATH6KL_DBG_BMI, "bmi done skipped\n");
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	ar->bmi.done_sent = true;
+	ar->bmi.करोne_sent = true;
 
-	ret = ath6kl_hif_bmi_write(ar, (u8 *)&cid, sizeof(cid));
-	if (ret) {
+	ret = ath6kl_hअगर_bmi_ग_लिखो(ar, (u8 *)&cid, माप(cid));
+	अगर (ret) अणु
 		ath6kl_err("Unable to send bmi done: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int ath6kl_bmi_get_target_info(struct ath6kl *ar,
-			       struct ath6kl_bmi_target_info *targ_info)
-{
-	int ret;
+पूर्णांक ath6kl_bmi_get_target_info(काष्ठा ath6kl *ar,
+			       काष्ठा ath6kl_bmi_target_info *targ_info)
+अणु
+	पूर्णांक ret;
 	u32 cid = BMI_GET_TARGET_INFO;
 
-	if (ar->bmi.done_sent) {
+	अगर (ar->bmi.करोne_sent) अणु
 		ath6kl_err("bmi done sent already, cmd %d disallowed\n", cid);
-		return -EACCES;
-	}
+		वापस -EACCES;
+	पूर्ण
 
-	ret = ath6kl_hif_bmi_write(ar, (u8 *)&cid, sizeof(cid));
-	if (ret) {
+	ret = ath6kl_hअगर_bmi_ग_लिखो(ar, (u8 *)&cid, माप(cid));
+	अगर (ret) अणु
 		ath6kl_err("Unable to send get target info: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	if (ar->hif_type == ATH6KL_HIF_TYPE_USB) {
-		ret = ath6kl_hif_bmi_read(ar, (u8 *)targ_info,
-					  sizeof(*targ_info));
-	} else {
-		ret = ath6kl_hif_bmi_read(ar, (u8 *)&targ_info->version,
-				sizeof(targ_info->version));
-	}
+	अगर (ar->hअगर_type == ATH6KL_HIF_TYPE_USB) अणु
+		ret = ath6kl_hअगर_bmi_पढ़ो(ar, (u8 *)targ_info,
+					  माप(*targ_info));
+	पूर्ण अन्यथा अणु
+		ret = ath6kl_hअगर_bmi_पढ़ो(ar, (u8 *)&targ_info->version,
+				माप(targ_info->version));
+	पूर्ण
 
-	if (ret) {
+	अगर (ret) अणु
 		ath6kl_err("Unable to recv target info: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	if (le32_to_cpu(targ_info->version) == TARGET_VERSION_SENTINAL) {
+	अगर (le32_to_cpu(targ_info->version) == TARGET_VERSION_SENTINAL) अणु
 		/* Determine how many bytes are in the Target's targ_info */
-		ret = ath6kl_hif_bmi_read(ar,
+		ret = ath6kl_hअगर_bmi_पढ़ो(ar,
 				   (u8 *)&targ_info->byte_count,
-				   sizeof(targ_info->byte_count));
-		if (ret) {
+				   माप(targ_info->byte_count));
+		अगर (ret) अणु
 			ath6kl_err("unable to read target info byte count: %d\n",
 				   ret);
-			return ret;
-		}
+			वापस ret;
+		पूर्ण
 
 		/*
 		 * The target's targ_info doesn't match the host's targ_info.
-		 * We need to do some backwards compatibility to make this work.
+		 * We need to करो some backwards compatibility to make this work.
 		 */
-		if (le32_to_cpu(targ_info->byte_count) != sizeof(*targ_info)) {
+		अगर (le32_to_cpu(targ_info->byte_count) != माप(*targ_info)) अणु
 			WARN_ON(1);
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
-		/* Read the remainder of the targ_info */
-		ret = ath6kl_hif_bmi_read(ar,
+		/* Read the reमुख्यder of the targ_info */
+		ret = ath6kl_hअगर_bmi_पढ़ो(ar,
 				   ((u8 *)targ_info) +
-				   sizeof(targ_info->byte_count),
-				   sizeof(*targ_info) -
-				   sizeof(targ_info->byte_count));
+				   माप(targ_info->byte_count),
+				   माप(*targ_info) -
+				   माप(targ_info->byte_count));
 
-		if (ret) {
+		अगर (ret) अणु
 			ath6kl_err("Unable to read target info (%d bytes): %d\n",
 				   targ_info->byte_count, ret);
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
 	ath6kl_dbg(ATH6KL_DBG_BMI, "target info (ver: 0x%x type: 0x%x)\n",
 		   targ_info->version, targ_info->type);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int ath6kl_bmi_read(struct ath6kl *ar, u32 addr, u8 *buf, u32 len)
-{
+पूर्णांक ath6kl_bmi_पढ़ो(काष्ठा ath6kl *ar, u32 addr, u8 *buf, u32 len)
+अणु
 	u32 cid = BMI_READ_MEMORY;
-	int ret;
+	पूर्णांक ret;
 	u32 offset;
-	u32 len_remain, rx_len;
+	u32 len_reमुख्य, rx_len;
 	u16 size;
 
-	if (ar->bmi.done_sent) {
+	अगर (ar->bmi.करोne_sent) अणु
 		ath6kl_err("bmi done sent already, cmd %d disallowed\n", cid);
-		return -EACCES;
-	}
+		वापस -EACCES;
+	पूर्ण
 
-	size = ar->bmi.max_data_size + sizeof(cid) + sizeof(addr) + sizeof(len);
-	if (size > ar->bmi.max_cmd_size) {
+	size = ar->bmi.max_data_size + माप(cid) + माप(addr) + माप(len);
+	अगर (size > ar->bmi.max_cmd_size) अणु
 		WARN_ON(1);
-		return -EINVAL;
-	}
-	memset(ar->bmi.cmd_buf, 0, size);
+		वापस -EINVAL;
+	पूर्ण
+	स_रखो(ar->bmi.cmd_buf, 0, size);
 
 	ath6kl_dbg(ATH6KL_DBG_BMI,
 		   "bmi read memory: device: addr: 0x%x, len: %d\n",
 		   addr, len);
 
-	len_remain = len;
+	len_reमुख्य = len;
 
-	while (len_remain) {
-		rx_len = (len_remain < ar->bmi.max_data_size) ?
-					len_remain : ar->bmi.max_data_size;
+	जबतक (len_reमुख्य) अणु
+		rx_len = (len_reमुख्य < ar->bmi.max_data_size) ?
+					len_reमुख्य : ar->bmi.max_data_size;
 		offset = 0;
-		memcpy(&(ar->bmi.cmd_buf[offset]), &cid, sizeof(cid));
-		offset += sizeof(cid);
-		memcpy(&(ar->bmi.cmd_buf[offset]), &addr, sizeof(addr));
-		offset += sizeof(addr);
-		memcpy(&(ar->bmi.cmd_buf[offset]), &rx_len, sizeof(rx_len));
-		offset += sizeof(len);
+		स_नकल(&(ar->bmi.cmd_buf[offset]), &cid, माप(cid));
+		offset += माप(cid);
+		स_नकल(&(ar->bmi.cmd_buf[offset]), &addr, माप(addr));
+		offset += माप(addr);
+		स_नकल(&(ar->bmi.cmd_buf[offset]), &rx_len, माप(rx_len));
+		offset += माप(len);
 
-		ret = ath6kl_hif_bmi_write(ar, ar->bmi.cmd_buf, offset);
-		if (ret) {
+		ret = ath6kl_hअगर_bmi_ग_लिखो(ar, ar->bmi.cmd_buf, offset);
+		अगर (ret) अणु
 			ath6kl_err("Unable to write to the device: %d\n",
 				   ret);
-			return ret;
-		}
-		ret = ath6kl_hif_bmi_read(ar, ar->bmi.cmd_buf, rx_len);
-		if (ret) {
+			वापस ret;
+		पूर्ण
+		ret = ath6kl_hअगर_bmi_पढ़ो(ar, ar->bmi.cmd_buf, rx_len);
+		अगर (ret) अणु
 			ath6kl_err("Unable to read from the device: %d\n",
 				   ret);
-			return ret;
-		}
-		memcpy(&buf[len - len_remain], ar->bmi.cmd_buf, rx_len);
-		len_remain -= rx_len; addr += rx_len;
-	}
+			वापस ret;
+		पूर्ण
+		स_नकल(&buf[len - len_reमुख्य], ar->bmi.cmd_buf, rx_len);
+		len_reमुख्य -= rx_len; addr += rx_len;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int ath6kl_bmi_write(struct ath6kl *ar, u32 addr, u8 *buf, u32 len)
-{
+पूर्णांक ath6kl_bmi_ग_लिखो(काष्ठा ath6kl *ar, u32 addr, u8 *buf, u32 len)
+अणु
 	u32 cid = BMI_WRITE_MEMORY;
-	int ret;
+	पूर्णांक ret;
 	u32 offset;
-	u32 len_remain, tx_len;
-	const u32 header = sizeof(cid) + sizeof(addr) + sizeof(len);
+	u32 len_reमुख्य, tx_len;
+	स्थिर u32 header = माप(cid) + माप(addr) + माप(len);
 	u8 aligned_buf[400];
 	u8 *src;
 
-	if (ar->bmi.done_sent) {
+	अगर (ar->bmi.करोne_sent) अणु
 		ath6kl_err("bmi done sent already, cmd %d disallowed\n", cid);
-		return -EACCES;
-	}
+		वापस -EACCES;
+	पूर्ण
 
-	if ((ar->bmi.max_data_size + header) > ar->bmi.max_cmd_size) {
+	अगर ((ar->bmi.max_data_size + header) > ar->bmi.max_cmd_size) अणु
 		WARN_ON(1);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (WARN_ON(ar->bmi.max_data_size > sizeof(aligned_buf)))
-		return -E2BIG;
+	अगर (WARN_ON(ar->bmi.max_data_size > माप(aligned_buf)))
+		वापस -E2BIG;
 
-	memset(ar->bmi.cmd_buf, 0, ar->bmi.max_data_size + header);
+	स_रखो(ar->bmi.cmd_buf, 0, ar->bmi.max_data_size + header);
 
 	ath6kl_dbg(ATH6KL_DBG_BMI,
 		   "bmi write memory: addr: 0x%x, len: %d\n", addr, len);
 
-	len_remain = len;
-	while (len_remain) {
-		src = &buf[len - len_remain];
+	len_reमुख्य = len;
+	जबतक (len_reमुख्य) अणु
+		src = &buf[len - len_reमुख्य];
 
-		if (len_remain < (ar->bmi.max_data_size - header)) {
-			if (len_remain & 3) {
+		अगर (len_reमुख्य < (ar->bmi.max_data_size - header)) अणु
+			अगर (len_reमुख्य & 3) अणु
 				/* align it with 4 bytes */
-				len_remain = len_remain +
-					     (4 - (len_remain & 3));
-				memcpy(aligned_buf, src, len_remain);
+				len_reमुख्य = len_reमुख्य +
+					     (4 - (len_reमुख्य & 3));
+				स_नकल(aligned_buf, src, len_reमुख्य);
 				src = aligned_buf;
-			}
-			tx_len = len_remain;
-		} else {
+			पूर्ण
+			tx_len = len_reमुख्य;
+		पूर्ण अन्यथा अणु
 			tx_len = (ar->bmi.max_data_size - header);
-		}
+		पूर्ण
 
 		offset = 0;
-		memcpy(&(ar->bmi.cmd_buf[offset]), &cid, sizeof(cid));
-		offset += sizeof(cid);
-		memcpy(&(ar->bmi.cmd_buf[offset]), &addr, sizeof(addr));
-		offset += sizeof(addr);
-		memcpy(&(ar->bmi.cmd_buf[offset]), &tx_len, sizeof(tx_len));
-		offset += sizeof(tx_len);
-		memcpy(&(ar->bmi.cmd_buf[offset]), src, tx_len);
+		स_नकल(&(ar->bmi.cmd_buf[offset]), &cid, माप(cid));
+		offset += माप(cid);
+		स_नकल(&(ar->bmi.cmd_buf[offset]), &addr, माप(addr));
+		offset += माप(addr);
+		स_नकल(&(ar->bmi.cmd_buf[offset]), &tx_len, माप(tx_len));
+		offset += माप(tx_len);
+		स_नकल(&(ar->bmi.cmd_buf[offset]), src, tx_len);
 		offset += tx_len;
 
-		ret = ath6kl_hif_bmi_write(ar, ar->bmi.cmd_buf, offset);
-		if (ret) {
+		ret = ath6kl_hअगर_bmi_ग_लिखो(ar, ar->bmi.cmd_buf, offset);
+		अगर (ret) अणु
 			ath6kl_err("Unable to write to the device: %d\n",
 				   ret);
-			return ret;
-		}
-		len_remain -= tx_len; addr += tx_len;
-	}
+			वापस ret;
+		पूर्ण
+		len_reमुख्य -= tx_len; addr += tx_len;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int ath6kl_bmi_execute(struct ath6kl *ar, u32 addr, u32 *param)
-{
+पूर्णांक ath6kl_bmi_execute(काष्ठा ath6kl *ar, u32 addr, u32 *param)
+अणु
 	u32 cid = BMI_EXECUTE;
-	int ret;
+	पूर्णांक ret;
 	u32 offset;
 	u16 size;
 
-	if (ar->bmi.done_sent) {
+	अगर (ar->bmi.करोne_sent) अणु
 		ath6kl_err("bmi done sent already, cmd %d disallowed\n", cid);
-		return -EACCES;
-	}
+		वापस -EACCES;
+	पूर्ण
 
-	size = sizeof(cid) + sizeof(addr) + sizeof(param);
-	if (size > ar->bmi.max_cmd_size) {
+	size = माप(cid) + माप(addr) + माप(param);
+	अगर (size > ar->bmi.max_cmd_size) अणु
 		WARN_ON(1);
-		return -EINVAL;
-	}
-	memset(ar->bmi.cmd_buf, 0, size);
+		वापस -EINVAL;
+	पूर्ण
+	स_रखो(ar->bmi.cmd_buf, 0, size);
 
 	ath6kl_dbg(ATH6KL_DBG_BMI, "bmi execute: addr: 0x%x, param: %d)\n",
 		   addr, *param);
 
 	offset = 0;
-	memcpy(&(ar->bmi.cmd_buf[offset]), &cid, sizeof(cid));
-	offset += sizeof(cid);
-	memcpy(&(ar->bmi.cmd_buf[offset]), &addr, sizeof(addr));
-	offset += sizeof(addr);
-	memcpy(&(ar->bmi.cmd_buf[offset]), param, sizeof(*param));
-	offset += sizeof(*param);
+	स_नकल(&(ar->bmi.cmd_buf[offset]), &cid, माप(cid));
+	offset += माप(cid);
+	स_नकल(&(ar->bmi.cmd_buf[offset]), &addr, माप(addr));
+	offset += माप(addr);
+	स_नकल(&(ar->bmi.cmd_buf[offset]), param, माप(*param));
+	offset += माप(*param);
 
-	ret = ath6kl_hif_bmi_write(ar, ar->bmi.cmd_buf, offset);
-	if (ret) {
+	ret = ath6kl_hअगर_bmi_ग_लिखो(ar, ar->bmi.cmd_buf, offset);
+	अगर (ret) अणु
 		ath6kl_err("Unable to write to the device: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	ret = ath6kl_hif_bmi_read(ar, ar->bmi.cmd_buf, sizeof(*param));
-	if (ret) {
+	ret = ath6kl_hअगर_bmi_पढ़ो(ar, ar->bmi.cmd_buf, माप(*param));
+	अगर (ret) अणु
 		ath6kl_err("Unable to read from the device: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	memcpy(param, ar->bmi.cmd_buf, sizeof(*param));
+	स_नकल(param, ar->bmi.cmd_buf, माप(*param));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int ath6kl_bmi_set_app_start(struct ath6kl *ar, u32 addr)
-{
+पूर्णांक ath6kl_bmi_set_app_start(काष्ठा ath6kl *ar, u32 addr)
+अणु
 	u32 cid = BMI_SET_APP_START;
-	int ret;
+	पूर्णांक ret;
 	u32 offset;
 	u16 size;
 
-	if (ar->bmi.done_sent) {
+	अगर (ar->bmi.करोne_sent) अणु
 		ath6kl_err("bmi done sent already, cmd %d disallowed\n", cid);
-		return -EACCES;
-	}
+		वापस -EACCES;
+	पूर्ण
 
-	size = sizeof(cid) + sizeof(addr);
-	if (size > ar->bmi.max_cmd_size) {
+	size = माप(cid) + माप(addr);
+	अगर (size > ar->bmi.max_cmd_size) अणु
 		WARN_ON(1);
-		return -EINVAL;
-	}
-	memset(ar->bmi.cmd_buf, 0, size);
+		वापस -EINVAL;
+	पूर्ण
+	स_रखो(ar->bmi.cmd_buf, 0, size);
 
 	ath6kl_dbg(ATH6KL_DBG_BMI, "bmi set app start: addr: 0x%x\n", addr);
 
 	offset = 0;
-	memcpy(&(ar->bmi.cmd_buf[offset]), &cid, sizeof(cid));
-	offset += sizeof(cid);
-	memcpy(&(ar->bmi.cmd_buf[offset]), &addr, sizeof(addr));
-	offset += sizeof(addr);
+	स_नकल(&(ar->bmi.cmd_buf[offset]), &cid, माप(cid));
+	offset += माप(cid);
+	स_नकल(&(ar->bmi.cmd_buf[offset]), &addr, माप(addr));
+	offset += माप(addr);
 
-	ret = ath6kl_hif_bmi_write(ar, ar->bmi.cmd_buf, offset);
-	if (ret) {
+	ret = ath6kl_hअगर_bmi_ग_लिखो(ar, ar->bmi.cmd_buf, offset);
+	अगर (ret) अणु
 		ath6kl_err("Unable to write to the device: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int ath6kl_bmi_reg_read(struct ath6kl *ar, u32 addr, u32 *param)
-{
+पूर्णांक ath6kl_bmi_reg_पढ़ो(काष्ठा ath6kl *ar, u32 addr, u32 *param)
+अणु
 	u32 cid = BMI_READ_SOC_REGISTER;
-	int ret;
+	पूर्णांक ret;
 	u32 offset;
 	u16 size;
 
-	if (ar->bmi.done_sent) {
+	अगर (ar->bmi.करोne_sent) अणु
 		ath6kl_err("bmi done sent already, cmd %d disallowed\n", cid);
-		return -EACCES;
-	}
+		वापस -EACCES;
+	पूर्ण
 
-	size = sizeof(cid) + sizeof(addr);
-	if (size > ar->bmi.max_cmd_size) {
+	size = माप(cid) + माप(addr);
+	अगर (size > ar->bmi.max_cmd_size) अणु
 		WARN_ON(1);
-		return -EINVAL;
-	}
-	memset(ar->bmi.cmd_buf, 0, size);
+		वापस -EINVAL;
+	पूर्ण
+	स_रखो(ar->bmi.cmd_buf, 0, size);
 
 	ath6kl_dbg(ATH6KL_DBG_BMI, "bmi read SOC reg: addr: 0x%x\n", addr);
 
 	offset = 0;
-	memcpy(&(ar->bmi.cmd_buf[offset]), &cid, sizeof(cid));
-	offset += sizeof(cid);
-	memcpy(&(ar->bmi.cmd_buf[offset]), &addr, sizeof(addr));
-	offset += sizeof(addr);
+	स_नकल(&(ar->bmi.cmd_buf[offset]), &cid, माप(cid));
+	offset += माप(cid);
+	स_नकल(&(ar->bmi.cmd_buf[offset]), &addr, माप(addr));
+	offset += माप(addr);
 
-	ret = ath6kl_hif_bmi_write(ar, ar->bmi.cmd_buf, offset);
-	if (ret) {
+	ret = ath6kl_hअगर_bmi_ग_लिखो(ar, ar->bmi.cmd_buf, offset);
+	अगर (ret) अणु
 		ath6kl_err("Unable to write to the device: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	ret = ath6kl_hif_bmi_read(ar, ar->bmi.cmd_buf, sizeof(*param));
-	if (ret) {
+	ret = ath6kl_hअगर_bmi_पढ़ो(ar, ar->bmi.cmd_buf, माप(*param));
+	अगर (ret) अणु
 		ath6kl_err("Unable to read from the device: %d\n", ret);
-		return ret;
-	}
-	memcpy(param, ar->bmi.cmd_buf, sizeof(*param));
+		वापस ret;
+	पूर्ण
+	स_नकल(param, ar->bmi.cmd_buf, माप(*param));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int ath6kl_bmi_reg_write(struct ath6kl *ar, u32 addr, u32 param)
-{
+पूर्णांक ath6kl_bmi_reg_ग_लिखो(काष्ठा ath6kl *ar, u32 addr, u32 param)
+अणु
 	u32 cid = BMI_WRITE_SOC_REGISTER;
-	int ret;
+	पूर्णांक ret;
 	u32 offset;
 	u16 size;
 
-	if (ar->bmi.done_sent) {
+	अगर (ar->bmi.करोne_sent) अणु
 		ath6kl_err("bmi done sent already, cmd %d disallowed\n", cid);
-		return -EACCES;
-	}
+		वापस -EACCES;
+	पूर्ण
 
-	size = sizeof(cid) + sizeof(addr) + sizeof(param);
-	if (size > ar->bmi.max_cmd_size) {
+	size = माप(cid) + माप(addr) + माप(param);
+	अगर (size > ar->bmi.max_cmd_size) अणु
 		WARN_ON(1);
-		return -EINVAL;
-	}
-	memset(ar->bmi.cmd_buf, 0, size);
+		वापस -EINVAL;
+	पूर्ण
+	स_रखो(ar->bmi.cmd_buf, 0, size);
 
 	ath6kl_dbg(ATH6KL_DBG_BMI,
 		   "bmi write SOC reg: addr: 0x%x, param: %d\n",
 		    addr, param);
 
 	offset = 0;
-	memcpy(&(ar->bmi.cmd_buf[offset]), &cid, sizeof(cid));
-	offset += sizeof(cid);
-	memcpy(&(ar->bmi.cmd_buf[offset]), &addr, sizeof(addr));
-	offset += sizeof(addr);
-	memcpy(&(ar->bmi.cmd_buf[offset]), &param, sizeof(param));
-	offset += sizeof(param);
+	स_नकल(&(ar->bmi.cmd_buf[offset]), &cid, माप(cid));
+	offset += माप(cid);
+	स_नकल(&(ar->bmi.cmd_buf[offset]), &addr, माप(addr));
+	offset += माप(addr);
+	स_नकल(&(ar->bmi.cmd_buf[offset]), &param, माप(param));
+	offset += माप(param);
 
-	ret = ath6kl_hif_bmi_write(ar, ar->bmi.cmd_buf, offset);
-	if (ret) {
+	ret = ath6kl_hअगर_bmi_ग_लिखो(ar, ar->bmi.cmd_buf, offset);
+	अगर (ret) अणु
 		ath6kl_err("Unable to write to the device: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int ath6kl_bmi_lz_data(struct ath6kl *ar, u8 *buf, u32 len)
-{
+पूर्णांक ath6kl_bmi_lz_data(काष्ठा ath6kl *ar, u8 *buf, u32 len)
+अणु
 	u32 cid = BMI_LZ_DATA;
-	int ret;
+	पूर्णांक ret;
 	u32 offset;
-	u32 len_remain, tx_len;
-	const u32 header = sizeof(cid) + sizeof(len);
+	u32 len_reमुख्य, tx_len;
+	स्थिर u32 header = माप(cid) + माप(len);
 	u16 size;
 
-	if (ar->bmi.done_sent) {
+	अगर (ar->bmi.करोne_sent) अणु
 		ath6kl_err("bmi done sent already, cmd %d disallowed\n", cid);
-		return -EACCES;
-	}
+		वापस -EACCES;
+	पूर्ण
 
 	size = ar->bmi.max_data_size + header;
-	if (size > ar->bmi.max_cmd_size) {
+	अगर (size > ar->bmi.max_cmd_size) अणु
 		WARN_ON(1);
-		return -EINVAL;
-	}
-	memset(ar->bmi.cmd_buf, 0, size);
+		वापस -EINVAL;
+	पूर्ण
+	स_रखो(ar->bmi.cmd_buf, 0, size);
 
 	ath6kl_dbg(ATH6KL_DBG_BMI, "bmi send LZ data: len: %d)\n",
 		   len);
 
-	len_remain = len;
-	while (len_remain) {
-		tx_len = (len_remain < (ar->bmi.max_data_size - header)) ?
-			  len_remain : (ar->bmi.max_data_size - header);
+	len_reमुख्य = len;
+	जबतक (len_reमुख्य) अणु
+		tx_len = (len_reमुख्य < (ar->bmi.max_data_size - header)) ?
+			  len_reमुख्य : (ar->bmi.max_data_size - header);
 
 		offset = 0;
-		memcpy(&(ar->bmi.cmd_buf[offset]), &cid, sizeof(cid));
-		offset += sizeof(cid);
-		memcpy(&(ar->bmi.cmd_buf[offset]), &tx_len, sizeof(tx_len));
-		offset += sizeof(tx_len);
-		memcpy(&(ar->bmi.cmd_buf[offset]), &buf[len - len_remain],
+		स_नकल(&(ar->bmi.cmd_buf[offset]), &cid, माप(cid));
+		offset += माप(cid);
+		स_नकल(&(ar->bmi.cmd_buf[offset]), &tx_len, माप(tx_len));
+		offset += माप(tx_len);
+		स_नकल(&(ar->bmi.cmd_buf[offset]), &buf[len - len_reमुख्य],
 		       tx_len);
 		offset += tx_len;
 
-		ret = ath6kl_hif_bmi_write(ar, ar->bmi.cmd_buf, offset);
-		if (ret) {
+		ret = ath6kl_hअगर_bmi_ग_लिखो(ar, ar->bmi.cmd_buf, offset);
+		अगर (ret) अणु
 			ath6kl_err("Unable to write to the device: %d\n",
 				   ret);
-			return ret;
-		}
+			वापस ret;
+		पूर्ण
 
-		len_remain -= tx_len;
-	}
+		len_reमुख्य -= tx_len;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int ath6kl_bmi_lz_stream_start(struct ath6kl *ar, u32 addr)
-{
+पूर्णांक ath6kl_bmi_lz_stream_start(काष्ठा ath6kl *ar, u32 addr)
+अणु
 	u32 cid = BMI_LZ_STREAM_START;
-	int ret;
+	पूर्णांक ret;
 	u32 offset;
 	u16 size;
 
-	if (ar->bmi.done_sent) {
+	अगर (ar->bmi.करोne_sent) अणु
 		ath6kl_err("bmi done sent already, cmd %d disallowed\n", cid);
-		return -EACCES;
-	}
+		वापस -EACCES;
+	पूर्ण
 
-	size = sizeof(cid) + sizeof(addr);
-	if (size > ar->bmi.max_cmd_size) {
+	size = माप(cid) + माप(addr);
+	अगर (size > ar->bmi.max_cmd_size) अणु
 		WARN_ON(1);
-		return -EINVAL;
-	}
-	memset(ar->bmi.cmd_buf, 0, size);
+		वापस -EINVAL;
+	पूर्ण
+	स_रखो(ar->bmi.cmd_buf, 0, size);
 
 	ath6kl_dbg(ATH6KL_DBG_BMI,
 		   "bmi LZ stream start: addr: 0x%x)\n",
 		    addr);
 
 	offset = 0;
-	memcpy(&(ar->bmi.cmd_buf[offset]), &cid, sizeof(cid));
-	offset += sizeof(cid);
-	memcpy(&(ar->bmi.cmd_buf[offset]), &addr, sizeof(addr));
-	offset += sizeof(addr);
+	स_नकल(&(ar->bmi.cmd_buf[offset]), &cid, माप(cid));
+	offset += माप(cid);
+	स_नकल(&(ar->bmi.cmd_buf[offset]), &addr, माप(addr));
+	offset += माप(addr);
 
-	ret = ath6kl_hif_bmi_write(ar, ar->bmi.cmd_buf, offset);
-	if (ret) {
+	ret = ath6kl_hअगर_bmi_ग_लिखो(ar, ar->bmi.cmd_buf, offset);
+	अगर (ret) अणु
 		ath6kl_err("Unable to start LZ stream to the device: %d\n",
 			   ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int ath6kl_bmi_fast_download(struct ath6kl *ar, u32 addr, u8 *buf, u32 len)
-{
-	int ret;
+पूर्णांक ath6kl_bmi_fast_करोwnload(काष्ठा ath6kl *ar, u32 addr, u8 *buf, u32 len)
+अणु
+	पूर्णांक ret;
 	u32 last_word = 0;
 	u32 last_word_offset = len & ~0x3;
 	u32 unaligned_bytes = len & 0x3;
 
 	ret = ath6kl_bmi_lz_stream_start(ar, addr);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	if (unaligned_bytes) {
-		/* copy the last word into a zero padded buffer */
-		memcpy(&last_word, &buf[last_word_offset], unaligned_bytes);
-	}
+	अगर (unaligned_bytes) अणु
+		/* copy the last word पूर्णांकo a zero padded buffer */
+		स_नकल(&last_word, &buf[last_word_offset], unaligned_bytes);
+	पूर्ण
 
 	ret = ath6kl_bmi_lz_data(ar, buf, last_word_offset);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	if (unaligned_bytes)
+	अगर (unaligned_bytes)
 		ret = ath6kl_bmi_lz_data(ar, (u8 *)&last_word, 4);
 
-	if (!ret) {
-		/* Close compressed stream and open a new (fake) one.
-		 * This serves mainly to flush Target caches. */
+	अगर (!ret) अणु
+		/* Close compressed stream and खोलो a new (fake) one.
+		 * This serves मुख्यly to flush Target caches. */
 		ret = ath6kl_bmi_lz_stream_start(ar, 0x00);
-	}
-	return ret;
-}
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-void ath6kl_bmi_reset(struct ath6kl *ar)
-{
-	ar->bmi.done_sent = false;
-}
+व्योम ath6kl_bmi_reset(काष्ठा ath6kl *ar)
+अणु
+	ar->bmi.करोne_sent = false;
+पूर्ण
 
-int ath6kl_bmi_init(struct ath6kl *ar)
-{
-	if (WARN_ON(ar->bmi.max_data_size == 0))
-		return -EINVAL;
+पूर्णांक ath6kl_bmi_init(काष्ठा ath6kl *ar)
+अणु
+	अगर (WARN_ON(ar->bmi.max_data_size == 0))
+		वापस -EINVAL;
 
 	/* cmd + addr + len + data_size */
-	ar->bmi.max_cmd_size = ar->bmi.max_data_size + (sizeof(u32) * 3);
+	ar->bmi.max_cmd_size = ar->bmi.max_data_size + (माप(u32) * 3);
 
 	ar->bmi.cmd_buf = kzalloc(ar->bmi.max_cmd_size, GFP_KERNEL);
-	if (!ar->bmi.cmd_buf)
-		return -ENOMEM;
+	अगर (!ar->bmi.cmd_buf)
+		वापस -ENOMEM;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void ath6kl_bmi_cleanup(struct ath6kl *ar)
-{
-	kfree(ar->bmi.cmd_buf);
-	ar->bmi.cmd_buf = NULL;
-}
+व्योम ath6kl_bmi_cleanup(काष्ठा ath6kl *ar)
+अणु
+	kमुक्त(ar->bmi.cmd_buf);
+	ar->bmi.cmd_buf = शून्य;
+पूर्ण

@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2020 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -23,18 +24,18 @@
  *
  */
 
-#ifndef __DC_HUBBUB_DCN30_H__
-#define __DC_HUBBUB_DCN30_H__
+#अगर_अघोषित __DC_HUBBUB_DCN30_H__
+#घोषणा __DC_HUBBUB_DCN30_H__
 
-#include "dcn21/dcn21_hubbub.h"
+#समावेश "dcn21/dcn21_hubbub.h"
 
-#define HUBBUB_REG_LIST_DCN3AG(id)\
+#घोषणा HUBBUB_REG_LIST_DCN3AG(id)\
 	HUBBUB_REG_LIST_DCN21()
 
-#define HUBBUB_MASK_SH_LIST_DCN3AG(mask_sh)\
+#घोषणा HUBBUB_MASK_SH_LIST_DCN3AG(mask_sh)\
 	HUBBUB_MASK_SH_LIST_DCN21(mask_sh)
 
-#define HUBBUB_REG_LIST_DCN30(id)\
+#घोषणा HUBBUB_REG_LIST_DCN30(id)\
 	HUBBUB_REG_LIST_DCN20_COMMON(), \
 	HUBBUB_SR_WATERMARK_REG_LIST(), \
 	SR(DCHUBBUB_ARB_FRAC_URG_BW_NOM_A),\
@@ -50,7 +51,7 @@
 	SR(DCHUBBUB_ARB_REFCYC_PER_TRIP_TO_MEMORY_C),\
 	SR(DCHUBBUB_ARB_REFCYC_PER_TRIP_TO_MEMORY_D)
 
-#define HUBBUB_MASK_SH_LIST_DCN30(mask_sh)\
+#घोषणा HUBBUB_MASK_SH_LIST_DCN30(mask_sh)\
 	HUBBUB_MASK_SH_LIST_DCN_COMMON(mask_sh), \
 	HUBBUB_MASK_SH_LIST_STUTTER(mask_sh), \
 	HUBBUB_SF(DCHUBBUB_GLOBAL_TIMER_CNTL, DCHUBBUB_GLOBAL_TIMER_REFDIV, mask_sh), \
@@ -89,36 +90,36 @@
 	HUBBUB_SF(DCHUBBUB_ARB_ALLOW_DRAM_CLK_CHANGE_WATERMARK_C, DCHUBBUB_ARB_VM_ROW_ALLOW_DRAM_CLK_CHANGE_WATERMARK_C, mask_sh), \
 	HUBBUB_SF(DCHUBBUB_ARB_ALLOW_DRAM_CLK_CHANGE_WATERMARK_D, DCHUBBUB_ARB_VM_ROW_ALLOW_DRAM_CLK_CHANGE_WATERMARK_D, mask_sh)
 
-void hubbub3_construct(struct dcn20_hubbub *hubbub3,
-	struct dc_context *ctx,
-	const struct dcn_hubbub_registers *hubbub_regs,
-	const struct dcn_hubbub_shift *hubbub_shift,
-	const struct dcn_hubbub_mask *hubbub_mask);
+व्योम hubbub3_स्थिरruct(काष्ठा dcn20_hubbub *hubbub3,
+	काष्ठा dc_context *ctx,
+	स्थिर काष्ठा dcn_hubbub_रेजिस्टरs *hubbub_regs,
+	स्थिर काष्ठा dcn_hubbub_shअगरt *hubbub_shअगरt,
+	स्थिर काष्ठा dcn_hubbub_mask *hubbub_mask);
 
-int hubbub3_init_dchub_sys_ctx(struct hubbub *hubbub,
-		struct dcn_hubbub_phys_addr_config *pa_config);
+पूर्णांक hubbub3_init_dchub_sys_ctx(काष्ठा hubbub *hubbub,
+		काष्ठा dcn_hubbub_phys_addr_config *pa_config);
 
 bool hubbub3_dcc_support_swizzle(
-		enum swizzle_mode_values swizzle,
-		unsigned int bytes_per_element,
-		enum segment_order *segment_order_horz,
-		enum segment_order *segment_order_vert);
+		क्रमागत swizzle_mode_values swizzle,
+		अचिन्हित पूर्णांक bytes_per_element,
+		क्रमागत segment_order *segment_order_horz,
+		क्रमागत segment_order *segment_order_vert);
 
-void hubbub3_force_wm_propagate_to_pipes(struct hubbub *hubbub);
+व्योम hubbub3_क्रमce_wm_propagate_to_pipes(काष्ठा hubbub *hubbub);
 
-bool hubbub3_get_dcc_compression_cap(struct hubbub *hubbub,
-		const struct dc_dcc_surface_param *input,
-		struct dc_surface_dcc_cap *output);
+bool hubbub3_get_dcc_compression_cap(काष्ठा hubbub *hubbub,
+		स्थिर काष्ठा dc_dcc_surface_param *input,
+		काष्ठा dc_surface_dcc_cap *output);
 
 bool hubbub3_program_watermarks(
-		struct hubbub *hubbub,
-		struct dcn_watermark_set *watermarks,
-		unsigned int refclk_mhz,
+		काष्ठा hubbub *hubbub,
+		काष्ठा dcn_watermark_set *watermarks,
+		अचिन्हित पूर्णांक refclk_mhz,
 		bool safe_to_lower);
 
-void hubbub3_force_pstate_change_control(struct hubbub *hubbub,
-		bool force, bool allow);
+व्योम hubbub3_क्रमce_pstate_change_control(काष्ठा hubbub *hubbub,
+		bool क्रमce, bool allow);
 
-void hubbub3_init_watermarks(struct hubbub *hubbub);
+व्योम hubbub3_init_watermarks(काष्ठा hubbub *hubbub);
 
-#endif
+#पूर्ण_अगर

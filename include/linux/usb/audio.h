@@ -1,45 +1,46 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * <linux/usb/audio.h> -- USB Audio definitions.
+ * <linux/usb/audपन.स> -- USB Audio definitions.
  *
  * Copyright (C) 2006 Thumtronics Pty Ltd.
- * Developed for Thumtronics by Grey Innovation
+ * Developed क्रम Thumtronics by Grey Innovation
  * Ben Williamson <ben.williamson@greyinnovation.com>
  *
  * This software is distributed under the terms of the GNU General Public
  * License ("GPL") version 2, as published by the Free Software Foundation.
  *
- * This file holds USB constants and structures defined
- * by the USB Device Class Definition for Audio Devices.
- * Comments below reference relevant sections of that document:
+ * This file holds USB स्थिरants and काष्ठाures defined
+ * by the USB Device Class Definition क्रम Audio Devices.
+ * Comments below reference relevant sections of that करोcument:
  *
- * http://www.usb.org/developers/devclass_docs/audio10.pdf
+ * http://www.usb.org/developers/devclass_करोcs/audio10.pdf
  *
- * Types and defines in this file are either specific to version 1.0 of
- * this standard or common for newer versions.
+ * Types and defines in this file are either specअगरic to version 1.0 of
+ * this standard or common क्रम newer versions.
  */
-#ifndef __LINUX_USB_AUDIO_H
-#define __LINUX_USB_AUDIO_H
+#अगर_अघोषित __LINUX_USB_AUDIO_H
+#घोषणा __LINUX_USB_AUDIO_H
 
-#include <uapi/linux/usb/audio.h>
+#समावेश <uapi/linux/usb/audपन.स>
 
 
-struct usb_audio_control {
-	struct list_head list;
-	const char *name;
+काष्ठा usb_audio_control अणु
+	काष्ठा list_head list;
+	स्थिर अक्षर *name;
 	u8 type;
-	int data[5];
-	int (*set)(struct usb_audio_control *con, u8 cmd, int value);
-	int (*get)(struct usb_audio_control *con, u8 cmd);
-};
+	पूर्णांक data[5];
+	पूर्णांक (*set)(काष्ठा usb_audio_control *con, u8 cmd, पूर्णांक value);
+	पूर्णांक (*get)(काष्ठा usb_audio_control *con, u8 cmd);
+पूर्ण;
 
-struct usb_audio_control_selector {
-	struct list_head list;
-	struct list_head control;
+काष्ठा usb_audio_control_selector अणु
+	काष्ठा list_head list;
+	काष्ठा list_head control;
 	u8 id;
-	const char *name;
+	स्थिर अक्षर *name;
 	u8 type;
-	struct usb_descriptor_header *desc;
-};
+	काष्ठा usb_descriptor_header *desc;
+पूर्ण;
 
-#endif /* __LINUX_USB_AUDIO_H */
+#पूर्ण_अगर /* __LINUX_USB_AUDIO_H */

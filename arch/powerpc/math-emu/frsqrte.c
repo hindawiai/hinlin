@@ -1,13 +1,14 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <linux/types.h>
-#include <linux/errno.h>
-#include <linux/uaccess.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <linux/types.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/uaccess.h>
 
-int
-frsqrte(void *frD, void *frB)
-{
-#ifdef DEBUG
-	printk("%s: %p %p\n", __func__, frD, frB);
-#endif
-	return 0;
-}
+पूर्णांक
+frवर्ग_मूलe(व्योम *frD, व्योम *frB)
+अणु
+#अगर_घोषित DEBUG
+	prपूर्णांकk("%s: %p %p\n", __func__, frD, frB);
+#पूर्ण_अगर
+	वापस 0;
+पूर्ण

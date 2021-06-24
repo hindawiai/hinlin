@@ -1,75 +1,76 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
  *   Copyright (C) International Business Machines Corp., 2000-2002
  */
-#ifndef _H_JFS_XTREE
-#define _H_JFS_XTREE
+#अगर_अघोषित _H_JFS_XTREE
+#घोषणा _H_JFS_XTREE
 
 /*
  *	jfs_xtree.h: extent allocation descriptor B+-tree manager
  */
 
-#include "jfs_btree.h"
+#समावेश "jfs_btree.h"
 
 
 /*
  *	extent allocation descriptor (xad)
  */
-typedef struct xad {
+प्रकार काष्ठा xad अणु
 	__u8 flag;	/* 1: flag */
 	__u8 rsvrd[2];	/* 2: reserved */
 	__u8 off1;	/* 1: offset in unit of fsblksize */
 	__le32 off2;	/* 4: offset in unit of fsblksize */
 	pxd_t loc;	/* 8: length and address in unit of fsblksize */
-} xad_t;			/* (16) */
+पूर्ण xad_t;			/* (16) */
 
-#define MAXXLEN		((1 << 24) - 1)
+#घोषणा MAXXLEN		((1 << 24) - 1)
 
-#define XTSLOTSIZE	16
-#define L2XTSLOTSIZE	4
+#घोषणा XTSLOTSIZE	16
+#घोषणा L2XTSLOTSIZE	4
 
-/* xad_t field construction */
-#define XADoffset(xad, offset64)\
-{\
+/* xad_t field स्थिरruction */
+#घोषणा XADoffset(xad, offset64)\
+अणु\
 	(xad)->off1 = ((u64)offset64) >> 32;\
 	(xad)->off2 = __cpu_to_le32((offset64) & 0xffffffff);\
-}
-#define XADaddress(xad, address64) PXDaddress(&(xad)->loc, address64)
-#define XADlength(xad, length32) PXDlength(&(xad)->loc, length32)
+पूर्ण
+#घोषणा XADaddress(xad, address64) PXDaddress(&(xad)->loc, address64)
+#घोषणा XADlength(xad, length32) PXDlength(&(xad)->loc, length32)
 
 /* xad_t field extraction */
-#define offsetXAD(xad)\
+#घोषणा offsetXAD(xad)\
 	( ((s64)((xad)->off1)) << 32 | __le32_to_cpu((xad)->off2))
-#define addressXAD(xad) addressPXD(&(xad)->loc)
-#define lengthXAD(xad) lengthPXD(&(xad)->loc)
+#घोषणा addressXAD(xad) addressPXD(&(xad)->loc)
+#घोषणा lengthXAD(xad) lengthPXD(&(xad)->loc)
 
 /* xad list */
-struct xadlist {
+काष्ठा xadlist अणु
 	s16 maxnxad;
 	s16 nxad;
 	xad_t *xad;
-};
+पूर्ण;
 
 /* xad_t flags */
-#define XAD_NEW		0x01	/* new */
-#define XAD_EXTENDED	0x02	/* extended */
-#define XAD_COMPRESSED	0x04	/* compressed with recorded length */
-#define XAD_NOTRECORDED 0x08	/* allocated but not recorded */
-#define XAD_COW		0x10	/* copy-on-write */
+#घोषणा XAD_NEW		0x01	/* new */
+#घोषणा XAD_EXTENDED	0x02	/* extended */
+#घोषणा XAD_COMPRESSED	0x04	/* compressed with recorded length */
+#घोषणा XAD_NOTRECORDED 0x08	/* allocated but not recorded */
+#घोषणा XAD_COW		0x10	/* copy-on-ग_लिखो */
 
 
-/* possible values for maxentry */
-#define XTROOTINITSLOT_DIR 6
-#define XTROOTINITSLOT	10
-#define XTROOTMAXSLOT	18
-#define XTPAGEMAXSLOT	256
-#define XTENTRYSTART	2
+/* possible values क्रम maxentry */
+#घोषणा XTROOTINITSLOT_सूची 6
+#घोषणा XTROOTINITSLOT	10
+#घोषणा XTROOTMAXSLOT	18
+#घोषणा XTPAGEMAXSLOT	256
+#घोषणा XTENTRYSTART	2
 
 /*
  *	xtree page:
  */
-typedef union {
-	struct xtheader {
+प्रकार जोड़ अणु
+	काष्ठा xtheader अणु
 		__le64 next;	/* 8: */
 		__le64 prev;	/* 8: */
 
@@ -80,33 +81,33 @@ typedef union {
 		__le16 rsrvd2;	/* 2: */
 
 		pxd_t self;	/* 8: self */
-	} header;		/* (32) */
+	पूर्ण header;		/* (32) */
 
 	xad_t xad[XTROOTMAXSLOT];	/* 16 * maxentry: xad array */
-} xtpage_t;
+पूर्ण xtpage_t;
 
 /*
- *	external declaration
+ *	बाह्यal declaration
  */
-extern int xtLookup(struct inode *ip, s64 lstart, s64 llen,
-		    int *pflag, s64 * paddr, int *plen, int flag);
-extern void xtInitRoot(tid_t tid, struct inode *ip);
-extern int xtInsert(tid_t tid, struct inode *ip,
-		    int xflag, s64 xoff, int xlen, s64 * xaddrp, int flag);
-extern int xtExtend(tid_t tid, struct inode *ip, s64 xoff, int xlen,
-		    int flag);
-#ifdef _NOTYET
-extern int xtTailgate(tid_t tid, struct inode *ip,
-		      s64 xoff, int xlen, s64 xaddr, int flag);
-#endif
-extern int xtUpdate(tid_t tid, struct inode *ip, struct xad *nxad);
-extern int xtDelete(tid_t tid, struct inode *ip, s64 xoff, int xlen,
-		    int flag);
-extern s64 xtTruncate(tid_t tid, struct inode *ip, s64 newsize, int type);
-extern s64 xtTruncate_pmap(tid_t tid, struct inode *ip, s64 committed_size);
-extern int xtRelocate(tid_t tid, struct inode *ip,
-		      xad_t * oxad, s64 nxaddr, int xtype);
-extern int xtAppend(tid_t tid,
-		    struct inode *ip, int xflag, s64 xoff, int maxblocks,
-		    int *xlenp, s64 * xaddrp, int flag);
-#endif				/* !_H_JFS_XTREE */
+बाह्य पूर्णांक xtLookup(काष्ठा inode *ip, s64 lstart, s64 llen,
+		    पूर्णांक *pflag, s64 * paddr, पूर्णांक *plen, पूर्णांक flag);
+बाह्य व्योम xtInitRoot(tid_t tid, काष्ठा inode *ip);
+बाह्य पूर्णांक xtInsert(tid_t tid, काष्ठा inode *ip,
+		    पूर्णांक xflag, s64 xoff, पूर्णांक xlen, s64 * xaddrp, पूर्णांक flag);
+बाह्य पूर्णांक xtExtend(tid_t tid, काष्ठा inode *ip, s64 xoff, पूर्णांक xlen,
+		    पूर्णांक flag);
+#अगर_घोषित _NOTYET
+बाह्य पूर्णांक xtTailgate(tid_t tid, काष्ठा inode *ip,
+		      s64 xoff, पूर्णांक xlen, s64 xaddr, पूर्णांक flag);
+#पूर्ण_अगर
+बाह्य पूर्णांक xtUpdate(tid_t tid, काष्ठा inode *ip, काष्ठा xad *nxad);
+बाह्य पूर्णांक xtDelete(tid_t tid, काष्ठा inode *ip, s64 xoff, पूर्णांक xlen,
+		    पूर्णांक flag);
+बाह्य s64 xtTruncate(tid_t tid, काष्ठा inode *ip, s64 newsize, पूर्णांक type);
+बाह्य s64 xtTruncate_pmap(tid_t tid, काष्ठा inode *ip, s64 committed_size);
+बाह्य पूर्णांक xtRelocate(tid_t tid, काष्ठा inode *ip,
+		      xad_t * oxad, s64 nxaddr, पूर्णांक xtype);
+बाह्य पूर्णांक xtAppend(tid_t tid,
+		    काष्ठा inode *ip, पूर्णांक xflag, s64 xoff, पूर्णांक maxblocks,
+		    पूर्णांक *xlenp, s64 * xaddrp, पूर्णांक flag);
+#पूर्ण_अगर				/* !_H_JFS_XTREE */

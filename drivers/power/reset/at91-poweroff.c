@@ -1,7 +1,8 @@
+<शैली गुरु>
 /*
- * Atmel AT91 SAM9 SoCs reset code
+ * Aपंचांगel AT91 SAM9 SoCs reset code
  *
- * Copyright (C) 2007 Atmel Corporation.
+ * Copyright (C) 2007 Aपंचांगel Corporation.
  * Copyright (C) 2011 Jean-Christophe PLAGNIOL-VILLARD <plagnioj@jcrosoft.com>
  * Copyright (C) 2014 Free Electrons
  *
@@ -10,87 +11,87 @@
  * warranty of any kind, whether express or implied.
  */
 
-#include <linux/clk.h>
-#include <linux/io.h>
-#include <linux/module.h>
-#include <linux/of.h>
-#include <linux/of_address.h>
-#include <linux/platform_device.h>
-#include <linux/printk.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/module.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_address.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/prपूर्णांकk.h>
 
-#include <soc/at91/at91sam9_ddrsdr.h>
+#समावेश <soc/at91/at91sam9_ddrsdr.h>
 
-#define AT91_SHDW_CR	0x00		/* Shut Down Control Register */
-#define AT91_SHDW_SHDW		BIT(0)			/* Shut Down command */
-#define AT91_SHDW_KEY		(0xa5 << 24)		/* KEY Password */
+#घोषणा AT91_SHDW_CR	0x00		/* Shut Down Control Register */
+#घोषणा AT91_SHDW_SHDW		BIT(0)			/* Shut Down command */
+#घोषणा AT91_SHDW_KEY		(0xa5 << 24)		/* KEY Password */
 
-#define AT91_SHDW_MR	0x04		/* Shut Down Mode Register */
-#define AT91_SHDW_WKMODE0	GENMASK(2, 0)		/* Wake-up 0 Mode Selection */
-#define AT91_SHDW_CPTWK0_MAX	0xf			/* Maximum Counter On Wake Up 0 */
-#define AT91_SHDW_CPTWK0	(AT91_SHDW_CPTWK0_MAX << 4) /* Counter On Wake Up 0 */
-#define AT91_SHDW_CPTWK0_(x)	((x) << 4)
-#define AT91_SHDW_RTTWKEN	BIT(16)			/* Real Time Timer Wake-up Enable */
-#define AT91_SHDW_RTCWKEN	BIT(17)			/* Real Time Clock Wake-up Enable */
+#घोषणा AT91_SHDW_MR	0x04		/* Shut Down Mode Register */
+#घोषणा AT91_SHDW_WKMODE0	GENMASK(2, 0)		/* Wake-up 0 Mode Selection */
+#घोषणा AT91_SHDW_CPTWK0_MAX	0xf			/* Maximum Counter On Wake Up 0 */
+#घोषणा AT91_SHDW_CPTWK0	(AT91_SHDW_CPTWK0_MAX << 4) /* Counter On Wake Up 0 */
+#घोषणा AT91_SHDW_CPTWK0_(x)	((x) << 4)
+#घोषणा AT91_SHDW_RTTWKEN	BIT(16)			/* Real Time Timer Wake-up Enable */
+#घोषणा AT91_SHDW_RTCWKEN	BIT(17)			/* Real Time Clock Wake-up Enable */
 
-#define AT91_SHDW_SR	0x08		/* Shut Down Status Register */
-#define AT91_SHDW_WAKEUP0	BIT(0)			/* Wake-up 0 Status */
-#define AT91_SHDW_RTTWK		BIT(16)			/* Real-time Timer Wake-up */
-#define AT91_SHDW_RTCWK		BIT(17)			/* Real-time Clock Wake-up [SAM9RL] */
+#घोषणा AT91_SHDW_SR	0x08		/* Shut Down Status Register */
+#घोषणा AT91_SHDW_WAKEUP0	BIT(0)			/* Wake-up 0 Status */
+#घोषणा AT91_SHDW_RTTWK		BIT(16)			/* Real-समय Timer Wake-up */
+#घोषणा AT91_SHDW_RTCWK		BIT(17)			/* Real-समय Clock Wake-up [SAM9RL] */
 
-enum wakeup_type {
+क्रमागत wakeup_type अणु
 	AT91_SHDW_WKMODE0_NONE		= 0,
 	AT91_SHDW_WKMODE0_HIGH		= 1,
 	AT91_SHDW_WKMODE0_LOW		= 2,
 	AT91_SHDW_WKMODE0_ANYLEVEL	= 3,
-};
+पूर्ण;
 
-static const char *shdwc_wakeup_modes[] = {
+अटल स्थिर अक्षर *shdwc_wakeup_modes[] = अणु
 	[AT91_SHDW_WKMODE0_NONE]	= "none",
 	[AT91_SHDW_WKMODE0_HIGH]	= "high",
 	[AT91_SHDW_WKMODE0_LOW]		= "low",
 	[AT91_SHDW_WKMODE0_ANYLEVEL]	= "any",
-};
+पूर्ण;
 
-static struct shdwc {
-	struct clk *sclk;
-	void __iomem *shdwc_base;
-	void __iomem *mpddrc_base;
-} at91_shdwc;
+अटल काष्ठा shdwc अणु
+	काष्ठा clk *sclk;
+	व्योम __iomem *shdwc_base;
+	व्योम __iomem *mpddrc_base;
+पूर्ण at91_shdwc;
 
-static void __init at91_wakeup_status(struct platform_device *pdev)
-{
-	const char *reason;
-	u32 reg = readl(at91_shdwc.shdwc_base + AT91_SHDW_SR);
+अटल व्योम __init at91_wakeup_status(काष्ठा platक्रमm_device *pdev)
+अणु
+	स्थिर अक्षर *reason;
+	u32 reg = पढ़ोl(at91_shdwc.shdwc_base + AT91_SHDW_SR);
 
-	/* Simple power-on, just bail out */
-	if (!reg)
-		return;
+	/* Simple घातer-on, just bail out */
+	अगर (!reg)
+		वापस;
 
-	if (reg & AT91_SHDW_RTTWK)
+	अगर (reg & AT91_SHDW_RTTWK)
 		reason = "RTT";
-	else if (reg & AT91_SHDW_RTCWK)
+	अन्यथा अगर (reg & AT91_SHDW_RTCWK)
 		reason = "RTC";
-	else
+	अन्यथा
 		reason = "unknown";
 
 	dev_info(&pdev->dev, "Wake-Up source: %s\n", reason);
-}
+पूर्ण
 
-static void at91_poweroff(void)
-{
-	asm volatile(
+अटल व्योम at91_घातeroff(व्योम)
+अणु
+	यंत्र अस्थिर(
 		/* Align to cache lines */
 		".balign 32\n\t"
 
-		/* Ensure AT91_SHDW_CR is in the TLB by reading it */
-		"	ldr	r6, [%2, #" __stringify(AT91_SHDW_CR) "]\n\t"
+		/* Ensure AT91_SHDW_CR is in the TLB by पढ़ोing it */
+		"	ldr	r6, [%2, #" __stringअगरy(AT91_SHDW_CR) "]\n\t"
 
-		/* Power down SDRAM0 */
+		/* Power करोwn SDRAM0 */
 		"	tst	%0, #0\n\t"
 		"	beq	1f\n\t"
-		"	str	%1, [%0, #" __stringify(AT91_DDRSDRC_LPR) "]\n\t"
-		/* Shutdown CPU */
-		"1:	str	%3, [%2, #" __stringify(AT91_SHDW_CR) "]\n\t"
+		"	str	%1, [%0, #" __stringअगरy(AT91_DDRSDRC_LPR) "]\n\t"
+		/* Shutकरोwn CPU */
+		"1:	str	%3, [%2, #" __stringअगरy(AT91_SHDW_CR) "]\n\t"
 
 		"	b	.\n\t"
 		:
@@ -99,140 +100,140 @@ static void at91_poweroff(void)
 		  "r" (at91_shdwc.shdwc_base),
 		  "r" cpu_to_le32(AT91_SHDW_KEY | AT91_SHDW_SHDW)
 		: "r6");
-}
+पूर्ण
 
-static int at91_poweroff_get_wakeup_mode(struct device_node *np)
-{
-	const char *pm;
-	unsigned int i;
-	int err;
+अटल पूर्णांक at91_घातeroff_get_wakeup_mode(काष्ठा device_node *np)
+अणु
+	स्थिर अक्षर *pm;
+	अचिन्हित पूर्णांक i;
+	पूर्णांक err;
 
-	err = of_property_read_string(np, "atmel,wakeup-mode", &pm);
-	if (err < 0)
-		return AT91_SHDW_WKMODE0_ANYLEVEL;
+	err = of_property_पढ़ो_string(np, "atmel,wakeup-mode", &pm);
+	अगर (err < 0)
+		वापस AT91_SHDW_WKMODE0_ANYLEVEL;
 
-	for (i = 0; i < ARRAY_SIZE(shdwc_wakeup_modes); i++)
-		if (!strcasecmp(pm, shdwc_wakeup_modes[i]))
-			return i;
+	क्रम (i = 0; i < ARRAY_SIZE(shdwc_wakeup_modes); i++)
+		अगर (!strहालcmp(pm, shdwc_wakeup_modes[i]))
+			वापस i;
 
-	return -ENODEV;
-}
+	वापस -ENODEV;
+पूर्ण
 
-static void at91_poweroff_dt_set_wakeup_mode(struct platform_device *pdev)
-{
-	struct device_node *np = pdev->dev.of_node;
-	int wakeup_mode;
-	u32 mode = 0, tmp;
+अटल व्योम at91_घातeroff_dt_set_wakeup_mode(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device_node *np = pdev->dev.of_node;
+	पूर्णांक wakeup_mode;
+	u32 mode = 0, पंचांगp;
 
-	wakeup_mode = at91_poweroff_get_wakeup_mode(np);
-	if (wakeup_mode < 0) {
+	wakeup_mode = at91_घातeroff_get_wakeup_mode(np);
+	अगर (wakeup_mode < 0) अणु
 		dev_warn(&pdev->dev, "shdwc unknown wakeup mode\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (!of_property_read_u32(np, "atmel,wakeup-counter", &tmp)) {
-		if (tmp > AT91_SHDW_CPTWK0_MAX) {
+	अगर (!of_property_पढ़ो_u32(np, "atmel,wakeup-counter", &पंचांगp)) अणु
+		अगर (पंचांगp > AT91_SHDW_CPTWK0_MAX) अणु
 			dev_warn(&pdev->dev,
 				 "shdwc wakeup counter 0x%x > 0x%x reduce it to 0x%x\n",
-				 tmp, AT91_SHDW_CPTWK0_MAX, AT91_SHDW_CPTWK0_MAX);
-			tmp = AT91_SHDW_CPTWK0_MAX;
-		}
-		mode |= AT91_SHDW_CPTWK0_(tmp);
-	}
+				 पंचांगp, AT91_SHDW_CPTWK0_MAX, AT91_SHDW_CPTWK0_MAX);
+			पंचांगp = AT91_SHDW_CPTWK0_MAX;
+		पूर्ण
+		mode |= AT91_SHDW_CPTWK0_(पंचांगp);
+	पूर्ण
 
-	if (of_property_read_bool(np, "atmel,wakeup-rtc-timer"))
+	अगर (of_property_पढ़ो_bool(np, "atmel,wakeup-rtc-timer"))
 			mode |= AT91_SHDW_RTCWKEN;
 
-	if (of_property_read_bool(np, "atmel,wakeup-rtt-timer"))
+	अगर (of_property_पढ़ो_bool(np, "atmel,wakeup-rtt-timer"))
 			mode |= AT91_SHDW_RTTWKEN;
 
-	writel(wakeup_mode | mode, at91_shdwc.shdwc_base + AT91_SHDW_MR);
-}
+	ग_लिखोl(wakeup_mode | mode, at91_shdwc.shdwc_base + AT91_SHDW_MR);
+पूर्ण
 
-static int __init at91_poweroff_probe(struct platform_device *pdev)
-{
-	struct resource *res;
-	struct device_node *np;
+अटल पूर्णांक __init at91_घातeroff_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा resource *res;
+	काष्ठा device_node *np;
 	u32 ddr_type;
-	int ret;
+	पूर्णांक ret;
 
-	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
 	at91_shdwc.shdwc_base = devm_ioremap_resource(&pdev->dev, res);
-	if (IS_ERR(at91_shdwc.shdwc_base))
-		return PTR_ERR(at91_shdwc.shdwc_base);
+	अगर (IS_ERR(at91_shdwc.shdwc_base))
+		वापस PTR_ERR(at91_shdwc.shdwc_base);
 
-	at91_shdwc.sclk = devm_clk_get(&pdev->dev, NULL);
-	if (IS_ERR(at91_shdwc.sclk))
-		return PTR_ERR(at91_shdwc.sclk);
+	at91_shdwc.sclk = devm_clk_get(&pdev->dev, शून्य);
+	अगर (IS_ERR(at91_shdwc.sclk))
+		वापस PTR_ERR(at91_shdwc.sclk);
 
 	ret = clk_prepare_enable(at91_shdwc.sclk);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&pdev->dev, "Could not enable slow clock\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	at91_wakeup_status(pdev);
 
-	if (pdev->dev.of_node)
-		at91_poweroff_dt_set_wakeup_mode(pdev);
+	अगर (pdev->dev.of_node)
+		at91_घातeroff_dt_set_wakeup_mode(pdev);
 
-	np = of_find_compatible_node(NULL, NULL, "atmel,sama5d3-ddramc");
-	if (np) {
+	np = of_find_compatible_node(शून्य, शून्य, "atmel,sama5d3-ddramc");
+	अगर (np) अणु
 		at91_shdwc.mpddrc_base = of_iomap(np, 0);
 		of_node_put(np);
 
-		if (!at91_shdwc.mpddrc_base) {
+		अगर (!at91_shdwc.mpddrc_base) अणु
 			ret = -ENOMEM;
-			goto clk_disable;
-		}
+			जाओ clk_disable;
+		पूर्ण
 
-		ddr_type = readl(at91_shdwc.mpddrc_base + AT91_DDRSDRC_MDR) &
+		ddr_type = पढ़ोl(at91_shdwc.mpddrc_base + AT91_DDRSDRC_MDR) &
 				 AT91_DDRSDRC_MD;
-		if (ddr_type != AT91_DDRSDRC_MD_LPDDR2 &&
-		    ddr_type != AT91_DDRSDRC_MD_LPDDR3) {
+		अगर (ddr_type != AT91_DDRSDRC_MD_LPDDR2 &&
+		    ddr_type != AT91_DDRSDRC_MD_LPDDR3) अणु
 			iounmap(at91_shdwc.mpddrc_base);
-			at91_shdwc.mpddrc_base = NULL;
-		}
-	}
+			at91_shdwc.mpddrc_base = शून्य;
+		पूर्ण
+	पूर्ण
 
-	pm_power_off = at91_poweroff;
+	pm_घातer_off = at91_घातeroff;
 
-	return 0;
+	वापस 0;
 
 clk_disable:
 	clk_disable_unprepare(at91_shdwc.sclk);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int __exit at91_poweroff_remove(struct platform_device *pdev)
-{
-	if (pm_power_off == at91_poweroff)
-		pm_power_off = NULL;
+अटल पूर्णांक __निकास at91_घातeroff_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	अगर (pm_घातer_off == at91_घातeroff)
+		pm_घातer_off = शून्य;
 
-	if (at91_shdwc.mpddrc_base)
+	अगर (at91_shdwc.mpddrc_base)
 		iounmap(at91_shdwc.mpddrc_base);
 
 	clk_disable_unprepare(at91_shdwc.sclk);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct of_device_id at91_poweroff_of_match[] = {
-	{ .compatible = "atmel,at91sam9260-shdwc", },
-	{ .compatible = "atmel,at91sam9rl-shdwc", },
-	{ .compatible = "atmel,at91sam9x5-shdwc", },
-	{ /*sentinel*/ }
-};
-MODULE_DEVICE_TABLE(of, at91_poweroff_of_match);
+अटल स्थिर काष्ठा of_device_id at91_घातeroff_of_match[] = अणु
+	अणु .compatible = "atmel,at91sam9260-shdwc", पूर्ण,
+	अणु .compatible = "atmel,at91sam9rl-shdwc", पूर्ण,
+	अणु .compatible = "atmel,at91sam9x5-shdwc", पूर्ण,
+	अणु /*sentinel*/ पूर्ण
+पूर्ण;
+MODULE_DEVICE_TABLE(of, at91_घातeroff_of_match);
 
-static struct platform_driver at91_poweroff_driver = {
-	.remove = __exit_p(at91_poweroff_remove),
-	.driver = {
+अटल काष्ठा platक्रमm_driver at91_घातeroff_driver = अणु
+	.हटाओ = __निकास_p(at91_घातeroff_हटाओ),
+	.driver = अणु
 		.name = "at91-poweroff",
-		.of_match_table = at91_poweroff_of_match,
-	},
-};
-module_platform_driver_probe(at91_poweroff_driver, at91_poweroff_probe);
+		.of_match_table = at91_घातeroff_of_match,
+	पूर्ण,
+पूर्ण;
+module_platक्रमm_driver_probe(at91_घातeroff_driver, at91_घातeroff_probe);
 
 MODULE_AUTHOR("Atmel Corporation");
 MODULE_DESCRIPTION("Shutdown driver for Atmel SoCs");

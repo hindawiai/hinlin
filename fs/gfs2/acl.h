@@ -1,19 +1,20 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * Copyright (C) Sistina Software, Inc.  1997-2003 All rights reserved.
  * Copyright (C) 2004-2006 Red Hat, Inc.  All rights reserved.
  */
 
-#ifndef __ACL_DOT_H__
-#define __ACL_DOT_H__
+#अगर_अघोषित __ACL_DOT_H__
+#घोषणा __ACL_DOT_H__
 
-#include "incore.h"
+#समावेश "incore.h"
 
-#define GFS2_ACL_MAX_ENTRIES(sdp) ((300 << (sdp)->sd_sb.sb_bsize_shift) >> 12)
+#घोषणा GFS2_ACL_MAX_ENTRIES(sdp) ((300 << (sdp)->sd_sb.sb_bsize_shअगरt) >> 12)
 
-extern struct posix_acl *gfs2_get_acl(struct inode *inode, int type);
-extern int __gfs2_set_acl(struct inode *inode, struct posix_acl *acl, int type);
-extern int gfs2_set_acl(struct user_namespace *mnt_userns, struct inode *inode,
-			struct posix_acl *acl, int type);
+बाह्य काष्ठा posix_acl *gfs2_get_acl(काष्ठा inode *inode, पूर्णांक type);
+बाह्य पूर्णांक __gfs2_set_acl(काष्ठा inode *inode, काष्ठा posix_acl *acl, पूर्णांक type);
+बाह्य पूर्णांक gfs2_set_acl(काष्ठा user_namespace *mnt_userns, काष्ठा inode *inode,
+			काष्ठा posix_acl *acl, पूर्णांक type);
 
-#endif /* __ACL_DOT_H__ */
+#पूर्ण_अगर /* __ACL_DOT_H__ */

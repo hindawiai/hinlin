@@ -1,229 +1,230 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * MEN Chameleon Bus.
  *
  * Copyright (C) 2013 MEN Mikroelektronik GmbH (www.men.de)
  * Author: Johannes Thumshirn <johannes.thumshirn@men.de>
  */
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/slab.h>
-#include <linux/types.h>
-#include <linux/idr.h>
-#include <linux/mcb.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/types.h>
+#समावेश <linux/idr.h>
+#समावेश <linux/mcb.h>
 
-static DEFINE_IDA(mcb_ida);
+अटल DEFINE_IDA(mcb_ida);
 
-static const struct mcb_device_id *mcb_match_id(const struct mcb_device_id *ids,
-						struct mcb_device *dev)
-{
-	if (ids) {
-		while (ids->device) {
-			if (ids->device == dev->id)
-				return ids;
+अटल स्थिर काष्ठा mcb_device_id *mcb_match_id(स्थिर काष्ठा mcb_device_id *ids,
+						काष्ठा mcb_device *dev)
+अणु
+	अगर (ids) अणु
+		जबतक (ids->device) अणु
+			अगर (ids->device == dev->id)
+				वापस ids;
 			ids++;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static int mcb_match(struct device *dev, struct device_driver *drv)
-{
-	struct mcb_driver *mdrv = to_mcb_driver(drv);
-	struct mcb_device *mdev = to_mcb_device(dev);
-	const struct mcb_device_id *found_id;
+अटल पूर्णांक mcb_match(काष्ठा device *dev, काष्ठा device_driver *drv)
+अणु
+	काष्ठा mcb_driver *mdrv = to_mcb_driver(drv);
+	काष्ठा mcb_device *mdev = to_mcb_device(dev);
+	स्थिर काष्ठा mcb_device_id *found_id;
 
 	found_id = mcb_match_id(mdrv->id_table, mdev);
-	if (found_id)
-		return 1;
+	अगर (found_id)
+		वापस 1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mcb_uevent(struct device *dev, struct kobj_uevent_env *env)
-{
-	struct mcb_device *mdev = to_mcb_device(dev);
-	int ret;
+अटल पूर्णांक mcb_uevent(काष्ठा device *dev, काष्ठा kobj_uevent_env *env)
+अणु
+	काष्ठा mcb_device *mdev = to_mcb_device(dev);
+	पूर्णांक ret;
 
 	ret = add_uevent_var(env, "MODALIAS=mcb:16z%03d", mdev->id);
-	if (ret)
-		return -ENOMEM;
+	अगर (ret)
+		वापस -ENOMEM;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mcb_probe(struct device *dev)
-{
-	struct mcb_driver *mdrv = to_mcb_driver(dev->driver);
-	struct mcb_device *mdev = to_mcb_device(dev);
-	const struct mcb_device_id *found_id;
-	struct module *carrier_mod;
-	int ret;
+अटल पूर्णांक mcb_probe(काष्ठा device *dev)
+अणु
+	काष्ठा mcb_driver *mdrv = to_mcb_driver(dev->driver);
+	काष्ठा mcb_device *mdev = to_mcb_device(dev);
+	स्थिर काष्ठा mcb_device_id *found_id;
+	काष्ठा module *carrier_mod;
+	पूर्णांक ret;
 
 	found_id = mcb_match_id(mdrv->id_table, mdev);
-	if (!found_id)
-		return -ENODEV;
+	अगर (!found_id)
+		वापस -ENODEV;
 
 	carrier_mod = mdev->dev.parent->driver->owner;
-	if (!try_module_get(carrier_mod))
-		return -EINVAL;
+	अगर (!try_module_get(carrier_mod))
+		वापस -EINVAL;
 
 	get_device(dev);
 	ret = mdrv->probe(mdev, found_id);
-	if (ret)
+	अगर (ret)
 		module_put(carrier_mod);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int mcb_remove(struct device *dev)
-{
-	struct mcb_driver *mdrv = to_mcb_driver(dev->driver);
-	struct mcb_device *mdev = to_mcb_device(dev);
-	struct module *carrier_mod;
+अटल पूर्णांक mcb_हटाओ(काष्ठा device *dev)
+अणु
+	काष्ठा mcb_driver *mdrv = to_mcb_driver(dev->driver);
+	काष्ठा mcb_device *mdev = to_mcb_device(dev);
+	काष्ठा module *carrier_mod;
 
-	mdrv->remove(mdev);
+	mdrv->हटाओ(mdev);
 
 	carrier_mod = mdev->dev.parent->driver->owner;
 	module_put(carrier_mod);
 
 	put_device(&mdev->dev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void mcb_shutdown(struct device *dev)
-{
-	struct mcb_driver *mdrv = to_mcb_driver(dev->driver);
-	struct mcb_device *mdev = to_mcb_device(dev);
+अटल व्योम mcb_shutकरोwn(काष्ठा device *dev)
+अणु
+	काष्ठा mcb_driver *mdrv = to_mcb_driver(dev->driver);
+	काष्ठा mcb_device *mdev = to_mcb_device(dev);
 
-	if (mdrv && mdrv->shutdown)
-		mdrv->shutdown(mdev);
-}
+	अगर (mdrv && mdrv->shutकरोwn)
+		mdrv->shutकरोwn(mdev);
+पूर्ण
 
-static ssize_t revision_show(struct device *dev, struct device_attribute *attr,
-			 char *buf)
-{
-	struct mcb_bus *bus = to_mcb_bus(dev);
+अटल sमाप_प्रकार revision_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
+			 अक्षर *buf)
+अणु
+	काष्ठा mcb_bus *bus = to_mcb_bus(dev);
 
-	return scnprintf(buf, PAGE_SIZE, "%d\n", bus->revision);
-}
-static DEVICE_ATTR_RO(revision);
+	वापस scnम_लिखो(buf, PAGE_SIZE, "%d\n", bus->revision);
+पूर्ण
+अटल DEVICE_ATTR_RO(revision);
 
-static ssize_t model_show(struct device *dev, struct device_attribute *attr,
-			 char *buf)
-{
-	struct mcb_bus *bus = to_mcb_bus(dev);
+अटल sमाप_प्रकार model_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
+			 अक्षर *buf)
+अणु
+	काष्ठा mcb_bus *bus = to_mcb_bus(dev);
 
-	return scnprintf(buf, PAGE_SIZE, "%c\n", bus->model);
-}
-static DEVICE_ATTR_RO(model);
+	वापस scnम_लिखो(buf, PAGE_SIZE, "%c\n", bus->model);
+पूर्ण
+अटल DEVICE_ATTR_RO(model);
 
-static ssize_t minor_show(struct device *dev, struct device_attribute *attr,
-			 char *buf)
-{
-	struct mcb_bus *bus = to_mcb_bus(dev);
+अटल sमाप_प्रकार minor_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
+			 अक्षर *buf)
+अणु
+	काष्ठा mcb_bus *bus = to_mcb_bus(dev);
 
-	return scnprintf(buf, PAGE_SIZE, "%d\n", bus->minor);
-}
-static DEVICE_ATTR_RO(minor);
+	वापस scnम_लिखो(buf, PAGE_SIZE, "%d\n", bus->minor);
+पूर्ण
+अटल DEVICE_ATTR_RO(minor);
 
-static ssize_t name_show(struct device *dev, struct device_attribute *attr,
-			 char *buf)
-{
-	struct mcb_bus *bus = to_mcb_bus(dev);
+अटल sमाप_प्रकार name_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
+			 अक्षर *buf)
+अणु
+	काष्ठा mcb_bus *bus = to_mcb_bus(dev);
 
-	return scnprintf(buf, PAGE_SIZE, "%s\n", bus->name);
-}
-static DEVICE_ATTR_RO(name);
+	वापस scnम_लिखो(buf, PAGE_SIZE, "%s\n", bus->name);
+पूर्ण
+अटल DEVICE_ATTR_RO(name);
 
-static struct attribute *mcb_bus_attrs[] = {
+अटल काष्ठा attribute *mcb_bus_attrs[] = अणु
 	&dev_attr_revision.attr,
 	&dev_attr_model.attr,
 	&dev_attr_minor.attr,
 	&dev_attr_name.attr,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-static const struct attribute_group mcb_carrier_group = {
+अटल स्थिर काष्ठा attribute_group mcb_carrier_group = अणु
 	.attrs = mcb_bus_attrs,
-};
+पूर्ण;
 
-static const struct attribute_group *mcb_carrier_groups[] = {
+अटल स्थिर काष्ठा attribute_group *mcb_carrier_groups[] = अणु
 	&mcb_carrier_group,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
 
-static struct bus_type mcb_bus_type = {
+अटल काष्ठा bus_type mcb_bus_type = अणु
 	.name = "mcb",
 	.match = mcb_match,
 	.uevent = mcb_uevent,
 	.probe = mcb_probe,
-	.remove = mcb_remove,
-	.shutdown = mcb_shutdown,
-};
+	.हटाओ = mcb_हटाओ,
+	.shutकरोwn = mcb_shutकरोwn,
+पूर्ण;
 
-static struct device_type mcb_carrier_device_type = {
+अटल काष्ठा device_type mcb_carrier_device_type = अणु
 	.name = "mcb-carrier",
 	.groups = mcb_carrier_groups,
-};
+पूर्ण;
 
 /**
- * __mcb_register_driver() - Register a @mcb_driver at the system
+ * __mcb_रेजिस्टर_driver() - Register a @mcb_driver at the प्रणाली
  * @drv: The @mcb_driver
  * @owner: The @mcb_driver's module
  * @mod_name: The name of the @mcb_driver's module
  *
- * Register a @mcb_driver at the system. Perform some sanity checks, if
- * the .probe and .remove methods are provided by the driver.
+ * Register a @mcb_driver at the प्रणाली. Perक्रमm some sanity checks, अगर
+ * the .probe and .हटाओ methods are provided by the driver.
  */
-int __mcb_register_driver(struct mcb_driver *drv, struct module *owner,
-			const char *mod_name)
-{
-	if (!drv->probe || !drv->remove)
-		return -EINVAL;
+पूर्णांक __mcb_रेजिस्टर_driver(काष्ठा mcb_driver *drv, काष्ठा module *owner,
+			स्थिर अक्षर *mod_name)
+अणु
+	अगर (!drv->probe || !drv->हटाओ)
+		वापस -EINVAL;
 
 	drv->driver.owner = owner;
 	drv->driver.bus = &mcb_bus_type;
 	drv->driver.mod_name = mod_name;
 
-	return driver_register(&drv->driver);
-}
-EXPORT_SYMBOL_NS_GPL(__mcb_register_driver, MCB);
+	वापस driver_रेजिस्टर(&drv->driver);
+पूर्ण
+EXPORT_SYMBOL_NS_GPL(__mcb_रेजिस्टर_driver, MCB);
 
 /**
- * mcb_unregister_driver() - Unregister a @mcb_driver from the system
+ * mcb_unरेजिस्टर_driver() - Unरेजिस्टर a @mcb_driver from the प्रणाली
  * @drv: The @mcb_driver
  *
- * Unregister a @mcb_driver from the system.
+ * Unरेजिस्टर a @mcb_driver from the प्रणाली.
  */
-void mcb_unregister_driver(struct mcb_driver *drv)
-{
-	driver_unregister(&drv->driver);
-}
-EXPORT_SYMBOL_NS_GPL(mcb_unregister_driver, MCB);
+व्योम mcb_unरेजिस्टर_driver(काष्ठा mcb_driver *drv)
+अणु
+	driver_unरेजिस्टर(&drv->driver);
+पूर्ण
+EXPORT_SYMBOL_NS_GPL(mcb_unरेजिस्टर_driver, MCB);
 
-static void mcb_release_dev(struct device *dev)
-{
-	struct mcb_device *mdev = to_mcb_device(dev);
+अटल व्योम mcb_release_dev(काष्ठा device *dev)
+अणु
+	काष्ठा mcb_device *mdev = to_mcb_device(dev);
 
 	mcb_bus_put(mdev->bus);
-	kfree(mdev);
-}
+	kमुक्त(mdev);
+पूर्ण
 
 /**
- * mcb_device_register() - Register a mcb_device
+ * mcb_device_रेजिस्टर() - Register a mcb_device
  * @bus: The @mcb_bus of the device
  * @dev: The @mcb_device
  *
- * Register a specific @mcb_device at a @mcb_bus and the system itself.
+ * Register a specअगरic @mcb_device at a @mcb_bus and the प्रणाली itself.
  */
-int mcb_device_register(struct mcb_bus *bus, struct mcb_device *dev)
-{
-	int ret;
-	int device_id;
+पूर्णांक mcb_device_रेजिस्टर(काष्ठा mcb_bus *bus, काष्ठा mcb_device *dev)
+अणु
+	पूर्णांक ret;
+	पूर्णांक device_id;
 
 	device_initialize(&dev->dev);
 	mcb_bus_get(bus);
@@ -237,49 +238,49 @@ int mcb_device_register(struct mcb_bus *bus, struct mcb_device *dev)
 		bus->bus_nr, device_id, dev->inst, dev->group, dev->var);
 
 	ret = device_add(&dev->dev);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		pr_err("Failed registering device 16z%03d on bus mcb%d (%d)\n",
 			device_id, bus->bus_nr, ret);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 out:
 
-	return ret;
-}
-EXPORT_SYMBOL_NS_GPL(mcb_device_register, MCB);
+	वापस ret;
+पूर्ण
+EXPORT_SYMBOL_NS_GPL(mcb_device_रेजिस्टर, MCB);
 
-static void mcb_free_bus(struct device *dev)
-{
-	struct mcb_bus *bus = to_mcb_bus(dev);
+अटल व्योम mcb_मुक्त_bus(काष्ठा device *dev)
+अणु
+	काष्ठा mcb_bus *bus = to_mcb_bus(dev);
 
 	put_device(bus->carrier);
-	ida_simple_remove(&mcb_ida, bus->bus_nr);
-	kfree(bus);
-}
+	ida_simple_हटाओ(&mcb_ida, bus->bus_nr);
+	kमुक्त(bus);
+पूर्ण
 
 /**
  * mcb_alloc_bus() - Allocate a new @mcb_bus
  *
  * Allocate a new @mcb_bus.
  */
-struct mcb_bus *mcb_alloc_bus(struct device *carrier)
-{
-	struct mcb_bus *bus;
-	int bus_nr;
-	int rc;
+काष्ठा mcb_bus *mcb_alloc_bus(काष्ठा device *carrier)
+अणु
+	काष्ठा mcb_bus *bus;
+	पूर्णांक bus_nr;
+	पूर्णांक rc;
 
-	bus = kzalloc(sizeof(struct mcb_bus), GFP_KERNEL);
-	if (!bus)
-		return ERR_PTR(-ENOMEM);
+	bus = kzalloc(माप(काष्ठा mcb_bus), GFP_KERNEL);
+	अगर (!bus)
+		वापस ERR_PTR(-ENOMEM);
 
 	bus_nr = ida_simple_get(&mcb_ida, 0, 0, GFP_KERNEL);
-	if (bus_nr < 0) {
+	अगर (bus_nr < 0) अणु
 		rc = bus_nr;
-		goto err_free;
-	}
+		जाओ err_मुक्त;
+	पूर्ण
 
 	bus->bus_nr = bus_nr;
 	bus->carrier = get_device(carrier);
@@ -288,41 +289,41 @@ struct mcb_bus *mcb_alloc_bus(struct device *carrier)
 	bus->dev.parent = carrier;
 	bus->dev.bus = &mcb_bus_type;
 	bus->dev.type = &mcb_carrier_device_type;
-	bus->dev.release = &mcb_free_bus;
+	bus->dev.release = &mcb_मुक्त_bus;
 
 	dev_set_name(&bus->dev, "mcb:%d", bus_nr);
 	rc = device_add(&bus->dev);
-	if (rc)
-		goto err_free;
+	अगर (rc)
+		जाओ err_मुक्त;
 
-	return bus;
-err_free:
+	वापस bus;
+err_मुक्त:
 	put_device(carrier);
-	kfree(bus);
-	return ERR_PTR(rc);
-}
+	kमुक्त(bus);
+	वापस ERR_PTR(rc);
+पूर्ण
 EXPORT_SYMBOL_NS_GPL(mcb_alloc_bus, MCB);
 
-static int __mcb_devices_unregister(struct device *dev, void *data)
-{
-	device_unregister(dev);
-	return 0;
-}
+अटल पूर्णांक __mcb_devices_unरेजिस्टर(काष्ठा device *dev, व्योम *data)
+अणु
+	device_unरेजिस्टर(dev);
+	वापस 0;
+पूर्ण
 
-static void mcb_devices_unregister(struct mcb_bus *bus)
-{
-	bus_for_each_dev(&mcb_bus_type, NULL, NULL, __mcb_devices_unregister);
-}
+अटल व्योम mcb_devices_unरेजिस्टर(काष्ठा mcb_bus *bus)
+अणु
+	bus_क्रम_each_dev(&mcb_bus_type, शून्य, शून्य, __mcb_devices_unरेजिस्टर);
+पूर्ण
 /**
  * mcb_release_bus() - Free a @mcb_bus
  * @bus: The @mcb_bus to release
  *
- * Release an allocated @mcb_bus from the system.
+ * Release an allocated @mcb_bus from the प्रणाली.
  */
-void mcb_release_bus(struct mcb_bus *bus)
-{
-	mcb_devices_unregister(bus);
-}
+व्योम mcb_release_bus(काष्ठा mcb_bus *bus)
+अणु
+	mcb_devices_unरेजिस्टर(bus);
+पूर्ण
 EXPORT_SYMBOL_NS_GPL(mcb_release_bus, MCB);
 
 /**
@@ -331,13 +332,13 @@ EXPORT_SYMBOL_NS_GPL(mcb_release_bus, MCB);
  *
  * Get a @mcb_bus' ref
  */
-struct mcb_bus *mcb_bus_get(struct mcb_bus *bus)
-{
-	if (bus)
+काष्ठा mcb_bus *mcb_bus_get(काष्ठा mcb_bus *bus)
+अणु
+	अगर (bus)
 		get_device(&bus->dev);
 
-	return bus;
-}
+	वापस bus;
+पूर्ण
 EXPORT_SYMBOL_NS_GPL(mcb_bus_get, MCB);
 
 /**
@@ -346,11 +347,11 @@ EXPORT_SYMBOL_NS_GPL(mcb_bus_get, MCB);
  *
  * Release a @mcb_bus' ref
  */
-void mcb_bus_put(struct mcb_bus *bus)
-{
-	if (bus)
+व्योम mcb_bus_put(काष्ठा mcb_bus *bus)
+अणु
+	अगर (bus)
 		put_device(&bus->dev);
-}
+पूर्ण
 EXPORT_SYMBOL_NS_GPL(mcb_bus_put, MCB);
 
 /**
@@ -359,101 +360,101 @@ EXPORT_SYMBOL_NS_GPL(mcb_bus_put, MCB);
  *
  * Allocate a @mcb_device and add bus.
  */
-struct mcb_device *mcb_alloc_dev(struct mcb_bus *bus)
-{
-	struct mcb_device *dev;
+काष्ठा mcb_device *mcb_alloc_dev(काष्ठा mcb_bus *bus)
+अणु
+	काष्ठा mcb_device *dev;
 
-	dev = kzalloc(sizeof(struct mcb_device), GFP_KERNEL);
-	if (!dev)
-		return NULL;
+	dev = kzalloc(माप(काष्ठा mcb_device), GFP_KERNEL);
+	अगर (!dev)
+		वापस शून्य;
 
 	dev->bus = bus;
 
-	return dev;
-}
+	वापस dev;
+पूर्ण
 EXPORT_SYMBOL_NS_GPL(mcb_alloc_dev, MCB);
 
 /**
- * mcb_free_dev() - Free @mcb_device
- * @dev: The device to free
+ * mcb_मुक्त_dev() - Free @mcb_device
+ * @dev: The device to मुक्त
  *
  * Free a @mcb_device
  */
-void mcb_free_dev(struct mcb_device *dev)
-{
-	kfree(dev);
-}
-EXPORT_SYMBOL_NS_GPL(mcb_free_dev, MCB);
+व्योम mcb_मुक्त_dev(काष्ठा mcb_device *dev)
+अणु
+	kमुक्त(dev);
+पूर्ण
+EXPORT_SYMBOL_NS_GPL(mcb_मुक्त_dev, MCB);
 
-static int __mcb_bus_add_devices(struct device *dev, void *data)
-{
-	struct mcb_device *mdev = to_mcb_device(dev);
-	int retval;
+अटल पूर्णांक __mcb_bus_add_devices(काष्ठा device *dev, व्योम *data)
+अणु
+	काष्ठा mcb_device *mdev = to_mcb_device(dev);
+	पूर्णांक retval;
 
-	if (mdev->is_added)
-		return 0;
+	अगर (mdev->is_added)
+		वापस 0;
 
 	retval = device_attach(dev);
-	if (retval < 0)
+	अगर (retval < 0)
 		dev_err(dev, "Error adding device (%d)\n", retval);
 
 	mdev->is_added = true;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * mcb_bus_add_devices() - Add devices in the bus' internal device list
+ * mcb_bus_add_devices() - Add devices in the bus' पूर्णांकernal device list
  * @bus: The @mcb_bus we add the devices
  *
- * Add devices in the bus' internal device list to the system.
+ * Add devices in the bus' पूर्णांकernal device list to the प्रणाली.
  */
-void mcb_bus_add_devices(const struct mcb_bus *bus)
-{
-	bus_for_each_dev(&mcb_bus_type, NULL, NULL, __mcb_bus_add_devices);
-}
+व्योम mcb_bus_add_devices(स्थिर काष्ठा mcb_bus *bus)
+अणु
+	bus_क्रम_each_dev(&mcb_bus_type, शून्य, शून्य, __mcb_bus_add_devices);
+पूर्ण
 EXPORT_SYMBOL_NS_GPL(mcb_bus_add_devices, MCB);
 
 /**
- * mcb_get_resource() - get a resource for a mcb device
+ * mcb_get_resource() - get a resource क्रम a mcb device
  * @dev: the mcb device
  * @type: the type of resource
  */
-struct resource *mcb_get_resource(struct mcb_device *dev, unsigned int type)
-{
-	if (type == IORESOURCE_MEM)
-		return &dev->mem;
-	else if (type == IORESOURCE_IRQ)
-		return &dev->irq;
-	else
-		return NULL;
-}
+काष्ठा resource *mcb_get_resource(काष्ठा mcb_device *dev, अचिन्हित पूर्णांक type)
+अणु
+	अगर (type == IORESOURCE_MEM)
+		वापस &dev->mem;
+	अन्यथा अगर (type == IORESOURCE_IRQ)
+		वापस &dev->irq;
+	अन्यथा
+		वापस शून्य;
+पूर्ण
 EXPORT_SYMBOL_NS_GPL(mcb_get_resource, MCB);
 
 /**
  * mcb_request_mem() - Request memory
- * @dev: The @mcb_device the memory is for
- * @name: The name for the memory reference.
+ * @dev: The @mcb_device the memory is क्रम
+ * @name: The name क्रम the memory reference.
  *
- * Request memory for a @mcb_device. If @name is NULL the driver name will
+ * Request memory क्रम a @mcb_device. If @name is शून्य the driver name will
  * be used.
  */
-struct resource *mcb_request_mem(struct mcb_device *dev, const char *name)
-{
-	struct resource *mem;
+काष्ठा resource *mcb_request_mem(काष्ठा mcb_device *dev, स्थिर अक्षर *name)
+अणु
+	काष्ठा resource *mem;
 	u32 size;
 
-	if (!name)
+	अगर (!name)
 		name = dev->dev.driver->name;
 
 	size = resource_size(&dev->mem);
 
 	mem = request_mem_region(dev->mem.start, size, name);
-	if (!mem)
-		return ERR_PTR(-EBUSY);
+	अगर (!mem)
+		वापस ERR_PTR(-EBUSY);
 
-	return mem;
-}
+	वापस mem;
+पूर्ण
 EXPORT_SYMBOL_NS_GPL(mcb_request_mem, MCB);
 
 /**
@@ -462,58 +463,58 @@ EXPORT_SYMBOL_NS_GPL(mcb_request_mem, MCB);
  *
  * Release memory that was prior requested via @mcb_request_mem().
  */
-void mcb_release_mem(struct resource *mem)
-{
+व्योम mcb_release_mem(काष्ठा resource *mem)
+अणु
 	u32 size;
 
 	size = resource_size(mem);
 	release_mem_region(mem->start, size);
-}
+पूर्ण
 EXPORT_SYMBOL_NS_GPL(mcb_release_mem, MCB);
 
-static int __mcb_get_irq(struct mcb_device *dev)
-{
-	struct resource *irq;
+अटल पूर्णांक __mcb_get_irq(काष्ठा mcb_device *dev)
+अणु
+	काष्ठा resource *irq;
 
 	irq = mcb_get_resource(dev, IORESOURCE_IRQ);
 
-	return irq->start;
-}
+	वापस irq->start;
+पूर्ण
 
 /**
  * mcb_get_irq() - Get device's IRQ number
- * @dev: The @mcb_device the IRQ is for
+ * @dev: The @mcb_device the IRQ is क्रम
  *
  * Get the IRQ number of a given @mcb_device.
  */
-int mcb_get_irq(struct mcb_device *dev)
-{
-	struct mcb_bus *bus = dev->bus;
+पूर्णांक mcb_get_irq(काष्ठा mcb_device *dev)
+अणु
+	काष्ठा mcb_bus *bus = dev->bus;
 
-	if (bus->get_irq)
-		return bus->get_irq(dev);
+	अगर (bus->get_irq)
+		वापस bus->get_irq(dev);
 
-	return __mcb_get_irq(dev);
-}
+	वापस __mcb_get_irq(dev);
+पूर्ण
 EXPORT_SYMBOL_NS_GPL(mcb_get_irq, MCB);
 
-static int mcb_init(void)
-{
-	return bus_register(&mcb_bus_type);
-}
+अटल पूर्णांक mcb_init(व्योम)
+अणु
+	वापस bus_रेजिस्टर(&mcb_bus_type);
+पूर्ण
 
-static void mcb_exit(void)
-{
+अटल व्योम mcb_निकास(व्योम)
+अणु
 	ida_destroy(&mcb_ida);
-	bus_unregister(&mcb_bus_type);
-}
+	bus_unरेजिस्टर(&mcb_bus_type);
+पूर्ण
 
-/* mcb must be initialized after PCI but before the chameleon drivers.
+/* mcb must be initialized after PCI but beक्रमe the chameleon drivers.
  * That means we must use some initcall between subsys_initcall and
  * device_initcall.
  */
 fs_initcall(mcb_init);
-module_exit(mcb_exit);
+module_निकास(mcb_निकास);
 
 MODULE_DESCRIPTION("MEN Chameleon Bus Driver");
 MODULE_AUTHOR("Johannes Thumshirn <johannes.thumshirn@men.de>");

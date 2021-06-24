@@ -1,256 +1,257 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 // Copyright IBM Corp
 
-#define pr_fmt(fmt) "clk-aspeed: " fmt
+#घोषणा pr_fmt(fmt) "clk-aspeed: " fmt
 
-#include <linux/mfd/syscon.h>
-#include <linux/of_address.h>
-#include <linux/of_device.h>
-#include <linux/platform_device.h>
-#include <linux/regmap.h>
-#include <linux/slab.h>
+#समावेश <linux/mfd/syscon.h>
+#समावेश <linux/of_address.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/regmap.h>
+#समावेश <linux/slab.h>
 
-#include <dt-bindings/clock/aspeed-clock.h>
+#समावेश <dt-bindings/घड़ी/aspeed-घड़ी.h>
 
-#include "clk-aspeed.h"
+#समावेश "clk-aspeed.h"
 
-#define ASPEED_NUM_CLKS		38
+#घोषणा ASPEED_NUM_CLKS		38
 
-#define ASPEED_RESET2_OFFSET	32
+#घोषणा ASPEED_RESET2_OFFSET	32
 
-#define ASPEED_RESET_CTRL	0x04
-#define ASPEED_CLK_SELECTION	0x08
-#define ASPEED_CLK_STOP_CTRL	0x0c
-#define ASPEED_MPLL_PARAM	0x20
-#define ASPEED_HPLL_PARAM	0x24
-#define  AST2500_HPLL_BYPASS_EN	BIT(20)
-#define  AST2400_HPLL_PROGRAMMED BIT(18)
-#define  AST2400_HPLL_BYPASS_EN	BIT(17)
-#define ASPEED_MISC_CTRL	0x2c
-#define  UART_DIV13_EN		BIT(12)
-#define ASPEED_MAC_CLK_DLY	0x48
-#define ASPEED_STRAP		0x70
-#define  CLKIN_25MHZ_EN		BIT(23)
-#define  AST2400_CLK_SOURCE_SEL	BIT(18)
-#define ASPEED_CLK_SELECTION_2	0xd8
-#define ASPEED_RESET_CTRL2	0xd4
+#घोषणा ASPEED_RESET_CTRL	0x04
+#घोषणा ASPEED_CLK_SELECTION	0x08
+#घोषणा ASPEED_CLK_STOP_CTRL	0x0c
+#घोषणा ASPEED_MPLL_PARAM	0x20
+#घोषणा ASPEED_HPLL_PARAM	0x24
+#घोषणा  AST2500_HPLL_BYPASS_EN	BIT(20)
+#घोषणा  AST2400_HPLL_PROGRAMMED BIT(18)
+#घोषणा  AST2400_HPLL_BYPASS_EN	BIT(17)
+#घोषणा ASPEED_MISC_CTRL	0x2c
+#घोषणा  UART_DIV13_EN		BIT(12)
+#घोषणा ASPEED_MAC_CLK_DLY	0x48
+#घोषणा ASPEED_STRAP		0x70
+#घोषणा  CLKIN_25MHZ_EN		BIT(23)
+#घोषणा  AST2400_CLK_SOURCE_SEL	BIT(18)
+#घोषणा ASPEED_CLK_SELECTION_2	0xd8
+#घोषणा ASPEED_RESET_CTRL2	0xd4
 
-/* Globally visible clocks */
-static DEFINE_SPINLOCK(aspeed_clk_lock);
+/* Globally visible घड़ीs */
+अटल DEFINE_SPINLOCK(aspeed_clk_lock);
 
-/* Keeps track of all clocks */
-static struct clk_hw_onecell_data *aspeed_clk_data;
+/* Keeps track of all घड़ीs */
+अटल काष्ठा clk_hw_onecell_data *aspeed_clk_data;
 
-static void __iomem *scu_base;
+अटल व्योम __iomem *scu_base;
 
 /* TODO: ask Aspeed about the actual parent data */
-static const struct aspeed_gate_data aspeed_gates[] = {
+अटल स्थिर काष्ठा aspeed_gate_data aspeed_gates[] = अणु
 	/*				 clk rst   name			parent	flags */
-	[ASPEED_CLK_GATE_ECLK] =	{  0,  6, "eclk-gate",		"eclk",	0 }, /* Video Engine */
-	[ASPEED_CLK_GATE_GCLK] =	{  1,  7, "gclk-gate",		NULL,	0 }, /* 2D engine */
-	[ASPEED_CLK_GATE_MCLK] =	{  2, -1, "mclk-gate",		"mpll",	CLK_IS_CRITICAL }, /* SDRAM */
-	[ASPEED_CLK_GATE_VCLK] =	{  3, -1, "vclk-gate",		NULL,	0 }, /* Video Capture */
-	[ASPEED_CLK_GATE_BCLK] =	{  4,  8, "bclk-gate",		"bclk",	CLK_IS_CRITICAL }, /* PCIe/PCI */
-	[ASPEED_CLK_GATE_DCLK] =	{  5, -1, "dclk-gate",		NULL,	CLK_IS_CRITICAL }, /* DAC */
-	[ASPEED_CLK_GATE_REFCLK] =	{  6, -1, "refclk-gate",	"clkin", CLK_IS_CRITICAL },
-	[ASPEED_CLK_GATE_USBPORT2CLK] =	{  7,  3, "usb-port2-gate",	NULL,	0 }, /* USB2.0 Host port 2 */
-	[ASPEED_CLK_GATE_LCLK] =	{  8,  5, "lclk-gate",		NULL,	0 }, /* LPC */
-	[ASPEED_CLK_GATE_USBUHCICLK] =	{  9, 15, "usb-uhci-gate",	NULL,	0 }, /* USB1.1 (requires port 2 enabled) */
-	[ASPEED_CLK_GATE_D1CLK] =	{ 10, 13, "d1clk-gate",		NULL,	0 }, /* GFX CRT */
-	[ASPEED_CLK_GATE_YCLK] =	{ 13,  4, "yclk-gate",		NULL,	0 }, /* HAC */
-	[ASPEED_CLK_GATE_USBPORT1CLK] = { 14, 14, "usb-port1-gate",	NULL,	0 }, /* USB2 hub/USB2 host port 1/USB1.1 dev */
-	[ASPEED_CLK_GATE_UART1CLK] =	{ 15, -1, "uart1clk-gate",	"uart",	0 }, /* UART1 */
-	[ASPEED_CLK_GATE_UART2CLK] =	{ 16, -1, "uart2clk-gate",	"uart",	0 }, /* UART2 */
-	[ASPEED_CLK_GATE_UART5CLK] =	{ 17, -1, "uart5clk-gate",	"uart",	0 }, /* UART5 */
-	[ASPEED_CLK_GATE_ESPICLK] =	{ 19, -1, "espiclk-gate",	NULL,	0 }, /* eSPI */
-	[ASPEED_CLK_GATE_MAC1CLK] =	{ 20, 11, "mac1clk-gate",	"mac",	0 }, /* MAC1 */
-	[ASPEED_CLK_GATE_MAC2CLK] =	{ 21, 12, "mac2clk-gate",	"mac",	0 }, /* MAC2 */
-	[ASPEED_CLK_GATE_RSACLK] =	{ 24, -1, "rsaclk-gate",	NULL,	0 }, /* RSA */
-	[ASPEED_CLK_GATE_UART3CLK] =	{ 25, -1, "uart3clk-gate",	"uart",	0 }, /* UART3 */
-	[ASPEED_CLK_GATE_UART4CLK] =	{ 26, -1, "uart4clk-gate",	"uart",	0 }, /* UART4 */
-	[ASPEED_CLK_GATE_SDCLK] =	{ 27, 16, "sdclk-gate",		NULL,	0 }, /* SDIO/SD */
-	[ASPEED_CLK_GATE_LHCCLK] =	{ 28, -1, "lhclk-gate",		"lhclk", 0 }, /* LPC master/LPC+ */
-};
+	[ASPEED_CLK_GATE_ECLK] =	अणु  0,  6, "eclk-gate",		"eclk",	0 पूर्ण, /* Video Engine */
+	[ASPEED_CLK_GATE_GCLK] =	अणु  1,  7, "gclk-gate",		शून्य,	0 पूर्ण, /* 2D engine */
+	[ASPEED_CLK_GATE_MCLK] =	अणु  2, -1, "mclk-gate",		"mpll",	CLK_IS_CRITICAL पूर्ण, /* SDRAM */
+	[ASPEED_CLK_GATE_VCLK] =	अणु  3, -1, "vclk-gate",		शून्य,	0 पूर्ण, /* Video Capture */
+	[ASPEED_CLK_GATE_BCLK] =	अणु  4,  8, "bclk-gate",		"bclk",	CLK_IS_CRITICAL पूर्ण, /* PCIe/PCI */
+	[ASPEED_CLK_GATE_DCLK] =	अणु  5, -1, "dclk-gate",		शून्य,	CLK_IS_CRITICAL पूर्ण, /* DAC */
+	[ASPEED_CLK_GATE_REFCLK] =	अणु  6, -1, "refclk-gate",	"clkin", CLK_IS_CRITICAL पूर्ण,
+	[ASPEED_CLK_GATE_USBPORT2CLK] =	अणु  7,  3, "usb-port2-gate",	शून्य,	0 पूर्ण, /* USB2.0 Host port 2 */
+	[ASPEED_CLK_GATE_LCLK] =	अणु  8,  5, "lclk-gate",		शून्य,	0 पूर्ण, /* LPC */
+	[ASPEED_CLK_GATE_USBUHCICLK] =	अणु  9, 15, "usb-uhci-gate",	शून्य,	0 पूर्ण, /* USB1.1 (requires port 2 enabled) */
+	[ASPEED_CLK_GATE_D1CLK] =	अणु 10, 13, "d1clk-gate",		शून्य,	0 पूर्ण, /* GFX CRT */
+	[ASPEED_CLK_GATE_YCLK] =	अणु 13,  4, "yclk-gate",		शून्य,	0 पूर्ण, /* HAC */
+	[ASPEED_CLK_GATE_USBPORT1CLK] = अणु 14, 14, "usb-port1-gate",	शून्य,	0 पूर्ण, /* USB2 hub/USB2 host port 1/USB1.1 dev */
+	[ASPEED_CLK_GATE_UART1CLK] =	अणु 15, -1, "uart1clk-gate",	"uart",	0 पूर्ण, /* UART1 */
+	[ASPEED_CLK_GATE_UART2CLK] =	अणु 16, -1, "uart2clk-gate",	"uart",	0 पूर्ण, /* UART2 */
+	[ASPEED_CLK_GATE_UART5CLK] =	अणु 17, -1, "uart5clk-gate",	"uart",	0 पूर्ण, /* UART5 */
+	[ASPEED_CLK_GATE_ESPICLK] =	अणु 19, -1, "espiclk-gate",	शून्य,	0 पूर्ण, /* eSPI */
+	[ASPEED_CLK_GATE_MAC1CLK] =	अणु 20, 11, "mac1clk-gate",	"mac",	0 पूर्ण, /* MAC1 */
+	[ASPEED_CLK_GATE_MAC2CLK] =	अणु 21, 12, "mac2clk-gate",	"mac",	0 पूर्ण, /* MAC2 */
+	[ASPEED_CLK_GATE_RSACLK] =	अणु 24, -1, "rsaclk-gate",	शून्य,	0 पूर्ण, /* RSA */
+	[ASPEED_CLK_GATE_UART3CLK] =	अणु 25, -1, "uart3clk-gate",	"uart",	0 पूर्ण, /* UART3 */
+	[ASPEED_CLK_GATE_UART4CLK] =	अणु 26, -1, "uart4clk-gate",	"uart",	0 पूर्ण, /* UART4 */
+	[ASPEED_CLK_GATE_SDCLK] =	अणु 27, 16, "sdclk-gate",		शून्य,	0 पूर्ण, /* SDIO/SD */
+	[ASPEED_CLK_GATE_LHCCLK] =	अणु 28, -1, "lhclk-gate",		"lhclk", 0 पूर्ण, /* LPC master/LPC+ */
+पूर्ण;
 
-static const char * const eclk_parent_names[] = {
+अटल स्थिर अक्षर * स्थिर eclk_parent_names[] = अणु
 	"mpll",
 	"hpll",
 	"dpll",
-};
+पूर्ण;
 
-static const struct clk_div_table ast2500_eclk_div_table[] = {
-	{ 0x0, 2 },
-	{ 0x1, 2 },
-	{ 0x2, 3 },
-	{ 0x3, 4 },
-	{ 0x4, 5 },
-	{ 0x5, 6 },
-	{ 0x6, 7 },
-	{ 0x7, 8 },
-	{ 0 }
-};
+अटल स्थिर काष्ठा clk_भाग_प्रकारable ast2500_eclk_भाग_प्रकारable[] = अणु
+	अणु 0x0, 2 पूर्ण,
+	अणु 0x1, 2 पूर्ण,
+	अणु 0x2, 3 पूर्ण,
+	अणु 0x3, 4 पूर्ण,
+	अणु 0x4, 5 पूर्ण,
+	अणु 0x5, 6 पूर्ण,
+	अणु 0x6, 7 पूर्ण,
+	अणु 0x7, 8 पूर्ण,
+	अणु 0 पूर्ण
+पूर्ण;
 
-static const struct clk_div_table ast2500_mac_div_table[] = {
-	{ 0x0, 4 }, /* Yep, really. Aspeed confirmed this is correct */
-	{ 0x1, 4 },
-	{ 0x2, 6 },
-	{ 0x3, 8 },
-	{ 0x4, 10 },
-	{ 0x5, 12 },
-	{ 0x6, 14 },
-	{ 0x7, 16 },
-	{ 0 }
-};
+अटल स्थिर काष्ठा clk_भाग_प्रकारable ast2500_mac_भाग_प्रकारable[] = अणु
+	अणु 0x0, 4 पूर्ण, /* Yep, really. Aspeed confirmed this is correct */
+	अणु 0x1, 4 पूर्ण,
+	अणु 0x2, 6 पूर्ण,
+	अणु 0x3, 8 पूर्ण,
+	अणु 0x4, 10 पूर्ण,
+	अणु 0x5, 12 पूर्ण,
+	अणु 0x6, 14 पूर्ण,
+	अणु 0x7, 16 पूर्ण,
+	अणु 0 पूर्ण
+पूर्ण;
 
-static const struct clk_div_table ast2400_div_table[] = {
-	{ 0x0, 2 },
-	{ 0x1, 4 },
-	{ 0x2, 6 },
-	{ 0x3, 8 },
-	{ 0x4, 10 },
-	{ 0x5, 12 },
-	{ 0x6, 14 },
-	{ 0x7, 16 },
-	{ 0 }
-};
+अटल स्थिर काष्ठा clk_भाग_प्रकारable ast2400_भाग_प्रकारable[] = अणु
+	अणु 0x0, 2 पूर्ण,
+	अणु 0x1, 4 पूर्ण,
+	अणु 0x2, 6 पूर्ण,
+	अणु 0x3, 8 पूर्ण,
+	अणु 0x4, 10 पूर्ण,
+	अणु 0x5, 12 पूर्ण,
+	अणु 0x6, 14 पूर्ण,
+	अणु 0x7, 16 पूर्ण,
+	अणु 0 पूर्ण
+पूर्ण;
 
-static const struct clk_div_table ast2500_div_table[] = {
-	{ 0x0, 4 },
-	{ 0x1, 8 },
-	{ 0x2, 12 },
-	{ 0x3, 16 },
-	{ 0x4, 20 },
-	{ 0x5, 24 },
-	{ 0x6, 28 },
-	{ 0x7, 32 },
-	{ 0 }
-};
+अटल स्थिर काष्ठा clk_भाग_प्रकारable ast2500_भाग_प्रकारable[] = अणु
+	अणु 0x0, 4 पूर्ण,
+	अणु 0x1, 8 पूर्ण,
+	अणु 0x2, 12 पूर्ण,
+	अणु 0x3, 16 पूर्ण,
+	अणु 0x4, 20 पूर्ण,
+	अणु 0x5, 24 पूर्ण,
+	अणु 0x6, 28 पूर्ण,
+	अणु 0x7, 32 पूर्ण,
+	अणु 0 पूर्ण
+पूर्ण;
 
-static struct clk_hw *aspeed_ast2400_calc_pll(const char *name, u32 val)
-{
-	unsigned int mult, div;
+अटल काष्ठा clk_hw *aspeed_ast2400_calc_pll(स्थिर अक्षर *name, u32 val)
+अणु
+	अचिन्हित पूर्णांक mult, भाग;
 
-	if (val & AST2400_HPLL_BYPASS_EN) {
+	अगर (val & AST2400_HPLL_BYPASS_EN) अणु
 		/* Pass through mode */
-		mult = div = 1;
-	} else {
+		mult = भाग = 1;
+	पूर्ण अन्यथा अणु
 		/* F = 24Mhz * (2-OD) * [(N + 2) / (D + 1)] */
 		u32 n = (val >> 5) & 0x3f;
 		u32 od = (val >> 4) & 0x1;
 		u32 d = val & 0xf;
 
 		mult = (2 - od) * (n + 2);
-		div = d + 1;
-	}
-	return clk_hw_register_fixed_factor(NULL, name, "clkin", 0,
-			mult, div);
-};
+		भाग = d + 1;
+	पूर्ण
+	वापस clk_hw_रेजिस्टर_fixed_factor(शून्य, name, "clkin", 0,
+			mult, भाग);
+पूर्ण;
 
-static struct clk_hw *aspeed_ast2500_calc_pll(const char *name, u32 val)
-{
-	unsigned int mult, div;
+अटल काष्ठा clk_hw *aspeed_ast2500_calc_pll(स्थिर अक्षर *name, u32 val)
+अणु
+	अचिन्हित पूर्णांक mult, भाग;
 
-	if (val & AST2500_HPLL_BYPASS_EN) {
+	अगर (val & AST2500_HPLL_BYPASS_EN) अणु
 		/* Pass through mode */
-		mult = div = 1;
-	} else {
+		mult = भाग = 1;
+	पूर्ण अन्यथा अणु
 		/* F = clkin * [(M+1) / (N+1)] / (P + 1) */
 		u32 p = (val >> 13) & 0x3f;
 		u32 m = (val >> 5) & 0xff;
 		u32 n = val & 0x1f;
 
 		mult = (m + 1) / (n + 1);
-		div = p + 1;
-	}
+		भाग = p + 1;
+	पूर्ण
 
-	return clk_hw_register_fixed_factor(NULL, name, "clkin", 0,
-			mult, div);
-}
+	वापस clk_hw_रेजिस्टर_fixed_factor(शून्य, name, "clkin", 0,
+			mult, भाग);
+पूर्ण
 
-static const struct aspeed_clk_soc_data ast2500_data = {
-	.div_table = ast2500_div_table,
-	.eclk_div_table = ast2500_eclk_div_table,
-	.mac_div_table = ast2500_mac_div_table,
+अटल स्थिर काष्ठा aspeed_clk_soc_data ast2500_data = अणु
+	.भाग_प्रकारable = ast2500_भाग_प्रकारable,
+	.eclk_भाग_प्रकारable = ast2500_eclk_भाग_प्रकारable,
+	.mac_भाग_प्रकारable = ast2500_mac_भाग_प्रकारable,
 	.calc_pll = aspeed_ast2500_calc_pll,
-};
+पूर्ण;
 
-static const struct aspeed_clk_soc_data ast2400_data = {
-	.div_table = ast2400_div_table,
-	.eclk_div_table = ast2400_div_table,
-	.mac_div_table = ast2400_div_table,
+अटल स्थिर काष्ठा aspeed_clk_soc_data ast2400_data = अणु
+	.भाग_प्रकारable = ast2400_भाग_प्रकारable,
+	.eclk_भाग_प्रकारable = ast2400_भाग_प्रकारable,
+	.mac_भाग_प्रकारable = ast2400_भाग_प्रकारable,
 	.calc_pll = aspeed_ast2400_calc_pll,
-};
+पूर्ण;
 
-static int aspeed_clk_is_enabled(struct clk_hw *hw)
-{
-	struct aspeed_clk_gate *gate = to_aspeed_clk_gate(hw);
-	u32 clk = BIT(gate->clock_idx);
+अटल पूर्णांक aspeed_clk_is_enabled(काष्ठा clk_hw *hw)
+अणु
+	काष्ठा aspeed_clk_gate *gate = to_aspeed_clk_gate(hw);
+	u32 clk = BIT(gate->घड़ी_idx);
 	u32 rst = BIT(gate->reset_idx);
 	u32 enval = (gate->flags & CLK_GATE_SET_TO_DISABLE) ? 0 : clk;
 	u32 reg;
 
 	/*
-	 * If the IP is in reset, treat the clock as not enabled,
-	 * this happens with some clocks such as the USB one when
+	 * If the IP is in reset, treat the घड़ी as not enabled,
+	 * this happens with some घड़ीs such as the USB one when
 	 * coming from cold reset. Without this, aspeed_clk_enable()
-	 * will fail to lift the reset.
+	 * will fail to lअगरt the reset.
 	 */
-	if (gate->reset_idx >= 0) {
-		regmap_read(gate->map, ASPEED_RESET_CTRL, &reg);
-		if (reg & rst)
-			return 0;
-	}
+	अगर (gate->reset_idx >= 0) अणु
+		regmap_पढ़ो(gate->map, ASPEED_RESET_CTRL, &reg);
+		अगर (reg & rst)
+			वापस 0;
+	पूर्ण
 
-	regmap_read(gate->map, ASPEED_CLK_STOP_CTRL, &reg);
+	regmap_पढ़ो(gate->map, ASPEED_CLK_STOP_CTRL, &reg);
 
-	return ((reg & clk) == enval) ? 1 : 0;
-}
+	वापस ((reg & clk) == enval) ? 1 : 0;
+पूर्ण
 
-static int aspeed_clk_enable(struct clk_hw *hw)
-{
-	struct aspeed_clk_gate *gate = to_aspeed_clk_gate(hw);
-	unsigned long flags;
-	u32 clk = BIT(gate->clock_idx);
+अटल पूर्णांक aspeed_clk_enable(काष्ठा clk_hw *hw)
+अणु
+	काष्ठा aspeed_clk_gate *gate = to_aspeed_clk_gate(hw);
+	अचिन्हित दीर्घ flags;
+	u32 clk = BIT(gate->घड़ी_idx);
 	u32 rst = BIT(gate->reset_idx);
 	u32 enval;
 
 	spin_lock_irqsave(gate->lock, flags);
 
-	if (aspeed_clk_is_enabled(hw)) {
+	अगर (aspeed_clk_is_enabled(hw)) अणु
 		spin_unlock_irqrestore(gate->lock, flags);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	if (gate->reset_idx >= 0) {
+	अगर (gate->reset_idx >= 0) अणु
 		/* Put IP in reset */
 		regmap_update_bits(gate->map, ASPEED_RESET_CTRL, rst, rst);
 
 		/* Delay 100us */
 		udelay(100);
-	}
+	पूर्ण
 
-	/* Enable clock */
+	/* Enable घड़ी */
 	enval = (gate->flags & CLK_GATE_SET_TO_DISABLE) ? 0 : clk;
 	regmap_update_bits(gate->map, ASPEED_CLK_STOP_CTRL, clk, enval);
 
-	if (gate->reset_idx >= 0) {
-		/* A delay of 10ms is specified by the ASPEED docs */
+	अगर (gate->reset_idx >= 0) अणु
+		/* A delay of 10ms is specअगरied by the ASPEED करोcs */
 		mdelay(10);
 
 		/* Take IP out of reset */
 		regmap_update_bits(gate->map, ASPEED_RESET_CTRL, rst, 0);
-	}
+	पूर्ण
 
 	spin_unlock_irqrestore(gate->lock, flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void aspeed_clk_disable(struct clk_hw *hw)
-{
-	struct aspeed_clk_gate *gate = to_aspeed_clk_gate(hw);
-	unsigned long flags;
-	u32 clk = BIT(gate->clock_idx);
+अटल व्योम aspeed_clk_disable(काष्ठा clk_hw *hw)
+अणु
+	काष्ठा aspeed_clk_gate *gate = to_aspeed_clk_gate(hw);
+	अचिन्हित दीर्घ flags;
+	u32 clk = BIT(gate->घड़ी_idx);
 	u32 enval;
 
 	spin_lock_irqsave(gate->lock, flags);
@@ -259,15 +260,15 @@ static void aspeed_clk_disable(struct clk_hw *hw)
 	regmap_update_bits(gate->map, ASPEED_CLK_STOP_CTRL, clk, enval);
 
 	spin_unlock_irqrestore(gate->lock, flags);
-}
+पूर्ण
 
-static const struct clk_ops aspeed_clk_gate_ops = {
+अटल स्थिर काष्ठा clk_ops aspeed_clk_gate_ops = अणु
 	.enable = aspeed_clk_enable,
 	.disable = aspeed_clk_disable,
 	.is_enabled = aspeed_clk_is_enabled,
-};
+पूर्ण;
 
-static const u8 aspeed_resets[] = {
+अटल स्थिर u8 aspeed_resets[] = अणु
 	/* SCU04 resets */
 	[ASPEED_RESET_XDMA]	= 25,
 	[ASPEED_RESET_MCTP]	= 24,
@@ -284,120 +285,120 @@ static const u8 aspeed_resets[] = {
 	 * the SCU04 resets.
 	 */
 	[ASPEED_RESET_CRT1]	= ASPEED_RESET2_OFFSET + 5,
-};
+पूर्ण;
 
-static int aspeed_reset_deassert(struct reset_controller_dev *rcdev,
-				 unsigned long id)
-{
-	struct aspeed_reset *ar = to_aspeed_reset(rcdev);
+अटल पूर्णांक aspeed_reset_deनिश्चित(काष्ठा reset_controller_dev *rcdev,
+				 अचिन्हित दीर्घ id)
+अणु
+	काष्ठा aspeed_reset *ar = to_aspeed_reset(rcdev);
 	u32 reg = ASPEED_RESET_CTRL;
 	u32 bit = aspeed_resets[id];
 
-	if (bit >= ASPEED_RESET2_OFFSET) {
+	अगर (bit >= ASPEED_RESET2_OFFSET) अणु
 		bit -= ASPEED_RESET2_OFFSET;
 		reg = ASPEED_RESET_CTRL2;
-	}
+	पूर्ण
 
-	return regmap_update_bits(ar->map, reg, BIT(bit), 0);
-}
+	वापस regmap_update_bits(ar->map, reg, BIT(bit), 0);
+पूर्ण
 
-static int aspeed_reset_assert(struct reset_controller_dev *rcdev,
-			       unsigned long id)
-{
-	struct aspeed_reset *ar = to_aspeed_reset(rcdev);
+अटल पूर्णांक aspeed_reset_निश्चित(काष्ठा reset_controller_dev *rcdev,
+			       अचिन्हित दीर्घ id)
+अणु
+	काष्ठा aspeed_reset *ar = to_aspeed_reset(rcdev);
 	u32 reg = ASPEED_RESET_CTRL;
 	u32 bit = aspeed_resets[id];
 
-	if (bit >= ASPEED_RESET2_OFFSET) {
+	अगर (bit >= ASPEED_RESET2_OFFSET) अणु
 		bit -= ASPEED_RESET2_OFFSET;
 		reg = ASPEED_RESET_CTRL2;
-	}
+	पूर्ण
 
-	return regmap_update_bits(ar->map, reg, BIT(bit), BIT(bit));
-}
+	वापस regmap_update_bits(ar->map, reg, BIT(bit), BIT(bit));
+पूर्ण
 
-static int aspeed_reset_status(struct reset_controller_dev *rcdev,
-			       unsigned long id)
-{
-	struct aspeed_reset *ar = to_aspeed_reset(rcdev);
+अटल पूर्णांक aspeed_reset_status(काष्ठा reset_controller_dev *rcdev,
+			       अचिन्हित दीर्घ id)
+अणु
+	काष्ठा aspeed_reset *ar = to_aspeed_reset(rcdev);
 	u32 reg = ASPEED_RESET_CTRL;
 	u32 bit = aspeed_resets[id];
-	int ret, val;
+	पूर्णांक ret, val;
 
-	if (bit >= ASPEED_RESET2_OFFSET) {
+	अगर (bit >= ASPEED_RESET2_OFFSET) अणु
 		bit -= ASPEED_RESET2_OFFSET;
 		reg = ASPEED_RESET_CTRL2;
-	}
+	पूर्ण
 
-	ret = regmap_read(ar->map, reg, &val);
-	if (ret)
-		return ret;
+	ret = regmap_पढ़ो(ar->map, reg, &val);
+	अगर (ret)
+		वापस ret;
 
-	return !!(val & BIT(bit));
-}
+	वापस !!(val & BIT(bit));
+पूर्ण
 
-static const struct reset_control_ops aspeed_reset_ops = {
-	.assert = aspeed_reset_assert,
-	.deassert = aspeed_reset_deassert,
+अटल स्थिर काष्ठा reset_control_ops aspeed_reset_ops = अणु
+	.निश्चित = aspeed_reset_निश्चित,
+	.deनिश्चित = aspeed_reset_deनिश्चित,
 	.status = aspeed_reset_status,
-};
+पूर्ण;
 
-static struct clk_hw *aspeed_clk_hw_register_gate(struct device *dev,
-		const char *name, const char *parent_name, unsigned long flags,
-		struct regmap *map, u8 clock_idx, u8 reset_idx,
+अटल काष्ठा clk_hw *aspeed_clk_hw_रेजिस्टर_gate(काष्ठा device *dev,
+		स्थिर अक्षर *name, स्थिर अक्षर *parent_name, अचिन्हित दीर्घ flags,
+		काष्ठा regmap *map, u8 घड़ी_idx, u8 reset_idx,
 		u8 clk_gate_flags, spinlock_t *lock)
-{
-	struct aspeed_clk_gate *gate;
-	struct clk_init_data init;
-	struct clk_hw *hw;
-	int ret;
+अणु
+	काष्ठा aspeed_clk_gate *gate;
+	काष्ठा clk_init_data init;
+	काष्ठा clk_hw *hw;
+	पूर्णांक ret;
 
-	gate = kzalloc(sizeof(*gate), GFP_KERNEL);
-	if (!gate)
-		return ERR_PTR(-ENOMEM);
+	gate = kzalloc(माप(*gate), GFP_KERNEL);
+	अगर (!gate)
+		वापस ERR_PTR(-ENOMEM);
 
 	init.name = name;
 	init.ops = &aspeed_clk_gate_ops;
 	init.flags = flags;
-	init.parent_names = parent_name ? &parent_name : NULL;
+	init.parent_names = parent_name ? &parent_name : शून्य;
 	init.num_parents = parent_name ? 1 : 0;
 
 	gate->map = map;
-	gate->clock_idx = clock_idx;
+	gate->घड़ी_idx = घड़ी_idx;
 	gate->reset_idx = reset_idx;
 	gate->flags = clk_gate_flags;
 	gate->lock = lock;
 	gate->hw.init = &init;
 
 	hw = &gate->hw;
-	ret = clk_hw_register(dev, hw);
-	if (ret) {
-		kfree(gate);
+	ret = clk_hw_रेजिस्टर(dev, hw);
+	अगर (ret) अणु
+		kमुक्त(gate);
 		hw = ERR_PTR(ret);
-	}
+	पूर्ण
 
-	return hw;
-}
+	वापस hw;
+पूर्ण
 
-static int aspeed_clk_probe(struct platform_device *pdev)
-{
-	const struct aspeed_clk_soc_data *soc_data;
-	struct device *dev = &pdev->dev;
-	struct aspeed_reset *ar;
-	struct regmap *map;
-	struct clk_hw *hw;
+अटल पूर्णांक aspeed_clk_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	स्थिर काष्ठा aspeed_clk_soc_data *soc_data;
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा aspeed_reset *ar;
+	काष्ठा regmap *map;
+	काष्ठा clk_hw *hw;
 	u32 val, rate;
-	int i, ret;
+	पूर्णांक i, ret;
 
 	map = syscon_node_to_regmap(dev->of_node);
-	if (IS_ERR(map)) {
+	अगर (IS_ERR(map)) अणु
 		dev_err(dev, "no syscon regmap\n");
-		return PTR_ERR(map);
-	}
+		वापस PTR_ERR(map);
+	पूर्ण
 
-	ar = devm_kzalloc(dev, sizeof(*ar), GFP_KERNEL);
-	if (!ar)
-		return -ENOMEM;
+	ar = devm_kzalloc(dev, माप(*ar), GFP_KERNEL);
+	अगर (!ar)
+		वापस -ENOMEM;
 
 	ar->map = map;
 	ar->rcdev.owner = THIS_MODULE;
@@ -405,338 +406,338 @@ static int aspeed_clk_probe(struct platform_device *pdev)
 	ar->rcdev.ops = &aspeed_reset_ops;
 	ar->rcdev.of_node = dev->of_node;
 
-	ret = devm_reset_controller_register(dev, &ar->rcdev);
-	if (ret) {
+	ret = devm_reset_controller_रेजिस्टर(dev, &ar->rcdev);
+	अगर (ret) अणु
 		dev_err(dev, "could not register reset controller\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	/* SoC generations share common layouts but have different divisors */
+	/* SoC generations share common layouts but have dअगरferent भागisors */
 	soc_data = of_device_get_match_data(dev);
-	if (!soc_data) {
+	अगर (!soc_data) अणु
 		dev_err(dev, "no match data for platform\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	/* UART clock div13 setting */
-	regmap_read(map, ASPEED_MISC_CTRL, &val);
-	if (val & UART_DIV13_EN)
+	/* UART घड़ी भाग13 setting */
+	regmap_पढ़ो(map, ASPEED_MISC_CTRL, &val);
+	अगर (val & UART_DIV13_EN)
 		rate = 24000000 / 13;
-	else
+	अन्यथा
 		rate = 24000000;
-	/* TODO: Find the parent data for the uart clock */
-	hw = clk_hw_register_fixed_rate(dev, "uart", NULL, 0, rate);
-	if (IS_ERR(hw))
-		return PTR_ERR(hw);
+	/* TODO: Find the parent data क्रम the uart घड़ी */
+	hw = clk_hw_रेजिस्टर_fixed_rate(dev, "uart", शून्य, 0, rate);
+	अगर (IS_ERR(hw))
+		वापस PTR_ERR(hw);
 	aspeed_clk_data->hws[ASPEED_CLK_UART] = hw;
 
 	/*
-	 * Memory controller (M-PLL) PLL. This clock is configured by the
-	 * bootloader, and is exposed to Linux as a read-only clock rate.
+	 * Memory controller (M-PLL) PLL. This घड़ी is configured by the
+	 * bootloader, and is exposed to Linux as a पढ़ो-only घड़ी rate.
 	 */
-	regmap_read(map, ASPEED_MPLL_PARAM, &val);
+	regmap_पढ़ो(map, ASPEED_MPLL_PARAM, &val);
 	hw = soc_data->calc_pll("mpll", val);
-	if (IS_ERR(hw))
-		return PTR_ERR(hw);
+	अगर (IS_ERR(hw))
+		वापस PTR_ERR(hw);
 	aspeed_clk_data->hws[ASPEED_CLK_MPLL] =	hw;
 
-	/* SD/SDIO clock divider and gate */
-	hw = clk_hw_register_gate(dev, "sd_extclk_gate", "hpll", 0,
+	/* SD/SDIO घड़ी भागider and gate */
+	hw = clk_hw_रेजिस्टर_gate(dev, "sd_extclk_gate", "hpll", 0,
 				  scu_base + ASPEED_CLK_SELECTION, 15, 0,
 				  &aspeed_clk_lock);
-	if (IS_ERR(hw))
-		return PTR_ERR(hw);
-	hw = clk_hw_register_divider_table(dev, "sd_extclk", "sd_extclk_gate",
+	अगर (IS_ERR(hw))
+		वापस PTR_ERR(hw);
+	hw = clk_hw_रेजिस्टर_भागider_table(dev, "sd_extclk", "sd_extclk_gate",
 			0, scu_base + ASPEED_CLK_SELECTION, 12, 3, 0,
-			soc_data->div_table,
+			soc_data->भाग_प्रकारable,
 			&aspeed_clk_lock);
-	if (IS_ERR(hw))
-		return PTR_ERR(hw);
+	अगर (IS_ERR(hw))
+		वापस PTR_ERR(hw);
 	aspeed_clk_data->hws[ASPEED_CLK_SDIO] = hw;
 
-	/* MAC AHB bus clock divider */
-	hw = clk_hw_register_divider_table(dev, "mac", "hpll", 0,
+	/* MAC AHB bus घड़ी भागider */
+	hw = clk_hw_रेजिस्टर_भागider_table(dev, "mac", "hpll", 0,
 			scu_base + ASPEED_CLK_SELECTION, 16, 3, 0,
-			soc_data->mac_div_table,
+			soc_data->mac_भाग_प्रकारable,
 			&aspeed_clk_lock);
-	if (IS_ERR(hw))
-		return PTR_ERR(hw);
+	अगर (IS_ERR(hw))
+		वापस PTR_ERR(hw);
 	aspeed_clk_data->hws[ASPEED_CLK_MAC] = hw;
 
-	if (of_device_is_compatible(pdev->dev.of_node, "aspeed,ast2500-scu")) {
+	अगर (of_device_is_compatible(pdev->dev.of_node, "aspeed,ast2500-scu")) अणु
 		/* RMII 50MHz RCLK */
-		hw = clk_hw_register_fixed_rate(dev, "mac12rclk", "hpll", 0,
+		hw = clk_hw_रेजिस्टर_fixed_rate(dev, "mac12rclk", "hpll", 0,
 						50000000);
-		if (IS_ERR(hw))
-			return PTR_ERR(hw);
+		अगर (IS_ERR(hw))
+			वापस PTR_ERR(hw);
 
 		/* RMII1 50MHz (RCLK) output enable */
-		hw = clk_hw_register_gate(dev, "mac1rclk", "mac12rclk", 0,
+		hw = clk_hw_रेजिस्टर_gate(dev, "mac1rclk", "mac12rclk", 0,
 				scu_base + ASPEED_MAC_CLK_DLY, 29, 0,
 				&aspeed_clk_lock);
-		if (IS_ERR(hw))
-			return PTR_ERR(hw);
+		अगर (IS_ERR(hw))
+			वापस PTR_ERR(hw);
 		aspeed_clk_data->hws[ASPEED_CLK_MAC1RCLK] = hw;
 
 		/* RMII2 50MHz (RCLK) output enable */
-		hw = clk_hw_register_gate(dev, "mac2rclk", "mac12rclk", 0,
+		hw = clk_hw_रेजिस्टर_gate(dev, "mac2rclk", "mac12rclk", 0,
 				scu_base + ASPEED_MAC_CLK_DLY, 30, 0,
 				&aspeed_clk_lock);
-		if (IS_ERR(hw))
-			return PTR_ERR(hw);
+		अगर (IS_ERR(hw))
+			वापस PTR_ERR(hw);
 		aspeed_clk_data->hws[ASPEED_CLK_MAC2RCLK] = hw;
-	}
+	पूर्ण
 
-	/* LPC Host (LHCLK) clock divider */
-	hw = clk_hw_register_divider_table(dev, "lhclk", "hpll", 0,
+	/* LPC Host (LHCLK) घड़ी भागider */
+	hw = clk_hw_रेजिस्टर_भागider_table(dev, "lhclk", "hpll", 0,
 			scu_base + ASPEED_CLK_SELECTION, 20, 3, 0,
-			soc_data->div_table,
+			soc_data->भाग_प्रकारable,
 			&aspeed_clk_lock);
-	if (IS_ERR(hw))
-		return PTR_ERR(hw);
+	अगर (IS_ERR(hw))
+		वापस PTR_ERR(hw);
 	aspeed_clk_data->hws[ASPEED_CLK_LHCLK] = hw;
 
-	/* P-Bus (BCLK) clock divider */
-	hw = clk_hw_register_divider_table(dev, "bclk", "hpll", 0,
+	/* P-Bus (BCLK) घड़ी भागider */
+	hw = clk_hw_रेजिस्टर_भागider_table(dev, "bclk", "hpll", 0,
 			scu_base + ASPEED_CLK_SELECTION_2, 0, 2, 0,
-			soc_data->div_table,
+			soc_data->भाग_प्रकारable,
 			&aspeed_clk_lock);
-	if (IS_ERR(hw))
-		return PTR_ERR(hw);
+	अगर (IS_ERR(hw))
+		वापस PTR_ERR(hw);
 	aspeed_clk_data->hws[ASPEED_CLK_BCLK] = hw;
 
-	/* Fixed 24MHz clock */
-	hw = clk_hw_register_fixed_rate(NULL, "fixed-24m", "clkin",
+	/* Fixed 24MHz घड़ी */
+	hw = clk_hw_रेजिस्टर_fixed_rate(शून्य, "fixed-24m", "clkin",
 					0, 24000000);
-	if (IS_ERR(hw))
-		return PTR_ERR(hw);
+	अगर (IS_ERR(hw))
+		वापस PTR_ERR(hw);
 	aspeed_clk_data->hws[ASPEED_CLK_24M] = hw;
 
-	hw = clk_hw_register_mux(dev, "eclk-mux", eclk_parent_names,
+	hw = clk_hw_रेजिस्टर_mux(dev, "eclk-mux", eclk_parent_names,
 				 ARRAY_SIZE(eclk_parent_names), 0,
 				 scu_base + ASPEED_CLK_SELECTION, 2, 0x3, 0,
 				 &aspeed_clk_lock);
-	if (IS_ERR(hw))
-		return PTR_ERR(hw);
+	अगर (IS_ERR(hw))
+		वापस PTR_ERR(hw);
 	aspeed_clk_data->hws[ASPEED_CLK_ECLK_MUX] = hw;
 
-	hw = clk_hw_register_divider_table(dev, "eclk", "eclk-mux", 0,
+	hw = clk_hw_रेजिस्टर_भागider_table(dev, "eclk", "eclk-mux", 0,
 					   scu_base + ASPEED_CLK_SELECTION, 28,
-					   3, 0, soc_data->eclk_div_table,
+					   3, 0, soc_data->eclk_भाग_प्रकारable,
 					   &aspeed_clk_lock);
-	if (IS_ERR(hw))
-		return PTR_ERR(hw);
+	अगर (IS_ERR(hw))
+		वापस PTR_ERR(hw);
 	aspeed_clk_data->hws[ASPEED_CLK_ECLK] = hw;
 
 	/*
-	 * TODO: There are a number of clocks that not included in this driver
-	 * as more information is required:
+	 * TODO: There are a number of घड़ीs that not included in this driver
+	 * as more inक्रमmation is required:
 	 *   D2-PLL
 	 *   D-PLL
 	 *   YCLK
 	 *   RGMII
 	 *   RMII
-	 *   UART[1..5] clock source mux
+	 *   UART[1..5] घड़ी source mux
 	 */
 
-	for (i = 0; i < ARRAY_SIZE(aspeed_gates); i++) {
-		const struct aspeed_gate_data *gd = &aspeed_gates[i];
+	क्रम (i = 0; i < ARRAY_SIZE(aspeed_gates); i++) अणु
+		स्थिर काष्ठा aspeed_gate_data *gd = &aspeed_gates[i];
 		u32 gate_flags;
 
-		/* Special case: the USB port 1 clock (bit 14) is always
+		/* Special हाल: the USB port 1 घड़ी (bit 14) is always
 		 * working the opposite way from the other ones.
 		 */
-		gate_flags = (gd->clock_idx == 14) ? 0 : CLK_GATE_SET_TO_DISABLE;
-		hw = aspeed_clk_hw_register_gate(dev,
+		gate_flags = (gd->घड़ी_idx == 14) ? 0 : CLK_GATE_SET_TO_DISABLE;
+		hw = aspeed_clk_hw_रेजिस्टर_gate(dev,
 				gd->name,
 				gd->parent_name,
 				gd->flags,
 				map,
-				gd->clock_idx,
+				gd->घड़ी_idx,
 				gd->reset_idx,
 				gate_flags,
 				&aspeed_clk_lock);
-		if (IS_ERR(hw))
-			return PTR_ERR(hw);
+		अगर (IS_ERR(hw))
+			वापस PTR_ERR(hw);
 		aspeed_clk_data->hws[i] = hw;
-	}
+	पूर्ण
 
-	return 0;
-};
+	वापस 0;
+पूर्ण;
 
-static const struct of_device_id aspeed_clk_dt_ids[] = {
-	{ .compatible = "aspeed,ast2400-scu", .data = &ast2400_data },
-	{ .compatible = "aspeed,ast2500-scu", .data = &ast2500_data },
-	{ }
-};
+अटल स्थिर काष्ठा of_device_id aspeed_clk_dt_ids[] = अणु
+	अणु .compatible = "aspeed,ast2400-scu", .data = &ast2400_data पूर्ण,
+	अणु .compatible = "aspeed,ast2500-scu", .data = &ast2500_data पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 
-static struct platform_driver aspeed_clk_driver = {
+अटल काष्ठा platक्रमm_driver aspeed_clk_driver = अणु
 	.probe  = aspeed_clk_probe,
-	.driver = {
+	.driver = अणु
 		.name = "aspeed-clk",
 		.of_match_table = aspeed_clk_dt_ids,
 		.suppress_bind_attrs = true,
-	},
-};
-builtin_platform_driver(aspeed_clk_driver);
+	पूर्ण,
+पूर्ण;
+builtin_platक्रमm_driver(aspeed_clk_driver);
 
-static void __init aspeed_ast2400_cc(struct regmap *map)
-{
-	struct clk_hw *hw;
-	u32 val, div, clkin, hpll;
-	const u16 hpll_rates[][4] = {
-		{384, 360, 336, 408},
-		{400, 375, 350, 425},
-	};
-	int rate;
+अटल व्योम __init aspeed_ast2400_cc(काष्ठा regmap *map)
+अणु
+	काष्ठा clk_hw *hw;
+	u32 val, भाग, clkin, hpll;
+	स्थिर u16 hpll_rates[][4] = अणु
+		अणु384, 360, 336, 408पूर्ण,
+		अणु400, 375, 350, 425पूर्ण,
+	पूर्ण;
+	पूर्णांक rate;
 
 	/*
 	 * CLKIN is the crystal oscillator, 24, 48 or 25MHz selected by
 	 * strapping
 	 */
-	regmap_read(map, ASPEED_STRAP, &val);
+	regmap_पढ़ो(map, ASPEED_STRAP, &val);
 	rate = (val >> 8) & 3;
-	if (val & CLKIN_25MHZ_EN) {
+	अगर (val & CLKIN_25MHZ_EN) अणु
 		clkin = 25000000;
 		hpll = hpll_rates[1][rate];
-	} else if (val & AST2400_CLK_SOURCE_SEL) {
+	पूर्ण अन्यथा अगर (val & AST2400_CLK_SOURCE_SEL) अणु
 		clkin = 48000000;
 		hpll = hpll_rates[0][rate];
-	} else {
+	पूर्ण अन्यथा अणु
 		clkin = 24000000;
 		hpll = hpll_rates[0][rate];
-	}
-	hw = clk_hw_register_fixed_rate(NULL, "clkin", NULL, 0, clkin);
+	पूर्ण
+	hw = clk_hw_रेजिस्टर_fixed_rate(शून्य, "clkin", शून्य, 0, clkin);
 	pr_debug("clkin @%u MHz\n", clkin / 1000000);
 
 	/*
-	 * High-speed PLL clock derived from the crystal. This the CPU clock,
+	 * High-speed PLL घड़ी derived from the crystal. This the CPU घड़ी,
 	 * and we assume that it is enabled. It can be configured through the
-	 * HPLL_PARAM register, or set to a specified frequency by strapping.
+	 * HPLL_PARAM रेजिस्टर, or set to a specअगरied frequency by strapping.
 	 */
-	regmap_read(map, ASPEED_HPLL_PARAM, &val);
-	if (val & AST2400_HPLL_PROGRAMMED)
+	regmap_पढ़ो(map, ASPEED_HPLL_PARAM, &val);
+	अगर (val & AST2400_HPLL_PROGRAMMED)
 		hw = aspeed_ast2400_calc_pll("hpll", val);
-	else
-		hw = clk_hw_register_fixed_rate(NULL, "hpll", "clkin", 0,
+	अन्यथा
+		hw = clk_hw_रेजिस्टर_fixed_rate(शून्य, "hpll", "clkin", 0,
 				hpll * 1000000);
 
 	aspeed_clk_data->hws[ASPEED_CLK_HPLL] = hw;
 
 	/*
-	 * Strap bits 11:10 define the CPU/AHB clock frequency ratio (aka HCLK)
+	 * Strap bits 11:10 define the CPU/AHB घड़ी frequency ratio (aka HCLK)
 	 *   00: Select CPU:AHB = 1:1
 	 *   01: Select CPU:AHB = 2:1
 	 *   10: Select CPU:AHB = 4:1
 	 *   11: Select CPU:AHB = 3:1
 	 */
-	regmap_read(map, ASPEED_STRAP, &val);
+	regmap_पढ़ो(map, ASPEED_STRAP, &val);
 	val = (val >> 10) & 0x3;
-	div = val + 1;
-	if (div == 3)
-		div = 4;
-	else if (div == 4)
-		div = 3;
-	hw = clk_hw_register_fixed_factor(NULL, "ahb", "hpll", 0, 1, div);
+	भाग = val + 1;
+	अगर (भाग == 3)
+		भाग = 4;
+	अन्यथा अगर (भाग == 4)
+		भाग = 3;
+	hw = clk_hw_रेजिस्टर_fixed_factor(शून्य, "ahb", "hpll", 0, 1, भाग);
 	aspeed_clk_data->hws[ASPEED_CLK_AHB] = hw;
 
-	/* APB clock clock selection register SCU08 (aka PCLK) */
-	hw = clk_hw_register_divider_table(NULL, "apb", "hpll", 0,
+	/* APB घड़ी घड़ी selection रेजिस्टर SCU08 (aka PCLK) */
+	hw = clk_hw_रेजिस्टर_भागider_table(शून्य, "apb", "hpll", 0,
 			scu_base + ASPEED_CLK_SELECTION, 23, 3, 0,
-			ast2400_div_table,
+			ast2400_भाग_प्रकारable,
 			&aspeed_clk_lock);
 	aspeed_clk_data->hws[ASPEED_CLK_APB] = hw;
-}
+पूर्ण
 
-static void __init aspeed_ast2500_cc(struct regmap *map)
-{
-	struct clk_hw *hw;
-	u32 val, freq, div;
+अटल व्योम __init aspeed_ast2500_cc(काष्ठा regmap *map)
+अणु
+	काष्ठा clk_hw *hw;
+	u32 val, freq, भाग;
 
 	/* CLKIN is the crystal oscillator, 24 or 25MHz selected by strapping */
-	regmap_read(map, ASPEED_STRAP, &val);
-	if (val & CLKIN_25MHZ_EN)
+	regmap_पढ़ो(map, ASPEED_STRAP, &val);
+	अगर (val & CLKIN_25MHZ_EN)
 		freq = 25000000;
-	else
+	अन्यथा
 		freq = 24000000;
-	hw = clk_hw_register_fixed_rate(NULL, "clkin", NULL, 0, freq);
+	hw = clk_hw_रेजिस्टर_fixed_rate(शून्य, "clkin", शून्य, 0, freq);
 	pr_debug("clkin @%u MHz\n", freq / 1000000);
 
 	/*
-	 * High-speed PLL clock derived from the crystal. This the CPU clock,
+	 * High-speed PLL घड़ी derived from the crystal. This the CPU घड़ी,
 	 * and we assume that it is enabled
 	 */
-	regmap_read(map, ASPEED_HPLL_PARAM, &val);
+	regmap_पढ़ो(map, ASPEED_HPLL_PARAM, &val);
 	aspeed_clk_data->hws[ASPEED_CLK_HPLL] = aspeed_ast2500_calc_pll("hpll", val);
 
-	/* Strap bits 11:9 define the AXI/AHB clock frequency ratio (aka HCLK)*/
-	regmap_read(map, ASPEED_STRAP, &val);
+	/* Strap bits 11:9 define the AXI/AHB घड़ी frequency ratio (aka HCLK)*/
+	regmap_पढ़ो(map, ASPEED_STRAP, &val);
 	val = (val >> 9) & 0x7;
 	WARN(val == 0, "strapping is zero: cannot determine ahb clock");
-	div = 2 * (val + 1);
-	hw = clk_hw_register_fixed_factor(NULL, "ahb", "hpll", 0, 1, div);
+	भाग = 2 * (val + 1);
+	hw = clk_hw_रेजिस्टर_fixed_factor(शून्य, "ahb", "hpll", 0, 1, भाग);
 	aspeed_clk_data->hws[ASPEED_CLK_AHB] = hw;
 
-	/* APB clock clock selection register SCU08 (aka PCLK) */
-	regmap_read(map, ASPEED_CLK_SELECTION, &val);
+	/* APB घड़ी घड़ी selection रेजिस्टर SCU08 (aka PCLK) */
+	regmap_पढ़ो(map, ASPEED_CLK_SELECTION, &val);
 	val = (val >> 23) & 0x7;
-	div = 4 * (val + 1);
-	hw = clk_hw_register_fixed_factor(NULL, "apb", "hpll", 0, 1, div);
+	भाग = 4 * (val + 1);
+	hw = clk_hw_रेजिस्टर_fixed_factor(शून्य, "apb", "hpll", 0, 1, भाग);
 	aspeed_clk_data->hws[ASPEED_CLK_APB] = hw;
-};
+पूर्ण;
 
-static void __init aspeed_cc_init(struct device_node *np)
-{
-	struct regmap *map;
+अटल व्योम __init aspeed_cc_init(काष्ठा device_node *np)
+अणु
+	काष्ठा regmap *map;
 	u32 val;
-	int ret;
-	int i;
+	पूर्णांक ret;
+	पूर्णांक i;
 
 	scu_base = of_iomap(np, 0);
-	if (!scu_base)
-		return;
+	अगर (!scu_base)
+		वापस;
 
-	aspeed_clk_data = kzalloc(struct_size(aspeed_clk_data, hws,
+	aspeed_clk_data = kzalloc(काष्ठा_size(aspeed_clk_data, hws,
 					      ASPEED_NUM_CLKS),
 				  GFP_KERNEL);
-	if (!aspeed_clk_data)
-		return;
+	अगर (!aspeed_clk_data)
+		वापस;
 
 	/*
-	 * This way all clocks fetched before the platform device probes,
-	 * except those we assign here for early use, will be deferred.
+	 * This way all घड़ीs fetched beक्रमe the platक्रमm device probes,
+	 * except those we assign here क्रम early use, will be deferred.
 	 */
-	for (i = 0; i < ASPEED_NUM_CLKS; i++)
+	क्रम (i = 0; i < ASPEED_NUM_CLKS; i++)
 		aspeed_clk_data->hws[i] = ERR_PTR(-EPROBE_DEFER);
 
 	map = syscon_node_to_regmap(np);
-	if (IS_ERR(map)) {
+	अगर (IS_ERR(map)) अणु
 		pr_err("no syscon regmap\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 	/*
 	 * We check that the regmap works on this very first access,
 	 * but as this is an MMIO-backed regmap, subsequent regmap
 	 * access is not going to fail and we skip error checks from
-	 * this point.
+	 * this poपूर्णांक.
 	 */
-	ret = regmap_read(map, ASPEED_STRAP, &val);
-	if (ret) {
+	ret = regmap_पढ़ो(map, ASPEED_STRAP, &val);
+	अगर (ret) अणु
 		pr_err("failed to read strapping register\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (of_device_is_compatible(np, "aspeed,ast2400-scu"))
+	अगर (of_device_is_compatible(np, "aspeed,ast2400-scu"))
 		aspeed_ast2400_cc(map);
-	else if (of_device_is_compatible(np, "aspeed,ast2500-scu"))
+	अन्यथा अगर (of_device_is_compatible(np, "aspeed,ast2500-scu"))
 		aspeed_ast2500_cc(map);
-	else
+	अन्यथा
 		pr_err("unknown platform, failed to add clocks\n");
 
 	aspeed_clk_data->num = ASPEED_NUM_CLKS;
 	ret = of_clk_add_hw_provider(np, of_clk_hw_onecell_get, aspeed_clk_data);
-	if (ret)
+	अगर (ret)
 		pr_err("failed to add DT provider: %d\n", ret);
-};
+पूर्ण;
 CLK_OF_DECLARE_DRIVER(aspeed_cc_g5, "aspeed,ast2500-scu", aspeed_cc_init);
 CLK_OF_DECLARE_DRIVER(aspeed_cc_g4, "aspeed,ast2400-scu", aspeed_cc_init);

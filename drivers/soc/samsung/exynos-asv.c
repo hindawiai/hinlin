@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Copyright (c) 2019 Samsung Electronics Co., Ltd.
  *	      http://www.samsung.com/
@@ -9,152 +10,152 @@
  * Samsung Exynos SoC Adaptive Supply Voltage support
  */
 
-#include <linux/cpu.h>
-#include <linux/device.h>
-#include <linux/errno.h>
-#include <linux/of.h>
-#include <linux/pm_opp.h>
-#include <linux/regmap.h>
-#include <linux/soc/samsung/exynos-chipid.h>
+#समावेश <linux/cpu.h>
+#समावेश <linux/device.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/of.h>
+#समावेश <linux/pm_opp.h>
+#समावेश <linux/regmap.h>
+#समावेश <linux/soc/samsung/exynos-chipid.h>
 
-#include "exynos-asv.h"
-#include "exynos5422-asv.h"
+#समावेश "exynos-asv.h"
+#समावेश "exynos5422-asv.h"
 
-#define MHZ 1000000U
+#घोषणा MHZ 1000000U
 
-static int exynos_asv_update_cpu_opps(struct exynos_asv *asv,
-				      struct device *cpu)
-{
-	struct exynos_asv_subsys *subsys = NULL;
-	struct dev_pm_opp *opp;
-	unsigned int opp_freq;
-	int i;
+अटल पूर्णांक exynos_asv_update_cpu_opps(काष्ठा exynos_asv *asv,
+				      काष्ठा device *cpu)
+अणु
+	काष्ठा exynos_asv_subsys *subsys = शून्य;
+	काष्ठा dev_pm_opp *opp;
+	अचिन्हित पूर्णांक opp_freq;
+	पूर्णांक i;
 
-	for (i = 0; i < ARRAY_SIZE(asv->subsys); i++) {
-		if (of_device_is_compatible(cpu->of_node,
-					    asv->subsys[i].cpu_dt_compat)) {
+	क्रम (i = 0; i < ARRAY_SIZE(asv->subsys); i++) अणु
+		अगर (of_device_is_compatible(cpu->of_node,
+					    asv->subsys[i].cpu_dt_compat)) अणु
 			subsys = &asv->subsys[i];
-			break;
-		}
-	}
-	if (!subsys)
-		return -EINVAL;
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	अगर (!subsys)
+		वापस -EINVAL;
 
-	for (i = 0; i < subsys->table.num_rows; i++) {
-		unsigned int new_volt, volt;
-		int ret;
+	क्रम (i = 0; i < subsys->table.num_rows; i++) अणु
+		अचिन्हित पूर्णांक new_volt, volt;
+		पूर्णांक ret;
 
 		opp_freq = exynos_asv_opp_get_frequency(subsys, i);
 
 		opp = dev_pm_opp_find_freq_exact(cpu, opp_freq * MHZ, true);
-		if (IS_ERR(opp)) {
+		अगर (IS_ERR(opp)) अणु
 			dev_info(asv->dev, "cpu%d opp%d, freq: %u missing\n",
 				 cpu->id, i, opp_freq);
 
-			continue;
-		}
+			जारी;
+		पूर्ण
 
 		volt = dev_pm_opp_get_voltage(opp);
 		new_volt = asv->opp_get_voltage(subsys, i, volt);
 		dev_pm_opp_put(opp);
 
-		if (new_volt == volt)
-			continue;
+		अगर (new_volt == volt)
+			जारी;
 
 		ret = dev_pm_opp_adjust_voltage(cpu, opp_freq * MHZ,
 						new_volt, new_volt, new_volt);
-		if (ret < 0)
+		अगर (ret < 0)
 			dev_err(asv->dev,
 				"Failed to adjust OPP %u Hz/%u uV for cpu%d\n",
 				opp_freq, new_volt, cpu->id);
-		else
+		अन्यथा
 			dev_dbg(asv->dev,
 				"Adjusted OPP %u Hz/%u -> %u uV, cpu%d\n",
 				opp_freq, volt, new_volt, cpu->id);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int exynos_asv_update_opps(struct exynos_asv *asv)
-{
-	struct opp_table *last_opp_table = NULL;
-	struct device *cpu;
-	int ret, cpuid;
+अटल पूर्णांक exynos_asv_update_opps(काष्ठा exynos_asv *asv)
+अणु
+	काष्ठा opp_table *last_opp_table = शून्य;
+	काष्ठा device *cpu;
+	पूर्णांक ret, cpuid;
 
-	for_each_possible_cpu(cpuid) {
-		struct opp_table *opp_table;
+	क्रम_each_possible_cpu(cpuid) अणु
+		काष्ठा opp_table *opp_table;
 
 		cpu = get_cpu_device(cpuid);
-		if (!cpu)
-			continue;
+		अगर (!cpu)
+			जारी;
 
 		opp_table = dev_pm_opp_get_opp_table(cpu);
-		if (IS_ERR(opp_table))
-			continue;
+		अगर (IS_ERR(opp_table))
+			जारी;
 
-		if (!last_opp_table || opp_table != last_opp_table) {
+		अगर (!last_opp_table || opp_table != last_opp_table) अणु
 			last_opp_table = opp_table;
 
 			ret = exynos_asv_update_cpu_opps(asv, cpu);
-			if (ret < 0)
+			अगर (ret < 0)
 				dev_err(asv->dev, "Couldn't udate OPPs for cpu%d\n",
 					cpuid);
-		}
+		पूर्ण
 
 		dev_pm_opp_put_opp_table(opp_table);
-	}
+	पूर्ण
 
-	return	0;
-}
+	वापस	0;
+पूर्ण
 
-int exynos_asv_init(struct device *dev, struct regmap *regmap)
-{
-	int (*probe_func)(struct exynos_asv *asv);
-	struct exynos_asv *asv;
-	struct device *cpu_dev;
+पूर्णांक exynos_asv_init(काष्ठा device *dev, काष्ठा regmap *regmap)
+अणु
+	पूर्णांक (*probe_func)(काष्ठा exynos_asv *asv);
+	काष्ठा exynos_asv *asv;
+	काष्ठा device *cpu_dev;
 	u32 product_id = 0;
-	int ret, i;
+	पूर्णांक ret, i;
 
-	asv = devm_kzalloc(dev, sizeof(*asv), GFP_KERNEL);
-	if (!asv)
-		return -ENOMEM;
+	asv = devm_kzalloc(dev, माप(*asv), GFP_KERNEL);
+	अगर (!asv)
+		वापस -ENOMEM;
 
 	asv->chipid_regmap = regmap;
 	asv->dev = dev;
-	ret = regmap_read(asv->chipid_regmap, EXYNOS_CHIPID_REG_PRO_ID,
+	ret = regmap_पढ़ो(asv->chipid_regmap, EXYNOS_CHIPID_REG_PRO_ID,
 			  &product_id);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(dev, "Cannot read revision from ChipID: %d\n", ret);
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	switch (product_id & EXYNOS_MASK) {
-	case 0xE5422000:
+	चयन (product_id & EXYNOS_MASK) अणु
+	हाल 0xE5422000:
 		probe_func = exynos5422_asv_init;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		dev_dbg(dev, "No ASV support for this SoC\n");
-		devm_kfree(dev, asv);
-		return 0;
-	}
+		devm_kमुक्त(dev, asv);
+		वापस 0;
+	पूर्ण
 
 	cpu_dev = get_cpu_device(0);
 	ret = dev_pm_opp_get_opp_count(cpu_dev);
-	if (ret < 0)
-		return -EPROBE_DEFER;
+	अगर (ret < 0)
+		वापस -EPROBE_DEFER;
 
-	ret = of_property_read_u32(dev->of_node, "samsung,asv-bin",
+	ret = of_property_पढ़ो_u32(dev->of_node, "samsung,asv-bin",
 				   &asv->of_bin);
-	if (ret < 0)
+	अगर (ret < 0)
 		asv->of_bin = -EINVAL;
 
-	for (i = 0; i < ARRAY_SIZE(asv->subsys); i++)
+	क्रम (i = 0; i < ARRAY_SIZE(asv->subsys); i++)
 		asv->subsys[i].asv = asv;
 
 	ret = probe_func(asv);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	return exynos_asv_update_opps(asv);
-}
+	वापस exynos_asv_update_opps(asv);
+पूर्ण

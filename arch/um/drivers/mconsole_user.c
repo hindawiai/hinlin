@@ -1,98 +1,99 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Copyright (C) 2001 Lennert Buytenhek (buytenh@gnu.org)
- * Copyright (C) 2001 - 2007 Jeff Dike (jdike@{addtoit,linux.intel}.com)
+ * Copyright (C) 2001 - 2007 Jeff Dike (jdike@अणुaddtoit,linux.पूर्णांकelपूर्ण.com)
  */
 
-#include <errno.h>
-#include <string.h>
-#include <unistd.h>
-#include <sys/socket.h>
-#include <sys/uio.h>
-#include <sys/un.h>
-#include "mconsole.h"
+#समावेश <त्रुटिसं.स>
+#समावेश <माला.स>
+#समावेश <unistd.h>
+#समावेश <sys/socket.h>
+#समावेश <sys/uपन.स>
+#समावेश <sys/un.h>
+#समावेश "mconsole.h"
 
-static struct mconsole_command commands[] = {
+अटल काष्ठा mconsole_command commands[] = अणु
 	/*
-	 * With uts namespaces, uts information becomes process-specific, so
-	 * we need a process context.  If we try handling this in interrupt
-	 * context, we may hit an exiting process without a valid uts
+	 * With uts namespaces, uts inक्रमmation becomes process-specअगरic, so
+	 * we need a process context.  If we try handling this in पूर्णांकerrupt
+	 * context, we may hit an निकासing process without a valid uts
 	 * namespace.
 	 */
-	{ "version", mconsole_version, MCONSOLE_PROC },
-	{ "halt", mconsole_halt, MCONSOLE_PROC },
-	{ "reboot", mconsole_reboot, MCONSOLE_PROC },
-	{ "config", mconsole_config, MCONSOLE_PROC },
-	{ "remove", mconsole_remove, MCONSOLE_PROC },
-	{ "sysrq", mconsole_sysrq, MCONSOLE_INTR },
-	{ "help", mconsole_help, MCONSOLE_INTR },
-	{ "cad", mconsole_cad, MCONSOLE_INTR },
-	{ "stop", mconsole_stop, MCONSOLE_PROC },
-	{ "go", mconsole_go, MCONSOLE_INTR },
-	{ "log", mconsole_log, MCONSOLE_INTR },
-	{ "proc", mconsole_proc, MCONSOLE_PROC },
-	{ "stack", mconsole_stack, MCONSOLE_INTR },
-};
+	अणु "version", mconsole_version, MCONSOLE_PROC पूर्ण,
+	अणु "halt", mconsole_halt, MCONSOLE_PROC पूर्ण,
+	अणु "reboot", mconsole_reboot, MCONSOLE_PROC पूर्ण,
+	अणु "config", mconsole_config, MCONSOLE_PROC पूर्ण,
+	अणु "remove", mconsole_हटाओ, MCONSOLE_PROC पूर्ण,
+	अणु "sysrq", mconsole_sysrq, MCONSOLE_INTR पूर्ण,
+	अणु "help", mconsole_help, MCONSOLE_INTR पूर्ण,
+	अणु "cad", mconsole_cad, MCONSOLE_INTR पूर्ण,
+	अणु "stop", mconsole_stop, MCONSOLE_PROC पूर्ण,
+	अणु "go", mconsole_go, MCONSOLE_INTR पूर्ण,
+	अणु "log", mconsole_log, MCONSOLE_INTR पूर्ण,
+	अणु "proc", mconsole_proc, MCONSOLE_PROC पूर्ण,
+	अणु "stack", mconsole_stack, MCONSOLE_INTR पूर्ण,
+पूर्ण;
 
 /* Initialized in mconsole_init, which is an initcall */
-char mconsole_socket_name[256];
+अक्षर mconsole_socket_name[256];
 
-static int mconsole_reply_v0(struct mc_request *req, char *reply)
-{
-	struct iovec iov;
-	struct msghdr msg;
+अटल पूर्णांक mconsole_reply_v0(काष्ठा mc_request *req, अक्षर *reply)
+अणु
+	काष्ठा iovec iov;
+	काष्ठा msghdr msg;
 
 	iov.iov_base = reply;
-	iov.iov_len = strlen(reply);
+	iov.iov_len = म_माप(reply);
 
 	msg.msg_name = &(req->origin);
 	msg.msg_namelen = req->originlen;
 	msg.msg_iov = &iov;
 	msg.msg_iovlen = 1;
-	msg.msg_control = NULL;
+	msg.msg_control = शून्य;
 	msg.msg_controllen = 0;
 	msg.msg_flags = 0;
 
-	return sendmsg(req->originating_fd, &msg, 0);
-}
+	वापस sendmsg(req->originating_fd, &msg, 0);
+पूर्ण
 
-static struct mconsole_command *mconsole_parse(struct mc_request *req)
-{
-	struct mconsole_command *cmd;
-	int i;
+अटल काष्ठा mconsole_command *mconsole_parse(काष्ठा mc_request *req)
+अणु
+	काष्ठा mconsole_command *cmd;
+	पूर्णांक i;
 
-	for (i = 0; i < ARRAY_SIZE(commands); i++) {
+	क्रम (i = 0; i < ARRAY_SIZE(commands); i++) अणु
 		cmd = &commands[i];
-		if (!strncmp(req->request.data, cmd->command,
-			    strlen(cmd->command))) {
-			return cmd;
-		}
-	}
-	return NULL;
-}
+		अगर (!म_भेदन(req->request.data, cmd->command,
+			    म_माप(cmd->command))) अणु
+			वापस cmd;
+		पूर्ण
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
-#define MIN(a,b) ((a)<(b) ? (a):(b))
+#घोषणा MIN(a,b) ((a)<(b) ? (a):(b))
 
-#define STRINGX(x) #x
-#define STRING(x) STRINGX(x)
+#घोषणा STRINGX(x) #x
+#घोषणा STRING(x) STRINGX(x)
 
-int mconsole_get_request(int fd, struct mc_request *req)
-{
-	int len;
+पूर्णांक mconsole_get_request(पूर्णांक fd, काष्ठा mc_request *req)
+अणु
+	पूर्णांक len;
 
-	req->originlen = sizeof(req->origin);
-	req->len = recvfrom(fd, &req->request, sizeof(req->request), 0,
-			    (struct sockaddr *) req->origin, &req->originlen);
-	if (req->len < 0)
-		return 0;
+	req->originlen = माप(req->origin);
+	req->len = recvfrom(fd, &req->request, माप(req->request), 0,
+			    (काष्ठा sockaddr *) req->origin, &req->originlen);
+	अगर (req->len < 0)
+		वापस 0;
 
 	req->originating_fd = fd;
 
-	if (req->request.magic != MCONSOLE_MAGIC) {
+	अगर (req->request.magic != MCONSOLE_MAGIC) अणु
 		/* Unversioned request */
-		len = MIN(sizeof(req->request.data) - 1,
-			  strlen((char *) &req->request));
-		memmove(req->request.data, &req->request, len);
+		len = MIN(माप(req->request.data) - 1,
+			  म_माप((अक्षर *) &req->request));
+		स_हटाओ(req->request.data, &req->request, len);
 		req->request.data[len] = '\0';
 
 		req->request.magic = MCONSOLE_MAGIC;
@@ -101,40 +102,40 @@ int mconsole_get_request(int fd, struct mc_request *req)
 
 		mconsole_reply_v0(req, "ERR Version 0 mconsole clients are "
 				  "not supported by this driver");
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	if (req->request.len >= MCONSOLE_MAX_DATA) {
+	अगर (req->request.len >= MCONSOLE_MAX_DATA) अणु
 		mconsole_reply(req, "Request too large", 1, 0);
-		return 0;
-	}
-	if (req->request.version != MCONSOLE_VERSION) {
+		वापस 0;
+	पूर्ण
+	अगर (req->request.version != MCONSOLE_VERSION) अणु
 		mconsole_reply(req, "This driver only supports version "
 			       STRING(MCONSOLE_VERSION) " clients", 1, 0);
-	}
+	पूर्ण
 
 	req->request.data[req->request.len] = '\0';
 	req->cmd = mconsole_parse(req);
-	if (req->cmd == NULL) {
+	अगर (req->cmd == शून्य) अणु
 		mconsole_reply(req, "Unknown command", 1, 0);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-int mconsole_reply_len(struct mc_request *req, const char *str, int total,
-		       int err, int more)
-{
+पूर्णांक mconsole_reply_len(काष्ठा mc_request *req, स्थिर अक्षर *str, पूर्णांक total,
+		       पूर्णांक err, पूर्णांक more)
+अणु
 	/*
 	 * XXX This is a stack consumption problem.  It'd be nice to
 	 * make it global and serialize access to it, but there are a
 	 * ton of callers to this function.
 	 */
-	struct mconsole_reply reply;
-	int len, n;
+	काष्ठा mconsole_reply reply;
+	पूर्णांक len, n;
 
-	do {
+	करो अणु
 		reply.err = err;
 
 		/* err can only be true on the first packet */
@@ -142,78 +143,78 @@ int mconsole_reply_len(struct mc_request *req, const char *str, int total,
 
 		len = MIN(total, MCONSOLE_MAX_DATA - 1);
 
-		if (len == total) reply.more = more;
-		else reply.more = 1;
+		अगर (len == total) reply.more = more;
+		अन्यथा reply.more = 1;
 
-		memcpy(reply.data, str, len);
+		स_नकल(reply.data, str, len);
 		reply.data[len] = '\0';
 		total -= len;
 		str += len;
 		reply.len = len + 1;
 
-		len = sizeof(reply) + reply.len - sizeof(reply.data);
+		len = माप(reply) + reply.len - माप(reply.data);
 
 		n = sendto(req->originating_fd, &reply, len, 0,
-			   (struct sockaddr *) req->origin, req->originlen);
+			   (काष्ठा sockaddr *) req->origin, req->originlen);
 
-		if (n < 0)
-			return -errno;
-	} while (total > 0);
-	return 0;
-}
+		अगर (n < 0)
+			वापस -त्रुटि_सं;
+	पूर्ण जबतक (total > 0);
+	वापस 0;
+पूर्ण
 
-int mconsole_reply(struct mc_request *req, const char *str, int err, int more)
-{
-	return mconsole_reply_len(req, str, strlen(str), err, more);
-}
+पूर्णांक mconsole_reply(काष्ठा mc_request *req, स्थिर अक्षर *str, पूर्णांक err, पूर्णांक more)
+अणु
+	वापस mconsole_reply_len(req, str, म_माप(str), err, more);
+पूर्ण
 
 
-int mconsole_unlink_socket(void)
-{
+पूर्णांक mconsole_unlink_socket(व्योम)
+अणु
 	unlink(mconsole_socket_name);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int notify_sock = -1;
+अटल पूर्णांक notअगरy_sock = -1;
 
-int mconsole_notify(char *sock_name, int type, const void *data, int len)
-{
-	struct sockaddr_un target;
-	struct mconsole_notify packet;
-	int n, err = 0;
+पूर्णांक mconsole_notअगरy(अक्षर *sock_name, पूर्णांक type, स्थिर व्योम *data, पूर्णांक len)
+अणु
+	काष्ठा sockaddr_un target;
+	काष्ठा mconsole_notअगरy packet;
+	पूर्णांक n, err = 0;
 
-	lock_notify();
-	if (notify_sock < 0) {
-		notify_sock = socket(PF_UNIX, SOCK_DGRAM, 0);
-		if (notify_sock < 0) {
-			err = -errno;
-			printk(UM_KERN_ERR "mconsole_notify - socket failed, "
-			       "errno = %d\n", errno);
-		}
-	}
-	unlock_notify();
+	lock_notअगरy();
+	अगर (notअगरy_sock < 0) अणु
+		notअगरy_sock = socket(PF_UNIX, SOCK_DGRAM, 0);
+		अगर (notअगरy_sock < 0) अणु
+			err = -त्रुटि_सं;
+			prपूर्णांकk(UM_KERN_ERR "mconsole_notify - socket failed, "
+			       "errno = %d\n", त्रुटि_सं);
+		पूर्ण
+	पूर्ण
+	unlock_notअगरy();
 
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	target.sun_family = AF_UNIX;
-	strcpy(target.sun_path, sock_name);
+	म_नकल(target.sun_path, sock_name);
 
 	packet.magic = MCONSOLE_MAGIC;
 	packet.version = MCONSOLE_VERSION;
 	packet.type = type;
-	len = (len > sizeof(packet.data)) ? sizeof(packet.data) : len;
+	len = (len > माप(packet.data)) ? माप(packet.data) : len;
 	packet.len = len;
-	memcpy(packet.data, data, len);
+	स_नकल(packet.data, data, len);
 
 	err = 0;
-	len = sizeof(packet) + packet.len - sizeof(packet.data);
-	n = sendto(notify_sock, &packet, len, 0, (struct sockaddr *) &target,
-		   sizeof(target));
-	if (n < 0) {
-		err = -errno;
-		printk(UM_KERN_ERR "mconsole_notify - sendto failed, "
-		       "errno = %d\n", errno);
-	}
-	return err;
-}
+	len = माप(packet) + packet.len - माप(packet.data);
+	n = sendto(notअगरy_sock, &packet, len, 0, (काष्ठा sockaddr *) &target,
+		   माप(target));
+	अगर (n < 0) अणु
+		err = -त्रुटि_सं;
+		prपूर्णांकk(UM_KERN_ERR "mconsole_notify - sendto failed, "
+		       "errno = %d\n", त्रुटि_सं);
+	पूर्ण
+	वापस err;
+पूर्ण

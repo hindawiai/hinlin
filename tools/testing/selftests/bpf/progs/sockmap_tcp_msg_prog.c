@@ -1,14 +1,15 @@
-#include <linux/bpf.h>
+<शैली गुरु>
+#समावेश <linux/bpf.h>
 
-#include <bpf/bpf_helpers.h>
-#include <bpf/bpf_endian.h>
+#समावेश <bpf/bpf_helpers.h>
+#समावेश <bpf/bpf_endian.h>
 
-int _version SEC("version") = 1;
+पूर्णांक _version SEC("version") = 1;
 
 SEC("sk_msg1")
-int bpf_prog1(struct sk_msg_md *msg)
-{
-	return SK_PASS;
-}
+पूर्णांक bpf_prog1(काष्ठा sk_msg_md *msg)
+अणु
+	वापस SK_PASS;
+पूर्ण
 
-char _license[] SEC("license") = "GPL";
+अक्षर _license[] SEC("license") = "GPL";

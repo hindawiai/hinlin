@@ -1,19 +1,20 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
  * Copyright (C) 2003-2008 Takahiro Hirofuchi
  */
 
-#include <linux/kthread.h>
-#include <linux/slab.h>
-#include <linux/scatterlist.h>
+#समावेश <linux/kthपढ़ो.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/scatterlist.h>
 
-#include "usbip_common.h"
-#include "vhci.h"
+#समावेश "usbip_common.h"
+#समावेश "vhci.h"
 
-static void setup_cmd_submit_pdu(struct usbip_header *pdup,  struct urb *urb)
-{
-	struct vhci_priv *priv = ((struct vhci_priv *)urb->hcpriv);
-	struct vhci_device *vdev = priv->vdev;
+अटल व्योम setup_cmd_submit_pdu(काष्ठा usbip_header *pdup,  काष्ठा urb *urb)
+अणु
+	काष्ठा vhci_priv *priv = ((काष्ठा vhci_priv *)urb->hcpriv);
+	काष्ठा vhci_device *vdev = priv->vdev;
 
 	usbip_dbg_vhci_tx("URB, local devnum %u, remote devid %u\n",
 			  usb_pipedevice(urb->pipe), vdev->devid);
@@ -22,73 +23,73 @@ static void setup_cmd_submit_pdu(struct usbip_header *pdup,  struct urb *urb)
 	pdup->base.seqnum    = priv->seqnum;
 	pdup->base.devid     = vdev->devid;
 	pdup->base.direction = usb_pipein(urb->pipe) ?
-		USBIP_DIR_IN : USBIP_DIR_OUT;
-	pdup->base.ep	     = usb_pipeendpoint(urb->pipe);
+		USBIP_सूची_IN : USBIP_सूची_OUT;
+	pdup->base.ep	     = usb_pipeendpoपूर्णांक(urb->pipe);
 
 	usbip_pack_pdu(pdup, urb, USBIP_CMD_SUBMIT, 1);
 
-	if (urb->setup_packet)
-		memcpy(pdup->u.cmd_submit.setup, urb->setup_packet, 8);
-}
+	अगर (urb->setup_packet)
+		स_नकल(pdup->u.cmd_submit.setup, urb->setup_packet, 8);
+पूर्ण
 
-static struct vhci_priv *dequeue_from_priv_tx(struct vhci_device *vdev)
-{
-	struct vhci_priv *priv, *tmp;
-	unsigned long flags;
+अटल काष्ठा vhci_priv *dequeue_from_priv_tx(काष्ठा vhci_device *vdev)
+अणु
+	काष्ठा vhci_priv *priv, *पंचांगp;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&vdev->priv_lock, flags);
 
-	list_for_each_entry_safe(priv, tmp, &vdev->priv_tx, list) {
+	list_क्रम_each_entry_safe(priv, पंचांगp, &vdev->priv_tx, list) अणु
 		list_move_tail(&priv->list, &vdev->priv_rx);
 		spin_unlock_irqrestore(&vdev->priv_lock, flags);
-		return priv;
-	}
+		वापस priv;
+	पूर्ण
 
 	spin_unlock_irqrestore(&vdev->priv_lock, flags);
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static int vhci_send_cmd_submit(struct vhci_device *vdev)
-{
-	struct usbip_iso_packet_descriptor *iso_buffer = NULL;
-	struct vhci_priv *priv = NULL;
-	struct scatterlist *sg;
+अटल पूर्णांक vhci_send_cmd_submit(काष्ठा vhci_device *vdev)
+अणु
+	काष्ठा usbip_iso_packet_descriptor *iso_buffer = शून्य;
+	काष्ठा vhci_priv *priv = शून्य;
+	काष्ठा scatterlist *sg;
 
-	struct msghdr msg;
-	struct kvec *iov;
-	size_t txsize;
+	काष्ठा msghdr msg;
+	काष्ठा kvec *iov;
+	माप_प्रकार txsize;
 
-	size_t total_size = 0;
-	int iovnum;
-	int err = -ENOMEM;
-	int i;
+	माप_प्रकार total_size = 0;
+	पूर्णांक iovnum;
+	पूर्णांक err = -ENOMEM;
+	पूर्णांक i;
 
-	while ((priv = dequeue_from_priv_tx(vdev)) != NULL) {
-		int ret;
-		struct urb *urb = priv->urb;
-		struct usbip_header pdu_header;
+	जबतक ((priv = dequeue_from_priv_tx(vdev)) != शून्य) अणु
+		पूर्णांक ret;
+		काष्ठा urb *urb = priv->urb;
+		काष्ठा usbip_header pdu_header;
 
 		txsize = 0;
-		memset(&pdu_header, 0, sizeof(pdu_header));
-		memset(&msg, 0, sizeof(msg));
-		memset(&iov, 0, sizeof(iov));
+		स_रखो(&pdu_header, 0, माप(pdu_header));
+		स_रखो(&msg, 0, माप(msg));
+		स_रखो(&iov, 0, माप(iov));
 
 		usbip_dbg_vhci_tx("setup txdata urb seqnum %lu\n",
 				  priv->seqnum);
 
-		if (urb->num_sgs && usb_pipeout(urb->pipe))
+		अगर (urb->num_sgs && usb_pipeout(urb->pipe))
 			iovnum = 2 + urb->num_sgs;
-		else
+		अन्यथा
 			iovnum = 3;
 
-		iov = kcalloc(iovnum, sizeof(*iov), GFP_KERNEL);
-		if (!iov) {
+		iov = kसुस्मृति(iovnum, माप(*iov), GFP_KERNEL);
+		अगर (!iov) अणु
 			usbip_event_add(&vdev->ud, SDEV_EVENT_ERROR_MALLOC);
-			return -ENOMEM;
-		}
+			वापस -ENOMEM;
+		पूर्ण
 
-		if (urb->num_sgs)
+		अगर (urb->num_sgs)
 			urb->transfer_flags |= URB_DMA_MAP_SG;
 
 		/* 1. setup usbip_header */
@@ -97,109 +98,109 @@ static int vhci_send_cmd_submit(struct vhci_device *vdev)
 		iovnum = 0;
 
 		iov[iovnum].iov_base = &pdu_header;
-		iov[iovnum].iov_len  = sizeof(pdu_header);
-		txsize += sizeof(pdu_header);
+		iov[iovnum].iov_len  = माप(pdu_header);
+		txsize += माप(pdu_header);
 		iovnum++;
 
 		/* 2. setup transfer buffer */
-		if (!usb_pipein(urb->pipe) && urb->transfer_buffer_length > 0) {
-			if (urb->num_sgs &&
-				      !usb_endpoint_xfer_isoc(&urb->ep->desc)) {
-				for_each_sg(urb->sg, sg, urb->num_sgs, i) {
+		अगर (!usb_pipein(urb->pipe) && urb->transfer_buffer_length > 0) अणु
+			अगर (urb->num_sgs &&
+				      !usb_endpoपूर्णांक_xfer_isoc(&urb->ep->desc)) अणु
+				क्रम_each_sg(urb->sg, sg, urb->num_sgs, i) अणु
 					iov[iovnum].iov_base = sg_virt(sg);
 					iov[iovnum].iov_len = sg->length;
 					iovnum++;
-				}
-			} else {
+				पूर्ण
+			पूर्ण अन्यथा अणु
 				iov[iovnum].iov_base = urb->transfer_buffer;
 				iov[iovnum].iov_len  =
 						urb->transfer_buffer_length;
 				iovnum++;
-			}
+			पूर्ण
 			txsize += urb->transfer_buffer_length;
-		}
+		पूर्ण
 
 		/* 3. setup iso_packet_descriptor */
-		if (usb_pipetype(urb->pipe) == PIPE_ISOCHRONOUS) {
-			ssize_t len = 0;
+		अगर (usb_pipetype(urb->pipe) == PIPE_ISOCHRONOUS) अणु
+			sमाप_प्रकार len = 0;
 
 			iso_buffer = usbip_alloc_iso_desc_pdu(urb, &len);
-			if (!iso_buffer) {
+			अगर (!iso_buffer) अणु
 				usbip_event_add(&vdev->ud,
 						SDEV_EVENT_ERROR_MALLOC);
-				goto err_iso_buffer;
-			}
+				जाओ err_iso_buffer;
+			पूर्ण
 
 			iov[iovnum].iov_base = iso_buffer;
 			iov[iovnum].iov_len  = len;
 			iovnum++;
 			txsize += len;
-		}
+		पूर्ण
 
 		ret = kernel_sendmsg(vdev->ud.tcp_socket, &msg, iov, iovnum,
 				     txsize);
-		if (ret != txsize) {
+		अगर (ret != txsize) अणु
 			pr_err("sendmsg failed!, ret=%d for %zd\n", ret,
 			       txsize);
 			usbip_event_add(&vdev->ud, VDEV_EVENT_ERROR_TCP);
 			err = -EPIPE;
-			goto err_tx;
-		}
+			जाओ err_tx;
+		पूर्ण
 
-		kfree(iov);
-		/* This is only for isochronous case */
-		kfree(iso_buffer);
-		iso_buffer = NULL;
+		kमुक्त(iov);
+		/* This is only क्रम isochronous हाल */
+		kमुक्त(iso_buffer);
+		iso_buffer = शून्य;
 
 		usbip_dbg_vhci_tx("send txdata\n");
 
 		total_size += txsize;
-	}
+	पूर्ण
 
-	return total_size;
+	वापस total_size;
 
 err_tx:
-	kfree(iso_buffer);
+	kमुक्त(iso_buffer);
 err_iso_buffer:
-	kfree(iov);
+	kमुक्त(iov);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static struct vhci_unlink *dequeue_from_unlink_tx(struct vhci_device *vdev)
-{
-	struct vhci_unlink *unlink, *tmp;
-	unsigned long flags;
+अटल काष्ठा vhci_unlink *dequeue_from_unlink_tx(काष्ठा vhci_device *vdev)
+अणु
+	काष्ठा vhci_unlink *unlink, *पंचांगp;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&vdev->priv_lock, flags);
 
-	list_for_each_entry_safe(unlink, tmp, &vdev->unlink_tx, list) {
+	list_क्रम_each_entry_safe(unlink, पंचांगp, &vdev->unlink_tx, list) अणु
 		list_move_tail(&unlink->list, &vdev->unlink_rx);
 		spin_unlock_irqrestore(&vdev->priv_lock, flags);
-		return unlink;
-	}
+		वापस unlink;
+	पूर्ण
 
 	spin_unlock_irqrestore(&vdev->priv_lock, flags);
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static int vhci_send_cmd_unlink(struct vhci_device *vdev)
-{
-	struct vhci_unlink *unlink = NULL;
+अटल पूर्णांक vhci_send_cmd_unlink(काष्ठा vhci_device *vdev)
+अणु
+	काष्ठा vhci_unlink *unlink = शून्य;
 
-	struct msghdr msg;
-	struct kvec iov;
-	size_t txsize;
-	size_t total_size = 0;
+	काष्ठा msghdr msg;
+	काष्ठा kvec iov;
+	माप_प्रकार txsize;
+	माप_प्रकार total_size = 0;
 
-	while ((unlink = dequeue_from_unlink_tx(vdev)) != NULL) {
-		int ret;
-		struct usbip_header pdu_header;
+	जबतक ((unlink = dequeue_from_unlink_tx(vdev)) != शून्य) अणु
+		पूर्णांक ret;
+		काष्ठा usbip_header pdu_header;
 
-		memset(&pdu_header, 0, sizeof(pdu_header));
-		memset(&msg, 0, sizeof(msg));
-		memset(&iov, 0, sizeof(iov));
+		स_रखो(&pdu_header, 0, माप(pdu_header));
+		स_रखो(&msg, 0, माप(msg));
+		स_रखो(&iov, 0, माप(iov));
 
 		usbip_dbg_vhci_tx("setup cmd unlink, %lu\n", unlink->seqnum);
 
@@ -213,44 +214,44 @@ static int vhci_send_cmd_unlink(struct vhci_device *vdev)
 		usbip_header_correct_endian(&pdu_header, 1);
 
 		iov.iov_base = &pdu_header;
-		iov.iov_len  = sizeof(pdu_header);
-		txsize = sizeof(pdu_header);
+		iov.iov_len  = माप(pdu_header);
+		txsize = माप(pdu_header);
 
 		ret = kernel_sendmsg(vdev->ud.tcp_socket, &msg, &iov, 1, txsize);
-		if (ret != txsize) {
+		अगर (ret != txsize) अणु
 			pr_err("sendmsg failed!, ret=%d for %zd\n", ret,
 			       txsize);
 			usbip_event_add(&vdev->ud, VDEV_EVENT_ERROR_TCP);
-			return -1;
-		}
+			वापस -1;
+		पूर्ण
 
 		usbip_dbg_vhci_tx("send txdata\n");
 
 		total_size += txsize;
-	}
+	पूर्ण
 
-	return total_size;
-}
+	वापस total_size;
+पूर्ण
 
-int vhci_tx_loop(void *data)
-{
-	struct usbip_device *ud = data;
-	struct vhci_device *vdev = container_of(ud, struct vhci_device, ud);
+पूर्णांक vhci_tx_loop(व्योम *data)
+अणु
+	काष्ठा usbip_device *ud = data;
+	काष्ठा vhci_device *vdev = container_of(ud, काष्ठा vhci_device, ud);
 
-	while (!kthread_should_stop()) {
-		if (vhci_send_cmd_submit(vdev) < 0)
-			break;
+	जबतक (!kthपढ़ो_should_stop()) अणु
+		अगर (vhci_send_cmd_submit(vdev) < 0)
+			अवरोध;
 
-		if (vhci_send_cmd_unlink(vdev) < 0)
-			break;
+		अगर (vhci_send_cmd_unlink(vdev) < 0)
+			अवरोध;
 
-		wait_event_interruptible(vdev->waitq_tx,
+		रुको_event_पूर्णांकerruptible(vdev->रुकोq_tx,
 					 (!list_empty(&vdev->priv_tx) ||
 					  !list_empty(&vdev->unlink_tx) ||
-					  kthread_should_stop()));
+					  kthपढ़ो_should_stop()));
 
 		usbip_dbg_vhci_tx("pending urbs ?, now wake up\n");
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

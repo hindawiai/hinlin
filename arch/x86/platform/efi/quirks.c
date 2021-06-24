@@ -1,45 +1,46 @@
-// SPDX-License-Identifier: GPL-2.0-only
-#define pr_fmt(fmt) "efi: " fmt
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
+#घोषणा pr_fmt(fmt) "efi: " fmt
 
-#include <linux/init.h>
-#include <linux/kernel.h>
-#include <linux/string.h>
-#include <linux/time.h>
-#include <linux/types.h>
-#include <linux/efi.h>
-#include <linux/slab.h>
-#include <linux/memblock.h>
-#include <linux/acpi.h>
-#include <linux/dmi.h>
+#समावेश <linux/init.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/समय.स>
+#समावेश <linux/types.h>
+#समावेश <linux/efi.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/memblock.h>
+#समावेश <linux/acpi.h>
+#समावेश <linux/dmi.h>
 
-#include <asm/e820/api.h>
-#include <asm/efi.h>
-#include <asm/uv/uv.h>
-#include <asm/cpu_device_id.h>
-#include <asm/realmode.h>
-#include <asm/reboot.h>
+#समावेश <यंत्र/e820/api.h>
+#समावेश <यंत्र/efi.h>
+#समावेश <यंत्र/uv/uv.h>
+#समावेश <यंत्र/cpu_device_id.h>
+#समावेश <यंत्र/realmode.h>
+#समावेश <यंत्र/reboot.h>
 
-#define EFI_MIN_RESERVE 5120
+#घोषणा EFI_MIN_RESERVE 5120
 
-#define EFI_DUMMY_GUID \
+#घोषणा EFI_DUMMY_GUID \
 	EFI_GUID(0x4424ac57, 0xbe4b, 0x47dd, 0x9e, 0x97, 0xed, 0x50, 0xf0, 0x9f, 0x92, 0xa9)
 
-#define QUARK_CSH_SIGNATURE		0x5f435348	/* _CSH */
-#define QUARK_SECURITY_HEADER_SIZE	0x400
+#घोषणा QUARK_CSH_SIGNATURE		0x5f435348	/* _CSH */
+#घोषणा QUARK_SECURITY_HEADER_SIZE	0x400
 
 /*
- * Header prepended to the standard EFI capsule on Quark systems the are based
+ * Header prepended to the standard EFI capsule on Quark प्रणालीs the are based
  * on Intel firmware BSP.
- * @csh_signature:	Unique identifier to sanity check signed module
+ * @csh_signature:	Unique identअगरier to sanity check चिन्हित module
  * 			presence ("_CSH").
- * @version:		Current version of CSH used. Should be one for Quark A0.
+ * @version:		Current version of CSH used. Should be one क्रम Quark A0.
  * @modulesize:		Size of the entire module including the module header
  * 			and payload.
- * @security_version_number_index: Index of SVN to use for validation of signed
+ * @security_version_number_index: Index of SVN to use क्रम validation of चिन्हित
  * 			module.
  * @security_version_number: Used to prevent against roll back of modules.
- * @rsvd_module_id:	Currently unused for Clanton (Quark).
- * @rsvd_module_vendor:	Vendor Identifier. For Intel products value is
+ * @rsvd_module_id:	Currently unused क्रम Clanton (Quark).
+ * @rsvd_module_venकरोr:	Venकरोr Identअगरier. For Intel products value is
  * 			0x00008086.
  * @rsvd_date:		BCD representation of build date as yyyymmdd, where
  * 			yyyy=4 digit year, mm=1-12, dd=1-31.
@@ -51,22 +52,22 @@
  * 			padding optionally added by the signing tool.
  * @signaturesize:	Total length of the signature including including any
  * 			padding optionally added by the signing tool.
- * @rsvd_next_header:	32-bit pointer to the next Secure Boot Module in the
- * 			chain, if there is a next header.
- * @rsvd:		Reserved, padding structure to required size.
+ * @rsvd_next_header:	32-bit poपूर्णांकer to the next Secure Boot Module in the
+ * 			chain, अगर there is a next header.
+ * @rsvd:		Reserved, padding काष्ठाure to required size.
  *
  * See also QuartSecurityHeader_t in
- * Quark_EDKII_v1.2.1.1/QuarkPlatformPkg/Include/QuarkBootRom.h
- * from https://downloadcenter.intel.com/download/23197/Intel-Quark-SoC-X1000-Board-Support-Package-BSP
+ * Quark_EDKII_v1.2.1.1/QuarkPlatक्रमmPkg/Include/QuarkBootRom.h
+ * from https://करोwnloadcenter.पूर्णांकel.com/करोwnload/23197/Intel-Quark-SoC-X1000-Board-Support-Package-BSP
  */
-struct quark_security_header {
+काष्ठा quark_security_header अणु
 	u32 csh_signature;
 	u32 version;
 	u32 modulesize;
 	u32 security_version_number_index;
 	u32 security_version_number;
 	u32 rsvd_module_id;
-	u32 rsvd_module_vendor;
+	u32 rsvd_module_venकरोr;
 	u32 rsvd_date;
 	u32 headersize;
 	u32 hash_algo;
@@ -75,158 +76,158 @@ struct quark_security_header {
 	u32 signaturesize;
 	u32 rsvd_next_header;
 	u32 rsvd[2];
-};
+पूर्ण;
 
-static const efi_char16_t efi_dummy_name[] = L"DUMMY";
+अटल स्थिर efi_अक्षर16_t efi_dummy_name[] = L"DUMMY";
 
-static bool efi_no_storage_paranoia;
+अटल bool efi_no_storage_paranoia;
 
 /*
- * Some firmware implementations refuse to boot if there's insufficient
+ * Some firmware implementations refuse to boot अगर there's insufficient
  * space in the variable store. The implementation of garbage collection
  * in some FW versions causes stale (deleted) variables to take up space
- * longer than intended and space is only freed once the store becomes
+ * दीर्घer than पूर्णांकended and space is only मुक्तd once the store becomes
  * almost completely full.
  *
  * Enabling this option disables the space checks in
- * efi_query_variable_store() and forces garbage collection.
+ * efi_query_variable_store() and क्रमces garbage collection.
  *
- * Only enable this option if deleting EFI variables does not free up
- * space in your variable store, e.g. if despite deleting variables
+ * Only enable this option अगर deleting EFI variables करोes not मुक्त up
+ * space in your variable store, e.g. अगर despite deleting variables
  * you're unable to create new ones.
  */
-static int __init setup_storage_paranoia(char *arg)
-{
+अटल पूर्णांक __init setup_storage_paranoia(अक्षर *arg)
+अणु
 	efi_no_storage_paranoia = true;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 early_param("efi_no_storage_paranoia", setup_storage_paranoia);
 
 /*
  * Deleting the dummy variable which kicks off garbage collection
 */
-void efi_delete_dummy_variable(void)
-{
-	efi.set_variable_nonblocking((efi_char16_t *)efi_dummy_name,
+व्योम efi_delete_dummy_variable(व्योम)
+अणु
+	efi.set_variable_nonblocking((efi_अक्षर16_t *)efi_dummy_name,
 				     &EFI_DUMMY_GUID,
 				     EFI_VARIABLE_NON_VOLATILE |
 				     EFI_VARIABLE_BOOTSERVICE_ACCESS |
-				     EFI_VARIABLE_RUNTIME_ACCESS, 0, NULL);
-}
+				     EFI_VARIABLE_RUNTIME_ACCESS, 0, शून्य);
+पूर्ण
 
 /*
- * In the nonblocking case we do not attempt to perform garbage
- * collection if we do not have enough free space. Rather, we do the
- * bare minimum check and give up immediately if the available space
+ * In the nonblocking हाल we करो not attempt to perक्रमm garbage
+ * collection अगर we करो not have enough मुक्त space. Rather, we करो the
+ * bare minimum check and give up immediately अगर the available space
  * is below EFI_MIN_RESERVE.
  *
- * This function is intended to be small and simple because it is
+ * This function is पूर्णांकended to be small and simple because it is
  * invoked from crash handler paths.
  */
-static efi_status_t
-query_variable_store_nonblocking(u32 attributes, unsigned long size)
-{
+अटल efi_status_t
+query_variable_store_nonblocking(u32 attributes, अचिन्हित दीर्घ size)
+अणु
 	efi_status_t status;
-	u64 storage_size, remaining_size, max_size;
+	u64 storage_size, reमुख्यing_size, max_size;
 
 	status = efi.query_variable_info_nonblocking(attributes, &storage_size,
-						     &remaining_size,
+						     &reमुख्यing_size,
 						     &max_size);
-	if (status != EFI_SUCCESS)
-		return status;
+	अगर (status != EFI_SUCCESS)
+		वापस status;
 
-	if (remaining_size - size < EFI_MIN_RESERVE)
-		return EFI_OUT_OF_RESOURCES;
+	अगर (reमुख्यing_size - size < EFI_MIN_RESERVE)
+		वापस EFI_OUT_OF_RESOURCES;
 
-	return EFI_SUCCESS;
-}
+	वापस EFI_SUCCESS;
+पूर्ण
 
 /*
- * Some firmware implementations refuse to boot if there's insufficient space
+ * Some firmware implementations refuse to boot अगर there's insufficient space
  * in the variable store. Ensure that we never use more than a safe limit.
  *
- * Return EFI_SUCCESS if it is safe to write 'size' bytes to the variable
+ * Return EFI_SUCCESS अगर it is safe to ग_लिखो 'size' bytes to the variable
  * store.
  */
-efi_status_t efi_query_variable_store(u32 attributes, unsigned long size,
+efi_status_t efi_query_variable_store(u32 attributes, अचिन्हित दीर्घ size,
 				      bool nonblocking)
-{
+अणु
 	efi_status_t status;
-	u64 storage_size, remaining_size, max_size;
+	u64 storage_size, reमुख्यing_size, max_size;
 
-	if (!(attributes & EFI_VARIABLE_NON_VOLATILE))
-		return 0;
+	अगर (!(attributes & EFI_VARIABLE_NON_VOLATILE))
+		वापस 0;
 
-	if (nonblocking)
-		return query_variable_store_nonblocking(attributes, size);
+	अगर (nonblocking)
+		वापस query_variable_store_nonblocking(attributes, size);
 
 	status = efi.query_variable_info(attributes, &storage_size,
-					 &remaining_size, &max_size);
-	if (status != EFI_SUCCESS)
-		return status;
+					 &reमुख्यing_size, &max_size);
+	अगर (status != EFI_SUCCESS)
+		वापस status;
 
 	/*
-	 * We account for that by refusing the write if permitting it would
+	 * We account क्रम that by refusing the ग_लिखो अगर permitting it would
 	 * reduce the available space to under 5KB. This figure was provided by
 	 * Samsung, so should be safe.
 	 */
-	if ((remaining_size - size < EFI_MIN_RESERVE) &&
-		!efi_no_storage_paranoia) {
+	अगर ((reमुख्यing_size - size < EFI_MIN_RESERVE) &&
+		!efi_no_storage_paranoia) अणु
 
 		/*
 		 * Triggering garbage collection may require that the firmware
-		 * generate a real EFI_OUT_OF_RESOURCES error. We can force
+		 * generate a real EFI_OUT_OF_RESOURCES error. We can क्रमce
 		 * that by attempting to use more space than is available.
 		 */
-		unsigned long dummy_size = remaining_size + 1024;
-		void *dummy = kzalloc(dummy_size, GFP_KERNEL);
+		अचिन्हित दीर्घ dummy_size = reमुख्यing_size + 1024;
+		व्योम *dummy = kzalloc(dummy_size, GFP_KERNEL);
 
-		if (!dummy)
-			return EFI_OUT_OF_RESOURCES;
+		अगर (!dummy)
+			वापस EFI_OUT_OF_RESOURCES;
 
-		status = efi.set_variable((efi_char16_t *)efi_dummy_name,
+		status = efi.set_variable((efi_अक्षर16_t *)efi_dummy_name,
 					  &EFI_DUMMY_GUID,
 					  EFI_VARIABLE_NON_VOLATILE |
 					  EFI_VARIABLE_BOOTSERVICE_ACCESS |
 					  EFI_VARIABLE_RUNTIME_ACCESS,
 					  dummy_size, dummy);
 
-		if (status == EFI_SUCCESS) {
+		अगर (status == EFI_SUCCESS) अणु
 			/*
-			 * This should have failed, so if it didn't make sure
+			 * This should have failed, so अगर it didn't make sure
 			 * that we delete it...
 			 */
 			efi_delete_dummy_variable();
-		}
+		पूर्ण
 
-		kfree(dummy);
+		kमुक्त(dummy);
 
 		/*
-		 * The runtime code may now have triggered a garbage collection
+		 * The runसमय code may now have triggered a garbage collection
 		 * run, so check the variable info again
 		 */
 		status = efi.query_variable_info(attributes, &storage_size,
-						 &remaining_size, &max_size);
+						 &reमुख्यing_size, &max_size);
 
-		if (status != EFI_SUCCESS)
-			return status;
+		अगर (status != EFI_SUCCESS)
+			वापस status;
 
 		/*
-		 * There still isn't enough room, so return an error
+		 * There still isn't enough room, so वापस an error
 		 */
-		if (remaining_size - size < EFI_MIN_RESERVE)
-			return EFI_OUT_OF_RESOURCES;
-	}
+		अगर (reमुख्यing_size - size < EFI_MIN_RESERVE)
+			वापस EFI_OUT_OF_RESOURCES;
+	पूर्ण
 
-	return EFI_SUCCESS;
-}
+	वापस EFI_SUCCESS;
+पूर्ण
 EXPORT_SYMBOL_GPL(efi_query_variable_store);
 
 /*
- * The UEFI specification makes it clear that the operating system is
- * free to do whatever it wants with boot services code after
+ * The UEFI specअगरication makes it clear that the operating प्रणाली is
+ * मुक्त to करो whatever it wants with boot services code after
  * ExitBootServices() has been called. Ignoring this recommendation a
- * significant bunch of EFI implementations continue calling into boot
+ * signअगरicant bunch of EFI implementations जारी calling पूर्णांकo boot
  * services code (SetVirtualAddressMap). In order to work around such
  * buggy implementations we reserve boot services region during EFI
  * init and make sure it stays executable. Then, after
@@ -234,36 +235,36 @@ EXPORT_SYMBOL_GPL(efi_query_variable_store);
  *
  * However, some boot services regions contain data that is required
  * by drivers, so we need to track which memory ranges can never be
- * freed. This is done by tagging those regions with the
+ * मुक्तd. This is करोne by tagging those regions with the
  * EFI_MEMORY_RUNTIME attribute.
  *
  * Any driver that wants to mark a region as reserved must use
  * efi_mem_reserve() which will insert a new EFI memory descriptor
- * into efi.memmap (splitting existing regions if necessary) and tag
+ * पूर्णांकo efi.memmap (splitting existing regions अगर necessary) and tag
  * it with EFI_MEMORY_RUNTIME.
  */
-void __init efi_arch_mem_reserve(phys_addr_t addr, u64 size)
-{
-	struct efi_memory_map_data data = { 0 };
-	struct efi_mem_range mr;
+व्योम __init efi_arch_mem_reserve(phys_addr_t addr, u64 size)
+अणु
+	काष्ठा efi_memory_map_data data = अणु 0 पूर्ण;
+	काष्ठा efi_mem_range mr;
 	efi_memory_desc_t md;
-	int num_entries;
-	void *new;
+	पूर्णांक num_entries;
+	व्योम *new;
 
-	if (efi_mem_desc_lookup(addr, &md) ||
-	    md.type != EFI_BOOT_SERVICES_DATA) {
+	अगर (efi_mem_desc_lookup(addr, &md) ||
+	    md.type != EFI_BOOT_SERVICES_DATA) अणु
 		pr_err("Failed to lookup EFI memory descriptor for %pa\n", &addr);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (addr + size > md.phys_addr + (md.num_pages << EFI_PAGE_SHIFT)) {
+	अगर (addr + size > md.phys_addr + (md.num_pages << EFI_PAGE_SHIFT)) अणु
 		pr_err("Region spans EFI memory descriptors, %pa\n", &addr);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	size += addr % EFI_PAGE_SIZE;
 	size = round_up(size, EFI_PAGE_SIZE);
-	addr = round_down(addr, EFI_PAGE_SIZE);
+	addr = round_करोwn(addr, EFI_PAGE_SIZE);
 
 	mr.range.start = addr;
 	mr.range.end = addr + size - 1;
@@ -272,16 +273,16 @@ void __init efi_arch_mem_reserve(phys_addr_t addr, u64 size)
 	num_entries = efi_memmap_split_count(&md, &mr.range);
 	num_entries += efi.memmap.nr_map;
 
-	if (efi_memmap_alloc(num_entries, &data) != 0) {
+	अगर (efi_memmap_alloc(num_entries, &data) != 0) अणु
 		pr_err("Could not allocate boot services memmap\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	new = early_memremap(data.phys_map, data.size);
-	if (!new) {
+	अगर (!new) अणु
 		pr_err("Failed to map new boot services memmap\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	efi_memmap_insert(&efi.memmap, new, &mr);
 	early_memunmap(new, data.size);
@@ -289,470 +290,470 @@ void __init efi_arch_mem_reserve(phys_addr_t addr, u64 size)
 	efi_memmap_install(&data);
 	e820__range_update(addr, size, E820_TYPE_RAM, E820_TYPE_RESERVED);
 	e820__update_table(e820_table);
-}
+पूर्ण
 
 /*
- * Helper function for efi_reserve_boot_services() to figure out if we
- * can free regions in efi_free_boot_services().
+ * Helper function क्रम efi_reserve_boot_services() to figure out अगर we
+ * can मुक्त regions in efi_मुक्त_boot_services().
  *
- * Use this function to ensure we do not free regions owned by somebody
- * else. We must only reserve (and then free) regions:
+ * Use this function to ensure we करो not मुक्त regions owned by somebody
+ * अन्यथा. We must only reserve (and then मुक्त) regions:
  *
  * - Not within any part of the kernel
  * - Not the BIOS reserved area (E820_TYPE_RESERVED, E820_TYPE_NVS, etc)
  */
-static __init bool can_free_region(u64 start, u64 size)
-{
-	if (start + size > __pa_symbol(_text) && start <= __pa_symbol(_end))
-		return false;
+अटल __init bool can_मुक्त_region(u64 start, u64 size)
+अणु
+	अगर (start + size > __pa_symbol(_text) && start <= __pa_symbol(_end))
+		वापस false;
 
-	if (!e820__mapped_all(start, start+size, E820_TYPE_RAM))
-		return false;
+	अगर (!e820__mapped_all(start, start+size, E820_TYPE_RAM))
+		वापस false;
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-void __init efi_reserve_boot_services(void)
-{
+व्योम __init efi_reserve_boot_services(व्योम)
+अणु
 	efi_memory_desc_t *md;
 
-	if (!efi_enabled(EFI_MEMMAP))
-		return;
+	अगर (!efi_enabled(EFI_MEMMAP))
+		वापस;
 
-	for_each_efi_memory_desc(md) {
+	क्रम_each_efi_memory_desc(md) अणु
 		u64 start = md->phys_addr;
 		u64 size = md->num_pages << EFI_PAGE_SHIFT;
-		bool already_reserved;
+		bool alपढ़ोy_reserved;
 
-		if (md->type != EFI_BOOT_SERVICES_CODE &&
+		अगर (md->type != EFI_BOOT_SERVICES_CODE &&
 		    md->type != EFI_BOOT_SERVICES_DATA)
-			continue;
+			जारी;
 
-		already_reserved = memblock_is_region_reserved(start, size);
+		alपढ़ोy_reserved = memblock_is_region_reserved(start, size);
 
 		/*
 		 * Because the following memblock_reserve() is paired
-		 * with memblock_free_late() for this region in
-		 * efi_free_boot_services(), we must be extremely
-		 * careful not to reserve, and subsequently free,
+		 * with memblock_मुक्त_late() क्रम this region in
+		 * efi_मुक्त_boot_services(), we must be extremely
+		 * careful not to reserve, and subsequently मुक्त,
 		 * critical regions of memory (like the kernel image) or
-		 * those regions that somebody else has already
+		 * those regions that somebody अन्यथा has alपढ़ोy
 		 * reserved.
 		 *
 		 * A good example of a critical region that must not be
-		 * freed is page zero (first 4Kb of memory), which may
+		 * मुक्तd is page zero (first 4Kb of memory), which may
 		 * contain boot services code/data but is marked
 		 * E820_TYPE_RESERVED by trim_bios_range().
 		 */
-		if (!already_reserved) {
+		अगर (!alपढ़ोy_reserved) अणु
 			memblock_reserve(start, size);
 
 			/*
 			 * If we are the first to reserve the region, no
-			 * one else cares about it. We own it and can
-			 * free it later.
+			 * one अन्यथा cares about it. We own it and can
+			 * मुक्त it later.
 			 */
-			if (can_free_region(start, size))
-				continue;
-		}
+			अगर (can_मुक्त_region(start, size))
+				जारी;
+		पूर्ण
 
 		/*
-		 * We don't own the region. We must not free it.
+		 * We करोn't own the region. We must not मुक्त it.
 		 *
-		 * Setting this bit for a boot services region really
-		 * doesn't make sense as far as the firmware is
-		 * concerned, but it does provide us with a way to tag
+		 * Setting this bit क्रम a boot services region really
+		 * करोesn't make sense as far as the firmware is
+		 * concerned, but it करोes provide us with a way to tag
 		 * those regions that must not be paired with
-		 * memblock_free_late().
+		 * memblock_मुक्त_late().
 		 */
 		md->attribute |= EFI_MEMORY_RUNTIME;
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
- * Apart from having VA mappings for EFI boot services code/data regions,
- * (duplicate) 1:1 mappings were also created as a quirk for buggy firmware. So,
+ * Apart from having VA mappings क्रम EFI boot services code/data regions,
+ * (duplicate) 1:1 mappings were also created as a quirk क्रम buggy firmware. So,
  * unmap both 1:1 and VA mappings.
  */
-static void __init efi_unmap_pages(efi_memory_desc_t *md)
-{
+अटल व्योम __init efi_unmap_pages(efi_memory_desc_t *md)
+अणु
 	pgd_t *pgd = efi_mm.pgd;
 	u64 pa = md->phys_addr;
 	u64 va = md->virt_addr;
 
 	/*
-	 * EFI mixed mode has all RAM mapped to access arguments while making
-	 * EFI runtime calls, hence don't unmap EFI boot services code/data
+	 * EFI mixed mode has all RAM mapped to access arguments जबतक making
+	 * EFI runसमय calls, hence करोn't unmap EFI boot services code/data
 	 * regions.
 	 */
-	if (efi_is_mixed())
-		return;
+	अगर (efi_is_mixed())
+		वापस;
 
-	if (kernel_unmap_pages_in_pgd(pgd, pa, md->num_pages))
+	अगर (kernel_unmap_pages_in_pgd(pgd, pa, md->num_pages))
 		pr_err("Failed to unmap 1:1 mapping for 0x%llx\n", pa);
 
-	if (kernel_unmap_pages_in_pgd(pgd, va, md->num_pages))
+	अगर (kernel_unmap_pages_in_pgd(pgd, va, md->num_pages))
 		pr_err("Failed to unmap VA mapping for 0x%llx\n", va);
-}
+पूर्ण
 
-void __init efi_free_boot_services(void)
-{
-	struct efi_memory_map_data data = { 0 };
+व्योम __init efi_मुक्त_boot_services(व्योम)
+अणु
+	काष्ठा efi_memory_map_data data = अणु 0 पूर्ण;
 	efi_memory_desc_t *md;
-	int num_entries = 0;
-	void *new, *new_md;
+	पूर्णांक num_entries = 0;
+	व्योम *new, *new_md;
 
-	/* Keep all regions for /sys/kernel/debug/efi */
-	if (efi_enabled(EFI_DBG))
-		return;
+	/* Keep all regions क्रम /sys/kernel/debug/efi */
+	अगर (efi_enabled(EFI_DBG))
+		वापस;
 
-	for_each_efi_memory_desc(md) {
-		unsigned long long start = md->phys_addr;
-		unsigned long long size = md->num_pages << EFI_PAGE_SHIFT;
-		size_t rm_size;
+	क्रम_each_efi_memory_desc(md) अणु
+		अचिन्हित दीर्घ दीर्घ start = md->phys_addr;
+		अचिन्हित दीर्घ दीर्घ size = md->num_pages << EFI_PAGE_SHIFT;
+		माप_प्रकार rm_size;
 
-		if (md->type != EFI_BOOT_SERVICES_CODE &&
-		    md->type != EFI_BOOT_SERVICES_DATA) {
+		अगर (md->type != EFI_BOOT_SERVICES_CODE &&
+		    md->type != EFI_BOOT_SERVICES_DATA) अणु
 			num_entries++;
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		/* Do not free, someone else owns it: */
-		if (md->attribute & EFI_MEMORY_RUNTIME) {
+		/* Do not मुक्त, someone अन्यथा owns it: */
+		अगर (md->attribute & EFI_MEMORY_RUNTIME) अणु
 			num_entries++;
-			continue;
-		}
+			जारी;
+		पूर्ण
 
 		/*
-		 * Before calling set_virtual_address_map(), EFI boot services
-		 * code/data regions were mapped as a quirk for buggy firmware.
-		 * Unmap them from efi_pgd before freeing them up.
+		 * Beक्रमe calling set_भव_address_map(), EFI boot services
+		 * code/data regions were mapped as a quirk क्रम buggy firmware.
+		 * Unmap them from efi_pgd beक्रमe मुक्तing them up.
 		 */
 		efi_unmap_pages(md);
 
 		/*
-		 * Nasty quirk: if all sub-1MB memory is used for boot
+		 * Nasty quirk: अगर all sub-1MB memory is used क्रम boot
 		 * services, we can get here without having allocated the
 		 * real mode trampoline.  It's too late to hand boot services
 		 * memory back to the memblock allocator, so instead
-		 * try to manually allocate the trampoline if needed.
+		 * try to manually allocate the trampoline अगर needed.
 		 *
 		 * I've seen this on a Dell XPS 13 9350 with firmware
-		 * 1.4.4 with SGX enabled booting Linux via Fedora 24's
-		 * grub2-efi on a hard disk.  (And no, I don't know why
+		 * 1.4.4 with SGX enabled booting Linux via Feकरोra 24's
+		 * grub2-efi on a hard disk.  (And no, I करोn't know why
 		 * this happened, but Linux should still try to boot rather
 		 * panicking early.)
 		 */
 		rm_size = real_mode_size_needed();
-		if (rm_size && (start + rm_size) < (1<<20) && size >= rm_size) {
+		अगर (rm_size && (start + rm_size) < (1<<20) && size >= rm_size) अणु
 			set_real_mode_mem(start);
 			start += rm_size;
 			size -= rm_size;
-		}
+		पूर्ण
 
 		/*
-		 * Don't free memory under 1M for two reasons:
+		 * Don't मुक्त memory under 1M क्रम two reasons:
 		 * - BIOS might clobber it
 		 * - Crash kernel needs it to be reserved
 		 */
-		if (start + size < SZ_1M)
-			continue;
-		if (start < SZ_1M) {
+		अगर (start + size < SZ_1M)
+			जारी;
+		अगर (start < SZ_1M) अणु
 			size -= (SZ_1M - start);
 			start = SZ_1M;
-		}
+		पूर्ण
 
-		memblock_free_late(start, size);
-	}
+		memblock_मुक्त_late(start, size);
+	पूर्ण
 
-	if (!num_entries)
-		return;
+	अगर (!num_entries)
+		वापस;
 
-	if (efi_memmap_alloc(num_entries, &data) != 0) {
+	अगर (efi_memmap_alloc(num_entries, &data) != 0) अणु
 		pr_err("Failed to allocate new EFI memmap\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	new = memremap(data.phys_map, data.size, MEMREMAP_WB);
-	if (!new) {
+	अगर (!new) अणु
 		pr_err("Failed to map new EFI memmap\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/*
 	 * Build a new EFI memmap that excludes any boot services
 	 * regions that are not tagged EFI_MEMORY_RUNTIME, since those
-	 * regions have now been freed.
+	 * regions have now been मुक्तd.
 	 */
 	new_md = new;
-	for_each_efi_memory_desc(md) {
-		if (!(md->attribute & EFI_MEMORY_RUNTIME) &&
+	क्रम_each_efi_memory_desc(md) अणु
+		अगर (!(md->attribute & EFI_MEMORY_RUNTIME) &&
 		    (md->type == EFI_BOOT_SERVICES_CODE ||
 		     md->type == EFI_BOOT_SERVICES_DATA))
-			continue;
+			जारी;
 
-		memcpy(new_md, md, efi.memmap.desc_size);
+		स_नकल(new_md, md, efi.memmap.desc_size);
 		new_md += efi.memmap.desc_size;
-	}
+	पूर्ण
 
 	memunmap(new);
 
-	if (efi_memmap_install(&data) != 0) {
+	अगर (efi_memmap_install(&data) != 0) अणु
 		pr_err("Could not install new EFI memmap\n");
-		return;
-	}
-}
+		वापस;
+	पूर्ण
+पूर्ण
 
 /*
- * A number of config table entries get remapped to virtual addresses
- * after entering EFI virtual mode. However, the kexec kernel requires
- * their physical addresses therefore we pass them via setup_data and
+ * A number of config table entries get remapped to भव addresses
+ * after entering EFI भव mode. However, the kexec kernel requires
+ * their physical addresses thereक्रमe we pass them via setup_data and
  * correct those entries to their respective physical addresses here.
  *
- * Currently only handles smbios which is necessary for some firmware
+ * Currently only handles smbios which is necessary क्रम some firmware
  * implementation.
  */
-int __init efi_reuse_config(u64 tables, int nr_tables)
-{
-	int i, sz, ret = 0;
-	void *p, *tablep;
-	struct efi_setup_data *data;
+पूर्णांक __init efi_reuse_config(u64 tables, पूर्णांक nr_tables)
+अणु
+	पूर्णांक i, sz, ret = 0;
+	व्योम *p, *tablep;
+	काष्ठा efi_setup_data *data;
 
-	if (nr_tables == 0)
-		return 0;
+	अगर (nr_tables == 0)
+		वापस 0;
 
-	if (!efi_setup)
-		return 0;
+	अगर (!efi_setup)
+		वापस 0;
 
-	if (!efi_enabled(EFI_64BIT))
-		return 0;
+	अगर (!efi_enabled(EFI_64BIT))
+		वापस 0;
 
-	data = early_memremap(efi_setup, sizeof(*data));
-	if (!data) {
+	data = early_memremap(efi_setup, माप(*data));
+	अगर (!data) अणु
 		ret = -ENOMEM;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (!data->smbios)
-		goto out_memremap;
+	अगर (!data->smbios)
+		जाओ out_memremap;
 
-	sz = sizeof(efi_config_table_64_t);
+	sz = माप(efi_config_table_64_t);
 
 	p = tablep = early_memremap(tables, nr_tables * sz);
-	if (!p) {
+	अगर (!p) अणु
 		pr_err("Could not map Configuration table!\n");
 		ret = -ENOMEM;
-		goto out_memremap;
-	}
+		जाओ out_memremap;
+	पूर्ण
 
-	for (i = 0; i < nr_tables; i++) {
+	क्रम (i = 0; i < nr_tables; i++) अणु
 		efi_guid_t guid;
 
 		guid = ((efi_config_table_64_t *)p)->guid;
 
-		if (!efi_guidcmp(guid, SMBIOS_TABLE_GUID))
+		अगर (!efi_guidcmp(guid, SMBIOS_TABLE_GUID))
 			((efi_config_table_64_t *)p)->table = data->smbios;
 		p += sz;
-	}
+	पूर्ण
 	early_memunmap(tablep, nr_tables * sz);
 
 out_memremap:
-	early_memunmap(data, sizeof(*data));
+	early_memunmap(data, माप(*data));
 out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-void __init efi_apply_memmap_quirks(void)
-{
+व्योम __init efi_apply_memmap_quirks(व्योम)
+अणु
 	/*
-	 * Once setup is done earlier, unmap the EFI memory map on mismatched
-	 * firmware/kernel architectures since there is no support for runtime
+	 * Once setup is करोne earlier, unmap the EFI memory map on mismatched
+	 * firmware/kernel architectures since there is no support क्रम runसमय
 	 * services.
 	 */
-	if (!efi_runtime_supported()) {
+	अगर (!efi_runसमय_supported()) अणु
 		pr_info("Setup done, disabling due to 32/64-bit mismatch\n");
 		efi_memmap_unmap();
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
- * For most modern platforms the preferred method of powering off is via
+ * For most modern platक्रमms the preferred method of घातering off is via
  * ACPI. However, there are some that are known to require the use of
- * EFI runtime services and for which ACPI does not work at all.
+ * EFI runसमय services and क्रम which ACPI करोes not work at all.
  *
- * Using EFI is a last resort, to be used only if no other option
+ * Using EFI is a last resort, to be used only अगर no other option
  * exists.
  */
-bool efi_reboot_required(void)
-{
-	if (!acpi_gbl_reduced_hardware)
-		return false;
+bool efi_reboot_required(व्योम)
+अणु
+	अगर (!acpi_gbl_reduced_hardware)
+		वापस false;
 
 	efi_reboot_quirk_mode = EFI_RESET_WARM;
-	return true;
-}
+	वापस true;
+पूर्ण
 
-bool efi_poweroff_required(void)
-{
-	return acpi_gbl_reduced_hardware || acpi_no_s5;
-}
+bool efi_घातeroff_required(व्योम)
+अणु
+	वापस acpi_gbl_reduced_hardware || acpi_no_s5;
+पूर्ण
 
-#ifdef CONFIG_EFI_CAPSULE_QUIRK_QUARK_CSH
+#अगर_घोषित CONFIG_EFI_CAPSULE_QUIRK_QUARK_CSH
 
-static int qrk_capsule_setup_info(struct capsule_info *cap_info, void **pkbuff,
-				  size_t hdr_bytes)
-{
-	struct quark_security_header *csh = *pkbuff;
+अटल पूर्णांक qrk_capsule_setup_info(काष्ठा capsule_info *cap_info, व्योम **pkbuff,
+				  माप_प्रकार hdr_bytes)
+अणु
+	काष्ठा quark_security_header *csh = *pkbuff;
 
 	/* Only process data block that is larger than the security header */
-	if (hdr_bytes < sizeof(struct quark_security_header))
-		return 0;
+	अगर (hdr_bytes < माप(काष्ठा quark_security_header))
+		वापस 0;
 
-	if (csh->csh_signature != QUARK_CSH_SIGNATURE ||
+	अगर (csh->csh_signature != QUARK_CSH_SIGNATURE ||
 	    csh->headersize != QUARK_SECURITY_HEADER_SIZE)
-		return 1;
+		वापस 1;
 
-	/* Only process data block if EFI header is included */
-	if (hdr_bytes < QUARK_SECURITY_HEADER_SIZE +
-			sizeof(efi_capsule_header_t))
-		return 0;
+	/* Only process data block अगर EFI header is included */
+	अगर (hdr_bytes < QUARK_SECURITY_HEADER_SIZE +
+			माप(efi_capsule_header_t))
+		वापस 0;
 
 	pr_debug("Quark security header detected\n");
 
-	if (csh->rsvd_next_header != 0) {
+	अगर (csh->rsvd_next_header != 0) अणु
 		pr_err("multiple Quark security headers not supported\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	*pkbuff += csh->headersize;
 	cap_info->total_size = csh->headersize;
 
 	/*
-	 * Update the first page pointer to skip over the CSH header.
+	 * Update the first page poपूर्णांकer to skip over the CSH header.
 	 */
 	cap_info->phys[0] += csh->headersize;
 
 	/*
-	 * cap_info->capsule should point at a virtual mapping of the entire
+	 * cap_info->capsule should poपूर्णांक at a भव mapping of the entire
 	 * capsule, starting at the capsule header. Our image has the Quark
-	 * security header prepended, so we cannot rely on the default vmap()
+	 * security header prepended, so we cannot rely on the शेष vmap()
 	 * mapping created by the generic capsule code.
-	 * Given that the Quark firmware does not appear to care about the
-	 * virtual mapping, let's just point cap_info->capsule at our copy
+	 * Given that the Quark firmware करोes not appear to care about the
+	 * भव mapping, let's just poपूर्णांक cap_info->capsule at our copy
 	 * of the capsule header.
 	 */
 	cap_info->capsule = &cap_info->header;
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-static const struct x86_cpu_id efi_capsule_quirk_ids[] = {
+अटल स्थिर काष्ठा x86_cpu_id efi_capsule_quirk_ids[] = अणु
 	X86_MATCH_VENDOR_FAM_MODEL(INTEL, 5, INTEL_FAM5_QUARK_X1000,
 				   &qrk_capsule_setup_info),
-	{ }
-};
+	अणु पूर्ण
+पूर्ण;
 
-int efi_capsule_setup_info(struct capsule_info *cap_info, void *kbuff,
-			   size_t hdr_bytes)
-{
-	int (*quirk_handler)(struct capsule_info *, void **, size_t);
-	const struct x86_cpu_id *id;
-	int ret;
+पूर्णांक efi_capsule_setup_info(काष्ठा capsule_info *cap_info, व्योम *kbuff,
+			   माप_प्रकार hdr_bytes)
+अणु
+	पूर्णांक (*quirk_handler)(काष्ठा capsule_info *, व्योम **, माप_प्रकार);
+	स्थिर काष्ठा x86_cpu_id *id;
+	पूर्णांक ret;
 
-	if (hdr_bytes < sizeof(efi_capsule_header_t))
-		return 0;
+	अगर (hdr_bytes < माप(efi_capsule_header_t))
+		वापस 0;
 
 	cap_info->total_size = 0;
 
 	id = x86_match_cpu(efi_capsule_quirk_ids);
-	if (id) {
+	अगर (id) अणु
 		/*
-		 * The quirk handler is supposed to return
-		 *  - a value > 0 if the setup should continue, after advancing
+		 * The quirk handler is supposed to वापस
+		 *  - a value > 0 अगर the setup should जारी, after advancing
 		 *    kbuff as needed
-		 *  - 0 if not enough hdr_bytes are available yet
+		 *  - 0 अगर not enough hdr_bytes are available yet
 		 *  - a negative error code otherwise
 		 */
 		quirk_handler = (typeof(quirk_handler))id->driver_data;
 		ret = quirk_handler(cap_info, &kbuff, hdr_bytes);
-		if (ret <= 0)
-			return ret;
-	}
+		अगर (ret <= 0)
+			वापस ret;
+	पूर्ण
 
-	memcpy(&cap_info->header, kbuff, sizeof(cap_info->header));
+	स_नकल(&cap_info->header, kbuff, माप(cap_info->header));
 
 	cap_info->total_size += cap_info->header.imagesize;
 
-	return __efi_capsule_setup_info(cap_info);
-}
+	वापस __efi_capsule_setup_info(cap_info);
+पूर्ण
 
-#endif
+#पूर्ण_अगर
 
 /*
- * If any access by any efi runtime service causes a page fault, then,
- * 1. If it's efi_reset_system(), reboot through BIOS.
- * 2. If any other efi runtime service, then
+ * If any access by any efi runसमय service causes a page fault, then,
+ * 1. If it's efi_reset_प्रणाली(), reboot through BIOS.
+ * 2. If any other efi runसमय service, then
  *    a. Return error status to the efi caller process.
- *    b. Disable EFI Runtime Services forever and
+ *    b. Disable EFI Runसमय Services क्रमever and
  *    c. Freeze efi_rts_wq and schedule new process.
  *
- * @return: Returns, if the page fault is not handled. This function
- * will never return if the page fault is handled successfully.
+ * @वापस: Returns, अगर the page fault is not handled. This function
+ * will never वापस अगर the page fault is handled successfully.
  */
-void efi_crash_gracefully_on_page_fault(unsigned long phys_addr)
-{
-	if (!IS_ENABLED(CONFIG_X86_64))
-		return;
+व्योम efi_crash_gracefully_on_page_fault(अचिन्हित दीर्घ phys_addr)
+अणु
+	अगर (!IS_ENABLED(CONFIG_X86_64))
+		वापस;
 
 	/*
-	 * If we get an interrupt/NMI while processing an EFI runtime service
+	 * If we get an पूर्णांकerrupt/NMI जबतक processing an EFI runसमय service
 	 * then this is a regular OOPS, not an EFI failure.
 	 */
-	if (in_interrupt())
-		return;
+	अगर (in_पूर्णांकerrupt())
+		वापस;
 
 	/*
-	 * Make sure that an efi runtime service caused the page fault.
-	 * READ_ONCE() because we might be OOPSing in a different thread,
-	 * and we don't want to trip KTSAN while trying to OOPS.
+	 * Make sure that an efi runसमय service caused the page fault.
+	 * READ_ONCE() because we might be OOPSing in a dअगरferent thपढ़ो,
+	 * and we करोn't want to trip KTSAN जबतक trying to OOPS.
 	 */
-	if (READ_ONCE(efi_rts_work.efi_rts_id) == EFI_NONE ||
+	अगर (READ_ONCE(efi_rts_work.efi_rts_id) == EFI_NONE ||
 	    current_work() != &efi_rts_work.work)
-		return;
+		वापस;
 
 	/*
 	 * Address range 0x0000 - 0x0fff is always mapped in the efi_pgd, so
 	 * page faulting on these addresses isn't expected.
 	 */
-	if (phys_addr <= 0x0fff)
-		return;
+	अगर (phys_addr <= 0x0fff)
+		वापस;
 
 	/*
-	 * Print stack trace as it might be useful to know which EFI Runtime
+	 * Prपूर्णांक stack trace as it might be useful to know which EFI Runसमय
 	 * Service is buggy.
 	 */
 	WARN(1, FW_BUG "Page fault caused by firmware at PA: 0x%lx\n",
 	     phys_addr);
 
 	/*
-	 * Buggy efi_reset_system() is handled differently from other EFI
-	 * Runtime Services as it doesn't use efi_rts_wq. Although,
+	 * Buggy efi_reset_प्रणाली() is handled dअगरferently from other EFI
+	 * Runसमय Services as it करोesn't use efi_rts_wq. Although,
 	 * native_machine_emergency_restart() says that machine_real_restart()
 	 * could fail, it's better not to complicate this fault handler
-	 * because this case occurs *very* rarely and hence could be improved
+	 * because this हाल occurs *very* rarely and hence could be improved
 	 * on a need by basis.
 	 */
-	if (efi_rts_work.efi_rts_id == EFI_RESET_SYSTEM) {
+	अगर (efi_rts_work.efi_rts_id == EFI_RESET_SYSTEM) अणु
 		pr_info("efi_reset_system() buggy! Reboot through BIOS\n");
 		machine_real_restart(MRR_BIOS);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/*
-	 * Before calling EFI Runtime Service, the kernel has switched the
-	 * calling process to efi_mm. Hence, switch back to task_mm.
+	 * Beक्रमe calling EFI Runसमय Service, the kernel has चयनed the
+	 * calling process to efi_mm. Hence, चयन back to task_mm.
 	 */
-	arch_efi_call_virt_teardown();
+	arch_efi_call_virt_tearकरोwn();
 
 	/* Signal error status to the efi caller process */
 	efi_rts_work.status = EFI_ABORTED;
@@ -765,8 +766,8 @@ void efi_crash_gracefully_on_page_fault(unsigned long phys_addr)
 	 * Call schedule() in an infinite loop, so that any spurious wake ups
 	 * will never run efi_rts_wq again.
 	 */
-	for (;;) {
+	क्रम (;;) अणु
 		set_current_state(TASK_IDLE);
 		schedule();
-	}
-}
+	पूर्ण
+पूर्ण

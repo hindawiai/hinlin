@@ -1,3 +1,4 @@
+<शैली गुरु>
 /*
  * Intel 82860 Memory Controller kernel module
  * (C) 2005 Red Hat (http://www.redhat.com)
@@ -9,166 +10,166 @@
  * by Thayne Harbaugh of Linux Networx. (http://lnxi.com)
  */
 
-#include <linux/module.h>
-#include <linux/init.h>
-#include <linux/pci.h>
-#include <linux/pci_ids.h>
-#include <linux/edac.h>
-#include "edac_module.h"
+#समावेश <linux/module.h>
+#समावेश <linux/init.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/pci_ids.h>
+#समावेश <linux/edac.h>
+#समावेश "edac_module.h"
 
-#define EDAC_MOD_STR	"i82860_edac"
+#घोषणा EDAC_MOD_STR	"i82860_edac"
 
-#define i82860_printk(level, fmt, arg...) \
-	edac_printk(level, "i82860", fmt, ##arg)
+#घोषणा i82860_prपूर्णांकk(level, fmt, arg...) \
+	edac_prपूर्णांकk(level, "i82860", fmt, ##arg)
 
-#define i82860_mc_printk(mci, level, fmt, arg...) \
-	edac_mc_chipset_printk(mci, level, "i82860", fmt, ##arg)
+#घोषणा i82860_mc_prपूर्णांकk(mci, level, fmt, arg...) \
+	edac_mc_chipset_prपूर्णांकk(mci, level, "i82860", fmt, ##arg)
 
-#ifndef PCI_DEVICE_ID_INTEL_82860_0
-#define PCI_DEVICE_ID_INTEL_82860_0	0x2531
-#endif				/* PCI_DEVICE_ID_INTEL_82860_0 */
+#अगर_अघोषित PCI_DEVICE_ID_INTEL_82860_0
+#घोषणा PCI_DEVICE_ID_INTEL_82860_0	0x2531
+#पूर्ण_अगर				/* PCI_DEVICE_ID_INTEL_82860_0 */
 
-#define I82860_MCHCFG 0x50
-#define I82860_GBA 0x60
-#define I82860_GBA_MASK 0x7FF
-#define I82860_GBA_SHIFT 24
-#define I82860_ERRSTS 0xC8
-#define I82860_EAP 0xE4
-#define I82860_DERRCTL_STS 0xE2
+#घोषणा I82860_MCHCFG 0x50
+#घोषणा I82860_GBA 0x60
+#घोषणा I82860_GBA_MASK 0x7FF
+#घोषणा I82860_GBA_SHIFT 24
+#घोषणा I82860_ERRSTS 0xC8
+#घोषणा I82860_EAP 0xE4
+#घोषणा I82860_DERRCTL_STS 0xE2
 
-enum i82860_chips {
+क्रमागत i82860_chips अणु
 	I82860 = 0,
-};
+पूर्ण;
 
-struct i82860_dev_info {
-	const char *ctl_name;
-};
+काष्ठा i82860_dev_info अणु
+	स्थिर अक्षर *ctl_name;
+पूर्ण;
 
-struct i82860_error_info {
+काष्ठा i82860_error_info अणु
 	u16 errsts;
 	u32 eap;
 	u16 derrsyn;
 	u16 errsts2;
-};
+पूर्ण;
 
-static const struct i82860_dev_info i82860_devs[] = {
-	[I82860] = {
-		.ctl_name = "i82860"},
-};
+अटल स्थिर काष्ठा i82860_dev_info i82860_devs[] = अणु
+	[I82860] = अणु
+		.ctl_name = "i82860"पूर्ण,
+पूर्ण;
 
-static struct pci_dev *mci_pdev;	/* init dev: in case that AGP code
-					 * has already registered driver
+अटल काष्ठा pci_dev *mci_pdev;	/* init dev: in हाल that AGP code
+					 * has alपढ़ोy रेजिस्टरed driver
 					 */
-static struct edac_pci_ctl_info *i82860_pci;
+अटल काष्ठा edac_pci_ctl_info *i82860_pci;
 
-static void i82860_get_error_info(struct mem_ctl_info *mci,
-				struct i82860_error_info *info)
-{
-	struct pci_dev *pdev;
+अटल व्योम i82860_get_error_info(काष्ठा mem_ctl_info *mci,
+				काष्ठा i82860_error_info *info)
+अणु
+	काष्ठा pci_dev *pdev;
 
 	pdev = to_pci_dev(mci->pdev);
 
 	/*
-	 * This is a mess because there is no atomic way to read all the
-	 * registers at once and the registers can transition from CE being
+	 * This is a mess because there is no atomic way to पढ़ो all the
+	 * रेजिस्टरs at once and the रेजिस्टरs can transition from CE being
 	 * overwritten by UE.
 	 */
-	pci_read_config_word(pdev, I82860_ERRSTS, &info->errsts);
-	pci_read_config_dword(pdev, I82860_EAP, &info->eap);
-	pci_read_config_word(pdev, I82860_DERRCTL_STS, &info->derrsyn);
-	pci_read_config_word(pdev, I82860_ERRSTS, &info->errsts2);
+	pci_पढ़ो_config_word(pdev, I82860_ERRSTS, &info->errsts);
+	pci_पढ़ो_config_dword(pdev, I82860_EAP, &info->eap);
+	pci_पढ़ो_config_word(pdev, I82860_DERRCTL_STS, &info->derrsyn);
+	pci_पढ़ो_config_word(pdev, I82860_ERRSTS, &info->errsts2);
 
-	pci_write_bits16(pdev, I82860_ERRSTS, 0x0003, 0x0003);
+	pci_ग_लिखो_bits16(pdev, I82860_ERRSTS, 0x0003, 0x0003);
 
 	/*
-	 * If the error is the same for both reads then the first set of reads
+	 * If the error is the same क्रम both पढ़ोs then the first set of पढ़ोs
 	 * is valid.  If there is a change then there is a CE no info and the
-	 * second set of reads is valid and should be UE info.
+	 * second set of पढ़ोs is valid and should be UE info.
 	 */
-	if (!(info->errsts2 & 0x0003))
-		return;
+	अगर (!(info->errsts2 & 0x0003))
+		वापस;
 
-	if ((info->errsts ^ info->errsts2) & 0x0003) {
-		pci_read_config_dword(pdev, I82860_EAP, &info->eap);
-		pci_read_config_word(pdev, I82860_DERRCTL_STS, &info->derrsyn);
-	}
-}
+	अगर ((info->errsts ^ info->errsts2) & 0x0003) अणु
+		pci_पढ़ो_config_dword(pdev, I82860_EAP, &info->eap);
+		pci_पढ़ो_config_word(pdev, I82860_DERRCTL_STS, &info->derrsyn);
+	पूर्ण
+पूर्ण
 
-static int i82860_process_error_info(struct mem_ctl_info *mci,
-				struct i82860_error_info *info,
-				int handle_errors)
-{
-	struct dimm_info *dimm;
-	int row;
+अटल पूर्णांक i82860_process_error_info(काष्ठा mem_ctl_info *mci,
+				काष्ठा i82860_error_info *info,
+				पूर्णांक handle_errors)
+अणु
+	काष्ठा dimm_info *dimm;
+	पूर्णांक row;
 
-	if (!(info->errsts2 & 0x0003))
-		return 0;
+	अगर (!(info->errsts2 & 0x0003))
+		वापस 0;
 
-	if (!handle_errors)
-		return 1;
+	अगर (!handle_errors)
+		वापस 1;
 
-	if ((info->errsts ^ info->errsts2) & 0x0003) {
+	अगर ((info->errsts ^ info->errsts2) & 0x0003) अणु
 		edac_mc_handle_error(HW_EVENT_ERR_UNCORRECTED, mci, 1, 0, 0, 0,
 				     -1, -1, -1, "UE overwrote CE", "");
 		info->errsts = info->errsts2;
-	}
+	पूर्ण
 
 	info->eap >>= PAGE_SHIFT;
 	row = edac_mc_find_csrow_by_page(mci, info->eap);
 	dimm = mci->csrows[row]->channels[0]->dimm;
 
-	if (info->errsts & 0x0002)
+	अगर (info->errsts & 0x0002)
 		edac_mc_handle_error(HW_EVENT_ERR_UNCORRECTED, mci, 1,
 				     info->eap, 0, 0,
 				     dimm->location[0], dimm->location[1], -1,
 				     "i82860 UE", "");
-	else
+	अन्यथा
 		edac_mc_handle_error(HW_EVENT_ERR_CORRECTED, mci, 1,
 				     info->eap, 0, info->derrsyn,
 				     dimm->location[0], dimm->location[1], -1,
 				     "i82860 CE", "");
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-static void i82860_check(struct mem_ctl_info *mci)
-{
-	struct i82860_error_info info;
+अटल व्योम i82860_check(काष्ठा mem_ctl_info *mci)
+अणु
+	काष्ठा i82860_error_info info;
 
 	i82860_get_error_info(mci, &info);
 	i82860_process_error_info(mci, &info, 1);
-}
+पूर्ण
 
-static void i82860_init_csrows(struct mem_ctl_info *mci, struct pci_dev *pdev)
-{
-	unsigned long last_cumul_size;
+अटल व्योम i82860_init_csrows(काष्ठा mem_ctl_info *mci, काष्ठा pci_dev *pdev)
+अणु
+	अचिन्हित दीर्घ last_cumul_size;
 	u16 mchcfg_ddim;	/* DRAM Data Integrity Mode 0=none, 2=edac */
 	u16 value;
 	u32 cumul_size;
-	struct csrow_info *csrow;
-	struct dimm_info *dimm;
-	int index;
+	काष्ठा csrow_info *csrow;
+	काष्ठा dimm_info *dimm;
+	पूर्णांक index;
 
-	pci_read_config_word(pdev, I82860_MCHCFG, &mchcfg_ddim);
+	pci_पढ़ो_config_word(pdev, I82860_MCHCFG, &mchcfg_ddim);
 	mchcfg_ddim = mchcfg_ddim & 0x180;
 	last_cumul_size = 0;
 
 	/* The group row boundary (GRA) reg values are boundary address
-	 * for each DRAM row with a granularity of 16MB.  GRA regs are
-	 * cumulative; therefore GRA15 will contain the total memory contained
+	 * क्रम each DRAM row with a granularity of 16MB.  GRA regs are
+	 * cumulative; thereक्रमe GRA15 will contain the total memory contained
 	 * in all eight rows.
 	 */
-	for (index = 0; index < mci->nr_csrows; index++) {
+	क्रम (index = 0; index < mci->nr_csrows; index++) अणु
 		csrow = mci->csrows[index];
 		dimm = csrow->channels[0]->dimm;
 
-		pci_read_config_word(pdev, I82860_GBA + index * 2, &value);
+		pci_पढ़ो_config_word(pdev, I82860_GBA + index * 2, &value);
 		cumul_size = (value & I82860_GBA_MASK) <<
 			(I82860_GBA_SHIFT - PAGE_SHIFT);
 		edac_dbg(3, "(%d) cumul_size 0x%x\n", index, cumul_size);
 
-		if (cumul_size == last_cumul_size)
-			continue;	/* not populated */
+		अगर (cumul_size == last_cumul_size)
+			जारी;	/* not populated */
 
 		csrow->first_page = last_cumul_size;
 		csrow->last_page = cumul_size - 1;
@@ -178,24 +179,24 @@ static void i82860_init_csrows(struct mem_ctl_info *mci, struct pci_dev *pdev)
 		dimm->mtype = MEM_RMBS;
 		dimm->dtype = DEV_UNKNOWN;
 		dimm->edac_mode = mchcfg_ddim ? EDAC_SECDED : EDAC_NONE;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int i82860_probe1(struct pci_dev *pdev, int dev_idx)
-{
-	struct mem_ctl_info *mci;
-	struct edac_mc_layer layers[2];
-	struct i82860_error_info discard;
+अटल पूर्णांक i82860_probe1(काष्ठा pci_dev *pdev, पूर्णांक dev_idx)
+अणु
+	काष्ठा mem_ctl_info *mci;
+	काष्ठा edac_mc_layer layers[2];
+	काष्ठा i82860_error_info discard;
 
 	/*
-	 * RDRAM has channels but these don't map onto the csrow abstraction.
+	 * RDRAM has channels but these करोn't map onto the csrow असलtraction.
 	 * According with the datasheet, there are 2 Rambus channels, supporting
 	 * up to 16 direct RDRAM devices.
-	 * The device groups from the GRA registers seem to map reasonably
+	 * The device groups from the GRA रेजिस्टरs seem to map reasonably
 	 * well onto the notion of a chip select row.
-	 * There are 16 GRA registers and since the name is associated with
-	 * the channel and the GRA registers map to physical devices so we are
-	 * going to make 1 channel for group.
+	 * There are 16 GRA रेजिस्टरs and since the name is associated with
+	 * the channel and the GRA रेजिस्टरs map to physical devices so we are
+	 * going to make 1 channel क्रम group.
 	 */
 	layers[0].type = EDAC_MC_LAYER_CHANNEL;
 	layers[0].size = 2;
@@ -204,8 +205,8 @@ static int i82860_probe1(struct pci_dev *pdev, int dev_idx)
 	layers[1].size = 8;
 	layers[1].is_virt_csrow = true;
 	mci = edac_mc_alloc(0, ARRAY_SIZE(layers), layers, 0);
-	if (!mci)
-		return -ENOMEM;
+	अगर (!mci)
+		वापस -ENOMEM;
 
 	edac_dbg(3, "init mci\n");
 	mci->pdev = &pdev->dev;
@@ -217,147 +218,147 @@ static int i82860_probe1(struct pci_dev *pdev, int dev_idx)
 	mci->ctl_name = i82860_devs[dev_idx].ctl_name;
 	mci->dev_name = pci_name(pdev);
 	mci->edac_check = i82860_check;
-	mci->ctl_page_to_phys = NULL;
+	mci->ctl_page_to_phys = शून्य;
 	i82860_init_csrows(mci, pdev);
 	i82860_get_error_info(mci, &discard);	/* clear counters */
 
 	/* Here we assume that we will never see multiple instances of this
-	 * type of memory controller.  The ID is therefore hardcoded to 0.
+	 * type of memory controller.  The ID is thereक्रमe hardcoded to 0.
 	 */
-	if (edac_mc_add_mc(mci)) {
+	अगर (edac_mc_add_mc(mci)) अणु
 		edac_dbg(3, "failed edac_mc_add_mc()\n");
-		goto fail;
-	}
+		जाओ fail;
+	पूर्ण
 
 	/* allocating generic PCI control info */
 	i82860_pci = edac_pci_create_generic_ctl(&pdev->dev, EDAC_MOD_STR);
-	if (!i82860_pci) {
-		printk(KERN_WARNING
+	अगर (!i82860_pci) अणु
+		prपूर्णांकk(KERN_WARNING
 			"%s(): Unable to create PCI control\n",
 			__func__);
-		printk(KERN_WARNING
+		prपूर्णांकk(KERN_WARNING
 			"%s(): PCI error report via EDAC not setup\n",
 			__func__);
-	}
+	पूर्ण
 
 	/* get this far and it's successful */
 	edac_dbg(3, "success\n");
 
-	return 0;
+	वापस 0;
 
 fail:
-	edac_mc_free(mci);
-	return -ENODEV;
-}
+	edac_mc_मुक्त(mci);
+	वापस -ENODEV;
+पूर्ण
 
-/* returns count (>= 0), or negative on error */
-static int i82860_init_one(struct pci_dev *pdev,
-			   const struct pci_device_id *ent)
-{
-	int rc;
+/* वापसs count (>= 0), or negative on error */
+अटल पूर्णांक i82860_init_one(काष्ठा pci_dev *pdev,
+			   स्थिर काष्ठा pci_device_id *ent)
+अणु
+	पूर्णांक rc;
 
 	edac_dbg(0, "\n");
-	i82860_printk(KERN_INFO, "i82860 init one\n");
+	i82860_prपूर्णांकk(KERN_INFO, "i82860 init one\n");
 
-	if (pci_enable_device(pdev) < 0)
-		return -EIO;
+	अगर (pci_enable_device(pdev) < 0)
+		वापस -EIO;
 
 	rc = i82860_probe1(pdev, ent->driver_data);
 
-	if (rc == 0)
+	अगर (rc == 0)
 		mci_pdev = pci_dev_get(pdev);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static void i82860_remove_one(struct pci_dev *pdev)
-{
-	struct mem_ctl_info *mci;
+अटल व्योम i82860_हटाओ_one(काष्ठा pci_dev *pdev)
+अणु
+	काष्ठा mem_ctl_info *mci;
 
 	edac_dbg(0, "\n");
 
-	if (i82860_pci)
+	अगर (i82860_pci)
 		edac_pci_release_generic_ctl(i82860_pci);
 
-	if ((mci = edac_mc_del_mc(&pdev->dev)) == NULL)
-		return;
+	अगर ((mci = edac_mc_del_mc(&pdev->dev)) == शून्य)
+		वापस;
 
-	edac_mc_free(mci);
-}
+	edac_mc_मुक्त(mci);
+पूर्ण
 
-static const struct pci_device_id i82860_pci_tbl[] = {
-	{
+अटल स्थिर काष्ठा pci_device_id i82860_pci_tbl[] = अणु
+	अणु
 	 PCI_VEND_DEV(INTEL, 82860_0), PCI_ANY_ID, PCI_ANY_ID, 0, 0,
-	 I82860},
-	{
+	 I82860पूर्ण,
+	अणु
 	 0,
-	 }			/* 0 terminated list. */
-};
+	 पूर्ण			/* 0 terminated list. */
+पूर्ण;
 
 MODULE_DEVICE_TABLE(pci, i82860_pci_tbl);
 
-static struct pci_driver i82860_driver = {
+अटल काष्ठा pci_driver i82860_driver = अणु
 	.name = EDAC_MOD_STR,
 	.probe = i82860_init_one,
-	.remove = i82860_remove_one,
+	.हटाओ = i82860_हटाओ_one,
 	.id_table = i82860_pci_tbl,
-};
+पूर्ण;
 
-static int __init i82860_init(void)
-{
-	int pci_rc;
+अटल पूर्णांक __init i82860_init(व्योम)
+अणु
+	पूर्णांक pci_rc;
 
 	edac_dbg(3, "\n");
 
-       /* Ensure that the OPSTATE is set correctly for POLL or NMI */
+       /* Ensure that the OPSTATE is set correctly क्रम POLL or NMI */
        opstate_init();
 
-	if ((pci_rc = pci_register_driver(&i82860_driver)) < 0)
-		goto fail0;
+	अगर ((pci_rc = pci_रेजिस्टर_driver(&i82860_driver)) < 0)
+		जाओ fail0;
 
-	if (!mci_pdev) {
+	अगर (!mci_pdev) अणु
 		mci_pdev = pci_get_device(PCI_VENDOR_ID_INTEL,
-					PCI_DEVICE_ID_INTEL_82860_0, NULL);
+					PCI_DEVICE_ID_INTEL_82860_0, शून्य);
 
-		if (mci_pdev == NULL) {
+		अगर (mci_pdev == शून्य) अणु
 			edac_dbg(0, "860 pci_get_device fail\n");
 			pci_rc = -ENODEV;
-			goto fail1;
-		}
+			जाओ fail1;
+		पूर्ण
 
 		pci_rc = i82860_init_one(mci_pdev, i82860_pci_tbl);
 
-		if (pci_rc < 0) {
+		अगर (pci_rc < 0) अणु
 			edac_dbg(0, "860 init fail\n");
 			pci_rc = -ENODEV;
-			goto fail1;
-		}
-	}
+			जाओ fail1;
+		पूर्ण
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 fail1:
-	pci_unregister_driver(&i82860_driver);
+	pci_unरेजिस्टर_driver(&i82860_driver);
 
 fail0:
 	pci_dev_put(mci_pdev);
-	return pci_rc;
-}
+	वापस pci_rc;
+पूर्ण
 
-static void __exit i82860_exit(void)
-{
+अटल व्योम __निकास i82860_निकास(व्योम)
+अणु
 	edac_dbg(3, "\n");
-	pci_unregister_driver(&i82860_driver);
+	pci_unरेजिस्टर_driver(&i82860_driver);
 	pci_dev_put(mci_pdev);
-}
+पूर्ण
 
 module_init(i82860_init);
-module_exit(i82860_exit);
+module_निकास(i82860_निकास);
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Red Hat Inc. (http://www.redhat.com) "
 		"Ben Woodard <woodard@redhat.com>");
 MODULE_DESCRIPTION("ECC support for Intel 82860 memory hub controllers");
 
-module_param(edac_op_state, int, 0444);
+module_param(edac_op_state, पूर्णांक, 0444);
 MODULE_PARM_DESC(edac_op_state, "EDAC Error Reporting state: 0=Poll,1=NMI");

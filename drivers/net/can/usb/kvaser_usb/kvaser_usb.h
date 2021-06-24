@@ -1,7 +1,8 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /* Parts of this driver are based on the following:
  *  - Kvaser linux leaf driver (version 4.78)
- *  - CAN driver for esd CAN-USB/2
+ *  - CAN driver क्रम esd CAN-USB/2
  *  - Kvaser linux usbcanII driver (version 5.3)
  *  - Kvaser linux mhydra driver (version 5.24)
  *
@@ -11,123 +12,123 @@
  * Copyright (C) 2015 Valeo S.A.
  */
 
-#ifndef KVASER_USB_H
-#define KVASER_USB_H
+#अगर_अघोषित KVASER_USB_H
+#घोषणा KVASER_USB_H
 
-/* Kvaser USB CAN dongles are divided into three major platforms:
+/* Kvaser USB CAN करोngles are भागided पूर्णांकo three major platक्रमms:
  * - Hydra: Running firmware labeled as 'mhydra'
  * - Leaf: Based on Renesas M32C or Freescale i.MX28, running firmware labeled
  *         as 'filo'
  * - UsbcanII: Based on Renesas M16C, running firmware labeled as 'helios'
  */
 
-#include <linux/completion.h>
-#include <linux/spinlock.h>
-#include <linux/types.h>
-#include <linux/usb.h>
+#समावेश <linux/completion.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/types.h>
+#समावेश <linux/usb.h>
 
-#include <linux/can.h>
-#include <linux/can/dev.h>
+#समावेश <linux/can.h>
+#समावेश <linux/can/dev.h>
 
-#define KVASER_USB_MAX_RX_URBS			4
-#define KVASER_USB_MAX_TX_URBS			128
-#define KVASER_USB_TIMEOUT			1000 /* msecs */
-#define KVASER_USB_RX_BUFFER_SIZE		3072
-#define KVASER_USB_MAX_NET_DEVICES		5
+#घोषणा KVASER_USB_MAX_RX_URBS			4
+#घोषणा KVASER_USB_MAX_TX_URBS			128
+#घोषणा KVASER_USB_TIMEOUT			1000 /* msecs */
+#घोषणा KVASER_USB_RX_BUFFER_SIZE		3072
+#घोषणा KVASER_USB_MAX_NET_DEVICES		5
 
 /* USB devices features */
-#define KVASER_USB_HAS_SILENT_MODE		BIT(0)
-#define KVASER_USB_HAS_TXRX_ERRORS		BIT(1)
+#घोषणा KVASER_USB_HAS_SILENT_MODE		BIT(0)
+#घोषणा KVASER_USB_HAS_TXRX_ERRORS		BIT(1)
 
 /* Device capabilities */
-#define KVASER_USB_CAP_BERR_CAP			0x01
-#define KVASER_USB_CAP_EXT_CAP			0x02
-#define KVASER_USB_HYDRA_CAP_EXT_CMD		0x04
+#घोषणा KVASER_USB_CAP_BERR_CAP			0x01
+#घोषणा KVASER_USB_CAP_EXT_CAP			0x02
+#घोषणा KVASER_USB_HYDRA_CAP_EXT_CMD		0x04
 
-struct kvaser_usb_dev_cfg;
+काष्ठा kvaser_usb_dev_cfg;
 
-enum kvaser_usb_leaf_family {
+क्रमागत kvaser_usb_leaf_family अणु
 	KVASER_LEAF,
 	KVASER_USBCAN,
-};
+पूर्ण;
 
-#define KVASER_USB_HYDRA_MAX_CMD_LEN		128
-struct kvaser_usb_dev_card_data_hydra {
+#घोषणा KVASER_USB_HYDRA_MAX_CMD_LEN		128
+काष्ठा kvaser_usb_dev_card_data_hydra अणु
 	u8 channel_to_he[KVASER_USB_MAX_NET_DEVICES];
 	u8 sysdbg_he;
-	spinlock_t transid_lock; /* lock for transid */
+	spinlock_t transid_lock; /* lock क्रम transid */
 	u16 transid;
-	/* lock for usb_rx_leftover and usb_rx_leftover_len */
+	/* lock क्रम usb_rx_leftover and usb_rx_leftover_len */
 	spinlock_t usb_rx_leftover_lock;
 	u8 usb_rx_leftover[KVASER_USB_HYDRA_MAX_CMD_LEN];
 	u8 usb_rx_leftover_len;
-};
-struct kvaser_usb_dev_card_data {
+पूर्ण;
+काष्ठा kvaser_usb_dev_card_data अणु
 	u32 ctrlmode_supported;
 	u32 capabilities;
-	union {
-		struct {
-			enum kvaser_usb_leaf_family family;
-		} leaf;
-		struct kvaser_usb_dev_card_data_hydra hydra;
-	};
-};
+	जोड़ अणु
+		काष्ठा अणु
+			क्रमागत kvaser_usb_leaf_family family;
+		पूर्ण leaf;
+		काष्ठा kvaser_usb_dev_card_data_hydra hydra;
+	पूर्ण;
+पूर्ण;
 
-/* Context for an outstanding, not yet ACKed, transmission */
-struct kvaser_usb_tx_urb_context {
-	struct kvaser_usb_net_priv *priv;
+/* Context क्रम an outstanding, not yet ACKed, transmission */
+काष्ठा kvaser_usb_tx_urb_context अणु
+	काष्ठा kvaser_usb_net_priv *priv;
 	u32 echo_index;
-	int dlc;
-};
+	पूर्णांक dlc;
+पूर्ण;
 
-struct kvaser_usb {
-	struct usb_device *udev;
-	struct usb_interface *intf;
-	struct kvaser_usb_net_priv *nets[KVASER_USB_MAX_NET_DEVICES];
-	const struct kvaser_usb_dev_ops *ops;
-	const struct kvaser_usb_dev_cfg *cfg;
+काष्ठा kvaser_usb अणु
+	काष्ठा usb_device *udev;
+	काष्ठा usb_पूर्णांकerface *पूर्णांकf;
+	काष्ठा kvaser_usb_net_priv *nets[KVASER_USB_MAX_NET_DEVICES];
+	स्थिर काष्ठा kvaser_usb_dev_ops *ops;
+	स्थिर काष्ठा kvaser_usb_dev_cfg *cfg;
 
-	struct usb_endpoint_descriptor *bulk_in, *bulk_out;
-	struct usb_anchor rx_submitted;
+	काष्ठा usb_endpoपूर्णांक_descriptor *bulk_in, *bulk_out;
+	काष्ठा usb_anchor rx_submitted;
 
 	/* @max_tx_urbs: Firmware-reported maximum number of outstanding,
 	 * not yet ACKed, transmissions on this device. This value is
-	 * also used as a sentinel for marking free tx contexts.
+	 * also used as a sentinel क्रम marking मुक्त tx contexts.
 	 */
 	u32 fw_version;
-	unsigned int nchannels;
-	unsigned int max_tx_urbs;
-	struct kvaser_usb_dev_card_data card_data;
+	अचिन्हित पूर्णांक nchannels;
+	अचिन्हित पूर्णांक max_tx_urbs;
+	काष्ठा kvaser_usb_dev_card_data card_data;
 
-	bool rxinitdone;
-	void *rxbuf[KVASER_USB_MAX_RX_URBS];
+	bool rxinitकरोne;
+	व्योम *rxbuf[KVASER_USB_MAX_RX_URBS];
 	dma_addr_t rxbuf_dma[KVASER_USB_MAX_RX_URBS];
-};
+पूर्ण;
 
-struct kvaser_usb_net_priv {
-	struct can_priv can;
-	struct can_berr_counter bec;
+काष्ठा kvaser_usb_net_priv अणु
+	काष्ठा can_priv can;
+	काष्ठा can_berr_counter bec;
 
-	struct kvaser_usb *dev;
-	struct net_device *netdev;
-	int channel;
+	काष्ठा kvaser_usb *dev;
+	काष्ठा net_device *netdev;
+	पूर्णांक channel;
 
-	struct completion start_comp, stop_comp, flush_comp;
-	struct usb_anchor tx_submitted;
+	काष्ठा completion start_comp, stop_comp, flush_comp;
+	काष्ठा usb_anchor tx_submitted;
 
-	spinlock_t tx_contexts_lock; /* lock for active_tx_contexts */
-	int active_tx_contexts;
-	struct kvaser_usb_tx_urb_context tx_contexts[];
-};
+	spinlock_t tx_contexts_lock; /* lock क्रम active_tx_contexts */
+	पूर्णांक active_tx_contexts;
+	काष्ठा kvaser_usb_tx_urb_context tx_contexts[];
+पूर्ण;
 
 /**
- * struct kvaser_usb_dev_ops - Device specific functions
- * @dev_set_mode:		used for can.do_set_mode
- * @dev_set_bittiming:		used for can.do_set_bittiming
- * @dev_set_data_bittiming:	used for can.do_set_data_bittiming
- * @dev_get_berr_counter:	used for can.do_get_berr_counter
+ * काष्ठा kvaser_usb_dev_ops - Device specअगरic functions
+ * @dev_set_mode:		used क्रम can.करो_set_mode
+ * @dev_set_bittiming:		used क्रम can.करो_set_bittiming
+ * @dev_set_data_bittiming:	used क्रम can.करो_set_data_bittiming
+ * @dev_get_berr_counter:	used क्रम can.करो_get_berr_counter
  *
- * @dev_setup_endpoints:	setup USB in and out endpoints
+ * @dev_setup_endpoपूर्णांकs:	setup USB in and out endpoपूर्णांकs
  * @dev_init_card:		initialize card
  * @dev_get_software_info:	get software info
  * @dev_get_software_details:	get software details
@@ -139,50 +140,50 @@ struct kvaser_usb_net_priv {
  * @dev_stop_chip:		stop the CAN controller
  * @dev_reset_chip:		reset the CAN controller
  * @dev_flush_queue:		flush outstanding CAN messages
- * @dev_read_bulk_callback:	handle incoming commands
- * @dev_frame_to_cmd:		translate struct can_frame into device command
+ * @dev_पढ़ो_bulk_callback:	handle incoming commands
+ * @dev_frame_to_cmd:		translate काष्ठा can_frame पूर्णांकo device command
  */
-struct kvaser_usb_dev_ops {
-	int (*dev_set_mode)(struct net_device *netdev, enum can_mode mode);
-	int (*dev_set_bittiming)(struct net_device *netdev);
-	int (*dev_set_data_bittiming)(struct net_device *netdev);
-	int (*dev_get_berr_counter)(const struct net_device *netdev,
-				    struct can_berr_counter *bec);
-	int (*dev_setup_endpoints)(struct kvaser_usb *dev);
-	int (*dev_init_card)(struct kvaser_usb *dev);
-	int (*dev_get_software_info)(struct kvaser_usb *dev);
-	int (*dev_get_software_details)(struct kvaser_usb *dev);
-	int (*dev_get_card_info)(struct kvaser_usb *dev);
-	int (*dev_get_capabilities)(struct kvaser_usb *dev);
-	int (*dev_set_opt_mode)(const struct kvaser_usb_net_priv *priv);
-	int (*dev_start_chip)(struct kvaser_usb_net_priv *priv);
-	int (*dev_stop_chip)(struct kvaser_usb_net_priv *priv);
-	int (*dev_reset_chip)(struct kvaser_usb *dev, int channel);
-	int (*dev_flush_queue)(struct kvaser_usb_net_priv *priv);
-	void (*dev_read_bulk_callback)(struct kvaser_usb *dev, void *buf,
-				       int len);
-	void *(*dev_frame_to_cmd)(const struct kvaser_usb_net_priv *priv,
-				  const struct sk_buff *skb, int *frame_len,
-				  int *cmd_len, u16 transid);
-};
+काष्ठा kvaser_usb_dev_ops अणु
+	पूर्णांक (*dev_set_mode)(काष्ठा net_device *netdev, क्रमागत can_mode mode);
+	पूर्णांक (*dev_set_bittiming)(काष्ठा net_device *netdev);
+	पूर्णांक (*dev_set_data_bittiming)(काष्ठा net_device *netdev);
+	पूर्णांक (*dev_get_berr_counter)(स्थिर काष्ठा net_device *netdev,
+				    काष्ठा can_berr_counter *bec);
+	पूर्णांक (*dev_setup_endpoपूर्णांकs)(काष्ठा kvaser_usb *dev);
+	पूर्णांक (*dev_init_card)(काष्ठा kvaser_usb *dev);
+	पूर्णांक (*dev_get_software_info)(काष्ठा kvaser_usb *dev);
+	पूर्णांक (*dev_get_software_details)(काष्ठा kvaser_usb *dev);
+	पूर्णांक (*dev_get_card_info)(काष्ठा kvaser_usb *dev);
+	पूर्णांक (*dev_get_capabilities)(काष्ठा kvaser_usb *dev);
+	पूर्णांक (*dev_set_opt_mode)(स्थिर काष्ठा kvaser_usb_net_priv *priv);
+	पूर्णांक (*dev_start_chip)(काष्ठा kvaser_usb_net_priv *priv);
+	पूर्णांक (*dev_stop_chip)(काष्ठा kvaser_usb_net_priv *priv);
+	पूर्णांक (*dev_reset_chip)(काष्ठा kvaser_usb *dev, पूर्णांक channel);
+	पूर्णांक (*dev_flush_queue)(काष्ठा kvaser_usb_net_priv *priv);
+	व्योम (*dev_पढ़ो_bulk_callback)(काष्ठा kvaser_usb *dev, व्योम *buf,
+				       पूर्णांक len);
+	व्योम *(*dev_frame_to_cmd)(स्थिर काष्ठा kvaser_usb_net_priv *priv,
+				  स्थिर काष्ठा sk_buff *skb, पूर्णांक *frame_len,
+				  पूर्णांक *cmd_len, u16 transid);
+पूर्ण;
 
-struct kvaser_usb_dev_cfg {
-	const struct can_clock clock;
-	const unsigned int timestamp_freq;
-	const struct can_bittiming_const * const bittiming_const;
-	const struct can_bittiming_const * const data_bittiming_const;
-};
+काष्ठा kvaser_usb_dev_cfg अणु
+	स्थिर काष्ठा can_घड़ी घड़ी;
+	स्थिर अचिन्हित पूर्णांक बारtamp_freq;
+	स्थिर काष्ठा can_bittiming_स्थिर * स्थिर bittiming_स्थिर;
+	स्थिर काष्ठा can_bittiming_स्थिर * स्थिर data_bittiming_स्थिर;
+पूर्ण;
 
-extern const struct kvaser_usb_dev_ops kvaser_usb_hydra_dev_ops;
-extern const struct kvaser_usb_dev_ops kvaser_usb_leaf_dev_ops;
+बाह्य स्थिर काष्ठा kvaser_usb_dev_ops kvaser_usb_hydra_dev_ops;
+बाह्य स्थिर काष्ठा kvaser_usb_dev_ops kvaser_usb_leaf_dev_ops;
 
-int kvaser_usb_recv_cmd(const struct kvaser_usb *dev, void *cmd, int len,
-			int *actual_len);
+पूर्णांक kvaser_usb_recv_cmd(स्थिर काष्ठा kvaser_usb *dev, व्योम *cmd, पूर्णांक len,
+			पूर्णांक *actual_len);
 
-int kvaser_usb_send_cmd(const struct kvaser_usb *dev, void *cmd, int len);
+पूर्णांक kvaser_usb_send_cmd(स्थिर काष्ठा kvaser_usb *dev, व्योम *cmd, पूर्णांक len);
 
-int kvaser_usb_send_cmd_async(struct kvaser_usb_net_priv *priv, void *cmd,
-			      int len);
+पूर्णांक kvaser_usb_send_cmd_async(काष्ठा kvaser_usb_net_priv *priv, व्योम *cmd,
+			      पूर्णांक len);
 
-int kvaser_usb_can_rx_over_error(struct net_device *netdev);
-#endif /* KVASER_USB_H */
+पूर्णांक kvaser_usb_can_rx_over_error(काष्ठा net_device *netdev);
+#पूर्ण_अगर /* KVASER_USB_H */

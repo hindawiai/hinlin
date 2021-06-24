@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2010 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -21,16 +22,16 @@
  *
  * Authors: Alex Deucher
  */
-#ifndef __SI_REG_H__
-#define __SI_REG_H__
+#अगर_अघोषित __SI_REG_H__
+#घोषणा __SI_REG_H__
 
 /* SI */
-#define SI_DC_GPIO_HPD_MASK                      0x65b0
-#define SI_DC_GPIO_HPD_A                         0x65b4
-#define SI_DC_GPIO_HPD_EN                        0x65b8
-#define SI_DC_GPIO_HPD_Y                         0x65bc
+#घोषणा SI_DC_GPIO_HPD_MASK                      0x65b0
+#घोषणा SI_DC_GPIO_HPD_A                         0x65b4
+#घोषणा SI_DC_GPIO_HPD_EN                        0x65b8
+#घोषणा SI_DC_GPIO_HPD_Y                         0x65bc
 
-#define SI_GRPH_CONTROL                          0x6804
+#घोषणा SI_GRPH_CONTROL                          0x6804
 #       define SI_GRPH_DEPTH(x)                  (((x) & 0x3) << 0)
 #       define SI_GRPH_DEPTH_8BPP                0
 #       define SI_GRPH_DEPTH_16BPP               1
@@ -102,4 +103,4 @@
 #       define SI_ADDR_SURF_P8_32x32_16x32	 13
 #       define SI_ADDR_SURF_P8_32x64_32x32	 14
 
-#endif
+#पूर्ण_अगर

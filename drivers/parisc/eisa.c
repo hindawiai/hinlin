@@ -1,20 +1,21 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * eisa.c - provide support for EISA adapters in PA-RISC machines
+ * eisa.c - provide support क्रम EISA adapters in PA-RISC machines
  *
- * Copyright (c) 2001 Matthew Wilcox for Hewlett Packard
+ * Copyright (c) 2001 Matthew Wilcox क्रम Hewlett Packard
  * Copyright (c) 2001 Daniel Engstrom <5116@telia.com>
  *
  * There are two distinct EISA adapters.  Mongoose is found in machines
- * before the 712; then the Wax ASIC is used.  To complicate matters, the
+ * beक्रमe the 712; then the Wax ASIC is used.  To complicate matters, the
  * Wax ASIC also includes a PS/2 and RS-232 controller, but those are
- * dealt with elsewhere; this file is concerned only with the EISA portions
+ * dealt with अन्यथाwhere; this file is concerned only with the EISA portions
  * of Wax.
  *
  * HINT:
  * -----
  * To allow an ISA card to work properly in the EISA slot you need to
- * set an edge trigger level. This may be done on the palo command line
+ * set an edge trigger level. This may be करोne on the palo command line
  * by adding the kernel parameter "eisa_irq_edge=n,n2,[...]]", with
  * n and n2 as the irq levels you want to use.
  *
@@ -22,185 +23,185 @@
  * irq levels 10 and 11.
  */
 
-#include <linux/init.h>
-#include <linux/ioport.h>
-#include <linux/interrupt.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/pci.h>
-#include <linux/spinlock.h>
-#include <linux/eisa.h>
+#समावेश <linux/init.h>
+#समावेश <linux/ioport.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/eisa.h>
 
-#include <asm/byteorder.h>
-#include <asm/io.h>
-#include <asm/hardware.h>
-#include <asm/processor.h>
-#include <asm/parisc-device.h>
-#include <asm/delay.h>
-#include <asm/eisa_bus.h>
-#include <asm/eisa_eeprom.h>
+#समावेश <यंत्र/byteorder.h>
+#समावेश <यंत्र/पन.स>
+#समावेश <यंत्र/hardware.h>
+#समावेश <यंत्र/processor.h>
+#समावेश <यंत्र/parisc-device.h>
+#समावेश <यंत्र/delay.h>
+#समावेश <यंत्र/eisa_bus.h>
+#समावेश <यंत्र/eisa_eeprom.h>
 
-#include "iommu.h"
+#समावेश "iommu.h"
 
-#if 0
-#define EISA_DBG(msg, arg...) printk(KERN_DEBUG "eisa: " msg, ## arg)
-#else
-#define EISA_DBG(msg, arg...)
-#endif
+#अगर 0
+#घोषणा EISA_DBG(msg, arg...) prपूर्णांकk(KERN_DEBUG "eisa: " msg, ## arg)
+#अन्यथा
+#घोषणा EISA_DBG(msg, arg...)
+#पूर्ण_अगर
 
-#define SNAKES_EEPROM_BASE_ADDR 0xF0810400
-#define MIRAGE_EEPROM_BASE_ADDR 0xF00C0400
+#घोषणा SNAKES_EEPROM_BASE_ADDR 0xF0810400
+#घोषणा MIRAGE_EEPROM_BASE_ADDR 0xF00C0400
 
-static DEFINE_SPINLOCK(eisa_irq_lock);
+अटल DEFINE_SPINLOCK(eisa_irq_lock);
 
-void __iomem *eisa_eeprom_addr __read_mostly;
+व्योम __iomem *eisa_eeprom_addr __पढ़ो_mostly;
 
-/* We can only have one EISA adapter in the system because neither
+/* We can only have one EISA adapter in the प्रणाली because neither
  * implementation can be flexed.
  */
-static struct eisa_ba {
-	struct pci_hba_data	hba;
-	unsigned long eeprom_addr;
-	struct eisa_root_device root;
-} eisa_dev;
+अटल काष्ठा eisa_ba अणु
+	काष्ठा pci_hba_data	hba;
+	अचिन्हित दीर्घ eeprom_addr;
+	काष्ठा eisa_root_device root;
+पूर्ण eisa_dev;
 
 /* Port ops */
 
-static inline unsigned long eisa_permute(unsigned short port)
-{
-	if (port & 0x300) {
-		return 0xfc000000 | ((port & 0xfc00) >> 6)
+अटल अंतरभूत अचिन्हित दीर्घ eisa_permute(अचिन्हित लघु port)
+अणु
+	अगर (port & 0x300) अणु
+		वापस 0xfc000000 | ((port & 0xfc00) >> 6)
 			| ((port & 0x3f8) << 9) | (port & 7);
-	} else {
-		return 0xfc000000 | port;
-	}
-}
+	पूर्ण अन्यथा अणु
+		वापस 0xfc000000 | port;
+	पूर्ण
+पूर्ण
 
-unsigned char eisa_in8(unsigned short port)
-{
-	if (EISA_bus)
-		return gsc_readb(eisa_permute(port));
-	return 0xff;
-}
+अचिन्हित अक्षर eisa_in8(अचिन्हित लघु port)
+अणु
+	अगर (EISA_bus)
+		वापस gsc_पढ़ोb(eisa_permute(port));
+	वापस 0xff;
+पूर्ण
 
-unsigned short eisa_in16(unsigned short port)
-{
-	if (EISA_bus)
-		return le16_to_cpu(gsc_readw(eisa_permute(port)));
-	return 0xffff;
-}
+अचिन्हित लघु eisa_in16(अचिन्हित लघु port)
+अणु
+	अगर (EISA_bus)
+		वापस le16_to_cpu(gsc_पढ़ोw(eisa_permute(port)));
+	वापस 0xffff;
+पूर्ण
 
-unsigned int eisa_in32(unsigned short port)
-{
-	if (EISA_bus)
-		return le32_to_cpu(gsc_readl(eisa_permute(port)));
-	return 0xffffffff;
-}
+अचिन्हित पूर्णांक eisa_in32(अचिन्हित लघु port)
+अणु
+	अगर (EISA_bus)
+		वापस le32_to_cpu(gsc_पढ़ोl(eisa_permute(port)));
+	वापस 0xffffffff;
+पूर्ण
 
-void eisa_out8(unsigned char data, unsigned short port)
-{
-	if (EISA_bus)
-		gsc_writeb(data, eisa_permute(port));
-}
+व्योम eisa_out8(अचिन्हित अक्षर data, अचिन्हित लघु port)
+अणु
+	अगर (EISA_bus)
+		gsc_ग_लिखोb(data, eisa_permute(port));
+पूर्ण
 
-void eisa_out16(unsigned short data, unsigned short port)
-{
-	if (EISA_bus)
-		gsc_writew(cpu_to_le16(data), eisa_permute(port));
-}
+व्योम eisa_out16(अचिन्हित लघु data, अचिन्हित लघु port)
+अणु
+	अगर (EISA_bus)
+		gsc_ग_लिखोw(cpu_to_le16(data), eisa_permute(port));
+पूर्ण
 
-void eisa_out32(unsigned int data, unsigned short port)
-{
-	if (EISA_bus)
-		gsc_writel(cpu_to_le32(data), eisa_permute(port));
-}
+व्योम eisa_out32(अचिन्हित पूर्णांक data, अचिन्हित लघु port)
+अणु
+	अगर (EISA_bus)
+		gsc_ग_लिखोl(cpu_to_le32(data), eisa_permute(port));
+पूर्ण
 
-#ifndef CONFIG_PCI
-/* We call these directly without PCI.  See asm/io.h. */
+#अगर_अघोषित CONFIG_PCI
+/* We call these directly without PCI.  See यंत्र/पन.स. */
 EXPORT_SYMBOL(eisa_in8);
 EXPORT_SYMBOL(eisa_in16);
 EXPORT_SYMBOL(eisa_in32);
 EXPORT_SYMBOL(eisa_out8);
 EXPORT_SYMBOL(eisa_out16);
 EXPORT_SYMBOL(eisa_out32);
-#endif
+#पूर्ण_अगर
 
 /* Interrupt handling */
 
-/* cached interrupt mask registers */
-static int master_mask;
-static int slave_mask;
+/* cached पूर्णांकerrupt mask रेजिस्टरs */
+अटल पूर्णांक master_mask;
+अटल पूर्णांक slave_mask;
 
 /* the trig level can be set with the
  * eisa_irq_edge=n,n,n commandline parameter
- * We should really read this from the EEPROM
+ * We should really पढ़ो this from the EEPROM
  * in the furure.
  */
 /* irq 13,8,2,1,0 must be edge */
-static unsigned int eisa_irq_level __read_mostly; /* default to edge triggered */
+अटल अचिन्हित पूर्णांक eisa_irq_level __पढ़ो_mostly; /* शेष to edge triggered */
 
 
-/* called by free irq */
-static void eisa_mask_irq(struct irq_data *d)
-{
-	unsigned int irq = d->irq;
-	unsigned long flags;
+/* called by मुक्त irq */
+अटल व्योम eisa_mask_irq(काष्ठा irq_data *d)
+अणु
+	अचिन्हित पूर्णांक irq = d->irq;
+	अचिन्हित दीर्घ flags;
 
 	EISA_DBG("disable irq %d\n", irq);
-	/* just mask for now */
+	/* just mask क्रम now */
 	spin_lock_irqsave(&eisa_irq_lock, flags);
-        if (irq & 8) {
+        अगर (irq & 8) अणु
 		slave_mask |= (1 << (irq&7));
 		eisa_out8(slave_mask, 0xa1);
-	} else {
+	पूर्ण अन्यथा अणु
 		master_mask |= (1 << (irq&7));
 		eisa_out8(master_mask, 0x21);
-	}
+	पूर्ण
 	spin_unlock_irqrestore(&eisa_irq_lock, flags);
 	EISA_DBG("pic0 mask %02x\n", eisa_in8(0x21));
 	EISA_DBG("pic1 mask %02x\n", eisa_in8(0xa1));
-}
+पूर्ण
 
 /* called by request irq */
-static void eisa_unmask_irq(struct irq_data *d)
-{
-	unsigned int irq = d->irq;
-	unsigned long flags;
+अटल व्योम eisa_unmask_irq(काष्ठा irq_data *d)
+अणु
+	अचिन्हित पूर्णांक irq = d->irq;
+	अचिन्हित दीर्घ flags;
 	EISA_DBG("enable irq %d\n", irq);
 
 	spin_lock_irqsave(&eisa_irq_lock, flags);
-        if (irq & 8) {
+        अगर (irq & 8) अणु
 		slave_mask &= ~(1 << (irq&7));
 		eisa_out8(slave_mask, 0xa1);
-	} else {
+	पूर्ण अन्यथा अणु
 		master_mask &= ~(1 << (irq&7));
 		eisa_out8(master_mask, 0x21);
-	}
+	पूर्ण
 	spin_unlock_irqrestore(&eisa_irq_lock, flags);
 	EISA_DBG("pic0 mask %02x\n", eisa_in8(0x21));
 	EISA_DBG("pic1 mask %02x\n", eisa_in8(0xa1));
-}
+पूर्ण
 
-static struct irq_chip eisa_interrupt_type = {
+अटल काष्ठा irq_chip eisa_पूर्णांकerrupt_type = अणु
 	.name		=	"EISA",
 	.irq_unmask	=	eisa_unmask_irq,
 	.irq_mask	=	eisa_mask_irq,
-};
+पूर्ण;
 
-static irqreturn_t eisa_irq(int wax_irq, void *intr_dev)
-{
-	int irq = gsc_readb(0xfc01f000); /* EISA supports 16 irqs */
-	unsigned long flags;
+अटल irqवापस_t eisa_irq(पूर्णांक wax_irq, व्योम *पूर्णांकr_dev)
+अणु
+	पूर्णांक irq = gsc_पढ़ोb(0xfc01f000); /* EISA supports 16 irqs */
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&eisa_irq_lock, flags);
-	/* read IRR command */
+	/* पढ़ो IRR command */
 	eisa_out8(0x0a, 0x20);
 	eisa_out8(0x0a, 0xa0);
 
 	EISA_DBG("irq IAR %02x 8259-1 irr %02x 8259-2 irr %02x\n",
 		   irq, eisa_in8(0x20), eisa_in8(0xa0));
 
-	/* read ISR command */
+	/* पढ़ो ISR command */
 	eisa_out8(0x0a, 0x20);
 	eisa_out8(0x0a, 0xa0);
 	EISA_DBG("irq 8259-1 isr %02x imr %02x 8259-2 isr %02x imr %02x\n",
@@ -208,44 +209,44 @@ static irqreturn_t eisa_irq(int wax_irq, void *intr_dev)
 
 	irq &= 0xf;
 
-	/* mask irq and write eoi */
-	if (irq & 8) {
+	/* mask irq and ग_लिखो eoi */
+	अगर (irq & 8) अणु
 		slave_mask |= (1 << (irq&7));
 		eisa_out8(slave_mask, 0xa1);
 		eisa_out8(0x60 | (irq&7),0xa0);/* 'Specific EOI' to slave */
 		eisa_out8(0x62, 0x20);	/* 'Specific EOI' to master-IRQ2 */
 
-	} else {
+	पूर्ण अन्यथा अणु
 		master_mask |= (1 << (irq&7));
 		eisa_out8(master_mask, 0x21);
 		eisa_out8(0x60|irq, 0x20);	/* 'Specific EOI' to master */
-	}
+	पूर्ण
 	spin_unlock_irqrestore(&eisa_irq_lock, flags);
 
 	generic_handle_irq(irq);
 
 	spin_lock_irqsave(&eisa_irq_lock, flags);
 	/* unmask */
-        if (irq & 8) {
+        अगर (irq & 8) अणु
 		slave_mask &= ~(1 << (irq&7));
 		eisa_out8(slave_mask, 0xa1);
-	} else {
+	पूर्ण अन्यथा अणु
 		master_mask &= ~(1 << (irq&7));
 		eisa_out8(master_mask, 0x21);
-	}
+	पूर्ण
 	spin_unlock_irqrestore(&eisa_irq_lock, flags);
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static irqreturn_t dummy_irq2_handler(int _, void *dev)
-{
-	printk(KERN_ALERT "eisa: uhh, irq2?\n");
-	return IRQ_HANDLED;
-}
+अटल irqवापस_t dummy_irq2_handler(पूर्णांक _, व्योम *dev)
+अणु
+	prपूर्णांकk(KERN_ALERT "eisa: uhh, irq2?\n");
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static void init_eisa_pic(void)
-{
-	unsigned long flags;
+अटल व्योम init_eisa_pic(व्योम)
+अणु
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&eisa_irq_lock, flags);
 
@@ -285,20 +286,20 @@ static void init_eisa_pic(void)
 	EISA_DBG("pic1 edge/level %02x\n", eisa_in8(0x4d1));
 
 	spin_unlock_irqrestore(&eisa_irq_lock, flags);
-}
+पूर्ण
 
 /* Device initialisation */
 
-#define is_mongoose(dev) (dev->id.sversion == 0x00076)
+#घोषणा is_mongoose(dev) (dev->id.sversion == 0x00076)
 
-static int __init eisa_probe(struct parisc_device *dev)
-{
-	int i, result;
+अटल पूर्णांक __init eisa_probe(काष्ठा parisc_device *dev)
+अणु
+	पूर्णांक i, result;
 
-	char *name = is_mongoose(dev) ? "Mongoose" : "Wax";
+	अक्षर *name = is_mongoose(dev) ? "Mongoose" : "Wax";
 
-	printk(KERN_INFO "%s EISA Adapter found at 0x%08lx\n",
-		name, (unsigned long)dev->hpa.start);
+	prपूर्णांकk(KERN_INFO "%s EISA Adapter found at 0x%08lx\n",
+		name, (अचिन्हित दीर्घ)dev->hpa.start);
 
 	eisa_dev.hba.dev = dev;
 	eisa_dev.hba.iommu = ccio_get_iommu(dev);
@@ -308,155 +309,155 @@ static int __init eisa_probe(struct parisc_device *dev)
 	eisa_dev.hba.lmmio_space.end = F_EXTEND(0xffbfffff);
 	eisa_dev.hba.lmmio_space.flags = IORESOURCE_MEM;
 	result = ccio_request_resource(dev, &eisa_dev.hba.lmmio_space);
-	if (result < 0) {
-		printk(KERN_ERR "EISA: failed to claim EISA Bus address space!\n");
-		return result;
-	}
+	अगर (result < 0) अणु
+		prपूर्णांकk(KERN_ERR "EISA: failed to claim EISA Bus address space!\n");
+		वापस result;
+	पूर्ण
 	eisa_dev.hba.io_space.name = "EISA";
 	eisa_dev.hba.io_space.start = 0;
 	eisa_dev.hba.io_space.end = 0xffff;
 	eisa_dev.hba.lmmio_space.flags = IORESOURCE_IO;
 	result = request_resource(&ioport_resource, &eisa_dev.hba.io_space);
-	if (result < 0) {
-		printk(KERN_ERR "EISA: failed to claim EISA Bus port space!\n");
-		return result;
-	}
-	pcibios_register_hba(&eisa_dev.hba);
+	अगर (result < 0) अणु
+		prपूर्णांकk(KERN_ERR "EISA: failed to claim EISA Bus port space!\n");
+		वापस result;
+	पूर्ण
+	pcibios_रेजिस्टर_hba(&eisa_dev.hba);
 
 	result = request_irq(dev->irq, eisa_irq, IRQF_SHARED, "EISA", &eisa_dev);
-	if (result) {
-		printk(KERN_ERR "EISA: request_irq failed!\n");
-		goto error_release;
-	}
+	अगर (result) अणु
+		prपूर्णांकk(KERN_ERR "EISA: request_irq failed!\n");
+		जाओ error_release;
+	पूर्ण
 
 	/* Reserve IRQ2 */
-	if (request_irq(2, dummy_irq2_handler, 0, "cascade", NULL))
+	अगर (request_irq(2, dummy_irq2_handler, 0, "cascade", शून्य))
 		pr_err("Failed to request irq 2 (cascade)\n");
-	for (i = 0; i < 16; i++) {
-		irq_set_chip_and_handler(i, &eisa_interrupt_type,
+	क्रम (i = 0; i < 16; i++) अणु
+		irq_set_chip_and_handler(i, &eisa_पूर्णांकerrupt_type,
 					 handle_simple_irq);
-	}
+	पूर्ण
 
 	EISA_bus = 1;
 
-	if (dev->num_addrs) {
+	अगर (dev->num_addrs) अणु
 		/* newer firmware hand out the eeprom address */
 		eisa_dev.eeprom_addr = dev->addr[0];
-	} else {
+	पूर्ण अन्यथा अणु
 		/* old firmware, need to figure out the box */
-		if (is_mongoose(dev)) {
+		अगर (is_mongoose(dev)) अणु
 			eisa_dev.eeprom_addr = SNAKES_EEPROM_BASE_ADDR;
-		} else {
+		पूर्ण अन्यथा अणु
 			eisa_dev.eeprom_addr = MIRAGE_EEPROM_BASE_ADDR;
-		}
-	}
+		पूर्ण
+	पूर्ण
 	eisa_eeprom_addr = ioremap(eisa_dev.eeprom_addr, HPEE_MAX_LENGTH);
-	if (!eisa_eeprom_addr) {
+	अगर (!eisa_eeprom_addr) अणु
 		result = -ENOMEM;
-		printk(KERN_ERR "EISA: ioremap failed!\n");
-		goto error_free_irq;
-	}
-	result = eisa_enumerator(eisa_dev.eeprom_addr, &eisa_dev.hba.io_space,
+		prपूर्णांकk(KERN_ERR "EISA: ioremap failed!\n");
+		जाओ error_मुक्त_irq;
+	पूर्ण
+	result = eisa_क्रमागतerator(eisa_dev.eeprom_addr, &eisa_dev.hba.io_space,
 			&eisa_dev.hba.lmmio_space);
 	init_eisa_pic();
 
-	if (result >= 0) {
-		/* FIXME : Don't enumerate the bus twice. */
+	अगर (result >= 0) अणु
+		/* FIXME : Don't क्रमागतerate the bus twice. */
 		eisa_dev.root.dev = &dev->dev;
 		dev_set_drvdata(&dev->dev, &eisa_dev.root);
 		eisa_dev.root.bus_base_addr = 0;
 		eisa_dev.root.res = &eisa_dev.hba.io_space;
 		eisa_dev.root.slots = result;
 		eisa_dev.root.dma_mask = 0xffffffff; /* wild guess */
-		if (eisa_root_register (&eisa_dev.root)) {
-			printk(KERN_ERR "EISA: Failed to register EISA root\n");
+		अगर (eisa_root_रेजिस्टर (&eisa_dev.root)) अणु
+			prपूर्णांकk(KERN_ERR "EISA: Failed to register EISA root\n");
 			result = -ENOMEM;
-			goto error_iounmap;
-		}
-	}
+			जाओ error_iounmap;
+		पूर्ण
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 error_iounmap:
 	iounmap(eisa_eeprom_addr);
-error_free_irq:
-	free_irq(dev->irq, &eisa_dev);
+error_मुक्त_irq:
+	मुक्त_irq(dev->irq, &eisa_dev);
 error_release:
 	release_resource(&eisa_dev.hba.io_space);
-	return result;
-}
+	वापस result;
+पूर्ण
 
-static const struct parisc_device_id eisa_tbl[] __initconst = {
-	{ HPHW_BA, HVERSION_REV_ANY_ID, HVERSION_ANY_ID, 0x00076 }, /* Mongoose */
-	{ HPHW_BA, HVERSION_REV_ANY_ID, HVERSION_ANY_ID, 0x00090 }, /* Wax EISA */
-	{ 0, }
-};
+अटल स्थिर काष्ठा parisc_device_id eisa_tbl[] __initस्थिर = अणु
+	अणु HPHW_BA, HVERSION_REV_ANY_ID, HVERSION_ANY_ID, 0x00076 पूर्ण, /* Mongoose */
+	अणु HPHW_BA, HVERSION_REV_ANY_ID, HVERSION_ANY_ID, 0x00090 पूर्ण, /* Wax EISA */
+	अणु 0, पूर्ण
+पूर्ण;
 
 MODULE_DEVICE_TABLE(parisc, eisa_tbl);
 
-static struct parisc_driver eisa_driver __refdata = {
+अटल काष्ठा parisc_driver eisa_driver __refdata = अणु
 	.name =		"eisa_ba",
 	.id_table =	eisa_tbl,
 	.probe =	eisa_probe,
-};
+पूर्ण;
 
-void __init eisa_init(void)
-{
-	register_parisc_driver(&eisa_driver);
-}
+व्योम __init eisa_init(व्योम)
+अणु
+	रेजिस्टर_parisc_driver(&eisa_driver);
+पूर्ण
 
 
-static unsigned int eisa_irq_configured;
-void eisa_make_irq_level(int num)
-{
-	if (eisa_irq_configured& (1<<num)) {
-		printk(KERN_WARNING
+अटल अचिन्हित पूर्णांक eisa_irq_configured;
+व्योम eisa_make_irq_level(पूर्णांक num)
+अणु
+	अगर (eisa_irq_configured& (1<<num)) अणु
+		prपूर्णांकk(KERN_WARNING
 		       "IRQ %d polarity configured twice (last to level)\n",
 		       num);
-	}
+	पूर्ण
 	eisa_irq_level |= (1<<num); /* set the corresponding bit */
 	eisa_irq_configured |= (1<<num); /* set the corresponding bit */
-}
+पूर्ण
 
-void eisa_make_irq_edge(int num)
-{
-	if (eisa_irq_configured& (1<<num)) {
-		printk(KERN_WARNING
+व्योम eisa_make_irq_edge(पूर्णांक num)
+अणु
+	अगर (eisa_irq_configured& (1<<num)) अणु
+		prपूर्णांकk(KERN_WARNING
 		       "IRQ %d polarity configured twice (last to edge)\n",
 		       num);
-	}
+	पूर्ण
 	eisa_irq_level &= ~(1<<num); /* clear the corresponding bit */
 	eisa_irq_configured |= (1<<num); /* set the corresponding bit */
-}
+पूर्ण
 
-static int __init eisa_irq_setup(char *str)
-{
-	char *cur = str;
-	int val;
+अटल पूर्णांक __init eisa_irq_setup(अक्षर *str)
+अणु
+	अक्षर *cur = str;
+	पूर्णांक val;
 
 	EISA_DBG("IRQ setup\n");
-	while (cur != NULL) {
-		char *pe;
+	जबतक (cur != शून्य) अणु
+		अक्षर *pe;
 
-		val = (int) simple_strtoul(cur, &pe, 0);
-		if (val > 15 || val < 0) {
-			printk(KERN_ERR "eisa: EISA irq value are 0-15\n");
-			continue;
-		}
-		if (val == 2) {
+		val = (पूर्णांक) simple_म_से_अदीर्घ(cur, &pe, 0);
+		अगर (val > 15 || val < 0) अणु
+			prपूर्णांकk(KERN_ERR "eisa: EISA irq value are 0-15\n");
+			जारी;
+		पूर्ण
+		अगर (val == 2) अणु
 			val = 9;
-		}
+		पूर्ण
 		eisa_make_irq_edge(val); /* clear the corresponding bit */
 		EISA_DBG("setting IRQ %d to edge-triggered mode\n", val);
 
-		if ((cur = strchr(cur, ','))) {
+		अगर ((cur = म_अक्षर(cur, ','))) अणु
 			cur++;
-		} else {
-			break;
-		}
-	}
-	return 1;
-}
+		पूर्ण अन्यथा अणु
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	वापस 1;
+पूर्ण
 
 __setup("eisa_irq_edge=", eisa_irq_setup);
 

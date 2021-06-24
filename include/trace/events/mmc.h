@@ -1,46 +1,47 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#undef TRACE_SYSTEM
-#define TRACE_SYSTEM mmc
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अघोषित TRACE_SYSTEM
+#घोषणा TRACE_SYSTEM mmc
 
-#if !defined(_TRACE_MMC_H) || defined(TRACE_HEADER_MULTI_READ)
-#define _TRACE_MMC_H
+#अगर !defined(_TRACE_MMC_H) || defined(TRACE_HEADER_MULTI_READ)
+#घोषणा _TRACE_MMC_H
 
-#include <linux/blkdev.h>
-#include <linux/mmc/core.h>
-#include <linux/mmc/host.h>
-#include <linux/tracepoint.h>
+#समावेश <linux/blkdev.h>
+#समावेश <linux/mmc/core.h>
+#समावेश <linux/mmc/host.h>
+#समावेश <linux/tracepoपूर्णांक.h>
 
 TRACE_EVENT(mmc_request_start,
 
-	TP_PROTO(struct mmc_host *host, struct mmc_request *mrq),
+	TP_PROTO(काष्ठा mmc_host *host, काष्ठा mmc_request *mrq),
 
 	TP_ARGS(host, mrq),
 
 	TP_STRUCT__entry(
 		__field(u32,			cmd_opcode)
 		__field(u32,			cmd_arg)
-		__field(unsigned int,		cmd_flags)
-		__field(unsigned int,		cmd_retries)
+		__field(अचिन्हित पूर्णांक,		cmd_flags)
+		__field(अचिन्हित पूर्णांक,		cmd_retries)
 		__field(u32,			stop_opcode)
 		__field(u32,			stop_arg)
-		__field(unsigned int,		stop_flags)
-		__field(unsigned int,		stop_retries)
+		__field(अचिन्हित पूर्णांक,		stop_flags)
+		__field(अचिन्हित पूर्णांक,		stop_retries)
 		__field(u32,			sbc_opcode)
 		__field(u32,			sbc_arg)
-		__field(unsigned int,		sbc_flags)
-		__field(unsigned int,		sbc_retries)
-		__field(unsigned int,		blocks)
-		__field(unsigned int,		blk_addr)
-		__field(unsigned int,		blksz)
-		__field(unsigned int,		data_flags)
-		__field(int,			tag)
-		__field(unsigned int,		can_retune)
-		__field(unsigned int,		doing_retune)
-		__field(unsigned int,		retune_now)
-		__field(int,			need_retune)
-		__field(int,			hold_retune)
-		__field(unsigned int,		retune_period)
-		__field(struct mmc_request *,	mrq)
+		__field(अचिन्हित पूर्णांक,		sbc_flags)
+		__field(अचिन्हित पूर्णांक,		sbc_retries)
+		__field(अचिन्हित पूर्णांक,		blocks)
+		__field(अचिन्हित पूर्णांक,		blk_addr)
+		__field(अचिन्हित पूर्णांक,		blksz)
+		__field(अचिन्हित पूर्णांक,		data_flags)
+		__field(पूर्णांक,			tag)
+		__field(अचिन्हित पूर्णांक,		can_retune)
+		__field(अचिन्हित पूर्णांक,		करोing_retune)
+		__field(अचिन्हित पूर्णांक,		retune_now)
+		__field(पूर्णांक,			need_retune)
+		__field(पूर्णांक,			hold_retune)
+		__field(अचिन्हित पूर्णांक,		retune_period)
+		__field(काष्ठा mmc_request *,	mrq)
 		__string(name,			mmc_hostname(host))
 	),
 
@@ -63,7 +64,7 @@ TRACE_EVENT(mmc_request_start,
 		__entry->data_flags = mrq->data ? mrq->data->flags : 0;
 		__entry->tag = mrq->tag;
 		__entry->can_retune = host->can_retune;
-		__entry->doing_retune = host->doing_retune;
+		__entry->करोing_retune = host->करोing_retune;
 		__entry->retune_now = host->retune_now;
 		__entry->need_retune = host->need_retune;
 		__entry->hold_retune = host->hold_retune;
@@ -72,7 +73,7 @@ TRACE_EVENT(mmc_request_start,
 		__entry->mrq = mrq;
 	),
 
-	TP_printk("%s: start struct mmc_request[%p]: "
+	TP_prपूर्णांकk("%s: start struct mmc_request[%p]: "
 		  "cmd_opcode=%u cmd_arg=0x%x cmd_flags=0x%x cmd_retries=%u "
 		  "stop_opcode=%u stop_arg=0x%x stop_flags=0x%x stop_retries=%u "
 		  "sbc_opcode=%u sbc_arg=0x%x sbc_flags=0x%x sbc_retires=%u "
@@ -88,40 +89,40 @@ TRACE_EVENT(mmc_request_start,
 		  __entry->sbc_flags, __entry->sbc_retries,
 		  __entry->blocks, __entry->blksz,
 		  __entry->blk_addr, __entry->data_flags, __entry->tag,
-		  __entry->can_retune, __entry->doing_retune,
+		  __entry->can_retune, __entry->करोing_retune,
 		  __entry->retune_now, __entry->need_retune,
 		  __entry->hold_retune, __entry->retune_period)
 );
 
-TRACE_EVENT(mmc_request_done,
+TRACE_EVENT(mmc_request_करोne,
 
-	TP_PROTO(struct mmc_host *host, struct mmc_request *mrq),
+	TP_PROTO(काष्ठा mmc_host *host, काष्ठा mmc_request *mrq),
 
 	TP_ARGS(host, mrq),
 
 	TP_STRUCT__entry(
 		__field(u32,			cmd_opcode)
-		__field(int,			cmd_err)
+		__field(पूर्णांक,			cmd_err)
 		__array(u32,			cmd_resp,	4)
-		__field(unsigned int,		cmd_retries)
+		__field(अचिन्हित पूर्णांक,		cmd_retries)
 		__field(u32,			stop_opcode)
-		__field(int,			stop_err)
+		__field(पूर्णांक,			stop_err)
 		__array(u32,			stop_resp,	4)
-		__field(unsigned int,		stop_retries)
+		__field(अचिन्हित पूर्णांक,		stop_retries)
 		__field(u32,			sbc_opcode)
-		__field(int,			sbc_err)
+		__field(पूर्णांक,			sbc_err)
 		__array(u32,			sbc_resp,	4)
-		__field(unsigned int,		sbc_retries)
-		__field(unsigned int,		bytes_xfered)
-		__field(int,			data_err)
-		__field(int,			tag)
-		__field(unsigned int,		can_retune)
-		__field(unsigned int,		doing_retune)
-		__field(unsigned int,		retune_now)
-		__field(int,			need_retune)
-		__field(int,			hold_retune)
-		__field(unsigned int,		retune_period)
-		__field(struct mmc_request *,	mrq)
+		__field(अचिन्हित पूर्णांक,		sbc_retries)
+		__field(अचिन्हित पूर्णांक,		bytes_xfered)
+		__field(पूर्णांक,			data_err)
+		__field(पूर्णांक,			tag)
+		__field(अचिन्हित पूर्णांक,		can_retune)
+		__field(अचिन्हित पूर्णांक,		करोing_retune)
+		__field(अचिन्हित पूर्णांक,		retune_now)
+		__field(पूर्णांक,			need_retune)
+		__field(पूर्णांक,			hold_retune)
+		__field(अचिन्हित पूर्णांक,		retune_period)
+		__field(काष्ठा mmc_request *,	mrq)
 		__string(name,			mmc_hostname(host))
 	),
 
@@ -151,7 +152,7 @@ TRACE_EVENT(mmc_request_done,
 		__entry->data_err = mrq->data ? mrq->data->error : 0;
 		__entry->tag = mrq->tag;
 		__entry->can_retune = host->can_retune;
-		__entry->doing_retune = host->doing_retune;
+		__entry->करोing_retune = host->करोing_retune;
 		__entry->retune_now = host->retune_now;
 		__entry->need_retune = host->need_retune;
 		__entry->hold_retune = host->hold_retune;
@@ -160,7 +161,7 @@ TRACE_EVENT(mmc_request_done,
 		__entry->mrq = mrq;
 	),
 
-	TP_printk("%s: end struct mmc_request[%p]: "
+	TP_prपूर्णांकk("%s: end struct mmc_request[%p]: "
 		  "cmd_opcode=%u cmd_err=%d cmd_resp=0x%x 0x%x 0x%x 0x%x "
 		  "cmd_retries=%u stop_opcode=%u stop_err=%d "
 		  "stop_resp=0x%x 0x%x 0x%x 0x%x stop_retries=%u "
@@ -182,12 +183,12 @@ TRACE_EVENT(mmc_request_done,
 		  __entry->sbc_resp[2], __entry->sbc_resp[3],
 		  __entry->sbc_retries,
 		  __entry->bytes_xfered, __entry->data_err, __entry->tag,
-		  __entry->can_retune, __entry->doing_retune,
+		  __entry->can_retune, __entry->करोing_retune,
 		  __entry->retune_now, __entry->need_retune,
 		  __entry->hold_retune, __entry->retune_period)
 );
 
-#endif /* _TRACE_MMC_H */
+#पूर्ण_अगर /* _TRACE_MMC_H */
 
 /* This part must be outside protection */
-#include <trace/define_trace.h>
+#समावेश <trace/define_trace.h>

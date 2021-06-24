@@ -1,87 +1,88 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
- * NCI based driver for Samsung S3FWRN5 NFC chip
+ * NCI based driver क्रम Samsung S3FWRN5 NFC chip
  *
  * Copyright (C) 2015 Samsung Electrnoics
  * Robert Baldyga <r.baldyga@samsung.com>
  */
 
-#ifndef __LOCAL_S3FWRN5_H_
-#define __LOCAL_S3FWRN5_H_
+#अगर_अघोषित __LOCAL_S3FWRN5_H_
+#घोषणा __LOCAL_S3FWRN5_H_
 
-#include <linux/nfc.h>
+#समावेश <linux/nfc.h>
 
-#include <net/nfc/nci_core.h>
+#समावेश <net/nfc/nci_core.h>
 
-#include "firmware.h"
+#समावेश "firmware.h"
 
-enum s3fwrn5_mode {
+क्रमागत s3fwrn5_mode अणु
 	S3FWRN5_MODE_COLD,
 	S3FWRN5_MODE_NCI,
 	S3FWRN5_MODE_FW,
-};
+पूर्ण;
 
-struct s3fwrn5_phy_ops {
-	void (*set_wake)(void *id, bool sleep);
-	void (*set_mode)(void *id, enum s3fwrn5_mode);
-	enum s3fwrn5_mode (*get_mode)(void *id);
-	int (*write)(void *id, struct sk_buff *skb);
-};
+काष्ठा s3fwrn5_phy_ops अणु
+	व्योम (*set_wake)(व्योम *id, bool sleep);
+	व्योम (*set_mode)(व्योम *id, क्रमागत s3fwrn5_mode);
+	क्रमागत s3fwrn5_mode (*get_mode)(व्योम *id);
+	पूर्णांक (*ग_लिखो)(व्योम *id, काष्ठा sk_buff *skb);
+पूर्ण;
 
-struct s3fwrn5_info {
-	struct nci_dev *ndev;
-	void *phy_id;
-	struct device *pdev;
+काष्ठा s3fwrn5_info अणु
+	काष्ठा nci_dev *ndev;
+	व्योम *phy_id;
+	काष्ठा device *pdev;
 
-	const struct s3fwrn5_phy_ops *phy_ops;
+	स्थिर काष्ठा s3fwrn5_phy_ops *phy_ops;
 
-	struct s3fwrn5_fw_info fw_info;
+	काष्ठा s3fwrn5_fw_info fw_info;
 
-	struct mutex mutex;
-};
+	काष्ठा mutex mutex;
+पूर्ण;
 
-static inline int s3fwrn5_set_mode(struct s3fwrn5_info *info,
-	enum s3fwrn5_mode mode)
-{
-	if (!info->phy_ops->set_mode)
-		return -EOPNOTSUPP;
+अटल अंतरभूत पूर्णांक s3fwrn5_set_mode(काष्ठा s3fwrn5_info *info,
+	क्रमागत s3fwrn5_mode mode)
+अणु
+	अगर (!info->phy_ops->set_mode)
+		वापस -EOPNOTSUPP;
 
 	info->phy_ops->set_mode(info->phy_id, mode);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static inline enum s3fwrn5_mode s3fwrn5_get_mode(struct s3fwrn5_info *info)
-{
-	if (!info->phy_ops->get_mode)
-		return -EOPNOTSUPP;
+अटल अंतरभूत क्रमागत s3fwrn5_mode s3fwrn5_get_mode(काष्ठा s3fwrn5_info *info)
+अणु
+	अगर (!info->phy_ops->get_mode)
+		वापस -EOPNOTSUPP;
 
-	return info->phy_ops->get_mode(info->phy_id);
-}
+	वापस info->phy_ops->get_mode(info->phy_id);
+पूर्ण
 
-static inline int s3fwrn5_set_wake(struct s3fwrn5_info *info, bool wake)
-{
-	if (!info->phy_ops->set_wake)
-		return -EOPNOTSUPP;
+अटल अंतरभूत पूर्णांक s3fwrn5_set_wake(काष्ठा s3fwrn5_info *info, bool wake)
+अणु
+	अगर (!info->phy_ops->set_wake)
+		वापस -EOPNOTSUPP;
 
 	info->phy_ops->set_wake(info->phy_id, wake);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static inline int s3fwrn5_write(struct s3fwrn5_info *info, struct sk_buff *skb)
-{
-	if (!info->phy_ops->write)
-		return -EOPNOTSUPP;
+अटल अंतरभूत पूर्णांक s3fwrn5_ग_लिखो(काष्ठा s3fwrn5_info *info, काष्ठा sk_buff *skb)
+अणु
+	अगर (!info->phy_ops->ग_लिखो)
+		वापस -EOPNOTSUPP;
 
-	return info->phy_ops->write(info->phy_id, skb);
-}
+	वापस info->phy_ops->ग_लिखो(info->phy_id, skb);
+पूर्ण
 
-int s3fwrn5_probe(struct nci_dev **ndev, void *phy_id, struct device *pdev,
-	const struct s3fwrn5_phy_ops *phy_ops);
-void s3fwrn5_remove(struct nci_dev *ndev);
+पूर्णांक s3fwrn5_probe(काष्ठा nci_dev **ndev, व्योम *phy_id, काष्ठा device *pdev,
+	स्थिर काष्ठा s3fwrn5_phy_ops *phy_ops);
+व्योम s3fwrn5_हटाओ(काष्ठा nci_dev *ndev);
 
-int s3fwrn5_recv_frame(struct nci_dev *ndev, struct sk_buff *skb,
-	enum s3fwrn5_mode mode);
+पूर्णांक s3fwrn5_recv_frame(काष्ठा nci_dev *ndev, काष्ठा sk_buff *skb,
+	क्रमागत s3fwrn5_mode mode);
 
-#endif /* __LOCAL_S3FWRN5_H_ */
+#पूर्ण_अगर /* __LOCAL_S3FWRN5_H_ */

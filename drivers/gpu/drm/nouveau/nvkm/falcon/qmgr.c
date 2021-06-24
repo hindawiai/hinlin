@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright (c) 2017, NVIDIA CORPORATION. All rights reserved.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -20,68 +21,68 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  *
  */
-#include "qmgr.h"
+#समावेश "qmgr.h"
 
-struct nvkm_falcon_qmgr_seq *
-nvkm_falcon_qmgr_seq_acquire(struct nvkm_falcon_qmgr *qmgr)
-{
-	const struct nvkm_subdev *subdev = qmgr->falcon->owner;
-	struct nvkm_falcon_qmgr_seq *seq;
+काष्ठा nvkm_falcon_qmgr_seq *
+nvkm_falcon_qmgr_seq_acquire(काष्ठा nvkm_falcon_qmgr *qmgr)
+अणु
+	स्थिर काष्ठा nvkm_subdev *subdev = qmgr->falcon->owner;
+	काष्ठा nvkm_falcon_qmgr_seq *seq;
 	u32 index;
 
 	mutex_lock(&qmgr->seq.mutex);
 	index = find_first_zero_bit(qmgr->seq.tbl, NVKM_FALCON_QMGR_SEQ_NUM);
-	if (index >= NVKM_FALCON_QMGR_SEQ_NUM) {
+	अगर (index >= NVKM_FALCON_QMGR_SEQ_NUM) अणु
 		nvkm_error(subdev, "no free sequence available\n");
 		mutex_unlock(&qmgr->seq.mutex);
-		return ERR_PTR(-EAGAIN);
-	}
+		वापस ERR_PTR(-EAGAIN);
+	पूर्ण
 
 	set_bit(index, qmgr->seq.tbl);
 	mutex_unlock(&qmgr->seq.mutex);
 
 	seq = &qmgr->seq.id[index];
 	seq->state = SEQ_STATE_PENDING;
-	return seq;
-}
+	वापस seq;
+पूर्ण
 
-void
-nvkm_falcon_qmgr_seq_release(struct nvkm_falcon_qmgr *qmgr,
-			     struct nvkm_falcon_qmgr_seq *seq)
-{
+व्योम
+nvkm_falcon_qmgr_seq_release(काष्ठा nvkm_falcon_qmgr *qmgr,
+			     काष्ठा nvkm_falcon_qmgr_seq *seq)
+अणु
 	/* no need to acquire seq.mutex since clear_bit is atomic */
 	seq->state = SEQ_STATE_FREE;
-	seq->callback = NULL;
-	reinit_completion(&seq->done);
+	seq->callback = शून्य;
+	reinit_completion(&seq->करोne);
 	clear_bit(seq->id, qmgr->seq.tbl);
-}
+पूर्ण
 
-void
-nvkm_falcon_qmgr_del(struct nvkm_falcon_qmgr **pqmgr)
-{
-	struct nvkm_falcon_qmgr *qmgr = *pqmgr;
-	if (qmgr) {
-		kfree(*pqmgr);
-		*pqmgr = NULL;
-	}
-}
+व्योम
+nvkm_falcon_qmgr_del(काष्ठा nvkm_falcon_qmgr **pqmgr)
+अणु
+	काष्ठा nvkm_falcon_qmgr *qmgr = *pqmgr;
+	अगर (qmgr) अणु
+		kमुक्त(*pqmgr);
+		*pqmgr = शून्य;
+	पूर्ण
+पूर्ण
 
-int
-nvkm_falcon_qmgr_new(struct nvkm_falcon *falcon,
-		     struct nvkm_falcon_qmgr **pqmgr)
-{
-	struct nvkm_falcon_qmgr *qmgr;
-	int i;
+पूर्णांक
+nvkm_falcon_qmgr_new(काष्ठा nvkm_falcon *falcon,
+		     काष्ठा nvkm_falcon_qmgr **pqmgr)
+अणु
+	काष्ठा nvkm_falcon_qmgr *qmgr;
+	पूर्णांक i;
 
-	if (!(qmgr = *pqmgr = kzalloc(sizeof(*qmgr), GFP_KERNEL)))
-		return -ENOMEM;
+	अगर (!(qmgr = *pqmgr = kzalloc(माप(*qmgr), GFP_KERNEL)))
+		वापस -ENOMEM;
 
 	qmgr->falcon = falcon;
 	mutex_init(&qmgr->seq.mutex);
-	for (i = 0; i < NVKM_FALCON_QMGR_SEQ_NUM; i++) {
+	क्रम (i = 0; i < NVKM_FALCON_QMGR_SEQ_NUM; i++) अणु
 		qmgr->seq.id[i].id = i;
-		init_completion(&qmgr->seq.id[i].done);
-	}
+		init_completion(&qmgr->seq.id[i].करोne);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

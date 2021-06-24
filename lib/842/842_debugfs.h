@@ -1,50 +1,51 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 
-#ifndef __842_DEBUGFS_H__
-#define __842_DEBUGFS_H__
+#अगर_अघोषित __842_DEBUGFS_H__
+#घोषणा __842_DEBUGFS_H__
 
-#include <linux/debugfs.h>
+#समावेश <linux/debugfs.h>
 
-static bool sw842_template_counts;
-module_param_named(template_counts, sw842_template_counts, bool, 0444);
+अटल bool sw842_ढाँचा_counts;
+module_param_named(ढाँचा_counts, sw842_ढाँचा_counts, bool, 0444);
 
-static atomic_t template_count[OPS_MAX], template_repeat_count,
-	template_zeros_count, template_short_data_count, template_end_count;
+अटल atomic_t ढाँचा_count[OPS_MAX], ढाँचा_repeat_count,
+	ढाँचा_zeros_count, ढाँचा_लघु_data_count, ढाँचा_end_count;
 
-static struct dentry *sw842_debugfs_root;
+अटल काष्ठा dentry *sw842_debugfs_root;
 
-static int __init sw842_debugfs_create(void)
-{
+अटल पूर्णांक __init sw842_debugfs_create(व्योम)
+अणु
 	umode_t m = S_IRUGO | S_IWUSR;
-	int i;
+	पूर्णांक i;
 
-	if (!debugfs_initialized())
-		return -ENODEV;
+	अगर (!debugfs_initialized())
+		वापस -ENODEV;
 
-	sw842_debugfs_root = debugfs_create_dir(MODULE_NAME, NULL);
+	sw842_debugfs_root = debugfs_create_dir(MODULE_NAME, शून्य);
 
-	for (i = 0; i < ARRAY_SIZE(template_count); i++) {
-		char name[32];
+	क्रम (i = 0; i < ARRAY_SIZE(ढाँचा_count); i++) अणु
+		अक्षर name[32];
 
-		snprintf(name, 32, "template_%02x", i);
+		snम_लिखो(name, 32, "template_%02x", i);
 		debugfs_create_atomic_t(name, m, sw842_debugfs_root,
-					&template_count[i]);
-	}
+					&ढाँचा_count[i]);
+	पूर्ण
 	debugfs_create_atomic_t("template_repeat", m, sw842_debugfs_root,
-				&template_repeat_count);
+				&ढाँचा_repeat_count);
 	debugfs_create_atomic_t("template_zeros", m, sw842_debugfs_root,
-				&template_zeros_count);
+				&ढाँचा_zeros_count);
 	debugfs_create_atomic_t("template_short_data", m, sw842_debugfs_root,
-				&template_short_data_count);
+				&ढाँचा_लघु_data_count);
 	debugfs_create_atomic_t("template_end", m, sw842_debugfs_root,
-				&template_end_count);
+				&ढाँचा_end_count);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void __exit sw842_debugfs_remove(void)
-{
-	debugfs_remove_recursive(sw842_debugfs_root);
-}
+अटल व्योम __निकास sw842_debugfs_हटाओ(व्योम)
+अणु
+	debugfs_हटाओ_recursive(sw842_debugfs_root);
+पूर्ण
 
-#endif
+#पूर्ण_अगर

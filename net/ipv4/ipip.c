@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  *	Linux NET3:	IP/IP protocol decoder.
  *
@@ -9,14 +10,14 @@
  *		Alan Cox	:	Merged and made usable non modular (its so tiny its silly as
  *					a module taking up 2 pages).
  *		Alan Cox	: 	Fixed bug with 1.3.18 and IPIP not working (now needs to set skb->h.iph)
- *					to keep ip_forward happy.
- *		Alan Cox	:	More fixes for 1.3.21, and firewall fix. Maybe this will work soon 8).
- *		Kai Schulte	:	Fixed #defines for IP_FIREWALL->FIREWALL
- *              David Woodhouse :       Perform some basic ICMP handling.
+ *					to keep ip_क्रमward happy.
+ *		Alan Cox	:	More fixes क्रम 1.3.21, and firewall fix. Maybe this will work soon 8).
+ *		Kai Schulte	:	Fixed #घोषणाs क्रम IP_FIREWALL->FIREWALL
+ *              David Woodhouse :       Perक्रमm some basic ICMP handling.
  *                                      IPIP Routing without decapsulation.
  *              Carlos Picoto   :       GRE over IP support
  *		Alexey Kuznetsov:	Reworked. Really, now it is truncated version of ipv4/ip_gre.c.
- *					I do not want to merge them together.
+ *					I करो not want to merge them together.
  */
 
 /* tunnel.c: an IP tunnel driver
@@ -25,7 +26,7 @@
 	which you can tunnel network traffic transparently across subnets.
 
 	This was written by looking at Nick Holloway's dummy driver
-	Thanks for the great code!
+	Thanks क्रम the great code!
 
 		-Sam Lantinga	(slouken@cs.ucdavis.edu)  02/01/95
 
@@ -40,9 +41,9 @@
 
 	Reworked:
 		Changed to tunnel to destination gateway in addition to the
-			tunnel's pointopoint address
+			tunnel's poपूर्णांकopoपूर्णांक address
 		Almost completely rewritten
-		Note:  There is currently no firewall or ICMP handling done.
+		Note:  There is currently no firewall or ICMP handling करोne.
 
 		-Sam Lantinga	(slouken@cs.ucdavis.edu) 02/13/96
 
@@ -57,26 +58,26 @@
 	When we are passed a packet, we are expected to fill in the
 	source address with our source IP address.
 
-	What is the proper way to allocate, copy and free a buffer?
+	What is the proper way to allocate, copy and मुक्त a buffer?
 	After you allocate it, it is a "0 length" chunk of memory
 	starting at zero.  If you want to add headers to the buffer
 	later, you'll have to call "skb_reserve(skb, amount)" with
 	the amount of memory you want reserved.  Then, you call
 	"skb_put(skb, amount)" with the amount of space you want in
-	the buffer.  skb_put() returns a pointer to the top (#0) of
+	the buffer.  skb_put() वापसs a poपूर्णांकer to the top (#0) of
 	that buffer.  skb->len is set to the amount of space you have
-	"allocated" with skb_put().  You can then write up to skb->len
+	"allocated" with skb_put().  You can then ग_लिखो up to skb->len
 	bytes to that buffer.  If you need more, you can call skb_put()
 	again with the additional amount of space you need.  You can
 	find out how much more space you can allocate by calling
 	"skb_tailroom(skb)".
 	Now, to add header space, call "skb_push(skb, header_len)".
-	This creates space at the beginning of the buffer and returns
-	a pointer to this new space.  If later you need to strip a
+	This creates space at the beginning of the buffer and वापसs
+	a poपूर्णांकer to this new space.  If later you need to strip a
 	header from a buffer, call "skb_pull(skb, header_len)".
-	skb_headroom() will return how much space is left at the top
-	of the buffer (before the main data).  Remember, this headroom
-	space must be reserved before the skb_put() function is called.
+	skb_headroom() will वापस how much space is left at the top
+	of the buffer (beक्रमe the मुख्य data).  Remember, this headroom
+	space must be reserved beक्रमe the skb_put() function is called.
 	*/
 
 /*
@@ -86,280 +87,280 @@
  */
 
 
-#include <linux/capability.h>
-#include <linux/module.h>
-#include <linux/types.h>
-#include <linux/kernel.h>
-#include <linux/slab.h>
-#include <linux/uaccess.h>
-#include <linux/skbuff.h>
-#include <linux/netdevice.h>
-#include <linux/in.h>
-#include <linux/tcp.h>
-#include <linux/udp.h>
-#include <linux/if_arp.h>
-#include <linux/init.h>
-#include <linux/netfilter_ipv4.h>
-#include <linux/if_ether.h>
+#समावेश <linux/capability.h>
+#समावेश <linux/module.h>
+#समावेश <linux/types.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/uaccess.h>
+#समावेश <linux/skbuff.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/in.h>
+#समावेश <linux/tcp.h>
+#समावेश <linux/udp.h>
+#समावेश <linux/अगर_arp.h>
+#समावेश <linux/init.h>
+#समावेश <linux/netfilter_ipv4.h>
+#समावेश <linux/अगर_ether.h>
 
-#include <net/sock.h>
-#include <net/ip.h>
-#include <net/icmp.h>
-#include <net/ip_tunnels.h>
-#include <net/inet_ecn.h>
-#include <net/xfrm.h>
-#include <net/net_namespace.h>
-#include <net/netns/generic.h>
-#include <net/dst_metadata.h>
+#समावेश <net/sock.h>
+#समावेश <net/ip.h>
+#समावेश <net/icmp.h>
+#समावेश <net/ip_tunnels.h>
+#समावेश <net/inet_ecn.h>
+#समावेश <net/xfrm.h>
+#समावेश <net/net_namespace.h>
+#समावेश <net/netns/generic.h>
+#समावेश <net/dst_metadata.h>
 
-static bool log_ecn_error = true;
+अटल bool log_ecn_error = true;
 module_param(log_ecn_error, bool, 0644);
 MODULE_PARM_DESC(log_ecn_error, "Log packets received with corrupted ECN");
 
-static unsigned int ipip_net_id __read_mostly;
+अटल अचिन्हित पूर्णांक ipip_net_id __पढ़ो_mostly;
 
-static int ipip_tunnel_init(struct net_device *dev);
-static struct rtnl_link_ops ipip_link_ops __read_mostly;
+अटल पूर्णांक ipip_tunnel_init(काष्ठा net_device *dev);
+अटल काष्ठा rtnl_link_ops ipip_link_ops __पढ़ो_mostly;
 
-static int ipip_err(struct sk_buff *skb, u32 info)
-{
-	/* All the routers (except for Linux) return only
+अटल पूर्णांक ipip_err(काष्ठा sk_buff *skb, u32 info)
+अणु
+	/* All the routers (except क्रम Linux) वापस only
 	 * 8 bytes of packet payload. It means, that precise relaying of
-	 * ICMP in the real Internet is absolutely infeasible.
+	 * ICMP in the real Internet is असलolutely infeasible.
 	 */
-	struct net *net = dev_net(skb->dev);
-	struct ip_tunnel_net *itn = net_generic(net, ipip_net_id);
-	const struct iphdr *iph = (const struct iphdr *)skb->data;
-	const int type = icmp_hdr(skb)->type;
-	const int code = icmp_hdr(skb)->code;
-	struct ip_tunnel *t;
-	int err = 0;
+	काष्ठा net *net = dev_net(skb->dev);
+	काष्ठा ip_tunnel_net *itn = net_generic(net, ipip_net_id);
+	स्थिर काष्ठा iphdr *iph = (स्थिर काष्ठा iphdr *)skb->data;
+	स्थिर पूर्णांक type = icmp_hdr(skb)->type;
+	स्थिर पूर्णांक code = icmp_hdr(skb)->code;
+	काष्ठा ip_tunnel *t;
+	पूर्णांक err = 0;
 
-	t = ip_tunnel_lookup(itn, skb->dev->ifindex, TUNNEL_NO_KEY,
+	t = ip_tunnel_lookup(itn, skb->dev->अगरindex, TUNNEL_NO_KEY,
 			     iph->daddr, iph->saddr, 0);
-	if (!t) {
+	अगर (!t) अणु
 		err = -ENOENT;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	switch (type) {
-	case ICMP_DEST_UNREACH:
-		switch (code) {
-		case ICMP_SR_FAILED:
+	चयन (type) अणु
+	हाल ICMP_DEST_UNREACH:
+		चयन (code) अणु
+		हाल ICMP_SR_FAILED:
 			/* Impossible event. */
-			goto out;
-		default:
+			जाओ out;
+		शेष:
 			/* All others are translated to HOST_UNREACH.
 			 * rfc2003 contains "deep thoughts" about NET_UNREACH,
 			 * I believe they are just ether pollution. --ANK
 			 */
-			break;
-		}
-		break;
+			अवरोध;
+		पूर्ण
+		अवरोध;
 
-	case ICMP_TIME_EXCEEDED:
-		if (code != ICMP_EXC_TTL)
-			goto out;
-		break;
+	हाल ICMP_TIME_EXCEEDED:
+		अगर (code != ICMP_EXC_TTL)
+			जाओ out;
+		अवरोध;
 
-	case ICMP_REDIRECT:
-		break;
+	हाल ICMP_REसूचीECT:
+		अवरोध;
 
-	default:
-		goto out;
-	}
+	शेष:
+		जाओ out;
+	पूर्ण
 
-	if (type == ICMP_DEST_UNREACH && code == ICMP_FRAG_NEEDED) {
+	अगर (type == ICMP_DEST_UNREACH && code == ICMP_FRAG_NEEDED) अणु
 		ipv4_update_pmtu(skb, net, info, t->parms.link, iph->protocol);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (type == ICMP_REDIRECT) {
+	अगर (type == ICMP_REसूचीECT) अणु
 		ipv4_redirect(skb, net, t->parms.link, iph->protocol);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (t->parms.iph.daddr == 0) {
+	अगर (t->parms.iph.daddr == 0) अणु
 		err = -ENOENT;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (t->parms.iph.ttl == 0 && type == ICMP_TIME_EXCEEDED)
-		goto out;
+	अगर (t->parms.iph.ttl == 0 && type == ICMP_TIME_EXCEEDED)
+		जाओ out;
 
-	if (time_before(jiffies, t->err_time + IPTUNNEL_ERR_TIMEO))
+	अगर (समय_beक्रमe(jअगरfies, t->err_समय + IPTUNNEL_ERR_TIMEO))
 		t->err_count++;
-	else
+	अन्यथा
 		t->err_count = 1;
-	t->err_time = jiffies;
+	t->err_समय = jअगरfies;
 
 out:
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static const struct tnl_ptk_info ipip_tpi = {
-	/* no tunnel info required for ipip. */
+अटल स्थिर काष्ठा tnl_ptk_info ipip_tpi = अणु
+	/* no tunnel info required क्रम ipip. */
 	.proto = htons(ETH_P_IP),
-};
+पूर्ण;
 
-#if IS_ENABLED(CONFIG_MPLS)
-static const struct tnl_ptk_info mplsip_tpi = {
-	/* no tunnel info required for mplsip. */
+#अगर IS_ENABLED(CONFIG_MPLS)
+अटल स्थिर काष्ठा tnl_ptk_info mplsip_tpi = अणु
+	/* no tunnel info required क्रम mplsip. */
 	.proto = htons(ETH_P_MPLS_UC),
-};
-#endif
+पूर्ण;
+#पूर्ण_अगर
 
-static int ipip_tunnel_rcv(struct sk_buff *skb, u8 ipproto)
-{
-	struct net *net = dev_net(skb->dev);
-	struct ip_tunnel_net *itn = net_generic(net, ipip_net_id);
-	struct metadata_dst *tun_dst = NULL;
-	struct ip_tunnel *tunnel;
-	const struct iphdr *iph;
+अटल पूर्णांक ipip_tunnel_rcv(काष्ठा sk_buff *skb, u8 ipproto)
+अणु
+	काष्ठा net *net = dev_net(skb->dev);
+	काष्ठा ip_tunnel_net *itn = net_generic(net, ipip_net_id);
+	काष्ठा metadata_dst *tun_dst = शून्य;
+	काष्ठा ip_tunnel *tunnel;
+	स्थिर काष्ठा iphdr *iph;
 
 	iph = ip_hdr(skb);
-	tunnel = ip_tunnel_lookup(itn, skb->dev->ifindex, TUNNEL_NO_KEY,
+	tunnel = ip_tunnel_lookup(itn, skb->dev->अगरindex, TUNNEL_NO_KEY,
 			iph->saddr, iph->daddr, 0);
-	if (tunnel) {
-		const struct tnl_ptk_info *tpi;
+	अगर (tunnel) अणु
+		स्थिर काष्ठा tnl_ptk_info *tpi;
 
-		if (tunnel->parms.iph.protocol != ipproto &&
+		अगर (tunnel->parms.iph.protocol != ipproto &&
 		    tunnel->parms.iph.protocol != 0)
-			goto drop;
+			जाओ drop;
 
-		if (!xfrm4_policy_check(NULL, XFRM_POLICY_IN, skb))
-			goto drop;
-#if IS_ENABLED(CONFIG_MPLS)
-		if (ipproto == IPPROTO_MPLS)
+		अगर (!xfrm4_policy_check(शून्य, XFRM_POLICY_IN, skb))
+			जाओ drop;
+#अगर IS_ENABLED(CONFIG_MPLS)
+		अगर (ipproto == IPPROTO_MPLS)
 			tpi = &mplsip_tpi;
-		else
-#endif
+		अन्यथा
+#पूर्ण_अगर
 			tpi = &ipip_tpi;
-		if (iptunnel_pull_header(skb, 0, tpi->proto, false))
-			goto drop;
-		if (tunnel->collect_md) {
+		अगर (iptunnel_pull_header(skb, 0, tpi->proto, false))
+			जाओ drop;
+		अगर (tunnel->collect_md) अणु
 			tun_dst = ip_tun_rx_dst(skb, 0, 0, 0);
-			if (!tun_dst)
-				return 0;
-		}
-		return ip_tunnel_rcv(tunnel, skb, tpi, tun_dst, log_ecn_error);
-	}
+			अगर (!tun_dst)
+				वापस 0;
+		पूर्ण
+		वापस ip_tunnel_rcv(tunnel, skb, tpi, tun_dst, log_ecn_error);
+	पूर्ण
 
-	return -1;
+	वापस -1;
 
 drop:
-	kfree_skb(skb);
-	return 0;
-}
+	kमुक्त_skb(skb);
+	वापस 0;
+पूर्ण
 
-static int ipip_rcv(struct sk_buff *skb)
-{
-	return ipip_tunnel_rcv(skb, IPPROTO_IPIP);
-}
+अटल पूर्णांक ipip_rcv(काष्ठा sk_buff *skb)
+अणु
+	वापस ipip_tunnel_rcv(skb, IPPROTO_IPIP);
+पूर्ण
 
-#if IS_ENABLED(CONFIG_MPLS)
-static int mplsip_rcv(struct sk_buff *skb)
-{
-	return ipip_tunnel_rcv(skb, IPPROTO_MPLS);
-}
-#endif
+#अगर IS_ENABLED(CONFIG_MPLS)
+अटल पूर्णांक mplsip_rcv(काष्ठा sk_buff *skb)
+अणु
+	वापस ipip_tunnel_rcv(skb, IPPROTO_MPLS);
+पूर्ण
+#पूर्ण_अगर
 
 /*
  *	This function assumes it is being called from dev_queue_xmit()
  *	and that skb is filled properly by that function.
  */
-static netdev_tx_t ipip_tunnel_xmit(struct sk_buff *skb,
-				    struct net_device *dev)
-{
-	struct ip_tunnel *tunnel = netdev_priv(dev);
-	const struct iphdr  *tiph = &tunnel->parms.iph;
+अटल netdev_tx_t ipip_tunnel_xmit(काष्ठा sk_buff *skb,
+				    काष्ठा net_device *dev)
+अणु
+	काष्ठा ip_tunnel *tunnel = netdev_priv(dev);
+	स्थिर काष्ठा iphdr  *tiph = &tunnel->parms.iph;
 	u8 ipproto;
 
-	if (!pskb_inet_may_pull(skb))
-		goto tx_error;
+	अगर (!pskb_inet_may_pull(skb))
+		जाओ tx_error;
 
-	switch (skb->protocol) {
-	case htons(ETH_P_IP):
+	चयन (skb->protocol) अणु
+	हाल htons(ETH_P_IP):
 		ipproto = IPPROTO_IPIP;
-		break;
-#if IS_ENABLED(CONFIG_MPLS)
-	case htons(ETH_P_MPLS_UC):
+		अवरोध;
+#अगर IS_ENABLED(CONFIG_MPLS)
+	हाल htons(ETH_P_MPLS_UC):
 		ipproto = IPPROTO_MPLS;
-		break;
-#endif
-	default:
-		goto tx_error;
-	}
+		अवरोध;
+#पूर्ण_अगर
+	शेष:
+		जाओ tx_error;
+	पूर्ण
 
-	if (tiph->protocol != ipproto && tiph->protocol != 0)
-		goto tx_error;
+	अगर (tiph->protocol != ipproto && tiph->protocol != 0)
+		जाओ tx_error;
 
-	if (iptunnel_handle_offloads(skb, SKB_GSO_IPXIP4))
-		goto tx_error;
+	अगर (iptunnel_handle_offloads(skb, SKB_GSO_IPXIP4))
+		जाओ tx_error;
 
 	skb_set_inner_ipproto(skb, ipproto);
 
-	if (tunnel->collect_md)
+	अगर (tunnel->collect_md)
 		ip_md_tunnel_xmit(skb, dev, ipproto, 0);
-	else
+	अन्यथा
 		ip_tunnel_xmit(skb, dev, tiph, ipproto);
-	return NETDEV_TX_OK;
+	वापस NETDEV_TX_OK;
 
 tx_error:
-	kfree_skb(skb);
+	kमुक्त_skb(skb);
 
 	dev->stats.tx_errors++;
-	return NETDEV_TX_OK;
-}
+	वापस NETDEV_TX_OK;
+पूर्ण
 
-static bool ipip_tunnel_ioctl_verify_protocol(u8 ipproto)
-{
-	switch (ipproto) {
-	case 0:
-	case IPPROTO_IPIP:
-#if IS_ENABLED(CONFIG_MPLS)
-	case IPPROTO_MPLS:
-#endif
-		return true;
-	}
+अटल bool ipip_tunnel_ioctl_verअगरy_protocol(u8 ipproto)
+अणु
+	चयन (ipproto) अणु
+	हाल 0:
+	हाल IPPROTO_IPIP:
+#अगर IS_ENABLED(CONFIG_MPLS)
+	हाल IPPROTO_MPLS:
+#पूर्ण_अगर
+		वापस true;
+	पूर्ण
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static int
-ipip_tunnel_ctl(struct net_device *dev, struct ip_tunnel_parm *p, int cmd)
-{
-	if (cmd == SIOCADDTUNNEL || cmd == SIOCCHGTUNNEL) {
-		if (p->iph.version != 4 ||
-		    !ipip_tunnel_ioctl_verify_protocol(p->iph.protocol) ||
+अटल पूर्णांक
+ipip_tunnel_ctl(काष्ठा net_device *dev, काष्ठा ip_tunnel_parm *p, पूर्णांक cmd)
+अणु
+	अगर (cmd == SIOCADDTUNNEL || cmd == SIOCCHGTUNNEL) अणु
+		अगर (p->iph.version != 4 ||
+		    !ipip_tunnel_ioctl_verअगरy_protocol(p->iph.protocol) ||
 		    p->iph.ihl != 5 || (p->iph.frag_off & htons(~IP_DF)))
-			return -EINVAL;
-	}
+			वापस -EINVAL;
+	पूर्ण
 
 	p->i_key = p->o_key = 0;
 	p->i_flags = p->o_flags = 0;
-	return ip_tunnel_ctl(dev, p, cmd);
-}
+	वापस ip_tunnel_ctl(dev, p, cmd);
+पूर्ण
 
-static const struct net_device_ops ipip_netdev_ops = {
-	.ndo_init       = ipip_tunnel_init,
-	.ndo_uninit     = ip_tunnel_uninit,
-	.ndo_start_xmit	= ipip_tunnel_xmit,
-	.ndo_do_ioctl	= ip_tunnel_ioctl,
-	.ndo_change_mtu = ip_tunnel_change_mtu,
-	.ndo_get_stats64 = dev_get_tstats64,
-	.ndo_get_iflink = ip_tunnel_get_iflink,
-	.ndo_tunnel_ctl	= ipip_tunnel_ctl,
-};
+अटल स्थिर काष्ठा net_device_ops ipip_netdev_ops = अणु
+	.nकरो_init       = ipip_tunnel_init,
+	.nकरो_uninit     = ip_tunnel_uninit,
+	.nकरो_start_xmit	= ipip_tunnel_xmit,
+	.nकरो_करो_ioctl	= ip_tunnel_ioctl,
+	.nकरो_change_mtu = ip_tunnel_change_mtu,
+	.nकरो_get_stats64 = dev_get_tstats64,
+	.nकरो_get_अगरlink = ip_tunnel_get_अगरlink,
+	.nकरो_tunnel_ctl	= ipip_tunnel_ctl,
+पूर्ण;
 
-#define IPIP_FEATURES (NETIF_F_SG |		\
+#घोषणा IPIP_FEATURES (NETIF_F_SG |		\
 		       NETIF_F_FRAGLIST |	\
 		       NETIF_F_HIGHDMA |	\
 		       NETIF_F_GSO_SOFTWARE |	\
 		       NETIF_F_HW_CSUM)
 
-static void ipip_tunnel_setup(struct net_device *dev)
-{
+अटल व्योम ipip_tunnel_setup(काष्ठा net_device *dev)
+अणु
 	dev->netdev_ops		= &ipip_netdev_ops;
 	dev->header_ops		= &ip_tunnel_header_ops;
 
@@ -367,170 +368,170 @@ static void ipip_tunnel_setup(struct net_device *dev)
 	dev->flags		= IFF_NOARP;
 	dev->addr_len		= 4;
 	dev->features		|= NETIF_F_LLTX;
-	netif_keep_dst(dev);
+	netअगर_keep_dst(dev);
 
 	dev->features		|= IPIP_FEATURES;
 	dev->hw_features	|= IPIP_FEATURES;
 	ip_tunnel_setup(dev, ipip_net_id);
-}
+पूर्ण
 
-static int ipip_tunnel_init(struct net_device *dev)
-{
-	struct ip_tunnel *tunnel = netdev_priv(dev);
+अटल पूर्णांक ipip_tunnel_init(काष्ठा net_device *dev)
+अणु
+	काष्ठा ip_tunnel *tunnel = netdev_priv(dev);
 
-	memcpy(dev->dev_addr, &tunnel->parms.iph.saddr, 4);
-	memcpy(dev->broadcast, &tunnel->parms.iph.daddr, 4);
+	स_नकल(dev->dev_addr, &tunnel->parms.iph.saddr, 4);
+	स_नकल(dev->broadcast, &tunnel->parms.iph.daddr, 4);
 
 	tunnel->tun_hlen = 0;
 	tunnel->hlen = tunnel->tun_hlen + tunnel->encap_hlen;
-	return ip_tunnel_init(dev);
-}
+	वापस ip_tunnel_init(dev);
+पूर्ण
 
-static int ipip_tunnel_validate(struct nlattr *tb[], struct nlattr *data[],
-				struct netlink_ext_ack *extack)
-{
+अटल पूर्णांक ipip_tunnel_validate(काष्ठा nlattr *tb[], काष्ठा nlattr *data[],
+				काष्ठा netlink_ext_ack *extack)
+अणु
 	u8 proto;
 
-	if (!data || !data[IFLA_IPTUN_PROTO])
-		return 0;
+	अगर (!data || !data[IFLA_IPTUN_PROTO])
+		वापस 0;
 
 	proto = nla_get_u8(data[IFLA_IPTUN_PROTO]);
-	if (proto != IPPROTO_IPIP && proto != IPPROTO_MPLS && proto != 0)
-		return -EINVAL;
+	अगर (proto != IPPROTO_IPIP && proto != IPPROTO_MPLS && proto != 0)
+		वापस -EINVAL;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void ipip_netlink_parms(struct nlattr *data[],
-			       struct ip_tunnel_parm *parms, bool *collect_md,
+अटल व्योम ipip_netlink_parms(काष्ठा nlattr *data[],
+			       काष्ठा ip_tunnel_parm *parms, bool *collect_md,
 			       __u32 *fwmark)
-{
-	memset(parms, 0, sizeof(*parms));
+अणु
+	स_रखो(parms, 0, माप(*parms));
 
 	parms->iph.version = 4;
 	parms->iph.protocol = IPPROTO_IPIP;
 	parms->iph.ihl = 5;
 	*collect_md = false;
 
-	if (!data)
-		return;
+	अगर (!data)
+		वापस;
 
-	if (data[IFLA_IPTUN_LINK])
+	अगर (data[IFLA_IPTUN_LINK])
 		parms->link = nla_get_u32(data[IFLA_IPTUN_LINK]);
 
-	if (data[IFLA_IPTUN_LOCAL])
+	अगर (data[IFLA_IPTUN_LOCAL])
 		parms->iph.saddr = nla_get_in_addr(data[IFLA_IPTUN_LOCAL]);
 
-	if (data[IFLA_IPTUN_REMOTE])
+	अगर (data[IFLA_IPTUN_REMOTE])
 		parms->iph.daddr = nla_get_in_addr(data[IFLA_IPTUN_REMOTE]);
 
-	if (data[IFLA_IPTUN_TTL]) {
+	अगर (data[IFLA_IPTUN_TTL]) अणु
 		parms->iph.ttl = nla_get_u8(data[IFLA_IPTUN_TTL]);
-		if (parms->iph.ttl)
+		अगर (parms->iph.ttl)
 			parms->iph.frag_off = htons(IP_DF);
-	}
+	पूर्ण
 
-	if (data[IFLA_IPTUN_TOS])
+	अगर (data[IFLA_IPTUN_TOS])
 		parms->iph.tos = nla_get_u8(data[IFLA_IPTUN_TOS]);
 
-	if (data[IFLA_IPTUN_PROTO])
+	अगर (data[IFLA_IPTUN_PROTO])
 		parms->iph.protocol = nla_get_u8(data[IFLA_IPTUN_PROTO]);
 
-	if (!data[IFLA_IPTUN_PMTUDISC] || nla_get_u8(data[IFLA_IPTUN_PMTUDISC]))
+	अगर (!data[IFLA_IPTUN_PMTUDISC] || nla_get_u8(data[IFLA_IPTUN_PMTUDISC]))
 		parms->iph.frag_off = htons(IP_DF);
 
-	if (data[IFLA_IPTUN_COLLECT_METADATA])
+	अगर (data[IFLA_IPTUN_COLLECT_METADATA])
 		*collect_md = true;
 
-	if (data[IFLA_IPTUN_FWMARK])
+	अगर (data[IFLA_IPTUN_FWMARK])
 		*fwmark = nla_get_u32(data[IFLA_IPTUN_FWMARK]);
-}
+पूर्ण
 
-/* This function returns true when ENCAP attributes are present in the nl msg */
-static bool ipip_netlink_encap_parms(struct nlattr *data[],
-				     struct ip_tunnel_encap *ipencap)
-{
+/* This function वापसs true when ENCAP attributes are present in the nl msg */
+अटल bool ipip_netlink_encap_parms(काष्ठा nlattr *data[],
+				     काष्ठा ip_tunnel_encap *ipencap)
+अणु
 	bool ret = false;
 
-	memset(ipencap, 0, sizeof(*ipencap));
+	स_रखो(ipencap, 0, माप(*ipencap));
 
-	if (!data)
-		return ret;
+	अगर (!data)
+		वापस ret;
 
-	if (data[IFLA_IPTUN_ENCAP_TYPE]) {
+	अगर (data[IFLA_IPTUN_ENCAP_TYPE]) अणु
 		ret = true;
 		ipencap->type = nla_get_u16(data[IFLA_IPTUN_ENCAP_TYPE]);
-	}
+	पूर्ण
 
-	if (data[IFLA_IPTUN_ENCAP_FLAGS]) {
+	अगर (data[IFLA_IPTUN_ENCAP_FLAGS]) अणु
 		ret = true;
 		ipencap->flags = nla_get_u16(data[IFLA_IPTUN_ENCAP_FLAGS]);
-	}
+	पूर्ण
 
-	if (data[IFLA_IPTUN_ENCAP_SPORT]) {
+	अगर (data[IFLA_IPTUN_ENCAP_SPORT]) अणु
 		ret = true;
 		ipencap->sport = nla_get_be16(data[IFLA_IPTUN_ENCAP_SPORT]);
-	}
+	पूर्ण
 
-	if (data[IFLA_IPTUN_ENCAP_DPORT]) {
+	अगर (data[IFLA_IPTUN_ENCAP_DPORT]) अणु
 		ret = true;
 		ipencap->dport = nla_get_be16(data[IFLA_IPTUN_ENCAP_DPORT]);
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int ipip_newlink(struct net *src_net, struct net_device *dev,
-			struct nlattr *tb[], struct nlattr *data[],
-			struct netlink_ext_ack *extack)
-{
-	struct ip_tunnel *t = netdev_priv(dev);
-	struct ip_tunnel_parm p;
-	struct ip_tunnel_encap ipencap;
+अटल पूर्णांक ipip_newlink(काष्ठा net *src_net, काष्ठा net_device *dev,
+			काष्ठा nlattr *tb[], काष्ठा nlattr *data[],
+			काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा ip_tunnel *t = netdev_priv(dev);
+	काष्ठा ip_tunnel_parm p;
+	काष्ठा ip_tunnel_encap ipencap;
 	__u32 fwmark = 0;
 
-	if (ipip_netlink_encap_parms(data, &ipencap)) {
-		int err = ip_tunnel_encap_setup(t, &ipencap);
+	अगर (ipip_netlink_encap_parms(data, &ipencap)) अणु
+		पूर्णांक err = ip_tunnel_encap_setup(t, &ipencap);
 
-		if (err < 0)
-			return err;
-	}
+		अगर (err < 0)
+			वापस err;
+	पूर्ण
 
 	ipip_netlink_parms(data, &p, &t->collect_md, &fwmark);
-	return ip_tunnel_newlink(dev, tb, &p, fwmark);
-}
+	वापस ip_tunnel_newlink(dev, tb, &p, fwmark);
+पूर्ण
 
-static int ipip_changelink(struct net_device *dev, struct nlattr *tb[],
-			   struct nlattr *data[],
-			   struct netlink_ext_ack *extack)
-{
-	struct ip_tunnel *t = netdev_priv(dev);
-	struct ip_tunnel_parm p;
-	struct ip_tunnel_encap ipencap;
+अटल पूर्णांक ipip_changelink(काष्ठा net_device *dev, काष्ठा nlattr *tb[],
+			   काष्ठा nlattr *data[],
+			   काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा ip_tunnel *t = netdev_priv(dev);
+	काष्ठा ip_tunnel_parm p;
+	काष्ठा ip_tunnel_encap ipencap;
 	bool collect_md;
 	__u32 fwmark = t->fwmark;
 
-	if (ipip_netlink_encap_parms(data, &ipencap)) {
-		int err = ip_tunnel_encap_setup(t, &ipencap);
+	अगर (ipip_netlink_encap_parms(data, &ipencap)) अणु
+		पूर्णांक err = ip_tunnel_encap_setup(t, &ipencap);
 
-		if (err < 0)
-			return err;
-	}
+		अगर (err < 0)
+			वापस err;
+	पूर्ण
 
 	ipip_netlink_parms(data, &p, &collect_md, &fwmark);
-	if (collect_md)
-		return -EINVAL;
+	अगर (collect_md)
+		वापस -EINVAL;
 
-	if (((dev->flags & IFF_POINTOPOINT) && !p.iph.daddr) ||
+	अगर (((dev->flags & IFF_POINTOPOINT) && !p.iph.daddr) ||
 	    (!(dev->flags & IFF_POINTOPOINT) && p.iph.daddr))
-		return -EINVAL;
+		वापस -EINVAL;
 
-	return ip_tunnel_changelink(dev, tb, &p, fwmark);
-}
+	वापस ip_tunnel_changelink(dev, tb, &p, fwmark);
+पूर्ण
 
-static size_t ipip_get_size(const struct net_device *dev)
-{
-	return
+अटल माप_प्रकार ipip_get_size(स्थिर काष्ठा net_device *dev)
+अणु
+	वापस
 		/* IFLA_IPTUN_LINK */
 		nla_total_size(4) +
 		/* IFLA_IPTUN_LOCAL */
@@ -558,14 +559,14 @@ static size_t ipip_get_size(const struct net_device *dev)
 		/* IFLA_IPTUN_FWMARK */
 		nla_total_size(4) +
 		0;
-}
+पूर्ण
 
-static int ipip_fill_info(struct sk_buff *skb, const struct net_device *dev)
-{
-	struct ip_tunnel *tunnel = netdev_priv(dev);
-	struct ip_tunnel_parm *parm = &tunnel->parms;
+अटल पूर्णांक ipip_fill_info(काष्ठा sk_buff *skb, स्थिर काष्ठा net_device *dev)
+अणु
+	काष्ठा ip_tunnel *tunnel = netdev_priv(dev);
+	काष्ठा ip_tunnel_parm *parm = &tunnel->parms;
 
-	if (nla_put_u32(skb, IFLA_IPTUN_LINK, parm->link) ||
+	अगर (nla_put_u32(skb, IFLA_IPTUN_LINK, parm->link) ||
 	    nla_put_in_addr(skb, IFLA_IPTUN_LOCAL, parm->iph.saddr) ||
 	    nla_put_in_addr(skb, IFLA_IPTUN_REMOTE, parm->iph.daddr) ||
 	    nla_put_u8(skb, IFLA_IPTUN_TTL, parm->iph.ttl) ||
@@ -574,9 +575,9 @@ static int ipip_fill_info(struct sk_buff *skb, const struct net_device *dev)
 	    nla_put_u8(skb, IFLA_IPTUN_PMTUDISC,
 		       !!(parm->iph.frag_off & htons(IP_DF))) ||
 	    nla_put_u32(skb, IFLA_IPTUN_FWMARK, tunnel->fwmark))
-		goto nla_put_failure;
+		जाओ nla_put_failure;
 
-	if (nla_put_u16(skb, IFLA_IPTUN_ENCAP_TYPE,
+	अगर (nla_put_u16(skb, IFLA_IPTUN_ENCAP_TYPE,
 			tunnel->encap.type) ||
 	    nla_put_be16(skb, IFLA_IPTUN_ENCAP_SPORT,
 			 tunnel->encap.sport) ||
@@ -584,38 +585,38 @@ static int ipip_fill_info(struct sk_buff *skb, const struct net_device *dev)
 			 tunnel->encap.dport) ||
 	    nla_put_u16(skb, IFLA_IPTUN_ENCAP_FLAGS,
 			tunnel->encap.flags))
-		goto nla_put_failure;
+		जाओ nla_put_failure;
 
-	if (tunnel->collect_md)
-		if (nla_put_flag(skb, IFLA_IPTUN_COLLECT_METADATA))
-			goto nla_put_failure;
-	return 0;
+	अगर (tunnel->collect_md)
+		अगर (nla_put_flag(skb, IFLA_IPTUN_COLLECT_METADATA))
+			जाओ nla_put_failure;
+	वापस 0;
 
 nla_put_failure:
-	return -EMSGSIZE;
-}
+	वापस -EMSGSIZE;
+पूर्ण
 
-static const struct nla_policy ipip_policy[IFLA_IPTUN_MAX + 1] = {
-	[IFLA_IPTUN_LINK]		= { .type = NLA_U32 },
-	[IFLA_IPTUN_LOCAL]		= { .type = NLA_U32 },
-	[IFLA_IPTUN_REMOTE]		= { .type = NLA_U32 },
-	[IFLA_IPTUN_TTL]		= { .type = NLA_U8 },
-	[IFLA_IPTUN_TOS]		= { .type = NLA_U8 },
-	[IFLA_IPTUN_PROTO]		= { .type = NLA_U8 },
-	[IFLA_IPTUN_PMTUDISC]		= { .type = NLA_U8 },
-	[IFLA_IPTUN_ENCAP_TYPE]		= { .type = NLA_U16 },
-	[IFLA_IPTUN_ENCAP_FLAGS]	= { .type = NLA_U16 },
-	[IFLA_IPTUN_ENCAP_SPORT]	= { .type = NLA_U16 },
-	[IFLA_IPTUN_ENCAP_DPORT]	= { .type = NLA_U16 },
-	[IFLA_IPTUN_COLLECT_METADATA]	= { .type = NLA_FLAG },
-	[IFLA_IPTUN_FWMARK]		= { .type = NLA_U32 },
-};
+अटल स्थिर काष्ठा nla_policy ipip_policy[IFLA_IPTUN_MAX + 1] = अणु
+	[IFLA_IPTUN_LINK]		= अणु .type = NLA_U32 पूर्ण,
+	[IFLA_IPTUN_LOCAL]		= अणु .type = NLA_U32 पूर्ण,
+	[IFLA_IPTUN_REMOTE]		= अणु .type = NLA_U32 पूर्ण,
+	[IFLA_IPTUN_TTL]		= अणु .type = NLA_U8 पूर्ण,
+	[IFLA_IPTUN_TOS]		= अणु .type = NLA_U8 पूर्ण,
+	[IFLA_IPTUN_PROTO]		= अणु .type = NLA_U8 पूर्ण,
+	[IFLA_IPTUN_PMTUDISC]		= अणु .type = NLA_U8 पूर्ण,
+	[IFLA_IPTUN_ENCAP_TYPE]		= अणु .type = NLA_U16 पूर्ण,
+	[IFLA_IPTUN_ENCAP_FLAGS]	= अणु .type = NLA_U16 पूर्ण,
+	[IFLA_IPTUN_ENCAP_SPORT]	= अणु .type = NLA_U16 पूर्ण,
+	[IFLA_IPTUN_ENCAP_DPORT]	= अणु .type = NLA_U16 पूर्ण,
+	[IFLA_IPTUN_COLLECT_METADATA]	= अणु .type = NLA_FLAG पूर्ण,
+	[IFLA_IPTUN_FWMARK]		= अणु .type = NLA_U32 पूर्ण,
+पूर्ण;
 
-static struct rtnl_link_ops ipip_link_ops __read_mostly = {
+अटल काष्ठा rtnl_link_ops ipip_link_ops __पढ़ो_mostly = अणु
 	.kind		= "ipip",
 	.maxtype	= IFLA_IPTUN_MAX,
 	.policy		= ipip_policy,
-	.priv_size	= sizeof(struct ip_tunnel),
+	.priv_size	= माप(काष्ठा ip_tunnel),
 	.setup		= ipip_tunnel_setup,
 	.validate	= ipip_tunnel_validate,
 	.newlink	= ipip_newlink,
@@ -624,93 +625,93 @@ static struct rtnl_link_ops ipip_link_ops __read_mostly = {
 	.get_size	= ipip_get_size,
 	.fill_info	= ipip_fill_info,
 	.get_link_net	= ip_tunnel_get_link_net,
-};
+पूर्ण;
 
-static struct xfrm_tunnel ipip_handler __read_mostly = {
+अटल काष्ठा xfrm_tunnel ipip_handler __पढ़ो_mostly = अणु
 	.handler	=	ipip_rcv,
 	.err_handler	=	ipip_err,
 	.priority	=	1,
-};
+पूर्ण;
 
-#if IS_ENABLED(CONFIG_MPLS)
-static struct xfrm_tunnel mplsip_handler __read_mostly = {
+#अगर IS_ENABLED(CONFIG_MPLS)
+अटल काष्ठा xfrm_tunnel mplsip_handler __पढ़ो_mostly = अणु
 	.handler	=	mplsip_rcv,
 	.err_handler	=	ipip_err,
 	.priority	=	1,
-};
-#endif
+पूर्ण;
+#पूर्ण_अगर
 
-static int __net_init ipip_init_net(struct net *net)
-{
-	return ip_tunnel_init_net(net, ipip_net_id, &ipip_link_ops, "tunl0");
-}
+अटल पूर्णांक __net_init ipip_init_net(काष्ठा net *net)
+अणु
+	वापस ip_tunnel_init_net(net, ipip_net_id, &ipip_link_ops, "tunl0");
+पूर्ण
 
-static void __net_exit ipip_exit_batch_net(struct list_head *list_net)
-{
+अटल व्योम __net_निकास ipip_निकास_batch_net(काष्ठा list_head *list_net)
+अणु
 	ip_tunnel_delete_nets(list_net, ipip_net_id, &ipip_link_ops);
-}
+पूर्ण
 
-static struct pernet_operations ipip_net_ops = {
+अटल काष्ठा pernet_operations ipip_net_ops = अणु
 	.init = ipip_init_net,
-	.exit_batch = ipip_exit_batch_net,
+	.निकास_batch = ipip_निकास_batch_net,
 	.id   = &ipip_net_id,
-	.size = sizeof(struct ip_tunnel_net),
-};
+	.size = माप(काष्ठा ip_tunnel_net),
+पूर्ण;
 
-static int __init ipip_init(void)
-{
-	int err;
+अटल पूर्णांक __init ipip_init(व्योम)
+अणु
+	पूर्णांक err;
 
 	pr_info("ipip: IPv4 and MPLS over IPv4 tunneling driver\n");
 
-	err = register_pernet_device(&ipip_net_ops);
-	if (err < 0)
-		return err;
-	err = xfrm4_tunnel_register(&ipip_handler, AF_INET);
-	if (err < 0) {
+	err = रेजिस्टर_pernet_device(&ipip_net_ops);
+	अगर (err < 0)
+		वापस err;
+	err = xfrm4_tunnel_रेजिस्टर(&ipip_handler, AF_INET);
+	अगर (err < 0) अणु
 		pr_info("%s: can't register tunnel\n", __func__);
-		goto xfrm_tunnel_ipip_failed;
-	}
-#if IS_ENABLED(CONFIG_MPLS)
-	err = xfrm4_tunnel_register(&mplsip_handler, AF_MPLS);
-	if (err < 0) {
+		जाओ xfrm_tunnel_ipip_failed;
+	पूर्ण
+#अगर IS_ENABLED(CONFIG_MPLS)
+	err = xfrm4_tunnel_रेजिस्टर(&mplsip_handler, AF_MPLS);
+	अगर (err < 0) अणु
 		pr_info("%s: can't register tunnel\n", __func__);
-		goto xfrm_tunnel_mplsip_failed;
-	}
-#endif
-	err = rtnl_link_register(&ipip_link_ops);
-	if (err < 0)
-		goto rtnl_link_failed;
+		जाओ xfrm_tunnel_mplsip_failed;
+	पूर्ण
+#पूर्ण_अगर
+	err = rtnl_link_रेजिस्टर(&ipip_link_ops);
+	अगर (err < 0)
+		जाओ rtnl_link_failed;
 
 out:
-	return err;
+	वापस err;
 
 rtnl_link_failed:
-#if IS_ENABLED(CONFIG_MPLS)
-	xfrm4_tunnel_deregister(&mplsip_handler, AF_MPLS);
+#अगर IS_ENABLED(CONFIG_MPLS)
+	xfrm4_tunnel_deरेजिस्टर(&mplsip_handler, AF_MPLS);
 xfrm_tunnel_mplsip_failed:
 
-#endif
-	xfrm4_tunnel_deregister(&ipip_handler, AF_INET);
+#पूर्ण_अगर
+	xfrm4_tunnel_deरेजिस्टर(&ipip_handler, AF_INET);
 xfrm_tunnel_ipip_failed:
-	unregister_pernet_device(&ipip_net_ops);
-	goto out;
-}
+	unरेजिस्टर_pernet_device(&ipip_net_ops);
+	जाओ out;
+पूर्ण
 
-static void __exit ipip_fini(void)
-{
-	rtnl_link_unregister(&ipip_link_ops);
-	if (xfrm4_tunnel_deregister(&ipip_handler, AF_INET))
+अटल व्योम __निकास ipip_fini(व्योम)
+अणु
+	rtnl_link_unरेजिस्टर(&ipip_link_ops);
+	अगर (xfrm4_tunnel_deरेजिस्टर(&ipip_handler, AF_INET))
 		pr_info("%s: can't deregister tunnel\n", __func__);
-#if IS_ENABLED(CONFIG_MPLS)
-	if (xfrm4_tunnel_deregister(&mplsip_handler, AF_MPLS))
+#अगर IS_ENABLED(CONFIG_MPLS)
+	अगर (xfrm4_tunnel_deरेजिस्टर(&mplsip_handler, AF_MPLS))
 		pr_info("%s: can't deregister tunnel\n", __func__);
-#endif
-	unregister_pernet_device(&ipip_net_ops);
-}
+#पूर्ण_अगर
+	unरेजिस्टर_pernet_device(&ipip_net_ops);
+पूर्ण
 
 module_init(ipip_init);
-module_exit(ipip_fini);
+module_निकास(ipip_fini);
 MODULE_LICENSE("GPL");
 MODULE_ALIAS_RTNL_LINK("ipip");
 MODULE_ALIAS_NETDEV("tunl0");

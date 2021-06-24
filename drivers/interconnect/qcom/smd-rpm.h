@@ -1,15 +1,16 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * Copyright (c) 2019, Linaro Ltd.
  * Author: Georgi Djakov <georgi.djakov@linaro.org>
  */
 
-#ifndef __DRIVERS_INTERCONNECT_QCOM_SMD_RPM_H
-#define __DRIVERS_INTERCONNECT_QCOM_SMD_RPM_H
+#अगर_अघोषित __DRIVERS_INTERCONNECT_QCOM_SMD_RPM_H
+#घोषणा __DRIVERS_INTERCONNECT_QCOM_SMD_RPM_H
 
-#include <linux/soc/qcom/smd-rpm.h>
+#समावेश <linux/soc/qcom/smd-rpm.h>
 
-bool qcom_icc_rpm_smd_available(void);
-int qcom_icc_rpm_smd_send(int ctx, int rsc_type, int id, u32 val);
+bool qcom_icc_rpm_smd_available(व्योम);
+पूर्णांक qcom_icc_rpm_smd_send(पूर्णांक ctx, पूर्णांक rsc_type, पूर्णांक id, u32 val);
 
-#endif
+#पूर्ण_अगर

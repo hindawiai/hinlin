@@ -1,70 +1,71 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /* Key management controls
  *
  * Copyright (C) 2008 Red Hat, Inc. All Rights Reserved.
  * Written by David Howells (dhowells@redhat.com)
  */
 
-#include <linux/key.h>
-#include <linux/sysctl.h>
-#include "internal.h"
+#समावेश <linux/key.h>
+#समावेश <linux/sysctl.h>
+#समावेश "internal.h"
 
-struct ctl_table key_sysctls[] = {
-	{
+काष्ठा ctl_table key_sysctls[] = अणु
+	अणु
 		.procname = "maxkeys",
 		.data = &key_quota_maxkeys,
-		.maxlen = sizeof(unsigned),
+		.maxlen = माप(अचिन्हित),
 		.mode = 0644,
-		.proc_handler = proc_dointvec_minmax,
-		.extra1 = (void *) SYSCTL_ONE,
-		.extra2 = (void *) SYSCTL_INT_MAX,
-	},
-	{
+		.proc_handler = proc_करोपूर्णांकvec_minmax,
+		.extra1 = (व्योम *) SYSCTL_ONE,
+		.extra2 = (व्योम *) SYSCTL_पूर्णांक_उच्च,
+	पूर्ण,
+	अणु
 		.procname = "maxbytes",
 		.data = &key_quota_maxbytes,
-		.maxlen = sizeof(unsigned),
+		.maxlen = माप(अचिन्हित),
 		.mode = 0644,
-		.proc_handler = proc_dointvec_minmax,
-		.extra1 = (void *) SYSCTL_ONE,
-		.extra2 = (void *) SYSCTL_INT_MAX,
-	},
-	{
+		.proc_handler = proc_करोपूर्णांकvec_minmax,
+		.extra1 = (व्योम *) SYSCTL_ONE,
+		.extra2 = (व्योम *) SYSCTL_पूर्णांक_उच्च,
+	पूर्ण,
+	अणु
 		.procname = "root_maxkeys",
 		.data = &key_quota_root_maxkeys,
-		.maxlen = sizeof(unsigned),
+		.maxlen = माप(अचिन्हित),
 		.mode = 0644,
-		.proc_handler = proc_dointvec_minmax,
-		.extra1 = (void *) SYSCTL_ONE,
-		.extra2 = (void *) SYSCTL_INT_MAX,
-	},
-	{
+		.proc_handler = proc_करोपूर्णांकvec_minmax,
+		.extra1 = (व्योम *) SYSCTL_ONE,
+		.extra2 = (व्योम *) SYSCTL_पूर्णांक_उच्च,
+	पूर्ण,
+	अणु
 		.procname = "root_maxbytes",
 		.data = &key_quota_root_maxbytes,
-		.maxlen = sizeof(unsigned),
+		.maxlen = माप(अचिन्हित),
 		.mode = 0644,
-		.proc_handler = proc_dointvec_minmax,
-		.extra1 = (void *) SYSCTL_ONE,
-		.extra2 = (void *) SYSCTL_INT_MAX,
-	},
-	{
+		.proc_handler = proc_करोपूर्णांकvec_minmax,
+		.extra1 = (व्योम *) SYSCTL_ONE,
+		.extra2 = (व्योम *) SYSCTL_पूर्णांक_उच्च,
+	पूर्ण,
+	अणु
 		.procname = "gc_delay",
 		.data = &key_gc_delay,
-		.maxlen = sizeof(unsigned),
+		.maxlen = माप(अचिन्हित),
 		.mode = 0644,
-		.proc_handler = proc_dointvec_minmax,
-		.extra1 = (void *) SYSCTL_ZERO,
-		.extra2 = (void *) SYSCTL_INT_MAX,
-	},
-#ifdef CONFIG_PERSISTENT_KEYRINGS
-	{
+		.proc_handler = proc_करोपूर्णांकvec_minmax,
+		.extra1 = (व्योम *) SYSCTL_ZERO,
+		.extra2 = (व्योम *) SYSCTL_पूर्णांक_उच्च,
+	पूर्ण,
+#अगर_घोषित CONFIG_PERSISTENT_KEYRINGS
+	अणु
 		.procname = "persistent_keyring_expiry",
 		.data = &persistent_keyring_expiry,
-		.maxlen = sizeof(unsigned),
+		.maxlen = माप(अचिन्हित),
 		.mode = 0644,
-		.proc_handler = proc_dointvec_minmax,
-		.extra1 = (void *) SYSCTL_ZERO,
-		.extra2 = (void *) SYSCTL_INT_MAX,
-	},
-#endif
-	{ }
-};
+		.proc_handler = proc_करोपूर्णांकvec_minmax,
+		.extra1 = (व्योम *) SYSCTL_ZERO,
+		.extra2 = (व्योम *) SYSCTL_पूर्णांक_उच्च,
+	पूर्ण,
+#पूर्ण_अगर
+	अणु पूर्ण
+पूर्ण;

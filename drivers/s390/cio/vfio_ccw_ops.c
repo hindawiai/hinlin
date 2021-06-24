@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * Physical device callbacks for vfio_ccw
+ * Physical device callbacks क्रम vfio_ccw
  *
  * Copyright IBM Corp. 2017
  * Copyright Red Hat, Inc. 2019
@@ -10,648 +11,648 @@
  *            Cornelia Huck <cohuck@redhat.com>
  */
 
-#include <linux/vfio.h>
-#include <linux/mdev.h>
-#include <linux/nospec.h>
-#include <linux/slab.h>
+#समावेश <linux/vfपन.स>
+#समावेश <linux/mdev.h>
+#समावेश <linux/nospec.h>
+#समावेश <linux/slab.h>
 
-#include "vfio_ccw_private.h"
+#समावेश "vfio_ccw_private.h"
 
-static int vfio_ccw_mdev_reset(struct mdev_device *mdev)
-{
-	struct vfio_ccw_private *private;
-	struct subchannel *sch;
-	int ret;
+अटल पूर्णांक vfio_ccw_mdev_reset(काष्ठा mdev_device *mdev)
+अणु
+	काष्ठा vfio_ccw_निजी *निजी;
+	काष्ठा subchannel *sch;
+	पूर्णांक ret;
 
-	private = dev_get_drvdata(mdev_parent_dev(mdev));
-	sch = private->sch;
+	निजी = dev_get_drvdata(mdev_parent_dev(mdev));
+	sch = निजी->sch;
 	/*
 	 * TODO:
 	 * In the cureent stage, some things like "no I/O running" and "no
-	 * interrupt pending" are clear, but we are not sure what other state
+	 * पूर्णांकerrupt pending" are clear, but we are not sure what other state
 	 * we need to care about.
-	 * There are still a lot more instructions need to be handled. We
+	 * There are still a lot more inकाष्ठाions need to be handled. We
 	 * should come back here later.
 	 */
 	ret = vfio_ccw_sch_quiesce(sch);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	ret = cio_enable_subchannel(sch, (u32)(unsigned long)sch);
-	if (!ret)
-		private->state = VFIO_CCW_STATE_IDLE;
+	ret = cio_enable_subchannel(sch, (u32)(अचिन्हित दीर्घ)sch);
+	अगर (!ret)
+		निजी->state = VFIO_CCW_STATE_IDLE;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int vfio_ccw_mdev_notifier(struct notifier_block *nb,
-				  unsigned long action,
-				  void *data)
-{
-	struct vfio_ccw_private *private =
-		container_of(nb, struct vfio_ccw_private, nb);
+अटल पूर्णांक vfio_ccw_mdev_notअगरier(काष्ठा notअगरier_block *nb,
+				  अचिन्हित दीर्घ action,
+				  व्योम *data)
+अणु
+	काष्ठा vfio_ccw_निजी *निजी =
+		container_of(nb, काष्ठा vfio_ccw_निजी, nb);
 
 	/*
-	 * Vendor drivers MUST unpin pages in response to an
+	 * Venकरोr drivers MUST unpin pages in response to an
 	 * invalidation.
 	 */
-	if (action == VFIO_IOMMU_NOTIFY_DMA_UNMAP) {
-		struct vfio_iommu_type1_dma_unmap *unmap = data;
+	अगर (action == VFIO_IOMMU_NOTIFY_DMA_UNMAP) अणु
+		काष्ठा vfio_iommu_type1_dma_unmap *unmap = data;
 
-		if (!cp_iova_pinned(&private->cp, unmap->iova))
-			return NOTIFY_OK;
+		अगर (!cp_iova_pinned(&निजी->cp, unmap->iova))
+			वापस NOTIFY_OK;
 
-		if (vfio_ccw_mdev_reset(private->mdev))
-			return NOTIFY_BAD;
+		अगर (vfio_ccw_mdev_reset(निजी->mdev))
+			वापस NOTIFY_BAD;
 
-		cp_free(&private->cp);
-		return NOTIFY_OK;
-	}
+		cp_मुक्त(&निजी->cp);
+		वापस NOTIFY_OK;
+	पूर्ण
 
-	return NOTIFY_DONE;
-}
+	वापस NOTIFY_DONE;
+पूर्ण
 
-static ssize_t name_show(struct mdev_type *mtype,
-			 struct mdev_type_attribute *attr, char *buf)
-{
-	return sprintf(buf, "I/O subchannel (Non-QDIO)\n");
-}
-static MDEV_TYPE_ATTR_RO(name);
+अटल sमाप_प्रकार name_show(काष्ठा mdev_type *mtype,
+			 काष्ठा mdev_type_attribute *attr, अक्षर *buf)
+अणु
+	वापस प्र_लिखो(buf, "I/O subchannel (Non-QDIO)\n");
+पूर्ण
+अटल MDEV_TYPE_ATTR_RO(name);
 
-static ssize_t device_api_show(struct mdev_type *mtype,
-			       struct mdev_type_attribute *attr, char *buf)
-{
-	return sprintf(buf, "%s\n", VFIO_DEVICE_API_CCW_STRING);
-}
-static MDEV_TYPE_ATTR_RO(device_api);
+अटल sमाप_प्रकार device_api_show(काष्ठा mdev_type *mtype,
+			       काष्ठा mdev_type_attribute *attr, अक्षर *buf)
+अणु
+	वापस प्र_लिखो(buf, "%s\n", VFIO_DEVICE_API_CCW_STRING);
+पूर्ण
+अटल MDEV_TYPE_ATTR_RO(device_api);
 
-static ssize_t available_instances_show(struct mdev_type *mtype,
-					struct mdev_type_attribute *attr,
-					char *buf)
-{
-	struct vfio_ccw_private *private =
+अटल sमाप_प्रकार available_instances_show(काष्ठा mdev_type *mtype,
+					काष्ठा mdev_type_attribute *attr,
+					अक्षर *buf)
+अणु
+	काष्ठा vfio_ccw_निजी *निजी =
 		dev_get_drvdata(mtype_get_parent_dev(mtype));
 
-	return sprintf(buf, "%d\n", atomic_read(&private->avail));
-}
-static MDEV_TYPE_ATTR_RO(available_instances);
+	वापस प्र_लिखो(buf, "%d\n", atomic_पढ़ो(&निजी->avail));
+पूर्ण
+अटल MDEV_TYPE_ATTR_RO(available_instances);
 
-static struct attribute *mdev_types_attrs[] = {
+अटल काष्ठा attribute *mdev_types_attrs[] = अणु
 	&mdev_type_attr_name.attr,
 	&mdev_type_attr_device_api.attr,
 	&mdev_type_attr_available_instances.attr,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-static struct attribute_group mdev_type_group = {
+अटल काष्ठा attribute_group mdev_type_group = अणु
 	.name  = "io",
 	.attrs = mdev_types_attrs,
-};
+पूर्ण;
 
-static struct attribute_group *mdev_type_groups[] = {
+अटल काष्ठा attribute_group *mdev_type_groups[] = अणु
 	&mdev_type_group,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-static int vfio_ccw_mdev_create(struct mdev_device *mdev)
-{
-	struct vfio_ccw_private *private =
+अटल पूर्णांक vfio_ccw_mdev_create(काष्ठा mdev_device *mdev)
+अणु
+	काष्ठा vfio_ccw_निजी *निजी =
 		dev_get_drvdata(mdev_parent_dev(mdev));
 
-	if (private->state == VFIO_CCW_STATE_NOT_OPER)
-		return -ENODEV;
+	अगर (निजी->state == VFIO_CCW_STATE_NOT_OPER)
+		वापस -ENODEV;
 
-	if (atomic_dec_if_positive(&private->avail) < 0)
-		return -EPERM;
+	अगर (atomic_dec_अगर_positive(&निजी->avail) < 0)
+		वापस -EPERM;
 
-	private->mdev = mdev;
-	private->state = VFIO_CCW_STATE_IDLE;
+	निजी->mdev = mdev;
+	निजी->state = VFIO_CCW_STATE_IDLE;
 
 	VFIO_CCW_MSG_EVENT(2, "mdev %pUl, sch %x.%x.%04x: create\n",
-			   mdev_uuid(mdev), private->sch->schid.cssid,
-			   private->sch->schid.ssid,
-			   private->sch->schid.sch_no);
+			   mdev_uuid(mdev), निजी->sch->schid.cssid,
+			   निजी->sch->schid.ssid,
+			   निजी->sch->schid.sch_no);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int vfio_ccw_mdev_remove(struct mdev_device *mdev)
-{
-	struct vfio_ccw_private *private =
+अटल पूर्णांक vfio_ccw_mdev_हटाओ(काष्ठा mdev_device *mdev)
+अणु
+	काष्ठा vfio_ccw_निजी *निजी =
 		dev_get_drvdata(mdev_parent_dev(mdev));
 
 	VFIO_CCW_MSG_EVENT(2, "mdev %pUl, sch %x.%x.%04x: remove\n",
-			   mdev_uuid(mdev), private->sch->schid.cssid,
-			   private->sch->schid.ssid,
-			   private->sch->schid.sch_no);
+			   mdev_uuid(mdev), निजी->sch->schid.cssid,
+			   निजी->sch->schid.ssid,
+			   निजी->sch->schid.sch_no);
 
-	if ((private->state != VFIO_CCW_STATE_NOT_OPER) &&
-	    (private->state != VFIO_CCW_STATE_STANDBY)) {
-		if (!vfio_ccw_sch_quiesce(private->sch))
-			private->state = VFIO_CCW_STATE_STANDBY;
+	अगर ((निजी->state != VFIO_CCW_STATE_NOT_OPER) &&
+	    (निजी->state != VFIO_CCW_STATE_STANDBY)) अणु
+		अगर (!vfio_ccw_sch_quiesce(निजी->sch))
+			निजी->state = VFIO_CCW_STATE_STANDBY;
 		/* The state will be NOT_OPER on error. */
-	}
+	पूर्ण
 
-	cp_free(&private->cp);
-	private->mdev = NULL;
-	atomic_inc(&private->avail);
+	cp_मुक्त(&निजी->cp);
+	निजी->mdev = शून्य;
+	atomic_inc(&निजी->avail);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int vfio_ccw_mdev_open(struct mdev_device *mdev)
-{
-	struct vfio_ccw_private *private =
+अटल पूर्णांक vfio_ccw_mdev_खोलो(काष्ठा mdev_device *mdev)
+अणु
+	काष्ठा vfio_ccw_निजी *निजी =
 		dev_get_drvdata(mdev_parent_dev(mdev));
-	unsigned long events = VFIO_IOMMU_NOTIFY_DMA_UNMAP;
-	int ret;
+	अचिन्हित दीर्घ events = VFIO_IOMMU_NOTIFY_DMA_UNMAP;
+	पूर्णांक ret;
 
-	private->nb.notifier_call = vfio_ccw_mdev_notifier;
+	निजी->nb.notअगरier_call = vfio_ccw_mdev_notअगरier;
 
-	ret = vfio_register_notifier(mdev_dev(mdev), VFIO_IOMMU_NOTIFY,
-				     &events, &private->nb);
-	if (ret)
-		return ret;
+	ret = vfio_रेजिस्टर_notअगरier(mdev_dev(mdev), VFIO_IOMMU_NOTIFY,
+				     &events, &निजी->nb);
+	अगर (ret)
+		वापस ret;
 
-	ret = vfio_ccw_register_async_dev_regions(private);
-	if (ret)
-		goto out_unregister;
+	ret = vfio_ccw_रेजिस्टर_async_dev_regions(निजी);
+	अगर (ret)
+		जाओ out_unरेजिस्टर;
 
-	ret = vfio_ccw_register_schib_dev_regions(private);
-	if (ret)
-		goto out_unregister;
+	ret = vfio_ccw_रेजिस्टर_schib_dev_regions(निजी);
+	अगर (ret)
+		जाओ out_unरेजिस्टर;
 
-	ret = vfio_ccw_register_crw_dev_regions(private);
-	if (ret)
-		goto out_unregister;
+	ret = vfio_ccw_रेजिस्टर_crw_dev_regions(निजी);
+	अगर (ret)
+		जाओ out_unरेजिस्टर;
 
-	return ret;
+	वापस ret;
 
-out_unregister:
-	vfio_ccw_unregister_dev_regions(private);
-	vfio_unregister_notifier(mdev_dev(mdev), VFIO_IOMMU_NOTIFY,
-				 &private->nb);
-	return ret;
-}
+out_unरेजिस्टर:
+	vfio_ccw_unरेजिस्टर_dev_regions(निजी);
+	vfio_unरेजिस्टर_notअगरier(mdev_dev(mdev), VFIO_IOMMU_NOTIFY,
+				 &निजी->nb);
+	वापस ret;
+पूर्ण
 
-static void vfio_ccw_mdev_release(struct mdev_device *mdev)
-{
-	struct vfio_ccw_private *private =
+अटल व्योम vfio_ccw_mdev_release(काष्ठा mdev_device *mdev)
+अणु
+	काष्ठा vfio_ccw_निजी *निजी =
 		dev_get_drvdata(mdev_parent_dev(mdev));
 
-	if ((private->state != VFIO_CCW_STATE_NOT_OPER) &&
-	    (private->state != VFIO_CCW_STATE_STANDBY)) {
-		if (!vfio_ccw_mdev_reset(mdev))
-			private->state = VFIO_CCW_STATE_STANDBY;
+	अगर ((निजी->state != VFIO_CCW_STATE_NOT_OPER) &&
+	    (निजी->state != VFIO_CCW_STATE_STANDBY)) अणु
+		अगर (!vfio_ccw_mdev_reset(mdev))
+			निजी->state = VFIO_CCW_STATE_STANDBY;
 		/* The state will be NOT_OPER on error. */
-	}
+	पूर्ण
 
-	cp_free(&private->cp);
-	vfio_ccw_unregister_dev_regions(private);
-	vfio_unregister_notifier(mdev_dev(mdev), VFIO_IOMMU_NOTIFY,
-				 &private->nb);
-}
+	cp_मुक्त(&निजी->cp);
+	vfio_ccw_unरेजिस्टर_dev_regions(निजी);
+	vfio_unरेजिस्टर_notअगरier(mdev_dev(mdev), VFIO_IOMMU_NOTIFY,
+				 &निजी->nb);
+पूर्ण
 
-static ssize_t vfio_ccw_mdev_read_io_region(struct vfio_ccw_private *private,
-					    char __user *buf, size_t count,
+अटल sमाप_प्रकार vfio_ccw_mdev_पढ़ो_io_region(काष्ठा vfio_ccw_निजी *निजी,
+					    अक्षर __user *buf, माप_प्रकार count,
 					    loff_t *ppos)
-{
+अणु
 	loff_t pos = *ppos & VFIO_CCW_OFFSET_MASK;
-	struct ccw_io_region *region;
-	int ret;
+	काष्ठा ccw_io_region *region;
+	पूर्णांक ret;
 
-	if (pos + count > sizeof(*region))
-		return -EINVAL;
+	अगर (pos + count > माप(*region))
+		वापस -EINVAL;
 
-	mutex_lock(&private->io_mutex);
-	region = private->io_region;
-	if (copy_to_user(buf, (void *)region + pos, count))
+	mutex_lock(&निजी->io_mutex);
+	region = निजी->io_region;
+	अगर (copy_to_user(buf, (व्योम *)region + pos, count))
 		ret = -EFAULT;
-	else
+	अन्यथा
 		ret = count;
-	mutex_unlock(&private->io_mutex);
-	return ret;
-}
+	mutex_unlock(&निजी->io_mutex);
+	वापस ret;
+पूर्ण
 
-static ssize_t vfio_ccw_mdev_read(struct mdev_device *mdev,
-				  char __user *buf,
-				  size_t count,
+अटल sमाप_प्रकार vfio_ccw_mdev_पढ़ो(काष्ठा mdev_device *mdev,
+				  अक्षर __user *buf,
+				  माप_प्रकार count,
 				  loff_t *ppos)
-{
-	unsigned int index = VFIO_CCW_OFFSET_TO_INDEX(*ppos);
-	struct vfio_ccw_private *private;
+अणु
+	अचिन्हित पूर्णांक index = VFIO_CCW_OFFSET_TO_INDEX(*ppos);
+	काष्ठा vfio_ccw_निजी *निजी;
 
-	private = dev_get_drvdata(mdev_parent_dev(mdev));
+	निजी = dev_get_drvdata(mdev_parent_dev(mdev));
 
-	if (index >= VFIO_CCW_NUM_REGIONS + private->num_regions)
-		return -EINVAL;
+	अगर (index >= VFIO_CCW_NUM_REGIONS + निजी->num_regions)
+		वापस -EINVAL;
 
-	switch (index) {
-	case VFIO_CCW_CONFIG_REGION_INDEX:
-		return vfio_ccw_mdev_read_io_region(private, buf, count, ppos);
-	default:
+	चयन (index) अणु
+	हाल VFIO_CCW_CONFIG_REGION_INDEX:
+		वापस vfio_ccw_mdev_पढ़ो_io_region(निजी, buf, count, ppos);
+	शेष:
 		index -= VFIO_CCW_NUM_REGIONS;
-		return private->region[index].ops->read(private, buf, count,
+		वापस निजी->region[index].ops->पढ़ो(निजी, buf, count,
 							ppos);
-	}
+	पूर्ण
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static ssize_t vfio_ccw_mdev_write_io_region(struct vfio_ccw_private *private,
-					     const char __user *buf,
-					     size_t count, loff_t *ppos)
-{
+अटल sमाप_प्रकार vfio_ccw_mdev_ग_लिखो_io_region(काष्ठा vfio_ccw_निजी *निजी,
+					     स्थिर अक्षर __user *buf,
+					     माप_प्रकार count, loff_t *ppos)
+अणु
 	loff_t pos = *ppos & VFIO_CCW_OFFSET_MASK;
-	struct ccw_io_region *region;
-	int ret;
+	काष्ठा ccw_io_region *region;
+	पूर्णांक ret;
 
-	if (pos + count > sizeof(*region))
-		return -EINVAL;
+	अगर (pos + count > माप(*region))
+		वापस -EINVAL;
 
-	if (!mutex_trylock(&private->io_mutex))
-		return -EAGAIN;
+	अगर (!mutex_trylock(&निजी->io_mutex))
+		वापस -EAGAIN;
 
-	region = private->io_region;
-	if (copy_from_user((void *)region + pos, buf, count)) {
+	region = निजी->io_region;
+	अगर (copy_from_user((व्योम *)region + pos, buf, count)) अणु
 		ret = -EFAULT;
-		goto out_unlock;
-	}
+		जाओ out_unlock;
+	पूर्ण
 
-	vfio_ccw_fsm_event(private, VFIO_CCW_EVENT_IO_REQ);
+	vfio_ccw_fsm_event(निजी, VFIO_CCW_EVENT_IO_REQ);
 	ret = (region->ret_code != 0) ? region->ret_code : count;
 
 out_unlock:
-	mutex_unlock(&private->io_mutex);
-	return ret;
-}
+	mutex_unlock(&निजी->io_mutex);
+	वापस ret;
+पूर्ण
 
-static ssize_t vfio_ccw_mdev_write(struct mdev_device *mdev,
-				   const char __user *buf,
-				   size_t count,
+अटल sमाप_प्रकार vfio_ccw_mdev_ग_लिखो(काष्ठा mdev_device *mdev,
+				   स्थिर अक्षर __user *buf,
+				   माप_प्रकार count,
 				   loff_t *ppos)
-{
-	unsigned int index = VFIO_CCW_OFFSET_TO_INDEX(*ppos);
-	struct vfio_ccw_private *private;
+अणु
+	अचिन्हित पूर्णांक index = VFIO_CCW_OFFSET_TO_INDEX(*ppos);
+	काष्ठा vfio_ccw_निजी *निजी;
 
-	private = dev_get_drvdata(mdev_parent_dev(mdev));
+	निजी = dev_get_drvdata(mdev_parent_dev(mdev));
 
-	if (index >= VFIO_CCW_NUM_REGIONS + private->num_regions)
-		return -EINVAL;
+	अगर (index >= VFIO_CCW_NUM_REGIONS + निजी->num_regions)
+		वापस -EINVAL;
 
-	switch (index) {
-	case VFIO_CCW_CONFIG_REGION_INDEX:
-		return vfio_ccw_mdev_write_io_region(private, buf, count, ppos);
-	default:
+	चयन (index) अणु
+	हाल VFIO_CCW_CONFIG_REGION_INDEX:
+		वापस vfio_ccw_mdev_ग_लिखो_io_region(निजी, buf, count, ppos);
+	शेष:
 		index -= VFIO_CCW_NUM_REGIONS;
-		return private->region[index].ops->write(private, buf, count,
+		वापस निजी->region[index].ops->ग_लिखो(निजी, buf, count,
 							 ppos);
-	}
+	पूर्ण
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static int vfio_ccw_mdev_get_device_info(struct vfio_device_info *info,
-					 struct mdev_device *mdev)
-{
-	struct vfio_ccw_private *private;
+अटल पूर्णांक vfio_ccw_mdev_get_device_info(काष्ठा vfio_device_info *info,
+					 काष्ठा mdev_device *mdev)
+अणु
+	काष्ठा vfio_ccw_निजी *निजी;
 
-	private = dev_get_drvdata(mdev_parent_dev(mdev));
+	निजी = dev_get_drvdata(mdev_parent_dev(mdev));
 	info->flags = VFIO_DEVICE_FLAGS_CCW | VFIO_DEVICE_FLAGS_RESET;
-	info->num_regions = VFIO_CCW_NUM_REGIONS + private->num_regions;
+	info->num_regions = VFIO_CCW_NUM_REGIONS + निजी->num_regions;
 	info->num_irqs = VFIO_CCW_NUM_IRQS;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int vfio_ccw_mdev_get_region_info(struct vfio_region_info *info,
-					 struct mdev_device *mdev,
-					 unsigned long arg)
-{
-	struct vfio_ccw_private *private;
-	int i;
+अटल पूर्णांक vfio_ccw_mdev_get_region_info(काष्ठा vfio_region_info *info,
+					 काष्ठा mdev_device *mdev,
+					 अचिन्हित दीर्घ arg)
+अणु
+	काष्ठा vfio_ccw_निजी *निजी;
+	पूर्णांक i;
 
-	private = dev_get_drvdata(mdev_parent_dev(mdev));
-	switch (info->index) {
-	case VFIO_CCW_CONFIG_REGION_INDEX:
+	निजी = dev_get_drvdata(mdev_parent_dev(mdev));
+	चयन (info->index) अणु
+	हाल VFIO_CCW_CONFIG_REGION_INDEX:
 		info->offset = 0;
-		info->size = sizeof(struct ccw_io_region);
+		info->size = माप(काष्ठा ccw_io_region);
 		info->flags = VFIO_REGION_INFO_FLAG_READ
 			      | VFIO_REGION_INFO_FLAG_WRITE;
-		return 0;
-	default: /* all other regions are handled via capability chain */
-	{
-		struct vfio_info_cap caps = { .buf = NULL, .size = 0 };
-		struct vfio_region_info_cap_type cap_type = {
+		वापस 0;
+	शेष: /* all other regions are handled via capability chain */
+	अणु
+		काष्ठा vfio_info_cap caps = अणु .buf = शून्य, .size = 0 पूर्ण;
+		काष्ठा vfio_region_info_cap_type cap_type = अणु
 			.header.id = VFIO_REGION_INFO_CAP_TYPE,
-			.header.version = 1 };
-		int ret;
+			.header.version = 1 पूर्ण;
+		पूर्णांक ret;
 
-		if (info->index >=
-		    VFIO_CCW_NUM_REGIONS + private->num_regions)
-			return -EINVAL;
+		अगर (info->index >=
+		    VFIO_CCW_NUM_REGIONS + निजी->num_regions)
+			वापस -EINVAL;
 
 		info->index = array_index_nospec(info->index,
 						 VFIO_CCW_NUM_REGIONS +
-						 private->num_regions);
+						 निजी->num_regions);
 
 		i = info->index - VFIO_CCW_NUM_REGIONS;
 
 		info->offset = VFIO_CCW_INDEX_TO_OFFSET(info->index);
-		info->size = private->region[i].size;
-		info->flags = private->region[i].flags;
+		info->size = निजी->region[i].size;
+		info->flags = निजी->region[i].flags;
 
-		cap_type.type = private->region[i].type;
-		cap_type.subtype = private->region[i].subtype;
+		cap_type.type = निजी->region[i].type;
+		cap_type.subtype = निजी->region[i].subtype;
 
 		ret = vfio_info_add_capability(&caps, &cap_type.header,
-					       sizeof(cap_type));
-		if (ret)
-			return ret;
+					       माप(cap_type));
+		अगर (ret)
+			वापस ret;
 
 		info->flags |= VFIO_REGION_INFO_FLAG_CAPS;
-		if (info->argsz < sizeof(*info) + caps.size) {
-			info->argsz = sizeof(*info) + caps.size;
+		अगर (info->argsz < माप(*info) + caps.size) अणु
+			info->argsz = माप(*info) + caps.size;
 			info->cap_offset = 0;
-		} else {
-			vfio_info_cap_shift(&caps, sizeof(*info));
-			if (copy_to_user((void __user *)arg + sizeof(*info),
-					 caps.buf, caps.size)) {
-				kfree(caps.buf);
-				return -EFAULT;
-			}
-			info->cap_offset = sizeof(*info);
-		}
+		पूर्ण अन्यथा अणु
+			vfio_info_cap_shअगरt(&caps, माप(*info));
+			अगर (copy_to_user((व्योम __user *)arg + माप(*info),
+					 caps.buf, caps.size)) अणु
+				kमुक्त(caps.buf);
+				वापस -EFAULT;
+			पूर्ण
+			info->cap_offset = माप(*info);
+		पूर्ण
 
-		kfree(caps.buf);
+		kमुक्त(caps.buf);
 
-	}
-	}
-	return 0;
-}
+	पूर्ण
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int vfio_ccw_mdev_get_irq_info(struct vfio_irq_info *info)
-{
-	switch (info->index) {
-	case VFIO_CCW_IO_IRQ_INDEX:
-	case VFIO_CCW_CRW_IRQ_INDEX:
-	case VFIO_CCW_REQ_IRQ_INDEX:
+अटल पूर्णांक vfio_ccw_mdev_get_irq_info(काष्ठा vfio_irq_info *info)
+अणु
+	चयन (info->index) अणु
+	हाल VFIO_CCW_IO_IRQ_INDEX:
+	हाल VFIO_CCW_CRW_IRQ_INDEX:
+	हाल VFIO_CCW_REQ_IRQ_INDEX:
 		info->count = 1;
 		info->flags = VFIO_IRQ_INFO_EVENTFD;
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int vfio_ccw_mdev_set_irqs(struct mdev_device *mdev,
-				  uint32_t flags,
-				  uint32_t index,
-				  void __user *data)
-{
-	struct vfio_ccw_private *private;
-	struct eventfd_ctx **ctx;
+अटल पूर्णांक vfio_ccw_mdev_set_irqs(काष्ठा mdev_device *mdev,
+				  uपूर्णांक32_t flags,
+				  uपूर्णांक32_t index,
+				  व्योम __user *data)
+अणु
+	काष्ठा vfio_ccw_निजी *निजी;
+	काष्ठा eventfd_ctx **ctx;
 
-	if (!(flags & VFIO_IRQ_SET_ACTION_TRIGGER))
-		return -EINVAL;
+	अगर (!(flags & VFIO_IRQ_SET_ACTION_TRIGGER))
+		वापस -EINVAL;
 
-	private = dev_get_drvdata(mdev_parent_dev(mdev));
+	निजी = dev_get_drvdata(mdev_parent_dev(mdev));
 
-	switch (index) {
-	case VFIO_CCW_IO_IRQ_INDEX:
-		ctx = &private->io_trigger;
-		break;
-	case VFIO_CCW_CRW_IRQ_INDEX:
-		ctx = &private->crw_trigger;
-		break;
-	case VFIO_CCW_REQ_IRQ_INDEX:
-		ctx = &private->req_trigger;
-		break;
-	default:
-		return -EINVAL;
-	}
+	चयन (index) अणु
+	हाल VFIO_CCW_IO_IRQ_INDEX:
+		ctx = &निजी->io_trigger;
+		अवरोध;
+	हाल VFIO_CCW_CRW_IRQ_INDEX:
+		ctx = &निजी->crw_trigger;
+		अवरोध;
+	हाल VFIO_CCW_REQ_IRQ_INDEX:
+		ctx = &निजी->req_trigger;
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	switch (flags & VFIO_IRQ_SET_DATA_TYPE_MASK) {
-	case VFIO_IRQ_SET_DATA_NONE:
-	{
-		if (*ctx)
-			eventfd_signal(*ctx, 1);
-		return 0;
-	}
-	case VFIO_IRQ_SET_DATA_BOOL:
-	{
-		uint8_t trigger;
+	चयन (flags & VFIO_IRQ_SET_DATA_TYPE_MASK) अणु
+	हाल VFIO_IRQ_SET_DATA_NONE:
+	अणु
+		अगर (*ctx)
+			eventfd_संकेत(*ctx, 1);
+		वापस 0;
+	पूर्ण
+	हाल VFIO_IRQ_SET_DATA_BOOL:
+	अणु
+		uपूर्णांक8_t trigger;
 
-		if (get_user(trigger, (uint8_t __user *)data))
-			return -EFAULT;
+		अगर (get_user(trigger, (uपूर्णांक8_t __user *)data))
+			वापस -EFAULT;
 
-		if (trigger && *ctx)
-			eventfd_signal(*ctx, 1);
-		return 0;
-	}
-	case VFIO_IRQ_SET_DATA_EVENTFD:
-	{
-		int32_t fd;
+		अगर (trigger && *ctx)
+			eventfd_संकेत(*ctx, 1);
+		वापस 0;
+	पूर्ण
+	हाल VFIO_IRQ_SET_DATA_EVENTFD:
+	अणु
+		पूर्णांक32_t fd;
 
-		if (get_user(fd, (int32_t __user *)data))
-			return -EFAULT;
+		अगर (get_user(fd, (पूर्णांक32_t __user *)data))
+			वापस -EFAULT;
 
-		if (fd == -1) {
-			if (*ctx)
+		अगर (fd == -1) अणु
+			अगर (*ctx)
 				eventfd_ctx_put(*ctx);
-			*ctx = NULL;
-		} else if (fd >= 0) {
-			struct eventfd_ctx *efdctx;
+			*ctx = शून्य;
+		पूर्ण अन्यथा अगर (fd >= 0) अणु
+			काष्ठा eventfd_ctx *efdctx;
 
 			efdctx = eventfd_ctx_fdget(fd);
-			if (IS_ERR(efdctx))
-				return PTR_ERR(efdctx);
+			अगर (IS_ERR(efdctx))
+				वापस PTR_ERR(efdctx);
 
-			if (*ctx)
+			अगर (*ctx)
 				eventfd_ctx_put(*ctx);
 
 			*ctx = efdctx;
-		} else
-			return -EINVAL;
+		पूर्ण अन्यथा
+			वापस -EINVAL;
 
-		return 0;
-	}
-	default:
-		return -EINVAL;
-	}
-}
+		वापस 0;
+	पूर्ण
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+पूर्ण
 
-int vfio_ccw_register_dev_region(struct vfio_ccw_private *private,
-				 unsigned int subtype,
-				 const struct vfio_ccw_regops *ops,
-				 size_t size, u32 flags, void *data)
-{
-	struct vfio_ccw_region *region;
+पूर्णांक vfio_ccw_रेजिस्टर_dev_region(काष्ठा vfio_ccw_निजी *निजी,
+				 अचिन्हित पूर्णांक subtype,
+				 स्थिर काष्ठा vfio_ccw_regops *ops,
+				 माप_प्रकार size, u32 flags, व्योम *data)
+अणु
+	काष्ठा vfio_ccw_region *region;
 
-	region = krealloc(private->region,
-			  (private->num_regions + 1) * sizeof(*region),
+	region = kपुनः_स्मृति(निजी->region,
+			  (निजी->num_regions + 1) * माप(*region),
 			  GFP_KERNEL);
-	if (!region)
-		return -ENOMEM;
+	अगर (!region)
+		वापस -ENOMEM;
 
-	private->region = region;
-	private->region[private->num_regions].type = VFIO_REGION_TYPE_CCW;
-	private->region[private->num_regions].subtype = subtype;
-	private->region[private->num_regions].ops = ops;
-	private->region[private->num_regions].size = size;
-	private->region[private->num_regions].flags = flags;
-	private->region[private->num_regions].data = data;
+	निजी->region = region;
+	निजी->region[निजी->num_regions].type = VFIO_REGION_TYPE_CCW;
+	निजी->region[निजी->num_regions].subtype = subtype;
+	निजी->region[निजी->num_regions].ops = ops;
+	निजी->region[निजी->num_regions].size = size;
+	निजी->region[निजी->num_regions].flags = flags;
+	निजी->region[निजी->num_regions].data = data;
 
-	private->num_regions++;
+	निजी->num_regions++;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void vfio_ccw_unregister_dev_regions(struct vfio_ccw_private *private)
-{
-	int i;
+व्योम vfio_ccw_unरेजिस्टर_dev_regions(काष्ठा vfio_ccw_निजी *निजी)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < private->num_regions; i++)
-		private->region[i].ops->release(private, &private->region[i]);
-	private->num_regions = 0;
-	kfree(private->region);
-	private->region = NULL;
-}
+	क्रम (i = 0; i < निजी->num_regions; i++)
+		निजी->region[i].ops->release(निजी, &निजी->region[i]);
+	निजी->num_regions = 0;
+	kमुक्त(निजी->region);
+	निजी->region = शून्य;
+पूर्ण
 
-static ssize_t vfio_ccw_mdev_ioctl(struct mdev_device *mdev,
-				   unsigned int cmd,
-				   unsigned long arg)
-{
-	int ret = 0;
-	unsigned long minsz;
+अटल sमाप_प्रकार vfio_ccw_mdev_ioctl(काष्ठा mdev_device *mdev,
+				   अचिन्हित पूर्णांक cmd,
+				   अचिन्हित दीर्घ arg)
+अणु
+	पूर्णांक ret = 0;
+	अचिन्हित दीर्घ minsz;
 
-	switch (cmd) {
-	case VFIO_DEVICE_GET_INFO:
-	{
-		struct vfio_device_info info;
+	चयन (cmd) अणु
+	हाल VFIO_DEVICE_GET_INFO:
+	अणु
+		काष्ठा vfio_device_info info;
 
-		minsz = offsetofend(struct vfio_device_info, num_irqs);
+		minsz = दुरत्वend(काष्ठा vfio_device_info, num_irqs);
 
-		if (copy_from_user(&info, (void __user *)arg, minsz))
-			return -EFAULT;
+		अगर (copy_from_user(&info, (व्योम __user *)arg, minsz))
+			वापस -EFAULT;
 
-		if (info.argsz < minsz)
-			return -EINVAL;
+		अगर (info.argsz < minsz)
+			वापस -EINVAL;
 
 		ret = vfio_ccw_mdev_get_device_info(&info, mdev);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 
-		return copy_to_user((void __user *)arg, &info, minsz) ? -EFAULT : 0;
-	}
-	case VFIO_DEVICE_GET_REGION_INFO:
-	{
-		struct vfio_region_info info;
+		वापस copy_to_user((व्योम __user *)arg, &info, minsz) ? -EFAULT : 0;
+	पूर्ण
+	हाल VFIO_DEVICE_GET_REGION_INFO:
+	अणु
+		काष्ठा vfio_region_info info;
 
-		minsz = offsetofend(struct vfio_region_info, offset);
+		minsz = दुरत्वend(काष्ठा vfio_region_info, offset);
 
-		if (copy_from_user(&info, (void __user *)arg, minsz))
-			return -EFAULT;
+		अगर (copy_from_user(&info, (व्योम __user *)arg, minsz))
+			वापस -EFAULT;
 
-		if (info.argsz < minsz)
-			return -EINVAL;
+		अगर (info.argsz < minsz)
+			वापस -EINVAL;
 
 		ret = vfio_ccw_mdev_get_region_info(&info, mdev, arg);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 
-		return copy_to_user((void __user *)arg, &info, minsz) ? -EFAULT : 0;
-	}
-	case VFIO_DEVICE_GET_IRQ_INFO:
-	{
-		struct vfio_irq_info info;
+		वापस copy_to_user((व्योम __user *)arg, &info, minsz) ? -EFAULT : 0;
+	पूर्ण
+	हाल VFIO_DEVICE_GET_IRQ_INFO:
+	अणु
+		काष्ठा vfio_irq_info info;
 
-		minsz = offsetofend(struct vfio_irq_info, count);
+		minsz = दुरत्वend(काष्ठा vfio_irq_info, count);
 
-		if (copy_from_user(&info, (void __user *)arg, minsz))
-			return -EFAULT;
+		अगर (copy_from_user(&info, (व्योम __user *)arg, minsz))
+			वापस -EFAULT;
 
-		if (info.argsz < minsz || info.index >= VFIO_CCW_NUM_IRQS)
-			return -EINVAL;
+		अगर (info.argsz < minsz || info.index >= VFIO_CCW_NUM_IRQS)
+			वापस -EINVAL;
 
 		ret = vfio_ccw_mdev_get_irq_info(&info);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 
-		if (info.count == -1)
-			return -EINVAL;
+		अगर (info.count == -1)
+			वापस -EINVAL;
 
-		return copy_to_user((void __user *)arg, &info, minsz) ? -EFAULT : 0;
-	}
-	case VFIO_DEVICE_SET_IRQS:
-	{
-		struct vfio_irq_set hdr;
-		size_t data_size;
-		void __user *data;
+		वापस copy_to_user((व्योम __user *)arg, &info, minsz) ? -EFAULT : 0;
+	पूर्ण
+	हाल VFIO_DEVICE_SET_IRQS:
+	अणु
+		काष्ठा vfio_irq_set hdr;
+		माप_प्रकार data_size;
+		व्योम __user *data;
 
-		minsz = offsetofend(struct vfio_irq_set, count);
+		minsz = दुरत्वend(काष्ठा vfio_irq_set, count);
 
-		if (copy_from_user(&hdr, (void __user *)arg, minsz))
-			return -EFAULT;
+		अगर (copy_from_user(&hdr, (व्योम __user *)arg, minsz))
+			वापस -EFAULT;
 
 		ret = vfio_set_irqs_validate_and_prepare(&hdr, 1,
 							 VFIO_CCW_NUM_IRQS,
 							 &data_size);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 
-		data = (void __user *)(arg + minsz);
-		return vfio_ccw_mdev_set_irqs(mdev, hdr.flags, hdr.index, data);
-	}
-	case VFIO_DEVICE_RESET:
-		return vfio_ccw_mdev_reset(mdev);
-	default:
-		return -ENOTTY;
-	}
-}
+		data = (व्योम __user *)(arg + minsz);
+		वापस vfio_ccw_mdev_set_irqs(mdev, hdr.flags, hdr.index, data);
+	पूर्ण
+	हाल VFIO_DEVICE_RESET:
+		वापस vfio_ccw_mdev_reset(mdev);
+	शेष:
+		वापस -ENOTTY;
+	पूर्ण
+पूर्ण
 
 /* Request removal of the device*/
-static void vfio_ccw_mdev_request(struct mdev_device *mdev, unsigned int count)
-{
-	struct vfio_ccw_private *private = dev_get_drvdata(mdev_parent_dev(mdev));
+अटल व्योम vfio_ccw_mdev_request(काष्ठा mdev_device *mdev, अचिन्हित पूर्णांक count)
+अणु
+	काष्ठा vfio_ccw_निजी *निजी = dev_get_drvdata(mdev_parent_dev(mdev));
 
-	if (!private)
-		return;
+	अगर (!निजी)
+		वापस;
 
-	if (private->req_trigger) {
-		if (!(count % 10))
-			dev_notice_ratelimited(mdev_dev(private->mdev),
+	अगर (निजी->req_trigger) अणु
+		अगर (!(count % 10))
+			dev_notice_ratelimited(mdev_dev(निजी->mdev),
 					       "Relaying device request to user (#%u)\n",
 					       count);
 
-		eventfd_signal(private->req_trigger, 1);
-	} else if (count == 0) {
-		dev_notice(mdev_dev(private->mdev),
+		eventfd_संकेत(निजी->req_trigger, 1);
+	पूर्ण अन्यथा अगर (count == 0) अणु
+		dev_notice(mdev_dev(निजी->mdev),
 			   "No device request channel registered, blocked until released by user\n");
-	}
-}
+	पूर्ण
+पूर्ण
 
-static const struct mdev_parent_ops vfio_ccw_mdev_ops = {
+अटल स्थिर काष्ठा mdev_parent_ops vfio_ccw_mdev_ops = अणु
 	.owner			= THIS_MODULE,
 	.supported_type_groups  = mdev_type_groups,
 	.create			= vfio_ccw_mdev_create,
-	.remove			= vfio_ccw_mdev_remove,
-	.open			= vfio_ccw_mdev_open,
+	.हटाओ			= vfio_ccw_mdev_हटाओ,
+	.खोलो			= vfio_ccw_mdev_खोलो,
 	.release		= vfio_ccw_mdev_release,
-	.read			= vfio_ccw_mdev_read,
-	.write			= vfio_ccw_mdev_write,
+	.पढ़ो			= vfio_ccw_mdev_पढ़ो,
+	.ग_लिखो			= vfio_ccw_mdev_ग_लिखो,
 	.ioctl			= vfio_ccw_mdev_ioctl,
 	.request		= vfio_ccw_mdev_request,
-};
+पूर्ण;
 
-int vfio_ccw_mdev_reg(struct subchannel *sch)
-{
-	return mdev_register_device(&sch->dev, &vfio_ccw_mdev_ops);
-}
+पूर्णांक vfio_ccw_mdev_reg(काष्ठा subchannel *sch)
+अणु
+	वापस mdev_रेजिस्टर_device(&sch->dev, &vfio_ccw_mdev_ops);
+पूर्ण
 
-void vfio_ccw_mdev_unreg(struct subchannel *sch)
-{
-	mdev_unregister_device(&sch->dev);
-}
+व्योम vfio_ccw_mdev_unreg(काष्ठा subchannel *sch)
+अणु
+	mdev_unरेजिस्टर_device(&sch->dev);
+पूर्ण

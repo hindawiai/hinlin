@@ -1,166 +1,167 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * vhost transport for vsock
+ * vhost transport क्रम vsock
  *
  * Copyright (C) 2013-2015 Red Hat, Inc.
  * Author: Asias He <asias@redhat.com>
  *         Stefan Hajnoczi <stefanha@redhat.com>
  */
-#include <linux/miscdevice.h>
-#include <linux/atomic.h>
-#include <linux/module.h>
-#include <linux/mutex.h>
-#include <linux/vmalloc.h>
-#include <net/sock.h>
-#include <linux/virtio_vsock.h>
-#include <linux/vhost.h>
-#include <linux/hashtable.h>
+#समावेश <linux/miscdevice.h>
+#समावेश <linux/atomic.h>
+#समावेश <linux/module.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/vदो_स्मृति.h>
+#समावेश <net/sock.h>
+#समावेश <linux/virtio_vsock.h>
+#समावेश <linux/vhost.h>
+#समावेश <linux/hashtable.h>
 
-#include <net/af_vsock.h>
-#include "vhost.h"
+#समावेश <net/af_vsock.h>
+#समावेश "vhost.h"
 
-#define VHOST_VSOCK_DEFAULT_HOST_CID	2
-/* Max number of bytes transferred before requeueing the job.
+#घोषणा VHOST_VSOCK_DEFAULT_HOST_CID	2
+/* Max number of bytes transferred beक्रमe requeueing the job.
  * Using this limit prevents one virtqueue from starving others. */
-#define VHOST_VSOCK_WEIGHT 0x80000
-/* Max number of packets transferred before requeueing the job.
+#घोषणा VHOST_VSOCK_WEIGHT 0x80000
+/* Max number of packets transferred beक्रमe requeueing the job.
  * Using this limit prevents one virtqueue from starving others with
  * small pkts.
  */
-#define VHOST_VSOCK_PKT_WEIGHT 256
+#घोषणा VHOST_VSOCK_PKT_WEIGHT 256
 
-enum {
+क्रमागत अणु
 	VHOST_VSOCK_FEATURES = VHOST_FEATURES |
 			       (1ULL << VIRTIO_F_ACCESS_PLATFORM)
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	VHOST_VSOCK_BACKEND_FEATURES = (1ULL << VHOST_BACKEND_F_IOTLB_MSG_V2)
-};
+पूर्ण;
 
-/* Used to track all the vhost_vsock instances on the system. */
-static DEFINE_MUTEX(vhost_vsock_mutex);
-static DEFINE_READ_MOSTLY_HASHTABLE(vhost_vsock_hash, 8);
+/* Used to track all the vhost_vsock instances on the प्रणाली. */
+अटल DEFINE_MUTEX(vhost_vsock_mutex);
+अटल DEFINE_READ_MOSTLY_HASHTABLE(vhost_vsock_hash, 8);
 
-struct vhost_vsock {
-	struct vhost_dev dev;
-	struct vhost_virtqueue vqs[2];
+काष्ठा vhost_vsock अणु
+	काष्ठा vhost_dev dev;
+	काष्ठा vhost_virtqueue vqs[2];
 
-	/* Link to global vhost_vsock_hash, writes use vhost_vsock_mutex */
-	struct hlist_node hash;
+	/* Link to global vhost_vsock_hash, ग_लिखोs use vhost_vsock_mutex */
+	काष्ठा hlist_node hash;
 
-	struct vhost_work send_pkt_work;
+	काष्ठा vhost_work send_pkt_work;
 	spinlock_t send_pkt_list_lock;
-	struct list_head send_pkt_list;	/* host->guest pending packets */
+	काष्ठा list_head send_pkt_list;	/* host->guest pending packets */
 
 	atomic_t queued_replies;
 
 	u32 guest_cid;
-};
+पूर्ण;
 
-static u32 vhost_transport_get_local_cid(void)
-{
-	return VHOST_VSOCK_DEFAULT_HOST_CID;
-}
+अटल u32 vhost_transport_get_local_cid(व्योम)
+अणु
+	वापस VHOST_VSOCK_DEFAULT_HOST_CID;
+पूर्ण
 
-/* Callers that dereference the return value must hold vhost_vsock_mutex or the
- * RCU read lock.
+/* Callers that dereference the वापस value must hold vhost_vsock_mutex or the
+ * RCU पढ़ो lock.
  */
-static struct vhost_vsock *vhost_vsock_get(u32 guest_cid)
-{
-	struct vhost_vsock *vsock;
+अटल काष्ठा vhost_vsock *vhost_vsock_get(u32 guest_cid)
+अणु
+	काष्ठा vhost_vsock *vsock;
 
-	hash_for_each_possible_rcu(vhost_vsock_hash, vsock, hash, guest_cid) {
+	hash_क्रम_each_possible_rcu(vhost_vsock_hash, vsock, hash, guest_cid) अणु
 		u32 other_cid = vsock->guest_cid;
 
 		/* Skip instances that have no CID yet */
-		if (other_cid == 0)
-			continue;
+		अगर (other_cid == 0)
+			जारी;
 
-		if (other_cid == guest_cid)
-			return vsock;
+		अगर (other_cid == guest_cid)
+			वापस vsock;
 
-	}
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static void
-vhost_transport_do_send_pkt(struct vhost_vsock *vsock,
-			    struct vhost_virtqueue *vq)
-{
-	struct vhost_virtqueue *tx_vq = &vsock->vqs[VSOCK_VQ_TX];
-	int pkts = 0, total_len = 0;
+अटल व्योम
+vhost_transport_करो_send_pkt(काष्ठा vhost_vsock *vsock,
+			    काष्ठा vhost_virtqueue *vq)
+अणु
+	काष्ठा vhost_virtqueue *tx_vq = &vsock->vqs[VSOCK_VQ_TX];
+	पूर्णांक pkts = 0, total_len = 0;
 	bool added = false;
 	bool restart_tx = false;
 
 	mutex_lock(&vq->mutex);
 
-	if (!vhost_vq_get_backend(vq))
-		goto out;
+	अगर (!vhost_vq_get_backend(vq))
+		जाओ out;
 
-	if (!vq_meta_prefetch(vq))
-		goto out;
+	अगर (!vq_meta_prefetch(vq))
+		जाओ out;
 
-	/* Avoid further vmexits, we're already processing the virtqueue */
-	vhost_disable_notify(&vsock->dev, vq);
+	/* Aव्योम further vmनिकासs, we're alपढ़ोy processing the virtqueue */
+	vhost_disable_notअगरy(&vsock->dev, vq);
 
-	do {
-		struct virtio_vsock_pkt *pkt;
-		struct iov_iter iov_iter;
-		unsigned out, in;
-		size_t nbytes;
-		size_t iov_len, payload_len;
-		int head;
+	करो अणु
+		काष्ठा virtio_vsock_pkt *pkt;
+		काष्ठा iov_iter iov_iter;
+		अचिन्हित out, in;
+		माप_प्रकार nbytes;
+		माप_प्रकार iov_len, payload_len;
+		पूर्णांक head;
 
 		spin_lock_bh(&vsock->send_pkt_list_lock);
-		if (list_empty(&vsock->send_pkt_list)) {
+		अगर (list_empty(&vsock->send_pkt_list)) अणु
 			spin_unlock_bh(&vsock->send_pkt_list_lock);
-			vhost_enable_notify(&vsock->dev, vq);
-			break;
-		}
+			vhost_enable_notअगरy(&vsock->dev, vq);
+			अवरोध;
+		पूर्ण
 
 		pkt = list_first_entry(&vsock->send_pkt_list,
-				       struct virtio_vsock_pkt, list);
+				       काष्ठा virtio_vsock_pkt, list);
 		list_del_init(&pkt->list);
 		spin_unlock_bh(&vsock->send_pkt_list_lock);
 
 		head = vhost_get_vq_desc(vq, vq->iov, ARRAY_SIZE(vq->iov),
-					 &out, &in, NULL, NULL);
-		if (head < 0) {
+					 &out, &in, शून्य, शून्य);
+		अगर (head < 0) अणु
 			spin_lock_bh(&vsock->send_pkt_list_lock);
 			list_add(&pkt->list, &vsock->send_pkt_list);
 			spin_unlock_bh(&vsock->send_pkt_list_lock);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		if (head == vq->num) {
+		अगर (head == vq->num) अणु
 			spin_lock_bh(&vsock->send_pkt_list_lock);
 			list_add(&pkt->list, &vsock->send_pkt_list);
 			spin_unlock_bh(&vsock->send_pkt_list_lock);
 
-			/* We cannot finish yet if more buffers snuck in while
-			 * re-enabling notify.
+			/* We cannot finish yet अगर more buffers snuck in जबतक
+			 * re-enabling notअगरy.
 			 */
-			if (unlikely(vhost_enable_notify(&vsock->dev, vq))) {
-				vhost_disable_notify(&vsock->dev, vq);
-				continue;
-			}
-			break;
-		}
+			अगर (unlikely(vhost_enable_notअगरy(&vsock->dev, vq))) अणु
+				vhost_disable_notअगरy(&vsock->dev, vq);
+				जारी;
+			पूर्ण
+			अवरोध;
+		पूर्ण
 
-		if (out) {
-			virtio_transport_free_pkt(pkt);
+		अगर (out) अणु
+			virtio_transport_मुक्त_pkt(pkt);
 			vq_err(vq, "Expected 0 output buffers, got %u\n", out);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		iov_len = iov_length(&vq->iov[out], in);
-		if (iov_len < sizeof(pkt->hdr)) {
-			virtio_transport_free_pkt(pkt);
+		अगर (iov_len < माप(pkt->hdr)) अणु
+			virtio_transport_मुक्त_pkt(pkt);
 			vq_err(vq, "Buffer len [%zu] too small\n", iov_len);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		iov_iter_init(&iov_iter, READ, &vq->iov[out], in, iov_len);
 		payload_len = pkt->len - pkt->off;
@@ -168,33 +169,33 @@ vhost_transport_do_send_pkt(struct vhost_vsock *vsock,
 		/* If the packet is greater than the space available in the
 		 * buffer, we split it using multiple buffers.
 		 */
-		if (payload_len > iov_len - sizeof(pkt->hdr))
-			payload_len = iov_len - sizeof(pkt->hdr);
+		अगर (payload_len > iov_len - माप(pkt->hdr))
+			payload_len = iov_len - माप(pkt->hdr);
 
 		/* Set the correct length in the header */
 		pkt->hdr.len = cpu_to_le32(payload_len);
 
-		nbytes = copy_to_iter(&pkt->hdr, sizeof(pkt->hdr), &iov_iter);
-		if (nbytes != sizeof(pkt->hdr)) {
-			virtio_transport_free_pkt(pkt);
+		nbytes = copy_to_iter(&pkt->hdr, माप(pkt->hdr), &iov_iter);
+		अगर (nbytes != माप(pkt->hdr)) अणु
+			virtio_transport_मुक्त_pkt(pkt);
 			vq_err(vq, "Faulted on copying pkt hdr\n");
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		nbytes = copy_to_iter(pkt->buf + pkt->off, payload_len,
 				      &iov_iter);
-		if (nbytes != payload_len) {
-			virtio_transport_free_pkt(pkt);
+		अगर (nbytes != payload_len) अणु
+			virtio_transport_मुक्त_pkt(pkt);
 			vq_err(vq, "Faulted on copying pkt buf\n");
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		/* Deliver to monitoring devices all packets that we
 		 * will transmit.
 		 */
 		virtio_transport_deliver_tap_pkt(pkt);
 
-		vhost_add_used(vq, head, sizeof(pkt->hdr) + payload_len);
+		vhost_add_used(vq, head, माप(pkt->hdr) + payload_len);
 		added = true;
 
 		pkt->off += payload_len;
@@ -203,9 +204,9 @@ vhost_transport_do_send_pkt(struct vhost_vsock *vsock,
 		/* If we didn't send all the payload we can requeue the packet
 		 * to send it with the next available buffer.
 		 */
-		if (pkt->off < pkt->len) {
+		अगर (pkt->off < pkt->len) अणु
 			/* We are queueing the same virtio_vsock_pkt to handle
-			 * the remaining bytes, and we want to deliver it
+			 * the reमुख्यing bytes, and we want to deliver it
 			 * to monitoring devices in the next iteration.
 			 */
 			pkt->tap_delivered = false;
@@ -213,60 +214,60 @@ vhost_transport_do_send_pkt(struct vhost_vsock *vsock,
 			spin_lock_bh(&vsock->send_pkt_list_lock);
 			list_add(&pkt->list, &vsock->send_pkt_list);
 			spin_unlock_bh(&vsock->send_pkt_list_lock);
-		} else {
-			if (pkt->reply) {
-				int val;
+		पूर्ण अन्यथा अणु
+			अगर (pkt->reply) अणु
+				पूर्णांक val;
 
-				val = atomic_dec_return(&vsock->queued_replies);
+				val = atomic_dec_वापस(&vsock->queued_replies);
 
 				/* Do we have resources to resume tx
 				 * processing?
 				 */
-				if (val + 1 == tx_vq->num)
+				अगर (val + 1 == tx_vq->num)
 					restart_tx = true;
-			}
+			पूर्ण
 
-			virtio_transport_free_pkt(pkt);
-		}
-	} while(likely(!vhost_exceeds_weight(vq, ++pkts, total_len)));
-	if (added)
-		vhost_signal(&vsock->dev, vq);
+			virtio_transport_मुक्त_pkt(pkt);
+		पूर्ण
+	पूर्ण जबतक(likely(!vhost_exceeds_weight(vq, ++pkts, total_len)));
+	अगर (added)
+		vhost_संकेत(&vsock->dev, vq);
 
 out:
 	mutex_unlock(&vq->mutex);
 
-	if (restart_tx)
+	अगर (restart_tx)
 		vhost_poll_queue(&tx_vq->poll);
-}
+पूर्ण
 
-static void vhost_transport_send_pkt_work(struct vhost_work *work)
-{
-	struct vhost_virtqueue *vq;
-	struct vhost_vsock *vsock;
+अटल व्योम vhost_transport_send_pkt_work(काष्ठा vhost_work *work)
+अणु
+	काष्ठा vhost_virtqueue *vq;
+	काष्ठा vhost_vsock *vsock;
 
-	vsock = container_of(work, struct vhost_vsock, send_pkt_work);
+	vsock = container_of(work, काष्ठा vhost_vsock, send_pkt_work);
 	vq = &vsock->vqs[VSOCK_VQ_RX];
 
-	vhost_transport_do_send_pkt(vsock, vq);
-}
+	vhost_transport_करो_send_pkt(vsock, vq);
+पूर्ण
 
-static int
-vhost_transport_send_pkt(struct virtio_vsock_pkt *pkt)
-{
-	struct vhost_vsock *vsock;
-	int len = pkt->len;
+अटल पूर्णांक
+vhost_transport_send_pkt(काष्ठा virtio_vsock_pkt *pkt)
+अणु
+	काष्ठा vhost_vsock *vsock;
+	पूर्णांक len = pkt->len;
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 
 	/* Find the vhost_vsock according to guest context id  */
 	vsock = vhost_vsock_get(le64_to_cpu(pkt->hdr.dst_cid));
-	if (!vsock) {
-		rcu_read_unlock();
-		virtio_transport_free_pkt(pkt);
-		return -ENODEV;
-	}
+	अगर (!vsock) अणु
+		rcu_पढ़ो_unlock();
+		virtio_transport_मुक्त_pkt(pkt);
+		वापस -ENODEV;
+	पूर्ण
 
-	if (pkt->reply)
+	अगर (pkt->reply)
 		atomic_inc(&vsock->queued_replies);
 
 	spin_lock_bh(&vsock->send_pkt_list_lock);
@@ -275,140 +276,140 @@ vhost_transport_send_pkt(struct virtio_vsock_pkt *pkt)
 
 	vhost_work_queue(&vsock->dev, &vsock->send_pkt_work);
 
-	rcu_read_unlock();
-	return len;
-}
+	rcu_पढ़ो_unlock();
+	वापस len;
+पूर्ण
 
-static int
-vhost_transport_cancel_pkt(struct vsock_sock *vsk)
-{
-	struct vhost_vsock *vsock;
-	struct virtio_vsock_pkt *pkt, *n;
-	int cnt = 0;
-	int ret = -ENODEV;
-	LIST_HEAD(freeme);
+अटल पूर्णांक
+vhost_transport_cancel_pkt(काष्ठा vsock_sock *vsk)
+अणु
+	काष्ठा vhost_vsock *vsock;
+	काष्ठा virtio_vsock_pkt *pkt, *n;
+	पूर्णांक cnt = 0;
+	पूर्णांक ret = -ENODEV;
+	LIST_HEAD(मुक्तme);
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 
 	/* Find the vhost_vsock according to guest context id  */
 	vsock = vhost_vsock_get(vsk->remote_addr.svm_cid);
-	if (!vsock)
-		goto out;
+	अगर (!vsock)
+		जाओ out;
 
 	spin_lock_bh(&vsock->send_pkt_list_lock);
-	list_for_each_entry_safe(pkt, n, &vsock->send_pkt_list, list) {
-		if (pkt->vsk != vsk)
-			continue;
-		list_move(&pkt->list, &freeme);
-	}
+	list_क्रम_each_entry_safe(pkt, n, &vsock->send_pkt_list, list) अणु
+		अगर (pkt->vsk != vsk)
+			जारी;
+		list_move(&pkt->list, &मुक्तme);
+	पूर्ण
 	spin_unlock_bh(&vsock->send_pkt_list_lock);
 
-	list_for_each_entry_safe(pkt, n, &freeme, list) {
-		if (pkt->reply)
+	list_क्रम_each_entry_safe(pkt, n, &मुक्तme, list) अणु
+		अगर (pkt->reply)
 			cnt++;
 		list_del(&pkt->list);
-		virtio_transport_free_pkt(pkt);
-	}
+		virtio_transport_मुक्त_pkt(pkt);
+	पूर्ण
 
-	if (cnt) {
-		struct vhost_virtqueue *tx_vq = &vsock->vqs[VSOCK_VQ_TX];
-		int new_cnt;
+	अगर (cnt) अणु
+		काष्ठा vhost_virtqueue *tx_vq = &vsock->vqs[VSOCK_VQ_TX];
+		पूर्णांक new_cnt;
 
-		new_cnt = atomic_sub_return(cnt, &vsock->queued_replies);
-		if (new_cnt + cnt >= tx_vq->num && new_cnt < tx_vq->num)
+		new_cnt = atomic_sub_वापस(cnt, &vsock->queued_replies);
+		अगर (new_cnt + cnt >= tx_vq->num && new_cnt < tx_vq->num)
 			vhost_poll_queue(&tx_vq->poll);
-	}
+	पूर्ण
 
 	ret = 0;
 out:
-	rcu_read_unlock();
-	return ret;
-}
+	rcu_पढ़ो_unlock();
+	वापस ret;
+पूर्ण
 
-static struct virtio_vsock_pkt *
-vhost_vsock_alloc_pkt(struct vhost_virtqueue *vq,
-		      unsigned int out, unsigned int in)
-{
-	struct virtio_vsock_pkt *pkt;
-	struct iov_iter iov_iter;
-	size_t nbytes;
-	size_t len;
+अटल काष्ठा virtio_vsock_pkt *
+vhost_vsock_alloc_pkt(काष्ठा vhost_virtqueue *vq,
+		      अचिन्हित पूर्णांक out, अचिन्हित पूर्णांक in)
+अणु
+	काष्ठा virtio_vsock_pkt *pkt;
+	काष्ठा iov_iter iov_iter;
+	माप_प्रकार nbytes;
+	माप_प्रकार len;
 
-	if (in != 0) {
+	अगर (in != 0) अणु
 		vq_err(vq, "Expected 0 input buffers, got %u\n", in);
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
-	pkt = kzalloc(sizeof(*pkt), GFP_KERNEL);
-	if (!pkt)
-		return NULL;
+	pkt = kzalloc(माप(*pkt), GFP_KERNEL);
+	अगर (!pkt)
+		वापस शून्य;
 
 	len = iov_length(vq->iov, out);
 	iov_iter_init(&iov_iter, WRITE, vq->iov, out, len);
 
-	nbytes = copy_from_iter(&pkt->hdr, sizeof(pkt->hdr), &iov_iter);
-	if (nbytes != sizeof(pkt->hdr)) {
+	nbytes = copy_from_iter(&pkt->hdr, माप(pkt->hdr), &iov_iter);
+	अगर (nbytes != माप(pkt->hdr)) अणु
 		vq_err(vq, "Expected %zu bytes for pkt->hdr, got %zu bytes\n",
-		       sizeof(pkt->hdr), nbytes);
-		kfree(pkt);
-		return NULL;
-	}
+		       माप(pkt->hdr), nbytes);
+		kमुक्त(pkt);
+		वापस शून्य;
+	पूर्ण
 
-	if (le16_to_cpu(pkt->hdr.type) == VIRTIO_VSOCK_TYPE_STREAM)
+	अगर (le16_to_cpu(pkt->hdr.type) == VIRTIO_VSOCK_TYPE_STREAM)
 		pkt->len = le32_to_cpu(pkt->hdr.len);
 
 	/* No payload */
-	if (!pkt->len)
-		return pkt;
+	अगर (!pkt->len)
+		वापस pkt;
 
 	/* The pkt is too big */
-	if (pkt->len > VIRTIO_VSOCK_MAX_PKT_BUF_SIZE) {
-		kfree(pkt);
-		return NULL;
-	}
+	अगर (pkt->len > VIRTIO_VSOCK_MAX_PKT_BUF_SIZE) अणु
+		kमुक्त(pkt);
+		वापस शून्य;
+	पूर्ण
 
-	pkt->buf = kmalloc(pkt->len, GFP_KERNEL);
-	if (!pkt->buf) {
-		kfree(pkt);
-		return NULL;
-	}
+	pkt->buf = kदो_स्मृति(pkt->len, GFP_KERNEL);
+	अगर (!pkt->buf) अणु
+		kमुक्त(pkt);
+		वापस शून्य;
+	पूर्ण
 
 	pkt->buf_len = pkt->len;
 
 	nbytes = copy_from_iter(pkt->buf, pkt->len, &iov_iter);
-	if (nbytes != pkt->len) {
+	अगर (nbytes != pkt->len) अणु
 		vq_err(vq, "Expected %u byte payload, got %zu bytes\n",
 		       pkt->len, nbytes);
-		virtio_transport_free_pkt(pkt);
-		return NULL;
-	}
+		virtio_transport_मुक्त_pkt(pkt);
+		वापस शून्य;
+	पूर्ण
 
-	return pkt;
-}
+	वापस pkt;
+पूर्ण
 
-/* Is there space left for replies to rx packets? */
-static bool vhost_vsock_more_replies(struct vhost_vsock *vsock)
-{
-	struct vhost_virtqueue *vq = &vsock->vqs[VSOCK_VQ_TX];
-	int val;
+/* Is there space left क्रम replies to rx packets? */
+अटल bool vhost_vsock_more_replies(काष्ठा vhost_vsock *vsock)
+अणु
+	काष्ठा vhost_virtqueue *vq = &vsock->vqs[VSOCK_VQ_TX];
+	पूर्णांक val;
 
-	smp_rmb(); /* paired with atomic_inc() and atomic_dec_return() */
-	val = atomic_read(&vsock->queued_replies);
+	smp_rmb(); /* paired with atomic_inc() and atomic_dec_वापस() */
+	val = atomic_पढ़ो(&vsock->queued_replies);
 
-	return val < vq->num;
-}
+	वापस val < vq->num;
+पूर्ण
 
-static struct virtio_transport vhost_transport = {
-	.transport = {
+अटल काष्ठा virtio_transport vhost_transport = अणु
+	.transport = अणु
 		.module                   = THIS_MODULE,
 
 		.get_local_cid            = vhost_transport_get_local_cid,
 
-		.init                     = virtio_transport_do_socket_init,
-		.destruct                 = virtio_transport_destruct,
+		.init                     = virtio_transport_करो_socket_init,
+		.deकाष्ठा                 = virtio_transport_deकाष्ठा,
 		.release                  = virtio_transport_release,
 		.connect                  = virtio_transport_connect,
-		.shutdown                 = virtio_transport_shutdown,
+		.shutकरोwn                 = virtio_transport_shutकरोwn,
 		.cancel_pkt               = vhost_transport_cancel_pkt,
 
 		.dgram_enqueue            = virtio_transport_dgram_enqueue,
@@ -424,72 +425,72 @@ static struct virtio_transport vhost_transport = {
 		.stream_is_active         = virtio_transport_stream_is_active,
 		.stream_allow             = virtio_transport_stream_allow,
 
-		.notify_poll_in           = virtio_transport_notify_poll_in,
-		.notify_poll_out          = virtio_transport_notify_poll_out,
-		.notify_recv_init         = virtio_transport_notify_recv_init,
-		.notify_recv_pre_block    = virtio_transport_notify_recv_pre_block,
-		.notify_recv_pre_dequeue  = virtio_transport_notify_recv_pre_dequeue,
-		.notify_recv_post_dequeue = virtio_transport_notify_recv_post_dequeue,
-		.notify_send_init         = virtio_transport_notify_send_init,
-		.notify_send_pre_block    = virtio_transport_notify_send_pre_block,
-		.notify_send_pre_enqueue  = virtio_transport_notify_send_pre_enqueue,
-		.notify_send_post_enqueue = virtio_transport_notify_send_post_enqueue,
-		.notify_buffer_size       = virtio_transport_notify_buffer_size,
+		.notअगरy_poll_in           = virtio_transport_notअगरy_poll_in,
+		.notअगरy_poll_out          = virtio_transport_notअगरy_poll_out,
+		.notअगरy_recv_init         = virtio_transport_notअगरy_recv_init,
+		.notअगरy_recv_pre_block    = virtio_transport_notअगरy_recv_pre_block,
+		.notअगरy_recv_pre_dequeue  = virtio_transport_notअगरy_recv_pre_dequeue,
+		.notअगरy_recv_post_dequeue = virtio_transport_notअगरy_recv_post_dequeue,
+		.notअगरy_send_init         = virtio_transport_notअगरy_send_init,
+		.notअगरy_send_pre_block    = virtio_transport_notअगरy_send_pre_block,
+		.notअगरy_send_pre_enqueue  = virtio_transport_notअगरy_send_pre_enqueue,
+		.notअगरy_send_post_enqueue = virtio_transport_notअगरy_send_post_enqueue,
+		.notअगरy_buffer_size       = virtio_transport_notअगरy_buffer_size,
 
-	},
+	पूर्ण,
 
 	.send_pkt = vhost_transport_send_pkt,
-};
+पूर्ण;
 
-static void vhost_vsock_handle_tx_kick(struct vhost_work *work)
-{
-	struct vhost_virtqueue *vq = container_of(work, struct vhost_virtqueue,
+अटल व्योम vhost_vsock_handle_tx_kick(काष्ठा vhost_work *work)
+अणु
+	काष्ठा vhost_virtqueue *vq = container_of(work, काष्ठा vhost_virtqueue,
 						  poll.work);
-	struct vhost_vsock *vsock = container_of(vq->dev, struct vhost_vsock,
+	काष्ठा vhost_vsock *vsock = container_of(vq->dev, काष्ठा vhost_vsock,
 						 dev);
-	struct virtio_vsock_pkt *pkt;
-	int head, pkts = 0, total_len = 0;
-	unsigned int out, in;
+	काष्ठा virtio_vsock_pkt *pkt;
+	पूर्णांक head, pkts = 0, total_len = 0;
+	अचिन्हित पूर्णांक out, in;
 	bool added = false;
 
 	mutex_lock(&vq->mutex);
 
-	if (!vhost_vq_get_backend(vq))
-		goto out;
+	अगर (!vhost_vq_get_backend(vq))
+		जाओ out;
 
-	if (!vq_meta_prefetch(vq))
-		goto out;
+	अगर (!vq_meta_prefetch(vq))
+		जाओ out;
 
-	vhost_disable_notify(&vsock->dev, vq);
-	do {
+	vhost_disable_notअगरy(&vsock->dev, vq);
+	करो अणु
 		u32 len;
 
-		if (!vhost_vsock_more_replies(vsock)) {
-			/* Stop tx until the device processes already
+		अगर (!vhost_vsock_more_replies(vsock)) अणु
+			/* Stop tx until the device processes alपढ़ोy
 			 * pending replies.  Leave tx virtqueue
 			 * callbacks disabled.
 			 */
-			goto no_more_replies;
-		}
+			जाओ no_more_replies;
+		पूर्ण
 
 		head = vhost_get_vq_desc(vq, vq->iov, ARRAY_SIZE(vq->iov),
-					 &out, &in, NULL, NULL);
-		if (head < 0)
-			break;
+					 &out, &in, शून्य, शून्य);
+		अगर (head < 0)
+			अवरोध;
 
-		if (head == vq->num) {
-			if (unlikely(vhost_enable_notify(&vsock->dev, vq))) {
-				vhost_disable_notify(&vsock->dev, vq);
-				continue;
-			}
-			break;
-		}
+		अगर (head == vq->num) अणु
+			अगर (unlikely(vhost_enable_notअगरy(&vsock->dev, vq))) अणु
+				vhost_disable_notअगरy(&vsock->dev, vq);
+				जारी;
+			पूर्ण
+			अवरोध;
+		पूर्ण
 
 		pkt = vhost_vsock_alloc_pkt(vq, out, in);
-		if (!pkt) {
+		अगर (!pkt) अणु
 			vq_err(vq, "Faulted on pkt\n");
-			continue;
-		}
+			जारी;
+		पूर्ण
 
 		len = pkt->len;
 
@@ -497,142 +498,142 @@ static void vhost_vsock_handle_tx_kick(struct vhost_work *work)
 		virtio_transport_deliver_tap_pkt(pkt);
 
 		/* Only accept correctly addressed packets */
-		if (le64_to_cpu(pkt->hdr.src_cid) == vsock->guest_cid &&
+		अगर (le64_to_cpu(pkt->hdr.src_cid) == vsock->guest_cid &&
 		    le64_to_cpu(pkt->hdr.dst_cid) ==
 		    vhost_transport_get_local_cid())
 			virtio_transport_recv_pkt(&vhost_transport, pkt);
-		else
-			virtio_transport_free_pkt(pkt);
+		अन्यथा
+			virtio_transport_मुक्त_pkt(pkt);
 
-		len += sizeof(pkt->hdr);
+		len += माप(pkt->hdr);
 		vhost_add_used(vq, head, len);
 		total_len += len;
 		added = true;
-	} while(likely(!vhost_exceeds_weight(vq, ++pkts, total_len)));
+	पूर्ण जबतक(likely(!vhost_exceeds_weight(vq, ++pkts, total_len)));
 
 no_more_replies:
-	if (added)
-		vhost_signal(&vsock->dev, vq);
+	अगर (added)
+		vhost_संकेत(&vsock->dev, vq);
 
 out:
 	mutex_unlock(&vq->mutex);
-}
+पूर्ण
 
-static void vhost_vsock_handle_rx_kick(struct vhost_work *work)
-{
-	struct vhost_virtqueue *vq = container_of(work, struct vhost_virtqueue,
+अटल व्योम vhost_vsock_handle_rx_kick(काष्ठा vhost_work *work)
+अणु
+	काष्ठा vhost_virtqueue *vq = container_of(work, काष्ठा vhost_virtqueue,
 						poll.work);
-	struct vhost_vsock *vsock = container_of(vq->dev, struct vhost_vsock,
+	काष्ठा vhost_vsock *vsock = container_of(vq->dev, काष्ठा vhost_vsock,
 						 dev);
 
-	vhost_transport_do_send_pkt(vsock, vq);
-}
+	vhost_transport_करो_send_pkt(vsock, vq);
+पूर्ण
 
-static int vhost_vsock_start(struct vhost_vsock *vsock)
-{
-	struct vhost_virtqueue *vq;
-	size_t i;
-	int ret;
+अटल पूर्णांक vhost_vsock_start(काष्ठा vhost_vsock *vsock)
+अणु
+	काष्ठा vhost_virtqueue *vq;
+	माप_प्रकार i;
+	पूर्णांक ret;
 
 	mutex_lock(&vsock->dev.mutex);
 
 	ret = vhost_dev_check_owner(&vsock->dev);
-	if (ret)
-		goto err;
+	अगर (ret)
+		जाओ err;
 
-	for (i = 0; i < ARRAY_SIZE(vsock->vqs); i++) {
+	क्रम (i = 0; i < ARRAY_SIZE(vsock->vqs); i++) अणु
 		vq = &vsock->vqs[i];
 
 		mutex_lock(&vq->mutex);
 
-		if (!vhost_vq_access_ok(vq)) {
+		अगर (!vhost_vq_access_ok(vq)) अणु
 			ret = -EFAULT;
-			goto err_vq;
-		}
+			जाओ err_vq;
+		पूर्ण
 
-		if (!vhost_vq_get_backend(vq)) {
+		अगर (!vhost_vq_get_backend(vq)) अणु
 			vhost_vq_set_backend(vq, vsock);
 			ret = vhost_vq_init_access(vq);
-			if (ret)
-				goto err_vq;
-		}
+			अगर (ret)
+				जाओ err_vq;
+		पूर्ण
 
 		mutex_unlock(&vq->mutex);
-	}
+	पूर्ण
 
-	/* Some packets may have been queued before the device was started,
+	/* Some packets may have been queued beक्रमe the device was started,
 	 * let's kick the send worker to send them.
 	 */
 	vhost_work_queue(&vsock->dev, &vsock->send_pkt_work);
 
 	mutex_unlock(&vsock->dev.mutex);
-	return 0;
+	वापस 0;
 
 err_vq:
-	vhost_vq_set_backend(vq, NULL);
+	vhost_vq_set_backend(vq, शून्य);
 	mutex_unlock(&vq->mutex);
 
-	for (i = 0; i < ARRAY_SIZE(vsock->vqs); i++) {
+	क्रम (i = 0; i < ARRAY_SIZE(vsock->vqs); i++) अणु
 		vq = &vsock->vqs[i];
 
 		mutex_lock(&vq->mutex);
-		vhost_vq_set_backend(vq, NULL);
+		vhost_vq_set_backend(vq, शून्य);
 		mutex_unlock(&vq->mutex);
-	}
+	पूर्ण
 err:
 	mutex_unlock(&vsock->dev.mutex);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int vhost_vsock_stop(struct vhost_vsock *vsock)
-{
-	size_t i;
-	int ret;
+अटल पूर्णांक vhost_vsock_stop(काष्ठा vhost_vsock *vsock)
+अणु
+	माप_प्रकार i;
+	पूर्णांक ret;
 
 	mutex_lock(&vsock->dev.mutex);
 
 	ret = vhost_dev_check_owner(&vsock->dev);
-	if (ret)
-		goto err;
+	अगर (ret)
+		जाओ err;
 
-	for (i = 0; i < ARRAY_SIZE(vsock->vqs); i++) {
-		struct vhost_virtqueue *vq = &vsock->vqs[i];
+	क्रम (i = 0; i < ARRAY_SIZE(vsock->vqs); i++) अणु
+		काष्ठा vhost_virtqueue *vq = &vsock->vqs[i];
 
 		mutex_lock(&vq->mutex);
-		vhost_vq_set_backend(vq, NULL);
+		vhost_vq_set_backend(vq, शून्य);
 		mutex_unlock(&vq->mutex);
-	}
+	पूर्ण
 
 err:
 	mutex_unlock(&vsock->dev.mutex);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void vhost_vsock_free(struct vhost_vsock *vsock)
-{
-	kvfree(vsock);
-}
+अटल व्योम vhost_vsock_मुक्त(काष्ठा vhost_vsock *vsock)
+अणु
+	kvमुक्त(vsock);
+पूर्ण
 
-static int vhost_vsock_dev_open(struct inode *inode, struct file *file)
-{
-	struct vhost_virtqueue **vqs;
-	struct vhost_vsock *vsock;
-	int ret;
+अटल पूर्णांक vhost_vsock_dev_खोलो(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	काष्ठा vhost_virtqueue **vqs;
+	काष्ठा vhost_vsock *vsock;
+	पूर्णांक ret;
 
-	/* This struct is large and allocation could fail, fall back to vmalloc
-	 * if there is no other way.
+	/* This काष्ठा is large and allocation could fail, fall back to vदो_स्मृति
+	 * अगर there is no other way.
 	 */
-	vsock = kvmalloc(sizeof(*vsock), GFP_KERNEL | __GFP_RETRY_MAYFAIL);
-	if (!vsock)
-		return -ENOMEM;
+	vsock = kvदो_स्मृति(माप(*vsock), GFP_KERNEL | __GFP_RETRY_MAYFAIL);
+	अगर (!vsock)
+		वापस -ENOMEM;
 
-	vqs = kmalloc_array(ARRAY_SIZE(vsock->vqs), sizeof(*vqs), GFP_KERNEL);
-	if (!vqs) {
+	vqs = kदो_स्मृति_array(ARRAY_SIZE(vsock->vqs), माप(*vqs), GFP_KERNEL);
+	अगर (!vqs) अणु
 		ret = -ENOMEM;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	vsock->guest_cid = 0; /* no CID assigned yet */
+	vsock->guest_cid = 0; /* no CID asचिन्हित yet */
 
 	atomic_set(&vsock->queued_replies, 0);
 
@@ -643,282 +644,282 @@ static int vhost_vsock_dev_open(struct inode *inode, struct file *file)
 
 	vhost_dev_init(&vsock->dev, vqs, ARRAY_SIZE(vsock->vqs),
 		       UIO_MAXIOV, VHOST_VSOCK_PKT_WEIGHT,
-		       VHOST_VSOCK_WEIGHT, true, NULL);
+		       VHOST_VSOCK_WEIGHT, true, शून्य);
 
-	file->private_data = vsock;
+	file->निजी_data = vsock;
 	spin_lock_init(&vsock->send_pkt_list_lock);
 	INIT_LIST_HEAD(&vsock->send_pkt_list);
 	vhost_work_init(&vsock->send_pkt_work, vhost_transport_send_pkt_work);
-	return 0;
+	वापस 0;
 
 out:
-	vhost_vsock_free(vsock);
-	return ret;
-}
+	vhost_vsock_मुक्त(vsock);
+	वापस ret;
+पूर्ण
 
-static void vhost_vsock_flush(struct vhost_vsock *vsock)
-{
-	int i;
+अटल व्योम vhost_vsock_flush(काष्ठा vhost_vsock *vsock)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < ARRAY_SIZE(vsock->vqs); i++)
-		if (vsock->vqs[i].handle_kick)
+	क्रम (i = 0; i < ARRAY_SIZE(vsock->vqs); i++)
+		अगर (vsock->vqs[i].handle_kick)
 			vhost_poll_flush(&vsock->vqs[i].poll);
 	vhost_work_flush(&vsock->dev, &vsock->send_pkt_work);
-}
+पूर्ण
 
-static void vhost_vsock_reset_orphans(struct sock *sk)
-{
-	struct vsock_sock *vsk = vsock_sk(sk);
+अटल व्योम vhost_vsock_reset_orphans(काष्ठा sock *sk)
+अणु
+	काष्ठा vsock_sock *vsk = vsock_sk(sk);
 
-	/* vmci_transport.c doesn't take sk_lock here either.  At least we're
-	 * under vsock_table_lock so the sock cannot disappear while we're
+	/* vmci_transport.c करोesn't take sk_lock here either.  At least we're
+	 * under vsock_table_lock so the sock cannot disappear जबतक we're
 	 * executing.
 	 */
 
 	/* If the peer is still valid, no need to reset connection */
-	if (vhost_vsock_get(vsk->remote_addr.svm_cid))
-		return;
+	अगर (vhost_vsock_get(vsk->remote_addr.svm_cid))
+		वापस;
 
-	/* If the close timeout is pending, let it expire.  This avoids races
-	 * with the timeout callback.
+	/* If the बंद समयout is pending, let it expire.  This aव्योमs races
+	 * with the समयout callback.
 	 */
-	if (vsk->close_work_scheduled)
-		return;
+	अगर (vsk->बंद_work_scheduled)
+		वापस;
 
 	sock_set_flag(sk, SOCK_DONE);
-	vsk->peer_shutdown = SHUTDOWN_MASK;
+	vsk->peer_shutकरोwn = SHUTDOWN_MASK;
 	sk->sk_state = SS_UNCONNECTED;
 	sk->sk_err = ECONNRESET;
 	sk->sk_error_report(sk);
-}
+पूर्ण
 
-static int vhost_vsock_dev_release(struct inode *inode, struct file *file)
-{
-	struct vhost_vsock *vsock = file->private_data;
+अटल पूर्णांक vhost_vsock_dev_release(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	काष्ठा vhost_vsock *vsock = file->निजी_data;
 
 	mutex_lock(&vhost_vsock_mutex);
-	if (vsock->guest_cid)
+	अगर (vsock->guest_cid)
 		hash_del_rcu(&vsock->hash);
 	mutex_unlock(&vhost_vsock_mutex);
 
-	/* Wait for other CPUs to finish using vsock */
+	/* Wait क्रम other CPUs to finish using vsock */
 	synchronize_rcu();
 
-	/* Iterating over all connections for all CIDs to find orphans is
-	 * inefficient.  Room for improvement here. */
-	vsock_for_each_connected_socket(vhost_vsock_reset_orphans);
+	/* Iterating over all connections क्रम all CIDs to find orphans is
+	 * inefficient.  Room क्रम improvement here. */
+	vsock_क्रम_each_connected_socket(vhost_vsock_reset_orphans);
 
 	vhost_vsock_stop(vsock);
 	vhost_vsock_flush(vsock);
 	vhost_dev_stop(&vsock->dev);
 
 	spin_lock_bh(&vsock->send_pkt_list_lock);
-	while (!list_empty(&vsock->send_pkt_list)) {
-		struct virtio_vsock_pkt *pkt;
+	जबतक (!list_empty(&vsock->send_pkt_list)) अणु
+		काष्ठा virtio_vsock_pkt *pkt;
 
 		pkt = list_first_entry(&vsock->send_pkt_list,
-				struct virtio_vsock_pkt, list);
+				काष्ठा virtio_vsock_pkt, list);
 		list_del_init(&pkt->list);
-		virtio_transport_free_pkt(pkt);
-	}
+		virtio_transport_मुक्त_pkt(pkt);
+	पूर्ण
 	spin_unlock_bh(&vsock->send_pkt_list_lock);
 
 	vhost_dev_cleanup(&vsock->dev);
-	kfree(vsock->dev.vqs);
-	vhost_vsock_free(vsock);
-	return 0;
-}
+	kमुक्त(vsock->dev.vqs);
+	vhost_vsock_मुक्त(vsock);
+	वापस 0;
+पूर्ण
 
-static int vhost_vsock_set_cid(struct vhost_vsock *vsock, u64 guest_cid)
-{
-	struct vhost_vsock *other;
+अटल पूर्णांक vhost_vsock_set_cid(काष्ठा vhost_vsock *vsock, u64 guest_cid)
+अणु
+	काष्ठा vhost_vsock *other;
 
 	/* Refuse reserved CIDs */
-	if (guest_cid <= VMADDR_CID_HOST ||
+	अगर (guest_cid <= VMADDR_CID_HOST ||
 	    guest_cid == U32_MAX)
-		return -EINVAL;
+		वापस -EINVAL;
 
 	/* 64-bit CIDs are not yet supported */
-	if (guest_cid > U32_MAX)
-		return -EINVAL;
+	अगर (guest_cid > U32_MAX)
+		वापस -EINVAL;
 
-	/* Refuse if CID is assigned to the guest->host transport (i.e. nested
+	/* Refuse अगर CID is asचिन्हित to the guest->host transport (i.e. nested
 	 * VM), to make the loopback work.
 	 */
-	if (vsock_find_cid(guest_cid))
-		return -EADDRINUSE;
+	अगर (vsock_find_cid(guest_cid))
+		वापस -EADDRINUSE;
 
-	/* Refuse if CID is already in use */
+	/* Refuse अगर CID is alपढ़ोy in use */
 	mutex_lock(&vhost_vsock_mutex);
 	other = vhost_vsock_get(guest_cid);
-	if (other && other != vsock) {
+	अगर (other && other != vsock) अणु
 		mutex_unlock(&vhost_vsock_mutex);
-		return -EADDRINUSE;
-	}
+		वापस -EADDRINUSE;
+	पूर्ण
 
-	if (vsock->guest_cid)
+	अगर (vsock->guest_cid)
 		hash_del_rcu(&vsock->hash);
 
 	vsock->guest_cid = guest_cid;
 	hash_add_rcu(vhost_vsock_hash, &vsock->hash, vsock->guest_cid);
 	mutex_unlock(&vhost_vsock_mutex);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int vhost_vsock_set_features(struct vhost_vsock *vsock, u64 features)
-{
-	struct vhost_virtqueue *vq;
-	int i;
+अटल पूर्णांक vhost_vsock_set_features(काष्ठा vhost_vsock *vsock, u64 features)
+अणु
+	काष्ठा vhost_virtqueue *vq;
+	पूर्णांक i;
 
-	if (features & ~VHOST_VSOCK_FEATURES)
-		return -EOPNOTSUPP;
+	अगर (features & ~VHOST_VSOCK_FEATURES)
+		वापस -EOPNOTSUPP;
 
 	mutex_lock(&vsock->dev.mutex);
-	if ((features & (1 << VHOST_F_LOG_ALL)) &&
-	    !vhost_log_access_ok(&vsock->dev)) {
-		goto err;
-	}
+	अगर ((features & (1 << VHOST_F_LOG_ALL)) &&
+	    !vhost_log_access_ok(&vsock->dev)) अणु
+		जाओ err;
+	पूर्ण
 
-	if ((features & (1ULL << VIRTIO_F_ACCESS_PLATFORM))) {
-		if (vhost_init_device_iotlb(&vsock->dev, true))
-			goto err;
-	}
+	अगर ((features & (1ULL << VIRTIO_F_ACCESS_PLATFORM))) अणु
+		अगर (vhost_init_device_iotlb(&vsock->dev, true))
+			जाओ err;
+	पूर्ण
 
-	for (i = 0; i < ARRAY_SIZE(vsock->vqs); i++) {
+	क्रम (i = 0; i < ARRAY_SIZE(vsock->vqs); i++) अणु
 		vq = &vsock->vqs[i];
 		mutex_lock(&vq->mutex);
 		vq->acked_features = features;
 		mutex_unlock(&vq->mutex);
-	}
+	पूर्ण
 	mutex_unlock(&vsock->dev.mutex);
-	return 0;
+	वापस 0;
 
 err:
 	mutex_unlock(&vsock->dev.mutex);
-	return -EFAULT;
-}
+	वापस -EFAULT;
+पूर्ण
 
-static long vhost_vsock_dev_ioctl(struct file *f, unsigned int ioctl,
-				  unsigned long arg)
-{
-	struct vhost_vsock *vsock = f->private_data;
-	void __user *argp = (void __user *)arg;
+अटल दीर्घ vhost_vsock_dev_ioctl(काष्ठा file *f, अचिन्हित पूर्णांक ioctl,
+				  अचिन्हित दीर्घ arg)
+अणु
+	काष्ठा vhost_vsock *vsock = f->निजी_data;
+	व्योम __user *argp = (व्योम __user *)arg;
 	u64 guest_cid;
 	u64 features;
-	int start;
-	int r;
+	पूर्णांक start;
+	पूर्णांक r;
 
-	switch (ioctl) {
-	case VHOST_VSOCK_SET_GUEST_CID:
-		if (copy_from_user(&guest_cid, argp, sizeof(guest_cid)))
-			return -EFAULT;
-		return vhost_vsock_set_cid(vsock, guest_cid);
-	case VHOST_VSOCK_SET_RUNNING:
-		if (copy_from_user(&start, argp, sizeof(start)))
-			return -EFAULT;
-		if (start)
-			return vhost_vsock_start(vsock);
-		else
-			return vhost_vsock_stop(vsock);
-	case VHOST_GET_FEATURES:
+	चयन (ioctl) अणु
+	हाल VHOST_VSOCK_SET_GUEST_CID:
+		अगर (copy_from_user(&guest_cid, argp, माप(guest_cid)))
+			वापस -EFAULT;
+		वापस vhost_vsock_set_cid(vsock, guest_cid);
+	हाल VHOST_VSOCK_SET_RUNNING:
+		अगर (copy_from_user(&start, argp, माप(start)))
+			वापस -EFAULT;
+		अगर (start)
+			वापस vhost_vsock_start(vsock);
+		अन्यथा
+			वापस vhost_vsock_stop(vsock);
+	हाल VHOST_GET_FEATURES:
 		features = VHOST_VSOCK_FEATURES;
-		if (copy_to_user(argp, &features, sizeof(features)))
-			return -EFAULT;
-		return 0;
-	case VHOST_SET_FEATURES:
-		if (copy_from_user(&features, argp, sizeof(features)))
-			return -EFAULT;
-		return vhost_vsock_set_features(vsock, features);
-	case VHOST_GET_BACKEND_FEATURES:
+		अगर (copy_to_user(argp, &features, माप(features)))
+			वापस -EFAULT;
+		वापस 0;
+	हाल VHOST_SET_FEATURES:
+		अगर (copy_from_user(&features, argp, माप(features)))
+			वापस -EFAULT;
+		वापस vhost_vsock_set_features(vsock, features);
+	हाल VHOST_GET_BACKEND_FEATURES:
 		features = VHOST_VSOCK_BACKEND_FEATURES;
-		if (copy_to_user(argp, &features, sizeof(features)))
-			return -EFAULT;
-		return 0;
-	case VHOST_SET_BACKEND_FEATURES:
-		if (copy_from_user(&features, argp, sizeof(features)))
-			return -EFAULT;
-		if (features & ~VHOST_VSOCK_BACKEND_FEATURES)
-			return -EOPNOTSUPP;
+		अगर (copy_to_user(argp, &features, माप(features)))
+			वापस -EFAULT;
+		वापस 0;
+	हाल VHOST_SET_BACKEND_FEATURES:
+		अगर (copy_from_user(&features, argp, माप(features)))
+			वापस -EFAULT;
+		अगर (features & ~VHOST_VSOCK_BACKEND_FEATURES)
+			वापस -EOPNOTSUPP;
 		vhost_set_backend_features(&vsock->dev, features);
-		return 0;
-	default:
+		वापस 0;
+	शेष:
 		mutex_lock(&vsock->dev.mutex);
 		r = vhost_dev_ioctl(&vsock->dev, ioctl, argp);
-		if (r == -ENOIOCTLCMD)
+		अगर (r == -ENOIOCTLCMD)
 			r = vhost_vring_ioctl(&vsock->dev, ioctl, argp);
-		else
+		अन्यथा
 			vhost_vsock_flush(vsock);
 		mutex_unlock(&vsock->dev.mutex);
-		return r;
-	}
-}
+		वापस r;
+	पूर्ण
+पूर्ण
 
-static ssize_t vhost_vsock_chr_read_iter(struct kiocb *iocb, struct iov_iter *to)
-{
-	struct file *file = iocb->ki_filp;
-	struct vhost_vsock *vsock = file->private_data;
-	struct vhost_dev *dev = &vsock->dev;
-	int noblock = file->f_flags & O_NONBLOCK;
+अटल sमाप_प्रकार vhost_vsock_chr_पढ़ो_iter(काष्ठा kiocb *iocb, काष्ठा iov_iter *to)
+अणु
+	काष्ठा file *file = iocb->ki_filp;
+	काष्ठा vhost_vsock *vsock = file->निजी_data;
+	काष्ठा vhost_dev *dev = &vsock->dev;
+	पूर्णांक noblock = file->f_flags & O_NONBLOCK;
 
-	return vhost_chr_read_iter(dev, to, noblock);
-}
+	वापस vhost_chr_पढ़ो_iter(dev, to, noblock);
+पूर्ण
 
-static ssize_t vhost_vsock_chr_write_iter(struct kiocb *iocb,
-					struct iov_iter *from)
-{
-	struct file *file = iocb->ki_filp;
-	struct vhost_vsock *vsock = file->private_data;
-	struct vhost_dev *dev = &vsock->dev;
+अटल sमाप_प्रकार vhost_vsock_chr_ग_लिखो_iter(काष्ठा kiocb *iocb,
+					काष्ठा iov_iter *from)
+अणु
+	काष्ठा file *file = iocb->ki_filp;
+	काष्ठा vhost_vsock *vsock = file->निजी_data;
+	काष्ठा vhost_dev *dev = &vsock->dev;
 
-	return vhost_chr_write_iter(dev, from);
-}
+	वापस vhost_chr_ग_लिखो_iter(dev, from);
+पूर्ण
 
-static __poll_t vhost_vsock_chr_poll(struct file *file, poll_table *wait)
-{
-	struct vhost_vsock *vsock = file->private_data;
-	struct vhost_dev *dev = &vsock->dev;
+अटल __poll_t vhost_vsock_chr_poll(काष्ठा file *file, poll_table *रुको)
+अणु
+	काष्ठा vhost_vsock *vsock = file->निजी_data;
+	काष्ठा vhost_dev *dev = &vsock->dev;
 
-	return vhost_chr_poll(file, dev, wait);
-}
+	वापस vhost_chr_poll(file, dev, रुको);
+पूर्ण
 
-static const struct file_operations vhost_vsock_fops = {
+अटल स्थिर काष्ठा file_operations vhost_vsock_fops = अणु
 	.owner          = THIS_MODULE,
-	.open           = vhost_vsock_dev_open,
+	.खोलो           = vhost_vsock_dev_खोलो,
 	.release        = vhost_vsock_dev_release,
 	.llseek		= noop_llseek,
 	.unlocked_ioctl = vhost_vsock_dev_ioctl,
 	.compat_ioctl   = compat_ptr_ioctl,
-	.read_iter      = vhost_vsock_chr_read_iter,
-	.write_iter     = vhost_vsock_chr_write_iter,
+	.पढ़ो_iter      = vhost_vsock_chr_पढ़ो_iter,
+	.ग_लिखो_iter     = vhost_vsock_chr_ग_लिखो_iter,
 	.poll           = vhost_vsock_chr_poll,
-};
+पूर्ण;
 
-static struct miscdevice vhost_vsock_misc = {
+अटल काष्ठा miscdevice vhost_vsock_misc = अणु
 	.minor = VHOST_VSOCK_MINOR,
 	.name = "vhost-vsock",
 	.fops = &vhost_vsock_fops,
-};
+पूर्ण;
 
-static int __init vhost_vsock_init(void)
-{
-	int ret;
+अटल पूर्णांक __init vhost_vsock_init(व्योम)
+अणु
+	पूर्णांक ret;
 
-	ret = vsock_core_register(&vhost_transport.transport,
+	ret = vsock_core_रेजिस्टर(&vhost_transport.transport,
 				  VSOCK_TRANSPORT_F_H2G);
-	if (ret < 0)
-		return ret;
-	return misc_register(&vhost_vsock_misc);
-};
+	अगर (ret < 0)
+		वापस ret;
+	वापस misc_रेजिस्टर(&vhost_vsock_misc);
+पूर्ण;
 
-static void __exit vhost_vsock_exit(void)
-{
-	misc_deregister(&vhost_vsock_misc);
-	vsock_core_unregister(&vhost_transport.transport);
-};
+अटल व्योम __निकास vhost_vsock_निकास(व्योम)
+अणु
+	misc_deरेजिस्टर(&vhost_vsock_misc);
+	vsock_core_unरेजिस्टर(&vhost_transport.transport);
+पूर्ण;
 
 module_init(vhost_vsock_init);
-module_exit(vhost_vsock_exit);
+module_निकास(vhost_vsock_निकास);
 MODULE_LICENSE("GPL v2");
 MODULE_AUTHOR("Asias He");
 MODULE_DESCRIPTION("vhost transport for vsock ");

@@ -1,53 +1,54 @@
-// SPDX-License-Identifier: GPL-2.0
-#include "util/iostat.h"
-#include "util/debug.h"
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश "util/iostat.h"
+#समावेश "util/debug.h"
 
-enum iostat_mode_t iostat_mode = IOSTAT_NONE;
+क्रमागत iostat_mode_t iostat_mode = IOSTAT_NONE;
 
-__weak int iostat_prepare(struct evlist *evlist __maybe_unused,
-			  struct perf_stat_config *config __maybe_unused)
-{
-	return -1;
-}
+__weak पूर्णांक iostat_prepare(काष्ठा evlist *evlist __maybe_unused,
+			  काष्ठा perf_stat_config *config __maybe_unused)
+अणु
+	वापस -1;
+पूर्ण
 
-__weak int iostat_parse(const struct option *opt __maybe_unused,
-			 const char *str __maybe_unused,
-			 int unset __maybe_unused)
-{
+__weak पूर्णांक iostat_parse(स्थिर काष्ठा option *opt __maybe_unused,
+			 स्थिर अक्षर *str __maybe_unused,
+			 पूर्णांक unset __maybe_unused)
+अणु
 	pr_err("iostat mode is not supported on current platform\n");
-	return -1;
-}
+	वापस -1;
+पूर्ण
 
-__weak void iostat_list(struct evlist *evlist __maybe_unused,
-		       struct perf_stat_config *config __maybe_unused)
-{
-}
+__weak व्योम iostat_list(काष्ठा evlist *evlist __maybe_unused,
+		       काष्ठा perf_stat_config *config __maybe_unused)
+अणु
+पूर्ण
 
-__weak void iostat_release(struct evlist *evlist __maybe_unused)
-{
-}
+__weak व्योम iostat_release(काष्ठा evlist *evlist __maybe_unused)
+अणु
+पूर्ण
 
-__weak void iostat_print_header_prefix(struct perf_stat_config *config __maybe_unused)
-{
-}
+__weak व्योम iostat_prपूर्णांक_header_prefix(काष्ठा perf_stat_config *config __maybe_unused)
+अणु
+पूर्ण
 
-__weak void iostat_print_metric(struct perf_stat_config *config __maybe_unused,
-				struct evsel *evsel __maybe_unused,
-				struct perf_stat_output_ctx *out __maybe_unused)
-{
-}
+__weak व्योम iostat_prपूर्णांक_metric(काष्ठा perf_stat_config *config __maybe_unused,
+				काष्ठा evsel *evsel __maybe_unused,
+				काष्ठा perf_stat_output_ctx *out __maybe_unused)
+अणु
+पूर्ण
 
-__weak void iostat_prefix(struct evlist *evlist __maybe_unused,
-			  struct perf_stat_config *config __maybe_unused,
-			  char *prefix __maybe_unused,
-			  struct timespec *ts __maybe_unused)
-{
-}
+__weak व्योम iostat_prefix(काष्ठा evlist *evlist __maybe_unused,
+			  काष्ठा perf_stat_config *config __maybe_unused,
+			  अक्षर *prefix __maybe_unused,
+			  काष्ठा बारpec *ts __maybe_unused)
+अणु
+पूर्ण
 
-__weak void iostat_print_counters(struct evlist *evlist __maybe_unused,
-				  struct perf_stat_config *config __maybe_unused,
-				  struct timespec *ts __maybe_unused,
-				  char *prefix __maybe_unused,
-				  iostat_print_counter_t print_cnt_cb __maybe_unused)
-{
-}
+__weak व्योम iostat_prपूर्णांक_counters(काष्ठा evlist *evlist __maybe_unused,
+				  काष्ठा perf_stat_config *config __maybe_unused,
+				  काष्ठा बारpec *ts __maybe_unused,
+				  अक्षर *prefix __maybe_unused,
+				  iostat_prपूर्णांक_counter_t prपूर्णांक_cnt_cb __maybe_unused)
+अणु
+पूर्ण

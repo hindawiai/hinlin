@@ -1,133 +1,134 @@
+<शैली गुरु>
 /*
- * A Remote Heap.  Remote means that we don't touch the memory that the
- * heap points to. Normal heap implementations use the memory they manage
- * to place their list. We cannot do that because the memory we manage may
- * have special properties, for example it is uncachable or of different
+ * A Remote Heap.  Remote means that we करोn't touch the memory that the
+ * heap poपूर्णांकs to. Normal heap implementations use the memory they manage
+ * to place their list. We cannot करो that because the memory we manage may
+ * have special properties, क्रम example it is uncachable or of dअगरferent
  * endianess.
  *
- * Author: Pantelis Antoniou <panto@intracom.gr>
+ * Author: Pantelis Antoniou <panto@पूर्णांकracom.gr>
  *
  * 2004 (c) INTRACOM S.A. Greece. This file is licensed under
  * the terms of the GNU General Public License version 2. This program
  * is licensed "as is" without any warranty of any kind, whether express
  * or implied.
  */
-#include <linux/types.h>
-#include <linux/errno.h>
-#include <linux/kernel.h>
-#include <linux/export.h>
-#include <linux/mm.h>
-#include <linux/err.h>
-#include <linux/slab.h>
+#समावेश <linux/types.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/kernel.h>
+#समावेश <linux/export.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/err.h>
+#समावेश <linux/slab.h>
 
-#include <asm/rheap.h>
+#समावेश <यंत्र/rheap.h>
 
 /*
- * Fixup a list_head, needed when copying lists.  If the pointers fall
+ * Fixup a list_head, needed when copying lists.  If the poपूर्णांकers fall
  * between s and e, apply the delta.  This assumes that
- * sizeof(struct list_head *) == sizeof(unsigned long *).
+ * माप(काष्ठा list_head *) == माप(अचिन्हित दीर्घ *).
  */
-static inline void fixup(unsigned long s, unsigned long e, int d,
-			 struct list_head *l)
-{
-	unsigned long *pp;
+अटल अंतरभूत व्योम fixup(अचिन्हित दीर्घ s, अचिन्हित दीर्घ e, पूर्णांक d,
+			 काष्ठा list_head *l)
+अणु
+	अचिन्हित दीर्घ *pp;
 
-	pp = (unsigned long *)&l->next;
-	if (*pp >= s && *pp < e)
+	pp = (अचिन्हित दीर्घ *)&l->next;
+	अगर (*pp >= s && *pp < e)
 		*pp += d;
 
-	pp = (unsigned long *)&l->prev;
-	if (*pp >= s && *pp < e)
+	pp = (अचिन्हित दीर्घ *)&l->prev;
+	अगर (*pp >= s && *pp < e)
 		*pp += d;
-}
+पूर्ण
 
 /* Grow the allocated blocks */
-static int grow(rh_info_t * info, int max_blocks)
-{
+अटल पूर्णांक grow(rh_info_t * info, पूर्णांक max_blocks)
+अणु
 	rh_block_t *block, *blk;
-	int i, new_blocks;
-	int delta;
-	unsigned long blks, blke;
+	पूर्णांक i, new_blocks;
+	पूर्णांक delta;
+	अचिन्हित दीर्घ blks, blke;
 
-	if (max_blocks <= info->max_blocks)
-		return -EINVAL;
+	अगर (max_blocks <= info->max_blocks)
+		वापस -EINVAL;
 
 	new_blocks = max_blocks - info->max_blocks;
 
-	block = kmalloc_array(max_blocks, sizeof(rh_block_t), GFP_ATOMIC);
-	if (block == NULL)
-		return -ENOMEM;
+	block = kदो_स्मृति_array(max_blocks, माप(rh_block_t), GFP_ATOMIC);
+	अगर (block == शून्य)
+		वापस -ENOMEM;
 
-	if (info->max_blocks > 0) {
+	अगर (info->max_blocks > 0) अणु
 
 		/* copy old block area */
-		memcpy(block, info->block,
-		       sizeof(rh_block_t) * info->max_blocks);
+		स_नकल(block, info->block,
+		       माप(rh_block_t) * info->max_blocks);
 
-		delta = (char *)block - (char *)info->block;
+		delta = (अक्षर *)block - (अक्षर *)info->block;
 
-		/* and fixup list pointers */
-		blks = (unsigned long)info->block;
-		blke = (unsigned long)(info->block + info->max_blocks);
+		/* and fixup list poपूर्णांकers */
+		blks = (अचिन्हित दीर्घ)info->block;
+		blke = (अचिन्हित दीर्घ)(info->block + info->max_blocks);
 
-		for (i = 0, blk = block; i < info->max_blocks; i++, blk++)
+		क्रम (i = 0, blk = block; i < info->max_blocks; i++, blk++)
 			fixup(blks, blke, delta, &blk->list);
 
 		fixup(blks, blke, delta, &info->empty_list);
-		fixup(blks, blke, delta, &info->free_list);
+		fixup(blks, blke, delta, &info->मुक्त_list);
 		fixup(blks, blke, delta, &info->taken_list);
 
-		/* free the old allocated memory */
-		if ((info->flags & RHIF_STATIC_BLOCK) == 0)
-			kfree(info->block);
-	}
+		/* मुक्त the old allocated memory */
+		अगर ((info->flags & RHIF_STATIC_BLOCK) == 0)
+			kमुक्त(info->block);
+	पूर्ण
 
 	info->block = block;
 	info->empty_slots += new_blocks;
 	info->max_blocks = max_blocks;
 	info->flags &= ~RHIF_STATIC_BLOCK;
 
-	/* add all new blocks to the free list */
+	/* add all new blocks to the मुक्त list */
 	blk = block + info->max_blocks - new_blocks;
-	for (i = 0; i < new_blocks; i++, blk++)
+	क्रम (i = 0; i < new_blocks; i++, blk++)
 		list_add(&blk->list, &info->empty_list);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * Assure at least the required amount of empty slots.  If this function
- * causes a grow in the block area then all pointers kept to the block
+ * causes a grow in the block area then all poपूर्णांकers kept to the block
  * area are invalid!
  */
-static int assure_empty(rh_info_t * info, int slots)
-{
-	int max_blocks;
+अटल पूर्णांक assure_empty(rh_info_t * info, पूर्णांक slots)
+अणु
+	पूर्णांक max_blocks;
 
 	/* This function is not meant to be used to grow uncontrollably */
-	if (slots >= 4)
-		return -EINVAL;
+	अगर (slots >= 4)
+		वापस -EINVAL;
 
 	/* Enough space */
-	if (info->empty_slots >= slots)
-		return 0;
+	अगर (info->empty_slots >= slots)
+		वापस 0;
 
 	/* Next 16 sized block */
 	max_blocks = ((info->max_blocks + slots) + 15) & ~15;
 
-	return grow(info, max_blocks);
-}
+	वापस grow(info, max_blocks);
+पूर्ण
 
-static rh_block_t *get_slot(rh_info_t * info)
-{
+अटल rh_block_t *get_slot(rh_info_t * info)
+अणु
 	rh_block_t *blk;
 
-	/* If no more free slots, and failure to extend. */
-	/* XXX: You should have called assure_empty before */
-	if (info->empty_slots == 0) {
-		printk(KERN_ERR "rh: out of slots; crash is imminent.\n");
-		return NULL;
-	}
+	/* If no more मुक्त slots, and failure to extend. */
+	/* XXX: You should have called assure_empty beक्रमe */
+	अगर (info->empty_slots == 0) अणु
+		prपूर्णांकk(KERN_ERR "rh: out of slots; crash is imminent.\n");
+		वापस शून्य;
+	पूर्ण
 
 	/* Get empty slot to use */
 	blk = list_entry(info->empty_list.next, rh_block_t, list);
@@ -137,175 +138,175 @@ static rh_block_t *get_slot(rh_info_t * info)
 	/* Initialize */
 	blk->start = 0;
 	blk->size = 0;
-	blk->owner = NULL;
+	blk->owner = शून्य;
 
-	return blk;
-}
+	वापस blk;
+पूर्ण
 
-static inline void release_slot(rh_info_t * info, rh_block_t * blk)
-{
+अटल अंतरभूत व्योम release_slot(rh_info_t * info, rh_block_t * blk)
+अणु
 	list_add(&blk->list, &info->empty_list);
 	info->empty_slots++;
-}
+पूर्ण
 
-static void attach_free_block(rh_info_t * info, rh_block_t * blkn)
-{
+अटल व्योम attach_मुक्त_block(rh_info_t * info, rh_block_t * blkn)
+अणु
 	rh_block_t *blk;
-	rh_block_t *before;
+	rh_block_t *beक्रमe;
 	rh_block_t *after;
 	rh_block_t *next;
-	int size;
-	unsigned long s, e, bs, be;
-	struct list_head *l;
+	पूर्णांक size;
+	अचिन्हित दीर्घ s, e, bs, be;
+	काष्ठा list_head *l;
 
 	/* We assume that they are aligned properly */
 	size = blkn->size;
 	s = blkn->start;
 	e = s + size;
 
-	/* Find the blocks immediately before and after the given one
-	 * (if any) */
-	before = NULL;
-	after = NULL;
-	next = NULL;
+	/* Find the blocks immediately beक्रमe and after the given one
+	 * (अगर any) */
+	beक्रमe = शून्य;
+	after = शून्य;
+	next = शून्य;
 
-	list_for_each(l, &info->free_list) {
+	list_क्रम_each(l, &info->मुक्त_list) अणु
 		blk = list_entry(l, rh_block_t, list);
 
 		bs = blk->start;
 		be = bs + blk->size;
 
-		if (next == NULL && s >= bs)
+		अगर (next == शून्य && s >= bs)
 			next = blk;
 
-		if (be == s)
-			before = blk;
+		अगर (be == s)
+			beक्रमe = blk;
 
-		if (e == bs)
+		अगर (e == bs)
 			after = blk;
 
-		/* If both are not null, break now */
-		if (before != NULL && after != NULL)
-			break;
-	}
+		/* If both are not null, अवरोध now */
+		अगर (beक्रमe != शून्य && after != शून्य)
+			अवरोध;
+	पूर्ण
 
-	/* Now check if they are really adjacent */
-	if (before && s != (before->start + before->size))
-		before = NULL;
+	/* Now check अगर they are really adjacent */
+	अगर (beक्रमe && s != (beक्रमe->start + beक्रमe->size))
+		beक्रमe = शून्य;
 
-	if (after && e != after->start)
-		after = NULL;
+	अगर (after && e != after->start)
+		after = शून्य;
 
-	/* No coalescing; list insert and return */
-	if (before == NULL && after == NULL) {
+	/* No coalescing; list insert and वापस */
+	अगर (beक्रमe == शून्य && after == शून्य) अणु
 
-		if (next != NULL)
+		अगर (next != शून्य)
 			list_add(&blkn->list, &next->list);
-		else
-			list_add(&blkn->list, &info->free_list);
+		अन्यथा
+			list_add(&blkn->list, &info->मुक्त_list);
 
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	/* We don't need it anymore */
+	/* We करोn't need it anymore */
 	release_slot(info, blkn);
 
-	/* Grow the before block */
-	if (before != NULL && after == NULL) {
-		before->size += size;
-		return;
-	}
+	/* Grow the beक्रमe block */
+	अगर (beक्रमe != शून्य && after == शून्य) अणु
+		beक्रमe->size += size;
+		वापस;
+	पूर्ण
 
 	/* Grow the after block backwards */
-	if (before == NULL && after != NULL) {
+	अगर (beक्रमe == शून्य && after != शून्य) अणु
 		after->start -= size;
 		after->size += size;
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	/* Grow the before block, and release the after block */
-	before->size += size + after->size;
+	/* Grow the beक्रमe block, and release the after block */
+	beक्रमe->size += size + after->size;
 	list_del(&after->list);
 	release_slot(info, after);
-}
+पूर्ण
 
-static void attach_taken_block(rh_info_t * info, rh_block_t * blkn)
-{
+अटल व्योम attach_taken_block(rh_info_t * info, rh_block_t * blkn)
+अणु
 	rh_block_t *blk;
-	struct list_head *l;
+	काष्ठा list_head *l;
 
-	/* Find the block immediately before the given one (if any) */
-	list_for_each(l, &info->taken_list) {
+	/* Find the block immediately beक्रमe the given one (अगर any) */
+	list_क्रम_each(l, &info->taken_list) अणु
 		blk = list_entry(l, rh_block_t, list);
-		if (blk->start > blkn->start) {
+		अगर (blk->start > blkn->start) अणु
 			list_add_tail(&blkn->list, &blk->list);
-			return;
-		}
-	}
+			वापस;
+		पूर्ण
+	पूर्ण
 
 	list_add_tail(&blkn->list, &info->taken_list);
-}
+पूर्ण
 
 /*
- * Create a remote heap dynamically.  Note that no memory for the blocks
+ * Create a remote heap dynamically.  Note that no memory क्रम the blocks
  * are allocated.  It will upon the first allocation
  */
-rh_info_t *rh_create(unsigned int alignment)
-{
+rh_info_t *rh_create(अचिन्हित पूर्णांक alignment)
+अणु
 	rh_info_t *info;
 
-	/* Alignment must be a power of two */
-	if ((alignment & (alignment - 1)) != 0)
-		return ERR_PTR(-EINVAL);
+	/* Alignment must be a घातer of two */
+	अगर ((alignment & (alignment - 1)) != 0)
+		वापस ERR_PTR(-EINVAL);
 
-	info = kmalloc(sizeof(*info), GFP_ATOMIC);
-	if (info == NULL)
-		return ERR_PTR(-ENOMEM);
+	info = kदो_स्मृति(माप(*info), GFP_ATOMIC);
+	अगर (info == शून्य)
+		वापस ERR_PTR(-ENOMEM);
 
 	info->alignment = alignment;
 
 	/* Initially everything as empty */
-	info->block = NULL;
+	info->block = शून्य;
 	info->max_blocks = 0;
 	info->empty_slots = 0;
 	info->flags = 0;
 
 	INIT_LIST_HEAD(&info->empty_list);
-	INIT_LIST_HEAD(&info->free_list);
+	INIT_LIST_HEAD(&info->मुक्त_list);
 	INIT_LIST_HEAD(&info->taken_list);
 
-	return info;
-}
+	वापस info;
+पूर्ण
 EXPORT_SYMBOL_GPL(rh_create);
 
 /*
- * Destroy a dynamically created remote heap.  Deallocate only if the areas
- * are not static
+ * Destroy a dynamically created remote heap.  Deallocate only अगर the areas
+ * are not अटल
  */
-void rh_destroy(rh_info_t * info)
-{
-	if ((info->flags & RHIF_STATIC_BLOCK) == 0)
-		kfree(info->block);
+व्योम rh_destroy(rh_info_t * info)
+अणु
+	अगर ((info->flags & RHIF_STATIC_BLOCK) == 0)
+		kमुक्त(info->block);
 
-	if ((info->flags & RHIF_STATIC_INFO) == 0)
-		kfree(info);
-}
+	अगर ((info->flags & RHIF_STATIC_INFO) == 0)
+		kमुक्त(info);
+पूर्ण
 EXPORT_SYMBOL_GPL(rh_destroy);
 
 /*
  * Initialize in place a remote heap info block.  This is needed to support
  * operation very early in the startup of the kernel, when it is not yet safe
- * to call kmalloc.
+ * to call kदो_स्मृति.
  */
-void rh_init(rh_info_t * info, unsigned int alignment, int max_blocks,
+व्योम rh_init(rh_info_t * info, अचिन्हित पूर्णांक alignment, पूर्णांक max_blocks,
 	     rh_block_t * block)
-{
-	int i;
+अणु
+	पूर्णांक i;
 	rh_block_t *blk;
 
-	/* Alignment must be a power of two */
-	if ((alignment & (alignment - 1)) != 0)
-		return;
+	/* Alignment must be a घातer of two */
+	अगर ((alignment & (alignment - 1)) != 0)
+		वापस;
 
 	info->alignment = alignment;
 
@@ -316,21 +317,21 @@ void rh_init(rh_info_t * info, unsigned int alignment, int max_blocks,
 	info->flags = RHIF_STATIC_INFO | RHIF_STATIC_BLOCK;
 
 	INIT_LIST_HEAD(&info->empty_list);
-	INIT_LIST_HEAD(&info->free_list);
+	INIT_LIST_HEAD(&info->मुक्त_list);
 	INIT_LIST_HEAD(&info->taken_list);
 
-	/* Add all new blocks to the free list */
-	for (i = 0, blk = block; i < max_blocks; i++, blk++)
+	/* Add all new blocks to the मुक्त list */
+	क्रम (i = 0, blk = block; i < max_blocks; i++, blk++)
 		list_add(&blk->list, &info->empty_list);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(rh_init);
 
-/* Attach a free memory region, coalesces regions if adjacent */
-int rh_attach_region(rh_info_t * info, unsigned long start, int size)
-{
+/* Attach a मुक्त memory region, coalesces regions अगर adjacent */
+पूर्णांक rh_attach_region(rh_info_t * info, अचिन्हित दीर्घ start, पूर्णांक size)
+अणु
 	rh_block_t *blk;
-	unsigned long s, e, m;
-	int r;
+	अचिन्हित दीर्घ s, e, m;
+	पूर्णांक r;
 
 	/* The region must be aligned */
 	s = start;
@@ -340,42 +341,42 @@ int rh_attach_region(rh_info_t * info, unsigned long start, int size)
 	/* Round start up */
 	s = (s + m) & ~m;
 
-	/* Round end down */
+	/* Round end करोwn */
 	e = e & ~m;
 
-	if (IS_ERR_VALUE(e) || (e < s))
-		return -ERANGE;
+	अगर (IS_ERR_VALUE(e) || (e < s))
+		वापस -दुस्फल;
 
 	/* Take final values */
 	start = s;
 	size = e - s;
 
-	/* Grow the blocks, if needed */
+	/* Grow the blocks, अगर needed */
 	r = assure_empty(info, 1);
-	if (r < 0)
-		return r;
+	अगर (r < 0)
+		वापस r;
 
 	blk = get_slot(info);
 	blk->start = start;
 	blk->size = size;
-	blk->owner = NULL;
+	blk->owner = शून्य;
 
-	attach_free_block(info, blk);
+	attach_मुक्त_block(info, blk);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(rh_attach_region);
 
-/* Detatch given address range, splits free block if needed. */
-unsigned long rh_detach_region(rh_info_t * info, unsigned long start, int size)
-{
-	struct list_head *l;
+/* Detatch given address range, splits मुक्त block अगर needed. */
+अचिन्हित दीर्घ rh_detach_region(rh_info_t * info, अचिन्हित दीर्घ start, पूर्णांक size)
+अणु
+	काष्ठा list_head *l;
 	rh_block_t *blk, *newblk;
-	unsigned long s, e, m, bs, be;
+	अचिन्हित दीर्घ s, e, m, bs, be;
 
 	/* Validate size */
-	if (size <= 0)
-		return (unsigned long) -EINVAL;
+	अगर (size <= 0)
+		वापस (अचिन्हित दीर्घ) -EINVAL;
 
 	/* The region must be aligned */
 	s = start;
@@ -385,154 +386,154 @@ unsigned long rh_detach_region(rh_info_t * info, unsigned long start, int size)
 	/* Round start up */
 	s = (s + m) & ~m;
 
-	/* Round end down */
+	/* Round end करोwn */
 	e = e & ~m;
 
-	if (assure_empty(info, 1) < 0)
-		return (unsigned long) -ENOMEM;
+	अगर (assure_empty(info, 1) < 0)
+		वापस (अचिन्हित दीर्घ) -ENOMEM;
 
-	blk = NULL;
-	list_for_each(l, &info->free_list) {
+	blk = शून्य;
+	list_क्रम_each(l, &info->मुक्त_list) अणु
 		blk = list_entry(l, rh_block_t, list);
-		/* The range must lie entirely inside one free block */
+		/* The range must lie entirely inside one मुक्त block */
 		bs = blk->start;
 		be = blk->start + blk->size;
-		if (s >= bs && e <= be)
-			break;
-		blk = NULL;
-	}
+		अगर (s >= bs && e <= be)
+			अवरोध;
+		blk = शून्य;
+	पूर्ण
 
-	if (blk == NULL)
-		return (unsigned long) -ENOMEM;
+	अगर (blk == शून्य)
+		वापस (अचिन्हित दीर्घ) -ENOMEM;
 
 	/* Perfect fit */
-	if (bs == s && be == e) {
-		/* Delete from free list, release slot */
+	अगर (bs == s && be == e) अणु
+		/* Delete from मुक्त list, release slot */
 		list_del(&blk->list);
 		release_slot(info, blk);
-		return s;
-	}
+		वापस s;
+	पूर्ण
 
-	/* blk still in free list, with updated start and/or size */
-	if (bs == s || be == e) {
-		if (bs == s)
+	/* blk still in मुक्त list, with updated start and/or size */
+	अगर (bs == s || be == e) अणु
+		अगर (bs == s)
 			blk->start += size;
 		blk->size -= size;
 
-	} else {
-		/* The front free fragment */
+	पूर्ण अन्यथा अणु
+		/* The front मुक्त fragment */
 		blk->size = s - bs;
 
-		/* the back free fragment */
+		/* the back मुक्त fragment */
 		newblk = get_slot(info);
 		newblk->start = e;
 		newblk->size = be - e;
 
 		list_add(&newblk->list, &blk->list);
-	}
+	पूर्ण
 
-	return s;
-}
+	वापस s;
+पूर्ण
 EXPORT_SYMBOL_GPL(rh_detach_region);
 
-/* Allocate a block of memory at the specified alignment.  The value returned
- * is an offset into the buffer initialized by rh_init(), or a negative number
- * if there is an error.
+/* Allocate a block of memory at the specअगरied alignment.  The value वापसed
+ * is an offset पूर्णांकo the buffer initialized by rh_init(), or a negative number
+ * अगर there is an error.
  */
-unsigned long rh_alloc_align(rh_info_t * info, int size, int alignment, const char *owner)
-{
-	struct list_head *l;
+अचिन्हित दीर्घ rh_alloc_align(rh_info_t * info, पूर्णांक size, पूर्णांक alignment, स्थिर अक्षर *owner)
+अणु
+	काष्ठा list_head *l;
 	rh_block_t *blk;
 	rh_block_t *newblk;
-	unsigned long start, sp_size;
+	अचिन्हित दीर्घ start, sp_size;
 
-	/* Validate size, and alignment must be power of two */
-	if (size <= 0 || (alignment & (alignment - 1)) != 0)
-		return (unsigned long) -EINVAL;
+	/* Validate size, and alignment must be घातer of two */
+	अगर (size <= 0 || (alignment & (alignment - 1)) != 0)
+		वापस (अचिन्हित दीर्घ) -EINVAL;
 
 	/* Align to configured alignment */
 	size = (size + (info->alignment - 1)) & ~(info->alignment - 1);
 
-	if (assure_empty(info, 2) < 0)
-		return (unsigned long) -ENOMEM;
+	अगर (assure_empty(info, 2) < 0)
+		वापस (अचिन्हित दीर्घ) -ENOMEM;
 
-	blk = NULL;
-	list_for_each(l, &info->free_list) {
+	blk = शून्य;
+	list_क्रम_each(l, &info->मुक्त_list) अणु
 		blk = list_entry(l, rh_block_t, list);
-		if (size <= blk->size) {
+		अगर (size <= blk->size) अणु
 			start = (blk->start + alignment - 1) & ~(alignment - 1);
-			if (start + size <= blk->start + blk->size)
-				break;
-		}
-		blk = NULL;
-	}
+			अगर (start + size <= blk->start + blk->size)
+				अवरोध;
+		पूर्ण
+		blk = शून्य;
+	पूर्ण
 
-	if (blk == NULL)
-		return (unsigned long) -ENOMEM;
+	अगर (blk == शून्य)
+		वापस (अचिन्हित दीर्घ) -ENOMEM;
 
 	/* Just fits */
-	if (blk->size == size) {
-		/* Move from free list to taken list */
+	अगर (blk->size == size) अणु
+		/* Move from मुक्त list to taken list */
 		list_del(&blk->list);
 		newblk = blk;
-	} else {
-		/* Fragment caused, split if needed */
-		/* Create block for fragment in the beginning */
+	पूर्ण अन्यथा अणु
+		/* Fragment caused, split अगर needed */
+		/* Create block क्रम fragment in the beginning */
 		sp_size = start - blk->start;
-		if (sp_size) {
+		अगर (sp_size) अणु
 			rh_block_t *spblk;
 
 			spblk = get_slot(info);
 			spblk->start = blk->start;
 			spblk->size = sp_size;
-			/* add before the blk */
+			/* add beक्रमe the blk */
 			list_add(&spblk->list, blk->list.prev);
-		}
+		पूर्ण
 		newblk = get_slot(info);
 		newblk->start = start;
 		newblk->size = size;
 
-		/* blk still in free list, with updated start and size
-		 * for fragment in the end */
+		/* blk still in मुक्त list, with updated start and size
+		 * क्रम fragment in the end */
 		blk->start = start + size;
 		blk->size -= sp_size + size;
-		/* No fragment in the end, remove blk */
-		if (blk->size == 0) {
+		/* No fragment in the end, हटाओ blk */
+		अगर (blk->size == 0) अणु
 			list_del(&blk->list);
 			release_slot(info, blk);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	newblk->owner = owner;
 	attach_taken_block(info, newblk);
 
-	return start;
-}
+	वापस start;
+पूर्ण
 EXPORT_SYMBOL_GPL(rh_alloc_align);
 
-/* Allocate a block of memory at the default alignment.  The value returned is
- * an offset into the buffer initialized by rh_init(), or a negative number if
+/* Allocate a block of memory at the शेष alignment.  The value वापसed is
+ * an offset पूर्णांकo the buffer initialized by rh_init(), or a negative number अगर
  * there is an error.
  */
-unsigned long rh_alloc(rh_info_t * info, int size, const char *owner)
-{
-	return rh_alloc_align(info, size, info->alignment, owner);
-}
+अचिन्हित दीर्घ rh_alloc(rh_info_t * info, पूर्णांक size, स्थिर अक्षर *owner)
+अणु
+	वापस rh_alloc_align(info, size, info->alignment, owner);
+पूर्ण
 EXPORT_SYMBOL_GPL(rh_alloc);
 
-/* Allocate a block of memory at the given offset, rounded up to the default
- * alignment.  The value returned is an offset into the buffer initialized by
- * rh_init(), or a negative number if there is an error.
+/* Allocate a block of memory at the given offset, rounded up to the शेष
+ * alignment.  The value वापसed is an offset पूर्णांकo the buffer initialized by
+ * rh_init(), or a negative number अगर there is an error.
  */
-unsigned long rh_alloc_fixed(rh_info_t * info, unsigned long start, int size, const char *owner)
-{
-	struct list_head *l;
+अचिन्हित दीर्घ rh_alloc_fixed(rh_info_t * info, अचिन्हित दीर्घ start, पूर्णांक size, स्थिर अक्षर *owner)
+अणु
+	काष्ठा list_head *l;
 	rh_block_t *blk, *newblk1, *newblk2;
-	unsigned long s, e, m, bs = 0, be = 0;
+	अचिन्हित दीर्घ s, e, m, bs = 0, be = 0;
 
 	/* Validate size */
-	if (size <= 0)
-		return (unsigned long) -EINVAL;
+	अगर (size <= 0)
+		वापस (अचिन्हित दीर्घ) -EINVAL;
 
 	/* The region must be aligned */
 	s = start;
@@ -542,56 +543,56 @@ unsigned long rh_alloc_fixed(rh_info_t * info, unsigned long start, int size, co
 	/* Round start up */
 	s = (s + m) & ~m;
 
-	/* Round end down */
+	/* Round end करोwn */
 	e = e & ~m;
 
-	if (assure_empty(info, 2) < 0)
-		return (unsigned long) -ENOMEM;
+	अगर (assure_empty(info, 2) < 0)
+		वापस (अचिन्हित दीर्घ) -ENOMEM;
 
-	blk = NULL;
-	list_for_each(l, &info->free_list) {
+	blk = शून्य;
+	list_क्रम_each(l, &info->मुक्त_list) अणु
 		blk = list_entry(l, rh_block_t, list);
-		/* The range must lie entirely inside one free block */
+		/* The range must lie entirely inside one मुक्त block */
 		bs = blk->start;
 		be = blk->start + blk->size;
-		if (s >= bs && e <= be)
-			break;
-		blk = NULL;
-	}
+		अगर (s >= bs && e <= be)
+			अवरोध;
+		blk = शून्य;
+	पूर्ण
 
-	if (blk == NULL)
-		return (unsigned long) -ENOMEM;
+	अगर (blk == शून्य)
+		वापस (अचिन्हित दीर्घ) -ENOMEM;
 
 	/* Perfect fit */
-	if (bs == s && be == e) {
-		/* Move from free list to taken list */
+	अगर (bs == s && be == e) अणु
+		/* Move from मुक्त list to taken list */
 		list_del(&blk->list);
 		blk->owner = owner;
 
 		start = blk->start;
 		attach_taken_block(info, blk);
 
-		return start;
+		वापस start;
 
-	}
+	पूर्ण
 
-	/* blk still in free list, with updated start and/or size */
-	if (bs == s || be == e) {
-		if (bs == s)
+	/* blk still in मुक्त list, with updated start and/or size */
+	अगर (bs == s || be == e) अणु
+		अगर (bs == s)
 			blk->start += size;
 		blk->size -= size;
 
-	} else {
-		/* The front free fragment */
+	पूर्ण अन्यथा अणु
+		/* The front मुक्त fragment */
 		blk->size = s - bs;
 
-		/* The back free fragment */
+		/* The back मुक्त fragment */
 		newblk2 = get_slot(info);
 		newblk2->start = e;
 		newblk2->size = be - e;
 
 		list_add(&newblk2->list, &blk->list);
-	}
+	पूर्ण
 
 	newblk1 = get_slot(info);
 	newblk1->start = s;
@@ -601,147 +602,147 @@ unsigned long rh_alloc_fixed(rh_info_t * info, unsigned long start, int size, co
 	start = newblk1->start;
 	attach_taken_block(info, newblk1);
 
-	return start;
-}
+	वापस start;
+पूर्ण
 EXPORT_SYMBOL_GPL(rh_alloc_fixed);
 
 /* Deallocate the memory previously allocated by one of the rh_alloc functions.
- * The return value is the size of the deallocated block, or a negative number
- * if there is an error.
+ * The वापस value is the size of the deallocated block, or a negative number
+ * अगर there is an error.
  */
-int rh_free(rh_info_t * info, unsigned long start)
-{
+पूर्णांक rh_मुक्त(rh_info_t * info, अचिन्हित दीर्घ start)
+अणु
 	rh_block_t *blk, *blk2;
-	struct list_head *l;
-	int size;
+	काष्ठा list_head *l;
+	पूर्णांक size;
 
-	/* Linear search for block */
-	blk = NULL;
-	list_for_each(l, &info->taken_list) {
+	/* Linear search क्रम block */
+	blk = शून्य;
+	list_क्रम_each(l, &info->taken_list) अणु
 		blk2 = list_entry(l, rh_block_t, list);
-		if (start < blk2->start)
-			break;
+		अगर (start < blk2->start)
+			अवरोध;
 		blk = blk2;
-	}
+	पूर्ण
 
-	if (blk == NULL || start > (blk->start + blk->size))
-		return -EINVAL;
+	अगर (blk == शून्य || start > (blk->start + blk->size))
+		वापस -EINVAL;
 
 	/* Remove from taken list */
 	list_del(&blk->list);
 
-	/* Get size of freed block */
+	/* Get size of मुक्तd block */
 	size = blk->size;
-	attach_free_block(info, blk);
+	attach_मुक्त_block(info, blk);
 
-	return size;
-}
-EXPORT_SYMBOL_GPL(rh_free);
+	वापस size;
+पूर्ण
+EXPORT_SYMBOL_GPL(rh_मुक्त);
 
-int rh_get_stats(rh_info_t * info, int what, int max_stats, rh_stats_t * stats)
-{
+पूर्णांक rh_get_stats(rh_info_t * info, पूर्णांक what, पूर्णांक max_stats, rh_stats_t * stats)
+अणु
 	rh_block_t *blk;
-	struct list_head *l;
-	struct list_head *h;
-	int nr;
+	काष्ठा list_head *l;
+	काष्ठा list_head *h;
+	पूर्णांक nr;
 
-	switch (what) {
+	चयन (what) अणु
 
-	case RHGS_FREE:
-		h = &info->free_list;
-		break;
+	हाल RHGS_FREE:
+		h = &info->मुक्त_list;
+		अवरोध;
 
-	case RHGS_TAKEN:
+	हाल RHGS_TAKEN:
 		h = &info->taken_list;
-		break;
+		अवरोध;
 
-	default:
-		return -EINVAL;
-	}
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	/* Linear search for block */
+	/* Linear search क्रम block */
 	nr = 0;
-	list_for_each(l, h) {
+	list_क्रम_each(l, h) अणु
 		blk = list_entry(l, rh_block_t, list);
-		if (stats != NULL && nr < max_stats) {
+		अगर (stats != शून्य && nr < max_stats) अणु
 			stats->start = blk->start;
 			stats->size = blk->size;
 			stats->owner = blk->owner;
 			stats++;
-		}
+		पूर्ण
 		nr++;
-	}
+	पूर्ण
 
-	return nr;
-}
+	वापस nr;
+पूर्ण
 EXPORT_SYMBOL_GPL(rh_get_stats);
 
-int rh_set_owner(rh_info_t * info, unsigned long start, const char *owner)
-{
+पूर्णांक rh_set_owner(rh_info_t * info, अचिन्हित दीर्घ start, स्थिर अक्षर *owner)
+अणु
 	rh_block_t *blk, *blk2;
-	struct list_head *l;
-	int size;
+	काष्ठा list_head *l;
+	पूर्णांक size;
 
-	/* Linear search for block */
-	blk = NULL;
-	list_for_each(l, &info->taken_list) {
+	/* Linear search क्रम block */
+	blk = शून्य;
+	list_क्रम_each(l, &info->taken_list) अणु
 		blk2 = list_entry(l, rh_block_t, list);
-		if (start < blk2->start)
-			break;
+		अगर (start < blk2->start)
+			अवरोध;
 		blk = blk2;
-	}
+	पूर्ण
 
-	if (blk == NULL || start > (blk->start + blk->size))
-		return -EINVAL;
+	अगर (blk == शून्य || start > (blk->start + blk->size))
+		वापस -EINVAL;
 
 	blk->owner = owner;
 	size = blk->size;
 
-	return size;
-}
+	वापस size;
+पूर्ण
 EXPORT_SYMBOL_GPL(rh_set_owner);
 
-void rh_dump(rh_info_t * info)
-{
-	static rh_stats_t st[32];	/* XXX maximum 32 blocks */
-	int maxnr;
-	int i, nr;
+व्योम rh_dump(rh_info_t * info)
+अणु
+	अटल rh_stats_t st[32];	/* XXX maximum 32 blocks */
+	पूर्णांक maxnr;
+	पूर्णांक i, nr;
 
 	maxnr = ARRAY_SIZE(st);
 
-	printk(KERN_INFO
+	prपूर्णांकk(KERN_INFO
 	       "info @0x%p (%d slots empty / %d max)\n",
 	       info, info->empty_slots, info->max_blocks);
 
-	printk(KERN_INFO "  Free:\n");
+	prपूर्णांकk(KERN_INFO "  Free:\n");
 	nr = rh_get_stats(info, RHGS_FREE, maxnr, st);
-	if (nr > maxnr)
+	अगर (nr > maxnr)
 		nr = maxnr;
-	for (i = 0; i < nr; i++)
-		printk(KERN_INFO
+	क्रम (i = 0; i < nr; i++)
+		prपूर्णांकk(KERN_INFO
 		       "    0x%lx-0x%lx (%u)\n",
 		       st[i].start, st[i].start + st[i].size,
 		       st[i].size);
-	printk(KERN_INFO "\n");
+	prपूर्णांकk(KERN_INFO "\n");
 
-	printk(KERN_INFO "  Taken:\n");
+	prपूर्णांकk(KERN_INFO "  Taken:\n");
 	nr = rh_get_stats(info, RHGS_TAKEN, maxnr, st);
-	if (nr > maxnr)
+	अगर (nr > maxnr)
 		nr = maxnr;
-	for (i = 0; i < nr; i++)
-		printk(KERN_INFO
+	क्रम (i = 0; i < nr; i++)
+		prपूर्णांकk(KERN_INFO
 		       "    0x%lx-0x%lx (%u) %s\n",
 		       st[i].start, st[i].start + st[i].size,
-		       st[i].size, st[i].owner != NULL ? st[i].owner : "");
-	printk(KERN_INFO "\n");
-}
+		       st[i].size, st[i].owner != शून्य ? st[i].owner : "");
+	prपूर्णांकk(KERN_INFO "\n");
+पूर्ण
 EXPORT_SYMBOL_GPL(rh_dump);
 
-void rh_dump_blk(rh_info_t * info, rh_block_t * blk)
-{
-	printk(KERN_INFO
+व्योम rh_dump_blk(rh_info_t * info, rh_block_t * blk)
+अणु
+	prपूर्णांकk(KERN_INFO
 	       "blk @0x%p: 0x%lx-0x%lx (%u)\n",
 	       blk, blk->start, blk->start + blk->size, blk->size);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(rh_dump_blk);
 

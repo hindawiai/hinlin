@@ -1,108 +1,109 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _NFNETLINK_H
-#define _NFNETLINK_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _NFNETLINK_H
+#घोषणा _NFNETLINK_H
 
-#include <linux/netlink.h>
-#include <linux/capability.h>
-#include <net/netlink.h>
-#include <uapi/linux/netfilter/nfnetlink.h>
+#समावेश <linux/netlink.h>
+#समावेश <linux/capability.h>
+#समावेश <net/netlink.h>
+#समावेश <uapi/linux/netfilter/nfnetlink.h>
 
-struct nfnl_info {
-	struct net		*net;
-	struct sock		*sk;
-	const struct nlmsghdr	*nlh;
-	struct netlink_ext_ack	*extack;
-};
+काष्ठा nfnl_info अणु
+	काष्ठा net		*net;
+	काष्ठा sock		*sk;
+	स्थिर काष्ठा nlmsghdr	*nlh;
+	काष्ठा netlink_ext_ack	*extack;
+पूर्ण;
 
-enum nfnl_callback_type {
+क्रमागत nfnl_callback_type अणु
 	NFNL_CB_UNSPEC	= 0,
 	NFNL_CB_MUTEX,
 	NFNL_CB_RCU,
 	NFNL_CB_BATCH,
-};
+पूर्ण;
 
-struct nfnl_callback {
-	int (*call)(struct sk_buff *skb, const struct nfnl_info *info,
-		    const struct nlattr * const cda[]);
-	const struct nla_policy	*policy;
-	enum nfnl_callback_type	type;
+काष्ठा nfnl_callback अणु
+	पूर्णांक (*call)(काष्ठा sk_buff *skb, स्थिर काष्ठा nfnl_info *info,
+		    स्थिर काष्ठा nlattr * स्थिर cda[]);
+	स्थिर काष्ठा nla_policy	*policy;
+	क्रमागत nfnl_callback_type	type;
 	__u16			attr_count;
-};
+पूर्ण;
 
-enum nfnl_abort_action {
+क्रमागत nfnl_पात_action अणु
 	NFNL_ABORT_NONE		= 0,
 	NFNL_ABORT_AUTOLOAD,
 	NFNL_ABORT_VALIDATE,
-};
+पूर्ण;
 
-struct nfnetlink_subsystem {
-	const char *name;
-	__u8 subsys_id;			/* nfnetlink subsystem ID */
+काष्ठा nfnetlink_subप्रणाली अणु
+	स्थिर अक्षर *name;
+	__u8 subsys_id;			/* nfnetlink subप्रणाली ID */
 	__u8 cb_count;			/* number of callbacks */
-	const struct nfnl_callback *cb;	/* callback for individual types */
-	struct module *owner;
-	int (*commit)(struct net *net, struct sk_buff *skb);
-	int (*abort)(struct net *net, struct sk_buff *skb,
-		     enum nfnl_abort_action action);
-	void (*cleanup)(struct net *net);
-	bool (*valid_genid)(struct net *net, u32 genid);
-};
+	स्थिर काष्ठा nfnl_callback *cb;	/* callback क्रम inभागidual types */
+	काष्ठा module *owner;
+	पूर्णांक (*commit)(काष्ठा net *net, काष्ठा sk_buff *skb);
+	पूर्णांक (*पात)(काष्ठा net *net, काष्ठा sk_buff *skb,
+		     क्रमागत nfnl_पात_action action);
+	व्योम (*cleanup)(काष्ठा net *net);
+	bool (*valid_genid)(काष्ठा net *net, u32 genid);
+पूर्ण;
 
-int nfnetlink_subsys_register(const struct nfnetlink_subsystem *n);
-int nfnetlink_subsys_unregister(const struct nfnetlink_subsystem *n);
+पूर्णांक nfnetlink_subsys_रेजिस्टर(स्थिर काष्ठा nfnetlink_subप्रणाली *n);
+पूर्णांक nfnetlink_subsys_unरेजिस्टर(स्थिर काष्ठा nfnetlink_subप्रणाली *n);
 
-int nfnetlink_has_listeners(struct net *net, unsigned int group);
-int nfnetlink_send(struct sk_buff *skb, struct net *net, u32 portid,
-		   unsigned int group, int echo, gfp_t flags);
-int nfnetlink_set_err(struct net *net, u32 portid, u32 group, int error);
-int nfnetlink_unicast(struct sk_buff *skb, struct net *net, u32 portid);
-void nfnetlink_broadcast(struct net *net, struct sk_buff *skb, __u32 portid,
+पूर्णांक nfnetlink_has_listeners(काष्ठा net *net, अचिन्हित पूर्णांक group);
+पूर्णांक nfnetlink_send(काष्ठा sk_buff *skb, काष्ठा net *net, u32 portid,
+		   अचिन्हित पूर्णांक group, पूर्णांक echo, gfp_t flags);
+पूर्णांक nfnetlink_set_err(काष्ठा net *net, u32 portid, u32 group, पूर्णांक error);
+पूर्णांक nfnetlink_unicast(काष्ठा sk_buff *skb, काष्ठा net *net, u32 portid);
+व्योम nfnetlink_broadcast(काष्ठा net *net, काष्ठा sk_buff *skb, __u32 portid,
 			 __u32 group, gfp_t allocation);
 
-static inline u16 nfnl_msg_type(u8 subsys, u8 msg_type)
-{
-	return subsys << 8 | msg_type;
-}
+अटल अंतरभूत u16 nfnl_msg_type(u8 subsys, u8 msg_type)
+अणु
+	वापस subsys << 8 | msg_type;
+पूर्ण
 
-static inline void nfnl_fill_hdr(struct nlmsghdr *nlh, u8 family, u8 version,
+अटल अंतरभूत व्योम nfnl_fill_hdr(काष्ठा nlmsghdr *nlh, u8 family, u8 version,
 				 __be16 res_id)
-{
-	struct nfgenmsg *nfmsg;
+अणु
+	काष्ठा nfgenmsg *nfmsg;
 
 	nfmsg = nlmsg_data(nlh);
 	nfmsg->nfgen_family = family;
 	nfmsg->version = version;
 	nfmsg->res_id = res_id;
-}
+पूर्ण
 
-static inline struct nlmsghdr *nfnl_msg_put(struct sk_buff *skb, u32 portid,
-					    u32 seq, int type, int flags,
+अटल अंतरभूत काष्ठा nlmsghdr *nfnl_msg_put(काष्ठा sk_buff *skb, u32 portid,
+					    u32 seq, पूर्णांक type, पूर्णांक flags,
 					    u8 family, u8 version,
 					    __be16 res_id)
-{
-	struct nlmsghdr *nlh;
+अणु
+	काष्ठा nlmsghdr *nlh;
 
-	nlh = nlmsg_put(skb, portid, seq, type, sizeof(struct nfgenmsg), flags);
-	if (!nlh)
-		return NULL;
+	nlh = nlmsg_put(skb, portid, seq, type, माप(काष्ठा nfgenmsg), flags);
+	अगर (!nlh)
+		वापस शून्य;
 
 	nfnl_fill_hdr(nlh, family, version, res_id);
 
-	return nlh;
-}
+	वापस nlh;
+पूर्ण
 
-void nfnl_lock(__u8 subsys_id);
-void nfnl_unlock(__u8 subsys_id);
-#ifdef CONFIG_PROVE_LOCKING
+व्योम nfnl_lock(__u8 subsys_id);
+व्योम nfnl_unlock(__u8 subsys_id);
+#अगर_घोषित CONFIG_PROVE_LOCKING
 bool lockdep_nfnl_is_held(__u8 subsys_id);
-#else
-static inline bool lockdep_nfnl_is_held(__u8 subsys_id)
-{
-	return true;
-}
-#endif /* CONFIG_PROVE_LOCKING */
+#अन्यथा
+अटल अंतरभूत bool lockdep_nfnl_is_held(__u8 subsys_id)
+अणु
+	वापस true;
+पूर्ण
+#पूर्ण_अगर /* CONFIG_PROVE_LOCKING */
 
-#define MODULE_ALIAS_NFNL_SUBSYS(subsys) \
-	MODULE_ALIAS("nfnetlink-subsys-" __stringify(subsys))
+#घोषणा MODULE_ALIAS_NFNL_SUBSYS(subsys) \
+	MODULE_ALIAS("nfnetlink-subsys-" __stringअगरy(subsys))
 
-#endif	/* _NFNETLINK_H */
+#पूर्ण_अगर	/* _NFNETLINK_H */

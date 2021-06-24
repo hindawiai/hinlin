@@ -1,33 +1,34 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __LINUX_GOLDFISH_H
-#define __LINUX_GOLDFISH_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __LINUX_GOLDFISH_H
+#घोषणा __LINUX_GOLDFISH_H
 
-#include <linux/kernel.h>
-#include <linux/types.h>
-#include <linux/io.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/types.h>
+#समावेश <linux/पन.स>
 
-/* Helpers for Goldfish virtual platform */
+/* Helpers क्रम Goldfish भव platक्रमm */
 
-static inline void gf_write_ptr(const void *ptr, void __iomem *portl,
-				void __iomem *porth)
-{
-	const unsigned long addr = (unsigned long)ptr;
+अटल अंतरभूत व्योम gf_ग_लिखो_ptr(स्थिर व्योम *ptr, व्योम __iomem *portl,
+				व्योम __iomem *porth)
+अणु
+	स्थिर अचिन्हित दीर्घ addr = (अचिन्हित दीर्घ)ptr;
 
-	__raw_writel(lower_32_bits(addr), portl);
-#ifdef CONFIG_64BIT
-	__raw_writel(upper_32_bits(addr), porth);
-#endif
-}
+	__raw_ग_लिखोl(lower_32_bits(addr), portl);
+#अगर_घोषित CONFIG_64BIT
+	__raw_ग_लिखोl(upper_32_bits(addr), porth);
+#पूर्ण_अगर
+पूर्ण
 
-static inline void gf_write_dma_addr(const dma_addr_t addr,
-				     void __iomem *portl,
-				     void __iomem *porth)
-{
-	__raw_writel(lower_32_bits(addr), portl);
-#ifdef CONFIG_ARCH_DMA_ADDR_T_64BIT
-	__raw_writel(upper_32_bits(addr), porth);
-#endif
-}
+अटल अंतरभूत व्योम gf_ग_लिखो_dma_addr(स्थिर dma_addr_t addr,
+				     व्योम __iomem *portl,
+				     व्योम __iomem *porth)
+अणु
+	__raw_ग_लिखोl(lower_32_bits(addr), portl);
+#अगर_घोषित CONFIG_ARCH_DMA_ADDR_T_64BIT
+	__raw_ग_लिखोl(upper_32_bits(addr), porth);
+#पूर्ण_अगर
+पूर्ण
 
 
-#endif /* __LINUX_GOLDFISH_H */
+#पूर्ण_अगर /* __LINUX_GOLDFISH_H */

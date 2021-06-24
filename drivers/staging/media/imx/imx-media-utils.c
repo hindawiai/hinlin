@@ -1,20 +1,21 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
- * V4L2 Media Controller Driver for Freescale i.MX5/6 SOC
+ * V4L2 Media Controller Driver क्रम Freescale i.MX5/6 SOC
  *
  * Copyright (c) 2016 Mentor Graphics Inc.
  */
-#include <linux/module.h>
-#include "imx-media.h"
+#समावेश <linux/module.h>
+#समावेश "imx-media.h"
 
-#define IMX_BUS_FMTS(fmt...) (const u32[]) {fmt, 0}
+#घोषणा IMX_BUS_FMTS(fmt...) (स्थिर u32[]) अणुfmt, 0पूर्ण
 
 /*
- * List of supported pixel formats for the subdevs.
+ * List of supported pixel क्रमmats क्रम the subdevs.
  */
-static const struct imx_media_pixfmt pixel_formats[] = {
-	/*** YUV formats start here ***/
-	{
+अटल स्थिर काष्ठा imx_media_pixfmt pixel_क्रमmats[] = अणु
+	/*** YUV क्रमmats start here ***/
+	अणु
 		.fourcc	= V4L2_PIX_FMT_UYVY,
 		.codes  = IMX_BUS_FMTS(
 			MEDIA_BUS_FMT_UYVY8_2X8,
@@ -22,7 +23,7 @@ static const struct imx_media_pixfmt pixel_formats[] = {
 		),
 		.cs     = IPUV3_COLORSPACE_YUV,
 		.bpp    = 16,
-	}, {
+	पूर्ण, अणु
 		.fourcc	= V4L2_PIX_FMT_YUYV,
 		.codes  = IMX_BUS_FMTS(
 			MEDIA_BUS_FMT_YUYV8_2X8,
@@ -30,46 +31,46 @@ static const struct imx_media_pixfmt pixel_formats[] = {
 		),
 		.cs     = IPUV3_COLORSPACE_YUV,
 		.bpp    = 16,
-	}, {
+	पूर्ण, अणु
 		.fourcc	= V4L2_PIX_FMT_YUV420,
 		.cs     = IPUV3_COLORSPACE_YUV,
 		.bpp    = 12,
 		.planar = true,
-	}, {
+	पूर्ण, अणु
 		.fourcc = V4L2_PIX_FMT_YVU420,
 		.cs     = IPUV3_COLORSPACE_YUV,
 		.bpp    = 12,
 		.planar = true,
-	}, {
+	पूर्ण, अणु
 		.fourcc = V4L2_PIX_FMT_YUV422P,
 		.cs     = IPUV3_COLORSPACE_YUV,
 		.bpp    = 16,
 		.planar = true,
-	}, {
+	पूर्ण, अणु
 		.fourcc = V4L2_PIX_FMT_NV12,
 		.cs     = IPUV3_COLORSPACE_YUV,
 		.bpp    = 12,
 		.planar = true,
-	}, {
+	पूर्ण, अणु
 		.fourcc = V4L2_PIX_FMT_NV16,
 		.cs     = IPUV3_COLORSPACE_YUV,
 		.bpp    = 16,
 		.planar = true,
-	}, {
+	पूर्ण, अणु
 		.fourcc = V4L2_PIX_FMT_YUV32,
 		.codes  = IMX_BUS_FMTS(MEDIA_BUS_FMT_AYUV8_1X32),
 		.cs     = IPUV3_COLORSPACE_YUV,
 		.bpp    = 32,
 		.ipufmt = true,
-	},
-	/*** RGB formats start here ***/
-	{
+	पूर्ण,
+	/*** RGB क्रमmats start here ***/
+	अणु
 		.fourcc	= V4L2_PIX_FMT_RGB565,
 		.codes  = IMX_BUS_FMTS(MEDIA_BUS_FMT_RGB565_2X8_LE),
 		.cs     = IPUV3_COLORSPACE_RGB,
 		.bpp    = 16,
 		.cycles = 2,
-	}, {
+	पूर्ण, अणु
 		.fourcc	= V4L2_PIX_FMT_RGB24,
 		.codes  = IMX_BUS_FMTS(
 			MEDIA_BUS_FMT_RGB888_1X24,
@@ -77,60 +78,60 @@ static const struct imx_media_pixfmt pixel_formats[] = {
 		),
 		.cs     = IPUV3_COLORSPACE_RGB,
 		.bpp    = 24,
-	}, {
+	पूर्ण, अणु
 		.fourcc	= V4L2_PIX_FMT_BGR24,
 		.cs     = IPUV3_COLORSPACE_RGB,
 		.bpp    = 24,
-	}, {
+	पूर्ण, अणु
 		.fourcc	= V4L2_PIX_FMT_XRGB32,
 		.codes  = IMX_BUS_FMTS(MEDIA_BUS_FMT_ARGB8888_1X32),
 		.cs     = IPUV3_COLORSPACE_RGB,
 		.bpp    = 32,
-	}, {
+	पूर्ण, अणु
 		.fourcc	= V4L2_PIX_FMT_XRGB32,
 		.codes  = IMX_BUS_FMTS(MEDIA_BUS_FMT_ARGB8888_1X32),
 		.cs     = IPUV3_COLORSPACE_RGB,
 		.bpp    = 32,
 		.ipufmt = true,
-	}, {
+	पूर्ण, अणु
 		.fourcc	= V4L2_PIX_FMT_XBGR32,
 		.cs     = IPUV3_COLORSPACE_RGB,
 		.bpp    = 32,
-	}, {
+	पूर्ण, अणु
 		.fourcc	= V4L2_PIX_FMT_BGRX32,
 		.cs     = IPUV3_COLORSPACE_RGB,
 		.bpp    = 32,
-	}, {
+	पूर्ण, अणु
 		.fourcc	= V4L2_PIX_FMT_RGBX32,
 		.cs     = IPUV3_COLORSPACE_RGB,
 		.bpp    = 32,
-	},
-	/*** raw bayer and grayscale formats start here ***/
-	{
+	पूर्ण,
+	/*** raw bayer and grayscale क्रमmats start here ***/
+	अणु
 		.fourcc = V4L2_PIX_FMT_SBGGR8,
 		.codes  = IMX_BUS_FMTS(MEDIA_BUS_FMT_SBGGR8_1X8),
 		.cs     = IPUV3_COLORSPACE_RGB,
 		.bpp    = 8,
 		.bayer  = true,
-	}, {
+	पूर्ण, अणु
 		.fourcc = V4L2_PIX_FMT_SGBRG8,
 		.codes  = IMX_BUS_FMTS(MEDIA_BUS_FMT_SGBRG8_1X8),
 		.cs     = IPUV3_COLORSPACE_RGB,
 		.bpp    = 8,
 		.bayer  = true,
-	}, {
+	पूर्ण, अणु
 		.fourcc = V4L2_PIX_FMT_SGRBG8,
 		.codes  = IMX_BUS_FMTS(MEDIA_BUS_FMT_SGRBG8_1X8),
 		.cs     = IPUV3_COLORSPACE_RGB,
 		.bpp    = 8,
 		.bayer  = true,
-	}, {
+	पूर्ण, अणु
 		.fourcc = V4L2_PIX_FMT_SRGGB8,
 		.codes  = IMX_BUS_FMTS(MEDIA_BUS_FMT_SRGGB8_1X8),
 		.cs     = IPUV3_COLORSPACE_RGB,
 		.bpp    = 8,
 		.bayer  = true,
-	}, {
+	पूर्ण, अणु
 		.fourcc = V4L2_PIX_FMT_SBGGR16,
 		.codes  = IMX_BUS_FMTS(
 			MEDIA_BUS_FMT_SBGGR10_1X10,
@@ -141,7 +142,7 @@ static const struct imx_media_pixfmt pixel_formats[] = {
 		.cs     = IPUV3_COLORSPACE_RGB,
 		.bpp    = 16,
 		.bayer  = true,
-	}, {
+	पूर्ण, अणु
 		.fourcc = V4L2_PIX_FMT_SGBRG16,
 		.codes  = IMX_BUS_FMTS(
 			MEDIA_BUS_FMT_SGBRG10_1X10,
@@ -152,7 +153,7 @@ static const struct imx_media_pixfmt pixel_formats[] = {
 		.cs     = IPUV3_COLORSPACE_RGB,
 		.bpp    = 16,
 		.bayer  = true,
-	}, {
+	पूर्ण, अणु
 		.fourcc = V4L2_PIX_FMT_SGRBG16,
 		.codes  = IMX_BUS_FMTS(
 			MEDIA_BUS_FMT_SGRBG10_1X10,
@@ -163,7 +164,7 @@ static const struct imx_media_pixfmt pixel_formats[] = {
 		.cs     = IPUV3_COLORSPACE_RGB,
 		.bpp    = 16,
 		.bayer  = true,
-	}, {
+	पूर्ण, अणु
 		.fourcc = V4L2_PIX_FMT_SRGGB16,
 		.codes  = IMX_BUS_FMTS(
 			MEDIA_BUS_FMT_SRGGB10_1X10,
@@ -174,7 +175,7 @@ static const struct imx_media_pixfmt pixel_formats[] = {
 		.cs     = IPUV3_COLORSPACE_RGB,
 		.bpp    = 16,
 		.bayer  = true,
-	}, {
+	पूर्ण, अणु
 		.fourcc = V4L2_PIX_FMT_GREY,
 		.codes = IMX_BUS_FMTS(
 			MEDIA_BUS_FMT_Y8_1X8,
@@ -184,228 +185,228 @@ static const struct imx_media_pixfmt pixel_formats[] = {
 		.cs     = IPUV3_COLORSPACE_RGB,
 		.bpp    = 8,
 		.bayer  = true,
-	}, {
+	पूर्ण, अणु
 		.fourcc = V4L2_PIX_FMT_Y10,
 		.codes = IMX_BUS_FMTS(MEDIA_BUS_FMT_Y10_1X10),
 		.cs     = IPUV3_COLORSPACE_RGB,
 		.bpp    = 16,
 		.bayer  = true,
-	}, {
+	पूर्ण, अणु
 		.fourcc = V4L2_PIX_FMT_Y12,
 		.codes = IMX_BUS_FMTS(MEDIA_BUS_FMT_Y12_1X12),
 		.cs     = IPUV3_COLORSPACE_RGB,
 		.bpp    = 16,
 		.bayer  = true,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
 /*
- * Search in the pixel_formats[] array for an entry with the given fourcc
- * that matches the requested selection criteria and return it.
+ * Search in the pixel_क्रमmats[] array क्रम an entry with the given fourcc
+ * that matches the requested selection criteria and वापस it.
  *
- * @fourcc: Search for an entry with the given fourcc pixel format.
+ * @fourcc: Search क्रम an entry with the given fourcc pixel क्रमmat.
  * @fmt_sel: Allow entries only with the given selection criteria.
  */
-const struct imx_media_pixfmt *
-imx_media_find_pixel_format(u32 fourcc, enum imx_pixfmt_sel fmt_sel)
-{
+स्थिर काष्ठा imx_media_pixfmt *
+imx_media_find_pixel_क्रमmat(u32 fourcc, क्रमागत imx_pixfmt_sel fmt_sel)
+अणु
 	bool sel_ipu = fmt_sel & PIXFMT_SEL_IPU;
-	unsigned int i;
+	अचिन्हित पूर्णांक i;
 
 	fmt_sel &= ~PIXFMT_SEL_IPU;
 
-	for (i = 0; i < ARRAY_SIZE(pixel_formats); i++) {
-		const struct imx_media_pixfmt *fmt = &pixel_formats[i];
-		enum imx_pixfmt_sel sel;
+	क्रम (i = 0; i < ARRAY_SIZE(pixel_क्रमmats); i++) अणु
+		स्थिर काष्ठा imx_media_pixfmt *fmt = &pixel_क्रमmats[i];
+		क्रमागत imx_pixfmt_sel sel;
 
-		if (sel_ipu != fmt->ipufmt)
-			continue;
+		अगर (sel_ipu != fmt->ipufmt)
+			जारी;
 
 		sel = fmt->bayer ? PIXFMT_SEL_BAYER :
 			((fmt->cs == IPUV3_COLORSPACE_YUV) ?
 			 PIXFMT_SEL_YUV : PIXFMT_SEL_RGB);
 
-		if ((fmt_sel & sel) && fmt->fourcc == fourcc)
-			return fmt;
-	}
+		अगर ((fmt_sel & sel) && fmt->fourcc == fourcc)
+			वापस fmt;
+	पूर्ण
 
-	return NULL;
-}
-EXPORT_SYMBOL_GPL(imx_media_find_pixel_format);
+	वापस शून्य;
+पूर्ण
+EXPORT_SYMBOL_GPL(imx_media_find_pixel_क्रमmat);
 
 /*
- * Search in the pixel_formats[] array for an entry with the given media
- * bus code that matches the requested selection criteria and return it.
+ * Search in the pixel_क्रमmats[] array क्रम an entry with the given media
+ * bus code that matches the requested selection criteria and वापस it.
  *
- * @code: Search for an entry with the given media-bus code.
+ * @code: Search क्रम an entry with the given media-bus code.
  * @fmt_sel: Allow entries only with the given selection criteria.
  */
-const struct imx_media_pixfmt *
-imx_media_find_mbus_format(u32 code, enum imx_pixfmt_sel fmt_sel)
-{
+स्थिर काष्ठा imx_media_pixfmt *
+imx_media_find_mbus_क्रमmat(u32 code, क्रमागत imx_pixfmt_sel fmt_sel)
+अणु
 	bool sel_ipu = fmt_sel & PIXFMT_SEL_IPU;
-	unsigned int i;
+	अचिन्हित पूर्णांक i;
 
 	fmt_sel &= ~PIXFMT_SEL_IPU;
 
-	for (i = 0; i < ARRAY_SIZE(pixel_formats); i++) {
-		const struct imx_media_pixfmt *fmt = &pixel_formats[i];
-		enum imx_pixfmt_sel sel;
-		unsigned int j;
+	क्रम (i = 0; i < ARRAY_SIZE(pixel_क्रमmats); i++) अणु
+		स्थिर काष्ठा imx_media_pixfmt *fmt = &pixel_क्रमmats[i];
+		क्रमागत imx_pixfmt_sel sel;
+		अचिन्हित पूर्णांक j;
 
-		if (sel_ipu != fmt->ipufmt)
-			continue;
+		अगर (sel_ipu != fmt->ipufmt)
+			जारी;
 
 		sel = fmt->bayer ? PIXFMT_SEL_BAYER :
 			((fmt->cs == IPUV3_COLORSPACE_YUV) ?
 			 PIXFMT_SEL_YUV : PIXFMT_SEL_RGB);
 
-		if (!(fmt_sel & sel) || !fmt->codes)
-			continue;
+		अगर (!(fmt_sel & sel) || !fmt->codes)
+			जारी;
 
-		for (j = 0; fmt->codes[j]; j++) {
-			if (code == fmt->codes[j])
-				return fmt;
-		}
-	}
+		क्रम (j = 0; fmt->codes[j]; j++) अणु
+			अगर (code == fmt->codes[j])
+				वापस fmt;
+		पूर्ण
+	पूर्ण
 
-	return NULL;
-}
-EXPORT_SYMBOL_GPL(imx_media_find_mbus_format);
+	वापस शून्य;
+पूर्ण
+EXPORT_SYMBOL_GPL(imx_media_find_mbus_क्रमmat);
 
 /*
- * Enumerate entries in the pixel_formats[] array that match the
+ * Enumerate entries in the pixel_क्रमmats[] array that match the
  * requested selection criteria. Return the fourcc that matches the
  * selection criteria at the requested match index.
  *
- * @fourcc: The returned fourcc that matches the search criteria at
+ * @fourcc: The वापसed fourcc that matches the search criteria at
  *          the requested match index.
  * @index: The requested match index.
- * @fmt_sel: Include in the enumeration entries with the given selection
+ * @fmt_sel: Include in the क्रमागतeration entries with the given selection
  *           criteria.
- * @code: If non-zero, only include in the enumeration entries matching this
+ * @code: If non-zero, only include in the क्रमागतeration entries matching this
  *	media bus code.
  */
-int imx_media_enum_pixel_formats(u32 *fourcc, u32 index,
-				 enum imx_pixfmt_sel fmt_sel, u32 code)
-{
+पूर्णांक imx_media_क्रमागत_pixel_क्रमmats(u32 *fourcc, u32 index,
+				 क्रमागत imx_pixfmt_sel fmt_sel, u32 code)
+अणु
 	bool sel_ipu = fmt_sel & PIXFMT_SEL_IPU;
-	unsigned int i;
+	अचिन्हित पूर्णांक i;
 
 	fmt_sel &= ~PIXFMT_SEL_IPU;
 
-	for (i = 0; i < ARRAY_SIZE(pixel_formats); i++) {
-		const struct imx_media_pixfmt *fmt = &pixel_formats[i];
-		enum imx_pixfmt_sel sel;
+	क्रम (i = 0; i < ARRAY_SIZE(pixel_क्रमmats); i++) अणु
+		स्थिर काष्ठा imx_media_pixfmt *fmt = &pixel_क्रमmats[i];
+		क्रमागत imx_pixfmt_sel sel;
 
-		if (sel_ipu != fmt->ipufmt)
-			continue;
+		अगर (sel_ipu != fmt->ipufmt)
+			जारी;
 
 		sel = fmt->bayer ? PIXFMT_SEL_BAYER :
 			((fmt->cs == IPUV3_COLORSPACE_YUV) ?
 			 PIXFMT_SEL_YUV : PIXFMT_SEL_RGB);
 
-		if (!(fmt_sel & sel))
-			continue;
+		अगर (!(fmt_sel & sel))
+			जारी;
 
 		/*
-		 * If a media bus code is specified, only consider formats that
+		 * If a media bus code is specअगरied, only consider क्रमmats that
 		 * match it.
 		 */
-		if (code) {
-			unsigned int j;
+		अगर (code) अणु
+			अचिन्हित पूर्णांक j;
 
-			if (!fmt->codes)
-				continue;
+			अगर (!fmt->codes)
+				जारी;
 
-			for (j = 0; fmt->codes[j]; j++) {
-				if (code == fmt->codes[j])
-					break;
-			}
+			क्रम (j = 0; fmt->codes[j]; j++) अणु
+				अगर (code == fmt->codes[j])
+					अवरोध;
+			पूर्ण
 
-			if (!fmt->codes[j])
-				continue;
-		}
+			अगर (!fmt->codes[j])
+				जारी;
+		पूर्ण
 
-		if (index == 0) {
+		अगर (index == 0) अणु
 			*fourcc = fmt->fourcc;
-			return 0;
-		}
+			वापस 0;
+		पूर्ण
 
 		index--;
-	}
+	पूर्ण
 
-	return -EINVAL;
-}
-EXPORT_SYMBOL_GPL(imx_media_enum_pixel_formats);
+	वापस -EINVAL;
+पूर्ण
+EXPORT_SYMBOL_GPL(imx_media_क्रमागत_pixel_क्रमmats);
 
 /*
- * Enumerate entries in the pixel_formats[] array that match the
+ * Enumerate entries in the pixel_क्रमmats[] array that match the
  * requested search criteria. Return the media-bus code that matches
  * the search criteria at the requested match index.
  *
- * @code: The returned media-bus code that matches the search criteria at
+ * @code: The वापसed media-bus code that matches the search criteria at
  *        the requested match index.
  * @index: The requested match index.
- * @fmt_sel: Include in the enumeration entries with the given selection
+ * @fmt_sel: Include in the क्रमागतeration entries with the given selection
  *           criteria.
  */
-int imx_media_enum_mbus_formats(u32 *code, u32 index,
-				enum imx_pixfmt_sel fmt_sel)
-{
+पूर्णांक imx_media_क्रमागत_mbus_क्रमmats(u32 *code, u32 index,
+				क्रमागत imx_pixfmt_sel fmt_sel)
+अणु
 	bool sel_ipu = fmt_sel & PIXFMT_SEL_IPU;
-	unsigned int i;
+	अचिन्हित पूर्णांक i;
 
 	fmt_sel &= ~PIXFMT_SEL_IPU;
 
-	for (i = 0; i < ARRAY_SIZE(pixel_formats); i++) {
-		const struct imx_media_pixfmt *fmt = &pixel_formats[i];
-		enum imx_pixfmt_sel sel;
-		unsigned int j;
+	क्रम (i = 0; i < ARRAY_SIZE(pixel_क्रमmats); i++) अणु
+		स्थिर काष्ठा imx_media_pixfmt *fmt = &pixel_क्रमmats[i];
+		क्रमागत imx_pixfmt_sel sel;
+		अचिन्हित पूर्णांक j;
 
-		if (sel_ipu != fmt->ipufmt)
-			continue;
+		अगर (sel_ipu != fmt->ipufmt)
+			जारी;
 
 		sel = fmt->bayer ? PIXFMT_SEL_BAYER :
 			((fmt->cs == IPUV3_COLORSPACE_YUV) ?
 			 PIXFMT_SEL_YUV : PIXFMT_SEL_RGB);
 
-		if (!(fmt_sel & sel) || !fmt->codes)
-			continue;
+		अगर (!(fmt_sel & sel) || !fmt->codes)
+			जारी;
 
-		for (j = 0; fmt->codes[j]; j++) {
-			if (index == 0) {
+		क्रम (j = 0; fmt->codes[j]; j++) अणु
+			अगर (index == 0) अणु
 				*code = fmt->codes[j];
-				return 0;
-			}
+				वापस 0;
+			पूर्ण
 
 			index--;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return -EINVAL;
-}
-EXPORT_SYMBOL_GPL(imx_media_enum_mbus_formats);
+	वापस -EINVAL;
+पूर्ण
+EXPORT_SYMBOL_GPL(imx_media_क्रमागत_mbus_क्रमmats);
 
-int imx_media_init_mbus_fmt(struct v4l2_mbus_framefmt *mbus,
+पूर्णांक imx_media_init_mbus_fmt(काष्ठा v4l2_mbus_framefmt *mbus,
 			    u32 width, u32 height, u32 code, u32 field,
-			    const struct imx_media_pixfmt **cc)
-{
-	const struct imx_media_pixfmt *lcc;
+			    स्थिर काष्ठा imx_media_pixfmt **cc)
+अणु
+	स्थिर काष्ठा imx_media_pixfmt *lcc;
 
 	mbus->width = width;
 	mbus->height = height;
 	mbus->field = field;
 
-	if (code == 0)
-		imx_media_enum_mbus_formats(&code, 0, PIXFMT_SEL_YUV);
+	अगर (code == 0)
+		imx_media_क्रमागत_mbus_क्रमmats(&code, 0, PIXFMT_SEL_YUV);
 
-	lcc = imx_media_find_mbus_format(code, PIXFMT_SEL_ANY);
-	if (!lcc) {
-		lcc = imx_media_find_ipu_format(code, PIXFMT_SEL_YUV_RGB);
-		if (!lcc)
-			return -EINVAL;
-	}
+	lcc = imx_media_find_mbus_क्रमmat(code, PIXFMT_SEL_ANY);
+	अगर (!lcc) अणु
+		lcc = imx_media_find_ipu_क्रमmat(code, PIXFMT_SEL_YUV_RGB);
+		अगर (!lcc)
+			वापस -EINVAL;
+	पूर्ण
 
 	mbus->code = code;
 
@@ -417,145 +418,145 @@ int imx_media_init_mbus_fmt(struct v4l2_mbus_framefmt *mbus,
 					      mbus->colorspace,
 					      mbus->ycbcr_enc);
 
-	if (cc)
+	अगर (cc)
 		*cc = lcc;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(imx_media_init_mbus_fmt);
 
 /*
- * Initializes the TRY format to the ACTIVE format on all pads
+ * Initializes the TRY क्रमmat to the ACTIVE क्रमmat on all pads
  * of a subdev. Can be used as the .init_cfg pad operation.
  */
-int imx_media_init_cfg(struct v4l2_subdev *sd,
-		       struct v4l2_subdev_pad_config *cfg)
-{
-	struct v4l2_mbus_framefmt *mf_try;
-	struct v4l2_subdev_format format;
-	unsigned int pad;
-	int ret;
+पूर्णांक imx_media_init_cfg(काष्ठा v4l2_subdev *sd,
+		       काष्ठा v4l2_subdev_pad_config *cfg)
+अणु
+	काष्ठा v4l2_mbus_framefmt *mf_try;
+	काष्ठा v4l2_subdev_क्रमmat क्रमmat;
+	अचिन्हित पूर्णांक pad;
+	पूर्णांक ret;
 
-	for (pad = 0; pad < sd->entity.num_pads; pad++) {
-		memset(&format, 0, sizeof(format));
+	क्रम (pad = 0; pad < sd->entity.num_pads; pad++) अणु
+		स_रखो(&क्रमmat, 0, माप(क्रमmat));
 
-		format.pad = pad;
-		format.which = V4L2_SUBDEV_FORMAT_ACTIVE;
-		ret = v4l2_subdev_call(sd, pad, get_fmt, NULL, &format);
-		if (ret)
-			continue;
+		क्रमmat.pad = pad;
+		क्रमmat.which = V4L2_SUBDEV_FORMAT_ACTIVE;
+		ret = v4l2_subdev_call(sd, pad, get_fmt, शून्य, &क्रमmat);
+		अगर (ret)
+			जारी;
 
-		mf_try = v4l2_subdev_get_try_format(sd, cfg, pad);
-		*mf_try = format.format;
-	}
+		mf_try = v4l2_subdev_get_try_क्रमmat(sd, cfg, pad);
+		*mf_try = क्रमmat.क्रमmat;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(imx_media_init_cfg);
 
 /*
- * Default the colorspace in tryfmt to SRGB if set to an unsupported
- * colorspace or not initialized. Then set the remaining colorimetry
- * parameters based on the colorspace if they are uninitialized.
+ * Default the colorspace in tryfmt to SRGB अगर set to an unsupported
+ * colorspace or not initialized. Then set the reमुख्यing colorimetry
+ * parameters based on the colorspace अगर they are uninitialized.
  *
  * tryfmt->code must be set on entry.
  *
- * If this format is destined to be routed through the Image Converter,
+ * If this क्रमmat is destined to be routed through the Image Converter,
  * Y`CbCr encoding must be fixed. The IC supports only BT.601 Y`CbCr
  * or Rec.709 Y`CbCr encoding.
  */
-void imx_media_try_colorimetry(struct v4l2_mbus_framefmt *tryfmt,
+व्योम imx_media_try_colorimetry(काष्ठा v4l2_mbus_framefmt *tryfmt,
 			       bool ic_route)
-{
-	const struct imx_media_pixfmt *cc;
+अणु
+	स्थिर काष्ठा imx_media_pixfmt *cc;
 	bool is_rgb = false;
 
-	cc = imx_media_find_mbus_format(tryfmt->code, PIXFMT_SEL_ANY);
-	if (!cc)
-		cc = imx_media_find_ipu_format(tryfmt->code,
+	cc = imx_media_find_mbus_क्रमmat(tryfmt->code, PIXFMT_SEL_ANY);
+	अगर (!cc)
+		cc = imx_media_find_ipu_क्रमmat(tryfmt->code,
 					       PIXFMT_SEL_YUV_RGB);
 
-	if (cc && cc->cs == IPUV3_COLORSPACE_RGB)
+	अगर (cc && cc->cs == IPUV3_COLORSPACE_RGB)
 		is_rgb = true;
 
-	switch (tryfmt->colorspace) {
-	case V4L2_COLORSPACE_SMPTE170M:
-	case V4L2_COLORSPACE_REC709:
-	case V4L2_COLORSPACE_JPEG:
-	case V4L2_COLORSPACE_SRGB:
-	case V4L2_COLORSPACE_BT2020:
-	case V4L2_COLORSPACE_OPRGB:
-	case V4L2_COLORSPACE_DCI_P3:
-	case V4L2_COLORSPACE_RAW:
-		break;
-	default:
+	चयन (tryfmt->colorspace) अणु
+	हाल V4L2_COLORSPACE_SMPTE170M:
+	हाल V4L2_COLORSPACE_REC709:
+	हाल V4L2_COLORSPACE_JPEG:
+	हाल V4L2_COLORSPACE_SRGB:
+	हाल V4L2_COLORSPACE_BT2020:
+	हाल V4L2_COLORSPACE_OPRGB:
+	हाल V4L2_COLORSPACE_DCI_P3:
+	हाल V4L2_COLORSPACE_RAW:
+		अवरोध;
+	शेष:
 		tryfmt->colorspace = V4L2_COLORSPACE_SRGB;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	if (tryfmt->xfer_func == V4L2_XFER_FUNC_DEFAULT)
+	अगर (tryfmt->xfer_func == V4L2_XFER_FUNC_DEFAULT)
 		tryfmt->xfer_func =
 			V4L2_MAP_XFER_FUNC_DEFAULT(tryfmt->colorspace);
 
-	if (ic_route) {
-		if (tryfmt->ycbcr_enc != V4L2_YCBCR_ENC_601 &&
+	अगर (ic_route) अणु
+		अगर (tryfmt->ycbcr_enc != V4L2_YCBCR_ENC_601 &&
 		    tryfmt->ycbcr_enc != V4L2_YCBCR_ENC_709)
 			tryfmt->ycbcr_enc = V4L2_YCBCR_ENC_601;
-	} else {
-		if (tryfmt->ycbcr_enc == V4L2_YCBCR_ENC_DEFAULT) {
+	पूर्ण अन्यथा अणु
+		अगर (tryfmt->ycbcr_enc == V4L2_YCBCR_ENC_DEFAULT) अणु
 			tryfmt->ycbcr_enc =
 				V4L2_MAP_YCBCR_ENC_DEFAULT(tryfmt->colorspace);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (tryfmt->quantization == V4L2_QUANTIZATION_DEFAULT)
+	अगर (tryfmt->quantization == V4L2_QUANTIZATION_DEFAULT)
 		tryfmt->quantization =
 			V4L2_MAP_QUANTIZATION_DEFAULT(is_rgb,
 						      tryfmt->colorspace,
 						      tryfmt->ycbcr_enc);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(imx_media_try_colorimetry);
 
-int imx_media_mbus_fmt_to_pix_fmt(struct v4l2_pix_format *pix,
-				  const struct v4l2_mbus_framefmt *mbus,
-				  const struct imx_media_pixfmt *cc)
-{
+पूर्णांक imx_media_mbus_fmt_to_pix_fmt(काष्ठा v4l2_pix_क्रमmat *pix,
+				  स्थिर काष्ठा v4l2_mbus_framefmt *mbus,
+				  स्थिर काष्ठा imx_media_pixfmt *cc)
+अणु
 	u32 width;
 	u32 stride;
 
-	if (!cc) {
-		cc = imx_media_find_ipu_format(mbus->code,
+	अगर (!cc) अणु
+		cc = imx_media_find_ipu_क्रमmat(mbus->code,
 					       PIXFMT_SEL_YUV_RGB);
-		if (!cc)
-			cc = imx_media_find_mbus_format(mbus->code,
+		अगर (!cc)
+			cc = imx_media_find_mbus_क्रमmat(mbus->code,
 							PIXFMT_SEL_ANY);
-		if (!cc)
-			return -EINVAL;
-	}
+		अगर (!cc)
+			वापस -EINVAL;
+	पूर्ण
 
 	/*
-	 * TODO: the IPU currently does not support the AYUV32 format,
-	 * so until it does convert to a supported YUV format.
+	 * TODO: the IPU currently करोes not support the AYUV32 क्रमmat,
+	 * so until it करोes convert to a supported YUV क्रमmat.
 	 */
-	if (cc->ipufmt && cc->cs == IPUV3_COLORSPACE_YUV) {
+	अगर (cc->ipufmt && cc->cs == IPUV3_COLORSPACE_YUV) अणु
 		u32 code;
 
-		imx_media_enum_mbus_formats(&code, 0, PIXFMT_SEL_YUV);
-		cc = imx_media_find_mbus_format(code, PIXFMT_SEL_YUV);
-	}
+		imx_media_क्रमागत_mbus_क्रमmats(&code, 0, PIXFMT_SEL_YUV);
+		cc = imx_media_find_mbus_क्रमmat(code, PIXFMT_SEL_YUV);
+	पूर्ण
 
-	/* Round up width for minimum burst size */
+	/* Round up width क्रम minimum burst size */
 	width = round_up(mbus->width, 8);
 
-	/* Round up stride for IDMAC line start address alignment */
-	if (cc->planar)
+	/* Round up stride क्रम IDMAC line start address alignment */
+	अगर (cc->planar)
 		stride = round_up(width, 16);
-	else
+	अन्यथा
 		stride = round_up((width * cc->bpp) >> 3, 8);
 
 	pix->width = width;
 	pix->height = mbus->height;
-	pix->pixelformat = cc->fourcc;
+	pix->pixelक्रमmat = cc->fourcc;
 	pix->colorspace = mbus->colorspace;
 	pix->xfer_func = mbus->xfer_func;
 	pix->ycbcr_enc = mbus->ycbcr_enc;
@@ -565,39 +566,39 @@ int imx_media_mbus_fmt_to_pix_fmt(struct v4l2_pix_format *pix,
 	pix->sizeimage = cc->planar ? ((stride * pix->height * cc->bpp) >> 3) :
 			 stride * pix->height;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(imx_media_mbus_fmt_to_pix_fmt);
 
-int imx_media_mbus_fmt_to_ipu_image(struct ipu_image *image,
-				    const struct v4l2_mbus_framefmt *mbus)
-{
-	int ret;
+पूर्णांक imx_media_mbus_fmt_to_ipu_image(काष्ठा ipu_image *image,
+				    स्थिर काष्ठा v4l2_mbus_framefmt *mbus)
+अणु
+	पूर्णांक ret;
 
-	memset(image, 0, sizeof(*image));
+	स_रखो(image, 0, माप(*image));
 
-	ret = imx_media_mbus_fmt_to_pix_fmt(&image->pix, mbus, NULL);
-	if (ret)
-		return ret;
+	ret = imx_media_mbus_fmt_to_pix_fmt(&image->pix, mbus, शून्य);
+	अगर (ret)
+		वापस ret;
 
 	image->rect.width = mbus->width;
 	image->rect.height = mbus->height;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(imx_media_mbus_fmt_to_ipu_image);
 
-int imx_media_ipu_image_to_mbus_fmt(struct v4l2_mbus_framefmt *mbus,
-				    const struct ipu_image *image)
-{
-	const struct imx_media_pixfmt *fmt;
+पूर्णांक imx_media_ipu_image_to_mbus_fmt(काष्ठा v4l2_mbus_framefmt *mbus,
+				    स्थिर काष्ठा ipu_image *image)
+अणु
+	स्थिर काष्ठा imx_media_pixfmt *fmt;
 
-	fmt = imx_media_find_pixel_format(image->pix.pixelformat,
+	fmt = imx_media_find_pixel_क्रमmat(image->pix.pixelक्रमmat,
 					  PIXFMT_SEL_ANY);
-	if (!fmt || !fmt->codes || !fmt->codes[0])
-		return -EINVAL;
+	अगर (!fmt || !fmt->codes || !fmt->codes[0])
+		वापस -EINVAL;
 
-	memset(mbus, 0, sizeof(*mbus));
+	स_रखो(mbus, 0, माप(*mbus));
 	mbus->width = image->pix.width;
 	mbus->height = image->pix.height;
 	mbus->code = fmt->codes[0];
@@ -607,214 +608,214 @@ int imx_media_ipu_image_to_mbus_fmt(struct v4l2_mbus_framefmt *mbus,
 	mbus->ycbcr_enc = image->pix.ycbcr_enc;
 	mbus->quantization = image->pix.quantization;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(imx_media_ipu_image_to_mbus_fmt);
 
-void imx_media_free_dma_buf(struct device *dev,
-			    struct imx_media_dma_buf *buf)
-{
-	if (buf->virt)
-		dma_free_coherent(dev, buf->len, buf->virt, buf->phys);
+व्योम imx_media_मुक्त_dma_buf(काष्ठा device *dev,
+			    काष्ठा imx_media_dma_buf *buf)
+अणु
+	अगर (buf->virt)
+		dma_मुक्त_coherent(dev, buf->len, buf->virt, buf->phys);
 
-	buf->virt = NULL;
+	buf->virt = शून्य;
 	buf->phys = 0;
-}
-EXPORT_SYMBOL_GPL(imx_media_free_dma_buf);
+पूर्ण
+EXPORT_SYMBOL_GPL(imx_media_मुक्त_dma_buf);
 
-int imx_media_alloc_dma_buf(struct device *dev,
-			    struct imx_media_dma_buf *buf,
-			    int size)
-{
-	imx_media_free_dma_buf(dev, buf);
+पूर्णांक imx_media_alloc_dma_buf(काष्ठा device *dev,
+			    काष्ठा imx_media_dma_buf *buf,
+			    पूर्णांक size)
+अणु
+	imx_media_मुक्त_dma_buf(dev, buf);
 
 	buf->len = PAGE_ALIGN(size);
 	buf->virt = dma_alloc_coherent(dev, buf->len, &buf->phys,
 				       GFP_DMA | GFP_KERNEL);
-	if (!buf->virt) {
+	अगर (!buf->virt) अणु
 		dev_err(dev, "%s: failed\n", __func__);
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(imx_media_alloc_dma_buf);
 
-/* form a subdev name given a group id and ipu id */
-void imx_media_grp_id_to_sd_name(char *sd_name, int sz, u32 grp_id, int ipu_id)
-{
-	int id;
+/* क्रमm a subdev name given a group id and ipu id */
+व्योम imx_media_grp_id_to_sd_name(अक्षर *sd_name, पूर्णांक sz, u32 grp_id, पूर्णांक ipu_id)
+अणु
+	पूर्णांक id;
 
-	switch (grp_id) {
-	case IMX_MEDIA_GRP_ID_IPU_CSI0...IMX_MEDIA_GRP_ID_IPU_CSI1:
+	चयन (grp_id) अणु
+	हाल IMX_MEDIA_GRP_ID_IPU_CSI0...IMX_MEDIA_GRP_ID_IPU_CSI1:
 		id = (grp_id >> IMX_MEDIA_GRP_ID_IPU_CSI_BIT) - 1;
-		snprintf(sd_name, sz, "ipu%d_csi%d", ipu_id + 1, id);
-		break;
-	case IMX_MEDIA_GRP_ID_IPU_VDIC:
-		snprintf(sd_name, sz, "ipu%d_vdic", ipu_id + 1);
-		break;
-	case IMX_MEDIA_GRP_ID_IPU_IC_PRP:
-		snprintf(sd_name, sz, "ipu%d_ic_prp", ipu_id + 1);
-		break;
-	case IMX_MEDIA_GRP_ID_IPU_IC_PRPENC:
-		snprintf(sd_name, sz, "ipu%d_ic_prpenc", ipu_id + 1);
-		break;
-	case IMX_MEDIA_GRP_ID_IPU_IC_PRPVF:
-		snprintf(sd_name, sz, "ipu%d_ic_prpvf", ipu_id + 1);
-		break;
-	default:
-		break;
-	}
-}
+		snम_लिखो(sd_name, sz, "ipu%d_csi%d", ipu_id + 1, id);
+		अवरोध;
+	हाल IMX_MEDIA_GRP_ID_IPU_VDIC:
+		snम_लिखो(sd_name, sz, "ipu%d_vdic", ipu_id + 1);
+		अवरोध;
+	हाल IMX_MEDIA_GRP_ID_IPU_IC_PRP:
+		snम_लिखो(sd_name, sz, "ipu%d_ic_prp", ipu_id + 1);
+		अवरोध;
+	हाल IMX_MEDIA_GRP_ID_IPU_IC_PRPENC:
+		snम_लिखो(sd_name, sz, "ipu%d_ic_prpenc", ipu_id + 1);
+		अवरोध;
+	हाल IMX_MEDIA_GRP_ID_IPU_IC_PRPVF:
+		snम_लिखो(sd_name, sz, "ipu%d_ic_prpvf", ipu_id + 1);
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
+पूर्ण
 EXPORT_SYMBOL_GPL(imx_media_grp_id_to_sd_name);
 
-struct v4l2_subdev *
-imx_media_find_subdev_by_fwnode(struct imx_media_dev *imxmd,
-				struct fwnode_handle *fwnode)
-{
-	struct v4l2_subdev *sd;
+काष्ठा v4l2_subdev *
+imx_media_find_subdev_by_fwnode(काष्ठा imx_media_dev *imxmd,
+				काष्ठा fwnode_handle *fwnode)
+अणु
+	काष्ठा v4l2_subdev *sd;
 
-	list_for_each_entry(sd, &imxmd->v4l2_dev.subdevs, list) {
-		if (sd->fwnode == fwnode)
-			return sd;
-	}
+	list_क्रम_each_entry(sd, &imxmd->v4l2_dev.subdevs, list) अणु
+		अगर (sd->fwnode == fwnode)
+			वापस sd;
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 EXPORT_SYMBOL_GPL(imx_media_find_subdev_by_fwnode);
 
-struct v4l2_subdev *
-imx_media_find_subdev_by_devname(struct imx_media_dev *imxmd,
-				 const char *devname)
-{
-	struct v4l2_subdev *sd;
+काष्ठा v4l2_subdev *
+imx_media_find_subdev_by_devname(काष्ठा imx_media_dev *imxmd,
+				 स्थिर अक्षर *devname)
+अणु
+	काष्ठा v4l2_subdev *sd;
 
-	list_for_each_entry(sd, &imxmd->v4l2_dev.subdevs, list) {
-		if (!strcmp(devname, dev_name(sd->dev)))
-			return sd;
-	}
+	list_क्रम_each_entry(sd, &imxmd->v4l2_dev.subdevs, list) अणु
+		अगर (!म_भेद(devname, dev_name(sd->dev)))
+			वापस sd;
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 EXPORT_SYMBOL_GPL(imx_media_find_subdev_by_devname);
 
 /*
  * Adds a video device to the master video device list. This is called
- * when a video device is registered.
+ * when a video device is रेजिस्टरed.
  */
-void imx_media_add_video_device(struct imx_media_dev *imxmd,
-				struct imx_media_video_dev *vdev)
-{
+व्योम imx_media_add_video_device(काष्ठा imx_media_dev *imxmd,
+				काष्ठा imx_media_video_dev *vdev)
+अणु
 	mutex_lock(&imxmd->mutex);
 
 	list_add_tail(&vdev->list, &imxmd->vdev_list);
 
 	mutex_unlock(&imxmd->mutex);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(imx_media_add_video_device);
 
 /*
- * Search upstream/downstream for a subdevice or video device pad in the
+ * Search upstream/करोwnstream क्रम a subdevice or video device pad in the
  * current pipeline, starting from start_entity. Returns the device's
  * source/sink pad that it was reached from. Must be called with
  * mdev->graph_mutex held.
  *
  * If grp_id != 0, finds a subdevice's pad of given grp_id.
  * Else If buftype != 0, finds a video device's pad of given buffer type.
- * Else, returns the nearest source/sink pad to start_entity.
+ * Else, वापसs the nearest source/sink pad to start_entity.
  */
-struct media_pad *
-imx_media_pipeline_pad(struct media_entity *start_entity, u32 grp_id,
-		       enum v4l2_buf_type buftype, bool upstream)
-{
-	struct media_entity *me = start_entity;
-	struct media_pad *pad = NULL;
-	struct video_device *vfd;
-	struct v4l2_subdev *sd;
-	int i;
+काष्ठा media_pad *
+imx_media_pipeline_pad(काष्ठा media_entity *start_entity, u32 grp_id,
+		       क्रमागत v4l2_buf_type buftype, bool upstream)
+अणु
+	काष्ठा media_entity *me = start_entity;
+	काष्ठा media_pad *pad = शून्य;
+	काष्ठा video_device *vfd;
+	काष्ठा v4l2_subdev *sd;
+	पूर्णांक i;
 
-	for (i = 0; i < me->num_pads; i++) {
-		struct media_pad *spad = &me->pads[i];
+	क्रम (i = 0; i < me->num_pads; i++) अणु
+		काष्ठा media_pad *spad = &me->pads[i];
 
-		if ((upstream && !(spad->flags & MEDIA_PAD_FL_SINK)) ||
+		अगर ((upstream && !(spad->flags & MEDIA_PAD_FL_SINK)) ||
 		    (!upstream && !(spad->flags & MEDIA_PAD_FL_SOURCE)))
-			continue;
+			जारी;
 
 		pad = media_entity_remote_pad(spad);
-		if (!pad)
-			continue;
+		अगर (!pad)
+			जारी;
 
-		if (grp_id) {
-			if (is_media_entity_v4l2_subdev(pad->entity)) {
+		अगर (grp_id) अणु
+			अगर (is_media_entity_v4l2_subdev(pad->entity)) अणु
 				sd = media_entity_to_v4l2_subdev(pad->entity);
-				if (sd->grp_id & grp_id)
-					return pad;
-			}
+				अगर (sd->grp_id & grp_id)
+					वापस pad;
+			पूर्ण
 
-			return imx_media_pipeline_pad(pad->entity, grp_id,
+			वापस imx_media_pipeline_pad(pad->entity, grp_id,
 						      buftype, upstream);
-		} else if (buftype) {
-			if (is_media_entity_v4l2_video_device(pad->entity)) {
+		पूर्ण अन्यथा अगर (buftype) अणु
+			अगर (is_media_entity_v4l2_video_device(pad->entity)) अणु
 				vfd = media_entity_to_video_device(pad->entity);
-				if (buftype == vfd->queue->type)
-					return pad;
-			}
+				अगर (buftype == vfd->queue->type)
+					वापस pad;
+			पूर्ण
 
-			return imx_media_pipeline_pad(pad->entity, grp_id,
+			वापस imx_media_pipeline_pad(pad->entity, grp_id,
 						      buftype, upstream);
-		} else {
-			return pad;
-		}
-	}
+		पूर्ण अन्यथा अणु
+			वापस pad;
+		पूर्ण
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 EXPORT_SYMBOL_GPL(imx_media_pipeline_pad);
 
 /*
- * Search upstream/downstream for a subdev or video device in the current
+ * Search upstream/करोwnstream क्रम a subdev or video device in the current
  * pipeline. Must be called with mdev->graph_mutex held.
  */
-static struct media_entity *
-find_pipeline_entity(struct media_entity *start, u32 grp_id,
-		     enum v4l2_buf_type buftype, bool upstream)
-{
-	struct media_pad *pad = NULL;
-	struct video_device *vfd;
-	struct v4l2_subdev *sd;
+अटल काष्ठा media_entity *
+find_pipeline_entity(काष्ठा media_entity *start, u32 grp_id,
+		     क्रमागत v4l2_buf_type buftype, bool upstream)
+अणु
+	काष्ठा media_pad *pad = शून्य;
+	काष्ठा video_device *vfd;
+	काष्ठा v4l2_subdev *sd;
 
-	if (grp_id && is_media_entity_v4l2_subdev(start)) {
+	अगर (grp_id && is_media_entity_v4l2_subdev(start)) अणु
 		sd = media_entity_to_v4l2_subdev(start);
-		if (sd->grp_id & grp_id)
-			return &sd->entity;
-	} else if (buftype && is_media_entity_v4l2_video_device(start)) {
+		अगर (sd->grp_id & grp_id)
+			वापस &sd->entity;
+	पूर्ण अन्यथा अगर (buftype && is_media_entity_v4l2_video_device(start)) अणु
 		vfd = media_entity_to_video_device(start);
-		if (buftype == vfd->queue->type)
-			return &vfd->entity;
-	}
+		अगर (buftype == vfd->queue->type)
+			वापस &vfd->entity;
+	पूर्ण
 
 	pad = imx_media_pipeline_pad(start, grp_id, buftype, upstream);
 
-	return pad ? pad->entity : NULL;
-}
+	वापस pad ? pad->entity : शून्य;
+पूर्ण
 
 /*
- * Find the upstream mipi-csi2 virtual channel reached from the given
+ * Find the upstream mipi-csi2 भव channel reached from the given
  * start entity in the current pipeline.
  * Must be called with mdev->graph_mutex held.
  */
-int imx_media_pipeline_csi2_channel(struct media_entity *start_entity)
-{
-	struct media_pad *pad;
-	int ret = -EPIPE;
+पूर्णांक imx_media_pipeline_csi2_channel(काष्ठा media_entity *start_entity)
+अणु
+	काष्ठा media_pad *pad;
+	पूर्णांक ret = -EPIPE;
 
 	pad = imx_media_pipeline_pad(start_entity, IMX_MEDIA_GRP_ID_CSI2,
 				     0, true);
-	if (pad)
+	अगर (pad)
 		ret = pad->index - 1;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(imx_media_pipeline_csi2_channel);
 
 /*
@@ -822,18 +823,18 @@ EXPORT_SYMBOL_GPL(imx_media_pipeline_csi2_channel);
  * the current pipeline.
  * Must be called with mdev->graph_mutex held.
  */
-struct v4l2_subdev *
-imx_media_pipeline_subdev(struct media_entity *start_entity, u32 grp_id,
+काष्ठा v4l2_subdev *
+imx_media_pipeline_subdev(काष्ठा media_entity *start_entity, u32 grp_id,
 			  bool upstream)
-{
-	struct media_entity *me;
+अणु
+	काष्ठा media_entity *me;
 
 	me = find_pipeline_entity(start_entity, grp_id, 0, upstream);
-	if (!me)
-		return ERR_PTR(-ENODEV);
+	अगर (!me)
+		वापस ERR_PTR(-ENODEV);
 
-	return media_entity_to_v4l2_subdev(me);
-}
+	वापस media_entity_to_v4l2_subdev(me);
+पूर्ण
 EXPORT_SYMBOL_GPL(imx_media_pipeline_subdev);
 
 /*
@@ -841,86 +842,86 @@ EXPORT_SYMBOL_GPL(imx_media_pipeline_subdev);
  * the current pipeline.
  * Must be called with mdev->graph_mutex held.
  */
-struct video_device *
-imx_media_pipeline_video_device(struct media_entity *start_entity,
-				enum v4l2_buf_type buftype, bool upstream)
-{
-	struct media_entity *me;
+काष्ठा video_device *
+imx_media_pipeline_video_device(काष्ठा media_entity *start_entity,
+				क्रमागत v4l2_buf_type buftype, bool upstream)
+अणु
+	काष्ठा media_entity *me;
 
 	me = find_pipeline_entity(start_entity, 0, buftype, upstream);
-	if (!me)
-		return ERR_PTR(-ENODEV);
+	अगर (!me)
+		वापस ERR_PTR(-ENODEV);
 
-	return media_entity_to_video_device(me);
-}
+	वापस media_entity_to_video_device(me);
+पूर्ण
 EXPORT_SYMBOL_GPL(imx_media_pipeline_video_device);
 
 /*
- * Find a fwnode endpoint that maps to the given subdevice's pad.
- * If there are multiple endpoints that map to the pad, only the
- * first endpoint encountered is returned.
+ * Find a fwnode endpoपूर्णांक that maps to the given subdevice's pad.
+ * If there are multiple endpoपूर्णांकs that map to the pad, only the
+ * first endpoपूर्णांक encountered is वापसed.
  *
- * On success the refcount of the returned fwnode endpoint is
+ * On success the refcount of the वापसed fwnode endpoपूर्णांक is
  * incremented.
  */
-struct fwnode_handle *imx_media_get_pad_fwnode(struct media_pad *pad)
-{
-	struct fwnode_handle *endpoint;
-	struct v4l2_subdev *sd;
+काष्ठा fwnode_handle *imx_media_get_pad_fwnode(काष्ठा media_pad *pad)
+अणु
+	काष्ठा fwnode_handle *endpoपूर्णांक;
+	काष्ठा v4l2_subdev *sd;
 
-	if (!is_media_entity_v4l2_subdev(pad->entity))
-		return ERR_PTR(-ENODEV);
+	अगर (!is_media_entity_v4l2_subdev(pad->entity))
+		वापस ERR_PTR(-ENODEV);
 
 	sd = media_entity_to_v4l2_subdev(pad->entity);
 
-	fwnode_graph_for_each_endpoint(dev_fwnode(sd->dev), endpoint) {
-		int pad_idx = media_entity_get_fwnode_pad(&sd->entity,
-							  endpoint,
+	fwnode_graph_क्रम_each_endpoपूर्णांक(dev_fwnode(sd->dev), endpoपूर्णांक) अणु
+		पूर्णांक pad_idx = media_entity_get_fwnode_pad(&sd->entity,
+							  endpoपूर्णांक,
 							  pad->flags);
-		if (pad_idx < 0)
-			continue;
+		अगर (pad_idx < 0)
+			जारी;
 
-		if (pad_idx == pad->index)
-			return endpoint;
-	}
+		अगर (pad_idx == pad->index)
+			वापस endpoपूर्णांक;
+	पूर्ण
 
-	return ERR_PTR(-ENODEV);
-}
+	वापस ERR_PTR(-ENODEV);
+पूर्ण
 EXPORT_SYMBOL_GPL(imx_media_get_pad_fwnode);
 
 /*
  * Turn current pipeline streaming on/off starting from entity.
  */
-int imx_media_pipeline_set_stream(struct imx_media_dev *imxmd,
-				  struct media_entity *entity,
+पूर्णांक imx_media_pipeline_set_stream(काष्ठा imx_media_dev *imxmd,
+				  काष्ठा media_entity *entity,
 				  bool on)
-{
-	struct v4l2_subdev *sd;
-	int ret = 0;
+अणु
+	काष्ठा v4l2_subdev *sd;
+	पूर्णांक ret = 0;
 
-	if (!is_media_entity_v4l2_subdev(entity))
-		return -EINVAL;
+	अगर (!is_media_entity_v4l2_subdev(entity))
+		वापस -EINVAL;
 	sd = media_entity_to_v4l2_subdev(entity);
 
 	mutex_lock(&imxmd->md.graph_mutex);
 
-	if (on) {
+	अगर (on) अणु
 		ret = __media_pipeline_start(entity, &imxmd->pipe);
-		if (ret)
-			goto out;
+		अगर (ret)
+			जाओ out;
 		ret = v4l2_subdev_call(sd, video, s_stream, 1);
-		if (ret)
+		अगर (ret)
 			__media_pipeline_stop(entity);
-	} else {
+	पूर्ण अन्यथा अणु
 		v4l2_subdev_call(sd, video, s_stream, 0);
-		if (entity->pipe)
+		अगर (entity->pipe)
 			__media_pipeline_stop(entity);
-	}
+	पूर्ण
 
 out:
 	mutex_unlock(&imxmd->md.graph_mutex);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(imx_media_pipeline_set_stream);
 
 MODULE_DESCRIPTION("i.MX5/6 v4l2 media controller driver");

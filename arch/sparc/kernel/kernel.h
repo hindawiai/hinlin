@@ -1,193 +1,194 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __SPARC_KERNEL_H
-#define __SPARC_KERNEL_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __SPARC_KERNEL_H
+#घोषणा __SPARC_KERNEL_H
 
-#include <linux/interrupt.h>
-#include <linux/ftrace.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/ftrace.h>
 
-#include <asm/traps.h>
-#include <asm/head.h>
-#include <asm/io.h>
+#समावेश <यंत्र/traps.h>
+#समावेश <यंत्र/head.h>
+#समावेश <यंत्र/पन.स>
 
 /* cpu.c */
-extern const char *sparc_pmu_type;
-extern unsigned int fsr_storage;
-extern int ncpus_probed;
+बाह्य स्थिर अक्षर *sparc_pmu_type;
+बाह्य अचिन्हित पूर्णांक fsr_storage;
+बाह्य पूर्णांक ncpus_probed;
 
-/* process{_32,_64}.c */
-asmlinkage long sparc_clone(struct pt_regs *regs);
-asmlinkage long sparc_fork(struct pt_regs *regs);
-asmlinkage long sparc_vfork(struct pt_regs *regs);
+/* processअणु_32,_64पूर्ण.c */
+यंत्रlinkage दीर्घ sparc_clone(काष्ठा pt_regs *regs);
+यंत्रlinkage दीर्घ sparc_विभाजन(काष्ठा pt_regs *regs);
+यंत्रlinkage दीर्घ sparc_vविभाजन(काष्ठा pt_regs *regs);
 
-#ifdef CONFIG_SPARC64
+#अगर_घोषित CONFIG_SPARC64
 /* setup_64.c */
-struct seq_file;
-void cpucap_info(struct seq_file *);
+काष्ठा seq_file;
+व्योम cpucap_info(काष्ठा seq_file *);
 
-static inline unsigned long kimage_addr_to_ra(const void *p)
-{
-	unsigned long val = (unsigned long) p;
+अटल अंतरभूत अचिन्हित दीर्घ kimage_addr_to_ra(स्थिर व्योम *p)
+अणु
+	अचिन्हित दीर्घ val = (अचिन्हित दीर्घ) p;
 
-	return kern_base + (val - KERNBASE);
-}
+	वापस kern_base + (val - KERNBASE);
+पूर्ण
 
 /* sys_sparc_64.c */
-asmlinkage long sys_kern_features(void);
+यंत्रlinkage दीर्घ sys_kern_features(व्योम);
 
 /* unaligned_64.c */
-asmlinkage void kernel_unaligned_trap(struct pt_regs *regs, unsigned int insn);
-int handle_popc(u32 insn, struct pt_regs *regs);
-void handle_lddfmna(struct pt_regs *regs, unsigned long sfar, unsigned long sfsr);
-void handle_stdfmna(struct pt_regs *regs, unsigned long sfar, unsigned long sfsr);
+यंत्रlinkage व्योम kernel_unaligned_trap(काष्ठा pt_regs *regs, अचिन्हित पूर्णांक insn);
+पूर्णांक handle_popc(u32 insn, काष्ठा pt_regs *regs);
+व्योम handle_lddfmna(काष्ठा pt_regs *regs, अचिन्हित दीर्घ sfar, अचिन्हित दीर्घ sfsr);
+व्योम handle_stdfmna(काष्ठा pt_regs *regs, अचिन्हित दीर्घ sfar, अचिन्हित दीर्घ sfsr);
 
 /* smp_64.c */
-void __irq_entry smp_call_function_client(int irq, struct pt_regs *regs);
-void __irq_entry smp_call_function_single_client(int irq, struct pt_regs *regs);
-void __irq_entry smp_penguin_jailcell(int irq, struct pt_regs *regs);
-void __irq_entry smp_receive_signal_client(int irq, struct pt_regs *regs);
+व्योम __irq_entry smp_call_function_client(पूर्णांक irq, काष्ठा pt_regs *regs);
+व्योम __irq_entry smp_call_function_single_client(पूर्णांक irq, काष्ठा pt_regs *regs);
+व्योम __irq_entry smp_penguin_jailcell(पूर्णांक irq, काष्ठा pt_regs *regs);
+व्योम __irq_entry smp_receive_संकेत_client(पूर्णांक irq, काष्ठा pt_regs *regs);
 
 /* kgdb_64.c */
-void __irq_entry smp_kgdb_capture_client(int irq, struct pt_regs *regs);
+व्योम __irq_entry smp_kgdb_capture_client(पूर्णांक irq, काष्ठा pt_regs *regs);
 
 /* pci.c */
-#ifdef CONFIG_PCI
-int ali_sound_dma_hack(struct device *dev, u64 device_mask);
-#else
-#define ali_sound_dma_hack(dev, mask)	(0)
-#endif
+#अगर_घोषित CONFIG_PCI
+पूर्णांक ali_sound_dma_hack(काष्ठा device *dev, u64 device_mask);
+#अन्यथा
+#घोषणा ali_sound_dma_hack(dev, mask)	(0)
+#पूर्ण_अगर
 
-/* signal32.c */
-void do_sigreturn32(struct pt_regs *regs);
-asmlinkage void do_rt_sigreturn32(struct pt_regs *regs);
-void do_signal32(struct pt_regs * regs);
-asmlinkage int do_sys32_sigstack(u32 u_ssptr, u32 u_ossptr, unsigned long sp);
+/* संकेत32.c */
+व्योम करो_sigवापस32(काष्ठा pt_regs *regs);
+यंत्रlinkage व्योम करो_rt_sigवापस32(काष्ठा pt_regs *regs);
+व्योम करो_संकेत32(काष्ठा pt_regs * regs);
+यंत्रlinkage पूर्णांक करो_sys32_sigstack(u32 u_ssptr, u32 u_ossptr, अचिन्हित दीर्घ sp);
 
-/* time_64.c */
-void __init time_init_early(void);
+/* समय_64.c */
+व्योम __init समय_init_early(व्योम);
 
 /* compat_audit.c */
-extern unsigned int sparc32_dir_class[];
-extern unsigned int sparc32_chattr_class[];
-extern unsigned int sparc32_write_class[];
-extern unsigned int sparc32_read_class[];
-extern unsigned int sparc32_signal_class[];
-int sparc32_classify_syscall(unsigned int syscall);
-#endif
+बाह्य अचिन्हित पूर्णांक sparc32_dir_class[];
+बाह्य अचिन्हित पूर्णांक sparc32_chattr_class[];
+बाह्य अचिन्हित पूर्णांक sparc32_ग_लिखो_class[];
+बाह्य अचिन्हित पूर्णांक sparc32_पढ़ो_class[];
+बाह्य अचिन्हित पूर्णांक sparc32_संकेत_class[];
+पूर्णांक sparc32_classअगरy_syscall(अचिन्हित पूर्णांक syscall);
+#पूर्ण_अगर
 
-#ifdef CONFIG_SPARC32
+#अगर_घोषित CONFIG_SPARC32
 /* setup_32.c */
-struct linux_romvec;
-void sparc32_start_kernel(struct linux_romvec *rp);
+काष्ठा linux_romvec;
+व्योम sparc32_start_kernel(काष्ठा linux_romvec *rp);
 
 /* cpu.c */
-void cpu_probe(void);
+व्योम cpu_probe(व्योम);
 
 /* traps_32.c */
-void handle_hw_divzero(struct pt_regs *regs, unsigned long pc,
-                       unsigned long npc, unsigned long psr);
+व्योम handle_hw_भागzero(काष्ठा pt_regs *regs, अचिन्हित दीर्घ pc,
+                       अचिन्हित दीर्घ npc, अचिन्हित दीर्घ psr);
 /* irq_32.c */
-extern struct irqaction static_irqaction[];
-extern int static_irq_count;
-extern spinlock_t irq_action_lock;
+बाह्य काष्ठा irqaction अटल_irqaction[];
+बाह्य पूर्णांक अटल_irq_count;
+बाह्य spinlock_t irq_action_lock;
 
-void unexpected_irq(int irq, void *dev_id, struct pt_regs * regs);
-void init_IRQ(void);
+व्योम unexpected_irq(पूर्णांक irq, व्योम *dev_id, काष्ठा pt_regs * regs);
+व्योम init_IRQ(व्योम);
 
 /* sun4m_irq.c */
-void sun4m_init_IRQ(void);
-void sun4m_unmask_profile_irq(void);
-void sun4m_clear_profile_irq(int cpu);
+व्योम sun4m_init_IRQ(व्योम);
+व्योम sun4m_unmask_profile_irq(व्योम);
+व्योम sun4m_clear_profile_irq(पूर्णांक cpu);
 
 /* sun4m_smp.c */
-void sun4m_cpu_pre_starting(void *arg);
-void sun4m_cpu_pre_online(void *arg);
-void __init smp4m_boot_cpus(void);
-int smp4m_boot_one_cpu(int i, struct task_struct *idle);
-void __init smp4m_smp_done(void);
-void smp4m_cross_call_irq(void);
-void smp4m_percpu_timer_interrupt(struct pt_regs *regs);
+व्योम sun4m_cpu_pre_starting(व्योम *arg);
+व्योम sun4m_cpu_pre_online(व्योम *arg);
+व्योम __init smp4m_boot_cpus(व्योम);
+पूर्णांक smp4m_boot_one_cpu(पूर्णांक i, काष्ठा task_काष्ठा *idle);
+व्योम __init smp4m_smp_करोne(व्योम);
+व्योम smp4m_cross_call_irq(व्योम);
+व्योम smp4m_percpu_समयr_पूर्णांकerrupt(काष्ठा pt_regs *regs);
 
 /* sun4d_irq.c */
-extern spinlock_t sun4d_imsk_lock;
+बाह्य spinlock_t sun4d_imsk_lock;
 
-void sun4d_init_IRQ(void);
-int sun4d_request_irq(unsigned int irq,
+व्योम sun4d_init_IRQ(व्योम);
+पूर्णांक sun4d_request_irq(अचिन्हित पूर्णांक irq,
                       irq_handler_t handler,
-                      unsigned long irqflags,
-                      const char *devname, void *dev_id);
-int show_sun4d_interrupts(struct seq_file *, void *);
-void sun4d_distribute_irqs(void);
-void sun4d_free_irq(unsigned int irq, void *dev_id);
+                      अचिन्हित दीर्घ irqflags,
+                      स्थिर अक्षर *devname, व्योम *dev_id);
+पूर्णांक show_sun4d_पूर्णांकerrupts(काष्ठा seq_file *, व्योम *);
+व्योम sun4d_distribute_irqs(व्योम);
+व्योम sun4d_मुक्त_irq(अचिन्हित पूर्णांक irq, व्योम *dev_id);
 
 /* sun4d_smp.c */
-void sun4d_cpu_pre_starting(void *arg);
-void sun4d_cpu_pre_online(void *arg);
-void __init smp4d_boot_cpus(void);
-int smp4d_boot_one_cpu(int i, struct task_struct *idle);
-void __init smp4d_smp_done(void);
-void smp4d_cross_call_irq(void);
-void smp4d_percpu_timer_interrupt(struct pt_regs *regs);
+व्योम sun4d_cpu_pre_starting(व्योम *arg);
+व्योम sun4d_cpu_pre_online(व्योम *arg);
+व्योम __init smp4d_boot_cpus(व्योम);
+पूर्णांक smp4d_boot_one_cpu(पूर्णांक i, काष्ठा task_काष्ठा *idle);
+व्योम __init smp4d_smp_करोne(व्योम);
+व्योम smp4d_cross_call_irq(व्योम);
+व्योम smp4d_percpu_समयr_पूर्णांकerrupt(काष्ठा pt_regs *regs);
 
 /* leon_smp.c */
-void leon_cpu_pre_starting(void *arg);
-void leon_cpu_pre_online(void *arg);
-void leonsmp_ipi_interrupt(void);
-void leon_cross_call_irq(void);
+व्योम leon_cpu_pre_starting(व्योम *arg);
+व्योम leon_cpu_pre_online(व्योम *arg);
+व्योम leonsmp_ipi_पूर्णांकerrupt(व्योम);
+व्योम leon_cross_call_irq(व्योम);
 
 /* head_32.S */
-extern unsigned int t_nmi[];
-extern unsigned int linux_trap_ipi15_sun4d[];
-extern unsigned int linux_trap_ipi15_sun4m[];
+बाह्य अचिन्हित पूर्णांक t_nmi[];
+बाह्य अचिन्हित पूर्णांक linux_trap_ipi15_sun4d[];
+बाह्य अचिन्हित पूर्णांक linux_trap_ipi15_sun4m[];
 
-extern struct tt_entry trapbase;
-extern struct tt_entry trapbase_cpu1;
-extern struct tt_entry trapbase_cpu2;
-extern struct tt_entry trapbase_cpu3;
+बाह्य काष्ठा tt_entry trapbase;
+बाह्य काष्ठा tt_entry trapbase_cpu1;
+बाह्य काष्ठा tt_entry trapbase_cpu2;
+बाह्य काष्ठा tt_entry trapbase_cpu3;
 
-extern char cputypval[];
+बाह्य अक्षर cputypval[];
 
 /* entry.S */
-extern unsigned long lvl14_save[4];
-extern unsigned int real_irq_entry[];
-extern unsigned int smp4d_ticker[];
-extern unsigned int patchme_maybe_smp_msg[];
+बाह्य अचिन्हित दीर्घ lvl14_save[4];
+बाह्य अचिन्हित पूर्णांक real_irq_entry[];
+बाह्य अचिन्हित पूर्णांक smp4d_ticker[];
+बाह्य अचिन्हित पूर्णांक patchme_maybe_smp_msg[];
 
-void floppy_hardint(void);
+व्योम floppy_hardपूर्णांक(व्योम);
 
 /* trampoline_32.S */
-extern unsigned long sun4m_cpu_startup;
-extern unsigned long sun4d_cpu_startup;
+बाह्य अचिन्हित दीर्घ sun4m_cpu_startup;
+बाह्य अचिन्हित दीर्घ sun4d_cpu_startup;
 
-/* signal_32.c */
-asmlinkage void do_sigreturn(struct pt_regs *regs);
-asmlinkage void do_rt_sigreturn(struct pt_regs *regs);
-void do_notify_resume(struct pt_regs *regs, unsigned long orig_i0,
-                      unsigned long thread_info_flags);
-asmlinkage int do_sys_sigstack(struct sigstack __user *ssptr,
-                               struct sigstack __user *ossptr,
-                               unsigned long sp);
+/* संकेत_32.c */
+यंत्रlinkage व्योम करो_sigवापस(काष्ठा pt_regs *regs);
+यंत्रlinkage व्योम करो_rt_sigवापस(काष्ठा pt_regs *regs);
+व्योम करो_notअगरy_resume(काष्ठा pt_regs *regs, अचिन्हित दीर्घ orig_i0,
+                      अचिन्हित दीर्घ thपढ़ो_info_flags);
+यंत्रlinkage पूर्णांक करो_sys_sigstack(काष्ठा sigstack __user *ssptr,
+                               काष्ठा sigstack __user *ossptr,
+                               अचिन्हित दीर्घ sp);
 
 /* ptrace_32.c */
-asmlinkage int syscall_trace(struct pt_regs *regs, int syscall_exit_p);
+यंत्रlinkage पूर्णांक syscall_trace(काष्ठा pt_regs *regs, पूर्णांक syscall_निकास_p);
 
 /* unaligned_32.c */
-asmlinkage void kernel_unaligned_trap(struct pt_regs *regs, unsigned int insn);
-asmlinkage void user_unaligned_trap(struct pt_regs *regs, unsigned int insn);
+यंत्रlinkage व्योम kernel_unaligned_trap(काष्ठा pt_regs *regs, अचिन्हित पूर्णांक insn);
+यंत्रlinkage व्योम user_unaligned_trap(काष्ठा pt_regs *regs, अचिन्हित पूर्णांक insn);
 
-/* windows.c */
-void try_to_clear_window_buffer(struct pt_regs *regs, int who);
+/* winकरोws.c */
+व्योम try_to_clear_winकरोw_buffer(काष्ठा pt_regs *regs, पूर्णांक who);
 
 /* auxio_32.c */
-void __init auxio_probe(void);
-void __init auxio_power_probe(void);
+व्योम __init auxio_probe(व्योम);
+व्योम __init auxio_घातer_probe(व्योम);
 
 /* pcic.c */
-extern void __iomem *pcic_regs;
-void pcic_nmi(unsigned int pend, struct pt_regs *regs);
+बाह्य व्योम __iomem *pcic_regs;
+व्योम pcic_nmi(अचिन्हित पूर्णांक pend, काष्ठा pt_regs *regs);
 
-/* time_32.c */
-void __init time_init(void);
+/* समय_32.c */
+व्योम __init समय_init(व्योम);
 
-#else /* CONFIG_SPARC32 */
-#endif /* CONFIG_SPARC32 */
-#endif /* !(__SPARC_KERNEL_H) */
+#अन्यथा /* CONFIG_SPARC32 */
+#पूर्ण_अगर /* CONFIG_SPARC32 */
+#पूर्ण_अगर /* !(__SPARC_KERNEL_H) */

@@ -1,326 +1,327 @@
+<शैली गुरु>
 /*
  * Copyright (c) 2016 Intel Corporation
  *
- * Permission to use, copy, modify, distribute, and sell this software and its
- * documentation for any purpose is hereby granted without fee, provided that
+ * Permission to use, copy, modअगरy, distribute, and sell this software and its
+ * करोcumentation क्रम any purpose is hereby granted without fee, provided that
  * the above copyright notice appear in all copies and that both that copyright
- * notice and this permission notice appear in supporting documentation, and
+ * notice and this permission notice appear in supporting करोcumentation, and
  * that the name of the copyright holders not be used in advertising or
- * publicity pertaining to distribution of the software without specific,
+ * खुलाity pertaining to distribution of the software without specअगरic,
  * written prior permission.  The copyright holders make no representations
- * about the suitability of this software for any purpose.  It is provided "as
+ * about the suitability of this software क्रम any purpose.  It is provided "as
  * is" without express or implied warranty.
  *
  * THE COPYRIGHT HOLDERS DISCLAIM ALL WARRANTIES WITH REGARD TO THIS SOFTWARE,
  * INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS, IN NO
- * EVENT SHALL THE COPYRIGHT HOLDERS BE LIABLE FOR ANY SPECIAL, INDIRECT OR
+ * EVENT SHALL THE COPYRIGHT HOLDERS BE LIABLE FOR ANY SPECIAL, INसूचीECT OR
  * CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE,
  * DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER
  * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE
  * OF THIS SOFTWARE.
  */
 
-#ifndef __DRM_ENCODER_H__
-#define __DRM_ENCODER_H__
+#अगर_अघोषित __DRM_ENCODER_H__
+#घोषणा __DRM_ENCODER_H__
 
-#include <linux/list.h>
-#include <linux/ctype.h>
-#include <drm/drm_crtc.h>
-#include <drm/drm_mode.h>
-#include <drm/drm_mode_object.h>
-#include <drm/drm_util.h>
+#समावेश <linux/list.h>
+#समावेश <linux/प्रकार.स>
+#समावेश <drm/drm_crtc.h>
+#समावेश <drm/drm_mode.h>
+#समावेश <drm/drm_mode_object.h>
+#समावेश <drm/drm_util.h>
 
-struct drm_encoder;
+काष्ठा drm_encoder;
 
 /**
- * struct drm_encoder_funcs - encoder controls
+ * काष्ठा drm_encoder_funcs - encoder controls
  *
  * Encoders sit between CRTCs and connectors.
  */
-struct drm_encoder_funcs {
+काष्ठा drm_encoder_funcs अणु
 	/**
 	 * @reset:
 	 *
 	 * Reset encoder hardware and software state to off. This function isn't
 	 * called by the core directly, only through drm_mode_config_reset().
-	 * It's not a helper hook only for historical reasons.
+	 * It's not a helper hook only क्रम historical reasons.
 	 */
-	void (*reset)(struct drm_encoder *encoder);
+	व्योम (*reset)(काष्ठा drm_encoder *encoder);
 
 	/**
 	 * @destroy:
 	 *
-	 * Clean up encoder resources. This is only called at driver unload time
+	 * Clean up encoder resources. This is only called at driver unload समय
 	 * through drm_mode_config_cleanup() since an encoder cannot be
 	 * hotplugged in DRM.
 	 */
-	void (*destroy)(struct drm_encoder *encoder);
+	व्योम (*destroy)(काष्ठा drm_encoder *encoder);
 
 	/**
-	 * @late_register:
+	 * @late_रेजिस्टर:
 	 *
-	 * This optional hook can be used to register additional userspace
-	 * interfaces attached to the encoder like debugfs interfaces.
-	 * It is called late in the driver load sequence from drm_dev_register().
-	 * Everything added from this callback should be unregistered in
-	 * the early_unregister callback.
+	 * This optional hook can be used to रेजिस्टर additional userspace
+	 * पूर्णांकerfaces attached to the encoder like debugfs पूर्णांकerfaces.
+	 * It is called late in the driver load sequence from drm_dev_रेजिस्टर().
+	 * Everything added from this callback should be unरेजिस्टरed in
+	 * the early_unरेजिस्टर callback.
 	 *
 	 * Returns:
 	 *
 	 * 0 on success, or a negative error code on failure.
 	 */
-	int (*late_register)(struct drm_encoder *encoder);
+	पूर्णांक (*late_रेजिस्टर)(काष्ठा drm_encoder *encoder);
 
 	/**
-	 * @early_unregister:
+	 * @early_unरेजिस्टर:
 	 *
-	 * This optional hook should be used to unregister the additional
-	 * userspace interfaces attached to the encoder from
-	 * @late_register. It is called from drm_dev_unregister(),
+	 * This optional hook should be used to unरेजिस्टर the additional
+	 * userspace पूर्णांकerfaces attached to the encoder from
+	 * @late_रेजिस्टर. It is called from drm_dev_unरेजिस्टर(),
 	 * early in the driver unload sequence to disable userspace access
-	 * before data structures are torndown.
+	 * beक्रमe data काष्ठाures are tornकरोwn.
 	 */
-	void (*early_unregister)(struct drm_encoder *encoder);
-};
+	व्योम (*early_unरेजिस्टर)(काष्ठा drm_encoder *encoder);
+पूर्ण;
 
 /**
- * struct drm_encoder - central DRM encoder structure
+ * काष्ठा drm_encoder - central DRM encoder काष्ठाure
  * @dev: parent DRM device
  * @head: list management
  * @base: base KMS object
- * @name: human readable name, can be overwritten by the driver
- * @funcs: control functions, can be NULL for simple managed encoders
- * @helper_private: mid-layer private data
+ * @name: human पढ़ोable name, can be overwritten by the driver
+ * @funcs: control functions, can be शून्य क्रम simple managed encoders
+ * @helper_निजी: mid-layer निजी data
  *
- * CRTCs drive pixels to encoders, which convert them into signals
- * appropriate for a given connector or set of connectors.
+ * CRTCs drive pixels to encoders, which convert them पूर्णांकo संकेतs
+ * appropriate क्रम a given connector or set of connectors.
  */
-struct drm_encoder {
-	struct drm_device *dev;
-	struct list_head head;
+काष्ठा drm_encoder अणु
+	काष्ठा drm_device *dev;
+	काष्ठा list_head head;
 
-	struct drm_mode_object base;
-	char *name;
+	काष्ठा drm_mode_object base;
+	अक्षर *name;
 	/**
 	 * @encoder_type:
 	 *
 	 * One of the DRM_MODE_ENCODER_<foo> types in drm_mode.h. The following
 	 * encoder types are defined thus far:
 	 *
-	 * - DRM_MODE_ENCODER_DAC for VGA and analog on DVI-I/DVI-A.
+	 * - DRM_MODE_ENCODER_DAC क्रम VGA and analog on DVI-I/DVI-A.
 	 *
-	 * - DRM_MODE_ENCODER_TMDS for DVI, HDMI and (embedded) DisplayPort.
+	 * - DRM_MODE_ENCODER_TMDS क्रम DVI, HDMI and (embedded) DisplayPort.
 	 *
-	 * - DRM_MODE_ENCODER_LVDS for display panels, or in general any panel
+	 * - DRM_MODE_ENCODER_LVDS क्रम display panels, or in general any panel
 	 *   with a proprietary parallel connector.
 	 *
-	 * - DRM_MODE_ENCODER_TVDAC for TV output (Composite, S-Video,
+	 * - DRM_MODE_ENCODER_TVDAC क्रम TV output (Composite, S-Video,
 	 *   Component, SCART).
 	 *
-	 * - DRM_MODE_ENCODER_VIRTUAL for virtual machine displays
+	 * - DRM_MODE_ENCODER_VIRTUAL क्रम भव machine displays
 	 *
-	 * - DRM_MODE_ENCODER_DSI for panels connected using the DSI serial bus.
+	 * - DRM_MODE_ENCODER_DSI क्रम panels connected using the DSI serial bus.
 	 *
-	 * - DRM_MODE_ENCODER_DPI for panels connected using the DPI parallel
+	 * - DRM_MODE_ENCODER_DPI क्रम panels connected using the DPI parallel
 	 *   bus.
 	 *
-	 * - DRM_MODE_ENCODER_DPMST for special fake encoders used to allow
+	 * - DRM_MODE_ENCODER_DPMST क्रम special fake encoders used to allow
 	 *   mutliple DP MST streams to share one physical encoder.
 	 */
-	int encoder_type;
+	पूर्णांक encoder_type;
 
 	/**
 	 * @index: Position inside the mode_config.list, can be used as an array
-	 * index. It is invariant over the lifetime of the encoder.
+	 * index. It is invariant over the lअगरeसमय of the encoder.
 	 */
-	unsigned index;
+	अचिन्हित index;
 
 	/**
-	 * @possible_crtcs: Bitmask of potential CRTC bindings, using
-	 * drm_crtc_index() as the index into the bitfield. The driver must set
-	 * the bits for all &drm_crtc objects this encoder can be connected to
-	 * before calling drm_dev_register().
+	 * @possible_crtcs: Biपंचांगask of potential CRTC bindings, using
+	 * drm_crtc_index() as the index पूर्णांकo the bitfield. The driver must set
+	 * the bits क्रम all &drm_crtc objects this encoder can be connected to
+	 * beक्रमe calling drm_dev_रेजिस्टर().
 	 *
-	 * You will get a WARN if you get this wrong in the driver.
+	 * You will get a WARN अगर you get this wrong in the driver.
 	 *
-	 * Note that since CRTC objects can't be hotplugged the assigned indices
-	 * are stable and hence known before registering all objects.
+	 * Note that since CRTC objects can't be hotplugged the asचिन्हित indices
+	 * are stable and hence known beक्रमe रेजिस्टरing all objects.
 	 */
-	uint32_t possible_crtcs;
+	uपूर्णांक32_t possible_crtcs;
 
 	/**
-	 * @possible_clones: Bitmask of potential sibling encoders for cloning,
-	 * using drm_encoder_index() as the index into the bitfield. The driver
-	 * must set the bits for all &drm_encoder objects which can clone a
-	 * &drm_crtc together with this encoder before calling
-	 * drm_dev_register(). Drivers should set the bit representing the
+	 * @possible_clones: Biपंचांगask of potential sibling encoders क्रम cloning,
+	 * using drm_encoder_index() as the index पूर्णांकo the bitfield. The driver
+	 * must set the bits क्रम all &drm_encoder objects which can clone a
+	 * &drm_crtc together with this encoder beक्रमe calling
+	 * drm_dev_रेजिस्टर(). Drivers should set the bit representing the
 	 * encoder itself, too. Cloning bits should be set such that when two
 	 * encoders can be used in a cloned configuration, they both should have
 	 * each another bits set.
 	 *
-	 * As an exception to the above rule if the driver doesn't implement
+	 * As an exception to the above rule अगर the driver करोesn't implement
 	 * any cloning it can leave @possible_clones set to 0. The core will
-	 * automagically fix this up by setting the bit for the encoder itself.
+	 * स्वतःmagically fix this up by setting the bit क्रम the encoder itself.
 	 *
-	 * You will get a WARN if you get this wrong in the driver.
+	 * You will get a WARN अगर you get this wrong in the driver.
 	 *
-	 * Note that since encoder objects can't be hotplugged the assigned indices
-	 * are stable and hence known before registering all objects.
+	 * Note that since encoder objects can't be hotplugged the asचिन्हित indices
+	 * are stable and hence known beक्रमe रेजिस्टरing all objects.
 	 */
-	uint32_t possible_clones;
+	uपूर्णांक32_t possible_clones;
 
 	/**
-	 * @crtc: Currently bound CRTC, only really meaningful for non-atomic
+	 * @crtc: Currently bound CRTC, only really meaningful क्रम non-atomic
 	 * drivers.  Atomic drivers should instead check
 	 * &drm_connector_state.crtc.
 	 */
-	struct drm_crtc *crtc;
+	काष्ठा drm_crtc *crtc;
 
 	/**
 	 * @bridge_chain: Bridges attached to this encoder. Drivers shall not
 	 * access this field directly.
 	 */
-	struct list_head bridge_chain;
+	काष्ठा list_head bridge_chain;
 
-	const struct drm_encoder_funcs *funcs;
-	const struct drm_encoder_helper_funcs *helper_private;
-};
+	स्थिर काष्ठा drm_encoder_funcs *funcs;
+	स्थिर काष्ठा drm_encoder_helper_funcs *helper_निजी;
+पूर्ण;
 
-#define obj_to_encoder(x) container_of(x, struct drm_encoder, base)
+#घोषणा obj_to_encoder(x) container_of(x, काष्ठा drm_encoder, base)
 
-__printf(5, 6)
-int drm_encoder_init(struct drm_device *dev,
-		     struct drm_encoder *encoder,
-		     const struct drm_encoder_funcs *funcs,
-		     int encoder_type, const char *name, ...);
+__म_लिखो(5, 6)
+पूर्णांक drm_encoder_init(काष्ठा drm_device *dev,
+		     काष्ठा drm_encoder *encoder,
+		     स्थिर काष्ठा drm_encoder_funcs *funcs,
+		     पूर्णांक encoder_type, स्थिर अक्षर *name, ...);
 
-__printf(6, 7)
-void *__drmm_encoder_alloc(struct drm_device *dev,
-			   size_t size, size_t offset,
-			   const struct drm_encoder_funcs *funcs,
-			   int encoder_type,
-			   const char *name, ...);
+__म_लिखो(6, 7)
+व्योम *__drmm_encoder_alloc(काष्ठा drm_device *dev,
+			   माप_प्रकार size, माप_प्रकार offset,
+			   स्थिर काष्ठा drm_encoder_funcs *funcs,
+			   पूर्णांक encoder_type,
+			   स्थिर अक्षर *name, ...);
 
 /**
  * drmm_encoder_alloc - Allocate and initialize an encoder
  * @dev: drm device
- * @type: the type of the struct which contains struct &drm_encoder
+ * @type: the type of the काष्ठा which contains काष्ठा &drm_encoder
  * @member: the name of the &drm_encoder within @type
- * @funcs: callbacks for this encoder (optional)
+ * @funcs: callbacks क्रम this encoder (optional)
  * @encoder_type: user visible type of the encoder
- * @name: printf style format string for the encoder name, or NULL for default name
+ * @name: म_लिखो style क्रमmat string क्रम the encoder name, or शून्य क्रम शेष name
  *
  * Allocates and initializes an encoder. Encoder should be subclassed as part of
- * driver encoder objects. Cleanup is automatically handled through registering
+ * driver encoder objects. Cleanup is स्वतःmatically handled through रेजिस्टरing
  * drm_encoder_cleanup() with drmm_add_action().
  *
- * The @drm_encoder_funcs.destroy hook must be NULL.
+ * The @drm_encoder_funcs.destroy hook must be शून्य.
  *
  * Returns:
- * Pointer to new encoder, or ERR_PTR on failure.
+ * Poपूर्णांकer to new encoder, or ERR_PTR on failure.
  */
-#define drmm_encoder_alloc(dev, type, member, funcs, encoder_type, name, ...) \
-	((type *)__drmm_encoder_alloc(dev, sizeof(type), \
-				      offsetof(type, member), funcs, \
+#घोषणा drmm_encoder_alloc(dev, type, member, funcs, encoder_type, name, ...) \
+	((type *)__drmm_encoder_alloc(dev, माप(type), \
+				      दुरत्व(type, member), funcs, \
 				      encoder_type, name, ##__VA_ARGS__))
 
 /**
  * drmm_plain_encoder_alloc - Allocate and initialize an encoder
  * @dev: drm device
- * @funcs: callbacks for this encoder (optional)
+ * @funcs: callbacks क्रम this encoder (optional)
  * @encoder_type: user visible type of the encoder
- * @name: printf style format string for the encoder name, or NULL for default name
+ * @name: म_लिखो style क्रमmat string क्रम the encoder name, or शून्य क्रम शेष name
  *
- * This is a simplified version of drmm_encoder_alloc(), which only allocates
- * and returns a struct drm_encoder instance, with no subclassing.
+ * This is a simplअगरied version of drmm_encoder_alloc(), which only allocates
+ * and वापसs a काष्ठा drm_encoder instance, with no subclassing.
  *
  * Returns:
- * Pointer to the new drm_encoder struct, or ERR_PTR on failure.
+ * Poपूर्णांकer to the new drm_encoder काष्ठा, or ERR_PTR on failure.
  */
-#define drmm_plain_encoder_alloc(dev, funcs, encoder_type, name, ...) \
-	((struct drm_encoder *) \
-	 __drmm_encoder_alloc(dev, sizeof(struct drm_encoder), \
+#घोषणा drmm_plain_encoder_alloc(dev, funcs, encoder_type, name, ...) \
+	((काष्ठा drm_encoder *) \
+	 __drmm_encoder_alloc(dev, माप(काष्ठा drm_encoder), \
 			      0, funcs, encoder_type, name, ##__VA_ARGS__))
 
 /**
- * drm_encoder_index - find the index of a registered encoder
- * @encoder: encoder to find index for
+ * drm_encoder_index - find the index of a रेजिस्टरed encoder
+ * @encoder: encoder to find index क्रम
  *
- * Given a registered encoder, return the index of that encoder within a DRM
+ * Given a रेजिस्टरed encoder, वापस the index of that encoder within a DRM
  * device's list of encoders.
  */
-static inline unsigned int drm_encoder_index(const struct drm_encoder *encoder)
-{
-	return encoder->index;
-}
+अटल अंतरभूत अचिन्हित पूर्णांक drm_encoder_index(स्थिर काष्ठा drm_encoder *encoder)
+अणु
+	वापस encoder->index;
+पूर्ण
 
 /**
- * drm_encoder_mask - find the mask of a registered encoder
- * @encoder: encoder to find mask for
+ * drm_encoder_mask - find the mask of a रेजिस्टरed encoder
+ * @encoder: encoder to find mask क्रम
  *
- * Given a registered encoder, return the mask bit of that encoder for an
+ * Given a रेजिस्टरed encoder, वापस the mask bit of that encoder क्रम an
  * encoder's possible_clones field.
  */
-static inline u32 drm_encoder_mask(const struct drm_encoder *encoder)
-{
-	return 1 << drm_encoder_index(encoder);
-}
+अटल अंतरभूत u32 drm_encoder_mask(स्थिर काष्ठा drm_encoder *encoder)
+अणु
+	वापस 1 << drm_encoder_index(encoder);
+पूर्ण
 
 /**
  * drm_encoder_crtc_ok - can a given crtc drive a given encoder?
  * @encoder: encoder to test
  * @crtc: crtc to test
  *
- * Returns false if @encoder can't be driven by @crtc, true otherwise.
+ * Returns false अगर @encoder can't be driven by @crtc, true otherwise.
  */
-static inline bool drm_encoder_crtc_ok(struct drm_encoder *encoder,
-				       struct drm_crtc *crtc)
-{
-	return !!(encoder->possible_crtcs & drm_crtc_mask(crtc));
-}
+अटल अंतरभूत bool drm_encoder_crtc_ok(काष्ठा drm_encoder *encoder,
+				       काष्ठा drm_crtc *crtc)
+अणु
+	वापस !!(encoder->possible_crtcs & drm_crtc_mask(crtc));
+पूर्ण
 
 /**
  * drm_encoder_find - find a &drm_encoder
  * @dev: DRM device
- * @file_priv: drm file to check for lease against.
+ * @file_priv: drm file to check क्रम lease against.
  * @id: encoder id
  *
- * Returns the encoder with @id, NULL if it doesn't exist. Simple wrapper around
+ * Returns the encoder with @id, शून्य अगर it करोesn't exist. Simple wrapper around
  * drm_mode_object_find().
  */
-static inline struct drm_encoder *drm_encoder_find(struct drm_device *dev,
-						   struct drm_file *file_priv,
-						   uint32_t id)
-{
-	struct drm_mode_object *mo;
+अटल अंतरभूत काष्ठा drm_encoder *drm_encoder_find(काष्ठा drm_device *dev,
+						   काष्ठा drm_file *file_priv,
+						   uपूर्णांक32_t id)
+अणु
+	काष्ठा drm_mode_object *mo;
 
 	mo = drm_mode_object_find(dev, file_priv, id, DRM_MODE_OBJECT_ENCODER);
 
-	return mo ? obj_to_encoder(mo) : NULL;
-}
+	वापस mo ? obj_to_encoder(mo) : शून्य;
+पूर्ण
 
-void drm_encoder_cleanup(struct drm_encoder *encoder);
+व्योम drm_encoder_cleanup(काष्ठा drm_encoder *encoder);
 
 /**
- * drm_for_each_encoder_mask - iterate over encoders specified by bitmask
+ * drm_क्रम_each_encoder_mask - iterate over encoders specअगरied by biपंचांगask
  * @encoder: the loop cursor
  * @dev: the DRM device
- * @encoder_mask: bitmask of encoder indices
+ * @encoder_mask: biपंचांगask of encoder indices
  *
- * Iterate over all encoders specified by bitmask.
+ * Iterate over all encoders specअगरied by biपंचांगask.
  */
-#define drm_for_each_encoder_mask(encoder, dev, encoder_mask) \
-	list_for_each_entry((encoder), &(dev)->mode_config.encoder_list, head) \
-		for_each_if ((encoder_mask) & drm_encoder_mask(encoder))
+#घोषणा drm_क्रम_each_encoder_mask(encoder, dev, encoder_mask) \
+	list_क्रम_each_entry((encoder), &(dev)->mode_config.encoder_list, head) \
+		क्रम_each_अगर ((encoder_mask) & drm_encoder_mask(encoder))
 
 /**
- * drm_for_each_encoder - iterate over all encoders
+ * drm_क्रम_each_encoder - iterate over all encoders
  * @encoder: the loop cursor
  * @dev: the DRM device
  *
  * Iterate over all encoders of @dev.
  */
-#define drm_for_each_encoder(encoder, dev) \
-	list_for_each_entry(encoder, &(dev)->mode_config.encoder_list, head)
+#घोषणा drm_क्रम_each_encoder(encoder, dev) \
+	list_क्रम_each_entry(encoder, &(dev)->mode_config.encoder_list, head)
 
-#endif
+#पूर्ण_अगर

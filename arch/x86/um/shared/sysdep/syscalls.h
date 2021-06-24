@@ -1,6 +1,7 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifdef __i386__
-#include "syscalls_32.h"
-#else
-#include "syscalls_64.h"
-#endif
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_घोषित __i386__
+#समावेश "syscalls_32.h"
+#अन्यथा
+#समावेश "syscalls_64.h"
+#पूर्ण_अगर

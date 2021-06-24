@@ -1,183 +1,184 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
  * kcomedilib/kcomedilib.c
- * a comedlib interface for kernel modules
+ * a comedlib पूर्णांकerface क्रम kernel modules
  *
  * COMEDI - Linux Control and Measurement Device Interface
  * Copyright (C) 1997-2000 David A. Schleef <ds@schleef.org>
  */
 
-#include <linux/module.h>
+#समावेश <linux/module.h>
 
-#include <linux/errno.h>
-#include <linux/kernel.h>
-#include <linux/sched.h>
-#include <linux/fcntl.h>
-#include <linux/mm.h>
-#include <linux/io.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/kernel.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/fcntl.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/पन.स>
 
-#include "../comedi.h"
-#include "../comedilib.h"
-#include "../comedidev.h"
+#समावेश "../comedi.h"
+#समावेश "../comedilib.h"
+#समावेश "../comedidev.h"
 
 MODULE_AUTHOR("David Schleef <ds@schleef.org>");
 MODULE_DESCRIPTION("Comedi kernel library");
 MODULE_LICENSE("GPL");
 
-struct comedi_device *comedi_open(const char *filename)
-{
-	struct comedi_device *dev, *retval = NULL;
-	unsigned int minor;
+काष्ठा comedi_device *comedi_खोलो(स्थिर अक्षर *filename)
+अणु
+	काष्ठा comedi_device *dev, *retval = शून्य;
+	अचिन्हित पूर्णांक minor;
 
-	if (strncmp(filename, "/dev/comedi", 11) != 0)
-		return NULL;
+	अगर (म_भेदन(filename, "/dev/comedi", 11) != 0)
+		वापस शून्य;
 
-	if (kstrtouint(filename + 11, 0, &minor))
-		return NULL;
+	अगर (kstrtouपूर्णांक(filename + 11, 0, &minor))
+		वापस शून्य;
 
-	if (minor >= COMEDI_NUM_BOARD_MINORS)
-		return NULL;
+	अगर (minor >= COMEDI_NUM_BOARD_MINORS)
+		वापस शून्य;
 
 	dev = comedi_dev_get_from_minor(minor);
-	if (!dev)
-		return NULL;
+	अगर (!dev)
+		वापस शून्य;
 
-	down_read(&dev->attach_lock);
-	if (dev->attached)
+	करोwn_पढ़ो(&dev->attach_lock);
+	अगर (dev->attached)
 		retval = dev;
-	else
-		retval = NULL;
-	up_read(&dev->attach_lock);
+	अन्यथा
+		retval = शून्य;
+	up_पढ़ो(&dev->attach_lock);
 
-	if (!retval)
+	अगर (!retval)
 		comedi_dev_put(dev);
 
-	return retval;
-}
-EXPORT_SYMBOL_GPL(comedi_open);
+	वापस retval;
+पूर्ण
+EXPORT_SYMBOL_GPL(comedi_खोलो);
 
-int comedi_close(struct comedi_device *dev)
-{
+पूर्णांक comedi_बंद(काष्ठा comedi_device *dev)
+अणु
 	comedi_dev_put(dev);
-	return 0;
-}
-EXPORT_SYMBOL_GPL(comedi_close);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL_GPL(comedi_बंद);
 
-static int comedi_do_insn(struct comedi_device *dev,
-			  struct comedi_insn *insn,
-			  unsigned int *data)
-{
-	struct comedi_subdevice *s;
-	int ret;
+अटल पूर्णांक comedi_करो_insn(काष्ठा comedi_device *dev,
+			  काष्ठा comedi_insn *insn,
+			  अचिन्हित पूर्णांक *data)
+अणु
+	काष्ठा comedi_subdevice *s;
+	पूर्णांक ret;
 
 	mutex_lock(&dev->mutex);
 
-	if (!dev->attached) {
+	अगर (!dev->attached) अणु
 		ret = -EINVAL;
-		goto error;
-	}
+		जाओ error;
+	पूर्ण
 
-	/* a subdevice instruction */
-	if (insn->subdev >= dev->n_subdevices) {
+	/* a subdevice inकाष्ठाion */
+	अगर (insn->subdev >= dev->n_subdevices) अणु
 		ret = -EINVAL;
-		goto error;
-	}
+		जाओ error;
+	पूर्ण
 	s = &dev->subdevices[insn->subdev];
 
-	if (s->type == COMEDI_SUBD_UNUSED) {
+	अगर (s->type == COMEDI_SUBD_UNUSED) अणु
 		dev_err(dev->class_dev,
 			"%d not usable subdevice\n", insn->subdev);
 		ret = -EIO;
-		goto error;
-	}
+		जाओ error;
+	पूर्ण
 
 	/* XXX check lock */
 
 	ret = comedi_check_chanlist(s, 1, &insn->chanspec);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(dev->class_dev, "bad chanspec\n");
 		ret = -EINVAL;
-		goto error;
-	}
+		जाओ error;
+	पूर्ण
 
-	if (s->busy) {
+	अगर (s->busy) अणु
 		ret = -EBUSY;
-		goto error;
-	}
+		जाओ error;
+	पूर्ण
 	s->busy = dev;
 
-	switch (insn->insn) {
-	case INSN_BITS:
+	चयन (insn->insn) अणु
+	हाल INSN_BITS:
 		ret = s->insn_bits(dev, s, insn, data);
-		break;
-	case INSN_CONFIG:
-		/* XXX should check instruction length */
+		अवरोध;
+	हाल INSN_CONFIG:
+		/* XXX should check inकाष्ठाion length */
 		ret = s->insn_config(dev, s, insn, data);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		ret = -EINVAL;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	s->busy = NULL;
+	s->busy = शून्य;
 error:
 
 	mutex_unlock(&dev->mutex);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int comedi_dio_get_config(struct comedi_device *dev, unsigned int subdev,
-			  unsigned int chan, unsigned int *io)
-{
-	struct comedi_insn insn;
-	unsigned int data[2];
-	int ret;
+पूर्णांक comedi_dio_get_config(काष्ठा comedi_device *dev, अचिन्हित पूर्णांक subdev,
+			  अचिन्हित पूर्णांक chan, अचिन्हित पूर्णांक *io)
+अणु
+	काष्ठा comedi_insn insn;
+	अचिन्हित पूर्णांक data[2];
+	पूर्णांक ret;
 
-	memset(&insn, 0, sizeof(insn));
+	स_रखो(&insn, 0, माप(insn));
 	insn.insn = INSN_CONFIG;
 	insn.n = 2;
 	insn.subdev = subdev;
 	insn.chanspec = CR_PACK(chan, 0, 0);
 	data[0] = INSN_CONFIG_DIO_QUERY;
 	data[1] = 0;
-	ret = comedi_do_insn(dev, &insn, data);
-	if (ret >= 0)
+	ret = comedi_करो_insn(dev, &insn, data);
+	अगर (ret >= 0)
 		*io = data[1];
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(comedi_dio_get_config);
 
-int comedi_dio_config(struct comedi_device *dev, unsigned int subdev,
-		      unsigned int chan, unsigned int io)
-{
-	struct comedi_insn insn;
+पूर्णांक comedi_dio_config(काष्ठा comedi_device *dev, अचिन्हित पूर्णांक subdev,
+		      अचिन्हित पूर्णांक chan, अचिन्हित पूर्णांक io)
+अणु
+	काष्ठा comedi_insn insn;
 
-	memset(&insn, 0, sizeof(insn));
+	स_रखो(&insn, 0, माप(insn));
 	insn.insn = INSN_CONFIG;
 	insn.n = 1;
 	insn.subdev = subdev;
 	insn.chanspec = CR_PACK(chan, 0, 0);
 
-	return comedi_do_insn(dev, &insn, &io);
-}
+	वापस comedi_करो_insn(dev, &insn, &io);
+पूर्ण
 EXPORT_SYMBOL_GPL(comedi_dio_config);
 
-int comedi_dio_bitfield2(struct comedi_device *dev, unsigned int subdev,
-			 unsigned int mask, unsigned int *bits,
-			 unsigned int base_channel)
-{
-	struct comedi_insn insn;
-	unsigned int data[2];
-	unsigned int n_chan;
-	unsigned int shift;
-	int ret;
+पूर्णांक comedi_dio_bitfield2(काष्ठा comedi_device *dev, अचिन्हित पूर्णांक subdev,
+			 अचिन्हित पूर्णांक mask, अचिन्हित पूर्णांक *bits,
+			 अचिन्हित पूर्णांक base_channel)
+अणु
+	काष्ठा comedi_insn insn;
+	अचिन्हित पूर्णांक data[2];
+	अचिन्हित पूर्णांक n_chan;
+	अचिन्हित पूर्णांक shअगरt;
+	पूर्णांक ret;
 
 	base_channel = CR_CHAN(base_channel);
 	n_chan = comedi_get_n_channels(dev, subdev);
-	if (base_channel >= n_chan)
-		return -EINVAL;
+	अगर (base_channel >= n_chan)
+		वापस -EINVAL;
 
-	memset(&insn, 0, sizeof(insn));
+	स_रखो(&insn, 0, माप(insn));
 	insn.insn = INSN_BITS;
 	insn.chanspec = base_channel;
 	insn.n = 2;
@@ -188,68 +189,68 @@ int comedi_dio_bitfield2(struct comedi_device *dev, unsigned int subdev,
 
 	/*
 	 * Most drivers ignore the base channel in insn->chanspec.
-	 * Fix this here if the subdevice has <= 32 channels.
+	 * Fix this here अगर the subdevice has <= 32 channels.
 	 */
-	if (n_chan <= 32) {
-		shift = base_channel;
-		if (shift) {
+	अगर (n_chan <= 32) अणु
+		shअगरt = base_channel;
+		अगर (shअगरt) अणु
 			insn.chanspec = 0;
-			data[0] <<= shift;
-			data[1] <<= shift;
-		}
-	} else {
-		shift = 0;
-	}
+			data[0] <<= shअगरt;
+			data[1] <<= shअगरt;
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		shअगरt = 0;
+	पूर्ण
 
-	ret = comedi_do_insn(dev, &insn, data);
-	*bits = data[1] >> shift;
-	return ret;
-}
+	ret = comedi_करो_insn(dev, &insn, data);
+	*bits = data[1] >> shअगरt;
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(comedi_dio_bitfield2);
 
-int comedi_find_subdevice_by_type(struct comedi_device *dev, int type,
-				  unsigned int subd)
-{
-	struct comedi_subdevice *s;
-	int ret = -ENODEV;
+पूर्णांक comedi_find_subdevice_by_type(काष्ठा comedi_device *dev, पूर्णांक type,
+				  अचिन्हित पूर्णांक subd)
+अणु
+	काष्ठा comedi_subdevice *s;
+	पूर्णांक ret = -ENODEV;
 
-	down_read(&dev->attach_lock);
-	if (dev->attached)
-		for (; subd < dev->n_subdevices; subd++) {
+	करोwn_पढ़ो(&dev->attach_lock);
+	अगर (dev->attached)
+		क्रम (; subd < dev->n_subdevices; subd++) अणु
 			s = &dev->subdevices[subd];
-			if (s->type == type) {
+			अगर (s->type == type) अणु
 				ret = subd;
-				break;
-			}
-		}
-	up_read(&dev->attach_lock);
-	return ret;
-}
+				अवरोध;
+			पूर्ण
+		पूर्ण
+	up_पढ़ो(&dev->attach_lock);
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(comedi_find_subdevice_by_type);
 
-int comedi_get_n_channels(struct comedi_device *dev, unsigned int subdevice)
-{
-	int n;
+पूर्णांक comedi_get_n_channels(काष्ठा comedi_device *dev, अचिन्हित पूर्णांक subdevice)
+अणु
+	पूर्णांक n;
 
-	down_read(&dev->attach_lock);
-	if (!dev->attached || subdevice >= dev->n_subdevices)
+	करोwn_पढ़ो(&dev->attach_lock);
+	अगर (!dev->attached || subdevice >= dev->n_subdevices)
 		n = 0;
-	else
+	अन्यथा
 		n = dev->subdevices[subdevice].n_chan;
-	up_read(&dev->attach_lock);
+	up_पढ़ो(&dev->attach_lock);
 
-	return n;
-}
+	वापस n;
+पूर्ण
 EXPORT_SYMBOL_GPL(comedi_get_n_channels);
 
-static int __init kcomedilib_module_init(void)
-{
-	return 0;
-}
+अटल पूर्णांक __init kcomedilib_module_init(व्योम)
+अणु
+	वापस 0;
+पूर्ण
 
-static void __exit kcomedilib_module_exit(void)
-{
-}
+अटल व्योम __निकास kcomedilib_module_निकास(व्योम)
+अणु
+पूर्ण
 
 module_init(kcomedilib_module_init);
-module_exit(kcomedilib_module_exit);
+module_निकास(kcomedilib_module_निकास);

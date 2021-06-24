@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: BSD-3-Clause OR GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: BSD-3-Clause OR GPL-2.0
 /******************************************************************************
  *
  * Module Name: psargs - Parse AML opcode arguments
@@ -7,22 +8,22 @@
  *
  *****************************************************************************/
 
-#include <acpi/acpi.h>
-#include "accommon.h"
-#include "acparser.h"
-#include "amlcode.h"
-#include "acnamesp.h"
-#include "acdispat.h"
-#include "acconvert.h"
+#समावेश <acpi/acpi.h>
+#समावेश "accommon.h"
+#समावेश "acparser.h"
+#समावेश "amlcode.h"
+#समावेश "acnamesp.h"
+#समावेश "acdispat.h"
+#समावेश "acconvert.h"
 
-#define _COMPONENT          ACPI_PARSER
+#घोषणा _COMPONENT          ACPI_PARSER
 ACPI_MODULE_NAME("psargs")
 
 /* Local prototypes */
-static u32
-acpi_ps_get_next_package_length(struct acpi_parse_state *parser_state);
+अटल u32
+acpi_ps_get_next_package_length(काष्ठा acpi_parse_state *parser_state);
 
-static union acpi_parse_object *acpi_ps_get_next_field(struct acpi_parse_state
+अटल जोड़ acpi_parse_object *acpi_ps_get_next_field(काष्ठा acpi_parse_state
 						       *parser_state);
 
 /*******************************************************************************
@@ -31,17 +32,17 @@ static union acpi_parse_object *acpi_ps_get_next_field(struct acpi_parse_state
  *
  * PARAMETERS:  parser_state        - Current parser state object
  *
- * RETURN:      Decoded package length. On completion, the AML pointer points
+ * RETURN:      Decoded package length. On completion, the AML poपूर्णांकer poपूर्णांकs
  *              past the length byte or bytes.
  *
- * DESCRIPTION: Decode and return a package length field.
- *              Note: Largest package length is 28 bits, from ACPI specification
+ * DESCRIPTION: Decode and वापस a package length field.
+ *              Note: Largest package length is 28 bits, from ACPI specअगरication
  *
  ******************************************************************************/
 
-static u32
-acpi_ps_get_next_package_length(struct acpi_parse_state *parser_state)
-{
+अटल u32
+acpi_ps_get_next_package_length(काष्ठा acpi_parse_state *parser_state)
+अणु
 	u8 *aml = parser_state->aml;
 	u32 package_length = 0;
 	u32 byte_count;
@@ -58,9 +59,9 @@ acpi_ps_get_next_package_length(struct acpi_parse_state *parser_state)
 
 	/* Get bytes 3, 2, 1 as needed */
 
-	while (byte_count) {
+	जबतक (byte_count) अणु
 		/*
-		 * Final bit positions for the package length bytes:
+		 * Final bit positions क्रम the package length bytes:
 		 *      Byte3->[20:27]
 		 *      Byte2->[12:19]
 		 *      Byte1->[04:11]
@@ -70,13 +71,13 @@ acpi_ps_get_next_package_length(struct acpi_parse_state *parser_state)
 
 		byte_zero_mask = 0x0F;	/* Use bits [0:3] of byte 0 */
 		byte_count--;
-	}
+	पूर्ण
 
-	/* Byte 0 is a special case, either bits [0:3] or [0:5] are used */
+	/* Byte 0 is a special हाल, either bits [0:3] or [0:5] are used */
 
 	package_length |= (aml[0] & byte_zero_mask);
-	return_UINT32(package_length);
-}
+	वापस_UINT32(package_length);
+पूर्ण
 
 /*******************************************************************************
  *
@@ -84,15 +85,15 @@ acpi_ps_get_next_package_length(struct acpi_parse_state *parser_state)
  *
  * PARAMETERS:  parser_state        - Current parser state object
  *
- * RETURN:      Pointer to end-of-package +1
+ * RETURN:      Poपूर्णांकer to end-of-package +1
  *
- * DESCRIPTION: Get next package length and return a pointer past the end of
+ * DESCRIPTION: Get next package length and वापस a poपूर्णांकer past the end of
  *              the package. Consumes the package length field
  *
  ******************************************************************************/
 
-u8 *acpi_ps_get_next_package_end(struct acpi_parse_state *parser_state)
-{
+u8 *acpi_ps_get_next_package_end(काष्ठा acpi_parse_state *parser_state)
+अणु
 	u8 *start = parser_state->aml;
 	u32 package_length;
 
@@ -102,8 +103,8 @@ u8 *acpi_ps_get_next_package_end(struct acpi_parse_state *parser_state)
 
 	package_length = acpi_ps_get_next_package_length(parser_state);
 
-	return_PTR(start + package_length);	/* end of package */
-}
+	वापस_PTR(start + package_length);	/* end of package */
+पूर्ण
 
 /*******************************************************************************
  *
@@ -111,66 +112,66 @@ u8 *acpi_ps_get_next_package_end(struct acpi_parse_state *parser_state)
  *
  * PARAMETERS:  parser_state        - Current parser state object
  *
- * RETURN:      Pointer to the start of the name string (pointer points into
+ * RETURN:      Poपूर्णांकer to the start of the name string (poपूर्णांकer poपूर्णांकs पूर्णांकo
  *              the AML.
  *
  * DESCRIPTION: Get next raw namestring within the AML stream. Handles all name
- *              prefix characters. Set parser state to point past the string.
+ *              prefix अक्षरacters. Set parser state to poपूर्णांक past the string.
  *              (Name is consumed from the AML.)
  *
  ******************************************************************************/
 
-char *acpi_ps_get_next_namestring(struct acpi_parse_state *parser_state)
-{
+अक्षर *acpi_ps_get_next_namestring(काष्ठा acpi_parse_state *parser_state)
+अणु
 	u8 *start = parser_state->aml;
 	u8 *end = parser_state->aml;
 
 	ACPI_FUNCTION_TRACE(ps_get_next_namestring);
 
-	/* Point past any namestring prefix characters (backslash or carat) */
+	/* Poपूर्णांक past any namestring prefix अक्षरacters (backslash or carat) */
 
-	while (ACPI_IS_ROOT_PREFIX(*end) || ACPI_IS_PARENT_PREFIX(*end)) {
+	जबतक (ACPI_IS_ROOT_PREFIX(*end) || ACPI_IS_PARENT_PREFIX(*end)) अणु
 		end++;
-	}
+	पूर्ण
 
-	/* Decode the path prefix character */
+	/* Decode the path prefix अक्षरacter */
 
-	switch (*end) {
-	case 0:
+	चयन (*end) अणु
+	हाल 0:
 
 		/* null_name */
 
-		if (end == start) {
-			start = NULL;
-		}
+		अगर (end == start) अणु
+			start = शून्य;
+		पूर्ण
 		end++;
-		break;
+		अवरोध;
 
-	case AML_DUAL_NAME_PREFIX:
+	हाल AML_DUAL_NAME_PREFIX:
 
 		/* Two name segments */
 
 		end += 1 + (2 * ACPI_NAMESEG_SIZE);
-		break;
+		अवरोध;
 
-	case AML_MULTI_NAME_PREFIX:
+	हाल AML_MULTI_NAME_PREFIX:
 
-		/* Multiple name segments, 4 chars each, count in next byte */
+		/* Multiple name segments, 4 अक्षरs each, count in next byte */
 
 		end += 2 + (*(end + 1) * ACPI_NAMESEG_SIZE);
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 
 		/* Single name segment */
 
 		end += ACPI_NAMESEG_SIZE;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	parser_state->aml = end;
-	return_PTR((char *)start);
-}
+	वापस_PTR((अक्षर *)start);
+पूर्ण
 
 /*******************************************************************************
  *
@@ -178,31 +179,31 @@ char *acpi_ps_get_next_namestring(struct acpi_parse_state *parser_state)
  *
  * PARAMETERS:  parser_state        - Current parser state object
  *              arg                 - Where the namepath will be stored
- *              arg_count           - If the namepath points to a control method
- *                                    the method's argument is returned here.
+ *              arg_count           - If the namepath poपूर्णांकs to a control method
+ *                                    the method's argument is वापसed here.
  *              possible_method_call - Whether the namepath can possibly be the
  *                                    start of a method call
  *
  * RETURN:      Status
  *
- * DESCRIPTION: Get next name (if method call, return # of required args).
- *              Names are looked up in the internal namespace to determine
- *              if the name represents a control method. If a method
- *              is found, the number of arguments to the method is returned.
- *              This information is critical for parsing to continue correctly.
+ * DESCRIPTION: Get next name (अगर method call, वापस # of required args).
+ *              Names are looked up in the पूर्णांकernal namespace to determine
+ *              अगर the name represents a control method. If a method
+ *              is found, the number of arguments to the method is वापसed.
+ *              This inक्रमmation is critical क्रम parsing to जारी correctly.
  *
  ******************************************************************************/
 
 acpi_status
-acpi_ps_get_next_namepath(struct acpi_walk_state *walk_state,
-			  struct acpi_parse_state *parser_state,
-			  union acpi_parse_object *arg, u8 possible_method_call)
-{
+acpi_ps_get_next_namepath(काष्ठा acpi_walk_state *walk_state,
+			  काष्ठा acpi_parse_state *parser_state,
+			  जोड़ acpi_parse_object *arg, u8 possible_method_call)
+अणु
 	acpi_status status;
-	char *path;
-	union acpi_parse_object *name_op;
-	union acpi_operand_object *method_desc;
-	struct acpi_namespace_node *node;
+	अक्षर *path;
+	जोड़ acpi_parse_object *name_op;
+	जोड़ acpi_opeअक्रम_object *method_desc;
+	काष्ठा acpi_namespace_node *node;
 	u8 *start = parser_state->aml;
 
 	ACPI_FUNCTION_TRACE(ps_get_next_namepath);
@@ -210,46 +211,46 @@ acpi_ps_get_next_namepath(struct acpi_walk_state *walk_state,
 	path = acpi_ps_get_next_namestring(parser_state);
 	acpi_ps_init_op(arg, AML_INT_NAMEPATH_OP);
 
-	/* Null path case is allowed, just exit */
+	/* Null path हाल is allowed, just निकास */
 
-	if (!path) {
+	अगर (!path) अणु
 		arg->common.value.name = path;
-		return_ACPI_STATUS(AE_OK);
-	}
+		वापस_ACPI_STATUS(AE_OK);
+	पूर्ण
 
 	/*
-	 * Lookup the name in the internal namespace, starting with the current
-	 * scope. We don't want to add anything new to the namespace here,
+	 * Lookup the name in the पूर्णांकernal namespace, starting with the current
+	 * scope. We करोn't want to add anything new to the namespace here,
 	 * however, so we use MODE_EXECUTE.
-	 * Allow searching of the parent tree, but don't open a new scope -
-	 * we just want to lookup the object (must be mode EXECUTE to perform
+	 * Allow searching of the parent tree, but करोn't खोलो a new scope -
+	 * we just want to lookup the object (must be mode EXECUTE to perक्रमm
 	 * the upsearch)
 	 */
 	status = acpi_ns_lookup(walk_state->scope_info, path,
 				ACPI_TYPE_ANY, ACPI_IMODE_EXECUTE,
 				ACPI_NS_SEARCH_PARENT | ACPI_NS_DONT_OPEN_SCOPE,
-				NULL, &node);
+				शून्य, &node);
 
 	/*
 	 * If this name is a control method invocation, we must
 	 * setup the method call
 	 */
-	if (ACPI_SUCCESS(status) &&
-	    possible_method_call && (node->type == ACPI_TYPE_METHOD)) {
-		if ((GET_CURRENT_ARG_TYPE(walk_state->arg_types) ==
+	अगर (ACPI_SUCCESS(status) &&
+	    possible_method_call && (node->type == ACPI_TYPE_METHOD)) अणु
+		अगर ((GET_CURRENT_ARG_TYPE(walk_state->arg_types) ==
 		     ARGP_SUPERNAME)
 		    || (GET_CURRENT_ARG_TYPE(walk_state->arg_types) ==
-			ARGP_TARGET)) {
+			ARGP_TARGET)) अणु
 			/*
-			 * acpi_ps_get_next_namestring has increased the AML pointer past
+			 * acpi_ps_get_next_namestring has increased the AML poपूर्णांकer past
 			 * the method invocation namestring, so we need to restore the
-			 * saved AML pointer back to the original method invocation
+			 * saved AML poपूर्णांकer back to the original method invocation
 			 * namestring.
 			 */
 			walk_state->parser_state.aml = start;
 			walk_state->arg_count = 1;
 			acpi_ps_init_op(arg, AML_INT_METHODCALL_OP);
-		}
+		पूर्ण
 
 		/* This name is actually a control method invocation */
 
@@ -259,26 +260,26 @@ acpi_ps_get_next_namepath(struct acpi_walk_state *walk_state,
 				  node->name.ascii, node, method_desc, path));
 
 		name_op = acpi_ps_alloc_op(AML_INT_NAMEPATH_OP, start);
-		if (!name_op) {
-			return_ACPI_STATUS(AE_NO_MEMORY);
-		}
+		अगर (!name_op) अणु
+			वापस_ACPI_STATUS(AE_NO_MEMORY);
+		पूर्ण
 
-		/* Change Arg into a METHOD CALL and attach name to it */
+		/* Change Arg पूर्णांकo a METHOD CALL and attach name to it */
 
 		acpi_ps_init_op(arg, AML_INT_METHODCALL_OP);
 		name_op->common.value.name = path;
 
-		/* Point METHODCALL/NAME to the METHOD Node */
+		/* Poपूर्णांक METHODCALL/NAME to the METHOD Node */
 
 		name_op->common.node = node;
 		acpi_ps_append_arg(arg, name_op);
 
-		if (!method_desc) {
+		अगर (!method_desc) अणु
 			ACPI_ERROR((AE_INFO,
 				    "Control Method %p has no attached object",
 				    node));
-			return_ACPI_STATUS(AE_AML_INTERNAL);
-		}
+			वापस_ACPI_STATUS(AE_AML_INTERNAL);
+		पूर्ण
 
 		ACPI_DEBUG_PRINT((ACPI_DB_PARSE,
 				  "Control Method - %p Args %X\n",
@@ -287,62 +288,62 @@ acpi_ps_get_next_namepath(struct acpi_walk_state *walk_state,
 		/* Get the number of arguments to expect */
 
 		walk_state->arg_count = method_desc->method.param_count;
-		return_ACPI_STATUS(AE_OK);
-	}
+		वापस_ACPI_STATUS(AE_OK);
+	पूर्ण
 
 	/*
-	 * Special handling if the name was not found during the lookup -
-	 * some not_found cases are allowed
+	 * Special handling अगर the name was not found during the lookup -
+	 * some not_found हालs are allowed
 	 */
-	if (status == AE_NOT_FOUND) {
+	अगर (status == AE_NOT_FOUND) अणु
 
-		/* 1) not_found is ok during load pass 1/2 (allow forward references) */
+		/* 1) not_found is ok during load pass 1/2 (allow क्रमward references) */
 
-		if ((walk_state->parse_flags & ACPI_PARSE_MODE_MASK) !=
-		    ACPI_PARSE_EXECUTE) {
+		अगर ((walk_state->parse_flags & ACPI_PARSE_MODE_MASK) !=
+		    ACPI_PARSE_EXECUTE) अणु
 			status = AE_OK;
-		}
+		पूर्ण
 
 		/* 2) not_found during a cond_ref_of(x) is ok by definition */
 
-		else if (walk_state->op->common.aml_opcode ==
-			 AML_CONDITIONAL_REF_OF_OP) {
+		अन्यथा अगर (walk_state->op->common.aml_opcode ==
+			 AML_CONDITIONAL_REF_OF_OP) अणु
 			status = AE_OK;
-		}
+		पूर्ण
 
 		/*
-		 * 3) not_found while building a Package is ok at this point, we
-		 * may flag as an error later if slack mode is not enabled.
+		 * 3) not_found जबतक building a Package is ok at this poपूर्णांक, we
+		 * may flag as an error later अगर slack mode is not enabled.
 		 * (Some ASL code depends on allowing this behavior)
 		 */
-		else if ((arg->common.parent) &&
+		अन्यथा अगर ((arg->common.parent) &&
 			 ((arg->common.parent->common.aml_opcode ==
 			   AML_PACKAGE_OP)
 			  || (arg->common.parent->common.aml_opcode ==
-			      AML_VARIABLE_PACKAGE_OP))) {
+			      AML_VARIABLE_PACKAGE_OP))) अणु
 			status = AE_OK;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	/* Final exception check (may have been changed from code above) */
 
-	if (ACPI_FAILURE(status)) {
+	अगर (ACPI_FAILURE(status)) अणु
 		ACPI_ERROR_NAMESPACE(walk_state->scope_info, path, status);
 
-		if ((walk_state->parse_flags & ACPI_PARSE_MODE_MASK) ==
-		    ACPI_PARSE_EXECUTE) {
+		अगर ((walk_state->parse_flags & ACPI_PARSE_MODE_MASK) ==
+		    ACPI_PARSE_EXECUTE) अणु
 
 			/* Report a control method execution error */
 
 			status = acpi_ds_method_error(status, walk_state);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	/* Save the namepath */
 
 	arg->common.value.name = path;
-	return_ACPI_STATUS(status);
-}
+	वापस_ACPI_STATUS(status);
+पूर्ण
 
 /*******************************************************************************
  *
@@ -350,95 +351,95 @@ acpi_ps_get_next_namepath(struct acpi_walk_state *walk_state,
  *
  * PARAMETERS:  parser_state        - Current parser state object
  *              arg_type            - The argument type (AML_*_ARG)
- *              arg                 - Where the argument is returned
+ *              arg                 - Where the argument is वापसed
  *
  * RETURN:      None
  *
- * DESCRIPTION: Get the next simple argument (constant, string, or namestring)
+ * DESCRIPTION: Get the next simple argument (स्थिरant, string, or namestring)
  *
  ******************************************************************************/
 
-void
-acpi_ps_get_next_simple_arg(struct acpi_parse_state *parser_state,
-			    u32 arg_type, union acpi_parse_object *arg)
-{
+व्योम
+acpi_ps_get_next_simple_arg(काष्ठा acpi_parse_state *parser_state,
+			    u32 arg_type, जोड़ acpi_parse_object *arg)
+अणु
 	u32 length;
 	u16 opcode;
 	u8 *aml = parser_state->aml;
 
 	ACPI_FUNCTION_TRACE_U32(ps_get_next_simple_arg, arg_type);
 
-	switch (arg_type) {
-	case ARGP_BYTEDATA:
+	चयन (arg_type) अणु
+	हाल ARGP_BYTEDATA:
 
 		/* Get 1 byte from the AML stream */
 
 		opcode = AML_BYTE_OP;
-		arg->common.value.integer = (u64) *aml;
+		arg->common.value.पूर्णांकeger = (u64) *aml;
 		length = 1;
-		break;
+		अवरोध;
 
-	case ARGP_WORDDATA:
+	हाल ARGP_WORDDATA:
 
 		/* Get 2 bytes from the AML stream */
 
 		opcode = AML_WORD_OP;
-		ACPI_MOVE_16_TO_64(&arg->common.value.integer, aml);
+		ACPI_MOVE_16_TO_64(&arg->common.value.पूर्णांकeger, aml);
 		length = 2;
-		break;
+		अवरोध;
 
-	case ARGP_DWORDDATA:
+	हाल ARGP_DWORDDATA:
 
 		/* Get 4 bytes from the AML stream */
 
 		opcode = AML_DWORD_OP;
-		ACPI_MOVE_32_TO_64(&arg->common.value.integer, aml);
+		ACPI_MOVE_32_TO_64(&arg->common.value.पूर्णांकeger, aml);
 		length = 4;
-		break;
+		अवरोध;
 
-	case ARGP_QWORDDATA:
+	हाल ARGP_QWORDDATA:
 
 		/* Get 8 bytes from the AML stream */
 
 		opcode = AML_QWORD_OP;
-		ACPI_MOVE_64_TO_64(&arg->common.value.integer, aml);
+		ACPI_MOVE_64_TO_64(&arg->common.value.पूर्णांकeger, aml);
 		length = 8;
-		break;
+		अवरोध;
 
-	case ARGP_CHARLIST:
+	हाल ARGP_CHARLIST:
 
-		/* Get a pointer to the string, point past the string */
+		/* Get a poपूर्णांकer to the string, poपूर्णांक past the string */
 
 		opcode = AML_STRING_OP;
-		arg->common.value.string = ACPI_CAST_PTR(char, aml);
+		arg->common.value.string = ACPI_CAST_PTR(अक्षर, aml);
 
 		/* Find the null terminator */
 
 		length = 0;
-		while (aml[length]) {
+		जबतक (aml[length]) अणु
 			length++;
-		}
+		पूर्ण
 		length++;
-		break;
+		अवरोध;
 
-	case ARGP_NAME:
-	case ARGP_NAMESTRING:
+	हाल ARGP_NAME:
+	हाल ARGP_NAMESTRING:
 
 		acpi_ps_init_op(arg, AML_INT_NAMEPATH_OP);
 		arg->common.value.name =
 		    acpi_ps_get_next_namestring(parser_state);
-		return_VOID;
+		वापस_VOID;
 
-	default:
+	शेष:
 
 		ACPI_ERROR((AE_INFO, "Invalid ArgType 0x%X", arg_type));
-		return_VOID;
-	}
+		वापस_VOID;
+	पूर्ण
 
 	acpi_ps_init_op(arg, opcode);
 	parser_state->aml += length;
-	return_VOID;
-}
+	वापस_VOID;
+पूर्ण
 
 /*******************************************************************************
  *
@@ -452,12 +453,12 @@ acpi_ps_get_next_simple_arg(struct acpi_parse_state *parser_state,
  *
  ******************************************************************************/
 
-static union acpi_parse_object *acpi_ps_get_next_field(struct acpi_parse_state
+अटल जोड़ acpi_parse_object *acpi_ps_get_next_field(काष्ठा acpi_parse_state
 						       *parser_state)
-{
+अणु
 	u8 *aml;
-	union acpi_parse_object *field;
-	union acpi_parse_object *arg = NULL;
+	जोड़ acpi_parse_object *field;
+	जोड़ acpi_parse_object *arg = शून्य;
 	u16 opcode;
 	u32 name;
 	u8 access_type;
@@ -474,51 +475,51 @@ static union acpi_parse_object *acpi_ps_get_next_field(struct acpi_parse_state
 
 	/* Determine field type */
 
-	switch (ACPI_GET8(parser_state->aml)) {
-	case AML_FIELD_OFFSET_OP:
+	चयन (ACPI_GET8(parser_state->aml)) अणु
+	हाल AML_FIELD_OFFSET_OP:
 
 		opcode = AML_INT_RESERVEDFIELD_OP;
 		parser_state->aml++;
-		break;
+		अवरोध;
 
-	case AML_FIELD_ACCESS_OP:
+	हाल AML_FIELD_ACCESS_OP:
 
 		opcode = AML_INT_ACCESSFIELD_OP;
 		parser_state->aml++;
-		break;
+		अवरोध;
 
-	case AML_FIELD_CONNECTION_OP:
+	हाल AML_FIELD_CONNECTION_OP:
 
 		opcode = AML_INT_CONNECTION_OP;
 		parser_state->aml++;
-		break;
+		अवरोध;
 
-	case AML_FIELD_EXT_ACCESS_OP:
+	हाल AML_FIELD_EXT_ACCESS_OP:
 
 		opcode = AML_INT_EXTACCESSFIELD_OP;
 		parser_state->aml++;
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 
 		opcode = AML_INT_NAMEDFIELD_OP;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	/* Allocate a new field op */
 
 	field = acpi_ps_alloc_op(opcode, aml);
-	if (!field) {
-		return_PTR(NULL);
-	}
+	अगर (!field) अणु
+		वापस_PTR(शून्य);
+	पूर्ण
 
 	/* Decode the field type */
 
 	ASL_CV_CAPTURE_COMMENTS_ONLY(parser_state);
-	switch (opcode) {
-	case AML_INT_NAMEDFIELD_OP:
+	चयन (opcode) अणु
+	हाल AML_INT_NAMEDFIELD_OP:
 
-		/* Get the 4-character name */
+		/* Get the 4-अक्षरacter name */
 
 		ACPI_MOVE_32_TO_32(&name, parser_state->aml);
 		acpi_ps_set_name(field, name);
@@ -526,41 +527,41 @@ static union acpi_parse_object *acpi_ps_get_next_field(struct acpi_parse_state
 
 		ASL_CV_CAPTURE_COMMENTS_ONLY(parser_state);
 
-#ifdef ACPI_ASL_COMPILER
+#अगर_घोषित ACPI_ASL_COMPILER
 		/*
 		 * Because the package length isn't represented as a parse tree object,
 		 * take comments surrounding this and add to the previously created
 		 * parse node.
 		 */
-		if (field->common.inline_comment) {
+		अगर (field->common.अंतरभूत_comment) अणु
 			field->common.name_comment =
-			    field->common.inline_comment;
-		}
-		field->common.inline_comment = acpi_gbl_current_inline_comment;
-		acpi_gbl_current_inline_comment = NULL;
-#endif
+			    field->common.अंतरभूत_comment;
+		पूर्ण
+		field->common.अंतरभूत_comment = acpi_gbl_current_अंतरभूत_comment;
+		acpi_gbl_current_अंतरभूत_comment = शून्य;
+#पूर्ण_अगर
 
 		/* Get the length which is encoded as a package length */
 
 		field->common.value.size =
 		    acpi_ps_get_next_package_length(parser_state);
-		break;
+		अवरोध;
 
-	case AML_INT_RESERVEDFIELD_OP:
+	हाल AML_INT_RESERVEDFIELD_OP:
 
 		/* Get the length which is encoded as a package length */
 
 		field->common.value.size =
 		    acpi_ps_get_next_package_length(parser_state);
-		break;
+		अवरोध;
 
-	case AML_INT_ACCESSFIELD_OP:
-	case AML_INT_EXTACCESSFIELD_OP:
+	हाल AML_INT_ACCESSFIELD_OP:
+	हाल AML_INT_EXTACCESSFIELD_OP:
 
 		/*
-		 * Get access_type and access_attrib and merge into the field Op
-		 * access_type is first operand, access_attribute is second. stuff
-		 * these bytes into the node integer value for convenience.
+		 * Get access_type and access_attrib and merge पूर्णांकo the field Op
+		 * access_type is first opeअक्रम, access_attribute is second. stuff
+		 * these bytes पूर्णांकo the node पूर्णांकeger value क्रम convenience.
 		 */
 
 		/* Get the two bytes (Type/Attribute) */
@@ -570,28 +571,28 @@ static union acpi_parse_object *acpi_ps_get_next_field(struct acpi_parse_state
 		access_attribute = ACPI_GET8(parser_state->aml);
 		parser_state->aml++;
 
-		field->common.value.integer = (u8)access_type;
-		field->common.value.integer |= (u16)(access_attribute << 8);
+		field->common.value.पूर्णांकeger = (u8)access_type;
+		field->common.value.पूर्णांकeger |= (u16)(access_attribute << 8);
 
 		/* This opcode has a third byte, access_length */
 
-		if (opcode == AML_INT_EXTACCESSFIELD_OP) {
+		अगर (opcode == AML_INT_EXTACCESSFIELD_OP) अणु
 			access_length = ACPI_GET8(parser_state->aml);
 			parser_state->aml++;
 
-			field->common.value.integer |=
+			field->common.value.पूर्णांकeger |=
 			    (u32)(access_length << 16);
-		}
-		break;
+		पूर्ण
+		अवरोध;
 
-	case AML_INT_CONNECTION_OP:
+	हाल AML_INT_CONNECTION_OP:
 
 		/*
-		 * Argument for Connection operator can be either a Buffer
+		 * Argument क्रम Connection चालक can be either a Buffer
 		 * (resource descriptor), or a name_string.
 		 */
 		aml = parser_state->aml;
-		if (ACPI_GET8(parser_state->aml) == AML_BUFFER_OP) {
+		अगर (ACPI_GET8(parser_state->aml) == AML_BUFFER_OP) अणु
 			parser_state->aml++;
 
 			ASL_CV_CAPTURE_COMMENTS_ONLY(parser_state);
@@ -601,16 +602,16 @@ static union acpi_parse_object *acpi_ps_get_next_field(struct acpi_parse_state
 			pkg_end += pkg_length;
 
 			ASL_CV_CAPTURE_COMMENTS_ONLY(parser_state);
-			if (parser_state->aml < pkg_end) {
+			अगर (parser_state->aml < pkg_end) अणु
 
 				/* Non-empty list */
 
 				arg =
 				    acpi_ps_alloc_op(AML_INT_BYTELIST_OP, aml);
-				if (!arg) {
-					acpi_ps_free_op(field);
-					return_PTR(NULL);
-				}
+				अगर (!arg) अणु
+					acpi_ps_मुक्त_op(field);
+					वापस_PTR(शून्य);
+				पूर्ण
 
 				/* Get the actual buffer length argument */
 
@@ -618,70 +619,70 @@ static union acpi_parse_object *acpi_ps_get_next_field(struct acpi_parse_state
 				parser_state->aml++;
 
 				ASL_CV_CAPTURE_COMMENTS_ONLY(parser_state);
-				switch (opcode) {
-				case AML_BYTE_OP:	/* AML_BYTEDATA_ARG */
+				चयन (opcode) अणु
+				हाल AML_BYTE_OP:	/* AML_BYTEDATA_ARG */
 
 					buffer_length =
 					    ACPI_GET8(parser_state->aml);
 					parser_state->aml += 1;
-					break;
+					अवरोध;
 
-				case AML_WORD_OP:	/* AML_WORDDATA_ARG */
+				हाल AML_WORD_OP:	/* AML_WORDDATA_ARG */
 
 					buffer_length =
 					    ACPI_GET16(parser_state->aml);
 					parser_state->aml += 2;
-					break;
+					अवरोध;
 
-				case AML_DWORD_OP:	/* AML_DWORDATA_ARG */
+				हाल AML_DWORD_OP:	/* AML_DWORDATA_ARG */
 
 					buffer_length =
 					    ACPI_GET32(parser_state->aml);
 					parser_state->aml += 4;
-					break;
+					अवरोध;
 
-				default:
+				शेष:
 
 					buffer_length = 0;
-					break;
-				}
+					अवरोध;
+				पूर्ण
 
 				/* Fill in bytelist data */
 
 				ASL_CV_CAPTURE_COMMENTS_ONLY(parser_state);
 				arg->named.value.size = buffer_length;
 				arg->named.data = parser_state->aml;
-			}
+			पूर्ण
 
 			/* Skip to End of byte data */
 
 			parser_state->aml = pkg_end;
-		} else {
+		पूर्ण अन्यथा अणु
 			arg = acpi_ps_alloc_op(AML_INT_NAMEPATH_OP, aml);
-			if (!arg) {
-				acpi_ps_free_op(field);
-				return_PTR(NULL);
-			}
+			अगर (!arg) अणु
+				acpi_ps_मुक्त_op(field);
+				वापस_PTR(शून्य);
+			पूर्ण
 
 			/* Get the Namestring argument */
 
 			arg->common.value.name =
 			    acpi_ps_get_next_namestring(parser_state);
-		}
+		पूर्ण
 
 		/* Link the buffer/namestring to parent (CONNECTION_OP) */
 
 		acpi_ps_append_arg(field, arg);
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 
-		/* Opcode was set in previous switch */
-		break;
-	}
+		/* Opcode was set in previous चयन */
+		अवरोध;
+	पूर्ण
 
-	return_PTR(field);
-}
+	वापस_PTR(field);
+पूर्ण
 
 /*******************************************************************************
  *
@@ -690,7 +691,7 @@ static union acpi_parse_object *acpi_ps_get_next_field(struct acpi_parse_state
  * PARAMETERS:  walk_state          - Current state
  *              parser_state        - Current parser state object
  *              arg_type            - The argument type (AML_*_ARG)
- *              return_arg          - Where the next arg is returned
+ *              वापस_arg          - Where the next arg is वापसed
  *
  * RETURN:      Status, and an op object containing the next argument.
  *
@@ -700,13 +701,13 @@ static union acpi_parse_object *acpi_ps_get_next_field(struct acpi_parse_state
  ******************************************************************************/
 
 acpi_status
-acpi_ps_get_next_arg(struct acpi_walk_state *walk_state,
-		     struct acpi_parse_state *parser_state,
-		     u32 arg_type, union acpi_parse_object **return_arg)
-{
-	union acpi_parse_object *arg = NULL;
-	union acpi_parse_object *prev = NULL;
-	union acpi_parse_object *field;
+acpi_ps_get_next_arg(काष्ठा acpi_walk_state *walk_state,
+		     काष्ठा acpi_parse_state *parser_state,
+		     u32 arg_type, जोड़ acpi_parse_object **वापस_arg)
+अणु
+	जोड़ acpi_parse_object *arg = शून्य;
+	जोड़ acpi_parse_object *prev = शून्य;
+	जोड़ acpi_parse_object *field;
 	u32 subop;
 	acpi_status status = AE_OK;
 
@@ -716,69 +717,69 @@ acpi_ps_get_next_arg(struct acpi_walk_state *walk_state,
 			  "Expected argument type ARGP: %s (%2.2X)\n",
 			  acpi_ut_get_argument_type_name(arg_type), arg_type));
 
-	switch (arg_type) {
-	case ARGP_BYTEDATA:
-	case ARGP_WORDDATA:
-	case ARGP_DWORDDATA:
-	case ARGP_CHARLIST:
-	case ARGP_NAME:
-	case ARGP_NAMESTRING:
+	चयन (arg_type) अणु
+	हाल ARGP_BYTEDATA:
+	हाल ARGP_WORDDATA:
+	हाल ARGP_DWORDDATA:
+	हाल ARGP_CHARLIST:
+	हाल ARGP_NAME:
+	हाल ARGP_NAMESTRING:
 
 		/* Constants, strings, and namestrings are all the same size */
 
 		arg = acpi_ps_alloc_op(AML_BYTE_OP, parser_state->aml);
-		if (!arg) {
-			return_ACPI_STATUS(AE_NO_MEMORY);
-		}
+		अगर (!arg) अणु
+			वापस_ACPI_STATUS(AE_NO_MEMORY);
+		पूर्ण
 
 		acpi_ps_get_next_simple_arg(parser_state, arg_type, arg);
-		break;
+		अवरोध;
 
-	case ARGP_PKGLENGTH:
+	हाल ARGP_PKGLENGTH:
 
-		/* Package length, nothing returned */
+		/* Package length, nothing वापसed */
 
 		parser_state->pkg_end =
 		    acpi_ps_get_next_package_end(parser_state);
-		break;
+		अवरोध;
 
-	case ARGP_FIELDLIST:
+	हाल ARGP_FIELDLIST:
 
-		if (parser_state->aml < parser_state->pkg_end) {
+		अगर (parser_state->aml < parser_state->pkg_end) अणु
 
 			/* Non-empty list */
 
-			while (parser_state->aml < parser_state->pkg_end) {
+			जबतक (parser_state->aml < parser_state->pkg_end) अणु
 				field = acpi_ps_get_next_field(parser_state);
-				if (!field) {
-					return_ACPI_STATUS(AE_NO_MEMORY);
-				}
+				अगर (!field) अणु
+					वापस_ACPI_STATUS(AE_NO_MEMORY);
+				पूर्ण
 
-				if (prev) {
+				अगर (prev) अणु
 					prev->common.next = field;
-				} else {
+				पूर्ण अन्यथा अणु
 					arg = field;
-				}
+				पूर्ण
 				prev = field;
-			}
+			पूर्ण
 
 			/* Skip to End of byte data */
 
 			parser_state->aml = parser_state->pkg_end;
-		}
-		break;
+		पूर्ण
+		अवरोध;
 
-	case ARGP_BYTELIST:
+	हाल ARGP_BYTELIST:
 
-		if (parser_state->aml < parser_state->pkg_end) {
+		अगर (parser_state->aml < parser_state->pkg_end) अणु
 
 			/* Non-empty list */
 
 			arg = acpi_ps_alloc_op(AML_INT_BYTELIST_OP,
 					       parser_state->aml);
-			if (!arg) {
-				return_ACPI_STATUS(AE_NO_MEMORY);
-			}
+			अगर (!arg) अणु
+				वापस_ACPI_STATUS(AE_NO_MEMORY);
+			पूर्ण
 
 			/* Fill in bytelist data */
 
@@ -790,11 +791,11 @@ acpi_ps_get_next_arg(struct acpi_walk_state *walk_state,
 			/* Skip to End of byte data */
 
 			parser_state->aml = parser_state->pkg_end;
-		}
-		break;
+		पूर्ण
+		अवरोध;
 
-	case ARGP_SIMPLENAME:
-	case ARGP_NAME_OR_REF:
+	हाल ARGP_SIMPLENAME:
+	हाल ARGP_NAME_OR_REF:
 
 		ACPI_DEBUG_PRINT((ACPI_DB_PARSE,
 				  "**** SimpleName/NameOrRef: %s (%2.2X)\n",
@@ -802,33 +803,33 @@ acpi_ps_get_next_arg(struct acpi_walk_state *walk_state,
 				  arg_type));
 
 		subop = acpi_ps_peek_opcode(parser_state);
-		if (subop == 0 ||
-		    acpi_ps_is_leading_char(subop) ||
+		अगर (subop == 0 ||
+		    acpi_ps_is_leading_अक्षर(subop) ||
 		    ACPI_IS_ROOT_PREFIX(subop) ||
-		    ACPI_IS_PARENT_PREFIX(subop)) {
+		    ACPI_IS_PARENT_PREFIX(subop)) अणु
 
 			/* null_name or name_string */
 
 			arg =
 			    acpi_ps_alloc_op(AML_INT_NAMEPATH_OP,
 					     parser_state->aml);
-			if (!arg) {
-				return_ACPI_STATUS(AE_NO_MEMORY);
-			}
+			अगर (!arg) अणु
+				वापस_ACPI_STATUS(AE_NO_MEMORY);
+			पूर्ण
 
 			status =
 			    acpi_ps_get_next_namepath(walk_state, parser_state,
 						      arg,
 						      ACPI_NOT_METHOD_CALL);
-		} else {
-			/* Single complex argument, nothing returned */
+		पूर्ण अन्यथा अणु
+			/* Single complex argument, nothing वापसed */
 
 			walk_state->arg_count = 1;
-		}
-		break;
+		पूर्ण
+		अवरोध;
 
-	case ARGP_TARGET:
-	case ARGP_SUPERNAME:
+	हाल ARGP_TARGET:
+	हाल ARGP_SUPERNAME:
 
 		ACPI_DEBUG_PRINT((ACPI_DB_PARSE,
 				  "**** Target/Supername: %s (%2.2X)\n",
@@ -836,73 +837,73 @@ acpi_ps_get_next_arg(struct acpi_walk_state *walk_state,
 				  arg_type));
 
 		subop = acpi_ps_peek_opcode(parser_state);
-		if (subop == 0 ||
-		    acpi_ps_is_leading_char(subop) ||
+		अगर (subop == 0 ||
+		    acpi_ps_is_leading_अक्षर(subop) ||
 		    ACPI_IS_ROOT_PREFIX(subop) ||
-		    ACPI_IS_PARENT_PREFIX(subop)) {
+		    ACPI_IS_PARENT_PREFIX(subop)) अणु
 
-			/* NULL target (zero). Convert to a NULL namepath */
+			/* शून्य target (zero). Convert to a शून्य namepath */
 
 			arg =
 			    acpi_ps_alloc_op(AML_INT_NAMEPATH_OP,
 					     parser_state->aml);
-			if (!arg) {
-				return_ACPI_STATUS(AE_NO_MEMORY);
-			}
+			अगर (!arg) अणु
+				वापस_ACPI_STATUS(AE_NO_MEMORY);
+			पूर्ण
 
 			status =
 			    acpi_ps_get_next_namepath(walk_state, parser_state,
 						      arg,
 						      ACPI_POSSIBLE_METHOD_CALL);
 
-			if (arg->common.aml_opcode == AML_INT_METHODCALL_OP) {
+			अगर (arg->common.aml_opcode == AML_INT_METHODCALL_OP) अणु
 
 				/* Free method call op and corresponding namestring sub-ob */
 
-				acpi_ps_free_op(arg->common.value.arg);
-				acpi_ps_free_op(arg);
-				arg = NULL;
+				acpi_ps_मुक्त_op(arg->common.value.arg);
+				acpi_ps_मुक्त_op(arg);
+				arg = शून्य;
 				walk_state->arg_count = 1;
-			}
-		} else {
-			/* Single complex argument, nothing returned */
+			पूर्ण
+		पूर्ण अन्यथा अणु
+			/* Single complex argument, nothing वापसed */
 
 			walk_state->arg_count = 1;
-		}
-		break;
+		पूर्ण
+		अवरोध;
 
-	case ARGP_DATAOBJ:
-	case ARGP_TERMARG:
+	हाल ARGP_DATAOBJ:
+	हाल ARGP_TERMARG:
 
 		ACPI_DEBUG_PRINT((ACPI_DB_PARSE,
 				  "**** TermArg/DataObj: %s (%2.2X)\n",
 				  acpi_ut_get_argument_type_name(arg_type),
 				  arg_type));
 
-		/* Single complex argument, nothing returned */
+		/* Single complex argument, nothing वापसed */
 
 		walk_state->arg_count = 1;
-		break;
+		अवरोध;
 
-	case ARGP_DATAOBJLIST:
-	case ARGP_TERMLIST:
-	case ARGP_OBJLIST:
+	हाल ARGP_DATAOBJLIST:
+	हाल ARGP_TERMLIST:
+	हाल ARGP_OBJLIST:
 
-		if (parser_state->aml < parser_state->pkg_end) {
+		अगर (parser_state->aml < parser_state->pkg_end) अणु
 
-			/* Non-empty list of variable arguments, nothing returned */
+			/* Non-empty list of variable arguments, nothing वापसed */
 
 			walk_state->arg_count = ACPI_VAR_ARGS;
-		}
-		break;
+		पूर्ण
+		अवरोध;
 
-	default:
+	शेष:
 
 		ACPI_ERROR((AE_INFO, "Invalid ArgType: 0x%X", arg_type));
 		status = AE_AML_OPERAND_TYPE;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	*return_arg = arg;
-	return_ACPI_STATUS(status);
-}
+	*वापस_arg = arg;
+	वापस_ACPI_STATUS(status);
+पूर्ण

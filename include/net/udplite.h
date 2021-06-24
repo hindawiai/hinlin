@@ -1,136 +1,137 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- *	Definitions for the UDP-Lite (RFC 3828) code.
+ *	Definitions क्रम the UDP-Lite (RFC 3828) code.
  */
-#ifndef _UDPLITE_H
-#define _UDPLITE_H
+#अगर_अघोषित _UDPLITE_H
+#घोषणा _UDPLITE_H
 
-#include <net/ip6_checksum.h>
+#समावेश <net/ip6_checksum.h>
 
 /* UDP-Lite socket options */
-#define UDPLITE_SEND_CSCOV   10 /* sender partial coverage (as sent)      */
-#define UDPLITE_RECV_CSCOV   11 /* receiver partial coverage (threshold ) */
+#घोषणा UDPLITE_SEND_CSCOV   10 /* sender partial coverage (as sent)      */
+#घोषणा UDPLITE_RECV_CSCOV   11 /* receiver partial coverage (threshold ) */
 
-extern struct proto 		udplite_prot;
-extern struct udp_table		udplite_table;
+बाह्य काष्ठा proto 		udplite_prot;
+बाह्य काष्ठा udp_table		udplite_table;
 
 /*
  *	Checksum computation is all in software, hence simpler getfrag.
  */
-static __inline__ int udplite_getfrag(void *from, char *to, int  offset,
-				      int len, int odd, struct sk_buff *skb)
-{
-	struct msghdr *msg = from;
-	return copy_from_iter_full(to, len, &msg->msg_iter) ? 0 : -EFAULT;
-}
+अटल __अंतरभूत__ पूर्णांक udplite_getfrag(व्योम *from, अक्षर *to, पूर्णांक  offset,
+				      पूर्णांक len, पूर्णांक odd, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा msghdr *msg = from;
+	वापस copy_from_iter_full(to, len, &msg->msg_iter) ? 0 : -EFAULT;
+पूर्ण
 
 /* Designate sk as UDP-Lite socket */
-static inline int udplite_sk_init(struct sock *sk)
-{
+अटल अंतरभूत पूर्णांक udplite_sk_init(काष्ठा sock *sk)
+अणु
 	udp_init_sock(sk);
 	udp_sk(sk)->pcflag = UDPLITE_BIT;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * 	Checksumming routines
  */
-static inline int udplite_checksum_init(struct sk_buff *skb, struct udphdr *uh)
-{
+अटल अंतरभूत पूर्णांक udplite_checksum_init(काष्ठा sk_buff *skb, काष्ठा udphdr *uh)
+अणु
 	u16 cscov;
 
         /* In UDPv4 a zero checksum means that the transmitter generated no
          * checksum. UDP-Lite (like IPv6) mandates checksums, hence packets
          * with a zero checksum field are illegal.                            */
-	if (uh->check == 0) {
+	अगर (uh->check == 0) अणु
 		net_dbg_ratelimited("UDPLite: zeroed checksum field\n");
-		return 1;
-	}
+		वापस 1;
+	पूर्ण
 
 	cscov = ntohs(uh->len);
 
-	if (cscov == 0)		 /* Indicates that full coverage is required. */
+	अगर (cscov == 0)		 /* Indicates that full coverage is required. */
 		;
-	else if (cscov < 8  || cscov > skb->len) {
+	अन्यथा अगर (cscov < 8  || cscov > skb->len) अणु
 		/*
 		 * Coverage length violates RFC 3828: log and discard silently.
 		 */
 		net_dbg_ratelimited("UDPLite: bad csum coverage %d/%d\n",
 				    cscov, skb->len);
-		return 1;
+		वापस 1;
 
-	} else if (cscov < skb->len) {
+	पूर्ण अन्यथा अगर (cscov < skb->len) अणु
         	UDP_SKB_CB(skb)->partial_cov = 1;
 		UDP_SKB_CB(skb)->cscov = cscov;
-		if (skb->ip_summed == CHECKSUM_COMPLETE)
+		अगर (skb->ip_summed == CHECKSUM_COMPLETE)
 			skb->ip_summed = CHECKSUM_NONE;
 		skb->csum_valid = 0;
-        }
+        पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* Slow-path computation of checksum. Socket is locked. */
-static inline __wsum udplite_csum_outgoing(struct sock *sk, struct sk_buff *skb)
-{
-	const struct udp_sock *up = udp_sk(skb->sk);
-	int cscov = up->len;
+अटल अंतरभूत __wsum udplite_csum_outgoing(काष्ठा sock *sk, काष्ठा sk_buff *skb)
+अणु
+	स्थिर काष्ठा udp_sock *up = udp_sk(skb->sk);
+	पूर्णांक cscov = up->len;
 	__wsum csum = 0;
 
-	if (up->pcflag & UDPLITE_SEND_CC) {
+	अगर (up->pcflag & UDPLITE_SEND_CC) अणु
 		/*
 		 * Sender has set `partial coverage' option on UDP-Lite socket.
-		 * The special case "up->pcslen == 0" signifies full coverage.
+		 * The special हाल "up->pcslen == 0" signअगरies full coverage.
 		 */
-		if (up->pcslen < up->len) {
-			if (0 < up->pcslen)
+		अगर (up->pcslen < up->len) अणु
+			अगर (0 < up->pcslen)
 				cscov = up->pcslen;
 			udp_hdr(skb)->len = htons(up->pcslen);
-		}
+		पूर्ण
 		/*
-		 * NOTE: Causes for the error case  `up->pcslen > up->len':
+		 * NOTE: Causes क्रम the error हाल  `up->pcslen > up->len':
 		 *        (i)  Application error (will not be penalized).
-		 *       (ii)  Payload too big for send buffer: data is split
-		 *             into several packets, each with its own header.
-		 *             In this case (e.g. last segment), coverage may
+		 *       (ii)  Payload too big क्रम send buffer: data is split
+		 *             पूर्णांकo several packets, each with its own header.
+		 *             In this हाल (e.g. last segment), coverage may
 		 *             exceed packet length.
 		 *       Since packets with coverage length > packet length are
-		 *       illegal, we fall back to the defaults here.
+		 *       illegal, we fall back to the शेषs here.
 		 */
-	}
+	पूर्ण
 
-	skb->ip_summed = CHECKSUM_NONE;     /* no HW support for checksumming */
+	skb->ip_summed = CHECKSUM_NONE;     /* no HW support क्रम checksumming */
 
-	skb_queue_walk(&sk->sk_write_queue, skb) {
-		const int off = skb_transport_offset(skb);
-		const int len = skb->len - off;
+	skb_queue_walk(&sk->sk_ग_लिखो_queue, skb) अणु
+		स्थिर पूर्णांक off = skb_transport_offset(skb);
+		स्थिर पूर्णांक len = skb->len - off;
 
 		csum = skb_checksum(skb, off, (cscov > len)? len : cscov, csum);
 
-		if ((cscov -= len) <= 0)
-			break;
-	}
-	return csum;
-}
+		अगर ((cscov -= len) <= 0)
+			अवरोध;
+	पूर्ण
+	वापस csum;
+पूर्ण
 
 /* Fast-path computation of checksum. Socket may not be locked. */
-static inline __wsum udplite_csum(struct sk_buff *skb)
-{
-	const struct udp_sock *up = udp_sk(skb->sk);
-	const int off = skb_transport_offset(skb);
-	int len = skb->len - off;
+अटल अंतरभूत __wsum udplite_csum(काष्ठा sk_buff *skb)
+अणु
+	स्थिर काष्ठा udp_sock *up = udp_sk(skb->sk);
+	स्थिर पूर्णांक off = skb_transport_offset(skb);
+	पूर्णांक len = skb->len - off;
 
-	if ((up->pcflag & UDPLITE_SEND_CC) && up->pcslen < len) {
-		if (0 < up->pcslen)
+	अगर ((up->pcflag & UDPLITE_SEND_CC) && up->pcslen < len) अणु
+		अगर (0 < up->pcslen)
 			len = up->pcslen;
 		udp_hdr(skb)->len = htons(up->pcslen);
-	}
-	skb->ip_summed = CHECKSUM_NONE;     /* no HW support for checksumming */
+	पूर्ण
+	skb->ip_summed = CHECKSUM_NONE;     /* no HW support क्रम checksumming */
 
-	return skb_checksum(skb, off, len, 0);
-}
+	वापस skb_checksum(skb, off, len, 0);
+पूर्ण
 
-void udplite4_register(void);
-int udplite_get_port(struct sock *sk, unsigned short snum,
-		     int (*scmp)(const struct sock *, const struct sock *));
-#endif	/* _UDPLITE_H */
+व्योम udplite4_रेजिस्टर(व्योम);
+पूर्णांक udplite_get_port(काष्ठा sock *sk, अचिन्हित लघु snum,
+		     पूर्णांक (*scmp)(स्थिर काष्ठा sock *, स्थिर काष्ठा sock *));
+#पूर्ण_अगर	/* _UDPLITE_H */

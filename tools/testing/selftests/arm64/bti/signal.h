@@ -1,21 +1,22 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * Copyright (C) 2019  Arm Limited
  * Original author: Dave Martin <Dave.Martin@arm.com>
  */
 
-#ifndef SIGNAL_H
-#define SIGNAL_H
+#अगर_अघोषित SIGNAL_H
+#घोषणा SIGNAL_H
 
-#include <linux/signal.h>
+#समावेश <linux/संकेत.स>
 
-#include "system.h"
+#समावेश "system.h"
 
-typedef __sighandler_t sighandler_t;
+प्रकार __sighandler_t sighandler_t;
 
-int sigemptyset(sigset_t *s);
-int sigaddset(sigset_t *s, int n);
-int sigaction(int n, struct sigaction *sa, const struct sigaction *old);
-int sigprocmask(int how, const sigset_t *mask, sigset_t *old);
+पूर्णांक sigemptyset(sigset_t *s);
+पूर्णांक sigaddset(sigset_t *s, पूर्णांक n);
+पूर्णांक sigaction(पूर्णांक n, काष्ठा sigaction *sa, स्थिर काष्ठा sigaction *old);
+पूर्णांक sigprocmask(पूर्णांक how, स्थिर sigset_t *mask, sigset_t *old);
 
-#endif /* ! SIGNAL_H */
+#पूर्ण_अगर /* ! SIGNAL_H */

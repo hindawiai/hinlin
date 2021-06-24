@@ -1,249 +1,250 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- *  skl-topology.c - Implements Platform component ALSA controls/widget
+ *  skl-topology.c - Implements Platक्रमm component ALSA controls/widget
  *  handlers.
  *
  *  Copyright (C) 2014-2015 Intel Corp
- *  Author: Jeeja KP <jeeja.kp@intel.com>
+ *  Author: Jeeja KP <jeeja.kp@पूर्णांकel.com>
  *  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-#include <linux/slab.h>
-#include <linux/types.h>
-#include <linux/firmware.h>
-#include <linux/uuid.h>
-#include <sound/intel-nhlt.h>
-#include <sound/soc.h>
-#include <sound/soc-acpi.h>
-#include <sound/soc-topology.h>
-#include <uapi/sound/snd_sst_tokens.h>
-#include <uapi/sound/skl-tplg-interface.h>
-#include "skl-sst-dsp.h"
-#include "skl-sst-ipc.h"
-#include "skl-topology.h"
-#include "skl.h"
-#include "../common/sst-dsp.h"
-#include "../common/sst-dsp-priv.h"
+#समावेश <linux/slab.h>
+#समावेश <linux/types.h>
+#समावेश <linux/firmware.h>
+#समावेश <linux/uuid.h>
+#समावेश <sound/पूर्णांकel-nhlt.h>
+#समावेश <sound/soc.h>
+#समावेश <sound/soc-acpi.h>
+#समावेश <sound/soc-topology.h>
+#समावेश <uapi/sound/snd_sst_tokens.h>
+#समावेश <uapi/sound/skl-tplg-पूर्णांकerface.h>
+#समावेश "skl-sst-dsp.h"
+#समावेश "skl-sst-ipc.h"
+#समावेश "skl-topology.h"
+#समावेश "skl.h"
+#समावेश "../common/sst-dsp.h"
+#समावेश "../common/sst-dsp-priv.h"
 
-#define SKL_CH_FIXUP_MASK		(1 << 0)
-#define SKL_RATE_FIXUP_MASK		(1 << 1)
-#define SKL_FMT_FIXUP_MASK		(1 << 2)
-#define SKL_IN_DIR_BIT_MASK		BIT(0)
-#define SKL_PIN_COUNT_MASK		GENMASK(7, 4)
+#घोषणा SKL_CH_FIXUP_MASK		(1 << 0)
+#घोषणा SKL_RATE_FIXUP_MASK		(1 << 1)
+#घोषणा SKL_FMT_FIXUP_MASK		(1 << 2)
+#घोषणा SKL_IN_सूची_BIT_MASK		BIT(0)
+#घोषणा SKL_PIN_COUNT_MASK		GENMASK(7, 4)
 
-static const int mic_mono_list[] = {
+अटल स्थिर पूर्णांक mic_mono_list[] = अणु
 0, 1, 2, 3,
-};
-static const int mic_stereo_list[][SKL_CH_STEREO] = {
-{0, 1}, {0, 2}, {0, 3}, {1, 2}, {1, 3}, {2, 3},
-};
-static const int mic_trio_list[][SKL_CH_TRIO] = {
-{0, 1, 2}, {0, 1, 3}, {0, 2, 3}, {1, 2, 3},
-};
-static const int mic_quatro_list[][SKL_CH_QUATRO] = {
-{0, 1, 2, 3},
-};
+पूर्ण;
+अटल स्थिर पूर्णांक mic_stereo_list[][SKL_CH_STEREO] = अणु
+अणु0, 1पूर्ण, अणु0, 2पूर्ण, अणु0, 3पूर्ण, अणु1, 2पूर्ण, अणु1, 3पूर्ण, अणु2, 3पूर्ण,
+पूर्ण;
+अटल स्थिर पूर्णांक mic_trio_list[][SKL_CH_TRIO] = अणु
+अणु0, 1, 2पूर्ण, अणु0, 1, 3पूर्ण, अणु0, 2, 3पूर्ण, अणु1, 2, 3पूर्ण,
+पूर्ण;
+अटल स्थिर पूर्णांक mic_quatro_list[][SKL_CH_QUATRO] = अणु
+अणु0, 1, 2, 3पूर्ण,
+पूर्ण;
 
-#define CHECK_HW_PARAMS(ch, freq, bps, prm_ch, prm_freq, prm_bps) \
+#घोषणा CHECK_HW_PARAMS(ch, freq, bps, prm_ch, prm_freq, prm_bps) \
 	((ch == prm_ch) && (bps == prm_bps) && (freq == prm_freq))
 
-void skl_tplg_d0i3_get(struct skl_dev *skl, enum d0i3_capability caps)
-{
-	struct skl_d0i3_data *d0i3 =  &skl->d0i3;
+व्योम skl_tplg_d0i3_get(काष्ठा skl_dev *skl, क्रमागत d0i3_capability caps)
+अणु
+	काष्ठा skl_d0i3_data *d0i3 =  &skl->d0i3;
 
-	switch (caps) {
-	case SKL_D0I3_NONE:
+	चयन (caps) अणु
+	हाल SKL_D0I3_NONE:
 		d0i3->non_d0i3++;
-		break;
+		अवरोध;
 
-	case SKL_D0I3_STREAMING:
+	हाल SKL_D0I3_STREAMING:
 		d0i3->streaming++;
-		break;
+		अवरोध;
 
-	case SKL_D0I3_NON_STREAMING:
+	हाल SKL_D0I3_NON_STREAMING:
 		d0i3->non_streaming++;
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-void skl_tplg_d0i3_put(struct skl_dev *skl, enum d0i3_capability caps)
-{
-	struct skl_d0i3_data *d0i3 =  &skl->d0i3;
+व्योम skl_tplg_d0i3_put(काष्ठा skl_dev *skl, क्रमागत d0i3_capability caps)
+अणु
+	काष्ठा skl_d0i3_data *d0i3 =  &skl->d0i3;
 
-	switch (caps) {
-	case SKL_D0I3_NONE:
+	चयन (caps) अणु
+	हाल SKL_D0I3_NONE:
 		d0i3->non_d0i3--;
-		break;
+		अवरोध;
 
-	case SKL_D0I3_STREAMING:
+	हाल SKL_D0I3_STREAMING:
 		d0i3->streaming--;
-		break;
+		अवरोध;
 
-	case SKL_D0I3_NON_STREAMING:
+	हाल SKL_D0I3_NON_STREAMING:
 		d0i3->non_streaming--;
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
 /*
- * SKL DSP driver modelling uses only few DAPM widgets so for rest we will
- * ignore. This helpers checks if the SKL driver handles this widget type
+ * SKL DSP driver modelling uses only few DAPM widमाला_लो so क्रम rest we will
+ * ignore. This helpers checks अगर the SKL driver handles this widget type
  */
-static int is_skl_dsp_widget_type(struct snd_soc_dapm_widget *w,
-				  struct device *dev)
-{
-	if (w->dapm->dev != dev)
-		return false;
+अटल पूर्णांक is_skl_dsp_widget_type(काष्ठा snd_soc_dapm_widget *w,
+				  काष्ठा device *dev)
+अणु
+	अगर (w->dapm->dev != dev)
+		वापस false;
 
-	switch (w->id) {
-	case snd_soc_dapm_dai_link:
-	case snd_soc_dapm_dai_in:
-	case snd_soc_dapm_aif_in:
-	case snd_soc_dapm_aif_out:
-	case snd_soc_dapm_dai_out:
-	case snd_soc_dapm_switch:
-	case snd_soc_dapm_output:
-	case snd_soc_dapm_mux:
+	चयन (w->id) अणु
+	हाल snd_soc_dapm_dai_link:
+	हाल snd_soc_dapm_dai_in:
+	हाल snd_soc_dapm_aअगर_in:
+	हाल snd_soc_dapm_aअगर_out:
+	हाल snd_soc_dapm_dai_out:
+	हाल snd_soc_dapm_चयन:
+	हाल snd_soc_dapm_output:
+	हाल snd_soc_dapm_mux:
 
-		return false;
-	default:
-		return true;
-	}
-}
+		वापस false;
+	शेष:
+		वापस true;
+	पूर्ण
+पूर्ण
 
-static void skl_dump_mconfig(struct skl_dev *skl, struct skl_module_cfg *mcfg)
-{
-	struct skl_module_iface *iface = &mcfg->module->formats[0];
+अटल व्योम skl_dump_mconfig(काष्ठा skl_dev *skl, काष्ठा skl_module_cfg *mcfg)
+अणु
+	काष्ठा skl_module_अगरace *अगरace = &mcfg->module->क्रमmats[0];
 
 	dev_dbg(skl->dev, "Dumping config\n");
 	dev_dbg(skl->dev, "Input Format:\n");
-	dev_dbg(skl->dev, "channels = %d\n", iface->inputs[0].fmt.channels);
-	dev_dbg(skl->dev, "s_freq = %d\n", iface->inputs[0].fmt.s_freq);
-	dev_dbg(skl->dev, "ch_cfg = %d\n", iface->inputs[0].fmt.ch_cfg);
+	dev_dbg(skl->dev, "channels = %d\n", अगरace->inमाला_दो[0].fmt.channels);
+	dev_dbg(skl->dev, "s_freq = %d\n", अगरace->inमाला_दो[0].fmt.s_freq);
+	dev_dbg(skl->dev, "ch_cfg = %d\n", अगरace->inमाला_दो[0].fmt.ch_cfg);
 	dev_dbg(skl->dev, "valid bit depth = %d\n",
-				iface->inputs[0].fmt.valid_bit_depth);
+				अगरace->inमाला_दो[0].fmt.valid_bit_depth);
 	dev_dbg(skl->dev, "Output Format:\n");
-	dev_dbg(skl->dev, "channels = %d\n", iface->outputs[0].fmt.channels);
-	dev_dbg(skl->dev, "s_freq = %d\n", iface->outputs[0].fmt.s_freq);
+	dev_dbg(skl->dev, "channels = %d\n", अगरace->outमाला_दो[0].fmt.channels);
+	dev_dbg(skl->dev, "s_freq = %d\n", अगरace->outमाला_दो[0].fmt.s_freq);
 	dev_dbg(skl->dev, "valid bit depth = %d\n",
-				iface->outputs[0].fmt.valid_bit_depth);
-	dev_dbg(skl->dev, "ch_cfg = %d\n", iface->outputs[0].fmt.ch_cfg);
-}
+				अगरace->outमाला_दो[0].fmt.valid_bit_depth);
+	dev_dbg(skl->dev, "ch_cfg = %d\n", अगरace->outमाला_दो[0].fmt.ch_cfg);
+पूर्ण
 
-static void skl_tplg_update_chmap(struct skl_module_fmt *fmt, int chs)
-{
-	int slot_map = 0xFFFFFFFF;
-	int start_slot = 0;
-	int i;
+अटल व्योम skl_tplg_update_chmap(काष्ठा skl_module_fmt *fmt, पूर्णांक chs)
+अणु
+	पूर्णांक slot_map = 0xFFFFFFFF;
+	पूर्णांक start_slot = 0;
+	पूर्णांक i;
 
-	for (i = 0; i < chs; i++) {
+	क्रम (i = 0; i < chs; i++) अणु
 		/*
 		 * For 2 channels with starting slot as 0, slot map will
 		 * look like 0xFFFFFF10.
 		 */
 		slot_map &= (~(0xF << (4 * i)) | (start_slot << (4 * i)));
 		start_slot++;
-	}
+	पूर्ण
 	fmt->ch_map = slot_map;
-}
+पूर्ण
 
-static void skl_tplg_update_params(struct skl_module_fmt *fmt,
-			struct skl_pipe_params *params, int fixup)
-{
-	if (fixup & SKL_RATE_FIXUP_MASK)
+अटल व्योम skl_tplg_update_params(काष्ठा skl_module_fmt *fmt,
+			काष्ठा skl_pipe_params *params, पूर्णांक fixup)
+अणु
+	अगर (fixup & SKL_RATE_FIXUP_MASK)
 		fmt->s_freq = params->s_freq;
-	if (fixup & SKL_CH_FIXUP_MASK) {
+	अगर (fixup & SKL_CH_FIXUP_MASK) अणु
 		fmt->channels = params->ch;
 		skl_tplg_update_chmap(fmt, fmt->channels);
-	}
-	if (fixup & SKL_FMT_FIXUP_MASK) {
+	पूर्ण
+	अगर (fixup & SKL_FMT_FIXUP_MASK) अणु
 		fmt->valid_bit_depth = skl_get_bit_depth(params->s_fmt);
 
 		/*
 		 * 16 bit is 16 bit container whereas 24 bit is in 32 bit
 		 * container so update bit depth accordingly
 		 */
-		switch (fmt->valid_bit_depth) {
-		case SKL_DEPTH_16BIT:
+		चयन (fmt->valid_bit_depth) अणु
+		हाल SKL_DEPTH_16BIT:
 			fmt->bit_depth = fmt->valid_bit_depth;
-			break;
+			अवरोध;
 
-		default:
+		शेष:
 			fmt->bit_depth = SKL_DEPTH_32BIT;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-}
+पूर्ण
 
 /*
  * A pipeline may have modules which impact the pcm parameters, like SRC,
- * channel converter, format converter.
+ * channel converter, क्रमmat converter.
  * We need to calculate the output params by applying the 'fixup'
  * Topology will tell driver which type of fixup is to be applied by
  * supplying the fixup mask, so based on that we calculate the output
  *
- * Now In FE the pcm hw_params is source/target format. Same is applicable
- * for BE with its hw_params invoked.
+ * Now In FE the pcm hw_params is source/target क्रमmat. Same is applicable
+ * क्रम BE with its hw_params invoked.
  * here based on FE, BE pipeline and direction we calculate the input and
- * outfix and then apply that for a module
+ * outfix and then apply that क्रम a module
  */
-static void skl_tplg_update_params_fixup(struct skl_module_cfg *m_cfg,
-		struct skl_pipe_params *params, bool is_fe)
-{
-	int in_fixup, out_fixup;
-	struct skl_module_fmt *in_fmt, *out_fmt;
+अटल व्योम skl_tplg_update_params_fixup(काष्ठा skl_module_cfg *m_cfg,
+		काष्ठा skl_pipe_params *params, bool is_fe)
+अणु
+	पूर्णांक in_fixup, out_fixup;
+	काष्ठा skl_module_fmt *in_fmt, *out_fmt;
 
 	/* Fixups will be applied to pin 0 only */
-	in_fmt = &m_cfg->module->formats[0].inputs[0].fmt;
-	out_fmt = &m_cfg->module->formats[0].outputs[0].fmt;
+	in_fmt = &m_cfg->module->क्रमmats[0].inमाला_दो[0].fmt;
+	out_fmt = &m_cfg->module->क्रमmats[0].outमाला_दो[0].fmt;
 
-	if (params->stream == SNDRV_PCM_STREAM_PLAYBACK) {
-		if (is_fe) {
+	अगर (params->stream == SNDRV_PCM_STREAM_PLAYBACK) अणु
+		अगर (is_fe) अणु
 			in_fixup = m_cfg->params_fixup;
 			out_fixup = (~m_cfg->converter) &
 					m_cfg->params_fixup;
-		} else {
+		पूर्ण अन्यथा अणु
 			out_fixup = m_cfg->params_fixup;
 			in_fixup = (~m_cfg->converter) &
 					m_cfg->params_fixup;
-		}
-	} else {
-		if (is_fe) {
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		अगर (is_fe) अणु
 			out_fixup = m_cfg->params_fixup;
 			in_fixup = (~m_cfg->converter) &
 					m_cfg->params_fixup;
-		} else {
+		पूर्ण अन्यथा अणु
 			in_fixup = m_cfg->params_fixup;
 			out_fixup = (~m_cfg->converter) &
 					m_cfg->params_fixup;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	skl_tplg_update_params(in_fmt, params, in_fixup);
 	skl_tplg_update_params(out_fmt, params, out_fixup);
-}
+पूर्ण
 
 /*
  * A module needs input and output buffers, which are dependent upon pcm
  * params, so once we have calculate params, we need buffer calculation as
  * well.
  */
-static void skl_tplg_update_buffer_size(struct skl_dev *skl,
-				struct skl_module_cfg *mcfg)
-{
-	int multiplier = 1;
-	struct skl_module_fmt *in_fmt, *out_fmt;
-	struct skl_module_res *res;
+अटल व्योम skl_tplg_update_buffer_size(काष्ठा skl_dev *skl,
+				काष्ठा skl_module_cfg *mcfg)
+अणु
+	पूर्णांक multiplier = 1;
+	काष्ठा skl_module_fmt *in_fmt, *out_fmt;
+	काष्ठा skl_module_res *res;
 
 	/* Since fixups is applied to pin 0 only, ibs, obs needs
-	 * change for pin 0 only
+	 * change क्रम pin 0 only
 	 */
 	res = &mcfg->module->resources[0];
-	in_fmt = &mcfg->module->formats[0].inputs[0].fmt;
-	out_fmt = &mcfg->module->formats[0].outputs[0].fmt;
+	in_fmt = &mcfg->module->क्रमmats[0].inमाला_दो[0].fmt;
+	out_fmt = &mcfg->module->क्रमmats[0].outमाला_दो[0].fmt;
 
-	if (mcfg->m_type == SKL_MODULE_TYPE_SRCINT)
+	अगर (mcfg->m_type == SKL_MODULE_TYPE_SRCINT)
 		multiplier = 5;
 
 	res->ibs = DIV_ROUND_UP(in_fmt->s_freq, 1000) *
@@ -253,113 +254,113 @@ static void skl_tplg_update_buffer_size(struct skl_dev *skl,
 	res->obs = DIV_ROUND_UP(out_fmt->s_freq, 1000) *
 			out_fmt->channels * (out_fmt->bit_depth >> 3) *
 			multiplier;
-}
+पूर्ण
 
-static u8 skl_tplg_be_dev_type(int dev_type)
-{
-	int ret;
+अटल u8 skl_tplg_be_dev_type(पूर्णांक dev_type)
+अणु
+	पूर्णांक ret;
 
-	switch (dev_type) {
-	case SKL_DEVICE_BT:
+	चयन (dev_type) अणु
+	हाल SKL_DEVICE_BT:
 		ret = NHLT_DEVICE_BT;
-		break;
+		अवरोध;
 
-	case SKL_DEVICE_DMIC:
+	हाल SKL_DEVICE_DMIC:
 		ret = NHLT_DEVICE_DMIC;
-		break;
+		अवरोध;
 
-	case SKL_DEVICE_I2S:
+	हाल SKL_DEVICE_I2S:
 		ret = NHLT_DEVICE_I2S;
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		ret = NHLT_DEVICE_INVALID;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int skl_tplg_update_be_blob(struct snd_soc_dapm_widget *w,
-						struct skl_dev *skl)
-{
-	struct skl_module_cfg *m_cfg = w->priv;
-	int link_type, dir;
+अटल पूर्णांक skl_tplg_update_be_blob(काष्ठा snd_soc_dapm_widget *w,
+						काष्ठा skl_dev *skl)
+अणु
+	काष्ठा skl_module_cfg *m_cfg = w->priv;
+	पूर्णांक link_type, dir;
 	u32 ch, s_freq, s_fmt;
-	struct nhlt_specific_cfg *cfg;
+	काष्ठा nhlt_specअगरic_cfg *cfg;
 	u8 dev_type = skl_tplg_be_dev_type(m_cfg->dev_type);
-	int fmt_idx = m_cfg->fmt_idx;
-	struct skl_module_iface *m_iface = &m_cfg->module->formats[fmt_idx];
+	पूर्णांक fmt_idx = m_cfg->fmt_idx;
+	काष्ठा skl_module_अगरace *m_अगरace = &m_cfg->module->क्रमmats[fmt_idx];
 
-	/* check if we already have blob */
-	if (m_cfg->formats_config.caps_size > 0)
-		return 0;
+	/* check अगर we alपढ़ोy have blob */
+	अगर (m_cfg->क्रमmats_config.caps_size > 0)
+		वापस 0;
 
 	dev_dbg(skl->dev, "Applying default cfg blob\n");
-	switch (m_cfg->dev_type) {
-	case SKL_DEVICE_DMIC:
+	चयन (m_cfg->dev_type) अणु
+	हाल SKL_DEVICE_DMIC:
 		link_type = NHLT_LINK_DMIC;
 		dir = SNDRV_PCM_STREAM_CAPTURE;
-		s_freq = m_iface->inputs[0].fmt.s_freq;
-		s_fmt = m_iface->inputs[0].fmt.bit_depth;
-		ch = m_iface->inputs[0].fmt.channels;
-		break;
+		s_freq = m_अगरace->inमाला_दो[0].fmt.s_freq;
+		s_fmt = m_अगरace->inमाला_दो[0].fmt.bit_depth;
+		ch = m_अगरace->inमाला_दो[0].fmt.channels;
+		अवरोध;
 
-	case SKL_DEVICE_I2S:
+	हाल SKL_DEVICE_I2S:
 		link_type = NHLT_LINK_SSP;
-		if (m_cfg->hw_conn_type == SKL_CONN_SOURCE) {
+		अगर (m_cfg->hw_conn_type == SKL_CONN_SOURCE) अणु
 			dir = SNDRV_PCM_STREAM_PLAYBACK;
-			s_freq = m_iface->outputs[0].fmt.s_freq;
-			s_fmt = m_iface->outputs[0].fmt.bit_depth;
-			ch = m_iface->outputs[0].fmt.channels;
-		} else {
+			s_freq = m_अगरace->outमाला_दो[0].fmt.s_freq;
+			s_fmt = m_अगरace->outमाला_दो[0].fmt.bit_depth;
+			ch = m_अगरace->outमाला_दो[0].fmt.channels;
+		पूर्ण अन्यथा अणु
 			dir = SNDRV_PCM_STREAM_CAPTURE;
-			s_freq = m_iface->inputs[0].fmt.s_freq;
-			s_fmt = m_iface->inputs[0].fmt.bit_depth;
-			ch = m_iface->inputs[0].fmt.channels;
-		}
-		break;
+			s_freq = m_अगरace->inमाला_दो[0].fmt.s_freq;
+			s_fmt = m_अगरace->inमाला_दो[0].fmt.bit_depth;
+			ch = m_अगरace->inमाला_दो[0].fmt.channels;
+		पूर्ण
+		अवरोध;
 
-	default:
-		return -EINVAL;
-	}
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	/* update the blob based on virtual bus_id and default params */
+	/* update the blob based on भव bus_id and शेष params */
 	cfg = skl_get_ep_blob(skl, m_cfg->vbus_id, link_type,
 					s_fmt, ch, s_freq, dir, dev_type);
-	if (cfg) {
-		m_cfg->formats_config.caps_size = cfg->size;
-		m_cfg->formats_config.caps = (u32 *) &cfg->caps;
-	} else {
+	अगर (cfg) अणु
+		m_cfg->क्रमmats_config.caps_size = cfg->size;
+		m_cfg->क्रमmats_config.caps = (u32 *) &cfg->caps;
+	पूर्ण अन्यथा अणु
 		dev_err(skl->dev, "Blob NULL for id %x type %d dirn %d\n",
 					m_cfg->vbus_id, link_type, dir);
 		dev_err(skl->dev, "PCM: ch %d, freq %d, fmt %d\n",
 					ch, s_freq, s_fmt);
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void skl_tplg_update_module_params(struct snd_soc_dapm_widget *w,
-							struct skl_dev *skl)
-{
-	struct skl_module_cfg *m_cfg = w->priv;
-	struct skl_pipe_params *params = m_cfg->pipe->p_params;
-	int p_conn_type = m_cfg->pipe->conn_type;
+अटल व्योम skl_tplg_update_module_params(काष्ठा snd_soc_dapm_widget *w,
+							काष्ठा skl_dev *skl)
+अणु
+	काष्ठा skl_module_cfg *m_cfg = w->priv;
+	काष्ठा skl_pipe_params *params = m_cfg->pipe->p_params;
+	पूर्णांक p_conn_type = m_cfg->pipe->conn_type;
 	bool is_fe;
 
-	if (!m_cfg->params_fixup)
-		return;
+	अगर (!m_cfg->params_fixup)
+		वापस;
 
 	dev_dbg(skl->dev, "Mconfig for widget=%s BEFORE updation\n",
 				w->name);
 
 	skl_dump_mconfig(skl, m_cfg);
 
-	if (p_conn_type == SKL_PIPE_CONN_TYPE_FE)
+	अगर (p_conn_type == SKL_PIPE_CONN_TYPE_FE)
 		is_fe = true;
-	else
+	अन्यथा
 		is_fe = false;
 
 	skl_tplg_update_params_fixup(m_cfg, params, is_fe);
@@ -369,145 +370,145 @@ static void skl_tplg_update_module_params(struct snd_soc_dapm_widget *w,
 				w->name);
 
 	skl_dump_mconfig(skl, m_cfg);
-}
+पूर्ण
 
 /*
  * some modules can have multiple params set from user control and
  * need to be set after module is initialized. If set_param flag is
- * set module params will be done after module is initialised.
+ * set module params will be करोne after module is initialised.
  */
-static int skl_tplg_set_module_params(struct snd_soc_dapm_widget *w,
-						struct skl_dev *skl)
-{
-	int i, ret;
-	struct skl_module_cfg *mconfig = w->priv;
-	const struct snd_kcontrol_new *k;
-	struct soc_bytes_ext *sb;
-	struct skl_algo_data *bc;
-	struct skl_specific_cfg *sp_cfg;
+अटल पूर्णांक skl_tplg_set_module_params(काष्ठा snd_soc_dapm_widget *w,
+						काष्ठा skl_dev *skl)
+अणु
+	पूर्णांक i, ret;
+	काष्ठा skl_module_cfg *mconfig = w->priv;
+	स्थिर काष्ठा snd_kcontrol_new *k;
+	काष्ठा soc_bytes_ext *sb;
+	काष्ठा skl_algo_data *bc;
+	काष्ठा skl_specअगरic_cfg *sp_cfg;
 
-	if (mconfig->formats_config.caps_size > 0 &&
-		mconfig->formats_config.set_params == SKL_PARAM_SET) {
-		sp_cfg = &mconfig->formats_config;
+	अगर (mconfig->क्रमmats_config.caps_size > 0 &&
+		mconfig->क्रमmats_config.set_params == SKL_PARAM_SET) अणु
+		sp_cfg = &mconfig->क्रमmats_config;
 		ret = skl_set_module_params(skl, sp_cfg->caps,
 					sp_cfg->caps_size,
 					sp_cfg->param_id, mconfig);
-		if (ret < 0)
-			return ret;
-	}
+		अगर (ret < 0)
+			वापस ret;
+	पूर्ण
 
-	for (i = 0; i < w->num_kcontrols; i++) {
+	क्रम (i = 0; i < w->num_kcontrols; i++) अणु
 		k = &w->kcontrol_news[i];
-		if (k->access & SNDRV_CTL_ELEM_ACCESS_TLV_CALLBACK) {
-			sb = (void *) k->private_value;
-			bc = (struct skl_algo_data *)sb->dobj.private;
+		अगर (k->access & SNDRV_CTL_ELEM_ACCESS_TLV_CALLBACK) अणु
+			sb = (व्योम *) k->निजी_value;
+			bc = (काष्ठा skl_algo_data *)sb->करोbj.निजी;
 
-			if (bc->set_params == SKL_PARAM_SET) {
+			अगर (bc->set_params == SKL_PARAM_SET) अणु
 				ret = skl_set_module_params(skl,
 						(u32 *)bc->params, bc->size,
 						bc->param_id, mconfig);
-				if (ret < 0)
-					return ret;
-			}
-		}
-	}
+				अगर (ret < 0)
+					वापस ret;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * some module param can set from user control and this is required as
- * when module is initailzed. if module param is required in init it is
- * identifed by set_param flag. if set_param flag is not set, then this
+ * when module is initailzed. अगर module param is required in init it is
+ * identअगरed by set_param flag. अगर set_param flag is not set, then this
  * parameter needs to set as part of module init.
  */
-static int skl_tplg_set_module_init_data(struct snd_soc_dapm_widget *w)
-{
-	const struct snd_kcontrol_new *k;
-	struct soc_bytes_ext *sb;
-	struct skl_algo_data *bc;
-	struct skl_module_cfg *mconfig = w->priv;
-	int i;
+अटल पूर्णांक skl_tplg_set_module_init_data(काष्ठा snd_soc_dapm_widget *w)
+अणु
+	स्थिर काष्ठा snd_kcontrol_new *k;
+	काष्ठा soc_bytes_ext *sb;
+	काष्ठा skl_algo_data *bc;
+	काष्ठा skl_module_cfg *mconfig = w->priv;
+	पूर्णांक i;
 
-	for (i = 0; i < w->num_kcontrols; i++) {
+	क्रम (i = 0; i < w->num_kcontrols; i++) अणु
 		k = &w->kcontrol_news[i];
-		if (k->access & SNDRV_CTL_ELEM_ACCESS_TLV_CALLBACK) {
-			sb = (struct soc_bytes_ext *)k->private_value;
-			bc = (struct skl_algo_data *)sb->dobj.private;
+		अगर (k->access & SNDRV_CTL_ELEM_ACCESS_TLV_CALLBACK) अणु
+			sb = (काष्ठा soc_bytes_ext *)k->निजी_value;
+			bc = (काष्ठा skl_algo_data *)sb->करोbj.निजी;
 
-			if (bc->set_params != SKL_PARAM_INIT)
-				continue;
+			अगर (bc->set_params != SKL_PARAM_INIT)
+				जारी;
 
-			mconfig->formats_config.caps = (u32 *)bc->params;
-			mconfig->formats_config.caps_size = bc->size;
+			mconfig->क्रमmats_config.caps = (u32 *)bc->params;
+			mconfig->क्रमmats_config.caps_size = bc->size;
 
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int skl_tplg_module_prepare(struct skl_dev *skl, struct skl_pipe *pipe,
-		struct snd_soc_dapm_widget *w, struct skl_module_cfg *mcfg)
-{
-	switch (mcfg->dev_type) {
-	case SKL_DEVICE_HDAHOST:
-		return skl_pcm_host_dma_prepare(skl->dev, pipe->p_params);
+अटल पूर्णांक skl_tplg_module_prepare(काष्ठा skl_dev *skl, काष्ठा skl_pipe *pipe,
+		काष्ठा snd_soc_dapm_widget *w, काष्ठा skl_module_cfg *mcfg)
+अणु
+	चयन (mcfg->dev_type) अणु
+	हाल SKL_DEVICE_HDAHOST:
+		वापस skl_pcm_host_dma_prepare(skl->dev, pipe->p_params);
 
-	case SKL_DEVICE_HDALINK:
-		return skl_pcm_link_dma_prepare(skl->dev, pipe->p_params);
-	}
+	हाल SKL_DEVICE_HDALINK:
+		वापस skl_pcm_link_dma_prepare(skl->dev, pipe->p_params);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * Inside a pipe instance, we can have various modules. These modules need
  * to instantiated in DSP by invoking INIT_MODULE IPC, which is achieved by
- * skl_init_module() routine, so invoke that for all modules in a pipeline
+ * skl_init_module() routine, so invoke that क्रम all modules in a pipeline
  */
-static int
-skl_tplg_init_pipe_modules(struct skl_dev *skl, struct skl_pipe *pipe)
-{
-	struct skl_pipe_module *w_module;
-	struct snd_soc_dapm_widget *w;
-	struct skl_module_cfg *mconfig;
+अटल पूर्णांक
+skl_tplg_init_pipe_modules(काष्ठा skl_dev *skl, काष्ठा skl_pipe *pipe)
+अणु
+	काष्ठा skl_pipe_module *w_module;
+	काष्ठा snd_soc_dapm_widget *w;
+	काष्ठा skl_module_cfg *mconfig;
 	u8 cfg_idx;
-	int ret = 0;
+	पूर्णांक ret = 0;
 
-	list_for_each_entry(w_module, &pipe->w_list, node) {
+	list_क्रम_each_entry(w_module, &pipe->w_list, node) अणु
 		guid_t *uuid_mod;
 		w = w_module->w;
 		mconfig = w->priv;
 
-		/* check if module ids are populated */
-		if (mconfig->id.module_id < 0) {
+		/* check अगर module ids are populated */
+		अगर (mconfig->id.module_id < 0) अणु
 			dev_err(skl->dev,
 					"module %pUL id not populated\n",
 					(guid_t *)mconfig->guid);
-			return -EIO;
-		}
+			वापस -EIO;
+		पूर्ण
 
 		cfg_idx = mconfig->pipe->cur_config_idx;
 		mconfig->fmt_idx = mconfig->mod_cfg[cfg_idx].fmt_idx;
 		mconfig->res_idx = mconfig->mod_cfg[cfg_idx].res_idx;
 
-		if (mconfig->module->loadable && skl->dsp->fw_ops.load_mod) {
+		अगर (mconfig->module->loadable && skl->dsp->fw_ops.load_mod) अणु
 			ret = skl->dsp->fw_ops.load_mod(skl->dsp,
 				mconfig->id.module_id, mconfig->guid);
-			if (ret < 0)
-				return ret;
+			अगर (ret < 0)
+				वापस ret;
 
 			mconfig->m_state = SKL_MODULE_LOADED;
-		}
+		पूर्ण
 
-		/* prepare the DMA if the module is gateway cpr */
+		/* prepare the DMA अगर the module is gateway cpr */
 		ret = skl_tplg_module_prepare(skl, pipe, w, mconfig);
-		if (ret < 0)
-			return ret;
+		अगर (ret < 0)
+			वापस ret;
 
-		/* update blob if blob is null for be with default value */
+		/* update blob अगर blob is null क्रम be with शेष value */
 		skl_tplg_update_be_blob(w, skl);
 
 		/*
@@ -518,456 +519,456 @@ skl_tplg_init_pipe_modules(struct skl_dev *skl, struct skl_pipe *pipe)
 		uuid_mod = (guid_t *)mconfig->guid;
 		mconfig->id.pvt_id = skl_get_pvt_id(skl, uuid_mod,
 						mconfig->id.instance_id);
-		if (mconfig->id.pvt_id < 0)
-			return ret;
+		अगर (mconfig->id.pvt_id < 0)
+			वापस ret;
 		skl_tplg_set_module_init_data(w);
 
 		ret = skl_dsp_get_core(skl->dsp, mconfig->core_id);
-		if (ret < 0) {
+		अगर (ret < 0) अणु
 			dev_err(skl->dev, "Failed to wake up core %d ret=%d\n",
 						mconfig->core_id, ret);
-			return ret;
-		}
+			वापस ret;
+		पूर्ण
 
 		ret = skl_init_module(skl, mconfig);
-		if (ret < 0) {
+		अगर (ret < 0) अणु
 			skl_put_pvt_id(skl, uuid_mod, &mconfig->id.pvt_id);
-			goto err;
-		}
+			जाओ err;
+		पूर्ण
 
 		ret = skl_tplg_set_module_params(w, skl);
-		if (ret < 0)
-			goto err;
-	}
+		अगर (ret < 0)
+			जाओ err;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 err:
 	skl_dsp_put_core(skl->dsp, mconfig->core_id);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int skl_tplg_unload_pipe_modules(struct skl_dev *skl,
-	 struct skl_pipe *pipe)
-{
-	int ret = 0;
-	struct skl_pipe_module *w_module;
-	struct skl_module_cfg *mconfig;
+अटल पूर्णांक skl_tplg_unload_pipe_modules(काष्ठा skl_dev *skl,
+	 काष्ठा skl_pipe *pipe)
+अणु
+	पूर्णांक ret = 0;
+	काष्ठा skl_pipe_module *w_module;
+	काष्ठा skl_module_cfg *mconfig;
 
-	list_for_each_entry(w_module, &pipe->w_list, node) {
+	list_क्रम_each_entry(w_module, &pipe->w_list, node) अणु
 		guid_t *uuid_mod;
 		mconfig  = w_module->w->priv;
 		uuid_mod = (guid_t *)mconfig->guid;
 
-		if (mconfig->module->loadable && skl->dsp->fw_ops.unload_mod &&
-			mconfig->m_state > SKL_MODULE_UNINIT) {
+		अगर (mconfig->module->loadable && skl->dsp->fw_ops.unload_mod &&
+			mconfig->m_state > SKL_MODULE_UNINIT) अणु
 			ret = skl->dsp->fw_ops.unload_mod(skl->dsp,
 						mconfig->id.module_id);
-			if (ret < 0)
-				return -EIO;
-		}
+			अगर (ret < 0)
+				वापस -EIO;
+		पूर्ण
 		skl_put_pvt_id(skl, uuid_mod, &mconfig->id.pvt_id);
 
 		ret = skl_dsp_put_core(skl->dsp, mconfig->core_id);
-		if (ret < 0) {
-			/* don't return; continue with other modules */
+		अगर (ret < 0) अणु
+			/* करोn't वापस; जारी with other modules */
 			dev_err(skl->dev, "Failed to sleep core %d ret=%d\n",
 				mconfig->core_id, ret);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	/* no modules to unload in this path, so return */
-	return ret;
-}
+	/* no modules to unload in this path, so वापस */
+	वापस ret;
+पूर्ण
 
-static bool skl_tplg_is_multi_fmt(struct skl_dev *skl, struct skl_pipe *pipe)
-{
-	struct skl_pipe_fmt *cur_fmt;
-	struct skl_pipe_fmt *next_fmt;
-	int i;
+अटल bool skl_tplg_is_multi_fmt(काष्ठा skl_dev *skl, काष्ठा skl_pipe *pipe)
+अणु
+	काष्ठा skl_pipe_fmt *cur_fmt;
+	काष्ठा skl_pipe_fmt *next_fmt;
+	पूर्णांक i;
 
-	if (pipe->nr_cfgs <= 1)
-		return false;
+	अगर (pipe->nr_cfgs <= 1)
+		वापस false;
 
-	if (pipe->conn_type != SKL_PIPE_CONN_TYPE_FE)
-		return true;
+	अगर (pipe->conn_type != SKL_PIPE_CONN_TYPE_FE)
+		वापस true;
 
-	for (i = 0; i < pipe->nr_cfgs - 1; i++) {
-		if (pipe->direction == SNDRV_PCM_STREAM_PLAYBACK) {
+	क्रम (i = 0; i < pipe->nr_cfgs - 1; i++) अणु
+		अगर (pipe->direction == SNDRV_PCM_STREAM_PLAYBACK) अणु
 			cur_fmt = &pipe->configs[i].out_fmt;
 			next_fmt = &pipe->configs[i + 1].out_fmt;
-		} else {
+		पूर्ण अन्यथा अणु
 			cur_fmt = &pipe->configs[i].in_fmt;
 			next_fmt = &pipe->configs[i + 1].in_fmt;
-		}
+		पूर्ण
 
-		if (!CHECK_HW_PARAMS(cur_fmt->channels, cur_fmt->freq,
+		अगर (!CHECK_HW_PARAMS(cur_fmt->channels, cur_fmt->freq,
 				     cur_fmt->bps,
 				     next_fmt->channels,
 				     next_fmt->freq,
 				     next_fmt->bps))
-			return true;
-	}
+			वापस true;
+	पूर्ण
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
 /*
- * Here, we select pipe format based on the pipe type and pipe
- * direction to determine the current config index for the pipeline.
+ * Here, we select pipe क्रमmat based on the pipe type and pipe
+ * direction to determine the current config index क्रम the pipeline.
  * The config index is then used to select proper module resources.
- * Intermediate pipes currently have a fixed format hence we select the
- * 0th configuratation by default for such pipes.
+ * Intermediate pipes currently have a fixed क्रमmat hence we select the
+ * 0th configuratation by शेष क्रम such pipes.
  */
-static int
-skl_tplg_get_pipe_config(struct skl_dev *skl, struct skl_module_cfg *mconfig)
-{
-	struct skl_pipe *pipe = mconfig->pipe;
-	struct skl_pipe_params *params = pipe->p_params;
-	struct skl_path_config *pconfig = &pipe->configs[0];
-	struct skl_pipe_fmt *fmt = NULL;
+अटल पूर्णांक
+skl_tplg_get_pipe_config(काष्ठा skl_dev *skl, काष्ठा skl_module_cfg *mconfig)
+अणु
+	काष्ठा skl_pipe *pipe = mconfig->pipe;
+	काष्ठा skl_pipe_params *params = pipe->p_params;
+	काष्ठा skl_path_config *pconfig = &pipe->configs[0];
+	काष्ठा skl_pipe_fmt *fmt = शून्य;
 	bool in_fmt = false;
-	int i;
+	पूर्णांक i;
 
-	if (pipe->nr_cfgs == 0) {
+	अगर (pipe->nr_cfgs == 0) अणु
 		pipe->cur_config_idx = 0;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	if (skl_tplg_is_multi_fmt(skl, pipe)) {
+	अगर (skl_tplg_is_multi_fmt(skl, pipe)) अणु
 		pipe->cur_config_idx = pipe->pipe_config_idx;
 		pipe->memory_pages = pconfig->mem_pages;
 		dev_dbg(skl->dev, "found pipe config idx:%d\n",
 			pipe->cur_config_idx);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	if (pipe->conn_type == SKL_PIPE_CONN_TYPE_NONE) {
+	अगर (pipe->conn_type == SKL_PIPE_CONN_TYPE_NONE) अणु
 		dev_dbg(skl->dev, "No conn_type detected, take 0th config\n");
 		pipe->cur_config_idx = 0;
 		pipe->memory_pages = pconfig->mem_pages;
 
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	if ((pipe->conn_type == SKL_PIPE_CONN_TYPE_FE &&
+	अगर ((pipe->conn_type == SKL_PIPE_CONN_TYPE_FE &&
 	     pipe->direction == SNDRV_PCM_STREAM_PLAYBACK) ||
 	     (pipe->conn_type == SKL_PIPE_CONN_TYPE_BE &&
 	     pipe->direction == SNDRV_PCM_STREAM_CAPTURE))
 		in_fmt = true;
 
-	for (i = 0; i < pipe->nr_cfgs; i++) {
+	क्रम (i = 0; i < pipe->nr_cfgs; i++) अणु
 		pconfig = &pipe->configs[i];
-		if (in_fmt)
+		अगर (in_fmt)
 			fmt = &pconfig->in_fmt;
-		else
+		अन्यथा
 			fmt = &pconfig->out_fmt;
 
-		if (CHECK_HW_PARAMS(params->ch, params->s_freq, params->s_fmt,
-				    fmt->channels, fmt->freq, fmt->bps)) {
+		अगर (CHECK_HW_PARAMS(params->ch, params->s_freq, params->s_fmt,
+				    fmt->channels, fmt->freq, fmt->bps)) अणु
 			pipe->cur_config_idx = i;
 			pipe->memory_pages = pconfig->mem_pages;
 			dev_dbg(skl->dev, "Using pipe config: %d\n", i);
 
-			return 0;
-		}
-	}
+			वापस 0;
+		पूर्ण
+	पूर्ण
 
 	dev_err(skl->dev, "Invalid pipe config: %d %d %d for pipe: %d\n",
 		params->ch, params->s_freq, params->s_fmt, pipe->ppl_id);
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
 /*
  * Mixer module represents a pipeline. So in the Pre-PMU event of mixer we
- * need create the pipeline. So we do following:
+ * need create the pipeline. So we करो following:
  *   - Create the pipeline
  *   - Initialize the modules in pipeline
  *   - finally bind all modules together
  */
-static int skl_tplg_mixer_dapm_pre_pmu_event(struct snd_soc_dapm_widget *w,
-							struct skl_dev *skl)
-{
-	int ret;
-	struct skl_module_cfg *mconfig = w->priv;
-	struct skl_pipe_module *w_module;
-	struct skl_pipe *s_pipe = mconfig->pipe;
-	struct skl_module_cfg *src_module = NULL, *dst_module, *module;
-	struct skl_module_deferred_bind *modules;
+अटल पूर्णांक skl_tplg_mixer_dapm_pre_pmu_event(काष्ठा snd_soc_dapm_widget *w,
+							काष्ठा skl_dev *skl)
+अणु
+	पूर्णांक ret;
+	काष्ठा skl_module_cfg *mconfig = w->priv;
+	काष्ठा skl_pipe_module *w_module;
+	काष्ठा skl_pipe *s_pipe = mconfig->pipe;
+	काष्ठा skl_module_cfg *src_module = शून्य, *dst_module, *module;
+	काष्ठा skl_module_deferred_bind *modules;
 
 	ret = skl_tplg_get_pipe_config(skl, mconfig);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	/*
-	 * Create a list of modules for pipe.
+	 * Create a list of modules क्रम pipe.
 	 * This list contains modules from source to sink
 	 */
 	ret = skl_create_pipeline(skl, mconfig->pipe);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	/* Init all pipe modules from source to sink */
 	ret = skl_tplg_init_pipe_modules(skl, s_pipe);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	/* Bind modules from source to sink */
-	list_for_each_entry(w_module, &s_pipe->w_list, node) {
+	list_क्रम_each_entry(w_module, &s_pipe->w_list, node) अणु
 		dst_module = w_module->w->priv;
 
-		if (src_module == NULL) {
+		अगर (src_module == शून्य) अणु
 			src_module = dst_module;
-			continue;
-		}
+			जारी;
+		पूर्ण
 
 		ret = skl_bind_modules(skl, src_module, dst_module);
-		if (ret < 0)
-			return ret;
+		अगर (ret < 0)
+			वापस ret;
 
 		src_module = dst_module;
-	}
+	पूर्ण
 
 	/*
-	 * When the destination module is initialized, check for these modules
+	 * When the destination module is initialized, check क्रम these modules
 	 * in deferred bind list. If found, bind them.
 	 */
-	list_for_each_entry(w_module, &s_pipe->w_list, node) {
-		if (list_empty(&skl->bind_list))
-			break;
+	list_क्रम_each_entry(w_module, &s_pipe->w_list, node) अणु
+		अगर (list_empty(&skl->bind_list))
+			अवरोध;
 
-		list_for_each_entry(modules, &skl->bind_list, node) {
+		list_क्रम_each_entry(modules, &skl->bind_list, node) अणु
 			module = w_module->w->priv;
-			if (modules->dst == module)
+			अगर (modules->dst == module)
 				skl_bind_modules(skl, modules->src,
 							modules->dst);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int skl_fill_sink_instance_id(struct skl_dev *skl, u32 *params,
-				int size, struct skl_module_cfg *mcfg)
-{
-	int i, pvt_id;
+अटल पूर्णांक skl_fill_sink_instance_id(काष्ठा skl_dev *skl, u32 *params,
+				पूर्णांक size, काष्ठा skl_module_cfg *mcfg)
+अणु
+	पूर्णांक i, pvt_id;
 
-	if (mcfg->m_type == SKL_MODULE_TYPE_KPB) {
-		struct skl_kpb_params *kpb_params =
-				(struct skl_kpb_params *)params;
-		struct skl_mod_inst_map *inst = kpb_params->u.map;
+	अगर (mcfg->m_type == SKL_MODULE_TYPE_KPB) अणु
+		काष्ठा skl_kpb_params *kpb_params =
+				(काष्ठा skl_kpb_params *)params;
+		काष्ठा skl_mod_inst_map *inst = kpb_params->u.map;
 
-		for (i = 0; i < kpb_params->num_modules; i++) {
+		क्रम (i = 0; i < kpb_params->num_modules; i++) अणु
 			pvt_id = skl_get_pvt_instance_id_map(skl, inst->mod_id,
 								inst->inst_id);
-			if (pvt_id < 0)
-				return -EINVAL;
+			अगर (pvt_id < 0)
+				वापस -EINVAL;
 
 			inst->inst_id = pvt_id;
 			inst++;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 /*
  * Some modules require params to be set after the module is bound to
  * all pins connected.
  *
- * The module provider initializes set_param flag for such modules and we
+ * The module provider initializes set_param flag क्रम such modules and we
  * send params after binding
  */
-static int skl_tplg_set_module_bind_params(struct snd_soc_dapm_widget *w,
-			struct skl_module_cfg *mcfg, struct skl_dev *skl)
-{
-	int i, ret;
-	struct skl_module_cfg *mconfig = w->priv;
-	const struct snd_kcontrol_new *k;
-	struct soc_bytes_ext *sb;
-	struct skl_algo_data *bc;
-	struct skl_specific_cfg *sp_cfg;
+अटल पूर्णांक skl_tplg_set_module_bind_params(काष्ठा snd_soc_dapm_widget *w,
+			काष्ठा skl_module_cfg *mcfg, काष्ठा skl_dev *skl)
+अणु
+	पूर्णांक i, ret;
+	काष्ठा skl_module_cfg *mconfig = w->priv;
+	स्थिर काष्ठा snd_kcontrol_new *k;
+	काष्ठा soc_bytes_ext *sb;
+	काष्ठा skl_algo_data *bc;
+	काष्ठा skl_specअगरic_cfg *sp_cfg;
 	u32 *params;
 
 	/*
 	 * check all out/in pins are in bind state.
-	 * if so set the module param
+	 * अगर so set the module param
 	 */
-	for (i = 0; i < mcfg->module->max_output_pins; i++) {
-		if (mcfg->m_out_pin[i].pin_state != SKL_PIN_BIND_DONE)
-			return 0;
-	}
+	क्रम (i = 0; i < mcfg->module->max_output_pins; i++) अणु
+		अगर (mcfg->m_out_pin[i].pin_state != SKL_PIN_BIND_DONE)
+			वापस 0;
+	पूर्ण
 
-	for (i = 0; i < mcfg->module->max_input_pins; i++) {
-		if (mcfg->m_in_pin[i].pin_state != SKL_PIN_BIND_DONE)
-			return 0;
-	}
+	क्रम (i = 0; i < mcfg->module->max_input_pins; i++) अणु
+		अगर (mcfg->m_in_pin[i].pin_state != SKL_PIN_BIND_DONE)
+			वापस 0;
+	पूर्ण
 
-	if (mconfig->formats_config.caps_size > 0 &&
-		mconfig->formats_config.set_params == SKL_PARAM_BIND) {
-		sp_cfg = &mconfig->formats_config;
+	अगर (mconfig->क्रमmats_config.caps_size > 0 &&
+		mconfig->क्रमmats_config.set_params == SKL_PARAM_BIND) अणु
+		sp_cfg = &mconfig->क्रमmats_config;
 		ret = skl_set_module_params(skl, sp_cfg->caps,
 					sp_cfg->caps_size,
 					sp_cfg->param_id, mconfig);
-		if (ret < 0)
-			return ret;
-	}
+		अगर (ret < 0)
+			वापस ret;
+	पूर्ण
 
-	for (i = 0; i < w->num_kcontrols; i++) {
+	क्रम (i = 0; i < w->num_kcontrols; i++) अणु
 		k = &w->kcontrol_news[i];
-		if (k->access & SNDRV_CTL_ELEM_ACCESS_TLV_CALLBACK) {
-			sb = (void *) k->private_value;
-			bc = (struct skl_algo_data *)sb->dobj.private;
+		अगर (k->access & SNDRV_CTL_ELEM_ACCESS_TLV_CALLBACK) अणु
+			sb = (व्योम *) k->निजी_value;
+			bc = (काष्ठा skl_algo_data *)sb->करोbj.निजी;
 
-			if (bc->set_params == SKL_PARAM_BIND) {
+			अगर (bc->set_params == SKL_PARAM_BIND) अणु
 				params = kmemdup(bc->params, bc->max, GFP_KERNEL);
-				if (!params)
-					return -ENOMEM;
+				अगर (!params)
+					वापस -ENOMEM;
 
 				skl_fill_sink_instance_id(skl, params, bc->max,
 								mconfig);
 
 				ret = skl_set_module_params(skl, params,
 						bc->max, bc->param_id, mconfig);
-				kfree(params);
+				kमुक्त(params);
 
-				if (ret < 0)
-					return ret;
-			}
-		}
-	}
+				अगर (ret < 0)
+					वापस ret;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int skl_get_module_id(struct skl_dev *skl, guid_t *uuid)
-{
-	struct uuid_module *module;
+अटल पूर्णांक skl_get_module_id(काष्ठा skl_dev *skl, guid_t *uuid)
+अणु
+	काष्ठा uuid_module *module;
 
-	list_for_each_entry(module, &skl->uuid_list, list) {
-		if (guid_equal(uuid, &module->uuid))
-			return module->id;
-	}
+	list_क्रम_each_entry(module, &skl->uuid_list, list) अणु
+		अगर (guid_equal(uuid, &module->uuid))
+			वापस module->id;
+	पूर्ण
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static int skl_tplg_find_moduleid_from_uuid(struct skl_dev *skl,
-					const struct snd_kcontrol_new *k)
-{
-	struct soc_bytes_ext *sb = (void *) k->private_value;
-	struct skl_algo_data *bc = (struct skl_algo_data *)sb->dobj.private;
-	struct skl_kpb_params *uuid_params, *params;
-	struct hdac_bus *bus = skl_to_bus(skl);
-	int i, size, module_id;
+अटल पूर्णांक skl_tplg_find_moduleid_from_uuid(काष्ठा skl_dev *skl,
+					स्थिर काष्ठा snd_kcontrol_new *k)
+अणु
+	काष्ठा soc_bytes_ext *sb = (व्योम *) k->निजी_value;
+	काष्ठा skl_algo_data *bc = (काष्ठा skl_algo_data *)sb->करोbj.निजी;
+	काष्ठा skl_kpb_params *uuid_params, *params;
+	काष्ठा hdac_bus *bus = skl_to_bus(skl);
+	पूर्णांक i, size, module_id;
 
-	if (bc->set_params == SKL_PARAM_BIND && bc->max) {
-		uuid_params = (struct skl_kpb_params *)bc->params;
-		size = struct_size(params, u.map, uuid_params->num_modules);
+	अगर (bc->set_params == SKL_PARAM_BIND && bc->max) अणु
+		uuid_params = (काष्ठा skl_kpb_params *)bc->params;
+		size = काष्ठा_size(params, u.map, uuid_params->num_modules);
 
 		params = devm_kzalloc(bus->dev, size, GFP_KERNEL);
-		if (!params)
-			return -ENOMEM;
+		अगर (!params)
+			वापस -ENOMEM;
 
 		params->num_modules = uuid_params->num_modules;
 
-		for (i = 0; i < uuid_params->num_modules; i++) {
+		क्रम (i = 0; i < uuid_params->num_modules; i++) अणु
 			module_id = skl_get_module_id(skl,
 				&uuid_params->u.map_uuid[i].mod_uuid);
-			if (module_id < 0) {
-				devm_kfree(bus->dev, params);
-				return -EINVAL;
-			}
+			अगर (module_id < 0) अणु
+				devm_kमुक्त(bus->dev, params);
+				वापस -EINVAL;
+			पूर्ण
 
 			params->u.map[i].mod_id = module_id;
 			params->u.map[i].inst_id =
 				uuid_params->u.map_uuid[i].inst_id;
-		}
+		पूर्ण
 
-		devm_kfree(bus->dev, bc->params);
-		bc->params = (char *)params;
+		devm_kमुक्त(bus->dev, bc->params);
+		bc->params = (अक्षर *)params;
 		bc->max = size;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * Retrieve the module id from UUID mentioned in the
  * post bind params
  */
-void skl_tplg_add_moduleid_in_bind_params(struct skl_dev *skl,
-				struct snd_soc_dapm_widget *w)
-{
-	struct skl_module_cfg *mconfig = w->priv;
-	int i;
+व्योम skl_tplg_add_moduleid_in_bind_params(काष्ठा skl_dev *skl,
+				काष्ठा snd_soc_dapm_widget *w)
+अणु
+	काष्ठा skl_module_cfg *mconfig = w->priv;
+	पूर्णांक i;
 
 	/*
-	 * Post bind params are used for only for KPB
+	 * Post bind params are used क्रम only क्रम KPB
 	 * to set copier instances to drain the data
 	 * in fast mode
 	 */
-	if (mconfig->m_type != SKL_MODULE_TYPE_KPB)
-		return;
+	अगर (mconfig->m_type != SKL_MODULE_TYPE_KPB)
+		वापस;
 
-	for (i = 0; i < w->num_kcontrols; i++)
-		if ((w->kcontrol_news[i].access &
+	क्रम (i = 0; i < w->num_kcontrols; i++)
+		अगर ((w->kcontrol_news[i].access &
 			SNDRV_CTL_ELEM_ACCESS_TLV_CALLBACK) &&
 			(skl_tplg_find_moduleid_from_uuid(skl,
 			&w->kcontrol_news[i]) < 0))
 			dev_err(skl->dev,
 				"%s: invalid kpb post bind params\n",
 				__func__);
-}
+पूर्ण
 
-static int skl_tplg_module_add_deferred_bind(struct skl_dev *skl,
-	struct skl_module_cfg *src, struct skl_module_cfg *dst)
-{
-	struct skl_module_deferred_bind *m_list, *modules;
-	int i;
+अटल पूर्णांक skl_tplg_module_add_deferred_bind(काष्ठा skl_dev *skl,
+	काष्ठा skl_module_cfg *src, काष्ठा skl_module_cfg *dst)
+अणु
+	काष्ठा skl_module_deferred_bind *m_list, *modules;
+	पूर्णांक i;
 
-	/* only supported for module with static pin connection */
-	for (i = 0; i < dst->module->max_input_pins; i++) {
-		struct skl_module_pin *pin = &dst->m_in_pin[i];
+	/* only supported क्रम module with अटल pin connection */
+	क्रम (i = 0; i < dst->module->max_input_pins; i++) अणु
+		काष्ठा skl_module_pin *pin = &dst->m_in_pin[i];
 
-		if (pin->is_dynamic)
-			continue;
+		अगर (pin->is_dynamic)
+			जारी;
 
-		if ((pin->id.module_id  == src->id.module_id) &&
-			(pin->id.instance_id  == src->id.instance_id)) {
+		अगर ((pin->id.module_id  == src->id.module_id) &&
+			(pin->id.instance_id  == src->id.instance_id)) अणु
 
-			if (!list_empty(&skl->bind_list)) {
-				list_for_each_entry(modules, &skl->bind_list, node) {
-					if (modules->src == src && modules->dst == dst)
-						return 0;
-				}
-			}
+			अगर (!list_empty(&skl->bind_list)) अणु
+				list_क्रम_each_entry(modules, &skl->bind_list, node) अणु
+					अगर (modules->src == src && modules->dst == dst)
+						वापस 0;
+				पूर्ण
+			पूर्ण
 
-			m_list = kzalloc(sizeof(*m_list), GFP_KERNEL);
-			if (!m_list)
-				return -ENOMEM;
+			m_list = kzalloc(माप(*m_list), GFP_KERNEL);
+			अगर (!m_list)
+				वापस -ENOMEM;
 
 			m_list->src = src;
 			m_list->dst = dst;
 
 			list_add(&m_list->node, &skl->bind_list);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int skl_tplg_bind_sinks(struct snd_soc_dapm_widget *w,
-				struct skl_dev *skl,
-				struct snd_soc_dapm_widget *src_w,
-				struct skl_module_cfg *src_mconfig)
-{
-	struct snd_soc_dapm_path *p;
-	struct snd_soc_dapm_widget *sink = NULL, *next_sink = NULL;
-	struct skl_module_cfg *sink_mconfig;
-	int ret;
+अटल पूर्णांक skl_tplg_bind_sinks(काष्ठा snd_soc_dapm_widget *w,
+				काष्ठा skl_dev *skl,
+				काष्ठा snd_soc_dapm_widget *src_w,
+				काष्ठा skl_module_cfg *src_mconfig)
+अणु
+	काष्ठा snd_soc_dapm_path *p;
+	काष्ठा snd_soc_dapm_widget *sink = शून्य, *next_sink = शून्य;
+	काष्ठा skl_module_cfg *sink_mconfig;
+	पूर्णांक ret;
 
-	snd_soc_dapm_widget_for_each_sink_path(w, p) {
-		if (!p->connect)
-			continue;
+	snd_soc_dapm_widget_क्रम_each_sink_path(w, p) अणु
+		अगर (!p->connect)
+			जारी;
 
 		dev_dbg(skl->dev,
 			"%s: src widget=%s\n", __func__, w->name);
@@ -976,50 +977,50 @@ static int skl_tplg_bind_sinks(struct snd_soc_dapm_widget *w,
 
 		next_sink = p->sink;
 
-		if (!is_skl_dsp_widget_type(p->sink, skl->dev))
-			return skl_tplg_bind_sinks(p->sink, skl, src_w, src_mconfig);
+		अगर (!is_skl_dsp_widget_type(p->sink, skl->dev))
+			वापस skl_tplg_bind_sinks(p->sink, skl, src_w, src_mconfig);
 
 		/*
-		 * here we will check widgets in sink pipelines, so that
-		 * can be any widgets type and we are only interested if
-		 * they are ones used for SKL so check that first
+		 * here we will check widमाला_लो in sink pipelines, so that
+		 * can be any widमाला_लो type and we are only पूर्णांकerested अगर
+		 * they are ones used क्रम SKL so check that first
 		 */
-		if ((p->sink->priv != NULL) &&
-				is_skl_dsp_widget_type(p->sink, skl->dev)) {
+		अगर ((p->sink->priv != शून्य) &&
+				is_skl_dsp_widget_type(p->sink, skl->dev)) अणु
 
 			sink = p->sink;
 			sink_mconfig = sink->priv;
 
 			/*
 			 * Modules other than PGA leaf can be connected
-			 * directly or via switch to a module in another
+			 * directly or via चयन to a module in another
 			 * pipeline. EX: reference path
 			 * when the path is enabled, the dst module that needs
-			 * to be bound may not be initialized. if the module is
+			 * to be bound may not be initialized. अगर the module is
 			 * not initialized, add these modules in the deferred
 			 * bind list and when the dst module is initialised,
 			 * bind this module to the dst_module in deferred list.
 			 */
-			if (((src_mconfig->m_state == SKL_MODULE_INIT_DONE)
-				&& (sink_mconfig->m_state == SKL_MODULE_UNINIT))) {
+			अगर (((src_mconfig->m_state == SKL_MODULE_INIT_DONE)
+				&& (sink_mconfig->m_state == SKL_MODULE_UNINIT))) अणु
 
 				ret = skl_tplg_module_add_deferred_bind(skl,
 						src_mconfig, sink_mconfig);
 
-				if (ret < 0)
-					return ret;
+				अगर (ret < 0)
+					वापस ret;
 
-			}
+			पूर्ण
 
 
-			if (src_mconfig->m_state == SKL_MODULE_UNINIT ||
+			अगर (src_mconfig->m_state == SKL_MODULE_UNINIT ||
 				sink_mconfig->m_state == SKL_MODULE_UNINIT)
-				continue;
+				जारी;
 
 			/* Bind source to sink, mixin is always source */
 			ret = skl_bind_modules(skl, src_mconfig, sink_mconfig);
-			if (ret)
-				return ret;
+			अगर (ret)
+				वापस ret;
 
 			/* set module params after bind */
 			skl_tplg_set_module_bind_params(src_w,
@@ -1028,115 +1029,115 @@ static int skl_tplg_bind_sinks(struct snd_soc_dapm_widget *w,
 					sink_mconfig, skl);
 
 			/* Start sinks pipe first */
-			if (sink_mconfig->pipe->state != SKL_PIPE_STARTED) {
-				if (sink_mconfig->pipe->conn_type !=
+			अगर (sink_mconfig->pipe->state != SKL_PIPE_STARTED) अणु
+				अगर (sink_mconfig->pipe->conn_type !=
 							SKL_PIPE_CONN_TYPE_FE)
 					ret = skl_run_pipe(skl,
 							sink_mconfig->pipe);
-				if (ret)
-					return ret;
-			}
-		}
-	}
+				अगर (ret)
+					वापस ret;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	if (!sink && next_sink)
-		return skl_tplg_bind_sinks(next_sink, skl, src_w, src_mconfig);
+	अगर (!sink && next_sink)
+		वापस skl_tplg_bind_sinks(next_sink, skl, src_w, src_mconfig);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * A PGA represents a module in a pipeline. So in the Pre-PMU event of PGA
- * we need to do following:
+ * we need to करो following:
  *   - Bind to sink pipeline
- *      Since the sink pipes can be running and we don't get mixer event on
- *      connect for already running mixer, we need to find the sink pipes
+ *      Since the sink pipes can be running and we करोn't get mixer event on
+ *      connect क्रम alपढ़ोy running mixer, we need to find the sink pipes
  *      here and bind to them. This way dynamic connect works.
- *   - Start sink pipeline, if not running
+ *   - Start sink pipeline, अगर not running
  *   - Then run current pipe
  */
-static int skl_tplg_pga_dapm_pre_pmu_event(struct snd_soc_dapm_widget *w,
-							struct skl_dev *skl)
-{
-	struct skl_module_cfg *src_mconfig;
-	int ret = 0;
+अटल पूर्णांक skl_tplg_pga_dapm_pre_pmu_event(काष्ठा snd_soc_dapm_widget *w,
+							काष्ठा skl_dev *skl)
+अणु
+	काष्ठा skl_module_cfg *src_mconfig;
+	पूर्णांक ret = 0;
 
 	src_mconfig = w->priv;
 
 	/*
 	 * find which sink it is connected to, bind with the sink,
-	 * if sink is not started, start sink pipe first, then start
+	 * अगर sink is not started, start sink pipe first, then start
 	 * this pipe
 	 */
 	ret = skl_tplg_bind_sinks(w, skl, w, src_mconfig);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	/* Start source pipe last after starting all sinks */
-	if (src_mconfig->pipe->conn_type != SKL_PIPE_CONN_TYPE_FE)
-		return skl_run_pipe(skl, src_mconfig->pipe);
+	अगर (src_mconfig->pipe->conn_type != SKL_PIPE_CONN_TYPE_FE)
+		वापस skl_run_pipe(skl, src_mconfig->pipe);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct snd_soc_dapm_widget *skl_get_src_dsp_widget(
-		struct snd_soc_dapm_widget *w, struct skl_dev *skl)
-{
-	struct snd_soc_dapm_path *p;
-	struct snd_soc_dapm_widget *src_w = NULL;
+अटल काष्ठा snd_soc_dapm_widget *skl_get_src_dsp_widget(
+		काष्ठा snd_soc_dapm_widget *w, काष्ठा skl_dev *skl)
+अणु
+	काष्ठा snd_soc_dapm_path *p;
+	काष्ठा snd_soc_dapm_widget *src_w = शून्य;
 
-	snd_soc_dapm_widget_for_each_source_path(w, p) {
+	snd_soc_dapm_widget_क्रम_each_source_path(w, p) अणु
 		src_w = p->source;
-		if (!p->connect)
-			continue;
+		अगर (!p->connect)
+			जारी;
 
 		dev_dbg(skl->dev, "sink widget=%s\n", w->name);
 		dev_dbg(skl->dev, "src widget=%s\n", p->source->name);
 
 		/*
-		 * here we will check widgets in sink pipelines, so that can
-		 * be any widgets type and we are only interested if they are
-		 * ones used for SKL so check that first
+		 * here we will check widमाला_लो in sink pipelines, so that can
+		 * be any widमाला_लो type and we are only पूर्णांकerested अगर they are
+		 * ones used क्रम SKL so check that first
 		 */
-		if ((p->source->priv != NULL) &&
-				is_skl_dsp_widget_type(p->source, skl->dev)) {
-			return p->source;
-		}
-	}
+		अगर ((p->source->priv != शून्य) &&
+				is_skl_dsp_widget_type(p->source, skl->dev)) अणु
+			वापस p->source;
+		पूर्ण
+	पूर्ण
 
-	if (src_w != NULL)
-		return skl_get_src_dsp_widget(src_w, skl);
+	अगर (src_w != शून्य)
+		वापस skl_get_src_dsp_widget(src_w, skl);
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
 /*
- * in the Post-PMU event of mixer we need to do following:
- *   - Check if this pipe is running
- *   - if not, then
+ * in the Post-PMU event of mixer we need to करो following:
+ *   - Check अगर this pipe is running
+ *   - अगर not, then
  *	- bind this pipeline to its source pipeline
- *	  if source pipe is already running, this means it is a dynamic
+ *	  अगर source pipe is alपढ़ोy running, this means it is a dynamic
  *	  connection and we need to bind only to that pipe
  *	- start this pipeline
  */
-static int skl_tplg_mixer_dapm_post_pmu_event(struct snd_soc_dapm_widget *w,
-							struct skl_dev *skl)
-{
-	int ret = 0;
-	struct snd_soc_dapm_widget *source, *sink;
-	struct skl_module_cfg *src_mconfig, *sink_mconfig;
-	int src_pipe_started = 0;
+अटल पूर्णांक skl_tplg_mixer_dapm_post_pmu_event(काष्ठा snd_soc_dapm_widget *w,
+							काष्ठा skl_dev *skl)
+अणु
+	पूर्णांक ret = 0;
+	काष्ठा snd_soc_dapm_widget *source, *sink;
+	काष्ठा skl_module_cfg *src_mconfig, *sink_mconfig;
+	पूर्णांक src_pipe_started = 0;
 
 	sink = w;
 	sink_mconfig = sink->priv;
 
 	/*
-	 * If source pipe is already started, that means source is driving
-	 * one more sink before this sink got connected, Since source is
+	 * If source pipe is alपढ़ोy started, that means source is driving
+	 * one more sink beक्रमe this sink got connected, Since source is
 	 * started, bind this sink to source and start this pipe.
 	 */
 	source = skl_get_src_dsp_widget(w, skl);
-	if (source != NULL) {
+	अगर (source != शून्य) अणु
 		src_mconfig = source->priv;
 		sink_mconfig = sink->priv;
 		src_pipe_started = 1;
@@ -1145,945 +1146,945 @@ static int skl_tplg_mixer_dapm_post_pmu_event(struct snd_soc_dapm_widget *w,
 		 * check pipe state, then no need to bind or start the
 		 * pipe
 		 */
-		if (src_mconfig->pipe->state != SKL_PIPE_STARTED)
+		अगर (src_mconfig->pipe->state != SKL_PIPE_STARTED)
 			src_pipe_started = 0;
-	}
+	पूर्ण
 
-	if (src_pipe_started) {
+	अगर (src_pipe_started) अणु
 		ret = skl_bind_modules(skl, src_mconfig, sink_mconfig);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 
 		/* set module params after bind */
 		skl_tplg_set_module_bind_params(source, src_mconfig, skl);
 		skl_tplg_set_module_bind_params(sink, sink_mconfig, skl);
 
-		if (sink_mconfig->pipe->conn_type != SKL_PIPE_CONN_TYPE_FE)
+		अगर (sink_mconfig->pipe->conn_type != SKL_PIPE_CONN_TYPE_FE)
 			ret = skl_run_pipe(skl, sink_mconfig->pipe);
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
- * in the Pre-PMD event of mixer we need to do following:
+ * in the Pre-PMD event of mixer we need to करो following:
  *   - Stop the pipe
- *   - find the source connections and remove that from dapm_path_list
- *   - unbind with source pipelines if still connected
+ *   - find the source connections and हटाओ that from dapm_path_list
+ *   - unbind with source pipelines अगर still connected
  */
-static int skl_tplg_mixer_dapm_pre_pmd_event(struct snd_soc_dapm_widget *w,
-							struct skl_dev *skl)
-{
-	struct skl_module_cfg *src_mconfig, *sink_mconfig;
-	int ret = 0, i;
+अटल पूर्णांक skl_tplg_mixer_dapm_pre_pmd_event(काष्ठा snd_soc_dapm_widget *w,
+							काष्ठा skl_dev *skl)
+अणु
+	काष्ठा skl_module_cfg *src_mconfig, *sink_mconfig;
+	पूर्णांक ret = 0, i;
 
 	sink_mconfig = w->priv;
 
 	/* Stop the pipe */
 	ret = skl_stop_pipe(skl, sink_mconfig->pipe);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	for (i = 0; i < sink_mconfig->module->max_input_pins; i++) {
-		if (sink_mconfig->m_in_pin[i].pin_state == SKL_PIN_BIND_DONE) {
+	क्रम (i = 0; i < sink_mconfig->module->max_input_pins; i++) अणु
+		अगर (sink_mconfig->m_in_pin[i].pin_state == SKL_PIN_BIND_DONE) अणु
 			src_mconfig = sink_mconfig->m_in_pin[i].tgt_mcfg;
-			if (!src_mconfig)
-				continue;
+			अगर (!src_mconfig)
+				जारी;
 
 			ret = skl_unbind_modules(skl,
 						src_mconfig, sink_mconfig);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
- * in the Post-PMD event of mixer we need to do following:
+ * in the Post-PMD event of mixer we need to करो following:
  *   - Unbind the modules within the pipeline
  *   - Delete the pipeline (modules are not required to be explicitly
  *     deleted, pipeline delete is enough here
  */
-static int skl_tplg_mixer_dapm_post_pmd_event(struct snd_soc_dapm_widget *w,
-							struct skl_dev *skl)
-{
-	struct skl_module_cfg *mconfig = w->priv;
-	struct skl_pipe_module *w_module;
-	struct skl_module_cfg *src_module = NULL, *dst_module;
-	struct skl_pipe *s_pipe = mconfig->pipe;
-	struct skl_module_deferred_bind *modules, *tmp;
+अटल पूर्णांक skl_tplg_mixer_dapm_post_pmd_event(काष्ठा snd_soc_dapm_widget *w,
+							काष्ठा skl_dev *skl)
+अणु
+	काष्ठा skl_module_cfg *mconfig = w->priv;
+	काष्ठा skl_pipe_module *w_module;
+	काष्ठा skl_module_cfg *src_module = शून्य, *dst_module;
+	काष्ठा skl_pipe *s_pipe = mconfig->pipe;
+	काष्ठा skl_module_deferred_bind *modules, *पंचांगp;
 
-	if (s_pipe->state == SKL_PIPE_INVALID)
-		return -EINVAL;
+	अगर (s_pipe->state == SKL_PIPE_INVALID)
+		वापस -EINVAL;
 
-	list_for_each_entry(w_module, &s_pipe->w_list, node) {
-		if (list_empty(&skl->bind_list))
-			break;
+	list_क्रम_each_entry(w_module, &s_pipe->w_list, node) अणु
+		अगर (list_empty(&skl->bind_list))
+			अवरोध;
 
 		src_module = w_module->w->priv;
 
-		list_for_each_entry_safe(modules, tmp, &skl->bind_list, node) {
+		list_क्रम_each_entry_safe(modules, पंचांगp, &skl->bind_list, node) अणु
 			/*
 			 * When the destination module is deleted, Unbind the
 			 * modules from deferred bind list.
 			 */
-			if (modules->dst == src_module) {
+			अगर (modules->dst == src_module) अणु
 				skl_unbind_modules(skl, modules->src,
 						modules->dst);
-			}
+			पूर्ण
 
 			/*
-			 * When the source module is deleted, remove this entry
+			 * When the source module is deleted, हटाओ this entry
 			 * from the deferred bind list.
 			 */
-			if (modules->src == src_module) {
+			अगर (modules->src == src_module) अणु
 				list_del(&modules->node);
-				modules->src = NULL;
-				modules->dst = NULL;
-				kfree(modules);
-			}
-		}
-	}
+				modules->src = शून्य;
+				modules->dst = शून्य;
+				kमुक्त(modules);
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	list_for_each_entry(w_module, &s_pipe->w_list, node) {
+	list_क्रम_each_entry(w_module, &s_pipe->w_list, node) अणु
 		dst_module = w_module->w->priv;
 
-		if (src_module == NULL) {
+		अगर (src_module == शून्य) अणु
 			src_module = dst_module;
-			continue;
-		}
+			जारी;
+		पूर्ण
 
 		skl_unbind_modules(skl, src_module, dst_module);
 		src_module = dst_module;
-	}
+	पूर्ण
 
 	skl_delete_pipe(skl, mconfig->pipe);
 
-	list_for_each_entry(w_module, &s_pipe->w_list, node) {
+	list_क्रम_each_entry(w_module, &s_pipe->w_list, node) अणु
 		src_module = w_module->w->priv;
 		src_module->m_state = SKL_MODULE_UNINIT;
-	}
+	पूर्ण
 
-	return skl_tplg_unload_pipe_modules(skl, s_pipe);
-}
+	वापस skl_tplg_unload_pipe_modules(skl, s_pipe);
+पूर्ण
 
 /*
- * in the Post-PMD event of PGA we need to do following:
+ * in the Post-PMD event of PGA we need to करो following:
  *   - Stop the pipeline
  *   - In source pipe is connected, unbind with source pipelines
  */
-static int skl_tplg_pga_dapm_post_pmd_event(struct snd_soc_dapm_widget *w,
-							struct skl_dev *skl)
-{
-	struct skl_module_cfg *src_mconfig, *sink_mconfig;
-	int ret = 0, i;
+अटल पूर्णांक skl_tplg_pga_dapm_post_pmd_event(काष्ठा snd_soc_dapm_widget *w,
+							काष्ठा skl_dev *skl)
+अणु
+	काष्ठा skl_module_cfg *src_mconfig, *sink_mconfig;
+	पूर्णांक ret = 0, i;
 
 	src_mconfig = w->priv;
 
 	/* Stop the pipe since this is a mixin module */
 	ret = skl_stop_pipe(skl, src_mconfig->pipe);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	for (i = 0; i < src_mconfig->module->max_output_pins; i++) {
-		if (src_mconfig->m_out_pin[i].pin_state == SKL_PIN_BIND_DONE) {
+	क्रम (i = 0; i < src_mconfig->module->max_output_pins; i++) अणु
+		अगर (src_mconfig->m_out_pin[i].pin_state == SKL_PIN_BIND_DONE) अणु
 			sink_mconfig = src_mconfig->m_out_pin[i].tgt_mcfg;
-			if (!sink_mconfig)
-				continue;
+			अगर (!sink_mconfig)
+				जारी;
 			/*
-			 * This is a connecter and if path is found that means
+			 * This is a connecter and अगर path is found that means
 			 * unbind between source and sink has not happened yet
 			 */
 			ret = skl_unbind_modules(skl, src_mconfig,
 							sink_mconfig);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
  * In modelling, we assume there will be ONLY one mixer in a pipeline. If a
  * second one is required that is created as another pipe entity.
- * The mixer is responsible for pipe management and represent a pipeline
+ * The mixer is responsible क्रम pipe management and represent a pipeline
  * instance
  */
-static int skl_tplg_mixer_event(struct snd_soc_dapm_widget *w,
-				struct snd_kcontrol *k, int event)
-{
-	struct snd_soc_dapm_context *dapm = w->dapm;
-	struct skl_dev *skl = get_skl_ctx(dapm->dev);
+अटल पूर्णांक skl_tplg_mixer_event(काष्ठा snd_soc_dapm_widget *w,
+				काष्ठा snd_kcontrol *k, पूर्णांक event)
+अणु
+	काष्ठा snd_soc_dapm_context *dapm = w->dapm;
+	काष्ठा skl_dev *skl = get_skl_ctx(dapm->dev);
 
-	switch (event) {
-	case SND_SOC_DAPM_PRE_PMU:
-		return skl_tplg_mixer_dapm_pre_pmu_event(w, skl);
+	चयन (event) अणु
+	हाल SND_SOC_DAPM_PRE_PMU:
+		वापस skl_tplg_mixer_dapm_pre_pmu_event(w, skl);
 
-	case SND_SOC_DAPM_POST_PMU:
-		return skl_tplg_mixer_dapm_post_pmu_event(w, skl);
+	हाल SND_SOC_DAPM_POST_PMU:
+		वापस skl_tplg_mixer_dapm_post_pmu_event(w, skl);
 
-	case SND_SOC_DAPM_PRE_PMD:
-		return skl_tplg_mixer_dapm_pre_pmd_event(w, skl);
+	हाल SND_SOC_DAPM_PRE_PMD:
+		वापस skl_tplg_mixer_dapm_pre_pmd_event(w, skl);
 
-	case SND_SOC_DAPM_POST_PMD:
-		return skl_tplg_mixer_dapm_post_pmd_event(w, skl);
-	}
+	हाल SND_SOC_DAPM_POST_PMD:
+		वापस skl_tplg_mixer_dapm_post_pmd_event(w, skl);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * In modelling, we assumed rest of the modules in pipeline are PGA. But we
- * are interested in last PGA (leaf PGA) in a pipeline to disconnect with
+ * are पूर्णांकerested in last PGA (leaf PGA) in a pipeline to disconnect with
  * the sink when it is running (two FE to one BE or one FE to two BE)
  * scenarios
  */
-static int skl_tplg_pga_event(struct snd_soc_dapm_widget *w,
-			struct snd_kcontrol *k, int event)
+अटल पूर्णांक skl_tplg_pga_event(काष्ठा snd_soc_dapm_widget *w,
+			काष्ठा snd_kcontrol *k, पूर्णांक event)
 
-{
-	struct snd_soc_dapm_context *dapm = w->dapm;
-	struct skl_dev *skl = get_skl_ctx(dapm->dev);
+अणु
+	काष्ठा snd_soc_dapm_context *dapm = w->dapm;
+	काष्ठा skl_dev *skl = get_skl_ctx(dapm->dev);
 
-	switch (event) {
-	case SND_SOC_DAPM_PRE_PMU:
-		return skl_tplg_pga_dapm_pre_pmu_event(w, skl);
+	चयन (event) अणु
+	हाल SND_SOC_DAPM_PRE_PMU:
+		वापस skl_tplg_pga_dapm_pre_pmu_event(w, skl);
 
-	case SND_SOC_DAPM_POST_PMD:
-		return skl_tplg_pga_dapm_post_pmd_event(w, skl);
-	}
+	हाल SND_SOC_DAPM_POST_PMD:
+		वापस skl_tplg_pga_dapm_post_pmd_event(w, skl);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int skl_tplg_multi_config_set_get(struct snd_kcontrol *kcontrol,
-					 struct snd_ctl_elem_value *ucontrol,
+अटल पूर्णांक skl_tplg_multi_config_set_get(काष्ठा snd_kcontrol *kcontrol,
+					 काष्ठा snd_ctl_elem_value *ucontrol,
 					 bool is_set)
-{
-	struct snd_soc_component *component =
+अणु
+	काष्ठा snd_soc_component *component =
 		snd_soc_kcontrol_component(kcontrol);
-	struct hdac_bus *bus = snd_soc_component_get_drvdata(component);
-	struct skl_dev *skl = bus_to_skl(bus);
-	struct skl_pipeline *ppl;
-	struct skl_pipe *pipe = NULL;
-	struct soc_enum *ec = (struct soc_enum *)kcontrol->private_value;
+	काष्ठा hdac_bus *bus = snd_soc_component_get_drvdata(component);
+	काष्ठा skl_dev *skl = bus_to_skl(bus);
+	काष्ठा skl_pipeline *ppl;
+	काष्ठा skl_pipe *pipe = शून्य;
+	काष्ठा soc_क्रमागत *ec = (काष्ठा soc_क्रमागत *)kcontrol->निजी_value;
 	u32 *pipe_id;
 
-	if (!ec)
-		return -EINVAL;
+	अगर (!ec)
+		वापस -EINVAL;
 
-	if (is_set && ucontrol->value.enumerated.item[0] > ec->items)
-		return -EINVAL;
+	अगर (is_set && ucontrol->value.क्रमागतerated.item[0] > ec->items)
+		वापस -EINVAL;
 
-	pipe_id = ec->dobj.private;
+	pipe_id = ec->करोbj.निजी;
 
-	list_for_each_entry(ppl, &skl->ppl_list, node) {
-		if (ppl->pipe->ppl_id == *pipe_id) {
+	list_क्रम_each_entry(ppl, &skl->ppl_list, node) अणु
+		अगर (ppl->pipe->ppl_id == *pipe_id) अणु
 			pipe = ppl->pipe;
-			break;
-		}
-	}
-	if (!pipe)
-		return -EIO;
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	अगर (!pipe)
+		वापस -EIO;
 
-	if (is_set)
-		pipe->pipe_config_idx = ucontrol->value.enumerated.item[0];
-	else
-		ucontrol->value.enumerated.item[0]  =  pipe->pipe_config_idx;
+	अगर (is_set)
+		pipe->pipe_config_idx = ucontrol->value.क्रमागतerated.item[0];
+	अन्यथा
+		ucontrol->value.क्रमागतerated.item[0]  =  pipe->pipe_config_idx;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int skl_tplg_multi_config_get(struct snd_kcontrol *kcontrol,
-				     struct snd_ctl_elem_value *ucontrol)
-{
-	return skl_tplg_multi_config_set_get(kcontrol, ucontrol, false);
-}
+अटल पूर्णांक skl_tplg_multi_config_get(काष्ठा snd_kcontrol *kcontrol,
+				     काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	वापस skl_tplg_multi_config_set_get(kcontrol, ucontrol, false);
+पूर्ण
 
-static int skl_tplg_multi_config_set(struct snd_kcontrol *kcontrol,
-				     struct snd_ctl_elem_value *ucontrol)
-{
-	return skl_tplg_multi_config_set_get(kcontrol, ucontrol, true);
-}
+अटल पूर्णांक skl_tplg_multi_config_set(काष्ठा snd_kcontrol *kcontrol,
+				     काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	वापस skl_tplg_multi_config_set_get(kcontrol, ucontrol, true);
+पूर्ण
 
-static int skl_tplg_multi_config_get_dmic(struct snd_kcontrol *kcontrol,
-					  struct snd_ctl_elem_value *ucontrol)
-{
-	return skl_tplg_multi_config_set_get(kcontrol, ucontrol, false);
-}
+अटल पूर्णांक skl_tplg_multi_config_get_dmic(काष्ठा snd_kcontrol *kcontrol,
+					  काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	वापस skl_tplg_multi_config_set_get(kcontrol, ucontrol, false);
+पूर्ण
 
-static int skl_tplg_multi_config_set_dmic(struct snd_kcontrol *kcontrol,
-					  struct snd_ctl_elem_value *ucontrol)
-{
-	return skl_tplg_multi_config_set_get(kcontrol, ucontrol, true);
-}
+अटल पूर्णांक skl_tplg_multi_config_set_dmic(काष्ठा snd_kcontrol *kcontrol,
+					  काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	वापस skl_tplg_multi_config_set_get(kcontrol, ucontrol, true);
+पूर्ण
 
-static int skl_tplg_tlv_control_get(struct snd_kcontrol *kcontrol,
-			unsigned int __user *data, unsigned int size)
-{
-	struct soc_bytes_ext *sb =
-			(struct soc_bytes_ext *)kcontrol->private_value;
-	struct skl_algo_data *bc = (struct skl_algo_data *)sb->dobj.private;
-	struct snd_soc_dapm_widget *w = snd_soc_dapm_kcontrol_widget(kcontrol);
-	struct skl_module_cfg *mconfig = w->priv;
-	struct skl_dev *skl = get_skl_ctx(w->dapm->dev);
+अटल पूर्णांक skl_tplg_tlv_control_get(काष्ठा snd_kcontrol *kcontrol,
+			अचिन्हित पूर्णांक __user *data, अचिन्हित पूर्णांक size)
+अणु
+	काष्ठा soc_bytes_ext *sb =
+			(काष्ठा soc_bytes_ext *)kcontrol->निजी_value;
+	काष्ठा skl_algo_data *bc = (काष्ठा skl_algo_data *)sb->करोbj.निजी;
+	काष्ठा snd_soc_dapm_widget *w = snd_soc_dapm_kcontrol_widget(kcontrol);
+	काष्ठा skl_module_cfg *mconfig = w->priv;
+	काष्ठा skl_dev *skl = get_skl_ctx(w->dapm->dev);
 
-	if (w->power)
+	अगर (w->घातer)
 		skl_get_module_params(skl, (u32 *)bc->params,
 				      bc->size, bc->param_id, mconfig);
 
-	/* decrement size for TLV header */
-	size -= 2 * sizeof(u32);
+	/* decrement size क्रम TLV header */
+	size -= 2 * माप(u32);
 
-	/* check size as we don't want to send kernel data */
-	if (size > bc->max)
+	/* check size as we करोn't want to send kernel data */
+	अगर (size > bc->max)
 		size = bc->max;
 
-	if (bc->params) {
-		if (copy_to_user(data, &bc->param_id, sizeof(u32)))
-			return -EFAULT;
-		if (copy_to_user(data + 1, &size, sizeof(u32)))
-			return -EFAULT;
-		if (copy_to_user(data + 2, bc->params, size))
-			return -EFAULT;
-	}
+	अगर (bc->params) अणु
+		अगर (copy_to_user(data, &bc->param_id, माप(u32)))
+			वापस -EFAULT;
+		अगर (copy_to_user(data + 1, &size, माप(u32)))
+			वापस -EFAULT;
+		अगर (copy_to_user(data + 2, bc->params, size))
+			वापस -EFAULT;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#define SKL_PARAM_VENDOR_ID 0xff
+#घोषणा SKL_PARAM_VENDOR_ID 0xff
 
-static int skl_tplg_tlv_control_set(struct snd_kcontrol *kcontrol,
-			const unsigned int __user *data, unsigned int size)
-{
-	struct snd_soc_dapm_widget *w = snd_soc_dapm_kcontrol_widget(kcontrol);
-	struct skl_module_cfg *mconfig = w->priv;
-	struct soc_bytes_ext *sb =
-			(struct soc_bytes_ext *)kcontrol->private_value;
-	struct skl_algo_data *ac = (struct skl_algo_data *)sb->dobj.private;
-	struct skl_dev *skl = get_skl_ctx(w->dapm->dev);
+अटल पूर्णांक skl_tplg_tlv_control_set(काष्ठा snd_kcontrol *kcontrol,
+			स्थिर अचिन्हित पूर्णांक __user *data, अचिन्हित पूर्णांक size)
+अणु
+	काष्ठा snd_soc_dapm_widget *w = snd_soc_dapm_kcontrol_widget(kcontrol);
+	काष्ठा skl_module_cfg *mconfig = w->priv;
+	काष्ठा soc_bytes_ext *sb =
+			(काष्ठा soc_bytes_ext *)kcontrol->निजी_value;
+	काष्ठा skl_algo_data *ac = (काष्ठा skl_algo_data *)sb->करोbj.निजी;
+	काष्ठा skl_dev *skl = get_skl_ctx(w->dapm->dev);
 
-	if (ac->params) {
+	अगर (ac->params) अणु
 		/*
 		 * Widget data is expected to be stripped of T and L
 		 */
-		size -= 2 * sizeof(unsigned int);
+		size -= 2 * माप(अचिन्हित पूर्णांक);
 		data += 2;
 
-		if (size > ac->max)
-			return -EINVAL;
+		अगर (size > ac->max)
+			वापस -EINVAL;
 		ac->size = size;
 
-		if (copy_from_user(ac->params, data, size))
-			return -EFAULT;
+		अगर (copy_from_user(ac->params, data, size))
+			वापस -EFAULT;
 
-		if (w->power)
-			return skl_set_module_params(skl,
+		अगर (w->घातer)
+			वापस skl_set_module_params(skl,
 						(u32 *)ac->params, ac->size,
 						ac->param_id, mconfig);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int skl_tplg_mic_control_get(struct snd_kcontrol *kcontrol,
-		struct snd_ctl_elem_value *ucontrol)
-{
-	struct snd_soc_dapm_widget *w = snd_soc_dapm_kcontrol_widget(kcontrol);
-	struct skl_module_cfg *mconfig = w->priv;
-	struct soc_enum *ec = (struct soc_enum *)kcontrol->private_value;
-	u32 ch_type = *((u32 *)ec->dobj.private);
+अटल पूर्णांक skl_tplg_mic_control_get(काष्ठा snd_kcontrol *kcontrol,
+		काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	काष्ठा snd_soc_dapm_widget *w = snd_soc_dapm_kcontrol_widget(kcontrol);
+	काष्ठा skl_module_cfg *mconfig = w->priv;
+	काष्ठा soc_क्रमागत *ec = (काष्ठा soc_क्रमागत *)kcontrol->निजी_value;
+	u32 ch_type = *((u32 *)ec->करोbj.निजी);
 
-	if (mconfig->dmic_ch_type == ch_type)
-		ucontrol->value.enumerated.item[0] =
+	अगर (mconfig->dmic_ch_type == ch_type)
+		ucontrol->value.क्रमागतerated.item[0] =
 					mconfig->dmic_ch_combo_index;
-	else
-		ucontrol->value.enumerated.item[0] = 0;
+	अन्यथा
+		ucontrol->value.क्रमागतerated.item[0] = 0;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int skl_fill_mic_sel_params(struct skl_module_cfg *mconfig,
-	struct skl_mic_sel_config *mic_cfg, struct device *dev)
-{
-	struct skl_specific_cfg *sp_cfg = &mconfig->formats_config;
+अटल पूर्णांक skl_fill_mic_sel_params(काष्ठा skl_module_cfg *mconfig,
+	काष्ठा skl_mic_sel_config *mic_cfg, काष्ठा device *dev)
+अणु
+	काष्ठा skl_specअगरic_cfg *sp_cfg = &mconfig->क्रमmats_config;
 
-	sp_cfg->caps_size = sizeof(struct skl_mic_sel_config);
+	sp_cfg->caps_size = माप(काष्ठा skl_mic_sel_config);
 	sp_cfg->set_params = SKL_PARAM_SET;
 	sp_cfg->param_id = 0x00;
-	if (!sp_cfg->caps) {
+	अगर (!sp_cfg->caps) अणु
 		sp_cfg->caps = devm_kzalloc(dev, sp_cfg->caps_size, GFP_KERNEL);
-		if (!sp_cfg->caps)
-			return -ENOMEM;
-	}
+		अगर (!sp_cfg->caps)
+			वापस -ENOMEM;
+	पूर्ण
 
-	mic_cfg->mic_switch = SKL_MIC_SEL_SWITCH;
+	mic_cfg->mic_चयन = SKL_MIC_SEL_SWITCH;
 	mic_cfg->flags = 0;
-	memcpy(sp_cfg->caps, mic_cfg, sp_cfg->caps_size);
+	स_नकल(sp_cfg->caps, mic_cfg, sp_cfg->caps_size);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int skl_tplg_mic_control_set(struct snd_kcontrol *kcontrol,
-			struct snd_ctl_elem_value *ucontrol)
-{
-	struct snd_soc_dapm_widget *w = snd_soc_dapm_kcontrol_widget(kcontrol);
-	struct skl_module_cfg *mconfig = w->priv;
-	struct skl_mic_sel_config mic_cfg = {0};
-	struct soc_enum *ec = (struct soc_enum *)kcontrol->private_value;
-	u32 ch_type = *((u32 *)ec->dobj.private);
-	const int *list;
+अटल पूर्णांक skl_tplg_mic_control_set(काष्ठा snd_kcontrol *kcontrol,
+			काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	काष्ठा snd_soc_dapm_widget *w = snd_soc_dapm_kcontrol_widget(kcontrol);
+	काष्ठा skl_module_cfg *mconfig = w->priv;
+	काष्ठा skl_mic_sel_config mic_cfg = अणु0पूर्ण;
+	काष्ठा soc_क्रमागत *ec = (काष्ठा soc_क्रमागत *)kcontrol->निजी_value;
+	u32 ch_type = *((u32 *)ec->करोbj.निजी);
+	स्थिर पूर्णांक *list;
 	u8 in_ch, out_ch, index;
 
 	mconfig->dmic_ch_type = ch_type;
-	mconfig->dmic_ch_combo_index = ucontrol->value.enumerated.item[0];
+	mconfig->dmic_ch_combo_index = ucontrol->value.क्रमागतerated.item[0];
 
-	/* enum control index 0 is INVALID, so no channels to be set */
-	if (mconfig->dmic_ch_combo_index == 0)
-		return 0;
+	/* क्रमागत control index 0 is INVALID, so no channels to be set */
+	अगर (mconfig->dmic_ch_combo_index == 0)
+		वापस 0;
 
-	/* No valid channel selection map for index 0, so offset by 1 */
+	/* No valid channel selection map क्रम index 0, so offset by 1 */
 	index = mconfig->dmic_ch_combo_index - 1;
 
-	switch (ch_type) {
-	case SKL_CH_MONO:
-		if (mconfig->dmic_ch_combo_index > ARRAY_SIZE(mic_mono_list))
-			return -EINVAL;
+	चयन (ch_type) अणु
+	हाल SKL_CH_MONO:
+		अगर (mconfig->dmic_ch_combo_index > ARRAY_SIZE(mic_mono_list))
+			वापस -EINVAL;
 
 		list = &mic_mono_list[index];
-		break;
+		अवरोध;
 
-	case SKL_CH_STEREO:
-		if (mconfig->dmic_ch_combo_index > ARRAY_SIZE(mic_stereo_list))
-			return -EINVAL;
+	हाल SKL_CH_STEREO:
+		अगर (mconfig->dmic_ch_combo_index > ARRAY_SIZE(mic_stereo_list))
+			वापस -EINVAL;
 
 		list = mic_stereo_list[index];
-		break;
+		अवरोध;
 
-	case SKL_CH_TRIO:
-		if (mconfig->dmic_ch_combo_index > ARRAY_SIZE(mic_trio_list))
-			return -EINVAL;
+	हाल SKL_CH_TRIO:
+		अगर (mconfig->dmic_ch_combo_index > ARRAY_SIZE(mic_trio_list))
+			वापस -EINVAL;
 
 		list = mic_trio_list[index];
-		break;
+		अवरोध;
 
-	case SKL_CH_QUATRO:
-		if (mconfig->dmic_ch_combo_index > ARRAY_SIZE(mic_quatro_list))
-			return -EINVAL;
+	हाल SKL_CH_QUATRO:
+		अगर (mconfig->dmic_ch_combo_index > ARRAY_SIZE(mic_quatro_list))
+			वापस -EINVAL;
 
 		list = mic_quatro_list[index];
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		dev_err(w->dapm->dev,
 				"Invalid channel %d for mic_select module\n",
 				ch_type);
-		return -EINVAL;
+		वापस -EINVAL;
 
-	}
+	पूर्ण
 
-	/* channel type enum map to number of chanels for that type */
-	for (out_ch = 0; out_ch < ch_type; out_ch++) {
+	/* channel type क्रमागत map to number of chanels क्रम that type */
+	क्रम (out_ch = 0; out_ch < ch_type; out_ch++) अणु
 		in_ch = list[out_ch];
 		mic_cfg.blob[out_ch][in_ch] = SKL_DEFAULT_MIC_SEL_GAIN;
-	}
+	पूर्ण
 
-	return skl_fill_mic_sel_params(mconfig, &mic_cfg, w->dapm->dev);
-}
+	वापस skl_fill_mic_sel_params(mconfig, &mic_cfg, w->dapm->dev);
+पूर्ण
 
 /*
- * Fill the dma id for host and link. In case of passthrough
+ * Fill the dma id क्रम host and link. In हाल of passthrough
  * pipeline, this will both host and link in the same
  * pipeline, so need to copy the link and host based on dev_type
  */
-static void skl_tplg_fill_dma_id(struct skl_module_cfg *mcfg,
-				struct skl_pipe_params *params)
-{
-	struct skl_pipe *pipe = mcfg->pipe;
+अटल व्योम skl_tplg_fill_dma_id(काष्ठा skl_module_cfg *mcfg,
+				काष्ठा skl_pipe_params *params)
+अणु
+	काष्ठा skl_pipe *pipe = mcfg->pipe;
 
-	if (pipe->passthru) {
-		switch (mcfg->dev_type) {
-		case SKL_DEVICE_HDALINK:
+	अगर (pipe->passthru) अणु
+		चयन (mcfg->dev_type) अणु
+		हाल SKL_DEVICE_HDALINK:
 			pipe->p_params->link_dma_id = params->link_dma_id;
 			pipe->p_params->link_index = params->link_index;
 			pipe->p_params->link_bps = params->link_bps;
-			break;
+			अवरोध;
 
-		case SKL_DEVICE_HDAHOST:
+		हाल SKL_DEVICE_HDAHOST:
 			pipe->p_params->host_dma_id = params->host_dma_id;
 			pipe->p_params->host_bps = params->host_bps;
-			break;
+			अवरोध;
 
-		default:
-			break;
-		}
+		शेष:
+			अवरोध;
+		पूर्ण
 		pipe->p_params->s_fmt = params->s_fmt;
 		pipe->p_params->ch = params->ch;
 		pipe->p_params->s_freq = params->s_freq;
 		pipe->p_params->stream = params->stream;
-		pipe->p_params->format = params->format;
+		pipe->p_params->क्रमmat = params->क्रमmat;
 
-	} else {
-		memcpy(pipe->p_params, params, sizeof(*params));
-	}
-}
+	पूर्ण अन्यथा अणु
+		स_नकल(pipe->p_params, params, माप(*params));
+	पूर्ण
+पूर्ण
 
 /*
  * The FE params are passed by hw_params of the DAI.
  * On hw_params, the params are stored in Gateway module of the FE and we
- * need to calculate the format in DSP module configuration, that
- * conversion is done here
+ * need to calculate the क्रमmat in DSP module configuration, that
+ * conversion is करोne here
  */
-int skl_tplg_update_pipe_params(struct device *dev,
-			struct skl_module_cfg *mconfig,
-			struct skl_pipe_params *params)
-{
-	struct skl_module_res *res = &mconfig->module->resources[0];
-	struct skl_dev *skl = get_skl_ctx(dev);
-	struct skl_module_fmt *format = NULL;
+पूर्णांक skl_tplg_update_pipe_params(काष्ठा device *dev,
+			काष्ठा skl_module_cfg *mconfig,
+			काष्ठा skl_pipe_params *params)
+अणु
+	काष्ठा skl_module_res *res = &mconfig->module->resources[0];
+	काष्ठा skl_dev *skl = get_skl_ctx(dev);
+	काष्ठा skl_module_fmt *क्रमmat = शून्य;
 	u8 cfg_idx = mconfig->pipe->cur_config_idx;
 
 	skl_tplg_fill_dma_id(mconfig, params);
 	mconfig->fmt_idx = mconfig->mod_cfg[cfg_idx].fmt_idx;
 	mconfig->res_idx = mconfig->mod_cfg[cfg_idx].res_idx;
 
-	if (skl->nr_modules)
-		return 0;
+	अगर (skl->nr_modules)
+		वापस 0;
 
-	if (params->stream == SNDRV_PCM_STREAM_PLAYBACK)
-		format = &mconfig->module->formats[0].inputs[0].fmt;
-	else
-		format = &mconfig->module->formats[0].outputs[0].fmt;
+	अगर (params->stream == SNDRV_PCM_STREAM_PLAYBACK)
+		क्रमmat = &mconfig->module->क्रमmats[0].inमाला_दो[0].fmt;
+	अन्यथा
+		क्रमmat = &mconfig->module->क्रमmats[0].outमाला_दो[0].fmt;
 
 	/* set the hw_params */
-	format->s_freq = params->s_freq;
-	format->channels = params->ch;
-	format->valid_bit_depth = skl_get_bit_depth(params->s_fmt);
+	क्रमmat->s_freq = params->s_freq;
+	क्रमmat->channels = params->ch;
+	क्रमmat->valid_bit_depth = skl_get_bit_depth(params->s_fmt);
 
 	/*
 	 * 16 bit is 16 bit container whereas 24 bit is in 32 bit
 	 * container so update bit depth accordingly
 	 */
-	switch (format->valid_bit_depth) {
-	case SKL_DEPTH_16BIT:
-		format->bit_depth = format->valid_bit_depth;
-		break;
+	चयन (क्रमmat->valid_bit_depth) अणु
+	हाल SKL_DEPTH_16BIT:
+		क्रमmat->bit_depth = क्रमmat->valid_bit_depth;
+		अवरोध;
 
-	case SKL_DEPTH_24BIT:
-	case SKL_DEPTH_32BIT:
-		format->bit_depth = SKL_DEPTH_32BIT;
-		break;
+	हाल SKL_DEPTH_24BIT:
+	हाल SKL_DEPTH_32BIT:
+		क्रमmat->bit_depth = SKL_DEPTH_32BIT;
+		अवरोध;
 
-	default:
+	शेष:
 		dev_err(dev, "Invalid bit depth %x for pipe\n",
-				format->valid_bit_depth);
-		return -EINVAL;
-	}
+				क्रमmat->valid_bit_depth);
+		वापस -EINVAL;
+	पूर्ण
 
-	if (params->stream == SNDRV_PCM_STREAM_PLAYBACK) {
-		res->ibs = (format->s_freq / 1000) *
-				(format->channels) *
-				(format->bit_depth >> 3);
-	} else {
-		res->obs = (format->s_freq / 1000) *
-				(format->channels) *
-				(format->bit_depth >> 3);
-	}
+	अगर (params->stream == SNDRV_PCM_STREAM_PLAYBACK) अणु
+		res->ibs = (क्रमmat->s_freq / 1000) *
+				(क्रमmat->channels) *
+				(क्रमmat->bit_depth >> 3);
+	पूर्ण अन्यथा अणु
+		res->obs = (क्रमmat->s_freq / 1000) *
+				(क्रमmat->channels) *
+				(क्रमmat->bit_depth >> 3);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * Query the module config for the FE DAI
- * This is used to find the hw_params set for that DAI and apply to FE
+ * Query the module config क्रम the FE DAI
+ * This is used to find the hw_params set क्रम that DAI and apply to FE
  * pipeline
  */
-struct skl_module_cfg *
-skl_tplg_fe_get_cpr_module(struct snd_soc_dai *dai, int stream)
-{
-	struct snd_soc_dapm_widget *w;
-	struct snd_soc_dapm_path *p = NULL;
+काष्ठा skl_module_cfg *
+skl_tplg_fe_get_cpr_module(काष्ठा snd_soc_dai *dai, पूर्णांक stream)
+अणु
+	काष्ठा snd_soc_dapm_widget *w;
+	काष्ठा snd_soc_dapm_path *p = शून्य;
 
-	if (stream == SNDRV_PCM_STREAM_PLAYBACK) {
+	अगर (stream == SNDRV_PCM_STREAM_PLAYBACK) अणु
 		w = dai->playback_widget;
-		snd_soc_dapm_widget_for_each_sink_path(w, p) {
-			if (p->connect && p->sink->power &&
+		snd_soc_dapm_widget_क्रम_each_sink_path(w, p) अणु
+			अगर (p->connect && p->sink->घातer &&
 				!is_skl_dsp_widget_type(p->sink, dai->dev))
-				continue;
+				जारी;
 
-			if (p->sink->priv) {
+			अगर (p->sink->priv) अणु
 				dev_dbg(dai->dev, "set params for %s\n",
 						p->sink->name);
-				return p->sink->priv;
-			}
-		}
-	} else {
+				वापस p->sink->priv;
+			पूर्ण
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		w = dai->capture_widget;
-		snd_soc_dapm_widget_for_each_source_path(w, p) {
-			if (p->connect && p->source->power &&
+		snd_soc_dapm_widget_क्रम_each_source_path(w, p) अणु
+			अगर (p->connect && p->source->घातer &&
 				!is_skl_dsp_widget_type(p->source, dai->dev))
-				continue;
+				जारी;
 
-			if (p->source->priv) {
+			अगर (p->source->priv) अणु
 				dev_dbg(dai->dev, "set params for %s\n",
 						p->source->name);
-				return p->source->priv;
-			}
-		}
-	}
+				वापस p->source->priv;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static struct skl_module_cfg *skl_get_mconfig_pb_cpr(
-		struct snd_soc_dai *dai, struct snd_soc_dapm_widget *w)
-{
-	struct snd_soc_dapm_path *p;
-	struct skl_module_cfg *mconfig = NULL;
+अटल काष्ठा skl_module_cfg *skl_get_mconfig_pb_cpr(
+		काष्ठा snd_soc_dai *dai, काष्ठा snd_soc_dapm_widget *w)
+अणु
+	काष्ठा snd_soc_dapm_path *p;
+	काष्ठा skl_module_cfg *mconfig = शून्य;
 
-	snd_soc_dapm_widget_for_each_source_path(w, p) {
-		if (w->endpoints[SND_SOC_DAPM_DIR_OUT] > 0) {
-			if (p->connect &&
-				    (p->sink->id == snd_soc_dapm_aif_out) &&
-				    p->source->priv) {
+	snd_soc_dapm_widget_क्रम_each_source_path(w, p) अणु
+		अगर (w->endpoपूर्णांकs[SND_SOC_DAPM_सूची_OUT] > 0) अणु
+			अगर (p->connect &&
+				    (p->sink->id == snd_soc_dapm_aअगर_out) &&
+				    p->source->priv) अणु
 				mconfig = p->source->priv;
-				return mconfig;
-			}
+				वापस mconfig;
+			पूर्ण
 			mconfig = skl_get_mconfig_pb_cpr(dai, p->source);
-			if (mconfig)
-				return mconfig;
-		}
-	}
-	return mconfig;
-}
+			अगर (mconfig)
+				वापस mconfig;
+		पूर्ण
+	पूर्ण
+	वापस mconfig;
+पूर्ण
 
-static struct skl_module_cfg *skl_get_mconfig_cap_cpr(
-		struct snd_soc_dai *dai, struct snd_soc_dapm_widget *w)
-{
-	struct snd_soc_dapm_path *p;
-	struct skl_module_cfg *mconfig = NULL;
+अटल काष्ठा skl_module_cfg *skl_get_mconfig_cap_cpr(
+		काष्ठा snd_soc_dai *dai, काष्ठा snd_soc_dapm_widget *w)
+अणु
+	काष्ठा snd_soc_dapm_path *p;
+	काष्ठा skl_module_cfg *mconfig = शून्य;
 
-	snd_soc_dapm_widget_for_each_sink_path(w, p) {
-		if (w->endpoints[SND_SOC_DAPM_DIR_IN] > 0) {
-			if (p->connect &&
-				    (p->source->id == snd_soc_dapm_aif_in) &&
-				    p->sink->priv) {
+	snd_soc_dapm_widget_क्रम_each_sink_path(w, p) अणु
+		अगर (w->endpoपूर्णांकs[SND_SOC_DAPM_सूची_IN] > 0) अणु
+			अगर (p->connect &&
+				    (p->source->id == snd_soc_dapm_aअगर_in) &&
+				    p->sink->priv) अणु
 				mconfig = p->sink->priv;
-				return mconfig;
-			}
+				वापस mconfig;
+			पूर्ण
 			mconfig = skl_get_mconfig_cap_cpr(dai, p->sink);
-			if (mconfig)
-				return mconfig;
-		}
-	}
-	return mconfig;
-}
+			अगर (mconfig)
+				वापस mconfig;
+		पूर्ण
+	पूर्ण
+	वापस mconfig;
+पूर्ण
 
-struct skl_module_cfg *
-skl_tplg_be_get_cpr_module(struct snd_soc_dai *dai, int stream)
-{
-	struct snd_soc_dapm_widget *w;
-	struct skl_module_cfg *mconfig;
+काष्ठा skl_module_cfg *
+skl_tplg_be_get_cpr_module(काष्ठा snd_soc_dai *dai, पूर्णांक stream)
+अणु
+	काष्ठा snd_soc_dapm_widget *w;
+	काष्ठा skl_module_cfg *mconfig;
 
-	if (stream == SNDRV_PCM_STREAM_PLAYBACK) {
+	अगर (stream == SNDRV_PCM_STREAM_PLAYBACK) अणु
 		w = dai->playback_widget;
 		mconfig = skl_get_mconfig_pb_cpr(dai, w);
-	} else {
+	पूर्ण अन्यथा अणु
 		w = dai->capture_widget;
 		mconfig = skl_get_mconfig_cap_cpr(dai, w);
-	}
-	return mconfig;
-}
+	पूर्ण
+	वापस mconfig;
+पूर्ण
 
-static u8 skl_tplg_be_link_type(int dev_type)
-{
-	int ret;
+अटल u8 skl_tplg_be_link_type(पूर्णांक dev_type)
+अणु
+	पूर्णांक ret;
 
-	switch (dev_type) {
-	case SKL_DEVICE_BT:
+	चयन (dev_type) अणु
+	हाल SKL_DEVICE_BT:
 		ret = NHLT_LINK_SSP;
-		break;
+		अवरोध;
 
-	case SKL_DEVICE_DMIC:
+	हाल SKL_DEVICE_DMIC:
 		ret = NHLT_LINK_DMIC;
-		break;
+		अवरोध;
 
-	case SKL_DEVICE_I2S:
+	हाल SKL_DEVICE_I2S:
 		ret = NHLT_LINK_SSP;
-		break;
+		अवरोध;
 
-	case SKL_DEVICE_HDALINK:
+	हाल SKL_DEVICE_HDALINK:
 		ret = NHLT_LINK_HDA;
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		ret = NHLT_LINK_INVALID;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
  * Fill the BE gateway parameters
  * The BE gateway expects a blob of parameters which are kept in the ACPI
- * NHLT blob, so query the blob for interface type (i2s/pdm) and instance.
+ * NHLT blob, so query the blob क्रम पूर्णांकerface type (i2s/pdm) and instance.
  * The port can have multiple settings so pick based on the PCM
  * parameters
  */
-static int skl_tplg_be_fill_pipe_params(struct snd_soc_dai *dai,
-				struct skl_module_cfg *mconfig,
-				struct skl_pipe_params *params)
-{
-	struct nhlt_specific_cfg *cfg;
-	struct skl_dev *skl = get_skl_ctx(dai->dev);
-	int link_type = skl_tplg_be_link_type(mconfig->dev_type);
+अटल पूर्णांक skl_tplg_be_fill_pipe_params(काष्ठा snd_soc_dai *dai,
+				काष्ठा skl_module_cfg *mconfig,
+				काष्ठा skl_pipe_params *params)
+अणु
+	काष्ठा nhlt_specअगरic_cfg *cfg;
+	काष्ठा skl_dev *skl = get_skl_ctx(dai->dev);
+	पूर्णांक link_type = skl_tplg_be_link_type(mconfig->dev_type);
 	u8 dev_type = skl_tplg_be_dev_type(mconfig->dev_type);
 
 	skl_tplg_fill_dma_id(mconfig, params);
 
-	if (link_type == NHLT_LINK_HDA)
-		return 0;
+	अगर (link_type == NHLT_LINK_HDA)
+		वापस 0;
 
-	/* update the blob based on virtual bus_id*/
+	/* update the blob based on भव bus_id*/
 	cfg = skl_get_ep_blob(skl, mconfig->vbus_id, link_type,
 					params->s_fmt, params->ch,
 					params->s_freq, params->stream,
 					dev_type);
-	if (cfg) {
-		mconfig->formats_config.caps_size = cfg->size;
-		mconfig->formats_config.caps = (u32 *) &cfg->caps;
-	} else {
+	अगर (cfg) अणु
+		mconfig->क्रमmats_config.caps_size = cfg->size;
+		mconfig->क्रमmats_config.caps = (u32 *) &cfg->caps;
+	पूर्ण अन्यथा अणु
 		dev_err(dai->dev, "Blob NULL for id %x type %d dirn %d\n",
 					mconfig->vbus_id, link_type,
 					params->stream);
 		dev_err(dai->dev, "PCM: ch %d, freq %d, fmt %d\n",
 				 params->ch, params->s_freq, params->s_fmt);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int skl_tplg_be_set_src_pipe_params(struct snd_soc_dai *dai,
-				struct snd_soc_dapm_widget *w,
-				struct skl_pipe_params *params)
-{
-	struct snd_soc_dapm_path *p;
-	int ret = -EIO;
+अटल पूर्णांक skl_tplg_be_set_src_pipe_params(काष्ठा snd_soc_dai *dai,
+				काष्ठा snd_soc_dapm_widget *w,
+				काष्ठा skl_pipe_params *params)
+अणु
+	काष्ठा snd_soc_dapm_path *p;
+	पूर्णांक ret = -EIO;
 
-	snd_soc_dapm_widget_for_each_source_path(w, p) {
-		if (p->connect && is_skl_dsp_widget_type(p->source, dai->dev) &&
-						p->source->priv) {
+	snd_soc_dapm_widget_क्रम_each_source_path(w, p) अणु
+		अगर (p->connect && is_skl_dsp_widget_type(p->source, dai->dev) &&
+						p->source->priv) अणु
 
 			ret = skl_tplg_be_fill_pipe_params(dai,
 						p->source->priv, params);
-			if (ret < 0)
-				return ret;
-		} else {
+			अगर (ret < 0)
+				वापस ret;
+		पूर्ण अन्यथा अणु
 			ret = skl_tplg_be_set_src_pipe_params(dai,
 						p->source, params);
-			if (ret < 0)
-				return ret;
-		}
-	}
+			अगर (ret < 0)
+				वापस ret;
+		पूर्ण
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int skl_tplg_be_set_sink_pipe_params(struct snd_soc_dai *dai,
-	struct snd_soc_dapm_widget *w, struct skl_pipe_params *params)
-{
-	struct snd_soc_dapm_path *p;
-	int ret = -EIO;
+अटल पूर्णांक skl_tplg_be_set_sink_pipe_params(काष्ठा snd_soc_dai *dai,
+	काष्ठा snd_soc_dapm_widget *w, काष्ठा skl_pipe_params *params)
+अणु
+	काष्ठा snd_soc_dapm_path *p;
+	पूर्णांक ret = -EIO;
 
-	snd_soc_dapm_widget_for_each_sink_path(w, p) {
-		if (p->connect && is_skl_dsp_widget_type(p->sink, dai->dev) &&
-						p->sink->priv) {
+	snd_soc_dapm_widget_क्रम_each_sink_path(w, p) अणु
+		अगर (p->connect && is_skl_dsp_widget_type(p->sink, dai->dev) &&
+						p->sink->priv) अणु
 
 			ret = skl_tplg_be_fill_pipe_params(dai,
 						p->sink->priv, params);
-			if (ret < 0)
-				return ret;
-		} else {
+			अगर (ret < 0)
+				वापस ret;
+		पूर्ण अन्यथा अणु
 			ret = skl_tplg_be_set_sink_pipe_params(
 						dai, p->sink, params);
-			if (ret < 0)
-				return ret;
-		}
-	}
+			अगर (ret < 0)
+				वापस ret;
+		पूर्ण
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
  * BE hw_params can be a source parameters (capture) or sink parameters
  * (playback). Based on sink and source we need to either find the source
  * list or the sink list and set the pipeline parameters
  */
-int skl_tplg_be_update_params(struct snd_soc_dai *dai,
-				struct skl_pipe_params *params)
-{
-	struct snd_soc_dapm_widget *w;
+पूर्णांक skl_tplg_be_update_params(काष्ठा snd_soc_dai *dai,
+				काष्ठा skl_pipe_params *params)
+अणु
+	काष्ठा snd_soc_dapm_widget *w;
 
-	if (params->stream == SNDRV_PCM_STREAM_PLAYBACK) {
+	अगर (params->stream == SNDRV_PCM_STREAM_PLAYBACK) अणु
 		w = dai->playback_widget;
 
-		return skl_tplg_be_set_src_pipe_params(dai, w, params);
+		वापस skl_tplg_be_set_src_pipe_params(dai, w, params);
 
-	} else {
+	पूर्ण अन्यथा अणु
 		w = dai->capture_widget;
 
-		return skl_tplg_be_set_sink_pipe_params(dai, w, params);
-	}
+		वापस skl_tplg_be_set_sink_pipe_params(dai, w, params);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct snd_soc_tplg_widget_events skl_tplg_widget_ops[] = {
-	{SKL_MIXER_EVENT, skl_tplg_mixer_event},
-	{SKL_VMIXER_EVENT, skl_tplg_mixer_event},
-	{SKL_PGA_EVENT, skl_tplg_pga_event},
-};
+अटल स्थिर काष्ठा snd_soc_tplg_widget_events skl_tplg_widget_ops[] = अणु
+	अणुSKL_MIXER_EVENT, skl_tplg_mixer_eventपूर्ण,
+	अणुSKL_VMIXER_EVENT, skl_tplg_mixer_eventपूर्ण,
+	अणुSKL_PGA_EVENT, skl_tplg_pga_eventपूर्ण,
+पूर्ण;
 
-static const struct snd_soc_tplg_bytes_ext_ops skl_tlv_ops[] = {
-	{SKL_CONTROL_TYPE_BYTE_TLV, skl_tplg_tlv_control_get,
-					skl_tplg_tlv_control_set},
-};
+अटल स्थिर काष्ठा snd_soc_tplg_bytes_ext_ops skl_tlv_ops[] = अणु
+	अणुSKL_CONTROL_TYPE_BYTE_TLV, skl_tplg_tlv_control_get,
+					skl_tplg_tlv_control_setपूर्ण,
+पूर्ण;
 
-static const struct snd_soc_tplg_kcontrol_ops skl_tplg_kcontrol_ops[] = {
-	{
+अटल स्थिर काष्ठा snd_soc_tplg_kcontrol_ops skl_tplg_kcontrol_ops[] = अणु
+	अणु
 		.id = SKL_CONTROL_TYPE_MIC_SELECT,
 		.get = skl_tplg_mic_control_get,
 		.put = skl_tplg_mic_control_set,
-	},
-	{
+	पूर्ण,
+	अणु
 		.id = SKL_CONTROL_TYPE_MULTI_IO_SELECT,
 		.get = skl_tplg_multi_config_get,
 		.put = skl_tplg_multi_config_set,
-	},
-	{
+	पूर्ण,
+	अणु
 		.id = SKL_CONTROL_TYPE_MULTI_IO_SELECT_DMIC,
 		.get = skl_tplg_multi_config_get_dmic,
 		.put = skl_tplg_multi_config_set_dmic,
-	}
-};
+	पूर्ण
+पूर्ण;
 
-static int skl_tplg_fill_pipe_cfg(struct device *dev,
-			struct skl_pipe *pipe, u32 tkn,
-			u32 tkn_val, int conf_idx, int dir)
-{
-	struct skl_pipe_fmt *fmt;
-	struct skl_path_config *config;
+अटल पूर्णांक skl_tplg_fill_pipe_cfg(काष्ठा device *dev,
+			काष्ठा skl_pipe *pipe, u32 tkn,
+			u32 tkn_val, पूर्णांक conf_idx, पूर्णांक dir)
+अणु
+	काष्ठा skl_pipe_fmt *fmt;
+	काष्ठा skl_path_config *config;
 
-	switch (dir) {
-	case SKL_DIR_IN:
+	चयन (dir) अणु
+	हाल SKL_सूची_IN:
 		fmt = &pipe->configs[conf_idx].in_fmt;
-		break;
+		अवरोध;
 
-	case SKL_DIR_OUT:
+	हाल SKL_सूची_OUT:
 		fmt = &pipe->configs[conf_idx].out_fmt;
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		dev_err(dev, "Invalid direction: %d\n", dir);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	config = &pipe->configs[conf_idx];
 
-	switch (tkn) {
-	case SKL_TKN_U32_CFG_FREQ:
+	चयन (tkn) अणु
+	हाल SKL_TKN_U32_CFG_FREQ:
 		fmt->freq = tkn_val;
-		break;
+		अवरोध;
 
-	case SKL_TKN_U8_CFG_CHAN:
+	हाल SKL_TKN_U8_CFG_CHAN:
 		fmt->channels = tkn_val;
-		break;
+		अवरोध;
 
-	case SKL_TKN_U8_CFG_BPS:
+	हाल SKL_TKN_U8_CFG_BPS:
 		fmt->bps = tkn_val;
-		break;
+		अवरोध;
 
-	case SKL_TKN_U32_PATH_MEM_PGS:
+	हाल SKL_TKN_U32_PATH_MEM_PGS:
 		config->mem_pages = tkn_val;
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		dev_err(dev, "Invalid token config: %d\n", tkn);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int skl_tplg_fill_pipe_tkn(struct device *dev,
-			struct skl_pipe *pipe, u32 tkn,
+अटल पूर्णांक skl_tplg_fill_pipe_tkn(काष्ठा device *dev,
+			काष्ठा skl_pipe *pipe, u32 tkn,
 			u32 tkn_val)
-{
+अणु
 
-	switch (tkn) {
-	case SKL_TKN_U32_PIPE_CONN_TYPE:
+	चयन (tkn) अणु
+	हाल SKL_TKN_U32_PIPE_CONN_TYPE:
 		pipe->conn_type = tkn_val;
-		break;
+		अवरोध;
 
-	case SKL_TKN_U32_PIPE_PRIORITY:
+	हाल SKL_TKN_U32_PIPE_PRIORITY:
 		pipe->pipe_priority = tkn_val;
-		break;
+		अवरोध;
 
-	case SKL_TKN_U32_PIPE_MEM_PGS:
+	हाल SKL_TKN_U32_PIPE_MEM_PGS:
 		pipe->memory_pages = tkn_val;
-		break;
+		अवरोध;
 
-	case SKL_TKN_U32_PMODE:
+	हाल SKL_TKN_U32_PMODE:
 		pipe->lp_mode = tkn_val;
-		break;
+		अवरोध;
 
-	case SKL_TKN_U32_PIPE_DIRECTION:
+	हाल SKL_TKN_U32_PIPE_सूचीECTION:
 		pipe->direction = tkn_val;
-		break;
+		अवरोध;
 
-	case SKL_TKN_U32_NUM_CONFIGS:
+	हाल SKL_TKN_U32_NUM_CONFIGS:
 		pipe->nr_cfgs = tkn_val;
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		dev_err(dev, "Token not handled %d\n", tkn);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * Add pipeline by parsing the relevant tokens
- * Return an existing pipe if the pipe already exists.
+ * Return an existing pipe अगर the pipe alपढ़ोy exists.
  */
-static int skl_tplg_add_pipe(struct device *dev,
-		struct skl_module_cfg *mconfig, struct skl_dev *skl,
-		struct snd_soc_tplg_vendor_value_elem *tkn_elem)
-{
-	struct skl_pipeline *ppl;
-	struct skl_pipe *pipe;
-	struct skl_pipe_params *params;
+अटल पूर्णांक skl_tplg_add_pipe(काष्ठा device *dev,
+		काष्ठा skl_module_cfg *mconfig, काष्ठा skl_dev *skl,
+		काष्ठा snd_soc_tplg_venकरोr_value_elem *tkn_elem)
+अणु
+	काष्ठा skl_pipeline *ppl;
+	काष्ठा skl_pipe *pipe;
+	काष्ठा skl_pipe_params *params;
 
-	list_for_each_entry(ppl, &skl->ppl_list, node) {
-		if (ppl->pipe->ppl_id == tkn_elem->value) {
+	list_क्रम_each_entry(ppl, &skl->ppl_list, node) अणु
+		अगर (ppl->pipe->ppl_id == tkn_elem->value) अणु
 			mconfig->pipe = ppl->pipe;
-			return -EEXIST;
-		}
-	}
+			वापस -EEXIST;
+		पूर्ण
+	पूर्ण
 
-	ppl = devm_kzalloc(dev, sizeof(*ppl), GFP_KERNEL);
-	if (!ppl)
-		return -ENOMEM;
+	ppl = devm_kzalloc(dev, माप(*ppl), GFP_KERNEL);
+	अगर (!ppl)
+		वापस -ENOMEM;
 
-	pipe = devm_kzalloc(dev, sizeof(*pipe), GFP_KERNEL);
-	if (!pipe)
-		return -ENOMEM;
+	pipe = devm_kzalloc(dev, माप(*pipe), GFP_KERNEL);
+	अगर (!pipe)
+		वापस -ENOMEM;
 
-	params = devm_kzalloc(dev, sizeof(*params), GFP_KERNEL);
-	if (!params)
-		return -ENOMEM;
+	params = devm_kzalloc(dev, माप(*params), GFP_KERNEL);
+	अगर (!params)
+		वापस -ENOMEM;
 
 	pipe->p_params = params;
 	pipe->ppl_id = tkn_elem->value;
@@ -2095,649 +2096,649 @@ static int skl_tplg_add_pipe(struct device *dev,
 	mconfig->pipe = pipe;
 	mconfig->pipe->state = SKL_PIPE_INVALID;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int skl_tplg_get_uuid(struct device *dev, guid_t *guid,
-	      struct snd_soc_tplg_vendor_uuid_elem *uuid_tkn)
-{
-	if (uuid_tkn->token == SKL_TKN_UUID) {
+अटल पूर्णांक skl_tplg_get_uuid(काष्ठा device *dev, guid_t *guid,
+	      काष्ठा snd_soc_tplg_venकरोr_uuid_elem *uuid_tkn)
+अणु
+	अगर (uuid_tkn->token == SKL_TKN_UUID) अणु
 		import_guid(guid, uuid_tkn->uuid);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	dev_err(dev, "Not an UUID token %d\n", uuid_tkn->token);
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static int skl_tplg_fill_pin(struct device *dev,
-			struct snd_soc_tplg_vendor_value_elem *tkn_elem,
-			struct skl_module_pin *m_pin,
-			int pin_index)
-{
-	int ret;
+अटल पूर्णांक skl_tplg_fill_pin(काष्ठा device *dev,
+			काष्ठा snd_soc_tplg_venकरोr_value_elem *tkn_elem,
+			काष्ठा skl_module_pin *m_pin,
+			पूर्णांक pin_index)
+अणु
+	पूर्णांक ret;
 
-	switch (tkn_elem->token) {
-	case SKL_TKN_U32_PIN_MOD_ID:
+	चयन (tkn_elem->token) अणु
+	हाल SKL_TKN_U32_PIN_MOD_ID:
 		m_pin[pin_index].id.module_id = tkn_elem->value;
-		break;
+		अवरोध;
 
-	case SKL_TKN_U32_PIN_INST_ID:
+	हाल SKL_TKN_U32_PIN_INST_ID:
 		m_pin[pin_index].id.instance_id = tkn_elem->value;
-		break;
+		अवरोध;
 
-	case SKL_TKN_UUID:
+	हाल SKL_TKN_UUID:
 		ret = skl_tplg_get_uuid(dev, &m_pin[pin_index].id.mod_uuid,
-			(struct snd_soc_tplg_vendor_uuid_elem *)tkn_elem);
-		if (ret < 0)
-			return ret;
+			(काष्ठा snd_soc_tplg_venकरोr_uuid_elem *)tkn_elem);
+		अगर (ret < 0)
+			वापस ret;
 
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		dev_err(dev, "%d Not a pin token\n", tkn_elem->token);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * Parse for pin config specific tokens to fill up the
- * module private data
+ * Parse क्रम pin config specअगरic tokens to fill up the
+ * module निजी data
  */
-static int skl_tplg_fill_pins_info(struct device *dev,
-		struct skl_module_cfg *mconfig,
-		struct snd_soc_tplg_vendor_value_elem *tkn_elem,
-		int dir, int pin_count)
-{
-	int ret;
-	struct skl_module_pin *m_pin;
+अटल पूर्णांक skl_tplg_fill_pins_info(काष्ठा device *dev,
+		काष्ठा skl_module_cfg *mconfig,
+		काष्ठा snd_soc_tplg_venकरोr_value_elem *tkn_elem,
+		पूर्णांक dir, पूर्णांक pin_count)
+अणु
+	पूर्णांक ret;
+	काष्ठा skl_module_pin *m_pin;
 
-	switch (dir) {
-	case SKL_DIR_IN:
+	चयन (dir) अणु
+	हाल SKL_सूची_IN:
 		m_pin = mconfig->m_in_pin;
-		break;
+		अवरोध;
 
-	case SKL_DIR_OUT:
+	हाल SKL_सूची_OUT:
 		m_pin = mconfig->m_out_pin;
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		dev_err(dev, "Invalid direction value\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	ret = skl_tplg_fill_pin(dev, tkn_elem, m_pin, pin_count);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	m_pin[pin_count].in_use = false;
 	m_pin[pin_count].pin_state = SKL_PIN_UNBIND;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * Fill up input/output module config format based
+ * Fill up input/output module config क्रमmat based
  * on the direction
  */
-static int skl_tplg_fill_fmt(struct device *dev,
-		struct skl_module_fmt *dst_fmt,
+अटल पूर्णांक skl_tplg_fill_fmt(काष्ठा device *dev,
+		काष्ठा skl_module_fmt *dst_fmt,
 		u32 tkn, u32 value)
-{
-	switch (tkn) {
-	case SKL_TKN_U32_FMT_CH:
+अणु
+	चयन (tkn) अणु
+	हाल SKL_TKN_U32_FMT_CH:
 		dst_fmt->channels  = value;
-		break;
+		अवरोध;
 
-	case SKL_TKN_U32_FMT_FREQ:
+	हाल SKL_TKN_U32_FMT_FREQ:
 		dst_fmt->s_freq = value;
-		break;
+		अवरोध;
 
-	case SKL_TKN_U32_FMT_BIT_DEPTH:
+	हाल SKL_TKN_U32_FMT_BIT_DEPTH:
 		dst_fmt->bit_depth = value;
-		break;
+		अवरोध;
 
-	case SKL_TKN_U32_FMT_SAMPLE_SIZE:
+	हाल SKL_TKN_U32_FMT_SAMPLE_SIZE:
 		dst_fmt->valid_bit_depth = value;
-		break;
+		अवरोध;
 
-	case SKL_TKN_U32_FMT_CH_CONFIG:
+	हाल SKL_TKN_U32_FMT_CH_CONFIG:
 		dst_fmt->ch_cfg = value;
-		break;
+		अवरोध;
 
-	case SKL_TKN_U32_FMT_INTERLEAVE:
-		dst_fmt->interleaving_style = value;
-		break;
+	हाल SKL_TKN_U32_FMT_INTERLEAVE:
+		dst_fmt->पूर्णांकerleaving_style = value;
+		अवरोध;
 
-	case SKL_TKN_U32_FMT_SAMPLE_TYPE:
+	हाल SKL_TKN_U32_FMT_SAMPLE_TYPE:
 		dst_fmt->sample_type = value;
-		break;
+		अवरोध;
 
-	case SKL_TKN_U32_FMT_CH_MAP:
+	हाल SKL_TKN_U32_FMT_CH_MAP:
 		dst_fmt->ch_map = value;
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		dev_err(dev, "Invalid token %d\n", tkn);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int skl_tplg_widget_fill_fmt(struct device *dev,
-		struct skl_module_iface *fmt,
-		u32 tkn, u32 val, u32 dir, int fmt_idx)
-{
-	struct skl_module_fmt *dst_fmt;
+अटल पूर्णांक skl_tplg_widget_fill_fmt(काष्ठा device *dev,
+		काष्ठा skl_module_अगरace *fmt,
+		u32 tkn, u32 val, u32 dir, पूर्णांक fmt_idx)
+अणु
+	काष्ठा skl_module_fmt *dst_fmt;
 
-	if (!fmt)
-		return -EINVAL;
+	अगर (!fmt)
+		वापस -EINVAL;
 
-	switch (dir) {
-	case SKL_DIR_IN:
-		dst_fmt = &fmt->inputs[fmt_idx].fmt;
-		break;
+	चयन (dir) अणु
+	हाल SKL_सूची_IN:
+		dst_fmt = &fmt->inमाला_दो[fmt_idx].fmt;
+		अवरोध;
 
-	case SKL_DIR_OUT:
-		dst_fmt = &fmt->outputs[fmt_idx].fmt;
-		break;
+	हाल SKL_सूची_OUT:
+		dst_fmt = &fmt->outमाला_दो[fmt_idx].fmt;
+		अवरोध;
 
-	default:
+	शेष:
 		dev_err(dev, "Invalid direction: %d\n", dir);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return skl_tplg_fill_fmt(dev, dst_fmt, tkn, val);
-}
+	वापस skl_tplg_fill_fmt(dev, dst_fmt, tkn, val);
+पूर्ण
 
-static void skl_tplg_fill_pin_dynamic_val(
-		struct skl_module_pin *mpin, u32 pin_count, u32 value)
-{
-	int i;
+अटल व्योम skl_tplg_fill_pin_dynamic_val(
+		काष्ठा skl_module_pin *mpin, u32 pin_count, u32 value)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < pin_count; i++)
+	क्रम (i = 0; i < pin_count; i++)
 		mpin[i].is_dynamic = value;
-}
+पूर्ण
 
 /*
- * Resource table in the manifest has pin specific resources
+ * Resource table in the manअगरest has pin specअगरic resources
  * like pin and pin buffer size
  */
-static int skl_tplg_manifest_pin_res_tkn(struct device *dev,
-		struct snd_soc_tplg_vendor_value_elem *tkn_elem,
-		struct skl_module_res *res, int pin_idx, int dir)
-{
-	struct skl_module_pin_resources *m_pin;
+अटल पूर्णांक skl_tplg_manअगरest_pin_res_tkn(काष्ठा device *dev,
+		काष्ठा snd_soc_tplg_venकरोr_value_elem *tkn_elem,
+		काष्ठा skl_module_res *res, पूर्णांक pin_idx, पूर्णांक dir)
+अणु
+	काष्ठा skl_module_pin_resources *m_pin;
 
-	switch (dir) {
-	case SKL_DIR_IN:
+	चयन (dir) अणु
+	हाल SKL_सूची_IN:
 		m_pin = &res->input[pin_idx];
-		break;
+		अवरोध;
 
-	case SKL_DIR_OUT:
+	हाल SKL_सूची_OUT:
 		m_pin = &res->output[pin_idx];
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		dev_err(dev, "Invalid pin direction: %d\n", dir);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	switch (tkn_elem->token) {
-	case SKL_TKN_MM_U32_RES_PIN_ID:
+	चयन (tkn_elem->token) अणु
+	हाल SKL_TKN_MM_U32_RES_PIN_ID:
 		m_pin->pin_index = tkn_elem->value;
-		break;
+		अवरोध;
 
-	case SKL_TKN_MM_U32_PIN_BUF:
+	हाल SKL_TKN_MM_U32_PIN_BUF:
 		m_pin->buf_size = tkn_elem->value;
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		dev_err(dev, "Invalid token: %d\n", tkn_elem->token);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * Fill module specific resources from the manifest's resource
+ * Fill module specअगरic resources from the manअगरest's resource
  * table like CPS, DMA size, mem_pages.
  */
-static int skl_tplg_fill_res_tkn(struct device *dev,
-		struct snd_soc_tplg_vendor_value_elem *tkn_elem,
-		struct skl_module_res *res,
-		int pin_idx, int dir)
-{
-	int ret, tkn_count = 0;
+अटल पूर्णांक skl_tplg_fill_res_tkn(काष्ठा device *dev,
+		काष्ठा snd_soc_tplg_venकरोr_value_elem *tkn_elem,
+		काष्ठा skl_module_res *res,
+		पूर्णांक pin_idx, पूर्णांक dir)
+अणु
+	पूर्णांक ret, tkn_count = 0;
 
-	if (!res)
-		return -EINVAL;
+	अगर (!res)
+		वापस -EINVAL;
 
-	switch (tkn_elem->token) {
-	case SKL_TKN_MM_U32_DMA_SIZE:
+	चयन (tkn_elem->token) अणु
+	हाल SKL_TKN_MM_U32_DMA_SIZE:
 		res->dma_buffer_size = tkn_elem->value;
-		break;
+		अवरोध;
 
-	case SKL_TKN_MM_U32_CPC:
+	हाल SKL_TKN_MM_U32_CPC:
 		res->cpc = tkn_elem->value;
-		break;
+		अवरोध;
 
-	case SKL_TKN_U32_MEM_PAGES:
+	हाल SKL_TKN_U32_MEM_PAGES:
 		res->is_pages = tkn_elem->value;
-		break;
+		अवरोध;
 
-	case SKL_TKN_U32_OBS:
+	हाल SKL_TKN_U32_OBS:
 		res->obs = tkn_elem->value;
-		break;
+		अवरोध;
 
-	case SKL_TKN_U32_IBS:
+	हाल SKL_TKN_U32_IBS:
 		res->ibs = tkn_elem->value;
-		break;
+		अवरोध;
 
-	case SKL_TKN_MM_U32_RES_PIN_ID:
-	case SKL_TKN_MM_U32_PIN_BUF:
-		ret = skl_tplg_manifest_pin_res_tkn(dev, tkn_elem, res,
+	हाल SKL_TKN_MM_U32_RES_PIN_ID:
+	हाल SKL_TKN_MM_U32_PIN_BUF:
+		ret = skl_tplg_manअगरest_pin_res_tkn(dev, tkn_elem, res,
 						    pin_idx, dir);
-		if (ret < 0)
-			return ret;
-		break;
+		अगर (ret < 0)
+			वापस ret;
+		अवरोध;
 
-	case SKL_TKN_MM_U32_CPS:
-	case SKL_TKN_U32_MAX_MCPS:
+	हाल SKL_TKN_MM_U32_CPS:
+	हाल SKL_TKN_U32_MAX_MCPS:
 		/* ignore unused tokens */
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		dev_err(dev, "Not a res type token: %d", tkn_elem->token);
-		return -EINVAL;
+		वापस -EINVAL;
 
-	}
+	पूर्ण
 	tkn_count++;
 
-	return tkn_count;
-}
+	वापस tkn_count;
+पूर्ण
 
 /*
- * Parse tokens to fill up the module private data
+ * Parse tokens to fill up the module निजी data
  */
-static int skl_tplg_get_token(struct device *dev,
-		struct snd_soc_tplg_vendor_value_elem *tkn_elem,
-		struct skl_dev *skl, struct skl_module_cfg *mconfig)
-{
-	int tkn_count = 0;
-	int ret;
-	static int is_pipe_exists;
-	static int pin_index, dir, conf_idx;
-	struct skl_module_iface *iface = NULL;
-	struct skl_module_res *res = NULL;
-	int res_idx = mconfig->res_idx;
-	int fmt_idx = mconfig->fmt_idx;
+अटल पूर्णांक skl_tplg_get_token(काष्ठा device *dev,
+		काष्ठा snd_soc_tplg_venकरोr_value_elem *tkn_elem,
+		काष्ठा skl_dev *skl, काष्ठा skl_module_cfg *mconfig)
+अणु
+	पूर्णांक tkn_count = 0;
+	पूर्णांक ret;
+	अटल पूर्णांक is_pipe_exists;
+	अटल पूर्णांक pin_index, dir, conf_idx;
+	काष्ठा skl_module_अगरace *अगरace = शून्य;
+	काष्ठा skl_module_res *res = शून्य;
+	पूर्णांक res_idx = mconfig->res_idx;
+	पूर्णांक fmt_idx = mconfig->fmt_idx;
 
 	/*
-	 * If the manifest structure contains no modules, fill all
+	 * If the manअगरest काष्ठाure contains no modules, fill all
 	 * the module data to 0th index.
-	 * res_idx and fmt_idx are default set to 0.
+	 * res_idx and fmt_idx are शेष set to 0.
 	 */
-	if (skl->nr_modules == 0) {
+	अगर (skl->nr_modules == 0) अणु
 		res = &mconfig->module->resources[res_idx];
-		iface = &mconfig->module->formats[fmt_idx];
-	}
+		अगरace = &mconfig->module->क्रमmats[fmt_idx];
+	पूर्ण
 
-	if (tkn_elem->token > SKL_TKN_MAX)
-		return -EINVAL;
+	अगर (tkn_elem->token > SKL_TKN_MAX)
+		वापस -EINVAL;
 
-	switch (tkn_elem->token) {
-	case SKL_TKN_U8_IN_QUEUE_COUNT:
+	चयन (tkn_elem->token) अणु
+	हाल SKL_TKN_U8_IN_QUEUE_COUNT:
 		mconfig->module->max_input_pins = tkn_elem->value;
-		break;
+		अवरोध;
 
-	case SKL_TKN_U8_OUT_QUEUE_COUNT:
+	हाल SKL_TKN_U8_OUT_QUEUE_COUNT:
 		mconfig->module->max_output_pins = tkn_elem->value;
-		break;
+		अवरोध;
 
-	case SKL_TKN_U8_DYN_IN_PIN:
-		if (!mconfig->m_in_pin)
+	हाल SKL_TKN_U8_DYN_IN_PIN:
+		अगर (!mconfig->m_in_pin)
 			mconfig->m_in_pin =
-				devm_kcalloc(dev, MAX_IN_QUEUE,
-					     sizeof(*mconfig->m_in_pin),
+				devm_kसुस्मृति(dev, MAX_IN_QUEUE,
+					     माप(*mconfig->m_in_pin),
 					     GFP_KERNEL);
-		if (!mconfig->m_in_pin)
-			return -ENOMEM;
+		अगर (!mconfig->m_in_pin)
+			वापस -ENOMEM;
 
 		skl_tplg_fill_pin_dynamic_val(mconfig->m_in_pin, MAX_IN_QUEUE,
 					      tkn_elem->value);
-		break;
+		अवरोध;
 
-	case SKL_TKN_U8_DYN_OUT_PIN:
-		if (!mconfig->m_out_pin)
+	हाल SKL_TKN_U8_DYN_OUT_PIN:
+		अगर (!mconfig->m_out_pin)
 			mconfig->m_out_pin =
-				devm_kcalloc(dev, MAX_IN_QUEUE,
-					     sizeof(*mconfig->m_in_pin),
+				devm_kसुस्मृति(dev, MAX_IN_QUEUE,
+					     माप(*mconfig->m_in_pin),
 					     GFP_KERNEL);
-		if (!mconfig->m_out_pin)
-			return -ENOMEM;
+		अगर (!mconfig->m_out_pin)
+			वापस -ENOMEM;
 
 		skl_tplg_fill_pin_dynamic_val(mconfig->m_out_pin, MAX_OUT_QUEUE,
 					      tkn_elem->value);
-		break;
+		अवरोध;
 
-	case SKL_TKN_U8_TIME_SLOT:
-		mconfig->time_slot = tkn_elem->value;
-		break;
+	हाल SKL_TKN_U8_TIME_SLOT:
+		mconfig->समय_slot = tkn_elem->value;
+		अवरोध;
 
-	case SKL_TKN_U8_CORE_ID:
+	हाल SKL_TKN_U8_CORE_ID:
 		mconfig->core_id = tkn_elem->value;
-		break;
+		अवरोध;
 
-	case SKL_TKN_U8_MOD_TYPE:
+	हाल SKL_TKN_U8_MOD_TYPE:
 		mconfig->m_type = tkn_elem->value;
-		break;
+		अवरोध;
 
-	case SKL_TKN_U8_DEV_TYPE:
+	हाल SKL_TKN_U8_DEV_TYPE:
 		mconfig->dev_type = tkn_elem->value;
-		break;
+		अवरोध;
 
-	case SKL_TKN_U8_HW_CONN_TYPE:
+	हाल SKL_TKN_U8_HW_CONN_TYPE:
 		mconfig->hw_conn_type = tkn_elem->value;
-		break;
+		अवरोध;
 
-	case SKL_TKN_U16_MOD_INST_ID:
+	हाल SKL_TKN_U16_MOD_INST_ID:
 		mconfig->id.instance_id =
 		tkn_elem->value;
-		break;
+		अवरोध;
 
-	case SKL_TKN_U32_MEM_PAGES:
-	case SKL_TKN_U32_MAX_MCPS:
-	case SKL_TKN_U32_OBS:
-	case SKL_TKN_U32_IBS:
+	हाल SKL_TKN_U32_MEM_PAGES:
+	हाल SKL_TKN_U32_MAX_MCPS:
+	हाल SKL_TKN_U32_OBS:
+	हाल SKL_TKN_U32_IBS:
 		ret = skl_tplg_fill_res_tkn(dev, tkn_elem, res, pin_index, dir);
-		if (ret < 0)
-			return ret;
+		अगर (ret < 0)
+			वापस ret;
 
-		break;
+		अवरोध;
 
-	case SKL_TKN_U32_VBUS_ID:
+	हाल SKL_TKN_U32_VBUS_ID:
 		mconfig->vbus_id = tkn_elem->value;
-		break;
+		अवरोध;
 
-	case SKL_TKN_U32_PARAMS_FIXUP:
+	हाल SKL_TKN_U32_PARAMS_FIXUP:
 		mconfig->params_fixup = tkn_elem->value;
-		break;
+		अवरोध;
 
-	case SKL_TKN_U32_CONVERTER:
+	हाल SKL_TKN_U32_CONVERTER:
 		mconfig->converter = tkn_elem->value;
-		break;
+		अवरोध;
 
-	case SKL_TKN_U32_D0I3_CAPS:
+	हाल SKL_TKN_U32_D0I3_CAPS:
 		mconfig->d0i3_caps = tkn_elem->value;
-		break;
+		अवरोध;
 
-	case SKL_TKN_U32_PIPE_ID:
+	हाल SKL_TKN_U32_PIPE_ID:
 		ret = skl_tplg_add_pipe(dev,
 				mconfig, skl, tkn_elem);
 
-		if (ret < 0) {
-			if (ret == -EEXIST) {
+		अगर (ret < 0) अणु
+			अगर (ret == -EEXIST) अणु
 				is_pipe_exists = 1;
-				break;
-			}
-			return is_pipe_exists;
-		}
+				अवरोध;
+			पूर्ण
+			वापस is_pipe_exists;
+		पूर्ण
 
-		break;
+		अवरोध;
 
-	case SKL_TKN_U32_PIPE_CONFIG_ID:
+	हाल SKL_TKN_U32_PIPE_CONFIG_ID:
 		conf_idx = tkn_elem->value;
-		break;
+		अवरोध;
 
-	case SKL_TKN_U32_PIPE_CONN_TYPE:
-	case SKL_TKN_U32_PIPE_PRIORITY:
-	case SKL_TKN_U32_PIPE_MEM_PGS:
-	case SKL_TKN_U32_PMODE:
-	case SKL_TKN_U32_PIPE_DIRECTION:
-	case SKL_TKN_U32_NUM_CONFIGS:
-		if (is_pipe_exists) {
+	हाल SKL_TKN_U32_PIPE_CONN_TYPE:
+	हाल SKL_TKN_U32_PIPE_PRIORITY:
+	हाल SKL_TKN_U32_PIPE_MEM_PGS:
+	हाल SKL_TKN_U32_PMODE:
+	हाल SKL_TKN_U32_PIPE_सूचीECTION:
+	हाल SKL_TKN_U32_NUM_CONFIGS:
+		अगर (is_pipe_exists) अणु
 			ret = skl_tplg_fill_pipe_tkn(dev, mconfig->pipe,
 					tkn_elem->token, tkn_elem->value);
-			if (ret < 0)
-				return ret;
-		}
+			अगर (ret < 0)
+				वापस ret;
+		पूर्ण
 
-		break;
+		अवरोध;
 
-	case SKL_TKN_U32_PATH_MEM_PGS:
-	case SKL_TKN_U32_CFG_FREQ:
-	case SKL_TKN_U8_CFG_CHAN:
-	case SKL_TKN_U8_CFG_BPS:
-		if (mconfig->pipe->nr_cfgs) {
+	हाल SKL_TKN_U32_PATH_MEM_PGS:
+	हाल SKL_TKN_U32_CFG_FREQ:
+	हाल SKL_TKN_U8_CFG_CHAN:
+	हाल SKL_TKN_U8_CFG_BPS:
+		अगर (mconfig->pipe->nr_cfgs) अणु
 			ret = skl_tplg_fill_pipe_cfg(dev, mconfig->pipe,
 					tkn_elem->token, tkn_elem->value,
 					conf_idx, dir);
-			if (ret < 0)
-				return ret;
-		}
-		break;
+			अगर (ret < 0)
+				वापस ret;
+		पूर्ण
+		अवरोध;
 
-	case SKL_TKN_CFG_MOD_RES_ID:
+	हाल SKL_TKN_CFG_MOD_RES_ID:
 		mconfig->mod_cfg[conf_idx].res_idx = tkn_elem->value;
-		break;
+		अवरोध;
 
-	case SKL_TKN_CFG_MOD_FMT_ID:
+	हाल SKL_TKN_CFG_MOD_FMT_ID:
 		mconfig->mod_cfg[conf_idx].fmt_idx = tkn_elem->value;
-		break;
+		अवरोध;
 
 	/*
-	 * SKL_TKN_U32_DIR_PIN_COUNT token has the value for both
+	 * SKL_TKN_U32_सूची_PIN_COUNT token has the value क्रम both
 	 * direction and the pin count. The first four bits represent
 	 * direction and next four the pin count.
 	 */
-	case SKL_TKN_U32_DIR_PIN_COUNT:
-		dir = tkn_elem->value & SKL_IN_DIR_BIT_MASK;
+	हाल SKL_TKN_U32_सूची_PIN_COUNT:
+		dir = tkn_elem->value & SKL_IN_सूची_BIT_MASK;
 		pin_index = (tkn_elem->value &
 			SKL_PIN_COUNT_MASK) >> 4;
 
-		break;
+		अवरोध;
 
-	case SKL_TKN_U32_FMT_CH:
-	case SKL_TKN_U32_FMT_FREQ:
-	case SKL_TKN_U32_FMT_BIT_DEPTH:
-	case SKL_TKN_U32_FMT_SAMPLE_SIZE:
-	case SKL_TKN_U32_FMT_CH_CONFIG:
-	case SKL_TKN_U32_FMT_INTERLEAVE:
-	case SKL_TKN_U32_FMT_SAMPLE_TYPE:
-	case SKL_TKN_U32_FMT_CH_MAP:
-		ret = skl_tplg_widget_fill_fmt(dev, iface, tkn_elem->token,
+	हाल SKL_TKN_U32_FMT_CH:
+	हाल SKL_TKN_U32_FMT_FREQ:
+	हाल SKL_TKN_U32_FMT_BIT_DEPTH:
+	हाल SKL_TKN_U32_FMT_SAMPLE_SIZE:
+	हाल SKL_TKN_U32_FMT_CH_CONFIG:
+	हाल SKL_TKN_U32_FMT_INTERLEAVE:
+	हाल SKL_TKN_U32_FMT_SAMPLE_TYPE:
+	हाल SKL_TKN_U32_FMT_CH_MAP:
+		ret = skl_tplg_widget_fill_fmt(dev, अगरace, tkn_elem->token,
 				tkn_elem->value, dir, pin_index);
 
-		if (ret < 0)
-			return ret;
+		अगर (ret < 0)
+			वापस ret;
 
-		break;
+		अवरोध;
 
-	case SKL_TKN_U32_PIN_MOD_ID:
-	case SKL_TKN_U32_PIN_INST_ID:
-	case SKL_TKN_UUID:
+	हाल SKL_TKN_U32_PIN_MOD_ID:
+	हाल SKL_TKN_U32_PIN_INST_ID:
+	हाल SKL_TKN_UUID:
 		ret = skl_tplg_fill_pins_info(dev,
 				mconfig, tkn_elem, dir,
 				pin_index);
-		if (ret < 0)
-			return ret;
+		अगर (ret < 0)
+			वापस ret;
 
-		break;
+		अवरोध;
 
-	case SKL_TKN_U32_CAPS_SIZE:
-		mconfig->formats_config.caps_size =
+	हाल SKL_TKN_U32_CAPS_SIZE:
+		mconfig->क्रमmats_config.caps_size =
 			tkn_elem->value;
 
-		break;
+		अवरोध;
 
-	case SKL_TKN_U32_CAPS_SET_PARAMS:
-		mconfig->formats_config.set_params =
+	हाल SKL_TKN_U32_CAPS_SET_PARAMS:
+		mconfig->क्रमmats_config.set_params =
 				tkn_elem->value;
-		break;
+		अवरोध;
 
-	case SKL_TKN_U32_CAPS_PARAMS_ID:
-		mconfig->formats_config.param_id =
+	हाल SKL_TKN_U32_CAPS_PARAMS_ID:
+		mconfig->क्रमmats_config.param_id =
 				tkn_elem->value;
-		break;
+		अवरोध;
 
-	case SKL_TKN_U32_PROC_DOMAIN:
-		mconfig->domain =
+	हाल SKL_TKN_U32_PROC_DOMAIN:
+		mconfig->करोमुख्य =
 			tkn_elem->value;
 
-		break;
+		अवरोध;
 
-	case SKL_TKN_U32_DMA_BUF_SIZE:
+	हाल SKL_TKN_U32_DMA_BUF_SIZE:
 		mconfig->dma_buffer_size = tkn_elem->value;
-		break;
+		अवरोध;
 
-	case SKL_TKN_U8_IN_PIN_TYPE:
-	case SKL_TKN_U8_OUT_PIN_TYPE:
-	case SKL_TKN_U8_CONN_TYPE:
-		break;
+	हाल SKL_TKN_U8_IN_PIN_TYPE:
+	हाल SKL_TKN_U8_OUT_PIN_TYPE:
+	हाल SKL_TKN_U8_CONN_TYPE:
+		अवरोध;
 
-	default:
+	शेष:
 		dev_err(dev, "Token %d not handled\n",
 				tkn_elem->token);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	tkn_count++;
 
-	return tkn_count;
-}
+	वापस tkn_count;
+पूर्ण
 
 /*
- * Parse the vendor array for specific tokens to construct
- * module private data
+ * Parse the venकरोr array क्रम specअगरic tokens to स्थिरruct
+ * module निजी data
  */
-static int skl_tplg_get_tokens(struct device *dev,
-		char *pvt_data,	struct skl_dev *skl,
-		struct skl_module_cfg *mconfig, int block_size)
-{
-	struct snd_soc_tplg_vendor_array *array;
-	struct snd_soc_tplg_vendor_value_elem *tkn_elem;
-	int tkn_count = 0, ret;
-	int off = 0, tuple_size = 0;
+अटल पूर्णांक skl_tplg_get_tokens(काष्ठा device *dev,
+		अक्षर *pvt_data,	काष्ठा skl_dev *skl,
+		काष्ठा skl_module_cfg *mconfig, पूर्णांक block_size)
+अणु
+	काष्ठा snd_soc_tplg_venकरोr_array *array;
+	काष्ठा snd_soc_tplg_venकरोr_value_elem *tkn_elem;
+	पूर्णांक tkn_count = 0, ret;
+	पूर्णांक off = 0, tuple_size = 0;
 	bool is_module_guid = true;
 
-	if (block_size <= 0)
-		return -EINVAL;
+	अगर (block_size <= 0)
+		वापस -EINVAL;
 
-	while (tuple_size < block_size) {
-		array = (struct snd_soc_tplg_vendor_array *)(pvt_data + off);
+	जबतक (tuple_size < block_size) अणु
+		array = (काष्ठा snd_soc_tplg_venकरोr_array *)(pvt_data + off);
 
 		off += array->size;
 
-		switch (array->type) {
-		case SND_SOC_TPLG_TUPLE_TYPE_STRING:
+		चयन (array->type) अणु
+		हाल SND_SOC_TPLG_TUPLE_TYPE_STRING:
 			dev_warn(dev, "no string tokens expected for skl tplg\n");
-			continue;
+			जारी;
 
-		case SND_SOC_TPLG_TUPLE_TYPE_UUID:
-			if (is_module_guid) {
+		हाल SND_SOC_TPLG_TUPLE_TYPE_UUID:
+			अगर (is_module_guid) अणु
 				ret = skl_tplg_get_uuid(dev, (guid_t *)mconfig->guid,
 							array->uuid);
 				is_module_guid = false;
-			} else {
+			पूर्ण अन्यथा अणु
 				ret = skl_tplg_get_token(dev, array->value, skl,
 							 mconfig);
-			}
+			पूर्ण
 
-			if (ret < 0)
-				return ret;
+			अगर (ret < 0)
+				वापस ret;
 
-			tuple_size += sizeof(*array->uuid);
+			tuple_size += माप(*array->uuid);
 
-			continue;
+			जारी;
 
-		default:
+		शेष:
 			tkn_elem = array->value;
 			tkn_count = 0;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		while (tkn_count <= (array->num_elems - 1)) {
+		जबतक (tkn_count <= (array->num_elems - 1)) अणु
 			ret = skl_tplg_get_token(dev, tkn_elem,
 					skl, mconfig);
 
-			if (ret < 0)
-				return ret;
+			अगर (ret < 0)
+				वापस ret;
 
 			tkn_count = tkn_count + ret;
 			tkn_elem++;
-		}
+		पूर्ण
 
-		tuple_size += tkn_count * sizeof(*tkn_elem);
-	}
+		tuple_size += tkn_count * माप(*tkn_elem);
+	पूर्ण
 
-	return off;
-}
+	वापस off;
+पूर्ण
 
 /*
- * Every data block is preceded by a descriptor to read the number
+ * Every data block is preceded by a descriptor to पढ़ो the number
  * of data blocks, they type of the block and it's size
  */
-static int skl_tplg_get_desc_blocks(struct device *dev,
-		struct snd_soc_tplg_vendor_array *array)
-{
-	struct snd_soc_tplg_vendor_value_elem *tkn_elem;
+अटल पूर्णांक skl_tplg_get_desc_blocks(काष्ठा device *dev,
+		काष्ठा snd_soc_tplg_venकरोr_array *array)
+अणु
+	काष्ठा snd_soc_tplg_venकरोr_value_elem *tkn_elem;
 
 	tkn_elem = array->value;
 
-	switch (tkn_elem->token) {
-	case SKL_TKN_U8_NUM_BLOCKS:
-	case SKL_TKN_U8_BLOCK_TYPE:
-	case SKL_TKN_U16_BLOCK_SIZE:
-		return tkn_elem->value;
+	चयन (tkn_elem->token) अणु
+	हाल SKL_TKN_U8_NUM_BLOCKS:
+	हाल SKL_TKN_U8_BLOCK_TYPE:
+	हाल SKL_TKN_U16_BLOCK_SIZE:
+		वापस tkn_elem->value;
 
-	default:
+	शेष:
 		dev_err(dev, "Invalid descriptor token %d\n", tkn_elem->token);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-/* Functions to parse private data from configuration file format v4 */
+/* Functions to parse निजी data from configuration file क्रमmat v4 */
 
 /*
- * Add pipeline from topology binary into driver pipeline list
+ * Add pipeline from topology binary पूर्णांकo driver pipeline list
  *
- * If already added we return that instance
- * Otherwise we create a new instance and add into driver list
+ * If alपढ़ोy added we वापस that instance
+ * Otherwise we create a new instance and add पूर्णांकo driver list
  */
-static int skl_tplg_add_pipe_v4(struct device *dev,
-			struct skl_module_cfg *mconfig, struct skl_dev *skl,
-			struct skl_dfw_v4_pipe *dfw_pipe)
-{
-	struct skl_pipeline *ppl;
-	struct skl_pipe *pipe;
-	struct skl_pipe_params *params;
+अटल पूर्णांक skl_tplg_add_pipe_v4(काष्ठा device *dev,
+			काष्ठा skl_module_cfg *mconfig, काष्ठा skl_dev *skl,
+			काष्ठा skl_dfw_v4_pipe *dfw_pipe)
+अणु
+	काष्ठा skl_pipeline *ppl;
+	काष्ठा skl_pipe *pipe;
+	काष्ठा skl_pipe_params *params;
 
-	list_for_each_entry(ppl, &skl->ppl_list, node) {
-		if (ppl->pipe->ppl_id == dfw_pipe->pipe_id) {
+	list_क्रम_each_entry(ppl, &skl->ppl_list, node) अणु
+		अगर (ppl->pipe->ppl_id == dfw_pipe->pipe_id) अणु
 			mconfig->pipe = ppl->pipe;
-			return 0;
-		}
-	}
+			वापस 0;
+		पूर्ण
+	पूर्ण
 
-	ppl = devm_kzalloc(dev, sizeof(*ppl), GFP_KERNEL);
-	if (!ppl)
-		return -ENOMEM;
+	ppl = devm_kzalloc(dev, माप(*ppl), GFP_KERNEL);
+	अगर (!ppl)
+		वापस -ENOMEM;
 
-	pipe = devm_kzalloc(dev, sizeof(*pipe), GFP_KERNEL);
-	if (!pipe)
-		return -ENOMEM;
+	pipe = devm_kzalloc(dev, माप(*pipe), GFP_KERNEL);
+	अगर (!pipe)
+		वापस -ENOMEM;
 
-	params = devm_kzalloc(dev, sizeof(*params), GFP_KERNEL);
-	if (!params)
-		return -ENOMEM;
+	params = devm_kzalloc(dev, माप(*params), GFP_KERNEL);
+	अगर (!params)
+		वापस -ENOMEM;
 
 	pipe->ppl_id = dfw_pipe->pipe_id;
 	pipe->memory_pages = dfw_pipe->memory_pages;
@@ -2752,56 +2753,56 @@ static int skl_tplg_add_pipe_v4(struct device *dev,
 
 	mconfig->pipe = pipe;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void skl_fill_module_pin_info_v4(struct skl_dfw_v4_module_pin *dfw_pin,
-					struct skl_module_pin *m_pin,
-					bool is_dynamic, int max_pin)
-{
-	int i;
+अटल व्योम skl_fill_module_pin_info_v4(काष्ठा skl_dfw_v4_module_pin *dfw_pin,
+					काष्ठा skl_module_pin *m_pin,
+					bool is_dynamic, पूर्णांक max_pin)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < max_pin; i++) {
+	क्रम (i = 0; i < max_pin; i++) अणु
 		m_pin[i].id.module_id = dfw_pin[i].module_id;
 		m_pin[i].id.instance_id = dfw_pin[i].instance_id;
 		m_pin[i].in_use = false;
 		m_pin[i].is_dynamic = is_dynamic;
 		m_pin[i].pin_state = SKL_PIN_UNBIND;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void skl_tplg_fill_fmt_v4(struct skl_module_pin_fmt *dst_fmt,
-				 struct skl_dfw_v4_module_fmt *src_fmt,
-				 int pins)
-{
-	int i;
+अटल व्योम skl_tplg_fill_fmt_v4(काष्ठा skl_module_pin_fmt *dst_fmt,
+				 काष्ठा skl_dfw_v4_module_fmt *src_fmt,
+				 पूर्णांक pins)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < pins; i++) {
+	क्रम (i = 0; i < pins; i++) अणु
 		dst_fmt[i].fmt.channels  = src_fmt[i].channels;
 		dst_fmt[i].fmt.s_freq = src_fmt[i].freq;
 		dst_fmt[i].fmt.bit_depth = src_fmt[i].bit_depth;
 		dst_fmt[i].fmt.valid_bit_depth = src_fmt[i].valid_bit_depth;
 		dst_fmt[i].fmt.ch_cfg = src_fmt[i].ch_cfg;
 		dst_fmt[i].fmt.ch_map = src_fmt[i].ch_map;
-		dst_fmt[i].fmt.interleaving_style =
-						src_fmt[i].interleaving_style;
+		dst_fmt[i].fmt.पूर्णांकerleaving_style =
+						src_fmt[i].पूर्णांकerleaving_style;
 		dst_fmt[i].fmt.sample_type = src_fmt[i].sample_type;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int skl_tplg_get_pvt_data_v4(struct snd_soc_tplg_dapm_widget *tplg_w,
-				    struct skl_dev *skl, struct device *dev,
-				    struct skl_module_cfg *mconfig)
-{
-	struct skl_dfw_v4_module *dfw =
-				(struct skl_dfw_v4_module *)tplg_w->priv.data;
-	int ret;
+अटल पूर्णांक skl_tplg_get_pvt_data_v4(काष्ठा snd_soc_tplg_dapm_widget *tplg_w,
+				    काष्ठा skl_dev *skl, काष्ठा device *dev,
+				    काष्ठा skl_module_cfg *mconfig)
+अणु
+	काष्ठा skl_dfw_v4_module *dfw =
+				(काष्ठा skl_dfw_v4_module *)tplg_w->priv.data;
+	पूर्णांक ret;
 
 	dev_dbg(dev, "Parsing Skylake v4 widget topology data\n");
 
 	ret = guid_parse(dfw->uuid, (guid_t *)mconfig->guid);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 	mconfig->id.module_id = -1;
 	mconfig->id.instance_id = dfw->instance_id;
 	mconfig->module->resources[0].cpc = dfw->max_mcps / 1000;
@@ -2811,9 +2812,9 @@ static int skl_tplg_get_pvt_data_v4(struct snd_soc_tplg_dapm_widget *tplg_w,
 	mconfig->module->max_input_pins = dfw->max_in_queue;
 	mconfig->module->max_output_pins = dfw->max_out_queue;
 	mconfig->module->loadable = dfw->is_loadable;
-	skl_tplg_fill_fmt_v4(mconfig->module->formats[0].inputs, dfw->in_fmt,
+	skl_tplg_fill_fmt_v4(mconfig->module->क्रमmats[0].inमाला_दो, dfw->in_fmt,
 			     MAX_IN_QUEUE);
-	skl_tplg_fill_fmt_v4(mconfig->module->formats[0].outputs, dfw->out_fmt,
+	skl_tplg_fill_fmt_v4(mconfig->module->क्रमmats[0].outमाला_दो, dfw->out_fmt,
 			     MAX_OUT_QUEUE);
 
 	mconfig->params_fixup = dfw->params_fixup;
@@ -2823,25 +2824,25 @@ static int skl_tplg_get_pvt_data_v4(struct snd_soc_tplg_dapm_widget *tplg_w,
 	mconfig->module->resources[0].is_pages = dfw->mem_pages;
 
 	ret = skl_tplg_add_pipe_v4(dev, mconfig, skl, &dfw->pipe);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	mconfig->dev_type = dfw->dev_type;
 	mconfig->hw_conn_type = dfw->hw_conn_type;
-	mconfig->time_slot = dfw->time_slot;
-	mconfig->formats_config.caps_size = dfw->caps.caps_size;
+	mconfig->समय_slot = dfw->समय_slot;
+	mconfig->क्रमmats_config.caps_size = dfw->caps.caps_size;
 
-	mconfig->m_in_pin = devm_kcalloc(dev,
-				MAX_IN_QUEUE, sizeof(*mconfig->m_in_pin),
+	mconfig->m_in_pin = devm_kसुस्मृति(dev,
+				MAX_IN_QUEUE, माप(*mconfig->m_in_pin),
 				GFP_KERNEL);
-	if (!mconfig->m_in_pin)
-		return -ENOMEM;
+	अगर (!mconfig->m_in_pin)
+		वापस -ENOMEM;
 
-	mconfig->m_out_pin = devm_kcalloc(dev,
-				MAX_OUT_QUEUE, sizeof(*mconfig->m_out_pin),
+	mconfig->m_out_pin = devm_kसुस्मृति(dev,
+				MAX_OUT_QUEUE, माप(*mconfig->m_out_pin),
 				GFP_KERNEL);
-	if (!mconfig->m_out_pin)
-		return -ENOMEM;
+	अगर (!mconfig->m_out_pin)
+		वापस -ENOMEM;
 
 	skl_fill_module_pin_info_v4(dfw->in_pin, mconfig->m_in_pin,
 				    dfw->is_dynamic_in_pin,
@@ -2850,933 +2851,933 @@ static int skl_tplg_get_pvt_data_v4(struct snd_soc_tplg_dapm_widget *tplg_w,
 				    dfw->is_dynamic_out_pin,
 				    mconfig->module->max_output_pins);
 
-	if (mconfig->formats_config.caps_size) {
-		mconfig->formats_config.set_params = dfw->caps.set_params;
-		mconfig->formats_config.param_id = dfw->caps.param_id;
-		mconfig->formats_config.caps =
-		devm_kzalloc(dev, mconfig->formats_config.caps_size,
+	अगर (mconfig->क्रमmats_config.caps_size) अणु
+		mconfig->क्रमmats_config.set_params = dfw->caps.set_params;
+		mconfig->क्रमmats_config.param_id = dfw->caps.param_id;
+		mconfig->क्रमmats_config.caps =
+		devm_kzalloc(dev, mconfig->क्रमmats_config.caps_size,
 			     GFP_KERNEL);
-		if (!mconfig->formats_config.caps)
-			return -ENOMEM;
-		memcpy(mconfig->formats_config.caps, dfw->caps.caps,
+		अगर (!mconfig->क्रमmats_config.caps)
+			वापस -ENOMEM;
+		स_नकल(mconfig->क्रमmats_config.caps, dfw->caps.caps,
 		       dfw->caps.caps_size);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * Parse the private data for the token and corresponding value.
- * The private data can have multiple data blocks. So, a data block
- * is preceded by a descriptor for number of blocks and a descriptor
- * for the type and size of the suceeding data block.
+ * Parse the निजी data क्रम the token and corresponding value.
+ * The निजी data can have multiple data blocks. So, a data block
+ * is preceded by a descriptor क्रम number of blocks and a descriptor
+ * क्रम the type and size of the suceeding data block.
  */
-static int skl_tplg_get_pvt_data(struct snd_soc_tplg_dapm_widget *tplg_w,
-				struct skl_dev *skl, struct device *dev,
-				struct skl_module_cfg *mconfig)
-{
-	struct snd_soc_tplg_vendor_array *array;
-	int num_blocks, block_size, block_type, off = 0;
-	char *data;
-	int ret;
+अटल पूर्णांक skl_tplg_get_pvt_data(काष्ठा snd_soc_tplg_dapm_widget *tplg_w,
+				काष्ठा skl_dev *skl, काष्ठा device *dev,
+				काष्ठा skl_module_cfg *mconfig)
+अणु
+	काष्ठा snd_soc_tplg_venकरोr_array *array;
+	पूर्णांक num_blocks, block_size, block_type, off = 0;
+	अक्षर *data;
+	पूर्णांक ret;
 
 	/*
 	 * v4 configuration files have a valid UUID at the start of
-	 * the widget's private data.
+	 * the widget's निजी data.
 	 */
-	if (uuid_is_valid((char *)tplg_w->priv.data))
-		return skl_tplg_get_pvt_data_v4(tplg_w, skl, dev, mconfig);
+	अगर (uuid_is_valid((अक्षर *)tplg_w->priv.data))
+		वापस skl_tplg_get_pvt_data_v4(tplg_w, skl, dev, mconfig);
 
 	/* Read the NUM_DATA_BLOCKS descriptor */
-	array = (struct snd_soc_tplg_vendor_array *)tplg_w->priv.data;
+	array = (काष्ठा snd_soc_tplg_venकरोr_array *)tplg_w->priv.data;
 	ret = skl_tplg_get_desc_blocks(dev, array);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 	num_blocks = ret;
 
 	off += array->size;
 	/* Read the BLOCK_TYPE and BLOCK_SIZE descriptor */
-	while (num_blocks > 0) {
-		array = (struct snd_soc_tplg_vendor_array *)
+	जबतक (num_blocks > 0) अणु
+		array = (काष्ठा snd_soc_tplg_venकरोr_array *)
 				(tplg_w->priv.data + off);
 
 		ret = skl_tplg_get_desc_blocks(dev, array);
 
-		if (ret < 0)
-			return ret;
+		अगर (ret < 0)
+			वापस ret;
 		block_type = ret;
 		off += array->size;
 
-		array = (struct snd_soc_tplg_vendor_array *)
+		array = (काष्ठा snd_soc_tplg_venकरोr_array *)
 			(tplg_w->priv.data + off);
 
 		ret = skl_tplg_get_desc_blocks(dev, array);
 
-		if (ret < 0)
-			return ret;
+		अगर (ret < 0)
+			वापस ret;
 		block_size = ret;
 		off += array->size;
 
-		array = (struct snd_soc_tplg_vendor_array *)
+		array = (काष्ठा snd_soc_tplg_venकरोr_array *)
 			(tplg_w->priv.data + off);
 
 		data = (tplg_w->priv.data + off);
 
-		if (block_type == SKL_TYPE_TUPLE) {
+		अगर (block_type == SKL_TYPE_TUPLE) अणु
 			ret = skl_tplg_get_tokens(dev, data,
 					skl, mconfig, block_size);
 
-			if (ret < 0)
-				return ret;
+			अगर (ret < 0)
+				वापस ret;
 
 			--num_blocks;
-		} else {
-			if (mconfig->formats_config.caps_size > 0)
-				memcpy(mconfig->formats_config.caps, data,
-					mconfig->formats_config.caps_size);
+		पूर्ण अन्यथा अणु
+			अगर (mconfig->क्रमmats_config.caps_size > 0)
+				स_नकल(mconfig->क्रमmats_config.caps, data,
+					mconfig->क्रमmats_config.caps_size);
 			--num_blocks;
-			ret = mconfig->formats_config.caps_size;
-		}
+			ret = mconfig->क्रमmats_config.caps_size;
+		पूर्ण
 		off += ret;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void skl_clear_pin_config(struct snd_soc_component *component,
-				struct snd_soc_dapm_widget *w)
-{
-	int i;
-	struct skl_module_cfg *mconfig;
-	struct skl_pipe *pipe;
+अटल व्योम skl_clear_pin_config(काष्ठा snd_soc_component *component,
+				काष्ठा snd_soc_dapm_widget *w)
+अणु
+	पूर्णांक i;
+	काष्ठा skl_module_cfg *mconfig;
+	काष्ठा skl_pipe *pipe;
 
-	if (!strncmp(w->dapm->component->name, component->name,
-					strlen(component->name))) {
+	अगर (!म_भेदन(w->dapm->component->name, component->name,
+					म_माप(component->name))) अणु
 		mconfig = w->priv;
 		pipe = mconfig->pipe;
-		for (i = 0; i < mconfig->module->max_input_pins; i++) {
+		क्रम (i = 0; i < mconfig->module->max_input_pins; i++) अणु
 			mconfig->m_in_pin[i].in_use = false;
 			mconfig->m_in_pin[i].pin_state = SKL_PIN_UNBIND;
-		}
-		for (i = 0; i < mconfig->module->max_output_pins; i++) {
+		पूर्ण
+		क्रम (i = 0; i < mconfig->module->max_output_pins; i++) अणु
 			mconfig->m_out_pin[i].in_use = false;
 			mconfig->m_out_pin[i].pin_state = SKL_PIN_UNBIND;
-		}
+		पूर्ण
 		pipe->state = SKL_PIPE_INVALID;
 		mconfig->m_state = SKL_MODULE_UNINIT;
-	}
-}
+	पूर्ण
+पूर्ण
 
-void skl_cleanup_resources(struct skl_dev *skl)
-{
-	struct snd_soc_component *soc_component = skl->component;
-	struct snd_soc_dapm_widget *w;
-	struct snd_soc_card *card;
+व्योम skl_cleanup_resources(काष्ठा skl_dev *skl)
+अणु
+	काष्ठा snd_soc_component *soc_component = skl->component;
+	काष्ठा snd_soc_dapm_widget *w;
+	काष्ठा snd_soc_card *card;
 
-	if (soc_component == NULL)
-		return;
+	अगर (soc_component == शून्य)
+		वापस;
 
 	card = soc_component->card;
-	if (!card || !card->instantiated)
-		return;
+	अगर (!card || !card->instantiated)
+		वापस;
 
-	list_for_each_entry(w, &card->widgets, list) {
-		if (is_skl_dsp_widget_type(w, skl->dev) && w->priv != NULL)
+	list_क्रम_each_entry(w, &card->widमाला_लो, list) अणु
+		अगर (is_skl_dsp_widget_type(w, skl->dev) && w->priv != शून्य)
 			skl_clear_pin_config(soc_component, w);
-	}
+	पूर्ण
 
 	skl_clear_module_cnt(skl->dsp);
-}
+पूर्ण
 
 /*
  * Topology core widget load callback
  *
- * This is used to save the private data for each widget which gives
- * information to the driver about module and pipeline parameters which DSP
- * FW expects like ids, resource values, formats etc
+ * This is used to save the निजी data क्रम each widget which gives
+ * inक्रमmation to the driver about module and pipeline parameters which DSP
+ * FW expects like ids, resource values, क्रमmats etc
  */
-static int skl_tplg_widget_load(struct snd_soc_component *cmpnt, int index,
-				struct snd_soc_dapm_widget *w,
-				struct snd_soc_tplg_dapm_widget *tplg_w)
-{
-	int ret;
-	struct hdac_bus *bus = snd_soc_component_get_drvdata(cmpnt);
-	struct skl_dev *skl = bus_to_skl(bus);
-	struct skl_module_cfg *mconfig;
+अटल पूर्णांक skl_tplg_widget_load(काष्ठा snd_soc_component *cmpnt, पूर्णांक index,
+				काष्ठा snd_soc_dapm_widget *w,
+				काष्ठा snd_soc_tplg_dapm_widget *tplg_w)
+अणु
+	पूर्णांक ret;
+	काष्ठा hdac_bus *bus = snd_soc_component_get_drvdata(cmpnt);
+	काष्ठा skl_dev *skl = bus_to_skl(bus);
+	काष्ठा skl_module_cfg *mconfig;
 
-	if (!tplg_w->priv.size)
-		goto bind_event;
+	अगर (!tplg_w->priv.size)
+		जाओ bind_event;
 
-	mconfig = devm_kzalloc(bus->dev, sizeof(*mconfig), GFP_KERNEL);
+	mconfig = devm_kzalloc(bus->dev, माप(*mconfig), GFP_KERNEL);
 
-	if (!mconfig)
-		return -ENOMEM;
+	अगर (!mconfig)
+		वापस -ENOMEM;
 
-	if (skl->nr_modules == 0) {
+	अगर (skl->nr_modules == 0) अणु
 		mconfig->module = devm_kzalloc(bus->dev,
-				sizeof(*mconfig->module), GFP_KERNEL);
-		if (!mconfig->module)
-			return -ENOMEM;
-	}
+				माप(*mconfig->module), GFP_KERNEL);
+		अगर (!mconfig->module)
+			वापस -ENOMEM;
+	पूर्ण
 
 	w->priv = mconfig;
 
 	/*
 	 * module binary can be loaded later, so set it to query when
-	 * module is load for a use case
+	 * module is load क्रम a use हाल
 	 */
 	mconfig->id.module_id = -1;
 
-	/* Parse private data for tuples */
+	/* Parse निजी data क्रम tuples */
 	ret = skl_tplg_get_pvt_data(tplg_w, skl, bus->dev, mconfig);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	skl_debug_init_module(skl->debugfs, w, mconfig);
 
 bind_event:
-	if (tplg_w->event_type == 0) {
+	अगर (tplg_w->event_type == 0) अणु
 		dev_dbg(bus->dev, "ASoC: No event handler required\n");
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	ret = snd_soc_tplg_widget_bind_event(w, skl_tplg_widget_ops,
 					ARRAY_SIZE(skl_tplg_widget_ops),
 					tplg_w->event_type);
 
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(bus->dev, "%s: No matching event handlers found for %d\n",
 					__func__, tplg_w->event_type);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int skl_init_algo_data(struct device *dev, struct soc_bytes_ext *be,
-					struct snd_soc_tplg_bytes_control *bc)
-{
-	struct skl_algo_data *ac;
-	struct skl_dfw_algo_data *dfw_ac =
-				(struct skl_dfw_algo_data *)bc->priv.data;
+अटल पूर्णांक skl_init_algo_data(काष्ठा device *dev, काष्ठा soc_bytes_ext *be,
+					काष्ठा snd_soc_tplg_bytes_control *bc)
+अणु
+	काष्ठा skl_algo_data *ac;
+	काष्ठा skl_dfw_algo_data *dfw_ac =
+				(काष्ठा skl_dfw_algo_data *)bc->priv.data;
 
-	ac = devm_kzalloc(dev, sizeof(*ac), GFP_KERNEL);
-	if (!ac)
-		return -ENOMEM;
+	ac = devm_kzalloc(dev, माप(*ac), GFP_KERNEL);
+	अगर (!ac)
+		वापस -ENOMEM;
 
-	/* Fill private data */
+	/* Fill निजी data */
 	ac->max = dfw_ac->max;
 	ac->param_id = dfw_ac->param_id;
 	ac->set_params = dfw_ac->set_params;
 	ac->size = dfw_ac->max;
 
-	if (ac->max) {
+	अगर (ac->max) अणु
 		ac->params = devm_kzalloc(dev, ac->max, GFP_KERNEL);
-		if (!ac->params)
-			return -ENOMEM;
+		अगर (!ac->params)
+			वापस -ENOMEM;
 
-		memcpy(ac->params, dfw_ac->params, ac->max);
-	}
+		स_नकल(ac->params, dfw_ac->params, ac->max);
+	पूर्ण
 
-	be->dobj.private  = ac;
-	return 0;
-}
+	be->करोbj.निजी  = ac;
+	वापस 0;
+पूर्ण
 
-static int skl_init_enum_data(struct device *dev, struct soc_enum *se,
-				struct snd_soc_tplg_enum_control *ec)
-{
+अटल पूर्णांक skl_init_क्रमागत_data(काष्ठा device *dev, काष्ठा soc_क्रमागत *se,
+				काष्ठा snd_soc_tplg_क्रमागत_control *ec)
+अणु
 
-	void *data;
+	व्योम *data;
 
-	if (ec->priv.size) {
-		data = devm_kzalloc(dev, sizeof(ec->priv.size), GFP_KERNEL);
-		if (!data)
-			return -ENOMEM;
-		memcpy(data, ec->priv.data, ec->priv.size);
-		se->dobj.private = data;
-	}
+	अगर (ec->priv.size) अणु
+		data = devm_kzalloc(dev, माप(ec->priv.size), GFP_KERNEL);
+		अगर (!data)
+			वापस -ENOMEM;
+		स_नकल(data, ec->priv.data, ec->priv.size);
+		se->करोbj.निजी = data;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
-}
+पूर्ण
 
-static int skl_tplg_control_load(struct snd_soc_component *cmpnt,
-				int index,
-				struct snd_kcontrol_new *kctl,
-				struct snd_soc_tplg_ctl_hdr *hdr)
-{
-	struct soc_bytes_ext *sb;
-	struct snd_soc_tplg_bytes_control *tplg_bc;
-	struct snd_soc_tplg_enum_control *tplg_ec;
-	struct hdac_bus *bus  = snd_soc_component_get_drvdata(cmpnt);
-	struct soc_enum *se;
+अटल पूर्णांक skl_tplg_control_load(काष्ठा snd_soc_component *cmpnt,
+				पूर्णांक index,
+				काष्ठा snd_kcontrol_new *kctl,
+				काष्ठा snd_soc_tplg_ctl_hdr *hdr)
+अणु
+	काष्ठा soc_bytes_ext *sb;
+	काष्ठा snd_soc_tplg_bytes_control *tplg_bc;
+	काष्ठा snd_soc_tplg_क्रमागत_control *tplg_ec;
+	काष्ठा hdac_bus *bus  = snd_soc_component_get_drvdata(cmpnt);
+	काष्ठा soc_क्रमागत *se;
 
-	switch (hdr->ops.info) {
-	case SND_SOC_TPLG_CTL_BYTES:
+	चयन (hdr->ops.info) अणु
+	हाल SND_SOC_TPLG_CTL_BYTES:
 		tplg_bc = container_of(hdr,
-				struct snd_soc_tplg_bytes_control, hdr);
-		if (kctl->access & SNDRV_CTL_ELEM_ACCESS_TLV_CALLBACK) {
-			sb = (struct soc_bytes_ext *)kctl->private_value;
-			if (tplg_bc->priv.size)
-				return skl_init_algo_data(
+				काष्ठा snd_soc_tplg_bytes_control, hdr);
+		अगर (kctl->access & SNDRV_CTL_ELEM_ACCESS_TLV_CALLBACK) अणु
+			sb = (काष्ठा soc_bytes_ext *)kctl->निजी_value;
+			अगर (tplg_bc->priv.size)
+				वापस skl_init_algo_data(
 						bus->dev, sb, tplg_bc);
-		}
-		break;
+		पूर्ण
+		अवरोध;
 
-	case SND_SOC_TPLG_CTL_ENUM:
+	हाल SND_SOC_TPLG_CTL_ENUM:
 		tplg_ec = container_of(hdr,
-				struct snd_soc_tplg_enum_control, hdr);
-		if (kctl->access & SNDRV_CTL_ELEM_ACCESS_READ) {
-			se = (struct soc_enum *)kctl->private_value;
-			if (tplg_ec->priv.size)
-				skl_init_enum_data(bus->dev, se, tplg_ec);
-		}
+				काष्ठा snd_soc_tplg_क्रमागत_control, hdr);
+		अगर (kctl->access & SNDRV_CTL_ELEM_ACCESS_READ) अणु
+			se = (काष्ठा soc_क्रमागत *)kctl->निजी_value;
+			अगर (tplg_ec->priv.size)
+				skl_init_क्रमागत_data(bus->dev, se, tplg_ec);
+		पूर्ण
 
 		/*
-		 * now that the control initializations are done, remove
-		 * write permission for the DMIC configuration enums to
-		 * avoid conflicts between NHLT settings and user interaction
+		 * now that the control initializations are करोne, हटाओ
+		 * ग_लिखो permission क्रम the DMIC configuration क्रमागतs to
+		 * aव्योम conflicts between NHLT settings and user पूर्णांकeraction
 		 */
 
-		if (hdr->ops.get == SKL_CONTROL_TYPE_MULTI_IO_SELECT_DMIC)
+		अगर (hdr->ops.get == SKL_CONTROL_TYPE_MULTI_IO_SELECT_DMIC)
 			kctl->access = SNDRV_CTL_ELEM_ACCESS_READ;
 
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		dev_dbg(bus->dev, "Control load not supported %d:%d:%d\n",
 			hdr->ops.get, hdr->ops.put, hdr->ops.info);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int skl_tplg_fill_str_mfest_tkn(struct device *dev,
-		struct snd_soc_tplg_vendor_string_elem *str_elem,
-		struct skl_dev *skl)
-{
-	int tkn_count = 0;
-	static int ref_count;
+अटल पूर्णांक skl_tplg_fill_str_mfest_tkn(काष्ठा device *dev,
+		काष्ठा snd_soc_tplg_venकरोr_string_elem *str_elem,
+		काष्ठा skl_dev *skl)
+अणु
+	पूर्णांक tkn_count = 0;
+	अटल पूर्णांक ref_count;
 
-	switch (str_elem->token) {
-	case SKL_TKN_STR_LIB_NAME:
-		if (ref_count > skl->lib_count - 1) {
+	चयन (str_elem->token) अणु
+	हाल SKL_TKN_STR_LIB_NAME:
+		अगर (ref_count > skl->lib_count - 1) अणु
 			ref_count = 0;
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
-		strncpy(skl->lib_info[ref_count].name,
+		म_नकलन(skl->lib_info[ref_count].name,
 			str_elem->string,
 			ARRAY_SIZE(skl->lib_info[ref_count].name));
 		ref_count++;
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		dev_err(dev, "Not a string token %d\n", str_elem->token);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 	tkn_count++;
 
-	return tkn_count;
-}
+	वापस tkn_count;
+पूर्ण
 
-static int skl_tplg_get_str_tkn(struct device *dev,
-		struct snd_soc_tplg_vendor_array *array,
-		struct skl_dev *skl)
-{
-	int tkn_count = 0, ret;
-	struct snd_soc_tplg_vendor_string_elem *str_elem;
+अटल पूर्णांक skl_tplg_get_str_tkn(काष्ठा device *dev,
+		काष्ठा snd_soc_tplg_venकरोr_array *array,
+		काष्ठा skl_dev *skl)
+अणु
+	पूर्णांक tkn_count = 0, ret;
+	काष्ठा snd_soc_tplg_venकरोr_string_elem *str_elem;
 
-	str_elem = (struct snd_soc_tplg_vendor_string_elem *)array->value;
-	while (tkn_count < array->num_elems) {
+	str_elem = (काष्ठा snd_soc_tplg_venकरोr_string_elem *)array->value;
+	जबतक (tkn_count < array->num_elems) अणु
 		ret = skl_tplg_fill_str_mfest_tkn(dev, str_elem, skl);
 		str_elem++;
 
-		if (ret < 0)
-			return ret;
+		अगर (ret < 0)
+			वापस ret;
 
 		tkn_count = tkn_count + ret;
-	}
+	पूर्ण
 
-	return tkn_count;
-}
+	वापस tkn_count;
+पूर्ण
 
-static int skl_tplg_manifest_fill_fmt(struct device *dev,
-		struct skl_module_iface *fmt,
-		struct snd_soc_tplg_vendor_value_elem *tkn_elem,
-		u32 dir, int fmt_idx)
-{
-	struct skl_module_pin_fmt *dst_fmt;
-	struct skl_module_fmt *mod_fmt;
-	int ret;
+अटल पूर्णांक skl_tplg_manअगरest_fill_fmt(काष्ठा device *dev,
+		काष्ठा skl_module_अगरace *fmt,
+		काष्ठा snd_soc_tplg_venकरोr_value_elem *tkn_elem,
+		u32 dir, पूर्णांक fmt_idx)
+अणु
+	काष्ठा skl_module_pin_fmt *dst_fmt;
+	काष्ठा skl_module_fmt *mod_fmt;
+	पूर्णांक ret;
 
-	if (!fmt)
-		return -EINVAL;
+	अगर (!fmt)
+		वापस -EINVAL;
 
-	switch (dir) {
-	case SKL_DIR_IN:
-		dst_fmt = &fmt->inputs[fmt_idx];
-		break;
+	चयन (dir) अणु
+	हाल SKL_सूची_IN:
+		dst_fmt = &fmt->inमाला_दो[fmt_idx];
+		अवरोध;
 
-	case SKL_DIR_OUT:
-		dst_fmt = &fmt->outputs[fmt_idx];
-		break;
+	हाल SKL_सूची_OUT:
+		dst_fmt = &fmt->outमाला_दो[fmt_idx];
+		अवरोध;
 
-	default:
+	शेष:
 		dev_err(dev, "Invalid direction: %d\n", dir);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	mod_fmt = &dst_fmt->fmt;
 
-	switch (tkn_elem->token) {
-	case SKL_TKN_MM_U32_INTF_PIN_ID:
+	चयन (tkn_elem->token) अणु
+	हाल SKL_TKN_MM_U32_INTF_PIN_ID:
 		dst_fmt->id = tkn_elem->value;
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		ret = skl_tplg_fill_fmt(dev, mod_fmt, tkn_elem->token,
 					tkn_elem->value);
-		if (ret < 0)
-			return ret;
-		break;
-	}
+		अगर (ret < 0)
+			वापस ret;
+		अवरोध;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int skl_tplg_fill_mod_info(struct device *dev,
-		struct snd_soc_tplg_vendor_value_elem *tkn_elem,
-		struct skl_module *mod)
-{
+अटल पूर्णांक skl_tplg_fill_mod_info(काष्ठा device *dev,
+		काष्ठा snd_soc_tplg_venकरोr_value_elem *tkn_elem,
+		काष्ठा skl_module *mod)
+अणु
 
-	if (!mod)
-		return -EINVAL;
+	अगर (!mod)
+		वापस -EINVAL;
 
-	switch (tkn_elem->token) {
-	case SKL_TKN_U8_IN_PIN_TYPE:
+	चयन (tkn_elem->token) अणु
+	हाल SKL_TKN_U8_IN_PIN_TYPE:
 		mod->input_pin_type = tkn_elem->value;
-		break;
+		अवरोध;
 
-	case SKL_TKN_U8_OUT_PIN_TYPE:
+	हाल SKL_TKN_U8_OUT_PIN_TYPE:
 		mod->output_pin_type = tkn_elem->value;
-		break;
+		अवरोध;
 
-	case SKL_TKN_U8_IN_QUEUE_COUNT:
+	हाल SKL_TKN_U8_IN_QUEUE_COUNT:
 		mod->max_input_pins = tkn_elem->value;
-		break;
+		अवरोध;
 
-	case SKL_TKN_U8_OUT_QUEUE_COUNT:
+	हाल SKL_TKN_U8_OUT_QUEUE_COUNT:
 		mod->max_output_pins = tkn_elem->value;
-		break;
+		अवरोध;
 
-	case SKL_TKN_MM_U8_NUM_RES:
+	हाल SKL_TKN_MM_U8_NUM_RES:
 		mod->nr_resources = tkn_elem->value;
-		break;
+		अवरोध;
 
-	case SKL_TKN_MM_U8_NUM_INTF:
-		mod->nr_interfaces = tkn_elem->value;
-		break;
+	हाल SKL_TKN_MM_U8_NUM_INTF:
+		mod->nr_पूर्णांकerfaces = tkn_elem->value;
+		अवरोध;
 
-	default:
+	शेष:
 		dev_err(dev, "Invalid mod info token %d", tkn_elem->token);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
-static int skl_tplg_get_int_tkn(struct device *dev,
-		struct snd_soc_tplg_vendor_value_elem *tkn_elem,
-		struct skl_dev *skl)
-{
-	int tkn_count = 0, ret;
-	static int mod_idx, res_val_idx, intf_val_idx, dir, pin_idx;
-	struct skl_module_res *res = NULL;
-	struct skl_module_iface *fmt = NULL;
-	struct skl_module *mod = NULL;
-	static struct skl_astate_param *astate_table;
-	static int astate_cfg_idx, count;
-	int i;
-	size_t size;
+अटल पूर्णांक skl_tplg_get_पूर्णांक_tkn(काष्ठा device *dev,
+		काष्ठा snd_soc_tplg_venकरोr_value_elem *tkn_elem,
+		काष्ठा skl_dev *skl)
+अणु
+	पूर्णांक tkn_count = 0, ret;
+	अटल पूर्णांक mod_idx, res_val_idx, पूर्णांकf_val_idx, dir, pin_idx;
+	काष्ठा skl_module_res *res = शून्य;
+	काष्ठा skl_module_अगरace *fmt = शून्य;
+	काष्ठा skl_module *mod = शून्य;
+	अटल काष्ठा skl_astate_param *astate_table;
+	अटल पूर्णांक astate_cfg_idx, count;
+	पूर्णांक i;
+	माप_प्रकार size;
 
-	if (skl->modules) {
+	अगर (skl->modules) अणु
 		mod = skl->modules[mod_idx];
 		res = &mod->resources[res_val_idx];
-		fmt = &mod->formats[intf_val_idx];
-	}
+		fmt = &mod->क्रमmats[पूर्णांकf_val_idx];
+	पूर्ण
 
-	switch (tkn_elem->token) {
-	case SKL_TKN_U32_LIB_COUNT:
+	चयन (tkn_elem->token) अणु
+	हाल SKL_TKN_U32_LIB_COUNT:
 		skl->lib_count = tkn_elem->value;
-		break;
+		अवरोध;
 
-	case SKL_TKN_U8_NUM_MOD:
+	हाल SKL_TKN_U8_NUM_MOD:
 		skl->nr_modules = tkn_elem->value;
-		skl->modules = devm_kcalloc(dev, skl->nr_modules,
-				sizeof(*skl->modules), GFP_KERNEL);
-		if (!skl->modules)
-			return -ENOMEM;
+		skl->modules = devm_kसुस्मृति(dev, skl->nr_modules,
+				माप(*skl->modules), GFP_KERNEL);
+		अगर (!skl->modules)
+			वापस -ENOMEM;
 
-		for (i = 0; i < skl->nr_modules; i++) {
+		क्रम (i = 0; i < skl->nr_modules; i++) अणु
 			skl->modules[i] = devm_kzalloc(dev,
-					sizeof(struct skl_module), GFP_KERNEL);
-			if (!skl->modules[i])
-				return -ENOMEM;
-		}
-		break;
+					माप(काष्ठा skl_module), GFP_KERNEL);
+			अगर (!skl->modules[i])
+				वापस -ENOMEM;
+		पूर्ण
+		अवरोध;
 
-	case SKL_TKN_MM_U8_MOD_IDX:
+	हाल SKL_TKN_MM_U8_MOD_IDX:
 		mod_idx = tkn_elem->value;
-		break;
+		अवरोध;
 
-	case SKL_TKN_U32_ASTATE_COUNT:
-		if (astate_table != NULL) {
+	हाल SKL_TKN_U32_ASTATE_COUNT:
+		अगर (astate_table != शून्य) अणु
 			dev_err(dev, "More than one entry for A-State count");
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
-		if (tkn_elem->value > SKL_MAX_ASTATE_CFG) {
+		अगर (tkn_elem->value > SKL_MAX_ASTATE_CFG) अणु
 			dev_err(dev, "Invalid A-State count %d\n",
 				tkn_elem->value);
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
-		size = struct_size(skl->cfg.astate_cfg, astate_table,
+		size = काष्ठा_size(skl->cfg.astate_cfg, astate_table,
 				   tkn_elem->value);
 		skl->cfg.astate_cfg = devm_kzalloc(dev, size, GFP_KERNEL);
-		if (!skl->cfg.astate_cfg)
-			return -ENOMEM;
+		अगर (!skl->cfg.astate_cfg)
+			वापस -ENOMEM;
 
 		astate_table = skl->cfg.astate_cfg->astate_table;
 		count = skl->cfg.astate_cfg->count = tkn_elem->value;
-		break;
+		अवरोध;
 
-	case SKL_TKN_U32_ASTATE_IDX:
-		if (tkn_elem->value >= count) {
+	हाल SKL_TKN_U32_ASTATE_IDX:
+		अगर (tkn_elem->value >= count) अणु
 			dev_err(dev, "Invalid A-State index %d\n",
 				tkn_elem->value);
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
 		astate_cfg_idx = tkn_elem->value;
-		break;
+		अवरोध;
 
-	case SKL_TKN_U32_ASTATE_KCPS:
+	हाल SKL_TKN_U32_ASTATE_KCPS:
 		astate_table[astate_cfg_idx].kcps = tkn_elem->value;
-		break;
+		अवरोध;
 
-	case SKL_TKN_U32_ASTATE_CLK_SRC:
+	हाल SKL_TKN_U32_ASTATE_CLK_SRC:
 		astate_table[astate_cfg_idx].clk_src = tkn_elem->value;
-		break;
+		अवरोध;
 
-	case SKL_TKN_U8_IN_PIN_TYPE:
-	case SKL_TKN_U8_OUT_PIN_TYPE:
-	case SKL_TKN_U8_IN_QUEUE_COUNT:
-	case SKL_TKN_U8_OUT_QUEUE_COUNT:
-	case SKL_TKN_MM_U8_NUM_RES:
-	case SKL_TKN_MM_U8_NUM_INTF:
+	हाल SKL_TKN_U8_IN_PIN_TYPE:
+	हाल SKL_TKN_U8_OUT_PIN_TYPE:
+	हाल SKL_TKN_U8_IN_QUEUE_COUNT:
+	हाल SKL_TKN_U8_OUT_QUEUE_COUNT:
+	हाल SKL_TKN_MM_U8_NUM_RES:
+	हाल SKL_TKN_MM_U8_NUM_INTF:
 		ret = skl_tplg_fill_mod_info(dev, tkn_elem, mod);
-		if (ret < 0)
-			return ret;
-		break;
+		अगर (ret < 0)
+			वापस ret;
+		अवरोध;
 
-	case SKL_TKN_U32_DIR_PIN_COUNT:
-		dir = tkn_elem->value & SKL_IN_DIR_BIT_MASK;
+	हाल SKL_TKN_U32_सूची_PIN_COUNT:
+		dir = tkn_elem->value & SKL_IN_सूची_BIT_MASK;
 		pin_idx = (tkn_elem->value & SKL_PIN_COUNT_MASK) >> 4;
-		break;
+		अवरोध;
 
-	case SKL_TKN_MM_U32_RES_ID:
-		if (!res)
-			return -EINVAL;
+	हाल SKL_TKN_MM_U32_RES_ID:
+		अगर (!res)
+			वापस -EINVAL;
 
 		res->id = tkn_elem->value;
 		res_val_idx = tkn_elem->value;
-		break;
+		अवरोध;
 
-	case SKL_TKN_MM_U32_FMT_ID:
-		if (!fmt)
-			return -EINVAL;
+	हाल SKL_TKN_MM_U32_FMT_ID:
+		अगर (!fmt)
+			वापस -EINVAL;
 
 		fmt->fmt_idx = tkn_elem->value;
-		intf_val_idx = tkn_elem->value;
-		break;
+		पूर्णांकf_val_idx = tkn_elem->value;
+		अवरोध;
 
-	case SKL_TKN_MM_U32_CPS:
-	case SKL_TKN_MM_U32_DMA_SIZE:
-	case SKL_TKN_MM_U32_CPC:
-	case SKL_TKN_U32_MEM_PAGES:
-	case SKL_TKN_U32_OBS:
-	case SKL_TKN_U32_IBS:
-	case SKL_TKN_MM_U32_RES_PIN_ID:
-	case SKL_TKN_MM_U32_PIN_BUF:
+	हाल SKL_TKN_MM_U32_CPS:
+	हाल SKL_TKN_MM_U32_DMA_SIZE:
+	हाल SKL_TKN_MM_U32_CPC:
+	हाल SKL_TKN_U32_MEM_PAGES:
+	हाल SKL_TKN_U32_OBS:
+	हाल SKL_TKN_U32_IBS:
+	हाल SKL_TKN_MM_U32_RES_PIN_ID:
+	हाल SKL_TKN_MM_U32_PIN_BUF:
 		ret = skl_tplg_fill_res_tkn(dev, tkn_elem, res, pin_idx, dir);
-		if (ret < 0)
-			return ret;
+		अगर (ret < 0)
+			वापस ret;
 
-		break;
+		अवरोध;
 
-	case SKL_TKN_MM_U32_NUM_IN_FMT:
-		if (!fmt)
-			return -EINVAL;
+	हाल SKL_TKN_MM_U32_NUM_IN_FMT:
+		अगर (!fmt)
+			वापस -EINVAL;
 
 		res->nr_input_pins = tkn_elem->value;
-		break;
+		अवरोध;
 
-	case SKL_TKN_MM_U32_NUM_OUT_FMT:
-		if (!fmt)
-			return -EINVAL;
+	हाल SKL_TKN_MM_U32_NUM_OUT_FMT:
+		अगर (!fmt)
+			वापस -EINVAL;
 
 		res->nr_output_pins = tkn_elem->value;
-		break;
+		अवरोध;
 
-	case SKL_TKN_U32_FMT_CH:
-	case SKL_TKN_U32_FMT_FREQ:
-	case SKL_TKN_U32_FMT_BIT_DEPTH:
-	case SKL_TKN_U32_FMT_SAMPLE_SIZE:
-	case SKL_TKN_U32_FMT_CH_CONFIG:
-	case SKL_TKN_U32_FMT_INTERLEAVE:
-	case SKL_TKN_U32_FMT_SAMPLE_TYPE:
-	case SKL_TKN_U32_FMT_CH_MAP:
-	case SKL_TKN_MM_U32_INTF_PIN_ID:
-		ret = skl_tplg_manifest_fill_fmt(dev, fmt, tkn_elem,
+	हाल SKL_TKN_U32_FMT_CH:
+	हाल SKL_TKN_U32_FMT_FREQ:
+	हाल SKL_TKN_U32_FMT_BIT_DEPTH:
+	हाल SKL_TKN_U32_FMT_SAMPLE_SIZE:
+	हाल SKL_TKN_U32_FMT_CH_CONFIG:
+	हाल SKL_TKN_U32_FMT_INTERLEAVE:
+	हाल SKL_TKN_U32_FMT_SAMPLE_TYPE:
+	हाल SKL_TKN_U32_FMT_CH_MAP:
+	हाल SKL_TKN_MM_U32_INTF_PIN_ID:
+		ret = skl_tplg_manअगरest_fill_fmt(dev, fmt, tkn_elem,
 						 dir, pin_idx);
-		if (ret < 0)
-			return ret;
-		break;
+		अगर (ret < 0)
+			वापस ret;
+		अवरोध;
 
-	default:
+	शेष:
 		dev_err(dev, "Not a manifest token %d\n", tkn_elem->token);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 	tkn_count++;
 
-	return tkn_count;
-}
+	वापस tkn_count;
+पूर्ण
 
 /*
- * Fill the manifest structure by parsing the tokens based on the
+ * Fill the manअगरest काष्ठाure by parsing the tokens based on the
  * type.
  */
-static int skl_tplg_get_manifest_tkn(struct device *dev,
-		char *pvt_data, struct skl_dev *skl,
-		int block_size)
-{
-	int tkn_count = 0, ret;
-	int off = 0, tuple_size = 0;
+अटल पूर्णांक skl_tplg_get_manअगरest_tkn(काष्ठा device *dev,
+		अक्षर *pvt_data, काष्ठा skl_dev *skl,
+		पूर्णांक block_size)
+अणु
+	पूर्णांक tkn_count = 0, ret;
+	पूर्णांक off = 0, tuple_size = 0;
 	u8 uuid_index = 0;
-	struct snd_soc_tplg_vendor_array *array;
-	struct snd_soc_tplg_vendor_value_elem *tkn_elem;
+	काष्ठा snd_soc_tplg_venकरोr_array *array;
+	काष्ठा snd_soc_tplg_venकरोr_value_elem *tkn_elem;
 
-	if (block_size <= 0)
-		return -EINVAL;
+	अगर (block_size <= 0)
+		वापस -EINVAL;
 
-	while (tuple_size < block_size) {
-		array = (struct snd_soc_tplg_vendor_array *)(pvt_data + off);
+	जबतक (tuple_size < block_size) अणु
+		array = (काष्ठा snd_soc_tplg_venकरोr_array *)(pvt_data + off);
 		off += array->size;
-		switch (array->type) {
-		case SND_SOC_TPLG_TUPLE_TYPE_STRING:
+		चयन (array->type) अणु
+		हाल SND_SOC_TPLG_TUPLE_TYPE_STRING:
 			ret = skl_tplg_get_str_tkn(dev, array, skl);
 
-			if (ret < 0)
-				return ret;
+			अगर (ret < 0)
+				वापस ret;
 			tkn_count = ret;
 
 			tuple_size += tkn_count *
-				sizeof(struct snd_soc_tplg_vendor_string_elem);
-			continue;
+				माप(काष्ठा snd_soc_tplg_venकरोr_string_elem);
+			जारी;
 
-		case SND_SOC_TPLG_TUPLE_TYPE_UUID:
-			if (array->uuid->token != SKL_TKN_UUID) {
+		हाल SND_SOC_TPLG_TUPLE_TYPE_UUID:
+			अगर (array->uuid->token != SKL_TKN_UUID) अणु
 				dev_err(dev, "Not an UUID token: %d\n",
 					array->uuid->token);
-				return -EINVAL;
-			}
-			if (uuid_index >= skl->nr_modules) {
+				वापस -EINVAL;
+			पूर्ण
+			अगर (uuid_index >= skl->nr_modules) अणु
 				dev_err(dev, "Too many UUID tokens\n");
-				return -EINVAL;
-			}
+				वापस -EINVAL;
+			पूर्ण
 			import_guid(&skl->modules[uuid_index++]->uuid,
 				    array->uuid->uuid);
 
-			tuple_size += sizeof(*array->uuid);
-			continue;
+			tuple_size += माप(*array->uuid);
+			जारी;
 
-		default:
+		शेष:
 			tkn_elem = array->value;
 			tkn_count = 0;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		while (tkn_count <= array->num_elems - 1) {
-			ret = skl_tplg_get_int_tkn(dev,
+		जबतक (tkn_count <= array->num_elems - 1) अणु
+			ret = skl_tplg_get_पूर्णांक_tkn(dev,
 					tkn_elem, skl);
-			if (ret < 0)
-				return ret;
+			अगर (ret < 0)
+				वापस ret;
 
 			tkn_count = tkn_count + ret;
 			tkn_elem++;
-		}
-		tuple_size += (tkn_count * sizeof(*tkn_elem));
+		पूर्ण
+		tuple_size += (tkn_count * माप(*tkn_elem));
 		tkn_count = 0;
-	}
+	पूर्ण
 
-	return off;
-}
+	वापस off;
+पूर्ण
 
 /*
- * Parse manifest private data for tokens. The private data block is
- * preceded by descriptors for type and size of data block.
+ * Parse manअगरest निजी data क्रम tokens. The निजी data block is
+ * preceded by descriptors क्रम type and size of data block.
  */
-static int skl_tplg_get_manifest_data(struct snd_soc_tplg_manifest *manifest,
-			struct device *dev, struct skl_dev *skl)
-{
-	struct snd_soc_tplg_vendor_array *array;
-	int num_blocks, block_size = 0, block_type, off = 0;
-	char *data;
-	int ret;
+अटल पूर्णांक skl_tplg_get_manअगरest_data(काष्ठा snd_soc_tplg_manअगरest *manअगरest,
+			काष्ठा device *dev, काष्ठा skl_dev *skl)
+अणु
+	काष्ठा snd_soc_tplg_venकरोr_array *array;
+	पूर्णांक num_blocks, block_size = 0, block_type, off = 0;
+	अक्षर *data;
+	पूर्णांक ret;
 
 	/* Read the NUM_DATA_BLOCKS descriptor */
-	array = (struct snd_soc_tplg_vendor_array *)manifest->priv.data;
+	array = (काष्ठा snd_soc_tplg_venकरोr_array *)manअगरest->priv.data;
 	ret = skl_tplg_get_desc_blocks(dev, array);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 	num_blocks = ret;
 
 	off += array->size;
 	/* Read the BLOCK_TYPE and BLOCK_SIZE descriptor */
-	while (num_blocks > 0) {
-		array = (struct snd_soc_tplg_vendor_array *)
-				(manifest->priv.data + off);
+	जबतक (num_blocks > 0) अणु
+		array = (काष्ठा snd_soc_tplg_venकरोr_array *)
+				(manअगरest->priv.data + off);
 		ret = skl_tplg_get_desc_blocks(dev, array);
 
-		if (ret < 0)
-			return ret;
+		अगर (ret < 0)
+			वापस ret;
 		block_type = ret;
 		off += array->size;
 
-		array = (struct snd_soc_tplg_vendor_array *)
-			(manifest->priv.data + off);
+		array = (काष्ठा snd_soc_tplg_venकरोr_array *)
+			(manअगरest->priv.data + off);
 
 		ret = skl_tplg_get_desc_blocks(dev, array);
 
-		if (ret < 0)
-			return ret;
+		अगर (ret < 0)
+			वापस ret;
 		block_size = ret;
 		off += array->size;
 
-		array = (struct snd_soc_tplg_vendor_array *)
-			(manifest->priv.data + off);
+		array = (काष्ठा snd_soc_tplg_venकरोr_array *)
+			(manअगरest->priv.data + off);
 
-		data = (manifest->priv.data + off);
+		data = (manअगरest->priv.data + off);
 
-		if (block_type == SKL_TYPE_TUPLE) {
-			ret = skl_tplg_get_manifest_tkn(dev, data, skl,
+		अगर (block_type == SKL_TYPE_TUPLE) अणु
+			ret = skl_tplg_get_manअगरest_tkn(dev, data, skl,
 					block_size);
 
-			if (ret < 0)
-				return ret;
+			अगर (ret < 0)
+				वापस ret;
 
 			--num_blocks;
-		} else {
-			return -EINVAL;
-		}
+		पूर्ण अन्यथा अणु
+			वापस -EINVAL;
+		पूर्ण
 		off += ret;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int skl_manifest_load(struct snd_soc_component *cmpnt, int index,
-				struct snd_soc_tplg_manifest *manifest)
-{
-	struct hdac_bus *bus = snd_soc_component_get_drvdata(cmpnt);
-	struct skl_dev *skl = bus_to_skl(bus);
+अटल पूर्णांक skl_manअगरest_load(काष्ठा snd_soc_component *cmpnt, पूर्णांक index,
+				काष्ठा snd_soc_tplg_manअगरest *manअगरest)
+अणु
+	काष्ठा hdac_bus *bus = snd_soc_component_get_drvdata(cmpnt);
+	काष्ठा skl_dev *skl = bus_to_skl(bus);
 
-	/* proceed only if we have private data defined */
-	if (manifest->priv.size == 0)
-		return 0;
+	/* proceed only अगर we have निजी data defined */
+	अगर (manअगरest->priv.size == 0)
+		वापस 0;
 
-	skl_tplg_get_manifest_data(manifest, bus->dev, skl);
+	skl_tplg_get_manअगरest_data(manअगरest, bus->dev, skl);
 
-	if (skl->lib_count > SKL_MAX_LIB) {
+	अगर (skl->lib_count > SKL_MAX_LIB) अणु
 		dev_err(bus->dev, "Exceeding max Library count. Got:%d\n",
 					skl->lib_count);
-		return  -EINVAL;
-	}
+		वापस  -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void skl_tplg_complete(struct snd_soc_component *component)
-{
-	struct snd_soc_dobj *dobj;
-	struct snd_soc_acpi_mach *mach;
-	struct snd_ctl_elem_value *val;
-	int i;
+अटल व्योम skl_tplg_complete(काष्ठा snd_soc_component *component)
+अणु
+	काष्ठा snd_soc_करोbj *करोbj;
+	काष्ठा snd_soc_acpi_mach *mach;
+	काष्ठा snd_ctl_elem_value *val;
+	पूर्णांक i;
 
-	val = kmalloc(sizeof(*val), GFP_KERNEL);
-	if (!val)
-		return;
+	val = kदो_स्मृति(माप(*val), GFP_KERNEL);
+	अगर (!val)
+		वापस;
 
 	mach = dev_get_platdata(component->card->dev);
-	list_for_each_entry(dobj, &component->dobj_list, list) {
-		struct snd_kcontrol *kcontrol = dobj->control.kcontrol;
-		struct soc_enum *se;
-		char **texts;
-		char chan_text[4];
+	list_क्रम_each_entry(करोbj, &component->करोbj_list, list) अणु
+		काष्ठा snd_kcontrol *kcontrol = करोbj->control.kcontrol;
+		काष्ठा soc_क्रमागत *se;
+		अक्षर **texts;
+		अक्षर chan_text[4];
 
-		if (dobj->type != SND_SOC_DOBJ_ENUM || !kcontrol ||
+		अगर (करोbj->type != SND_SOC_DOBJ_ENUM || !kcontrol ||
 		    kcontrol->put != skl_tplg_multi_config_set_dmic)
-			continue;
+			जारी;
 
-		se = (struct soc_enum *)kcontrol->private_value;
-		texts = dobj->control.dtexts;
-		sprintf(chan_text, "c%d", mach->mach_params.dmic_num);
+		se = (काष्ठा soc_क्रमागत *)kcontrol->निजी_value;
+		texts = करोbj->control.dtexts;
+		प्र_लिखो(chan_text, "c%d", mach->mach_params.dmic_num);
 
-		for (i = 0; i < se->items; i++) {
-			if (strstr(texts[i], chan_text)) {
-				memset(val, 0, sizeof(*val));
-				val->value.enumerated.item[0] = i;
+		क्रम (i = 0; i < se->items; i++) अणु
+			अगर (म_माला(texts[i], chan_text)) अणु
+				स_रखो(val, 0, माप(*val));
+				val->value.क्रमागतerated.item[0] = i;
 				kcontrol->put(kcontrol, val);
-			}
-		}
-	}
-	kfree(val);
-}
+			पूर्ण
+		पूर्ण
+	पूर्ण
+	kमुक्त(val);
+पूर्ण
 
-static struct snd_soc_tplg_ops skl_tplg_ops  = {
+अटल काष्ठा snd_soc_tplg_ops skl_tplg_ops  = अणु
 	.widget_load = skl_tplg_widget_load,
 	.control_load = skl_tplg_control_load,
 	.bytes_ext_ops = skl_tlv_ops,
 	.bytes_ext_ops_count = ARRAY_SIZE(skl_tlv_ops),
 	.io_ops = skl_tplg_kcontrol_ops,
 	.io_ops_count = ARRAY_SIZE(skl_tplg_kcontrol_ops),
-	.manifest = skl_manifest_load,
+	.manअगरest = skl_manअगरest_load,
 	.dai_load = skl_dai_load,
 	.complete = skl_tplg_complete,
-};
+पूर्ण;
 
 /*
  * A pipe can have multiple modules, each of them will be a DAPM widget as
  * well. While managing a pipeline we need to get the list of all the
- * widgets in a pipelines, so this helper - skl_tplg_create_pipe_widget_list()
- * helps to get the SKL type widgets in that pipeline
+ * widमाला_लो in a pipelines, so this helper - skl_tplg_create_pipe_widget_list()
+ * helps to get the SKL type widमाला_लो in that pipeline
  */
-static int skl_tplg_create_pipe_widget_list(struct snd_soc_component *component)
-{
-	struct snd_soc_dapm_widget *w;
-	struct skl_module_cfg *mcfg = NULL;
-	struct skl_pipe_module *p_module = NULL;
-	struct skl_pipe *pipe;
+अटल पूर्णांक skl_tplg_create_pipe_widget_list(काष्ठा snd_soc_component *component)
+अणु
+	काष्ठा snd_soc_dapm_widget *w;
+	काष्ठा skl_module_cfg *mcfg = शून्य;
+	काष्ठा skl_pipe_module *p_module = शून्य;
+	काष्ठा skl_pipe *pipe;
 
-	list_for_each_entry(w, &component->card->widgets, list) {
-		if (is_skl_dsp_widget_type(w, component->dev) && w->priv) {
+	list_क्रम_each_entry(w, &component->card->widमाला_लो, list) अणु
+		अगर (is_skl_dsp_widget_type(w, component->dev) && w->priv) अणु
 			mcfg = w->priv;
 			pipe = mcfg->pipe;
 
 			p_module = devm_kzalloc(component->dev,
-						sizeof(*p_module), GFP_KERNEL);
-			if (!p_module)
-				return -ENOMEM;
+						माप(*p_module), GFP_KERNEL);
+			अगर (!p_module)
+				वापस -ENOMEM;
 
 			p_module->w = w;
 			list_add_tail(&p_module->node, &pipe->w_list);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void skl_tplg_set_pipe_type(struct skl_dev *skl, struct skl_pipe *pipe)
-{
-	struct skl_pipe_module *w_module;
-	struct snd_soc_dapm_widget *w;
-	struct skl_module_cfg *mconfig;
+अटल व्योम skl_tplg_set_pipe_type(काष्ठा skl_dev *skl, काष्ठा skl_pipe *pipe)
+अणु
+	काष्ठा skl_pipe_module *w_module;
+	काष्ठा snd_soc_dapm_widget *w;
+	काष्ठा skl_module_cfg *mconfig;
 	bool host_found = false, link_found = false;
 
-	list_for_each_entry(w_module, &pipe->w_list, node) {
+	list_क्रम_each_entry(w_module, &pipe->w_list, node) अणु
 		w = w_module->w;
 		mconfig = w->priv;
 
-		if (mconfig->dev_type == SKL_DEVICE_HDAHOST)
+		अगर (mconfig->dev_type == SKL_DEVICE_HDAHOST)
 			host_found = true;
-		else if (mconfig->dev_type != SKL_DEVICE_NONE)
+		अन्यथा अगर (mconfig->dev_type != SKL_DEVICE_NONE)
 			link_found = true;
-	}
+	पूर्ण
 
-	if (host_found && link_found)
+	अगर (host_found && link_found)
 		pipe->passthru = true;
-	else
+	अन्यथा
 		pipe->passthru = false;
-}
+पूर्ण
 
 /*
  * SKL topology init routine
  */
-int skl_tplg_init(struct snd_soc_component *component, struct hdac_bus *bus)
-{
-	int ret;
-	const struct firmware *fw;
-	struct skl_dev *skl = bus_to_skl(bus);
-	struct skl_pipeline *ppl;
+पूर्णांक skl_tplg_init(काष्ठा snd_soc_component *component, काष्ठा hdac_bus *bus)
+अणु
+	पूर्णांक ret;
+	स्थिर काष्ठा firmware *fw;
+	काष्ठा skl_dev *skl = bus_to_skl(bus);
+	काष्ठा skl_pipeline *ppl;
 
 	ret = request_firmware(&fw, skl->tplg_name, bus->dev);
-	if (ret < 0) {
-		char alt_tplg_name[64];
+	अगर (ret < 0) अणु
+		अक्षर alt_tplg_name[64];
 
-		snprintf(alt_tplg_name, sizeof(alt_tplg_name), "%s-tplg.bin",
+		snम_लिखो(alt_tplg_name, माप(alt_tplg_name), "%s-tplg.bin",
 			 skl->mach->drv_name);
 		dev_info(bus->dev, "tplg fw %s load failed with %d, trying alternative tplg name %s",
 			 skl->tplg_name, ret, alt_tplg_name);
 
 		ret = request_firmware(&fw, alt_tplg_name, bus->dev);
-		if (!ret)
-			goto component_load;
+		अगर (!ret)
+			जाओ component_load;
 
 		dev_info(bus->dev, "tplg %s failed with %d, falling back to dfw_sst.bin",
 			 alt_tplg_name, ret);
 
 		ret = request_firmware(&fw, "dfw_sst.bin", bus->dev);
-		if (ret < 0) {
+		अगर (ret < 0) अणु
 			dev_err(bus->dev, "Fallback tplg fw %s load failed with %d\n",
 					"dfw_sst.bin", ret);
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
 component_load:
 	ret = snd_soc_tplg_component_load(component, &skl_tplg_ops, fw);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(bus->dev, "tplg component load failed%d\n", ret);
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
 	ret = skl_tplg_create_pipe_widget_list(component);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(bus->dev, "tplg create pipe widget list failed%d\n",
 				ret);
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
-	list_for_each_entry(ppl, &skl->ppl_list, node)
+	list_क्रम_each_entry(ppl, &skl->ppl_list, node)
 		skl_tplg_set_pipe_type(skl, ppl->pipe);
 
 err:
 	release_firmware(fw);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-void skl_tplg_exit(struct snd_soc_component *component, struct hdac_bus *bus)
-{
-	struct skl_dev *skl = bus_to_skl(bus);
-	struct skl_pipeline *ppl, *tmp;
+व्योम skl_tplg_निकास(काष्ठा snd_soc_component *component, काष्ठा hdac_bus *bus)
+अणु
+	काष्ठा skl_dev *skl = bus_to_skl(bus);
+	काष्ठा skl_pipeline *ppl, *पंचांगp;
 
-	list_for_each_entry_safe(ppl, tmp, &skl->ppl_list, node)
+	list_क्रम_each_entry_safe(ppl, पंचांगp, &skl->ppl_list, node)
 		list_del(&ppl->node);
 
 	/* clean up topology */
-	snd_soc_tplg_component_remove(component);
-}
+	snd_soc_tplg_component_हटाओ(component);
+पूर्ण

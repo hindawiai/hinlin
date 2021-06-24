@@ -1,32 +1,33 @@
-/* SPDX-License-Identifier: GPL-2.0+ */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0+ */
 /*
  * Copyright (C) 2018 BayLibre, SAS
  * Author: Maxime Jourdan <mjourdan@baylibre.com>
  */
 
-#ifndef __MESON_VDEC_ESPARSER_H_
-#define __MESON_VDEC_ESPARSER_H_
+#अगर_अघोषित __MESON_VDEC_ESPARSER_H_
+#घोषणा __MESON_VDEC_ESPARSER_H_
 
-#include <linux/platform_device.h>
+#समावेश <linux/platक्रमm_device.h>
 
-#include "vdec.h"
+#समावेश "vdec.h"
 
-int esparser_init(struct platform_device *pdev, struct amvdec_core *core);
-int esparser_power_up(struct amvdec_session *sess);
+पूर्णांक esparser_init(काष्ठा platक्रमm_device *pdev, काष्ठा amvdec_core *core);
+पूर्णांक esparser_घातer_up(काष्ठा amvdec_session *sess);
 
 /**
- * esparser_queue_eos() - write End Of Stream sequence to the ESPARSER
+ * esparser_queue_eos() - ग_लिखो End Of Stream sequence to the ESPARSER
  *
- * @core vdec core struct
+ * @core vdec core काष्ठा
  */
-int esparser_queue_eos(struct amvdec_core *core, const u8 *data, u32 len);
+पूर्णांक esparser_queue_eos(काष्ठा amvdec_core *core, स्थिर u8 *data, u32 len);
 
 /**
- * esparser_queue_all_src() - work handler that writes as many src buffers
+ * esparser_queue_all_src() - work handler that ग_लिखोs as many src buffers
  * as possible to the ESPARSER
  */
-void esparser_queue_all_src(struct work_struct *work);
+व्योम esparser_queue_all_src(काष्ठा work_काष्ठा *work);
 
-#define ESPARSER_MIN_PACKET_SIZE SZ_4K
+#घोषणा ESPARSER_MIN_PACKET_SIZE SZ_4K
 
-#endif
+#पूर्ण_अगर

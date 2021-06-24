@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright 2003-2005	Devicescape Software, Inc.
  * Copyright (c) 2006	Jiri Benc <jbenc@suse.cz>
@@ -8,50 +9,50 @@
  * Copyright (C) 2018 - 2020 Intel Corporation
  */
 
-#include <linux/debugfs.h>
-#include <linux/ieee80211.h>
-#include "ieee80211_i.h"
-#include "debugfs.h"
-#include "debugfs_sta.h"
-#include "sta_info.h"
-#include "driver-ops.h"
+#समावेश <linux/debugfs.h>
+#समावेश <linux/ieee80211.h>
+#समावेश "ieee80211_i.h"
+#समावेश "debugfs.h"
+#समावेश "debugfs_sta.h"
+#समावेश "sta_info.h"
+#समावेश "driver-ops.h"
 
 /* sta attributtes */
 
-#define STA_READ(name, field, format_string)				\
-static ssize_t sta_ ##name## _read(struct file *file,			\
-				   char __user *userbuf,		\
-				   size_t count, loff_t *ppos)		\
-{									\
-	struct sta_info *sta = file->private_data;			\
-	return mac80211_format_buffer(userbuf, count, ppos, 		\
-				      format_string, sta->field);	\
-}
-#define STA_READ_D(name, field) STA_READ(name, field, "%d\n")
+#घोषणा STA_READ(name, field, क्रमmat_string)				\
+अटल sमाप_प्रकार sta_ ##name## _पढ़ो(काष्ठा file *file,			\
+				   अक्षर __user *userbuf,		\
+				   माप_प्रकार count, loff_t *ppos)		\
+अणु									\
+	काष्ठा sta_info *sta = file->निजी_data;			\
+	वापस mac80211_क्रमmat_buffer(userbuf, count, ppos, 		\
+				      क्रमmat_string, sta->field);	\
+पूर्ण
+#घोषणा STA_READ_D(name, field) STA_READ(name, field, "%d\n")
 
-#define STA_OPS(name)							\
-static const struct file_operations sta_ ##name## _ops = {		\
-	.read = sta_##name##_read,					\
-	.open = simple_open,						\
+#घोषणा STA_OPS(name)							\
+अटल स्थिर काष्ठा file_operations sta_ ##name## _ops = अणु		\
+	.पढ़ो = sta_##name##_पढ़ो,					\
+	.खोलो = simple_खोलो,						\
 	.llseek = generic_file_llseek,					\
-}
+पूर्ण
 
-#define STA_OPS_RW(name)						\
-static const struct file_operations sta_ ##name## _ops = {		\
-	.read = sta_##name##_read,					\
-	.write = sta_##name##_write,					\
-	.open = simple_open,						\
+#घोषणा STA_OPS_RW(name)						\
+अटल स्थिर काष्ठा file_operations sta_ ##name## _ops = अणु		\
+	.पढ़ो = sta_##name##_पढ़ो,					\
+	.ग_लिखो = sta_##name##_ग_लिखो,					\
+	.खोलो = simple_खोलो,						\
 	.llseek = generic_file_llseek,					\
-}
+पूर्ण
 
-#define STA_FILE(name, field, format)					\
-		STA_READ_##format(name, field)				\
+#घोषणा STA_खाता(name, field, क्रमmat)					\
+		STA_READ_##क्रमmat(name, field)				\
 		STA_OPS(name)
 
-STA_FILE(aid, sta.aid, D);
+STA_खाता(aid, sta.aid, D);
 
-static const char * const sta_flag_names[] = {
-#define FLAG(F) [WLAN_STA_##F] = #F
+अटल स्थिर अक्षर * स्थिर sta_flag_names[] = अणु
+#घोषणा FLAG(F) [WLAN_STA_##F] = #F
 	FLAG(AUTH),
 	FLAG(ASSOC),
 	FLAG(PS_STA),
@@ -80,93 +81,93 @@ static const char * const sta_flag_names[] = {
 	FLAG(PS_DELIVER),
 	FLAG(USES_ENCRYPTION),
 	FLAG(DECAP_OFFLOAD),
-#undef FLAG
-};
+#अघोषित FLAG
+पूर्ण;
 
-static ssize_t sta_flags_read(struct file *file, char __user *userbuf,
-			      size_t count, loff_t *ppos)
-{
-	char buf[16 * NUM_WLAN_STA_FLAGS], *pos = buf;
-	char *end = buf + sizeof(buf) - 1;
-	struct sta_info *sta = file->private_data;
-	unsigned int flg;
+अटल sमाप_प्रकार sta_flags_पढ़ो(काष्ठा file *file, अक्षर __user *userbuf,
+			      माप_प्रकार count, loff_t *ppos)
+अणु
+	अक्षर buf[16 * NUM_WLAN_STA_FLAGS], *pos = buf;
+	अक्षर *end = buf + माप(buf) - 1;
+	काष्ठा sta_info *sta = file->निजी_data;
+	अचिन्हित पूर्णांक flg;
 
 	BUILD_BUG_ON(ARRAY_SIZE(sta_flag_names) != NUM_WLAN_STA_FLAGS);
 
-	for (flg = 0; flg < NUM_WLAN_STA_FLAGS; flg++) {
-		if (test_sta_flag(sta, flg))
-			pos += scnprintf(pos, end - pos, "%s\n",
+	क्रम (flg = 0; flg < NUM_WLAN_STA_FLAGS; flg++) अणु
+		अगर (test_sta_flag(sta, flg))
+			pos += scnम_लिखो(pos, end - pos, "%s\n",
 					 sta_flag_names[flg]);
-	}
+	पूर्ण
 
-	return simple_read_from_buffer(userbuf, count, ppos, buf, strlen(buf));
-}
+	वापस simple_पढ़ो_from_buffer(userbuf, count, ppos, buf, म_माप(buf));
+पूर्ण
 STA_OPS(flags);
 
-static ssize_t sta_num_ps_buf_frames_read(struct file *file,
-					  char __user *userbuf,
-					  size_t count, loff_t *ppos)
-{
-	struct sta_info *sta = file->private_data;
-	char buf[17*IEEE80211_NUM_ACS], *p = buf;
-	int ac;
+अटल sमाप_प्रकार sta_num_ps_buf_frames_पढ़ो(काष्ठा file *file,
+					  अक्षर __user *userbuf,
+					  माप_प्रकार count, loff_t *ppos)
+अणु
+	काष्ठा sta_info *sta = file->निजी_data;
+	अक्षर buf[17*IEEE80211_NUM_ACS], *p = buf;
+	पूर्णांक ac;
 
-	for (ac = 0; ac < IEEE80211_NUM_ACS; ac++)
-		p += scnprintf(p, sizeof(buf)+buf-p, "AC%d: %d\n", ac,
+	क्रम (ac = 0; ac < IEEE80211_NUM_ACS; ac++)
+		p += scnम_लिखो(p, माप(buf)+buf-p, "AC%d: %d\n", ac,
 			       skb_queue_len(&sta->ps_tx_buf[ac]) +
 			       skb_queue_len(&sta->tx_filtered[ac]));
-	return simple_read_from_buffer(userbuf, count, ppos, buf, p - buf);
-}
+	वापस simple_पढ़ो_from_buffer(userbuf, count, ppos, buf, p - buf);
+पूर्ण
 STA_OPS(num_ps_buf_frames);
 
-static ssize_t sta_last_seq_ctrl_read(struct file *file, char __user *userbuf,
-				      size_t count, loff_t *ppos)
-{
-	char buf[15*IEEE80211_NUM_TIDS], *p = buf;
-	int i;
-	struct sta_info *sta = file->private_data;
-	for (i = 0; i < IEEE80211_NUM_TIDS; i++)
-		p += scnprintf(p, sizeof(buf)+buf-p, "%x ",
+अटल sमाप_प्रकार sta_last_seq_ctrl_पढ़ो(काष्ठा file *file, अक्षर __user *userbuf,
+				      माप_प्रकार count, loff_t *ppos)
+अणु
+	अक्षर buf[15*IEEE80211_NUM_TIDS], *p = buf;
+	पूर्णांक i;
+	काष्ठा sta_info *sta = file->निजी_data;
+	क्रम (i = 0; i < IEEE80211_NUM_TIDS; i++)
+		p += scnम_लिखो(p, माप(buf)+buf-p, "%x ",
 			       le16_to_cpu(sta->last_seq_ctrl[i]));
-	p += scnprintf(p, sizeof(buf)+buf-p, "\n");
-	return simple_read_from_buffer(userbuf, count, ppos, buf, p - buf);
-}
+	p += scnम_लिखो(p, माप(buf)+buf-p, "\n");
+	वापस simple_पढ़ो_from_buffer(userbuf, count, ppos, buf, p - buf);
+पूर्ण
 STA_OPS(last_seq_ctrl);
 
-#define AQM_TXQ_ENTRY_LEN 130
+#घोषणा AQM_TXQ_ENTRY_LEN 130
 
-static ssize_t sta_aqm_read(struct file *file, char __user *userbuf,
-			size_t count, loff_t *ppos)
-{
-	struct sta_info *sta = file->private_data;
-	struct ieee80211_local *local = sta->local;
-	size_t bufsz = AQM_TXQ_ENTRY_LEN * (IEEE80211_NUM_TIDS + 2);
-	char *buf = kzalloc(bufsz, GFP_KERNEL), *p = buf;
-	struct txq_info *txqi;
-	ssize_t rv;
-	int i;
+अटल sमाप_प्रकार sta_aqm_पढ़ो(काष्ठा file *file, अक्षर __user *userbuf,
+			माप_प्रकार count, loff_t *ppos)
+अणु
+	काष्ठा sta_info *sta = file->निजी_data;
+	काष्ठा ieee80211_local *local = sta->local;
+	माप_प्रकार bufsz = AQM_TXQ_ENTRY_LEN * (IEEE80211_NUM_TIDS + 2);
+	अक्षर *buf = kzalloc(bufsz, GFP_KERNEL), *p = buf;
+	काष्ठा txq_info *txqi;
+	sमाप_प्रकार rv;
+	पूर्णांक i;
 
-	if (!buf)
-		return -ENOMEM;
+	अगर (!buf)
+		वापस -ENOMEM;
 
 	spin_lock_bh(&local->fq.lock);
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 
-	p += scnprintf(p,
+	p += scnम_लिखो(p,
 		       bufsz+buf-p,
 		       "target %uus interval %uus ecn %s\n",
-		       codel_time_to_us(sta->cparams.target),
-		       codel_time_to_us(sta->cparams.interval),
+		       codel_समय_प्रकारo_us(sta->cparams.target),
+		       codel_समय_प्रकारo_us(sta->cparams.पूर्णांकerval),
 		       sta->cparams.ecn ? "yes" : "no");
-	p += scnprintf(p,
+	p += scnम_लिखो(p,
 		       bufsz+buf-p,
 		       "tid ac backlog-bytes backlog-packets new-flows drops marks overlimit collisions tx-bytes tx-packets flags\n");
 
-	for (i = 0; i < ARRAY_SIZE(sta->sta.txq); i++) {
-		if (!sta->sta.txq[i])
-			continue;
+	क्रम (i = 0; i < ARRAY_SIZE(sta->sta.txq); i++) अणु
+		अगर (!sta->sta.txq[i])
+			जारी;
 		txqi = to_txq_info(sta->sta.txq[i]);
-		p += scnprintf(p, bufsz+buf-p,
+		p += scnम_लिखो(p, bufsz+buf-p,
 			       "%d %d %u %u %u %u %u %u %u %u %u 0x%lx(%s%s%s)\n",
 			       txqi->txq.tid,
 			       txqi->txq.ac,
@@ -183,266 +184,266 @@ static ssize_t sta_aqm_read(struct file *file, char __user *userbuf,
 			       test_bit(IEEE80211_TXQ_STOP, &txqi->flags) ? "STOP" : "RUN",
 			       test_bit(IEEE80211_TXQ_AMPDU, &txqi->flags) ? " AMPDU" : "",
 			       test_bit(IEEE80211_TXQ_NO_AMSDU, &txqi->flags) ? " NO-AMSDU" : "");
-	}
+	पूर्ण
 
-	rcu_read_unlock();
+	rcu_पढ़ो_unlock();
 	spin_unlock_bh(&local->fq.lock);
 
-	rv = simple_read_from_buffer(userbuf, count, ppos, buf, p - buf);
-	kfree(buf);
-	return rv;
-}
+	rv = simple_पढ़ो_from_buffer(userbuf, count, ppos, buf, p - buf);
+	kमुक्त(buf);
+	वापस rv;
+पूर्ण
 STA_OPS(aqm);
 
-static ssize_t sta_airtime_read(struct file *file, char __user *userbuf,
-				size_t count, loff_t *ppos)
-{
-	struct sta_info *sta = file->private_data;
-	struct ieee80211_local *local = sta->sdata->local;
-	size_t bufsz = 400;
-	char *buf = kzalloc(bufsz, GFP_KERNEL), *p = buf;
-	u64 rx_airtime = 0, tx_airtime = 0;
+अटल sमाप_प्रकार sta_airसमय_पढ़ो(काष्ठा file *file, अक्षर __user *userbuf,
+				माप_प्रकार count, loff_t *ppos)
+अणु
+	काष्ठा sta_info *sta = file->निजी_data;
+	काष्ठा ieee80211_local *local = sta->sdata->local;
+	माप_प्रकार bufsz = 400;
+	अक्षर *buf = kzalloc(bufsz, GFP_KERNEL), *p = buf;
+	u64 rx_airसमय = 0, tx_airसमय = 0;
 	s64 deficit[IEEE80211_NUM_ACS];
-	ssize_t rv;
-	int ac;
+	sमाप_प्रकार rv;
+	पूर्णांक ac;
 
-	if (!buf)
-		return -ENOMEM;
+	अगर (!buf)
+		वापस -ENOMEM;
 
-	for (ac = 0; ac < IEEE80211_NUM_ACS; ac++) {
+	क्रम (ac = 0; ac < IEEE80211_NUM_ACS; ac++) अणु
 		spin_lock_bh(&local->active_txq_lock[ac]);
-		rx_airtime += sta->airtime[ac].rx_airtime;
-		tx_airtime += sta->airtime[ac].tx_airtime;
-		deficit[ac] = sta->airtime[ac].deficit;
+		rx_airसमय += sta->airसमय[ac].rx_airसमय;
+		tx_airसमय += sta->airसमय[ac].tx_airसमय;
+		deficit[ac] = sta->airसमय[ac].deficit;
 		spin_unlock_bh(&local->active_txq_lock[ac]);
-	}
+	पूर्ण
 
-	p += scnprintf(p, bufsz + buf - p,
+	p += scnम_लिखो(p, bufsz + buf - p,
 		"RX: %llu us\nTX: %llu us\nWeight: %u\n"
 		"Deficit: VO: %lld us VI: %lld us BE: %lld us BK: %lld us\n",
-		rx_airtime, tx_airtime, sta->airtime_weight,
+		rx_airसमय, tx_airसमय, sta->airसमय_weight,
 		deficit[0], deficit[1], deficit[2], deficit[3]);
 
-	rv = simple_read_from_buffer(userbuf, count, ppos, buf, p - buf);
-	kfree(buf);
-	return rv;
-}
+	rv = simple_पढ़ो_from_buffer(userbuf, count, ppos, buf, p - buf);
+	kमुक्त(buf);
+	वापस rv;
+पूर्ण
 
-static ssize_t sta_airtime_write(struct file *file, const char __user *userbuf,
-				 size_t count, loff_t *ppos)
-{
-	struct sta_info *sta = file->private_data;
-	struct ieee80211_local *local = sta->sdata->local;
-	int ac;
+अटल sमाप_प्रकार sta_airसमय_ग_लिखो(काष्ठा file *file, स्थिर अक्षर __user *userbuf,
+				 माप_प्रकार count, loff_t *ppos)
+अणु
+	काष्ठा sta_info *sta = file->निजी_data;
+	काष्ठा ieee80211_local *local = sta->sdata->local;
+	पूर्णांक ac;
 
-	for (ac = 0; ac < IEEE80211_NUM_ACS; ac++) {
+	क्रम (ac = 0; ac < IEEE80211_NUM_ACS; ac++) अणु
 		spin_lock_bh(&local->active_txq_lock[ac]);
-		sta->airtime[ac].rx_airtime = 0;
-		sta->airtime[ac].tx_airtime = 0;
-		sta->airtime[ac].deficit = sta->airtime_weight;
+		sta->airसमय[ac].rx_airसमय = 0;
+		sta->airसमय[ac].tx_airसमय = 0;
+		sta->airसमय[ac].deficit = sta->airसमय_weight;
 		spin_unlock_bh(&local->active_txq_lock[ac]);
-	}
+	पूर्ण
 
-	return count;
-}
-STA_OPS_RW(airtime);
+	वापस count;
+पूर्ण
+STA_OPS_RW(airसमय);
 
-static ssize_t sta_aql_read(struct file *file, char __user *userbuf,
-				size_t count, loff_t *ppos)
-{
-	struct sta_info *sta = file->private_data;
-	struct ieee80211_local *local = sta->sdata->local;
-	size_t bufsz = 400;
-	char *buf = kzalloc(bufsz, GFP_KERNEL), *p = buf;
+अटल sमाप_प्रकार sta_aql_पढ़ो(काष्ठा file *file, अक्षर __user *userbuf,
+				माप_प्रकार count, loff_t *ppos)
+अणु
+	काष्ठा sta_info *sta = file->निजी_data;
+	काष्ठा ieee80211_local *local = sta->sdata->local;
+	माप_प्रकार bufsz = 400;
+	अक्षर *buf = kzalloc(bufsz, GFP_KERNEL), *p = buf;
 	u32 q_depth[IEEE80211_NUM_ACS];
 	u32 q_limit_l[IEEE80211_NUM_ACS], q_limit_h[IEEE80211_NUM_ACS];
-	ssize_t rv;
-	int ac;
+	sमाप_प्रकार rv;
+	पूर्णांक ac;
 
-	if (!buf)
-		return -ENOMEM;
+	अगर (!buf)
+		वापस -ENOMEM;
 
-	for (ac = 0; ac < IEEE80211_NUM_ACS; ac++) {
+	क्रम (ac = 0; ac < IEEE80211_NUM_ACS; ac++) अणु
 		spin_lock_bh(&local->active_txq_lock[ac]);
-		q_limit_l[ac] = sta->airtime[ac].aql_limit_low;
-		q_limit_h[ac] = sta->airtime[ac].aql_limit_high;
+		q_limit_l[ac] = sta->airसमय[ac].aql_limit_low;
+		q_limit_h[ac] = sta->airसमय[ac].aql_limit_high;
 		spin_unlock_bh(&local->active_txq_lock[ac]);
-		q_depth[ac] = atomic_read(&sta->airtime[ac].aql_tx_pending);
-	}
+		q_depth[ac] = atomic_पढ़ो(&sta->airसमय[ac].aql_tx_pending);
+	पूर्ण
 
-	p += scnprintf(p, bufsz + buf - p,
+	p += scnम_लिखो(p, bufsz + buf - p,
 		"Q depth: VO: %u us VI: %u us BE: %u us BK: %u us\n"
 		"Q limit[low/high]: VO: %u/%u VI: %u/%u BE: %u/%u BK: %u/%u\n",
 		q_depth[0], q_depth[1], q_depth[2], q_depth[3],
 		q_limit_l[0], q_limit_h[0], q_limit_l[1], q_limit_h[1],
 		q_limit_l[2], q_limit_h[2], q_limit_l[3], q_limit_h[3]);
 
-	rv = simple_read_from_buffer(userbuf, count, ppos, buf, p - buf);
-	kfree(buf);
-	return rv;
-}
+	rv = simple_पढ़ो_from_buffer(userbuf, count, ppos, buf, p - buf);
+	kमुक्त(buf);
+	वापस rv;
+पूर्ण
 
-static ssize_t sta_aql_write(struct file *file, const char __user *userbuf,
-				 size_t count, loff_t *ppos)
-{
-	struct sta_info *sta = file->private_data;
+अटल sमाप_प्रकार sta_aql_ग_लिखो(काष्ठा file *file, स्थिर अक्षर __user *userbuf,
+				 माप_प्रकार count, loff_t *ppos)
+अणु
+	काष्ठा sta_info *sta = file->निजी_data;
 	u32 ac, q_limit_l, q_limit_h;
-	char _buf[100] = {}, *buf = _buf;
+	अक्षर _buf[100] = अणुपूर्ण, *buf = _buf;
 
-	if (count > sizeof(_buf))
-		return -EINVAL;
+	अगर (count > माप(_buf))
+		वापस -EINVAL;
 
-	if (copy_from_user(buf, userbuf, count))
-		return -EFAULT;
+	अगर (copy_from_user(buf, userbuf, count))
+		वापस -EFAULT;
 
-	buf[sizeof(_buf) - 1] = '\0';
-	if (sscanf(buf, "limit %u %u %u", &ac, &q_limit_l, &q_limit_h)
+	buf[माप(_buf) - 1] = '\0';
+	अगर (माला_पूछो(buf, "limit %u %u %u", &ac, &q_limit_l, &q_limit_h)
 	    != 3)
-		return -EINVAL;
+		वापस -EINVAL;
 
-	if (ac >= IEEE80211_NUM_ACS)
-		return -EINVAL;
+	अगर (ac >= IEEE80211_NUM_ACS)
+		वापस -EINVAL;
 
-	sta->airtime[ac].aql_limit_low = q_limit_l;
-	sta->airtime[ac].aql_limit_high = q_limit_h;
+	sta->airसमय[ac].aql_limit_low = q_limit_l;
+	sta->airसमय[ac].aql_limit_high = q_limit_h;
 
-	return count;
-}
+	वापस count;
+पूर्ण
 STA_OPS_RW(aql);
 
 
-static ssize_t sta_agg_status_read(struct file *file, char __user *userbuf,
-					size_t count, loff_t *ppos)
-{
-	char buf[71 + IEEE80211_NUM_TIDS * 40], *p = buf;
-	int i;
-	struct sta_info *sta = file->private_data;
-	struct tid_ampdu_rx *tid_rx;
-	struct tid_ampdu_tx *tid_tx;
+अटल sमाप_प्रकार sta_agg_status_पढ़ो(काष्ठा file *file, अक्षर __user *userbuf,
+					माप_प्रकार count, loff_t *ppos)
+अणु
+	अक्षर buf[71 + IEEE80211_NUM_TIDS * 40], *p = buf;
+	पूर्णांक i;
+	काष्ठा sta_info *sta = file->निजी_data;
+	काष्ठा tid_ampdu_rx *tid_rx;
+	काष्ठा tid_ampdu_tx *tid_tx;
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 
-	p += scnprintf(p, sizeof(buf) + buf - p, "next dialog_token: %#02x\n",
+	p += scnम_लिखो(p, माप(buf) + buf - p, "next dialog_token: %#02x\n",
 			sta->ampdu_mlme.dialog_token_allocator + 1);
-	p += scnprintf(p, sizeof(buf) + buf - p,
+	p += scnम_लिखो(p, माप(buf) + buf - p,
 		       "TID\t\tRX\tDTKN\tSSN\t\tTX\tDTKN\tpending\n");
 
-	for (i = 0; i < IEEE80211_NUM_TIDS; i++) {
+	क्रम (i = 0; i < IEEE80211_NUM_TIDS; i++) अणु
 		bool tid_rx_valid;
 
 		tid_rx = rcu_dereference(sta->ampdu_mlme.tid_rx[i]);
 		tid_tx = rcu_dereference(sta->ampdu_mlme.tid_tx[i]);
 		tid_rx_valid = test_bit(i, sta->ampdu_mlme.agg_session_valid);
 
-		p += scnprintf(p, sizeof(buf) + buf - p, "%02d", i);
-		p += scnprintf(p, sizeof(buf) + buf - p, "\t\t%x",
+		p += scnम_लिखो(p, माप(buf) + buf - p, "%02d", i);
+		p += scnम_लिखो(p, माप(buf) + buf - p, "\t\t%x",
 			       tid_rx_valid);
-		p += scnprintf(p, sizeof(buf) + buf - p, "\t%#.2x",
+		p += scnम_लिखो(p, माप(buf) + buf - p, "\t%#.2x",
 			       tid_rx_valid ?
 					sta->ampdu_mlme.tid_rx_token[i] : 0);
-		p += scnprintf(p, sizeof(buf) + buf - p, "\t%#.3x",
+		p += scnम_लिखो(p, माप(buf) + buf - p, "\t%#.3x",
 				tid_rx ? tid_rx->ssn : 0);
 
-		p += scnprintf(p, sizeof(buf) + buf - p, "\t\t%x", !!tid_tx);
-		p += scnprintf(p, sizeof(buf) + buf - p, "\t%#.2x",
+		p += scnम_लिखो(p, माप(buf) + buf - p, "\t\t%x", !!tid_tx);
+		p += scnम_लिखो(p, माप(buf) + buf - p, "\t%#.2x",
 				tid_tx ? tid_tx->dialog_token : 0);
-		p += scnprintf(p, sizeof(buf) + buf - p, "\t%03d",
+		p += scnम_लिखो(p, माप(buf) + buf - p, "\t%03d",
 				tid_tx ? skb_queue_len(&tid_tx->pending) : 0);
-		p += scnprintf(p, sizeof(buf) + buf - p, "\n");
-	}
-	rcu_read_unlock();
+		p += scnम_लिखो(p, माप(buf) + buf - p, "\n");
+	पूर्ण
+	rcu_पढ़ो_unlock();
 
-	return simple_read_from_buffer(userbuf, count, ppos, buf, p - buf);
-}
+	वापस simple_पढ़ो_from_buffer(userbuf, count, ppos, buf, p - buf);
+पूर्ण
 
-static ssize_t sta_agg_status_write(struct file *file, const char __user *userbuf,
-				    size_t count, loff_t *ppos)
-{
-	char _buf[25] = {}, *buf = _buf;
-	struct sta_info *sta = file->private_data;
+अटल sमाप_प्रकार sta_agg_status_ग_लिखो(काष्ठा file *file, स्थिर अक्षर __user *userbuf,
+				    माप_प्रकार count, loff_t *ppos)
+अणु
+	अक्षर _buf[25] = अणुपूर्ण, *buf = _buf;
+	काष्ठा sta_info *sta = file->निजी_data;
 	bool start, tx;
-	unsigned long tid;
-	char *pos;
-	int ret, timeout = 5000;
+	अचिन्हित दीर्घ tid;
+	अक्षर *pos;
+	पूर्णांक ret, समयout = 5000;
 
-	if (count > sizeof(_buf))
-		return -EINVAL;
+	अगर (count > माप(_buf))
+		वापस -EINVAL;
 
-	if (copy_from_user(buf, userbuf, count))
-		return -EFAULT;
+	अगर (copy_from_user(buf, userbuf, count))
+		वापस -EFAULT;
 
-	buf[sizeof(_buf) - 1] = '\0';
+	buf[माप(_buf) - 1] = '\0';
 	pos = buf;
 	buf = strsep(&pos, " ");
-	if (!buf)
-		return -EINVAL;
+	अगर (!buf)
+		वापस -EINVAL;
 
-	if (!strcmp(buf, "tx"))
+	अगर (!म_भेद(buf, "tx"))
 		tx = true;
-	else if (!strcmp(buf, "rx"))
+	अन्यथा अगर (!म_भेद(buf, "rx"))
 		tx = false;
-	else
-		return -EINVAL;
+	अन्यथा
+		वापस -EINVAL;
 
 	buf = strsep(&pos, " ");
-	if (!buf)
-		return -EINVAL;
-	if (!strcmp(buf, "start")) {
+	अगर (!buf)
+		वापस -EINVAL;
+	अगर (!म_भेद(buf, "start")) अणु
 		start = true;
-		if (!tx)
-			return -EINVAL;
-	} else if (!strcmp(buf, "stop")) {
+		अगर (!tx)
+			वापस -EINVAL;
+	पूर्ण अन्यथा अगर (!म_भेद(buf, "stop")) अणु
 		start = false;
-	} else {
-		return -EINVAL;
-	}
+	पूर्ण अन्यथा अणु
+		वापस -EINVAL;
+	पूर्ण
 
 	buf = strsep(&pos, " ");
-	if (!buf)
-		return -EINVAL;
-	if (sscanf(buf, "timeout=%d", &timeout) == 1) {
+	अगर (!buf)
+		वापस -EINVAL;
+	अगर (माला_पूछो(buf, "timeout=%d", &समयout) == 1) अणु
 		buf = strsep(&pos, " ");
-		if (!buf || !tx || !start)
-			return -EINVAL;
-	}
+		अगर (!buf || !tx || !start)
+			वापस -EINVAL;
+	पूर्ण
 
-	ret = kstrtoul(buf, 0, &tid);
-	if (ret || tid >= IEEE80211_NUM_TIDS)
-		return -EINVAL;
+	ret = kम_से_अदीर्घ(buf, 0, &tid);
+	अगर (ret || tid >= IEEE80211_NUM_TIDS)
+		वापस -EINVAL;
 
-	if (tx) {
-		if (start)
+	अगर (tx) अणु
+		अगर (start)
 			ret = ieee80211_start_tx_ba_session(&sta->sta, tid,
-							    timeout);
-		else
+							    समयout);
+		अन्यथा
 			ret = ieee80211_stop_tx_ba_session(&sta->sta, tid);
-	} else {
+	पूर्ण अन्यथा अणु
 		__ieee80211_stop_rx_ba_session(sta, tid, WLAN_BACK_RECIPIENT,
 					       3, true);
 		ret = 0;
-	}
+	पूर्ण
 
-	return ret ?: count;
-}
+	वापस ret ?: count;
+पूर्ण
 STA_OPS_RW(agg_status);
 
-static ssize_t sta_ht_capa_read(struct file *file, char __user *userbuf,
-				size_t count, loff_t *ppos)
-{
-#define PRINT_HT_CAP(_cond, _str) \
-	do { \
-	if (_cond) \
-			p += scnprintf(p, sizeof(buf)+buf-p, "\t" _str "\n"); \
-	} while (0)
-	char buf[512], *p = buf;
-	int i;
-	struct sta_info *sta = file->private_data;
-	struct ieee80211_sta_ht_cap *htc = &sta->sta.ht_cap;
+अटल sमाप_प्रकार sta_ht_capa_पढ़ो(काष्ठा file *file, अक्षर __user *userbuf,
+				माप_प्रकार count, loff_t *ppos)
+अणु
+#घोषणा PRINT_HT_CAP(_cond, _str) \
+	करो अणु \
+	अगर (_cond) \
+			p += scnम_लिखो(p, माप(buf)+buf-p, "\t" _str "\n"); \
+	पूर्ण जबतक (0)
+	अक्षर buf[512], *p = buf;
+	पूर्णांक i;
+	काष्ठा sta_info *sta = file->निजी_data;
+	काष्ठा ieee80211_sta_ht_cap *htc = &sta->sta.ht_cap;
 
-	p += scnprintf(p, sizeof(buf) + buf - p, "ht %ssupported\n",
+	p += scnम_लिखो(p, माप(buf) + buf - p, "ht %ssupported\n",
 			htc->ht_supported ? "" : "not ");
-	if (htc->ht_supported) {
-		p += scnprintf(p, sizeof(buf)+buf-p, "cap: %#.4x\n", htc->cap);
+	अगर (htc->ht_supported) अणु
+		p += scnम_लिखो(p, माप(buf)+buf-p, "cap: %#.4x\n", htc->cap);
 
 		PRINT_HT_CAP((htc->cap & BIT(0)), "RX LDPC");
 		PRINT_HT_CAP((htc->cap & BIT(1)), "HT20/HT40");
@@ -471,8 +472,8 @@ static ssize_t sta_ht_capa_read(struct file *file, char __user *userbuf,
 
 		/*
 		 * For beacons and probe response this would mean the BSS
-		 * does or does not allow the usage of DSSS/CCK HT40.
-		 * Otherwise it means the STA does or does not use
+		 * करोes or करोes not allow the usage of DSSS/CCK HT40.
+		 * Otherwise it means the STA करोes or करोes not use
 		 * DSSS/CCK HT40.
 		 */
 		PRINT_HT_CAP((htc->cap & BIT(12)), "DSSS/CCK HT40");
@@ -484,97 +485,97 @@ static ssize_t sta_ht_capa_read(struct file *file, char __user *userbuf,
 
 		PRINT_HT_CAP((htc->cap & BIT(15)), "L-SIG TXOP protection");
 
-		p += scnprintf(p, sizeof(buf)+buf-p, "ampdu factor/density: %d/%d\n",
+		p += scnम_लिखो(p, माप(buf)+buf-p, "ampdu factor/density: %d/%d\n",
 				htc->ampdu_factor, htc->ampdu_density);
-		p += scnprintf(p, sizeof(buf)+buf-p, "MCS mask:");
+		p += scnम_लिखो(p, माप(buf)+buf-p, "MCS mask:");
 
-		for (i = 0; i < IEEE80211_HT_MCS_MASK_LEN; i++)
-			p += scnprintf(p, sizeof(buf)+buf-p, " %.2x",
+		क्रम (i = 0; i < IEEE80211_HT_MCS_MASK_LEN; i++)
+			p += scnम_लिखो(p, माप(buf)+buf-p, " %.2x",
 					htc->mcs.rx_mask[i]);
-		p += scnprintf(p, sizeof(buf)+buf-p, "\n");
+		p += scnम_लिखो(p, माप(buf)+buf-p, "\n");
 
 		/* If not set this is meaningless */
-		if (le16_to_cpu(htc->mcs.rx_highest)) {
-			p += scnprintf(p, sizeof(buf)+buf-p,
+		अगर (le16_to_cpu(htc->mcs.rx_highest)) अणु
+			p += scnम_लिखो(p, माप(buf)+buf-p,
 				       "MCS rx highest: %d Mbps\n",
 				       le16_to_cpu(htc->mcs.rx_highest));
-		}
+		पूर्ण
 
-		p += scnprintf(p, sizeof(buf)+buf-p, "MCS tx params: %x\n",
+		p += scnम_लिखो(p, माप(buf)+buf-p, "MCS tx params: %x\n",
 				htc->mcs.tx_params);
-	}
+	पूर्ण
 
-	return simple_read_from_buffer(userbuf, count, ppos, buf, p - buf);
-}
+	वापस simple_पढ़ो_from_buffer(userbuf, count, ppos, buf, p - buf);
+पूर्ण
 STA_OPS(ht_capa);
 
-static ssize_t sta_vht_capa_read(struct file *file, char __user *userbuf,
-				 size_t count, loff_t *ppos)
-{
-	char buf[512], *p = buf;
-	struct sta_info *sta = file->private_data;
-	struct ieee80211_sta_vht_cap *vhtc = &sta->sta.vht_cap;
+अटल sमाप_प्रकार sta_vht_capa_पढ़ो(काष्ठा file *file, अक्षर __user *userbuf,
+				 माप_प्रकार count, loff_t *ppos)
+अणु
+	अक्षर buf[512], *p = buf;
+	काष्ठा sta_info *sta = file->निजी_data;
+	काष्ठा ieee80211_sta_vht_cap *vhtc = &sta->sta.vht_cap;
 
-	p += scnprintf(p, sizeof(buf) + buf - p, "VHT %ssupported\n",
+	p += scnम_लिखो(p, माप(buf) + buf - p, "VHT %ssupported\n",
 			vhtc->vht_supported ? "" : "not ");
-	if (vhtc->vht_supported) {
-		p += scnprintf(p, sizeof(buf) + buf - p, "cap: %#.8x\n",
+	अगर (vhtc->vht_supported) अणु
+		p += scnम_लिखो(p, माप(buf) + buf - p, "cap: %#.8x\n",
 			       vhtc->cap);
-#define PFLAG(a, b)							\
-		do {							\
-			if (vhtc->cap & IEEE80211_VHT_CAP_ ## a)	\
-				p += scnprintf(p, sizeof(buf) + buf - p, \
+#घोषणा PFLAG(a, b)							\
+		करो अणु							\
+			अगर (vhtc->cap & IEEE80211_VHT_CAP_ ## a)	\
+				p += scnम_लिखो(p, माप(buf) + buf - p, \
 					       "\t\t%s\n", b);		\
-		} while (0)
+		पूर्ण जबतक (0)
 
-		switch (vhtc->cap & 0x3) {
-		case IEEE80211_VHT_CAP_MAX_MPDU_LENGTH_3895:
-			p += scnprintf(p, sizeof(buf) + buf - p,
+		चयन (vhtc->cap & 0x3) अणु
+		हाल IEEE80211_VHT_CAP_MAX_MPDU_LENGTH_3895:
+			p += scnम_लिखो(p, माप(buf) + buf - p,
 				       "\t\tMAX-MPDU-3895\n");
-			break;
-		case IEEE80211_VHT_CAP_MAX_MPDU_LENGTH_7991:
-			p += scnprintf(p, sizeof(buf) + buf - p,
+			अवरोध;
+		हाल IEEE80211_VHT_CAP_MAX_MPDU_LENGTH_7991:
+			p += scnम_लिखो(p, माप(buf) + buf - p,
 				       "\t\tMAX-MPDU-7991\n");
-			break;
-		case IEEE80211_VHT_CAP_MAX_MPDU_LENGTH_11454:
-			p += scnprintf(p, sizeof(buf) + buf - p,
+			अवरोध;
+		हाल IEEE80211_VHT_CAP_MAX_MPDU_LENGTH_11454:
+			p += scnम_लिखो(p, माप(buf) + buf - p,
 				       "\t\tMAX-MPDU-11454\n");
-			break;
-		default:
-			p += scnprintf(p, sizeof(buf) + buf - p,
+			अवरोध;
+		शेष:
+			p += scnम_लिखो(p, माप(buf) + buf - p,
 				       "\t\tMAX-MPDU-UNKNOWN\n");
-		}
-		switch (vhtc->cap & IEEE80211_VHT_CAP_SUPP_CHAN_WIDTH_MASK) {
-		case 0:
-			p += scnprintf(p, sizeof(buf) + buf - p,
+		पूर्ण
+		चयन (vhtc->cap & IEEE80211_VHT_CAP_SUPP_CHAN_WIDTH_MASK) अणु
+		हाल 0:
+			p += scnम_लिखो(p, माप(buf) + buf - p,
 				       "\t\t80Mhz\n");
-			break;
-		case IEEE80211_VHT_CAP_SUPP_CHAN_WIDTH_160MHZ:
-			p += scnprintf(p, sizeof(buf) + buf - p,
+			अवरोध;
+		हाल IEEE80211_VHT_CAP_SUPP_CHAN_WIDTH_160MHZ:
+			p += scnम_लिखो(p, माप(buf) + buf - p,
 				       "\t\t160Mhz\n");
-			break;
-		case IEEE80211_VHT_CAP_SUPP_CHAN_WIDTH_160_80PLUS80MHZ:
-			p += scnprintf(p, sizeof(buf) + buf - p,
+			अवरोध;
+		हाल IEEE80211_VHT_CAP_SUPP_CHAN_WIDTH_160_80PLUS80MHZ:
+			p += scnम_लिखो(p, माप(buf) + buf - p,
 				       "\t\t80+80Mhz\n");
-			break;
-		default:
-			p += scnprintf(p, sizeof(buf) + buf - p,
+			अवरोध;
+		शेष:
+			p += scnम_लिखो(p, माप(buf) + buf - p,
 				       "\t\tUNKNOWN-MHZ: 0x%x\n",
 				       (vhtc->cap >> 2) & 0x3);
-		}
+		पूर्ण
 		PFLAG(RXLDPC, "RXLDPC");
 		PFLAG(SHORT_GI_80, "SHORT-GI-80");
 		PFLAG(SHORT_GI_160, "SHORT-GI-160");
 		PFLAG(TXSTBC, "TXSTBC");
-		p += scnprintf(p, sizeof(buf) + buf - p,
+		p += scnम_लिखो(p, माप(buf) + buf - p,
 			       "\t\tRXSTBC_%d\n", (vhtc->cap >> 8) & 0x7);
 		PFLAG(SU_BEAMFORMER_CAPABLE, "SU-BEAMFORMER-CAPABLE");
 		PFLAG(SU_BEAMFORMEE_CAPABLE, "SU-BEAMFORMEE-CAPABLE");
-		p += scnprintf(p, sizeof(buf) + buf - p,
+		p += scnम_लिखो(p, माप(buf) + buf - p,
 			"\t\tBEAMFORMEE-STS: 0x%x\n",
 			(vhtc->cap & IEEE80211_VHT_CAP_BEAMFORMEE_STS_MASK) >>
 			IEEE80211_VHT_CAP_BEAMFORMEE_STS_SHIFT);
-		p += scnprintf(p, sizeof(buf) + buf - p,
+		p += scnम_लिखो(p, माप(buf) + buf - p,
 			"\t\tSOUNDING-DIMENSIONS: 0x%x\n",
 			(vhtc->cap & IEEE80211_VHT_CAP_SOUNDING_DIMENSIONS_MASK)
 			>> IEEE80211_VHT_CAP_SOUNDING_DIMENSIONS_SHIFT);
@@ -582,90 +583,90 @@ static ssize_t sta_vht_capa_read(struct file *file, char __user *userbuf,
 		PFLAG(MU_BEAMFORMEE_CAPABLE, "MU-BEAMFORMEE-CAPABLE");
 		PFLAG(VHT_TXOP_PS, "TXOP-PS");
 		PFLAG(HTC_VHT, "HTC-VHT");
-		p += scnprintf(p, sizeof(buf) + buf - p,
+		p += scnम_लिखो(p, माप(buf) + buf - p,
 			"\t\tMPDU-LENGTH-EXPONENT: 0x%x\n",
 			(vhtc->cap & IEEE80211_VHT_CAP_MAX_A_MPDU_LENGTH_EXPONENT_MASK) >>
 			IEEE80211_VHT_CAP_MAX_A_MPDU_LENGTH_EXPONENT_SHIFT);
 		PFLAG(VHT_LINK_ADAPTATION_VHT_UNSOL_MFB,
 		      "LINK-ADAPTATION-VHT-UNSOL-MFB");
-		p += scnprintf(p, sizeof(buf) + buf - p,
+		p += scnम_लिखो(p, माप(buf) + buf - p,
 			"\t\tLINK-ADAPTATION-VHT-MRQ-MFB: 0x%x\n",
 			(vhtc->cap & IEEE80211_VHT_CAP_VHT_LINK_ADAPTATION_VHT_MRQ_MFB) >> 26);
 		PFLAG(RX_ANTENNA_PATTERN, "RX-ANTENNA-PATTERN");
 		PFLAG(TX_ANTENNA_PATTERN, "TX-ANTENNA-PATTERN");
 
-		p += scnprintf(p, sizeof(buf)+buf-p, "RX MCS: %.4x\n",
+		p += scnम_लिखो(p, माप(buf)+buf-p, "RX MCS: %.4x\n",
 			       le16_to_cpu(vhtc->vht_mcs.rx_mcs_map));
-		if (vhtc->vht_mcs.rx_highest)
-			p += scnprintf(p, sizeof(buf)+buf-p,
+		अगर (vhtc->vht_mcs.rx_highest)
+			p += scnम_लिखो(p, माप(buf)+buf-p,
 				       "MCS RX highest: %d Mbps\n",
 				       le16_to_cpu(vhtc->vht_mcs.rx_highest));
-		p += scnprintf(p, sizeof(buf)+buf-p, "TX MCS: %.4x\n",
+		p += scnम_लिखो(p, माप(buf)+buf-p, "TX MCS: %.4x\n",
 			       le16_to_cpu(vhtc->vht_mcs.tx_mcs_map));
-		if (vhtc->vht_mcs.tx_highest)
-			p += scnprintf(p, sizeof(buf)+buf-p,
+		अगर (vhtc->vht_mcs.tx_highest)
+			p += scnम_लिखो(p, माप(buf)+buf-p,
 				       "MCS TX highest: %d Mbps\n",
 				       le16_to_cpu(vhtc->vht_mcs.tx_highest));
-#undef PFLAG
-	}
+#अघोषित PFLAG
+	पूर्ण
 
-	return simple_read_from_buffer(userbuf, count, ppos, buf, p - buf);
-}
+	वापस simple_पढ़ो_from_buffer(userbuf, count, ppos, buf, p - buf);
+पूर्ण
 STA_OPS(vht_capa);
 
-static ssize_t sta_he_capa_read(struct file *file, char __user *userbuf,
-				size_t count, loff_t *ppos)
-{
-	char *buf, *p;
-	size_t buf_sz = PAGE_SIZE;
-	struct sta_info *sta = file->private_data;
-	struct ieee80211_sta_he_cap *hec = &sta->sta.he_cap;
-	struct ieee80211_he_mcs_nss_supp *nss = &hec->he_mcs_nss_supp;
+अटल sमाप_प्रकार sta_he_capa_पढ़ो(काष्ठा file *file, अक्षर __user *userbuf,
+				माप_प्रकार count, loff_t *ppos)
+अणु
+	अक्षर *buf, *p;
+	माप_प्रकार buf_sz = PAGE_SIZE;
+	काष्ठा sta_info *sta = file->निजी_data;
+	काष्ठा ieee80211_sta_he_cap *hec = &sta->sta.he_cap;
+	काष्ठा ieee80211_he_mcs_nss_supp *nss = &hec->he_mcs_nss_supp;
 	u8 ppe_size;
 	u8 *cap;
-	int i;
-	ssize_t ret;
+	पूर्णांक i;
+	sमाप_प्रकार ret;
 
-	buf = kmalloc(buf_sz, GFP_KERNEL);
-	if (!buf)
-		return -ENOMEM;
+	buf = kदो_स्मृति(buf_sz, GFP_KERNEL);
+	अगर (!buf)
+		वापस -ENOMEM;
 	p = buf;
 
-	p += scnprintf(p, buf_sz + buf - p, "HE %ssupported\n",
+	p += scnम_लिखो(p, buf_sz + buf - p, "HE %ssupported\n",
 		       hec->has_he ? "" : "not ");
-	if (!hec->has_he)
-		goto out;
+	अगर (!hec->has_he)
+		जाओ out;
 
 	cap = hec->he_cap_elem.mac_cap_info;
-	p += scnprintf(p, buf_sz + buf - p,
+	p += scnम_लिखो(p, buf_sz + buf - p,
 		       "MAC-CAP: %#.2x %#.2x %#.2x %#.2x %#.2x %#.2x\n",
 		       cap[0], cap[1], cap[2], cap[3], cap[4], cap[5]);
 
-#define PRINT(fmt, ...)							\
-	p += scnprintf(p, buf_sz + buf - p, "\t\t" fmt "\n",		\
+#घोषणा PRINT(fmt, ...)							\
+	p += scnम_लिखो(p, buf_sz + buf - p, "\t\t" fmt "\n",		\
 		       ##__VA_ARGS__)
 
-#define PFLAG(t, n, a, b)						\
-	do {								\
-		if (cap[n] & IEEE80211_HE_##t##_CAP##n##_##a)		\
+#घोषणा PFLAG(t, n, a, b)						\
+	करो अणु								\
+		अगर (cap[n] & IEEE80211_HE_##t##_CAP##n##_##a)		\
 			PRINT("%s", b);					\
-	} while (0)
+	पूर्ण जबतक (0)
 
-#define PFLAG_RANGE(t, i, n, s, m, off, fmt)				\
-	do {								\
+#घोषणा PFLAG_RANGE(t, i, n, s, m, off, fmt)				\
+	करो अणु								\
 		u8 msk = IEEE80211_HE_##t##_CAP##i##_##n##_MASK;	\
 		u8 idx = ((cap[i] & msk) >> (ffs(msk) - 1)) + off;	\
 		PRINT(fmt, (s << idx) + (m * idx));			\
-	} while (0)
+	पूर्ण जबतक (0)
 
-#define PFLAG_RANGE_DEFAULT(t, i, n, s, m, off, fmt, a, b)		\
-	do {								\
-		if (cap[i] == IEEE80211_HE_##t ##_CAP##i##_##n##_##a) {	\
+#घोषणा PFLAG_RANGE_DEFAULT(t, i, n, s, m, off, fmt, a, b)		\
+	करो अणु								\
+		अगर (cap[i] == IEEE80211_HE_##t ##_CAP##i##_##n##_##a) अणु	\
 			PRINT("%s", b);					\
-			break;						\
-		}							\
+			अवरोध;						\
+		पूर्ण							\
 		PFLAG_RANGE(t, i, n, s, m, off, fmt);			\
-	} while (0)
+	पूर्ण जबतक (0)
 
 	PFLAG(MAC, 0, HTC_HE, "HTC-HE");
 	PFLAG(MAC, 0, TWT_REQ, "TWT-REQ");
@@ -682,22 +683,22 @@ static ssize_t sta_he_capa_read(struct file *file, char __user *userbuf,
 	PFLAG_RANGE(MAC, 1, MULTI_TID_AGG_RX_QOS, 0, 1, 1,
 		    "MULTI-TID-AGG-RX-QOS-%d");
 
-	if (cap[0] & IEEE80211_HE_MAC_CAP0_HTC_HE) {
-		switch (((cap[2] << 1) | (cap[1] >> 7)) & 0x3) {
-		case 0:
+	अगर (cap[0] & IEEE80211_HE_MAC_CAP0_HTC_HE) अणु
+		चयन (((cap[2] << 1) | (cap[1] >> 7)) & 0x3) अणु
+		हाल 0:
 			PRINT("LINK-ADAPTATION-NO-FEEDBACK");
-			break;
-		case 1:
+			अवरोध;
+		हाल 1:
 			PRINT("LINK-ADAPTATION-RESERVED");
-			break;
-		case 2:
+			अवरोध;
+		हाल 2:
 			PRINT("LINK-ADAPTATION-UNSOLICITED-FEEDBACK");
-			break;
-		case 3:
+			अवरोध;
+		हाल 3:
 			PRINT("LINK-ADAPTATION-BOTH");
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
 	PFLAG(MAC, 2, ALL_ACK, "ALL-ACK");
 	PFLAG(MAC, 2, TRS, "TRS");
@@ -710,20 +711,20 @@ static ssize_t sta_he_capa_read(struct file *file, char __user *userbuf,
 	PFLAG(MAC, 3, OMI_CONTROL, "OMI-CONTROL");
 	PFLAG(MAC, 3, OFDMA_RA, "OFDMA-RA");
 
-	switch (cap[3] & IEEE80211_HE_MAC_CAP3_MAX_AMPDU_LEN_EXP_MASK) {
-	case IEEE80211_HE_MAC_CAP3_MAX_AMPDU_LEN_EXP_EXT_0:
+	चयन (cap[3] & IEEE80211_HE_MAC_CAP3_MAX_AMPDU_LEN_EXP_MASK) अणु
+	हाल IEEE80211_HE_MAC_CAP3_MAX_AMPDU_LEN_EXP_EXT_0:
 		PRINT("MAX-AMPDU-LEN-EXP-USE-EXT-0");
-		break;
-	case IEEE80211_HE_MAC_CAP3_MAX_AMPDU_LEN_EXP_EXT_1:
+		अवरोध;
+	हाल IEEE80211_HE_MAC_CAP3_MAX_AMPDU_LEN_EXP_EXT_1:
 		PRINT("MAX-AMPDU-LEN-EXP-VHT-EXT-1");
-		break;
-	case IEEE80211_HE_MAC_CAP3_MAX_AMPDU_LEN_EXP_EXT_2:
+		अवरोध;
+	हाल IEEE80211_HE_MAC_CAP3_MAX_AMPDU_LEN_EXP_EXT_2:
 		PRINT("MAX-AMPDU-LEN-EXP-VHT-EXT-2");
-		break;
-	case IEEE80211_HE_MAC_CAP3_MAX_AMPDU_LEN_EXP_EXT_3:
+		अवरोध;
+	हाल IEEE80211_HE_MAC_CAP3_MAX_AMPDU_LEN_EXP_EXT_3:
 		PRINT("MAX-AMPDU-LEN-EXP-VHT-EXT-3");
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	PFLAG(MAC, 3, AMSDU_FRAG, "AMSDU-FRAG");
 	PFLAG(MAC, 3, FLEX_TWT_SCHED, "FLEX-TWT-SCHED");
@@ -748,7 +749,7 @@ static ssize_t sta_he_capa_read(struct file *file, char __user *userbuf,
 	PFLAG(MAC, 5, HT_VHT_TRIG_FRAME_RX, "HT-VHT-TRIG-FRAME-RX");
 
 	cap = hec->he_cap_elem.phy_cap_info;
-	p += scnprintf(p, buf_sz + buf - p,
+	p += scnम_लिखो(p, buf_sz + buf - p,
 		       "PHY CAP: %#.2x %#.2x %#.2x %#.2x %#.2x %#.2x %#.2x %#.2x %#.2x %#.2x %#.2x\n",
 		       cap[0], cap[1], cap[2], cap[3], cap[4], cap[5], cap[6],
 		       cap[7], cap[8], cap[9], cap[10]);
@@ -766,20 +767,20 @@ static ssize_t sta_he_capa_read(struct file *file, char __user *userbuf,
 	PFLAG(PHY, 0, CHANNEL_WIDTH_SET_RU_MAPPING_IN_5G,
 	      "CHANNEL-WIDTH-SET-RU-MAPPING-IN-5G");
 
-	switch (cap[1] & IEEE80211_HE_PHY_CAP1_PREAMBLE_PUNC_RX_MASK) {
-	case IEEE80211_HE_PHY_CAP1_PREAMBLE_PUNC_RX_80MHZ_ONLY_SECOND_20MHZ:
+	चयन (cap[1] & IEEE80211_HE_PHY_CAP1_PREAMBLE_PUNC_RX_MASK) अणु
+	हाल IEEE80211_HE_PHY_CAP1_PREAMBLE_PUNC_RX_80MHZ_ONLY_SECOND_20MHZ:
 		PRINT("PREAMBLE-PUNC-RX-80MHZ-ONLY-SECOND-20MHZ");
-		break;
-	case IEEE80211_HE_PHY_CAP1_PREAMBLE_PUNC_RX_80MHZ_ONLY_SECOND_40MHZ:
+		अवरोध;
+	हाल IEEE80211_HE_PHY_CAP1_PREAMBLE_PUNC_RX_80MHZ_ONLY_SECOND_40MHZ:
 		PRINT("PREAMBLE-PUNC-RX-80MHZ-ONLY-SECOND-40MHZ");
-		break;
-	case IEEE80211_HE_PHY_CAP1_PREAMBLE_PUNC_RX_160MHZ_ONLY_SECOND_20MHZ:
+		अवरोध;
+	हाल IEEE80211_HE_PHY_CAP1_PREAMBLE_PUNC_RX_160MHZ_ONLY_SECOND_20MHZ:
 		PRINT("PREAMBLE-PUNC-RX-160MHZ-ONLY-SECOND-20MHZ");
-		break;
-	case IEEE80211_HE_PHY_CAP1_PREAMBLE_PUNC_RX_160MHZ_ONLY_SECOND_40MHZ:
+		अवरोध;
+	हाल IEEE80211_HE_PHY_CAP1_PREAMBLE_PUNC_RX_160MHZ_ONLY_SECOND_40MHZ:
 		PRINT("PREAMBLE-PUNC-RX-160MHZ-ONLY-SECOND-40MHZ");
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	PFLAG(PHY, 1, DEVICE_CLASS_A,
 	      "IEEE80211-HE-PHY-CAP1-DEVICE-CLASS-A");
@@ -797,38 +798,38 @@ static ssize_t sta_he_capa_read(struct file *file, char __user *userbuf,
 	PFLAG(PHY, 2, UL_MU_FULL_MU_MIMO, "UL-MU-FULL-MU-MIMO");
 	PFLAG(PHY, 2, UL_MU_PARTIAL_MU_MIMO, "UL-MU-PARTIAL-MU-MIMO");
 
-	switch (cap[3] & IEEE80211_HE_PHY_CAP3_DCM_MAX_CONST_TX_MASK) {
-	case IEEE80211_HE_PHY_CAP3_DCM_MAX_CONST_TX_NO_DCM:
+	चयन (cap[3] & IEEE80211_HE_PHY_CAP3_DCM_MAX_CONST_TX_MASK) अणु
+	हाल IEEE80211_HE_PHY_CAP3_DCM_MAX_CONST_TX_NO_DCM:
 		PRINT("DCM-MAX-CONST-TX-NO-DCM");
-		break;
-	case IEEE80211_HE_PHY_CAP3_DCM_MAX_CONST_TX_BPSK:
+		अवरोध;
+	हाल IEEE80211_HE_PHY_CAP3_DCM_MAX_CONST_TX_BPSK:
 		PRINT("DCM-MAX-CONST-TX-BPSK");
-		break;
-	case IEEE80211_HE_PHY_CAP3_DCM_MAX_CONST_TX_QPSK:
+		अवरोध;
+	हाल IEEE80211_HE_PHY_CAP3_DCM_MAX_CONST_TX_QPSK:
 		PRINT("DCM-MAX-CONST-TX-QPSK");
-		break;
-	case IEEE80211_HE_PHY_CAP3_DCM_MAX_CONST_TX_16_QAM:
+		अवरोध;
+	हाल IEEE80211_HE_PHY_CAP3_DCM_MAX_CONST_TX_16_QAM:
 		PRINT("DCM-MAX-CONST-TX-16-QAM");
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	PFLAG(PHY, 3, DCM_MAX_TX_NSS_1, "DCM-MAX-TX-NSS-1");
 	PFLAG(PHY, 3, DCM_MAX_TX_NSS_2, "DCM-MAX-TX-NSS-2");
 
-	switch (cap[3] & IEEE80211_HE_PHY_CAP3_DCM_MAX_CONST_RX_MASK) {
-	case IEEE80211_HE_PHY_CAP3_DCM_MAX_CONST_RX_NO_DCM:
+	चयन (cap[3] & IEEE80211_HE_PHY_CAP3_DCM_MAX_CONST_RX_MASK) अणु
+	हाल IEEE80211_HE_PHY_CAP3_DCM_MAX_CONST_RX_NO_DCM:
 		PRINT("DCM-MAX-CONST-RX-NO-DCM");
-		break;
-	case IEEE80211_HE_PHY_CAP3_DCM_MAX_CONST_RX_BPSK:
+		अवरोध;
+	हाल IEEE80211_HE_PHY_CAP3_DCM_MAX_CONST_RX_BPSK:
 		PRINT("DCM-MAX-CONST-RX-BPSK");
-		break;
-	case IEEE80211_HE_PHY_CAP3_DCM_MAX_CONST_RX_QPSK:
+		अवरोध;
+	हाल IEEE80211_HE_PHY_CAP3_DCM_MAX_CONST_RX_QPSK:
 		PRINT("DCM-MAX-CONST-RX-QPSK");
-		break;
-	case IEEE80211_HE_PHY_CAP3_DCM_MAX_CONST_RX_16_QAM:
+		अवरोध;
+	हाल IEEE80211_HE_PHY_CAP3_DCM_MAX_CONST_RX_16_QAM:
 		PRINT("DCM-MAX-CONST-RX-16-QAM");
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	PFLAG(PHY, 3, DCM_MAX_RX_NSS_1, "DCM-MAX-RX-NSS-1");
 	PFLAG(PHY, 3, DCM_MAX_RX_NSS_2, "DCM-MAX-RX-NSS-2");
@@ -881,20 +882,20 @@ static ssize_t sta_he_capa_read(struct file *file, char __user *userbuf,
 	PFLAG(PHY, 8, MIDAMBLE_RX_TX_2X_AND_1XLTF,
 	      "MIDAMBLE-RX-TX-2X-AND-1XLTF");
 
-	switch (cap[8] & IEEE80211_HE_PHY_CAP8_DCM_MAX_RU_MASK) {
-	case IEEE80211_HE_PHY_CAP8_DCM_MAX_RU_242:
+	चयन (cap[8] & IEEE80211_HE_PHY_CAP8_DCM_MAX_RU_MASK) अणु
+	हाल IEEE80211_HE_PHY_CAP8_DCM_MAX_RU_242:
 		PRINT("DCM-MAX-RU-242");
-		break;
-	case IEEE80211_HE_PHY_CAP8_DCM_MAX_RU_484:
+		अवरोध;
+	हाल IEEE80211_HE_PHY_CAP8_DCM_MAX_RU_484:
 		PRINT("DCM-MAX-RU-484");
-		break;
-	case IEEE80211_HE_PHY_CAP8_DCM_MAX_RU_996:
+		अवरोध;
+	हाल IEEE80211_HE_PHY_CAP8_DCM_MAX_RU_996:
 		PRINT("DCM-MAX-RU-996");
-		break;
-	case IEEE80211_HE_PHY_CAP8_DCM_MAX_RU_2x996:
+		अवरोध;
+	हाल IEEE80211_HE_PHY_CAP8_DCM_MAX_RU_2x996:
 		PRINT("DCM-MAX-RU-2x996");
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	PFLAG(PHY, 9, LONGER_THAN_16_SIGB_OFDM_SYM,
 	      "LONGER-THAN-16-SIGB-OFDM-SYM");
@@ -909,107 +910,107 @@ static ssize_t sta_he_capa_read(struct file *file, char __user *userbuf,
 	PFLAG(PHY, 9, RX_FULL_BW_SU_USING_MU_WITH_NON_COMP_SIGB,
 	      "RX-FULL-BW-SU-USING-MU-WITH-NON-COMP-SIGB");
 
-	switch (cap[9] & IEEE80211_HE_PHY_CAP9_NOMIMAL_PKT_PADDING_MASK) {
-	case IEEE80211_HE_PHY_CAP9_NOMIMAL_PKT_PADDING_0US:
+	चयन (cap[9] & IEEE80211_HE_PHY_CAP9_NOMIMAL_PKT_PADDING_MASK) अणु
+	हाल IEEE80211_HE_PHY_CAP9_NOMIMAL_PKT_PADDING_0US:
 		PRINT("NOMINAL-PACKET-PADDING-0US");
-		break;
-	case IEEE80211_HE_PHY_CAP9_NOMIMAL_PKT_PADDING_8US:
+		अवरोध;
+	हाल IEEE80211_HE_PHY_CAP9_NOMIMAL_PKT_PADDING_8US:
 		PRINT("NOMINAL-PACKET-PADDING-8US");
-		break;
-	case IEEE80211_HE_PHY_CAP9_NOMIMAL_PKT_PADDING_16US:
+		अवरोध;
+	हाल IEEE80211_HE_PHY_CAP9_NOMIMAL_PKT_PADDING_16US:
 		PRINT("NOMINAL-PACKET-PADDING-16US");
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-#undef PFLAG_RANGE_DEFAULT
-#undef PFLAG_RANGE
-#undef PFLAG
+#अघोषित PFLAG_RANGE_DEFAULT
+#अघोषित PFLAG_RANGE
+#अघोषित PFLAG
 
-#define PRINT_NSS_SUPP(f, n)						\
-	do {								\
-		int _i;							\
+#घोषणा PRINT_NSS_SUPP(f, n)						\
+	करो अणु								\
+		पूर्णांक _i;							\
 		u16 v = le16_to_cpu(nss->f);				\
-		p += scnprintf(p, buf_sz + buf - p, n ": %#.4x\n", v);	\
-		for (_i = 0; _i < 8; _i += 2) {				\
-			switch ((v >> _i) & 0x3) {			\
-			case 0:						\
+		p += scnम_लिखो(p, buf_sz + buf - p, n ": %#.4x\n", v);	\
+		क्रम (_i = 0; _i < 8; _i += 2) अणु				\
+			चयन ((v >> _i) & 0x3) अणु			\
+			हाल 0:						\
 				PRINT(n "-%d-SUPPORT-0-7", _i / 2);	\
-				break;					\
-			case 1:						\
+				अवरोध;					\
+			हाल 1:						\
 				PRINT(n "-%d-SUPPORT-0-9", _i / 2);	\
-				break;					\
-			case 2:						\
+				अवरोध;					\
+			हाल 2:						\
 				PRINT(n "-%d-SUPPORT-0-11", _i / 2);	\
-				break;					\
-			case 3:						\
+				अवरोध;					\
+			हाल 3:						\
 				PRINT(n "-%d-NOT-SUPPORTED", _i / 2);	\
-				break;					\
-			}						\
-		}							\
-	} while (0)
+				अवरोध;					\
+			पूर्ण						\
+		पूर्ण							\
+	पूर्ण जबतक (0)
 
 	PRINT_NSS_SUPP(rx_mcs_80, "RX-MCS-80");
 	PRINT_NSS_SUPP(tx_mcs_80, "TX-MCS-80");
 
-	if (cap[0] & IEEE80211_HE_PHY_CAP0_CHANNEL_WIDTH_SET_160MHZ_IN_5G) {
+	अगर (cap[0] & IEEE80211_HE_PHY_CAP0_CHANNEL_WIDTH_SET_160MHZ_IN_5G) अणु
 		PRINT_NSS_SUPP(rx_mcs_160, "RX-MCS-160");
 		PRINT_NSS_SUPP(tx_mcs_160, "TX-MCS-160");
-	}
+	पूर्ण
 
-	if (cap[0] &
-	    IEEE80211_HE_PHY_CAP0_CHANNEL_WIDTH_SET_80PLUS80_MHZ_IN_5G) {
+	अगर (cap[0] &
+	    IEEE80211_HE_PHY_CAP0_CHANNEL_WIDTH_SET_80PLUS80_MHZ_IN_5G) अणु
 		PRINT_NSS_SUPP(rx_mcs_80p80, "RX-MCS-80P80");
 		PRINT_NSS_SUPP(tx_mcs_80p80, "TX-MCS-80P80");
-	}
+	पूर्ण
 
-#undef PRINT_NSS_SUPP
-#undef PRINT
+#अघोषित PRINT_NSS_SUPP
+#अघोषित PRINT
 
-	if (!(cap[6] & IEEE80211_HE_PHY_CAP6_PPE_THRESHOLD_PRESENT))
-		goto out;
+	अगर (!(cap[6] & IEEE80211_HE_PHY_CAP6_PPE_THRESHOLD_PRESENT))
+		जाओ out;
 
-	p += scnprintf(p, buf_sz + buf - p, "PPE-THRESHOLDS: %#.2x",
+	p += scnम_लिखो(p, buf_sz + buf - p, "PPE-THRESHOLDS: %#.2x",
 		       hec->ppe_thres[0]);
 
 	ppe_size = ieee80211_he_ppe_size(hec->ppe_thres[0], cap);
-	for (i = 1; i < ppe_size; i++) {
-		p += scnprintf(p, buf_sz + buf - p, " %#.2x",
+	क्रम (i = 1; i < ppe_size; i++) अणु
+		p += scnम_लिखो(p, buf_sz + buf - p, " %#.2x",
 			       hec->ppe_thres[i]);
-	}
-	p += scnprintf(p, buf_sz + buf - p, "\n");
+	पूर्ण
+	p += scnम_लिखो(p, buf_sz + buf - p, "\n");
 
 out:
-	ret = simple_read_from_buffer(userbuf, count, ppos, buf, p - buf);
-	kfree(buf);
-	return ret;
-}
+	ret = simple_पढ़ो_from_buffer(userbuf, count, ppos, buf, p - buf);
+	kमुक्त(buf);
+	वापस ret;
+पूर्ण
 STA_OPS(he_capa);
 
-#define DEBUGFS_ADD(name) \
+#घोषणा DEBUGFS_ADD(name) \
 	debugfs_create_file(#name, 0400, \
 		sta->debugfs_dir, sta, &sta_ ##name## _ops)
 
-#define DEBUGFS_ADD_COUNTER(name, field)				\
-	debugfs_create_ulong(#name, 0400, sta->debugfs_dir, &sta->field);
+#घोषणा DEBUGFS_ADD_COUNTER(name, field)				\
+	debugfs_create_uदीर्घ(#name, 0400, sta->debugfs_dir, &sta->field);
 
-void ieee80211_sta_debugfs_add(struct sta_info *sta)
-{
-	struct ieee80211_local *local = sta->local;
-	struct ieee80211_sub_if_data *sdata = sta->sdata;
-	struct dentry *stations_dir = sta->sdata->debugfs.subdir_stations;
+व्योम ieee80211_sta_debugfs_add(काष्ठा sta_info *sta)
+अणु
+	काष्ठा ieee80211_local *local = sta->local;
+	काष्ठा ieee80211_sub_अगर_data *sdata = sta->sdata;
+	काष्ठा dentry *stations_dir = sta->sdata->debugfs.subdir_stations;
 	u8 mac[3*ETH_ALEN];
 
-	if (!stations_dir)
-		return;
+	अगर (!stations_dir)
+		वापस;
 
-	snprintf(mac, sizeof(mac), "%pM", sta->sta.addr);
+	snम_लिखो(mac, माप(mac), "%pM", sta->sta.addr);
 
 	/*
 	 * This might fail due to a race condition:
 	 * When mac80211 unlinks a station, the debugfs entries
-	 * remain, but it is already possible to link a new
+	 * reमुख्य, but it is alपढ़ोy possible to link a new
 	 * station with the same address which triggers adding
-	 * it to debugfs; therefore, if the old station isn't
+	 * it to debugfs; thereक्रमe, अगर the old station isn't
 	 * destroyed quickly enough the old station's debugfs
 	 * dir might still be around.
 	 */
@@ -1028,12 +1029,12 @@ void ieee80211_sta_debugfs_add(struct sta_info *sta)
 	DEBUGFS_ADD_COUNTER(rx_fragments, rx_stats.fragments);
 	DEBUGFS_ADD_COUNTER(tx_filtered, status_stats.filtered);
 
-	if (local->ops->wake_tx_queue) {
+	अगर (local->ops->wake_tx_queue) अणु
 		DEBUGFS_ADD(aqm);
-		DEBUGFS_ADD(airtime);
-	}
+		DEBUGFS_ADD(airसमय);
+	पूर्ण
 
-	if (wiphy_ext_feature_isset(local->hw.wiphy,
+	अगर (wiphy_ext_feature_isset(local->hw.wiphy,
 				    NL80211_EXT_FEATURE_AQL))
 		DEBUGFS_ADD(aql);
 
@@ -1041,10 +1042,10 @@ void ieee80211_sta_debugfs_add(struct sta_info *sta)
 			   &sta->driver_buffered_tids);
 
 	drv_sta_add_debugfs(local, sdata, &sta->sta, sta->debugfs_dir);
-}
+पूर्ण
 
-void ieee80211_sta_debugfs_remove(struct sta_info *sta)
-{
-	debugfs_remove_recursive(sta->debugfs_dir);
-	sta->debugfs_dir = NULL;
-}
+व्योम ieee80211_sta_debugfs_हटाओ(काष्ठा sta_info *sta)
+अणु
+	debugfs_हटाओ_recursive(sta->debugfs_dir);
+	sta->debugfs_dir = शून्य;
+पूर्ण

@@ -1,49 +1,50 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /* 
  * Copyright (C) 2002 Jeff Dike (jdike@karaya.com)
- * Copyright (C) 2015 Richard Weinberger (richard@nod.at)
+ * Copyright (C) 2015 Riअक्षरd Weinberger (riअक्षरd@nod.at)
  */
 
-#ifndef __UM_UACCESS_H
-#define __UM_UACCESS_H
+#अगर_अघोषित __UM_UACCESS_H
+#घोषणा __UM_UACCESS_H
 
-#include <asm/elf.h>
+#समावेश <यंत्र/elf.h>
 
-#define __under_task_size(addr, size) \
-	(((unsigned long) (addr) < TASK_SIZE) && \
-	 (((unsigned long) (addr) + (size)) < TASK_SIZE))
+#घोषणा __under_task_size(addr, size) \
+	(((अचिन्हित दीर्घ) (addr) < TASK_SIZE) && \
+	 (((अचिन्हित दीर्घ) (addr) + (size)) < TASK_SIZE))
 
-#define __access_ok_vsyscall(addr, size) \
-	  (((unsigned long) (addr) >= FIXADDR_USER_START) && \
-	  ((unsigned long) (addr) + (size) <= FIXADDR_USER_END) && \
-	  ((unsigned long) (addr) + (size) >= (unsigned long)(addr)))
+#घोषणा __access_ok_vsyscall(addr, size) \
+	  (((अचिन्हित दीर्घ) (addr) >= FIXADDR_USER_START) && \
+	  ((अचिन्हित दीर्घ) (addr) + (size) <= FIXADDR_USER_END) && \
+	  ((अचिन्हित दीर्घ) (addr) + (size) >= (अचिन्हित दीर्घ)(addr)))
 
-#define __addr_range_nowrap(addr, size) \
-	((unsigned long) (addr) <= ((unsigned long) (addr) + (size)))
+#घोषणा __addr_range_nowrap(addr, size) \
+	((अचिन्हित दीर्घ) (addr) <= ((अचिन्हित दीर्घ) (addr) + (size)))
 
-extern unsigned long raw_copy_from_user(void *to, const void __user *from, unsigned long n);
-extern unsigned long raw_copy_to_user(void __user *to, const void *from, unsigned long n);
-extern long __strncpy_from_user(char *dst, const char __user *src, long count);
-extern long __strnlen_user(const void __user *str, long len);
-extern unsigned long __clear_user(void __user *mem, unsigned long len);
-static inline int __access_ok(unsigned long addr, unsigned long size);
+बाह्य अचिन्हित दीर्घ raw_copy_from_user(व्योम *to, स्थिर व्योम __user *from, अचिन्हित दीर्घ n);
+बाह्य अचिन्हित दीर्घ raw_copy_to_user(व्योम __user *to, स्थिर व्योम *from, अचिन्हित दीर्घ n);
+बाह्य दीर्घ __म_नकलन_from_user(अक्षर *dst, स्थिर अक्षर __user *src, दीर्घ count);
+बाह्य दीर्घ __strnlen_user(स्थिर व्योम __user *str, दीर्घ len);
+बाह्य अचिन्हित दीर्घ __clear_user(व्योम __user *mem, अचिन्हित दीर्घ len);
+अटल अंतरभूत पूर्णांक __access_ok(अचिन्हित दीर्घ addr, अचिन्हित दीर्घ size);
 
-/* Teach asm-generic/uaccess.h that we have C functions for these. */
-#define __access_ok __access_ok
-#define __clear_user __clear_user
-#define __strnlen_user __strnlen_user
-#define __strncpy_from_user __strncpy_from_user
-#define INLINE_COPY_FROM_USER
-#define INLINE_COPY_TO_USER
+/* Teach यंत्र-generic/uaccess.h that we have C functions क्रम these. */
+#घोषणा __access_ok __access_ok
+#घोषणा __clear_user __clear_user
+#घोषणा __strnlen_user __strnlen_user
+#घोषणा __म_नकलन_from_user __म_नकलन_from_user
+#घोषणा INLINE_COPY_FROM_USER
+#घोषणा INLINE_COPY_TO_USER
 
-#include <asm-generic/uaccess.h>
+#समावेश <यंत्र-generic/uaccess.h>
 
-static inline int __access_ok(unsigned long addr, unsigned long size)
-{
-	return __addr_range_nowrap(addr, size) &&
+अटल अंतरभूत पूर्णांक __access_ok(अचिन्हित दीर्घ addr, अचिन्हित दीर्घ size)
+अणु
+	वापस __addr_range_nowrap(addr, size) &&
 		(__under_task_size(addr, size) ||
 		__access_ok_vsyscall(addr, size) ||
 		uaccess_kernel());
-}
+पूर्ण
 
-#endif
+#पूर्ण_अगर

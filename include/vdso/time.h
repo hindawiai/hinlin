@@ -1,12 +1,13 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __VDSO_TIME_H
-#define __VDSO_TIME_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __VDSO_TIME_H
+#घोषणा __VDSO_TIME_H
 
-#include <uapi/linux/types.h>
+#समावेश <uapi/linux/types.h>
 
-struct timens_offset {
+काष्ठा समयns_offset अणु
 	s64	sec;
 	u64	nsec;
-};
+पूर्ण;
 
-#endif /* __VDSO_TIME_H */
+#पूर्ण_अगर /* __VDSO_TIME_H */

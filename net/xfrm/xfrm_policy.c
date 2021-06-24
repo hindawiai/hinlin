@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * xfrm_policy.c
  *
@@ -9,71 +10,71 @@
  * 		IPv6 support
  * 	Kazunori MIYAZAWA @USAGI
  * 	YOSHIFUJI Hideaki
- * 		Split up af-specific portion
+ * 		Split up af-specअगरic portion
  *	Derek Atkins <derek@ihtfp.com>		Add the post_input processor
  *
  */
 
-#include <linux/err.h>
-#include <linux/slab.h>
-#include <linux/kmod.h>
-#include <linux/list.h>
-#include <linux/spinlock.h>
-#include <linux/workqueue.h>
-#include <linux/notifier.h>
-#include <linux/netdevice.h>
-#include <linux/netfilter.h>
-#include <linux/module.h>
-#include <linux/cache.h>
-#include <linux/cpu.h>
-#include <linux/audit.h>
-#include <linux/rhashtable.h>
-#include <linux/if_tunnel.h>
-#include <net/dst.h>
-#include <net/flow.h>
-#include <net/xfrm.h>
-#include <net/ip.h>
-#if IS_ENABLED(CONFIG_IPV6_MIP6)
-#include <net/mip6.h>
-#endif
-#ifdef CONFIG_XFRM_STATISTICS
-#include <net/snmp.h>
-#endif
-#ifdef CONFIG_XFRM_ESPINTCP
-#include <net/espintcp.h>
-#endif
+#समावेश <linux/err.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/kmod.h>
+#समावेश <linux/list.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/workqueue.h>
+#समावेश <linux/notअगरier.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/netfilter.h>
+#समावेश <linux/module.h>
+#समावेश <linux/cache.h>
+#समावेश <linux/cpu.h>
+#समावेश <linux/audit.h>
+#समावेश <linux/rhashtable.h>
+#समावेश <linux/अगर_tunnel.h>
+#समावेश <net/dst.h>
+#समावेश <net/flow.h>
+#समावेश <net/xfrm.h>
+#समावेश <net/ip.h>
+#अगर IS_ENABLED(CONFIG_IPV6_MIP6)
+#समावेश <net/mip6.h>
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_XFRM_STATISTICS
+#समावेश <net/snmp.h>
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_XFRM_ESPINTCP
+#समावेश <net/espपूर्णांकcp.h>
+#पूर्ण_अगर
 
-#include "xfrm_hash.h"
+#समावेश "xfrm_hash.h"
 
-#define XFRM_QUEUE_TMO_MIN ((unsigned)(HZ/10))
-#define XFRM_QUEUE_TMO_MAX ((unsigned)(60*HZ))
-#define XFRM_MAX_QUEUE_LEN	100
+#घोषणा XFRM_QUEUE_TMO_MIN ((अचिन्हित)(HZ/10))
+#घोषणा XFRM_QUEUE_TMO_MAX ((अचिन्हित)(60*HZ))
+#घोषणा XFRM_MAX_QUEUE_LEN	100
 
-struct xfrm_flo {
-	struct dst_entry *dst_orig;
+काष्ठा xfrm_flo अणु
+	काष्ठा dst_entry *dst_orig;
 	u8 flags;
-};
+पूर्ण;
 
 /* prefixes smaller than this are stored in lists, not trees. */
-#define INEXACT_PREFIXLEN_IPV4	16
-#define INEXACT_PREFIXLEN_IPV6	48
+#घोषणा INEXACT_PREFIXLEN_IPV4	16
+#घोषणा INEXACT_PREFIXLEN_IPV6	48
 
-struct xfrm_pol_inexact_node {
-	struct rb_node node;
-	union {
+काष्ठा xfrm_pol_inexact_node अणु
+	काष्ठा rb_node node;
+	जोड़ अणु
 		xfrm_address_t addr;
-		struct rcu_head rcu;
-	};
+		काष्ठा rcu_head rcu;
+	पूर्ण;
 	u8 prefixlen;
 
-	struct rb_root root;
+	काष्ठा rb_root root;
 
 	/* the policies matching this node, can be empty list */
-	struct hlist_head hhead;
-};
+	काष्ठा hlist_head hhead;
+पूर्ण;
 
 /* xfrm inexact policy search tree:
- * xfrm_pol_inexact_bin = hash(dir,type,family,if_id);
+ * xfrm_pol_inexact_bin = hash(dir,type,family,अगर_id);
  *  |
  * +---- root_d: sorted by daddr:prefix
  * |                 |
@@ -99,299 +100,299 @@ struct xfrm_pol_inexact_node {
  * |
  * +---- coarse policies and all any:any policies
  *
- * Lookups return four candidate lists:
+ * Lookups वापस four candidate lists:
  * 1. any:any list from top-level xfrm_pol_inexact_bin
  * 2. any:daddr list from daddr tree
  * 3. saddr:daddr list from 2nd level daddr tree
  * 4. saddr:any list from saddr tree
  *
- * This result set then needs to be searched for the policy with
+ * This result set then needs to be searched क्रम the policy with
  * the lowest priority.  If two results have same prio, youngest one wins.
  */
 
-struct xfrm_pol_inexact_key {
+काष्ठा xfrm_pol_inexact_key अणु
 	possible_net_t net;
-	u32 if_id;
+	u32 अगर_id;
 	u16 family;
 	u8 dir, type;
-};
+पूर्ण;
 
-struct xfrm_pol_inexact_bin {
-	struct xfrm_pol_inexact_key k;
-	struct rhash_head head;
+काष्ठा xfrm_pol_inexact_bin अणु
+	काष्ठा xfrm_pol_inexact_key k;
+	काष्ठा rhash_head head;
 	/* list containing '*:*' policies */
-	struct hlist_head hhead;
+	काष्ठा hlist_head hhead;
 
 	seqcount_spinlock_t count;
 	/* tree sorted by daddr/prefix */
-	struct rb_root root_d;
+	काष्ठा rb_root root_d;
 
 	/* tree sorted by saddr/prefix */
-	struct rb_root root_s;
+	काष्ठा rb_root root_s;
 
 	/* slow path below */
-	struct list_head inexact_bins;
-	struct rcu_head rcu;
-};
+	काष्ठा list_head inexact_bins;
+	काष्ठा rcu_head rcu;
+पूर्ण;
 
-enum xfrm_pol_inexact_candidate_type {
+क्रमागत xfrm_pol_inexact_candidate_type अणु
 	XFRM_POL_CAND_BOTH,
 	XFRM_POL_CAND_SADDR,
 	XFRM_POL_CAND_DADDR,
 	XFRM_POL_CAND_ANY,
 
 	XFRM_POL_CAND_MAX,
-};
+पूर्ण;
 
-struct xfrm_pol_inexact_candidates {
-	struct hlist_head *res[XFRM_POL_CAND_MAX];
-};
+काष्ठा xfrm_pol_inexact_candidates अणु
+	काष्ठा hlist_head *res[XFRM_POL_CAND_MAX];
+पूर्ण;
 
-static DEFINE_SPINLOCK(xfrm_if_cb_lock);
-static struct xfrm_if_cb const __rcu *xfrm_if_cb __read_mostly;
+अटल DEFINE_SPINLOCK(xfrm_अगर_cb_lock);
+अटल काष्ठा xfrm_अगर_cb स्थिर __rcu *xfrm_अगर_cb __पढ़ो_mostly;
 
-static DEFINE_SPINLOCK(xfrm_policy_afinfo_lock);
-static struct xfrm_policy_afinfo const __rcu *xfrm_policy_afinfo[AF_INET6 + 1]
-						__read_mostly;
+अटल DEFINE_SPINLOCK(xfrm_policy_afinfo_lock);
+अटल काष्ठा xfrm_policy_afinfo स्थिर __rcu *xfrm_policy_afinfo[AF_INET6 + 1]
+						__पढ़ो_mostly;
 
-static struct kmem_cache *xfrm_dst_cache __ro_after_init;
-static __read_mostly seqcount_mutex_t xfrm_policy_hash_generation;
+अटल काष्ठा kmem_cache *xfrm_dst_cache __ro_after_init;
+अटल __पढ़ो_mostly seqcount_mutex_t xfrm_policy_hash_generation;
 
-static struct rhashtable xfrm_policy_inexact_table;
-static const struct rhashtable_params xfrm_pol_inexact_params;
+अटल काष्ठा rhashtable xfrm_policy_inexact_table;
+अटल स्थिर काष्ठा rhashtable_params xfrm_pol_inexact_params;
 
-static void xfrm_init_pmtu(struct xfrm_dst **bundle, int nr);
-static int stale_bundle(struct dst_entry *dst);
-static int xfrm_bundle_ok(struct xfrm_dst *xdst);
-static void xfrm_policy_queue_process(struct timer_list *t);
+अटल व्योम xfrm_init_pmtu(काष्ठा xfrm_dst **bundle, पूर्णांक nr);
+अटल पूर्णांक stale_bundle(काष्ठा dst_entry *dst);
+अटल पूर्णांक xfrm_bundle_ok(काष्ठा xfrm_dst *xdst);
+अटल व्योम xfrm_policy_queue_process(काष्ठा समयr_list *t);
 
-static void __xfrm_policy_link(struct xfrm_policy *pol, int dir);
-static struct xfrm_policy *__xfrm_policy_unlink(struct xfrm_policy *pol,
-						int dir);
+अटल व्योम __xfrm_policy_link(काष्ठा xfrm_policy *pol, पूर्णांक dir);
+अटल काष्ठा xfrm_policy *__xfrm_policy_unlink(काष्ठा xfrm_policy *pol,
+						पूर्णांक dir);
 
-static struct xfrm_pol_inexact_bin *
-xfrm_policy_inexact_lookup(struct net *net, u8 type, u16 family, u8 dir,
-			   u32 if_id);
+अटल काष्ठा xfrm_pol_inexact_bin *
+xfrm_policy_inexact_lookup(काष्ठा net *net, u8 type, u16 family, u8 dir,
+			   u32 अगर_id);
 
-static struct xfrm_pol_inexact_bin *
-xfrm_policy_inexact_lookup_rcu(struct net *net,
-			       u8 type, u16 family, u8 dir, u32 if_id);
-static struct xfrm_policy *
-xfrm_policy_insert_list(struct hlist_head *chain, struct xfrm_policy *policy,
+अटल काष्ठा xfrm_pol_inexact_bin *
+xfrm_policy_inexact_lookup_rcu(काष्ठा net *net,
+			       u8 type, u16 family, u8 dir, u32 अगर_id);
+अटल काष्ठा xfrm_policy *
+xfrm_policy_insert_list(काष्ठा hlist_head *chain, काष्ठा xfrm_policy *policy,
 			bool excl);
-static void xfrm_policy_insert_inexact_list(struct hlist_head *chain,
-					    struct xfrm_policy *policy);
+अटल व्योम xfrm_policy_insert_inexact_list(काष्ठा hlist_head *chain,
+					    काष्ठा xfrm_policy *policy);
 
-static bool
-xfrm_policy_find_inexact_candidates(struct xfrm_pol_inexact_candidates *cand,
-				    struct xfrm_pol_inexact_bin *b,
-				    const xfrm_address_t *saddr,
-				    const xfrm_address_t *daddr);
+अटल bool
+xfrm_policy_find_inexact_candidates(काष्ठा xfrm_pol_inexact_candidates *cand,
+				    काष्ठा xfrm_pol_inexact_bin *b,
+				    स्थिर xfrm_address_t *saddr,
+				    स्थिर xfrm_address_t *daddr);
 
-static inline bool xfrm_pol_hold_rcu(struct xfrm_policy *policy)
-{
-	return refcount_inc_not_zero(&policy->refcnt);
-}
+अटल अंतरभूत bool xfrm_pol_hold_rcu(काष्ठा xfrm_policy *policy)
+अणु
+	वापस refcount_inc_not_zero(&policy->refcnt);
+पूर्ण
 
-static inline bool
-__xfrm4_selector_match(const struct xfrm_selector *sel, const struct flowi *fl)
-{
-	const struct flowi4 *fl4 = &fl->u.ip4;
+अटल अंतरभूत bool
+__xfrm4_selector_match(स्थिर काष्ठा xfrm_selector *sel, स्थिर काष्ठा flowi *fl)
+अणु
+	स्थिर काष्ठा flowi4 *fl4 = &fl->u.ip4;
 
-	return  addr4_match(fl4->daddr, sel->daddr.a4, sel->prefixlen_d) &&
+	वापस  addr4_match(fl4->daddr, sel->daddr.a4, sel->prefixlen_d) &&
 		addr4_match(fl4->saddr, sel->saddr.a4, sel->prefixlen_s) &&
 		!((xfrm_flowi_dport(fl, &fl4->uli) ^ sel->dport) & sel->dport_mask) &&
 		!((xfrm_flowi_sport(fl, &fl4->uli) ^ sel->sport) & sel->sport_mask) &&
 		(fl4->flowi4_proto == sel->proto || !sel->proto) &&
-		(fl4->flowi4_oif == sel->ifindex || !sel->ifindex);
-}
+		(fl4->flowi4_oअगर == sel->अगरindex || !sel->अगरindex);
+पूर्ण
 
-static inline bool
-__xfrm6_selector_match(const struct xfrm_selector *sel, const struct flowi *fl)
-{
-	const struct flowi6 *fl6 = &fl->u.ip6;
+अटल अंतरभूत bool
+__xfrm6_selector_match(स्थिर काष्ठा xfrm_selector *sel, स्थिर काष्ठा flowi *fl)
+अणु
+	स्थिर काष्ठा flowi6 *fl6 = &fl->u.ip6;
 
-	return  addr_match(&fl6->daddr, &sel->daddr, sel->prefixlen_d) &&
+	वापस  addr_match(&fl6->daddr, &sel->daddr, sel->prefixlen_d) &&
 		addr_match(&fl6->saddr, &sel->saddr, sel->prefixlen_s) &&
 		!((xfrm_flowi_dport(fl, &fl6->uli) ^ sel->dport) & sel->dport_mask) &&
 		!((xfrm_flowi_sport(fl, &fl6->uli) ^ sel->sport) & sel->sport_mask) &&
 		(fl6->flowi6_proto == sel->proto || !sel->proto) &&
-		(fl6->flowi6_oif == sel->ifindex || !sel->ifindex);
-}
+		(fl6->flowi6_oअगर == sel->अगरindex || !sel->अगरindex);
+पूर्ण
 
-bool xfrm_selector_match(const struct xfrm_selector *sel, const struct flowi *fl,
-			 unsigned short family)
-{
-	switch (family) {
-	case AF_INET:
-		return __xfrm4_selector_match(sel, fl);
-	case AF_INET6:
-		return __xfrm6_selector_match(sel, fl);
-	}
-	return false;
-}
+bool xfrm_selector_match(स्थिर काष्ठा xfrm_selector *sel, स्थिर काष्ठा flowi *fl,
+			 अचिन्हित लघु family)
+अणु
+	चयन (family) अणु
+	हाल AF_INET:
+		वापस __xfrm4_selector_match(sel, fl);
+	हाल AF_INET6:
+		वापस __xfrm6_selector_match(sel, fl);
+	पूर्ण
+	वापस false;
+पूर्ण
 
-static const struct xfrm_policy_afinfo *xfrm_policy_get_afinfo(unsigned short family)
-{
-	const struct xfrm_policy_afinfo *afinfo;
+अटल स्थिर काष्ठा xfrm_policy_afinfo *xfrm_policy_get_afinfo(अचिन्हित लघु family)
+अणु
+	स्थिर काष्ठा xfrm_policy_afinfo *afinfo;
 
-	if (unlikely(family >= ARRAY_SIZE(xfrm_policy_afinfo)))
-		return NULL;
-	rcu_read_lock();
+	अगर (unlikely(family >= ARRAY_SIZE(xfrm_policy_afinfo)))
+		वापस शून्य;
+	rcu_पढ़ो_lock();
 	afinfo = rcu_dereference(xfrm_policy_afinfo[family]);
-	if (unlikely(!afinfo))
-		rcu_read_unlock();
-	return afinfo;
-}
+	अगर (unlikely(!afinfo))
+		rcu_पढ़ो_unlock();
+	वापस afinfo;
+पूर्ण
 
-/* Called with rcu_read_lock(). */
-static const struct xfrm_if_cb *xfrm_if_get_cb(void)
-{
-	return rcu_dereference(xfrm_if_cb);
-}
+/* Called with rcu_पढ़ो_lock(). */
+अटल स्थिर काष्ठा xfrm_अगर_cb *xfrm_अगर_get_cb(व्योम)
+अणु
+	वापस rcu_dereference(xfrm_अगर_cb);
+पूर्ण
 
-struct dst_entry *__xfrm_dst_lookup(struct net *net, int tos, int oif,
-				    const xfrm_address_t *saddr,
-				    const xfrm_address_t *daddr,
-				    int family, u32 mark)
-{
-	const struct xfrm_policy_afinfo *afinfo;
-	struct dst_entry *dst;
+काष्ठा dst_entry *__xfrm_dst_lookup(काष्ठा net *net, पूर्णांक tos, पूर्णांक oअगर,
+				    स्थिर xfrm_address_t *saddr,
+				    स्थिर xfrm_address_t *daddr,
+				    पूर्णांक family, u32 mark)
+अणु
+	स्थिर काष्ठा xfrm_policy_afinfo *afinfo;
+	काष्ठा dst_entry *dst;
 
 	afinfo = xfrm_policy_get_afinfo(family);
-	if (unlikely(afinfo == NULL))
-		return ERR_PTR(-EAFNOSUPPORT);
+	अगर (unlikely(afinfo == शून्य))
+		वापस ERR_PTR(-EAFNOSUPPORT);
 
-	dst = afinfo->dst_lookup(net, tos, oif, saddr, daddr, mark);
+	dst = afinfo->dst_lookup(net, tos, oअगर, saddr, daddr, mark);
 
-	rcu_read_unlock();
+	rcu_पढ़ो_unlock();
 
-	return dst;
-}
+	वापस dst;
+पूर्ण
 EXPORT_SYMBOL(__xfrm_dst_lookup);
 
-static inline struct dst_entry *xfrm_dst_lookup(struct xfrm_state *x,
-						int tos, int oif,
+अटल अंतरभूत काष्ठा dst_entry *xfrm_dst_lookup(काष्ठा xfrm_state *x,
+						पूर्णांक tos, पूर्णांक oअगर,
 						xfrm_address_t *prev_saddr,
 						xfrm_address_t *prev_daddr,
-						int family, u32 mark)
-{
-	struct net *net = xs_net(x);
+						पूर्णांक family, u32 mark)
+अणु
+	काष्ठा net *net = xs_net(x);
 	xfrm_address_t *saddr = &x->props.saddr;
 	xfrm_address_t *daddr = &x->id.daddr;
-	struct dst_entry *dst;
+	काष्ठा dst_entry *dst;
 
-	if (x->type->flags & XFRM_TYPE_LOCAL_COADDR) {
+	अगर (x->type->flags & XFRM_TYPE_LOCAL_COADDR) अणु
 		saddr = x->coaddr;
 		daddr = prev_daddr;
-	}
-	if (x->type->flags & XFRM_TYPE_REMOTE_COADDR) {
+	पूर्ण
+	अगर (x->type->flags & XFRM_TYPE_REMOTE_COADDR) अणु
 		saddr = prev_saddr;
 		daddr = x->coaddr;
-	}
+	पूर्ण
 
-	dst = __xfrm_dst_lookup(net, tos, oif, saddr, daddr, family, mark);
+	dst = __xfrm_dst_lookup(net, tos, oअगर, saddr, daddr, family, mark);
 
-	if (!IS_ERR(dst)) {
-		if (prev_saddr != saddr)
-			memcpy(prev_saddr, saddr,  sizeof(*prev_saddr));
-		if (prev_daddr != daddr)
-			memcpy(prev_daddr, daddr,  sizeof(*prev_daddr));
-	}
+	अगर (!IS_ERR(dst)) अणु
+		अगर (prev_saddr != saddr)
+			स_नकल(prev_saddr, saddr,  माप(*prev_saddr));
+		अगर (prev_daddr != daddr)
+			स_नकल(prev_daddr, daddr,  माप(*prev_daddr));
+	पूर्ण
 
-	return dst;
-}
+	वापस dst;
+पूर्ण
 
-static inline unsigned long make_jiffies(long secs)
-{
-	if (secs >= (MAX_SCHEDULE_TIMEOUT-1)/HZ)
-		return MAX_SCHEDULE_TIMEOUT-1;
-	else
-		return secs*HZ;
-}
+अटल अंतरभूत अचिन्हित दीर्घ make_jअगरfies(दीर्घ secs)
+अणु
+	अगर (secs >= (MAX_SCHEDULE_TIMEOUT-1)/HZ)
+		वापस MAX_SCHEDULE_TIMEOUT-1;
+	अन्यथा
+		वापस secs*HZ;
+पूर्ण
 
-static void xfrm_policy_timer(struct timer_list *t)
-{
-	struct xfrm_policy *xp = from_timer(xp, t, timer);
-	time64_t now = ktime_get_real_seconds();
-	time64_t next = TIME64_MAX;
-	int warn = 0;
-	int dir;
+अटल व्योम xfrm_policy_समयr(काष्ठा समयr_list *t)
+अणु
+	काष्ठा xfrm_policy *xp = from_समयr(xp, t, समयr);
+	समय64_t now = kसमय_get_real_seconds();
+	समय64_t next = TIME64_MAX;
+	पूर्णांक warn = 0;
+	पूर्णांक dir;
 
-	read_lock(&xp->lock);
+	पढ़ो_lock(&xp->lock);
 
-	if (unlikely(xp->walk.dead))
-		goto out;
+	अगर (unlikely(xp->walk.dead))
+		जाओ out;
 
 	dir = xfrm_policy_id2dir(xp->index);
 
-	if (xp->lft.hard_add_expires_seconds) {
-		time64_t tmo = xp->lft.hard_add_expires_seconds +
-			xp->curlft.add_time - now;
-		if (tmo <= 0)
-			goto expired;
-		if (tmo < next)
-			next = tmo;
-	}
-	if (xp->lft.hard_use_expires_seconds) {
-		time64_t tmo = xp->lft.hard_use_expires_seconds +
-			(xp->curlft.use_time ? : xp->curlft.add_time) - now;
-		if (tmo <= 0)
-			goto expired;
-		if (tmo < next)
-			next = tmo;
-	}
-	if (xp->lft.soft_add_expires_seconds) {
-		time64_t tmo = xp->lft.soft_add_expires_seconds +
-			xp->curlft.add_time - now;
-		if (tmo <= 0) {
+	अगर (xp->lft.hard_add_expires_seconds) अणु
+		समय64_t पंचांगo = xp->lft.hard_add_expires_seconds +
+			xp->curlft.add_समय - now;
+		अगर (पंचांगo <= 0)
+			जाओ expired;
+		अगर (पंचांगo < next)
+			next = पंचांगo;
+	पूर्ण
+	अगर (xp->lft.hard_use_expires_seconds) अणु
+		समय64_t पंचांगo = xp->lft.hard_use_expires_seconds +
+			(xp->curlft.use_समय ? : xp->curlft.add_समय) - now;
+		अगर (पंचांगo <= 0)
+			जाओ expired;
+		अगर (पंचांगo < next)
+			next = पंचांगo;
+	पूर्ण
+	अगर (xp->lft.soft_add_expires_seconds) अणु
+		समय64_t पंचांगo = xp->lft.soft_add_expires_seconds +
+			xp->curlft.add_समय - now;
+		अगर (पंचांगo <= 0) अणु
 			warn = 1;
-			tmo = XFRM_KM_TIMEOUT;
-		}
-		if (tmo < next)
-			next = tmo;
-	}
-	if (xp->lft.soft_use_expires_seconds) {
-		time64_t tmo = xp->lft.soft_use_expires_seconds +
-			(xp->curlft.use_time ? : xp->curlft.add_time) - now;
-		if (tmo <= 0) {
+			पंचांगo = XFRM_KM_TIMEOUT;
+		पूर्ण
+		अगर (पंचांगo < next)
+			next = पंचांगo;
+	पूर्ण
+	अगर (xp->lft.soft_use_expires_seconds) अणु
+		समय64_t पंचांगo = xp->lft.soft_use_expires_seconds +
+			(xp->curlft.use_समय ? : xp->curlft.add_समय) - now;
+		अगर (पंचांगo <= 0) अणु
 			warn = 1;
-			tmo = XFRM_KM_TIMEOUT;
-		}
-		if (tmo < next)
-			next = tmo;
-	}
+			पंचांगo = XFRM_KM_TIMEOUT;
+		पूर्ण
+		अगर (पंचांगo < next)
+			next = पंचांगo;
+	पूर्ण
 
-	if (warn)
+	अगर (warn)
 		km_policy_expired(xp, dir, 0, 0);
-	if (next != TIME64_MAX &&
-	    !mod_timer(&xp->timer, jiffies + make_jiffies(next)))
+	अगर (next != TIME64_MAX &&
+	    !mod_समयr(&xp->समयr, jअगरfies + make_jअगरfies(next)))
 		xfrm_pol_hold(xp);
 
 out:
-	read_unlock(&xp->lock);
+	पढ़ो_unlock(&xp->lock);
 	xfrm_pol_put(xp);
-	return;
+	वापस;
 
 expired:
-	read_unlock(&xp->lock);
-	if (!xfrm_policy_delete(xp, dir))
+	पढ़ो_unlock(&xp->lock);
+	अगर (!xfrm_policy_delete(xp, dir))
 		km_policy_expired(xp, dir, 1, 0);
 	xfrm_pol_put(xp);
-}
+पूर्ण
 
 /* Allocate xfrm_policy. Not used here, it is supposed to be used by pfkeyv2
  * SPD calls.
  */
 
-struct xfrm_policy *xfrm_policy_alloc(struct net *net, gfp_t gfp)
-{
-	struct xfrm_policy *policy;
+काष्ठा xfrm_policy *xfrm_policy_alloc(काष्ठा net *net, gfp_t gfp)
+अणु
+	काष्ठा xfrm_policy *policy;
 
-	policy = kzalloc(sizeof(struct xfrm_policy), gfp);
+	policy = kzalloc(माप(काष्ठा xfrm_policy), gfp);
 
-	if (policy) {
-		write_pnet(&policy->xp_net, net);
+	अगर (policy) अणु
+		ग_लिखो_pnet(&policy->xp_net, net);
 		INIT_LIST_HEAD(&policy->walk.all);
 		INIT_HLIST_NODE(&policy->bydst_inexact_list);
 		INIT_HLIST_NODE(&policy->bydst);
@@ -399,226 +400,226 @@ struct xfrm_policy *xfrm_policy_alloc(struct net *net, gfp_t gfp)
 		rwlock_init(&policy->lock);
 		refcount_set(&policy->refcnt, 1);
 		skb_queue_head_init(&policy->polq.hold_queue);
-		timer_setup(&policy->timer, xfrm_policy_timer, 0);
-		timer_setup(&policy->polq.hold_timer,
+		समयr_setup(&policy->समयr, xfrm_policy_समयr, 0);
+		समयr_setup(&policy->polq.hold_समयr,
 			    xfrm_policy_queue_process, 0);
-	}
-	return policy;
-}
+	पूर्ण
+	वापस policy;
+पूर्ण
 EXPORT_SYMBOL(xfrm_policy_alloc);
 
-static void xfrm_policy_destroy_rcu(struct rcu_head *head)
-{
-	struct xfrm_policy *policy = container_of(head, struct xfrm_policy, rcu);
+अटल व्योम xfrm_policy_destroy_rcu(काष्ठा rcu_head *head)
+अणु
+	काष्ठा xfrm_policy *policy = container_of(head, काष्ठा xfrm_policy, rcu);
 
-	security_xfrm_policy_free(policy->security);
-	kfree(policy);
-}
+	security_xfrm_policy_मुक्त(policy->security);
+	kमुक्त(policy);
+पूर्ण
 
 /* Destroy xfrm_policy: descendant resources must be released to this moment. */
 
-void xfrm_policy_destroy(struct xfrm_policy *policy)
-{
+व्योम xfrm_policy_destroy(काष्ठा xfrm_policy *policy)
+अणु
 	BUG_ON(!policy->walk.dead);
 
-	if (del_timer(&policy->timer) || del_timer(&policy->polq.hold_timer))
+	अगर (del_समयr(&policy->समयr) || del_समयr(&policy->polq.hold_समयr))
 		BUG();
 
 	call_rcu(&policy->rcu, xfrm_policy_destroy_rcu);
-}
+पूर्ण
 EXPORT_SYMBOL(xfrm_policy_destroy);
 
 /* Rule must be locked. Release descendant resources, announce
  * entry dead. The rule must be unlinked from lists to the moment.
  */
 
-static void xfrm_policy_kill(struct xfrm_policy *policy)
-{
-	write_lock_bh(&policy->lock);
+अटल व्योम xfrm_policy_समाप्त(काष्ठा xfrm_policy *policy)
+अणु
+	ग_लिखो_lock_bh(&policy->lock);
 	policy->walk.dead = 1;
-	write_unlock_bh(&policy->lock);
+	ग_लिखो_unlock_bh(&policy->lock);
 
 	atomic_inc(&policy->genid);
 
-	if (del_timer(&policy->polq.hold_timer))
+	अगर (del_समयr(&policy->polq.hold_समयr))
 		xfrm_pol_put(policy);
 	skb_queue_purge(&policy->polq.hold_queue);
 
-	if (del_timer(&policy->timer))
+	अगर (del_समयr(&policy->समयr))
 		xfrm_pol_put(policy);
 
 	xfrm_pol_put(policy);
-}
+पूर्ण
 
-static unsigned int xfrm_policy_hashmax __read_mostly = 1 * 1024 * 1024;
+अटल अचिन्हित पूर्णांक xfrm_policy_hashmax __पढ़ो_mostly = 1 * 1024 * 1024;
 
-static inline unsigned int idx_hash(struct net *net, u32 index)
-{
-	return __idx_hash(index, net->xfrm.policy_idx_hmask);
-}
+अटल अंतरभूत अचिन्हित पूर्णांक idx_hash(काष्ठा net *net, u32 index)
+अणु
+	वापस __idx_hash(index, net->xfrm.policy_idx_hmask);
+पूर्ण
 
 /* calculate policy hash thresholds */
-static void __get_hash_thresh(struct net *net,
-			      unsigned short family, int dir,
+अटल व्योम __get_hash_thresh(काष्ठा net *net,
+			      अचिन्हित लघु family, पूर्णांक dir,
 			      u8 *dbits, u8 *sbits)
-{
-	switch (family) {
-	case AF_INET:
+अणु
+	चयन (family) अणु
+	हाल AF_INET:
 		*dbits = net->xfrm.policy_bydst[dir].dbits4;
 		*sbits = net->xfrm.policy_bydst[dir].sbits4;
-		break;
+		अवरोध;
 
-	case AF_INET6:
+	हाल AF_INET6:
 		*dbits = net->xfrm.policy_bydst[dir].dbits6;
 		*sbits = net->xfrm.policy_bydst[dir].sbits6;
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		*dbits = 0;
 		*sbits = 0;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static struct hlist_head *policy_hash_bysel(struct net *net,
-					    const struct xfrm_selector *sel,
-					    unsigned short family, int dir)
-{
-	unsigned int hmask = net->xfrm.policy_bydst[dir].hmask;
-	unsigned int hash;
+अटल काष्ठा hlist_head *policy_hash_bysel(काष्ठा net *net,
+					    स्थिर काष्ठा xfrm_selector *sel,
+					    अचिन्हित लघु family, पूर्णांक dir)
+अणु
+	अचिन्हित पूर्णांक hmask = net->xfrm.policy_bydst[dir].hmask;
+	अचिन्हित पूर्णांक hash;
 	u8 dbits;
 	u8 sbits;
 
 	__get_hash_thresh(net, family, dir, &dbits, &sbits);
 	hash = __sel_hash(sel, family, hmask, dbits, sbits);
 
-	if (hash == hmask + 1)
-		return NULL;
+	अगर (hash == hmask + 1)
+		वापस शून्य;
 
-	return rcu_dereference_check(net->xfrm.policy_bydst[dir].table,
+	वापस rcu_dereference_check(net->xfrm.policy_bydst[dir].table,
 		     lockdep_is_held(&net->xfrm.xfrm_policy_lock)) + hash;
-}
+पूर्ण
 
-static struct hlist_head *policy_hash_direct(struct net *net,
-					     const xfrm_address_t *daddr,
-					     const xfrm_address_t *saddr,
-					     unsigned short family, int dir)
-{
-	unsigned int hmask = net->xfrm.policy_bydst[dir].hmask;
-	unsigned int hash;
+अटल काष्ठा hlist_head *policy_hash_direct(काष्ठा net *net,
+					     स्थिर xfrm_address_t *daddr,
+					     स्थिर xfrm_address_t *saddr,
+					     अचिन्हित लघु family, पूर्णांक dir)
+अणु
+	अचिन्हित पूर्णांक hmask = net->xfrm.policy_bydst[dir].hmask;
+	अचिन्हित पूर्णांक hash;
 	u8 dbits;
 	u8 sbits;
 
 	__get_hash_thresh(net, family, dir, &dbits, &sbits);
 	hash = __addr_hash(daddr, saddr, family, hmask, dbits, sbits);
 
-	return rcu_dereference_check(net->xfrm.policy_bydst[dir].table,
+	वापस rcu_dereference_check(net->xfrm.policy_bydst[dir].table,
 		     lockdep_is_held(&net->xfrm.xfrm_policy_lock)) + hash;
-}
+पूर्ण
 
-static void xfrm_dst_hash_transfer(struct net *net,
-				   struct hlist_head *list,
-				   struct hlist_head *ndsttable,
-				   unsigned int nhashmask,
-				   int dir)
-{
-	struct hlist_node *tmp, *entry0 = NULL;
-	struct xfrm_policy *pol;
-	unsigned int h0 = 0;
+अटल व्योम xfrm_dst_hash_transfer(काष्ठा net *net,
+				   काष्ठा hlist_head *list,
+				   काष्ठा hlist_head *ndsttable,
+				   अचिन्हित पूर्णांक nhashmask,
+				   पूर्णांक dir)
+अणु
+	काष्ठा hlist_node *पंचांगp, *entry0 = शून्य;
+	काष्ठा xfrm_policy *pol;
+	अचिन्हित पूर्णांक h0 = 0;
 	u8 dbits;
 	u8 sbits;
 
-redo:
-	hlist_for_each_entry_safe(pol, tmp, list, bydst) {
-		unsigned int h;
+reकरो:
+	hlist_क्रम_each_entry_safe(pol, पंचांगp, list, bydst) अणु
+		अचिन्हित पूर्णांक h;
 
 		__get_hash_thresh(net, pol->family, dir, &dbits, &sbits);
 		h = __addr_hash(&pol->selector.daddr, &pol->selector.saddr,
 				pol->family, nhashmask, dbits, sbits);
-		if (!entry0) {
+		अगर (!entry0) अणु
 			hlist_del_rcu(&pol->bydst);
 			hlist_add_head_rcu(&pol->bydst, ndsttable + h);
 			h0 = h;
-		} else {
-			if (h != h0)
-				continue;
+		पूर्ण अन्यथा अणु
+			अगर (h != h0)
+				जारी;
 			hlist_del_rcu(&pol->bydst);
 			hlist_add_behind_rcu(&pol->bydst, entry0);
-		}
+		पूर्ण
 		entry0 = &pol->bydst;
-	}
-	if (!hlist_empty(list)) {
-		entry0 = NULL;
-		goto redo;
-	}
-}
+	पूर्ण
+	अगर (!hlist_empty(list)) अणु
+		entry0 = शून्य;
+		जाओ reकरो;
+	पूर्ण
+पूर्ण
 
-static void xfrm_idx_hash_transfer(struct hlist_head *list,
-				   struct hlist_head *nidxtable,
-				   unsigned int nhashmask)
-{
-	struct hlist_node *tmp;
-	struct xfrm_policy *pol;
+अटल व्योम xfrm_idx_hash_transfer(काष्ठा hlist_head *list,
+				   काष्ठा hlist_head *nidxtable,
+				   अचिन्हित पूर्णांक nhashmask)
+अणु
+	काष्ठा hlist_node *पंचांगp;
+	काष्ठा xfrm_policy *pol;
 
-	hlist_for_each_entry_safe(pol, tmp, list, byidx) {
-		unsigned int h;
+	hlist_क्रम_each_entry_safe(pol, पंचांगp, list, byidx) अणु
+		अचिन्हित पूर्णांक h;
 
 		h = __idx_hash(pol->index, nhashmask);
 		hlist_add_head(&pol->byidx, nidxtable+h);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static unsigned long xfrm_new_hash_mask(unsigned int old_hmask)
-{
-	return ((old_hmask + 1) << 1) - 1;
-}
+अटल अचिन्हित दीर्घ xfrm_new_hash_mask(अचिन्हित पूर्णांक old_hmask)
+अणु
+	वापस ((old_hmask + 1) << 1) - 1;
+पूर्ण
 
-static void xfrm_bydst_resize(struct net *net, int dir)
-{
-	unsigned int hmask = net->xfrm.policy_bydst[dir].hmask;
-	unsigned int nhashmask = xfrm_new_hash_mask(hmask);
-	unsigned int nsize = (nhashmask + 1) * sizeof(struct hlist_head);
-	struct hlist_head *ndst = xfrm_hash_alloc(nsize);
-	struct hlist_head *odst;
-	int i;
+अटल व्योम xfrm_bydst_resize(काष्ठा net *net, पूर्णांक dir)
+अणु
+	अचिन्हित पूर्णांक hmask = net->xfrm.policy_bydst[dir].hmask;
+	अचिन्हित पूर्णांक nhashmask = xfrm_new_hash_mask(hmask);
+	अचिन्हित पूर्णांक nsize = (nhashmask + 1) * माप(काष्ठा hlist_head);
+	काष्ठा hlist_head *ndst = xfrm_hash_alloc(nsize);
+	काष्ठा hlist_head *odst;
+	पूर्णांक i;
 
-	if (!ndst)
-		return;
+	अगर (!ndst)
+		वापस;
 
 	spin_lock_bh(&net->xfrm.xfrm_policy_lock);
-	write_seqcount_begin(&xfrm_policy_hash_generation);
+	ग_लिखो_seqcount_begin(&xfrm_policy_hash_generation);
 
-	odst = rcu_dereference_protected(net->xfrm.policy_bydst[dir].table,
+	odst = rcu_dereference_रक्षित(net->xfrm.policy_bydst[dir].table,
 				lockdep_is_held(&net->xfrm.xfrm_policy_lock));
 
-	for (i = hmask; i >= 0; i--)
+	क्रम (i = hmask; i >= 0; i--)
 		xfrm_dst_hash_transfer(net, odst + i, ndst, nhashmask, dir);
 
-	rcu_assign_pointer(net->xfrm.policy_bydst[dir].table, ndst);
+	rcu_assign_poपूर्णांकer(net->xfrm.policy_bydst[dir].table, ndst);
 	net->xfrm.policy_bydst[dir].hmask = nhashmask;
 
-	write_seqcount_end(&xfrm_policy_hash_generation);
+	ग_लिखो_seqcount_end(&xfrm_policy_hash_generation);
 	spin_unlock_bh(&net->xfrm.xfrm_policy_lock);
 
 	synchronize_rcu();
 
-	xfrm_hash_free(odst, (hmask + 1) * sizeof(struct hlist_head));
-}
+	xfrm_hash_मुक्त(odst, (hmask + 1) * माप(काष्ठा hlist_head));
+पूर्ण
 
-static void xfrm_byidx_resize(struct net *net, int total)
-{
-	unsigned int hmask = net->xfrm.policy_idx_hmask;
-	unsigned int nhashmask = xfrm_new_hash_mask(hmask);
-	unsigned int nsize = (nhashmask + 1) * sizeof(struct hlist_head);
-	struct hlist_head *oidx = net->xfrm.policy_byidx;
-	struct hlist_head *nidx = xfrm_hash_alloc(nsize);
-	int i;
+अटल व्योम xfrm_byidx_resize(काष्ठा net *net, पूर्णांक total)
+अणु
+	अचिन्हित पूर्णांक hmask = net->xfrm.policy_idx_hmask;
+	अचिन्हित पूर्णांक nhashmask = xfrm_new_hash_mask(hmask);
+	अचिन्हित पूर्णांक nsize = (nhashmask + 1) * माप(काष्ठा hlist_head);
+	काष्ठा hlist_head *oidx = net->xfrm.policy_byidx;
+	काष्ठा hlist_head *nidx = xfrm_hash_alloc(nsize);
+	पूर्णांक i;
 
-	if (!nidx)
-		return;
+	अगर (!nidx)
+		वापस;
 
 	spin_lock_bh(&net->xfrm.xfrm_policy_lock);
 
-	for (i = hmask; i >= 0; i--)
+	क्रम (i = hmask; i >= 0; i--)
 		xfrm_idx_hash_transfer(oidx + i, nidx, nhashmask);
 
 	net->xfrm.policy_byidx = nidx;
@@ -626,37 +627,37 @@ static void xfrm_byidx_resize(struct net *net, int total)
 
 	spin_unlock_bh(&net->xfrm.xfrm_policy_lock);
 
-	xfrm_hash_free(oidx, (hmask + 1) * sizeof(struct hlist_head));
-}
+	xfrm_hash_मुक्त(oidx, (hmask + 1) * माप(काष्ठा hlist_head));
+पूर्ण
 
-static inline int xfrm_bydst_should_resize(struct net *net, int dir, int *total)
-{
-	unsigned int cnt = net->xfrm.policy_count[dir];
-	unsigned int hmask = net->xfrm.policy_bydst[dir].hmask;
+अटल अंतरभूत पूर्णांक xfrm_bydst_should_resize(काष्ठा net *net, पूर्णांक dir, पूर्णांक *total)
+अणु
+	अचिन्हित पूर्णांक cnt = net->xfrm.policy_count[dir];
+	अचिन्हित पूर्णांक hmask = net->xfrm.policy_bydst[dir].hmask;
 
-	if (total)
+	अगर (total)
 		*total += cnt;
 
-	if ((hmask + 1) < xfrm_policy_hashmax &&
+	अगर ((hmask + 1) < xfrm_policy_hashmax &&
 	    cnt > hmask)
-		return 1;
+		वापस 1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static inline int xfrm_byidx_should_resize(struct net *net, int total)
-{
-	unsigned int hmask = net->xfrm.policy_idx_hmask;
+अटल अंतरभूत पूर्णांक xfrm_byidx_should_resize(काष्ठा net *net, पूर्णांक total)
+अणु
+	अचिन्हित पूर्णांक hmask = net->xfrm.policy_idx_hmask;
 
-	if ((hmask + 1) < xfrm_policy_hashmax &&
+	अगर ((hmask + 1) < xfrm_policy_hashmax &&
 	    total > hmask)
-		return 1;
+		वापस 1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void xfrm_spd_getinfo(struct net *net, struct xfrmk_spdinfo *si)
-{
+व्योम xfrm_spd_getinfo(काष्ठा net *net, काष्ठा xfrmk_spdinfo *si)
+अणु
 	si->incnt = net->xfrm.policy_count[XFRM_POLICY_IN];
 	si->outcnt = net->xfrm.policy_count[XFRM_POLICY_OUT];
 	si->fwdcnt = net->xfrm.policy_count[XFRM_POLICY_FWD];
@@ -665,55 +666,55 @@ void xfrm_spd_getinfo(struct net *net, struct xfrmk_spdinfo *si)
 	si->fwdscnt = net->xfrm.policy_count[XFRM_POLICY_FWD+XFRM_POLICY_MAX];
 	si->spdhcnt = net->xfrm.policy_idx_hmask;
 	si->spdhmcnt = xfrm_policy_hashmax;
-}
+पूर्ण
 EXPORT_SYMBOL(xfrm_spd_getinfo);
 
-static DEFINE_MUTEX(hash_resize_mutex);
-static void xfrm_hash_resize(struct work_struct *work)
-{
-	struct net *net = container_of(work, struct net, xfrm.policy_hash_work);
-	int dir, total;
+अटल DEFINE_MUTEX(hash_resize_mutex);
+अटल व्योम xfrm_hash_resize(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा net *net = container_of(work, काष्ठा net, xfrm.policy_hash_work);
+	पूर्णांक dir, total;
 
 	mutex_lock(&hash_resize_mutex);
 
 	total = 0;
-	for (dir = 0; dir < XFRM_POLICY_MAX; dir++) {
-		if (xfrm_bydst_should_resize(net, dir, &total))
+	क्रम (dir = 0; dir < XFRM_POLICY_MAX; dir++) अणु
+		अगर (xfrm_bydst_should_resize(net, dir, &total))
 			xfrm_bydst_resize(net, dir);
-	}
-	if (xfrm_byidx_should_resize(net, total))
+	पूर्ण
+	अगर (xfrm_byidx_should_resize(net, total))
 		xfrm_byidx_resize(net, total);
 
 	mutex_unlock(&hash_resize_mutex);
-}
+पूर्ण
 
-/* Make sure *pol can be inserted into fastbin.
+/* Make sure *pol can be inserted पूर्णांकo fastbin.
  * Useful to check that later insert requests will be successful
  * (provided xfrm_policy_lock is held throughout).
  */
-static struct xfrm_pol_inexact_bin *
-xfrm_policy_inexact_alloc_bin(const struct xfrm_policy *pol, u8 dir)
-{
-	struct xfrm_pol_inexact_bin *bin, *prev;
-	struct xfrm_pol_inexact_key k = {
+अटल काष्ठा xfrm_pol_inexact_bin *
+xfrm_policy_inexact_alloc_bin(स्थिर काष्ठा xfrm_policy *pol, u8 dir)
+अणु
+	काष्ठा xfrm_pol_inexact_bin *bin, *prev;
+	काष्ठा xfrm_pol_inexact_key k = अणु
 		.family = pol->family,
 		.type = pol->type,
 		.dir = dir,
-		.if_id = pol->if_id,
-	};
-	struct net *net = xp_net(pol);
+		.अगर_id = pol->अगर_id,
+	पूर्ण;
+	काष्ठा net *net = xp_net(pol);
 
-	lockdep_assert_held(&net->xfrm.xfrm_policy_lock);
+	lockdep_निश्चित_held(&net->xfrm.xfrm_policy_lock);
 
-	write_pnet(&k.net, net);
+	ग_लिखो_pnet(&k.net, net);
 	bin = rhashtable_lookup_fast(&xfrm_policy_inexact_table, &k,
 				     xfrm_pol_inexact_params);
-	if (bin)
-		return bin;
+	अगर (bin)
+		वापस bin;
 
-	bin = kzalloc(sizeof(*bin), GFP_ATOMIC);
-	if (!bin)
-		return NULL;
+	bin = kzalloc(माप(*bin), GFP_ATOMIC);
+	अगर (!bin)
+		वापस शून्य;
 
 	bin->k = k;
 	INIT_HLIST_HEAD(&bin->hhead);
@@ -724,35 +725,35 @@ xfrm_policy_inexact_alloc_bin(const struct xfrm_policy *pol, u8 dir)
 	prev = rhashtable_lookup_get_insert_key(&xfrm_policy_inexact_table,
 						&bin->k, &bin->head,
 						xfrm_pol_inexact_params);
-	if (!prev) {
+	अगर (!prev) अणु
 		list_add(&bin->inexact_bins, &net->xfrm.inexact_bins);
-		return bin;
-	}
+		वापस bin;
+	पूर्ण
 
-	kfree(bin);
+	kमुक्त(bin);
 
-	return IS_ERR(prev) ? NULL : prev;
-}
+	वापस IS_ERR(prev) ? शून्य : prev;
+पूर्ण
 
-static bool xfrm_pol_inexact_addr_use_any_list(const xfrm_address_t *addr,
-					       int family, u8 prefixlen)
-{
-	if (xfrm_addr_any(addr, family))
-		return true;
+अटल bool xfrm_pol_inexact_addr_use_any_list(स्थिर xfrm_address_t *addr,
+					       पूर्णांक family, u8 prefixlen)
+अणु
+	अगर (xfrm_addr_any(addr, family))
+		वापस true;
 
-	if (family == AF_INET6 && prefixlen < INEXACT_PREFIXLEN_IPV6)
-		return true;
+	अगर (family == AF_INET6 && prefixlen < INEXACT_PREFIXLEN_IPV6)
+		वापस true;
 
-	if (family == AF_INET && prefixlen < INEXACT_PREFIXLEN_IPV4)
-		return true;
+	अगर (family == AF_INET && prefixlen < INEXACT_PREFIXLEN_IPV4)
+		वापस true;
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static bool
-xfrm_policy_inexact_insert_use_any_list(const struct xfrm_policy *policy)
-{
-	const xfrm_address_t *addr;
+अटल bool
+xfrm_policy_inexact_insert_use_any_list(स्थिर काष्ठा xfrm_policy *policy)
+अणु
+	स्थिर xfrm_address_t *addr;
 	bool saddr_any, daddr_any;
 	u8 prefixlen;
 
@@ -767,112 +768,112 @@ xfrm_policy_inexact_insert_use_any_list(const struct xfrm_policy *policy)
 	daddr_any = xfrm_pol_inexact_addr_use_any_list(addr,
 						       policy->family,
 						       prefixlen);
-	return saddr_any && daddr_any;
-}
+	वापस saddr_any && daddr_any;
+पूर्ण
 
-static void xfrm_pol_inexact_node_init(struct xfrm_pol_inexact_node *node,
-				       const xfrm_address_t *addr, u8 prefixlen)
-{
+अटल व्योम xfrm_pol_inexact_node_init(काष्ठा xfrm_pol_inexact_node *node,
+				       स्थिर xfrm_address_t *addr, u8 prefixlen)
+अणु
 	node->addr = *addr;
 	node->prefixlen = prefixlen;
-}
+पूर्ण
 
-static struct xfrm_pol_inexact_node *
-xfrm_pol_inexact_node_alloc(const xfrm_address_t *addr, u8 prefixlen)
-{
-	struct xfrm_pol_inexact_node *node;
+अटल काष्ठा xfrm_pol_inexact_node *
+xfrm_pol_inexact_node_alloc(स्थिर xfrm_address_t *addr, u8 prefixlen)
+अणु
+	काष्ठा xfrm_pol_inexact_node *node;
 
-	node = kzalloc(sizeof(*node), GFP_ATOMIC);
-	if (node)
+	node = kzalloc(माप(*node), GFP_ATOMIC);
+	अगर (node)
 		xfrm_pol_inexact_node_init(node, addr, prefixlen);
 
-	return node;
-}
+	वापस node;
+पूर्ण
 
-static int xfrm_policy_addr_delta(const xfrm_address_t *a,
-				  const xfrm_address_t *b,
+अटल पूर्णांक xfrm_policy_addr_delta(स्थिर xfrm_address_t *a,
+				  स्थिर xfrm_address_t *b,
 				  u8 prefixlen, u16 family)
-{
+अणु
 	u32 ma, mb, mask;
-	unsigned int pdw, pbi;
-	int delta = 0;
+	अचिन्हित पूर्णांक pdw, pbi;
+	पूर्णांक delta = 0;
 
-	switch (family) {
-	case AF_INET:
-		if (prefixlen == 0)
-			return 0;
+	चयन (family) अणु
+	हाल AF_INET:
+		अगर (prefixlen == 0)
+			वापस 0;
 		mask = ~0U << (32 - prefixlen);
 		ma = ntohl(a->a4) & mask;
 		mb = ntohl(b->a4) & mask;
-		if (ma < mb)
+		अगर (ma < mb)
 			delta = -1;
-		else if (ma > mb)
+		अन्यथा अगर (ma > mb)
 			delta = 1;
-		break;
-	case AF_INET6:
+		अवरोध;
+	हाल AF_INET6:
 		pdw = prefixlen >> 5;
 		pbi = prefixlen & 0x1f;
 
-		if (pdw) {
-			delta = memcmp(a->a6, b->a6, pdw << 2);
-			if (delta)
-				return delta;
-		}
-		if (pbi) {
+		अगर (pdw) अणु
+			delta = स_भेद(a->a6, b->a6, pdw << 2);
+			अगर (delta)
+				वापस delta;
+		पूर्ण
+		अगर (pbi) अणु
 			mask = ~0U << (32 - pbi);
 			ma = ntohl(a->a6[pdw]) & mask;
 			mb = ntohl(b->a6[pdw]) & mask;
-			if (ma < mb)
+			अगर (ma < mb)
 				delta = -1;
-			else if (ma > mb)
+			अन्यथा अगर (ma > mb)
 				delta = 1;
-		}
-		break;
-	default:
-		break;
-	}
+		पूर्ण
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	return delta;
-}
+	वापस delta;
+पूर्ण
 
-static void xfrm_policy_inexact_list_reinsert(struct net *net,
-					      struct xfrm_pol_inexact_node *n,
+अटल व्योम xfrm_policy_inexact_list_reinsert(काष्ठा net *net,
+					      काष्ठा xfrm_pol_inexact_node *n,
 					      u16 family)
-{
-	unsigned int matched_s, matched_d;
-	struct xfrm_policy *policy, *p;
+अणु
+	अचिन्हित पूर्णांक matched_s, matched_d;
+	काष्ठा xfrm_policy *policy, *p;
 
 	matched_s = 0;
 	matched_d = 0;
 
-	list_for_each_entry_reverse(policy, &net->xfrm.policy_all, walk.all) {
-		struct hlist_node *newpos = NULL;
+	list_क्रम_each_entry_reverse(policy, &net->xfrm.policy_all, walk.all) अणु
+		काष्ठा hlist_node *newpos = शून्य;
 		bool matches_s, matches_d;
 
-		if (!policy->bydst_reinsert)
-			continue;
+		अगर (!policy->bydst_reinsert)
+			जारी;
 
 		WARN_ON_ONCE(policy->family != family);
 
 		policy->bydst_reinsert = false;
-		hlist_for_each_entry(p, &n->hhead, bydst) {
-			if (policy->priority > p->priority)
+		hlist_क्रम_each_entry(p, &n->hhead, bydst) अणु
+			अगर (policy->priority > p->priority)
 				newpos = &p->bydst;
-			else if (policy->priority == p->priority &&
+			अन्यथा अगर (policy->priority == p->priority &&
 				 policy->pos > p->pos)
 				newpos = &p->bydst;
-			else
-				break;
-		}
+			अन्यथा
+				अवरोध;
+		पूर्ण
 
-		if (newpos)
+		अगर (newpos)
 			hlist_add_behind_rcu(&policy->bydst, newpos);
-		else
+		अन्यथा
 			hlist_add_head_rcu(&policy->bydst, &n->hhead);
 
 		/* paranoia checks follow.
 		 * Check that the reinserted policy matches at least
-		 * saddr or daddr for current node prefix.
+		 * saddr or daddr क्रम current node prefix.
 		 *
 		 * Matching both is fine, matching saddr in one policy
 		 * (but not daddr) and then matching only daddr in another
@@ -886,550 +887,550 @@ static void xfrm_policy_inexact_list_reinsert(struct net *net,
 						   &n->addr,
 						   n->prefixlen,
 						   family) == 0;
-		if (matches_s && matches_d)
-			continue;
+		अगर (matches_s && matches_d)
+			जारी;
 
 		WARN_ON_ONCE(!matches_s && !matches_d);
-		if (matches_s)
+		अगर (matches_s)
 			matched_s++;
-		if (matches_d)
+		अगर (matches_d)
 			matched_d++;
 		WARN_ON_ONCE(matched_s && matched_d);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void xfrm_policy_inexact_node_reinsert(struct net *net,
-					      struct xfrm_pol_inexact_node *n,
-					      struct rb_root *new,
+अटल व्योम xfrm_policy_inexact_node_reinsert(काष्ठा net *net,
+					      काष्ठा xfrm_pol_inexact_node *n,
+					      काष्ठा rb_root *new,
 					      u16 family)
-{
-	struct xfrm_pol_inexact_node *node;
-	struct rb_node **p, *parent;
+अणु
+	काष्ठा xfrm_pol_inexact_node *node;
+	काष्ठा rb_node **p, *parent;
 
 	/* we should not have another subtree here */
 	WARN_ON_ONCE(!RB_EMPTY_ROOT(&n->root));
 restart:
-	parent = NULL;
+	parent = शून्य;
 	p = &new->rb_node;
-	while (*p) {
+	जबतक (*p) अणु
 		u8 prefixlen;
-		int delta;
+		पूर्णांक delta;
 
 		parent = *p;
-		node = rb_entry(*p, struct xfrm_pol_inexact_node, node);
+		node = rb_entry(*p, काष्ठा xfrm_pol_inexact_node, node);
 
 		prefixlen = min(node->prefixlen, n->prefixlen);
 
 		delta = xfrm_policy_addr_delta(&n->addr, &node->addr,
 					       prefixlen, family);
-		if (delta < 0) {
+		अगर (delta < 0) अणु
 			p = &parent->rb_left;
-		} else if (delta > 0) {
+		पूर्ण अन्यथा अगर (delta > 0) अणु
 			p = &parent->rb_right;
-		} else {
+		पूर्ण अन्यथा अणु
 			bool same_prefixlen = node->prefixlen == n->prefixlen;
-			struct xfrm_policy *tmp;
+			काष्ठा xfrm_policy *पंचांगp;
 
-			hlist_for_each_entry(tmp, &n->hhead, bydst) {
-				tmp->bydst_reinsert = true;
-				hlist_del_rcu(&tmp->bydst);
-			}
+			hlist_क्रम_each_entry(पंचांगp, &n->hhead, bydst) अणु
+				पंचांगp->bydst_reinsert = true;
+				hlist_del_rcu(&पंचांगp->bydst);
+			पूर्ण
 
 			node->prefixlen = prefixlen;
 
 			xfrm_policy_inexact_list_reinsert(net, node, family);
 
-			if (same_prefixlen) {
-				kfree_rcu(n, rcu);
-				return;
-			}
+			अगर (same_prefixlen) अणु
+				kमुक्त_rcu(n, rcu);
+				वापस;
+			पूर्ण
 
 			rb_erase(*p, new);
-			kfree_rcu(n, rcu);
+			kमुक्त_rcu(n, rcu);
 			n = node;
-			goto restart;
-		}
-	}
+			जाओ restart;
+		पूर्ण
+	पूर्ण
 
 	rb_link_node_rcu(&n->node, parent, p);
 	rb_insert_color(&n->node, new);
-}
+पूर्ण
 
 /* merge nodes v and n */
-static void xfrm_policy_inexact_node_merge(struct net *net,
-					   struct xfrm_pol_inexact_node *v,
-					   struct xfrm_pol_inexact_node *n,
+अटल व्योम xfrm_policy_inexact_node_merge(काष्ठा net *net,
+					   काष्ठा xfrm_pol_inexact_node *v,
+					   काष्ठा xfrm_pol_inexact_node *n,
 					   u16 family)
-{
-	struct xfrm_pol_inexact_node *node;
-	struct xfrm_policy *tmp;
-	struct rb_node *rnode;
+अणु
+	काष्ठा xfrm_pol_inexact_node *node;
+	काष्ठा xfrm_policy *पंचांगp;
+	काष्ठा rb_node *rnode;
 
 	/* To-be-merged node v has a subtree.
 	 *
 	 * Dismantle it and insert its nodes to n->root.
 	 */
-	while ((rnode = rb_first(&v->root)) != NULL) {
-		node = rb_entry(rnode, struct xfrm_pol_inexact_node, node);
+	जबतक ((rnode = rb_first(&v->root)) != शून्य) अणु
+		node = rb_entry(rnode, काष्ठा xfrm_pol_inexact_node, node);
 		rb_erase(&node->node, &v->root);
 		xfrm_policy_inexact_node_reinsert(net, node, &n->root,
 						  family);
-	}
+	पूर्ण
 
-	hlist_for_each_entry(tmp, &v->hhead, bydst) {
-		tmp->bydst_reinsert = true;
-		hlist_del_rcu(&tmp->bydst);
-	}
+	hlist_क्रम_each_entry(पंचांगp, &v->hhead, bydst) अणु
+		पंचांगp->bydst_reinsert = true;
+		hlist_del_rcu(&पंचांगp->bydst);
+	पूर्ण
 
 	xfrm_policy_inexact_list_reinsert(net, n, family);
-}
+पूर्ण
 
-static struct xfrm_pol_inexact_node *
-xfrm_policy_inexact_insert_node(struct net *net,
-				struct rb_root *root,
+अटल काष्ठा xfrm_pol_inexact_node *
+xfrm_policy_inexact_insert_node(काष्ठा net *net,
+				काष्ठा rb_root *root,
 				xfrm_address_t *addr,
 				u16 family, u8 prefixlen, u8 dir)
-{
-	struct xfrm_pol_inexact_node *cached = NULL;
-	struct rb_node **p, *parent = NULL;
-	struct xfrm_pol_inexact_node *node;
+अणु
+	काष्ठा xfrm_pol_inexact_node *cached = शून्य;
+	काष्ठा rb_node **p, *parent = शून्य;
+	काष्ठा xfrm_pol_inexact_node *node;
 
 	p = &root->rb_node;
-	while (*p) {
-		int delta;
+	जबतक (*p) अणु
+		पूर्णांक delta;
 
 		parent = *p;
-		node = rb_entry(*p, struct xfrm_pol_inexact_node, node);
+		node = rb_entry(*p, काष्ठा xfrm_pol_inexact_node, node);
 
 		delta = xfrm_policy_addr_delta(addr, &node->addr,
 					       node->prefixlen,
 					       family);
-		if (delta == 0 && prefixlen >= node->prefixlen) {
+		अगर (delta == 0 && prefixlen >= node->prefixlen) अणु
 			WARN_ON_ONCE(cached); /* ipsec policies got lost */
-			return node;
-		}
+			वापस node;
+		पूर्ण
 
-		if (delta < 0)
+		अगर (delta < 0)
 			p = &parent->rb_left;
-		else
+		अन्यथा
 			p = &parent->rb_right;
 
-		if (prefixlen < node->prefixlen) {
+		अगर (prefixlen < node->prefixlen) अणु
 			delta = xfrm_policy_addr_delta(addr, &node->addr,
 						       prefixlen,
 						       family);
-			if (delta)
-				continue;
+			अगर (delta)
+				जारी;
 
 			/* This node is a subnet of the new prefix. It needs
-			 * to be removed and re-inserted with the smaller
+			 * to be हटाओd and re-inserted with the smaller
 			 * prefix and all nodes that are now also covered
 			 * by the reduced prefixlen.
 			 */
 			rb_erase(&node->node, root);
 
-			if (!cached) {
+			अगर (!cached) अणु
 				xfrm_pol_inexact_node_init(node, addr,
 							   prefixlen);
 				cached = node;
-			} else {
+			पूर्ण अन्यथा अणु
 				/* This node also falls within the new
 				 * prefixlen. Merge the to-be-reinserted
 				 * node and this one.
 				 */
 				xfrm_policy_inexact_node_merge(net, node,
 							       cached, family);
-				kfree_rcu(node, rcu);
-			}
+				kमुक्त_rcu(node, rcu);
+			पूर्ण
 
 			/* restart */
 			p = &root->rb_node;
-			parent = NULL;
-		}
-	}
+			parent = शून्य;
+		पूर्ण
+	पूर्ण
 
 	node = cached;
-	if (!node) {
+	अगर (!node) अणु
 		node = xfrm_pol_inexact_node_alloc(addr, prefixlen);
-		if (!node)
-			return NULL;
-	}
+		अगर (!node)
+			वापस शून्य;
+	पूर्ण
 
 	rb_link_node_rcu(&node->node, parent, p);
 	rb_insert_color(&node->node, root);
 
-	return node;
-}
+	वापस node;
+पूर्ण
 
-static void xfrm_policy_inexact_gc_tree(struct rb_root *r, bool rm)
-{
-	struct xfrm_pol_inexact_node *node;
-	struct rb_node *rn = rb_first(r);
+अटल व्योम xfrm_policy_inexact_gc_tree(काष्ठा rb_root *r, bool rm)
+अणु
+	काष्ठा xfrm_pol_inexact_node *node;
+	काष्ठा rb_node *rn = rb_first(r);
 
-	while (rn) {
-		node = rb_entry(rn, struct xfrm_pol_inexact_node, node);
+	जबतक (rn) अणु
+		node = rb_entry(rn, काष्ठा xfrm_pol_inexact_node, node);
 
 		xfrm_policy_inexact_gc_tree(&node->root, rm);
 		rn = rb_next(rn);
 
-		if (!hlist_empty(&node->hhead) || !RB_EMPTY_ROOT(&node->root)) {
+		अगर (!hlist_empty(&node->hhead) || !RB_EMPTY_ROOT(&node->root)) अणु
 			WARN_ON_ONCE(rm);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
 		rb_erase(&node->node, r);
-		kfree_rcu(node, rcu);
-	}
-}
+		kमुक्त_rcu(node, rcu);
+	पूर्ण
+पूर्ण
 
-static void __xfrm_policy_inexact_prune_bin(struct xfrm_pol_inexact_bin *b, bool net_exit)
-{
-	write_seqcount_begin(&b->count);
-	xfrm_policy_inexact_gc_tree(&b->root_d, net_exit);
-	xfrm_policy_inexact_gc_tree(&b->root_s, net_exit);
-	write_seqcount_end(&b->count);
+अटल व्योम __xfrm_policy_inexact_prune_bin(काष्ठा xfrm_pol_inexact_bin *b, bool net_निकास)
+अणु
+	ग_लिखो_seqcount_begin(&b->count);
+	xfrm_policy_inexact_gc_tree(&b->root_d, net_निकास);
+	xfrm_policy_inexact_gc_tree(&b->root_s, net_निकास);
+	ग_लिखो_seqcount_end(&b->count);
 
-	if (!RB_EMPTY_ROOT(&b->root_d) || !RB_EMPTY_ROOT(&b->root_s) ||
-	    !hlist_empty(&b->hhead)) {
-		WARN_ON_ONCE(net_exit);
-		return;
-	}
+	अगर (!RB_EMPTY_ROOT(&b->root_d) || !RB_EMPTY_ROOT(&b->root_s) ||
+	    !hlist_empty(&b->hhead)) अणु
+		WARN_ON_ONCE(net_निकास);
+		वापस;
+	पूर्ण
 
-	if (rhashtable_remove_fast(&xfrm_policy_inexact_table, &b->head,
-				   xfrm_pol_inexact_params) == 0) {
+	अगर (rhashtable_हटाओ_fast(&xfrm_policy_inexact_table, &b->head,
+				   xfrm_pol_inexact_params) == 0) अणु
 		list_del(&b->inexact_bins);
-		kfree_rcu(b, rcu);
-	}
-}
+		kमुक्त_rcu(b, rcu);
+	पूर्ण
+पूर्ण
 
-static void xfrm_policy_inexact_prune_bin(struct xfrm_pol_inexact_bin *b)
-{
-	struct net *net = read_pnet(&b->k.net);
+अटल व्योम xfrm_policy_inexact_prune_bin(काष्ठा xfrm_pol_inexact_bin *b)
+अणु
+	काष्ठा net *net = पढ़ो_pnet(&b->k.net);
 
 	spin_lock_bh(&net->xfrm.xfrm_policy_lock);
 	__xfrm_policy_inexact_prune_bin(b, false);
 	spin_unlock_bh(&net->xfrm.xfrm_policy_lock);
-}
+पूर्ण
 
-static void __xfrm_policy_inexact_flush(struct net *net)
-{
-	struct xfrm_pol_inexact_bin *bin, *t;
+अटल व्योम __xfrm_policy_inexact_flush(काष्ठा net *net)
+अणु
+	काष्ठा xfrm_pol_inexact_bin *bin, *t;
 
-	lockdep_assert_held(&net->xfrm.xfrm_policy_lock);
+	lockdep_निश्चित_held(&net->xfrm.xfrm_policy_lock);
 
-	list_for_each_entry_safe(bin, t, &net->xfrm.inexact_bins, inexact_bins)
+	list_क्रम_each_entry_safe(bin, t, &net->xfrm.inexact_bins, inexact_bins)
 		__xfrm_policy_inexact_prune_bin(bin, false);
-}
+पूर्ण
 
-static struct hlist_head *
-xfrm_policy_inexact_alloc_chain(struct xfrm_pol_inexact_bin *bin,
-				struct xfrm_policy *policy, u8 dir)
-{
-	struct xfrm_pol_inexact_node *n;
-	struct net *net;
+अटल काष्ठा hlist_head *
+xfrm_policy_inexact_alloc_chain(काष्ठा xfrm_pol_inexact_bin *bin,
+				काष्ठा xfrm_policy *policy, u8 dir)
+अणु
+	काष्ठा xfrm_pol_inexact_node *n;
+	काष्ठा net *net;
 
 	net = xp_net(policy);
-	lockdep_assert_held(&net->xfrm.xfrm_policy_lock);
+	lockdep_निश्चित_held(&net->xfrm.xfrm_policy_lock);
 
-	if (xfrm_policy_inexact_insert_use_any_list(policy))
-		return &bin->hhead;
+	अगर (xfrm_policy_inexact_insert_use_any_list(policy))
+		वापस &bin->hhead;
 
-	if (xfrm_pol_inexact_addr_use_any_list(&policy->selector.daddr,
+	अगर (xfrm_pol_inexact_addr_use_any_list(&policy->selector.daddr,
 					       policy->family,
-					       policy->selector.prefixlen_d)) {
-		write_seqcount_begin(&bin->count);
+					       policy->selector.prefixlen_d)) अणु
+		ग_लिखो_seqcount_begin(&bin->count);
 		n = xfrm_policy_inexact_insert_node(net,
 						    &bin->root_s,
 						    &policy->selector.saddr,
 						    policy->family,
 						    policy->selector.prefixlen_s,
 						    dir);
-		write_seqcount_end(&bin->count);
-		if (!n)
-			return NULL;
+		ग_लिखो_seqcount_end(&bin->count);
+		अगर (!n)
+			वापस शून्य;
 
-		return &n->hhead;
-	}
+		वापस &n->hhead;
+	पूर्ण
 
 	/* daddr is fixed */
-	write_seqcount_begin(&bin->count);
+	ग_लिखो_seqcount_begin(&bin->count);
 	n = xfrm_policy_inexact_insert_node(net,
 					    &bin->root_d,
 					    &policy->selector.daddr,
 					    policy->family,
 					    policy->selector.prefixlen_d, dir);
-	write_seqcount_end(&bin->count);
-	if (!n)
-		return NULL;
+	ग_लिखो_seqcount_end(&bin->count);
+	अगर (!n)
+		वापस शून्य;
 
 	/* saddr is wildcard */
-	if (xfrm_pol_inexact_addr_use_any_list(&policy->selector.saddr,
+	अगर (xfrm_pol_inexact_addr_use_any_list(&policy->selector.saddr,
 					       policy->family,
 					       policy->selector.prefixlen_s))
-		return &n->hhead;
+		वापस &n->hhead;
 
-	write_seqcount_begin(&bin->count);
+	ग_लिखो_seqcount_begin(&bin->count);
 	n = xfrm_policy_inexact_insert_node(net,
 					    &n->root,
 					    &policy->selector.saddr,
 					    policy->family,
 					    policy->selector.prefixlen_s, dir);
-	write_seqcount_end(&bin->count);
-	if (!n)
-		return NULL;
+	ग_लिखो_seqcount_end(&bin->count);
+	अगर (!n)
+		वापस शून्य;
 
-	return &n->hhead;
-}
+	वापस &n->hhead;
+पूर्ण
 
-static struct xfrm_policy *
-xfrm_policy_inexact_insert(struct xfrm_policy *policy, u8 dir, int excl)
-{
-	struct xfrm_pol_inexact_bin *bin;
-	struct xfrm_policy *delpol;
-	struct hlist_head *chain;
-	struct net *net;
+अटल काष्ठा xfrm_policy *
+xfrm_policy_inexact_insert(काष्ठा xfrm_policy *policy, u8 dir, पूर्णांक excl)
+अणु
+	काष्ठा xfrm_pol_inexact_bin *bin;
+	काष्ठा xfrm_policy *delpol;
+	काष्ठा hlist_head *chain;
+	काष्ठा net *net;
 
 	bin = xfrm_policy_inexact_alloc_bin(policy, dir);
-	if (!bin)
-		return ERR_PTR(-ENOMEM);
+	अगर (!bin)
+		वापस ERR_PTR(-ENOMEM);
 
 	net = xp_net(policy);
-	lockdep_assert_held(&net->xfrm.xfrm_policy_lock);
+	lockdep_निश्चित_held(&net->xfrm.xfrm_policy_lock);
 
 	chain = xfrm_policy_inexact_alloc_chain(bin, policy, dir);
-	if (!chain) {
+	अगर (!chain) अणु
 		__xfrm_policy_inexact_prune_bin(bin, false);
-		return ERR_PTR(-ENOMEM);
-	}
+		वापस ERR_PTR(-ENOMEM);
+	पूर्ण
 
 	delpol = xfrm_policy_insert_list(chain, policy, excl);
-	if (delpol && excl) {
+	अगर (delpol && excl) अणु
 		__xfrm_policy_inexact_prune_bin(bin, false);
-		return ERR_PTR(-EEXIST);
-	}
+		वापस ERR_PTR(-EEXIST);
+	पूर्ण
 
 	chain = &net->xfrm.policy_inexact[dir];
 	xfrm_policy_insert_inexact_list(chain, policy);
 
-	if (delpol)
+	अगर (delpol)
 		__xfrm_policy_inexact_prune_bin(bin, false);
 
-	return delpol;
-}
+	वापस delpol;
+पूर्ण
 
-static void xfrm_hash_rebuild(struct work_struct *work)
-{
-	struct net *net = container_of(work, struct net,
+अटल व्योम xfrm_hash_rebuild(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा net *net = container_of(work, काष्ठा net,
 				       xfrm.policy_hthresh.work);
-	unsigned int hmask;
-	struct xfrm_policy *pol;
-	struct xfrm_policy *policy;
-	struct hlist_head *chain;
-	struct hlist_head *odst;
-	struct hlist_node *newpos;
-	int i;
-	int dir;
-	unsigned seq;
+	अचिन्हित पूर्णांक hmask;
+	काष्ठा xfrm_policy *pol;
+	काष्ठा xfrm_policy *policy;
+	काष्ठा hlist_head *chain;
+	काष्ठा hlist_head *odst;
+	काष्ठा hlist_node *newpos;
+	पूर्णांक i;
+	पूर्णांक dir;
+	अचिन्हित seq;
 	u8 lbits4, rbits4, lbits6, rbits6;
 
 	mutex_lock(&hash_resize_mutex);
 
-	/* read selector prefixlen thresholds */
-	do {
-		seq = read_seqbegin(&net->xfrm.policy_hthresh.lock);
+	/* पढ़ो selector prefixlen thresholds */
+	करो अणु
+		seq = पढ़ो_seqbegin(&net->xfrm.policy_hthresh.lock);
 
 		lbits4 = net->xfrm.policy_hthresh.lbits4;
 		rbits4 = net->xfrm.policy_hthresh.rbits4;
 		lbits6 = net->xfrm.policy_hthresh.lbits6;
 		rbits6 = net->xfrm.policy_hthresh.rbits6;
-	} while (read_seqretry(&net->xfrm.policy_hthresh.lock, seq));
+	पूर्ण जबतक (पढ़ो_seqretry(&net->xfrm.policy_hthresh.lock, seq));
 
 	spin_lock_bh(&net->xfrm.xfrm_policy_lock);
-	write_seqcount_begin(&xfrm_policy_hash_generation);
+	ग_लिखो_seqcount_begin(&xfrm_policy_hash_generation);
 
-	/* make sure that we can insert the indirect policies again before
-	 * we start with destructive action.
+	/* make sure that we can insert the indirect policies again beक्रमe
+	 * we start with deकाष्ठाive action.
 	 */
-	list_for_each_entry(policy, &net->xfrm.policy_all, walk.all) {
-		struct xfrm_pol_inexact_bin *bin;
+	list_क्रम_each_entry(policy, &net->xfrm.policy_all, walk.all) अणु
+		काष्ठा xfrm_pol_inexact_bin *bin;
 		u8 dbits, sbits;
 
 		dir = xfrm_policy_id2dir(policy->index);
-		if (policy->walk.dead || dir >= XFRM_POLICY_MAX)
-			continue;
+		अगर (policy->walk.dead || dir >= XFRM_POLICY_MAX)
+			जारी;
 
-		if ((dir & XFRM_POLICY_MASK) == XFRM_POLICY_OUT) {
-			if (policy->family == AF_INET) {
+		अगर ((dir & XFRM_POLICY_MASK) == XFRM_POLICY_OUT) अणु
+			अगर (policy->family == AF_INET) अणु
 				dbits = rbits4;
 				sbits = lbits4;
-			} else {
+			पूर्ण अन्यथा अणु
 				dbits = rbits6;
 				sbits = lbits6;
-			}
-		} else {
-			if (policy->family == AF_INET) {
+			पूर्ण
+		पूर्ण अन्यथा अणु
+			अगर (policy->family == AF_INET) अणु
 				dbits = lbits4;
 				sbits = rbits4;
-			} else {
+			पूर्ण अन्यथा अणु
 				dbits = lbits6;
 				sbits = rbits6;
-			}
-		}
+			पूर्ण
+		पूर्ण
 
-		if (policy->selector.prefixlen_d < dbits ||
+		अगर (policy->selector.prefixlen_d < dbits ||
 		    policy->selector.prefixlen_s < sbits)
-			continue;
+			जारी;
 
 		bin = xfrm_policy_inexact_alloc_bin(policy, dir);
-		if (!bin)
-			goto out_unlock;
+		अगर (!bin)
+			जाओ out_unlock;
 
-		if (!xfrm_policy_inexact_alloc_chain(bin, policy, dir))
-			goto out_unlock;
-	}
+		अगर (!xfrm_policy_inexact_alloc_chain(bin, policy, dir))
+			जाओ out_unlock;
+	पूर्ण
 
 	/* reset the bydst and inexact table in all directions */
-	for (dir = 0; dir < XFRM_POLICY_MAX; dir++) {
-		struct hlist_node *n;
+	क्रम (dir = 0; dir < XFRM_POLICY_MAX; dir++) अणु
+		काष्ठा hlist_node *n;
 
-		hlist_for_each_entry_safe(policy, n,
+		hlist_क्रम_each_entry_safe(policy, n,
 					  &net->xfrm.policy_inexact[dir],
-					  bydst_inexact_list) {
+					  bydst_inexact_list) अणु
 			hlist_del_rcu(&policy->bydst);
 			hlist_del_init(&policy->bydst_inexact_list);
-		}
+		पूर्ण
 
 		hmask = net->xfrm.policy_bydst[dir].hmask;
 		odst = net->xfrm.policy_bydst[dir].table;
-		for (i = hmask; i >= 0; i--) {
-			hlist_for_each_entry_safe(policy, n, odst + i, bydst)
+		क्रम (i = hmask; i >= 0; i--) अणु
+			hlist_क्रम_each_entry_safe(policy, n, odst + i, bydst)
 				hlist_del_rcu(&policy->bydst);
-		}
-		if ((dir & XFRM_POLICY_MASK) == XFRM_POLICY_OUT) {
+		पूर्ण
+		अगर ((dir & XFRM_POLICY_MASK) == XFRM_POLICY_OUT) अणु
 			/* dir out => dst = remote, src = local */
 			net->xfrm.policy_bydst[dir].dbits4 = rbits4;
 			net->xfrm.policy_bydst[dir].sbits4 = lbits4;
 			net->xfrm.policy_bydst[dir].dbits6 = rbits6;
 			net->xfrm.policy_bydst[dir].sbits6 = lbits6;
-		} else {
+		पूर्ण अन्यथा अणु
 			/* dir in/fwd => dst = local, src = remote */
 			net->xfrm.policy_bydst[dir].dbits4 = lbits4;
 			net->xfrm.policy_bydst[dir].sbits4 = rbits4;
 			net->xfrm.policy_bydst[dir].dbits6 = lbits6;
 			net->xfrm.policy_bydst[dir].sbits6 = rbits6;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	/* re-insert all policies by order of creation */
-	list_for_each_entry_reverse(policy, &net->xfrm.policy_all, walk.all) {
-		if (policy->walk.dead)
-			continue;
+	list_क्रम_each_entry_reverse(policy, &net->xfrm.policy_all, walk.all) अणु
+		अगर (policy->walk.dead)
+			जारी;
 		dir = xfrm_policy_id2dir(policy->index);
-		if (dir >= XFRM_POLICY_MAX) {
+		अगर (dir >= XFRM_POLICY_MAX) अणु
 			/* skip socket policies */
-			continue;
-		}
-		newpos = NULL;
+			जारी;
+		पूर्ण
+		newpos = शून्य;
 		chain = policy_hash_bysel(net, &policy->selector,
 					  policy->family, dir);
 
-		if (!chain) {
-			void *p = xfrm_policy_inexact_insert(policy, dir, 0);
+		अगर (!chain) अणु
+			व्योम *p = xfrm_policy_inexact_insert(policy, dir, 0);
 
 			WARN_ONCE(IS_ERR(p), "reinsert: %ld\n", PTR_ERR(p));
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		hlist_for_each_entry(pol, chain, bydst) {
-			if (policy->priority >= pol->priority)
+		hlist_क्रम_each_entry(pol, chain, bydst) अणु
+			अगर (policy->priority >= pol->priority)
 				newpos = &pol->bydst;
-			else
-				break;
-		}
-		if (newpos)
+			अन्यथा
+				अवरोध;
+		पूर्ण
+		अगर (newpos)
 			hlist_add_behind_rcu(&policy->bydst, newpos);
-		else
+		अन्यथा
 			hlist_add_head_rcu(&policy->bydst, chain);
-	}
+	पूर्ण
 
 out_unlock:
 	__xfrm_policy_inexact_flush(net);
-	write_seqcount_end(&xfrm_policy_hash_generation);
+	ग_लिखो_seqcount_end(&xfrm_policy_hash_generation);
 	spin_unlock_bh(&net->xfrm.xfrm_policy_lock);
 
 	mutex_unlock(&hash_resize_mutex);
-}
+पूर्ण
 
-void xfrm_policy_hash_rebuild(struct net *net)
-{
+व्योम xfrm_policy_hash_rebuild(काष्ठा net *net)
+अणु
 	schedule_work(&net->xfrm.policy_hthresh.work);
-}
+पूर्ण
 EXPORT_SYMBOL(xfrm_policy_hash_rebuild);
 
 /* Generate new index... KAME seems to generate them ordered by cost
- * of an absolute inpredictability of ordering of rules. This will not pass. */
-static u32 xfrm_gen_index(struct net *net, int dir, u32 index)
-{
-	static u32 idx_generator;
+ * of an असलolute inpredictability of ordering of rules. This will not pass. */
+अटल u32 xfrm_gen_index(काष्ठा net *net, पूर्णांक dir, u32 index)
+अणु
+	अटल u32 idx_generator;
 
-	for (;;) {
-		struct hlist_head *list;
-		struct xfrm_policy *p;
+	क्रम (;;) अणु
+		काष्ठा hlist_head *list;
+		काष्ठा xfrm_policy *p;
 		u32 idx;
-		int found;
+		पूर्णांक found;
 
-		if (!index) {
+		अगर (!index) अणु
 			idx = (idx_generator | dir);
 			idx_generator += 8;
-		} else {
+		पूर्ण अन्यथा अणु
 			idx = index;
 			index = 0;
-		}
+		पूर्ण
 
-		if (idx == 0)
+		अगर (idx == 0)
 			idx = 8;
 		list = net->xfrm.policy_byidx + idx_hash(net, idx);
 		found = 0;
-		hlist_for_each_entry(p, list, byidx) {
-			if (p->index == idx) {
+		hlist_क्रम_each_entry(p, list, byidx) अणु
+			अगर (p->index == idx) अणु
 				found = 1;
-				break;
-			}
-		}
-		if (!found)
-			return idx;
-	}
-}
+				अवरोध;
+			पूर्ण
+		पूर्ण
+		अगर (!found)
+			वापस idx;
+	पूर्ण
+पूर्ण
 
-static inline int selector_cmp(struct xfrm_selector *s1, struct xfrm_selector *s2)
-{
+अटल अंतरभूत पूर्णांक selector_cmp(काष्ठा xfrm_selector *s1, काष्ठा xfrm_selector *s2)
+अणु
 	u32 *p1 = (u32 *) s1;
 	u32 *p2 = (u32 *) s2;
-	int len = sizeof(struct xfrm_selector) / sizeof(u32);
-	int i;
+	पूर्णांक len = माप(काष्ठा xfrm_selector) / माप(u32);
+	पूर्णांक i;
 
-	for (i = 0; i < len; i++) {
-		if (p1[i] != p2[i])
-			return 1;
-	}
+	क्रम (i = 0; i < len; i++) अणु
+		अगर (p1[i] != p2[i])
+			वापस 1;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void xfrm_policy_requeue(struct xfrm_policy *old,
-				struct xfrm_policy *new)
-{
-	struct xfrm_policy_queue *pq = &old->polq;
-	struct sk_buff_head list;
+अटल व्योम xfrm_policy_requeue(काष्ठा xfrm_policy *old,
+				काष्ठा xfrm_policy *new)
+अणु
+	काष्ठा xfrm_policy_queue *pq = &old->polq;
+	काष्ठा sk_buff_head list;
 
-	if (skb_queue_empty(&pq->hold_queue))
-		return;
+	अगर (skb_queue_empty(&pq->hold_queue))
+		वापस;
 
 	__skb_queue_head_init(&list);
 
 	spin_lock_bh(&pq->hold_queue.lock);
 	skb_queue_splice_init(&pq->hold_queue, &list);
-	if (del_timer(&pq->hold_timer))
+	अगर (del_समयr(&pq->hold_समयr))
 		xfrm_pol_put(old);
 	spin_unlock_bh(&pq->hold_queue.lock);
 
@@ -1437,1122 +1438,1122 @@ static void xfrm_policy_requeue(struct xfrm_policy *old,
 
 	spin_lock_bh(&pq->hold_queue.lock);
 	skb_queue_splice(&list, &pq->hold_queue);
-	pq->timeout = XFRM_QUEUE_TMO_MIN;
-	if (!mod_timer(&pq->hold_timer, jiffies))
+	pq->समयout = XFRM_QUEUE_TMO_MIN;
+	अगर (!mod_समयr(&pq->hold_समयr, jअगरfies))
 		xfrm_pol_hold(new);
 	spin_unlock_bh(&pq->hold_queue.lock);
-}
+पूर्ण
 
-static inline bool xfrm_policy_mark_match(const struct xfrm_mark *mark,
-					  struct xfrm_policy *pol)
-{
-	return mark->v == pol->mark.v && mark->m == pol->mark.m;
-}
+अटल अंतरभूत bool xfrm_policy_mark_match(स्थिर काष्ठा xfrm_mark *mark,
+					  काष्ठा xfrm_policy *pol)
+अणु
+	वापस mark->v == pol->mark.v && mark->m == pol->mark.m;
+पूर्ण
 
-static u32 xfrm_pol_bin_key(const void *data, u32 len, u32 seed)
-{
-	const struct xfrm_pol_inexact_key *k = data;
+अटल u32 xfrm_pol_bin_key(स्थिर व्योम *data, u32 len, u32 seed)
+अणु
+	स्थिर काष्ठा xfrm_pol_inexact_key *k = data;
 	u32 a = k->type << 24 | k->dir << 16 | k->family;
 
-	return jhash_3words(a, k->if_id, net_hash_mix(read_pnet(&k->net)),
+	वापस jhash_3words(a, k->अगर_id, net_hash_mix(पढ़ो_pnet(&k->net)),
 			    seed);
-}
+पूर्ण
 
-static u32 xfrm_pol_bin_obj(const void *data, u32 len, u32 seed)
-{
-	const struct xfrm_pol_inexact_bin *b = data;
+अटल u32 xfrm_pol_bin_obj(स्थिर व्योम *data, u32 len, u32 seed)
+अणु
+	स्थिर काष्ठा xfrm_pol_inexact_bin *b = data;
 
-	return xfrm_pol_bin_key(&b->k, 0, seed);
-}
+	वापस xfrm_pol_bin_key(&b->k, 0, seed);
+पूर्ण
 
-static int xfrm_pol_bin_cmp(struct rhashtable_compare_arg *arg,
-			    const void *ptr)
-{
-	const struct xfrm_pol_inexact_key *key = arg->key;
-	const struct xfrm_pol_inexact_bin *b = ptr;
-	int ret;
+अटल पूर्णांक xfrm_pol_bin_cmp(काष्ठा rhashtable_compare_arg *arg,
+			    स्थिर व्योम *ptr)
+अणु
+	स्थिर काष्ठा xfrm_pol_inexact_key *key = arg->key;
+	स्थिर काष्ठा xfrm_pol_inexact_bin *b = ptr;
+	पूर्णांक ret;
 
-	if (!net_eq(read_pnet(&b->k.net), read_pnet(&key->net)))
-		return -1;
+	अगर (!net_eq(पढ़ो_pnet(&b->k.net), पढ़ो_pnet(&key->net)))
+		वापस -1;
 
 	ret = b->k.dir ^ key->dir;
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ret = b->k.type ^ key->type;
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ret = b->k.family ^ key->family;
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	return b->k.if_id ^ key->if_id;
-}
+	वापस b->k.अगर_id ^ key->अगर_id;
+पूर्ण
 
-static const struct rhashtable_params xfrm_pol_inexact_params = {
-	.head_offset		= offsetof(struct xfrm_pol_inexact_bin, head),
+अटल स्थिर काष्ठा rhashtable_params xfrm_pol_inexact_params = अणु
+	.head_offset		= दुरत्व(काष्ठा xfrm_pol_inexact_bin, head),
 	.hashfn			= xfrm_pol_bin_key,
 	.obj_hashfn		= xfrm_pol_bin_obj,
 	.obj_cmpfn		= xfrm_pol_bin_cmp,
-	.automatic_shrinking	= true,
-};
+	.स्वतःmatic_shrinking	= true,
+पूर्ण;
 
-static void xfrm_policy_insert_inexact_list(struct hlist_head *chain,
-					    struct xfrm_policy *policy)
-{
-	struct xfrm_policy *pol, *delpol = NULL;
-	struct hlist_node *newpos = NULL;
-	int i = 0;
+अटल व्योम xfrm_policy_insert_inexact_list(काष्ठा hlist_head *chain,
+					    काष्ठा xfrm_policy *policy)
+अणु
+	काष्ठा xfrm_policy *pol, *delpol = शून्य;
+	काष्ठा hlist_node *newpos = शून्य;
+	पूर्णांक i = 0;
 
-	hlist_for_each_entry(pol, chain, bydst_inexact_list) {
-		if (pol->type == policy->type &&
-		    pol->if_id == policy->if_id &&
+	hlist_क्रम_each_entry(pol, chain, bydst_inexact_list) अणु
+		अगर (pol->type == policy->type &&
+		    pol->अगर_id == policy->अगर_id &&
 		    !selector_cmp(&pol->selector, &policy->selector) &&
 		    xfrm_policy_mark_match(&policy->mark, pol) &&
 		    xfrm_sec_ctx_match(pol->security, policy->security) &&
-		    !WARN_ON(delpol)) {
+		    !WARN_ON(delpol)) अणु
 			delpol = pol;
-			if (policy->priority > pol->priority)
-				continue;
-		} else if (policy->priority >= pol->priority) {
+			अगर (policy->priority > pol->priority)
+				जारी;
+		पूर्ण अन्यथा अगर (policy->priority >= pol->priority) अणु
 			newpos = &pol->bydst_inexact_list;
-			continue;
-		}
-		if (delpol)
-			break;
-	}
+			जारी;
+		पूर्ण
+		अगर (delpol)
+			अवरोध;
+	पूर्ण
 
-	if (newpos)
+	अगर (newpos)
 		hlist_add_behind_rcu(&policy->bydst_inexact_list, newpos);
-	else
+	अन्यथा
 		hlist_add_head_rcu(&policy->bydst_inexact_list, chain);
 
-	hlist_for_each_entry(pol, chain, bydst_inexact_list) {
+	hlist_क्रम_each_entry(pol, chain, bydst_inexact_list) अणु
 		pol->pos = i;
 		i++;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static struct xfrm_policy *xfrm_policy_insert_list(struct hlist_head *chain,
-						   struct xfrm_policy *policy,
+अटल काष्ठा xfrm_policy *xfrm_policy_insert_list(काष्ठा hlist_head *chain,
+						   काष्ठा xfrm_policy *policy,
 						   bool excl)
-{
-	struct xfrm_policy *pol, *newpos = NULL, *delpol = NULL;
+अणु
+	काष्ठा xfrm_policy *pol, *newpos = शून्य, *delpol = शून्य;
 
-	hlist_for_each_entry(pol, chain, bydst) {
-		if (pol->type == policy->type &&
-		    pol->if_id == policy->if_id &&
+	hlist_क्रम_each_entry(pol, chain, bydst) अणु
+		अगर (pol->type == policy->type &&
+		    pol->अगर_id == policy->अगर_id &&
 		    !selector_cmp(&pol->selector, &policy->selector) &&
 		    xfrm_policy_mark_match(&policy->mark, pol) &&
 		    xfrm_sec_ctx_match(pol->security, policy->security) &&
-		    !WARN_ON(delpol)) {
-			if (excl)
-				return ERR_PTR(-EEXIST);
+		    !WARN_ON(delpol)) अणु
+			अगर (excl)
+				वापस ERR_PTR(-EEXIST);
 			delpol = pol;
-			if (policy->priority > pol->priority)
-				continue;
-		} else if (policy->priority >= pol->priority) {
+			अगर (policy->priority > pol->priority)
+				जारी;
+		पूर्ण अन्यथा अगर (policy->priority >= pol->priority) अणु
 			newpos = pol;
-			continue;
-		}
-		if (delpol)
-			break;
-	}
+			जारी;
+		पूर्ण
+		अगर (delpol)
+			अवरोध;
+	पूर्ण
 
-	if (newpos)
+	अगर (newpos)
 		hlist_add_behind_rcu(&policy->bydst, &newpos->bydst);
-	else
+	अन्यथा
 		hlist_add_head_rcu(&policy->bydst, chain);
 
-	return delpol;
-}
+	वापस delpol;
+पूर्ण
 
-int xfrm_policy_insert(int dir, struct xfrm_policy *policy, int excl)
-{
-	struct net *net = xp_net(policy);
-	struct xfrm_policy *delpol;
-	struct hlist_head *chain;
+पूर्णांक xfrm_policy_insert(पूर्णांक dir, काष्ठा xfrm_policy *policy, पूर्णांक excl)
+अणु
+	काष्ठा net *net = xp_net(policy);
+	काष्ठा xfrm_policy *delpol;
+	काष्ठा hlist_head *chain;
 
 	spin_lock_bh(&net->xfrm.xfrm_policy_lock);
 	chain = policy_hash_bysel(net, &policy->selector, policy->family, dir);
-	if (chain)
+	अगर (chain)
 		delpol = xfrm_policy_insert_list(chain, policy, excl);
-	else
+	अन्यथा
 		delpol = xfrm_policy_inexact_insert(policy, dir, excl);
 
-	if (IS_ERR(delpol)) {
+	अगर (IS_ERR(delpol)) अणु
 		spin_unlock_bh(&net->xfrm.xfrm_policy_lock);
-		return PTR_ERR(delpol);
-	}
+		वापस PTR_ERR(delpol);
+	पूर्ण
 
 	__xfrm_policy_link(policy, dir);
 
 	/* After previous checking, family can either be AF_INET or AF_INET6 */
-	if (policy->family == AF_INET)
+	अगर (policy->family == AF_INET)
 		rt_genid_bump_ipv4(net);
-	else
+	अन्यथा
 		rt_genid_bump_ipv6(net);
 
-	if (delpol) {
+	अगर (delpol) अणु
 		xfrm_policy_requeue(delpol, policy);
 		__xfrm_policy_unlink(delpol, dir);
-	}
+	पूर्ण
 	policy->index = delpol ? delpol->index : xfrm_gen_index(net, dir, policy->index);
 	hlist_add_head(&policy->byidx, net->xfrm.policy_byidx+idx_hash(net, policy->index));
-	policy->curlft.add_time = ktime_get_real_seconds();
-	policy->curlft.use_time = 0;
-	if (!mod_timer(&policy->timer, jiffies + HZ))
+	policy->curlft.add_समय = kसमय_get_real_seconds();
+	policy->curlft.use_समय = 0;
+	अगर (!mod_समयr(&policy->समयr, jअगरfies + HZ))
 		xfrm_pol_hold(policy);
 	spin_unlock_bh(&net->xfrm.xfrm_policy_lock);
 
-	if (delpol)
-		xfrm_policy_kill(delpol);
-	else if (xfrm_bydst_should_resize(net, dir, NULL))
+	अगर (delpol)
+		xfrm_policy_समाप्त(delpol);
+	अन्यथा अगर (xfrm_bydst_should_resize(net, dir, शून्य))
 		schedule_work(&net->xfrm.policy_hash_work);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(xfrm_policy_insert);
 
-static struct xfrm_policy *
-__xfrm_policy_bysel_ctx(struct hlist_head *chain, const struct xfrm_mark *mark,
-			u32 if_id, u8 type, int dir, struct xfrm_selector *sel,
-			struct xfrm_sec_ctx *ctx)
-{
-	struct xfrm_policy *pol;
+अटल काष्ठा xfrm_policy *
+__xfrm_policy_bysel_ctx(काष्ठा hlist_head *chain, स्थिर काष्ठा xfrm_mark *mark,
+			u32 अगर_id, u8 type, पूर्णांक dir, काष्ठा xfrm_selector *sel,
+			काष्ठा xfrm_sec_ctx *ctx)
+अणु
+	काष्ठा xfrm_policy *pol;
 
-	if (!chain)
-		return NULL;
+	अगर (!chain)
+		वापस शून्य;
 
-	hlist_for_each_entry(pol, chain, bydst) {
-		if (pol->type == type &&
-		    pol->if_id == if_id &&
+	hlist_क्रम_each_entry(pol, chain, bydst) अणु
+		अगर (pol->type == type &&
+		    pol->अगर_id == अगर_id &&
 		    xfrm_policy_mark_match(mark, pol) &&
 		    !selector_cmp(sel, &pol->selector) &&
 		    xfrm_sec_ctx_match(ctx, pol->security))
-			return pol;
-	}
+			वापस pol;
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-struct xfrm_policy *
-xfrm_policy_bysel_ctx(struct net *net, const struct xfrm_mark *mark, u32 if_id,
-		      u8 type, int dir, struct xfrm_selector *sel,
-		      struct xfrm_sec_ctx *ctx, int delete, int *err)
-{
-	struct xfrm_pol_inexact_bin *bin = NULL;
-	struct xfrm_policy *pol, *ret = NULL;
-	struct hlist_head *chain;
+काष्ठा xfrm_policy *
+xfrm_policy_bysel_ctx(काष्ठा net *net, स्थिर काष्ठा xfrm_mark *mark, u32 अगर_id,
+		      u8 type, पूर्णांक dir, काष्ठा xfrm_selector *sel,
+		      काष्ठा xfrm_sec_ctx *ctx, पूर्णांक delete, पूर्णांक *err)
+अणु
+	काष्ठा xfrm_pol_inexact_bin *bin = शून्य;
+	काष्ठा xfrm_policy *pol, *ret = शून्य;
+	काष्ठा hlist_head *chain;
 
 	*err = 0;
 	spin_lock_bh(&net->xfrm.xfrm_policy_lock);
 	chain = policy_hash_bysel(net, sel, sel->family, dir);
-	if (!chain) {
-		struct xfrm_pol_inexact_candidates cand;
-		int i;
+	अगर (!chain) अणु
+		काष्ठा xfrm_pol_inexact_candidates cand;
+		पूर्णांक i;
 
 		bin = xfrm_policy_inexact_lookup(net, type,
-						 sel->family, dir, if_id);
-		if (!bin) {
+						 sel->family, dir, अगर_id);
+		अगर (!bin) अणु
 			spin_unlock_bh(&net->xfrm.xfrm_policy_lock);
-			return NULL;
-		}
+			वापस शून्य;
+		पूर्ण
 
-		if (!xfrm_policy_find_inexact_candidates(&cand, bin,
+		अगर (!xfrm_policy_find_inexact_candidates(&cand, bin,
 							 &sel->saddr,
-							 &sel->daddr)) {
+							 &sel->daddr)) अणु
 			spin_unlock_bh(&net->xfrm.xfrm_policy_lock);
-			return NULL;
-		}
+			वापस शून्य;
+		पूर्ण
 
-		pol = NULL;
-		for (i = 0; i < ARRAY_SIZE(cand.res); i++) {
-			struct xfrm_policy *tmp;
+		pol = शून्य;
+		क्रम (i = 0; i < ARRAY_SIZE(cand.res); i++) अणु
+			काष्ठा xfrm_policy *पंचांगp;
 
-			tmp = __xfrm_policy_bysel_ctx(cand.res[i], mark,
-						      if_id, type, dir,
+			पंचांगp = __xfrm_policy_bysel_ctx(cand.res[i], mark,
+						      अगर_id, type, dir,
 						      sel, ctx);
-			if (!tmp)
-				continue;
+			अगर (!पंचांगp)
+				जारी;
 
-			if (!pol || tmp->pos < pol->pos)
-				pol = tmp;
-		}
-	} else {
-		pol = __xfrm_policy_bysel_ctx(chain, mark, if_id, type, dir,
+			अगर (!pol || पंचांगp->pos < pol->pos)
+				pol = पंचांगp;
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		pol = __xfrm_policy_bysel_ctx(chain, mark, अगर_id, type, dir,
 					      sel, ctx);
-	}
+	पूर्ण
 
-	if (pol) {
+	अगर (pol) अणु
 		xfrm_pol_hold(pol);
-		if (delete) {
+		अगर (delete) अणु
 			*err = security_xfrm_policy_delete(pol->security);
-			if (*err) {
+			अगर (*err) अणु
 				spin_unlock_bh(&net->xfrm.xfrm_policy_lock);
-				return pol;
-			}
+				वापस pol;
+			पूर्ण
 			__xfrm_policy_unlink(pol, dir);
-		}
+		पूर्ण
 		ret = pol;
-	}
+	पूर्ण
 	spin_unlock_bh(&net->xfrm.xfrm_policy_lock);
 
-	if (ret && delete)
-		xfrm_policy_kill(ret);
-	if (bin && delete)
+	अगर (ret && delete)
+		xfrm_policy_समाप्त(ret);
+	अगर (bin && delete)
 		xfrm_policy_inexact_prune_bin(bin);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL(xfrm_policy_bysel_ctx);
 
-struct xfrm_policy *
-xfrm_policy_byid(struct net *net, const struct xfrm_mark *mark, u32 if_id,
-		 u8 type, int dir, u32 id, int delete, int *err)
-{
-	struct xfrm_policy *pol, *ret;
-	struct hlist_head *chain;
+काष्ठा xfrm_policy *
+xfrm_policy_byid(काष्ठा net *net, स्थिर काष्ठा xfrm_mark *mark, u32 अगर_id,
+		 u8 type, पूर्णांक dir, u32 id, पूर्णांक delete, पूर्णांक *err)
+अणु
+	काष्ठा xfrm_policy *pol, *ret;
+	काष्ठा hlist_head *chain;
 
 	*err = -ENOENT;
-	if (xfrm_policy_id2dir(id) != dir)
-		return NULL;
+	अगर (xfrm_policy_id2dir(id) != dir)
+		वापस शून्य;
 
 	*err = 0;
 	spin_lock_bh(&net->xfrm.xfrm_policy_lock);
 	chain = net->xfrm.policy_byidx + idx_hash(net, id);
-	ret = NULL;
-	hlist_for_each_entry(pol, chain, byidx) {
-		if (pol->type == type && pol->index == id &&
-		    pol->if_id == if_id && xfrm_policy_mark_match(mark, pol)) {
+	ret = शून्य;
+	hlist_क्रम_each_entry(pol, chain, byidx) अणु
+		अगर (pol->type == type && pol->index == id &&
+		    pol->अगर_id == अगर_id && xfrm_policy_mark_match(mark, pol)) अणु
 			xfrm_pol_hold(pol);
-			if (delete) {
+			अगर (delete) अणु
 				*err = security_xfrm_policy_delete(
 								pol->security);
-				if (*err) {
+				अगर (*err) अणु
 					spin_unlock_bh(&net->xfrm.xfrm_policy_lock);
-					return pol;
-				}
+					वापस pol;
+				पूर्ण
 				__xfrm_policy_unlink(pol, dir);
-			}
+			पूर्ण
 			ret = pol;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 	spin_unlock_bh(&net->xfrm.xfrm_policy_lock);
 
-	if (ret && delete)
-		xfrm_policy_kill(ret);
-	return ret;
-}
+	अगर (ret && delete)
+		xfrm_policy_समाप्त(ret);
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL(xfrm_policy_byid);
 
-#ifdef CONFIG_SECURITY_NETWORK_XFRM
-static inline int
-xfrm_policy_flush_secctx_check(struct net *net, u8 type, bool task_valid)
-{
-	struct xfrm_policy *pol;
-	int err = 0;
+#अगर_घोषित CONFIG_SECURITY_NETWORK_XFRM
+अटल अंतरभूत पूर्णांक
+xfrm_policy_flush_secctx_check(काष्ठा net *net, u8 type, bool task_valid)
+अणु
+	काष्ठा xfrm_policy *pol;
+	पूर्णांक err = 0;
 
-	list_for_each_entry(pol, &net->xfrm.policy_all, walk.all) {
-		if (pol->walk.dead ||
+	list_क्रम_each_entry(pol, &net->xfrm.policy_all, walk.all) अणु
+		अगर (pol->walk.dead ||
 		    xfrm_policy_id2dir(pol->index) >= XFRM_POLICY_MAX ||
 		    pol->type != type)
-			continue;
+			जारी;
 
 		err = security_xfrm_policy_delete(pol->security);
-		if (err) {
+		अगर (err) अणु
 			xfrm_audit_policy_delete(pol, 0, task_valid);
-			return err;
-		}
-	}
-	return err;
-}
-#else
-static inline int
-xfrm_policy_flush_secctx_check(struct net *net, u8 type, bool task_valid)
-{
-	return 0;
-}
-#endif
+			वापस err;
+		पूर्ण
+	पूर्ण
+	वापस err;
+पूर्ण
+#अन्यथा
+अटल अंतरभूत पूर्णांक
+xfrm_policy_flush_secctx_check(काष्ठा net *net, u8 type, bool task_valid)
+अणु
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
-int xfrm_policy_flush(struct net *net, u8 type, bool task_valid)
-{
-	int dir, err = 0, cnt = 0;
-	struct xfrm_policy *pol;
+पूर्णांक xfrm_policy_flush(काष्ठा net *net, u8 type, bool task_valid)
+अणु
+	पूर्णांक dir, err = 0, cnt = 0;
+	काष्ठा xfrm_policy *pol;
 
 	spin_lock_bh(&net->xfrm.xfrm_policy_lock);
 
 	err = xfrm_policy_flush_secctx_check(net, type, task_valid);
-	if (err)
-		goto out;
+	अगर (err)
+		जाओ out;
 
 again:
-	list_for_each_entry(pol, &net->xfrm.policy_all, walk.all) {
+	list_क्रम_each_entry(pol, &net->xfrm.policy_all, walk.all) अणु
 		dir = xfrm_policy_id2dir(pol->index);
-		if (pol->walk.dead ||
+		अगर (pol->walk.dead ||
 		    dir >= XFRM_POLICY_MAX ||
 		    pol->type != type)
-			continue;
+			जारी;
 
 		__xfrm_policy_unlink(pol, dir);
 		spin_unlock_bh(&net->xfrm.xfrm_policy_lock);
 		cnt++;
 		xfrm_audit_policy_delete(pol, 1, task_valid);
-		xfrm_policy_kill(pol);
+		xfrm_policy_समाप्त(pol);
 		spin_lock_bh(&net->xfrm.xfrm_policy_lock);
-		goto again;
-	}
-	if (cnt)
+		जाओ again;
+	पूर्ण
+	अगर (cnt)
 		__xfrm_policy_inexact_flush(net);
-	else
+	अन्यथा
 		err = -ESRCH;
 out:
 	spin_unlock_bh(&net->xfrm.xfrm_policy_lock);
-	return err;
-}
+	वापस err;
+पूर्ण
 EXPORT_SYMBOL(xfrm_policy_flush);
 
-int xfrm_policy_walk(struct net *net, struct xfrm_policy_walk *walk,
-		     int (*func)(struct xfrm_policy *, int, int, void*),
-		     void *data)
-{
-	struct xfrm_policy *pol;
-	struct xfrm_policy_walk_entry *x;
-	int error = 0;
+पूर्णांक xfrm_policy_walk(काष्ठा net *net, काष्ठा xfrm_policy_walk *walk,
+		     पूर्णांक (*func)(काष्ठा xfrm_policy *, पूर्णांक, पूर्णांक, व्योम*),
+		     व्योम *data)
+अणु
+	काष्ठा xfrm_policy *pol;
+	काष्ठा xfrm_policy_walk_entry *x;
+	पूर्णांक error = 0;
 
-	if (walk->type >= XFRM_POLICY_TYPE_MAX &&
+	अगर (walk->type >= XFRM_POLICY_TYPE_MAX &&
 	    walk->type != XFRM_POLICY_TYPE_ANY)
-		return -EINVAL;
+		वापस -EINVAL;
 
-	if (list_empty(&walk->walk.all) && walk->seq != 0)
-		return 0;
+	अगर (list_empty(&walk->walk.all) && walk->seq != 0)
+		वापस 0;
 
 	spin_lock_bh(&net->xfrm.xfrm_policy_lock);
-	if (list_empty(&walk->walk.all))
-		x = list_first_entry(&net->xfrm.policy_all, struct xfrm_policy_walk_entry, all);
-	else
+	अगर (list_empty(&walk->walk.all))
+		x = list_first_entry(&net->xfrm.policy_all, काष्ठा xfrm_policy_walk_entry, all);
+	अन्यथा
 		x = list_first_entry(&walk->walk.all,
-				     struct xfrm_policy_walk_entry, all);
+				     काष्ठा xfrm_policy_walk_entry, all);
 
-	list_for_each_entry_from(x, &net->xfrm.policy_all, all) {
-		if (x->dead)
-			continue;
-		pol = container_of(x, struct xfrm_policy, walk);
-		if (walk->type != XFRM_POLICY_TYPE_ANY &&
+	list_क्रम_each_entry_from(x, &net->xfrm.policy_all, all) अणु
+		अगर (x->dead)
+			जारी;
+		pol = container_of(x, काष्ठा xfrm_policy, walk);
+		अगर (walk->type != XFRM_POLICY_TYPE_ANY &&
 		    walk->type != pol->type)
-			continue;
+			जारी;
 		error = func(pol, xfrm_policy_id2dir(pol->index),
 			     walk->seq, data);
-		if (error) {
+		अगर (error) अणु
 			list_move_tail(&walk->walk.all, &x->all);
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 		walk->seq++;
-	}
-	if (walk->seq == 0) {
+	पूर्ण
+	अगर (walk->seq == 0) अणु
 		error = -ENOENT;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 	list_del_init(&walk->walk.all);
 out:
 	spin_unlock_bh(&net->xfrm.xfrm_policy_lock);
-	return error;
-}
+	वापस error;
+पूर्ण
 EXPORT_SYMBOL(xfrm_policy_walk);
 
-void xfrm_policy_walk_init(struct xfrm_policy_walk *walk, u8 type)
-{
+व्योम xfrm_policy_walk_init(काष्ठा xfrm_policy_walk *walk, u8 type)
+अणु
 	INIT_LIST_HEAD(&walk->walk.all);
 	walk->walk.dead = 1;
 	walk->type = type;
 	walk->seq = 0;
-}
+पूर्ण
 EXPORT_SYMBOL(xfrm_policy_walk_init);
 
-void xfrm_policy_walk_done(struct xfrm_policy_walk *walk, struct net *net)
-{
-	if (list_empty(&walk->walk.all))
-		return;
+व्योम xfrm_policy_walk_करोne(काष्ठा xfrm_policy_walk *walk, काष्ठा net *net)
+अणु
+	अगर (list_empty(&walk->walk.all))
+		वापस;
 
 	spin_lock_bh(&net->xfrm.xfrm_policy_lock); /*FIXME where is net? */
 	list_del(&walk->walk.all);
 	spin_unlock_bh(&net->xfrm.xfrm_policy_lock);
-}
-EXPORT_SYMBOL(xfrm_policy_walk_done);
+पूर्ण
+EXPORT_SYMBOL(xfrm_policy_walk_करोne);
 
 /*
  * Find policy to apply to this flow.
  *
- * Returns 0 if policy found, else an -errno.
+ * Returns 0 अगर policy found, अन्यथा an -त्रुटि_सं.
  */
-static int xfrm_policy_match(const struct xfrm_policy *pol,
-			     const struct flowi *fl,
-			     u8 type, u16 family, int dir, u32 if_id)
-{
-	const struct xfrm_selector *sel = &pol->selector;
-	int ret = -ESRCH;
+अटल पूर्णांक xfrm_policy_match(स्थिर काष्ठा xfrm_policy *pol,
+			     स्थिर काष्ठा flowi *fl,
+			     u8 type, u16 family, पूर्णांक dir, u32 अगर_id)
+अणु
+	स्थिर काष्ठा xfrm_selector *sel = &pol->selector;
+	पूर्णांक ret = -ESRCH;
 	bool match;
 
-	if (pol->family != family ||
-	    pol->if_id != if_id ||
+	अगर (pol->family != family ||
+	    pol->अगर_id != अगर_id ||
 	    (fl->flowi_mark & pol->mark.m) != pol->mark.v ||
 	    pol->type != type)
-		return ret;
+		वापस ret;
 
 	match = xfrm_selector_match(sel, fl, family);
-	if (match)
+	अगर (match)
 		ret = security_xfrm_policy_lookup(pol->security, fl->flowi_secid,
 						  dir);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static struct xfrm_pol_inexact_node *
-xfrm_policy_lookup_inexact_addr(const struct rb_root *r,
+अटल काष्ठा xfrm_pol_inexact_node *
+xfrm_policy_lookup_inexact_addr(स्थिर काष्ठा rb_root *r,
 				seqcount_spinlock_t *count,
-				const xfrm_address_t *addr, u16 family)
-{
-	const struct rb_node *parent;
-	int seq;
+				स्थिर xfrm_address_t *addr, u16 family)
+अणु
+	स्थिर काष्ठा rb_node *parent;
+	पूर्णांक seq;
 
 again:
-	seq = read_seqcount_begin(count);
+	seq = पढ़ो_seqcount_begin(count);
 
 	parent = rcu_dereference_raw(r->rb_node);
-	while (parent) {
-		struct xfrm_pol_inexact_node *node;
-		int delta;
+	जबतक (parent) अणु
+		काष्ठा xfrm_pol_inexact_node *node;
+		पूर्णांक delta;
 
-		node = rb_entry(parent, struct xfrm_pol_inexact_node, node);
+		node = rb_entry(parent, काष्ठा xfrm_pol_inexact_node, node);
 
 		delta = xfrm_policy_addr_delta(addr, &node->addr,
 					       node->prefixlen, family);
-		if (delta < 0) {
+		अगर (delta < 0) अणु
 			parent = rcu_dereference_raw(parent->rb_left);
-			continue;
-		} else if (delta > 0) {
+			जारी;
+		पूर्ण अन्यथा अगर (delta > 0) अणु
 			parent = rcu_dereference_raw(parent->rb_right);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		return node;
-	}
+		वापस node;
+	पूर्ण
 
-	if (read_seqcount_retry(count, seq))
-		goto again;
+	अगर (पढ़ो_seqcount_retry(count, seq))
+		जाओ again;
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static bool
-xfrm_policy_find_inexact_candidates(struct xfrm_pol_inexact_candidates *cand,
-				    struct xfrm_pol_inexact_bin *b,
-				    const xfrm_address_t *saddr,
-				    const xfrm_address_t *daddr)
-{
-	struct xfrm_pol_inexact_node *n;
+अटल bool
+xfrm_policy_find_inexact_candidates(काष्ठा xfrm_pol_inexact_candidates *cand,
+				    काष्ठा xfrm_pol_inexact_bin *b,
+				    स्थिर xfrm_address_t *saddr,
+				    स्थिर xfrm_address_t *daddr)
+अणु
+	काष्ठा xfrm_pol_inexact_node *n;
 	u16 family;
 
-	if (!b)
-		return false;
+	अगर (!b)
+		वापस false;
 
 	family = b->k.family;
-	memset(cand, 0, sizeof(*cand));
+	स_रखो(cand, 0, माप(*cand));
 	cand->res[XFRM_POL_CAND_ANY] = &b->hhead;
 
 	n = xfrm_policy_lookup_inexact_addr(&b->root_d, &b->count, daddr,
 					    family);
-	if (n) {
+	अगर (n) अणु
 		cand->res[XFRM_POL_CAND_DADDR] = &n->hhead;
 		n = xfrm_policy_lookup_inexact_addr(&n->root, &b->count, saddr,
 						    family);
-		if (n)
+		अगर (n)
 			cand->res[XFRM_POL_CAND_BOTH] = &n->hhead;
-	}
+	पूर्ण
 
 	n = xfrm_policy_lookup_inexact_addr(&b->root_s, &b->count, saddr,
 					    family);
-	if (n)
+	अगर (n)
 		cand->res[XFRM_POL_CAND_SADDR] = &n->hhead;
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static struct xfrm_pol_inexact_bin *
-xfrm_policy_inexact_lookup_rcu(struct net *net, u8 type, u16 family,
-			       u8 dir, u32 if_id)
-{
-	struct xfrm_pol_inexact_key k = {
+अटल काष्ठा xfrm_pol_inexact_bin *
+xfrm_policy_inexact_lookup_rcu(काष्ठा net *net, u8 type, u16 family,
+			       u8 dir, u32 अगर_id)
+अणु
+	काष्ठा xfrm_pol_inexact_key k = अणु
 		.family = family,
 		.type = type,
 		.dir = dir,
-		.if_id = if_id,
-	};
+		.अगर_id = अगर_id,
+	पूर्ण;
 
-	write_pnet(&k.net, net);
+	ग_लिखो_pnet(&k.net, net);
 
-	return rhashtable_lookup(&xfrm_policy_inexact_table, &k,
+	वापस rhashtable_lookup(&xfrm_policy_inexact_table, &k,
 				 xfrm_pol_inexact_params);
-}
+पूर्ण
 
-static struct xfrm_pol_inexact_bin *
-xfrm_policy_inexact_lookup(struct net *net, u8 type, u16 family,
-			   u8 dir, u32 if_id)
-{
-	struct xfrm_pol_inexact_bin *bin;
+अटल काष्ठा xfrm_pol_inexact_bin *
+xfrm_policy_inexact_lookup(काष्ठा net *net, u8 type, u16 family,
+			   u8 dir, u32 अगर_id)
+अणु
+	काष्ठा xfrm_pol_inexact_bin *bin;
 
-	lockdep_assert_held(&net->xfrm.xfrm_policy_lock);
+	lockdep_निश्चित_held(&net->xfrm.xfrm_policy_lock);
 
-	rcu_read_lock();
-	bin = xfrm_policy_inexact_lookup_rcu(net, type, family, dir, if_id);
-	rcu_read_unlock();
+	rcu_पढ़ो_lock();
+	bin = xfrm_policy_inexact_lookup_rcu(net, type, family, dir, अगर_id);
+	rcu_पढ़ो_unlock();
 
-	return bin;
-}
+	वापस bin;
+पूर्ण
 
-static struct xfrm_policy *
-__xfrm_policy_eval_candidates(struct hlist_head *chain,
-			      struct xfrm_policy *prefer,
-			      const struct flowi *fl,
-			      u8 type, u16 family, int dir, u32 if_id)
-{
+अटल काष्ठा xfrm_policy *
+__xfrm_policy_eval_candidates(काष्ठा hlist_head *chain,
+			      काष्ठा xfrm_policy *prefer,
+			      स्थिर काष्ठा flowi *fl,
+			      u8 type, u16 family, पूर्णांक dir, u32 अगर_id)
+अणु
 	u32 priority = prefer ? prefer->priority : ~0u;
-	struct xfrm_policy *pol;
+	काष्ठा xfrm_policy *pol;
 
-	if (!chain)
-		return NULL;
+	अगर (!chain)
+		वापस शून्य;
 
-	hlist_for_each_entry_rcu(pol, chain, bydst) {
-		int err;
+	hlist_क्रम_each_entry_rcu(pol, chain, bydst) अणु
+		पूर्णांक err;
 
-		if (pol->priority > priority)
-			break;
+		अगर (pol->priority > priority)
+			अवरोध;
 
-		err = xfrm_policy_match(pol, fl, type, family, dir, if_id);
-		if (err) {
-			if (err != -ESRCH)
-				return ERR_PTR(err);
+		err = xfrm_policy_match(pol, fl, type, family, dir, अगर_id);
+		अगर (err) अणु
+			अगर (err != -ESRCH)
+				वापस ERR_PTR(err);
 
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		if (prefer) {
+		अगर (prefer) अणु
 			/* matches.  Is it older than *prefer? */
-			if (pol->priority == priority &&
+			अगर (pol->priority == priority &&
 			    prefer->pos < pol->pos)
-				return prefer;
-		}
+				वापस prefer;
+		पूर्ण
 
-		return pol;
-	}
+		वापस pol;
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static struct xfrm_policy *
-xfrm_policy_eval_candidates(struct xfrm_pol_inexact_candidates *cand,
-			    struct xfrm_policy *prefer,
-			    const struct flowi *fl,
-			    u8 type, u16 family, int dir, u32 if_id)
-{
-	struct xfrm_policy *tmp;
-	int i;
+अटल काष्ठा xfrm_policy *
+xfrm_policy_eval_candidates(काष्ठा xfrm_pol_inexact_candidates *cand,
+			    काष्ठा xfrm_policy *prefer,
+			    स्थिर काष्ठा flowi *fl,
+			    u8 type, u16 family, पूर्णांक dir, u32 अगर_id)
+अणु
+	काष्ठा xfrm_policy *पंचांगp;
+	पूर्णांक i;
 
-	for (i = 0; i < ARRAY_SIZE(cand->res); i++) {
-		tmp = __xfrm_policy_eval_candidates(cand->res[i],
+	क्रम (i = 0; i < ARRAY_SIZE(cand->res); i++) अणु
+		पंचांगp = __xfrm_policy_eval_candidates(cand->res[i],
 						    prefer,
 						    fl, type, family, dir,
-						    if_id);
-		if (!tmp)
-			continue;
+						    अगर_id);
+		अगर (!पंचांगp)
+			जारी;
 
-		if (IS_ERR(tmp))
-			return tmp;
-		prefer = tmp;
-	}
+		अगर (IS_ERR(पंचांगp))
+			वापस पंचांगp;
+		prefer = पंचांगp;
+	पूर्ण
 
-	return prefer;
-}
+	वापस prefer;
+पूर्ण
 
-static struct xfrm_policy *xfrm_policy_lookup_bytype(struct net *net, u8 type,
-						     const struct flowi *fl,
+अटल काष्ठा xfrm_policy *xfrm_policy_lookup_bytype(काष्ठा net *net, u8 type,
+						     स्थिर काष्ठा flowi *fl,
 						     u16 family, u8 dir,
-						     u32 if_id)
-{
-	struct xfrm_pol_inexact_candidates cand;
-	const xfrm_address_t *daddr, *saddr;
-	struct xfrm_pol_inexact_bin *bin;
-	struct xfrm_policy *pol, *ret;
-	struct hlist_head *chain;
-	unsigned int sequence;
-	int err;
+						     u32 अगर_id)
+अणु
+	काष्ठा xfrm_pol_inexact_candidates cand;
+	स्थिर xfrm_address_t *daddr, *saddr;
+	काष्ठा xfrm_pol_inexact_bin *bin;
+	काष्ठा xfrm_policy *pol, *ret;
+	काष्ठा hlist_head *chain;
+	अचिन्हित पूर्णांक sequence;
+	पूर्णांक err;
 
 	daddr = xfrm_flowi_daddr(fl, family);
 	saddr = xfrm_flowi_saddr(fl, family);
-	if (unlikely(!daddr || !saddr))
-		return NULL;
+	अगर (unlikely(!daddr || !saddr))
+		वापस शून्य;
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
  retry:
-	do {
-		sequence = read_seqcount_begin(&xfrm_policy_hash_generation);
+	करो अणु
+		sequence = पढ़ो_seqcount_begin(&xfrm_policy_hash_generation);
 		chain = policy_hash_direct(net, daddr, saddr, family, dir);
-	} while (read_seqcount_retry(&xfrm_policy_hash_generation, sequence));
+	पूर्ण जबतक (पढ़ो_seqcount_retry(&xfrm_policy_hash_generation, sequence));
 
-	ret = NULL;
-	hlist_for_each_entry_rcu(pol, chain, bydst) {
-		err = xfrm_policy_match(pol, fl, type, family, dir, if_id);
-		if (err) {
-			if (err == -ESRCH)
-				continue;
-			else {
+	ret = शून्य;
+	hlist_क्रम_each_entry_rcu(pol, chain, bydst) अणु
+		err = xfrm_policy_match(pol, fl, type, family, dir, अगर_id);
+		अगर (err) अणु
+			अगर (err == -ESRCH)
+				जारी;
+			अन्यथा अणु
 				ret = ERR_PTR(err);
-				goto fail;
-			}
-		} else {
+				जाओ fail;
+			पूर्ण
+		पूर्ण अन्यथा अणु
 			ret = pol;
-			break;
-		}
-	}
-	bin = xfrm_policy_inexact_lookup_rcu(net, type, family, dir, if_id);
-	if (!bin || !xfrm_policy_find_inexact_candidates(&cand, bin, saddr,
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	bin = xfrm_policy_inexact_lookup_rcu(net, type, family, dir, अगर_id);
+	अगर (!bin || !xfrm_policy_find_inexact_candidates(&cand, bin, saddr,
 							 daddr))
-		goto skip_inexact;
+		जाओ skip_inexact;
 
 	pol = xfrm_policy_eval_candidates(&cand, ret, fl, type,
-					  family, dir, if_id);
-	if (pol) {
+					  family, dir, अगर_id);
+	अगर (pol) अणु
 		ret = pol;
-		if (IS_ERR(pol))
-			goto fail;
-	}
+		अगर (IS_ERR(pol))
+			जाओ fail;
+	पूर्ण
 
 skip_inexact:
-	if (read_seqcount_retry(&xfrm_policy_hash_generation, sequence))
-		goto retry;
+	अगर (पढ़ो_seqcount_retry(&xfrm_policy_hash_generation, sequence))
+		जाओ retry;
 
-	if (ret && !xfrm_pol_hold_rcu(ret))
-		goto retry;
+	अगर (ret && !xfrm_pol_hold_rcu(ret))
+		जाओ retry;
 fail:
-	rcu_read_unlock();
+	rcu_पढ़ो_unlock();
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static struct xfrm_policy *xfrm_policy_lookup(struct net *net,
-					      const struct flowi *fl,
-					      u16 family, u8 dir, u32 if_id)
-{
-#ifdef CONFIG_XFRM_SUB_POLICY
-	struct xfrm_policy *pol;
+अटल काष्ठा xfrm_policy *xfrm_policy_lookup(काष्ठा net *net,
+					      स्थिर काष्ठा flowi *fl,
+					      u16 family, u8 dir, u32 अगर_id)
+अणु
+#अगर_घोषित CONFIG_XFRM_SUB_POLICY
+	काष्ठा xfrm_policy *pol;
 
 	pol = xfrm_policy_lookup_bytype(net, XFRM_POLICY_TYPE_SUB, fl, family,
-					dir, if_id);
-	if (pol != NULL)
-		return pol;
-#endif
-	return xfrm_policy_lookup_bytype(net, XFRM_POLICY_TYPE_MAIN, fl, family,
-					 dir, if_id);
-}
+					dir, अगर_id);
+	अगर (pol != शून्य)
+		वापस pol;
+#पूर्ण_अगर
+	वापस xfrm_policy_lookup_bytype(net, XFRM_POLICY_TYPE_MAIN, fl, family,
+					 dir, अगर_id);
+पूर्ण
 
-static struct xfrm_policy *xfrm_sk_policy_lookup(const struct sock *sk, int dir,
-						 const struct flowi *fl,
-						 u16 family, u32 if_id)
-{
-	struct xfrm_policy *pol;
+अटल काष्ठा xfrm_policy *xfrm_sk_policy_lookup(स्थिर काष्ठा sock *sk, पूर्णांक dir,
+						 स्थिर काष्ठा flowi *fl,
+						 u16 family, u32 अगर_id)
+अणु
+	काष्ठा xfrm_policy *pol;
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
  again:
 	pol = rcu_dereference(sk->sk_policy[dir]);
-	if (pol != NULL) {
+	अगर (pol != शून्य) अणु
 		bool match;
-		int err = 0;
+		पूर्णांक err = 0;
 
-		if (pol->family != family) {
-			pol = NULL;
-			goto out;
-		}
+		अगर (pol->family != family) अणु
+			pol = शून्य;
+			जाओ out;
+		पूर्ण
 
 		match = xfrm_selector_match(&pol->selector, fl, family);
-		if (match) {
-			if ((sk->sk_mark & pol->mark.m) != pol->mark.v ||
-			    pol->if_id != if_id) {
-				pol = NULL;
-				goto out;
-			}
+		अगर (match) अणु
+			अगर ((sk->sk_mark & pol->mark.m) != pol->mark.v ||
+			    pol->अगर_id != अगर_id) अणु
+				pol = शून्य;
+				जाओ out;
+			पूर्ण
 			err = security_xfrm_policy_lookup(pol->security,
 						      fl->flowi_secid,
 						      dir);
-			if (!err) {
-				if (!xfrm_pol_hold_rcu(pol))
-					goto again;
-			} else if (err == -ESRCH) {
-				pol = NULL;
-			} else {
+			अगर (!err) अणु
+				अगर (!xfrm_pol_hold_rcu(pol))
+					जाओ again;
+			पूर्ण अन्यथा अगर (err == -ESRCH) अणु
+				pol = शून्य;
+			पूर्ण अन्यथा अणु
 				pol = ERR_PTR(err);
-			}
-		} else
-			pol = NULL;
-	}
+			पूर्ण
+		पूर्ण अन्यथा
+			pol = शून्य;
+	पूर्ण
 out:
-	rcu_read_unlock();
-	return pol;
-}
+	rcu_पढ़ो_unlock();
+	वापस pol;
+पूर्ण
 
-static void __xfrm_policy_link(struct xfrm_policy *pol, int dir)
-{
-	struct net *net = xp_net(pol);
+अटल व्योम __xfrm_policy_link(काष्ठा xfrm_policy *pol, पूर्णांक dir)
+अणु
+	काष्ठा net *net = xp_net(pol);
 
 	list_add(&pol->walk.all, &net->xfrm.policy_all);
 	net->xfrm.policy_count[dir]++;
 	xfrm_pol_hold(pol);
-}
+पूर्ण
 
-static struct xfrm_policy *__xfrm_policy_unlink(struct xfrm_policy *pol,
-						int dir)
-{
-	struct net *net = xp_net(pol);
+अटल काष्ठा xfrm_policy *__xfrm_policy_unlink(काष्ठा xfrm_policy *pol,
+						पूर्णांक dir)
+अणु
+	काष्ठा net *net = xp_net(pol);
 
-	if (list_empty(&pol->walk.all))
-		return NULL;
+	अगर (list_empty(&pol->walk.all))
+		वापस शून्य;
 
 	/* Socket policies are not hashed. */
-	if (!hlist_unhashed(&pol->bydst)) {
+	अगर (!hlist_unhashed(&pol->bydst)) अणु
 		hlist_del_rcu(&pol->bydst);
 		hlist_del_init(&pol->bydst_inexact_list);
 		hlist_del(&pol->byidx);
-	}
+	पूर्ण
 
 	list_del_init(&pol->walk.all);
 	net->xfrm.policy_count[dir]--;
 
-	return pol;
-}
+	वापस pol;
+पूर्ण
 
-static void xfrm_sk_policy_link(struct xfrm_policy *pol, int dir)
-{
+अटल व्योम xfrm_sk_policy_link(काष्ठा xfrm_policy *pol, पूर्णांक dir)
+अणु
 	__xfrm_policy_link(pol, XFRM_POLICY_MAX + dir);
-}
+पूर्ण
 
-static void xfrm_sk_policy_unlink(struct xfrm_policy *pol, int dir)
-{
+अटल व्योम xfrm_sk_policy_unlink(काष्ठा xfrm_policy *pol, पूर्णांक dir)
+अणु
 	__xfrm_policy_unlink(pol, XFRM_POLICY_MAX + dir);
-}
+पूर्ण
 
-int xfrm_policy_delete(struct xfrm_policy *pol, int dir)
-{
-	struct net *net = xp_net(pol);
+पूर्णांक xfrm_policy_delete(काष्ठा xfrm_policy *pol, पूर्णांक dir)
+अणु
+	काष्ठा net *net = xp_net(pol);
 
 	spin_lock_bh(&net->xfrm.xfrm_policy_lock);
 	pol = __xfrm_policy_unlink(pol, dir);
 	spin_unlock_bh(&net->xfrm.xfrm_policy_lock);
-	if (pol) {
-		xfrm_policy_kill(pol);
-		return 0;
-	}
-	return -ENOENT;
-}
+	अगर (pol) अणु
+		xfrm_policy_समाप्त(pol);
+		वापस 0;
+	पूर्ण
+	वापस -ENOENT;
+पूर्ण
 EXPORT_SYMBOL(xfrm_policy_delete);
 
-int xfrm_sk_policy_insert(struct sock *sk, int dir, struct xfrm_policy *pol)
-{
-	struct net *net = sock_net(sk);
-	struct xfrm_policy *old_pol;
+पूर्णांक xfrm_sk_policy_insert(काष्ठा sock *sk, पूर्णांक dir, काष्ठा xfrm_policy *pol)
+अणु
+	काष्ठा net *net = sock_net(sk);
+	काष्ठा xfrm_policy *old_pol;
 
-#ifdef CONFIG_XFRM_SUB_POLICY
-	if (pol && pol->type != XFRM_POLICY_TYPE_MAIN)
-		return -EINVAL;
-#endif
+#अगर_घोषित CONFIG_XFRM_SUB_POLICY
+	अगर (pol && pol->type != XFRM_POLICY_TYPE_MAIN)
+		वापस -EINVAL;
+#पूर्ण_अगर
 
 	spin_lock_bh(&net->xfrm.xfrm_policy_lock);
-	old_pol = rcu_dereference_protected(sk->sk_policy[dir],
+	old_pol = rcu_dereference_रक्षित(sk->sk_policy[dir],
 				lockdep_is_held(&net->xfrm.xfrm_policy_lock));
-	if (pol) {
-		pol->curlft.add_time = ktime_get_real_seconds();
+	अगर (pol) अणु
+		pol->curlft.add_समय = kसमय_get_real_seconds();
 		pol->index = xfrm_gen_index(net, XFRM_POLICY_MAX+dir, 0);
 		xfrm_sk_policy_link(pol, dir);
-	}
-	rcu_assign_pointer(sk->sk_policy[dir], pol);
-	if (old_pol) {
-		if (pol)
+	पूर्ण
+	rcu_assign_poपूर्णांकer(sk->sk_policy[dir], pol);
+	अगर (old_pol) अणु
+		अगर (pol)
 			xfrm_policy_requeue(old_pol, pol);
 
 		/* Unlinking succeeds always. This is the only function
 		 * allowed to delete or replace socket policy.
 		 */
 		xfrm_sk_policy_unlink(old_pol, dir);
-	}
+	पूर्ण
 	spin_unlock_bh(&net->xfrm.xfrm_policy_lock);
 
-	if (old_pol) {
-		xfrm_policy_kill(old_pol);
-	}
-	return 0;
-}
+	अगर (old_pol) अणु
+		xfrm_policy_समाप्त(old_pol);
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static struct xfrm_policy *clone_policy(const struct xfrm_policy *old, int dir)
-{
-	struct xfrm_policy *newp = xfrm_policy_alloc(xp_net(old), GFP_ATOMIC);
-	struct net *net = xp_net(old);
+अटल काष्ठा xfrm_policy *clone_policy(स्थिर काष्ठा xfrm_policy *old, पूर्णांक dir)
+अणु
+	काष्ठा xfrm_policy *newp = xfrm_policy_alloc(xp_net(old), GFP_ATOMIC);
+	काष्ठा net *net = xp_net(old);
 
-	if (newp) {
+	अगर (newp) अणु
 		newp->selector = old->selector;
-		if (security_xfrm_policy_clone(old->security,
-					       &newp->security)) {
-			kfree(newp);
-			return NULL;  /* ENOMEM */
-		}
+		अगर (security_xfrm_policy_clone(old->security,
+					       &newp->security)) अणु
+			kमुक्त(newp);
+			वापस शून्य;  /* ENOMEM */
+		पूर्ण
 		newp->lft = old->lft;
 		newp->curlft = old->curlft;
 		newp->mark = old->mark;
-		newp->if_id = old->if_id;
+		newp->अगर_id = old->अगर_id;
 		newp->action = old->action;
 		newp->flags = old->flags;
 		newp->xfrm_nr = old->xfrm_nr;
 		newp->index = old->index;
 		newp->type = old->type;
 		newp->family = old->family;
-		memcpy(newp->xfrm_vec, old->xfrm_vec,
-		       newp->xfrm_nr*sizeof(struct xfrm_tmpl));
+		स_नकल(newp->xfrm_vec, old->xfrm_vec,
+		       newp->xfrm_nr*माप(काष्ठा xfrm_पंचांगpl));
 		spin_lock_bh(&net->xfrm.xfrm_policy_lock);
 		xfrm_sk_policy_link(newp, dir);
 		spin_unlock_bh(&net->xfrm.xfrm_policy_lock);
 		xfrm_pol_put(newp);
-	}
-	return newp;
-}
+	पूर्ण
+	वापस newp;
+पूर्ण
 
-int __xfrm_sk_clone_policy(struct sock *sk, const struct sock *osk)
-{
-	const struct xfrm_policy *p;
-	struct xfrm_policy *np;
-	int i, ret = 0;
+पूर्णांक __xfrm_sk_clone_policy(काष्ठा sock *sk, स्थिर काष्ठा sock *osk)
+अणु
+	स्थिर काष्ठा xfrm_policy *p;
+	काष्ठा xfrm_policy *np;
+	पूर्णांक i, ret = 0;
 
-	rcu_read_lock();
-	for (i = 0; i < 2; i++) {
+	rcu_पढ़ो_lock();
+	क्रम (i = 0; i < 2; i++) अणु
 		p = rcu_dereference(osk->sk_policy[i]);
-		if (p) {
+		अगर (p) अणु
 			np = clone_policy(p, i);
-			if (unlikely(!np)) {
+			अगर (unlikely(!np)) अणु
 				ret = -ENOMEM;
-				break;
-			}
-			rcu_assign_pointer(sk->sk_policy[i], np);
-		}
-	}
-	rcu_read_unlock();
-	return ret;
-}
+				अवरोध;
+			पूर्ण
+			rcu_assign_poपूर्णांकer(sk->sk_policy[i], np);
+		पूर्ण
+	पूर्ण
+	rcu_पढ़ो_unlock();
+	वापस ret;
+पूर्ण
 
-static int
-xfrm_get_saddr(struct net *net, int oif, xfrm_address_t *local,
-	       xfrm_address_t *remote, unsigned short family, u32 mark)
-{
-	int err;
-	const struct xfrm_policy_afinfo *afinfo = xfrm_policy_get_afinfo(family);
+अटल पूर्णांक
+xfrm_get_saddr(काष्ठा net *net, पूर्णांक oअगर, xfrm_address_t *local,
+	       xfrm_address_t *remote, अचिन्हित लघु family, u32 mark)
+अणु
+	पूर्णांक err;
+	स्थिर काष्ठा xfrm_policy_afinfo *afinfo = xfrm_policy_get_afinfo(family);
 
-	if (unlikely(afinfo == NULL))
-		return -EINVAL;
-	err = afinfo->get_saddr(net, oif, local, remote, mark);
-	rcu_read_unlock();
-	return err;
-}
+	अगर (unlikely(afinfo == शून्य))
+		वापस -EINVAL;
+	err = afinfo->get_saddr(net, oअगर, local, remote, mark);
+	rcu_पढ़ो_unlock();
+	वापस err;
+पूर्ण
 
-/* Resolve list of templates for the flow, given policy. */
+/* Resolve list of ढाँचाs क्रम the flow, given policy. */
 
-static int
-xfrm_tmpl_resolve_one(struct xfrm_policy *policy, const struct flowi *fl,
-		      struct xfrm_state **xfrm, unsigned short family)
-{
-	struct net *net = xp_net(policy);
-	int nx;
-	int i, error;
+अटल पूर्णांक
+xfrm_पंचांगpl_resolve_one(काष्ठा xfrm_policy *policy, स्थिर काष्ठा flowi *fl,
+		      काष्ठा xfrm_state **xfrm, अचिन्हित लघु family)
+अणु
+	काष्ठा net *net = xp_net(policy);
+	पूर्णांक nx;
+	पूर्णांक i, error;
 	xfrm_address_t *daddr = xfrm_flowi_daddr(fl, family);
 	xfrm_address_t *saddr = xfrm_flowi_saddr(fl, family);
-	xfrm_address_t tmp;
+	xfrm_address_t पंचांगp;
 
-	for (nx = 0, i = 0; i < policy->xfrm_nr; i++) {
-		struct xfrm_state *x;
+	क्रम (nx = 0, i = 0; i < policy->xfrm_nr; i++) अणु
+		काष्ठा xfrm_state *x;
 		xfrm_address_t *remote = daddr;
 		xfrm_address_t *local  = saddr;
-		struct xfrm_tmpl *tmpl = &policy->xfrm_vec[i];
+		काष्ठा xfrm_पंचांगpl *पंचांगpl = &policy->xfrm_vec[i];
 
-		if (tmpl->mode == XFRM_MODE_TUNNEL ||
-		    tmpl->mode == XFRM_MODE_BEET) {
-			remote = &tmpl->id.daddr;
-			local = &tmpl->saddr;
-			if (xfrm_addr_any(local, tmpl->encap_family)) {
-				error = xfrm_get_saddr(net, fl->flowi_oif,
-						       &tmp, remote,
-						       tmpl->encap_family, 0);
-				if (error)
-					goto fail;
-				local = &tmp;
-			}
-		}
+		अगर (पंचांगpl->mode == XFRM_MODE_TUNNEL ||
+		    पंचांगpl->mode == XFRM_MODE_BEET) अणु
+			remote = &पंचांगpl->id.daddr;
+			local = &पंचांगpl->saddr;
+			अगर (xfrm_addr_any(local, पंचांगpl->encap_family)) अणु
+				error = xfrm_get_saddr(net, fl->flowi_oअगर,
+						       &पंचांगp, remote,
+						       पंचांगpl->encap_family, 0);
+				अगर (error)
+					जाओ fail;
+				local = &पंचांगp;
+			पूर्ण
+		पूर्ण
 
-		x = xfrm_state_find(remote, local, fl, tmpl, policy, &error,
-				    family, policy->if_id);
+		x = xfrm_state_find(remote, local, fl, पंचांगpl, policy, &error,
+				    family, policy->अगर_id);
 
-		if (x && x->km.state == XFRM_STATE_VALID) {
+		अगर (x && x->km.state == XFRM_STATE_VALID) अणु
 			xfrm[nx++] = x;
 			daddr = remote;
 			saddr = local;
-			continue;
-		}
-		if (x) {
+			जारी;
+		पूर्ण
+		अगर (x) अणु
 			error = (x->km.state == XFRM_STATE_ERROR ?
 				 -EINVAL : -EAGAIN);
 			xfrm_state_put(x);
-		} else if (error == -ESRCH) {
+		पूर्ण अन्यथा अगर (error == -ESRCH) अणु
 			error = -EAGAIN;
-		}
+		पूर्ण
 
-		if (!tmpl->optional)
-			goto fail;
-	}
-	return nx;
+		अगर (!पंचांगpl->optional)
+			जाओ fail;
+	पूर्ण
+	वापस nx;
 
 fail:
-	for (nx--; nx >= 0; nx--)
+	क्रम (nx--; nx >= 0; nx--)
 		xfrm_state_put(xfrm[nx]);
-	return error;
-}
+	वापस error;
+पूर्ण
 
-static int
-xfrm_tmpl_resolve(struct xfrm_policy **pols, int npols, const struct flowi *fl,
-		  struct xfrm_state **xfrm, unsigned short family)
-{
-	struct xfrm_state *tp[XFRM_MAX_DEPTH];
-	struct xfrm_state **tpp = (npols > 1) ? tp : xfrm;
-	int cnx = 0;
-	int error;
-	int ret;
-	int i;
+अटल पूर्णांक
+xfrm_पंचांगpl_resolve(काष्ठा xfrm_policy **pols, पूर्णांक npols, स्थिर काष्ठा flowi *fl,
+		  काष्ठा xfrm_state **xfrm, अचिन्हित लघु family)
+अणु
+	काष्ठा xfrm_state *tp[XFRM_MAX_DEPTH];
+	काष्ठा xfrm_state **tpp = (npols > 1) ? tp : xfrm;
+	पूर्णांक cnx = 0;
+	पूर्णांक error;
+	पूर्णांक ret;
+	पूर्णांक i;
 
-	for (i = 0; i < npols; i++) {
-		if (cnx + pols[i]->xfrm_nr >= XFRM_MAX_DEPTH) {
+	क्रम (i = 0; i < npols; i++) अणु
+		अगर (cnx + pols[i]->xfrm_nr >= XFRM_MAX_DEPTH) अणु
 			error = -ENOBUFS;
-			goto fail;
-		}
+			जाओ fail;
+		पूर्ण
 
-		ret = xfrm_tmpl_resolve_one(pols[i], fl, &tpp[cnx], family);
-		if (ret < 0) {
+		ret = xfrm_पंचांगpl_resolve_one(pols[i], fl, &tpp[cnx], family);
+		अगर (ret < 0) अणु
 			error = ret;
-			goto fail;
-		} else
+			जाओ fail;
+		पूर्ण अन्यथा
 			cnx += ret;
-	}
+	पूर्ण
 
-	/* found states are sorted for outbound processing */
-	if (npols > 1)
+	/* found states are sorted क्रम outbound processing */
+	अगर (npols > 1)
 		xfrm_state_sort(xfrm, tpp, cnx, family);
 
-	return cnx;
+	वापस cnx;
 
  fail:
-	for (cnx--; cnx >= 0; cnx--)
+	क्रम (cnx--; cnx >= 0; cnx--)
 		xfrm_state_put(tpp[cnx]);
-	return error;
+	वापस error;
 
-}
+पूर्ण
 
-static int xfrm_get_tos(const struct flowi *fl, int family)
-{
-	if (family == AF_INET)
-		return IPTOS_RT_MASK & fl->u.ip4.flowi4_tos;
+अटल पूर्णांक xfrm_get_tos(स्थिर काष्ठा flowi *fl, पूर्णांक family)
+अणु
+	अगर (family == AF_INET)
+		वापस IPTOS_RT_MASK & fl->u.ip4.flowi4_tos;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static inline struct xfrm_dst *xfrm_alloc_dst(struct net *net, int family)
-{
-	const struct xfrm_policy_afinfo *afinfo = xfrm_policy_get_afinfo(family);
-	struct dst_ops *dst_ops;
-	struct xfrm_dst *xdst;
+अटल अंतरभूत काष्ठा xfrm_dst *xfrm_alloc_dst(काष्ठा net *net, पूर्णांक family)
+अणु
+	स्थिर काष्ठा xfrm_policy_afinfo *afinfo = xfrm_policy_get_afinfo(family);
+	काष्ठा dst_ops *dst_ops;
+	काष्ठा xfrm_dst *xdst;
 
-	if (!afinfo)
-		return ERR_PTR(-EINVAL);
+	अगर (!afinfo)
+		वापस ERR_PTR(-EINVAL);
 
-	switch (family) {
-	case AF_INET:
+	चयन (family) अणु
+	हाल AF_INET:
 		dst_ops = &net->xfrm.xfrm4_dst_ops;
-		break;
-#if IS_ENABLED(CONFIG_IPV6)
-	case AF_INET6:
+		अवरोध;
+#अगर IS_ENABLED(CONFIG_IPV6)
+	हाल AF_INET6:
 		dst_ops = &net->xfrm.xfrm6_dst_ops;
-		break;
-#endif
-	default:
+		अवरोध;
+#पूर्ण_अगर
+	शेष:
 		BUG();
-	}
-	xdst = dst_alloc(dst_ops, NULL, 1, DST_OBSOLETE_NONE, 0);
+	पूर्ण
+	xdst = dst_alloc(dst_ops, शून्य, 1, DST_OBSOLETE_NONE, 0);
 
-	if (likely(xdst)) {
-		struct dst_entry *dst = &xdst->u.dst;
+	अगर (likely(xdst)) अणु
+		काष्ठा dst_entry *dst = &xdst->u.dst;
 
-		memset(dst + 1, 0, sizeof(*xdst) - sizeof(*dst));
-	} else
+		स_रखो(dst + 1, 0, माप(*xdst) - माप(*dst));
+	पूर्ण अन्यथा
 		xdst = ERR_PTR(-ENOBUFS);
 
-	rcu_read_unlock();
+	rcu_पढ़ो_unlock();
 
-	return xdst;
-}
+	वापस xdst;
+पूर्ण
 
-static void xfrm_init_path(struct xfrm_dst *path, struct dst_entry *dst,
-			   int nfheader_len)
-{
-	if (dst->ops->family == AF_INET6) {
-		struct rt6_info *rt = (struct rt6_info *)dst;
+अटल व्योम xfrm_init_path(काष्ठा xfrm_dst *path, काष्ठा dst_entry *dst,
+			   पूर्णांक nfheader_len)
+अणु
+	अगर (dst->ops->family == AF_INET6) अणु
+		काष्ठा rt6_info *rt = (काष्ठा rt6_info *)dst;
 		path->path_cookie = rt6_get_cookie(rt);
 		path->u.rt6.rt6i_nfheader_len = nfheader_len;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static inline int xfrm_fill_dst(struct xfrm_dst *xdst, struct net_device *dev,
-				const struct flowi *fl)
-{
-	const struct xfrm_policy_afinfo *afinfo =
+अटल अंतरभूत पूर्णांक xfrm_fill_dst(काष्ठा xfrm_dst *xdst, काष्ठा net_device *dev,
+				स्थिर काष्ठा flowi *fl)
+अणु
+	स्थिर काष्ठा xfrm_policy_afinfo *afinfo =
 		xfrm_policy_get_afinfo(xdst->u.dst.ops->family);
-	int err;
+	पूर्णांक err;
 
-	if (!afinfo)
-		return -EINVAL;
+	अगर (!afinfo)
+		वापस -EINVAL;
 
 	err = afinfo->fill_dst(xdst, dev, fl);
 
-	rcu_read_unlock();
+	rcu_पढ़ो_unlock();
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
 
 /* Allocate chain of dst_entry's, attach known xfrm's, calculate
  * all the metrics... Shortly, bundle a bundle.
  */
 
-static struct dst_entry *xfrm_bundle_create(struct xfrm_policy *policy,
-					    struct xfrm_state **xfrm,
-					    struct xfrm_dst **bundle,
-					    int nx,
-					    const struct flowi *fl,
-					    struct dst_entry *dst)
-{
-	const struct xfrm_state_afinfo *afinfo;
-	const struct xfrm_mode *inner_mode;
-	struct net *net = xp_net(policy);
-	unsigned long now = jiffies;
-	struct net_device *dev;
-	struct xfrm_dst *xdst_prev = NULL;
-	struct xfrm_dst *xdst0 = NULL;
-	int i = 0;
-	int err;
-	int header_len = 0;
-	int nfheader_len = 0;
-	int trailer_len = 0;
-	int tos;
-	int family = policy->selector.family;
+अटल काष्ठा dst_entry *xfrm_bundle_create(काष्ठा xfrm_policy *policy,
+					    काष्ठा xfrm_state **xfrm,
+					    काष्ठा xfrm_dst **bundle,
+					    पूर्णांक nx,
+					    स्थिर काष्ठा flowi *fl,
+					    काष्ठा dst_entry *dst)
+अणु
+	स्थिर काष्ठा xfrm_state_afinfo *afinfo;
+	स्थिर काष्ठा xfrm_mode *inner_mode;
+	काष्ठा net *net = xp_net(policy);
+	अचिन्हित दीर्घ now = jअगरfies;
+	काष्ठा net_device *dev;
+	काष्ठा xfrm_dst *xdst_prev = शून्य;
+	काष्ठा xfrm_dst *xdst0 = शून्य;
+	पूर्णांक i = 0;
+	पूर्णांक err;
+	पूर्णांक header_len = 0;
+	पूर्णांक nfheader_len = 0;
+	पूर्णांक trailer_len = 0;
+	पूर्णांक tos;
+	पूर्णांक family = policy->selector.family;
 	xfrm_address_t saddr, daddr;
 
 	xfrm_flowi_addr_get(fl, &saddr, &daddr, family);
@@ -2561,52 +2562,52 @@ static struct dst_entry *xfrm_bundle_create(struct xfrm_policy *policy,
 
 	dst_hold(dst);
 
-	for (; i < nx; i++) {
-		struct xfrm_dst *xdst = xfrm_alloc_dst(net, family);
-		struct dst_entry *dst1 = &xdst->u.dst;
+	क्रम (; i < nx; i++) अणु
+		काष्ठा xfrm_dst *xdst = xfrm_alloc_dst(net, family);
+		काष्ठा dst_entry *dst1 = &xdst->u.dst;
 
 		err = PTR_ERR(xdst);
-		if (IS_ERR(xdst)) {
+		अगर (IS_ERR(xdst)) अणु
 			dst_release(dst);
-			goto put_states;
-		}
+			जाओ put_states;
+		पूर्ण
 
 		bundle[i] = xdst;
-		if (!xdst_prev)
+		अगर (!xdst_prev)
 			xdst0 = xdst;
-		else
+		अन्यथा
 			/* Ref count is taken during xfrm_alloc_dst()
-			 * No need to do dst_clone() on dst1
+			 * No need to करो dst_clone() on dst1
 			 */
 			xfrm_dst_set_child(xdst_prev, &xdst->u.dst);
 
-		if (xfrm[i]->sel.family == AF_UNSPEC) {
+		अगर (xfrm[i]->sel.family == AF_UNSPEC) अणु
 			inner_mode = xfrm_ip2inner_mode(xfrm[i],
 							xfrm_af2proto(family));
-			if (!inner_mode) {
+			अगर (!inner_mode) अणु
 				err = -EAFNOSUPPORT;
 				dst_release(dst);
-				goto put_states;
-			}
-		} else
+				जाओ put_states;
+			पूर्ण
+		पूर्ण अन्यथा
 			inner_mode = &xfrm[i]->inner_mode;
 
 		xdst->route = dst;
 		dst_copy_metrics(dst1, dst);
 
-		if (xfrm[i]->props.mode != XFRM_MODE_TRANSPORT) {
+		अगर (xfrm[i]->props.mode != XFRM_MODE_TRANSPORT) अणु
 			__u32 mark = 0;
 
-			if (xfrm[i]->props.smark.v || xfrm[i]->props.smark.m)
+			अगर (xfrm[i]->props.smark.v || xfrm[i]->props.smark.m)
 				mark = xfrm_smark_get(fl->flowi_mark, xfrm[i]);
 
 			family = xfrm[i]->props.family;
-			dst = xfrm_dst_lookup(xfrm[i], tos, fl->flowi_oif,
+			dst = xfrm_dst_lookup(xfrm[i], tos, fl->flowi_oअगर,
 					      &saddr, &daddr, family, mark);
 			err = PTR_ERR(dst);
-			if (IS_ERR(dst))
-				goto put_states;
-		} else
+			अगर (IS_ERR(dst))
+				जाओ put_states;
+		पूर्ण अन्यथा
 			dst_hold(dst);
 
 		dst1->xfrm = xfrm[i];
@@ -2617,158 +2618,158 @@ static struct dst_entry *xfrm_bundle_create(struct xfrm_policy *policy,
 
 		dst1->input = dst_discard;
 
-		rcu_read_lock();
+		rcu_पढ़ो_lock();
 		afinfo = xfrm_state_afinfo_get_rcu(inner_mode->family);
-		if (likely(afinfo))
+		अगर (likely(afinfo))
 			dst1->output = afinfo->output;
-		else
+		अन्यथा
 			dst1->output = dst_discard_out;
-		rcu_read_unlock();
+		rcu_पढ़ो_unlock();
 
 		xdst_prev = xdst;
 
 		header_len += xfrm[i]->props.header_len;
-		if (xfrm[i]->type->flags & XFRM_TYPE_NON_FRAGMENT)
+		अगर (xfrm[i]->type->flags & XFRM_TYPE_NON_FRAGMENT)
 			nfheader_len += xfrm[i]->props.header_len;
 		trailer_len += xfrm[i]->props.trailer_len;
-	}
+	पूर्ण
 
 	xfrm_dst_set_child(xdst_prev, dst);
 	xdst0->path = dst;
 
 	err = -ENODEV;
 	dev = dst->dev;
-	if (!dev)
-		goto free_dst;
+	अगर (!dev)
+		जाओ मुक्त_dst;
 
 	xfrm_init_path(xdst0, dst, nfheader_len);
 	xfrm_init_pmtu(bundle, nx);
 
-	for (xdst_prev = xdst0; xdst_prev != (struct xfrm_dst *)dst;
-	     xdst_prev = (struct xfrm_dst *) xfrm_dst_child(&xdst_prev->u.dst)) {
+	क्रम (xdst_prev = xdst0; xdst_prev != (काष्ठा xfrm_dst *)dst;
+	     xdst_prev = (काष्ठा xfrm_dst *) xfrm_dst_child(&xdst_prev->u.dst)) अणु
 		err = xfrm_fill_dst(xdst_prev, dev, fl);
-		if (err)
-			goto free_dst;
+		अगर (err)
+			जाओ मुक्त_dst;
 
 		xdst_prev->u.dst.header_len = header_len;
 		xdst_prev->u.dst.trailer_len = trailer_len;
 		header_len -= xdst_prev->u.dst.xfrm->props.header_len;
 		trailer_len -= xdst_prev->u.dst.xfrm->props.trailer_len;
-	}
+	पूर्ण
 
-	return &xdst0->u.dst;
+	वापस &xdst0->u.dst;
 
 put_states:
-	for (; i < nx; i++)
+	क्रम (; i < nx; i++)
 		xfrm_state_put(xfrm[i]);
-free_dst:
-	if (xdst0)
+मुक्त_dst:
+	अगर (xdst0)
 		dst_release_immediate(&xdst0->u.dst);
 
-	return ERR_PTR(err);
-}
+	वापस ERR_PTR(err);
+पूर्ण
 
-static int xfrm_expand_policies(const struct flowi *fl, u16 family,
-				struct xfrm_policy **pols,
-				int *num_pols, int *num_xfrms)
-{
-	int i;
+अटल पूर्णांक xfrm_expand_policies(स्थिर काष्ठा flowi *fl, u16 family,
+				काष्ठा xfrm_policy **pols,
+				पूर्णांक *num_pols, पूर्णांक *num_xfrms)
+अणु
+	पूर्णांक i;
 
-	if (*num_pols == 0 || !pols[0]) {
+	अगर (*num_pols == 0 || !pols[0]) अणु
 		*num_pols = 0;
 		*num_xfrms = 0;
-		return 0;
-	}
-	if (IS_ERR(pols[0]))
-		return PTR_ERR(pols[0]);
+		वापस 0;
+	पूर्ण
+	अगर (IS_ERR(pols[0]))
+		वापस PTR_ERR(pols[0]);
 
 	*num_xfrms = pols[0]->xfrm_nr;
 
-#ifdef CONFIG_XFRM_SUB_POLICY
-	if (pols[0] && pols[0]->action == XFRM_POLICY_ALLOW &&
-	    pols[0]->type != XFRM_POLICY_TYPE_MAIN) {
+#अगर_घोषित CONFIG_XFRM_SUB_POLICY
+	अगर (pols[0] && pols[0]->action == XFRM_POLICY_ALLOW &&
+	    pols[0]->type != XFRM_POLICY_TYPE_MAIN) अणु
 		pols[1] = xfrm_policy_lookup_bytype(xp_net(pols[0]),
 						    XFRM_POLICY_TYPE_MAIN,
 						    fl, family,
 						    XFRM_POLICY_OUT,
-						    pols[0]->if_id);
-		if (pols[1]) {
-			if (IS_ERR(pols[1])) {
+						    pols[0]->अगर_id);
+		अगर (pols[1]) अणु
+			अगर (IS_ERR(pols[1])) अणु
 				xfrm_pols_put(pols, *num_pols);
-				return PTR_ERR(pols[1]);
-			}
+				वापस PTR_ERR(pols[1]);
+			पूर्ण
 			(*num_pols)++;
 			(*num_xfrms) += pols[1]->xfrm_nr;
-		}
-	}
-#endif
-	for (i = 0; i < *num_pols; i++) {
-		if (pols[i]->action != XFRM_POLICY_ALLOW) {
+		पूर्ण
+	पूर्ण
+#पूर्ण_अगर
+	क्रम (i = 0; i < *num_pols; i++) अणु
+		अगर (pols[i]->action != XFRM_POLICY_ALLOW) अणु
 			*num_xfrms = -1;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
-}
+पूर्ण
 
-static struct xfrm_dst *
-xfrm_resolve_and_create_bundle(struct xfrm_policy **pols, int num_pols,
-			       const struct flowi *fl, u16 family,
-			       struct dst_entry *dst_orig)
-{
-	struct net *net = xp_net(pols[0]);
-	struct xfrm_state *xfrm[XFRM_MAX_DEPTH];
-	struct xfrm_dst *bundle[XFRM_MAX_DEPTH];
-	struct xfrm_dst *xdst;
-	struct dst_entry *dst;
-	int err;
+अटल काष्ठा xfrm_dst *
+xfrm_resolve_and_create_bundle(काष्ठा xfrm_policy **pols, पूर्णांक num_pols,
+			       स्थिर काष्ठा flowi *fl, u16 family,
+			       काष्ठा dst_entry *dst_orig)
+अणु
+	काष्ठा net *net = xp_net(pols[0]);
+	काष्ठा xfrm_state *xfrm[XFRM_MAX_DEPTH];
+	काष्ठा xfrm_dst *bundle[XFRM_MAX_DEPTH];
+	काष्ठा xfrm_dst *xdst;
+	काष्ठा dst_entry *dst;
+	पूर्णांक err;
 
 	/* Try to instantiate a bundle */
-	err = xfrm_tmpl_resolve(pols, num_pols, fl, xfrm, family);
-	if (err <= 0) {
-		if (err == 0)
-			return NULL;
+	err = xfrm_पंचांगpl_resolve(pols, num_pols, fl, xfrm, family);
+	अगर (err <= 0) अणु
+		अगर (err == 0)
+			वापस शून्य;
 
-		if (err != -EAGAIN)
+		अगर (err != -EAGAIN)
 			XFRM_INC_STATS(net, LINUX_MIB_XFRMOUTPOLERROR);
-		return ERR_PTR(err);
-	}
+		वापस ERR_PTR(err);
+	पूर्ण
 
 	dst = xfrm_bundle_create(pols[0], xfrm, bundle, err, fl, dst_orig);
-	if (IS_ERR(dst)) {
+	अगर (IS_ERR(dst)) अणु
 		XFRM_INC_STATS(net, LINUX_MIB_XFRMOUTBUNDLEGENERROR);
-		return ERR_CAST(dst);
-	}
+		वापस ERR_CAST(dst);
+	पूर्ण
 
-	xdst = (struct xfrm_dst *)dst;
+	xdst = (काष्ठा xfrm_dst *)dst;
 	xdst->num_xfrms = err;
 	xdst->num_pols = num_pols;
-	memcpy(xdst->pols, pols, sizeof(struct xfrm_policy *) * num_pols);
-	xdst->policy_genid = atomic_read(&pols[0]->genid);
+	स_नकल(xdst->pols, pols, माप(काष्ठा xfrm_policy *) * num_pols);
+	xdst->policy_genid = atomic_पढ़ो(&pols[0]->genid);
 
-	return xdst;
-}
+	वापस xdst;
+पूर्ण
 
-static void xfrm_policy_queue_process(struct timer_list *t)
-{
-	struct sk_buff *skb;
-	struct sock *sk;
-	struct dst_entry *dst;
-	struct xfrm_policy *pol = from_timer(pol, t, polq.hold_timer);
-	struct net *net = xp_net(pol);
-	struct xfrm_policy_queue *pq = &pol->polq;
-	struct flowi fl;
-	struct sk_buff_head list;
+अटल व्योम xfrm_policy_queue_process(काष्ठा समयr_list *t)
+अणु
+	काष्ठा sk_buff *skb;
+	काष्ठा sock *sk;
+	काष्ठा dst_entry *dst;
+	काष्ठा xfrm_policy *pol = from_समयr(pol, t, polq.hold_समयr);
+	काष्ठा net *net = xp_net(pol);
+	काष्ठा xfrm_policy_queue *pq = &pol->polq;
+	काष्ठा flowi fl;
+	काष्ठा sk_buff_head list;
 	__u32 skb_mark;
 
 	spin_lock(&pq->hold_queue.lock);
 	skb = skb_peek(&pq->hold_queue);
-	if (!skb) {
+	अगर (!skb) अणु
 		spin_unlock(&pq->hold_queue.lock);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 	dst = skb_dst(skb);
 	sk = skb->sk;
 
@@ -2781,31 +2782,31 @@ static void xfrm_policy_queue_process(struct timer_list *t)
 
 	dst_hold(xfrm_dst_path(dst));
 	dst = xfrm_lookup(net, xfrm_dst_path(dst), &fl, sk, XFRM_LOOKUP_QUEUE);
-	if (IS_ERR(dst))
-		goto purge_queue;
+	अगर (IS_ERR(dst))
+		जाओ purge_queue;
 
-	if (dst->flags & DST_XFRM_QUEUE) {
+	अगर (dst->flags & DST_XFRM_QUEUE) अणु
 		dst_release(dst);
 
-		if (pq->timeout >= XFRM_QUEUE_TMO_MAX)
-			goto purge_queue;
+		अगर (pq->समयout >= XFRM_QUEUE_TMO_MAX)
+			जाओ purge_queue;
 
-		pq->timeout = pq->timeout << 1;
-		if (!mod_timer(&pq->hold_timer, jiffies + pq->timeout))
+		pq->समयout = pq->समयout << 1;
+		अगर (!mod_समयr(&pq->hold_समयr, jअगरfies + pq->समयout))
 			xfrm_pol_hold(pol);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	dst_release(dst);
 
 	__skb_queue_head_init(&list);
 
 	spin_lock(&pq->hold_queue.lock);
-	pq->timeout = 0;
+	pq->समयout = 0;
 	skb_queue_splice_init(&pq->hold_queue, &list);
 	spin_unlock(&pq->hold_queue.lock);
 
-	while (!skb_queue_empty(&list)) {
+	जबतक (!skb_queue_empty(&list)) अणु
 		skb = __skb_dequeue(&list);
 
 		/* Fixup the mark to support VTI. */
@@ -2816,90 +2817,90 @@ static void xfrm_policy_queue_process(struct timer_list *t)
 
 		dst_hold(xfrm_dst_path(skb_dst(skb)));
 		dst = xfrm_lookup(net, xfrm_dst_path(skb_dst(skb)), &fl, skb->sk, 0);
-		if (IS_ERR(dst)) {
-			kfree_skb(skb);
-			continue;
-		}
+		अगर (IS_ERR(dst)) अणु
+			kमुक्त_skb(skb);
+			जारी;
+		पूर्ण
 
 		nf_reset_ct(skb);
 		skb_dst_drop(skb);
 		skb_dst_set(skb, dst);
 
 		dst_output(net, skb->sk, skb);
-	}
+	पूर्ण
 
 out:
 	xfrm_pol_put(pol);
-	return;
+	वापस;
 
 purge_queue:
-	pq->timeout = 0;
+	pq->समयout = 0;
 	skb_queue_purge(&pq->hold_queue);
 	xfrm_pol_put(pol);
-}
+पूर्ण
 
-static int xdst_queue_output(struct net *net, struct sock *sk, struct sk_buff *skb)
-{
-	unsigned long sched_next;
-	struct dst_entry *dst = skb_dst(skb);
-	struct xfrm_dst *xdst = (struct xfrm_dst *) dst;
-	struct xfrm_policy *pol = xdst->pols[0];
-	struct xfrm_policy_queue *pq = &pol->polq;
+अटल पूर्णांक xdst_queue_output(काष्ठा net *net, काष्ठा sock *sk, काष्ठा sk_buff *skb)
+अणु
+	अचिन्हित दीर्घ sched_next;
+	काष्ठा dst_entry *dst = skb_dst(skb);
+	काष्ठा xfrm_dst *xdst = (काष्ठा xfrm_dst *) dst;
+	काष्ठा xfrm_policy *pol = xdst->pols[0];
+	काष्ठा xfrm_policy_queue *pq = &pol->polq;
 
-	if (unlikely(skb_fclone_busy(sk, skb))) {
-		kfree_skb(skb);
-		return 0;
-	}
+	अगर (unlikely(skb_fclone_busy(sk, skb))) अणु
+		kमुक्त_skb(skb);
+		वापस 0;
+	पूर्ण
 
-	if (pq->hold_queue.qlen > XFRM_MAX_QUEUE_LEN) {
-		kfree_skb(skb);
-		return -EAGAIN;
-	}
+	अगर (pq->hold_queue.qlen > XFRM_MAX_QUEUE_LEN) अणु
+		kमुक्त_skb(skb);
+		वापस -EAGAIN;
+	पूर्ण
 
-	skb_dst_force(skb);
+	skb_dst_क्रमce(skb);
 
 	spin_lock_bh(&pq->hold_queue.lock);
 
-	if (!pq->timeout)
-		pq->timeout = XFRM_QUEUE_TMO_MIN;
+	अगर (!pq->समयout)
+		pq->समयout = XFRM_QUEUE_TMO_MIN;
 
-	sched_next = jiffies + pq->timeout;
+	sched_next = jअगरfies + pq->समयout;
 
-	if (del_timer(&pq->hold_timer)) {
-		if (time_before(pq->hold_timer.expires, sched_next))
-			sched_next = pq->hold_timer.expires;
+	अगर (del_समयr(&pq->hold_समयr)) अणु
+		अगर (समय_beक्रमe(pq->hold_समयr.expires, sched_next))
+			sched_next = pq->hold_समयr.expires;
 		xfrm_pol_put(pol);
-	}
+	पूर्ण
 
 	__skb_queue_tail(&pq->hold_queue, skb);
-	if (!mod_timer(&pq->hold_timer, sched_next))
+	अगर (!mod_समयr(&pq->hold_समयr, sched_next))
 		xfrm_pol_hold(pol);
 
 	spin_unlock_bh(&pq->hold_queue.lock);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct xfrm_dst *xfrm_create_dummy_bundle(struct net *net,
-						 struct xfrm_flo *xflo,
-						 const struct flowi *fl,
-						 int num_xfrms,
+अटल काष्ठा xfrm_dst *xfrm_create_dummy_bundle(काष्ठा net *net,
+						 काष्ठा xfrm_flo *xflo,
+						 स्थिर काष्ठा flowi *fl,
+						 पूर्णांक num_xfrms,
 						 u16 family)
-{
-	int err;
-	struct net_device *dev;
-	struct dst_entry *dst;
-	struct dst_entry *dst1;
-	struct xfrm_dst *xdst;
+अणु
+	पूर्णांक err;
+	काष्ठा net_device *dev;
+	काष्ठा dst_entry *dst;
+	काष्ठा dst_entry *dst1;
+	काष्ठा xfrm_dst *xdst;
 
 	xdst = xfrm_alloc_dst(net, family);
-	if (IS_ERR(xdst))
-		return xdst;
+	अगर (IS_ERR(xdst))
+		वापस xdst;
 
-	if (!(xflo->flags & XFRM_LOOKUP_QUEUE) ||
+	अगर (!(xflo->flags & XFRM_LOOKUP_QUEUE) ||
 	    net->xfrm.sysctl_larval_drop ||
 	    num_xfrms <= 0)
-		return xdst;
+		वापस xdst;
 
 	dst = xflo->dst_orig;
 	dst1 = &xdst->u.dst;
@@ -2910,7 +2911,7 @@ static struct xfrm_dst *xfrm_create_dummy_bundle(struct net *net,
 
 	dst1->obsolete = DST_OBSOLETE_FORCE_CHK;
 	dst1->flags |= DST_XFRM_QUEUE;
-	dst1->lastuse = jiffies;
+	dst1->lastuse = jअगरfies;
 
 	dst1->input = dst_discard;
 	dst1->output = xdst_queue_output;
@@ -2919,392 +2920,392 @@ static struct xfrm_dst *xfrm_create_dummy_bundle(struct net *net,
 	xfrm_dst_set_child(xdst, dst);
 	xdst->path = dst;
 
-	xfrm_init_path((struct xfrm_dst *)dst1, dst, 0);
+	xfrm_init_path((काष्ठा xfrm_dst *)dst1, dst, 0);
 
 	err = -ENODEV;
 	dev = dst->dev;
-	if (!dev)
-		goto free_dst;
+	अगर (!dev)
+		जाओ मुक्त_dst;
 
 	err = xfrm_fill_dst(xdst, dev, fl);
-	if (err)
-		goto free_dst;
+	अगर (err)
+		जाओ मुक्त_dst;
 
 out:
-	return xdst;
+	वापस xdst;
 
-free_dst:
+मुक्त_dst:
 	dst_release(dst1);
 	xdst = ERR_PTR(err);
-	goto out;
-}
+	जाओ out;
+पूर्ण
 
-static struct xfrm_dst *xfrm_bundle_lookup(struct net *net,
-					   const struct flowi *fl,
+अटल काष्ठा xfrm_dst *xfrm_bundle_lookup(काष्ठा net *net,
+					   स्थिर काष्ठा flowi *fl,
 					   u16 family, u8 dir,
-					   struct xfrm_flo *xflo, u32 if_id)
-{
-	struct xfrm_policy *pols[XFRM_POLICY_TYPE_MAX];
-	int num_pols = 0, num_xfrms = 0, err;
-	struct xfrm_dst *xdst;
+					   काष्ठा xfrm_flo *xflo, u32 अगर_id)
+अणु
+	काष्ठा xfrm_policy *pols[XFRM_POLICY_TYPE_MAX];
+	पूर्णांक num_pols = 0, num_xfrms = 0, err;
+	काष्ठा xfrm_dst *xdst;
 
-	/* Resolve policies to use if we couldn't get them from
+	/* Resolve policies to use अगर we couldn't get them from
 	 * previous cache entry */
 	num_pols = 1;
-	pols[0] = xfrm_policy_lookup(net, fl, family, dir, if_id);
+	pols[0] = xfrm_policy_lookup(net, fl, family, dir, अगर_id);
 	err = xfrm_expand_policies(fl, family, pols,
 					   &num_pols, &num_xfrms);
-	if (err < 0)
-		goto inc_error;
-	if (num_pols == 0)
-		return NULL;
-	if (num_xfrms <= 0)
-		goto make_dummy_bundle;
+	अगर (err < 0)
+		जाओ inc_error;
+	अगर (num_pols == 0)
+		वापस शून्य;
+	अगर (num_xfrms <= 0)
+		जाओ make_dummy_bundle;
 
 	xdst = xfrm_resolve_and_create_bundle(pols, num_pols, fl, family,
 					      xflo->dst_orig);
-	if (IS_ERR(xdst)) {
+	अगर (IS_ERR(xdst)) अणु
 		err = PTR_ERR(xdst);
-		if (err == -EREMOTE) {
+		अगर (err == -EREMOTE) अणु
 			xfrm_pols_put(pols, num_pols);
-			return NULL;
-		}
+			वापस शून्य;
+		पूर्ण
 
-		if (err != -EAGAIN)
-			goto error;
-		goto make_dummy_bundle;
-	} else if (xdst == NULL) {
+		अगर (err != -EAGAIN)
+			जाओ error;
+		जाओ make_dummy_bundle;
+	पूर्ण अन्यथा अगर (xdst == शून्य) अणु
 		num_xfrms = 0;
-		goto make_dummy_bundle;
-	}
+		जाओ make_dummy_bundle;
+	पूर्ण
 
-	return xdst;
+	वापस xdst;
 
 make_dummy_bundle:
 	/* We found policies, but there's no bundles to instantiate:
-	 * either because the policy blocks, has no transformations or
-	 * we could not build template (no xfrm_states).*/
+	 * either because the policy blocks, has no transक्रमmations or
+	 * we could not build ढाँचा (no xfrm_states).*/
 	xdst = xfrm_create_dummy_bundle(net, xflo, fl, num_xfrms, family);
-	if (IS_ERR(xdst)) {
+	अगर (IS_ERR(xdst)) अणु
 		xfrm_pols_put(pols, num_pols);
-		return ERR_CAST(xdst);
-	}
+		वापस ERR_CAST(xdst);
+	पूर्ण
 	xdst->num_pols = num_pols;
 	xdst->num_xfrms = num_xfrms;
-	memcpy(xdst->pols, pols, sizeof(struct xfrm_policy *) * num_pols);
+	स_नकल(xdst->pols, pols, माप(काष्ठा xfrm_policy *) * num_pols);
 
-	return xdst;
+	वापस xdst;
 
 inc_error:
 	XFRM_INC_STATS(net, LINUX_MIB_XFRMOUTPOLERROR);
 error:
 	xfrm_pols_put(pols, num_pols);
-	return ERR_PTR(err);
-}
+	वापस ERR_PTR(err);
+पूर्ण
 
-static struct dst_entry *make_blackhole(struct net *net, u16 family,
-					struct dst_entry *dst_orig)
-{
-	const struct xfrm_policy_afinfo *afinfo = xfrm_policy_get_afinfo(family);
-	struct dst_entry *ret;
+अटल काष्ठा dst_entry *make_blackhole(काष्ठा net *net, u16 family,
+					काष्ठा dst_entry *dst_orig)
+अणु
+	स्थिर काष्ठा xfrm_policy_afinfo *afinfo = xfrm_policy_get_afinfo(family);
+	काष्ठा dst_entry *ret;
 
-	if (!afinfo) {
+	अगर (!afinfo) अणु
 		dst_release(dst_orig);
-		return ERR_PTR(-EINVAL);
-	} else {
+		वापस ERR_PTR(-EINVAL);
+	पूर्ण अन्यथा अणु
 		ret = afinfo->blackhole_route(net, dst_orig);
-	}
-	rcu_read_unlock();
+	पूर्ण
+	rcu_पढ़ो_unlock();
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-/* Finds/creates a bundle for given flow and if_id
+/* Finds/creates a bundle क्रम given flow and अगर_id
  *
  * At the moment we eat a raw IP route. Mostly to speed up lookups
- * on interfaces with disabled IPsec.
+ * on पूर्णांकerfaces with disabled IPsec.
  *
- * xfrm_lookup uses an if_id of 0 by default, and is provided for
+ * xfrm_lookup uses an अगर_id of 0 by शेष, and is provided क्रम
  * compatibility
  */
-struct dst_entry *xfrm_lookup_with_ifid(struct net *net,
-					struct dst_entry *dst_orig,
-					const struct flowi *fl,
-					const struct sock *sk,
-					int flags, u32 if_id)
-{
-	struct xfrm_policy *pols[XFRM_POLICY_TYPE_MAX];
-	struct xfrm_dst *xdst;
-	struct dst_entry *dst, *route;
+काष्ठा dst_entry *xfrm_lookup_with_अगरid(काष्ठा net *net,
+					काष्ठा dst_entry *dst_orig,
+					स्थिर काष्ठा flowi *fl,
+					स्थिर काष्ठा sock *sk,
+					पूर्णांक flags, u32 अगर_id)
+अणु
+	काष्ठा xfrm_policy *pols[XFRM_POLICY_TYPE_MAX];
+	काष्ठा xfrm_dst *xdst;
+	काष्ठा dst_entry *dst, *route;
 	u16 family = dst_orig->ops->family;
 	u8 dir = XFRM_POLICY_OUT;
-	int i, err, num_pols, num_xfrms = 0, drop_pols = 0;
+	पूर्णांक i, err, num_pols, num_xfrms = 0, drop_pols = 0;
 
-	dst = NULL;
-	xdst = NULL;
-	route = NULL;
+	dst = शून्य;
+	xdst = शून्य;
+	route = शून्य;
 
-	sk = sk_const_to_full_sk(sk);
-	if (sk && sk->sk_policy[XFRM_POLICY_OUT]) {
+	sk = sk_स्थिर_to_full_sk(sk);
+	अगर (sk && sk->sk_policy[XFRM_POLICY_OUT]) अणु
 		num_pols = 1;
 		pols[0] = xfrm_sk_policy_lookup(sk, XFRM_POLICY_OUT, fl, family,
-						if_id);
+						अगर_id);
 		err = xfrm_expand_policies(fl, family, pols,
 					   &num_pols, &num_xfrms);
-		if (err < 0)
-			goto dropdst;
+		अगर (err < 0)
+			जाओ dropdst;
 
-		if (num_pols) {
-			if (num_xfrms <= 0) {
+		अगर (num_pols) अणु
+			अगर (num_xfrms <= 0) अणु
 				drop_pols = num_pols;
-				goto no_transform;
-			}
+				जाओ no_transक्रमm;
+			पूर्ण
 
 			xdst = xfrm_resolve_and_create_bundle(
 					pols, num_pols, fl,
 					family, dst_orig);
 
-			if (IS_ERR(xdst)) {
+			अगर (IS_ERR(xdst)) अणु
 				xfrm_pols_put(pols, num_pols);
 				err = PTR_ERR(xdst);
-				if (err == -EREMOTE)
-					goto nopol;
+				अगर (err == -EREMOTE)
+					जाओ nopol;
 
-				goto dropdst;
-			} else if (xdst == NULL) {
+				जाओ dropdst;
+			पूर्ण अन्यथा अगर (xdst == शून्य) अणु
 				num_xfrms = 0;
 				drop_pols = num_pols;
-				goto no_transform;
-			}
+				जाओ no_transक्रमm;
+			पूर्ण
 
 			route = xdst->route;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (xdst == NULL) {
-		struct xfrm_flo xflo;
+	अगर (xdst == शून्य) अणु
+		काष्ठा xfrm_flo xflo;
 
 		xflo.dst_orig = dst_orig;
 		xflo.flags = flags;
 
 		/* To accelerate a bit...  */
-		if (!if_id && ((dst_orig->flags & DST_NOXFRM) ||
+		अगर (!अगर_id && ((dst_orig->flags & DST_NOXFRM) ||
 			       !net->xfrm.policy_count[XFRM_POLICY_OUT]))
-			goto nopol;
+			जाओ nopol;
 
-		xdst = xfrm_bundle_lookup(net, fl, family, dir, &xflo, if_id);
-		if (xdst == NULL)
-			goto nopol;
-		if (IS_ERR(xdst)) {
+		xdst = xfrm_bundle_lookup(net, fl, family, dir, &xflo, अगर_id);
+		अगर (xdst == शून्य)
+			जाओ nopol;
+		अगर (IS_ERR(xdst)) अणु
 			err = PTR_ERR(xdst);
-			goto dropdst;
-		}
+			जाओ dropdst;
+		पूर्ण
 
 		num_pols = xdst->num_pols;
 		num_xfrms = xdst->num_xfrms;
-		memcpy(pols, xdst->pols, sizeof(struct xfrm_policy *) * num_pols);
+		स_नकल(pols, xdst->pols, माप(काष्ठा xfrm_policy *) * num_pols);
 		route = xdst->route;
-	}
+	पूर्ण
 
 	dst = &xdst->u.dst;
-	if (route == NULL && num_xfrms > 0) {
-		/* The only case when xfrm_bundle_lookup() returns a
-		 * bundle with null route, is when the template could
+	अगर (route == शून्य && num_xfrms > 0) अणु
+		/* The only हाल when xfrm_bundle_lookup() वापसs a
+		 * bundle with null route, is when the ढाँचा could
 		 * not be resolved. It means policies are there, but
-		 * bundle could not be created, since we don't yet
-		 * have the xfrm_state's. We need to wait for KM to
+		 * bundle could not be created, since we करोn't yet
+		 * have the xfrm_state's. We need to रुको क्रम KM to
 		 * negotiate new SA's or bail out with error.*/
-		if (net->xfrm.sysctl_larval_drop) {
+		अगर (net->xfrm.sysctl_larval_drop) अणु
 			XFRM_INC_STATS(net, LINUX_MIB_XFRMOUTNOSTATES);
 			err = -EREMOTE;
-			goto error;
-		}
+			जाओ error;
+		पूर्ण
 
 		err = -EAGAIN;
 
 		XFRM_INC_STATS(net, LINUX_MIB_XFRMOUTNOSTATES);
-		goto error;
-	}
+		जाओ error;
+	पूर्ण
 
-no_transform:
-	if (num_pols == 0)
-		goto nopol;
+no_transक्रमm:
+	अगर (num_pols == 0)
+		जाओ nopol;
 
-	if ((flags & XFRM_LOOKUP_ICMP) &&
-	    !(pols[0]->flags & XFRM_POLICY_ICMP)) {
+	अगर ((flags & XFRM_LOOKUP_ICMP) &&
+	    !(pols[0]->flags & XFRM_POLICY_ICMP)) अणु
 		err = -ENOENT;
-		goto error;
-	}
+		जाओ error;
+	पूर्ण
 
-	for (i = 0; i < num_pols; i++)
-		pols[i]->curlft.use_time = ktime_get_real_seconds();
+	क्रम (i = 0; i < num_pols; i++)
+		pols[i]->curlft.use_समय = kसमय_get_real_seconds();
 
-	if (num_xfrms < 0) {
+	अगर (num_xfrms < 0) अणु
 		/* Prohibit the flow */
 		XFRM_INC_STATS(net, LINUX_MIB_XFRMOUTPOLBLOCK);
 		err = -EPERM;
-		goto error;
-	} else if (num_xfrms > 0) {
-		/* Flow transformed */
+		जाओ error;
+	पूर्ण अन्यथा अगर (num_xfrms > 0) अणु
+		/* Flow transक्रमmed */
 		dst_release(dst_orig);
-	} else {
-		/* Flow passes untransformed */
+	पूर्ण अन्यथा अणु
+		/* Flow passes untransक्रमmed */
 		dst_release(dst);
 		dst = dst_orig;
-	}
+	पूर्ण
 ok:
 	xfrm_pols_put(pols, drop_pols);
-	if (dst && dst->xfrm &&
+	अगर (dst && dst->xfrm &&
 	    dst->xfrm->props.mode == XFRM_MODE_TUNNEL)
 		dst->flags |= DST_XFRM_TUNNEL;
-	return dst;
+	वापस dst;
 
 nopol:
-	if (!(flags & XFRM_LOOKUP_ICMP)) {
+	अगर (!(flags & XFRM_LOOKUP_ICMP)) अणु
 		dst = dst_orig;
-		goto ok;
-	}
+		जाओ ok;
+	पूर्ण
 	err = -ENOENT;
 error:
 	dst_release(dst);
 dropdst:
-	if (!(flags & XFRM_LOOKUP_KEEP_DST_REF))
+	अगर (!(flags & XFRM_LOOKUP_KEEP_DST_REF))
 		dst_release(dst_orig);
 	xfrm_pols_put(pols, drop_pols);
-	return ERR_PTR(err);
-}
-EXPORT_SYMBOL(xfrm_lookup_with_ifid);
+	वापस ERR_PTR(err);
+पूर्ण
+EXPORT_SYMBOL(xfrm_lookup_with_अगरid);
 
-/* Main function: finds/creates a bundle for given flow.
+/* Main function: finds/creates a bundle क्रम given flow.
  *
  * At the moment we eat a raw IP route. Mostly to speed up lookups
- * on interfaces with disabled IPsec.
+ * on पूर्णांकerfaces with disabled IPsec.
  */
-struct dst_entry *xfrm_lookup(struct net *net, struct dst_entry *dst_orig,
-			      const struct flowi *fl, const struct sock *sk,
-			      int flags)
-{
-	return xfrm_lookup_with_ifid(net, dst_orig, fl, sk, flags, 0);
-}
+काष्ठा dst_entry *xfrm_lookup(काष्ठा net *net, काष्ठा dst_entry *dst_orig,
+			      स्थिर काष्ठा flowi *fl, स्थिर काष्ठा sock *sk,
+			      पूर्णांक flags)
+अणु
+	वापस xfrm_lookup_with_अगरid(net, dst_orig, fl, sk, flags, 0);
+पूर्ण
 EXPORT_SYMBOL(xfrm_lookup);
 
 /* Callers of xfrm_lookup_route() must ensure a call to dst_output().
  * Otherwise we may send out blackholed packets.
  */
-struct dst_entry *xfrm_lookup_route(struct net *net, struct dst_entry *dst_orig,
-				    const struct flowi *fl,
-				    const struct sock *sk, int flags)
-{
-	struct dst_entry *dst = xfrm_lookup(net, dst_orig, fl, sk,
+काष्ठा dst_entry *xfrm_lookup_route(काष्ठा net *net, काष्ठा dst_entry *dst_orig,
+				    स्थिर काष्ठा flowi *fl,
+				    स्थिर काष्ठा sock *sk, पूर्णांक flags)
+अणु
+	काष्ठा dst_entry *dst = xfrm_lookup(net, dst_orig, fl, sk,
 					    flags | XFRM_LOOKUP_QUEUE |
 					    XFRM_LOOKUP_KEEP_DST_REF);
 
-	if (PTR_ERR(dst) == -EREMOTE)
-		return make_blackhole(net, dst_orig->ops->family, dst_orig);
+	अगर (PTR_ERR(dst) == -EREMOTE)
+		वापस make_blackhole(net, dst_orig->ops->family, dst_orig);
 
-	if (IS_ERR(dst))
+	अगर (IS_ERR(dst))
 		dst_release(dst_orig);
 
-	return dst;
-}
+	वापस dst;
+पूर्ण
 EXPORT_SYMBOL(xfrm_lookup_route);
 
-static inline int
-xfrm_secpath_reject(int idx, struct sk_buff *skb, const struct flowi *fl)
-{
-	struct sec_path *sp = skb_sec_path(skb);
-	struct xfrm_state *x;
+अटल अंतरभूत पूर्णांक
+xfrm_secpath_reject(पूर्णांक idx, काष्ठा sk_buff *skb, स्थिर काष्ठा flowi *fl)
+अणु
+	काष्ठा sec_path *sp = skb_sec_path(skb);
+	काष्ठा xfrm_state *x;
 
-	if (!sp || idx < 0 || idx >= sp->len)
-		return 0;
+	अगर (!sp || idx < 0 || idx >= sp->len)
+		वापस 0;
 	x = sp->xvec[idx];
-	if (!x->type->reject)
-		return 0;
-	return x->type->reject(x, skb, fl);
-}
+	अगर (!x->type->reject)
+		वापस 0;
+	वापस x->type->reject(x, skb, fl);
+पूर्ण
 
-/* When skb is transformed back to its "native" form, we have to
+/* When skb is transक्रमmed back to its "native" क्रमm, we have to
  * check policy restrictions. At the moment we make this in maximally
  * stupid way. Shame on me. :-) Of course, connected sockets must
  * have policy cached at them.
  */
 
-static inline int
-xfrm_state_ok(const struct xfrm_tmpl *tmpl, const struct xfrm_state *x,
-	      unsigned short family)
-{
-	if (xfrm_state_kern(x))
-		return tmpl->optional && !xfrm_state_addr_cmp(tmpl, x, tmpl->encap_family);
-	return	x->id.proto == tmpl->id.proto &&
-		(x->id.spi == tmpl->id.spi || !tmpl->id.spi) &&
-		(x->props.reqid == tmpl->reqid || !tmpl->reqid) &&
-		x->props.mode == tmpl->mode &&
-		(tmpl->allalgs || (tmpl->aalgos & (1<<x->props.aalgo)) ||
-		 !(xfrm_id_proto_match(tmpl->id.proto, IPSEC_PROTO_ANY))) &&
+अटल अंतरभूत पूर्णांक
+xfrm_state_ok(स्थिर काष्ठा xfrm_पंचांगpl *पंचांगpl, स्थिर काष्ठा xfrm_state *x,
+	      अचिन्हित लघु family)
+अणु
+	अगर (xfrm_state_kern(x))
+		वापस पंचांगpl->optional && !xfrm_state_addr_cmp(पंचांगpl, x, पंचांगpl->encap_family);
+	वापस	x->id.proto == पंचांगpl->id.proto &&
+		(x->id.spi == पंचांगpl->id.spi || !पंचांगpl->id.spi) &&
+		(x->props.reqid == पंचांगpl->reqid || !पंचांगpl->reqid) &&
+		x->props.mode == पंचांगpl->mode &&
+		(पंचांगpl->allalgs || (पंचांगpl->aalgos & (1<<x->props.aalgo)) ||
+		 !(xfrm_id_proto_match(पंचांगpl->id.proto, IPSEC_PROTO_ANY))) &&
 		!(x->props.mode != XFRM_MODE_TRANSPORT &&
-		  xfrm_state_addr_cmp(tmpl, x, family));
-}
+		  xfrm_state_addr_cmp(पंचांगpl, x, family));
+पूर्ण
 
 /*
- * 0 or more than 0 is returned when validation is succeeded (either bypass
+ * 0 or more than 0 is वापसed when validation is succeeded (either bypass
  * because of optional transport mode, or next index of the mathced secpath
- * state with the template.
- * -1 is returned when no matching template is found.
- * Otherwise "-2 - errored_index" is returned.
+ * state with the ढाँचा.
+ * -1 is वापसed when no matching ढाँचा is found.
+ * Otherwise "-2 - errored_index" is वापसed.
  */
-static inline int
-xfrm_policy_ok(const struct xfrm_tmpl *tmpl, const struct sec_path *sp, int start,
-	       unsigned short family)
-{
-	int idx = start;
+अटल अंतरभूत पूर्णांक
+xfrm_policy_ok(स्थिर काष्ठा xfrm_पंचांगpl *पंचांगpl, स्थिर काष्ठा sec_path *sp, पूर्णांक start,
+	       अचिन्हित लघु family)
+अणु
+	पूर्णांक idx = start;
 
-	if (tmpl->optional) {
-		if (tmpl->mode == XFRM_MODE_TRANSPORT)
-			return start;
-	} else
+	अगर (पंचांगpl->optional) अणु
+		अगर (पंचांगpl->mode == XFRM_MODE_TRANSPORT)
+			वापस start;
+	पूर्ण अन्यथा
 		start = -1;
-	for (; idx < sp->len; idx++) {
-		if (xfrm_state_ok(tmpl, sp->xvec[idx], family))
-			return ++idx;
-		if (sp->xvec[idx]->props.mode != XFRM_MODE_TRANSPORT) {
-			if (start == -1)
+	क्रम (; idx < sp->len; idx++) अणु
+		अगर (xfrm_state_ok(पंचांगpl, sp->xvec[idx], family))
+			वापस ++idx;
+		अगर (sp->xvec[idx]->props.mode != XFRM_MODE_TRANSPORT) अणु
+			अगर (start == -1)
 				start = -2-idx;
-			break;
-		}
-	}
-	return start;
-}
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	वापस start;
+पूर्ण
 
-static void
-decode_session4(struct sk_buff *skb, struct flowi *fl, bool reverse)
-{
-	const struct iphdr *iph = ip_hdr(skb);
-	int ihl = iph->ihl;
+अटल व्योम
+decode_session4(काष्ठा sk_buff *skb, काष्ठा flowi *fl, bool reverse)
+अणु
+	स्थिर काष्ठा iphdr *iph = ip_hdr(skb);
+	पूर्णांक ihl = iph->ihl;
 	u8 *xprth = skb_network_header(skb) + ihl * 4;
-	struct flowi4 *fl4 = &fl->u.ip4;
-	int oif = 0;
+	काष्ठा flowi4 *fl4 = &fl->u.ip4;
+	पूर्णांक oअगर = 0;
 
-	if (skb_dst(skb) && skb_dst(skb)->dev)
-		oif = skb_dst(skb)->dev->ifindex;
+	अगर (skb_dst(skb) && skb_dst(skb)->dev)
+		oअगर = skb_dst(skb)->dev->अगरindex;
 
-	memset(fl4, 0, sizeof(struct flowi4));
+	स_रखो(fl4, 0, माप(काष्ठा flowi4));
 	fl4->flowi4_mark = skb->mark;
-	fl4->flowi4_oif = reverse ? skb->skb_iif : oif;
+	fl4->flowi4_oअगर = reverse ? skb->skb_iअगर : oअगर;
 
 	fl4->flowi4_proto = iph->protocol;
 	fl4->daddr = reverse ? iph->saddr : iph->daddr;
 	fl4->saddr = reverse ? iph->daddr : iph->saddr;
 	fl4->flowi4_tos = iph->tos;
 
-	if (!ip_is_fragment(iph)) {
-		switch (iph->protocol) {
-		case IPPROTO_UDP:
-		case IPPROTO_UDPLITE:
-		case IPPROTO_TCP:
-		case IPPROTO_SCTP:
-		case IPPROTO_DCCP:
-			if (xprth + 4 < skb->data ||
-			    pskb_may_pull(skb, xprth + 4 - skb->data)) {
+	अगर (!ip_is_fragment(iph)) अणु
+		चयन (iph->protocol) अणु
+		हाल IPPROTO_UDP:
+		हाल IPPROTO_UDPLITE:
+		हाल IPPROTO_TCP:
+		हाल IPPROTO_SCTP:
+		हाल IPPROTO_DCCP:
+			अगर (xprth + 4 < skb->data ||
+			    pskb_may_pull(skb, xprth + 4 - skb->data)) अणु
 				__be16 *ports;
 
 				xprth = skb_network_header(skb) + ihl * 4;
@@ -3312,11 +3313,11 @@ decode_session4(struct sk_buff *skb, struct flowi *fl, bool reverse)
 
 				fl4->fl4_sport = ports[!!reverse];
 				fl4->fl4_dport = ports[!reverse];
-			}
-			break;
-		case IPPROTO_ICMP:
-			if (xprth + 2 < skb->data ||
-			    pskb_may_pull(skb, xprth + 2 - skb->data)) {
+			पूर्ण
+			अवरोध;
+		हाल IPPROTO_ICMP:
+			अगर (xprth + 2 < skb->data ||
+			    pskb_may_pull(skb, xprth + 2 - skb->data)) अणु
 				u8 *icmp;
 
 				xprth = skb_network_header(skb) + ihl * 4;
@@ -3324,11 +3325,11 @@ decode_session4(struct sk_buff *skb, struct flowi *fl, bool reverse)
 
 				fl4->fl4_icmp_type = icmp[0];
 				fl4->fl4_icmp_code = icmp[1];
-			}
-			break;
-		case IPPROTO_GRE:
-			if (xprth + 12 < skb->data ||
-			    pskb_may_pull(skb, xprth + 12 - skb->data)) {
+			पूर्ण
+			अवरोध;
+		हाल IPPROTO_GRE:
+			अगर (xprth + 12 < skb->data ||
+			    pskb_may_pull(skb, xprth + 12 - skb->data)) अणु
 				__be16 *greflags;
 				__be32 *gre_hdr;
 
@@ -3336,349 +3337,349 @@ decode_session4(struct sk_buff *skb, struct flowi *fl, bool reverse)
 				greflags = (__be16 *)xprth;
 				gre_hdr = (__be32 *)xprth;
 
-				if (greflags[0] & GRE_KEY) {
-					if (greflags[0] & GRE_CSUM)
+				अगर (greflags[0] & GRE_KEY) अणु
+					अगर (greflags[0] & GRE_CSUM)
 						gre_hdr++;
 					fl4->fl4_gre_key = gre_hdr[1];
-				}
-			}
-			break;
-		default:
-			break;
-		}
-	}
-}
+				पूर्ण
+			पूर्ण
+			अवरोध;
+		शेष:
+			अवरोध;
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-#if IS_ENABLED(CONFIG_IPV6)
-static void
-decode_session6(struct sk_buff *skb, struct flowi *fl, bool reverse)
-{
-	struct flowi6 *fl6 = &fl->u.ip6;
-	int onlyproto = 0;
-	const struct ipv6hdr *hdr = ipv6_hdr(skb);
-	u32 offset = sizeof(*hdr);
-	struct ipv6_opt_hdr *exthdr;
-	const unsigned char *nh = skb_network_header(skb);
+#अगर IS_ENABLED(CONFIG_IPV6)
+अटल व्योम
+decode_session6(काष्ठा sk_buff *skb, काष्ठा flowi *fl, bool reverse)
+अणु
+	काष्ठा flowi6 *fl6 = &fl->u.ip6;
+	पूर्णांक onlyproto = 0;
+	स्थिर काष्ठा ipv6hdr *hdr = ipv6_hdr(skb);
+	u32 offset = माप(*hdr);
+	काष्ठा ipv6_opt_hdr *exthdr;
+	स्थिर अचिन्हित अक्षर *nh = skb_network_header(skb);
 	u16 nhoff = IP6CB(skb)->nhoff;
-	int oif = 0;
+	पूर्णांक oअगर = 0;
 	u8 nexthdr;
 
-	if (!nhoff)
-		nhoff = offsetof(struct ipv6hdr, nexthdr);
+	अगर (!nhoff)
+		nhoff = दुरत्व(काष्ठा ipv6hdr, nexthdr);
 
 	nexthdr = nh[nhoff];
 
-	if (skb_dst(skb) && skb_dst(skb)->dev)
-		oif = skb_dst(skb)->dev->ifindex;
+	अगर (skb_dst(skb) && skb_dst(skb)->dev)
+		oअगर = skb_dst(skb)->dev->अगरindex;
 
-	memset(fl6, 0, sizeof(struct flowi6));
+	स_रखो(fl6, 0, माप(काष्ठा flowi6));
 	fl6->flowi6_mark = skb->mark;
-	fl6->flowi6_oif = reverse ? skb->skb_iif : oif;
+	fl6->flowi6_oअगर = reverse ? skb->skb_iअगर : oअगर;
 
 	fl6->daddr = reverse ? hdr->saddr : hdr->daddr;
 	fl6->saddr = reverse ? hdr->daddr : hdr->saddr;
 
-	while (nh + offset + sizeof(*exthdr) < skb->data ||
-	       pskb_may_pull(skb, nh + offset + sizeof(*exthdr) - skb->data)) {
+	जबतक (nh + offset + माप(*exthdr) < skb->data ||
+	       pskb_may_pull(skb, nh + offset + माप(*exthdr) - skb->data)) अणु
 		nh = skb_network_header(skb);
-		exthdr = (struct ipv6_opt_hdr *)(nh + offset);
+		exthdr = (काष्ठा ipv6_opt_hdr *)(nh + offset);
 
-		switch (nexthdr) {
-		case NEXTHDR_FRAGMENT:
+		चयन (nexthdr) अणु
+		हाल NEXTHDR_FRAGMENT:
 			onlyproto = 1;
 			fallthrough;
-		case NEXTHDR_ROUTING:
-		case NEXTHDR_HOP:
-		case NEXTHDR_DEST:
+		हाल NEXTHDR_ROUTING:
+		हाल NEXTHDR_HOP:
+		हाल NEXTHDR_DEST:
 			offset += ipv6_optlen(exthdr);
 			nexthdr = exthdr->nexthdr;
-			exthdr = (struct ipv6_opt_hdr *)(nh + offset);
-			break;
-		case IPPROTO_UDP:
-		case IPPROTO_UDPLITE:
-		case IPPROTO_TCP:
-		case IPPROTO_SCTP:
-		case IPPROTO_DCCP:
-			if (!onlyproto && (nh + offset + 4 < skb->data ||
-			     pskb_may_pull(skb, nh + offset + 4 - skb->data))) {
+			exthdr = (काष्ठा ipv6_opt_hdr *)(nh + offset);
+			अवरोध;
+		हाल IPPROTO_UDP:
+		हाल IPPROTO_UDPLITE:
+		हाल IPPROTO_TCP:
+		हाल IPPROTO_SCTP:
+		हाल IPPROTO_DCCP:
+			अगर (!onlyproto && (nh + offset + 4 < skb->data ||
+			     pskb_may_pull(skb, nh + offset + 4 - skb->data))) अणु
 				__be16 *ports;
 
 				nh = skb_network_header(skb);
 				ports = (__be16 *)(nh + offset);
 				fl6->fl6_sport = ports[!!reverse];
 				fl6->fl6_dport = ports[!reverse];
-			}
+			पूर्ण
 			fl6->flowi6_proto = nexthdr;
-			return;
-		case IPPROTO_ICMPV6:
-			if (!onlyproto && (nh + offset + 2 < skb->data ||
-			    pskb_may_pull(skb, nh + offset + 2 - skb->data))) {
+			वापस;
+		हाल IPPROTO_ICMPV6:
+			अगर (!onlyproto && (nh + offset + 2 < skb->data ||
+			    pskb_may_pull(skb, nh + offset + 2 - skb->data))) अणु
 				u8 *icmp;
 
 				nh = skb_network_header(skb);
 				icmp = (u8 *)(nh + offset);
 				fl6->fl6_icmp_type = icmp[0];
 				fl6->fl6_icmp_code = icmp[1];
-			}
+			पूर्ण
 			fl6->flowi6_proto = nexthdr;
-			return;
-#if IS_ENABLED(CONFIG_IPV6_MIP6)
-		case IPPROTO_MH:
+			वापस;
+#अगर IS_ENABLED(CONFIG_IPV6_MIP6)
+		हाल IPPROTO_MH:
 			offset += ipv6_optlen(exthdr);
-			if (!onlyproto && (nh + offset + 3 < skb->data ||
-			    pskb_may_pull(skb, nh + offset + 3 - skb->data))) {
-				struct ip6_mh *mh;
+			अगर (!onlyproto && (nh + offset + 3 < skb->data ||
+			    pskb_may_pull(skb, nh + offset + 3 - skb->data))) अणु
+				काष्ठा ip6_mh *mh;
 
 				nh = skb_network_header(skb);
-				mh = (struct ip6_mh *)(nh + offset);
+				mh = (काष्ठा ip6_mh *)(nh + offset);
 				fl6->fl6_mh_type = mh->ip6mh_type;
-			}
+			पूर्ण
 			fl6->flowi6_proto = nexthdr;
-			return;
-#endif
-		default:
+			वापस;
+#पूर्ण_अगर
+		शेष:
 			fl6->flowi6_proto = nexthdr;
-			return;
-		}
-	}
-}
-#endif
+			वापस;
+		पूर्ण
+	पूर्ण
+पूर्ण
+#पूर्ण_अगर
 
-int __xfrm_decode_session(struct sk_buff *skb, struct flowi *fl,
-			  unsigned int family, int reverse)
-{
-	switch (family) {
-	case AF_INET:
+पूर्णांक __xfrm_decode_session(काष्ठा sk_buff *skb, काष्ठा flowi *fl,
+			  अचिन्हित पूर्णांक family, पूर्णांक reverse)
+अणु
+	चयन (family) अणु
+	हाल AF_INET:
 		decode_session4(skb, fl, reverse);
-		break;
-#if IS_ENABLED(CONFIG_IPV6)
-	case AF_INET6:
+		अवरोध;
+#अगर IS_ENABLED(CONFIG_IPV6)
+	हाल AF_INET6:
 		decode_session6(skb, fl, reverse);
-		break;
-#endif
-	default:
-		return -EAFNOSUPPORT;
-	}
+		अवरोध;
+#पूर्ण_अगर
+	शेष:
+		वापस -EAFNOSUPPORT;
+	पूर्ण
 
-	return security_xfrm_decode_session(skb, &fl->flowi_secid);
-}
+	वापस security_xfrm_decode_session(skb, &fl->flowi_secid);
+पूर्ण
 EXPORT_SYMBOL(__xfrm_decode_session);
 
-static inline int secpath_has_nontransport(const struct sec_path *sp, int k, int *idxp)
-{
-	for (; k < sp->len; k++) {
-		if (sp->xvec[k]->props.mode != XFRM_MODE_TRANSPORT) {
+अटल अंतरभूत पूर्णांक secpath_has_nontransport(स्थिर काष्ठा sec_path *sp, पूर्णांक k, पूर्णांक *idxp)
+अणु
+	क्रम (; k < sp->len; k++) अणु
+		अगर (sp->xvec[k]->props.mode != XFRM_MODE_TRANSPORT) अणु
 			*idxp = k;
-			return 1;
-		}
-	}
+			वापस 1;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int __xfrm_policy_check(struct sock *sk, int dir, struct sk_buff *skb,
-			unsigned short family)
-{
-	struct net *net = dev_net(skb->dev);
-	struct xfrm_policy *pol;
-	struct xfrm_policy *pols[XFRM_POLICY_TYPE_MAX];
-	int npols = 0;
-	int xfrm_nr;
-	int pi;
-	int reverse;
-	struct flowi fl;
-	int xerr_idx = -1;
-	const struct xfrm_if_cb *ifcb;
-	struct sec_path *sp;
-	struct xfrm_if *xi;
-	u32 if_id = 0;
+पूर्णांक __xfrm_policy_check(काष्ठा sock *sk, पूर्णांक dir, काष्ठा sk_buff *skb,
+			अचिन्हित लघु family)
+अणु
+	काष्ठा net *net = dev_net(skb->dev);
+	काष्ठा xfrm_policy *pol;
+	काष्ठा xfrm_policy *pols[XFRM_POLICY_TYPE_MAX];
+	पूर्णांक npols = 0;
+	पूर्णांक xfrm_nr;
+	पूर्णांक pi;
+	पूर्णांक reverse;
+	काष्ठा flowi fl;
+	पूर्णांक xerr_idx = -1;
+	स्थिर काष्ठा xfrm_अगर_cb *अगरcb;
+	काष्ठा sec_path *sp;
+	काष्ठा xfrm_अगर *xi;
+	u32 अगर_id = 0;
 
-	rcu_read_lock();
-	ifcb = xfrm_if_get_cb();
+	rcu_पढ़ो_lock();
+	अगरcb = xfrm_अगर_get_cb();
 
-	if (ifcb) {
-		xi = ifcb->decode_session(skb, family);
-		if (xi) {
-			if_id = xi->p.if_id;
+	अगर (अगरcb) अणु
+		xi = अगरcb->decode_session(skb, family);
+		अगर (xi) अणु
+			अगर_id = xi->p.अगर_id;
 			net = xi->net;
-		}
-	}
-	rcu_read_unlock();
+		पूर्ण
+	पूर्ण
+	rcu_पढ़ो_unlock();
 
 	reverse = dir & ~XFRM_POLICY_MASK;
 	dir &= XFRM_POLICY_MASK;
 
-	if (__xfrm_decode_session(skb, &fl, family, reverse) < 0) {
+	अगर (__xfrm_decode_session(skb, &fl, family, reverse) < 0) अणु
 		XFRM_INC_STATS(net, LINUX_MIB_XFRMINHDRERROR);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	nf_nat_decode_session(skb, &fl, family);
 
 	/* First, check used SA against their selectors. */
 	sp = skb_sec_path(skb);
-	if (sp) {
-		int i;
+	अगर (sp) अणु
+		पूर्णांक i;
 
-		for (i = sp->len - 1; i >= 0; i--) {
-			struct xfrm_state *x = sp->xvec[i];
-			if (!xfrm_selector_match(&x->sel, &fl, family)) {
+		क्रम (i = sp->len - 1; i >= 0; i--) अणु
+			काष्ठा xfrm_state *x = sp->xvec[i];
+			अगर (!xfrm_selector_match(&x->sel, &fl, family)) अणु
 				XFRM_INC_STATS(net, LINUX_MIB_XFRMINSTATEMISMATCH);
-				return 0;
-			}
-		}
-	}
+				वापस 0;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	pol = NULL;
+	pol = शून्य;
 	sk = sk_to_full_sk(sk);
-	if (sk && sk->sk_policy[dir]) {
-		pol = xfrm_sk_policy_lookup(sk, dir, &fl, family, if_id);
-		if (IS_ERR(pol)) {
+	अगर (sk && sk->sk_policy[dir]) अणु
+		pol = xfrm_sk_policy_lookup(sk, dir, &fl, family, अगर_id);
+		अगर (IS_ERR(pol)) अणु
 			XFRM_INC_STATS(net, LINUX_MIB_XFRMINPOLERROR);
-			return 0;
-		}
-	}
+			वापस 0;
+		पूर्ण
+	पूर्ण
 
-	if (!pol)
-		pol = xfrm_policy_lookup(net, &fl, family, dir, if_id);
+	अगर (!pol)
+		pol = xfrm_policy_lookup(net, &fl, family, dir, अगर_id);
 
-	if (IS_ERR(pol)) {
+	अगर (IS_ERR(pol)) अणु
 		XFRM_INC_STATS(net, LINUX_MIB_XFRMINPOLERROR);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	if (!pol) {
-		if (sp && secpath_has_nontransport(sp, 0, &xerr_idx)) {
+	अगर (!pol) अणु
+		अगर (sp && secpath_has_nontransport(sp, 0, &xerr_idx)) अणु
 			xfrm_secpath_reject(xerr_idx, skb, &fl);
 			XFRM_INC_STATS(net, LINUX_MIB_XFRMINNOPOLS);
-			return 0;
-		}
-		return 1;
-	}
+			वापस 0;
+		पूर्ण
+		वापस 1;
+	पूर्ण
 
-	pol->curlft.use_time = ktime_get_real_seconds();
+	pol->curlft.use_समय = kसमय_get_real_seconds();
 
 	pols[0] = pol;
 	npols++;
-#ifdef CONFIG_XFRM_SUB_POLICY
-	if (pols[0]->type != XFRM_POLICY_TYPE_MAIN) {
+#अगर_घोषित CONFIG_XFRM_SUB_POLICY
+	अगर (pols[0]->type != XFRM_POLICY_TYPE_MAIN) अणु
 		pols[1] = xfrm_policy_lookup_bytype(net, XFRM_POLICY_TYPE_MAIN,
 						    &fl, family,
-						    XFRM_POLICY_IN, if_id);
-		if (pols[1]) {
-			if (IS_ERR(pols[1])) {
+						    XFRM_POLICY_IN, अगर_id);
+		अगर (pols[1]) अणु
+			अगर (IS_ERR(pols[1])) अणु
 				XFRM_INC_STATS(net, LINUX_MIB_XFRMINPOLERROR);
-				return 0;
-			}
-			pols[1]->curlft.use_time = ktime_get_real_seconds();
+				वापस 0;
+			पूर्ण
+			pols[1]->curlft.use_समय = kसमय_get_real_seconds();
 			npols++;
-		}
-	}
-#endif
+		पूर्ण
+	पूर्ण
+#पूर्ण_अगर
 
-	if (pol->action == XFRM_POLICY_ALLOW) {
-		static struct sec_path dummy;
-		struct xfrm_tmpl *tp[XFRM_MAX_DEPTH];
-		struct xfrm_tmpl *stp[XFRM_MAX_DEPTH];
-		struct xfrm_tmpl **tpp = tp;
-		int ti = 0;
-		int i, k;
+	अगर (pol->action == XFRM_POLICY_ALLOW) अणु
+		अटल काष्ठा sec_path dummy;
+		काष्ठा xfrm_पंचांगpl *tp[XFRM_MAX_DEPTH];
+		काष्ठा xfrm_पंचांगpl *stp[XFRM_MAX_DEPTH];
+		काष्ठा xfrm_पंचांगpl **tpp = tp;
+		पूर्णांक ti = 0;
+		पूर्णांक i, k;
 
 		sp = skb_sec_path(skb);
-		if (!sp)
+		अगर (!sp)
 			sp = &dummy;
 
-		for (pi = 0; pi < npols; pi++) {
-			if (pols[pi] != pol &&
-			    pols[pi]->action != XFRM_POLICY_ALLOW) {
+		क्रम (pi = 0; pi < npols; pi++) अणु
+			अगर (pols[pi] != pol &&
+			    pols[pi]->action != XFRM_POLICY_ALLOW) अणु
 				XFRM_INC_STATS(net, LINUX_MIB_XFRMINPOLBLOCK);
-				goto reject;
-			}
-			if (ti + pols[pi]->xfrm_nr >= XFRM_MAX_DEPTH) {
+				जाओ reject;
+			पूर्ण
+			अगर (ti + pols[pi]->xfrm_nr >= XFRM_MAX_DEPTH) अणु
 				XFRM_INC_STATS(net, LINUX_MIB_XFRMINBUFFERERROR);
-				goto reject_error;
-			}
-			for (i = 0; i < pols[pi]->xfrm_nr; i++)
+				जाओ reject_error;
+			पूर्ण
+			क्रम (i = 0; i < pols[pi]->xfrm_nr; i++)
 				tpp[ti++] = &pols[pi]->xfrm_vec[i];
-		}
+		पूर्ण
 		xfrm_nr = ti;
-		if (npols > 1) {
-			xfrm_tmpl_sort(stp, tpp, xfrm_nr, family);
+		अगर (npols > 1) अणु
+			xfrm_पंचांगpl_sort(stp, tpp, xfrm_nr, family);
 			tpp = stp;
-		}
+		पूर्ण
 
-		/* For each tunnel xfrm, find the first matching tmpl.
-		 * For each tmpl before that, find corresponding xfrm.
+		/* For each tunnel xfrm, find the first matching पंचांगpl.
+		 * For each पंचांगpl beक्रमe that, find corresponding xfrm.
 		 * Order is _important_. Later we will implement
 		 * some barriers, but at the moment barriers
-		 * are implied between each two transformations.
+		 * are implied between each two transक्रमmations.
 		 */
-		for (i = xfrm_nr-1, k = 0; i >= 0; i--) {
+		क्रम (i = xfrm_nr-1, k = 0; i >= 0; i--) अणु
 			k = xfrm_policy_ok(tpp[i], sp, k, family);
-			if (k < 0) {
-				if (k < -1)
-					/* "-2 - errored_index" returned */
+			अगर (k < 0) अणु
+				अगर (k < -1)
+					/* "-2 - errored_index" वापसed */
 					xerr_idx = -(2+k);
 				XFRM_INC_STATS(net, LINUX_MIB_XFRMINTMPLMISMATCH);
-				goto reject;
-			}
-		}
+				जाओ reject;
+			पूर्ण
+		पूर्ण
 
-		if (secpath_has_nontransport(sp, k, &xerr_idx)) {
+		अगर (secpath_has_nontransport(sp, k, &xerr_idx)) अणु
 			XFRM_INC_STATS(net, LINUX_MIB_XFRMINTMPLMISMATCH);
-			goto reject;
-		}
+			जाओ reject;
+		पूर्ण
 
 		xfrm_pols_put(pols, npols);
-		return 1;
-	}
+		वापस 1;
+	पूर्ण
 	XFRM_INC_STATS(net, LINUX_MIB_XFRMINPOLBLOCK);
 
 reject:
 	xfrm_secpath_reject(xerr_idx, skb, &fl);
 reject_error:
 	xfrm_pols_put(pols, npols);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(__xfrm_policy_check);
 
-int __xfrm_route_forward(struct sk_buff *skb, unsigned short family)
-{
-	struct net *net = dev_net(skb->dev);
-	struct flowi fl;
-	struct dst_entry *dst;
-	int res = 1;
+पूर्णांक __xfrm_route_क्रमward(काष्ठा sk_buff *skb, अचिन्हित लघु family)
+अणु
+	काष्ठा net *net = dev_net(skb->dev);
+	काष्ठा flowi fl;
+	काष्ठा dst_entry *dst;
+	पूर्णांक res = 1;
 
-	if (xfrm_decode_session(skb, &fl, family) < 0) {
+	अगर (xfrm_decode_session(skb, &fl, family) < 0) अणु
 		XFRM_INC_STATS(net, LINUX_MIB_XFRMFWDHDRERROR);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	skb_dst_force(skb);
-	if (!skb_dst(skb)) {
+	skb_dst_क्रमce(skb);
+	अगर (!skb_dst(skb)) अणु
 		XFRM_INC_STATS(net, LINUX_MIB_XFRMFWDHDRERROR);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	dst = xfrm_lookup(net, skb_dst(skb), &fl, NULL, XFRM_LOOKUP_QUEUE);
-	if (IS_ERR(dst)) {
+	dst = xfrm_lookup(net, skb_dst(skb), &fl, शून्य, XFRM_LOOKUP_QUEUE);
+	अगर (IS_ERR(dst)) अणु
 		res = 0;
-		dst = NULL;
-	}
+		dst = शून्य;
+	पूर्ण
 	skb_dst_set(skb, dst);
-	return res;
-}
-EXPORT_SYMBOL(__xfrm_route_forward);
+	वापस res;
+पूर्ण
+EXPORT_SYMBOL(__xfrm_route_क्रमward);
 
 /* Optimize later using cookies and generation ids. */
 
-static struct dst_entry *xfrm_dst_check(struct dst_entry *dst, u32 cookie)
-{
+अटल काष्ठा dst_entry *xfrm_dst_check(काष्ठा dst_entry *dst, u32 cookie)
+अणु
 	/* Code (such as __xfrm4_bundle_create()) sets dst->obsolete
-	 * to DST_OBSOLETE_FORCE_CHK to force all XFRM destinations to
-	 * get validated by dst_ops->check on every use.  We do this
+	 * to DST_OBSOLETE_FORCE_CHK to क्रमce all XFRM destinations to
+	 * get validated by dst_ops->check on every use.  We करो this
 	 * because when a normal route referenced by an XFRM dst is
-	 * obsoleted we do not go looking around for all parent
+	 * obsoleted we करो not go looking around क्रम all parent
 	 * referencing XFRM dsts so that we can invalidate them.  It
 	 * is just too much work.  Instead we make the checks here on
 	 * every use.  For example:
@@ -3690,54 +3691,54 @@ static struct dst_entry *xfrm_dst_check(struct dst_entry *dst, u32 cookie)
 	 * notice.  That's what we are validating here via the
 	 * stale_bundle() check.
 	 *
-	 * When a dst is removed from the fib tree, DST_OBSOLETE_DEAD will
+	 * When a dst is हटाओd from the fib tree, DST_OBSOLETE_DEAD will
 	 * be marked on it.
-	 * This will force stale_bundle() to fail on any xdst bundle with
+	 * This will क्रमce stale_bundle() to fail on any xdst bundle with
 	 * this dst linked in it.
 	 */
-	if (dst->obsolete < 0 && !stale_bundle(dst))
-		return dst;
+	अगर (dst->obsolete < 0 && !stale_bundle(dst))
+		वापस dst;
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static int stale_bundle(struct dst_entry *dst)
-{
-	return !xfrm_bundle_ok((struct xfrm_dst *)dst);
-}
+अटल पूर्णांक stale_bundle(काष्ठा dst_entry *dst)
+अणु
+	वापस !xfrm_bundle_ok((काष्ठा xfrm_dst *)dst);
+पूर्ण
 
-void xfrm_dst_ifdown(struct dst_entry *dst, struct net_device *dev)
-{
-	while ((dst = xfrm_dst_child(dst)) && dst->xfrm && dst->dev == dev) {
+व्योम xfrm_dst_अगरकरोwn(काष्ठा dst_entry *dst, काष्ठा net_device *dev)
+अणु
+	जबतक ((dst = xfrm_dst_child(dst)) && dst->xfrm && dst->dev == dev) अणु
 		dst->dev = dev_net(dev)->loopback_dev;
 		dev_hold(dst->dev);
 		dev_put(dev);
-	}
-}
-EXPORT_SYMBOL(xfrm_dst_ifdown);
+	पूर्ण
+पूर्ण
+EXPORT_SYMBOL(xfrm_dst_अगरकरोwn);
 
-static void xfrm_link_failure(struct sk_buff *skb)
-{
-	/* Impossible. Such dst must be popped before reaches point of failure. */
-}
+अटल व्योम xfrm_link_failure(काष्ठा sk_buff *skb)
+अणु
+	/* Impossible. Such dst must be popped beक्रमe reaches poपूर्णांक of failure. */
+पूर्ण
 
-static struct dst_entry *xfrm_negative_advice(struct dst_entry *dst)
-{
-	if (dst) {
-		if (dst->obsolete) {
+अटल काष्ठा dst_entry *xfrm_negative_advice(काष्ठा dst_entry *dst)
+अणु
+	अगर (dst) अणु
+		अगर (dst->obsolete) अणु
 			dst_release(dst);
-			dst = NULL;
-		}
-	}
-	return dst;
-}
+			dst = शून्य;
+		पूर्ण
+	पूर्ण
+	वापस dst;
+पूर्ण
 
-static void xfrm_init_pmtu(struct xfrm_dst **bundle, int nr)
-{
-	while (nr--) {
-		struct xfrm_dst *xdst = bundle[nr];
+अटल व्योम xfrm_init_pmtu(काष्ठा xfrm_dst **bundle, पूर्णांक nr)
+अणु
+	जबतक (nr--) अणु
+		काष्ठा xfrm_dst *xdst = bundle[nr];
 		u32 pmtu, route_mtu_cached;
-		struct dst_entry *dst;
+		काष्ठा dst_entry *dst;
 
 		dst = &xdst->u.dst;
 		pmtu = dst_mtu(xfrm_dst_child(dst));
@@ -3748,260 +3749,260 @@ static void xfrm_init_pmtu(struct xfrm_dst **bundle, int nr)
 		route_mtu_cached = dst_mtu(xdst->route);
 		xdst->route_mtu_cached = route_mtu_cached;
 
-		if (pmtu > route_mtu_cached)
+		अगर (pmtu > route_mtu_cached)
 			pmtu = route_mtu_cached;
 
 		dst_metric_set(dst, RTAX_MTU, pmtu);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /* Check that the bundle accepts the flow and its components are
  * still valid.
  */
 
-static int xfrm_bundle_ok(struct xfrm_dst *first)
-{
-	struct xfrm_dst *bundle[XFRM_MAX_DEPTH];
-	struct dst_entry *dst = &first->u.dst;
-	struct xfrm_dst *xdst;
-	int start_from, nr;
+अटल पूर्णांक xfrm_bundle_ok(काष्ठा xfrm_dst *first)
+अणु
+	काष्ठा xfrm_dst *bundle[XFRM_MAX_DEPTH];
+	काष्ठा dst_entry *dst = &first->u.dst;
+	काष्ठा xfrm_dst *xdst;
+	पूर्णांक start_from, nr;
 	u32 mtu;
 
-	if (!dst_check(xfrm_dst_path(dst), ((struct xfrm_dst *)dst)->path_cookie) ||
-	    (dst->dev && !netif_running(dst->dev)))
-		return 0;
+	अगर (!dst_check(xfrm_dst_path(dst), ((काष्ठा xfrm_dst *)dst)->path_cookie) ||
+	    (dst->dev && !netअगर_running(dst->dev)))
+		वापस 0;
 
-	if (dst->flags & DST_XFRM_QUEUE)
-		return 1;
+	अगर (dst->flags & DST_XFRM_QUEUE)
+		वापस 1;
 
 	start_from = nr = 0;
-	do {
-		struct xfrm_dst *xdst = (struct xfrm_dst *)dst;
+	करो अणु
+		काष्ठा xfrm_dst *xdst = (काष्ठा xfrm_dst *)dst;
 
-		if (dst->xfrm->km.state != XFRM_STATE_VALID)
-			return 0;
-		if (xdst->xfrm_genid != dst->xfrm->genid)
-			return 0;
-		if (xdst->num_pols > 0 &&
-		    xdst->policy_genid != atomic_read(&xdst->pols[0]->genid))
-			return 0;
+		अगर (dst->xfrm->km.state != XFRM_STATE_VALID)
+			वापस 0;
+		अगर (xdst->xfrm_genid != dst->xfrm->genid)
+			वापस 0;
+		अगर (xdst->num_pols > 0 &&
+		    xdst->policy_genid != atomic_पढ़ो(&xdst->pols[0]->genid))
+			वापस 0;
 
 		bundle[nr++] = xdst;
 
 		mtu = dst_mtu(xfrm_dst_child(dst));
-		if (xdst->child_mtu_cached != mtu) {
+		अगर (xdst->child_mtu_cached != mtu) अणु
 			start_from = nr;
 			xdst->child_mtu_cached = mtu;
-		}
+		पूर्ण
 
-		if (!dst_check(xdst->route, xdst->route_cookie))
-			return 0;
+		अगर (!dst_check(xdst->route, xdst->route_cookie))
+			वापस 0;
 		mtu = dst_mtu(xdst->route);
-		if (xdst->route_mtu_cached != mtu) {
+		अगर (xdst->route_mtu_cached != mtu) अणु
 			start_from = nr;
 			xdst->route_mtu_cached = mtu;
-		}
+		पूर्ण
 
 		dst = xfrm_dst_child(dst);
-	} while (dst->xfrm);
+	पूर्ण जबतक (dst->xfrm);
 
-	if (likely(!start_from))
-		return 1;
+	अगर (likely(!start_from))
+		वापस 1;
 
 	xdst = bundle[start_from - 1];
 	mtu = xdst->child_mtu_cached;
-	while (start_from--) {
+	जबतक (start_from--) अणु
 		dst = &xdst->u.dst;
 
 		mtu = xfrm_state_mtu(dst->xfrm, mtu);
-		if (mtu > xdst->route_mtu_cached)
+		अगर (mtu > xdst->route_mtu_cached)
 			mtu = xdst->route_mtu_cached;
 		dst_metric_set(dst, RTAX_MTU, mtu);
-		if (!start_from)
-			break;
+		अगर (!start_from)
+			अवरोध;
 
 		xdst = bundle[start_from - 1];
 		xdst->child_mtu_cached = mtu;
-	}
+	पूर्ण
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-static unsigned int xfrm_default_advmss(const struct dst_entry *dst)
-{
-	return dst_metric_advmss(xfrm_dst_path(dst));
-}
+अटल अचिन्हित पूर्णांक xfrm_शेष_advmss(स्थिर काष्ठा dst_entry *dst)
+अणु
+	वापस dst_metric_advmss(xfrm_dst_path(dst));
+पूर्ण
 
-static unsigned int xfrm_mtu(const struct dst_entry *dst)
-{
-	unsigned int mtu = dst_metric_raw(dst, RTAX_MTU);
+अटल अचिन्हित पूर्णांक xfrm_mtu(स्थिर काष्ठा dst_entry *dst)
+अणु
+	अचिन्हित पूर्णांक mtu = dst_metric_raw(dst, RTAX_MTU);
 
-	return mtu ? : dst_mtu(xfrm_dst_path(dst));
-}
+	वापस mtu ? : dst_mtu(xfrm_dst_path(dst));
+पूर्ण
 
-static const void *xfrm_get_dst_nexthop(const struct dst_entry *dst,
-					const void *daddr)
-{
-	while (dst->xfrm) {
-		const struct xfrm_state *xfrm = dst->xfrm;
+अटल स्थिर व्योम *xfrm_get_dst_nexthop(स्थिर काष्ठा dst_entry *dst,
+					स्थिर व्योम *daddr)
+अणु
+	जबतक (dst->xfrm) अणु
+		स्थिर काष्ठा xfrm_state *xfrm = dst->xfrm;
 
 		dst = xfrm_dst_child(dst);
 
-		if (xfrm->props.mode == XFRM_MODE_TRANSPORT)
-			continue;
-		if (xfrm->type->flags & XFRM_TYPE_REMOTE_COADDR)
+		अगर (xfrm->props.mode == XFRM_MODE_TRANSPORT)
+			जारी;
+		अगर (xfrm->type->flags & XFRM_TYPE_REMOTE_COADDR)
 			daddr = xfrm->coaddr;
-		else if (!(xfrm->type->flags & XFRM_TYPE_LOCAL_COADDR))
+		अन्यथा अगर (!(xfrm->type->flags & XFRM_TYPE_LOCAL_COADDR))
 			daddr = &xfrm->id.daddr;
-	}
-	return daddr;
-}
+	पूर्ण
+	वापस daddr;
+पूर्ण
 
-static struct neighbour *xfrm_neigh_lookup(const struct dst_entry *dst,
-					   struct sk_buff *skb,
-					   const void *daddr)
-{
-	const struct dst_entry *path = xfrm_dst_path(dst);
+अटल काष्ठा neighbour *xfrm_neigh_lookup(स्थिर काष्ठा dst_entry *dst,
+					   काष्ठा sk_buff *skb,
+					   स्थिर व्योम *daddr)
+अणु
+	स्थिर काष्ठा dst_entry *path = xfrm_dst_path(dst);
 
-	if (!skb)
+	अगर (!skb)
 		daddr = xfrm_get_dst_nexthop(dst, daddr);
-	return path->ops->neigh_lookup(path, skb, daddr);
-}
+	वापस path->ops->neigh_lookup(path, skb, daddr);
+पूर्ण
 
-static void xfrm_confirm_neigh(const struct dst_entry *dst, const void *daddr)
-{
-	const struct dst_entry *path = xfrm_dst_path(dst);
+अटल व्योम xfrm_confirm_neigh(स्थिर काष्ठा dst_entry *dst, स्थिर व्योम *daddr)
+अणु
+	स्थिर काष्ठा dst_entry *path = xfrm_dst_path(dst);
 
 	daddr = xfrm_get_dst_nexthop(dst, daddr);
 	path->ops->confirm_neigh(path, daddr);
-}
+पूर्ण
 
-int xfrm_policy_register_afinfo(const struct xfrm_policy_afinfo *afinfo, int family)
-{
-	int err = 0;
+पूर्णांक xfrm_policy_रेजिस्टर_afinfo(स्थिर काष्ठा xfrm_policy_afinfo *afinfo, पूर्णांक family)
+अणु
+	पूर्णांक err = 0;
 
-	if (WARN_ON(family >= ARRAY_SIZE(xfrm_policy_afinfo)))
-		return -EAFNOSUPPORT;
+	अगर (WARN_ON(family >= ARRAY_SIZE(xfrm_policy_afinfo)))
+		वापस -EAFNOSUPPORT;
 
 	spin_lock(&xfrm_policy_afinfo_lock);
-	if (unlikely(xfrm_policy_afinfo[family] != NULL))
+	अगर (unlikely(xfrm_policy_afinfo[family] != शून्य))
 		err = -EEXIST;
-	else {
-		struct dst_ops *dst_ops = afinfo->dst_ops;
-		if (likely(dst_ops->kmem_cachep == NULL))
+	अन्यथा अणु
+		काष्ठा dst_ops *dst_ops = afinfo->dst_ops;
+		अगर (likely(dst_ops->kmem_cachep == शून्य))
 			dst_ops->kmem_cachep = xfrm_dst_cache;
-		if (likely(dst_ops->check == NULL))
+		अगर (likely(dst_ops->check == शून्य))
 			dst_ops->check = xfrm_dst_check;
-		if (likely(dst_ops->default_advmss == NULL))
-			dst_ops->default_advmss = xfrm_default_advmss;
-		if (likely(dst_ops->mtu == NULL))
+		अगर (likely(dst_ops->शेष_advmss == शून्य))
+			dst_ops->शेष_advmss = xfrm_शेष_advmss;
+		अगर (likely(dst_ops->mtu == शून्य))
 			dst_ops->mtu = xfrm_mtu;
-		if (likely(dst_ops->negative_advice == NULL))
+		अगर (likely(dst_ops->negative_advice == शून्य))
 			dst_ops->negative_advice = xfrm_negative_advice;
-		if (likely(dst_ops->link_failure == NULL))
+		अगर (likely(dst_ops->link_failure == शून्य))
 			dst_ops->link_failure = xfrm_link_failure;
-		if (likely(dst_ops->neigh_lookup == NULL))
+		अगर (likely(dst_ops->neigh_lookup == शून्य))
 			dst_ops->neigh_lookup = xfrm_neigh_lookup;
-		if (likely(!dst_ops->confirm_neigh))
+		अगर (likely(!dst_ops->confirm_neigh))
 			dst_ops->confirm_neigh = xfrm_confirm_neigh;
-		rcu_assign_pointer(xfrm_policy_afinfo[family], afinfo);
-	}
+		rcu_assign_poपूर्णांकer(xfrm_policy_afinfo[family], afinfo);
+	पूर्ण
 	spin_unlock(&xfrm_policy_afinfo_lock);
 
-	return err;
-}
-EXPORT_SYMBOL(xfrm_policy_register_afinfo);
+	वापस err;
+पूर्ण
+EXPORT_SYMBOL(xfrm_policy_रेजिस्टर_afinfo);
 
-void xfrm_policy_unregister_afinfo(const struct xfrm_policy_afinfo *afinfo)
-{
-	struct dst_ops *dst_ops = afinfo->dst_ops;
-	int i;
+व्योम xfrm_policy_unरेजिस्टर_afinfo(स्थिर काष्ठा xfrm_policy_afinfo *afinfo)
+अणु
+	काष्ठा dst_ops *dst_ops = afinfo->dst_ops;
+	पूर्णांक i;
 
-	for (i = 0; i < ARRAY_SIZE(xfrm_policy_afinfo); i++) {
-		if (xfrm_policy_afinfo[i] != afinfo)
-			continue;
-		RCU_INIT_POINTER(xfrm_policy_afinfo[i], NULL);
-		break;
-	}
+	क्रम (i = 0; i < ARRAY_SIZE(xfrm_policy_afinfo); i++) अणु
+		अगर (xfrm_policy_afinfo[i] != afinfo)
+			जारी;
+		RCU_INIT_POINTER(xfrm_policy_afinfo[i], शून्य);
+		अवरोध;
+	पूर्ण
 
 	synchronize_rcu();
 
-	dst_ops->kmem_cachep = NULL;
-	dst_ops->check = NULL;
-	dst_ops->negative_advice = NULL;
-	dst_ops->link_failure = NULL;
-}
-EXPORT_SYMBOL(xfrm_policy_unregister_afinfo);
+	dst_ops->kmem_cachep = शून्य;
+	dst_ops->check = शून्य;
+	dst_ops->negative_advice = शून्य;
+	dst_ops->link_failure = शून्य;
+पूर्ण
+EXPORT_SYMBOL(xfrm_policy_unरेजिस्टर_afinfo);
 
-void xfrm_if_register_cb(const struct xfrm_if_cb *ifcb)
-{
-	spin_lock(&xfrm_if_cb_lock);
-	rcu_assign_pointer(xfrm_if_cb, ifcb);
-	spin_unlock(&xfrm_if_cb_lock);
-}
-EXPORT_SYMBOL(xfrm_if_register_cb);
+व्योम xfrm_अगर_रेजिस्टर_cb(स्थिर काष्ठा xfrm_अगर_cb *अगरcb)
+अणु
+	spin_lock(&xfrm_अगर_cb_lock);
+	rcu_assign_poपूर्णांकer(xfrm_अगर_cb, अगरcb);
+	spin_unlock(&xfrm_अगर_cb_lock);
+पूर्ण
+EXPORT_SYMBOL(xfrm_अगर_रेजिस्टर_cb);
 
-void xfrm_if_unregister_cb(void)
-{
-	RCU_INIT_POINTER(xfrm_if_cb, NULL);
+व्योम xfrm_अगर_unरेजिस्टर_cb(व्योम)
+अणु
+	RCU_INIT_POINTER(xfrm_अगर_cb, शून्य);
 	synchronize_rcu();
-}
-EXPORT_SYMBOL(xfrm_if_unregister_cb);
+पूर्ण
+EXPORT_SYMBOL(xfrm_अगर_unरेजिस्टर_cb);
 
-#ifdef CONFIG_XFRM_STATISTICS
-static int __net_init xfrm_statistics_init(struct net *net)
-{
-	int rv;
-	net->mib.xfrm_statistics = alloc_percpu(struct linux_xfrm_mib);
-	if (!net->mib.xfrm_statistics)
-		return -ENOMEM;
+#अगर_घोषित CONFIG_XFRM_STATISTICS
+अटल पूर्णांक __net_init xfrm_statistics_init(काष्ठा net *net)
+अणु
+	पूर्णांक rv;
+	net->mib.xfrm_statistics = alloc_percpu(काष्ठा linux_xfrm_mib);
+	अगर (!net->mib.xfrm_statistics)
+		वापस -ENOMEM;
 	rv = xfrm_proc_init(net);
-	if (rv < 0)
-		free_percpu(net->mib.xfrm_statistics);
-	return rv;
-}
+	अगर (rv < 0)
+		मुक्त_percpu(net->mib.xfrm_statistics);
+	वापस rv;
+पूर्ण
 
-static void xfrm_statistics_fini(struct net *net)
-{
+अटल व्योम xfrm_statistics_fini(काष्ठा net *net)
+अणु
 	xfrm_proc_fini(net);
-	free_percpu(net->mib.xfrm_statistics);
-}
-#else
-static int __net_init xfrm_statistics_init(struct net *net)
-{
-	return 0;
-}
+	मुक्त_percpu(net->mib.xfrm_statistics);
+पूर्ण
+#अन्यथा
+अटल पूर्णांक __net_init xfrm_statistics_init(काष्ठा net *net)
+अणु
+	वापस 0;
+पूर्ण
 
-static void xfrm_statistics_fini(struct net *net)
-{
-}
-#endif
+अटल व्योम xfrm_statistics_fini(काष्ठा net *net)
+अणु
+पूर्ण
+#पूर्ण_अगर
 
-static int __net_init xfrm_policy_init(struct net *net)
-{
-	unsigned int hmask, sz;
-	int dir, err;
+अटल पूर्णांक __net_init xfrm_policy_init(काष्ठा net *net)
+अणु
+	अचिन्हित पूर्णांक hmask, sz;
+	पूर्णांक dir, err;
 
-	if (net_eq(net, &init_net)) {
+	अगर (net_eq(net, &init_net)) अणु
 		xfrm_dst_cache = kmem_cache_create("xfrm_dst_cache",
-					   sizeof(struct xfrm_dst),
+					   माप(काष्ठा xfrm_dst),
 					   0, SLAB_HWCACHE_ALIGN|SLAB_PANIC,
-					   NULL);
+					   शून्य);
 		err = rhashtable_init(&xfrm_policy_inexact_table,
 				      &xfrm_pol_inexact_params);
 		BUG_ON(err);
-	}
+	पूर्ण
 
 	hmask = 8 - 1;
-	sz = (hmask+1) * sizeof(struct hlist_head);
+	sz = (hmask+1) * माप(काष्ठा hlist_head);
 
 	net->xfrm.policy_byidx = xfrm_hash_alloc(sz);
-	if (!net->xfrm.policy_byidx)
-		goto out_byidx;
+	अगर (!net->xfrm.policy_byidx)
+		जाओ out_byidx;
 	net->xfrm.policy_idx_hmask = hmask;
 
-	for (dir = 0; dir < XFRM_POLICY_MAX; dir++) {
-		struct xfrm_policy_hash *htab;
+	क्रम (dir = 0; dir < XFRM_POLICY_MAX; dir++) अणु
+		काष्ठा xfrm_policy_hash *htab;
 
 		net->xfrm.policy_count[dir] = 0;
 		net->xfrm.policy_count[XFRM_POLICY_MAX + dir] = 0;
@@ -4009,14 +4010,14 @@ static int __net_init xfrm_policy_init(struct net *net)
 
 		htab = &net->xfrm.policy_bydst[dir];
 		htab->table = xfrm_hash_alloc(sz);
-		if (!htab->table)
-			goto out_bydst;
+		अगर (!htab->table)
+			जाओ out_bydst;
 		htab->hmask = hmask;
 		htab->dbits4 = 32;
 		htab->sbits4 = 32;
 		htab->dbits6 = 128;
 		htab->sbits6 = 128;
-	}
+	पूर्ण
 	net->xfrm.policy_hthresh.lbits4 = 32;
 	net->xfrm.policy_hthresh.rbits4 = 32;
 	net->xfrm.policy_hthresh.lbits6 = 128;
@@ -4028,58 +4029,58 @@ static int __net_init xfrm_policy_init(struct net *net)
 	INIT_LIST_HEAD(&net->xfrm.inexact_bins);
 	INIT_WORK(&net->xfrm.policy_hash_work, xfrm_hash_resize);
 	INIT_WORK(&net->xfrm.policy_hthresh.work, xfrm_hash_rebuild);
-	return 0;
+	वापस 0;
 
 out_bydst:
-	for (dir--; dir >= 0; dir--) {
-		struct xfrm_policy_hash *htab;
+	क्रम (dir--; dir >= 0; dir--) अणु
+		काष्ठा xfrm_policy_hash *htab;
 
 		htab = &net->xfrm.policy_bydst[dir];
-		xfrm_hash_free(htab->table, sz);
-	}
-	xfrm_hash_free(net->xfrm.policy_byidx, sz);
+		xfrm_hash_मुक्त(htab->table, sz);
+	पूर्ण
+	xfrm_hash_मुक्त(net->xfrm.policy_byidx, sz);
 out_byidx:
-	return -ENOMEM;
-}
+	वापस -ENOMEM;
+पूर्ण
 
-static void xfrm_policy_fini(struct net *net)
-{
-	struct xfrm_pol_inexact_bin *b, *t;
-	unsigned int sz;
-	int dir;
+अटल व्योम xfrm_policy_fini(काष्ठा net *net)
+अणु
+	काष्ठा xfrm_pol_inexact_bin *b, *t;
+	अचिन्हित पूर्णांक sz;
+	पूर्णांक dir;
 
 	flush_work(&net->xfrm.policy_hash_work);
-#ifdef CONFIG_XFRM_SUB_POLICY
+#अगर_घोषित CONFIG_XFRM_SUB_POLICY
 	xfrm_policy_flush(net, XFRM_POLICY_TYPE_SUB, false);
-#endif
+#पूर्ण_अगर
 	xfrm_policy_flush(net, XFRM_POLICY_TYPE_MAIN, false);
 
 	WARN_ON(!list_empty(&net->xfrm.policy_all));
 
-	for (dir = 0; dir < XFRM_POLICY_MAX; dir++) {
-		struct xfrm_policy_hash *htab;
+	क्रम (dir = 0; dir < XFRM_POLICY_MAX; dir++) अणु
+		काष्ठा xfrm_policy_hash *htab;
 
 		WARN_ON(!hlist_empty(&net->xfrm.policy_inexact[dir]));
 
 		htab = &net->xfrm.policy_bydst[dir];
-		sz = (htab->hmask + 1) * sizeof(struct hlist_head);
+		sz = (htab->hmask + 1) * माप(काष्ठा hlist_head);
 		WARN_ON(!hlist_empty(htab->table));
-		xfrm_hash_free(htab->table, sz);
-	}
+		xfrm_hash_मुक्त(htab->table, sz);
+	पूर्ण
 
-	sz = (net->xfrm.policy_idx_hmask + 1) * sizeof(struct hlist_head);
+	sz = (net->xfrm.policy_idx_hmask + 1) * माप(काष्ठा hlist_head);
 	WARN_ON(!hlist_empty(net->xfrm.policy_byidx));
-	xfrm_hash_free(net->xfrm.policy_byidx, sz);
+	xfrm_hash_मुक्त(net->xfrm.policy_byidx, sz);
 
 	spin_lock_bh(&net->xfrm.xfrm_policy_lock);
-	list_for_each_entry_safe(b, t, &net->xfrm.inexact_bins, inexact_bins)
+	list_क्रम_each_entry_safe(b, t, &net->xfrm.inexact_bins, inexact_bins)
 		__xfrm_policy_inexact_prune_bin(b, true);
 	spin_unlock_bh(&net->xfrm.xfrm_policy_lock);
-}
+पूर्ण
 
-static int __net_init xfrm_net_init(struct net *net)
-{
-	int rv;
+अटल पूर्णांक __net_init xfrm_net_init(काष्ठा net *net)
+अणु
+	पूर्णांक rv;
 
 	/* Initialize the per-net locks here */
 	spin_lock_init(&net->xfrm.xfrm_state_lock);
@@ -4087,19 +4088,19 @@ static int __net_init xfrm_net_init(struct net *net)
 	mutex_init(&net->xfrm.xfrm_cfg_mutex);
 
 	rv = xfrm_statistics_init(net);
-	if (rv < 0)
-		goto out_statistics;
+	अगर (rv < 0)
+		जाओ out_statistics;
 	rv = xfrm_state_init(net);
-	if (rv < 0)
-		goto out_state;
+	अगर (rv < 0)
+		जाओ out_state;
 	rv = xfrm_policy_init(net);
-	if (rv < 0)
-		goto out_policy;
+	अगर (rv < 0)
+		जाओ out_policy;
 	rv = xfrm_sysctl_init(net);
-	if (rv < 0)
-		goto out_sysctl;
+	अगर (rv < 0)
+		जाओ out_sysctl;
 
-	return 0;
+	वापस 0;
 
 out_sysctl:
 	xfrm_policy_fini(net);
@@ -4108,327 +4109,327 @@ out_policy:
 out_state:
 	xfrm_statistics_fini(net);
 out_statistics:
-	return rv;
-}
+	वापस rv;
+पूर्ण
 
-static void __net_exit xfrm_net_exit(struct net *net)
-{
+अटल व्योम __net_निकास xfrm_net_निकास(काष्ठा net *net)
+अणु
 	xfrm_sysctl_fini(net);
 	xfrm_policy_fini(net);
 	xfrm_state_fini(net);
 	xfrm_statistics_fini(net);
-}
+पूर्ण
 
-static struct pernet_operations __net_initdata xfrm_net_ops = {
+अटल काष्ठा pernet_operations __net_initdata xfrm_net_ops = अणु
 	.init = xfrm_net_init,
-	.exit = xfrm_net_exit,
-};
+	.निकास = xfrm_net_निकास,
+पूर्ण;
 
-void __init xfrm_init(void)
-{
-	register_pernet_subsys(&xfrm_net_ops);
+व्योम __init xfrm_init(व्योम)
+अणु
+	रेजिस्टर_pernet_subsys(&xfrm_net_ops);
 	xfrm_dev_init();
 	seqcount_mutex_init(&xfrm_policy_hash_generation, &hash_resize_mutex);
 	xfrm_input_init();
 
-#ifdef CONFIG_XFRM_ESPINTCP
-	espintcp_init();
-#endif
-}
+#अगर_घोषित CONFIG_XFRM_ESPINTCP
+	espपूर्णांकcp_init();
+#पूर्ण_अगर
+पूर्ण
 
-#ifdef CONFIG_AUDITSYSCALL
-static void xfrm_audit_common_policyinfo(struct xfrm_policy *xp,
-					 struct audit_buffer *audit_buf)
-{
-	struct xfrm_sec_ctx *ctx = xp->security;
-	struct xfrm_selector *sel = &xp->selector;
+#अगर_घोषित CONFIG_AUDITSYSCALL
+अटल व्योम xfrm_audit_common_policyinfo(काष्ठा xfrm_policy *xp,
+					 काष्ठा audit_buffer *audit_buf)
+अणु
+	काष्ठा xfrm_sec_ctx *ctx = xp->security;
+	काष्ठा xfrm_selector *sel = &xp->selector;
 
-	if (ctx)
-		audit_log_format(audit_buf, " sec_alg=%u sec_doi=%u sec_obj=%s",
-				 ctx->ctx_alg, ctx->ctx_doi, ctx->ctx_str);
+	अगर (ctx)
+		audit_log_क्रमmat(audit_buf, " sec_alg=%u sec_doi=%u sec_obj=%s",
+				 ctx->ctx_alg, ctx->ctx_करोi, ctx->ctx_str);
 
-	switch (sel->family) {
-	case AF_INET:
-		audit_log_format(audit_buf, " src=%pI4", &sel->saddr.a4);
-		if (sel->prefixlen_s != 32)
-			audit_log_format(audit_buf, " src_prefixlen=%d",
+	चयन (sel->family) अणु
+	हाल AF_INET:
+		audit_log_क्रमmat(audit_buf, " src=%pI4", &sel->saddr.a4);
+		अगर (sel->prefixlen_s != 32)
+			audit_log_क्रमmat(audit_buf, " src_prefixlen=%d",
 					 sel->prefixlen_s);
-		audit_log_format(audit_buf, " dst=%pI4", &sel->daddr.a4);
-		if (sel->prefixlen_d != 32)
-			audit_log_format(audit_buf, " dst_prefixlen=%d",
+		audit_log_क्रमmat(audit_buf, " dst=%pI4", &sel->daddr.a4);
+		अगर (sel->prefixlen_d != 32)
+			audit_log_क्रमmat(audit_buf, " dst_prefixlen=%d",
 					 sel->prefixlen_d);
-		break;
-	case AF_INET6:
-		audit_log_format(audit_buf, " src=%pI6", sel->saddr.a6);
-		if (sel->prefixlen_s != 128)
-			audit_log_format(audit_buf, " src_prefixlen=%d",
+		अवरोध;
+	हाल AF_INET6:
+		audit_log_क्रमmat(audit_buf, " src=%pI6", sel->saddr.a6);
+		अगर (sel->prefixlen_s != 128)
+			audit_log_क्रमmat(audit_buf, " src_prefixlen=%d",
 					 sel->prefixlen_s);
-		audit_log_format(audit_buf, " dst=%pI6", sel->daddr.a6);
-		if (sel->prefixlen_d != 128)
-			audit_log_format(audit_buf, " dst_prefixlen=%d",
+		audit_log_क्रमmat(audit_buf, " dst=%pI6", sel->daddr.a6);
+		अगर (sel->prefixlen_d != 128)
+			audit_log_क्रमmat(audit_buf, " dst_prefixlen=%d",
 					 sel->prefixlen_d);
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-void xfrm_audit_policy_add(struct xfrm_policy *xp, int result, bool task_valid)
-{
-	struct audit_buffer *audit_buf;
+व्योम xfrm_audit_policy_add(काष्ठा xfrm_policy *xp, पूर्णांक result, bool task_valid)
+अणु
+	काष्ठा audit_buffer *audit_buf;
 
 	audit_buf = xfrm_audit_start("SPD-add");
-	if (audit_buf == NULL)
-		return;
+	अगर (audit_buf == शून्य)
+		वापस;
 	xfrm_audit_helper_usrinfo(task_valid, audit_buf);
-	audit_log_format(audit_buf, " res=%u", result);
+	audit_log_क्रमmat(audit_buf, " res=%u", result);
 	xfrm_audit_common_policyinfo(xp, audit_buf);
 	audit_log_end(audit_buf);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(xfrm_audit_policy_add);
 
-void xfrm_audit_policy_delete(struct xfrm_policy *xp, int result,
+व्योम xfrm_audit_policy_delete(काष्ठा xfrm_policy *xp, पूर्णांक result,
 			      bool task_valid)
-{
-	struct audit_buffer *audit_buf;
+अणु
+	काष्ठा audit_buffer *audit_buf;
 
 	audit_buf = xfrm_audit_start("SPD-delete");
-	if (audit_buf == NULL)
-		return;
+	अगर (audit_buf == शून्य)
+		वापस;
 	xfrm_audit_helper_usrinfo(task_valid, audit_buf);
-	audit_log_format(audit_buf, " res=%u", result);
+	audit_log_क्रमmat(audit_buf, " res=%u", result);
 	xfrm_audit_common_policyinfo(xp, audit_buf);
 	audit_log_end(audit_buf);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(xfrm_audit_policy_delete);
-#endif
+#पूर्ण_अगर
 
-#ifdef CONFIG_XFRM_MIGRATE
-static bool xfrm_migrate_selector_match(const struct xfrm_selector *sel_cmp,
-					const struct xfrm_selector *sel_tgt)
-{
-	if (sel_cmp->proto == IPSEC_ULPROTO_ANY) {
-		if (sel_tgt->family == sel_cmp->family &&
+#अगर_घोषित CONFIG_XFRM_MIGRATE
+अटल bool xfrm_migrate_selector_match(स्थिर काष्ठा xfrm_selector *sel_cmp,
+					स्थिर काष्ठा xfrm_selector *sel_tgt)
+अणु
+	अगर (sel_cmp->proto == IPSEC_ULPROTO_ANY) अणु
+		अगर (sel_tgt->family == sel_cmp->family &&
 		    xfrm_addr_equal(&sel_tgt->daddr, &sel_cmp->daddr,
 				    sel_cmp->family) &&
 		    xfrm_addr_equal(&sel_tgt->saddr, &sel_cmp->saddr,
 				    sel_cmp->family) &&
 		    sel_tgt->prefixlen_d == sel_cmp->prefixlen_d &&
-		    sel_tgt->prefixlen_s == sel_cmp->prefixlen_s) {
-			return true;
-		}
-	} else {
-		if (memcmp(sel_tgt, sel_cmp, sizeof(*sel_tgt)) == 0) {
-			return true;
-		}
-	}
-	return false;
-}
+		    sel_tgt->prefixlen_s == sel_cmp->prefixlen_s) अणु
+			वापस true;
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		अगर (स_भेद(sel_tgt, sel_cmp, माप(*sel_tgt)) == 0) अणु
+			वापस true;
+		पूर्ण
+	पूर्ण
+	वापस false;
+पूर्ण
 
-static struct xfrm_policy *xfrm_migrate_policy_find(const struct xfrm_selector *sel,
-						    u8 dir, u8 type, struct net *net)
-{
-	struct xfrm_policy *pol, *ret = NULL;
-	struct hlist_head *chain;
+अटल काष्ठा xfrm_policy *xfrm_migrate_policy_find(स्थिर काष्ठा xfrm_selector *sel,
+						    u8 dir, u8 type, काष्ठा net *net)
+अणु
+	काष्ठा xfrm_policy *pol, *ret = शून्य;
+	काष्ठा hlist_head *chain;
 	u32 priority = ~0U;
 
 	spin_lock_bh(&net->xfrm.xfrm_policy_lock);
 	chain = policy_hash_direct(net, &sel->daddr, &sel->saddr, sel->family, dir);
-	hlist_for_each_entry(pol, chain, bydst) {
-		if (xfrm_migrate_selector_match(sel, &pol->selector) &&
-		    pol->type == type) {
+	hlist_क्रम_each_entry(pol, chain, bydst) अणु
+		अगर (xfrm_migrate_selector_match(sel, &pol->selector) &&
+		    pol->type == type) अणु
 			ret = pol;
 			priority = ret->priority;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 	chain = &net->xfrm.policy_inexact[dir];
-	hlist_for_each_entry(pol, chain, bydst_inexact_list) {
-		if ((pol->priority >= priority) && ret)
-			break;
+	hlist_क्रम_each_entry(pol, chain, bydst_inexact_list) अणु
+		अगर ((pol->priority >= priority) && ret)
+			अवरोध;
 
-		if (xfrm_migrate_selector_match(sel, &pol->selector) &&
-		    pol->type == type) {
+		अगर (xfrm_migrate_selector_match(sel, &pol->selector) &&
+		    pol->type == type) अणु
 			ret = pol;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
 	xfrm_pol_hold(ret);
 
 	spin_unlock_bh(&net->xfrm.xfrm_policy_lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int migrate_tmpl_match(const struct xfrm_migrate *m, const struct xfrm_tmpl *t)
-{
-	int match = 0;
+अटल पूर्णांक migrate_पंचांगpl_match(स्थिर काष्ठा xfrm_migrate *m, स्थिर काष्ठा xfrm_पंचांगpl *t)
+अणु
+	पूर्णांक match = 0;
 
-	if (t->mode == m->mode && t->id.proto == m->proto &&
-	    (m->reqid == 0 || t->reqid == m->reqid)) {
-		switch (t->mode) {
-		case XFRM_MODE_TUNNEL:
-		case XFRM_MODE_BEET:
-			if (xfrm_addr_equal(&t->id.daddr, &m->old_daddr,
+	अगर (t->mode == m->mode && t->id.proto == m->proto &&
+	    (m->reqid == 0 || t->reqid == m->reqid)) अणु
+		चयन (t->mode) अणु
+		हाल XFRM_MODE_TUNNEL:
+		हाल XFRM_MODE_BEET:
+			अगर (xfrm_addr_equal(&t->id.daddr, &m->old_daddr,
 					    m->old_family) &&
 			    xfrm_addr_equal(&t->saddr, &m->old_saddr,
-					    m->old_family)) {
+					    m->old_family)) अणु
 				match = 1;
-			}
-			break;
-		case XFRM_MODE_TRANSPORT:
-			/* in case of transport mode, template does not store
+			पूर्ण
+			अवरोध;
+		हाल XFRM_MODE_TRANSPORT:
+			/* in हाल of transport mode, ढाँचा करोes not store
 			   any IP addresses, hence we just compare mode and
 			   protocol */
 			match = 1;
-			break;
-		default:
-			break;
-		}
-	}
-	return match;
-}
+			अवरोध;
+		शेष:
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	वापस match;
+पूर्ण
 
-/* update endpoint address(es) of template(s) */
-static int xfrm_policy_migrate(struct xfrm_policy *pol,
-			       struct xfrm_migrate *m, int num_migrate)
-{
-	struct xfrm_migrate *mp;
-	int i, j, n = 0;
+/* update endpoपूर्णांक address(es) of ढाँचा(s) */
+अटल पूर्णांक xfrm_policy_migrate(काष्ठा xfrm_policy *pol,
+			       काष्ठा xfrm_migrate *m, पूर्णांक num_migrate)
+अणु
+	काष्ठा xfrm_migrate *mp;
+	पूर्णांक i, j, n = 0;
 
-	write_lock_bh(&pol->lock);
-	if (unlikely(pol->walk.dead)) {
+	ग_लिखो_lock_bh(&pol->lock);
+	अगर (unlikely(pol->walk.dead)) अणु
 		/* target policy has been deleted */
-		write_unlock_bh(&pol->lock);
-		return -ENOENT;
-	}
+		ग_लिखो_unlock_bh(&pol->lock);
+		वापस -ENOENT;
+	पूर्ण
 
-	for (i = 0; i < pol->xfrm_nr; i++) {
-		for (j = 0, mp = m; j < num_migrate; j++, mp++) {
-			if (!migrate_tmpl_match(mp, &pol->xfrm_vec[i]))
-				continue;
+	क्रम (i = 0; i < pol->xfrm_nr; i++) अणु
+		क्रम (j = 0, mp = m; j < num_migrate; j++, mp++) अणु
+			अगर (!migrate_पंचांगpl_match(mp, &pol->xfrm_vec[i]))
+				जारी;
 			n++;
-			if (pol->xfrm_vec[i].mode != XFRM_MODE_TUNNEL &&
+			अगर (pol->xfrm_vec[i].mode != XFRM_MODE_TUNNEL &&
 			    pol->xfrm_vec[i].mode != XFRM_MODE_BEET)
-				continue;
-			/* update endpoints */
-			memcpy(&pol->xfrm_vec[i].id.daddr, &mp->new_daddr,
-			       sizeof(pol->xfrm_vec[i].id.daddr));
-			memcpy(&pol->xfrm_vec[i].saddr, &mp->new_saddr,
-			       sizeof(pol->xfrm_vec[i].saddr));
+				जारी;
+			/* update endpoपूर्णांकs */
+			स_नकल(&pol->xfrm_vec[i].id.daddr, &mp->new_daddr,
+			       माप(pol->xfrm_vec[i].id.daddr));
+			स_नकल(&pol->xfrm_vec[i].saddr, &mp->new_saddr,
+			       माप(pol->xfrm_vec[i].saddr));
 			pol->xfrm_vec[i].encap_family = mp->new_family;
 			/* flush bundles */
 			atomic_inc(&pol->genid);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	write_unlock_bh(&pol->lock);
+	ग_लिखो_unlock_bh(&pol->lock);
 
-	if (!n)
-		return -ENODATA;
+	अगर (!n)
+		वापस -ENODATA;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int xfrm_migrate_check(const struct xfrm_migrate *m, int num_migrate)
-{
-	int i, j;
+अटल पूर्णांक xfrm_migrate_check(स्थिर काष्ठा xfrm_migrate *m, पूर्णांक num_migrate)
+अणु
+	पूर्णांक i, j;
 
-	if (num_migrate < 1 || num_migrate > XFRM_MAX_DEPTH)
-		return -EINVAL;
+	अगर (num_migrate < 1 || num_migrate > XFRM_MAX_DEPTH)
+		वापस -EINVAL;
 
-	for (i = 0; i < num_migrate; i++) {
-		if (xfrm_addr_any(&m[i].new_daddr, m[i].new_family) ||
+	क्रम (i = 0; i < num_migrate; i++) अणु
+		अगर (xfrm_addr_any(&m[i].new_daddr, m[i].new_family) ||
 		    xfrm_addr_any(&m[i].new_saddr, m[i].new_family))
-			return -EINVAL;
+			वापस -EINVAL;
 
-		/* check if there is any duplicated entry */
-		for (j = i + 1; j < num_migrate; j++) {
-			if (!memcmp(&m[i].old_daddr, &m[j].old_daddr,
-				    sizeof(m[i].old_daddr)) &&
-			    !memcmp(&m[i].old_saddr, &m[j].old_saddr,
-				    sizeof(m[i].old_saddr)) &&
+		/* check अगर there is any duplicated entry */
+		क्रम (j = i + 1; j < num_migrate; j++) अणु
+			अगर (!स_भेद(&m[i].old_daddr, &m[j].old_daddr,
+				    माप(m[i].old_daddr)) &&
+			    !स_भेद(&m[i].old_saddr, &m[j].old_saddr,
+				    माप(m[i].old_saddr)) &&
 			    m[i].proto == m[j].proto &&
 			    m[i].mode == m[j].mode &&
 			    m[i].reqid == m[j].reqid &&
 			    m[i].old_family == m[j].old_family)
-				return -EINVAL;
-		}
-	}
+				वापस -EINVAL;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int xfrm_migrate(const struct xfrm_selector *sel, u8 dir, u8 type,
-		 struct xfrm_migrate *m, int num_migrate,
-		 struct xfrm_kmaddress *k, struct net *net,
-		 struct xfrm_encap_tmpl *encap)
-{
-	int i, err, nx_cur = 0, nx_new = 0;
-	struct xfrm_policy *pol = NULL;
-	struct xfrm_state *x, *xc;
-	struct xfrm_state *x_cur[XFRM_MAX_DEPTH];
-	struct xfrm_state *x_new[XFRM_MAX_DEPTH];
-	struct xfrm_migrate *mp;
+पूर्णांक xfrm_migrate(स्थिर काष्ठा xfrm_selector *sel, u8 dir, u8 type,
+		 काष्ठा xfrm_migrate *m, पूर्णांक num_migrate,
+		 काष्ठा xfrm_kmaddress *k, काष्ठा net *net,
+		 काष्ठा xfrm_encap_पंचांगpl *encap)
+अणु
+	पूर्णांक i, err, nx_cur = 0, nx_new = 0;
+	काष्ठा xfrm_policy *pol = शून्य;
+	काष्ठा xfrm_state *x, *xc;
+	काष्ठा xfrm_state *x_cur[XFRM_MAX_DEPTH];
+	काष्ठा xfrm_state *x_new[XFRM_MAX_DEPTH];
+	काष्ठा xfrm_migrate *mp;
 
 	/* Stage 0 - sanity checks */
-	if ((err = xfrm_migrate_check(m, num_migrate)) < 0)
-		goto out;
+	अगर ((err = xfrm_migrate_check(m, num_migrate)) < 0)
+		जाओ out;
 
-	if (dir >= XFRM_POLICY_MAX) {
+	अगर (dir >= XFRM_POLICY_MAX) अणु
 		err = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	/* Stage 1 - find policy */
-	if ((pol = xfrm_migrate_policy_find(sel, dir, type, net)) == NULL) {
+	अगर ((pol = xfrm_migrate_policy_find(sel, dir, type, net)) == शून्य) अणु
 		err = -ENOENT;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	/* Stage 2 - find and update state(s) */
-	for (i = 0, mp = m; i < num_migrate; i++, mp++) {
-		if ((x = xfrm_migrate_state_find(mp, net))) {
+	क्रम (i = 0, mp = m; i < num_migrate; i++, mp++) अणु
+		अगर ((x = xfrm_migrate_state_find(mp, net))) अणु
 			x_cur[nx_cur] = x;
 			nx_cur++;
 			xc = xfrm_state_migrate(x, mp, encap);
-			if (xc) {
+			अगर (xc) अणु
 				x_new[nx_new] = xc;
 				nx_new++;
-			} else {
+			पूर्ण अन्यथा अणु
 				err = -ENODATA;
-				goto restore_state;
-			}
-		}
-	}
+				जाओ restore_state;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
 	/* Stage 3 - update policy */
-	if ((err = xfrm_policy_migrate(pol, m, num_migrate)) < 0)
-		goto restore_state;
+	अगर ((err = xfrm_policy_migrate(pol, m, num_migrate)) < 0)
+		जाओ restore_state;
 
 	/* Stage 4 - delete old state(s) */
-	if (nx_cur) {
+	अगर (nx_cur) अणु
 		xfrm_states_put(x_cur, nx_cur);
 		xfrm_states_delete(x_cur, nx_cur);
-	}
+	पूर्ण
 
 	/* Stage 5 - announce */
 	km_migrate(sel, dir, type, m, num_migrate, k, encap);
 
 	xfrm_pol_put(pol);
 
-	return 0;
+	वापस 0;
 out:
-	return err;
+	वापस err;
 
 restore_state:
-	if (pol)
+	अगर (pol)
 		xfrm_pol_put(pol);
-	if (nx_cur)
+	अगर (nx_cur)
 		xfrm_states_put(x_cur, nx_cur);
-	if (nx_new)
+	अगर (nx_new)
 		xfrm_states_delete(x_new, nx_new);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 EXPORT_SYMBOL(xfrm_migrate);
-#endif
+#पूर्ण_अगर

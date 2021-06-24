@@ -1,328 +1,329 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (c) 2012-2014, The Linux Foundation. All rights reserved.
  */
 
-#include <linux/bitops.h>
-#include <linux/completion.h>
-#include <linux/delay.h>
-#include <linux/err.h>
-#include <linux/iio/iio.h>
-#include <linux/interrupt.h>
-#include <linux/kernel.h>
-#include <linux/mutex.h>
-#include <linux/module.h>
-#include <linux/of.h>
-#include <linux/of_device.h>
-#include <linux/platform_device.h>
-#include <linux/regmap.h>
-#include <linux/slab.h>
+#समावेश <linux/bitops.h>
+#समावेश <linux/completion.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/err.h>
+#समावेश <linux/iio/iपन.स>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/regmap.h>
+#समावेश <linux/slab.h>
 
-/* IADC register and bit definition */
-#define IADC_REVISION2				0x1
-#define IADC_REVISION2_SUPPORTED_IADC		1
+/* IADC रेजिस्टर and bit definition */
+#घोषणा IADC_REVISION2				0x1
+#घोषणा IADC_REVISION2_SUPPORTED_IADC		1
 
-#define IADC_PERPH_TYPE				0x4
-#define IADC_PERPH_TYPE_ADC			8
+#घोषणा IADC_PERPH_TYPE				0x4
+#घोषणा IADC_PERPH_TYPE_ADC			8
 
-#define IADC_PERPH_SUBTYPE			0x5
-#define IADC_PERPH_SUBTYPE_IADC			3
+#घोषणा IADC_PERPH_SUBTYPE			0x5
+#घोषणा IADC_PERPH_SUBTYPE_IADC			3
 
-#define IADC_STATUS1				0x8
-#define IADC_STATUS1_OP_MODE			4
-#define IADC_STATUS1_REQ_STS			BIT(1)
-#define IADC_STATUS1_EOC			BIT(0)
-#define IADC_STATUS1_REQ_STS_EOC_MASK		0x3
+#घोषणा IADC_STATUS1				0x8
+#घोषणा IADC_STATUS1_OP_MODE			4
+#घोषणा IADC_STATUS1_REQ_STS			BIT(1)
+#घोषणा IADC_STATUS1_EOC			BIT(0)
+#घोषणा IADC_STATUS1_REQ_STS_EOC_MASK		0x3
 
-#define IADC_MODE_CTL				0x40
-#define IADC_OP_MODE_SHIFT			3
-#define IADC_OP_MODE_NORMAL			0
-#define IADC_TRIM_EN				BIT(0)
+#घोषणा IADC_MODE_CTL				0x40
+#घोषणा IADC_OP_MODE_SHIFT			3
+#घोषणा IADC_OP_MODE_NORMAL			0
+#घोषणा IADC_TRIM_EN				BIT(0)
 
-#define IADC_EN_CTL1				0x46
-#define IADC_EN_CTL1_SET			BIT(7)
+#घोषणा IADC_EN_CTL1				0x46
+#घोषणा IADC_EN_CTL1_SET			BIT(7)
 
-#define IADC_CH_SEL_CTL				0x48
+#घोषणा IADC_CH_SEL_CTL				0x48
 
-#define IADC_DIG_PARAM				0x50
-#define IADC_DIG_DEC_RATIO_SEL_SHIFT		2
+#घोषणा IADC_DIG_PARAM				0x50
+#घोषणा IADC_DIG_DEC_RATIO_SEL_SHIFT		2
 
-#define IADC_HW_SETTLE_DELAY			0x51
+#घोषणा IADC_HW_SETTLE_DELAY			0x51
 
-#define IADC_CONV_REQ				0x52
-#define IADC_CONV_REQ_SET			BIT(7)
+#घोषणा IADC_CONV_REQ				0x52
+#घोषणा IADC_CONV_REQ_SET			BIT(7)
 
-#define IADC_FAST_AVG_CTL			0x5a
-#define IADC_FAST_AVG_EN			0x5b
-#define IADC_FAST_AVG_EN_SET			BIT(7)
+#घोषणा IADC_FAST_AVG_CTL			0x5a
+#घोषणा IADC_FAST_AVG_EN			0x5b
+#घोषणा IADC_FAST_AVG_EN_SET			BIT(7)
 
-#define IADC_PERH_RESET_CTL3			0xda
-#define IADC_FOLLOW_WARM_RB			BIT(2)
+#घोषणा IADC_PERH_RESET_CTL3			0xda
+#घोषणा IADC_FOLLOW_WARM_RB			BIT(2)
 
-#define IADC_DATA				0x60	/* 16 bits */
+#घोषणा IADC_DATA				0x60	/* 16 bits */
 
-#define IADC_SEC_ACCESS				0xd0
-#define IADC_SEC_ACCESS_DATA			0xa5
+#घोषणा IADC_SEC_ACCESS				0xd0
+#घोषणा IADC_SEC_ACCESS_DATA			0xa5
 
-#define IADC_NOMINAL_RSENSE			0xf4
-#define IADC_NOMINAL_RSENSE_SIGN_MASK		BIT(7)
+#घोषणा IADC_NOMINAL_RSENSE			0xf4
+#घोषणा IADC_NOMINAL_RSENSE_SIGN_MASK		BIT(7)
 
-#define IADC_REF_GAIN_MICRO_VOLTS		17857
+#घोषणा IADC_REF_GAIN_MICRO_VOLTS		17857
 
-#define IADC_INT_RSENSE_DEVIATION		15625	/* nano Ohms per bit */
+#घोषणा IADC_INT_RSENSE_DEVIATION		15625	/* nano Ohms per bit */
 
-#define IADC_INT_RSENSE_IDEAL_VALUE		10000	/* micro Ohms */
-#define IADC_INT_RSENSE_DEFAULT_VALUE		7800	/* micro Ohms */
-#define IADC_INT_RSENSE_DEFAULT_GF		9000	/* micro Ohms */
-#define IADC_INT_RSENSE_DEFAULT_SMIC		9700	/* micro Ohms */
+#घोषणा IADC_INT_RSENSE_IDEAL_VALUE		10000	/* micro Ohms */
+#घोषणा IADC_INT_RSENSE_DEFAULT_VALUE		7800	/* micro Ohms */
+#घोषणा IADC_INT_RSENSE_DEFAULT_GF		9000	/* micro Ohms */
+#घोषणा IADC_INT_RSENSE_DEFAULT_SMIC		9700	/* micro Ohms */
 
-#define IADC_CONV_TIME_MIN_US			2000
-#define IADC_CONV_TIME_MAX_US			2100
+#घोषणा IADC_CONV_TIME_MIN_US			2000
+#घोषणा IADC_CONV_TIME_MAX_US			2100
 
-#define IADC_DEF_PRESCALING			0 /* 1:1 */
-#define IADC_DEF_DECIMATION			0 /* 512 */
-#define IADC_DEF_HW_SETTLE_TIME			0 /* 0 us */
-#define IADC_DEF_AVG_SAMPLES			0 /* 1 sample */
+#घोषणा IADC_DEF_PRESCALING			0 /* 1:1 */
+#घोषणा IADC_DEF_DECIMATION			0 /* 512 */
+#घोषणा IADC_DEF_HW_SETTLE_TIME			0 /* 0 us */
+#घोषणा IADC_DEF_AVG_SAMPLES			0 /* 1 sample */
 
 /* IADC channel list */
-#define IADC_INT_RSENSE				0
-#define IADC_EXT_RSENSE				1
-#define IADC_GAIN_17P857MV			3
-#define IADC_EXT_OFFSET_CSP_CSN			5
-#define IADC_INT_OFFSET_CSP2_CSN2		6
+#घोषणा IADC_INT_RSENSE				0
+#घोषणा IADC_EXT_RSENSE				1
+#घोषणा IADC_GAIN_17P857MV			3
+#घोषणा IADC_EXT_OFFSET_CSP_CSN			5
+#घोषणा IADC_INT_OFFSET_CSP2_CSN2		6
 
 /**
- * struct iadc_chip - IADC Current ADC device structure.
- * @regmap: regmap for register read/write.
- * @dev: This device pointer.
- * @base: base offset for the ADC peripheral.
- * @rsense: Values of the internal and external sense resister in micro Ohms.
- * @poll_eoc: Poll for end of conversion instead of waiting for IRQ.
- * @offset: Raw offset values for the internal and external channels.
+ * काष्ठा iadc_chip - IADC Current ADC device काष्ठाure.
+ * @regmap: regmap क्रम रेजिस्टर पढ़ो/ग_लिखो.
+ * @dev: This device poपूर्णांकer.
+ * @base: base offset क्रम the ADC peripheral.
+ * @rsense: Values of the पूर्णांकernal and बाह्यal sense resister in micro Ohms.
+ * @poll_eoc: Poll क्रम end of conversion instead of रुकोing क्रम IRQ.
+ * @offset: Raw offset values क्रम the पूर्णांकernal and बाह्यal channels.
  * @gain: Raw gain of the channels.
- * @lock: ADC lock for access to the peripheral.
- * @complete: ADC notification after end of conversion interrupt is received.
+ * @lock: ADC lock क्रम access to the peripheral.
+ * @complete: ADC notअगरication after end of conversion पूर्णांकerrupt is received.
  */
-struct iadc_chip {
-	struct regmap	*regmap;
-	struct device	*dev;
+काष्ठा iadc_chip अणु
+	काष्ठा regmap	*regmap;
+	काष्ठा device	*dev;
 	u16		base;
 	bool		poll_eoc;
 	u32		rsense[2];
 	u16		offset[2];
 	u16		gain;
-	struct mutex	lock;
-	struct completion complete;
-};
+	काष्ठा mutex	lock;
+	काष्ठा completion complete;
+पूर्ण;
 
-static int iadc_read(struct iadc_chip *iadc, u16 offset, u8 *data)
-{
-	unsigned int val;
-	int ret;
+अटल पूर्णांक iadc_पढ़ो(काष्ठा iadc_chip *iadc, u16 offset, u8 *data)
+अणु
+	अचिन्हित पूर्णांक val;
+	पूर्णांक ret;
 
-	ret = regmap_read(iadc->regmap, iadc->base + offset, &val);
-	if (ret < 0)
-		return ret;
+	ret = regmap_पढ़ो(iadc->regmap, iadc->base + offset, &val);
+	अगर (ret < 0)
+		वापस ret;
 
 	*data = val;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int iadc_write(struct iadc_chip *iadc, u16 offset, u8 data)
-{
-	return regmap_write(iadc->regmap, iadc->base + offset, data);
-}
+अटल पूर्णांक iadc_ग_लिखो(काष्ठा iadc_chip *iadc, u16 offset, u8 data)
+अणु
+	वापस regmap_ग_लिखो(iadc->regmap, iadc->base + offset, data);
+पूर्ण
 
-static int iadc_reset(struct iadc_chip *iadc)
-{
+अटल पूर्णांक iadc_reset(काष्ठा iadc_chip *iadc)
+अणु
 	u8 data;
-	int ret;
+	पूर्णांक ret;
 
-	ret = iadc_write(iadc, IADC_SEC_ACCESS, IADC_SEC_ACCESS_DATA);
-	if (ret < 0)
-		return ret;
+	ret = iadc_ग_लिखो(iadc, IADC_SEC_ACCESS, IADC_SEC_ACCESS_DATA);
+	अगर (ret < 0)
+		वापस ret;
 
-	ret = iadc_read(iadc, IADC_PERH_RESET_CTL3, &data);
-	if (ret < 0)
-		return ret;
+	ret = iadc_पढ़ो(iadc, IADC_PERH_RESET_CTL3, &data);
+	अगर (ret < 0)
+		वापस ret;
 
-	ret = iadc_write(iadc, IADC_SEC_ACCESS, IADC_SEC_ACCESS_DATA);
-	if (ret < 0)
-		return ret;
+	ret = iadc_ग_लिखो(iadc, IADC_SEC_ACCESS, IADC_SEC_ACCESS_DATA);
+	अगर (ret < 0)
+		वापस ret;
 
 	data |= IADC_FOLLOW_WARM_RB;
 
-	return iadc_write(iadc, IADC_PERH_RESET_CTL3, data);
-}
+	वापस iadc_ग_लिखो(iadc, IADC_PERH_RESET_CTL3, data);
+पूर्ण
 
-static int iadc_set_state(struct iadc_chip *iadc, bool state)
-{
-	return iadc_write(iadc, IADC_EN_CTL1, state ? IADC_EN_CTL1_SET : 0);
-}
+अटल पूर्णांक iadc_set_state(काष्ठा iadc_chip *iadc, bool state)
+अणु
+	वापस iadc_ग_लिखो(iadc, IADC_EN_CTL1, state ? IADC_EN_CTL1_SET : 0);
+पूर्ण
 
-static void iadc_status_show(struct iadc_chip *iadc)
-{
+अटल व्योम iadc_status_show(काष्ठा iadc_chip *iadc)
+अणु
 	u8 mode, sta1, chan, dig, en, req;
-	int ret;
+	पूर्णांक ret;
 
-	ret = iadc_read(iadc, IADC_MODE_CTL, &mode);
-	if (ret < 0)
-		return;
+	ret = iadc_पढ़ो(iadc, IADC_MODE_CTL, &mode);
+	अगर (ret < 0)
+		वापस;
 
-	ret = iadc_read(iadc, IADC_DIG_PARAM, &dig);
-	if (ret < 0)
-		return;
+	ret = iadc_पढ़ो(iadc, IADC_DIG_PARAM, &dig);
+	अगर (ret < 0)
+		वापस;
 
-	ret = iadc_read(iadc, IADC_CH_SEL_CTL, &chan);
-	if (ret < 0)
-		return;
+	ret = iadc_पढ़ो(iadc, IADC_CH_SEL_CTL, &chan);
+	अगर (ret < 0)
+		वापस;
 
-	ret = iadc_read(iadc, IADC_CONV_REQ, &req);
-	if (ret < 0)
-		return;
+	ret = iadc_पढ़ो(iadc, IADC_CONV_REQ, &req);
+	अगर (ret < 0)
+		वापस;
 
-	ret = iadc_read(iadc, IADC_STATUS1, &sta1);
-	if (ret < 0)
-		return;
+	ret = iadc_पढ़ो(iadc, IADC_STATUS1, &sta1);
+	अगर (ret < 0)
+		वापस;
 
-	ret = iadc_read(iadc, IADC_EN_CTL1, &en);
-	if (ret < 0)
-		return;
+	ret = iadc_पढ़ो(iadc, IADC_EN_CTL1, &en);
+	अगर (ret < 0)
+		वापस;
 
 	dev_err(iadc->dev,
 		"mode:%02x en:%02x chan:%02x dig:%02x req:%02x sta1:%02x\n",
 		mode, en, chan, dig, req, sta1);
-}
+पूर्ण
 
-static int iadc_configure(struct iadc_chip *iadc, int channel)
-{
+अटल पूर्णांक iadc_configure(काष्ठा iadc_chip *iadc, पूर्णांक channel)
+अणु
 	u8 decim, mode;
-	int ret;
+	पूर्णांक ret;
 
 	/* Mode selection */
 	mode = (IADC_OP_MODE_NORMAL << IADC_OP_MODE_SHIFT) | IADC_TRIM_EN;
-	ret = iadc_write(iadc, IADC_MODE_CTL, mode);
-	if (ret < 0)
-		return ret;
+	ret = iadc_ग_लिखो(iadc, IADC_MODE_CTL, mode);
+	अगर (ret < 0)
+		वापस ret;
 
 	/* Channel selection */
-	ret = iadc_write(iadc, IADC_CH_SEL_CTL, channel);
-	if (ret < 0)
-		return ret;
+	ret = iadc_ग_लिखो(iadc, IADC_CH_SEL_CTL, channel);
+	अगर (ret < 0)
+		वापस ret;
 
 	/* Digital parameter setup */
 	decim = IADC_DEF_DECIMATION << IADC_DIG_DEC_RATIO_SEL_SHIFT;
-	ret = iadc_write(iadc, IADC_DIG_PARAM, decim);
-	if (ret < 0)
-		return ret;
+	ret = iadc_ग_लिखो(iadc, IADC_DIG_PARAM, decim);
+	अगर (ret < 0)
+		वापस ret;
 
-	/* HW settle time delay */
-	ret = iadc_write(iadc, IADC_HW_SETTLE_DELAY, IADC_DEF_HW_SETTLE_TIME);
-	if (ret < 0)
-		return ret;
+	/* HW settle समय delay */
+	ret = iadc_ग_लिखो(iadc, IADC_HW_SETTLE_DELAY, IADC_DEF_HW_SETTLE_TIME);
+	अगर (ret < 0)
+		वापस ret;
 
-	ret = iadc_write(iadc, IADC_FAST_AVG_CTL, IADC_DEF_AVG_SAMPLES);
-	if (ret < 0)
-		return ret;
+	ret = iadc_ग_लिखो(iadc, IADC_FAST_AVG_CTL, IADC_DEF_AVG_SAMPLES);
+	अगर (ret < 0)
+		वापस ret;
 
-	if (IADC_DEF_AVG_SAMPLES)
-		ret = iadc_write(iadc, IADC_FAST_AVG_EN, IADC_FAST_AVG_EN_SET);
-	else
-		ret = iadc_write(iadc, IADC_FAST_AVG_EN, 0);
+	अगर (IADC_DEF_AVG_SAMPLES)
+		ret = iadc_ग_लिखो(iadc, IADC_FAST_AVG_EN, IADC_FAST_AVG_EN_SET);
+	अन्यथा
+		ret = iadc_ग_लिखो(iadc, IADC_FAST_AVG_EN, 0);
 
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	if (!iadc->poll_eoc)
+	अगर (!iadc->poll_eoc)
 		reinit_completion(&iadc->complete);
 
 	ret = iadc_set_state(iadc, true);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	/* Request conversion */
-	return iadc_write(iadc, IADC_CONV_REQ, IADC_CONV_REQ_SET);
-}
+	वापस iadc_ग_लिखो(iadc, IADC_CONV_REQ, IADC_CONV_REQ_SET);
+पूर्ण
 
-static int iadc_poll_wait_eoc(struct iadc_chip *iadc, unsigned int interval_us)
-{
-	unsigned int count, retry;
-	int ret;
+अटल पूर्णांक iadc_poll_रुको_eoc(काष्ठा iadc_chip *iadc, अचिन्हित पूर्णांक पूर्णांकerval_us)
+अणु
+	अचिन्हित पूर्णांक count, retry;
+	पूर्णांक ret;
 	u8 sta1;
 
-	retry = interval_us / IADC_CONV_TIME_MIN_US;
+	retry = पूर्णांकerval_us / IADC_CONV_TIME_MIN_US;
 
-	for (count = 0; count < retry; count++) {
-		ret = iadc_read(iadc, IADC_STATUS1, &sta1);
-		if (ret < 0)
-			return ret;
+	क्रम (count = 0; count < retry; count++) अणु
+		ret = iadc_पढ़ो(iadc, IADC_STATUS1, &sta1);
+		अगर (ret < 0)
+			वापस ret;
 
 		sta1 &= IADC_STATUS1_REQ_STS_EOC_MASK;
-		if (sta1 == IADC_STATUS1_EOC)
-			return 0;
+		अगर (sta1 == IADC_STATUS1_EOC)
+			वापस 0;
 
 		usleep_range(IADC_CONV_TIME_MIN_US, IADC_CONV_TIME_MAX_US);
-	}
+	पूर्ण
 
 	iadc_status_show(iadc);
 
-	return -ETIMEDOUT;
-}
+	वापस -ETIMEDOUT;
+पूर्ण
 
-static int iadc_read_result(struct iadc_chip *iadc, u16 *data)
-{
-	return regmap_bulk_read(iadc->regmap, iadc->base + IADC_DATA, data, 2);
-}
+अटल पूर्णांक iadc_पढ़ो_result(काष्ठा iadc_chip *iadc, u16 *data)
+अणु
+	वापस regmap_bulk_पढ़ो(iadc->regmap, iadc->base + IADC_DATA, data, 2);
+पूर्ण
 
-static int iadc_do_conversion(struct iadc_chip *iadc, int chan, u16 *data)
-{
-	unsigned int wait;
-	int ret;
+अटल पूर्णांक iadc_करो_conversion(काष्ठा iadc_chip *iadc, पूर्णांक chan, u16 *data)
+अणु
+	अचिन्हित पूर्णांक रुको;
+	पूर्णांक ret;
 
 	ret = iadc_configure(iadc, chan);
-	if (ret < 0)
-		goto exit;
+	अगर (ret < 0)
+		जाओ निकास;
 
-	wait = BIT(IADC_DEF_AVG_SAMPLES) * IADC_CONV_TIME_MIN_US * 2;
+	रुको = BIT(IADC_DEF_AVG_SAMPLES) * IADC_CONV_TIME_MIN_US * 2;
 
-	if (iadc->poll_eoc) {
-		ret = iadc_poll_wait_eoc(iadc, wait);
-	} else {
-		ret = wait_for_completion_timeout(&iadc->complete,
-			usecs_to_jiffies(wait));
-		if (!ret)
+	अगर (iadc->poll_eoc) अणु
+		ret = iadc_poll_रुको_eoc(iadc, रुको);
+	पूर्ण अन्यथा अणु
+		ret = रुको_क्रम_completion_समयout(&iadc->complete,
+			usecs_to_jअगरfies(रुको));
+		अगर (!ret)
 			ret = -ETIMEDOUT;
-		else
-			/* double check conversion status */
-			ret = iadc_poll_wait_eoc(iadc, IADC_CONV_TIME_MIN_US);
-	}
+		अन्यथा
+			/* द्विगुन check conversion status */
+			ret = iadc_poll_रुको_eoc(iadc, IADC_CONV_TIME_MIN_US);
+	पूर्ण
 
-	if (!ret)
-		ret = iadc_read_result(iadc, data);
-exit:
+	अगर (!ret)
+		ret = iadc_पढ़ो_result(iadc, data);
+निकास:
 	iadc_set_state(iadc, false);
-	if (ret < 0)
+	अगर (ret < 0)
 		dev_err(iadc->dev, "conversion failed\n");
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int iadc_read_raw(struct iio_dev *indio_dev,
-			 struct iio_chan_spec const *chan,
-			 int *val, int *val2, long mask)
-{
-	struct iadc_chip *iadc = iio_priv(indio_dev);
+अटल पूर्णांक iadc_पढ़ो_raw(काष्ठा iio_dev *indio_dev,
+			 काष्ठा iio_chan_spec स्थिर *chan,
+			 पूर्णांक *val, पूर्णांक *val2, दीर्घ mask)
+अणु
+	काष्ठा iadc_chip *iadc = iio_priv(indio_dev);
 	s32 isense_ua, vsense_uv;
 	u16 adc_raw, vsense_raw;
-	int ret;
+	पूर्णांक ret;
 
-	switch (mask) {
-	case IIO_CHAN_INFO_RAW:
+	चयन (mask) अणु
+	हाल IIO_CHAN_INFO_RAW:
 		mutex_lock(&iadc->lock);
-		ret = iadc_do_conversion(iadc, chan->channel, &adc_raw);
+		ret = iadc_करो_conversion(iadc, chan->channel, &adc_raw);
 		mutex_unlock(&iadc->lock);
-		if (ret < 0)
-			return ret;
+		अगर (ret < 0)
+			वापस ret;
 
 		vsense_raw = adc_raw - iadc->offset[chan->channel];
 
@@ -336,248 +337,248 @@ static int iadc_read_raw(struct iio_dev *indio_dev,
 			adc_raw, vsense_uv, isense_ua);
 
 		*val = isense_ua;
-		return IIO_VAL_INT;
-	case IIO_CHAN_INFO_SCALE:
+		वापस IIO_VAL_INT;
+	हाल IIO_CHAN_INFO_SCALE:
 		*val = 0;
 		*val2 = 1000;
-		return IIO_VAL_INT_PLUS_MICRO;
-	}
+		वापस IIO_VAL_INT_PLUS_MICRO;
+	पूर्ण
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static const struct iio_info iadc_info = {
-	.read_raw = iadc_read_raw,
-};
+अटल स्थिर काष्ठा iio_info iadc_info = अणु
+	.पढ़ो_raw = iadc_पढ़ो_raw,
+पूर्ण;
 
-static irqreturn_t iadc_isr(int irq, void *dev_id)
-{
-	struct iadc_chip *iadc = dev_id;
+अटल irqवापस_t iadc_isr(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा iadc_chip *iadc = dev_id;
 
 	complete(&iadc->complete);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static int iadc_update_offset(struct iadc_chip *iadc)
-{
-	int ret;
+अटल पूर्णांक iadc_update_offset(काष्ठा iadc_chip *iadc)
+अणु
+	पूर्णांक ret;
 
-	ret = iadc_do_conversion(iadc, IADC_GAIN_17P857MV, &iadc->gain);
-	if (ret < 0)
-		return ret;
+	ret = iadc_करो_conversion(iadc, IADC_GAIN_17P857MV, &iadc->gain);
+	अगर (ret < 0)
+		वापस ret;
 
-	ret = iadc_do_conversion(iadc, IADC_INT_OFFSET_CSP2_CSN2,
+	ret = iadc_करो_conversion(iadc, IADC_INT_OFFSET_CSP2_CSN2,
 				 &iadc->offset[IADC_INT_RSENSE]);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	if (iadc->gain == iadc->offset[IADC_INT_RSENSE]) {
+	अगर (iadc->gain == iadc->offset[IADC_INT_RSENSE]) अणु
 		dev_err(iadc->dev, "error: internal offset == gain %d\n",
 			iadc->gain);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	ret = iadc_do_conversion(iadc, IADC_EXT_OFFSET_CSP_CSN,
+	ret = iadc_करो_conversion(iadc, IADC_EXT_OFFSET_CSP_CSN,
 				 &iadc->offset[IADC_EXT_RSENSE]);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	if (iadc->gain == iadc->offset[IADC_EXT_RSENSE]) {
+	अगर (iadc->gain == iadc->offset[IADC_EXT_RSENSE]) अणु
 		dev_err(iadc->dev, "error: external offset == gain %d\n",
 			iadc->gain);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int iadc_version_check(struct iadc_chip *iadc)
-{
+अटल पूर्णांक iadc_version_check(काष्ठा iadc_chip *iadc)
+अणु
 	u8 val;
-	int ret;
+	पूर्णांक ret;
 
-	ret = iadc_read(iadc, IADC_PERPH_TYPE, &val);
-	if (ret < 0)
-		return ret;
+	ret = iadc_पढ़ो(iadc, IADC_PERPH_TYPE, &val);
+	अगर (ret < 0)
+		वापस ret;
 
-	if (val < IADC_PERPH_TYPE_ADC) {
+	अगर (val < IADC_PERPH_TYPE_ADC) अणु
 		dev_err(iadc->dev, "%d is not ADC\n", val);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	ret = iadc_read(iadc, IADC_PERPH_SUBTYPE, &val);
-	if (ret < 0)
-		return ret;
+	ret = iadc_पढ़ो(iadc, IADC_PERPH_SUBTYPE, &val);
+	अगर (ret < 0)
+		वापस ret;
 
-	if (val < IADC_PERPH_SUBTYPE_IADC) {
+	अगर (val < IADC_PERPH_SUBTYPE_IADC) अणु
 		dev_err(iadc->dev, "%d is not IADC\n", val);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	ret = iadc_read(iadc, IADC_REVISION2, &val);
-	if (ret < 0)
-		return ret;
+	ret = iadc_पढ़ो(iadc, IADC_REVISION2, &val);
+	अगर (ret < 0)
+		वापस ret;
 
-	if (val < IADC_REVISION2_SUPPORTED_IADC) {
+	अगर (val < IADC_REVISION2_SUPPORTED_IADC) अणु
 		dev_err(iadc->dev, "revision %d not supported\n", val);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int iadc_rsense_read(struct iadc_chip *iadc, struct device_node *node)
-{
-	int ret, sign, int_sense;
+अटल पूर्णांक iadc_rsense_पढ़ो(काष्ठा iadc_chip *iadc, काष्ठा device_node *node)
+अणु
+	पूर्णांक ret, sign, पूर्णांक_sense;
 	u8 deviation;
 
-	ret = of_property_read_u32(node, "qcom,external-resistor-micro-ohms",
+	ret = of_property_पढ़ो_u32(node, "qcom,external-resistor-micro-ohms",
 				   &iadc->rsense[IADC_EXT_RSENSE]);
-	if (ret < 0)
+	अगर (ret < 0)
 		iadc->rsense[IADC_EXT_RSENSE] = IADC_INT_RSENSE_IDEAL_VALUE;
 
-	if (!iadc->rsense[IADC_EXT_RSENSE]) {
+	अगर (!iadc->rsense[IADC_EXT_RSENSE]) अणु
 		dev_err(iadc->dev, "external resistor can't be zero Ohms");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	ret = iadc_read(iadc, IADC_NOMINAL_RSENSE, &deviation);
-	if (ret < 0)
-		return ret;
+	ret = iadc_पढ़ो(iadc, IADC_NOMINAL_RSENSE, &deviation);
+	अगर (ret < 0)
+		वापस ret;
 
 	/*
 	 * Deviation value stored is an offset from 10 mili Ohms, bit 7 is
-	 * the sign, the remaining bits have an LSB of 15625 nano Ohms.
+	 * the sign, the reमुख्यing bits have an LSB of 15625 nano Ohms.
 	 */
 	sign = (deviation & IADC_NOMINAL_RSENSE_SIGN_MASK) ? -1 : 1;
 
 	deviation &= ~IADC_NOMINAL_RSENSE_SIGN_MASK;
 
 	/* Scale it to nono Ohms */
-	int_sense = IADC_INT_RSENSE_IDEAL_VALUE * 1000;
-	int_sense += sign * deviation * IADC_INT_RSENSE_DEVIATION;
-	int_sense /= 1000; /* micro Ohms */
+	पूर्णांक_sense = IADC_INT_RSENSE_IDEAL_VALUE * 1000;
+	पूर्णांक_sense += sign * deviation * IADC_INT_RSENSE_DEVIATION;
+	पूर्णांक_sense /= 1000; /* micro Ohms */
 
-	iadc->rsense[IADC_INT_RSENSE] = int_sense;
-	return 0;
-}
+	iadc->rsense[IADC_INT_RSENSE] = पूर्णांक_sense;
+	वापस 0;
+पूर्ण
 
-static const struct iio_chan_spec iadc_channels[] = {
-	{
+अटल स्थिर काष्ठा iio_chan_spec iadc_channels[] = अणु
+	अणु
 		.type = IIO_CURRENT,
 		.datasheet_name	= "INTERNAL_RSENSE",
 		.channel = 0,
 		.info_mask_separate = BIT(IIO_CHAN_INFO_RAW) |
 				      BIT(IIO_CHAN_INFO_SCALE),
 		.indexed = 1,
-	},
-	{
+	पूर्ण,
+	अणु
 		.type = IIO_CURRENT,
 		.datasheet_name	= "EXTERNAL_RSENSE",
 		.channel = 1,
 		.info_mask_separate = BIT(IIO_CHAN_INFO_RAW) |
 				      BIT(IIO_CHAN_INFO_SCALE),
 		.indexed = 1,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static int iadc_probe(struct platform_device *pdev)
-{
-	struct device_node *node = pdev->dev.of_node;
-	struct device *dev = &pdev->dev;
-	struct iio_dev *indio_dev;
-	struct iadc_chip *iadc;
-	int ret, irq_eoc;
+अटल पूर्णांक iadc_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device_node *node = pdev->dev.of_node;
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा iio_dev *indio_dev;
+	काष्ठा iadc_chip *iadc;
+	पूर्णांक ret, irq_eoc;
 	u32 res;
 
-	indio_dev = devm_iio_device_alloc(dev, sizeof(*iadc));
-	if (!indio_dev)
-		return -ENOMEM;
+	indio_dev = devm_iio_device_alloc(dev, माप(*iadc));
+	अगर (!indio_dev)
+		वापस -ENOMEM;
 
 	iadc = iio_priv(indio_dev);
 	iadc->dev = dev;
 
-	iadc->regmap = dev_get_regmap(dev->parent, NULL);
-	if (!iadc->regmap)
-		return -ENODEV;
+	iadc->regmap = dev_get_regmap(dev->parent, शून्य);
+	अगर (!iadc->regmap)
+		वापस -ENODEV;
 
 	init_completion(&iadc->complete);
 	mutex_init(&iadc->lock);
 
-	ret = of_property_read_u32(node, "reg", &res);
-	if (ret < 0)
-		return -ENODEV;
+	ret = of_property_पढ़ो_u32(node, "reg", &res);
+	अगर (ret < 0)
+		वापस -ENODEV;
 
 	iadc->base = res;
 
 	ret = iadc_version_check(iadc);
-	if (ret < 0)
-		return -ENODEV;
+	अगर (ret < 0)
+		वापस -ENODEV;
 
-	ret = iadc_rsense_read(iadc, node);
-	if (ret < 0)
-		return -ENODEV;
+	ret = iadc_rsense_पढ़ो(iadc, node);
+	अगर (ret < 0)
+		वापस -ENODEV;
 
 	dev_dbg(iadc->dev, "sense resistors %d and %d micro Ohm\n",
 		iadc->rsense[IADC_INT_RSENSE],
 		iadc->rsense[IADC_EXT_RSENSE]);
 
-	irq_eoc = platform_get_irq(pdev, 0);
-	if (irq_eoc == -EPROBE_DEFER)
-		return irq_eoc;
+	irq_eoc = platक्रमm_get_irq(pdev, 0);
+	अगर (irq_eoc == -EPROBE_DEFER)
+		वापस irq_eoc;
 
-	if (irq_eoc < 0)
+	अगर (irq_eoc < 0)
 		iadc->poll_eoc = true;
 
 	ret = iadc_reset(iadc);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(dev, "reset failed\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	if (!iadc->poll_eoc) {
+	अगर (!iadc->poll_eoc) अणु
 		ret = devm_request_irq(dev, irq_eoc, iadc_isr, 0,
 					"spmi-iadc", iadc);
-		if (!ret)
+		अगर (!ret)
 			enable_irq_wake(irq_eoc);
-		else
-			return ret;
-	} else {
+		अन्यथा
+			वापस ret;
+	पूर्ण अन्यथा अणु
 		device_init_wakeup(iadc->dev, 1);
-	}
+	पूर्ण
 
 	ret = iadc_update_offset(iadc);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(dev, "failed offset calibration\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	indio_dev->name = pdev->name;
-	indio_dev->modes = INDIO_DIRECT_MODE;
+	indio_dev->modes = INDIO_सूचीECT_MODE;
 	indio_dev->info = &iadc_info;
 	indio_dev->channels = iadc_channels;
 	indio_dev->num_channels = ARRAY_SIZE(iadc_channels);
 
-	return devm_iio_device_register(dev, indio_dev);
-}
+	वापस devm_iio_device_रेजिस्टर(dev, indio_dev);
+पूर्ण
 
-static const struct of_device_id iadc_match_table[] = {
-	{ .compatible = "qcom,spmi-iadc" },
-	{ }
-};
+अटल स्थिर काष्ठा of_device_id iadc_match_table[] = अणु
+	अणु .compatible = "qcom,spmi-iadc" पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 
 MODULE_DEVICE_TABLE(of, iadc_match_table);
 
-static struct platform_driver iadc_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver iadc_driver = अणु
+	.driver = अणु
 		   .name = "qcom-spmi-iadc",
 		   .of_match_table = iadc_match_table,
-	},
+	पूर्ण,
 	.probe = iadc_probe,
-};
+पूर्ण;
 
-module_platform_driver(iadc_driver);
+module_platक्रमm_driver(iadc_driver);
 
 MODULE_ALIAS("platform:qcom-spmi-iadc");
 MODULE_DESCRIPTION("Qualcomm SPMI PMIC current ADC driver");

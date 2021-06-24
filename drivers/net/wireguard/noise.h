@@ -1,135 +1,136 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * Copyright (C) 2015-2019 Jason A. Donenfeld <Jason@zx2c4.com>. All Rights Reserved.
  */
-#ifndef _WG_NOISE_H
-#define _WG_NOISE_H
+#अगर_अघोषित _WG_NOISE_H
+#घोषणा _WG_NOISE_H
 
-#include "messages.h"
-#include "peerlookup.h"
+#समावेश "messages.h"
+#समावेश "peerlookup.h"
 
-#include <linux/types.h>
-#include <linux/spinlock.h>
-#include <linux/atomic.h>
-#include <linux/rwsem.h>
-#include <linux/mutex.h>
-#include <linux/kref.h>
+#समावेश <linux/types.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/atomic.h>
+#समावेश <linux/rwsem.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/kref.h>
 
-struct noise_replay_counter {
+काष्ठा noise_replay_counter अणु
 	u64 counter;
 	spinlock_t lock;
-	unsigned long backtrack[COUNTER_BITS_TOTAL / BITS_PER_LONG];
-};
+	अचिन्हित दीर्घ backtrack[COUNTER_BITS_TOTAL / BITS_PER_LONG];
+पूर्ण;
 
-struct noise_symmetric_key {
+काष्ठा noise_symmetric_key अणु
 	u8 key[NOISE_SYMMETRIC_KEY_LEN];
 	u64 birthdate;
 	bool is_valid;
-};
+पूर्ण;
 
-struct noise_keypair {
-	struct index_hashtable_entry entry;
-	struct noise_symmetric_key sending;
+काष्ठा noise_keypair अणु
+	काष्ठा index_hashtable_entry entry;
+	काष्ठा noise_symmetric_key sending;
 	atomic64_t sending_counter;
-	struct noise_symmetric_key receiving;
-	struct noise_replay_counter receiving_counter;
+	काष्ठा noise_symmetric_key receiving;
+	काष्ठा noise_replay_counter receiving_counter;
 	__le32 remote_index;
 	bool i_am_the_initiator;
-	struct kref refcount;
-	struct rcu_head rcu;
-	u64 internal_id;
-};
+	काष्ठा kref refcount;
+	काष्ठा rcu_head rcu;
+	u64 पूर्णांकernal_id;
+पूर्ण;
 
-struct noise_keypairs {
-	struct noise_keypair __rcu *current_keypair;
-	struct noise_keypair __rcu *previous_keypair;
-	struct noise_keypair __rcu *next_keypair;
+काष्ठा noise_keypairs अणु
+	काष्ठा noise_keypair __rcu *current_keypair;
+	काष्ठा noise_keypair __rcu *previous_keypair;
+	काष्ठा noise_keypair __rcu *next_keypair;
 	spinlock_t keypair_update_lock;
-};
+पूर्ण;
 
-struct noise_static_identity {
-	u8 static_public[NOISE_PUBLIC_KEY_LEN];
-	u8 static_private[NOISE_PUBLIC_KEY_LEN];
-	struct rw_semaphore lock;
+काष्ठा noise_अटल_identity अणु
+	u8 अटल_खुला[NOISE_PUBLIC_KEY_LEN];
+	u8 अटल_निजी[NOISE_PUBLIC_KEY_LEN];
+	काष्ठा rw_semaphore lock;
 	bool has_identity;
-};
+पूर्ण;
 
-enum noise_handshake_state {
+क्रमागत noise_handshake_state अणु
 	HANDSHAKE_ZEROED,
 	HANDSHAKE_CREATED_INITIATION,
 	HANDSHAKE_CONSUMED_INITIATION,
 	HANDSHAKE_CREATED_RESPONSE,
 	HANDSHAKE_CONSUMED_RESPONSE
-};
+पूर्ण;
 
-struct noise_handshake {
-	struct index_hashtable_entry entry;
+काष्ठा noise_handshake अणु
+	काष्ठा index_hashtable_entry entry;
 
-	enum noise_handshake_state state;
+	क्रमागत noise_handshake_state state;
 	u64 last_initiation_consumption;
 
-	struct noise_static_identity *static_identity;
+	काष्ठा noise_अटल_identity *अटल_identity;
 
-	u8 ephemeral_private[NOISE_PUBLIC_KEY_LEN];
-	u8 remote_static[NOISE_PUBLIC_KEY_LEN];
+	u8 ephemeral_निजी[NOISE_PUBLIC_KEY_LEN];
+	u8 remote_अटल[NOISE_PUBLIC_KEY_LEN];
 	u8 remote_ephemeral[NOISE_PUBLIC_KEY_LEN];
-	u8 precomputed_static_static[NOISE_PUBLIC_KEY_LEN];
+	u8 precomputed_अटल_अटल[NOISE_PUBLIC_KEY_LEN];
 
 	u8 preshared_key[NOISE_SYMMETRIC_KEY_LEN];
 
 	u8 hash[NOISE_HASH_LEN];
 	u8 chaining_key[NOISE_HASH_LEN];
 
-	u8 latest_timestamp[NOISE_TIMESTAMP_LEN];
+	u8 latest_बारtamp[NOISE_TIMESTAMP_LEN];
 	__le32 remote_index;
 
 	/* Protects all members except the immutable (after noise_handshake_
-	 * init): remote_static, precomputed_static_static, static_identity.
+	 * init): remote_अटल, precomputed_अटल_अटल, अटल_identity.
 	 */
-	struct rw_semaphore lock;
-};
+	काष्ठा rw_semaphore lock;
+पूर्ण;
 
-struct wg_device;
+काष्ठा wg_device;
 
-void wg_noise_init(void);
-void wg_noise_handshake_init(struct noise_handshake *handshake,
-			     struct noise_static_identity *static_identity,
-			     const u8 peer_public_key[NOISE_PUBLIC_KEY_LEN],
-			     const u8 peer_preshared_key[NOISE_SYMMETRIC_KEY_LEN],
-			     struct wg_peer *peer);
-void wg_noise_handshake_clear(struct noise_handshake *handshake);
-static inline void wg_noise_reset_last_sent_handshake(atomic64_t *handshake_ns)
-{
-	atomic64_set(handshake_ns, ktime_get_coarse_boottime_ns() -
+व्योम wg_noise_init(व्योम);
+व्योम wg_noise_handshake_init(काष्ठा noise_handshake *handshake,
+			     काष्ठा noise_अटल_identity *अटल_identity,
+			     स्थिर u8 peer_खुला_key[NOISE_PUBLIC_KEY_LEN],
+			     स्थिर u8 peer_preshared_key[NOISE_SYMMETRIC_KEY_LEN],
+			     काष्ठा wg_peer *peer);
+व्योम wg_noise_handshake_clear(काष्ठा noise_handshake *handshake);
+अटल अंतरभूत व्योम wg_noise_reset_last_sent_handshake(atomic64_t *handshake_ns)
+अणु
+	atomic64_set(handshake_ns, kसमय_get_coarse_bootसमय_ns() -
 				       (u64)(REKEY_TIMEOUT + 1) * NSEC_PER_SEC);
-}
+पूर्ण
 
-void wg_noise_keypair_put(struct noise_keypair *keypair, bool unreference_now);
-struct noise_keypair *wg_noise_keypair_get(struct noise_keypair *keypair);
-void wg_noise_keypairs_clear(struct noise_keypairs *keypairs);
-bool wg_noise_received_with_keypair(struct noise_keypairs *keypairs,
-				    struct noise_keypair *received_keypair);
-void wg_noise_expire_current_peer_keypairs(struct wg_peer *peer);
+व्योम wg_noise_keypair_put(काष्ठा noise_keypair *keypair, bool unreference_now);
+काष्ठा noise_keypair *wg_noise_keypair_get(काष्ठा noise_keypair *keypair);
+व्योम wg_noise_keypairs_clear(काष्ठा noise_keypairs *keypairs);
+bool wg_noise_received_with_keypair(काष्ठा noise_keypairs *keypairs,
+				    काष्ठा noise_keypair *received_keypair);
+व्योम wg_noise_expire_current_peer_keypairs(काष्ठा wg_peer *peer);
 
-void wg_noise_set_static_identity_private_key(
-	struct noise_static_identity *static_identity,
-	const u8 private_key[NOISE_PUBLIC_KEY_LEN]);
-void wg_noise_precompute_static_static(struct wg_peer *peer);
+व्योम wg_noise_set_अटल_identity_निजी_key(
+	काष्ठा noise_अटल_identity *अटल_identity,
+	स्थिर u8 निजी_key[NOISE_PUBLIC_KEY_LEN]);
+व्योम wg_noise_precompute_अटल_अटल(काष्ठा wg_peer *peer);
 
 bool
-wg_noise_handshake_create_initiation(struct message_handshake_initiation *dst,
-				     struct noise_handshake *handshake);
-struct wg_peer *
-wg_noise_handshake_consume_initiation(struct message_handshake_initiation *src,
-				      struct wg_device *wg);
+wg_noise_handshake_create_initiation(काष्ठा message_handshake_initiation *dst,
+				     काष्ठा noise_handshake *handshake);
+काष्ठा wg_peer *
+wg_noise_handshake_consume_initiation(काष्ठा message_handshake_initiation *src,
+				      काष्ठा wg_device *wg);
 
-bool wg_noise_handshake_create_response(struct message_handshake_response *dst,
-					struct noise_handshake *handshake);
-struct wg_peer *
-wg_noise_handshake_consume_response(struct message_handshake_response *src,
-				    struct wg_device *wg);
+bool wg_noise_handshake_create_response(काष्ठा message_handshake_response *dst,
+					काष्ठा noise_handshake *handshake);
+काष्ठा wg_peer *
+wg_noise_handshake_consume_response(काष्ठा message_handshake_response *src,
+				    काष्ठा wg_device *wg);
 
-bool wg_noise_handshake_begin_session(struct noise_handshake *handshake,
-				      struct noise_keypairs *keypairs);
+bool wg_noise_handshake_begin_session(काष्ठा noise_handshake *handshake,
+				      काष्ठा noise_keypairs *keypairs);
 
-#endif /* _WG_NOISE_H */
+#पूर्ण_अगर /* _WG_NOISE_H */

@@ -1,230 +1,231 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /* Copyright(c) 2017 - 2018 Intel Corporation. */
 
-#include <asm/barrier.h>
-#include <errno.h>
-#include <getopt.h>
-#include <libgen.h>
-#include <linux/bpf.h>
-#include <linux/compiler.h>
-#include <linux/if_link.h>
-#include <linux/if_xdp.h>
-#include <linux/if_ether.h>
-#include <linux/ip.h>
-#include <linux/limits.h>
-#include <linux/udp.h>
-#include <arpa/inet.h>
-#include <locale.h>
-#include <net/ethernet.h>
-#include <net/if.h>
-#include <poll.h>
-#include <pthread.h>
-#include <signal.h>
-#include <stdbool.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <sys/capability.h>
-#include <sys/mman.h>
-#include <sys/resource.h>
-#include <sys/socket.h>
-#include <sys/types.h>
-#include <sys/un.h>
-#include <time.h>
-#include <unistd.h>
+#समावेश <यंत्र/barrier.h>
+#समावेश <त्रुटिसं.स>
+#समावेश <getopt.h>
+#समावेश <libgen.h>
+#समावेश <linux/bpf.h>
+#समावेश <linux/compiler.h>
+#समावेश <linux/अगर_link.h>
+#समावेश <linux/अगर_xdp.h>
+#समावेश <linux/अगर_ether.h>
+#समावेश <linux/ip.h>
+#समावेश <linux/सीमा.स>
+#समावेश <linux/udp.h>
+#समावेश <arpa/inet.h>
+#समावेश <क्षेत्र.स>
+#समावेश <net/ethernet.h>
+#समावेश <net/अगर.h>
+#समावेश <poll.h>
+#समावेश <pthपढ़ो.h>
+#समावेश <संकेत.स>
+#समावेश <stdbool.h>
+#समावेश <मानकपन.स>
+#समावेश <मानककोष.स>
+#समावेश <माला.स>
+#समावेश <sys/capability.h>
+#समावेश <sys/mman.h>
+#समावेश <sys/resource.h>
+#समावेश <sys/socket.h>
+#समावेश <sys/types.h>
+#समावेश <sys/un.h>
+#समावेश <समय.स>
+#समावेश <unistd.h>
 
-#include <bpf/libbpf.h>
-#include <bpf/xsk.h>
-#include <bpf/bpf.h>
-#include "xdpsock.h"
+#समावेश <bpf/libbpf.h>
+#समावेश <bpf/xsk.h>
+#समावेश <bpf/bpf.h>
+#समावेश "xdpsock.h"
 
-#ifndef SOL_XDP
-#define SOL_XDP 283
-#endif
+#अगर_अघोषित SOL_XDP
+#घोषणा SOL_XDP 283
+#पूर्ण_अगर
 
-#ifndef AF_XDP
-#define AF_XDP 44
-#endif
+#अगर_अघोषित AF_XDP
+#घोषणा AF_XDP 44
+#पूर्ण_अगर
 
-#ifndef PF_XDP
-#define PF_XDP AF_XDP
-#endif
+#अगर_अघोषित PF_XDP
+#घोषणा PF_XDP AF_XDP
+#पूर्ण_अगर
 
-#define NUM_FRAMES (4 * 1024)
-#define MIN_PKT_SIZE 64
+#घोषणा NUM_FRAMES (4 * 1024)
+#घोषणा MIN_PKT_SIZE 64
 
-#define DEBUG_HEXDUMP 0
+#घोषणा DEBUG_HEXDUMP 0
 
-typedef __u64 u64;
-typedef __u32 u32;
-typedef __u16 u16;
-typedef __u8  u8;
+प्रकार __u64 u64;
+प्रकार __u32 u32;
+प्रकार __u16 u16;
+प्रकार __u8  u8;
 
-static unsigned long prev_time;
+अटल अचिन्हित दीर्घ prev_समय;
 
-enum benchmark_type {
+क्रमागत benchmark_type अणु
 	BENCH_RXDROP = 0,
 	BENCH_TXONLY = 1,
 	BENCH_L2FWD = 2,
-};
+पूर्ण;
 
-static enum benchmark_type opt_bench = BENCH_RXDROP;
-static u32 opt_xdp_flags = XDP_FLAGS_UPDATE_IF_NOEXIST;
-static const char *opt_if = "";
-static int opt_ifindex;
-static int opt_queue;
-static unsigned long opt_duration;
-static unsigned long start_time;
-static bool benchmark_done;
-static u32 opt_batch_size = 64;
-static int opt_pkt_count;
-static u16 opt_pkt_size = MIN_PKT_SIZE;
-static u32 opt_pkt_fill_pattern = 0x12345678;
-static bool opt_extra_stats;
-static bool opt_quiet;
-static bool opt_app_stats;
-static const char *opt_irq_str = "";
-static u32 irq_no;
-static int irqs_at_init = -1;
-static int opt_poll;
-static int opt_interval = 1;
-static u32 opt_xdp_bind_flags = XDP_USE_NEED_WAKEUP;
-static u32 opt_umem_flags;
-static int opt_unaligned_chunks;
-static int opt_mmap_flags;
-static int opt_xsk_frame_size = XSK_UMEM__DEFAULT_FRAME_SIZE;
-static int opt_timeout = 1000;
-static bool opt_need_wakeup = true;
-static u32 opt_num_xsks = 1;
-static bool opt_busy_poll;
-static bool opt_reduced_cap;
+अटल क्रमागत benchmark_type opt_bench = BENCH_RXDROP;
+अटल u32 opt_xdp_flags = XDP_FLAGS_UPDATE_IF_NOEXIST;
+अटल स्थिर अक्षर *opt_अगर = "";
+अटल पूर्णांक opt_अगरindex;
+अटल पूर्णांक opt_queue;
+अटल अचिन्हित दीर्घ opt_duration;
+अटल अचिन्हित दीर्घ start_समय;
+अटल bool benchmark_करोne;
+अटल u32 opt_batch_size = 64;
+अटल पूर्णांक opt_pkt_count;
+अटल u16 opt_pkt_size = MIN_PKT_SIZE;
+अटल u32 opt_pkt_fill_pattern = 0x12345678;
+अटल bool opt_extra_stats;
+अटल bool opt_quiet;
+अटल bool opt_app_stats;
+अटल स्थिर अक्षर *opt_irq_str = "";
+अटल u32 irq_no;
+अटल पूर्णांक irqs_at_init = -1;
+अटल पूर्णांक opt_poll;
+अटल पूर्णांक opt_पूर्णांकerval = 1;
+अटल u32 opt_xdp_bind_flags = XDP_USE_NEED_WAKEUP;
+अटल u32 opt_umem_flags;
+अटल पूर्णांक opt_unaligned_chunks;
+अटल पूर्णांक opt_mmap_flags;
+अटल पूर्णांक opt_xsk_frame_size = XSK_UMEM__DEFAULT_FRAME_SIZE;
+अटल पूर्णांक opt_समयout = 1000;
+अटल bool opt_need_wakeup = true;
+अटल u32 opt_num_xsks = 1;
+अटल bool opt_busy_poll;
+अटल bool opt_reduced_cap;
 
-struct xsk_ring_stats {
-	unsigned long rx_npkts;
-	unsigned long tx_npkts;
-	unsigned long rx_dropped_npkts;
-	unsigned long rx_invalid_npkts;
-	unsigned long tx_invalid_npkts;
-	unsigned long rx_full_npkts;
-	unsigned long rx_fill_empty_npkts;
-	unsigned long tx_empty_npkts;
-	unsigned long prev_rx_npkts;
-	unsigned long prev_tx_npkts;
-	unsigned long prev_rx_dropped_npkts;
-	unsigned long prev_rx_invalid_npkts;
-	unsigned long prev_tx_invalid_npkts;
-	unsigned long prev_rx_full_npkts;
-	unsigned long prev_rx_fill_empty_npkts;
-	unsigned long prev_tx_empty_npkts;
-};
+काष्ठा xsk_ring_stats अणु
+	अचिन्हित दीर्घ rx_npkts;
+	अचिन्हित दीर्घ tx_npkts;
+	अचिन्हित दीर्घ rx_dropped_npkts;
+	अचिन्हित दीर्घ rx_invalid_npkts;
+	अचिन्हित दीर्घ tx_invalid_npkts;
+	अचिन्हित दीर्घ rx_full_npkts;
+	अचिन्हित दीर्घ rx_fill_empty_npkts;
+	अचिन्हित दीर्घ tx_empty_npkts;
+	अचिन्हित दीर्घ prev_rx_npkts;
+	अचिन्हित दीर्घ prev_tx_npkts;
+	अचिन्हित दीर्घ prev_rx_dropped_npkts;
+	अचिन्हित दीर्घ prev_rx_invalid_npkts;
+	अचिन्हित दीर्घ prev_tx_invalid_npkts;
+	अचिन्हित दीर्घ prev_rx_full_npkts;
+	अचिन्हित दीर्घ prev_rx_fill_empty_npkts;
+	अचिन्हित दीर्घ prev_tx_empty_npkts;
+पूर्ण;
 
-struct xsk_driver_stats {
-	unsigned long intrs;
-	unsigned long prev_intrs;
-};
+काष्ठा xsk_driver_stats अणु
+	अचिन्हित दीर्घ पूर्णांकrs;
+	अचिन्हित दीर्घ prev_पूर्णांकrs;
+पूर्ण;
 
-struct xsk_app_stats {
-	unsigned long rx_empty_polls;
-	unsigned long fill_fail_polls;
-	unsigned long copy_tx_sendtos;
-	unsigned long tx_wakeup_sendtos;
-	unsigned long opt_polls;
-	unsigned long prev_rx_empty_polls;
-	unsigned long prev_fill_fail_polls;
-	unsigned long prev_copy_tx_sendtos;
-	unsigned long prev_tx_wakeup_sendtos;
-	unsigned long prev_opt_polls;
-};
+काष्ठा xsk_app_stats अणु
+	अचिन्हित दीर्घ rx_empty_polls;
+	अचिन्हित दीर्घ fill_fail_polls;
+	अचिन्हित दीर्घ copy_tx_sendtos;
+	अचिन्हित दीर्घ tx_wakeup_sendtos;
+	अचिन्हित दीर्घ opt_polls;
+	अचिन्हित दीर्घ prev_rx_empty_polls;
+	अचिन्हित दीर्घ prev_fill_fail_polls;
+	अचिन्हित दीर्घ prev_copy_tx_sendtos;
+	अचिन्हित दीर्घ prev_tx_wakeup_sendtos;
+	अचिन्हित दीर्घ prev_opt_polls;
+पूर्ण;
 
-struct xsk_umem_info {
-	struct xsk_ring_prod fq;
-	struct xsk_ring_cons cq;
-	struct xsk_umem *umem;
-	void *buffer;
-};
+काष्ठा xsk_umem_info अणु
+	काष्ठा xsk_ring_prod fq;
+	काष्ठा xsk_ring_cons cq;
+	काष्ठा xsk_umem *umem;
+	व्योम *buffer;
+पूर्ण;
 
-struct xsk_socket_info {
-	struct xsk_ring_cons rx;
-	struct xsk_ring_prod tx;
-	struct xsk_umem_info *umem;
-	struct xsk_socket *xsk;
-	struct xsk_ring_stats ring_stats;
-	struct xsk_app_stats app_stats;
-	struct xsk_driver_stats drv_stats;
+काष्ठा xsk_socket_info अणु
+	काष्ठा xsk_ring_cons rx;
+	काष्ठा xsk_ring_prod tx;
+	काष्ठा xsk_umem_info *umem;
+	काष्ठा xsk_socket *xsk;
+	काष्ठा xsk_ring_stats ring_stats;
+	काष्ठा xsk_app_stats app_stats;
+	काष्ठा xsk_driver_stats drv_stats;
 	u32 outstanding_tx;
-};
+पूर्ण;
 
-static int num_socks;
-struct xsk_socket_info *xsks[MAX_SOCKS];
-int sock;
+अटल पूर्णांक num_socks;
+काष्ठा xsk_socket_info *xsks[MAX_SOCKS];
+पूर्णांक sock;
 
-static unsigned long get_nsecs(void)
-{
-	struct timespec ts;
+अटल अचिन्हित दीर्घ get_nsecs(व्योम)
+अणु
+	काष्ठा बारpec ts;
 
-	clock_gettime(CLOCK_MONOTONIC, &ts);
-	return ts.tv_sec * 1000000000UL + ts.tv_nsec;
-}
+	घड़ी_समय_लो(CLOCK_MONOTONIC, &ts);
+	वापस ts.tv_sec * 1000000000UL + ts.tv_nsec;
+पूर्ण
 
-static void print_benchmark(bool running)
-{
-	const char *bench_str = "INVALID";
+अटल व्योम prपूर्णांक_benchmark(bool running)
+अणु
+	स्थिर अक्षर *bench_str = "INVALID";
 
-	if (opt_bench == BENCH_RXDROP)
+	अगर (opt_bench == BENCH_RXDROP)
 		bench_str = "rxdrop";
-	else if (opt_bench == BENCH_TXONLY)
+	अन्यथा अगर (opt_bench == BENCH_TXONLY)
 		bench_str = "txonly";
-	else if (opt_bench == BENCH_L2FWD)
+	अन्यथा अगर (opt_bench == BENCH_L2FWD)
 		bench_str = "l2fwd";
 
-	printf("%s:%d %s ", opt_if, opt_queue, bench_str);
-	if (opt_xdp_flags & XDP_FLAGS_SKB_MODE)
-		printf("xdp-skb ");
-	else if (opt_xdp_flags & XDP_FLAGS_DRV_MODE)
-		printf("xdp-drv ");
-	else
-		printf("	");
+	म_लिखो("%s:%d %s ", opt_अगर, opt_queue, bench_str);
+	अगर (opt_xdp_flags & XDP_FLAGS_SKB_MODE)
+		म_लिखो("xdp-skb ");
+	अन्यथा अगर (opt_xdp_flags & XDP_FLAGS_DRV_MODE)
+		म_लिखो("xdp-drv ");
+	अन्यथा
+		म_लिखो("	");
 
-	if (opt_poll)
-		printf("poll() ");
+	अगर (opt_poll)
+		म_लिखो("poll() ");
 
-	if (running) {
-		printf("running...");
-		fflush(stdout);
-	}
-}
+	अगर (running) अणु
+		म_लिखो("running...");
+		ख_साफ(मानक_निकास);
+	पूर्ण
+पूर्ण
 
-static int xsk_get_xdp_stats(int fd, struct xsk_socket_info *xsk)
-{
-	struct xdp_statistics stats;
+अटल पूर्णांक xsk_get_xdp_stats(पूर्णांक fd, काष्ठा xsk_socket_info *xsk)
+अणु
+	काष्ठा xdp_statistics stats;
 	socklen_t optlen;
-	int err;
+	पूर्णांक err;
 
-	optlen = sizeof(stats);
-	err = getsockopt(fd, SOL_XDP, XDP_STATISTICS, &stats, &optlen);
-	if (err)
-		return err;
+	optlen = माप(stats);
+	err = माला_लोockopt(fd, SOL_XDP, XDP_STATISTICS, &stats, &optlen);
+	अगर (err)
+		वापस err;
 
-	if (optlen == sizeof(struct xdp_statistics)) {
+	अगर (optlen == माप(काष्ठा xdp_statistics)) अणु
 		xsk->ring_stats.rx_dropped_npkts = stats.rx_dropped;
 		xsk->ring_stats.rx_invalid_npkts = stats.rx_invalid_descs;
 		xsk->ring_stats.tx_invalid_npkts = stats.tx_invalid_descs;
 		xsk->ring_stats.rx_full_npkts = stats.rx_ring_full;
 		xsk->ring_stats.rx_fill_empty_npkts = stats.rx_fill_ring_empty_descs;
 		xsk->ring_stats.tx_empty_npkts = stats.tx_ring_empty_descs;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static void dump_app_stats(long dt)
-{
-	int i;
+अटल व्योम dump_app_stats(दीर्घ dt)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < num_socks && xsks[i]; i++) {
-		char *fmt = "%-18s %'-14.0f %'-14lu\n";
-		double rx_empty_polls_ps, fill_fail_polls_ps, copy_tx_sendtos_ps,
+	क्रम (i = 0; i < num_socks && xsks[i]; i++) अणु
+		अक्षर *fmt = "%-18s %'-14.0f %'-14lu\n";
+		द्विगुन rx_empty_polls_ps, fill_fail_polls_ps, copy_tx_sendtos_ps,
 				tx_wakeup_sendtos_ps, opt_polls_ps;
 
 		rx_empty_polls_ps = (xsks[i]->app_stats.rx_empty_polls -
@@ -239,129 +240,129 @@ static void dump_app_stats(long dt)
 		opt_polls_ps = (xsks[i]->app_stats.opt_polls -
 					xsks[i]->app_stats.prev_opt_polls) * 1000000000. / dt;
 
-		printf("\n%-18s %-14s %-14s\n", "", "calls/s", "count");
-		printf(fmt, "rx empty polls", rx_empty_polls_ps, xsks[i]->app_stats.rx_empty_polls);
-		printf(fmt, "fill fail polls", fill_fail_polls_ps,
+		म_लिखो("\n%-18s %-14s %-14s\n", "", "calls/s", "count");
+		म_लिखो(fmt, "rx empty polls", rx_empty_polls_ps, xsks[i]->app_stats.rx_empty_polls);
+		म_लिखो(fmt, "fill fail polls", fill_fail_polls_ps,
 							xsks[i]->app_stats.fill_fail_polls);
-		printf(fmt, "copy tx sendtos", copy_tx_sendtos_ps,
+		म_लिखो(fmt, "copy tx sendtos", copy_tx_sendtos_ps,
 							xsks[i]->app_stats.copy_tx_sendtos);
-		printf(fmt, "tx wakeup sendtos", tx_wakeup_sendtos_ps,
+		म_लिखो(fmt, "tx wakeup sendtos", tx_wakeup_sendtos_ps,
 							xsks[i]->app_stats.tx_wakeup_sendtos);
-		printf(fmt, "opt polls", opt_polls_ps, xsks[i]->app_stats.opt_polls);
+		म_लिखो(fmt, "opt polls", opt_polls_ps, xsks[i]->app_stats.opt_polls);
 
 		xsks[i]->app_stats.prev_rx_empty_polls = xsks[i]->app_stats.rx_empty_polls;
 		xsks[i]->app_stats.prev_fill_fail_polls = xsks[i]->app_stats.fill_fail_polls;
 		xsks[i]->app_stats.prev_copy_tx_sendtos = xsks[i]->app_stats.copy_tx_sendtos;
 		xsks[i]->app_stats.prev_tx_wakeup_sendtos = xsks[i]->app_stats.tx_wakeup_sendtos;
 		xsks[i]->app_stats.prev_opt_polls = xsks[i]->app_stats.opt_polls;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static bool get_interrupt_number(void)
-{
-	FILE *f_int_proc;
-	char line[4096];
+अटल bool get_पूर्णांकerrupt_number(व्योम)
+अणु
+	खाता *f_पूर्णांक_proc;
+	अक्षर line[4096];
 	bool found = false;
 
-	f_int_proc = fopen("/proc/interrupts", "r");
-	if (f_int_proc == NULL) {
-		printf("Failed to open /proc/interrupts.\n");
-		return found;
-	}
+	f_पूर्णांक_proc = ख_खोलो("/proc/interrupts", "r");
+	अगर (f_पूर्णांक_proc == शून्य) अणु
+		म_लिखो("Failed to open /proc/interrupts.\n");
+		वापस found;
+	पूर्ण
 
-	while (!feof(f_int_proc) && !found) {
-		/* Make sure to read a full line at a time */
-		if (fgets(line, sizeof(line), f_int_proc) == NULL ||
-				line[strlen(line) - 1] != '\n') {
-			printf("Error reading from interrupts file\n");
-			break;
-		}
+	जबतक (!ख_पूर्ण(f_पूर्णांक_proc) && !found) अणु
+		/* Make sure to पढ़ो a full line at a समय */
+		अगर (ख_माला_लो(line, माप(line), f_पूर्णांक_proc) == शून्य ||
+				line[म_माप(line) - 1] != '\n') अणु
+			म_लिखो("Error reading from interrupts file\n");
+			अवरोध;
+		पूर्ण
 
-		/* Extract interrupt number from line */
-		if (strstr(line, opt_irq_str) != NULL) {
-			irq_no = atoi(line);
+		/* Extract पूर्णांकerrupt number from line */
+		अगर (म_माला(line, opt_irq_str) != शून्य) अणु
+			irq_no = म_से_प(line);
 			found = true;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	fclose(f_int_proc);
+	ख_बंद(f_पूर्णांक_proc);
 
-	return found;
-}
+	वापस found;
+पूर्ण
 
-static int get_irqs(void)
-{
-	char count_path[PATH_MAX];
-	int total_intrs = -1;
-	FILE *f_count_proc;
-	char line[4096];
+अटल पूर्णांक get_irqs(व्योम)
+अणु
+	अक्षर count_path[PATH_MAX];
+	पूर्णांक total_पूर्णांकrs = -1;
+	खाता *f_count_proc;
+	अक्षर line[4096];
 
-	snprintf(count_path, sizeof(count_path),
+	snम_लिखो(count_path, माप(count_path),
 		"/sys/kernel/irq/%i/per_cpu_count", irq_no);
-	f_count_proc = fopen(count_path, "r");
-	if (f_count_proc == NULL) {
-		printf("Failed to open %s\n", count_path);
-		return total_intrs;
-	}
+	f_count_proc = ख_खोलो(count_path, "r");
+	अगर (f_count_proc == शून्य) अणु
+		म_लिखो("Failed to open %s\n", count_path);
+		वापस total_पूर्णांकrs;
+	पूर्ण
 
-	if (fgets(line, sizeof(line), f_count_proc) == NULL ||
-			line[strlen(line) - 1] != '\n') {
-		printf("Error reading from %s\n", count_path);
-	} else {
-		static const char com[2] = ",";
-		char *token;
+	अगर (ख_माला_लो(line, माप(line), f_count_proc) == शून्य ||
+			line[म_माप(line) - 1] != '\n') अणु
+		म_लिखो("Error reading from %s\n", count_path);
+	पूर्ण अन्यथा अणु
+		अटल स्थिर अक्षर com[2] = ",";
+		अक्षर *token;
 
-		total_intrs = 0;
-		token = strtok(line, com);
-		while (token != NULL) {
-			/* sum up interrupts across all cores */
-			total_intrs += atoi(token);
-			token = strtok(NULL, com);
-		}
-	}
+		total_पूर्णांकrs = 0;
+		token = म_मोहर(line, com);
+		जबतक (token != शून्य) अणु
+			/* sum up पूर्णांकerrupts across all cores */
+			total_पूर्णांकrs += म_से_प(token);
+			token = म_मोहर(शून्य, com);
+		पूर्ण
+	पूर्ण
 
-	fclose(f_count_proc);
+	ख_बंद(f_count_proc);
 
-	return total_intrs;
-}
+	वापस total_पूर्णांकrs;
+पूर्ण
 
-static void dump_driver_stats(long dt)
-{
-	int i;
+अटल व्योम dump_driver_stats(दीर्घ dt)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < num_socks && xsks[i]; i++) {
-		char *fmt = "%-18s %'-14.0f %'-14lu\n";
-		double intrs_ps;
-		int n_ints = get_irqs();
+	क्रम (i = 0; i < num_socks && xsks[i]; i++) अणु
+		अक्षर *fmt = "%-18s %'-14.0f %'-14lu\n";
+		द्विगुन पूर्णांकrs_ps;
+		पूर्णांक n_पूर्णांकs = get_irqs();
 
-		if (n_ints < 0) {
-			printf("error getting intr info for intr %i\n", irq_no);
-			return;
-		}
-		xsks[i]->drv_stats.intrs = n_ints - irqs_at_init;
+		अगर (n_पूर्णांकs < 0) अणु
+			म_लिखो("error getting intr info for intr %i\n", irq_no);
+			वापस;
+		पूर्ण
+		xsks[i]->drv_stats.पूर्णांकrs = n_पूर्णांकs - irqs_at_init;
 
-		intrs_ps = (xsks[i]->drv_stats.intrs - xsks[i]->drv_stats.prev_intrs) *
+		पूर्णांकrs_ps = (xsks[i]->drv_stats.पूर्णांकrs - xsks[i]->drv_stats.prev_पूर्णांकrs) *
 			 1000000000. / dt;
 
-		printf("\n%-18s %-14s %-14s\n", "", "intrs/s", "count");
-		printf(fmt, "irqs", intrs_ps, xsks[i]->drv_stats.intrs);
+		म_लिखो("\n%-18s %-14s %-14s\n", "", "intrs/s", "count");
+		म_लिखो(fmt, "irqs", पूर्णांकrs_ps, xsks[i]->drv_stats.पूर्णांकrs);
 
-		xsks[i]->drv_stats.prev_intrs = xsks[i]->drv_stats.intrs;
-	}
-}
+		xsks[i]->drv_stats.prev_पूर्णांकrs = xsks[i]->drv_stats.पूर्णांकrs;
+	पूर्ण
+पूर्ण
 
-static void dump_stats(void)
-{
-	unsigned long now = get_nsecs();
-	long dt = now - prev_time;
-	int i;
+अटल व्योम dump_stats(व्योम)
+अणु
+	अचिन्हित दीर्घ now = get_nsecs();
+	दीर्घ dt = now - prev_समय;
+	पूर्णांक i;
 
-	prev_time = now;
+	prev_समय = now;
 
-	for (i = 0; i < num_socks && xsks[i]; i++) {
-		char *fmt = "%-18s %'-14.0f %'-14lu\n";
-		double rx_pps, tx_pps, dropped_pps, rx_invalid_pps, full_pps, fill_empty_pps,
+	क्रम (i = 0; i < num_socks && xsks[i]; i++) अणु
+		अक्षर *fmt = "%-18s %'-14.0f %'-14lu\n";
+		द्विगुन rx_pps, tx_pps, dropped_pps, rx_invalid_pps, full_pps, fill_empty_pps,
 			tx_invalid_pps, tx_empty_pps;
 
 		rx_pps = (xsks[i]->ring_stats.rx_npkts - xsks[i]->ring_stats.prev_rx_npkts) *
@@ -369,20 +370,20 @@ static void dump_stats(void)
 		tx_pps = (xsks[i]->ring_stats.tx_npkts - xsks[i]->ring_stats.prev_tx_npkts) *
 			 1000000000. / dt;
 
-		printf("\n sock%d@", i);
-		print_benchmark(false);
-		printf("\n");
+		म_लिखो("\n sock%d@", i);
+		prपूर्णांक_benchmark(false);
+		म_लिखो("\n");
 
-		printf("%-18s %-14s %-14s %-14.2f\n", "", "pps", "pkts",
+		म_लिखो("%-18s %-14s %-14s %-14.2f\n", "", "pps", "pkts",
 		       dt / 1000000000.);
-		printf(fmt, "rx", rx_pps, xsks[i]->ring_stats.rx_npkts);
-		printf(fmt, "tx", tx_pps, xsks[i]->ring_stats.tx_npkts);
+		म_लिखो(fmt, "rx", rx_pps, xsks[i]->ring_stats.rx_npkts);
+		म_लिखो(fmt, "tx", tx_pps, xsks[i]->ring_stats.tx_npkts);
 
 		xsks[i]->ring_stats.prev_rx_npkts = xsks[i]->ring_stats.rx_npkts;
 		xsks[i]->ring_stats.prev_tx_npkts = xsks[i]->ring_stats.tx_npkts;
 
-		if (opt_extra_stats) {
-			if (!xsk_get_xdp_stats(xsk_socket__fd(xsks[i]->xsk), xsks[i])) {
+		अगर (opt_extra_stats) अणु
+			अगर (!xsk_get_xdp_stats(xsk_socket__fd(xsks[i]->xsk), xsks[i])) अणु
 				dropped_pps = (xsks[i]->ring_stats.rx_dropped_npkts -
 						xsks[i]->ring_stats.prev_rx_dropped_npkts) *
 							1000000000. / dt;
@@ -402,17 +403,17 @@ static void dump_stats(void)
 						xsks[i]->ring_stats.prev_tx_empty_npkts) *
 							1000000000. / dt;
 
-				printf(fmt, "rx dropped", dropped_pps,
+				म_लिखो(fmt, "rx dropped", dropped_pps,
 				       xsks[i]->ring_stats.rx_dropped_npkts);
-				printf(fmt, "rx invalid", rx_invalid_pps,
+				म_लिखो(fmt, "rx invalid", rx_invalid_pps,
 				       xsks[i]->ring_stats.rx_invalid_npkts);
-				printf(fmt, "tx invalid", tx_invalid_pps,
+				म_लिखो(fmt, "tx invalid", tx_invalid_pps,
 				       xsks[i]->ring_stats.tx_invalid_npkts);
-				printf(fmt, "rx queue full", full_pps,
+				म_लिखो(fmt, "rx queue full", full_pps,
 				       xsks[i]->ring_stats.rx_full_npkts);
-				printf(fmt, "fill ring empty", fill_empty_pps,
+				म_लिखो(fmt, "fill ring empty", fill_empty_pps,
 				       xsks[i]->ring_stats.rx_fill_empty_npkts);
-				printf(fmt, "tx ring empty", tx_empty_pps,
+				म_लिखो(fmt, "tx ring empty", tx_empty_pps,
 				       xsks[i]->ring_stats.tx_empty_npkts);
 
 				xsks[i]->ring_stats.prev_rx_dropped_npkts =
@@ -427,247 +428,247 @@ static void dump_stats(void)
 					xsks[i]->ring_stats.rx_fill_empty_npkts;
 				xsks[i]->ring_stats.prev_tx_empty_npkts =
 					xsks[i]->ring_stats.tx_empty_npkts;
-			} else {
-				printf("%-15s\n", "Error retrieving extra stats");
-			}
-		}
-	}
+			पूर्ण अन्यथा अणु
+				म_लिखो("%-15s\n", "Error retrieving extra stats");
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	if (opt_app_stats)
+	अगर (opt_app_stats)
 		dump_app_stats(dt);
-	if (irq_no)
+	अगर (irq_no)
 		dump_driver_stats(dt);
-}
+पूर्ण
 
-static bool is_benchmark_done(void)
-{
-	if (opt_duration > 0) {
-		unsigned long dt = (get_nsecs() - start_time);
+अटल bool is_benchmark_करोne(व्योम)
+अणु
+	अगर (opt_duration > 0) अणु
+		अचिन्हित दीर्घ dt = (get_nsecs() - start_समय);
 
-		if (dt >= opt_duration)
-			benchmark_done = true;
-	}
-	return benchmark_done;
-}
+		अगर (dt >= opt_duration)
+			benchmark_करोne = true;
+	पूर्ण
+	वापस benchmark_करोne;
+पूर्ण
 
-static void *poller(void *arg)
-{
-	(void)arg;
-	while (!is_benchmark_done()) {
-		sleep(opt_interval);
+अटल व्योम *poller(व्योम *arg)
+अणु
+	(व्योम)arg;
+	जबतक (!is_benchmark_करोne()) अणु
+		sleep(opt_पूर्णांकerval);
 		dump_stats();
-	}
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static void int_exit(int sig)
-{
-	benchmark_done = true;
-}
+अटल व्योम पूर्णांक_निकास(पूर्णांक sig)
+अणु
+	benchmark_करोne = true;
+पूर्ण
 
-static void __exit_with_error(int error, const char *file, const char *func,
-			      int line)
-{
-	fprintf(stderr, "%s:%s:%i: errno: %d/\"%s\"\n", file, func,
-		line, error, strerror(error));
-	exit(EXIT_FAILURE);
-}
+अटल व्योम __निकास_with_error(पूर्णांक error, स्थिर अक्षर *file, स्थिर अक्षर *func,
+			      पूर्णांक line)
+अणु
+	ख_लिखो(मानक_त्रुटि, "%s:%s:%i: errno: %d/\"%s\"\n", file, func,
+		line, error, म_त्रुटि(error));
+	निकास(निकास_त्रुटि);
+पूर्ण
 
-#define exit_with_error(error) __exit_with_error(error, __FILE__, __func__, __LINE__)
+#घोषणा निकास_with_error(error) __निकास_with_error(error, __खाता__, __func__, __LINE__)
 
-static void xdpsock_cleanup(void)
-{
-	struct xsk_umem *umem = xsks[0]->umem->umem;
-	int i, cmd = CLOSE_CONN;
+अटल व्योम xdpsock_cleanup(व्योम)
+अणु
+	काष्ठा xsk_umem *umem = xsks[0]->umem->umem;
+	पूर्णांक i, cmd = CLOSE_CONN;
 
 	dump_stats();
-	for (i = 0; i < num_socks; i++)
+	क्रम (i = 0; i < num_socks; i++)
 		xsk_socket__delete(xsks[i]->xsk);
-	(void)xsk_umem__delete(umem);
+	(व्योम)xsk_umem__delete(umem);
 
-	if (opt_reduced_cap) {
-		if (write(sock, &cmd, sizeof(int)) < 0)
-			exit_with_error(errno);
-	}
-}
+	अगर (opt_reduced_cap) अणु
+		अगर (ग_लिखो(sock, &cmd, माप(पूर्णांक)) < 0)
+			निकास_with_error(त्रुटि_सं);
+	पूर्ण
+पूर्ण
 
-static void swap_mac_addresses(void *data)
-{
-	struct ether_header *eth = (struct ether_header *)data;
-	struct ether_addr *src_addr = (struct ether_addr *)&eth->ether_shost;
-	struct ether_addr *dst_addr = (struct ether_addr *)&eth->ether_dhost;
-	struct ether_addr tmp;
+अटल व्योम swap_mac_addresses(व्योम *data)
+अणु
+	काष्ठा ether_header *eth = (काष्ठा ether_header *)data;
+	काष्ठा ether_addr *src_addr = (काष्ठा ether_addr *)&eth->ether_shost;
+	काष्ठा ether_addr *dst_addr = (काष्ठा ether_addr *)&eth->ether_dhost;
+	काष्ठा ether_addr पंचांगp;
 
-	tmp = *src_addr;
+	पंचांगp = *src_addr;
 	*src_addr = *dst_addr;
-	*dst_addr = tmp;
-}
+	*dst_addr = पंचांगp;
+पूर्ण
 
-static void hex_dump(void *pkt, size_t length, u64 addr)
-{
-	const unsigned char *address = (unsigned char *)pkt;
-	const unsigned char *line = address;
-	size_t line_size = 32;
-	unsigned char c;
-	char buf[32];
-	int i = 0;
+अटल व्योम hex_dump(व्योम *pkt, माप_प्रकार length, u64 addr)
+अणु
+	स्थिर अचिन्हित अक्षर *address = (अचिन्हित अक्षर *)pkt;
+	स्थिर अचिन्हित अक्षर *line = address;
+	माप_प्रकार line_size = 32;
+	अचिन्हित अक्षर c;
+	अक्षर buf[32];
+	पूर्णांक i = 0;
 
-	if (!DEBUG_HEXDUMP)
-		return;
+	अगर (!DEBUG_HEXDUMP)
+		वापस;
 
-	sprintf(buf, "addr=%llu", addr);
-	printf("length = %zu\n", length);
-	printf("%s | ", buf);
-	while (length-- > 0) {
-		printf("%02X ", *address++);
-		if (!(++i % line_size) || (length == 0 && i % line_size)) {
-			if (length == 0) {
-				while (i++ % line_size)
-					printf("__ ");
-			}
-			printf(" | ");	/* right close */
-			while (line < address) {
+	प्र_लिखो(buf, "addr=%llu", addr);
+	म_लिखो("length = %zu\n", length);
+	म_लिखो("%s | ", buf);
+	जबतक (length-- > 0) अणु
+		म_लिखो("%02X ", *address++);
+		अगर (!(++i % line_size) || (length == 0 && i % line_size)) अणु
+			अगर (length == 0) अणु
+				जबतक (i++ % line_size)
+					म_लिखो("__ ");
+			पूर्ण
+			म_लिखो(" | ");	/* right बंद */
+			जबतक (line < address) अणु
 				c = *line++;
-				printf("%c", (c < 33 || c == 255) ? 0x2E : c);
-			}
-			printf("\n");
-			if (length > 0)
-				printf("%s | ", buf);
-		}
-	}
-	printf("\n");
-}
+				म_लिखो("%c", (c < 33 || c == 255) ? 0x2E : c);
+			पूर्ण
+			म_लिखो("\n");
+			अगर (length > 0)
+				म_लिखो("%s | ", buf);
+		पूर्ण
+	पूर्ण
+	म_लिखो("\n");
+पूर्ण
 
-static void *memset32_htonl(void *dest, u32 val, u32 size)
-{
+अटल व्योम *स_रखो32_htonl(व्योम *dest, u32 val, u32 size)
+अणु
 	u32 *ptr = (u32 *)dest;
-	int i;
+	पूर्णांक i;
 
 	val = htonl(val);
 
-	for (i = 0; i < (size & (~0x3)); i += 4)
+	क्रम (i = 0; i < (size & (~0x3)); i += 4)
 		ptr[i >> 2] = val;
 
-	for (; i < size; i++)
-		((char *)dest)[i] = ((char *)&val)[i & 3];
+	क्रम (; i < size; i++)
+		((अक्षर *)dest)[i] = ((अक्षर *)&val)[i & 3];
 
-	return dest;
-}
+	वापस dest;
+पूर्ण
 
 /*
  * This function code has been taken from
  * Linux kernel lib/checksum.c
  */
-static inline unsigned short from32to16(unsigned int x)
-{
-	/* add up 16-bit and 16-bit for 16+c bit */
+अटल अंतरभूत अचिन्हित लघु from32to16(अचिन्हित पूर्णांक x)
+अणु
+	/* add up 16-bit and 16-bit क्रम 16+c bit */
 	x = (x & 0xffff) + (x >> 16);
 	/* add up carry.. */
 	x = (x & 0xffff) + (x >> 16);
-	return x;
-}
+	वापस x;
+पूर्ण
 
 /*
  * This function code has been taken from
  * Linux kernel lib/checksum.c
  */
-static unsigned int do_csum(const unsigned char *buff, int len)
-{
-	unsigned int result = 0;
-	int odd;
+अटल अचिन्हित पूर्णांक करो_csum(स्थिर अचिन्हित अक्षर *buff, पूर्णांक len)
+अणु
+	अचिन्हित पूर्णांक result = 0;
+	पूर्णांक odd;
 
-	if (len <= 0)
-		goto out;
-	odd = 1 & (unsigned long)buff;
-	if (odd) {
-#ifdef __LITTLE_ENDIAN
+	अगर (len <= 0)
+		जाओ out;
+	odd = 1 & (अचिन्हित दीर्घ)buff;
+	अगर (odd) अणु
+#अगर_घोषित __LITTLE_ENDIAN
 		result += (*buff << 8);
-#else
+#अन्यथा
 		result = *buff;
-#endif
+#पूर्ण_अगर
 		len--;
 		buff++;
-	}
-	if (len >= 2) {
-		if (2 & (unsigned long)buff) {
-			result += *(unsigned short *)buff;
+	पूर्ण
+	अगर (len >= 2) अणु
+		अगर (2 & (अचिन्हित दीर्घ)buff) अणु
+			result += *(अचिन्हित लघु *)buff;
 			len -= 2;
 			buff += 2;
-		}
-		if (len >= 4) {
-			const unsigned char *end = buff +
-						   ((unsigned int)len & ~3);
-			unsigned int carry = 0;
+		पूर्ण
+		अगर (len >= 4) अणु
+			स्थिर अचिन्हित अक्षर *end = buff +
+						   ((अचिन्हित पूर्णांक)len & ~3);
+			अचिन्हित पूर्णांक carry = 0;
 
-			do {
-				unsigned int w = *(unsigned int *)buff;
+			करो अणु
+				अचिन्हित पूर्णांक w = *(अचिन्हित पूर्णांक *)buff;
 
 				buff += 4;
 				result += carry;
 				result += w;
 				carry = (w > result);
-			} while (buff < end);
+			पूर्ण जबतक (buff < end);
 			result += carry;
 			result = (result & 0xffff) + (result >> 16);
-		}
-		if (len & 2) {
-			result += *(unsigned short *)buff;
+		पूर्ण
+		अगर (len & 2) अणु
+			result += *(अचिन्हित लघु *)buff;
 			buff += 2;
-		}
-	}
-	if (len & 1)
-#ifdef __LITTLE_ENDIAN
+		पूर्ण
+	पूर्ण
+	अगर (len & 1)
+#अगर_घोषित __LITTLE_ENDIAN
 		result += *buff;
-#else
+#अन्यथा
 		result += (*buff << 8);
-#endif
+#पूर्ण_अगर
 	result = from32to16(result);
-	if (odd)
+	अगर (odd)
 		result = ((result >> 8) & 0xff) | ((result & 0xff) << 8);
 out:
-	return result;
-}
+	वापस result;
+पूर्ण
 
-__sum16 ip_fast_csum(const void *iph, unsigned int ihl);
+__sum16 ip_fast_csum(स्थिर व्योम *iph, अचिन्हित पूर्णांक ihl);
 
 /*
- *	This is a version of ip_compute_csum() optimized for IP headers,
+ *	This is a version of ip_compute_csum() optimized क्रम IP headers,
  *	which always checksum on 4 octet boundaries.
  *	This function code has been taken from
  *	Linux kernel lib/checksum.c
  */
-__sum16 ip_fast_csum(const void *iph, unsigned int ihl)
-{
-	return (__force __sum16)~do_csum(iph, ihl * 4);
-}
+__sum16 ip_fast_csum(स्थिर व्योम *iph, अचिन्हित पूर्णांक ihl)
+अणु
+	वापस (__क्रमce __sum16)~करो_csum(iph, ihl * 4);
+पूर्ण
 
 /*
  * Fold a partial checksum
  * This function code has been taken from
- * Linux kernel include/asm-generic/checksum.h
+ * Linux kernel include/यंत्र-generic/checksum.h
  */
-static inline __sum16 csum_fold(__wsum csum)
-{
-	u32 sum = (__force u32)csum;
+अटल अंतरभूत __sum16 csum_fold(__wsum csum)
+अणु
+	u32 sum = (__क्रमce u32)csum;
 
 	sum = (sum & 0xffff) + (sum >> 16);
 	sum = (sum & 0xffff) + (sum >> 16);
-	return (__force __sum16)~sum;
-}
+	वापस (__क्रमce __sum16)~sum;
+पूर्ण
 
 /*
  * This function code has been taken from
  * Linux kernel lib/checksum.c
  */
-static inline u32 from64to32(u64 x)
-{
-	/* add up 32-bit and 32-bit for 32+c bit */
+अटल अंतरभूत u32 from64to32(u64 x)
+अणु
+	/* add up 32-bit and 32-bit क्रम 32+c bit */
 	x = (x & 0xffffffff) + (x >> 32);
 	/* add up carry.. */
 	x = (x & 0xffffffff) + (x >> 32);
-	return (u32)x;
-}
+	वापस (u32)x;
+पूर्ण
 
 __wsum csum_tcpudp_nofold(__be32 saddr, __be32 daddr,
 			  __u32 len, __u8 proto, __wsum sum);
@@ -678,67 +679,67 @@ __wsum csum_tcpudp_nofold(__be32 saddr, __be32 daddr,
  */
 __wsum csum_tcpudp_nofold(__be32 saddr, __be32 daddr,
 			  __u32 len, __u8 proto, __wsum sum)
-{
-	unsigned long long s = (__force u32)sum;
+अणु
+	अचिन्हित दीर्घ दीर्घ s = (__क्रमce u32)sum;
 
-	s += (__force u32)saddr;
-	s += (__force u32)daddr;
-#ifdef __BIG_ENDIAN__
+	s += (__क्रमce u32)saddr;
+	s += (__क्रमce u32)daddr;
+#अगर_घोषित __BIG_ENDIAN__
 	s += proto + len;
-#else
+#अन्यथा
 	s += (proto + len) << 8;
-#endif
-	return (__force __wsum)from64to32(s);
-}
+#पूर्ण_अगर
+	वापस (__क्रमce __wsum)from64to32(s);
+पूर्ण
 
 /*
  * This function has been taken from
- * Linux kernel include/asm-generic/checksum.h
+ * Linux kernel include/यंत्र-generic/checksum.h
  */
-static inline __sum16
+अटल अंतरभूत __sum16
 csum_tcpudp_magic(__be32 saddr, __be32 daddr, __u32 len,
 		  __u8 proto, __wsum sum)
-{
-	return csum_fold(csum_tcpudp_nofold(saddr, daddr, len, proto, sum));
-}
+अणु
+	वापस csum_fold(csum_tcpudp_nofold(saddr, daddr, len, proto, sum));
+पूर्ण
 
-static inline u16 udp_csum(u32 saddr, u32 daddr, u32 len,
+अटल अंतरभूत u16 udp_csum(u32 saddr, u32 daddr, u32 len,
 			   u8 proto, u16 *udp_pkt)
-{
+अणु
 	u32 csum = 0;
 	u32 cnt = 0;
 
 	/* udp hdr and data */
-	for (; cnt < len; cnt += 2)
+	क्रम (; cnt < len; cnt += 2)
 		csum += udp_pkt[cnt >> 1];
 
-	return csum_tcpudp_magic(saddr, daddr, len, proto, csum);
-}
+	वापस csum_tcpudp_magic(saddr, daddr, len, proto, csum);
+पूर्ण
 
-#define ETH_FCS_SIZE 4
+#घोषणा ETH_FCS_SIZE 4
 
-#define PKT_HDR_SIZE (sizeof(struct ethhdr) + sizeof(struct iphdr) + \
-		      sizeof(struct udphdr))
+#घोषणा PKT_HDR_SIZE (माप(काष्ठा ethhdr) + माप(काष्ठा iphdr) + \
+		      माप(काष्ठा udphdr))
 
-#define PKT_SIZE		(opt_pkt_size - ETH_FCS_SIZE)
-#define IP_PKT_SIZE		(PKT_SIZE - sizeof(struct ethhdr))
-#define UDP_PKT_SIZE		(IP_PKT_SIZE - sizeof(struct iphdr))
-#define UDP_PKT_DATA_SIZE	(UDP_PKT_SIZE - sizeof(struct udphdr))
+#घोषणा PKT_SIZE		(opt_pkt_size - ETH_FCS_SIZE)
+#घोषणा IP_PKT_SIZE		(PKT_SIZE - माप(काष्ठा ethhdr))
+#घोषणा UDP_PKT_SIZE		(IP_PKT_SIZE - माप(काष्ठा iphdr))
+#घोषणा UDP_PKT_DATA_SIZE	(UDP_PKT_SIZE - माप(काष्ठा udphdr))
 
-static u8 pkt_data[XSK_UMEM__DEFAULT_FRAME_SIZE];
+अटल u8 pkt_data[XSK_UMEM__DEFAULT_FRAME_SIZE];
 
-static void gen_eth_hdr_data(void)
-{
-	struct udphdr *udp_hdr = (struct udphdr *)(pkt_data +
-						   sizeof(struct ethhdr) +
-						   sizeof(struct iphdr));
-	struct iphdr *ip_hdr = (struct iphdr *)(pkt_data +
-						sizeof(struct ethhdr));
-	struct ethhdr *eth_hdr = (struct ethhdr *)pkt_data;
+अटल व्योम gen_eth_hdr_data(व्योम)
+अणु
+	काष्ठा udphdr *udp_hdr = (काष्ठा udphdr *)(pkt_data +
+						   माप(काष्ठा ethhdr) +
+						   माप(काष्ठा iphdr));
+	काष्ठा iphdr *ip_hdr = (काष्ठा iphdr *)(pkt_data +
+						माप(काष्ठा ethhdr));
+	काष्ठा ethhdr *eth_hdr = (काष्ठा ethhdr *)pkt_data;
 
 	/* ethernet header */
-	memcpy(eth_hdr->h_dest, "\x3c\xfd\xfe\x9e\x7f\x71", ETH_ALEN);
-	memcpy(eth_hdr->h_source, "\xec\xb1\xd7\x98\x3a\xc0", ETH_ALEN);
+	स_नकल(eth_hdr->h_dest, "\x3c\xfd\xfe\x9e\x7f\x71", ETH_ALEN);
+	स_नकल(eth_hdr->h_source, "\xec\xb1\xd7\x98\x3a\xc0", ETH_ALEN);
 	eth_hdr->h_proto = htons(ETH_P_IP);
 
 	/* IP header */
@@ -755,7 +756,7 @@ static void gen_eth_hdr_data(void)
 
 	/* IP header checksum */
 	ip_hdr->check = 0;
-	ip_hdr->check = ip_fast_csum((const void *)ip_hdr, ip_hdr->ihl);
+	ip_hdr->check = ip_fast_csum((स्थिर व्योम *)ip_hdr, ip_hdr->ihl);
 
 	/* UDP header */
 	udp_hdr->source = htons(0x1000);
@@ -763,29 +764,29 @@ static void gen_eth_hdr_data(void)
 	udp_hdr->len = htons(UDP_PKT_SIZE);
 
 	/* UDP data */
-	memset32_htonl(pkt_data + PKT_HDR_SIZE, opt_pkt_fill_pattern,
+	स_रखो32_htonl(pkt_data + PKT_HDR_SIZE, opt_pkt_fill_pattern,
 		       UDP_PKT_DATA_SIZE);
 
 	/* UDP header checksum */
 	udp_hdr->check = 0;
 	udp_hdr->check = udp_csum(ip_hdr->saddr, ip_hdr->daddr, UDP_PKT_SIZE,
 				  IPPROTO_UDP, (u16 *)udp_hdr);
-}
+पूर्ण
 
-static void gen_eth_frame(struct xsk_umem_info *umem, u64 addr)
-{
-	memcpy(xsk_umem__get_data(umem->buffer, addr), pkt_data,
+अटल व्योम gen_eth_frame(काष्ठा xsk_umem_info *umem, u64 addr)
+अणु
+	स_नकल(xsk_umem__get_data(umem->buffer, addr), pkt_data,
 	       PKT_SIZE);
-}
+पूर्ण
 
-static struct xsk_umem_info *xsk_configure_umem(void *buffer, u64 size)
-{
-	struct xsk_umem_info *umem;
-	struct xsk_umem_config cfg = {
+अटल काष्ठा xsk_umem_info *xsk_configure_umem(व्योम *buffer, u64 size)
+अणु
+	काष्ठा xsk_umem_info *umem;
+	काष्ठा xsk_umem_config cfg = अणु
 		/* We recommend that you set the fill ring size >= HW RX ring size +
 		 * AF_XDP RX ring size. Make sure you fill up the fill ring
-		 * with buffers at regular intervals, and you will with this setting
-		 * avoid allocation failures in the driver. These are usually quite
+		 * with buffers at regular पूर्णांकervals, and you will with this setting
+		 * aव्योम allocation failures in the driver. These are usually quite
 		 * expensive since drivers have not been written to assume that
 		 * allocation failures are common. For regular sockets, kernel
 		 * allocated memory is used that only runs out in OOM situations
@@ -796,66 +797,66 @@ static struct xsk_umem_info *xsk_configure_umem(void *buffer, u64 size)
 		.frame_size = opt_xsk_frame_size,
 		.frame_headroom = XSK_UMEM__DEFAULT_FRAME_HEADROOM,
 		.flags = opt_umem_flags
-	};
-	int ret;
+	पूर्ण;
+	पूर्णांक ret;
 
-	umem = calloc(1, sizeof(*umem));
-	if (!umem)
-		exit_with_error(errno);
+	umem = सुस्मृति(1, माप(*umem));
+	अगर (!umem)
+		निकास_with_error(त्रुटि_सं);
 
 	ret = xsk_umem__create(&umem->umem, buffer, size, &umem->fq, &umem->cq,
 			       &cfg);
-	if (ret)
-		exit_with_error(-ret);
+	अगर (ret)
+		निकास_with_error(-ret);
 
 	umem->buffer = buffer;
-	return umem;
-}
+	वापस umem;
+पूर्ण
 
-static void xsk_populate_fill_ring(struct xsk_umem_info *umem)
-{
-	int ret, i;
+अटल व्योम xsk_populate_fill_ring(काष्ठा xsk_umem_info *umem)
+अणु
+	पूर्णांक ret, i;
 	u32 idx;
 
 	ret = xsk_ring_prod__reserve(&umem->fq,
 				     XSK_RING_PROD__DEFAULT_NUM_DESCS * 2, &idx);
-	if (ret != XSK_RING_PROD__DEFAULT_NUM_DESCS * 2)
-		exit_with_error(-ret);
-	for (i = 0; i < XSK_RING_PROD__DEFAULT_NUM_DESCS * 2; i++)
+	अगर (ret != XSK_RING_PROD__DEFAULT_NUM_DESCS * 2)
+		निकास_with_error(-ret);
+	क्रम (i = 0; i < XSK_RING_PROD__DEFAULT_NUM_DESCS * 2; i++)
 		*xsk_ring_prod__fill_addr(&umem->fq, idx++) =
 			i * opt_xsk_frame_size;
 	xsk_ring_prod__submit(&umem->fq, XSK_RING_PROD__DEFAULT_NUM_DESCS * 2);
-}
+पूर्ण
 
-static struct xsk_socket_info *xsk_configure_socket(struct xsk_umem_info *umem,
+अटल काष्ठा xsk_socket_info *xsk_configure_socket(काष्ठा xsk_umem_info *umem,
 						    bool rx, bool tx)
-{
-	struct xsk_socket_config cfg;
-	struct xsk_socket_info *xsk;
-	struct xsk_ring_cons *rxr;
-	struct xsk_ring_prod *txr;
-	int ret;
+अणु
+	काष्ठा xsk_socket_config cfg;
+	काष्ठा xsk_socket_info *xsk;
+	काष्ठा xsk_ring_cons *rxr;
+	काष्ठा xsk_ring_prod *txr;
+	पूर्णांक ret;
 
-	xsk = calloc(1, sizeof(*xsk));
-	if (!xsk)
-		exit_with_error(errno);
+	xsk = सुस्मृति(1, माप(*xsk));
+	अगर (!xsk)
+		निकास_with_error(त्रुटि_सं);
 
 	xsk->umem = umem;
 	cfg.rx_size = XSK_RING_CONS__DEFAULT_NUM_DESCS;
 	cfg.tx_size = XSK_RING_PROD__DEFAULT_NUM_DESCS;
-	if (opt_num_xsks > 1 || opt_reduced_cap)
+	अगर (opt_num_xsks > 1 || opt_reduced_cap)
 		cfg.libbpf_flags = XSK_LIBBPF_FLAGS__INHIBIT_PROG_LOAD;
-	else
+	अन्यथा
 		cfg.libbpf_flags = 0;
 	cfg.xdp_flags = opt_xdp_flags;
 	cfg.bind_flags = opt_xdp_bind_flags;
 
-	rxr = rx ? &xsk->rx : NULL;
-	txr = tx ? &xsk->tx : NULL;
-	ret = xsk_socket__create(&xsk->xsk, opt_if, opt_queue, umem->umem,
+	rxr = rx ? &xsk->rx : शून्य;
+	txr = tx ? &xsk->tx : शून्य;
+	ret = xsk_socket__create(&xsk->xsk, opt_अगर, opt_queue, umem->umem,
 				 rxr, txr, &cfg);
-	if (ret)
-		exit_with_error(-ret);
+	अगर (ret)
+		निकास_with_error(-ret);
 
 	xsk->app_stats.rx_empty_polls = 0;
 	xsk->app_stats.fill_fail_polls = 0;
@@ -868,43 +869,43 @@ static struct xsk_socket_info *xsk_configure_socket(struct xsk_umem_info *umem,
 	xsk->app_stats.prev_tx_wakeup_sendtos = 0;
 	xsk->app_stats.prev_opt_polls = 0;
 
-	return xsk;
-}
+	वापस xsk;
+पूर्ण
 
-static struct option long_options[] = {
-	{"rxdrop", no_argument, 0, 'r'},
-	{"txonly", no_argument, 0, 't'},
-	{"l2fwd", no_argument, 0, 'l'},
-	{"interface", required_argument, 0, 'i'},
-	{"queue", required_argument, 0, 'q'},
-	{"poll", no_argument, 0, 'p'},
-	{"xdp-skb", no_argument, 0, 'S'},
-	{"xdp-native", no_argument, 0, 'N'},
-	{"interval", required_argument, 0, 'n'},
-	{"zero-copy", no_argument, 0, 'z'},
-	{"copy", no_argument, 0, 'c'},
-	{"frame-size", required_argument, 0, 'f'},
-	{"no-need-wakeup", no_argument, 0, 'm'},
-	{"unaligned", no_argument, 0, 'u'},
-	{"shared-umem", no_argument, 0, 'M'},
-	{"force", no_argument, 0, 'F'},
-	{"duration", required_argument, 0, 'd'},
-	{"batch-size", required_argument, 0, 'b'},
-	{"tx-pkt-count", required_argument, 0, 'C'},
-	{"tx-pkt-size", required_argument, 0, 's'},
-	{"tx-pkt-pattern", required_argument, 0, 'P'},
-	{"extra-stats", no_argument, 0, 'x'},
-	{"quiet", no_argument, 0, 'Q'},
-	{"app-stats", no_argument, 0, 'a'},
-	{"irq-string", no_argument, 0, 'I'},
-	{"busy-poll", no_argument, 0, 'B'},
-	{"reduce-cap", no_argument, 0, 'R'},
-	{0, 0, 0, 0}
-};
+अटल काष्ठा option दीर्घ_options[] = अणु
+	अणु"rxdrop", no_argument, 0, 'r'पूर्ण,
+	अणु"txonly", no_argument, 0, 't'पूर्ण,
+	अणु"l2fwd", no_argument, 0, 'l'पूर्ण,
+	अणु"interface", required_argument, 0, 'i'पूर्ण,
+	अणु"queue", required_argument, 0, 'q'पूर्ण,
+	अणु"poll", no_argument, 0, 'p'पूर्ण,
+	अणु"xdp-skb", no_argument, 0, 'S'पूर्ण,
+	अणु"xdp-native", no_argument, 0, 'N'पूर्ण,
+	अणु"interval", required_argument, 0, 'n'पूर्ण,
+	अणु"zero-copy", no_argument, 0, 'z'पूर्ण,
+	अणु"copy", no_argument, 0, 'c'पूर्ण,
+	अणु"frame-size", required_argument, 0, 'f'पूर्ण,
+	अणु"no-need-wakeup", no_argument, 0, 'm'पूर्ण,
+	अणु"unaligned", no_argument, 0, 'u'पूर्ण,
+	अणु"shared-umem", no_argument, 0, 'M'पूर्ण,
+	अणु"force", no_argument, 0, 'F'पूर्ण,
+	अणु"duration", required_argument, 0, 'd'पूर्ण,
+	अणु"batch-size", required_argument, 0, 'b'पूर्ण,
+	अणु"tx-pkt-count", required_argument, 0, 'C'पूर्ण,
+	अणु"tx-pkt-size", required_argument, 0, 's'पूर्ण,
+	अणु"tx-pkt-pattern", required_argument, 0, 'P'पूर्ण,
+	अणु"extra-stats", no_argument, 0, 'x'पूर्ण,
+	अणु"quiet", no_argument, 0, 'Q'पूर्ण,
+	अणु"app-stats", no_argument, 0, 'a'पूर्ण,
+	अणु"irq-string", no_argument, 0, 'I'पूर्ण,
+	अणु"busy-poll", no_argument, 0, 'B'पूर्ण,
+	अणु"reduce-cap", no_argument, 0, 'R'पूर्ण,
+	अणु0, 0, 0, 0पूर्ण
+पूर्ण;
 
-static void usage(const char *prog)
-{
-	const char *str =
+अटल व्योम usage(स्थिर अक्षर *prog)
+अणु
+	स्थिर अक्षर *str =
 		"  Usage: %s [OPTIONS]\n"
 		"  Options:\n"
 		"  -r, --rxdrop		Discard all incoming packets (default)\n"
@@ -940,324 +941,324 @@ static void usage(const char *prog)
 		"  -B, --busy-poll      Busy poll.\n"
 		"  -R, --reduce-cap	Use reduced capabilities (cannot be used with -M)\n"
 		"\n";
-	fprintf(stderr, str, prog, XSK_UMEM__DEFAULT_FRAME_SIZE,
+	ख_लिखो(मानक_त्रुटि, str, prog, XSK_UMEM__DEFAULT_FRAME_SIZE,
 		opt_batch_size, MIN_PKT_SIZE, MIN_PKT_SIZE,
 		XSK_UMEM__DEFAULT_FRAME_SIZE, opt_pkt_fill_pattern);
 
-	exit(EXIT_FAILURE);
-}
+	निकास(निकास_त्रुटि);
+पूर्ण
 
-static void parse_command_line(int argc, char **argv)
-{
-	int option_index, c;
+अटल व्योम parse_command_line(पूर्णांक argc, अक्षर **argv)
+अणु
+	पूर्णांक option_index, c;
 
 	opterr = 0;
 
-	for (;;) {
-		c = getopt_long(argc, argv, "Frtli:q:pSNn:czf:muMd:b:C:s:P:xQaI:BR",
-				long_options, &option_index);
-		if (c == -1)
-			break;
+	क्रम (;;) अणु
+		c = getopt_दीर्घ(argc, argv, "Frtli:q:pSNn:czf:muMd:b:C:s:P:xQaI:BR",
+				दीर्घ_options, &option_index);
+		अगर (c == -1)
+			अवरोध;
 
-		switch (c) {
-		case 'r':
+		चयन (c) अणु
+		हाल 'r':
 			opt_bench = BENCH_RXDROP;
-			break;
-		case 't':
+			अवरोध;
+		हाल 't':
 			opt_bench = BENCH_TXONLY;
-			break;
-		case 'l':
+			अवरोध;
+		हाल 'l':
 			opt_bench = BENCH_L2FWD;
-			break;
-		case 'i':
-			opt_if = optarg;
-			break;
-		case 'q':
-			opt_queue = atoi(optarg);
-			break;
-		case 'p':
+			अवरोध;
+		हाल 'i':
+			opt_अगर = optarg;
+			अवरोध;
+		हाल 'q':
+			opt_queue = म_से_प(optarg);
+			अवरोध;
+		हाल 'p':
 			opt_poll = 1;
-			break;
-		case 'S':
+			अवरोध;
+		हाल 'S':
 			opt_xdp_flags |= XDP_FLAGS_SKB_MODE;
 			opt_xdp_bind_flags |= XDP_COPY;
-			break;
-		case 'N':
-			/* default, set below */
-			break;
-		case 'n':
-			opt_interval = atoi(optarg);
-			break;
-		case 'z':
+			अवरोध;
+		हाल 'N':
+			/* शेष, set below */
+			अवरोध;
+		हाल 'n':
+			opt_पूर्णांकerval = म_से_प(optarg);
+			अवरोध;
+		हाल 'z':
 			opt_xdp_bind_flags |= XDP_ZEROCOPY;
-			break;
-		case 'c':
+			अवरोध;
+		हाल 'c':
 			opt_xdp_bind_flags |= XDP_COPY;
-			break;
-		case 'u':
+			अवरोध;
+		हाल 'u':
 			opt_umem_flags |= XDP_UMEM_UNALIGNED_CHUNK_FLAG;
 			opt_unaligned_chunks = 1;
 			opt_mmap_flags = MAP_HUGETLB;
-			break;
-		case 'F':
+			अवरोध;
+		हाल 'F':
 			opt_xdp_flags &= ~XDP_FLAGS_UPDATE_IF_NOEXIST;
-			break;
-		case 'f':
-			opt_xsk_frame_size = atoi(optarg);
-			break;
-		case 'm':
+			अवरोध;
+		हाल 'f':
+			opt_xsk_frame_size = म_से_प(optarg);
+			अवरोध;
+		हाल 'm':
 			opt_need_wakeup = false;
 			opt_xdp_bind_flags &= ~XDP_USE_NEED_WAKEUP;
-			break;
-		case 'M':
+			अवरोध;
+		हाल 'M':
 			opt_num_xsks = MAX_SOCKS;
-			break;
-		case 'd':
-			opt_duration = atoi(optarg);
+			अवरोध;
+		हाल 'd':
+			opt_duration = म_से_प(optarg);
 			opt_duration *= 1000000000;
-			break;
-		case 'b':
-			opt_batch_size = atoi(optarg);
-			break;
-		case 'C':
-			opt_pkt_count = atoi(optarg);
-			break;
-		case 's':
-			opt_pkt_size = atoi(optarg);
-			if (opt_pkt_size > (XSK_UMEM__DEFAULT_FRAME_SIZE) ||
-			    opt_pkt_size < MIN_PKT_SIZE) {
-				fprintf(stderr,
+			अवरोध;
+		हाल 'b':
+			opt_batch_size = म_से_प(optarg);
+			अवरोध;
+		हाल 'C':
+			opt_pkt_count = म_से_प(optarg);
+			अवरोध;
+		हाल 's':
+			opt_pkt_size = म_से_प(optarg);
+			अगर (opt_pkt_size > (XSK_UMEM__DEFAULT_FRAME_SIZE) ||
+			    opt_pkt_size < MIN_PKT_SIZE) अणु
+				ख_लिखो(मानक_त्रुटि,
 					"ERROR: Invalid frame size %d\n",
 					opt_pkt_size);
 				usage(basename(argv[0]));
-			}
-			break;
-		case 'P':
-			opt_pkt_fill_pattern = strtol(optarg, NULL, 16);
-			break;
-		case 'x':
+			पूर्ण
+			अवरोध;
+		हाल 'P':
+			opt_pkt_fill_pattern = म_से_दीर्घ(optarg, शून्य, 16);
+			अवरोध;
+		हाल 'x':
 			opt_extra_stats = 1;
-			break;
-		case 'Q':
+			अवरोध;
+		हाल 'Q':
 			opt_quiet = 1;
-			break;
-		case 'a':
+			अवरोध;
+		हाल 'a':
 			opt_app_stats = 1;
-			break;
-		case 'I':
+			अवरोध;
+		हाल 'I':
 			opt_irq_str = optarg;
-			if (get_interrupt_number())
+			अगर (get_पूर्णांकerrupt_number())
 				irqs_at_init = get_irqs();
-			if (irqs_at_init < 0) {
-				fprintf(stderr, "ERROR: Failed to get irqs for %s\n", opt_irq_str);
+			अगर (irqs_at_init < 0) अणु
+				ख_लिखो(मानक_त्रुटि, "ERROR: Failed to get irqs for %s\n", opt_irq_str);
 				usage(basename(argv[0]));
-			}
-			break;
-		case 'B':
+			पूर्ण
+			अवरोध;
+		हाल 'B':
 			opt_busy_poll = 1;
-			break;
-		case 'R':
+			अवरोध;
+		हाल 'R':
 			opt_reduced_cap = true;
-			break;
-		default:
+			अवरोध;
+		शेष:
 			usage(basename(argv[0]));
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (!(opt_xdp_flags & XDP_FLAGS_SKB_MODE))
+	अगर (!(opt_xdp_flags & XDP_FLAGS_SKB_MODE))
 		opt_xdp_flags |= XDP_FLAGS_DRV_MODE;
 
-	opt_ifindex = if_nametoindex(opt_if);
-	if (!opt_ifindex) {
-		fprintf(stderr, "ERROR: interface \"%s\" does not exist\n",
-			opt_if);
+	opt_अगरindex = अगर_nametoindex(opt_अगर);
+	अगर (!opt_अगरindex) अणु
+		ख_लिखो(मानक_त्रुटि, "ERROR: interface \"%s\" does not exist\n",
+			opt_अगर);
 		usage(basename(argv[0]));
-	}
+	पूर्ण
 
-	if ((opt_xsk_frame_size & (opt_xsk_frame_size - 1)) &&
-	    !opt_unaligned_chunks) {
-		fprintf(stderr, "--frame-size=%d is not a power of two\n",
+	अगर ((opt_xsk_frame_size & (opt_xsk_frame_size - 1)) &&
+	    !opt_unaligned_chunks) अणु
+		ख_लिखो(मानक_त्रुटि, "--frame-size=%d is not a power of two\n",
 			opt_xsk_frame_size);
 		usage(basename(argv[0]));
-	}
+	पूर्ण
 
-	if (opt_reduced_cap && opt_num_xsks > 1) {
-		fprintf(stderr, "ERROR: -M and -R cannot be used together\n");
+	अगर (opt_reduced_cap && opt_num_xsks > 1) अणु
+		ख_लिखो(मानक_त्रुटि, "ERROR: -M and -R cannot be used together\n");
 		usage(basename(argv[0]));
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void kick_tx(struct xsk_socket_info *xsk)
-{
-	int ret;
+अटल व्योम kick_tx(काष्ठा xsk_socket_info *xsk)
+अणु
+	पूर्णांक ret;
 
-	ret = sendto(xsk_socket__fd(xsk->xsk), NULL, 0, MSG_DONTWAIT, NULL, 0);
-	if (ret >= 0 || errno == ENOBUFS || errno == EAGAIN ||
-	    errno == EBUSY || errno == ENETDOWN)
-		return;
-	exit_with_error(errno);
-}
+	ret = sendto(xsk_socket__fd(xsk->xsk), शून्य, 0, MSG_DONTWAIT, शून्य, 0);
+	अगर (ret >= 0 || त्रुटि_सं == ENOBUFS || त्रुटि_सं == EAGAIN ||
+	    त्रुटि_सं == EBUSY || त्रुटि_सं == ENETDOWN)
+		वापस;
+	निकास_with_error(त्रुटि_सं);
+पूर्ण
 
-static inline void complete_tx_l2fwd(struct xsk_socket_info *xsk)
-{
-	struct xsk_umem_info *umem = xsk->umem;
+अटल अंतरभूत व्योम complete_tx_l2fwd(काष्ठा xsk_socket_info *xsk)
+अणु
+	काष्ठा xsk_umem_info *umem = xsk->umem;
 	u32 idx_cq = 0, idx_fq = 0;
-	unsigned int rcvd;
-	size_t ndescs;
+	अचिन्हित पूर्णांक rcvd;
+	माप_प्रकार ndescs;
 
-	if (!xsk->outstanding_tx)
-		return;
+	अगर (!xsk->outstanding_tx)
+		वापस;
 
 	/* In copy mode, Tx is driven by a syscall so we need to use e.g. sendto() to
-	 * really send the packets. In zero-copy mode we do not have to do this, since Tx
-	 * is driven by the NAPI loop. So as an optimization, we do not have to call
-	 * sendto() all the time in zero-copy mode for l2fwd.
+	 * really send the packets. In zero-copy mode we करो not have to करो this, since Tx
+	 * is driven by the NAPI loop. So as an optimization, we करो not have to call
+	 * sendto() all the समय in zero-copy mode क्रम l2fwd.
 	 */
-	if (opt_xdp_bind_flags & XDP_COPY) {
+	अगर (opt_xdp_bind_flags & XDP_COPY) अणु
 		xsk->app_stats.copy_tx_sendtos++;
 		kick_tx(xsk);
-	}
+	पूर्ण
 
 	ndescs = (xsk->outstanding_tx > opt_batch_size) ? opt_batch_size :
 		xsk->outstanding_tx;
 
 	/* re-add completed Tx buffers */
 	rcvd = xsk_ring_cons__peek(&umem->cq, ndescs, &idx_cq);
-	if (rcvd > 0) {
-		unsigned int i;
-		int ret;
+	अगर (rcvd > 0) अणु
+		अचिन्हित पूर्णांक i;
+		पूर्णांक ret;
 
 		ret = xsk_ring_prod__reserve(&umem->fq, rcvd, &idx_fq);
-		while (ret != rcvd) {
-			if (ret < 0)
-				exit_with_error(-ret);
-			if (opt_busy_poll || xsk_ring_prod__needs_wakeup(&umem->fq)) {
+		जबतक (ret != rcvd) अणु
+			अगर (ret < 0)
+				निकास_with_error(-ret);
+			अगर (opt_busy_poll || xsk_ring_prod__needs_wakeup(&umem->fq)) अणु
 				xsk->app_stats.fill_fail_polls++;
-				recvfrom(xsk_socket__fd(xsk->xsk), NULL, 0, MSG_DONTWAIT, NULL,
-					 NULL);
-			}
+				recvfrom(xsk_socket__fd(xsk->xsk), शून्य, 0, MSG_DONTWAIT, शून्य,
+					 शून्य);
+			पूर्ण
 			ret = xsk_ring_prod__reserve(&umem->fq, rcvd, &idx_fq);
-		}
+		पूर्ण
 
-		for (i = 0; i < rcvd; i++)
+		क्रम (i = 0; i < rcvd; i++)
 			*xsk_ring_prod__fill_addr(&umem->fq, idx_fq++) =
 				*xsk_ring_cons__comp_addr(&umem->cq, idx_cq++);
 
 		xsk_ring_prod__submit(&xsk->umem->fq, rcvd);
 		xsk_ring_cons__release(&xsk->umem->cq, rcvd);
 		xsk->outstanding_tx -= rcvd;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static inline void complete_tx_only(struct xsk_socket_info *xsk,
-				    int batch_size)
-{
-	unsigned int rcvd;
+अटल अंतरभूत व्योम complete_tx_only(काष्ठा xsk_socket_info *xsk,
+				    पूर्णांक batch_size)
+अणु
+	अचिन्हित पूर्णांक rcvd;
 	u32 idx;
 
-	if (!xsk->outstanding_tx)
-		return;
+	अगर (!xsk->outstanding_tx)
+		वापस;
 
-	if (!opt_need_wakeup || xsk_ring_prod__needs_wakeup(&xsk->tx)) {
+	अगर (!opt_need_wakeup || xsk_ring_prod__needs_wakeup(&xsk->tx)) अणु
 		xsk->app_stats.tx_wakeup_sendtos++;
 		kick_tx(xsk);
-	}
+	पूर्ण
 
 	rcvd = xsk_ring_cons__peek(&xsk->umem->cq, batch_size, &idx);
-	if (rcvd > 0) {
+	अगर (rcvd > 0) अणु
 		xsk_ring_cons__release(&xsk->umem->cq, rcvd);
 		xsk->outstanding_tx -= rcvd;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void rx_drop(struct xsk_socket_info *xsk)
-{
-	unsigned int rcvd, i;
+अटल व्योम rx_drop(काष्ठा xsk_socket_info *xsk)
+अणु
+	अचिन्हित पूर्णांक rcvd, i;
 	u32 idx_rx = 0, idx_fq = 0;
-	int ret;
+	पूर्णांक ret;
 
 	rcvd = xsk_ring_cons__peek(&xsk->rx, opt_batch_size, &idx_rx);
-	if (!rcvd) {
-		if (opt_busy_poll || xsk_ring_prod__needs_wakeup(&xsk->umem->fq)) {
+	अगर (!rcvd) अणु
+		अगर (opt_busy_poll || xsk_ring_prod__needs_wakeup(&xsk->umem->fq)) अणु
 			xsk->app_stats.rx_empty_polls++;
-			recvfrom(xsk_socket__fd(xsk->xsk), NULL, 0, MSG_DONTWAIT, NULL, NULL);
-		}
-		return;
-	}
+			recvfrom(xsk_socket__fd(xsk->xsk), शून्य, 0, MSG_DONTWAIT, शून्य, शून्य);
+		पूर्ण
+		वापस;
+	पूर्ण
 
 	ret = xsk_ring_prod__reserve(&xsk->umem->fq, rcvd, &idx_fq);
-	while (ret != rcvd) {
-		if (ret < 0)
-			exit_with_error(-ret);
-		if (opt_busy_poll || xsk_ring_prod__needs_wakeup(&xsk->umem->fq)) {
+	जबतक (ret != rcvd) अणु
+		अगर (ret < 0)
+			निकास_with_error(-ret);
+		अगर (opt_busy_poll || xsk_ring_prod__needs_wakeup(&xsk->umem->fq)) अणु
 			xsk->app_stats.fill_fail_polls++;
-			recvfrom(xsk_socket__fd(xsk->xsk), NULL, 0, MSG_DONTWAIT, NULL, NULL);
-		}
+			recvfrom(xsk_socket__fd(xsk->xsk), शून्य, 0, MSG_DONTWAIT, शून्य, शून्य);
+		पूर्ण
 		ret = xsk_ring_prod__reserve(&xsk->umem->fq, rcvd, &idx_fq);
-	}
+	पूर्ण
 
-	for (i = 0; i < rcvd; i++) {
+	क्रम (i = 0; i < rcvd; i++) अणु
 		u64 addr = xsk_ring_cons__rx_desc(&xsk->rx, idx_rx)->addr;
 		u32 len = xsk_ring_cons__rx_desc(&xsk->rx, idx_rx++)->len;
 		u64 orig = xsk_umem__extract_addr(addr);
 
 		addr = xsk_umem__add_offset_to_addr(addr);
-		char *pkt = xsk_umem__get_data(xsk->umem->buffer, addr);
+		अक्षर *pkt = xsk_umem__get_data(xsk->umem->buffer, addr);
 
 		hex_dump(pkt, len, addr);
 		*xsk_ring_prod__fill_addr(&xsk->umem->fq, idx_fq++) = orig;
-	}
+	पूर्ण
 
 	xsk_ring_prod__submit(&xsk->umem->fq, rcvd);
 	xsk_ring_cons__release(&xsk->rx, rcvd);
 	xsk->ring_stats.rx_npkts += rcvd;
-}
+पूर्ण
 
-static void rx_drop_all(void)
-{
-	struct pollfd fds[MAX_SOCKS] = {};
-	int i, ret;
+अटल व्योम rx_drop_all(व्योम)
+अणु
+	काष्ठा pollfd fds[MAX_SOCKS] = अणुपूर्ण;
+	पूर्णांक i, ret;
 
-	for (i = 0; i < num_socks; i++) {
+	क्रम (i = 0; i < num_socks; i++) अणु
 		fds[i].fd = xsk_socket__fd(xsks[i]->xsk);
 		fds[i].events = POLLIN;
-	}
+	पूर्ण
 
-	for (;;) {
-		if (opt_poll) {
-			for (i = 0; i < num_socks; i++)
+	क्रम (;;) अणु
+		अगर (opt_poll) अणु
+			क्रम (i = 0; i < num_socks; i++)
 				xsks[i]->app_stats.opt_polls++;
-			ret = poll(fds, num_socks, opt_timeout);
-			if (ret <= 0)
-				continue;
-		}
+			ret = poll(fds, num_socks, opt_समयout);
+			अगर (ret <= 0)
+				जारी;
+		पूर्ण
 
-		for (i = 0; i < num_socks; i++)
+		क्रम (i = 0; i < num_socks; i++)
 			rx_drop(xsks[i]);
 
-		if (benchmark_done)
-			break;
-	}
-}
+		अगर (benchmark_करोne)
+			अवरोध;
+	पूर्ण
+पूर्ण
 
-static void tx_only(struct xsk_socket_info *xsk, u32 *frame_nb, int batch_size)
-{
+अटल व्योम tx_only(काष्ठा xsk_socket_info *xsk, u32 *frame_nb, पूर्णांक batch_size)
+अणु
 	u32 idx;
-	unsigned int i;
+	अचिन्हित पूर्णांक i;
 
-	while (xsk_ring_prod__reserve(&xsk->tx, batch_size, &idx) <
-				      batch_size) {
+	जबतक (xsk_ring_prod__reserve(&xsk->tx, batch_size, &idx) <
+				      batch_size) अणु
 		complete_tx_only(xsk, batch_size);
-		if (benchmark_done)
-			return;
-	}
+		अगर (benchmark_करोne)
+			वापस;
+	पूर्ण
 
-	for (i = 0; i < batch_size; i++) {
-		struct xdp_desc *tx_desc = xsk_ring_prod__tx_desc(&xsk->tx,
+	क्रम (i = 0; i < batch_size; i++) अणु
+		काष्ठा xdp_desc *tx_desc = xsk_ring_prod__tx_desc(&xsk->tx,
 								  idx + i);
 		tx_desc->addr = (*frame_nb + i) * opt_xsk_frame_size;
 		tx_desc->len = PKT_SIZE;
-	}
+	पूर्ण
 
 	xsk_ring_prod__submit(&xsk->tx, batch_size);
 	xsk->ring_stats.tx_npkts += batch_size;
@@ -1265,236 +1266,236 @@ static void tx_only(struct xsk_socket_info *xsk, u32 *frame_nb, int batch_size)
 	*frame_nb += batch_size;
 	*frame_nb %= NUM_FRAMES;
 	complete_tx_only(xsk, batch_size);
-}
+पूर्ण
 
-static inline int get_batch_size(int pkt_cnt)
-{
-	if (!opt_pkt_count)
-		return opt_batch_size;
+अटल अंतरभूत पूर्णांक get_batch_size(पूर्णांक pkt_cnt)
+अणु
+	अगर (!opt_pkt_count)
+		वापस opt_batch_size;
 
-	if (pkt_cnt + opt_batch_size <= opt_pkt_count)
-		return opt_batch_size;
+	अगर (pkt_cnt + opt_batch_size <= opt_pkt_count)
+		वापस opt_batch_size;
 
-	return opt_pkt_count - pkt_cnt;
-}
+	वापस opt_pkt_count - pkt_cnt;
+पूर्ण
 
-static void complete_tx_only_all(void)
-{
+अटल व्योम complete_tx_only_all(व्योम)
+अणु
 	bool pending;
-	int i;
+	पूर्णांक i;
 
-	do {
+	करो अणु
 		pending = false;
-		for (i = 0; i < num_socks; i++) {
-			if (xsks[i]->outstanding_tx) {
+		क्रम (i = 0; i < num_socks; i++) अणु
+			अगर (xsks[i]->outstanding_tx) अणु
 				complete_tx_only(xsks[i], opt_batch_size);
 				pending = !!xsks[i]->outstanding_tx;
-			}
-		}
-	} while (pending);
-}
+			पूर्ण
+		पूर्ण
+	पूर्ण जबतक (pending);
+पूर्ण
 
-static void tx_only_all(void)
-{
-	struct pollfd fds[MAX_SOCKS] = {};
-	u32 frame_nb[MAX_SOCKS] = {};
-	int pkt_cnt = 0;
-	int i, ret;
+अटल व्योम tx_only_all(व्योम)
+अणु
+	काष्ठा pollfd fds[MAX_SOCKS] = अणुपूर्ण;
+	u32 frame_nb[MAX_SOCKS] = अणुपूर्ण;
+	पूर्णांक pkt_cnt = 0;
+	पूर्णांक i, ret;
 
-	for (i = 0; i < num_socks; i++) {
+	क्रम (i = 0; i < num_socks; i++) अणु
 		fds[0].fd = xsk_socket__fd(xsks[i]->xsk);
 		fds[0].events = POLLOUT;
-	}
+	पूर्ण
 
-	while ((opt_pkt_count && pkt_cnt < opt_pkt_count) || !opt_pkt_count) {
-		int batch_size = get_batch_size(pkt_cnt);
+	जबतक ((opt_pkt_count && pkt_cnt < opt_pkt_count) || !opt_pkt_count) अणु
+		पूर्णांक batch_size = get_batch_size(pkt_cnt);
 
-		if (opt_poll) {
-			for (i = 0; i < num_socks; i++)
+		अगर (opt_poll) अणु
+			क्रम (i = 0; i < num_socks; i++)
 				xsks[i]->app_stats.opt_polls++;
-			ret = poll(fds, num_socks, opt_timeout);
-			if (ret <= 0)
-				continue;
+			ret = poll(fds, num_socks, opt_समयout);
+			अगर (ret <= 0)
+				जारी;
 
-			if (!(fds[0].revents & POLLOUT))
-				continue;
-		}
+			अगर (!(fds[0].revents & POLLOUT))
+				जारी;
+		पूर्ण
 
-		for (i = 0; i < num_socks; i++)
+		क्रम (i = 0; i < num_socks; i++)
 			tx_only(xsks[i], &frame_nb[i], batch_size);
 
 		pkt_cnt += batch_size;
 
-		if (benchmark_done)
-			break;
-	}
+		अगर (benchmark_करोne)
+			अवरोध;
+	पूर्ण
 
-	if (opt_pkt_count)
+	अगर (opt_pkt_count)
 		complete_tx_only_all();
-}
+पूर्ण
 
-static void l2fwd(struct xsk_socket_info *xsk)
-{
-	unsigned int rcvd, i;
+अटल व्योम l2fwd(काष्ठा xsk_socket_info *xsk)
+अणु
+	अचिन्हित पूर्णांक rcvd, i;
 	u32 idx_rx = 0, idx_tx = 0;
-	int ret;
+	पूर्णांक ret;
 
 	complete_tx_l2fwd(xsk);
 
 	rcvd = xsk_ring_cons__peek(&xsk->rx, opt_batch_size, &idx_rx);
-	if (!rcvd) {
-		if (opt_busy_poll || xsk_ring_prod__needs_wakeup(&xsk->umem->fq)) {
+	अगर (!rcvd) अणु
+		अगर (opt_busy_poll || xsk_ring_prod__needs_wakeup(&xsk->umem->fq)) अणु
 			xsk->app_stats.rx_empty_polls++;
-			recvfrom(xsk_socket__fd(xsk->xsk), NULL, 0, MSG_DONTWAIT, NULL, NULL);
-		}
-		return;
-	}
+			recvfrom(xsk_socket__fd(xsk->xsk), शून्य, 0, MSG_DONTWAIT, शून्य, शून्य);
+		पूर्ण
+		वापस;
+	पूर्ण
 	xsk->ring_stats.rx_npkts += rcvd;
 
 	ret = xsk_ring_prod__reserve(&xsk->tx, rcvd, &idx_tx);
-	while (ret != rcvd) {
-		if (ret < 0)
-			exit_with_error(-ret);
+	जबतक (ret != rcvd) अणु
+		अगर (ret < 0)
+			निकास_with_error(-ret);
 		complete_tx_l2fwd(xsk);
-		if (opt_busy_poll || xsk_ring_prod__needs_wakeup(&xsk->tx)) {
+		अगर (opt_busy_poll || xsk_ring_prod__needs_wakeup(&xsk->tx)) अणु
 			xsk->app_stats.tx_wakeup_sendtos++;
 			kick_tx(xsk);
-		}
+		पूर्ण
 		ret = xsk_ring_prod__reserve(&xsk->tx, rcvd, &idx_tx);
-	}
+	पूर्ण
 
-	for (i = 0; i < rcvd; i++) {
+	क्रम (i = 0; i < rcvd; i++) अणु
 		u64 addr = xsk_ring_cons__rx_desc(&xsk->rx, idx_rx)->addr;
 		u32 len = xsk_ring_cons__rx_desc(&xsk->rx, idx_rx++)->len;
 		u64 orig = addr;
 
 		addr = xsk_umem__add_offset_to_addr(addr);
-		char *pkt = xsk_umem__get_data(xsk->umem->buffer, addr);
+		अक्षर *pkt = xsk_umem__get_data(xsk->umem->buffer, addr);
 
 		swap_mac_addresses(pkt);
 
 		hex_dump(pkt, len, addr);
 		xsk_ring_prod__tx_desc(&xsk->tx, idx_tx)->addr = orig;
 		xsk_ring_prod__tx_desc(&xsk->tx, idx_tx++)->len = len;
-	}
+	पूर्ण
 
 	xsk_ring_prod__submit(&xsk->tx, rcvd);
 	xsk_ring_cons__release(&xsk->rx, rcvd);
 
 	xsk->ring_stats.tx_npkts += rcvd;
 	xsk->outstanding_tx += rcvd;
-}
+पूर्ण
 
-static void l2fwd_all(void)
-{
-	struct pollfd fds[MAX_SOCKS] = {};
-	int i, ret;
+अटल व्योम l2fwd_all(व्योम)
+अणु
+	काष्ठा pollfd fds[MAX_SOCKS] = अणुपूर्ण;
+	पूर्णांक i, ret;
 
-	for (;;) {
-		if (opt_poll) {
-			for (i = 0; i < num_socks; i++) {
+	क्रम (;;) अणु
+		अगर (opt_poll) अणु
+			क्रम (i = 0; i < num_socks; i++) अणु
 				fds[i].fd = xsk_socket__fd(xsks[i]->xsk);
 				fds[i].events = POLLOUT | POLLIN;
 				xsks[i]->app_stats.opt_polls++;
-			}
-			ret = poll(fds, num_socks, opt_timeout);
-			if (ret <= 0)
-				continue;
-		}
+			पूर्ण
+			ret = poll(fds, num_socks, opt_समयout);
+			अगर (ret <= 0)
+				जारी;
+		पूर्ण
 
-		for (i = 0; i < num_socks; i++)
+		क्रम (i = 0; i < num_socks; i++)
 			l2fwd(xsks[i]);
 
-		if (benchmark_done)
-			break;
-	}
-}
+		अगर (benchmark_करोne)
+			अवरोध;
+	पूर्ण
+पूर्ण
 
-static void load_xdp_program(char **argv, struct bpf_object **obj)
-{
-	struct bpf_prog_load_attr prog_load_attr = {
+अटल व्योम load_xdp_program(अक्षर **argv, काष्ठा bpf_object **obj)
+अणु
+	काष्ठा bpf_prog_load_attr prog_load_attr = अणु
 		.prog_type      = BPF_PROG_TYPE_XDP,
-	};
-	char xdp_filename[256];
-	int prog_fd;
+	पूर्ण;
+	अक्षर xdp_filename[256];
+	पूर्णांक prog_fd;
 
-	snprintf(xdp_filename, sizeof(xdp_filename), "%s_kern.o", argv[0]);
+	snम_लिखो(xdp_filename, माप(xdp_filename), "%s_kern.o", argv[0]);
 	prog_load_attr.file = xdp_filename;
 
-	if (bpf_prog_load_xattr(&prog_load_attr, obj, &prog_fd))
-		exit(EXIT_FAILURE);
-	if (prog_fd < 0) {
-		fprintf(stderr, "ERROR: no program found: %s\n",
-			strerror(prog_fd));
-		exit(EXIT_FAILURE);
-	}
+	अगर (bpf_prog_load_xattr(&prog_load_attr, obj, &prog_fd))
+		निकास(निकास_त्रुटि);
+	अगर (prog_fd < 0) अणु
+		ख_लिखो(मानक_त्रुटि, "ERROR: no program found: %s\n",
+			म_त्रुटि(prog_fd));
+		निकास(निकास_त्रुटि);
+	पूर्ण
 
-	if (bpf_set_link_xdp_fd(opt_ifindex, prog_fd, opt_xdp_flags) < 0) {
-		fprintf(stderr, "ERROR: link set xdp fd failed\n");
-		exit(EXIT_FAILURE);
-	}
-}
+	अगर (bpf_set_link_xdp_fd(opt_अगरindex, prog_fd, opt_xdp_flags) < 0) अणु
+		ख_लिखो(मानक_त्रुटि, "ERROR: link set xdp fd failed\n");
+		निकास(निकास_त्रुटि);
+	पूर्ण
+पूर्ण
 
-static void enter_xsks_into_map(struct bpf_object *obj)
-{
-	struct bpf_map *map;
-	int i, xsks_map;
+अटल व्योम enter_xsks_पूर्णांकo_map(काष्ठा bpf_object *obj)
+अणु
+	काष्ठा bpf_map *map;
+	पूर्णांक i, xsks_map;
 
 	map = bpf_object__find_map_by_name(obj, "xsks_map");
 	xsks_map = bpf_map__fd(map);
-	if (xsks_map < 0) {
-		fprintf(stderr, "ERROR: no xsks map found: %s\n",
-			strerror(xsks_map));
-			exit(EXIT_FAILURE);
-	}
+	अगर (xsks_map < 0) अणु
+		ख_लिखो(मानक_त्रुटि, "ERROR: no xsks map found: %s\n",
+			म_त्रुटि(xsks_map));
+			निकास(निकास_त्रुटि);
+	पूर्ण
 
-	for (i = 0; i < num_socks; i++) {
-		int fd = xsk_socket__fd(xsks[i]->xsk);
-		int key, ret;
+	क्रम (i = 0; i < num_socks; i++) अणु
+		पूर्णांक fd = xsk_socket__fd(xsks[i]->xsk);
+		पूर्णांक key, ret;
 
 		key = i;
 		ret = bpf_map_update_elem(xsks_map, &key, &fd, 0);
-		if (ret) {
-			fprintf(stderr, "ERROR: bpf_map_update_elem %d\n", i);
-			exit(EXIT_FAILURE);
-		}
-	}
-}
+		अगर (ret) अणु
+			ख_लिखो(मानक_त्रुटि, "ERROR: bpf_map_update_elem %d\n", i);
+			निकास(निकास_त्रुटि);
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static void apply_setsockopt(struct xsk_socket_info *xsk)
-{
-	int sock_opt;
+अटल व्योम apply_setsockopt(काष्ठा xsk_socket_info *xsk)
+अणु
+	पूर्णांक sock_opt;
 
-	if (!opt_busy_poll)
-		return;
+	अगर (!opt_busy_poll)
+		वापस;
 
 	sock_opt = 1;
-	if (setsockopt(xsk_socket__fd(xsk->xsk), SOL_SOCKET, SO_PREFER_BUSY_POLL,
-		       (void *)&sock_opt, sizeof(sock_opt)) < 0)
-		exit_with_error(errno);
+	अगर (setsockopt(xsk_socket__fd(xsk->xsk), SOL_SOCKET, SO_PREFER_BUSY_POLL,
+		       (व्योम *)&sock_opt, माप(sock_opt)) < 0)
+		निकास_with_error(त्रुटि_सं);
 
 	sock_opt = 20;
-	if (setsockopt(xsk_socket__fd(xsk->xsk), SOL_SOCKET, SO_BUSY_POLL,
-		       (void *)&sock_opt, sizeof(sock_opt)) < 0)
-		exit_with_error(errno);
+	अगर (setsockopt(xsk_socket__fd(xsk->xsk), SOL_SOCKET, SO_BUSY_POLL,
+		       (व्योम *)&sock_opt, माप(sock_opt)) < 0)
+		निकास_with_error(त्रुटि_सं);
 
 	sock_opt = opt_batch_size;
-	if (setsockopt(xsk_socket__fd(xsk->xsk), SOL_SOCKET, SO_BUSY_POLL_BUDGET,
-		       (void *)&sock_opt, sizeof(sock_opt)) < 0)
-		exit_with_error(errno);
-}
+	अगर (setsockopt(xsk_socket__fd(xsk->xsk), SOL_SOCKET, SO_BUSY_POLL_BUDGET,
+		       (व्योम *)&sock_opt, माप(sock_opt)) < 0)
+		निकास_with_error(त्रुटि_सं);
+पूर्ण
 
-static int recv_xsks_map_fd_from_ctrl_node(int sock, int *_fd)
-{
-	char cms[CMSG_SPACE(sizeof(int))];
-	struct cmsghdr *cmsg;
-	struct msghdr msg;
-	struct iovec iov;
-	int value;
-	int len;
+अटल पूर्णांक recv_xsks_map_fd_from_ctrl_node(पूर्णांक sock, पूर्णांक *_fd)
+अणु
+	अक्षर cms[CMSG_SPACE(माप(पूर्णांक))];
+	काष्ठा cmsghdr *cmsg;
+	काष्ठा msghdr msg;
+	काष्ठा iovec iov;
+	पूर्णांक value;
+	पूर्णांक len;
 
 	iov.iov_base = &value;
-	iov.iov_len = sizeof(int);
+	iov.iov_len = माप(पूर्णांक);
 
 	msg.msg_name = 0;
 	msg.msg_namelen = 0;
@@ -1502,177 +1503,177 @@ static int recv_xsks_map_fd_from_ctrl_node(int sock, int *_fd)
 	msg.msg_iovlen = 1;
 	msg.msg_flags = 0;
 	msg.msg_control = (caddr_t)cms;
-	msg.msg_controllen = sizeof(cms);
+	msg.msg_controllen = माप(cms);
 
 	len = recvmsg(sock, &msg, 0);
 
-	if (len < 0) {
-		fprintf(stderr, "Recvmsg failed length incorrect.\n");
-		return -EINVAL;
-	}
+	अगर (len < 0) अणु
+		ख_लिखो(मानक_त्रुटि, "Recvmsg failed length incorrect.\n");
+		वापस -EINVAL;
+	पूर्ण
 
-	if (len == 0) {
-		fprintf(stderr, "Recvmsg failed no data\n");
-		return -EINVAL;
-	}
+	अगर (len == 0) अणु
+		ख_लिखो(मानक_त्रुटि, "Recvmsg failed no data\n");
+		वापस -EINVAL;
+	पूर्ण
 
 	cmsg = CMSG_FIRSTHDR(&msg);
-	*_fd = *(int *)CMSG_DATA(cmsg);
+	*_fd = *(पूर्णांक *)CMSG_DATA(cmsg);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-recv_xsks_map_fd(int *xsks_map_fd)
-{
-	struct sockaddr_un server;
-	int err;
+अटल पूर्णांक
+recv_xsks_map_fd(पूर्णांक *xsks_map_fd)
+अणु
+	काष्ठा sockaddr_un server;
+	पूर्णांक err;
 
 	sock = socket(AF_UNIX, SOCK_STREAM, 0);
-	if (sock < 0) {
-		fprintf(stderr, "Error opening socket stream: %s", strerror(errno));
-		return errno;
-	}
+	अगर (sock < 0) अणु
+		ख_लिखो(मानक_त्रुटि, "Error opening socket stream: %s", म_त्रुटि(त्रुटि_सं));
+		वापस त्रुटि_सं;
+	पूर्ण
 
 	server.sun_family = AF_UNIX;
-	strcpy(server.sun_path, SOCKET_NAME);
+	म_नकल(server.sun_path, SOCKET_NAME);
 
-	if (connect(sock, (struct sockaddr *)&server, sizeof(struct sockaddr_un)) < 0) {
-		close(sock);
-		fprintf(stderr, "Error connecting stream socket: %s", strerror(errno));
-		return errno;
-	}
+	अगर (connect(sock, (काष्ठा sockaddr *)&server, माप(काष्ठा sockaddr_un)) < 0) अणु
+		बंद(sock);
+		ख_लिखो(मानक_त्रुटि, "Error connecting stream socket: %s", म_त्रुटि(त्रुटि_सं));
+		वापस त्रुटि_सं;
+	पूर्ण
 
 	err = recv_xsks_map_fd_from_ctrl_node(sock, xsks_map_fd);
-	if (err) {
-		fprintf(stderr, "Error %d receiving fd\n", err);
-		return err;
-	}
-	return 0;
-}
+	अगर (err) अणु
+		ख_लिखो(मानक_त्रुटि, "Error %d receiving fd\n", err);
+		वापस err;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-int main(int argc, char **argv)
-{
-	struct __user_cap_header_struct hdr = { _LINUX_CAPABILITY_VERSION_3, 0 };
-	struct __user_cap_data_struct data[2] = { { 0 } };
-	struct rlimit r = {RLIM_INFINITY, RLIM_INFINITY};
+पूर्णांक मुख्य(पूर्णांक argc, अक्षर **argv)
+अणु
+	काष्ठा __user_cap_header_काष्ठा hdr = अणु _LINUX_CAPABILITY_VERSION_3, 0 पूर्ण;
+	काष्ठा __user_cap_data_काष्ठा data[2] = अणु अणु 0 पूर्ण पूर्ण;
+	काष्ठा rlimit r = अणुRLIM_अनन्त, RLIM_अनन्तपूर्ण;
 	bool rx = false, tx = false;
-	struct xsk_umem_info *umem;
-	struct bpf_object *obj;
-	int xsks_map_fd = 0;
-	pthread_t pt;
-	int i, ret;
-	void *bufs;
+	काष्ठा xsk_umem_info *umem;
+	काष्ठा bpf_object *obj;
+	पूर्णांक xsks_map_fd = 0;
+	pthपढ़ो_t pt;
+	पूर्णांक i, ret;
+	व्योम *bufs;
 
 	parse_command_line(argc, argv);
 
-	if (opt_reduced_cap) {
-		if (capget(&hdr, data)  < 0)
-			fprintf(stderr, "Error getting capabilities\n");
+	अगर (opt_reduced_cap) अणु
+		अगर (capget(&hdr, data)  < 0)
+			ख_लिखो(मानक_त्रुटि, "Error getting capabilities\n");
 
 		data->effective &= CAP_TO_MASK(CAP_NET_RAW);
 		data->permitted &= CAP_TO_MASK(CAP_NET_RAW);
 
-		if (capset(&hdr, data) < 0)
-			fprintf(stderr, "Setting capabilities failed\n");
+		अगर (capset(&hdr, data) < 0)
+			ख_लिखो(मानक_त्रुटि, "Setting capabilities failed\n");
 
-		if (capget(&hdr, data)  < 0) {
-			fprintf(stderr, "Error getting capabilities\n");
-		} else {
-			fprintf(stderr, "Capabilities EFF %x Caps INH %x Caps Per %x\n",
+		अगर (capget(&hdr, data)  < 0) अणु
+			ख_लिखो(मानक_त्रुटि, "Error getting capabilities\n");
+		पूर्ण अन्यथा अणु
+			ख_लिखो(मानक_त्रुटि, "Capabilities EFF %x Caps INH %x Caps Per %x\n",
 				data[0].effective, data[0].inheritable, data[0].permitted);
-			fprintf(stderr, "Capabilities EFF %x Caps INH %x Caps Per %x\n",
+			ख_लिखो(मानक_त्रुटि, "Capabilities EFF %x Caps INH %x Caps Per %x\n",
 				data[1].effective, data[1].inheritable, data[1].permitted);
-		}
-	} else {
-		if (setrlimit(RLIMIT_MEMLOCK, &r)) {
-			fprintf(stderr, "ERROR: setrlimit(RLIMIT_MEMLOCK) \"%s\"\n",
-				strerror(errno));
-			exit(EXIT_FAILURE);
-		}
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		अगर (setrlimit(RLIMIT_MEMLOCK, &r)) अणु
+			ख_लिखो(मानक_त्रुटि, "ERROR: setrlimit(RLIMIT_MEMLOCK) \"%s\"\n",
+				म_त्रुटि(त्रुटि_सं));
+			निकास(निकास_त्रुटि);
+		पूर्ण
 
-		if (opt_num_xsks > 1)
+		अगर (opt_num_xsks > 1)
 			load_xdp_program(argv, &obj);
-	}
+	पूर्ण
 
-	/* Reserve memory for the umem. Use hugepages if unaligned chunk mode */
-	bufs = mmap(NULL, NUM_FRAMES * opt_xsk_frame_size,
+	/* Reserve memory क्रम the umem. Use hugepages अगर unaligned chunk mode */
+	bufs = mmap(शून्य, NUM_FRAMES * opt_xsk_frame_size,
 		    PROT_READ | PROT_WRITE,
 		    MAP_PRIVATE | MAP_ANONYMOUS | opt_mmap_flags, -1, 0);
-	if (bufs == MAP_FAILED) {
-		printf("ERROR: mmap failed\n");
-		exit(EXIT_FAILURE);
-	}
+	अगर (bufs == MAP_FAILED) अणु
+		म_लिखो("ERROR: mmap failed\n");
+		निकास(निकास_त्रुटि);
+	पूर्ण
 
 	/* Create sockets... */
 	umem = xsk_configure_umem(bufs, NUM_FRAMES * opt_xsk_frame_size);
-	if (opt_bench == BENCH_RXDROP || opt_bench == BENCH_L2FWD) {
+	अगर (opt_bench == BENCH_RXDROP || opt_bench == BENCH_L2FWD) अणु
 		rx = true;
 		xsk_populate_fill_ring(umem);
-	}
-	if (opt_bench == BENCH_L2FWD || opt_bench == BENCH_TXONLY)
+	पूर्ण
+	अगर (opt_bench == BENCH_L2FWD || opt_bench == BENCH_TXONLY)
 		tx = true;
-	for (i = 0; i < opt_num_xsks; i++)
+	क्रम (i = 0; i < opt_num_xsks; i++)
 		xsks[num_socks++] = xsk_configure_socket(umem, rx, tx);
 
-	for (i = 0; i < opt_num_xsks; i++)
+	क्रम (i = 0; i < opt_num_xsks; i++)
 		apply_setsockopt(xsks[i]);
 
-	if (opt_bench == BENCH_TXONLY) {
+	अगर (opt_bench == BENCH_TXONLY) अणु
 		gen_eth_hdr_data();
 
-		for (i = 0; i < NUM_FRAMES; i++)
+		क्रम (i = 0; i < NUM_FRAMES; i++)
 			gen_eth_frame(umem, i * opt_xsk_frame_size);
-	}
+	पूर्ण
 
-	if (opt_num_xsks > 1 && opt_bench != BENCH_TXONLY)
-		enter_xsks_into_map(obj);
+	अगर (opt_num_xsks > 1 && opt_bench != BENCH_TXONLY)
+		enter_xsks_पूर्णांकo_map(obj);
 
-	if (opt_reduced_cap) {
+	अगर (opt_reduced_cap) अणु
 		ret = recv_xsks_map_fd(&xsks_map_fd);
-		if (ret) {
-			fprintf(stderr, "Error %d receiving xsks_map_fd\n", ret);
-			exit_with_error(ret);
-		}
-		if (xsks[0]->xsk) {
+		अगर (ret) अणु
+			ख_लिखो(मानक_त्रुटि, "Error %d receiving xsks_map_fd\n", ret);
+			निकास_with_error(ret);
+		पूर्ण
+		अगर (xsks[0]->xsk) अणु
 			ret = xsk_socket__update_xskmap(xsks[0]->xsk, xsks_map_fd);
-			if (ret) {
-				fprintf(stderr, "Update of BPF map failed(%d)\n", ret);
-				exit_with_error(ret);
-			}
-		}
-	}
+			अगर (ret) अणु
+				ख_लिखो(मानक_त्रुटि, "Update of BPF map failed(%d)\n", ret);
+				निकास_with_error(ret);
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	signal(SIGINT, int_exit);
-	signal(SIGTERM, int_exit);
-	signal(SIGABRT, int_exit);
+	संकेत(संक_विघ्न, पूर्णांक_निकास);
+	संकेत(संक_इति, पूर्णांक_निकास);
+	संकेत(SIGABRT, पूर्णांक_निकास);
 
-	setlocale(LC_ALL, "");
+	रखो_क्षेत्र(LC_ALL, "");
 
-	if (!opt_quiet) {
-		ret = pthread_create(&pt, NULL, poller, NULL);
-		if (ret)
-			exit_with_error(ret);
-	}
+	अगर (!opt_quiet) अणु
+		ret = pthपढ़ो_create(&pt, शून्य, poller, शून्य);
+		अगर (ret)
+			निकास_with_error(ret);
+	पूर्ण
 
-	prev_time = get_nsecs();
-	start_time = prev_time;
+	prev_समय = get_nsecs();
+	start_समय = prev_समय;
 
-	if (opt_bench == BENCH_RXDROP)
+	अगर (opt_bench == BENCH_RXDROP)
 		rx_drop_all();
-	else if (opt_bench == BENCH_TXONLY)
+	अन्यथा अगर (opt_bench == BENCH_TXONLY)
 		tx_only_all();
-	else
+	अन्यथा
 		l2fwd_all();
 
-	benchmark_done = true;
+	benchmark_करोne = true;
 
-	if (!opt_quiet)
-		pthread_join(pt, NULL);
+	अगर (!opt_quiet)
+		pthपढ़ो_join(pt, शून्य);
 
 	xdpsock_cleanup();
 
 	munmap(bufs, NUM_FRAMES * opt_xsk_frame_size);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

@@ -1,8 +1,9 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _NET_INET_IPX_H_
-#define _NET_INET_IPX_H_
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _NET_INET_IPX_H_
+#घोषणा _NET_INET_IPX_H_
 /*
- *	The following information is in its entirety obtained from:
+ *	The following inक्रमmation is in its entirety obtained from:
  *
  *	Novell 'IPX Router Specification' Version 1.10 
  *		Part No. 107-000029-001
@@ -10,162 +11,162 @@
  *	Which is available from ftp.novell.com
  */
 
-#include <linux/netdevice.h>
-#include <net/datalink.h>
-#include <linux/ipx.h>
-#include <linux/list.h>
-#include <linux/slab.h>
-#include <linux/refcount.h>
+#समावेश <linux/netdevice.h>
+#समावेश <net/datalink.h>
+#समावेश <linux/ipx.h>
+#समावेश <linux/list.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/refcount.h>
 
-struct ipx_address {
+काष्ठा ipx_address अणु
 	__be32  net;
 	__u8    node[IPX_NODE_LEN]; 
 	__be16  sock;
-};
+पूर्ण;
 
-#define ipx_broadcast_node	"\377\377\377\377\377\377"
-#define ipx_this_node           "\0\0\0\0\0\0"
+#घोषणा ipx_broadcast_node	"\377\377\377\377\377\377"
+#घोषणा ipx_this_node           "\0\0\0\0\0\0"
 
-#define IPX_MAX_PPROP_HOPS 8
+#घोषणा IPX_MAX_PPROP_HOPS 8
 
-struct ipxhdr {
+काष्ठा ipxhdr अणु
 	__be16			ipx_checksum __packed;
-#define IPX_NO_CHECKSUM	cpu_to_be16(0xFFFF)
+#घोषणा IPX_NO_CHECKSUM	cpu_to_be16(0xFFFF)
 	__be16			ipx_pktsize __packed;
 	__u8			ipx_tctrl;
 	__u8			ipx_type;
-#define IPX_TYPE_UNKNOWN	0x00
-#define IPX_TYPE_RIP		0x01	/* may also be 0 */
-#define IPX_TYPE_SAP		0x04	/* may also be 0 */
-#define IPX_TYPE_SPX		0x05	/* SPX protocol */
-#define IPX_TYPE_NCP		0x11	/* $lots for docs on this (SPIT) */
-#define IPX_TYPE_PPROP		0x14	/* complicated flood fill brdcast */
-	struct ipx_address	ipx_dest __packed;
-	struct ipx_address	ipx_source __packed;
-};
+#घोषणा IPX_TYPE_UNKNOWN	0x00
+#घोषणा IPX_TYPE_RIP		0x01	/* may also be 0 */
+#घोषणा IPX_TYPE_SAP		0x04	/* may also be 0 */
+#घोषणा IPX_TYPE_SPX		0x05	/* SPX protocol */
+#घोषणा IPX_TYPE_NCP		0x11	/* $lots क्रम करोcs on this (SPIT) */
+#घोषणा IPX_TYPE_PPROP		0x14	/* complicated flood fill brdcast */
+	काष्ठा ipx_address	ipx_dest __packed;
+	काष्ठा ipx_address	ipx_source __packed;
+पूर्ण;
 
 /* From af_ipx.c */
-extern int sysctl_ipx_pprop_broadcasting;
+बाह्य पूर्णांक sysctl_ipx_pprop_broadcasting;
 
-struct ipx_interface {
+काष्ठा ipx_पूर्णांकerface अणु
 	/* IPX address */
-	__be32			if_netnum;
-	unsigned char		if_node[IPX_NODE_LEN];
+	__be32			अगर_netnum;
+	अचिन्हित अक्षर		अगर_node[IPX_NODE_LEN];
 	refcount_t		refcnt;
 
 	/* physical device info */
-	struct net_device	*if_dev;
-	struct datalink_proto	*if_dlink;
-	__be16			if_dlink_type;
+	काष्ठा net_device	*अगर_dev;
+	काष्ठा datalink_proto	*अगर_dlink;
+	__be16			अगर_dlink_type;
 
 	/* socket support */
-	unsigned short		if_sknum;
-	struct hlist_head	if_sklist;
-	spinlock_t		if_sklist_lock;
+	अचिन्हित लघु		अगर_sknum;
+	काष्ठा hlist_head	अगर_sklist;
+	spinlock_t		अगर_sklist_lock;
 
 	/* administrative overhead */
-	int			if_ipx_offset;
-	unsigned char		if_internal;
-	unsigned char		if_primary;
+	पूर्णांक			अगर_ipx_offset;
+	अचिन्हित अक्षर		अगर_पूर्णांकernal;
+	अचिन्हित अक्षर		अगर_primary;
 	
-	struct list_head	node; /* node in ipx_interfaces list */
-};
+	काष्ठा list_head	node; /* node in ipx_पूर्णांकerfaces list */
+पूर्ण;
 
-struct ipx_route {
+काष्ठा ipx_route अणु
 	__be32			ir_net;
-	struct ipx_interface	*ir_intrfc;
-	unsigned char		ir_routed;
-	unsigned char		ir_router_node[IPX_NODE_LEN];
-	struct list_head	node; /* node in ipx_routes list */
+	काष्ठा ipx_पूर्णांकerface	*ir_पूर्णांकrfc;
+	अचिन्हित अक्षर		ir_routed;
+	अचिन्हित अक्षर		ir_router_node[IPX_NODE_LEN];
+	काष्ठा list_head	node; /* node in ipx_routes list */
 	refcount_t		refcnt;
-};
+पूर्ण;
 
-struct ipx_cb {
+काष्ठा ipx_cb अणु
 	u8	ipx_tctrl;
 	__be32	ipx_dest_net;
 	__be32	ipx_source_net;
-	struct {
+	काष्ठा अणु
 		__be32 netnum;
-		int index;
-	} last_hop;
-};
+		पूर्णांक index;
+	पूर्ण last_hop;
+पूर्ण;
 
-#include <net/sock.h>
+#समावेश <net/sock.h>
 
-struct ipx_sock {
-	/* struct sock has to be the first member of ipx_sock */
-	struct sock		sk;
-	struct ipx_address	dest_addr;
-	struct ipx_interface	*intrfc;
+काष्ठा ipx_sock अणु
+	/* काष्ठा sock has to be the first member of ipx_sock */
+	काष्ठा sock		sk;
+	काष्ठा ipx_address	dest_addr;
+	काष्ठा ipx_पूर्णांकerface	*पूर्णांकrfc;
 	__be16			port;
-#ifdef CONFIG_IPX_INTERN
-	unsigned char		node[IPX_NODE_LEN];
-#endif
-	unsigned short		type;
+#अगर_घोषित CONFIG_IPX_INTERN
+	अचिन्हित अक्षर		node[IPX_NODE_LEN];
+#पूर्ण_अगर
+	अचिन्हित लघु		type;
 	/*
-	 * To handle special ncp connection-handling sockets for mars_nwe,
+	 * To handle special ncp connection-handling sockets क्रम mars_nwe,
  	 * the connection number must be stored in the socket.
 	 */
-	unsigned short		ipx_ncp_conn;
-};
+	अचिन्हित लघु		ipx_ncp_conn;
+पूर्ण;
 
-static inline struct ipx_sock *ipx_sk(struct sock *sk)
-{
-	return (struct ipx_sock *)sk;
-}
+अटल अंतरभूत काष्ठा ipx_sock *ipx_sk(काष्ठा sock *sk)
+अणु
+	वापस (काष्ठा ipx_sock *)sk;
+पूर्ण
 
-#define IPX_SKB_CB(__skb) ((struct ipx_cb *)&((__skb)->cb[0]))
+#घोषणा IPX_SKB_CB(__skb) ((काष्ठा ipx_cb *)&((__skb)->cb[0]))
 
-#define IPX_MIN_EPHEMERAL_SOCKET	0x4000
-#define IPX_MAX_EPHEMERAL_SOCKET	0x7fff
+#घोषणा IPX_MIN_EPHEMERAL_SOCKET	0x4000
+#घोषणा IPX_MAX_EPHEMERAL_SOCKET	0x7fff
 
-extern struct list_head ipx_routes;
-extern rwlock_t ipx_routes_lock;
+बाह्य काष्ठा list_head ipx_routes;
+बाह्य rwlock_t ipx_routes_lock;
 
-extern struct list_head ipx_interfaces;
-struct ipx_interface *ipx_interfaces_head(void);
-extern spinlock_t ipx_interfaces_lock;
+बाह्य काष्ठा list_head ipx_पूर्णांकerfaces;
+काष्ठा ipx_पूर्णांकerface *ipx_पूर्णांकerfaces_head(व्योम);
+बाह्य spinlock_t ipx_पूर्णांकerfaces_lock;
 
-extern struct ipx_interface *ipx_primary_net;
+बाह्य काष्ठा ipx_पूर्णांकerface *ipx_primary_net;
 
-int ipx_proc_init(void);
-void ipx_proc_exit(void);
+पूर्णांक ipx_proc_init(व्योम);
+व्योम ipx_proc_निकास(व्योम);
 
-const char *ipx_frame_name(__be16);
-const char *ipx_device_name(struct ipx_interface *intrfc);
+स्थिर अक्षर *ipx_frame_name(__be16);
+स्थिर अक्षर *ipx_device_name(काष्ठा ipx_पूर्णांकerface *पूर्णांकrfc);
 
-static __inline__ void ipxitf_hold(struct ipx_interface *intrfc)
-{
-	refcount_inc(&intrfc->refcnt);
-}
+अटल __अंतरभूत__ व्योम ipxitf_hold(काष्ठा ipx_पूर्णांकerface *पूर्णांकrfc)
+अणु
+	refcount_inc(&पूर्णांकrfc->refcnt);
+पूर्ण
 
-void ipxitf_down(struct ipx_interface *intrfc);
-struct ipx_interface *ipxitf_find_using_net(__be32 net);
-int ipxitf_send(struct ipx_interface *intrfc, struct sk_buff *skb, char *node);
-__be16 ipx_cksum(struct ipxhdr *packet, int length);
-int ipxrtr_add_route(__be32 network, struct ipx_interface *intrfc,
-		     unsigned char *node);
-void ipxrtr_del_routes(struct ipx_interface *intrfc);
-int ipxrtr_route_packet(struct sock *sk, struct sockaddr_ipx *usipx,
-			struct msghdr *msg, size_t len, int noblock);
-int ipxrtr_route_skb(struct sk_buff *skb);
-struct ipx_route *ipxrtr_lookup(__be32 net);
-int ipxrtr_ioctl(unsigned int cmd, void __user *arg);
+व्योम ipxitf_करोwn(काष्ठा ipx_पूर्णांकerface *पूर्णांकrfc);
+काष्ठा ipx_पूर्णांकerface *ipxitf_find_using_net(__be32 net);
+पूर्णांक ipxitf_send(काष्ठा ipx_पूर्णांकerface *पूर्णांकrfc, काष्ठा sk_buff *skb, अक्षर *node);
+__be16 ipx_cksum(काष्ठा ipxhdr *packet, पूर्णांक length);
+पूर्णांक ipxrtr_add_route(__be32 network, काष्ठा ipx_पूर्णांकerface *पूर्णांकrfc,
+		     अचिन्हित अक्षर *node);
+व्योम ipxrtr_del_routes(काष्ठा ipx_पूर्णांकerface *पूर्णांकrfc);
+पूर्णांक ipxrtr_route_packet(काष्ठा sock *sk, काष्ठा sockaddr_ipx *usipx,
+			काष्ठा msghdr *msg, माप_प्रकार len, पूर्णांक noblock);
+पूर्णांक ipxrtr_route_skb(काष्ठा sk_buff *skb);
+काष्ठा ipx_route *ipxrtr_lookup(__be32 net);
+पूर्णांक ipxrtr_ioctl(अचिन्हित पूर्णांक cmd, व्योम __user *arg);
 
-static __inline__ void ipxitf_put(struct ipx_interface *intrfc)
-{
-	if (refcount_dec_and_test(&intrfc->refcnt))
-		ipxitf_down(intrfc);
-}
+अटल __अंतरभूत__ व्योम ipxitf_put(काष्ठा ipx_पूर्णांकerface *पूर्णांकrfc)
+अणु
+	अगर (refcount_dec_and_test(&पूर्णांकrfc->refcnt))
+		ipxitf_करोwn(पूर्णांकrfc);
+पूर्ण
 
-static __inline__ void ipxrtr_hold(struct ipx_route *rt)
-{
+अटल __अंतरभूत__ व्योम ipxrtr_hold(काष्ठा ipx_route *rt)
+अणु
 	        refcount_inc(&rt->refcnt);
-}
+पूर्ण
 
-static __inline__ void ipxrtr_put(struct ipx_route *rt)
-{
-	        if (refcount_dec_and_test(&rt->refcnt))
-			                kfree(rt);
-}
-#endif /* _NET_INET_IPX_H_ */
+अटल __अंतरभूत__ व्योम ipxrtr_put(काष्ठा ipx_route *rt)
+अणु
+	        अगर (refcount_dec_and_test(&rt->refcnt))
+			                kमुक्त(rt);
+पूर्ण
+#पूर्ण_अगर /* _NET_INET_IPX_H_ */

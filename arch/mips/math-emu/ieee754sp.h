@@ -1,77 +1,78 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
- * IEEE754 floating point
- * double precision internal header file
+ * IEEE754 भग्नing poपूर्णांक
+ * द्विगुन precision पूर्णांकernal header file
  */
 /*
- * MIPS floating point support
+ * MIPS भग्नing poपूर्णांक support
  * Copyright (C) 1994-2000 Algorithmics Ltd.
  */
 
-#include <linux/compiler.h>
+#समावेश <linux/compiler.h>
 
-#include "ieee754int.h"
+#समावेश "ieee754int.h"
 
-#define assert(expr) ((void)0)
+#घोषणा निश्चित(expr) ((व्योम)0)
 
-#define SP_EBIAS	127
-#define SP_EMIN		(-126)
-#define SP_EMAX		127
-#define SP_FBITS	23
-#define SP_MBITS	23
+#घोषणा SP_EBIAS	127
+#घोषणा SP_EMIN		(-126)
+#घोषणा SP_EMAX		127
+#घोषणा SP_FBITS	23
+#घोषणा SP_MBITS	23
 
-#define SP_MBIT(x)	((u32)1 << (x))
-#define SP_HIDDEN_BIT	SP_MBIT(SP_FBITS)
-#define SP_SIGN_BIT	SP_MBIT(31)
+#घोषणा SP_MBIT(x)	((u32)1 << (x))
+#घोषणा SP_HIDDEN_BIT	SP_MBIT(SP_FBITS)
+#घोषणा SP_SIGN_BIT	SP_MBIT(31)
 
-#define SPSIGN(sp)	(sp.sign)
-#define SPBEXP(sp)	(sp.bexp)
-#define SPMANT(sp)	(sp.mant)
+#घोषणा SPSIGN(sp)	(sp.sign)
+#घोषणा SPBEXP(sp)	(sp.bexp)
+#घोषणा SPMANT(sp)	(sp.mant)
 
-static inline int ieee754sp_finite(union ieee754sp x)
-{
-	return SPBEXP(x) != SP_EMAX + 1 + SP_EBIAS;
-}
+अटल अंतरभूत पूर्णांक ieee754sp_finite(जोड़ ieee754sp x)
+अणु
+	वापस SPBEXP(x) != SP_EMAX + 1 + SP_EBIAS;
+पूर्ण
 
-/* 64 bit right shift with rounding */
-#define XSPSRS64(v, rs)						\
+/* 64 bit right shअगरt with rounding */
+#घोषणा XSPSRS64(v, rs)						\
 	(((rs) >= 64) ? ((v) != 0) : ((v) >> (rs)) | ((v) << (64-(rs)) != 0))
 
-/* 3bit extended single precision sticky right shift */
-#define XSPSRS(v, rs)						\
+/* 3bit extended single precision sticky right shअगरt */
+#घोषणा XSPSRS(v, rs)						\
 	((rs > (SP_FBITS+3))?1:((v) >> (rs)) | ((v) << (32-(rs)) != 0))
 
-#define XSPSRS1(m) \
+#घोषणा XSPSRS1(m) \
 	((m >> 1) | (m & 1))
 
-#define SPXSRSX1() \
+#घोषणा SPXSRSX1() \
 	(xe++, (xm = XSPSRS1(xm)))
 
-#define SPXSRSY1() \
+#घोषणा SPXSRSY1() \
 	(ye++, (ym = XSPSRS1(ym)))
 
 /* convert denormal to normalized with extended exponent */
-#define SPDNORMx(m,e) \
-	while ((m >> SP_FBITS) == 0) { m <<= 1; e--; }
-#define SPDNORMX	SPDNORMx(xm, xe)
-#define SPDNORMY	SPDNORMx(ym, ye)
-#define SPDNORMZ	SPDNORMx(zm, ze)
+#घोषणा SPDNORMx(m,e) \
+	जबतक ((m >> SP_FBITS) == 0) अणु m <<= 1; e--; पूर्ण
+#घोषणा SPDNORMX	SPDNORMx(xm, xe)
+#घोषणा SPDNORMY	SPDNORMx(ym, ye)
+#घोषणा SPDNORMZ	SPDNORMx(zm, ze)
 
-static inline union ieee754sp buildsp(int s, int bx, unsigned int m)
-{
-	union ieee754sp r;
+अटल अंतरभूत जोड़ ieee754sp buildsp(पूर्णांक s, पूर्णांक bx, अचिन्हित पूर्णांक m)
+अणु
+	जोड़ ieee754sp r;
 
-	assert((s) == 0 || (s) == 1);
-	assert((bx) >= SP_EMIN - 1 + SP_EBIAS
+	निश्चित((s) == 0 || (s) == 1);
+	निश्चित((bx) >= SP_EMIN - 1 + SP_EBIAS
 	       && (bx) <= SP_EMAX + 1 + SP_EBIAS);
-	assert(((m) >> SP_FBITS) == 0);
+	निश्चित(((m) >> SP_FBITS) == 0);
 
 	r.sign = s;
 	r.bexp = bx;
 	r.mant = m;
 
-	return r;
-}
+	वापस r;
+पूर्ण
 
-extern union ieee754sp __cold ieee754sp_nanxcpt(union ieee754sp);
-extern union ieee754sp ieee754sp_format(int, int, unsigned);
+बाह्य जोड़ ieee754sp __cold ieee754sp_nanxcpt(जोड़ ieee754sp);
+बाह्य जोड़ ieee754sp ieee754sp_क्रमmat(पूर्णांक, पूर्णांक, अचिन्हित);

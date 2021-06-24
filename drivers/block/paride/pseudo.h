@@ -1,102 +1,103 @@
+<शैली गुरु>
 /* 
-        pseudo.h    (c) 1997-8  Grant R. Guenther <grant@torque.net>
+        pseuकरो.h    (c) 1997-8  Grant R. Guenther <grant@torque.net>
                                 Under the terms of the GNU General Public License.
 
-	This is the "pseudo-interrupt" logic for parallel port drivers.
+	This is the "pseudo-interrupt" logic क्रम parallel port drivers.
 
-        This module is #included into each driver.  It makes one
+        This module is #समावेशd पूर्णांकo each driver.  It makes one
         function available:
 
-		ps_set_intr( void (*continuation)(void),
-			     int  (*ready)(void),
-			     int timeout,
-			     int nice )
+		ps_set_पूर्णांकr( व्योम (*continuation)(व्योम),
+			     पूर्णांक  (*पढ़ोy)(व्योम),
+			     पूर्णांक समयout,
+			     पूर्णांक nice )
 
-	Which will arrange for ready() to be evaluated frequently and
-	when either it returns true, or timeout jiffies have passed,
+	Which will arrange क्रम पढ़ोy() to be evaluated frequently and
+	when either it वापसs true, or समयout jअगरfies have passed,
 	continuation() will be invoked.
 
-	If nice is 1, the test will done approximately once a
-	jiffy.  If nice is 0, the test will also be done whenever
+	If nice is 1, the test will करोne approximately once a
+	jअगरfy.  If nice is 0, the test will also be करोne whenever
 	the scheduler runs (by adding it to a task queue).  If
-	nice is greater than 1, the test will be done once every
-	(nice-1) jiffies. 
+	nice is greater than 1, the test will be करोne once every
+	(nice-1) jअगरfies. 
 
 */
 
 /* Changes:
 
 	1.01	1998.05.03	Switched from cli()/sti() to spinlocks
-	1.02    1998.12.14      Added support for nice > 1
+	1.02    1998.12.14      Added support क्रम nice > 1
 */
 	
-#define PS_VERSION	"1.02"
+#घोषणा PS_VERSION	"1.02"
 
-#include <linux/sched.h>
-#include <linux/workqueue.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/workqueue.h>
 
-static void ps_tq_int(struct work_struct *work);
+अटल व्योम ps_tq_पूर्णांक(काष्ठा work_काष्ठा *work);
 
-static void (* ps_continuation)(void);
-static int (* ps_ready)(void);
-static unsigned long ps_timeout;
-static int ps_tq_active = 0;
-static int ps_nice = 0;
+अटल व्योम (* ps_continuation)(व्योम);
+अटल पूर्णांक (* ps_पढ़ोy)(व्योम);
+अटल अचिन्हित दीर्घ ps_समयout;
+अटल पूर्णांक ps_tq_active = 0;
+अटल पूर्णांक ps_nice = 0;
 
-static DEFINE_SPINLOCK(ps_spinlock __attribute__((unused)));
+अटल DEFINE_SPINLOCK(ps_spinlock __attribute__((unused)));
 
-static DECLARE_DELAYED_WORK(ps_tq, ps_tq_int);
+अटल DECLARE_DELAYED_WORK(ps_tq, ps_tq_पूर्णांक);
 
-static void ps_set_intr(void (*continuation)(void), 
-			int (*ready)(void),
-			int timeout, int nice)
-{
-	unsigned long	flags;
+अटल व्योम ps_set_पूर्णांकr(व्योम (*continuation)(व्योम), 
+			पूर्णांक (*पढ़ोy)(व्योम),
+			पूर्णांक समयout, पूर्णांक nice)
+अणु
+	अचिन्हित दीर्घ	flags;
 
 	spin_lock_irqsave(&ps_spinlock,flags);
 
 	ps_continuation = continuation;
-	ps_ready = ready;
-	ps_timeout = jiffies + timeout;
+	ps_पढ़ोy = पढ़ोy;
+	ps_समयout = jअगरfies + समयout;
 	ps_nice = nice;
 
-	if (!ps_tq_active) {
+	अगर (!ps_tq_active) अणु
 		ps_tq_active = 1;
-		if (!ps_nice)
+		अगर (!ps_nice)
 			schedule_delayed_work(&ps_tq, 0);
-		else
+		अन्यथा
 			schedule_delayed_work(&ps_tq, ps_nice-1);
-	}
+	पूर्ण
 	spin_unlock_irqrestore(&ps_spinlock,flags);
-}
+पूर्ण
 
-static void ps_tq_int(struct work_struct *work)
-{
-	void (*con)(void);
-	unsigned long flags;
+अटल व्योम ps_tq_पूर्णांक(काष्ठा work_काष्ठा *work)
+अणु
+	व्योम (*con)(व्योम);
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&ps_spinlock,flags);
 
 	con = ps_continuation;
 	ps_tq_active = 0;
 
-	if (!con) {
+	अगर (!con) अणु
 		spin_unlock_irqrestore(&ps_spinlock,flags);
-		return;
-	}
-	if (!ps_ready || ps_ready() || time_after_eq(jiffies, ps_timeout)) {
-		ps_continuation = NULL;
+		वापस;
+	पूर्ण
+	अगर (!ps_पढ़ोy || ps_पढ़ोy() || समय_after_eq(jअगरfies, ps_समयout)) अणु
+		ps_continuation = शून्य;
 		spin_unlock_irqrestore(&ps_spinlock,flags);
 		con();
-		return;
-	}
+		वापस;
+	पूर्ण
 	ps_tq_active = 1;
-	if (!ps_nice)
+	अगर (!ps_nice)
 		schedule_delayed_work(&ps_tq, 0);
-	else
+	अन्यथा
 		schedule_delayed_work(&ps_tq, ps_nice-1);
 	spin_unlock_irqrestore(&ps_spinlock,flags);
-}
+पूर्ण
 
-/* end of pseudo.h */
+/* end of pseuकरो.h */
 

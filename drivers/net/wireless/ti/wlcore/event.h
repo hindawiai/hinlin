@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * This file is part of wl1271
  *
@@ -8,22 +9,22 @@
  * Contact: Luciano Coelho <luciano.coelho@nokia.com>
  */
 
-#ifndef __EVENT_H__
-#define __EVENT_H__
+#अगर_अघोषित __EVENT_H__
+#घोषणा __EVENT_H__
 
 /*
  * Mbox events
  *
  * The event mechanism is based on a pair of event buffers (buffers A and
  * B) at fixed locations in the target's memory. The host processes one
- * buffer while the other buffer continues to collect events. If the host
- * is not processing events, an interrupt is issued to signal that a buffer
- * is ready. Once the host is done with processing events from one buffer,
- * it signals the target (with an ACK interrupt) that the event buffer is
- * free.
+ * buffer जबतक the other buffer जारीs to collect events. If the host
+ * is not processing events, an पूर्णांकerrupt is issued to संकेत that a buffer
+ * is पढ़ोy. Once the host is करोne with processing events from one buffer,
+ * it संकेतs the target (with an ACK पूर्णांकerrupt) that the event buffer is
+ * मुक्त.
  */
 
-enum {
+क्रमागत अणु
 	RSSI_SNR_TRIGGER_0_EVENT_ID              = BIT(0),
 	RSSI_SNR_TRIGGER_1_EVENT_ID              = BIT(1),
 	RSSI_SNR_TRIGGER_2_EVENT_ID              = BIT(2),
@@ -34,49 +35,49 @@ enum {
 	RSSI_SNR_TRIGGER_7_EVENT_ID              = BIT(7),
 
 	EVENT_MBOX_ALL_EVENT_ID			 = 0x7fffffff,
-};
+पूर्ण;
 
-/* events the driver might want to wait for */
-enum wlcore_wait_event {
+/* events the driver might want to रुको क्रम */
+क्रमागत wlcore_रुको_event अणु
 	WLCORE_EVENT_ROLE_STOP_COMPLETE,
 	WLCORE_EVENT_PEER_REMOVE_COMPLETE,
 	WLCORE_EVENT_DFS_CONFIG_COMPLETE
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	EVENT_ENTER_POWER_SAVE_FAIL = 0,
 	EVENT_ENTER_POWER_SAVE_SUCCESS,
-};
+पूर्ण;
 
-#define NUM_OF_RSSI_SNR_TRIGGERS 8
+#घोषणा NUM_OF_RSSI_SNR_TRIGGERS 8
 
-struct fw_logger_information {
+काष्ठा fw_logger_inक्रमmation अणु
 	__le32 max_buff_size;
 	__le32 actual_buff_size;
 	__le32 num_trace_drop;
-	__le32 buff_read_ptr;
-	__le32 buff_write_ptr;
-} __packed;
+	__le32 buff_पढ़ो_ptr;
+	__le32 buff_ग_लिखो_ptr;
+पूर्ण __packed;
 
-struct wl1271;
+काष्ठा wl1271;
 
-int wl1271_event_unmask(struct wl1271 *wl);
-int wl1271_event_handle(struct wl1271 *wl, u8 mbox);
+पूर्णांक wl1271_event_unmask(काष्ठा wl1271 *wl);
+पूर्णांक wl1271_event_handle(काष्ठा wl1271 *wl, u8 mbox);
 
-void wlcore_event_soft_gemini_sense(struct wl1271 *wl, u8 enable);
-void wlcore_event_sched_scan_completed(struct wl1271 *wl,
+व्योम wlcore_event_soft_gemini_sense(काष्ठा wl1271 *wl, u8 enable);
+व्योम wlcore_event_sched_scan_completed(काष्ठा wl1271 *wl,
 				       u8 status);
-void wlcore_event_ba_rx_constraint(struct wl1271 *wl,
-				   unsigned long roles_bitmap,
-				   unsigned long allowed_bitmap);
-void wlcore_event_channel_switch(struct wl1271 *wl,
-				 unsigned long roles_bitmap,
+व्योम wlcore_event_ba_rx_स्थिरraपूर्णांक(काष्ठा wl1271 *wl,
+				   अचिन्हित दीर्घ roles_biपंचांगap,
+				   अचिन्हित दीर्घ allowed_biपंचांगap);
+व्योम wlcore_event_channel_चयन(काष्ठा wl1271 *wl,
+				 अचिन्हित दीर्घ roles_biपंचांगap,
 				 bool success);
-void wlcore_event_beacon_loss(struct wl1271 *wl, unsigned long roles_bitmap);
-void wlcore_event_dummy_packet(struct wl1271 *wl);
-void wlcore_event_max_tx_failure(struct wl1271 *wl, unsigned long sta_bitmap);
-void wlcore_event_inactive_sta(struct wl1271 *wl, unsigned long sta_bitmap);
-void wlcore_event_roc_complete(struct wl1271 *wl);
-void wlcore_event_rssi_trigger(struct wl1271 *wl, s8 *metric_arr);
-int  wlcore_event_fw_logger(struct wl1271 *wl);
-#endif
+व्योम wlcore_event_beacon_loss(काष्ठा wl1271 *wl, अचिन्हित दीर्घ roles_biपंचांगap);
+व्योम wlcore_event_dummy_packet(काष्ठा wl1271 *wl);
+व्योम wlcore_event_max_tx_failure(काष्ठा wl1271 *wl, अचिन्हित दीर्घ sta_biपंचांगap);
+व्योम wlcore_event_inactive_sta(काष्ठा wl1271 *wl, अचिन्हित दीर्घ sta_biपंचांगap);
+व्योम wlcore_event_roc_complete(काष्ठा wl1271 *wl);
+व्योम wlcore_event_rssi_trigger(काष्ठा wl1271 *wl, s8 *metric_arr);
+पूर्णांक  wlcore_event_fw_logger(काष्ठा wl1271 *wl);
+#पूर्ण_अगर

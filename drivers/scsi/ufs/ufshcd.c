@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Universal Flash Storage Host controller driver Core
  * Copyright (C) 2011-2013 Samsung India Software Operations
@@ -9,137 +10,137 @@
  *	Vinayak Holikatti <h.vinayak@samsung.com>
  */
 
-#include <linux/async.h>
-#include <linux/devfreq.h>
-#include <linux/nls.h>
-#include <linux/of.h>
-#include <linux/bitfield.h>
-#include <linux/blk-pm.h>
-#include <linux/blkdev.h>
-#include "ufshcd.h"
-#include "ufs_quirks.h"
-#include "unipro.h"
-#include "ufs-sysfs.h"
-#include "ufs-debugfs.h"
-#include "ufs_bsg.h"
-#include "ufshcd-crypto.h"
-#include <asm/unaligned.h>
+#समावेश <linux/async.h>
+#समावेश <linux/devfreq.h>
+#समावेश <linux/nls.h>
+#समावेश <linux/of.h>
+#समावेश <linux/bitfield.h>
+#समावेश <linux/blk-pm.h>
+#समावेश <linux/blkdev.h>
+#समावेश "ufshcd.h"
+#समावेश "ufs_quirks.h"
+#समावेश "unipro.h"
+#समावेश "ufs-sysfs.h"
+#समावेश "ufs-debugfs.h"
+#समावेश "ufs_bsg.h"
+#समावेश "ufshcd-crypto.h"
+#समावेश <यंत्र/unaligned.h>
 
-#define CREATE_TRACE_POINTS
-#include <trace/events/ufs.h>
+#घोषणा CREATE_TRACE_POINTS
+#समावेश <trace/events/ufs.h>
 
-#define UFSHCD_ENABLE_INTRS	(UTP_TRANSFER_REQ_COMPL |\
+#घोषणा UFSHCD_ENABLE_INTRS	(UTP_TRANSFER_REQ_COMPL |\
 				 UTP_TASK_REQ_COMPL |\
 				 UFSHCD_ERROR_MASK)
-/* UIC command timeout, unit: ms */
-#define UIC_CMD_TIMEOUT	500
+/* UIC command समयout, unit: ms */
+#घोषणा UIC_CMD_TIMEOUT	500
 
-/* NOP OUT retries waiting for NOP IN response */
-#define NOP_OUT_RETRIES    10
-/* Timeout after 50 msecs if NOP OUT hangs without response */
-#define NOP_OUT_TIMEOUT    50 /* msecs */
+/* NOP OUT retries रुकोing क्रम NOP IN response */
+#घोषणा NOP_OUT_RETRIES    10
+/* Timeout after 50 msecs अगर NOP OUT hangs without response */
+#घोषणा NOP_OUT_TIMEOUT    50 /* msecs */
 
 /* Query request retries */
-#define QUERY_REQ_RETRIES 3
-/* Query request timeout */
-#define QUERY_REQ_TIMEOUT 1500 /* 1.5 seconds */
+#घोषणा QUERY_REQ_RETRIES 3
+/* Query request समयout */
+#घोषणा QUERY_REQ_TIMEOUT 1500 /* 1.5 seconds */
 
-/* Task management command timeout */
-#define TM_CMD_TIMEOUT	100 /* msecs */
+/* Task management command समयout */
+#घोषणा TM_CMD_TIMEOUT	100 /* msecs */
 
-/* maximum number of retries for a general UIC command  */
-#define UFS_UIC_COMMAND_RETRIES 3
+/* maximum number of retries क्रम a general UIC command  */
+#घोषणा UFS_UIC_COMMAND_RETRIES 3
 
 /* maximum number of link-startup retries */
-#define DME_LINKSTARTUP_RETRIES 3
+#घोषणा DME_LINKSTARTUP_RETRIES 3
 
-/* Maximum retries for Hibern8 enter */
-#define UIC_HIBERN8_ENTER_RETRIES 3
+/* Maximum retries क्रम Hibern8 enter */
+#घोषणा UIC_HIBERN8_ENTER_RETRIES 3
 
-/* maximum number of reset retries before giving up */
-#define MAX_HOST_RESET_RETRIES 5
+/* maximum number of reset retries beक्रमe giving up */
+#घोषणा MAX_HOST_RESET_RETRIES 5
 
 /* Expose the flag value from utp_upiu_query.value */
-#define MASK_QUERY_UPIU_FLAG_LOC 0xFF
+#घोषणा MASK_QUERY_UPIU_FLAG_LOC 0xFF
 
-/* Interrupt aggregation default timeout, unit: 40us */
-#define INT_AGGR_DEF_TO	0x02
+/* Interrupt aggregation शेष समयout, unit: 40us */
+#घोषणा INT_AGGR_DEF_TO	0x02
 
-/* default delay of autosuspend: 2000 ms */
-#define RPM_AUTOSUSPEND_DELAY_MS 2000
+/* शेष delay of स्वतःsuspend: 2000 ms */
+#घोषणा RPM_AUTOSUSPEND_DELAY_MS 2000
 
 /* Default delay of RPM device flush delayed work */
-#define RPM_DEV_FLUSH_RECHECK_WORK_DELAY_MS 5000
+#घोषणा RPM_DEV_FLUSH_RECHECK_WORK_DELAY_MS 5000
 
-/* Default value of wait time before gating device ref clock */
-#define UFSHCD_REF_CLK_GATING_WAIT_US 0xFF /* microsecs */
+/* Default value of रुको समय beक्रमe gating device ref घड़ी */
+#घोषणा UFSHCD_REF_CLK_GATING_WAIT_US 0xFF /* microsecs */
 
-/* Polling time to wait for fDeviceInit */
-#define FDEVICEINIT_COMPL_TIMEOUT 1500 /* millisecs */
+/* Polling समय to रुको क्रम fDeviceInit */
+#घोषणा FDEVICEINIT_COMPL_TIMEOUT 1500 /* millisecs */
 
-#define ufshcd_toggle_vreg(_dev, _vreg, _on)				\
-	({                                                              \
-		int _ret;                                               \
-		if (_on)                                                \
+#घोषणा ufshcd_toggle_vreg(_dev, _vreg, _on)				\
+	(अणु                                                              \
+		पूर्णांक _ret;                                               \
+		अगर (_on)                                                \
 			_ret = ufshcd_enable_vreg(_dev, _vreg);         \
-		else                                                    \
+		अन्यथा                                                    \
 			_ret = ufshcd_disable_vreg(_dev, _vreg);        \
 		_ret;                                                   \
-	})
+	पूर्ण)
 
-#define ufshcd_hex_dump(prefix_str, buf, len) do {                       \
-	size_t __len = (len);                                            \
-	print_hex_dump(KERN_ERR, prefix_str,                             \
+#घोषणा ufshcd_hex_dump(prefix_str, buf, len) करो अणु                       \
+	माप_प्रकार __len = (len);                                            \
+	prपूर्णांक_hex_dump(KERN_ERR, prefix_str,                             \
 		       __len > 4 ? DUMP_PREFIX_OFFSET : DUMP_PREFIX_NONE,\
 		       16, 4, buf, __len, false);                        \
-} while (0)
+पूर्ण जबतक (0)
 
-int ufshcd_dump_regs(struct ufs_hba *hba, size_t offset, size_t len,
-		     const char *prefix)
-{
+पूर्णांक ufshcd_dump_regs(काष्ठा ufs_hba *hba, माप_प्रकार offset, माप_प्रकार len,
+		     स्थिर अक्षर *prefix)
+अणु
 	u32 *regs;
-	size_t pos;
+	माप_प्रकार pos;
 
-	if (offset % 4 != 0 || len % 4 != 0) /* keep readl happy */
-		return -EINVAL;
+	अगर (offset % 4 != 0 || len % 4 != 0) /* keep पढ़ोl happy */
+		वापस -EINVAL;
 
 	regs = kzalloc(len, GFP_ATOMIC);
-	if (!regs)
-		return -ENOMEM;
+	अगर (!regs)
+		वापस -ENOMEM;
 
-	for (pos = 0; pos < len; pos += 4)
-		regs[pos / 4] = ufshcd_readl(hba, offset + pos);
+	क्रम (pos = 0; pos < len; pos += 4)
+		regs[pos / 4] = ufshcd_पढ़ोl(hba, offset + pos);
 
 	ufshcd_hex_dump(prefix, regs, len);
-	kfree(regs);
+	kमुक्त(regs);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(ufshcd_dump_regs);
 
-enum {
+क्रमागत अणु
 	UFSHCD_MAX_CHANNEL	= 0,
 	UFSHCD_MAX_ID		= 1,
 	UFSHCD_CMD_PER_LUN	= 32,
 	UFSHCD_CAN_QUEUE	= 32,
-};
+पूर्ण;
 
 /* UFSHCD states */
-enum {
+क्रमागत अणु
 	UFSHCD_STATE_RESET,
 	UFSHCD_STATE_ERROR,
 	UFSHCD_STATE_OPERATIONAL,
 	UFSHCD_STATE_EH_SCHEDULED_FATAL,
 	UFSHCD_STATE_EH_SCHEDULED_NON_FATAL,
-};
+पूर्ण;
 
 /* UFSHCD error handling flags */
-enum {
+क्रमागत अणु
 	UFSHCD_EH_IN_PROGRESS = (1 << 0),
-};
+पूर्ण;
 
 /* UFSHCD UIC layer error flags */
-enum {
+क्रमागत अणु
 	UFSHCD_UIC_DL_PA_INIT_ERROR = (1 << 0), /* Data link layer error */
 	UFSHCD_UIC_DL_NAC_RECEIVED_ERROR = (1 << 1), /* Data link layer error */
 	UFSHCD_UIC_DL_TCx_REPLAY_ERROR = (1 << 2), /* Data link layer error */
@@ -147,58 +148,58 @@ enum {
 	UFSHCD_UIC_TL_ERROR = (1 << 4), /* Transport Layer error */
 	UFSHCD_UIC_DME_ERROR = (1 << 5), /* DME error */
 	UFSHCD_UIC_PA_GENERIC_ERROR = (1 << 6), /* Generic PA error */
-};
+पूर्ण;
 
-#define ufshcd_set_eh_in_progress(h) \
+#घोषणा ufshcd_set_eh_in_progress(h) \
 	((h)->eh_flags |= UFSHCD_EH_IN_PROGRESS)
-#define ufshcd_eh_in_progress(h) \
+#घोषणा ufshcd_eh_in_progress(h) \
 	((h)->eh_flags & UFSHCD_EH_IN_PROGRESS)
-#define ufshcd_clear_eh_in_progress(h) \
+#घोषणा ufshcd_clear_eh_in_progress(h) \
 	((h)->eh_flags &= ~UFSHCD_EH_IN_PROGRESS)
 
-struct ufs_pm_lvl_states ufs_pm_lvl_states[] = {
-	{UFS_ACTIVE_PWR_MODE, UIC_LINK_ACTIVE_STATE},
-	{UFS_ACTIVE_PWR_MODE, UIC_LINK_HIBERN8_STATE},
-	{UFS_SLEEP_PWR_MODE, UIC_LINK_ACTIVE_STATE},
-	{UFS_SLEEP_PWR_MODE, UIC_LINK_HIBERN8_STATE},
-	{UFS_POWERDOWN_PWR_MODE, UIC_LINK_HIBERN8_STATE},
-	{UFS_POWERDOWN_PWR_MODE, UIC_LINK_OFF_STATE},
+काष्ठा ufs_pm_lvl_states ufs_pm_lvl_states[] = अणु
+	अणुUFS_ACTIVE_PWR_MODE, UIC_LINK_ACTIVE_STATEपूर्ण,
+	अणुUFS_ACTIVE_PWR_MODE, UIC_LINK_HIBERN8_STATEपूर्ण,
+	अणुUFS_SLEEP_PWR_MODE, UIC_LINK_ACTIVE_STATEपूर्ण,
+	अणुUFS_SLEEP_PWR_MODE, UIC_LINK_HIBERN8_STATEपूर्ण,
+	अणुUFS_POWERDOWN_PWR_MODE, UIC_LINK_HIBERN8_STATEपूर्ण,
+	अणुUFS_POWERDOWN_PWR_MODE, UIC_LINK_OFF_STATEपूर्ण,
 	/*
 	 * For DeepSleep, the link is first put in hibern8 and then off.
 	 * Leaving the link in hibern8 is not supported.
 	 */
-	{UFS_DEEPSLEEP_PWR_MODE, UIC_LINK_OFF_STATE},
-};
+	अणुUFS_DEEPSLEEP_PWR_MODE, UIC_LINK_OFF_STATEपूर्ण,
+पूर्ण;
 
-static inline enum ufs_dev_pwr_mode
-ufs_get_pm_lvl_to_dev_pwr_mode(enum ufs_pm_level lvl)
-{
-	return ufs_pm_lvl_states[lvl].dev_state;
-}
+अटल अंतरभूत क्रमागत ufs_dev_pwr_mode
+ufs_get_pm_lvl_to_dev_pwr_mode(क्रमागत ufs_pm_level lvl)
+अणु
+	वापस ufs_pm_lvl_states[lvl].dev_state;
+पूर्ण
 
-static inline enum uic_link_state
-ufs_get_pm_lvl_to_link_pwr_state(enum ufs_pm_level lvl)
-{
-	return ufs_pm_lvl_states[lvl].link_state;
-}
+अटल अंतरभूत क्रमागत uic_link_state
+ufs_get_pm_lvl_to_link_pwr_state(क्रमागत ufs_pm_level lvl)
+अणु
+	वापस ufs_pm_lvl_states[lvl].link_state;
+पूर्ण
 
-static inline enum ufs_pm_level
-ufs_get_desired_pm_lvl_for_dev_link_state(enum ufs_dev_pwr_mode dev_state,
-					enum uic_link_state link_state)
-{
-	enum ufs_pm_level lvl;
+अटल अंतरभूत क्रमागत ufs_pm_level
+ufs_get_desired_pm_lvl_क्रम_dev_link_state(क्रमागत ufs_dev_pwr_mode dev_state,
+					क्रमागत uic_link_state link_state)
+अणु
+	क्रमागत ufs_pm_level lvl;
 
-	for (lvl = UFS_PM_LVL_0; lvl < UFS_PM_LVL_MAX; lvl++) {
-		if ((ufs_pm_lvl_states[lvl].dev_state == dev_state) &&
+	क्रम (lvl = UFS_PM_LVL_0; lvl < UFS_PM_LVL_MAX; lvl++) अणु
+		अगर ((ufs_pm_lvl_states[lvl].dev_state == dev_state) &&
 			(ufs_pm_lvl_states[lvl].link_state == link_state))
-			return lvl;
-	}
+			वापस lvl;
+	पूर्ण
 
-	/* if no match found, return the level 0 */
-	return UFS_PM_LVL_0;
-}
+	/* अगर no match found, वापस the level 0 */
+	वापस UFS_PM_LVL_0;
+पूर्ण
 
-static struct ufs_dev_fix ufs_fixups[] = {
+अटल काष्ठा ufs_dev_fix ufs_fixups[] = अणु
 	/* UFS cards deviations table */
 	UFS_FIX(UFS_VENDOR_MICRON, UFS_ANY_MODEL,
 		UFS_DEVICE_QUIRK_DELAY_BEFORE_LPM),
@@ -217,321 +218,321 @@ static struct ufs_dev_fix ufs_fixups[] = {
 	UFS_FIX(UFS_VENDOR_TOSHIBA, "THGLF2G9D8KBADG",
 		UFS_DEVICE_QUIRK_PA_TACTIVATE),
 	END_FIX
-};
+पूर्ण;
 
-static irqreturn_t ufshcd_tmc_handler(struct ufs_hba *hba);
-static void ufshcd_async_scan(void *data, async_cookie_t cookie);
-static int ufshcd_reset_and_restore(struct ufs_hba *hba);
-static int ufshcd_eh_host_reset_handler(struct scsi_cmnd *cmd);
-static int ufshcd_clear_tm_cmd(struct ufs_hba *hba, int tag);
-static void ufshcd_hba_exit(struct ufs_hba *hba);
-static int ufshcd_clear_ua_wluns(struct ufs_hba *hba);
-static int ufshcd_probe_hba(struct ufs_hba *hba, bool async);
-static int ufshcd_setup_clocks(struct ufs_hba *hba, bool on);
-static int ufshcd_uic_hibern8_enter(struct ufs_hba *hba);
-static inline void ufshcd_add_delay_before_dme_cmd(struct ufs_hba *hba);
-static int ufshcd_host_reset_and_restore(struct ufs_hba *hba);
-static void ufshcd_resume_clkscaling(struct ufs_hba *hba);
-static void ufshcd_suspend_clkscaling(struct ufs_hba *hba);
-static void __ufshcd_suspend_clkscaling(struct ufs_hba *hba);
-static int ufshcd_scale_clks(struct ufs_hba *hba, bool scale_up);
-static irqreturn_t ufshcd_intr(int irq, void *__hba);
-static int ufshcd_change_power_mode(struct ufs_hba *hba,
-			     struct ufs_pa_layer_attr *pwr_mode);
-static void ufshcd_schedule_eh_work(struct ufs_hba *hba);
-static int ufshcd_setup_hba_vreg(struct ufs_hba *hba, bool on);
-static int ufshcd_setup_vreg(struct ufs_hba *hba, bool on);
-static inline int ufshcd_config_vreg_hpm(struct ufs_hba *hba,
-					 struct ufs_vreg *vreg);
-static int ufshcd_try_to_abort_task(struct ufs_hba *hba, int tag);
-static void ufshcd_wb_toggle_flush_during_h8(struct ufs_hba *hba, bool set);
-static inline void ufshcd_wb_toggle_flush(struct ufs_hba *hba, bool enable);
-static void ufshcd_hba_vreg_set_lpm(struct ufs_hba *hba);
-static void ufshcd_hba_vreg_set_hpm(struct ufs_hba *hba);
+अटल irqवापस_t ufshcd_पंचांगc_handler(काष्ठा ufs_hba *hba);
+अटल व्योम ufshcd_async_scan(व्योम *data, async_cookie_t cookie);
+अटल पूर्णांक ufshcd_reset_and_restore(काष्ठा ufs_hba *hba);
+अटल पूर्णांक ufshcd_eh_host_reset_handler(काष्ठा scsi_cmnd *cmd);
+अटल पूर्णांक ufshcd_clear_पंचांग_cmd(काष्ठा ufs_hba *hba, पूर्णांक tag);
+अटल व्योम ufshcd_hba_निकास(काष्ठा ufs_hba *hba);
+अटल पूर्णांक ufshcd_clear_ua_wluns(काष्ठा ufs_hba *hba);
+अटल पूर्णांक ufshcd_probe_hba(काष्ठा ufs_hba *hba, bool async);
+अटल पूर्णांक ufshcd_setup_घड़ीs(काष्ठा ufs_hba *hba, bool on);
+अटल पूर्णांक ufshcd_uic_hibern8_enter(काष्ठा ufs_hba *hba);
+अटल अंतरभूत व्योम ufshcd_add_delay_beक्रमe_dme_cmd(काष्ठा ufs_hba *hba);
+अटल पूर्णांक ufshcd_host_reset_and_restore(काष्ठा ufs_hba *hba);
+अटल व्योम ufshcd_resume_clkscaling(काष्ठा ufs_hba *hba);
+अटल व्योम ufshcd_suspend_clkscaling(काष्ठा ufs_hba *hba);
+अटल व्योम __ufshcd_suspend_clkscaling(काष्ठा ufs_hba *hba);
+अटल पूर्णांक ufshcd_scale_clks(काष्ठा ufs_hba *hba, bool scale_up);
+अटल irqवापस_t ufshcd_पूर्णांकr(पूर्णांक irq, व्योम *__hba);
+अटल पूर्णांक ufshcd_change_घातer_mode(काष्ठा ufs_hba *hba,
+			     काष्ठा ufs_pa_layer_attr *pwr_mode);
+अटल व्योम ufshcd_schedule_eh_work(काष्ठा ufs_hba *hba);
+अटल पूर्णांक ufshcd_setup_hba_vreg(काष्ठा ufs_hba *hba, bool on);
+अटल पूर्णांक ufshcd_setup_vreg(काष्ठा ufs_hba *hba, bool on);
+अटल अंतरभूत पूर्णांक ufshcd_config_vreg_hpm(काष्ठा ufs_hba *hba,
+					 काष्ठा ufs_vreg *vreg);
+अटल पूर्णांक ufshcd_try_to_पात_task(काष्ठा ufs_hba *hba, पूर्णांक tag);
+अटल व्योम ufshcd_wb_toggle_flush_during_h8(काष्ठा ufs_hba *hba, bool set);
+अटल अंतरभूत व्योम ufshcd_wb_toggle_flush(काष्ठा ufs_hba *hba, bool enable);
+अटल व्योम ufshcd_hba_vreg_set_lpm(काष्ठा ufs_hba *hba);
+अटल व्योम ufshcd_hba_vreg_set_hpm(काष्ठा ufs_hba *hba);
 
-static inline bool ufshcd_valid_tag(struct ufs_hba *hba, int tag)
-{
-	return tag >= 0 && tag < hba->nutrs;
-}
+अटल अंतरभूत bool ufshcd_valid_tag(काष्ठा ufs_hba *hba, पूर्णांक tag)
+अणु
+	वापस tag >= 0 && tag < hba->nutrs;
+पूर्ण
 
-static inline void ufshcd_enable_irq(struct ufs_hba *hba)
-{
-	if (!hba->is_irq_enabled) {
+अटल अंतरभूत व्योम ufshcd_enable_irq(काष्ठा ufs_hba *hba)
+अणु
+	अगर (!hba->is_irq_enabled) अणु
 		enable_irq(hba->irq);
 		hba->is_irq_enabled = true;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static inline void ufshcd_disable_irq(struct ufs_hba *hba)
-{
-	if (hba->is_irq_enabled) {
+अटल अंतरभूत व्योम ufshcd_disable_irq(काष्ठा ufs_hba *hba)
+अणु
+	अगर (hba->is_irq_enabled) अणु
 		disable_irq(hba->irq);
 		hba->is_irq_enabled = false;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static inline void ufshcd_wb_config(struct ufs_hba *hba)
-{
-	if (!ufshcd_is_wb_allowed(hba))
-		return;
+अटल अंतरभूत व्योम ufshcd_wb_config(काष्ठा ufs_hba *hba)
+अणु
+	अगर (!ufshcd_is_wb_allowed(hba))
+		वापस;
 
 	ufshcd_wb_toggle(hba, true);
 
 	ufshcd_wb_toggle_flush_during_h8(hba, true);
-	if (!(hba->quirks & UFSHCI_QUIRK_SKIP_MANUAL_WB_FLUSH_CTRL))
+	अगर (!(hba->quirks & UFSHCI_QUIRK_SKIP_MANUAL_WB_FLUSH_CTRL))
 		ufshcd_wb_toggle_flush(hba, true);
-}
+पूर्ण
 
-static void ufshcd_scsi_unblock_requests(struct ufs_hba *hba)
-{
-	if (atomic_dec_and_test(&hba->scsi_block_reqs_cnt))
+अटल व्योम ufshcd_scsi_unblock_requests(काष्ठा ufs_hba *hba)
+अणु
+	अगर (atomic_dec_and_test(&hba->scsi_block_reqs_cnt))
 		scsi_unblock_requests(hba->host);
-}
+पूर्ण
 
-static void ufshcd_scsi_block_requests(struct ufs_hba *hba)
-{
-	if (atomic_inc_return(&hba->scsi_block_reqs_cnt) == 1)
+अटल व्योम ufshcd_scsi_block_requests(काष्ठा ufs_hba *hba)
+अणु
+	अगर (atomic_inc_वापस(&hba->scsi_block_reqs_cnt) == 1)
 		scsi_block_requests(hba->host);
-}
+पूर्ण
 
-static void ufshcd_add_cmd_upiu_trace(struct ufs_hba *hba, unsigned int tag,
-				      enum ufs_trace_str_t str_t)
-{
-	struct utp_upiu_req *rq = hba->lrb[tag].ucd_req_ptr;
+अटल व्योम ufshcd_add_cmd_upiu_trace(काष्ठा ufs_hba *hba, अचिन्हित पूर्णांक tag,
+				      क्रमागत ufs_trace_str_t str_t)
+अणु
+	काष्ठा utp_upiu_req *rq = hba->lrb[tag].ucd_req_ptr;
 
-	if (!trace_ufshcd_upiu_enabled())
-		return;
+	अगर (!trace_ufshcd_upiu_enabled())
+		वापस;
 
 	trace_ufshcd_upiu(dev_name(hba->dev), str_t, &rq->header, &rq->sc.cdb,
 			  UFS_TSF_CDB);
-}
+पूर्ण
 
-static void ufshcd_add_query_upiu_trace(struct ufs_hba *hba,
-					enum ufs_trace_str_t str_t,
-					struct utp_upiu_req *rq_rsp)
-{
-	if (!trace_ufshcd_upiu_enabled())
-		return;
+अटल व्योम ufshcd_add_query_upiu_trace(काष्ठा ufs_hba *hba,
+					क्रमागत ufs_trace_str_t str_t,
+					काष्ठा utp_upiu_req *rq_rsp)
+अणु
+	अगर (!trace_ufshcd_upiu_enabled())
+		वापस;
 
 	trace_ufshcd_upiu(dev_name(hba->dev), str_t, &rq_rsp->header,
 			  &rq_rsp->qr, UFS_TSF_OSF);
-}
+पूर्ण
 
-static void ufshcd_add_tm_upiu_trace(struct ufs_hba *hba, unsigned int tag,
-				     enum ufs_trace_str_t str_t)
-{
-	int off = (int)tag - hba->nutrs;
-	struct utp_task_req_desc *descp = &hba->utmrdl_base_addr[off];
+अटल व्योम ufshcd_add_पंचांग_upiu_trace(काष्ठा ufs_hba *hba, अचिन्हित पूर्णांक tag,
+				     क्रमागत ufs_trace_str_t str_t)
+अणु
+	पूर्णांक off = (पूर्णांक)tag - hba->nutrs;
+	काष्ठा utp_task_req_desc *descp = &hba->uपंचांगrdl_base_addr[off];
 
-	if (!trace_ufshcd_upiu_enabled())
-		return;
+	अगर (!trace_ufshcd_upiu_enabled())
+		वापस;
 
-	if (str_t == UFS_TM_SEND)
+	अगर (str_t == UFS_TM_SEND)
 		trace_ufshcd_upiu(dev_name(hba->dev), str_t,
 				  &descp->upiu_req.req_header,
 				  &descp->upiu_req.input_param1,
 				  UFS_TSF_TM_INPUT);
-	else
+	अन्यथा
 		trace_ufshcd_upiu(dev_name(hba->dev), str_t,
 				  &descp->upiu_rsp.rsp_header,
 				  &descp->upiu_rsp.output_param1,
 				  UFS_TSF_TM_OUTPUT);
-}
+पूर्ण
 
-static void ufshcd_add_uic_command_trace(struct ufs_hba *hba,
-					 struct uic_command *ucmd,
-					 enum ufs_trace_str_t str_t)
-{
+अटल व्योम ufshcd_add_uic_command_trace(काष्ठा ufs_hba *hba,
+					 काष्ठा uic_command *ucmd,
+					 क्रमागत ufs_trace_str_t str_t)
+अणु
 	u32 cmd;
 
-	if (!trace_ufshcd_uic_command_enabled())
-		return;
+	अगर (!trace_ufshcd_uic_command_enabled())
+		वापस;
 
-	if (str_t == UFS_CMD_SEND)
+	अगर (str_t == UFS_CMD_SEND)
 		cmd = ucmd->command;
-	else
-		cmd = ufshcd_readl(hba, REG_UIC_COMMAND);
+	अन्यथा
+		cmd = ufshcd_पढ़ोl(hba, REG_UIC_COMMAND);
 
 	trace_ufshcd_uic_command(dev_name(hba->dev), str_t, cmd,
-				 ufshcd_readl(hba, REG_UIC_COMMAND_ARG_1),
-				 ufshcd_readl(hba, REG_UIC_COMMAND_ARG_2),
-				 ufshcd_readl(hba, REG_UIC_COMMAND_ARG_3));
-}
+				 ufshcd_पढ़ोl(hba, REG_UIC_COMMAND_ARG_1),
+				 ufshcd_पढ़ोl(hba, REG_UIC_COMMAND_ARG_2),
+				 ufshcd_पढ़ोl(hba, REG_UIC_COMMAND_ARG_3));
+पूर्ण
 
-static void ufshcd_add_command_trace(struct ufs_hba *hba, unsigned int tag,
-				     enum ufs_trace_str_t str_t)
-{
+अटल व्योम ufshcd_add_command_trace(काष्ठा ufs_hba *hba, अचिन्हित पूर्णांक tag,
+				     क्रमागत ufs_trace_str_t str_t)
+अणु
 	sector_t lba = -1;
 	u8 opcode = 0, group_id = 0;
-	u32 intr, doorbell;
-	struct ufshcd_lrb *lrbp = &hba->lrb[tag];
-	struct scsi_cmnd *cmd = lrbp->cmd;
-	int transfer_len = -1;
+	u32 पूर्णांकr, करोorbell;
+	काष्ठा ufshcd_lrb *lrbp = &hba->lrb[tag];
+	काष्ठा scsi_cmnd *cmd = lrbp->cmd;
+	पूर्णांक transfer_len = -1;
 
-	if (!trace_ufshcd_command_enabled()) {
+	अगर (!trace_ufshcd_command_enabled()) अणु
 		/* trace UPIU W/O tracing command */
-		if (cmd)
+		अगर (cmd)
 			ufshcd_add_cmd_upiu_trace(hba, tag, str_t);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (cmd) { /* data phase exists */
+	अगर (cmd) अणु /* data phase exists */
 		/* trace UPIU also */
 		ufshcd_add_cmd_upiu_trace(hba, tag, str_t);
 		opcode = cmd->cmnd[0];
-		if ((opcode == READ_10) || (opcode == WRITE_10)) {
+		अगर ((opcode == READ_10) || (opcode == WRITE_10)) अणु
 			/*
-			 * Currently we only fully trace read(10) and write(10)
+			 * Currently we only fully trace पढ़ो(10) and ग_लिखो(10)
 			 * commands
 			 */
-			if (cmd->request && cmd->request->bio)
+			अगर (cmd->request && cmd->request->bio)
 				lba = cmd->request->bio->bi_iter.bi_sector;
 			transfer_len = be32_to_cpu(
 				lrbp->ucd_req_ptr->sc.exp_data_transfer_len);
-			if (opcode == WRITE_10)
+			अगर (opcode == WRITE_10)
 				group_id = lrbp->cmd->cmnd[6];
-		} else if (opcode == UNMAP) {
-			if (cmd->request) {
+		पूर्ण अन्यथा अगर (opcode == UNMAP) अणु
+			अगर (cmd->request) अणु
 				lba = scsi_get_lba(cmd);
 				transfer_len = blk_rq_bytes(cmd->request);
-			}
-		}
-	}
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	intr = ufshcd_readl(hba, REG_INTERRUPT_STATUS);
-	doorbell = ufshcd_readl(hba, REG_UTP_TRANSFER_REQ_DOOR_BELL);
+	पूर्णांकr = ufshcd_पढ़ोl(hba, REG_INTERRUPT_STATUS);
+	करोorbell = ufshcd_पढ़ोl(hba, REG_UTP_TRANSFER_REQ_DOOR_BELL);
 	trace_ufshcd_command(dev_name(hba->dev), str_t, tag,
-			doorbell, transfer_len, intr, lba, opcode, group_id);
-}
+			करोorbell, transfer_len, पूर्णांकr, lba, opcode, group_id);
+पूर्ण
 
-static void ufshcd_print_clk_freqs(struct ufs_hba *hba)
-{
-	struct ufs_clk_info *clki;
-	struct list_head *head = &hba->clk_list_head;
+अटल व्योम ufshcd_prपूर्णांक_clk_freqs(काष्ठा ufs_hba *hba)
+अणु
+	काष्ठा ufs_clk_info *clki;
+	काष्ठा list_head *head = &hba->clk_list_head;
 
-	if (list_empty(head))
-		return;
+	अगर (list_empty(head))
+		वापस;
 
-	list_for_each_entry(clki, head, list) {
-		if (!IS_ERR_OR_NULL(clki->clk) && clki->min_freq &&
+	list_क्रम_each_entry(clki, head, list) अणु
+		अगर (!IS_ERR_OR_शून्य(clki->clk) && clki->min_freq &&
 				clki->max_freq)
 			dev_err(hba->dev, "clk: %s, rate: %u\n",
 					clki->name, clki->curr_freq);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void ufshcd_print_evt(struct ufs_hba *hba, u32 id,
-			     char *err_name)
-{
-	int i;
+अटल व्योम ufshcd_prपूर्णांक_evt(काष्ठा ufs_hba *hba, u32 id,
+			     अक्षर *err_name)
+अणु
+	पूर्णांक i;
 	bool found = false;
-	struct ufs_event_hist *e;
+	काष्ठा ufs_event_hist *e;
 
-	if (id >= UFS_EVT_CNT)
-		return;
+	अगर (id >= UFS_EVT_CNT)
+		वापस;
 
 	e = &hba->ufs_stats.event[id];
 
-	for (i = 0; i < UFS_EVENT_HIST_LENGTH; i++) {
-		int p = (i + e->pos) % UFS_EVENT_HIST_LENGTH;
+	क्रम (i = 0; i < UFS_EVENT_HIST_LENGTH; i++) अणु
+		पूर्णांक p = (i + e->pos) % UFS_EVENT_HIST_LENGTH;
 
-		if (e->tstamp[p] == 0)
-			continue;
+		अगर (e->tstamp[p] == 0)
+			जारी;
 		dev_err(hba->dev, "%s[%d] = 0x%x at %lld us\n", err_name, p,
-			e->val[p], ktime_to_us(e->tstamp[p]));
+			e->val[p], kसमय_प्रकारo_us(e->tstamp[p]));
 		found = true;
-	}
+	पूर्ण
 
-	if (!found)
+	अगर (!found)
 		dev_err(hba->dev, "No record of %s\n", err_name);
-	else
+	अन्यथा
 		dev_err(hba->dev, "%s: total cnt=%llu\n", err_name, e->cnt);
-}
+पूर्ण
 
-static void ufshcd_print_evt_hist(struct ufs_hba *hba)
-{
+अटल व्योम ufshcd_prपूर्णांक_evt_hist(काष्ठा ufs_hba *hba)
+अणु
 	ufshcd_dump_regs(hba, 0, UFSHCI_REG_SPACE_SIZE, "host_regs: ");
 
-	ufshcd_print_evt(hba, UFS_EVT_PA_ERR, "pa_err");
-	ufshcd_print_evt(hba, UFS_EVT_DL_ERR, "dl_err");
-	ufshcd_print_evt(hba, UFS_EVT_NL_ERR, "nl_err");
-	ufshcd_print_evt(hba, UFS_EVT_TL_ERR, "tl_err");
-	ufshcd_print_evt(hba, UFS_EVT_DME_ERR, "dme_err");
-	ufshcd_print_evt(hba, UFS_EVT_AUTO_HIBERN8_ERR,
+	ufshcd_prपूर्णांक_evt(hba, UFS_EVT_PA_ERR, "pa_err");
+	ufshcd_prपूर्णांक_evt(hba, UFS_EVT_DL_ERR, "dl_err");
+	ufshcd_prपूर्णांक_evt(hba, UFS_EVT_NL_ERR, "nl_err");
+	ufshcd_prपूर्णांक_evt(hba, UFS_EVT_TL_ERR, "tl_err");
+	ufshcd_prपूर्णांक_evt(hba, UFS_EVT_DME_ERR, "dme_err");
+	ufshcd_prपूर्णांक_evt(hba, UFS_EVT_AUTO_HIBERN8_ERR,
 			 "auto_hibern8_err");
-	ufshcd_print_evt(hba, UFS_EVT_FATAL_ERR, "fatal_err");
-	ufshcd_print_evt(hba, UFS_EVT_LINK_STARTUP_FAIL,
+	ufshcd_prपूर्णांक_evt(hba, UFS_EVT_FATAL_ERR, "fatal_err");
+	ufshcd_prपूर्णांक_evt(hba, UFS_EVT_LINK_STARTUP_FAIL,
 			 "link_startup_fail");
-	ufshcd_print_evt(hba, UFS_EVT_RESUME_ERR, "resume_fail");
-	ufshcd_print_evt(hba, UFS_EVT_SUSPEND_ERR,
+	ufshcd_prपूर्णांक_evt(hba, UFS_EVT_RESUME_ERR, "resume_fail");
+	ufshcd_prपूर्णांक_evt(hba, UFS_EVT_SUSPEND_ERR,
 			 "suspend_fail");
-	ufshcd_print_evt(hba, UFS_EVT_DEV_RESET, "dev_reset");
-	ufshcd_print_evt(hba, UFS_EVT_HOST_RESET, "host_reset");
-	ufshcd_print_evt(hba, UFS_EVT_ABORT, "task_abort");
+	ufshcd_prपूर्णांक_evt(hba, UFS_EVT_DEV_RESET, "dev_reset");
+	ufshcd_prपूर्णांक_evt(hba, UFS_EVT_HOST_RESET, "host_reset");
+	ufshcd_prपूर्णांक_evt(hba, UFS_EVT_ABORT, "task_abort");
 
-	ufshcd_vops_dbg_register_dump(hba);
-}
+	ufshcd_vops_dbg_रेजिस्टर_dump(hba);
+पूर्ण
 
-static
-void ufshcd_print_trs(struct ufs_hba *hba, unsigned long bitmap, bool pr_prdt)
-{
-	struct ufshcd_lrb *lrbp;
-	int prdt_length;
-	int tag;
+अटल
+व्योम ufshcd_prपूर्णांक_trs(काष्ठा ufs_hba *hba, अचिन्हित दीर्घ biपंचांगap, bool pr_prdt)
+अणु
+	काष्ठा ufshcd_lrb *lrbp;
+	पूर्णांक prdt_length;
+	पूर्णांक tag;
 
-	for_each_set_bit(tag, &bitmap, hba->nutrs) {
+	क्रम_each_set_bit(tag, &biपंचांगap, hba->nutrs) अणु
 		lrbp = &hba->lrb[tag];
 
 		dev_err(hba->dev, "UPIU[%d] - issue time %lld us\n",
-				tag, ktime_to_us(lrbp->issue_time_stamp));
+				tag, kसमय_प्रकारo_us(lrbp->issue_समय_stamp));
 		dev_err(hba->dev, "UPIU[%d] - complete time %lld us\n",
-				tag, ktime_to_us(lrbp->compl_time_stamp));
+				tag, kसमय_प्रकारo_us(lrbp->compl_समय_stamp));
 		dev_err(hba->dev,
 			"UPIU[%d] - Transfer Request Descriptor phys@0x%llx\n",
 			tag, (u64)lrbp->utrd_dma_addr);
 
 		ufshcd_hex_dump("UPIU TRD: ", lrbp->utr_descriptor_ptr,
-				sizeof(struct utp_transfer_req_desc));
+				माप(काष्ठा utp_transfer_req_desc));
 		dev_err(hba->dev, "UPIU[%d] - Request UPIU phys@0x%llx\n", tag,
 			(u64)lrbp->ucd_req_dma_addr);
 		ufshcd_hex_dump("UPIU REQ: ", lrbp->ucd_req_ptr,
-				sizeof(struct utp_upiu_req));
+				माप(काष्ठा utp_upiu_req));
 		dev_err(hba->dev, "UPIU[%d] - Response UPIU phys@0x%llx\n", tag,
 			(u64)lrbp->ucd_rsp_dma_addr);
 		ufshcd_hex_dump("UPIU RSP: ", lrbp->ucd_rsp_ptr,
-				sizeof(struct utp_upiu_rsp));
+				माप(काष्ठा utp_upiu_rsp));
 
 		prdt_length = le16_to_cpu(
 			lrbp->utr_descriptor_ptr->prd_table_length);
-		if (hba->quirks & UFSHCD_QUIRK_PRDT_BYTE_GRAN)
-			prdt_length /= sizeof(struct ufshcd_sg_entry);
+		अगर (hba->quirks & UFSHCD_QUIRK_PRDT_BYTE_GRAN)
+			prdt_length /= माप(काष्ठा ufshcd_sg_entry);
 
 		dev_err(hba->dev,
 			"UPIU[%d] - PRDT - %d entries  phys@0x%llx\n",
 			tag, prdt_length,
 			(u64)lrbp->ucd_prdt_dma_addr);
 
-		if (pr_prdt)
+		अगर (pr_prdt)
 			ufshcd_hex_dump("UPIU PRDT: ", lrbp->ucd_prdt_ptr,
-				sizeof(struct ufshcd_sg_entry) * prdt_length);
-	}
-}
+				माप(काष्ठा ufshcd_sg_entry) * prdt_length);
+	पूर्ण
+पूर्ण
 
-static void ufshcd_print_tmrs(struct ufs_hba *hba, unsigned long bitmap)
-{
-	int tag;
+अटल व्योम ufshcd_prपूर्णांक_पंचांगrs(काष्ठा ufs_hba *hba, अचिन्हित दीर्घ biपंचांगap)
+अणु
+	पूर्णांक tag;
 
-	for_each_set_bit(tag, &bitmap, hba->nutmrs) {
-		struct utp_task_req_desc *tmrdp = &hba->utmrdl_base_addr[tag];
+	क्रम_each_set_bit(tag, &biपंचांगap, hba->nuपंचांगrs) अणु
+		काष्ठा utp_task_req_desc *पंचांगrdp = &hba->uपंचांगrdl_base_addr[tag];
 
 		dev_err(hba->dev, "TM[%d] - Task Management Header\n", tag);
-		ufshcd_hex_dump("", tmrdp, sizeof(*tmrdp));
-	}
-}
+		ufshcd_hex_dump("", पंचांगrdp, माप(*पंचांगrdp));
+	पूर्ण
+पूर्ण
 
-static void ufshcd_print_host_state(struct ufs_hba *hba)
-{
-	struct scsi_device *sdev_ufs = hba->sdev_ufs_device;
+अटल व्योम ufshcd_prपूर्णांक_host_state(काष्ठा ufs_hba *hba)
+अणु
+	काष्ठा scsi_device *sdev_ufs = hba->sdev_ufs_device;
 
 	dev_err(hba->dev, "UFS Host state=%d\n", hba->ufshcd_state);
 	dev_err(hba->dev, "outstanding reqs=0x%lx tasks=0x%lx\n",
@@ -543,36 +544,36 @@ static void ufshcd_print_host_state(struct ufs_hba *hba)
 	dev_err(hba->dev, "PM in progress=%d, sys. suspended=%d\n",
 		hba->pm_op_in_progress, hba->is_sys_suspended);
 	dev_err(hba->dev, "Auto BKOPS=%d, Host self-block=%d\n",
-		hba->auto_bkops_enabled, hba->host->host_self_blocked);
+		hba->स्वतः_bkops_enabled, hba->host->host_self_blocked);
 	dev_err(hba->dev, "Clk gate=%d\n", hba->clk_gating.state);
 	dev_err(hba->dev,
 		"last_hibern8_exit_tstamp at %lld us, hibern8_exit_cnt=%d\n",
-		ktime_to_us(hba->ufs_stats.last_hibern8_exit_tstamp),
-		hba->ufs_stats.hibern8_exit_cnt);
+		kसमय_प्रकारo_us(hba->ufs_stats.last_hibern8_निकास_tstamp),
+		hba->ufs_stats.hibern8_निकास_cnt);
 	dev_err(hba->dev, "last intr at %lld us, last intr status=0x%x\n",
-		ktime_to_us(hba->ufs_stats.last_intr_ts),
-		hba->ufs_stats.last_intr_status);
+		kसमय_प्रकारo_us(hba->ufs_stats.last_पूर्णांकr_ts),
+		hba->ufs_stats.last_पूर्णांकr_status);
 	dev_err(hba->dev, "error handling flags=0x%x, req. abort count=%d\n",
-		hba->eh_flags, hba->req_abort_count);
+		hba->eh_flags, hba->req_पात_count);
 	dev_err(hba->dev, "hba->ufs_version=0x%x, Host capabilities=0x%x, caps=0x%x\n",
 		hba->ufs_version, hba->capabilities, hba->caps);
 	dev_err(hba->dev, "quirks=0x%x, dev. quirks=0x%x\n", hba->quirks,
 		hba->dev_quirks);
-	if (sdev_ufs)
+	अगर (sdev_ufs)
 		dev_err(hba->dev, "UFS dev info: %.8s %.16s rev %.4s\n",
-			sdev_ufs->vendor, sdev_ufs->model, sdev_ufs->rev);
+			sdev_ufs->venकरोr, sdev_ufs->model, sdev_ufs->rev);
 
-	ufshcd_print_clk_freqs(hba);
-}
+	ufshcd_prपूर्णांक_clk_freqs(hba);
+पूर्ण
 
 /**
- * ufshcd_print_pwr_info - print power params as saved in hba
- * power info
+ * ufshcd_prपूर्णांक_pwr_info - prपूर्णांक घातer params as saved in hba
+ * घातer info
  * @hba: per-adapter instance
  */
-static void ufshcd_print_pwr_info(struct ufs_hba *hba)
-{
-	static const char * const names[] = {
+अटल व्योम ufshcd_prपूर्णांक_pwr_info(काष्ठा ufs_hba *hba)
+अणु
+	अटल स्थिर अक्षर * स्थिर names[] = अणु
 		"INVALID MODE",
 		"FAST MODE",
 		"SLOW_MODE",
@@ -580,7 +581,7 @@ static void ufshcd_print_pwr_info(struct ufs_hba *hba)
 		"FASTAUTO_MODE",
 		"SLOWAUTO_MODE",
 		"INVALID MODE",
-	};
+	पूर्ण;
 
 	dev_err(hba->dev, "%s:[RX, TX]: gear=[%d, %d], lane[%d, %d], pwr[%s, %s], rate = %d\n",
 		 __func__,
@@ -589,396 +590,396 @@ static void ufshcd_print_pwr_info(struct ufs_hba *hba)
 		 names[hba->pwr_info.pwr_rx],
 		 names[hba->pwr_info.pwr_tx],
 		 hba->pwr_info.hs_rate);
-}
+पूर्ण
 
-static void ufshcd_device_reset(struct ufs_hba *hba)
-{
-	int err;
+अटल व्योम ufshcd_device_reset(काष्ठा ufs_hba *hba)
+अणु
+	पूर्णांक err;
 
 	err = ufshcd_vops_device_reset(hba);
 
-	if (!err) {
+	अगर (!err) अणु
 		ufshcd_set_ufs_dev_active(hba);
-		if (ufshcd_is_wb_allowed(hba)) {
+		अगर (ufshcd_is_wb_allowed(hba)) अणु
 			hba->dev_info.wb_enabled = false;
 			hba->dev_info.wb_buf_flush_enabled = false;
-		}
-	}
-	if (err != -EOPNOTSUPP)
+		पूर्ण
+	पूर्ण
+	अगर (err != -EOPNOTSUPP)
 		ufshcd_update_evt_hist(hba, UFS_EVT_DEV_RESET, err);
-}
+पूर्ण
 
-void ufshcd_delay_us(unsigned long us, unsigned long tolerance)
-{
-	if (!us)
-		return;
+व्योम ufshcd_delay_us(अचिन्हित दीर्घ us, अचिन्हित दीर्घ tolerance)
+अणु
+	अगर (!us)
+		वापस;
 
-	if (us < 10)
+	अगर (us < 10)
 		udelay(us);
-	else
+	अन्यथा
 		usleep_range(us, us + tolerance);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(ufshcd_delay_us);
 
 /**
- * ufshcd_wait_for_register - wait for register value to change
- * @hba: per-adapter interface
- * @reg: mmio register offset
- * @mask: mask to apply to the read register value
- * @val: value to wait for
- * @interval_us: polling interval in microseconds
- * @timeout_ms: timeout in milliseconds
+ * ufshcd_रुको_क्रम_रेजिस्टर - रुको क्रम रेजिस्टर value to change
+ * @hba: per-adapter पूर्णांकerface
+ * @reg: mmio रेजिस्टर offset
+ * @mask: mask to apply to the पढ़ो रेजिस्टर value
+ * @val: value to रुको क्रम
+ * @पूर्णांकerval_us: polling पूर्णांकerval in microseconds
+ * @समयout_ms: समयout in milliseconds
  *
  * Return:
  * -ETIMEDOUT on error, zero on success.
  */
-int ufshcd_wait_for_register(struct ufs_hba *hba, u32 reg, u32 mask,
-				u32 val, unsigned long interval_us,
-				unsigned long timeout_ms)
-{
-	int err = 0;
-	unsigned long timeout = jiffies + msecs_to_jiffies(timeout_ms);
+पूर्णांक ufshcd_रुको_क्रम_रेजिस्टर(काष्ठा ufs_hba *hba, u32 reg, u32 mask,
+				u32 val, अचिन्हित दीर्घ पूर्णांकerval_us,
+				अचिन्हित दीर्घ समयout_ms)
+अणु
+	पूर्णांक err = 0;
+	अचिन्हित दीर्घ समयout = jअगरfies + msecs_to_jअगरfies(समयout_ms);
 
-	/* ignore bits that we don't intend to wait on */
+	/* ignore bits that we करोn't पूर्णांकend to रुको on */
 	val = val & mask;
 
-	while ((ufshcd_readl(hba, reg) & mask) != val) {
-		usleep_range(interval_us, interval_us + 50);
-		if (time_after(jiffies, timeout)) {
-			if ((ufshcd_readl(hba, reg) & mask) != val)
+	जबतक ((ufshcd_पढ़ोl(hba, reg) & mask) != val) अणु
+		usleep_range(पूर्णांकerval_us, पूर्णांकerval_us + 50);
+		अगर (समय_after(jअगरfies, समयout)) अणु
+			अगर ((ufshcd_पढ़ोl(hba, reg) & mask) != val)
 				err = -ETIMEDOUT;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /**
- * ufshcd_get_intr_mask - Get the interrupt bit mask
- * @hba: Pointer to adapter instance
+ * ufshcd_get_पूर्णांकr_mask - Get the पूर्णांकerrupt bit mask
+ * @hba: Poपूर्णांकer to adapter instance
  *
- * Returns interrupt bit mask per version
+ * Returns पूर्णांकerrupt bit mask per version
  */
-static inline u32 ufshcd_get_intr_mask(struct ufs_hba *hba)
-{
-	if (hba->ufs_version == ufshci_version(1, 0))
-		return INTERRUPT_MASK_ALL_VER_10;
-	if (hba->ufs_version <= ufshci_version(2, 0))
-		return INTERRUPT_MASK_ALL_VER_11;
+अटल अंतरभूत u32 ufshcd_get_पूर्णांकr_mask(काष्ठा ufs_hba *hba)
+अणु
+	अगर (hba->ufs_version == ufshci_version(1, 0))
+		वापस INTERRUPT_MASK_ALL_VER_10;
+	अगर (hba->ufs_version <= ufshci_version(2, 0))
+		वापस INTERRUPT_MASK_ALL_VER_11;
 
-	return INTERRUPT_MASK_ALL_VER_21;
-}
+	वापस INTERRUPT_MASK_ALL_VER_21;
+पूर्ण
 
 /**
  * ufshcd_get_ufs_version - Get the UFS version supported by the HBA
- * @hba: Pointer to adapter instance
+ * @hba: Poपूर्णांकer to adapter instance
  *
  * Returns UFSHCI version supported by the controller
  */
-static inline u32 ufshcd_get_ufs_version(struct ufs_hba *hba)
-{
+अटल अंतरभूत u32 ufshcd_get_ufs_version(काष्ठा ufs_hba *hba)
+अणु
 	u32 ufshci_ver;
 
-	if (hba->quirks & UFSHCD_QUIRK_BROKEN_UFS_HCI_VERSION)
+	अगर (hba->quirks & UFSHCD_QUIRK_BROKEN_UFS_HCI_VERSION)
 		ufshci_ver = ufshcd_vops_get_ufs_hci_version(hba);
-	else
-		ufshci_ver = ufshcd_readl(hba, REG_UFS_VERSION);
+	अन्यथा
+		ufshci_ver = ufshcd_पढ़ोl(hba, REG_UFS_VERSION);
 
 	/*
-	 * UFSHCI v1.x uses a different version scheme, in order
+	 * UFSHCI v1.x uses a dअगरferent version scheme, in order
 	 * to allow the use of comparisons with the ufshci_version
 	 * function, we convert it to the same scheme as ufs 2.0+.
 	 */
-	if (ufshci_ver & 0x00010000)
-		return ufshci_version(1, ufshci_ver & 0x00000100);
+	अगर (ufshci_ver & 0x00010000)
+		वापस ufshci_version(1, ufshci_ver & 0x00000100);
 
-	return ufshci_ver;
-}
+	वापस ufshci_ver;
+पूर्ण
 
 /**
- * ufshcd_is_device_present - Check if any device connected to
+ * ufshcd_is_device_present - Check अगर any device connected to
  *			      the host controller
- * @hba: pointer to adapter instance
+ * @hba: poपूर्णांकer to adapter instance
  *
- * Returns true if device present, false if no device detected
+ * Returns true अगर device present, false अगर no device detected
  */
-static inline bool ufshcd_is_device_present(struct ufs_hba *hba)
-{
-	return (ufshcd_readl(hba, REG_CONTROLLER_STATUS) &
+अटल अंतरभूत bool ufshcd_is_device_present(काष्ठा ufs_hba *hba)
+अणु
+	वापस (ufshcd_पढ़ोl(hba, REG_CONTROLLER_STATUS) &
 						DEVICE_PRESENT) ? true : false;
-}
+पूर्ण
 
 /**
  * ufshcd_get_tr_ocs - Get the UTRD Overall Command Status
- * @lrbp: pointer to local command reference block
+ * @lrbp: poपूर्णांकer to local command reference block
  *
  * This function is used to get the OCS field from UTRD
  * Returns the OCS field in the UTRD
  */
-static inline int ufshcd_get_tr_ocs(struct ufshcd_lrb *lrbp)
-{
-	return le32_to_cpu(lrbp->utr_descriptor_ptr->header.dword_2) & MASK_OCS;
-}
+अटल अंतरभूत पूर्णांक ufshcd_get_tr_ocs(काष्ठा ufshcd_lrb *lrbp)
+अणु
+	वापस le32_to_cpu(lrbp->utr_descriptor_ptr->header.dword_2) & MASK_OCS;
+पूर्ण
 
 /**
- * ufshcd_utrl_clear - Clear a bit in UTRLCLR register
+ * ufshcd_utrl_clear - Clear a bit in UTRLCLR रेजिस्टर
  * @hba: per adapter instance
  * @pos: position of the bit to be cleared
  */
-static inline void ufshcd_utrl_clear(struct ufs_hba *hba, u32 pos)
-{
-	if (hba->quirks & UFSHCI_QUIRK_BROKEN_REQ_LIST_CLR)
-		ufshcd_writel(hba, (1 << pos), REG_UTP_TRANSFER_REQ_LIST_CLEAR);
-	else
-		ufshcd_writel(hba, ~(1 << pos),
+अटल अंतरभूत व्योम ufshcd_utrl_clear(काष्ठा ufs_hba *hba, u32 pos)
+अणु
+	अगर (hba->quirks & UFSHCI_QUIRK_BROKEN_REQ_LIST_CLR)
+		ufshcd_ग_लिखोl(hba, (1 << pos), REG_UTP_TRANSFER_REQ_LIST_CLEAR);
+	अन्यथा
+		ufshcd_ग_लिखोl(hba, ~(1 << pos),
 				REG_UTP_TRANSFER_REQ_LIST_CLEAR);
-}
+पूर्ण
 
 /**
- * ufshcd_utmrl_clear - Clear a bit in UTRMLCLR register
+ * ufshcd_uपंचांगrl_clear - Clear a bit in UTRMLCLR रेजिस्टर
  * @hba: per adapter instance
  * @pos: position of the bit to be cleared
  */
-static inline void ufshcd_utmrl_clear(struct ufs_hba *hba, u32 pos)
-{
-	if (hba->quirks & UFSHCI_QUIRK_BROKEN_REQ_LIST_CLR)
-		ufshcd_writel(hba, (1 << pos), REG_UTP_TASK_REQ_LIST_CLEAR);
-	else
-		ufshcd_writel(hba, ~(1 << pos), REG_UTP_TASK_REQ_LIST_CLEAR);
-}
+अटल अंतरभूत व्योम ufshcd_uपंचांगrl_clear(काष्ठा ufs_hba *hba, u32 pos)
+अणु
+	अगर (hba->quirks & UFSHCI_QUIRK_BROKEN_REQ_LIST_CLR)
+		ufshcd_ग_लिखोl(hba, (1 << pos), REG_UTP_TASK_REQ_LIST_CLEAR);
+	अन्यथा
+		ufshcd_ग_लिखोl(hba, ~(1 << pos), REG_UTP_TASK_REQ_LIST_CLEAR);
+पूर्ण
 
 /**
  * ufshcd_outstanding_req_clear - Clear a bit in outstanding request field
  * @hba: per adapter instance
  * @tag: position of the bit to be cleared
  */
-static inline void ufshcd_outstanding_req_clear(struct ufs_hba *hba, int tag)
-{
+अटल अंतरभूत व्योम ufshcd_outstanding_req_clear(काष्ठा ufs_hba *hba, पूर्णांक tag)
+अणु
 	__clear_bit(tag, &hba->outstanding_reqs);
-}
+पूर्ण
 
 /**
  * ufshcd_get_lists_status - Check UCRDY, UTRLRDY and UTMRLRDY
  * @reg: Register value of host controller status
  *
- * Returns integer, 0 on Success and positive value if failed
+ * Returns पूर्णांकeger, 0 on Success and positive value अगर failed
  */
-static inline int ufshcd_get_lists_status(u32 reg)
-{
-	return !((reg & UFSHCD_STATUS_READY) == UFSHCD_STATUS_READY);
-}
+अटल अंतरभूत पूर्णांक ufshcd_get_lists_status(u32 reg)
+अणु
+	वापस !((reg & UFSHCD_STATUS_READY) == UFSHCD_STATUS_READY);
+पूर्ण
 
 /**
  * ufshcd_get_uic_cmd_result - Get the UIC command result
- * @hba: Pointer to adapter instance
+ * @hba: Poपूर्णांकer to adapter instance
  *
- * This function gets the result of UIC command completion
+ * This function माला_लो the result of UIC command completion
  * Returns 0 on success, non zero value on error
  */
-static inline int ufshcd_get_uic_cmd_result(struct ufs_hba *hba)
-{
-	return ufshcd_readl(hba, REG_UIC_COMMAND_ARG_2) &
+अटल अंतरभूत पूर्णांक ufshcd_get_uic_cmd_result(काष्ठा ufs_hba *hba)
+अणु
+	वापस ufshcd_पढ़ोl(hba, REG_UIC_COMMAND_ARG_2) &
 	       MASK_UIC_COMMAND_RESULT;
-}
+पूर्ण
 
 /**
- * ufshcd_get_dme_attr_val - Get the value of attribute returned by UIC command
- * @hba: Pointer to adapter instance
+ * ufshcd_get_dme_attr_val - Get the value of attribute वापसed by UIC command
+ * @hba: Poपूर्णांकer to adapter instance
  *
- * This function gets UIC command argument3
+ * This function माला_लो UIC command argument3
  * Returns 0 on success, non zero value on error
  */
-static inline u32 ufshcd_get_dme_attr_val(struct ufs_hba *hba)
-{
-	return ufshcd_readl(hba, REG_UIC_COMMAND_ARG_3);
-}
+अटल अंतरभूत u32 ufshcd_get_dme_attr_val(काष्ठा ufs_hba *hba)
+अणु
+	वापस ufshcd_पढ़ोl(hba, REG_UIC_COMMAND_ARG_3);
+पूर्ण
 
 /**
- * ufshcd_get_req_rsp - returns the TR response transaction type
- * @ucd_rsp_ptr: pointer to response UPIU
+ * ufshcd_get_req_rsp - वापसs the TR response transaction type
+ * @ucd_rsp_ptr: poपूर्णांकer to response UPIU
  */
-static inline int
-ufshcd_get_req_rsp(struct utp_upiu_rsp *ucd_rsp_ptr)
-{
-	return be32_to_cpu(ucd_rsp_ptr->header.dword_0) >> 24;
-}
+अटल अंतरभूत पूर्णांक
+ufshcd_get_req_rsp(काष्ठा utp_upiu_rsp *ucd_rsp_ptr)
+अणु
+	वापस be32_to_cpu(ucd_rsp_ptr->header.dword_0) >> 24;
+पूर्ण
 
 /**
  * ufshcd_get_rsp_upiu_result - Get the result from response UPIU
- * @ucd_rsp_ptr: pointer to response UPIU
+ * @ucd_rsp_ptr: poपूर्णांकer to response UPIU
  *
- * This function gets the response status and scsi_status from response UPIU
+ * This function माला_लो the response status and scsi_status from response UPIU
  * Returns the response result code.
  */
-static inline int
-ufshcd_get_rsp_upiu_result(struct utp_upiu_rsp *ucd_rsp_ptr)
-{
-	return be32_to_cpu(ucd_rsp_ptr->header.dword_1) & MASK_RSP_UPIU_RESULT;
-}
+अटल अंतरभूत पूर्णांक
+ufshcd_get_rsp_upiu_result(काष्ठा utp_upiu_rsp *ucd_rsp_ptr)
+अणु
+	वापस be32_to_cpu(ucd_rsp_ptr->header.dword_1) & MASK_RSP_UPIU_RESULT;
+पूर्ण
 
 /*
  * ufshcd_get_rsp_upiu_data_seg_len - Get the data segment length
  *				from response UPIU
- * @ucd_rsp_ptr: pointer to response UPIU
+ * @ucd_rsp_ptr: poपूर्णांकer to response UPIU
  *
  * Return the data segment length.
  */
-static inline unsigned int
-ufshcd_get_rsp_upiu_data_seg_len(struct utp_upiu_rsp *ucd_rsp_ptr)
-{
-	return be32_to_cpu(ucd_rsp_ptr->header.dword_2) &
+अटल अंतरभूत अचिन्हित पूर्णांक
+ufshcd_get_rsp_upiu_data_seg_len(काष्ठा utp_upiu_rsp *ucd_rsp_ptr)
+अणु
+	वापस be32_to_cpu(ucd_rsp_ptr->header.dword_2) &
 		MASK_RSP_UPIU_DATA_SEG_LEN;
-}
+पूर्ण
 
 /**
- * ufshcd_is_exception_event - Check if the device raised an exception event
- * @ucd_rsp_ptr: pointer to response UPIU
+ * ufshcd_is_exception_event - Check अगर the device उठाओd an exception event
+ * @ucd_rsp_ptr: poपूर्णांकer to response UPIU
  *
- * The function checks if the device raised an exception event indicated in
- * the Device Information field of response UPIU.
+ * The function checks अगर the device उठाओd an exception event indicated in
+ * the Device Inक्रमmation field of response UPIU.
  *
- * Returns true if exception is raised, false otherwise.
+ * Returns true अगर exception is उठाओd, false otherwise.
  */
-static inline bool ufshcd_is_exception_event(struct utp_upiu_rsp *ucd_rsp_ptr)
-{
-	return be32_to_cpu(ucd_rsp_ptr->header.dword_2) &
+अटल अंतरभूत bool ufshcd_is_exception_event(काष्ठा utp_upiu_rsp *ucd_rsp_ptr)
+अणु
+	वापस be32_to_cpu(ucd_rsp_ptr->header.dword_2) &
 			MASK_RSP_EXCEPTION_EVENT ? true : false;
-}
+पूर्ण
 
 /**
- * ufshcd_reset_intr_aggr - Reset interrupt aggregation values.
+ * ufshcd_reset_पूर्णांकr_aggr - Reset पूर्णांकerrupt aggregation values.
  * @hba: per adapter instance
  */
-static inline void
-ufshcd_reset_intr_aggr(struct ufs_hba *hba)
-{
-	ufshcd_writel(hba, INT_AGGR_ENABLE |
+अटल अंतरभूत व्योम
+ufshcd_reset_पूर्णांकr_aggr(काष्ठा ufs_hba *hba)
+अणु
+	ufshcd_ग_लिखोl(hba, INT_AGGR_ENABLE |
 		      INT_AGGR_COUNTER_AND_TIMER_RESET,
 		      REG_UTP_TRANSFER_REQ_INT_AGG_CONTROL);
-}
+पूर्ण
 
 /**
- * ufshcd_config_intr_aggr - Configure interrupt aggregation values.
+ * ufshcd_config_पूर्णांकr_aggr - Configure पूर्णांकerrupt aggregation values.
  * @hba: per adapter instance
  * @cnt: Interrupt aggregation counter threshold
- * @tmout: Interrupt aggregation timeout value
+ * @पंचांगout: Interrupt aggregation समयout value
  */
-static inline void
-ufshcd_config_intr_aggr(struct ufs_hba *hba, u8 cnt, u8 tmout)
-{
-	ufshcd_writel(hba, INT_AGGR_ENABLE | INT_AGGR_PARAM_WRITE |
+अटल अंतरभूत व्योम
+ufshcd_config_पूर्णांकr_aggr(काष्ठा ufs_hba *hba, u8 cnt, u8 पंचांगout)
+अणु
+	ufshcd_ग_लिखोl(hba, INT_AGGR_ENABLE | INT_AGGR_PARAM_WRITE |
 		      INT_AGGR_COUNTER_THLD_VAL(cnt) |
-		      INT_AGGR_TIMEOUT_VAL(tmout),
+		      INT_AGGR_TIMEOUT_VAL(पंचांगout),
 		      REG_UTP_TRANSFER_REQ_INT_AGG_CONTROL);
-}
+पूर्ण
 
 /**
- * ufshcd_disable_intr_aggr - Disables interrupt aggregation.
+ * ufshcd_disable_पूर्णांकr_aggr - Disables पूर्णांकerrupt aggregation.
  * @hba: per adapter instance
  */
-static inline void ufshcd_disable_intr_aggr(struct ufs_hba *hba)
-{
-	ufshcd_writel(hba, 0, REG_UTP_TRANSFER_REQ_INT_AGG_CONTROL);
-}
+अटल अंतरभूत व्योम ufshcd_disable_पूर्णांकr_aggr(काष्ठा ufs_hba *hba)
+अणु
+	ufshcd_ग_लिखोl(hba, 0, REG_UTP_TRANSFER_REQ_INT_AGG_CONTROL);
+पूर्ण
 
 /**
- * ufshcd_enable_run_stop_reg - Enable run-stop registers,
- *			When run-stop registers are set to 1, it indicates the
+ * ufshcd_enable_run_stop_reg - Enable run-stop रेजिस्टरs,
+ *			When run-stop रेजिस्टरs are set to 1, it indicates the
  *			host controller that it can process the requests
  * @hba: per adapter instance
  */
-static void ufshcd_enable_run_stop_reg(struct ufs_hba *hba)
-{
-	ufshcd_writel(hba, UTP_TASK_REQ_LIST_RUN_STOP_BIT,
+अटल व्योम ufshcd_enable_run_stop_reg(काष्ठा ufs_hba *hba)
+अणु
+	ufshcd_ग_लिखोl(hba, UTP_TASK_REQ_LIST_RUN_STOP_BIT,
 		      REG_UTP_TASK_REQ_LIST_RUN_STOP);
-	ufshcd_writel(hba, UTP_TRANSFER_REQ_LIST_RUN_STOP_BIT,
+	ufshcd_ग_लिखोl(hba, UTP_TRANSFER_REQ_LIST_RUN_STOP_BIT,
 		      REG_UTP_TRANSFER_REQ_LIST_RUN_STOP);
-}
+पूर्ण
 
 /**
  * ufshcd_hba_start - Start controller initialization sequence
  * @hba: per adapter instance
  */
-static inline void ufshcd_hba_start(struct ufs_hba *hba)
-{
+अटल अंतरभूत व्योम ufshcd_hba_start(काष्ठा ufs_hba *hba)
+अणु
 	u32 val = CONTROLLER_ENABLE;
 
-	if (ufshcd_crypto_enable(hba))
+	अगर (ufshcd_crypto_enable(hba))
 		val |= CRYPTO_GENERAL_ENABLE;
 
-	ufshcd_writel(hba, val, REG_CONTROLLER_ENABLE);
-}
+	ufshcd_ग_लिखोl(hba, val, REG_CONTROLLER_ENABLE);
+पूर्ण
 
 /**
  * ufshcd_is_hba_active - Get controller state
  * @hba: per adapter instance
  *
- * Returns false if controller is active, true otherwise
+ * Returns false अगर controller is active, true otherwise
  */
-static inline bool ufshcd_is_hba_active(struct ufs_hba *hba)
-{
-	return (ufshcd_readl(hba, REG_CONTROLLER_ENABLE) & CONTROLLER_ENABLE)
+अटल अंतरभूत bool ufshcd_is_hba_active(काष्ठा ufs_hba *hba)
+अणु
+	वापस (ufshcd_पढ़ोl(hba, REG_CONTROLLER_ENABLE) & CONTROLLER_ENABLE)
 		? false : true;
-}
+पूर्ण
 
-u32 ufshcd_get_local_unipro_ver(struct ufs_hba *hba)
-{
+u32 ufshcd_get_local_unipro_ver(काष्ठा ufs_hba *hba)
+अणु
 	/* HCI version 1.0 and 1.1 supports UniPro 1.41 */
-	if (hba->ufs_version <= ufshci_version(1, 1))
-		return UFS_UNIPRO_VER_1_41;
-	else
-		return UFS_UNIPRO_VER_1_6;
-}
+	अगर (hba->ufs_version <= ufshci_version(1, 1))
+		वापस UFS_UNIPRO_VER_1_41;
+	अन्यथा
+		वापस UFS_UNIPRO_VER_1_6;
+पूर्ण
 EXPORT_SYMBOL(ufshcd_get_local_unipro_ver);
 
-static bool ufshcd_is_unipro_pa_params_tuning_req(struct ufs_hba *hba)
-{
+अटल bool ufshcd_is_unipro_pa_params_tuning_req(काष्ठा ufs_hba *hba)
+अणु
 	/*
 	 * If both host and device support UniPro ver1.6 or later, PA layer
 	 * parameters tuning happens during link startup itself.
 	 *
-	 * We can manually tune PA layer parameters if either host or device
-	 * doesn't support UniPro ver 1.6 or later. But to keep manual tuning
-	 * logic simple, we will only do manual tuning if local unipro version
-	 * doesn't support ver1.6 or later.
+	 * We can manually tune PA layer parameters अगर either host or device
+	 * करोesn't support UniPro ver 1.6 or later. But to keep manual tuning
+	 * logic simple, we will only करो manual tuning अगर local unipro version
+	 * करोesn't support ver1.6 or later.
 	 */
-	if (ufshcd_get_local_unipro_ver(hba) < UFS_UNIPRO_VER_1_6)
-		return true;
-	else
-		return false;
-}
+	अगर (ufshcd_get_local_unipro_ver(hba) < UFS_UNIPRO_VER_1_6)
+		वापस true;
+	अन्यथा
+		वापस false;
+पूर्ण
 
 /**
- * ufshcd_set_clk_freq - set UFS controller clock frequencies
+ * ufshcd_set_clk_freq - set UFS controller घड़ी frequencies
  * @hba: per adapter instance
  * @scale_up: If True, set max possible frequency othewise set low frequency
  *
- * Returns 0 if successful
- * Returns < 0 for any other errors
+ * Returns 0 अगर successful
+ * Returns < 0 क्रम any other errors
  */
-static int ufshcd_set_clk_freq(struct ufs_hba *hba, bool scale_up)
-{
-	int ret = 0;
-	struct ufs_clk_info *clki;
-	struct list_head *head = &hba->clk_list_head;
+अटल पूर्णांक ufshcd_set_clk_freq(काष्ठा ufs_hba *hba, bool scale_up)
+अणु
+	पूर्णांक ret = 0;
+	काष्ठा ufs_clk_info *clki;
+	काष्ठा list_head *head = &hba->clk_list_head;
 
-	if (list_empty(head))
-		goto out;
+	अगर (list_empty(head))
+		जाओ out;
 
-	list_for_each_entry(clki, head, list) {
-		if (!IS_ERR_OR_NULL(clki->clk)) {
-			if (scale_up && clki->max_freq) {
-				if (clki->curr_freq == clki->max_freq)
-					continue;
+	list_क्रम_each_entry(clki, head, list) अणु
+		अगर (!IS_ERR_OR_शून्य(clki->clk)) अणु
+			अगर (scale_up && clki->max_freq) अणु
+				अगर (clki->curr_freq == clki->max_freq)
+					जारी;
 
 				ret = clk_set_rate(clki->clk, clki->max_freq);
-				if (ret) {
+				अगर (ret) अणु
 					dev_err(hba->dev, "%s: %s clk set rate(%dHz) failed, %d\n",
 						__func__, clki->name,
 						clki->max_freq, ret);
-					break;
-				}
+					अवरोध;
+				पूर्ण
 				trace_ufshcd_clk_scaling(dev_name(hba->dev),
 						"scaled up", clki->name,
 						clki->curr_freq,
@@ -986,459 +987,459 @@ static int ufshcd_set_clk_freq(struct ufs_hba *hba, bool scale_up)
 
 				clki->curr_freq = clki->max_freq;
 
-			} else if (!scale_up && clki->min_freq) {
-				if (clki->curr_freq == clki->min_freq)
-					continue;
+			पूर्ण अन्यथा अगर (!scale_up && clki->min_freq) अणु
+				अगर (clki->curr_freq == clki->min_freq)
+					जारी;
 
 				ret = clk_set_rate(clki->clk, clki->min_freq);
-				if (ret) {
+				अगर (ret) अणु
 					dev_err(hba->dev, "%s: %s clk set rate(%dHz) failed, %d\n",
 						__func__, clki->name,
 						clki->min_freq, ret);
-					break;
-				}
+					अवरोध;
+				पूर्ण
 				trace_ufshcd_clk_scaling(dev_name(hba->dev),
 						"scaled down", clki->name,
 						clki->curr_freq,
 						clki->min_freq);
 				clki->curr_freq = clki->min_freq;
-			}
-		}
+			पूर्ण
+		पूर्ण
 		dev_dbg(hba->dev, "%s: clk: %s, rate: %lu\n", __func__,
 				clki->name, clk_get_rate(clki->clk));
-	}
+	पूर्ण
 
 out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * ufshcd_scale_clks - scale up or scale down UFS controller clocks
+ * ufshcd_scale_clks - scale up or scale करोwn UFS controller घड़ीs
  * @hba: per adapter instance
- * @scale_up: True if scaling up and false if scaling down
+ * @scale_up: True अगर scaling up and false अगर scaling करोwn
  *
- * Returns 0 if successful
- * Returns < 0 for any other errors
+ * Returns 0 अगर successful
+ * Returns < 0 क्रम any other errors
  */
-static int ufshcd_scale_clks(struct ufs_hba *hba, bool scale_up)
-{
-	int ret = 0;
-	ktime_t start = ktime_get();
+अटल पूर्णांक ufshcd_scale_clks(काष्ठा ufs_hba *hba, bool scale_up)
+अणु
+	पूर्णांक ret = 0;
+	kसमय_प्रकार start = kसमय_get();
 
-	ret = ufshcd_vops_clk_scale_notify(hba, scale_up, PRE_CHANGE);
-	if (ret)
-		goto out;
+	ret = ufshcd_vops_clk_scale_notअगरy(hba, scale_up, PRE_CHANGE);
+	अगर (ret)
+		जाओ out;
 
 	ret = ufshcd_set_clk_freq(hba, scale_up);
-	if (ret)
-		goto out;
+	अगर (ret)
+		जाओ out;
 
-	ret = ufshcd_vops_clk_scale_notify(hba, scale_up, POST_CHANGE);
-	if (ret)
+	ret = ufshcd_vops_clk_scale_notअगरy(hba, scale_up, POST_CHANGE);
+	अगर (ret)
 		ufshcd_set_clk_freq(hba, !scale_up);
 
 out:
 	trace_ufshcd_profile_clk_scaling(dev_name(hba->dev),
 			(scale_up ? "up" : "down"),
-			ktime_to_us(ktime_sub(ktime_get(), start)), ret);
-	return ret;
-}
+			kसमय_प्रकारo_us(kसमय_sub(kसमय_get(), start)), ret);
+	वापस ret;
+पूर्ण
 
 /**
- * ufshcd_is_devfreq_scaling_required - check if scaling is required or not
+ * ufshcd_is_devfreq_scaling_required - check अगर scaling is required or not
  * @hba: per adapter instance
- * @scale_up: True if scaling up and false if scaling down
+ * @scale_up: True अगर scaling up and false अगर scaling करोwn
  *
- * Returns true if scaling is required, false otherwise.
+ * Returns true अगर scaling is required, false otherwise.
  */
-static bool ufshcd_is_devfreq_scaling_required(struct ufs_hba *hba,
+अटल bool ufshcd_is_devfreq_scaling_required(काष्ठा ufs_hba *hba,
 					       bool scale_up)
-{
-	struct ufs_clk_info *clki;
-	struct list_head *head = &hba->clk_list_head;
+अणु
+	काष्ठा ufs_clk_info *clki;
+	काष्ठा list_head *head = &hba->clk_list_head;
 
-	if (list_empty(head))
-		return false;
+	अगर (list_empty(head))
+		वापस false;
 
-	list_for_each_entry(clki, head, list) {
-		if (!IS_ERR_OR_NULL(clki->clk)) {
-			if (scale_up && clki->max_freq) {
-				if (clki->curr_freq == clki->max_freq)
-					continue;
-				return true;
-			} else if (!scale_up && clki->min_freq) {
-				if (clki->curr_freq == clki->min_freq)
-					continue;
-				return true;
-			}
-		}
-	}
+	list_क्रम_each_entry(clki, head, list) अणु
+		अगर (!IS_ERR_OR_शून्य(clki->clk)) अणु
+			अगर (scale_up && clki->max_freq) अणु
+				अगर (clki->curr_freq == clki->max_freq)
+					जारी;
+				वापस true;
+			पूर्ण अन्यथा अगर (!scale_up && clki->min_freq) अणु
+				अगर (clki->curr_freq == clki->min_freq)
+					जारी;
+				वापस true;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static int ufshcd_wait_for_doorbell_clr(struct ufs_hba *hba,
-					u64 wait_timeout_us)
-{
-	unsigned long flags;
-	int ret = 0;
-	u32 tm_doorbell;
-	u32 tr_doorbell;
-	bool timeout = false, do_last_check = false;
-	ktime_t start;
+अटल पूर्णांक ufshcd_रुको_क्रम_करोorbell_clr(काष्ठा ufs_hba *hba,
+					u64 रुको_समयout_us)
+अणु
+	अचिन्हित दीर्घ flags;
+	पूर्णांक ret = 0;
+	u32 पंचांग_करोorbell;
+	u32 tr_करोorbell;
+	bool समयout = false, करो_last_check = false;
+	kसमय_प्रकार start;
 
 	ufshcd_hold(hba, false);
 	spin_lock_irqsave(hba->host->host_lock, flags);
 	/*
-	 * Wait for all the outstanding tasks/transfer requests.
-	 * Verify by checking the doorbell registers are clear.
+	 * Wait क्रम all the outstanding tasks/transfer requests.
+	 * Verअगरy by checking the करोorbell रेजिस्टरs are clear.
 	 */
-	start = ktime_get();
-	do {
-		if (hba->ufshcd_state != UFSHCD_STATE_OPERATIONAL) {
+	start = kसमय_get();
+	करो अणु
+		अगर (hba->ufshcd_state != UFSHCD_STATE_OPERATIONAL) अणु
 			ret = -EBUSY;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
-		tm_doorbell = ufshcd_readl(hba, REG_UTP_TASK_REQ_DOOR_BELL);
-		tr_doorbell = ufshcd_readl(hba, REG_UTP_TRANSFER_REQ_DOOR_BELL);
-		if (!tm_doorbell && !tr_doorbell) {
-			timeout = false;
-			break;
-		} else if (do_last_check) {
-			break;
-		}
+		पंचांग_करोorbell = ufshcd_पढ़ोl(hba, REG_UTP_TASK_REQ_DOOR_BELL);
+		tr_करोorbell = ufshcd_पढ़ोl(hba, REG_UTP_TRANSFER_REQ_DOOR_BELL);
+		अगर (!पंचांग_करोorbell && !tr_करोorbell) अणु
+			समयout = false;
+			अवरोध;
+		पूर्ण अन्यथा अगर (करो_last_check) अणु
+			अवरोध;
+		पूर्ण
 
 		spin_unlock_irqrestore(hba->host->host_lock, flags);
 		schedule();
-		if (ktime_to_us(ktime_sub(ktime_get(), start)) >
-		    wait_timeout_us) {
-			timeout = true;
+		अगर (kसमय_प्रकारo_us(kसमय_sub(kसमय_get(), start)) >
+		    रुको_समयout_us) अणु
+			समयout = true;
 			/*
-			 * We might have scheduled out for long time so make
-			 * sure to check if doorbells are cleared by this time
+			 * We might have scheduled out क्रम दीर्घ समय so make
+			 * sure to check अगर करोorbells are cleared by this समय
 			 * or not.
 			 */
-			do_last_check = true;
-		}
+			करो_last_check = true;
+		पूर्ण
 		spin_lock_irqsave(hba->host->host_lock, flags);
-	} while (tm_doorbell || tr_doorbell);
+	पूर्ण जबतक (पंचांग_करोorbell || tr_करोorbell);
 
-	if (timeout) {
+	अगर (समयout) अणु
 		dev_err(hba->dev,
 			"%s: timedout waiting for doorbell to clear (tm=0x%x, tr=0x%x)\n",
-			__func__, tm_doorbell, tr_doorbell);
+			__func__, पंचांग_करोorbell, tr_करोorbell);
 		ret = -EBUSY;
-	}
+	पूर्ण
 out:
 	spin_unlock_irqrestore(hba->host->host_lock, flags);
 	ufshcd_release(hba);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * ufshcd_scale_gear - scale up/down UFS gear
+ * ufshcd_scale_gear - scale up/करोwn UFS gear
  * @hba: per adapter instance
- * @scale_up: True for scaling up gear and false for scaling down
+ * @scale_up: True क्रम scaling up gear and false क्रम scaling करोwn
  *
- * Returns 0 for success,
- * Returns -EBUSY if scaling can't happen at this time
- * Returns non-zero for any other errors
+ * Returns 0 क्रम success,
+ * Returns -EBUSY अगर scaling can't happen at this समय
+ * Returns non-zero क्रम any other errors
  */
-static int ufshcd_scale_gear(struct ufs_hba *hba, bool scale_up)
-{
-	int ret = 0;
-	struct ufs_pa_layer_attr new_pwr_info;
+अटल पूर्णांक ufshcd_scale_gear(काष्ठा ufs_hba *hba, bool scale_up)
+अणु
+	पूर्णांक ret = 0;
+	काष्ठा ufs_pa_layer_attr new_pwr_info;
 
-	if (scale_up) {
-		memcpy(&new_pwr_info, &hba->clk_scaling.saved_pwr_info.info,
-		       sizeof(struct ufs_pa_layer_attr));
-	} else {
-		memcpy(&new_pwr_info, &hba->pwr_info,
-		       sizeof(struct ufs_pa_layer_attr));
+	अगर (scale_up) अणु
+		स_नकल(&new_pwr_info, &hba->clk_scaling.saved_pwr_info.info,
+		       माप(काष्ठा ufs_pa_layer_attr));
+	पूर्ण अन्यथा अणु
+		स_नकल(&new_pwr_info, &hba->pwr_info,
+		       माप(काष्ठा ufs_pa_layer_attr));
 
-		if (hba->pwr_info.gear_tx > hba->clk_scaling.min_gear ||
-		    hba->pwr_info.gear_rx > hba->clk_scaling.min_gear) {
-			/* save the current power mode */
-			memcpy(&hba->clk_scaling.saved_pwr_info.info,
+		अगर (hba->pwr_info.gear_tx > hba->clk_scaling.min_gear ||
+		    hba->pwr_info.gear_rx > hba->clk_scaling.min_gear) अणु
+			/* save the current घातer mode */
+			स_नकल(&hba->clk_scaling.saved_pwr_info.info,
 				&hba->pwr_info,
-				sizeof(struct ufs_pa_layer_attr));
+				माप(काष्ठा ufs_pa_layer_attr));
 
-			/* scale down gear */
+			/* scale करोwn gear */
 			new_pwr_info.gear_tx = hba->clk_scaling.min_gear;
 			new_pwr_info.gear_rx = hba->clk_scaling.min_gear;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	/* check if the power mode needs to be changed or not? */
+	/* check अगर the घातer mode needs to be changed or not? */
 	ret = ufshcd_config_pwr_mode(hba, &new_pwr_info);
-	if (ret)
+	अगर (ret)
 		dev_err(hba->dev, "%s: failed err %d, old gear: (tx %d rx %d), new gear: (tx %d rx %d)",
 			__func__, ret,
 			hba->pwr_info.gear_tx, hba->pwr_info.gear_rx,
 			new_pwr_info.gear_tx, new_pwr_info.gear_rx);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int ufshcd_clock_scaling_prepare(struct ufs_hba *hba)
-{
-	#define DOORBELL_CLR_TOUT_US		(1000 * 1000) /* 1 sec */
-	int ret = 0;
+अटल पूर्णांक ufshcd_घड़ी_scaling_prepare(काष्ठा ufs_hba *hba)
+अणु
+	#घोषणा DOORBELL_CLR_TOUT_US		(1000 * 1000) /* 1 sec */
+	पूर्णांक ret = 0;
 	/*
 	 * make sure that there are no outstanding requests when
-	 * clock scaling is in progress
+	 * घड़ी scaling is in progress
 	 */
 	ufshcd_scsi_block_requests(hba);
-	down_write(&hba->clk_scaling_lock);
+	करोwn_ग_लिखो(&hba->clk_scaling_lock);
 
-	if (!hba->clk_scaling.is_allowed ||
-	    ufshcd_wait_for_doorbell_clr(hba, DOORBELL_CLR_TOUT_US)) {
+	अगर (!hba->clk_scaling.is_allowed ||
+	    ufshcd_रुको_क्रम_करोorbell_clr(hba, DOORBELL_CLR_TOUT_US)) अणु
 		ret = -EBUSY;
-		up_write(&hba->clk_scaling_lock);
+		up_ग_लिखो(&hba->clk_scaling_lock);
 		ufshcd_scsi_unblock_requests(hba);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	/* let's not get into low power until clock scaling is completed */
+	/* let's not get पूर्णांकo low घातer until घड़ी scaling is completed */
 	ufshcd_hold(hba, false);
 
 out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void ufshcd_clock_scaling_unprepare(struct ufs_hba *hba, bool writelock)
-{
-	if (writelock)
-		up_write(&hba->clk_scaling_lock);
-	else
-		up_read(&hba->clk_scaling_lock);
+अटल व्योम ufshcd_घड़ी_scaling_unprepare(काष्ठा ufs_hba *hba, bool ग_लिखोlock)
+अणु
+	अगर (ग_लिखोlock)
+		up_ग_लिखो(&hba->clk_scaling_lock);
+	अन्यथा
+		up_पढ़ो(&hba->clk_scaling_lock);
 	ufshcd_scsi_unblock_requests(hba);
 	ufshcd_release(hba);
-}
+पूर्ण
 
 /**
- * ufshcd_devfreq_scale - scale up/down UFS clocks and gear
+ * ufshcd_devfreq_scale - scale up/करोwn UFS घड़ीs and gear
  * @hba: per adapter instance
- * @scale_up: True for scaling up and false for scalin down
+ * @scale_up: True क्रम scaling up and false क्रम scalin करोwn
  *
- * Returns 0 for success,
- * Returns -EBUSY if scaling can't happen at this time
- * Returns non-zero for any other errors
+ * Returns 0 क्रम success,
+ * Returns -EBUSY अगर scaling can't happen at this समय
+ * Returns non-zero क्रम any other errors
  */
-static int ufshcd_devfreq_scale(struct ufs_hba *hba, bool scale_up)
-{
-	int ret = 0;
-	bool is_writelock = true;
+अटल पूर्णांक ufshcd_devfreq_scale(काष्ठा ufs_hba *hba, bool scale_up)
+अणु
+	पूर्णांक ret = 0;
+	bool is_ग_लिखोlock = true;
 
-	ret = ufshcd_clock_scaling_prepare(hba);
-	if (ret)
-		return ret;
+	ret = ufshcd_घड़ी_scaling_prepare(hba);
+	अगर (ret)
+		वापस ret;
 
-	/* scale down the gear before scaling down clocks */
-	if (!scale_up) {
+	/* scale करोwn the gear beक्रमe scaling करोwn घड़ीs */
+	अगर (!scale_up) अणु
 		ret = ufshcd_scale_gear(hba, false);
-		if (ret)
-			goto out_unprepare;
-	}
+		अगर (ret)
+			जाओ out_unprepare;
+	पूर्ण
 
 	ret = ufshcd_scale_clks(hba, scale_up);
-	if (ret) {
-		if (!scale_up)
+	अगर (ret) अणु
+		अगर (!scale_up)
 			ufshcd_scale_gear(hba, true);
-		goto out_unprepare;
-	}
+		जाओ out_unprepare;
+	पूर्ण
 
-	/* scale up the gear after scaling up clocks */
-	if (scale_up) {
+	/* scale up the gear after scaling up घड़ीs */
+	अगर (scale_up) अणु
 		ret = ufshcd_scale_gear(hba, true);
-		if (ret) {
+		अगर (ret) अणु
 			ufshcd_scale_clks(hba, false);
-			goto out_unprepare;
-		}
-	}
+			जाओ out_unprepare;
+		पूर्ण
+	पूर्ण
 
-	/* Enable Write Booster if we have scaled up else disable it */
-	downgrade_write(&hba->clk_scaling_lock);
-	is_writelock = false;
+	/* Enable Write Booster अगर we have scaled up अन्यथा disable it */
+	करोwngrade_ग_लिखो(&hba->clk_scaling_lock);
+	is_ग_लिखोlock = false;
 	ufshcd_wb_toggle(hba, scale_up);
 
 out_unprepare:
-	ufshcd_clock_scaling_unprepare(hba, is_writelock);
-	return ret;
-}
+	ufshcd_घड़ी_scaling_unprepare(hba, is_ग_लिखोlock);
+	वापस ret;
+पूर्ण
 
-static void ufshcd_clk_scaling_suspend_work(struct work_struct *work)
-{
-	struct ufs_hba *hba = container_of(work, struct ufs_hba,
+अटल व्योम ufshcd_clk_scaling_suspend_work(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा ufs_hba *hba = container_of(work, काष्ठा ufs_hba,
 					   clk_scaling.suspend_work);
-	unsigned long irq_flags;
+	अचिन्हित दीर्घ irq_flags;
 
 	spin_lock_irqsave(hba->host->host_lock, irq_flags);
-	if (hba->clk_scaling.active_reqs || hba->clk_scaling.is_suspended) {
+	अगर (hba->clk_scaling.active_reqs || hba->clk_scaling.is_suspended) अणु
 		spin_unlock_irqrestore(hba->host->host_lock, irq_flags);
-		return;
-	}
+		वापस;
+	पूर्ण
 	hba->clk_scaling.is_suspended = true;
 	spin_unlock_irqrestore(hba->host->host_lock, irq_flags);
 
 	__ufshcd_suspend_clkscaling(hba);
-}
+पूर्ण
 
-static void ufshcd_clk_scaling_resume_work(struct work_struct *work)
-{
-	struct ufs_hba *hba = container_of(work, struct ufs_hba,
+अटल व्योम ufshcd_clk_scaling_resume_work(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा ufs_hba *hba = container_of(work, काष्ठा ufs_hba,
 					   clk_scaling.resume_work);
-	unsigned long irq_flags;
+	अचिन्हित दीर्घ irq_flags;
 
 	spin_lock_irqsave(hba->host->host_lock, irq_flags);
-	if (!hba->clk_scaling.is_suspended) {
+	अगर (!hba->clk_scaling.is_suspended) अणु
 		spin_unlock_irqrestore(hba->host->host_lock, irq_flags);
-		return;
-	}
+		वापस;
+	पूर्ण
 	hba->clk_scaling.is_suspended = false;
 	spin_unlock_irqrestore(hba->host->host_lock, irq_flags);
 
 	devfreq_resume_device(hba->devfreq);
-}
+पूर्ण
 
-static int ufshcd_devfreq_target(struct device *dev,
-				unsigned long *freq, u32 flags)
-{
-	int ret = 0;
-	struct ufs_hba *hba = dev_get_drvdata(dev);
-	ktime_t start;
+अटल पूर्णांक ufshcd_devfreq_target(काष्ठा device *dev,
+				अचिन्हित दीर्घ *freq, u32 flags)
+अणु
+	पूर्णांक ret = 0;
+	काष्ठा ufs_hba *hba = dev_get_drvdata(dev);
+	kसमय_प्रकार start;
 	bool scale_up, sched_clk_scaling_suspend_work = false;
-	struct list_head *clk_list = &hba->clk_list_head;
-	struct ufs_clk_info *clki;
-	unsigned long irq_flags;
+	काष्ठा list_head *clk_list = &hba->clk_list_head;
+	काष्ठा ufs_clk_info *clki;
+	अचिन्हित दीर्घ irq_flags;
 
-	if (!ufshcd_is_clkscaling_supported(hba))
-		return -EINVAL;
+	अगर (!ufshcd_is_clkscaling_supported(hba))
+		वापस -EINVAL;
 
-	clki = list_first_entry(&hba->clk_list_head, struct ufs_clk_info, list);
-	/* Override with the closest supported frequency */
-	*freq = (unsigned long) clk_round_rate(clki->clk, *freq);
+	clki = list_first_entry(&hba->clk_list_head, काष्ठा ufs_clk_info, list);
+	/* Override with the बंदst supported frequency */
+	*freq = (अचिन्हित दीर्घ) clk_round_rate(clki->clk, *freq);
 	spin_lock_irqsave(hba->host->host_lock, irq_flags);
-	if (ufshcd_eh_in_progress(hba)) {
+	अगर (ufshcd_eh_in_progress(hba)) अणु
 		spin_unlock_irqrestore(hba->host->host_lock, irq_flags);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	if (!hba->clk_scaling.active_reqs)
+	अगर (!hba->clk_scaling.active_reqs)
 		sched_clk_scaling_suspend_work = true;
 
-	if (list_empty(clk_list)) {
+	अगर (list_empty(clk_list)) अणु
 		spin_unlock_irqrestore(hba->host->host_lock, irq_flags);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	/* Decide based on the rounded-off frequency and update */
 	scale_up = (*freq == clki->max_freq) ? true : false;
-	if (!scale_up)
+	अगर (!scale_up)
 		*freq = clki->min_freq;
 	/* Update the frequency */
-	if (!ufshcd_is_devfreq_scaling_required(hba, scale_up)) {
+	अगर (!ufshcd_is_devfreq_scaling_required(hba, scale_up)) अणु
 		spin_unlock_irqrestore(hba->host->host_lock, irq_flags);
 		ret = 0;
-		goto out; /* no state change required */
-	}
+		जाओ out; /* no state change required */
+	पूर्ण
 	spin_unlock_irqrestore(hba->host->host_lock, irq_flags);
 
-	start = ktime_get();
+	start = kसमय_get();
 	ret = ufshcd_devfreq_scale(hba, scale_up);
 
 	trace_ufshcd_profile_clk_scaling(dev_name(hba->dev),
 		(scale_up ? "up" : "down"),
-		ktime_to_us(ktime_sub(ktime_get(), start)), ret);
+		kसमय_प्रकारo_us(kसमय_sub(kसमय_get(), start)), ret);
 
 out:
-	if (sched_clk_scaling_suspend_work)
+	अगर (sched_clk_scaling_suspend_work)
 		queue_work(hba->clk_scaling.workq,
 			   &hba->clk_scaling.suspend_work);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static bool ufshcd_is_busy(struct request *req, void *priv, bool reserved)
-{
-	int *busy = priv;
+अटल bool ufshcd_is_busy(काष्ठा request *req, व्योम *priv, bool reserved)
+अणु
+	पूर्णांक *busy = priv;
 
 	WARN_ON_ONCE(reserved);
 	(*busy)++;
-	return false;
-}
+	वापस false;
+पूर्ण
 
 /* Whether or not any tag is in use by a request that is in progress. */
-static bool ufshcd_any_tag_in_use(struct ufs_hba *hba)
-{
-	struct request_queue *q = hba->cmd_queue;
-	int busy = 0;
+अटल bool ufshcd_any_tag_in_use(काष्ठा ufs_hba *hba)
+अणु
+	काष्ठा request_queue *q = hba->cmd_queue;
+	पूर्णांक busy = 0;
 
 	blk_mq_tagset_busy_iter(q->tag_set, ufshcd_is_busy, &busy);
-	return busy;
-}
+	वापस busy;
+पूर्ण
 
-static int ufshcd_devfreq_get_dev_status(struct device *dev,
-		struct devfreq_dev_status *stat)
-{
-	struct ufs_hba *hba = dev_get_drvdata(dev);
-	struct ufs_clk_scaling *scaling = &hba->clk_scaling;
-	unsigned long flags;
-	struct list_head *clk_list = &hba->clk_list_head;
-	struct ufs_clk_info *clki;
-	ktime_t curr_t;
+अटल पूर्णांक ufshcd_devfreq_get_dev_status(काष्ठा device *dev,
+		काष्ठा devfreq_dev_status *stat)
+अणु
+	काष्ठा ufs_hba *hba = dev_get_drvdata(dev);
+	काष्ठा ufs_clk_scaling *scaling = &hba->clk_scaling;
+	अचिन्हित दीर्घ flags;
+	काष्ठा list_head *clk_list = &hba->clk_list_head;
+	काष्ठा ufs_clk_info *clki;
+	kसमय_प्रकार curr_t;
 
-	if (!ufshcd_is_clkscaling_supported(hba))
-		return -EINVAL;
+	अगर (!ufshcd_is_clkscaling_supported(hba))
+		वापस -EINVAL;
 
-	memset(stat, 0, sizeof(*stat));
+	स_रखो(stat, 0, माप(*stat));
 
 	spin_lock_irqsave(hba->host->host_lock, flags);
-	curr_t = ktime_get();
-	if (!scaling->window_start_t)
-		goto start_window;
+	curr_t = kसमय_get();
+	अगर (!scaling->winकरोw_start_t)
+		जाओ start_winकरोw;
 
-	clki = list_first_entry(clk_list, struct ufs_clk_info, list);
+	clki = list_first_entry(clk_list, काष्ठा ufs_clk_info, list);
 	/*
 	 * If current frequency is 0, then the ondemand governor considers
 	 * there's no initial frequency set. And it always requests to set
 	 * to max. frequency.
 	 */
 	stat->current_frequency = clki->curr_freq;
-	if (scaling->is_busy_started)
-		scaling->tot_busy_t += ktime_us_delta(curr_t,
+	अगर (scaling->is_busy_started)
+		scaling->tot_busy_t += kसमय_us_delta(curr_t,
 				scaling->busy_start_t);
 
-	stat->total_time = ktime_us_delta(curr_t, scaling->window_start_t);
-	stat->busy_time = scaling->tot_busy_t;
-start_window:
-	scaling->window_start_t = curr_t;
+	stat->total_समय = kसमय_us_delta(curr_t, scaling->winकरोw_start_t);
+	stat->busy_समय = scaling->tot_busy_t;
+start_winकरोw:
+	scaling->winकरोw_start_t = curr_t;
 	scaling->tot_busy_t = 0;
 
-	if (hba->outstanding_reqs) {
+	अगर (hba->outstanding_reqs) अणु
 		scaling->busy_start_t = curr_t;
 		scaling->is_busy_started = true;
-	} else {
+	पूर्ण अन्यथा अणु
 		scaling->busy_start_t = 0;
 		scaling->is_busy_started = false;
-	}
+	पूर्ण
 	spin_unlock_irqrestore(hba->host->host_lock, flags);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ufshcd_devfreq_init(struct ufs_hba *hba)
-{
-	struct list_head *clk_list = &hba->clk_list_head;
-	struct ufs_clk_info *clki;
-	struct devfreq *devfreq;
-	int ret;
+अटल पूर्णांक ufshcd_devfreq_init(काष्ठा ufs_hba *hba)
+अणु
+	काष्ठा list_head *clk_list = &hba->clk_list_head;
+	काष्ठा ufs_clk_info *clki;
+	काष्ठा devfreq *devfreq;
+	पूर्णांक ret;
 
-	/* Skip devfreq if we don't have any clocks in the list */
-	if (list_empty(clk_list))
-		return 0;
+	/* Skip devfreq अगर we करोn't have any घड़ीs in the list */
+	अगर (list_empty(clk_list))
+		वापस 0;
 
-	clki = list_first_entry(clk_list, struct ufs_clk_info, list);
+	clki = list_first_entry(clk_list, काष्ठा ufs_clk_info, list);
 	dev_pm_opp_add(hba->dev, clki->min_freq, 0);
 	dev_pm_opp_add(hba->dev, clki->max_freq, 0);
 
@@ -1448,156 +1449,156 @@ static int ufshcd_devfreq_init(struct ufs_hba *hba)
 			&hba->vps->devfreq_profile,
 			DEVFREQ_GOV_SIMPLE_ONDEMAND,
 			&hba->vps->ondemand_data);
-	if (IS_ERR(devfreq)) {
+	अगर (IS_ERR(devfreq)) अणु
 		ret = PTR_ERR(devfreq);
 		dev_err(hba->dev, "Unable to register with devfreq %d\n", ret);
 
-		dev_pm_opp_remove(hba->dev, clki->min_freq);
-		dev_pm_opp_remove(hba->dev, clki->max_freq);
-		return ret;
-	}
+		dev_pm_opp_हटाओ(hba->dev, clki->min_freq);
+		dev_pm_opp_हटाओ(hba->dev, clki->max_freq);
+		वापस ret;
+	पूर्ण
 
 	hba->devfreq = devfreq;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void ufshcd_devfreq_remove(struct ufs_hba *hba)
-{
-	struct list_head *clk_list = &hba->clk_list_head;
-	struct ufs_clk_info *clki;
+अटल व्योम ufshcd_devfreq_हटाओ(काष्ठा ufs_hba *hba)
+अणु
+	काष्ठा list_head *clk_list = &hba->clk_list_head;
+	काष्ठा ufs_clk_info *clki;
 
-	if (!hba->devfreq)
-		return;
+	अगर (!hba->devfreq)
+		वापस;
 
-	devfreq_remove_device(hba->devfreq);
-	hba->devfreq = NULL;
+	devfreq_हटाओ_device(hba->devfreq);
+	hba->devfreq = शून्य;
 
-	clki = list_first_entry(clk_list, struct ufs_clk_info, list);
-	dev_pm_opp_remove(hba->dev, clki->min_freq);
-	dev_pm_opp_remove(hba->dev, clki->max_freq);
-}
+	clki = list_first_entry(clk_list, काष्ठा ufs_clk_info, list);
+	dev_pm_opp_हटाओ(hba->dev, clki->min_freq);
+	dev_pm_opp_हटाओ(hba->dev, clki->max_freq);
+पूर्ण
 
-static void __ufshcd_suspend_clkscaling(struct ufs_hba *hba)
-{
-	unsigned long flags;
+अटल व्योम __ufshcd_suspend_clkscaling(काष्ठा ufs_hba *hba)
+अणु
+	अचिन्हित दीर्घ flags;
 
 	devfreq_suspend_device(hba->devfreq);
 	spin_lock_irqsave(hba->host->host_lock, flags);
-	hba->clk_scaling.window_start_t = 0;
+	hba->clk_scaling.winकरोw_start_t = 0;
 	spin_unlock_irqrestore(hba->host->host_lock, flags);
-}
+पूर्ण
 
-static void ufshcd_suspend_clkscaling(struct ufs_hba *hba)
-{
-	unsigned long flags;
+अटल व्योम ufshcd_suspend_clkscaling(काष्ठा ufs_hba *hba)
+अणु
+	अचिन्हित दीर्घ flags;
 	bool suspend = false;
 
 	cancel_work_sync(&hba->clk_scaling.suspend_work);
 	cancel_work_sync(&hba->clk_scaling.resume_work);
 
 	spin_lock_irqsave(hba->host->host_lock, flags);
-	if (!hba->clk_scaling.is_suspended) {
+	अगर (!hba->clk_scaling.is_suspended) अणु
 		suspend = true;
 		hba->clk_scaling.is_suspended = true;
-	}
+	पूर्ण
 	spin_unlock_irqrestore(hba->host->host_lock, flags);
 
-	if (suspend)
+	अगर (suspend)
 		__ufshcd_suspend_clkscaling(hba);
-}
+पूर्ण
 
-static void ufshcd_resume_clkscaling(struct ufs_hba *hba)
-{
-	unsigned long flags;
+अटल व्योम ufshcd_resume_clkscaling(काष्ठा ufs_hba *hba)
+अणु
+	अचिन्हित दीर्घ flags;
 	bool resume = false;
 
 	spin_lock_irqsave(hba->host->host_lock, flags);
-	if (hba->clk_scaling.is_suspended) {
+	अगर (hba->clk_scaling.is_suspended) अणु
 		resume = true;
 		hba->clk_scaling.is_suspended = false;
-	}
+	पूर्ण
 	spin_unlock_irqrestore(hba->host->host_lock, flags);
 
-	if (resume)
+	अगर (resume)
 		devfreq_resume_device(hba->devfreq);
-}
+पूर्ण
 
-static ssize_t ufshcd_clkscale_enable_show(struct device *dev,
-		struct device_attribute *attr, char *buf)
-{
-	struct ufs_hba *hba = dev_get_drvdata(dev);
+अटल sमाप_प्रकार ufshcd_clkscale_enable_show(काष्ठा device *dev,
+		काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा ufs_hba *hba = dev_get_drvdata(dev);
 
-	return sysfs_emit(buf, "%d\n", hba->clk_scaling.is_enabled);
-}
+	वापस sysfs_emit(buf, "%d\n", hba->clk_scaling.is_enabled);
+पूर्ण
 
-static ssize_t ufshcd_clkscale_enable_store(struct device *dev,
-		struct device_attribute *attr, const char *buf, size_t count)
-{
-	struct ufs_hba *hba = dev_get_drvdata(dev);
+अटल sमाप_प्रकार ufshcd_clkscale_enable_store(काष्ठा device *dev,
+		काष्ठा device_attribute *attr, स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	काष्ठा ufs_hba *hba = dev_get_drvdata(dev);
 	u32 value;
-	int err = 0;
+	पूर्णांक err = 0;
 
-	if (kstrtou32(buf, 0, &value))
-		return -EINVAL;
+	अगर (kstrtou32(buf, 0, &value))
+		वापस -EINVAL;
 
-	down(&hba->host_sem);
-	if (!ufshcd_is_user_access_allowed(hba)) {
+	करोwn(&hba->host_sem);
+	अगर (!ufshcd_is_user_access_allowed(hba)) अणु
 		err = -EBUSY;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	value = !!value;
-	if (value == hba->clk_scaling.is_enabled)
-		goto out;
+	अगर (value == hba->clk_scaling.is_enabled)
+		जाओ out;
 
-	pm_runtime_get_sync(hba->dev);
+	pm_runसमय_get_sync(hba->dev);
 	ufshcd_hold(hba, false);
 
 	hba->clk_scaling.is_enabled = value;
 
-	if (value) {
+	अगर (value) अणु
 		ufshcd_resume_clkscaling(hba);
-	} else {
+	पूर्ण अन्यथा अणु
 		ufshcd_suspend_clkscaling(hba);
 		err = ufshcd_devfreq_scale(hba, true);
-		if (err)
+		अगर (err)
 			dev_err(hba->dev, "%s: failed to scale clocks up %d\n",
 					__func__, err);
-	}
+	पूर्ण
 
 	ufshcd_release(hba);
-	pm_runtime_put_sync(hba->dev);
+	pm_runसमय_put_sync(hba->dev);
 out:
 	up(&hba->host_sem);
-	return err ? err : count;
-}
+	वापस err ? err : count;
+पूर्ण
 
-static void ufshcd_init_clk_scaling_sysfs(struct ufs_hba *hba)
-{
+अटल व्योम ufshcd_init_clk_scaling_sysfs(काष्ठा ufs_hba *hba)
+अणु
 	hba->clk_scaling.enable_attr.show = ufshcd_clkscale_enable_show;
 	hba->clk_scaling.enable_attr.store = ufshcd_clkscale_enable_store;
 	sysfs_attr_init(&hba->clk_scaling.enable_attr.attr);
 	hba->clk_scaling.enable_attr.attr.name = "clkscale_enable";
 	hba->clk_scaling.enable_attr.attr.mode = 0644;
-	if (device_create_file(hba->dev, &hba->clk_scaling.enable_attr))
+	अगर (device_create_file(hba->dev, &hba->clk_scaling.enable_attr))
 		dev_err(hba->dev, "Failed to create sysfs for clkscale_enable\n");
-}
+पूर्ण
 
-static void ufshcd_remove_clk_scaling_sysfs(struct ufs_hba *hba)
-{
-	if (hba->clk_scaling.enable_attr.attr.name)
-		device_remove_file(hba->dev, &hba->clk_scaling.enable_attr);
-}
+अटल व्योम ufshcd_हटाओ_clk_scaling_sysfs(काष्ठा ufs_hba *hba)
+अणु
+	अगर (hba->clk_scaling.enable_attr.attr.name)
+		device_हटाओ_file(hba->dev, &hba->clk_scaling.enable_attr);
+पूर्ण
 
-static void ufshcd_init_clk_scaling(struct ufs_hba *hba)
-{
-	char wq_name[sizeof("ufs_clkscaling_00")];
+अटल व्योम ufshcd_init_clk_scaling(काष्ठा ufs_hba *hba)
+अणु
+	अक्षर wq_name[माप("ufs_clkscaling_00")];
 
-	if (!ufshcd_is_clkscaling_supported(hba))
-		return;
+	अगर (!ufshcd_is_clkscaling_supported(hba))
+		वापस;
 
-	if (!hba->clk_scaling.min_gear)
+	अगर (!hba->clk_scaling.min_gear)
 		hba->clk_scaling.min_gear = UFS_HS_G1;
 
 	INIT_WORK(&hba->clk_scaling.suspend_work,
@@ -1605,323 +1606,323 @@ static void ufshcd_init_clk_scaling(struct ufs_hba *hba)
 	INIT_WORK(&hba->clk_scaling.resume_work,
 		  ufshcd_clk_scaling_resume_work);
 
-	snprintf(wq_name, sizeof(wq_name), "ufs_clkscaling_%d",
+	snम_लिखो(wq_name, माप(wq_name), "ufs_clkscaling_%d",
 		 hba->host->host_no);
-	hba->clk_scaling.workq = create_singlethread_workqueue(wq_name);
+	hba->clk_scaling.workq = create_singlethपढ़ो_workqueue(wq_name);
 
 	hba->clk_scaling.is_initialized = true;
-}
+पूर्ण
 
-static void ufshcd_exit_clk_scaling(struct ufs_hba *hba)
-{
-	if (!hba->clk_scaling.is_initialized)
-		return;
+अटल व्योम ufshcd_निकास_clk_scaling(काष्ठा ufs_hba *hba)
+अणु
+	अगर (!hba->clk_scaling.is_initialized)
+		वापस;
 
-	ufshcd_remove_clk_scaling_sysfs(hba);
+	ufshcd_हटाओ_clk_scaling_sysfs(hba);
 	destroy_workqueue(hba->clk_scaling.workq);
-	ufshcd_devfreq_remove(hba);
+	ufshcd_devfreq_हटाओ(hba);
 	hba->clk_scaling.is_initialized = false;
-}
+पूर्ण
 
-static void ufshcd_ungate_work(struct work_struct *work)
-{
-	int ret;
-	unsigned long flags;
-	struct ufs_hba *hba = container_of(work, struct ufs_hba,
+अटल व्योम ufshcd_ungate_work(काष्ठा work_काष्ठा *work)
+अणु
+	पूर्णांक ret;
+	अचिन्हित दीर्घ flags;
+	काष्ठा ufs_hba *hba = container_of(work, काष्ठा ufs_hba,
 			clk_gating.ungate_work);
 
 	cancel_delayed_work_sync(&hba->clk_gating.gate_work);
 
 	spin_lock_irqsave(hba->host->host_lock, flags);
-	if (hba->clk_gating.state == CLKS_ON) {
+	अगर (hba->clk_gating.state == CLKS_ON) अणु
 		spin_unlock_irqrestore(hba->host->host_lock, flags);
-		goto unblock_reqs;
-	}
+		जाओ unblock_reqs;
+	पूर्ण
 
 	spin_unlock_irqrestore(hba->host->host_lock, flags);
 	ufshcd_hba_vreg_set_hpm(hba);
-	ufshcd_setup_clocks(hba, true);
+	ufshcd_setup_घड़ीs(hba, true);
 
 	ufshcd_enable_irq(hba);
 
 	/* Exit from hibern8 */
-	if (ufshcd_can_hibern8_during_gating(hba)) {
+	अगर (ufshcd_can_hibern8_during_gating(hba)) अणु
 		/* Prevent gating in this path */
 		hba->clk_gating.is_suspended = true;
-		if (ufshcd_is_link_hibern8(hba)) {
-			ret = ufshcd_uic_hibern8_exit(hba);
-			if (ret)
+		अगर (ufshcd_is_link_hibern8(hba)) अणु
+			ret = ufshcd_uic_hibern8_निकास(hba);
+			अगर (ret)
 				dev_err(hba->dev, "%s: hibern8 exit failed %d\n",
 					__func__, ret);
-			else
+			अन्यथा
 				ufshcd_set_link_active(hba);
-		}
+		पूर्ण
 		hba->clk_gating.is_suspended = false;
-	}
+	पूर्ण
 unblock_reqs:
 	ufshcd_scsi_unblock_requests(hba);
-}
+पूर्ण
 
 /**
- * ufshcd_hold - Enable clocks that were gated earlier due to ufshcd_release.
- * Also, exit from hibern8 mode and set the link as active.
+ * ufshcd_hold - Enable घड़ीs that were gated earlier due to ufshcd_release.
+ * Also, निकास from hibern8 mode and set the link as active.
  * @hba: per adapter instance
- * @async: This indicates whether caller should ungate clocks asynchronously.
+ * @async: This indicates whether caller should ungate घड़ीs asynchronously.
  */
-int ufshcd_hold(struct ufs_hba *hba, bool async)
-{
-	int rc = 0;
+पूर्णांक ufshcd_hold(काष्ठा ufs_hba *hba, bool async)
+अणु
+	पूर्णांक rc = 0;
 	bool flush_result;
-	unsigned long flags;
+	अचिन्हित दीर्घ flags;
 
-	if (!ufshcd_is_clkgating_allowed(hba))
-		goto out;
+	अगर (!ufshcd_is_clkgating_allowed(hba))
+		जाओ out;
 	spin_lock_irqsave(hba->host->host_lock, flags);
 	hba->clk_gating.active_reqs++;
 
 start:
-	switch (hba->clk_gating.state) {
-	case CLKS_ON:
+	चयन (hba->clk_gating.state) अणु
+	हाल CLKS_ON:
 		/*
-		 * Wait for the ungate work to complete if in progress.
-		 * Though the clocks may be in ON state, the link could
-		 * still be in hibner8 state if hibern8 is allowed
-		 * during clock gating.
-		 * Make sure we exit hibern8 state also in addition to
-		 * clocks being ON.
+		 * Wait क्रम the ungate work to complete अगर in progress.
+		 * Though the घड़ीs may be in ON state, the link could
+		 * still be in hibner8 state अगर hibern8 is allowed
+		 * during घड़ी gating.
+		 * Make sure we निकास hibern8 state also in addition to
+		 * घड़ीs being ON.
 		 */
-		if (ufshcd_can_hibern8_during_gating(hba) &&
-		    ufshcd_is_link_hibern8(hba)) {
-			if (async) {
+		अगर (ufshcd_can_hibern8_during_gating(hba) &&
+		    ufshcd_is_link_hibern8(hba)) अणु
+			अगर (async) अणु
 				rc = -EAGAIN;
 				hba->clk_gating.active_reqs--;
-				break;
-			}
+				अवरोध;
+			पूर्ण
 			spin_unlock_irqrestore(hba->host->host_lock, flags);
 			flush_result = flush_work(&hba->clk_gating.ungate_work);
-			if (hba->clk_gating.is_suspended && !flush_result)
-				goto out;
+			अगर (hba->clk_gating.is_suspended && !flush_result)
+				जाओ out;
 			spin_lock_irqsave(hba->host->host_lock, flags);
-			goto start;
-		}
-		break;
-	case REQ_CLKS_OFF:
-		if (cancel_delayed_work(&hba->clk_gating.gate_work)) {
+			जाओ start;
+		पूर्ण
+		अवरोध;
+	हाल REQ_CLKS_OFF:
+		अगर (cancel_delayed_work(&hba->clk_gating.gate_work)) अणु
 			hba->clk_gating.state = CLKS_ON;
 			trace_ufshcd_clk_gating(dev_name(hba->dev),
 						hba->clk_gating.state);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		/*
-		 * If we are here, it means gating work is either done or
+		 * If we are here, it means gating work is either करोne or
 		 * currently running. Hence, fall through to cancel gating
-		 * work and to enable clocks.
+		 * work and to enable घड़ीs.
 		 */
 		fallthrough;
-	case CLKS_OFF:
+	हाल CLKS_OFF:
 		hba->clk_gating.state = REQ_CLKS_ON;
 		trace_ufshcd_clk_gating(dev_name(hba->dev),
 					hba->clk_gating.state);
-		if (queue_work(hba->clk_gating.clk_gating_workq,
+		अगर (queue_work(hba->clk_gating.clk_gating_workq,
 			       &hba->clk_gating.ungate_work))
 			ufshcd_scsi_block_requests(hba);
 		/*
-		 * fall through to check if we should wait for this
-		 * work to be done or not.
+		 * fall through to check अगर we should रुको क्रम this
+		 * work to be करोne or not.
 		 */
 		fallthrough;
-	case REQ_CLKS_ON:
-		if (async) {
+	हाल REQ_CLKS_ON:
+		अगर (async) अणु
 			rc = -EAGAIN;
 			hba->clk_gating.active_reqs--;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		spin_unlock_irqrestore(hba->host->host_lock, flags);
 		flush_work(&hba->clk_gating.ungate_work);
-		/* Make sure state is CLKS_ON before returning */
+		/* Make sure state is CLKS_ON beक्रमe वापसing */
 		spin_lock_irqsave(hba->host->host_lock, flags);
-		goto start;
-	default:
+		जाओ start;
+	शेष:
 		dev_err(hba->dev, "%s: clk gating is in invalid state %d\n",
 				__func__, hba->clk_gating.state);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 	spin_unlock_irqrestore(hba->host->host_lock, flags);
 out:
-	return rc;
-}
+	वापस rc;
+पूर्ण
 EXPORT_SYMBOL_GPL(ufshcd_hold);
 
-static void ufshcd_gate_work(struct work_struct *work)
-{
-	struct ufs_hba *hba = container_of(work, struct ufs_hba,
+अटल व्योम ufshcd_gate_work(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा ufs_hba *hba = container_of(work, काष्ठा ufs_hba,
 			clk_gating.gate_work.work);
-	unsigned long flags;
-	int ret;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक ret;
 
 	spin_lock_irqsave(hba->host->host_lock, flags);
 	/*
-	 * In case you are here to cancel this work the gating state
-	 * would be marked as REQ_CLKS_ON. In this case save time by
-	 * skipping the gating work and exit after changing the clock
+	 * In हाल you are here to cancel this work the gating state
+	 * would be marked as REQ_CLKS_ON. In this हाल save समय by
+	 * skipping the gating work and निकास after changing the घड़ी
 	 * state to CLKS_ON.
 	 */
-	if (hba->clk_gating.is_suspended ||
-		(hba->clk_gating.state != REQ_CLKS_OFF)) {
+	अगर (hba->clk_gating.is_suspended ||
+		(hba->clk_gating.state != REQ_CLKS_OFF)) अणु
 		hba->clk_gating.state = CLKS_ON;
 		trace_ufshcd_clk_gating(dev_name(hba->dev),
 					hba->clk_gating.state);
-		goto rel_lock;
-	}
+		जाओ rel_lock;
+	पूर्ण
 
-	if (hba->clk_gating.active_reqs
+	अगर (hba->clk_gating.active_reqs
 		|| hba->ufshcd_state != UFSHCD_STATE_OPERATIONAL
 		|| ufshcd_any_tag_in_use(hba) || hba->outstanding_tasks
-		|| hba->active_uic_cmd || hba->uic_async_done)
-		goto rel_lock;
+		|| hba->active_uic_cmd || hba->uic_async_करोne)
+		जाओ rel_lock;
 
 	spin_unlock_irqrestore(hba->host->host_lock, flags);
 
-	/* put the link into hibern8 mode before turning off clocks */
-	if (ufshcd_can_hibern8_during_gating(hba)) {
+	/* put the link पूर्णांकo hibern8 mode beक्रमe turning off घड़ीs */
+	अगर (ufshcd_can_hibern8_during_gating(hba)) अणु
 		ret = ufshcd_uic_hibern8_enter(hba);
-		if (ret) {
+		अगर (ret) अणु
 			hba->clk_gating.state = CLKS_ON;
 			dev_err(hba->dev, "%s: hibern8 enter failed %d\n",
 					__func__, ret);
 			trace_ufshcd_clk_gating(dev_name(hba->dev),
 						hba->clk_gating.state);
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 		ufshcd_set_link_hibern8(hba);
-	}
+	पूर्ण
 
 	ufshcd_disable_irq(hba);
 
-	ufshcd_setup_clocks(hba, false);
+	ufshcd_setup_घड़ीs(hba, false);
 
-	/* Put the host controller in low power mode if possible */
+	/* Put the host controller in low घातer mode अगर possible */
 	ufshcd_hba_vreg_set_lpm(hba);
 	/*
-	 * In case you are here to cancel this work the gating state
-	 * would be marked as REQ_CLKS_ON. In this case keep the state
-	 * as REQ_CLKS_ON which would anyway imply that clocks are off
-	 * and a request to turn them on is pending. By doing this way,
+	 * In हाल you are here to cancel this work the gating state
+	 * would be marked as REQ_CLKS_ON. In this हाल keep the state
+	 * as REQ_CLKS_ON which would anyway imply that घड़ीs are off
+	 * and a request to turn them on is pending. By करोing this way,
 	 * we keep the state machine in tact and this would ultimately
-	 * prevent from doing cancel work multiple times when there are
-	 * new requests arriving before the current cancel work is done.
+	 * prevent from करोing cancel work multiple बार when there are
+	 * new requests arriving beक्रमe the current cancel work is करोne.
 	 */
 	spin_lock_irqsave(hba->host->host_lock, flags);
-	if (hba->clk_gating.state == REQ_CLKS_OFF) {
+	अगर (hba->clk_gating.state == REQ_CLKS_OFF) अणु
 		hba->clk_gating.state = CLKS_OFF;
 		trace_ufshcd_clk_gating(dev_name(hba->dev),
 					hba->clk_gating.state);
-	}
+	पूर्ण
 rel_lock:
 	spin_unlock_irqrestore(hba->host->host_lock, flags);
 out:
-	return;
-}
+	वापस;
+पूर्ण
 
-/* host lock must be held before calling this variant */
-static void __ufshcd_release(struct ufs_hba *hba)
-{
-	if (!ufshcd_is_clkgating_allowed(hba))
-		return;
+/* host lock must be held beक्रमe calling this variant */
+अटल व्योम __ufshcd_release(काष्ठा ufs_hba *hba)
+अणु
+	अगर (!ufshcd_is_clkgating_allowed(hba))
+		वापस;
 
 	hba->clk_gating.active_reqs--;
 
-	if (hba->clk_gating.active_reqs || hba->clk_gating.is_suspended ||
+	अगर (hba->clk_gating.active_reqs || hba->clk_gating.is_suspended ||
 	    hba->ufshcd_state != UFSHCD_STATE_OPERATIONAL ||
 	    hba->outstanding_tasks ||
-	    hba->active_uic_cmd || hba->uic_async_done ||
+	    hba->active_uic_cmd || hba->uic_async_करोne ||
 	    hba->clk_gating.state == CLKS_OFF)
-		return;
+		वापस;
 
 	hba->clk_gating.state = REQ_CLKS_OFF;
 	trace_ufshcd_clk_gating(dev_name(hba->dev), hba->clk_gating.state);
 	queue_delayed_work(hba->clk_gating.clk_gating_workq,
 			   &hba->clk_gating.gate_work,
-			   msecs_to_jiffies(hba->clk_gating.delay_ms));
-}
+			   msecs_to_jअगरfies(hba->clk_gating.delay_ms));
+पूर्ण
 
-void ufshcd_release(struct ufs_hba *hba)
-{
-	unsigned long flags;
+व्योम ufshcd_release(काष्ठा ufs_hba *hba)
+अणु
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(hba->host->host_lock, flags);
 	__ufshcd_release(hba);
 	spin_unlock_irqrestore(hba->host->host_lock, flags);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(ufshcd_release);
 
-static ssize_t ufshcd_clkgate_delay_show(struct device *dev,
-		struct device_attribute *attr, char *buf)
-{
-	struct ufs_hba *hba = dev_get_drvdata(dev);
+अटल sमाप_प्रकार ufshcd_clkgate_delay_show(काष्ठा device *dev,
+		काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा ufs_hba *hba = dev_get_drvdata(dev);
 
-	return sysfs_emit(buf, "%lu\n", hba->clk_gating.delay_ms);
-}
+	वापस sysfs_emit(buf, "%lu\n", hba->clk_gating.delay_ms);
+पूर्ण
 
-static ssize_t ufshcd_clkgate_delay_store(struct device *dev,
-		struct device_attribute *attr, const char *buf, size_t count)
-{
-	struct ufs_hba *hba = dev_get_drvdata(dev);
-	unsigned long flags, value;
+अटल sमाप_प्रकार ufshcd_clkgate_delay_store(काष्ठा device *dev,
+		काष्ठा device_attribute *attr, स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	काष्ठा ufs_hba *hba = dev_get_drvdata(dev);
+	अचिन्हित दीर्घ flags, value;
 
-	if (kstrtoul(buf, 0, &value))
-		return -EINVAL;
+	अगर (kम_से_अदीर्घ(buf, 0, &value))
+		वापस -EINVAL;
 
 	spin_lock_irqsave(hba->host->host_lock, flags);
 	hba->clk_gating.delay_ms = value;
 	spin_unlock_irqrestore(hba->host->host_lock, flags);
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static ssize_t ufshcd_clkgate_enable_show(struct device *dev,
-		struct device_attribute *attr, char *buf)
-{
-	struct ufs_hba *hba = dev_get_drvdata(dev);
+अटल sमाप_प्रकार ufshcd_clkgate_enable_show(काष्ठा device *dev,
+		काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा ufs_hba *hba = dev_get_drvdata(dev);
 
-	return sysfs_emit(buf, "%d\n", hba->clk_gating.is_enabled);
-}
+	वापस sysfs_emit(buf, "%d\n", hba->clk_gating.is_enabled);
+पूर्ण
 
-static ssize_t ufshcd_clkgate_enable_store(struct device *dev,
-		struct device_attribute *attr, const char *buf, size_t count)
-{
-	struct ufs_hba *hba = dev_get_drvdata(dev);
-	unsigned long flags;
+अटल sमाप_प्रकार ufshcd_clkgate_enable_store(काष्ठा device *dev,
+		काष्ठा device_attribute *attr, स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	काष्ठा ufs_hba *hba = dev_get_drvdata(dev);
+	अचिन्हित दीर्घ flags;
 	u32 value;
 
-	if (kstrtou32(buf, 0, &value))
-		return -EINVAL;
+	अगर (kstrtou32(buf, 0, &value))
+		वापस -EINVAL;
 
 	value = !!value;
 
 	spin_lock_irqsave(hba->host->host_lock, flags);
-	if (value == hba->clk_gating.is_enabled)
-		goto out;
+	अगर (value == hba->clk_gating.is_enabled)
+		जाओ out;
 
-	if (value)
+	अगर (value)
 		__ufshcd_release(hba);
-	else
+	अन्यथा
 		hba->clk_gating.active_reqs++;
 
 	hba->clk_gating.is_enabled = value;
 out:
 	spin_unlock_irqrestore(hba->host->host_lock, flags);
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static void ufshcd_init_clk_gating_sysfs(struct ufs_hba *hba)
-{
+अटल व्योम ufshcd_init_clk_gating_sysfs(काष्ठा ufs_hba *hba)
+अणु
 	hba->clk_gating.delay_attr.show = ufshcd_clkgate_delay_show;
 	hba->clk_gating.delay_attr.store = ufshcd_clkgate_delay_store;
 	sysfs_attr_init(&hba->clk_gating.delay_attr.attr);
 	hba->clk_gating.delay_attr.attr.name = "clkgate_delay_ms";
 	hba->clk_gating.delay_attr.attr.mode = 0644;
-	if (device_create_file(hba->dev, &hba->clk_gating.delay_attr))
+	अगर (device_create_file(hba->dev, &hba->clk_gating.delay_attr))
 		dev_err(hba->dev, "Failed to create sysfs for clkgate_delay\n");
 
 	hba->clk_gating.enable_attr.show = ufshcd_clkgate_enable_show;
@@ -1929,24 +1930,24 @@ static void ufshcd_init_clk_gating_sysfs(struct ufs_hba *hba)
 	sysfs_attr_init(&hba->clk_gating.enable_attr.attr);
 	hba->clk_gating.enable_attr.attr.name = "clkgate_enable";
 	hba->clk_gating.enable_attr.attr.mode = 0644;
-	if (device_create_file(hba->dev, &hba->clk_gating.enable_attr))
+	अगर (device_create_file(hba->dev, &hba->clk_gating.enable_attr))
 		dev_err(hba->dev, "Failed to create sysfs for clkgate_enable\n");
-}
+पूर्ण
 
-static void ufshcd_remove_clk_gating_sysfs(struct ufs_hba *hba)
-{
-	if (hba->clk_gating.delay_attr.attr.name)
-		device_remove_file(hba->dev, &hba->clk_gating.delay_attr);
-	if (hba->clk_gating.enable_attr.attr.name)
-		device_remove_file(hba->dev, &hba->clk_gating.enable_attr);
-}
+अटल व्योम ufshcd_हटाओ_clk_gating_sysfs(काष्ठा ufs_hba *hba)
+अणु
+	अगर (hba->clk_gating.delay_attr.attr.name)
+		device_हटाओ_file(hba->dev, &hba->clk_gating.delay_attr);
+	अगर (hba->clk_gating.enable_attr.attr.name)
+		device_हटाओ_file(hba->dev, &hba->clk_gating.enable_attr);
+पूर्ण
 
-static void ufshcd_init_clk_gating(struct ufs_hba *hba)
-{
-	char wq_name[sizeof("ufs_clk_gating_00")];
+अटल व्योम ufshcd_init_clk_gating(काष्ठा ufs_hba *hba)
+अणु
+	अक्षर wq_name[माप("ufs_clk_gating_00")];
 
-	if (!ufshcd_is_clkgating_allowed(hba))
-		return;
+	अगर (!ufshcd_is_clkgating_allowed(hba))
+		वापस;
 
 	hba->clk_gating.state = CLKS_ON;
 
@@ -1954,7 +1955,7 @@ static void ufshcd_init_clk_gating(struct ufs_hba *hba)
 	INIT_DELAYED_WORK(&hba->clk_gating.gate_work, ufshcd_gate_work);
 	INIT_WORK(&hba->clk_gating.ungate_work, ufshcd_ungate_work);
 
-	snprintf(wq_name, ARRAY_SIZE(wq_name), "ufs_clk_gating_%d",
+	snम_लिखो(wq_name, ARRAY_SIZE(wq_name), "ufs_clk_gating_%d",
 		 hba->host->host_no);
 	hba->clk_gating.clk_gating_workq = alloc_ordered_workqueue(wq_name,
 					WQ_MEM_RECLAIM | WQ_HIGHPRI);
@@ -1963,120 +1964,120 @@ static void ufshcd_init_clk_gating(struct ufs_hba *hba)
 
 	hba->clk_gating.is_enabled = true;
 	hba->clk_gating.is_initialized = true;
-}
+पूर्ण
 
-static void ufshcd_exit_clk_gating(struct ufs_hba *hba)
-{
-	if (!hba->clk_gating.is_initialized)
-		return;
-	ufshcd_remove_clk_gating_sysfs(hba);
+अटल व्योम ufshcd_निकास_clk_gating(काष्ठा ufs_hba *hba)
+अणु
+	अगर (!hba->clk_gating.is_initialized)
+		वापस;
+	ufshcd_हटाओ_clk_gating_sysfs(hba);
 	cancel_work_sync(&hba->clk_gating.ungate_work);
 	cancel_delayed_work_sync(&hba->clk_gating.gate_work);
 	destroy_workqueue(hba->clk_gating.clk_gating_workq);
 	hba->clk_gating.is_initialized = false;
-}
+पूर्ण
 
 /* Must be called with host lock acquired */
-static void ufshcd_clk_scaling_start_busy(struct ufs_hba *hba)
-{
+अटल व्योम ufshcd_clk_scaling_start_busy(काष्ठा ufs_hba *hba)
+अणु
 	bool queue_resume_work = false;
-	ktime_t curr_t = ktime_get();
+	kसमय_प्रकार curr_t = kसमय_get();
 
-	if (!ufshcd_is_clkscaling_supported(hba))
-		return;
+	अगर (!ufshcd_is_clkscaling_supported(hba))
+		वापस;
 
-	if (!hba->clk_scaling.active_reqs++)
+	अगर (!hba->clk_scaling.active_reqs++)
 		queue_resume_work = true;
 
-	if (!hba->clk_scaling.is_enabled || hba->pm_op_in_progress)
-		return;
+	अगर (!hba->clk_scaling.is_enabled || hba->pm_op_in_progress)
+		वापस;
 
-	if (queue_resume_work)
+	अगर (queue_resume_work)
 		queue_work(hba->clk_scaling.workq,
 			   &hba->clk_scaling.resume_work);
 
-	if (!hba->clk_scaling.window_start_t) {
-		hba->clk_scaling.window_start_t = curr_t;
+	अगर (!hba->clk_scaling.winकरोw_start_t) अणु
+		hba->clk_scaling.winकरोw_start_t = curr_t;
 		hba->clk_scaling.tot_busy_t = 0;
 		hba->clk_scaling.is_busy_started = false;
-	}
+	पूर्ण
 
-	if (!hba->clk_scaling.is_busy_started) {
+	अगर (!hba->clk_scaling.is_busy_started) अणु
 		hba->clk_scaling.busy_start_t = curr_t;
 		hba->clk_scaling.is_busy_started = true;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void ufshcd_clk_scaling_update_busy(struct ufs_hba *hba)
-{
-	struct ufs_clk_scaling *scaling = &hba->clk_scaling;
+अटल व्योम ufshcd_clk_scaling_update_busy(काष्ठा ufs_hba *hba)
+अणु
+	काष्ठा ufs_clk_scaling *scaling = &hba->clk_scaling;
 
-	if (!ufshcd_is_clkscaling_supported(hba))
-		return;
+	अगर (!ufshcd_is_clkscaling_supported(hba))
+		वापस;
 
-	if (!hba->outstanding_reqs && scaling->is_busy_started) {
-		scaling->tot_busy_t += ktime_to_us(ktime_sub(ktime_get(),
+	अगर (!hba->outstanding_reqs && scaling->is_busy_started) अणु
+		scaling->tot_busy_t += kसमय_प्रकारo_us(kसमय_sub(kसमय_get(),
 					scaling->busy_start_t));
 		scaling->busy_start_t = 0;
 		scaling->is_busy_started = false;
-	}
-}
+	पूर्ण
+पूर्ण
 /**
  * ufshcd_send_command - Send SCSI or device management commands
  * @hba: per adapter instance
  * @task_tag: Task tag of the command
  */
-static inline
-void ufshcd_send_command(struct ufs_hba *hba, unsigned int task_tag)
-{
-	struct ufshcd_lrb *lrbp = &hba->lrb[task_tag];
+अटल अंतरभूत
+व्योम ufshcd_send_command(काष्ठा ufs_hba *hba, अचिन्हित पूर्णांक task_tag)
+अणु
+	काष्ठा ufshcd_lrb *lrbp = &hba->lrb[task_tag];
 
-	lrbp->issue_time_stamp = ktime_get();
-	lrbp->compl_time_stamp = ktime_set(0, 0);
+	lrbp->issue_समय_stamp = kसमय_get();
+	lrbp->compl_समय_stamp = kसमय_set(0, 0);
 	ufshcd_vops_setup_xfer_req(hba, task_tag, (lrbp->cmd ? true : false));
 	ufshcd_add_command_trace(hba, task_tag, UFS_CMD_SEND);
 	ufshcd_clk_scaling_start_busy(hba);
 	__set_bit(task_tag, &hba->outstanding_reqs);
-	ufshcd_writel(hba, 1 << task_tag, REG_UTP_TRANSFER_REQ_DOOR_BELL);
-	/* Make sure that doorbell is committed immediately */
+	ufshcd_ग_लिखोl(hba, 1 << task_tag, REG_UTP_TRANSFER_REQ_DOOR_BELL);
+	/* Make sure that करोorbell is committed immediately */
 	wmb();
-}
+पूर्ण
 
 /**
- * ufshcd_copy_sense_data - Copy sense data in case of check condition
- * @lrbp: pointer to local reference block
+ * ufshcd_copy_sense_data - Copy sense data in हाल of check condition
+ * @lrbp: poपूर्णांकer to local reference block
  */
-static inline void ufshcd_copy_sense_data(struct ufshcd_lrb *lrbp)
-{
-	int len;
-	if (lrbp->sense_buffer &&
-	    ufshcd_get_rsp_upiu_data_seg_len(lrbp->ucd_rsp_ptr)) {
-		int len_to_copy;
+अटल अंतरभूत व्योम ufshcd_copy_sense_data(काष्ठा ufshcd_lrb *lrbp)
+अणु
+	पूर्णांक len;
+	अगर (lrbp->sense_buffer &&
+	    ufshcd_get_rsp_upiu_data_seg_len(lrbp->ucd_rsp_ptr)) अणु
+		पूर्णांक len_to_copy;
 
 		len = be16_to_cpu(lrbp->ucd_rsp_ptr->sr.sense_data_len);
-		len_to_copy = min_t(int, UFS_SENSE_SIZE, len);
+		len_to_copy = min_t(पूर्णांक, UFS_SENSE_SIZE, len);
 
-		memcpy(lrbp->sense_buffer, lrbp->ucd_rsp_ptr->sr.sense_data,
+		स_नकल(lrbp->sense_buffer, lrbp->ucd_rsp_ptr->sr.sense_data,
 		       len_to_copy);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
  * ufshcd_copy_query_response() - Copy the Query Response and the data
  * descriptor
  * @hba: per adapter instance
- * @lrbp: pointer to local reference block
+ * @lrbp: poपूर्णांकer to local reference block
  */
-static
-int ufshcd_copy_query_response(struct ufs_hba *hba, struct ufshcd_lrb *lrbp)
-{
-	struct ufs_query_res *query_res = &hba->dev_cmd.query.response;
+अटल
+पूर्णांक ufshcd_copy_query_response(काष्ठा ufs_hba *hba, काष्ठा ufshcd_lrb *lrbp)
+अणु
+	काष्ठा ufs_query_res *query_res = &hba->dev_cmd.query.response;
 
-	memcpy(&query_res->upiu_res, &lrbp->ucd_rsp_ptr->qr, QUERY_OSF_SIZE);
+	स_नकल(&query_res->upiu_res, &lrbp->ucd_rsp_ptr->qr, QUERY_OSF_SIZE);
 
 	/* Get the descriptor */
-	if (hba->dev_cmd.query.descriptor &&
-	    lrbp->ucd_rsp_ptr->qr.opcode == UPIU_QUERY_OPCODE_READ_DESC) {
+	अगर (hba->dev_cmd.query.descriptor &&
+	    lrbp->ucd_rsp_ptr->qr.opcode == UPIU_QUERY_OPCODE_READ_DESC) अणु
 		u8 *descp = (u8 *)lrbp->ucd_rsp_ptr +
 				GENERAL_UPIU_REQUEST_SIZE;
 		u16 resp_len;
@@ -2087,18 +2088,18 @@ int ufshcd_copy_query_response(struct ufs_hba *hba, struct ufshcd_lrb *lrbp)
 						MASK_QUERY_DATA_SEG_LEN;
 		buf_len = be16_to_cpu(
 				hba->dev_cmd.query.request.upiu_req.length);
-		if (likely(buf_len >= resp_len)) {
-			memcpy(hba->dev_cmd.query.descriptor, descp, resp_len);
-		} else {
+		अगर (likely(buf_len >= resp_len)) अणु
+			स_नकल(hba->dev_cmd.query.descriptor, descp, resp_len);
+		पूर्ण अन्यथा अणु
 			dev_warn(hba->dev,
 				 "%s: rsp size %d is bigger than buffer size %d",
 				 __func__, resp_len, buf_len);
-			return -EINVAL;
-		}
-	}
+			वापस -EINVAL;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * ufshcd_hba_capabilities - Read controller capabilities
@@ -2106,50 +2107,50 @@ int ufshcd_copy_query_response(struct ufs_hba *hba, struct ufshcd_lrb *lrbp)
  *
  * Return: 0 on success, negative on error.
  */
-static inline int ufshcd_hba_capabilities(struct ufs_hba *hba)
-{
-	int err;
+अटल अंतरभूत पूर्णांक ufshcd_hba_capabilities(काष्ठा ufs_hba *hba)
+अणु
+	पूर्णांक err;
 
-	hba->capabilities = ufshcd_readl(hba, REG_CONTROLLER_CAPABILITIES);
+	hba->capabilities = ufshcd_पढ़ोl(hba, REG_CONTROLLER_CAPABILITIES);
 
-	/* nutrs and nutmrs are 0 based values */
+	/* nutrs and nuपंचांगrs are 0 based values */
 	hba->nutrs = (hba->capabilities & MASK_TRANSFER_REQUESTS_SLOTS) + 1;
-	hba->nutmrs =
+	hba->nuपंचांगrs =
 	((hba->capabilities & MASK_TASK_MANAGEMENT_REQUEST_SLOTS) >> 16) + 1;
 
 	/* Read crypto capabilities */
 	err = ufshcd_hba_init_crypto_capabilities(hba);
-	if (err)
+	अगर (err)
 		dev_err(hba->dev, "crypto setup failed\n");
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /**
- * ufshcd_ready_for_uic_cmd - Check if controller is ready
+ * ufshcd_पढ़ोy_क्रम_uic_cmd - Check अगर controller is पढ़ोy
  *                            to accept UIC commands
  * @hba: per adapter instance
- * Return true on success, else false
+ * Return true on success, अन्यथा false
  */
-static inline bool ufshcd_ready_for_uic_cmd(struct ufs_hba *hba)
-{
-	if (ufshcd_readl(hba, REG_CONTROLLER_STATUS) & UIC_COMMAND_READY)
-		return true;
-	else
-		return false;
-}
+अटल अंतरभूत bool ufshcd_पढ़ोy_क्रम_uic_cmd(काष्ठा ufs_hba *hba)
+अणु
+	अगर (ufshcd_पढ़ोl(hba, REG_CONTROLLER_STATUS) & UIC_COMMAND_READY)
+		वापस true;
+	अन्यथा
+		वापस false;
+पूर्ण
 
 /**
- * ufshcd_get_upmcrs - Get the power mode change request status
- * @hba: Pointer to adapter instance
+ * ufshcd_get_upmcrs - Get the घातer mode change request status
+ * @hba: Poपूर्णांकer to adapter instance
  *
- * This function gets the UPMCRS field of HCS register
+ * This function माला_लो the UPMCRS field of HCS रेजिस्टर
  * Returns value of UPMCRS field
  */
-static inline u8 ufshcd_get_upmcrs(struct ufs_hba *hba)
-{
-	return (ufshcd_readl(hba, REG_CONTROLLER_STATUS) >> 8) & 0x7;
-}
+अटल अंतरभूत u8 ufshcd_get_upmcrs(काष्ठा ufs_hba *hba)
+अणु
+	वापस (ufshcd_पढ़ोl(hba, REG_CONTROLLER_STATUS) >> 8) & 0x7;
+पूर्ण
 
 /**
  * ufshcd_dispatch_uic_cmd - Dispatch UIC commands to unipro layers
@@ -2158,152 +2159,152 @@ static inline u8 ufshcd_get_upmcrs(struct ufs_hba *hba)
  *
  * Mutex must be held.
  */
-static inline void
-ufshcd_dispatch_uic_cmd(struct ufs_hba *hba, struct uic_command *uic_cmd)
-{
+अटल अंतरभूत व्योम
+ufshcd_dispatch_uic_cmd(काष्ठा ufs_hba *hba, काष्ठा uic_command *uic_cmd)
+अणु
 	WARN_ON(hba->active_uic_cmd);
 
 	hba->active_uic_cmd = uic_cmd;
 
 	/* Write Args */
-	ufshcd_writel(hba, uic_cmd->argument1, REG_UIC_COMMAND_ARG_1);
-	ufshcd_writel(hba, uic_cmd->argument2, REG_UIC_COMMAND_ARG_2);
-	ufshcd_writel(hba, uic_cmd->argument3, REG_UIC_COMMAND_ARG_3);
+	ufshcd_ग_लिखोl(hba, uic_cmd->argument1, REG_UIC_COMMAND_ARG_1);
+	ufshcd_ग_लिखोl(hba, uic_cmd->argument2, REG_UIC_COMMAND_ARG_2);
+	ufshcd_ग_लिखोl(hba, uic_cmd->argument3, REG_UIC_COMMAND_ARG_3);
 
 	ufshcd_add_uic_command_trace(hba, uic_cmd, UFS_CMD_SEND);
 
 	/* Write UIC Cmd */
-	ufshcd_writel(hba, uic_cmd->command & COMMAND_OPCODE_MASK,
+	ufshcd_ग_लिखोl(hba, uic_cmd->command & COMMAND_OPCODE_MASK,
 		      REG_UIC_COMMAND);
-}
+पूर्ण
 
 /**
- * ufshcd_wait_for_uic_cmd - Wait complectioin of UIC command
+ * ufshcd_रुको_क्रम_uic_cmd - Wait complectioin of UIC command
  * @hba: per adapter instance
  * @uic_cmd: UIC command
  *
  * Must be called with mutex held.
- * Returns 0 only if success.
+ * Returns 0 only अगर success.
  */
-static int
-ufshcd_wait_for_uic_cmd(struct ufs_hba *hba, struct uic_command *uic_cmd)
-{
-	int ret;
-	unsigned long flags;
+अटल पूर्णांक
+ufshcd_रुको_क्रम_uic_cmd(काष्ठा ufs_hba *hba, काष्ठा uic_command *uic_cmd)
+अणु
+	पूर्णांक ret;
+	अचिन्हित दीर्घ flags;
 
-	if (wait_for_completion_timeout(&uic_cmd->done,
-					msecs_to_jiffies(UIC_CMD_TIMEOUT))) {
+	अगर (रुको_क्रम_completion_समयout(&uic_cmd->करोne,
+					msecs_to_jअगरfies(UIC_CMD_TIMEOUT))) अणु
 		ret = uic_cmd->argument2 & MASK_UIC_COMMAND_RESULT;
-	} else {
+	पूर्ण अन्यथा अणु
 		ret = -ETIMEDOUT;
 		dev_err(hba->dev,
 			"uic cmd 0x%x with arg3 0x%x completion timeout\n",
 			uic_cmd->command, uic_cmd->argument3);
 
-		if (!uic_cmd->cmd_active) {
+		अगर (!uic_cmd->cmd_active) अणु
 			dev_err(hba->dev, "%s: UIC cmd has been completed, return the result\n",
 				__func__);
 			ret = uic_cmd->argument2 & MASK_UIC_COMMAND_RESULT;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	spin_lock_irqsave(hba->host->host_lock, flags);
-	hba->active_uic_cmd = NULL;
+	hba->active_uic_cmd = शून्य;
 	spin_unlock_irqrestore(hba->host->host_lock, flags);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
  * __ufshcd_send_uic_cmd - Send UIC commands and retrieve the result
  * @hba: per adapter instance
  * @uic_cmd: UIC command
- * @completion: initialize the completion only if this is set to true
+ * @completion: initialize the completion only अगर this is set to true
  *
  * Identical to ufshcd_send_uic_cmd() expect mutex. Must be called
  * with mutex held and host_lock locked.
- * Returns 0 only if success.
+ * Returns 0 only अगर success.
  */
-static int
-__ufshcd_send_uic_cmd(struct ufs_hba *hba, struct uic_command *uic_cmd,
+अटल पूर्णांक
+__ufshcd_send_uic_cmd(काष्ठा ufs_hba *hba, काष्ठा uic_command *uic_cmd,
 		      bool completion)
-{
-	if (!ufshcd_ready_for_uic_cmd(hba)) {
+अणु
+	अगर (!ufshcd_पढ़ोy_क्रम_uic_cmd(hba)) अणु
 		dev_err(hba->dev,
 			"Controller not ready to accept UIC commands\n");
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
-	if (completion)
-		init_completion(&uic_cmd->done);
+	अगर (completion)
+		init_completion(&uic_cmd->करोne);
 
 	uic_cmd->cmd_active = 1;
 	ufshcd_dispatch_uic_cmd(hba, uic_cmd);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * ufshcd_send_uic_cmd - Send UIC commands and retrieve the result
  * @hba: per adapter instance
  * @uic_cmd: UIC command
  *
- * Returns 0 only if success.
+ * Returns 0 only अगर success.
  */
-int ufshcd_send_uic_cmd(struct ufs_hba *hba, struct uic_command *uic_cmd)
-{
-	int ret;
-	unsigned long flags;
+पूर्णांक ufshcd_send_uic_cmd(काष्ठा ufs_hba *hba, काष्ठा uic_command *uic_cmd)
+अणु
+	पूर्णांक ret;
+	अचिन्हित दीर्घ flags;
 
 	ufshcd_hold(hba, false);
 	mutex_lock(&hba->uic_cmd_mutex);
-	ufshcd_add_delay_before_dme_cmd(hba);
+	ufshcd_add_delay_beक्रमe_dme_cmd(hba);
 
 	spin_lock_irqsave(hba->host->host_lock, flags);
 	ret = __ufshcd_send_uic_cmd(hba, uic_cmd, true);
 	spin_unlock_irqrestore(hba->host->host_lock, flags);
-	if (!ret)
-		ret = ufshcd_wait_for_uic_cmd(hba, uic_cmd);
+	अगर (!ret)
+		ret = ufshcd_रुको_क्रम_uic_cmd(hba, uic_cmd);
 
 	mutex_unlock(&hba->uic_cmd_mutex);
 
 	ufshcd_release(hba);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
  * ufshcd_map_sg - Map scatter-gather list to prdt
  * @hba: per adapter instance
- * @lrbp: pointer to local reference block
+ * @lrbp: poपूर्णांकer to local reference block
  *
- * Returns 0 in case of success, non-zero value in case of failure
+ * Returns 0 in हाल of success, non-zero value in हाल of failure
  */
-static int ufshcd_map_sg(struct ufs_hba *hba, struct ufshcd_lrb *lrbp)
-{
-	struct ufshcd_sg_entry *prd_table;
-	struct scatterlist *sg;
-	struct scsi_cmnd *cmd;
-	int sg_segments;
-	int i;
+अटल पूर्णांक ufshcd_map_sg(काष्ठा ufs_hba *hba, काष्ठा ufshcd_lrb *lrbp)
+अणु
+	काष्ठा ufshcd_sg_entry *prd_table;
+	काष्ठा scatterlist *sg;
+	काष्ठा scsi_cmnd *cmd;
+	पूर्णांक sg_segments;
+	पूर्णांक i;
 
 	cmd = lrbp->cmd;
 	sg_segments = scsi_dma_map(cmd);
-	if (sg_segments < 0)
-		return sg_segments;
+	अगर (sg_segments < 0)
+		वापस sg_segments;
 
-	if (sg_segments) {
+	अगर (sg_segments) अणु
 
-		if (hba->quirks & UFSHCD_QUIRK_PRDT_BYTE_GRAN)
+		अगर (hba->quirks & UFSHCD_QUIRK_PRDT_BYTE_GRAN)
 			lrbp->utr_descriptor_ptr->prd_table_length =
 				cpu_to_le16((sg_segments *
-					sizeof(struct ufshcd_sg_entry)));
-		else
+					माप(काष्ठा ufshcd_sg_entry)));
+		अन्यथा
 			lrbp->utr_descriptor_ptr->prd_table_length =
 				cpu_to_le16((u16) (sg_segments));
 
-		prd_table = (struct ufshcd_sg_entry *)lrbp->ucd_prdt_ptr;
+		prd_table = (काष्ठा ufshcd_sg_entry *)lrbp->ucd_prdt_ptr;
 
-		scsi_for_each_sg(cmd, sg, sg_segments, i) {
+		scsi_क्रम_each_sg(cmd, sg, sg_segments, i) अणु
 			prd_table[i].size  =
 				cpu_to_le32(((u32) sg_dma_len(sg))-1);
 			prd_table[i].base_addr =
@@ -2311,86 +2312,86 @@ static int ufshcd_map_sg(struct ufs_hba *hba, struct ufshcd_lrb *lrbp)
 			prd_table[i].upper_addr =
 				cpu_to_le32(upper_32_bits(sg->dma_address));
 			prd_table[i].reserved = 0;
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		lrbp->utr_descriptor_ptr->prd_table_length = 0;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * ufshcd_enable_intr - enable interrupts
+ * ufshcd_enable_पूर्णांकr - enable पूर्णांकerrupts
  * @hba: per adapter instance
- * @intrs: interrupt bits
+ * @पूर्णांकrs: पूर्णांकerrupt bits
  */
-static void ufshcd_enable_intr(struct ufs_hba *hba, u32 intrs)
-{
-	u32 set = ufshcd_readl(hba, REG_INTERRUPT_ENABLE);
+अटल व्योम ufshcd_enable_पूर्णांकr(काष्ठा ufs_hba *hba, u32 पूर्णांकrs)
+अणु
+	u32 set = ufshcd_पढ़ोl(hba, REG_INTERRUPT_ENABLE);
 
-	if (hba->ufs_version == ufshci_version(1, 0)) {
+	अगर (hba->ufs_version == ufshci_version(1, 0)) अणु
 		u32 rw;
 		rw = set & INTERRUPT_MASK_RW_VER_10;
-		set = rw | ((set ^ intrs) & intrs);
-	} else {
-		set |= intrs;
-	}
+		set = rw | ((set ^ पूर्णांकrs) & पूर्णांकrs);
+	पूर्ण अन्यथा अणु
+		set |= पूर्णांकrs;
+	पूर्ण
 
-	ufshcd_writel(hba, set, REG_INTERRUPT_ENABLE);
-}
+	ufshcd_ग_लिखोl(hba, set, REG_INTERRUPT_ENABLE);
+पूर्ण
 
 /**
- * ufshcd_disable_intr - disable interrupts
+ * ufshcd_disable_पूर्णांकr - disable पूर्णांकerrupts
  * @hba: per adapter instance
- * @intrs: interrupt bits
+ * @पूर्णांकrs: पूर्णांकerrupt bits
  */
-static void ufshcd_disable_intr(struct ufs_hba *hba, u32 intrs)
-{
-	u32 set = ufshcd_readl(hba, REG_INTERRUPT_ENABLE);
+अटल व्योम ufshcd_disable_पूर्णांकr(काष्ठा ufs_hba *hba, u32 पूर्णांकrs)
+अणु
+	u32 set = ufshcd_पढ़ोl(hba, REG_INTERRUPT_ENABLE);
 
-	if (hba->ufs_version == ufshci_version(1, 0)) {
+	अगर (hba->ufs_version == ufshci_version(1, 0)) अणु
 		u32 rw;
 		rw = (set & INTERRUPT_MASK_RW_VER_10) &
-			~(intrs & INTERRUPT_MASK_RW_VER_10);
-		set = rw | ((set & intrs) & ~INTERRUPT_MASK_RW_VER_10);
+			~(पूर्णांकrs & INTERRUPT_MASK_RW_VER_10);
+		set = rw | ((set & पूर्णांकrs) & ~INTERRUPT_MASK_RW_VER_10);
 
-	} else {
-		set &= ~intrs;
-	}
+	पूर्ण अन्यथा अणु
+		set &= ~पूर्णांकrs;
+	पूर्ण
 
-	ufshcd_writel(hba, set, REG_INTERRUPT_ENABLE);
-}
+	ufshcd_ग_लिखोl(hba, set, REG_INTERRUPT_ENABLE);
+पूर्ण
 
 /**
  * ufshcd_prepare_req_desc_hdr() - Fills the requests header
  * descriptor according to request
- * @lrbp: pointer to local reference block
+ * @lrbp: poपूर्णांकer to local reference block
  * @upiu_flags: flags required in the header
  * @cmd_dir: requests data direction
  */
-static void ufshcd_prepare_req_desc_hdr(struct ufshcd_lrb *lrbp,
-			u8 *upiu_flags, enum dma_data_direction cmd_dir)
-{
-	struct utp_transfer_req_desc *req_desc = lrbp->utr_descriptor_ptr;
+अटल व्योम ufshcd_prepare_req_desc_hdr(काष्ठा ufshcd_lrb *lrbp,
+			u8 *upiu_flags, क्रमागत dma_data_direction cmd_dir)
+अणु
+	काष्ठा utp_transfer_req_desc *req_desc = lrbp->utr_descriptor_ptr;
 	u32 data_direction;
 	u32 dword_0;
 	u32 dword_1 = 0;
 	u32 dword_3 = 0;
 
-	if (cmd_dir == DMA_FROM_DEVICE) {
+	अगर (cmd_dir == DMA_FROM_DEVICE) अणु
 		data_direction = UTP_DEVICE_TO_HOST;
 		*upiu_flags = UPIU_CMD_FLAGS_READ;
-	} else if (cmd_dir == DMA_TO_DEVICE) {
+	पूर्ण अन्यथा अगर (cmd_dir == DMA_TO_DEVICE) अणु
 		data_direction = UTP_HOST_TO_DEVICE;
 		*upiu_flags = UPIU_CMD_FLAGS_WRITE;
-	} else {
+	पूर्ण अन्यथा अणु
 		data_direction = UTP_NO_DATA_TRANSFER;
 		*upiu_flags = UPIU_CMD_FLAGS_NONE;
-	}
+	पूर्ण
 
 	dword_0 = data_direction | (lrbp->command_type
 				<< UPIU_COMMAND_TYPE_OFFSET);
-	if (lrbp->intr_cmd)
+	अगर (lrbp->पूर्णांकr_cmd)
 		dword_0 |= UTP_REQ_DESC_INT_CMD;
 
 	/* Prepare crypto related dwords */
@@ -2400,7 +2401,7 @@ static void ufshcd_prepare_req_desc_hdr(struct ufshcd_lrb *lrbp,
 	req_desc->header.dword_0 = cpu_to_le32(dword_0);
 	req_desc->header.dword_1 = cpu_to_le32(dword_1);
 	/*
-	 * assigning invalid value for command status. Controller
+	 * assigning invalid value क्रम command status. Controller
 	 * updates OCS on command completion, with the command
 	 * status
 	 */
@@ -2409,20 +2410,20 @@ static void ufshcd_prepare_req_desc_hdr(struct ufshcd_lrb *lrbp,
 	req_desc->header.dword_3 = cpu_to_le32(dword_3);
 
 	req_desc->prd_table_length = 0;
-}
+पूर्ण
 
 /**
  * ufshcd_prepare_utp_scsi_cmd_upiu() - fills the utp_transfer_req_desc,
- * for scsi commands
- * @lrbp: local reference block pointer
+ * क्रम scsi commands
+ * @lrbp: local reference block poपूर्णांकer
  * @upiu_flags: flags
  */
-static
-void ufshcd_prepare_utp_scsi_cmd_upiu(struct ufshcd_lrb *lrbp, u8 upiu_flags)
-{
-	struct scsi_cmnd *cmd = lrbp->cmd;
-	struct utp_upiu_req *ucd_req_ptr = lrbp->ucd_req_ptr;
-	unsigned short cdb_len;
+अटल
+व्योम ufshcd_prepare_utp_scsi_cmd_upiu(काष्ठा ufshcd_lrb *lrbp, u8 upiu_flags)
+अणु
+	काष्ठा scsi_cmnd *cmd = lrbp->cmd;
+	काष्ठा utp_upiu_req *ucd_req_ptr = lrbp->ucd_req_ptr;
+	अचिन्हित लघु cdb_len;
 
 	/* command descriptor fields */
 	ucd_req_ptr->header.dword_0 = UPIU_HEADER_DWORD(
@@ -2436,25 +2437,25 @@ void ufshcd_prepare_utp_scsi_cmd_upiu(struct ufshcd_lrb *lrbp, u8 upiu_flags)
 
 	ucd_req_ptr->sc.exp_data_transfer_len = cpu_to_be32(cmd->sdb.length);
 
-	cdb_len = min_t(unsigned short, cmd->cmd_len, UFS_CDB_SIZE);
-	memset(ucd_req_ptr->sc.cdb, 0, UFS_CDB_SIZE);
-	memcpy(ucd_req_ptr->sc.cdb, cmd->cmnd, cdb_len);
+	cdb_len = min_t(अचिन्हित लघु, cmd->cmd_len, UFS_CDB_SIZE);
+	स_रखो(ucd_req_ptr->sc.cdb, 0, UFS_CDB_SIZE);
+	स_नकल(ucd_req_ptr->sc.cdb, cmd->cmnd, cdb_len);
 
-	memset(lrbp->ucd_rsp_ptr, 0, sizeof(struct utp_upiu_rsp));
-}
+	स_रखो(lrbp->ucd_rsp_ptr, 0, माप(काष्ठा utp_upiu_rsp));
+पूर्ण
 
 /**
  * ufshcd_prepare_utp_query_req_upiu() - fills the utp_transfer_req_desc,
- * for query requsts
+ * क्रम query requsts
  * @hba: UFS hba
- * @lrbp: local reference block pointer
+ * @lrbp: local reference block poपूर्णांकer
  * @upiu_flags: flags
  */
-static void ufshcd_prepare_utp_query_req_upiu(struct ufs_hba *hba,
-				struct ufshcd_lrb *lrbp, u8 upiu_flags)
-{
-	struct utp_upiu_req *ucd_req_ptr = lrbp->ucd_req_ptr;
-	struct ufs_query *query = &hba->dev_cmd.query;
+अटल व्योम ufshcd_prepare_utp_query_req_upiu(काष्ठा ufs_hba *hba,
+				काष्ठा ufshcd_lrb *lrbp, u8 upiu_flags)
+अणु
+	काष्ठा utp_upiu_req *ucd_req_ptr = lrbp->ucd_req_ptr;
+	काष्ठा ufs_query *query = &hba->dev_cmd.query;
 	u16 len = be16_to_cpu(query->request.upiu_req.length);
 
 	/* Query request header */
@@ -2464,29 +2465,29 @@ static void ufshcd_prepare_utp_query_req_upiu(struct ufs_hba *hba,
 	ucd_req_ptr->header.dword_1 = UPIU_HEADER_DWORD(
 			0, query->request.query_func, 0, 0);
 
-	/* Data segment length only need for WRITE_DESC */
-	if (query->request.upiu_req.opcode == UPIU_QUERY_OPCODE_WRITE_DESC)
+	/* Data segment length only need क्रम WRITE_DESC */
+	अगर (query->request.upiu_req.opcode == UPIU_QUERY_OPCODE_WRITE_DESC)
 		ucd_req_ptr->header.dword_2 =
 			UPIU_HEADER_DWORD(0, 0, (len >> 8), (u8)len);
-	else
+	अन्यथा
 		ucd_req_ptr->header.dword_2 = 0;
 
 	/* Copy the Query Request buffer as is */
-	memcpy(&ucd_req_ptr->qr, &query->request.upiu_req,
+	स_नकल(&ucd_req_ptr->qr, &query->request.upiu_req,
 			QUERY_OSF_SIZE);
 
 	/* Copy the Descriptor */
-	if (query->request.upiu_req.opcode == UPIU_QUERY_OPCODE_WRITE_DESC)
-		memcpy(ucd_req_ptr + 1, query->descriptor, len);
+	अगर (query->request.upiu_req.opcode == UPIU_QUERY_OPCODE_WRITE_DESC)
+		स_नकल(ucd_req_ptr + 1, query->descriptor, len);
 
-	memset(lrbp->ucd_rsp_ptr, 0, sizeof(struct utp_upiu_rsp));
-}
+	स_रखो(lrbp->ucd_rsp_ptr, 0, माप(काष्ठा utp_upiu_rsp));
+पूर्ण
 
-static inline void ufshcd_prepare_utp_nop_upiu(struct ufshcd_lrb *lrbp)
-{
-	struct utp_upiu_req *ucd_req_ptr = lrbp->ucd_req_ptr;
+अटल अंतरभूत व्योम ufshcd_prepare_utp_nop_upiu(काष्ठा ufshcd_lrb *lrbp)
+अणु
+	काष्ठा utp_upiu_req *ucd_req_ptr = lrbp->ucd_req_ptr;
 
-	memset(ucd_req_ptr, 0, sizeof(struct utp_upiu_req));
+	स_रखो(ucd_req_ptr, 0, माप(काष्ठा utp_upiu_req));
 
 	/* command descriptor fields */
 	ucd_req_ptr->header.dword_0 =
@@ -2496,63 +2497,63 @@ static inline void ufshcd_prepare_utp_nop_upiu(struct ufshcd_lrb *lrbp)
 	ucd_req_ptr->header.dword_1 = 0;
 	ucd_req_ptr->header.dword_2 = 0;
 
-	memset(lrbp->ucd_rsp_ptr, 0, sizeof(struct utp_upiu_rsp));
-}
+	स_रखो(lrbp->ucd_rsp_ptr, 0, माप(काष्ठा utp_upiu_rsp));
+पूर्ण
 
 /**
- * ufshcd_compose_devman_upiu - UFS Protocol Information Unit(UPIU)
- *			     for Device Management Purposes
+ * ufshcd_compose_devman_upiu - UFS Protocol Inक्रमmation Unit(UPIU)
+ *			     क्रम Device Management Purposes
  * @hba: per adapter instance
- * @lrbp: pointer to local reference block
+ * @lrbp: poपूर्णांकer to local reference block
  */
-static int ufshcd_compose_devman_upiu(struct ufs_hba *hba,
-				      struct ufshcd_lrb *lrbp)
-{
+अटल पूर्णांक ufshcd_compose_devman_upiu(काष्ठा ufs_hba *hba,
+				      काष्ठा ufshcd_lrb *lrbp)
+अणु
 	u8 upiu_flags;
-	int ret = 0;
+	पूर्णांक ret = 0;
 
-	if (hba->ufs_version <= ufshci_version(1, 1))
+	अगर (hba->ufs_version <= ufshci_version(1, 1))
 		lrbp->command_type = UTP_CMD_TYPE_DEV_MANAGE;
-	else
+	अन्यथा
 		lrbp->command_type = UTP_CMD_TYPE_UFS_STORAGE;
 
 	ufshcd_prepare_req_desc_hdr(lrbp, &upiu_flags, DMA_NONE);
-	if (hba->dev_cmd.type == DEV_CMD_TYPE_QUERY)
+	अगर (hba->dev_cmd.type == DEV_CMD_TYPE_QUERY)
 		ufshcd_prepare_utp_query_req_upiu(hba, lrbp, upiu_flags);
-	else if (hba->dev_cmd.type == DEV_CMD_TYPE_NOP)
+	अन्यथा अगर (hba->dev_cmd.type == DEV_CMD_TYPE_NOP)
 		ufshcd_prepare_utp_nop_upiu(lrbp);
-	else
+	अन्यथा
 		ret = -EINVAL;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * ufshcd_comp_scsi_upiu - UFS Protocol Information Unit(UPIU)
- *			   for SCSI Purposes
+ * ufshcd_comp_scsi_upiu - UFS Protocol Inक्रमmation Unit(UPIU)
+ *			   क्रम SCSI Purposes
  * @hba: per adapter instance
- * @lrbp: pointer to local reference block
+ * @lrbp: poपूर्णांकer to local reference block
  */
-static int ufshcd_comp_scsi_upiu(struct ufs_hba *hba, struct ufshcd_lrb *lrbp)
-{
+अटल पूर्णांक ufshcd_comp_scsi_upiu(काष्ठा ufs_hba *hba, काष्ठा ufshcd_lrb *lrbp)
+अणु
 	u8 upiu_flags;
-	int ret = 0;
+	पूर्णांक ret = 0;
 
-	if (hba->ufs_version <= ufshci_version(1, 1))
+	अगर (hba->ufs_version <= ufshci_version(1, 1))
 		lrbp->command_type = UTP_CMD_TYPE_SCSI;
-	else
+	अन्यथा
 		lrbp->command_type = UTP_CMD_TYPE_UFS_STORAGE;
 
-	if (likely(lrbp->cmd)) {
+	अगर (likely(lrbp->cmd)) अणु
 		ufshcd_prepare_req_desc_hdr(lrbp, &upiu_flags,
 						lrbp->cmd->sc_data_direction);
 		ufshcd_prepare_utp_scsi_cmd_upiu(lrbp, upiu_flags);
-	} else {
+	पूर्ण अन्यथा अणु
 		ret = -EINVAL;
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
  * ufshcd_upiu_wlun_to_scsi_wlun - maps UPIU W-LUN id to SCSI W-LUN ID
@@ -2560,79 +2561,79 @@ static int ufshcd_comp_scsi_upiu(struct ufs_hba *hba, struct ufshcd_lrb *lrbp)
  *
  * Returns SCSI W-LUN id
  */
-static inline u16 ufshcd_upiu_wlun_to_scsi_wlun(u8 upiu_wlun_id)
-{
-	return (upiu_wlun_id & ~UFS_UPIU_WLUN_ID) | SCSI_W_LUN_BASE;
-}
+अटल अंतरभूत u16 ufshcd_upiu_wlun_to_scsi_wlun(u8 upiu_wlun_id)
+अणु
+	वापस (upiu_wlun_id & ~UFS_UPIU_WLUN_ID) | SCSI_W_LUN_BASE;
+पूर्ण
 
-static void ufshcd_init_lrb(struct ufs_hba *hba, struct ufshcd_lrb *lrb, int i)
-{
-	struct utp_transfer_cmd_desc *cmd_descp = hba->ucdl_base_addr;
-	struct utp_transfer_req_desc *utrdlp = hba->utrdl_base_addr;
+अटल व्योम ufshcd_init_lrb(काष्ठा ufs_hba *hba, काष्ठा ufshcd_lrb *lrb, पूर्णांक i)
+अणु
+	काष्ठा utp_transfer_cmd_desc *cmd_descp = hba->ucdl_base_addr;
+	काष्ठा utp_transfer_req_desc *utrdlp = hba->utrdl_base_addr;
 	dma_addr_t cmd_desc_element_addr = hba->ucdl_dma_addr +
-		i * sizeof(struct utp_transfer_cmd_desc);
-	u16 response_offset = offsetof(struct utp_transfer_cmd_desc,
+		i * माप(काष्ठा utp_transfer_cmd_desc);
+	u16 response_offset = दुरत्व(काष्ठा utp_transfer_cmd_desc,
 				       response_upiu);
-	u16 prdt_offset = offsetof(struct utp_transfer_cmd_desc, prd_table);
+	u16 prdt_offset = दुरत्व(काष्ठा utp_transfer_cmd_desc, prd_table);
 
 	lrb->utr_descriptor_ptr = utrdlp + i;
 	lrb->utrd_dma_addr = hba->utrdl_dma_addr +
-		i * sizeof(struct utp_transfer_req_desc);
-	lrb->ucd_req_ptr = (struct utp_upiu_req *)(cmd_descp + i);
+		i * माप(काष्ठा utp_transfer_req_desc);
+	lrb->ucd_req_ptr = (काष्ठा utp_upiu_req *)(cmd_descp + i);
 	lrb->ucd_req_dma_addr = cmd_desc_element_addr;
-	lrb->ucd_rsp_ptr = (struct utp_upiu_rsp *)cmd_descp[i].response_upiu;
+	lrb->ucd_rsp_ptr = (काष्ठा utp_upiu_rsp *)cmd_descp[i].response_upiu;
 	lrb->ucd_rsp_dma_addr = cmd_desc_element_addr + response_offset;
-	lrb->ucd_prdt_ptr = (struct ufshcd_sg_entry *)cmd_descp[i].prd_table;
+	lrb->ucd_prdt_ptr = (काष्ठा ufshcd_sg_entry *)cmd_descp[i].prd_table;
 	lrb->ucd_prdt_dma_addr = cmd_desc_element_addr + prdt_offset;
-}
+पूर्ण
 
 /**
- * ufshcd_queuecommand - main entry point for SCSI requests
- * @host: SCSI host pointer
+ * ufshcd_queuecommand - मुख्य entry poपूर्णांक क्रम SCSI requests
+ * @host: SCSI host poपूर्णांकer
  * @cmd: command from SCSI Midlayer
  *
- * Returns 0 for success, non-zero in case of failure
+ * Returns 0 क्रम success, non-zero in हाल of failure
  */
-static int ufshcd_queuecommand(struct Scsi_Host *host, struct scsi_cmnd *cmd)
-{
-	struct ufshcd_lrb *lrbp;
-	struct ufs_hba *hba;
-	unsigned long flags;
-	int tag;
-	int err = 0;
+अटल पूर्णांक ufshcd_queuecommand(काष्ठा Scsi_Host *host, काष्ठा scsi_cmnd *cmd)
+अणु
+	काष्ठा ufshcd_lrb *lrbp;
+	काष्ठा ufs_hba *hba;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक tag;
+	पूर्णांक err = 0;
 
 	hba = shost_priv(host);
 
 	tag = cmd->request->tag;
-	if (!ufshcd_valid_tag(hba, tag)) {
+	अगर (!ufshcd_valid_tag(hba, tag)) अणु
 		dev_err(hba->dev,
 			"%s: invalid command tag %d: cmd=0x%p, cmd->request=0x%p",
 			__func__, tag, cmd, cmd->request);
 		BUG();
-	}
+	पूर्ण
 
-	if (!down_read_trylock(&hba->clk_scaling_lock))
-		return SCSI_MLQUEUE_HOST_BUSY;
+	अगर (!करोwn_पढ़ो_trylock(&hba->clk_scaling_lock))
+		वापस SCSI_MLQUEUE_HOST_BUSY;
 
-	hba->req_abort_count = 0;
+	hba->req_पात_count = 0;
 
 	err = ufshcd_hold(hba, true);
-	if (err) {
+	अगर (err) अणु
 		err = SCSI_MLQUEUE_HOST_BUSY;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 	WARN_ON(ufshcd_is_clkgating_allowed(hba) &&
 		(hba->clk_gating.state != CLKS_ON));
 
 	lrbp = &hba->lrb[tag];
-	if (unlikely(lrbp->in_use)) {
-		if (hba->pm_op_in_progress)
+	अगर (unlikely(lrbp->in_use)) अणु
+		अगर (hba->pm_op_in_progress)
 			set_host_byte(cmd, DID_BAD_TARGET);
-		else
+		अन्यथा
 			err = SCSI_MLQUEUE_HOST_BUSY;
 		ufshcd_release(hba);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	WARN_ON(lrbp->cmd);
 	lrbp->cmd = cmd;
@@ -2640,340 +2641,340 @@ static int ufshcd_queuecommand(struct Scsi_Host *host, struct scsi_cmnd *cmd)
 	lrbp->sense_buffer = cmd->sense_buffer;
 	lrbp->task_tag = tag;
 	lrbp->lun = ufshcd_scsi_to_upiu_lun(cmd->device->lun);
-	lrbp->intr_cmd = !ufshcd_is_intr_aggr_allowed(hba) ? true : false;
+	lrbp->पूर्णांकr_cmd = !ufshcd_is_पूर्णांकr_aggr_allowed(hba) ? true : false;
 
 	ufshcd_prepare_lrbp_crypto(cmd->request, lrbp);
 
-	lrbp->req_abort_skip = false;
+	lrbp->req_पात_skip = false;
 
 	ufshcd_comp_scsi_upiu(hba, lrbp);
 
 	err = ufshcd_map_sg(hba, lrbp);
-	if (err) {
-		lrbp->cmd = NULL;
+	अगर (err) अणु
+		lrbp->cmd = शून्य;
 		ufshcd_release(hba);
-		goto out;
-	}
-	/* Make sure descriptors are ready before ringing the doorbell */
+		जाओ out;
+	पूर्ण
+	/* Make sure descriptors are पढ़ोy beक्रमe ringing the करोorbell */
 	wmb();
 
 	spin_lock_irqsave(hba->host->host_lock, flags);
-	switch (hba->ufshcd_state) {
-	case UFSHCD_STATE_OPERATIONAL:
-	case UFSHCD_STATE_EH_SCHEDULED_NON_FATAL:
-		break;
-	case UFSHCD_STATE_EH_SCHEDULED_FATAL:
+	चयन (hba->ufshcd_state) अणु
+	हाल UFSHCD_STATE_OPERATIONAL:
+	हाल UFSHCD_STATE_EH_SCHEDULED_NON_FATAL:
+		अवरोध;
+	हाल UFSHCD_STATE_EH_SCHEDULED_FATAL:
 		/*
-		 * pm_runtime_get_sync() is used at error handling preparation
+		 * pm_runसमय_get_sync() is used at error handling preparation
 		 * stage. If a scsi cmd, e.g. the SSU cmd, is sent from hba's
-		 * PM ops, it can never be finished if we let SCSI layer keep
-		 * retrying it, which gets err handler stuck forever. Neither
+		 * PM ops, it can never be finished अगर we let SCSI layer keep
+		 * retrying it, which माला_लो err handler stuck क्रमever. Neither
 		 * can we let the scsi cmd pass through, because UFS is in bad
-		 * state, the scsi cmd may eventually time out, which will get
-		 * err handler blocked for too long. So, just fail the scsi cmd
+		 * state, the scsi cmd may eventually समय out, which will get
+		 * err handler blocked क्रम too दीर्घ. So, just fail the scsi cmd
 		 * sent from PM ops, err handler can recover PM error anyways.
 		 */
-		if (hba->pm_op_in_progress) {
-			hba->force_reset = true;
+		अगर (hba->pm_op_in_progress) अणु
+			hba->क्रमce_reset = true;
 			set_host_byte(cmd, DID_BAD_TARGET);
-			goto out_compl_cmd;
-		}
+			जाओ out_compl_cmd;
+		पूर्ण
 		fallthrough;
-	case UFSHCD_STATE_RESET:
+	हाल UFSHCD_STATE_RESET:
 		err = SCSI_MLQUEUE_HOST_BUSY;
-		goto out_compl_cmd;
-	case UFSHCD_STATE_ERROR:
+		जाओ out_compl_cmd;
+	हाल UFSHCD_STATE_ERROR:
 		set_host_byte(cmd, DID_ERROR);
-		goto out_compl_cmd;
-	default:
+		जाओ out_compl_cmd;
+	शेष:
 		dev_WARN_ONCE(hba->dev, 1, "%s: invalid state %d\n",
 				__func__, hba->ufshcd_state);
 		set_host_byte(cmd, DID_BAD_TARGET);
-		goto out_compl_cmd;
-	}
+		जाओ out_compl_cmd;
+	पूर्ण
 	ufshcd_send_command(hba, tag);
 	spin_unlock_irqrestore(hba->host->host_lock, flags);
-	goto out;
+	जाओ out;
 
 out_compl_cmd:
 	scsi_dma_unmap(lrbp->cmd);
-	lrbp->cmd = NULL;
+	lrbp->cmd = शून्य;
 	spin_unlock_irqrestore(hba->host->host_lock, flags);
 	ufshcd_release(hba);
-	if (!err)
-		cmd->scsi_done(cmd);
+	अगर (!err)
+		cmd->scsi_करोne(cmd);
 out:
-	up_read(&hba->clk_scaling_lock);
-	return err;
-}
+	up_पढ़ो(&hba->clk_scaling_lock);
+	वापस err;
+पूर्ण
 
-static int ufshcd_compose_dev_cmd(struct ufs_hba *hba,
-		struct ufshcd_lrb *lrbp, enum dev_cmd_type cmd_type, int tag)
-{
-	lrbp->cmd = NULL;
+अटल पूर्णांक ufshcd_compose_dev_cmd(काष्ठा ufs_hba *hba,
+		काष्ठा ufshcd_lrb *lrbp, क्रमागत dev_cmd_type cmd_type, पूर्णांक tag)
+अणु
+	lrbp->cmd = शून्य;
 	lrbp->sense_bufflen = 0;
-	lrbp->sense_buffer = NULL;
+	lrbp->sense_buffer = शून्य;
 	lrbp->task_tag = tag;
-	lrbp->lun = 0; /* device management cmd is not specific to any LUN */
-	lrbp->intr_cmd = true; /* No interrupt aggregation */
-	ufshcd_prepare_lrbp_crypto(NULL, lrbp);
+	lrbp->lun = 0; /* device management cmd is not specअगरic to any LUN */
+	lrbp->पूर्णांकr_cmd = true; /* No पूर्णांकerrupt aggregation */
+	ufshcd_prepare_lrbp_crypto(शून्य, lrbp);
 	hba->dev_cmd.type = cmd_type;
 
-	return ufshcd_compose_devman_upiu(hba, lrbp);
-}
+	वापस ufshcd_compose_devman_upiu(hba, lrbp);
+पूर्ण
 
-static int
-ufshcd_clear_cmd(struct ufs_hba *hba, int tag)
-{
-	int err = 0;
-	unsigned long flags;
+अटल पूर्णांक
+ufshcd_clear_cmd(काष्ठा ufs_hba *hba, पूर्णांक tag)
+अणु
+	पूर्णांक err = 0;
+	अचिन्हित दीर्घ flags;
 	u32 mask = 1 << tag;
 
-	/* clear outstanding transaction before retry */
+	/* clear outstanding transaction beक्रमe retry */
 	spin_lock_irqsave(hba->host->host_lock, flags);
 	ufshcd_utrl_clear(hba, tag);
 	spin_unlock_irqrestore(hba->host->host_lock, flags);
 
 	/*
-	 * wait for for h/w to clear corresponding bit in door-bell.
-	 * max. wait is 1 sec.
+	 * रुको क्रम क्रम h/w to clear corresponding bit in करोor-bell.
+	 * max. रुको is 1 sec.
 	 */
-	err = ufshcd_wait_for_register(hba,
+	err = ufshcd_रुको_क्रम_रेजिस्टर(hba,
 			REG_UTP_TRANSFER_REQ_DOOR_BELL,
 			mask, ~mask, 1000, 1000);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int
-ufshcd_check_query_response(struct ufs_hba *hba, struct ufshcd_lrb *lrbp)
-{
-	struct ufs_query_res *query_res = &hba->dev_cmd.query.response;
+अटल पूर्णांक
+ufshcd_check_query_response(काष्ठा ufs_hba *hba, काष्ठा ufshcd_lrb *lrbp)
+अणु
+	काष्ठा ufs_query_res *query_res = &hba->dev_cmd.query.response;
 
 	/* Get the UPIU response */
 	query_res->response = ufshcd_get_rsp_upiu_result(lrbp->ucd_rsp_ptr) >>
 				UPIU_RSP_CODE_OFFSET;
-	return query_res->response;
-}
+	वापस query_res->response;
+पूर्ण
 
 /**
  * ufshcd_dev_cmd_completion() - handles device management command responses
  * @hba: per adapter instance
- * @lrbp: pointer to local reference block
+ * @lrbp: poपूर्णांकer to local reference block
  */
-static int
-ufshcd_dev_cmd_completion(struct ufs_hba *hba, struct ufshcd_lrb *lrbp)
-{
-	int resp;
-	int err = 0;
+अटल पूर्णांक
+ufshcd_dev_cmd_completion(काष्ठा ufs_hba *hba, काष्ठा ufshcd_lrb *lrbp)
+अणु
+	पूर्णांक resp;
+	पूर्णांक err = 0;
 
-	hba->ufs_stats.last_hibern8_exit_tstamp = ktime_set(0, 0);
+	hba->ufs_stats.last_hibern8_निकास_tstamp = kसमय_set(0, 0);
 	resp = ufshcd_get_req_rsp(lrbp->ucd_rsp_ptr);
 
-	switch (resp) {
-	case UPIU_TRANSACTION_NOP_IN:
-		if (hba->dev_cmd.type != DEV_CMD_TYPE_NOP) {
+	चयन (resp) अणु
+	हाल UPIU_TRANSACTION_NOP_IN:
+		अगर (hba->dev_cmd.type != DEV_CMD_TYPE_NOP) अणु
 			err = -EINVAL;
 			dev_err(hba->dev, "%s: unexpected response %x\n",
 					__func__, resp);
-		}
-		break;
-	case UPIU_TRANSACTION_QUERY_RSP:
+		पूर्ण
+		अवरोध;
+	हाल UPIU_TRANSACTION_QUERY_RSP:
 		err = ufshcd_check_query_response(hba, lrbp);
-		if (!err)
+		अगर (!err)
 			err = ufshcd_copy_query_response(hba, lrbp);
-		break;
-	case UPIU_TRANSACTION_REJECT_UPIU:
+		अवरोध;
+	हाल UPIU_TRANSACTION_REJECT_UPIU:
 		/* TODO: handle Reject UPIU Response */
 		err = -EPERM;
 		dev_err(hba->dev, "%s: Reject UPIU not fully implemented\n",
 				__func__);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		err = -EINVAL;
 		dev_err(hba->dev, "%s: Invalid device management cmd response: %x\n",
 				__func__, resp);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int ufshcd_wait_for_dev_cmd(struct ufs_hba *hba,
-		struct ufshcd_lrb *lrbp, int max_timeout)
-{
-	int err = 0;
-	unsigned long time_left;
-	unsigned long flags;
+अटल पूर्णांक ufshcd_रुको_क्रम_dev_cmd(काष्ठा ufs_hba *hba,
+		काष्ठा ufshcd_lrb *lrbp, पूर्णांक max_समयout)
+अणु
+	पूर्णांक err = 0;
+	अचिन्हित दीर्घ समय_left;
+	अचिन्हित दीर्घ flags;
 
-	time_left = wait_for_completion_timeout(hba->dev_cmd.complete,
-			msecs_to_jiffies(max_timeout));
+	समय_left = रुको_क्रम_completion_समयout(hba->dev_cmd.complete,
+			msecs_to_jअगरfies(max_समयout));
 
-	/* Make sure descriptors are ready before ringing the doorbell */
+	/* Make sure descriptors are पढ़ोy beक्रमe ringing the करोorbell */
 	wmb();
 	spin_lock_irqsave(hba->host->host_lock, flags);
-	hba->dev_cmd.complete = NULL;
-	if (likely(time_left)) {
+	hba->dev_cmd.complete = शून्य;
+	अगर (likely(समय_left)) अणु
 		err = ufshcd_get_tr_ocs(lrbp);
-		if (!err)
+		अगर (!err)
 			err = ufshcd_dev_cmd_completion(hba, lrbp);
-	}
+	पूर्ण
 	spin_unlock_irqrestore(hba->host->host_lock, flags);
 
-	if (!time_left) {
+	अगर (!समय_left) अणु
 		err = -ETIMEDOUT;
 		dev_dbg(hba->dev, "%s: dev_cmd request timedout, tag %d\n",
 			__func__, lrbp->task_tag);
-		if (!ufshcd_clear_cmd(hba, lrbp->task_tag))
-			/* successfully cleared the command, retry if needed */
+		अगर (!ufshcd_clear_cmd(hba, lrbp->task_tag))
+			/* successfully cleared the command, retry अगर needed */
 			err = -EAGAIN;
 		/*
-		 * in case of an error, after clearing the doorbell,
+		 * in हाल of an error, after clearing the करोorbell,
 		 * we also need to clear the outstanding_request
 		 * field in hba
 		 */
 		ufshcd_outstanding_req_clear(hba, lrbp->task_tag);
-	}
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /**
- * ufshcd_exec_dev_cmd - API for sending device management requests
+ * ufshcd_exec_dev_cmd - API क्रम sending device management requests
  * @hba: UFS hba
- * @cmd_type: specifies the type (NOP, Query...)
- * @timeout: timeout in milliseconds
+ * @cmd_type: specअगरies the type (NOP, Query...)
+ * @समयout: समयout in milliseconds
  *
- * NOTE: Since there is only one available tag for device management commands,
+ * NOTE: Since there is only one available tag क्रम device management commands,
  * it is expected you hold the hba->dev_cmd.lock mutex.
  */
-static int ufshcd_exec_dev_cmd(struct ufs_hba *hba,
-		enum dev_cmd_type cmd_type, int timeout)
-{
-	struct request_queue *q = hba->cmd_queue;
-	struct request *req;
-	struct ufshcd_lrb *lrbp;
-	int err;
-	int tag;
-	struct completion wait;
-	unsigned long flags;
+अटल पूर्णांक ufshcd_exec_dev_cmd(काष्ठा ufs_hba *hba,
+		क्रमागत dev_cmd_type cmd_type, पूर्णांक समयout)
+अणु
+	काष्ठा request_queue *q = hba->cmd_queue;
+	काष्ठा request *req;
+	काष्ठा ufshcd_lrb *lrbp;
+	पूर्णांक err;
+	पूर्णांक tag;
+	काष्ठा completion रुको;
+	अचिन्हित दीर्घ flags;
 
-	down_read(&hba->clk_scaling_lock);
+	करोwn_पढ़ो(&hba->clk_scaling_lock);
 
 	/*
-	 * Get free slot, sleep if slots are unavailable.
-	 * Even though we use wait_event() which sleeps indefinitely,
-	 * the maximum wait time is bounded by SCSI request timeout.
+	 * Get मुक्त slot, sleep अगर slots are unavailable.
+	 * Even though we use रुको_event() which sleeps indefinitely,
+	 * the maximum रुको समय is bounded by SCSI request समयout.
 	 */
 	req = blk_get_request(q, REQ_OP_DRV_OUT, 0);
-	if (IS_ERR(req)) {
+	अगर (IS_ERR(req)) अणु
 		err = PTR_ERR(req);
-		goto out_unlock;
-	}
+		जाओ out_unlock;
+	पूर्ण
 	tag = req->tag;
 	WARN_ON_ONCE(!ufshcd_valid_tag(hba, tag));
-	/* Set the timeout such that the SCSI error handler is not activated. */
-	req->timeout = msecs_to_jiffies(2 * timeout);
+	/* Set the समयout such that the SCSI error handler is not activated. */
+	req->समयout = msecs_to_jअगरfies(2 * समयout);
 	blk_mq_start_request(req);
 
-	init_completion(&wait);
+	init_completion(&रुको);
 	lrbp = &hba->lrb[tag];
-	if (unlikely(lrbp->in_use)) {
+	अगर (unlikely(lrbp->in_use)) अणु
 		err = -EBUSY;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	WARN_ON(lrbp->cmd);
 	err = ufshcd_compose_dev_cmd(hba, lrbp, cmd_type, tag);
-	if (unlikely(err))
-		goto out_put_tag;
+	अगर (unlikely(err))
+		जाओ out_put_tag;
 
-	hba->dev_cmd.complete = &wait;
+	hba->dev_cmd.complete = &रुको;
 
 	ufshcd_add_query_upiu_trace(hba, UFS_QUERY_SEND, lrbp->ucd_req_ptr);
-	/* Make sure descriptors are ready before ringing the doorbell */
+	/* Make sure descriptors are पढ़ोy beक्रमe ringing the करोorbell */
 	wmb();
 	spin_lock_irqsave(hba->host->host_lock, flags);
 	ufshcd_send_command(hba, tag);
 	spin_unlock_irqrestore(hba->host->host_lock, flags);
 
-	err = ufshcd_wait_for_dev_cmd(hba, lrbp, timeout);
+	err = ufshcd_रुको_क्रम_dev_cmd(hba, lrbp, समयout);
 
 out:
 	ufshcd_add_query_upiu_trace(hba, err ? UFS_QUERY_ERR : UFS_QUERY_COMP,
-				    (struct utp_upiu_req *)lrbp->ucd_rsp_ptr);
+				    (काष्ठा utp_upiu_req *)lrbp->ucd_rsp_ptr);
 
 out_put_tag:
 	blk_put_request(req);
 out_unlock:
-	up_read(&hba->clk_scaling_lock);
-	return err;
-}
+	up_पढ़ो(&hba->clk_scaling_lock);
+	वापस err;
+पूर्ण
 
 /**
  * ufshcd_init_query() - init the query response and request parameters
  * @hba: per-adapter instance
- * @request: address of the request pointer to be initialized
- * @response: address of the response pointer to be initialized
- * @opcode: operation to perform
+ * @request: address of the request poपूर्णांकer to be initialized
+ * @response: address of the response poपूर्णांकer to be initialized
+ * @opcode: operation to perक्रमm
  * @idn: flag idn to access
  * @index: LU number to access
- * @selector: query/flag/descriptor further identification
+ * @selector: query/flag/descriptor further identअगरication
  */
-static inline void ufshcd_init_query(struct ufs_hba *hba,
-		struct ufs_query_req **request, struct ufs_query_res **response,
-		enum query_opcode opcode, u8 idn, u8 index, u8 selector)
-{
+अटल अंतरभूत व्योम ufshcd_init_query(काष्ठा ufs_hba *hba,
+		काष्ठा ufs_query_req **request, काष्ठा ufs_query_res **response,
+		क्रमागत query_opcode opcode, u8 idn, u8 index, u8 selector)
+अणु
 	*request = &hba->dev_cmd.query.request;
 	*response = &hba->dev_cmd.query.response;
-	memset(*request, 0, sizeof(struct ufs_query_req));
-	memset(*response, 0, sizeof(struct ufs_query_res));
+	स_रखो(*request, 0, माप(काष्ठा ufs_query_req));
+	स_रखो(*response, 0, माप(काष्ठा ufs_query_res));
 	(*request)->upiu_req.opcode = opcode;
 	(*request)->upiu_req.idn = idn;
 	(*request)->upiu_req.index = index;
 	(*request)->upiu_req.selector = selector;
-}
+पूर्ण
 
-static int ufshcd_query_flag_retry(struct ufs_hba *hba,
-	enum query_opcode opcode, enum flag_idn idn, u8 index, bool *flag_res)
-{
-	int ret;
-	int retries;
+अटल पूर्णांक ufshcd_query_flag_retry(काष्ठा ufs_hba *hba,
+	क्रमागत query_opcode opcode, क्रमागत flag_idn idn, u8 index, bool *flag_res)
+अणु
+	पूर्णांक ret;
+	पूर्णांक retries;
 
-	for (retries = 0; retries < QUERY_REQ_RETRIES; retries++) {
+	क्रम (retries = 0; retries < QUERY_REQ_RETRIES; retries++) अणु
 		ret = ufshcd_query_flag(hba, opcode, idn, index, flag_res);
-		if (ret)
+		अगर (ret)
 			dev_dbg(hba->dev,
 				"%s: failed with error %d, retries %d\n",
 				__func__, ret, retries);
-		else
-			break;
-	}
+		अन्यथा
+			अवरोध;
+	पूर्ण
 
-	if (ret)
+	अगर (ret)
 		dev_err(hba->dev,
 			"%s: query attribute, opcode %d, idn %d, failed with error %d after %d retires\n",
 			__func__, opcode, idn, ret, retries);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * ufshcd_query_flag() - API function for sending flag query requests
+ * ufshcd_query_flag() - API function क्रम sending flag query requests
  * @hba: per-adapter instance
- * @opcode: flag query to perform
+ * @opcode: flag query to perक्रमm
  * @idn: flag idn to access
  * @index: flag index to access
  * @flag_res: the flag value after the query request completes
  *
- * Returns 0 for success, non-zero in case of failure
+ * Returns 0 क्रम success, non-zero in हाल of failure
  */
-int ufshcd_query_flag(struct ufs_hba *hba, enum query_opcode opcode,
-			enum flag_idn idn, u8 index, bool *flag_res)
-{
-	struct ufs_query_req *request = NULL;
-	struct ufs_query_res *response = NULL;
-	int err, selector = 0;
-	int timeout = QUERY_REQ_TIMEOUT;
+पूर्णांक ufshcd_query_flag(काष्ठा ufs_hba *hba, क्रमागत query_opcode opcode,
+			क्रमागत flag_idn idn, u8 index, bool *flag_res)
+अणु
+	काष्ठा ufs_query_req *request = शून्य;
+	काष्ठा ufs_query_res *response = शून्य;
+	पूर्णांक err, selector = 0;
+	पूर्णांक समयout = QUERY_REQ_TIMEOUT;
 
 	BUG_ON(!hba);
 
@@ -2982,51 +2983,51 @@ int ufshcd_query_flag(struct ufs_hba *hba, enum query_opcode opcode,
 	ufshcd_init_query(hba, &request, &response, opcode, idn, index,
 			selector);
 
-	switch (opcode) {
-	case UPIU_QUERY_OPCODE_SET_FLAG:
-	case UPIU_QUERY_OPCODE_CLEAR_FLAG:
-	case UPIU_QUERY_OPCODE_TOGGLE_FLAG:
+	चयन (opcode) अणु
+	हाल UPIU_QUERY_OPCODE_SET_FLAG:
+	हाल UPIU_QUERY_OPCODE_CLEAR_FLAG:
+	हाल UPIU_QUERY_OPCODE_TOGGLE_FLAG:
 		request->query_func = UPIU_QUERY_FUNC_STANDARD_WRITE_REQUEST;
-		break;
-	case UPIU_QUERY_OPCODE_READ_FLAG:
+		अवरोध;
+	हाल UPIU_QUERY_OPCODE_READ_FLAG:
 		request->query_func = UPIU_QUERY_FUNC_STANDARD_READ_REQUEST;
-		if (!flag_res) {
-			/* No dummy reads */
+		अगर (!flag_res) अणु
+			/* No dummy पढ़ोs */
 			dev_err(hba->dev, "%s: Invalid argument for read request\n",
 					__func__);
 			err = -EINVAL;
-			goto out_unlock;
-		}
-		break;
-	default:
+			जाओ out_unlock;
+		पूर्ण
+		अवरोध;
+	शेष:
 		dev_err(hba->dev,
 			"%s: Expected query flag opcode but got = %d\n",
 			__func__, opcode);
 		err = -EINVAL;
-		goto out_unlock;
-	}
+		जाओ out_unlock;
+	पूर्ण
 
-	err = ufshcd_exec_dev_cmd(hba, DEV_CMD_TYPE_QUERY, timeout);
+	err = ufshcd_exec_dev_cmd(hba, DEV_CMD_TYPE_QUERY, समयout);
 
-	if (err) {
+	अगर (err) अणु
 		dev_err(hba->dev,
 			"%s: Sending flag query for idn %d failed, err = %d\n",
 			__func__, idn, err);
-		goto out_unlock;
-	}
+		जाओ out_unlock;
+	पूर्ण
 
-	if (flag_res)
+	अगर (flag_res)
 		*flag_res = (be32_to_cpu(response->upiu_res.value) &
 				MASK_QUERY_UPIU_FLAG_LOC) & 0x1;
 
 out_unlock:
 	mutex_unlock(&hba->dev_cmd.lock);
 	ufshcd_release(hba);
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /**
- * ufshcd_query_attr - API function for sending attribute requests
+ * ufshcd_query_attr - API function क्रम sending attribute requests
  * @hba: per-adapter instance
  * @opcode: attribute opcode
  * @idn: attribute idn to access
@@ -3034,22 +3035,22 @@ out_unlock:
  * @selector: selector field
  * @attr_val: the attribute value after the query request completes
  *
- * Returns 0 for success, non-zero in case of failure
+ * Returns 0 क्रम success, non-zero in हाल of failure
 */
-int ufshcd_query_attr(struct ufs_hba *hba, enum query_opcode opcode,
-		      enum attr_idn idn, u8 index, u8 selector, u32 *attr_val)
-{
-	struct ufs_query_req *request = NULL;
-	struct ufs_query_res *response = NULL;
-	int err;
+पूर्णांक ufshcd_query_attr(काष्ठा ufs_hba *hba, क्रमागत query_opcode opcode,
+		      क्रमागत attr_idn idn, u8 index, u8 selector, u32 *attr_val)
+अणु
+	काष्ठा ufs_query_req *request = शून्य;
+	काष्ठा ufs_query_res *response = शून्य;
+	पूर्णांक err;
 
 	BUG_ON(!hba);
 
-	if (!attr_val) {
+	अगर (!attr_val) अणु
 		dev_err(hba->dev, "%s: attribute value required for opcode 0x%x\n",
 				__func__, opcode);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	ufshcd_hold(hba, false);
 
@@ -3057,39 +3058,39 @@ int ufshcd_query_attr(struct ufs_hba *hba, enum query_opcode opcode,
 	ufshcd_init_query(hba, &request, &response, opcode, idn, index,
 			selector);
 
-	switch (opcode) {
-	case UPIU_QUERY_OPCODE_WRITE_ATTR:
+	चयन (opcode) अणु
+	हाल UPIU_QUERY_OPCODE_WRITE_ATTR:
 		request->query_func = UPIU_QUERY_FUNC_STANDARD_WRITE_REQUEST;
 		request->upiu_req.value = cpu_to_be32(*attr_val);
-		break;
-	case UPIU_QUERY_OPCODE_READ_ATTR:
+		अवरोध;
+	हाल UPIU_QUERY_OPCODE_READ_ATTR:
 		request->query_func = UPIU_QUERY_FUNC_STANDARD_READ_REQUEST;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		dev_err(hba->dev, "%s: Expected query attr opcode but got = 0x%.2x\n",
 				__func__, opcode);
 		err = -EINVAL;
-		goto out_unlock;
-	}
+		जाओ out_unlock;
+	पूर्ण
 
 	err = ufshcd_exec_dev_cmd(hba, DEV_CMD_TYPE_QUERY, QUERY_REQ_TIMEOUT);
 
-	if (err) {
+	अगर (err) अणु
 		dev_err(hba->dev, "%s: opcode 0x%.2x for idn %d failed, index %d, err = %d\n",
 				__func__, opcode, idn, index, err);
-		goto out_unlock;
-	}
+		जाओ out_unlock;
+	पूर्ण
 
 	*attr_val = be32_to_cpu(response->upiu_res.value);
 
 out_unlock:
 	mutex_unlock(&hba->dev_cmd.lock);
 	ufshcd_release(hba);
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /**
- * ufshcd_query_attr_retry() - API function for sending query
+ * ufshcd_query_attr_retry() - API function क्रम sending query
  * attribute with retries
  * @hba: per-adapter instance
  * @opcode: attribute opcode
@@ -3099,53 +3100,53 @@ out_unlock:
  * @attr_val: the attribute value after the query request
  * completes
  *
- * Returns 0 for success, non-zero in case of failure
+ * Returns 0 क्रम success, non-zero in हाल of failure
 */
-static int ufshcd_query_attr_retry(struct ufs_hba *hba,
-	enum query_opcode opcode, enum attr_idn idn, u8 index, u8 selector,
+अटल पूर्णांक ufshcd_query_attr_retry(काष्ठा ufs_hba *hba,
+	क्रमागत query_opcode opcode, क्रमागत attr_idn idn, u8 index, u8 selector,
 	u32 *attr_val)
-{
-	int ret = 0;
+अणु
+	पूर्णांक ret = 0;
 	u32 retries;
 
-	for (retries = QUERY_REQ_RETRIES; retries > 0; retries--) {
+	क्रम (retries = QUERY_REQ_RETRIES; retries > 0; retries--) अणु
 		ret = ufshcd_query_attr(hba, opcode, idn, index,
 						selector, attr_val);
-		if (ret)
+		अगर (ret)
 			dev_dbg(hba->dev, "%s: failed with error %d, retries %d\n",
 				__func__, ret, retries);
-		else
-			break;
-	}
+		अन्यथा
+			अवरोध;
+	पूर्ण
 
-	if (ret)
+	अगर (ret)
 		dev_err(hba->dev,
 			"%s: query attribute, idn %d, failed with error %d after %d retires\n",
 			__func__, idn, ret, QUERY_REQ_RETRIES);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int __ufshcd_query_descriptor(struct ufs_hba *hba,
-			enum query_opcode opcode, enum desc_idn idn, u8 index,
-			u8 selector, u8 *desc_buf, int *buf_len)
-{
-	struct ufs_query_req *request = NULL;
-	struct ufs_query_res *response = NULL;
-	int err;
+अटल पूर्णांक __ufshcd_query_descriptor(काष्ठा ufs_hba *hba,
+			क्रमागत query_opcode opcode, क्रमागत desc_idn idn, u8 index,
+			u8 selector, u8 *desc_buf, पूर्णांक *buf_len)
+अणु
+	काष्ठा ufs_query_req *request = शून्य;
+	काष्ठा ufs_query_res *response = शून्य;
+	पूर्णांक err;
 
 	BUG_ON(!hba);
 
-	if (!desc_buf) {
+	अगर (!desc_buf) अणु
 		dev_err(hba->dev, "%s: descriptor buffer required for opcode 0x%x\n",
 				__func__, opcode);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (*buf_len < QUERY_DESC_MIN_SIZE || *buf_len > QUERY_DESC_MAX_SIZE) {
+	अगर (*buf_len < QUERY_DESC_MIN_SIZE || *buf_len > QUERY_DESC_MAX_SIZE) अणु
 		dev_err(hba->dev, "%s: descriptor buffer size (%d) is out of range\n",
 				__func__, *buf_len);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	ufshcd_hold(hba, false);
 
@@ -3155,40 +3156,40 @@ static int __ufshcd_query_descriptor(struct ufs_hba *hba,
 	hba->dev_cmd.query.descriptor = desc_buf;
 	request->upiu_req.length = cpu_to_be16(*buf_len);
 
-	switch (opcode) {
-	case UPIU_QUERY_OPCODE_WRITE_DESC:
+	चयन (opcode) अणु
+	हाल UPIU_QUERY_OPCODE_WRITE_DESC:
 		request->query_func = UPIU_QUERY_FUNC_STANDARD_WRITE_REQUEST;
-		break;
-	case UPIU_QUERY_OPCODE_READ_DESC:
+		अवरोध;
+	हाल UPIU_QUERY_OPCODE_READ_DESC:
 		request->query_func = UPIU_QUERY_FUNC_STANDARD_READ_REQUEST;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		dev_err(hba->dev,
 				"%s: Expected query descriptor opcode but got = 0x%.2x\n",
 				__func__, opcode);
 		err = -EINVAL;
-		goto out_unlock;
-	}
+		जाओ out_unlock;
+	पूर्ण
 
 	err = ufshcd_exec_dev_cmd(hba, DEV_CMD_TYPE_QUERY, QUERY_REQ_TIMEOUT);
 
-	if (err) {
+	अगर (err) अणु
 		dev_err(hba->dev, "%s: opcode 0x%.2x for idn %d failed, index %d, err = %d\n",
 				__func__, opcode, idn, index, err);
-		goto out_unlock;
-	}
+		जाओ out_unlock;
+	पूर्ण
 
 	*buf_len = be16_to_cpu(response->upiu_res.length);
 
 out_unlock:
-	hba->dev_cmd.query.descriptor = NULL;
+	hba->dev_cmd.query.descriptor = शून्य;
 	mutex_unlock(&hba->dev_cmd.lock);
 	ufshcd_release(hba);
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /**
- * ufshcd_query_descriptor_retry - API function for sending descriptor requests
+ * ufshcd_query_descriptor_retry - API function क्रम sending descriptor requests
  * @hba: per-adapter instance
  * @opcode: attribute opcode
  * @idn: attribute idn to access
@@ -3197,51 +3198,51 @@ out_unlock:
  * @desc_buf: the buffer that contains the descriptor
  * @buf_len: length parameter passed to the device
  *
- * Returns 0 for success, non-zero in case of failure.
- * The buf_len parameter will contain, on return, the length parameter
+ * Returns 0 क्रम success, non-zero in हाल of failure.
+ * The buf_len parameter will contain, on वापस, the length parameter
  * received on the response.
  */
-int ufshcd_query_descriptor_retry(struct ufs_hba *hba,
-				  enum query_opcode opcode,
-				  enum desc_idn idn, u8 index,
+पूर्णांक ufshcd_query_descriptor_retry(काष्ठा ufs_hba *hba,
+				  क्रमागत query_opcode opcode,
+				  क्रमागत desc_idn idn, u8 index,
 				  u8 selector,
-				  u8 *desc_buf, int *buf_len)
-{
-	int err;
-	int retries;
+				  u8 *desc_buf, पूर्णांक *buf_len)
+अणु
+	पूर्णांक err;
+	पूर्णांक retries;
 
-	for (retries = QUERY_REQ_RETRIES; retries > 0; retries--) {
+	क्रम (retries = QUERY_REQ_RETRIES; retries > 0; retries--) अणु
 		err = __ufshcd_query_descriptor(hba, opcode, idn, index,
 						selector, desc_buf, buf_len);
-		if (!err || err == -EINVAL)
-			break;
-	}
+		अगर (!err || err == -EINVAL)
+			अवरोध;
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /**
  * ufshcd_map_desc_id_to_length - map descriptor IDN to its length
- * @hba: Pointer to adapter instance
+ * @hba: Poपूर्णांकer to adapter instance
  * @desc_id: descriptor idn value
  * @desc_len: mapped desc length (out)
  */
-void ufshcd_map_desc_id_to_length(struct ufs_hba *hba, enum desc_idn desc_id,
-				  int *desc_len)
-{
-	if (desc_id >= QUERY_DESC_IDN_MAX || desc_id == QUERY_DESC_IDN_RFU_0 ||
+व्योम ufshcd_map_desc_id_to_length(काष्ठा ufs_hba *hba, क्रमागत desc_idn desc_id,
+				  पूर्णांक *desc_len)
+अणु
+	अगर (desc_id >= QUERY_DESC_IDN_MAX || desc_id == QUERY_DESC_IDN_RFU_0 ||
 	    desc_id == QUERY_DESC_IDN_RFU_1)
 		*desc_len = 0;
-	else
+	अन्यथा
 		*desc_len = hba->desc_size[desc_id];
-}
+पूर्ण
 EXPORT_SYMBOL(ufshcd_map_desc_id_to_length);
 
-static void ufshcd_update_desc_length(struct ufs_hba *hba,
-				      enum desc_idn desc_id, int desc_index,
-				      unsigned char desc_len)
-{
-	if (hba->desc_size[desc_id] == QUERY_DESC_MAX_SIZE &&
+अटल व्योम ufshcd_update_desc_length(काष्ठा ufs_hba *hba,
+				      क्रमागत desc_idn desc_id, पूर्णांक desc_index,
+				      अचिन्हित अक्षर desc_len)
+अणु
+	अगर (hba->desc_size[desc_id] == QUERY_DESC_MAX_SIZE &&
 	    desc_id != QUERY_DESC_IDN_STRING && desc_index != UFS_RPMB_UNIT)
 		/* For UFS 3.1, the normal unit descriptor is 10 bytes larger
 		 * than the RPMB unit, however, both descriptors share the same
@@ -3249,119 +3250,119 @@ static void ufshcd_update_desc_length(struct ufs_hba *hba,
 		 * choose the normal unit descriptor length by desc_index.
 		 */
 		hba->desc_size[desc_id] = desc_len;
-}
+पूर्ण
 
 /**
- * ufshcd_read_desc_param - read the specified descriptor parameter
- * @hba: Pointer to adapter instance
+ * ufshcd_पढ़ो_desc_param - पढ़ो the specअगरied descriptor parameter
+ * @hba: Poपूर्णांकer to adapter instance
  * @desc_id: descriptor idn value
  * @desc_index: descriptor index
- * @param_offset: offset of the parameter to read
- * @param_read_buf: pointer to buffer where parameter would be read
- * @param_size: sizeof(param_read_buf)
+ * @param_offset: offset of the parameter to पढ़ो
+ * @param_पढ़ो_buf: poपूर्णांकer to buffer where parameter would be पढ़ो
+ * @param_size: माप(param_पढ़ो_buf)
  *
- * Return 0 in case of success, non-zero otherwise
+ * Return 0 in हाल of success, non-zero otherwise
  */
-int ufshcd_read_desc_param(struct ufs_hba *hba,
-			   enum desc_idn desc_id,
-			   int desc_index,
+पूर्णांक ufshcd_पढ़ो_desc_param(काष्ठा ufs_hba *hba,
+			   क्रमागत desc_idn desc_id,
+			   पूर्णांक desc_index,
 			   u8 param_offset,
-			   u8 *param_read_buf,
+			   u8 *param_पढ़ो_buf,
 			   u8 param_size)
-{
-	int ret;
+अणु
+	पूर्णांक ret;
 	u8 *desc_buf;
-	int buff_len;
-	bool is_kmalloc = true;
+	पूर्णांक buff_len;
+	bool is_kदो_स्मृति = true;
 
 	/* Safety check */
-	if (desc_id >= QUERY_DESC_IDN_MAX || !param_size)
-		return -EINVAL;
+	अगर (desc_id >= QUERY_DESC_IDN_MAX || !param_size)
+		वापस -EINVAL;
 
 	/* Get the length of descriptor */
 	ufshcd_map_desc_id_to_length(hba, desc_id, &buff_len);
-	if (!buff_len) {
+	अगर (!buff_len) अणु
 		dev_err(hba->dev, "%s: Failed to get desc length\n", __func__);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (param_offset >= buff_len) {
+	अगर (param_offset >= buff_len) अणु
 		dev_err(hba->dev, "%s: Invalid offset 0x%x in descriptor IDN 0x%x, length 0x%x\n",
 			__func__, param_offset, desc_id, buff_len);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	/* Check whether we need temp memory */
-	if (param_offset != 0 || param_size < buff_len) {
+	अगर (param_offset != 0 || param_size < buff_len) अणु
 		desc_buf = kzalloc(buff_len, GFP_KERNEL);
-		if (!desc_buf)
-			return -ENOMEM;
-	} else {
-		desc_buf = param_read_buf;
-		is_kmalloc = false;
-	}
+		अगर (!desc_buf)
+			वापस -ENOMEM;
+	पूर्ण अन्यथा अणु
+		desc_buf = param_पढ़ो_buf;
+		is_kदो_स्मृति = false;
+	पूर्ण
 
-	/* Request for full descriptor */
+	/* Request क्रम full descriptor */
 	ret = ufshcd_query_descriptor_retry(hba, UPIU_QUERY_OPCODE_READ_DESC,
 					desc_id, desc_index, 0,
 					desc_buf, &buff_len);
 
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(hba->dev, "%s: Failed reading descriptor. desc_id %d, desc_index %d, param_offset %d, ret %d\n",
 			__func__, desc_id, desc_index, param_offset, ret);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	/* Sanity check */
-	if (desc_buf[QUERY_DESC_DESC_TYPE_OFFSET] != desc_id) {
+	अगर (desc_buf[QUERY_DESC_DESC_TYPE_OFFSET] != desc_id) अणु
 		dev_err(hba->dev, "%s: invalid desc_id %d in descriptor header\n",
 			__func__, desc_buf[QUERY_DESC_DESC_TYPE_OFFSET]);
 		ret = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	/* Update descriptor length */
 	buff_len = desc_buf[QUERY_DESC_LENGTH_OFFSET];
 	ufshcd_update_desc_length(hba, desc_id, desc_index, buff_len);
 
-	if (is_kmalloc) {
-		/* Make sure we don't copy more data than available */
-		if (param_offset + param_size > buff_len)
+	अगर (is_kदो_स्मृति) अणु
+		/* Make sure we करोn't copy more data than available */
+		अगर (param_offset + param_size > buff_len)
 			param_size = buff_len - param_offset;
-		memcpy(param_read_buf, &desc_buf[param_offset], param_size);
-	}
+		स_नकल(param_पढ़ो_buf, &desc_buf[param_offset], param_size);
+	पूर्ण
 out:
-	if (is_kmalloc)
-		kfree(desc_buf);
-	return ret;
-}
+	अगर (is_kदो_स्मृति)
+		kमुक्त(desc_buf);
+	वापस ret;
+पूर्ण
 
 /**
- * struct uc_string_id - unicode string
+ * काष्ठा uc_string_id - unicode string
  *
  * @len: size of this descriptor inclusive
  * @type: descriptor type
- * @uc: unicode string character
+ * @uc: unicode string अक्षरacter
  */
-struct uc_string_id {
+काष्ठा uc_string_id अणु
 	u8 len;
 	u8 type;
-	wchar_t uc[];
-} __packed;
+	ब_अक्षर_प्रकार uc[];
+पूर्ण __packed;
 
-/* replace non-printable or non-ASCII characters with spaces */
-static inline char ufshcd_remove_non_printable(u8 ch)
-{
-	return (ch >= 0x20 && ch <= 0x7e) ? ch : ' ';
-}
+/* replace non-prपूर्णांकable or non-ASCII अक्षरacters with spaces */
+अटल अंतरभूत अक्षर ufshcd_हटाओ_non_prपूर्णांकable(u8 ch)
+अणु
+	वापस (ch >= 0x20 && ch <= 0x7e) ? ch : ' ';
+पूर्ण
 
 /**
- * ufshcd_read_string_desc - read string descriptor
- * @hba: pointer to adapter instance
+ * ufshcd_पढ़ो_string_desc - पढ़ो string descriptor
+ * @hba: poपूर्णांकer to adapter instance
  * @desc_index: descriptor index
- * @buf: pointer to buffer where descriptor would be read,
- *       the caller should free the memory.
- * @ascii: if true convert from unicode to ascii characters
+ * @buf: poपूर्णांकer to buffer where descriptor would be पढ़ो,
+ *       the caller should मुक्त the memory.
+ * @ascii: अगर true convert from unicode to ascii अक्षरacters
  *         null terminated string.
  *
  * Return:
@@ -3369,146 +3370,146 @@ static inline char ufshcd_remove_non_printable(u8 ch)
  * *      -ENOMEM: on allocation failure
  * *      -EINVAL: on a wrong parameter
  */
-int ufshcd_read_string_desc(struct ufs_hba *hba, u8 desc_index,
+पूर्णांक ufshcd_पढ़ो_string_desc(काष्ठा ufs_hba *hba, u8 desc_index,
 			    u8 **buf, bool ascii)
-{
-	struct uc_string_id *uc_str;
+अणु
+	काष्ठा uc_string_id *uc_str;
 	u8 *str;
-	int ret;
+	पूर्णांक ret;
 
-	if (!buf)
-		return -EINVAL;
+	अगर (!buf)
+		वापस -EINVAL;
 
 	uc_str = kzalloc(QUERY_DESC_MAX_SIZE, GFP_KERNEL);
-	if (!uc_str)
-		return -ENOMEM;
+	अगर (!uc_str)
+		वापस -ENOMEM;
 
-	ret = ufshcd_read_desc_param(hba, QUERY_DESC_IDN_STRING, desc_index, 0,
+	ret = ufshcd_पढ़ो_desc_param(hba, QUERY_DESC_IDN_STRING, desc_index, 0,
 				     (u8 *)uc_str, QUERY_DESC_MAX_SIZE);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(hba->dev, "Reading String Desc failed after %d retries. err = %d\n",
 			QUERY_REQ_RETRIES, ret);
-		str = NULL;
-		goto out;
-	}
+		str = शून्य;
+		जाओ out;
+	पूर्ण
 
-	if (uc_str->len <= QUERY_DESC_HDR_SIZE) {
+	अगर (uc_str->len <= QUERY_DESC_HDR_SIZE) अणु
 		dev_dbg(hba->dev, "String Desc is of zero length\n");
-		str = NULL;
+		str = शून्य;
 		ret = 0;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (ascii) {
-		ssize_t ascii_len;
-		int i;
-		/* remove header and divide by 2 to move from UTF16 to UTF8 */
+	अगर (ascii) अणु
+		sमाप_प्रकार ascii_len;
+		पूर्णांक i;
+		/* हटाओ header and भागide by 2 to move from UTF16 to UTF8 */
 		ascii_len = (uc_str->len - QUERY_DESC_HDR_SIZE) / 2 + 1;
 		str = kzalloc(ascii_len, GFP_KERNEL);
-		if (!str) {
+		अगर (!str) अणु
 			ret = -ENOMEM;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
 		/*
-		 * the descriptor contains string in UTF16 format
+		 * the descriptor contains string in UTF16 क्रमmat
 		 * we need to convert to utf-8 so it can be displayed
 		 */
 		ret = utf16s_to_utf8s(uc_str->uc,
 				      uc_str->len - QUERY_DESC_HDR_SIZE,
 				      UTF16_BIG_ENDIAN, str, ascii_len);
 
-		/* replace non-printable or non-ASCII characters with spaces */
-		for (i = 0; i < ret; i++)
-			str[i] = ufshcd_remove_non_printable(str[i]);
+		/* replace non-prपूर्णांकable or non-ASCII अक्षरacters with spaces */
+		क्रम (i = 0; i < ret; i++)
+			str[i] = ufshcd_हटाओ_non_prपूर्णांकable(str[i]);
 
 		str[ret++] = '\0';
 
-	} else {
+	पूर्ण अन्यथा अणु
 		str = kmemdup(uc_str, uc_str->len, GFP_KERNEL);
-		if (!str) {
+		अगर (!str) अणु
 			ret = -ENOMEM;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 		ret = uc_str->len;
-	}
+	पूर्ण
 out:
 	*buf = str;
-	kfree(uc_str);
-	return ret;
-}
+	kमुक्त(uc_str);
+	वापस ret;
+पूर्ण
 
 /**
- * ufshcd_read_unit_desc_param - read the specified unit descriptor parameter
- * @hba: Pointer to adapter instance
+ * ufshcd_पढ़ो_unit_desc_param - पढ़ो the specअगरied unit descriptor parameter
+ * @hba: Poपूर्णांकer to adapter instance
  * @lun: lun id
- * @param_offset: offset of the parameter to read
- * @param_read_buf: pointer to buffer where parameter would be read
- * @param_size: sizeof(param_read_buf)
+ * @param_offset: offset of the parameter to पढ़ो
+ * @param_पढ़ो_buf: poपूर्णांकer to buffer where parameter would be पढ़ो
+ * @param_size: माप(param_पढ़ो_buf)
  *
- * Return 0 in case of success, non-zero otherwise
+ * Return 0 in हाल of success, non-zero otherwise
  */
-static inline int ufshcd_read_unit_desc_param(struct ufs_hba *hba,
-					      int lun,
-					      enum unit_desc_param param_offset,
-					      u8 *param_read_buf,
+अटल अंतरभूत पूर्णांक ufshcd_पढ़ो_unit_desc_param(काष्ठा ufs_hba *hba,
+					      पूर्णांक lun,
+					      क्रमागत unit_desc_param param_offset,
+					      u8 *param_पढ़ो_buf,
 					      u32 param_size)
-{
+अणु
 	/*
-	 * Unit descriptors are only available for general purpose LUs (LUN id
+	 * Unit descriptors are only available क्रम general purpose LUs (LUN id
 	 * from 0 to 7) and RPMB Well known LU.
 	 */
-	if (!ufs_is_valid_unit_desc_lun(&hba->dev_info, lun, param_offset))
-		return -EOPNOTSUPP;
+	अगर (!ufs_is_valid_unit_desc_lun(&hba->dev_info, lun, param_offset))
+		वापस -EOPNOTSUPP;
 
-	return ufshcd_read_desc_param(hba, QUERY_DESC_IDN_UNIT, lun,
-				      param_offset, param_read_buf, param_size);
-}
+	वापस ufshcd_पढ़ो_desc_param(hba, QUERY_DESC_IDN_UNIT, lun,
+				      param_offset, param_पढ़ो_buf, param_size);
+पूर्ण
 
-static int ufshcd_get_ref_clk_gating_wait(struct ufs_hba *hba)
-{
-	int err = 0;
-	u32 gating_wait = UFSHCD_REF_CLK_GATING_WAIT_US;
+अटल पूर्णांक ufshcd_get_ref_clk_gating_रुको(काष्ठा ufs_hba *hba)
+अणु
+	पूर्णांक err = 0;
+	u32 gating_रुको = UFSHCD_REF_CLK_GATING_WAIT_US;
 
-	if (hba->dev_info.wspecversion >= 0x300) {
+	अगर (hba->dev_info.wspecversion >= 0x300) अणु
 		err = ufshcd_query_attr_retry(hba, UPIU_QUERY_OPCODE_READ_ATTR,
 				QUERY_ATTR_IDN_REF_CLK_GATING_WAIT_TIME, 0, 0,
-				&gating_wait);
-		if (err)
+				&gating_रुको);
+		अगर (err)
 			dev_err(hba->dev, "Failed reading bRefClkGatingWait. err = %d, use default %uus\n",
-					 err, gating_wait);
+					 err, gating_रुको);
 
-		if (gating_wait == 0) {
-			gating_wait = UFSHCD_REF_CLK_GATING_WAIT_US;
+		अगर (gating_रुको == 0) अणु
+			gating_रुको = UFSHCD_REF_CLK_GATING_WAIT_US;
 			dev_err(hba->dev, "Undefined ref clk gating wait time, use default %uus\n",
-					 gating_wait);
-		}
+					 gating_रुको);
+		पूर्ण
 
-		hba->dev_info.clk_gating_wait_us = gating_wait;
-	}
+		hba->dev_info.clk_gating_रुको_us = gating_रुको;
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /**
- * ufshcd_memory_alloc - allocate memory for host memory space data structures
+ * ufshcd_memory_alloc - allocate memory क्रम host memory space data काष्ठाures
  * @hba: per adapter instance
  *
- * 1. Allocate DMA memory for Command Descriptor array
+ * 1. Allocate DMA memory क्रम Command Descriptor array
  *	Each command descriptor consist of Command UPIU, Response UPIU and PRDT
- * 2. Allocate DMA memory for UTP Transfer Request Descriptor List (UTRDL).
- * 3. Allocate DMA memory for UTP Task Management Request Descriptor List
+ * 2. Allocate DMA memory क्रम UTP Transfer Request Descriptor List (UTRDL).
+ * 3. Allocate DMA memory क्रम UTP Task Management Request Descriptor List
  *	(UTMRDL)
- * 4. Allocate memory for local reference block(lrb).
+ * 4. Allocate memory क्रम local reference block(lrb).
  *
- * Returns 0 for success, non-zero in case of failure
+ * Returns 0 क्रम success, non-zero in हाल of failure
  */
-static int ufshcd_memory_alloc(struct ufs_hba *hba)
-{
-	size_t utmrdl_size, utrdl_size, ucdl_size;
+अटल पूर्णांक ufshcd_memory_alloc(काष्ठा ufs_hba *hba)
+अणु
+	माप_प्रकार uपंचांगrdl_size, utrdl_size, ucdl_size;
 
-	/* Allocate memory for UTP command descriptors */
-	ucdl_size = (sizeof(struct utp_transfer_cmd_desc) * hba->nutrs);
+	/* Allocate memory क्रम UTP command descriptors */
+	ucdl_size = (माप(काष्ठा utp_transfer_cmd_desc) * hba->nutrs);
 	hba->ucdl_base_addr = dmam_alloc_coherent(hba->dev,
 						  ucdl_size,
 						  &hba->ucdl_dma_addr,
@@ -3517,60 +3518,60 @@ static int ufshcd_memory_alloc(struct ufs_hba *hba)
 	/*
 	 * UFSHCI requires UTP command descriptor to be 128 byte aligned.
 	 * make sure hba->ucdl_dma_addr is aligned to PAGE_SIZE
-	 * if hba->ucdl_dma_addr is aligned to PAGE_SIZE, then it will
+	 * अगर hba->ucdl_dma_addr is aligned to PAGE_SIZE, then it will
 	 * be aligned to 128 bytes as well
 	 */
-	if (!hba->ucdl_base_addr ||
-	    WARN_ON(hba->ucdl_dma_addr & (PAGE_SIZE - 1))) {
+	अगर (!hba->ucdl_base_addr ||
+	    WARN_ON(hba->ucdl_dma_addr & (PAGE_SIZE - 1))) अणु
 		dev_err(hba->dev,
 			"Command Descriptor Memory allocation failed\n");
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	/*
-	 * Allocate memory for UTP Transfer descriptors
+	 * Allocate memory क्रम UTP Transfer descriptors
 	 * UFSHCI requires 1024 byte alignment of UTRD
 	 */
-	utrdl_size = (sizeof(struct utp_transfer_req_desc) * hba->nutrs);
+	utrdl_size = (माप(काष्ठा utp_transfer_req_desc) * hba->nutrs);
 	hba->utrdl_base_addr = dmam_alloc_coherent(hba->dev,
 						   utrdl_size,
 						   &hba->utrdl_dma_addr,
 						   GFP_KERNEL);
-	if (!hba->utrdl_base_addr ||
-	    WARN_ON(hba->utrdl_dma_addr & (PAGE_SIZE - 1))) {
+	अगर (!hba->utrdl_base_addr ||
+	    WARN_ON(hba->utrdl_dma_addr & (PAGE_SIZE - 1))) अणु
 		dev_err(hba->dev,
 			"Transfer Descriptor Memory allocation failed\n");
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	/*
-	 * Allocate memory for UTP Task Management descriptors
+	 * Allocate memory क्रम UTP Task Management descriptors
 	 * UFSHCI requires 1024 byte alignment of UTMRD
 	 */
-	utmrdl_size = sizeof(struct utp_task_req_desc) * hba->nutmrs;
-	hba->utmrdl_base_addr = dmam_alloc_coherent(hba->dev,
-						    utmrdl_size,
-						    &hba->utmrdl_dma_addr,
+	uपंचांगrdl_size = माप(काष्ठा utp_task_req_desc) * hba->nuपंचांगrs;
+	hba->uपंचांगrdl_base_addr = dmam_alloc_coherent(hba->dev,
+						    uपंचांगrdl_size,
+						    &hba->uपंचांगrdl_dma_addr,
 						    GFP_KERNEL);
-	if (!hba->utmrdl_base_addr ||
-	    WARN_ON(hba->utmrdl_dma_addr & (PAGE_SIZE - 1))) {
+	अगर (!hba->uपंचांगrdl_base_addr ||
+	    WARN_ON(hba->uपंचांगrdl_dma_addr & (PAGE_SIZE - 1))) अणु
 		dev_err(hba->dev,
 		"Task Management Descriptor Memory allocation failed\n");
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	/* Allocate memory for local reference block */
-	hba->lrb = devm_kcalloc(hba->dev,
-				hba->nutrs, sizeof(struct ufshcd_lrb),
+	/* Allocate memory क्रम local reference block */
+	hba->lrb = devm_kसुस्मृति(hba->dev,
+				hba->nutrs, माप(काष्ठा ufshcd_lrb),
 				GFP_KERNEL);
-	if (!hba->lrb) {
+	अगर (!hba->lrb) अणु
 		dev_err(hba->dev, "LRB Memory allocation failed\n");
-		goto out;
-	}
-	return 0;
+		जाओ out;
+	पूर्ण
+	वापस 0;
 out:
-	return -ENOMEM;
-}
+	वापस -ENOMEM;
+पूर्ण
 
 /**
  * ufshcd_host_memory_configure - configure local reference block with
@@ -3583,29 +3584,29 @@ out:
  * 2. Update each UTRD with Response UPIU offset, Response UPIU length
  * and PRDT offset.
  * 3. Save the corresponding addresses of UTRD, UCD.CMD, UCD.RSP and UCD.PRDT
- * into local reference block.
+ * पूर्णांकo local reference block.
  */
-static void ufshcd_host_memory_configure(struct ufs_hba *hba)
-{
-	struct utp_transfer_req_desc *utrdlp;
+अटल व्योम ufshcd_host_memory_configure(काष्ठा ufs_hba *hba)
+अणु
+	काष्ठा utp_transfer_req_desc *utrdlp;
 	dma_addr_t cmd_desc_dma_addr;
 	dma_addr_t cmd_desc_element_addr;
 	u16 response_offset;
 	u16 prdt_offset;
-	int cmd_desc_size;
-	int i;
+	पूर्णांक cmd_desc_size;
+	पूर्णांक i;
 
 	utrdlp = hba->utrdl_base_addr;
 
 	response_offset =
-		offsetof(struct utp_transfer_cmd_desc, response_upiu);
+		दुरत्व(काष्ठा utp_transfer_cmd_desc, response_upiu);
 	prdt_offset =
-		offsetof(struct utp_transfer_cmd_desc, prd_table);
+		दुरत्व(काष्ठा utp_transfer_cmd_desc, prd_table);
 
-	cmd_desc_size = sizeof(struct utp_transfer_cmd_desc);
+	cmd_desc_size = माप(काष्ठा utp_transfer_cmd_desc);
 	cmd_desc_dma_addr = hba->ucdl_dma_addr;
 
-	for (i = 0; i < hba->nutrs; i++) {
+	क्रम (i = 0; i < hba->nutrs; i++) अणु
 		/* Configure UTRD with command descriptor base address */
 		cmd_desc_element_addr =
 				(cmd_desc_dma_addr + (cmd_desc_size * i));
@@ -3614,29 +3615,29 @@ static void ufshcd_host_memory_configure(struct ufs_hba *hba)
 		utrdlp[i].command_desc_base_addr_hi =
 				cpu_to_le32(upper_32_bits(cmd_desc_element_addr));
 
-		/* Response upiu and prdt offset should be in double words */
-		if (hba->quirks & UFSHCD_QUIRK_PRDT_BYTE_GRAN) {
+		/* Response upiu and prdt offset should be in द्विगुन words */
+		अगर (hba->quirks & UFSHCD_QUIRK_PRDT_BYTE_GRAN) अणु
 			utrdlp[i].response_upiu_offset =
 				cpu_to_le16(response_offset);
 			utrdlp[i].prd_table_offset =
 				cpu_to_le16(prdt_offset);
 			utrdlp[i].response_upiu_length =
 				cpu_to_le16(ALIGNED_UPIU_SIZE);
-		} else {
+		पूर्ण अन्यथा अणु
 			utrdlp[i].response_upiu_offset =
 				cpu_to_le16(response_offset >> 2);
 			utrdlp[i].prd_table_offset =
 				cpu_to_le16(prdt_offset >> 2);
 			utrdlp[i].response_upiu_length =
 				cpu_to_le16(ALIGNED_UPIU_SIZE >> 2);
-		}
+		पूर्ण
 
 		ufshcd_init_lrb(hba, &hba->lrb[i], i);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
- * ufshcd_dme_link_startup - Notify Unipro to perform link startup
+ * ufshcd_dme_link_startup - Notअगरy Unipro to perक्रमm link startup
  * @hba: per adapter instance
  *
  * UIC_CMD_DME_LINK_STARTUP command must be issued to Unipro layer,
@@ -3646,21 +3647,21 @@ static void ufshcd_host_memory_configure(struct ufs_hba *hba)
  *
  * Returns 0 on success, non-zero value on failure
  */
-static int ufshcd_dme_link_startup(struct ufs_hba *hba)
-{
-	struct uic_command uic_cmd = {0};
-	int ret;
+अटल पूर्णांक ufshcd_dme_link_startup(काष्ठा ufs_hba *hba)
+अणु
+	काष्ठा uic_command uic_cmd = अणु0पूर्ण;
+	पूर्णांक ret;
 
 	uic_cmd.command = UIC_CMD_DME_LINK_STARTUP;
 
 	ret = ufshcd_send_uic_cmd(hba, &uic_cmd);
-	if (ret)
+	अगर (ret)
 		dev_dbg(hba->dev,
 			"dme-link-startup: error code %d\n", ret);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 /**
- * ufshcd_dme_reset - UIC command for DME_RESET
+ * ufshcd_dme_reset - UIC command क्रम DME_RESET
  * @hba: per adapter instance
  *
  * DME_RESET command is issued in order to reset UniPro stack.
@@ -3668,93 +3669,93 @@ static int ufshcd_dme_link_startup(struct ufs_hba *hba)
  *
  * Returns 0 on success, non-zero value on failure
  */
-static int ufshcd_dme_reset(struct ufs_hba *hba)
-{
-	struct uic_command uic_cmd = {0};
-	int ret;
+अटल पूर्णांक ufshcd_dme_reset(काष्ठा ufs_hba *hba)
+अणु
+	काष्ठा uic_command uic_cmd = अणु0पूर्ण;
+	पूर्णांक ret;
 
 	uic_cmd.command = UIC_CMD_DME_RESET;
 
 	ret = ufshcd_send_uic_cmd(hba, &uic_cmd);
-	if (ret)
+	अगर (ret)
 		dev_err(hba->dev,
 			"dme-reset: error code %d\n", ret);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int ufshcd_dme_configure_adapt(struct ufs_hba *hba,
-			       int agreed_gear,
-			       int adapt_val)
-{
-	int ret;
+पूर्णांक ufshcd_dme_configure_adapt(काष्ठा ufs_hba *hba,
+			       पूर्णांक agreed_gear,
+			       पूर्णांक adapt_val)
+अणु
+	पूर्णांक ret;
 
-	if (agreed_gear != UFS_HS_G4)
+	अगर (agreed_gear != UFS_HS_G4)
 		adapt_val = PA_NO_ADAPT;
 
 	ret = ufshcd_dme_set(hba,
 			     UIC_ARG_MIB(PA_TXHSADAPTTYPE),
 			     adapt_val);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(ufshcd_dme_configure_adapt);
 
 /**
- * ufshcd_dme_enable - UIC command for DME_ENABLE
+ * ufshcd_dme_enable - UIC command क्रम DME_ENABLE
  * @hba: per adapter instance
  *
  * DME_ENABLE command is issued in order to enable UniPro stack.
  *
  * Returns 0 on success, non-zero value on failure
  */
-static int ufshcd_dme_enable(struct ufs_hba *hba)
-{
-	struct uic_command uic_cmd = {0};
-	int ret;
+अटल पूर्णांक ufshcd_dme_enable(काष्ठा ufs_hba *hba)
+अणु
+	काष्ठा uic_command uic_cmd = अणु0पूर्ण;
+	पूर्णांक ret;
 
 	uic_cmd.command = UIC_CMD_DME_ENABLE;
 
 	ret = ufshcd_send_uic_cmd(hba, &uic_cmd);
-	if (ret)
+	अगर (ret)
 		dev_err(hba->dev,
 			"dme-enable: error code %d\n", ret);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static inline void ufshcd_add_delay_before_dme_cmd(struct ufs_hba *hba)
-{
-	#define MIN_DELAY_BEFORE_DME_CMDS_US	1000
-	unsigned long min_sleep_time_us;
+अटल अंतरभूत व्योम ufshcd_add_delay_beक्रमe_dme_cmd(काष्ठा ufs_hba *hba)
+अणु
+	#घोषणा MIN_DELAY_BEFORE_DME_CMDS_US	1000
+	अचिन्हित दीर्घ min_sleep_समय_us;
 
-	if (!(hba->quirks & UFSHCD_QUIRK_DELAY_BEFORE_DME_CMDS))
-		return;
+	अगर (!(hba->quirks & UFSHCD_QUIRK_DELAY_BEFORE_DME_CMDS))
+		वापस;
 
 	/*
-	 * last_dme_cmd_tstamp will be 0 only for 1st call to
+	 * last_dme_cmd_tstamp will be 0 only क्रम 1st call to
 	 * this function
 	 */
-	if (unlikely(!ktime_to_us(hba->last_dme_cmd_tstamp))) {
-		min_sleep_time_us = MIN_DELAY_BEFORE_DME_CMDS_US;
-	} else {
-		unsigned long delta =
-			(unsigned long) ktime_to_us(
-				ktime_sub(ktime_get(),
+	अगर (unlikely(!kसमय_प्रकारo_us(hba->last_dme_cmd_tstamp))) अणु
+		min_sleep_समय_us = MIN_DELAY_BEFORE_DME_CMDS_US;
+	पूर्ण अन्यथा अणु
+		अचिन्हित दीर्घ delta =
+			(अचिन्हित दीर्घ) kसमय_प्रकारo_us(
+				kसमय_sub(kसमय_get(),
 				hba->last_dme_cmd_tstamp));
 
-		if (delta < MIN_DELAY_BEFORE_DME_CMDS_US)
-			min_sleep_time_us =
+		अगर (delta < MIN_DELAY_BEFORE_DME_CMDS_US)
+			min_sleep_समय_us =
 				MIN_DELAY_BEFORE_DME_CMDS_US - delta;
-		else
-			return; /* no more delay required */
-	}
+		अन्यथा
+			वापस; /* no more delay required */
+	पूर्ण
 
-	/* allow sleep for extra 50us if needed */
-	usleep_range(min_sleep_time_us, min_sleep_time_us + 50);
-}
+	/* allow sleep क्रम extra 50us अगर needed */
+	usleep_range(min_sleep_समय_us, min_sleep_समय_us + 50);
+पूर्ण
 
 /**
- * ufshcd_dme_set_attr - UIC command for DME_SET, DME_PEER_SET
+ * ufshcd_dme_set_attr - UIC command क्रम DME_SET, DME_PEER_SET
  * @hba: per adapter instance
  * @attr_sel: uic command argument1
  * @attr_set: attribute set type as uic command argument2
@@ -3763,17 +3764,17 @@ static inline void ufshcd_add_delay_before_dme_cmd(struct ufs_hba *hba)
  *
  * Returns 0 on success, non-zero value on failure
  */
-int ufshcd_dme_set_attr(struct ufs_hba *hba, u32 attr_sel,
+पूर्णांक ufshcd_dme_set_attr(काष्ठा ufs_hba *hba, u32 attr_sel,
 			u8 attr_set, u32 mib_val, u8 peer)
-{
-	struct uic_command uic_cmd = {0};
-	static const char *const action[] = {
+अणु
+	काष्ठा uic_command uic_cmd = अणु0पूर्ण;
+	अटल स्थिर अक्षर *स्थिर action[] = अणु
 		"dme-set",
 		"dme-peer-set"
-	};
-	const char *set = action[!!peer];
-	int ret;
-	int retries = UFS_UIC_COMMAND_RETRIES;
+	पूर्ण;
+	स्थिर अक्षर *set = action[!!peer];
+	पूर्णांक ret;
+	पूर्णांक retries = UFS_UIC_COMMAND_RETRIES;
 
 	uic_cmd.command = peer ?
 		UIC_CMD_DME_PEER_SET : UIC_CMD_DME_SET;
@@ -3781,218 +3782,218 @@ int ufshcd_dme_set_attr(struct ufs_hba *hba, u32 attr_sel,
 	uic_cmd.argument2 = UIC_ARG_ATTR_TYPE(attr_set);
 	uic_cmd.argument3 = mib_val;
 
-	do {
-		/* for peer attributes we retry upon failure */
+	करो अणु
+		/* क्रम peer attributes we retry upon failure */
 		ret = ufshcd_send_uic_cmd(hba, &uic_cmd);
-		if (ret)
+		अगर (ret)
 			dev_dbg(hba->dev, "%s: attr-id 0x%x val 0x%x error code %d\n",
 				set, UIC_GET_ATTR_ID(attr_sel), mib_val, ret);
-	} while (ret && peer && --retries);
+	पूर्ण जबतक (ret && peer && --retries);
 
-	if (ret)
+	अगर (ret)
 		dev_err(hba->dev, "%s: attr-id 0x%x val 0x%x failed %d retries\n",
 			set, UIC_GET_ATTR_ID(attr_sel), mib_val,
 			UFS_UIC_COMMAND_RETRIES - retries);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(ufshcd_dme_set_attr);
 
 /**
- * ufshcd_dme_get_attr - UIC command for DME_GET, DME_PEER_GET
+ * ufshcd_dme_get_attr - UIC command क्रम DME_GET, DME_PEER_GET
  * @hba: per adapter instance
  * @attr_sel: uic command argument1
- * @mib_val: the value of the attribute as returned by the UIC command
+ * @mib_val: the value of the attribute as वापसed by the UIC command
  * @peer: indicate whether peer or local
  *
  * Returns 0 on success, non-zero value on failure
  */
-int ufshcd_dme_get_attr(struct ufs_hba *hba, u32 attr_sel,
+पूर्णांक ufshcd_dme_get_attr(काष्ठा ufs_hba *hba, u32 attr_sel,
 			u32 *mib_val, u8 peer)
-{
-	struct uic_command uic_cmd = {0};
-	static const char *const action[] = {
+अणु
+	काष्ठा uic_command uic_cmd = अणु0पूर्ण;
+	अटल स्थिर अक्षर *स्थिर action[] = अणु
 		"dme-get",
 		"dme-peer-get"
-	};
-	const char *get = action[!!peer];
-	int ret;
-	int retries = UFS_UIC_COMMAND_RETRIES;
-	struct ufs_pa_layer_attr orig_pwr_info;
-	struct ufs_pa_layer_attr temp_pwr_info;
+	पूर्ण;
+	स्थिर अक्षर *get = action[!!peer];
+	पूर्णांक ret;
+	पूर्णांक retries = UFS_UIC_COMMAND_RETRIES;
+	काष्ठा ufs_pa_layer_attr orig_pwr_info;
+	काष्ठा ufs_pa_layer_attr temp_pwr_info;
 	bool pwr_mode_change = false;
 
-	if (peer && (hba->quirks & UFSHCD_QUIRK_DME_PEER_ACCESS_AUTO_MODE)) {
+	अगर (peer && (hba->quirks & UFSHCD_QUIRK_DME_PEER_ACCESS_AUTO_MODE)) अणु
 		orig_pwr_info = hba->pwr_info;
 		temp_pwr_info = orig_pwr_info;
 
-		if (orig_pwr_info.pwr_tx == FAST_MODE ||
-		    orig_pwr_info.pwr_rx == FAST_MODE) {
+		अगर (orig_pwr_info.pwr_tx == FAST_MODE ||
+		    orig_pwr_info.pwr_rx == FAST_MODE) अणु
 			temp_pwr_info.pwr_tx = FASTAUTO_MODE;
 			temp_pwr_info.pwr_rx = FASTAUTO_MODE;
 			pwr_mode_change = true;
-		} else if (orig_pwr_info.pwr_tx == SLOW_MODE ||
-		    orig_pwr_info.pwr_rx == SLOW_MODE) {
+		पूर्ण अन्यथा अगर (orig_pwr_info.pwr_tx == SLOW_MODE ||
+		    orig_pwr_info.pwr_rx == SLOW_MODE) अणु
 			temp_pwr_info.pwr_tx = SLOWAUTO_MODE;
 			temp_pwr_info.pwr_rx = SLOWAUTO_MODE;
 			pwr_mode_change = true;
-		}
-		if (pwr_mode_change) {
-			ret = ufshcd_change_power_mode(hba, &temp_pwr_info);
-			if (ret)
-				goto out;
-		}
-	}
+		पूर्ण
+		अगर (pwr_mode_change) अणु
+			ret = ufshcd_change_घातer_mode(hba, &temp_pwr_info);
+			अगर (ret)
+				जाओ out;
+		पूर्ण
+	पूर्ण
 
 	uic_cmd.command = peer ?
 		UIC_CMD_DME_PEER_GET : UIC_CMD_DME_GET;
 	uic_cmd.argument1 = attr_sel;
 
-	do {
-		/* for peer attributes we retry upon failure */
+	करो अणु
+		/* क्रम peer attributes we retry upon failure */
 		ret = ufshcd_send_uic_cmd(hba, &uic_cmd);
-		if (ret)
+		अगर (ret)
 			dev_dbg(hba->dev, "%s: attr-id 0x%x error code %d\n",
 				get, UIC_GET_ATTR_ID(attr_sel), ret);
-	} while (ret && peer && --retries);
+	पूर्ण जबतक (ret && peer && --retries);
 
-	if (ret)
+	अगर (ret)
 		dev_err(hba->dev, "%s: attr-id 0x%x failed %d retries\n",
 			get, UIC_GET_ATTR_ID(attr_sel),
 			UFS_UIC_COMMAND_RETRIES - retries);
 
-	if (mib_val && !ret)
+	अगर (mib_val && !ret)
 		*mib_val = uic_cmd.argument3;
 
-	if (peer && (hba->quirks & UFSHCD_QUIRK_DME_PEER_ACCESS_AUTO_MODE)
+	अगर (peer && (hba->quirks & UFSHCD_QUIRK_DME_PEER_ACCESS_AUTO_MODE)
 	    && pwr_mode_change)
-		ufshcd_change_power_mode(hba, &orig_pwr_info);
+		ufshcd_change_घातer_mode(hba, &orig_pwr_info);
 out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(ufshcd_dme_get_attr);
 
 /**
- * ufshcd_uic_pwr_ctrl - executes UIC commands (which affects the link power
- * state) and waits for it to take effect.
+ * ufshcd_uic_pwr_ctrl - executes UIC commands (which affects the link घातer
+ * state) and रुकोs क्रम it to take effect.
  *
  * @hba: per adapter instance
  * @cmd: UIC command to execute
  *
  * DME operations like DME_SET(PA_PWRMODE), DME_HIBERNATE_ENTER &
- * DME_HIBERNATE_EXIT commands take some time to take its effect on both host
+ * DME_HIBERNATE_EXIT commands take some समय to take its effect on both host
  * and device UniPro link and hence it's final completion would be indicated by
- * dedicated status bits in Interrupt Status register (UPMS, UHES, UHXS) in
+ * dedicated status bits in Interrupt Status रेजिस्टर (UPMS, UHES, UHXS) in
  * addition to normal UIC command completion Status (UCCS). This function only
- * returns after the relevant status bits indicate the completion.
+ * वापसs after the relevant status bits indicate the completion.
  *
  * Returns 0 on success, non-zero value on failure
  */
-static int ufshcd_uic_pwr_ctrl(struct ufs_hba *hba, struct uic_command *cmd)
-{
-	struct completion uic_async_done;
-	unsigned long flags;
+अटल पूर्णांक ufshcd_uic_pwr_ctrl(काष्ठा ufs_hba *hba, काष्ठा uic_command *cmd)
+अणु
+	काष्ठा completion uic_async_करोne;
+	अचिन्हित दीर्घ flags;
 	u8 status;
-	int ret;
-	bool reenable_intr = false;
+	पूर्णांक ret;
+	bool reenable_पूर्णांकr = false;
 
 	mutex_lock(&hba->uic_cmd_mutex);
-	init_completion(&uic_async_done);
-	ufshcd_add_delay_before_dme_cmd(hba);
+	init_completion(&uic_async_करोne);
+	ufshcd_add_delay_beक्रमe_dme_cmd(hba);
 
 	spin_lock_irqsave(hba->host->host_lock, flags);
-	if (ufshcd_is_link_broken(hba)) {
+	अगर (ufshcd_is_link_broken(hba)) अणु
 		ret = -ENOLINK;
-		goto out_unlock;
-	}
-	hba->uic_async_done = &uic_async_done;
-	if (ufshcd_readl(hba, REG_INTERRUPT_ENABLE) & UIC_COMMAND_COMPL) {
-		ufshcd_disable_intr(hba, UIC_COMMAND_COMPL);
+		जाओ out_unlock;
+	पूर्ण
+	hba->uic_async_करोne = &uic_async_करोne;
+	अगर (ufshcd_पढ़ोl(hba, REG_INTERRUPT_ENABLE) & UIC_COMMAND_COMPL) अणु
+		ufshcd_disable_पूर्णांकr(hba, UIC_COMMAND_COMPL);
 		/*
-		 * Make sure UIC command completion interrupt is disabled before
+		 * Make sure UIC command completion पूर्णांकerrupt is disabled beक्रमe
 		 * issuing UIC command.
 		 */
 		wmb();
-		reenable_intr = true;
-	}
+		reenable_पूर्णांकr = true;
+	पूर्ण
 	ret = __ufshcd_send_uic_cmd(hba, cmd, false);
 	spin_unlock_irqrestore(hba->host->host_lock, flags);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(hba->dev,
 			"pwr ctrl cmd 0x%x with mode 0x%x uic error %d\n",
 			cmd->command, cmd->argument3, ret);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (!wait_for_completion_timeout(hba->uic_async_done,
-					 msecs_to_jiffies(UIC_CMD_TIMEOUT))) {
+	अगर (!रुको_क्रम_completion_समयout(hba->uic_async_करोne,
+					 msecs_to_jअगरfies(UIC_CMD_TIMEOUT))) अणु
 		dev_err(hba->dev,
 			"pwr ctrl cmd 0x%x with mode 0x%x completion timeout\n",
 			cmd->command, cmd->argument3);
 
-		if (!cmd->cmd_active) {
+		अगर (!cmd->cmd_active) अणु
 			dev_err(hba->dev, "%s: Power Mode Change operation has been completed, go check UPMCRS\n",
 				__func__);
-			goto check_upmcrs;
-		}
+			जाओ check_upmcrs;
+		पूर्ण
 
 		ret = -ETIMEDOUT;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 check_upmcrs:
 	status = ufshcd_get_upmcrs(hba);
-	if (status != PWR_LOCAL) {
+	अगर (status != PWR_LOCAL) अणु
 		dev_err(hba->dev,
 			"pwr ctrl cmd 0x%x failed, host upmcrs:0x%x\n",
 			cmd->command, status);
 		ret = (status != PWR_OK) ? status : -1;
-	}
+	पूर्ण
 out:
-	if (ret) {
-		ufshcd_print_host_state(hba);
-		ufshcd_print_pwr_info(hba);
-		ufshcd_print_evt_hist(hba);
-	}
+	अगर (ret) अणु
+		ufshcd_prपूर्णांक_host_state(hba);
+		ufshcd_prपूर्णांक_pwr_info(hba);
+		ufshcd_prपूर्णांक_evt_hist(hba);
+	पूर्ण
 
 	spin_lock_irqsave(hba->host->host_lock, flags);
-	hba->active_uic_cmd = NULL;
-	hba->uic_async_done = NULL;
-	if (reenable_intr)
-		ufshcd_enable_intr(hba, UIC_COMMAND_COMPL);
-	if (ret) {
+	hba->active_uic_cmd = शून्य;
+	hba->uic_async_करोne = शून्य;
+	अगर (reenable_पूर्णांकr)
+		ufshcd_enable_पूर्णांकr(hba, UIC_COMMAND_COMPL);
+	अगर (ret) अणु
 		ufshcd_set_link_broken(hba);
 		ufshcd_schedule_eh_work(hba);
-	}
+	पूर्ण
 out_unlock:
 	spin_unlock_irqrestore(hba->host->host_lock, flags);
 	mutex_unlock(&hba->uic_cmd_mutex);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * ufshcd_uic_change_pwr_mode - Perform the UIC power mode chage
+ * ufshcd_uic_change_pwr_mode - Perक्रमm the UIC घातer mode chage
  *				using DME_SET primitives.
  * @hba: per adapter instance
- * @mode: powr mode value
+ * @mode: घातr mode value
  *
  * Returns 0 on success, non-zero value on failure
  */
-static int ufshcd_uic_change_pwr_mode(struct ufs_hba *hba, u8 mode)
-{
-	struct uic_command uic_cmd = {0};
-	int ret;
+अटल पूर्णांक ufshcd_uic_change_pwr_mode(काष्ठा ufs_hba *hba, u8 mode)
+अणु
+	काष्ठा uic_command uic_cmd = अणु0पूर्ण;
+	पूर्णांक ret;
 
-	if (hba->quirks & UFSHCD_QUIRK_BROKEN_PA_RXHSUNTERMCAP) {
+	अगर (hba->quirks & UFSHCD_QUIRK_BROKEN_PA_RXHSUNTERMCAP) अणु
 		ret = ufshcd_dme_set(hba,
 				UIC_ARG_MIB_SEL(PA_RXHSUNTERMCAP, 0), 1);
-		if (ret) {
+		अगर (ret) अणु
 			dev_err(hba->dev, "%s: failed to enable PA_RXHSUNTERMCAP ret %d\n",
 						__func__, ret);
-			goto out;
-		}
-	}
+			जाओ out;
+		पूर्ण
+	पूर्ण
 
 	uic_cmd.command = UIC_CMD_DME_SET;
 	uic_cmd.argument1 = UIC_ARG_MIB(PA_PWRMODE);
@@ -4002,13 +4003,13 @@ static int ufshcd_uic_change_pwr_mode(struct ufs_hba *hba, u8 mode)
 	ufshcd_release(hba);
 
 out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int ufshcd_link_recovery(struct ufs_hba *hba)
-{
-	int ret;
-	unsigned long flags;
+पूर्णांक ufshcd_link_recovery(काष्ठा ufs_hba *hba)
+अणु
+	पूर्णांक ret;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(hba->host->host_lock, flags);
 	hba->ufshcd_state = UFSHCD_STATE_RESET;
@@ -4021,115 +4022,115 @@ int ufshcd_link_recovery(struct ufs_hba *hba)
 	ret = ufshcd_host_reset_and_restore(hba);
 
 	spin_lock_irqsave(hba->host->host_lock, flags);
-	if (ret)
+	अगर (ret)
 		hba->ufshcd_state = UFSHCD_STATE_ERROR;
 	ufshcd_clear_eh_in_progress(hba);
 	spin_unlock_irqrestore(hba->host->host_lock, flags);
 
-	if (ret)
+	अगर (ret)
 		dev_err(hba->dev, "%s: link recovery failed, err %d",
 			__func__, ret);
-	else
+	अन्यथा
 		ufshcd_clear_ua_wluns(hba);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(ufshcd_link_recovery);
 
-static int ufshcd_uic_hibern8_enter(struct ufs_hba *hba)
-{
-	int ret;
-	struct uic_command uic_cmd = {0};
-	ktime_t start = ktime_get();
+अटल पूर्णांक ufshcd_uic_hibern8_enter(काष्ठा ufs_hba *hba)
+अणु
+	पूर्णांक ret;
+	काष्ठा uic_command uic_cmd = अणु0पूर्ण;
+	kसमय_प्रकार start = kसमय_get();
 
-	ufshcd_vops_hibern8_notify(hba, UIC_CMD_DME_HIBER_ENTER, PRE_CHANGE);
+	ufshcd_vops_hibern8_notअगरy(hba, UIC_CMD_DME_HIBER_ENTER, PRE_CHANGE);
 
 	uic_cmd.command = UIC_CMD_DME_HIBER_ENTER;
 	ret = ufshcd_uic_pwr_ctrl(hba, &uic_cmd);
 	trace_ufshcd_profile_hibern8(dev_name(hba->dev), "enter",
-			     ktime_to_us(ktime_sub(ktime_get(), start)), ret);
+			     kसमय_प्रकारo_us(kसमय_sub(kसमय_get(), start)), ret);
 
-	if (ret)
+	अगर (ret)
 		dev_err(hba->dev, "%s: hibern8 enter failed. ret = %d\n",
 			__func__, ret);
-	else
-		ufshcd_vops_hibern8_notify(hba, UIC_CMD_DME_HIBER_ENTER,
+	अन्यथा
+		ufshcd_vops_hibern8_notअगरy(hba, UIC_CMD_DME_HIBER_ENTER,
 								POST_CHANGE);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int ufshcd_uic_hibern8_exit(struct ufs_hba *hba)
-{
-	struct uic_command uic_cmd = {0};
-	int ret;
-	ktime_t start = ktime_get();
+पूर्णांक ufshcd_uic_hibern8_निकास(काष्ठा ufs_hba *hba)
+अणु
+	काष्ठा uic_command uic_cmd = अणु0पूर्ण;
+	पूर्णांक ret;
+	kसमय_प्रकार start = kसमय_get();
 
-	ufshcd_vops_hibern8_notify(hba, UIC_CMD_DME_HIBER_EXIT, PRE_CHANGE);
+	ufshcd_vops_hibern8_notअगरy(hba, UIC_CMD_DME_HIBER_EXIT, PRE_CHANGE);
 
 	uic_cmd.command = UIC_CMD_DME_HIBER_EXIT;
 	ret = ufshcd_uic_pwr_ctrl(hba, &uic_cmd);
 	trace_ufshcd_profile_hibern8(dev_name(hba->dev), "exit",
-			     ktime_to_us(ktime_sub(ktime_get(), start)), ret);
+			     kसमय_प्रकारo_us(kसमय_sub(kसमय_get(), start)), ret);
 
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(hba->dev, "%s: hibern8 exit failed. ret = %d\n",
 			__func__, ret);
-	} else {
-		ufshcd_vops_hibern8_notify(hba, UIC_CMD_DME_HIBER_EXIT,
+	पूर्ण अन्यथा अणु
+		ufshcd_vops_hibern8_notअगरy(hba, UIC_CMD_DME_HIBER_EXIT,
 								POST_CHANGE);
-		hba->ufs_stats.last_hibern8_exit_tstamp = ktime_get();
-		hba->ufs_stats.hibern8_exit_cnt++;
-	}
+		hba->ufs_stats.last_hibern8_निकास_tstamp = kसमय_get();
+		hba->ufs_stats.hibern8_निकास_cnt++;
+	पूर्ण
 
-	return ret;
-}
-EXPORT_SYMBOL_GPL(ufshcd_uic_hibern8_exit);
+	वापस ret;
+पूर्ण
+EXPORT_SYMBOL_GPL(ufshcd_uic_hibern8_निकास);
 
-void ufshcd_auto_hibern8_update(struct ufs_hba *hba, u32 ahit)
-{
-	unsigned long flags;
+व्योम ufshcd_स्वतः_hibern8_update(काष्ठा ufs_hba *hba, u32 ahit)
+अणु
+	अचिन्हित दीर्घ flags;
 	bool update = false;
 
-	if (!ufshcd_is_auto_hibern8_supported(hba))
-		return;
+	अगर (!ufshcd_is_स्वतः_hibern8_supported(hba))
+		वापस;
 
 	spin_lock_irqsave(hba->host->host_lock, flags);
-	if (hba->ahit != ahit) {
+	अगर (hba->ahit != ahit) अणु
 		hba->ahit = ahit;
 		update = true;
-	}
+	पूर्ण
 	spin_unlock_irqrestore(hba->host->host_lock, flags);
 
-	if (update && !pm_runtime_suspended(hba->dev)) {
-		pm_runtime_get_sync(hba->dev);
+	अगर (update && !pm_runसमय_suspended(hba->dev)) अणु
+		pm_runसमय_get_sync(hba->dev);
 		ufshcd_hold(hba, false);
-		ufshcd_auto_hibern8_enable(hba);
+		ufshcd_स्वतः_hibern8_enable(hba);
 		ufshcd_release(hba);
-		pm_runtime_put(hba->dev);
-	}
-}
-EXPORT_SYMBOL_GPL(ufshcd_auto_hibern8_update);
+		pm_runसमय_put(hba->dev);
+	पूर्ण
+पूर्ण
+EXPORT_SYMBOL_GPL(ufshcd_स्वतः_hibern8_update);
 
-void ufshcd_auto_hibern8_enable(struct ufs_hba *hba)
-{
-	unsigned long flags;
+व्योम ufshcd_स्वतः_hibern8_enable(काष्ठा ufs_hba *hba)
+अणु
+	अचिन्हित दीर्घ flags;
 
-	if (!ufshcd_is_auto_hibern8_supported(hba))
-		return;
+	अगर (!ufshcd_is_स्वतः_hibern8_supported(hba))
+		वापस;
 
 	spin_lock_irqsave(hba->host->host_lock, flags);
-	ufshcd_writel(hba, hba->ahit, REG_AUTO_HIBERNATE_IDLE_TIMER);
+	ufshcd_ग_लिखोl(hba, hba->ahit, REG_AUTO_HIBERNATE_IDLE_TIMER);
 	spin_unlock_irqrestore(hba->host->host_lock, flags);
-}
+पूर्ण
 
  /**
- * ufshcd_init_pwr_info - setting the POR (power on reset)
- * values in hba power info
+ * ufshcd_init_pwr_info - setting the POR (घातer on reset)
+ * values in hba घातer info
  * @hba: per-adapter instance
  */
-static void ufshcd_init_pwr_info(struct ufs_hba *hba)
-{
+अटल व्योम ufshcd_init_pwr_info(काष्ठा ufs_hba *hba)
+अणु
 	hba->pwr_info.gear_rx = UFS_PWM_G1;
 	hba->pwr_info.gear_tx = UFS_PWM_G1;
 	hba->pwr_info.lane_rx = 1;
@@ -4137,18 +4138,18 @@ static void ufshcd_init_pwr_info(struct ufs_hba *hba)
 	hba->pwr_info.pwr_rx = SLOWAUTO_MODE;
 	hba->pwr_info.pwr_tx = SLOWAUTO_MODE;
 	hba->pwr_info.hs_rate = 0;
-}
+पूर्ण
 
 /**
- * ufshcd_get_max_pwr_mode - reads the max power mode negotiated with device
+ * ufshcd_get_max_pwr_mode - पढ़ोs the max घातer mode negotiated with device
  * @hba: per-adapter instance
  */
-static int ufshcd_get_max_pwr_mode(struct ufs_hba *hba)
-{
-	struct ufs_pa_layer_attr *pwr_info = &hba->max_pwr_info.info;
+अटल पूर्णांक ufshcd_get_max_pwr_mode(काष्ठा ufs_hba *hba)
+अणु
+	काष्ठा ufs_pa_layer_attr *pwr_info = &hba->max_pwr_info.info;
 
-	if (hba->max_pwr_info.is_valid)
-		return 0;
+	अगर (hba->max_pwr_info.is_valid)
+		वापस 0;
 
 	pwr_info->pwr_tx = FAST_MODE;
 	pwr_info->pwr_rx = FAST_MODE;
@@ -4160,13 +4161,13 @@ static int ufshcd_get_max_pwr_mode(struct ufs_hba *hba)
 	ufshcd_dme_get(hba, UIC_ARG_MIB(PA_CONNECTEDTXDATALANES),
 			&pwr_info->lane_tx);
 
-	if (!pwr_info->lane_rx || !pwr_info->lane_tx) {
+	अगर (!pwr_info->lane_rx || !pwr_info->lane_tx) अणु
 		dev_err(hba->dev, "%s: invalid connected lanes value. rx=%d, tx=%d\n",
 				__func__,
 				pwr_info->lane_rx,
 				pwr_info->lane_tx);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	/*
 	 * First, get the maximum gears of HS speed.
@@ -4174,54 +4175,54 @@ static int ufshcd_get_max_pwr_mode(struct ufs_hba *hba)
 	 * Then, get the maximum gears of PWM speed.
 	 */
 	ufshcd_dme_get(hba, UIC_ARG_MIB(PA_MAXRXHSGEAR), &pwr_info->gear_rx);
-	if (!pwr_info->gear_rx) {
+	अगर (!pwr_info->gear_rx) अणु
 		ufshcd_dme_get(hba, UIC_ARG_MIB(PA_MAXRXPWMGEAR),
 				&pwr_info->gear_rx);
-		if (!pwr_info->gear_rx) {
+		अगर (!pwr_info->gear_rx) अणु
 			dev_err(hba->dev, "%s: invalid max pwm rx gear read = %d\n",
 				__func__, pwr_info->gear_rx);
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 		pwr_info->pwr_rx = SLOW_MODE;
-	}
+	पूर्ण
 
 	ufshcd_dme_peer_get(hba, UIC_ARG_MIB(PA_MAXRXHSGEAR),
 			&pwr_info->gear_tx);
-	if (!pwr_info->gear_tx) {
+	अगर (!pwr_info->gear_tx) अणु
 		ufshcd_dme_peer_get(hba, UIC_ARG_MIB(PA_MAXRXPWMGEAR),
 				&pwr_info->gear_tx);
-		if (!pwr_info->gear_tx) {
+		अगर (!pwr_info->gear_tx) अणु
 			dev_err(hba->dev, "%s: invalid max pwm tx gear read = %d\n",
 				__func__, pwr_info->gear_tx);
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 		pwr_info->pwr_tx = SLOW_MODE;
-	}
+	पूर्ण
 
 	hba->max_pwr_info.is_valid = true;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ufshcd_change_power_mode(struct ufs_hba *hba,
-			     struct ufs_pa_layer_attr *pwr_mode)
-{
-	int ret;
+अटल पूर्णांक ufshcd_change_घातer_mode(काष्ठा ufs_hba *hba,
+			     काष्ठा ufs_pa_layer_attr *pwr_mode)
+अणु
+	पूर्णांक ret;
 
-	/* if already configured to the requested pwr_mode */
-	if (!hba->force_pmc &&
+	/* अगर alपढ़ोy configured to the requested pwr_mode */
+	अगर (!hba->क्रमce_pmc &&
 	    pwr_mode->gear_rx == hba->pwr_info.gear_rx &&
 	    pwr_mode->gear_tx == hba->pwr_info.gear_tx &&
 	    pwr_mode->lane_rx == hba->pwr_info.lane_rx &&
 	    pwr_mode->lane_tx == hba->pwr_info.lane_tx &&
 	    pwr_mode->pwr_rx == hba->pwr_info.pwr_rx &&
 	    pwr_mode->pwr_tx == hba->pwr_info.pwr_tx &&
-	    pwr_mode->hs_rate == hba->pwr_info.hs_rate) {
+	    pwr_mode->hs_rate == hba->pwr_info.hs_rate) अणु
 		dev_dbg(hba->dev, "%s: power already configured\n", __func__);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	/*
-	 * Configure attributes for power mode change with below.
+	 * Configure attributes क्रम घातer mode change with below.
 	 * - PA_RXGEAR, PA_ACTIVERXDATALANES, PA_RXTERMINATION,
 	 * - PA_TXGEAR, PA_ACTIVETXDATALANES, PA_TXTERMINATION,
 	 * - PA_HSSERIES
@@ -4229,29 +4230,29 @@ static int ufshcd_change_power_mode(struct ufs_hba *hba,
 	ufshcd_dme_set(hba, UIC_ARG_MIB(PA_RXGEAR), pwr_mode->gear_rx);
 	ufshcd_dme_set(hba, UIC_ARG_MIB(PA_ACTIVERXDATALANES),
 			pwr_mode->lane_rx);
-	if (pwr_mode->pwr_rx == FASTAUTO_MODE ||
+	अगर (pwr_mode->pwr_rx == FASTAUTO_MODE ||
 			pwr_mode->pwr_rx == FAST_MODE)
 		ufshcd_dme_set(hba, UIC_ARG_MIB(PA_RXTERMINATION), TRUE);
-	else
+	अन्यथा
 		ufshcd_dme_set(hba, UIC_ARG_MIB(PA_RXTERMINATION), FALSE);
 
 	ufshcd_dme_set(hba, UIC_ARG_MIB(PA_TXGEAR), pwr_mode->gear_tx);
 	ufshcd_dme_set(hba, UIC_ARG_MIB(PA_ACTIVETXDATALANES),
 			pwr_mode->lane_tx);
-	if (pwr_mode->pwr_tx == FASTAUTO_MODE ||
+	अगर (pwr_mode->pwr_tx == FASTAUTO_MODE ||
 			pwr_mode->pwr_tx == FAST_MODE)
 		ufshcd_dme_set(hba, UIC_ARG_MIB(PA_TXTERMINATION), TRUE);
-	else
+	अन्यथा
 		ufshcd_dme_set(hba, UIC_ARG_MIB(PA_TXTERMINATION), FALSE);
 
-	if (pwr_mode->pwr_rx == FASTAUTO_MODE ||
+	अगर (pwr_mode->pwr_rx == FASTAUTO_MODE ||
 	    pwr_mode->pwr_tx == FASTAUTO_MODE ||
 	    pwr_mode->pwr_rx == FAST_MODE ||
 	    pwr_mode->pwr_tx == FAST_MODE)
 		ufshcd_dme_set(hba, UIC_ARG_MIB(PA_HSSERIES),
 						pwr_mode->hs_rate);
 
-	if (!(hba->quirks & UFSHCD_QUIRK_SKIP_DEF_UNIPRO_TIMEOUT_SETTING)) {
+	अगर (!(hba->quirks & UFSHCD_QUIRK_SKIP_DEF_UNIPRO_TIMEOUT_SETTING)) अणु
 		ufshcd_dme_set(hba, UIC_ARG_MIB(PA_PWRMODEUSERDATA0),
 				DL_FC0ProtectionTimeOutVal_Default);
 		ufshcd_dme_set(hba, UIC_ARG_MIB(PA_PWRMODEUSERDATA1),
@@ -4271,199 +4272,199 @@ static int ufshcd_change_power_mode(struct ufs_hba *hba,
 				DL_TC0ReplayTimeOutVal_Default);
 		ufshcd_dme_set(hba, UIC_ARG_MIB(DME_LocalAFC0ReqTimeOutVal),
 				DL_AFC0ReqTimeOutVal_Default);
-	}
+	पूर्ण
 
 	ret = ufshcd_uic_change_pwr_mode(hba, pwr_mode->pwr_rx << 4
 			| pwr_mode->pwr_tx);
 
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(hba->dev,
 			"%s: power mode change failed %d\n", __func__, ret);
-	} else {
-		ufshcd_vops_pwr_change_notify(hba, POST_CHANGE, NULL,
+	पूर्ण अन्यथा अणु
+		ufshcd_vops_pwr_change_notअगरy(hba, POST_CHANGE, शून्य,
 								pwr_mode);
 
-		memcpy(&hba->pwr_info, pwr_mode,
-			sizeof(struct ufs_pa_layer_attr));
-	}
+		स_नकल(&hba->pwr_info, pwr_mode,
+			माप(काष्ठा ufs_pa_layer_attr));
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * ufshcd_config_pwr_mode - configure a new power mode
+ * ufshcd_config_pwr_mode - configure a new घातer mode
  * @hba: per-adapter instance
- * @desired_pwr_mode: desired power configuration
+ * @desired_pwr_mode: desired घातer configuration
  */
-int ufshcd_config_pwr_mode(struct ufs_hba *hba,
-		struct ufs_pa_layer_attr *desired_pwr_mode)
-{
-	struct ufs_pa_layer_attr final_params = { 0 };
-	int ret;
+पूर्णांक ufshcd_config_pwr_mode(काष्ठा ufs_hba *hba,
+		काष्ठा ufs_pa_layer_attr *desired_pwr_mode)
+अणु
+	काष्ठा ufs_pa_layer_attr final_params = अणु 0 पूर्ण;
+	पूर्णांक ret;
 
-	ret = ufshcd_vops_pwr_change_notify(hba, PRE_CHANGE,
+	ret = ufshcd_vops_pwr_change_notअगरy(hba, PRE_CHANGE,
 					desired_pwr_mode, &final_params);
 
-	if (ret)
-		memcpy(&final_params, desired_pwr_mode, sizeof(final_params));
+	अगर (ret)
+		स_नकल(&final_params, desired_pwr_mode, माप(final_params));
 
-	ret = ufshcd_change_power_mode(hba, &final_params);
+	ret = ufshcd_change_घातer_mode(hba, &final_params);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(ufshcd_config_pwr_mode);
 
 /**
- * ufshcd_complete_dev_init() - checks device readiness
+ * ufshcd_complete_dev_init() - checks device पढ़ोiness
  * @hba: per-adapter instance
  *
  * Set fDeviceInit flag and poll until device toggles it.
  */
-static int ufshcd_complete_dev_init(struct ufs_hba *hba)
-{
-	int err;
+अटल पूर्णांक ufshcd_complete_dev_init(काष्ठा ufs_hba *hba)
+अणु
+	पूर्णांक err;
 	bool flag_res = true;
-	ktime_t timeout;
+	kसमय_प्रकार समयout;
 
 	err = ufshcd_query_flag_retry(hba, UPIU_QUERY_OPCODE_SET_FLAG,
-		QUERY_FLAG_IDN_FDEVICEINIT, 0, NULL);
-	if (err) {
+		QUERY_FLAG_IDN_FDEVICEINIT, 0, शून्य);
+	अगर (err) अणु
 		dev_err(hba->dev,
 			"%s setting fDeviceInit flag failed with error %d\n",
 			__func__, err);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	/* Poll fDeviceInit flag to be cleared */
-	timeout = ktime_add_ms(ktime_get(), FDEVICEINIT_COMPL_TIMEOUT);
-	do {
+	समयout = kसमय_add_ms(kसमय_get(), FDEVICEINIT_COMPL_TIMEOUT);
+	करो अणु
 		err = ufshcd_query_flag(hba, UPIU_QUERY_OPCODE_READ_FLAG,
 					QUERY_FLAG_IDN_FDEVICEINIT, 0, &flag_res);
-		if (!flag_res)
-			break;
+		अगर (!flag_res)
+			अवरोध;
 		usleep_range(5000, 10000);
-	} while (ktime_before(ktime_get(), timeout));
+	पूर्ण जबतक (kसमय_beक्रमe(kसमय_get(), समयout));
 
-	if (err) {
+	अगर (err) अणु
 		dev_err(hba->dev,
 				"%s reading fDeviceInit flag failed with error %d\n",
 				__func__, err);
-	} else if (flag_res) {
+	पूर्ण अन्यथा अगर (flag_res) अणु
 		dev_err(hba->dev,
 				"%s fDeviceInit was not cleared by the device\n",
 				__func__);
 		err = -EBUSY;
-	}
+	पूर्ण
 out:
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /**
  * ufshcd_make_hba_operational - Make UFS controller operational
  * @hba: per adapter instance
  *
  * To bring UFS host controller to operational state,
- * 1. Enable required interrupts
- * 2. Configure interrupt aggregation
+ * 1. Enable required पूर्णांकerrupts
+ * 2. Configure पूर्णांकerrupt aggregation
  * 3. Program UTRL and UTMRL base address
- * 4. Configure run-stop-registers
+ * 4. Configure run-stop-रेजिस्टरs
  *
  * Returns 0 on success, non-zero value on failure
  */
-int ufshcd_make_hba_operational(struct ufs_hba *hba)
-{
-	int err = 0;
+पूर्णांक ufshcd_make_hba_operational(काष्ठा ufs_hba *hba)
+अणु
+	पूर्णांक err = 0;
 	u32 reg;
 
-	/* Enable required interrupts */
-	ufshcd_enable_intr(hba, UFSHCD_ENABLE_INTRS);
+	/* Enable required पूर्णांकerrupts */
+	ufshcd_enable_पूर्णांकr(hba, UFSHCD_ENABLE_INTRS);
 
-	/* Configure interrupt aggregation */
-	if (ufshcd_is_intr_aggr_allowed(hba))
-		ufshcd_config_intr_aggr(hba, hba->nutrs - 1, INT_AGGR_DEF_TO);
-	else
-		ufshcd_disable_intr_aggr(hba);
+	/* Configure पूर्णांकerrupt aggregation */
+	अगर (ufshcd_is_पूर्णांकr_aggr_allowed(hba))
+		ufshcd_config_पूर्णांकr_aggr(hba, hba->nutrs - 1, INT_AGGR_DEF_TO);
+	अन्यथा
+		ufshcd_disable_पूर्णांकr_aggr(hba);
 
-	/* Configure UTRL and UTMRL base address registers */
-	ufshcd_writel(hba, lower_32_bits(hba->utrdl_dma_addr),
+	/* Configure UTRL and UTMRL base address रेजिस्टरs */
+	ufshcd_ग_लिखोl(hba, lower_32_bits(hba->utrdl_dma_addr),
 			REG_UTP_TRANSFER_REQ_LIST_BASE_L);
-	ufshcd_writel(hba, upper_32_bits(hba->utrdl_dma_addr),
+	ufshcd_ग_लिखोl(hba, upper_32_bits(hba->utrdl_dma_addr),
 			REG_UTP_TRANSFER_REQ_LIST_BASE_H);
-	ufshcd_writel(hba, lower_32_bits(hba->utmrdl_dma_addr),
+	ufshcd_ग_लिखोl(hba, lower_32_bits(hba->uपंचांगrdl_dma_addr),
 			REG_UTP_TASK_REQ_LIST_BASE_L);
-	ufshcd_writel(hba, upper_32_bits(hba->utmrdl_dma_addr),
+	ufshcd_ग_लिखोl(hba, upper_32_bits(hba->uपंचांगrdl_dma_addr),
 			REG_UTP_TASK_REQ_LIST_BASE_H);
 
 	/*
-	 * Make sure base address and interrupt setup are updated before
-	 * enabling the run/stop registers below.
+	 * Make sure base address and पूर्णांकerrupt setup are updated beक्रमe
+	 * enabling the run/stop रेजिस्टरs below.
 	 */
 	wmb();
 
 	/*
 	 * UCRDY, UTMRLDY and UTRLRDY bits must be 1
 	 */
-	reg = ufshcd_readl(hba, REG_CONTROLLER_STATUS);
-	if (!(ufshcd_get_lists_status(reg))) {
+	reg = ufshcd_पढ़ोl(hba, REG_CONTROLLER_STATUS);
+	अगर (!(ufshcd_get_lists_status(reg))) अणु
 		ufshcd_enable_run_stop_reg(hba);
-	} else {
+	पूर्ण अन्यथा अणु
 		dev_err(hba->dev,
 			"Host controller not ready to process requests");
 		err = -EIO;
-	}
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 EXPORT_SYMBOL_GPL(ufshcd_make_hba_operational);
 
 /**
  * ufshcd_hba_stop - Send controller to reset state
  * @hba: per adapter instance
  */
-static inline void ufshcd_hba_stop(struct ufs_hba *hba)
-{
-	unsigned long flags;
-	int err;
+अटल अंतरभूत व्योम ufshcd_hba_stop(काष्ठा ufs_hba *hba)
+अणु
+	अचिन्हित दीर्घ flags;
+	पूर्णांक err;
 
 	/*
 	 * Obtain the host lock to prevent that the controller is disabled
-	 * while the UFS interrupt handler is active on another CPU.
+	 * जबतक the UFS पूर्णांकerrupt handler is active on another CPU.
 	 */
 	spin_lock_irqsave(hba->host->host_lock, flags);
-	ufshcd_writel(hba, CONTROLLER_DISABLE,  REG_CONTROLLER_ENABLE);
+	ufshcd_ग_लिखोl(hba, CONTROLLER_DISABLE,  REG_CONTROLLER_ENABLE);
 	spin_unlock_irqrestore(hba->host->host_lock, flags);
 
-	err = ufshcd_wait_for_register(hba, REG_CONTROLLER_ENABLE,
+	err = ufshcd_रुको_क्रम_रेजिस्टर(hba, REG_CONTROLLER_ENABLE,
 					CONTROLLER_ENABLE, CONTROLLER_DISABLE,
 					10, 1);
-	if (err)
+	अगर (err)
 		dev_err(hba->dev, "%s: Controller disable failed\n", __func__);
-}
+पूर्ण
 
 /**
  * ufshcd_hba_execute_hce - initialize the controller
  * @hba: per adapter instance
  *
  * The controller resets itself and controller firmware initialization
- * sequence kicks off. When controller is ready it will set
+ * sequence kicks off. When controller is पढ़ोy it will set
  * the Host Controller Enable bit to 1.
  *
  * Returns 0 on success, non-zero value on failure
  */
-static int ufshcd_hba_execute_hce(struct ufs_hba *hba)
-{
-	int retry_outer = 3;
-	int retry_inner;
+अटल पूर्णांक ufshcd_hba_execute_hce(काष्ठा ufs_hba *hba)
+अणु
+	पूर्णांक retry_outer = 3;
+	पूर्णांक retry_inner;
 
 start:
-	if (!ufshcd_is_hba_active(hba))
+	अगर (!ufshcd_is_hba_active(hba))
 		/* change controller state to "reset state" */
 		ufshcd_hba_stop(hba);
 
-	/* UniPro link is disabled at this point */
+	/* UniPro link is disabled at this poपूर्णांक */
 	ufshcd_set_link_off(hba);
 
-	ufshcd_vops_hce_enable_notify(hba, PRE_CHANGE);
+	ufshcd_vops_hce_enable_notअगरy(hba, PRE_CHANGE);
 
 	/* start controller initialization sequence */
 	ufshcd_hba_start(hba);
@@ -4472,489 +4473,489 @@ start:
 	 * To initialize a UFS host controller HCE bit must be set to 1.
 	 * During initialization the HCE bit value changes from 1->0->1.
 	 * When the host controller completes initialization sequence
-	 * it sets the value of HCE bit to 1. The same HCE bit is read back
-	 * to check if the controller has completed initialization sequence.
+	 * it sets the value of HCE bit to 1. The same HCE bit is पढ़ो back
+	 * to check अगर the controller has completed initialization sequence.
 	 * So without this delay the value HCE = 1, set in the previous
-	 * instruction might be read back.
+	 * inकाष्ठाion might be पढ़ो back.
 	 * This delay can be changed based on the controller.
 	 */
 	ufshcd_delay_us(hba->vps->hba_enable_delay_us, 100);
 
-	/* wait for the host controller to complete initialization */
+	/* रुको क्रम the host controller to complete initialization */
 	retry_inner = 50;
-	while (ufshcd_is_hba_active(hba)) {
-		if (retry_inner) {
+	जबतक (ufshcd_is_hba_active(hba)) अणु
+		अगर (retry_inner) अणु
 			retry_inner--;
-		} else {
+		पूर्ण अन्यथा अणु
 			dev_err(hba->dev,
 				"Controller enable failed\n");
-			if (retry_outer) {
+			अगर (retry_outer) अणु
 				retry_outer--;
-				goto start;
-			}
-			return -EIO;
-		}
+				जाओ start;
+			पूर्ण
+			वापस -EIO;
+		पूर्ण
 		usleep_range(1000, 1100);
-	}
+	पूर्ण
 
-	/* enable UIC related interrupts */
-	ufshcd_enable_intr(hba, UFSHCD_UIC_MASK);
+	/* enable UIC related पूर्णांकerrupts */
+	ufshcd_enable_पूर्णांकr(hba, UFSHCD_UIC_MASK);
 
-	ufshcd_vops_hce_enable_notify(hba, POST_CHANGE);
+	ufshcd_vops_hce_enable_notअगरy(hba, POST_CHANGE);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int ufshcd_hba_enable(struct ufs_hba *hba)
-{
-	int ret;
+पूर्णांक ufshcd_hba_enable(काष्ठा ufs_hba *hba)
+अणु
+	पूर्णांक ret;
 
-	if (hba->quirks & UFSHCI_QUIRK_BROKEN_HCE) {
+	अगर (hba->quirks & UFSHCI_QUIRK_BROKEN_HCE) अणु
 		ufshcd_set_link_off(hba);
-		ufshcd_vops_hce_enable_notify(hba, PRE_CHANGE);
+		ufshcd_vops_hce_enable_notअगरy(hba, PRE_CHANGE);
 
-		/* enable UIC related interrupts */
-		ufshcd_enable_intr(hba, UFSHCD_UIC_MASK);
+		/* enable UIC related पूर्णांकerrupts */
+		ufshcd_enable_पूर्णांकr(hba, UFSHCD_UIC_MASK);
 		ret = ufshcd_dme_reset(hba);
-		if (!ret) {
+		अगर (!ret) अणु
 			ret = ufshcd_dme_enable(hba);
-			if (!ret)
-				ufshcd_vops_hce_enable_notify(hba, POST_CHANGE);
-			if (ret)
+			अगर (!ret)
+				ufshcd_vops_hce_enable_notअगरy(hba, POST_CHANGE);
+			अगर (ret)
 				dev_err(hba->dev,
 					"Host controller enable failed with non-hce\n");
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		ret = ufshcd_hba_execute_hce(hba);
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(ufshcd_hba_enable);
 
-static int ufshcd_disable_tx_lcc(struct ufs_hba *hba, bool peer)
-{
-	int tx_lanes = 0, i, err = 0;
+अटल पूर्णांक ufshcd_disable_tx_lcc(काष्ठा ufs_hba *hba, bool peer)
+अणु
+	पूर्णांक tx_lanes = 0, i, err = 0;
 
-	if (!peer)
+	अगर (!peer)
 		ufshcd_dme_get(hba, UIC_ARG_MIB(PA_CONNECTEDTXDATALANES),
 			       &tx_lanes);
-	else
+	अन्यथा
 		ufshcd_dme_peer_get(hba, UIC_ARG_MIB(PA_CONNECTEDTXDATALANES),
 				    &tx_lanes);
-	for (i = 0; i < tx_lanes; i++) {
-		if (!peer)
+	क्रम (i = 0; i < tx_lanes; i++) अणु
+		अगर (!peer)
 			err = ufshcd_dme_set(hba,
 				UIC_ARG_MIB_SEL(TX_LCC_ENABLE,
 					UIC_ARG_MPHY_TX_GEN_SEL_INDEX(i)),
 					0);
-		else
+		अन्यथा
 			err = ufshcd_dme_peer_set(hba,
 				UIC_ARG_MIB_SEL(TX_LCC_ENABLE,
 					UIC_ARG_MPHY_TX_GEN_SEL_INDEX(i)),
 					0);
-		if (err) {
+		अगर (err) अणु
 			dev_err(hba->dev, "%s: TX LCC Disable failed, peer = %d, lane = %d, err = %d",
 				__func__, peer, i, err);
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static inline int ufshcd_disable_device_tx_lcc(struct ufs_hba *hba)
-{
-	return ufshcd_disable_tx_lcc(hba, true);
-}
+अटल अंतरभूत पूर्णांक ufshcd_disable_device_tx_lcc(काष्ठा ufs_hba *hba)
+अणु
+	वापस ufshcd_disable_tx_lcc(hba, true);
+पूर्ण
 
-void ufshcd_update_evt_hist(struct ufs_hba *hba, u32 id, u32 val)
-{
-	struct ufs_event_hist *e;
+व्योम ufshcd_update_evt_hist(काष्ठा ufs_hba *hba, u32 id, u32 val)
+अणु
+	काष्ठा ufs_event_hist *e;
 
-	if (id >= UFS_EVT_CNT)
-		return;
+	अगर (id >= UFS_EVT_CNT)
+		वापस;
 
 	e = &hba->ufs_stats.event[id];
 	e->val[e->pos] = val;
-	e->tstamp[e->pos] = ktime_get();
+	e->tstamp[e->pos] = kसमय_get();
 	e->cnt += 1;
 	e->pos = (e->pos + 1) % UFS_EVENT_HIST_LENGTH;
 
-	ufshcd_vops_event_notify(hba, id, &val);
-}
+	ufshcd_vops_event_notअगरy(hba, id, &val);
+पूर्ण
 EXPORT_SYMBOL_GPL(ufshcd_update_evt_hist);
 
 /**
  * ufshcd_link_startup - Initialize unipro link startup
  * @hba: per adapter instance
  *
- * Returns 0 for success, non-zero in case of failure
+ * Returns 0 क्रम success, non-zero in हाल of failure
  */
-static int ufshcd_link_startup(struct ufs_hba *hba)
-{
-	int ret;
-	int retries = DME_LINKSTARTUP_RETRIES;
+अटल पूर्णांक ufshcd_link_startup(काष्ठा ufs_hba *hba)
+अणु
+	पूर्णांक ret;
+	पूर्णांक retries = DME_LINKSTARTUP_RETRIES;
 	bool link_startup_again = false;
 
 	/*
 	 * If UFS device isn't active then we will have to issue link startup
-	 * 2 times to make sure the device state move to active.
+	 * 2 बार to make sure the device state move to active.
 	 */
-	if (!ufshcd_is_ufs_dev_active(hba))
+	अगर (!ufshcd_is_ufs_dev_active(hba))
 		link_startup_again = true;
 
 link_startup:
-	do {
-		ufshcd_vops_link_startup_notify(hba, PRE_CHANGE);
+	करो अणु
+		ufshcd_vops_link_startup_notअगरy(hba, PRE_CHANGE);
 
 		ret = ufshcd_dme_link_startup(hba);
 
-		/* check if device is detected by inter-connect layer */
-		if (!ret && !ufshcd_is_device_present(hba)) {
+		/* check अगर device is detected by पूर्णांकer-connect layer */
+		अगर (!ret && !ufshcd_is_device_present(hba)) अणु
 			ufshcd_update_evt_hist(hba,
 					       UFS_EVT_LINK_STARTUP_FAIL,
 					       0);
 			dev_err(hba->dev, "%s: Device not present\n", __func__);
 			ret = -ENXIO;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
 		/*
 		 * DME link lost indication is only received when link is up,
-		 * but we can't be sure if the link is up until link startup
+		 * but we can't be sure अगर the link is up until link startup
 		 * succeeds. So reset the local Uni-Pro and try again.
 		 */
-		if (ret && ufshcd_hba_enable(hba)) {
+		अगर (ret && ufshcd_hba_enable(hba)) अणु
 			ufshcd_update_evt_hist(hba,
 					       UFS_EVT_LINK_STARTUP_FAIL,
 					       (u32)ret);
-			goto out;
-		}
-	} while (ret && retries--);
+			जाओ out;
+		पूर्ण
+	पूर्ण जबतक (ret && retries--);
 
-	if (ret) {
+	अगर (ret) अणु
 		/* failed to get the link up... retire */
 		ufshcd_update_evt_hist(hba,
 				       UFS_EVT_LINK_STARTUP_FAIL,
 				       (u32)ret);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (link_startup_again) {
+	अगर (link_startup_again) अणु
 		link_startup_again = false;
 		retries = DME_LINKSTARTUP_RETRIES;
-		goto link_startup;
-	}
+		जाओ link_startup;
+	पूर्ण
 
 	/* Mark that link is up in PWM-G1, 1-lane, SLOW-AUTO mode */
 	ufshcd_init_pwr_info(hba);
-	ufshcd_print_pwr_info(hba);
+	ufshcd_prपूर्णांक_pwr_info(hba);
 
-	if (hba->quirks & UFSHCD_QUIRK_BROKEN_LCC) {
+	अगर (hba->quirks & UFSHCD_QUIRK_BROKEN_LCC) अणु
 		ret = ufshcd_disable_device_tx_lcc(hba);
-		if (ret)
-			goto out;
-	}
+		अगर (ret)
+			जाओ out;
+	पूर्ण
 
 	/* Include any host controller configuration via UIC commands */
-	ret = ufshcd_vops_link_startup_notify(hba, POST_CHANGE);
-	if (ret)
-		goto out;
+	ret = ufshcd_vops_link_startup_notअगरy(hba, POST_CHANGE);
+	अगर (ret)
+		जाओ out;
 
 	/* Clear UECPA once due to LINERESET has happened during LINK_STARTUP */
-	ufshcd_readl(hba, REG_UIC_ERROR_CODE_PHY_ADAPTER_LAYER);
+	ufshcd_पढ़ोl(hba, REG_UIC_ERROR_CODE_PHY_ADAPTER_LAYER);
 	ret = ufshcd_make_hba_operational(hba);
 out:
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(hba->dev, "link startup failed %d\n", ret);
-		ufshcd_print_host_state(hba);
-		ufshcd_print_pwr_info(hba);
-		ufshcd_print_evt_hist(hba);
-	}
-	return ret;
-}
+		ufshcd_prपूर्णांक_host_state(hba);
+		ufshcd_prपूर्णांक_pwr_info(hba);
+		ufshcd_prपूर्णांक_evt_hist(hba);
+	पूर्ण
+	वापस ret;
+पूर्ण
 
 /**
- * ufshcd_verify_dev_init() - Verify device initialization
+ * ufshcd_verअगरy_dev_init() - Verअगरy device initialization
  * @hba: per-adapter instance
  *
- * Send NOP OUT UPIU and wait for NOP IN response to check whether the
- * device Transport Protocol (UTP) layer is ready after a reset.
+ * Send NOP OUT UPIU and रुको क्रम NOP IN response to check whether the
+ * device Transport Protocol (UTP) layer is पढ़ोy after a reset.
  * If the UTP layer at the device side is not initialized, it may
- * not respond with NOP IN UPIU within timeout of %NOP_OUT_TIMEOUT
- * and we retry sending NOP OUT for %NOP_OUT_RETRIES iterations.
+ * not respond with NOP IN UPIU within समयout of %NOP_OUT_TIMEOUT
+ * and we retry sending NOP OUT क्रम %NOP_OUT_RETRIES iterations.
  */
-static int ufshcd_verify_dev_init(struct ufs_hba *hba)
-{
-	int err = 0;
-	int retries;
+अटल पूर्णांक ufshcd_verअगरy_dev_init(काष्ठा ufs_hba *hba)
+अणु
+	पूर्णांक err = 0;
+	पूर्णांक retries;
 
 	ufshcd_hold(hba, false);
 	mutex_lock(&hba->dev_cmd.lock);
-	for (retries = NOP_OUT_RETRIES; retries > 0; retries--) {
+	क्रम (retries = NOP_OUT_RETRIES; retries > 0; retries--) अणु
 		err = ufshcd_exec_dev_cmd(hba, DEV_CMD_TYPE_NOP,
 					       NOP_OUT_TIMEOUT);
 
-		if (!err || err == -ETIMEDOUT)
-			break;
+		अगर (!err || err == -ETIMEDOUT)
+			अवरोध;
 
 		dev_dbg(hba->dev, "%s: error %d retrying\n", __func__, err);
-	}
+	पूर्ण
 	mutex_unlock(&hba->dev_cmd.lock);
 	ufshcd_release(hba);
 
-	if (err)
+	अगर (err)
 		dev_err(hba->dev, "%s: NOP OUT failed %d\n", __func__, err);
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /**
  * ufshcd_set_queue_depth - set lun queue depth
- * @sdev: pointer to SCSI device
+ * @sdev: poपूर्णांकer to SCSI device
  *
  * Read bLUQueueDepth value and activate scsi tagged command
- * queueing. For WLUN, queue depth is set to 1. For best-effort
- * cases (bLUQueueDepth = 0) the queue depth is set to a maximum
+ * queueing. For WLUN, queue depth is set to 1. For best-efक्रमt
+ * हालs (bLUQueueDepth = 0) the queue depth is set to a maximum
  * value that host can queue.
  */
-static void ufshcd_set_queue_depth(struct scsi_device *sdev)
-{
-	int ret = 0;
+अटल व्योम ufshcd_set_queue_depth(काष्ठा scsi_device *sdev)
+अणु
+	पूर्णांक ret = 0;
 	u8 lun_qdepth;
-	struct ufs_hba *hba;
+	काष्ठा ufs_hba *hba;
 
 	hba = shost_priv(sdev->host);
 
 	lun_qdepth = hba->nutrs;
-	ret = ufshcd_read_unit_desc_param(hba,
+	ret = ufshcd_पढ़ो_unit_desc_param(hba,
 					  ufshcd_scsi_to_upiu_lun(sdev->lun),
 					  UNIT_DESC_PARAM_LU_Q_DEPTH,
 					  &lun_qdepth,
-					  sizeof(lun_qdepth));
+					  माप(lun_qdepth));
 
-	/* Some WLUN doesn't support unit descriptor */
-	if (ret == -EOPNOTSUPP)
+	/* Some WLUN करोesn't support unit descriptor */
+	अगर (ret == -EOPNOTSUPP)
 		lun_qdepth = 1;
-	else if (!lun_qdepth)
+	अन्यथा अगर (!lun_qdepth)
 		/* eventually, we can figure out the real queue depth */
 		lun_qdepth = hba->nutrs;
-	else
-		lun_qdepth = min_t(int, lun_qdepth, hba->nutrs);
+	अन्यथा
+		lun_qdepth = min_t(पूर्णांक, lun_qdepth, hba->nutrs);
 
 	dev_dbg(hba->dev, "%s: activate tcq with queue depth %d\n",
 			__func__, lun_qdepth);
 	scsi_change_queue_depth(sdev, lun_qdepth);
-}
+पूर्ण
 
 /*
- * ufshcd_get_lu_wp - returns the "b_lu_write_protect" from UNIT DESCRIPTOR
+ * ufshcd_get_lu_wp - वापसs the "b_lu_write_protect" from UNIT DESCRIPTOR
  * @hba: per-adapter instance
  * @lun: UFS device lun id
- * @b_lu_write_protect: pointer to buffer to hold the LU's write protect info
+ * @b_lu_ग_लिखो_protect: poपूर्णांकer to buffer to hold the LU's ग_लिखो protect info
  *
- * Returns 0 in case of success and b_lu_write_protect status would be returned
- * @b_lu_write_protect parameter.
- * Returns -ENOTSUPP if reading b_lu_write_protect is not supported.
- * Returns -EINVAL in case of invalid parameters passed to this function.
+ * Returns 0 in हाल of success and b_lu_ग_लिखो_protect status would be वापसed
+ * @b_lu_ग_लिखो_protect parameter.
+ * Returns -ENOTSUPP अगर पढ़ोing b_lu_ग_लिखो_protect is not supported.
+ * Returns -EINVAL in हाल of invalid parameters passed to this function.
  */
-static int ufshcd_get_lu_wp(struct ufs_hba *hba,
+अटल पूर्णांक ufshcd_get_lu_wp(काष्ठा ufs_hba *hba,
 			    u8 lun,
-			    u8 *b_lu_write_protect)
-{
-	int ret;
+			    u8 *b_lu_ग_लिखो_protect)
+अणु
+	पूर्णांक ret;
 
-	if (!b_lu_write_protect)
+	अगर (!b_lu_ग_लिखो_protect)
 		ret = -EINVAL;
 	/*
-	 * According to UFS device spec, RPMB LU can't be write
-	 * protected so skip reading bLUWriteProtect parameter for
+	 * According to UFS device spec, RPMB LU can't be ग_लिखो
+	 * रक्षित so skip पढ़ोing bLUWriteProtect parameter क्रम
 	 * it. For other W-LUs, UNIT DESCRIPTOR is not available.
 	 */
-	else if (lun >= hba->dev_info.max_lu_supported)
+	अन्यथा अगर (lun >= hba->dev_info.max_lu_supported)
 		ret = -ENOTSUPP;
-	else
-		ret = ufshcd_read_unit_desc_param(hba,
+	अन्यथा
+		ret = ufshcd_पढ़ो_unit_desc_param(hba,
 					  lun,
 					  UNIT_DESC_PARAM_LU_WR_PROTECT,
-					  b_lu_write_protect,
-					  sizeof(*b_lu_write_protect));
-	return ret;
-}
+					  b_lu_ग_लिखो_protect,
+					  माप(*b_lu_ग_लिखो_protect));
+	वापस ret;
+पूर्ण
 
 /**
- * ufshcd_get_lu_power_on_wp_status - get LU's power on write protect
+ * ufshcd_get_lu_घातer_on_wp_status - get LU's घातer on ग_लिखो protect
  * status
  * @hba: per-adapter instance
- * @sdev: pointer to SCSI device
+ * @sdev: poपूर्णांकer to SCSI device
  *
  */
-static inline void ufshcd_get_lu_power_on_wp_status(struct ufs_hba *hba,
-						    struct scsi_device *sdev)
-{
-	if (hba->dev_info.f_power_on_wp_en &&
-	    !hba->dev_info.is_lu_power_on_wp) {
-		u8 b_lu_write_protect;
+अटल अंतरभूत व्योम ufshcd_get_lu_घातer_on_wp_status(काष्ठा ufs_hba *hba,
+						    काष्ठा scsi_device *sdev)
+अणु
+	अगर (hba->dev_info.f_घातer_on_wp_en &&
+	    !hba->dev_info.is_lu_घातer_on_wp) अणु
+		u8 b_lu_ग_लिखो_protect;
 
-		if (!ufshcd_get_lu_wp(hba, ufshcd_scsi_to_upiu_lun(sdev->lun),
-				      &b_lu_write_protect) &&
-		    (b_lu_write_protect == UFS_LU_POWER_ON_WP))
-			hba->dev_info.is_lu_power_on_wp = true;
-	}
-}
+		अगर (!ufshcd_get_lu_wp(hba, ufshcd_scsi_to_upiu_lun(sdev->lun),
+				      &b_lu_ग_लिखो_protect) &&
+		    (b_lu_ग_लिखो_protect == UFS_LU_POWER_ON_WP))
+			hba->dev_info.is_lu_घातer_on_wp = true;
+	पूर्ण
+पूर्ण
 
 /**
  * ufshcd_slave_alloc - handle initial SCSI device configurations
- * @sdev: pointer to SCSI device
+ * @sdev: poपूर्णांकer to SCSI device
  *
  * Returns success
  */
-static int ufshcd_slave_alloc(struct scsi_device *sdev)
-{
-	struct ufs_hba *hba;
+अटल पूर्णांक ufshcd_slave_alloc(काष्ठा scsi_device *sdev)
+अणु
+	काष्ठा ufs_hba *hba;
 
 	hba = shost_priv(sdev->host);
 
 	/* Mode sense(6) is not supported by UFS, so use Mode sense(10) */
-	sdev->use_10_for_ms = 1;
+	sdev->use_10_क्रम_ms = 1;
 
 	/* DBD field should be set to 1 in mode sense(10) */
-	sdev->set_dbd_for_ms = 1;
+	sdev->set_dbd_क्रम_ms = 1;
 
-	/* allow SCSI layer to restart the device in case of errors */
+	/* allow SCSI layer to restart the device in हाल of errors */
 	sdev->allow_restart = 1;
 
 	/* REPORT SUPPORTED OPERATION CODES is not supported */
 	sdev->no_report_opcodes = 1;
 
 	/* WRITE_SAME command is not supported */
-	sdev->no_write_same = 1;
+	sdev->no_ग_लिखो_same = 1;
 
 	ufshcd_set_queue_depth(sdev);
 
-	ufshcd_get_lu_power_on_wp_status(hba, sdev);
+	ufshcd_get_lu_घातer_on_wp_status(hba, sdev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * ufshcd_change_queue_depth - change queue depth
- * @sdev: pointer to SCSI device
+ * @sdev: poपूर्णांकer to SCSI device
  * @depth: required depth to set
  *
  * Change queue depth and make sure the max. limits are not crossed.
  */
-static int ufshcd_change_queue_depth(struct scsi_device *sdev, int depth)
-{
-	struct ufs_hba *hba = shost_priv(sdev->host);
+अटल पूर्णांक ufshcd_change_queue_depth(काष्ठा scsi_device *sdev, पूर्णांक depth)
+अणु
+	काष्ठा ufs_hba *hba = shost_priv(sdev->host);
 
-	if (depth > hba->nutrs)
+	अगर (depth > hba->nutrs)
 		depth = hba->nutrs;
-	return scsi_change_queue_depth(sdev, depth);
-}
+	वापस scsi_change_queue_depth(sdev, depth);
+पूर्ण
 
 /**
  * ufshcd_slave_configure - adjust SCSI device configurations
- * @sdev: pointer to SCSI device
+ * @sdev: poपूर्णांकer to SCSI device
  */
-static int ufshcd_slave_configure(struct scsi_device *sdev)
-{
-	struct ufs_hba *hba = shost_priv(sdev->host);
-	struct request_queue *q = sdev->request_queue;
+अटल पूर्णांक ufshcd_slave_configure(काष्ठा scsi_device *sdev)
+अणु
+	काष्ठा ufs_hba *hba = shost_priv(sdev->host);
+	काष्ठा request_queue *q = sdev->request_queue;
 
 	blk_queue_update_dma_pad(q, PRDT_DATA_BYTE_COUNT_PAD - 1);
-	if (hba->quirks & UFSHCD_QUIRK_ALIGN_SG_WITH_PAGE_SIZE)
+	अगर (hba->quirks & UFSHCD_QUIRK_ALIGN_SG_WITH_PAGE_SIZE)
 		blk_queue_update_dma_alignment(q, PAGE_SIZE - 1);
 
-	if (ufshcd_is_rpm_autosuspend_allowed(hba))
-		sdev->rpm_autosuspend = 1;
+	अगर (ufshcd_is_rpm_स्वतःsuspend_allowed(hba))
+		sdev->rpm_स्वतःsuspend = 1;
 
 	ufshcd_crypto_setup_rq_keyslot_manager(hba, q);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * ufshcd_slave_destroy - remove SCSI device configurations
- * @sdev: pointer to SCSI device
+ * ufshcd_slave_destroy - हटाओ SCSI device configurations
+ * @sdev: poपूर्णांकer to SCSI device
  */
-static void ufshcd_slave_destroy(struct scsi_device *sdev)
-{
-	struct ufs_hba *hba;
+अटल व्योम ufshcd_slave_destroy(काष्ठा scsi_device *sdev)
+अणु
+	काष्ठा ufs_hba *hba;
 
 	hba = shost_priv(sdev->host);
 	/* Drop the reference as it won't be needed anymore */
-	if (ufshcd_scsi_to_upiu_lun(sdev->lun) == UFS_UPIU_UFS_DEVICE_WLUN) {
-		unsigned long flags;
+	अगर (ufshcd_scsi_to_upiu_lun(sdev->lun) == UFS_UPIU_UFS_DEVICE_WLUN) अणु
+		अचिन्हित दीर्घ flags;
 
 		spin_lock_irqsave(hba->host->host_lock, flags);
-		hba->sdev_ufs_device = NULL;
+		hba->sdev_ufs_device = शून्य;
 		spin_unlock_irqrestore(hba->host->host_lock, flags);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
  * ufshcd_scsi_cmd_status - Update SCSI command result based on SCSI status
- * @lrbp: pointer to local reference block of completed command
+ * @lrbp: poपूर्णांकer to local reference block of completed command
  * @scsi_status: SCSI command status
  *
  * Returns value base on SCSI command status
  */
-static inline int
-ufshcd_scsi_cmd_status(struct ufshcd_lrb *lrbp, int scsi_status)
-{
-	int result = 0;
+अटल अंतरभूत पूर्णांक
+ufshcd_scsi_cmd_status(काष्ठा ufshcd_lrb *lrbp, पूर्णांक scsi_status)
+अणु
+	पूर्णांक result = 0;
 
-	switch (scsi_status) {
-	case SAM_STAT_CHECK_CONDITION:
+	चयन (scsi_status) अणु
+	हाल SAM_STAT_CHECK_CONDITION:
 		ufshcd_copy_sense_data(lrbp);
 		fallthrough;
-	case SAM_STAT_GOOD:
+	हाल SAM_STAT_GOOD:
 		result |= DID_OK << 16 | scsi_status;
-		break;
-	case SAM_STAT_TASK_SET_FULL:
-	case SAM_STAT_BUSY:
-	case SAM_STAT_TASK_ABORTED:
+		अवरोध;
+	हाल SAM_STAT_TASK_SET_FULL:
+	हाल SAM_STAT_BUSY:
+	हाल SAM_STAT_TASK_ABORTED:
 		ufshcd_copy_sense_data(lrbp);
 		result |= scsi_status;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		result |= DID_ERROR << 16;
-		break;
-	} /* end of switch */
+		अवरोध;
+	पूर्ण /* end of चयन */
 
-	return result;
-}
+	वापस result;
+पूर्ण
 
 /**
  * ufshcd_transfer_rsp_status - Get overall status of the response
  * @hba: per adapter instance
- * @lrbp: pointer to local reference block of completed command
+ * @lrbp: poपूर्णांकer to local reference block of completed command
  *
- * Returns result of the command to notify SCSI midlayer
+ * Returns result of the command to notअगरy SCSI midlayer
  */
-static inline int
-ufshcd_transfer_rsp_status(struct ufs_hba *hba, struct ufshcd_lrb *lrbp)
-{
-	int result = 0;
-	int scsi_status;
-	int ocs;
+अटल अंतरभूत पूर्णांक
+ufshcd_transfer_rsp_status(काष्ठा ufs_hba *hba, काष्ठा ufshcd_lrb *lrbp)
+अणु
+	पूर्णांक result = 0;
+	पूर्णांक scsi_status;
+	पूर्णांक ocs;
 
 	/* overall command status of utrd */
 	ocs = ufshcd_get_tr_ocs(lrbp);
 
-	if (hba->quirks & UFSHCD_QUIRK_BROKEN_OCS_FATAL_ERROR) {
-		if (be32_to_cpu(lrbp->ucd_rsp_ptr->header.dword_1) &
+	अगर (hba->quirks & UFSHCD_QUIRK_BROKEN_OCS_FATAL_ERROR) अणु
+		अगर (be32_to_cpu(lrbp->ucd_rsp_ptr->header.dword_1) &
 					MASK_RSP_UPIU_RESULT)
 			ocs = OCS_SUCCESS;
-	}
+	पूर्ण
 
-	switch (ocs) {
-	case OCS_SUCCESS:
+	चयन (ocs) अणु
+	हाल OCS_SUCCESS:
 		result = ufshcd_get_req_rsp(lrbp->ucd_rsp_ptr);
-		hba->ufs_stats.last_hibern8_exit_tstamp = ktime_set(0, 0);
-		switch (result) {
-		case UPIU_TRANSACTION_RESPONSE:
+		hba->ufs_stats.last_hibern8_निकास_tstamp = kसमय_set(0, 0);
+		चयन (result) अणु
+		हाल UPIU_TRANSACTION_RESPONSE:
 			/*
 			 * get the response UPIU result to extract
 			 * the SCSI command status
@@ -4963,7 +4964,7 @@ ufshcd_transfer_rsp_status(struct ufs_hba *hba, struct ufshcd_lrb *lrbp)
 
 			/*
 			 * get the result based on SCSI status response
-			 * to notify the SCSI midlayer of the command status
+			 * to notअगरy the SCSI midlayer of the command status
 			 */
 			scsi_status = result & MASK_SCSI_STATUS;
 			result = ufshcd_scsi_cmd_status(lrbp, scsi_status);
@@ -4971,231 +4972,231 @@ ufshcd_transfer_rsp_status(struct ufs_hba *hba, struct ufshcd_lrb *lrbp)
 			/*
 			 * Currently we are only supporting BKOPs exception
 			 * events hence we can ignore BKOPs exception event
-			 * during power management callbacks. BKOPs exception
-			 * event is not expected to be raised in runtime suspend
+			 * during घातer management callbacks. BKOPs exception
+			 * event is not expected to be उठाओd in runसमय suspend
 			 * callback as it allows the urgent bkops.
-			 * During system suspend, we are anyway forcefully
-			 * disabling the bkops and if urgent bkops is needed
-			 * it will be enabled on system resume. Long term
-			 * solution could be to abort the system suspend if
+			 * During प्रणाली suspend, we are anyway क्रमcefully
+			 * disabling the bkops and अगर urgent bkops is needed
+			 * it will be enabled on प्रणाली resume. Long term
+			 * solution could be to पात the प्रणाली suspend अगर
 			 * UFS device needs urgent BKOPs.
 			 */
-			if (!hba->pm_op_in_progress &&
+			अगर (!hba->pm_op_in_progress &&
 			    !ufshcd_eh_in_progress(hba) &&
 			    ufshcd_is_exception_event(lrbp->ucd_rsp_ptr) &&
-			    schedule_work(&hba->eeh_work)) {
+			    schedule_work(&hba->eeh_work)) अणु
 				/*
 				 * Prevent suspend once eeh_work is scheduled
-				 * to avoid deadlock between ufshcd_suspend
+				 * to aव्योम deadlock between ufshcd_suspend
 				 * and exception event handler.
 				 */
-				pm_runtime_get_noresume(hba->dev);
-			}
-			break;
-		case UPIU_TRANSACTION_REJECT_UPIU:
+				pm_runसमय_get_noresume(hba->dev);
+			पूर्ण
+			अवरोध;
+		हाल UPIU_TRANSACTION_REJECT_UPIU:
 			/* TODO: handle Reject UPIU Response */
 			result = DID_ERROR << 16;
 			dev_err(hba->dev,
 				"Reject UPIU not fully implemented\n");
-			break;
-		default:
+			अवरोध;
+		शेष:
 			dev_err(hba->dev,
 				"Unexpected request response code = %x\n",
 				result);
 			result = DID_ERROR << 16;
-			break;
-		}
-		break;
-	case OCS_ABORTED:
+			अवरोध;
+		पूर्ण
+		अवरोध;
+	हाल OCS_ABORTED:
 		result |= DID_ABORT << 16;
-		break;
-	case OCS_INVALID_COMMAND_STATUS:
+		अवरोध;
+	हाल OCS_INVALID_COMMAND_STATUS:
 		result |= DID_REQUEUE << 16;
-		break;
-	case OCS_INVALID_CMD_TABLE_ATTR:
-	case OCS_INVALID_PRDT_ATTR:
-	case OCS_MISMATCH_DATA_BUF_SIZE:
-	case OCS_MISMATCH_RESP_UPIU_SIZE:
-	case OCS_PEER_COMM_FAILURE:
-	case OCS_FATAL_ERROR:
-	case OCS_DEVICE_FATAL_ERROR:
-	case OCS_INVALID_CRYPTO_CONFIG:
-	case OCS_GENERAL_CRYPTO_ERROR:
-	default:
+		अवरोध;
+	हाल OCS_INVALID_CMD_TABLE_ATTR:
+	हाल OCS_INVALID_PRDT_ATTR:
+	हाल OCS_MISMATCH_DATA_BUF_SIZE:
+	हाल OCS_MISMATCH_RESP_UPIU_SIZE:
+	हाल OCS_PEER_COMM_FAILURE:
+	हाल OCS_FATAL_ERROR:
+	हाल OCS_DEVICE_FATAL_ERROR:
+	हाल OCS_INVALID_CRYPTO_CONFIG:
+	हाल OCS_GENERAL_CRYPTO_ERROR:
+	शेष:
 		result |= DID_ERROR << 16;
 		dev_err(hba->dev,
 				"OCS error from controller = %x for tag %d\n",
 				ocs, lrbp->task_tag);
-		ufshcd_print_evt_hist(hba);
-		ufshcd_print_host_state(hba);
-		break;
-	} /* end of switch */
+		ufshcd_prपूर्णांक_evt_hist(hba);
+		ufshcd_prपूर्णांक_host_state(hba);
+		अवरोध;
+	पूर्ण /* end of चयन */
 
-	if ((host_byte(result) != DID_OK) &&
+	अगर ((host_byte(result) != DID_OK) &&
 	    (host_byte(result) != DID_REQUEUE) && !hba->silence_err_logs)
-		ufshcd_print_trs(hba, 1 << lrbp->task_tag, true);
-	return result;
-}
+		ufshcd_prपूर्णांक_trs(hba, 1 << lrbp->task_tag, true);
+	वापस result;
+पूर्ण
 
 /**
  * ufshcd_uic_cmd_compl - handle completion of uic command
  * @hba: per adapter instance
- * @intr_status: interrupt status generated by the controller
+ * @पूर्णांकr_status: पूर्णांकerrupt status generated by the controller
  *
  * Returns
- *  IRQ_HANDLED - If interrupt is valid
- *  IRQ_NONE    - If invalid interrupt
+ *  IRQ_HANDLED - If पूर्णांकerrupt is valid
+ *  IRQ_NONE    - If invalid पूर्णांकerrupt
  */
-static irqreturn_t ufshcd_uic_cmd_compl(struct ufs_hba *hba, u32 intr_status)
-{
-	irqreturn_t retval = IRQ_NONE;
+अटल irqवापस_t ufshcd_uic_cmd_compl(काष्ठा ufs_hba *hba, u32 पूर्णांकr_status)
+अणु
+	irqवापस_t retval = IRQ_NONE;
 
-	if ((intr_status & UIC_COMMAND_COMPL) && hba->active_uic_cmd) {
+	अगर ((पूर्णांकr_status & UIC_COMMAND_COMPL) && hba->active_uic_cmd) अणु
 		hba->active_uic_cmd->argument2 |=
 			ufshcd_get_uic_cmd_result(hba);
 		hba->active_uic_cmd->argument3 =
 			ufshcd_get_dme_attr_val(hba);
-		if (!hba->uic_async_done)
+		अगर (!hba->uic_async_करोne)
 			hba->active_uic_cmd->cmd_active = 0;
-		complete(&hba->active_uic_cmd->done);
+		complete(&hba->active_uic_cmd->करोne);
 		retval = IRQ_HANDLED;
-	}
+	पूर्ण
 
-	if ((intr_status & UFSHCD_UIC_PWR_MASK) && hba->uic_async_done) {
+	अगर ((पूर्णांकr_status & UFSHCD_UIC_PWR_MASK) && hba->uic_async_करोne) अणु
 		hba->active_uic_cmd->cmd_active = 0;
-		complete(hba->uic_async_done);
+		complete(hba->uic_async_करोne);
 		retval = IRQ_HANDLED;
-	}
+	पूर्ण
 
-	if (retval == IRQ_HANDLED)
+	अगर (retval == IRQ_HANDLED)
 		ufshcd_add_uic_command_trace(hba, hba->active_uic_cmd,
 					     UFS_CMD_COMP);
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
 /**
  * __ufshcd_transfer_req_compl - handle SCSI and query command completion
  * @hba: per adapter instance
  * @completed_reqs: requests to complete
  */
-static void __ufshcd_transfer_req_compl(struct ufs_hba *hba,
-					unsigned long completed_reqs)
-{
-	struct ufshcd_lrb *lrbp;
-	struct scsi_cmnd *cmd;
-	int result;
-	int index;
+अटल व्योम __ufshcd_transfer_req_compl(काष्ठा ufs_hba *hba,
+					अचिन्हित दीर्घ completed_reqs)
+अणु
+	काष्ठा ufshcd_lrb *lrbp;
+	काष्ठा scsi_cmnd *cmd;
+	पूर्णांक result;
+	पूर्णांक index;
 	bool update_scaling = false;
 
-	for_each_set_bit(index, &completed_reqs, hba->nutrs) {
+	क्रम_each_set_bit(index, &completed_reqs, hba->nutrs) अणु
 		lrbp = &hba->lrb[index];
 		lrbp->in_use = false;
-		lrbp->compl_time_stamp = ktime_get();
+		lrbp->compl_समय_stamp = kसमय_get();
 		cmd = lrbp->cmd;
-		if (cmd) {
+		अगर (cmd) अणु
 			ufshcd_add_command_trace(hba, index, UFS_CMD_COMP);
 			result = ufshcd_transfer_rsp_status(hba, lrbp);
 			scsi_dma_unmap(cmd);
 			cmd->result = result;
-			/* Mark completed command as NULL in LRB */
-			lrbp->cmd = NULL;
-			/* Do not touch lrbp after scsi done */
-			cmd->scsi_done(cmd);
+			/* Mark completed command as शून्य in LRB */
+			lrbp->cmd = शून्य;
+			/* Do not touch lrbp after scsi करोne */
+			cmd->scsi_करोne(cmd);
 			__ufshcd_release(hba);
 			update_scaling = true;
-		} else if (lrbp->command_type == UTP_CMD_TYPE_DEV_MANAGE ||
-			lrbp->command_type == UTP_CMD_TYPE_UFS_STORAGE) {
-			if (hba->dev_cmd.complete) {
+		पूर्ण अन्यथा अगर (lrbp->command_type == UTP_CMD_TYPE_DEV_MANAGE ||
+			lrbp->command_type == UTP_CMD_TYPE_UFS_STORAGE) अणु
+			अगर (hba->dev_cmd.complete) अणु
 				ufshcd_add_command_trace(hba, index,
 							 UFS_DEV_COMP);
 				complete(hba->dev_cmd.complete);
 				update_scaling = true;
-			}
-		}
-		if (ufshcd_is_clkscaling_supported(hba) && update_scaling)
+			पूर्ण
+		पूर्ण
+		अगर (ufshcd_is_clkscaling_supported(hba) && update_scaling)
 			hba->clk_scaling.active_reqs--;
-	}
+	पूर्ण
 
 	/* clear corresponding bits of completed commands */
 	hba->outstanding_reqs ^= completed_reqs;
 
 	ufshcd_clk_scaling_update_busy(hba);
-}
+पूर्ण
 
 /**
  * ufshcd_transfer_req_compl - handle SCSI and query command completion
  * @hba: per adapter instance
  *
  * Returns
- *  IRQ_HANDLED - If interrupt is valid
- *  IRQ_NONE    - If invalid interrupt
+ *  IRQ_HANDLED - If पूर्णांकerrupt is valid
+ *  IRQ_NONE    - If invalid पूर्णांकerrupt
  */
-static irqreturn_t ufshcd_transfer_req_compl(struct ufs_hba *hba)
-{
-	unsigned long completed_reqs;
-	u32 tr_doorbell;
+अटल irqवापस_t ufshcd_transfer_req_compl(काष्ठा ufs_hba *hba)
+अणु
+	अचिन्हित दीर्घ completed_reqs;
+	u32 tr_करोorbell;
 
-	/* Resetting interrupt aggregation counters first and reading the
+	/* Resetting पूर्णांकerrupt aggregation counters first and पढ़ोing the
 	 * DOOR_BELL afterward allows us to handle all the completed requests.
-	 * In order to prevent other interrupts starvation the DB is read once
-	 * after reset. The down side of this solution is the possibility of
-	 * false interrupt if device completes another request after resetting
-	 * aggregation and before reading the DB.
+	 * In order to prevent other पूर्णांकerrupts starvation the DB is पढ़ो once
+	 * after reset. The करोwn side of this solution is the possibility of
+	 * false पूर्णांकerrupt अगर device completes another request after resetting
+	 * aggregation and beक्रमe पढ़ोing the DB.
 	 */
-	if (ufshcd_is_intr_aggr_allowed(hba) &&
+	अगर (ufshcd_is_पूर्णांकr_aggr_allowed(hba) &&
 	    !(hba->quirks & UFSHCI_QUIRK_SKIP_RESET_INTR_AGGR))
-		ufshcd_reset_intr_aggr(hba);
+		ufshcd_reset_पूर्णांकr_aggr(hba);
 
-	tr_doorbell = ufshcd_readl(hba, REG_UTP_TRANSFER_REQ_DOOR_BELL);
-	completed_reqs = tr_doorbell ^ hba->outstanding_reqs;
+	tr_करोorbell = ufshcd_पढ़ोl(hba, REG_UTP_TRANSFER_REQ_DOOR_BELL);
+	completed_reqs = tr_करोorbell ^ hba->outstanding_reqs;
 
-	if (completed_reqs) {
+	अगर (completed_reqs) अणु
 		__ufshcd_transfer_req_compl(hba, completed_reqs);
-		return IRQ_HANDLED;
-	} else {
-		return IRQ_NONE;
-	}
-}
+		वापस IRQ_HANDLED;
+	पूर्ण अन्यथा अणु
+		वापस IRQ_NONE;
+	पूर्ण
+पूर्ण
 
-int __ufshcd_write_ee_control(struct ufs_hba *hba, u32 ee_ctrl_mask)
-{
-	return ufshcd_query_attr_retry(hba, UPIU_QUERY_OPCODE_WRITE_ATTR,
+पूर्णांक __ufshcd_ग_लिखो_ee_control(काष्ठा ufs_hba *hba, u32 ee_ctrl_mask)
+अणु
+	वापस ufshcd_query_attr_retry(hba, UPIU_QUERY_OPCODE_WRITE_ATTR,
 				       QUERY_ATTR_IDN_EE_CONTROL, 0, 0,
 				       &ee_ctrl_mask);
-}
+पूर्ण
 
-int ufshcd_write_ee_control(struct ufs_hba *hba)
-{
-	int err;
+पूर्णांक ufshcd_ग_लिखो_ee_control(काष्ठा ufs_hba *hba)
+अणु
+	पूर्णांक err;
 
 	mutex_lock(&hba->ee_ctrl_mutex);
-	err = __ufshcd_write_ee_control(hba, hba->ee_ctrl_mask);
+	err = __ufshcd_ग_लिखो_ee_control(hba, hba->ee_ctrl_mask);
 	mutex_unlock(&hba->ee_ctrl_mutex);
-	if (err)
+	अगर (err)
 		dev_err(hba->dev, "%s: failed to write ee control %d\n",
 			__func__, err);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-int ufshcd_update_ee_control(struct ufs_hba *hba, u16 *mask, u16 *other_mask,
+पूर्णांक ufshcd_update_ee_control(काष्ठा ufs_hba *hba, u16 *mask, u16 *other_mask,
 			     u16 set, u16 clr)
-{
+अणु
 	u16 new_mask, ee_ctrl_mask;
-	int err = 0;
+	पूर्णांक err = 0;
 
 	mutex_lock(&hba->ee_ctrl_mutex);
 	new_mask = (*mask & ~clr) | set;
 	ee_ctrl_mask = new_mask | *other_mask;
-	if (ee_ctrl_mask != hba->ee_ctrl_mask)
-		err = __ufshcd_write_ee_control(hba, ee_ctrl_mask);
+	अगर (ee_ctrl_mask != hba->ee_ctrl_mask)
+		err = __ufshcd_ग_लिखो_ee_control(hba, ee_ctrl_mask);
 	/* Still need to update 'mask' even if 'ee_ctrl_mask' was unchanged */
-	if (!err) {
+	अगर (!err) अणु
 		hba->ee_ctrl_mask = ee_ctrl_mask;
 		*mask = new_mask;
-	}
+	पूर्ण
 	mutex_unlock(&hba->ee_ctrl_mutex);
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /**
  * ufshcd_disable_ee - disable exception event
@@ -5207,10 +5208,10 @@ int ufshcd_update_ee_control(struct ufs_hba *hba, u16 *mask, u16 *other_mask,
  *
  * Returns zero on success, non-zero error value on failure.
  */
-static inline int ufshcd_disable_ee(struct ufs_hba *hba, u16 mask)
-{
-	return ufshcd_update_ee_drv_mask(hba, 0, mask);
-}
+अटल अंतरभूत पूर्णांक ufshcd_disable_ee(काष्ठा ufs_hba *hba, u16 mask)
+अणु
+	वापस ufshcd_update_ee_drv_mask(hba, 0, mask);
+पूर्ण
 
 /**
  * ufshcd_enable_ee - enable exception event
@@ -5222,13 +5223,13 @@ static inline int ufshcd_disable_ee(struct ufs_hba *hba, u16 mask)
  *
  * Returns zero on success, non-zero error value on failure.
  */
-static inline int ufshcd_enable_ee(struct ufs_hba *hba, u16 mask)
-{
-	return ufshcd_update_ee_drv_mask(hba, mask, 0);
-}
+अटल अंतरभूत पूर्णांक ufshcd_enable_ee(काष्ठा ufs_hba *hba, u16 mask)
+अणु
+	वापस ufshcd_update_ee_drv_mask(hba, mask, 0);
+पूर्ण
 
 /**
- * ufshcd_enable_auto_bkops - Allow device managed BKOPS
+ * ufshcd_enable_स्वतः_bkops - Allow device managed BKOPS
  * @hba: per-adapter instance
  *
  * Allow device to manage background operations on its own. Enabling
@@ -5238,150 +5239,150 @@ static inline int ufshcd_enable_ee(struct ufs_hba *hba, u16 mask)
  *
  * Returns zero on success, non-zero on failure.
  */
-static int ufshcd_enable_auto_bkops(struct ufs_hba *hba)
-{
-	int err = 0;
+अटल पूर्णांक ufshcd_enable_स्वतः_bkops(काष्ठा ufs_hba *hba)
+अणु
+	पूर्णांक err = 0;
 
-	if (hba->auto_bkops_enabled)
-		goto out;
+	अगर (hba->स्वतः_bkops_enabled)
+		जाओ out;
 
 	err = ufshcd_query_flag_retry(hba, UPIU_QUERY_OPCODE_SET_FLAG,
-			QUERY_FLAG_IDN_BKOPS_EN, 0, NULL);
-	if (err) {
+			QUERY_FLAG_IDN_BKOPS_EN, 0, शून्य);
+	अगर (err) अणु
 		dev_err(hba->dev, "%s: failed to enable bkops %d\n",
 				__func__, err);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	hba->auto_bkops_enabled = true;
-	trace_ufshcd_auto_bkops_state(dev_name(hba->dev), "Enabled");
+	hba->स्वतः_bkops_enabled = true;
+	trace_ufshcd_स्वतः_bkops_state(dev_name(hba->dev), "Enabled");
 
 	/* No need of URGENT_BKOPS exception from the device */
 	err = ufshcd_disable_ee(hba, MASK_EE_URGENT_BKOPS);
-	if (err)
+	अगर (err)
 		dev_err(hba->dev, "%s: failed to disable exception event %d\n",
 				__func__, err);
 out:
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /**
- * ufshcd_disable_auto_bkops - block device in doing background operations
+ * ufshcd_disable_स्वतः_bkops - block device in करोing background operations
  * @hba: per-adapter instance
  *
  * Disabling background operations improves command response latency but
- * has drawback of device moving into critical state where the device is
- * not-operable. Make sure to call ufshcd_enable_auto_bkops() whenever the
+ * has drawback of device moving पूर्णांकo critical state where the device is
+ * not-operable. Make sure to call ufshcd_enable_स्वतः_bkops() whenever the
  * host is idle so that BKOPS are managed effectively without any negative
  * impacts.
  *
  * Returns zero on success, non-zero on failure.
  */
-static int ufshcd_disable_auto_bkops(struct ufs_hba *hba)
-{
-	int err = 0;
+अटल पूर्णांक ufshcd_disable_स्वतः_bkops(काष्ठा ufs_hba *hba)
+अणु
+	पूर्णांक err = 0;
 
-	if (!hba->auto_bkops_enabled)
-		goto out;
+	अगर (!hba->स्वतः_bkops_enabled)
+		जाओ out;
 
 	/*
 	 * If host assisted BKOPs is to be enabled, make sure
 	 * urgent bkops exception is allowed.
 	 */
 	err = ufshcd_enable_ee(hba, MASK_EE_URGENT_BKOPS);
-	if (err) {
+	अगर (err) अणु
 		dev_err(hba->dev, "%s: failed to enable exception event %d\n",
 				__func__, err);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	err = ufshcd_query_flag_retry(hba, UPIU_QUERY_OPCODE_CLEAR_FLAG,
-			QUERY_FLAG_IDN_BKOPS_EN, 0, NULL);
-	if (err) {
+			QUERY_FLAG_IDN_BKOPS_EN, 0, शून्य);
+	अगर (err) अणु
 		dev_err(hba->dev, "%s: failed to disable bkops %d\n",
 				__func__, err);
 		ufshcd_disable_ee(hba, MASK_EE_URGENT_BKOPS);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	hba->auto_bkops_enabled = false;
-	trace_ufshcd_auto_bkops_state(dev_name(hba->dev), "Disabled");
+	hba->स्वतः_bkops_enabled = false;
+	trace_ufshcd_स्वतः_bkops_state(dev_name(hba->dev), "Disabled");
 	hba->is_urgent_bkops_lvl_checked = false;
 out:
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /**
- * ufshcd_force_reset_auto_bkops - force reset auto bkops state
+ * ufshcd_क्रमce_reset_स्वतः_bkops - क्रमce reset स्वतः bkops state
  * @hba: per adapter instance
  *
  * After a device reset the device may toggle the BKOPS_EN flag
- * to default value. The s/w tracking variables should be updated
- * as well. This function would change the auto-bkops state based on
+ * to शेष value. The s/w tracking variables should be updated
+ * as well. This function would change the स्वतः-bkops state based on
  * UFSHCD_CAP_KEEP_AUTO_BKOPS_ENABLED_EXCEPT_SUSPEND.
  */
-static void ufshcd_force_reset_auto_bkops(struct ufs_hba *hba)
-{
-	if (ufshcd_keep_autobkops_enabled_except_suspend(hba)) {
-		hba->auto_bkops_enabled = false;
+अटल व्योम ufshcd_क्रमce_reset_स्वतः_bkops(काष्ठा ufs_hba *hba)
+अणु
+	अगर (ufshcd_keep_स्वतःbkops_enabled_except_suspend(hba)) अणु
+		hba->स्वतः_bkops_enabled = false;
 		hba->ee_ctrl_mask |= MASK_EE_URGENT_BKOPS;
-		ufshcd_enable_auto_bkops(hba);
-	} else {
-		hba->auto_bkops_enabled = true;
+		ufshcd_enable_स्वतः_bkops(hba);
+	पूर्ण अन्यथा अणु
+		hba->स्वतः_bkops_enabled = true;
 		hba->ee_ctrl_mask &= ~MASK_EE_URGENT_BKOPS;
-		ufshcd_disable_auto_bkops(hba);
-	}
+		ufshcd_disable_स्वतः_bkops(hba);
+	पूर्ण
 	hba->urgent_bkops_lvl = BKOPS_STATUS_PERF_IMPACT;
 	hba->is_urgent_bkops_lvl_checked = false;
-}
+पूर्ण
 
-static inline int ufshcd_get_bkops_status(struct ufs_hba *hba, u32 *status)
-{
-	return ufshcd_query_attr_retry(hba, UPIU_QUERY_OPCODE_READ_ATTR,
+अटल अंतरभूत पूर्णांक ufshcd_get_bkops_status(काष्ठा ufs_hba *hba, u32 *status)
+अणु
+	वापस ufshcd_query_attr_retry(hba, UPIU_QUERY_OPCODE_READ_ATTR,
 			QUERY_ATTR_IDN_BKOPS_STATUS, 0, 0, status);
-}
+पूर्ण
 
 /**
- * ufshcd_bkops_ctrl - control the auto bkops based on current bkops status
+ * ufshcd_bkops_ctrl - control the स्वतः bkops based on current bkops status
  * @hba: per-adapter instance
  * @status: bkops_status value
  *
  * Read the bkops_status from the UFS device and Enable fBackgroundOpsEn
- * flag in the device to permit background operations if the device
+ * flag in the device to permit background operations अगर the device
  * bkops_status is greater than or equal to "status" argument passed to
  * this function, disable otherwise.
  *
- * Returns 0 for success, non-zero in case of failure.
+ * Returns 0 क्रम success, non-zero in हाल of failure.
  *
  * NOTE: Caller of this function can check the "hba->auto_bkops_enabled" flag
- * to know whether auto bkops is enabled or disabled after this function
- * returns control to it.
+ * to know whether स्वतः bkops is enabled or disabled after this function
+ * वापसs control to it.
  */
-static int ufshcd_bkops_ctrl(struct ufs_hba *hba,
-			     enum bkops_status status)
-{
-	int err;
+अटल पूर्णांक ufshcd_bkops_ctrl(काष्ठा ufs_hba *hba,
+			     क्रमागत bkops_status status)
+अणु
+	पूर्णांक err;
 	u32 curr_status = 0;
 
 	err = ufshcd_get_bkops_status(hba, &curr_status);
-	if (err) {
+	अगर (err) अणु
 		dev_err(hba->dev, "%s: failed to get BKOPS status %d\n",
 				__func__, err);
-		goto out;
-	} else if (curr_status > BKOPS_STATUS_MAX) {
+		जाओ out;
+	पूर्ण अन्यथा अगर (curr_status > BKOPS_STATUS_MAX) अणु
 		dev_err(hba->dev, "%s: invalid BKOPS status %d\n",
 				__func__, curr_status);
 		err = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (curr_status >= status)
-		err = ufshcd_enable_auto_bkops(hba);
-	else
-		err = ufshcd_disable_auto_bkops(hba);
+	अगर (curr_status >= status)
+		err = ufshcd_enable_स्वतः_bkops(hba);
+	अन्यथा
+		err = ufshcd_disable_स्वतः_bkops(hba);
 out:
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /**
  * ufshcd_urgent_bkops - handle urgent bkops exception event
@@ -5390,164 +5391,164 @@ out:
  * Enable fBackgroundOpsEn flag in the device to permit background
  * operations.
  *
- * If BKOPs is enabled, this function returns 0, 1 if the bkops in not enabled
- * and negative error value for any other failure.
+ * If BKOPs is enabled, this function वापसs 0, 1 अगर the bkops in not enabled
+ * and negative error value क्रम any other failure.
  */
-static int ufshcd_urgent_bkops(struct ufs_hba *hba)
-{
-	return ufshcd_bkops_ctrl(hba, hba->urgent_bkops_lvl);
-}
+अटल पूर्णांक ufshcd_urgent_bkops(काष्ठा ufs_hba *hba)
+अणु
+	वापस ufshcd_bkops_ctrl(hba, hba->urgent_bkops_lvl);
+पूर्ण
 
-static inline int ufshcd_get_ee_status(struct ufs_hba *hba, u32 *status)
-{
-	return ufshcd_query_attr_retry(hba, UPIU_QUERY_OPCODE_READ_ATTR,
+अटल अंतरभूत पूर्णांक ufshcd_get_ee_status(काष्ठा ufs_hba *hba, u32 *status)
+अणु
+	वापस ufshcd_query_attr_retry(hba, UPIU_QUERY_OPCODE_READ_ATTR,
 			QUERY_ATTR_IDN_EE_STATUS, 0, 0, status);
-}
+पूर्ण
 
-static void ufshcd_bkops_exception_event_handler(struct ufs_hba *hba)
-{
-	int err;
+अटल व्योम ufshcd_bkops_exception_event_handler(काष्ठा ufs_hba *hba)
+अणु
+	पूर्णांक err;
 	u32 curr_status = 0;
 
-	if (hba->is_urgent_bkops_lvl_checked)
-		goto enable_auto_bkops;
+	अगर (hba->is_urgent_bkops_lvl_checked)
+		जाओ enable_स्वतः_bkops;
 
 	err = ufshcd_get_bkops_status(hba, &curr_status);
-	if (err) {
+	अगर (err) अणु
 		dev_err(hba->dev, "%s: failed to get BKOPS status %d\n",
 				__func__, err);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	/*
 	 * We are seeing that some devices are raising the urgent bkops
-	 * exception events even when BKOPS status doesn't indicate performace
+	 * exception events even when BKOPS status करोesn't indicate perक्रमmace
 	 * impacted or critical. Handle these device by determining their urgent
-	 * bkops status at runtime.
+	 * bkops status at runसमय.
 	 */
-	if (curr_status < BKOPS_STATUS_PERF_IMPACT) {
+	अगर (curr_status < BKOPS_STATUS_PERF_IMPACT) अणु
 		dev_err(hba->dev, "%s: device raised urgent BKOPS exception for bkops status %d\n",
 				__func__, curr_status);
 		/* update the current status as the urgent bkops level */
 		hba->urgent_bkops_lvl = curr_status;
 		hba->is_urgent_bkops_lvl_checked = true;
-	}
+	पूर्ण
 
-enable_auto_bkops:
-	err = ufshcd_enable_auto_bkops(hba);
+enable_स्वतः_bkops:
+	err = ufshcd_enable_स्वतः_bkops(hba);
 out:
-	if (err < 0)
+	अगर (err < 0)
 		dev_err(hba->dev, "%s: failed to handle urgent bkops %d\n",
 				__func__, err);
-}
+पूर्ण
 
-static int __ufshcd_wb_toggle(struct ufs_hba *hba, bool set, enum flag_idn idn)
-{
+अटल पूर्णांक __ufshcd_wb_toggle(काष्ठा ufs_hba *hba, bool set, क्रमागत flag_idn idn)
+अणु
 	u8 index;
-	enum query_opcode opcode = set ? UPIU_QUERY_OPCODE_SET_FLAG :
+	क्रमागत query_opcode opcode = set ? UPIU_QUERY_OPCODE_SET_FLAG :
 				   UPIU_QUERY_OPCODE_CLEAR_FLAG;
 
 	index = ufshcd_wb_get_query_index(hba);
-	return ufshcd_query_flag_retry(hba, opcode, idn, index, NULL);
-}
+	वापस ufshcd_query_flag_retry(hba, opcode, idn, index, शून्य);
+पूर्ण
 
-int ufshcd_wb_toggle(struct ufs_hba *hba, bool enable)
-{
-	int ret;
+पूर्णांक ufshcd_wb_toggle(काष्ठा ufs_hba *hba, bool enable)
+अणु
+	पूर्णांक ret;
 
-	if (!ufshcd_is_wb_allowed(hba))
-		return 0;
+	अगर (!ufshcd_is_wb_allowed(hba))
+		वापस 0;
 
-	if (!(enable ^ hba->dev_info.wb_enabled))
-		return 0;
+	अगर (!(enable ^ hba->dev_info.wb_enabled))
+		वापस 0;
 
 	ret = __ufshcd_wb_toggle(hba, enable, QUERY_FLAG_IDN_WB_EN);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(hba->dev, "%s Write Booster %s failed %d\n",
 			__func__, enable ? "enable" : "disable", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	hba->dev_info.wb_enabled = enable;
 	dev_info(hba->dev, "%s Write Booster %s\n",
 			__func__, enable ? "enabled" : "disabled");
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void ufshcd_wb_toggle_flush_during_h8(struct ufs_hba *hba, bool set)
-{
-	int ret;
+अटल व्योम ufshcd_wb_toggle_flush_during_h8(काष्ठा ufs_hba *hba, bool set)
+अणु
+	पूर्णांक ret;
 
 	ret = __ufshcd_wb_toggle(hba, set,
 			QUERY_FLAG_IDN_WB_BUFF_FLUSH_DURING_HIBERN8);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(hba->dev, "%s: WB-Buf Flush during H8 %s failed: %d\n",
 			__func__, set ? "enable" : "disable", ret);
-		return;
-	}
+		वापस;
+	पूर्ण
 	dev_dbg(hba->dev, "%s WB-Buf Flush during H8 %s\n",
 			__func__, set ? "enabled" : "disabled");
-}
+पूर्ण
 
-static inline void ufshcd_wb_toggle_flush(struct ufs_hba *hba, bool enable)
-{
-	int ret;
+अटल अंतरभूत व्योम ufshcd_wb_toggle_flush(काष्ठा ufs_hba *hba, bool enable)
+अणु
+	पूर्णांक ret;
 
-	if (!ufshcd_is_wb_allowed(hba) ||
+	अगर (!ufshcd_is_wb_allowed(hba) ||
 	    hba->dev_info.wb_buf_flush_enabled == enable)
-		return;
+		वापस;
 
 	ret = __ufshcd_wb_toggle(hba, enable, QUERY_FLAG_IDN_WB_BUFF_FLUSH_EN);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(hba->dev, "%s WB-Buf Flush %s failed %d\n", __func__,
 			enable ? "enable" : "disable", ret);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	hba->dev_info.wb_buf_flush_enabled = enable;
 
 	dev_dbg(hba->dev, "%s WB-Buf Flush %s\n",
 			__func__, enable ? "enabled" : "disabled");
-}
+पूर्ण
 
-static bool ufshcd_wb_presrv_usrspc_keep_vcc_on(struct ufs_hba *hba,
+अटल bool ufshcd_wb_presrv_usrspc_keep_vcc_on(काष्ठा ufs_hba *hba,
 						u32 avail_buf)
-{
+अणु
 	u32 cur_buf;
-	int ret;
+	पूर्णांक ret;
 	u8 index;
 
 	index = ufshcd_wb_get_query_index(hba);
 	ret = ufshcd_query_attr_retry(hba, UPIU_QUERY_OPCODE_READ_ATTR,
 					      QUERY_ATTR_IDN_CURR_WB_BUFF_SIZE,
 					      index, 0, &cur_buf);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(hba->dev, "%s dCurWriteBoosterBufferSize read failed %d\n",
 			__func__, ret);
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
-	if (!cur_buf) {
+	अगर (!cur_buf) अणु
 		dev_info(hba->dev, "dCurWBBuf: %d WB disabled until free-space is available\n",
 			 cur_buf);
-		return false;
-	}
-	/* Let it continue to flush when available buffer exceeds threshold */
-	if (avail_buf < hba->vps->wb_flush_threshold)
-		return true;
+		वापस false;
+	पूर्ण
+	/* Let it जारी to flush when available buffer exceeds threshold */
+	अगर (avail_buf < hba->vps->wb_flush_threshold)
+		वापस true;
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static bool ufshcd_wb_need_flush(struct ufs_hba *hba)
-{
-	int ret;
+अटल bool ufshcd_wb_need_flush(काष्ठा ufs_hba *hba)
+अणु
+	पूर्णांक ret;
 	u32 avail_buf;
 	u8 index;
 
-	if (!ufshcd_is_wb_allowed(hba))
-		return false;
+	अगर (!ufshcd_is_wb_allowed(hba))
+		वापस false;
 	/*
 	 * The ufs device needs the vcc to be ON to flush.
 	 * With user-space reduction enabled, it's enough to enable flush
@@ -5556,213 +5557,213 @@ static bool ufshcd_wb_need_flush(struct ufs_hba *hba)
 	 * With user-space preserved enabled, the current-buffer
 	 * should be checked too because the wb buffer size can reduce
 	 * when disk tends to be full. This info is provided by current
-	 * buffer (dCurrentWriteBoosterBufferSize). There's no point in
+	 * buffer (dCurrentWriteBoosterBufferSize). There's no poपूर्णांक in
 	 * keeping vcc on when current buffer is empty.
 	 */
 	index = ufshcd_wb_get_query_index(hba);
 	ret = ufshcd_query_attr_retry(hba, UPIU_QUERY_OPCODE_READ_ATTR,
 				      QUERY_ATTR_IDN_AVAIL_WB_BUFF_SIZE,
 				      index, 0, &avail_buf);
-	if (ret) {
+	अगर (ret) अणु
 		dev_warn(hba->dev, "%s dAvailableWriteBoosterBufferSize read failed %d\n",
 			 __func__, ret);
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
-	if (!hba->dev_info.b_presrv_uspc_en) {
-		if (avail_buf <= UFS_WB_BUF_REMAIN_PERCENT(10))
-			return true;
-		return false;
-	}
+	अगर (!hba->dev_info.b_presrv_uspc_en) अणु
+		अगर (avail_buf <= UFS_WB_BUF_REMAIN_PERCENT(10))
+			वापस true;
+		वापस false;
+	पूर्ण
 
-	return ufshcd_wb_presrv_usrspc_keep_vcc_on(hba, avail_buf);
-}
+	वापस ufshcd_wb_presrv_usrspc_keep_vcc_on(hba, avail_buf);
+पूर्ण
 
-static void ufshcd_rpm_dev_flush_recheck_work(struct work_struct *work)
-{
-	struct ufs_hba *hba = container_of(to_delayed_work(work),
-					   struct ufs_hba,
+अटल व्योम ufshcd_rpm_dev_flush_recheck_work(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा ufs_hba *hba = container_of(to_delayed_work(work),
+					   काष्ठा ufs_hba,
 					   rpm_dev_flush_recheck_work);
 	/*
-	 * To prevent unnecessary VCC power drain after device finishes
-	 * WriteBooster buffer flush or Auto BKOPs, force runtime resume
-	 * after a certain delay to recheck the threshold by next runtime
+	 * To prevent unnecessary VCC घातer drain after device finishes
+	 * WriteBooster buffer flush or Auto BKOPs, क्रमce runसमय resume
+	 * after a certain delay to recheck the threshold by next runसमय
 	 * suspend.
 	 */
-	pm_runtime_get_sync(hba->dev);
-	pm_runtime_put_sync(hba->dev);
-}
+	pm_runसमय_get_sync(hba->dev);
+	pm_runसमय_put_sync(hba->dev);
+पूर्ण
 
 /**
- * ufshcd_exception_event_handler - handle exceptions raised by device
- * @work: pointer to work data
+ * ufshcd_exception_event_handler - handle exceptions उठाओd by device
+ * @work: poपूर्णांकer to work data
  *
  * Read bExceptionEventStatus attribute from the device and handle the
  * exception event accordingly.
  */
-static void ufshcd_exception_event_handler(struct work_struct *work)
-{
-	struct ufs_hba *hba;
-	int err;
+अटल व्योम ufshcd_exception_event_handler(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा ufs_hba *hba;
+	पूर्णांक err;
 	u32 status = 0;
-	hba = container_of(work, struct ufs_hba, eeh_work);
+	hba = container_of(work, काष्ठा ufs_hba, eeh_work);
 
-	pm_runtime_get_sync(hba->dev);
+	pm_runसमय_get_sync(hba->dev);
 	ufshcd_scsi_block_requests(hba);
 	err = ufshcd_get_ee_status(hba, &status);
-	if (err) {
+	अगर (err) अणु
 		dev_err(hba->dev, "%s: failed to get exception status %d\n",
 				__func__, err);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	trace_ufshcd_exception_event(dev_name(hba->dev), status);
 
-	if (status & hba->ee_drv_mask & MASK_EE_URGENT_BKOPS)
+	अगर (status & hba->ee_drv_mask & MASK_EE_URGENT_BKOPS)
 		ufshcd_bkops_exception_event_handler(hba);
 
 	ufs_debugfs_exception_event(hba, status);
 out:
 	ufshcd_scsi_unblock_requests(hba);
 	/*
-	 * pm_runtime_get_noresume is called while scheduling
-	 * eeh_work to avoid suspend racing with exception work.
-	 * Hence decrement usage counter using pm_runtime_put_noidle
+	 * pm_runसमय_get_noresume is called जबतक scheduling
+	 * eeh_work to aव्योम suspend racing with exception work.
+	 * Hence decrement usage counter using pm_runसमय_put_noidle
 	 * to allow suspend on completion of exception event handler.
 	 */
-	pm_runtime_put_noidle(hba->dev);
-	pm_runtime_put(hba->dev);
-	return;
-}
+	pm_runसमय_put_noidle(hba->dev);
+	pm_runसमय_put(hba->dev);
+	वापस;
+पूर्ण
 
-/* Complete requests that have door-bell cleared */
-static void ufshcd_complete_requests(struct ufs_hba *hba)
-{
+/* Complete requests that have करोor-bell cleared */
+अटल व्योम ufshcd_complete_requests(काष्ठा ufs_hba *hba)
+अणु
 	ufshcd_transfer_req_compl(hba);
-	ufshcd_tmc_handler(hba);
-}
+	ufshcd_पंचांगc_handler(hba);
+पूर्ण
 
 /**
- * ufshcd_quirk_dl_nac_errors - This function checks if error handling is
+ * ufshcd_quirk_dl_nac_errors - This function checks अगर error handling is
  *				to recover from the DL NAC errors or not.
  * @hba: per-adapter instance
  *
- * Returns true if error handling is required, false otherwise
+ * Returns true अगर error handling is required, false otherwise
  */
-static bool ufshcd_quirk_dl_nac_errors(struct ufs_hba *hba)
-{
-	unsigned long flags;
+अटल bool ufshcd_quirk_dl_nac_errors(काष्ठा ufs_hba *hba)
+अणु
+	अचिन्हित दीर्घ flags;
 	bool err_handling = true;
 
 	spin_lock_irqsave(hba->host->host_lock, flags);
 	/*
 	 * UFS_DEVICE_QUIRK_RECOVERY_FROM_DL_NAC_ERRORS only workaround the
-	 * device fatal error and/or DL NAC & REPLAY timeout errors.
+	 * device fatal error and/or DL NAC & REPLAY समयout errors.
 	 */
-	if (hba->saved_err & (CONTROLLER_FATAL_ERROR | SYSTEM_BUS_FATAL_ERROR))
-		goto out;
+	अगर (hba->saved_err & (CONTROLLER_FATAL_ERROR | SYSTEM_BUS_FATAL_ERROR))
+		जाओ out;
 
-	if ((hba->saved_err & DEVICE_FATAL_ERROR) ||
+	अगर ((hba->saved_err & DEVICE_FATAL_ERROR) ||
 	    ((hba->saved_err & UIC_ERROR) &&
 	     (hba->saved_uic_err & UFSHCD_UIC_DL_TCx_REPLAY_ERROR)))
-		goto out;
+		जाओ out;
 
-	if ((hba->saved_err & UIC_ERROR) &&
-	    (hba->saved_uic_err & UFSHCD_UIC_DL_NAC_RECEIVED_ERROR)) {
-		int err;
+	अगर ((hba->saved_err & UIC_ERROR) &&
+	    (hba->saved_uic_err & UFSHCD_UIC_DL_NAC_RECEIVED_ERROR)) अणु
+		पूर्णांक err;
 		/*
-		 * wait for 50ms to see if we can get any other errors or not.
+		 * रुको क्रम 50ms to see अगर we can get any other errors or not.
 		 */
 		spin_unlock_irqrestore(hba->host->host_lock, flags);
 		msleep(50);
 		spin_lock_irqsave(hba->host->host_lock, flags);
 
 		/*
-		 * now check if we have got any other severe errors other than
+		 * now check अगर we have got any other severe errors other than
 		 * DL NAC error?
 		 */
-		if ((hba->saved_err & INT_FATAL_ERRORS) ||
+		अगर ((hba->saved_err & INT_FATAL_ERRORS) ||
 		    ((hba->saved_err & UIC_ERROR) &&
 		    (hba->saved_uic_err & ~UFSHCD_UIC_DL_NAC_RECEIVED_ERROR)))
-			goto out;
+			जाओ out;
 
 		/*
 		 * As DL NAC is the only error received so far, send out NOP
-		 * command to confirm if link is still active or not.
-		 *   - If we don't get any response then do error recovery.
+		 * command to confirm अगर link is still active or not.
+		 *   - If we करोn't get any response then करो error recovery.
 		 *   - If we get response then clear the DL NAC error bit.
 		 */
 
 		spin_unlock_irqrestore(hba->host->host_lock, flags);
-		err = ufshcd_verify_dev_init(hba);
+		err = ufshcd_verअगरy_dev_init(hba);
 		spin_lock_irqsave(hba->host->host_lock, flags);
 
-		if (err)
-			goto out;
+		अगर (err)
+			जाओ out;
 
 		/* Link seems to be alive hence ignore the DL NAC errors */
-		if (hba->saved_uic_err == UFSHCD_UIC_DL_NAC_RECEIVED_ERROR)
+		अगर (hba->saved_uic_err == UFSHCD_UIC_DL_NAC_RECEIVED_ERROR)
 			hba->saved_err &= ~UIC_ERROR;
 		/* clear NAC error */
 		hba->saved_uic_err &= ~UFSHCD_UIC_DL_NAC_RECEIVED_ERROR;
-		if (!hba->saved_uic_err)
+		अगर (!hba->saved_uic_err)
 			err_handling = false;
-	}
+	पूर्ण
 out:
 	spin_unlock_irqrestore(hba->host->host_lock, flags);
-	return err_handling;
-}
+	वापस err_handling;
+पूर्ण
 
-/* host lock must be held before calling this func */
-static inline bool ufshcd_is_saved_err_fatal(struct ufs_hba *hba)
-{
-	return (hba->saved_uic_err & UFSHCD_UIC_DL_PA_INIT_ERROR) ||
+/* host lock must be held beक्रमe calling this func */
+अटल अंतरभूत bool ufshcd_is_saved_err_fatal(काष्ठा ufs_hba *hba)
+अणु
+	वापस (hba->saved_uic_err & UFSHCD_UIC_DL_PA_INIT_ERROR) ||
 	       (hba->saved_err & (INT_FATAL_ERRORS | UFSHCD_UIC_HIBERN8_MASK));
-}
+पूर्ण
 
-/* host lock must be held before calling this func */
-static inline void ufshcd_schedule_eh_work(struct ufs_hba *hba)
-{
+/* host lock must be held beक्रमe calling this func */
+अटल अंतरभूत व्योम ufshcd_schedule_eh_work(काष्ठा ufs_hba *hba)
+अणु
 	/* handle fatal errors only when link is not in error state */
-	if (hba->ufshcd_state != UFSHCD_STATE_ERROR) {
-		if (hba->force_reset || ufshcd_is_link_broken(hba) ||
+	अगर (hba->ufshcd_state != UFSHCD_STATE_ERROR) अणु
+		अगर (hba->क्रमce_reset || ufshcd_is_link_broken(hba) ||
 		    ufshcd_is_saved_err_fatal(hba))
 			hba->ufshcd_state = UFSHCD_STATE_EH_SCHEDULED_FATAL;
-		else
+		अन्यथा
 			hba->ufshcd_state = UFSHCD_STATE_EH_SCHEDULED_NON_FATAL;
 		queue_work(hba->eh_wq, &hba->eh_work);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void ufshcd_clk_scaling_allow(struct ufs_hba *hba, bool allow)
-{
-	down_write(&hba->clk_scaling_lock);
+अटल व्योम ufshcd_clk_scaling_allow(काष्ठा ufs_hba *hba, bool allow)
+अणु
+	करोwn_ग_लिखो(&hba->clk_scaling_lock);
 	hba->clk_scaling.is_allowed = allow;
-	up_write(&hba->clk_scaling_lock);
-}
+	up_ग_लिखो(&hba->clk_scaling_lock);
+पूर्ण
 
-static void ufshcd_clk_scaling_suspend(struct ufs_hba *hba, bool suspend)
-{
-	if (suspend) {
-		if (hba->clk_scaling.is_enabled)
+अटल व्योम ufshcd_clk_scaling_suspend(काष्ठा ufs_hba *hba, bool suspend)
+अणु
+	अगर (suspend) अणु
+		अगर (hba->clk_scaling.is_enabled)
 			ufshcd_suspend_clkscaling(hba);
 		ufshcd_clk_scaling_allow(hba, false);
-	} else {
+	पूर्ण अन्यथा अणु
 		ufshcd_clk_scaling_allow(hba, true);
-		if (hba->clk_scaling.is_enabled)
+		अगर (hba->clk_scaling.is_enabled)
 			ufshcd_resume_clkscaling(hba);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void ufshcd_err_handling_prepare(struct ufs_hba *hba)
-{
-	pm_runtime_get_sync(hba->dev);
-	if (pm_runtime_status_suspended(hba->dev) || hba->is_sys_suspended) {
-		enum ufs_pm_op pm_op;
+अटल व्योम ufshcd_err_handling_prepare(काष्ठा ufs_hba *hba)
+अणु
+	pm_runसमय_get_sync(hba->dev);
+	अगर (pm_runसमय_status_suspended(hba->dev) || hba->is_sys_suspended) अणु
+		क्रमागत ufs_pm_op pm_op;
 
 		/*
-		 * Don't assume anything of pm_runtime_get_sync(), if
-		 * resume fails, irq and clocks can be OFF, and powers
+		 * Don't assume anything of pm_runसमय_get_sync(), अगर
+		 * resume fails, irq and घड़ीs can be OFF, and घातers
 		 * can be OFF or in LPM.
 		 */
 		ufshcd_setup_hba_vreg(hba, true);
@@ -5771,209 +5772,209 @@ static void ufshcd_err_handling_prepare(struct ufs_hba *hba)
 		ufshcd_config_vreg_hpm(hba, hba->vreg_info.vccq);
 		ufshcd_config_vreg_hpm(hba, hba->vreg_info.vccq2);
 		ufshcd_hold(hba, false);
-		if (!ufshcd_is_clkgating_allowed(hba))
-			ufshcd_setup_clocks(hba, true);
+		अगर (!ufshcd_is_clkgating_allowed(hba))
+			ufshcd_setup_घड़ीs(hba, true);
 		ufshcd_release(hba);
 		pm_op = hba->is_sys_suspended ? UFS_SYSTEM_PM : UFS_RUNTIME_PM;
 		ufshcd_vops_resume(hba, pm_op);
-	} else {
+	पूर्ण अन्यथा अणु
 		ufshcd_hold(hba, false);
-		if (ufshcd_is_clkscaling_supported(hba) &&
+		अगर (ufshcd_is_clkscaling_supported(hba) &&
 		    hba->clk_scaling.is_enabled)
 			ufshcd_suspend_clkscaling(hba);
 		ufshcd_clk_scaling_allow(hba, false);
-	}
+	पूर्ण
 	ufshcd_scsi_block_requests(hba);
 	/* Drain ufshcd_queuecommand() */
-	down_write(&hba->clk_scaling_lock);
-	up_write(&hba->clk_scaling_lock);
+	करोwn_ग_लिखो(&hba->clk_scaling_lock);
+	up_ग_लिखो(&hba->clk_scaling_lock);
 	cancel_work_sync(&hba->eeh_work);
-}
+पूर्ण
 
-static void ufshcd_err_handling_unprepare(struct ufs_hba *hba)
-{
+अटल व्योम ufshcd_err_handling_unprepare(काष्ठा ufs_hba *hba)
+अणु
 	ufshcd_scsi_unblock_requests(hba);
 	ufshcd_release(hba);
-	if (ufshcd_is_clkscaling_supported(hba))
+	अगर (ufshcd_is_clkscaling_supported(hba))
 		ufshcd_clk_scaling_suspend(hba, false);
 	ufshcd_clear_ua_wluns(hba);
-	pm_runtime_put(hba->dev);
-}
+	pm_runसमय_put(hba->dev);
+पूर्ण
 
-static inline bool ufshcd_err_handling_should_stop(struct ufs_hba *hba)
-{
-	return (!hba->is_powered || hba->shutting_down ||
+अटल अंतरभूत bool ufshcd_err_handling_should_stop(काष्ठा ufs_hba *hba)
+अणु
+	वापस (!hba->is_घातered || hba->shutting_करोwn ||
 		hba->ufshcd_state == UFSHCD_STATE_ERROR ||
-		(!(hba->saved_err || hba->saved_uic_err || hba->force_reset ||
+		(!(hba->saved_err || hba->saved_uic_err || hba->क्रमce_reset ||
 		   ufshcd_is_link_broken(hba))));
-}
+पूर्ण
 
-#ifdef CONFIG_PM
-static void ufshcd_recover_pm_error(struct ufs_hba *hba)
-{
-	struct Scsi_Host *shost = hba->host;
-	struct scsi_device *sdev;
-	struct request_queue *q;
-	int ret;
+#अगर_घोषित CONFIG_PM
+अटल व्योम ufshcd_recover_pm_error(काष्ठा ufs_hba *hba)
+अणु
+	काष्ठा Scsi_Host *shost = hba->host;
+	काष्ठा scsi_device *sdev;
+	काष्ठा request_queue *q;
+	पूर्णांक ret;
 
 	hba->is_sys_suspended = false;
 	/*
 	 * Set RPM status of hba device to RPM_ACTIVE,
-	 * this also clears its runtime error.
+	 * this also clears its runसमय error.
 	 */
-	ret = pm_runtime_set_active(hba->dev);
+	ret = pm_runसमय_set_active(hba->dev);
 	/*
-	 * If hba device had runtime error, we also need to resume those
-	 * scsi devices under hba in case any of them has failed to be
-	 * resumed due to hba runtime resume failure. This is to unblock
-	 * blk_queue_enter in case there are bios waiting inside it.
+	 * If hba device had runसमय error, we also need to resume those
+	 * scsi devices under hba in हाल any of them has failed to be
+	 * resumed due to hba runसमय resume failure. This is to unblock
+	 * blk_queue_enter in हाल there are bios रुकोing inside it.
 	 */
-	if (!ret) {
-		shost_for_each_device(sdev, shost) {
+	अगर (!ret) अणु
+		shost_क्रम_each_device(sdev, shost) अणु
 			q = sdev->request_queue;
-			if (q->dev && (q->rpm_status == RPM_SUSPENDED ||
+			अगर (q->dev && (q->rpm_status == RPM_SUSPENDED ||
 				       q->rpm_status == RPM_SUSPENDING))
 				pm_request_resume(q->dev);
-		}
-	}
-}
-#else
-static inline void ufshcd_recover_pm_error(struct ufs_hba *hba)
-{
-}
-#endif
+		पूर्ण
+	पूर्ण
+पूर्ण
+#अन्यथा
+अटल अंतरभूत व्योम ufshcd_recover_pm_error(काष्ठा ufs_hba *hba)
+अणु
+पूर्ण
+#पूर्ण_अगर
 
-static bool ufshcd_is_pwr_mode_restore_needed(struct ufs_hba *hba)
-{
-	struct ufs_pa_layer_attr *pwr_info = &hba->pwr_info;
+अटल bool ufshcd_is_pwr_mode_restore_needed(काष्ठा ufs_hba *hba)
+अणु
+	काष्ठा ufs_pa_layer_attr *pwr_info = &hba->pwr_info;
 	u32 mode;
 
 	ufshcd_dme_get(hba, UIC_ARG_MIB(PA_PWRMODE), &mode);
 
-	if (pwr_info->pwr_rx != ((mode >> PWRMODE_RX_OFFSET) & PWRMODE_MASK))
-		return true;
+	अगर (pwr_info->pwr_rx != ((mode >> PWRMODE_RX_OFFSET) & PWRMODE_MASK))
+		वापस true;
 
-	if (pwr_info->pwr_tx != (mode & PWRMODE_MASK))
-		return true;
+	अगर (pwr_info->pwr_tx != (mode & PWRMODE_MASK))
+		वापस true;
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
 /**
  * ufshcd_err_handler - handle UFS errors that require s/w attention
- * @work: pointer to work structure
+ * @work: poपूर्णांकer to work काष्ठाure
  */
-static void ufshcd_err_handler(struct work_struct *work)
-{
-	struct ufs_hba *hba;
-	unsigned long flags;
+अटल व्योम ufshcd_err_handler(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा ufs_hba *hba;
+	अचिन्हित दीर्घ flags;
 	bool err_xfer = false;
-	bool err_tm = false;
-	int err = 0, pmc_err;
-	int tag;
+	bool err_पंचांग = false;
+	पूर्णांक err = 0, pmc_err;
+	पूर्णांक tag;
 	bool needs_reset = false, needs_restore = false;
 
-	hba = container_of(work, struct ufs_hba, eh_work);
+	hba = container_of(work, काष्ठा ufs_hba, eh_work);
 
-	down(&hba->host_sem);
+	करोwn(&hba->host_sem);
 	spin_lock_irqsave(hba->host->host_lock, flags);
-	if (ufshcd_err_handling_should_stop(hba)) {
-		if (hba->ufshcd_state != UFSHCD_STATE_ERROR)
+	अगर (ufshcd_err_handling_should_stop(hba)) अणु
+		अगर (hba->ufshcd_state != UFSHCD_STATE_ERROR)
 			hba->ufshcd_state = UFSHCD_STATE_OPERATIONAL;
 		spin_unlock_irqrestore(hba->host->host_lock, flags);
 		up(&hba->host_sem);
-		return;
-	}
+		वापस;
+	पूर्ण
 	ufshcd_set_eh_in_progress(hba);
 	spin_unlock_irqrestore(hba->host->host_lock, flags);
 	ufshcd_err_handling_prepare(hba);
 	spin_lock_irqsave(hba->host->host_lock, flags);
-	if (hba->ufshcd_state != UFSHCD_STATE_ERROR)
+	अगर (hba->ufshcd_state != UFSHCD_STATE_ERROR)
 		hba->ufshcd_state = UFSHCD_STATE_RESET;
 
-	/* Complete requests that have door-bell cleared by h/w */
+	/* Complete requests that have करोor-bell cleared by h/w */
 	ufshcd_complete_requests(hba);
 
 	/*
 	 * A full reset and restore might have happened after preparation
-	 * is finished, double check whether we should stop.
+	 * is finished, द्विगुन check whether we should stop.
 	 */
-	if (ufshcd_err_handling_should_stop(hba))
-		goto skip_err_handling;
+	अगर (ufshcd_err_handling_should_stop(hba))
+		जाओ skip_err_handling;
 
-	if (hba->dev_quirks & UFS_DEVICE_QUIRK_RECOVERY_FROM_DL_NAC_ERRORS) {
+	अगर (hba->dev_quirks & UFS_DEVICE_QUIRK_RECOVERY_FROM_DL_NAC_ERRORS) अणु
 		bool ret;
 
 		spin_unlock_irqrestore(hba->host->host_lock, flags);
 		/* release the lock as ufshcd_quirk_dl_nac_errors() may sleep */
 		ret = ufshcd_quirk_dl_nac_errors(hba);
 		spin_lock_irqsave(hba->host->host_lock, flags);
-		if (!ret && ufshcd_err_handling_should_stop(hba))
-			goto skip_err_handling;
-	}
+		अगर (!ret && ufshcd_err_handling_should_stop(hba))
+			जाओ skip_err_handling;
+	पूर्ण
 
-	if ((hba->saved_err & (INT_FATAL_ERRORS | UFSHCD_UIC_HIBERN8_MASK)) ||
+	अगर ((hba->saved_err & (INT_FATAL_ERRORS | UFSHCD_UIC_HIBERN8_MASK)) ||
 	    (hba->saved_uic_err &&
-	     (hba->saved_uic_err != UFSHCD_UIC_PA_GENERIC_ERROR))) {
+	     (hba->saved_uic_err != UFSHCD_UIC_PA_GENERIC_ERROR))) अणु
 		bool pr_prdt = !!(hba->saved_err & SYSTEM_BUS_FATAL_ERROR);
 
 		spin_unlock_irqrestore(hba->host->host_lock, flags);
-		ufshcd_print_host_state(hba);
-		ufshcd_print_pwr_info(hba);
-		ufshcd_print_evt_hist(hba);
-		ufshcd_print_tmrs(hba, hba->outstanding_tasks);
-		ufshcd_print_trs(hba, hba->outstanding_reqs, pr_prdt);
+		ufshcd_prपूर्णांक_host_state(hba);
+		ufshcd_prपूर्णांक_pwr_info(hba);
+		ufshcd_prपूर्णांक_evt_hist(hba);
+		ufshcd_prपूर्णांक_पंचांगrs(hba, hba->outstanding_tasks);
+		ufshcd_prपूर्णांक_trs(hba, hba->outstanding_reqs, pr_prdt);
 		spin_lock_irqsave(hba->host->host_lock, flags);
-	}
+	पूर्ण
 
 	/*
-	 * if host reset is required then skip clearing the pending
-	 * transfers forcefully because they will get cleared during
+	 * अगर host reset is required then skip clearing the pending
+	 * transfers क्रमcefully because they will get cleared during
 	 * host reset and restore
 	 */
-	if (hba->force_reset || ufshcd_is_link_broken(hba) ||
+	अगर (hba->क्रमce_reset || ufshcd_is_link_broken(hba) ||
 	    ufshcd_is_saved_err_fatal(hba) ||
 	    ((hba->saved_err & UIC_ERROR) &&
 	     (hba->saved_uic_err & (UFSHCD_UIC_DL_NAC_RECEIVED_ERROR |
-				    UFSHCD_UIC_DL_TCx_REPLAY_ERROR)))) {
+				    UFSHCD_UIC_DL_TCx_REPLAY_ERROR)))) अणु
 		needs_reset = true;
-		goto do_reset;
-	}
+		जाओ करो_reset;
+	पूर्ण
 
 	/*
 	 * If LINERESET was caught, UFS might have been put to PWM mode,
-	 * check if power mode restore is needed.
+	 * check अगर घातer mode restore is needed.
 	 */
-	if (hba->saved_uic_err & UFSHCD_UIC_PA_GENERIC_ERROR) {
+	अगर (hba->saved_uic_err & UFSHCD_UIC_PA_GENERIC_ERROR) अणु
 		hba->saved_uic_err &= ~UFSHCD_UIC_PA_GENERIC_ERROR;
-		if (!hba->saved_uic_err)
+		अगर (!hba->saved_uic_err)
 			hba->saved_err &= ~UIC_ERROR;
 		spin_unlock_irqrestore(hba->host->host_lock, flags);
-		if (ufshcd_is_pwr_mode_restore_needed(hba))
+		अगर (ufshcd_is_pwr_mode_restore_needed(hba))
 			needs_restore = true;
 		spin_lock_irqsave(hba->host->host_lock, flags);
-		if (!hba->saved_err && !needs_restore)
-			goto skip_err_handling;
-	}
+		अगर (!hba->saved_err && !needs_restore)
+			जाओ skip_err_handling;
+	पूर्ण
 
 	hba->silence_err_logs = true;
 	/* release lock as clear command might sleep */
 	spin_unlock_irqrestore(hba->host->host_lock, flags);
 	/* Clear pending transfer requests */
-	for_each_set_bit(tag, &hba->outstanding_reqs, hba->nutrs) {
-		if (ufshcd_try_to_abort_task(hba, tag)) {
+	क्रम_each_set_bit(tag, &hba->outstanding_reqs, hba->nutrs) अणु
+		अगर (ufshcd_try_to_पात_task(hba, tag)) अणु
 			err_xfer = true;
-			goto lock_skip_pending_xfer_clear;
-		}
-	}
+			जाओ lock_skip_pending_xfer_clear;
+		पूर्ण
+	पूर्ण
 
 	/* Clear pending task management requests */
-	for_each_set_bit(tag, &hba->outstanding_tasks, hba->nutmrs) {
-		if (ufshcd_clear_tm_cmd(hba, tag)) {
-			err_tm = true;
-			goto lock_skip_pending_xfer_clear;
-		}
-	}
+	क्रम_each_set_bit(tag, &hba->outstanding_tasks, hba->nuपंचांगrs) अणु
+		अगर (ufshcd_clear_पंचांग_cmd(hba, tag)) अणु
+			err_पंचांग = true;
+			जाओ lock_skip_pending_xfer_clear;
+		पूर्ण
+	पूर्ण
 
 lock_skip_pending_xfer_clear:
 	spin_lock_irqsave(hba->host->host_lock, flags);
@@ -5982,213 +5983,213 @@ lock_skip_pending_xfer_clear:
 	ufshcd_complete_requests(hba);
 	hba->silence_err_logs = false;
 
-	if (err_xfer || err_tm) {
+	अगर (err_xfer || err_पंचांग) अणु
 		needs_reset = true;
-		goto do_reset;
-	}
+		जाओ करो_reset;
+	पूर्ण
 
 	/*
-	 * After all reqs and tasks are cleared from doorbell,
-	 * now it is safe to retore power mode.
+	 * After all reqs and tasks are cleared from करोorbell,
+	 * now it is safe to retore घातer mode.
 	 */
-	if (needs_restore) {
+	अगर (needs_restore) अणु
 		spin_unlock_irqrestore(hba->host->host_lock, flags);
 		/*
-		 * Hold the scaling lock just in case dev cmds
+		 * Hold the scaling lock just in हाल dev cmds
 		 * are sent via bsg and/or sysfs.
 		 */
-		down_write(&hba->clk_scaling_lock);
-		hba->force_pmc = true;
+		करोwn_ग_लिखो(&hba->clk_scaling_lock);
+		hba->क्रमce_pmc = true;
 		pmc_err = ufshcd_config_pwr_mode(hba, &(hba->pwr_info));
-		if (pmc_err) {
+		अगर (pmc_err) अणु
 			needs_reset = true;
 			dev_err(hba->dev, "%s: Failed to restore power mode, err = %d\n",
 					__func__, pmc_err);
-		}
-		hba->force_pmc = false;
-		ufshcd_print_pwr_info(hba);
-		up_write(&hba->clk_scaling_lock);
+		पूर्ण
+		hba->क्रमce_pmc = false;
+		ufshcd_prपूर्णांक_pwr_info(hba);
+		up_ग_लिखो(&hba->clk_scaling_lock);
 		spin_lock_irqsave(hba->host->host_lock, flags);
-	}
+	पूर्ण
 
-do_reset:
+करो_reset:
 	/* Fatal errors need reset */
-	if (needs_reset) {
-		unsigned long max_doorbells = (1UL << hba->nutrs) - 1;
+	अगर (needs_reset) अणु
+		अचिन्हित दीर्घ max_करोorbells = (1UL << hba->nutrs) - 1;
 
 		/*
-		 * ufshcd_reset_and_restore() does the link reinitialization
-		 * which will need atleast one empty doorbell slot to send the
+		 * ufshcd_reset_and_restore() करोes the link reinitialization
+		 * which will need atleast one empty करोorbell slot to send the
 		 * device management commands (NOP and query commands).
-		 * If there is no slot empty at this moment then free up last
-		 * slot forcefully.
+		 * If there is no slot empty at this moment then मुक्त up last
+		 * slot क्रमcefully.
 		 */
-		if (hba->outstanding_reqs == max_doorbells)
+		अगर (hba->outstanding_reqs == max_करोorbells)
 			__ufshcd_transfer_req_compl(hba,
 						    (1UL << (hba->nutrs - 1)));
 
-		hba->force_reset = false;
+		hba->क्रमce_reset = false;
 		spin_unlock_irqrestore(hba->host->host_lock, flags);
 		err = ufshcd_reset_and_restore(hba);
-		if (err)
+		अगर (err)
 			dev_err(hba->dev, "%s: reset and restore failed with err %d\n",
 					__func__, err);
-		else
+		अन्यथा
 			ufshcd_recover_pm_error(hba);
 		spin_lock_irqsave(hba->host->host_lock, flags);
-	}
+	पूर्ण
 
 skip_err_handling:
-	if (!needs_reset) {
-		if (hba->ufshcd_state == UFSHCD_STATE_RESET)
+	अगर (!needs_reset) अणु
+		अगर (hba->ufshcd_state == UFSHCD_STATE_RESET)
 			hba->ufshcd_state = UFSHCD_STATE_OPERATIONAL;
-		if (hba->saved_err || hba->saved_uic_err)
+		अगर (hba->saved_err || hba->saved_uic_err)
 			dev_err_ratelimited(hba->dev, "%s: exit: saved_err 0x%x saved_uic_err 0x%x",
 			    __func__, hba->saved_err, hba->saved_uic_err);
-	}
+	पूर्ण
 	ufshcd_clear_eh_in_progress(hba);
 	spin_unlock_irqrestore(hba->host->host_lock, flags);
 	ufshcd_err_handling_unprepare(hba);
 	up(&hba->host_sem);
-}
+पूर्ण
 
 /**
  * ufshcd_update_uic_error - check and set fatal UIC error flags.
  * @hba: per-adapter instance
  *
  * Returns
- *  IRQ_HANDLED - If interrupt is valid
- *  IRQ_NONE    - If invalid interrupt
+ *  IRQ_HANDLED - If पूर्णांकerrupt is valid
+ *  IRQ_NONE    - If invalid पूर्णांकerrupt
  */
-static irqreturn_t ufshcd_update_uic_error(struct ufs_hba *hba)
-{
+अटल irqवापस_t ufshcd_update_uic_error(काष्ठा ufs_hba *hba)
+अणु
 	u32 reg;
-	irqreturn_t retval = IRQ_NONE;
+	irqवापस_t retval = IRQ_NONE;
 
 	/* PHY layer error */
-	reg = ufshcd_readl(hba, REG_UIC_ERROR_CODE_PHY_ADAPTER_LAYER);
-	if ((reg & UIC_PHY_ADAPTER_LAYER_ERROR) &&
-	    (reg & UIC_PHY_ADAPTER_LAYER_ERROR_CODE_MASK)) {
+	reg = ufshcd_पढ़ोl(hba, REG_UIC_ERROR_CODE_PHY_ADAPTER_LAYER);
+	अगर ((reg & UIC_PHY_ADAPTER_LAYER_ERROR) &&
+	    (reg & UIC_PHY_ADAPTER_LAYER_ERROR_CODE_MASK)) अणु
 		ufshcd_update_evt_hist(hba, UFS_EVT_PA_ERR, reg);
 		/*
-		 * To know whether this error is fatal or not, DB timeout
+		 * To know whether this error is fatal or not, DB समयout
 		 * must be checked but this error is handled separately.
 		 */
-		if (reg & UIC_PHY_ADAPTER_LAYER_LANE_ERR_MASK)
+		अगर (reg & UIC_PHY_ADAPTER_LAYER_LANE_ERR_MASK)
 			dev_dbg(hba->dev, "%s: UIC Lane error reported\n",
 					__func__);
 
 		/* Got a LINERESET indication. */
-		if (reg & UIC_PHY_ADAPTER_LAYER_GENERIC_ERROR) {
-			struct uic_command *cmd = NULL;
+		अगर (reg & UIC_PHY_ADAPTER_LAYER_GENERIC_ERROR) अणु
+			काष्ठा uic_command *cmd = शून्य;
 
 			hba->uic_error |= UFSHCD_UIC_PA_GENERIC_ERROR;
-			if (hba->uic_async_done && hba->active_uic_cmd)
+			अगर (hba->uic_async_करोne && hba->active_uic_cmd)
 				cmd = hba->active_uic_cmd;
 			/*
-			 * Ignore the LINERESET during power mode change
+			 * Ignore the LINERESET during घातer mode change
 			 * operation via DME_SET command.
 			 */
-			if (cmd && (cmd->command == UIC_CMD_DME_SET))
+			अगर (cmd && (cmd->command == UIC_CMD_DME_SET))
 				hba->uic_error &= ~UFSHCD_UIC_PA_GENERIC_ERROR;
-		}
+		पूर्ण
 		retval |= IRQ_HANDLED;
-	}
+	पूर्ण
 
 	/* PA_INIT_ERROR is fatal and needs UIC reset */
-	reg = ufshcd_readl(hba, REG_UIC_ERROR_CODE_DATA_LINK_LAYER);
-	if ((reg & UIC_DATA_LINK_LAYER_ERROR) &&
-	    (reg & UIC_DATA_LINK_LAYER_ERROR_CODE_MASK)) {
+	reg = ufshcd_पढ़ोl(hba, REG_UIC_ERROR_CODE_DATA_LINK_LAYER);
+	अगर ((reg & UIC_DATA_LINK_LAYER_ERROR) &&
+	    (reg & UIC_DATA_LINK_LAYER_ERROR_CODE_MASK)) अणु
 		ufshcd_update_evt_hist(hba, UFS_EVT_DL_ERR, reg);
 
-		if (reg & UIC_DATA_LINK_LAYER_ERROR_PA_INIT)
+		अगर (reg & UIC_DATA_LINK_LAYER_ERROR_PA_INIT)
 			hba->uic_error |= UFSHCD_UIC_DL_PA_INIT_ERROR;
-		else if (hba->dev_quirks &
-				UFS_DEVICE_QUIRK_RECOVERY_FROM_DL_NAC_ERRORS) {
-			if (reg & UIC_DATA_LINK_LAYER_ERROR_NAC_RECEIVED)
+		अन्यथा अगर (hba->dev_quirks &
+				UFS_DEVICE_QUIRK_RECOVERY_FROM_DL_NAC_ERRORS) अणु
+			अगर (reg & UIC_DATA_LINK_LAYER_ERROR_NAC_RECEIVED)
 				hba->uic_error |=
 					UFSHCD_UIC_DL_NAC_RECEIVED_ERROR;
-			else if (reg & UIC_DATA_LINK_LAYER_ERROR_TCx_REPLAY_TIMEOUT)
+			अन्यथा अगर (reg & UIC_DATA_LINK_LAYER_ERROR_TCx_REPLAY_TIMEOUT)
 				hba->uic_error |= UFSHCD_UIC_DL_TCx_REPLAY_ERROR;
-		}
+		पूर्ण
 		retval |= IRQ_HANDLED;
-	}
+	पूर्ण
 
 	/* UIC NL/TL/DME errors needs software retry */
-	reg = ufshcd_readl(hba, REG_UIC_ERROR_CODE_NETWORK_LAYER);
-	if ((reg & UIC_NETWORK_LAYER_ERROR) &&
-	    (reg & UIC_NETWORK_LAYER_ERROR_CODE_MASK)) {
+	reg = ufshcd_पढ़ोl(hba, REG_UIC_ERROR_CODE_NETWORK_LAYER);
+	अगर ((reg & UIC_NETWORK_LAYER_ERROR) &&
+	    (reg & UIC_NETWORK_LAYER_ERROR_CODE_MASK)) अणु
 		ufshcd_update_evt_hist(hba, UFS_EVT_NL_ERR, reg);
 		hba->uic_error |= UFSHCD_UIC_NL_ERROR;
 		retval |= IRQ_HANDLED;
-	}
+	पूर्ण
 
-	reg = ufshcd_readl(hba, REG_UIC_ERROR_CODE_TRANSPORT_LAYER);
-	if ((reg & UIC_TRANSPORT_LAYER_ERROR) &&
-	    (reg & UIC_TRANSPORT_LAYER_ERROR_CODE_MASK)) {
+	reg = ufshcd_पढ़ोl(hba, REG_UIC_ERROR_CODE_TRANSPORT_LAYER);
+	अगर ((reg & UIC_TRANSPORT_LAYER_ERROR) &&
+	    (reg & UIC_TRANSPORT_LAYER_ERROR_CODE_MASK)) अणु
 		ufshcd_update_evt_hist(hba, UFS_EVT_TL_ERR, reg);
 		hba->uic_error |= UFSHCD_UIC_TL_ERROR;
 		retval |= IRQ_HANDLED;
-	}
+	पूर्ण
 
-	reg = ufshcd_readl(hba, REG_UIC_ERROR_CODE_DME);
-	if ((reg & UIC_DME_ERROR) &&
-	    (reg & UIC_DME_ERROR_CODE_MASK)) {
+	reg = ufshcd_पढ़ोl(hba, REG_UIC_ERROR_CODE_DME);
+	अगर ((reg & UIC_DME_ERROR) &&
+	    (reg & UIC_DME_ERROR_CODE_MASK)) अणु
 		ufshcd_update_evt_hist(hba, UFS_EVT_DME_ERR, reg);
 		hba->uic_error |= UFSHCD_UIC_DME_ERROR;
 		retval |= IRQ_HANDLED;
-	}
+	पूर्ण
 
 	dev_dbg(hba->dev, "%s: UIC error flags = 0x%08x\n",
 			__func__, hba->uic_error);
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
-static bool ufshcd_is_auto_hibern8_error(struct ufs_hba *hba,
-					 u32 intr_mask)
-{
-	if (!ufshcd_is_auto_hibern8_supported(hba) ||
-	    !ufshcd_is_auto_hibern8_enabled(hba))
-		return false;
+अटल bool ufshcd_is_स्वतः_hibern8_error(काष्ठा ufs_hba *hba,
+					 u32 पूर्णांकr_mask)
+अणु
+	अगर (!ufshcd_is_स्वतः_hibern8_supported(hba) ||
+	    !ufshcd_is_स्वतः_hibern8_enabled(hba))
+		वापस false;
 
-	if (!(intr_mask & UFSHCD_UIC_HIBERN8_MASK))
-		return false;
+	अगर (!(पूर्णांकr_mask & UFSHCD_UIC_HIBERN8_MASK))
+		वापस false;
 
-	if (hba->active_uic_cmd &&
+	अगर (hba->active_uic_cmd &&
 	    (hba->active_uic_cmd->command == UIC_CMD_DME_HIBER_ENTER ||
 	    hba->active_uic_cmd->command == UIC_CMD_DME_HIBER_EXIT))
-		return false;
+		वापस false;
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
 /**
- * ufshcd_check_errors - Check for errors that need s/w attention
+ * ufshcd_check_errors - Check क्रम errors that need s/w attention
  * @hba: per-adapter instance
  *
  * Returns
- *  IRQ_HANDLED - If interrupt is valid
- *  IRQ_NONE    - If invalid interrupt
+ *  IRQ_HANDLED - If पूर्णांकerrupt is valid
+ *  IRQ_NONE    - If invalid पूर्णांकerrupt
  */
-static irqreturn_t ufshcd_check_errors(struct ufs_hba *hba)
-{
+अटल irqवापस_t ufshcd_check_errors(काष्ठा ufs_hba *hba)
+अणु
 	bool queue_eh_work = false;
-	irqreturn_t retval = IRQ_NONE;
+	irqवापस_t retval = IRQ_NONE;
 
-	if (hba->errors & INT_FATAL_ERRORS) {
+	अगर (hba->errors & INT_FATAL_ERRORS) अणु
 		ufshcd_update_evt_hist(hba, UFS_EVT_FATAL_ERR,
 				       hba->errors);
 		queue_eh_work = true;
-	}
+	पूर्ण
 
-	if (hba->errors & UIC_ERROR) {
+	अगर (hba->errors & UIC_ERROR) अणु
 		hba->uic_error = 0;
 		retval = ufshcd_update_uic_error(hba);
-		if (hba->uic_error)
+		अगर (hba->uic_error)
 			queue_eh_work = true;
-	}
+	पूर्ण
 
-	if (hba->errors & UFSHCD_UIC_HIBERN8_MASK) {
+	अगर (hba->errors & UFSHCD_UIC_HIBERN8_MASK) अणु
 		dev_err(hba->dev,
 			"%s: Auto Hibern8 %s failed - status: 0x%08x, upmcrs: 0x%08x\n",
 			__func__, (hba->errors & UIC_HIBERNATE_ENTER) ?
@@ -6198,204 +6199,204 @@ static irqreturn_t ufshcd_check_errors(struct ufs_hba *hba)
 				       hba->errors);
 		ufshcd_set_link_broken(hba);
 		queue_eh_work = true;
-	}
+	पूर्ण
 
-	if (queue_eh_work) {
+	अगर (queue_eh_work) अणु
 		/*
-		 * update the transfer error masks to sticky bits, let's do this
+		 * update the transfer error masks to sticky bits, let's करो this
 		 * irrespective of current ufshcd_state.
 		 */
 		hba->saved_err |= hba->errors;
 		hba->saved_uic_err |= hba->uic_error;
 
-		/* dump controller state before resetting */
-		if ((hba->saved_err &
+		/* dump controller state beक्रमe resetting */
+		अगर ((hba->saved_err &
 		     (INT_FATAL_ERRORS | UFSHCD_UIC_HIBERN8_MASK)) ||
 		    (hba->saved_uic_err &&
-		     (hba->saved_uic_err != UFSHCD_UIC_PA_GENERIC_ERROR))) {
+		     (hba->saved_uic_err != UFSHCD_UIC_PA_GENERIC_ERROR))) अणु
 			dev_err(hba->dev, "%s: saved_err 0x%x saved_uic_err 0x%x\n",
 					__func__, hba->saved_err,
 					hba->saved_uic_err);
 			ufshcd_dump_regs(hba, 0, UFSHCI_REG_SPACE_SIZE,
 					 "host_regs: ");
-			ufshcd_print_pwr_info(hba);
-		}
+			ufshcd_prपूर्णांक_pwr_info(hba);
+		पूर्ण
 		ufshcd_schedule_eh_work(hba);
 		retval |= IRQ_HANDLED;
-	}
+	पूर्ण
 	/*
-	 * if (!queue_eh_work) -
+	 * अगर (!queue_eh_work) -
 	 * Other errors are either non-fatal where host recovers
-	 * itself without s/w intervention or errors that will be
+	 * itself without s/w पूर्णांकervention or errors that will be
 	 * handled by the SCSI core layer.
 	 */
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
-struct ctm_info {
-	struct ufs_hba	*hba;
-	unsigned long	pending;
-	unsigned int	ncpl;
-};
+काष्ठा cपंचांग_info अणु
+	काष्ठा ufs_hba	*hba;
+	अचिन्हित दीर्घ	pending;
+	अचिन्हित पूर्णांक	ncpl;
+पूर्ण;
 
-static bool ufshcd_compl_tm(struct request *req, void *priv, bool reserved)
-{
-	struct ctm_info *const ci = priv;
-	struct completion *c;
+अटल bool ufshcd_compl_पंचांग(काष्ठा request *req, व्योम *priv, bool reserved)
+अणु
+	काष्ठा cपंचांग_info *स्थिर ci = priv;
+	काष्ठा completion *c;
 
 	WARN_ON_ONCE(reserved);
-	if (test_bit(req->tag, &ci->pending))
-		return true;
+	अगर (test_bit(req->tag, &ci->pending))
+		वापस true;
 	ci->ncpl++;
 	c = req->end_io_data;
-	if (c)
+	अगर (c)
 		complete(c);
-	return true;
-}
+	वापस true;
+पूर्ण
 
 /**
- * ufshcd_tmc_handler - handle task management function completion
+ * ufshcd_पंचांगc_handler - handle task management function completion
  * @hba: per adapter instance
  *
  * Returns
- *  IRQ_HANDLED - If interrupt is valid
- *  IRQ_NONE    - If invalid interrupt
+ *  IRQ_HANDLED - If पूर्णांकerrupt is valid
+ *  IRQ_NONE    - If invalid पूर्णांकerrupt
  */
-static irqreturn_t ufshcd_tmc_handler(struct ufs_hba *hba)
-{
-	struct request_queue *q = hba->tmf_queue;
-	struct ctm_info ci = {
+अटल irqवापस_t ufshcd_पंचांगc_handler(काष्ठा ufs_hba *hba)
+अणु
+	काष्ठा request_queue *q = hba->पंचांगf_queue;
+	काष्ठा cपंचांग_info ci = अणु
 		.hba	 = hba,
-		.pending = ufshcd_readl(hba, REG_UTP_TASK_REQ_DOOR_BELL),
-	};
+		.pending = ufshcd_पढ़ोl(hba, REG_UTP_TASK_REQ_DOOR_BELL),
+	पूर्ण;
 
-	blk_mq_tagset_busy_iter(q->tag_set, ufshcd_compl_tm, &ci);
-	return ci.ncpl ? IRQ_HANDLED : IRQ_NONE;
-}
+	blk_mq_tagset_busy_iter(q->tag_set, ufshcd_compl_पंचांग, &ci);
+	वापस ci.ncpl ? IRQ_HANDLED : IRQ_NONE;
+पूर्ण
 
 /**
- * ufshcd_sl_intr - Interrupt service routine
+ * ufshcd_sl_पूर्णांकr - Interrupt service routine
  * @hba: per adapter instance
- * @intr_status: contains interrupts generated by the controller
+ * @पूर्णांकr_status: contains पूर्णांकerrupts generated by the controller
  *
  * Returns
- *  IRQ_HANDLED - If interrupt is valid
- *  IRQ_NONE    - If invalid interrupt
+ *  IRQ_HANDLED - If पूर्णांकerrupt is valid
+ *  IRQ_NONE    - If invalid पूर्णांकerrupt
  */
-static irqreturn_t ufshcd_sl_intr(struct ufs_hba *hba, u32 intr_status)
-{
-	irqreturn_t retval = IRQ_NONE;
+अटल irqवापस_t ufshcd_sl_पूर्णांकr(काष्ठा ufs_hba *hba, u32 पूर्णांकr_status)
+अणु
+	irqवापस_t retval = IRQ_NONE;
 
-	hba->errors = UFSHCD_ERROR_MASK & intr_status;
+	hba->errors = UFSHCD_ERROR_MASK & पूर्णांकr_status;
 
-	if (ufshcd_is_auto_hibern8_error(hba, intr_status))
-		hba->errors |= (UFSHCD_UIC_HIBERN8_MASK & intr_status);
+	अगर (ufshcd_is_स्वतः_hibern8_error(hba, पूर्णांकr_status))
+		hba->errors |= (UFSHCD_UIC_HIBERN8_MASK & पूर्णांकr_status);
 
-	if (hba->errors)
+	अगर (hba->errors)
 		retval |= ufshcd_check_errors(hba);
 
-	if (intr_status & UFSHCD_UIC_MASK)
-		retval |= ufshcd_uic_cmd_compl(hba, intr_status);
+	अगर (पूर्णांकr_status & UFSHCD_UIC_MASK)
+		retval |= ufshcd_uic_cmd_compl(hba, पूर्णांकr_status);
 
-	if (intr_status & UTP_TASK_REQ_COMPL)
-		retval |= ufshcd_tmc_handler(hba);
+	अगर (पूर्णांकr_status & UTP_TASK_REQ_COMPL)
+		retval |= ufshcd_पंचांगc_handler(hba);
 
-	if (intr_status & UTP_TRANSFER_REQ_COMPL)
+	अगर (पूर्णांकr_status & UTP_TRANSFER_REQ_COMPL)
 		retval |= ufshcd_transfer_req_compl(hba);
 
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
 /**
- * ufshcd_intr - Main interrupt service routine
+ * ufshcd_पूर्णांकr - Main पूर्णांकerrupt service routine
  * @irq: irq number
- * @__hba: pointer to adapter instance
+ * @__hba: poपूर्णांकer to adapter instance
  *
  * Returns
- *  IRQ_HANDLED - If interrupt is valid
- *  IRQ_NONE    - If invalid interrupt
+ *  IRQ_HANDLED - If पूर्णांकerrupt is valid
+ *  IRQ_NONE    - If invalid पूर्णांकerrupt
  */
-static irqreturn_t ufshcd_intr(int irq, void *__hba)
-{
-	u32 intr_status, enabled_intr_status = 0;
-	irqreturn_t retval = IRQ_NONE;
-	struct ufs_hba *hba = __hba;
-	int retries = hba->nutrs;
+अटल irqवापस_t ufshcd_पूर्णांकr(पूर्णांक irq, व्योम *__hba)
+अणु
+	u32 पूर्णांकr_status, enabled_पूर्णांकr_status = 0;
+	irqवापस_t retval = IRQ_NONE;
+	काष्ठा ufs_hba *hba = __hba;
+	पूर्णांक retries = hba->nutrs;
 
 	spin_lock(hba->host->host_lock);
-	intr_status = ufshcd_readl(hba, REG_INTERRUPT_STATUS);
-	hba->ufs_stats.last_intr_status = intr_status;
-	hba->ufs_stats.last_intr_ts = ktime_get();
+	पूर्णांकr_status = ufshcd_पढ़ोl(hba, REG_INTERRUPT_STATUS);
+	hba->ufs_stats.last_पूर्णांकr_status = पूर्णांकr_status;
+	hba->ufs_stats.last_पूर्णांकr_ts = kसमय_get();
 
 	/*
-	 * There could be max of hba->nutrs reqs in flight and in worst case
-	 * if the reqs get finished 1 by 1 after the interrupt status is
-	 * read, make sure we handle them by checking the interrupt status
-	 * again in a loop until we process all of the reqs before returning.
+	 * There could be max of hba->nutrs reqs in flight and in worst हाल
+	 * अगर the reqs get finished 1 by 1 after the पूर्णांकerrupt status is
+	 * पढ़ो, make sure we handle them by checking the पूर्णांकerrupt status
+	 * again in a loop until we process all of the reqs beक्रमe वापसing.
 	 */
-	while (intr_status && retries--) {
-		enabled_intr_status =
-			intr_status & ufshcd_readl(hba, REG_INTERRUPT_ENABLE);
-		ufshcd_writel(hba, intr_status, REG_INTERRUPT_STATUS);
-		if (enabled_intr_status)
-			retval |= ufshcd_sl_intr(hba, enabled_intr_status);
+	जबतक (पूर्णांकr_status && retries--) अणु
+		enabled_पूर्णांकr_status =
+			पूर्णांकr_status & ufshcd_पढ़ोl(hba, REG_INTERRUPT_ENABLE);
+		ufshcd_ग_लिखोl(hba, पूर्णांकr_status, REG_INTERRUPT_STATUS);
+		अगर (enabled_पूर्णांकr_status)
+			retval |= ufshcd_sl_पूर्णांकr(hba, enabled_पूर्णांकr_status);
 
-		intr_status = ufshcd_readl(hba, REG_INTERRUPT_STATUS);
-	}
+		पूर्णांकr_status = ufshcd_पढ़ोl(hba, REG_INTERRUPT_STATUS);
+	पूर्ण
 
-	if (enabled_intr_status && retval == IRQ_NONE &&
-				!ufshcd_eh_in_progress(hba)) {
+	अगर (enabled_पूर्णांकr_status && retval == IRQ_NONE &&
+				!ufshcd_eh_in_progress(hba)) अणु
 		dev_err(hba->dev, "%s: Unhandled interrupt 0x%08x (0x%08x, 0x%08x)\n",
 					__func__,
-					intr_status,
-					hba->ufs_stats.last_intr_status,
-					enabled_intr_status);
+					पूर्णांकr_status,
+					hba->ufs_stats.last_पूर्णांकr_status,
+					enabled_पूर्णांकr_status);
 		ufshcd_dump_regs(hba, 0, UFSHCI_REG_SPACE_SIZE, "host_regs: ");
-	}
+	पूर्ण
 
 	spin_unlock(hba->host->host_lock);
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
-static int ufshcd_clear_tm_cmd(struct ufs_hba *hba, int tag)
-{
-	int err = 0;
+अटल पूर्णांक ufshcd_clear_पंचांग_cmd(काष्ठा ufs_hba *hba, पूर्णांक tag)
+अणु
+	पूर्णांक err = 0;
 	u32 mask = 1 << tag;
-	unsigned long flags;
+	अचिन्हित दीर्घ flags;
 
-	if (!test_bit(tag, &hba->outstanding_tasks))
-		goto out;
+	अगर (!test_bit(tag, &hba->outstanding_tasks))
+		जाओ out;
 
 	spin_lock_irqsave(hba->host->host_lock, flags);
-	ufshcd_utmrl_clear(hba, tag);
+	ufshcd_uपंचांगrl_clear(hba, tag);
 	spin_unlock_irqrestore(hba->host->host_lock, flags);
 
-	/* poll for max. 1 sec to clear door bell register by h/w */
-	err = ufshcd_wait_for_register(hba,
+	/* poll क्रम max. 1 sec to clear करोor bell रेजिस्टर by h/w */
+	err = ufshcd_रुको_क्रम_रेजिस्टर(hba,
 			REG_UTP_TASK_REQ_DOOR_BELL,
 			mask, 0, 1000, 1000);
 out:
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int __ufshcd_issue_tm_cmd(struct ufs_hba *hba,
-		struct utp_task_req_desc *treq, u8 tm_function)
-{
-	struct request_queue *q = hba->tmf_queue;
-	struct Scsi_Host *host = hba->host;
-	DECLARE_COMPLETION_ONSTACK(wait);
-	struct request *req;
-	unsigned long flags;
-	int task_tag, err;
+अटल पूर्णांक __ufshcd_issue_पंचांग_cmd(काष्ठा ufs_hba *hba,
+		काष्ठा utp_task_req_desc *treq, u8 पंचांग_function)
+अणु
+	काष्ठा request_queue *q = hba->पंचांगf_queue;
+	काष्ठा Scsi_Host *host = hba->host;
+	DECLARE_COMPLETION_ONSTACK(रुको);
+	काष्ठा request *req;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक task_tag, err;
 
 	/*
-	 * blk_get_request() is used here only to get a free tag.
+	 * blk_get_request() is used here only to get a मुक्त tag.
 	 */
 	req = blk_get_request(q, REQ_OP_DRV_OUT, 0);
-	if (IS_ERR(req))
-		return PTR_ERR(req);
+	अगर (IS_ERR(req))
+		वापस PTR_ERR(req);
 
-	req->end_io_data = &wait;
+	req->end_io_data = &रुको;
 	ufshcd_hold(hba, false);
 
 	spin_lock_irqsave(host->host_lock, flags);
@@ -6404,45 +6405,45 @@ static int __ufshcd_issue_tm_cmd(struct ufs_hba *hba,
 	task_tag = req->tag;
 	treq->upiu_req.req_header.dword_0 |= cpu_to_be32(task_tag);
 
-	memcpy(hba->utmrdl_base_addr + task_tag, treq, sizeof(*treq));
-	ufshcd_vops_setup_task_mgmt(hba, task_tag, tm_function);
+	स_नकल(hba->uपंचांगrdl_base_addr + task_tag, treq, माप(*treq));
+	ufshcd_vops_setup_task_mgmt(hba, task_tag, पंचांग_function);
 
 	/* send command to the controller */
 	__set_bit(task_tag, &hba->outstanding_tasks);
 
-	/* Make sure descriptors are ready before ringing the task doorbell */
+	/* Make sure descriptors are पढ़ोy beक्रमe ringing the task करोorbell */
 	wmb();
 
-	ufshcd_writel(hba, 1 << task_tag, REG_UTP_TASK_REQ_DOOR_BELL);
-	/* Make sure that doorbell is committed immediately */
+	ufshcd_ग_लिखोl(hba, 1 << task_tag, REG_UTP_TASK_REQ_DOOR_BELL);
+	/* Make sure that करोorbell is committed immediately */
 	wmb();
 
 	spin_unlock_irqrestore(host->host_lock, flags);
 
-	ufshcd_add_tm_upiu_trace(hba, task_tag, UFS_TM_SEND);
+	ufshcd_add_पंचांग_upiu_trace(hba, task_tag, UFS_TM_SEND);
 
-	/* wait until the task management command is completed */
-	err = wait_for_completion_io_timeout(&wait,
-			msecs_to_jiffies(TM_CMD_TIMEOUT));
-	if (!err) {
+	/* रुको until the task management command is completed */
+	err = रुको_क्रम_completion_io_समयout(&रुको,
+			msecs_to_jअगरfies(TM_CMD_TIMEOUT));
+	अगर (!err) अणु
 		/*
-		 * Make sure that ufshcd_compl_tm() does not trigger a
-		 * use-after-free.
+		 * Make sure that ufshcd_compl_पंचांग() करोes not trigger a
+		 * use-after-मुक्त.
 		 */
-		req->end_io_data = NULL;
-		ufshcd_add_tm_upiu_trace(hba, task_tag, UFS_TM_ERR);
+		req->end_io_data = शून्य;
+		ufshcd_add_पंचांग_upiu_trace(hba, task_tag, UFS_TM_ERR);
 		dev_err(hba->dev, "%s: task management cmd 0x%.2x timed-out\n",
-				__func__, tm_function);
-		if (ufshcd_clear_tm_cmd(hba, task_tag))
+				__func__, पंचांग_function);
+		अगर (ufshcd_clear_पंचांग_cmd(hba, task_tag))
 			dev_WARN(hba->dev, "%s: unable to clear tm cmd (slot %d) after timeout\n",
 					__func__, task_tag);
 		err = -ETIMEDOUT;
-	} else {
+	पूर्ण अन्यथा अणु
 		err = 0;
-		memcpy(treq, hba->utmrdl_base_addr + task_tag, sizeof(*treq));
+		स_नकल(treq, hba->uपंचांगrdl_base_addr + task_tag, माप(*treq));
 
-		ufshcd_add_tm_upiu_trace(hba, task_tag, UFS_TM_COMP);
-	}
+		ufshcd_add_पंचांग_upiu_trace(hba, task_tag, UFS_TM_COMP);
+	पूर्ण
 
 	spin_lock_irqsave(hba->host->host_lock, flags);
 	__clear_bit(task_tag, &hba->outstanding_tasks);
@@ -6451,24 +6452,24 @@ static int __ufshcd_issue_tm_cmd(struct ufs_hba *hba,
 	ufshcd_release(hba);
 	blk_put_request(req);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /**
- * ufshcd_issue_tm_cmd - issues task management commands to controller
+ * ufshcd_issue_पंचांग_cmd - issues task management commands to controller
  * @hba: per adapter instance
  * @lun_id: LUN ID to which TM command is sent
  * @task_id: task ID to which the TM command is applicable
- * @tm_function: task management function opcode
- * @tm_response: task management service response return value
+ * @पंचांग_function: task management function opcode
+ * @पंचांग_response: task management service response वापस value
  *
  * Returns non-zero value on error, zero on success.
  */
-static int ufshcd_issue_tm_cmd(struct ufs_hba *hba, int lun_id, int task_id,
-		u8 tm_function, u8 *tm_response)
-{
-	struct utp_task_req_desc treq = { { 0 }, };
-	int ocs_value, err;
+अटल पूर्णांक ufshcd_issue_पंचांग_cmd(काष्ठा ufs_hba *hba, पूर्णांक lun_id, पूर्णांक task_id,
+		u8 पंचांग_function, u8 *पंचांग_response)
+अणु
+	काष्ठा utp_task_req_desc treq = अणु अणु 0 पूर्ण, पूर्ण;
+	पूर्णांक ocs_value, err;
 
 	/* Configure task request descriptor */
 	treq.header.dword_0 = cpu_to_le32(UTP_REQ_DESC_INT_CMD);
@@ -6477,92 +6478,92 @@ static int ufshcd_issue_tm_cmd(struct ufs_hba *hba, int lun_id, int task_id,
 	/* Configure task request UPIU */
 	treq.upiu_req.req_header.dword_0 = cpu_to_be32(lun_id << 8) |
 				  cpu_to_be32(UPIU_TRANSACTION_TASK_REQ << 24);
-	treq.upiu_req.req_header.dword_1 = cpu_to_be32(tm_function << 16);
+	treq.upiu_req.req_header.dword_1 = cpu_to_be32(पंचांग_function << 16);
 
 	/*
-	 * The host shall provide the same value for LUN field in the basic
-	 * header and for Input Parameter.
+	 * The host shall provide the same value क्रम LUN field in the basic
+	 * header and क्रम Input Parameter.
 	 */
 	treq.upiu_req.input_param1 = cpu_to_be32(lun_id);
 	treq.upiu_req.input_param2 = cpu_to_be32(task_id);
 
-	err = __ufshcd_issue_tm_cmd(hba, &treq, tm_function);
-	if (err == -ETIMEDOUT)
-		return err;
+	err = __ufshcd_issue_पंचांग_cmd(hba, &treq, पंचांग_function);
+	अगर (err == -ETIMEDOUT)
+		वापस err;
 
 	ocs_value = le32_to_cpu(treq.header.dword_2) & MASK_OCS;
-	if (ocs_value != OCS_SUCCESS)
+	अगर (ocs_value != OCS_SUCCESS)
 		dev_err(hba->dev, "%s: failed, ocs = 0x%x\n",
 				__func__, ocs_value);
-	else if (tm_response)
-		*tm_response = be32_to_cpu(treq.upiu_rsp.output_param1) &
+	अन्यथा अगर (पंचांग_response)
+		*पंचांग_response = be32_to_cpu(treq.upiu_rsp.output_param1) &
 				MASK_TM_SERVICE_RESP;
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /**
- * ufshcd_issue_devman_upiu_cmd - API for sending "utrd" type requests
+ * ufshcd_issue_devman_upiu_cmd - API क्रम sending "utrd" type requests
  * @hba:	per-adapter instance
  * @req_upiu:	upiu request
  * @rsp_upiu:	upiu reply
- * @desc_buff:	pointer to descriptor buffer, NULL if NA
- * @buff_len:	descriptor size, 0 if NA
- * @cmd_type:	specifies the type (NOP, Query...)
+ * @desc_buff:	poपूर्णांकer to descriptor buffer, शून्य अगर NA
+ * @buff_len:	descriptor size, 0 अगर NA
+ * @cmd_type:	specअगरies the type (NOP, Query...)
  * @desc_op:	descriptor operation
  *
  * Those type of requests uses UTP Transfer Request Descriptor - utrd.
- * Therefore, it "rides" the device management infrastructure: uses its tag and
+ * Thereक्रमe, it "rides" the device management infraकाष्ठाure: uses its tag and
  * tasks work queues.
  *
- * Since there is only one available tag for device management commands,
+ * Since there is only one available tag क्रम device management commands,
  * the caller is expected to hold the hba->dev_cmd.lock mutex.
  */
-static int ufshcd_issue_devman_upiu_cmd(struct ufs_hba *hba,
-					struct utp_upiu_req *req_upiu,
-					struct utp_upiu_req *rsp_upiu,
-					u8 *desc_buff, int *buff_len,
-					enum dev_cmd_type cmd_type,
-					enum query_opcode desc_op)
-{
-	struct request_queue *q = hba->cmd_queue;
-	struct request *req;
-	struct ufshcd_lrb *lrbp;
-	int err = 0;
-	int tag;
-	struct completion wait;
-	unsigned long flags;
+अटल पूर्णांक ufshcd_issue_devman_upiu_cmd(काष्ठा ufs_hba *hba,
+					काष्ठा utp_upiu_req *req_upiu,
+					काष्ठा utp_upiu_req *rsp_upiu,
+					u8 *desc_buff, पूर्णांक *buff_len,
+					क्रमागत dev_cmd_type cmd_type,
+					क्रमागत query_opcode desc_op)
+अणु
+	काष्ठा request_queue *q = hba->cmd_queue;
+	काष्ठा request *req;
+	काष्ठा ufshcd_lrb *lrbp;
+	पूर्णांक err = 0;
+	पूर्णांक tag;
+	काष्ठा completion रुको;
+	अचिन्हित दीर्घ flags;
 	u8 upiu_flags;
 
-	down_read(&hba->clk_scaling_lock);
+	करोwn_पढ़ो(&hba->clk_scaling_lock);
 
 	req = blk_get_request(q, REQ_OP_DRV_OUT, 0);
-	if (IS_ERR(req)) {
+	अगर (IS_ERR(req)) अणु
 		err = PTR_ERR(req);
-		goto out_unlock;
-	}
+		जाओ out_unlock;
+	पूर्ण
 	tag = req->tag;
 	WARN_ON_ONCE(!ufshcd_valid_tag(hba, tag));
 
-	init_completion(&wait);
+	init_completion(&रुको);
 	lrbp = &hba->lrb[tag];
-	if (unlikely(lrbp->in_use)) {
+	अगर (unlikely(lrbp->in_use)) अणु
 		err = -EBUSY;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	WARN_ON(lrbp->cmd);
-	lrbp->cmd = NULL;
+	lrbp->cmd = शून्य;
 	lrbp->sense_bufflen = 0;
-	lrbp->sense_buffer = NULL;
+	lrbp->sense_buffer = शून्य;
 	lrbp->task_tag = tag;
 	lrbp->lun = 0;
-	lrbp->intr_cmd = true;
-	ufshcd_prepare_lrbp_crypto(NULL, lrbp);
+	lrbp->पूर्णांकr_cmd = true;
+	ufshcd_prepare_lrbp_crypto(शून्य, lrbp);
 	hba->dev_cmd.type = cmd_type;
 
-	if (hba->ufs_version <= ufshci_version(1, 1))
+	अगर (hba->ufs_version <= ufshci_version(1, 1))
 		lrbp->command_type = UTP_CMD_TYPE_DEV_MANAGE;
-	else
+	अन्यथा
 		lrbp->command_type = UTP_CMD_TYPE_UFS_STORAGE;
 
 	/* update the task tag in the request upiu */
@@ -6571,67 +6572,67 @@ static int ufshcd_issue_devman_upiu_cmd(struct ufs_hba *hba,
 	ufshcd_prepare_req_desc_hdr(lrbp, &upiu_flags, DMA_NONE);
 
 	/* just copy the upiu request as it is */
-	memcpy(lrbp->ucd_req_ptr, req_upiu, sizeof(*lrbp->ucd_req_ptr));
-	if (desc_buff && desc_op == UPIU_QUERY_OPCODE_WRITE_DESC) {
+	स_नकल(lrbp->ucd_req_ptr, req_upiu, माप(*lrbp->ucd_req_ptr));
+	अगर (desc_buff && desc_op == UPIU_QUERY_OPCODE_WRITE_DESC) अणु
 		/* The Data Segment Area is optional depending upon the query
-		 * function value. for WRITE DESCRIPTOR, the data segment
+		 * function value. क्रम WRITE DESCRIPTOR, the data segment
 		 * follows right after the tsf.
 		 */
-		memcpy(lrbp->ucd_req_ptr + 1, desc_buff, *buff_len);
+		स_नकल(lrbp->ucd_req_ptr + 1, desc_buff, *buff_len);
 		*buff_len = 0;
-	}
+	पूर्ण
 
-	memset(lrbp->ucd_rsp_ptr, 0, sizeof(struct utp_upiu_rsp));
+	स_रखो(lrbp->ucd_rsp_ptr, 0, माप(काष्ठा utp_upiu_rsp));
 
-	hba->dev_cmd.complete = &wait;
+	hba->dev_cmd.complete = &रुको;
 
-	/* Make sure descriptors are ready before ringing the doorbell */
+	/* Make sure descriptors are पढ़ोy beक्रमe ringing the करोorbell */
 	wmb();
 	spin_lock_irqsave(hba->host->host_lock, flags);
 	ufshcd_send_command(hba, tag);
 	spin_unlock_irqrestore(hba->host->host_lock, flags);
 
 	/*
-	 * ignore the returning value here - ufshcd_check_query_response is
+	 * ignore the वापसing value here - ufshcd_check_query_response is
 	 * bound to fail since dev_cmd.query and dev_cmd.type were left empty.
-	 * read the response directly ignoring all errors.
+	 * पढ़ो the response directly ignoring all errors.
 	 */
-	ufshcd_wait_for_dev_cmd(hba, lrbp, QUERY_REQ_TIMEOUT);
+	ufshcd_रुको_क्रम_dev_cmd(hba, lrbp, QUERY_REQ_TIMEOUT);
 
 	/* just copy the upiu response as it is */
-	memcpy(rsp_upiu, lrbp->ucd_rsp_ptr, sizeof(*rsp_upiu));
-	if (desc_buff && desc_op == UPIU_QUERY_OPCODE_READ_DESC) {
-		u8 *descp = (u8 *)lrbp->ucd_rsp_ptr + sizeof(*rsp_upiu);
+	स_नकल(rsp_upiu, lrbp->ucd_rsp_ptr, माप(*rsp_upiu));
+	अगर (desc_buff && desc_op == UPIU_QUERY_OPCODE_READ_DESC) अणु
+		u8 *descp = (u8 *)lrbp->ucd_rsp_ptr + माप(*rsp_upiu);
 		u16 resp_len = be32_to_cpu(lrbp->ucd_rsp_ptr->header.dword_2) &
 			       MASK_QUERY_DATA_SEG_LEN;
 
-		if (*buff_len >= resp_len) {
-			memcpy(desc_buff, descp, resp_len);
+		अगर (*buff_len >= resp_len) अणु
+			स_नकल(desc_buff, descp, resp_len);
 			*buff_len = resp_len;
-		} else {
+		पूर्ण अन्यथा अणु
 			dev_warn(hba->dev,
 				 "%s: rsp size %d is bigger than buffer size %d",
 				 __func__, resp_len, *buff_len);
 			*buff_len = 0;
 			err = -EINVAL;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 out:
 	blk_put_request(req);
 out_unlock:
-	up_read(&hba->clk_scaling_lock);
-	return err;
-}
+	up_पढ़ो(&hba->clk_scaling_lock);
+	वापस err;
+पूर्ण
 
 /**
- * ufshcd_exec_raw_upiu_cmd - API function for sending raw upiu commands
+ * ufshcd_exec_raw_upiu_cmd - API function क्रम sending raw upiu commands
  * @hba:	per-adapter instance
  * @req_upiu:	upiu request
- * @rsp_upiu:	upiu reply - only 8 DW as we do not support scsi commands
+ * @rsp_upiu:	upiu reply - only 8 DW as we करो not support scsi commands
  * @msgcode:	message code, one of UPIU Transaction Codes Initiator to Target
- * @desc_buff:	pointer to descriptor buffer, NULL if NA
- * @buff_len:	descriptor size, 0 if NA
+ * @desc_buff:	poपूर्णांकer to descriptor buffer, शून्य अगर NA
+ * @buff_len:	descriptor size, 0 अगर NA
  * @desc_op:	descriptor operation
  *
  * Supports UTP Transfer requests (nop and query), and UTP Task
@@ -6639,24 +6640,24 @@ out_unlock:
  * It is up to the caller to fill the upiu conent properly, as it will
  * be copied without any further input validations.
  */
-int ufshcd_exec_raw_upiu_cmd(struct ufs_hba *hba,
-			     struct utp_upiu_req *req_upiu,
-			     struct utp_upiu_req *rsp_upiu,
-			     int msgcode,
-			     u8 *desc_buff, int *buff_len,
-			     enum query_opcode desc_op)
-{
-	int err;
-	enum dev_cmd_type cmd_type = DEV_CMD_TYPE_QUERY;
-	struct utp_task_req_desc treq = { { 0 }, };
-	int ocs_value;
-	u8 tm_f = be32_to_cpu(req_upiu->header.dword_1) >> 16 & MASK_TM_FUNC;
+पूर्णांक ufshcd_exec_raw_upiu_cmd(काष्ठा ufs_hba *hba,
+			     काष्ठा utp_upiu_req *req_upiu,
+			     काष्ठा utp_upiu_req *rsp_upiu,
+			     पूर्णांक msgcode,
+			     u8 *desc_buff, पूर्णांक *buff_len,
+			     क्रमागत query_opcode desc_op)
+अणु
+	पूर्णांक err;
+	क्रमागत dev_cmd_type cmd_type = DEV_CMD_TYPE_QUERY;
+	काष्ठा utp_task_req_desc treq = अणु अणु 0 पूर्ण, पूर्ण;
+	पूर्णांक ocs_value;
+	u8 पंचांग_f = be32_to_cpu(req_upiu->header.dword_1) >> 16 & MASK_TM_FUNC;
 
-	switch (msgcode) {
-	case UPIU_TRANSACTION_NOP_OUT:
+	चयन (msgcode) अणु
+	हाल UPIU_TRANSACTION_NOP_OUT:
 		cmd_type = DEV_CMD_TYPE_NOP;
 		fallthrough;
-	case UPIU_TRANSACTION_QUERY_REQ:
+	हाल UPIU_TRANSACTION_QUERY_REQ:
 		ufshcd_hold(hba, false);
 		mutex_lock(&hba->dev_cmd.lock);
 		err = ufshcd_issue_devman_upiu_cmd(hba, req_upiu, rsp_upiu,
@@ -6665,294 +6666,294 @@ int ufshcd_exec_raw_upiu_cmd(struct ufs_hba *hba,
 		mutex_unlock(&hba->dev_cmd.lock);
 		ufshcd_release(hba);
 
-		break;
-	case UPIU_TRANSACTION_TASK_REQ:
+		अवरोध;
+	हाल UPIU_TRANSACTION_TASK_REQ:
 		treq.header.dword_0 = cpu_to_le32(UTP_REQ_DESC_INT_CMD);
 		treq.header.dword_2 = cpu_to_le32(OCS_INVALID_COMMAND_STATUS);
 
-		memcpy(&treq.upiu_req, req_upiu, sizeof(*req_upiu));
+		स_नकल(&treq.upiu_req, req_upiu, माप(*req_upiu));
 
-		err = __ufshcd_issue_tm_cmd(hba, &treq, tm_f);
-		if (err == -ETIMEDOUT)
-			break;
+		err = __ufshcd_issue_पंचांग_cmd(hba, &treq, पंचांग_f);
+		अगर (err == -ETIMEDOUT)
+			अवरोध;
 
 		ocs_value = le32_to_cpu(treq.header.dword_2) & MASK_OCS;
-		if (ocs_value != OCS_SUCCESS) {
+		अगर (ocs_value != OCS_SUCCESS) अणु
 			dev_err(hba->dev, "%s: failed, ocs = 0x%x\n", __func__,
 				ocs_value);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		memcpy(rsp_upiu, &treq.upiu_rsp, sizeof(*rsp_upiu));
+		स_नकल(rsp_upiu, &treq.upiu_rsp, माप(*rsp_upiu));
 
-		break;
-	default:
+		अवरोध;
+	शेष:
 		err = -EINVAL;
 
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /**
- * ufshcd_eh_device_reset_handler - device reset handler registered to
+ * ufshcd_eh_device_reset_handler - device reset handler रेजिस्टरed to
  *                                    scsi layer.
- * @cmd: SCSI command pointer
+ * @cmd: SCSI command poपूर्णांकer
  *
  * Returns SUCCESS/FAILED
  */
-static int ufshcd_eh_device_reset_handler(struct scsi_cmnd *cmd)
-{
-	struct Scsi_Host *host;
-	struct ufs_hba *hba;
+अटल पूर्णांक ufshcd_eh_device_reset_handler(काष्ठा scsi_cmnd *cmd)
+अणु
+	काष्ठा Scsi_Host *host;
+	काष्ठा ufs_hba *hba;
 	u32 pos;
-	int err;
+	पूर्णांक err;
 	u8 resp = 0xF, lun;
-	unsigned long flags;
+	अचिन्हित दीर्घ flags;
 
 	host = cmd->device->host;
 	hba = shost_priv(host);
 
 	lun = ufshcd_scsi_to_upiu_lun(cmd->device->lun);
-	err = ufshcd_issue_tm_cmd(hba, lun, 0, UFS_LOGICAL_RESET, &resp);
-	if (err || resp != UPIU_TASK_MANAGEMENT_FUNC_COMPL) {
-		if (!err)
+	err = ufshcd_issue_पंचांग_cmd(hba, lun, 0, UFS_LOGICAL_RESET, &resp);
+	अगर (err || resp != UPIU_TASK_MANAGEMENT_FUNC_COMPL) अणु
+		अगर (!err)
 			err = resp;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	/* clear the commands that were pending for corresponding LUN */
-	for_each_set_bit(pos, &hba->outstanding_reqs, hba->nutrs) {
-		if (hba->lrb[pos].lun == lun) {
+	/* clear the commands that were pending क्रम corresponding LUN */
+	क्रम_each_set_bit(pos, &hba->outstanding_reqs, hba->nutrs) अणु
+		अगर (hba->lrb[pos].lun == lun) अणु
 			err = ufshcd_clear_cmd(hba, pos);
-			if (err)
-				break;
-		}
-	}
+			अगर (err)
+				अवरोध;
+		पूर्ण
+	पूर्ण
 	spin_lock_irqsave(host->host_lock, flags);
 	ufshcd_transfer_req_compl(hba);
 	spin_unlock_irqrestore(host->host_lock, flags);
 
 out:
-	hba->req_abort_count = 0;
+	hba->req_पात_count = 0;
 	ufshcd_update_evt_hist(hba, UFS_EVT_DEV_RESET, (u32)err);
-	if (!err) {
+	अगर (!err) अणु
 		err = SUCCESS;
-	} else {
+	पूर्ण अन्यथा अणु
 		dev_err(hba->dev, "%s: failed with err %d\n", __func__, err);
 		err = FAILED;
-	}
-	return err;
-}
+	पूर्ण
+	वापस err;
+पूर्ण
 
-static void ufshcd_set_req_abort_skip(struct ufs_hba *hba, unsigned long bitmap)
-{
-	struct ufshcd_lrb *lrbp;
-	int tag;
+अटल व्योम ufshcd_set_req_पात_skip(काष्ठा ufs_hba *hba, अचिन्हित दीर्घ biपंचांगap)
+अणु
+	काष्ठा ufshcd_lrb *lrbp;
+	पूर्णांक tag;
 
-	for_each_set_bit(tag, &bitmap, hba->nutrs) {
+	क्रम_each_set_bit(tag, &biपंचांगap, hba->nutrs) अणु
 		lrbp = &hba->lrb[tag];
-		lrbp->req_abort_skip = true;
-	}
-}
+		lrbp->req_पात_skip = true;
+	पूर्ण
+पूर्ण
 
 /**
- * ufshcd_try_to_abort_task - abort a specific task
- * @hba: Pointer to adapter instance
- * @tag: Task tag/index to be aborted
+ * ufshcd_try_to_पात_task - पात a specअगरic task
+ * @hba: Poपूर्णांकer to adapter instance
+ * @tag: Task tag/index to be पातed
  *
  * Abort the pending command in device by sending UFS_ABORT_TASK task management
- * command, and in host controller by clearing the door-bell register. There can
- * be race between controller sending the command to the device while abort is
- * issued. To avoid that, first issue UFS_QUERY_TASK to check if the command is
- * really issued and then try to abort it.
+ * command, and in host controller by clearing the करोor-bell रेजिस्टर. There can
+ * be race between controller sending the command to the device जबतक पात is
+ * issued. To aव्योम that, first issue UFS_QUERY_TASK to check अगर the command is
+ * really issued and then try to पात it.
  *
  * Returns zero on success, non-zero on failure
  */
-static int ufshcd_try_to_abort_task(struct ufs_hba *hba, int tag)
-{
-	struct ufshcd_lrb *lrbp = &hba->lrb[tag];
-	int err = 0;
-	int poll_cnt;
+अटल पूर्णांक ufshcd_try_to_पात_task(काष्ठा ufs_hba *hba, पूर्णांक tag)
+अणु
+	काष्ठा ufshcd_lrb *lrbp = &hba->lrb[tag];
+	पूर्णांक err = 0;
+	पूर्णांक poll_cnt;
 	u8 resp = 0xF;
 	u32 reg;
 
-	for (poll_cnt = 100; poll_cnt; poll_cnt--) {
-		err = ufshcd_issue_tm_cmd(hba, lrbp->lun, lrbp->task_tag,
+	क्रम (poll_cnt = 100; poll_cnt; poll_cnt--) अणु
+		err = ufshcd_issue_पंचांग_cmd(hba, lrbp->lun, lrbp->task_tag,
 				UFS_QUERY_TASK, &resp);
-		if (!err && resp == UPIU_TASK_MANAGEMENT_FUNC_SUCCEEDED) {
+		अगर (!err && resp == UPIU_TASK_MANAGEMENT_FUNC_SUCCEEDED) अणु
 			/* cmd pending in the device */
 			dev_err(hba->dev, "%s: cmd pending in the device. tag = %d\n",
 				__func__, tag);
-			break;
-		} else if (!err && resp == UPIU_TASK_MANAGEMENT_FUNC_COMPL) {
+			अवरोध;
+		पूर्ण अन्यथा अगर (!err && resp == UPIU_TASK_MANAGEMENT_FUNC_COMPL) अणु
 			/*
-			 * cmd not pending in the device, check if it is
+			 * cmd not pending in the device, check अगर it is
 			 * in transition.
 			 */
 			dev_err(hba->dev, "%s: cmd at tag %d not pending in the device.\n",
 				__func__, tag);
-			reg = ufshcd_readl(hba, REG_UTP_TRANSFER_REQ_DOOR_BELL);
-			if (reg & (1 << tag)) {
-				/* sleep for max. 200us to stabilize */
+			reg = ufshcd_पढ़ोl(hba, REG_UTP_TRANSFER_REQ_DOOR_BELL);
+			अगर (reg & (1 << tag)) अणु
+				/* sleep क्रम max. 200us to stabilize */
 				usleep_range(100, 200);
-				continue;
-			}
-			/* command completed already */
+				जारी;
+			पूर्ण
+			/* command completed alपढ़ोy */
 			dev_err(hba->dev, "%s: cmd at tag %d successfully cleared from DB.\n",
 				__func__, tag);
-			goto out;
-		} else {
+			जाओ out;
+		पूर्ण अन्यथा अणु
 			dev_err(hba->dev,
 				"%s: no response from device. tag = %d, err %d\n",
 				__func__, tag, err);
-			if (!err)
+			अगर (!err)
 				err = resp; /* service response error */
-			goto out;
-		}
-	}
+			जाओ out;
+		पूर्ण
+	पूर्ण
 
-	if (!poll_cnt) {
+	अगर (!poll_cnt) अणु
 		err = -EBUSY;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	err = ufshcd_issue_tm_cmd(hba, lrbp->lun, lrbp->task_tag,
+	err = ufshcd_issue_पंचांग_cmd(hba, lrbp->lun, lrbp->task_tag,
 			UFS_ABORT_TASK, &resp);
-	if (err || resp != UPIU_TASK_MANAGEMENT_FUNC_COMPL) {
-		if (!err) {
+	अगर (err || resp != UPIU_TASK_MANAGEMENT_FUNC_COMPL) अणु
+		अगर (!err) अणु
 			err = resp; /* service response error */
 			dev_err(hba->dev, "%s: issued. tag = %d, err %d\n",
 				__func__, tag, err);
-		}
-		goto out;
-	}
+		पूर्ण
+		जाओ out;
+	पूर्ण
 
 	err = ufshcd_clear_cmd(hba, tag);
-	if (err)
+	अगर (err)
 		dev_err(hba->dev, "%s: Failed clearing cmd at tag %d, err %d\n",
 			__func__, tag, err);
 
 out:
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /**
- * ufshcd_abort - scsi host template eh_abort_handler callback
- * @cmd: SCSI command pointer
+ * ufshcd_पात - scsi host ढाँचा eh_पात_handler callback
+ * @cmd: SCSI command poपूर्णांकer
  *
  * Returns SUCCESS/FAILED
  */
-static int ufshcd_abort(struct scsi_cmnd *cmd)
-{
-	struct Scsi_Host *host;
-	struct ufs_hba *hba;
-	unsigned long flags;
-	unsigned int tag;
-	int err = 0;
-	struct ufshcd_lrb *lrbp;
+अटल पूर्णांक ufshcd_पात(काष्ठा scsi_cmnd *cmd)
+अणु
+	काष्ठा Scsi_Host *host;
+	काष्ठा ufs_hba *hba;
+	अचिन्हित दीर्घ flags;
+	अचिन्हित पूर्णांक tag;
+	पूर्णांक err = 0;
+	काष्ठा ufshcd_lrb *lrbp;
 	u32 reg;
 
 	host = cmd->device->host;
 	hba = shost_priv(host);
 	tag = cmd->request->tag;
 	lrbp = &hba->lrb[tag];
-	if (!ufshcd_valid_tag(hba, tag)) {
+	अगर (!ufshcd_valid_tag(hba, tag)) अणु
 		dev_err(hba->dev,
 			"%s: invalid command tag %d: cmd=0x%p, cmd->request=0x%p",
 			__func__, tag, cmd, cmd->request);
 		BUG();
-	}
+	पूर्ण
 
 	ufshcd_hold(hba, false);
-	reg = ufshcd_readl(hba, REG_UTP_TRANSFER_REQ_DOOR_BELL);
-	/* If command is already aborted/completed, return SUCCESS */
-	if (!(test_bit(tag, &hba->outstanding_reqs))) {
+	reg = ufshcd_पढ़ोl(hba, REG_UTP_TRANSFER_REQ_DOOR_BELL);
+	/* If command is alपढ़ोy पातed/completed, वापस SUCCESS */
+	अगर (!(test_bit(tag, &hba->outstanding_reqs))) अणु
 		dev_err(hba->dev,
 			"%s: cmd at tag %d already completed, outstanding=0x%lx, doorbell=0x%x\n",
 			__func__, tag, hba->outstanding_reqs, reg);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	/* Print Transfer Request of aborted task */
+	/* Prपूर्णांक Transfer Request of पातed task */
 	dev_info(hba->dev, "%s: Device abort task at tag %d\n", __func__, tag);
 
 	/*
-	 * Print detailed info about aborted request.
-	 * As more than one request might get aborted at the same time,
-	 * print full information only for the first aborted request in order
-	 * to reduce repeated printouts. For other aborted requests only print
+	 * Prपूर्णांक detailed info about पातed request.
+	 * As more than one request might get पातed at the same समय,
+	 * prपूर्णांक full inक्रमmation only क्रम the first पातed request in order
+	 * to reduce repeated prपूर्णांकouts. For other पातed requests only prपूर्णांक
 	 * basic details.
 	 */
-	scsi_print_command(cmd);
-	if (!hba->req_abort_count) {
+	scsi_prपूर्णांक_command(cmd);
+	अगर (!hba->req_पात_count) अणु
 		ufshcd_update_evt_hist(hba, UFS_EVT_ABORT, tag);
-		ufshcd_print_evt_hist(hba);
-		ufshcd_print_host_state(hba);
-		ufshcd_print_pwr_info(hba);
-		ufshcd_print_trs(hba, 1 << tag, true);
-	} else {
-		ufshcd_print_trs(hba, 1 << tag, false);
-	}
-	hba->req_abort_count++;
+		ufshcd_prपूर्णांक_evt_hist(hba);
+		ufshcd_prपूर्णांक_host_state(hba);
+		ufshcd_prपूर्णांक_pwr_info(hba);
+		ufshcd_prपूर्णांक_trs(hba, 1 << tag, true);
+	पूर्ण अन्यथा अणु
+		ufshcd_prपूर्णांक_trs(hba, 1 << tag, false);
+	पूर्ण
+	hba->req_पात_count++;
 
-	if (!(reg & (1 << tag))) {
+	अगर (!(reg & (1 << tag))) अणु
 		dev_err(hba->dev,
 		"%s: cmd was completed, but without a notifying intr, tag = %d",
 		__func__, tag);
-		goto cleanup;
-	}
+		जाओ cleanup;
+	पूर्ण
 
 	/*
-	 * Task abort to the device W-LUN is illegal. When this command
+	 * Task पात to the device W-LUN is illegal. When this command
 	 * will fail, due to spec violation, scsi err handling next step
 	 * will be to send LU reset which, again, is a spec violation.
-	 * To avoid these unnecessary/illegal steps, first we clean up
+	 * To aव्योम these unnecessary/illegal steps, first we clean up
 	 * the lrb taken by this cmd and mark the lrb as in_use, then
 	 * queue the eh_work and bail.
 	 */
-	if (lrbp->lun == UFS_UPIU_UFS_DEVICE_WLUN) {
+	अगर (lrbp->lun == UFS_UPIU_UFS_DEVICE_WLUN) अणु
 		ufshcd_update_evt_hist(hba, UFS_EVT_ABORT, lrbp->lun);
 		spin_lock_irqsave(host->host_lock, flags);
-		if (lrbp->cmd) {
+		अगर (lrbp->cmd) अणु
 			__ufshcd_transfer_req_compl(hba, (1UL << tag));
 			__set_bit(tag, &hba->outstanding_reqs);
 			lrbp->in_use = true;
-			hba->force_reset = true;
+			hba->क्रमce_reset = true;
 			ufshcd_schedule_eh_work(hba);
-		}
+		पूर्ण
 
 		spin_unlock_irqrestore(host->host_lock, flags);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	/* Skip task abort in case previous aborts failed and report failure */
-	if (lrbp->req_abort_skip)
+	/* Skip task पात in हाल previous पातs failed and report failure */
+	अगर (lrbp->req_पात_skip)
 		err = -EIO;
-	else
-		err = ufshcd_try_to_abort_task(hba, tag);
+	अन्यथा
+		err = ufshcd_try_to_पात_task(hba, tag);
 
-	if (!err) {
+	अगर (!err) अणु
 cleanup:
 		spin_lock_irqsave(host->host_lock, flags);
 		__ufshcd_transfer_req_compl(hba, (1UL << tag));
 		spin_unlock_irqrestore(host->host_lock, flags);
 out:
 		err = SUCCESS;
-	} else {
+	पूर्ण अन्यथा अणु
 		dev_err(hba->dev, "%s: failed with err %d\n", __func__, err);
-		ufshcd_set_req_abort_skip(hba, hba->outstanding_reqs);
+		ufshcd_set_req_पात_skip(hba, hba->outstanding_reqs);
 		err = FAILED;
-	}
+	पूर्ण
 
 	/*
 	 * This ufshcd_release() corresponds to the original scsi cmd that got
-	 * aborted here (as we won't get any IRQ for it).
+	 * पातed here (as we won't get any IRQ क्रम it).
 	 */
 	ufshcd_release(hba);
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /**
  * ufshcd_host_reset_and_restore - reset and restore host controller
@@ -6960,14 +6961,14 @@ out:
  *
  * Note that host controller reset may issue DME_RESET to
  * local and remote (device) Uni-Pro stack and the attributes
- * are reset to default state.
+ * are reset to शेष state.
  *
  * Returns zero on success, non-zero on failure
  */
-static int ufshcd_host_reset_and_restore(struct ufs_hba *hba)
-{
-	int err;
-	unsigned long flags;
+अटल पूर्णांक ufshcd_host_reset_and_restore(काष्ठा ufs_hba *hba)
+अणु
+	पूर्णांक err;
+	अचिन्हित दीर्घ flags;
 
 	/*
 	 * Stop the host controller and complete the requests
@@ -6981,20 +6982,20 @@ static int ufshcd_host_reset_and_restore(struct ufs_hba *hba)
 	hba->silence_err_logs = false;
 	spin_unlock_irqrestore(hba->host->host_lock, flags);
 
-	/* scale up clocks to max frequency before full reinitialization */
+	/* scale up घड़ीs to max frequency beक्रमe full reinitialization */
 	ufshcd_set_clk_freq(hba, true);
 
 	err = ufshcd_hba_enable(hba);
 
 	/* Establish the link again and restore the device */
-	if (!err)
+	अगर (!err)
 		err = ufshcd_probe_hba(hba, false);
 
-	if (err)
+	अगर (err)
 		dev_err(hba->dev, "%s: Host init failed %d\n", __func__, err);
 	ufshcd_update_evt_hist(hba, UFS_EVT_HOST_RESET, (u32)err);
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /**
  * ufshcd_reset_and_restore - reset and re-initialize host/device
@@ -7005,17 +7006,17 @@ static int ufshcd_host_reset_and_restore(struct ufs_hba *hba)
  *
  * Returns zero on success, non-zero on failure
  */
-static int ufshcd_reset_and_restore(struct ufs_hba *hba)
-{
+अटल पूर्णांक ufshcd_reset_and_restore(काष्ठा ufs_hba *hba)
+अणु
 	u32 saved_err;
 	u32 saved_uic_err;
-	int err = 0;
-	unsigned long flags;
-	int retries = MAX_HOST_RESET_RETRIES;
+	पूर्णांक err = 0;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक retries = MAX_HOST_RESET_RETRIES;
 
 	/*
 	 * This is a fresh start, cache and clear saved error first,
-	 * in case new error generated during reset and restore.
+	 * in हाल new error generated during reset and restore.
 	 */
 	spin_lock_irqsave(hba->host->host_lock, flags);
 	saved_err = hba->saved_err;
@@ -7024,45 +7025,45 @@ static int ufshcd_reset_and_restore(struct ufs_hba *hba)
 	hba->saved_uic_err = 0;
 	spin_unlock_irqrestore(hba->host->host_lock, flags);
 
-	do {
+	करो अणु
 		/* Reset the attached device */
 		ufshcd_device_reset(hba);
 
 		err = ufshcd_host_reset_and_restore(hba);
-	} while (err && --retries);
+	पूर्ण जबतक (err && --retries);
 
 	spin_lock_irqsave(hba->host->host_lock, flags);
 	/*
-	 * Inform scsi mid-layer that we did reset and allow to handle
+	 * Inक्रमm scsi mid-layer that we did reset and allow to handle
 	 * Unit Attention properly.
 	 */
 	scsi_report_bus_reset(hba->host, 0);
-	if (err) {
+	अगर (err) अणु
 		hba->ufshcd_state = UFSHCD_STATE_ERROR;
 		hba->saved_err |= saved_err;
 		hba->saved_uic_err |= saved_uic_err;
-	}
+	पूर्ण
 	spin_unlock_irqrestore(hba->host->host_lock, flags);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /**
- * ufshcd_eh_host_reset_handler - host reset handler registered to scsi layer
- * @cmd: SCSI command pointer
+ * ufshcd_eh_host_reset_handler - host reset handler रेजिस्टरed to scsi layer
+ * @cmd: SCSI command poपूर्णांकer
  *
  * Returns SUCCESS/FAILED
  */
-static int ufshcd_eh_host_reset_handler(struct scsi_cmnd *cmd)
-{
-	int err = SUCCESS;
-	unsigned long flags;
-	struct ufs_hba *hba;
+अटल पूर्णांक ufshcd_eh_host_reset_handler(काष्ठा scsi_cmnd *cmd)
+अणु
+	पूर्णांक err = SUCCESS;
+	अचिन्हित दीर्घ flags;
+	काष्ठा ufs_hba *hba;
 
 	hba = shost_priv(cmd->device->host);
 
 	spin_lock_irqsave(hba->host->host_lock, flags);
-	hba->force_reset = true;
+	hba->क्रमce_reset = true;
 	ufshcd_schedule_eh_work(hba);
 	dev_err(hba->dev, "%s: reset in progress - 1\n", __func__);
 	spin_unlock_irqrestore(hba->host->host_lock, flags);
@@ -7070,120 +7071,120 @@ static int ufshcd_eh_host_reset_handler(struct scsi_cmnd *cmd)
 	flush_work(&hba->eh_work);
 
 	spin_lock_irqsave(hba->host->host_lock, flags);
-	if (hba->ufshcd_state == UFSHCD_STATE_ERROR)
+	अगर (hba->ufshcd_state == UFSHCD_STATE_ERROR)
 		err = FAILED;
 	spin_unlock_irqrestore(hba->host->host_lock, flags);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /**
  * ufshcd_get_max_icc_level - calculate the ICC level
  * @sup_curr_uA: max. current supported by the regulator
  * @start_scan: row at the desc table to start scan from
- * @buff: power descriptor buffer
+ * @buff: घातer descriptor buffer
  *
- * Returns calculated max ICC level for specific regulator
+ * Returns calculated max ICC level क्रम specअगरic regulator
  */
-static u32 ufshcd_get_max_icc_level(int sup_curr_uA, u32 start_scan, char *buff)
-{
-	int i;
-	int curr_uA;
+अटल u32 ufshcd_get_max_icc_level(पूर्णांक sup_curr_uA, u32 start_scan, अक्षर *buff)
+अणु
+	पूर्णांक i;
+	पूर्णांक curr_uA;
 	u16 data;
 	u16 unit;
 
-	for (i = start_scan; i >= 0; i--) {
+	क्रम (i = start_scan; i >= 0; i--) अणु
 		data = be16_to_cpup((__be16 *)&buff[2 * i]);
 		unit = (data & ATTR_ICC_LVL_UNIT_MASK) >>
 						ATTR_ICC_LVL_UNIT_OFFSET;
 		curr_uA = data & ATTR_ICC_LVL_VALUE_MASK;
-		switch (unit) {
-		case UFSHCD_NANO_AMP:
+		चयन (unit) अणु
+		हाल UFSHCD_न_अंकO_AMP:
 			curr_uA = curr_uA / 1000;
-			break;
-		case UFSHCD_MILI_AMP:
+			अवरोध;
+		हाल UFSHCD_MILI_AMP:
 			curr_uA = curr_uA * 1000;
-			break;
-		case UFSHCD_AMP:
+			अवरोध;
+		हाल UFSHCD_AMP:
 			curr_uA = curr_uA * 1000 * 1000;
-			break;
-		case UFSHCD_MICRO_AMP:
-		default:
-			break;
-		}
-		if (sup_curr_uA >= curr_uA)
-			break;
-	}
-	if (i < 0) {
+			अवरोध;
+		हाल UFSHCD_MICRO_AMP:
+		शेष:
+			अवरोध;
+		पूर्ण
+		अगर (sup_curr_uA >= curr_uA)
+			अवरोध;
+	पूर्ण
+	अगर (i < 0) अणु
 		i = 0;
 		pr_err("%s: Couldn't find valid icc_level = %d", __func__, i);
-	}
+	पूर्ण
 
-	return (u32)i;
-}
+	वापस (u32)i;
+पूर्ण
 
 /**
  * ufshcd_find_max_sup_active_icc_level - calculate the max ICC level
- * In case regulators are not initialized we'll return 0
+ * In हाल regulators are not initialized we'll वापस 0
  * @hba: per-adapter instance
- * @desc_buf: power descriptor buffer to extract ICC levels from.
+ * @desc_buf: घातer descriptor buffer to extract ICC levels from.
  * @len: length of desc_buff
  *
  * Returns calculated ICC level
  */
-static u32 ufshcd_find_max_sup_active_icc_level(struct ufs_hba *hba,
-							u8 *desc_buf, int len)
-{
+अटल u32 ufshcd_find_max_sup_active_icc_level(काष्ठा ufs_hba *hba,
+							u8 *desc_buf, पूर्णांक len)
+अणु
 	u32 icc_level = 0;
 
-	if (!hba->vreg_info.vcc || !hba->vreg_info.vccq ||
-						!hba->vreg_info.vccq2) {
+	अगर (!hba->vreg_info.vcc || !hba->vreg_info.vccq ||
+						!hba->vreg_info.vccq2) अणु
 		dev_err(hba->dev,
 			"%s: Regulator capability was not set, actvIccLevel=%d",
 							__func__, icc_level);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (hba->vreg_info.vcc->max_uA)
+	अगर (hba->vreg_info.vcc->max_uA)
 		icc_level = ufshcd_get_max_icc_level(
 				hba->vreg_info.vcc->max_uA,
 				POWER_DESC_MAX_ACTV_ICC_LVLS - 1,
 				&desc_buf[PWR_DESC_ACTIVE_LVLS_VCC_0]);
 
-	if (hba->vreg_info.vccq->max_uA)
+	अगर (hba->vreg_info.vccq->max_uA)
 		icc_level = ufshcd_get_max_icc_level(
 				hba->vreg_info.vccq->max_uA,
 				icc_level,
 				&desc_buf[PWR_DESC_ACTIVE_LVLS_VCCQ_0]);
 
-	if (hba->vreg_info.vccq2->max_uA)
+	अगर (hba->vreg_info.vccq2->max_uA)
 		icc_level = ufshcd_get_max_icc_level(
 				hba->vreg_info.vccq2->max_uA,
 				icc_level,
 				&desc_buf[PWR_DESC_ACTIVE_LVLS_VCCQ2_0]);
 out:
-	return icc_level;
-}
+	वापस icc_level;
+पूर्ण
 
-static void ufshcd_set_active_icc_lvl(struct ufs_hba *hba)
-{
-	int ret;
-	int buff_len = hba->desc_size[QUERY_DESC_IDN_POWER];
+अटल व्योम ufshcd_set_active_icc_lvl(काष्ठा ufs_hba *hba)
+अणु
+	पूर्णांक ret;
+	पूर्णांक buff_len = hba->desc_size[QUERY_DESC_IDN_POWER];
 	u8 *desc_buf;
 	u32 icc_level;
 
-	desc_buf = kmalloc(buff_len, GFP_KERNEL);
-	if (!desc_buf)
-		return;
+	desc_buf = kदो_स्मृति(buff_len, GFP_KERNEL);
+	अगर (!desc_buf)
+		वापस;
 
-	ret = ufshcd_read_desc_param(hba, QUERY_DESC_IDN_POWER, 0, 0,
+	ret = ufshcd_पढ़ो_desc_param(hba, QUERY_DESC_IDN_POWER, 0, 0,
 				     desc_buf, buff_len);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(hba->dev,
 			"%s: Failed reading power descriptor.len = %d ret = %d",
 			__func__, buff_len, ret);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	icc_level = ufshcd_find_max_sup_active_icc_level(hba, desc_buf,
 							 buff_len);
@@ -7192,122 +7193,122 @@ static void ufshcd_set_active_icc_lvl(struct ufs_hba *hba)
 	ret = ufshcd_query_attr_retry(hba, UPIU_QUERY_OPCODE_WRITE_ATTR,
 		QUERY_ATTR_IDN_ACTIVE_ICC_LVL, 0, 0, &icc_level);
 
-	if (ret)
+	अगर (ret)
 		dev_err(hba->dev,
 			"%s: Failed configuring bActiveICCLevel = %d ret = %d",
 			__func__, icc_level, ret);
 
 out:
-	kfree(desc_buf);
-}
+	kमुक्त(desc_buf);
+पूर्ण
 
-static inline void ufshcd_blk_pm_runtime_init(struct scsi_device *sdev)
-{
-	scsi_autopm_get_device(sdev);
-	blk_pm_runtime_init(sdev->request_queue, &sdev->sdev_gendev);
-	if (sdev->rpm_autosuspend)
-		pm_runtime_set_autosuspend_delay(&sdev->sdev_gendev,
+अटल अंतरभूत व्योम ufshcd_blk_pm_runसमय_init(काष्ठा scsi_device *sdev)
+अणु
+	scsi_स्वतःpm_get_device(sdev);
+	blk_pm_runसमय_init(sdev->request_queue, &sdev->sdev_gendev);
+	अगर (sdev->rpm_स्वतःsuspend)
+		pm_runसमय_set_स्वतःsuspend_delay(&sdev->sdev_gendev,
 						 RPM_AUTOSUSPEND_DELAY_MS);
-	scsi_autopm_put_device(sdev);
-}
+	scsi_स्वतःpm_put_device(sdev);
+पूर्ण
 
 /**
  * ufshcd_scsi_add_wlus - Adds required W-LUs
  * @hba: per-adapter instance
  *
- * UFS device specification requires the UFS devices to support 4 well known
+ * UFS device specअगरication requires the UFS devices to support 4 well known
  * logical units:
  *	"REPORT_LUNS" (address: 01h)
  *	"UFS Device" (address: 50h)
  *	"RPMB" (address: 44h)
  *	"BOOT" (address: 30h)
- * UFS device's power management needs to be controlled by "POWER CONDITION"
+ * UFS device's घातer management needs to be controlled by "POWER CONDITION"
  * field of SSU (START STOP UNIT) command. But this "power condition" field
  * will take effect only when its sent to "UFS device" well known logical unit
  * hence we require the scsi_device instance to represent this logical unit in
- * order for the UFS host driver to send the SSU command for power management.
+ * order क्रम the UFS host driver to send the SSU command क्रम घातer management.
  *
- * We also require the scsi_device instance for "RPMB" (Replay Protected Memory
+ * We also require the scsi_device instance क्रम "RPMB" (Replay Protected Memory
  * Block) LU so user space process can control this LU. User space may also
  * want to have access to BOOT LU.
  *
- * This function adds scsi device instances for each of all well known LUs
+ * This function adds scsi device instances क्रम each of all well known LUs
  * (except "REPORT LUNS" LU).
  *
  * Returns zero on success (all required W-LUs are added successfully),
- * non-zero error value on failure (if failed to add any of the required W-LU).
+ * non-zero error value on failure (अगर failed to add any of the required W-LU).
  */
-static int ufshcd_scsi_add_wlus(struct ufs_hba *hba)
-{
-	int ret = 0;
-	struct scsi_device *sdev_boot;
+अटल पूर्णांक ufshcd_scsi_add_wlus(काष्ठा ufs_hba *hba)
+अणु
+	पूर्णांक ret = 0;
+	काष्ठा scsi_device *sdev_boot;
 
 	hba->sdev_ufs_device = __scsi_add_device(hba->host, 0, 0,
-		ufshcd_upiu_wlun_to_scsi_wlun(UFS_UPIU_UFS_DEVICE_WLUN), NULL);
-	if (IS_ERR(hba->sdev_ufs_device)) {
+		ufshcd_upiu_wlun_to_scsi_wlun(UFS_UPIU_UFS_DEVICE_WLUN), शून्य);
+	अगर (IS_ERR(hba->sdev_ufs_device)) अणु
 		ret = PTR_ERR(hba->sdev_ufs_device);
-		hba->sdev_ufs_device = NULL;
-		goto out;
-	}
-	ufshcd_blk_pm_runtime_init(hba->sdev_ufs_device);
+		hba->sdev_ufs_device = शून्य;
+		जाओ out;
+	पूर्ण
+	ufshcd_blk_pm_runसमय_init(hba->sdev_ufs_device);
 	scsi_device_put(hba->sdev_ufs_device);
 
 	hba->sdev_rpmb = __scsi_add_device(hba->host, 0, 0,
-		ufshcd_upiu_wlun_to_scsi_wlun(UFS_UPIU_RPMB_WLUN), NULL);
-	if (IS_ERR(hba->sdev_rpmb)) {
+		ufshcd_upiu_wlun_to_scsi_wlun(UFS_UPIU_RPMB_WLUN), शून्य);
+	अगर (IS_ERR(hba->sdev_rpmb)) अणु
 		ret = PTR_ERR(hba->sdev_rpmb);
-		goto remove_sdev_ufs_device;
-	}
-	ufshcd_blk_pm_runtime_init(hba->sdev_rpmb);
+		जाओ हटाओ_sdev_ufs_device;
+	पूर्ण
+	ufshcd_blk_pm_runसमय_init(hba->sdev_rpmb);
 	scsi_device_put(hba->sdev_rpmb);
 
 	sdev_boot = __scsi_add_device(hba->host, 0, 0,
-		ufshcd_upiu_wlun_to_scsi_wlun(UFS_UPIU_BOOT_WLUN), NULL);
-	if (IS_ERR(sdev_boot)) {
+		ufshcd_upiu_wlun_to_scsi_wlun(UFS_UPIU_BOOT_WLUN), शून्य);
+	अगर (IS_ERR(sdev_boot)) अणु
 		dev_err(hba->dev, "%s: BOOT WLUN not found\n", __func__);
-	} else {
-		ufshcd_blk_pm_runtime_init(sdev_boot);
+	पूर्ण अन्यथा अणु
+		ufshcd_blk_pm_runसमय_init(sdev_boot);
 		scsi_device_put(sdev_boot);
-	}
-	goto out;
+	पूर्ण
+	जाओ out;
 
-remove_sdev_ufs_device:
-	scsi_remove_device(hba->sdev_ufs_device);
+हटाओ_sdev_ufs_device:
+	scsi_हटाओ_device(hba->sdev_ufs_device);
 out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void ufshcd_wb_probe(struct ufs_hba *hba, u8 *desc_buf)
-{
-	struct ufs_dev_info *dev_info = &hba->dev_info;
+अटल व्योम ufshcd_wb_probe(काष्ठा ufs_hba *hba, u8 *desc_buf)
+अणु
+	काष्ठा ufs_dev_info *dev_info = &hba->dev_info;
 	u8 lun;
 	u32 d_lu_wb_buf_alloc;
 	u32 ext_ufs_feature;
 
-	if (!ufshcd_is_wb_allowed(hba))
-		return;
+	अगर (!ufshcd_is_wb_allowed(hba))
+		वापस;
 	/*
-	 * Probe WB only for UFS-2.2 and UFS-3.1 (and later) devices or
+	 * Probe WB only क्रम UFS-2.2 and UFS-3.1 (and later) devices or
 	 * UFS devices with quirk UFS_DEVICE_QUIRK_SUPPORT_EXTENDED_FEATURES
 	 * enabled
 	 */
-	if (!(dev_info->wspecversion >= 0x310 ||
+	अगर (!(dev_info->wspecversion >= 0x310 ||
 	      dev_info->wspecversion == 0x220 ||
 	     (hba->dev_quirks & UFS_DEVICE_QUIRK_SUPPORT_EXTENDED_FEATURES)))
-		goto wb_disabled;
+		जाओ wb_disabled;
 
-	if (hba->desc_size[QUERY_DESC_IDN_DEVICE] <
+	अगर (hba->desc_size[QUERY_DESC_IDN_DEVICE] <
 	    DEVICE_DESC_PARAM_EXT_UFS_FEATURE_SUP + 4)
-		goto wb_disabled;
+		जाओ wb_disabled;
 
 	ext_ufs_feature = get_unaligned_be32(desc_buf +
 					DEVICE_DESC_PARAM_EXT_UFS_FEATURE_SUP);
 
-	if (!(ext_ufs_feature & UFS_DEV_WRITE_BOOSTER_SUP))
-		goto wb_disabled;
+	अगर (!(ext_ufs_feature & UFS_DEV_WRITE_BOOSTER_SUP))
+		जाओ wb_disabled;
 
 	/*
-	 * WB may be supported but not configured while provisioning. The spec
+	 * WB may be supported but not configured जबतक provisioning. The spec
 	 * says, in dedicated wb buffer mode, a max of 1 lun would have wb
 	 * buffer configured.
 	 */
@@ -7316,260 +7317,260 @@ static void ufshcd_wb_probe(struct ufs_hba *hba, u8 *desc_buf)
 	dev_info->b_presrv_uspc_en =
 		desc_buf[DEVICE_DESC_PARAM_WB_PRESRV_USRSPC_EN];
 
-	if (dev_info->wb_buffer_type == WB_BUF_MODE_SHARED) {
-		if (!get_unaligned_be32(desc_buf +
+	अगर (dev_info->wb_buffer_type == WB_BUF_MODE_SHARED) अणु
+		अगर (!get_unaligned_be32(desc_buf +
 				   DEVICE_DESC_PARAM_WB_SHARED_ALLOC_UNITS))
-			goto wb_disabled;
-	} else {
-		for (lun = 0; lun < UFS_UPIU_MAX_WB_LUN_ID; lun++) {
+			जाओ wb_disabled;
+	पूर्ण अन्यथा अणु
+		क्रम (lun = 0; lun < UFS_UPIU_MAX_WB_LUN_ID; lun++) अणु
 			d_lu_wb_buf_alloc = 0;
-			ufshcd_read_unit_desc_param(hba,
+			ufshcd_पढ़ो_unit_desc_param(hba,
 					lun,
 					UNIT_DESC_PARAM_WB_BUF_ALLOC_UNITS,
 					(u8 *)&d_lu_wb_buf_alloc,
-					sizeof(d_lu_wb_buf_alloc));
-			if (d_lu_wb_buf_alloc) {
+					माप(d_lu_wb_buf_alloc));
+			अगर (d_lu_wb_buf_alloc) अणु
 				dev_info->wb_dedicated_lu = lun;
-				break;
-			}
-		}
+				अवरोध;
+			पूर्ण
+		पूर्ण
 
-		if (!d_lu_wb_buf_alloc)
-			goto wb_disabled;
-	}
-	return;
+		अगर (!d_lu_wb_buf_alloc)
+			जाओ wb_disabled;
+	पूर्ण
+	वापस;
 
 wb_disabled:
 	hba->caps &= ~UFSHCD_CAP_WB_EN;
-}
+पूर्ण
 
-void ufshcd_fixup_dev_quirks(struct ufs_hba *hba, struct ufs_dev_fix *fixups)
-{
-	struct ufs_dev_fix *f;
-	struct ufs_dev_info *dev_info = &hba->dev_info;
+व्योम ufshcd_fixup_dev_quirks(काष्ठा ufs_hba *hba, काष्ठा ufs_dev_fix *fixups)
+अणु
+	काष्ठा ufs_dev_fix *f;
+	काष्ठा ufs_dev_info *dev_info = &hba->dev_info;
 
-	if (!fixups)
-		return;
+	अगर (!fixups)
+		वापस;
 
-	for (f = fixups; f->quirk; f++) {
-		if ((f->wmanufacturerid == dev_info->wmanufacturerid ||
+	क्रम (f = fixups; f->quirk; f++) अणु
+		अगर ((f->wmanufacturerid == dev_info->wmanufacturerid ||
 		     f->wmanufacturerid == UFS_ANY_VENDOR) &&
 		     ((dev_info->model &&
 		       STR_PRFX_EQUAL(f->model, dev_info->model)) ||
-		      !strcmp(f->model, UFS_ANY_MODEL)))
+		      !म_भेद(f->model, UFS_ANY_MODEL)))
 			hba->dev_quirks |= f->quirk;
-	}
-}
+	पूर्ण
+पूर्ण
 EXPORT_SYMBOL_GPL(ufshcd_fixup_dev_quirks);
 
-static void ufs_fixup_device_setup(struct ufs_hba *hba)
-{
+अटल व्योम ufs_fixup_device_setup(काष्ठा ufs_hba *hba)
+अणु
 	/* fix by general quirk table */
 	ufshcd_fixup_dev_quirks(hba, ufs_fixups);
 
-	/* allow vendors to fix quirks */
+	/* allow venकरोrs to fix quirks */
 	ufshcd_vops_fixup_dev_quirks(hba);
-}
+पूर्ण
 
-static int ufs_get_device_desc(struct ufs_hba *hba)
-{
-	int err;
+अटल पूर्णांक ufs_get_device_desc(काष्ठा ufs_hba *hba)
+अणु
+	पूर्णांक err;
 	u8 model_index;
 	u8 *desc_buf;
-	struct ufs_dev_info *dev_info = &hba->dev_info;
+	काष्ठा ufs_dev_info *dev_info = &hba->dev_info;
 
-	desc_buf = kmalloc(QUERY_DESC_MAX_SIZE, GFP_KERNEL);
-	if (!desc_buf) {
+	desc_buf = kदो_स्मृति(QUERY_DESC_MAX_SIZE, GFP_KERNEL);
+	अगर (!desc_buf) अणु
 		err = -ENOMEM;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	err = ufshcd_read_desc_param(hba, QUERY_DESC_IDN_DEVICE, 0, 0, desc_buf,
+	err = ufshcd_पढ़ो_desc_param(hba, QUERY_DESC_IDN_DEVICE, 0, 0, desc_buf,
 				     hba->desc_size[QUERY_DESC_IDN_DEVICE]);
-	if (err) {
+	अगर (err) अणु
 		dev_err(hba->dev, "%s: Failed reading Device Desc. err = %d\n",
 			__func__, err);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	/*
-	 * getting vendor (manufacturerID) and Bank Index in big endian
-	 * format
+	 * getting venकरोr (manufacturerID) and Bank Index in big endian
+	 * क्रमmat
 	 */
 	dev_info->wmanufacturerid = desc_buf[DEVICE_DESC_PARAM_MANF_ID] << 8 |
 				     desc_buf[DEVICE_DESC_PARAM_MANF_ID + 1];
 
-	/* getting Specification Version in big endian format */
+	/* getting Specअगरication Version in big endian क्रमmat */
 	dev_info->wspecversion = desc_buf[DEVICE_DESC_PARAM_SPEC_VER] << 8 |
 				      desc_buf[DEVICE_DESC_PARAM_SPEC_VER + 1];
 
 	model_index = desc_buf[DEVICE_DESC_PARAM_PRDCT_NAME];
 
-	err = ufshcd_read_string_desc(hba, model_index,
+	err = ufshcd_पढ़ो_string_desc(hba, model_index,
 				      &dev_info->model, SD_ASCII_STD);
-	if (err < 0) {
+	अगर (err < 0) अणु
 		dev_err(hba->dev, "%s: Failed reading Product Name. err = %d\n",
 			__func__, err);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	ufs_fixup_device_setup(hba);
 
 	ufshcd_wb_probe(hba, desc_buf);
 
 	/*
-	 * ufshcd_read_string_desc returns size of the string
+	 * ufshcd_पढ़ो_string_desc वापसs size of the string
 	 * reset the error value
 	 */
 	err = 0;
 
 out:
-	kfree(desc_buf);
-	return err;
-}
+	kमुक्त(desc_buf);
+	वापस err;
+पूर्ण
 
-static void ufs_put_device_desc(struct ufs_hba *hba)
-{
-	struct ufs_dev_info *dev_info = &hba->dev_info;
+अटल व्योम ufs_put_device_desc(काष्ठा ufs_hba *hba)
+अणु
+	काष्ठा ufs_dev_info *dev_info = &hba->dev_info;
 
-	kfree(dev_info->model);
-	dev_info->model = NULL;
-}
+	kमुक्त(dev_info->model);
+	dev_info->model = शून्य;
+पूर्ण
 
 /**
  * ufshcd_tune_pa_tactivate - Tunes PA_TActivate of local UniPro
  * @hba: per-adapter instance
  *
- * PA_TActivate parameter can be tuned manually if UniPro version is less than
+ * PA_TActivate parameter can be tuned manually अगर UniPro version is less than
  * 1.61. PA_TActivate needs to be greater than or equal to peerM-PHY's
  * RX_MIN_ACTIVATETIME_CAPABILITY attribute. This optimal value can help reduce
- * the hibern8 exit latency.
+ * the hibern8 निकास latency.
  *
  * Returns zero on success, non-zero error value on failure.
  */
-static int ufshcd_tune_pa_tactivate(struct ufs_hba *hba)
-{
-	int ret = 0;
-	u32 peer_rx_min_activatetime = 0, tuned_pa_tactivate;
+अटल पूर्णांक ufshcd_tune_pa_tactivate(काष्ठा ufs_hba *hba)
+अणु
+	पूर्णांक ret = 0;
+	u32 peer_rx_min_activateसमय = 0, tuned_pa_tactivate;
 
 	ret = ufshcd_dme_peer_get(hba,
 				  UIC_ARG_MIB_SEL(
 					RX_MIN_ACTIVATETIME_CAPABILITY,
 					UIC_ARG_MPHY_RX_GEN_SEL_INDEX(0)),
-				  &peer_rx_min_activatetime);
-	if (ret)
-		goto out;
+				  &peer_rx_min_activateसमय);
+	अगर (ret)
+		जाओ out;
 
 	/* make sure proper unit conversion is applied */
 	tuned_pa_tactivate =
-		((peer_rx_min_activatetime * RX_MIN_ACTIVATETIME_UNIT_US)
+		((peer_rx_min_activateसमय * RX_MIN_ACTIVATETIME_UNIT_US)
 		 / PA_TACTIVATE_TIME_UNIT_US);
 	ret = ufshcd_dme_set(hba, UIC_ARG_MIB(PA_TACTIVATE),
 			     tuned_pa_tactivate);
 
 out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * ufshcd_tune_pa_hibern8time - Tunes PA_Hibern8Time of local UniPro
+ * ufshcd_tune_pa_hibern8समय - Tunes PA_Hibern8Time of local UniPro
  * @hba: per-adapter instance
  *
- * PA_Hibern8Time parameter can be tuned manually if UniPro version is less than
+ * PA_Hibern8Time parameter can be tuned manually अगर UniPro version is less than
  * 1.61. PA_Hibern8Time needs to be maximum of local M-PHY's
  * TX_HIBERN8TIME_CAPABILITY & peer M-PHY's RX_HIBERN8TIME_CAPABILITY.
- * This optimal value can help reduce the hibern8 exit latency.
+ * This optimal value can help reduce the hibern8 निकास latency.
  *
  * Returns zero on success, non-zero error value on failure.
  */
-static int ufshcd_tune_pa_hibern8time(struct ufs_hba *hba)
-{
-	int ret = 0;
-	u32 local_tx_hibern8_time_cap = 0, peer_rx_hibern8_time_cap = 0;
-	u32 max_hibern8_time, tuned_pa_hibern8time;
+अटल पूर्णांक ufshcd_tune_pa_hibern8समय(काष्ठा ufs_hba *hba)
+अणु
+	पूर्णांक ret = 0;
+	u32 local_tx_hibern8_समय_cap = 0, peer_rx_hibern8_समय_cap = 0;
+	u32 max_hibern8_समय, tuned_pa_hibern8समय;
 
 	ret = ufshcd_dme_get(hba,
 			     UIC_ARG_MIB_SEL(TX_HIBERN8TIME_CAPABILITY,
 					UIC_ARG_MPHY_TX_GEN_SEL_INDEX(0)),
-				  &local_tx_hibern8_time_cap);
-	if (ret)
-		goto out;
+				  &local_tx_hibern8_समय_cap);
+	अगर (ret)
+		जाओ out;
 
 	ret = ufshcd_dme_peer_get(hba,
 				  UIC_ARG_MIB_SEL(RX_HIBERN8TIME_CAPABILITY,
 					UIC_ARG_MPHY_RX_GEN_SEL_INDEX(0)),
-				  &peer_rx_hibern8_time_cap);
-	if (ret)
-		goto out;
+				  &peer_rx_hibern8_समय_cap);
+	अगर (ret)
+		जाओ out;
 
-	max_hibern8_time = max(local_tx_hibern8_time_cap,
-			       peer_rx_hibern8_time_cap);
+	max_hibern8_समय = max(local_tx_hibern8_समय_cap,
+			       peer_rx_hibern8_समय_cap);
 	/* make sure proper unit conversion is applied */
-	tuned_pa_hibern8time = ((max_hibern8_time * HIBERN8TIME_UNIT_US)
+	tuned_pa_hibern8समय = ((max_hibern8_समय * HIBERN8TIME_UNIT_US)
 				/ PA_HIBERN8_TIME_UNIT_US);
 	ret = ufshcd_dme_set(hba, UIC_ARG_MIB(PA_HIBERN8TIME),
-			     tuned_pa_hibern8time);
+			     tuned_pa_hibern8समय);
 out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
  * ufshcd_quirk_tune_host_pa_tactivate - Ensures that host PA_TACTIVATE is
- * less than device PA_TACTIVATE time.
+ * less than device PA_TACTIVATE समय.
  * @hba: per-adapter instance
  *
  * Some UFS devices require host PA_TACTIVATE to be lower than device
  * PA_TACTIVATE, we need to enable UFS_DEVICE_QUIRK_HOST_PA_TACTIVATE quirk
- * for such devices.
+ * क्रम such devices.
  *
  * Returns zero on success, non-zero error value on failure.
  */
-static int ufshcd_quirk_tune_host_pa_tactivate(struct ufs_hba *hba)
-{
-	int ret = 0;
+अटल पूर्णांक ufshcd_quirk_tune_host_pa_tactivate(काष्ठा ufs_hba *hba)
+अणु
+	पूर्णांक ret = 0;
 	u32 granularity, peer_granularity;
 	u32 pa_tactivate, peer_pa_tactivate;
 	u32 pa_tactivate_us, peer_pa_tactivate_us;
-	u8 gran_to_us_table[] = {1, 4, 8, 16, 32, 100};
+	u8 gran_to_us_table[] = अणु1, 4, 8, 16, 32, 100पूर्ण;
 
 	ret = ufshcd_dme_get(hba, UIC_ARG_MIB(PA_GRANULARITY),
 				  &granularity);
-	if (ret)
-		goto out;
+	अगर (ret)
+		जाओ out;
 
 	ret = ufshcd_dme_peer_get(hba, UIC_ARG_MIB(PA_GRANULARITY),
 				  &peer_granularity);
-	if (ret)
-		goto out;
+	अगर (ret)
+		जाओ out;
 
-	if ((granularity < PA_GRANULARITY_MIN_VAL) ||
-	    (granularity > PA_GRANULARITY_MAX_VAL)) {
+	अगर ((granularity < PA_GRANULARITY_MIN_VAL) ||
+	    (granularity > PA_GRANULARITY_MAX_VAL)) अणु
 		dev_err(hba->dev, "%s: invalid host PA_GRANULARITY %d",
 			__func__, granularity);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if ((peer_granularity < PA_GRANULARITY_MIN_VAL) ||
-	    (peer_granularity > PA_GRANULARITY_MAX_VAL)) {
+	अगर ((peer_granularity < PA_GRANULARITY_MIN_VAL) ||
+	    (peer_granularity > PA_GRANULARITY_MAX_VAL)) अणु
 		dev_err(hba->dev, "%s: invalid device PA_GRANULARITY %d",
 			__func__, peer_granularity);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	ret = ufshcd_dme_get(hba, UIC_ARG_MIB(PA_TACTIVATE), &pa_tactivate);
-	if (ret)
-		goto out;
+	अगर (ret)
+		जाओ out;
 
 	ret = ufshcd_dme_peer_get(hba, UIC_ARG_MIB(PA_TACTIVATE),
 				  &peer_pa_tactivate);
-	if (ret)
-		goto out;
+	अगर (ret)
+		जाओ out;
 
 	pa_tactivate_us = pa_tactivate * gran_to_us_table[granularity - 1];
 	peer_pa_tactivate_us = peer_pa_tactivate *
 			     gran_to_us_table[peer_granularity - 1];
 
-	if (pa_tactivate_us > peer_pa_tactivate_us) {
+	अगर (pa_tactivate_us > peer_pa_tactivate_us) अणु
 		u32 new_peer_pa_tactivate;
 
 		new_peer_pa_tactivate = pa_tactivate_us /
@@ -7577,286 +7578,286 @@ static int ufshcd_quirk_tune_host_pa_tactivate(struct ufs_hba *hba)
 		new_peer_pa_tactivate++;
 		ret = ufshcd_dme_peer_set(hba, UIC_ARG_MIB(PA_TACTIVATE),
 					  new_peer_pa_tactivate);
-	}
+	पूर्ण
 
 out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void ufshcd_tune_unipro_params(struct ufs_hba *hba)
-{
-	if (ufshcd_is_unipro_pa_params_tuning_req(hba)) {
+अटल व्योम ufshcd_tune_unipro_params(काष्ठा ufs_hba *hba)
+अणु
+	अगर (ufshcd_is_unipro_pa_params_tuning_req(hba)) अणु
 		ufshcd_tune_pa_tactivate(hba);
-		ufshcd_tune_pa_hibern8time(hba);
-	}
+		ufshcd_tune_pa_hibern8समय(hba);
+	पूर्ण
 
 	ufshcd_vops_apply_dev_quirks(hba);
 
-	if (hba->dev_quirks & UFS_DEVICE_QUIRK_PA_TACTIVATE)
-		/* set 1ms timeout for PA_TACTIVATE */
+	अगर (hba->dev_quirks & UFS_DEVICE_QUIRK_PA_TACTIVATE)
+		/* set 1ms समयout क्रम PA_TACTIVATE */
 		ufshcd_dme_set(hba, UIC_ARG_MIB(PA_TACTIVATE), 10);
 
-	if (hba->dev_quirks & UFS_DEVICE_QUIRK_HOST_PA_TACTIVATE)
+	अगर (hba->dev_quirks & UFS_DEVICE_QUIRK_HOST_PA_TACTIVATE)
 		ufshcd_quirk_tune_host_pa_tactivate(hba);
-}
+पूर्ण
 
-static void ufshcd_clear_dbg_ufs_stats(struct ufs_hba *hba)
-{
-	hba->ufs_stats.hibern8_exit_cnt = 0;
-	hba->ufs_stats.last_hibern8_exit_tstamp = ktime_set(0, 0);
-	hba->req_abort_count = 0;
-}
+अटल व्योम ufshcd_clear_dbg_ufs_stats(काष्ठा ufs_hba *hba)
+अणु
+	hba->ufs_stats.hibern8_निकास_cnt = 0;
+	hba->ufs_stats.last_hibern8_निकास_tstamp = kसमय_set(0, 0);
+	hba->req_पात_count = 0;
+पूर्ण
 
-static int ufshcd_device_geo_params_init(struct ufs_hba *hba)
-{
-	int err;
-	size_t buff_len;
+अटल पूर्णांक ufshcd_device_geo_params_init(काष्ठा ufs_hba *hba)
+अणु
+	पूर्णांक err;
+	माप_प्रकार buff_len;
 	u8 *desc_buf;
 
 	buff_len = hba->desc_size[QUERY_DESC_IDN_GEOMETRY];
-	desc_buf = kmalloc(buff_len, GFP_KERNEL);
-	if (!desc_buf) {
+	desc_buf = kदो_स्मृति(buff_len, GFP_KERNEL);
+	अगर (!desc_buf) अणु
 		err = -ENOMEM;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	err = ufshcd_read_desc_param(hba, QUERY_DESC_IDN_GEOMETRY, 0, 0,
+	err = ufshcd_पढ़ो_desc_param(hba, QUERY_DESC_IDN_GEOMETRY, 0, 0,
 				     desc_buf, buff_len);
-	if (err) {
+	अगर (err) अणु
 		dev_err(hba->dev, "%s: Failed reading Geometry Desc. err = %d\n",
 				__func__, err);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (desc_buf[GEOMETRY_DESC_PARAM_MAX_NUM_LUN] == 1)
+	अगर (desc_buf[GEOMETRY_DESC_PARAM_MAX_NUM_LUN] == 1)
 		hba->dev_info.max_lu_supported = 32;
-	else if (desc_buf[GEOMETRY_DESC_PARAM_MAX_NUM_LUN] == 0)
+	अन्यथा अगर (desc_buf[GEOMETRY_DESC_PARAM_MAX_NUM_LUN] == 0)
 		hba->dev_info.max_lu_supported = 8;
 
 out:
-	kfree(desc_buf);
-	return err;
-}
+	kमुक्त(desc_buf);
+	वापस err;
+पूर्ण
 
-static struct ufs_ref_clk ufs_ref_clk_freqs[] = {
-	{19200000, REF_CLK_FREQ_19_2_MHZ},
-	{26000000, REF_CLK_FREQ_26_MHZ},
-	{38400000, REF_CLK_FREQ_38_4_MHZ},
-	{52000000, REF_CLK_FREQ_52_MHZ},
-	{0, REF_CLK_FREQ_INVAL},
-};
+अटल काष्ठा ufs_ref_clk ufs_ref_clk_freqs[] = अणु
+	अणु19200000, REF_CLK_FREQ_19_2_MHZपूर्ण,
+	अणु26000000, REF_CLK_FREQ_26_MHZपूर्ण,
+	अणु38400000, REF_CLK_FREQ_38_4_MHZपूर्ण,
+	अणु52000000, REF_CLK_FREQ_52_MHZपूर्ण,
+	अणु0, REF_CLK_FREQ_INVALपूर्ण,
+पूर्ण;
 
-static enum ufs_ref_clk_freq
-ufs_get_bref_clk_from_hz(unsigned long freq)
-{
-	int i;
+अटल क्रमागत ufs_ref_clk_freq
+ufs_get_bref_clk_from_hz(अचिन्हित दीर्घ freq)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; ufs_ref_clk_freqs[i].freq_hz; i++)
-		if (ufs_ref_clk_freqs[i].freq_hz == freq)
-			return ufs_ref_clk_freqs[i].val;
+	क्रम (i = 0; ufs_ref_clk_freqs[i].freq_hz; i++)
+		अगर (ufs_ref_clk_freqs[i].freq_hz == freq)
+			वापस ufs_ref_clk_freqs[i].val;
 
-	return REF_CLK_FREQ_INVAL;
-}
+	वापस REF_CLK_FREQ_INVAL;
+पूर्ण
 
-void ufshcd_parse_dev_ref_clk_freq(struct ufs_hba *hba, struct clk *refclk)
-{
-	unsigned long freq;
+व्योम ufshcd_parse_dev_ref_clk_freq(काष्ठा ufs_hba *hba, काष्ठा clk *refclk)
+अणु
+	अचिन्हित दीर्घ freq;
 
 	freq = clk_get_rate(refclk);
 
 	hba->dev_ref_clk_freq =
 		ufs_get_bref_clk_from_hz(freq);
 
-	if (hba->dev_ref_clk_freq == REF_CLK_FREQ_INVAL)
+	अगर (hba->dev_ref_clk_freq == REF_CLK_FREQ_INVAL)
 		dev_err(hba->dev,
 		"invalid ref_clk setting = %ld\n", freq);
-}
+पूर्ण
 
-static int ufshcd_set_dev_ref_clk(struct ufs_hba *hba)
-{
-	int err;
+अटल पूर्णांक ufshcd_set_dev_ref_clk(काष्ठा ufs_hba *hba)
+अणु
+	पूर्णांक err;
 	u32 ref_clk;
 	u32 freq = hba->dev_ref_clk_freq;
 
 	err = ufshcd_query_attr_retry(hba, UPIU_QUERY_OPCODE_READ_ATTR,
 			QUERY_ATTR_IDN_REF_CLK_FREQ, 0, 0, &ref_clk);
 
-	if (err) {
+	अगर (err) अणु
 		dev_err(hba->dev, "failed reading bRefClkFreq. err = %d\n",
 			err);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (ref_clk == freq)
-		goto out; /* nothing to update */
+	अगर (ref_clk == freq)
+		जाओ out; /* nothing to update */
 
 	err = ufshcd_query_attr_retry(hba, UPIU_QUERY_OPCODE_WRITE_ATTR,
 			QUERY_ATTR_IDN_REF_CLK_FREQ, 0, 0, &freq);
 
-	if (err) {
+	अगर (err) अणु
 		dev_err(hba->dev, "bRefClkFreq setting to %lu Hz failed\n",
 			ufs_ref_clk_freqs[freq].freq_hz);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	dev_dbg(hba->dev, "bRefClkFreq setting to %lu Hz succeeded\n",
 			ufs_ref_clk_freqs[freq].freq_hz);
 
 out:
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int ufshcd_device_params_init(struct ufs_hba *hba)
-{
+अटल पूर्णांक ufshcd_device_params_init(काष्ठा ufs_hba *hba)
+अणु
 	bool flag;
-	int ret, i;
+	पूर्णांक ret, i;
 
 	 /* Init device descriptor sizes */
-	for (i = 0; i < QUERY_DESC_IDN_MAX; i++)
+	क्रम (i = 0; i < QUERY_DESC_IDN_MAX; i++)
 		hba->desc_size[i] = QUERY_DESC_MAX_SIZE;
 
 	/* Init UFS geometry descriptor related parameters */
 	ret = ufshcd_device_geo_params_init(hba);
-	if (ret)
-		goto out;
+	अगर (ret)
+		जाओ out;
 
 	/* Check and apply UFS device quirks */
 	ret = ufs_get_device_desc(hba);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(hba->dev, "%s: Failed getting device info. err = %d\n",
 			__func__, ret);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	ufshcd_get_ref_clk_gating_wait(hba);
+	ufshcd_get_ref_clk_gating_रुको(hba);
 
-	if (!ufshcd_query_flag_retry(hba, UPIU_QUERY_OPCODE_READ_FLAG,
+	अगर (!ufshcd_query_flag_retry(hba, UPIU_QUERY_OPCODE_READ_FLAG,
 			QUERY_FLAG_IDN_PWR_ON_WPE, 0, &flag))
-		hba->dev_info.f_power_on_wp_en = flag;
+		hba->dev_info.f_घातer_on_wp_en = flag;
 
-	/* Probe maximum power mode co-supported by both UFS host and device */
-	if (ufshcd_get_max_pwr_mode(hba))
+	/* Probe maximum घातer mode co-supported by both UFS host and device */
+	अगर (ufshcd_get_max_pwr_mode(hba))
 		dev_err(hba->dev,
 			"%s: Failed getting max supported power mode\n",
 			__func__);
 out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
  * ufshcd_add_lus - probe and add UFS logical units
  * @hba: per-adapter instance
  */
-static int ufshcd_add_lus(struct ufs_hba *hba)
-{
-	int ret;
+अटल पूर्णांक ufshcd_add_lus(काष्ठा ufs_hba *hba)
+अणु
+	पूर्णांक ret;
 
 	/* Add required well known logical units to scsi mid layer */
 	ret = ufshcd_scsi_add_wlus(hba);
-	if (ret)
-		goto out;
+	अगर (ret)
+		जाओ out;
 
 	ufshcd_clear_ua_wluns(hba);
 
 	/* Initialize devfreq after UFS device is detected */
-	if (ufshcd_is_clkscaling_supported(hba)) {
-		memcpy(&hba->clk_scaling.saved_pwr_info.info,
+	अगर (ufshcd_is_clkscaling_supported(hba)) अणु
+		स_नकल(&hba->clk_scaling.saved_pwr_info.info,
 			&hba->pwr_info,
-			sizeof(struct ufs_pa_layer_attr));
+			माप(काष्ठा ufs_pa_layer_attr));
 		hba->clk_scaling.saved_pwr_info.is_valid = true;
 		hba->clk_scaling.is_allowed = true;
 
 		ret = ufshcd_devfreq_init(hba);
-		if (ret)
-			goto out;
+		अगर (ret)
+			जाओ out;
 
 		hba->clk_scaling.is_enabled = true;
 		ufshcd_init_clk_scaling_sysfs(hba);
-	}
+	पूर्ण
 
 	ufs_bsg_probe(hba);
 	scsi_scan_host(hba->host);
-	pm_runtime_put_sync(hba->dev);
+	pm_runसमय_put_sync(hba->dev);
 
 out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int
-ufshcd_send_request_sense(struct ufs_hba *hba, struct scsi_device *sdp);
+अटल पूर्णांक
+ufshcd_send_request_sense(काष्ठा ufs_hba *hba, काष्ठा scsi_device *sdp);
 
-static int ufshcd_clear_ua_wlun(struct ufs_hba *hba, u8 wlun)
-{
-	struct scsi_device *sdp;
-	unsigned long flags;
-	int ret = 0;
+अटल पूर्णांक ufshcd_clear_ua_wlun(काष्ठा ufs_hba *hba, u8 wlun)
+अणु
+	काष्ठा scsi_device *sdp;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक ret = 0;
 
 	spin_lock_irqsave(hba->host->host_lock, flags);
-	if (wlun == UFS_UPIU_UFS_DEVICE_WLUN)
+	अगर (wlun == UFS_UPIU_UFS_DEVICE_WLUN)
 		sdp = hba->sdev_ufs_device;
-	else if (wlun == UFS_UPIU_RPMB_WLUN)
+	अन्यथा अगर (wlun == UFS_UPIU_RPMB_WLUN)
 		sdp = hba->sdev_rpmb;
-	else
+	अन्यथा
 		BUG();
-	if (sdp) {
+	अगर (sdp) अणु
 		ret = scsi_device_get(sdp);
-		if (!ret && !scsi_device_online(sdp)) {
+		अगर (!ret && !scsi_device_online(sdp)) अणु
 			ret = -ENODEV;
 			scsi_device_put(sdp);
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		ret = -ENODEV;
-	}
+	पूर्ण
 	spin_unlock_irqrestore(hba->host->host_lock, flags);
-	if (ret)
-		goto out_err;
+	अगर (ret)
+		जाओ out_err;
 
 	ret = ufshcd_send_request_sense(hba, sdp);
 	scsi_device_put(sdp);
 out_err:
-	if (ret)
+	अगर (ret)
 		dev_err(hba->dev, "%s: UAC clear LU=%x ret = %d\n",
 				__func__, wlun, ret);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int ufshcd_clear_ua_wluns(struct ufs_hba *hba)
-{
-	int ret = 0;
+अटल पूर्णांक ufshcd_clear_ua_wluns(काष्ठा ufs_hba *hba)
+अणु
+	पूर्णांक ret = 0;
 
-	if (!hba->wlun_dev_clr_ua)
-		goto out;
+	अगर (!hba->wlun_dev_clr_ua)
+		जाओ out;
 
 	ret = ufshcd_clear_ua_wlun(hba, UFS_UPIU_UFS_DEVICE_WLUN);
-	if (!ret)
+	अगर (!ret)
 		ret = ufshcd_clear_ua_wlun(hba, UFS_UPIU_RPMB_WLUN);
-	if (!ret)
+	अगर (!ret)
 		hba->wlun_dev_clr_ua = false;
 out:
-	if (ret)
+	अगर (ret)
 		dev_err(hba->dev, "%s: Failed to clear UAC WLUNS ret = %d\n",
 				__func__, ret);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
  * ufshcd_probe_hba - probe hba to detect device and initialize
  * @hba: per-adapter instance
  * @async: asynchronous execution or not
  *
- * Execute link-startup and verify device initialization
+ * Execute link-startup and verअगरy device initialization
  */
-static int ufshcd_probe_hba(struct ufs_hba *hba, bool async)
-{
-	int ret;
-	unsigned long flags;
-	ktime_t start = ktime_get();
+अटल पूर्णांक ufshcd_probe_hba(काष्ठा ufs_hba *hba, bool async)
+अणु
+	पूर्णांक ret;
+	अचिन्हित दीर्घ flags;
+	kसमय_प्रकार start = kसमय_get();
 
 	hba->ufshcd_state = UFSHCD_STATE_RESET;
 
 	ret = ufshcd_link_startup(hba);
-	if (ret)
-		goto out;
+	अगर (ret)
+		जाओ out;
 
 	/* Debug counters initialization */
 	ufshcd_clear_dbg_ufs_stats(hba);
@@ -7864,125 +7865,125 @@ static int ufshcd_probe_hba(struct ufs_hba *hba, bool async)
 	/* UniPro link is active now */
 	ufshcd_set_link_active(hba);
 
-	/* Verify device initialization by sending NOP OUT UPIU */
-	ret = ufshcd_verify_dev_init(hba);
-	if (ret)
-		goto out;
+	/* Verअगरy device initialization by sending NOP OUT UPIU */
+	ret = ufshcd_verअगरy_dev_init(hba);
+	अगर (ret)
+		जाओ out;
 
-	/* Initiate UFS initialization, and waiting until completion */
+	/* Initiate UFS initialization, and रुकोing until completion */
 	ret = ufshcd_complete_dev_init(hba);
-	if (ret)
-		goto out;
+	अगर (ret)
+		जाओ out;
 
 	/*
 	 * Initialize UFS device parameters used by driver, these
 	 * parameters are associated with UFS descriptors.
 	 */
-	if (async) {
+	अगर (async) अणु
 		ret = ufshcd_device_params_init(hba);
-		if (ret)
-			goto out;
-	}
+		अगर (ret)
+			जाओ out;
+	पूर्ण
 
 	ufshcd_tune_unipro_params(hba);
 
 	/* UFS device is also active now */
 	ufshcd_set_ufs_dev_active(hba);
-	ufshcd_force_reset_auto_bkops(hba);
+	ufshcd_क्रमce_reset_स्वतः_bkops(hba);
 	hba->wlun_dev_clr_ua = true;
 
-	/* Gear up to HS gear if supported */
-	if (hba->max_pwr_info.is_valid) {
+	/* Gear up to HS gear अगर supported */
+	अगर (hba->max_pwr_info.is_valid) अणु
 		/*
-		 * Set the right value to bRefClkFreq before attempting to
-		 * switch to HS gears.
+		 * Set the right value to bRefClkFreq beक्रमe attempting to
+		 * चयन to HS gears.
 		 */
-		if (hba->dev_ref_clk_freq != REF_CLK_FREQ_INVAL)
+		अगर (hba->dev_ref_clk_freq != REF_CLK_FREQ_INVAL)
 			ufshcd_set_dev_ref_clk(hba);
 		ret = ufshcd_config_pwr_mode(hba, &hba->max_pwr_info.info);
-		if (ret) {
+		अगर (ret) अणु
 			dev_err(hba->dev, "%s: Failed setting power mode, err = %d\n",
 					__func__, ret);
-			goto out;
-		}
-		ufshcd_print_pwr_info(hba);
-	}
+			जाओ out;
+		पूर्ण
+		ufshcd_prपूर्णांक_pwr_info(hba);
+	पूर्ण
 
 	/*
-	 * bActiveICCLevel is volatile for UFS device (as per latest v2.1 spec)
-	 * and for removable UFS card as well, hence always set the parameter.
+	 * bActiveICCLevel is अस्थिर क्रम UFS device (as per latest v2.1 spec)
+	 * and क्रम removable UFS card as well, hence always set the parameter.
 	 * Note: Error handler may issue the device reset hence resetting
 	 * bActiveICCLevel as well so it is always safe to set this here.
 	 */
 	ufshcd_set_active_icc_lvl(hba);
 
 	ufshcd_wb_config(hba);
-	if (hba->ee_usr_mask)
-		ufshcd_write_ee_control(hba);
-	/* Enable Auto-Hibernate if configured */
-	ufshcd_auto_hibern8_enable(hba);
+	अगर (hba->ee_usr_mask)
+		ufshcd_ग_लिखो_ee_control(hba);
+	/* Enable Auto-Hibernate अगर configured */
+	ufshcd_स्वतः_hibern8_enable(hba);
 
 out:
 	spin_lock_irqsave(hba->host->host_lock, flags);
-	if (ret)
+	अगर (ret)
 		hba->ufshcd_state = UFSHCD_STATE_ERROR;
-	else if (hba->ufshcd_state == UFSHCD_STATE_RESET)
+	अन्यथा अगर (hba->ufshcd_state == UFSHCD_STATE_RESET)
 		hba->ufshcd_state = UFSHCD_STATE_OPERATIONAL;
 	spin_unlock_irqrestore(hba->host->host_lock, flags);
 
 	trace_ufshcd_init(dev_name(hba->dev), ret,
-		ktime_to_us(ktime_sub(ktime_get(), start)),
+		kसमय_प्रकारo_us(kसमय_sub(kसमय_get(), start)),
 		hba->curr_dev_pwr_mode, hba->uic_link_state);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * ufshcd_async_scan - asynchronous execution for probing hba
- * @data: data pointer to pass to this function
+ * ufshcd_async_scan - asynchronous execution क्रम probing hba
+ * @data: data poपूर्णांकer to pass to this function
  * @cookie: cookie data
  */
-static void ufshcd_async_scan(void *data, async_cookie_t cookie)
-{
-	struct ufs_hba *hba = (struct ufs_hba *)data;
-	int ret;
+अटल व्योम ufshcd_async_scan(व्योम *data, async_cookie_t cookie)
+अणु
+	काष्ठा ufs_hba *hba = (काष्ठा ufs_hba *)data;
+	पूर्णांक ret;
 
-	down(&hba->host_sem);
+	करोwn(&hba->host_sem);
 	/* Initialize hba, detect and initialize UFS device */
 	ret = ufshcd_probe_hba(hba, true);
 	up(&hba->host_sem);
-	if (ret)
-		goto out;
+	अगर (ret)
+		जाओ out;
 
 	/* Probe and add UFS logical units  */
 	ret = ufshcd_add_lus(hba);
 out:
 	/*
 	 * If we failed to initialize the device or the device is not
-	 * present, turn off the power/clocks etc.
+	 * present, turn off the घातer/घड़ीs etc.
 	 */
-	if (ret) {
-		pm_runtime_put_sync(hba->dev);
-		ufshcd_hba_exit(hba);
-	}
-}
+	अगर (ret) अणु
+		pm_runसमय_put_sync(hba->dev);
+		ufshcd_hba_निकास(hba);
+	पूर्ण
+पूर्ण
 
-static const struct attribute_group *ufshcd_driver_groups[] = {
+अटल स्थिर काष्ठा attribute_group *ufshcd_driver_groups[] = अणु
 	&ufs_sysfs_unit_descriptor_group,
 	&ufs_sysfs_lun_attributes_group,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-static struct ufs_hba_variant_params ufs_hba_vps = {
+अटल काष्ठा ufs_hba_variant_params ufs_hba_vps = अणु
 	.hba_enable_delay_us		= 1000,
 	.wb_flush_threshold		= UFS_WB_BUF_REMAIN_PERCENT(40),
 	.devfreq_profile.polling_ms	= 100,
 	.devfreq_profile.target		= ufshcd_devfreq_target,
 	.devfreq_profile.get_dev_status	= ufshcd_devfreq_get_dev_status,
 	.ondemand_data.upthreshold	= 70,
-	.ondemand_data.downdifferential	= 5,
-};
+	.ondemand_data.करोwndअगरferential	= 5,
+पूर्ण;
 
-static struct scsi_host_template ufshcd_driver_template = {
+अटल काष्ठा scsi_host_ढाँचा ufshcd_driver_ढाँचा = अणु
 	.module			= THIS_MODULE,
 	.name			= UFSHCD,
 	.proc_name		= UFSHCD,
@@ -7991,7 +7992,7 @@ static struct scsi_host_template ufshcd_driver_template = {
 	.slave_configure	= ufshcd_slave_configure,
 	.slave_destroy		= ufshcd_slave_destroy,
 	.change_queue_depth	= ufshcd_change_queue_depth,
-	.eh_abort_handler	= ufshcd_abort,
+	.eh_पात_handler	= ufshcd_पात,
 	.eh_device_reset_handler = ufshcd_eh_device_reset_handler,
 	.eh_host_reset_handler   = ufshcd_eh_host_reset_handler,
 	.this_id		= -1,
@@ -8003,475 +8004,475 @@ static struct scsi_host_template ufshcd_driver_template = {
 	.track_queue_depth	= 1,
 	.sdev_groups		= ufshcd_driver_groups,
 	.dma_boundary		= PAGE_SIZE - 1,
-	.rpm_autosuspend_delay	= RPM_AUTOSUSPEND_DELAY_MS,
-};
+	.rpm_स्वतःsuspend_delay	= RPM_AUTOSUSPEND_DELAY_MS,
+पूर्ण;
 
-static int ufshcd_config_vreg_load(struct device *dev, struct ufs_vreg *vreg,
-				   int ua)
-{
-	int ret;
+अटल पूर्णांक ufshcd_config_vreg_load(काष्ठा device *dev, काष्ठा ufs_vreg *vreg,
+				   पूर्णांक ua)
+अणु
+	पूर्णांक ret;
 
-	if (!vreg)
-		return 0;
+	अगर (!vreg)
+		वापस 0;
 
 	/*
 	 * "set_load" operation shall be required on those regulators
-	 * which specifically configured current limitation. Otherwise
+	 * which specअगरically configured current limitation. Otherwise
 	 * zero max_uA may cause unexpected behavior when regulator is
-	 * enabled or set as high power mode.
+	 * enabled or set as high घातer mode.
 	 */
-	if (!vreg->max_uA)
-		return 0;
+	अगर (!vreg->max_uA)
+		वापस 0;
 
 	ret = regulator_set_load(vreg->reg, ua);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(dev, "%s: %s set load (ua=%d) failed, err=%d\n",
 				__func__, vreg->name, ua, ret);
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static inline int ufshcd_config_vreg_lpm(struct ufs_hba *hba,
-					 struct ufs_vreg *vreg)
-{
-	return ufshcd_config_vreg_load(hba->dev, vreg, UFS_VREG_LPM_LOAD_UA);
-}
+अटल अंतरभूत पूर्णांक ufshcd_config_vreg_lpm(काष्ठा ufs_hba *hba,
+					 काष्ठा ufs_vreg *vreg)
+अणु
+	वापस ufshcd_config_vreg_load(hba->dev, vreg, UFS_VREG_LPM_LOAD_UA);
+पूर्ण
 
-static inline int ufshcd_config_vreg_hpm(struct ufs_hba *hba,
-					 struct ufs_vreg *vreg)
-{
-	if (!vreg)
-		return 0;
+अटल अंतरभूत पूर्णांक ufshcd_config_vreg_hpm(काष्ठा ufs_hba *hba,
+					 काष्ठा ufs_vreg *vreg)
+अणु
+	अगर (!vreg)
+		वापस 0;
 
-	return ufshcd_config_vreg_load(hba->dev, vreg, vreg->max_uA);
-}
+	वापस ufshcd_config_vreg_load(hba->dev, vreg, vreg->max_uA);
+पूर्ण
 
-static int ufshcd_config_vreg(struct device *dev,
-		struct ufs_vreg *vreg, bool on)
-{
-	int ret = 0;
-	struct regulator *reg;
-	const char *name;
-	int min_uV, uA_load;
+अटल पूर्णांक ufshcd_config_vreg(काष्ठा device *dev,
+		काष्ठा ufs_vreg *vreg, bool on)
+अणु
+	पूर्णांक ret = 0;
+	काष्ठा regulator *reg;
+	स्थिर अक्षर *name;
+	पूर्णांक min_uV, uA_load;
 
 	BUG_ON(!vreg);
 
 	reg = vreg->reg;
 	name = vreg->name;
 
-	if (regulator_count_voltages(reg) > 0) {
+	अगर (regulator_count_voltages(reg) > 0) अणु
 		uA_load = on ? vreg->max_uA : 0;
 		ret = ufshcd_config_vreg_load(dev, vreg, uA_load);
-		if (ret)
-			goto out;
+		अगर (ret)
+			जाओ out;
 
-		if (vreg->min_uV && vreg->max_uV) {
+		अगर (vreg->min_uV && vreg->max_uV) अणु
 			min_uV = on ? vreg->min_uV : 0;
 			ret = regulator_set_voltage(reg, min_uV, vreg->max_uV);
-			if (ret)
+			अगर (ret)
 				dev_err(dev,
 					"%s: %s set voltage failed, err=%d\n",
 					__func__, name, ret);
-		}
-	}
+		पूर्ण
+	पूर्ण
 out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int ufshcd_enable_vreg(struct device *dev, struct ufs_vreg *vreg)
-{
-	int ret = 0;
+अटल पूर्णांक ufshcd_enable_vreg(काष्ठा device *dev, काष्ठा ufs_vreg *vreg)
+अणु
+	पूर्णांक ret = 0;
 
-	if (!vreg || vreg->enabled)
-		goto out;
+	अगर (!vreg || vreg->enabled)
+		जाओ out;
 
 	ret = ufshcd_config_vreg(dev, vreg, true);
-	if (!ret)
+	अगर (!ret)
 		ret = regulator_enable(vreg->reg);
 
-	if (!ret)
+	अगर (!ret)
 		vreg->enabled = true;
-	else
+	अन्यथा
 		dev_err(dev, "%s: %s enable failed, err=%d\n",
 				__func__, vreg->name, ret);
 out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int ufshcd_disable_vreg(struct device *dev, struct ufs_vreg *vreg)
-{
-	int ret = 0;
+अटल पूर्णांक ufshcd_disable_vreg(काष्ठा device *dev, काष्ठा ufs_vreg *vreg)
+अणु
+	पूर्णांक ret = 0;
 
-	if (!vreg || !vreg->enabled || vreg->always_on)
-		goto out;
+	अगर (!vreg || !vreg->enabled || vreg->always_on)
+		जाओ out;
 
 	ret = regulator_disable(vreg->reg);
 
-	if (!ret) {
+	अगर (!ret) अणु
 		/* ignore errors on applying disable config */
 		ufshcd_config_vreg(dev, vreg, false);
 		vreg->enabled = false;
-	} else {
+	पूर्ण अन्यथा अणु
 		dev_err(dev, "%s: %s disable failed, err=%d\n",
 				__func__, vreg->name, ret);
-	}
+	पूर्ण
 out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int ufshcd_setup_vreg(struct ufs_hba *hba, bool on)
-{
-	int ret = 0;
-	struct device *dev = hba->dev;
-	struct ufs_vreg_info *info = &hba->vreg_info;
+अटल पूर्णांक ufshcd_setup_vreg(काष्ठा ufs_hba *hba, bool on)
+अणु
+	पूर्णांक ret = 0;
+	काष्ठा device *dev = hba->dev;
+	काष्ठा ufs_vreg_info *info = &hba->vreg_info;
 
 	ret = ufshcd_toggle_vreg(dev, info->vcc, on);
-	if (ret)
-		goto out;
+	अगर (ret)
+		जाओ out;
 
 	ret = ufshcd_toggle_vreg(dev, info->vccq, on);
-	if (ret)
-		goto out;
+	अगर (ret)
+		जाओ out;
 
 	ret = ufshcd_toggle_vreg(dev, info->vccq2, on);
 
 out:
-	if (ret) {
+	अगर (ret) अणु
 		ufshcd_toggle_vreg(dev, info->vccq2, false);
 		ufshcd_toggle_vreg(dev, info->vccq, false);
 		ufshcd_toggle_vreg(dev, info->vcc, false);
-	}
-	return ret;
-}
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static int ufshcd_setup_hba_vreg(struct ufs_hba *hba, bool on)
-{
-	struct ufs_vreg_info *info = &hba->vreg_info;
+अटल पूर्णांक ufshcd_setup_hba_vreg(काष्ठा ufs_hba *hba, bool on)
+अणु
+	काष्ठा ufs_vreg_info *info = &hba->vreg_info;
 
-	return ufshcd_toggle_vreg(hba->dev, info->vdd_hba, on);
-}
+	वापस ufshcd_toggle_vreg(hba->dev, info->vdd_hba, on);
+पूर्ण
 
-static int ufshcd_get_vreg(struct device *dev, struct ufs_vreg *vreg)
-{
-	int ret = 0;
+अटल पूर्णांक ufshcd_get_vreg(काष्ठा device *dev, काष्ठा ufs_vreg *vreg)
+अणु
+	पूर्णांक ret = 0;
 
-	if (!vreg)
-		goto out;
+	अगर (!vreg)
+		जाओ out;
 
 	vreg->reg = devm_regulator_get(dev, vreg->name);
-	if (IS_ERR(vreg->reg)) {
+	अगर (IS_ERR(vreg->reg)) अणु
 		ret = PTR_ERR(vreg->reg);
 		dev_err(dev, "%s: %s get failed, err=%d\n",
 				__func__, vreg->name, ret);
-	}
+	पूर्ण
 out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int ufshcd_init_vreg(struct ufs_hba *hba)
-{
-	int ret = 0;
-	struct device *dev = hba->dev;
-	struct ufs_vreg_info *info = &hba->vreg_info;
+अटल पूर्णांक ufshcd_init_vreg(काष्ठा ufs_hba *hba)
+अणु
+	पूर्णांक ret = 0;
+	काष्ठा device *dev = hba->dev;
+	काष्ठा ufs_vreg_info *info = &hba->vreg_info;
 
 	ret = ufshcd_get_vreg(dev, info->vcc);
-	if (ret)
-		goto out;
+	अगर (ret)
+		जाओ out;
 
 	ret = ufshcd_get_vreg(dev, info->vccq);
-	if (!ret)
+	अगर (!ret)
 		ret = ufshcd_get_vreg(dev, info->vccq2);
 out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int ufshcd_init_hba_vreg(struct ufs_hba *hba)
-{
-	struct ufs_vreg_info *info = &hba->vreg_info;
+अटल पूर्णांक ufshcd_init_hba_vreg(काष्ठा ufs_hba *hba)
+अणु
+	काष्ठा ufs_vreg_info *info = &hba->vreg_info;
 
-	if (info)
-		return ufshcd_get_vreg(hba->dev, info->vdd_hba);
+	अगर (info)
+		वापस ufshcd_get_vreg(hba->dev, info->vdd_hba);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ufshcd_setup_clocks(struct ufs_hba *hba, bool on)
-{
-	int ret = 0;
-	struct ufs_clk_info *clki;
-	struct list_head *head = &hba->clk_list_head;
-	unsigned long flags;
-	ktime_t start = ktime_get();
+अटल पूर्णांक ufshcd_setup_घड़ीs(काष्ठा ufs_hba *hba, bool on)
+अणु
+	पूर्णांक ret = 0;
+	काष्ठा ufs_clk_info *clki;
+	काष्ठा list_head *head = &hba->clk_list_head;
+	अचिन्हित दीर्घ flags;
+	kसमय_प्रकार start = kसमय_get();
 	bool clk_state_changed = false;
 
-	if (list_empty(head))
-		goto out;
+	अगर (list_empty(head))
+		जाओ out;
 
-	ret = ufshcd_vops_setup_clocks(hba, on, PRE_CHANGE);
-	if (ret)
-		return ret;
+	ret = ufshcd_vops_setup_घड़ीs(hba, on, PRE_CHANGE);
+	अगर (ret)
+		वापस ret;
 
-	list_for_each_entry(clki, head, list) {
-		if (!IS_ERR_OR_NULL(clki->clk)) {
+	list_क्रम_each_entry(clki, head, list) अणु
+		अगर (!IS_ERR_OR_शून्य(clki->clk)) अणु
 			/*
-			 * Don't disable clocks which are needed
+			 * Don't disable घड़ीs which are needed
 			 * to keep the link active.
 			 */
-			if (ufshcd_is_link_active(hba) &&
+			अगर (ufshcd_is_link_active(hba) &&
 			    clki->keep_link_active)
-				continue;
+				जारी;
 
 			clk_state_changed = on ^ clki->enabled;
-			if (on && !clki->enabled) {
+			अगर (on && !clki->enabled) अणु
 				ret = clk_prepare_enable(clki->clk);
-				if (ret) {
+				अगर (ret) अणु
 					dev_err(hba->dev, "%s: %s prepare enable failed, %d\n",
 						__func__, clki->name, ret);
-					goto out;
-				}
-			} else if (!on && clki->enabled) {
+					जाओ out;
+				पूर्ण
+			पूर्ण अन्यथा अगर (!on && clki->enabled) अणु
 				clk_disable_unprepare(clki->clk);
-			}
+			पूर्ण
 			clki->enabled = on;
 			dev_dbg(hba->dev, "%s: clk: %s %sabled\n", __func__,
 					clki->name, on ? "en" : "dis");
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	ret = ufshcd_vops_setup_clocks(hba, on, POST_CHANGE);
-	if (ret)
-		return ret;
+	ret = ufshcd_vops_setup_घड़ीs(hba, on, POST_CHANGE);
+	अगर (ret)
+		वापस ret;
 
 out:
-	if (ret) {
-		list_for_each_entry(clki, head, list) {
-			if (!IS_ERR_OR_NULL(clki->clk) && clki->enabled)
+	अगर (ret) अणु
+		list_क्रम_each_entry(clki, head, list) अणु
+			अगर (!IS_ERR_OR_शून्य(clki->clk) && clki->enabled)
 				clk_disable_unprepare(clki->clk);
-		}
-	} else if (!ret && on) {
+		पूर्ण
+	पूर्ण अन्यथा अगर (!ret && on) अणु
 		spin_lock_irqsave(hba->host->host_lock, flags);
 		hba->clk_gating.state = CLKS_ON;
 		trace_ufshcd_clk_gating(dev_name(hba->dev),
 					hba->clk_gating.state);
 		spin_unlock_irqrestore(hba->host->host_lock, flags);
-	}
+	पूर्ण
 
-	if (clk_state_changed)
+	अगर (clk_state_changed)
 		trace_ufshcd_profile_clk_gating(dev_name(hba->dev),
 			(on ? "on" : "off"),
-			ktime_to_us(ktime_sub(ktime_get(), start)), ret);
-	return ret;
-}
+			kसमय_प्रकारo_us(kसमय_sub(kसमय_get(), start)), ret);
+	वापस ret;
+पूर्ण
 
-static int ufshcd_init_clocks(struct ufs_hba *hba)
-{
-	int ret = 0;
-	struct ufs_clk_info *clki;
-	struct device *dev = hba->dev;
-	struct list_head *head = &hba->clk_list_head;
+अटल पूर्णांक ufshcd_init_घड़ीs(काष्ठा ufs_hba *hba)
+अणु
+	पूर्णांक ret = 0;
+	काष्ठा ufs_clk_info *clki;
+	काष्ठा device *dev = hba->dev;
+	काष्ठा list_head *head = &hba->clk_list_head;
 
-	if (list_empty(head))
-		goto out;
+	अगर (list_empty(head))
+		जाओ out;
 
-	list_for_each_entry(clki, head, list) {
-		if (!clki->name)
-			continue;
+	list_क्रम_each_entry(clki, head, list) अणु
+		अगर (!clki->name)
+			जारी;
 
 		clki->clk = devm_clk_get(dev, clki->name);
-		if (IS_ERR(clki->clk)) {
+		अगर (IS_ERR(clki->clk)) अणु
 			ret = PTR_ERR(clki->clk);
 			dev_err(dev, "%s: %s clk get failed, %d\n",
 					__func__, clki->name, ret);
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
 		/*
 		 * Parse device ref clk freq as per device tree "ref_clk".
 		 * Default dev_ref_clk_freq is set to REF_CLK_FREQ_INVAL
 		 * in ufshcd_alloc_host().
 		 */
-		if (!strcmp(clki->name, "ref_clk"))
+		अगर (!म_भेद(clki->name, "ref_clk"))
 			ufshcd_parse_dev_ref_clk_freq(hba, clki->clk);
 
-		if (clki->max_freq) {
+		अगर (clki->max_freq) अणु
 			ret = clk_set_rate(clki->clk, clki->max_freq);
-			if (ret) {
+			अगर (ret) अणु
 				dev_err(hba->dev, "%s: %s clk set rate(%dHz) failed, %d\n",
 					__func__, clki->name,
 					clki->max_freq, ret);
-				goto out;
-			}
+				जाओ out;
+			पूर्ण
 			clki->curr_freq = clki->max_freq;
-		}
+		पूर्ण
 		dev_dbg(dev, "%s: clk: %s, rate: %lu\n", __func__,
 				clki->name, clk_get_rate(clki->clk));
-	}
+	पूर्ण
 out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int ufshcd_variant_hba_init(struct ufs_hba *hba)
-{
-	int err = 0;
+अटल पूर्णांक ufshcd_variant_hba_init(काष्ठा ufs_hba *hba)
+अणु
+	पूर्णांक err = 0;
 
-	if (!hba->vops)
-		goto out;
+	अगर (!hba->vops)
+		जाओ out;
 
 	err = ufshcd_vops_init(hba);
-	if (err)
+	अगर (err)
 		dev_err(hba->dev, "%s: variant %s init failed err %d\n",
 			__func__, ufshcd_get_var_name(hba), err);
 out:
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void ufshcd_variant_hba_exit(struct ufs_hba *hba)
-{
-	if (!hba->vops)
-		return;
+अटल व्योम ufshcd_variant_hba_निकास(काष्ठा ufs_hba *hba)
+अणु
+	अगर (!hba->vops)
+		वापस;
 
-	ufshcd_vops_exit(hba);
-}
+	ufshcd_vops_निकास(hba);
+पूर्ण
 
-static int ufshcd_hba_init(struct ufs_hba *hba)
-{
-	int err;
+अटल पूर्णांक ufshcd_hba_init(काष्ठा ufs_hba *hba)
+अणु
+	पूर्णांक err;
 
 	/*
-	 * Handle host controller power separately from the UFS device power
-	 * rails as it will help controlling the UFS host controller power
-	 * collapse easily which is different than UFS device power collapse.
-	 * Also, enable the host controller power before we go ahead with rest
+	 * Handle host controller घातer separately from the UFS device घातer
+	 * rails as it will help controlling the UFS host controller घातer
+	 * collapse easily which is dअगरferent than UFS device घातer collapse.
+	 * Also, enable the host controller घातer beक्रमe we go ahead with rest
 	 * of the initialization here.
 	 */
 	err = ufshcd_init_hba_vreg(hba);
-	if (err)
-		goto out;
+	अगर (err)
+		जाओ out;
 
 	err = ufshcd_setup_hba_vreg(hba, true);
-	if (err)
-		goto out;
+	अगर (err)
+		जाओ out;
 
-	err = ufshcd_init_clocks(hba);
-	if (err)
-		goto out_disable_hba_vreg;
+	err = ufshcd_init_घड़ीs(hba);
+	अगर (err)
+		जाओ out_disable_hba_vreg;
 
-	err = ufshcd_setup_clocks(hba, true);
-	if (err)
-		goto out_disable_hba_vreg;
+	err = ufshcd_setup_घड़ीs(hba, true);
+	अगर (err)
+		जाओ out_disable_hba_vreg;
 
 	err = ufshcd_init_vreg(hba);
-	if (err)
-		goto out_disable_clks;
+	अगर (err)
+		जाओ out_disable_clks;
 
 	err = ufshcd_setup_vreg(hba, true);
-	if (err)
-		goto out_disable_clks;
+	अगर (err)
+		जाओ out_disable_clks;
 
 	err = ufshcd_variant_hba_init(hba);
-	if (err)
-		goto out_disable_vreg;
+	अगर (err)
+		जाओ out_disable_vreg;
 
 	ufs_debugfs_hba_init(hba);
 
-	hba->is_powered = true;
-	goto out;
+	hba->is_घातered = true;
+	जाओ out;
 
 out_disable_vreg:
 	ufshcd_setup_vreg(hba, false);
 out_disable_clks:
-	ufshcd_setup_clocks(hba, false);
+	ufshcd_setup_घड़ीs(hba, false);
 out_disable_hba_vreg:
 	ufshcd_setup_hba_vreg(hba, false);
 out:
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void ufshcd_hba_exit(struct ufs_hba *hba)
-{
-	if (hba->is_powered) {
-		ufshcd_exit_clk_scaling(hba);
-		ufshcd_exit_clk_gating(hba);
-		if (hba->eh_wq)
+अटल व्योम ufshcd_hba_निकास(काष्ठा ufs_hba *hba)
+अणु
+	अगर (hba->is_घातered) अणु
+		ufshcd_निकास_clk_scaling(hba);
+		ufshcd_निकास_clk_gating(hba);
+		अगर (hba->eh_wq)
 			destroy_workqueue(hba->eh_wq);
-		ufs_debugfs_hba_exit(hba);
-		ufshcd_variant_hba_exit(hba);
+		ufs_debugfs_hba_निकास(hba);
+		ufshcd_variant_hba_निकास(hba);
 		ufshcd_setup_vreg(hba, false);
-		ufshcd_setup_clocks(hba, false);
+		ufshcd_setup_घड़ीs(hba, false);
 		ufshcd_setup_hba_vreg(hba, false);
-		hba->is_powered = false;
+		hba->is_घातered = false;
 		ufs_put_device_desc(hba);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int
-ufshcd_send_request_sense(struct ufs_hba *hba, struct scsi_device *sdp)
-{
-	unsigned char cmd[6] = {REQUEST_SENSE,
+अटल पूर्णांक
+ufshcd_send_request_sense(काष्ठा ufs_hba *hba, काष्ठा scsi_device *sdp)
+अणु
+	अचिन्हित अक्षर cmd[6] = अणुREQUEST_SENSE,
 				0,
 				0,
 				0,
 				UFS_SENSE_SIZE,
-				0};
-	char *buffer;
-	int ret;
+				0पूर्ण;
+	अक्षर *buffer;
+	पूर्णांक ret;
 
 	buffer = kzalloc(UFS_SENSE_SIZE, GFP_KERNEL);
-	if (!buffer) {
+	अगर (!buffer) अणु
 		ret = -ENOMEM;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	ret = scsi_execute(sdp, cmd, DMA_FROM_DEVICE, buffer,
-			UFS_SENSE_SIZE, NULL, NULL,
-			msecs_to_jiffies(1000), 3, 0, RQF_PM, NULL);
-	if (ret)
+			UFS_SENSE_SIZE, शून्य, शून्य,
+			msecs_to_jअगरfies(1000), 3, 0, RQF_PM, शून्य);
+	अगर (ret)
 		pr_err("%s: failed with err %d\n", __func__, ret);
 
-	kfree(buffer);
+	kमुक्त(buffer);
 out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
  * ufshcd_set_dev_pwr_mode - sends START STOP UNIT command to set device
- *			     power mode
+ *			     घातer mode
  * @hba: per adapter instance
- * @pwr_mode: device power mode to set
+ * @pwr_mode: device घातer mode to set
  *
- * Returns 0 if requested power mode is set successfully
- * Returns non-zero if failed to set the requested power mode
+ * Returns 0 अगर requested घातer mode is set successfully
+ * Returns non-zero अगर failed to set the requested घातer mode
  */
-static int ufshcd_set_dev_pwr_mode(struct ufs_hba *hba,
-				     enum ufs_dev_pwr_mode pwr_mode)
-{
-	unsigned char cmd[6] = { START_STOP };
-	struct scsi_sense_hdr sshdr;
-	struct scsi_device *sdp;
-	unsigned long flags;
-	int ret;
+अटल पूर्णांक ufshcd_set_dev_pwr_mode(काष्ठा ufs_hba *hba,
+				     क्रमागत ufs_dev_pwr_mode pwr_mode)
+अणु
+	अचिन्हित अक्षर cmd[6] = अणु START_STOP पूर्ण;
+	काष्ठा scsi_sense_hdr sshdr;
+	काष्ठा scsi_device *sdp;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक ret;
 
 	spin_lock_irqsave(hba->host->host_lock, flags);
 	sdp = hba->sdev_ufs_device;
-	if (sdp) {
+	अगर (sdp) अणु
 		ret = scsi_device_get(sdp);
-		if (!ret && !scsi_device_online(sdp)) {
+		अगर (!ret && !scsi_device_online(sdp)) अणु
 			ret = -ENODEV;
 			scsi_device_put(sdp);
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		ret = -ENODEV;
-	}
+	पूर्ण
 	spin_unlock_irqrestore(hba->host->host_lock, flags);
 
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	/*
 	 * If scsi commands fail, the scsi mid-layer schedules scsi error-
-	 * handling, which would wait for host to be resumed. Since we know
-	 * we are functional while we are here, skip host resume in error
+	 * handling, which would रुको क्रम host to be resumed. Since we know
+	 * we are functional जबतक we are here, skip host resume in error
 	 * handling context.
 	 */
 	hba->host->eh_noresume = 1;
@@ -8480,340 +8481,340 @@ static int ufshcd_set_dev_pwr_mode(struct ufs_hba *hba,
 	cmd[4] = pwr_mode << 4;
 
 	/*
-	 * Current function would be generally called from the power management
-	 * callbacks hence set the RQF_PM flag so that it doesn't resume the
-	 * already suspended childs.
+	 * Current function would be generally called from the घातer management
+	 * callbacks hence set the RQF_PM flag so that it करोesn't resume the
+	 * alपढ़ोy suspended childs.
 	 */
-	ret = scsi_execute(sdp, cmd, DMA_NONE, NULL, 0, NULL, &sshdr,
-			START_STOP_TIMEOUT, 0, 0, RQF_PM, NULL);
-	if (ret) {
-		sdev_printk(KERN_WARNING, sdp,
+	ret = scsi_execute(sdp, cmd, DMA_NONE, शून्य, 0, शून्य, &sshdr,
+			START_STOP_TIMEOUT, 0, 0, RQF_PM, शून्य);
+	अगर (ret) अणु
+		sdev_prपूर्णांकk(KERN_WARNING, sdp,
 			    "START_STOP failed for power mode: %d, result %x\n",
 			    pwr_mode, ret);
-		if (driver_byte(ret) == DRIVER_SENSE)
-			scsi_print_sense_hdr(sdp, NULL, &sshdr);
-	}
+		अगर (driver_byte(ret) == DRIVER_SENSE)
+			scsi_prपूर्णांक_sense_hdr(sdp, शून्य, &sshdr);
+	पूर्ण
 
-	if (!ret)
+	अगर (!ret)
 		hba->curr_dev_pwr_mode = pwr_mode;
 
 	scsi_device_put(sdp);
 	hba->host->eh_noresume = 0;
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int ufshcd_link_state_transition(struct ufs_hba *hba,
-					enum uic_link_state req_link_state,
-					int check_for_bkops)
-{
-	int ret = 0;
+अटल पूर्णांक ufshcd_link_state_transition(काष्ठा ufs_hba *hba,
+					क्रमागत uic_link_state req_link_state,
+					पूर्णांक check_क्रम_bkops)
+अणु
+	पूर्णांक ret = 0;
 
-	if (req_link_state == hba->uic_link_state)
-		return 0;
+	अगर (req_link_state == hba->uic_link_state)
+		वापस 0;
 
-	if (req_link_state == UIC_LINK_HIBERN8_STATE) {
+	अगर (req_link_state == UIC_LINK_HIBERN8_STATE) अणु
 		ret = ufshcd_uic_hibern8_enter(hba);
-		if (!ret) {
+		अगर (!ret) अणु
 			ufshcd_set_link_hibern8(hba);
-		} else {
+		पूर्ण अन्यथा अणु
 			dev_err(hba->dev, "%s: hibern8 enter failed %d\n",
 					__func__, ret);
-			goto out;
-		}
-	}
+			जाओ out;
+		पूर्ण
+	पूर्ण
 	/*
-	 * If autobkops is enabled, link can't be turned off because
+	 * If स्वतःbkops is enabled, link can't be turned off because
 	 * turning off the link would also turn off the device, except in the
-	 * case of DeepSleep where the device is expected to remain powered.
+	 * हाल of DeepSleep where the device is expected to reमुख्य घातered.
 	 */
-	else if ((req_link_state == UIC_LINK_OFF_STATE) &&
-		 (!check_for_bkops || !hba->auto_bkops_enabled)) {
+	अन्यथा अगर ((req_link_state == UIC_LINK_OFF_STATE) &&
+		 (!check_क्रम_bkops || !hba->स्वतः_bkops_enabled)) अणु
 		/*
-		 * Let's make sure that link is in low power mode, we are doing
+		 * Let's make sure that link is in low घातer mode, we are करोing
 		 * this currently by putting the link in Hibern8. Otherway to
-		 * put the link in low power mode is to send the DME end point
+		 * put the link in low घातer mode is to send the DME end poपूर्णांक
 		 * to device and then send the DME reset command to local
 		 * unipro. But putting the link in hibern8 is much faster.
 		 *
 		 * Note also that putting the link in Hibern8 is a requirement
-		 * for entering DeepSleep.
+		 * क्रम entering DeepSleep.
 		 */
 		ret = ufshcd_uic_hibern8_enter(hba);
-		if (ret) {
+		अगर (ret) अणु
 			dev_err(hba->dev, "%s: hibern8 enter failed %d\n",
 					__func__, ret);
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 		/*
 		 * Change controller state to "reset state" which
 		 * should also put the link in off/reset state
 		 */
 		ufshcd_hba_stop(hba);
 		/*
-		 * TODO: Check if we need any delay to make sure that
+		 * TODO: Check अगर we need any delay to make sure that
 		 * controller is reset
 		 */
 		ufshcd_set_link_off(hba);
-	}
+	पूर्ण
 
 out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void ufshcd_vreg_set_lpm(struct ufs_hba *hba)
-{
+अटल व्योम ufshcd_vreg_set_lpm(काष्ठा ufs_hba *hba)
+अणु
 	bool vcc_off = false;
 
 	/*
 	 * It seems some UFS devices may keep drawing more than sleep current
-	 * (atleast for 500us) from UFS rails (especially from VCCQ rail).
-	 * To avoid this situation, add 2ms delay before putting these UFS
+	 * (atleast क्रम 500us) from UFS rails (especially from VCCQ rail).
+	 * To aव्योम this situation, add 2ms delay beक्रमe putting these UFS
 	 * rails in LPM mode.
 	 */
-	if (!ufshcd_is_link_active(hba) &&
+	अगर (!ufshcd_is_link_active(hba) &&
 	    hba->dev_quirks & UFS_DEVICE_QUIRK_DELAY_BEFORE_LPM)
 		usleep_range(2000, 2100);
 
 	/*
 	 * If UFS device is either in UFS_Sleep turn off VCC rail to save some
-	 * power.
+	 * घातer.
 	 *
-	 * If UFS device and link is in OFF state, all power supplies (VCC,
-	 * VCCQ, VCCQ2) can be turned off if power on write protect is not
+	 * If UFS device and link is in OFF state, all घातer supplies (VCC,
+	 * VCCQ, VCCQ2) can be turned off अगर घातer on ग_लिखो protect is not
 	 * required. If UFS link is inactive (Hibern8 or OFF state) and device
 	 * is in sleep state, put VCCQ & VCCQ2 rails in LPM mode.
 	 *
-	 * Ignore the error returned by ufshcd_toggle_vreg() as device is anyway
-	 * in low power state which would save some power.
+	 * Ignore the error वापसed by ufshcd_toggle_vreg() as device is anyway
+	 * in low घातer state which would save some घातer.
 	 *
 	 * If Write Booster is enabled and the device needs to flush the WB
-	 * buffer OR if bkops status is urgent for WB, keep Vcc on.
+	 * buffer OR अगर bkops status is urgent क्रम WB, keep Vcc on.
 	 */
-	if (ufshcd_is_ufs_dev_poweroff(hba) && ufshcd_is_link_off(hba) &&
-	    !hba->dev_info.is_lu_power_on_wp) {
+	अगर (ufshcd_is_ufs_dev_घातeroff(hba) && ufshcd_is_link_off(hba) &&
+	    !hba->dev_info.is_lu_घातer_on_wp) अणु
 		ufshcd_setup_vreg(hba, false);
 		vcc_off = true;
-	} else if (!ufshcd_is_ufs_dev_active(hba)) {
+	पूर्ण अन्यथा अगर (!ufshcd_is_ufs_dev_active(hba)) अणु
 		ufshcd_toggle_vreg(hba->dev, hba->vreg_info.vcc, false);
 		vcc_off = true;
-		if (ufshcd_is_link_hibern8(hba) || ufshcd_is_link_off(hba)) {
+		अगर (ufshcd_is_link_hibern8(hba) || ufshcd_is_link_off(hba)) अणु
 			ufshcd_config_vreg_lpm(hba, hba->vreg_info.vccq);
 			ufshcd_config_vreg_lpm(hba, hba->vreg_info.vccq2);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	/*
-	 * Some UFS devices require delay after VCC power rail is turned-off.
+	 * Some UFS devices require delay after VCC घातer rail is turned-off.
 	 */
-	if (vcc_off && hba->vreg_info.vcc &&
+	अगर (vcc_off && hba->vreg_info.vcc &&
 		hba->dev_quirks & UFS_DEVICE_QUIRK_DELAY_AFTER_LPM)
 		usleep_range(5000, 5100);
-}
+पूर्ण
 
-static int ufshcd_vreg_set_hpm(struct ufs_hba *hba)
-{
-	int ret = 0;
+अटल पूर्णांक ufshcd_vreg_set_hpm(काष्ठा ufs_hba *hba)
+अणु
+	पूर्णांक ret = 0;
 
-	if (ufshcd_is_ufs_dev_poweroff(hba) && ufshcd_is_link_off(hba) &&
-	    !hba->dev_info.is_lu_power_on_wp) {
+	अगर (ufshcd_is_ufs_dev_घातeroff(hba) && ufshcd_is_link_off(hba) &&
+	    !hba->dev_info.is_lu_घातer_on_wp) अणु
 		ret = ufshcd_setup_vreg(hba, true);
-	} else if (!ufshcd_is_ufs_dev_active(hba)) {
-		if (!ufshcd_is_link_active(hba)) {
+	पूर्ण अन्यथा अगर (!ufshcd_is_ufs_dev_active(hba)) अणु
+		अगर (!ufshcd_is_link_active(hba)) अणु
 			ret = ufshcd_config_vreg_hpm(hba, hba->vreg_info.vccq);
-			if (ret)
-				goto vcc_disable;
+			अगर (ret)
+				जाओ vcc_disable;
 			ret = ufshcd_config_vreg_hpm(hba, hba->vreg_info.vccq2);
-			if (ret)
-				goto vccq_lpm;
-		}
+			अगर (ret)
+				जाओ vccq_lpm;
+		पूर्ण
 		ret = ufshcd_toggle_vreg(hba->dev, hba->vreg_info.vcc, true);
-	}
-	goto out;
+	पूर्ण
+	जाओ out;
 
 vccq_lpm:
 	ufshcd_config_vreg_lpm(hba, hba->vreg_info.vccq);
 vcc_disable:
 	ufshcd_toggle_vreg(hba->dev, hba->vreg_info.vcc, false);
 out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void ufshcd_hba_vreg_set_lpm(struct ufs_hba *hba)
-{
-	if (ufshcd_is_link_off(hba) || ufshcd_can_aggressive_pc(hba))
+अटल व्योम ufshcd_hba_vreg_set_lpm(काष्ठा ufs_hba *hba)
+अणु
+	अगर (ufshcd_is_link_off(hba) || ufshcd_can_aggressive_pc(hba))
 		ufshcd_setup_hba_vreg(hba, false);
-}
+पूर्ण
 
-static void ufshcd_hba_vreg_set_hpm(struct ufs_hba *hba)
-{
-	if (ufshcd_is_link_off(hba) || ufshcd_can_aggressive_pc(hba))
+अटल व्योम ufshcd_hba_vreg_set_hpm(काष्ठा ufs_hba *hba)
+अणु
+	अगर (ufshcd_is_link_off(hba) || ufshcd_can_aggressive_pc(hba))
 		ufshcd_setup_hba_vreg(hba, true);
-}
+पूर्ण
 
 /**
- * ufshcd_suspend - helper function for suspend operations
+ * ufshcd_suspend - helper function क्रम suspend operations
  * @hba: per adapter instance
- * @pm_op: desired low power operation type
+ * @pm_op: desired low घातer operation type
  *
- * This function will try to put the UFS device and link into low power
- * mode based on the "rpm_lvl" (Runtime PM level) or "spm_lvl"
+ * This function will try to put the UFS device and link पूर्णांकo low घातer
+ * mode based on the "rpm_lvl" (Runसमय PM level) or "spm_lvl"
  * (System PM level).
  *
- * If this function is called during shutdown, it will make sure that
- * both UFS device and UFS link is powered off.
+ * If this function is called during shutकरोwn, it will make sure that
+ * both UFS device and UFS link is घातered off.
  *
- * NOTE: UFS device & link must be active before we enter in this function.
+ * NOTE: UFS device & link must be active beक्रमe we enter in this function.
  *
- * Returns 0 for success and non-zero for failure
+ * Returns 0 क्रम success and non-zero क्रम failure
  */
-static int ufshcd_suspend(struct ufs_hba *hba, enum ufs_pm_op pm_op)
-{
-	int ret = 0;
-	int check_for_bkops;
-	enum ufs_pm_level pm_lvl;
-	enum ufs_dev_pwr_mode req_dev_pwr_mode;
-	enum uic_link_state req_link_state;
+अटल पूर्णांक ufshcd_suspend(काष्ठा ufs_hba *hba, क्रमागत ufs_pm_op pm_op)
+अणु
+	पूर्णांक ret = 0;
+	पूर्णांक check_क्रम_bkops;
+	क्रमागत ufs_pm_level pm_lvl;
+	क्रमागत ufs_dev_pwr_mode req_dev_pwr_mode;
+	क्रमागत uic_link_state req_link_state;
 
 	hba->pm_op_in_progress = 1;
-	if (!ufshcd_is_shutdown_pm(pm_op)) {
-		pm_lvl = ufshcd_is_runtime_pm(pm_op) ?
+	अगर (!ufshcd_is_shutकरोwn_pm(pm_op)) अणु
+		pm_lvl = ufshcd_is_runसमय_pm(pm_op) ?
 			 hba->rpm_lvl : hba->spm_lvl;
 		req_dev_pwr_mode = ufs_get_pm_lvl_to_dev_pwr_mode(pm_lvl);
 		req_link_state = ufs_get_pm_lvl_to_link_pwr_state(pm_lvl);
-	} else {
+	पूर्ण अन्यथा अणु
 		req_dev_pwr_mode = UFS_POWERDOWN_PWR_MODE;
 		req_link_state = UIC_LINK_OFF_STATE;
-	}
+	पूर्ण
 
 	/*
-	 * If we can't transition into any of the low power modes
-	 * just gate the clocks.
+	 * If we can't transition पूर्णांकo any of the low घातer modes
+	 * just gate the घड़ीs.
 	 */
 	ufshcd_hold(hba, false);
 	hba->clk_gating.is_suspended = true;
 
-	if (ufshcd_is_clkscaling_supported(hba))
+	अगर (ufshcd_is_clkscaling_supported(hba))
 		ufshcd_clk_scaling_suspend(hba, true);
 
-	if (req_dev_pwr_mode == UFS_ACTIVE_PWR_MODE &&
-			req_link_state == UIC_LINK_ACTIVE_STATE) {
-		goto disable_clks;
-	}
+	अगर (req_dev_pwr_mode == UFS_ACTIVE_PWR_MODE &&
+			req_link_state == UIC_LINK_ACTIVE_STATE) अणु
+		जाओ disable_clks;
+	पूर्ण
 
-	if ((req_dev_pwr_mode == hba->curr_dev_pwr_mode) &&
+	अगर ((req_dev_pwr_mode == hba->curr_dev_pwr_mode) &&
 	    (req_link_state == hba->uic_link_state))
-		goto enable_gating;
+		जाओ enable_gating;
 
-	/* UFS device & link must be active before we enter in this function */
-	if (!ufshcd_is_ufs_dev_active(hba) || !ufshcd_is_link_active(hba)) {
+	/* UFS device & link must be active beक्रमe we enter in this function */
+	अगर (!ufshcd_is_ufs_dev_active(hba) || !ufshcd_is_link_active(hba)) अणु
 		ret = -EINVAL;
-		goto enable_gating;
-	}
+		जाओ enable_gating;
+	पूर्ण
 
-	if (ufshcd_is_runtime_pm(pm_op)) {
-		if (ufshcd_can_autobkops_during_suspend(hba)) {
+	अगर (ufshcd_is_runसमय_pm(pm_op)) अणु
+		अगर (ufshcd_can_स्वतःbkops_during_suspend(hba)) अणु
 			/*
 			 * The device is idle with no requests in the queue,
-			 * allow background operations if bkops status shows
-			 * that performance might be impacted.
+			 * allow background operations अगर bkops status shows
+			 * that perक्रमmance might be impacted.
 			 */
 			ret = ufshcd_urgent_bkops(hba);
-			if (ret)
-				goto enable_gating;
-		} else {
-			/* make sure that auto bkops is disabled */
-			ufshcd_disable_auto_bkops(hba);
-		}
+			अगर (ret)
+				जाओ enable_gating;
+		पूर्ण अन्यथा अणु
+			/* make sure that स्वतः bkops is disabled */
+			ufshcd_disable_स्वतः_bkops(hba);
+		पूर्ण
 		/*
-		 * If device needs to do BKOP or WB buffer flush during
-		 * Hibern8, keep device power mode as "active power mode"
+		 * If device needs to करो BKOP or WB buffer flush during
+		 * Hibern8, keep device घातer mode as "active power mode"
 		 * and VCC supply.
 		 */
 		hba->dev_info.b_rpm_dev_flush_capable =
-			hba->auto_bkops_enabled ||
+			hba->स्वतः_bkops_enabled ||
 			(((req_link_state == UIC_LINK_HIBERN8_STATE) ||
 			((req_link_state == UIC_LINK_ACTIVE_STATE) &&
-			ufshcd_is_auto_hibern8_enabled(hba))) &&
+			ufshcd_is_स्वतः_hibern8_enabled(hba))) &&
 			ufshcd_wb_need_flush(hba));
-	}
+	पूर्ण
 
 	flush_work(&hba->eeh_work);
 
-	if (req_dev_pwr_mode != hba->curr_dev_pwr_mode) {
-		if (!ufshcd_is_runtime_pm(pm_op))
+	अगर (req_dev_pwr_mode != hba->curr_dev_pwr_mode) अणु
+		अगर (!ufshcd_is_runसमय_pm(pm_op))
 			/* ensure that bkops is disabled */
-			ufshcd_disable_auto_bkops(hba);
+			ufshcd_disable_स्वतः_bkops(hba);
 
-		if (!hba->dev_info.b_rpm_dev_flush_capable) {
+		अगर (!hba->dev_info.b_rpm_dev_flush_capable) अणु
 			ret = ufshcd_set_dev_pwr_mode(hba, req_dev_pwr_mode);
-			if (ret)
-				goto enable_gating;
-		}
-	}
+			अगर (ret)
+				जाओ enable_gating;
+		पूर्ण
+	पूर्ण
 
 	/*
-	 * In the case of DeepSleep, the device is expected to remain powered
-	 * with the link off, so do not check for bkops.
+	 * In the हाल of DeepSleep, the device is expected to reमुख्य घातered
+	 * with the link off, so करो not check क्रम bkops.
 	 */
-	check_for_bkops = !ufshcd_is_ufs_dev_deepsleep(hba);
-	ret = ufshcd_link_state_transition(hba, req_link_state, check_for_bkops);
-	if (ret)
-		goto set_dev_active;
+	check_क्रम_bkops = !ufshcd_is_ufs_dev_deepsleep(hba);
+	ret = ufshcd_link_state_transition(hba, req_link_state, check_क्रम_bkops);
+	अगर (ret)
+		जाओ set_dev_active;
 
 disable_clks:
 	/*
-	 * Call vendor specific suspend callback. As these callbacks may access
-	 * vendor specific host controller register space call them before the
-	 * host clocks are ON.
+	 * Call venकरोr specअगरic suspend callback. As these callbacks may access
+	 * venकरोr specअगरic host controller रेजिस्टर space call them beक्रमe the
+	 * host घड़ीs are ON.
 	 */
 	ret = ufshcd_vops_suspend(hba, pm_op);
-	if (ret)
-		goto set_link_active;
+	अगर (ret)
+		जाओ set_link_active;
 	/*
 	 * Disable the host irq as host controller as there won't be any
 	 * host controller transaction expected till resume.
 	 */
 	ufshcd_disable_irq(hba);
 
-	ufshcd_setup_clocks(hba, false);
+	ufshcd_setup_घड़ीs(hba, false);
 
-	if (ufshcd_is_clkgating_allowed(hba)) {
+	अगर (ufshcd_is_clkgating_allowed(hba)) अणु
 		hba->clk_gating.state = CLKS_OFF;
 		trace_ufshcd_clk_gating(dev_name(hba->dev),
 					hba->clk_gating.state);
-	}
+	पूर्ण
 
 	ufshcd_vreg_set_lpm(hba);
 
-	/* Put the host controller in low power mode if possible */
+	/* Put the host controller in low घातer mode अगर possible */
 	ufshcd_hba_vreg_set_lpm(hba);
-	goto out;
+	जाओ out;
 
 set_link_active:
 	ufshcd_vreg_set_hpm(hba);
 	/*
-	 * Device hardware reset is required to exit DeepSleep. Also, for
-	 * DeepSleep, the link is off so host reset and restore will be done
+	 * Device hardware reset is required to निकास DeepSleep. Also, क्रम
+	 * DeepSleep, the link is off so host reset and restore will be करोne
 	 * further below.
 	 */
-	if (ufshcd_is_ufs_dev_deepsleep(hba)) {
+	अगर (ufshcd_is_ufs_dev_deepsleep(hba)) अणु
 		ufshcd_device_reset(hba);
 		WARN_ON(!ufshcd_is_link_off(hba));
-	}
-	if (ufshcd_is_link_hibern8(hba) && !ufshcd_uic_hibern8_exit(hba))
+	पूर्ण
+	अगर (ufshcd_is_link_hibern8(hba) && !ufshcd_uic_hibern8_निकास(hba))
 		ufshcd_set_link_active(hba);
-	else if (ufshcd_is_link_off(hba))
+	अन्यथा अगर (ufshcd_is_link_off(hba))
 		ufshcd_host_reset_and_restore(hba);
 set_dev_active:
-	/* Can also get here needing to exit DeepSleep */
-	if (ufshcd_is_ufs_dev_deepsleep(hba)) {
+	/* Can also get here needing to निकास DeepSleep */
+	अगर (ufshcd_is_ufs_dev_deepsleep(hba)) अणु
 		ufshcd_device_reset(hba);
 		ufshcd_host_reset_and_restore(hba);
-	}
-	if (!ufshcd_set_dev_pwr_mode(hba, UFS_ACTIVE_PWR_MODE))
-		ufshcd_disable_auto_bkops(hba);
+	पूर्ण
+	अगर (!ufshcd_set_dev_pwr_mode(hba, UFS_ACTIVE_PWR_MODE))
+		ufshcd_disable_स्वतः_bkops(hba);
 enable_gating:
-	if (ufshcd_is_clkscaling_supported(hba))
+	अगर (ufshcd_is_clkscaling_supported(hba))
 		ufshcd_clk_scaling_suspend(hba, false);
 
 	hba->clk_gating.is_suspended = false;
@@ -8821,362 +8822,362 @@ enable_gating:
 	ufshcd_clear_ua_wluns(hba);
 	ufshcd_release(hba);
 out:
-	if (hba->dev_info.b_rpm_dev_flush_capable) {
+	अगर (hba->dev_info.b_rpm_dev_flush_capable) अणु
 		schedule_delayed_work(&hba->rpm_dev_flush_recheck_work,
-			msecs_to_jiffies(RPM_DEV_FLUSH_RECHECK_WORK_DELAY_MS));
-	}
+			msecs_to_jअगरfies(RPM_DEV_FLUSH_RECHECK_WORK_DELAY_MS));
+	पूर्ण
 
 	hba->pm_op_in_progress = 0;
 
-	if (ret)
+	अगर (ret)
 		ufshcd_update_evt_hist(hba, UFS_EVT_SUSPEND_ERR, (u32)ret);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * ufshcd_resume - helper function for resume operations
+ * ufshcd_resume - helper function क्रम resume operations
  * @hba: per adapter instance
- * @pm_op: runtime PM or system PM
+ * @pm_op: runसमय PM or प्रणाली PM
  *
  * This function basically brings the UFS device, UniPro link and controller
  * to active state.
  *
- * Returns 0 for success and non-zero for failure
+ * Returns 0 क्रम success and non-zero क्रम failure
  */
-static int ufshcd_resume(struct ufs_hba *hba, enum ufs_pm_op pm_op)
-{
-	int ret;
-	enum uic_link_state old_link_state;
+अटल पूर्णांक ufshcd_resume(काष्ठा ufs_hba *hba, क्रमागत ufs_pm_op pm_op)
+अणु
+	पूर्णांक ret;
+	क्रमागत uic_link_state old_link_state;
 
 	hba->pm_op_in_progress = 1;
 	old_link_state = hba->uic_link_state;
 
 	ufshcd_hba_vreg_set_hpm(hba);
 	ret = ufshcd_vreg_set_hpm(hba);
-	if (ret)
-		goto out;
+	अगर (ret)
+		जाओ out;
 
-	/* Make sure clocks are enabled before accessing controller */
-	ret = ufshcd_setup_clocks(hba, true);
-	if (ret)
-		goto disable_vreg;
+	/* Make sure घड़ीs are enabled beक्रमe accessing controller */
+	ret = ufshcd_setup_घड़ीs(hba, true);
+	अगर (ret)
+		जाओ disable_vreg;
 
 	/* enable the host irq as host controller would be active soon */
 	ufshcd_enable_irq(hba);
 
 	/*
-	 * Call vendor specific resume callback. As these callbacks may access
-	 * vendor specific host controller register space call them when the
-	 * host clocks are ON.
+	 * Call venकरोr specअगरic resume callback. As these callbacks may access
+	 * venकरोr specअगरic host controller रेजिस्टर space call them when the
+	 * host घड़ीs are ON.
 	 */
 	ret = ufshcd_vops_resume(hba, pm_op);
-	if (ret)
-		goto disable_irq_and_vops_clks;
+	अगर (ret)
+		जाओ disable_irq_and_vops_clks;
 
 	/* For DeepSleep, the only supported option is to have the link off */
 	WARN_ON(ufshcd_is_ufs_dev_deepsleep(hba) && !ufshcd_is_link_off(hba));
 
-	if (ufshcd_is_link_hibern8(hba)) {
-		ret = ufshcd_uic_hibern8_exit(hba);
-		if (!ret) {
+	अगर (ufshcd_is_link_hibern8(hba)) अणु
+		ret = ufshcd_uic_hibern8_निकास(hba);
+		अगर (!ret) अणु
 			ufshcd_set_link_active(hba);
-		} else {
+		पूर्ण अन्यथा अणु
 			dev_err(hba->dev, "%s: hibern8 exit failed %d\n",
 					__func__, ret);
-			goto vendor_suspend;
-		}
-	} else if (ufshcd_is_link_off(hba)) {
+			जाओ venकरोr_suspend;
+		पूर्ण
+	पूर्ण अन्यथा अगर (ufshcd_is_link_off(hba)) अणु
 		/*
 		 * A full initialization of the host and the device is
 		 * required since the link was put to off during suspend.
-		 * Note, in the case of DeepSleep, the device will exit
+		 * Note, in the हाल of DeepSleep, the device will निकास
 		 * DeepSleep due to device reset.
 		 */
 		ret = ufshcd_reset_and_restore(hba);
 		/*
-		 * ufshcd_reset_and_restore() should have already
+		 * ufshcd_reset_and_restore() should have alपढ़ोy
 		 * set the link state as active
 		 */
-		if (ret || !ufshcd_is_link_active(hba))
-			goto vendor_suspend;
-	}
+		अगर (ret || !ufshcd_is_link_active(hba))
+			जाओ venकरोr_suspend;
+	पूर्ण
 
-	if (!ufshcd_is_ufs_dev_active(hba)) {
+	अगर (!ufshcd_is_ufs_dev_active(hba)) अणु
 		ret = ufshcd_set_dev_pwr_mode(hba, UFS_ACTIVE_PWR_MODE);
-		if (ret)
-			goto set_old_link_state;
-	}
+		अगर (ret)
+			जाओ set_old_link_state;
+	पूर्ण
 
-	if (ufshcd_keep_autobkops_enabled_except_suspend(hba))
-		ufshcd_enable_auto_bkops(hba);
-	else
+	अगर (ufshcd_keep_स्वतःbkops_enabled_except_suspend(hba))
+		ufshcd_enable_स्वतः_bkops(hba);
+	अन्यथा
 		/*
 		 * If BKOPs operations are urgently needed at this moment then
-		 * keep auto-bkops enabled or else disable it.
+		 * keep स्वतः-bkops enabled or अन्यथा disable it.
 		 */
 		ufshcd_urgent_bkops(hba);
 
-	if (hba->ee_usr_mask)
-		ufshcd_write_ee_control(hba);
+	अगर (hba->ee_usr_mask)
+		ufshcd_ग_लिखो_ee_control(hba);
 
 	hba->clk_gating.is_suspended = false;
 
-	if (ufshcd_is_clkscaling_supported(hba))
+	अगर (ufshcd_is_clkscaling_supported(hba))
 		ufshcd_clk_scaling_suspend(hba, false);
 
-	/* Enable Auto-Hibernate if configured */
-	ufshcd_auto_hibern8_enable(hba);
+	/* Enable Auto-Hibernate अगर configured */
+	ufshcd_स्वतः_hibern8_enable(hba);
 
-	if (hba->dev_info.b_rpm_dev_flush_capable) {
+	अगर (hba->dev_info.b_rpm_dev_flush_capable) अणु
 		hba->dev_info.b_rpm_dev_flush_capable = false;
 		cancel_delayed_work(&hba->rpm_dev_flush_recheck_work);
-	}
+	पूर्ण
 
 	ufshcd_clear_ua_wluns(hba);
 
-	/* Schedule clock gating in case of no access to UFS device yet */
+	/* Schedule घड़ी gating in हाल of no access to UFS device yet */
 	ufshcd_release(hba);
 
-	goto out;
+	जाओ out;
 
 set_old_link_state:
 	ufshcd_link_state_transition(hba, old_link_state, 0);
-vendor_suspend:
+venकरोr_suspend:
 	ufshcd_vops_suspend(hba, pm_op);
 disable_irq_and_vops_clks:
 	ufshcd_disable_irq(hba);
-	ufshcd_setup_clocks(hba, false);
-	if (ufshcd_is_clkgating_allowed(hba)) {
+	ufshcd_setup_घड़ीs(hba, false);
+	अगर (ufshcd_is_clkgating_allowed(hba)) अणु
 		hba->clk_gating.state = CLKS_OFF;
 		trace_ufshcd_clk_gating(dev_name(hba->dev),
 					hba->clk_gating.state);
-	}
+	पूर्ण
 disable_vreg:
 	ufshcd_vreg_set_lpm(hba);
 out:
 	hba->pm_op_in_progress = 0;
-	if (ret)
+	अगर (ret)
 		ufshcd_update_evt_hist(hba, UFS_EVT_RESUME_ERR, (u32)ret);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * ufshcd_system_suspend - system suspend routine
+ * ufshcd_प्रणाली_suspend - प्रणाली suspend routine
  * @hba: per adapter instance
  *
- * Check the description of ufshcd_suspend() function for more details.
+ * Check the description of ufshcd_suspend() function क्रम more details.
  *
- * Returns 0 for success and non-zero for failure
+ * Returns 0 क्रम success and non-zero क्रम failure
  */
-int ufshcd_system_suspend(struct ufs_hba *hba)
-{
-	int ret = 0;
-	ktime_t start = ktime_get();
+पूर्णांक ufshcd_प्रणाली_suspend(काष्ठा ufs_hba *hba)
+अणु
+	पूर्णांक ret = 0;
+	kसमय_प्रकार start = kसमय_get();
 
-	down(&hba->host_sem);
+	करोwn(&hba->host_sem);
 
-	if (!hba->is_powered)
-		return 0;
+	अगर (!hba->is_घातered)
+		वापस 0;
 
 	cancel_delayed_work_sync(&hba->rpm_dev_flush_recheck_work);
 
-	if ((ufs_get_pm_lvl_to_dev_pwr_mode(hba->spm_lvl) ==
+	अगर ((ufs_get_pm_lvl_to_dev_pwr_mode(hba->spm_lvl) ==
 	     hba->curr_dev_pwr_mode) &&
 	    (ufs_get_pm_lvl_to_link_pwr_state(hba->spm_lvl) ==
 	     hba->uic_link_state) &&
-	     pm_runtime_suspended(hba->dev) &&
+	     pm_runसमय_suspended(hba->dev) &&
 	     !hba->dev_info.b_rpm_dev_flush_capable)
-		goto out;
+		जाओ out;
 
-	if (pm_runtime_suspended(hba->dev)) {
+	अगर (pm_runसमय_suspended(hba->dev)) अणु
 		/*
-		 * UFS device and/or UFS link low power states during runtime
-		 * suspend seems to be different than what is expected during
-		 * system suspend. Hence runtime resume the devic & link and
-		 * let the system suspend low power states to take effect.
-		 * TODO: If resume takes longer time, we might have optimize
-		 * it in future by not resuming everything if possible.
+		 * UFS device and/or UFS link low घातer states during runसमय
+		 * suspend seems to be dअगरferent than what is expected during
+		 * प्रणाली suspend. Hence runसमय resume the devic & link and
+		 * let the प्रणाली suspend low घातer states to take effect.
+		 * TODO: If resume takes दीर्घer समय, we might have optimize
+		 * it in future by not resuming everything अगर possible.
 		 */
-		ret = ufshcd_runtime_resume(hba);
-		if (ret)
-			goto out;
-	}
+		ret = ufshcd_runसमय_resume(hba);
+		अगर (ret)
+			जाओ out;
+	पूर्ण
 
 	ret = ufshcd_suspend(hba, UFS_SYSTEM_PM);
 out:
-	trace_ufshcd_system_suspend(dev_name(hba->dev), ret,
-		ktime_to_us(ktime_sub(ktime_get(), start)),
+	trace_ufshcd_प्रणाली_suspend(dev_name(hba->dev), ret,
+		kसमय_प्रकारo_us(kसमय_sub(kसमय_get(), start)),
 		hba->curr_dev_pwr_mode, hba->uic_link_state);
-	if (!ret)
+	अगर (!ret)
 		hba->is_sys_suspended = true;
-	else
+	अन्यथा
 		up(&hba->host_sem);
-	return ret;
-}
-EXPORT_SYMBOL(ufshcd_system_suspend);
+	वापस ret;
+पूर्ण
+EXPORT_SYMBOL(ufshcd_प्रणाली_suspend);
 
 /**
- * ufshcd_system_resume - system resume routine
+ * ufshcd_प्रणाली_resume - प्रणाली resume routine
  * @hba: per adapter instance
  *
- * Returns 0 for success and non-zero for failure
+ * Returns 0 क्रम success and non-zero क्रम failure
  */
 
-int ufshcd_system_resume(struct ufs_hba *hba)
-{
-	int ret = 0;
-	ktime_t start = ktime_get();
+पूर्णांक ufshcd_प्रणाली_resume(काष्ठा ufs_hba *hba)
+अणु
+	पूर्णांक ret = 0;
+	kसमय_प्रकार start = kसमय_get();
 
-	if (!hba->is_powered || pm_runtime_suspended(hba->dev))
+	अगर (!hba->is_घातered || pm_runसमय_suspended(hba->dev))
 		/*
-		 * Let the runtime resume take care of resuming
-		 * if runtime suspended.
+		 * Let the runसमय resume take care of resuming
+		 * अगर runसमय suspended.
 		 */
-		goto out;
-	else
+		जाओ out;
+	अन्यथा
 		ret = ufshcd_resume(hba, UFS_SYSTEM_PM);
 out:
-	trace_ufshcd_system_resume(dev_name(hba->dev), ret,
-		ktime_to_us(ktime_sub(ktime_get(), start)),
+	trace_ufshcd_प्रणाली_resume(dev_name(hba->dev), ret,
+		kसमय_प्रकारo_us(kसमय_sub(kसमय_get(), start)),
 		hba->curr_dev_pwr_mode, hba->uic_link_state);
-	if (!ret)
+	अगर (!ret)
 		hba->is_sys_suspended = false;
 	up(&hba->host_sem);
-	return ret;
-}
-EXPORT_SYMBOL(ufshcd_system_resume);
+	वापस ret;
+पूर्ण
+EXPORT_SYMBOL(ufshcd_प्रणाली_resume);
 
 /**
- * ufshcd_runtime_suspend - runtime suspend routine
+ * ufshcd_runसमय_suspend - runसमय suspend routine
  * @hba: per adapter instance
  *
- * Check the description of ufshcd_suspend() function for more details.
+ * Check the description of ufshcd_suspend() function क्रम more details.
  *
- * Returns 0 for success and non-zero for failure
+ * Returns 0 क्रम success and non-zero क्रम failure
  */
-int ufshcd_runtime_suspend(struct ufs_hba *hba)
-{
-	int ret = 0;
-	ktime_t start = ktime_get();
+पूर्णांक ufshcd_runसमय_suspend(काष्ठा ufs_hba *hba)
+अणु
+	पूर्णांक ret = 0;
+	kसमय_प्रकार start = kसमय_get();
 
-	if (!hba->is_powered)
-		goto out;
-	else
+	अगर (!hba->is_घातered)
+		जाओ out;
+	अन्यथा
 		ret = ufshcd_suspend(hba, UFS_RUNTIME_PM);
 out:
-	trace_ufshcd_runtime_suspend(dev_name(hba->dev), ret,
-		ktime_to_us(ktime_sub(ktime_get(), start)),
+	trace_ufshcd_runसमय_suspend(dev_name(hba->dev), ret,
+		kसमय_प्रकारo_us(kसमय_sub(kसमय_get(), start)),
 		hba->curr_dev_pwr_mode, hba->uic_link_state);
-	return ret;
-}
-EXPORT_SYMBOL(ufshcd_runtime_suspend);
+	वापस ret;
+पूर्ण
+EXPORT_SYMBOL(ufshcd_runसमय_suspend);
 
 /**
- * ufshcd_runtime_resume - runtime resume routine
+ * ufshcd_runसमय_resume - runसमय resume routine
  * @hba: per adapter instance
  *
  * This function basically brings the UFS device, UniPro link and controller
- * to active state. Following operations are done in this function:
+ * to active state. Following operations are करोne in this function:
  *
- * 1. Turn on all the controller related clocks
+ * 1. Turn on all the controller related घड़ीs
  * 2. Bring the UniPro link out of Hibernate state
  * 3. If UFS device is in sleep state, turn ON VCC rail and bring the UFS device
  *    to active state.
- * 4. If auto-bkops is enabled on the device, disable it.
+ * 4. If स्वतः-bkops is enabled on the device, disable it.
  *
- * So following would be the possible power state after this function return
+ * So following would be the possible घातer state after this function वापस
  * successfully:
  *	S1: UFS device in Active state with VCC rail ON
  *	    UniPro link in Active state
- *	    All the UFS/UniPro controller clocks are ON
+ *	    All the UFS/UniPro controller घड़ीs are ON
  *
- * Returns 0 for success and non-zero for failure
+ * Returns 0 क्रम success and non-zero क्रम failure
  */
-int ufshcd_runtime_resume(struct ufs_hba *hba)
-{
-	int ret = 0;
-	ktime_t start = ktime_get();
+पूर्णांक ufshcd_runसमय_resume(काष्ठा ufs_hba *hba)
+अणु
+	पूर्णांक ret = 0;
+	kसमय_प्रकार start = kसमय_get();
 
-	if (!hba->is_powered)
-		goto out;
-	else
+	अगर (!hba->is_घातered)
+		जाओ out;
+	अन्यथा
 		ret = ufshcd_resume(hba, UFS_RUNTIME_PM);
 out:
-	trace_ufshcd_runtime_resume(dev_name(hba->dev), ret,
-		ktime_to_us(ktime_sub(ktime_get(), start)),
+	trace_ufshcd_runसमय_resume(dev_name(hba->dev), ret,
+		kसमय_प्रकारo_us(kसमय_sub(kसमय_get(), start)),
 		hba->curr_dev_pwr_mode, hba->uic_link_state);
-	return ret;
-}
-EXPORT_SYMBOL(ufshcd_runtime_resume);
+	वापस ret;
+पूर्ण
+EXPORT_SYMBOL(ufshcd_runसमय_resume);
 
-int ufshcd_runtime_idle(struct ufs_hba *hba)
-{
-	return 0;
-}
-EXPORT_SYMBOL(ufshcd_runtime_idle);
+पूर्णांक ufshcd_runसमय_idle(काष्ठा ufs_hba *hba)
+अणु
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL(ufshcd_runसमय_idle);
 
 /**
- * ufshcd_shutdown - shutdown routine
+ * ufshcd_shutकरोwn - shutकरोwn routine
  * @hba: per adapter instance
  *
- * This function would power off both UFS device and UFS link.
+ * This function would घातer off both UFS device and UFS link.
  *
- * Returns 0 always to allow force shutdown even in case of errors.
+ * Returns 0 always to allow क्रमce shutकरोwn even in हाल of errors.
  */
-int ufshcd_shutdown(struct ufs_hba *hba)
-{
-	int ret = 0;
+पूर्णांक ufshcd_shutकरोwn(काष्ठा ufs_hba *hba)
+अणु
+	पूर्णांक ret = 0;
 
-	down(&hba->host_sem);
-	hba->shutting_down = true;
+	करोwn(&hba->host_sem);
+	hba->shutting_करोwn = true;
 	up(&hba->host_sem);
 
-	if (!hba->is_powered)
-		goto out;
+	अगर (!hba->is_घातered)
+		जाओ out;
 
-	if (ufshcd_is_ufs_dev_poweroff(hba) && ufshcd_is_link_off(hba))
-		goto out;
+	अगर (ufshcd_is_ufs_dev_घातeroff(hba) && ufshcd_is_link_off(hba))
+		जाओ out;
 
-	pm_runtime_get_sync(hba->dev);
+	pm_runसमय_get_sync(hba->dev);
 
 	ret = ufshcd_suspend(hba, UFS_SHUTDOWN_PM);
 out:
-	if (ret)
+	अगर (ret)
 		dev_err(hba->dev, "%s failed, err %d\n", __func__, ret);
-	hba->is_powered = false;
-	/* allow force shutdown even in case of errors */
-	return 0;
-}
-EXPORT_SYMBOL(ufshcd_shutdown);
+	hba->is_घातered = false;
+	/* allow क्रमce shutकरोwn even in हाल of errors */
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL(ufshcd_shutकरोwn);
 
 /**
- * ufshcd_remove - de-allocate SCSI host and host memory space
- *		data structure memory
+ * ufshcd_हटाओ - de-allocate SCSI host and host memory space
+ *		data काष्ठाure memory
  * @hba: per adapter instance
  */
-void ufshcd_remove(struct ufs_hba *hba)
-{
-	ufs_bsg_remove(hba);
-	ufs_sysfs_remove_nodes(hba->dev);
-	blk_cleanup_queue(hba->tmf_queue);
-	blk_mq_free_tag_set(&hba->tmf_tag_set);
+व्योम ufshcd_हटाओ(काष्ठा ufs_hba *hba)
+अणु
+	ufs_bsg_हटाओ(hba);
+	ufs_sysfs_हटाओ_nodes(hba->dev);
+	blk_cleanup_queue(hba->पंचांगf_queue);
+	blk_mq_मुक्त_tag_set(&hba->पंचांगf_tag_set);
 	blk_cleanup_queue(hba->cmd_queue);
-	scsi_remove_host(hba->host);
-	/* disable interrupts */
-	ufshcd_disable_intr(hba, hba->intr_mask);
+	scsi_हटाओ_host(hba->host);
+	/* disable पूर्णांकerrupts */
+	ufshcd_disable_पूर्णांकr(hba, hba->पूर्णांकr_mask);
 	ufshcd_hba_stop(hba);
-	ufshcd_hba_exit(hba);
-}
-EXPORT_SYMBOL_GPL(ufshcd_remove);
+	ufshcd_hba_निकास(hba);
+पूर्ण
+EXPORT_SYMBOL_GPL(ufshcd_हटाओ);
 
 /**
  * ufshcd_dealloc_host - deallocate Host Bus Adapter (HBA)
- * @hba: pointer to Host Bus Adapter (HBA)
+ * @hba: poपूर्णांकer to Host Bus Adapter (HBA)
  */
-void ufshcd_dealloc_host(struct ufs_hba *hba)
-{
+व्योम ufshcd_dealloc_host(काष्ठा ufs_hba *hba)
+अणु
 	scsi_host_put(hba->host);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(ufshcd_dealloc_host);
 
 /**
@@ -9184,43 +9185,43 @@ EXPORT_SYMBOL_GPL(ufshcd_dealloc_host);
  *			 addressing capability
  * @hba: per adapter instance
  *
- * Returns 0 for success, non-zero for failure
+ * Returns 0 क्रम success, non-zero क्रम failure
  */
-static int ufshcd_set_dma_mask(struct ufs_hba *hba)
-{
-	if (hba->capabilities & MASK_64_ADDRESSING_SUPPORT) {
-		if (!dma_set_mask_and_coherent(hba->dev, DMA_BIT_MASK(64)))
-			return 0;
-	}
-	return dma_set_mask_and_coherent(hba->dev, DMA_BIT_MASK(32));
-}
+अटल पूर्णांक ufshcd_set_dma_mask(काष्ठा ufs_hba *hba)
+अणु
+	अगर (hba->capabilities & MASK_64_ADDRESSING_SUPPORT) अणु
+		अगर (!dma_set_mask_and_coherent(hba->dev, DMA_BIT_MASK(64)))
+			वापस 0;
+	पूर्ण
+	वापस dma_set_mask_and_coherent(hba->dev, DMA_BIT_MASK(32));
+पूर्ण
 
 /**
  * ufshcd_alloc_host - allocate Host Bus Adapter (HBA)
- * @dev: pointer to device handle
- * @hba_handle: driver private handle
+ * @dev: poपूर्णांकer to device handle
+ * @hba_handle: driver निजी handle
  * Returns 0 on success, non-zero value on failure
  */
-int ufshcd_alloc_host(struct device *dev, struct ufs_hba **hba_handle)
-{
-	struct Scsi_Host *host;
-	struct ufs_hba *hba;
-	int err = 0;
+पूर्णांक ufshcd_alloc_host(काष्ठा device *dev, काष्ठा ufs_hba **hba_handle)
+अणु
+	काष्ठा Scsi_Host *host;
+	काष्ठा ufs_hba *hba;
+	पूर्णांक err = 0;
 
-	if (!dev) {
+	अगर (!dev) अणु
 		dev_err(dev,
 		"Invalid memory reference for dev is NULL\n");
 		err = -ENODEV;
-		goto out_error;
-	}
+		जाओ out_error;
+	पूर्ण
 
-	host = scsi_host_alloc(&ufshcd_driver_template,
-				sizeof(struct ufs_hba));
-	if (!host) {
+	host = scsi_host_alloc(&ufshcd_driver_ढाँचा,
+				माप(काष्ठा ufs_hba));
+	अगर (!host) अणु
 		dev_err(dev, "scsi_host_alloc failed\n");
 		err = -ENOMEM;
-		goto out_error;
-	}
+		जाओ out_error;
+	पूर्ण
 	hba = shost_priv(host);
 	hba->host = host;
 	hba->dev = dev;
@@ -9230,74 +9231,74 @@ int ufshcd_alloc_host(struct device *dev, struct ufs_hba **hba_handle)
 	INIT_LIST_HEAD(&hba->clk_list_head);
 
 out_error:
-	return err;
-}
+	वापस err;
+पूर्ण
 EXPORT_SYMBOL(ufshcd_alloc_host);
 
 /* This function exists because blk_mq_alloc_tag_set() requires this. */
-static blk_status_t ufshcd_queue_tmf(struct blk_mq_hw_ctx *hctx,
-				     const struct blk_mq_queue_data *qd)
-{
+अटल blk_status_t ufshcd_queue_पंचांगf(काष्ठा blk_mq_hw_ctx *hctx,
+				     स्थिर काष्ठा blk_mq_queue_data *qd)
+अणु
 	WARN_ON_ONCE(true);
-	return BLK_STS_NOTSUPP;
-}
+	वापस BLK_STS_NOTSUPP;
+पूर्ण
 
-static const struct blk_mq_ops ufshcd_tmf_ops = {
-	.queue_rq = ufshcd_queue_tmf,
-};
+अटल स्थिर काष्ठा blk_mq_ops ufshcd_पंचांगf_ops = अणु
+	.queue_rq = ufshcd_queue_पंचांगf,
+पूर्ण;
 
 /**
  * ufshcd_init - Driver initialization routine
  * @hba: per-adapter instance
- * @mmio_base: base register address
+ * @mmio_base: base रेजिस्टर address
  * @irq: Interrupt line of device
  * Returns 0 on success, non-zero value on failure
  */
-int ufshcd_init(struct ufs_hba *hba, void __iomem *mmio_base, unsigned int irq)
-{
-	int err;
-	struct Scsi_Host *host = hba->host;
-	struct device *dev = hba->dev;
-	char eh_wq_name[sizeof("ufs_eh_wq_00")];
+पूर्णांक ufshcd_init(काष्ठा ufs_hba *hba, व्योम __iomem *mmio_base, अचिन्हित पूर्णांक irq)
+अणु
+	पूर्णांक err;
+	काष्ठा Scsi_Host *host = hba->host;
+	काष्ठा device *dev = hba->dev;
+	अक्षर eh_wq_name[माप("ufs_eh_wq_00")];
 
-	if (!mmio_base) {
+	अगर (!mmio_base) अणु
 		dev_err(hba->dev,
 		"Invalid memory reference for mmio_base is NULL\n");
 		err = -ENODEV;
-		goto out_error;
-	}
+		जाओ out_error;
+	पूर्ण
 
 	hba->mmio_base = mmio_base;
 	hba->irq = irq;
 	hba->vps = &ufs_hba_vps;
 
 	err = ufshcd_hba_init(hba);
-	if (err)
-		goto out_error;
+	अगर (err)
+		जाओ out_error;
 
-	/* Read capabilities registers */
+	/* Read capabilities रेजिस्टरs */
 	err = ufshcd_hba_capabilities(hba);
-	if (err)
-		goto out_disable;
+	अगर (err)
+		जाओ out_disable;
 
 	/* Get UFS version supported by the controller */
 	hba->ufs_version = ufshcd_get_ufs_version(hba);
 
 	/* Get Interrupt bit mask per version */
-	hba->intr_mask = ufshcd_get_intr_mask(hba);
+	hba->पूर्णांकr_mask = ufshcd_get_पूर्णांकr_mask(hba);
 
 	err = ufshcd_set_dma_mask(hba);
-	if (err) {
+	अगर (err) अणु
 		dev_err(hba->dev, "set dma mask failed\n");
-		goto out_disable;
-	}
+		जाओ out_disable;
+	पूर्ण
 
-	/* Allocate memory for host memory space */
+	/* Allocate memory क्रम host memory space */
 	err = ufshcd_memory_alloc(hba);
-	if (err) {
+	अगर (err) अणु
 		dev_err(hba->dev, "Memory allocation failed\n");
-		goto out_disable;
-	}
+		जाओ out_disable;
+	पूर्ण
 
 	/* Configure LRB */
 	ufshcd_host_memory_configure(hba);
@@ -9313,15 +9314,15 @@ int ufshcd_init(struct ufs_hba *hba, void __iomem *mmio_base, unsigned int irq)
 	hba->max_pwr_info.is_valid = false;
 
 	/* Initialize work queues */
-	snprintf(eh_wq_name, sizeof(eh_wq_name), "ufs_eh_wq_%d",
+	snम_लिखो(eh_wq_name, माप(eh_wq_name), "ufs_eh_wq_%d",
 		 hba->host->host_no);
-	hba->eh_wq = create_singlethread_workqueue(eh_wq_name);
-	if (!hba->eh_wq) {
+	hba->eh_wq = create_singlethपढ़ो_workqueue(eh_wq_name);
+	अगर (!hba->eh_wq) अणु
 		dev_err(hba->dev, "%s: failed to create eh workqueue\n",
 				__func__);
 		err = -ENOMEM;
-		goto out_disable;
-	}
+		जाओ out_disable;
+	पूर्ण
 	INIT_WORK(&hba->eh_work, ufshcd_err_handler);
 	INIT_WORK(&hba->eeh_work, ufshcd_exception_event_handler);
 
@@ -9330,10 +9331,10 @@ int ufshcd_init(struct ufs_hba *hba, void __iomem *mmio_base, unsigned int irq)
 	/* Initialize UIC command mutex */
 	mutex_init(&hba->uic_cmd_mutex);
 
-	/* Initialize mutex for device management commands */
+	/* Initialize mutex क्रम device management commands */
 	mutex_init(&hba->dev_cmd.lock);
 
-	/* Initialize mutex for exception event control */
+	/* Initialize mutex क्रम exception event control */
 	mutex_init(&hba->ee_ctrl_mutex);
 
 	init_rwsem(&hba->clk_scaling_lock);
@@ -9343,54 +9344,54 @@ int ufshcd_init(struct ufs_hba *hba, void __iomem *mmio_base, unsigned int irq)
 	ufshcd_init_clk_scaling(hba);
 
 	/*
-	 * In order to avoid any spurious interrupt immediately after
-	 * registering UFS controller interrupt handler, clear any pending UFS
-	 * interrupt status and disable all the UFS interrupts.
+	 * In order to aव्योम any spurious पूर्णांकerrupt immediately after
+	 * रेजिस्टरing UFS controller पूर्णांकerrupt handler, clear any pending UFS
+	 * पूर्णांकerrupt status and disable all the UFS पूर्णांकerrupts.
 	 */
-	ufshcd_writel(hba, ufshcd_readl(hba, REG_INTERRUPT_STATUS),
+	ufshcd_ग_लिखोl(hba, ufshcd_पढ़ोl(hba, REG_INTERRUPT_STATUS),
 		      REG_INTERRUPT_STATUS);
-	ufshcd_writel(hba, 0, REG_INTERRUPT_ENABLE);
+	ufshcd_ग_लिखोl(hba, 0, REG_INTERRUPT_ENABLE);
 	/*
-	 * Make sure that UFS interrupts are disabled and any pending interrupt
-	 * status is cleared before registering UFS interrupt handler.
+	 * Make sure that UFS पूर्णांकerrupts are disabled and any pending पूर्णांकerrupt
+	 * status is cleared beक्रमe रेजिस्टरing UFS पूर्णांकerrupt handler.
 	 */
 	mb();
 
 	/* IRQ registration */
-	err = devm_request_irq(dev, irq, ufshcd_intr, IRQF_SHARED, UFSHCD, hba);
-	if (err) {
+	err = devm_request_irq(dev, irq, ufshcd_पूर्णांकr, IRQF_SHARED, UFSHCD, hba);
+	अगर (err) अणु
 		dev_err(hba->dev, "request irq failed\n");
-		goto out_disable;
-	} else {
+		जाओ out_disable;
+	पूर्ण अन्यथा अणु
 		hba->is_irq_enabled = true;
-	}
+	पूर्ण
 
 	err = scsi_add_host(host, hba->dev);
-	if (err) {
+	अगर (err) अणु
 		dev_err(hba->dev, "scsi_add_host failed\n");
-		goto out_disable;
-	}
+		जाओ out_disable;
+	पूर्ण
 
 	hba->cmd_queue = blk_mq_init_queue(&hba->host->tag_set);
-	if (IS_ERR(hba->cmd_queue)) {
+	अगर (IS_ERR(hba->cmd_queue)) अणु
 		err = PTR_ERR(hba->cmd_queue);
-		goto out_remove_scsi_host;
-	}
+		जाओ out_हटाओ_scsi_host;
+	पूर्ण
 
-	hba->tmf_tag_set = (struct blk_mq_tag_set) {
+	hba->पंचांगf_tag_set = (काष्ठा blk_mq_tag_set) अणु
 		.nr_hw_queues	= 1,
-		.queue_depth	= hba->nutmrs,
-		.ops		= &ufshcd_tmf_ops,
+		.queue_depth	= hba->nuपंचांगrs,
+		.ops		= &ufshcd_पंचांगf_ops,
 		.flags		= BLK_MQ_F_NO_SCHED,
-	};
-	err = blk_mq_alloc_tag_set(&hba->tmf_tag_set);
-	if (err < 0)
-		goto free_cmd_queue;
-	hba->tmf_queue = blk_mq_init_queue(&hba->tmf_tag_set);
-	if (IS_ERR(hba->tmf_queue)) {
-		err = PTR_ERR(hba->tmf_queue);
-		goto free_tmf_tag_set;
-	}
+	पूर्ण;
+	err = blk_mq_alloc_tag_set(&hba->पंचांगf_tag_set);
+	अगर (err < 0)
+		जाओ मुक्त_cmd_queue;
+	hba->पंचांगf_queue = blk_mq_init_queue(&hba->पंचांगf_tag_set);
+	अगर (IS_ERR(hba->पंचांगf_queue)) अणु
+		err = PTR_ERR(hba->पंचांगf_queue);
+		जाओ मुक्त_पंचांगf_tag_set;
+	पूर्ण
 
 	/* Reset the attached device */
 	ufshcd_device_reset(hba);
@@ -9399,41 +9400,41 @@ int ufshcd_init(struct ufs_hba *hba, void __iomem *mmio_base, unsigned int irq)
 
 	/* Host controller enable */
 	err = ufshcd_hba_enable(hba);
-	if (err) {
+	अगर (err) अणु
 		dev_err(hba->dev, "Host controller enable failed\n");
-		ufshcd_print_evt_hist(hba);
-		ufshcd_print_host_state(hba);
-		goto free_tmf_queue;
-	}
+		ufshcd_prपूर्णांक_evt_hist(hba);
+		ufshcd_prपूर्णांक_host_state(hba);
+		जाओ मुक्त_पंचांगf_queue;
+	पूर्ण
 
 	/*
-	 * Set the default power management level for runtime and system PM.
-	 * Default power saving mode is to keep UFS link in Hibern8 state
+	 * Set the शेष घातer management level क्रम runसमय and प्रणाली PM.
+	 * Default घातer saving mode is to keep UFS link in Hibern8 state
 	 * and UFS device in sleep state.
 	 */
-	hba->rpm_lvl = ufs_get_desired_pm_lvl_for_dev_link_state(
+	hba->rpm_lvl = ufs_get_desired_pm_lvl_क्रम_dev_link_state(
 						UFS_SLEEP_PWR_MODE,
 						UIC_LINK_HIBERN8_STATE);
-	hba->spm_lvl = ufs_get_desired_pm_lvl_for_dev_link_state(
+	hba->spm_lvl = ufs_get_desired_pm_lvl_क्रम_dev_link_state(
 						UFS_SLEEP_PWR_MODE,
 						UIC_LINK_HIBERN8_STATE);
 
 	INIT_DELAYED_WORK(&hba->rpm_dev_flush_recheck_work,
 			  ufshcd_rpm_dev_flush_recheck_work);
 
-	/* Set the default auto-hiberate idle timer value to 150 ms */
-	if (ufshcd_is_auto_hibern8_supported(hba) && !hba->ahit) {
+	/* Set the शेष स्वतः-hiberate idle समयr value to 150 ms */
+	अगर (ufshcd_is_स्वतः_hibern8_supported(hba) && !hba->ahit) अणु
 		hba->ahit = FIELD_PREP(UFSHCI_AHIBERN8_TIMER_MASK, 150) |
 			    FIELD_PREP(UFSHCI_AHIBERN8_SCALE_MASK, 3);
-	}
+	पूर्ण
 
-	/* Hold auto suspend until async scan completes */
-	pm_runtime_get_sync(dev);
+	/* Hold स्वतः suspend until async scan completes */
+	pm_runसमय_get_sync(dev);
 	atomic_set(&hba->scsi_block_reqs_cnt, 0);
 	/*
-	 * We are assuming that device wasn't put in sleep/power-down
-	 * state exclusively during the boot stage before kernel.
-	 * This assumption helps avoid doing link startup twice during
+	 * We are assuming that device wasn't put in sleep/घातer-करोwn
+	 * state exclusively during the boot stage beक्रमe kernel.
+	 * This assumption helps aव्योम करोing link startup twice during
 	 * ufshcd_probe_hba().
 	 */
 	ufshcd_set_ufs_dev_active(hba);
@@ -9441,37 +9442,37 @@ int ufshcd_init(struct ufs_hba *hba, void __iomem *mmio_base, unsigned int irq)
 	async_schedule(ufshcd_async_scan, hba);
 	ufs_sysfs_add_nodes(hba->dev);
 
-	return 0;
+	वापस 0;
 
-free_tmf_queue:
-	blk_cleanup_queue(hba->tmf_queue);
-free_tmf_tag_set:
-	blk_mq_free_tag_set(&hba->tmf_tag_set);
-free_cmd_queue:
+मुक्त_पंचांगf_queue:
+	blk_cleanup_queue(hba->पंचांगf_queue);
+मुक्त_पंचांगf_tag_set:
+	blk_mq_मुक्त_tag_set(&hba->पंचांगf_tag_set);
+मुक्त_cmd_queue:
 	blk_cleanup_queue(hba->cmd_queue);
-out_remove_scsi_host:
-	scsi_remove_host(hba->host);
+out_हटाओ_scsi_host:
+	scsi_हटाओ_host(hba->host);
 out_disable:
 	hba->is_irq_enabled = false;
-	ufshcd_hba_exit(hba);
+	ufshcd_hba_निकास(hba);
 out_error:
-	return err;
-}
+	वापस err;
+पूर्ण
 EXPORT_SYMBOL_GPL(ufshcd_init);
 
-static int __init ufshcd_core_init(void)
-{
+अटल पूर्णांक __init ufshcd_core_init(व्योम)
+अणु
 	ufs_debugfs_init();
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void __exit ufshcd_core_exit(void)
-{
-	ufs_debugfs_exit();
-}
+अटल व्योम __निकास ufshcd_core_निकास(व्योम)
+अणु
+	ufs_debugfs_निकास();
+पूर्ण
 
 module_init(ufshcd_core_init);
-module_exit(ufshcd_core_exit);
+module_निकास(ufshcd_core_निकास);
 
 MODULE_AUTHOR("Santosh Yaragnavi <santosh.sy@samsung.com>");
 MODULE_AUTHOR("Vinayak Holikatti <h.vinayak@samsung.com>");

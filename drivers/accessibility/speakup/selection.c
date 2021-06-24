@@ -1,48 +1,49 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <linux/slab.h> /* for kmalloc */
-#include <linux/consolemap.h>
-#include <linux/interrupt.h>
-#include <linux/sched.h>
-#include <linux/device.h> /* for dev_warn */
-#include <linux/selection.h>
-#include <linux/workqueue.h>
-#include <linux/tty.h>
-#include <linux/tty_flip.h>
-#include <linux/atomic.h>
-#include <linux/console.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <linux/slab.h> /* क्रम kदो_स्मृति */
+#समावेश <linux/consolemap.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/device.h> /* क्रम dev_warn */
+#समावेश <linux/selection.h>
+#समावेश <linux/workqueue.h>
+#समावेश <linux/tty.h>
+#समावेश <linux/tty_flip.h>
+#समावेश <linux/atomic.h>
+#समावेश <linux/console.h>
 
-#include "speakup.h"
+#समावेश "speakup.h"
 
-unsigned short spk_xs, spk_ys, spk_xe, spk_ye; /* our region points */
-struct vc_data *spk_sel_cons;
+अचिन्हित लघु spk_xs, spk_ys, spk_xe, spk_ye; /* our region poपूर्णांकs */
+काष्ठा vc_data *spk_sel_cons;
 
-struct speakup_selection_work {
-	struct work_struct work;
-	struct tiocl_selection sel;
-	struct tty_struct *tty;
-};
+काष्ठा speakup_selection_work अणु
+	काष्ठा work_काष्ठा work;
+	काष्ठा tiocl_selection sel;
+	काष्ठा tty_काष्ठा *tty;
+पूर्ण;
 
-static void __speakup_set_selection(struct work_struct *work)
-{
-	struct speakup_selection_work *ssw =
-		container_of(work, struct speakup_selection_work, work);
+अटल व्योम __speakup_set_selection(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा speakup_selection_work *ssw =
+		container_of(work, काष्ठा speakup_selection_work, work);
 
-	struct tty_struct *tty;
-	struct tiocl_selection sel;
+	काष्ठा tty_काष्ठा *tty;
+	काष्ठा tiocl_selection sel;
 
 	sel = ssw->sel;
 
-	/* this ensures we copy sel before releasing the lock below */
+	/* this ensures we copy sel beक्रमe releasing the lock below */
 	rmb();
 
-	/* release the lock by setting tty of the struct to NULL */
-	tty = xchg(&ssw->tty, NULL);
+	/* release the lock by setting tty of the काष्ठा to शून्य */
+	tty = xchg(&ssw->tty, शून्य);
 
-	if (spk_sel_cons != vc_cons[fg_console].d) {
+	अगर (spk_sel_cons != vc_cons[fg_console].d) अणु
 		spk_sel_cons = vc_cons[fg_console].d;
 		pr_warn("Selection: mark console not the same as cut\n");
-		goto unref;
-	}
+		जाओ unref;
+	पूर्ण
 
 	console_lock();
 	clear_selection();
@@ -52,29 +53,29 @@ static void __speakup_set_selection(struct work_struct *work)
 
 unref:
 	tty_kref_put(tty);
-}
+पूर्ण
 
-static struct speakup_selection_work speakup_sel_work = {
+अटल काष्ठा speakup_selection_work speakup_sel_work = अणु
 	.work = __WORK_INITIALIZER(speakup_sel_work.work,
 				   __speakup_set_selection)
-};
+पूर्ण;
 
-int speakup_set_selection(struct tty_struct *tty)
-{
-	/* we get kref here first in order to avoid a subtle race when
+पूर्णांक speakup_set_selection(काष्ठा tty_काष्ठा *tty)
+अणु
+	/* we get kref here first in order to aव्योम a subtle race when
 	 * cancelling selection work. getting kref first establishes the
-	 * invariant that if speakup_sel_work.tty is not NULL when
-	 * speakup_cancel_selection() is called, it must be the case that a put
+	 * invariant that अगर speakup_sel_work.tty is not शून्य when
+	 * speakup_cancel_selection() is called, it must be the हाल that a put
 	 * kref is pending.
 	 */
 	tty_kref_get(tty);
-	if (cmpxchg(&speakup_sel_work.tty, NULL, tty)) {
+	अगर (cmpxchg(&speakup_sel_work.tty, शून्य, tty)) अणु
 		tty_kref_put(tty);
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 	/* now we have the 'lock' by setting tty member of
-	 * speakup_selection_work. wmb() ensures that writes to
-	 * speakup_sel_work don't happen before cmpxchg() above.
+	 * speakup_selection_work. wmb() ensures that ग_लिखोs to
+	 * speakup_sel_work करोn't happen beक्रमe cmpxchg() above.
 	 */
 	wmb();
 
@@ -86,56 +87,56 @@ int speakup_set_selection(struct tty_struct *tty)
 
 	schedule_work_on(WORK_CPU_UNBOUND, &speakup_sel_work.work);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void speakup_cancel_selection(void)
-{
-	struct tty_struct *tty;
+व्योम speakup_cancel_selection(व्योम)
+अणु
+	काष्ठा tty_काष्ठा *tty;
 
 	cancel_work_sync(&speakup_sel_work.work);
-	/* setting to null so that if work fails to run and we cancel it,
-	 * we can run it again without getting EBUSY forever from there on.
-	 * we need to use xchg here to avoid race with speakup_set_selection()
+	/* setting to null so that अगर work fails to run and we cancel it,
+	 * we can run it again without getting EBUSY क्रमever from there on.
+	 * we need to use xchg here to aव्योम race with speakup_set_selection()
 	 */
-	tty = xchg(&speakup_sel_work.tty, NULL);
-	if (tty)
+	tty = xchg(&speakup_sel_work.tty, शून्य);
+	अगर (tty)
 		tty_kref_put(tty);
-}
+पूर्ण
 
-static void __speakup_paste_selection(struct work_struct *work)
-{
-	struct speakup_selection_work *ssw =
-		container_of(work, struct speakup_selection_work, work);
-	struct tty_struct *tty = xchg(&ssw->tty, NULL);
+अटल व्योम __speakup_paste_selection(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा speakup_selection_work *ssw =
+		container_of(work, काष्ठा speakup_selection_work, work);
+	काष्ठा tty_काष्ठा *tty = xchg(&ssw->tty, शून्य);
 
 	paste_selection(tty);
 	tty_kref_put(tty);
-}
+पूर्ण
 
-static struct speakup_selection_work speakup_paste_work = {
+अटल काष्ठा speakup_selection_work speakup_paste_work = अणु
 	.work = __WORK_INITIALIZER(speakup_paste_work.work,
 				   __speakup_paste_selection)
-};
+पूर्ण;
 
-int speakup_paste_selection(struct tty_struct *tty)
-{
+पूर्णांक speakup_paste_selection(काष्ठा tty_काष्ठा *tty)
+अणु
 	tty_kref_get(tty);
-	if (cmpxchg(&speakup_paste_work.tty, NULL, tty)) {
+	अगर (cmpxchg(&speakup_paste_work.tty, शून्य, tty)) अणु
 		tty_kref_put(tty);
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 
 	schedule_work_on(WORK_CPU_UNBOUND, &speakup_paste_work.work);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void speakup_cancel_paste(void)
-{
-	struct tty_struct *tty;
+व्योम speakup_cancel_paste(व्योम)
+अणु
+	काष्ठा tty_काष्ठा *tty;
 
 	cancel_work_sync(&speakup_paste_work.work);
-	tty = xchg(&speakup_paste_work.tty, NULL);
-	if (tty)
+	tty = xchg(&speakup_paste_work.tty, शून्य);
+	अगर (tty)
 		tty_kref_put(tty);
-}
+पूर्ण

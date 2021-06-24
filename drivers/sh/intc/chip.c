@@ -1,211 +1,212 @@
+<शैली गुरु>
 /*
- * IRQ chip definitions for INTC IRQs.
+ * IRQ chip definitions क्रम INTC IRQs.
  *
  * Copyright (C) 2007, 2008 Magnus Damm
  * Copyright (C) 2009 - 2012 Paul Mundt
  *
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the main directory of this archive
- * for more details.
+ * License.  See the file "COPYING" in the मुख्य directory of this archive
+ * क्रम more details.
  */
-#include <linux/cpumask.h>
-#include <linux/bsearch.h>
-#include <linux/io.h>
-#include "internals.h"
+#समावेश <linux/cpumask.h>
+#समावेश <linux/द्वा_खोज.h>
+#समावेश <linux/पन.स>
+#समावेश "internals.h"
 
-void _intc_enable(struct irq_data *data, unsigned long handle)
-{
-	unsigned int irq = data->irq;
-	struct intc_desc_int *d = get_intc_desc(irq);
-	unsigned long addr;
-	unsigned int cpu;
+व्योम _पूर्णांकc_enable(काष्ठा irq_data *data, अचिन्हित दीर्घ handle)
+अणु
+	अचिन्हित पूर्णांक irq = data->irq;
+	काष्ठा पूर्णांकc_desc_पूर्णांक *d = get_पूर्णांकc_desc(irq);
+	अचिन्हित दीर्घ addr;
+	अचिन्हित पूर्णांक cpu;
 
-	for (cpu = 0; cpu < SMP_NR(d, _INTC_ADDR_E(handle)); cpu++) {
-#ifdef CONFIG_SMP
-		if (!cpumask_test_cpu(cpu, irq_data_get_affinity_mask(data)))
-			continue;
-#endif
+	क्रम (cpu = 0; cpu < SMP_NR(d, _INTC_ADDR_E(handle)); cpu++) अणु
+#अगर_घोषित CONFIG_SMP
+		अगर (!cpumask_test_cpu(cpu, irq_data_get_affinity_mask(data)))
+			जारी;
+#पूर्ण_अगर
 		addr = INTC_REG(d, _INTC_ADDR_E(handle), cpu);
-		intc_enable_fns[_INTC_MODE(handle)](addr, handle, intc_reg_fns\
+		पूर्णांकc_enable_fns[_INTC_MODE(handle)](addr, handle, पूर्णांकc_reg_fns\
 						    [_INTC_FN(handle)], irq);
-	}
+	पूर्ण
 
-	intc_balancing_enable(irq);
-}
+	पूर्णांकc_balancing_enable(irq);
+पूर्ण
 
-static void intc_enable(struct irq_data *data)
-{
-	_intc_enable(data, (unsigned long)irq_data_get_irq_chip_data(data));
-}
+अटल व्योम पूर्णांकc_enable(काष्ठा irq_data *data)
+अणु
+	_पूर्णांकc_enable(data, (अचिन्हित दीर्घ)irq_data_get_irq_chip_data(data));
+पूर्ण
 
-static void intc_disable(struct irq_data *data)
-{
-	unsigned int irq = data->irq;
-	struct intc_desc_int *d = get_intc_desc(irq);
-	unsigned long handle = (unsigned long)irq_data_get_irq_chip_data(data);
-	unsigned long addr;
-	unsigned int cpu;
+अटल व्योम पूर्णांकc_disable(काष्ठा irq_data *data)
+अणु
+	अचिन्हित पूर्णांक irq = data->irq;
+	काष्ठा पूर्णांकc_desc_पूर्णांक *d = get_पूर्णांकc_desc(irq);
+	अचिन्हित दीर्घ handle = (अचिन्हित दीर्घ)irq_data_get_irq_chip_data(data);
+	अचिन्हित दीर्घ addr;
+	अचिन्हित पूर्णांक cpu;
 
-	intc_balancing_disable(irq);
+	पूर्णांकc_balancing_disable(irq);
 
-	for (cpu = 0; cpu < SMP_NR(d, _INTC_ADDR_D(handle)); cpu++) {
-#ifdef CONFIG_SMP
-		if (!cpumask_test_cpu(cpu, irq_data_get_affinity_mask(data)))
-			continue;
-#endif
+	क्रम (cpu = 0; cpu < SMP_NR(d, _INTC_ADDR_D(handle)); cpu++) अणु
+#अगर_घोषित CONFIG_SMP
+		अगर (!cpumask_test_cpu(cpu, irq_data_get_affinity_mask(data)))
+			जारी;
+#पूर्ण_अगर
 		addr = INTC_REG(d, _INTC_ADDR_D(handle), cpu);
-		intc_disable_fns[_INTC_MODE(handle)](addr, handle,intc_reg_fns\
+		पूर्णांकc_disable_fns[_INTC_MODE(handle)](addr, handle,पूर्णांकc_reg_fns\
 						     [_INTC_FN(handle)], irq);
-	}
-}
+	पूर्ण
+पूर्ण
 
-#ifdef CONFIG_SMP
+#अगर_घोषित CONFIG_SMP
 /*
- * This is held with the irq desc lock held, so we don't require any
- * additional locking here at the intc desc level. The affinity mask is
+ * This is held with the irq desc lock held, so we करोn't require any
+ * additional locking here at the पूर्णांकc desc level. The affinity mask is
  * later tested in the enable/disable paths.
  */
-static int intc_set_affinity(struct irq_data *data,
-			     const struct cpumask *cpumask,
-			     bool force)
-{
-	if (!cpumask_intersects(cpumask, cpu_online_mask))
-		return -1;
+अटल पूर्णांक पूर्णांकc_set_affinity(काष्ठा irq_data *data,
+			     स्थिर काष्ठा cpumask *cpumask,
+			     bool क्रमce)
+अणु
+	अगर (!cpumask_पूर्णांकersects(cpumask, cpu_online_mask))
+		वापस -1;
 
 	cpumask_copy(irq_data_get_affinity_mask(data), cpumask);
 
-	return IRQ_SET_MASK_OK_NOCOPY;
-}
-#endif
+	वापस IRQ_SET_MASK_OK_NOCOPY;
+पूर्ण
+#पूर्ण_अगर
 
-static void intc_mask_ack(struct irq_data *data)
-{
-	unsigned int irq = data->irq;
-	struct intc_desc_int *d = get_intc_desc(irq);
-	unsigned long handle = intc_get_ack_handle(irq);
-	void __iomem *addr;
+अटल व्योम पूर्णांकc_mask_ack(काष्ठा irq_data *data)
+अणु
+	अचिन्हित पूर्णांक irq = data->irq;
+	काष्ठा पूर्णांकc_desc_पूर्णांक *d = get_पूर्णांकc_desc(irq);
+	अचिन्हित दीर्घ handle = पूर्णांकc_get_ack_handle(irq);
+	व्योम __iomem *addr;
 
-	intc_disable(data);
+	पूर्णांकc_disable(data);
 
-	/* read register and write zero only to the associated bit */
-	if (handle) {
-		unsigned int value;
+	/* पढ़ो रेजिस्टर and ग_लिखो zero only to the associated bit */
+	अगर (handle) अणु
+		अचिन्हित पूर्णांक value;
 
-		addr = (void __iomem *)INTC_REG(d, _INTC_ADDR_D(handle), 0);
-		value = intc_set_field_from_handle(0, 1, handle);
+		addr = (व्योम __iomem *)INTC_REG(d, _INTC_ADDR_D(handle), 0);
+		value = पूर्णांकc_set_field_from_handle(0, 1, handle);
 
-		switch (_INTC_FN(handle)) {
-		case REG_FN_MODIFY_BASE + 0:	/* 8bit */
-			__raw_readb(addr);
-			__raw_writeb(0xff ^ value, addr);
-			break;
-		case REG_FN_MODIFY_BASE + 1:	/* 16bit */
-			__raw_readw(addr);
-			__raw_writew(0xffff ^ value, addr);
-			break;
-		case REG_FN_MODIFY_BASE + 3:	/* 32bit */
-			__raw_readl(addr);
-			__raw_writel(0xffffffff ^ value, addr);
-			break;
-		default:
+		चयन (_INTC_FN(handle)) अणु
+		हाल REG_FN_MODIFY_BASE + 0:	/* 8bit */
+			__raw_पढ़ोb(addr);
+			__raw_ग_लिखोb(0xff ^ value, addr);
+			अवरोध;
+		हाल REG_FN_MODIFY_BASE + 1:	/* 16bit */
+			__raw_पढ़ोw(addr);
+			__raw_ग_लिखोw(0xffff ^ value, addr);
+			अवरोध;
+		हाल REG_FN_MODIFY_BASE + 3:	/* 32bit */
+			__raw_पढ़ोl(addr);
+			__raw_ग_लिखोl(0xffffffff ^ value, addr);
+			अवरोध;
+		शेष:
 			BUG();
-			break;
-		}
-	}
-}
+			अवरोध;
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static struct intc_handle_int *intc_find_irq(struct intc_handle_int *hp,
-					     unsigned int nr_hp,
-					     unsigned int irq)
-{
-	struct intc_handle_int key;
+अटल काष्ठा पूर्णांकc_handle_पूर्णांक *पूर्णांकc_find_irq(काष्ठा पूर्णांकc_handle_पूर्णांक *hp,
+					     अचिन्हित पूर्णांक nr_hp,
+					     अचिन्हित पूर्णांक irq)
+अणु
+	काष्ठा पूर्णांकc_handle_पूर्णांक key;
 
 	key.irq = irq;
 	key.handle = 0;
 
-	return bsearch(&key, hp, nr_hp, sizeof(*hp), intc_handle_int_cmp);
-}
+	वापस द्वा_खोज(&key, hp, nr_hp, माप(*hp), पूर्णांकc_handle_पूर्णांक_cmp);
+पूर्ण
 
-int intc_set_priority(unsigned int irq, unsigned int prio)
-{
-	struct intc_desc_int *d = get_intc_desc(irq);
-	struct irq_data *data = irq_get_irq_data(irq);
-	struct intc_handle_int *ihp;
+पूर्णांक पूर्णांकc_set_priority(अचिन्हित पूर्णांक irq, अचिन्हित पूर्णांक prio)
+अणु
+	काष्ठा पूर्णांकc_desc_पूर्णांक *d = get_पूर्णांकc_desc(irq);
+	काष्ठा irq_data *data = irq_get_irq_data(irq);
+	काष्ठा पूर्णांकc_handle_पूर्णांक *ihp;
 
-	if (!intc_get_prio_level(irq) || prio <= 1)
-		return -EINVAL;
+	अगर (!पूर्णांकc_get_prio_level(irq) || prio <= 1)
+		वापस -EINVAL;
 
-	ihp = intc_find_irq(d->prio, d->nr_prio, irq);
-	if (ihp) {
-		if (prio >= (1 << _INTC_WIDTH(ihp->handle)))
-			return -EINVAL;
+	ihp = पूर्णांकc_find_irq(d->prio, d->nr_prio, irq);
+	अगर (ihp) अणु
+		अगर (prio >= (1 << _INTC_WIDTH(ihp->handle)))
+			वापस -EINVAL;
 
-		intc_set_prio_level(irq, prio);
+		पूर्णांकc_set_prio_level(irq, prio);
 
 		/*
 		 * only set secondary masking method directly
-		 * primary masking method is using intc_prio_level[irq]
+		 * primary masking method is using पूर्णांकc_prio_level[irq]
 		 * priority level will be set during next enable()
 		 */
-		if (_INTC_FN(ihp->handle) != REG_FN_ERR)
-			_intc_enable(data, ihp->handle);
-	}
-	return 0;
-}
+		अगर (_INTC_FN(ihp->handle) != REG_FN_ERR)
+			_पूर्णांकc_enable(data, ihp->handle);
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-#define SENSE_VALID_FLAG 0x80
-#define VALID(x) (x | SENSE_VALID_FLAG)
+#घोषणा SENSE_VALID_FLAG 0x80
+#घोषणा VALID(x) (x | SENSE_VALID_FLAG)
 
-static unsigned char intc_irq_sense_table[IRQ_TYPE_SENSE_MASK + 1] = {
+अटल अचिन्हित अक्षर पूर्णांकc_irq_sense_table[IRQ_TYPE_SENSE_MASK + 1] = अणु
 	[IRQ_TYPE_EDGE_FALLING] = VALID(0),
 	[IRQ_TYPE_EDGE_RISING] = VALID(1),
 	[IRQ_TYPE_LEVEL_LOW] = VALID(2),
-	/* SH7706, SH7707 and SH7709 do not support high level triggered */
-#if !defined(CONFIG_CPU_SUBTYPE_SH7706) && \
+	/* SH7706, SH7707 and SH7709 करो not support high level triggered */
+#अगर !defined(CONFIG_CPU_SUBTYPE_SH7706) && \
     !defined(CONFIG_CPU_SUBTYPE_SH7707) && \
     !defined(CONFIG_CPU_SUBTYPE_SH7709)
 	[IRQ_TYPE_LEVEL_HIGH] = VALID(3),
-#endif
-#if defined(CONFIG_ARM) /* all recent SH-Mobile / R-Mobile ARM support this */
+#पूर्ण_अगर
+#अगर defined(CONFIG_ARM) /* all recent SH-Mobile / R-Mobile ARM support this */
 	[IRQ_TYPE_EDGE_BOTH] = VALID(4),
-#endif
-};
+#पूर्ण_अगर
+पूर्ण;
 
-static int intc_set_type(struct irq_data *data, unsigned int type)
-{
-	unsigned int irq = data->irq;
-	struct intc_desc_int *d = get_intc_desc(irq);
-	unsigned char value = intc_irq_sense_table[type & IRQ_TYPE_SENSE_MASK];
-	struct intc_handle_int *ihp;
-	unsigned long addr;
+अटल पूर्णांक पूर्णांकc_set_type(काष्ठा irq_data *data, अचिन्हित पूर्णांक type)
+अणु
+	अचिन्हित पूर्णांक irq = data->irq;
+	काष्ठा पूर्णांकc_desc_पूर्णांक *d = get_पूर्णांकc_desc(irq);
+	अचिन्हित अक्षर value = पूर्णांकc_irq_sense_table[type & IRQ_TYPE_SENSE_MASK];
+	काष्ठा पूर्णांकc_handle_पूर्णांक *ihp;
+	अचिन्हित दीर्घ addr;
 
-	if (!value)
-		return -EINVAL;
+	अगर (!value)
+		वापस -EINVAL;
 
 	value &= ~SENSE_VALID_FLAG;
 
-	ihp = intc_find_irq(d->sense, d->nr_sense, irq);
-	if (ihp) {
-		/* PINT has 2-bit sense registers, should fail on EDGE_BOTH */
-		if (value >= (1 << _INTC_WIDTH(ihp->handle)))
-			return -EINVAL;
+	ihp = पूर्णांकc_find_irq(d->sense, d->nr_sense, irq);
+	अगर (ihp) अणु
+		/* PINT has 2-bit sense रेजिस्टरs, should fail on EDGE_BOTH */
+		अगर (value >= (1 << _INTC_WIDTH(ihp->handle)))
+			वापस -EINVAL;
 
 		addr = INTC_REG(d, _INTC_ADDR_E(ihp->handle), 0);
-		intc_reg_fns[_INTC_FN(ihp->handle)](addr, ihp->handle, value);
-	}
+		पूर्णांकc_reg_fns[_INTC_FN(ihp->handle)](addr, ihp->handle, value);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-struct irq_chip intc_irq_chip	= {
-	.irq_mask		= intc_disable,
-	.irq_unmask		= intc_enable,
-	.irq_mask_ack		= intc_mask_ack,
-	.irq_enable		= intc_enable,
-	.irq_disable		= intc_disable,
-	.irq_set_type		= intc_set_type,
-#ifdef CONFIG_SMP
-	.irq_set_affinity	= intc_set_affinity,
-#endif
+काष्ठा irq_chip पूर्णांकc_irq_chip	= अणु
+	.irq_mask		= पूर्णांकc_disable,
+	.irq_unmask		= पूर्णांकc_enable,
+	.irq_mask_ack		= पूर्णांकc_mask_ack,
+	.irq_enable		= पूर्णांकc_enable,
+	.irq_disable		= पूर्णांकc_disable,
+	.irq_set_type		= पूर्णांकc_set_type,
+#अगर_घोषित CONFIG_SMP
+	.irq_set_affinity	= पूर्णांकc_set_affinity,
+#पूर्ण_अगर
 	.flags			= IRQCHIP_SKIP_SET_WAKE,
-};
+पूर्ण;

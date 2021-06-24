@@ -1,52 +1,53 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /* Copyright (c) 2013-2014, 2016-2018 The Linux Foundation. All rights reserved.
  *
  * RMNET Data configuration engine
  */
 
-#include <linux/skbuff.h>
-#include <net/gro_cells.h>
+#समावेश <linux/skbuff.h>
+#समावेश <net/gro_cells.h>
 
-#ifndef _RMNET_CONFIG_H_
-#define _RMNET_CONFIG_H_
+#अगर_अघोषित _RMNET_CONFIG_H_
+#घोषणा _RMNET_CONFIG_H_
 
-#define RMNET_MAX_LOGICAL_EP 255
+#घोषणा RMNET_MAX_LOGICAL_EP 255
 
-struct rmnet_endpoint {
+काष्ठा rmnet_endpoपूर्णांक अणु
 	u8 mux_id;
-	struct net_device *egress_dev;
-	struct hlist_node hlnode;
-};
+	काष्ठा net_device *egress_dev;
+	काष्ठा hlist_node hlnode;
+पूर्ण;
 
-/* One instance of this structure is instantiated for each real_dev associated
+/* One instance of this काष्ठाure is instantiated क्रम each real_dev associated
  * with rmnet.
  */
-struct rmnet_port {
-	struct net_device *dev;
-	u32 data_format;
+काष्ठा rmnet_port अणु
+	काष्ठा net_device *dev;
+	u32 data_क्रमmat;
 	u8 nr_rmnet_devs;
 	u8 rmnet_mode;
-	struct hlist_head muxed_ep[RMNET_MAX_LOGICAL_EP];
-	struct net_device *bridge_ep;
-	struct net_device *rmnet_dev;
-};
+	काष्ठा hlist_head muxed_ep[RMNET_MAX_LOGICAL_EP];
+	काष्ठा net_device *bridge_ep;
+	काष्ठा net_device *rmnet_dev;
+पूर्ण;
 
-extern struct rtnl_link_ops rmnet_link_ops;
+बाह्य काष्ठा rtnl_link_ops rmnet_link_ops;
 
-struct rmnet_vnd_stats {
+काष्ठा rmnet_vnd_stats अणु
 	u64 rx_pkts;
 	u64 rx_bytes;
 	u64 tx_pkts;
 	u64 tx_bytes;
 	u32 tx_drops;
-};
+पूर्ण;
 
-struct rmnet_pcpu_stats {
-	struct rmnet_vnd_stats stats;
-	struct u64_stats_sync syncp;
-};
+काष्ठा rmnet_pcpu_stats अणु
+	काष्ठा rmnet_vnd_stats stats;
+	काष्ठा u64_stats_sync syncp;
+पूर्ण;
 
-struct rmnet_priv_stats {
+काष्ठा rmnet_priv_stats अणु
 	u64 csum_ok;
 	u64 csum_valid_unset;
 	u64 csum_validation_failed;
@@ -56,23 +57,23 @@ struct rmnet_priv_stats {
 	u64 csum_fragmented_pkt;
 	u64 csum_skipped;
 	u64 csum_sw;
-};
+पूर्ण;
 
-struct rmnet_priv {
+काष्ठा rmnet_priv अणु
 	u8 mux_id;
-	struct net_device *real_dev;
-	struct rmnet_pcpu_stats __percpu *pcpu_stats;
-	struct gro_cells gro_cells;
-	struct rmnet_priv_stats stats;
-};
+	काष्ठा net_device *real_dev;
+	काष्ठा rmnet_pcpu_stats __percpu *pcpu_stats;
+	काष्ठा gro_cells gro_cells;
+	काष्ठा rmnet_priv_stats stats;
+पूर्ण;
 
-struct rmnet_port *rmnet_get_port_rcu(struct net_device *real_dev);
-struct rmnet_endpoint *rmnet_get_endpoint(struct rmnet_port *port, u8 mux_id);
-int rmnet_add_bridge(struct net_device *rmnet_dev,
-		     struct net_device *slave_dev,
-		     struct netlink_ext_ack *extack);
-int rmnet_del_bridge(struct net_device *rmnet_dev,
-		     struct net_device *slave_dev);
-struct rmnet_port*
-rmnet_get_port_rtnl(const struct net_device *real_dev);
-#endif /* _RMNET_CONFIG_H_ */
+काष्ठा rmnet_port *rmnet_get_port_rcu(काष्ठा net_device *real_dev);
+काष्ठा rmnet_endpoपूर्णांक *rmnet_get_endpoपूर्णांक(काष्ठा rmnet_port *port, u8 mux_id);
+पूर्णांक rmnet_add_bridge(काष्ठा net_device *rmnet_dev,
+		     काष्ठा net_device *slave_dev,
+		     काष्ठा netlink_ext_ack *extack);
+पूर्णांक rmnet_del_bridge(काष्ठा net_device *rmnet_dev,
+		     काष्ठा net_device *slave_dev);
+काष्ठा rmnet_port*
+rmnet_get_port_rtnl(स्थिर काष्ठा net_device *real_dev);
+#पूर्ण_अगर /* _RMNET_CONFIG_H_ */

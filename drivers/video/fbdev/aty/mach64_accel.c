@@ -1,44 +1,45 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 
 /*
  *  ATI Mach64 Hardware Acceleration
  */
 
-#include <linux/delay.h>
-#include <asm/unaligned.h>
-#include <linux/fb.h>
-#include <video/mach64.h>
-#include "atyfb.h"
+#समावेश <linux/delay.h>
+#समावेश <यंत्र/unaligned.h>
+#समावेश <linux/fb.h>
+#समावेश <video/mach64.h>
+#समावेश "atyfb.h"
 
     /*
      *  Generic Mach64 routines
      */
 
-/* this is for DMA GUI engine! work in progress */
-typedef struct {
+/* this is क्रम DMA GUI engine! work in progress */
+प्रकार काष्ठा अणु
 	u32 frame_buf_offset;
-	u32 system_mem_addr;
+	u32 प्रणाली_mem_addr;
 	u32 command;
 	u32 reserved;
-} BM_DESCRIPTOR_ENTRY;
+पूर्ण BM_DESCRIPTOR_ENTRY;
 
-#define LAST_DESCRIPTOR (1 << 31)
-#define SYSTEM_TO_FRAME_BUFFER 0
+#घोषणा LAST_DESCRIPTOR (1 << 31)
+#घोषणा SYSTEM_TO_FRAME_BUFFER 0
 
-static u32 rotation24bpp(u32 dx, u32 direction)
-{
+अटल u32 rotation24bpp(u32 dx, u32 direction)
+अणु
 	u32 rotation;
-	if (direction & DST_X_LEFT_TO_RIGHT) {
+	अगर (direction & DST_X_LEFT_TO_RIGHT) अणु
 		rotation = (dx / 4) % 6;
-	} else {
+	पूर्ण अन्यथा अणु
 		rotation = ((dx + 2) / 4) % 6;
-	}
+	पूर्ण
 
-	return ((rotation << 8) | DST_24_ROTATION_ENABLE);
-}
+	वापस ((rotation << 8) | DST_24_ROTATION_ENABLE);
+पूर्ण
 
-void aty_reset_engine(struct atyfb_par *par)
-{
+व्योम aty_reset_engine(काष्ठा atyfb_par *par)
+अणु
 	/* reset engine */
 	aty_st_le32(GEN_TEST_CNTL,
 		aty_ld_le32(GEN_TEST_CNTL, par) &
@@ -51,60 +52,60 @@ void aty_reset_engine(struct atyfb_par *par)
 	aty_st_le32(BUS_CNTL,
 		aty_ld_le32(BUS_CNTL, par) | BUS_HOST_ERR_ACK | BUS_FIFO_ERR_ACK, par);
 
-	par->fifo_space = 0;
-}
+	par->fअगरo_space = 0;
+पूर्ण
 
-static void reset_GTC_3D_engine(const struct atyfb_par *par)
-{
+अटल व्योम reset_GTC_3D_engine(स्थिर काष्ठा atyfb_par *par)
+अणु
 	aty_st_le32(SCALE_3D_CNTL, 0xc0, par);
 	mdelay(GTC_3D_RESET_DELAY);
 	aty_st_le32(SETUP_CNTL, 0x00, par);
 	mdelay(GTC_3D_RESET_DELAY);
 	aty_st_le32(SCALE_3D_CNTL, 0x00, par);
 	mdelay(GTC_3D_RESET_DELAY);
-}
+पूर्ण
 
-void aty_init_engine(struct atyfb_par *par, struct fb_info *info)
-{
+व्योम aty_init_engine(काष्ठा atyfb_par *par, काष्ठा fb_info *info)
+अणु
 	u32 pitch_value;
 	u32 vxres;
 
-	/* determine modal information from global mode structure */
+	/* determine modal inक्रमmation from global mode काष्ठाure */
 	pitch_value = info->fix.line_length / (info->var.bits_per_pixel / 8);
-	vxres = info->var.xres_virtual;
+	vxres = info->var.xres_भव;
 
-	if (info->var.bits_per_pixel == 24) {
+	अगर (info->var.bits_per_pixel == 24) अणु
 		/* In 24 bpp, the engine is in 8 bpp - this requires that all */
 		/* horizontal coordinates and widths must be adjusted */
 		pitch_value *= 3;
 		vxres *= 3;
-	}
+	पूर्ण
 
-	/* On GTC (RagePro), we need to reset the 3D engine before */
-	if (M64_HAS(RESET_3D))
+	/* On GTC (RagePro), we need to reset the 3D engine beक्रमe */
+	अगर (M64_HAS(RESET_3D))
 		reset_GTC_3D_engine(par);
 
 	/* Reset engine, enable, and clear any engine errors */
 	aty_reset_engine(par);
-	/* Ensure that vga page pointers are set to zero - the upper */
-	/* page pointers are set to 1 to handle overflows in the */
+	/* Ensure that vga page poपूर्णांकers are set to zero - the upper */
+	/* page poपूर्णांकers are set to 1 to handle overflows in the */
 	/* lower page */
 	aty_st_le32(MEM_VGA_WP_SEL, 0x00010000, par);
 	aty_st_le32(MEM_VGA_RP_SEL, 0x00010000, par);
 
 	/* ---- Setup standard engine context ---- */
 
-	/* All GUI registers here are FIFOed - therefore, wait for */
+	/* All GUI रेजिस्टरs here are FIFOed - thereक्रमe, रुको क्रम */
 	/* the appropriate number of empty FIFO entries */
-	wait_for_fifo(14, par);
+	रुको_क्रम_fअगरo(14, par);
 
-	/* enable all registers to be loaded for context loads */
+	/* enable all रेजिस्टरs to be loaded क्रम context loads */
 	aty_st_le32(CONTEXT_MASK, 0xFFFFFFFF, par);
 
 	/* set destination pitch to modal pitch, set offset to zero */
 	aty_st_le32(DST_OFF_PITCH, (pitch_value / 8) << 22, par);
 
-	/* zero these registers (set them to a known state) */
+	/* zero these रेजिस्टरs (set them to a known state) */
 	aty_st_le32(DST_Y_X, 0, par);
 	aty_st_le32(DST_HEIGHT, 0, par);
 	aty_st_le32(DST_BRES_ERR, 0, par);
@@ -118,7 +119,7 @@ void aty_init_engine(struct atyfb_par *par, struct fb_info *info)
 	/* set source pitch to modal pitch, set offset to zero */
 	aty_st_le32(SRC_OFF_PITCH, (pitch_value / 8) << 22, par);
 
-	/* set these registers to a known state */
+	/* set these रेजिस्टरs to a known state */
 	aty_st_le32(SRC_Y_X, 0, par);
 	aty_st_le32(SRC_HEIGHT1_WIDTH1, 1, par);
 	aty_st_le32(SRC_Y_X_START, 0, par);
@@ -128,7 +129,7 @@ void aty_init_engine(struct atyfb_par *par, struct fb_info *info)
 	aty_st_le32(SRC_CNTL, SRC_LINE_X_LEFT_TO_RIGHT, par);
 
 	/* set host attributes */
-	wait_for_fifo(13, par);
+	रुको_क्रम_fअगरo(13, par);
 	aty_st_le32(HOST_CNTL, HOST_BYTE_ALIGN, par);
 
 	/* set pattern attributes */
@@ -145,134 +146,134 @@ void aty_init_engine(struct atyfb_par *par, struct fb_info *info)
 	/* set background color to minimum value (usually BLACK) */
 	aty_st_le32(DP_BKGD_CLR, 0, par);
 
-	/* set foreground color to maximum value (usually WHITE) */
+	/* set क्रमeground color to maximum value (usually WHITE) */
 	aty_st_le32(DP_FRGD_CLR, 0xFFFFFFFF, par);
 
-	/* set write mask to effect all pixel bits */
+	/* set ग_लिखो mask to effect all pixel bits */
 	aty_st_le32(DP_WRITE_MASK, 0xFFFFFFFF, par);
 
-	/* set foreground mix to overpaint and background mix to */
+	/* set क्रमeground mix to overpaपूर्णांक and background mix to */
 	/* no-effect */
 	aty_st_le32(DP_MIX, FRGD_MIX_S | BKGD_MIX_D, par);
 
-	/* set primary source pixel channel to foreground color */
-	/* register */
+	/* set primary source pixel channel to क्रमeground color */
+	/* रेजिस्टर */
 	aty_st_le32(DP_SRC, FRGD_SRC_FRGD_CLR, par);
 
 	/* set compare functionality to false (no-effect on */
 	/* destination) */
-	wait_for_fifo(3, par);
+	रुको_क्रम_fअगरo(3, par);
 	aty_st_le32(CLR_CMP_CLR, 0, par);
 	aty_st_le32(CLR_CMP_MASK, 0xFFFFFFFF, par);
 	aty_st_le32(CLR_CMP_CNTL, 0, par);
 
 	/* set pixel depth */
-	wait_for_fifo(2, par);
+	रुको_क्रम_fअगरo(2, par);
 	aty_st_le32(DP_PIX_WIDTH, par->crtc.dp_pix_width, par);
 	aty_st_le32(DP_CHAIN_MASK, par->crtc.dp_chain_mask, par);
 
-	wait_for_fifo(5, par);
+	रुको_क्रम_fअगरo(5, par);
  	aty_st_le32(SCALE_3D_CNTL, 0, par);
 	aty_st_le32(Z_CNTL, 0, par);
 	aty_st_le32(CRTC_INT_CNTL, aty_ld_le32(CRTC_INT_CNTL, par) & ~0x20,
 		    par);
 	aty_st_le32(GUI_TRAJ_CNTL, 0x100023, par);
 
-	/* insure engine is idle before leaving */
-	wait_for_idle(par);
-}
+	/* insure engine is idle beक्रमe leaving */
+	रुको_क्रम_idle(par);
+पूर्ण
 
     /*
      *  Accelerated functions
      */
 
-static inline void draw_rect(s16 x, s16 y, u16 width, u16 height,
-			     struct atyfb_par *par)
-{
-	/* perform rectangle fill */
-	wait_for_fifo(2, par);
+अटल अंतरभूत व्योम draw_rect(s16 x, s16 y, u16 width, u16 height,
+			     काष्ठा atyfb_par *par)
+अणु
+	/* perक्रमm rectangle fill */
+	रुको_क्रम_fअगरo(2, par);
 	aty_st_le32(DST_Y_X, (x << 16) | y, par);
 	aty_st_le32(DST_HEIGHT_WIDTH, (width << 16) | height, par);
 	par->blitter_may_be_busy = 1;
-}
+पूर्ण
 
-void atyfb_copyarea(struct fb_info *info, const struct fb_copyarea *area)
-{
-	struct atyfb_par *par = (struct atyfb_par *) info->par;
+व्योम atyfb_copyarea(काष्ठा fb_info *info, स्थिर काष्ठा fb_copyarea *area)
+अणु
+	काष्ठा atyfb_par *par = (काष्ठा atyfb_par *) info->par;
 	u32 dy = area->dy, sy = area->sy, direction = DST_LAST_PEL;
 	u32 sx = area->sx, dx = area->dx, width = area->width, rotation = 0;
 
-	if (par->asleep)
-		return;
-	if (!area->width || !area->height)
-		return;
-	if (!par->accel_flags) {
+	अगर (par->asleep)
+		वापस;
+	अगर (!area->width || !area->height)
+		वापस;
+	अगर (!par->accel_flags) अणु
 		cfb_copyarea(info, area);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (info->var.bits_per_pixel == 24) {
+	अगर (info->var.bits_per_pixel == 24) अणु
 		/* In 24 bpp, the engine is in 8 bpp - this requires that all */
 		/* horizontal coordinates and widths must be adjusted */
 		sx *= 3;
 		dx *= 3;
 		width *= 3;
-	}
+	पूर्ण
 
-	if (area->sy < area->dy) {
+	अगर (area->sy < area->dy) अणु
 		dy += area->height - 1;
 		sy += area->height - 1;
-	} else
+	पूर्ण अन्यथा
 		direction |= DST_Y_TOP_TO_BOTTOM;
 
-	if (sx < dx) {
+	अगर (sx < dx) अणु
 		dx += width - 1;
 		sx += width - 1;
-	} else
+	पूर्ण अन्यथा
 		direction |= DST_X_LEFT_TO_RIGHT;
 
-	if (info->var.bits_per_pixel == 24) {
+	अगर (info->var.bits_per_pixel == 24) अणु
 		rotation = rotation24bpp(dx, direction);
-	}
+	पूर्ण
 
-	wait_for_fifo(5, par);
+	रुको_क्रम_fअगरo(5, par);
 	aty_st_le32(DP_PIX_WIDTH, par->crtc.dp_pix_width, par);
 	aty_st_le32(DP_SRC, FRGD_SRC_BLIT, par);
 	aty_st_le32(SRC_Y_X, (sx << 16) | sy, par);
 	aty_st_le32(SRC_HEIGHT1_WIDTH1, (width << 16) | area->height, par);
 	aty_st_le32(DST_CNTL, direction | rotation, par);
 	draw_rect(dx, dy, width, area->height, par);
-}
+पूर्ण
 
-void atyfb_fillrect(struct fb_info *info, const struct fb_fillrect *rect)
-{
-	struct atyfb_par *par = (struct atyfb_par *) info->par;
+व्योम atyfb_fillrect(काष्ठा fb_info *info, स्थिर काष्ठा fb_fillrect *rect)
+अणु
+	काष्ठा atyfb_par *par = (काष्ठा atyfb_par *) info->par;
 	u32 color, dx = rect->dx, width = rect->width, rotation = 0;
 
-	if (par->asleep)
-		return;
-	if (!rect->width || !rect->height)
-		return;
-	if (!par->accel_flags) {
+	अगर (par->asleep)
+		वापस;
+	अगर (!rect->width || !rect->height)
+		वापस;
+	अगर (!par->accel_flags) अणु
 		cfb_fillrect(info, rect);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (info->fix.visual == FB_VISUAL_TRUECOLOR ||
-	    info->fix.visual == FB_VISUAL_DIRECTCOLOR)
-		color = ((u32 *)(info->pseudo_palette))[rect->color];
-	else
+	अगर (info->fix.visual == FB_VISUAL_TRUECOLOR ||
+	    info->fix.visual == FB_VISUAL_सूचीECTCOLOR)
+		color = ((u32 *)(info->pseuकरो_palette))[rect->color];
+	अन्यथा
 		color = rect->color;
 
-	if (info->var.bits_per_pixel == 24) {
+	अगर (info->var.bits_per_pixel == 24) अणु
 		/* In 24 bpp, the engine is in 8 bpp - this requires that all */
 		/* horizontal coordinates and widths must be adjusted */
 		dx *= 3;
 		width *= 3;
 		rotation = rotation24bpp(dx, DST_X_LEFT_TO_RIGHT);
-	}
+	पूर्ण
 
-	wait_for_fifo(4, par);
+	रुको_क्रम_fअगरo(4, par);
 	aty_st_le32(DP_PIX_WIDTH, par->crtc.dp_pix_width, par);
 	aty_st_le32(DP_FRGD_CLR, color, par);
 	aty_st_le32(DP_SRC,
@@ -282,58 +283,58 @@ void atyfb_fillrect(struct fb_info *info, const struct fb_fillrect *rect)
 		    DST_LAST_PEL | DST_Y_TOP_TO_BOTTOM |
 		    DST_X_LEFT_TO_RIGHT | rotation, par);
 	draw_rect(dx, rect->dy, width, rect->height, par);
-}
+पूर्ण
 
-void atyfb_imageblit(struct fb_info *info, const struct fb_image *image)
-{
-	struct atyfb_par *par = (struct atyfb_par *) info->par;
+व्योम atyfb_imageblit(काष्ठा fb_info *info, स्थिर काष्ठा fb_image *image)
+अणु
+	काष्ठा atyfb_par *par = (काष्ठा atyfb_par *) info->par;
 	u32 src_bytes, dx = image->dx, dy = image->dy, width = image->width;
 	u32 pix_width, rotation = 0, src, mix;
 
-	if (par->asleep)
-		return;
-	if (!image->width || !image->height)
-		return;
-	if (!par->accel_flags ||
-	    (image->depth != 1 && info->var.bits_per_pixel != image->depth)) {
+	अगर (par->asleep)
+		वापस;
+	अगर (!image->width || !image->height)
+		वापस;
+	अगर (!par->accel_flags ||
+	    (image->depth != 1 && info->var.bits_per_pixel != image->depth)) अणु
 		cfb_imageblit(info, image);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	pix_width = par->crtc.dp_pix_width;
 
-	switch (image->depth) {
-	case 1:
+	चयन (image->depth) अणु
+	हाल 1:
 	    pix_width &= ~(BYTE_ORDER_MASK | HOST_MASK);
 	    pix_width |= (BYTE_ORDER_MSB_TO_LSB | HOST_1BPP);
-	    break;
-	case 4:
+	    अवरोध;
+	हाल 4:
 	    pix_width &= ~(BYTE_ORDER_MASK | HOST_MASK);
 	    pix_width |= (BYTE_ORDER_MSB_TO_LSB | HOST_4BPP);
-	    break;
-	case 8:
+	    अवरोध;
+	हाल 8:
 	    pix_width &= ~HOST_MASK;
 	    pix_width |= HOST_8BPP;
-	    break;
-	case 15:
+	    अवरोध;
+	हाल 15:
 	    pix_width &= ~HOST_MASK;
 	    pix_width |= HOST_15BPP;
-	    break;
-	case 16:
+	    अवरोध;
+	हाल 16:
 	    pix_width &= ~HOST_MASK;
 	    pix_width |= HOST_16BPP;
-	    break;
-	case 24:
+	    अवरोध;
+	हाल 24:
 	    pix_width &= ~HOST_MASK;
 	    pix_width |= HOST_24BPP;
-	    break;
-	case 32:
+	    अवरोध;
+	हाल 32:
 	    pix_width &= ~HOST_MASK;
 	    pix_width |= HOST_32BPP;
-	    break;
-	}
+	    अवरोध;
+	पूर्ण
 
-	if (info->var.bits_per_pixel == 24) {
+	अगर (info->var.bits_per_pixel == 24) अणु
 		/* In 24 bpp, the engine is in 8 bpp - this requires that all */
 		/* horizontal coordinates and widths must be adjusted */
 		dx *= 3;
@@ -348,32 +349,32 @@ void atyfb_imageblit(struct fb_info *info, const struct fb_image *image)
 		 * since Rage 3D IIc we have DP_HOST_TRIPLE_EN bit
 		 * this hwaccelerated triple has an issue with not aligned data
 		 */
-		if (image->depth == 1 && M64_HAS(HW_TRIPLE) && image->width % 8 == 0)
+		अगर (image->depth == 1 && M64_HAS(HW_TRIPLE) && image->width % 8 == 0)
 			pix_width |= DP_HOST_TRIPLE_EN;
-	}
+	पूर्ण
 
-	if (image->depth == 1) {
+	अगर (image->depth == 1) अणु
 		u32 fg, bg;
-		if (info->fix.visual == FB_VISUAL_TRUECOLOR ||
-		    info->fix.visual == FB_VISUAL_DIRECTCOLOR) {
-			fg = ((u32*)(info->pseudo_palette))[image->fg_color];
-			bg = ((u32*)(info->pseudo_palette))[image->bg_color];
-		} else {
+		अगर (info->fix.visual == FB_VISUAL_TRUECOLOR ||
+		    info->fix.visual == FB_VISUAL_सूचीECTCOLOR) अणु
+			fg = ((u32*)(info->pseuकरो_palette))[image->fg_color];
+			bg = ((u32*)(info->pseuकरो_palette))[image->bg_color];
+		पूर्ण अन्यथा अणु
 			fg = image->fg_color;
 			bg = image->bg_color;
-		}
+		पूर्ण
 
-		wait_for_fifo(2, par);
+		रुको_क्रम_fअगरo(2, par);
 		aty_st_le32(DP_BKGD_CLR, bg, par);
 		aty_st_le32(DP_FRGD_CLR, fg, par);
 		src = MONO_SRC_HOST | FRGD_SRC_FRGD_CLR | BKGD_SRC_BKGD_CLR;
 		mix = FRGD_MIX_S | BKGD_MIX_S;
-	} else {
+	पूर्ण अन्यथा अणु
 		src = MONO_SRC_ONE | FRGD_SRC_HOST;
 		mix = FRGD_MIX_D_XOR_S | BKGD_MIX_D;
-	}
+	पूर्ण
 
-	wait_for_fifo(5, par);
+	रुको_क्रम_fअगरo(5, par);
 	aty_st_le32(DP_PIX_WIDTH, pix_width, par);
 	aty_st_le32(DP_MIX, mix, par);
 	aty_st_le32(DP_SRC, src, par);
@@ -384,46 +385,46 @@ void atyfb_imageblit(struct fb_info *info, const struct fb_image *image)
 	src_bytes = (((image->width * image->depth) + 7) / 8) * image->height;
 
 	/* manual triple each pixel */
-	if (image->depth == 1 && info->var.bits_per_pixel == 24 && !(pix_width & DP_HOST_TRIPLE_EN)) {
-		int inbit, outbit, mult24, byte_id_in_dword, width;
-		u8 *pbitmapin = (u8*)image->data, *pbitmapout;
+	अगर (image->depth == 1 && info->var.bits_per_pixel == 24 && !(pix_width & DP_HOST_TRIPLE_EN)) अणु
+		पूर्णांक inbit, outbit, mult24, byte_id_in_dword, width;
+		u8 *pbiपंचांगapin = (u8*)image->data, *pbiपंचांगapout;
 		u32 hostdword;
 
-		for (width = image->width, inbit = 7, mult24 = 0; src_bytes; ) {
-			for (hostdword = 0, pbitmapout = (u8*)&hostdword, byte_id_in_dword = 0;
+		क्रम (width = image->width, inbit = 7, mult24 = 0; src_bytes; ) अणु
+			क्रम (hostdword = 0, pbiपंचांगapout = (u8*)&hostdword, byte_id_in_dword = 0;
 				byte_id_in_dword < 4 && src_bytes;
-				byte_id_in_dword++, pbitmapout++) {
-				for (outbit = 7; outbit >= 0; outbit--) {
-					*pbitmapout |= (((*pbitmapin >> inbit) & 1) << outbit);
+				byte_id_in_dword++, pbiपंचांगapout++) अणु
+				क्रम (outbit = 7; outbit >= 0; outbit--) अणु
+					*pbiपंचांगapout |= (((*pbiपंचांगapin >> inbit) & 1) << outbit);
 					mult24++;
 					/* next bit */
-					if (mult24 == 3) {
+					अगर (mult24 == 3) अणु
 						mult24 = 0;
 						inbit--;
 						width--;
-					}
+					पूर्ण
 
 					/* next byte */
-					if (inbit < 0 || width == 0) {
+					अगर (inbit < 0 || width == 0) अणु
 						src_bytes--;
-						pbitmapin++;
+						pbiपंचांगapin++;
 						inbit = 7;
 
-						if (width == 0) {
+						अगर (width == 0) अणु
 						    width = image->width;
 						    outbit = 0;
-						}
-					}
-				}
-			}
-			wait_for_fifo(1, par);
+						पूर्ण
+					पूर्ण
+				पूर्ण
+			पूर्ण
+			रुको_क्रम_fअगरo(1, par);
 			aty_st_le32(HOST_DATA0, le32_to_cpu(hostdword), par);
-		}
-	} else {
-		u32 *pbitmap, dwords = (src_bytes + 3) / 4;
-		for (pbitmap = (u32*)(image->data); dwords; dwords--, pbitmap++) {
-			wait_for_fifo(1, par);
-			aty_st_le32(HOST_DATA0, get_unaligned_le32(pbitmap), par);
-		}
-	}
-}
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		u32 *pbiपंचांगap, dwords = (src_bytes + 3) / 4;
+		क्रम (pbiपंचांगap = (u32*)(image->data); dwords; dwords--, pbiपंचांगap++) अणु
+			रुको_क्रम_fअगरo(1, par);
+			aty_st_le32(HOST_DATA0, get_unaligned_le32(pbiपंचांगap), par);
+		पूर्ण
+	पूर्ण
+पूर्ण

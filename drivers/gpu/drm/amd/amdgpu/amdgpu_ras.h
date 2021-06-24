@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2018 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -21,20 +22,20 @@
  *
  *
  */
-#ifndef _AMDGPU_RAS_H
-#define _AMDGPU_RAS_H
+#अगर_अघोषित _AMDGPU_RAS_H
+#घोषणा _AMDGPU_RAS_H
 
-#include <linux/debugfs.h>
-#include <linux/list.h>
-#include "amdgpu.h"
-#include "amdgpu_psp.h"
-#include "ta_ras_if.h"
-#include "amdgpu_ras_eeprom.h"
+#समावेश <linux/debugfs.h>
+#समावेश <linux/list.h>
+#समावेश "amdgpu.h"
+#समावेश "amdgpu_psp.h"
+#समावेश "ta_ras_if.h"
+#समावेश "amdgpu_ras_eeprom.h"
 
-#define AMDGPU_RAS_FLAG_INIT_BY_VBIOS		(0x1 << 0)
-#define AMDGPU_RAS_FLAG_INIT_NEED_RESET		(0x1 << 1)
+#घोषणा AMDGPU_RAS_FLAG_INIT_BY_VBIOS		(0x1 << 0)
+#घोषणा AMDGPU_RAS_FLAG_INIT_NEED_RESET		(0x1 << 1)
 
-enum amdgpu_ras_block {
+क्रमागत amdgpu_ras_block अणु
 	AMDGPU_RAS_BLOCK__UMC = 0,
 	AMDGPU_RAS_BLOCK__SDMA,
 	AMDGPU_RAS_BLOCK__GFX,
@@ -51,12 +52,12 @@ enum amdgpu_ras_block {
 	AMDGPU_RAS_BLOCK__FUSE,
 
 	AMDGPU_RAS_BLOCK__LAST
-};
+पूर्ण;
 
-#define AMDGPU_RAS_BLOCK_COUNT	AMDGPU_RAS_BLOCK__LAST
-#define AMDGPU_RAS_BLOCK_MASK	((1ULL << AMDGPU_RAS_BLOCK_COUNT) - 1)
+#घोषणा AMDGPU_RAS_BLOCK_COUNT	AMDGPU_RAS_BLOCK__LAST
+#घोषणा AMDGPU_RAS_BLOCK_MASK	((1ULL << AMDGPU_RAS_BLOCK_COUNT) - 1)
 
-enum amdgpu_ras_gfx_subblock {
+क्रमागत amdgpu_ras_gfx_subblock अणु
 	/* CPC */
 	AMDGPU_RAS_BLOCK__GFX_CPC_INDEX_START = 0,
 	AMDGPU_RAS_BLOCK__GFX_CPC_SCRATCH =
@@ -127,7 +128,7 @@ enum amdgpu_ras_gfx_subblock {
 	AMDGPU_RAS_BLOCK__GFX_SQC_DATA_BANKA_TAG_RAM,
 	AMDGPU_RAS_BLOCK__GFX_SQC_DATA_BANKA_HIT_FIFO,
 	AMDGPU_RAS_BLOCK__GFX_SQC_DATA_BANKA_MISS_FIFO,
-	AMDGPU_RAS_BLOCK__GFX_SQC_DATA_BANKA_DIRTY_BIT_RAM,
+	AMDGPU_RAS_BLOCK__GFX_SQC_DATA_BANKA_सूचीTY_BIT_RAM,
 	AMDGPU_RAS_BLOCK__GFX_SQC_DATA_BANKA_BANK_RAM,
 	AMDGPU_RAS_BLOCK__GFX_SQC_INDEX1_END =
 		AMDGPU_RAS_BLOCK__GFX_SQC_DATA_BANKA_BANK_RAM,
@@ -141,7 +142,7 @@ enum amdgpu_ras_gfx_subblock {
 	AMDGPU_RAS_BLOCK__GFX_SQC_DATA_BANKB_TAG_RAM,
 	AMDGPU_RAS_BLOCK__GFX_SQC_DATA_BANKB_HIT_FIFO,
 	AMDGPU_RAS_BLOCK__GFX_SQC_DATA_BANKB_MISS_FIFO,
-	AMDGPU_RAS_BLOCK__GFX_SQC_DATA_BANKB_DIRTY_BIT_RAM,
+	AMDGPU_RAS_BLOCK__GFX_SQC_DATA_BANKB_सूचीTY_BIT_RAM,
 	AMDGPU_RAS_BLOCK__GFX_SQC_DATA_BANKB_BANK_RAM,
 	AMDGPU_RAS_BLOCK__GFX_SQC_INDEX2_END =
 		AMDGPU_RAS_BLOCK__GFX_SQC_DATA_BANKB_BANK_RAM,
@@ -173,8 +174,8 @@ enum amdgpu_ras_gfx_subblock {
 	AMDGPU_RAS_BLOCK__GFX_TCC_CACHE_DATA_BANK_0_1,
 	AMDGPU_RAS_BLOCK__GFX_TCC_CACHE_DATA_BANK_1_0,
 	AMDGPU_RAS_BLOCK__GFX_TCC_CACHE_DATA_BANK_1_1,
-	AMDGPU_RAS_BLOCK__GFX_TCC_CACHE_DIRTY_BANK_0,
-	AMDGPU_RAS_BLOCK__GFX_TCC_CACHE_DIRTY_BANK_1,
+	AMDGPU_RAS_BLOCK__GFX_TCC_CACHE_सूचीTY_BANK_0,
+	AMDGPU_RAS_BLOCK__GFX_TCC_CACHE_सूचीTY_BANK_1,
 	AMDGPU_RAS_BLOCK__GFX_TCC_HIGH_RATE_TAG,
 	AMDGPU_RAS_BLOCK__GFX_TCC_LOW_RATE_TAG,
 	AMDGPU_RAS_BLOCK__GFX_TCC_INDEX0_END =
@@ -284,348 +285,348 @@ enum amdgpu_ras_gfx_subblock {
 	/* UTC ATC L2 4KB cache */
 	AMDGPU_RAS_BLOCK__UTC_ATCL2_CACHE_4K_BANK,
 	AMDGPU_RAS_BLOCK__GFX_MAX
-};
+पूर्ण;
 
-enum amdgpu_ras_error_type {
+क्रमागत amdgpu_ras_error_type अणु
 	AMDGPU_RAS_ERROR__NONE							= 0,
 	AMDGPU_RAS_ERROR__PARITY						= 1,
 	AMDGPU_RAS_ERROR__SINGLE_CORRECTABLE					= 2,
 	AMDGPU_RAS_ERROR__MULTI_UNCORRECTABLE					= 4,
 	AMDGPU_RAS_ERROR__POISON						= 8,
-};
+पूर्ण;
 
-enum amdgpu_ras_ret {
+क्रमागत amdgpu_ras_ret अणु
 	AMDGPU_RAS_SUCCESS = 0,
 	AMDGPU_RAS_FAIL,
 	AMDGPU_RAS_UE,
 	AMDGPU_RAS_CE,
 	AMDGPU_RAS_PT,
-};
+पूर्ण;
 
-struct ras_common_if {
-	enum amdgpu_ras_block block;
-	enum amdgpu_ras_error_type type;
-	uint32_t sub_block_index;
+काष्ठा ras_common_अगर अणु
+	क्रमागत amdgpu_ras_block block;
+	क्रमागत amdgpu_ras_error_type type;
+	uपूर्णांक32_t sub_block_index;
 	/* block name */
-	char name[32];
-};
+	अक्षर name[32];
+पूर्ण;
 
-struct amdgpu_ras {
-	/* ras infrastructure */
-	/* for ras itself. */
-	uint32_t hw_supported;
-	/* for IP to check its ras ability. */
-	uint32_t supported;
-	uint32_t features;
-	struct list_head head;
+काष्ठा amdgpu_ras अणु
+	/* ras infraकाष्ठाure */
+	/* क्रम ras itself. */
+	uपूर्णांक32_t hw_supported;
+	/* क्रम IP to check its ras ability. */
+	uपूर्णांक32_t supported;
+	uपूर्णांक32_t features;
+	काष्ठा list_head head;
 	/* sysfs */
-	struct device_attribute features_attr;
-	struct bin_attribute badpages_attr;
+	काष्ठा device_attribute features_attr;
+	काष्ठा bin_attribute badpages_attr;
 	/* block array */
-	struct ras_manager *objs;
+	काष्ठा ras_manager *objs;
 
 	/* gpu recovery */
-	struct work_struct recovery_work;
+	काष्ठा work_काष्ठा recovery_work;
 	atomic_t in_recovery;
-	struct amdgpu_device *adev;
+	काष्ठा amdgpu_device *adev;
 	/* error handler data */
-	struct ras_err_handler_data *eh_data;
-	struct mutex recovery_lock;
+	काष्ठा ras_err_handler_data *eh_data;
+	काष्ठा mutex recovery_lock;
 
-	uint32_t flags;
+	uपूर्णांक32_t flags;
 	bool reboot;
-	struct amdgpu_ras_eeprom_control eeprom_control;
+	काष्ठा amdgpu_ras_eeprom_control eeprom_control;
 
-	bool error_query_ready;
+	bool error_query_पढ़ोy;
 
 	/* bad page count threshold */
-	uint32_t bad_page_cnt_threshold;
+	uपूर्णांक32_t bad_page_cnt_threshold;
 
 	/* disable ras error count harvest in recovery */
 	bool disable_ras_err_cnt_harvest;
-};
+पूर्ण;
 
-struct ras_fs_data {
-	char sysfs_name[32];
-	char debugfs_name[32];
-};
+काष्ठा ras_fs_data अणु
+	अक्षर sysfs_name[32];
+	अक्षर debugfs_name[32];
+पूर्ण;
 
-struct ras_err_data {
-	unsigned long ue_count;
-	unsigned long ce_count;
-	unsigned long err_addr_cnt;
-	struct eeprom_table_record *err_addr;
-};
+काष्ठा ras_err_data अणु
+	अचिन्हित दीर्घ ue_count;
+	अचिन्हित दीर्घ ce_count;
+	अचिन्हित दीर्घ err_addr_cnt;
+	काष्ठा eeprom_table_record *err_addr;
+पूर्ण;
 
-struct ras_err_handler_data {
-	/* point to bad page records array */
-	struct eeprom_table_record *bps;
+काष्ठा ras_err_handler_data अणु
+	/* poपूर्णांक to bad page records array */
+	काष्ठा eeprom_table_record *bps;
 	/* the count of entries */
-	int count;
+	पूर्णांक count;
 	/* the space can place new entries */
-	int space_left;
-};
+	पूर्णांक space_left;
+पूर्ण;
 
-typedef int (*ras_ih_cb)(struct amdgpu_device *adev,
-		void *err_data,
-		struct amdgpu_iv_entry *entry);
+प्रकार पूर्णांक (*ras_ih_cb)(काष्ठा amdgpu_device *adev,
+		व्योम *err_data,
+		काष्ठा amdgpu_iv_entry *entry);
 
-struct ras_ih_data {
-	/* interrupt bottom half */
-	struct work_struct ih_work;
-	int inuse;
+काष्ठा ras_ih_data अणु
+	/* पूर्णांकerrupt bottom half */
+	काष्ठा work_काष्ठा ih_work;
+	पूर्णांक inuse;
 	/* IP callback */
 	ras_ih_cb cb;
 	/* full of entries */
-	unsigned char *ring;
-	unsigned int ring_size;
-	unsigned int element_size;
-	unsigned int aligned_element_size;
-	unsigned int rptr;
-	unsigned int wptr;
-};
+	अचिन्हित अक्षर *ring;
+	अचिन्हित पूर्णांक ring_size;
+	अचिन्हित पूर्णांक element_size;
+	अचिन्हित पूर्णांक aligned_element_size;
+	अचिन्हित पूर्णांक rptr;
+	अचिन्हित पूर्णांक wptr;
+पूर्ण;
 
-struct ras_manager {
-	struct ras_common_if head;
+काष्ठा ras_manager अणु
+	काष्ठा ras_common_अगर head;
 	/* reference count */
-	int use;
+	पूर्णांक use;
 	/* ras block link */
-	struct list_head node;
+	काष्ठा list_head node;
 	/* the device */
-	struct amdgpu_device *adev;
+	काष्ठा amdgpu_device *adev;
 	/* sysfs */
-	struct device_attribute sysfs_attr;
-	int attr_inuse;
+	काष्ठा device_attribute sysfs_attr;
+	पूर्णांक attr_inuse;
 
 	/* fs node name */
-	struct ras_fs_data fs_data;
+	काष्ठा ras_fs_data fs_data;
 
 	/* IH data */
-	struct ras_ih_data ih_data;
+	काष्ठा ras_ih_data ih_data;
 
-	struct ras_err_data err_data;
-};
+	काष्ठा ras_err_data err_data;
+पूर्ण;
 
-struct ras_badpage {
-	unsigned int bp;
-	unsigned int size;
-	unsigned int flags;
-};
+काष्ठा ras_badpage अणु
+	अचिन्हित पूर्णांक bp;
+	अचिन्हित पूर्णांक size;
+	अचिन्हित पूर्णांक flags;
+पूर्ण;
 
-/* interfaces for IP */
-struct ras_fs_if {
-	struct ras_common_if head;
-	char sysfs_name[32];
-	char debugfs_name[32];
-};
+/* पूर्णांकerfaces क्रम IP */
+काष्ठा ras_fs_अगर अणु
+	काष्ठा ras_common_अगर head;
+	अक्षर sysfs_name[32];
+	अक्षर debugfs_name[32];
+पूर्ण;
 
-struct ras_query_if {
-	struct ras_common_if head;
-	unsigned long ue_count;
-	unsigned long ce_count;
-};
+काष्ठा ras_query_अगर अणु
+	काष्ठा ras_common_अगर head;
+	अचिन्हित दीर्घ ue_count;
+	अचिन्हित दीर्घ ce_count;
+पूर्ण;
 
-struct ras_inject_if {
-	struct ras_common_if head;
-	uint64_t address;
-	uint64_t value;
-};
+काष्ठा ras_inject_अगर अणु
+	काष्ठा ras_common_अगर head;
+	uपूर्णांक64_t address;
+	uपूर्णांक64_t value;
+पूर्ण;
 
-struct ras_cure_if {
-	struct ras_common_if head;
-	uint64_t address;
-};
+काष्ठा ras_cure_अगर अणु
+	काष्ठा ras_common_अगर head;
+	uपूर्णांक64_t address;
+पूर्ण;
 
-struct ras_ih_if {
-	struct ras_common_if head;
+काष्ठा ras_ih_अगर अणु
+	काष्ठा ras_common_अगर head;
 	ras_ih_cb cb;
-};
+पूर्ण;
 
-struct ras_dispatch_if {
-	struct ras_common_if head;
-	struct amdgpu_iv_entry *entry;
-};
+काष्ठा ras_dispatch_अगर अणु
+	काष्ठा ras_common_अगर head;
+	काष्ठा amdgpu_iv_entry *entry;
+पूर्ण;
 
-struct ras_debug_if {
-	union {
-		struct ras_common_if head;
-		struct ras_inject_if inject;
-	};
-	int op;
-};
+काष्ठा ras_debug_अगर अणु
+	जोड़ अणु
+		काष्ठा ras_common_अगर head;
+		काष्ठा ras_inject_अगर inject;
+	पूर्ण;
+	पूर्णांक op;
+पूर्ण;
 /* work flow
  * vbios
- * 1: ras feature enable (enabled by default)
+ * 1: ras feature enable (enabled by शेष)
  * psp
  * 2: ras framework init (in ip_init)
  * IP
  * 3: IH add
  * 4: debugfs/sysfs create
  * 5: query/inject
- * 6: debugfs/sysfs remove
- * 7: IH remove
+ * 6: debugfs/sysfs हटाओ
+ * 7: IH हटाओ
  * 8: feature disable
  */
 
-#define amdgpu_ras_get_context(adev)		((adev)->psp.ras.ras)
-#define amdgpu_ras_set_context(adev, ras_con)	((adev)->psp.ras.ras = (ras_con))
+#घोषणा amdgpu_ras_get_context(adev)		((adev)->psp.ras.ras)
+#घोषणा amdgpu_ras_set_context(adev, ras_con)	((adev)->psp.ras.ras = (ras_con))
 
-/* check if ras is supported on block, say, sdma, gfx */
-static inline int amdgpu_ras_is_supported(struct amdgpu_device *adev,
-		unsigned int block)
-{
-	struct amdgpu_ras *ras = amdgpu_ras_get_context(adev);
+/* check अगर ras is supported on block, say, sdma, gfx */
+अटल अंतरभूत पूर्णांक amdgpu_ras_is_supported(काष्ठा amdgpu_device *adev,
+		अचिन्हित पूर्णांक block)
+अणु
+	काष्ठा amdgpu_ras *ras = amdgpu_ras_get_context(adev);
 
-	if (block >= AMDGPU_RAS_BLOCK_COUNT)
-		return 0;
-	return ras && (ras->supported & (1 << block));
-}
+	अगर (block >= AMDGPU_RAS_BLOCK_COUNT)
+		वापस 0;
+	वापस ras && (ras->supported & (1 << block));
+पूर्ण
 
-int amdgpu_ras_recovery_init(struct amdgpu_device *adev);
-int amdgpu_ras_request_reset_on_boot(struct amdgpu_device *adev,
-		unsigned int block);
+पूर्णांक amdgpu_ras_recovery_init(काष्ठा amdgpu_device *adev);
+पूर्णांक amdgpu_ras_request_reset_on_boot(काष्ठा amdgpu_device *adev,
+		अचिन्हित पूर्णांक block);
 
-void amdgpu_ras_resume(struct amdgpu_device *adev);
-void amdgpu_ras_suspend(struct amdgpu_device *adev);
+व्योम amdgpu_ras_resume(काष्ठा amdgpu_device *adev);
+व्योम amdgpu_ras_suspend(काष्ठा amdgpu_device *adev);
 
-unsigned long amdgpu_ras_query_error_count(struct amdgpu_device *adev,
+अचिन्हित दीर्घ amdgpu_ras_query_error_count(काष्ठा amdgpu_device *adev,
 		bool is_ce);
 
 /* error handling functions */
-int amdgpu_ras_add_bad_pages(struct amdgpu_device *adev,
-		struct eeprom_table_record *bps, int pages);
+पूर्णांक amdgpu_ras_add_bad_pages(काष्ठा amdgpu_device *adev,
+		काष्ठा eeprom_table_record *bps, पूर्णांक pages);
 
-int amdgpu_ras_save_bad_pages(struct amdgpu_device *adev);
+पूर्णांक amdgpu_ras_save_bad_pages(काष्ठा amdgpu_device *adev);
 
-static inline int amdgpu_ras_reset_gpu(struct amdgpu_device *adev)
-{
-	struct amdgpu_ras *ras = amdgpu_ras_get_context(adev);
+अटल अंतरभूत पूर्णांक amdgpu_ras_reset_gpu(काष्ठा amdgpu_device *adev)
+अणु
+	काष्ठा amdgpu_ras *ras = amdgpu_ras_get_context(adev);
 
-	if (atomic_cmpxchg(&ras->in_recovery, 0, 1) == 0)
+	अगर (atomic_cmpxchg(&ras->in_recovery, 0, 1) == 0)
 		schedule_work(&ras->recovery_work);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static inline enum ta_ras_block
-amdgpu_ras_block_to_ta(enum amdgpu_ras_block block) {
-	switch (block) {
-	case AMDGPU_RAS_BLOCK__UMC:
-		return TA_RAS_BLOCK__UMC;
-	case AMDGPU_RAS_BLOCK__SDMA:
-		return TA_RAS_BLOCK__SDMA;
-	case AMDGPU_RAS_BLOCK__GFX:
-		return TA_RAS_BLOCK__GFX;
-	case AMDGPU_RAS_BLOCK__MMHUB:
-		return TA_RAS_BLOCK__MMHUB;
-	case AMDGPU_RAS_BLOCK__ATHUB:
-		return TA_RAS_BLOCK__ATHUB;
-	case AMDGPU_RAS_BLOCK__PCIE_BIF:
-		return TA_RAS_BLOCK__PCIE_BIF;
-	case AMDGPU_RAS_BLOCK__HDP:
-		return TA_RAS_BLOCK__HDP;
-	case AMDGPU_RAS_BLOCK__XGMI_WAFL:
-		return TA_RAS_BLOCK__XGMI_WAFL;
-	case AMDGPU_RAS_BLOCK__DF:
-		return TA_RAS_BLOCK__DF;
-	case AMDGPU_RAS_BLOCK__SMN:
-		return TA_RAS_BLOCK__SMN;
-	case AMDGPU_RAS_BLOCK__SEM:
-		return TA_RAS_BLOCK__SEM;
-	case AMDGPU_RAS_BLOCK__MP0:
-		return TA_RAS_BLOCK__MP0;
-	case AMDGPU_RAS_BLOCK__MP1:
-		return TA_RAS_BLOCK__MP1;
-	case AMDGPU_RAS_BLOCK__FUSE:
-		return TA_RAS_BLOCK__FUSE;
-	default:
+अटल अंतरभूत क्रमागत ta_ras_block
+amdgpu_ras_block_to_ta(क्रमागत amdgpu_ras_block block) अणु
+	चयन (block) अणु
+	हाल AMDGPU_RAS_BLOCK__UMC:
+		वापस TA_RAS_BLOCK__UMC;
+	हाल AMDGPU_RAS_BLOCK__SDMA:
+		वापस TA_RAS_BLOCK__SDMA;
+	हाल AMDGPU_RAS_BLOCK__GFX:
+		वापस TA_RAS_BLOCK__GFX;
+	हाल AMDGPU_RAS_BLOCK__MMHUB:
+		वापस TA_RAS_BLOCK__MMHUB;
+	हाल AMDGPU_RAS_BLOCK__ATHUB:
+		वापस TA_RAS_BLOCK__ATHUB;
+	हाल AMDGPU_RAS_BLOCK__PCIE_BIF:
+		वापस TA_RAS_BLOCK__PCIE_BIF;
+	हाल AMDGPU_RAS_BLOCK__HDP:
+		वापस TA_RAS_BLOCK__HDP;
+	हाल AMDGPU_RAS_BLOCK__XGMI_WAFL:
+		वापस TA_RAS_BLOCK__XGMI_WAFL;
+	हाल AMDGPU_RAS_BLOCK__DF:
+		वापस TA_RAS_BLOCK__DF;
+	हाल AMDGPU_RAS_BLOCK__SMN:
+		वापस TA_RAS_BLOCK__SMN;
+	हाल AMDGPU_RAS_BLOCK__SEM:
+		वापस TA_RAS_BLOCK__SEM;
+	हाल AMDGPU_RAS_BLOCK__MP0:
+		वापस TA_RAS_BLOCK__MP0;
+	हाल AMDGPU_RAS_BLOCK__MP1:
+		वापस TA_RAS_BLOCK__MP1;
+	हाल AMDGPU_RAS_BLOCK__FUSE:
+		वापस TA_RAS_BLOCK__FUSE;
+	शेष:
 		WARN_ONCE(1, "RAS ERROR: unexpected block id %d\n", block);
-		return TA_RAS_BLOCK__UMC;
-	}
-}
+		वापस TA_RAS_BLOCK__UMC;
+	पूर्ण
+पूर्ण
 
-static inline enum ta_ras_error_type
-amdgpu_ras_error_to_ta(enum amdgpu_ras_error_type error) {
-	switch (error) {
-	case AMDGPU_RAS_ERROR__NONE:
-		return TA_RAS_ERROR__NONE;
-	case AMDGPU_RAS_ERROR__PARITY:
-		return TA_RAS_ERROR__PARITY;
-	case AMDGPU_RAS_ERROR__SINGLE_CORRECTABLE:
-		return TA_RAS_ERROR__SINGLE_CORRECTABLE;
-	case AMDGPU_RAS_ERROR__MULTI_UNCORRECTABLE:
-		return TA_RAS_ERROR__MULTI_UNCORRECTABLE;
-	case AMDGPU_RAS_ERROR__POISON:
-		return TA_RAS_ERROR__POISON;
-	default:
+अटल अंतरभूत क्रमागत ta_ras_error_type
+amdgpu_ras_error_to_ta(क्रमागत amdgpu_ras_error_type error) अणु
+	चयन (error) अणु
+	हाल AMDGPU_RAS_ERROR__NONE:
+		वापस TA_RAS_ERROR__NONE;
+	हाल AMDGPU_RAS_ERROR__PARITY:
+		वापस TA_RAS_ERROR__PARITY;
+	हाल AMDGPU_RAS_ERROR__SINGLE_CORRECTABLE:
+		वापस TA_RAS_ERROR__SINGLE_CORRECTABLE;
+	हाल AMDGPU_RAS_ERROR__MULTI_UNCORRECTABLE:
+		वापस TA_RAS_ERROR__MULTI_UNCORRECTABLE;
+	हाल AMDGPU_RAS_ERROR__POISON:
+		वापस TA_RAS_ERROR__POISON;
+	शेष:
 		WARN_ONCE(1, "RAS ERROR: unexpected error type %d\n", error);
-		return TA_RAS_ERROR__NONE;
-	}
-}
+		वापस TA_RAS_ERROR__NONE;
+	पूर्ण
+पूर्ण
 
 /* called in ip_init and ip_fini */
-int amdgpu_ras_init(struct amdgpu_device *adev);
-int amdgpu_ras_fini(struct amdgpu_device *adev);
-int amdgpu_ras_pre_fini(struct amdgpu_device *adev);
-int amdgpu_ras_late_init(struct amdgpu_device *adev,
-			 struct ras_common_if *ras_block,
-			 struct ras_fs_if *fs_info,
-			 struct ras_ih_if *ih_info);
-void amdgpu_ras_late_fini(struct amdgpu_device *adev,
-			  struct ras_common_if *ras_block,
-			  struct ras_ih_if *ih_info);
+पूर्णांक amdgpu_ras_init(काष्ठा amdgpu_device *adev);
+पूर्णांक amdgpu_ras_fini(काष्ठा amdgpu_device *adev);
+पूर्णांक amdgpu_ras_pre_fini(काष्ठा amdgpu_device *adev);
+पूर्णांक amdgpu_ras_late_init(काष्ठा amdgpu_device *adev,
+			 काष्ठा ras_common_अगर *ras_block,
+			 काष्ठा ras_fs_अगर *fs_info,
+			 काष्ठा ras_ih_अगर *ih_info);
+व्योम amdgpu_ras_late_fini(काष्ठा amdgpu_device *adev,
+			  काष्ठा ras_common_अगर *ras_block,
+			  काष्ठा ras_ih_अगर *ih_info);
 
-int amdgpu_ras_feature_enable(struct amdgpu_device *adev,
-		struct ras_common_if *head, bool enable);
+पूर्णांक amdgpu_ras_feature_enable(काष्ठा amdgpu_device *adev,
+		काष्ठा ras_common_अगर *head, bool enable);
 
-int amdgpu_ras_feature_enable_on_boot(struct amdgpu_device *adev,
-		struct ras_common_if *head, bool enable);
+पूर्णांक amdgpu_ras_feature_enable_on_boot(काष्ठा amdgpu_device *adev,
+		काष्ठा ras_common_अगर *head, bool enable);
 
-int amdgpu_ras_sysfs_create(struct amdgpu_device *adev,
-		struct ras_fs_if *head);
+पूर्णांक amdgpu_ras_sysfs_create(काष्ठा amdgpu_device *adev,
+		काष्ठा ras_fs_अगर *head);
 
-int amdgpu_ras_sysfs_remove(struct amdgpu_device *adev,
-		struct ras_common_if *head);
+पूर्णांक amdgpu_ras_sysfs_हटाओ(काष्ठा amdgpu_device *adev,
+		काष्ठा ras_common_अगर *head);
 
-void amdgpu_ras_debugfs_create_all(struct amdgpu_device *adev);
+व्योम amdgpu_ras_debugfs_create_all(काष्ठा amdgpu_device *adev);
 
-int amdgpu_ras_query_error_status(struct amdgpu_device *adev,
-		struct ras_query_if *info);
+पूर्णांक amdgpu_ras_query_error_status(काष्ठा amdgpu_device *adev,
+		काष्ठा ras_query_अगर *info);
 
-int amdgpu_ras_reset_error_status(struct amdgpu_device *adev,
-		enum amdgpu_ras_block block);
+पूर्णांक amdgpu_ras_reset_error_status(काष्ठा amdgpu_device *adev,
+		क्रमागत amdgpu_ras_block block);
 
-int amdgpu_ras_error_inject(struct amdgpu_device *adev,
-		struct ras_inject_if *info);
+पूर्णांक amdgpu_ras_error_inject(काष्ठा amdgpu_device *adev,
+		काष्ठा ras_inject_अगर *info);
 
-int amdgpu_ras_interrupt_add_handler(struct amdgpu_device *adev,
-		struct ras_ih_if *info);
+पूर्णांक amdgpu_ras_पूर्णांकerrupt_add_handler(काष्ठा amdgpu_device *adev,
+		काष्ठा ras_ih_अगर *info);
 
-int amdgpu_ras_interrupt_remove_handler(struct amdgpu_device *adev,
-		struct ras_ih_if *info);
+पूर्णांक amdgpu_ras_पूर्णांकerrupt_हटाओ_handler(काष्ठा amdgpu_device *adev,
+		काष्ठा ras_ih_अगर *info);
 
-int amdgpu_ras_interrupt_dispatch(struct amdgpu_device *adev,
-		struct ras_dispatch_if *info);
+पूर्णांक amdgpu_ras_पूर्णांकerrupt_dispatch(काष्ठा amdgpu_device *adev,
+		काष्ठा ras_dispatch_अगर *info);
 
-struct ras_manager *amdgpu_ras_find_obj(struct amdgpu_device *adev,
-		struct ras_common_if *head);
+काष्ठा ras_manager *amdgpu_ras_find_obj(काष्ठा amdgpu_device *adev,
+		काष्ठा ras_common_अगर *head);
 
-extern atomic_t amdgpu_ras_in_intr;
+बाह्य atomic_t amdgpu_ras_in_पूर्णांकr;
 
-static inline bool amdgpu_ras_intr_triggered(void)
-{
-	return !!atomic_read(&amdgpu_ras_in_intr);
-}
+अटल अंतरभूत bool amdgpu_ras_पूर्णांकr_triggered(व्योम)
+अणु
+	वापस !!atomic_पढ़ो(&amdgpu_ras_in_पूर्णांकr);
+पूर्ण
 
-static inline void amdgpu_ras_intr_cleared(void)
-{
-	atomic_set(&amdgpu_ras_in_intr, 0);
-}
+अटल अंतरभूत व्योम amdgpu_ras_पूर्णांकr_cleared(व्योम)
+अणु
+	atomic_set(&amdgpu_ras_in_पूर्णांकr, 0);
+पूर्ण
 
-void amdgpu_ras_global_ras_isr(struct amdgpu_device *adev);
+व्योम amdgpu_ras_global_ras_isr(काष्ठा amdgpu_device *adev);
 
-void amdgpu_ras_set_error_query_ready(struct amdgpu_device *adev, bool ready);
+व्योम amdgpu_ras_set_error_query_पढ़ोy(काष्ठा amdgpu_device *adev, bool पढ़ोy);
 
-bool amdgpu_ras_need_emergency_restart(struct amdgpu_device *adev);
+bool amdgpu_ras_need_emergency_restart(काष्ठा amdgpu_device *adev);
 
-void amdgpu_release_ras_context(struct amdgpu_device *adev);
-#endif
+व्योम amdgpu_release_ras_context(काष्ठा amdgpu_device *adev);
+#पूर्ण_अगर

@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * r8a7795 Clock Pulse Generator / Module Standby and Software Reset
  *
@@ -10,19 +11,19 @@
  * Copyright (C) 2015 Renesas Electronics Corp.
  */
 
-#include <linux/device.h>
-#include <linux/init.h>
-#include <linux/kernel.h>
-#include <linux/soc/renesas/rcar-rst.h>
-#include <linux/sys_soc.h>
+#समावेश <linux/device.h>
+#समावेश <linux/init.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/soc/renesas/rcar-rst.h>
+#समावेश <linux/sys_soc.h>
 
-#include <dt-bindings/clock/r8a7795-cpg-mssr.h>
+#समावेश <dt-bindings/घड़ी/r8a7795-cpg-mssr.h>
 
-#include "renesas-cpg-mssr.h"
-#include "rcar-gen3-cpg.h"
+#समावेश "renesas-cpg-mssr.h"
+#समावेश "rcar-gen3-cpg.h"
 
-enum clk_ids {
-	/* Core Clock Outputs exported to DT */
+क्रमागत clk_ids अणु
+	/* Core Clock Outमाला_दो exported to DT */
 	LAST_DT_CORE_CLK = R8A7795_CLK_S0D12,
 
 	/* External Input Clocks */
@@ -49,10 +50,10 @@ enum clk_ids {
 
 	/* Module Clocks */
 	MOD_CLK_BASE
-};
+पूर्ण;
 
-static struct cpg_core_clk r8a7795_core_clks[] __initdata = {
-	/* External Clock Inputs */
+अटल काष्ठा cpg_core_clk r8a7795_core_clks[] __initdata = अणु
+	/* External Clock Inमाला_दो */
 	DEF_INPUT("extal",      CLK_EXTAL),
 	DEF_INPUT("extalr",     CLK_EXTALR),
 
@@ -80,7 +81,7 @@ static struct cpg_core_clk r8a7795_core_clks[] __initdata = {
 
 	DEF_GEN3_OSC(".r",      CLK_RINT,          CLK_EXTAL,      32),
 
-	/* Core Clock Outputs */
+	/* Core Clock Outमाला_दो */
 	DEF_GEN3_Z("z",         R8A7795_CLK_Z,     CLK_TYPE_GEN3_Z,  CLK_PLL0, 2, 8),
 	DEF_GEN3_Z("z2",        R8A7795_CLK_Z2,    CLK_TYPE_GEN3_Z,  CLK_PLL2, 2, 0),
 	DEF_FIXED("ztr",        R8A7795_CLK_ZTR,   CLK_PLL1_DIV2,  6, 1),
@@ -122,9 +123,9 @@ static struct cpg_core_clk r8a7795_core_clks[] __initdata = {
 	DEF_GEN3_OSC("osc",     R8A7795_CLK_OSC,   CLK_EXTAL,     8),
 
 	DEF_BASE("r",           R8A7795_CLK_R,     CLK_TYPE_GEN3_R, CLK_RINT),
-};
+पूर्ण;
 
-static struct mssr_mod_clk r8a7795_mod_clks[] __initdata = {
+अटल काष्ठा mssr_mod_clk r8a7795_mod_clks[] __initdata = अणु
 	DEF_MOD("fdp1-2",		 117,	R8A7795_CLK_S2D1), /* ES1.x */
 	DEF_MOD("fdp1-1",		 118,	R8A7795_CLK_S0D1),
 	DEF_MOD("fdp1-0",		 119,	R8A7795_CLK_S0D1),
@@ -289,12 +290,12 @@ static struct mssr_mod_clk r8a7795_mod_clks[] __initdata = {
 	DEF_MOD("scu-src2",		1029,	MOD_CLK_ID(1017)),
 	DEF_MOD("scu-src1",		1030,	MOD_CLK_ID(1017)),
 	DEF_MOD("scu-src0",		1031,	MOD_CLK_ID(1017)),
-};
+पूर्ण;
 
-static const unsigned int r8a7795_crit_mod_clks[] __initconst = {
+अटल स्थिर अचिन्हित पूर्णांक r8a7795_crit_mod_clks[] __initस्थिर = अणु
 	MOD_CLK_ID(402),	/* RWDT */
 	MOD_CLK_ID(408),	/* INTC-AP (GIC) */
-};
+पूर्ण;
 
 /*
  * CPG Clock Data
@@ -321,110 +322,110 @@ static const unsigned int r8a7795_crit_mod_clks[] __initconst = {
  * 1  1  1  0	Prohibited setting
  * 1  1  1  1	33.33 / 2	x180	x192	x144	x192	x144	/32
  */
-#define CPG_PLL_CONFIG_INDEX(md)	((((md) & BIT(14)) >> 11) | \
+#घोषणा CPG_PLL_CONFIG_INDEX(md)	((((md) & BIT(14)) >> 11) | \
 					 (((md) & BIT(13)) >> 11) | \
 					 (((md) & BIT(19)) >> 18) | \
 					 (((md) & BIT(17)) >> 17))
 
-static const struct rcar_gen3_cpg_pll_config cpg_pll_configs[16] __initconst = {
-	/* EXTAL div	PLL1 mult/div	PLL3 mult/div	OSC prediv */
-	{ 1,		192,	1,	192,	1,	16,	},
-	{ 1,		192,	1,	128,	1,	16,	},
-	{ 0, /* Prohibited setting */				},
-	{ 1,		192,	1,	192,	1,	16,	},
-	{ 1,		160,	1,	160,	1,	19,	},
-	{ 1,		160,	1,	106,	1,	19,	},
-	{ 0, /* Prohibited setting */				},
-	{ 1,		160,	1,	160,	1,	19,	},
-	{ 1,		128,	1,	128,	1,	24,	},
-	{ 1,		128,	1,	84,	1,	24,	},
-	{ 0, /* Prohibited setting */				},
-	{ 1,		128,	1,	128,	1,	24,	},
-	{ 2,		192,	1,	192,	1,	32,	},
-	{ 2,		192,	1,	128,	1,	32,	},
-	{ 0, /* Prohibited setting */				},
-	{ 2,		192,	1,	192,	1,	32,	},
-};
+अटल स्थिर काष्ठा rcar_gen3_cpg_pll_config cpg_pll_configs[16] __initस्थिर = अणु
+	/* EXTAL भाग	PLL1 mult/भाग	PLL3 mult/भाग	OSC preभाग */
+	अणु 1,		192,	1,	192,	1,	16,	पूर्ण,
+	अणु 1,		192,	1,	128,	1,	16,	पूर्ण,
+	अणु 0, /* Prohibited setting */				पूर्ण,
+	अणु 1,		192,	1,	192,	1,	16,	पूर्ण,
+	अणु 1,		160,	1,	160,	1,	19,	पूर्ण,
+	अणु 1,		160,	1,	106,	1,	19,	पूर्ण,
+	अणु 0, /* Prohibited setting */				पूर्ण,
+	अणु 1,		160,	1,	160,	1,	19,	पूर्ण,
+	अणु 1,		128,	1,	128,	1,	24,	पूर्ण,
+	अणु 1,		128,	1,	84,	1,	24,	पूर्ण,
+	अणु 0, /* Prohibited setting */				पूर्ण,
+	अणु 1,		128,	1,	128,	1,	24,	पूर्ण,
+	अणु 2,		192,	1,	192,	1,	32,	पूर्ण,
+	अणु 2,		192,	1,	128,	1,	32,	पूर्ण,
+	अणु 0, /* Prohibited setting */				पूर्ण,
+	अणु 2,		192,	1,	192,	1,	32,	पूर्ण,
+पूर्ण;
 
-static const struct soc_device_attribute r8a7795es1[] __initconst = {
-	{ .soc_id = "r8a7795", .revision = "ES1.*" },
-	{ /* sentinel */ }
-};
+अटल स्थिर काष्ठा soc_device_attribute r8a7795es1[] __initस्थिर = अणु
+	अणु .soc_id = "r8a7795", .revision = "ES1.*" पूर्ण,
+	अणु /* sentinel */ पूर्ण
+पूर्ण;
 
 
 	/*
-	 * Fixups for R-Car H3 ES1.x
+	 * Fixups क्रम R-Car H3 ES1.x
 	 */
 
-static const unsigned int r8a7795es1_mod_nullify[] __initconst = {
+अटल स्थिर अचिन्हित पूर्णांक r8a7795es1_mod_nullअगरy[] __initस्थिर = अणु
 	MOD_CLK_ID(326),			/* USB-DMAC3-0 */
 	MOD_CLK_ID(329),			/* USB-DMAC3-1 */
 	MOD_CLK_ID(700),			/* EHCI/OHCI3 */
 	MOD_CLK_ID(705),			/* HS-USB-IF3 */
 
-};
+पूर्ण;
 
-static const struct mssr_mod_reparent r8a7795es1_mod_reparent[] __initconst = {
-	{ MOD_CLK_ID(118), R8A7795_CLK_S2D1 },	/* FDP1-1 */
-	{ MOD_CLK_ID(119), R8A7795_CLK_S2D1 },	/* FDP1-0 */
-	{ MOD_CLK_ID(121), R8A7795_CLK_S3D2 },	/* TMU4 */
-	{ MOD_CLK_ID(217), R8A7795_CLK_S3D1 },	/* SYS-DMAC2 */
-	{ MOD_CLK_ID(218), R8A7795_CLK_S3D1 },	/* SYS-DMAC1 */
-	{ MOD_CLK_ID(219), R8A7795_CLK_S3D1 },	/* SYS-DMAC0 */
-	{ MOD_CLK_ID(408), R8A7795_CLK_S3D1 },	/* INTC-AP */
-	{ MOD_CLK_ID(501), R8A7795_CLK_S3D1 },	/* AUDMAC1 */
-	{ MOD_CLK_ID(502), R8A7795_CLK_S3D1 },	/* AUDMAC0 */
-	{ MOD_CLK_ID(523), R8A7795_CLK_S3D4 },	/* PWM */
-	{ MOD_CLK_ID(601), R8A7795_CLK_S2D1 },	/* FCPVD2 */
-	{ MOD_CLK_ID(602), R8A7795_CLK_S2D1 },	/* FCPVD1 */
-	{ MOD_CLK_ID(603), R8A7795_CLK_S2D1 },	/* FCPVD0 */
-	{ MOD_CLK_ID(606), R8A7795_CLK_S2D1 },	/* FCPVB1 */
-	{ MOD_CLK_ID(607), R8A7795_CLK_S2D1 },	/* FCPVB0 */
-	{ MOD_CLK_ID(610), R8A7795_CLK_S2D1 },	/* FCPVI1 */
-	{ MOD_CLK_ID(611), R8A7795_CLK_S2D1 },	/* FCPVI0 */
-	{ MOD_CLK_ID(614), R8A7795_CLK_S2D1 },	/* FCPF1 */
-	{ MOD_CLK_ID(615), R8A7795_CLK_S2D1 },	/* FCPF0 */
-	{ MOD_CLK_ID(619), R8A7795_CLK_S2D1 },	/* FCPCS */
-	{ MOD_CLK_ID(621), R8A7795_CLK_S2D1 },	/* VSPD2 */
-	{ MOD_CLK_ID(622), R8A7795_CLK_S2D1 },	/* VSPD1 */
-	{ MOD_CLK_ID(623), R8A7795_CLK_S2D1 },	/* VSPD0 */
-	{ MOD_CLK_ID(624), R8A7795_CLK_S2D1 },	/* VSPBC */
-	{ MOD_CLK_ID(626), R8A7795_CLK_S2D1 },	/* VSPBD */
-	{ MOD_CLK_ID(630), R8A7795_CLK_S2D1 },	/* VSPI1 */
-	{ MOD_CLK_ID(631), R8A7795_CLK_S2D1 },	/* VSPI0 */
-	{ MOD_CLK_ID(804), R8A7795_CLK_S2D1 },	/* VIN7 */
-	{ MOD_CLK_ID(805), R8A7795_CLK_S2D1 },	/* VIN6 */
-	{ MOD_CLK_ID(806), R8A7795_CLK_S2D1 },	/* VIN5 */
-	{ MOD_CLK_ID(807), R8A7795_CLK_S2D1 },	/* VIN4 */
-	{ MOD_CLK_ID(808), R8A7795_CLK_S2D1 },	/* VIN3 */
-	{ MOD_CLK_ID(809), R8A7795_CLK_S2D1 },	/* VIN2 */
-	{ MOD_CLK_ID(810), R8A7795_CLK_S2D1 },	/* VIN1 */
-	{ MOD_CLK_ID(811), R8A7795_CLK_S2D1 },	/* VIN0 */
-	{ MOD_CLK_ID(812), R8A7795_CLK_S3D2 },	/* EAVB-IF */
-	{ MOD_CLK_ID(820), R8A7795_CLK_S2D1 },	/* IMR3 */
-	{ MOD_CLK_ID(821), R8A7795_CLK_S2D1 },	/* IMR2 */
-	{ MOD_CLK_ID(822), R8A7795_CLK_S2D1 },	/* IMR1 */
-	{ MOD_CLK_ID(823), R8A7795_CLK_S2D1 },	/* IMR0 */
-	{ MOD_CLK_ID(905), R8A7795_CLK_CP },	/* GPIO7 */
-	{ MOD_CLK_ID(906), R8A7795_CLK_CP },	/* GPIO6 */
-	{ MOD_CLK_ID(907), R8A7795_CLK_CP },	/* GPIO5 */
-	{ MOD_CLK_ID(908), R8A7795_CLK_CP },	/* GPIO4 */
-	{ MOD_CLK_ID(909), R8A7795_CLK_CP },	/* GPIO3 */
-	{ MOD_CLK_ID(910), R8A7795_CLK_CP },	/* GPIO2 */
-	{ MOD_CLK_ID(911), R8A7795_CLK_CP },	/* GPIO1 */
-	{ MOD_CLK_ID(912), R8A7795_CLK_CP },	/* GPIO0 */
-	{ MOD_CLK_ID(918), R8A7795_CLK_S3D2 },	/* I2C6 */
-	{ MOD_CLK_ID(919), R8A7795_CLK_S3D2 },	/* I2C5 */
-	{ MOD_CLK_ID(927), R8A7795_CLK_S3D2 },	/* I2C4 */
-	{ MOD_CLK_ID(928), R8A7795_CLK_S3D2 },	/* I2C3 */
-};
+अटल स्थिर काष्ठा mssr_mod_reparent r8a7795es1_mod_reparent[] __initस्थिर = अणु
+	अणु MOD_CLK_ID(118), R8A7795_CLK_S2D1 पूर्ण,	/* FDP1-1 */
+	अणु MOD_CLK_ID(119), R8A7795_CLK_S2D1 पूर्ण,	/* FDP1-0 */
+	अणु MOD_CLK_ID(121), R8A7795_CLK_S3D2 पूर्ण,	/* TMU4 */
+	अणु MOD_CLK_ID(217), R8A7795_CLK_S3D1 पूर्ण,	/* SYS-DMAC2 */
+	अणु MOD_CLK_ID(218), R8A7795_CLK_S3D1 पूर्ण,	/* SYS-DMAC1 */
+	अणु MOD_CLK_ID(219), R8A7795_CLK_S3D1 पूर्ण,	/* SYS-DMAC0 */
+	अणु MOD_CLK_ID(408), R8A7795_CLK_S3D1 पूर्ण,	/* INTC-AP */
+	अणु MOD_CLK_ID(501), R8A7795_CLK_S3D1 पूर्ण,	/* AUDMAC1 */
+	अणु MOD_CLK_ID(502), R8A7795_CLK_S3D1 पूर्ण,	/* AUDMAC0 */
+	अणु MOD_CLK_ID(523), R8A7795_CLK_S3D4 पूर्ण,	/* PWM */
+	अणु MOD_CLK_ID(601), R8A7795_CLK_S2D1 पूर्ण,	/* FCPVD2 */
+	अणु MOD_CLK_ID(602), R8A7795_CLK_S2D1 पूर्ण,	/* FCPVD1 */
+	अणु MOD_CLK_ID(603), R8A7795_CLK_S2D1 पूर्ण,	/* FCPVD0 */
+	अणु MOD_CLK_ID(606), R8A7795_CLK_S2D1 पूर्ण,	/* FCPVB1 */
+	अणु MOD_CLK_ID(607), R8A7795_CLK_S2D1 पूर्ण,	/* FCPVB0 */
+	अणु MOD_CLK_ID(610), R8A7795_CLK_S2D1 पूर्ण,	/* FCPVI1 */
+	अणु MOD_CLK_ID(611), R8A7795_CLK_S2D1 पूर्ण,	/* FCPVI0 */
+	अणु MOD_CLK_ID(614), R8A7795_CLK_S2D1 पूर्ण,	/* FCPF1 */
+	अणु MOD_CLK_ID(615), R8A7795_CLK_S2D1 पूर्ण,	/* FCPF0 */
+	अणु MOD_CLK_ID(619), R8A7795_CLK_S2D1 पूर्ण,	/* FCPCS */
+	अणु MOD_CLK_ID(621), R8A7795_CLK_S2D1 पूर्ण,	/* VSPD2 */
+	अणु MOD_CLK_ID(622), R8A7795_CLK_S2D1 पूर्ण,	/* VSPD1 */
+	अणु MOD_CLK_ID(623), R8A7795_CLK_S2D1 पूर्ण,	/* VSPD0 */
+	अणु MOD_CLK_ID(624), R8A7795_CLK_S2D1 पूर्ण,	/* VSPBC */
+	अणु MOD_CLK_ID(626), R8A7795_CLK_S2D1 पूर्ण,	/* VSPBD */
+	अणु MOD_CLK_ID(630), R8A7795_CLK_S2D1 पूर्ण,	/* VSPI1 */
+	अणु MOD_CLK_ID(631), R8A7795_CLK_S2D1 पूर्ण,	/* VSPI0 */
+	अणु MOD_CLK_ID(804), R8A7795_CLK_S2D1 पूर्ण,	/* VIN7 */
+	अणु MOD_CLK_ID(805), R8A7795_CLK_S2D1 पूर्ण,	/* VIN6 */
+	अणु MOD_CLK_ID(806), R8A7795_CLK_S2D1 पूर्ण,	/* VIN5 */
+	अणु MOD_CLK_ID(807), R8A7795_CLK_S2D1 पूर्ण,	/* VIN4 */
+	अणु MOD_CLK_ID(808), R8A7795_CLK_S2D1 पूर्ण,	/* VIN3 */
+	अणु MOD_CLK_ID(809), R8A7795_CLK_S2D1 पूर्ण,	/* VIN2 */
+	अणु MOD_CLK_ID(810), R8A7795_CLK_S2D1 पूर्ण,	/* VIN1 */
+	अणु MOD_CLK_ID(811), R8A7795_CLK_S2D1 पूर्ण,	/* VIN0 */
+	अणु MOD_CLK_ID(812), R8A7795_CLK_S3D2 पूर्ण,	/* EAVB-IF */
+	अणु MOD_CLK_ID(820), R8A7795_CLK_S2D1 पूर्ण,	/* IMR3 */
+	अणु MOD_CLK_ID(821), R8A7795_CLK_S2D1 पूर्ण,	/* IMR2 */
+	अणु MOD_CLK_ID(822), R8A7795_CLK_S2D1 पूर्ण,	/* IMR1 */
+	अणु MOD_CLK_ID(823), R8A7795_CLK_S2D1 पूर्ण,	/* IMR0 */
+	अणु MOD_CLK_ID(905), R8A7795_CLK_CP पूर्ण,	/* GPIO7 */
+	अणु MOD_CLK_ID(906), R8A7795_CLK_CP पूर्ण,	/* GPIO6 */
+	अणु MOD_CLK_ID(907), R8A7795_CLK_CP पूर्ण,	/* GPIO5 */
+	अणु MOD_CLK_ID(908), R8A7795_CLK_CP पूर्ण,	/* GPIO4 */
+	अणु MOD_CLK_ID(909), R8A7795_CLK_CP पूर्ण,	/* GPIO3 */
+	अणु MOD_CLK_ID(910), R8A7795_CLK_CP पूर्ण,	/* GPIO2 */
+	अणु MOD_CLK_ID(911), R8A7795_CLK_CP पूर्ण,	/* GPIO1 */
+	अणु MOD_CLK_ID(912), R8A7795_CLK_CP पूर्ण,	/* GPIO0 */
+	अणु MOD_CLK_ID(918), R8A7795_CLK_S3D2 पूर्ण,	/* I2C6 */
+	अणु MOD_CLK_ID(919), R8A7795_CLK_S3D2 पूर्ण,	/* I2C5 */
+	अणु MOD_CLK_ID(927), R8A7795_CLK_S3D2 पूर्ण,	/* I2C4 */
+	अणु MOD_CLK_ID(928), R8A7795_CLK_S3D2 पूर्ण,	/* I2C3 */
+पूर्ण;
 
 
 	/*
-	 * Fixups for R-Car H3 ES2.x
+	 * Fixups क्रम R-Car H3 ES2.x
 	 */
 
-static const unsigned int r8a7795es2_mod_nullify[] __initconst = {
+अटल स्थिर अचिन्हित पूर्णांक r8a7795es2_mod_nullअगरy[] __initस्थिर = अणु
 	MOD_CLK_ID(117),			/* FDP1-2 */
 	MOD_CLK_ID(327),			/* USB3-IF1 */
 	MOD_CLK_ID(600),			/* FCPVD3 */
@@ -435,47 +436,47 @@ static const unsigned int r8a7795es2_mod_nullify[] __initconst = {
 	MOD_CLK_ID(620),			/* VSPD3 */
 	MOD_CLK_ID(629),			/* VSPI2 */
 	MOD_CLK_ID(713),			/* CSI21 */
-};
+पूर्ण;
 
-static int __init r8a7795_cpg_mssr_init(struct device *dev)
-{
-	const struct rcar_gen3_cpg_pll_config *cpg_pll_config;
+अटल पूर्णांक __init r8a7795_cpg_mssr_init(काष्ठा device *dev)
+अणु
+	स्थिर काष्ठा rcar_gen3_cpg_pll_config *cpg_pll_config;
 	u32 cpg_mode;
-	int error;
+	पूर्णांक error;
 
-	error = rcar_rst_read_mode_pins(&cpg_mode);
-	if (error)
-		return error;
+	error = rcar_rst_पढ़ो_mode_pins(&cpg_mode);
+	अगर (error)
+		वापस error;
 
 	cpg_pll_config = &cpg_pll_configs[CPG_PLL_CONFIG_INDEX(cpg_mode)];
-	if (!cpg_pll_config->extal_div) {
+	अगर (!cpg_pll_config->extal_भाग) अणु
 		dev_err(dev, "Prohibited setting (cpg_mode=0x%x)\n", cpg_mode);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (soc_device_match(r8a7795es1)) {
-		cpg_core_nullify_range(r8a7795_core_clks,
+	अगर (soc_device_match(r8a7795es1)) अणु
+		cpg_core_nullअगरy_range(r8a7795_core_clks,
 				       ARRAY_SIZE(r8a7795_core_clks),
 				       R8A7795_CLK_S0D2, R8A7795_CLK_S0D12);
-		mssr_mod_nullify(r8a7795_mod_clks,
+		mssr_mod_nullअगरy(r8a7795_mod_clks,
 				 ARRAY_SIZE(r8a7795_mod_clks),
-				 r8a7795es1_mod_nullify,
-				 ARRAY_SIZE(r8a7795es1_mod_nullify));
+				 r8a7795es1_mod_nullअगरy,
+				 ARRAY_SIZE(r8a7795es1_mod_nullअगरy));
 		mssr_mod_reparent(r8a7795_mod_clks,
 				  ARRAY_SIZE(r8a7795_mod_clks),
 				  r8a7795es1_mod_reparent,
 				  ARRAY_SIZE(r8a7795es1_mod_reparent));
-	} else {
-		mssr_mod_nullify(r8a7795_mod_clks,
+	पूर्ण अन्यथा अणु
+		mssr_mod_nullअगरy(r8a7795_mod_clks,
 				 ARRAY_SIZE(r8a7795_mod_clks),
-				 r8a7795es2_mod_nullify,
-				 ARRAY_SIZE(r8a7795es2_mod_nullify));
-	}
+				 r8a7795es2_mod_nullअगरy,
+				 ARRAY_SIZE(r8a7795es2_mod_nullअगरy));
+	पूर्ण
 
-	return rcar_gen3_cpg_init(cpg_pll_config, CLK_EXTALR, cpg_mode);
-}
+	वापस rcar_gen3_cpg_init(cpg_pll_config, CLK_EXTALR, cpg_mode);
+पूर्ण
 
-const struct cpg_mssr_info r8a7795_cpg_mssr_info __initconst = {
+स्थिर काष्ठा cpg_mssr_info r8a7795_cpg_mssr_info __initस्थिर = अणु
 	/* Core Clocks */
 	.core_clks = r8a7795_core_clks,
 	.num_core_clks = ARRAY_SIZE(r8a7795_core_clks),
@@ -493,5 +494,5 @@ const struct cpg_mssr_info r8a7795_cpg_mssr_info __initconst = {
 
 	/* Callbacks */
 	.init = r8a7795_cpg_mssr_init,
-	.cpg_clk_register = rcar_gen3_cpg_clk_register,
-};
+	.cpg_clk_रेजिस्टर = rcar_gen3_cpg_clk_रेजिस्टर,
+पूर्ण;

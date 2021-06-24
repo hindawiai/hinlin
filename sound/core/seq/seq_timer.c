@@ -1,506 +1,507 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  *   ALSA sequencer Timer
  *   Copyright (c) 1998-1999 by Frank van de Pol <fvdpol@coil.demon.nl>
  *                              Jaroslav Kysela <perex@perex.cz>
  */
 
-#include <sound/core.h>
-#include <linux/slab.h>
-#include "seq_timer.h"
-#include "seq_queue.h"
-#include "seq_info.h"
+#समावेश <sound/core.h>
+#समावेश <linux/slab.h>
+#समावेश "seq_timer.h"
+#समावेश "seq_queue.h"
+#समावेश "seq_info.h"
 
-/* allowed sequencer timer frequencies, in Hz */
-#define MIN_FREQUENCY		10
-#define MAX_FREQUENCY		6250
-#define DEFAULT_FREQUENCY	1000
+/* allowed sequencer समयr frequencies, in Hz */
+#घोषणा MIN_FREQUENCY		10
+#घोषणा MAX_FREQUENCY		6250
+#घोषणा DEFAULT_FREQUENCY	1000
 
-#define SKEW_BASE	0x10000	/* 16bit shift */
+#घोषणा SKEW_BASE	0x10000	/* 16bit shअगरt */
 
-static void snd_seq_timer_set_tick_resolution(struct snd_seq_timer *tmr)
-{
-	if (tmr->tempo < 1000000)
-		tmr->tick.resolution = (tmr->tempo * 1000) / tmr->ppq;
-	else {
+अटल व्योम snd_seq_समयr_set_tick_resolution(काष्ठा snd_seq_समयr *पंचांगr)
+अणु
+	अगर (पंचांगr->tempo < 1000000)
+		पंचांगr->tick.resolution = (पंचांगr->tempo * 1000) / पंचांगr->ppq;
+	अन्यथा अणु
 		/* might overflow.. */
-		unsigned int s;
-		s = tmr->tempo % tmr->ppq;
-		s = (s * 1000) / tmr->ppq;
-		tmr->tick.resolution = (tmr->tempo / tmr->ppq) * 1000;
-		tmr->tick.resolution += s;
-	}
-	if (tmr->tick.resolution <= 0)
-		tmr->tick.resolution = 1;
-	snd_seq_timer_update_tick(&tmr->tick, 0);
-}
+		अचिन्हित पूर्णांक s;
+		s = पंचांगr->tempo % पंचांगr->ppq;
+		s = (s * 1000) / पंचांगr->ppq;
+		पंचांगr->tick.resolution = (पंचांगr->tempo / पंचांगr->ppq) * 1000;
+		पंचांगr->tick.resolution += s;
+	पूर्ण
+	अगर (पंचांगr->tick.resolution <= 0)
+		पंचांगr->tick.resolution = 1;
+	snd_seq_समयr_update_tick(&पंचांगr->tick, 0);
+पूर्ण
 
-/* create new timer (constructor) */
-struct snd_seq_timer *snd_seq_timer_new(void)
-{
-	struct snd_seq_timer *tmr;
+/* create new समयr (स्थिरructor) */
+काष्ठा snd_seq_समयr *snd_seq_समयr_new(व्योम)
+अणु
+	काष्ठा snd_seq_समयr *पंचांगr;
 	
-	tmr = kzalloc(sizeof(*tmr), GFP_KERNEL);
-	if (!tmr)
-		return NULL;
-	spin_lock_init(&tmr->lock);
+	पंचांगr = kzalloc(माप(*पंचांगr), GFP_KERNEL);
+	अगर (!पंचांगr)
+		वापस शून्य;
+	spin_lock_init(&पंचांगr->lock);
 
-	/* reset setup to defaults */
-	snd_seq_timer_defaults(tmr);
+	/* reset setup to शेषs */
+	snd_seq_समयr_शेषs(पंचांगr);
 	
-	/* reset time */
-	snd_seq_timer_reset(tmr);
+	/* reset समय */
+	snd_seq_समयr_reset(पंचांगr);
 	
-	return tmr;
-}
+	वापस पंचांगr;
+पूर्ण
 
-/* delete timer (destructor) */
-void snd_seq_timer_delete(struct snd_seq_timer **tmr)
-{
-	struct snd_seq_timer *t = *tmr;
-	*tmr = NULL;
+/* delete समयr (deकाष्ठाor) */
+व्योम snd_seq_समयr_delete(काष्ठा snd_seq_समयr **पंचांगr)
+अणु
+	काष्ठा snd_seq_समयr *t = *पंचांगr;
+	*पंचांगr = शून्य;
 
-	if (t == NULL) {
+	अगर (t == शून्य) अणु
 		pr_debug("ALSA: seq: snd_seq_timer_delete() called with NULL timer\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 	t->running = 0;
 
-	/* reset time */
-	snd_seq_timer_stop(t);
-	snd_seq_timer_reset(t);
+	/* reset समय */
+	snd_seq_समयr_stop(t);
+	snd_seq_समयr_reset(t);
 
-	kfree(t);
-}
+	kमुक्त(t);
+पूर्ण
 
-void snd_seq_timer_defaults(struct snd_seq_timer * tmr)
-{
-	unsigned long flags;
+व्योम snd_seq_समयr_शेषs(काष्ठा snd_seq_समयr * पंचांगr)
+अणु
+	अचिन्हित दीर्घ flags;
 
-	spin_lock_irqsave(&tmr->lock, flags);
-	/* setup defaults */
-	tmr->ppq = 96;		/* 96 PPQ */
-	tmr->tempo = 500000;	/* 120 BPM */
-	snd_seq_timer_set_tick_resolution(tmr);
-	tmr->running = 0;
+	spin_lock_irqsave(&पंचांगr->lock, flags);
+	/* setup शेषs */
+	पंचांगr->ppq = 96;		/* 96 PPQ */
+	पंचांगr->tempo = 500000;	/* 120 BPM */
+	snd_seq_समयr_set_tick_resolution(पंचांगr);
+	पंचांगr->running = 0;
 
-	tmr->type = SNDRV_SEQ_TIMER_ALSA;
-	tmr->alsa_id.dev_class = seq_default_timer_class;
-	tmr->alsa_id.dev_sclass = seq_default_timer_sclass;
-	tmr->alsa_id.card = seq_default_timer_card;
-	tmr->alsa_id.device = seq_default_timer_device;
-	tmr->alsa_id.subdevice = seq_default_timer_subdevice;
-	tmr->preferred_resolution = seq_default_timer_resolution;
+	पंचांगr->type = SNDRV_SEQ_TIMER_ALSA;
+	पंचांगr->alsa_id.dev_class = seq_शेष_समयr_class;
+	पंचांगr->alsa_id.dev_sclass = seq_शेष_समयr_sclass;
+	पंचांगr->alsa_id.card = seq_शेष_समयr_card;
+	पंचांगr->alsa_id.device = seq_शेष_समयr_device;
+	पंचांगr->alsa_id.subdevice = seq_शेष_समयr_subdevice;
+	पंचांगr->preferred_resolution = seq_शेष_समयr_resolution;
 
-	tmr->skew = tmr->skew_base = SKEW_BASE;
-	spin_unlock_irqrestore(&tmr->lock, flags);
-}
+	पंचांगr->skew = पंचांगr->skew_base = SKEW_BASE;
+	spin_unlock_irqrestore(&पंचांगr->lock, flags);
+पूर्ण
 
-static void seq_timer_reset(struct snd_seq_timer *tmr)
-{
-	/* reset time & songposition */
-	tmr->cur_time.tv_sec = 0;
-	tmr->cur_time.tv_nsec = 0;
+अटल व्योम seq_समयr_reset(काष्ठा snd_seq_समयr *पंचांगr)
+अणु
+	/* reset समय & songposition */
+	पंचांगr->cur_समय.tv_sec = 0;
+	पंचांगr->cur_समय.tv_nsec = 0;
 
-	tmr->tick.cur_tick = 0;
-	tmr->tick.fraction = 0;
-}
+	पंचांगr->tick.cur_tick = 0;
+	पंचांगr->tick.fraction = 0;
+पूर्ण
 
-void snd_seq_timer_reset(struct snd_seq_timer *tmr)
-{
-	unsigned long flags;
+व्योम snd_seq_समयr_reset(काष्ठा snd_seq_समयr *पंचांगr)
+अणु
+	अचिन्हित दीर्घ flags;
 
-	spin_lock_irqsave(&tmr->lock, flags);
-	seq_timer_reset(tmr);
-	spin_unlock_irqrestore(&tmr->lock, flags);
-}
+	spin_lock_irqsave(&पंचांगr->lock, flags);
+	seq_समयr_reset(पंचांगr);
+	spin_unlock_irqrestore(&पंचांगr->lock, flags);
+पूर्ण
 
 
-/* called by timer interrupt routine. the period time since previous invocation is passed */
-static void snd_seq_timer_interrupt(struct snd_timer_instance *timeri,
-				    unsigned long resolution,
-				    unsigned long ticks)
-{
-	unsigned long flags;
-	struct snd_seq_queue *q = timeri->callback_data;
-	struct snd_seq_timer *tmr;
+/* called by समयr पूर्णांकerrupt routine. the period समय since previous invocation is passed */
+अटल व्योम snd_seq_समयr_पूर्णांकerrupt(काष्ठा snd_समयr_instance *समयri,
+				    अचिन्हित दीर्घ resolution,
+				    अचिन्हित दीर्घ ticks)
+अणु
+	अचिन्हित दीर्घ flags;
+	काष्ठा snd_seq_queue *q = समयri->callback_data;
+	काष्ठा snd_seq_समयr *पंचांगr;
 
-	if (q == NULL)
-		return;
-	tmr = q->timer;
-	if (tmr == NULL)
-		return;
-	spin_lock_irqsave(&tmr->lock, flags);
-	if (!tmr->running) {
-		spin_unlock_irqrestore(&tmr->lock, flags);
-		return;
-	}
+	अगर (q == शून्य)
+		वापस;
+	पंचांगr = q->समयr;
+	अगर (पंचांगr == शून्य)
+		वापस;
+	spin_lock_irqsave(&पंचांगr->lock, flags);
+	अगर (!पंचांगr->running) अणु
+		spin_unlock_irqrestore(&पंचांगr->lock, flags);
+		वापस;
+	पूर्ण
 
 	resolution *= ticks;
-	if (tmr->skew != tmr->skew_base) {
+	अगर (पंचांगr->skew != पंचांगr->skew_base) अणु
 		/* FIXME: assuming skew_base = 0x10000 */
-		resolution = (resolution >> 16) * tmr->skew +
-			(((resolution & 0xffff) * tmr->skew) >> 16);
-	}
+		resolution = (resolution >> 16) * पंचांगr->skew +
+			(((resolution & 0xffff) * पंचांगr->skew) >> 16);
+	पूर्ण
 
-	/* update timer */
-	snd_seq_inc_time_nsec(&tmr->cur_time, resolution);
+	/* update समयr */
+	snd_seq_inc_समय_nsec(&पंचांगr->cur_समय, resolution);
 
 	/* calculate current tick */
-	snd_seq_timer_update_tick(&tmr->tick, resolution);
+	snd_seq_समयr_update_tick(&पंचांगr->tick, resolution);
 
-	/* register actual time of this timer update */
-	ktime_get_ts64(&tmr->last_update);
+	/* रेजिस्टर actual समय of this समयr update */
+	kसमय_get_ts64(&पंचांगr->last_update);
 
-	spin_unlock_irqrestore(&tmr->lock, flags);
+	spin_unlock_irqrestore(&पंचांगr->lock, flags);
 
 	/* check queues and dispatch events */
 	snd_seq_check_queue(q, 1, 0);
-}
+पूर्ण
 
 /* set current tempo */
-int snd_seq_timer_set_tempo(struct snd_seq_timer * tmr, int tempo)
-{
-	unsigned long flags;
+पूर्णांक snd_seq_समयr_set_tempo(काष्ठा snd_seq_समयr * पंचांगr, पूर्णांक tempo)
+अणु
+	अचिन्हित दीर्घ flags;
 
-	if (snd_BUG_ON(!tmr))
-		return -EINVAL;
-	if (tempo <= 0)
-		return -EINVAL;
-	spin_lock_irqsave(&tmr->lock, flags);
-	if ((unsigned int)tempo != tmr->tempo) {
-		tmr->tempo = tempo;
-		snd_seq_timer_set_tick_resolution(tmr);
-	}
-	spin_unlock_irqrestore(&tmr->lock, flags);
-	return 0;
-}
+	अगर (snd_BUG_ON(!पंचांगr))
+		वापस -EINVAL;
+	अगर (tempo <= 0)
+		वापस -EINVAL;
+	spin_lock_irqsave(&पंचांगr->lock, flags);
+	अगर ((अचिन्हित पूर्णांक)tempo != पंचांगr->tempo) अणु
+		पंचांगr->tempo = tempo;
+		snd_seq_समयr_set_tick_resolution(पंचांगr);
+	पूर्ण
+	spin_unlock_irqrestore(&पंचांगr->lock, flags);
+	वापस 0;
+पूर्ण
 
 /* set current tempo and ppq in a shot */
-int snd_seq_timer_set_tempo_ppq(struct snd_seq_timer *tmr, int tempo, int ppq)
-{
-	int changed;
-	unsigned long flags;
+पूर्णांक snd_seq_समयr_set_tempo_ppq(काष्ठा snd_seq_समयr *पंचांगr, पूर्णांक tempo, पूर्णांक ppq)
+अणु
+	पूर्णांक changed;
+	अचिन्हित दीर्घ flags;
 
-	if (snd_BUG_ON(!tmr))
-		return -EINVAL;
-	if (tempo <= 0 || ppq <= 0)
-		return -EINVAL;
-	spin_lock_irqsave(&tmr->lock, flags);
-	if (tmr->running && (ppq != tmr->ppq)) {
-		/* refuse to change ppq on running timers */
+	अगर (snd_BUG_ON(!पंचांगr))
+		वापस -EINVAL;
+	अगर (tempo <= 0 || ppq <= 0)
+		वापस -EINVAL;
+	spin_lock_irqsave(&पंचांगr->lock, flags);
+	अगर (पंचांगr->running && (ppq != पंचांगr->ppq)) अणु
+		/* refuse to change ppq on running समयrs */
 		/* because it will upset the song position (ticks) */
-		spin_unlock_irqrestore(&tmr->lock, flags);
+		spin_unlock_irqrestore(&पंचांगr->lock, flags);
 		pr_debug("ALSA: seq: cannot change ppq of a running timer\n");
-		return -EBUSY;
-	}
-	changed = (tempo != tmr->tempo) || (ppq != tmr->ppq);
-	tmr->tempo = tempo;
-	tmr->ppq = ppq;
-	if (changed)
-		snd_seq_timer_set_tick_resolution(tmr);
-	spin_unlock_irqrestore(&tmr->lock, flags);
-	return 0;
-}
+		वापस -EBUSY;
+	पूर्ण
+	changed = (tempo != पंचांगr->tempo) || (ppq != पंचांगr->ppq);
+	पंचांगr->tempo = tempo;
+	पंचांगr->ppq = ppq;
+	अगर (changed)
+		snd_seq_समयr_set_tick_resolution(पंचांगr);
+	spin_unlock_irqrestore(&पंचांगr->lock, flags);
+	वापस 0;
+पूर्ण
 
 /* set current tick position */
-int snd_seq_timer_set_position_tick(struct snd_seq_timer *tmr,
-				    snd_seq_tick_time_t position)
-{
-	unsigned long flags;
+पूर्णांक snd_seq_समयr_set_position_tick(काष्ठा snd_seq_समयr *पंचांगr,
+				    snd_seq_tick_समय_प्रकार position)
+अणु
+	अचिन्हित दीर्घ flags;
 
-	if (snd_BUG_ON(!tmr))
-		return -EINVAL;
+	अगर (snd_BUG_ON(!पंचांगr))
+		वापस -EINVAL;
 
-	spin_lock_irqsave(&tmr->lock, flags);
-	tmr->tick.cur_tick = position;
-	tmr->tick.fraction = 0;
-	spin_unlock_irqrestore(&tmr->lock, flags);
-	return 0;
-}
+	spin_lock_irqsave(&पंचांगr->lock, flags);
+	पंचांगr->tick.cur_tick = position;
+	पंचांगr->tick.fraction = 0;
+	spin_unlock_irqrestore(&पंचांगr->lock, flags);
+	वापस 0;
+पूर्ण
 
-/* set current real-time position */
-int snd_seq_timer_set_position_time(struct snd_seq_timer *tmr,
-				    snd_seq_real_time_t position)
-{
-	unsigned long flags;
+/* set current real-समय position */
+पूर्णांक snd_seq_समयr_set_position_समय(काष्ठा snd_seq_समयr *पंचांगr,
+				    snd_seq_real_समय_प्रकार position)
+अणु
+	अचिन्हित दीर्घ flags;
 
-	if (snd_BUG_ON(!tmr))
-		return -EINVAL;
+	अगर (snd_BUG_ON(!पंचांगr))
+		वापस -EINVAL;
 
-	snd_seq_sanity_real_time(&position);
-	spin_lock_irqsave(&tmr->lock, flags);
-	tmr->cur_time = position;
-	spin_unlock_irqrestore(&tmr->lock, flags);
-	return 0;
-}
+	snd_seq_sanity_real_समय(&position);
+	spin_lock_irqsave(&पंचांगr->lock, flags);
+	पंचांगr->cur_समय = position;
+	spin_unlock_irqrestore(&पंचांगr->lock, flags);
+	वापस 0;
+पूर्ण
 
-/* set timer skew */
-int snd_seq_timer_set_skew(struct snd_seq_timer *tmr, unsigned int skew,
-			   unsigned int base)
-{
-	unsigned long flags;
+/* set समयr skew */
+पूर्णांक snd_seq_समयr_set_skew(काष्ठा snd_seq_समयr *पंचांगr, अचिन्हित पूर्णांक skew,
+			   अचिन्हित पूर्णांक base)
+अणु
+	अचिन्हित दीर्घ flags;
 
-	if (snd_BUG_ON(!tmr))
-		return -EINVAL;
+	अगर (snd_BUG_ON(!पंचांगr))
+		वापस -EINVAL;
 
 	/* FIXME */
-	if (base != SKEW_BASE) {
+	अगर (base != SKEW_BASE) अणु
 		pr_debug("ALSA: seq: invalid skew base 0x%x\n", base);
-		return -EINVAL;
-	}
-	spin_lock_irqsave(&tmr->lock, flags);
-	tmr->skew = skew;
-	spin_unlock_irqrestore(&tmr->lock, flags);
-	return 0;
-}
+		वापस -EINVAL;
+	पूर्ण
+	spin_lock_irqsave(&पंचांगr->lock, flags);
+	पंचांगr->skew = skew;
+	spin_unlock_irqrestore(&पंचांगr->lock, flags);
+	वापस 0;
+पूर्ण
 
-int snd_seq_timer_open(struct snd_seq_queue *q)
-{
-	struct snd_timer_instance *t;
-	struct snd_seq_timer *tmr;
-	char str[32];
-	int err;
+पूर्णांक snd_seq_समयr_खोलो(काष्ठा snd_seq_queue *q)
+अणु
+	काष्ठा snd_समयr_instance *t;
+	काष्ठा snd_seq_समयr *पंचांगr;
+	अक्षर str[32];
+	पूर्णांक err;
 
-	tmr = q->timer;
-	if (snd_BUG_ON(!tmr))
-		return -EINVAL;
-	if (tmr->timeri)
-		return -EBUSY;
-	sprintf(str, "sequencer queue %i", q->queue);
-	if (tmr->type != SNDRV_SEQ_TIMER_ALSA)	/* standard ALSA timer */
-		return -EINVAL;
-	if (tmr->alsa_id.dev_class != SNDRV_TIMER_CLASS_SLAVE)
-		tmr->alsa_id.dev_sclass = SNDRV_TIMER_SCLASS_SEQUENCER;
-	t = snd_timer_instance_new(str);
-	if (!t)
-		return -ENOMEM;
-	t->callback = snd_seq_timer_interrupt;
+	पंचांगr = q->समयr;
+	अगर (snd_BUG_ON(!पंचांगr))
+		वापस -EINVAL;
+	अगर (पंचांगr->समयri)
+		वापस -EBUSY;
+	प्र_लिखो(str, "sequencer queue %i", q->queue);
+	अगर (पंचांगr->type != SNDRV_SEQ_TIMER_ALSA)	/* standard ALSA समयr */
+		वापस -EINVAL;
+	अगर (पंचांगr->alsa_id.dev_class != SNDRV_TIMER_CLASS_SLAVE)
+		पंचांगr->alsa_id.dev_sclass = SNDRV_TIMER_SCLASS_SEQUENCER;
+	t = snd_समयr_instance_new(str);
+	अगर (!t)
+		वापस -ENOMEM;
+	t->callback = snd_seq_समयr_पूर्णांकerrupt;
 	t->callback_data = q;
 	t->flags |= SNDRV_TIMER_IFLG_AUTO;
-	err = snd_timer_open(t, &tmr->alsa_id, q->queue);
-	if (err < 0 && tmr->alsa_id.dev_class != SNDRV_TIMER_CLASS_SLAVE) {
-		if (tmr->alsa_id.dev_class != SNDRV_TIMER_CLASS_GLOBAL ||
-		    tmr->alsa_id.device != SNDRV_TIMER_GLOBAL_SYSTEM) {
-			struct snd_timer_id tid;
-			memset(&tid, 0, sizeof(tid));
+	err = snd_समयr_खोलो(t, &पंचांगr->alsa_id, q->queue);
+	अगर (err < 0 && पंचांगr->alsa_id.dev_class != SNDRV_TIMER_CLASS_SLAVE) अणु
+		अगर (पंचांगr->alsa_id.dev_class != SNDRV_TIMER_CLASS_GLOBAL ||
+		    पंचांगr->alsa_id.device != SNDRV_TIMER_GLOBAL_SYSTEM) अणु
+			काष्ठा snd_समयr_id tid;
+			स_रखो(&tid, 0, माप(tid));
 			tid.dev_class = SNDRV_TIMER_CLASS_GLOBAL;
 			tid.dev_sclass = SNDRV_TIMER_SCLASS_SEQUENCER;
 			tid.card = -1;
 			tid.device = SNDRV_TIMER_GLOBAL_SYSTEM;
-			err = snd_timer_open(t, &tid, q->queue);
-		}
-	}
-	if (err < 0) {
+			err = snd_समयr_खोलो(t, &tid, q->queue);
+		पूर्ण
+	पूर्ण
+	अगर (err < 0) अणु
 		pr_err("ALSA: seq fatal error: cannot create timer (%i)\n", err);
-		snd_timer_instance_free(t);
-		return err;
-	}
-	spin_lock_irq(&tmr->lock);
-	if (tmr->timeri)
+		snd_समयr_instance_मुक्त(t);
+		वापस err;
+	पूर्ण
+	spin_lock_irq(&पंचांगr->lock);
+	अगर (पंचांगr->समयri)
 		err = -EBUSY;
-	else
-		tmr->timeri = t;
-	spin_unlock_irq(&tmr->lock);
-	if (err < 0) {
-		snd_timer_close(t);
-		snd_timer_instance_free(t);
-		return err;
-	}
-	return 0;
-}
+	अन्यथा
+		पंचांगr->समयri = t;
+	spin_unlock_irq(&पंचांगr->lock);
+	अगर (err < 0) अणु
+		snd_समयr_बंद(t);
+		snd_समयr_instance_मुक्त(t);
+		वापस err;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-int snd_seq_timer_close(struct snd_seq_queue *q)
-{
-	struct snd_seq_timer *tmr;
-	struct snd_timer_instance *t;
+पूर्णांक snd_seq_समयr_बंद(काष्ठा snd_seq_queue *q)
+अणु
+	काष्ठा snd_seq_समयr *पंचांगr;
+	काष्ठा snd_समयr_instance *t;
 	
-	tmr = q->timer;
-	if (snd_BUG_ON(!tmr))
-		return -EINVAL;
-	spin_lock_irq(&tmr->lock);
-	t = tmr->timeri;
-	tmr->timeri = NULL;
-	spin_unlock_irq(&tmr->lock);
-	if (t) {
-		snd_timer_close(t);
-		snd_timer_instance_free(t);
-	}
-	return 0;
-}
+	पंचांगr = q->समयr;
+	अगर (snd_BUG_ON(!पंचांगr))
+		वापस -EINVAL;
+	spin_lock_irq(&पंचांगr->lock);
+	t = पंचांगr->समयri;
+	पंचांगr->समयri = शून्य;
+	spin_unlock_irq(&पंचांगr->lock);
+	अगर (t) अणु
+		snd_समयr_बंद(t);
+		snd_समयr_instance_मुक्त(t);
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int seq_timer_stop(struct snd_seq_timer *tmr)
-{
-	if (! tmr->timeri)
-		return -EINVAL;
-	if (!tmr->running)
-		return 0;
-	tmr->running = 0;
-	snd_timer_pause(tmr->timeri);
-	return 0;
-}
+अटल पूर्णांक seq_समयr_stop(काष्ठा snd_seq_समयr *पंचांगr)
+अणु
+	अगर (! पंचांगr->समयri)
+		वापस -EINVAL;
+	अगर (!पंचांगr->running)
+		वापस 0;
+	पंचांगr->running = 0;
+	snd_समयr_छोड़ो(पंचांगr->समयri);
+	वापस 0;
+पूर्ण
 
-int snd_seq_timer_stop(struct snd_seq_timer *tmr)
-{
-	unsigned long flags;
-	int err;
+पूर्णांक snd_seq_समयr_stop(काष्ठा snd_seq_समयr *पंचांगr)
+अणु
+	अचिन्हित दीर्घ flags;
+	पूर्णांक err;
 
-	spin_lock_irqsave(&tmr->lock, flags);
-	err = seq_timer_stop(tmr);
-	spin_unlock_irqrestore(&tmr->lock, flags);
-	return err;
-}
+	spin_lock_irqsave(&पंचांगr->lock, flags);
+	err = seq_समयr_stop(पंचांगr);
+	spin_unlock_irqrestore(&पंचांगr->lock, flags);
+	वापस err;
+पूर्ण
 
-static int initialize_timer(struct snd_seq_timer *tmr)
-{
-	struct snd_timer *t;
-	unsigned long freq;
+अटल पूर्णांक initialize_समयr(काष्ठा snd_seq_समयr *पंचांगr)
+अणु
+	काष्ठा snd_समयr *t;
+	अचिन्हित दीर्घ freq;
 
-	t = tmr->timeri->timer;
-	if (!t)
-		return -EINVAL;
+	t = पंचांगr->समयri->समयr;
+	अगर (!t)
+		वापस -EINVAL;
 
-	freq = tmr->preferred_resolution;
-	if (!freq)
+	freq = पंचांगr->preferred_resolution;
+	अगर (!freq)
 		freq = DEFAULT_FREQUENCY;
-	else if (freq < MIN_FREQUENCY)
+	अन्यथा अगर (freq < MIN_FREQUENCY)
 		freq = MIN_FREQUENCY;
-	else if (freq > MAX_FREQUENCY)
+	अन्यथा अगर (freq > MAX_FREQUENCY)
 		freq = MAX_FREQUENCY;
 
-	tmr->ticks = 1;
-	if (!(t->hw.flags & SNDRV_TIMER_HW_SLAVE)) {
-		unsigned long r = snd_timer_resolution(tmr->timeri);
-		if (r) {
-			tmr->ticks = (unsigned int)(1000000000uL / (r * freq));
-			if (! tmr->ticks)
-				tmr->ticks = 1;
-		}
-	}
-	tmr->initialized = 1;
-	return 0;
-}
+	पंचांगr->ticks = 1;
+	अगर (!(t->hw.flags & SNDRV_TIMER_HW_SLAVE)) अणु
+		अचिन्हित दीर्घ r = snd_समयr_resolution(पंचांगr->समयri);
+		अगर (r) अणु
+			पंचांगr->ticks = (अचिन्हित पूर्णांक)(1000000000uL / (r * freq));
+			अगर (! पंचांगr->ticks)
+				पंचांगr->ticks = 1;
+		पूर्ण
+	पूर्ण
+	पंचांगr->initialized = 1;
+	वापस 0;
+पूर्ण
 
-static int seq_timer_start(struct snd_seq_timer *tmr)
-{
-	if (! tmr->timeri)
-		return -EINVAL;
-	if (tmr->running)
-		seq_timer_stop(tmr);
-	seq_timer_reset(tmr);
-	if (initialize_timer(tmr) < 0)
-		return -EINVAL;
-	snd_timer_start(tmr->timeri, tmr->ticks);
-	tmr->running = 1;
-	ktime_get_ts64(&tmr->last_update);
-	return 0;
-}
+अटल पूर्णांक seq_समयr_start(काष्ठा snd_seq_समयr *पंचांगr)
+अणु
+	अगर (! पंचांगr->समयri)
+		वापस -EINVAL;
+	अगर (पंचांगr->running)
+		seq_समयr_stop(पंचांगr);
+	seq_समयr_reset(पंचांगr);
+	अगर (initialize_समयr(पंचांगr) < 0)
+		वापस -EINVAL;
+	snd_समयr_start(पंचांगr->समयri, पंचांगr->ticks);
+	पंचांगr->running = 1;
+	kसमय_get_ts64(&पंचांगr->last_update);
+	वापस 0;
+पूर्ण
 
-int snd_seq_timer_start(struct snd_seq_timer *tmr)
-{
-	unsigned long flags;
-	int err;
+पूर्णांक snd_seq_समयr_start(काष्ठा snd_seq_समयr *पंचांगr)
+अणु
+	अचिन्हित दीर्घ flags;
+	पूर्णांक err;
 
-	spin_lock_irqsave(&tmr->lock, flags);
-	err = seq_timer_start(tmr);
-	spin_unlock_irqrestore(&tmr->lock, flags);
-	return err;
-}
+	spin_lock_irqsave(&पंचांगr->lock, flags);
+	err = seq_समयr_start(पंचांगr);
+	spin_unlock_irqrestore(&पंचांगr->lock, flags);
+	वापस err;
+पूर्ण
 
-static int seq_timer_continue(struct snd_seq_timer *tmr)
-{
-	if (! tmr->timeri)
-		return -EINVAL;
-	if (tmr->running)
-		return -EBUSY;
-	if (! tmr->initialized) {
-		seq_timer_reset(tmr);
-		if (initialize_timer(tmr) < 0)
-			return -EINVAL;
-	}
-	snd_timer_start(tmr->timeri, tmr->ticks);
-	tmr->running = 1;
-	ktime_get_ts64(&tmr->last_update);
-	return 0;
-}
+अटल पूर्णांक seq_समयr_जारी(काष्ठा snd_seq_समयr *पंचांगr)
+अणु
+	अगर (! पंचांगr->समयri)
+		वापस -EINVAL;
+	अगर (पंचांगr->running)
+		वापस -EBUSY;
+	अगर (! पंचांगr->initialized) अणु
+		seq_समयr_reset(पंचांगr);
+		अगर (initialize_समयr(पंचांगr) < 0)
+			वापस -EINVAL;
+	पूर्ण
+	snd_समयr_start(पंचांगr->समयri, पंचांगr->ticks);
+	पंचांगr->running = 1;
+	kसमय_get_ts64(&पंचांगr->last_update);
+	वापस 0;
+पूर्ण
 
-int snd_seq_timer_continue(struct snd_seq_timer *tmr)
-{
-	unsigned long flags;
-	int err;
+पूर्णांक snd_seq_समयr_जारी(काष्ठा snd_seq_समयr *पंचांगr)
+अणु
+	अचिन्हित दीर्घ flags;
+	पूर्णांक err;
 
-	spin_lock_irqsave(&tmr->lock, flags);
-	err = seq_timer_continue(tmr);
-	spin_unlock_irqrestore(&tmr->lock, flags);
-	return err;
-}
+	spin_lock_irqsave(&पंचांगr->lock, flags);
+	err = seq_समयr_जारी(पंचांगr);
+	spin_unlock_irqrestore(&पंचांगr->lock, flags);
+	वापस err;
+पूर्ण
 
-/* return current 'real' time. use timeofday() to get better granularity. */
-snd_seq_real_time_t snd_seq_timer_get_cur_time(struct snd_seq_timer *tmr,
-					       bool adjust_ktime)
-{
-	snd_seq_real_time_t cur_time;
-	unsigned long flags;
+/* वापस current 'real' समय. use समयofday() to get better granularity. */
+snd_seq_real_समय_प्रकार snd_seq_समयr_get_cur_समय(काष्ठा snd_seq_समयr *पंचांगr,
+					       bool adjust_kसमय)
+अणु
+	snd_seq_real_समय_प्रकार cur_समय;
+	अचिन्हित दीर्घ flags;
 
-	spin_lock_irqsave(&tmr->lock, flags);
-	cur_time = tmr->cur_time;
-	if (adjust_ktime && tmr->running) {
-		struct timespec64 tm;
+	spin_lock_irqsave(&पंचांगr->lock, flags);
+	cur_समय = पंचांगr->cur_समय;
+	अगर (adjust_kसमय && पंचांगr->running) अणु
+		काष्ठा बारpec64 पंचांग;
 
-		ktime_get_ts64(&tm);
-		tm = timespec64_sub(tm, tmr->last_update);
-		cur_time.tv_nsec += tm.tv_nsec;
-		cur_time.tv_sec += tm.tv_sec;
-		snd_seq_sanity_real_time(&cur_time);
-	}
-	spin_unlock_irqrestore(&tmr->lock, flags);
-	return cur_time;	
-}
+		kसमय_get_ts64(&पंचांग);
+		पंचांग = बारpec64_sub(पंचांग, पंचांगr->last_update);
+		cur_समय.tv_nsec += पंचांग.tv_nsec;
+		cur_समय.tv_sec += पंचांग.tv_sec;
+		snd_seq_sanity_real_समय(&cur_समय);
+	पूर्ण
+	spin_unlock_irqrestore(&पंचांगr->lock, flags);
+	वापस cur_समय;	
+पूर्ण
 
-/* TODO: use interpolation on tick queue (will only be useful for very
+/* TODO: use पूर्णांकerpolation on tick queue (will only be useful क्रम very
  high PPQ values) */
-snd_seq_tick_time_t snd_seq_timer_get_cur_tick(struct snd_seq_timer *tmr)
-{
-	snd_seq_tick_time_t cur_tick;
-	unsigned long flags;
+snd_seq_tick_समय_प्रकार snd_seq_समयr_get_cur_tick(काष्ठा snd_seq_समयr *पंचांगr)
+अणु
+	snd_seq_tick_समय_प्रकार cur_tick;
+	अचिन्हित दीर्घ flags;
 
-	spin_lock_irqsave(&tmr->lock, flags);
-	cur_tick = tmr->tick.cur_tick;
-	spin_unlock_irqrestore(&tmr->lock, flags);
-	return cur_tick;
-}
+	spin_lock_irqsave(&पंचांगr->lock, flags);
+	cur_tick = पंचांगr->tick.cur_tick;
+	spin_unlock_irqrestore(&पंचांगr->lock, flags);
+	वापस cur_tick;
+पूर्ण
 
 
-#ifdef CONFIG_SND_PROC_FS
+#अगर_घोषित CONFIG_SND_PROC_FS
 /* exported to seq_info.c */
-void snd_seq_info_timer_read(struct snd_info_entry *entry,
-			     struct snd_info_buffer *buffer)
-{
-	int idx;
-	struct snd_seq_queue *q;
-	struct snd_seq_timer *tmr;
-	struct snd_timer_instance *ti;
-	unsigned long resolution;
+व्योम snd_seq_info_समयr_पढ़ो(काष्ठा snd_info_entry *entry,
+			     काष्ठा snd_info_buffer *buffer)
+अणु
+	पूर्णांक idx;
+	काष्ठा snd_seq_queue *q;
+	काष्ठा snd_seq_समयr *पंचांगr;
+	काष्ठा snd_समयr_instance *ti;
+	अचिन्हित दीर्घ resolution;
 	
-	for (idx = 0; idx < SNDRV_SEQ_MAX_QUEUES; idx++) {
+	क्रम (idx = 0; idx < SNDRV_SEQ_MAX_QUEUES; idx++) अणु
 		q = queueptr(idx);
-		if (q == NULL)
-			continue;
-		mutex_lock(&q->timer_mutex);
-		tmr = q->timer;
-		if (!tmr)
-			goto unlock;
-		ti = tmr->timeri;
-		if (!ti)
-			goto unlock;
-		snd_iprintf(buffer, "Timer for queue %i : %s\n", q->queue, ti->timer->name);
-		resolution = snd_timer_resolution(ti) * tmr->ticks;
-		snd_iprintf(buffer, "  Period time : %lu.%09lu\n", resolution / 1000000000, resolution % 1000000000);
-		snd_iprintf(buffer, "  Skew : %u / %u\n", tmr->skew, tmr->skew_base);
+		अगर (q == शून्य)
+			जारी;
+		mutex_lock(&q->समयr_mutex);
+		पंचांगr = q->समयr;
+		अगर (!पंचांगr)
+			जाओ unlock;
+		ti = पंचांगr->समयri;
+		अगर (!ti)
+			जाओ unlock;
+		snd_iम_लिखो(buffer, "Timer for queue %i : %s\n", q->queue, ti->समयr->name);
+		resolution = snd_समयr_resolution(ti) * पंचांगr->ticks;
+		snd_iम_लिखो(buffer, "  Period time : %lu.%09lu\n", resolution / 1000000000, resolution % 1000000000);
+		snd_iम_लिखो(buffer, "  Skew : %u / %u\n", पंचांगr->skew, पंचांगr->skew_base);
 unlock:
-		mutex_unlock(&q->timer_mutex);
-		queuefree(q);
- 	}
-}
-#endif /* CONFIG_SND_PROC_FS */
+		mutex_unlock(&q->समयr_mutex);
+		queueमुक्त(q);
+ 	पूर्ण
+पूर्ण
+#पूर्ण_अगर /* CONFIG_SND_PROC_FS */
 

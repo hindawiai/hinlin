@@ -1,138 +1,139 @@
+<शैली गुरु>
 /*
- * Copyright (C) 2017 Rafał Miłecki <rafal@milecki.pl>
+ * Copyright (C) 2017 Rafaध Miधecki <rafal@milecki.pl>
  *
- * Permission to use, copy, modify, and/or distribute this software for any
+ * Permission to use, copy, modअगरy, and/or distribute this software क्रम any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
  * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
  * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
- * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * ANY SPECIAL, सूचीECT, INसूचीECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
  * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <linux/of.h>
-#include <net/cfg80211.h>
-#include "core.h"
+#समावेश <linux/of.h>
+#समावेश <net/cfg80211.h>
+#समावेश "core.h"
 
-static bool wiphy_freq_limits_valid_chan(struct wiphy *wiphy,
-					 struct ieee80211_freq_range *freq_limits,
-					 unsigned int n_freq_limits,
-					 struct ieee80211_channel *chan)
-{
+अटल bool wiphy_freq_limits_valid_chan(काष्ठा wiphy *wiphy,
+					 काष्ठा ieee80211_freq_range *freq_limits,
+					 अचिन्हित पूर्णांक n_freq_limits,
+					 काष्ठा ieee80211_channel *chan)
+अणु
 	u32 bw = MHZ_TO_KHZ(20);
-	int i;
+	पूर्णांक i;
 
-	for (i = 0; i < n_freq_limits; i++) {
-		struct ieee80211_freq_range *limit = &freq_limits[i];
+	क्रम (i = 0; i < n_freq_limits; i++) अणु
+		काष्ठा ieee80211_freq_range *limit = &freq_limits[i];
 
-		if (cfg80211_does_bw_fit_range(limit,
+		अगर (cfg80211_करोes_bw_fit_range(limit,
 					       MHZ_TO_KHZ(chan->center_freq),
 					       bw))
-			return true;
-	}
+			वापस true;
+	पूर्ण
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static void wiphy_freq_limits_apply(struct wiphy *wiphy,
-				    struct ieee80211_freq_range *freq_limits,
-				    unsigned int n_freq_limits)
-{
-	enum nl80211_band band;
-	int i;
+अटल व्योम wiphy_freq_limits_apply(काष्ठा wiphy *wiphy,
+				    काष्ठा ieee80211_freq_range *freq_limits,
+				    अचिन्हित पूर्णांक n_freq_limits)
+अणु
+	क्रमागत nl80211_band band;
+	पूर्णांक i;
 
-	if (WARN_ON(!n_freq_limits))
-		return;
+	अगर (WARN_ON(!n_freq_limits))
+		वापस;
 
-	for (band = 0; band < NUM_NL80211_BANDS; band++) {
-		struct ieee80211_supported_band *sband = wiphy->bands[band];
+	क्रम (band = 0; band < NUM_NL80211_BANDS; band++) अणु
+		काष्ठा ieee80211_supported_band *sband = wiphy->bands[band];
 
-		if (!sband)
-			continue;
+		अगर (!sband)
+			जारी;
 
-		for (i = 0; i < sband->n_channels; i++) {
-			struct ieee80211_channel *chan = &sband->channels[i];
+		क्रम (i = 0; i < sband->n_channels; i++) अणु
+			काष्ठा ieee80211_channel *chan = &sband->channels[i];
 
-			if (chan->flags & IEEE80211_CHAN_DISABLED)
-				continue;
+			अगर (chan->flags & IEEE80211_CHAN_DISABLED)
+				जारी;
 
-			if (!wiphy_freq_limits_valid_chan(wiphy, freq_limits,
+			अगर (!wiphy_freq_limits_valid_chan(wiphy, freq_limits,
 							  n_freq_limits,
-							  chan)) {
+							  chan)) अणु
 				pr_debug("Disabling freq %d MHz as it's out of OF limits\n",
 					 chan->center_freq);
 				chan->flags |= IEEE80211_CHAN_DISABLED;
-			}
-		}
-	}
-}
+			पूर्ण
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-void wiphy_read_of_freq_limits(struct wiphy *wiphy)
-{
-	struct device *dev = wiphy_dev(wiphy);
-	struct device_node *np;
-	struct property *prop;
-	struct ieee80211_freq_range *freq_limits;
-	unsigned int n_freq_limits;
-	const __be32 *p;
-	int len, i;
-	int err = 0;
+व्योम wiphy_पढ़ो_of_freq_limits(काष्ठा wiphy *wiphy)
+अणु
+	काष्ठा device *dev = wiphy_dev(wiphy);
+	काष्ठा device_node *np;
+	काष्ठा property *prop;
+	काष्ठा ieee80211_freq_range *freq_limits;
+	अचिन्हित पूर्णांक n_freq_limits;
+	स्थिर __be32 *p;
+	पूर्णांक len, i;
+	पूर्णांक err = 0;
 
-	if (!dev)
-		return;
+	अगर (!dev)
+		वापस;
 	np = dev_of_node(dev);
-	if (!np)
-		return;
+	अगर (!np)
+		वापस;
 
 	prop = of_find_property(np, "ieee80211-freq-limit", &len);
-	if (!prop)
-		return;
+	अगर (!prop)
+		वापस;
 
-	if (!len || len % sizeof(u32) || len / sizeof(u32) % 2) {
+	अगर (!len || len % माप(u32) || len / माप(u32) % 2) अणु
 		dev_err(dev, "ieee80211-freq-limit wrong format");
-		return;
-	}
-	n_freq_limits = len / sizeof(u32) / 2;
+		वापस;
+	पूर्ण
+	n_freq_limits = len / माप(u32) / 2;
 
-	freq_limits = kcalloc(n_freq_limits, sizeof(*freq_limits), GFP_KERNEL);
-	if (!freq_limits) {
+	freq_limits = kसुस्मृति(n_freq_limits, माप(*freq_limits), GFP_KERNEL);
+	अगर (!freq_limits) अणु
 		err = -ENOMEM;
-		goto out_kfree;
-	}
+		जाओ out_kमुक्त;
+	पूर्ण
 
-	p = NULL;
-	for (i = 0; i < n_freq_limits; i++) {
-		struct ieee80211_freq_range *limit = &freq_limits[i];
+	p = शून्य;
+	क्रम (i = 0; i < n_freq_limits; i++) अणु
+		काष्ठा ieee80211_freq_range *limit = &freq_limits[i];
 
 		p = of_prop_next_u32(prop, p, &limit->start_freq_khz);
-		if (!p) {
+		अगर (!p) अणु
 			err = -EINVAL;
-			goto out_kfree;
-		}
+			जाओ out_kमुक्त;
+		पूर्ण
 
 		p = of_prop_next_u32(prop, p, &limit->end_freq_khz);
-		if (!p) {
+		अगर (!p) अणु
 			err = -EINVAL;
-			goto out_kfree;
-		}
+			जाओ out_kमुक्त;
+		पूर्ण
 
-		if (!limit->start_freq_khz ||
+		अगर (!limit->start_freq_khz ||
 		    !limit->end_freq_khz ||
-		    limit->start_freq_khz >= limit->end_freq_khz) {
+		    limit->start_freq_khz >= limit->end_freq_khz) अणु
 			err = -EINVAL;
-			goto out_kfree;
-		}
-	}
+			जाओ out_kमुक्त;
+		पूर्ण
+	पूर्ण
 
 	wiphy_freq_limits_apply(wiphy, freq_limits, n_freq_limits);
 
-out_kfree:
-	kfree(freq_limits);
-	if (err)
+out_kमुक्त:
+	kमुक्त(freq_limits);
+	अगर (err)
 		dev_err(dev, "Failed to get limits: %d\n", err);
-}
-EXPORT_SYMBOL(wiphy_read_of_freq_limits);
+पूर्ण
+EXPORT_SYMBOL(wiphy_पढ़ो_of_freq_limits);

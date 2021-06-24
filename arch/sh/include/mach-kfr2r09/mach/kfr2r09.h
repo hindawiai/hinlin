@@ -1,24 +1,25 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __ASM_SH_KFR2R09_H
-#define __ASM_SH_KFR2R09_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __ASM_SH_KFR2R09_H
+#घोषणा __ASM_SH_KFR2R09_H
 
-#include <video/sh_mobile_lcdc.h>
+#समावेश <video/sh_mobile_lcdc.h>
 
-#if defined(CONFIG_FB_SH_MOBILE_LCDC) || defined(CONFIG_FB_SH_MOBILE_LCDC_MODULE)
-int kfr2r09_lcd_setup(void *sys_ops_handle,
-		      struct sh_mobile_lcdc_sys_bus_ops *sys_ops);
-void kfr2r09_lcd_start(void *sys_ops_handle,
-		       struct sh_mobile_lcdc_sys_bus_ops *sys_ops);
-#else
-static int kfr2r09_lcd_setup(void *sys_ops_handle,
-				struct sh_mobile_lcdc_sys_bus_ops *sys_ops)
-{
-	return -ENODEV;
-}
-static void kfr2r09_lcd_start(void *sys_ops_handle,
-				struct sh_mobile_lcdc_sys_bus_ops *sys_ops)
-{
-}
-#endif
+#अगर defined(CONFIG_FB_SH_MOBILE_LCDC) || defined(CONFIG_FB_SH_MOBILE_LCDC_MODULE)
+पूर्णांक kfr2r09_lcd_setup(व्योम *sys_ops_handle,
+		      काष्ठा sh_mobile_lcdc_sys_bus_ops *sys_ops);
+व्योम kfr2r09_lcd_start(व्योम *sys_ops_handle,
+		       काष्ठा sh_mobile_lcdc_sys_bus_ops *sys_ops);
+#अन्यथा
+अटल पूर्णांक kfr2r09_lcd_setup(व्योम *sys_ops_handle,
+				काष्ठा sh_mobile_lcdc_sys_bus_ops *sys_ops)
+अणु
+	वापस -ENODEV;
+पूर्ण
+अटल व्योम kfr2r09_lcd_start(व्योम *sys_ops_handle,
+				काष्ठा sh_mobile_lcdc_sys_bus_ops *sys_ops)
+अणु
+पूर्ण
+#पूर्ण_अगर
 
-#endif /* __ASM_SH_KFR2R09_H */
+#पूर्ण_अगर /* __ASM_SH_KFR2R09_H */

@@ -1,19 +1,20 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  *   Copyright (C) International Business Machines Corp., 2000-2004
- *   Portions Copyright (C) Tino Reichardt, 2012
+ *   Portions Copyright (C) Tino Reiअक्षरdt, 2012
  */
 
-#include <linux/fs.h>
-#include <linux/slab.h>
-#include "jfs_incore.h"
-#include "jfs_superblock.h"
-#include "jfs_dmap.h"
-#include "jfs_imap.h"
-#include "jfs_lock.h"
-#include "jfs_metapage.h"
-#include "jfs_debug.h"
-#include "jfs_discard.h"
+#समावेश <linux/fs.h>
+#समावेश <linux/slab.h>
+#समावेश "jfs_incore.h"
+#समावेश "jfs_superblock.h"
+#समावेश "jfs_dmap.h"
+#समावेश "jfs_imap.h"
+#समावेश "jfs_lock.h"
+#समावेश "jfs_metapage.h"
+#समावेश "jfs_debug.h"
+#समावेश "jfs_discard.h"
 
 /*
  *	SERIALIZATION of the Block Allocation Map.
@@ -21,12 +22,12 @@
  *	the working state of the block allocation map is accessed in
  *	two directions:
  *
- *	1) allocation and free requests that start at the dmap
+ *	1) allocation and मुक्त requests that start at the dmap
  *	   level and move up through the dmap control pages (i.e.
  *	   the vast majority of requests).
  *
  *	2) allocation requests that start at dmap control page
- *	   level and work down towards the dmaps.
+ *	   level and work करोwn towards the dmaps.
  *
  *	the serialization scheme used here is as follows.
  *
@@ -35,86 +36,86 @@
  *	as it works it way up from a single dmap to the required level
  *	of dmap control page.
  *	requests that start at the top are serialized against each other
- *	and request that start from the bottom by the multiple read/single
- *	write inode lock of the bmap inode. requests starting at the top
- *	take this lock in write mode while request starting at the bottom
- *	take the lock in read mode.  a single top-down request may proceed
- *	exclusively while multiple bottoms-up requests may proceed
+ *	and request that start from the bottom by the multiple पढ़ो/single
+ *	ग_लिखो inode lock of the bmap inode. requests starting at the top
+ *	take this lock in ग_लिखो mode जबतक request starting at the bottom
+ *	take the lock in पढ़ो mode.  a single top-करोwn request may proceed
+ *	exclusively जबतक multiple bottoms-up requests may proceed
  *	simultaneously (under the protection of busy buffers).
  *
- *	in addition to information found in dmaps and dmap control pages,
- *	the working state of the block allocation map also includes read/
- *	write information maintained in the bmap descriptor (i.e. total
- *	free block count, allocation group level free block counts).
- *	a single exclusive lock (BMAP_LOCK) is used to guard this information
+ *	in addition to inक्रमmation found in dmaps and dmap control pages,
+ *	the working state of the block allocation map also includes पढ़ो/
+ *	ग_लिखो inक्रमmation मुख्यtained in the bmap descriptor (i.e. total
+ *	मुक्त block count, allocation group level मुक्त block counts).
+ *	a single exclusive lock (BMAP_LOCK) is used to guard this inक्रमmation
  *	in the face of multiple-bottoms up requests.
  *	(lock ordering: IREAD_LOCK, BMAP_LOCK);
  *
  *	accesses to the persistent state of the block allocation map (limited
- *	to the persistent bitmaps in dmaps) is guarded by (busy) buffers.
+ *	to the persistent biपंचांगaps in dmaps) is guarded by (busy) buffers.
  */
 
-#define BMAP_LOCK_INIT(bmp)	mutex_init(&bmp->db_bmaplock)
-#define BMAP_LOCK(bmp)		mutex_lock(&bmp->db_bmaplock)
-#define BMAP_UNLOCK(bmp)	mutex_unlock(&bmp->db_bmaplock)
+#घोषणा BMAP_LOCK_INIT(bmp)	mutex_init(&bmp->db_bmaplock)
+#घोषणा BMAP_LOCK(bmp)		mutex_lock(&bmp->db_bmaplock)
+#घोषणा BMAP_UNLOCK(bmp)	mutex_unlock(&bmp->db_bmaplock)
 
 /*
- * forward references
+ * क्रमward references
  */
-static void dbAllocBits(struct bmap * bmp, struct dmap * dp, s64 blkno,
-			int nblocks);
-static void dbSplit(dmtree_t * tp, int leafno, int splitsz, int newval);
-static int dbBackSplit(dmtree_t * tp, int leafno);
-static int dbJoin(dmtree_t * tp, int leafno, int newval);
-static void dbAdjTree(dmtree_t * tp, int leafno, int newval);
-static int dbAdjCtl(struct bmap * bmp, s64 blkno, int newval, int alloc,
-		    int level);
-static int dbAllocAny(struct bmap * bmp, s64 nblocks, int l2nb, s64 * results);
-static int dbAllocNext(struct bmap * bmp, struct dmap * dp, s64 blkno,
-		       int nblocks);
-static int dbAllocNear(struct bmap * bmp, struct dmap * dp, s64 blkno,
-		       int nblocks,
-		       int l2nb, s64 * results);
-static int dbAllocDmap(struct bmap * bmp, struct dmap * dp, s64 blkno,
-		       int nblocks);
-static int dbAllocDmapLev(struct bmap * bmp, struct dmap * dp, int nblocks,
-			  int l2nb,
+अटल व्योम dbAllocBits(काष्ठा bmap * bmp, काष्ठा dmap * dp, s64 blkno,
+			पूर्णांक nblocks);
+अटल व्योम dbSplit(dmtree_t * tp, पूर्णांक leafno, पूर्णांक splitsz, पूर्णांक newval);
+अटल पूर्णांक dbBackSplit(dmtree_t * tp, पूर्णांक leafno);
+अटल पूर्णांक dbJoin(dmtree_t * tp, पूर्णांक leafno, पूर्णांक newval);
+अटल व्योम dbAdjTree(dmtree_t * tp, पूर्णांक leafno, पूर्णांक newval);
+अटल पूर्णांक dbAdjCtl(काष्ठा bmap * bmp, s64 blkno, पूर्णांक newval, पूर्णांक alloc,
+		    पूर्णांक level);
+अटल पूर्णांक dbAllocAny(काष्ठा bmap * bmp, s64 nblocks, पूर्णांक l2nb, s64 * results);
+अटल पूर्णांक dbAllocNext(काष्ठा bmap * bmp, काष्ठा dmap * dp, s64 blkno,
+		       पूर्णांक nblocks);
+अटल पूर्णांक dbAllocNear(काष्ठा bmap * bmp, काष्ठा dmap * dp, s64 blkno,
+		       पूर्णांक nblocks,
+		       पूर्णांक l2nb, s64 * results);
+अटल पूर्णांक dbAllocDmap(काष्ठा bmap * bmp, काष्ठा dmap * dp, s64 blkno,
+		       पूर्णांक nblocks);
+अटल पूर्णांक dbAllocDmapLev(काष्ठा bmap * bmp, काष्ठा dmap * dp, पूर्णांक nblocks,
+			  पूर्णांक l2nb,
 			  s64 * results);
-static int dbAllocAG(struct bmap * bmp, int agno, s64 nblocks, int l2nb,
+अटल पूर्णांक dbAllocAG(काष्ठा bmap * bmp, पूर्णांक agno, s64 nblocks, पूर्णांक l2nb,
 		     s64 * results);
-static int dbAllocCtl(struct bmap * bmp, s64 nblocks, int l2nb, s64 blkno,
+अटल पूर्णांक dbAllocCtl(काष्ठा bmap * bmp, s64 nblocks, पूर्णांक l2nb, s64 blkno,
 		      s64 * results);
-static int dbExtend(struct inode *ip, s64 blkno, s64 nblocks, s64 addnblocks);
-static int dbFindBits(u32 word, int l2nb);
-static int dbFindCtl(struct bmap * bmp, int l2nb, int level, s64 * blkno);
-static int dbFindLeaf(dmtree_t * tp, int l2nb, int *leafidx);
-static int dbFreeBits(struct bmap * bmp, struct dmap * dp, s64 blkno,
-		      int nblocks);
-static int dbFreeDmap(struct bmap * bmp, struct dmap * dp, s64 blkno,
-		      int nblocks);
-static int dbMaxBud(u8 * cp);
-static int blkstol2(s64 nb);
+अटल पूर्णांक dbExtend(काष्ठा inode *ip, s64 blkno, s64 nblocks, s64 addnblocks);
+अटल पूर्णांक dbFindBits(u32 word, पूर्णांक l2nb);
+अटल पूर्णांक dbFindCtl(काष्ठा bmap * bmp, पूर्णांक l2nb, पूर्णांक level, s64 * blkno);
+अटल पूर्णांक dbFindLeaf(dmtree_t * tp, पूर्णांक l2nb, पूर्णांक *leafidx);
+अटल पूर्णांक dbFreeBits(काष्ठा bmap * bmp, काष्ठा dmap * dp, s64 blkno,
+		      पूर्णांक nblocks);
+अटल पूर्णांक dbFreeDmap(काष्ठा bmap * bmp, काष्ठा dmap * dp, s64 blkno,
+		      पूर्णांक nblocks);
+अटल पूर्णांक dbMaxBud(u8 * cp);
+अटल पूर्णांक blkstol2(s64 nb);
 
-static int cntlz(u32 value);
-static int cnttz(u32 word);
+अटल पूर्णांक cntlz(u32 value);
+अटल पूर्णांक cnttz(u32 word);
 
-static int dbAllocDmapBU(struct bmap * bmp, struct dmap * dp, s64 blkno,
-			 int nblocks);
-static int dbInitDmap(struct dmap * dp, s64 blkno, int nblocks);
-static int dbInitDmapTree(struct dmap * dp);
-static int dbInitTree(struct dmaptree * dtp);
-static int dbInitDmapCtl(struct dmapctl * dcp, int level, int i);
-static int dbGetL2AGSize(s64 nblocks);
+अटल पूर्णांक dbAllocDmapBU(काष्ठा bmap * bmp, काष्ठा dmap * dp, s64 blkno,
+			 पूर्णांक nblocks);
+अटल पूर्णांक dbInitDmap(काष्ठा dmap * dp, s64 blkno, पूर्णांक nblocks);
+अटल पूर्णांक dbInitDmapTree(काष्ठा dmap * dp);
+अटल पूर्णांक dbInitTree(काष्ठा dmaptree * dtp);
+अटल पूर्णांक dbInitDmapCtl(काष्ठा dmapctl * dcp, पूर्णांक level, पूर्णांक i);
+अटल पूर्णांक dbGetL2AGSize(s64 nblocks);
 
 /*
  *	buddy table
  *
- * table used for determining buddy sizes within characters of
- * dmap bitmap words.  the characters themselves serve as indexes
- * into the table, with the table elements yielding the maximum
- * binary buddy of free bits within the character.
+ * table used क्रम determining buddy sizes within अक्षरacters of
+ * dmap biपंचांगap words.  the अक्षरacters themselves serve as indexes
+ * पूर्णांकo the table, with the table elements yielding the maximum
+ * binary buddy of मुक्त bits within the अक्षरacter.
  */
-static const s8 budtab[256] = {
+अटल स्थिर s8 budtab[256] = अणु
 	3, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
 	2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
 	2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
@@ -131,52 +132,52 @@ static const s8 budtab[256] = {
 	2, 1, 1, 1, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0,
 	2, 1, 1, 1, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0,
 	2, 1, 1, 1, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -1
-};
+पूर्ण;
 
 /*
  * NAME:	dbMount()
  *
  * FUNCTION:	initializate the block allocation map.
  *
- *		memory is allocated for the in-core bmap descriptor and
+ *		memory is allocated क्रम the in-core bmap descriptor and
  *		the in-core descriptor is initialized from disk.
  *
  * PARAMETERS:
- *	ipbmap	- pointer to in-core inode for the block map.
+ *	ipbmap	- poपूर्णांकer to in-core inode क्रम the block map.
  *
  * RETURN VALUES:
  *	0	- success
  *	-ENOMEM	- insufficient memory
  *	-EIO	- i/o error
  */
-int dbMount(struct inode *ipbmap)
-{
-	struct bmap *bmp;
-	struct dbmap_disk *dbmp_le;
-	struct metapage *mp;
-	int i;
+पूर्णांक dbMount(काष्ठा inode *ipbmap)
+अणु
+	काष्ठा bmap *bmp;
+	काष्ठा dbmap_disk *dbmp_le;
+	काष्ठा metapage *mp;
+	पूर्णांक i;
 
 	/*
 	 * allocate/initialize the in-memory bmap descriptor
 	 */
-	/* allocate memory for the in-memory bmap descriptor */
-	bmp = kmalloc(sizeof(struct bmap), GFP_KERNEL);
-	if (bmp == NULL)
-		return -ENOMEM;
+	/* allocate memory क्रम the in-memory bmap descriptor */
+	bmp = kदो_स्मृति(माप(काष्ठा bmap), GFP_KERNEL);
+	अगर (bmp == शून्य)
+		वापस -ENOMEM;
 
-	/* read the on-disk bmap descriptor. */
-	mp = read_metapage(ipbmap,
+	/* पढ़ो the on-disk bmap descriptor. */
+	mp = पढ़ो_metapage(ipbmap,
 			   BMAPBLKNO << JFS_SBI(ipbmap->i_sb)->l2nbperpage,
 			   PSIZE, 0);
-	if (mp == NULL) {
-		kfree(bmp);
-		return -EIO;
-	}
+	अगर (mp == शून्य) अणु
+		kमुक्त(bmp);
+		वापस -EIO;
+	पूर्ण
 
 	/* copy the on-disk bmap descriptor to its in-memory version. */
-	dbmp_le = (struct dbmap_disk *) mp->data;
+	dbmp_le = (काष्ठा dbmap_disk *) mp->data;
 	bmp->db_mapsize = le64_to_cpu(dbmp_le->dn_mapsize);
-	bmp->db_nfree = le64_to_cpu(dbmp_le->dn_nfree);
+	bmp->db_nमुक्त = le64_to_cpu(dbmp_le->dn_nमुक्त);
 	bmp->db_l2nbperpage = le32_to_cpu(dbmp_le->dn_l2nbperpage);
 	bmp->db_numag = le32_to_cpu(dbmp_le->dn_numag);
 	bmp->db_maxlevel = le32_to_cpu(dbmp_le->dn_maxlevel);
@@ -187,10 +188,10 @@ int dbMount(struct inode *ipbmap)
 	bmp->db_agwidth = le32_to_cpu(dbmp_le->dn_agwidth);
 	bmp->db_agstart = le32_to_cpu(dbmp_le->dn_agstart);
 	bmp->db_agl2size = le32_to_cpu(dbmp_le->dn_agl2size);
-	for (i = 0; i < MAXAG; i++)
-		bmp->db_agfree[i] = le64_to_cpu(dbmp_le->dn_agfree[i]);
+	क्रम (i = 0; i < MAXAG; i++)
+		bmp->db_agमुक्त[i] = le64_to_cpu(dbmp_le->dn_agमुक्त[i]);
 	bmp->db_agsize = le64_to_cpu(dbmp_le->dn_agsize);
-	bmp->db_maxfreebud = dbmp_le->dn_maxfreebud;
+	bmp->db_maxमुक्तbud = dbmp_le->dn_maxमुक्तbud;
 
 	/* release the buffer. */
 	release_metapage(mp);
@@ -199,38 +200,38 @@ int dbMount(struct inode *ipbmap)
 	bmp->db_ipbmap = ipbmap;
 	JFS_SBI(ipbmap->i_sb)->bmap = bmp;
 
-	memset(bmp->db_active, 0, sizeof(bmp->db_active));
+	स_रखो(bmp->db_active, 0, माप(bmp->db_active));
 
 	/*
 	 * allocate/initialize the bmap lock
 	 */
 	BMAP_LOCK_INIT(bmp);
 
-	return (0);
-}
+	वापस (0);
+पूर्ण
 
 
 /*
  * NAME:	dbUnmount()
  *
- * FUNCTION:	terminate the block allocation map in preparation for
- *		file system unmount.
+ * FUNCTION:	terminate the block allocation map in preparation क्रम
+ *		file प्रणाली unmount.
  *
  *		the in-core bmap descriptor is written to disk and
- *		the memory for this descriptor is freed.
+ *		the memory क्रम this descriptor is मुक्तd.
  *
  * PARAMETERS:
- *	ipbmap	- pointer to in-core inode for the block map.
+ *	ipbmap	- poपूर्णांकer to in-core inode क्रम the block map.
  *
  * RETURN VALUES:
  *	0	- success
  *	-EIO	- i/o error
  */
-int dbUnmount(struct inode *ipbmap, int mounterror)
-{
-	struct bmap *bmp = JFS_SBI(ipbmap->i_sb)->bmap;
+पूर्णांक dbUnmount(काष्ठा inode *ipbmap, पूर्णांक mounterror)
+अणु
+	काष्ठा bmap *bmp = JFS_SBI(ipbmap->i_sb)->bmap;
 
-	if (!(mounterror || isReadOnly(ipbmap)))
+	अगर (!(mounterror || isReadOnly(ipbmap)))
 		dbSync(ipbmap);
 
 	/*
@@ -238,37 +239,37 @@ int dbUnmount(struct inode *ipbmap, int mounterror)
 	 */
 	truncate_inode_pages(ipbmap->i_mapping, 0);
 
-	/* free the memory for the in-memory bmap. */
-	kfree(bmp);
+	/* मुक्त the memory क्रम the in-memory bmap. */
+	kमुक्त(bmp);
 
-	return (0);
-}
+	वापस (0);
+पूर्ण
 
 /*
  *	dbSync()
  */
-int dbSync(struct inode *ipbmap)
-{
-	struct dbmap_disk *dbmp_le;
-	struct bmap *bmp = JFS_SBI(ipbmap->i_sb)->bmap;
-	struct metapage *mp;
-	int i;
+पूर्णांक dbSync(काष्ठा inode *ipbmap)
+अणु
+	काष्ठा dbmap_disk *dbmp_le;
+	काष्ठा bmap *bmp = JFS_SBI(ipbmap->i_sb)->bmap;
+	काष्ठा metapage *mp;
+	पूर्णांक i;
 
 	/*
-	 * write bmap global control page
+	 * ग_लिखो bmap global control page
 	 */
-	/* get the buffer for the on-disk bmap descriptor. */
-	mp = read_metapage(ipbmap,
+	/* get the buffer क्रम the on-disk bmap descriptor. */
+	mp = पढ़ो_metapage(ipbmap,
 			   BMAPBLKNO << JFS_SBI(ipbmap->i_sb)->l2nbperpage,
 			   PSIZE, 0);
-	if (mp == NULL) {
+	अगर (mp == शून्य) अणु
 		jfs_err("dbSync: read_metapage failed!");
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 	/* copy the in-memory version of the bmap to the on-disk version */
-	dbmp_le = (struct dbmap_disk *) mp->data;
+	dbmp_le = (काष्ठा dbmap_disk *) mp->data;
 	dbmp_le->dn_mapsize = cpu_to_le64(bmp->db_mapsize);
-	dbmp_le->dn_nfree = cpu_to_le64(bmp->db_nfree);
+	dbmp_le->dn_nमुक्त = cpu_to_le64(bmp->db_nमुक्त);
 	dbmp_le->dn_l2nbperpage = cpu_to_le32(bmp->db_l2nbperpage);
 	dbmp_le->dn_numag = cpu_to_le32(bmp->db_numag);
 	dbmp_le->dn_maxlevel = cpu_to_le32(bmp->db_maxlevel);
@@ -279,126 +280,126 @@ int dbSync(struct inode *ipbmap)
 	dbmp_le->dn_agwidth = cpu_to_le32(bmp->db_agwidth);
 	dbmp_le->dn_agstart = cpu_to_le32(bmp->db_agstart);
 	dbmp_le->dn_agl2size = cpu_to_le32(bmp->db_agl2size);
-	for (i = 0; i < MAXAG; i++)
-		dbmp_le->dn_agfree[i] = cpu_to_le64(bmp->db_agfree[i]);
+	क्रम (i = 0; i < MAXAG; i++)
+		dbmp_le->dn_agमुक्त[i] = cpu_to_le64(bmp->db_agमुक्त[i]);
 	dbmp_le->dn_agsize = cpu_to_le64(bmp->db_agsize);
-	dbmp_le->dn_maxfreebud = bmp->db_maxfreebud;
+	dbmp_le->dn_maxमुक्तbud = bmp->db_maxमुक्तbud;
 
-	/* write the buffer */
-	write_metapage(mp);
+	/* ग_लिखो the buffer */
+	ग_लिखो_metapage(mp);
 
 	/*
-	 * write out dirty pages of bmap
+	 * ग_लिखो out dirty pages of bmap
 	 */
-	filemap_write_and_wait(ipbmap->i_mapping);
+	filemap_ग_लिखो_and_रुको(ipbmap->i_mapping);
 
 	diWriteSpecial(ipbmap, 0);
 
-	return (0);
-}
+	वापस (0);
+पूर्ण
 
 /*
  * NAME:	dbFree()
  *
- * FUNCTION:	free the specified block range from the working block
+ * FUNCTION:	मुक्त the specअगरied block range from the working block
  *		allocation map.
  *
- *		the blocks will be free from the working map one dmap
- *		at a time.
+ *		the blocks will be मुक्त from the working map one dmap
+ *		at a समय.
  *
  * PARAMETERS:
- *	ip	- pointer to in-core inode;
- *	blkno	- starting block number to be freed.
- *	nblocks	- number of blocks to be freed.
+ *	ip	- poपूर्णांकer to in-core inode;
+ *	blkno	- starting block number to be मुक्तd.
+ *	nblocks	- number of blocks to be मुक्तd.
  *
  * RETURN VALUES:
  *	0	- success
  *	-EIO	- i/o error
  */
-int dbFree(struct inode *ip, s64 blkno, s64 nblocks)
-{
-	struct metapage *mp;
-	struct dmap *dp;
-	int nb, rc;
+पूर्णांक dbFree(काष्ठा inode *ip, s64 blkno, s64 nblocks)
+अणु
+	काष्ठा metapage *mp;
+	काष्ठा dmap *dp;
+	पूर्णांक nb, rc;
 	s64 lblkno, rem;
-	struct inode *ipbmap = JFS_SBI(ip->i_sb)->ipbmap;
-	struct bmap *bmp = JFS_SBI(ip->i_sb)->bmap;
-	struct super_block *sb = ipbmap->i_sb;
+	काष्ठा inode *ipbmap = JFS_SBI(ip->i_sb)->ipbmap;
+	काष्ठा bmap *bmp = JFS_SBI(ip->i_sb)->bmap;
+	काष्ठा super_block *sb = ipbmap->i_sb;
 
 	IREAD_LOCK(ipbmap, RDWRLOCK_DMAP);
 
-	/* block to be freed better be within the mapsize. */
-	if (unlikely((blkno == 0) || (blkno + nblocks > bmp->db_mapsize))) {
+	/* block to be मुक्तd better be within the mapsize. */
+	अगर (unlikely((blkno == 0) || (blkno + nblocks > bmp->db_mapsize))) अणु
 		IREAD_UNLOCK(ipbmap);
-		printk(KERN_ERR "blkno = %Lx, nblocks = %Lx\n",
-		       (unsigned long long) blkno,
-		       (unsigned long long) nblocks);
+		prपूर्णांकk(KERN_ERR "blkno = %Lx, nblocks = %Lx\n",
+		       (अचिन्हित दीर्घ दीर्घ) blkno,
+		       (अचिन्हित दीर्घ दीर्घ) nblocks);
 		jfs_error(ip->i_sb, "block to be freed is outside the map\n");
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
 	/**
 	 * TRIM the blocks, when mounted with discard option
 	 */
-	if (JFS_SBI(sb)->flag & JFS_DISCARD)
-		if (JFS_SBI(sb)->minblks_trim <= nblocks)
+	अगर (JFS_SBI(sb)->flag & JFS_DISCARD)
+		अगर (JFS_SBI(sb)->minblks_trim <= nblocks)
 			jfs_issue_discard(ipbmap, blkno, nblocks);
 
 	/*
-	 * free the blocks a dmap at a time.
+	 * मुक्त the blocks a dmap at a समय.
 	 */
-	mp = NULL;
-	for (rem = nblocks; rem > 0; rem -= nb, blkno += nb) {
-		/* release previous dmap if any */
-		if (mp) {
-			write_metapage(mp);
-		}
+	mp = शून्य;
+	क्रम (rem = nblocks; rem > 0; rem -= nb, blkno += nb) अणु
+		/* release previous dmap अगर any */
+		अगर (mp) अणु
+			ग_लिखो_metapage(mp);
+		पूर्ण
 
-		/* get the buffer for the current dmap. */
+		/* get the buffer क्रम the current dmap. */
 		lblkno = BLKTODMAP(blkno, bmp->db_l2nbperpage);
-		mp = read_metapage(ipbmap, lblkno, PSIZE, 0);
-		if (mp == NULL) {
+		mp = पढ़ो_metapage(ipbmap, lblkno, PSIZE, 0);
+		अगर (mp == शून्य) अणु
 			IREAD_UNLOCK(ipbmap);
-			return -EIO;
-		}
-		dp = (struct dmap *) mp->data;
+			वापस -EIO;
+		पूर्ण
+		dp = (काष्ठा dmap *) mp->data;
 
-		/* determine the number of blocks to be freed from
+		/* determine the number of blocks to be मुक्तd from
 		 * this dmap.
 		 */
 		nb = min(rem, BPERDMAP - (blkno & (BPERDMAP - 1)));
 
-		/* free the blocks. */
-		if ((rc = dbFreeDmap(bmp, dp, blkno, nb))) {
+		/* मुक्त the blocks. */
+		अगर ((rc = dbFreeDmap(bmp, dp, blkno, nb))) अणु
 			jfs_error(ip->i_sb, "error in block map\n");
 			release_metapage(mp);
 			IREAD_UNLOCK(ipbmap);
-			return (rc);
-		}
-	}
+			वापस (rc);
+		पूर्ण
+	पूर्ण
 
-	/* write the last buffer. */
-	write_metapage(mp);
+	/* ग_लिखो the last buffer. */
+	ग_लिखो_metapage(mp);
 
 	IREAD_UNLOCK(ipbmap);
 
-	return (0);
-}
+	वापस (0);
+पूर्ण
 
 
 /*
  * NAME:	dbUpdatePMap()
  *
- * FUNCTION:	update the allocation state (free or allocate) of the
- *		specified block range in the persistent block allocation map.
+ * FUNCTION:	update the allocation state (मुक्त or allocate) of the
+ *		specअगरied block range in the persistent block allocation map.
  *
  *		the blocks will be updated in the persistent map one
- *		dmap at a time.
+ *		dmap at a समय.
  *
  * PARAMETERS:
- *	ipbmap	- pointer to in-core inode for the block map.
- *	free	- 'true' if block range is to be freed from the persistent
- *		  map; 'false' if it is to be allocated.
+ *	ipbmap	- poपूर्णांकer to in-core inode क्रम the block map.
+ *	मुक्त	- 'true' अगर block range is to be मुक्तd from the persistent
+ *		  map; 'false' अगर it is to be allocated.
  *	blkno	- starting block number of the range.
  *	nblocks	- number of contiguous blocks in the range.
  *	tblk	- transaction block;
@@ -407,55 +408,55 @@ int dbFree(struct inode *ip, s64 blkno, s64 nblocks)
  *	0	- success
  *	-EIO	- i/o error
  */
-int
-dbUpdatePMap(struct inode *ipbmap,
-	     int free, s64 blkno, s64 nblocks, struct tblock * tblk)
-{
-	int nblks, dbitno, wbitno, rbits;
-	int word, nbits, nwords;
-	struct bmap *bmp = JFS_SBI(ipbmap->i_sb)->bmap;
+पूर्णांक
+dbUpdatePMap(काष्ठा inode *ipbmap,
+	     पूर्णांक मुक्त, s64 blkno, s64 nblocks, काष्ठा tblock * tblk)
+अणु
+	पूर्णांक nblks, dbitno, wbitno, rbits;
+	पूर्णांक word, nbits, nwords;
+	काष्ठा bmap *bmp = JFS_SBI(ipbmap->i_sb)->bmap;
 	s64 lblkno, rem, lastlblkno;
 	u32 mask;
-	struct dmap *dp;
-	struct metapage *mp;
-	struct jfs_log *log;
-	int lsn, difft, diffp;
-	unsigned long flags;
+	काष्ठा dmap *dp;
+	काष्ठा metapage *mp;
+	काष्ठा jfs_log *log;
+	पूर्णांक lsn, dअगरft, dअगरfp;
+	अचिन्हित दीर्घ flags;
 
 	/* the blocks better be within the mapsize. */
-	if (blkno + nblocks > bmp->db_mapsize) {
-		printk(KERN_ERR "blkno = %Lx, nblocks = %Lx\n",
-		       (unsigned long long) blkno,
-		       (unsigned long long) nblocks);
+	अगर (blkno + nblocks > bmp->db_mapsize) अणु
+		prपूर्णांकk(KERN_ERR "blkno = %Lx, nblocks = %Lx\n",
+		       (अचिन्हित दीर्घ दीर्घ) blkno,
+		       (अचिन्हित दीर्घ दीर्घ) nblocks);
 		jfs_error(ipbmap->i_sb, "blocks are outside the map\n");
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
 	/* compute delta of transaction lsn from log syncpt */
 	lsn = tblk->lsn;
-	log = (struct jfs_log *) JFS_SBI(tblk->sb)->log;
-	logdiff(difft, lsn, log);
+	log = (काष्ठा jfs_log *) JFS_SBI(tblk->sb)->log;
+	logdअगरf(dअगरft, lsn, log);
 
 	/*
-	 * update the block state a dmap at a time.
+	 * update the block state a dmap at a समय.
 	 */
-	mp = NULL;
+	mp = शून्य;
 	lastlblkno = 0;
-	for (rem = nblocks; rem > 0; rem -= nblks, blkno += nblks) {
-		/* get the buffer for the current dmap. */
+	क्रम (rem = nblocks; rem > 0; rem -= nblks, blkno += nblks) अणु
+		/* get the buffer क्रम the current dmap. */
 		lblkno = BLKTODMAP(blkno, bmp->db_l2nbperpage);
-		if (lblkno != lastlblkno) {
-			if (mp) {
-				write_metapage(mp);
-			}
+		अगर (lblkno != lastlblkno) अणु
+			अगर (mp) अणु
+				ग_लिखो_metapage(mp);
+			पूर्ण
 
-			mp = read_metapage(bmp->db_ipbmap, lblkno, PSIZE,
+			mp = पढ़ो_metapage(bmp->db_ipbmap, lblkno, PSIZE,
 					   0);
-			if (mp == NULL)
-				return -EIO;
-			metapage_wait_for_io(mp);
-		}
-		dp = (struct dmap *) mp->data;
+			अगर (mp == शून्य)
+				वापस -EIO;
+			metapage_रुको_क्रम_io(mp);
+		पूर्ण
+		dp = (काष्ठा dmap *) mp->data;
 
 		/* determine the bit number and word within the dmap of
 		 * the starting block.  also determine how many blocks
@@ -466,36 +467,36 @@ dbUpdatePMap(struct inode *ipbmap,
 		nblks = min(rem, (s64)BPERDMAP - dbitno);
 
 		/* update the bits of the dmap words. the first and last
-		 * words may only have a subset of their bits updated. if
-		 * this is the case, we'll work against that word (i.e.
+		 * words may only have a subset of their bits updated. अगर
+		 * this is the हाल, we'll work against that word (i.e.
 		 * partial first and/or last) only in a single pass.  a
 		 * single pass will also be used to update all words that
 		 * are to have all their bits updated.
 		 */
-		for (rbits = nblks; rbits > 0;
-		     rbits -= nbits, dbitno += nbits) {
+		क्रम (rbits = nblks; rbits > 0;
+		     rbits -= nbits, dbitno += nbits) अणु
 			/* determine the bit number within the word and
 			 * the number of bits within the word.
 			 */
 			wbitno = dbitno & (DBWORD - 1);
 			nbits = min(rbits, DBWORD - wbitno);
 
-			/* check if only part of the word is to be updated. */
-			if (nbits < DBWORD) {
-				/* update (free or allocate) the bits
+			/* check अगर only part of the word is to be updated. */
+			अगर (nbits < DBWORD) अणु
+				/* update (मुक्त or allocate) the bits
 				 * in this word.
 				 */
 				mask =
 				    (ONES << (DBWORD - nbits) >> wbitno);
-				if (free)
+				अगर (मुक्त)
 					dp->pmap[word] &=
 					    cpu_to_le32(~mask);
-				else
+				अन्यथा
 					dp->pmap[word] |=
 					    cpu_to_le32(mask);
 
 				word += 1;
-			} else {
+			पूर्ण अन्यथा अणु
 				/* one or more words are to have all
 				 * their bits updated.  determine how
 				 * many words and how many bits.
@@ -503,45 +504,45 @@ dbUpdatePMap(struct inode *ipbmap,
 				nwords = rbits >> L2DBWORD;
 				nbits = nwords << L2DBWORD;
 
-				/* update (free or allocate) the bits
+				/* update (मुक्त or allocate) the bits
 				 * in these words.
 				 */
-				if (free)
-					memset(&dp->pmap[word], 0,
+				अगर (मुक्त)
+					स_रखो(&dp->pmap[word], 0,
 					       nwords * 4);
-				else
-					memset(&dp->pmap[word], (int) ONES,
+				अन्यथा
+					स_रखो(&dp->pmap[word], (पूर्णांक) ONES,
 					       nwords * 4);
 
 				word += nwords;
-			}
-		}
+			पूर्ण
+		पूर्ण
 
 		/*
 		 * update dmap lsn
 		 */
-		if (lblkno == lastlblkno)
-			continue;
+		अगर (lblkno == lastlblkno)
+			जारी;
 
 		lastlblkno = lblkno;
 
 		LOGSYNC_LOCK(log, flags);
-		if (mp->lsn != 0) {
+		अगर (mp->lsn != 0) अणु
 			/* inherit older/smaller lsn */
-			logdiff(diffp, mp->lsn, log);
-			if (difft < diffp) {
+			logdअगरf(dअगरfp, mp->lsn, log);
+			अगर (dअगरft < dअगरfp) अणु
 				mp->lsn = lsn;
 
 				/* move bp after tblock in logsync list */
 				list_move(&mp->synclist, &tblk->synclist);
-			}
+			पूर्ण
 
 			/* inherit younger/larger clsn */
-			logdiff(difft, tblk->clsn, log);
-			logdiff(diffp, mp->clsn, log);
-			if (difft > diffp)
+			logdअगरf(dअगरft, tblk->clsn, log);
+			logdअगरf(dअगरfp, mp->clsn, log);
+			अगर (dअगरft > dअगरfp)
 				mp->clsn = tblk->clsn;
-		} else {
+		पूर्ण अन्यथा अणु
 			mp->log = log;
 			mp->lsn = lsn;
 
@@ -550,133 +551,133 @@ dbUpdatePMap(struct inode *ipbmap,
 			list_add(&mp->synclist, &tblk->synclist);
 
 			mp->clsn = tblk->clsn;
-		}
+		पूर्ण
 		LOGSYNC_UNLOCK(log, flags);
-	}
+	पूर्ण
 
-	/* write the last buffer. */
-	if (mp) {
-		write_metapage(mp);
-	}
+	/* ग_लिखो the last buffer. */
+	अगर (mp) अणु
+		ग_लिखो_metapage(mp);
+	पूर्ण
 
-	return (0);
-}
+	वापस (0);
+पूर्ण
 
 
 /*
  * NAME:	dbNextAG()
  *
- * FUNCTION:	find the preferred allocation group for new allocations.
+ * FUNCTION:	find the preferred allocation group क्रम new allocations.
  *
- *		Within the allocation groups, we maintain a preferred
+ *		Within the allocation groups, we मुख्यtain a preferred
  *		allocation group which consists of a group with at least
- *		average free space.  It is the preferred group that we target
+ *		average मुक्त space.  It is the preferred group that we target
  *		new inode allocation towards.  The tie-in between inode
  *		allocation and block allocation occurs as we allocate the
- *		first (data) block of an inode and specify the inode (block)
- *		as the allocation hint for this block.
+ *		first (data) block of an inode and specअगरy the inode (block)
+ *		as the allocation hपूर्णांक क्रम this block.
  *
- *		We try to avoid having more than one open file growing in
+ *		We try to aव्योम having more than one खोलो file growing in
  *		an allocation group, as this will lead to fragmentation.
- *		This differs from the old OS/2 method of trying to keep
- *		empty ags around for large allocations.
+ *		This dअगरfers from the old OS/2 method of trying to keep
+ *		empty ags around क्रम large allocations.
  *
  * PARAMETERS:
- *	ipbmap	- pointer to in-core inode for the block map.
+ *	ipbmap	- poपूर्णांकer to in-core inode क्रम the block map.
  *
  * RETURN VALUES:
  *	the preferred allocation group number.
  */
-int dbNextAG(struct inode *ipbmap)
-{
-	s64 avgfree;
-	int agpref;
+पूर्णांक dbNextAG(काष्ठा inode *ipbmap)
+अणु
+	s64 avgमुक्त;
+	पूर्णांक agpref;
 	s64 hwm = 0;
-	int i;
-	int next_best = -1;
-	struct bmap *bmp = JFS_SBI(ipbmap->i_sb)->bmap;
+	पूर्णांक i;
+	पूर्णांक next_best = -1;
+	काष्ठा bmap *bmp = JFS_SBI(ipbmap->i_sb)->bmap;
 
 	BMAP_LOCK(bmp);
 
-	/* determine the average number of free blocks within the ags. */
-	avgfree = (u32)bmp->db_nfree / bmp->db_numag;
+	/* determine the average number of मुक्त blocks within the ags. */
+	avgमुक्त = (u32)bmp->db_nमुक्त / bmp->db_numag;
 
 	/*
-	 * if the current preferred ag does not have an active allocator
-	 * and has at least average freespace, return it
+	 * अगर the current preferred ag करोes not have an active allocator
+	 * and has at least average मुक्तspace, वापस it
 	 */
 	agpref = bmp->db_agpref;
-	if ((atomic_read(&bmp->db_active[agpref]) == 0) &&
-	    (bmp->db_agfree[agpref] >= avgfree))
-		goto unlock;
+	अगर ((atomic_पढ़ो(&bmp->db_active[agpref]) == 0) &&
+	    (bmp->db_agमुक्त[agpref] >= avgमुक्त))
+		जाओ unlock;
 
 	/* From the last preferred ag, find the next one with at least
-	 * average free space.
+	 * average मुक्त space.
 	 */
-	for (i = 0 ; i < bmp->db_numag; i++, agpref++) {
-		if (agpref == bmp->db_numag)
+	क्रम (i = 0 ; i < bmp->db_numag; i++, agpref++) अणु
+		अगर (agpref == bmp->db_numag)
 			agpref = 0;
 
-		if (atomic_read(&bmp->db_active[agpref]))
-			/* open file is currently growing in this ag */
-			continue;
-		if (bmp->db_agfree[agpref] >= avgfree) {
+		अगर (atomic_पढ़ो(&bmp->db_active[agpref]))
+			/* खोलो file is currently growing in this ag */
+			जारी;
+		अगर (bmp->db_agमुक्त[agpref] >= avgमुक्त) अणु
 			/* Return this one */
 			bmp->db_agpref = agpref;
-			goto unlock;
-		} else if (bmp->db_agfree[agpref] > hwm) {
-			/* Less than avg. freespace, but best so far */
-			hwm = bmp->db_agfree[agpref];
+			जाओ unlock;
+		पूर्ण अन्यथा अगर (bmp->db_agमुक्त[agpref] > hwm) अणु
+			/* Less than avg. मुक्तspace, but best so far */
+			hwm = bmp->db_agमुक्त[agpref];
 			next_best = agpref;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	/*
-	 * If no inactive ag was found with average freespace, use the
+	 * If no inactive ag was found with average मुक्तspace, use the
 	 * next best
 	 */
-	if (next_best != -1)
+	अगर (next_best != -1)
 		bmp->db_agpref = next_best;
-	/* else leave db_agpref unchanged */
+	/* अन्यथा leave db_agpref unchanged */
 unlock:
 	BMAP_UNLOCK(bmp);
 
-	/* return the preferred group.
+	/* वापस the preferred group.
 	 */
-	return (bmp->db_agpref);
-}
+	वापस (bmp->db_agpref);
+पूर्ण
 
 /*
  * NAME:	dbAlloc()
  *
- * FUNCTION:	attempt to allocate a specified number of contiguous free
+ * FUNCTION:	attempt to allocate a specअगरied number of contiguous मुक्त
  *		blocks from the working allocation block map.
  *
- *		the block allocation policy uses hints and a multi-step
+ *		the block allocation policy uses hपूर्णांकs and a multi-step
  *		approach.
  *
- *		for allocation requests smaller than the number of blocks
+ *		क्रम allocation requests smaller than the number of blocks
  *		per dmap, we first try to allocate the new blocks
- *		immediately following the hint.  if these blocks are not
- *		available, we try to allocate blocks near the hint.  if
- *		no blocks near the hint are available, we next try to
- *		allocate within the same dmap as contains the hint.
+ *		immediately following the hपूर्णांक.  अगर these blocks are not
+ *		available, we try to allocate blocks near the hपूर्णांक.  अगर
+ *		no blocks near the hपूर्णांक are available, we next try to
+ *		allocate within the same dmap as contains the hपूर्णांक.
  *
- *		if no blocks are available in the dmap or the allocation
+ *		अगर no blocks are available in the dmap or the allocation
  *		request is larger than the dmap size, we try to allocate
- *		within the same allocation group as contains the hint. if
- *		this does not succeed, we finally try to allocate anywhere
+ *		within the same allocation group as contains the hपूर्णांक. अगर
+ *		this करोes not succeed, we finally try to allocate anywhere
  *		within the aggregate.
  *
  *		we also try to allocate anywhere within the aggregate
- *		for allocation requests larger than the allocation group
- *		size or requests that specify no hint value.
+ *		क्रम allocation requests larger than the allocation group
+ *		size or requests that specअगरy no hपूर्णांक value.
  *
  * PARAMETERS:
- *	ip	- pointer to in-core inode;
- *	hint	- allocation hint.
+ *	ip	- poपूर्णांकer to in-core inode;
+ *	hपूर्णांक	- allocation hपूर्णांक.
  *	nblocks	- number of contiguous blocks in the range.
- *	results	- on successful return, set to the starting block number
+ *	results	- on successful वापस, set to the starting block number
  *		  of the newly allocated contiguous range.
  *
  * RETURN VALUES:
@@ -684,23 +685,23 @@ unlock:
  *	-ENOSPC	- insufficient disk resources
  *	-EIO	- i/o error
  */
-int dbAlloc(struct inode *ip, s64 hint, s64 nblocks, s64 * results)
-{
-	int rc, agno;
-	struct inode *ipbmap = JFS_SBI(ip->i_sb)->ipbmap;
-	struct bmap *bmp;
-	struct metapage *mp;
+पूर्णांक dbAlloc(काष्ठा inode *ip, s64 hपूर्णांक, s64 nblocks, s64 * results)
+अणु
+	पूर्णांक rc, agno;
+	काष्ठा inode *ipbmap = JFS_SBI(ip->i_sb)->ipbmap;
+	काष्ठा bmap *bmp;
+	काष्ठा metapage *mp;
 	s64 lblkno, blkno;
-	struct dmap *dp;
-	int l2nb;
+	काष्ठा dmap *dp;
+	पूर्णांक l2nb;
 	s64 mapSize;
-	int writers;
+	पूर्णांक ग_लिखोrs;
 
-	/* assert that nblocks is valid */
-	assert(nblocks > 0);
+	/* निश्चित that nblocks is valid */
+	निश्चित(nblocks > 0);
 
 	/* get the log2 number of blocks to be allocated.
-	 * if the number of blocks is not a log2 multiple,
+	 * अगर the number of blocks is not a log2 multiple,
 	 * it will be rounded up to the next log2 multiple.
 	 */
 	l2nb = BLKSTOL2(nblocks);
@@ -709,130 +710,130 @@ int dbAlloc(struct inode *ip, s64 hint, s64 nblocks, s64 * results)
 
 	mapSize = bmp->db_mapsize;
 
-	/* the hint should be within the map */
-	if (hint >= mapSize) {
+	/* the hपूर्णांक should be within the map */
+	अगर (hपूर्णांक >= mapSize) अणु
 		jfs_error(ip->i_sb, "the hint is outside the map\n");
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
-	/* if the number of blocks to be allocated is greater than the
+	/* अगर the number of blocks to be allocated is greater than the
 	 * allocation group size, try to allocate anywhere.
 	 */
-	if (l2nb > bmp->db_agl2size) {
+	अगर (l2nb > bmp->db_agl2size) अणु
 		IWRITE_LOCK(ipbmap, RDWRLOCK_DMAP);
 
 		rc = dbAllocAny(bmp, nblocks, l2nb, results);
 
-		goto write_unlock;
-	}
+		जाओ ग_लिखो_unlock;
+	पूर्ण
 
 	/*
-	 * If no hint, let dbNextAG recommend an allocation group
+	 * If no hपूर्णांक, let dbNextAG recommend an allocation group
 	 */
-	if (hint == 0)
-		goto pref_ag;
+	अगर (hपूर्णांक == 0)
+		जाओ pref_ag;
 
-	/* we would like to allocate close to the hint.  adjust the
-	 * hint to the block following the hint since the allocators
-	 * will start looking for free space starting at this point.
+	/* we would like to allocate बंद to the hपूर्णांक.  adjust the
+	 * hपूर्णांक to the block following the hपूर्णांक since the allocators
+	 * will start looking क्रम मुक्त space starting at this poपूर्णांक.
 	 */
-	blkno = hint + 1;
+	blkno = hपूर्णांक + 1;
 
-	if (blkno >= bmp->db_mapsize)
-		goto pref_ag;
+	अगर (blkno >= bmp->db_mapsize)
+		जाओ pref_ag;
 
 	agno = blkno >> bmp->db_agl2size;
 
-	/* check if blkno crosses over into a new allocation group.
-	 * if so, check if we should allow allocations within this
+	/* check अगर blkno crosses over पूर्णांकo a new allocation group.
+	 * अगर so, check अगर we should allow allocations within this
 	 * allocation group.
 	 */
-	if ((blkno & (bmp->db_agsize - 1)) == 0)
-		/* check if the AG is currently being written to.
-		 * if so, call dbNextAG() to find a non-busy
-		 * AG with sufficient free space.
+	अगर ((blkno & (bmp->db_agsize - 1)) == 0)
+		/* check अगर the AG is currently being written to.
+		 * अगर so, call dbNextAG() to find a non-busy
+		 * AG with sufficient मुक्त space.
 		 */
-		if (atomic_read(&bmp->db_active[agno]))
-			goto pref_ag;
+		अगर (atomic_पढ़ो(&bmp->db_active[agno]))
+			जाओ pref_ag;
 
-	/* check if the allocation request size can be satisfied from a
-	 * single dmap.  if so, try to allocate from the dmap containing
-	 * the hint using a tiered strategy.
+	/* check अगर the allocation request size can be satisfied from a
+	 * single dmap.  अगर so, try to allocate from the dmap containing
+	 * the hपूर्णांक using a tiered strategy.
 	 */
-	if (nblocks <= BPERDMAP) {
+	अगर (nblocks <= BPERDMAP) अणु
 		IREAD_LOCK(ipbmap, RDWRLOCK_DMAP);
 
-		/* get the buffer for the dmap containing the hint.
+		/* get the buffer क्रम the dmap containing the hपूर्णांक.
 		 */
 		rc = -EIO;
 		lblkno = BLKTODMAP(blkno, bmp->db_l2nbperpage);
-		mp = read_metapage(ipbmap, lblkno, PSIZE, 0);
-		if (mp == NULL)
-			goto read_unlock;
+		mp = पढ़ो_metapage(ipbmap, lblkno, PSIZE, 0);
+		अगर (mp == शून्य)
+			जाओ पढ़ो_unlock;
 
-		dp = (struct dmap *) mp->data;
+		dp = (काष्ठा dmap *) mp->data;
 
 		/* first, try to satisfy the allocation request with the
-		 * blocks beginning at the hint.
+		 * blocks beginning at the hपूर्णांक.
 		 */
-		if ((rc = dbAllocNext(bmp, dp, blkno, (int) nblocks))
-		    != -ENOSPC) {
-			if (rc == 0) {
+		अगर ((rc = dbAllocNext(bmp, dp, blkno, (पूर्णांक) nblocks))
+		    != -ENOSPC) अणु
+			अगर (rc == 0) अणु
 				*results = blkno;
 				mark_metapage_dirty(mp);
-			}
+			पूर्ण
 
 			release_metapage(mp);
-			goto read_unlock;
-		}
+			जाओ पढ़ो_unlock;
+		पूर्ण
 
-		writers = atomic_read(&bmp->db_active[agno]);
-		if ((writers > 1) ||
-		    ((writers == 1) && (JFS_IP(ip)->active_ag != agno))) {
+		ग_लिखोrs = atomic_पढ़ो(&bmp->db_active[agno]);
+		अगर ((ग_लिखोrs > 1) ||
+		    ((ग_लिखोrs == 1) && (JFS_IP(ip)->active_ag != agno))) अणु
 			/*
-			 * Someone else is writing in this allocation
-			 * group.  To avoid fragmenting, try another ag
+			 * Someone अन्यथा is writing in this allocation
+			 * group.  To aव्योम fragmenting, try another ag
 			 */
 			release_metapage(mp);
 			IREAD_UNLOCK(ipbmap);
-			goto pref_ag;
-		}
+			जाओ pref_ag;
+		पूर्ण
 
 		/* next, try to satisfy the allocation request with blocks
-		 * near the hint.
+		 * near the hपूर्णांक.
 		 */
-		if ((rc =
-		     dbAllocNear(bmp, dp, blkno, (int) nblocks, l2nb, results))
-		    != -ENOSPC) {
-			if (rc == 0)
+		अगर ((rc =
+		     dbAllocNear(bmp, dp, blkno, (पूर्णांक) nblocks, l2nb, results))
+		    != -ENOSPC) अणु
+			अगर (rc == 0)
 				mark_metapage_dirty(mp);
 
 			release_metapage(mp);
-			goto read_unlock;
-		}
+			जाओ पढ़ो_unlock;
+		पूर्ण
 
 		/* try to satisfy the allocation request with blocks within
-		 * the same dmap as the hint.
+		 * the same dmap as the hपूर्णांक.
 		 */
-		if ((rc = dbAllocDmapLev(bmp, dp, (int) nblocks, l2nb, results))
-		    != -ENOSPC) {
-			if (rc == 0)
+		अगर ((rc = dbAllocDmapLev(bmp, dp, (पूर्णांक) nblocks, l2nb, results))
+		    != -ENOSPC) अणु
+			अगर (rc == 0)
 				mark_metapage_dirty(mp);
 
 			release_metapage(mp);
-			goto read_unlock;
-		}
+			जाओ पढ़ो_unlock;
+		पूर्ण
 
 		release_metapage(mp);
 		IREAD_UNLOCK(ipbmap);
-	}
+	पूर्ण
 
 	/* try to satisfy the allocation request with blocks within
-	 * the same allocation group as the hint.
+	 * the same allocation group as the hपूर्णांक.
 	 */
 	IWRITE_LOCK(ipbmap, RDWRLOCK_DMAP);
-	if ((rc = dbAllocAG(bmp, agno, nblocks, l2nb, results)) != -ENOSPC)
-		goto write_unlock;
+	अगर ((rc = dbAllocAG(bmp, agno, nblocks, l2nb, results)) != -ENOSPC)
+		जाओ ग_लिखो_unlock;
 
 	IWRITE_UNLOCK(ipbmap);
 
@@ -844,31 +845,31 @@ int dbAlloc(struct inode *ip, s64 hint, s64 nblocks, s64 * results)
 	agno = dbNextAG(ipbmap);
 	IWRITE_LOCK(ipbmap, RDWRLOCK_DMAP);
 
-	/* Try to allocate within this allocation group.  if that fails, try to
+	/* Try to allocate within this allocation group.  अगर that fails, try to
 	 * allocate anywhere in the map.
 	 */
-	if ((rc = dbAllocAG(bmp, agno, nblocks, l2nb, results)) == -ENOSPC)
+	अगर ((rc = dbAllocAG(bmp, agno, nblocks, l2nb, results)) == -ENOSPC)
 		rc = dbAllocAny(bmp, nblocks, l2nb, results);
 
-      write_unlock:
+      ग_लिखो_unlock:
 	IWRITE_UNLOCK(ipbmap);
 
-	return (rc);
+	वापस (rc);
 
-      read_unlock:
+      पढ़ो_unlock:
 	IREAD_UNLOCK(ipbmap);
 
-	return (rc);
-}
+	वापस (rc);
+पूर्ण
 
-#ifdef _NOTYET
+#अगर_घोषित _NOTYET
 /*
  * NAME:	dbAllocExact()
  *
  * FUNCTION:	try to allocate the requested extent;
  *
  * PARAMETERS:
- *	ip	- pointer to in-core inode;
+ *	ip	- poपूर्णांकer to in-core inode;
  *	blkno	- extent address;
  *	nblocks	- extent length;
  *
@@ -877,14 +878,14 @@ int dbAlloc(struct inode *ip, s64 hint, s64 nblocks, s64 * results)
  *	-ENOSPC	- insufficient disk resources
  *	-EIO	- i/o error
  */
-int dbAllocExact(struct inode *ip, s64 blkno, int nblocks)
-{
-	int rc;
-	struct inode *ipbmap = JFS_SBI(ip->i_sb)->ipbmap;
-	struct bmap *bmp = JFS_SBI(ip->i_sb)->bmap;
-	struct dmap *dp;
+पूर्णांक dbAllocExact(काष्ठा inode *ip, s64 blkno, पूर्णांक nblocks)
+अणु
+	पूर्णांक rc;
+	काष्ठा inode *ipbmap = JFS_SBI(ip->i_sb)->ipbmap;
+	काष्ठा bmap *bmp = JFS_SBI(ip->i_sb)->bmap;
+	काष्ठा dmap *dp;
 	s64 lblkno;
-	struct metapage *mp;
+	काष्ठा metapage *mp;
 
 	IREAD_LOCK(ipbmap, RDWRLOCK_DMAP);
 
@@ -895,65 +896,65 @@ int dbAllocExact(struct inode *ip, s64 blkno, int nblocks)
 	 *  max 64 blocks will be moved.
 	 *  allocation request size must be satisfied from a single dmap.
 	 */
-	if (nblocks <= 0 || nblocks > BPERDMAP || blkno >= bmp->db_mapsize) {
+	अगर (nblocks <= 0 || nblocks > BPERDMAP || blkno >= bmp->db_mapsize) अणु
 		IREAD_UNLOCK(ipbmap);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (nblocks > ((s64) 1 << bmp->db_maxfreebud)) {
-		/* the free space is no longer available */
+	अगर (nblocks > ((s64) 1 << bmp->db_maxमुक्तbud)) अणु
+		/* the मुक्त space is no दीर्घer available */
 		IREAD_UNLOCK(ipbmap);
-		return -ENOSPC;
-	}
+		वापस -ENOSPC;
+	पूर्ण
 
-	/* read in the dmap covering the extent */
+	/* पढ़ो in the dmap covering the extent */
 	lblkno = BLKTODMAP(blkno, bmp->db_l2nbperpage);
-	mp = read_metapage(ipbmap, lblkno, PSIZE, 0);
-	if (mp == NULL) {
+	mp = पढ़ो_metapage(ipbmap, lblkno, PSIZE, 0);
+	अगर (mp == शून्य) अणु
 		IREAD_UNLOCK(ipbmap);
-		return -EIO;
-	}
-	dp = (struct dmap *) mp->data;
+		वापस -EIO;
+	पूर्ण
+	dp = (काष्ठा dmap *) mp->data;
 
 	/* try to allocate the requested extent */
 	rc = dbAllocNext(bmp, dp, blkno, nblocks);
 
 	IREAD_UNLOCK(ipbmap);
 
-	if (rc == 0)
+	अगर (rc == 0)
 		mark_metapage_dirty(mp);
 
 	release_metapage(mp);
 
-	return (rc);
-}
-#endif /* _NOTYET */
+	वापस (rc);
+पूर्ण
+#पूर्ण_अगर /* _NOTYET */
 
 /*
  * NAME:	dbReAlloc()
  *
- * FUNCTION:	attempt to extend a current allocation by a specified
+ * FUNCTION:	attempt to extend a current allocation by a specअगरied
  *		number of blocks.
  *
  *		this routine attempts to satisfy the allocation request
  *		by first trying to extend the existing allocation in
  *		place by allocating the additional blocks as the blocks
- *		immediately following the current allocation.  if these
+ *		immediately following the current allocation.  अगर these
  *		blocks are not available, this routine will attempt to
  *		allocate a new set of contiguous blocks large enough
  *		to cover the existing allocation plus the additional
  *		number of blocks required.
  *
  * PARAMETERS:
- *	ip	    -  pointer to in-core inode requiring allocation.
+ *	ip	    -  poपूर्णांकer to in-core inode requiring allocation.
  *	blkno	    -  starting block of the current allocation.
  *	nblocks	    -  number of contiguous blocks within the current
  *		       allocation.
  *	addnblocks  -  number of blocks to add to the allocation.
- *	results	-      on successful return, set to the starting block number
- *		       of the existing allocation if the existing allocation
+ *	results	-      on successful वापस, set to the starting block number
+ *		       of the existing allocation अगर the existing allocation
  *		       was extended in place or to a newly allocated contiguous
- *		       range if the existing allocation could not be extended
+ *		       range अगर the existing allocation could not be extended
  *		       in place.
  *
  * RETURN VALUES:
@@ -961,36 +962,36 @@ int dbAllocExact(struct inode *ip, s64 blkno, int nblocks)
  *	-ENOSPC	- insufficient disk resources
  *	-EIO	- i/o error
  */
-int
-dbReAlloc(struct inode *ip,
+पूर्णांक
+dbReAlloc(काष्ठा inode *ip,
 	  s64 blkno, s64 nblocks, s64 addnblocks, s64 * results)
-{
-	int rc;
+अणु
+	पूर्णांक rc;
 
 	/* try to extend the allocation in place.
 	 */
-	if ((rc = dbExtend(ip, blkno, nblocks, addnblocks)) == 0) {
+	अगर ((rc = dbExtend(ip, blkno, nblocks, addnblocks)) == 0) अणु
 		*results = blkno;
-		return (0);
-	} else {
-		if (rc != -ENOSPC)
-			return (rc);
-	}
+		वापस (0);
+	पूर्ण अन्यथा अणु
+		अगर (rc != -ENOSPC)
+			वापस (rc);
+	पूर्ण
 
 	/* could not extend the allocation in place, so allocate a
-	 * new set of blocks for the entire request (i.e. try to get
+	 * new set of blocks क्रम the entire request (i.e. try to get
 	 * a range of contiguous blocks large enough to cover the
 	 * existing allocation plus the additional blocks.)
 	 */
-	return (dbAlloc
+	वापस (dbAlloc
 		(ip, blkno + nblocks - 1, addnblocks + nblocks, results));
-}
+पूर्ण
 
 
 /*
  * NAME:	dbExtend()
  *
- * FUNCTION:	attempt to extend a current allocation by a specified
+ * FUNCTION:	attempt to extend a current allocation by a specअगरied
  *		number of blocks.
  *
  *		this routine attempts to satisfy the allocation request
@@ -999,7 +1000,7 @@ dbReAlloc(struct inode *ip,
  *		immediately following the current allocation.
  *
  * PARAMETERS:
- *	ip	    -  pointer to in-core inode requiring allocation.
+ *	ip	    -  poपूर्णांकer to in-core inode requiring allocation.
  *	blkno	    -  starting block of the current allocation.
  *	nblocks	    -  number of contiguous blocks within the current
  *		       allocation.
@@ -1010,23 +1011,23 @@ dbReAlloc(struct inode *ip,
  *	-ENOSPC	- insufficient disk resources
  *	-EIO	- i/o error
  */
-static int dbExtend(struct inode *ip, s64 blkno, s64 nblocks, s64 addnblocks)
-{
-	struct jfs_sb_info *sbi = JFS_SBI(ip->i_sb);
+अटल पूर्णांक dbExtend(काष्ठा inode *ip, s64 blkno, s64 nblocks, s64 addnblocks)
+अणु
+	काष्ठा jfs_sb_info *sbi = JFS_SBI(ip->i_sb);
 	s64 lblkno, lastblkno, extblkno;
-	uint rel_block;
-	struct metapage *mp;
-	struct dmap *dp;
-	int rc;
-	struct inode *ipbmap = sbi->ipbmap;
-	struct bmap *bmp;
+	uपूर्णांक rel_block;
+	काष्ठा metapage *mp;
+	काष्ठा dmap *dp;
+	पूर्णांक rc;
+	काष्ठा inode *ipbmap = sbi->ipbmap;
+	काष्ठा bmap *bmp;
 
 	/*
-	 * We don't want a non-aligned extent to cross a page boundary
+	 * We करोn't want a non-aligned extent to cross a page boundary
 	 */
-	if (((rel_block = blkno & (sbi->nbperpage - 1))) &&
+	अगर (((rel_block = blkno & (sbi->nbperpage - 1))) &&
 	    (rel_block + nblocks + addnblocks > sbi->nbperpage))
-		return -ENOSPC;
+		वापस -ENOSPC;
 
 	/* get the last block of the current allocation */
 	lastblkno = blkno + nblocks - 1;
@@ -1038,91 +1039,91 @@ static int dbExtend(struct inode *ip, s64 blkno, s64 nblocks, s64 addnblocks)
 
 	IREAD_LOCK(ipbmap, RDWRLOCK_DMAP);
 
-	/* better be within the file system */
+	/* better be within the file प्रणाली */
 	bmp = sbi->bmap;
-	if (lastblkno < 0 || lastblkno >= bmp->db_mapsize) {
+	अगर (lastblkno < 0 || lastblkno >= bmp->db_mapsize) अणु
 		IREAD_UNLOCK(ipbmap);
 		jfs_error(ip->i_sb, "the block is outside the filesystem\n");
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
 	/* we'll attempt to extend the current allocation in place by
 	 * allocating the additional blocks as the blocks immediately
 	 * following the current allocation.  we only try to extend the
-	 * current allocation in place if the number of additional blocks
-	 * can fit into a dmap, the last block of the current allocation
-	 * is not the last block of the file system, and the start of the
+	 * current allocation in place अगर the number of additional blocks
+	 * can fit पूर्णांकo a dmap, the last block of the current allocation
+	 * is not the last block of the file प्रणाली, and the start of the
 	 * inplace extension is not on an allocation group boundary.
 	 */
-	if (addnblocks > BPERDMAP || extblkno >= bmp->db_mapsize ||
-	    (extblkno & (bmp->db_agsize - 1)) == 0) {
+	अगर (addnblocks > BPERDMAP || extblkno >= bmp->db_mapsize ||
+	    (extblkno & (bmp->db_agsize - 1)) == 0) अणु
 		IREAD_UNLOCK(ipbmap);
-		return -ENOSPC;
-	}
+		वापस -ENOSPC;
+	पूर्ण
 
-	/* get the buffer for the dmap containing the first block
+	/* get the buffer क्रम the dmap containing the first block
 	 * of the extension.
 	 */
 	lblkno = BLKTODMAP(extblkno, bmp->db_l2nbperpage);
-	mp = read_metapage(ipbmap, lblkno, PSIZE, 0);
-	if (mp == NULL) {
+	mp = पढ़ो_metapage(ipbmap, lblkno, PSIZE, 0);
+	अगर (mp == शून्य) अणु
 		IREAD_UNLOCK(ipbmap);
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
-	dp = (struct dmap *) mp->data;
+	dp = (काष्ठा dmap *) mp->data;
 
 	/* try to allocate the blocks immediately following the
 	 * current allocation.
 	 */
-	rc = dbAllocNext(bmp, dp, extblkno, (int) addnblocks);
+	rc = dbAllocNext(bmp, dp, extblkno, (पूर्णांक) addnblocks);
 
 	IREAD_UNLOCK(ipbmap);
 
 	/* were we successful ? */
-	if (rc == 0)
-		write_metapage(mp);
-	else
+	अगर (rc == 0)
+		ग_लिखो_metapage(mp);
+	अन्यथा
 		/* we were not successful */
 		release_metapage(mp);
 
-	return (rc);
-}
+	वापस (rc);
+पूर्ण
 
 
 /*
  * NAME:	dbAllocNext()
  *
- * FUNCTION:	attempt to allocate the blocks of the specified block
+ * FUNCTION:	attempt to allocate the blocks of the specअगरied block
  *		range within a dmap.
  *
  * PARAMETERS:
- *	bmp	-  pointer to bmap descriptor
- *	dp	-  pointer to dmap.
+ *	bmp	-  poपूर्णांकer to bmap descriptor
+ *	dp	-  poपूर्णांकer to dmap.
  *	blkno	-  starting block number of the range.
- *	nblocks	-  number of contiguous free blocks of the range.
+ *	nblocks	-  number of contiguous मुक्त blocks of the range.
  *
  * RETURN VALUES:
  *	0	- success
  *	-ENOSPC	- insufficient disk resources
  *	-EIO	- i/o error
  *
- * serialization: IREAD_LOCK(ipbmap) held on entry/exit;
+ * serialization: IREAD_LOCK(ipbmap) held on entry/निकास;
  */
-static int dbAllocNext(struct bmap * bmp, struct dmap * dp, s64 blkno,
-		       int nblocks)
-{
-	int dbitno, word, rembits, nb, nwords, wbitno, nw;
-	int l2size;
+अटल पूर्णांक dbAllocNext(काष्ठा bmap * bmp, काष्ठा dmap * dp, s64 blkno,
+		       पूर्णांक nblocks)
+अणु
+	पूर्णांक dbitno, word, rembits, nb, nwords, wbitno, nw;
+	पूर्णांक l2size;
 	s8 *leaf;
 	u32 mask;
 
-	if (dp->tree.leafidx != cpu_to_le32(LEAFIND)) {
+	अगर (dp->tree.leafidx != cpu_to_le32(LEAFIND)) अणु
 		jfs_error(bmp->db_ipbmap->i_sb, "Corrupt dmap page\n");
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
-	/* pick up a pointer to the leaves of the dmap tree.
+	/* pick up a poपूर्णांकer to the leaves of the dmap tree.
 	 */
 	leaf = dp->tree.stree + le32_to_cpu(dp->tree.leafidx);
 
@@ -1132,49 +1133,49 @@ static int dbAllocNext(struct bmap * bmp, struct dmap * dp, s64 blkno,
 	dbitno = blkno & (BPERDMAP - 1);
 	word = dbitno >> L2DBWORD;
 
-	/* check if the specified block range is contained within
+	/* check अगर the specअगरied block range is contained within
 	 * this dmap.
 	 */
-	if (dbitno + nblocks > BPERDMAP)
-		return -ENOSPC;
+	अगर (dbitno + nblocks > BPERDMAP)
+		वापस -ENOSPC;
 
-	/* check if the starting leaf indicates that anything
-	 * is free.
+	/* check अगर the starting leaf indicates that anything
+	 * is मुक्त.
 	 */
-	if (leaf[word] == NOFREE)
-		return -ENOSPC;
+	अगर (leaf[word] == NOFREE)
+		वापस -ENOSPC;
 
 	/* check the dmaps words corresponding to block range to see
-	 * if the block range is free.  not all bits of the first and
-	 * last words may be contained within the block range.  if this
-	 * is the case, we'll work against those words (i.e. partial first
-	 * and/or last) on an individual basis (a single pass) and examine
-	 * the actual bits to determine if they are free.  a single pass
-	 * will be used for all dmap words fully contained within the
-	 * specified range.  within this pass, the leaves of the dmap
-	 * tree will be examined to determine if the blocks are free. a
-	 * single leaf may describe the free space of multiple dmap
+	 * अगर the block range is मुक्त.  not all bits of the first and
+	 * last words may be contained within the block range.  अगर this
+	 * is the हाल, we'll work against those words (i.e. partial first
+	 * and/or last) on an inभागidual basis (a single pass) and examine
+	 * the actual bits to determine अगर they are मुक्त.  a single pass
+	 * will be used क्रम all dmap words fully contained within the
+	 * specअगरied range.  within this pass, the leaves of the dmap
+	 * tree will be examined to determine अगर the blocks are मुक्त. a
+	 * single leaf may describe the मुक्त space of multiple dmap
 	 * words, so we may visit only a subset of the actual leaves
 	 * corresponding to the dmap words of the block range.
 	 */
-	for (rembits = nblocks; rembits > 0; rembits -= nb, dbitno += nb) {
+	क्रम (rembits = nblocks; rembits > 0; rembits -= nb, dbitno += nb) अणु
 		/* determine the bit number within the word and
 		 * the number of bits within the word.
 		 */
 		wbitno = dbitno & (DBWORD - 1);
 		nb = min(rembits, DBWORD - wbitno);
 
-		/* check if only part of the word is to be examined.
+		/* check अगर only part of the word is to be examined.
 		 */
-		if (nb < DBWORD) {
-			/* check if the bits are free.
+		अगर (nb < DBWORD) अणु
+			/* check अगर the bits are मुक्त.
 			 */
 			mask = (ONES << (DBWORD - nb) >> wbitno);
-			if ((mask & ~le32_to_cpu(dp->wmap[word])) != mask)
-				return -ENOSPC;
+			अगर ((mask & ~le32_to_cpu(dp->wmap[word])) != mask)
+				वापस -ENOSPC;
 
 			word += 1;
-		} else {
+		पूर्ण अन्यथा अणु
 			/* one or more dmap words are fully contained
 			 * within the block range.  determine how many
 			 * words and how many bits.
@@ -1183,19 +1184,19 @@ static int dbAllocNext(struct bmap * bmp, struct dmap * dp, s64 blkno,
 			nb = nwords << L2DBWORD;
 
 			/* now examine the appropriate leaves to determine
-			 * if the blocks are free.
+			 * अगर the blocks are मुक्त.
 			 */
-			while (nwords > 0) {
-				/* does the leaf describe any free space ?
+			जबतक (nwords > 0) अणु
+				/* करोes the leaf describe any मुक्त space ?
 				 */
-				if (leaf[word] < BUDMIN)
-					return -ENOSPC;
+				अगर (leaf[word] < BUDMIN)
+					वापस -ENOSPC;
 
 				/* determine the l2 number of bits provided
 				 * by this leaf.
 				 */
 				l2size =
-				    min_t(int, leaf[word], NLSTOL2BSZ(nwords));
+				    min_t(पूर्णांक, leaf[word], NLSTOL2BSZ(nwords));
 
 				/* determine how many words were handled.
 				 */
@@ -1203,34 +1204,34 @@ static int dbAllocNext(struct bmap * bmp, struct dmap * dp, s64 blkno,
 
 				nwords -= nw;
 				word += nw;
-			}
-		}
-	}
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
 	/* allocate the blocks.
 	 */
-	return (dbAllocDmap(bmp, dp, blkno, nblocks));
-}
+	वापस (dbAllocDmap(bmp, dp, blkno, nblocks));
+पूर्ण
 
 
 /*
  * NAME:	dbAllocNear()
  *
- * FUNCTION:	attempt to allocate a number of contiguous free blocks near
- *		a specified block (hint) within a dmap.
+ * FUNCTION:	attempt to allocate a number of contiguous मुक्त blocks near
+ *		a specअगरied block (hपूर्णांक) within a dmap.
  *
- *		starting with the dmap leaf that covers the hint, we'll
- *		check the next four contiguous leaves for sufficient free
- *		space.  if sufficient free space is found, we'll allocate
- *		the desired free space.
+ *		starting with the dmap leaf that covers the hपूर्णांक, we'll
+ *		check the next four contiguous leaves क्रम sufficient मुक्त
+ *		space.  अगर sufficient मुक्त space is found, we'll allocate
+ *		the desired मुक्त space.
  *
  * PARAMETERS:
- *	bmp	-  pointer to bmap descriptor
- *	dp	-  pointer to dmap.
+ *	bmp	-  poपूर्णांकer to bmap descriptor
+ *	dp	-  poपूर्णांकer to dmap.
  *	blkno	-  block number to allocate near.
- *	nblocks	-  actual number of contiguous free blocks desired.
- *	l2nb	-  log2 number of contiguous free blocks desired.
- *	results	-  on successful return, set to the starting block number
+ *	nblocks	-  actual number of contiguous मुक्त blocks desired.
+ *	l2nb	-  log2 number of contiguous मुक्त blocks desired.
+ *	results	-  on successful वापस, set to the starting block number
  *		   of the newly allocated range.
  *
  * RETURN VALUES:
@@ -1238,108 +1239,108 @@ static int dbAllocNext(struct bmap * bmp, struct dmap * dp, s64 blkno,
  *	-ENOSPC	- insufficient disk resources
  *	-EIO	- i/o error
  *
- * serialization: IREAD_LOCK(ipbmap) held on entry/exit;
+ * serialization: IREAD_LOCK(ipbmap) held on entry/निकास;
  */
-static int
-dbAllocNear(struct bmap * bmp,
-	    struct dmap * dp, s64 blkno, int nblocks, int l2nb, s64 * results)
-{
-	int word, lword, rc;
+अटल पूर्णांक
+dbAllocNear(काष्ठा bmap * bmp,
+	    काष्ठा dmap * dp, s64 blkno, पूर्णांक nblocks, पूर्णांक l2nb, s64 * results)
+अणु
+	पूर्णांक word, lword, rc;
 	s8 *leaf;
 
-	if (dp->tree.leafidx != cpu_to_le32(LEAFIND)) {
+	अगर (dp->tree.leafidx != cpu_to_le32(LEAFIND)) अणु
 		jfs_error(bmp->db_ipbmap->i_sb, "Corrupt dmap page\n");
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
 	leaf = dp->tree.stree + le32_to_cpu(dp->tree.leafidx);
 
-	/* determine the word within the dmap that holds the hint
+	/* determine the word within the dmap that holds the hपूर्णांक
 	 * (i.e. blkno).  also, determine the last word in the dmap
 	 * that we'll include in our examination.
 	 */
 	word = (blkno & (BPERDMAP - 1)) >> L2DBWORD;
 	lword = min(word + 4, LPERDMAP);
 
-	/* examine the leaves for sufficient free space.
+	/* examine the leaves क्रम sufficient मुक्त space.
 	 */
-	for (; word < lword; word++) {
-		/* does the leaf describe sufficient free space ?
+	क्रम (; word < lword; word++) अणु
+		/* करोes the leaf describe sufficient मुक्त space ?
 		 */
-		if (leaf[word] < l2nb)
-			continue;
+		अगर (leaf[word] < l2nb)
+			जारी;
 
-		/* determine the block number within the file system
+		/* determine the block number within the file प्रणाली
 		 * of the first block described by this dmap word.
 		 */
 		blkno = le64_to_cpu(dp->start) + (word << L2DBWORD);
 
-		/* if not all bits of the dmap word are free, get the
+		/* अगर not all bits of the dmap word are मुक्त, get the
 		 * starting bit number within the dmap word of the required
-		 * string of free bits and adjust the block number with the
+		 * string of मुक्त bits and adjust the block number with the
 		 * value.
 		 */
-		if (leaf[word] < BUDMIN)
+		अगर (leaf[word] < BUDMIN)
 			blkno +=
 			    dbFindBits(le32_to_cpu(dp->wmap[word]), l2nb);
 
 		/* allocate the blocks.
 		 */
-		if ((rc = dbAllocDmap(bmp, dp, blkno, nblocks)) == 0)
+		अगर ((rc = dbAllocDmap(bmp, dp, blkno, nblocks)) == 0)
 			*results = blkno;
 
-		return (rc);
-	}
+		वापस (rc);
+	पूर्ण
 
-	return -ENOSPC;
-}
+	वापस -ENOSPC;
+पूर्ण
 
 
 /*
  * NAME:	dbAllocAG()
  *
- * FUNCTION:	attempt to allocate the specified number of contiguous
- *		free blocks within the specified allocation group.
+ * FUNCTION:	attempt to allocate the specअगरied number of contiguous
+ *		मुक्त blocks within the specअगरied allocation group.
  *
  *		unless the allocation group size is equal to the number
  *		of blocks per dmap, the dmap control pages will be used to
- *		find the required free space, if available.  we start the
+ *		find the required मुक्त space, अगर available.  we start the
  *		search at the highest dmap control page level which
- *		distinctly describes the allocation group's free space
+ *		distinctly describes the allocation group's मुक्त space
  *		(i.e. the highest level at which the allocation group's
- *		free space is not mixed in with that of any other group).
+ *		मुक्त space is not mixed in with that of any other group).
  *		in addition, we start the search within this level at a
  *		height of the dmapctl dmtree at which the nodes distinctly
- *		describe the allocation group's free space.  at this height,
- *		the allocation group's free space may be represented by 1
+ *		describe the allocation group's मुक्त space.  at this height,
+ *		the allocation group's मुक्त space may be represented by 1
  *		or two sub-trees, depending on the allocation group size.
- *		we search the top nodes of these subtrees left to right for
- *		sufficient free space.  if sufficient free space is found,
- *		the subtree is searched to find the leftmost leaf that
- *		has free space.  once we have made it to the leaf, we
+ *		we search the top nodes of these subtrees left to right क्रम
+ *		sufficient मुक्त space.  अगर sufficient मुक्त space is found,
+ *		the subtree is searched to find the lefपंचांगost leaf that
+ *		has मुक्त space.  once we have made it to the leaf, we
  *		move the search to the next lower level dmap control page
- *		corresponding to this leaf.  we continue down the dmap control
+ *		corresponding to this leaf.  we जारी करोwn the dmap control
  *		pages until we find the dmap that contains or starts the
- *		sufficient free space and we allocate at this dmap.
+ *		sufficient मुक्त space and we allocate at this dmap.
  *
- *		if the allocation group size is equal to the dmap size,
+ *		अगर the allocation group size is equal to the dmap size,
  *		we'll start at the dmap corresponding to the allocation
  *		group and attempt the allocation at this level.
  *
- *		the dmap control page search is also not performed if the
- *		allocation group is completely free and we go to the first
- *		dmap of the allocation group to do the allocation.  this is
- *		done because the allocation group may be part (not the first
- *		part) of a larger binary buddy system, causing the dmap
- *		control pages to indicate no free space (NOFREE) within
+ *		the dmap control page search is also not perक्रमmed अगर the
+ *		allocation group is completely मुक्त and we go to the first
+ *		dmap of the allocation group to करो the allocation.  this is
+ *		करोne because the allocation group may be part (not the first
+ *		part) of a larger binary buddy प्रणाली, causing the dmap
+ *		control pages to indicate no मुक्त space (NOFREE) within
  *		the allocation group.
  *
  * PARAMETERS:
- *	bmp	-  pointer to bmap descriptor
+ *	bmp	-  poपूर्णांकer to bmap descriptor
  *	agno	- allocation group number.
- *	nblocks	-  actual number of contiguous free blocks desired.
- *	l2nb	-  log2 number of contiguous free blocks desired.
- *	results	-  on successful return, set to the starting block number
+ *	nblocks	-  actual number of contiguous मुक्त blocks desired.
+ *	l2nb	-  log2 number of contiguous मुक्त blocks desired.
+ *	results	-  on successful वापस, set to the starting block number
  *		   of the newly allocated range.
  *
  * RETURN VALUES:
@@ -1347,80 +1348,80 @@ dbAllocNear(struct bmap * bmp,
  *	-ENOSPC	- insufficient disk resources
  *	-EIO	- i/o error
  *
- * note: IWRITE_LOCK(ipmap) held on entry/exit;
+ * note: IWRITE_LOCK(ipmap) held on entry/निकास;
  */
-static int
-dbAllocAG(struct bmap * bmp, int agno, s64 nblocks, int l2nb, s64 * results)
-{
-	struct metapage *mp;
-	struct dmapctl *dcp;
-	int rc, ti, i, k, m, n, agperlev;
+अटल पूर्णांक
+dbAllocAG(काष्ठा bmap * bmp, पूर्णांक agno, s64 nblocks, पूर्णांक l2nb, s64 * results)
+अणु
+	काष्ठा metapage *mp;
+	काष्ठा dmapctl *dcp;
+	पूर्णांक rc, ti, i, k, m, n, agperlev;
 	s64 blkno, lblkno;
-	int budmin;
+	पूर्णांक budmin;
 
-	/* allocation request should not be for more than the
+	/* allocation request should not be क्रम more than the
 	 * allocation group size.
 	 */
-	if (l2nb > bmp->db_agl2size) {
+	अगर (l2nb > bmp->db_agl2size) अणु
 		jfs_error(bmp->db_ipbmap->i_sb,
 			  "allocation request is larger than the allocation group size\n");
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
 	/* determine the starting block number of the allocation
 	 * group.
 	 */
 	blkno = (s64) agno << bmp->db_agl2size;
 
-	/* check if the allocation group size is the minimum allocation
-	 * group size or if the allocation group is completely free. if
+	/* check अगर the allocation group size is the minimum allocation
+	 * group size or अगर the allocation group is completely मुक्त. अगर
 	 * the allocation group size is the minimum size of BPERDMAP (i.e.
 	 * 1 dmap), there is no need to search the dmap control page (below)
 	 * that fully describes the allocation group since the allocation
-	 * group is already fully described by a dmap.  in this case, we
+	 * group is alपढ़ोy fully described by a dmap.  in this हाल, we
 	 * just call dbAllocCtl() to search the dmap tree and allocate the
-	 * required space if available.
+	 * required space अगर available.
 	 *
-	 * if the allocation group is completely free, dbAllocCtl() is
-	 * also called to allocate the required space.  this is done for
+	 * अगर the allocation group is completely मुक्त, dbAllocCtl() is
+	 * also called to allocate the required space.  this is करोne क्रम
 	 * two reasons.  first, it makes no sense searching the dmap control
-	 * pages for free space when we know that free space exists.  second,
+	 * pages क्रम मुक्त space when we know that मुक्त space exists.  second,
 	 * the dmap control pages may indicate that the allocation group
-	 * has no free space if the allocation group is part (not the first
-	 * part) of a larger binary buddy system.
+	 * has no मुक्त space अगर the allocation group is part (not the first
+	 * part) of a larger binary buddy प्रणाली.
 	 */
-	if (bmp->db_agsize == BPERDMAP
-	    || bmp->db_agfree[agno] == bmp->db_agsize) {
+	अगर (bmp->db_agsize == BPERDMAP
+	    || bmp->db_agमुक्त[agno] == bmp->db_agsize) अणु
 		rc = dbAllocCtl(bmp, nblocks, l2nb, blkno, results);
-		if ((rc == -ENOSPC) &&
-		    (bmp->db_agfree[agno] == bmp->db_agsize)) {
-			printk(KERN_ERR "blkno = %Lx, blocks = %Lx\n",
-			       (unsigned long long) blkno,
-			       (unsigned long long) nblocks);
+		अगर ((rc == -ENOSPC) &&
+		    (bmp->db_agमुक्त[agno] == bmp->db_agsize)) अणु
+			prपूर्णांकk(KERN_ERR "blkno = %Lx, blocks = %Lx\n",
+			       (अचिन्हित दीर्घ दीर्घ) blkno,
+			       (अचिन्हित दीर्घ दीर्घ) nblocks);
 			jfs_error(bmp->db_ipbmap->i_sb,
 				  "dbAllocCtl failed in free AG\n");
-		}
-		return (rc);
-	}
+		पूर्ण
+		वापस (rc);
+	पूर्ण
 
-	/* the buffer for the dmap control page that fully describes the
+	/* the buffer क्रम the dmap control page that fully describes the
 	 * allocation group.
 	 */
 	lblkno = BLKTOCTL(blkno, bmp->db_l2nbperpage, bmp->db_aglevel);
-	mp = read_metapage(bmp->db_ipbmap, lblkno, PSIZE, 0);
-	if (mp == NULL)
-		return -EIO;
-	dcp = (struct dmapctl *) mp->data;
+	mp = पढ़ो_metapage(bmp->db_ipbmap, lblkno, PSIZE, 0);
+	अगर (mp == शून्य)
+		वापस -EIO;
+	dcp = (काष्ठा dmapctl *) mp->data;
 	budmin = dcp->budmin;
 
-	if (dcp->leafidx != cpu_to_le32(CTLLEAFIND)) {
+	अगर (dcp->leafidx != cpu_to_le32(CTLLEAFIND)) अणु
 		jfs_error(bmp->db_ipbmap->i_sb, "Corrupt dmapctl page\n");
 		release_metapage(mp);
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
 	/* search the subtree(s) of the dmap control page that describes
-	 * the allocation group, looking for sufficient free space.  to begin,
+	 * the allocation group, looking क्रम sufficient मुक्त space.  to begin,
 	 * determine how many allocation groups are represented in a dmap
 	 * control page at the control page level (i.e. L0, L1, L2) that
 	 * fully describes an allocation group. next, determine the starting
@@ -1433,112 +1434,112 @@ dbAllocAG(struct bmap * bmp, int agno, s64 nblocks, int l2nb, s64 * results)
 	/* dmap control page trees fan-out by 4 and a single allocation
 	 * group may be described by 1 or 2 subtrees within the ag level
 	 * dmap control page, depending upon the ag size. examine the ag's
-	 * subtrees for sufficient free space, starting with the leftmost
+	 * subtrees क्रम sufficient मुक्त space, starting with the lefपंचांगost
 	 * subtree.
 	 */
-	for (i = 0; i < bmp->db_agwidth; i++, ti++) {
-		/* is there sufficient free space ?
+	क्रम (i = 0; i < bmp->db_agwidth; i++, ti++) अणु
+		/* is there sufficient मुक्त space ?
 		 */
-		if (l2nb > dcp->stree[ti])
-			continue;
+		अगर (l2nb > dcp->stree[ti])
+			जारी;
 
-		/* sufficient free space found in a subtree. now search down
-		 * the subtree to find the leftmost leaf that describes this
-		 * free space.
+		/* sufficient मुक्त space found in a subtree. now search करोwn
+		 * the subtree to find the lefपंचांगost leaf that describes this
+		 * मुक्त space.
 		 */
-		for (k = bmp->db_agheight; k > 0; k--) {
-			for (n = 0, m = (ti << 2) + 1; n < 4; n++) {
-				if (l2nb <= dcp->stree[m + n]) {
+		क्रम (k = bmp->db_agheight; k > 0; k--) अणु
+			क्रम (n = 0, m = (ti << 2) + 1; n < 4; n++) अणु
+				अगर (l2nb <= dcp->stree[m + n]) अणु
 					ti = m + n;
-					break;
-				}
-			}
-			if (n == 4) {
+					अवरोध;
+				पूर्ण
+			पूर्ण
+			अगर (n == 4) अणु
 				jfs_error(bmp->db_ipbmap->i_sb,
 					  "failed descending stree\n");
 				release_metapage(mp);
-				return -EIO;
-			}
-		}
+				वापस -EIO;
+			पूर्ण
+		पूर्ण
 
-		/* determine the block number within the file system
+		/* determine the block number within the file प्रणाली
 		 * that corresponds to this leaf.
 		 */
-		if (bmp->db_aglevel == 2)
+		अगर (bmp->db_aglevel == 2)
 			blkno = 0;
-		else if (bmp->db_aglevel == 1)
+		अन्यथा अगर (bmp->db_aglevel == 1)
 			blkno &= ~(MAXL1SIZE - 1);
-		else		/* bmp->db_aglevel == 0 */
+		अन्यथा		/* bmp->db_aglevel == 0 */
 			blkno &= ~(MAXL0SIZE - 1);
 
 		blkno +=
 		    ((s64) (ti - le32_to_cpu(dcp->leafidx))) << budmin;
 
-		/* release the buffer in preparation for going down
+		/* release the buffer in preparation क्रम going करोwn
 		 * the next level of dmap control pages.
 		 */
 		release_metapage(mp);
 
-		/* check if we need to continue to search down the lower
-		 * level dmap control pages.  we need to if the number of
+		/* check अगर we need to जारी to search करोwn the lower
+		 * level dmap control pages.  we need to अगर the number of
 		 * blocks required is less than maximum number of blocks
 		 * described at the next lower level.
 		 */
-		if (l2nb < budmin) {
+		अगर (l2nb < budmin) अणु
 
 			/* search the lower level dmap control pages to get
 			 * the starting block number of the dmap that
-			 * contains or starts off the free space.
+			 * contains or starts off the मुक्त space.
 			 */
-			if ((rc =
+			अगर ((rc =
 			     dbFindCtl(bmp, l2nb, bmp->db_aglevel - 1,
-				       &blkno))) {
-				if (rc == -ENOSPC) {
+				       &blkno))) अणु
+				अगर (rc == -ENOSPC) अणु
 					jfs_error(bmp->db_ipbmap->i_sb,
 						  "control page inconsistent\n");
-					return -EIO;
-				}
-				return (rc);
-			}
-		}
+					वापस -EIO;
+				पूर्ण
+				वापस (rc);
+			पूर्ण
+		पूर्ण
 
 		/* allocate the blocks.
 		 */
 		rc = dbAllocCtl(bmp, nblocks, l2nb, blkno, results);
-		if (rc == -ENOSPC) {
+		अगर (rc == -ENOSPC) अणु
 			jfs_error(bmp->db_ipbmap->i_sb,
 				  "unable to allocate blocks\n");
 			rc = -EIO;
-		}
-		return (rc);
-	}
+		पूर्ण
+		वापस (rc);
+	पूर्ण
 
 	/* no space in the allocation group.  release the buffer and
-	 * return -ENOSPC.
+	 * वापस -ENOSPC.
 	 */
 	release_metapage(mp);
 
-	return -ENOSPC;
-}
+	वापस -ENOSPC;
+पूर्ण
 
 
 /*
  * NAME:	dbAllocAny()
  *
- * FUNCTION:	attempt to allocate the specified number of contiguous
- *		free blocks anywhere in the file system.
+ * FUNCTION:	attempt to allocate the specअगरied number of contiguous
+ *		मुक्त blocks anywhere in the file प्रणाली.
  *
- *		dbAllocAny() attempts to find the sufficient free space by
- *		searching down the dmap control pages, starting with the
- *		highest level (i.e. L0, L1, L2) control page.  if free space
- *		large enough to satisfy the desired free space is found, the
- *		desired free space is allocated.
+ *		dbAllocAny() attempts to find the sufficient मुक्त space by
+ *		searching करोwn the dmap control pages, starting with the
+ *		highest level (i.e. L0, L1, L2) control page.  अगर मुक्त space
+ *		large enough to satisfy the desired मुक्त space is found, the
+ *		desired मुक्त space is allocated.
  *
  * PARAMETERS:
- *	bmp	-  pointer to bmap descriptor
- *	nblocks	 -  actual number of contiguous free blocks desired.
- *	l2nb	 -  log2 number of contiguous free blocks desired.
- *	results	-  on successful return, set to the starting block number
+ *	bmp	-  poपूर्णांकer to bmap descriptor
+ *	nblocks	 -  actual number of contiguous मुक्त blocks desired.
+ *	l2nb	 -  log2 number of contiguous मुक्त blocks desired.
+ *	results	-  on successful वापस, set to the starting block number
  *		   of the newly allocated range.
  *
  * RETURN VALUES:
@@ -1546,206 +1547,206 @@ dbAllocAG(struct bmap * bmp, int agno, s64 nblocks, int l2nb, s64 * results)
  *	-ENOSPC	- insufficient disk resources
  *	-EIO	- i/o error
  *
- * serialization: IWRITE_LOCK(ipbmap) held on entry/exit;
+ * serialization: IWRITE_LOCK(ipbmap) held on entry/निकास;
  */
-static int dbAllocAny(struct bmap * bmp, s64 nblocks, int l2nb, s64 * results)
-{
-	int rc;
+अटल पूर्णांक dbAllocAny(काष्ठा bmap * bmp, s64 nblocks, पूर्णांक l2nb, s64 * results)
+अणु
+	पूर्णांक rc;
 	s64 blkno = 0;
 
 	/* starting with the top level dmap control page, search
-	 * down the dmap control levels for sufficient free space.
-	 * if free space is found, dbFindCtl() returns the starting
+	 * करोwn the dmap control levels क्रम sufficient मुक्त space.
+	 * अगर मुक्त space is found, dbFindCtl() वापसs the starting
 	 * block number of the dmap that contains or starts off the
-	 * range of free space.
+	 * range of मुक्त space.
 	 */
-	if ((rc = dbFindCtl(bmp, l2nb, bmp->db_maxlevel, &blkno)))
-		return (rc);
+	अगर ((rc = dbFindCtl(bmp, l2nb, bmp->db_maxlevel, &blkno)))
+		वापस (rc);
 
 	/* allocate the blocks.
 	 */
 	rc = dbAllocCtl(bmp, nblocks, l2nb, blkno, results);
-	if (rc == -ENOSPC) {
+	अगर (rc == -ENOSPC) अणु
 		jfs_error(bmp->db_ipbmap->i_sb, "unable to allocate blocks\n");
-		return -EIO;
-	}
-	return (rc);
-}
+		वापस -EIO;
+	पूर्ण
+	वापस (rc);
+पूर्ण
 
 
 /*
  * NAME:	dbDiscardAG()
  *
- * FUNCTION:	attempt to discard (TRIM) all free blocks of specific AG
+ * FUNCTION:	attempt to discard (TRIM) all मुक्त blocks of specअगरic AG
  *
  *		algorithm:
  *		1) allocate blocks, as large as possible and save them
- *		   while holding IWRITE_LOCK on ipbmap
+ *		   जबतक holding IWRITE_LOCK on ipbmap
  *		2) trim all these saved block/length values
- *		3) mark the blocks free again
+ *		3) mark the blocks मुक्त again
  *
  *		benefit:
- *		- we work only on one ag at some time, minimizing how long we
+ *		- we work only on one ag at some समय, minimizing how दीर्घ we
  *		  need to lock ipbmap
- *		- reading / writing the fs is possible most time, even on
+ *		- पढ़ोing / writing the fs is possible most समय, even on
  *		  trimming
  *
- *		downside:
- *		- we write two times to the dmapctl and dmap pages
- *		- but for me, this seems the best way, better ideas?
+ *		करोwnside:
+ *		- we ग_लिखो two बार to the dmapctl and dmap pages
+ *		- but क्रम me, this seems the best way, better ideas?
  *		/TR 2012
  *
  * PARAMETERS:
- *	ip	- pointer to in-core inode
+ *	ip	- poपूर्णांकer to in-core inode
  *	agno	- ag to trim
  *	minlen	- minimum value of contiguous blocks
  *
  * RETURN VALUES:
  *	s64	- actual number of blocks trimmed
  */
-s64 dbDiscardAG(struct inode *ip, int agno, s64 minlen)
-{
-	struct inode *ipbmap = JFS_SBI(ip->i_sb)->ipbmap;
-	struct bmap *bmp = JFS_SBI(ip->i_sb)->bmap;
+s64 dbDiscardAG(काष्ठा inode *ip, पूर्णांक agno, s64 minlen)
+अणु
+	काष्ठा inode *ipbmap = JFS_SBI(ip->i_sb)->ipbmap;
+	काष्ठा bmap *bmp = JFS_SBI(ip->i_sb)->bmap;
 	s64 nblocks, blkno;
 	u64 trimmed = 0;
-	int rc, l2nb;
-	struct super_block *sb = ipbmap->i_sb;
+	पूर्णांक rc, l2nb;
+	काष्ठा super_block *sb = ipbmap->i_sb;
 
-	struct range2trim {
+	काष्ठा range2trim अणु
 		u64 blkno;
 		u64 nblocks;
-	} *totrim, *tt;
+	पूर्ण *totrim, *tt;
 
 	/* max blkno / nblocks pairs to trim */
-	int count = 0, range_cnt;
+	पूर्णांक count = 0, range_cnt;
 	u64 max_ranges;
 
-	/* prevent others from writing new stuff here, while trimming */
+	/* prevent others from writing new stuff here, जबतक trimming */
 	IWRITE_LOCK(ipbmap, RDWRLOCK_DMAP);
 
-	nblocks = bmp->db_agfree[agno];
+	nblocks = bmp->db_agमुक्त[agno];
 	max_ranges = nblocks;
-	do_div(max_ranges, minlen);
+	करो_भाग(max_ranges, minlen);
 	range_cnt = min_t(u64, max_ranges + 1, 32 * 1024);
-	totrim = kmalloc_array(range_cnt, sizeof(struct range2trim), GFP_NOFS);
-	if (totrim == NULL) {
+	totrim = kदो_स्मृति_array(range_cnt, माप(काष्ठा range2trim), GFP_NOFS);
+	अगर (totrim == शून्य) अणु
 		jfs_error(bmp->db_ipbmap->i_sb, "no memory for trim array\n");
 		IWRITE_UNLOCK(ipbmap);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	tt = totrim;
-	while (nblocks >= minlen) {
+	जबतक (nblocks >= minlen) अणु
 		l2nb = BLKSTOL2(nblocks);
 
 		/* 0 = okay, -EIO = fatal, -ENOSPC -> try smaller block */
 		rc = dbAllocAG(bmp, agno, nblocks, l2nb, &blkno);
-		if (rc == 0) {
+		अगर (rc == 0) अणु
 			tt->blkno = blkno;
 			tt->nblocks = nblocks;
 			tt++; count++;
 
-			/* the whole ag is free, trim now */
-			if (bmp->db_agfree[agno] == 0)
-				break;
+			/* the whole ag is मुक्त, trim now */
+			अगर (bmp->db_agमुक्त[agno] == 0)
+				अवरोध;
 
-			/* give a hint for the next while */
-			nblocks = bmp->db_agfree[agno];
-			continue;
-		} else if (rc == -ENOSPC) {
-			/* search for next smaller log2 block */
+			/* give a hपूर्णांक क्रम the next जबतक */
+			nblocks = bmp->db_agमुक्त[agno];
+			जारी;
+		पूर्ण अन्यथा अगर (rc == -ENOSPC) अणु
+			/* search क्रम next smaller log2 block */
 			l2nb = BLKSTOL2(nblocks) - 1;
 			nblocks = 1LL << l2nb;
-		} else {
-			/* Trim any already allocated blocks */
+		पूर्ण अन्यथा अणु
+			/* Trim any alपढ़ोy allocated blocks */
 			jfs_error(bmp->db_ipbmap->i_sb, "-EIO\n");
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		/* check, if our trim array is full */
-		if (unlikely(count >= range_cnt - 1))
-			break;
-	}
+		/* check, अगर our trim array is full */
+		अगर (unlikely(count >= range_cnt - 1))
+			अवरोध;
+	पूर्ण
 	IWRITE_UNLOCK(ipbmap);
 
 	tt->nblocks = 0; /* mark the current end */
-	for (tt = totrim; tt->nblocks != 0; tt++) {
+	क्रम (tt = totrim; tt->nblocks != 0; tt++) अणु
 		/* when mounted with online discard, dbFree() will
 		 * call jfs_issue_discard() itself */
-		if (!(JFS_SBI(sb)->flag & JFS_DISCARD))
+		अगर (!(JFS_SBI(sb)->flag & JFS_DISCARD))
 			jfs_issue_discard(ip, tt->blkno, tt->nblocks);
 		dbFree(ip, tt->blkno, tt->nblocks);
 		trimmed += tt->nblocks;
-	}
-	kfree(totrim);
+	पूर्ण
+	kमुक्त(totrim);
 
-	return trimmed;
-}
+	वापस trimmed;
+पूर्ण
 
 /*
  * NAME:	dbFindCtl()
  *
- * FUNCTION:	starting at a specified dmap control page level and block
- *		number, search down the dmap control levels for a range of
- *		contiguous free blocks large enough to satisfy an allocation
- *		request for the specified number of free blocks.
+ * FUNCTION:	starting at a specअगरied dmap control page level and block
+ *		number, search करोwn the dmap control levels क्रम a range of
+ *		contiguous मुक्त blocks large enough to satisfy an allocation
+ *		request क्रम the specअगरied number of मुक्त blocks.
  *
- *		if sufficient contiguous free blocks are found, this routine
- *		returns the starting block number within a dmap page that
- *		contains or starts a range of contiqious free blocks that
+ *		अगर sufficient contiguous मुक्त blocks are found, this routine
+ *		वापसs the starting block number within a dmap page that
+ *		contains or starts a range of contiqious मुक्त blocks that
  *		is sufficient in size.
  *
  * PARAMETERS:
- *	bmp	-  pointer to bmap descriptor
+ *	bmp	-  poपूर्णांकer to bmap descriptor
  *	level	-  starting dmap control page level.
- *	l2nb	-  log2 number of contiguous free blocks desired.
- *	*blkno	-  on entry, starting block number for conducting the search.
- *		   on successful return, the first block within a dmap page
- *		   that contains or starts a range of contiguous free blocks.
+ *	l2nb	-  log2 number of contiguous मुक्त blocks desired.
+ *	*blkno	-  on entry, starting block number क्रम conducting the search.
+ *		   on successful वापस, the first block within a dmap page
+ *		   that contains or starts a range of contiguous मुक्त blocks.
  *
  * RETURN VALUES:
  *	0	- success
  *	-ENOSPC	- insufficient disk resources
  *	-EIO	- i/o error
  *
- * serialization: IWRITE_LOCK(ipbmap) held on entry/exit;
+ * serialization: IWRITE_LOCK(ipbmap) held on entry/निकास;
  */
-static int dbFindCtl(struct bmap * bmp, int l2nb, int level, s64 * blkno)
-{
-	int rc, leafidx, lev;
+अटल पूर्णांक dbFindCtl(काष्ठा bmap * bmp, पूर्णांक l2nb, पूर्णांक level, s64 * blkno)
+अणु
+	पूर्णांक rc, leafidx, lev;
 	s64 b, lblkno;
-	struct dmapctl *dcp;
-	int budmin;
-	struct metapage *mp;
+	काष्ठा dmapctl *dcp;
+	पूर्णांक budmin;
+	काष्ठा metapage *mp;
 
-	/* starting at the specified dmap control page level and block
-	 * number, search down the dmap control levels for the starting
+	/* starting at the specअगरied dmap control page level and block
+	 * number, search करोwn the dmap control levels क्रम the starting
 	 * block number of a dmap page that contains or starts off
-	 * sufficient free blocks.
+	 * sufficient मुक्त blocks.
 	 */
-	for (lev = level, b = *blkno; lev >= 0; lev--) {
-		/* get the buffer of the dmap control page for the block
+	क्रम (lev = level, b = *blkno; lev >= 0; lev--) अणु
+		/* get the buffer of the dmap control page क्रम the block
 		 * number and level (i.e. L0, L1, L2).
 		 */
 		lblkno = BLKTOCTL(b, bmp->db_l2nbperpage, lev);
-		mp = read_metapage(bmp->db_ipbmap, lblkno, PSIZE, 0);
-		if (mp == NULL)
-			return -EIO;
-		dcp = (struct dmapctl *) mp->data;
+		mp = पढ़ो_metapage(bmp->db_ipbmap, lblkno, PSIZE, 0);
+		अगर (mp == शून्य)
+			वापस -EIO;
+		dcp = (काष्ठा dmapctl *) mp->data;
 		budmin = dcp->budmin;
 
-		if (dcp->leafidx != cpu_to_le32(CTLLEAFIND)) {
+		अगर (dcp->leafidx != cpu_to_le32(CTLLEAFIND)) अणु
 			jfs_error(bmp->db_ipbmap->i_sb,
 				  "Corrupt dmapctl page\n");
 			release_metapage(mp);
-			return -EIO;
-		}
+			वापस -EIO;
+		पूर्ण
 
-		/* search the tree within the dmap control page for
-		 * sufficient free space.  if sufficient free space is found,
-		 * dbFindLeaf() returns the index of the leaf at which
-		 * free space was found.
+		/* search the tree within the dmap control page क्रम
+		 * sufficient मुक्त space.  अगर sufficient मुक्त space is found,
+		 * dbFindLeaf() वापसs the index of the leaf at which
+		 * मुक्त space was found.
 		 */
 		rc = dbFindLeaf((dmtree_t *) dcp, l2nb, &leafidx);
 
@@ -1755,71 +1756,71 @@ static int dbFindCtl(struct bmap * bmp, int l2nb, int level, s64 * blkno)
 
 		/* space found ?
 		 */
-		if (rc) {
-			if (lev != level) {
+		अगर (rc) अणु
+			अगर (lev != level) अणु
 				jfs_error(bmp->db_ipbmap->i_sb,
 					  "dmap inconsistent\n");
-				return -EIO;
-			}
-			return -ENOSPC;
-		}
+				वापस -EIO;
+			पूर्ण
+			वापस -ENOSPC;
+		पूर्ण
 
 		/* adjust the block number to reflect the location within
-		 * the dmap control page (i.e. the leaf) at which free
+		 * the dmap control page (i.e. the leaf) at which मुक्त
 		 * space was found.
 		 */
 		b += (((s64) leafidx) << budmin);
 
-		/* we stop the search at this dmap control page level if
+		/* we stop the search at this dmap control page level अगर
 		 * the number of blocks required is greater than or equal
 		 * to the maximum number of blocks described at the next
 		 * (lower) level.
 		 */
-		if (l2nb >= budmin)
-			break;
-	}
+		अगर (l2nb >= budmin)
+			अवरोध;
+	पूर्ण
 
 	*blkno = b;
-	return (0);
-}
+	वापस (0);
+पूर्ण
 
 
 /*
  * NAME:	dbAllocCtl()
  *
- * FUNCTION:	attempt to allocate a specified number of contiguous
- *		blocks starting within a specific dmap.
+ * FUNCTION:	attempt to allocate a specअगरied number of contiguous
+ *		blocks starting within a specअगरic dmap.
  *
  *		this routine is called by higher level routines that search
- *		the dmap control pages above the actual dmaps for contiguous
- *		free space.  the result of successful searches by these
+ *		the dmap control pages above the actual dmaps क्रम contiguous
+ *		मुक्त space.  the result of successful searches by these
  *		routines are the starting block numbers within dmaps, with
- *		the dmaps themselves containing the desired contiguous free
- *		space or starting a contiguous free space of desired size
+ *		the dmaps themselves containing the desired contiguous मुक्त
+ *		space or starting a contiguous मुक्त space of desired size
  *		that is made up of the blocks of one or more dmaps. these
  *		calls should not fail due to insufficent resources.
  *
- *		this routine is called in some cases where it is not known
+ *		this routine is called in some हालs where it is not known
  *		whether it will fail due to insufficient resources.  more
- *		specifically, this occurs when allocating from an allocation
+ *		specअगरically, this occurs when allocating from an allocation
  *		group whose size is equal to the number of blocks per dmap.
- *		in this case, the dmap control pages are not examined prior
+ *		in this हाल, the dmap control pages are not examined prior
  *		to calling this routine (to save pathlength) and the call
  *		might fail.
  *
- *		for a request size that fits within a dmap, this routine relies
- *		upon the dmap's dmtree to find the requested contiguous free
- *		space.  for request sizes that are larger than a dmap, the
- *		requested free space will start at the first block of the
+ *		क्रम a request size that fits within a dmap, this routine relies
+ *		upon the dmap's dmtree to find the requested contiguous मुक्त
+ *		space.  क्रम request sizes that are larger than a dmap, the
+ *		requested मुक्त space will start at the first block of the
  *		first dmap (i.e. blkno).
  *
  * PARAMETERS:
- *	bmp	-  pointer to bmap descriptor
- *	nblocks	 -  actual number of contiguous free blocks to allocate.
- *	l2nb	 -  log2 number of contiguous free blocks to allocate.
+ *	bmp	-  poपूर्णांकer to bmap descriptor
+ *	nblocks	 -  actual number of contiguous मुक्त blocks to allocate.
+ *	l2nb	 -  log2 number of contiguous मुक्त blocks to allocate.
  *	blkno	 -  starting block number of the dmap to start the allocation
  *		    from.
- *	results	-  on successful return, set to the starting block number
+ *	results	-  on successful वापस, set to the starting block number
  *		   of the newly allocated range.
  *
  * RETURN VALUES:
@@ -1827,65 +1828,65 @@ static int dbFindCtl(struct bmap * bmp, int l2nb, int level, s64 * blkno)
  *	-ENOSPC	- insufficient disk resources
  *	-EIO	- i/o error
  *
- * serialization: IWRITE_LOCK(ipbmap) held on entry/exit;
+ * serialization: IWRITE_LOCK(ipbmap) held on entry/निकास;
  */
-static int
-dbAllocCtl(struct bmap * bmp, s64 nblocks, int l2nb, s64 blkno, s64 * results)
-{
-	int rc, nb;
+अटल पूर्णांक
+dbAllocCtl(काष्ठा bmap * bmp, s64 nblocks, पूर्णांक l2nb, s64 blkno, s64 * results)
+अणु
+	पूर्णांक rc, nb;
 	s64 b, lblkno, n;
-	struct metapage *mp;
-	struct dmap *dp;
+	काष्ठा metapage *mp;
+	काष्ठा dmap *dp;
 
-	/* check if the allocation request is confined to a single dmap.
+	/* check अगर the allocation request is confined to a single dmap.
 	 */
-	if (l2nb <= L2BPERDMAP) {
-		/* get the buffer for the dmap.
+	अगर (l2nb <= L2BPERDMAP) अणु
+		/* get the buffer क्रम the dmap.
 		 */
 		lblkno = BLKTODMAP(blkno, bmp->db_l2nbperpage);
-		mp = read_metapage(bmp->db_ipbmap, lblkno, PSIZE, 0);
-		if (mp == NULL)
-			return -EIO;
-		dp = (struct dmap *) mp->data;
+		mp = पढ़ो_metapage(bmp->db_ipbmap, lblkno, PSIZE, 0);
+		अगर (mp == शून्य)
+			वापस -EIO;
+		dp = (काष्ठा dmap *) mp->data;
 
 		/* try to allocate the blocks.
 		 */
-		rc = dbAllocDmapLev(bmp, dp, (int) nblocks, l2nb, results);
-		if (rc == 0)
+		rc = dbAllocDmapLev(bmp, dp, (पूर्णांक) nblocks, l2nb, results);
+		अगर (rc == 0)
 			mark_metapage_dirty(mp);
 
 		release_metapage(mp);
 
-		return (rc);
-	}
+		वापस (rc);
+	पूर्ण
 
 	/* allocation request involving multiple dmaps. it must start on
 	 * a dmap boundary.
 	 */
-	assert((blkno & (BPERDMAP - 1)) == 0);
+	निश्चित((blkno & (BPERDMAP - 1)) == 0);
 
 	/* allocate the blocks dmap by dmap.
 	 */
-	for (n = nblocks, b = blkno; n > 0; n -= nb, b += nb) {
-		/* get the buffer for the dmap.
+	क्रम (n = nblocks, b = blkno; n > 0; n -= nb, b += nb) अणु
+		/* get the buffer क्रम the dmap.
 		 */
 		lblkno = BLKTODMAP(b, bmp->db_l2nbperpage);
-		mp = read_metapage(bmp->db_ipbmap, lblkno, PSIZE, 0);
-		if (mp == NULL) {
+		mp = पढ़ो_metapage(bmp->db_ipbmap, lblkno, PSIZE, 0);
+		अगर (mp == शून्य) अणु
 			rc = -EIO;
-			goto backout;
-		}
-		dp = (struct dmap *) mp->data;
+			जाओ backout;
+		पूर्ण
+		dp = (काष्ठा dmap *) mp->data;
 
-		/* the dmap better be all free.
+		/* the dmap better be all मुक्त.
 		 */
-		if (dp->tree.stree[ROOT] != L2BPERDMAP) {
+		अगर (dp->tree.stree[ROOT] != L2BPERDMAP) अणु
 			release_metapage(mp);
 			jfs_error(bmp->db_ipbmap->i_sb,
 				  "the dmap is not all free\n");
 			rc = -EIO;
-			goto backout;
-		}
+			जाओ backout;
+		पूर्ण
 
 		/* determine how many blocks to allocate from this dmap.
 		 */
@@ -1893,83 +1894,83 @@ dbAllocCtl(struct bmap * bmp, s64 nblocks, int l2nb, s64 blkno, s64 * results)
 
 		/* allocate the blocks from the dmap.
 		 */
-		if ((rc = dbAllocDmap(bmp, dp, b, nb))) {
+		अगर ((rc = dbAllocDmap(bmp, dp, b, nb))) अणु
 			release_metapage(mp);
-			goto backout;
-		}
+			जाओ backout;
+		पूर्ण
 
-		/* write the buffer.
+		/* ग_लिखो the buffer.
 		 */
-		write_metapage(mp);
-	}
+		ग_लिखो_metapage(mp);
+	पूर्ण
 
-	/* set the results (starting block number) and return.
+	/* set the results (starting block number) and वापस.
 	 */
 	*results = blkno;
-	return (0);
+	वापस (0);
 
 	/* something failed in handling an allocation request involving
 	 * multiple dmaps.  we'll try to clean up by backing out any
-	 * allocation that has already happened for this request.  if
+	 * allocation that has alपढ़ोy happened क्रम this request.  अगर
 	 * we fail in backing out the allocation, we'll mark the file
-	 * system to indicate that blocks have been leaked.
+	 * प्रणाली to indicate that blocks have been leaked.
 	 */
       backout:
 
 	/* try to backout the allocations dmap by dmap.
 	 */
-	for (n = nblocks - n, b = blkno; n > 0;
-	     n -= BPERDMAP, b += BPERDMAP) {
-		/* get the buffer for this dmap.
+	क्रम (n = nblocks - n, b = blkno; n > 0;
+	     n -= BPERDMAP, b += BPERDMAP) अणु
+		/* get the buffer क्रम this dmap.
 		 */
 		lblkno = BLKTODMAP(b, bmp->db_l2nbperpage);
-		mp = read_metapage(bmp->db_ipbmap, lblkno, PSIZE, 0);
-		if (mp == NULL) {
-			/* could not back out.  mark the file system
+		mp = पढ़ो_metapage(bmp->db_ipbmap, lblkno, PSIZE, 0);
+		अगर (mp == शून्य) अणु
+			/* could not back out.  mark the file प्रणाली
 			 * to indicate that we have leaked blocks.
 			 */
 			jfs_error(bmp->db_ipbmap->i_sb,
 				  "I/O Error: Block Leakage\n");
-			continue;
-		}
-		dp = (struct dmap *) mp->data;
+			जारी;
+		पूर्ण
+		dp = (काष्ठा dmap *) mp->data;
 
-		/* free the blocks is this dmap.
+		/* मुक्त the blocks is this dmap.
 		 */
-		if (dbFreeDmap(bmp, dp, b, BPERDMAP)) {
-			/* could not back out.  mark the file system
+		अगर (dbFreeDmap(bmp, dp, b, BPERDMAP)) अणु
+			/* could not back out.  mark the file प्रणाली
 			 * to indicate that we have leaked blocks.
 			 */
 			release_metapage(mp);
 			jfs_error(bmp->db_ipbmap->i_sb, "Block Leakage\n");
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		/* write the buffer.
+		/* ग_लिखो the buffer.
 		 */
-		write_metapage(mp);
-	}
+		ग_लिखो_metapage(mp);
+	पूर्ण
 
-	return (rc);
-}
+	वापस (rc);
+पूर्ण
 
 
 /*
  * NAME:	dbAllocDmapLev()
  *
- * FUNCTION:	attempt to allocate a specified number of contiguous blocks
- *		from a specified dmap.
+ * FUNCTION:	attempt to allocate a specअगरied number of contiguous blocks
+ *		from a specअगरied dmap.
  *
- *		this routine checks if the contiguous blocks are available.
- *		if so, nblocks of blocks are allocated; otherwise, ENOSPC is
- *		returned.
+ *		this routine checks अगर the contiguous blocks are available.
+ *		अगर so, nblocks of blocks are allocated; otherwise, ENOSPC is
+ *		वापसed.
  *
  * PARAMETERS:
- *	mp	-  pointer to bmap descriptor
- *	dp	-  pointer to dmap to attempt to allocate blocks from.
+ *	mp	-  poपूर्णांकer to bmap descriptor
+ *	dp	-  poपूर्णांकer to dmap to attempt to allocate blocks from.
  *	l2nb	-  log2 number of contiguous block desired.
  *	nblocks	-  actual number of contiguous block desired.
- *	results	-  on successful return, set to the starting block number
+ *	results	-  on successful वापस, set to the starting block number
  *		   of the newly allocated range.
  *
  * RETURN VALUES:
@@ -1978,63 +1979,63 @@ dbAllocCtl(struct bmap * bmp, s64 nblocks, int l2nb, s64 blkno, s64 * results)
  *	-EIO	- i/o error
  *
  * serialization: IREAD_LOCK(ipbmap), e.g., from dbAlloc(), or
- *	IWRITE_LOCK(ipbmap), e.g., dbAllocCtl(), held on entry/exit;
+ *	IWRITE_LOCK(ipbmap), e.g., dbAllocCtl(), held on entry/निकास;
  */
-static int
-dbAllocDmapLev(struct bmap * bmp,
-	       struct dmap * dp, int nblocks, int l2nb, s64 * results)
-{
+अटल पूर्णांक
+dbAllocDmapLev(काष्ठा bmap * bmp,
+	       काष्ठा dmap * dp, पूर्णांक nblocks, पूर्णांक l2nb, s64 * results)
+अणु
 	s64 blkno;
-	int leafidx, rc;
+	पूर्णांक leafidx, rc;
 
 	/* can't be more than a dmaps worth of blocks */
-	assert(l2nb <= L2BPERDMAP);
+	निश्चित(l2nb <= L2BPERDMAP);
 
-	/* search the tree within the dmap page for sufficient
-	 * free space.  if sufficient free space is found, dbFindLeaf()
-	 * returns the index of the leaf at which free space was found.
+	/* search the tree within the dmap page क्रम sufficient
+	 * मुक्त space.  अगर sufficient मुक्त space is found, dbFindLeaf()
+	 * वापसs the index of the leaf at which मुक्त space was found.
 	 */
-	if (dbFindLeaf((dmtree_t *) & dp->tree, l2nb, &leafidx))
-		return -ENOSPC;
+	अगर (dbFindLeaf((dmtree_t *) & dp->tree, l2nb, &leafidx))
+		वापस -ENOSPC;
 
-	/* determine the block number within the file system corresponding
-	 * to the leaf at which free space was found.
+	/* determine the block number within the file प्रणाली corresponding
+	 * to the leaf at which मुक्त space was found.
 	 */
 	blkno = le64_to_cpu(dp->start) + (leafidx << L2DBWORD);
 
-	/* if not all bits of the dmap word are free, get the starting
-	 * bit number within the dmap word of the required string of free
+	/* अगर not all bits of the dmap word are मुक्त, get the starting
+	 * bit number within the dmap word of the required string of मुक्त
 	 * bits and adjust the block number with this value.
 	 */
-	if (dp->tree.stree[leafidx + LEAFIND] < BUDMIN)
+	अगर (dp->tree.stree[leafidx + LEAFIND] < BUDMIN)
 		blkno += dbFindBits(le32_to_cpu(dp->wmap[leafidx]), l2nb);
 
 	/* allocate the blocks */
-	if ((rc = dbAllocDmap(bmp, dp, blkno, nblocks)) == 0)
+	अगर ((rc = dbAllocDmap(bmp, dp, blkno, nblocks)) == 0)
 		*results = blkno;
 
-	return (rc);
-}
+	वापस (rc);
+पूर्ण
 
 
 /*
  * NAME:	dbAllocDmap()
  *
  * FUNCTION:	adjust the disk allocation map to reflect the allocation
- *		of a specified block range within a dmap.
+ *		of a specअगरied block range within a dmap.
  *
- *		this routine allocates the specified blocks from the dmap
- *		through a call to dbAllocBits(). if the allocation of the
- *		block range causes the maximum string of free blocks within
+ *		this routine allocates the specअगरied blocks from the dmap
+ *		through a call to dbAllocBits(). अगर the allocation of the
+ *		block range causes the maximum string of मुक्त blocks within
  *		the dmap to change (i.e. the value of the root of the dmap's
  *		dmtree), this routine will cause this change to be reflected
  *		up through the appropriate levels of the dmap control pages
- *		by a call to dbAdjCtl() for the L0 dmap control page that
+ *		by a call to dbAdjCtl() क्रम the L0 dmap control page that
  *		covers this dmap.
  *
  * PARAMETERS:
- *	bmp	-  pointer to bmap descriptor
- *	dp	-  pointer to dmap to allocate the block range from.
+ *	bmp	-  poपूर्णांकer to bmap descriptor
+ *	dp	-  poपूर्णांकer to dmap to allocate the block range from.
  *	blkno	-  starting block number of the block to be allocated.
  *	nblocks	-  number of blocks to be allocated.
  *
@@ -2042,134 +2043,134 @@ dbAllocDmapLev(struct bmap * bmp,
  *	0	- success
  *	-EIO	- i/o error
  *
- * serialization: IREAD_LOCK(ipbmap) or IWRITE_LOCK(ipbmap) held on entry/exit;
+ * serialization: IREAD_LOCK(ipbmap) or IWRITE_LOCK(ipbmap) held on entry/निकास;
  */
-static int dbAllocDmap(struct bmap * bmp, struct dmap * dp, s64 blkno,
-		       int nblocks)
-{
+अटल पूर्णांक dbAllocDmap(काष्ठा bmap * bmp, काष्ठा dmap * dp, s64 blkno,
+		       पूर्णांक nblocks)
+अणु
 	s8 oldroot;
-	int rc;
+	पूर्णांक rc;
 
-	/* save the current value of the root (i.e. maximum free string)
+	/* save the current value of the root (i.e. maximum मुक्त string)
 	 * of the dmap tree.
 	 */
 	oldroot = dp->tree.stree[ROOT];
 
-	/* allocate the specified (blocks) bits */
+	/* allocate the specअगरied (blocks) bits */
 	dbAllocBits(bmp, dp, blkno, nblocks);
 
-	/* if the root has not changed, done. */
-	if (dp->tree.stree[ROOT] == oldroot)
-		return (0);
+	/* अगर the root has not changed, करोne. */
+	अगर (dp->tree.stree[ROOT] == oldroot)
+		वापस (0);
 
 	/* root changed. bubble the change up to the dmap control pages.
-	 * if the adjustment of the upper level control pages fails,
+	 * अगर the adjusपंचांगent of the upper level control pages fails,
 	 * backout the bit allocation (thus making everything consistent).
 	 */
-	if ((rc = dbAdjCtl(bmp, blkno, dp->tree.stree[ROOT], 1, 0)))
+	अगर ((rc = dbAdjCtl(bmp, blkno, dp->tree.stree[ROOT], 1, 0)))
 		dbFreeBits(bmp, dp, blkno, nblocks);
 
-	return (rc);
-}
+	वापस (rc);
+पूर्ण
 
 
 /*
  * NAME:	dbFreeDmap()
  *
  * FUNCTION:	adjust the disk allocation map to reflect the allocation
- *		of a specified block range within a dmap.
+ *		of a specअगरied block range within a dmap.
  *
- *		this routine frees the specified blocks from the dmap through
- *		a call to dbFreeBits(). if the deallocation of the block range
- *		causes the maximum string of free blocks within the dmap to
+ *		this routine मुक्तs the specअगरied blocks from the dmap through
+ *		a call to dbFreeBits(). अगर the deallocation of the block range
+ *		causes the maximum string of मुक्त blocks within the dmap to
  *		change (i.e. the value of the root of the dmap's dmtree), this
  *		routine will cause this change to be reflected up through the
  *		appropriate levels of the dmap control pages by a call to
- *		dbAdjCtl() for the L0 dmap control page that covers this dmap.
+ *		dbAdjCtl() क्रम the L0 dmap control page that covers this dmap.
  *
  * PARAMETERS:
- *	bmp	-  pointer to bmap descriptor
- *	dp	-  pointer to dmap to free the block range from.
- *	blkno	-  starting block number of the block to be freed.
- *	nblocks	-  number of blocks to be freed.
+ *	bmp	-  poपूर्णांकer to bmap descriptor
+ *	dp	-  poपूर्णांकer to dmap to मुक्त the block range from.
+ *	blkno	-  starting block number of the block to be मुक्तd.
+ *	nblocks	-  number of blocks to be मुक्तd.
  *
  * RETURN VALUES:
  *	0	- success
  *	-EIO	- i/o error
  *
- * serialization: IREAD_LOCK(ipbmap) or IWRITE_LOCK(ipbmap) held on entry/exit;
+ * serialization: IREAD_LOCK(ipbmap) or IWRITE_LOCK(ipbmap) held on entry/निकास;
  */
-static int dbFreeDmap(struct bmap * bmp, struct dmap * dp, s64 blkno,
-		      int nblocks)
-{
+अटल पूर्णांक dbFreeDmap(काष्ठा bmap * bmp, काष्ठा dmap * dp, s64 blkno,
+		      पूर्णांक nblocks)
+अणु
 	s8 oldroot;
-	int rc = 0, word;
+	पूर्णांक rc = 0, word;
 
-	/* save the current value of the root (i.e. maximum free string)
+	/* save the current value of the root (i.e. maximum मुक्त string)
 	 * of the dmap tree.
 	 */
 	oldroot = dp->tree.stree[ROOT];
 
-	/* free the specified (blocks) bits */
+	/* मुक्त the specअगरied (blocks) bits */
 	rc = dbFreeBits(bmp, dp, blkno, nblocks);
 
-	/* if error or the root has not changed, done. */
-	if (rc || (dp->tree.stree[ROOT] == oldroot))
-		return (rc);
+	/* अगर error or the root has not changed, करोne. */
+	अगर (rc || (dp->tree.stree[ROOT] == oldroot))
+		वापस (rc);
 
 	/* root changed. bubble the change up to the dmap control pages.
-	 * if the adjustment of the upper level control pages fails,
+	 * अगर the adjusपंचांगent of the upper level control pages fails,
 	 * backout the deallocation.
 	 */
-	if ((rc = dbAdjCtl(bmp, blkno, dp->tree.stree[ROOT], 0, 0))) {
+	अगर ((rc = dbAdjCtl(bmp, blkno, dp->tree.stree[ROOT], 0, 0))) अणु
 		word = (blkno & (BPERDMAP - 1)) >> L2DBWORD;
 
 		/* as part of backing out the deallocation, we will have
-		 * to back split the dmap tree if the deallocation caused
-		 * the freed blocks to become part of a larger binary buddy
-		 * system.
+		 * to back split the dmap tree अगर the deallocation caused
+		 * the मुक्तd blocks to become part of a larger binary buddy
+		 * प्रणाली.
 		 */
-		if (dp->tree.stree[word] == NOFREE)
+		अगर (dp->tree.stree[word] == NOFREE)
 			dbBackSplit((dmtree_t *) & dp->tree, word);
 
 		dbAllocBits(bmp, dp, blkno, nblocks);
-	}
+	पूर्ण
 
-	return (rc);
-}
+	वापस (rc);
+पूर्ण
 
 
 /*
  * NAME:	dbAllocBits()
  *
- * FUNCTION:	allocate a specified block range from a dmap.
+ * FUNCTION:	allocate a specअगरied block range from a dmap.
  *
  *		this routine updates the dmap to reflect the working
- *		state allocation of the specified block range. it directly
- *		updates the bits of the working map and causes the adjustment
- *		of the binary buddy system described by the dmap's dmtree
+ *		state allocation of the specअगरied block range. it directly
+ *		updates the bits of the working map and causes the adjusपंचांगent
+ *		of the binary buddy प्रणाली described by the dmap's dmtree
  *		leaves to reflect the bits allocated.  it also causes the
  *		dmap's dmtree, as a whole, to reflect the allocated range.
  *
  * PARAMETERS:
- *	bmp	-  pointer to bmap descriptor
- *	dp	-  pointer to dmap to allocate bits from.
+ *	bmp	-  poपूर्णांकer to bmap descriptor
+ *	dp	-  poपूर्णांकer to dmap to allocate bits from.
  *	blkno	-  starting block number of the bits to be allocated.
  *	nblocks	-  number of bits to be allocated.
  *
  * RETURN VALUES: none
  *
- * serialization: IREAD_LOCK(ipbmap) or IWRITE_LOCK(ipbmap) held on entry/exit;
+ * serialization: IREAD_LOCK(ipbmap) or IWRITE_LOCK(ipbmap) held on entry/निकास;
  */
-static void dbAllocBits(struct bmap * bmp, struct dmap * dp, s64 blkno,
-			int nblocks)
-{
-	int dbitno, word, rembits, nb, nwords, wbitno, nw, agno;
+अटल व्योम dbAllocBits(काष्ठा bmap * bmp, काष्ठा dmap * dp, s64 blkno,
+			पूर्णांक nblocks)
+अणु
+	पूर्णांक dbitno, word, rembits, nb, nwords, wbitno, nw, agno;
 	dmtree_t *tp = (dmtree_t *) & dp->tree;
-	int size;
+	पूर्णांक size;
 	s8 *leaf;
 
-	/* pick up a pointer to the leaves of the dmap tree */
+	/* pick up a poपूर्णांकer to the leaves of the dmap tree */
 	leaf = dp->tree.stree + LEAFIND;
 
 	/* determine the bit number and word within the dmap of the
@@ -2179,54 +2180,54 @@ static void dbAllocBits(struct bmap * bmp, struct dmap * dp, s64 blkno,
 	word = dbitno >> L2DBWORD;
 
 	/* block range better be within the dmap */
-	assert(dbitno + nblocks <= BPERDMAP);
+	निश्चित(dbitno + nblocks <= BPERDMAP);
 
 	/* allocate the bits of the dmap's words corresponding to the block
 	 * range. not all bits of the first and last words may be contained
-	 * within the block range.  if this is the case, we'll work against
-	 * those words (i.e. partial first and/or last) on an individual basis
-	 * (a single pass), allocating the bits of interest by hand and
+	 * within the block range.  अगर this is the हाल, we'll work against
+	 * those words (i.e. partial first and/or last) on an inभागidual basis
+	 * (a single pass), allocating the bits of पूर्णांकerest by hand and
 	 * updating the leaf corresponding to the dmap word. a single pass
-	 * will be used for all dmap words fully contained within the
-	 * specified range.  within this pass, the bits of all fully contained
-	 * dmap words will be marked as free in a single shot and the leaves
-	 * will be updated. a single leaf may describe the free space of
+	 * will be used क्रम all dmap words fully contained within the
+	 * specअगरied range.  within this pass, the bits of all fully contained
+	 * dmap words will be marked as मुक्त in a single shot and the leaves
+	 * will be updated. a single leaf may describe the मुक्त space of
 	 * multiple dmap words, so we may update only a subset of the actual
 	 * leaves corresponding to the dmap words of the block range.
 	 */
-	for (rembits = nblocks; rembits > 0; rembits -= nb, dbitno += nb) {
+	क्रम (rembits = nblocks; rembits > 0; rembits -= nb, dbitno += nb) अणु
 		/* determine the bit number within the word and
 		 * the number of bits within the word.
 		 */
 		wbitno = dbitno & (DBWORD - 1);
 		nb = min(rembits, DBWORD - wbitno);
 
-		/* check if only part of a word is to be allocated.
+		/* check अगर only part of a word is to be allocated.
 		 */
-		if (nb < DBWORD) {
+		अगर (nb < DBWORD) अणु
 			/* allocate (set to 1) the appropriate bits within
 			 * this dmap word.
 			 */
 			dp->wmap[word] |= cpu_to_le32(ONES << (DBWORD - nb)
 						      >> wbitno);
 
-			/* update the leaf for this dmap word. in addition
+			/* update the leaf क्रम this dmap word. in addition
 			 * to setting the leaf value to the binary buddy max
 			 * of the updated dmap word, dbSplit() will split
-			 * the binary system of the leaves if need be.
+			 * the binary प्रणाली of the leaves अगर need be.
 			 */
 			dbSplit(tp, word, BUDMIN,
 				dbMaxBud((u8 *) & dp->wmap[word]));
 
 			word += 1;
-		} else {
+		पूर्ण अन्यथा अणु
 			/* one or more dmap words are fully contained
 			 * within the block range.  determine how many
 			 * words and allocate (set to 1) the bits of these
 			 * words.
 			 */
 			nwords = rembits >> L2DBWORD;
-			memset(&dp->wmap[word], (int) ONES, nwords * 4);
+			स_रखो(&dp->wmap[word], (पूर्णांक) ONES, nwords * 4);
 
 			/* determine how many bits.
 			 */
@@ -2235,25 +2236,25 @@ static void dbAllocBits(struct bmap * bmp, struct dmap * dp, s64 blkno,
 			/* now update the appropriate leaves to reflect
 			 * the allocated words.
 			 */
-			for (; nwords > 0; nwords -= nw) {
-				if (leaf[word] < BUDMIN) {
+			क्रम (; nwords > 0; nwords -= nw) अणु
+				अगर (leaf[word] < BUDMIN) अणु
 					jfs_error(bmp->db_ipbmap->i_sb,
 						  "leaf page corrupt\n");
-					break;
-				}
+					अवरोध;
+				पूर्ण
 
 				/* determine what the leaf value should be
 				 * updated to as the minimum of the l2 number
 				 * of bits being allocated and the l2 number
 				 * of bits currently described by this leaf.
 				 */
-				size = min_t(int, leaf[word],
+				size = min_t(पूर्णांक, leaf[word],
 					     NLSTOL2BSZ(nwords));
 
 				/* update the leaf to reflect the allocation.
 				 * in addition to setting the leaf value to
 				 * NOFREE, dbSplit() will split the binary
-				 * system of the leaves to reflect the current
+				 * प्रणाली of the leaves to reflect the current
 				 * allocation (size).
 				 */
 				dbSplit(tp, word, size, NOFREE);
@@ -2261,60 +2262,60 @@ static void dbAllocBits(struct bmap * bmp, struct dmap * dp, s64 blkno,
 				/* get the number of dmap words handled */
 				nw = BUDSIZE(size, BUDMIN);
 				word += nw;
-			}
-		}
-	}
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	/* update the free count for this dmap */
-	le32_add_cpu(&dp->nfree, -nblocks);
+	/* update the मुक्त count क्रम this dmap */
+	le32_add_cpu(&dp->nमुक्त, -nblocks);
 
 	BMAP_LOCK(bmp);
 
-	/* if this allocation group is completely free,
-	 * update the maximum allocation group number if this allocation
+	/* अगर this allocation group is completely मुक्त,
+	 * update the maximum allocation group number अगर this allocation
 	 * group is the new max.
 	 */
 	agno = blkno >> bmp->db_agl2size;
-	if (agno > bmp->db_maxag)
+	अगर (agno > bmp->db_maxag)
 		bmp->db_maxag = agno;
 
-	/* update the free count for the allocation group and map */
-	bmp->db_agfree[agno] -= nblocks;
-	bmp->db_nfree -= nblocks;
+	/* update the मुक्त count क्रम the allocation group and map */
+	bmp->db_agमुक्त[agno] -= nblocks;
+	bmp->db_nमुक्त -= nblocks;
 
 	BMAP_UNLOCK(bmp);
-}
+पूर्ण
 
 
 /*
  * NAME:	dbFreeBits()
  *
- * FUNCTION:	free a specified block range from a dmap.
+ * FUNCTION:	मुक्त a specअगरied block range from a dmap.
  *
  *		this routine updates the dmap to reflect the working
- *		state allocation of the specified block range. it directly
- *		updates the bits of the working map and causes the adjustment
- *		of the binary buddy system described by the dmap's dmtree
- *		leaves to reflect the bits freed.  it also causes the dmap's
+ *		state allocation of the specअगरied block range. it directly
+ *		updates the bits of the working map and causes the adjusपंचांगent
+ *		of the binary buddy प्रणाली described by the dmap's dmtree
+ *		leaves to reflect the bits मुक्तd.  it also causes the dmap's
  *		dmtree, as a whole, to reflect the deallocated range.
  *
  * PARAMETERS:
- *	bmp	-  pointer to bmap descriptor
- *	dp	-  pointer to dmap to free bits from.
- *	blkno	-  starting block number of the bits to be freed.
- *	nblocks	-  number of bits to be freed.
+ *	bmp	-  poपूर्णांकer to bmap descriptor
+ *	dp	-  poपूर्णांकer to dmap to मुक्त bits from.
+ *	blkno	-  starting block number of the bits to be मुक्तd.
+ *	nblocks	-  number of bits to be मुक्तd.
  *
- * RETURN VALUES: 0 for success
+ * RETURN VALUES: 0 क्रम success
  *
- * serialization: IREAD_LOCK(ipbmap) or IWRITE_LOCK(ipbmap) held on entry/exit;
+ * serialization: IREAD_LOCK(ipbmap) or IWRITE_LOCK(ipbmap) held on entry/निकास;
  */
-static int dbFreeBits(struct bmap * bmp, struct dmap * dp, s64 blkno,
-		       int nblocks)
-{
-	int dbitno, word, rembits, nb, nwords, wbitno, nw, agno;
+अटल पूर्णांक dbFreeBits(काष्ठा bmap * bmp, काष्ठा dmap * dp, s64 blkno,
+		       पूर्णांक nblocks)
+अणु
+	पूर्णांक dbitno, word, rembits, nb, nwords, wbitno, nw, agno;
 	dmtree_t *tp = (dmtree_t *) & dp->tree;
-	int rc = 0;
-	int size;
+	पूर्णांक rc = 0;
+	पूर्णांक size;
 
 	/* determine the bit number and word within the dmap of the
 	 * starting block.
@@ -2324,69 +2325,69 @@ static int dbFreeBits(struct bmap * bmp, struct dmap * dp, s64 blkno,
 
 	/* block range better be within the dmap.
 	 */
-	assert(dbitno + nblocks <= BPERDMAP);
+	निश्चित(dbitno + nblocks <= BPERDMAP);
 
-	/* free the bits of the dmaps words corresponding to the block range.
+	/* मुक्त the bits of the dmaps words corresponding to the block range.
 	 * not all bits of the first and last words may be contained within
-	 * the block range.  if this is the case, we'll work against those
-	 * words (i.e. partial first and/or last) on an individual basis
-	 * (a single pass), freeing the bits of interest by hand and updating
+	 * the block range.  अगर this is the हाल, we'll work against those
+	 * words (i.e. partial first and/or last) on an inभागidual basis
+	 * (a single pass), मुक्तing the bits of पूर्णांकerest by hand and updating
 	 * the leaf corresponding to the dmap word. a single pass will be used
-	 * for all dmap words fully contained within the specified range.
+	 * क्रम all dmap words fully contained within the specअगरied range.
 	 * within this pass, the bits of all fully contained dmap words will
-	 * be marked as free in a single shot and the leaves will be updated. a
-	 * single leaf may describe the free space of multiple dmap words,
+	 * be marked as मुक्त in a single shot and the leaves will be updated. a
+	 * single leaf may describe the मुक्त space of multiple dmap words,
 	 * so we may update only a subset of the actual leaves corresponding
 	 * to the dmap words of the block range.
 	 *
 	 * dbJoin() is used to update leaf values and will join the binary
-	 * buddy system of the leaves if the new leaf values indicate this
-	 * should be done.
+	 * buddy प्रणाली of the leaves अगर the new leaf values indicate this
+	 * should be करोne.
 	 */
-	for (rembits = nblocks; rembits > 0; rembits -= nb, dbitno += nb) {
+	क्रम (rembits = nblocks; rembits > 0; rembits -= nb, dbitno += nb) अणु
 		/* determine the bit number within the word and
 		 * the number of bits within the word.
 		 */
 		wbitno = dbitno & (DBWORD - 1);
 		nb = min(rembits, DBWORD - wbitno);
 
-		/* check if only part of a word is to be freed.
+		/* check अगर only part of a word is to be मुक्तd.
 		 */
-		if (nb < DBWORD) {
-			/* free (zero) the appropriate bits within this
+		अगर (nb < DBWORD) अणु
+			/* मुक्त (zero) the appropriate bits within this
 			 * dmap word.
 			 */
 			dp->wmap[word] &=
 			    cpu_to_le32(~(ONES << (DBWORD - nb)
 					  >> wbitno));
 
-			/* update the leaf for this dmap word.
+			/* update the leaf क्रम this dmap word.
 			 */
 			rc = dbJoin(tp, word,
 				    dbMaxBud((u8 *) & dp->wmap[word]));
-			if (rc)
-				return rc;
+			अगर (rc)
+				वापस rc;
 
 			word += 1;
-		} else {
+		पूर्ण अन्यथा अणु
 			/* one or more dmap words are fully contained
 			 * within the block range.  determine how many
-			 * words and free (zero) the bits of these words.
+			 * words and मुक्त (zero) the bits of these words.
 			 */
 			nwords = rembits >> L2DBWORD;
-			memset(&dp->wmap[word], 0, nwords * 4);
+			स_रखो(&dp->wmap[word], 0, nwords * 4);
 
 			/* determine how many bits.
 			 */
 			nb = nwords << L2DBWORD;
 
 			/* now update the appropriate leaves to reflect
-			 * the freed words.
+			 * the मुक्तd words.
 			 */
-			for (; nwords > 0; nwords -= nw) {
+			क्रम (; nwords > 0; nwords -= nw) अणु
 				/* determine what the leaf value should be
 				 * updated to as the minimum of the l2 number
-				 * of bits being freed and the l2 (max) number
+				 * of bits being मुक्तd and the l2 (max) number
 				 * of bits that can be described by this leaf.
 				 */
 				size =
@@ -2397,65 +2398,65 @@ static int dbFreeBits(struct bmap * bmp, struct dmap * dp, s64 blkno,
 				/* update the leaf.
 				 */
 				rc = dbJoin(tp, word, size);
-				if (rc)
-					return rc;
+				अगर (rc)
+					वापस rc;
 
 				/* get the number of dmap words handled.
 				 */
 				nw = BUDSIZE(size, BUDMIN);
 				word += nw;
-			}
-		}
-	}
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	/* update the free count for this dmap.
+	/* update the मुक्त count क्रम this dmap.
 	 */
-	le32_add_cpu(&dp->nfree, nblocks);
+	le32_add_cpu(&dp->nमुक्त, nblocks);
 
 	BMAP_LOCK(bmp);
 
-	/* update the free count for the allocation group and
+	/* update the मुक्त count क्रम the allocation group and
 	 * map.
 	 */
 	agno = blkno >> bmp->db_agl2size;
-	bmp->db_nfree += nblocks;
-	bmp->db_agfree[agno] += nblocks;
+	bmp->db_nमुक्त += nblocks;
+	bmp->db_agमुक्त[agno] += nblocks;
 
-	/* check if this allocation group is not completely free and
-	 * if it is currently the maximum (rightmost) allocation group.
-	 * if so, establish the new maximum allocation group number by
-	 * searching left for the first allocation group with allocation.
+	/* check अगर this allocation group is not completely मुक्त and
+	 * अगर it is currently the maximum (righपंचांगost) allocation group.
+	 * अगर so, establish the new maximum allocation group number by
+	 * searching left क्रम the first allocation group with allocation.
 	 */
-	if ((bmp->db_agfree[agno] == bmp->db_agsize && agno == bmp->db_maxag) ||
+	अगर ((bmp->db_agमुक्त[agno] == bmp->db_agsize && agno == bmp->db_maxag) ||
 	    (agno == bmp->db_numag - 1 &&
-	     bmp->db_agfree[agno] == (bmp-> db_mapsize & (BPERDMAP - 1)))) {
-		while (bmp->db_maxag > 0) {
+	     bmp->db_agमुक्त[agno] == (bmp-> db_mapsize & (BPERDMAP - 1)))) अणु
+		जबतक (bmp->db_maxag > 0) अणु
 			bmp->db_maxag -= 1;
-			if (bmp->db_agfree[bmp->db_maxag] !=
+			अगर (bmp->db_agमुक्त[bmp->db_maxag] !=
 			    bmp->db_agsize)
-				break;
-		}
+				अवरोध;
+		पूर्ण
 
-		/* re-establish the allocation group preference if the
+		/* re-establish the allocation group preference अगर the
 		 * current preference is right of the maximum allocation
 		 * group.
 		 */
-		if (bmp->db_agpref > bmp->db_maxag)
+		अगर (bmp->db_agpref > bmp->db_maxag)
 			bmp->db_agpref = bmp->db_maxag;
-	}
+	पूर्ण
 
 	BMAP_UNLOCK(bmp);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
 /*
  * NAME:	dbAdjCtl()
  *
- * FUNCTION:	adjust a dmap control page at a specified level to reflect
+ * FUNCTION:	adjust a dmap control page at a specअगरied level to reflect
  *		the change in a lower level dmap or dmap control page's
- *		maximum string of free blocks (i.e. a change in the root
+ *		maximum string of मुक्त blocks (i.e. a change in the root
  *		of the lower level object's dmtree) due to the allocation
  *		or deallocation of a range of blocks with a single dmap.
  *
@@ -2465,23 +2466,23 @@ static int dbFreeBits(struct bmap * bmp, struct dmap * dp, s64 blkno,
  *		or deallocation resulted in the root change.  this range
  *		is respresented by a single leaf of the current dmapctl
  *		and the leaf will be updated with this value, possibly
- *		causing a binary buddy system within the leaves to be
+ *		causing a binary buddy प्रणाली within the leaves to be
  *		split or joined.  the update may also cause the dmapctl's
  *		dmtree to be updated.
  *
- *		if the adjustment of the dmap control page, itself, causes its
+ *		अगर the adjusपंचांगent of the dmap control page, itself, causes its
  *		root to change, this change will be bubbled up to the next dmap
- *		control level by a recursive call to this routine, specifying
+ *		control level by a recursive call to this routine, specअगरying
  *		the new root value and the next dmap control page level to
  *		be adjusted.
  * PARAMETERS:
- *	bmp	-  pointer to bmap descriptor
+ *	bmp	-  poपूर्णांकer to bmap descriptor
  *	blkno	-  the first block of a block range within a dmap.  it is
  *		   the allocation or deallocation of this block range that
  *		   requires the dmap control page to be adjusted.
  *	newval	-  the new value of the lower level dmap or dmap control
  *		   page root.
- *	alloc	-  'true' if adjustment is due to an allocation.
+ *	alloc	-  'true' अगर adjusपंचांगent is due to an allocation.
  *	level	-  current level of dmap control page (i.e. L0, L1, L2) to
  *		   be adjusted.
  *
@@ -2489,32 +2490,32 @@ static int dbFreeBits(struct bmap * bmp, struct dmap * dp, s64 blkno,
  *	0	- success
  *	-EIO	- i/o error
  *
- * serialization: IREAD_LOCK(ipbmap) or IWRITE_LOCK(ipbmap) held on entry/exit;
+ * serialization: IREAD_LOCK(ipbmap) or IWRITE_LOCK(ipbmap) held on entry/निकास;
  */
-static int
-dbAdjCtl(struct bmap * bmp, s64 blkno, int newval, int alloc, int level)
-{
-	struct metapage *mp;
+अटल पूर्णांक
+dbAdjCtl(काष्ठा bmap * bmp, s64 blkno, पूर्णांक newval, पूर्णांक alloc, पूर्णांक level)
+अणु
+	काष्ठा metapage *mp;
 	s8 oldroot;
-	int oldval;
+	पूर्णांक oldval;
 	s64 lblkno;
-	struct dmapctl *dcp;
-	int rc, leafno, ti;
+	काष्ठा dmapctl *dcp;
+	पूर्णांक rc, leafno, ti;
 
-	/* get the buffer for the dmap control page for the specified
+	/* get the buffer क्रम the dmap control page क्रम the specअगरied
 	 * block number and control page level.
 	 */
 	lblkno = BLKTOCTL(blkno, bmp->db_l2nbperpage, level);
-	mp = read_metapage(bmp->db_ipbmap, lblkno, PSIZE, 0);
-	if (mp == NULL)
-		return -EIO;
-	dcp = (struct dmapctl *) mp->data;
+	mp = पढ़ो_metapage(bmp->db_ipbmap, lblkno, PSIZE, 0);
+	अगर (mp == शून्य)
+		वापस -EIO;
+	dcp = (काष्ठा dmapctl *) mp->data;
 
-	if (dcp->leafidx != cpu_to_le32(CTLLEAFIND)) {
+	अगर (dcp->leafidx != cpu_to_le32(CTLLEAFIND)) अणु
 		jfs_error(bmp->db_ipbmap->i_sb, "Corrupt dmapctl page\n");
 		release_metapage(mp);
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
 	/* determine the leaf number corresponding to the block and
 	 * the index within the dmap control tree.
@@ -2523,151 +2524,151 @@ dbAdjCtl(struct bmap * bmp, s64 blkno, int newval, int alloc, int level)
 	ti = leafno + le32_to_cpu(dcp->leafidx);
 
 	/* save the current leaf value and the current root level (i.e.
-	 * maximum l2 free string described by this dmapctl).
+	 * maximum l2 मुक्त string described by this dmapctl).
 	 */
 	oldval = dcp->stree[ti];
 	oldroot = dcp->stree[ROOT];
 
-	/* check if this is a control page update for an allocation.
-	 * if so, update the leaf to reflect the new leaf value using
+	/* check अगर this is a control page update क्रम an allocation.
+	 * अगर so, update the leaf to reflect the new leaf value using
 	 * dbSplit(); otherwise (deallocation), use dbJoin() to update
 	 * the leaf with the new value.  in addition to updating the
-	 * leaf, dbSplit() will also split the binary buddy system of
-	 * the leaves, if required, and bubble new values within the
-	 * dmapctl tree, if required.  similarly, dbJoin() will join
-	 * the binary buddy system of leaves and bubble new values up
+	 * leaf, dbSplit() will also split the binary buddy प्रणाली of
+	 * the leaves, अगर required, and bubble new values within the
+	 * dmapctl tree, अगर required.  similarly, dbJoin() will join
+	 * the binary buddy प्रणाली of leaves and bubble new values up
 	 * the dmapctl tree as required by the new leaf value.
 	 */
-	if (alloc) {
-		/* check if we are in the middle of a binary buddy
-		 * system.  this happens when we are performing the
+	अगर (alloc) अणु
+		/* check अगर we are in the middle of a binary buddy
+		 * प्रणाली.  this happens when we are perक्रमming the
 		 * first allocation out of an allocation group that
 		 * is part (not the first part) of a larger binary
-		 * buddy system.  if we are in the middle, back split
-		 * the system prior to calling dbSplit() which assumes
-		 * that it is at the front of a binary buddy system.
+		 * buddy प्रणाली.  अगर we are in the middle, back split
+		 * the प्रणाली prior to calling dbSplit() which assumes
+		 * that it is at the front of a binary buddy प्रणाली.
 		 */
-		if (oldval == NOFREE) {
+		अगर (oldval == NOFREE) अणु
 			rc = dbBackSplit((dmtree_t *) dcp, leafno);
-			if (rc) {
+			अगर (rc) अणु
 				release_metapage(mp);
-				return rc;
-			}
+				वापस rc;
+			पूर्ण
 			oldval = dcp->stree[ti];
-		}
+		पूर्ण
 		dbSplit((dmtree_t *) dcp, leafno, dcp->budmin, newval);
-	} else {
+	पूर्ण अन्यथा अणु
 		rc = dbJoin((dmtree_t *) dcp, leafno, newval);
-		if (rc) {
+		अगर (rc) अणु
 			release_metapage(mp);
-			return rc;
-		}
-	}
+			वापस rc;
+		पूर्ण
+	पूर्ण
 
-	/* check if the root of the current dmap control page changed due
-	 * to the update and if the current dmap control page is not at
-	 * the current top level (i.e. L0, L1, L2) of the map.  if so (i.e.
+	/* check अगर the root of the current dmap control page changed due
+	 * to the update and अगर the current dmap control page is not at
+	 * the current top level (i.e. L0, L1, L2) of the map.  अगर so (i.e.
 	 * root changed and this is not the top level), call this routine
-	 * again (recursion) for the next higher level of the mapping to
-	 * reflect the change in root for the current dmap control page.
+	 * again (recursion) क्रम the next higher level of the mapping to
+	 * reflect the change in root क्रम the current dmap control page.
 	 */
-	if (dcp->stree[ROOT] != oldroot) {
-		/* are we below the top level of the map.  if so,
+	अगर (dcp->stree[ROOT] != oldroot) अणु
+		/* are we below the top level of the map.  अगर so,
 		 * bubble the root up to the next higher level.
 		 */
-		if (level < bmp->db_maxlevel) {
+		अगर (level < bmp->db_maxlevel) अणु
 			/* bubble up the new root of this dmap control page to
 			 * the next level.
 			 */
-			if ((rc =
+			अगर ((rc =
 			     dbAdjCtl(bmp, blkno, dcp->stree[ROOT], alloc,
-				      level + 1))) {
+				      level + 1))) अणु
 				/* something went wrong in bubbling up the new
 				 * root value, so backout the changes to the
 				 * current dmap control page.
 				 */
-				if (alloc) {
+				अगर (alloc) अणु
 					dbJoin((dmtree_t *) dcp, leafno,
 					       oldval);
-				} else {
+				पूर्ण अन्यथा अणु
 					/* the dbJoin() above might have
-					 * caused a larger binary buddy system
-					 * to form and we may now be in the
-					 * middle of it.  if this is the case,
+					 * caused a larger binary buddy प्रणाली
+					 * to क्रमm and we may now be in the
+					 * middle of it.  अगर this is the हाल,
 					 * back split the buddies.
 					 */
-					if (dcp->stree[ti] == NOFREE)
+					अगर (dcp->stree[ti] == NOFREE)
 						dbBackSplit((dmtree_t *)
 							    dcp, leafno);
 					dbSplit((dmtree_t *) dcp, leafno,
 						dcp->budmin, oldval);
-				}
+				पूर्ण
 
-				/* release the buffer and return the error.
+				/* release the buffer and वापस the error.
 				 */
 				release_metapage(mp);
-				return (rc);
-			}
-		} else {
+				वापस (rc);
+			पूर्ण
+		पूर्ण अन्यथा अणु
 			/* we're at the top level of the map. update
 			 * the bmap control page to reflect the size
-			 * of the maximum free buddy system.
+			 * of the maximum मुक्त buddy प्रणाली.
 			 */
-			assert(level == bmp->db_maxlevel);
-			if (bmp->db_maxfreebud != oldroot) {
+			निश्चित(level == bmp->db_maxlevel);
+			अगर (bmp->db_maxमुक्तbud != oldroot) अणु
 				jfs_error(bmp->db_ipbmap->i_sb,
 					  "the maximum free buddy is not the old root\n");
-			}
-			bmp->db_maxfreebud = dcp->stree[ROOT];
-		}
-	}
+			पूर्ण
+			bmp->db_maxमुक्तbud = dcp->stree[ROOT];
+		पूर्ण
+	पूर्ण
 
-	/* write the buffer.
+	/* ग_लिखो the buffer.
 	 */
-	write_metapage(mp);
+	ग_लिखो_metapage(mp);
 
-	return (0);
-}
+	वापस (0);
+पूर्ण
 
 
 /*
  * NAME:	dbSplit()
  *
  * FUNCTION:	update the leaf of a dmtree with a new value, splitting
- *		the leaf from the binary buddy system of the dmtree's
+ *		the leaf from the binary buddy प्रणाली of the dmtree's
  *		leaves, as required.
  *
  * PARAMETERS:
- *	tp	- pointer to the tree containing the leaf.
+ *	tp	- poपूर्णांकer to the tree containing the leaf.
  *	leafno	- the number of the leaf to be updated.
- *	splitsz	- the size the binary buddy system starting at the leaf
- *		  must be split to, specified as the log2 number of blocks.
- *	newval	- the new value for the leaf.
+ *	splitsz	- the size the binary buddy प्रणाली starting at the leaf
+ *		  must be split to, specअगरied as the log2 number of blocks.
+ *	newval	- the new value क्रम the leaf.
  *
  * RETURN VALUES: none
  *
- * serialization: IREAD_LOCK(ipbmap) or IWRITE_LOCK(ipbmap) held on entry/exit;
+ * serialization: IREAD_LOCK(ipbmap) or IWRITE_LOCK(ipbmap) held on entry/निकास;
  */
-static void dbSplit(dmtree_t * tp, int leafno, int splitsz, int newval)
-{
-	int budsz;
-	int cursz;
+अटल व्योम dbSplit(dmtree_t * tp, पूर्णांक leafno, पूर्णांक splitsz, पूर्णांक newval)
+अणु
+	पूर्णांक budsz;
+	पूर्णांक cursz;
 	s8 *leaf = tp->dmt_stree + le32_to_cpu(tp->dmt_leafidx);
 
-	/* check if the leaf needs to be split.
+	/* check अगर the leaf needs to be split.
 	 */
-	if (leaf[leafno] > tp->dmt_budmin) {
-		/* the split occurs by cutting the buddy system in half
-		 * at the specified leaf until we reach the specified
+	अगर (leaf[leafno] > tp->dmt_budmin) अणु
+		/* the split occurs by cutting the buddy प्रणाली in half
+		 * at the specअगरied leaf until we reach the specअगरied
 		 * size.  pick up the starting split size (current size
 		 * - 1 in l2) and the corresponding buddy size.
 		 */
 		cursz = leaf[leafno] - 1;
 		budsz = BUDSIZE(cursz, tp->dmt_budmin);
 
-		/* split until we reach the specified size.
+		/* split until we reach the specअगरied size.
 		 */
-		while (cursz >= splitsz) {
+		जबतक (cursz >= splitsz) अणु
 			/* update the buddy's leaf with its new value.
 			 */
 			dbAdjTree(tp, leafno ^ budsz, cursz);
@@ -2676,143 +2677,143 @@ static void dbSplit(dmtree_t * tp, int leafno, int splitsz, int newval)
 			 */
 			cursz -= 1;
 			budsz >>= 1;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	/* adjust the dmap tree to reflect the specified leaf's new
+	/* adjust the dmap tree to reflect the specअगरied leaf's new
 	 * value.
 	 */
 	dbAdjTree(tp, leafno, newval);
-}
+पूर्ण
 
 
 /*
  * NAME:	dbBackSplit()
  *
- * FUNCTION:	back split the binary buddy system of dmtree leaves
- *		that hold a specified leaf until the specified leaf
- *		starts its own binary buddy system.
+ * FUNCTION:	back split the binary buddy प्रणाली of dmtree leaves
+ *		that hold a specअगरied leaf until the specअगरied leaf
+ *		starts its own binary buddy प्रणाली.
  *
- *		the allocators typically perform allocations at the start
- *		of binary buddy systems and dbSplit() is used to accomplish
- *		any required splits.  in some cases, however, allocation
- *		may occur in the middle of a binary system and requires a
+ *		the allocators typically perक्रमm allocations at the start
+ *		of binary buddy प्रणालीs and dbSplit() is used to accomplish
+ *		any required splits.  in some हालs, however, allocation
+ *		may occur in the middle of a binary प्रणाली and requires a
  *		back split, with the split proceeding out from the middle of
- *		the system (less efficient) rather than the start of the
- *		system (more efficient).  the cases in which a back split
+ *		the प्रणाली (less efficient) rather than the start of the
+ *		प्रणाली (more efficient).  the हालs in which a back split
  *		is required are rare and are limited to the first allocation
  *		within an allocation group which is a part (not first part)
- *		of a larger binary buddy system and a few exception cases
+ *		of a larger binary buddy प्रणाली and a few exception हालs
  *		in which a previous join operation must be backed out.
  *
  * PARAMETERS:
- *	tp	- pointer to the tree containing the leaf.
+ *	tp	- poपूर्णांकer to the tree containing the leaf.
  *	leafno	- the number of the leaf to be updated.
  *
  * RETURN VALUES: none
  *
- * serialization: IREAD_LOCK(ipbmap) or IWRITE_LOCK(ipbmap) held on entry/exit;
+ * serialization: IREAD_LOCK(ipbmap) or IWRITE_LOCK(ipbmap) held on entry/निकास;
  */
-static int dbBackSplit(dmtree_t * tp, int leafno)
-{
-	int budsz, bud, w, bsz, size;
-	int cursz;
+अटल पूर्णांक dbBackSplit(dmtree_t * tp, पूर्णांक leafno)
+अणु
+	पूर्णांक budsz, bud, w, bsz, size;
+	पूर्णांक cursz;
 	s8 *leaf = tp->dmt_stree + le32_to_cpu(tp->dmt_leafidx);
 
 	/* leaf should be part (not first part) of a binary
-	 * buddy system.
+	 * buddy प्रणाली.
 	 */
-	assert(leaf[leafno] == NOFREE);
+	निश्चित(leaf[leafno] == NOFREE);
 
 	/* the back split is accomplished by iteratively finding the leaf
-	 * that starts the buddy system that contains the specified leaf and
-	 * splitting that system in two.  this iteration continues until
-	 * the specified leaf becomes the start of a buddy system.
+	 * that starts the buddy प्रणाली that contains the specअगरied leaf and
+	 * splitting that प्रणाली in two.  this iteration जारीs until
+	 * the specअगरied leaf becomes the start of a buddy प्रणाली.
 	 *
-	 * determine maximum possible l2 size for the specified leaf.
+	 * determine maximum possible l2 size क्रम the specअगरied leaf.
 	 */
 	size =
 	    LITOL2BSZ(leafno, le32_to_cpu(tp->dmt_l2nleafs),
 		      tp->dmt_budmin);
 
 	/* determine the number of leaves covered by this size.  this
-	 * is the buddy size that we will start with as we search for
-	 * the buddy system that contains the specified leaf.
+	 * is the buddy size that we will start with as we search क्रम
+	 * the buddy प्रणाली that contains the specअगरied leaf.
 	 */
 	budsz = BUDSIZE(size, tp->dmt_budmin);
 
 	/* back split.
 	 */
-	while (leaf[leafno] == NOFREE) {
-		/* find the leftmost buddy leaf.
+	जबतक (leaf[leafno] == NOFREE) अणु
+		/* find the lefपंचांगost buddy leaf.
 		 */
-		for (w = leafno, bsz = budsz;; bsz <<= 1,
-		     w = (w < bud) ? w : bud) {
-			if (bsz >= le32_to_cpu(tp->dmt_nleafs)) {
+		क्रम (w = leafno, bsz = budsz;; bsz <<= 1,
+		     w = (w < bud) ? w : bud) अणु
+			अगर (bsz >= le32_to_cpu(tp->dmt_nleafs)) अणु
 				jfs_err("JFS: block map error in dbBackSplit");
-				return -EIO;
-			}
+				वापस -EIO;
+			पूर्ण
 
 			/* determine the buddy.
 			 */
 			bud = w ^ bsz;
 
-			/* check if this buddy is the start of the system.
+			/* check अगर this buddy is the start of the प्रणाली.
 			 */
-			if (leaf[bud] != NOFREE) {
+			अगर (leaf[bud] != NOFREE) अणु
 				/* split the leaf at the start of the
-				 * system in two.
+				 * प्रणाली in two.
 				 */
 				cursz = leaf[bud] - 1;
 				dbSplit(tp, bud, cursz, cursz);
-				break;
-			}
-		}
-	}
+				अवरोध;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	if (leaf[leafno] != size) {
+	अगर (leaf[leafno] != size) अणु
 		jfs_err("JFS: wrong leaf value in dbBackSplit");
-		return -EIO;
-	}
-	return 0;
-}
+		वापस -EIO;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 
 /*
  * NAME:	dbJoin()
  *
  * FUNCTION:	update the leaf of a dmtree with a new value, joining
- *		the leaf with other leaves of the dmtree into a multi-leaf
- *		binary buddy system, as required.
+ *		the leaf with other leaves of the dmtree पूर्णांकo a multi-leaf
+ *		binary buddy प्रणाली, as required.
  *
  * PARAMETERS:
- *	tp	- pointer to the tree containing the leaf.
+ *	tp	- poपूर्णांकer to the tree containing the leaf.
  *	leafno	- the number of the leaf to be updated.
- *	newval	- the new value for the leaf.
+ *	newval	- the new value क्रम the leaf.
  *
  * RETURN VALUES: none
  */
-static int dbJoin(dmtree_t * tp, int leafno, int newval)
-{
-	int budsz, buddy;
+अटल पूर्णांक dbJoin(dmtree_t * tp, पूर्णांक leafno, पूर्णांक newval)
+अणु
+	पूर्णांक budsz, buddy;
 	s8 *leaf;
 
 	/* can the new leaf value require a join with other leaves ?
 	 */
-	if (newval >= tp->dmt_budmin) {
-		/* pickup a pointer to the leaves of the tree.
+	अगर (newval >= tp->dmt_budmin) अणु
+		/* pickup a poपूर्णांकer to the leaves of the tree.
 		 */
 		leaf = tp->dmt_stree + le32_to_cpu(tp->dmt_leafidx);
 
-		/* try to join the specified leaf into a large binary
-		 * buddy system.  the join proceeds by attempting to join
-		 * the specified leafno with its buddy (leaf) at new value.
-		 * if the join occurs, we attempt to join the left leaf
+		/* try to join the specअगरied leaf पूर्णांकo a large binary
+		 * buddy प्रणाली.  the join proceeds by attempting to join
+		 * the specअगरied leafno with its buddy (leaf) at new value.
+		 * अगर the join occurs, we attempt to join the left leaf
 		 * of the joined buddies with its buddy at new value + 1.
-		 * we continue to join until we find a buddy that cannot be
-		 * joined (does not have a value equal to the size of the
-		 * last join) or until all leaves have been joined into a
-		 * single system.
+		 * we जारी to join until we find a buddy that cannot be
+		 * joined (करोes not have a value equal to the size of the
+		 * last join) or until all leaves have been joined पूर्णांकo a
+		 * single प्रणाली.
 		 *
 		 * get the buddy size (number of words covered) of
 		 * the new value.
@@ -2821,54 +2822,54 @@ static int dbJoin(dmtree_t * tp, int leafno, int newval)
 
 		/* try to join.
 		 */
-		while (budsz < le32_to_cpu(tp->dmt_nleafs)) {
+		जबतक (budsz < le32_to_cpu(tp->dmt_nleafs)) अणु
 			/* get the buddy leaf.
 			 */
 			buddy = leafno ^ budsz;
 
-			/* if the leaf's new value is greater than its
+			/* अगर the leaf's new value is greater than its
 			 * buddy's value, we join no more.
 			 */
-			if (newval > leaf[buddy])
-				break;
+			अगर (newval > leaf[buddy])
+				अवरोध;
 
 			/* It shouldn't be less */
-			if (newval < leaf[buddy])
-				return -EIO;
+			अगर (newval < leaf[buddy])
+				वापस -EIO;
 
 			/* check which (leafno or buddy) is the left buddy.
-			 * the left buddy gets to claim the blocks resulting
-			 * from the join while the right gets to claim none.
+			 * the left buddy माला_लो to claim the blocks resulting
+			 * from the join जबतक the right माला_लो to claim none.
 			 * the left buddy is also eligible to participate in
-			 * a join at the next higher level while the right
+			 * a join at the next higher level जबतक the right
 			 * is not.
 			 *
 			 */
-			if (leafno < buddy) {
+			अगर (leafno < buddy) अणु
 				/* leafno is the left buddy.
 				 */
 				dbAdjTree(tp, buddy, NOFREE);
-			} else {
+			पूर्ण अन्यथा अणु
 				/* buddy is the left buddy and becomes
 				 * leafno.
 				 */
 				dbAdjTree(tp, leafno, NOFREE);
 				leafno = buddy;
-			}
+			पूर्ण
 
 			/* on to try the next join.
 			 */
 			newval += 1;
 			budsz <<= 1;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	/* update the leaf value.
 	 */
 	dbAdjTree(tp, leafno, newval);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
 /*
@@ -2876,30 +2877,30 @@ static int dbJoin(dmtree_t * tp, int leafno, int newval)
  *
  * FUNCTION:	update a leaf of a dmtree with a new value, adjusting
  *		the dmtree, as required, to reflect the new leaf value.
- *		the combination of any buddies must already be done before
+ *		the combination of any buddies must alपढ़ोy be करोne beक्रमe
  *		this is called.
  *
  * PARAMETERS:
- *	tp	- pointer to the tree to be adjusted.
+ *	tp	- poपूर्णांकer to the tree to be adjusted.
  *	leafno	- the number of the leaf to be updated.
- *	newval	- the new value for the leaf.
+ *	newval	- the new value क्रम the leaf.
  *
  * RETURN VALUES: none
  */
-static void dbAdjTree(dmtree_t * tp, int leafno, int newval)
-{
-	int lp, pp, k;
-	int max;
+अटल व्योम dbAdjTree(dmtree_t * tp, पूर्णांक leafno, पूर्णांक newval)
+अणु
+	पूर्णांक lp, pp, k;
+	पूर्णांक max;
 
-	/* pick up the index of the leaf for this leafno.
+	/* pick up the index of the leaf क्रम this leafno.
 	 */
 	lp = leafno + le32_to_cpu(tp->dmt_leafidx);
 
-	/* is the current value the same as the old value ?  if so,
-	 * there is nothing to do.
+	/* is the current value the same as the old value ?  अगर so,
+	 * there is nothing to करो.
 	 */
-	if (tp->dmt_stree[lp] == newval)
-		return;
+	अगर (tp->dmt_stree[lp] == newval)
+		वापस;
 
 	/* set the new value.
 	 */
@@ -2907,9 +2908,9 @@ static void dbAdjTree(dmtree_t * tp, int leafno, int newval)
 
 	/* bubble the new value up the tree as required.
 	 */
-	for (k = 0; k < le32_to_cpu(tp->dmt_height); k++) {
+	क्रम (k = 0; k < le32_to_cpu(tp->dmt_height); k++) अणु
 		/* get the index of the first leaf of the 4 leaf
-		 * group containing the specified leaf (leafno).
+		 * group containing the specअगरied leaf (leafno).
 		 */
 		lp = ((lp - 1) & ~0x03) + 1;
 
@@ -2921,173 +2922,173 @@ static void dbAdjTree(dmtree_t * tp, int leafno, int newval)
 		 */
 		max = TREEMAX(&tp->dmt_stree[lp]);
 
-		/* if the maximum of the 4 is the same as the
-		 * parent's value, we're done.
+		/* अगर the maximum of the 4 is the same as the
+		 * parent's value, we're करोne.
 		 */
-		if (tp->dmt_stree[pp] == max)
-			break;
+		अगर (tp->dmt_stree[pp] == max)
+			अवरोध;
 
-		/* parent gets new value.
+		/* parent माला_लो new value.
 		 */
 		tp->dmt_stree[pp] = max;
 
-		/* parent becomes leaf for next go-round.
+		/* parent becomes leaf क्रम next go-round.
 		 */
 		lp = pp;
-	}
-}
+	पूर्ण
+पूर्ण
 
 
 /*
  * NAME:	dbFindLeaf()
  *
- * FUNCTION:	search a dmtree_t for sufficient free blocks, returning
- *		the index of a leaf describing the free blocks if
- *		sufficient free blocks are found.
+ * FUNCTION:	search a dmtree_t क्रम sufficient मुक्त blocks, वापसing
+ *		the index of a leaf describing the मुक्त blocks अगर
+ *		sufficient मुक्त blocks are found.
  *
  *		the search starts at the top of the dmtree_t tree and
- *		proceeds down the tree to the leftmost leaf with sufficient
- *		free space.
+ *		proceeds करोwn the tree to the lefपंचांगost leaf with sufficient
+ *		मुक्त space.
  *
  * PARAMETERS:
- *	tp	- pointer to the tree to be searched.
- *	l2nb	- log2 number of free blocks to search for.
- *	leafidx	- return pointer to be set to the index of the leaf
- *		  describing at least l2nb free blocks if sufficient
- *		  free blocks are found.
+ *	tp	- poपूर्णांकer to the tree to be searched.
+ *	l2nb	- log2 number of मुक्त blocks to search क्रम.
+ *	leafidx	- वापस poपूर्णांकer to be set to the index of the leaf
+ *		  describing at least l2nb मुक्त blocks अगर sufficient
+ *		  मुक्त blocks are found.
  *
  * RETURN VALUES:
  *	0	- success
- *	-ENOSPC	- insufficient free blocks.
+ *	-ENOSPC	- insufficient मुक्त blocks.
  */
-static int dbFindLeaf(dmtree_t * tp, int l2nb, int *leafidx)
-{
-	int ti, n = 0, k, x = 0;
+अटल पूर्णांक dbFindLeaf(dmtree_t * tp, पूर्णांक l2nb, पूर्णांक *leafidx)
+अणु
+	पूर्णांक ti, n = 0, k, x = 0;
 
-	/* first check the root of the tree to see if there is
-	 * sufficient free space.
+	/* first check the root of the tree to see अगर there is
+	 * sufficient मुक्त space.
 	 */
-	if (l2nb > tp->dmt_stree[ROOT])
-		return -ENOSPC;
+	अगर (l2nb > tp->dmt_stree[ROOT])
+		वापस -ENOSPC;
 
-	/* sufficient free space available. now search down the tree
-	 * starting at the next level for the leftmost leaf that
-	 * describes sufficient free space.
+	/* sufficient मुक्त space available. now search करोwn the tree
+	 * starting at the next level क्रम the lefपंचांगost leaf that
+	 * describes sufficient मुक्त space.
 	 */
-	for (k = le32_to_cpu(tp->dmt_height), ti = 1;
-	     k > 0; k--, ti = ((ti + n) << 2) + 1) {
+	क्रम (k = le32_to_cpu(tp->dmt_height), ti = 1;
+	     k > 0; k--, ti = ((ti + n) << 2) + 1) अणु
 		/* search the four nodes at this level, starting from
 		 * the left.
 		 */
-		for (x = ti, n = 0; n < 4; n++) {
-			/* sufficient free space found.  move to the next
-			 * level (or quit if this is the last level).
+		क्रम (x = ti, n = 0; n < 4; n++) अणु
+			/* sufficient मुक्त space found.  move to the next
+			 * level (or quit अगर this is the last level).
 			 */
-			if (l2nb <= tp->dmt_stree[x + n])
-				break;
-		}
+			अगर (l2nb <= tp->dmt_stree[x + n])
+				अवरोध;
+		पूर्ण
 
 		/* better have found something since the higher
 		 * levels of the tree said it was here.
 		 */
-		assert(n < 4);
-	}
+		निश्चित(n < 4);
+	पूर्ण
 
-	/* set the return to the leftmost leaf describing sufficient
-	 * free space.
+	/* set the वापस to the lefपंचांगost leaf describing sufficient
+	 * मुक्त space.
 	 */
 	*leafidx = x + n - le32_to_cpu(tp->dmt_leafidx);
 
-	return (0);
-}
+	वापस (0);
+पूर्ण
 
 
 /*
  * NAME:	dbFindBits()
  *
- * FUNCTION:	find a specified number of binary buddy free bits within a
- *		dmap bitmap word value.
+ * FUNCTION:	find a specअगरied number of binary buddy मुक्त bits within a
+ *		dmap biपंचांगap word value.
  *
- *		this routine searches the bitmap value for (1 << l2nb) free
+ *		this routine searches the biपंचांगap value क्रम (1 << l2nb) मुक्त
  *		bits at (1 << l2nb) alignments within the value.
  *
  * PARAMETERS:
- *	word	-  dmap bitmap word value.
- *	l2nb	-  number of free bits specified as a log2 number.
+ *	word	-  dmap biपंचांगap word value.
+ *	l2nb	-  number of मुक्त bits specअगरied as a log2 number.
  *
  * RETURN VALUES:
- *	starting bit number of free bits.
+ *	starting bit number of मुक्त bits.
  */
-static int dbFindBits(u32 word, int l2nb)
-{
-	int bitno, nb;
+अटल पूर्णांक dbFindBits(u32 word, पूर्णांक l2nb)
+अणु
+	पूर्णांक bitno, nb;
 	u32 mask;
 
 	/* get the number of bits.
 	 */
 	nb = 1 << l2nb;
-	assert(nb <= DBWORD);
+	निश्चित(nb <= DBWORD);
 
 	/* complement the word so we can use a mask (i.e. 0s represent
-	 * free bits) and compute the mask.
+	 * मुक्त bits) and compute the mask.
 	 */
 	word = ~word;
 	mask = ONES << (DBWORD - nb);
 
-	/* scan the word for nb free bits at nb alignments.
+	/* scan the word क्रम nb मुक्त bits at nb alignments.
 	 */
-	for (bitno = 0; mask != 0; bitno += nb, mask >>= nb) {
-		if ((mask & word) == mask)
-			break;
-	}
+	क्रम (bitno = 0; mask != 0; bitno += nb, mask >>= nb) अणु
+		अगर ((mask & word) == mask)
+			अवरोध;
+	पूर्ण
 
 	ASSERT(bitno < 32);
 
-	/* return the bit number.
+	/* वापस the bit number.
 	 */
-	return (bitno);
-}
+	वापस (bitno);
+पूर्ण
 
 
 /*
  * NAME:	dbMaxBud(u8 *cp)
  *
- * FUNCTION:	determine the largest binary buddy string of free
+ * FUNCTION:	determine the largest binary buddy string of मुक्त
  *		bits within 32-bits of the map.
  *
  * PARAMETERS:
- *	cp	-  pointer to the 32-bit value.
+ *	cp	-  poपूर्णांकer to the 32-bit value.
  *
  * RETURN VALUES:
- *	largest binary buddy of free bits within a dmap word.
+ *	largest binary buddy of मुक्त bits within a dmap word.
  */
-static int dbMaxBud(u8 * cp)
-{
-	signed char tmp1, tmp2;
+अटल पूर्णांक dbMaxBud(u8 * cp)
+अणु
+	चिन्हित अक्षर पंचांगp1, पंचांगp2;
 
-	/* check if the wmap word is all free. if so, the
-	 * free buddy size is BUDMIN.
+	/* check अगर the wmap word is all मुक्त. अगर so, the
+	 * मुक्त buddy size is BUDMIN.
 	 */
-	if (*((uint *) cp) == 0)
-		return (BUDMIN);
+	अगर (*((uपूर्णांक *) cp) == 0)
+		वापस (BUDMIN);
 
-	/* check if the wmap word is half free. if so, the
-	 * free buddy size is BUDMIN-1.
+	/* check अगर the wmap word is half मुक्त. अगर so, the
+	 * मुक्त buddy size is BUDMIN-1.
 	 */
-	if (*((u16 *) cp) == 0 || *((u16 *) cp + 1) == 0)
-		return (BUDMIN - 1);
+	अगर (*((u16 *) cp) == 0 || *((u16 *) cp + 1) == 0)
+		वापस (BUDMIN - 1);
 
-	/* not all free or half free. determine the free buddy
+	/* not all मुक्त or half मुक्त. determine the मुक्त buddy
 	 * size thru table lookup using quarters of the wmap word.
 	 */
-	tmp1 = max(budtab[cp[2]], budtab[cp[3]]);
-	tmp2 = max(budtab[cp[0]], budtab[cp[1]]);
-	return (max(tmp1, tmp2));
-}
+	पंचांगp1 = max(budtab[cp[2]], budtab[cp[3]]);
+	पंचांगp2 = max(budtab[cp[0]], budtab[cp[1]]);
+	वापस (max(पंचांगp1, पंचांगp2));
+पूर्ण
 
 
 /*
- * NAME:	cnttz(uint word)
+ * NAME:	cnttz(uपूर्णांक word)
  *
  * FUNCTION:	determine the number of trailing zeros within a 32-bit
  *		value.
@@ -3098,17 +3099,17 @@ static int dbMaxBud(u8 * cp)
  * RETURN VALUES:
  *	count of trailing zeros
  */
-static int cnttz(u32 word)
-{
-	int n;
+अटल पूर्णांक cnttz(u32 word)
+अणु
+	पूर्णांक n;
 
-	for (n = 0; n < 32; n++, word >>= 1) {
-		if (word & 0x01)
-			break;
-	}
+	क्रम (n = 0; n < 32; n++, word >>= 1) अणु
+		अगर (word & 0x01)
+			अवरोध;
+	पूर्ण
 
-	return (n);
-}
+	वापस (n);
+पूर्ण
 
 
 /*
@@ -3123,22 +3124,22 @@ static int cnttz(u32 word)
  * RETURN VALUES:
  *	count of leading zeros
  */
-static int cntlz(u32 value)
-{
-	int n;
+अटल पूर्णांक cntlz(u32 value)
+अणु
+	पूर्णांक n;
 
-	for (n = 0; n < 32; n++, value <<= 1) {
-		if (value & HIGHORDER)
-			break;
-	}
-	return (n);
-}
+	क्रम (n = 0; n < 32; n++, value <<= 1) अणु
+		अगर (value & HIGHORDER)
+			अवरोध;
+	पूर्ण
+	वापस (n);
+पूर्ण
 
 
 /*
  * NAME:	blkstol2(s64 nb)
  *
- * FUNCTION:	convert a block count to its log2 value. if the block
+ * FUNCTION:	convert a block count to its log2 value. अगर the block
  *		count is not a l2 multiple, it is rounded up to the next
  *		larger l2 multiple.
  *
@@ -3148,62 +3149,62 @@ static int cntlz(u32 value)
  * RETURN VALUES:
  *	log2 number of blocks
  */
-static int blkstol2(s64 nb)
-{
-	int l2nb;
-	s64 mask;		/* meant to be signed */
+अटल पूर्णांक blkstol2(s64 nb)
+अणु
+	पूर्णांक l2nb;
+	s64 mask;		/* meant to be चिन्हित */
 
 	mask = (s64) 1 << (64 - 1);
 
 	/* count the leading bits.
 	 */
-	for (l2nb = 0; l2nb < 64; l2nb++, mask >>= 1) {
+	क्रम (l2nb = 0; l2nb < 64; l2nb++, mask >>= 1) अणु
 		/* leading bit found.
 		 */
-		if (nb & mask) {
+		अगर (nb & mask) अणु
 			/* determine the l2 value.
 			 */
 			l2nb = (64 - 1) - l2nb;
 
-			/* check if we need to round up.
+			/* check अगर we need to round up.
 			 */
-			if (~mask & nb)
+			अगर (~mask & nb)
 				l2nb++;
 
-			return (l2nb);
-		}
-	}
-	assert(0);
-	return 0;		/* fix compiler warning */
-}
+			वापस (l2nb);
+		पूर्ण
+	पूर्ण
+	निश्चित(0);
+	वापस 0;		/* fix compiler warning */
+पूर्ण
 
 
 /*
  * NAME:	dbAllocBottomUp()
  *
- * FUNCTION:	alloc the specified block range from the working block
+ * FUNCTION:	alloc the specअगरied block range from the working block
  *		allocation map.
  *
  *		the blocks will be alloc from the working map one dmap
- *		at a time.
+ *		at a समय.
  *
  * PARAMETERS:
- *	ip	-  pointer to in-core inode;
- *	blkno	-  starting block number to be freed.
- *	nblocks	-  number of blocks to be freed.
+ *	ip	-  poपूर्णांकer to in-core inode;
+ *	blkno	-  starting block number to be मुक्तd.
+ *	nblocks	-  number of blocks to be मुक्तd.
  *
  * RETURN VALUES:
  *	0	- success
  *	-EIO	- i/o error
  */
-int dbAllocBottomUp(struct inode *ip, s64 blkno, s64 nblocks)
-{
-	struct metapage *mp;
-	struct dmap *dp;
-	int nb, rc;
+पूर्णांक dbAllocBottomUp(काष्ठा inode *ip, s64 blkno, s64 nblocks)
+अणु
+	काष्ठा metapage *mp;
+	काष्ठा dmap *dp;
+	पूर्णांक nb, rc;
 	s64 lblkno, rem;
-	struct inode *ipbmap = JFS_SBI(ip->i_sb)->ipbmap;
-	struct bmap *bmp = JFS_SBI(ip->i_sb)->bmap;
+	काष्ठा inode *ipbmap = JFS_SBI(ip->i_sb)->ipbmap;
+	काष्ठा bmap *bmp = JFS_SBI(ip->i_sb)->bmap;
 
 	IREAD_LOCK(ipbmap, RDWRLOCK_DMAP);
 
@@ -3211,23 +3212,23 @@ int dbAllocBottomUp(struct inode *ip, s64 blkno, s64 nblocks)
 	ASSERT(nblocks <= bmp->db_mapsize - blkno);
 
 	/*
-	 * allocate the blocks a dmap at a time.
+	 * allocate the blocks a dmap at a समय.
 	 */
-	mp = NULL;
-	for (rem = nblocks; rem > 0; rem -= nb, blkno += nb) {
-		/* release previous dmap if any */
-		if (mp) {
-			write_metapage(mp);
-		}
+	mp = शून्य;
+	क्रम (rem = nblocks; rem > 0; rem -= nb, blkno += nb) अणु
+		/* release previous dmap अगर any */
+		अगर (mp) अणु
+			ग_लिखो_metapage(mp);
+		पूर्ण
 
-		/* get the buffer for the current dmap. */
+		/* get the buffer क्रम the current dmap. */
 		lblkno = BLKTODMAP(blkno, bmp->db_l2nbperpage);
-		mp = read_metapage(ipbmap, lblkno, PSIZE, 0);
-		if (mp == NULL) {
+		mp = पढ़ो_metapage(ipbmap, lblkno, PSIZE, 0);
+		अगर (mp == शून्य) अणु
 			IREAD_UNLOCK(ipbmap);
-			return -EIO;
-		}
-		dp = (struct dmap *) mp->data;
+			वापस -EIO;
+		पूर्ण
+		dp = (काष्ठा dmap *) mp->data;
 
 		/* determine the number of blocks to be allocated from
 		 * this dmap.
@@ -3235,31 +3236,31 @@ int dbAllocBottomUp(struct inode *ip, s64 blkno, s64 nblocks)
 		nb = min(rem, BPERDMAP - (blkno & (BPERDMAP - 1)));
 
 		/* allocate the blocks. */
-		if ((rc = dbAllocDmapBU(bmp, dp, blkno, nb))) {
+		अगर ((rc = dbAllocDmapBU(bmp, dp, blkno, nb))) अणु
 			release_metapage(mp);
 			IREAD_UNLOCK(ipbmap);
-			return (rc);
-		}
-	}
+			वापस (rc);
+		पूर्ण
+	पूर्ण
 
-	/* write the last buffer. */
-	write_metapage(mp);
+	/* ग_लिखो the last buffer. */
+	ग_लिखो_metapage(mp);
 
 	IREAD_UNLOCK(ipbmap);
 
-	return (0);
-}
+	वापस (0);
+पूर्ण
 
 
-static int dbAllocDmapBU(struct bmap * bmp, struct dmap * dp, s64 blkno,
-			 int nblocks)
-{
-	int rc;
-	int dbitno, word, rembits, nb, nwords, wbitno, agno;
+अटल पूर्णांक dbAllocDmapBU(काष्ठा bmap * bmp, काष्ठा dmap * dp, s64 blkno,
+			 पूर्णांक nblocks)
+अणु
+	पूर्णांक rc;
+	पूर्णांक dbitno, word, rembits, nb, nwords, wbitno, agno;
 	s8 oldroot;
-	struct dmaptree *tp = (struct dmaptree *) & dp->tree;
+	काष्ठा dmaptree *tp = (काष्ठा dmaptree *) & dp->tree;
 
-	/* save the current value of the root (i.e. maximum free string)
+	/* save the current value of the root (i.e. maximum मुक्त string)
 	 * of the dmap tree.
 	 */
 	oldroot = tp->stree[ROOT];
@@ -3271,31 +3272,31 @@ static int dbAllocDmapBU(struct bmap * bmp, struct dmap * dp, s64 blkno,
 	word = dbitno >> L2DBWORD;
 
 	/* block range better be within the dmap */
-	assert(dbitno + nblocks <= BPERDMAP);
+	निश्चित(dbitno + nblocks <= BPERDMAP);
 
 	/* allocate the bits of the dmap's words corresponding to the block
 	 * range. not all bits of the first and last words may be contained
-	 * within the block range.  if this is the case, we'll work against
-	 * those words (i.e. partial first and/or last) on an individual basis
-	 * (a single pass), allocating the bits of interest by hand and
+	 * within the block range.  अगर this is the हाल, we'll work against
+	 * those words (i.e. partial first and/or last) on an inभागidual basis
+	 * (a single pass), allocating the bits of पूर्णांकerest by hand and
 	 * updating the leaf corresponding to the dmap word. a single pass
-	 * will be used for all dmap words fully contained within the
-	 * specified range.  within this pass, the bits of all fully contained
-	 * dmap words will be marked as free in a single shot and the leaves
-	 * will be updated. a single leaf may describe the free space of
+	 * will be used क्रम all dmap words fully contained within the
+	 * specअगरied range.  within this pass, the bits of all fully contained
+	 * dmap words will be marked as मुक्त in a single shot and the leaves
+	 * will be updated. a single leaf may describe the मुक्त space of
 	 * multiple dmap words, so we may update only a subset of the actual
 	 * leaves corresponding to the dmap words of the block range.
 	 */
-	for (rembits = nblocks; rembits > 0; rembits -= nb, dbitno += nb) {
+	क्रम (rembits = nblocks; rembits > 0; rembits -= nb, dbitno += nb) अणु
 		/* determine the bit number within the word and
 		 * the number of bits within the word.
 		 */
 		wbitno = dbitno & (DBWORD - 1);
 		nb = min(rembits, DBWORD - wbitno);
 
-		/* check if only part of a word is to be allocated.
+		/* check अगर only part of a word is to be allocated.
 		 */
-		if (nb < DBWORD) {
+		अगर (nb < DBWORD) अणु
 			/* allocate (set to 1) the appropriate bits within
 			 * this dmap word.
 			 */
@@ -3303,63 +3304,63 @@ static int dbAllocDmapBU(struct bmap * bmp, struct dmap * dp, s64 blkno,
 						      >> wbitno);
 
 			word++;
-		} else {
+		पूर्ण अन्यथा अणु
 			/* one or more dmap words are fully contained
 			 * within the block range.  determine how many
 			 * words and allocate (set to 1) the bits of these
 			 * words.
 			 */
 			nwords = rembits >> L2DBWORD;
-			memset(&dp->wmap[word], (int) ONES, nwords * 4);
+			स_रखो(&dp->wmap[word], (पूर्णांक) ONES, nwords * 4);
 
 			/* determine how many bits */
 			nb = nwords << L2DBWORD;
 			word += nwords;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	/* update the free count for this dmap */
-	le32_add_cpu(&dp->nfree, -nblocks);
+	/* update the मुक्त count क्रम this dmap */
+	le32_add_cpu(&dp->nमुक्त, -nblocks);
 
-	/* reconstruct summary tree */
+	/* reस्थिरruct summary tree */
 	dbInitDmapTree(dp);
 
 	BMAP_LOCK(bmp);
 
-	/* if this allocation group is completely free,
+	/* अगर this allocation group is completely मुक्त,
 	 * update the highest active allocation group number
-	 * if this allocation group is the new max.
+	 * अगर this allocation group is the new max.
 	 */
 	agno = blkno >> bmp->db_agl2size;
-	if (agno > bmp->db_maxag)
+	अगर (agno > bmp->db_maxag)
 		bmp->db_maxag = agno;
 
-	/* update the free count for the allocation group and map */
-	bmp->db_agfree[agno] -= nblocks;
-	bmp->db_nfree -= nblocks;
+	/* update the मुक्त count क्रम the allocation group and map */
+	bmp->db_agमुक्त[agno] -= nblocks;
+	bmp->db_nमुक्त -= nblocks;
 
 	BMAP_UNLOCK(bmp);
 
-	/* if the root has not changed, done. */
-	if (tp->stree[ROOT] == oldroot)
-		return (0);
+	/* अगर the root has not changed, करोne. */
+	अगर (tp->stree[ROOT] == oldroot)
+		वापस (0);
 
 	/* root changed. bubble the change up to the dmap control pages.
-	 * if the adjustment of the upper level control pages fails,
+	 * अगर the adjusपंचांगent of the upper level control pages fails,
 	 * backout the bit allocation (thus making everything consistent).
 	 */
-	if ((rc = dbAdjCtl(bmp, blkno, tp->stree[ROOT], 1, 0)))
+	अगर ((rc = dbAdjCtl(bmp, blkno, tp->stree[ROOT], 1, 0)))
 		dbFreeBits(bmp, dp, blkno, nblocks);
 
-	return (rc);
-}
+	वापस (rc);
+पूर्ण
 
 
 /*
  * NAME:	dbExtendFS()
  *
- * FUNCTION:	extend bmap from blkno for nblocks;
- *		dbExtendFS() updates bmap ready for dbAllocBottomUp();
+ * FUNCTION:	extend bmap from blkno क्रम nblocks;
+ *		dbExtendFS() updates bmap पढ़ोy क्रम dbAllocBottomUp();
  *
  * L2
  *  |
@@ -3372,25 +3373,25 @@ static int dbAllocDmapBU(struct bmap * bmp, struct dmap * dp, s64 blkno,
  *
  * <---old---><----------------------------extend----------------------->
  */
-int dbExtendFS(struct inode *ipbmap, s64 blkno,	s64 nblocks)
-{
-	struct jfs_sb_info *sbi = JFS_SBI(ipbmap->i_sb);
-	int nbperpage = sbi->nbperpage;
-	int i, i0 = true, j, j0 = true, k, n;
+पूर्णांक dbExtendFS(काष्ठा inode *ipbmap, s64 blkno,	s64 nblocks)
+अणु
+	काष्ठा jfs_sb_info *sbi = JFS_SBI(ipbmap->i_sb);
+	पूर्णांक nbperpage = sbi->nbperpage;
+	पूर्णांक i, i0 = true, j, j0 = true, k, n;
 	s64 newsize;
 	s64 p;
-	struct metapage *mp, *l2mp, *l1mp = NULL, *l0mp = NULL;
-	struct dmapctl *l2dcp, *l1dcp, *l0dcp;
-	struct dmap *dp;
+	काष्ठा metapage *mp, *l2mp, *l1mp = शून्य, *l0mp = शून्य;
+	काष्ठा dmapctl *l2dcp, *l1dcp, *l0dcp;
+	काष्ठा dmap *dp;
 	s8 *l0leaf, *l1leaf, *l2leaf;
-	struct bmap *bmp = sbi->bmap;
-	int agno, l2agsize, oldl2agsize;
+	काष्ठा bmap *bmp = sbi->bmap;
+	पूर्णांक agno, l2agsize, oldl2agsize;
 	s64 ag_rem;
 
 	newsize = blkno + nblocks;
 
 	jfs_info("dbExtendFS: blkno:%Ld nblocks:%Ld newsize:%Ld",
-		 (long long) blkno, (long long) nblocks, (long long) newsize);
+		 (दीर्घ दीर्घ) blkno, (दीर्घ दीर्घ) nblocks, (दीर्घ दीर्घ) newsize);
 
 	/*
 	 *	initialize bmap control page.
@@ -3416,30 +3417,30 @@ int dbExtendFS(struct inode *ipbmap, s64 blkno,	s64 nblocks)
 	bmp->db_numag += ((u32) newsize % (u32) bmp->db_agsize) ? 1 : 0;
 
 	/*
-	 *	reconfigure db_agfree[]
+	 *	reconfigure db_agमुक्त[]
 	 * from old AG configuration to new AG configuration;
 	 *
 	 * coalesce contiguous k (newAGSize/oldAGSize) AGs;
 	 * i.e., (AGi, ..., AGj) where i = k*n and j = k*(n+1) - 1 to AGn;
 	 * note: new AG size = old AG size * (2**x).
 	 */
-	if (l2agsize == oldl2agsize)
-		goto extend;
+	अगर (l2agsize == oldl2agsize)
+		जाओ extend;
 	k = 1 << (l2agsize - oldl2agsize);
-	ag_rem = bmp->db_agfree[0];	/* save agfree[0] */
-	for (i = 0, n = 0; i < agno; n++) {
-		bmp->db_agfree[n] = 0;	/* init collection point */
+	ag_rem = bmp->db_agमुक्त[0];	/* save agमुक्त[0] */
+	क्रम (i = 0, n = 0; i < agno; n++) अणु
+		bmp->db_agमुक्त[n] = 0;	/* init collection poपूर्णांक */
 
 		/* coalesce contiguous k AGs; */
-		for (j = 0; j < k && i < agno; j++, i++) {
+		क्रम (j = 0; j < k && i < agno; j++, i++) अणु
 			/* merge AGi to AGn */
-			bmp->db_agfree[n] += bmp->db_agfree[i];
-		}
-	}
-	bmp->db_agfree[0] += ag_rem;	/* restore agfree[0] */
+			bmp->db_agमुक्त[n] += bmp->db_agमुक्त[i];
+		पूर्ण
+	पूर्ण
+	bmp->db_agमुक्त[0] += ag_rem;	/* restore agमुक्त[0] */
 
-	for (; n < MAXAG; n++)
-		bmp->db_agfree[n] = 0;
+	क्रम (; n < MAXAG; n++)
+		bmp->db_agमुक्त[n] = 0;
 
 	/*
 	 * update highest active ag number
@@ -3451,17 +3452,17 @@ int dbExtendFS(struct inode *ipbmap, s64 blkno,	s64 nblocks)
 	 *	extend bmap
 	 *
 	 * update bit maps and corresponding level control pages;
-	 * global control page db_nfree, db_agfree[agno], db_maxfreebud;
+	 * global control page db_nमुक्त, db_agमुक्त[agno], db_maxमुक्तbud;
 	 */
       extend:
 	/* get L2 page */
 	p = BMAPBLKNO + nbperpage;	/* L2 page */
-	l2mp = read_metapage(ipbmap, p, PSIZE, 0);
-	if (!l2mp) {
+	l2mp = पढ़ो_metapage(ipbmap, p, PSIZE, 0);
+	अगर (!l2mp) अणु
 		jfs_error(ipbmap->i_sb, "L2 page could not be read\n");
-		return -EIO;
-	}
-	l2dcp = (struct dmapctl *) l2mp->data;
+		वापस -EIO;
+	पूर्ण
+	l2dcp = (काष्ठा dmapctl *) l2mp->data;
 
 	/* compute start L1 */
 	k = blkno >> L2MAXL1SIZE;
@@ -3471,46 +3472,46 @@ int dbExtendFS(struct inode *ipbmap, s64 blkno,	s64 nblocks)
 	/*
 	 * extend each L1 in L2
 	 */
-	for (; k < LPERCTL; k++, p += nbperpage) {
+	क्रम (; k < LPERCTL; k++, p += nbperpage) अणु
 		/* get L1 page */
-		if (j0) {
-			/* read in L1 page: (blkno & (MAXL1SIZE - 1)) */
-			l1mp = read_metapage(ipbmap, p, PSIZE, 0);
-			if (l1mp == NULL)
-				goto errout;
-			l1dcp = (struct dmapctl *) l1mp->data;
+		अगर (j0) अणु
+			/* पढ़ो in L1 page: (blkno & (MAXL1SIZE - 1)) */
+			l1mp = पढ़ो_metapage(ipbmap, p, PSIZE, 0);
+			अगर (l1mp == शून्य)
+				जाओ errout;
+			l1dcp = (काष्ठा dmapctl *) l1mp->data;
 
 			/* compute start L0 */
 			j = (blkno & (MAXL1SIZE - 1)) >> L2MAXL0SIZE;
 			l1leaf = l1dcp->stree + CTLLEAFIND + j;
 			p = BLKTOL0(blkno, sbi->l2nbperpage);
 			j0 = false;
-		} else {
+		पूर्ण अन्यथा अणु
 			/* assign/init L1 page */
 			l1mp = get_metapage(ipbmap, p, PSIZE, 0);
-			if (l1mp == NULL)
-				goto errout;
+			अगर (l1mp == शून्य)
+				जाओ errout;
 
-			l1dcp = (struct dmapctl *) l1mp->data;
+			l1dcp = (काष्ठा dmapctl *) l1mp->data;
 
 			/* compute start L0 */
 			j = 0;
 			l1leaf = l1dcp->stree + CTLLEAFIND;
 			p += nbperpage;	/* 1st L0 of L1.k */
-		}
+		पूर्ण
 
 		/*
 		 * extend each L0 in L1
 		 */
-		for (; j < LPERCTL; j++) {
+		क्रम (; j < LPERCTL; j++) अणु
 			/* get L0 page */
-			if (i0) {
-				/* read in L0 page: (blkno & (MAXL0SIZE - 1)) */
+			अगर (i0) अणु
+				/* पढ़ो in L0 page: (blkno & (MAXL0SIZE - 1)) */
 
-				l0mp = read_metapage(ipbmap, p, PSIZE, 0);
-				if (l0mp == NULL)
-					goto errout;
-				l0dcp = (struct dmapctl *) l0mp->data;
+				l0mp = पढ़ो_metapage(ipbmap, p, PSIZE, 0);
+				अगर (l0mp == शून्य)
+					जाओ errout;
+				l0dcp = (काष्ठा dmapctl *) l0mp->data;
 
 				/* compute start dmap */
 				i = (blkno & (MAXL0SIZE - 1)) >>
@@ -3519,137 +3520,137 @@ int dbExtendFS(struct inode *ipbmap, s64 blkno,	s64 nblocks)
 				p = BLKTODMAP(blkno,
 					      sbi->l2nbperpage);
 				i0 = false;
-			} else {
+			पूर्ण अन्यथा अणु
 				/* assign/init L0 page */
 				l0mp = get_metapage(ipbmap, p, PSIZE, 0);
-				if (l0mp == NULL)
-					goto errout;
+				अगर (l0mp == शून्य)
+					जाओ errout;
 
-				l0dcp = (struct dmapctl *) l0mp->data;
+				l0dcp = (काष्ठा dmapctl *) l0mp->data;
 
 				/* compute start dmap */
 				i = 0;
 				l0leaf = l0dcp->stree + CTLLEAFIND;
 				p += nbperpage;	/* 1st dmap of L0.j */
-			}
+			पूर्ण
 
 			/*
 			 * extend each dmap in L0
 			 */
-			for (; i < LPERCTL; i++) {
+			क्रम (; i < LPERCTL; i++) अणु
 				/*
-				 * reconstruct the dmap page, and
+				 * reस्थिरruct the dmap page, and
 				 * initialize corresponding parent L0 leaf
 				 */
-				if ((n = blkno & (BPERDMAP - 1))) {
-					/* read in dmap page: */
-					mp = read_metapage(ipbmap, p,
+				अगर ((n = blkno & (BPERDMAP - 1))) अणु
+					/* पढ़ो in dmap page: */
+					mp = पढ़ो_metapage(ipbmap, p,
 							   PSIZE, 0);
-					if (mp == NULL)
-						goto errout;
+					अगर (mp == शून्य)
+						जाओ errout;
 					n = min(nblocks, (s64)BPERDMAP - n);
-				} else {
+				पूर्ण अन्यथा अणु
 					/* assign/init dmap page */
-					mp = read_metapage(ipbmap, p,
+					mp = पढ़ो_metapage(ipbmap, p,
 							   PSIZE, 0);
-					if (mp == NULL)
-						goto errout;
+					अगर (mp == शून्य)
+						जाओ errout;
 
 					n = min_t(s64, nblocks, BPERDMAP);
-				}
+				पूर्ण
 
-				dp = (struct dmap *) mp->data;
+				dp = (काष्ठा dmap *) mp->data;
 				*l0leaf = dbInitDmap(dp, blkno, n);
 
-				bmp->db_nfree += n;
+				bmp->db_nमुक्त += n;
 				agno = le64_to_cpu(dp->start) >> l2agsize;
-				bmp->db_agfree[agno] += n;
+				bmp->db_agमुक्त[agno] += n;
 
-				write_metapage(mp);
+				ग_लिखो_metapage(mp);
 
 				l0leaf++;
 				p += nbperpage;
 
 				blkno += n;
 				nblocks -= n;
-				if (nblocks == 0)
-					break;
-			}	/* for each dmap in a L0 */
+				अगर (nblocks == 0)
+					अवरोध;
+			पूर्ण	/* क्रम each dmap in a L0 */
 
 			/*
 			 * build current L0 page from its leaves, and
 			 * initialize corresponding parent L1 leaf
 			 */
 			*l1leaf = dbInitDmapCtl(l0dcp, 0, ++i);
-			write_metapage(l0mp);
-			l0mp = NULL;
+			ग_लिखो_metapage(l0mp);
+			l0mp = शून्य;
 
-			if (nblocks)
-				l1leaf++;	/* continue for next L0 */
-			else {
+			अगर (nblocks)
+				l1leaf++;	/* जारी क्रम next L0 */
+			अन्यथा अणु
 				/* more than 1 L0 ? */
-				if (j > 0)
-					break;	/* build L1 page */
-				else {
+				अगर (j > 0)
+					अवरोध;	/* build L1 page */
+				अन्यथा अणु
 					/* summarize in global bmap page */
-					bmp->db_maxfreebud = *l1leaf;
+					bmp->db_maxमुक्तbud = *l1leaf;
 					release_metapage(l1mp);
 					release_metapage(l2mp);
-					goto finalize;
-				}
-			}
-		}		/* for each L0 in a L1 */
+					जाओ finalize;
+				पूर्ण
+			पूर्ण
+		पूर्ण		/* क्रम each L0 in a L1 */
 
 		/*
 		 * build current L1 page from its leaves, and
 		 * initialize corresponding parent L2 leaf
 		 */
 		*l2leaf = dbInitDmapCtl(l1dcp, 1, ++j);
-		write_metapage(l1mp);
-		l1mp = NULL;
+		ग_लिखो_metapage(l1mp);
+		l1mp = शून्य;
 
-		if (nblocks)
-			l2leaf++;	/* continue for next L1 */
-		else {
+		अगर (nblocks)
+			l2leaf++;	/* जारी क्रम next L1 */
+		अन्यथा अणु
 			/* more than 1 L1 ? */
-			if (k > 0)
-				break;	/* build L2 page */
-			else {
+			अगर (k > 0)
+				अवरोध;	/* build L2 page */
+			अन्यथा अणु
 				/* summarize in global bmap page */
-				bmp->db_maxfreebud = *l2leaf;
+				bmp->db_maxमुक्तbud = *l2leaf;
 				release_metapage(l2mp);
-				goto finalize;
-			}
-		}
-	}			/* for each L1 in a L2 */
+				जाओ finalize;
+			पूर्ण
+		पूर्ण
+	पूर्ण			/* क्रम each L1 in a L2 */
 
 	jfs_error(ipbmap->i_sb, "function has not returned as expected\n");
 errout:
-	if (l0mp)
+	अगर (l0mp)
 		release_metapage(l0mp);
-	if (l1mp)
+	अगर (l1mp)
 		release_metapage(l1mp);
 	release_metapage(l2mp);
-	return -EIO;
+	वापस -EIO;
 
 	/*
 	 *	finalize bmap control page
 	 */
 finalize:
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
 /*
  *	dbFinalizeBmap()
  */
-void dbFinalizeBmap(struct inode *ipbmap)
-{
-	struct bmap *bmp = JFS_SBI(ipbmap->i_sb)->bmap;
-	int actags, inactags, l2nl;
-	s64 ag_rem, actfree, inactfree, avgfree;
-	int i, n;
+व्योम dbFinalizeBmap(काष्ठा inode *ipbmap)
+अणु
+	काष्ठा bmap *bmp = JFS_SBI(ipbmap->i_sb)->bmap;
+	पूर्णांक actags, inactags, l2nl;
+	s64 ag_rem, actमुक्त, inactमुक्त, avgमुक्त;
+	पूर्णांक i, n;
 
 	/*
 	 *	finalize bmap control page
@@ -3657,7 +3658,7 @@ void dbFinalizeBmap(struct inode *ipbmap)
 //finalize:
 	/*
 	 * compute db_agpref: preferred ag to allocate from
-	 * (the leftmost ag with average free space in it);
+	 * (the lefपंचांगost ag with average मुक्त space in it);
 	 */
 //agpref:
 	/* get the number of active ags and inacitve ags */
@@ -3666,36 +3667,36 @@ void dbFinalizeBmap(struct inode *ipbmap)
 	ag_rem = bmp->db_mapsize & (bmp->db_agsize - 1);	/* ??? */
 
 	/* determine how many blocks are in the inactive allocation
-	 * groups. in doing this, we must account for the fact that
-	 * the rightmost group might be a partial group (i.e. file
-	 * system size is not a multiple of the group size).
+	 * groups. in करोing this, we must account क्रम the fact that
+	 * the righपंचांगost group might be a partial group (i.e. file
+	 * प्रणाली size is not a multiple of the group size).
 	 */
-	inactfree = (inactags && ag_rem) ?
+	inactमुक्त = (inactags && ag_rem) ?
 	    ((inactags - 1) << bmp->db_agl2size) + ag_rem
 	    : inactags << bmp->db_agl2size;
 
-	/* determine how many free blocks are in the active
-	 * allocation groups plus the average number of free blocks
+	/* determine how many मुक्त blocks are in the active
+	 * allocation groups plus the average number of मुक्त blocks
 	 * within the active ags.
 	 */
-	actfree = bmp->db_nfree - inactfree;
-	avgfree = (u32) actfree / (u32) actags;
+	actमुक्त = bmp->db_nमुक्त - inactमुक्त;
+	avgमुक्त = (u32) actमुक्त / (u32) actags;
 
-	/* if the preferred allocation group has not average free space.
-	 * re-establish the preferred group as the leftmost
-	 * group with average free space.
+	/* अगर the preferred allocation group has not average मुक्त space.
+	 * re-establish the preferred group as the lefपंचांगost
+	 * group with average मुक्त space.
 	 */
-	if (bmp->db_agfree[bmp->db_agpref] < avgfree) {
-		for (bmp->db_agpref = 0; bmp->db_agpref < actags;
-		     bmp->db_agpref++) {
-			if (bmp->db_agfree[bmp->db_agpref] >= avgfree)
-				break;
-		}
-		if (bmp->db_agpref >= bmp->db_numag) {
+	अगर (bmp->db_agमुक्त[bmp->db_agpref] < avgमुक्त) अणु
+		क्रम (bmp->db_agpref = 0; bmp->db_agpref < actags;
+		     bmp->db_agpref++) अणु
+			अगर (bmp->db_agमुक्त[bmp->db_agpref] >= avgमुक्त)
+				अवरोध;
+		पूर्ण
+		अगर (bmp->db_agpref >= bmp->db_numag) अणु
 			jfs_error(ipbmap->i_sb,
 				  "cannot find ag with average freespace\n");
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	/*
 	 * compute db_aglevel, db_agheight, db_width, db_agstart:
@@ -3709,139 +3710,139 @@ void dbFinalizeBmap(struct inode *ipbmap)
 	    bmp->db_agl2size - (L2BPERDMAP + bmp->db_aglevel * L2LPERCTL);
 	bmp->db_agheight = l2nl >> 1;
 	bmp->db_agwidth = 1 << (l2nl - (bmp->db_agheight << 1));
-	for (i = 5 - bmp->db_agheight, bmp->db_agstart = 0, n = 1; i > 0;
-	     i--) {
+	क्रम (i = 5 - bmp->db_agheight, bmp->db_agstart = 0, n = 1; i > 0;
+	     i--) अणु
 		bmp->db_agstart += n;
 		n <<= 2;
-	}
+	पूर्ण
 
-}
+पूर्ण
 
 
 /*
  * NAME:	dbInitDmap()/ujfs_idmap_page()
  *
- * FUNCTION:	initialize working/persistent bitmap of the dmap page
- *		for the specified number of blocks:
+ * FUNCTION:	initialize working/persistent biपंचांगap of the dmap page
+ *		क्रम the specअगरied number of blocks:
  *
- *		at entry, the bitmaps had been initialized as free (ZEROS);
- *		The number of blocks will only account for the actually
- *		existing blocks. Blocks which don't actually exist in
+ *		at entry, the biपंचांगaps had been initialized as मुक्त (ZEROS);
+ *		The number of blocks will only account क्रम the actually
+ *		existing blocks. Blocks which करोn't actually exist in
  *		the aggregate will be marked as allocated (ONES);
  *
  * PARAMETERS:
- *	dp	- pointer to page of map
+ *	dp	- poपूर्णांकer to page of map
  *	nblocks	- number of blocks this page
  *
  * RETURNS: NONE
  */
-static int dbInitDmap(struct dmap * dp, s64 Blkno, int nblocks)
-{
-	int blkno, w, b, r, nw, nb, i;
+अटल पूर्णांक dbInitDmap(काष्ठा dmap * dp, s64 Blkno, पूर्णांक nblocks)
+अणु
+	पूर्णांक blkno, w, b, r, nw, nb, i;
 
 	/* starting block number within the dmap */
 	blkno = Blkno & (BPERDMAP - 1);
 
-	if (blkno == 0) {
-		dp->nblocks = dp->nfree = cpu_to_le32(nblocks);
+	अगर (blkno == 0) अणु
+		dp->nblocks = dp->nमुक्त = cpu_to_le32(nblocks);
 		dp->start = cpu_to_le64(Blkno);
 
-		if (nblocks == BPERDMAP) {
-			memset(&dp->wmap[0], 0, LPERDMAP * 4);
-			memset(&dp->pmap[0], 0, LPERDMAP * 4);
-			goto initTree;
-		}
-	} else {
+		अगर (nblocks == BPERDMAP) अणु
+			स_रखो(&dp->wmap[0], 0, LPERDMAP * 4);
+			स_रखो(&dp->pmap[0], 0, LPERDMAP * 4);
+			जाओ initTree;
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		le32_add_cpu(&dp->nblocks, nblocks);
-		le32_add_cpu(&dp->nfree, nblocks);
-	}
+		le32_add_cpu(&dp->nमुक्त, nblocks);
+	पूर्ण
 
 	/* word number containing start block number */
 	w = blkno >> L2DBWORD;
 
 	/*
-	 * free the bits corresponding to the block range (ZEROS):
+	 * मुक्त the bits corresponding to the block range (ZEROS):
 	 * note: not all bits of the first and last words may be contained
 	 * within the block range.
 	 */
-	for (r = nblocks; r > 0; r -= nb, blkno += nb) {
-		/* number of bits preceding range to be freed in the word */
+	क्रम (r = nblocks; r > 0; r -= nb, blkno += nb) अणु
+		/* number of bits preceding range to be मुक्तd in the word */
 		b = blkno & (DBWORD - 1);
-		/* number of bits to free in the word */
+		/* number of bits to मुक्त in the word */
 		nb = min(r, DBWORD - b);
 
-		/* is partial word to be freed ? */
-		if (nb < DBWORD) {
-			/* free (set to 0) from the bitmap word */
+		/* is partial word to be मुक्तd ? */
+		अगर (nb < DBWORD) अणु
+			/* मुक्त (set to 0) from the biपंचांगap word */
 			dp->wmap[w] &= cpu_to_le32(~(ONES << (DBWORD - nb)
 						     >> b));
 			dp->pmap[w] &= cpu_to_le32(~(ONES << (DBWORD - nb)
 						     >> b));
 
-			/* skip the word freed */
+			/* skip the word मुक्तd */
 			w++;
-		} else {
-			/* free (set to 0) contiguous bitmap words */
+		पूर्ण अन्यथा अणु
+			/* मुक्त (set to 0) contiguous biपंचांगap words */
 			nw = r >> L2DBWORD;
-			memset(&dp->wmap[w], 0, nw * 4);
-			memset(&dp->pmap[w], 0, nw * 4);
+			स_रखो(&dp->wmap[w], 0, nw * 4);
+			स_रखो(&dp->pmap[w], 0, nw * 4);
 
-			/* skip the words freed */
+			/* skip the words मुक्तd */
 			nb = nw << L2DBWORD;
 			w += nw;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	/*
-	 * mark bits following the range to be freed (non-existing
+	 * mark bits following the range to be मुक्तd (non-existing
 	 * blocks) as allocated (ONES)
 	 */
 
-	if (blkno == BPERDMAP)
-		goto initTree;
+	अगर (blkno == BPERDMAP)
+		जाओ initTree;
 
 	/* the first word beyond the end of existing blocks */
 	w = blkno >> L2DBWORD;
 
-	/* does nblocks fall on a 32-bit boundary ? */
+	/* करोes nblocks fall on a 32-bit boundary ? */
 	b = blkno & (DBWORD - 1);
-	if (b) {
+	अगर (b) अणु
 		/* mark a partial word allocated */
 		dp->wmap[w] = dp->pmap[w] = cpu_to_le32(ONES >> b);
 		w++;
-	}
+	पूर्ण
 
 	/* set the rest of the words in the page to allocated (ONES) */
-	for (i = w; i < LPERDMAP; i++)
+	क्रम (i = w; i < LPERDMAP; i++)
 		dp->pmap[i] = dp->wmap[i] = cpu_to_le32(ONES);
 
 	/*
 	 * init tree
 	 */
       initTree:
-	return (dbInitDmapTree(dp));
-}
+	वापस (dbInitDmapTree(dp));
+पूर्ण
 
 
 /*
  * NAME:	dbInitDmapTree()/ujfs_complete_dmap()
  *
- * FUNCTION:	initialize summary tree of the specified dmap:
+ * FUNCTION:	initialize summary tree of the specअगरied dmap:
  *
- *		at entry, bitmap of the dmap has been initialized;
+ *		at entry, biपंचांगap of the dmap has been initialized;
  *
  * PARAMETERS:
  *	dp	- dmap to complete
- *	blkno	- starting block number for this dmap
- *	treemax	- will be filled in with max free for this dmap
+ *	blkno	- starting block number क्रम this dmap
+ *	treemax	- will be filled in with max मुक्त क्रम this dmap
  *
- * RETURNS:	max free string at the root of the tree
+ * RETURNS:	max मुक्त string at the root of the tree
  */
-static int dbInitDmapTree(struct dmap * dp)
-{
-	struct dmaptree *tp;
+अटल पूर्णांक dbInitDmapTree(काष्ठा dmap * dp)
+अणु
+	काष्ठा dmaptree *tp;
 	s8 *cp;
-	int i;
+	पूर्णांक i;
 
 	/* init fixed info of tree */
 	tp = &dp->tree;
@@ -3852,16 +3853,16 @@ static int dbInitDmapTree(struct dmap * dp)
 	tp->budmin = BUDMIN;
 
 	/* init each leaf from corresponding wmap word:
-	 * note: leaf is set to NOFREE(-1) if all blocks of corresponding
-	 * bitmap word are allocated.
+	 * note: leaf is set to NOFREE(-1) अगर all blocks of corresponding
+	 * biपंचांगap word are allocated.
 	 */
 	cp = tp->stree + le32_to_cpu(tp->leafidx);
-	for (i = 0; i < LPERDMAP; i++)
+	क्रम (i = 0; i < LPERDMAP; i++)
 		*cp++ = dbMaxBud((u8 *) & dp->wmap[i]);
 
 	/* build the dmap's binary buddy summary tree */
-	return (dbInitTree(tp));
-}
+	वापस (dbInitTree(tp));
+पूर्ण
 
 
 /*
@@ -3870,87 +3871,87 @@ static int dbInitDmapTree(struct dmap * dp)
  * FUNCTION:	initialize binary buddy summary tree of a dmap or dmapctl.
  *
  *		at entry, the leaves of the tree has been initialized
- *		from corresponding bitmap word or root of summary tree
+ *		from corresponding biपंचांगap word or root of summary tree
  *		of the child control page;
- *		configure binary buddy system at the leaf level, then
+ *		configure binary buddy प्रणाली at the leaf level, then
  *		bubble up the values of the leaf nodes up the tree.
  *
  * PARAMETERS:
- *	cp	- Pointer to the root of the tree
- *	l2leaves- Number of leaf nodes as a power of 2
+ *	cp	- Poपूर्णांकer to the root of the tree
+ *	l2leaves- Number of leaf nodes as a घातer of 2
  *	l2min	- Number of blocks that can be covered by a leaf
- *		  as a power of 2
+ *		  as a घातer of 2
  *
- * RETURNS: max free string at the root of the tree
+ * RETURNS: max मुक्त string at the root of the tree
  */
-static int dbInitTree(struct dmaptree * dtp)
-{
-	int l2max, l2free, bsize, nextb, i;
-	int child, parent, nparent;
+अटल पूर्णांक dbInitTree(काष्ठा dmaptree * dtp)
+अणु
+	पूर्णांक l2max, l2मुक्त, bsize, nextb, i;
+	पूर्णांक child, parent, nparent;
 	s8 *tp, *cp, *cp1;
 
 	tp = dtp->stree;
 
-	/* Determine the maximum free string possible for the leaves */
+	/* Determine the maximum मुक्त string possible क्रम the leaves */
 	l2max = le32_to_cpu(dtp->l2nleafs) + dtp->budmin;
 
 	/*
-	 * configure the leaf levevl into binary buddy system
+	 * configure the leaf levevl पूर्णांकo binary buddy प्रणाली
 	 *
 	 * Try to combine buddies starting with a buddy size of 1
 	 * (i.e. two leaves). At a buddy size of 1 two buddy leaves
-	 * can be combined if both buddies have a maximum free of l2min;
+	 * can be combined अगर both buddies have a maximum मुक्त of l2min;
 	 * the combination will result in the left-most buddy leaf having
-	 * a maximum free of l2min+1.
-	 * After processing all buddies for a given size, process buddies
+	 * a maximum मुक्त of l2min+1.
+	 * After processing all buddies क्रम a given size, process buddies
 	 * at the next higher buddy size (i.e. current size * 2) and
-	 * the next maximum free (current free + 1).
-	 * This continues until the maximum possible buddy combination
-	 * yields maximum free.
+	 * the next maximum मुक्त (current मुक्त + 1).
+	 * This जारीs until the maximum possible buddy combination
+	 * yields maximum मुक्त.
 	 */
-	for (l2free = dtp->budmin, bsize = 1; l2free < l2max;
-	     l2free++, bsize = nextb) {
+	क्रम (l2मुक्त = dtp->budmin, bsize = 1; l2मुक्त < l2max;
+	     l2मुक्त++, bsize = nextb) अणु
 		/* get next buddy size == current buddy pair size */
 		nextb = bsize << 1;
 
 		/* scan each adjacent buddy pair at current buddy size */
-		for (i = 0, cp = tp + le32_to_cpu(dtp->leafidx);
+		क्रम (i = 0, cp = tp + le32_to_cpu(dtp->leafidx);
 		     i < le32_to_cpu(dtp->nleafs);
-		     i += nextb, cp += nextb) {
-			/* coalesce if both adjacent buddies are max free */
-			if (*cp == l2free && *(cp + bsize) == l2free) {
-				*cp = l2free + 1;	/* left take right */
+		     i += nextb, cp += nextb) अणु
+			/* coalesce अगर both adjacent buddies are max मुक्त */
+			अगर (*cp == l2मुक्त && *(cp + bsize) == l2मुक्त) अणु
+				*cp = l2मुक्त + 1;	/* left take right */
 				*(cp + bsize) = -1;	/* right give left */
-			}
-		}
-	}
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
 	/*
-	 * bubble summary information of leaves up the tree.
+	 * bubble summary inक्रमmation of leaves up the tree.
 	 *
 	 * Starting at the leaf node level, the four nodes described by
-	 * the higher level parent node are compared for a maximum free and
+	 * the higher level parent node are compared क्रम a maximum मुक्त and
 	 * this maximum becomes the value of the parent node.
 	 * when all lower level nodes are processed in this fashion then
 	 * move up to the next level (parent becomes a lower level node) and
-	 * continue the process for that level.
+	 * जारी the process क्रम that level.
 	 */
-	for (child = le32_to_cpu(dtp->leafidx),
+	क्रम (child = le32_to_cpu(dtp->leafidx),
 	     nparent = le32_to_cpu(dtp->nleafs) >> 2;
-	     nparent > 0; nparent >>= 2, child = parent) {
+	     nparent > 0; nparent >>= 2, child = parent) अणु
 		/* get index of 1st node of parent level */
 		parent = (child - 1) >> 2;
 
 		/* set the value of the parent node as the maximum
 		 * of the four nodes of the current level.
 		 */
-		for (i = 0, cp = tp + child, cp1 = tp + parent;
+		क्रम (i = 0, cp = tp + child, cp1 = tp + parent;
 		     i < nparent; i++, cp += 4, cp1++)
 			*cp1 = TREEMAX(cp);
-	}
+	पूर्ण
 
-	return (*tp);
-}
+	वापस (*tp);
+पूर्ण
 
 
 /*
@@ -3958,8 +3959,8 @@ static int dbInitTree(struct dmaptree * dtp)
  *
  * function: initialize dmapctl page
  */
-static int dbInitDmapCtl(struct dmapctl * dcp, int level, int i)
-{				/* start leaf index not covered by range */
+अटल पूर्णांक dbInitDmapCtl(काष्ठा dmapctl * dcp, पूर्णांक level, पूर्णांक i)
+अणु				/* start leaf index not covered by range */
 	s8 *cp;
 
 	dcp->nleafs = cpu_to_le32(LPERCTL);
@@ -3970,16 +3971,16 @@ static int dbInitDmapCtl(struct dmapctl * dcp, int level, int i)
 
 	/*
 	 * initialize the leaves of current level that were not covered
-	 * by the specified input block range (i.e. the leaves have no
+	 * by the specअगरied input block range (i.e. the leaves have no
 	 * low level dmapctl or dmap).
 	 */
 	cp = &dcp->stree[CTLLEAFIND + i];
-	for (; i < LPERCTL; i++)
+	क्रम (; i < LPERCTL; i++)
 		*cp++ = NOFREE;
 
 	/* build the dmap's binary buddy summary tree */
-	return (dbInitTree((struct dmaptree *) dcp));
-}
+	वापस (dbInitTree((काष्ठा dmaptree *) dcp));
+पूर्ण
 
 
 /*
@@ -3992,29 +3993,29 @@ static int dbInitDmapCtl(struct dmapctl * dcp, int level, int i)
  *
  * RETURNS: log2(allocation group size) in aggregate blocks
  */
-static int dbGetL2AGSize(s64 nblocks)
-{
+अटल पूर्णांक dbGetL2AGSize(s64 nblocks)
+अणु
 	s64 sz;
 	s64 m;
-	int l2sz;
+	पूर्णांक l2sz;
 
-	if (nblocks < BPERDMAP * MAXAG)
-		return (L2BPERDMAP);
+	अगर (nblocks < BPERDMAP * MAXAG)
+		वापस (L2BPERDMAP);
 
-	/* round up aggregate size to power of 2 */
+	/* round up aggregate size to घातer of 2 */
 	m = ((u64) 1 << (64 - 1));
-	for (l2sz = 64; l2sz >= 0; l2sz--, m >>= 1) {
-		if (m & nblocks)
-			break;
-	}
+	क्रम (l2sz = 64; l2sz >= 0; l2sz--, m >>= 1) अणु
+		अगर (m & nblocks)
+			अवरोध;
+	पूर्ण
 
 	sz = (s64) 1 << l2sz;
-	if (sz < nblocks)
+	अगर (sz < nblocks)
 		l2sz += 1;
 
 	/* agsize = roundupSize/max_number_of_ag */
-	return (l2sz - L2MAXAG);
-}
+	वापस (l2sz - L2MAXAG);
+पूर्ण
 
 
 /*
@@ -4029,23 +4030,23 @@ static int dbGetL2AGSize(s64 nblocks)
 /*
  * maximum number of map pages at each level including control pages
  */
-#define MAXL0PAGES	(1 + LPERCTL)
-#define MAXL1PAGES	(1 + LPERCTL * MAXL0PAGES)
+#घोषणा MAXL0PAGES	(1 + LPERCTL)
+#घोषणा MAXL1PAGES	(1 + LPERCTL * MAXL0PAGES)
 
 /*
  * convert number of map pages to the zero origin top dmapctl level
  */
-#define BMAPPGTOLEV(npages)	\
+#घोषणा BMAPPGTOLEV(npages)	\
 	(((npages) <= 3 + MAXL0PAGES) ? 0 : \
 	 ((npages) <= 2 + MAXL1PAGES) ? 1 : 2)
 
-s64 dbMapFileSizeToMapSize(struct inode * ipbmap)
-{
-	struct super_block *sb = ipbmap->i_sb;
+s64 dbMapFileSizeToMapSize(काष्ठा inode * ipbmap)
+अणु
+	काष्ठा super_block *sb = ipbmap->i_sb;
 	s64 nblocks;
 	s64 npages, ndmaps;
-	int level, i;
-	int complete, factor;
+	पूर्णांक level, i;
+	पूर्णांक complete, factor;
 
 	nblocks = ipbmap->i_size >> JFS_SBI(sb)->l2bsize;
 	npages = nblocks >> JFS_SBI(sb)->l2nbperpage;
@@ -4053,14 +4054,14 @@ s64 dbMapFileSizeToMapSize(struct inode * ipbmap)
 
 	/* At each level, accumulate the number of dmap pages covered by
 	 * the number of full child levels below it;
-	 * repeat for the last incomplete child level.
+	 * repeat क्रम the last incomplete child level.
 	 */
 	ndmaps = 0;
 	npages--;		/* skip the first global control page */
 	/* skip higher level control pages above top level covered by map */
 	npages -= (2 - level);
 	npages--;		/* skip top level's control page */
-	for (i = level; i >= 0; i--) {
+	क्रम (i = level; i >= 0; i--) अणु
 		factor =
 		    (i == 2) ? MAXL1PAGES : ((i == 1) ? MAXL0PAGES : 1);
 		complete = (u32) npages / factor;
@@ -4071,12 +4072,12 @@ s64 dbMapFileSizeToMapSize(struct inode * ipbmap)
 		npages = (u32) npages % factor;
 		/* skip incomplete child's level control page */
 		npages--;
-	}
+	पूर्ण
 
-	/* convert the number of dmaps into the number of blocks
+	/* convert the number of dmaps पूर्णांकo the number of blocks
 	 * which can be covered by the dmaps;
 	 */
 	nblocks = ndmaps << L2BPERDMAP;
 
-	return (nblocks);
-}
+	वापस (nblocks);
+पूर्ण

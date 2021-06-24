@@ -1,23 +1,24 @@
+<शैली गुरु>
 /*
  * Copyright (c) 2013, Cisco Systems, Inc. All rights reserved.
  *
  * This software is available to you under a choice of one of two
  * licenses.  You may choose to be licensed under the terms of the GNU
  * General Public License (GPL) Version 2, available from the file
- * COPYING in the main directory of this source tree, or the
+ * COPYING in the मुख्य directory of this source tree, or the
  * BSD license below:
  *
- *     Redistribution and use in source and binary forms, with or
- *     without modification, are permitted provided that the following
+ *     Redistribution and use in source and binary क्रमms, with or
+ *     without modअगरication, are permitted provided that the following
  *     conditions are met:
  *
  *      - Redistributions of source code must retain the above
  *        copyright notice, this list of conditions and the following
  *        disclaimer.
  *
- *      - Redistributions in binary form must reproduce the above
+ *      - Redistributions in binary क्रमm must reproduce the above
  *        copyright notice, this list of conditions and the following
- *        disclaimer in the documentation and/or other materials
+ *        disclaimer in the करोcumentation and/or other materials
  *        provided with the distribution.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
@@ -30,185 +31,185 @@
  * SOFTWARE.
  *
  */
-#include <linux/bitmap.h>
-#include <linux/file.h>
-#include <linux/module.h>
-#include <linux/slab.h>
-#include <net/inet_sock.h>
+#समावेश <linux/biपंचांगap.h>
+#समावेश <linux/file.h>
+#समावेश <linux/module.h>
+#समावेश <linux/slab.h>
+#समावेश <net/inet_sock.h>
 
-#include "usnic_transport.h"
-#include "usnic_log.h"
+#समावेश "usnic_transport.h"
+#समावेश "usnic_log.h"
 
 /* ROCE */
-static unsigned long *roce_bitmap;
-static u16 roce_next_port = 1;
-#define ROCE_BITMAP_SZ ((1 << (8 /*CHAR_BIT*/ * sizeof(u16)))/8 /*CHAR BIT*/)
-static DEFINE_SPINLOCK(roce_bitmap_lock);
+अटल अचिन्हित दीर्घ *roce_biपंचांगap;
+अटल u16 roce_next_port = 1;
+#घोषणा ROCE_BITMAP_SZ ((1 << (8 /*अक्षर_बिट*/ * माप(u16)))/8 /*CHAR BIT*/)
+अटल DEFINE_SPINLOCK(roce_biपंचांगap_lock);
 
-const char *usnic_transport_to_str(enum usnic_transport_type type)
-{
-	switch (type) {
-	case USNIC_TRANSPORT_UNKNOWN:
-		return "Unknown";
-	case USNIC_TRANSPORT_ROCE_CUSTOM:
-		return "roce custom";
-	case USNIC_TRANSPORT_IPV4_UDP:
-		return "IPv4 UDP";
-	case USNIC_TRANSPORT_MAX:
-		return "Max?";
-	default:
-		return "Not known";
-	}
-}
+स्थिर अक्षर *usnic_transport_to_str(क्रमागत usnic_transport_type type)
+अणु
+	चयन (type) अणु
+	हाल USNIC_TRANSPORT_UNKNOWN:
+		वापस "Unknown";
+	हाल USNIC_TRANSPORT_ROCE_CUSTOM:
+		वापस "roce custom";
+	हाल USNIC_TRANSPORT_IPV4_UDP:
+		वापस "IPv4 UDP";
+	हाल USNIC_TRANSPORT_MAX:
+		वापस "Max?";
+	शेष:
+		वापस "Not known";
+	पूर्ण
+पूर्ण
 
-int usnic_transport_sock_to_str(char *buf, int buf_sz,
-					struct socket *sock)
-{
-	int err;
-	uint32_t addr;
-	uint16_t port;
-	int proto;
+पूर्णांक usnic_transport_sock_to_str(अक्षर *buf, पूर्णांक buf_sz,
+					काष्ठा socket *sock)
+अणु
+	पूर्णांक err;
+	uपूर्णांक32_t addr;
+	uपूर्णांक16_t port;
+	पूर्णांक proto;
 
-	memset(buf, 0, buf_sz);
+	स_रखो(buf, 0, buf_sz);
 	err = usnic_transport_sock_get_addr(sock, &proto, &addr, &port);
-	if (err)
-		return 0;
+	अगर (err)
+		वापस 0;
 
-	return scnprintf(buf, buf_sz, "Proto:%u Addr:%pI4h Port:%hu",
+	वापस scnम_लिखो(buf, buf_sz, "Proto:%u Addr:%pI4h Port:%hu",
 			proto, &addr, port);
-}
+पूर्ण
 
 /*
- * reserve a port number.  if "0" specified, we will try to pick one
+ * reserve a port number.  अगर "0" specअगरied, we will try to pick one
  * starting at roce_next_port.  roce_next_port will take on the values
  * 1..4096
  */
-u16 usnic_transport_rsrv_port(enum usnic_transport_type type, u16 port_num)
-{
-	if (type == USNIC_TRANSPORT_ROCE_CUSTOM) {
-		spin_lock(&roce_bitmap_lock);
-		if (!port_num) {
-			port_num = bitmap_find_next_zero_area(roce_bitmap,
+u16 usnic_transport_rsrv_port(क्रमागत usnic_transport_type type, u16 port_num)
+अणु
+	अगर (type == USNIC_TRANSPORT_ROCE_CUSTOM) अणु
+		spin_lock(&roce_biपंचांगap_lock);
+		अगर (!port_num) अणु
+			port_num = biपंचांगap_find_next_zero_area(roce_biपंचांगap,
 						ROCE_BITMAP_SZ,
 						roce_next_port /* start */,
 						1 /* nr */,
 						0 /* align */);
 			roce_next_port = (port_num & 4095) + 1;
-		} else if (test_bit(port_num, roce_bitmap)) {
+		पूर्ण अन्यथा अगर (test_bit(port_num, roce_biपंचांगap)) अणु
 			usnic_err("Failed to allocate port for %s\n",
 					usnic_transport_to_str(type));
-			spin_unlock(&roce_bitmap_lock);
-			goto out_fail;
-		}
-		bitmap_set(roce_bitmap, port_num, 1);
-		spin_unlock(&roce_bitmap_lock);
-	} else {
+			spin_unlock(&roce_biपंचांगap_lock);
+			जाओ out_fail;
+		पूर्ण
+		biपंचांगap_set(roce_biपंचांगap, port_num, 1);
+		spin_unlock(&roce_biपंचांगap_lock);
+	पूर्ण अन्यथा अणु
 		usnic_err("Failed to allocate port - transport %s unsupported\n",
 				usnic_transport_to_str(type));
-		goto out_fail;
-	}
+		जाओ out_fail;
+	पूर्ण
 
 	usnic_dbg("Allocating port %hu for %s\n", port_num,
 			usnic_transport_to_str(type));
-	return port_num;
+	वापस port_num;
 
 out_fail:
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void usnic_transport_unrsrv_port(enum usnic_transport_type type, u16 port_num)
-{
-	if (type == USNIC_TRANSPORT_ROCE_CUSTOM) {
-		spin_lock(&roce_bitmap_lock);
-		if (!port_num) {
+व्योम usnic_transport_unrsrv_port(क्रमागत usnic_transport_type type, u16 port_num)
+अणु
+	अगर (type == USNIC_TRANSPORT_ROCE_CUSTOM) अणु
+		spin_lock(&roce_biपंचांगap_lock);
+		अगर (!port_num) अणु
 			usnic_err("Unreserved invalid port num 0 for %s\n",
 					usnic_transport_to_str(type));
-			goto out_roce_custom;
-		}
+			जाओ out_roce_custom;
+		पूर्ण
 
-		if (!test_bit(port_num, roce_bitmap)) {
+		अगर (!test_bit(port_num, roce_biपंचांगap)) अणु
 			usnic_err("Unreserving invalid %hu for %s\n",
 					port_num,
 					usnic_transport_to_str(type));
-			goto out_roce_custom;
-		}
-		bitmap_clear(roce_bitmap, port_num, 1);
+			जाओ out_roce_custom;
+		पूर्ण
+		biपंचांगap_clear(roce_biपंचांगap, port_num, 1);
 		usnic_dbg("Freeing port %hu for %s\n", port_num,
 				usnic_transport_to_str(type));
 out_roce_custom:
-		spin_unlock(&roce_bitmap_lock);
-	} else {
+		spin_unlock(&roce_biपंचांगap_lock);
+	पूर्ण अन्यथा अणु
 		usnic_err("Freeing invalid port %hu for %d\n", port_num, type);
-	}
-}
+	पूर्ण
+पूर्ण
 
-struct socket *usnic_transport_get_socket(int sock_fd)
-{
-	struct socket *sock;
-	int err;
-	char buf[25];
+काष्ठा socket *usnic_transport_get_socket(पूर्णांक sock_fd)
+अणु
+	काष्ठा socket *sock;
+	पूर्णांक err;
+	अक्षर buf[25];
 
-	/* sockfd_lookup will internally do a fget */
+	/* sockfd_lookup will पूर्णांकernally करो a fget */
 	sock = sockfd_lookup(sock_fd, &err);
-	if (!sock) {
+	अगर (!sock) अणु
 		usnic_err("Unable to lookup socket for fd %d with err %d\n",
 				sock_fd, err);
-		return ERR_PTR(-ENOENT);
-	}
+		वापस ERR_PTR(-ENOENT);
+	पूर्ण
 
-	usnic_transport_sock_to_str(buf, sizeof(buf), sock);
+	usnic_transport_sock_to_str(buf, माप(buf), sock);
 	usnic_dbg("Get sock %s\n", buf);
 
-	return sock;
-}
+	वापस sock;
+पूर्ण
 
-void usnic_transport_put_socket(struct socket *sock)
-{
-	char buf[100];
+व्योम usnic_transport_put_socket(काष्ठा socket *sock)
+अणु
+	अक्षर buf[100];
 
-	usnic_transport_sock_to_str(buf, sizeof(buf), sock);
+	usnic_transport_sock_to_str(buf, माप(buf), sock);
 	usnic_dbg("Put sock %s\n", buf);
 	sockfd_put(sock);
-}
+पूर्ण
 
-int usnic_transport_sock_get_addr(struct socket *sock, int *proto,
-					uint32_t *addr, uint16_t *port)
-{
-	int err;
-	struct sockaddr_in sock_addr;
+पूर्णांक usnic_transport_sock_get_addr(काष्ठा socket *sock, पूर्णांक *proto,
+					uपूर्णांक32_t *addr, uपूर्णांक16_t *port)
+अणु
+	पूर्णांक err;
+	काष्ठा sockaddr_in sock_addr;
 
 	err = sock->ops->getname(sock,
-				(struct sockaddr *)&sock_addr,
+				(काष्ठा sockaddr *)&sock_addr,
 				0);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
-	if (sock_addr.sin_family != AF_INET)
-		return -EINVAL;
+	अगर (sock_addr.sin_family != AF_INET)
+		वापस -EINVAL;
 
-	if (proto)
+	अगर (proto)
 		*proto = sock->sk->sk_protocol;
-	if (port)
-		*port = ntohs(((struct sockaddr_in *)&sock_addr)->sin_port);
-	if (addr)
-		*addr = ntohl(((struct sockaddr_in *)
+	अगर (port)
+		*port = ntohs(((काष्ठा sockaddr_in *)&sock_addr)->sin_port);
+	अगर (addr)
+		*addr = ntohl(((काष्ठा sockaddr_in *)
 					&sock_addr)->sin_addr.s_addr);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int usnic_transport_init(void)
-{
-	roce_bitmap = kzalloc(ROCE_BITMAP_SZ, GFP_KERNEL);
-	if (!roce_bitmap)
-		return -ENOMEM;
+पूर्णांक usnic_transport_init(व्योम)
+अणु
+	roce_biपंचांगap = kzalloc(ROCE_BITMAP_SZ, GFP_KERNEL);
+	अगर (!roce_biपंचांगap)
+		वापस -ENOMEM;
 
 	/* Do not ever allocate bit 0, hence set it here */
-	bitmap_set(roce_bitmap, 0, 1);
-	return 0;
-}
+	biपंचांगap_set(roce_biपंचांगap, 0, 1);
+	वापस 0;
+पूर्ण
 
-void usnic_transport_fini(void)
-{
-	kfree(roce_bitmap);
-}
+व्योम usnic_transport_fini(व्योम)
+अणु
+	kमुक्त(roce_biपंचांगap);
+पूर्ण

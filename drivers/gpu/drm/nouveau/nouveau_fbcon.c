@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
- * Copyright © 2007 David Airlie
+ * Copyright तऊ 2007 David Airlie
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice (including the next
  * paragraph) shall be included in all copies or substantial portions of the
@@ -24,301 +25,301 @@
  *     David Airlie
  */
 
-#include <linux/module.h>
-#include <linux/kernel.h>
-#include <linux/errno.h>
-#include <linux/string.h>
-#include <linux/mm.h>
-#include <linux/tty.h>
-#include <linux/sysrq.h>
-#include <linux/delay.h>
-#include <linux/init.h>
-#include <linux/screen_info.h>
-#include <linux/vga_switcheroo.h>
-#include <linux/console.h>
+#समावेश <linux/module.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/माला.स>
+#समावेश <linux/mm.h>
+#समावेश <linux/tty.h>
+#समावेश <linux/sysrq.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/init.h>
+#समावेश <linux/screen_info.h>
+#समावेश <linux/vga_चयनeroo.h>
+#समावेश <linux/console.h>
 
-#include <drm/drm_crtc.h>
-#include <drm/drm_crtc_helper.h>
-#include <drm/drm_fb_helper.h>
-#include <drm/drm_fourcc.h>
-#include <drm/drm_atomic.h>
+#समावेश <drm/drm_crtc.h>
+#समावेश <drm/drm_crtc_helper.h>
+#समावेश <drm/drm_fb_helper.h>
+#समावेश <drm/drm_fourcc.h>
+#समावेश <drm/drm_atomic.h>
 
-#include "nouveau_drv.h"
-#include "nouveau_gem.h"
-#include "nouveau_bo.h"
-#include "nouveau_fbcon.h"
-#include "nouveau_chan.h"
-#include "nouveau_vmm.h"
+#समावेश "nouveau_drv.h"
+#समावेश "nouveau_gem.h"
+#समावेश "nouveau_bo.h"
+#समावेश "nouveau_fbcon.h"
+#समावेश "nouveau_chan.h"
+#समावेश "nouveau_vmm.h"
 
-#include "nouveau_crtc.h"
+#समावेश "nouveau_crtc.h"
 
 MODULE_PARM_DESC(nofbaccel, "Disable fbcon acceleration");
-int nouveau_nofbaccel = 0;
-module_param_named(nofbaccel, nouveau_nofbaccel, int, 0400);
+पूर्णांक nouveau_nofbaccel = 0;
+module_param_named(nofbaccel, nouveau_nofbaccel, पूर्णांक, 0400);
 
 MODULE_PARM_DESC(fbcon_bpp, "fbcon bits-per-pixel (default: auto)");
-static int nouveau_fbcon_bpp;
-module_param_named(fbcon_bpp, nouveau_fbcon_bpp, int, 0400);
+अटल पूर्णांक nouveau_fbcon_bpp;
+module_param_named(fbcon_bpp, nouveau_fbcon_bpp, पूर्णांक, 0400);
 
-static void
-nouveau_fbcon_fillrect(struct fb_info *info, const struct fb_fillrect *rect)
-{
-	struct nouveau_fbdev *fbcon = info->par;
-	struct nouveau_drm *drm = nouveau_drm(fbcon->helper.dev);
-	struct nvif_device *device = &drm->client.device;
-	int ret;
+अटल व्योम
+nouveau_fbcon_fillrect(काष्ठा fb_info *info, स्थिर काष्ठा fb_fillrect *rect)
+अणु
+	काष्ठा nouveau_fbdev *fbcon = info->par;
+	काष्ठा nouveau_drm *drm = nouveau_drm(fbcon->helper.dev);
+	काष्ठा nvअगर_device *device = &drm->client.device;
+	पूर्णांक ret;
 
-	if (info->state != FBINFO_STATE_RUNNING)
-		return;
+	अगर (info->state != FBINFO_STATE_RUNNING)
+		वापस;
 
 	ret = -ENODEV;
-	if (!in_interrupt() && !(info->flags & FBINFO_HWACCEL_DISABLED) &&
-	    mutex_trylock(&drm->client.mutex)) {
-		if (device->info.family < NV_DEVICE_INFO_V0_TESLA)
+	अगर (!in_पूर्णांकerrupt() && !(info->flags & FBINFO_HWACCEL_DISABLED) &&
+	    mutex_trylock(&drm->client.mutex)) अणु
+		अगर (device->info.family < NV_DEVICE_INFO_V0_TESLA)
 			ret = nv04_fbcon_fillrect(info, rect);
-		else
-		if (device->info.family < NV_DEVICE_INFO_V0_FERMI)
+		अन्यथा
+		अगर (device->info.family < NV_DEVICE_INFO_V0_FERMI)
 			ret = nv50_fbcon_fillrect(info, rect);
-		else
+		अन्यथा
 			ret = nvc0_fbcon_fillrect(info, rect);
 		mutex_unlock(&drm->client.mutex);
-	}
+	पूर्ण
 
-	if (ret == 0)
-		return;
+	अगर (ret == 0)
+		वापस;
 
-	if (ret != -ENODEV)
+	अगर (ret != -ENODEV)
 		nouveau_fbcon_gpu_lockup(info);
 	drm_fb_helper_cfb_fillrect(info, rect);
-}
+पूर्ण
 
-static void
-nouveau_fbcon_copyarea(struct fb_info *info, const struct fb_copyarea *image)
-{
-	struct nouveau_fbdev *fbcon = info->par;
-	struct nouveau_drm *drm = nouveau_drm(fbcon->helper.dev);
-	struct nvif_device *device = &drm->client.device;
-	int ret;
+अटल व्योम
+nouveau_fbcon_copyarea(काष्ठा fb_info *info, स्थिर काष्ठा fb_copyarea *image)
+अणु
+	काष्ठा nouveau_fbdev *fbcon = info->par;
+	काष्ठा nouveau_drm *drm = nouveau_drm(fbcon->helper.dev);
+	काष्ठा nvअगर_device *device = &drm->client.device;
+	पूर्णांक ret;
 
-	if (info->state != FBINFO_STATE_RUNNING)
-		return;
+	अगर (info->state != FBINFO_STATE_RUNNING)
+		वापस;
 
 	ret = -ENODEV;
-	if (!in_interrupt() && !(info->flags & FBINFO_HWACCEL_DISABLED) &&
-	    mutex_trylock(&drm->client.mutex)) {
-		if (device->info.family < NV_DEVICE_INFO_V0_TESLA)
+	अगर (!in_पूर्णांकerrupt() && !(info->flags & FBINFO_HWACCEL_DISABLED) &&
+	    mutex_trylock(&drm->client.mutex)) अणु
+		अगर (device->info.family < NV_DEVICE_INFO_V0_TESLA)
 			ret = nv04_fbcon_copyarea(info, image);
-		else
-		if (device->info.family < NV_DEVICE_INFO_V0_FERMI)
+		अन्यथा
+		अगर (device->info.family < NV_DEVICE_INFO_V0_FERMI)
 			ret = nv50_fbcon_copyarea(info, image);
-		else
+		अन्यथा
 			ret = nvc0_fbcon_copyarea(info, image);
 		mutex_unlock(&drm->client.mutex);
-	}
+	पूर्ण
 
-	if (ret == 0)
-		return;
+	अगर (ret == 0)
+		वापस;
 
-	if (ret != -ENODEV)
+	अगर (ret != -ENODEV)
 		nouveau_fbcon_gpu_lockup(info);
 	drm_fb_helper_cfb_copyarea(info, image);
-}
+पूर्ण
 
-static void
-nouveau_fbcon_imageblit(struct fb_info *info, const struct fb_image *image)
-{
-	struct nouveau_fbdev *fbcon = info->par;
-	struct nouveau_drm *drm = nouveau_drm(fbcon->helper.dev);
-	struct nvif_device *device = &drm->client.device;
-	int ret;
+अटल व्योम
+nouveau_fbcon_imageblit(काष्ठा fb_info *info, स्थिर काष्ठा fb_image *image)
+अणु
+	काष्ठा nouveau_fbdev *fbcon = info->par;
+	काष्ठा nouveau_drm *drm = nouveau_drm(fbcon->helper.dev);
+	काष्ठा nvअगर_device *device = &drm->client.device;
+	पूर्णांक ret;
 
-	if (info->state != FBINFO_STATE_RUNNING)
-		return;
+	अगर (info->state != FBINFO_STATE_RUNNING)
+		वापस;
 
 	ret = -ENODEV;
-	if (!in_interrupt() && !(info->flags & FBINFO_HWACCEL_DISABLED) &&
-	    mutex_trylock(&drm->client.mutex)) {
-		if (device->info.family < NV_DEVICE_INFO_V0_TESLA)
+	अगर (!in_पूर्णांकerrupt() && !(info->flags & FBINFO_HWACCEL_DISABLED) &&
+	    mutex_trylock(&drm->client.mutex)) अणु
+		अगर (device->info.family < NV_DEVICE_INFO_V0_TESLA)
 			ret = nv04_fbcon_imageblit(info, image);
-		else
-		if (device->info.family < NV_DEVICE_INFO_V0_FERMI)
+		अन्यथा
+		अगर (device->info.family < NV_DEVICE_INFO_V0_FERMI)
 			ret = nv50_fbcon_imageblit(info, image);
-		else
+		अन्यथा
 			ret = nvc0_fbcon_imageblit(info, image);
 		mutex_unlock(&drm->client.mutex);
-	}
+	पूर्ण
 
-	if (ret == 0)
-		return;
+	अगर (ret == 0)
+		वापस;
 
-	if (ret != -ENODEV)
+	अगर (ret != -ENODEV)
 		nouveau_fbcon_gpu_lockup(info);
 	drm_fb_helper_cfb_imageblit(info, image);
-}
+पूर्ण
 
-static int
-nouveau_fbcon_sync(struct fb_info *info)
-{
-	struct nouveau_fbdev *fbcon = info->par;
-	struct nouveau_drm *drm = nouveau_drm(fbcon->helper.dev);
-	struct nouveau_channel *chan = drm->channel;
-	int ret;
+अटल पूर्णांक
+nouveau_fbcon_sync(काष्ठा fb_info *info)
+अणु
+	काष्ठा nouveau_fbdev *fbcon = info->par;
+	काष्ठा nouveau_drm *drm = nouveau_drm(fbcon->helper.dev);
+	काष्ठा nouveau_channel *chan = drm->channel;
+	पूर्णांक ret;
 
-	if (!chan || !chan->accel_done || in_interrupt() ||
+	अगर (!chan || !chan->accel_करोne || in_पूर्णांकerrupt() ||
 	    info->state != FBINFO_STATE_RUNNING ||
 	    info->flags & FBINFO_HWACCEL_DISABLED)
-		return 0;
+		वापस 0;
 
-	if (!mutex_trylock(&drm->client.mutex))
-		return 0;
+	अगर (!mutex_trylock(&drm->client.mutex))
+		वापस 0;
 
 	ret = nouveau_channel_idle(chan);
 	mutex_unlock(&drm->client.mutex);
-	if (ret) {
+	अगर (ret) अणु
 		nouveau_fbcon_gpu_lockup(info);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	chan->accel_done = false;
-	return 0;
-}
+	chan->accel_करोne = false;
+	वापस 0;
+पूर्ण
 
-static int
-nouveau_fbcon_open(struct fb_info *info, int user)
-{
-	struct nouveau_fbdev *fbcon = info->par;
-	struct nouveau_drm *drm = nouveau_drm(fbcon->helper.dev);
-	int ret = pm_runtime_get_sync(drm->dev->dev);
-	if (ret < 0 && ret != -EACCES) {
-		pm_runtime_put(drm->dev->dev);
-		return ret;
-	}
-	return 0;
-}
+अटल पूर्णांक
+nouveau_fbcon_खोलो(काष्ठा fb_info *info, पूर्णांक user)
+अणु
+	काष्ठा nouveau_fbdev *fbcon = info->par;
+	काष्ठा nouveau_drm *drm = nouveau_drm(fbcon->helper.dev);
+	पूर्णांक ret = pm_runसमय_get_sync(drm->dev->dev);
+	अगर (ret < 0 && ret != -EACCES) अणु
+		pm_runसमय_put(drm->dev->dev);
+		वापस ret;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int
-nouveau_fbcon_release(struct fb_info *info, int user)
-{
-	struct nouveau_fbdev *fbcon = info->par;
-	struct nouveau_drm *drm = nouveau_drm(fbcon->helper.dev);
-	pm_runtime_put(drm->dev->dev);
-	return 0;
-}
+अटल पूर्णांक
+nouveau_fbcon_release(काष्ठा fb_info *info, पूर्णांक user)
+अणु
+	काष्ठा nouveau_fbdev *fbcon = info->par;
+	काष्ठा nouveau_drm *drm = nouveau_drm(fbcon->helper.dev);
+	pm_runसमय_put(drm->dev->dev);
+	वापस 0;
+पूर्ण
 
-static const struct fb_ops nouveau_fbcon_ops = {
+अटल स्थिर काष्ठा fb_ops nouveau_fbcon_ops = अणु
 	.owner = THIS_MODULE,
 	DRM_FB_HELPER_DEFAULT_OPS,
-	.fb_open = nouveau_fbcon_open,
+	.fb_खोलो = nouveau_fbcon_खोलो,
 	.fb_release = nouveau_fbcon_release,
 	.fb_fillrect = nouveau_fbcon_fillrect,
 	.fb_copyarea = nouveau_fbcon_copyarea,
 	.fb_imageblit = nouveau_fbcon_imageblit,
 	.fb_sync = nouveau_fbcon_sync,
-};
+पूर्ण;
 
-static const struct fb_ops nouveau_fbcon_sw_ops = {
+अटल स्थिर काष्ठा fb_ops nouveau_fbcon_sw_ops = अणु
 	.owner = THIS_MODULE,
 	DRM_FB_HELPER_DEFAULT_OPS,
-	.fb_open = nouveau_fbcon_open,
+	.fb_खोलो = nouveau_fbcon_खोलो,
 	.fb_release = nouveau_fbcon_release,
 	.fb_fillrect = drm_fb_helper_cfb_fillrect,
 	.fb_copyarea = drm_fb_helper_cfb_copyarea,
 	.fb_imageblit = drm_fb_helper_cfb_imageblit,
-};
+पूर्ण;
 
-void
-nouveau_fbcon_accel_save_disable(struct drm_device *dev)
-{
-	struct nouveau_drm *drm = nouveau_drm(dev);
-	if (drm->fbcon && drm->fbcon->helper.fbdev) {
+व्योम
+nouveau_fbcon_accel_save_disable(काष्ठा drm_device *dev)
+अणु
+	काष्ठा nouveau_drm *drm = nouveau_drm(dev);
+	अगर (drm->fbcon && drm->fbcon->helper.fbdev) अणु
 		drm->fbcon->saved_flags = drm->fbcon->helper.fbdev->flags;
 		drm->fbcon->helper.fbdev->flags |= FBINFO_HWACCEL_DISABLED;
-	}
-}
+	पूर्ण
+पूर्ण
 
-void
-nouveau_fbcon_accel_restore(struct drm_device *dev)
-{
-	struct nouveau_drm *drm = nouveau_drm(dev);
-	if (drm->fbcon && drm->fbcon->helper.fbdev) {
+व्योम
+nouveau_fbcon_accel_restore(काष्ठा drm_device *dev)
+अणु
+	काष्ठा nouveau_drm *drm = nouveau_drm(dev);
+	अगर (drm->fbcon && drm->fbcon->helper.fbdev) अणु
 		drm->fbcon->helper.fbdev->flags = drm->fbcon->saved_flags;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void
-nouveau_fbcon_accel_fini(struct drm_device *dev)
-{
-	struct nouveau_drm *drm = nouveau_drm(dev);
-	struct nouveau_fbdev *fbcon = drm->fbcon;
-	if (fbcon && drm->channel) {
+अटल व्योम
+nouveau_fbcon_accel_fini(काष्ठा drm_device *dev)
+अणु
+	काष्ठा nouveau_drm *drm = nouveau_drm(dev);
+	काष्ठा nouveau_fbdev *fbcon = drm->fbcon;
+	अगर (fbcon && drm->channel) अणु
 		console_lock();
-		if (fbcon->helper.fbdev)
+		अगर (fbcon->helper.fbdev)
 			fbcon->helper.fbdev->flags |= FBINFO_HWACCEL_DISABLED;
 		console_unlock();
 		nouveau_channel_idle(drm->channel);
-		nvif_object_dtor(&fbcon->twod);
-		nvif_object_dtor(&fbcon->blit);
-		nvif_object_dtor(&fbcon->gdi);
-		nvif_object_dtor(&fbcon->patt);
-		nvif_object_dtor(&fbcon->rop);
-		nvif_object_dtor(&fbcon->clip);
-		nvif_object_dtor(&fbcon->surf2d);
-	}
-}
+		nvअगर_object_dtor(&fbcon->twod);
+		nvअगर_object_dtor(&fbcon->blit);
+		nvअगर_object_dtor(&fbcon->gdi);
+		nvअगर_object_dtor(&fbcon->patt);
+		nvअगर_object_dtor(&fbcon->rop);
+		nvअगर_object_dtor(&fbcon->clip);
+		nvअगर_object_dtor(&fbcon->surf2d);
+	पूर्ण
+पूर्ण
 
-static void
-nouveau_fbcon_accel_init(struct drm_device *dev)
-{
-	struct nouveau_drm *drm = nouveau_drm(dev);
-	struct nouveau_fbdev *fbcon = drm->fbcon;
-	struct fb_info *info = fbcon->helper.fbdev;
-	int ret;
+अटल व्योम
+nouveau_fbcon_accel_init(काष्ठा drm_device *dev)
+अणु
+	काष्ठा nouveau_drm *drm = nouveau_drm(dev);
+	काष्ठा nouveau_fbdev *fbcon = drm->fbcon;
+	काष्ठा fb_info *info = fbcon->helper.fbdev;
+	पूर्णांक ret;
 
-	if (drm->client.device.info.family < NV_DEVICE_INFO_V0_TESLA)
+	अगर (drm->client.device.info.family < NV_DEVICE_INFO_V0_TESLA)
 		ret = nv04_fbcon_accel_init(info);
-	else
-	if (drm->client.device.info.family < NV_DEVICE_INFO_V0_FERMI)
+	अन्यथा
+	अगर (drm->client.device.info.family < NV_DEVICE_INFO_V0_FERMI)
 		ret = nv50_fbcon_accel_init(info);
-	else
+	अन्यथा
 		ret = nvc0_fbcon_accel_init(info);
 
-	if (ret == 0)
+	अगर (ret == 0)
 		info->fbops = &nouveau_fbcon_ops;
-}
+पूर्ण
 
-static void
-nouveau_fbcon_zfill(struct drm_device *dev, struct nouveau_fbdev *fbcon)
-{
-	struct fb_info *info = fbcon->helper.fbdev;
-	struct fb_fillrect rect;
+अटल व्योम
+nouveau_fbcon_zfill(काष्ठा drm_device *dev, काष्ठा nouveau_fbdev *fbcon)
+अणु
+	काष्ठा fb_info *info = fbcon->helper.fbdev;
+	काष्ठा fb_fillrect rect;
 
 	/* Clear the entire fbcon.  The drm will program every connector
-	 * with it's preferred mode.  If the sizes differ, one display will
+	 * with it's preferred mode.  If the sizes dअगरfer, one display will
 	 * quite likely have garbage around the console.
 	 */
 	rect.dx = rect.dy = 0;
-	rect.width = info->var.xres_virtual;
-	rect.height = info->var.yres_virtual;
+	rect.width = info->var.xres_भव;
+	rect.height = info->var.yres_भव;
 	rect.color = 0;
 	rect.rop = ROP_COPY;
 	info->fbops->fb_fillrect(info, &rect);
-}
+पूर्ण
 
-static int
-nouveau_fbcon_create(struct drm_fb_helper *helper,
-		     struct drm_fb_helper_surface_size *sizes)
-{
-	struct nouveau_fbdev *fbcon =
-		container_of(helper, struct nouveau_fbdev, helper);
-	struct drm_device *dev = fbcon->helper.dev;
-	struct nouveau_drm *drm = nouveau_drm(dev);
-	struct nvif_device *device = &drm->client.device;
-	struct fb_info *info;
-	struct drm_framebuffer *fb;
-	struct nouveau_channel *chan;
-	struct nouveau_bo *nvbo;
-	struct drm_mode_fb_cmd2 mode_cmd = {};
-	int ret;
+अटल पूर्णांक
+nouveau_fbcon_create(काष्ठा drm_fb_helper *helper,
+		     काष्ठा drm_fb_helper_surface_size *sizes)
+अणु
+	काष्ठा nouveau_fbdev *fbcon =
+		container_of(helper, काष्ठा nouveau_fbdev, helper);
+	काष्ठा drm_device *dev = fbcon->helper.dev;
+	काष्ठा nouveau_drm *drm = nouveau_drm(dev);
+	काष्ठा nvअगर_device *device = &drm->client.device;
+	काष्ठा fb_info *info;
+	काष्ठा drm_framebuffer *fb;
+	काष्ठा nouveau_channel *chan;
+	काष्ठा nouveau_bo *nvbo;
+	काष्ठा drm_mode_fb_cmd2 mode_cmd = अणुपूर्ण;
+	पूर्णांक ret;
 
 	mode_cmd.width = sizes->surface_width;
 	mode_cmd.height = sizes->surface_height;
@@ -326,54 +327,54 @@ nouveau_fbcon_create(struct drm_fb_helper *helper,
 	mode_cmd.pitches[0] = mode_cmd.width * (sizes->surface_bpp >> 3);
 	mode_cmd.pitches[0] = roundup(mode_cmd.pitches[0], 256);
 
-	mode_cmd.pixel_format = drm_mode_legacy_fb_format(sizes->surface_bpp,
+	mode_cmd.pixel_क्रमmat = drm_mode_legacy_fb_क्रमmat(sizes->surface_bpp,
 							  sizes->surface_depth);
 
 	ret = nouveau_gem_new(&drm->client, mode_cmd.pitches[0] *
 			      mode_cmd.height, 0, NOUVEAU_GEM_DOMAIN_VRAM,
 			      0, 0x0000, &nvbo);
-	if (ret) {
+	अगर (ret) अणु
 		NV_ERROR(drm, "failed to allocate framebuffer\n");
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	ret = nouveau_framebuffer_new(dev, &mode_cmd, &nvbo->bo.base, &fb);
-	if (ret)
-		goto out_unref;
+	अगर (ret)
+		जाओ out_unref;
 
 	ret = nouveau_bo_pin(nvbo, NOUVEAU_GEM_DOMAIN_VRAM, false);
-	if (ret) {
+	अगर (ret) अणु
 		NV_ERROR(drm, "failed to pin fb: %d\n", ret);
-		goto out_unref;
-	}
+		जाओ out_unref;
+	पूर्ण
 
 	ret = nouveau_bo_map(nvbo);
-	if (ret) {
+	अगर (ret) अणु
 		NV_ERROR(drm, "failed to map fb: %d\n", ret);
-		goto out_unpin;
-	}
+		जाओ out_unpin;
+	पूर्ण
 
-	chan = nouveau_nofbaccel ? NULL : drm->channel;
-	if (chan && device->info.family >= NV_DEVICE_INFO_V0_TESLA) {
+	chan = nouveau_nofbaccel ? शून्य : drm->channel;
+	अगर (chan && device->info.family >= NV_DEVICE_INFO_V0_TESLA) अणु
 		ret = nouveau_vma_new(nvbo, chan->vmm, &fbcon->vma);
-		if (ret) {
+		अगर (ret) अणु
 			NV_ERROR(drm, "failed to map fb into chan: %d\n", ret);
-			chan = NULL;
-		}
-	}
+			chan = शून्य;
+		पूर्ण
+	पूर्ण
 
 	info = drm_fb_helper_alloc_fbi(helper);
-	if (IS_ERR(info)) {
+	अगर (IS_ERR(info)) अणु
 		ret = PTR_ERR(info);
-		goto out_unlock;
-	}
+		जाओ out_unlock;
+	पूर्ण
 
 	/* setup helper */
 	fbcon->helper.fb = fb;
 
-	if (!chan)
+	अगर (!chan)
 		info->flags = FBINFO_HWACCEL_DISABLED;
-	else
+	अन्यथा
 		info->flags = FBINFO_HWACCEL_COPYAREA |
 			      FBINFO_HWACCEL_FILLRECT |
 			      FBINFO_HWACCEL_IMAGEBLIT;
@@ -381,14 +382,14 @@ nouveau_fbcon_create(struct drm_fb_helper *helper,
 	info->fix.smem_start = nvbo->bo.mem.bus.offset;
 	info->fix.smem_len = nvbo->bo.mem.num_pages << PAGE_SHIFT;
 
-	info->screen_base = nvbo_kmap_obj_iovirtual(nvbo);
+	info->screen_base = nvbo_kmap_obj_ioभव(nvbo);
 	info->screen_size = nvbo->bo.mem.num_pages << PAGE_SHIFT;
 
 	drm_fb_helper_fill_info(info, &fbcon->helper, sizes);
 
-	/* Use default scratch pixmap (info->pixmap.flags = FB_PIXMAP_SYSTEM) */
+	/* Use शेष scratch pixmap (info->pixmap.flags = FB_PIXMAP_SYSTEM) */
 
-	if (chan)
+	अगर (chan)
 		nouveau_fbcon_accel_init(dev);
 	nouveau_fbcon_zfill(dev, fbcon);
 
@@ -396,166 +397,166 @@ nouveau_fbcon_create(struct drm_fb_helper *helper,
 	NV_INFO(drm, "allocated %dx%d fb: 0x%llx, bo %p\n",
 		fb->width, fb->height, nvbo->offset, nvbo);
 
-	if (dev_is_pci(dev->dev))
-		vga_switcheroo_client_fb_set(to_pci_dev(dev->dev), info);
+	अगर (dev_is_pci(dev->dev))
+		vga_चयनeroo_client_fb_set(to_pci_dev(dev->dev), info);
 
-	return 0;
+	वापस 0;
 
 out_unlock:
-	if (chan)
+	अगर (chan)
 		nouveau_vma_del(&fbcon->vma);
 	nouveau_bo_unmap(nvbo);
 out_unpin:
 	nouveau_bo_unpin(nvbo);
 out_unref:
-	nouveau_bo_ref(NULL, &nvbo);
+	nouveau_bo_ref(शून्य, &nvbo);
 out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int
-nouveau_fbcon_destroy(struct drm_device *dev, struct nouveau_fbdev *fbcon)
-{
-	struct drm_framebuffer *fb = fbcon->helper.fb;
-	struct nouveau_bo *nvbo;
+अटल पूर्णांक
+nouveau_fbcon_destroy(काष्ठा drm_device *dev, काष्ठा nouveau_fbdev *fbcon)
+अणु
+	काष्ठा drm_framebuffer *fb = fbcon->helper.fb;
+	काष्ठा nouveau_bo *nvbo;
 
-	drm_fb_helper_unregister_fbi(&fbcon->helper);
+	drm_fb_helper_unरेजिस्टर_fbi(&fbcon->helper);
 	drm_fb_helper_fini(&fbcon->helper);
 
-	if (fb && fb->obj[0]) {
+	अगर (fb && fb->obj[0]) अणु
 		nvbo = nouveau_gem_object(fb->obj[0]);
 		nouveau_vma_del(&fbcon->vma);
 		nouveau_bo_unmap(nvbo);
 		nouveau_bo_unpin(nvbo);
 		drm_framebuffer_put(fb);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void nouveau_fbcon_gpu_lockup(struct fb_info *info)
-{
-	struct nouveau_fbdev *fbcon = info->par;
-	struct nouveau_drm *drm = nouveau_drm(fbcon->helper.dev);
+व्योम nouveau_fbcon_gpu_lockup(काष्ठा fb_info *info)
+अणु
+	काष्ठा nouveau_fbdev *fbcon = info->par;
+	काष्ठा nouveau_drm *drm = nouveau_drm(fbcon->helper.dev);
 
 	NV_ERROR(drm, "GPU lockup - switching to software fbcon\n");
 	info->flags |= FBINFO_HWACCEL_DISABLED;
-}
+पूर्ण
 
-static const struct drm_fb_helper_funcs nouveau_fbcon_helper_funcs = {
+अटल स्थिर काष्ठा drm_fb_helper_funcs nouveau_fbcon_helper_funcs = अणु
 	.fb_probe = nouveau_fbcon_create,
-};
+पूर्ण;
 
-static void
-nouveau_fbcon_set_suspend_work(struct work_struct *work)
-{
-	struct nouveau_drm *drm = container_of(work, typeof(*drm), fbcon_work);
-	int state = READ_ONCE(drm->fbcon_new_state);
+अटल व्योम
+nouveau_fbcon_set_suspend_work(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा nouveau_drm *drm = container_of(work, typeof(*drm), fbcon_work);
+	पूर्णांक state = READ_ONCE(drm->fbcon_new_state);
 
-	if (state == FBINFO_STATE_RUNNING)
-		pm_runtime_get_sync(drm->dev->dev);
+	अगर (state == FBINFO_STATE_RUNNING)
+		pm_runसमय_get_sync(drm->dev->dev);
 
 	console_lock();
-	if (state == FBINFO_STATE_RUNNING)
+	अगर (state == FBINFO_STATE_RUNNING)
 		nouveau_fbcon_accel_restore(drm->dev);
 	drm_fb_helper_set_suspend(&drm->fbcon->helper, state);
-	if (state != FBINFO_STATE_RUNNING)
+	अगर (state != FBINFO_STATE_RUNNING)
 		nouveau_fbcon_accel_save_disable(drm->dev);
 	console_unlock();
 
-	if (state == FBINFO_STATE_RUNNING) {
+	अगर (state == FBINFO_STATE_RUNNING) अणु
 		nouveau_fbcon_hotplug_resume(drm->fbcon);
-		pm_runtime_mark_last_busy(drm->dev->dev);
-		pm_runtime_put_sync(drm->dev->dev);
-	}
-}
+		pm_runसमय_mark_last_busy(drm->dev->dev);
+		pm_runसमय_put_sync(drm->dev->dev);
+	पूर्ण
+पूर्ण
 
-void
-nouveau_fbcon_set_suspend(struct drm_device *dev, int state)
-{
-	struct nouveau_drm *drm = nouveau_drm(dev);
+व्योम
+nouveau_fbcon_set_suspend(काष्ठा drm_device *dev, पूर्णांक state)
+अणु
+	काष्ठा nouveau_drm *drm = nouveau_drm(dev);
 
-	if (!drm->fbcon)
-		return;
+	अगर (!drm->fbcon)
+		वापस;
 
 	drm->fbcon_new_state = state;
-	/* Since runtime resume can happen as a result of a sysfs operation,
-	 * it's possible we already have the console locked. So handle fbcon
-	 * init/deinit from a seperate work thread
+	/* Since runसमय resume can happen as a result of a sysfs operation,
+	 * it's possible we alपढ़ोy have the console locked. So handle fbcon
+	 * init/deinit from a seperate work thपढ़ो
 	 */
 	schedule_work(&drm->fbcon_work);
-}
+पूर्ण
 
-void
-nouveau_fbcon_output_poll_changed(struct drm_device *dev)
-{
-	struct nouveau_drm *drm = nouveau_drm(dev);
-	struct nouveau_fbdev *fbcon = drm->fbcon;
-	int ret;
+व्योम
+nouveau_fbcon_output_poll_changed(काष्ठा drm_device *dev)
+अणु
+	काष्ठा nouveau_drm *drm = nouveau_drm(dev);
+	काष्ठा nouveau_fbdev *fbcon = drm->fbcon;
+	पूर्णांक ret;
 
-	if (!fbcon)
-		return;
+	अगर (!fbcon)
+		वापस;
 
 	mutex_lock(&fbcon->hotplug_lock);
 
-	ret = pm_runtime_get(dev->dev);
-	if (ret == 1 || ret == -EACCES) {
+	ret = pm_runसमय_get(dev->dev);
+	अगर (ret == 1 || ret == -EACCES) अणु
 		drm_fb_helper_hotplug_event(&fbcon->helper);
 
-		pm_runtime_mark_last_busy(dev->dev);
-		pm_runtime_put_autosuspend(dev->dev);
-	} else if (ret == 0) {
-		/* If the GPU was already in the process of suspending before
+		pm_runसमय_mark_last_busy(dev->dev);
+		pm_runसमय_put_स्वतःsuspend(dev->dev);
+	पूर्ण अन्यथा अगर (ret == 0) अणु
+		/* If the GPU was alपढ़ोy in the process of suspending beक्रमe
 		 * this event happened, then we can't block here as we'll
-		 * deadlock the runtime pmops since they wait for us to
-		 * finish. So, just defer this event for when we runtime
+		 * deadlock the runसमय pmops since they रुको क्रम us to
+		 * finish. So, just defer this event क्रम when we runसमय
 		 * resume again. It will be handled by fbcon_work.
 		 */
 		NV_DEBUG(drm, "fbcon HPD event deferred until runtime resume\n");
-		fbcon->hotplug_waiting = true;
-		pm_runtime_put_noidle(drm->dev->dev);
-	} else {
+		fbcon->hotplug_रुकोing = true;
+		pm_runसमय_put_noidle(drm->dev->dev);
+	पूर्ण अन्यथा अणु
 		DRM_WARN("fbcon HPD event lost due to RPM failure: %d\n",
 			 ret);
-	}
+	पूर्ण
 
 	mutex_unlock(&fbcon->hotplug_lock);
-}
+पूर्ण
 
-void
-nouveau_fbcon_hotplug_resume(struct nouveau_fbdev *fbcon)
-{
-	struct nouveau_drm *drm;
+व्योम
+nouveau_fbcon_hotplug_resume(काष्ठा nouveau_fbdev *fbcon)
+अणु
+	काष्ठा nouveau_drm *drm;
 
-	if (!fbcon)
-		return;
+	अगर (!fbcon)
+		वापस;
 	drm = nouveau_drm(fbcon->helper.dev);
 
 	mutex_lock(&fbcon->hotplug_lock);
-	if (fbcon->hotplug_waiting) {
-		fbcon->hotplug_waiting = false;
+	अगर (fbcon->hotplug_रुकोing) अणु
+		fbcon->hotplug_रुकोing = false;
 
 		NV_DEBUG(drm, "Handling deferred fbcon HPD events\n");
 		drm_fb_helper_hotplug_event(&fbcon->helper);
-	}
+	पूर्ण
 	mutex_unlock(&fbcon->hotplug_lock);
-}
+पूर्ण
 
-int
-nouveau_fbcon_init(struct drm_device *dev)
-{
-	struct nouveau_drm *drm = nouveau_drm(dev);
-	struct nouveau_fbdev *fbcon;
-	int preferred_bpp = nouveau_fbcon_bpp;
-	int ret;
+पूर्णांक
+nouveau_fbcon_init(काष्ठा drm_device *dev)
+अणु
+	काष्ठा nouveau_drm *drm = nouveau_drm(dev);
+	काष्ठा nouveau_fbdev *fbcon;
+	पूर्णांक preferred_bpp = nouveau_fbcon_bpp;
+	पूर्णांक ret;
 
-	if (!dev->mode_config.num_crtc ||
+	अगर (!dev->mode_config.num_crtc ||
 	    (to_pci_dev(dev->dev)->class >> 8) != PCI_CLASS_DISPLAY_VGA)
-		return 0;
+		वापस 0;
 
-	fbcon = kzalloc(sizeof(struct nouveau_fbdev), GFP_KERNEL);
-	if (!fbcon)
-		return -ENOMEM;
+	fbcon = kzalloc(माप(काष्ठा nouveau_fbdev), GFP_KERNEL);
+	अगर (!fbcon)
+		वापस -ENOMEM;
 
 	drm->fbcon = fbcon;
 	INIT_WORK(&drm->fbcon_work, nouveau_fbcon_set_suspend_work);
@@ -564,49 +565,49 @@ nouveau_fbcon_init(struct drm_device *dev)
 	drm_fb_helper_prepare(dev, &fbcon->helper, &nouveau_fbcon_helper_funcs);
 
 	ret = drm_fb_helper_init(dev, &fbcon->helper);
-	if (ret)
-		goto free;
+	अगर (ret)
+		जाओ मुक्त;
 
-	if (preferred_bpp != 8 && preferred_bpp != 16 && preferred_bpp != 32) {
-		if (drm->client.device.info.ram_size <= 32 * 1024 * 1024)
+	अगर (preferred_bpp != 8 && preferred_bpp != 16 && preferred_bpp != 32) अणु
+		अगर (drm->client.device.info.ram_size <= 32 * 1024 * 1024)
 			preferred_bpp = 8;
-		else
-		if (drm->client.device.info.ram_size <= 64 * 1024 * 1024)
+		अन्यथा
+		अगर (drm->client.device.info.ram_size <= 64 * 1024 * 1024)
 			preferred_bpp = 16;
-		else
+		अन्यथा
 			preferred_bpp = 32;
-	}
+	पूर्ण
 
-	/* disable all the possible outputs/crtcs before entering KMS mode */
-	if (!drm_drv_uses_atomic_modeset(dev))
+	/* disable all the possible outमाला_दो/crtcs beक्रमe entering KMS mode */
+	अगर (!drm_drv_uses_atomic_modeset(dev))
 		drm_helper_disable_unused_functions(dev);
 
 	ret = drm_fb_helper_initial_config(&fbcon->helper, preferred_bpp);
-	if (ret)
-		goto fini;
+	अगर (ret)
+		जाओ fini;
 
-	if (fbcon->helper.fbdev)
+	अगर (fbcon->helper.fbdev)
 		fbcon->helper.fbdev->pixmap.buf_align = 4;
-	return 0;
+	वापस 0;
 
 fini:
 	drm_fb_helper_fini(&fbcon->helper);
-free:
-	kfree(fbcon);
-	drm->fbcon = NULL;
-	return ret;
-}
+मुक्त:
+	kमुक्त(fbcon);
+	drm->fbcon = शून्य;
+	वापस ret;
+पूर्ण
 
-void
-nouveau_fbcon_fini(struct drm_device *dev)
-{
-	struct nouveau_drm *drm = nouveau_drm(dev);
+व्योम
+nouveau_fbcon_fini(काष्ठा drm_device *dev)
+अणु
+	काष्ठा nouveau_drm *drm = nouveau_drm(dev);
 
-	if (!drm->fbcon)
-		return;
+	अगर (!drm->fbcon)
+		वापस;
 
 	nouveau_fbcon_accel_fini(dev);
 	nouveau_fbcon_destroy(dev, drm->fbcon);
-	kfree(drm->fbcon);
-	drm->fbcon = NULL;
-}
+	kमुक्त(drm->fbcon);
+	drm->fbcon = शून्य;
+पूर्ण

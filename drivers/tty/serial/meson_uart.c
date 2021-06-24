@@ -1,488 +1,489 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  *  Based on meson_uart.c, by AMLOGIC, INC.
  *
  * Copyright (C) 2014 Carlo Caione <carlo@caione.org>
  */
 
-#include <linux/clk.h>
-#include <linux/console.h>
-#include <linux/delay.h>
-#include <linux/init.h>
-#include <linux/io.h>
-#include <linux/iopoll.h>
-#include <linux/module.h>
-#include <linux/kernel.h>
-#include <linux/of.h>
-#include <linux/platform_device.h>
-#include <linux/serial.h>
-#include <linux/serial_core.h>
-#include <linux/tty.h>
-#include <linux/tty_flip.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/console.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/init.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/iopoll.h>
+#समावेश <linux/module.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/of.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/serial.h>
+#समावेश <linux/serial_core.h>
+#समावेश <linux/tty.h>
+#समावेश <linux/tty_flip.h>
 
 /* Register offsets */
-#define AML_UART_WFIFO			0x00
-#define AML_UART_RFIFO			0x04
-#define AML_UART_CONTROL		0x08
-#define AML_UART_STATUS			0x0c
-#define AML_UART_MISC			0x10
-#define AML_UART_REG5			0x14
+#घोषणा AML_UART_WFIFO			0x00
+#घोषणा AML_UART_RFIFO			0x04
+#घोषणा AML_UART_CONTROL		0x08
+#घोषणा AML_UART_STATUS			0x0c
+#घोषणा AML_UART_MISC			0x10
+#घोषणा AML_UART_REG5			0x14
 
 /* AML_UART_CONTROL bits */
-#define AML_UART_TX_EN			BIT(12)
-#define AML_UART_RX_EN			BIT(13)
-#define AML_UART_TWO_WIRE_EN		BIT(15)
-#define AML_UART_STOP_BIT_LEN_MASK	(0x03 << 16)
-#define AML_UART_STOP_BIT_1SB		(0x00 << 16)
-#define AML_UART_STOP_BIT_2SB		(0x01 << 16)
-#define AML_UART_PARITY_TYPE		BIT(18)
-#define AML_UART_PARITY_EN		BIT(19)
-#define AML_UART_TX_RST			BIT(22)
-#define AML_UART_RX_RST			BIT(23)
-#define AML_UART_CLEAR_ERR		BIT(24)
-#define AML_UART_RX_INT_EN		BIT(27)
-#define AML_UART_TX_INT_EN		BIT(28)
-#define AML_UART_DATA_LEN_MASK		(0x03 << 20)
-#define AML_UART_DATA_LEN_8BIT		(0x00 << 20)
-#define AML_UART_DATA_LEN_7BIT		(0x01 << 20)
-#define AML_UART_DATA_LEN_6BIT		(0x02 << 20)
-#define AML_UART_DATA_LEN_5BIT		(0x03 << 20)
+#घोषणा AML_UART_TX_EN			BIT(12)
+#घोषणा AML_UART_RX_EN			BIT(13)
+#घोषणा AML_UART_TWO_WIRE_EN		BIT(15)
+#घोषणा AML_UART_STOP_BIT_LEN_MASK	(0x03 << 16)
+#घोषणा AML_UART_STOP_BIT_1SB		(0x00 << 16)
+#घोषणा AML_UART_STOP_BIT_2SB		(0x01 << 16)
+#घोषणा AML_UART_PARITY_TYPE		BIT(18)
+#घोषणा AML_UART_PARITY_EN		BIT(19)
+#घोषणा AML_UART_TX_RST			BIT(22)
+#घोषणा AML_UART_RX_RST			BIT(23)
+#घोषणा AML_UART_CLEAR_ERR		BIT(24)
+#घोषणा AML_UART_RX_INT_EN		BIT(27)
+#घोषणा AML_UART_TX_INT_EN		BIT(28)
+#घोषणा AML_UART_DATA_LEN_MASK		(0x03 << 20)
+#घोषणा AML_UART_DATA_LEN_8BIT		(0x00 << 20)
+#घोषणा AML_UART_DATA_LEN_7BIT		(0x01 << 20)
+#घोषणा AML_UART_DATA_LEN_6BIT		(0x02 << 20)
+#घोषणा AML_UART_DATA_LEN_5BIT		(0x03 << 20)
 
 /* AML_UART_STATUS bits */
-#define AML_UART_PARITY_ERR		BIT(16)
-#define AML_UART_FRAME_ERR		BIT(17)
-#define AML_UART_TX_FIFO_WERR		BIT(18)
-#define AML_UART_RX_EMPTY		BIT(20)
-#define AML_UART_TX_FULL		BIT(21)
-#define AML_UART_TX_EMPTY		BIT(22)
-#define AML_UART_XMIT_BUSY		BIT(25)
-#define AML_UART_ERR			(AML_UART_PARITY_ERR | \
+#घोषणा AML_UART_PARITY_ERR		BIT(16)
+#घोषणा AML_UART_FRAME_ERR		BIT(17)
+#घोषणा AML_UART_TX_FIFO_WERR		BIT(18)
+#घोषणा AML_UART_RX_EMPTY		BIT(20)
+#घोषणा AML_UART_TX_FULL		BIT(21)
+#घोषणा AML_UART_TX_EMPTY		BIT(22)
+#घोषणा AML_UART_XMIT_BUSY		BIT(25)
+#घोषणा AML_UART_ERR			(AML_UART_PARITY_ERR | \
 					 AML_UART_FRAME_ERR  | \
 					 AML_UART_TX_FIFO_WERR)
 
 /* AML_UART_MISC bits */
-#define AML_UART_XMIT_IRQ(c)		(((c) & 0xff) << 8)
-#define AML_UART_RECV_IRQ(c)		((c) & 0xff)
+#घोषणा AML_UART_XMIT_IRQ(c)		(((c) & 0xff) << 8)
+#घोषणा AML_UART_RECV_IRQ(c)		((c) & 0xff)
 
 /* AML_UART_REG5 bits */
-#define AML_UART_BAUD_MASK		0x7fffff
-#define AML_UART_BAUD_USE		BIT(23)
-#define AML_UART_BAUD_XTAL		BIT(24)
+#घोषणा AML_UART_BAUD_MASK		0x7fffff
+#घोषणा AML_UART_BAUD_USE		BIT(23)
+#घोषणा AML_UART_BAUD_XTAL		BIT(24)
 
-#define AML_UART_PORT_NUM		12
-#define AML_UART_PORT_OFFSET		6
-#define AML_UART_DEV_NAME		"ttyAML"
+#घोषणा AML_UART_PORT_NUM		12
+#घोषणा AML_UART_PORT_OFFSET		6
+#घोषणा AML_UART_DEV_NAME		"ttyAML"
 
-#define AML_UART_POLL_USEC		5
-#define AML_UART_TIMEOUT_USEC		10000
+#घोषणा AML_UART_POLL_USEC		5
+#घोषणा AML_UART_TIMEOUT_USEC		10000
 
-static struct uart_driver meson_uart_driver;
+अटल काष्ठा uart_driver meson_uart_driver;
 
-static struct uart_port *meson_ports[AML_UART_PORT_NUM];
+अटल काष्ठा uart_port *meson_ports[AML_UART_PORT_NUM];
 
-static void meson_uart_set_mctrl(struct uart_port *port, unsigned int mctrl)
-{
-}
+अटल व्योम meson_uart_set_mctrl(काष्ठा uart_port *port, अचिन्हित पूर्णांक mctrl)
+अणु
+पूर्ण
 
-static unsigned int meson_uart_get_mctrl(struct uart_port *port)
-{
-	return TIOCM_CTS;
-}
+अटल अचिन्हित पूर्णांक meson_uart_get_mctrl(काष्ठा uart_port *port)
+अणु
+	वापस TIOCM_CTS;
+पूर्ण
 
-static unsigned int meson_uart_tx_empty(struct uart_port *port)
-{
+अटल अचिन्हित पूर्णांक meson_uart_tx_empty(काष्ठा uart_port *port)
+अणु
 	u32 val;
 
-	val = readl(port->membase + AML_UART_STATUS);
+	val = पढ़ोl(port->membase + AML_UART_STATUS);
 	val &= (AML_UART_TX_EMPTY | AML_UART_XMIT_BUSY);
-	return (val == AML_UART_TX_EMPTY) ? TIOCSER_TEMT : 0;
-}
+	वापस (val == AML_UART_TX_EMPTY) ? TIOCSER_TEMT : 0;
+पूर्ण
 
-static void meson_uart_stop_tx(struct uart_port *port)
-{
+अटल व्योम meson_uart_stop_tx(काष्ठा uart_port *port)
+अणु
 	u32 val;
 
-	val = readl(port->membase + AML_UART_CONTROL);
+	val = पढ़ोl(port->membase + AML_UART_CONTROL);
 	val &= ~AML_UART_TX_INT_EN;
-	writel(val, port->membase + AML_UART_CONTROL);
-}
+	ग_लिखोl(val, port->membase + AML_UART_CONTROL);
+पूर्ण
 
-static void meson_uart_stop_rx(struct uart_port *port)
-{
+अटल व्योम meson_uart_stop_rx(काष्ठा uart_port *port)
+अणु
 	u32 val;
 
-	val = readl(port->membase + AML_UART_CONTROL);
+	val = पढ़ोl(port->membase + AML_UART_CONTROL);
 	val &= ~AML_UART_RX_EN;
-	writel(val, port->membase + AML_UART_CONTROL);
-}
+	ग_लिखोl(val, port->membase + AML_UART_CONTROL);
+पूर्ण
 
-static void meson_uart_shutdown(struct uart_port *port)
-{
-	unsigned long flags;
+अटल व्योम meson_uart_shutकरोwn(काष्ठा uart_port *port)
+अणु
+	अचिन्हित दीर्घ flags;
 	u32 val;
 
-	free_irq(port->irq, port);
+	मुक्त_irq(port->irq, port);
 
 	spin_lock_irqsave(&port->lock, flags);
 
-	val = readl(port->membase + AML_UART_CONTROL);
+	val = पढ़ोl(port->membase + AML_UART_CONTROL);
 	val &= ~AML_UART_RX_EN;
 	val &= ~(AML_UART_RX_INT_EN | AML_UART_TX_INT_EN);
-	writel(val, port->membase + AML_UART_CONTROL);
+	ग_लिखोl(val, port->membase + AML_UART_CONTROL);
 
 	spin_unlock_irqrestore(&port->lock, flags);
-}
+पूर्ण
 
-static void meson_uart_start_tx(struct uart_port *port)
-{
-	struct circ_buf *xmit = &port->state->xmit;
-	unsigned int ch;
+अटल व्योम meson_uart_start_tx(काष्ठा uart_port *port)
+अणु
+	काष्ठा circ_buf *xmit = &port->state->xmit;
+	अचिन्हित पूर्णांक ch;
 	u32 val;
 
-	if (uart_tx_stopped(port)) {
+	अगर (uart_tx_stopped(port)) अणु
 		meson_uart_stop_tx(port);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	while (!(readl(port->membase + AML_UART_STATUS) & AML_UART_TX_FULL)) {
-		if (port->x_char) {
-			writel(port->x_char, port->membase + AML_UART_WFIFO);
+	जबतक (!(पढ़ोl(port->membase + AML_UART_STATUS) & AML_UART_TX_FULL)) अणु
+		अगर (port->x_अक्षर) अणु
+			ग_लिखोl(port->x_अक्षर, port->membase + AML_UART_WFIFO);
 			port->icount.tx++;
-			port->x_char = 0;
-			continue;
-		}
+			port->x_अक्षर = 0;
+			जारी;
+		पूर्ण
 
-		if (uart_circ_empty(xmit))
-			break;
+		अगर (uart_circ_empty(xmit))
+			अवरोध;
 
 		ch = xmit->buf[xmit->tail];
-		writel(ch, port->membase + AML_UART_WFIFO);
+		ग_लिखोl(ch, port->membase + AML_UART_WFIFO);
 		xmit->tail = (xmit->tail+1) & (SERIAL_XMIT_SIZE - 1);
 		port->icount.tx++;
-	}
+	पूर्ण
 
-	if (!uart_circ_empty(xmit)) {
-		val = readl(port->membase + AML_UART_CONTROL);
+	अगर (!uart_circ_empty(xmit)) अणु
+		val = पढ़ोl(port->membase + AML_UART_CONTROL);
 		val |= AML_UART_TX_INT_EN;
-		writel(val, port->membase + AML_UART_CONTROL);
-	}
+		ग_लिखोl(val, port->membase + AML_UART_CONTROL);
+	पूर्ण
 
-	if (uart_circ_chars_pending(xmit) < WAKEUP_CHARS)
-		uart_write_wakeup(port);
-}
+	अगर (uart_circ_अक्षरs_pending(xmit) < WAKEUP_CHARS)
+		uart_ग_लिखो_wakeup(port);
+पूर्ण
 
-static void meson_receive_chars(struct uart_port *port)
-{
-	struct tty_port *tport = &port->state->port;
-	char flag;
+अटल व्योम meson_receive_अक्षरs(काष्ठा uart_port *port)
+अणु
+	काष्ठा tty_port *tport = &port->state->port;
+	अक्षर flag;
 	u32 ostatus, status, ch, mode;
 
-	do {
+	करो अणु
 		flag = TTY_NORMAL;
 		port->icount.rx++;
-		ostatus = status = readl(port->membase + AML_UART_STATUS);
+		ostatus = status = पढ़ोl(port->membase + AML_UART_STATUS);
 
-		if (status & AML_UART_ERR) {
-			if (status & AML_UART_TX_FIFO_WERR)
+		अगर (status & AML_UART_ERR) अणु
+			अगर (status & AML_UART_TX_FIFO_WERR)
 				port->icount.overrun++;
-			else if (status & AML_UART_FRAME_ERR)
+			अन्यथा अगर (status & AML_UART_FRAME_ERR)
 				port->icount.frame++;
-			else if (status & AML_UART_PARITY_ERR)
+			अन्यथा अगर (status & AML_UART_PARITY_ERR)
 				port->icount.frame++;
 
-			mode = readl(port->membase + AML_UART_CONTROL);
+			mode = पढ़ोl(port->membase + AML_UART_CONTROL);
 			mode |= AML_UART_CLEAR_ERR;
-			writel(mode, port->membase + AML_UART_CONTROL);
+			ग_लिखोl(mode, port->membase + AML_UART_CONTROL);
 
-			/* It doesn't clear to 0 automatically */
+			/* It करोesn't clear to 0 स्वतःmatically */
 			mode &= ~AML_UART_CLEAR_ERR;
-			writel(mode, port->membase + AML_UART_CONTROL);
+			ग_लिखोl(mode, port->membase + AML_UART_CONTROL);
 
-			status &= port->read_status_mask;
-			if (status & AML_UART_FRAME_ERR)
+			status &= port->पढ़ो_status_mask;
+			अगर (status & AML_UART_FRAME_ERR)
 				flag = TTY_FRAME;
-			else if (status & AML_UART_PARITY_ERR)
+			अन्यथा अगर (status & AML_UART_PARITY_ERR)
 				flag = TTY_PARITY;
-		}
+		पूर्ण
 
-		ch = readl(port->membase + AML_UART_RFIFO);
+		ch = पढ़ोl(port->membase + AML_UART_RFIFO);
 		ch &= 0xff;
 
-		if ((ostatus & AML_UART_FRAME_ERR) && (ch == 0)) {
+		अगर ((ostatus & AML_UART_FRAME_ERR) && (ch == 0)) अणु
 			port->icount.brk++;
 			flag = TTY_BREAK;
-			if (uart_handle_break(port))
-				continue;
-		}
+			अगर (uart_handle_अवरोध(port))
+				जारी;
+		पूर्ण
 
-		if (uart_handle_sysrq_char(port, ch))
-			continue;
+		अगर (uart_handle_sysrq_अक्षर(port, ch))
+			जारी;
 
-		if ((status & port->ignore_status_mask) == 0)
-			tty_insert_flip_char(tport, ch, flag);
+		अगर ((status & port->ignore_status_mask) == 0)
+			tty_insert_flip_अक्षर(tport, ch, flag);
 
-		if (status & AML_UART_TX_FIFO_WERR)
-			tty_insert_flip_char(tport, 0, TTY_OVERRUN);
+		अगर (status & AML_UART_TX_FIFO_WERR)
+			tty_insert_flip_अक्षर(tport, 0, TTY_OVERRUN);
 
-	} while (!(readl(port->membase + AML_UART_STATUS) & AML_UART_RX_EMPTY));
+	पूर्ण जबतक (!(पढ़ोl(port->membase + AML_UART_STATUS) & AML_UART_RX_EMPTY));
 
 	tty_flip_buffer_push(tport);
-}
+पूर्ण
 
-static irqreturn_t meson_uart_interrupt(int irq, void *dev_id)
-{
-	struct uart_port *port = (struct uart_port *)dev_id;
+अटल irqवापस_t meson_uart_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा uart_port *port = (काष्ठा uart_port *)dev_id;
 
 	spin_lock(&port->lock);
 
-	if (!(readl(port->membase + AML_UART_STATUS) & AML_UART_RX_EMPTY))
-		meson_receive_chars(port);
+	अगर (!(पढ़ोl(port->membase + AML_UART_STATUS) & AML_UART_RX_EMPTY))
+		meson_receive_अक्षरs(port);
 
-	if (!(readl(port->membase + AML_UART_STATUS) & AML_UART_TX_FULL)) {
-		if (readl(port->membase + AML_UART_CONTROL) & AML_UART_TX_INT_EN)
+	अगर (!(पढ़ोl(port->membase + AML_UART_STATUS) & AML_UART_TX_FULL)) अणु
+		अगर (पढ़ोl(port->membase + AML_UART_CONTROL) & AML_UART_TX_INT_EN)
 			meson_uart_start_tx(port);
-	}
+	पूर्ण
 
 	spin_unlock(&port->lock);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static const char *meson_uart_type(struct uart_port *port)
-{
-	return (port->type == PORT_MESON) ? "meson_uart" : NULL;
-}
+अटल स्थिर अक्षर *meson_uart_type(काष्ठा uart_port *port)
+अणु
+	वापस (port->type == PORT_MESON) ? "meson_uart" : शून्य;
+पूर्ण
 
-static void meson_uart_reset(struct uart_port *port)
-{
+अटल व्योम meson_uart_reset(काष्ठा uart_port *port)
+अणु
 	u32 val;
 
-	val = readl(port->membase + AML_UART_CONTROL);
+	val = पढ़ोl(port->membase + AML_UART_CONTROL);
 	val |= (AML_UART_RX_RST | AML_UART_TX_RST | AML_UART_CLEAR_ERR);
-	writel(val, port->membase + AML_UART_CONTROL);
+	ग_लिखोl(val, port->membase + AML_UART_CONTROL);
 
 	val &= ~(AML_UART_RX_RST | AML_UART_TX_RST | AML_UART_CLEAR_ERR);
-	writel(val, port->membase + AML_UART_CONTROL);
-}
+	ग_लिखोl(val, port->membase + AML_UART_CONTROL);
+पूर्ण
 
-static int meson_uart_startup(struct uart_port *port)
-{
+अटल पूर्णांक meson_uart_startup(काष्ठा uart_port *port)
+अणु
 	u32 val;
-	int ret = 0;
+	पूर्णांक ret = 0;
 
-	val = readl(port->membase + AML_UART_CONTROL);
+	val = पढ़ोl(port->membase + AML_UART_CONTROL);
 	val |= AML_UART_CLEAR_ERR;
-	writel(val, port->membase + AML_UART_CONTROL);
+	ग_लिखोl(val, port->membase + AML_UART_CONTROL);
 	val &= ~AML_UART_CLEAR_ERR;
-	writel(val, port->membase + AML_UART_CONTROL);
+	ग_लिखोl(val, port->membase + AML_UART_CONTROL);
 
 	val |= (AML_UART_RX_EN | AML_UART_TX_EN);
-	writel(val, port->membase + AML_UART_CONTROL);
+	ग_लिखोl(val, port->membase + AML_UART_CONTROL);
 
 	val |= (AML_UART_RX_INT_EN | AML_UART_TX_INT_EN);
-	writel(val, port->membase + AML_UART_CONTROL);
+	ग_लिखोl(val, port->membase + AML_UART_CONTROL);
 
-	val = (AML_UART_RECV_IRQ(1) | AML_UART_XMIT_IRQ(port->fifosize / 2));
-	writel(val, port->membase + AML_UART_MISC);
+	val = (AML_UART_RECV_IRQ(1) | AML_UART_XMIT_IRQ(port->fअगरosize / 2));
+	ग_लिखोl(val, port->membase + AML_UART_MISC);
 
-	ret = request_irq(port->irq, meson_uart_interrupt, 0,
+	ret = request_irq(port->irq, meson_uart_पूर्णांकerrupt, 0,
 			  port->name, port);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void meson_uart_change_speed(struct uart_port *port, unsigned long baud)
-{
+अटल व्योम meson_uart_change_speed(काष्ठा uart_port *port, अचिन्हित दीर्घ baud)
+अणु
 	u32 val;
 
-	while (!meson_uart_tx_empty(port))
+	जबतक (!meson_uart_tx_empty(port))
 		cpu_relax();
 
-	if (port->uartclk == 24000000) {
+	अगर (port->uartclk == 24000000) अणु
 		val = ((port->uartclk / 3) / baud) - 1;
 		val |= AML_UART_BAUD_XTAL;
-	} else {
+	पूर्ण अन्यथा अणु
 		val = ((port->uartclk * 10 / (baud * 4) + 5) / 10) - 1;
-	}
+	पूर्ण
 	val |= AML_UART_BAUD_USE;
-	writel(val, port->membase + AML_UART_REG5);
-}
+	ग_लिखोl(val, port->membase + AML_UART_REG5);
+पूर्ण
 
-static void meson_uart_set_termios(struct uart_port *port,
-				   struct ktermios *termios,
-				   struct ktermios *old)
-{
-	unsigned int cflags, iflags, baud;
-	unsigned long flags;
+अटल व्योम meson_uart_set_termios(काष्ठा uart_port *port,
+				   काष्ठा ktermios *termios,
+				   काष्ठा ktermios *old)
+अणु
+	अचिन्हित पूर्णांक cflags, अगरlags, baud;
+	अचिन्हित दीर्घ flags;
 	u32 val;
 
 	spin_lock_irqsave(&port->lock, flags);
 
 	cflags = termios->c_cflag;
-	iflags = termios->c_iflag;
+	अगरlags = termios->c_अगरlag;
 
-	val = readl(port->membase + AML_UART_CONTROL);
+	val = पढ़ोl(port->membase + AML_UART_CONTROL);
 
 	val &= ~AML_UART_DATA_LEN_MASK;
-	switch (cflags & CSIZE) {
-	case CS8:
+	चयन (cflags & CSIZE) अणु
+	हाल CS8:
 		val |= AML_UART_DATA_LEN_8BIT;
-		break;
-	case CS7:
+		अवरोध;
+	हाल CS7:
 		val |= AML_UART_DATA_LEN_7BIT;
-		break;
-	case CS6:
+		अवरोध;
+	हाल CS6:
 		val |= AML_UART_DATA_LEN_6BIT;
-		break;
-	case CS5:
+		अवरोध;
+	हाल CS5:
 		val |= AML_UART_DATA_LEN_5BIT;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	if (cflags & PARENB)
+	अगर (cflags & PARENB)
 		val |= AML_UART_PARITY_EN;
-	else
+	अन्यथा
 		val &= ~AML_UART_PARITY_EN;
 
-	if (cflags & PARODD)
+	अगर (cflags & PARODD)
 		val |= AML_UART_PARITY_TYPE;
-	else
+	अन्यथा
 		val &= ~AML_UART_PARITY_TYPE;
 
 	val &= ~AML_UART_STOP_BIT_LEN_MASK;
-	if (cflags & CSTOPB)
+	अगर (cflags & CSTOPB)
 		val |= AML_UART_STOP_BIT_2SB;
-	else
+	अन्यथा
 		val |= AML_UART_STOP_BIT_1SB;
 
-	if (cflags & CRTSCTS)
+	अगर (cflags & CRTSCTS)
 		val &= ~AML_UART_TWO_WIRE_EN;
-	else
+	अन्यथा
 		val |= AML_UART_TWO_WIRE_EN;
 
-	writel(val, port->membase + AML_UART_CONTROL);
+	ग_लिखोl(val, port->membase + AML_UART_CONTROL);
 
 	baud = uart_get_baud_rate(port, termios, old, 50, 4000000);
 	meson_uart_change_speed(port, baud);
 
-	port->read_status_mask = AML_UART_TX_FIFO_WERR;
-	if (iflags & INPCK)
-		port->read_status_mask |= AML_UART_PARITY_ERR |
+	port->पढ़ो_status_mask = AML_UART_TX_FIFO_WERR;
+	अगर (अगरlags & INPCK)
+		port->पढ़ो_status_mask |= AML_UART_PARITY_ERR |
 					  AML_UART_FRAME_ERR;
 
 	port->ignore_status_mask = 0;
-	if (iflags & IGNPAR)
+	अगर (अगरlags & IGNPAR)
 		port->ignore_status_mask |= AML_UART_PARITY_ERR |
 					    AML_UART_FRAME_ERR;
 
-	uart_update_timeout(port, termios->c_cflag, baud);
+	uart_update_समयout(port, termios->c_cflag, baud);
 	spin_unlock_irqrestore(&port->lock, flags);
-}
+पूर्ण
 
-static int meson_uart_verify_port(struct uart_port *port,
-				  struct serial_struct *ser)
-{
-	int ret = 0;
+अटल पूर्णांक meson_uart_verअगरy_port(काष्ठा uart_port *port,
+				  काष्ठा serial_काष्ठा *ser)
+अणु
+	पूर्णांक ret = 0;
 
-	if (port->type != PORT_MESON)
+	अगर (port->type != PORT_MESON)
 		ret = -EINVAL;
-	if (port->irq != ser->irq)
+	अगर (port->irq != ser->irq)
 		ret = -EINVAL;
-	if (ser->baud_base < 9600)
+	अगर (ser->baud_base < 9600)
 		ret = -EINVAL;
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void meson_uart_release_port(struct uart_port *port)
-{
+अटल व्योम meson_uart_release_port(काष्ठा uart_port *port)
+अणु
 	devm_iounmap(port->dev, port->membase);
-	port->membase = NULL;
+	port->membase = शून्य;
 	devm_release_mem_region(port->dev, port->mapbase, port->mapsize);
-}
+पूर्ण
 
-static int meson_uart_request_port(struct uart_port *port)
-{
-	if (!devm_request_mem_region(port->dev, port->mapbase, port->mapsize,
-				     dev_name(port->dev))) {
+अटल पूर्णांक meson_uart_request_port(काष्ठा uart_port *port)
+अणु
+	अगर (!devm_request_mem_region(port->dev, port->mapbase, port->mapsize,
+				     dev_name(port->dev))) अणु
 		dev_err(port->dev, "Memory region busy\n");
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 
 	port->membase = devm_ioremap(port->dev, port->mapbase,
 					     port->mapsize);
-	if (!port->membase)
-		return -ENOMEM;
+	अगर (!port->membase)
+		वापस -ENOMEM;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void meson_uart_config_port(struct uart_port *port, int flags)
-{
-	if (flags & UART_CONFIG_TYPE) {
+अटल व्योम meson_uart_config_port(काष्ठा uart_port *port, पूर्णांक flags)
+अणु
+	अगर (flags & UART_CONFIG_TYPE) अणु
 		port->type = PORT_MESON;
 		meson_uart_request_port(port);
-	}
-}
+	पूर्ण
+पूर्ण
 
-#ifdef CONFIG_CONSOLE_POLL
+#अगर_घोषित CONFIG_CONSOLE_POLL
 /*
- * Console polling routines for writing and reading from the uart while
- * in an interrupt or debug context (i.e. kgdb).
+ * Console polling routines क्रम writing and पढ़ोing from the uart जबतक
+ * in an पूर्णांकerrupt or debug context (i.e. kgdb).
  */
 
-static int meson_uart_poll_get_char(struct uart_port *port)
-{
+अटल पूर्णांक meson_uart_poll_get_अक्षर(काष्ठा uart_port *port)
+अणु
 	u32 c;
-	unsigned long flags;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&port->lock, flags);
 
-	if (readl(port->membase + AML_UART_STATUS) & AML_UART_RX_EMPTY)
+	अगर (पढ़ोl(port->membase + AML_UART_STATUS) & AML_UART_RX_EMPTY)
 		c = NO_POLL_CHAR;
-	else
-		c = readl(port->membase + AML_UART_RFIFO);
+	अन्यथा
+		c = पढ़ोl(port->membase + AML_UART_RFIFO);
 
 	spin_unlock_irqrestore(&port->lock, flags);
 
-	return c;
-}
+	वापस c;
+पूर्ण
 
-static void meson_uart_poll_put_char(struct uart_port *port, unsigned char c)
-{
-	unsigned long flags;
+अटल व्योम meson_uart_poll_put_अक्षर(काष्ठा uart_port *port, अचिन्हित अक्षर c)
+अणु
+	अचिन्हित दीर्घ flags;
 	u32 reg;
-	int ret;
+	पूर्णांक ret;
 
 	spin_lock_irqsave(&port->lock, flags);
 
-	/* Wait until FIFO is empty or timeout */
-	ret = readl_poll_timeout_atomic(port->membase + AML_UART_STATUS, reg,
+	/* Wait until FIFO is empty or समयout */
+	ret = पढ़ोl_poll_समयout_atomic(port->membase + AML_UART_STATUS, reg,
 					reg & AML_UART_TX_EMPTY,
 					AML_UART_POLL_USEC,
 					AML_UART_TIMEOUT_USEC);
-	if (ret == -ETIMEDOUT) {
+	अगर (ret == -ETIMEDOUT) अणु
 		dev_err(port->dev, "Timeout waiting for UART TX EMPTY\n");
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	/* Write the character */
-	writel(c, port->membase + AML_UART_WFIFO);
+	/* Write the अक्षरacter */
+	ग_लिखोl(c, port->membase + AML_UART_WFIFO);
 
-	/* Wait until FIFO is empty or timeout */
-	ret = readl_poll_timeout_atomic(port->membase + AML_UART_STATUS, reg,
+	/* Wait until FIFO is empty or समयout */
+	ret = पढ़ोl_poll_समयout_atomic(port->membase + AML_UART_STATUS, reg,
 					reg & AML_UART_TX_EMPTY,
 					AML_UART_POLL_USEC,
 					AML_UART_TIMEOUT_USEC);
-	if (ret == -ETIMEDOUT)
+	अगर (ret == -ETIMEDOUT)
 		dev_err(port->dev, "Timeout waiting for UART TX EMPTY\n");
 
 out:
 	spin_unlock_irqrestore(&port->lock, flags);
-}
+पूर्ण
 
-#endif /* CONFIG_CONSOLE_POLL */
+#पूर्ण_अगर /* CONFIG_CONSOLE_POLL */
 
-static const struct uart_ops meson_uart_ops = {
+अटल स्थिर काष्ठा uart_ops meson_uart_ops = अणु
 	.set_mctrl      = meson_uart_set_mctrl,
 	.get_mctrl      = meson_uart_get_mctrl,
 	.tx_empty	= meson_uart_tx_empty,
@@ -490,274 +491,274 @@ static const struct uart_ops meson_uart_ops = {
 	.stop_tx	= meson_uart_stop_tx,
 	.stop_rx	= meson_uart_stop_rx,
 	.startup	= meson_uart_startup,
-	.shutdown	= meson_uart_shutdown,
+	.shutकरोwn	= meson_uart_shutकरोwn,
 	.set_termios	= meson_uart_set_termios,
 	.type		= meson_uart_type,
 	.config_port	= meson_uart_config_port,
 	.request_port	= meson_uart_request_port,
 	.release_port	= meson_uart_release_port,
-	.verify_port	= meson_uart_verify_port,
-#ifdef CONFIG_CONSOLE_POLL
-	.poll_get_char	= meson_uart_poll_get_char,
-	.poll_put_char	= meson_uart_poll_put_char,
-#endif
-};
+	.verअगरy_port	= meson_uart_verअगरy_port,
+#अगर_घोषित CONFIG_CONSOLE_POLL
+	.poll_get_अक्षर	= meson_uart_poll_get_अक्षर,
+	.poll_put_अक्षर	= meson_uart_poll_put_अक्षर,
+#पूर्ण_अगर
+पूर्ण;
 
-#ifdef CONFIG_SERIAL_MESON_CONSOLE
-static void meson_uart_enable_tx_engine(struct uart_port *port)
-{
+#अगर_घोषित CONFIG_SERIAL_MESON_CONSOLE
+अटल व्योम meson_uart_enable_tx_engine(काष्ठा uart_port *port)
+अणु
 	u32 val;
 
-	val = readl(port->membase + AML_UART_CONTROL);
+	val = पढ़ोl(port->membase + AML_UART_CONTROL);
 	val |= AML_UART_TX_EN;
-	writel(val, port->membase + AML_UART_CONTROL);
-}
+	ग_लिखोl(val, port->membase + AML_UART_CONTROL);
+पूर्ण
 
-static void meson_console_putchar(struct uart_port *port, int ch)
-{
-	if (!port->membase)
-		return;
+अटल व्योम meson_console_अक्षर_दो(काष्ठा uart_port *port, पूर्णांक ch)
+अणु
+	अगर (!port->membase)
+		वापस;
 
-	while (readl(port->membase + AML_UART_STATUS) & AML_UART_TX_FULL)
+	जबतक (पढ़ोl(port->membase + AML_UART_STATUS) & AML_UART_TX_FULL)
 		cpu_relax();
-	writel(ch, port->membase + AML_UART_WFIFO);
-}
+	ग_लिखोl(ch, port->membase + AML_UART_WFIFO);
+पूर्ण
 
-static void meson_serial_port_write(struct uart_port *port, const char *s,
-				    u_int count)
-{
-	unsigned long flags;
-	int locked;
-	u32 val, tmp;
+अटल व्योम meson_serial_port_ग_लिखो(काष्ठा uart_port *port, स्थिर अक्षर *s,
+				    u_पूर्णांक count)
+अणु
+	अचिन्हित दीर्घ flags;
+	पूर्णांक locked;
+	u32 val, पंचांगp;
 
 	local_irq_save(flags);
-	if (port->sysrq) {
+	अगर (port->sysrq) अणु
 		locked = 0;
-	} else if (oops_in_progress) {
+	पूर्ण अन्यथा अगर (oops_in_progress) अणु
 		locked = spin_trylock(&port->lock);
-	} else {
+	पूर्ण अन्यथा अणु
 		spin_lock(&port->lock);
 		locked = 1;
-	}
+	पूर्ण
 
-	val = readl(port->membase + AML_UART_CONTROL);
-	tmp = val & ~(AML_UART_TX_INT_EN | AML_UART_RX_INT_EN);
-	writel(tmp, port->membase + AML_UART_CONTROL);
+	val = पढ़ोl(port->membase + AML_UART_CONTROL);
+	पंचांगp = val & ~(AML_UART_TX_INT_EN | AML_UART_RX_INT_EN);
+	ग_लिखोl(पंचांगp, port->membase + AML_UART_CONTROL);
 
-	uart_console_write(port, s, count, meson_console_putchar);
-	writel(val, port->membase + AML_UART_CONTROL);
+	uart_console_ग_लिखो(port, s, count, meson_console_अक्षर_दो);
+	ग_लिखोl(val, port->membase + AML_UART_CONTROL);
 
-	if (locked)
+	अगर (locked)
 		spin_unlock(&port->lock);
 	local_irq_restore(flags);
-}
+पूर्ण
 
-static void meson_serial_console_write(struct console *co, const char *s,
-				       u_int count)
-{
-	struct uart_port *port;
-
-	port = meson_ports[co->index];
-	if (!port)
-		return;
-
-	meson_serial_port_write(port, s, count);
-}
-
-static int meson_serial_console_setup(struct console *co, char *options)
-{
-	struct uart_port *port;
-	int baud = 115200;
-	int bits = 8;
-	int parity = 'n';
-	int flow = 'n';
-
-	if (co->index < 0 || co->index >= AML_UART_PORT_NUM)
-		return -EINVAL;
+अटल व्योम meson_serial_console_ग_लिखो(काष्ठा console *co, स्थिर अक्षर *s,
+				       u_पूर्णांक count)
+अणु
+	काष्ठा uart_port *port;
 
 	port = meson_ports[co->index];
-	if (!port || !port->membase)
-		return -ENODEV;
+	अगर (!port)
+		वापस;
+
+	meson_serial_port_ग_लिखो(port, s, count);
+पूर्ण
+
+अटल पूर्णांक meson_serial_console_setup(काष्ठा console *co, अक्षर *options)
+अणु
+	काष्ठा uart_port *port;
+	पूर्णांक baud = 115200;
+	पूर्णांक bits = 8;
+	पूर्णांक parity = 'n';
+	पूर्णांक flow = 'n';
+
+	अगर (co->index < 0 || co->index >= AML_UART_PORT_NUM)
+		वापस -EINVAL;
+
+	port = meson_ports[co->index];
+	अगर (!port || !port->membase)
+		वापस -ENODEV;
 
 	meson_uart_enable_tx_engine(port);
 
-	if (options)
+	अगर (options)
 		uart_parse_options(options, &baud, &parity, &bits, &flow);
 
-	return uart_set_options(port, co, baud, parity, bits, flow);
-}
+	वापस uart_set_options(port, co, baud, parity, bits, flow);
+पूर्ण
 
-static struct console meson_serial_console = {
+अटल काष्ठा console meson_serial_console = अणु
 	.name		= AML_UART_DEV_NAME,
-	.write		= meson_serial_console_write,
+	.ग_लिखो		= meson_serial_console_ग_लिखो,
 	.device		= uart_console_device,
 	.setup		= meson_serial_console_setup,
 	.flags		= CON_PRINTBUFFER,
 	.index		= -1,
 	.data		= &meson_uart_driver,
-};
+पूर्ण;
 
-static int __init meson_serial_console_init(void)
-{
-	register_console(&meson_serial_console);
-	return 0;
-}
+अटल पूर्णांक __init meson_serial_console_init(व्योम)
+अणु
+	रेजिस्टर_console(&meson_serial_console);
+	वापस 0;
+पूर्ण
 
-static void meson_serial_early_console_write(struct console *co,
-					     const char *s,
-					     u_int count)
-{
-	struct earlycon_device *dev = co->data;
+अटल व्योम meson_serial_early_console_ग_लिखो(काष्ठा console *co,
+					     स्थिर अक्षर *s,
+					     u_पूर्णांक count)
+अणु
+	काष्ठा earlycon_device *dev = co->data;
 
-	meson_serial_port_write(&dev->port, s, count);
-}
+	meson_serial_port_ग_लिखो(&dev->port, s, count);
+पूर्ण
 
-static int __init
-meson_serial_early_console_setup(struct earlycon_device *device, const char *opt)
-{
-	if (!device->port.membase)
-		return -ENODEV;
+अटल पूर्णांक __init
+meson_serial_early_console_setup(काष्ठा earlycon_device *device, स्थिर अक्षर *opt)
+अणु
+	अगर (!device->port.membase)
+		वापस -ENODEV;
 
 	meson_uart_enable_tx_engine(&device->port);
-	device->con->write = meson_serial_early_console_write;
-	return 0;
-}
-/* Legacy bindings, should be removed when no more used */
+	device->con->ग_लिखो = meson_serial_early_console_ग_लिखो;
+	वापस 0;
+पूर्ण
+/* Legacy bindings, should be हटाओd when no more used */
 OF_EARLYCON_DECLARE(meson, "amlogic,meson-uart",
 		    meson_serial_early_console_setup);
 /* Stable bindings */
 OF_EARLYCON_DECLARE(meson, "amlogic,meson-ao-uart",
 		    meson_serial_early_console_setup);
 
-#define MESON_SERIAL_CONSOLE	(&meson_serial_console)
-#else
-static int __init meson_serial_console_init(void) {
-	return 0;
-}
-#define MESON_SERIAL_CONSOLE	NULL
-#endif
+#घोषणा MESON_SERIAL_CONSOLE	(&meson_serial_console)
+#अन्यथा
+अटल पूर्णांक __init meson_serial_console_init(व्योम) अणु
+	वापस 0;
+पूर्ण
+#घोषणा MESON_SERIAL_CONSOLE	शून्य
+#पूर्ण_अगर
 
-static struct uart_driver meson_uart_driver = {
+अटल काष्ठा uart_driver meson_uart_driver = अणु
 	.owner		= THIS_MODULE,
 	.driver_name	= "meson_uart",
 	.dev_name	= AML_UART_DEV_NAME,
 	.nr		= AML_UART_PORT_NUM,
 	.cons		= MESON_SERIAL_CONSOLE,
-};
+पूर्ण;
 
-static inline struct clk *meson_uart_probe_clock(struct device *dev,
-						 const char *id)
-{
-	struct clk *clk = NULL;
-	int ret;
+अटल अंतरभूत काष्ठा clk *meson_uart_probe_घड़ी(काष्ठा device *dev,
+						 स्थिर अक्षर *id)
+अणु
+	काष्ठा clk *clk = शून्य;
+	पूर्णांक ret;
 
 	clk = devm_clk_get(dev, id);
-	if (IS_ERR(clk))
-		return clk;
+	अगर (IS_ERR(clk))
+		वापस clk;
 
 	ret = clk_prepare_enable(clk);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev, "couldn't enable clk\n");
-		return ERR_PTR(ret);
-	}
+		वापस ERR_PTR(ret);
+	पूर्ण
 
 	devm_add_action_or_reset(dev,
-			(void(*)(void *))clk_disable_unprepare,
+			(व्योम(*)(व्योम *))clk_disable_unprepare,
 			clk);
 
-	return clk;
-}
+	वापस clk;
+पूर्ण
 
 /*
- * This function gets clocks in the legacy non-stable DT bindings.
- * This code will be remove once all the platforms switch to the
+ * This function माला_लो घड़ीs in the legacy non-stable DT bindings.
+ * This code will be हटाओ once all the platक्रमms चयन to the
  * new DT bindings.
  */
-static int meson_uart_probe_clocks_legacy(struct platform_device *pdev,
-					  struct uart_port *port)
-{
-	struct clk *clk = NULL;
+अटल पूर्णांक meson_uart_probe_घड़ीs_legacy(काष्ठा platक्रमm_device *pdev,
+					  काष्ठा uart_port *port)
+अणु
+	काष्ठा clk *clk = शून्य;
 
-	clk = meson_uart_probe_clock(&pdev->dev, NULL);
-	if (IS_ERR(clk))
-		return PTR_ERR(clk);
+	clk = meson_uart_probe_घड़ी(&pdev->dev, शून्य);
+	अगर (IS_ERR(clk))
+		वापस PTR_ERR(clk);
 
 	port->uartclk = clk_get_rate(clk);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int meson_uart_probe_clocks(struct platform_device *pdev,
-				   struct uart_port *port)
-{
-	struct clk *clk_xtal = NULL;
-	struct clk *clk_pclk = NULL;
-	struct clk *clk_baud = NULL;
+अटल पूर्णांक meson_uart_probe_घड़ीs(काष्ठा platक्रमm_device *pdev,
+				   काष्ठा uart_port *port)
+अणु
+	काष्ठा clk *clk_xtal = शून्य;
+	काष्ठा clk *clk_pclk = शून्य;
+	काष्ठा clk *clk_baud = शून्य;
 
-	clk_pclk = meson_uart_probe_clock(&pdev->dev, "pclk");
-	if (IS_ERR(clk_pclk))
-		return PTR_ERR(clk_pclk);
+	clk_pclk = meson_uart_probe_घड़ी(&pdev->dev, "pclk");
+	अगर (IS_ERR(clk_pclk))
+		वापस PTR_ERR(clk_pclk);
 
-	clk_xtal = meson_uart_probe_clock(&pdev->dev, "xtal");
-	if (IS_ERR(clk_xtal))
-		return PTR_ERR(clk_xtal);
+	clk_xtal = meson_uart_probe_घड़ी(&pdev->dev, "xtal");
+	अगर (IS_ERR(clk_xtal))
+		वापस PTR_ERR(clk_xtal);
 
-	clk_baud = meson_uart_probe_clock(&pdev->dev, "baud");
-	if (IS_ERR(clk_baud))
-		return PTR_ERR(clk_baud);
+	clk_baud = meson_uart_probe_घड़ी(&pdev->dev, "baud");
+	अगर (IS_ERR(clk_baud))
+		वापस PTR_ERR(clk_baud);
 
 	port->uartclk = clk_get_rate(clk_baud);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int meson_uart_probe(struct platform_device *pdev)
-{
-	struct resource *res_mem, *res_irq;
-	struct uart_port *port;
-	int ret = 0;
-	int id = -1;
+अटल पूर्णांक meson_uart_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा resource *res_mem, *res_irq;
+	काष्ठा uart_port *port;
+	पूर्णांक ret = 0;
+	पूर्णांक id = -1;
 
-	if (pdev->dev.of_node)
+	अगर (pdev->dev.of_node)
 		pdev->id = of_alias_get_id(pdev->dev.of_node, "serial");
 
-	if (pdev->id < 0) {
-		for (id = AML_UART_PORT_OFFSET; id < AML_UART_PORT_NUM; id++) {
-			if (!meson_ports[id]) {
+	अगर (pdev->id < 0) अणु
+		क्रम (id = AML_UART_PORT_OFFSET; id < AML_UART_PORT_NUM; id++) अणु
+			अगर (!meson_ports[id]) अणु
 				pdev->id = id;
-				break;
-			}
-		}
-	}
+				अवरोध;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	if (pdev->id < 0 || pdev->id >= AML_UART_PORT_NUM)
-		return -EINVAL;
+	अगर (pdev->id < 0 || pdev->id >= AML_UART_PORT_NUM)
+		वापस -EINVAL;
 
-	res_mem = platform_get_resource(pdev, IORESOURCE_MEM, 0);
-	if (!res_mem)
-		return -ENODEV;
+	res_mem = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
+	अगर (!res_mem)
+		वापस -ENODEV;
 
-	res_irq = platform_get_resource(pdev, IORESOURCE_IRQ, 0);
-	if (!res_irq)
-		return -ENODEV;
+	res_irq = platक्रमm_get_resource(pdev, IORESOURCE_IRQ, 0);
+	अगर (!res_irq)
+		वापस -ENODEV;
 
-	if (meson_ports[pdev->id]) {
+	अगर (meson_ports[pdev->id]) अणु
 		dev_err(&pdev->dev, "port %d already allocated\n", pdev->id);
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 
-	port = devm_kzalloc(&pdev->dev, sizeof(struct uart_port), GFP_KERNEL);
-	if (!port)
-		return -ENOMEM;
+	port = devm_kzalloc(&pdev->dev, माप(काष्ठा uart_port), GFP_KERNEL);
+	अगर (!port)
+		वापस -ENOMEM;
 
-	/* Use legacy way until all platforms switch to new bindings */
-	if (of_device_is_compatible(pdev->dev.of_node, "amlogic,meson-uart"))
-		ret = meson_uart_probe_clocks_legacy(pdev, port);
-	else
-		ret = meson_uart_probe_clocks(pdev, port);
+	/* Use legacy way until all platक्रमms चयन to new bindings */
+	अगर (of_device_is_compatible(pdev->dev.of_node, "amlogic,meson-uart"))
+		ret = meson_uart_probe_घड़ीs_legacy(pdev, port);
+	अन्यथा
+		ret = meson_uart_probe_घड़ीs(pdev, port);
 
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	port->iotype = UPIO_MEM;
 	port->mapbase = res_mem->start;
@@ -768,85 +769,85 @@ static int meson_uart_probe(struct platform_device *pdev)
 	port->dev = &pdev->dev;
 	port->line = pdev->id;
 	port->type = PORT_MESON;
-	port->x_char = 0;
+	port->x_अक्षर = 0;
 	port->ops = &meson_uart_ops;
-	port->fifosize = 64;
+	port->fअगरosize = 64;
 
 	meson_ports[pdev->id] = port;
-	platform_set_drvdata(pdev, port);
+	platक्रमm_set_drvdata(pdev, port);
 
-	/* reset port before registering (and possibly registering console) */
-	if (meson_uart_request_port(port) >= 0) {
+	/* reset port beक्रमe रेजिस्टरing (and possibly रेजिस्टरing console) */
+	अगर (meson_uart_request_port(port) >= 0) अणु
 		meson_uart_reset(port);
 		meson_uart_release_port(port);
-	}
+	पूर्ण
 
 	ret = uart_add_one_port(&meson_uart_driver, port);
-	if (ret)
-		meson_ports[pdev->id] = NULL;
+	अगर (ret)
+		meson_ports[pdev->id] = शून्य;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int meson_uart_remove(struct platform_device *pdev)
-{
-	struct uart_port *port;
+अटल पूर्णांक meson_uart_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा uart_port *port;
 
-	port = platform_get_drvdata(pdev);
-	uart_remove_one_port(&meson_uart_driver, port);
-	meson_ports[pdev->id] = NULL;
+	port = platक्रमm_get_drvdata(pdev);
+	uart_हटाओ_one_port(&meson_uart_driver, port);
+	meson_ports[pdev->id] = शून्य;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct of_device_id meson_uart_dt_match[] = {
-	/* Legacy bindings, should be removed when no more used */
-	{ .compatible = "amlogic,meson-uart" },
+अटल स्थिर काष्ठा of_device_id meson_uart_dt_match[] = अणु
+	/* Legacy bindings, should be हटाओd when no more used */
+	अणु .compatible = "amlogic,meson-uart" पूर्ण,
 	/* Stable bindings */
-	{ .compatible = "amlogic,meson6-uart" },
-	{ .compatible = "amlogic,meson8-uart" },
-	{ .compatible = "amlogic,meson8b-uart" },
-	{ .compatible = "amlogic,meson-gx-uart" },
-	{ /* sentinel */ },
-};
+	अणु .compatible = "amlogic,meson6-uart" पूर्ण,
+	अणु .compatible = "amlogic,meson8-uart" पूर्ण,
+	अणु .compatible = "amlogic,meson8b-uart" पूर्ण,
+	अणु .compatible = "amlogic,meson-gx-uart" पूर्ण,
+	अणु /* sentinel */ पूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, meson_uart_dt_match);
 
-static  struct platform_driver meson_uart_platform_driver = {
+अटल  काष्ठा platक्रमm_driver meson_uart_platक्रमm_driver = अणु
 	.probe		= meson_uart_probe,
-	.remove		= meson_uart_remove,
-	.driver		= {
+	.हटाओ		= meson_uart_हटाओ,
+	.driver		= अणु
 		.name		= "meson_uart",
 		.of_match_table	= meson_uart_dt_match,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static int __init meson_uart_init(void)
-{
-	int ret;
+अटल पूर्णांक __init meson_uart_init(व्योम)
+अणु
+	पूर्णांक ret;
 
 	ret = meson_serial_console_init();
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 	
-	ret = uart_register_driver(&meson_uart_driver);
-	if (ret)
-		return ret;
+	ret = uart_रेजिस्टर_driver(&meson_uart_driver);
+	अगर (ret)
+		वापस ret;
 
-	ret = platform_driver_register(&meson_uart_platform_driver);
-	if (ret)
-		uart_unregister_driver(&meson_uart_driver);
+	ret = platक्रमm_driver_रेजिस्टर(&meson_uart_platक्रमm_driver);
+	अगर (ret)
+		uart_unरेजिस्टर_driver(&meson_uart_driver);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void __exit meson_uart_exit(void)
-{
-	platform_driver_unregister(&meson_uart_platform_driver);
-	uart_unregister_driver(&meson_uart_driver);
-}
+अटल व्योम __निकास meson_uart_निकास(व्योम)
+अणु
+	platक्रमm_driver_unरेजिस्टर(&meson_uart_platक्रमm_driver);
+	uart_unरेजिस्टर_driver(&meson_uart_driver);
+पूर्ण
 
 module_init(meson_uart_init);
-module_exit(meson_uart_exit);
+module_निकास(meson_uart_निकास);
 
 MODULE_AUTHOR("Carlo Caione <carlo@caione.org>");
 MODULE_DESCRIPTION("Amlogic Meson serial port driver");

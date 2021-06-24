@@ -1,2 +1,3 @@
-#define CS4231
-#include "opti92x-ad1848.c"
+<शैली गुरु>
+#घोषणा CS4231
+#समावेश "opti92x-ad1848.c"

@@ -1,29 +1,30 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Copyright (C) 2005, Intec Automation Inc.
  * Copyright (C) 2014, Freescale Semiconductor, Inc.
  */
 
-#include <linux/mtd/spi-nor.h>
+#समावेश <linux/mtd/spi-nor.h>
 
-#include "core.h"
+#समावेश "core.h"
 
-static const struct flash_info catalyst_parts[] = {
+अटल स्थिर काष्ठा flash_info catalyst_parts[] = अणु
 	/* Catalyst / On Semiconductor -- non-JEDEC */
-	{ "cat25c11", CAT25_INFO(16, 8, 16, 1,
-				 SPI_NOR_NO_ERASE | SPI_NOR_NO_FR) },
-	{ "cat25c03", CAT25_INFO(32, 8, 16, 2,
-				 SPI_NOR_NO_ERASE | SPI_NOR_NO_FR) },
-	{ "cat25c09", CAT25_INFO(128, 8, 32, 2,
-				 SPI_NOR_NO_ERASE | SPI_NOR_NO_FR) },
-	{ "cat25c17", CAT25_INFO(256, 8, 32, 2,
-				 SPI_NOR_NO_ERASE | SPI_NOR_NO_FR) },
-	{ "cat25128", CAT25_INFO(2048, 8, 64, 2,
-				 SPI_NOR_NO_ERASE | SPI_NOR_NO_FR) },
-};
+	अणु "cat25c11", CAT25_INFO(16, 8, 16, 1,
+				 SPI_NOR_NO_ERASE | SPI_NOR_NO_FR) पूर्ण,
+	अणु "cat25c03", CAT25_INFO(32, 8, 16, 2,
+				 SPI_NOR_NO_ERASE | SPI_NOR_NO_FR) पूर्ण,
+	अणु "cat25c09", CAT25_INFO(128, 8, 32, 2,
+				 SPI_NOR_NO_ERASE | SPI_NOR_NO_FR) पूर्ण,
+	अणु "cat25c17", CAT25_INFO(256, 8, 32, 2,
+				 SPI_NOR_NO_ERASE | SPI_NOR_NO_FR) पूर्ण,
+	अणु "cat25128", CAT25_INFO(2048, 8, 64, 2,
+				 SPI_NOR_NO_ERASE | SPI_NOR_NO_FR) पूर्ण,
+पूर्ण;
 
-const struct spi_nor_manufacturer spi_nor_catalyst = {
+स्थिर काष्ठा spi_nor_manufacturer spi_nor_catalyst = अणु
 	.name = "catalyst",
 	.parts = catalyst_parts,
 	.nparts = ARRAY_SIZE(catalyst_parts),
-};
+पूर्ण;

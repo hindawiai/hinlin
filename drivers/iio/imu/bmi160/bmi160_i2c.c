@@ -1,69 +1,70 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * BMI160 - Bosch IMU, I2C bits
  *
  * Copyright (c) 2016, Intel Corporation.
  *
  * 7-bit I2C slave address is:
- *      - 0x68 if SDO is pulled to GND
- *      - 0x69 if SDO is pulled to VDDIO
+ *      - 0x68 अगर SDO is pulled to GND
+ *      - 0x69 अगर SDO is pulled to VDDIO
  */
-#include <linux/acpi.h>
-#include <linux/i2c.h>
-#include <linux/module.h>
-#include <linux/of.h>
-#include <linux/regmap.h>
+#समावेश <linux/acpi.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of.h>
+#समावेश <linux/regmap.h>
 
-#include "bmi160.h"
+#समावेश "bmi160.h"
 
-static int bmi160_i2c_probe(struct i2c_client *client,
-			    const struct i2c_device_id *id)
-{
-	struct regmap *regmap;
-	const char *name = NULL;
+अटल पूर्णांक bmi160_i2c_probe(काष्ठा i2c_client *client,
+			    स्थिर काष्ठा i2c_device_id *id)
+अणु
+	काष्ठा regmap *regmap;
+	स्थिर अक्षर *name = शून्य;
 
 	regmap = devm_regmap_init_i2c(client, &bmi160_regmap_config);
-	if (IS_ERR(regmap)) {
+	अगर (IS_ERR(regmap)) अणु
 		dev_err(&client->dev, "Failed to register i2c regmap: %pe\n",
 			regmap);
-		return PTR_ERR(regmap);
-	}
+		वापस PTR_ERR(regmap);
+	पूर्ण
 
-	if (id)
+	अगर (id)
 		name = id->name;
 
-	return bmi160_core_probe(&client->dev, regmap, name, false);
-}
+	वापस bmi160_core_probe(&client->dev, regmap, name, false);
+पूर्ण
 
-static const struct i2c_device_id bmi160_i2c_id[] = {
-	{"bmi160", 0},
-	{}
-};
+अटल स्थिर काष्ठा i2c_device_id bmi160_i2c_id[] = अणु
+	अणु"bmi160", 0पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(i2c, bmi160_i2c_id);
 
-static const struct acpi_device_id bmi160_acpi_match[] = {
-	{"BMI0160", 0},
-	{ },
-};
+अटल स्थिर काष्ठा acpi_device_id bmi160_acpi_match[] = अणु
+	अणु"BMI0160", 0पूर्ण,
+	अणु पूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(acpi, bmi160_acpi_match);
 
-#ifdef CONFIG_OF
-static const struct of_device_id bmi160_of_match[] = {
-	{ .compatible = "bosch,bmi160" },
-	{ },
-};
+#अगर_घोषित CONFIG_OF
+अटल स्थिर काष्ठा of_device_id bmi160_of_match[] = अणु
+	अणु .compatible = "bosch,bmi160" पूर्ण,
+	अणु पूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, bmi160_of_match);
-#endif
+#पूर्ण_अगर
 
-static struct i2c_driver bmi160_i2c_driver = {
-	.driver = {
+अटल काष्ठा i2c_driver bmi160_i2c_driver = अणु
+	.driver = अणु
 		.name			= "bmi160_i2c",
 		.acpi_match_table	= ACPI_PTR(bmi160_acpi_match),
 		.of_match_table		= of_match_ptr(bmi160_of_match),
-	},
+	पूर्ण,
 	.probe		= bmi160_i2c_probe,
 	.id_table	= bmi160_i2c_id,
-};
+पूर्ण;
 module_i2c_driver(bmi160_i2c_driver);
 
 MODULE_AUTHOR("Daniel Baluta <daniel.baluta@intel.com>");

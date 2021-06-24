@@ -1,81 +1,82 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
  * Copyright (c) 2012 Linaro Limited.
  */
 
-#ifndef VIRT_H
-#define VIRT_H
+#अगर_अघोषित VIRT_H
+#घोषणा VIRT_H
 
-#include <asm/ptrace.h>
+#समावेश <यंत्र/ptrace.h>
 
 /*
  * Flag indicating that the kernel was not entered in the same mode on every
  * CPU.  The zImage loader stashes this value in an SPSR, so we need an
  * architecturally defined flag bit here.
  */
-#define BOOT_CPU_MODE_MISMATCH	PSR_N_BIT
+#घोषणा BOOT_CPU_MODE_MISMATCH	PSR_N_BIT
 
-#ifndef __ASSEMBLY__
-#include <asm/cacheflush.h>
+#अगर_अघोषित __ASSEMBLY__
+#समावेश <यंत्र/cacheflush.h>
 
-#ifdef CONFIG_ARM_VIRT_EXT
+#अगर_घोषित CONFIG_ARM_VIRT_EXT
 /*
  * __boot_cpu_mode records what mode the primary CPU was booted in.
  * A correctly-implemented bootloader must start all CPUs in the same mode:
- * if it fails to do this, the flag BOOT_CPU_MODE_MISMATCH is set to indicate
- * that some CPU(s) were booted in a different mode.
+ * अगर it fails to करो this, the flag BOOT_CPU_MODE_MISMATCH is set to indicate
+ * that some CPU(s) were booted in a dअगरferent mode.
  *
  * This allows the kernel to flag an error when the secondaries have come up.
  */
-extern int __boot_cpu_mode;
+बाह्य पूर्णांक __boot_cpu_mode;
 
-static inline void sync_boot_mode(void)
-{
+अटल अंतरभूत व्योम sync_boot_mode(व्योम)
+अणु
 	/*
-	 * As secondaries write to __boot_cpu_mode with caches disabled, we
+	 * As secondaries ग_लिखो to __boot_cpu_mode with caches disabled, we
 	 * must flush the corresponding cache entries to ensure the visibility
-	 * of their writes.
+	 * of their ग_लिखोs.
 	 */
 	sync_cache_r(&__boot_cpu_mode);
-}
+पूर्ण
 
-#else
-#define __boot_cpu_mode	(SVC_MODE)
-#define sync_boot_mode()
-#endif
+#अन्यथा
+#घोषणा __boot_cpu_mode	(SVC_MODE)
+#घोषणा sync_boot_mode()
+#पूर्ण_अगर
 
-#ifndef ZIMAGE
-void hyp_mode_check(void);
+#अगर_अघोषित ZIMAGE
+व्योम hyp_mode_check(व्योम);
 
 /* Reports the availability of HYP mode */
-static inline bool is_hyp_mode_available(void)
-{
-	return ((__boot_cpu_mode & MODE_MASK) == HYP_MODE &&
+अटल अंतरभूत bool is_hyp_mode_available(व्योम)
+अणु
+	वापस ((__boot_cpu_mode & MODE_MASK) == HYP_MODE &&
 		!(__boot_cpu_mode & BOOT_CPU_MODE_MISMATCH));
-}
+पूर्ण
 
-/* Check if the bootloader has booted CPUs in different modes */
-static inline bool is_hyp_mode_mismatched(void)
-{
-	return !!(__boot_cpu_mode & BOOT_CPU_MODE_MISMATCH);
-}
+/* Check अगर the bootloader has booted CPUs in dअगरferent modes */
+अटल अंतरभूत bool is_hyp_mode_mismatched(व्योम)
+अणु
+	वापस !!(__boot_cpu_mode & BOOT_CPU_MODE_MISMATCH);
+पूर्ण
 
-static inline bool is_kernel_in_hyp_mode(void)
-{
-	return false;
-}
+अटल अंतरभूत bool is_kernel_in_hyp_mode(व्योम)
+अणु
+	वापस false;
+पूर्ण
 
-#endif
+#पूर्ण_अगर
 
-#else
+#अन्यथा
 
 /* Only assembly code should need those */
 
-#define HVC_SET_VECTORS 0
-#define HVC_SOFT_RESTART 1
+#घोषणा HVC_SET_VECTORS 0
+#घोषणा HVC_SOFT_RESTART 1
 
-#endif /* __ASSEMBLY__ */
+#पूर्ण_अगर /* __ASSEMBLY__ */
 
-#define HVC_STUB_ERR	0xbadca11
+#घोषणा HVC_STUB_ERR	0xbadca11
 
-#endif /* ! VIRT_H */
+#पूर्ण_अगर /* ! VIRT_H */

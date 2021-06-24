@@ -1,5 +1,6 @@
+<शैली गुरु>
 /*
- * RTC client/driver for the Maxim/Dallas DS1374 Real-Time Clock over I2C
+ * RTC client/driver क्रम the Maxim/Dallas DS1374 Real-Time Clock over I2C
  *
  * Based on code by Randy Vinson <rvinson@mvista.com>,
  * which was based on the m41t00.c by Mark Greer <mgreer@mvista.com>.
@@ -18,451 +19,451 @@
  * "Sending and receiving", using SMBus level communication is preferred.
  */
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/interrupt.h>
-#include <linux/i2c.h>
-#include <linux/rtc.h>
-#include <linux/bcd.h>
-#include <linux/workqueue.h>
-#include <linux/slab.h>
-#include <linux/pm.h>
-#ifdef CONFIG_RTC_DRV_DS1374_WDT
-#include <linux/fs.h>
-#include <linux/ioctl.h>
-#include <linux/miscdevice.h>
-#include <linux/reboot.h>
-#include <linux/watchdog.h>
-#endif
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/rtc.h>
+#समावेश <linux/bcd.h>
+#समावेश <linux/workqueue.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/pm.h>
+#अगर_घोषित CONFIG_RTC_DRV_DS1374_WDT
+#समावेश <linux/fs.h>
+#समावेश <linux/ioctl.h>
+#समावेश <linux/miscdevice.h>
+#समावेश <linux/reboot.h>
+#समावेश <linux/watchकरोg.h>
+#पूर्ण_अगर
 
-#define DS1374_REG_TOD0		0x00 /* Time of Day */
-#define DS1374_REG_TOD1		0x01
-#define DS1374_REG_TOD2		0x02
-#define DS1374_REG_TOD3		0x03
-#define DS1374_REG_WDALM0	0x04 /* Watchdog/Alarm */
-#define DS1374_REG_WDALM1	0x05
-#define DS1374_REG_WDALM2	0x06
-#define DS1374_REG_CR		0x07 /* Control */
-#define DS1374_REG_CR_AIE	0x01 /* Alarm Int. Enable */
-#define DS1374_REG_CR_WDSTR	0x08 /* 1=INT, 0=RST */
-#define DS1374_REG_CR_WDALM	0x20 /* 1=Watchdog, 0=Alarm */
-#define DS1374_REG_CR_WACE	0x40 /* WD/Alarm counter enable */
-#define DS1374_REG_SR		0x08 /* Status */
-#define DS1374_REG_SR_OSF	0x80 /* Oscillator Stop Flag */
-#define DS1374_REG_SR_AF	0x01 /* Alarm Flag */
-#define DS1374_REG_TCR		0x09 /* Trickle Charge */
+#घोषणा DS1374_REG_TOD0		0x00 /* Time of Day */
+#घोषणा DS1374_REG_TOD1		0x01
+#घोषणा DS1374_REG_TOD2		0x02
+#घोषणा DS1374_REG_TOD3		0x03
+#घोषणा DS1374_REG_WDALM0	0x04 /* Watchकरोg/Alarm */
+#घोषणा DS1374_REG_WDALM1	0x05
+#घोषणा DS1374_REG_WDALM2	0x06
+#घोषणा DS1374_REG_CR		0x07 /* Control */
+#घोषणा DS1374_REG_CR_AIE	0x01 /* Alarm Int. Enable */
+#घोषणा DS1374_REG_CR_WDSTR	0x08 /* 1=INT, 0=RST */
+#घोषणा DS1374_REG_CR_WDALM	0x20 /* 1=Watchकरोg, 0=Alarm */
+#घोषणा DS1374_REG_CR_WACE	0x40 /* WD/Alarm counter enable */
+#घोषणा DS1374_REG_SR		0x08 /* Status */
+#घोषणा DS1374_REG_SR_OSF	0x80 /* Oscillator Stop Flag */
+#घोषणा DS1374_REG_SR_AF	0x01 /* Alarm Flag */
+#घोषणा DS1374_REG_TCR		0x09 /* Trickle Charge */
 
-static const struct i2c_device_id ds1374_id[] = {
-	{ "ds1374", 0 },
-	{ }
-};
+अटल स्थिर काष्ठा i2c_device_id ds1374_id[] = अणु
+	अणु "ds1374", 0 पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(i2c, ds1374_id);
 
-#ifdef CONFIG_OF
-static const struct of_device_id ds1374_of_match[] = {
-	{ .compatible = "dallas,ds1374" },
-	{ }
-};
+#अगर_घोषित CONFIG_OF
+अटल स्थिर काष्ठा of_device_id ds1374_of_match[] = अणु
+	अणु .compatible = "dallas,ds1374" पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, ds1374_of_match);
-#endif
+#पूर्ण_अगर
 
-struct ds1374 {
-	struct i2c_client *client;
-	struct rtc_device *rtc;
-	struct work_struct work;
-#ifdef CONFIG_RTC_DRV_DS1374_WDT
-	struct watchdog_device wdt;
-#endif
+काष्ठा ds1374 अणु
+	काष्ठा i2c_client *client;
+	काष्ठा rtc_device *rtc;
+	काष्ठा work_काष्ठा work;
+#अगर_घोषित CONFIG_RTC_DRV_DS1374_WDT
+	काष्ठा watchकरोg_device wdt;
+#पूर्ण_अगर
 	/* The mutex protects alarm operations, and prevents a race
-	 * between the enable_irq() in the workqueue and the free_irq()
-	 * in the remove function.
+	 * between the enable_irq() in the workqueue and the मुक्त_irq()
+	 * in the हटाओ function.
 	 */
-	struct mutex mutex;
-	int exiting;
-};
+	काष्ठा mutex mutex;
+	पूर्णांक निकासing;
+पूर्ण;
 
-static struct i2c_driver ds1374_driver;
+अटल काष्ठा i2c_driver ds1374_driver;
 
-static int ds1374_read_rtc(struct i2c_client *client, u32 *time,
-			   int reg, int nbytes)
-{
+अटल पूर्णांक ds1374_पढ़ो_rtc(काष्ठा i2c_client *client, u32 *समय,
+			   पूर्णांक reg, पूर्णांक nbytes)
+अणु
 	u8 buf[4];
-	int ret;
-	int i;
+	पूर्णांक ret;
+	पूर्णांक i;
 
-	if (WARN_ON(nbytes > 4))
-		return -EINVAL;
+	अगर (WARN_ON(nbytes > 4))
+		वापस -EINVAL;
 
-	ret = i2c_smbus_read_i2c_block_data(client, reg, nbytes, buf);
+	ret = i2c_smbus_पढ़ो_i2c_block_data(client, reg, nbytes, buf);
 
-	if (ret < 0)
-		return ret;
-	if (ret < nbytes)
-		return -EIO;
+	अगर (ret < 0)
+		वापस ret;
+	अगर (ret < nbytes)
+		वापस -EIO;
 
-	for (i = nbytes - 1, *time = 0; i >= 0; i--)
-		*time = (*time << 8) | buf[i];
+	क्रम (i = nbytes - 1, *समय = 0; i >= 0; i--)
+		*समय = (*समय << 8) | buf[i];
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ds1374_write_rtc(struct i2c_client *client, u32 time,
-			    int reg, int nbytes)
-{
+अटल पूर्णांक ds1374_ग_लिखो_rtc(काष्ठा i2c_client *client, u32 समय,
+			    पूर्णांक reg, पूर्णांक nbytes)
+अणु
 	u8 buf[4];
-	int i;
+	पूर्णांक i;
 
-	if (nbytes > 4) {
+	अगर (nbytes > 4) अणु
 		WARN_ON(1);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	for (i = 0; i < nbytes; i++) {
-		buf[i] = time & 0xff;
-		time >>= 8;
-	}
+	क्रम (i = 0; i < nbytes; i++) अणु
+		buf[i] = समय & 0xff;
+		समय >>= 8;
+	पूर्ण
 
-	return i2c_smbus_write_i2c_block_data(client, reg, nbytes, buf);
-}
+	वापस i2c_smbus_ग_लिखो_i2c_block_data(client, reg, nbytes, buf);
+पूर्ण
 
-static int ds1374_check_rtc_status(struct i2c_client *client)
-{
-	int ret = 0;
-	int control, stat;
+अटल पूर्णांक ds1374_check_rtc_status(काष्ठा i2c_client *client)
+अणु
+	पूर्णांक ret = 0;
+	पूर्णांक control, stat;
 
-	stat = i2c_smbus_read_byte_data(client, DS1374_REG_SR);
-	if (stat < 0)
-		return stat;
+	stat = i2c_smbus_पढ़ो_byte_data(client, DS1374_REG_SR);
+	अगर (stat < 0)
+		वापस stat;
 
-	if (stat & DS1374_REG_SR_OSF)
+	अगर (stat & DS1374_REG_SR_OSF)
 		dev_warn(&client->dev,
 			 "oscillator discontinuity flagged, time unreliable\n");
 
 	stat &= ~(DS1374_REG_SR_OSF | DS1374_REG_SR_AF);
 
-	ret = i2c_smbus_write_byte_data(client, DS1374_REG_SR, stat);
-	if (ret < 0)
-		return ret;
+	ret = i2c_smbus_ग_लिखो_byte_data(client, DS1374_REG_SR, stat);
+	अगर (ret < 0)
+		वापस ret;
 
-	/* If the alarm is pending, clear it before requesting
-	 * the interrupt, so an interrupt event isn't reported
-	 * before everything is initialized.
+	/* If the alarm is pending, clear it beक्रमe requesting
+	 * the पूर्णांकerrupt, so an पूर्णांकerrupt event isn't reported
+	 * beक्रमe everything is initialized.
 	 */
 
-	control = i2c_smbus_read_byte_data(client, DS1374_REG_CR);
-	if (control < 0)
-		return control;
+	control = i2c_smbus_पढ़ो_byte_data(client, DS1374_REG_CR);
+	अगर (control < 0)
+		वापस control;
 
 	control &= ~(DS1374_REG_CR_WACE | DS1374_REG_CR_AIE);
-	return i2c_smbus_write_byte_data(client, DS1374_REG_CR, control);
-}
+	वापस i2c_smbus_ग_लिखो_byte_data(client, DS1374_REG_CR, control);
+पूर्ण
 
-static int ds1374_read_time(struct device *dev, struct rtc_time *time)
-{
-	struct i2c_client *client = to_i2c_client(dev);
-	u32 itime;
-	int ret;
+अटल पूर्णांक ds1374_पढ़ो_समय(काष्ठा device *dev, काष्ठा rtc_समय *समय)
+अणु
+	काष्ठा i2c_client *client = to_i2c_client(dev);
+	u32 iसमय;
+	पूर्णांक ret;
 
-	ret = ds1374_read_rtc(client, &itime, DS1374_REG_TOD0, 4);
-	if (!ret)
-		rtc_time64_to_tm(itime, time);
+	ret = ds1374_पढ़ो_rtc(client, &iसमय, DS1374_REG_TOD0, 4);
+	अगर (!ret)
+		rtc_समय64_to_पंचांग(iसमय, समय);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int ds1374_set_time(struct device *dev, struct rtc_time *time)
-{
-	struct i2c_client *client = to_i2c_client(dev);
-	unsigned long itime = rtc_tm_to_time64(time);
+अटल पूर्णांक ds1374_set_समय(काष्ठा device *dev, काष्ठा rtc_समय *समय)
+अणु
+	काष्ठा i2c_client *client = to_i2c_client(dev);
+	अचिन्हित दीर्घ iसमय = rtc_पंचांग_to_समय64(समय);
 
-	return ds1374_write_rtc(client, itime, DS1374_REG_TOD0, 4);
-}
+	वापस ds1374_ग_लिखो_rtc(client, iसमय, DS1374_REG_TOD0, 4);
+पूर्ण
 
-#ifndef CONFIG_RTC_DRV_DS1374_WDT
-/* The ds1374 has a decrementer for an alarm, rather than a comparator.
- * If the time of day is changed, then the alarm will need to be
+#अगर_अघोषित CONFIG_RTC_DRV_DS1374_WDT
+/* The ds1374 has a decrementer क्रम an alarm, rather than a comparator.
+ * If the समय of day is changed, then the alarm will need to be
  * reset.
  */
-static int ds1374_read_alarm(struct device *dev, struct rtc_wkalrm *alarm)
-{
-	struct i2c_client *client = to_i2c_client(dev);
-	struct ds1374 *ds1374 = i2c_get_clientdata(client);
+अटल पूर्णांक ds1374_पढ़ो_alarm(काष्ठा device *dev, काष्ठा rtc_wkalrm *alarm)
+अणु
+	काष्ठा i2c_client *client = to_i2c_client(dev);
+	काष्ठा ds1374 *ds1374 = i2c_get_clientdata(client);
 	u32 now, cur_alarm;
-	int cr, sr;
-	int ret = 0;
+	पूर्णांक cr, sr;
+	पूर्णांक ret = 0;
 
-	if (client->irq <= 0)
-		return -EINVAL;
+	अगर (client->irq <= 0)
+		वापस -EINVAL;
 
 	mutex_lock(&ds1374->mutex);
 
-	cr = ret = i2c_smbus_read_byte_data(client, DS1374_REG_CR);
-	if (ret < 0)
-		goto out;
+	cr = ret = i2c_smbus_पढ़ो_byte_data(client, DS1374_REG_CR);
+	अगर (ret < 0)
+		जाओ out;
 
-	sr = ret = i2c_smbus_read_byte_data(client, DS1374_REG_SR);
-	if (ret < 0)
-		goto out;
+	sr = ret = i2c_smbus_पढ़ो_byte_data(client, DS1374_REG_SR);
+	अगर (ret < 0)
+		जाओ out;
 
-	ret = ds1374_read_rtc(client, &now, DS1374_REG_TOD0, 4);
-	if (ret)
-		goto out;
+	ret = ds1374_पढ़ो_rtc(client, &now, DS1374_REG_TOD0, 4);
+	अगर (ret)
+		जाओ out;
 
-	ret = ds1374_read_rtc(client, &cur_alarm, DS1374_REG_WDALM0, 3);
-	if (ret)
-		goto out;
+	ret = ds1374_पढ़ो_rtc(client, &cur_alarm, DS1374_REG_WDALM0, 3);
+	अगर (ret)
+		जाओ out;
 
-	rtc_time64_to_tm(now + cur_alarm, &alarm->time);
+	rtc_समय64_to_पंचांग(now + cur_alarm, &alarm->समय);
 	alarm->enabled = !!(cr & DS1374_REG_CR_WACE);
 	alarm->pending = !!(sr & DS1374_REG_SR_AF);
 
 out:
 	mutex_unlock(&ds1374->mutex);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int ds1374_set_alarm(struct device *dev, struct rtc_wkalrm *alarm)
-{
-	struct i2c_client *client = to_i2c_client(dev);
-	struct ds1374 *ds1374 = i2c_get_clientdata(client);
-	struct rtc_time now;
-	unsigned long new_alarm, itime;
-	int cr;
-	int ret = 0;
+अटल पूर्णांक ds1374_set_alarm(काष्ठा device *dev, काष्ठा rtc_wkalrm *alarm)
+अणु
+	काष्ठा i2c_client *client = to_i2c_client(dev);
+	काष्ठा ds1374 *ds1374 = i2c_get_clientdata(client);
+	काष्ठा rtc_समय now;
+	अचिन्हित दीर्घ new_alarm, iसमय;
+	पूर्णांक cr;
+	पूर्णांक ret = 0;
 
-	if (client->irq <= 0)
-		return -EINVAL;
+	अगर (client->irq <= 0)
+		वापस -EINVAL;
 
-	ret = ds1374_read_time(dev, &now);
-	if (ret < 0)
-		return ret;
+	ret = ds1374_पढ़ो_समय(dev, &now);
+	अगर (ret < 0)
+		वापस ret;
 
-	new_alarm = rtc_tm_to_time64(&alarm->time);
-	itime = rtc_tm_to_time64(&now);
+	new_alarm = rtc_पंचांग_to_समय64(&alarm->समय);
+	iसमय = rtc_पंचांग_to_समय64(&now);
 
 	/* This can happen due to races, in addition to dates that are
-	 * truly in the past.  To avoid requiring the caller to check for
+	 * truly in the past.  To aव्योम requiring the caller to check क्रम
 	 * races, dates in the past are assumed to be in the recent past
 	 * (i.e. not something that we'd rather the caller know about via
 	 * an error), and the alarm is set to go off as soon as possible.
 	 */
-	if (time_before_eq(new_alarm, itime))
+	अगर (समय_beक्रमe_eq(new_alarm, iसमय))
 		new_alarm = 1;
-	else
-		new_alarm -= itime;
+	अन्यथा
+		new_alarm -= iसमय;
 
 	mutex_lock(&ds1374->mutex);
 
-	ret = cr = i2c_smbus_read_byte_data(client, DS1374_REG_CR);
-	if (ret < 0)
-		goto out;
+	ret = cr = i2c_smbus_पढ़ो_byte_data(client, DS1374_REG_CR);
+	अगर (ret < 0)
+		जाओ out;
 
-	/* Disable any existing alarm before setting the new one
+	/* Disable any existing alarm beक्रमe setting the new one
 	 * (or lack thereof). */
 	cr &= ~DS1374_REG_CR_WACE;
 
-	ret = i2c_smbus_write_byte_data(client, DS1374_REG_CR, cr);
-	if (ret < 0)
-		goto out;
+	ret = i2c_smbus_ग_लिखो_byte_data(client, DS1374_REG_CR, cr);
+	अगर (ret < 0)
+		जाओ out;
 
-	ret = ds1374_write_rtc(client, new_alarm, DS1374_REG_WDALM0, 3);
-	if (ret)
-		goto out;
+	ret = ds1374_ग_लिखो_rtc(client, new_alarm, DS1374_REG_WDALM0, 3);
+	अगर (ret)
+		जाओ out;
 
-	if (alarm->enabled) {
+	अगर (alarm->enabled) अणु
 		cr |= DS1374_REG_CR_WACE | DS1374_REG_CR_AIE;
 		cr &= ~DS1374_REG_CR_WDALM;
 
-		ret = i2c_smbus_write_byte_data(client, DS1374_REG_CR, cr);
-	}
+		ret = i2c_smbus_ग_लिखो_byte_data(client, DS1374_REG_CR, cr);
+	पूर्ण
 
 out:
 	mutex_unlock(&ds1374->mutex);
-	return ret;
-}
-#endif
+	वापस ret;
+पूर्ण
+#पूर्ण_अगर
 
-static irqreturn_t ds1374_irq(int irq, void *dev_id)
-{
-	struct i2c_client *client = dev_id;
-	struct ds1374 *ds1374 = i2c_get_clientdata(client);
+अटल irqवापस_t ds1374_irq(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा i2c_client *client = dev_id;
+	काष्ठा ds1374 *ds1374 = i2c_get_clientdata(client);
 
 	disable_irq_nosync(irq);
 	schedule_work(&ds1374->work);
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static void ds1374_work(struct work_struct *work)
-{
-	struct ds1374 *ds1374 = container_of(work, struct ds1374, work);
-	struct i2c_client *client = ds1374->client;
-	int stat, control;
+अटल व्योम ds1374_work(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा ds1374 *ds1374 = container_of(work, काष्ठा ds1374, work);
+	काष्ठा i2c_client *client = ds1374->client;
+	पूर्णांक stat, control;
 
 	mutex_lock(&ds1374->mutex);
 
-	stat = i2c_smbus_read_byte_data(client, DS1374_REG_SR);
-	if (stat < 0)
-		goto unlock;
+	stat = i2c_smbus_पढ़ो_byte_data(client, DS1374_REG_SR);
+	अगर (stat < 0)
+		जाओ unlock;
 
-	if (stat & DS1374_REG_SR_AF) {
+	अगर (stat & DS1374_REG_SR_AF) अणु
 		stat &= ~DS1374_REG_SR_AF;
-		i2c_smbus_write_byte_data(client, DS1374_REG_SR, stat);
+		i2c_smbus_ग_लिखो_byte_data(client, DS1374_REG_SR, stat);
 
-		control = i2c_smbus_read_byte_data(client, DS1374_REG_CR);
-		if (control < 0)
-			goto out;
+		control = i2c_smbus_पढ़ो_byte_data(client, DS1374_REG_CR);
+		अगर (control < 0)
+			जाओ out;
 
 		control &= ~(DS1374_REG_CR_WACE | DS1374_REG_CR_AIE);
-		i2c_smbus_write_byte_data(client, DS1374_REG_CR, control);
+		i2c_smbus_ग_लिखो_byte_data(client, DS1374_REG_CR, control);
 
 		rtc_update_irq(ds1374->rtc, 1, RTC_AF | RTC_IRQF);
-	}
+	पूर्ण
 
 out:
-	if (!ds1374->exiting)
+	अगर (!ds1374->निकासing)
 		enable_irq(client->irq);
 unlock:
 	mutex_unlock(&ds1374->mutex);
-}
+पूर्ण
 
-#ifndef CONFIG_RTC_DRV_DS1374_WDT
-static int ds1374_alarm_irq_enable(struct device *dev, unsigned int enabled)
-{
-	struct i2c_client *client = to_i2c_client(dev);
-	struct ds1374 *ds1374 = i2c_get_clientdata(client);
-	int ret;
+#अगर_अघोषित CONFIG_RTC_DRV_DS1374_WDT
+अटल पूर्णांक ds1374_alarm_irq_enable(काष्ठा device *dev, अचिन्हित पूर्णांक enabled)
+अणु
+	काष्ठा i2c_client *client = to_i2c_client(dev);
+	काष्ठा ds1374 *ds1374 = i2c_get_clientdata(client);
+	पूर्णांक ret;
 
 	mutex_lock(&ds1374->mutex);
 
-	ret = i2c_smbus_read_byte_data(client, DS1374_REG_CR);
-	if (ret < 0)
-		goto out;
+	ret = i2c_smbus_पढ़ो_byte_data(client, DS1374_REG_CR);
+	अगर (ret < 0)
+		जाओ out;
 
-	if (enabled) {
+	अगर (enabled) अणु
 		ret |= DS1374_REG_CR_WACE | DS1374_REG_CR_AIE;
 		ret &= ~DS1374_REG_CR_WDALM;
-	} else {
+	पूर्ण अन्यथा अणु
 		ret &= ~DS1374_REG_CR_WACE;
-	}
-	ret = i2c_smbus_write_byte_data(client, DS1374_REG_CR, ret);
+	पूर्ण
+	ret = i2c_smbus_ग_लिखो_byte_data(client, DS1374_REG_CR, ret);
 
 out:
 	mutex_unlock(&ds1374->mutex);
-	return ret;
-}
-#endif
+	वापस ret;
+पूर्ण
+#पूर्ण_अगर
 
-static const struct rtc_class_ops ds1374_rtc_ops = {
-	.read_time = ds1374_read_time,
-	.set_time = ds1374_set_time,
-#ifndef CONFIG_RTC_DRV_DS1374_WDT
-	.read_alarm = ds1374_read_alarm,
+अटल स्थिर काष्ठा rtc_class_ops ds1374_rtc_ops = अणु
+	.पढ़ो_समय = ds1374_पढ़ो_समय,
+	.set_समय = ds1374_set_समय,
+#अगर_अघोषित CONFIG_RTC_DRV_DS1374_WDT
+	.पढ़ो_alarm = ds1374_पढ़ो_alarm,
 	.set_alarm = ds1374_set_alarm,
 	.alarm_irq_enable = ds1374_alarm_irq_enable,
-#endif
-};
+#पूर्ण_अगर
+पूर्ण;
 
-#ifdef CONFIG_RTC_DRV_DS1374_WDT
+#अगर_घोषित CONFIG_RTC_DRV_DS1374_WDT
 /*
  *****************************************************************************
  *
- * Watchdog Driver
+ * Watchकरोg Driver
  *
  *****************************************************************************
  */
 /* Default margin */
-#define TIMER_MARGIN_DEFAULT	32
-#define TIMER_MARGIN_MIN	1
-#define TIMER_MARGIN_MAX	4095 /* 24-bit value */
+#घोषणा TIMER_MARGIN_DEFAULT	32
+#घोषणा TIMER_MARGIN_MIN	1
+#घोषणा TIMER_MARGIN_MAX	4095 /* 24-bit value */
 
-static int wdt_margin;
-module_param(wdt_margin, int, 0);
+अटल पूर्णांक wdt_margin;
+module_param(wdt_margin, पूर्णांक, 0);
 MODULE_PARM_DESC(wdt_margin, "Watchdog timeout in seconds (default 32s)");
 
-static bool nowayout = WATCHDOG_NOWAYOUT;
+अटल bool nowayout = WATCHDOG_NOWAYOUT;
 module_param(nowayout, bool, 0);
 MODULE_PARM_DESC(nowayout, "Watchdog cannot be stopped once started (default ="
 		__MODULE_STRING(WATCHDOG_NOWAYOUT)")");
 
-static const struct watchdog_info ds1374_wdt_info = {
+अटल स्थिर काष्ठा watchकरोg_info ds1374_wdt_info = अणु
 	.identity       = "DS1374 Watchdog",
 	.options        = WDIOF_SETTIMEOUT | WDIOF_KEEPALIVEPING |
 						WDIOF_MAGICCLOSE,
-};
+पूर्ण;
 
-static int ds1374_wdt_settimeout(struct watchdog_device *wdt, unsigned int timeout)
-{
-	struct ds1374 *ds1374 = watchdog_get_drvdata(wdt);
-	struct i2c_client *client = ds1374->client;
-	int ret, cr;
+अटल पूर्णांक ds1374_wdt_समय_रखोout(काष्ठा watchकरोg_device *wdt, अचिन्हित पूर्णांक समयout)
+अणु
+	काष्ठा ds1374 *ds1374 = watchकरोg_get_drvdata(wdt);
+	काष्ठा i2c_client *client = ds1374->client;
+	पूर्णांक ret, cr;
 
-	wdt->timeout = timeout;
+	wdt->समयout = समयout;
 
-	cr = i2c_smbus_read_byte_data(client, DS1374_REG_CR);
-	if (cr < 0)
-		return cr;
+	cr = i2c_smbus_पढ़ो_byte_data(client, DS1374_REG_CR);
+	अगर (cr < 0)
+		वापस cr;
 
-	/* Disable any existing watchdog/alarm before setting the new one */
+	/* Disable any existing watchकरोg/alarm beक्रमe setting the new one */
 	cr &= ~DS1374_REG_CR_WACE;
 
-	ret = i2c_smbus_write_byte_data(client, DS1374_REG_CR, cr);
-	if (ret < 0)
-		return ret;
+	ret = i2c_smbus_ग_लिखो_byte_data(client, DS1374_REG_CR, cr);
+	अगर (ret < 0)
+		वापस ret;
 
-	/* Set new watchdog time */
-	timeout = timeout * 4096;
-	ret = ds1374_write_rtc(client, timeout, DS1374_REG_WDALM0, 3);
-	if (ret)
-		return ret;
+	/* Set new watchकरोg समय */
+	समयout = समयout * 4096;
+	ret = ds1374_ग_लिखो_rtc(client, समयout, DS1374_REG_WDALM0, 3);
+	अगर (ret)
+		वापस ret;
 
-	/* Enable watchdog timer */
+	/* Enable watchकरोg समयr */
 	cr |= DS1374_REG_CR_WACE | DS1374_REG_CR_WDALM;
-	cr &= ~DS1374_REG_CR_WDSTR;/* for RST PIN */
+	cr &= ~DS1374_REG_CR_WDSTR;/* क्रम RST PIN */
 	cr &= ~DS1374_REG_CR_AIE;
 
-	ret = i2c_smbus_write_byte_data(client, DS1374_REG_CR, cr);
-	if (ret < 0)
-		return ret;
+	ret = i2c_smbus_ग_लिखो_byte_data(client, DS1374_REG_CR, cr);
+	अगर (ret < 0)
+		वापस ret;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * Reload the watchdog timer.  (ie, pat the watchdog)
+ * Reload the watchकरोg समयr.  (ie, pat the watchकरोg)
  */
-static int ds1374_wdt_start(struct watchdog_device *wdt)
-{
-	struct ds1374 *ds1374 = watchdog_get_drvdata(wdt);
+अटल पूर्णांक ds1374_wdt_start(काष्ठा watchकरोg_device *wdt)
+अणु
+	काष्ठा ds1374 *ds1374 = watchकरोg_get_drvdata(wdt);
 	u32 val;
 
-	return ds1374_read_rtc(ds1374->client, &val, DS1374_REG_WDALM0, 3);
-}
+	वापस ds1374_पढ़ो_rtc(ds1374->client, &val, DS1374_REG_WDALM0, 3);
+पूर्ण
 
-static int ds1374_wdt_stop(struct watchdog_device *wdt)
-{
-	struct ds1374 *ds1374 = watchdog_get_drvdata(wdt);
-	struct i2c_client *client = ds1374->client;
-	int cr;
+अटल पूर्णांक ds1374_wdt_stop(काष्ठा watchकरोg_device *wdt)
+अणु
+	काष्ठा ds1374 *ds1374 = watchकरोg_get_drvdata(wdt);
+	काष्ठा i2c_client *client = ds1374->client;
+	पूर्णांक cr;
 
-	cr = i2c_smbus_read_byte_data(client, DS1374_REG_CR);
-	if (cr < 0)
-		return cr;
+	cr = i2c_smbus_पढ़ो_byte_data(client, DS1374_REG_CR);
+	अगर (cr < 0)
+		वापस cr;
 
-	/* Disable watchdog timer */
+	/* Disable watchकरोg समयr */
 	cr &= ~DS1374_REG_CR_WACE;
 
-	return i2c_smbus_write_byte_data(client, DS1374_REG_CR, cr);
-}
+	वापस i2c_smbus_ग_लिखो_byte_data(client, DS1374_REG_CR, cr);
+पूर्ण
 
-static const struct watchdog_ops ds1374_wdt_ops = {
+अटल स्थिर काष्ठा watchकरोg_ops ds1374_wdt_ops = अणु
 	.owner          = THIS_MODULE,
 	.start          = ds1374_wdt_start,
 	.stop           = ds1374_wdt_stop,
-	.set_timeout    = ds1374_wdt_settimeout,
-};
-#endif /*CONFIG_RTC_DRV_DS1374_WDT*/
+	.set_समयout    = ds1374_wdt_समय_रखोout,
+पूर्ण;
+#पूर्ण_अगर /*CONFIG_RTC_DRV_DS1374_WDT*/
 /*
  *****************************************************************************
  *
@@ -470,19 +471,19 @@ static const struct watchdog_ops ds1374_wdt_ops = {
  *
  *****************************************************************************
  */
-static int ds1374_probe(struct i2c_client *client,
-			const struct i2c_device_id *id)
-{
-	struct ds1374 *ds1374;
-	int ret;
+अटल पूर्णांक ds1374_probe(काष्ठा i2c_client *client,
+			स्थिर काष्ठा i2c_device_id *id)
+अणु
+	काष्ठा ds1374 *ds1374;
+	पूर्णांक ret;
 
-	ds1374 = devm_kzalloc(&client->dev, sizeof(struct ds1374), GFP_KERNEL);
-	if (!ds1374)
-		return -ENOMEM;
+	ds1374 = devm_kzalloc(&client->dev, माप(काष्ठा ds1374), GFP_KERNEL);
+	अगर (!ds1374)
+		वापस -ENOMEM;
 
 	ds1374->rtc = devm_rtc_allocate_device(&client->dev);
-	if (IS_ERR(ds1374->rtc))
-		return PTR_ERR(ds1374->rtc);
+	अगर (IS_ERR(ds1374->rtc))
+		वापस PTR_ERR(ds1374->rtc);
 
 	ds1374->client = client;
 	i2c_set_clientdata(client, ds1374);
@@ -491,97 +492,97 @@ static int ds1374_probe(struct i2c_client *client,
 	mutex_init(&ds1374->mutex);
 
 	ret = ds1374_check_rtc_status(client);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	if (client->irq > 0) {
+	अगर (client->irq > 0) अणु
 		ret = devm_request_irq(&client->dev, client->irq, ds1374_irq, 0,
 					"ds1374", client);
-		if (ret) {
+		अगर (ret) अणु
 			dev_err(&client->dev, "unable to request IRQ\n");
-			return ret;
-		}
+			वापस ret;
+		पूर्ण
 
 		device_set_wakeup_capable(&client->dev, 1);
-	}
+	पूर्ण
 
 	ds1374->rtc->ops = &ds1374_rtc_ops;
 	ds1374->rtc->range_max = U32_MAX;
 
-	ret = devm_rtc_register_device(ds1374->rtc);
-	if (ret)
-		return ret;
+	ret = devm_rtc_रेजिस्टर_device(ds1374->rtc);
+	अगर (ret)
+		वापस ret;
 
-#ifdef CONFIG_RTC_DRV_DS1374_WDT
+#अगर_घोषित CONFIG_RTC_DRV_DS1374_WDT
 	ds1374->wdt.info = &ds1374_wdt_info;
 	ds1374->wdt.ops = &ds1374_wdt_ops;
-	ds1374->wdt.timeout = TIMER_MARGIN_DEFAULT;
-	ds1374->wdt.min_timeout = TIMER_MARGIN_MIN;
-	ds1374->wdt.max_timeout = TIMER_MARGIN_MAX;
+	ds1374->wdt.समयout = TIMER_MARGIN_DEFAULT;
+	ds1374->wdt.min_समयout = TIMER_MARGIN_MIN;
+	ds1374->wdt.max_समयout = TIMER_MARGIN_MAX;
 
-	watchdog_init_timeout(&ds1374->wdt, wdt_margin, &client->dev);
-	watchdog_set_nowayout(&ds1374->wdt, nowayout);
-	watchdog_stop_on_reboot(&ds1374->wdt);
-	watchdog_stop_on_unregister(&ds1374->wdt);
-	watchdog_set_drvdata(&ds1374->wdt, ds1374);
-	ds1374_wdt_settimeout(&ds1374->wdt, ds1374->wdt.timeout);
+	watchकरोg_init_समयout(&ds1374->wdt, wdt_margin, &client->dev);
+	watchकरोg_set_nowayout(&ds1374->wdt, nowayout);
+	watchकरोg_stop_on_reboot(&ds1374->wdt);
+	watchकरोg_stop_on_unरेजिस्टर(&ds1374->wdt);
+	watchकरोg_set_drvdata(&ds1374->wdt, ds1374);
+	ds1374_wdt_समय_रखोout(&ds1374->wdt, ds1374->wdt.समयout);
 
-	ret = devm_watchdog_register_device(&client->dev, &ds1374->wdt);
-	if (ret)
-		return ret;
-#endif
+	ret = devm_watchकरोg_रेजिस्टर_device(&client->dev, &ds1374->wdt);
+	अगर (ret)
+		वापस ret;
+#पूर्ण_अगर
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ds1374_remove(struct i2c_client *client)
-{
-	struct ds1374 *ds1374 = i2c_get_clientdata(client);
+अटल पूर्णांक ds1374_हटाओ(काष्ठा i2c_client *client)
+अणु
+	काष्ठा ds1374 *ds1374 = i2c_get_clientdata(client);
 
-	if (client->irq > 0) {
+	अगर (client->irq > 0) अणु
 		mutex_lock(&ds1374->mutex);
-		ds1374->exiting = 1;
+		ds1374->निकासing = 1;
 		mutex_unlock(&ds1374->mutex);
 
-		devm_free_irq(&client->dev, client->irq, client);
+		devm_मुक्त_irq(&client->dev, client->irq, client);
 		cancel_work_sync(&ds1374->work);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_PM_SLEEP
-static int ds1374_suspend(struct device *dev)
-{
-	struct i2c_client *client = to_i2c_client(dev);
+#अगर_घोषित CONFIG_PM_SLEEP
+अटल पूर्णांक ds1374_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा i2c_client *client = to_i2c_client(dev);
 
-	if (client->irq > 0 && device_may_wakeup(&client->dev))
+	अगर (client->irq > 0 && device_may_wakeup(&client->dev))
 		enable_irq_wake(client->irq);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ds1374_resume(struct device *dev)
-{
-	struct i2c_client *client = to_i2c_client(dev);
+अटल पूर्णांक ds1374_resume(काष्ठा device *dev)
+अणु
+	काष्ठा i2c_client *client = to_i2c_client(dev);
 
-	if (client->irq > 0 && device_may_wakeup(&client->dev))
+	अगर (client->irq > 0 && device_may_wakeup(&client->dev))
 		disable_irq_wake(client->irq);
-	return 0;
-}
-#endif
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
-static SIMPLE_DEV_PM_OPS(ds1374_pm, ds1374_suspend, ds1374_resume);
+अटल SIMPLE_DEV_PM_OPS(ds1374_pm, ds1374_suspend, ds1374_resume);
 
-static struct i2c_driver ds1374_driver = {
-	.driver = {
+अटल काष्ठा i2c_driver ds1374_driver = अणु
+	.driver = अणु
 		.name = "rtc-ds1374",
 		.of_match_table = of_match_ptr(ds1374_of_match),
 		.pm = &ds1374_pm,
-	},
+	पूर्ण,
 	.probe = ds1374_probe,
-	.remove = ds1374_remove,
+	.हटाओ = ds1374_हटाओ,
 	.id_table = ds1374_id,
-};
+पूर्ण;
 
 module_i2c_driver(ds1374_driver);
 

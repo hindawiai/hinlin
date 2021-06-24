@@ -1,42 +1,43 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /* memcontrol.h - Memory Controller
  *
  * Copyright IBM Corporation, 2007
  * Author Balbir Singh <balbir@linux.vnet.ibm.com>
  *
  * Copyright 2007 OpenVZ SWsoft Inc
- * Author: Pavel Emelianov <xemul@openvz.org>
+ * Author: Pavel Emelianov <xemul@खोलोvz.org>
  */
 
-#ifndef _LINUX_MEMCONTROL_H
-#define _LINUX_MEMCONTROL_H
-#include <linux/cgroup.h>
-#include <linux/vm_event_item.h>
-#include <linux/hardirq.h>
-#include <linux/jump_label.h>
-#include <linux/page_counter.h>
-#include <linux/vmpressure.h>
-#include <linux/eventfd.h>
-#include <linux/mm.h>
-#include <linux/vmstat.h>
-#include <linux/writeback.h>
-#include <linux/page-flags.h>
+#अगर_अघोषित _LINUX_MEMCONTROL_H
+#घोषणा _LINUX_MEMCONTROL_H
+#समावेश <linux/cgroup.h>
+#समावेश <linux/vm_event_item.h>
+#समावेश <linux/hardirq.h>
+#समावेश <linux/jump_label.h>
+#समावेश <linux/page_counter.h>
+#समावेश <linux/vmpressure.h>
+#समावेश <linux/eventfd.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/vmस्थिति.स>
+#समावेश <linux/ग_लिखोback.h>
+#समावेश <linux/page-flags.h>
 
-struct mem_cgroup;
-struct obj_cgroup;
-struct page;
-struct mm_struct;
-struct kmem_cache;
+काष्ठा mem_cgroup;
+काष्ठा obj_cgroup;
+काष्ठा page;
+काष्ठा mm_काष्ठा;
+काष्ठा kmem_cache;
 
-/* Cgroup-specific page state, on top of universal node page state */
-enum memcg_stat_item {
+/* Cgroup-specअगरic page state, on top of universal node page state */
+क्रमागत memcg_stat_item अणु
 	MEMCG_SWAP = NR_VM_NODE_STAT_ITEMS,
 	MEMCG_SOCK,
 	MEMCG_PERCPU_B,
 	MEMCG_NR_STAT,
-};
+पूर्ण;
 
-enum memcg_memory_event {
+क्रमागत memcg_memory_event अणु
 	MEMCG_LOW,
 	MEMCG_HIGH,
 	MEMCG_MAX,
@@ -46,395 +47,395 @@ enum memcg_memory_event {
 	MEMCG_SWAP_MAX,
 	MEMCG_SWAP_FAIL,
 	MEMCG_NR_MEMORY_EVENTS,
-};
+पूर्ण;
 
-struct mem_cgroup_reclaim_cookie {
+काष्ठा mem_cgroup_reclaim_cookie अणु
 	pg_data_t *pgdat;
-	unsigned int generation;
-};
+	अचिन्हित पूर्णांक generation;
+पूर्ण;
 
-#ifdef CONFIG_MEMCG
+#अगर_घोषित CONFIG_MEMCG
 
-#define MEM_CGROUP_ID_SHIFT	16
-#define MEM_CGROUP_ID_MAX	USHRT_MAX
+#घोषणा MEM_CGROUP_ID_SHIFT	16
+#घोषणा MEM_CGROUP_ID_MAX	अच_लघु_उच्च
 
-struct mem_cgroup_id {
-	int id;
+काष्ठा mem_cgroup_id अणु
+	पूर्णांक id;
 	refcount_t ref;
-};
+पूर्ण;
 
 /*
  * Per memcg event counter is incremented at every pagein/pageout. With THP,
  * it will be incremented by the number of pages. This counter is used
- * to trigger some periodic events. This is straightforward and better
- * than using jiffies etc. to handle periodic memcg event.
+ * to trigger some periodic events. This is straightक्रमward and better
+ * than using jअगरfies etc. to handle periodic memcg event.
  */
-enum mem_cgroup_events_target {
+क्रमागत mem_cgroup_events_target अणु
 	MEM_CGROUP_TARGET_THRESH,
 	MEM_CGROUP_TARGET_SOFTLIMIT,
 	MEM_CGROUP_NTARGETS,
-};
+पूर्ण;
 
-struct memcg_vmstats_percpu {
+काष्ठा memcg_vmstats_percpu अणु
 	/* Local (CPU and cgroup) page state & events */
-	long			state[MEMCG_NR_STAT];
-	unsigned long		events[NR_VM_EVENT_ITEMS];
+	दीर्घ			state[MEMCG_NR_STAT];
+	अचिन्हित दीर्घ		events[NR_VM_EVENT_ITEMS];
 
-	/* Delta calculation for lockless upward propagation */
-	long			state_prev[MEMCG_NR_STAT];
-	unsigned long		events_prev[NR_VM_EVENT_ITEMS];
+	/* Delta calculation क्रम lockless upward propagation */
+	दीर्घ			state_prev[MEMCG_NR_STAT];
+	अचिन्हित दीर्घ		events_prev[NR_VM_EVENT_ITEMS];
 
-	/* Cgroup1: threshold notifications & softlimit tree updates */
-	unsigned long		nr_page_events;
-	unsigned long		targets[MEM_CGROUP_NTARGETS];
-};
+	/* Cgroup1: threshold notअगरications & softlimit tree updates */
+	अचिन्हित दीर्घ		nr_page_events;
+	अचिन्हित दीर्घ		tarमाला_लो[MEM_CGROUP_NTARGETS];
+पूर्ण;
 
-struct memcg_vmstats {
+काष्ठा memcg_vmstats अणु
 	/* Aggregated (CPU and subtree) page state & events */
-	long			state[MEMCG_NR_STAT];
-	unsigned long		events[NR_VM_EVENT_ITEMS];
+	दीर्घ			state[MEMCG_NR_STAT];
+	अचिन्हित दीर्घ		events[NR_VM_EVENT_ITEMS];
 
 	/* Pending child counts during tree propagation */
-	long			state_pending[MEMCG_NR_STAT];
-	unsigned long		events_pending[NR_VM_EVENT_ITEMS];
-};
+	दीर्घ			state_pending[MEMCG_NR_STAT];
+	अचिन्हित दीर्घ		events_pending[NR_VM_EVENT_ITEMS];
+पूर्ण;
 
-struct mem_cgroup_reclaim_iter {
-	struct mem_cgroup *position;
+काष्ठा mem_cgroup_reclaim_iter अणु
+	काष्ठा mem_cgroup *position;
 	/* scan generation, increased every round-trip */
-	unsigned int generation;
-};
+	अचिन्हित पूर्णांक generation;
+पूर्ण;
 
-struct lruvec_stat {
-	long count[NR_VM_NODE_STAT_ITEMS];
-};
+काष्ठा lruvec_stat अणु
+	दीर्घ count[NR_VM_NODE_STAT_ITEMS];
+पूर्ण;
 
-struct batched_lruvec_stat {
+काष्ठा batched_lruvec_stat अणु
 	s32 count[NR_VM_NODE_STAT_ITEMS];
-};
+पूर्ण;
 
 /*
- * Bitmap and deferred work of shrinker::id corresponding to memcg-aware
- * shrinkers, which have elements charged to this memcg.
+ * Biपंचांगap and deferred work of shrinker::id corresponding to memcg-aware
+ * shrinkers, which have elements अक्षरged to this memcg.
  */
-struct shrinker_info {
-	struct rcu_head rcu;
-	atomic_long_t *nr_deferred;
-	unsigned long *map;
-};
+काष्ठा shrinker_info अणु
+	काष्ठा rcu_head rcu;
+	atomic_दीर्घ_t *nr_deferred;
+	अचिन्हित दीर्घ *map;
+पूर्ण;
 
 /*
- * per-node information in memory controller.
+ * per-node inक्रमmation in memory controller.
  */
-struct mem_cgroup_per_node {
-	struct lruvec		lruvec;
+काष्ठा mem_cgroup_per_node अणु
+	काष्ठा lruvec		lruvec;
 
 	/*
-	 * Legacy local VM stats. This should be struct lruvec_stat and
-	 * cannot be optimized to struct batched_lruvec_stat. Because
+	 * Legacy local VM stats. This should be काष्ठा lruvec_stat and
+	 * cannot be optimized to काष्ठा batched_lruvec_stat. Because
 	 * the threshold of the lruvec_stat_cpu can be as big as
-	 * MEMCG_CHARGE_BATCH * PAGE_SIZE. It can fit into s32. But this
+	 * MEMCG_CHARGE_BATCH * PAGE_SIZE. It can fit पूर्णांकo s32. But this
 	 * filed has no upper limit.
 	 */
-	struct lruvec_stat __percpu *lruvec_stat_local;
+	काष्ठा lruvec_stat __percpu *lruvec_stat_local;
 
 	/* Subtree VM stats (batched updates) */
-	struct batched_lruvec_stat __percpu *lruvec_stat_cpu;
-	atomic_long_t		lruvec_stat[NR_VM_NODE_STAT_ITEMS];
+	काष्ठा batched_lruvec_stat __percpu *lruvec_stat_cpu;
+	atomic_दीर्घ_t		lruvec_stat[NR_VM_NODE_STAT_ITEMS];
 
-	unsigned long		lru_zone_size[MAX_NR_ZONES][NR_LRU_LISTS];
+	अचिन्हित दीर्घ		lru_zone_size[MAX_NR_ZONES][NR_LRU_LISTS];
 
-	struct mem_cgroup_reclaim_iter	iter;
+	काष्ठा mem_cgroup_reclaim_iter	iter;
 
-	struct shrinker_info __rcu	*shrinker_info;
+	काष्ठा shrinker_info __rcu	*shrinker_info;
 
-	struct rb_node		tree_node;	/* RB tree node */
-	unsigned long		usage_in_excess;/* Set to the value by which */
+	काष्ठा rb_node		tree_node;	/* RB tree node */
+	अचिन्हित दीर्घ		usage_in_excess;/* Set to the value by which */
 						/* the soft limit is exceeded*/
 	bool			on_tree;
-	struct mem_cgroup	*memcg;		/* Back pointer, we cannot */
+	काष्ठा mem_cgroup	*memcg;		/* Back poपूर्णांकer, we cannot */
 						/* use container_of	   */
-};
+पूर्ण;
 
-struct mem_cgroup_threshold {
-	struct eventfd_ctx *eventfd;
-	unsigned long threshold;
-};
+काष्ठा mem_cgroup_threshold अणु
+	काष्ठा eventfd_ctx *eventfd;
+	अचिन्हित दीर्घ threshold;
+पूर्ण;
 
 /* For threshold */
-struct mem_cgroup_threshold_ary {
-	/* An array index points to threshold just below or equal to usage. */
-	int current_threshold;
+काष्ठा mem_cgroup_threshold_ary अणु
+	/* An array index poपूर्णांकs to threshold just below or equal to usage. */
+	पूर्णांक current_threshold;
 	/* Size of entries[] */
-	unsigned int size;
+	अचिन्हित पूर्णांक size;
 	/* Array of thresholds */
-	struct mem_cgroup_threshold entries[];
-};
+	काष्ठा mem_cgroup_threshold entries[];
+पूर्ण;
 
-struct mem_cgroup_thresholds {
+काष्ठा mem_cgroup_thresholds अणु
 	/* Primary thresholds array */
-	struct mem_cgroup_threshold_ary *primary;
+	काष्ठा mem_cgroup_threshold_ary *primary;
 	/*
 	 * Spare threshold array.
-	 * This is needed to make mem_cgroup_unregister_event() "never fail".
+	 * This is needed to make mem_cgroup_unरेजिस्टर_event() "never fail".
 	 * It must be able to store at least primary->size - 1 entries.
 	 */
-	struct mem_cgroup_threshold_ary *spare;
-};
+	काष्ठा mem_cgroup_threshold_ary *spare;
+पूर्ण;
 
-enum memcg_kmem_state {
+क्रमागत memcg_kmem_state अणु
 	KMEM_NONE,
 	KMEM_ALLOCATED,
 	KMEM_ONLINE,
-};
+पूर्ण;
 
-#if defined(CONFIG_SMP)
-struct memcg_padding {
-	char x[0];
-} ____cacheline_internodealigned_in_smp;
-#define MEMCG_PADDING(name)      struct memcg_padding name;
-#else
-#define MEMCG_PADDING(name)
-#endif
+#अगर defined(CONFIG_SMP)
+काष्ठा memcg_padding अणु
+	अक्षर x[0];
+पूर्ण ____cacheline_पूर्णांकernodealigned_in_smp;
+#घोषणा MEMCG_PADDING(name)      काष्ठा memcg_padding name;
+#अन्यथा
+#घोषणा MEMCG_PADDING(name)
+#पूर्ण_अगर
 
 /*
- * Remember four most recent foreign writebacks with dirty pages in this
- * cgroup.  Inode sharing is expected to be uncommon and, even if we miss
- * one in a given round, we're likely to catch it later if it keeps
- * foreign-dirtying, so a fairly low count should be enough.
+ * Remember four most recent क्रमeign ग_लिखोbacks with dirty pages in this
+ * cgroup.  Inode sharing is expected to be uncommon and, even अगर we miss
+ * one in a given round, we're likely to catch it later अगर it keeps
+ * क्रमeign-dirtying, so a fairly low count should be enough.
  *
- * See mem_cgroup_track_foreign_dirty_slowpath() for details.
+ * See mem_cgroup_track_क्रमeign_dirty_slowpath() क्रम details.
  */
-#define MEMCG_CGWB_FRN_CNT	4
+#घोषणा MEMCG_CGWB_FRN_CNT	4
 
-struct memcg_cgwb_frn {
-	u64 bdi_id;			/* bdi->id of the foreign inode */
-	int memcg_id;			/* memcg->css.id of foreign inode */
-	u64 at;				/* jiffies_64 at the time of dirtying */
-	struct wb_completion done;	/* tracks in-flight foreign writebacks */
-};
+काष्ठा memcg_cgwb_frn अणु
+	u64 bdi_id;			/* bdi->id of the क्रमeign inode */
+	पूर्णांक memcg_id;			/* memcg->css.id of क्रमeign inode */
+	u64 at;				/* jअगरfies_64 at the समय of dirtying */
+	काष्ठा wb_completion करोne;	/* tracks in-flight क्रमeign ग_लिखोbacks */
+पूर्ण;
 
 /*
- * Bucket for arbitrarily byte-sized objects charged to a memory
+ * Bucket क्रम arbitrarily byte-sized objects अक्षरged to a memory
  * cgroup. The bucket can be reparented in one piece when the cgroup
- * is destroyed, without having to round up the individual references
+ * is destroyed, without having to round up the inभागidual references
  * of all live memory objects in the wild.
  */
-struct obj_cgroup {
-	struct percpu_ref refcnt;
-	struct mem_cgroup *memcg;
-	atomic_t nr_charged_bytes;
-	union {
-		struct list_head list;
-		struct rcu_head rcu;
-	};
-};
+काष्ठा obj_cgroup अणु
+	काष्ठा percpu_ref refcnt;
+	काष्ठा mem_cgroup *memcg;
+	atomic_t nr_अक्षरged_bytes;
+	जोड़ अणु
+		काष्ठा list_head list;
+		काष्ठा rcu_head rcu;
+	पूर्ण;
+पूर्ण;
 
 /*
- * The memory controller data structure. The memory controller controls both
+ * The memory controller data काष्ठाure. The memory controller controls both
  * page cache and RSS per cgroup. We would eventually like to provide
- * statistics based on the statistics developed by Rik Van Riel for clock-pro,
+ * statistics based on the statistics developed by Rik Van Riel क्रम घड़ी-pro,
  * to help the administrator determine what knobs to tune.
  */
-struct mem_cgroup {
-	struct cgroup_subsys_state css;
+काष्ठा mem_cgroup अणु
+	काष्ठा cgroup_subsys_state css;
 
 	/* Private memcg ID. Used to ID objects that outlive the cgroup */
-	struct mem_cgroup_id id;
+	काष्ठा mem_cgroup_id id;
 
 	/* Accounted resources */
-	struct page_counter memory;		/* Both v1 & v2 */
+	काष्ठा page_counter memory;		/* Both v1 & v2 */
 
-	union {
-		struct page_counter swap;	/* v2 only */
-		struct page_counter memsw;	/* v1 only */
-	};
+	जोड़ अणु
+		काष्ठा page_counter swap;	/* v2 only */
+		काष्ठा page_counter memsw;	/* v1 only */
+	पूर्ण;
 
 	/* Legacy consumer-oriented counters */
-	struct page_counter kmem;		/* v1 only */
-	struct page_counter tcpmem;		/* v1 only */
+	काष्ठा page_counter kmem;		/* v1 only */
+	काष्ठा page_counter tcpmem;		/* v1 only */
 
-	/* Range enforcement for interrupt charges */
-	struct work_struct high_work;
+	/* Range enक्रमcement क्रम पूर्णांकerrupt अक्षरges */
+	काष्ठा work_काष्ठा high_work;
 
-	unsigned long soft_limit;
+	अचिन्हित दीर्घ soft_limit;
 
-	/* vmpressure notifications */
-	struct vmpressure vmpressure;
+	/* vmpressure notअगरications */
+	काष्ठा vmpressure vmpressure;
 
 	/*
-	 * Should the OOM killer kill all belonging tasks, had it kill one?
+	 * Should the OOM समाप्तer समाप्त all beदीर्घing tasks, had it समाप्त one?
 	 */
 	bool oom_group;
 
-	/* protected by memcg_oom_lock */
+	/* रक्षित by memcg_oom_lock */
 	bool		oom_lock;
-	int		under_oom;
+	पूर्णांक		under_oom;
 
-	int	swappiness;
+	पूर्णांक	swappiness;
 	/* OOM-Killer disable */
-	int		oom_kill_disable;
+	पूर्णांक		oom_समाप्त_disable;
 
 	/* memory.events and memory.events.local */
-	struct cgroup_file events_file;
-	struct cgroup_file events_local_file;
+	काष्ठा cgroup_file events_file;
+	काष्ठा cgroup_file events_local_file;
 
-	/* handle for "memory.swap.events" */
-	struct cgroup_file swap_events_file;
+	/* handle क्रम "memory.swap.events" */
+	काष्ठा cgroup_file swap_events_file;
 
 	/* protect arrays of thresholds */
-	struct mutex thresholds_lock;
+	काष्ठा mutex thresholds_lock;
 
-	/* thresholds for memory usage. RCU-protected */
-	struct mem_cgroup_thresholds thresholds;
+	/* thresholds क्रम memory usage. RCU-रक्षित */
+	काष्ठा mem_cgroup_thresholds thresholds;
 
-	/* thresholds for mem+swap usage. RCU-protected */
-	struct mem_cgroup_thresholds memsw_thresholds;
+	/* thresholds क्रम mem+swap usage. RCU-रक्षित */
+	काष्ठा mem_cgroup_thresholds memsw_thresholds;
 
-	/* For oom notifier event fd */
-	struct list_head oom_notify;
+	/* For oom notअगरier event fd */
+	काष्ठा list_head oom_notअगरy;
 
 	/*
-	 * Should we move charges of a task when a task is moved into this
-	 * mem_cgroup ? And what type of charges should we move ?
+	 * Should we move अक्षरges of a task when a task is moved पूर्णांकo this
+	 * mem_cgroup ? And what type of अक्षरges should we move ?
 	 */
-	unsigned long move_charge_at_immigrate;
-	/* taken only while moving_account > 0 */
+	अचिन्हित दीर्घ move_अक्षरge_at_immigrate;
+	/* taken only जबतक moving_account > 0 */
 	spinlock_t		move_lock;
-	unsigned long		move_lock_flags;
+	अचिन्हित दीर्घ		move_lock_flags;
 
 	MEMCG_PADDING(_pad1_);
 
 	/* memory.stat */
-	struct memcg_vmstats	vmstats;
+	काष्ठा memcg_vmstats	vmstats;
 
 	/* memory.events */
-	atomic_long_t		memory_events[MEMCG_NR_MEMORY_EVENTS];
-	atomic_long_t		memory_events_local[MEMCG_NR_MEMORY_EVENTS];
+	atomic_दीर्घ_t		memory_events[MEMCG_NR_MEMORY_EVENTS];
+	atomic_दीर्घ_t		memory_events_local[MEMCG_NR_MEMORY_EVENTS];
 
-	unsigned long		socket_pressure;
+	अचिन्हित दीर्घ		socket_pressure;
 
 	/* Legacy tcp memory accounting */
 	bool			tcpmem_active;
-	int			tcpmem_pressure;
+	पूर्णांक			tcpmem_pressure;
 
-#ifdef CONFIG_MEMCG_KMEM
-	int kmemcg_id;
-	enum memcg_kmem_state kmem_state;
-	struct obj_cgroup __rcu *objcg;
-	struct list_head objcg_list; /* list of inherited objcgs */
-#endif
+#अगर_घोषित CONFIG_MEMCG_KMEM
+	पूर्णांक kmemcg_id;
+	क्रमागत memcg_kmem_state kmem_state;
+	काष्ठा obj_cgroup __rcu *objcg;
+	काष्ठा list_head objcg_list; /* list of inherited objcgs */
+#पूर्ण_अगर
 
 	MEMCG_PADDING(_pad2_);
 
 	/*
-	 * set > 0 if pages under this cgroup are moving to other cgroup.
+	 * set > 0 अगर pages under this cgroup are moving to other cgroup.
 	 */
 	atomic_t		moving_account;
-	struct task_struct	*move_lock_task;
+	काष्ठा task_काष्ठा	*move_lock_task;
 
-	struct memcg_vmstats_percpu __percpu *vmstats_percpu;
+	काष्ठा memcg_vmstats_percpu __percpu *vmstats_percpu;
 
-#ifdef CONFIG_CGROUP_WRITEBACK
-	struct list_head cgwb_list;
-	struct wb_domain cgwb_domain;
-	struct memcg_cgwb_frn cgwb_frn[MEMCG_CGWB_FRN_CNT];
-#endif
+#अगर_घोषित CONFIG_CGROUP_WRITEBACK
+	काष्ठा list_head cgwb_list;
+	काष्ठा wb_करोमुख्य cgwb_करोमुख्य;
+	काष्ठा memcg_cgwb_frn cgwb_frn[MEMCG_CGWB_FRN_CNT];
+#पूर्ण_अगर
 
 	/* List of events which userspace want to receive */
-	struct list_head event_list;
+	काष्ठा list_head event_list;
 	spinlock_t event_list_lock;
 
-#ifdef CONFIG_TRANSPARENT_HUGEPAGE
-	struct deferred_split deferred_split_queue;
-#endif
+#अगर_घोषित CONFIG_TRANSPARENT_HUGEPAGE
+	काष्ठा deferred_split deferred_split_queue;
+#पूर्ण_अगर
 
-	struct mem_cgroup_per_node *nodeinfo[0];
+	काष्ठा mem_cgroup_per_node *nodeinfo[0];
 	/* WARNING: nodeinfo must be the last member here */
-};
+पूर्ण;
 
 /*
- * size of first charge trial. "32" comes from vmscan.c's magic value.
+ * size of first अक्षरge trial. "32" comes from vmscan.c's magic value.
  * TODO: maybe necessary to use big numbers in big irons.
  */
-#define MEMCG_CHARGE_BATCH 32U
+#घोषणा MEMCG_CHARGE_BATCH 32U
 
-extern struct mem_cgroup *root_mem_cgroup;
+बाह्य काष्ठा mem_cgroup *root_mem_cgroup;
 
-enum page_memcg_data_flags {
-	/* page->memcg_data is a pointer to an objcgs vector */
+क्रमागत page_memcg_data_flags अणु
+	/* page->memcg_data is a poपूर्णांकer to an objcgs vector */
 	MEMCG_DATA_OBJCGS = (1UL << 0),
 	/* page has been accounted as a non-slab kernel page */
 	MEMCG_DATA_KMEM = (1UL << 1),
 	/* the next bit after the last actual flag */
 	__NR_MEMCG_DATA_FLAGS  = (1UL << 2),
-};
+पूर्ण;
 
-#define MEMCG_DATA_FLAGS_MASK (__NR_MEMCG_DATA_FLAGS - 1)
+#घोषणा MEMCG_DATA_FLAGS_MASK (__NR_MEMCG_DATA_FLAGS - 1)
 
-static inline bool PageMemcgKmem(struct page *page);
+अटल अंतरभूत bool PageMemcgKmem(काष्ठा page *page);
 
 /*
- * After the initialization objcg->memcg is always pointing at
+ * After the initialization objcg->memcg is always poपूर्णांकing at
  * a valid memcg, but can be atomically swapped to the parent memcg.
  *
- * The caller must ensure that the returned memcg won't be released:
- * e.g. acquire the rcu_read_lock or css_set_lock.
+ * The caller must ensure that the वापसed memcg won't be released:
+ * e.g. acquire the rcu_पढ़ो_lock or css_set_lock.
  */
-static inline struct mem_cgroup *obj_cgroup_memcg(struct obj_cgroup *objcg)
-{
-	return READ_ONCE(objcg->memcg);
-}
+अटल अंतरभूत काष्ठा mem_cgroup *obj_cgroup_memcg(काष्ठा obj_cgroup *objcg)
+अणु
+	वापस READ_ONCE(objcg->memcg);
+पूर्ण
 
 /*
  * __page_memcg - get the memory cgroup associated with a non-kmem page
- * @page: a pointer to the page struct
+ * @page: a poपूर्णांकer to the page काष्ठा
  *
- * Returns a pointer to the memory cgroup associated with the page,
- * or NULL. This function assumes that the page is known to have a
- * proper memory cgroup pointer. It's not safe to call this function
+ * Returns a poपूर्णांकer to the memory cgroup associated with the page,
+ * or शून्य. This function assumes that the page is known to have a
+ * proper memory cgroup poपूर्णांकer. It's not safe to call this function
  * against some type of pages, e.g. slab pages or ex-slab pages or
  * kmem pages.
  */
-static inline struct mem_cgroup *__page_memcg(struct page *page)
-{
-	unsigned long memcg_data = page->memcg_data;
+अटल अंतरभूत काष्ठा mem_cgroup *__page_memcg(काष्ठा page *page)
+अणु
+	अचिन्हित दीर्घ memcg_data = page->memcg_data;
 
 	VM_BUG_ON_PAGE(PageSlab(page), page);
 	VM_BUG_ON_PAGE(memcg_data & MEMCG_DATA_OBJCGS, page);
 	VM_BUG_ON_PAGE(memcg_data & MEMCG_DATA_KMEM, page);
 
-	return (struct mem_cgroup *)(memcg_data & ~MEMCG_DATA_FLAGS_MASK);
-}
+	वापस (काष्ठा mem_cgroup *)(memcg_data & ~MEMCG_DATA_FLAGS_MASK);
+पूर्ण
 
 /*
  * __page_objcg - get the object cgroup associated with a kmem page
- * @page: a pointer to the page struct
+ * @page: a poपूर्णांकer to the page काष्ठा
  *
- * Returns a pointer to the object cgroup associated with the page,
- * or NULL. This function assumes that the page is known to have a
- * proper object cgroup pointer. It's not safe to call this function
+ * Returns a poपूर्णांकer to the object cgroup associated with the page,
+ * or शून्य. This function assumes that the page is known to have a
+ * proper object cgroup poपूर्णांकer. It's not safe to call this function
  * against some type of pages, e.g. slab pages or ex-slab pages or
  * LRU pages.
  */
-static inline struct obj_cgroup *__page_objcg(struct page *page)
-{
-	unsigned long memcg_data = page->memcg_data;
+अटल अंतरभूत काष्ठा obj_cgroup *__page_objcg(काष्ठा page *page)
+अणु
+	अचिन्हित दीर्घ memcg_data = page->memcg_data;
 
 	VM_BUG_ON_PAGE(PageSlab(page), page);
 	VM_BUG_ON_PAGE(memcg_data & MEMCG_DATA_OBJCGS, page);
 	VM_BUG_ON_PAGE(!(memcg_data & MEMCG_DATA_KMEM), page);
 
-	return (struct obj_cgroup *)(memcg_data & ~MEMCG_DATA_FLAGS_MASK);
-}
+	वापस (काष्ठा obj_cgroup *)(memcg_data & ~MEMCG_DATA_FLAGS_MASK);
+पूर्ण
 
 /*
  * page_memcg - get the memory cgroup associated with a page
- * @page: a pointer to the page struct
+ * @page: a poपूर्णांकer to the page काष्ठा
  *
- * Returns a pointer to the memory cgroup associated with the page,
- * or NULL. This function assumes that the page is known to have a
- * proper memory cgroup pointer. It's not safe to call this function
+ * Returns a poपूर्णांकer to the memory cgroup associated with the page,
+ * or शून्य. This function assumes that the page is known to have a
+ * proper memory cgroup poपूर्णांकer. It's not safe to call this function
  * against some type of pages, e.g. slab pages or ex-slab pages.
  *
  * For a non-kmem page any of the following ensures page and memcg binding
@@ -445,51 +446,51 @@ static inline struct obj_cgroup *__page_objcg(struct page *page)
  * - lock_page_memcg()
  * - exclusive reference
  *
- * For a kmem page a caller should hold an rcu read lock to protect memcg
+ * For a kmem page a caller should hold an rcu पढ़ो lock to protect memcg
  * associated with a kmem page from being released.
  */
-static inline struct mem_cgroup *page_memcg(struct page *page)
-{
-	if (PageMemcgKmem(page))
-		return obj_cgroup_memcg(__page_objcg(page));
-	else
-		return __page_memcg(page);
-}
+अटल अंतरभूत काष्ठा mem_cgroup *page_memcg(काष्ठा page *page)
+अणु
+	अगर (PageMemcgKmem(page))
+		वापस obj_cgroup_memcg(__page_objcg(page));
+	अन्यथा
+		वापस __page_memcg(page);
+पूर्ण
 
 /*
  * page_memcg_rcu - locklessly get the memory cgroup associated with a page
- * @page: a pointer to the page struct
+ * @page: a poपूर्णांकer to the page काष्ठा
  *
- * Returns a pointer to the memory cgroup associated with the page,
- * or NULL. This function assumes that the page is known to have a
- * proper memory cgroup pointer. It's not safe to call this function
+ * Returns a poपूर्णांकer to the memory cgroup associated with the page,
+ * or शून्य. This function assumes that the page is known to have a
+ * proper memory cgroup poपूर्णांकer. It's not safe to call this function
  * against some type of pages, e.g. slab pages or ex-slab pages.
  */
-static inline struct mem_cgroup *page_memcg_rcu(struct page *page)
-{
-	unsigned long memcg_data = READ_ONCE(page->memcg_data);
+अटल अंतरभूत काष्ठा mem_cgroup *page_memcg_rcu(काष्ठा page *page)
+अणु
+	अचिन्हित दीर्घ memcg_data = READ_ONCE(page->memcg_data);
 
 	VM_BUG_ON_PAGE(PageSlab(page), page);
-	WARN_ON_ONCE(!rcu_read_lock_held());
+	WARN_ON_ONCE(!rcu_पढ़ो_lock_held());
 
-	if (memcg_data & MEMCG_DATA_KMEM) {
-		struct obj_cgroup *objcg;
+	अगर (memcg_data & MEMCG_DATA_KMEM) अणु
+		काष्ठा obj_cgroup *objcg;
 
-		objcg = (void *)(memcg_data & ~MEMCG_DATA_FLAGS_MASK);
-		return obj_cgroup_memcg(objcg);
-	}
+		objcg = (व्योम *)(memcg_data & ~MEMCG_DATA_FLAGS_MASK);
+		वापस obj_cgroup_memcg(objcg);
+	पूर्ण
 
-	return (struct mem_cgroup *)(memcg_data & ~MEMCG_DATA_FLAGS_MASK);
-}
+	वापस (काष्ठा mem_cgroup *)(memcg_data & ~MEMCG_DATA_FLAGS_MASK);
+पूर्ण
 
 /*
  * page_memcg_check - get the memory cgroup associated with a page
- * @page: a pointer to the page struct
+ * @page: a poपूर्णांकer to the page काष्ठा
  *
- * Returns a pointer to the memory cgroup associated with the page,
- * or NULL. This function unlike page_memcg() can take any page
- * as an argument. It has to be used in cases when it's not known if a page
- * has an associated memory cgroup pointer or an object cgroups vector or
+ * Returns a poपूर्णांकer to the memory cgroup associated with the page,
+ * or शून्य. This function unlike page_memcg() can take any page
+ * as an argument. It has to be used in हालs when it's not known अगर a page
+ * has an associated memory cgroup poपूर्णांकer or an object cgroups vector or
  * an object cgroup.
  *
  * For a non-kmem page any of the following ensures page and memcg binding
@@ -500,135 +501,135 @@ static inline struct mem_cgroup *page_memcg_rcu(struct page *page)
  * - lock_page_memcg()
  * - exclusive reference
  *
- * For a kmem page a caller should hold an rcu read lock to protect memcg
+ * For a kmem page a caller should hold an rcu पढ़ो lock to protect memcg
  * associated with a kmem page from being released.
  */
-static inline struct mem_cgroup *page_memcg_check(struct page *page)
-{
+अटल अंतरभूत काष्ठा mem_cgroup *page_memcg_check(काष्ठा page *page)
+अणु
 	/*
 	 * Because page->memcg_data might be changed asynchronously
-	 * for slab pages, READ_ONCE() should be used here.
+	 * क्रम slab pages, READ_ONCE() should be used here.
 	 */
-	unsigned long memcg_data = READ_ONCE(page->memcg_data);
+	अचिन्हित दीर्घ memcg_data = READ_ONCE(page->memcg_data);
 
-	if (memcg_data & MEMCG_DATA_OBJCGS)
-		return NULL;
+	अगर (memcg_data & MEMCG_DATA_OBJCGS)
+		वापस शून्य;
 
-	if (memcg_data & MEMCG_DATA_KMEM) {
-		struct obj_cgroup *objcg;
+	अगर (memcg_data & MEMCG_DATA_KMEM) अणु
+		काष्ठा obj_cgroup *objcg;
 
-		objcg = (void *)(memcg_data & ~MEMCG_DATA_FLAGS_MASK);
-		return obj_cgroup_memcg(objcg);
-	}
+		objcg = (व्योम *)(memcg_data & ~MEMCG_DATA_FLAGS_MASK);
+		वापस obj_cgroup_memcg(objcg);
+	पूर्ण
 
-	return (struct mem_cgroup *)(memcg_data & ~MEMCG_DATA_FLAGS_MASK);
-}
+	वापस (काष्ठा mem_cgroup *)(memcg_data & ~MEMCG_DATA_FLAGS_MASK);
+पूर्ण
 
-#ifdef CONFIG_MEMCG_KMEM
+#अगर_घोषित CONFIG_MEMCG_KMEM
 /*
- * PageMemcgKmem - check if the page has MemcgKmem flag set
- * @page: a pointer to the page struct
+ * PageMemcgKmem - check अगर the page has MemcgKmem flag set
+ * @page: a poपूर्णांकer to the page काष्ठा
  *
- * Checks if the page has MemcgKmem flag set. The caller must ensure that
+ * Checks अगर the page has MemcgKmem flag set. The caller must ensure that
  * the page has an associated memory cgroup. It's not safe to call this function
  * against some types of pages, e.g. slab pages.
  */
-static inline bool PageMemcgKmem(struct page *page)
-{
+अटल अंतरभूत bool PageMemcgKmem(काष्ठा page *page)
+अणु
 	VM_BUG_ON_PAGE(page->memcg_data & MEMCG_DATA_OBJCGS, page);
-	return page->memcg_data & MEMCG_DATA_KMEM;
-}
+	वापस page->memcg_data & MEMCG_DATA_KMEM;
+पूर्ण
 
 /*
  * page_objcgs - get the object cgroups vector associated with a page
- * @page: a pointer to the page struct
+ * @page: a poपूर्णांकer to the page काष्ठा
  *
- * Returns a pointer to the object cgroups vector associated with the page,
- * or NULL. This function assumes that the page is known to have an
+ * Returns a poपूर्णांकer to the object cgroups vector associated with the page,
+ * or शून्य. This function assumes that the page is known to have an
  * associated object cgroups vector. It's not safe to call this function
  * against pages, which might have an associated memory cgroup: e.g.
  * kernel stack pages.
  */
-static inline struct obj_cgroup **page_objcgs(struct page *page)
-{
-	unsigned long memcg_data = READ_ONCE(page->memcg_data);
+अटल अंतरभूत काष्ठा obj_cgroup **page_objcgs(काष्ठा page *page)
+अणु
+	अचिन्हित दीर्घ memcg_data = READ_ONCE(page->memcg_data);
 
 	VM_BUG_ON_PAGE(memcg_data && !(memcg_data & MEMCG_DATA_OBJCGS), page);
 	VM_BUG_ON_PAGE(memcg_data & MEMCG_DATA_KMEM, page);
 
-	return (struct obj_cgroup **)(memcg_data & ~MEMCG_DATA_FLAGS_MASK);
-}
+	वापस (काष्ठा obj_cgroup **)(memcg_data & ~MEMCG_DATA_FLAGS_MASK);
+पूर्ण
 
 /*
  * page_objcgs_check - get the object cgroups vector associated with a page
- * @page: a pointer to the page struct
+ * @page: a poपूर्णांकer to the page काष्ठा
  *
- * Returns a pointer to the object cgroups vector associated with the page,
- * or NULL. This function is safe to use if the page can be directly associated
+ * Returns a poपूर्णांकer to the object cgroups vector associated with the page,
+ * or शून्य. This function is safe to use अगर the page can be directly associated
  * with a memory cgroup.
  */
-static inline struct obj_cgroup **page_objcgs_check(struct page *page)
-{
-	unsigned long memcg_data = READ_ONCE(page->memcg_data);
+अटल अंतरभूत काष्ठा obj_cgroup **page_objcgs_check(काष्ठा page *page)
+अणु
+	अचिन्हित दीर्घ memcg_data = READ_ONCE(page->memcg_data);
 
-	if (!memcg_data || !(memcg_data & MEMCG_DATA_OBJCGS))
-		return NULL;
+	अगर (!memcg_data || !(memcg_data & MEMCG_DATA_OBJCGS))
+		वापस शून्य;
 
 	VM_BUG_ON_PAGE(memcg_data & MEMCG_DATA_KMEM, page);
 
-	return (struct obj_cgroup **)(memcg_data & ~MEMCG_DATA_FLAGS_MASK);
-}
+	वापस (काष्ठा obj_cgroup **)(memcg_data & ~MEMCG_DATA_FLAGS_MASK);
+पूर्ण
 
-#else
-static inline bool PageMemcgKmem(struct page *page)
-{
-	return false;
-}
+#अन्यथा
+अटल अंतरभूत bool PageMemcgKmem(काष्ठा page *page)
+अणु
+	वापस false;
+पूर्ण
 
-static inline struct obj_cgroup **page_objcgs(struct page *page)
-{
-	return NULL;
-}
+अटल अंतरभूत काष्ठा obj_cgroup **page_objcgs(काष्ठा page *page)
+अणु
+	वापस शून्य;
+पूर्ण
 
-static inline struct obj_cgroup **page_objcgs_check(struct page *page)
-{
-	return NULL;
-}
-#endif
+अटल अंतरभूत काष्ठा obj_cgroup **page_objcgs_check(काष्ठा page *page)
+अणु
+	वापस शून्य;
+पूर्ण
+#पूर्ण_अगर
 
-static __always_inline bool memcg_stat_item_in_bytes(int idx)
-{
-	if (idx == MEMCG_PERCPU_B)
-		return true;
-	return vmstat_item_in_bytes(idx);
-}
+अटल __always_अंतरभूत bool memcg_stat_item_in_bytes(पूर्णांक idx)
+अणु
+	अगर (idx == MEMCG_PERCPU_B)
+		वापस true;
+	वापस vmstat_item_in_bytes(idx);
+पूर्ण
 
-static inline bool mem_cgroup_is_root(struct mem_cgroup *memcg)
-{
-	return (memcg == root_mem_cgroup);
-}
+अटल अंतरभूत bool mem_cgroup_is_root(काष्ठा mem_cgroup *memcg)
+अणु
+	वापस (memcg == root_mem_cgroup);
+पूर्ण
 
-static inline bool mem_cgroup_disabled(void)
-{
-	return !cgroup_subsys_enabled(memory_cgrp_subsys);
-}
+अटल अंतरभूत bool mem_cgroup_disabled(व्योम)
+अणु
+	वापस !cgroup_subsys_enabled(memory_cgrp_subsys);
+पूर्ण
 
-static inline unsigned long mem_cgroup_protection(struct mem_cgroup *root,
-						  struct mem_cgroup *memcg,
+अटल अंतरभूत अचिन्हित दीर्घ mem_cgroup_protection(काष्ठा mem_cgroup *root,
+						  काष्ठा mem_cgroup *memcg,
 						  bool in_low_reclaim)
-{
-	if (mem_cgroup_disabled())
-		return 0;
+अणु
+	अगर (mem_cgroup_disabled())
+		वापस 0;
 
 	/*
 	 * There is no reclaim protection applied to a targeted reclaim.
-	 * We are special casing this specific case here because
-	 * mem_cgroup_protected calculation is not robust enough to keep
-	 * the protection invariant for calculated effective values for
-	 * parallel reclaimers with different reclaim target. This is
-	 * especially a problem for tail memcgs (as they have pages on LRU)
-	 * which would want to have effective values 0 for targeted reclaim
-	 * but a different value for external reclaim.
+	 * We are special casing this specअगरic हाल here because
+	 * mem_cgroup_रक्षित calculation is not robust enough to keep
+	 * the protection invariant क्रम calculated effective values क्रम
+	 * parallel reclaimers with dअगरferent reclaim target. This is
+	 * especially a problem क्रम tail memcgs (as they have pages on LRU)
+	 * which would want to have effective values 0 क्रम targeted reclaim
+	 * but a dअगरferent value क्रम बाह्यal reclaim.
 	 *
 	 * Example
 	 * Let's have global and A's reclaim in parallel:
@@ -653,78 +654,78 @@ static inline unsigned long mem_cgroup_protection(struct mem_cgroup *root,
 	 * is possible and reclaiming B would be violating the protection.
 	 *
 	 */
-	if (root == memcg)
-		return 0;
+	अगर (root == memcg)
+		वापस 0;
 
-	if (in_low_reclaim)
-		return READ_ONCE(memcg->memory.emin);
+	अगर (in_low_reclaim)
+		वापस READ_ONCE(memcg->memory.emin);
 
-	return max(READ_ONCE(memcg->memory.emin),
+	वापस max(READ_ONCE(memcg->memory.emin),
 		   READ_ONCE(memcg->memory.elow));
-}
+पूर्ण
 
-void mem_cgroup_calculate_protection(struct mem_cgroup *root,
-				     struct mem_cgroup *memcg);
+व्योम mem_cgroup_calculate_protection(काष्ठा mem_cgroup *root,
+				     काष्ठा mem_cgroup *memcg);
 
-static inline bool mem_cgroup_supports_protection(struct mem_cgroup *memcg)
-{
+अटल अंतरभूत bool mem_cgroup_supports_protection(काष्ठा mem_cgroup *memcg)
+अणु
 	/*
-	 * The root memcg doesn't account charges, and doesn't support
+	 * The root memcg करोesn't account charges, and doesn't support
 	 * protection.
 	 */
-	return !mem_cgroup_disabled() && !mem_cgroup_is_root(memcg);
+	वापस !mem_cgroup_disabled() && !mem_cgroup_is_root(memcg);
 
-}
+पूर्ण
 
-static inline bool mem_cgroup_below_low(struct mem_cgroup *memcg)
-{
-	if (!mem_cgroup_supports_protection(memcg))
-		return false;
+अटल अंतरभूत bool mem_cgroup_below_low(काष्ठा mem_cgroup *memcg)
+अणु
+	अगर (!mem_cgroup_supports_protection(memcg))
+		वापस false;
 
-	return READ_ONCE(memcg->memory.elow) >=
-		page_counter_read(&memcg->memory);
-}
+	वापस READ_ONCE(memcg->memory.elow) >=
+		page_counter_पढ़ो(&memcg->memory);
+पूर्ण
 
-static inline bool mem_cgroup_below_min(struct mem_cgroup *memcg)
-{
-	if (!mem_cgroup_supports_protection(memcg))
-		return false;
+अटल अंतरभूत bool mem_cgroup_below_min(काष्ठा mem_cgroup *memcg)
+अणु
+	अगर (!mem_cgroup_supports_protection(memcg))
+		वापस false;
 
-	return READ_ONCE(memcg->memory.emin) >=
-		page_counter_read(&memcg->memory);
-}
+	वापस READ_ONCE(memcg->memory.emin) >=
+		page_counter_पढ़ो(&memcg->memory);
+पूर्ण
 
-int mem_cgroup_charge(struct page *page, struct mm_struct *mm, gfp_t gfp_mask);
-int mem_cgroup_swapin_charge_page(struct page *page, struct mm_struct *mm,
+पूर्णांक mem_cgroup_अक्षरge(काष्ठा page *page, काष्ठा mm_काष्ठा *mm, gfp_t gfp_mask);
+पूर्णांक mem_cgroup_swapin_अक्षरge_page(काष्ठा page *page, काष्ठा mm_काष्ठा *mm,
 				  gfp_t gfp, swp_entry_t entry);
-void mem_cgroup_swapin_uncharge_swap(swp_entry_t entry);
+व्योम mem_cgroup_swapin_unअक्षरge_swap(swp_entry_t entry);
 
-void mem_cgroup_uncharge(struct page *page);
-void mem_cgroup_uncharge_list(struct list_head *page_list);
+व्योम mem_cgroup_unअक्षरge(काष्ठा page *page);
+व्योम mem_cgroup_unअक्षरge_list(काष्ठा list_head *page_list);
 
-void mem_cgroup_migrate(struct page *oldpage, struct page *newpage);
+व्योम mem_cgroup_migrate(काष्ठा page *oldpage, काष्ठा page *newpage);
 
 /**
- * mem_cgroup_lruvec - get the lru list vector for a memcg & node
+ * mem_cgroup_lruvec - get the lru list vector क्रम a memcg & node
  * @memcg: memcg of the wanted lruvec
  * @pgdat: pglist_data
  *
- * Returns the lru list vector holding pages for a given @memcg &
- * @pgdat combination. This can be the node lruvec, if the memory
+ * Returns the lru list vector holding pages क्रम a given @memcg &
+ * @pgdat combination. This can be the node lruvec, अगर the memory
  * controller is disabled.
  */
-static inline struct lruvec *mem_cgroup_lruvec(struct mem_cgroup *memcg,
-					       struct pglist_data *pgdat)
-{
-	struct mem_cgroup_per_node *mz;
-	struct lruvec *lruvec;
+अटल अंतरभूत काष्ठा lruvec *mem_cgroup_lruvec(काष्ठा mem_cgroup *memcg,
+					       काष्ठा pglist_data *pgdat)
+अणु
+	काष्ठा mem_cgroup_per_node *mz;
+	काष्ठा lruvec *lruvec;
 
-	if (mem_cgroup_disabled()) {
+	अगर (mem_cgroup_disabled()) अणु
 		lruvec = &pgdat->__lruvec;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (!memcg)
+	अगर (!memcg)
 		memcg = root_mem_cgroup;
 
 	mz = memcg->nodeinfo[pgdat->node_id];
@@ -733,1004 +734,1004 @@ out:
 	/*
 	 * Since a node can be onlined after the mem_cgroup was created,
 	 * we have to be prepared to initialize lruvec->pgdat here;
-	 * and if offlined then reonlined, we need to reinitialize it.
+	 * and अगर offlined then reonlined, we need to reinitialize it.
 	 */
-	if (unlikely(lruvec->pgdat != pgdat))
+	अगर (unlikely(lruvec->pgdat != pgdat))
 		lruvec->pgdat = pgdat;
-	return lruvec;
-}
+	वापस lruvec;
+पूर्ण
 
 /**
- * mem_cgroup_page_lruvec - return lruvec for isolating/putting an LRU page
+ * mem_cgroup_page_lruvec - वापस lruvec क्रम isolating/putting an LRU page
  * @page: the page
  * @pgdat: pgdat of the page
  *
  * This function relies on page->mem_cgroup being stable.
  */
-static inline struct lruvec *mem_cgroup_page_lruvec(struct page *page,
-						struct pglist_data *pgdat)
-{
-	struct mem_cgroup *memcg = page_memcg(page);
+अटल अंतरभूत काष्ठा lruvec *mem_cgroup_page_lruvec(काष्ठा page *page,
+						काष्ठा pglist_data *pgdat)
+अणु
+	काष्ठा mem_cgroup *memcg = page_memcg(page);
 
 	VM_WARN_ON_ONCE_PAGE(!memcg && !mem_cgroup_disabled(), page);
-	return mem_cgroup_lruvec(memcg, pgdat);
-}
+	वापस mem_cgroup_lruvec(memcg, pgdat);
+पूर्ण
 
-static inline bool lruvec_holds_page_lru_lock(struct page *page,
-					      struct lruvec *lruvec)
-{
+अटल अंतरभूत bool lruvec_holds_page_lru_lock(काष्ठा page *page,
+					      काष्ठा lruvec *lruvec)
+अणु
 	pg_data_t *pgdat = page_pgdat(page);
-	const struct mem_cgroup *memcg;
-	struct mem_cgroup_per_node *mz;
+	स्थिर काष्ठा mem_cgroup *memcg;
+	काष्ठा mem_cgroup_per_node *mz;
 
-	if (mem_cgroup_disabled())
-		return lruvec == &pgdat->__lruvec;
+	अगर (mem_cgroup_disabled())
+		वापस lruvec == &pgdat->__lruvec;
 
-	mz = container_of(lruvec, struct mem_cgroup_per_node, lruvec);
+	mz = container_of(lruvec, काष्ठा mem_cgroup_per_node, lruvec);
 	memcg = page_memcg(page) ? : root_mem_cgroup;
 
-	return lruvec->pgdat == pgdat && mz->memcg == memcg;
-}
+	वापस lruvec->pgdat == pgdat && mz->memcg == memcg;
+पूर्ण
 
-struct mem_cgroup *mem_cgroup_from_task(struct task_struct *p);
+काष्ठा mem_cgroup *mem_cgroup_from_task(काष्ठा task_काष्ठा *p);
 
-struct mem_cgroup *get_mem_cgroup_from_mm(struct mm_struct *mm);
+काष्ठा mem_cgroup *get_mem_cgroup_from_mm(काष्ठा mm_काष्ठा *mm);
 
-struct lruvec *lock_page_lruvec(struct page *page);
-struct lruvec *lock_page_lruvec_irq(struct page *page);
-struct lruvec *lock_page_lruvec_irqsave(struct page *page,
-						unsigned long *flags);
+काष्ठा lruvec *lock_page_lruvec(काष्ठा page *page);
+काष्ठा lruvec *lock_page_lruvec_irq(काष्ठा page *page);
+काष्ठा lruvec *lock_page_lruvec_irqsave(काष्ठा page *page,
+						अचिन्हित दीर्घ *flags);
 
-#ifdef CONFIG_DEBUG_VM
-void lruvec_memcg_debug(struct lruvec *lruvec, struct page *page);
-#else
-static inline void lruvec_memcg_debug(struct lruvec *lruvec, struct page *page)
-{
-}
-#endif
+#अगर_घोषित CONFIG_DEBUG_VM
+व्योम lruvec_memcg_debug(काष्ठा lruvec *lruvec, काष्ठा page *page);
+#अन्यथा
+अटल अंतरभूत व्योम lruvec_memcg_debug(काष्ठा lruvec *lruvec, काष्ठा page *page)
+अणु
+पूर्ण
+#पूर्ण_अगर
 
-static inline
-struct mem_cgroup *mem_cgroup_from_css(struct cgroup_subsys_state *css){
-	return css ? container_of(css, struct mem_cgroup, css) : NULL;
-}
+अटल अंतरभूत
+काष्ठा mem_cgroup *mem_cgroup_from_css(काष्ठा cgroup_subsys_state *css)अणु
+	वापस css ? container_of(css, काष्ठा mem_cgroup, css) : शून्य;
+पूर्ण
 
-static inline bool obj_cgroup_tryget(struct obj_cgroup *objcg)
-{
-	return percpu_ref_tryget(&objcg->refcnt);
-}
+अटल अंतरभूत bool obj_cgroup_tryget(काष्ठा obj_cgroup *objcg)
+अणु
+	वापस percpu_ref_tryget(&objcg->refcnt);
+पूर्ण
 
-static inline void obj_cgroup_get(struct obj_cgroup *objcg)
-{
+अटल अंतरभूत व्योम obj_cgroup_get(काष्ठा obj_cgroup *objcg)
+अणु
 	percpu_ref_get(&objcg->refcnt);
-}
+पूर्ण
 
-static inline void obj_cgroup_get_many(struct obj_cgroup *objcg,
-				       unsigned long nr)
-{
+अटल अंतरभूत व्योम obj_cgroup_get_many(काष्ठा obj_cgroup *objcg,
+				       अचिन्हित दीर्घ nr)
+अणु
 	percpu_ref_get_many(&objcg->refcnt, nr);
-}
+पूर्ण
 
-static inline void obj_cgroup_put(struct obj_cgroup *objcg)
-{
+अटल अंतरभूत व्योम obj_cgroup_put(काष्ठा obj_cgroup *objcg)
+अणु
 	percpu_ref_put(&objcg->refcnt);
-}
+पूर्ण
 
-static inline void mem_cgroup_put(struct mem_cgroup *memcg)
-{
-	if (memcg)
+अटल अंतरभूत व्योम mem_cgroup_put(काष्ठा mem_cgroup *memcg)
+अणु
+	अगर (memcg)
 		css_put(&memcg->css);
-}
+पूर्ण
 
-#define mem_cgroup_from_counter(counter, member)	\
-	container_of(counter, struct mem_cgroup, member)
+#घोषणा mem_cgroup_from_counter(counter, member)	\
+	container_of(counter, काष्ठा mem_cgroup, member)
 
-struct mem_cgroup *mem_cgroup_iter(struct mem_cgroup *,
-				   struct mem_cgroup *,
-				   struct mem_cgroup_reclaim_cookie *);
-void mem_cgroup_iter_break(struct mem_cgroup *, struct mem_cgroup *);
-int mem_cgroup_scan_tasks(struct mem_cgroup *,
-			  int (*)(struct task_struct *, void *), void *);
+काष्ठा mem_cgroup *mem_cgroup_iter(काष्ठा mem_cgroup *,
+				   काष्ठा mem_cgroup *,
+				   काष्ठा mem_cgroup_reclaim_cookie *);
+व्योम mem_cgroup_iter_अवरोध(काष्ठा mem_cgroup *, काष्ठा mem_cgroup *);
+पूर्णांक mem_cgroup_scan_tasks(काष्ठा mem_cgroup *,
+			  पूर्णांक (*)(काष्ठा task_काष्ठा *, व्योम *), व्योम *);
 
-static inline unsigned short mem_cgroup_id(struct mem_cgroup *memcg)
-{
-	if (mem_cgroup_disabled())
-		return 0;
+अटल अंतरभूत अचिन्हित लघु mem_cgroup_id(काष्ठा mem_cgroup *memcg)
+अणु
+	अगर (mem_cgroup_disabled())
+		वापस 0;
 
-	return memcg->id.id;
-}
-struct mem_cgroup *mem_cgroup_from_id(unsigned short id);
+	वापस memcg->id.id;
+पूर्ण
+काष्ठा mem_cgroup *mem_cgroup_from_id(अचिन्हित लघु id);
 
-static inline struct mem_cgroup *mem_cgroup_from_seq(struct seq_file *m)
-{
-	return mem_cgroup_from_css(seq_css(m));
-}
+अटल अंतरभूत काष्ठा mem_cgroup *mem_cgroup_from_seq(काष्ठा seq_file *m)
+अणु
+	वापस mem_cgroup_from_css(seq_css(m));
+पूर्ण
 
-static inline struct mem_cgroup *lruvec_memcg(struct lruvec *lruvec)
-{
-	struct mem_cgroup_per_node *mz;
+अटल अंतरभूत काष्ठा mem_cgroup *lruvec_memcg(काष्ठा lruvec *lruvec)
+अणु
+	काष्ठा mem_cgroup_per_node *mz;
 
-	if (mem_cgroup_disabled())
-		return NULL;
+	अगर (mem_cgroup_disabled())
+		वापस शून्य;
 
-	mz = container_of(lruvec, struct mem_cgroup_per_node, lruvec);
-	return mz->memcg;
-}
+	mz = container_of(lruvec, काष्ठा mem_cgroup_per_node, lruvec);
+	वापस mz->memcg;
+पूर्ण
 
 /**
  * parent_mem_cgroup - find the accounting parent of a memcg
  * @memcg: memcg whose parent to find
  *
- * Returns the parent memcg, or NULL if this is the root or the memory
+ * Returns the parent memcg, or शून्य अगर this is the root or the memory
  * controller is in legacy no-hierarchy mode.
  */
-static inline struct mem_cgroup *parent_mem_cgroup(struct mem_cgroup *memcg)
-{
-	if (!memcg->memory.parent)
-		return NULL;
-	return mem_cgroup_from_counter(memcg->memory.parent, memory);
-}
+अटल अंतरभूत काष्ठा mem_cgroup *parent_mem_cgroup(काष्ठा mem_cgroup *memcg)
+अणु
+	अगर (!memcg->memory.parent)
+		वापस शून्य;
+	वापस mem_cgroup_from_counter(memcg->memory.parent, memory);
+पूर्ण
 
-static inline bool mem_cgroup_is_descendant(struct mem_cgroup *memcg,
-			      struct mem_cgroup *root)
-{
-	if (root == memcg)
-		return true;
-	return cgroup_is_descendant(memcg->css.cgroup, root->css.cgroup);
-}
+अटल अंतरभूत bool mem_cgroup_is_descendant(काष्ठा mem_cgroup *memcg,
+			      काष्ठा mem_cgroup *root)
+अणु
+	अगर (root == memcg)
+		वापस true;
+	वापस cgroup_is_descendant(memcg->css.cgroup, root->css.cgroup);
+पूर्ण
 
-static inline bool mm_match_cgroup(struct mm_struct *mm,
-				   struct mem_cgroup *memcg)
-{
-	struct mem_cgroup *task_memcg;
+अटल अंतरभूत bool mm_match_cgroup(काष्ठा mm_काष्ठा *mm,
+				   काष्ठा mem_cgroup *memcg)
+अणु
+	काष्ठा mem_cgroup *task_memcg;
 	bool match = false;
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	task_memcg = mem_cgroup_from_task(rcu_dereference(mm->owner));
-	if (task_memcg)
+	अगर (task_memcg)
 		match = mem_cgroup_is_descendant(task_memcg, memcg);
-	rcu_read_unlock();
-	return match;
-}
+	rcu_पढ़ो_unlock();
+	वापस match;
+पूर्ण
 
-struct cgroup_subsys_state *mem_cgroup_css_from_page(struct page *page);
-ino_t page_cgroup_ino(struct page *page);
+काष्ठा cgroup_subsys_state *mem_cgroup_css_from_page(काष्ठा page *page);
+ino_t page_cgroup_ino(काष्ठा page *page);
 
-static inline bool mem_cgroup_online(struct mem_cgroup *memcg)
-{
-	if (mem_cgroup_disabled())
-		return true;
-	return !!(memcg->css.flags & CSS_ONLINE);
-}
+अटल अंतरभूत bool mem_cgroup_online(काष्ठा mem_cgroup *memcg)
+अणु
+	अगर (mem_cgroup_disabled())
+		वापस true;
+	वापस !!(memcg->css.flags & CSS_ONLINE);
+पूर्ण
 
 /*
  * For memory reclaim.
  */
-int mem_cgroup_select_victim_node(struct mem_cgroup *memcg);
+पूर्णांक mem_cgroup_select_victim_node(काष्ठा mem_cgroup *memcg);
 
-void mem_cgroup_update_lru_size(struct lruvec *lruvec, enum lru_list lru,
-		int zid, int nr_pages);
+व्योम mem_cgroup_update_lru_size(काष्ठा lruvec *lruvec, क्रमागत lru_list lru,
+		पूर्णांक zid, पूर्णांक nr_pages);
 
-static inline
-unsigned long mem_cgroup_get_zone_lru_size(struct lruvec *lruvec,
-		enum lru_list lru, int zone_idx)
-{
-	struct mem_cgroup_per_node *mz;
+अटल अंतरभूत
+अचिन्हित दीर्घ mem_cgroup_get_zone_lru_size(काष्ठा lruvec *lruvec,
+		क्रमागत lru_list lru, पूर्णांक zone_idx)
+अणु
+	काष्ठा mem_cgroup_per_node *mz;
 
-	mz = container_of(lruvec, struct mem_cgroup_per_node, lruvec);
-	return READ_ONCE(mz->lru_zone_size[zone_idx][lru]);
-}
+	mz = container_of(lruvec, काष्ठा mem_cgroup_per_node, lruvec);
+	वापस READ_ONCE(mz->lru_zone_size[zone_idx][lru]);
+पूर्ण
 
-void mem_cgroup_handle_over_high(void);
+व्योम mem_cgroup_handle_over_high(व्योम);
 
-unsigned long mem_cgroup_get_max(struct mem_cgroup *memcg);
+अचिन्हित दीर्घ mem_cgroup_get_max(काष्ठा mem_cgroup *memcg);
 
-unsigned long mem_cgroup_size(struct mem_cgroup *memcg);
+अचिन्हित दीर्घ mem_cgroup_size(काष्ठा mem_cgroup *memcg);
 
-void mem_cgroup_print_oom_context(struct mem_cgroup *memcg,
-				struct task_struct *p);
+व्योम mem_cgroup_prपूर्णांक_oom_context(काष्ठा mem_cgroup *memcg,
+				काष्ठा task_काष्ठा *p);
 
-void mem_cgroup_print_oom_meminfo(struct mem_cgroup *memcg);
+व्योम mem_cgroup_prपूर्णांक_oom_meminfo(काष्ठा mem_cgroup *memcg);
 
-static inline void mem_cgroup_enter_user_fault(void)
-{
+अटल अंतरभूत व्योम mem_cgroup_enter_user_fault(व्योम)
+अणु
 	WARN_ON(current->in_user_fault);
 	current->in_user_fault = 1;
-}
+पूर्ण
 
-static inline void mem_cgroup_exit_user_fault(void)
-{
+अटल अंतरभूत व्योम mem_cgroup_निकास_user_fault(व्योम)
+अणु
 	WARN_ON(!current->in_user_fault);
 	current->in_user_fault = 0;
-}
+पूर्ण
 
-static inline bool task_in_memcg_oom(struct task_struct *p)
-{
-	return p->memcg_in_oom;
-}
+अटल अंतरभूत bool task_in_memcg_oom(काष्ठा task_काष्ठा *p)
+अणु
+	वापस p->memcg_in_oom;
+पूर्ण
 
-bool mem_cgroup_oom_synchronize(bool wait);
-struct mem_cgroup *mem_cgroup_get_oom_group(struct task_struct *victim,
-					    struct mem_cgroup *oom_domain);
-void mem_cgroup_print_oom_group(struct mem_cgroup *memcg);
+bool mem_cgroup_oom_synchronize(bool रुको);
+काष्ठा mem_cgroup *mem_cgroup_get_oom_group(काष्ठा task_काष्ठा *victim,
+					    काष्ठा mem_cgroup *oom_करोमुख्य);
+व्योम mem_cgroup_prपूर्णांक_oom_group(काष्ठा mem_cgroup *memcg);
 
-#ifdef CONFIG_MEMCG_SWAP
-extern bool cgroup_memory_noswap;
-#endif
+#अगर_घोषित CONFIG_MEMCG_SWAP
+बाह्य bool cgroup_memory_noswap;
+#पूर्ण_अगर
 
-void lock_page_memcg(struct page *page);
-void unlock_page_memcg(struct page *page);
+व्योम lock_page_memcg(काष्ठा page *page);
+व्योम unlock_page_memcg(काष्ठा page *page);
 
-void __mod_memcg_state(struct mem_cgroup *memcg, int idx, int val);
+व्योम __mod_memcg_state(काष्ठा mem_cgroup *memcg, पूर्णांक idx, पूर्णांक val);
 
-/* idx can be of type enum memcg_stat_item or node_stat_item */
-static inline void mod_memcg_state(struct mem_cgroup *memcg,
-				   int idx, int val)
-{
-	unsigned long flags;
+/* idx can be of type क्रमागत memcg_stat_item or node_stat_item */
+अटल अंतरभूत व्योम mod_memcg_state(काष्ठा mem_cgroup *memcg,
+				   पूर्णांक idx, पूर्णांक val)
+अणु
+	अचिन्हित दीर्घ flags;
 
 	local_irq_save(flags);
 	__mod_memcg_state(memcg, idx, val);
 	local_irq_restore(flags);
-}
+पूर्ण
 
-static inline unsigned long lruvec_page_state(struct lruvec *lruvec,
-					      enum node_stat_item idx)
-{
-	struct mem_cgroup_per_node *pn;
-	long x;
+अटल अंतरभूत अचिन्हित दीर्घ lruvec_page_state(काष्ठा lruvec *lruvec,
+					      क्रमागत node_stat_item idx)
+अणु
+	काष्ठा mem_cgroup_per_node *pn;
+	दीर्घ x;
 
-	if (mem_cgroup_disabled())
-		return node_page_state(lruvec_pgdat(lruvec), idx);
+	अगर (mem_cgroup_disabled())
+		वापस node_page_state(lruvec_pgdat(lruvec), idx);
 
-	pn = container_of(lruvec, struct mem_cgroup_per_node, lruvec);
-	x = atomic_long_read(&pn->lruvec_stat[idx]);
-#ifdef CONFIG_SMP
-	if (x < 0)
+	pn = container_of(lruvec, काष्ठा mem_cgroup_per_node, lruvec);
+	x = atomic_दीर्घ_पढ़ो(&pn->lruvec_stat[idx]);
+#अगर_घोषित CONFIG_SMP
+	अगर (x < 0)
 		x = 0;
-#endif
-	return x;
-}
+#पूर्ण_अगर
+	वापस x;
+पूर्ण
 
-static inline unsigned long lruvec_page_state_local(struct lruvec *lruvec,
-						    enum node_stat_item idx)
-{
-	struct mem_cgroup_per_node *pn;
-	long x = 0;
-	int cpu;
+अटल अंतरभूत अचिन्हित दीर्घ lruvec_page_state_local(काष्ठा lruvec *lruvec,
+						    क्रमागत node_stat_item idx)
+अणु
+	काष्ठा mem_cgroup_per_node *pn;
+	दीर्घ x = 0;
+	पूर्णांक cpu;
 
-	if (mem_cgroup_disabled())
-		return node_page_state(lruvec_pgdat(lruvec), idx);
+	अगर (mem_cgroup_disabled())
+		वापस node_page_state(lruvec_pgdat(lruvec), idx);
 
-	pn = container_of(lruvec, struct mem_cgroup_per_node, lruvec);
-	for_each_possible_cpu(cpu)
+	pn = container_of(lruvec, काष्ठा mem_cgroup_per_node, lruvec);
+	क्रम_each_possible_cpu(cpu)
 		x += per_cpu(pn->lruvec_stat_local->count[idx], cpu);
-#ifdef CONFIG_SMP
-	if (x < 0)
+#अगर_घोषित CONFIG_SMP
+	अगर (x < 0)
 		x = 0;
-#endif
-	return x;
-}
+#पूर्ण_अगर
+	वापस x;
+पूर्ण
 
-void __mod_memcg_lruvec_state(struct lruvec *lruvec, enum node_stat_item idx,
-			      int val);
-void __mod_lruvec_kmem_state(void *p, enum node_stat_item idx, int val);
+व्योम __mod_memcg_lruvec_state(काष्ठा lruvec *lruvec, क्रमागत node_stat_item idx,
+			      पूर्णांक val);
+व्योम __mod_lruvec_kmem_state(व्योम *p, क्रमागत node_stat_item idx, पूर्णांक val);
 
-static inline void mod_lruvec_kmem_state(void *p, enum node_stat_item idx,
-					 int val)
-{
-	unsigned long flags;
+अटल अंतरभूत व्योम mod_lruvec_kmem_state(व्योम *p, क्रमागत node_stat_item idx,
+					 पूर्णांक val)
+अणु
+	अचिन्हित दीर्घ flags;
 
 	local_irq_save(flags);
 	__mod_lruvec_kmem_state(p, idx, val);
 	local_irq_restore(flags);
-}
+पूर्ण
 
-static inline void mod_memcg_lruvec_state(struct lruvec *lruvec,
-					  enum node_stat_item idx, int val)
-{
-	unsigned long flags;
+अटल अंतरभूत व्योम mod_memcg_lruvec_state(काष्ठा lruvec *lruvec,
+					  क्रमागत node_stat_item idx, पूर्णांक val)
+अणु
+	अचिन्हित दीर्घ flags;
 
 	local_irq_save(flags);
 	__mod_memcg_lruvec_state(lruvec, idx, val);
 	local_irq_restore(flags);
-}
+पूर्ण
 
-void __count_memcg_events(struct mem_cgroup *memcg, enum vm_event_item idx,
-			  unsigned long count);
+व्योम __count_memcg_events(काष्ठा mem_cgroup *memcg, क्रमागत vm_event_item idx,
+			  अचिन्हित दीर्घ count);
 
-static inline void count_memcg_events(struct mem_cgroup *memcg,
-				      enum vm_event_item idx,
-				      unsigned long count)
-{
-	unsigned long flags;
+अटल अंतरभूत व्योम count_memcg_events(काष्ठा mem_cgroup *memcg,
+				      क्रमागत vm_event_item idx,
+				      अचिन्हित दीर्घ count)
+अणु
+	अचिन्हित दीर्घ flags;
 
 	local_irq_save(flags);
 	__count_memcg_events(memcg, idx, count);
 	local_irq_restore(flags);
-}
+पूर्ण
 
-static inline void count_memcg_page_event(struct page *page,
-					  enum vm_event_item idx)
-{
-	struct mem_cgroup *memcg = page_memcg(page);
+अटल अंतरभूत व्योम count_memcg_page_event(काष्ठा page *page,
+					  क्रमागत vm_event_item idx)
+अणु
+	काष्ठा mem_cgroup *memcg = page_memcg(page);
 
-	if (memcg)
+	अगर (memcg)
 		count_memcg_events(memcg, idx, 1);
-}
+पूर्ण
 
-static inline void count_memcg_event_mm(struct mm_struct *mm,
-					enum vm_event_item idx)
-{
-	struct mem_cgroup *memcg;
+अटल अंतरभूत व्योम count_memcg_event_mm(काष्ठा mm_काष्ठा *mm,
+					क्रमागत vm_event_item idx)
+अणु
+	काष्ठा mem_cgroup *memcg;
 
-	if (mem_cgroup_disabled())
-		return;
+	अगर (mem_cgroup_disabled())
+		वापस;
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	memcg = mem_cgroup_from_task(rcu_dereference(mm->owner));
-	if (likely(memcg))
+	अगर (likely(memcg))
 		count_memcg_events(memcg, idx, 1);
-	rcu_read_unlock();
-}
+	rcu_पढ़ो_unlock();
+पूर्ण
 
-static inline void memcg_memory_event(struct mem_cgroup *memcg,
-				      enum memcg_memory_event event)
-{
+अटल अंतरभूत व्योम memcg_memory_event(काष्ठा mem_cgroup *memcg,
+				      क्रमागत memcg_memory_event event)
+अणु
 	bool swap_event = event == MEMCG_SWAP_HIGH || event == MEMCG_SWAP_MAX ||
 			  event == MEMCG_SWAP_FAIL;
 
-	atomic_long_inc(&memcg->memory_events_local[event]);
-	if (!swap_event)
-		cgroup_file_notify(&memcg->events_local_file);
+	atomic_दीर्घ_inc(&memcg->memory_events_local[event]);
+	अगर (!swap_event)
+		cgroup_file_notअगरy(&memcg->events_local_file);
 
-	do {
-		atomic_long_inc(&memcg->memory_events[event]);
-		if (swap_event)
-			cgroup_file_notify(&memcg->swap_events_file);
-		else
-			cgroup_file_notify(&memcg->events_file);
+	करो अणु
+		atomic_दीर्घ_inc(&memcg->memory_events[event]);
+		अगर (swap_event)
+			cgroup_file_notअगरy(&memcg->swap_events_file);
+		अन्यथा
+			cgroup_file_notअगरy(&memcg->events_file);
 
-		if (!cgroup_subsys_on_dfl(memory_cgrp_subsys))
-			break;
-		if (cgrp_dfl_root.flags & CGRP_ROOT_MEMORY_LOCAL_EVENTS)
-			break;
-	} while ((memcg = parent_mem_cgroup(memcg)) &&
+		अगर (!cgroup_subsys_on_dfl(memory_cgrp_subsys))
+			अवरोध;
+		अगर (cgrp_dfl_root.flags & CGRP_ROOT_MEMORY_LOCAL_EVENTS)
+			अवरोध;
+	पूर्ण जबतक ((memcg = parent_mem_cgroup(memcg)) &&
 		 !mem_cgroup_is_root(memcg));
-}
+पूर्ण
 
-static inline void memcg_memory_event_mm(struct mm_struct *mm,
-					 enum memcg_memory_event event)
-{
-	struct mem_cgroup *memcg;
+अटल अंतरभूत व्योम memcg_memory_event_mm(काष्ठा mm_काष्ठा *mm,
+					 क्रमागत memcg_memory_event event)
+अणु
+	काष्ठा mem_cgroup *memcg;
 
-	if (mem_cgroup_disabled())
-		return;
+	अगर (mem_cgroup_disabled())
+		वापस;
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	memcg = mem_cgroup_from_task(rcu_dereference(mm->owner));
-	if (likely(memcg))
+	अगर (likely(memcg))
 		memcg_memory_event(memcg, event);
-	rcu_read_unlock();
-}
+	rcu_पढ़ो_unlock();
+पूर्ण
 
-void split_page_memcg(struct page *head, unsigned int nr);
+व्योम split_page_memcg(काष्ठा page *head, अचिन्हित पूर्णांक nr);
 
-unsigned long mem_cgroup_soft_limit_reclaim(pg_data_t *pgdat, int order,
+अचिन्हित दीर्घ mem_cgroup_soft_limit_reclaim(pg_data_t *pgdat, पूर्णांक order,
 						gfp_t gfp_mask,
-						unsigned long *total_scanned);
+						अचिन्हित दीर्घ *total_scanned);
 
-#else /* CONFIG_MEMCG */
+#अन्यथा /* CONFIG_MEMCG */
 
-#define MEM_CGROUP_ID_SHIFT	0
-#define MEM_CGROUP_ID_MAX	0
+#घोषणा MEM_CGROUP_ID_SHIFT	0
+#घोषणा MEM_CGROUP_ID_MAX	0
 
-static inline struct mem_cgroup *page_memcg(struct page *page)
-{
-	return NULL;
-}
+अटल अंतरभूत काष्ठा mem_cgroup *page_memcg(काष्ठा page *page)
+अणु
+	वापस शून्य;
+पूर्ण
 
-static inline struct mem_cgroup *page_memcg_rcu(struct page *page)
-{
-	WARN_ON_ONCE(!rcu_read_lock_held());
-	return NULL;
-}
+अटल अंतरभूत काष्ठा mem_cgroup *page_memcg_rcu(काष्ठा page *page)
+अणु
+	WARN_ON_ONCE(!rcu_पढ़ो_lock_held());
+	वापस शून्य;
+पूर्ण
 
-static inline struct mem_cgroup *page_memcg_check(struct page *page)
-{
-	return NULL;
-}
+अटल अंतरभूत काष्ठा mem_cgroup *page_memcg_check(काष्ठा page *page)
+अणु
+	वापस शून्य;
+पूर्ण
 
-static inline bool PageMemcgKmem(struct page *page)
-{
-	return false;
-}
+अटल अंतरभूत bool PageMemcgKmem(काष्ठा page *page)
+अणु
+	वापस false;
+पूर्ण
 
-static inline bool mem_cgroup_is_root(struct mem_cgroup *memcg)
-{
-	return true;
-}
+अटल अंतरभूत bool mem_cgroup_is_root(काष्ठा mem_cgroup *memcg)
+अणु
+	वापस true;
+पूर्ण
 
-static inline bool mem_cgroup_disabled(void)
-{
-	return true;
-}
+अटल अंतरभूत bool mem_cgroup_disabled(व्योम)
+अणु
+	वापस true;
+पूर्ण
 
-static inline void memcg_memory_event(struct mem_cgroup *memcg,
-				      enum memcg_memory_event event)
-{
-}
+अटल अंतरभूत व्योम memcg_memory_event(काष्ठा mem_cgroup *memcg,
+				      क्रमागत memcg_memory_event event)
+अणु
+पूर्ण
 
-static inline void memcg_memory_event_mm(struct mm_struct *mm,
-					 enum memcg_memory_event event)
-{
-}
+अटल अंतरभूत व्योम memcg_memory_event_mm(काष्ठा mm_काष्ठा *mm,
+					 क्रमागत memcg_memory_event event)
+अणु
+पूर्ण
 
-static inline unsigned long mem_cgroup_protection(struct mem_cgroup *root,
-						  struct mem_cgroup *memcg,
+अटल अंतरभूत अचिन्हित दीर्घ mem_cgroup_protection(काष्ठा mem_cgroup *root,
+						  काष्ठा mem_cgroup *memcg,
 						  bool in_low_reclaim)
-{
-	return 0;
-}
+अणु
+	वापस 0;
+पूर्ण
 
-static inline void mem_cgroup_calculate_protection(struct mem_cgroup *root,
-						   struct mem_cgroup *memcg)
-{
-}
+अटल अंतरभूत व्योम mem_cgroup_calculate_protection(काष्ठा mem_cgroup *root,
+						   काष्ठा mem_cgroup *memcg)
+अणु
+पूर्ण
 
-static inline bool mem_cgroup_below_low(struct mem_cgroup *memcg)
-{
-	return false;
-}
+अटल अंतरभूत bool mem_cgroup_below_low(काष्ठा mem_cgroup *memcg)
+अणु
+	वापस false;
+पूर्ण
 
-static inline bool mem_cgroup_below_min(struct mem_cgroup *memcg)
-{
-	return false;
-}
+अटल अंतरभूत bool mem_cgroup_below_min(काष्ठा mem_cgroup *memcg)
+अणु
+	वापस false;
+पूर्ण
 
-static inline int mem_cgroup_charge(struct page *page, struct mm_struct *mm,
+अटल अंतरभूत पूर्णांक mem_cgroup_अक्षरge(काष्ठा page *page, काष्ठा mm_काष्ठा *mm,
 				    gfp_t gfp_mask)
-{
-	return 0;
-}
+अणु
+	वापस 0;
+पूर्ण
 
-static inline int mem_cgroup_swapin_charge_page(struct page *page,
-			struct mm_struct *mm, gfp_t gfp, swp_entry_t entry)
-{
-	return 0;
-}
+अटल अंतरभूत पूर्णांक mem_cgroup_swapin_अक्षरge_page(काष्ठा page *page,
+			काष्ठा mm_काष्ठा *mm, gfp_t gfp, swp_entry_t entry)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline void mem_cgroup_swapin_uncharge_swap(swp_entry_t entry)
-{
-}
+अटल अंतरभूत व्योम mem_cgroup_swapin_unअक्षरge_swap(swp_entry_t entry)
+अणु
+पूर्ण
 
-static inline void mem_cgroup_uncharge(struct page *page)
-{
-}
+अटल अंतरभूत व्योम mem_cgroup_unअक्षरge(काष्ठा page *page)
+अणु
+पूर्ण
 
-static inline void mem_cgroup_uncharge_list(struct list_head *page_list)
-{
-}
+अटल अंतरभूत व्योम mem_cgroup_unअक्षरge_list(काष्ठा list_head *page_list)
+अणु
+पूर्ण
 
-static inline void mem_cgroup_migrate(struct page *old, struct page *new)
-{
-}
+अटल अंतरभूत व्योम mem_cgroup_migrate(काष्ठा page *old, काष्ठा page *new)
+अणु
+पूर्ण
 
-static inline struct lruvec *mem_cgroup_lruvec(struct mem_cgroup *memcg,
-					       struct pglist_data *pgdat)
-{
-	return &pgdat->__lruvec;
-}
+अटल अंतरभूत काष्ठा lruvec *mem_cgroup_lruvec(काष्ठा mem_cgroup *memcg,
+					       काष्ठा pglist_data *pgdat)
+अणु
+	वापस &pgdat->__lruvec;
+पूर्ण
 
-static inline struct lruvec *mem_cgroup_page_lruvec(struct page *page,
-						    struct pglist_data *pgdat)
-{
-	return &pgdat->__lruvec;
-}
+अटल अंतरभूत काष्ठा lruvec *mem_cgroup_page_lruvec(काष्ठा page *page,
+						    काष्ठा pglist_data *pgdat)
+अणु
+	वापस &pgdat->__lruvec;
+पूर्ण
 
-static inline bool lruvec_holds_page_lru_lock(struct page *page,
-					      struct lruvec *lruvec)
-{
+अटल अंतरभूत bool lruvec_holds_page_lru_lock(काष्ठा page *page,
+					      काष्ठा lruvec *lruvec)
+अणु
 	pg_data_t *pgdat = page_pgdat(page);
 
-	return lruvec == &pgdat->__lruvec;
-}
+	वापस lruvec == &pgdat->__lruvec;
+पूर्ण
 
-static inline void lruvec_memcg_debug(struct lruvec *lruvec, struct page *page)
-{
-}
+अटल अंतरभूत व्योम lruvec_memcg_debug(काष्ठा lruvec *lruvec, काष्ठा page *page)
+अणु
+पूर्ण
 
-static inline struct mem_cgroup *parent_mem_cgroup(struct mem_cgroup *memcg)
-{
-	return NULL;
-}
+अटल अंतरभूत काष्ठा mem_cgroup *parent_mem_cgroup(काष्ठा mem_cgroup *memcg)
+अणु
+	वापस शून्य;
+पूर्ण
 
-static inline bool mm_match_cgroup(struct mm_struct *mm,
-		struct mem_cgroup *memcg)
-{
-	return true;
-}
+अटल अंतरभूत bool mm_match_cgroup(काष्ठा mm_काष्ठा *mm,
+		काष्ठा mem_cgroup *memcg)
+अणु
+	वापस true;
+पूर्ण
 
-static inline struct mem_cgroup *get_mem_cgroup_from_mm(struct mm_struct *mm)
-{
-	return NULL;
-}
+अटल अंतरभूत काष्ठा mem_cgroup *get_mem_cgroup_from_mm(काष्ठा mm_काष्ठा *mm)
+अणु
+	वापस शून्य;
+पूर्ण
 
-static inline void mem_cgroup_put(struct mem_cgroup *memcg)
-{
-}
+अटल अंतरभूत व्योम mem_cgroup_put(काष्ठा mem_cgroup *memcg)
+अणु
+पूर्ण
 
-static inline struct lruvec *lock_page_lruvec(struct page *page)
-{
-	struct pglist_data *pgdat = page_pgdat(page);
+अटल अंतरभूत काष्ठा lruvec *lock_page_lruvec(काष्ठा page *page)
+अणु
+	काष्ठा pglist_data *pgdat = page_pgdat(page);
 
 	spin_lock(&pgdat->__lruvec.lru_lock);
-	return &pgdat->__lruvec;
-}
+	वापस &pgdat->__lruvec;
+पूर्ण
 
-static inline struct lruvec *lock_page_lruvec_irq(struct page *page)
-{
-	struct pglist_data *pgdat = page_pgdat(page);
+अटल अंतरभूत काष्ठा lruvec *lock_page_lruvec_irq(काष्ठा page *page)
+अणु
+	काष्ठा pglist_data *pgdat = page_pgdat(page);
 
 	spin_lock_irq(&pgdat->__lruvec.lru_lock);
-	return &pgdat->__lruvec;
-}
+	वापस &pgdat->__lruvec;
+पूर्ण
 
-static inline struct lruvec *lock_page_lruvec_irqsave(struct page *page,
-		unsigned long *flagsp)
-{
-	struct pglist_data *pgdat = page_pgdat(page);
+अटल अंतरभूत काष्ठा lruvec *lock_page_lruvec_irqsave(काष्ठा page *page,
+		अचिन्हित दीर्घ *flagsp)
+अणु
+	काष्ठा pglist_data *pgdat = page_pgdat(page);
 
 	spin_lock_irqsave(&pgdat->__lruvec.lru_lock, *flagsp);
-	return &pgdat->__lruvec;
-}
+	वापस &pgdat->__lruvec;
+पूर्ण
 
-static inline struct mem_cgroup *
-mem_cgroup_iter(struct mem_cgroup *root,
-		struct mem_cgroup *prev,
-		struct mem_cgroup_reclaim_cookie *reclaim)
-{
-	return NULL;
-}
+अटल अंतरभूत काष्ठा mem_cgroup *
+mem_cgroup_iter(काष्ठा mem_cgroup *root,
+		काष्ठा mem_cgroup *prev,
+		काष्ठा mem_cgroup_reclaim_cookie *reclaim)
+अणु
+	वापस शून्य;
+पूर्ण
 
-static inline void mem_cgroup_iter_break(struct mem_cgroup *root,
-					 struct mem_cgroup *prev)
-{
-}
+अटल अंतरभूत व्योम mem_cgroup_iter_अवरोध(काष्ठा mem_cgroup *root,
+					 काष्ठा mem_cgroup *prev)
+अणु
+पूर्ण
 
-static inline int mem_cgroup_scan_tasks(struct mem_cgroup *memcg,
-		int (*fn)(struct task_struct *, void *), void *arg)
-{
-	return 0;
-}
+अटल अंतरभूत पूर्णांक mem_cgroup_scan_tasks(काष्ठा mem_cgroup *memcg,
+		पूर्णांक (*fn)(काष्ठा task_काष्ठा *, व्योम *), व्योम *arg)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline unsigned short mem_cgroup_id(struct mem_cgroup *memcg)
-{
-	return 0;
-}
+अटल अंतरभूत अचिन्हित लघु mem_cgroup_id(काष्ठा mem_cgroup *memcg)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline struct mem_cgroup *mem_cgroup_from_id(unsigned short id)
-{
+अटल अंतरभूत काष्ठा mem_cgroup *mem_cgroup_from_id(अचिन्हित लघु id)
+अणु
 	WARN_ON_ONCE(id);
-	/* XXX: This should always return root_mem_cgroup */
-	return NULL;
-}
+	/* XXX: This should always वापस root_mem_cgroup */
+	वापस शून्य;
+पूर्ण
 
-static inline struct mem_cgroup *mem_cgroup_from_seq(struct seq_file *m)
-{
-	return NULL;
-}
+अटल अंतरभूत काष्ठा mem_cgroup *mem_cgroup_from_seq(काष्ठा seq_file *m)
+अणु
+	वापस शून्य;
+पूर्ण
 
-static inline struct mem_cgroup *lruvec_memcg(struct lruvec *lruvec)
-{
-	return NULL;
-}
+अटल अंतरभूत काष्ठा mem_cgroup *lruvec_memcg(काष्ठा lruvec *lruvec)
+अणु
+	वापस शून्य;
+पूर्ण
 
-static inline bool mem_cgroup_online(struct mem_cgroup *memcg)
-{
-	return true;
-}
+अटल अंतरभूत bool mem_cgroup_online(काष्ठा mem_cgroup *memcg)
+अणु
+	वापस true;
+पूर्ण
 
-static inline
-unsigned long mem_cgroup_get_zone_lru_size(struct lruvec *lruvec,
-		enum lru_list lru, int zone_idx)
-{
-	return 0;
-}
+अटल अंतरभूत
+अचिन्हित दीर्घ mem_cgroup_get_zone_lru_size(काष्ठा lruvec *lruvec,
+		क्रमागत lru_list lru, पूर्णांक zone_idx)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline unsigned long mem_cgroup_get_max(struct mem_cgroup *memcg)
-{
-	return 0;
-}
+अटल अंतरभूत अचिन्हित दीर्घ mem_cgroup_get_max(काष्ठा mem_cgroup *memcg)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline unsigned long mem_cgroup_size(struct mem_cgroup *memcg)
-{
-	return 0;
-}
+अटल अंतरभूत अचिन्हित दीर्घ mem_cgroup_size(काष्ठा mem_cgroup *memcg)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline void
-mem_cgroup_print_oom_context(struct mem_cgroup *memcg, struct task_struct *p)
-{
-}
+अटल अंतरभूत व्योम
+mem_cgroup_prपूर्णांक_oom_context(काष्ठा mem_cgroup *memcg, काष्ठा task_काष्ठा *p)
+अणु
+पूर्ण
 
-static inline void
-mem_cgroup_print_oom_meminfo(struct mem_cgroup *memcg)
-{
-}
+अटल अंतरभूत व्योम
+mem_cgroup_prपूर्णांक_oom_meminfo(काष्ठा mem_cgroup *memcg)
+अणु
+पूर्ण
 
-static inline void lock_page_memcg(struct page *page)
-{
-}
+अटल अंतरभूत व्योम lock_page_memcg(काष्ठा page *page)
+अणु
+पूर्ण
 
-static inline void unlock_page_memcg(struct page *page)
-{
-}
+अटल अंतरभूत व्योम unlock_page_memcg(काष्ठा page *page)
+अणु
+पूर्ण
 
-static inline void mem_cgroup_handle_over_high(void)
-{
-}
+अटल अंतरभूत व्योम mem_cgroup_handle_over_high(व्योम)
+अणु
+पूर्ण
 
-static inline void mem_cgroup_enter_user_fault(void)
-{
-}
+अटल अंतरभूत व्योम mem_cgroup_enter_user_fault(व्योम)
+अणु
+पूर्ण
 
-static inline void mem_cgroup_exit_user_fault(void)
-{
-}
+अटल अंतरभूत व्योम mem_cgroup_निकास_user_fault(व्योम)
+अणु
+पूर्ण
 
-static inline bool task_in_memcg_oom(struct task_struct *p)
-{
-	return false;
-}
+अटल अंतरभूत bool task_in_memcg_oom(काष्ठा task_काष्ठा *p)
+अणु
+	वापस false;
+पूर्ण
 
-static inline bool mem_cgroup_oom_synchronize(bool wait)
-{
-	return false;
-}
+अटल अंतरभूत bool mem_cgroup_oom_synchronize(bool रुको)
+अणु
+	वापस false;
+पूर्ण
 
-static inline struct mem_cgroup *mem_cgroup_get_oom_group(
-	struct task_struct *victim, struct mem_cgroup *oom_domain)
-{
-	return NULL;
-}
+अटल अंतरभूत काष्ठा mem_cgroup *mem_cgroup_get_oom_group(
+	काष्ठा task_काष्ठा *victim, काष्ठा mem_cgroup *oom_करोमुख्य)
+अणु
+	वापस शून्य;
+पूर्ण
 
-static inline void mem_cgroup_print_oom_group(struct mem_cgroup *memcg)
-{
-}
+अटल अंतरभूत व्योम mem_cgroup_prपूर्णांक_oom_group(काष्ठा mem_cgroup *memcg)
+अणु
+पूर्ण
 
-static inline void __mod_memcg_state(struct mem_cgroup *memcg,
-				     int idx,
-				     int nr)
-{
-}
+अटल अंतरभूत व्योम __mod_memcg_state(काष्ठा mem_cgroup *memcg,
+				     पूर्णांक idx,
+				     पूर्णांक nr)
+अणु
+पूर्ण
 
-static inline void mod_memcg_state(struct mem_cgroup *memcg,
-				   int idx,
-				   int nr)
-{
-}
+अटल अंतरभूत व्योम mod_memcg_state(काष्ठा mem_cgroup *memcg,
+				   पूर्णांक idx,
+				   पूर्णांक nr)
+अणु
+पूर्ण
 
-static inline unsigned long lruvec_page_state(struct lruvec *lruvec,
-					      enum node_stat_item idx)
-{
-	return node_page_state(lruvec_pgdat(lruvec), idx);
-}
+अटल अंतरभूत अचिन्हित दीर्घ lruvec_page_state(काष्ठा lruvec *lruvec,
+					      क्रमागत node_stat_item idx)
+अणु
+	वापस node_page_state(lruvec_pgdat(lruvec), idx);
+पूर्ण
 
-static inline unsigned long lruvec_page_state_local(struct lruvec *lruvec,
-						    enum node_stat_item idx)
-{
-	return node_page_state(lruvec_pgdat(lruvec), idx);
-}
+अटल अंतरभूत अचिन्हित दीर्घ lruvec_page_state_local(काष्ठा lruvec *lruvec,
+						    क्रमागत node_stat_item idx)
+अणु
+	वापस node_page_state(lruvec_pgdat(lruvec), idx);
+पूर्ण
 
-static inline void __mod_memcg_lruvec_state(struct lruvec *lruvec,
-					    enum node_stat_item idx, int val)
-{
-}
+अटल अंतरभूत व्योम __mod_memcg_lruvec_state(काष्ठा lruvec *lruvec,
+					    क्रमागत node_stat_item idx, पूर्णांक val)
+अणु
+पूर्ण
 
-static inline void __mod_lruvec_kmem_state(void *p, enum node_stat_item idx,
-					   int val)
-{
-	struct page *page = virt_to_head_page(p);
+अटल अंतरभूत व्योम __mod_lruvec_kmem_state(व्योम *p, क्रमागत node_stat_item idx,
+					   पूर्णांक val)
+अणु
+	काष्ठा page *page = virt_to_head_page(p);
 
 	__mod_node_page_state(page_pgdat(page), idx, val);
-}
+पूर्ण
 
-static inline void mod_lruvec_kmem_state(void *p, enum node_stat_item idx,
-					 int val)
-{
-	struct page *page = virt_to_head_page(p);
+अटल अंतरभूत व्योम mod_lruvec_kmem_state(व्योम *p, क्रमागत node_stat_item idx,
+					 पूर्णांक val)
+अणु
+	काष्ठा page *page = virt_to_head_page(p);
 
 	mod_node_page_state(page_pgdat(page), idx, val);
-}
+पूर्ण
 
-static inline void count_memcg_events(struct mem_cgroup *memcg,
-				      enum vm_event_item idx,
-				      unsigned long count)
-{
-}
+अटल अंतरभूत व्योम count_memcg_events(काष्ठा mem_cgroup *memcg,
+				      क्रमागत vm_event_item idx,
+				      अचिन्हित दीर्घ count)
+अणु
+पूर्ण
 
-static inline void __count_memcg_events(struct mem_cgroup *memcg,
-					enum vm_event_item idx,
-					unsigned long count)
-{
-}
+अटल अंतरभूत व्योम __count_memcg_events(काष्ठा mem_cgroup *memcg,
+					क्रमागत vm_event_item idx,
+					अचिन्हित दीर्घ count)
+अणु
+पूर्ण
 
-static inline void count_memcg_page_event(struct page *page,
-					  int idx)
-{
-}
+अटल अंतरभूत व्योम count_memcg_page_event(काष्ठा page *page,
+					  पूर्णांक idx)
+अणु
+पूर्ण
 
-static inline
-void count_memcg_event_mm(struct mm_struct *mm, enum vm_event_item idx)
-{
-}
+अटल अंतरभूत
+व्योम count_memcg_event_mm(काष्ठा mm_काष्ठा *mm, क्रमागत vm_event_item idx)
+अणु
+पूर्ण
 
-static inline void split_page_memcg(struct page *head, unsigned int nr)
-{
-}
+अटल अंतरभूत व्योम split_page_memcg(काष्ठा page *head, अचिन्हित पूर्णांक nr)
+अणु
+पूर्ण
 
-static inline
-unsigned long mem_cgroup_soft_limit_reclaim(pg_data_t *pgdat, int order,
+अटल अंतरभूत
+अचिन्हित दीर्घ mem_cgroup_soft_limit_reclaim(pg_data_t *pgdat, पूर्णांक order,
 					    gfp_t gfp_mask,
-					    unsigned long *total_scanned)
-{
-	return 0;
-}
-#endif /* CONFIG_MEMCG */
+					    अचिन्हित दीर्घ *total_scanned)
+अणु
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर /* CONFIG_MEMCG */
 
-static inline void __inc_lruvec_kmem_state(void *p, enum node_stat_item idx)
-{
+अटल अंतरभूत व्योम __inc_lruvec_kmem_state(व्योम *p, क्रमागत node_stat_item idx)
+अणु
 	__mod_lruvec_kmem_state(p, idx, 1);
-}
+पूर्ण
 
-static inline void __dec_lruvec_kmem_state(void *p, enum node_stat_item idx)
-{
+अटल अंतरभूत व्योम __dec_lruvec_kmem_state(व्योम *p, क्रमागत node_stat_item idx)
+अणु
 	__mod_lruvec_kmem_state(p, idx, -1);
-}
+पूर्ण
 
-static inline struct lruvec *parent_lruvec(struct lruvec *lruvec)
-{
-	struct mem_cgroup *memcg;
+अटल अंतरभूत काष्ठा lruvec *parent_lruvec(काष्ठा lruvec *lruvec)
+अणु
+	काष्ठा mem_cgroup *memcg;
 
 	memcg = lruvec_memcg(lruvec);
-	if (!memcg)
-		return NULL;
+	अगर (!memcg)
+		वापस शून्य;
 	memcg = parent_mem_cgroup(memcg);
-	if (!memcg)
-		return NULL;
-	return mem_cgroup_lruvec(memcg, lruvec_pgdat(lruvec));
-}
+	अगर (!memcg)
+		वापस शून्य;
+	वापस mem_cgroup_lruvec(memcg, lruvec_pgdat(lruvec));
+पूर्ण
 
-static inline void unlock_page_lruvec(struct lruvec *lruvec)
-{
+अटल अंतरभूत व्योम unlock_page_lruvec(काष्ठा lruvec *lruvec)
+अणु
 	spin_unlock(&lruvec->lru_lock);
-}
+पूर्ण
 
-static inline void unlock_page_lruvec_irq(struct lruvec *lruvec)
-{
+अटल अंतरभूत व्योम unlock_page_lruvec_irq(काष्ठा lruvec *lruvec)
+अणु
 	spin_unlock_irq(&lruvec->lru_lock);
-}
+पूर्ण
 
-static inline void unlock_page_lruvec_irqrestore(struct lruvec *lruvec,
-		unsigned long flags)
-{
+अटल अंतरभूत व्योम unlock_page_lruvec_irqrestore(काष्ठा lruvec *lruvec,
+		अचिन्हित दीर्घ flags)
+अणु
 	spin_unlock_irqrestore(&lruvec->lru_lock, flags);
-}
+पूर्ण
 
 /* Don't lock again iff page's lruvec locked */
-static inline struct lruvec *relock_page_lruvec_irq(struct page *page,
-		struct lruvec *locked_lruvec)
-{
-	if (locked_lruvec) {
-		if (lruvec_holds_page_lru_lock(page, locked_lruvec))
-			return locked_lruvec;
+अटल अंतरभूत काष्ठा lruvec *relock_page_lruvec_irq(काष्ठा page *page,
+		काष्ठा lruvec *locked_lruvec)
+अणु
+	अगर (locked_lruvec) अणु
+		अगर (lruvec_holds_page_lru_lock(page, locked_lruvec))
+			वापस locked_lruvec;
 
 		unlock_page_lruvec_irq(locked_lruvec);
-	}
+	पूर्ण
 
-	return lock_page_lruvec_irq(page);
-}
+	वापस lock_page_lruvec_irq(page);
+पूर्ण
 
 /* Don't lock again iff page's lruvec locked */
-static inline struct lruvec *relock_page_lruvec_irqsave(struct page *page,
-		struct lruvec *locked_lruvec, unsigned long *flags)
-{
-	if (locked_lruvec) {
-		if (lruvec_holds_page_lru_lock(page, locked_lruvec))
-			return locked_lruvec;
+अटल अंतरभूत काष्ठा lruvec *relock_page_lruvec_irqsave(काष्ठा page *page,
+		काष्ठा lruvec *locked_lruvec, अचिन्हित दीर्घ *flags)
+अणु
+	अगर (locked_lruvec) अणु
+		अगर (lruvec_holds_page_lru_lock(page, locked_lruvec))
+			वापस locked_lruvec;
 
 		unlock_page_lruvec_irqrestore(locked_lruvec, *flags);
-	}
+	पूर्ण
 
-	return lock_page_lruvec_irqsave(page, flags);
-}
+	वापस lock_page_lruvec_irqsave(page, flags);
+पूर्ण
 
-#ifdef CONFIG_CGROUP_WRITEBACK
+#अगर_घोषित CONFIG_CGROUP_WRITEBACK
 
-struct wb_domain *mem_cgroup_wb_domain(struct bdi_writeback *wb);
-void mem_cgroup_wb_stats(struct bdi_writeback *wb, unsigned long *pfilepages,
-			 unsigned long *pheadroom, unsigned long *pdirty,
-			 unsigned long *pwriteback);
+काष्ठा wb_करोमुख्य *mem_cgroup_wb_करोमुख्य(काष्ठा bdi_ग_लिखोback *wb);
+व्योम mem_cgroup_wb_stats(काष्ठा bdi_ग_लिखोback *wb, अचिन्हित दीर्घ *pfilepages,
+			 अचिन्हित दीर्घ *pheadroom, अचिन्हित दीर्घ *pdirty,
+			 अचिन्हित दीर्घ *pग_लिखोback);
 
-void mem_cgroup_track_foreign_dirty_slowpath(struct page *page,
-					     struct bdi_writeback *wb);
+व्योम mem_cgroup_track_क्रमeign_dirty_slowpath(काष्ठा page *page,
+					     काष्ठा bdi_ग_लिखोback *wb);
 
-static inline void mem_cgroup_track_foreign_dirty(struct page *page,
-						  struct bdi_writeback *wb)
-{
-	if (mem_cgroup_disabled())
-		return;
+अटल अंतरभूत व्योम mem_cgroup_track_क्रमeign_dirty(काष्ठा page *page,
+						  काष्ठा bdi_ग_लिखोback *wb)
+अणु
+	अगर (mem_cgroup_disabled())
+		वापस;
 
-	if (unlikely(&page_memcg(page)->css != wb->memcg_css))
-		mem_cgroup_track_foreign_dirty_slowpath(page, wb);
-}
+	अगर (unlikely(&page_memcg(page)->css != wb->memcg_css))
+		mem_cgroup_track_क्रमeign_dirty_slowpath(page, wb);
+पूर्ण
 
-void mem_cgroup_flush_foreign(struct bdi_writeback *wb);
+व्योम mem_cgroup_flush_क्रमeign(काष्ठा bdi_ग_लिखोback *wb);
 
-#else	/* CONFIG_CGROUP_WRITEBACK */
+#अन्यथा	/* CONFIG_CGROUP_WRITEBACK */
 
-static inline struct wb_domain *mem_cgroup_wb_domain(struct bdi_writeback *wb)
-{
-	return NULL;
-}
+अटल अंतरभूत काष्ठा wb_करोमुख्य *mem_cgroup_wb_करोमुख्य(काष्ठा bdi_ग_लिखोback *wb)
+अणु
+	वापस शून्य;
+पूर्ण
 
-static inline void mem_cgroup_wb_stats(struct bdi_writeback *wb,
-				       unsigned long *pfilepages,
-				       unsigned long *pheadroom,
-				       unsigned long *pdirty,
-				       unsigned long *pwriteback)
-{
-}
+अटल अंतरभूत व्योम mem_cgroup_wb_stats(काष्ठा bdi_ग_लिखोback *wb,
+				       अचिन्हित दीर्घ *pfilepages,
+				       अचिन्हित दीर्घ *pheadroom,
+				       अचिन्हित दीर्घ *pdirty,
+				       अचिन्हित दीर्घ *pग_लिखोback)
+अणु
+पूर्ण
 
-static inline void mem_cgroup_track_foreign_dirty(struct page *page,
-						  struct bdi_writeback *wb)
-{
-}
+अटल अंतरभूत व्योम mem_cgroup_track_क्रमeign_dirty(काष्ठा page *page,
+						  काष्ठा bdi_ग_लिखोback *wb)
+अणु
+पूर्ण
 
-static inline void mem_cgroup_flush_foreign(struct bdi_writeback *wb)
-{
-}
+अटल अंतरभूत व्योम mem_cgroup_flush_क्रमeign(काष्ठा bdi_ग_लिखोback *wb)
+अणु
+पूर्ण
 
-#endif	/* CONFIG_CGROUP_WRITEBACK */
+#पूर्ण_अगर	/* CONFIG_CGROUP_WRITEBACK */
 
-struct sock;
-bool mem_cgroup_charge_skmem(struct mem_cgroup *memcg, unsigned int nr_pages);
-void mem_cgroup_uncharge_skmem(struct mem_cgroup *memcg, unsigned int nr_pages);
-#ifdef CONFIG_MEMCG
-extern struct static_key_false memcg_sockets_enabled_key;
-#define mem_cgroup_sockets_enabled static_branch_unlikely(&memcg_sockets_enabled_key)
-void mem_cgroup_sk_alloc(struct sock *sk);
-void mem_cgroup_sk_free(struct sock *sk);
-static inline bool mem_cgroup_under_socket_pressure(struct mem_cgroup *memcg)
-{
-	if (!cgroup_subsys_on_dfl(memory_cgrp_subsys) && memcg->tcpmem_pressure)
-		return true;
-	do {
-		if (time_before(jiffies, memcg->socket_pressure))
-			return true;
-	} while ((memcg = parent_mem_cgroup(memcg)));
-	return false;
-}
+काष्ठा sock;
+bool mem_cgroup_अक्षरge_skmem(काष्ठा mem_cgroup *memcg, अचिन्हित पूर्णांक nr_pages);
+व्योम mem_cgroup_unअक्षरge_skmem(काष्ठा mem_cgroup *memcg, अचिन्हित पूर्णांक nr_pages);
+#अगर_घोषित CONFIG_MEMCG
+बाह्य काष्ठा अटल_key_false memcg_sockets_enabled_key;
+#घोषणा mem_cgroup_sockets_enabled अटल_branch_unlikely(&memcg_sockets_enabled_key)
+व्योम mem_cgroup_sk_alloc(काष्ठा sock *sk);
+व्योम mem_cgroup_sk_मुक्त(काष्ठा sock *sk);
+अटल अंतरभूत bool mem_cgroup_under_socket_pressure(काष्ठा mem_cgroup *memcg)
+अणु
+	अगर (!cgroup_subsys_on_dfl(memory_cgrp_subsys) && memcg->tcpmem_pressure)
+		वापस true;
+	करो अणु
+		अगर (समय_beक्रमe(jअगरfies, memcg->socket_pressure))
+			वापस true;
+	पूर्ण जबतक ((memcg = parent_mem_cgroup(memcg)));
+	वापस false;
+पूर्ण
 
-int alloc_shrinker_info(struct mem_cgroup *memcg);
-void free_shrinker_info(struct mem_cgroup *memcg);
-void set_shrinker_bit(struct mem_cgroup *memcg, int nid, int shrinker_id);
-void reparent_shrinker_deferred(struct mem_cgroup *memcg);
-#else
-#define mem_cgroup_sockets_enabled 0
-static inline void mem_cgroup_sk_alloc(struct sock *sk) { };
-static inline void mem_cgroup_sk_free(struct sock *sk) { };
-static inline bool mem_cgroup_under_socket_pressure(struct mem_cgroup *memcg)
-{
-	return false;
-}
+पूर्णांक alloc_shrinker_info(काष्ठा mem_cgroup *memcg);
+व्योम मुक्त_shrinker_info(काष्ठा mem_cgroup *memcg);
+व्योम set_shrinker_bit(काष्ठा mem_cgroup *memcg, पूर्णांक nid, पूर्णांक shrinker_id);
+व्योम reparent_shrinker_deferred(काष्ठा mem_cgroup *memcg);
+#अन्यथा
+#घोषणा mem_cgroup_sockets_enabled 0
+अटल अंतरभूत व्योम mem_cgroup_sk_alloc(काष्ठा sock *sk) अणु पूर्ण;
+अटल अंतरभूत व्योम mem_cgroup_sk_मुक्त(काष्ठा sock *sk) अणु पूर्ण;
+अटल अंतरभूत bool mem_cgroup_under_socket_pressure(काष्ठा mem_cgroup *memcg)
+अणु
+	वापस false;
+पूर्ण
 
-static inline void set_shrinker_bit(struct mem_cgroup *memcg,
-				    int nid, int shrinker_id)
-{
-}
-#endif
+अटल अंतरभूत व्योम set_shrinker_bit(काष्ठा mem_cgroup *memcg,
+				    पूर्णांक nid, पूर्णांक shrinker_id)
+अणु
+पूर्ण
+#पूर्ण_अगर
 
-#ifdef CONFIG_MEMCG_KMEM
-int __memcg_kmem_charge_page(struct page *page, gfp_t gfp, int order);
-void __memcg_kmem_uncharge_page(struct page *page, int order);
+#अगर_घोषित CONFIG_MEMCG_KMEM
+पूर्णांक __memcg_kmem_अक्षरge_page(काष्ठा page *page, gfp_t gfp, पूर्णांक order);
+व्योम __memcg_kmem_unअक्षरge_page(काष्ठा page *page, पूर्णांक order);
 
-struct obj_cgroup *get_obj_cgroup_from_current(void);
+काष्ठा obj_cgroup *get_obj_cgroup_from_current(व्योम);
 
-int obj_cgroup_charge(struct obj_cgroup *objcg, gfp_t gfp, size_t size);
-void obj_cgroup_uncharge(struct obj_cgroup *objcg, size_t size);
+पूर्णांक obj_cgroup_अक्षरge(काष्ठा obj_cgroup *objcg, gfp_t gfp, माप_प्रकार size);
+व्योम obj_cgroup_unअक्षरge(काष्ठा obj_cgroup *objcg, माप_प्रकार size);
 
-extern struct static_key_false memcg_kmem_enabled_key;
+बाह्य काष्ठा अटल_key_false memcg_kmem_enabled_key;
 
-extern int memcg_nr_cache_ids;
-void memcg_get_cache_ids(void);
-void memcg_put_cache_ids(void);
+बाह्य पूर्णांक memcg_nr_cache_ids;
+व्योम memcg_get_cache_ids(व्योम);
+व्योम memcg_put_cache_ids(व्योम);
 
 /*
- * Helper macro to loop through all memcg-specific caches. Callers must still
- * check if the cache is valid (it is either valid or NULL).
+ * Helper macro to loop through all memcg-specअगरic caches. Callers must still
+ * check अगर the cache is valid (it is either valid or शून्य).
  * the slab_mutex must be held when looping through those caches
  */
-#define for_each_memcg_cache_index(_idx)	\
-	for ((_idx) = 0; (_idx) < memcg_nr_cache_ids; (_idx)++)
+#घोषणा क्रम_each_memcg_cache_index(_idx)	\
+	क्रम ((_idx) = 0; (_idx) < memcg_nr_cache_ids; (_idx)++)
 
-static inline bool memcg_kmem_enabled(void)
-{
-	return static_branch_likely(&memcg_kmem_enabled_key);
-}
+अटल अंतरभूत bool memcg_kmem_enabled(व्योम)
+अणु
+	वापस अटल_branch_likely(&memcg_kmem_enabled_key);
+पूर्ण
 
-static inline int memcg_kmem_charge_page(struct page *page, gfp_t gfp,
-					 int order)
-{
-	if (memcg_kmem_enabled())
-		return __memcg_kmem_charge_page(page, gfp, order);
-	return 0;
-}
+अटल अंतरभूत पूर्णांक memcg_kmem_अक्षरge_page(काष्ठा page *page, gfp_t gfp,
+					 पूर्णांक order)
+अणु
+	अगर (memcg_kmem_enabled())
+		वापस __memcg_kmem_अक्षरge_page(page, gfp, order);
+	वापस 0;
+पूर्ण
 
-static inline void memcg_kmem_uncharge_page(struct page *page, int order)
-{
-	if (memcg_kmem_enabled())
-		__memcg_kmem_uncharge_page(page, order);
-}
+अटल अंतरभूत व्योम memcg_kmem_unअक्षरge_page(काष्ठा page *page, पूर्णांक order)
+अणु
+	अगर (memcg_kmem_enabled())
+		__memcg_kmem_unअक्षरge_page(page, order);
+पूर्ण
 
 /*
- * A helper for accessing memcg's kmem_id, used for getting
+ * A helper क्रम accessing memcg's kmem_id, used क्रम getting
  * corresponding LRU lists.
  */
-static inline int memcg_cache_id(struct mem_cgroup *memcg)
-{
-	return memcg ? memcg->kmemcg_id : -1;
-}
+अटल अंतरभूत पूर्णांक memcg_cache_id(काष्ठा mem_cgroup *memcg)
+अणु
+	वापस memcg ? memcg->kmemcg_id : -1;
+पूर्ण
 
-struct mem_cgroup *mem_cgroup_from_obj(void *p);
+काष्ठा mem_cgroup *mem_cgroup_from_obj(व्योम *p);
 
-#else
+#अन्यथा
 
-static inline int memcg_kmem_charge_page(struct page *page, gfp_t gfp,
-					 int order)
-{
-	return 0;
-}
+अटल अंतरभूत पूर्णांक memcg_kmem_अक्षरge_page(काष्ठा page *page, gfp_t gfp,
+					 पूर्णांक order)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline void memcg_kmem_uncharge_page(struct page *page, int order)
-{
-}
+अटल अंतरभूत व्योम memcg_kmem_unअक्षरge_page(काष्ठा page *page, पूर्णांक order)
+अणु
+पूर्ण
 
-static inline int __memcg_kmem_charge_page(struct page *page, gfp_t gfp,
-					   int order)
-{
-	return 0;
-}
+अटल अंतरभूत पूर्णांक __memcg_kmem_अक्षरge_page(काष्ठा page *page, gfp_t gfp,
+					   पूर्णांक order)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline void __memcg_kmem_uncharge_page(struct page *page, int order)
-{
-}
+अटल अंतरभूत व्योम __memcg_kmem_unअक्षरge_page(काष्ठा page *page, पूर्णांक order)
+अणु
+पूर्ण
 
-#define for_each_memcg_cache_index(_idx)	\
-	for (; NULL; )
+#घोषणा क्रम_each_memcg_cache_index(_idx)	\
+	क्रम (; शून्य; )
 
-static inline bool memcg_kmem_enabled(void)
-{
-	return false;
-}
+अटल अंतरभूत bool memcg_kmem_enabled(व्योम)
+अणु
+	वापस false;
+पूर्ण
 
-static inline int memcg_cache_id(struct mem_cgroup *memcg)
-{
-	return -1;
-}
+अटल अंतरभूत पूर्णांक memcg_cache_id(काष्ठा mem_cgroup *memcg)
+अणु
+	वापस -1;
+पूर्ण
 
-static inline void memcg_get_cache_ids(void)
-{
-}
+अटल अंतरभूत व्योम memcg_get_cache_ids(व्योम)
+अणु
+पूर्ण
 
-static inline void memcg_put_cache_ids(void)
-{
-}
+अटल अंतरभूत व्योम memcg_put_cache_ids(व्योम)
+अणु
+पूर्ण
 
-static inline struct mem_cgroup *mem_cgroup_from_obj(void *p)
-{
-       return NULL;
-}
+अटल अंतरभूत काष्ठा mem_cgroup *mem_cgroup_from_obj(व्योम *p)
+अणु
+       वापस शून्य;
+पूर्ण
 
-#endif /* CONFIG_MEMCG_KMEM */
+#पूर्ण_अगर /* CONFIG_MEMCG_KMEM */
 
-#endif /* _LINUX_MEMCONTROL_H */
+#पूर्ण_अगर /* _LINUX_MEMCONTROL_H */

@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  *	Copyright IBM Corp. 2004, 2007
  *	Authors:	Belinda Thompson (belindat@us.ibm.com)
@@ -14,49 +15,49 @@
 	EXPORT_SYMBOL(ctc_mpc_flow_control);
 */
 
-#undef DEBUG
-#undef DEBUGDATA
-#undef DEBUGCCW
+#अघोषित DEBUG
+#अघोषित DEBUGDATA
+#अघोषित DEBUGCCW
 
-#define KMSG_COMPONENT "ctcm"
-#define pr_fmt(fmt) KMSG_COMPONENT ": " fmt
+#घोषणा KMSG_COMPONENT "ctcm"
+#घोषणा pr_fmt(fmt) KMSG_COMPONENT ": " fmt
 
-#include <linux/module.h>
-#include <linux/init.h>
-#include <linux/kernel.h>
-#include <linux/slab.h>
-#include <linux/errno.h>
-#include <linux/types.h>
-#include <linux/interrupt.h>
-#include <linux/timer.h>
-#include <linux/sched.h>
+#समावेश <linux/module.h>
+#समावेश <linux/init.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/types.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/समयr.h>
+#समावेश <linux/sched.h>
 
-#include <linux/signal.h>
-#include <linux/string.h>
-#include <linux/proc_fs.h>
+#समावेश <linux/संकेत.स>
+#समावेश <linux/माला.स>
+#समावेश <linux/proc_fs.h>
 
-#include <linux/ip.h>
-#include <linux/if_arp.h>
-#include <linux/tcp.h>
-#include <linux/skbuff.h>
-#include <linux/ctype.h>
-#include <linux/netdevice.h>
-#include <net/dst.h>
+#समावेश <linux/ip.h>
+#समावेश <linux/अगर_arp.h>
+#समावेश <linux/tcp.h>
+#समावेश <linux/skbuff.h>
+#समावेश <linux/प्रकार.स>
+#समावेश <linux/netdevice.h>
+#समावेश <net/dst.h>
 
-#include <linux/io.h>		/* instead of <asm/io.h> ok ? */
-#include <asm/ccwdev.h>
-#include <asm/ccwgroup.h>
-#include <linux/bitops.h>	/* instead of <asm/bitops.h> ok ? */
-#include <linux/uaccess.h>	/* instead of <asm/uaccess.h> ok ? */
-#include <linux/wait.h>
-#include <linux/moduleparam.h>
-#include <asm/idals.h>
+#समावेश <linux/पन.स>		/* instead of <यंत्र/पन.स> ok ? */
+#समावेश <यंत्र/ccwdev.h>
+#समावेश <यंत्र/ccwgroup.h>
+#समावेश <linux/bitops.h>	/* instead of <यंत्र/bitops.h> ok ? */
+#समावेश <linux/uaccess.h>	/* instead of <यंत्र/uaccess.h> ok ? */
+#समावेश <linux/रुको.h>
+#समावेश <linux/moduleparam.h>
+#समावेश <यंत्र/idals.h>
 
-#include "ctcm_main.h"
-#include "ctcm_mpc.h"
-#include "ctcm_fsms.h"
+#समावेश "ctcm_main.h"
+#समावेश "ctcm_mpc.h"
+#समावेश "ctcm_fsms.h"
 
-static const struct xid2 init_xid = {
+अटल स्थिर काष्ठा xid2 init_xid = अणु
 	.xid2_type_id	=	XID_FM2,
 	.xid2_len	=	0x45,
 	.xid2_adj_id	=	0,
@@ -76,65 +77,65 @@ static const struct xid2 init_xid = {
 	.xid2_resv5	=	0,
 	.xid2_mpc_flag	=	0,
 	.xid2_resv6	=	0,
-	.xid2_buf_len	=	(MPC_BUFSIZE_DEFAULT - 35),
-};
+	.xid2_buf_len	=	(MPC_बफ_मानE_DEFAULT - 35),
+पूर्ण;
 
-static const struct th_header thnorm = {
+अटल स्थिर काष्ठा th_header thnorm = अणु
 	.th_seg		=	0x00,
 	.th_ch_flag	=	TH_IS_XID,
 	.th_blk_flag	=	TH_DATA_IS_XID,
 	.th_is_xid	=	0x01,
 	.th_seq_num	=	0x00000000,
-};
+पूर्ण;
 
-static const struct th_header thdummy = {
+अटल स्थिर काष्ठा th_header thdummy = अणु
 	.th_seg		=	0x00,
 	.th_ch_flag	=	0x00,
 	.th_blk_flag	=	TH_DATA_IS_XID,
 	.th_is_xid	=	0x01,
 	.th_seq_num	=	0x00000000,
-};
+पूर्ण;
 
 /*
  * Definition of one MPC group
  */
 
 /*
- * Compatibility macros for busy handling
+ * Compatibility macros क्रम busy handling
  * of network devices.
  */
 
-static void ctcmpc_unpack_skb(struct channel *ch, struct sk_buff *pskb);
+अटल व्योम ctcmpc_unpack_skb(काष्ठा channel *ch, काष्ठा sk_buff *pskb);
 
 /*
- * MPC Group state machine actions (static prototypes)
+ * MPC Group state machine actions (अटल prototypes)
  */
-static void mpc_action_nop(fsm_instance *fsm, int event, void *arg);
-static void mpc_action_go_ready(fsm_instance *fsm, int event, void *arg);
-static void mpc_action_go_inop(fsm_instance *fi, int event, void *arg);
-static void mpc_action_timeout(fsm_instance *fi, int event, void *arg);
-static int  mpc_validate_xid(struct mpcg_info *mpcginfo);
-static void mpc_action_yside_xid(fsm_instance *fsm, int event, void *arg);
-static void mpc_action_doxid0(fsm_instance *fsm, int event, void *arg);
-static void mpc_action_doxid7(fsm_instance *fsm, int event, void *arg);
-static void mpc_action_xside_xid(fsm_instance *fsm, int event, void *arg);
-static void mpc_action_rcvd_xid0(fsm_instance *fsm, int event, void *arg);
-static void mpc_action_rcvd_xid7(fsm_instance *fsm, int event, void *arg);
+अटल व्योम mpc_action_nop(fsm_instance *fsm, पूर्णांक event, व्योम *arg);
+अटल व्योम mpc_action_go_पढ़ोy(fsm_instance *fsm, पूर्णांक event, व्योम *arg);
+अटल व्योम mpc_action_go_inop(fsm_instance *fi, पूर्णांक event, व्योम *arg);
+अटल व्योम mpc_action_समयout(fsm_instance *fi, पूर्णांक event, व्योम *arg);
+अटल पूर्णांक  mpc_validate_xid(काष्ठा mpcg_info *mpcginfo);
+अटल व्योम mpc_action_yside_xid(fsm_instance *fsm, पूर्णांक event, व्योम *arg);
+अटल व्योम mpc_action_करोxid0(fsm_instance *fsm, पूर्णांक event, व्योम *arg);
+अटल व्योम mpc_action_करोxid7(fsm_instance *fsm, पूर्णांक event, व्योम *arg);
+अटल व्योम mpc_action_xside_xid(fsm_instance *fsm, पूर्णांक event, व्योम *arg);
+अटल व्योम mpc_action_rcvd_xid0(fsm_instance *fsm, पूर्णांक event, व्योम *arg);
+अटल व्योम mpc_action_rcvd_xid7(fsm_instance *fsm, पूर्णांक event, व्योम *arg);
 
-#ifdef DEBUGDATA
+#अगर_घोषित DEBUGDATA
 /*-------------------------------------------------------------------*
-* Dump buffer format						     *
+* Dump buffer क्रमmat						     *
 *								     *
 *--------------------------------------------------------------------*/
-void ctcmpc_dumpit(char *buf, int len)
-{
+व्योम ctcmpc_dumpit(अक्षर *buf, पूर्णांक len)
+अणु
 	__u32	ct, sw, rm, dup;
-	char	*ptr, *rptr;
-	char	tbuf[82], tdup[82];
-	char	addr[22];
-	char	boff[12];
-	char	bhex[82], duphex[82];
-	char	basc[40];
+	अक्षर	*ptr, *rptr;
+	अक्षर	tbuf[82], tdup[82];
+	अक्षर	addr[22];
+	अक्षर	boff[12];
+	अक्षर	bhex[82], duphex[82];
+	अक्षर	basc[40];
 
 	sw  = 0;
 	rptr = ptr = buf;
@@ -142,129 +143,129 @@ void ctcmpc_dumpit(char *buf, int len)
 	duphex[0] = 0x00;
 	dup = 0;
 
-	for (ct = 0; ct < len; ct++, ptr++, rptr++) {
-		if (sw == 0) {
-			sprintf(addr, "%16.16llx", (__u64)rptr);
+	क्रम (ct = 0; ct < len; ct++, ptr++, rptr++) अणु
+		अगर (sw == 0) अणु
+			प्र_लिखो(addr, "%16.16llx", (__u64)rptr);
 
-			sprintf(boff, "%4.4X", (__u32)ct);
+			प्र_लिखो(boff, "%4.4X", (__u32)ct);
 			bhex[0] = '\0';
 			basc[0] = '\0';
-		}
-		if ((sw == 4) || (sw == 12))
-			strcat(bhex, " ");
-		if (sw == 8)
-			strcat(bhex, "	");
+		पूर्ण
+		अगर ((sw == 4) || (sw == 12))
+			म_जोड़ो(bhex, " ");
+		अगर (sw == 8)
+			म_जोड़ो(bhex, "	");
 
-		sprintf(tbuf, "%2.2llX", (__u64)*ptr);
+		प्र_लिखो(tbuf, "%2.2llX", (__u64)*ptr);
 
 		tbuf[2] = '\0';
-		strcat(bhex, tbuf);
-		if ((0 != isprint(*ptr)) && (*ptr >= 0x20))
+		म_जोड़ो(bhex, tbuf);
+		अगर ((0 != है_छाप(*ptr)) && (*ptr >= 0x20))
 			basc[sw] = *ptr;
-		else
+		अन्यथा
 			basc[sw] = '.';
 
 		basc[sw+1] = '\0';
 		sw++;
 		rm--;
-		if (sw != 16)
-			continue;
-		if ((strcmp(duphex, bhex)) != 0) {
-			if (dup != 0) {
-				sprintf(tdup,
+		अगर (sw != 16)
+			जारी;
+		अगर ((म_भेद(duphex, bhex)) != 0) अणु
+			अगर (dup != 0) अणु
+				प्र_लिखो(tdup,
 					"Duplicate as above to %s", addr);
 				ctcm_pr_debug("		       --- %s ---\n",
 						tdup);
-			}
+			पूर्ण
 			ctcm_pr_debug("   %s (+%s) : %s  [%s]\n",
 					addr, boff, bhex, basc);
 			dup = 0;
-			strcpy(duphex, bhex);
-		} else
+			म_नकल(duphex, bhex);
+		पूर्ण अन्यथा
 			dup++;
 
 		sw = 0;
 		rm = 16;
-	}  /* endfor */
+	पूर्ण  /* endक्रम */
 
-	if (sw != 0) {
-		for ( ; rm > 0; rm--, sw++) {
-			if ((sw == 4) || (sw == 12))
-				strcat(bhex, " ");
-			if (sw == 8)
-				strcat(bhex, "	");
-			strcat(bhex, "	");
-			strcat(basc, " ");
-		}
-		if (dup != 0) {
-			sprintf(tdup, "Duplicate as above to %s", addr);
+	अगर (sw != 0) अणु
+		क्रम ( ; rm > 0; rm--, sw++) अणु
+			अगर ((sw == 4) || (sw == 12))
+				म_जोड़ो(bhex, " ");
+			अगर (sw == 8)
+				म_जोड़ो(bhex, "	");
+			म_जोड़ो(bhex, "	");
+			म_जोड़ो(basc, " ");
+		पूर्ण
+		अगर (dup != 0) अणु
+			प्र_लिखो(tdup, "Duplicate as above to %s", addr);
 			ctcm_pr_debug("		       --- %s ---\n", tdup);
-		}
+		पूर्ण
 		ctcm_pr_debug("   %s (+%s) : %s  [%s]\n",
 					addr, boff, bhex, basc);
-	} else {
-		if (dup >= 1) {
-			sprintf(tdup, "Duplicate as above to %s", addr);
+	पूर्ण अन्यथा अणु
+		अगर (dup >= 1) अणु
+			प्र_लिखो(tdup, "Duplicate as above to %s", addr);
 			ctcm_pr_debug("		       --- %s ---\n", tdup);
-		}
-		if (dup != 0) {
+		पूर्ण
+		अगर (dup != 0) अणु
 			ctcm_pr_debug("   %s (+%s) : %s  [%s]\n",
 				addr, boff, bhex, basc);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return;
+	वापस;
 
-}   /*	 end of ctcmpc_dumpit  */
-#endif
+पूर्ण   /*	 end of ctcmpc_dumpit  */
+#पूर्ण_अगर
 
-#ifdef DEBUGDATA
+#अगर_घोषित DEBUGDATA
 /*
- * Dump header and first 16 bytes of an sk_buff for debugging purposes.
+ * Dump header and first 16 bytes of an sk_buff क्रम debugging purposes.
  *
  * skb		The sk_buff to dump.
  * offset	Offset relative to skb-data, where to start the dump.
  */
-void ctcmpc_dump_skb(struct sk_buff *skb, int offset)
-{
+व्योम ctcmpc_dump_skb(काष्ठा sk_buff *skb, पूर्णांक offset)
+अणु
 	__u8 *p = skb->data;
-	struct th_header *header;
-	struct pdu *pheader;
-	int bl = skb->len;
-	int i;
+	काष्ठा th_header *header;
+	काष्ठा pdu *pheader;
+	पूर्णांक bl = skb->len;
+	पूर्णांक i;
 
-	if (p == NULL)
-		return;
+	अगर (p == शून्य)
+		वापस;
 
 	p += offset;
-	header = (struct th_header *)p;
+	header = (काष्ठा th_header *)p;
 
 	ctcm_pr_debug("dump:\n");
 	ctcm_pr_debug("skb len=%d \n", skb->len);
-	if (skb->len > 2) {
-		switch (header->th_ch_flag) {
-		case TH_HAS_PDU:
-			break;
-		case 0x00:
-		case TH_IS_XID:
-			if ((header->th_blk_flag == TH_DATA_IS_XID) &&
+	अगर (skb->len > 2) अणु
+		चयन (header->th_ch_flag) अणु
+		हाल TH_HAS_PDU:
+			अवरोध;
+		हाल 0x00:
+		हाल TH_IS_XID:
+			अगर ((header->th_blk_flag == TH_DATA_IS_XID) &&
 			   (header->th_is_xid == 0x01))
-				goto dumpth;
-		case TH_SWEEP_REQ:
-				goto dumpth;
-		case TH_SWEEP_RESP:
-				goto dumpth;
-		default:
-			break;
-		}
+				जाओ dumpth;
+		हाल TH_SWEEP_REQ:
+				जाओ dumpth;
+		हाल TH_SWEEP_RESP:
+				जाओ dumpth;
+		शेष:
+			अवरोध;
+		पूर्ण
 
-		pheader = (struct pdu *)p;
+		pheader = (काष्ठा pdu *)p;
 		ctcm_pr_debug("pdu->offset: %d hex: %04x\n",
 			       pheader->pdu_offset, pheader->pdu_offset);
 		ctcm_pr_debug("pdu->flag  : %02x\n", pheader->pdu_flag);
 		ctcm_pr_debug("pdu->proto : %02x\n", pheader->pdu_proto);
 		ctcm_pr_debug("pdu->seq   : %02x\n", pheader->pdu_seq);
-					goto dumpdata;
+					जाओ dumpdata;
 
 dumpth:
 		ctcm_pr_debug("th->seg     : %02x\n", header->th_seg);
@@ -274,65 +275,65 @@ dumpth:
 			       (header->th_is_xid) ? "DATA" : "XID");
 		ctcm_pr_debug("th->seqnum  : %04x\n", header->th_seq_num);
 
-	}
+	पूर्ण
 dumpdata:
-	if (bl > 32)
+	अगर (bl > 32)
 		bl = 32;
 	ctcm_pr_debug("data: ");
-	for (i = 0; i < bl; i++)
+	क्रम (i = 0; i < bl; i++)
 		ctcm_pr_debug("%02x%s", *p++, (i % 16) ? " " : "\n");
 	ctcm_pr_debug("\n");
-}
-#endif
+पूर्ण
+#पूर्ण_अगर
 
-static struct net_device *ctcmpc_get_dev(int port_num)
-{
-	char device[20];
-	struct net_device *dev;
-	struct ctcm_priv *priv;
+अटल काष्ठा net_device *ctcmpc_get_dev(पूर्णांक port_num)
+अणु
+	अक्षर device[20];
+	काष्ठा net_device *dev;
+	काष्ठा ctcm_priv *priv;
 
-	sprintf(device, "%s%i", MPC_DEVICE_NAME, port_num);
+	प्र_लिखो(device, "%s%i", MPC_DEVICE_NAME, port_num);
 
 	dev = __dev_get_by_name(&init_net, device);
 
-	if (dev == NULL) {
+	अगर (dev == शून्य) अणु
 		CTCM_DBF_TEXT_(MPC_ERROR, CTC_DBF_ERROR,
 			"%s: Device not found by name: %s",
 					CTCM_FUNTAIL, device);
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 	priv = dev->ml_priv;
-	if (priv == NULL) {
+	अगर (priv == शून्य) अणु
 		CTCM_DBF_TEXT_(MPC_ERROR, CTC_DBF_ERROR,
 			"%s(%s): dev->ml_priv is NULL",
 					CTCM_FUNTAIL, device);
-		return NULL;
-	}
-	if (priv->mpcg == NULL) {
+		वापस शून्य;
+	पूर्ण
+	अगर (priv->mpcg == शून्य) अणु
 		CTCM_DBF_TEXT_(MPC_ERROR, CTC_DBF_ERROR,
 			"%s(%s): priv->mpcg is NULL",
 					CTCM_FUNTAIL, device);
-		return NULL;
-	}
-	return dev;
-}
+		वापस शून्य;
+	पूर्ण
+	वापस dev;
+पूर्ण
 
 /*
  * ctc_mpc_alloc_channel
- *	(exported interface)
+ *	(exported पूर्णांकerface)
  *
  * Device Initialization :
  *	ACTPATH  driven IO operations
  */
-int ctc_mpc_alloc_channel(int port_num, void (*callback)(int, int))
-{
-	struct net_device *dev;
-	struct mpc_group *grp;
-	struct ctcm_priv *priv;
+पूर्णांक ctc_mpc_alloc_channel(पूर्णांक port_num, व्योम (*callback)(पूर्णांक, पूर्णांक))
+अणु
+	काष्ठा net_device *dev;
+	काष्ठा mpc_group *grp;
+	काष्ठा ctcm_priv *priv;
 
 	dev = ctcmpc_get_dev(port_num);
-	if (dev == NULL)
-		return 1;
+	अगर (dev == शून्य)
+		वापस 1;
 	priv = dev->ml_priv;
 	grp = priv->mpcg;
 
@@ -342,69 +343,69 @@ int ctc_mpc_alloc_channel(int port_num, void (*callback)(int, int))
 
 	CTCM_DBF_TEXT_(MPC_SETUP, CTC_DBF_INFO,
 			"%s(%s): state=%s",
-			CTCM_FUNTAIL, dev->name, fsm_getstate_str(grp->fsm));
+			CTCM_FUNTAIL, dev->name, fsm_माला_लोtate_str(grp->fsm));
 
-	switch (fsm_getstate(grp->fsm)) {
-	case MPCG_STATE_INOP:
+	चयन (fsm_माला_लोtate(grp->fsm)) अणु
+	हाल MPCG_STATE_INOP:
 		/* Group is in the process of terminating */
 		grp->alloc_called = 1;
-		break;
-	case MPCG_STATE_RESET:
+		अवरोध;
+	हाल MPCG_STATE_RESET:
 		/* MPC Group will transition to state		  */
-		/* MPCG_STATE_XID2INITW iff the minimum number	  */
-		/* of 1 read and 1 write channel have successfully*/
+		/* MPCG_STATE_XID2INITW अगरf the minimum number	  */
+		/* of 1 पढ़ो and 1 ग_लिखो channel have successfully*/
 		/* activated					  */
 		/*fsm_newstate(grp->fsm, MPCG_STATE_XID2INITW);*/
-		if (callback)
+		अगर (callback)
 			grp->send_qllc_disc = 1;
 		fallthrough;
-	case MPCG_STATE_XID0IOWAIT:
-		fsm_deltimer(&grp->timer);
+	हाल MPCG_STATE_XID0IOWAIT:
+		fsm_delसमयr(&grp->समयr);
 		grp->outstanding_xid2 = 0;
 		grp->outstanding_xid7 = 0;
 		grp->outstanding_xid7_p2 = 0;
-		grp->saved_xid2 = NULL;
-		if (callback)
-			ctcm_open(dev);
+		grp->saved_xid2 = शून्य;
+		अगर (callback)
+			ctcm_खोलो(dev);
 		fsm_event(priv->fsm, DEV_EVENT_START, dev);
-		break;
-	case MPCG_STATE_READY:
+		अवरोध;
+	हाल MPCG_STATE_READY:
 		/* XID exchanges completed after PORT was activated */
-		/* Link station already active			    */
+		/* Link station alपढ़ोy active			    */
 		/* Maybe timing issue...retry callback		    */
 		grp->allocchan_callback_retries++;
-		if (grp->allocchan_callback_retries < 4) {
-			if (grp->allochanfunc)
+		अगर (grp->allocchan_callback_retries < 4) अणु
+			अगर (grp->allochanfunc)
 				grp->allochanfunc(grp->port_num,
 						  grp->group_max_buflen);
-		} else {
+		पूर्ण अन्यथा अणु
 			/* there are problems...bail out	    */
 			/* there may be a state mismatch so restart */
 			fsm_event(grp->fsm, MPCG_EVENT_INOP, dev);
 			grp->allocchan_callback_retries = 0;
-		}
-		break;
-	}
+		पूर्ण
+		अवरोध;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(ctc_mpc_alloc_channel);
 
 /*
  * ctc_mpc_establish_connectivity
- *	(exported interface)
+ *	(exported पूर्णांकerface)
  */
-void ctc_mpc_establish_connectivity(int port_num,
-				void (*callback)(int, int, int))
-{
-	struct net_device *dev;
-	struct mpc_group *grp;
-	struct ctcm_priv *priv;
-	struct channel *rch, *wch;
+व्योम ctc_mpc_establish_connectivity(पूर्णांक port_num,
+				व्योम (*callback)(पूर्णांक, पूर्णांक, पूर्णांक))
+अणु
+	काष्ठा net_device *dev;
+	काष्ठा mpc_group *grp;
+	काष्ठा ctcm_priv *priv;
+	काष्ठा channel *rch, *wch;
 
 	dev = ctcmpc_get_dev(port_num);
-	if (dev == NULL)
-		return;
+	अगर (dev == शून्य)
+		वापस;
 	priv = dev->ml_priv;
 	grp = priv->mpcg;
 	rch = priv->channel[CTCM_READ];
@@ -412,153 +413,153 @@ void ctc_mpc_establish_connectivity(int port_num,
 
 	CTCM_DBF_TEXT_(MPC_SETUP, CTC_DBF_INFO,
 			"%s(%s): state=%s",
-			CTCM_FUNTAIL, dev->name, fsm_getstate_str(grp->fsm));
+			CTCM_FUNTAIL, dev->name, fsm_माला_लोtate_str(grp->fsm));
 
 	grp->estconnfunc = callback;
 	grp->port_num = port_num;
 
-	switch (fsm_getstate(grp->fsm)) {
-	case MPCG_STATE_READY:
+	चयन (fsm_माला_लोtate(grp->fsm)) अणु
+	हाल MPCG_STATE_READY:
 		/* XID exchanges completed after PORT was activated */
-		/* Link station already active			    */
+		/* Link station alपढ़ोy active			    */
 		/* Maybe timing issue...retry callback		    */
-		fsm_deltimer(&grp->timer);
+		fsm_delसमयr(&grp->समयr);
 		grp->estconn_callback_retries++;
-		if (grp->estconn_callback_retries < 4) {
-			if (grp->estconnfunc) {
+		अगर (grp->estconn_callback_retries < 4) अणु
+			अगर (grp->estconnfunc) अणु
 				grp->estconnfunc(grp->port_num, 0,
 						grp->group_max_buflen);
-				grp->estconnfunc = NULL;
-			}
-		} else {
+				grp->estconnfunc = शून्य;
+			पूर्ण
+		पूर्ण अन्यथा अणु
 			/* there are problems...bail out	 */
 			fsm_event(grp->fsm, MPCG_EVENT_INOP, dev);
 			grp->estconn_callback_retries = 0;
-		}
-		break;
-	case MPCG_STATE_INOP:
-	case MPCG_STATE_RESET:
-		/* MPC Group is not ready to start XID - min num of */
-		/* 1 read and 1 write channel have not been acquired*/
+		पूर्ण
+		अवरोध;
+	हाल MPCG_STATE_INOP:
+	हाल MPCG_STATE_RESET:
+		/* MPC Group is not पढ़ोy to start XID - min num of */
+		/* 1 पढ़ो and 1 ग_लिखो channel have not been acquired*/
 
 		CTCM_DBF_TEXT_(MPC_ERROR, CTC_DBF_ERROR,
 			"%s(%s): REJECTED - inactive channels",
 					CTCM_FUNTAIL, dev->name);
-		if (grp->estconnfunc) {
+		अगर (grp->estconnfunc) अणु
 			grp->estconnfunc(grp->port_num, -1, 0);
-			grp->estconnfunc = NULL;
-		}
-		break;
-	case MPCG_STATE_XID2INITW:
+			grp->estconnfunc = शून्य;
+		पूर्ण
+		अवरोध;
+	हाल MPCG_STATE_XID2INITW:
 		/* alloc channel was called but no XID exchange    */
 		/* has occurred. initiate xside XID exchange	   */
 		/* make sure yside XID0 processing has not started */
 
-		if ((fsm_getstate(rch->fsm) > CH_XID0_PENDING) ||
-			(fsm_getstate(wch->fsm) > CH_XID0_PENDING)) {
+		अगर ((fsm_माला_लोtate(rch->fsm) > CH_XID0_PENDING) ||
+			(fsm_माला_लोtate(wch->fsm) > CH_XID0_PENDING)) अणु
 			CTCM_DBF_TEXT_(MPC_ERROR, CTC_DBF_ERROR,
 				"%s(%s): ABORT - PASSIVE XID",
 					CTCM_FUNTAIL, dev->name);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		grp->send_qllc_disc = 1;
 		fsm_newstate(grp->fsm, MPCG_STATE_XID0IOWAIT);
-		fsm_deltimer(&grp->timer);
-		fsm_addtimer(&grp->timer, MPC_XID_TIMEOUT_VALUE,
+		fsm_delसमयr(&grp->समयr);
+		fsm_addसमयr(&grp->समयr, MPC_XID_TIMEOUT_VALUE,
 						MPCG_EVENT_TIMER, dev);
 		grp->outstanding_xid7 = 0;
 		grp->outstanding_xid7_p2 = 0;
-		grp->saved_xid2 = NULL;
-		if ((rch->in_mpcgroup) &&
-				(fsm_getstate(rch->fsm) == CH_XID0_PENDING))
+		grp->saved_xid2 = शून्य;
+		अगर ((rch->in_mpcgroup) &&
+				(fsm_माला_लोtate(rch->fsm) == CH_XID0_PENDING))
 			fsm_event(grp->fsm, MPCG_EVENT_XID0DO, rch);
-		else {
+		अन्यथा अणु
 			CTCM_DBF_TEXT_(MPC_ERROR, CTC_DBF_ERROR,
 				"%s(%s): RX-%s not ready for ACTIVE XID0",
 					CTCM_FUNTAIL, dev->name, rch->id);
-			if (grp->estconnfunc) {
+			अगर (grp->estconnfunc) अणु
 				grp->estconnfunc(grp->port_num, -1, 0);
-				grp->estconnfunc = NULL;
-			}
-			fsm_deltimer(&grp->timer);
-				goto done;
-		}
-		if ((wch->in_mpcgroup) &&
-				(fsm_getstate(wch->fsm) == CH_XID0_PENDING))
+				grp->estconnfunc = शून्य;
+			पूर्ण
+			fsm_delसमयr(&grp->समयr);
+				जाओ करोne;
+		पूर्ण
+		अगर ((wch->in_mpcgroup) &&
+				(fsm_माला_लोtate(wch->fsm) == CH_XID0_PENDING))
 			fsm_event(grp->fsm, MPCG_EVENT_XID0DO, wch);
-		else {
+		अन्यथा अणु
 			CTCM_DBF_TEXT_(MPC_ERROR, CTC_DBF_ERROR,
 				"%s(%s): WX-%s not ready for ACTIVE XID0",
 					CTCM_FUNTAIL, dev->name, wch->id);
-			if (grp->estconnfunc) {
+			अगर (grp->estconnfunc) अणु
 				grp->estconnfunc(grp->port_num, -1, 0);
-				grp->estconnfunc = NULL;
-			}
-			fsm_deltimer(&grp->timer);
-				goto done;
-			}
-		break;
-	case MPCG_STATE_XID0IOWAIT:
-		/* already in active XID negotiations */
-	default:
-		break;
-	}
+				grp->estconnfunc = शून्य;
+			पूर्ण
+			fsm_delसमयr(&grp->समयr);
+				जाओ करोne;
+			पूर्ण
+		अवरोध;
+	हाल MPCG_STATE_XID0IOWAIT:
+		/* alपढ़ोy in active XID negotiations */
+	शेष:
+		अवरोध;
+	पूर्ण
 
-done:
+करोne:
 	CTCM_PR_DEBUG("Exit %s()\n", __func__);
-	return;
-}
+	वापस;
+पूर्ण
 EXPORT_SYMBOL(ctc_mpc_establish_connectivity);
 
 /*
  * ctc_mpc_dealloc_ch
- *	(exported interface)
+ *	(exported पूर्णांकerface)
  */
-void ctc_mpc_dealloc_ch(int port_num)
-{
-	struct net_device *dev;
-	struct ctcm_priv *priv;
-	struct mpc_group *grp;
+व्योम ctc_mpc_dealloc_ch(पूर्णांक port_num)
+अणु
+	काष्ठा net_device *dev;
+	काष्ठा ctcm_priv *priv;
+	काष्ठा mpc_group *grp;
 
 	dev = ctcmpc_get_dev(port_num);
-	if (dev == NULL)
-		return;
+	अगर (dev == शून्य)
+		वापस;
 	priv = dev->ml_priv;
 	grp = priv->mpcg;
 
 	CTCM_DBF_TEXT_(MPC_SETUP, CTC_DBF_DEBUG,
 			"%s: %s: refcount = %d\n",
-			CTCM_FUNTAIL, dev->name, netdev_refcnt_read(dev));
+			CTCM_FUNTAIL, dev->name, netdev_refcnt_पढ़ो(dev));
 
-	fsm_deltimer(&priv->restart_timer);
+	fsm_delसमयr(&priv->restart_समयr);
 	grp->channels_terminating = 0;
-	fsm_deltimer(&grp->timer);
-	grp->allochanfunc = NULL;
-	grp->estconnfunc = NULL;
+	fsm_delसमयr(&grp->समयr);
+	grp->allochanfunc = शून्य;
+	grp->estconnfunc = शून्य;
 	grp->port_persist = 0;
 	grp->send_qllc_disc = 0;
 	fsm_event(grp->fsm, MPCG_EVENT_INOP, dev);
 
-	ctcm_close(dev);
-	return;
-}
+	ctcm_बंद(dev);
+	वापस;
+पूर्ण
 EXPORT_SYMBOL(ctc_mpc_dealloc_ch);
 
 /*
  * ctc_mpc_flow_control
- *	(exported interface)
+ *	(exported पूर्णांकerface)
  */
-void ctc_mpc_flow_control(int port_num, int flowc)
-{
-	struct ctcm_priv *priv;
-	struct mpc_group *grp;
-	struct net_device *dev;
-	struct channel *rch;
-	int mpcg_state;
+व्योम ctc_mpc_flow_control(पूर्णांक port_num, पूर्णांक flowc)
+अणु
+	काष्ठा ctcm_priv *priv;
+	काष्ठा mpc_group *grp;
+	काष्ठा net_device *dev;
+	काष्ठा channel *rch;
+	पूर्णांक mpcg_state;
 
 	dev = ctcmpc_get_dev(port_num);
-	if (dev == NULL)
-		return;
+	अगर (dev == शून्य)
+		वापस;
 	priv = dev->ml_priv;
 	grp = priv->mpcg;
 
@@ -568,146 +569,146 @@ void ctc_mpc_flow_control(int port_num, int flowc)
 
 	rch = priv->channel[CTCM_READ];
 
-	mpcg_state = fsm_getstate(grp->fsm);
-	switch (flowc) {
-	case 1:
-		if (mpcg_state == MPCG_STATE_FLOWC)
-			break;
-		if (mpcg_state == MPCG_STATE_READY) {
-			if (grp->flow_off_called == 1)
+	mpcg_state = fsm_माला_लोtate(grp->fsm);
+	चयन (flowc) अणु
+	हाल 1:
+		अगर (mpcg_state == MPCG_STATE_FLOWC)
+			अवरोध;
+		अगर (mpcg_state == MPCG_STATE_READY) अणु
+			अगर (grp->flow_off_called == 1)
 				grp->flow_off_called = 0;
-			else
+			अन्यथा
 				fsm_newstate(grp->fsm, MPCG_STATE_FLOWC);
-			break;
-		}
-		break;
-	case 0:
-		if (mpcg_state == MPCG_STATE_FLOWC) {
+			अवरोध;
+		पूर्ण
+		अवरोध;
+	हाल 0:
+		अगर (mpcg_state == MPCG_STATE_FLOWC) अणु
 			fsm_newstate(grp->fsm, MPCG_STATE_READY);
 			/* ensure any data that has accumulated */
 			/* on the io_queue will now be sen t	*/
 			tasklet_schedule(&rch->ch_tasklet);
-		}
+		पूर्ण
 		/* possible race condition			*/
-		if (mpcg_state == MPCG_STATE_READY) {
+		अगर (mpcg_state == MPCG_STATE_READY) अणु
 			grp->flow_off_called = 1;
-			break;
-		}
-		break;
-	}
+			अवरोध;
+		पूर्ण
+		अवरोध;
+	पूर्ण
 
-}
+पूर्ण
 EXPORT_SYMBOL(ctc_mpc_flow_control);
 
-static int mpc_send_qllc_discontact(struct net_device *);
+अटल पूर्णांक mpc_send_qllc_discontact(काष्ठा net_device *);
 
 /*
  * helper function of ctcmpc_unpack_skb
 */
-static void mpc_rcvd_sweep_resp(struct mpcg_info *mpcginfo)
-{
-	struct channel	  *rch = mpcginfo->ch;
-	struct net_device *dev = rch->netdev;
-	struct ctcm_priv   *priv = dev->ml_priv;
-	struct mpc_group  *grp = priv->mpcg;
-	struct channel	  *ch = priv->channel[CTCM_WRITE];
+अटल व्योम mpc_rcvd_sweep_resp(काष्ठा mpcg_info *mpcginfo)
+अणु
+	काष्ठा channel	  *rch = mpcginfo->ch;
+	काष्ठा net_device *dev = rch->netdev;
+	काष्ठा ctcm_priv   *priv = dev->ml_priv;
+	काष्ठा mpc_group  *grp = priv->mpcg;
+	काष्ठा channel	  *ch = priv->channel[CTCM_WRITE];
 
 	CTCM_PR_DEBUG("%s: ch=0x%p id=%s\n", __func__, ch, ch->id);
-	CTCM_D3_DUMP((char *)mpcginfo->sweep, TH_SWEEP_LENGTH);
+	CTCM_D3_DUMP((अक्षर *)mpcginfo->sweep, TH_SWEEP_LENGTH);
 
 	grp->sweep_rsp_pend_num--;
 
-	if ((grp->sweep_req_pend_num == 0) &&
-			(grp->sweep_rsp_pend_num == 0)) {
-		fsm_deltimer(&ch->sweep_timer);
+	अगर ((grp->sweep_req_pend_num == 0) &&
+			(grp->sweep_rsp_pend_num == 0)) अणु
+		fsm_delसमयr(&ch->sweep_समयr);
 		grp->in_sweep = 0;
 		rch->th_seq_num = 0x00;
 		ch->th_seq_num = 0x00;
-		ctcm_clear_busy_do(dev);
-	}
+		ctcm_clear_busy_करो(dev);
+	पूर्ण
 
-	kfree(mpcginfo);
+	kमुक्त(mpcginfo);
 
-	return;
+	वापस;
 
-}
+पूर्ण
 
 /*
  * helper function of mpc_rcvd_sweep_req
  * which is a helper of ctcmpc_unpack_skb
  */
-static void ctcmpc_send_sweep_resp(struct channel *rch)
-{
-	struct net_device *dev = rch->netdev;
-	struct ctcm_priv *priv = dev->ml_priv;
-	struct mpc_group *grp = priv->mpcg;
-	struct th_sweep *header;
-	struct sk_buff *sweep_skb;
-	struct channel *ch  = priv->channel[CTCM_WRITE];
+अटल व्योम ctcmpc_send_sweep_resp(काष्ठा channel *rch)
+अणु
+	काष्ठा net_device *dev = rch->netdev;
+	काष्ठा ctcm_priv *priv = dev->ml_priv;
+	काष्ठा mpc_group *grp = priv->mpcg;
+	काष्ठा th_sweep *header;
+	काष्ठा sk_buff *sweep_skb;
+	काष्ठा channel *ch  = priv->channel[CTCM_WRITE];
 
 	CTCM_PR_DEBUG("%s: ch=0x%p id=%s\n", __func__, rch, rch->id);
 
-	sweep_skb = __dev_alloc_skb(MPC_BUFSIZE_DEFAULT, GFP_ATOMIC | GFP_DMA);
-	if (sweep_skb == NULL) {
+	sweep_skb = __dev_alloc_skb(MPC_बफ_मानE_DEFAULT, GFP_ATOMIC | GFP_DMA);
+	अगर (sweep_skb == शून्य) अणु
 		CTCM_DBF_TEXT_(MPC_ERROR, CTC_DBF_ERROR,
 			"%s(%s): sweep_skb allocation ERROR\n",
 			CTCM_FUNTAIL, rch->id);
-		goto done;
-	}
+		जाओ करोne;
+	पूर्ण
 
 	header = skb_put_zero(sweep_skb, TH_SWEEP_LENGTH);
 	header->th.th_ch_flag	= TH_SWEEP_RESP;
 	header->sw.th_last_seq	= ch->th_seq_num;
 
-	netif_trans_update(dev);
+	netअगर_trans_update(dev);
 	skb_queue_tail(&ch->sweep_queue, sweep_skb);
 
-	fsm_addtimer(&ch->sweep_timer, 100, CTC_EVENT_RSWEEP_TIMER, ch);
+	fsm_addसमयr(&ch->sweep_समयr, 100, CTC_EVENT_RSWEEP_TIMER, ch);
 
-	return;
+	वापस;
 
-done:
+करोne:
 	grp->in_sweep = 0;
-	ctcm_clear_busy_do(dev);
+	ctcm_clear_busy_करो(dev);
 	fsm_event(grp->fsm, MPCG_EVENT_INOP, dev);
 
-	return;
-}
+	वापस;
+पूर्ण
 
 /*
  * helper function of ctcmpc_unpack_skb
  */
-static void mpc_rcvd_sweep_req(struct mpcg_info *mpcginfo)
-{
-	struct channel	  *rch     = mpcginfo->ch;
-	struct net_device *dev     = rch->netdev;
-	struct ctcm_priv  *priv = dev->ml_priv;
-	struct mpc_group  *grp  = priv->mpcg;
-	struct channel	  *ch	   = priv->channel[CTCM_WRITE];
+अटल व्योम mpc_rcvd_sweep_req(काष्ठा mpcg_info *mpcginfo)
+अणु
+	काष्ठा channel	  *rch     = mpcginfo->ch;
+	काष्ठा net_device *dev     = rch->netdev;
+	काष्ठा ctcm_priv  *priv = dev->ml_priv;
+	काष्ठा mpc_group  *grp  = priv->mpcg;
+	काष्ठा channel	  *ch	   = priv->channel[CTCM_WRITE];
 
-	if (do_debug)
+	अगर (करो_debug)
 		CTCM_DBF_TEXT_(MPC_TRACE, CTC_DBF_DEBUG,
 			" %s(): ch=0x%p id=%s\n", __func__, ch, ch->id);
 
-	if (grp->in_sweep == 0) {
+	अगर (grp->in_sweep == 0) अणु
 		grp->in_sweep = 1;
 		ctcm_test_and_set_busy(dev);
 		grp->sweep_req_pend_num = grp->active_channels[CTCM_READ];
 		grp->sweep_rsp_pend_num = grp->active_channels[CTCM_READ];
-	}
+	पूर्ण
 
-	CTCM_D3_DUMP((char *)mpcginfo->sweep, TH_SWEEP_LENGTH);
+	CTCM_D3_DUMP((अक्षर *)mpcginfo->sweep, TH_SWEEP_LENGTH);
 
 	grp->sweep_req_pend_num--;
 	ctcmpc_send_sweep_resp(ch);
-	kfree(mpcginfo);
-	return;
-}
+	kमुक्त(mpcginfo);
+	वापस;
+पूर्ण
 
 /*
   * MPC Group Station FSM definitions
  */
-static const char *mpcg_event_names[] = {
+अटल स्थिर अक्षर *mpcg_event_names[] = अणु
 	[MPCG_EVENT_INOP]	= "INOP Condition",
 	[MPCG_EVENT_DISCONC]	= "Discontact Received",
 	[MPCG_EVENT_XID0DO]	= "Channel Active - Start XID",
@@ -716,9 +717,9 @@ static const char *mpcg_event_names[] = {
 	[MPCG_EVENT_XID7DONE]	= "XID7 Complete",
 	[MPCG_EVENT_TIMER]	= "XID Setup Timer",
 	[MPCG_EVENT_DOIO]	= "XID DoIO",
-};
+पूर्ण;
 
-static const char *mpcg_state_names[] = {
+अटल स्थिर अक्षर *mpcg_state_names[] = अणु
 	[MPCG_STATE_RESET]	= "Reset",
 	[MPCG_STATE_INOP]	= "INOP",
 	[MPCG_STATE_XID2INITW]	= "Passive XID- XID0 Pending Start",
@@ -732,116 +733,116 @@ static const char *mpcg_state_names[] = {
 	[MPCG_STATE_XID7INITF]	= "XID        - XID7 Complete ",
 	[MPCG_STATE_FLOWC]	= "FLOW CONTROL ON",
 	[MPCG_STATE_READY]	= "READY",
-};
+पूर्ण;
 
 /*
  * The MPC Group Station FSM
  *   22 events
  */
-static const fsm_node mpcg_fsm[] = {
-	{ MPCG_STATE_RESET,	MPCG_EVENT_INOP,	mpc_action_go_inop    },
-	{ MPCG_STATE_INOP,	MPCG_EVENT_INOP,	mpc_action_nop        },
-	{ MPCG_STATE_FLOWC,	MPCG_EVENT_INOP,	mpc_action_go_inop    },
+अटल स्थिर fsm_node mpcg_fsm[] = अणु
+	अणु MPCG_STATE_RESET,	MPCG_EVENT_INOP,	mpc_action_go_inop    पूर्ण,
+	अणु MPCG_STATE_INOP,	MPCG_EVENT_INOP,	mpc_action_nop        पूर्ण,
+	अणु MPCG_STATE_FLOWC,	MPCG_EVENT_INOP,	mpc_action_go_inop    पूर्ण,
 
-	{ MPCG_STATE_READY,	MPCG_EVENT_DISCONC,	mpc_action_discontact },
-	{ MPCG_STATE_READY,	MPCG_EVENT_INOP,	mpc_action_go_inop    },
+	अणु MPCG_STATE_READY,	MPCG_EVENT_DISCONC,	mpc_action_discontact पूर्ण,
+	अणु MPCG_STATE_READY,	MPCG_EVENT_INOP,	mpc_action_go_inop    पूर्ण,
 
-	{ MPCG_STATE_XID2INITW,	MPCG_EVENT_XID0DO,	mpc_action_doxid0     },
-	{ MPCG_STATE_XID2INITW,	MPCG_EVENT_XID2,	mpc_action_rcvd_xid0  },
-	{ MPCG_STATE_XID2INITW,	MPCG_EVENT_INOP,	mpc_action_go_inop    },
-	{ MPCG_STATE_XID2INITW,	MPCG_EVENT_TIMER,	mpc_action_timeout    },
-	{ MPCG_STATE_XID2INITW,	MPCG_EVENT_DOIO,	mpc_action_yside_xid  },
+	अणु MPCG_STATE_XID2INITW,	MPCG_EVENT_XID0DO,	mpc_action_करोxid0     पूर्ण,
+	अणु MPCG_STATE_XID2INITW,	MPCG_EVENT_XID2,	mpc_action_rcvd_xid0  पूर्ण,
+	अणु MPCG_STATE_XID2INITW,	MPCG_EVENT_INOP,	mpc_action_go_inop    पूर्ण,
+	अणु MPCG_STATE_XID2INITW,	MPCG_EVENT_TIMER,	mpc_action_समयout    पूर्ण,
+	अणु MPCG_STATE_XID2INITW,	MPCG_EVENT_DOIO,	mpc_action_yside_xid  पूर्ण,
 
-	{ MPCG_STATE_XID2INITX,	MPCG_EVENT_XID0DO,	mpc_action_doxid0     },
-	{ MPCG_STATE_XID2INITX,	MPCG_EVENT_XID2,	mpc_action_rcvd_xid0  },
-	{ MPCG_STATE_XID2INITX,	MPCG_EVENT_INOP,	mpc_action_go_inop    },
-	{ MPCG_STATE_XID2INITX,	MPCG_EVENT_TIMER,	mpc_action_timeout    },
-	{ MPCG_STATE_XID2INITX,	MPCG_EVENT_DOIO,	mpc_action_yside_xid  },
+	अणु MPCG_STATE_XID2INITX,	MPCG_EVENT_XID0DO,	mpc_action_करोxid0     पूर्ण,
+	अणु MPCG_STATE_XID2INITX,	MPCG_EVENT_XID2,	mpc_action_rcvd_xid0  पूर्ण,
+	अणु MPCG_STATE_XID2INITX,	MPCG_EVENT_INOP,	mpc_action_go_inop    पूर्ण,
+	अणु MPCG_STATE_XID2INITX,	MPCG_EVENT_TIMER,	mpc_action_समयout    पूर्ण,
+	अणु MPCG_STATE_XID2INITX,	MPCG_EVENT_DOIO,	mpc_action_yside_xid  पूर्ण,
 
-	{ MPCG_STATE_XID7INITW,	MPCG_EVENT_XID2DONE,	mpc_action_doxid7     },
-	{ MPCG_STATE_XID7INITW,	MPCG_EVENT_DISCONC,	mpc_action_discontact },
-	{ MPCG_STATE_XID7INITW,	MPCG_EVENT_XID2,	mpc_action_rcvd_xid7  },
-	{ MPCG_STATE_XID7INITW,	MPCG_EVENT_INOP,	mpc_action_go_inop    },
-	{ MPCG_STATE_XID7INITW,	MPCG_EVENT_TIMER,	mpc_action_timeout    },
-	{ MPCG_STATE_XID7INITW,	MPCG_EVENT_XID7DONE,	mpc_action_doxid7     },
-	{ MPCG_STATE_XID7INITW,	MPCG_EVENT_DOIO,	mpc_action_yside_xid  },
+	अणु MPCG_STATE_XID7INITW,	MPCG_EVENT_XID2DONE,	mpc_action_करोxid7     पूर्ण,
+	अणु MPCG_STATE_XID7INITW,	MPCG_EVENT_DISCONC,	mpc_action_discontact पूर्ण,
+	अणु MPCG_STATE_XID7INITW,	MPCG_EVENT_XID2,	mpc_action_rcvd_xid7  पूर्ण,
+	अणु MPCG_STATE_XID7INITW,	MPCG_EVENT_INOP,	mpc_action_go_inop    पूर्ण,
+	अणु MPCG_STATE_XID7INITW,	MPCG_EVENT_TIMER,	mpc_action_समयout    पूर्ण,
+	अणु MPCG_STATE_XID7INITW,	MPCG_EVENT_XID7DONE,	mpc_action_करोxid7     पूर्ण,
+	अणु MPCG_STATE_XID7INITW,	MPCG_EVENT_DOIO,	mpc_action_yside_xid  पूर्ण,
 
-	{ MPCG_STATE_XID7INITX,	MPCG_EVENT_DISCONC,	mpc_action_discontact },
-	{ MPCG_STATE_XID7INITX,	MPCG_EVENT_XID2,	mpc_action_rcvd_xid7  },
-	{ MPCG_STATE_XID7INITX,	MPCG_EVENT_INOP,	mpc_action_go_inop    },
-	{ MPCG_STATE_XID7INITX,	MPCG_EVENT_XID7DONE,	mpc_action_doxid7     },
-	{ MPCG_STATE_XID7INITX,	MPCG_EVENT_TIMER,	mpc_action_timeout    },
-	{ MPCG_STATE_XID7INITX,	MPCG_EVENT_DOIO,	mpc_action_yside_xid  },
+	अणु MPCG_STATE_XID7INITX,	MPCG_EVENT_DISCONC,	mpc_action_discontact पूर्ण,
+	अणु MPCG_STATE_XID7INITX,	MPCG_EVENT_XID2,	mpc_action_rcvd_xid7  पूर्ण,
+	अणु MPCG_STATE_XID7INITX,	MPCG_EVENT_INOP,	mpc_action_go_inop    पूर्ण,
+	अणु MPCG_STATE_XID7INITX,	MPCG_EVENT_XID7DONE,	mpc_action_करोxid7     पूर्ण,
+	अणु MPCG_STATE_XID7INITX,	MPCG_EVENT_TIMER,	mpc_action_समयout    पूर्ण,
+	अणु MPCG_STATE_XID7INITX,	MPCG_EVENT_DOIO,	mpc_action_yside_xid  पूर्ण,
 
-	{ MPCG_STATE_XID0IOWAIT, MPCG_EVENT_XID0DO,	mpc_action_doxid0     },
-	{ MPCG_STATE_XID0IOWAIT, MPCG_EVENT_DISCONC,	mpc_action_discontact },
-	{ MPCG_STATE_XID0IOWAIT, MPCG_EVENT_XID2,	mpc_action_rcvd_xid0  },
-	{ MPCG_STATE_XID0IOWAIT, MPCG_EVENT_INOP,	mpc_action_go_inop    },
-	{ MPCG_STATE_XID0IOWAIT, MPCG_EVENT_TIMER,	mpc_action_timeout    },
-	{ MPCG_STATE_XID0IOWAIT, MPCG_EVENT_DOIO,	mpc_action_xside_xid  },
+	अणु MPCG_STATE_XID0IOWAIT, MPCG_EVENT_XID0DO,	mpc_action_करोxid0     पूर्ण,
+	अणु MPCG_STATE_XID0IOWAIT, MPCG_EVENT_DISCONC,	mpc_action_discontact पूर्ण,
+	अणु MPCG_STATE_XID0IOWAIT, MPCG_EVENT_XID2,	mpc_action_rcvd_xid0  पूर्ण,
+	अणु MPCG_STATE_XID0IOWAIT, MPCG_EVENT_INOP,	mpc_action_go_inop    पूर्ण,
+	अणु MPCG_STATE_XID0IOWAIT, MPCG_EVENT_TIMER,	mpc_action_समयout    पूर्ण,
+	अणु MPCG_STATE_XID0IOWAIT, MPCG_EVENT_DOIO,	mpc_action_xside_xid  पूर्ण,
 
-	{ MPCG_STATE_XID0IOWAIX, MPCG_EVENT_XID0DO,	mpc_action_doxid0     },
-	{ MPCG_STATE_XID0IOWAIX, MPCG_EVENT_DISCONC,	mpc_action_discontact },
-	{ MPCG_STATE_XID0IOWAIX, MPCG_EVENT_XID2,	mpc_action_rcvd_xid0  },
-	{ MPCG_STATE_XID0IOWAIX, MPCG_EVENT_INOP,	mpc_action_go_inop    },
-	{ MPCG_STATE_XID0IOWAIX, MPCG_EVENT_TIMER,	mpc_action_timeout    },
-	{ MPCG_STATE_XID0IOWAIX, MPCG_EVENT_DOIO,	mpc_action_xside_xid  },
+	अणु MPCG_STATE_XID0IOWAIX, MPCG_EVENT_XID0DO,	mpc_action_करोxid0     पूर्ण,
+	अणु MPCG_STATE_XID0IOWAIX, MPCG_EVENT_DISCONC,	mpc_action_discontact पूर्ण,
+	अणु MPCG_STATE_XID0IOWAIX, MPCG_EVENT_XID2,	mpc_action_rcvd_xid0  पूर्ण,
+	अणु MPCG_STATE_XID0IOWAIX, MPCG_EVENT_INOP,	mpc_action_go_inop    पूर्ण,
+	अणु MPCG_STATE_XID0IOWAIX, MPCG_EVENT_TIMER,	mpc_action_समयout    पूर्ण,
+	अणु MPCG_STATE_XID0IOWAIX, MPCG_EVENT_DOIO,	mpc_action_xside_xid  पूर्ण,
 
-	{ MPCG_STATE_XID7INITI,	MPCG_EVENT_XID2DONE,	mpc_action_doxid7     },
-	{ MPCG_STATE_XID7INITI,	MPCG_EVENT_XID2,	mpc_action_rcvd_xid7  },
-	{ MPCG_STATE_XID7INITI,	MPCG_EVENT_DISCONC,	mpc_action_discontact },
-	{ MPCG_STATE_XID7INITI,	MPCG_EVENT_INOP,	mpc_action_go_inop    },
-	{ MPCG_STATE_XID7INITI,	MPCG_EVENT_TIMER,	mpc_action_timeout    },
-	{ MPCG_STATE_XID7INITI,	MPCG_EVENT_XID7DONE,	mpc_action_doxid7     },
-	{ MPCG_STATE_XID7INITI,	MPCG_EVENT_DOIO,	mpc_action_xside_xid  },
+	अणु MPCG_STATE_XID7INITI,	MPCG_EVENT_XID2DONE,	mpc_action_करोxid7     पूर्ण,
+	अणु MPCG_STATE_XID7INITI,	MPCG_EVENT_XID2,	mpc_action_rcvd_xid7  पूर्ण,
+	अणु MPCG_STATE_XID7INITI,	MPCG_EVENT_DISCONC,	mpc_action_discontact पूर्ण,
+	अणु MPCG_STATE_XID7INITI,	MPCG_EVENT_INOP,	mpc_action_go_inop    पूर्ण,
+	अणु MPCG_STATE_XID7INITI,	MPCG_EVENT_TIMER,	mpc_action_समयout    पूर्ण,
+	अणु MPCG_STATE_XID7INITI,	MPCG_EVENT_XID7DONE,	mpc_action_करोxid7     पूर्ण,
+	अणु MPCG_STATE_XID7INITI,	MPCG_EVENT_DOIO,	mpc_action_xside_xid  पूर्ण,
 
-	{ MPCG_STATE_XID7INITZ,	MPCG_EVENT_XID2,	mpc_action_rcvd_xid7  },
-	{ MPCG_STATE_XID7INITZ,	MPCG_EVENT_XID7DONE,	mpc_action_doxid7     },
-	{ MPCG_STATE_XID7INITZ,	MPCG_EVENT_DISCONC,	mpc_action_discontact },
-	{ MPCG_STATE_XID7INITZ,	MPCG_EVENT_INOP,	mpc_action_go_inop    },
-	{ MPCG_STATE_XID7INITZ,	MPCG_EVENT_TIMER,	mpc_action_timeout    },
-	{ MPCG_STATE_XID7INITZ,	MPCG_EVENT_DOIO,	mpc_action_xside_xid  },
+	अणु MPCG_STATE_XID7INITZ,	MPCG_EVENT_XID2,	mpc_action_rcvd_xid7  पूर्ण,
+	अणु MPCG_STATE_XID7INITZ,	MPCG_EVENT_XID7DONE,	mpc_action_करोxid7     पूर्ण,
+	अणु MPCG_STATE_XID7INITZ,	MPCG_EVENT_DISCONC,	mpc_action_discontact पूर्ण,
+	अणु MPCG_STATE_XID7INITZ,	MPCG_EVENT_INOP,	mpc_action_go_inop    पूर्ण,
+	अणु MPCG_STATE_XID7INITZ,	MPCG_EVENT_TIMER,	mpc_action_समयout    पूर्ण,
+	अणु MPCG_STATE_XID7INITZ,	MPCG_EVENT_DOIO,	mpc_action_xside_xid  पूर्ण,
 
-	{ MPCG_STATE_XID7INITF,	MPCG_EVENT_INOP,	mpc_action_go_inop    },
-	{ MPCG_STATE_XID7INITF,	MPCG_EVENT_XID7DONE,	mpc_action_go_ready   },
-};
+	अणु MPCG_STATE_XID7INITF,	MPCG_EVENT_INOP,	mpc_action_go_inop    पूर्ण,
+	अणु MPCG_STATE_XID7INITF,	MPCG_EVENT_XID7DONE,	mpc_action_go_पढ़ोy   पूर्ण,
+पूर्ण;
 
-static int mpcg_fsm_len = ARRAY_SIZE(mpcg_fsm);
+अटल पूर्णांक mpcg_fsm_len = ARRAY_SIZE(mpcg_fsm);
 
 /*
  * MPC Group Station FSM action
  * CTCM_PROTO_MPC only
  */
-static void mpc_action_go_ready(fsm_instance *fsm, int event, void *arg)
-{
-	struct net_device *dev = arg;
-	struct ctcm_priv *priv = dev->ml_priv;
-	struct mpc_group *grp = priv->mpcg;
+अटल व्योम mpc_action_go_पढ़ोy(fsm_instance *fsm, पूर्णांक event, व्योम *arg)
+अणु
+	काष्ठा net_device *dev = arg;
+	काष्ठा ctcm_priv *priv = dev->ml_priv;
+	काष्ठा mpc_group *grp = priv->mpcg;
 
-	if (grp == NULL) {
+	अगर (grp == शून्य) अणु
 		CTCM_DBF_TEXT_(MPC_ERROR, CTC_DBF_ERROR,
 			"%s(%s): No MPC group",
 				CTCM_FUNTAIL, dev->name);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	fsm_deltimer(&grp->timer);
+	fsm_delसमयr(&grp->समयr);
 
-	if (grp->saved_xid2->xid2_flag2 == 0x40) {
+	अगर (grp->saved_xid2->xid2_flag2 == 0x40) अणु
 		priv->xid->xid2_flag2 = 0x00;
-		if (grp->estconnfunc) {
+		अगर (grp->estconnfunc) अणु
 			grp->estconnfunc(grp->port_num, 1,
 					grp->group_max_buflen);
-			grp->estconnfunc = NULL;
-		} else if (grp->allochanfunc)
+			grp->estconnfunc = शून्य;
+		पूर्ण अन्यथा अगर (grp->allochanfunc)
 			grp->send_qllc_disc = 1;
 
 		fsm_event(grp->fsm, MPCG_EVENT_INOP, dev);
 		CTCM_DBF_TEXT_(MPC_ERROR, CTC_DBF_ERROR,
 				"%s(%s): fails",
 					CTCM_FUNTAIL, dev->name);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	grp->port_persist = 1;
 	grp->out_of_sequence = 0;
@@ -849,26 +850,26 @@ static void mpc_action_go_ready(fsm_instance *fsm, int event, void *arg)
 
 	tasklet_hi_schedule(&grp->mpc_tasklet2);
 
-	return;
-}
+	वापस;
+पूर्ण
 
 /*
  * helper of ctcm_init_netdevice
  * CTCM_PROTO_MPC only
  */
-void mpc_group_ready(unsigned long adev)
-{
-	struct net_device *dev = (struct net_device *)adev;
-	struct ctcm_priv *priv = dev->ml_priv;
-	struct mpc_group *grp = priv->mpcg;
-	struct channel *ch = NULL;
+व्योम mpc_group_पढ़ोy(अचिन्हित दीर्घ adev)
+अणु
+	काष्ठा net_device *dev = (काष्ठा net_device *)adev;
+	काष्ठा ctcm_priv *priv = dev->ml_priv;
+	काष्ठा mpc_group *grp = priv->mpcg;
+	काष्ठा channel *ch = शून्य;
 
-	if (grp == NULL) {
+	अगर (grp == शून्य) अणु
 		CTCM_DBF_TEXT_(MPC_ERROR, CTC_DBF_ERROR,
 			"%s(%s): No MPC group",
 				CTCM_FUNTAIL, dev->name);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	CTCM_DBF_TEXT_(MPC_SETUP, CTC_DBF_NOTICE,
 		"%s: %s: GROUP TRANSITIONED TO READY, maxbuf = %d\n",
@@ -876,145 +877,145 @@ void mpc_group_ready(unsigned long adev)
 
 	fsm_newstate(grp->fsm, MPCG_STATE_READY);
 
-	/* Put up a read on the channel */
+	/* Put up a पढ़ो on the channel */
 	ch = priv->channel[CTCM_READ];
 	ch->pdu_seq = 0;
 	CTCM_PR_DBGDATA("ctcmpc: %s() ToDCM_pdu_seq= %08x\n" ,
 			__func__, ch->pdu_seq);
 
 	ctcmpc_chx_rxidle(ch->fsm, CTC_EVENT_START, ch);
-	/* Put the write channel in idle state */
+	/* Put the ग_लिखो channel in idle state */
 	ch = priv->channel[CTCM_WRITE];
-	if (ch->collect_len > 0) {
+	अगर (ch->collect_len > 0) अणु
 		spin_lock(&ch->collect_lock);
 		ctcm_purge_skb_queue(&ch->collect_queue);
 		ch->collect_len = 0;
 		spin_unlock(&ch->collect_lock);
-	}
+	पूर्ण
 	ctcm_chx_txidle(ch->fsm, CTC_EVENT_START, ch);
 	ctcm_clear_busy(dev);
 
-	if (grp->estconnfunc) {
+	अगर (grp->estconnfunc) अणु
 		grp->estconnfunc(grp->port_num, 0,
 				    grp->group_max_buflen);
-		grp->estconnfunc = NULL;
-	} else 	if (grp->allochanfunc)
+		grp->estconnfunc = शून्य;
+	पूर्ण अन्यथा 	अगर (grp->allochanfunc)
 		grp->allochanfunc(grp->port_num, grp->group_max_buflen);
 
 	grp->send_qllc_disc = 1;
 	grp->changed_side = 0;
 
-	return;
+	वापस;
 
-}
+पूर्ण
 
 /*
  * Increment the MPC Group Active Channel Counts
  * helper of dev_action (called from channel fsm)
  */
-void mpc_channel_action(struct channel *ch, int direction, int action)
-{
-	struct net_device  *dev  = ch->netdev;
-	struct ctcm_priv   *priv = dev->ml_priv;
-	struct mpc_group   *grp  = priv->mpcg;
+व्योम mpc_channel_action(काष्ठा channel *ch, पूर्णांक direction, पूर्णांक action)
+अणु
+	काष्ठा net_device  *dev  = ch->netdev;
+	काष्ठा ctcm_priv   *priv = dev->ml_priv;
+	काष्ठा mpc_group   *grp  = priv->mpcg;
 
-	if (grp == NULL) {
+	अगर (grp == शून्य) अणु
 		CTCM_DBF_TEXT_(MPC_ERROR, CTC_DBF_ERROR,
 			"%s(%s): No MPC group",
 				CTCM_FUNTAIL, dev->name);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	CTCM_PR_DEBUG("enter %s: ch=0x%p id=%s\n", __func__, ch, ch->id);
 
 	CTCM_DBF_TEXT_(MPC_TRACE, CTC_DBF_NOTICE,
 		"%s: %i / Grp:%s total_channels=%i, active_channels: "
 		"read=%i, write=%i\n", __func__, action,
-		fsm_getstate_str(grp->fsm), grp->num_channel_paths,
+		fsm_माला_लोtate_str(grp->fsm), grp->num_channel_paths,
 		grp->active_channels[CTCM_READ],
 		grp->active_channels[CTCM_WRITE]);
 
-	if ((action == MPC_CHANNEL_ADD) && (ch->in_mpcgroup == 0)) {
+	अगर ((action == MPC_CHANNEL_ADD) && (ch->in_mpcgroup == 0)) अणु
 		grp->num_channel_paths++;
 		grp->active_channels[direction]++;
 		grp->outstanding_xid2++;
 		ch->in_mpcgroup = 1;
 
-		if (ch->xid_skb != NULL)
-			dev_kfree_skb_any(ch->xid_skb);
+		अगर (ch->xid_skb != शून्य)
+			dev_kमुक्त_skb_any(ch->xid_skb);
 
-		ch->xid_skb = __dev_alloc_skb(MPC_BUFSIZE_DEFAULT,
+		ch->xid_skb = __dev_alloc_skb(MPC_बफ_मानE_DEFAULT,
 					GFP_ATOMIC | GFP_DMA);
-		if (ch->xid_skb == NULL) {
+		अगर (ch->xid_skb == शून्य) अणु
 			CTCM_DBF_TEXT_(MPC_ERROR, CTC_DBF_ERROR,
 				"%s(%s): Couldn't alloc ch xid_skb\n",
 				CTCM_FUNTAIL, dev->name);
 			fsm_event(grp->fsm, MPCG_EVENT_INOP, dev);
-			return;
-		}
+			वापस;
+		पूर्ण
 		ch->xid_skb_data = ch->xid_skb->data;
-		ch->xid_th = (struct th_header *)ch->xid_skb->data;
+		ch->xid_th = (काष्ठा th_header *)ch->xid_skb->data;
 		skb_put(ch->xid_skb, TH_HEADER_LENGTH);
-		ch->xid = (struct xid2 *)skb_tail_pointer(ch->xid_skb);
+		ch->xid = (काष्ठा xid2 *)skb_tail_poपूर्णांकer(ch->xid_skb);
 		skb_put(ch->xid_skb, XID2_LENGTH);
-		ch->xid_id = skb_tail_pointer(ch->xid_skb);
+		ch->xid_id = skb_tail_poपूर्णांकer(ch->xid_skb);
 		ch->xid_skb->data = ch->xid_skb_data;
-		skb_reset_tail_pointer(ch->xid_skb);
+		skb_reset_tail_poपूर्णांकer(ch->xid_skb);
 		ch->xid_skb->len = 0;
 
 		skb_put_data(ch->xid_skb, grp->xid_skb->data,
 			     grp->xid_skb->len);
 
 		ch->xid->xid2_dlc_type =
-			((CHANNEL_DIRECTION(ch->flags) == CTCM_READ)
+			((CHANNEL_सूचीECTION(ch->flags) == CTCM_READ)
 				? XID2_READ_SIDE : XID2_WRITE_SIDE);
 
-		if (CHANNEL_DIRECTION(ch->flags) == CTCM_WRITE)
+		अगर (CHANNEL_सूचीECTION(ch->flags) == CTCM_WRITE)
 			ch->xid->xid2_buf_len = 0x00;
 
 		ch->xid_skb->data = ch->xid_skb_data;
-		skb_reset_tail_pointer(ch->xid_skb);
+		skb_reset_tail_poपूर्णांकer(ch->xid_skb);
 		ch->xid_skb->len = 0;
 
 		fsm_newstate(ch->fsm, CH_XID0_PENDING);
 
-		if ((grp->active_channels[CTCM_READ] > 0) &&
+		अगर ((grp->active_channels[CTCM_READ] > 0) &&
 		    (grp->active_channels[CTCM_WRITE] > 0) &&
-			(fsm_getstate(grp->fsm) < MPCG_STATE_XID2INITW)) {
+			(fsm_माला_लोtate(grp->fsm) < MPCG_STATE_XID2INITW)) अणु
 			fsm_newstate(grp->fsm, MPCG_STATE_XID2INITW);
 			CTCM_DBF_TEXT_(MPC_SETUP, CTC_DBF_NOTICE,
 				"%s: %s: MPC GROUP CHANNELS ACTIVE\n",
 						__func__, dev->name);
-		}
-	} else if ((action == MPC_CHANNEL_REMOVE) &&
-			(ch->in_mpcgroup == 1)) {
+		पूर्ण
+	पूर्ण अन्यथा अगर ((action == MPC_CHANNEL_REMOVE) &&
+			(ch->in_mpcgroup == 1)) अणु
 		ch->in_mpcgroup = 0;
 		grp->num_channel_paths--;
 		grp->active_channels[direction]--;
 
-		if (ch->xid_skb != NULL)
-			dev_kfree_skb_any(ch->xid_skb);
-		ch->xid_skb = NULL;
+		अगर (ch->xid_skb != शून्य)
+			dev_kमुक्त_skb_any(ch->xid_skb);
+		ch->xid_skb = शून्य;
 
-		if (grp->channels_terminating)
-					goto done;
+		अगर (grp->channels_terminating)
+					जाओ करोne;
 
-		if (((grp->active_channels[CTCM_READ] == 0) &&
+		अगर (((grp->active_channels[CTCM_READ] == 0) &&
 					(grp->active_channels[CTCM_WRITE] > 0))
 			|| ((grp->active_channels[CTCM_WRITE] == 0) &&
 					(grp->active_channels[CTCM_READ] > 0)))
 			fsm_event(grp->fsm, MPCG_EVENT_INOP, dev);
-	}
-done:
+	पूर्ण
+करोne:
 	CTCM_DBF_TEXT_(MPC_TRACE, CTC_DBF_DEBUG,
 		"exit %s: %i / Grp:%s total_channels=%i, active_channels: "
 		"read=%i, write=%i\n", __func__, action,
-		fsm_getstate_str(grp->fsm), grp->num_channel_paths,
+		fsm_माला_लोtate_str(grp->fsm), grp->num_channel_paths,
 		grp->active_channels[CTCM_READ],
 		grp->active_channels[CTCM_WRITE]);
 
 	CTCM_PR_DEBUG("exit %s: ch=0x%p id=%s\n", __func__, ch, ch->id);
-}
+पूर्ण
 
 /**
  * Unpack a just received skb and hand it over to
@@ -1024,50 +1025,50 @@ done:
  * ch		The channel where this skb has been received.
  * pskb		The received skb.
  */
-static void ctcmpc_unpack_skb(struct channel *ch, struct sk_buff *pskb)
-{
-	struct net_device *dev	= ch->netdev;
-	struct ctcm_priv *priv = dev->ml_priv;
-	struct mpc_group *grp = priv->mpcg;
-	struct pdu *curr_pdu;
-	struct mpcg_info *mpcginfo;
-	struct th_header *header = NULL;
-	struct th_sweep *sweep = NULL;
-	int pdu_last_seen = 0;
+अटल व्योम ctcmpc_unpack_skb(काष्ठा channel *ch, काष्ठा sk_buff *pskb)
+अणु
+	काष्ठा net_device *dev	= ch->netdev;
+	काष्ठा ctcm_priv *priv = dev->ml_priv;
+	काष्ठा mpc_group *grp = priv->mpcg;
+	काष्ठा pdu *curr_pdu;
+	काष्ठा mpcg_info *mpcginfo;
+	काष्ठा th_header *header = शून्य;
+	काष्ठा th_sweep *sweep = शून्य;
+	पूर्णांक pdu_last_seen = 0;
 	__u32 new_len;
-	struct sk_buff *skb;
-	int skblen;
-	int sendrc = 0;
+	काष्ठा sk_buff *skb;
+	पूर्णांक skblen;
+	पूर्णांक sendrc = 0;
 
 	CTCM_PR_DEBUG("ctcmpc enter: %s() %s cp:%i ch:%s\n",
 			__func__, dev->name, smp_processor_id(), ch->id);
 
-	header = (struct th_header *)pskb->data;
-	if ((header->th_seg == 0) &&
+	header = (काष्ठा th_header *)pskb->data;
+	अगर ((header->th_seg == 0) &&
 		(header->th_ch_flag == 0) &&
 		(header->th_blk_flag == 0) &&
 		(header->th_seq_num == 0))
-		/* nothing for us */	goto done;
+		/* nothing क्रम us */	जाओ करोne;
 
 	CTCM_PR_DBGDATA("%s: th_header\n", __func__);
-	CTCM_D3_DUMP((char *)header, TH_HEADER_LENGTH);
+	CTCM_D3_DUMP((अक्षर *)header, TH_HEADER_LENGTH);
 	CTCM_PR_DBGDATA("%s: pskb len: %04x \n", __func__, pskb->len);
 
 	pskb->dev = dev;
 	pskb->ip_summed = CHECKSUM_UNNECESSARY;
 	skb_pull(pskb, TH_HEADER_LENGTH);
 
-	if (likely(header->th_ch_flag == TH_HAS_PDU)) {
+	अगर (likely(header->th_ch_flag == TH_HAS_PDU)) अणु
 		CTCM_PR_DBGDATA("%s: came into th_has_pdu\n", __func__);
-		if ((fsm_getstate(grp->fsm) == MPCG_STATE_FLOWC) ||
-		   ((fsm_getstate(grp->fsm) == MPCG_STATE_READY) &&
+		अगर ((fsm_माला_लोtate(grp->fsm) == MPCG_STATE_FLOWC) ||
+		   ((fsm_माला_लोtate(grp->fsm) == MPCG_STATE_READY) &&
 		    (header->th_seq_num != ch->th_seq_num + 1) &&
-		    (ch->th_seq_num != 0))) {
+		    (ch->th_seq_num != 0))) अणु
 			/* This is NOT the next segment		*
 			 * we are not the correct race winner	*
-			 * go away and let someone else win	*
-			 * BUT..this only applies if xid negot	*
-			 * is done				*
+			 * go away and let someone अन्यथा win	*
+			 * BUT..this only applies अगर xid negot	*
+			 * is करोne				*
 			*/
 			grp->out_of_sequence += 1;
 			__skb_push(pskb, TH_HEADER_LENGTH);
@@ -1076,34 +1077,34 @@ static void ctcmpc_unpack_skb(struct channel *ch, struct sk_buff *pskb)
 					"got:%08x\n", __func__,
 				ch->th_seq_num + 1, header->th_seq_num);
 
-			return;
-		}
+			वापस;
+		पूर्ण
 		grp->out_of_sequence = 0;
 		ch->th_seq_num = header->th_seq_num;
 
 		CTCM_PR_DBGDATA("ctcmpc: %s() FromVTAM_th_seq=%08x\n",
 					__func__, ch->th_seq_num);
 
-		if (unlikely(fsm_getstate(grp->fsm) != MPCG_STATE_READY))
-					goto done;
-		while ((pskb->len > 0) && !pdu_last_seen) {
-			curr_pdu = (struct pdu *)pskb->data;
+		अगर (unlikely(fsm_माला_लोtate(grp->fsm) != MPCG_STATE_READY))
+					जाओ करोne;
+		जबतक ((pskb->len > 0) && !pdu_last_seen) अणु
+			curr_pdu = (काष्ठा pdu *)pskb->data;
 
 			CTCM_PR_DBGDATA("%s: pdu_header\n", __func__);
-			CTCM_D3_DUMP((char *)pskb->data, PDU_HEADER_LENGTH);
+			CTCM_D3_DUMP((अक्षर *)pskb->data, PDU_HEADER_LENGTH);
 			CTCM_PR_DBGDATA("%s: pskb len: %04x \n",
 						__func__, pskb->len);
 
 			skb_pull(pskb, PDU_HEADER_LENGTH);
 
-			if (curr_pdu->pdu_flag & PDU_LAST)
+			अगर (curr_pdu->pdu_flag & PDU_LAST)
 				pdu_last_seen = 1;
-			if (curr_pdu->pdu_flag & PDU_CNTL)
+			अगर (curr_pdu->pdu_flag & PDU_CNTL)
 				pskb->protocol = htons(ETH_P_SNAP);
-			else
+			अन्यथा
 				pskb->protocol = htons(ETH_P_SNA_DIX);
 
-			if ((pskb->len <= 0) || (pskb->len > ch->max_bufsize)) {
+			अगर ((pskb->len <= 0) || (pskb->len > ch->max_bufsize)) अणु
 				CTCM_DBF_TEXT_(MPC_ERROR, CTC_DBF_ERROR,
 					"%s(%s): Dropping packet with "
 					"illegal siize %d",
@@ -1111,31 +1112,31 @@ static void ctcmpc_unpack_skb(struct channel *ch, struct sk_buff *pskb)
 
 				priv->stats.rx_dropped++;
 				priv->stats.rx_length_errors++;
-					goto done;
-			}
+					जाओ करोne;
+			पूर्ण
 			skb_reset_mac_header(pskb);
 			new_len = curr_pdu->pdu_offset;
 			CTCM_PR_DBGDATA("%s: new_len: %04x \n",
 						__func__, new_len);
-			if ((new_len == 0) || (new_len > pskb->len)) {
+			अगर ((new_len == 0) || (new_len > pskb->len)) अणु
 				/* should never happen		    */
 				/* pskb len must be hosed...bail out */
 				CTCM_DBF_TEXT_(MPC_ERROR, CTC_DBF_ERROR,
 					"%s(%s): non valid pdu_offset: %04x",
 					/* "data may be lost", */
 					CTCM_FUNTAIL, dev->name, new_len);
-				goto done;
-			}
+				जाओ करोne;
+			पूर्ण
 			skb = __dev_alloc_skb(new_len+4, GFP_ATOMIC);
 
-			if (!skb) {
+			अगर (!skb) अणु
 				CTCM_DBF_TEXT_(MPC_ERROR, CTC_DBF_ERROR,
 					"%s(%s): MEMORY allocation error",
 						CTCM_FUNTAIL, dev->name);
 				priv->stats.rx_dropped++;
 				fsm_event(grp->fsm, MPCG_EVENT_INOP, dev);
-						goto done;
-			}
+						जाओ करोne;
+			पूर्ण
 			skb_put_data(skb, pskb->data, new_len);
 
 			skb_reset_mac_header(skb);
@@ -1145,27 +1146,27 @@ static void ctcmpc_unpack_skb(struct channel *ch, struct sk_buff *pskb)
 			*((__u32 *) skb_push(skb, 4)) = ch->pdu_seq;
 			ch->pdu_seq++;
 
-			if (do_debug_data) {
+			अगर (करो_debug_data) अणु
 				ctcm_pr_debug("%s: ToDCM_pdu_seq= %08x\n",
 						__func__, ch->pdu_seq);
 				ctcm_pr_debug("%s: skb:%0lx "
 					"skb len: %d \n", __func__,
-					(unsigned long)skb, skb->len);
+					(अचिन्हित दीर्घ)skb, skb->len);
 				ctcm_pr_debug("%s: up to 32 bytes "
 					"of pdu_data sent\n", __func__);
-				ctcmpc_dump32((char *)skb->data, skb->len);
-			}
+				ctcmpc_dump32((अक्षर *)skb->data, skb->len);
+			पूर्ण
 
 			skblen = skb->len;
-			sendrc = netif_rx(skb);
+			sendrc = netअगर_rx(skb);
 			priv->stats.rx_packets++;
 			priv->stats.rx_bytes += skblen;
-			skb_pull(pskb, new_len); /* point to next PDU */
-		}
-	} else {
-		mpcginfo = kmalloc(sizeof(struct mpcg_info), GFP_ATOMIC);
-		if (mpcginfo == NULL)
-					goto done;
+			skb_pull(pskb, new_len); /* poपूर्णांक to next PDU */
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		mpcginfo = kदो_स्मृति(माप(काष्ठा mpcg_info), GFP_ATOMIC);
+		अगर (mpcginfo == शून्य)
+					जाओ करोne;
 
 		mpcginfo->ch = ch;
 		mpcginfo->th = header;
@@ -1173,143 +1174,143 @@ static void ctcmpc_unpack_skb(struct channel *ch, struct sk_buff *pskb)
 		CTCM_PR_DEBUG("%s: Not PDU - may be control pkt\n",
 					__func__);
 		/*  it's a sweep?   */
-		sweep = (struct th_sweep *)pskb->data;
+		sweep = (काष्ठा th_sweep *)pskb->data;
 		mpcginfo->sweep = sweep;
-		if (header->th_ch_flag == TH_SWEEP_REQ)
+		अगर (header->th_ch_flag == TH_SWEEP_REQ)
 			mpc_rcvd_sweep_req(mpcginfo);
-		else if (header->th_ch_flag == TH_SWEEP_RESP)
+		अन्यथा अगर (header->th_ch_flag == TH_SWEEP_RESP)
 			mpc_rcvd_sweep_resp(mpcginfo);
-		else if (header->th_blk_flag == TH_DATA_IS_XID) {
-			struct xid2 *thisxid = (struct xid2 *)pskb->data;
+		अन्यथा अगर (header->th_blk_flag == TH_DATA_IS_XID) अणु
+			काष्ठा xid2 *thisxid = (काष्ठा xid2 *)pskb->data;
 			skb_pull(pskb, XID2_LENGTH);
 			mpcginfo->xid = thisxid;
 			fsm_event(grp->fsm, MPCG_EVENT_XID2, mpcginfo);
-		} else if (header->th_blk_flag == TH_DISCONTACT)
+		पूर्ण अन्यथा अगर (header->th_blk_flag == TH_DISCONTACT)
 			fsm_event(grp->fsm, MPCG_EVENT_DISCONC, mpcginfo);
-		else if (header->th_seq_num != 0) {
+		अन्यथा अगर (header->th_seq_num != 0) अणु
 			CTCM_DBF_TEXT_(MPC_ERROR, CTC_DBF_ERROR,
 				"%s(%s): control pkt expected\n",
 						CTCM_FUNTAIL, dev->name);
 			priv->stats.rx_dropped++;
-			/* mpcginfo only used for non-data transfers */
-			kfree(mpcginfo);
-			if (do_debug_data)
+			/* mpcginfo only used क्रम non-data transfers */
+			kमुक्त(mpcginfo);
+			अगर (करो_debug_data)
 				ctcmpc_dump_skb(pskb, -8);
-		}
-	}
-done:
+		पूर्ण
+	पूर्ण
+करोne:
 
-	dev_kfree_skb_any(pskb);
-	if (sendrc == NET_RX_DROP) {
+	dev_kमुक्त_skb_any(pskb);
+	अगर (sendrc == NET_RX_DROP) अणु
 		dev_warn(&dev->dev,
 			"The network backlog for %s is exceeded, "
 			"package dropped\n", __func__);
 		fsm_event(grp->fsm, MPCG_EVENT_INOP, dev);
-	}
+	पूर्ण
 
 	CTCM_PR_DEBUG("exit %s: %s: ch=0x%p id=%s\n",
 			__func__, dev->name, ch, ch->id);
-}
+पूर्ण
 
 /**
- * tasklet helper for mpc's skb unpacking.
+ * tasklet helper क्रम mpc's skb unpacking.
  *
  * ch		The channel to work on.
  * Allow flow control back pressure to occur here.
  * Throttling back channel can result in excessive
- * channel inactivity and system deact of channel
+ * channel inactivity and प्रणाली deact of channel
  */
-void ctcmpc_bh(unsigned long thischan)
-{
-	struct channel	  *ch	= (struct channel *)thischan;
-	struct sk_buff	  *skb;
-	struct net_device *dev	= ch->netdev;
-	struct ctcm_priv  *priv	= dev->ml_priv;
-	struct mpc_group  *grp	= priv->mpcg;
+व्योम ctcmpc_bh(अचिन्हित दीर्घ thischan)
+अणु
+	काष्ठा channel	  *ch	= (काष्ठा channel *)thischan;
+	काष्ठा sk_buff	  *skb;
+	काष्ठा net_device *dev	= ch->netdev;
+	काष्ठा ctcm_priv  *priv	= dev->ml_priv;
+	काष्ठा mpc_group  *grp	= priv->mpcg;
 
 	CTCM_PR_DEBUG("%s cp:%i enter:  %s() %s\n",
 	       dev->name, smp_processor_id(), __func__, ch->id);
 	/* caller has requested driver to throttle back */
-	while ((fsm_getstate(grp->fsm) != MPCG_STATE_FLOWC) &&
-			(skb = skb_dequeue(&ch->io_queue))) {
+	जबतक ((fsm_माला_लोtate(grp->fsm) != MPCG_STATE_FLOWC) &&
+			(skb = skb_dequeue(&ch->io_queue))) अणु
 		ctcmpc_unpack_skb(ch, skb);
-		if (grp->out_of_sequence > 20) {
-			/* assume data loss has occurred if */
-			/* missing seq_num for extended     */
-			/* period of time		    */
+		अगर (grp->out_of_sequence > 20) अणु
+			/* assume data loss has occurred अगर */
+			/* missing seq_num क्रम extended     */
+			/* period of समय		    */
 			grp->out_of_sequence = 0;
 			fsm_event(grp->fsm, MPCG_EVENT_INOP, dev);
-			break;
-		}
-		if (skb == skb_peek(&ch->io_queue))
-			break;
-	}
+			अवरोध;
+		पूर्ण
+		अगर (skb == skb_peek(&ch->io_queue))
+			अवरोध;
+	पूर्ण
 	CTCM_PR_DEBUG("exit %s: %s: ch=0x%p id=%s\n",
 			__func__, dev->name, ch, ch->id);
-	return;
-}
+	वापस;
+पूर्ण
 
 /*
  *  MPC Group Initializations
  */
-struct mpc_group *ctcmpc_init_mpc_group(struct ctcm_priv *priv)
-{
-	struct mpc_group *grp;
+काष्ठा mpc_group *ctcmpc_init_mpc_group(काष्ठा ctcm_priv *priv)
+अणु
+	काष्ठा mpc_group *grp;
 
 	CTCM_DBF_TEXT_(MPC_SETUP, CTC_DBF_INFO,
 			"Enter %s(%p)", CTCM_FUNTAIL, priv);
 
-	grp = kzalloc(sizeof(struct mpc_group), GFP_KERNEL);
-	if (grp == NULL)
-		return NULL;
+	grp = kzalloc(माप(काष्ठा mpc_group), GFP_KERNEL);
+	अगर (grp == शून्य)
+		वापस शून्य;
 
 	grp->fsm = init_fsm("mpcg", mpcg_state_names, mpcg_event_names,
 			MPCG_NR_STATES, MPCG_NR_EVENTS, mpcg_fsm,
 			mpcg_fsm_len, GFP_KERNEL);
-	if (grp->fsm == NULL) {
-		kfree(grp);
-		return NULL;
-	}
+	अगर (grp->fsm == शून्य) अणु
+		kमुक्त(grp);
+		वापस शून्य;
+	पूर्ण
 
 	fsm_newstate(grp->fsm, MPCG_STATE_RESET);
-	fsm_settimer(grp->fsm, &grp->timer);
+	fsm_समय_रखोr(grp->fsm, &grp->समयr);
 
 	grp->xid_skb =
-		 __dev_alloc_skb(MPC_BUFSIZE_DEFAULT, GFP_ATOMIC | GFP_DMA);
-	if (grp->xid_skb == NULL) {
-		kfree_fsm(grp->fsm);
-		kfree(grp);
-		return NULL;
-	}
-	/*  base xid for all channels in group  */
+		 __dev_alloc_skb(MPC_बफ_मानE_DEFAULT, GFP_ATOMIC | GFP_DMA);
+	अगर (grp->xid_skb == शून्य) अणु
+		kमुक्त_fsm(grp->fsm);
+		kमुक्त(grp);
+		वापस शून्य;
+	पूर्ण
+	/*  base xid क्रम all channels in group  */
 	grp->xid_skb_data = grp->xid_skb->data;
-	grp->xid_th = (struct th_header *)grp->xid_skb->data;
+	grp->xid_th = (काष्ठा th_header *)grp->xid_skb->data;
 	skb_put_data(grp->xid_skb, &thnorm, TH_HEADER_LENGTH);
 
-	grp->xid = (struct xid2 *)skb_tail_pointer(grp->xid_skb);
+	grp->xid = (काष्ठा xid2 *)skb_tail_poपूर्णांकer(grp->xid_skb);
 	skb_put_data(grp->xid_skb, &init_xid, XID2_LENGTH);
-	grp->xid->xid2_adj_id = jiffies | 0xfff00000;
-	grp->xid->xid2_sender_id = jiffies;
+	grp->xid->xid2_adj_id = jअगरfies | 0xfff00000;
+	grp->xid->xid2_sender_id = jअगरfies;
 
-	grp->xid_id = skb_tail_pointer(grp->xid_skb);
+	grp->xid_id = skb_tail_poपूर्णांकer(grp->xid_skb);
 	skb_put_data(grp->xid_skb, "VTAM", 4);
 
 	grp->rcvd_xid_skb =
-		__dev_alloc_skb(MPC_BUFSIZE_DEFAULT, GFP_ATOMIC|GFP_DMA);
-	if (grp->rcvd_xid_skb == NULL) {
-		kfree_fsm(grp->fsm);
-		dev_kfree_skb(grp->xid_skb);
-		kfree(grp);
-		return NULL;
-	}
+		__dev_alloc_skb(MPC_बफ_मानE_DEFAULT, GFP_ATOMIC|GFP_DMA);
+	अगर (grp->rcvd_xid_skb == शून्य) अणु
+		kमुक्त_fsm(grp->fsm);
+		dev_kमुक्त_skb(grp->xid_skb);
+		kमुक्त(grp);
+		वापस शून्य;
+	पूर्ण
 	grp->rcvd_xid_data = grp->rcvd_xid_skb->data;
-	grp->rcvd_xid_th = (struct th_header *)grp->rcvd_xid_skb->data;
+	grp->rcvd_xid_th = (काष्ठा th_header *)grp->rcvd_xid_skb->data;
 	skb_put_data(grp->rcvd_xid_skb, &thnorm, TH_HEADER_LENGTH);
-	grp->saved_xid2 = NULL;
+	grp->saved_xid2 = शून्य;
 	priv->xid = grp->xid;
 	priv->mpcg = grp;
-	return grp;
-}
+	वापस grp;
+पूर्ण
 
 /*
  * The MPC Group Station FSM
@@ -1321,203 +1322,203 @@ struct mpc_group *ctcmpc_init_mpc_group(struct ctcm_priv *priv)
  */
 
 /**
- * NOP action for statemachines
+ * NOP action क्रम statemachines
  */
-static void mpc_action_nop(fsm_instance *fi, int event, void *arg)
-{
-}
+अटल व्योम mpc_action_nop(fsm_instance *fi, पूर्णांक event, व्योम *arg)
+अणु
+पूर्ण
 
 /*
  * invoked when the device transitions to dev_stopped
- * MPC will stop each individual channel if a single XID failure
- * occurs, or will intitiate all channels be stopped if a GROUP
+ * MPC will stop each inभागidual channel अगर a single XID failure
+ * occurs, or will पूर्णांकitiate all channels be stopped अगर a GROUP
  * level failure occurs.
  */
-static void mpc_action_go_inop(fsm_instance *fi, int event, void *arg)
-{
-	struct net_device  *dev = arg;
-	struct ctcm_priv    *priv;
-	struct mpc_group *grp;
-	struct channel *wch;
+अटल व्योम mpc_action_go_inop(fsm_instance *fi, पूर्णांक event, व्योम *arg)
+अणु
+	काष्ठा net_device  *dev = arg;
+	काष्ठा ctcm_priv    *priv;
+	काष्ठा mpc_group *grp;
+	काष्ठा channel *wch;
 
 	CTCM_PR_DEBUG("Enter %s: %s\n",	__func__, dev->name);
 
 	priv  = dev->ml_priv;
 	grp =  priv->mpcg;
 	grp->flow_off_called = 0;
-	fsm_deltimer(&grp->timer);
-	if (grp->channels_terminating)
-			return;
+	fsm_delसमयr(&grp->समयr);
+	अगर (grp->channels_terminating)
+			वापस;
 
 	grp->channels_terminating = 1;
-	grp->saved_state = fsm_getstate(grp->fsm);
+	grp->saved_state = fsm_माला_लोtate(grp->fsm);
 	fsm_newstate(grp->fsm, MPCG_STATE_INOP);
-	if (grp->saved_state > MPCG_STATE_XID7INITF)
+	अगर (grp->saved_state > MPCG_STATE_XID7INITF)
 		CTCM_DBF_TEXT_(MPC_TRACE, CTC_DBF_NOTICE,
 			"%s(%s): MPC GROUP INOPERATIVE",
 				CTCM_FUNTAIL, dev->name);
-	if ((grp->saved_state != MPCG_STATE_RESET) ||
+	अगर ((grp->saved_state != MPCG_STATE_RESET) ||
 		/* dealloc_channel has been called */
 		(grp->port_persist == 0))
-		fsm_deltimer(&priv->restart_timer);
+		fsm_delसमयr(&priv->restart_समयr);
 
 	wch = priv->channel[CTCM_WRITE];
 
-	switch (grp->saved_state) {
-	case MPCG_STATE_RESET:
-	case MPCG_STATE_INOP:
-	case MPCG_STATE_XID2INITW:
-	case MPCG_STATE_XID0IOWAIT:
-	case MPCG_STATE_XID2INITX:
-	case MPCG_STATE_XID7INITW:
-	case MPCG_STATE_XID7INITX:
-	case MPCG_STATE_XID0IOWAIX:
-	case MPCG_STATE_XID7INITI:
-	case MPCG_STATE_XID7INITZ:
-	case MPCG_STATE_XID7INITF:
-		break;
-	case MPCG_STATE_FLOWC:
-	case MPCG_STATE_READY:
-	default:
+	चयन (grp->saved_state) अणु
+	हाल MPCG_STATE_RESET:
+	हाल MPCG_STATE_INOP:
+	हाल MPCG_STATE_XID2INITW:
+	हाल MPCG_STATE_XID0IOWAIT:
+	हाल MPCG_STATE_XID2INITX:
+	हाल MPCG_STATE_XID7INITW:
+	हाल MPCG_STATE_XID7INITX:
+	हाल MPCG_STATE_XID0IOWAIX:
+	हाल MPCG_STATE_XID7INITI:
+	हाल MPCG_STATE_XID7INITZ:
+	हाल MPCG_STATE_XID7INITF:
+		अवरोध;
+	हाल MPCG_STATE_FLOWC:
+	हाल MPCG_STATE_READY:
+	शेष:
 		tasklet_hi_schedule(&wch->ch_disc_tasklet);
-	}
+	पूर्ण
 
 	grp->xid2_tgnum = 0;
 	grp->group_max_buflen = 0;  /*min of all received */
 	grp->outstanding_xid2 = 0;
 	grp->outstanding_xid7 = 0;
 	grp->outstanding_xid7_p2 = 0;
-	grp->saved_xid2 = NULL;
+	grp->saved_xid2 = शून्य;
 	grp->xidnogood = 0;
 	grp->changed_side = 0;
 
 	grp->rcvd_xid_skb->data = grp->rcvd_xid_data;
-	skb_reset_tail_pointer(grp->rcvd_xid_skb);
+	skb_reset_tail_poपूर्णांकer(grp->rcvd_xid_skb);
 	grp->rcvd_xid_skb->len = 0;
-	grp->rcvd_xid_th = (struct th_header *)grp->rcvd_xid_skb->data;
+	grp->rcvd_xid_th = (काष्ठा th_header *)grp->rcvd_xid_skb->data;
 	skb_put_data(grp->rcvd_xid_skb, &thnorm, TH_HEADER_LENGTH);
 
-	if (grp->send_qllc_disc == 1) {
+	अगर (grp->send_qllc_disc == 1) अणु
 		grp->send_qllc_disc = 0;
 		mpc_send_qllc_discontact(dev);
-	}
+	पूर्ण
 
 	/* DO NOT issue DEV_EVENT_STOP directly out of this code */
 	/* This can result in INOP of VTAM PU due to halting of  */
-	/* outstanding IO which causes a sense to be returned	 */
+	/* outstanding IO which causes a sense to be वापसed	 */
 	/* Only about 3 senses are allowed and then IOS/VTAM will*/
-	/* become unreachable without manual intervention	 */
-	if ((grp->port_persist == 1) || (grp->alloc_called)) {
+	/* become unreachable without manual पूर्णांकervention	 */
+	अगर ((grp->port_persist == 1) || (grp->alloc_called)) अणु
 		grp->alloc_called = 0;
-		fsm_deltimer(&priv->restart_timer);
-		fsm_addtimer(&priv->restart_timer, 500, DEV_EVENT_RESTART, dev);
+		fsm_delसमयr(&priv->restart_समयr);
+		fsm_addसमयr(&priv->restart_समयr, 500, DEV_EVENT_RESTART, dev);
 		fsm_newstate(grp->fsm, MPCG_STATE_RESET);
-		if (grp->saved_state > MPCG_STATE_XID7INITF)
+		अगर (grp->saved_state > MPCG_STATE_XID7INITF)
 			CTCM_DBF_TEXT_(MPC_TRACE, CTC_DBF_ALWAYS,
 				"%s(%s): MPC GROUP RECOVERY SCHEDULED",
 					CTCM_FUNTAIL, dev->name);
-	} else {
-		fsm_deltimer(&priv->restart_timer);
-		fsm_addtimer(&priv->restart_timer, 500, DEV_EVENT_STOP, dev);
+	पूर्ण अन्यथा अणु
+		fsm_delसमयr(&priv->restart_समयr);
+		fsm_addसमयr(&priv->restart_समयr, 500, DEV_EVENT_STOP, dev);
 		fsm_newstate(grp->fsm, MPCG_STATE_RESET);
 		CTCM_DBF_TEXT_(MPC_TRACE, CTC_DBF_ALWAYS,
 			"%s(%s): NO MPC GROUP RECOVERY ATTEMPTED",
 						CTCM_FUNTAIL, dev->name);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
- * Handle mpc group  action timeout.
+ * Handle mpc group  action समयout.
  * MPC Group Station FSM action
  * CTCM_PROTO_MPC only
  *
  * fi		An instance of an mpc_group fsm.
  * event	The event, just happened.
- * arg		Generic pointer, casted from net_device * upon call.
+ * arg		Generic poपूर्णांकer, casted from net_device * upon call.
  */
-static void mpc_action_timeout(fsm_instance *fi, int event, void *arg)
-{
-	struct net_device *dev = arg;
-	struct ctcm_priv *priv;
-	struct mpc_group *grp;
-	struct channel *wch;
-	struct channel *rch;
+अटल व्योम mpc_action_समयout(fsm_instance *fi, पूर्णांक event, व्योम *arg)
+अणु
+	काष्ठा net_device *dev = arg;
+	काष्ठा ctcm_priv *priv;
+	काष्ठा mpc_group *grp;
+	काष्ठा channel *wch;
+	काष्ठा channel *rch;
 
 	priv = dev->ml_priv;
 	grp = priv->mpcg;
 	wch = priv->channel[CTCM_WRITE];
 	rch = priv->channel[CTCM_READ];
 
-	switch (fsm_getstate(grp->fsm)) {
-	case MPCG_STATE_XID2INITW:
+	चयन (fsm_माला_लोtate(grp->fsm)) अणु
+	हाल MPCG_STATE_XID2INITW:
 		/* Unless there is outstanding IO on the  */
-		/* channel just return and wait for ATTN  */
-		/* interrupt to begin XID negotiations	  */
-		if ((fsm_getstate(rch->fsm) == CH_XID0_PENDING) &&
-		   (fsm_getstate(wch->fsm) == CH_XID0_PENDING))
-			break;
+		/* channel just वापस and रुको क्रम ATTN  */
+		/* पूर्णांकerrupt to begin XID negotiations	  */
+		अगर ((fsm_माला_लोtate(rch->fsm) == CH_XID0_PENDING) &&
+		   (fsm_माला_लोtate(wch->fsm) == CH_XID0_PENDING))
+			अवरोध;
 		fallthrough;
-	default:
+	शेष:
 		fsm_event(grp->fsm, MPCG_EVENT_INOP, dev);
-	}
+	पूर्ण
 
 	CTCM_DBF_TEXT_(MPC_TRACE, CTC_DBF_DEBUG,
 			"%s: dev=%s exit",
 			CTCM_FUNTAIL, dev->name);
-	return;
-}
+	वापस;
+पूर्ण
 
 /*
  * MPC Group Station FSM action
  * CTCM_PROTO_MPC only
  */
-void mpc_action_discontact(fsm_instance *fi, int event, void *arg)
-{
-	struct mpcg_info   *mpcginfo   = arg;
-	struct channel	   *ch	       = mpcginfo->ch;
-	struct net_device  *dev;
-	struct ctcm_priv   *priv;
-	struct mpc_group   *grp;
+व्योम mpc_action_discontact(fsm_instance *fi, पूर्णांक event, व्योम *arg)
+अणु
+	काष्ठा mpcg_info   *mpcginfo   = arg;
+	काष्ठा channel	   *ch	       = mpcginfo->ch;
+	काष्ठा net_device  *dev;
+	काष्ठा ctcm_priv   *priv;
+	काष्ठा mpc_group   *grp;
 
-	if (ch) {
+	अगर (ch) अणु
 		dev = ch->netdev;
-		if (dev) {
+		अगर (dev) अणु
 			priv = dev->ml_priv;
-			if (priv) {
+			अगर (priv) अणु
 				CTCM_DBF_TEXT_(MPC_TRACE, CTC_DBF_NOTICE,
 					"%s: %s: %s\n",
 					CTCM_FUNTAIL, dev->name, ch->id);
 				grp = priv->mpcg;
 				grp->send_qllc_disc = 1;
 				fsm_event(grp->fsm, MPCG_EVENT_INOP, dev);
-			}
-		}
-	}
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	return;
-}
+	वापस;
+पूर्ण
 
 /*
  * MPC Group Station - not part of FSM
  * CTCM_PROTO_MPC only
- * called from add_channel in ctcm_main.c
+ * called from add_channel in ctcm_मुख्य.c
  */
-void mpc_action_send_discontact(unsigned long thischan)
-{
-	int rc;
-	struct channel	*ch = (struct channel *)thischan;
-	unsigned long	saveflags = 0;
+व्योम mpc_action_send_discontact(अचिन्हित दीर्घ thischan)
+अणु
+	पूर्णांक rc;
+	काष्ठा channel	*ch = (काष्ठा channel *)thischan;
+	अचिन्हित दीर्घ	saveflags = 0;
 
 	spin_lock_irqsave(get_ccwdev_lock(ch->cdev), saveflags);
 	rc = ccw_device_start(ch->cdev, &ch->ccw[15], 0, 0xff, 0);
 	spin_unlock_irqrestore(get_ccwdev_lock(ch->cdev), saveflags);
 
-	if (rc != 0) {
-		ctcm_ccw_check_rc(ch, rc, (char *)__func__);
-	}
+	अगर (rc != 0) अणु
+		ctcm_ccw_check_rc(ch, rc, (अक्षर *)__func__);
+	पूर्ण
 
-	return;
-}
+	वापस;
+पूर्ण
 
 
 /*
@@ -1525,62 +1526,62 @@ void mpc_action_send_discontact(unsigned long thischan)
  * CTCM_PROTO_MPC only
  * mpc_action_rcvd_xid7
 */
-static int mpc_validate_xid(struct mpcg_info *mpcginfo)
-{
-	struct channel	   *ch	 = mpcginfo->ch;
-	struct net_device  *dev  = ch->netdev;
-	struct ctcm_priv   *priv = dev->ml_priv;
-	struct mpc_group   *grp  = priv->mpcg;
-	struct xid2	   *xid  = mpcginfo->xid;
-	int	rc	 = 0;
+अटल पूर्णांक mpc_validate_xid(काष्ठा mpcg_info *mpcginfo)
+अणु
+	काष्ठा channel	   *ch	 = mpcginfo->ch;
+	काष्ठा net_device  *dev  = ch->netdev;
+	काष्ठा ctcm_priv   *priv = dev->ml_priv;
+	काष्ठा mpc_group   *grp  = priv->mpcg;
+	काष्ठा xid2	   *xid  = mpcginfo->xid;
+	पूर्णांक	rc	 = 0;
 	__u64	our_id   = 0;
 	__u64   their_id = 0;
-	int	len = TH_HEADER_LENGTH + PDU_HEADER_LENGTH;
+	पूर्णांक	len = TH_HEADER_LENGTH + PDU_HEADER_LENGTH;
 
 	CTCM_PR_DEBUG("Enter %s: xid=%p\n", __func__, xid);
 
-	if (xid == NULL) {
+	अगर (xid == शून्य) अणु
 		rc = 1;
-		/* XID REJECTED: xid == NULL */
+		/* XID REJECTED: xid == शून्य */
 		CTCM_DBF_TEXT_(MPC_ERROR, CTC_DBF_ERROR,
 			"%s(%s): xid = NULL",
 				CTCM_FUNTAIL, ch->id);
-			goto done;
-	}
+			जाओ करोne;
+	पूर्ण
 
-	CTCM_D3_DUMP((char *)xid, XID2_LENGTH);
+	CTCM_D3_DUMP((अक्षर *)xid, XID2_LENGTH);
 
 	/*the received direction should be the opposite of ours  */
-	if (((CHANNEL_DIRECTION(ch->flags) == CTCM_READ) ? XID2_WRITE_SIDE :
-				XID2_READ_SIDE) != xid->xid2_dlc_type) {
+	अगर (((CHANNEL_सूचीECTION(ch->flags) == CTCM_READ) ? XID2_WRITE_SIDE :
+				XID2_READ_SIDE) != xid->xid2_dlc_type) अणु
 		rc = 2;
 		/* XID REJECTED: r/w channel pairing mismatch */
 		CTCM_DBF_TEXT_(MPC_ERROR, CTC_DBF_ERROR,
 			"%s(%s): r/w channel pairing mismatch",
 				CTCM_FUNTAIL, ch->id);
-			goto done;
-	}
+			जाओ करोne;
+	पूर्ण
 
-	if (xid->xid2_dlc_type == XID2_READ_SIDE) {
+	अगर (xid->xid2_dlc_type == XID2_READ_SIDE) अणु
 		CTCM_PR_DEBUG("%s: grpmaxbuf:%d xid2buflen:%d\n", __func__,
 				grp->group_max_buflen, xid->xid2_buf_len);
 
-		if (grp->group_max_buflen == 0 || grp->group_max_buflen >
+		अगर (grp->group_max_buflen == 0 || grp->group_max_buflen >
 						xid->xid2_buf_len - len)
 			grp->group_max_buflen = xid->xid2_buf_len - len;
-	}
+	पूर्ण
 
-	if (grp->saved_xid2 == NULL) {
+	अगर (grp->saved_xid2 == शून्य) अणु
 		grp->saved_xid2 =
-			(struct xid2 *)skb_tail_pointer(grp->rcvd_xid_skb);
+			(काष्ठा xid2 *)skb_tail_poपूर्णांकer(grp->rcvd_xid_skb);
 
 		skb_put_data(grp->rcvd_xid_skb, xid, XID2_LENGTH);
 		grp->rcvd_xid_skb->data = grp->rcvd_xid_data;
 
-		skb_reset_tail_pointer(grp->rcvd_xid_skb);
+		skb_reset_tail_poपूर्णांकer(grp->rcvd_xid_skb);
 		grp->rcvd_xid_skb->len = 0;
 
-		/* convert two 32 bit numbers into 1 64 bit for id compare */
+		/* convert two 32 bit numbers पूर्णांकo 1 64 bit क्रम id compare */
 		our_id = (__u64)priv->xid->xid2_adj_id;
 		our_id = our_id << 32;
 		our_id = our_id + priv->xid->xid2_sender_id;
@@ -1588,106 +1589,106 @@ static int mpc_validate_xid(struct mpcg_info *mpcginfo)
 		their_id = their_id << 32;
 		their_id = their_id + xid->xid2_sender_id;
 		/* lower id assume the xside role */
-		if (our_id < their_id) {
+		अगर (our_id < their_id) अणु
 			grp->roll = XSIDE;
 			CTCM_DBF_TEXT_(MPC_TRACE, CTC_DBF_NOTICE,
 				"%s(%s): WE HAVE LOW ID - TAKE XSIDE",
 					CTCM_FUNTAIL, ch->id);
-		} else {
+		पूर्ण अन्यथा अणु
 			grp->roll = YSIDE;
 			CTCM_DBF_TEXT_(MPC_TRACE, CTC_DBF_NOTICE,
 				"%s(%s): WE HAVE HIGH ID - TAKE YSIDE",
 					CTCM_FUNTAIL, ch->id);
-		}
+		पूर्ण
 
-	} else {
-		if (xid->xid2_flag4 != grp->saved_xid2->xid2_flag4) {
+	पूर्ण अन्यथा अणु
+		अगर (xid->xid2_flag4 != grp->saved_xid2->xid2_flag4) अणु
 			rc = 3;
 			/* XID REJECTED: xid flag byte4 mismatch */
 			CTCM_DBF_TEXT_(MPC_ERROR, CTC_DBF_ERROR,
 				"%s(%s): xid flag byte4 mismatch",
 					CTCM_FUNTAIL, ch->id);
-		}
-		if (xid->xid2_flag2 == 0x40) {
+		पूर्ण
+		अगर (xid->xid2_flag2 == 0x40) अणु
 			rc = 4;
 			/* XID REJECTED - xid NOGOOD */
 			CTCM_DBF_TEXT_(MPC_ERROR, CTC_DBF_ERROR,
 				"%s(%s): xid NOGOOD",
 					CTCM_FUNTAIL, ch->id);
-		}
-		if (xid->xid2_adj_id != grp->saved_xid2->xid2_adj_id) {
+		पूर्ण
+		अगर (xid->xid2_adj_id != grp->saved_xid2->xid2_adj_id) अणु
 			rc = 5;
 			/* XID REJECTED - Adjacent Station ID Mismatch */
 			CTCM_DBF_TEXT_(MPC_ERROR, CTC_DBF_ERROR,
 				"%s(%s): Adjacent Station ID Mismatch",
 					CTCM_FUNTAIL, ch->id);
-		}
-		if (xid->xid2_sender_id != grp->saved_xid2->xid2_sender_id) {
+		पूर्ण
+		अगर (xid->xid2_sender_id != grp->saved_xid2->xid2_sender_id) अणु
 			rc = 6;
 			/* XID REJECTED - Sender Address Mismatch */
 			CTCM_DBF_TEXT_(MPC_ERROR, CTC_DBF_ERROR,
 				"%s(%s): Sender Address Mismatch",
 					CTCM_FUNTAIL, ch->id);
-		}
-	}
-done:
-	if (rc) {
+		पूर्ण
+	पूर्ण
+करोne:
+	अगर (rc) अणु
 		dev_warn(&dev->dev,
 			"The XID used in the MPC protocol is not valid, "
 			"rc = %d\n", rc);
 		priv->xid->xid2_flag2 = 0x40;
 		grp->saved_xid2->xid2_flag2 = 0x40;
-	}
+	पूर्ण
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
 /*
  * MPC Group Station FSM action
  * CTCM_PROTO_MPC only
  */
-static void mpc_action_side_xid(fsm_instance *fsm, void *arg, int side)
-{
-	struct channel *ch = arg;
-	int rc = 0;
-	int gotlock = 0;
-	unsigned long saveflags = 0;	/* avoids compiler warning with
+अटल व्योम mpc_action_side_xid(fsm_instance *fsm, व्योम *arg, पूर्णांक side)
+अणु
+	काष्ठा channel *ch = arg;
+	पूर्णांक rc = 0;
+	पूर्णांक gotlock = 0;
+	अचिन्हित दीर्घ saveflags = 0;	/* aव्योमs compiler warning with
 					   spin_unlock_irqrestore */
 
 	CTCM_PR_DEBUG("Enter %s: cp=%i ch=0x%p id=%s\n",
 			__func__, smp_processor_id(), ch, ch->id);
 
-	if (ctcm_checkalloc_buffer(ch))
-					goto done;
+	अगर (ctcm_checkalloc_buffer(ch))
+					जाओ करोne;
 
 	/*
 	 * skb data-buffer referencing:
 	 */
 	ch->trans_skb->data = ch->trans_skb_data;
-	skb_reset_tail_pointer(ch->trans_skb);
+	skb_reset_tail_poपूर्णांकer(ch->trans_skb);
 	ch->trans_skb->len = 0;
 	/* result of the previous 3 statements is NOT always
-	 * already set after ctcm_checkalloc_buffer
+	 * alपढ़ोy set after ctcm_checkalloc_buffer
 	 * because of possible reuse of the trans_skb
 	 */
-	memset(ch->trans_skb->data, 0, 16);
-	ch->rcvd_xid_th =  (struct th_header *)ch->trans_skb_data;
-	/* check is main purpose here: */
+	स_रखो(ch->trans_skb->data, 0, 16);
+	ch->rcvd_xid_th =  (काष्ठा th_header *)ch->trans_skb_data;
+	/* check is मुख्य purpose here: */
 	skb_put(ch->trans_skb, TH_HEADER_LENGTH);
-	ch->rcvd_xid = (struct xid2 *)skb_tail_pointer(ch->trans_skb);
-	/* check is main purpose here: */
+	ch->rcvd_xid = (काष्ठा xid2 *)skb_tail_poपूर्णांकer(ch->trans_skb);
+	/* check is मुख्य purpose here: */
 	skb_put(ch->trans_skb, XID2_LENGTH);
-	ch->rcvd_xid_id = skb_tail_pointer(ch->trans_skb);
-	/* cleanup back to startpoint */
+	ch->rcvd_xid_id = skb_tail_poपूर्णांकer(ch->trans_skb);
+	/* cleanup back to startpoपूर्णांक */
 	ch->trans_skb->data = ch->trans_skb_data;
-	skb_reset_tail_pointer(ch->trans_skb);
+	skb_reset_tail_poपूर्णांकer(ch->trans_skb);
 	ch->trans_skb->len = 0;
 
-	/* non-checking rewrite of above skb data-buffer referencing: */
+	/* non-checking reग_लिखो of above skb data-buffer referencing: */
 	/*
-	memset(ch->trans_skb->data, 0, 16);
-	ch->rcvd_xid_th =  (struct th_header *)ch->trans_skb_data;
-	ch->rcvd_xid = (struct xid2 *)(ch->trans_skb_data + TH_HEADER_LENGTH);
+	स_रखो(ch->trans_skb->data, 0, 16);
+	ch->rcvd_xid_th =  (काष्ठा th_header *)ch->trans_skb_data;
+	ch->rcvd_xid = (काष्ठा xid2 *)(ch->trans_skb_data + TH_HEADER_LENGTH);
 	ch->rcvd_xid_id = ch->trans_skb_data + TH_HEADER_LENGTH + XID2_LENGTH;
 	 */
 
@@ -1695,22 +1696,22 @@ static void mpc_action_side_xid(fsm_instance *fsm, void *arg, int side)
 	ch->ccw[8].count	= 0;
 	ch->ccw[8].cda		= 0x00;
 
-	if (!(ch->xid_th && ch->xid && ch->xid_id))
+	अगर (!(ch->xid_th && ch->xid && ch->xid_id))
 		CTCM_DBF_TEXT_(MPC_TRACE, CTC_DBF_INFO,
 			"%s(%s): xid_th=%p, xid=%p, xid_id=%p",
 			CTCM_FUNTAIL, ch->id, ch->xid_th, ch->xid, ch->xid_id);
 
-	if (side == XSIDE) {
+	अगर (side == XSIDE) अणु
 		/* mpc_action_xside_xid */
-		if (ch->xid_th == NULL)
-				goto done;
+		अगर (ch->xid_th == शून्य)
+				जाओ करोne;
 		ch->ccw[9].cmd_code	= CCW_CMD_WRITE;
 		ch->ccw[9].flags	= CCW_FLAG_SLI | CCW_FLAG_CC;
 		ch->ccw[9].count	= TH_HEADER_LENGTH;
 		ch->ccw[9].cda		= virt_to_phys(ch->xid_th);
 
-		if (ch->xid == NULL)
-				goto done;
+		अगर (ch->xid == शून्य)
+				जाओ करोne;
 		ch->ccw[10].cmd_code	= CCW_CMD_WRITE;
 		ch->ccw[10].flags	= CCW_FLAG_SLI | CCW_FLAG_CC;
 		ch->ccw[10].count	= XID2_LENGTH;
@@ -1729,7 +1730,7 @@ static void mpc_action_side_xid(fsm_instance *fsm, void *arg, int side)
 		ch->ccw[13].cmd_code	= CCW_CMD_READ;
 		ch->ccw[13].cda		= virt_to_phys(ch->rcvd_xid_id);
 
-	} else { /* side == YSIDE : mpc_action_yside_xid */
+	पूर्ण अन्यथा अणु /* side == YSIDE : mpc_action_yside_xid */
 		ch->ccw[9].cmd_code	= CCW_CMD_READ;
 		ch->ccw[9].flags	= CCW_FLAG_SLI | CCW_FLAG_CC;
 		ch->ccw[9].count	= TH_HEADER_LENGTH;
@@ -1740,26 +1741,26 @@ static void mpc_action_side_xid(fsm_instance *fsm, void *arg, int side)
 		ch->ccw[10].count	= XID2_LENGTH;
 		ch->ccw[10].cda		= virt_to_phys(ch->rcvd_xid);
 
-		if (ch->xid_th == NULL)
-				goto done;
+		अगर (ch->xid_th == शून्य)
+				जाओ करोne;
 		ch->ccw[11].cmd_code	= CCW_CMD_WRITE;
 		ch->ccw[11].flags	= CCW_FLAG_SLI | CCW_FLAG_CC;
 		ch->ccw[11].count	= TH_HEADER_LENGTH;
 		ch->ccw[11].cda		= virt_to_phys(ch->xid_th);
 
-		if (ch->xid == NULL)
-				goto done;
+		अगर (ch->xid == शून्य)
+				जाओ करोne;
 		ch->ccw[12].cmd_code	= CCW_CMD_WRITE;
 		ch->ccw[12].flags	= CCW_FLAG_SLI | CCW_FLAG_CC;
 		ch->ccw[12].count	= XID2_LENGTH;
 		ch->ccw[12].cda		= virt_to_phys(ch->xid);
 
-		if (ch->xid_id == NULL)
-				goto done;
+		अगर (ch->xid_id == शून्य)
+				जाओ करोne;
 		ch->ccw[13].cmd_code	= CCW_CMD_WRITE;
 		ch->ccw[13].cda		= virt_to_phys(ch->xid_id);
 
-	}
+	पूर्ण
 	ch->ccw[13].flags	= CCW_FLAG_SLI | CCW_FLAG_CC;
 	ch->ccw[13].count	= 4;
 
@@ -1768,239 +1769,239 @@ static void mpc_action_side_xid(fsm_instance *fsm, void *arg, int side)
 	ch->ccw[14].count	= 0;
 	ch->ccw[14].cda		= 0;
 
-	CTCM_CCW_DUMP((char *)&ch->ccw[8], sizeof(struct ccw1) * 7);
-	CTCM_D3_DUMP((char *)ch->xid_th, TH_HEADER_LENGTH);
-	CTCM_D3_DUMP((char *)ch->xid, XID2_LENGTH);
-	CTCM_D3_DUMP((char *)ch->xid_id, 4);
+	CTCM_CCW_DUMP((अक्षर *)&ch->ccw[8], माप(काष्ठा ccw1) * 7);
+	CTCM_D3_DUMP((अक्षर *)ch->xid_th, TH_HEADER_LENGTH);
+	CTCM_D3_DUMP((अक्षर *)ch->xid, XID2_LENGTH);
+	CTCM_D3_DUMP((अक्षर *)ch->xid_id, 4);
 
-	if (!in_irq()) {
-			 /* Such conditional locking is a known problem for
-			  * sparse because its static undeterministic.
+	अगर (!in_irq()) अणु
+			 /* Such conditional locking is a known problem क्रम
+			  * sparse because its अटल undeterministic.
 			  * Warnings should be ignored here. */
 		spin_lock_irqsave(get_ccwdev_lock(ch->cdev), saveflags);
 		gotlock = 1;
-	}
+	पूर्ण
 
-	fsm_addtimer(&ch->timer, 5000 , CTC_EVENT_TIMER, ch);
+	fsm_addसमयr(&ch->समयr, 5000 , CTC_EVENT_TIMER, ch);
 	rc = ccw_device_start(ch->cdev, &ch->ccw[8], 0, 0xff, 0);
 
-	if (gotlock)	/* see remark above about conditional locking */
+	अगर (gotlock)	/* see remark above about conditional locking */
 		spin_unlock_irqrestore(get_ccwdev_lock(ch->cdev), saveflags);
 
-	if (rc != 0) {
+	अगर (rc != 0) अणु
 		ctcm_ccw_check_rc(ch, rc,
 				(side == XSIDE) ? "x-side XID" : "y-side XID");
-	}
+	पूर्ण
 
-done:
+करोne:
 	CTCM_PR_DEBUG("Exit %s: ch=0x%p id=%s\n",
 				__func__, ch, ch->id);
-	return;
+	वापस;
 
-}
+पूर्ण
 
 /*
  * MPC Group Station FSM action
  * CTCM_PROTO_MPC only
  */
-static void mpc_action_xside_xid(fsm_instance *fsm, int event, void *arg)
-{
+अटल व्योम mpc_action_xside_xid(fsm_instance *fsm, पूर्णांक event, व्योम *arg)
+अणु
 	mpc_action_side_xid(fsm, arg, XSIDE);
-}
+पूर्ण
 
 /*
  * MPC Group Station FSM action
  * CTCM_PROTO_MPC only
  */
-static void mpc_action_yside_xid(fsm_instance *fsm, int event, void *arg)
-{
+अटल व्योम mpc_action_yside_xid(fsm_instance *fsm, पूर्णांक event, व्योम *arg)
+अणु
 	mpc_action_side_xid(fsm, arg, YSIDE);
-}
+पूर्ण
 
 /*
  * MPC Group Station FSM action
  * CTCM_PROTO_MPC only
  */
-static void mpc_action_doxid0(fsm_instance *fsm, int event, void *arg)
-{
-	struct channel	   *ch   = arg;
-	struct net_device  *dev  = ch->netdev;
-	struct ctcm_priv   *priv = dev->ml_priv;
-	struct mpc_group   *grp  = priv->mpcg;
+अटल व्योम mpc_action_करोxid0(fsm_instance *fsm, पूर्णांक event, व्योम *arg)
+अणु
+	काष्ठा channel	   *ch   = arg;
+	काष्ठा net_device  *dev  = ch->netdev;
+	काष्ठा ctcm_priv   *priv = dev->ml_priv;
+	काष्ठा mpc_group   *grp  = priv->mpcg;
 
 	CTCM_PR_DEBUG("Enter %s: cp=%i ch=0x%p id=%s\n",
 			__func__, smp_processor_id(), ch, ch->id);
 
-	if (ch->xid == NULL) {
+	अगर (ch->xid == शून्य) अणु
 		CTCM_DBF_TEXT_(MPC_ERROR, CTC_DBF_ERROR,
 			"%s(%s): ch->xid == NULL",
 				CTCM_FUNTAIL, dev->name);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	fsm_newstate(ch->fsm, CH_XID0_INPROGRESS);
 
 	ch->xid->xid2_option =	XID2_0;
 
-	switch (fsm_getstate(grp->fsm)) {
-	case MPCG_STATE_XID2INITW:
-	case MPCG_STATE_XID2INITX:
+	चयन (fsm_माला_लोtate(grp->fsm)) अणु
+	हाल MPCG_STATE_XID2INITW:
+	हाल MPCG_STATE_XID2INITX:
 		ch->ccw[8].cmd_code = CCW_CMD_SENSE_CMD;
-		break;
-	case MPCG_STATE_XID0IOWAIT:
-	case MPCG_STATE_XID0IOWAIX:
+		अवरोध;
+	हाल MPCG_STATE_XID0IOWAIT:
+	हाल MPCG_STATE_XID0IOWAIX:
 		ch->ccw[8].cmd_code = CCW_CMD_WRITE_CTL;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	fsm_event(grp->fsm, MPCG_EVENT_DOIO, ch);
 
-	return;
-}
+	वापस;
+पूर्ण
 
 /*
  * MPC Group Station FSM action
  * CTCM_PROTO_MPC only
 */
-static void mpc_action_doxid7(fsm_instance *fsm, int event, void *arg)
-{
-	struct net_device *dev = arg;
-	struct ctcm_priv  *priv = dev->ml_priv;
-	struct mpc_group  *grp  = NULL;
-	int direction;
-	int send = 0;
+अटल व्योम mpc_action_करोxid7(fsm_instance *fsm, पूर्णांक event, व्योम *arg)
+अणु
+	काष्ठा net_device *dev = arg;
+	काष्ठा ctcm_priv  *priv = dev->ml_priv;
+	काष्ठा mpc_group  *grp  = शून्य;
+	पूर्णांक direction;
+	पूर्णांक send = 0;
 
-	if (priv)
+	अगर (priv)
 		grp = priv->mpcg;
-	if (grp == NULL)
-		return;
+	अगर (grp == शून्य)
+		वापस;
 
-	for (direction = CTCM_READ; direction <= CTCM_WRITE; direction++) {
-		struct channel *ch = priv->channel[direction];
-		struct xid2 *thisxid = ch->xid;
+	क्रम (direction = CTCM_READ; direction <= CTCM_WRITE; direction++) अणु
+		काष्ठा channel *ch = priv->channel[direction];
+		काष्ठा xid2 *thisxid = ch->xid;
 		ch->xid_skb->data = ch->xid_skb_data;
-		skb_reset_tail_pointer(ch->xid_skb);
+		skb_reset_tail_poपूर्णांकer(ch->xid_skb);
 		ch->xid_skb->len = 0;
 		thisxid->xid2_option = XID2_7;
 		send = 0;
 
 		/* xid7 phase 1 */
-		if (grp->outstanding_xid7_p2 > 0) {
-			if (grp->roll == YSIDE) {
-				if (fsm_getstate(ch->fsm) == CH_XID7_PENDING1) {
+		अगर (grp->outstanding_xid7_p2 > 0) अणु
+			अगर (grp->roll == YSIDE) अणु
+				अगर (fsm_माला_लोtate(ch->fsm) == CH_XID7_PENDING1) अणु
 					fsm_newstate(ch->fsm, CH_XID7_PENDING2);
 					ch->ccw[8].cmd_code = CCW_CMD_SENSE_CMD;
 					skb_put_data(ch->xid_skb, &thdummy,
 						     TH_HEADER_LENGTH);
 					send = 1;
-				}
-			} else if (fsm_getstate(ch->fsm) < CH_XID7_PENDING2) {
+				पूर्ण
+			पूर्ण अन्यथा अगर (fsm_माला_लोtate(ch->fsm) < CH_XID7_PENDING2) अणु
 					fsm_newstate(ch->fsm, CH_XID7_PENDING2);
 					ch->ccw[8].cmd_code = CCW_CMD_WRITE_CTL;
 					skb_put_data(ch->xid_skb, &thnorm,
 						     TH_HEADER_LENGTH);
 					send = 1;
-			}
-		} else {
+			पूर्ण
+		पूर्ण अन्यथा अणु
 			/* xid7 phase 2 */
-			if (grp->roll == YSIDE) {
-				if (fsm_getstate(ch->fsm) < CH_XID7_PENDING4) {
+			अगर (grp->roll == YSIDE) अणु
+				अगर (fsm_माला_लोtate(ch->fsm) < CH_XID7_PENDING4) अणु
 					fsm_newstate(ch->fsm, CH_XID7_PENDING4);
 					skb_put_data(ch->xid_skb, &thnorm,
 						     TH_HEADER_LENGTH);
 					ch->ccw[8].cmd_code = CCW_CMD_WRITE_CTL;
 					send = 1;
-				}
-			} else if (fsm_getstate(ch->fsm) == CH_XID7_PENDING3) {
+				पूर्ण
+			पूर्ण अन्यथा अगर (fsm_माला_लोtate(ch->fsm) == CH_XID7_PENDING3) अणु
 				fsm_newstate(ch->fsm, CH_XID7_PENDING4);
 				ch->ccw[8].cmd_code = CCW_CMD_SENSE_CMD;
 				skb_put_data(ch->xid_skb, &thdummy,
 					     TH_HEADER_LENGTH);
 				send = 1;
-			}
-		}
+			पूर्ण
+		पूर्ण
 
-		if (send)
+		अगर (send)
 			fsm_event(grp->fsm, MPCG_EVENT_DOIO, ch);
-	}
+	पूर्ण
 
-	return;
-}
+	वापस;
+पूर्ण
 
 /*
  * MPC Group Station FSM action
  * CTCM_PROTO_MPC only
  */
-static void mpc_action_rcvd_xid0(fsm_instance *fsm, int event, void *arg)
-{
+अटल व्योम mpc_action_rcvd_xid0(fsm_instance *fsm, पूर्णांक event, व्योम *arg)
+अणु
 
-	struct mpcg_info   *mpcginfo  = arg;
-	struct channel	   *ch   = mpcginfo->ch;
-	struct net_device  *dev  = ch->netdev;
-	struct ctcm_priv   *priv = dev->ml_priv;
-	struct mpc_group   *grp  = priv->mpcg;
+	काष्ठा mpcg_info   *mpcginfo  = arg;
+	काष्ठा channel	   *ch   = mpcginfo->ch;
+	काष्ठा net_device  *dev  = ch->netdev;
+	काष्ठा ctcm_priv   *priv = dev->ml_priv;
+	काष्ठा mpc_group   *grp  = priv->mpcg;
 
 	CTCM_PR_DEBUG("%s: ch-id:%s xid2:%i xid7:%i xidt_p2:%i \n",
 			__func__, ch->id, grp->outstanding_xid2,
 			grp->outstanding_xid7, grp->outstanding_xid7_p2);
 
-	if (fsm_getstate(ch->fsm) < CH_XID7_PENDING)
+	अगर (fsm_माला_लोtate(ch->fsm) < CH_XID7_PENDING)
 		fsm_newstate(ch->fsm, CH_XID7_PENDING);
 
 	grp->outstanding_xid2--;
 	grp->outstanding_xid7++;
 	grp->outstanding_xid7_p2++;
 
-	/* must change state before validating xid to */
-	/* properly handle interim interrupts received*/
-	switch (fsm_getstate(grp->fsm)) {
-	case MPCG_STATE_XID2INITW:
+	/* must change state beक्रमe validating xid to */
+	/* properly handle पूर्णांकerim पूर्णांकerrupts received*/
+	चयन (fsm_माला_लोtate(grp->fsm)) अणु
+	हाल MPCG_STATE_XID2INITW:
 		fsm_newstate(grp->fsm, MPCG_STATE_XID2INITX);
 		mpc_validate_xid(mpcginfo);
-		break;
-	case MPCG_STATE_XID0IOWAIT:
+		अवरोध;
+	हाल MPCG_STATE_XID0IOWAIT:
 		fsm_newstate(grp->fsm, MPCG_STATE_XID0IOWAIX);
 		mpc_validate_xid(mpcginfo);
-		break;
-	case MPCG_STATE_XID2INITX:
-		if (grp->outstanding_xid2 == 0) {
+		अवरोध;
+	हाल MPCG_STATE_XID2INITX:
+		अगर (grp->outstanding_xid2 == 0) अणु
 			fsm_newstate(grp->fsm, MPCG_STATE_XID7INITW);
 			mpc_validate_xid(mpcginfo);
 			fsm_event(grp->fsm, MPCG_EVENT_XID2DONE, dev);
-		}
-		break;
-	case MPCG_STATE_XID0IOWAIX:
-		if (grp->outstanding_xid2 == 0) {
+		पूर्ण
+		अवरोध;
+	हाल MPCG_STATE_XID0IOWAIX:
+		अगर (grp->outstanding_xid2 == 0) अणु
 			fsm_newstate(grp->fsm, MPCG_STATE_XID7INITI);
 			mpc_validate_xid(mpcginfo);
 			fsm_event(grp->fsm, MPCG_EVENT_XID2DONE, dev);
-		}
-		break;
-	}
-	kfree(mpcginfo);
+		पूर्ण
+		अवरोध;
+	पूर्ण
+	kमुक्त(mpcginfo);
 
 	CTCM_PR_DEBUG("ctcmpc:%s() %s xid2:%i xid7:%i xidt_p2:%i \n",
 		__func__, ch->id, grp->outstanding_xid2,
 		grp->outstanding_xid7, grp->outstanding_xid7_p2);
 	CTCM_PR_DEBUG("ctcmpc:%s() %s grpstate: %s chanstate: %s \n",
 		__func__, ch->id,
-		fsm_getstate_str(grp->fsm), fsm_getstate_str(ch->fsm));
-	return;
+		fsm_माला_लोtate_str(grp->fsm), fsm_माला_लोtate_str(ch->fsm));
+	वापस;
 
-}
+पूर्ण
 
 
 /*
  * MPC Group Station FSM action
  * CTCM_PROTO_MPC only
  */
-static void mpc_action_rcvd_xid7(fsm_instance *fsm, int event, void *arg)
-{
-	struct mpcg_info   *mpcginfo   = arg;
-	struct channel	   *ch	       = mpcginfo->ch;
-	struct net_device  *dev        = ch->netdev;
-	struct ctcm_priv   *priv    = dev->ml_priv;
-	struct mpc_group   *grp     = priv->mpcg;
+अटल व्योम mpc_action_rcvd_xid7(fsm_instance *fsm, पूर्णांक event, व्योम *arg)
+अणु
+	काष्ठा mpcg_info   *mpcginfo   = arg;
+	काष्ठा channel	   *ch	       = mpcginfo->ch;
+	काष्ठा net_device  *dev        = ch->netdev;
+	काष्ठा ctcm_priv   *priv    = dev->ml_priv;
+	काष्ठा mpc_group   *grp     = priv->mpcg;
 
 	CTCM_PR_DEBUG("Enter %s: cp=%i ch=0x%p id=%s\n",
 		__func__, smp_processor_id(), ch, ch->id);
@@ -2009,96 +2010,96 @@ static void mpc_action_rcvd_xid7(fsm_instance *fsm, int event, void *arg)
 
 	grp->outstanding_xid7--;
 	ch->xid_skb->data = ch->xid_skb_data;
-	skb_reset_tail_pointer(ch->xid_skb);
+	skb_reset_tail_poपूर्णांकer(ch->xid_skb);
 	ch->xid_skb->len = 0;
 
-	switch (fsm_getstate(grp->fsm)) {
-	case MPCG_STATE_XID7INITI:
+	चयन (fsm_माला_लोtate(grp->fsm)) अणु
+	हाल MPCG_STATE_XID7INITI:
 		fsm_newstate(grp->fsm, MPCG_STATE_XID7INITZ);
 		mpc_validate_xid(mpcginfo);
-		break;
-	case MPCG_STATE_XID7INITW:
+		अवरोध;
+	हाल MPCG_STATE_XID7INITW:
 		fsm_newstate(grp->fsm, MPCG_STATE_XID7INITX);
 		mpc_validate_xid(mpcginfo);
-		break;
-	case MPCG_STATE_XID7INITZ:
-	case MPCG_STATE_XID7INITX:
-		if (grp->outstanding_xid7 == 0) {
-			if (grp->outstanding_xid7_p2 > 0) {
+		अवरोध;
+	हाल MPCG_STATE_XID7INITZ:
+	हाल MPCG_STATE_XID7INITX:
+		अगर (grp->outstanding_xid7 == 0) अणु
+			अगर (grp->outstanding_xid7_p2 > 0) अणु
 				grp->outstanding_xid7 =
 					grp->outstanding_xid7_p2;
 				grp->outstanding_xid7_p2 = 0;
-			} else
+			पूर्ण अन्यथा
 				fsm_newstate(grp->fsm, MPCG_STATE_XID7INITF);
 
 			mpc_validate_xid(mpcginfo);
 			fsm_event(grp->fsm, MPCG_EVENT_XID7DONE, dev);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		mpc_validate_xid(mpcginfo);
-		break;
-	}
-	kfree(mpcginfo);
-	return;
-}
+		अवरोध;
+	पूर्ण
+	kमुक्त(mpcginfo);
+	वापस;
+पूर्ण
 
 /*
  * mpc_action helper of an MPC Group Station FSM action
  * CTCM_PROTO_MPC only
  */
-static int mpc_send_qllc_discontact(struct net_device *dev)
-{
-	struct sk_buff   *skb;
-	struct qllc      *qllcptr;
-	struct ctcm_priv *priv = dev->ml_priv;
-	struct mpc_group *grp = priv->mpcg;
+अटल पूर्णांक mpc_send_qllc_discontact(काष्ठा net_device *dev)
+अणु
+	काष्ठा sk_buff   *skb;
+	काष्ठा qllc      *qllcptr;
+	काष्ठा ctcm_priv *priv = dev->ml_priv;
+	काष्ठा mpc_group *grp = priv->mpcg;
 
 	CTCM_PR_DEBUG("%s: GROUP STATE: %s\n",
 		__func__, mpcg_state_names[grp->saved_state]);
 
-	switch (grp->saved_state) {
+	चयन (grp->saved_state) अणु
 	/*
 	 * establish conn callback function is
 	 * preferred method to report failure
 	 */
-	case MPCG_STATE_XID0IOWAIT:
-	case MPCG_STATE_XID0IOWAIX:
-	case MPCG_STATE_XID7INITI:
-	case MPCG_STATE_XID7INITZ:
-	case MPCG_STATE_XID2INITW:
-	case MPCG_STATE_XID2INITX:
-	case MPCG_STATE_XID7INITW:
-	case MPCG_STATE_XID7INITX:
-		if (grp->estconnfunc) {
+	हाल MPCG_STATE_XID0IOWAIT:
+	हाल MPCG_STATE_XID0IOWAIX:
+	हाल MPCG_STATE_XID7INITI:
+	हाल MPCG_STATE_XID7INITZ:
+	हाल MPCG_STATE_XID2INITW:
+	हाल MPCG_STATE_XID2INITX:
+	हाल MPCG_STATE_XID7INITW:
+	हाल MPCG_STATE_XID7INITX:
+		अगर (grp->estconnfunc) अणु
 			grp->estconnfunc(grp->port_num, -1, 0);
-			grp->estconnfunc = NULL;
-			break;
-		}
+			grp->estconnfunc = शून्य;
+			अवरोध;
+		पूर्ण
 		fallthrough;
-	case MPCG_STATE_FLOWC:
-	case MPCG_STATE_READY:
+	हाल MPCG_STATE_FLOWC:
+	हाल MPCG_STATE_READY:
 		grp->send_qllc_disc = 2;
 
-		skb = __dev_alloc_skb(sizeof(struct qllc), GFP_ATOMIC);
-		if (skb == NULL) {
+		skb = __dev_alloc_skb(माप(काष्ठा qllc), GFP_ATOMIC);
+		अगर (skb == शून्य) अणु
 			CTCM_DBF_TEXT_(MPC_ERROR, CTC_DBF_ERROR,
 				"%s(%s): skb allocation error",
 						CTCM_FUNTAIL, dev->name);
 			priv->stats.rx_dropped++;
-			return -ENOMEM;
-		}
+			वापस -ENOMEM;
+		पूर्ण
 
-		qllcptr = skb_put(skb, sizeof(struct qllc));
+		qllcptr = skb_put(skb, माप(काष्ठा qllc));
 		qllcptr->qllc_address = 0xcc;
 		qllcptr->qllc_commands = 0x03;
 
-		if (skb_headroom(skb) < 4) {
+		अगर (skb_headroom(skb) < 4) अणु
 			CTCM_DBF_TEXT_(MPC_ERROR, CTC_DBF_ERROR,
 				"%s(%s): skb_headroom error",
 						CTCM_FUNTAIL, dev->name);
-			dev_kfree_skb_any(skb);
-			return -ENOMEM;
-		}
+			dev_kमुक्त_skb_any(skb);
+			वापस -ENOMEM;
+		पूर्ण
 
 		*((__u32 *)skb_push(skb, 4)) =
 			priv->channel[CTCM_READ]->pdu_seq;
@@ -2114,16 +2115,16 @@ static int mpc_send_qllc_discontact(struct net_device *dev)
 		skb->protocol = htons(ETH_P_SNAP);
 		skb->ip_summed = CHECKSUM_UNNECESSARY;
 
-		CTCM_D3_DUMP(skb->data, (sizeof(struct qllc) + 4));
+		CTCM_D3_DUMP(skb->data, (माप(काष्ठा qllc) + 4));
 
-		netif_rx(skb);
-		break;
-	default:
-		break;
+		netअगर_rx(skb);
+		अवरोध;
+	शेष:
+		अवरोध;
 
-	}
+	पूर्ण
 
-	return 0;
-}
-/* --- This is the END my friend --- */
+	वापस 0;
+पूर्ण
+/* --- This is the END my मित्र --- */
 

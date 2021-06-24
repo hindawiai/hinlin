@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 // Copyright (c) 2018 Facebook
 // Copyright (c) 2019 Cloudflare
 // Copyright (c) 2020 Isovalent, Inc.
@@ -8,254 +9,254 @@
  * matches the port.
  */
 
-#define _GNU_SOURCE
-#include <fcntl.h>
-#include <signal.h>
-#include <stdlib.h>
-#include <unistd.h>
+#घोषणा _GNU_SOURCE
+#समावेश <fcntl.h>
+#समावेश <संकेत.स>
+#समावेश <मानककोष.स>
+#समावेश <unistd.h>
 
-#include "test_progs.h"
+#समावेश "test_progs.h"
 
-#define BIND_PORT 1234
-#define CONNECT_PORT 4321
-#define TEST_DADDR (0xC0A80203)
-#define NS_SELF "/proc/self/ns/net"
-#define SERVER_MAP_PATH "/sys/fs/bpf/tc/globals/server_map"
+#घोषणा BIND_PORT 1234
+#घोषणा CONNECT_PORT 4321
+#घोषणा TEST_DADDR (0xC0A80203)
+#घोषणा NS_SELF "/proc/self/ns/net"
+#घोषणा SERVER_MAP_PATH "/sys/fs/bpf/tc/globals/server_map"
 
-static const struct timeval timeo_sec = { .tv_sec = 3 };
-static const size_t timeo_optlen = sizeof(timeo_sec);
-static int stop, duration;
+अटल स्थिर काष्ठा समयval समयo_sec = अणु .tv_sec = 3 पूर्ण;
+अटल स्थिर माप_प्रकार समयo_optlen = माप(समयo_sec);
+अटल पूर्णांक stop, duration;
 
-static bool
-configure_stack(void)
-{
-	char tc_cmd[BUFSIZ];
+अटल bool
+configure_stack(व्योम)
+अणु
+	अक्षर tc_cmd[बफ_मान];
 
 	/* Move to a new networking namespace */
-	if (CHECK_FAIL(unshare(CLONE_NEWNET)))
-		return false;
+	अगर (CHECK_FAIL(unshare(CLONE_NEWNET)))
+		वापस false;
 
 	/* Configure necessary links, routes */
-	if (CHECK_FAIL(system("ip link set dev lo up")))
-		return false;
-	if (CHECK_FAIL(system("ip route add local default dev lo")))
-		return false;
-	if (CHECK_FAIL(system("ip -6 route add local default dev lo")))
-		return false;
+	अगर (CHECK_FAIL(प्रणाली("ip link set dev lo up")))
+		वापस false;
+	अगर (CHECK_FAIL(प्रणाली("ip route add local default dev lo")))
+		वापस false;
+	अगर (CHECK_FAIL(प्रणाली("ip -6 route add local default dev lo")))
+		वापस false;
 
 	/* Load qdisc, BPF program */
-	if (CHECK_FAIL(system("tc qdisc add dev lo clsact")))
-		return false;
-	sprintf(tc_cmd, "%s %s %s %s", "tc filter add dev lo ingress bpf",
+	अगर (CHECK_FAIL(प्रणाली("tc qdisc add dev lo clsact")))
+		वापस false;
+	प्र_लिखो(tc_cmd, "%s %s %s %s", "tc filter add dev lo ingress bpf",
 		       "direct-action object-file ./test_sk_assign.o",
 		       "section classifier/sk_assign_test",
 		       (env.verbosity < VERBOSE_VERY) ? " 2>/dev/null" : "verbose");
-	if (CHECK(system(tc_cmd), "BPF load failed;",
+	अगर (CHECK(प्रणाली(tc_cmd), "BPF load failed;",
 		  "run with -vv for more info\n"))
-		return false;
+		वापस false;
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static int
-start_server(const struct sockaddr *addr, socklen_t len, int type)
-{
-	int fd;
-
-	fd = socket(addr->sa_family, type, 0);
-	if (CHECK_FAIL(fd == -1))
-		goto out;
-	if (CHECK_FAIL(setsockopt(fd, SOL_SOCKET, SO_RCVTIMEO, &timeo_sec,
-				  timeo_optlen)))
-		goto close_out;
-	if (CHECK_FAIL(bind(fd, addr, len) == -1))
-		goto close_out;
-	if (type == SOCK_STREAM && CHECK_FAIL(listen(fd, 128) == -1))
-		goto close_out;
-
-	goto out;
-close_out:
-	close(fd);
-	fd = -1;
-out:
-	return fd;
-}
-
-static int
-connect_to_server(const struct sockaddr *addr, socklen_t len, int type)
-{
-	int fd = -1;
+अटल पूर्णांक
+start_server(स्थिर काष्ठा sockaddr *addr, socklen_t len, पूर्णांक type)
+अणु
+	पूर्णांक fd;
 
 	fd = socket(addr->sa_family, type, 0);
-	if (CHECK_FAIL(fd == -1))
-		goto out;
-	if (CHECK_FAIL(setsockopt(fd, SOL_SOCKET, SO_SNDTIMEO, &timeo_sec,
-				  timeo_optlen)))
-		goto close_out;
-	if (CHECK_FAIL(connect(fd, addr, len)))
-		goto close_out;
+	अगर (CHECK_FAIL(fd == -1))
+		जाओ out;
+	अगर (CHECK_FAIL(setsockopt(fd, SOL_SOCKET, SO_RCVTIMEO, &समयo_sec,
+				  समयo_optlen)))
+		जाओ बंद_out;
+	अगर (CHECK_FAIL(bind(fd, addr, len) == -1))
+		जाओ बंद_out;
+	अगर (type == SOCK_STREAM && CHECK_FAIL(listen(fd, 128) == -1))
+		जाओ बंद_out;
 
-	goto out;
-close_out:
-	close(fd);
+	जाओ out;
+बंद_out:
+	बंद(fd);
 	fd = -1;
 out:
-	return fd;
-}
+	वापस fd;
+पूर्ण
 
-static in_port_t
-get_port(int fd)
-{
-	struct sockaddr_storage ss;
-	socklen_t slen = sizeof(ss);
+अटल पूर्णांक
+connect_to_server(स्थिर काष्ठा sockaddr *addr, socklen_t len, पूर्णांक type)
+अणु
+	पूर्णांक fd = -1;
+
+	fd = socket(addr->sa_family, type, 0);
+	अगर (CHECK_FAIL(fd == -1))
+		जाओ out;
+	अगर (CHECK_FAIL(setsockopt(fd, SOL_SOCKET, SO_SNDTIMEO, &समयo_sec,
+				  समयo_optlen)))
+		जाओ बंद_out;
+	अगर (CHECK_FAIL(connect(fd, addr, len)))
+		जाओ बंद_out;
+
+	जाओ out;
+बंद_out:
+	बंद(fd);
+	fd = -1;
+out:
+	वापस fd;
+पूर्ण
+
+अटल in_port_t
+get_port(पूर्णांक fd)
+अणु
+	काष्ठा sockaddr_storage ss;
+	socklen_t slen = माप(ss);
 	in_port_t port = 0;
 
-	if (CHECK_FAIL(getsockname(fd, (struct sockaddr *)&ss, &slen)))
-		return port;
+	अगर (CHECK_FAIL(माला_लोockname(fd, (काष्ठा sockaddr *)&ss, &slen)))
+		वापस port;
 
-	switch (ss.ss_family) {
-	case AF_INET:
-		port = ((struct sockaddr_in *)&ss)->sin_port;
-		break;
-	case AF_INET6:
-		port = ((struct sockaddr_in6 *)&ss)->sin6_port;
-		break;
-	default:
+	चयन (ss.ss_family) अणु
+	हाल AF_INET:
+		port = ((काष्ठा sockaddr_in *)&ss)->sin_port;
+		अवरोध;
+	हाल AF_INET6:
+		port = ((काष्ठा sockaddr_in6 *)&ss)->sin6_port;
+		अवरोध;
+	शेष:
 		CHECK(1, "Invalid address family", "%d\n", ss.ss_family);
-	}
-	return port;
-}
+	पूर्ण
+	वापस port;
+पूर्ण
 
-static ssize_t
-rcv_msg(int srv_client, int type)
-{
-	struct sockaddr_storage ss;
-	char buf[BUFSIZ];
+अटल sमाप_प्रकार
+rcv_msg(पूर्णांक srv_client, पूर्णांक type)
+अणु
+	काष्ठा sockaddr_storage ss;
+	अक्षर buf[बफ_मान];
 	socklen_t slen;
 
-	if (type == SOCK_STREAM)
-		return read(srv_client, &buf, sizeof(buf));
-	else
-		return recvfrom(srv_client, &buf, sizeof(buf), 0,
-				(struct sockaddr *)&ss, &slen);
-}
+	अगर (type == SOCK_STREAM)
+		वापस पढ़ो(srv_client, &buf, माप(buf));
+	अन्यथा
+		वापस recvfrom(srv_client, &buf, माप(buf), 0,
+				(काष्ठा sockaddr *)&ss, &slen);
+पूर्ण
 
-static int
-run_test(int server_fd, const struct sockaddr *addr, socklen_t len, int type)
-{
-	int client = -1, srv_client = -1;
-	char buf[] = "testing";
+अटल पूर्णांक
+run_test(पूर्णांक server_fd, स्थिर काष्ठा sockaddr *addr, socklen_t len, पूर्णांक type)
+अणु
+	पूर्णांक client = -1, srv_client = -1;
+	अक्षर buf[] = "testing";
 	in_port_t port;
-	int ret = 1;
+	पूर्णांक ret = 1;
 
 	client = connect_to_server(addr, len, type);
-	if (client == -1) {
-		perror("Cannot connect to server");
-		goto out;
-	}
+	अगर (client == -1) अणु
+		लिखो_त्रुटि("Cannot connect to server");
+		जाओ out;
+	पूर्ण
 
-	if (type == SOCK_STREAM) {
-		srv_client = accept(server_fd, NULL, NULL);
-		if (CHECK_FAIL(srv_client == -1)) {
-			perror("Can't accept connection");
-			goto out;
-		}
-	} else {
+	अगर (type == SOCK_STREAM) अणु
+		srv_client = accept(server_fd, शून्य, शून्य);
+		अगर (CHECK_FAIL(srv_client == -1)) अणु
+			लिखो_त्रुटि("Can't accept connection");
+			जाओ out;
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		srv_client = server_fd;
-	}
-	if (CHECK_FAIL(write(client, buf, sizeof(buf)) != sizeof(buf))) {
-		perror("Can't write on client");
-		goto out;
-	}
-	if (CHECK_FAIL(rcv_msg(srv_client, type) != sizeof(buf))) {
-		perror("Can't read on server");
-		goto out;
-	}
+	पूर्ण
+	अगर (CHECK_FAIL(ग_लिखो(client, buf, माप(buf)) != माप(buf))) अणु
+		लिखो_त्रुटि("Can't write on client");
+		जाओ out;
+	पूर्ण
+	अगर (CHECK_FAIL(rcv_msg(srv_client, type) != माप(buf))) अणु
+		लिखो_त्रुटि("Can't read on server");
+		जाओ out;
+	पूर्ण
 
 	port = get_port(srv_client);
-	if (CHECK_FAIL(!port))
-		goto out;
+	अगर (CHECK_FAIL(!port))
+		जाओ out;
 	/* SOCK_STREAM is connected via accept(), so the server's local address
 	 * will be the CONNECT_PORT rather than the BIND port that corresponds
 	 * to the listen socket. SOCK_DGRAM on the other hand is connectionless
 	 * so we can't really do the same check there; the server doesn't ever
 	 * create a socket with CONNECT_PORT.
 	 */
-	if (type == SOCK_STREAM &&
+	अगर (type == SOCK_STREAM &&
 	    CHECK(port != htons(CONNECT_PORT), "Expected", "port %u but got %u",
 		  CONNECT_PORT, ntohs(port)))
-		goto out;
-	else if (type == SOCK_DGRAM &&
+		जाओ out;
+	अन्यथा अगर (type == SOCK_DGRAM &&
 		 CHECK(port != htons(BIND_PORT), "Expected",
 		       "port %u but got %u", BIND_PORT, ntohs(port)))
-		goto out;
+		जाओ out;
 
 	ret = 0;
 out:
-	close(client);
-	if (srv_client != server_fd)
-		close(srv_client);
-	if (ret)
+	बंद(client);
+	अगर (srv_client != server_fd)
+		बंद(srv_client);
+	अगर (ret)
 		WRITE_ONCE(stop, 1);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void
-prepare_addr(struct sockaddr *addr, int family, __u16 port, bool rewrite_addr)
-{
-	struct sockaddr_in *addr4;
-	struct sockaddr_in6 *addr6;
+अटल व्योम
+prepare_addr(काष्ठा sockaddr *addr, पूर्णांक family, __u16 port, bool reग_लिखो_addr)
+अणु
+	काष्ठा sockaddr_in *addr4;
+	काष्ठा sockaddr_in6 *addr6;
 
-	switch (family) {
-	case AF_INET:
-		addr4 = (struct sockaddr_in *)addr;
-		memset(addr4, 0, sizeof(*addr4));
+	चयन (family) अणु
+	हाल AF_INET:
+		addr4 = (काष्ठा sockaddr_in *)addr;
+		स_रखो(addr4, 0, माप(*addr4));
 		addr4->sin_family = family;
 		addr4->sin_port = htons(port);
-		if (rewrite_addr)
+		अगर (reग_लिखो_addr)
 			addr4->sin_addr.s_addr = htonl(TEST_DADDR);
-		else
+		अन्यथा
 			addr4->sin_addr.s_addr = htonl(INADDR_LOOPBACK);
-		break;
-	case AF_INET6:
-		addr6 = (struct sockaddr_in6 *)addr;
-		memset(addr6, 0, sizeof(*addr6));
+		अवरोध;
+	हाल AF_INET6:
+		addr6 = (काष्ठा sockaddr_in6 *)addr;
+		स_रखो(addr6, 0, माप(*addr6));
 		addr6->sin6_family = family;
 		addr6->sin6_port = htons(port);
 		addr6->sin6_addr = in6addr_loopback;
-		if (rewrite_addr)
+		अगर (reग_लिखो_addr)
 			addr6->sin6_addr.s6_addr32[3] = htonl(TEST_DADDR);
-		break;
-	default:
-		fprintf(stderr, "Invalid family %d", family);
-	}
-}
+		अवरोध;
+	शेष:
+		ख_लिखो(मानक_त्रुटि, "Invalid family %d", family);
+	पूर्ण
+पूर्ण
 
-struct test_sk_cfg {
-	const char *name;
-	int family;
-	struct sockaddr *addr;
+काष्ठा test_sk_cfg अणु
+	स्थिर अक्षर *name;
+	पूर्णांक family;
+	काष्ठा sockaddr *addr;
 	socklen_t len;
-	int type;
-	bool rewrite_addr;
-};
+	पूर्णांक type;
+	bool reग_लिखो_addr;
+पूर्ण;
 
-#define TEST(NAME, FAMILY, TYPE, REWRITE)				\
-{									\
+#घोषणा TEST(NAME, FAMILY, TYPE, REWRITE)				\
+अणु									\
 	.name = NAME,							\
 	.family = FAMILY,						\
-	.addr = (FAMILY == AF_INET) ? (struct sockaddr *)&addr4		\
-				    : (struct sockaddr *)&addr6,	\
-	.len = (FAMILY == AF_INET) ? sizeof(addr4) : sizeof(addr6),	\
+	.addr = (FAMILY == AF_INET) ? (काष्ठा sockaddr *)&addr4		\
+				    : (काष्ठा sockaddr *)&addr6,	\
+	.len = (FAMILY == AF_INET) ? माप(addr4) : माप(addr6),	\
 	.type = TYPE,							\
-	.rewrite_addr = REWRITE,					\
-}
+	.reग_लिखो_addr = REWRITE,					\
+पूर्ण
 
-void test_sk_assign(void)
-{
-	struct sockaddr_in addr4;
-	struct sockaddr_in6 addr6;
-	struct test_sk_cfg tests[] = {
+व्योम test_sk_assign(व्योम)
+अणु
+	काष्ठा sockaddr_in addr4;
+	काष्ठा sockaddr_in6 addr6;
+	काष्ठा test_sk_cfg tests[] = अणु
 		TEST("ipv4 tcp port redir", AF_INET, SOCK_STREAM, false),
 		TEST("ipv4 tcp addr redir", AF_INET, SOCK_STREAM, true),
 		TEST("ipv6 tcp port redir", AF_INET6, SOCK_STREAM, false),
@@ -264,66 +265,66 @@ void test_sk_assign(void)
 		TEST("ipv4 udp addr redir", AF_INET, SOCK_DGRAM, true),
 		TEST("ipv6 udp port redir", AF_INET6, SOCK_DGRAM, false),
 		TEST("ipv6 udp addr redir", AF_INET6, SOCK_DGRAM, true),
-	};
+	पूर्ण;
 	__s64 server = -1;
-	int server_map;
-	int self_net;
-	int i;
+	पूर्णांक server_map;
+	पूर्णांक self_net;
+	पूर्णांक i;
 
-	self_net = open(NS_SELF, O_RDONLY);
-	if (CHECK_FAIL(self_net < 0)) {
-		perror("Unable to open "NS_SELF);
-		return;
-	}
+	self_net = खोलो(NS_SELF, O_RDONLY);
+	अगर (CHECK_FAIL(self_net < 0)) अणु
+		लिखो_त्रुटि("Unable to open "NS_SELF);
+		वापस;
+	पूर्ण
 
-	if (!configure_stack()) {
-		perror("configure_stack");
-		goto cleanup;
-	}
+	अगर (!configure_stack()) अणु
+		लिखो_त्रुटि("configure_stack");
+		जाओ cleanup;
+	पूर्ण
 
 	server_map = bpf_obj_get(SERVER_MAP_PATH);
-	if (CHECK_FAIL(server_map < 0)) {
-		perror("Unable to open " SERVER_MAP_PATH);
-		goto cleanup;
-	}
+	अगर (CHECK_FAIL(server_map < 0)) अणु
+		लिखो_त्रुटि("Unable to open " SERVER_MAP_PATH);
+		जाओ cleanup;
+	पूर्ण
 
-	for (i = 0; i < ARRAY_SIZE(tests) && !READ_ONCE(stop); i++) {
-		struct test_sk_cfg *test = &tests[i];
-		const struct sockaddr *addr;
-		const int zero = 0;
-		int err;
+	क्रम (i = 0; i < ARRAY_SIZE(tests) && !READ_ONCE(stop); i++) अणु
+		काष्ठा test_sk_cfg *test = &tests[i];
+		स्थिर काष्ठा sockaddr *addr;
+		स्थिर पूर्णांक zero = 0;
+		पूर्णांक err;
 
-		if (!test__start_subtest(test->name))
-			continue;
+		अगर (!test__start_subtest(test->name))
+			जारी;
 		prepare_addr(test->addr, test->family, BIND_PORT, false);
-		addr = (const struct sockaddr *)test->addr;
+		addr = (स्थिर काष्ठा sockaddr *)test->addr;
 		server = start_server(addr, test->len, test->type);
-		if (server == -1)
-			goto close;
+		अगर (server == -1)
+			जाओ बंद;
 
 		err = bpf_map_update_elem(server_map, &zero, &server, BPF_ANY);
-		if (CHECK_FAIL(err)) {
-			perror("Unable to update server_map");
-			goto close;
-		}
+		अगर (CHECK_FAIL(err)) अणु
+			लिखो_त्रुटि("Unable to update server_map");
+			जाओ बंद;
+		पूर्ण
 
 		/* connect to unbound ports */
 		prepare_addr(test->addr, test->family, CONNECT_PORT,
-			     test->rewrite_addr);
-		if (run_test(server, addr, test->len, test->type))
-			goto close;
+			     test->reग_लिखो_addr);
+		अगर (run_test(server, addr, test->len, test->type))
+			जाओ बंद;
 
-		close(server);
+		बंद(server);
 		server = -1;
-	}
+	पूर्ण
 
-close:
-	close(server);
-	close(server_map);
+बंद:
+	बंद(server);
+	बंद(server_map);
 cleanup:
-	if (CHECK_FAIL(unlink(SERVER_MAP_PATH)))
-		perror("Unable to unlink " SERVER_MAP_PATH);
-	if (CHECK_FAIL(setns(self_net, CLONE_NEWNET)))
-		perror("Failed to setns("NS_SELF")");
-	close(self_net);
-}
+	अगर (CHECK_FAIL(unlink(SERVER_MAP_PATH)))
+		लिखो_त्रुटि("Unable to unlink " SERVER_MAP_PATH);
+	अगर (CHECK_FAIL(setns(self_net, CLONE_NEWNET)))
+		लिखो_त्रुटि("Failed to setns("NS_SELF")");
+	बंद(self_net);
+पूर्ण

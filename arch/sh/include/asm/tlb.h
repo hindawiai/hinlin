@@ -1,29 +1,30 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __ASM_SH_TLB_H
-#define __ASM_SH_TLB_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __ASM_SH_TLB_H
+#घोषणा __ASM_SH_TLB_H
 
-#ifndef __ASSEMBLY__
-#include <linux/pagemap.h>
-#include <asm-generic/tlb.h>
+#अगर_अघोषित __ASSEMBLY__
+#समावेश <linux/pagemap.h>
+#समावेश <यंत्र-generic/tlb.h>
 
-#ifdef CONFIG_MMU
-#include <linux/swap.h>
+#अगर_घोषित CONFIG_MMU
+#समावेश <linux/swap.h>
 
-#if defined(CONFIG_CPU_SH4)
-extern void tlb_wire_entry(struct vm_area_struct *, unsigned long, pte_t);
-extern void tlb_unwire_entry(void);
-#else
-static inline void tlb_wire_entry(struct vm_area_struct *vma ,
-				  unsigned long addr, pte_t pte)
-{
+#अगर defined(CONFIG_CPU_SH4)
+बाह्य व्योम tlb_wire_entry(काष्ठा vm_area_काष्ठा *, अचिन्हित दीर्घ, pte_t);
+बाह्य व्योम tlb_unwire_entry(व्योम);
+#अन्यथा
+अटल अंतरभूत व्योम tlb_wire_entry(काष्ठा vm_area_काष्ठा *vma ,
+				  अचिन्हित दीर्घ addr, pte_t pte)
+अणु
 	BUG();
-}
+पूर्ण
 
-static inline void tlb_unwire_entry(void)
-{
+अटल अंतरभूत व्योम tlb_unwire_entry(व्योम)
+अणु
 	BUG();
-}
-#endif /* CONFIG_CPU_SH4 */
-#endif /* CONFIG_MMU */
-#endif /* __ASSEMBLY__ */
-#endif /* __ASM_SH_TLB_H */
+पूर्ण
+#पूर्ण_अगर /* CONFIG_CPU_SH4 */
+#पूर्ण_अगर /* CONFIG_MMU */
+#पूर्ण_अगर /* __ASSEMBLY__ */
+#पूर्ण_अगर /* __ASM_SH_TLB_H */

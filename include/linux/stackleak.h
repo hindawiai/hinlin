@@ -1,35 +1,36 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _LINUX_STACKLEAK_H
-#define _LINUX_STACKLEAK_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _LINUX_STACKLEAK_H
+#घोषणा _LINUX_STACKLEAK_H
 
-#include <linux/sched.h>
-#include <linux/sched/task_stack.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/sched/task_stack.h>
 
 /*
- * Check that the poison value points to the unused hole in the
- * virtual memory map for your platform.
+ * Check that the poison value poपूर्णांकs to the unused hole in the
+ * भव memory map क्रम your platक्रमm.
  */
-#define STACKLEAK_POISON -0xBEEF
-#define STACKLEAK_SEARCH_DEPTH 128
+#घोषणा STACKLEAK_POISON -0xBEEF
+#घोषणा STACKLEAK_SEARCH_DEPTH 128
 
-#ifdef CONFIG_GCC_PLUGIN_STACKLEAK
-#include <asm/stacktrace.h>
+#अगर_घोषित CONFIG_GCC_PLUGIN_STACKLEAK
+#समावेश <यंत्र/stacktrace.h>
 
-static inline void stackleak_task_init(struct task_struct *t)
-{
-	t->lowest_stack = (unsigned long)end_of_stack(t) + sizeof(unsigned long);
-# ifdef CONFIG_STACKLEAK_METRICS
+अटल अंतरभूत व्योम stackleak_task_init(काष्ठा task_काष्ठा *t)
+अणु
+	t->lowest_stack = (अचिन्हित दीर्घ)end_of_stack(t) + माप(अचिन्हित दीर्घ);
+# अगरdef CONFIG_STACKLEAK_METRICS
 	t->prev_lowest_stack = t->lowest_stack;
-# endif
-}
+# endअगर
+पूर्ण
 
-#ifdef CONFIG_STACKLEAK_RUNTIME_DISABLE
-int stack_erasing_sysctl(struct ctl_table *table, int write,
-			void *buffer, size_t *lenp, loff_t *ppos);
-#endif
+#अगर_घोषित CONFIG_STACKLEAK_RUNTIME_DISABLE
+पूर्णांक stack_erasing_sysctl(काष्ठा ctl_table *table, पूर्णांक ग_लिखो,
+			व्योम *buffer, माप_प्रकार *lenp, loff_t *ppos);
+#पूर्ण_अगर
 
-#else /* !CONFIG_GCC_PLUGIN_STACKLEAK */
-static inline void stackleak_task_init(struct task_struct *t) { }
-#endif
+#अन्यथा /* !CONFIG_GCC_PLUGIN_STACKLEAK */
+अटल अंतरभूत व्योम stackleak_task_init(काष्ठा task_काष्ठा *t) अणु पूर्ण
+#पूर्ण_अगर
 
-#endif
+#पूर्ण_अगर

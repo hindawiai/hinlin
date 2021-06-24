@@ -1,10 +1,11 @@
-/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
-#ifndef _UAPI_UVESAFB_H
-#define _UAPI_UVESAFB_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
+#अगर_अघोषित _UAPI_UVESAFB_H
+#घोषणा _UAPI_UVESAFB_H
 
-#include <linux/types.h>
+#समावेश <linux/types.h>
 
-struct v86_regs {
+काष्ठा v86_regs अणु
 	__u32 ebx;
 	__u32 ecx;
 	__u32 edx;
@@ -21,41 +22,41 @@ struct v86_regs {
 	__u16 ds;
 	__u16 fs;
 	__u16 gs;
-};
+पूर्ण;
 
 /* Task flags */
-#define TF_VBEIB	0x01
-#define TF_BUF_ESDI	0x02
-#define TF_BUF_ESBX	0x04
-#define TF_BUF_RET	0x08
-#define TF_EXIT		0x10
+#घोषणा TF_VBEIB	0x01
+#घोषणा TF_BUF_ESDI	0x02
+#घोषणा TF_BUF_ESBX	0x04
+#घोषणा TF_BUF_RET	0x08
+#घोषणा TF_EXIT		0x10
 
-struct uvesafb_task {
+काष्ठा uvesafb_task अणु
 	__u8 flags;
-	int buf_len;
-	struct v86_regs regs;
-};
+	पूर्णांक buf_len;
+	काष्ठा v86_regs regs;
+पूर्ण;
 
-/* Constants for the capabilities field
+/* Constants क्रम the capabilities field
  * in vbe_ib */
-#define VBE_CAP_CAN_SWITCH_DAC	0x01
-#define VBE_CAP_VGACOMPAT	0x02
+#घोषणा VBE_CAP_CAN_SWITCH_DAC	0x01
+#घोषणा VBE_CAP_VGACOMPAT	0x02
 
 /* The VBE Info Block */
-struct vbe_ib {
-	char  vbe_signature[4];
+काष्ठा vbe_ib अणु
+	अक्षर  vbe_signature[4];
 	__u16 vbe_version;
 	__u32 oem_string_ptr;
 	__u32 capabilities;
 	__u32 mode_list_ptr;
 	__u16 total_memory;
 	__u16 oem_software_rev;
-	__u32 oem_vendor_name_ptr;
+	__u32 oem_venकरोr_name_ptr;
 	__u32 oem_product_name_ptr;
 	__u32 oem_product_rev_ptr;
 	__u8  reserved[222];
-	char  oem_data[256];
-	char  misc_data[512];
-} __attribute__ ((packed));
+	अक्षर  oem_data[256];
+	अक्षर  misc_data[512];
+पूर्ण __attribute__ ((packed));
 
-#endif /* _UAPI_UVESAFB_H */
+#पूर्ण_अगर /* _UAPI_UVESAFB_H */

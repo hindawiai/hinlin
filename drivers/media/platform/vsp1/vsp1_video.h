@@ -1,61 +1,62 @@
-/* SPDX-License-Identifier: GPL-2.0+ */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0+ */
 /*
  * vsp1_video.h  --  R-Car VSP1 Video Node
  *
  * Copyright (C) 2013-2015 Renesas Electronics Corporation
  *
- * Contact: Laurent Pinchart (laurent.pinchart@ideasonboard.com)
+ * Contact: Laurent Pinअक्षरt (laurent.pinअक्षरt@ideasonboard.com)
  */
-#ifndef __VSP1_VIDEO_H__
-#define __VSP1_VIDEO_H__
+#अगर_अघोषित __VSP1_VIDEO_H__
+#घोषणा __VSP1_VIDEO_H__
 
-#include <linux/list.h>
-#include <linux/spinlock.h>
+#समावेश <linux/list.h>
+#समावेश <linux/spinlock.h>
 
-#include <media/videobuf2-v4l2.h>
+#समावेश <media/videobuf2-v4l2.h>
 
-#include "vsp1_rwpf.h"
+#समावेश "vsp1_rwpf.h"
 
-struct vsp1_vb2_buffer {
-	struct vb2_v4l2_buffer buf;
-	struct list_head queue;
-	struct vsp1_rwpf_memory mem;
-};
+काष्ठा vsp1_vb2_buffer अणु
+	काष्ठा vb2_v4l2_buffer buf;
+	काष्ठा list_head queue;
+	काष्ठा vsp1_rwpf_memory mem;
+पूर्ण;
 
-static inline struct vsp1_vb2_buffer *
-to_vsp1_vb2_buffer(struct vb2_v4l2_buffer *vbuf)
-{
-	return container_of(vbuf, struct vsp1_vb2_buffer, buf);
-}
+अटल अंतरभूत काष्ठा vsp1_vb2_buffer *
+to_vsp1_vb2_buffer(काष्ठा vb2_v4l2_buffer *vbuf)
+अणु
+	वापस container_of(vbuf, काष्ठा vsp1_vb2_buffer, buf);
+पूर्ण
 
-struct vsp1_video {
-	struct list_head list;
-	struct vsp1_device *vsp1;
-	struct vsp1_rwpf *rwpf;
+काष्ठा vsp1_video अणु
+	काष्ठा list_head list;
+	काष्ठा vsp1_device *vsp1;
+	काष्ठा vsp1_rwpf *rwpf;
 
-	struct video_device video;
-	enum v4l2_buf_type type;
-	struct media_pad pad;
+	काष्ठा video_device video;
+	क्रमागत v4l2_buf_type type;
+	काष्ठा media_pad pad;
 
-	struct mutex lock;
+	काष्ठा mutex lock;
 
-	unsigned int pipe_index;
+	अचिन्हित पूर्णांक pipe_index;
 
-	struct vb2_queue queue;
+	काष्ठा vb2_queue queue;
 	spinlock_t irqlock;
-	struct list_head irqqueue;
-};
+	काष्ठा list_head irqqueue;
+पूर्ण;
 
-static inline struct vsp1_video *to_vsp1_video(struct video_device *vdev)
-{
-	return container_of(vdev, struct vsp1_video, video);
-}
+अटल अंतरभूत काष्ठा vsp1_video *to_vsp1_video(काष्ठा video_device *vdev)
+अणु
+	वापस container_of(vdev, काष्ठा vsp1_video, video);
+पूर्ण
 
-void vsp1_video_suspend(struct vsp1_device *vsp1);
-void vsp1_video_resume(struct vsp1_device *vsp1);
+व्योम vsp1_video_suspend(काष्ठा vsp1_device *vsp1);
+व्योम vsp1_video_resume(काष्ठा vsp1_device *vsp1);
 
-struct vsp1_video *vsp1_video_create(struct vsp1_device *vsp1,
-				     struct vsp1_rwpf *rwpf);
-void vsp1_video_cleanup(struct vsp1_video *video);
+काष्ठा vsp1_video *vsp1_video_create(काष्ठा vsp1_device *vsp1,
+				     काष्ठा vsp1_rwpf *rwpf);
+व्योम vsp1_video_cleanup(काष्ठा vsp1_video *video);
 
-#endif /* __VSP1_VIDEO_H__ */
+#पूर्ण_अगर /* __VSP1_VIDEO_H__ */

@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*******************************************************************************
- * This file houses the main functions for the iSCSI CHAP support
+ * This file houses the मुख्य functions क्रम the iSCSI CHAP support
  *
  * (c) Copyright 2007-2013 Datera, Inc.
  *
@@ -8,174 +9,174 @@
  *
  ******************************************************************************/
 
-#include <crypto/hash.h>
-#include <linux/kernel.h>
-#include <linux/string.h>
-#include <linux/err.h>
-#include <linux/random.h>
-#include <linux/scatterlist.h>
-#include <target/iscsi/iscsi_target_core.h>
-#include "iscsi_target_nego.h"
-#include "iscsi_target_auth.h"
+#समावेश <crypto/hash.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/err.h>
+#समावेश <linux/अक्रमom.h>
+#समावेश <linux/scatterlist.h>
+#समावेश <target/iscsi/iscsi_target_core.h>
+#समावेश "iscsi_target_nego.h"
+#समावेश "iscsi_target_auth.h"
 
-static char *chap_get_digest_name(const int digest_type)
-{
-	switch (digest_type) {
-	case CHAP_DIGEST_MD5:
-		return "md5";
-	case CHAP_DIGEST_SHA1:
-		return "sha1";
-	case CHAP_DIGEST_SHA256:
-		return "sha256";
-	case CHAP_DIGEST_SHA3_256:
-		return "sha3-256";
-	default:
-		return NULL;
-	}
-}
+अटल अक्षर *chap_get_digest_name(स्थिर पूर्णांक digest_type)
+अणु
+	चयन (digest_type) अणु
+	हाल CHAP_DIGEST_MD5:
+		वापस "md5";
+	हाल CHAP_DIGEST_SHA1:
+		वापस "sha1";
+	हाल CHAP_DIGEST_SHA256:
+		वापस "sha256";
+	हाल CHAP_DIGEST_SHA3_256:
+		वापस "sha3-256";
+	शेष:
+		वापस शून्य;
+	पूर्ण
+पूर्ण
 
-static int chap_gen_challenge(
-	struct iscsi_conn *conn,
-	int caller,
-	char *c_str,
-	unsigned int *c_len)
-{
-	int ret;
-	unsigned char *challenge_asciihex;
-	struct iscsi_chap *chap = conn->auth_protocol;
+अटल पूर्णांक chap_gen_challenge(
+	काष्ठा iscsi_conn *conn,
+	पूर्णांक caller,
+	अक्षर *c_str,
+	अचिन्हित पूर्णांक *c_len)
+अणु
+	पूर्णांक ret;
+	अचिन्हित अक्षर *challenge_asciihex;
+	काष्ठा iscsi_chap *chap = conn->auth_protocol;
 
 	challenge_asciihex = kzalloc(chap->challenge_len * 2 + 1, GFP_KERNEL);
-	if (!challenge_asciihex)
-		return -ENOMEM;
+	अगर (!challenge_asciihex)
+		वापस -ENOMEM;
 
-	memset(chap->challenge, 0, MAX_CHAP_CHALLENGE_LEN);
+	स_रखो(chap->challenge, 0, MAX_CHAP_CHALLENGE_LEN);
 
-	ret = get_random_bytes_wait(chap->challenge, chap->challenge_len);
-	if (unlikely(ret))
-		goto out;
+	ret = get_अक्रमom_bytes_रुको(chap->challenge, chap->challenge_len);
+	अगर (unlikely(ret))
+		जाओ out;
 
 	bin2hex(challenge_asciihex, chap->challenge,
 				chap->challenge_len);
 	/*
-	 * Set CHAP_C, and copy the generated challenge into c_str.
+	 * Set CHAP_C, and copy the generated challenge पूर्णांकo c_str.
 	 */
-	*c_len += sprintf(c_str + *c_len, "CHAP_C=0x%s", challenge_asciihex);
+	*c_len += प्र_लिखो(c_str + *c_len, "CHAP_C=0x%s", challenge_asciihex);
 	*c_len += 1;
 
 	pr_debug("[%s] Sending CHAP_C=0x%s\n\n", (caller) ? "server" : "client",
 			challenge_asciihex);
 
 out:
-	kfree(challenge_asciihex);
-	return ret;
-}
+	kमुक्त(challenge_asciihex);
+	वापस ret;
+पूर्ण
 
-static int chap_test_algorithm(const char *name)
-{
-	struct crypto_shash *tfm;
+अटल पूर्णांक chap_test_algorithm(स्थिर अक्षर *name)
+अणु
+	काष्ठा crypto_shash *tfm;
 
 	tfm = crypto_alloc_shash(name, 0, 0);
-	if (IS_ERR(tfm))
-		return -1;
+	अगर (IS_ERR(tfm))
+		वापस -1;
 
-	crypto_free_shash(tfm);
-	return 0;
-}
+	crypto_मुक्त_shash(tfm);
+	वापस 0;
+पूर्ण
 
-static int chap_check_algorithm(const char *a_str)
-{
-	char *tmp, *orig, *token, *digest_name;
-	long digest_type;
-	int r = CHAP_DIGEST_UNKNOWN;
+अटल पूर्णांक chap_check_algorithm(स्थिर अक्षर *a_str)
+अणु
+	अक्षर *पंचांगp, *orig, *token, *digest_name;
+	दीर्घ digest_type;
+	पूर्णांक r = CHAP_DIGEST_UNKNOWN;
 
-	tmp = kstrdup(a_str, GFP_KERNEL);
-	if (!tmp) {
+	पंचांगp = kstrdup(a_str, GFP_KERNEL);
+	अगर (!पंचांगp) अणु
 		pr_err("Memory allocation failed for CHAP_A temporary buffer\n");
-		return CHAP_DIGEST_UNKNOWN;
-	}
-	orig = tmp;
+		वापस CHAP_DIGEST_UNKNOWN;
+	पूर्ण
+	orig = पंचांगp;
 
-	token = strsep(&tmp, "=");
-	if (!token)
-		goto out;
+	token = strsep(&पंचांगp, "=");
+	अगर (!token)
+		जाओ out;
 
-	if (strcmp(token, "CHAP_A")) {
+	अगर (म_भेद(token, "CHAP_A")) अणु
 		pr_err("Unable to locate CHAP_A key\n");
-		goto out;
-	}
-	while (token) {
-		token = strsep(&tmp, ",");
-		if (!token)
-			goto out;
+		जाओ out;
+	पूर्ण
+	जबतक (token) अणु
+		token = strsep(&पंचांगp, ",");
+		अगर (!token)
+			जाओ out;
 
-		if (kstrtol(token, 10, &digest_type))
-			continue;
+		अगर (kम_से_दीर्घ(token, 10, &digest_type))
+			जारी;
 
 		digest_name = chap_get_digest_name(digest_type);
-		if (!digest_name)
-			continue;
+		अगर (!digest_name)
+			जारी;
 
 		pr_debug("Selected %s Algorithm\n", digest_name);
-		if (chap_test_algorithm(digest_name) < 0) {
+		अगर (chap_test_algorithm(digest_name) < 0) अणु
 			pr_err("failed to allocate %s algo\n", digest_name);
-		} else {
+		पूर्ण अन्यथा अणु
 			r = digest_type;
-			goto out;
-		}
-	}
+			जाओ out;
+		पूर्ण
+	पूर्ण
 out:
-	kfree(orig);
-	return r;
-}
+	kमुक्त(orig);
+	वापस r;
+पूर्ण
 
-static void chap_close(struct iscsi_conn *conn)
-{
-	kfree(conn->auth_protocol);
-	conn->auth_protocol = NULL;
-}
+अटल व्योम chap_बंद(काष्ठा iscsi_conn *conn)
+अणु
+	kमुक्त(conn->auth_protocol);
+	conn->auth_protocol = शून्य;
+पूर्ण
 
-static struct iscsi_chap *chap_server_open(
-	struct iscsi_conn *conn,
-	struct iscsi_node_auth *auth,
-	const char *a_str,
-	char *aic_str,
-	unsigned int *aic_len)
-{
-	int digest_type;
-	struct iscsi_chap *chap;
+अटल काष्ठा iscsi_chap *chap_server_खोलो(
+	काष्ठा iscsi_conn *conn,
+	काष्ठा iscsi_node_auth *auth,
+	स्थिर अक्षर *a_str,
+	अक्षर *aic_str,
+	अचिन्हित पूर्णांक *aic_len)
+अणु
+	पूर्णांक digest_type;
+	काष्ठा iscsi_chap *chap;
 
-	if (!(auth->naf_flags & NAF_USERID_SET) ||
-	    !(auth->naf_flags & NAF_PASSWORD_SET)) {
+	अगर (!(auth->naf_flags & NAF_USERID_SET) ||
+	    !(auth->naf_flags & NAF_PASSWORD_SET)) अणु
 		pr_err("CHAP user or password not set for"
 				" Initiator ACL\n");
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
-	conn->auth_protocol = kzalloc(sizeof(struct iscsi_chap), GFP_KERNEL);
-	if (!conn->auth_protocol)
-		return NULL;
+	conn->auth_protocol = kzalloc(माप(काष्ठा iscsi_chap), GFP_KERNEL);
+	अगर (!conn->auth_protocol)
+		वापस शून्य;
 
 	chap = conn->auth_protocol;
 	digest_type = chap_check_algorithm(a_str);
-	switch (digest_type) {
-	case CHAP_DIGEST_MD5:
+	चयन (digest_type) अणु
+	हाल CHAP_DIGEST_MD5:
 		chap->digest_size = MD5_SIGNATURE_SIZE;
-		break;
-	case CHAP_DIGEST_SHA1:
+		अवरोध;
+	हाल CHAP_DIGEST_SHA1:
 		chap->digest_size = SHA1_SIGNATURE_SIZE;
-		break;
-	case CHAP_DIGEST_SHA256:
+		अवरोध;
+	हाल CHAP_DIGEST_SHA256:
 		chap->digest_size = SHA256_SIGNATURE_SIZE;
-		break;
-	case CHAP_DIGEST_SHA3_256:
+		अवरोध;
+	हाल CHAP_DIGEST_SHA3_256:
 		chap->digest_size = SHA3_256_SIGNATURE_SIZE;
-		break;
-	case CHAP_DIGEST_UNKNOWN:
-	default:
+		अवरोध;
+	हाल CHAP_DIGEST_UNKNOWN:
+	शेष:
 		pr_err("Unsupported CHAP_A value\n");
-		chap_close(conn);
-		return NULL;
-	}
+		chap_बंद(conn);
+		वापस शून्य;
+	पूर्ण
 
 	chap->digest_name = chap_get_digest_name(digest_type);
 
@@ -183,349 +184,349 @@ static struct iscsi_chap *chap_server_open(
 	chap->challenge_len = chap->digest_size;
 
 	pr_debug("[server] Got CHAP_A=%d\n", digest_type);
-	*aic_len = sprintf(aic_str, "CHAP_A=%d", digest_type);
+	*aic_len = प्र_लिखो(aic_str, "CHAP_A=%d", digest_type);
 	*aic_len += 1;
 	pr_debug("[server] Sending CHAP_A=%d\n", digest_type);
 
 	/*
-	 * Set Identifier.
+	 * Set Identअगरier.
 	 */
 	chap->id = conn->tpg->tpg_chap_id++;
-	*aic_len += sprintf(aic_str + *aic_len, "CHAP_I=%d", chap->id);
+	*aic_len += प्र_लिखो(aic_str + *aic_len, "CHAP_I=%d", chap->id);
 	*aic_len += 1;
 	pr_debug("[server] Sending CHAP_I=%d\n", chap->id);
 	/*
 	 * Generate Challenge.
 	 */
-	if (chap_gen_challenge(conn, 1, aic_str, aic_len) < 0) {
-		chap_close(conn);
-		return NULL;
-	}
+	अगर (chap_gen_challenge(conn, 1, aic_str, aic_len) < 0) अणु
+		chap_बंद(conn);
+		वापस शून्य;
+	पूर्ण
 
-	return chap;
-}
+	वापस chap;
+पूर्ण
 
-static int chap_server_compute_hash(
-	struct iscsi_conn *conn,
-	struct iscsi_node_auth *auth,
-	char *nr_in_ptr,
-	char *nr_out_ptr,
-	unsigned int *nr_out_len)
-{
-	unsigned long id;
-	unsigned char id_as_uchar;
-	unsigned char type;
-	unsigned char identifier[10], *initiatorchg = NULL;
-	unsigned char *initiatorchg_binhex = NULL;
-	unsigned char *digest = NULL;
-	unsigned char *response = NULL;
-	unsigned char *client_digest = NULL;
-	unsigned char *server_digest = NULL;
-	unsigned char chap_n[MAX_CHAP_N_SIZE], chap_r[MAX_RESPONSE_LENGTH];
-	size_t compare_len;
-	struct iscsi_chap *chap = conn->auth_protocol;
-	struct crypto_shash *tfm = NULL;
-	struct shash_desc *desc = NULL;
-	int auth_ret = -1, ret, initiatorchg_len;
+अटल पूर्णांक chap_server_compute_hash(
+	काष्ठा iscsi_conn *conn,
+	काष्ठा iscsi_node_auth *auth,
+	अक्षर *nr_in_ptr,
+	अक्षर *nr_out_ptr,
+	अचिन्हित पूर्णांक *nr_out_len)
+अणु
+	अचिन्हित दीर्घ id;
+	अचिन्हित अक्षर id_as_uअक्षर;
+	अचिन्हित अक्षर type;
+	अचिन्हित अक्षर identअगरier[10], *initiatorchg = शून्य;
+	अचिन्हित अक्षर *initiatorchg_binhex = शून्य;
+	अचिन्हित अक्षर *digest = शून्य;
+	अचिन्हित अक्षर *response = शून्य;
+	अचिन्हित अक्षर *client_digest = शून्य;
+	अचिन्हित अक्षर *server_digest = शून्य;
+	अचिन्हित अक्षर chap_n[MAX_CHAP_N_SIZE], chap_r[MAX_RESPONSE_LENGTH];
+	माप_प्रकार compare_len;
+	काष्ठा iscsi_chap *chap = conn->auth_protocol;
+	काष्ठा crypto_shash *tfm = शून्य;
+	काष्ठा shash_desc *desc = शून्य;
+	पूर्णांक auth_ret = -1, ret, initiatorchg_len;
 
 	digest = kzalloc(chap->digest_size, GFP_KERNEL);
-	if (!digest) {
+	अगर (!digest) अणु
 		pr_err("Unable to allocate the digest buffer\n");
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	response = kzalloc(chap->digest_size * 2 + 2, GFP_KERNEL);
-	if (!response) {
+	अगर (!response) अणु
 		pr_err("Unable to allocate the response buffer\n");
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	client_digest = kzalloc(chap->digest_size, GFP_KERNEL);
-	if (!client_digest) {
+	अगर (!client_digest) अणु
 		pr_err("Unable to allocate the client_digest buffer\n");
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	server_digest = kzalloc(chap->digest_size, GFP_KERNEL);
-	if (!server_digest) {
+	अगर (!server_digest) अणु
 		pr_err("Unable to allocate the server_digest buffer\n");
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	memset(identifier, 0, 10);
-	memset(chap_n, 0, MAX_CHAP_N_SIZE);
-	memset(chap_r, 0, MAX_RESPONSE_LENGTH);
+	स_रखो(identअगरier, 0, 10);
+	स_रखो(chap_n, 0, MAX_CHAP_N_SIZE);
+	स_रखो(chap_r, 0, MAX_RESPONSE_LENGTH);
 
 	initiatorchg = kzalloc(CHAP_CHALLENGE_STR_LEN, GFP_KERNEL);
-	if (!initiatorchg) {
+	अगर (!initiatorchg) अणु
 		pr_err("Unable to allocate challenge buffer\n");
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	initiatorchg_binhex = kzalloc(CHAP_CHALLENGE_STR_LEN, GFP_KERNEL);
-	if (!initiatorchg_binhex) {
+	अगर (!initiatorchg_binhex) अणु
 		pr_err("Unable to allocate initiatorchg_binhex buffer\n");
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 	/*
 	 * Extract CHAP_N.
 	 */
-	if (extract_param(nr_in_ptr, "CHAP_N", MAX_CHAP_N_SIZE, chap_n,
-				&type) < 0) {
+	अगर (extract_param(nr_in_ptr, "CHAP_N", MAX_CHAP_N_SIZE, chap_n,
+				&type) < 0) अणु
 		pr_err("Could not find CHAP_N.\n");
-		goto out;
-	}
-	if (type == HEX) {
+		जाओ out;
+	पूर्ण
+	अगर (type == HEX) अणु
 		pr_err("Could not find CHAP_N.\n");
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	/* Include the terminating NULL in the compare */
-	compare_len = strlen(auth->userid) + 1;
-	if (strncmp(chap_n, auth->userid, compare_len) != 0) {
+	/* Include the terminating शून्य in the compare */
+	compare_len = म_माप(auth->userid) + 1;
+	अगर (म_भेदन(chap_n, auth->userid, compare_len) != 0) अणु
 		pr_err("CHAP_N values do not match!\n");
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 	pr_debug("[server] Got CHAP_N=%s\n", chap_n);
 	/*
 	 * Extract CHAP_R.
 	 */
-	if (extract_param(nr_in_ptr, "CHAP_R", MAX_RESPONSE_LENGTH, chap_r,
-				&type) < 0) {
+	अगर (extract_param(nr_in_ptr, "CHAP_R", MAX_RESPONSE_LENGTH, chap_r,
+				&type) < 0) अणु
 		pr_err("Could not find CHAP_R.\n");
-		goto out;
-	}
-	if (type != HEX) {
+		जाओ out;
+	पूर्ण
+	अगर (type != HEX) अणु
 		pr_err("Could not find CHAP_R.\n");
-		goto out;
-	}
-	if (strlen(chap_r) != chap->digest_size * 2) {
+		जाओ out;
+	पूर्ण
+	अगर (म_माप(chap_r) != chap->digest_size * 2) अणु
 		pr_err("Malformed CHAP_R\n");
-		goto out;
-	}
-	if (hex2bin(client_digest, chap_r, chap->digest_size) < 0) {
+		जाओ out;
+	पूर्ण
+	अगर (hex2bin(client_digest, chap_r, chap->digest_size) < 0) अणु
 		pr_err("Malformed CHAP_R\n");
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	pr_debug("[server] Got CHAP_R=%s\n", chap_r);
 
 	tfm = crypto_alloc_shash(chap->digest_name, 0, 0);
-	if (IS_ERR(tfm)) {
-		tfm = NULL;
+	अगर (IS_ERR(tfm)) अणु
+		tfm = शून्य;
 		pr_err("Unable to allocate struct crypto_shash\n");
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	desc = kmalloc(sizeof(*desc) + crypto_shash_descsize(tfm), GFP_KERNEL);
-	if (!desc) {
+	desc = kदो_स्मृति(माप(*desc) + crypto_shash_descsize(tfm), GFP_KERNEL);
+	अगर (!desc) अणु
 		pr_err("Unable to allocate struct shash_desc\n");
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	desc->tfm = tfm;
 
 	ret = crypto_shash_init(desc);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		pr_err("crypto_shash_init() failed\n");
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	ret = crypto_shash_update(desc, &chap->id, 1);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		pr_err("crypto_shash_update() failed for id\n");
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	ret = crypto_shash_update(desc, (char *)&auth->password,
-				  strlen(auth->password));
-	if (ret < 0) {
+	ret = crypto_shash_update(desc, (अक्षर *)&auth->password,
+				  म_माप(auth->password));
+	अगर (ret < 0) अणु
 		pr_err("crypto_shash_update() failed for password\n");
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	ret = crypto_shash_finup(desc, chap->challenge,
 				 chap->challenge_len, server_digest);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		pr_err("crypto_shash_finup() failed for challenge\n");
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	bin2hex(response, server_digest, chap->digest_size);
 	pr_debug("[server] %s Server Digest: %s\n",
 		chap->digest_name, response);
 
-	if (memcmp(server_digest, client_digest, chap->digest_size) != 0) {
+	अगर (स_भेद(server_digest, client_digest, chap->digest_size) != 0) अणु
 		pr_debug("[server] %s Digests do not match!\n\n",
 			chap->digest_name);
-		goto out;
-	} else
+		जाओ out;
+	पूर्ण अन्यथा
 		pr_debug("[server] %s Digests match, CHAP connection"
 				" successful.\n\n", chap->digest_name);
 	/*
-	 * One way authentication has succeeded, return now if mutual
+	 * One way authentication has succeeded, वापस now अगर mutual
 	 * authentication is not enabled.
 	 */
-	if (!auth->authenticate_target) {
+	अगर (!auth->authenticate_target) अणु
 		auth_ret = 0;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 	/*
 	 * Get CHAP_I.
 	 */
-	if (extract_param(nr_in_ptr, "CHAP_I", 10, identifier, &type) < 0) {
+	अगर (extract_param(nr_in_ptr, "CHAP_I", 10, identअगरier, &type) < 0) अणु
 		pr_err("Could not find CHAP_I.\n");
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (type == HEX)
-		ret = kstrtoul(&identifier[2], 0, &id);
-	else
-		ret = kstrtoul(identifier, 0, &id);
+	अगर (type == HEX)
+		ret = kम_से_अदीर्घ(&identअगरier[2], 0, &id);
+	अन्यथा
+		ret = kम_से_अदीर्घ(identअगरier, 0, &id);
 
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		pr_err("kstrtoul() failed for CHAP identifier: %d\n", ret);
-		goto out;
-	}
-	if (id > 255) {
+		जाओ out;
+	पूर्ण
+	अगर (id > 255) अणु
 		pr_err("chap identifier: %lu greater than 255\n", id);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 	/*
-	 * RFC 1994 says Identifier is no more than octet (8 bits).
+	 * RFC 1994 says Identअगरier is no more than octet (8 bits).
 	 */
 	pr_debug("[server] Got CHAP_I=%lu\n", id);
 	/*
 	 * Get CHAP_C.
 	 */
-	if (extract_param(nr_in_ptr, "CHAP_C", CHAP_CHALLENGE_STR_LEN,
-			initiatorchg, &type) < 0) {
+	अगर (extract_param(nr_in_ptr, "CHAP_C", CHAP_CHALLENGE_STR_LEN,
+			initiatorchg, &type) < 0) अणु
 		pr_err("Could not find CHAP_C.\n");
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (type != HEX) {
+	अगर (type != HEX) अणु
 		pr_err("Could not find CHAP_C.\n");
-		goto out;
-	}
-	initiatorchg_len = DIV_ROUND_UP(strlen(initiatorchg), 2);
-	if (!initiatorchg_len) {
+		जाओ out;
+	पूर्ण
+	initiatorchg_len = DIV_ROUND_UP(म_माप(initiatorchg), 2);
+	अगर (!initiatorchg_len) अणु
 		pr_err("Unable to convert incoming challenge\n");
-		goto out;
-	}
-	if (initiatorchg_len > 1024) {
+		जाओ out;
+	पूर्ण
+	अगर (initiatorchg_len > 1024) अणु
 		pr_err("CHAP_C exceeds maximum binary size of 1024 bytes\n");
-		goto out;
-	}
-	if (hex2bin(initiatorchg_binhex, initiatorchg, initiatorchg_len) < 0) {
+		जाओ out;
+	पूर्ण
+	अगर (hex2bin(initiatorchg_binhex, initiatorchg, initiatorchg_len) < 0) अणु
 		pr_err("Malformed CHAP_C\n");
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 	pr_debug("[server] Got CHAP_C=%s\n", initiatorchg);
 	/*
 	 * During mutual authentication, the CHAP_C generated by the
 	 * initiator must not match the original CHAP_C generated by
 	 * the target.
 	 */
-	if (initiatorchg_len == chap->challenge_len &&
-				!memcmp(initiatorchg_binhex, chap->challenge,
-				initiatorchg_len)) {
+	अगर (initiatorchg_len == chap->challenge_len &&
+				!स_भेद(initiatorchg_binhex, chap->challenge,
+				initiatorchg_len)) अणु
 		pr_err("initiator CHAP_C matches target CHAP_C, failing"
 		       " login attempt\n");
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 	/*
-	 * Generate CHAP_N and CHAP_R for mutual authentication.
+	 * Generate CHAP_N and CHAP_R क्रम mutual authentication.
 	 */
 	ret = crypto_shash_init(desc);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		pr_err("crypto_shash_init() failed\n");
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	/* To handle both endiannesses */
-	id_as_uchar = id;
-	ret = crypto_shash_update(desc, &id_as_uchar, 1);
-	if (ret < 0) {
+	id_as_uअक्षर = id;
+	ret = crypto_shash_update(desc, &id_as_uअक्षर, 1);
+	अगर (ret < 0) अणु
 		pr_err("crypto_shash_update() failed for id\n");
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	ret = crypto_shash_update(desc, auth->password_mutual,
-				  strlen(auth->password_mutual));
-	if (ret < 0) {
+				  म_माप(auth->password_mutual));
+	अगर (ret < 0) अणु
 		pr_err("crypto_shash_update() failed for"
 				" password_mutual\n");
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 	/*
 	 * Convert received challenge to binary hex.
 	 */
 	ret = crypto_shash_finup(desc, initiatorchg_binhex, initiatorchg_len,
 				 digest);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		pr_err("crypto_shash_finup() failed for ma challenge\n");
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	/*
 	 * Generate CHAP_N and CHAP_R.
 	 */
-	*nr_out_len = sprintf(nr_out_ptr, "CHAP_N=%s", auth->userid_mutual);
+	*nr_out_len = प्र_लिखो(nr_out_ptr, "CHAP_N=%s", auth->userid_mutual);
 	*nr_out_len += 1;
 	pr_debug("[server] Sending CHAP_N=%s\n", auth->userid_mutual);
 	/*
 	 * Convert response from binary hex to ascii hext.
 	 */
 	bin2hex(response, digest, chap->digest_size);
-	*nr_out_len += sprintf(nr_out_ptr + *nr_out_len, "CHAP_R=0x%s",
+	*nr_out_len += प्र_लिखो(nr_out_ptr + *nr_out_len, "CHAP_R=0x%s",
 			response);
 	*nr_out_len += 1;
 	pr_debug("[server] Sending CHAP_R=0x%s\n", response);
 	auth_ret = 0;
 out:
-	kfree_sensitive(desc);
-	if (tfm)
-		crypto_free_shash(tfm);
-	kfree(initiatorchg);
-	kfree(initiatorchg_binhex);
-	kfree(digest);
-	kfree(response);
-	kfree(server_digest);
-	kfree(client_digest);
-	return auth_ret;
-}
+	kमुक्त_sensitive(desc);
+	अगर (tfm)
+		crypto_मुक्त_shash(tfm);
+	kमुक्त(initiatorchg);
+	kमुक्त(initiatorchg_binhex);
+	kमुक्त(digest);
+	kमुक्त(response);
+	kमुक्त(server_digest);
+	kमुक्त(client_digest);
+	वापस auth_ret;
+पूर्ण
 
-u32 chap_main_loop(
-	struct iscsi_conn *conn,
-	struct iscsi_node_auth *auth,
-	char *in_text,
-	char *out_text,
-	int *in_len,
-	int *out_len)
-{
-	struct iscsi_chap *chap = conn->auth_protocol;
+u32 chap_मुख्य_loop(
+	काष्ठा iscsi_conn *conn,
+	काष्ठा iscsi_node_auth *auth,
+	अक्षर *in_text,
+	अक्षर *out_text,
+	पूर्णांक *in_len,
+	पूर्णांक *out_len)
+अणु
+	काष्ठा iscsi_chap *chap = conn->auth_protocol;
 
-	if (!chap) {
-		chap = chap_server_open(conn, auth, in_text, out_text, out_len);
-		if (!chap)
-			return 2;
+	अगर (!chap) अणु
+		chap = chap_server_खोलो(conn, auth, in_text, out_text, out_len);
+		अगर (!chap)
+			वापस 2;
 		chap->chap_state = CHAP_STAGE_SERVER_AIC;
-		return 0;
-	} else if (chap->chap_state == CHAP_STAGE_SERVER_AIC) {
+		वापस 0;
+	पूर्ण अन्यथा अगर (chap->chap_state == CHAP_STAGE_SERVER_AIC) अणु
 		convert_null_to_semi(in_text, *in_len);
-		if (chap_server_compute_hash(conn, auth, in_text, out_text,
-				out_len) < 0) {
-			chap_close(conn);
-			return 2;
-		}
-		if (auth->authenticate_target)
+		अगर (chap_server_compute_hash(conn, auth, in_text, out_text,
+				out_len) < 0) अणु
+			chap_बंद(conn);
+			वापस 2;
+		पूर्ण
+		अगर (auth->authenticate_target)
 			chap->chap_state = CHAP_STAGE_SERVER_NR;
-		else
+		अन्यथा
 			*out_len = 0;
-		chap_close(conn);
-		return 1;
-	}
+		chap_बंद(conn);
+		वापस 1;
+	पूर्ण
 
-	return 2;
-}
+	वापस 2;
+पूर्ण

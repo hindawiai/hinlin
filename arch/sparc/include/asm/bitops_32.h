@@ -1,109 +1,110 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * bitops.h: Bit string operations on the Sparc.
  *
  * Copyright 1995 David S. Miller (davem@caip.rutgers.edu)
  * Copyright 1996 Eddie C. Dost   (ecd@skynet.be)
- * Copyright 2001 Anton Blanchard (anton@samba.org)
+ * Copyright 2001 Anton Blanअक्षरd (anton@samba.org)
  */
 
-#ifndef _SPARC_BITOPS_H
-#define _SPARC_BITOPS_H
+#अगर_अघोषित _SPARC_BITOPS_H
+#घोषणा _SPARC_BITOPS_H
 
-#include <linux/compiler.h>
-#include <asm/byteorder.h>
+#समावेश <linux/compiler.h>
+#समावेश <यंत्र/byteorder.h>
 
-#ifdef __KERNEL__
+#अगर_घोषित __KERNEL__
 
-#ifndef _LINUX_BITOPS_H
-#error only <linux/bitops.h> can be included directly
-#endif
+#अगर_अघोषित _LINUX_BITOPS_H
+#त्रुटि only <linux/bitops.h> can be included directly
+#पूर्ण_अगर
 
-unsigned long ___set_bit(unsigned long *addr, unsigned long mask);
-unsigned long ___clear_bit(unsigned long *addr, unsigned long mask);
-unsigned long ___change_bit(unsigned long *addr, unsigned long mask);
+अचिन्हित दीर्घ ___set_bit(अचिन्हित दीर्घ *addr, अचिन्हित दीर्घ mask);
+अचिन्हित दीर्घ ___clear_bit(अचिन्हित दीर्घ *addr, अचिन्हित दीर्घ mask);
+अचिन्हित दीर्घ ___change_bit(अचिन्हित दीर्घ *addr, अचिन्हित दीर्घ mask);
 
 /*
  * Set bit 'nr' in 32-bit quantity at address 'addr' where bit '0'
  * is in the highest of the four bytes and bit '31' is the high bit
  * within the first byte. Sparc is BIG-Endian. Unless noted otherwise
- * all bit-ops return 0 if bit was previously clear and != 0 otherwise.
+ * all bit-ops वापस 0 अगर bit was previously clear and != 0 otherwise.
  */
-static inline int test_and_set_bit(unsigned long nr, volatile unsigned long *addr)
-{
-	unsigned long *ADDR, mask;
+अटल अंतरभूत पूर्णांक test_and_set_bit(अचिन्हित दीर्घ nr, अस्थिर अचिन्हित दीर्घ *addr)
+अणु
+	अचिन्हित दीर्घ *ADDR, mask;
 
-	ADDR = ((unsigned long *) addr) + (nr >> 5);
+	ADDR = ((अचिन्हित दीर्घ *) addr) + (nr >> 5);
 	mask = 1 << (nr & 31);
 
-	return ___set_bit(ADDR, mask) != 0;
-}
+	वापस ___set_bit(ADDR, mask) != 0;
+पूर्ण
 
-static inline void set_bit(unsigned long nr, volatile unsigned long *addr)
-{
-	unsigned long *ADDR, mask;
+अटल अंतरभूत व्योम set_bit(अचिन्हित दीर्घ nr, अस्थिर अचिन्हित दीर्घ *addr)
+अणु
+	अचिन्हित दीर्घ *ADDR, mask;
 
-	ADDR = ((unsigned long *) addr) + (nr >> 5);
+	ADDR = ((अचिन्हित दीर्घ *) addr) + (nr >> 5);
 	mask = 1 << (nr & 31);
 
-	(void) ___set_bit(ADDR, mask);
-}
+	(व्योम) ___set_bit(ADDR, mask);
+पूर्ण
 
-static inline int test_and_clear_bit(unsigned long nr, volatile unsigned long *addr)
-{
-	unsigned long *ADDR, mask;
+अटल अंतरभूत पूर्णांक test_and_clear_bit(अचिन्हित दीर्घ nr, अस्थिर अचिन्हित दीर्घ *addr)
+अणु
+	अचिन्हित दीर्घ *ADDR, mask;
 
-	ADDR = ((unsigned long *) addr) + (nr >> 5);
+	ADDR = ((अचिन्हित दीर्घ *) addr) + (nr >> 5);
 	mask = 1 << (nr & 31);
 
-	return ___clear_bit(ADDR, mask) != 0;
-}
+	वापस ___clear_bit(ADDR, mask) != 0;
+पूर्ण
 
-static inline void clear_bit(unsigned long nr, volatile unsigned long *addr)
-{
-	unsigned long *ADDR, mask;
+अटल अंतरभूत व्योम clear_bit(अचिन्हित दीर्घ nr, अस्थिर अचिन्हित दीर्घ *addr)
+अणु
+	अचिन्हित दीर्घ *ADDR, mask;
 
-	ADDR = ((unsigned long *) addr) + (nr >> 5);
+	ADDR = ((अचिन्हित दीर्घ *) addr) + (nr >> 5);
 	mask = 1 << (nr & 31);
 
-	(void) ___clear_bit(ADDR, mask);
-}
+	(व्योम) ___clear_bit(ADDR, mask);
+पूर्ण
 
-static inline int test_and_change_bit(unsigned long nr, volatile unsigned long *addr)
-{
-	unsigned long *ADDR, mask;
+अटल अंतरभूत पूर्णांक test_and_change_bit(अचिन्हित दीर्घ nr, अस्थिर अचिन्हित दीर्घ *addr)
+अणु
+	अचिन्हित दीर्घ *ADDR, mask;
 
-	ADDR = ((unsigned long *) addr) + (nr >> 5);
+	ADDR = ((अचिन्हित दीर्घ *) addr) + (nr >> 5);
 	mask = 1 << (nr & 31);
 
-	return ___change_bit(ADDR, mask) != 0;
-}
+	वापस ___change_bit(ADDR, mask) != 0;
+पूर्ण
 
-static inline void change_bit(unsigned long nr, volatile unsigned long *addr)
-{
-	unsigned long *ADDR, mask;
+अटल अंतरभूत व्योम change_bit(अचिन्हित दीर्घ nr, अस्थिर अचिन्हित दीर्घ *addr)
+अणु
+	अचिन्हित दीर्घ *ADDR, mask;
 
-	ADDR = ((unsigned long *) addr) + (nr >> 5);
+	ADDR = ((अचिन्हित दीर्घ *) addr) + (nr >> 5);
 	mask = 1 << (nr & 31);
 
-	(void) ___change_bit(ADDR, mask);
-}
+	(व्योम) ___change_bit(ADDR, mask);
+पूर्ण
 
-#include <asm-generic/bitops/non-atomic.h>
+#समावेश <यंत्र-generic/bitops/non-atomic.h>
 
-#include <asm-generic/bitops/ffz.h>
-#include <asm-generic/bitops/__ffs.h>
-#include <asm-generic/bitops/sched.h>
-#include <asm-generic/bitops/ffs.h>
-#include <asm-generic/bitops/fls.h>
-#include <asm-generic/bitops/__fls.h>
-#include <asm-generic/bitops/fls64.h>
-#include <asm-generic/bitops/hweight.h>
-#include <asm-generic/bitops/lock.h>
-#include <asm-generic/bitops/find.h>
-#include <asm-generic/bitops/le.h>
-#include <asm-generic/bitops/ext2-atomic.h>
+#समावेश <यंत्र-generic/bitops/ffz.h>
+#समावेश <यंत्र-generic/bitops/__ffs.h>
+#समावेश <यंत्र-generic/bitops/sched.h>
+#समावेश <यंत्र-generic/bitops/ffs.h>
+#समावेश <यंत्र-generic/bitops/fls.h>
+#समावेश <यंत्र-generic/bitops/__fls.h>
+#समावेश <यंत्र-generic/bitops/fls64.h>
+#समावेश <यंत्र-generic/bitops/hweight.h>
+#समावेश <यंत्र-generic/bitops/lock.h>
+#समावेश <यंत्र-generic/bitops/find.h>
+#समावेश <यंत्र-generic/bitops/le.h>
+#समावेश <यंत्र-generic/bitops/ext2-atomic.h>
 
-#endif /* __KERNEL__ */
+#पूर्ण_अगर /* __KERNEL__ */
 
-#endif /* defined(_SPARC_BITOPS_H) */
+#पूर्ण_अगर /* defined(_SPARC_BITOPS_H) */

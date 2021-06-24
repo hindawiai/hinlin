@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
  * Analog Devices ADAU1373 Audio Codec drive
  *
@@ -6,28 +7,28 @@
  * Author: Lars-Peter Clausen <lars@metafoo.de>
  */
 
-#ifndef __SOUND_ADAU1373_H__
-#define __SOUND_ADAU1373_H__
+#अगर_अघोषित __SOUND_ADAU1373_H__
+#घोषणा __SOUND_ADAU1373_H__
 
-enum adau1373_micbias_voltage {
+क्रमागत adau1373_micbias_voltage अणु
 	ADAU1373_MICBIAS_2_9V = 0,
 	ADAU1373_MICBIAS_2_2V = 1,
 	ADAU1373_MICBIAS_2_6V = 2,
 	ADAU1373_MICBIAS_1_8V = 3,
-};
+पूर्ण;
 
-#define ADAU1373_DRC_SIZE 13
+#घोषणा ADAU1373_DRC_SIZE 13
 
-struct adau1373_platform_data {
-	bool input_differential[4];
-	bool lineout_differential;
+काष्ठा adau1373_platक्रमm_data अणु
+	bool input_dअगरferential[4];
+	bool lineout_dअगरferential;
 	bool lineout_ground_sense;
 
-	unsigned int num_drc;
-	uint8_t drc_setting[3][ADAU1373_DRC_SIZE];
+	अचिन्हित पूर्णांक num_drc;
+	uपूर्णांक8_t drc_setting[3][ADAU1373_DRC_SIZE];
 
-	enum adau1373_micbias_voltage micbias1;
-	enum adau1373_micbias_voltage micbias2;
-};
+	क्रमागत adau1373_micbias_voltage micbias1;
+	क्रमागत adau1373_micbias_voltage micbias2;
+पूर्ण;
 
-#endif
+#पूर्ण_अगर

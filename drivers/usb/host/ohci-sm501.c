@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: GPL-1.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-1.0+
 /*
- * OHCI HCD (Host Controller Driver) for USB.
+ * OHCI HCD (Host Controller Driver) क्रम USB.
  *
  * (C) Copyright 1999 Roman Weissgaerber <weissg@vienna.at>
  * (C) Copyright 2000-2005 David Brownell
@@ -12,38 +13,38 @@
  * This file is licenced under the GPL.
  */
 
-#include <linux/interrupt.h>
-#include <linux/jiffies.h>
-#include <linux/platform_device.h>
-#include <linux/dma-mapping.h>
-#include <linux/sm501.h>
-#include <linux/sm501-regs.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/jअगरfies.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/dma-mapping.h>
+#समावेश <linux/sm501.h>
+#समावेश <linux/sm501-regs.h>
 
-static int ohci_sm501_init(struct usb_hcd *hcd)
-{
-	return ohci_init(hcd_to_ohci(hcd));
-}
+अटल पूर्णांक ohci_sm501_init(काष्ठा usb_hcd *hcd)
+अणु
+	वापस ohci_init(hcd_to_ohci(hcd));
+पूर्ण
 
-static int ohci_sm501_start(struct usb_hcd *hcd)
-{
-	struct device *dev = hcd->self.controller;
-	int ret;
+अटल पूर्णांक ohci_sm501_start(काष्ठा usb_hcd *hcd)
+अणु
+	काष्ठा device *dev = hcd->self.controller;
+	पूर्णांक ret;
 
 	ret = ohci_run(hcd_to_ohci(hcd));
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(dev, "can't start %s", hcd->self.bus_name);
 		ohci_stop(hcd);
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*-------------------------------------------------------------------------*/
 
-static const struct hc_driver ohci_sm501_hc_driver = {
+अटल स्थिर काष्ठा hc_driver ohci_sm501_hc_driver = अणु
 	.description =		hcd_name,
 	.product_desc =		"SM501 OHCI",
-	.hcd_priv_size =	sizeof(struct ohci_hcd),
+	.hcd_priv_size =	माप(काष्ठा ohci_hcd),
 
 	/*
 	 * generic hardware linkage
@@ -52,19 +53,19 @@ static const struct hc_driver ohci_sm501_hc_driver = {
 	.flags =		HCD_USB11 | HCD_MEMORY,
 
 	/*
-	 * basic lifecycle operations
+	 * basic lअगरecycle operations
 	 */
 	.reset =		ohci_sm501_init,
 	.start =		ohci_sm501_start,
 	.stop =			ohci_stop,
-	.shutdown =		ohci_shutdown,
+	.shutकरोwn =		ohci_shutकरोwn,
 
 	/*
 	 * managing i/o requests and associated device resources
 	 */
 	.urb_enqueue =		ohci_urb_enqueue,
 	.urb_dequeue =		ohci_urb_dequeue,
-	.endpoint_disable =	ohci_endpoint_disable,
+	.endpoपूर्णांक_disable =	ohci_endpoपूर्णांक_disable,
 
 	/*
 	 * scheduling support
@@ -76,69 +77,69 @@ static const struct hc_driver ohci_sm501_hc_driver = {
 	 */
 	.hub_status_data =	ohci_hub_status_data,
 	.hub_control =		ohci_hub_control,
-#ifdef	CONFIG_PM
+#अगर_घोषित	CONFIG_PM
 	.bus_suspend =		ohci_bus_suspend,
 	.bus_resume =		ohci_bus_resume,
-#endif
+#पूर्ण_अगर
 	.start_port_reset =	ohci_start_port_reset,
-};
+पूर्ण;
 
 /*-------------------------------------------------------------------------*/
 
-static int ohci_hcd_sm501_drv_probe(struct platform_device *pdev)
-{
-	const struct hc_driver *driver = &ohci_sm501_hc_driver;
-	struct device *dev = &pdev->dev;
-	struct resource	*res, *mem;
-	int retval, irq;
-	struct usb_hcd *hcd = NULL;
+अटल पूर्णांक ohci_hcd_sm501_drv_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	स्थिर काष्ठा hc_driver *driver = &ohci_sm501_hc_driver;
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा resource	*res, *mem;
+	पूर्णांक retval, irq;
+	काष्ठा usb_hcd *hcd = शून्य;
 
-	irq = retval = platform_get_irq(pdev, 0);
-	if (retval < 0)
-		goto err0;
+	irq = retval = platक्रमm_get_irq(pdev, 0);
+	अगर (retval < 0)
+		जाओ err0;
 
-	mem = platform_get_resource(pdev, IORESOURCE_MEM, 1);
-	if (mem == NULL) {
+	mem = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 1);
+	अगर (mem == शून्य) अणु
 		dev_err(dev, "no resource definition for memory\n");
 		retval = -ENOENT;
-		goto err0;
-	}
+		जाओ err0;
+	पूर्ण
 
-	if (!request_mem_region(mem->start, resource_size(mem), pdev->name)) {
+	अगर (!request_mem_region(mem->start, resource_size(mem), pdev->name)) अणु
 		dev_err(dev, "request_mem_region failed\n");
 		retval = -EBUSY;
-		goto err0;
-	}
+		जाओ err0;
+	पूर्ण
 
-	/* allocate, reserve and remap resources for registers */
-	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
-	if (res == NULL) {
+	/* allocate, reserve and remap resources क्रम रेजिस्टरs */
+	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
+	अगर (res == शून्य) अणु
 		dev_err(dev, "no resource definition for registers\n");
 		retval = -ENOENT;
-		goto err1;
-	}
+		जाओ err1;
+	पूर्ण
 
 	hcd = usb_create_hcd(driver, &pdev->dev, dev_name(&pdev->dev));
-	if (!hcd) {
+	अगर (!hcd) अणु
 		retval = -ENOMEM;
-		goto err1;
-	}
+		जाओ err1;
+	पूर्ण
 
 	hcd->rsrc_start = res->start;
 	hcd->rsrc_len = resource_size(res);
 
-	if (!request_mem_region(hcd->rsrc_start, hcd->rsrc_len,	pdev->name)) {
+	अगर (!request_mem_region(hcd->rsrc_start, hcd->rsrc_len,	pdev->name)) अणु
 		dev_err(dev, "request_mem_region failed\n");
 		retval = -EBUSY;
-		goto err3;
-	}
+		जाओ err3;
+	पूर्ण
 
 	hcd->regs = ioremap(hcd->rsrc_start, hcd->rsrc_len);
-	if (hcd->regs == NULL) {
+	अगर (hcd->regs == शून्य) अणु
 		dev_err(dev, "cannot remap registers\n");
 		retval = -ENXIO;
-		goto err4;
-	}
+		जाओ err4;
+	पूर्ण
 
 	ohci_hcd_init(hcd_to_ohci(hcd));
 
@@ -146,33 +147,33 @@ static int ohci_hcd_sm501_drv_probe(struct platform_device *pdev)
 	 * by on-chip devices such as the video controller and the usb host.
 	 * This driver uses genalloc so that usb allocations with
 	 * gen_pool_dma_alloc() allocate from this local memory. The dma_handle
-	 * returned by gen_pool_dma_alloc() will be an offset starting from 0
-	 * for the first local memory byte.
+	 * वापसed by gen_pool_dma_alloc() will be an offset starting from 0
+	 * क्रम the first local memory byte.
 	 *
-	 * So as long as data is allocated using gen_pool_dma_alloc() all is
-	 * fine. This is however not always the case - buffers may be allocated
-	 * using kmalloc() - so the usb core needs to be told that it must copy
-	 * data into our local memory if the buffers happen to be placed in
+	 * So as दीर्घ as data is allocated using gen_pool_dma_alloc() all is
+	 * fine. This is however not always the हाल - buffers may be allocated
+	 * using kदो_स्मृति() - so the usb core needs to be told that it must copy
+	 * data पूर्णांकo our local memory अगर the buffers happen to be placed in
 	 * regular memory. A non-null hcd->localmem_pool initialized by the
-	 * the call to usb_hcd_setup_local_mem() below does just that.
+	 * the call to usb_hcd_setup_local_mem() below करोes just that.
 	 */
 
 	retval = usb_hcd_setup_local_mem(hcd, mem->start,
 					 mem->start - mem->parent->start,
 					 resource_size(mem));
-	if (retval < 0)
-		goto err5;
+	अगर (retval < 0)
+		जाओ err5;
 	retval = usb_add_hcd(hcd, irq, IRQF_SHARED);
-	if (retval)
-		goto err5;
+	अगर (retval)
+		जाओ err5;
 	device_wakeup_enable(hcd->self.controller);
 
-	/* enable power and unmask interrupts */
+	/* enable घातer and unmask पूर्णांकerrupts */
 
-	sm501_unit_power(dev->parent, SM501_GATE_USB_HOST, 1);
-	sm501_modify_reg(dev->parent, SM501_IRQ_MASK, 1 << 6, 0);
+	sm501_unit_घातer(dev->parent, SM501_GATE_USB_HOST, 1);
+	sm501_modअगरy_reg(dev->parent, SM501_IRQ_MASK, 1 << 6, 0);
 
-	return 0;
+	वापस 0;
 err5:
 	iounmap(hcd->regs);
 err4:
@@ -182,85 +183,85 @@ err3:
 err1:
 	release_mem_region(mem->start, resource_size(mem));
 err0:
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
-static int ohci_hcd_sm501_drv_remove(struct platform_device *pdev)
-{
-	struct usb_hcd *hcd = platform_get_drvdata(pdev);
-	struct resource	*mem;
+अटल पूर्णांक ohci_hcd_sm501_drv_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा usb_hcd *hcd = platक्रमm_get_drvdata(pdev);
+	काष्ठा resource	*mem;
 
-	usb_remove_hcd(hcd);
+	usb_हटाओ_hcd(hcd);
 	iounmap(hcd->regs);
 	release_mem_region(hcd->rsrc_start, hcd->rsrc_len);
 	usb_put_hcd(hcd);
-	mem = platform_get_resource(pdev, IORESOURCE_MEM, 1);
-	if (mem)
+	mem = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 1);
+	अगर (mem)
 		release_mem_region(mem->start, resource_size(mem));
 
-	/* mask interrupts and disable power */
+	/* mask पूर्णांकerrupts and disable घातer */
 
-	sm501_modify_reg(pdev->dev.parent, SM501_IRQ_MASK, 0, 1 << 6);
-	sm501_unit_power(pdev->dev.parent, SM501_GATE_USB_HOST, 0);
+	sm501_modअगरy_reg(pdev->dev.parent, SM501_IRQ_MASK, 0, 1 << 6);
+	sm501_unit_घातer(pdev->dev.parent, SM501_GATE_USB_HOST, 0);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*-------------------------------------------------------------------------*/
 
-#ifdef CONFIG_PM
-static int ohci_sm501_suspend(struct platform_device *pdev, pm_message_t msg)
-{
-	struct device *dev = &pdev->dev;
-	struct usb_hcd  *hcd = platform_get_drvdata(pdev);
-	struct ohci_hcd	*ohci = hcd_to_ohci(hcd);
-	bool do_wakeup = device_may_wakeup(dev);
-	int ret;
+#अगर_घोषित CONFIG_PM
+अटल पूर्णांक ohci_sm501_suspend(काष्ठा platक्रमm_device *pdev, pm_message_t msg)
+अणु
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा usb_hcd  *hcd = platक्रमm_get_drvdata(pdev);
+	काष्ठा ohci_hcd	*ohci = hcd_to_ohci(hcd);
+	bool करो_wakeup = device_may_wakeup(dev);
+	पूर्णांक ret;
 
-	if (time_before(jiffies, ohci->next_statechange))
+	अगर (समय_beक्रमe(jअगरfies, ohci->next_statechange))
 		msleep(5);
-	ohci->next_statechange = jiffies;
+	ohci->next_statechange = jअगरfies;
 
-	ret = ohci_suspend(hcd, do_wakeup);
-	if (ret)
-		return ret;
+	ret = ohci_suspend(hcd, करो_wakeup);
+	अगर (ret)
+		वापस ret;
 
-	sm501_unit_power(dev->parent, SM501_GATE_USB_HOST, 0);
-	return ret;
-}
+	sm501_unit_घातer(dev->parent, SM501_GATE_USB_HOST, 0);
+	वापस ret;
+पूर्ण
 
-static int ohci_sm501_resume(struct platform_device *pdev)
-{
-	struct device *dev = &pdev->dev;
-	struct usb_hcd	*hcd = platform_get_drvdata(pdev);
-	struct ohci_hcd	*ohci = hcd_to_ohci(hcd);
+अटल पूर्णांक ohci_sm501_resume(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा usb_hcd	*hcd = platक्रमm_get_drvdata(pdev);
+	काष्ठा ohci_hcd	*ohci = hcd_to_ohci(hcd);
 
-	if (time_before(jiffies, ohci->next_statechange))
+	अगर (समय_beक्रमe(jअगरfies, ohci->next_statechange))
 		msleep(5);
-	ohci->next_statechange = jiffies;
+	ohci->next_statechange = jअगरfies;
 
-	sm501_unit_power(dev->parent, SM501_GATE_USB_HOST, 1);
+	sm501_unit_घातer(dev->parent, SM501_GATE_USB_HOST, 1);
 	ohci_resume(hcd, false);
-	return 0;
-}
-#else
-#define ohci_sm501_suspend NULL
-#define ohci_sm501_resume NULL
-#endif
+	वापस 0;
+पूर्ण
+#अन्यथा
+#घोषणा ohci_sm501_suspend शून्य
+#घोषणा ohci_sm501_resume शून्य
+#पूर्ण_अगर
 
 /*-------------------------------------------------------------------------*/
 
 /*
- * Driver definition to register with the SM501 bus
+ * Driver definition to रेजिस्टर with the SM501 bus
  */
-static struct platform_driver ohci_hcd_sm501_driver = {
+अटल काष्ठा platक्रमm_driver ohci_hcd_sm501_driver = अणु
 	.probe		= ohci_hcd_sm501_drv_probe,
-	.remove		= ohci_hcd_sm501_drv_remove,
-	.shutdown	= usb_hcd_platform_shutdown,
+	.हटाओ		= ohci_hcd_sm501_drv_हटाओ,
+	.shutकरोwn	= usb_hcd_platक्रमm_shutकरोwn,
 	.suspend	= ohci_sm501_suspend,
 	.resume		= ohci_sm501_resume,
-	.driver		= {
+	.driver		= अणु
 		.name	= "sm501-usb",
-	},
-};
+	पूर्ण,
+पूर्ण;
 MODULE_ALIAS("platform:sm501-usb");

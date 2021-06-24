@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * vrf.c: device driver to encapsulate a VRF space
  *
@@ -9,52 +10,52 @@
  * Based on dummy, team and ipvlan drivers
  */
 
-#include <linux/ethtool.h>
-#include <linux/module.h>
-#include <linux/kernel.h>
-#include <linux/netdevice.h>
-#include <linux/etherdevice.h>
-#include <linux/ip.h>
-#include <linux/init.h>
-#include <linux/moduleparam.h>
-#include <linux/netfilter.h>
-#include <linux/rtnetlink.h>
-#include <net/rtnetlink.h>
-#include <linux/u64_stats_sync.h>
-#include <linux/hashtable.h>
-#include <linux/spinlock_types.h>
+#समावेश <linux/ethtool.h>
+#समावेश <linux/module.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/etherdevice.h>
+#समावेश <linux/ip.h>
+#समावेश <linux/init.h>
+#समावेश <linux/moduleparam.h>
+#समावेश <linux/netfilter.h>
+#समावेश <linux/rtnetlink.h>
+#समावेश <net/rtnetlink.h>
+#समावेश <linux/u64_stats_sync.h>
+#समावेश <linux/hashtable.h>
+#समावेश <linux/spinlock_types.h>
 
-#include <linux/inetdevice.h>
-#include <net/arp.h>
-#include <net/ip.h>
-#include <net/ip_fib.h>
-#include <net/ip6_fib.h>
-#include <net/ip6_route.h>
-#include <net/route.h>
-#include <net/addrconf.h>
-#include <net/l3mdev.h>
-#include <net/fib_rules.h>
-#include <net/netns/generic.h>
+#समावेश <linux/inetdevice.h>
+#समावेश <net/arp.h>
+#समावेश <net/ip.h>
+#समावेश <net/ip_fib.h>
+#समावेश <net/ip6_fib.h>
+#समावेश <net/ip6_route.h>
+#समावेश <net/route.h>
+#समावेश <net/addrconf.h>
+#समावेश <net/l3mdev.h>
+#समावेश <net/fib_rules.h>
+#समावेश <net/netns/generic.h>
 
-#define DRV_NAME	"vrf"
-#define DRV_VERSION	"1.1"
+#घोषणा DRV_NAME	"vrf"
+#घोषणा DRV_VERSION	"1.1"
 
-#define FIB_RULE_PREF  1000       /* default preference for FIB rules */
+#घोषणा FIB_RULE_PREF  1000       /* शेष preference क्रम FIB rules */
 
-#define HT_MAP_BITS	4
-#define HASH_INITVAL	((u32)0xcafef00d)
+#घोषणा HT_MAP_BITS	4
+#घोषणा HASH_INITVAL	((u32)0xcafef00d)
 
-struct  vrf_map {
+काष्ठा  vrf_map अणु
 	DECLARE_HASHTABLE(ht, HT_MAP_BITS);
 	spinlock_t vmap_lock;
 
 	/* shared_tables:
-	 * count how many distinct tables do not comply with the strict mode
+	 * count how many distinct tables करो not comply with the strict mode
 	 * requirement.
 	 * shared_tables value must be 0 in order to enable the strict mode.
 	 *
 	 * example of the evolution of shared_tables:
-	 *                                                        | time
+	 *                                                        | समय
 	 * add  vrf0 --> table 100        shared_tables = 0       | t0
 	 * add  vrf1 --> table 101        shared_tables = 0       | t1
 	 * add  vrf2 --> table 100        shared_tables = 1       | t2
@@ -69,15 +70,15 @@ struct  vrf_map {
 	 *
 	 * at t3, another dev (vrf3) is bound to the same table 100 but the
 	 * value of shared_tables is still 1.
-	 * This means that no matter how many new vrfs will register on the
+	 * This means that no matter how many new vrfs will रेजिस्टर on the
 	 * table 100, the shared_tables will not increase (considering only
 	 * table 100).
 	 *
 	 * at t4, vrf4 is bound to table 101, and shared_tables = 2.
 	 *
-	 * Looking at the value of shared_tables we can immediately know if
-	 * the strict_mode can or cannot be enforced. Indeed, strict_mode
-	 * can be enforced iff shared_tables = 0.
+	 * Looking at the value of shared_tables we can immediately know अगर
+	 * the strict_mode can or cannot be enक्रमced. Indeed, strict_mode
+	 * can be enक्रमced अगरf shared_tables = 0.
 	 *
 	 * Conversely, shared_tables is decreased when a vrf is de-associated
 	 * from a table with exactly two associated vrfs.
@@ -85,226 +86,226 @@ struct  vrf_map {
 	u32 shared_tables;
 
 	bool strict_mode;
-};
+पूर्ण;
 
-struct vrf_map_elem {
-	struct hlist_node hnode;
-	struct list_head vrf_list;  /* VRFs registered to this table */
+काष्ठा vrf_map_elem अणु
+	काष्ठा hlist_node hnode;
+	काष्ठा list_head vrf_list;  /* VRFs रेजिस्टरed to this table */
 
 	u32 table_id;
-	int users;
-	int ifindex;
-};
+	पूर्णांक users;
+	पूर्णांक अगरindex;
+पूर्ण;
 
-static unsigned int vrf_net_id;
+अटल अचिन्हित पूर्णांक vrf_net_id;
 
 /* per netns vrf data */
-struct netns_vrf {
-	/* protected by rtnl lock */
+काष्ठा netns_vrf अणु
+	/* रक्षित by rtnl lock */
 	bool add_fib_rules;
 
-	struct vrf_map vmap;
-	struct ctl_table_header	*ctl_hdr;
-};
+	काष्ठा vrf_map vmap;
+	काष्ठा ctl_table_header	*ctl_hdr;
+पूर्ण;
 
-struct net_vrf {
-	struct rtable __rcu	*rth;
-	struct rt6_info	__rcu	*rt6;
-#if IS_ENABLED(CONFIG_IPV6)
-	struct fib6_table	*fib6_table;
-#endif
+काष्ठा net_vrf अणु
+	काष्ठा rtable __rcu	*rth;
+	काष्ठा rt6_info	__rcu	*rt6;
+#अगर IS_ENABLED(CONFIG_IPV6)
+	काष्ठा fib6_table	*fib6_table;
+#पूर्ण_अगर
 	u32                     tb_id;
 
-	struct list_head	me_list;   /* entry in vrf_map_elem */
-	int			ifindex;
-};
+	काष्ठा list_head	me_list;   /* entry in vrf_map_elem */
+	पूर्णांक			अगरindex;
+पूर्ण;
 
-struct pcpu_dstats {
+काष्ठा pcpu_dstats अणु
 	u64			tx_pkts;
 	u64			tx_bytes;
 	u64			tx_drps;
 	u64			rx_pkts;
 	u64			rx_bytes;
 	u64			rx_drps;
-	struct u64_stats_sync	syncp;
-};
+	काष्ठा u64_stats_sync	syncp;
+पूर्ण;
 
-static void vrf_rx_stats(struct net_device *dev, int len)
-{
-	struct pcpu_dstats *dstats = this_cpu_ptr(dev->dstats);
+अटल व्योम vrf_rx_stats(काष्ठा net_device *dev, पूर्णांक len)
+अणु
+	काष्ठा pcpu_dstats *dstats = this_cpu_ptr(dev->dstats);
 
 	u64_stats_update_begin(&dstats->syncp);
 	dstats->rx_pkts++;
 	dstats->rx_bytes += len;
 	u64_stats_update_end(&dstats->syncp);
-}
+पूर्ण
 
-static void vrf_tx_error(struct net_device *vrf_dev, struct sk_buff *skb)
-{
+अटल व्योम vrf_tx_error(काष्ठा net_device *vrf_dev, काष्ठा sk_buff *skb)
+अणु
 	vrf_dev->stats.tx_errors++;
-	kfree_skb(skb);
-}
+	kमुक्त_skb(skb);
+पूर्ण
 
-static void vrf_get_stats64(struct net_device *dev,
-			    struct rtnl_link_stats64 *stats)
-{
-	int i;
+अटल व्योम vrf_get_stats64(काष्ठा net_device *dev,
+			    काष्ठा rtnl_link_stats64 *stats)
+अणु
+	पूर्णांक i;
 
-	for_each_possible_cpu(i) {
-		const struct pcpu_dstats *dstats;
+	क्रम_each_possible_cpu(i) अणु
+		स्थिर काष्ठा pcpu_dstats *dstats;
 		u64 tbytes, tpkts, tdrops, rbytes, rpkts;
-		unsigned int start;
+		अचिन्हित पूर्णांक start;
 
 		dstats = per_cpu_ptr(dev->dstats, i);
-		do {
+		करो अणु
 			start = u64_stats_fetch_begin_irq(&dstats->syncp);
 			tbytes = dstats->tx_bytes;
 			tpkts = dstats->tx_pkts;
 			tdrops = dstats->tx_drps;
 			rbytes = dstats->rx_bytes;
 			rpkts = dstats->rx_pkts;
-		} while (u64_stats_fetch_retry_irq(&dstats->syncp, start));
+		पूर्ण जबतक (u64_stats_fetch_retry_irq(&dstats->syncp, start));
 		stats->tx_bytes += tbytes;
 		stats->tx_packets += tpkts;
 		stats->tx_dropped += tdrops;
 		stats->rx_bytes += rbytes;
 		stats->rx_packets += rpkts;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static struct vrf_map *netns_vrf_map(struct net *net)
-{
-	struct netns_vrf *nn_vrf = net_generic(net, vrf_net_id);
+अटल काष्ठा vrf_map *netns_vrf_map(काष्ठा net *net)
+अणु
+	काष्ठा netns_vrf *nn_vrf = net_generic(net, vrf_net_id);
 
-	return &nn_vrf->vmap;
-}
+	वापस &nn_vrf->vmap;
+पूर्ण
 
-static struct vrf_map *netns_vrf_map_by_dev(struct net_device *dev)
-{
-	return netns_vrf_map(dev_net(dev));
-}
+अटल काष्ठा vrf_map *netns_vrf_map_by_dev(काष्ठा net_device *dev)
+अणु
+	वापस netns_vrf_map(dev_net(dev));
+पूर्ण
 
-static int vrf_map_elem_get_vrf_ifindex(struct vrf_map_elem *me)
-{
-	struct list_head *me_head = &me->vrf_list;
-	struct net_vrf *vrf;
+अटल पूर्णांक vrf_map_elem_get_vrf_अगरindex(काष्ठा vrf_map_elem *me)
+अणु
+	काष्ठा list_head *me_head = &me->vrf_list;
+	काष्ठा net_vrf *vrf;
 
-	if (list_empty(me_head))
-		return -ENODEV;
+	अगर (list_empty(me_head))
+		वापस -ENODEV;
 
-	vrf = list_first_entry(me_head, struct net_vrf, me_list);
+	vrf = list_first_entry(me_head, काष्ठा net_vrf, me_list);
 
-	return vrf->ifindex;
-}
+	वापस vrf->अगरindex;
+पूर्ण
 
-static struct vrf_map_elem *vrf_map_elem_alloc(gfp_t flags)
-{
-	struct vrf_map_elem *me;
+अटल काष्ठा vrf_map_elem *vrf_map_elem_alloc(gfp_t flags)
+अणु
+	काष्ठा vrf_map_elem *me;
 
-	me = kmalloc(sizeof(*me), flags);
-	if (!me)
-		return NULL;
+	me = kदो_स्मृति(माप(*me), flags);
+	अगर (!me)
+		वापस शून्य;
 
-	return me;
-}
+	वापस me;
+पूर्ण
 
-static void vrf_map_elem_free(struct vrf_map_elem *me)
-{
-	kfree(me);
-}
+अटल व्योम vrf_map_elem_मुक्त(काष्ठा vrf_map_elem *me)
+अणु
+	kमुक्त(me);
+पूर्ण
 
-static void vrf_map_elem_init(struct vrf_map_elem *me, int table_id,
-			      int ifindex, int users)
-{
+अटल व्योम vrf_map_elem_init(काष्ठा vrf_map_elem *me, पूर्णांक table_id,
+			      पूर्णांक अगरindex, पूर्णांक users)
+अणु
 	me->table_id = table_id;
-	me->ifindex = ifindex;
+	me->अगरindex = अगरindex;
 	me->users = users;
 	INIT_LIST_HEAD(&me->vrf_list);
-}
+पूर्ण
 
-static struct vrf_map_elem *vrf_map_lookup_elem(struct vrf_map *vmap,
+अटल काष्ठा vrf_map_elem *vrf_map_lookup_elem(काष्ठा vrf_map *vmap,
 						u32 table_id)
-{
-	struct vrf_map_elem *me;
+अणु
+	काष्ठा vrf_map_elem *me;
 	u32 key;
 
 	key = jhash_1word(table_id, HASH_INITVAL);
-	hash_for_each_possible(vmap->ht, me, hnode, key) {
-		if (me->table_id == table_id)
-			return me;
-	}
+	hash_क्रम_each_possible(vmap->ht, me, hnode, key) अणु
+		अगर (me->table_id == table_id)
+			वापस me;
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static void vrf_map_add_elem(struct vrf_map *vmap, struct vrf_map_elem *me)
-{
+अटल व्योम vrf_map_add_elem(काष्ठा vrf_map *vmap, काष्ठा vrf_map_elem *me)
+अणु
 	u32 table_id = me->table_id;
 	u32 key;
 
 	key = jhash_1word(table_id, HASH_INITVAL);
 	hash_add(vmap->ht, &me->hnode, key);
-}
+पूर्ण
 
-static void vrf_map_del_elem(struct vrf_map_elem *me)
-{
+अटल व्योम vrf_map_del_elem(काष्ठा vrf_map_elem *me)
+अणु
 	hash_del(&me->hnode);
-}
+पूर्ण
 
-static void vrf_map_lock(struct vrf_map *vmap) __acquires(&vmap->vmap_lock)
-{
+अटल व्योम vrf_map_lock(काष्ठा vrf_map *vmap) __acquires(&vmap->vmap_lock)
+अणु
 	spin_lock(&vmap->vmap_lock);
-}
+पूर्ण
 
-static void vrf_map_unlock(struct vrf_map *vmap) __releases(&vmap->vmap_lock)
-{
+अटल व्योम vrf_map_unlock(काष्ठा vrf_map *vmap) __releases(&vmap->vmap_lock)
+अणु
 	spin_unlock(&vmap->vmap_lock);
-}
+पूर्ण
 
 /* called with rtnl lock held */
-static int
-vrf_map_register_dev(struct net_device *dev, struct netlink_ext_ack *extack)
-{
-	struct vrf_map *vmap = netns_vrf_map_by_dev(dev);
-	struct net_vrf *vrf = netdev_priv(dev);
-	struct vrf_map_elem *new_me, *me;
+अटल पूर्णांक
+vrf_map_रेजिस्टर_dev(काष्ठा net_device *dev, काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा vrf_map *vmap = netns_vrf_map_by_dev(dev);
+	काष्ठा net_vrf *vrf = netdev_priv(dev);
+	काष्ठा vrf_map_elem *new_me, *me;
 	u32 table_id = vrf->tb_id;
-	bool free_new_me = false;
-	int users;
-	int res;
+	bool मुक्त_new_me = false;
+	पूर्णांक users;
+	पूर्णांक res;
 
 	/* we pre-allocate elements used in the spin-locked section (so that we
-	 * keep the spinlock as short as possibile).
+	 * keep the spinlock as लघु as possibile).
 	 */
 	new_me = vrf_map_elem_alloc(GFP_KERNEL);
-	if (!new_me)
-		return -ENOMEM;
+	अगर (!new_me)
+		वापस -ENOMEM;
 
-	vrf_map_elem_init(new_me, table_id, dev->ifindex, 0);
+	vrf_map_elem_init(new_me, table_id, dev->अगरindex, 0);
 
 	vrf_map_lock(vmap);
 
 	me = vrf_map_lookup_elem(vmap, table_id);
-	if (!me) {
+	अगर (!me) अणु
 		me = new_me;
 		vrf_map_add_elem(vmap, me);
-		goto link_vrf;
-	}
+		जाओ link_vrf;
+	पूर्ण
 
-	/* we already have an entry in the vrf_map, so it means there is (at
-	 * least) a vrf registered on the specific table.
+	/* we alपढ़ोy have an entry in the vrf_map, so it means there is (at
+	 * least) a vrf रेजिस्टरed on the specअगरic table.
 	 */
-	free_new_me = true;
-	if (vmap->strict_mode) {
+	मुक्त_new_me = true;
+	अगर (vmap->strict_mode) अणु
 		/* vrfs cannot share the same table */
 		NL_SET_ERR_MSG(extack, "Table is used by another VRF");
 		res = -EBUSY;
-		goto unlock;
-	}
+		जाओ unlock;
+	पूर्ण
 
 link_vrf:
 	users = ++me->users;
-	if (users == 2)
+	अगर (users == 2)
 		++vmap->shared_tables;
 
 	list_add(&vrf->me_list, &me->vrf_list);
@@ -314,150 +315,150 @@ link_vrf:
 unlock:
 	vrf_map_unlock(vmap);
 
-	/* clean-up, if needed */
-	if (free_new_me)
-		vrf_map_elem_free(new_me);
+	/* clean-up, अगर needed */
+	अगर (मुक्त_new_me)
+		vrf_map_elem_मुक्त(new_me);
 
-	return res;
-}
+	वापस res;
+पूर्ण
 
 /* called with rtnl lock held */
-static void vrf_map_unregister_dev(struct net_device *dev)
-{
-	struct vrf_map *vmap = netns_vrf_map_by_dev(dev);
-	struct net_vrf *vrf = netdev_priv(dev);
+अटल व्योम vrf_map_unरेजिस्टर_dev(काष्ठा net_device *dev)
+अणु
+	काष्ठा vrf_map *vmap = netns_vrf_map_by_dev(dev);
+	काष्ठा net_vrf *vrf = netdev_priv(dev);
 	u32 table_id = vrf->tb_id;
-	struct vrf_map_elem *me;
-	int users;
+	काष्ठा vrf_map_elem *me;
+	पूर्णांक users;
 
 	vrf_map_lock(vmap);
 
 	me = vrf_map_lookup_elem(vmap, table_id);
-	if (!me)
-		goto unlock;
+	अगर (!me)
+		जाओ unlock;
 
 	list_del(&vrf->me_list);
 
 	users = --me->users;
-	if (users == 1) {
+	अगर (users == 1) अणु
 		--vmap->shared_tables;
-	} else if (users == 0) {
+	पूर्ण अन्यथा अगर (users == 0) अणु
 		vrf_map_del_elem(me);
 
 		/* no one will refer to this element anymore */
-		vrf_map_elem_free(me);
-	}
+		vrf_map_elem_मुक्त(me);
+	पूर्ण
 
 unlock:
 	vrf_map_unlock(vmap);
-}
+पूर्ण
 
-/* return the vrf device index associated with the table_id */
-static int vrf_ifindex_lookup_by_table_id(struct net *net, u32 table_id)
-{
-	struct vrf_map *vmap = netns_vrf_map(net);
-	struct vrf_map_elem *me;
-	int ifindex;
+/* वापस the vrf device index associated with the table_id */
+अटल पूर्णांक vrf_अगरindex_lookup_by_table_id(काष्ठा net *net, u32 table_id)
+अणु
+	काष्ठा vrf_map *vmap = netns_vrf_map(net);
+	काष्ठा vrf_map_elem *me;
+	पूर्णांक अगरindex;
 
 	vrf_map_lock(vmap);
 
-	if (!vmap->strict_mode) {
-		ifindex = -EPERM;
-		goto unlock;
-	}
+	अगर (!vmap->strict_mode) अणु
+		अगरindex = -EPERM;
+		जाओ unlock;
+	पूर्ण
 
 	me = vrf_map_lookup_elem(vmap, table_id);
-	if (!me) {
-		ifindex = -ENODEV;
-		goto unlock;
-	}
+	अगर (!me) अणु
+		अगरindex = -ENODEV;
+		जाओ unlock;
+	पूर्ण
 
-	ifindex = vrf_map_elem_get_vrf_ifindex(me);
+	अगरindex = vrf_map_elem_get_vrf_अगरindex(me);
 
 unlock:
 	vrf_map_unlock(vmap);
 
-	return ifindex;
-}
+	वापस अगरindex;
+पूर्ण
 
-/* by default VRF devices do not have a qdisc and are expected
+/* by शेष VRF devices करो not have a qdisc and are expected
  * to be created with only a single queue.
  */
-static bool qdisc_tx_is_default(const struct net_device *dev)
-{
-	struct netdev_queue *txq;
-	struct Qdisc *qdisc;
+अटल bool qdisc_tx_is_शेष(स्थिर काष्ठा net_device *dev)
+अणु
+	काष्ठा netdev_queue *txq;
+	काष्ठा Qdisc *qdisc;
 
-	if (dev->num_tx_queues > 1)
-		return false;
+	अगर (dev->num_tx_queues > 1)
+		वापस false;
 
 	txq = netdev_get_tx_queue(dev, 0);
-	qdisc = rcu_access_pointer(txq->qdisc);
+	qdisc = rcu_access_poपूर्णांकer(txq->qdisc);
 
-	return !qdisc->enqueue;
-}
+	वापस !qdisc->enqueue;
+पूर्ण
 
 /* Local traffic destined to local address. Reinsert the packet to rx
  * path, similar to loopback handling.
  */
-static int vrf_local_xmit(struct sk_buff *skb, struct net_device *dev,
-			  struct dst_entry *dst)
-{
-	int len = skb->len;
+अटल पूर्णांक vrf_local_xmit(काष्ठा sk_buff *skb, काष्ठा net_device *dev,
+			  काष्ठा dst_entry *dst)
+अणु
+	पूर्णांक len = skb->len;
 
 	skb_orphan(skb);
 
 	skb_dst_set(skb, dst);
 
-	/* set pkt_type to avoid skb hitting packet taps twice -
+	/* set pkt_type to aव्योम skb hitting packet taps twice -
 	 * once on Tx and again in Rx processing
 	 */
 	skb->pkt_type = PACKET_LOOPBACK;
 
 	skb->protocol = eth_type_trans(skb, dev);
 
-	if (likely(netif_rx(skb) == NET_RX_SUCCESS))
+	अगर (likely(netअगर_rx(skb) == NET_RX_SUCCESS))
 		vrf_rx_stats(dev, len);
-	else
+	अन्यथा
 		this_cpu_inc(dev->dstats->rx_drps);
 
-	return NETDEV_TX_OK;
-}
+	वापस NETDEV_TX_OK;
+पूर्ण
 
-#if IS_ENABLED(CONFIG_IPV6)
-static int vrf_ip6_local_out(struct net *net, struct sock *sk,
-			     struct sk_buff *skb)
-{
-	int err;
+#अगर IS_ENABLED(CONFIG_IPV6)
+अटल पूर्णांक vrf_ip6_local_out(काष्ठा net *net, काष्ठा sock *sk,
+			     काष्ठा sk_buff *skb)
+अणु
+	पूर्णांक err;
 
 	err = nf_hook(NFPROTO_IPV6, NF_INET_LOCAL_OUT, net,
-		      sk, skb, NULL, skb_dst(skb)->dev, dst_output);
+		      sk, skb, शून्य, skb_dst(skb)->dev, dst_output);
 
-	if (likely(err == 1))
+	अगर (likely(err == 1))
 		err = dst_output(net, sk, skb);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static netdev_tx_t vrf_process_v6_outbound(struct sk_buff *skb,
-					   struct net_device *dev)
-{
-	const struct ipv6hdr *iph;
-	struct net *net = dev_net(skb->dev);
-	struct flowi6 fl6;
-	int ret = NET_XMIT_DROP;
-	struct dst_entry *dst;
-	struct dst_entry *dst_null = &net->ipv6.ip6_null_entry->dst;
+अटल netdev_tx_t vrf_process_v6_outbound(काष्ठा sk_buff *skb,
+					   काष्ठा net_device *dev)
+अणु
+	स्थिर काष्ठा ipv6hdr *iph;
+	काष्ठा net *net = dev_net(skb->dev);
+	काष्ठा flowi6 fl6;
+	पूर्णांक ret = NET_XMIT_DROP;
+	काष्ठा dst_entry *dst;
+	काष्ठा dst_entry *dst_null = &net->ipv6.ip6_null_entry->dst;
 
-	if (!pskb_may_pull(skb, ETH_HLEN + sizeof(struct ipv6hdr)))
-		goto err;
+	अगर (!pskb_may_pull(skb, ETH_HLEN + माप(काष्ठा ipv6hdr)))
+		जाओ err;
 
 	iph = ipv6_hdr(skb);
 
-	memset(&fl6, 0, sizeof(fl6));
+	स_रखो(&fl6, 0, माप(fl6));
 	/* needed to match OIF rule */
-	fl6.flowi6_oif = dev->ifindex;
-	fl6.flowi6_iif = LOOPBACK_IFINDEX;
+	fl6.flowi6_oअगर = dev->अगरindex;
+	fl6.flowi6_iअगर = LOOPBACK_IFINDEX;
 	fl6.daddr = iph->daddr;
 	fl6.saddr = iph->saddr;
 	fl6.flowlabel = ip6_flowinfo(iph);
@@ -465,789 +466,789 @@ static netdev_tx_t vrf_process_v6_outbound(struct sk_buff *skb,
 	fl6.flowi6_proto = iph->nexthdr;
 	fl6.flowi6_flags = FLOWI_FLAG_SKIP_NH_OIF;
 
-	dst = ip6_dst_lookup_flow(net, NULL, &fl6, NULL);
-	if (IS_ERR(dst) || dst == dst_null)
-		goto err;
+	dst = ip6_dst_lookup_flow(net, शून्य, &fl6, शून्य);
+	अगर (IS_ERR(dst) || dst == dst_null)
+		जाओ err;
 
 	skb_dst_drop(skb);
 
-	/* if dst.dev is the VRF device again this is locally originated traffic
+	/* अगर dst.dev is the VRF device again this is locally originated traffic
 	 * destined to a local address. Short circuit to Rx path.
 	 */
-	if (dst->dev == dev)
-		return vrf_local_xmit(skb, dev, dst);
+	अगर (dst->dev == dev)
+		वापस vrf_local_xmit(skb, dev, dst);
 
 	skb_dst_set(skb, dst);
 
-	/* strip the ethernet header added for pass through VRF device */
+	/* strip the ethernet header added क्रम pass through VRF device */
 	__skb_pull(skb, skb_network_offset(skb));
 
 	ret = vrf_ip6_local_out(net, skb->sk, skb);
-	if (unlikely(net_xmit_eval(ret)))
+	अगर (unlikely(net_xmit_eval(ret)))
 		dev->stats.tx_errors++;
-	else
+	अन्यथा
 		ret = NET_XMIT_SUCCESS;
 
-	return ret;
+	वापस ret;
 err:
 	vrf_tx_error(dev, skb);
-	return NET_XMIT_DROP;
-}
-#else
-static netdev_tx_t vrf_process_v6_outbound(struct sk_buff *skb,
-					   struct net_device *dev)
-{
+	वापस NET_XMIT_DROP;
+पूर्ण
+#अन्यथा
+अटल netdev_tx_t vrf_process_v6_outbound(काष्ठा sk_buff *skb,
+					   काष्ठा net_device *dev)
+अणु
 	vrf_tx_error(dev, skb);
-	return NET_XMIT_DROP;
-}
-#endif
+	वापस NET_XMIT_DROP;
+पूर्ण
+#पूर्ण_अगर
 
-/* based on ip_local_out; can't use it b/c the dst is switched pointing to us */
-static int vrf_ip_local_out(struct net *net, struct sock *sk,
-			    struct sk_buff *skb)
-{
-	int err;
+/* based on ip_local_out; can't use it b/c the dst is चयनed poपूर्णांकing to us */
+अटल पूर्णांक vrf_ip_local_out(काष्ठा net *net, काष्ठा sock *sk,
+			    काष्ठा sk_buff *skb)
+अणु
+	पूर्णांक err;
 
 	err = nf_hook(NFPROTO_IPV4, NF_INET_LOCAL_OUT, net, sk,
-		      skb, NULL, skb_dst(skb)->dev, dst_output);
-	if (likely(err == 1))
+		      skb, शून्य, skb_dst(skb)->dev, dst_output);
+	अगर (likely(err == 1))
 		err = dst_output(net, sk, skb);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static netdev_tx_t vrf_process_v4_outbound(struct sk_buff *skb,
-					   struct net_device *vrf_dev)
-{
-	struct iphdr *ip4h;
-	int ret = NET_XMIT_DROP;
-	struct flowi4 fl4;
-	struct net *net = dev_net(vrf_dev);
-	struct rtable *rt;
+अटल netdev_tx_t vrf_process_v4_outbound(काष्ठा sk_buff *skb,
+					   काष्ठा net_device *vrf_dev)
+अणु
+	काष्ठा iphdr *ip4h;
+	पूर्णांक ret = NET_XMIT_DROP;
+	काष्ठा flowi4 fl4;
+	काष्ठा net *net = dev_net(vrf_dev);
+	काष्ठा rtable *rt;
 
-	if (!pskb_may_pull(skb, ETH_HLEN + sizeof(struct iphdr)))
-		goto err;
+	अगर (!pskb_may_pull(skb, ETH_HLEN + माप(काष्ठा iphdr)))
+		जाओ err;
 
 	ip4h = ip_hdr(skb);
 
-	memset(&fl4, 0, sizeof(fl4));
+	स_रखो(&fl4, 0, माप(fl4));
 	/* needed to match OIF rule */
-	fl4.flowi4_oif = vrf_dev->ifindex;
-	fl4.flowi4_iif = LOOPBACK_IFINDEX;
+	fl4.flowi4_oअगर = vrf_dev->अगरindex;
+	fl4.flowi4_iअगर = LOOPBACK_IFINDEX;
 	fl4.flowi4_tos = RT_TOS(ip4h->tos);
 	fl4.flowi4_flags = FLOWI_FLAG_ANYSRC | FLOWI_FLAG_SKIP_NH_OIF;
 	fl4.flowi4_proto = ip4h->protocol;
 	fl4.daddr = ip4h->daddr;
 	fl4.saddr = ip4h->saddr;
 
-	rt = ip_route_output_flow(net, &fl4, NULL);
-	if (IS_ERR(rt))
-		goto err;
+	rt = ip_route_output_flow(net, &fl4, शून्य);
+	अगर (IS_ERR(rt))
+		जाओ err;
 
 	skb_dst_drop(skb);
 
-	/* if dst.dev is the VRF device again this is locally originated traffic
+	/* अगर dst.dev is the VRF device again this is locally originated traffic
 	 * destined to a local address. Short circuit to Rx path.
 	 */
-	if (rt->dst.dev == vrf_dev)
-		return vrf_local_xmit(skb, vrf_dev, &rt->dst);
+	अगर (rt->dst.dev == vrf_dev)
+		वापस vrf_local_xmit(skb, vrf_dev, &rt->dst);
 
 	skb_dst_set(skb, &rt->dst);
 
-	/* strip the ethernet header added for pass through VRF device */
+	/* strip the ethernet header added क्रम pass through VRF device */
 	__skb_pull(skb, skb_network_offset(skb));
 
-	if (!ip4h->saddr) {
+	अगर (!ip4h->saddr) अणु
 		ip4h->saddr = inet_select_addr(skb_dst(skb)->dev, 0,
 					       RT_SCOPE_LINK);
-	}
+	पूर्ण
 
 	ret = vrf_ip_local_out(dev_net(skb_dst(skb)->dev), skb->sk, skb);
-	if (unlikely(net_xmit_eval(ret)))
+	अगर (unlikely(net_xmit_eval(ret)))
 		vrf_dev->stats.tx_errors++;
-	else
+	अन्यथा
 		ret = NET_XMIT_SUCCESS;
 
 out:
-	return ret;
+	वापस ret;
 err:
 	vrf_tx_error(vrf_dev, skb);
-	goto out;
-}
+	जाओ out;
+पूर्ण
 
-static netdev_tx_t is_ip_tx_frame(struct sk_buff *skb, struct net_device *dev)
-{
-	switch (skb->protocol) {
-	case htons(ETH_P_IP):
-		return vrf_process_v4_outbound(skb, dev);
-	case htons(ETH_P_IPV6):
-		return vrf_process_v6_outbound(skb, dev);
-	default:
+अटल netdev_tx_t is_ip_tx_frame(काष्ठा sk_buff *skb, काष्ठा net_device *dev)
+अणु
+	चयन (skb->protocol) अणु
+	हाल htons(ETH_P_IP):
+		वापस vrf_process_v4_outbound(skb, dev);
+	हाल htons(ETH_P_IPV6):
+		वापस vrf_process_v6_outbound(skb, dev);
+	शेष:
 		vrf_tx_error(dev, skb);
-		return NET_XMIT_DROP;
-	}
-}
+		वापस NET_XMIT_DROP;
+	पूर्ण
+पूर्ण
 
-static netdev_tx_t vrf_xmit(struct sk_buff *skb, struct net_device *dev)
-{
-	int len = skb->len;
+अटल netdev_tx_t vrf_xmit(काष्ठा sk_buff *skb, काष्ठा net_device *dev)
+अणु
+	पूर्णांक len = skb->len;
 	netdev_tx_t ret = is_ip_tx_frame(skb, dev);
 
-	if (likely(ret == NET_XMIT_SUCCESS || ret == NET_XMIT_CN)) {
-		struct pcpu_dstats *dstats = this_cpu_ptr(dev->dstats);
+	अगर (likely(ret == NET_XMIT_SUCCESS || ret == NET_XMIT_CN)) अणु
+		काष्ठा pcpu_dstats *dstats = this_cpu_ptr(dev->dstats);
 
 		u64_stats_update_begin(&dstats->syncp);
 		dstats->tx_pkts++;
 		dstats->tx_bytes += len;
 		u64_stats_update_end(&dstats->syncp);
-	} else {
+	पूर्ण अन्यथा अणु
 		this_cpu_inc(dev->dstats->tx_drps);
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void vrf_finish_direct(struct sk_buff *skb)
-{
-	struct net_device *vrf_dev = skb->dev;
+अटल व्योम vrf_finish_direct(काष्ठा sk_buff *skb)
+अणु
+	काष्ठा net_device *vrf_dev = skb->dev;
 
-	if (!list_empty(&vrf_dev->ptype_all) &&
-	    likely(skb_headroom(skb) >= ETH_HLEN)) {
-		struct ethhdr *eth = skb_push(skb, ETH_HLEN);
+	अगर (!list_empty(&vrf_dev->ptype_all) &&
+	    likely(skb_headroom(skb) >= ETH_HLEN)) अणु
+		काष्ठा ethhdr *eth = skb_push(skb, ETH_HLEN);
 
 		ether_addr_copy(eth->h_source, vrf_dev->dev_addr);
 		eth_zero_addr(eth->h_dest);
 		eth->h_proto = skb->protocol;
 
-		rcu_read_lock_bh();
+		rcu_पढ़ो_lock_bh();
 		dev_queue_xmit_nit(skb, vrf_dev);
-		rcu_read_unlock_bh();
+		rcu_पढ़ो_unlock_bh();
 
 		skb_pull(skb, ETH_HLEN);
-	}
+	पूर्ण
 
 	/* reset skb device */
 	nf_reset_ct(skb);
-}
+पूर्ण
 
-#if IS_ENABLED(CONFIG_IPV6)
+#अगर IS_ENABLED(CONFIG_IPV6)
 /* modelled after ip6_finish_output2 */
-static int vrf_finish_output6(struct net *net, struct sock *sk,
-			      struct sk_buff *skb)
-{
-	struct dst_entry *dst = skb_dst(skb);
-	struct net_device *dev = dst->dev;
-	const struct in6_addr *nexthop;
-	struct neighbour *neigh;
-	int ret;
+अटल पूर्णांक vrf_finish_output6(काष्ठा net *net, काष्ठा sock *sk,
+			      काष्ठा sk_buff *skb)
+अणु
+	काष्ठा dst_entry *dst = skb_dst(skb);
+	काष्ठा net_device *dev = dst->dev;
+	स्थिर काष्ठा in6_addr *nexthop;
+	काष्ठा neighbour *neigh;
+	पूर्णांक ret;
 
 	nf_reset_ct(skb);
 
 	skb->protocol = htons(ETH_P_IPV6);
 	skb->dev = dev;
 
-	rcu_read_lock_bh();
-	nexthop = rt6_nexthop((struct rt6_info *)dst, &ipv6_hdr(skb)->daddr);
+	rcu_पढ़ो_lock_bh();
+	nexthop = rt6_nexthop((काष्ठा rt6_info *)dst, &ipv6_hdr(skb)->daddr);
 	neigh = __ipv6_neigh_lookup_noref(dst->dev, nexthop);
-	if (unlikely(!neigh))
+	अगर (unlikely(!neigh))
 		neigh = __neigh_create(&nd_tbl, nexthop, dst->dev, false);
-	if (!IS_ERR(neigh)) {
+	अगर (!IS_ERR(neigh)) अणु
 		sock_confirm_neigh(skb, neigh);
 		ret = neigh_output(neigh, skb, false);
-		rcu_read_unlock_bh();
-		return ret;
-	}
-	rcu_read_unlock_bh();
+		rcu_पढ़ो_unlock_bh();
+		वापस ret;
+	पूर्ण
+	rcu_पढ़ो_unlock_bh();
 
 	IP6_INC_STATS(dev_net(dst->dev),
 		      ip6_dst_idev(dst), IPSTATS_MIB_OUTNOROUTES);
-	kfree_skb(skb);
-	return -EINVAL;
-}
+	kमुक्त_skb(skb);
+	वापस -EINVAL;
+पूर्ण
 
 /* modelled after ip6_output */
-static int vrf_output6(struct net *net, struct sock *sk, struct sk_buff *skb)
-{
-	return NF_HOOK_COND(NFPROTO_IPV6, NF_INET_POST_ROUTING,
-			    net, sk, skb, NULL, skb_dst(skb)->dev,
+अटल पूर्णांक vrf_output6(काष्ठा net *net, काष्ठा sock *sk, काष्ठा sk_buff *skb)
+अणु
+	वापस NF_HOOK_COND(NFPROTO_IPV6, NF_INET_POST_ROUTING,
+			    net, sk, skb, शून्य, skb_dst(skb)->dev,
 			    vrf_finish_output6,
 			    !(IP6CB(skb)->flags & IP6SKB_REROUTED));
-}
+पूर्ण
 
 /* set dst on skb to send packet to us via dev_xmit path. Allows
  * packet to go through device based features such as qdisc, netfilter
  * hooks and packet sockets with skb->dev set to vrf device.
  */
-static struct sk_buff *vrf_ip6_out_redirect(struct net_device *vrf_dev,
-					    struct sk_buff *skb)
-{
-	struct net_vrf *vrf = netdev_priv(vrf_dev);
-	struct dst_entry *dst = NULL;
-	struct rt6_info *rt6;
+अटल काष्ठा sk_buff *vrf_ip6_out_redirect(काष्ठा net_device *vrf_dev,
+					    काष्ठा sk_buff *skb)
+अणु
+	काष्ठा net_vrf *vrf = netdev_priv(vrf_dev);
+	काष्ठा dst_entry *dst = शून्य;
+	काष्ठा rt6_info *rt6;
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 
 	rt6 = rcu_dereference(vrf->rt6);
-	if (likely(rt6)) {
+	अगर (likely(rt6)) अणु
 		dst = &rt6->dst;
 		dst_hold(dst);
-	}
+	पूर्ण
 
-	rcu_read_unlock();
+	rcu_पढ़ो_unlock();
 
-	if (unlikely(!dst)) {
+	अगर (unlikely(!dst)) अणु
 		vrf_tx_error(vrf_dev, skb);
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
 	skb_dst_drop(skb);
 	skb_dst_set(skb, dst);
 
-	return skb;
-}
+	वापस skb;
+पूर्ण
 
-static int vrf_output6_direct_finish(struct net *net, struct sock *sk,
-				     struct sk_buff *skb)
-{
+अटल पूर्णांक vrf_output6_direct_finish(काष्ठा net *net, काष्ठा sock *sk,
+				     काष्ठा sk_buff *skb)
+अणु
 	vrf_finish_direct(skb);
 
-	return vrf_ip6_local_out(net, sk, skb);
-}
+	वापस vrf_ip6_local_out(net, sk, skb);
+पूर्ण
 
-static int vrf_output6_direct(struct net *net, struct sock *sk,
-			      struct sk_buff *skb)
-{
-	int err = 1;
+अटल पूर्णांक vrf_output6_direct(काष्ठा net *net, काष्ठा sock *sk,
+			      काष्ठा sk_buff *skb)
+अणु
+	पूर्णांक err = 1;
 
 	skb->protocol = htons(ETH_P_IPV6);
 
-	if (!(IPCB(skb)->flags & IPSKB_REROUTED))
+	अगर (!(IPCB(skb)->flags & IPSKB_REROUTED))
 		err = nf_hook(NFPROTO_IPV6, NF_INET_POST_ROUTING, net, sk, skb,
-			      NULL, skb->dev, vrf_output6_direct_finish);
+			      शून्य, skb->dev, vrf_output6_direct_finish);
 
-	if (likely(err == 1))
+	अगर (likely(err == 1))
 		vrf_finish_direct(skb);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int vrf_ip6_out_direct_finish(struct net *net, struct sock *sk,
-				     struct sk_buff *skb)
-{
-	int err;
+अटल पूर्णांक vrf_ip6_out_direct_finish(काष्ठा net *net, काष्ठा sock *sk,
+				     काष्ठा sk_buff *skb)
+अणु
+	पूर्णांक err;
 
 	err = vrf_output6_direct(net, sk, skb);
-	if (likely(err == 1))
+	अगर (likely(err == 1))
 		err = vrf_ip6_local_out(net, sk, skb);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static struct sk_buff *vrf_ip6_out_direct(struct net_device *vrf_dev,
-					  struct sock *sk,
-					  struct sk_buff *skb)
-{
-	struct net *net = dev_net(vrf_dev);
-	int err;
+अटल काष्ठा sk_buff *vrf_ip6_out_direct(काष्ठा net_device *vrf_dev,
+					  काष्ठा sock *sk,
+					  काष्ठा sk_buff *skb)
+अणु
+	काष्ठा net *net = dev_net(vrf_dev);
+	पूर्णांक err;
 
 	skb->dev = vrf_dev;
 
 	err = nf_hook(NFPROTO_IPV6, NF_INET_LOCAL_OUT, net, sk,
-		      skb, NULL, vrf_dev, vrf_ip6_out_direct_finish);
+		      skb, शून्य, vrf_dev, vrf_ip6_out_direct_finish);
 
-	if (likely(err == 1))
+	अगर (likely(err == 1))
 		err = vrf_output6_direct(net, sk, skb);
 
-	if (likely(err == 1))
-		return skb;
+	अगर (likely(err == 1))
+		वापस skb;
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static struct sk_buff *vrf_ip6_out(struct net_device *vrf_dev,
-				   struct sock *sk,
-				   struct sk_buff *skb)
-{
-	/* don't divert link scope packets */
-	if (rt6_need_strict(&ipv6_hdr(skb)->daddr))
-		return skb;
+अटल काष्ठा sk_buff *vrf_ip6_out(काष्ठा net_device *vrf_dev,
+				   काष्ठा sock *sk,
+				   काष्ठा sk_buff *skb)
+अणु
+	/* करोn't भागert link scope packets */
+	अगर (rt6_need_strict(&ipv6_hdr(skb)->daddr))
+		वापस skb;
 
-	if (qdisc_tx_is_default(vrf_dev) ||
+	अगर (qdisc_tx_is_शेष(vrf_dev) ||
 	    IP6CB(skb)->flags & IP6SKB_XFRM_TRANSFORMED)
-		return vrf_ip6_out_direct(vrf_dev, sk, skb);
+		वापस vrf_ip6_out_direct(vrf_dev, sk, skb);
 
-	return vrf_ip6_out_redirect(vrf_dev, skb);
-}
+	वापस vrf_ip6_out_redirect(vrf_dev, skb);
+पूर्ण
 
 /* holding rtnl */
-static void vrf_rt6_release(struct net_device *dev, struct net_vrf *vrf)
-{
-	struct rt6_info *rt6 = rtnl_dereference(vrf->rt6);
-	struct net *net = dev_net(dev);
-	struct dst_entry *dst;
+अटल व्योम vrf_rt6_release(काष्ठा net_device *dev, काष्ठा net_vrf *vrf)
+अणु
+	काष्ठा rt6_info *rt6 = rtnl_dereference(vrf->rt6);
+	काष्ठा net *net = dev_net(dev);
+	काष्ठा dst_entry *dst;
 
-	RCU_INIT_POINTER(vrf->rt6, NULL);
+	RCU_INIT_POINTER(vrf->rt6, शून्य);
 	synchronize_rcu();
 
 	/* move dev in dst's to loopback so this VRF device can be deleted
-	 * - based on dst_ifdown
+	 * - based on dst_अगरकरोwn
 	 */
-	if (rt6) {
+	अगर (rt6) अणु
 		dst = &rt6->dst;
 		dev_put(dst->dev);
 		dst->dev = net->loopback_dev;
 		dev_hold(dst->dev);
 		dst_release(dst);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int vrf_rt6_create(struct net_device *dev)
-{
-	int flags = DST_NOPOLICY | DST_NOXFRM;
-	struct net_vrf *vrf = netdev_priv(dev);
-	struct net *net = dev_net(dev);
-	struct rt6_info *rt6;
-	int rc = -ENOMEM;
+अटल पूर्णांक vrf_rt6_create(काष्ठा net_device *dev)
+अणु
+	पूर्णांक flags = DST_NOPOLICY | DST_NOXFRM;
+	काष्ठा net_vrf *vrf = netdev_priv(dev);
+	काष्ठा net *net = dev_net(dev);
+	काष्ठा rt6_info *rt6;
+	पूर्णांक rc = -ENOMEM;
 
-	/* IPv6 can be CONFIG enabled and then disabled runtime */
-	if (!ipv6_mod_enabled())
-		return 0;
+	/* IPv6 can be CONFIG enabled and then disabled runसमय */
+	अगर (!ipv6_mod_enabled())
+		वापस 0;
 
 	vrf->fib6_table = fib6_new_table(net, vrf->tb_id);
-	if (!vrf->fib6_table)
-		goto out;
+	अगर (!vrf->fib6_table)
+		जाओ out;
 
-	/* create a dst for routing packets out a VRF device */
+	/* create a dst क्रम routing packets out a VRF device */
 	rt6 = ip6_dst_alloc(net, dev, flags);
-	if (!rt6)
-		goto out;
+	अगर (!rt6)
+		जाओ out;
 
 	rt6->dst.output	= vrf_output6;
 
-	rcu_assign_pointer(vrf->rt6, rt6);
+	rcu_assign_poपूर्णांकer(vrf->rt6, rt6);
 
 	rc = 0;
 out:
-	return rc;
-}
-#else
-static struct sk_buff *vrf_ip6_out(struct net_device *vrf_dev,
-				   struct sock *sk,
-				   struct sk_buff *skb)
-{
-	return skb;
-}
+	वापस rc;
+पूर्ण
+#अन्यथा
+अटल काष्ठा sk_buff *vrf_ip6_out(काष्ठा net_device *vrf_dev,
+				   काष्ठा sock *sk,
+				   काष्ठा sk_buff *skb)
+अणु
+	वापस skb;
+पूर्ण
 
-static void vrf_rt6_release(struct net_device *dev, struct net_vrf *vrf)
-{
-}
+अटल व्योम vrf_rt6_release(काष्ठा net_device *dev, काष्ठा net_vrf *vrf)
+अणु
+पूर्ण
 
-static int vrf_rt6_create(struct net_device *dev)
-{
-	return 0;
-}
-#endif
+अटल पूर्णांक vrf_rt6_create(काष्ठा net_device *dev)
+अणु
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
 /* modelled after ip_finish_output2 */
-static int vrf_finish_output(struct net *net, struct sock *sk, struct sk_buff *skb)
-{
-	struct dst_entry *dst = skb_dst(skb);
-	struct rtable *rt = (struct rtable *)dst;
-	struct net_device *dev = dst->dev;
-	unsigned int hh_len = LL_RESERVED_SPACE(dev);
-	struct neighbour *neigh;
+अटल पूर्णांक vrf_finish_output(काष्ठा net *net, काष्ठा sock *sk, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा dst_entry *dst = skb_dst(skb);
+	काष्ठा rtable *rt = (काष्ठा rtable *)dst;
+	काष्ठा net_device *dev = dst->dev;
+	अचिन्हित पूर्णांक hh_len = LL_RESERVED_SPACE(dev);
+	काष्ठा neighbour *neigh;
 	bool is_v6gw = false;
-	int ret = -EINVAL;
+	पूर्णांक ret = -EINVAL;
 
 	nf_reset_ct(skb);
 
 	/* Be paranoid, rather than too clever. */
-	if (unlikely(skb_headroom(skb) < hh_len && dev->header_ops)) {
-		struct sk_buff *skb2;
+	अगर (unlikely(skb_headroom(skb) < hh_len && dev->header_ops)) अणु
+		काष्ठा sk_buff *skb2;
 
-		skb2 = skb_realloc_headroom(skb, LL_RESERVED_SPACE(dev));
-		if (!skb2) {
+		skb2 = skb_पुनः_स्मृति_headroom(skb, LL_RESERVED_SPACE(dev));
+		अगर (!skb2) अणु
 			ret = -ENOMEM;
-			goto err;
-		}
-		if (skb->sk)
+			जाओ err;
+		पूर्ण
+		अगर (skb->sk)
 			skb_set_owner_w(skb2, skb->sk);
 
 		consume_skb(skb);
 		skb = skb2;
-	}
+	पूर्ण
 
-	rcu_read_lock_bh();
+	rcu_पढ़ो_lock_bh();
 
-	neigh = ip_neigh_for_gw(rt, skb, &is_v6gw);
-	if (!IS_ERR(neigh)) {
+	neigh = ip_neigh_क्रम_gw(rt, skb, &is_v6gw);
+	अगर (!IS_ERR(neigh)) अणु
 		sock_confirm_neigh(skb, neigh);
-		/* if crossing protocols, can not use the cached header */
+		/* अगर crossing protocols, can not use the cached header */
 		ret = neigh_output(neigh, skb, is_v6gw);
-		rcu_read_unlock_bh();
-		return ret;
-	}
+		rcu_पढ़ो_unlock_bh();
+		वापस ret;
+	पूर्ण
 
-	rcu_read_unlock_bh();
+	rcu_पढ़ो_unlock_bh();
 err:
 	vrf_tx_error(skb->dev, skb);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int vrf_output(struct net *net, struct sock *sk, struct sk_buff *skb)
-{
-	struct net_device *dev = skb_dst(skb)->dev;
+अटल पूर्णांक vrf_output(काष्ठा net *net, काष्ठा sock *sk, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा net_device *dev = skb_dst(skb)->dev;
 
 	IP_UPD_PO_STATS(net, IPSTATS_MIB_OUT, skb->len);
 
 	skb->dev = dev;
 	skb->protocol = htons(ETH_P_IP);
 
-	return NF_HOOK_COND(NFPROTO_IPV4, NF_INET_POST_ROUTING,
-			    net, sk, skb, NULL, dev,
+	वापस NF_HOOK_COND(NFPROTO_IPV4, NF_INET_POST_ROUTING,
+			    net, sk, skb, शून्य, dev,
 			    vrf_finish_output,
 			    !(IPCB(skb)->flags & IPSKB_REROUTED));
-}
+पूर्ण
 
 /* set dst on skb to send packet to us via dev_xmit path. Allows
  * packet to go through device based features such as qdisc, netfilter
  * hooks and packet sockets with skb->dev set to vrf device.
  */
-static struct sk_buff *vrf_ip_out_redirect(struct net_device *vrf_dev,
-					   struct sk_buff *skb)
-{
-	struct net_vrf *vrf = netdev_priv(vrf_dev);
-	struct dst_entry *dst = NULL;
-	struct rtable *rth;
+अटल काष्ठा sk_buff *vrf_ip_out_redirect(काष्ठा net_device *vrf_dev,
+					   काष्ठा sk_buff *skb)
+अणु
+	काष्ठा net_vrf *vrf = netdev_priv(vrf_dev);
+	काष्ठा dst_entry *dst = शून्य;
+	काष्ठा rtable *rth;
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 
 	rth = rcu_dereference(vrf->rth);
-	if (likely(rth)) {
+	अगर (likely(rth)) अणु
 		dst = &rth->dst;
 		dst_hold(dst);
-	}
+	पूर्ण
 
-	rcu_read_unlock();
+	rcu_पढ़ो_unlock();
 
-	if (unlikely(!dst)) {
+	अगर (unlikely(!dst)) अणु
 		vrf_tx_error(vrf_dev, skb);
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
 	skb_dst_drop(skb);
 	skb_dst_set(skb, dst);
 
-	return skb;
-}
+	वापस skb;
+पूर्ण
 
-static int vrf_output_direct_finish(struct net *net, struct sock *sk,
-				    struct sk_buff *skb)
-{
+अटल पूर्णांक vrf_output_direct_finish(काष्ठा net *net, काष्ठा sock *sk,
+				    काष्ठा sk_buff *skb)
+अणु
 	vrf_finish_direct(skb);
 
-	return vrf_ip_local_out(net, sk, skb);
-}
+	वापस vrf_ip_local_out(net, sk, skb);
+पूर्ण
 
-static int vrf_output_direct(struct net *net, struct sock *sk,
-			     struct sk_buff *skb)
-{
-	int err = 1;
+अटल पूर्णांक vrf_output_direct(काष्ठा net *net, काष्ठा sock *sk,
+			     काष्ठा sk_buff *skb)
+अणु
+	पूर्णांक err = 1;
 
 	skb->protocol = htons(ETH_P_IP);
 
-	if (!(IPCB(skb)->flags & IPSKB_REROUTED))
+	अगर (!(IPCB(skb)->flags & IPSKB_REROUTED))
 		err = nf_hook(NFPROTO_IPV4, NF_INET_POST_ROUTING, net, sk, skb,
-			      NULL, skb->dev, vrf_output_direct_finish);
+			      शून्य, skb->dev, vrf_output_direct_finish);
 
-	if (likely(err == 1))
+	अगर (likely(err == 1))
 		vrf_finish_direct(skb);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int vrf_ip_out_direct_finish(struct net *net, struct sock *sk,
-				    struct sk_buff *skb)
-{
-	int err;
+अटल पूर्णांक vrf_ip_out_direct_finish(काष्ठा net *net, काष्ठा sock *sk,
+				    काष्ठा sk_buff *skb)
+अणु
+	पूर्णांक err;
 
 	err = vrf_output_direct(net, sk, skb);
-	if (likely(err == 1))
+	अगर (likely(err == 1))
 		err = vrf_ip_local_out(net, sk, skb);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static struct sk_buff *vrf_ip_out_direct(struct net_device *vrf_dev,
-					 struct sock *sk,
-					 struct sk_buff *skb)
-{
-	struct net *net = dev_net(vrf_dev);
-	int err;
+अटल काष्ठा sk_buff *vrf_ip_out_direct(काष्ठा net_device *vrf_dev,
+					 काष्ठा sock *sk,
+					 काष्ठा sk_buff *skb)
+अणु
+	काष्ठा net *net = dev_net(vrf_dev);
+	पूर्णांक err;
 
 	skb->dev = vrf_dev;
 
 	err = nf_hook(NFPROTO_IPV4, NF_INET_LOCAL_OUT, net, sk,
-		      skb, NULL, vrf_dev, vrf_ip_out_direct_finish);
+		      skb, शून्य, vrf_dev, vrf_ip_out_direct_finish);
 
-	if (likely(err == 1))
+	अगर (likely(err == 1))
 		err = vrf_output_direct(net, sk, skb);
 
-	if (likely(err == 1))
-		return skb;
+	अगर (likely(err == 1))
+		वापस skb;
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static struct sk_buff *vrf_ip_out(struct net_device *vrf_dev,
-				  struct sock *sk,
-				  struct sk_buff *skb)
-{
-	/* don't divert multicast or local broadcast */
-	if (ipv4_is_multicast(ip_hdr(skb)->daddr) ||
+अटल काष्ठा sk_buff *vrf_ip_out(काष्ठा net_device *vrf_dev,
+				  काष्ठा sock *sk,
+				  काष्ठा sk_buff *skb)
+अणु
+	/* करोn't भागert multicast or local broadcast */
+	अगर (ipv4_is_multicast(ip_hdr(skb)->daddr) ||
 	    ipv4_is_lbcast(ip_hdr(skb)->daddr))
-		return skb;
+		वापस skb;
 
-	if (qdisc_tx_is_default(vrf_dev) ||
+	अगर (qdisc_tx_is_शेष(vrf_dev) ||
 	    IPCB(skb)->flags & IPSKB_XFRM_TRANSFORMED)
-		return vrf_ip_out_direct(vrf_dev, sk, skb);
+		वापस vrf_ip_out_direct(vrf_dev, sk, skb);
 
-	return vrf_ip_out_redirect(vrf_dev, skb);
-}
+	वापस vrf_ip_out_redirect(vrf_dev, skb);
+पूर्ण
 
 /* called with rcu lock held */
-static struct sk_buff *vrf_l3_out(struct net_device *vrf_dev,
-				  struct sock *sk,
-				  struct sk_buff *skb,
+अटल काष्ठा sk_buff *vrf_l3_out(काष्ठा net_device *vrf_dev,
+				  काष्ठा sock *sk,
+				  काष्ठा sk_buff *skb,
 				  u16 proto)
-{
-	switch (proto) {
-	case AF_INET:
-		return vrf_ip_out(vrf_dev, sk, skb);
-	case AF_INET6:
-		return vrf_ip6_out(vrf_dev, sk, skb);
-	}
+अणु
+	चयन (proto) अणु
+	हाल AF_INET:
+		वापस vrf_ip_out(vrf_dev, sk, skb);
+	हाल AF_INET6:
+		वापस vrf_ip6_out(vrf_dev, sk, skb);
+	पूर्ण
 
-	return skb;
-}
+	वापस skb;
+पूर्ण
 
 /* holding rtnl */
-static void vrf_rtable_release(struct net_device *dev, struct net_vrf *vrf)
-{
-	struct rtable *rth = rtnl_dereference(vrf->rth);
-	struct net *net = dev_net(dev);
-	struct dst_entry *dst;
+अटल व्योम vrf_rtable_release(काष्ठा net_device *dev, काष्ठा net_vrf *vrf)
+अणु
+	काष्ठा rtable *rth = rtnl_dereference(vrf->rth);
+	काष्ठा net *net = dev_net(dev);
+	काष्ठा dst_entry *dst;
 
-	RCU_INIT_POINTER(vrf->rth, NULL);
+	RCU_INIT_POINTER(vrf->rth, शून्य);
 	synchronize_rcu();
 
 	/* move dev in dst's to loopback so this VRF device can be deleted
-	 * - based on dst_ifdown
+	 * - based on dst_अगरकरोwn
 	 */
-	if (rth) {
+	अगर (rth) अणु
 		dst = &rth->dst;
 		dev_put(dst->dev);
 		dst->dev = net->loopback_dev;
 		dev_hold(dst->dev);
 		dst_release(dst);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int vrf_rtable_create(struct net_device *dev)
-{
-	struct net_vrf *vrf = netdev_priv(dev);
-	struct rtable *rth;
+अटल पूर्णांक vrf_rtable_create(काष्ठा net_device *dev)
+अणु
+	काष्ठा net_vrf *vrf = netdev_priv(dev);
+	काष्ठा rtable *rth;
 
-	if (!fib_new_table(dev_net(dev), vrf->tb_id))
-		return -ENOMEM;
+	अगर (!fib_new_table(dev_net(dev), vrf->tb_id))
+		वापस -ENOMEM;
 
-	/* create a dst for routing packets out through a VRF device */
+	/* create a dst क्रम routing packets out through a VRF device */
 	rth = rt_dst_alloc(dev, 0, RTN_UNICAST, 1, 1);
-	if (!rth)
-		return -ENOMEM;
+	अगर (!rth)
+		वापस -ENOMEM;
 
 	rth->dst.output	= vrf_output;
 
-	rcu_assign_pointer(vrf->rth, rth);
+	rcu_assign_poपूर्णांकer(vrf->rth, rth);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**************************** device handling ********************/
 
-/* cycle interface to flush neighbor cache and move routes across tables */
-static void cycle_netdev(struct net_device *dev,
-			 struct netlink_ext_ack *extack)
-{
-	unsigned int flags = dev->flags;
-	int ret;
+/* cycle पूर्णांकerface to flush neighbor cache and move routes across tables */
+अटल व्योम cycle_netdev(काष्ठा net_device *dev,
+			 काष्ठा netlink_ext_ack *extack)
+अणु
+	अचिन्हित पूर्णांक flags = dev->flags;
+	पूर्णांक ret;
 
-	if (!netif_running(dev))
-		return;
+	अगर (!netअगर_running(dev))
+		वापस;
 
 	ret = dev_change_flags(dev, flags & ~IFF_UP, extack);
-	if (ret >= 0)
+	अगर (ret >= 0)
 		ret = dev_change_flags(dev, flags, extack);
 
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		netdev_err(dev,
 			   "Failed to cycle device %s; route tables might be wrong!\n",
 			   dev->name);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int do_vrf_add_slave(struct net_device *dev, struct net_device *port_dev,
-			    struct netlink_ext_ack *extack)
-{
-	int ret;
+अटल पूर्णांक करो_vrf_add_slave(काष्ठा net_device *dev, काष्ठा net_device *port_dev,
+			    काष्ठा netlink_ext_ack *extack)
+अणु
+	पूर्णांक ret;
 
-	/* do not allow loopback device to be enslaved to a VRF.
-	 * The vrf device acts as the loopback for the vrf.
+	/* करो not allow loopback device to be enslaved to a VRF.
+	 * The vrf device acts as the loopback क्रम the vrf.
 	 */
-	if (port_dev == dev_net(dev)->loopback_dev) {
+	अगर (port_dev == dev_net(dev)->loopback_dev) अणु
 		NL_SET_ERR_MSG(extack,
 			       "Can not enslave loopback device to a VRF");
-		return -EOPNOTSUPP;
-	}
+		वापस -EOPNOTSUPP;
+	पूर्ण
 
 	port_dev->priv_flags |= IFF_L3MDEV_SLAVE;
-	ret = netdev_master_upper_dev_link(port_dev, dev, NULL, NULL, extack);
-	if (ret < 0)
-		goto err;
+	ret = netdev_master_upper_dev_link(port_dev, dev, शून्य, शून्य, extack);
+	अगर (ret < 0)
+		जाओ err;
 
 	cycle_netdev(port_dev, extack);
 
-	return 0;
+	वापस 0;
 
 err:
 	port_dev->priv_flags &= ~IFF_L3MDEV_SLAVE;
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int vrf_add_slave(struct net_device *dev, struct net_device *port_dev,
-			 struct netlink_ext_ack *extack)
-{
-	if (netif_is_l3_master(port_dev)) {
+अटल पूर्णांक vrf_add_slave(काष्ठा net_device *dev, काष्ठा net_device *port_dev,
+			 काष्ठा netlink_ext_ack *extack)
+अणु
+	अगर (netअगर_is_l3_master(port_dev)) अणु
 		NL_SET_ERR_MSG(extack,
 			       "Can not enslave an L3 master device to a VRF");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (netif_is_l3_slave(port_dev))
-		return -EINVAL;
+	अगर (netअगर_is_l3_slave(port_dev))
+		वापस -EINVAL;
 
-	return do_vrf_add_slave(dev, port_dev, extack);
-}
+	वापस करो_vrf_add_slave(dev, port_dev, extack);
+पूर्ण
 
-/* inverse of do_vrf_add_slave */
-static int do_vrf_del_slave(struct net_device *dev, struct net_device *port_dev)
-{
+/* inverse of करो_vrf_add_slave */
+अटल पूर्णांक करो_vrf_del_slave(काष्ठा net_device *dev, काष्ठा net_device *port_dev)
+अणु
 	netdev_upper_dev_unlink(port_dev, dev);
 	port_dev->priv_flags &= ~IFF_L3MDEV_SLAVE;
 
-	cycle_netdev(port_dev, NULL);
+	cycle_netdev(port_dev, शून्य);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int vrf_del_slave(struct net_device *dev, struct net_device *port_dev)
-{
-	return do_vrf_del_slave(dev, port_dev);
-}
+अटल पूर्णांक vrf_del_slave(काष्ठा net_device *dev, काष्ठा net_device *port_dev)
+अणु
+	वापस करो_vrf_del_slave(dev, port_dev);
+पूर्ण
 
-static void vrf_dev_uninit(struct net_device *dev)
-{
-	struct net_vrf *vrf = netdev_priv(dev);
+अटल व्योम vrf_dev_uninit(काष्ठा net_device *dev)
+अणु
+	काष्ठा net_vrf *vrf = netdev_priv(dev);
 
 	vrf_rtable_release(dev, vrf);
 	vrf_rt6_release(dev, vrf);
 
-	free_percpu(dev->dstats);
-	dev->dstats = NULL;
-}
+	मुक्त_percpu(dev->dstats);
+	dev->dstats = शून्य;
+पूर्ण
 
-static int vrf_dev_init(struct net_device *dev)
-{
-	struct net_vrf *vrf = netdev_priv(dev);
+अटल पूर्णांक vrf_dev_init(काष्ठा net_device *dev)
+अणु
+	काष्ठा net_vrf *vrf = netdev_priv(dev);
 
-	dev->dstats = netdev_alloc_pcpu_stats(struct pcpu_dstats);
-	if (!dev->dstats)
-		goto out_nomem;
+	dev->dstats = netdev_alloc_pcpu_stats(काष्ठा pcpu_dstats);
+	अगर (!dev->dstats)
+		जाओ out_nomem;
 
-	/* create the default dst which points back to us */
-	if (vrf_rtable_create(dev) != 0)
-		goto out_stats;
+	/* create the शेष dst which poपूर्णांकs back to us */
+	अगर (vrf_rtable_create(dev) != 0)
+		जाओ out_stats;
 
-	if (vrf_rt6_create(dev) != 0)
-		goto out_rth;
+	अगर (vrf_rt6_create(dev) != 0)
+		जाओ out_rth;
 
 	dev->flags = IFF_MASTER | IFF_NOARP;
 
-	/* similarly, oper state is irrelevant; set to up to avoid confusion */
+	/* similarly, oper state is irrelevant; set to up to aव्योम confusion */
 	dev->operstate = IF_OPER_UP;
 	netdev_lockdep_set_classes(dev);
-	return 0;
+	वापस 0;
 
 out_rth:
 	vrf_rtable_release(dev, vrf);
 out_stats:
-	free_percpu(dev->dstats);
-	dev->dstats = NULL;
+	मुक्त_percpu(dev->dstats);
+	dev->dstats = शून्य;
 out_nomem:
-	return -ENOMEM;
-}
+	वापस -ENOMEM;
+पूर्ण
 
-static const struct net_device_ops vrf_netdev_ops = {
-	.ndo_init		= vrf_dev_init,
-	.ndo_uninit		= vrf_dev_uninit,
-	.ndo_start_xmit		= vrf_xmit,
-	.ndo_set_mac_address	= eth_mac_addr,
-	.ndo_get_stats64	= vrf_get_stats64,
-	.ndo_add_slave		= vrf_add_slave,
-	.ndo_del_slave		= vrf_del_slave,
-};
+अटल स्थिर काष्ठा net_device_ops vrf_netdev_ops = अणु
+	.nकरो_init		= vrf_dev_init,
+	.nकरो_uninit		= vrf_dev_uninit,
+	.nकरो_start_xmit		= vrf_xmit,
+	.nकरो_set_mac_address	= eth_mac_addr,
+	.nकरो_get_stats64	= vrf_get_stats64,
+	.nकरो_add_slave		= vrf_add_slave,
+	.nकरो_del_slave		= vrf_del_slave,
+पूर्ण;
 
-static u32 vrf_fib_table(const struct net_device *dev)
-{
-	struct net_vrf *vrf = netdev_priv(dev);
+अटल u32 vrf_fib_table(स्थिर काष्ठा net_device *dev)
+अणु
+	काष्ठा net_vrf *vrf = netdev_priv(dev);
 
-	return vrf->tb_id;
-}
+	वापस vrf->tb_id;
+पूर्ण
 
-static int vrf_rcv_finish(struct net *net, struct sock *sk, struct sk_buff *skb)
-{
-	kfree_skb(skb);
-	return 0;
-}
+अटल पूर्णांक vrf_rcv_finish(काष्ठा net *net, काष्ठा sock *sk, काष्ठा sk_buff *skb)
+अणु
+	kमुक्त_skb(skb);
+	वापस 0;
+पूर्ण
 
-static struct sk_buff *vrf_rcv_nfhook(u8 pf, unsigned int hook,
-				      struct sk_buff *skb,
-				      struct net_device *dev)
-{
-	struct net *net = dev_net(dev);
+अटल काष्ठा sk_buff *vrf_rcv_nfhook(u8 pf, अचिन्हित पूर्णांक hook,
+				      काष्ठा sk_buff *skb,
+				      काष्ठा net_device *dev)
+अणु
+	काष्ठा net *net = dev_net(dev);
 
-	if (nf_hook(pf, hook, net, NULL, skb, dev, NULL, vrf_rcv_finish) != 1)
-		skb = NULL;    /* kfree_skb(skb) handled by nf code */
+	अगर (nf_hook(pf, hook, net, शून्य, skb, dev, शून्य, vrf_rcv_finish) != 1)
+		skb = शून्य;    /* kमुक्त_skb(skb) handled by nf code */
 
-	return skb;
-}
+	वापस skb;
+पूर्ण
 
-static int vrf_prepare_mac_header(struct sk_buff *skb,
-				  struct net_device *vrf_dev, u16 proto)
-{
-	struct ethhdr *eth;
-	int err;
+अटल पूर्णांक vrf_prepare_mac_header(काष्ठा sk_buff *skb,
+				  काष्ठा net_device *vrf_dev, u16 proto)
+अणु
+	काष्ठा ethhdr *eth;
+	पूर्णांक err;
 
-	/* in general, we do not know if there is enough space in the head of
-	 * the packet for hosting the mac header.
+	/* in general, we करो not know अगर there is enough space in the head of
+	 * the packet क्रम hosting the mac header.
 	 */
 	err = skb_cow_head(skb, LL_RESERVED_SPACE(vrf_dev));
-	if (unlikely(err))
+	अगर (unlikely(err))
 		/* no space in the skb head */
-		return -ENOBUFS;
+		वापस -ENOBUFS;
 
 	__skb_push(skb, ETH_HLEN);
-	eth = (struct ethhdr *)skb->data;
+	eth = (काष्ठा ethhdr *)skb->data;
 
 	skb_reset_mac_header(skb);
 
@@ -1259,7 +1260,7 @@ static int vrf_prepare_mac_header(struct sk_buff *skb,
 	eth->h_proto = htons(proto);
 
 	/* the destination address of the Ethernet frame corresponds to the
-	 * address set on the VRF interface; therefore, the packet is intended
+	 * address set on the VRF पूर्णांकerface; thereक्रमe, the packet is पूर्णांकended
 	 * to be processed locally.
 	 */
 	skb->protocol = eth->h_proto;
@@ -1267,401 +1268,401 @@ static int vrf_prepare_mac_header(struct sk_buff *skb,
 
 	skb_postpush_rcsum(skb, skb->data, ETH_HLEN);
 
-	skb_pull_inline(skb, ETH_HLEN);
+	skb_pull_अंतरभूत(skb, ETH_HLEN);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* prepare and add the mac header to the packet if it was not set previously.
- * In this way, packet sniffers such as tcpdump can parse the packet correctly.
- * If the mac header was already set, the original mac header is left
- * untouched and the function returns immediately.
+/* prepare and add the mac header to the packet अगर it was not set previously.
+ * In this way, packet snअगरfers such as tcpdump can parse the packet correctly.
+ * If the mac header was alपढ़ोy set, the original mac header is left
+ * untouched and the function वापसs immediately.
  */
-static int vrf_add_mac_header_if_unset(struct sk_buff *skb,
-				       struct net_device *vrf_dev,
+अटल पूर्णांक vrf_add_mac_header_अगर_unset(काष्ठा sk_buff *skb,
+				       काष्ठा net_device *vrf_dev,
 				       u16 proto)
-{
-	if (skb_mac_header_was_set(skb))
-		return 0;
+अणु
+	अगर (skb_mac_header_was_set(skb))
+		वापस 0;
 
-	return vrf_prepare_mac_header(skb, vrf_dev, proto);
-}
+	वापस vrf_prepare_mac_header(skb, vrf_dev, proto);
+पूर्ण
 
-#if IS_ENABLED(CONFIG_IPV6)
-/* neighbor handling is done with actual device; do not want
- * to flip skb->dev for those ndisc packets. This really fails
- * for multiple next protocols (e.g., NEXTHDR_HOP). But it is
+#अगर IS_ENABLED(CONFIG_IPV6)
+/* neighbor handling is करोne with actual device; करो not want
+ * to flip skb->dev क्रम those ndisc packets. This really fails
+ * क्रम multiple next protocols (e.g., NEXTHDR_HOP). But it is
  * a start.
  */
-static bool ipv6_ndisc_frame(const struct sk_buff *skb)
-{
-	const struct ipv6hdr *iph = ipv6_hdr(skb);
+अटल bool ipv6_ndisc_frame(स्थिर काष्ठा sk_buff *skb)
+अणु
+	स्थिर काष्ठा ipv6hdr *iph = ipv6_hdr(skb);
 	bool rc = false;
 
-	if (iph->nexthdr == NEXTHDR_ICMP) {
-		const struct icmp6hdr *icmph;
-		struct icmp6hdr _icmph;
+	अगर (iph->nexthdr == NEXTHDR_ICMP) अणु
+		स्थिर काष्ठा icmp6hdr *icmph;
+		काष्ठा icmp6hdr _icmph;
 
-		icmph = skb_header_pointer(skb, sizeof(*iph),
-					   sizeof(_icmph), &_icmph);
-		if (!icmph)
-			goto out;
+		icmph = skb_header_poपूर्णांकer(skb, माप(*iph),
+					   माप(_icmph), &_icmph);
+		अगर (!icmph)
+			जाओ out;
 
-		switch (icmph->icmp6_type) {
-		case NDISC_ROUTER_SOLICITATION:
-		case NDISC_ROUTER_ADVERTISEMENT:
-		case NDISC_NEIGHBOUR_SOLICITATION:
-		case NDISC_NEIGHBOUR_ADVERTISEMENT:
-		case NDISC_REDIRECT:
+		चयन (icmph->icmp6_type) अणु
+		हाल NDISC_ROUTER_SOLICITATION:
+		हाल NDISC_ROUTER_ADVERTISEMENT:
+		हाल NDISC_NEIGHBOUR_SOLICITATION:
+		हाल NDISC_NEIGHBOUR_ADVERTISEMENT:
+		हाल NDISC_REसूचीECT:
 			rc = true;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
 out:
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static struct rt6_info *vrf_ip6_route_lookup(struct net *net,
-					     const struct net_device *dev,
-					     struct flowi6 *fl6,
-					     int ifindex,
-					     const struct sk_buff *skb,
-					     int flags)
-{
-	struct net_vrf *vrf = netdev_priv(dev);
+अटल काष्ठा rt6_info *vrf_ip6_route_lookup(काष्ठा net *net,
+					     स्थिर काष्ठा net_device *dev,
+					     काष्ठा flowi6 *fl6,
+					     पूर्णांक अगरindex,
+					     स्थिर काष्ठा sk_buff *skb,
+					     पूर्णांक flags)
+अणु
+	काष्ठा net_vrf *vrf = netdev_priv(dev);
 
-	return ip6_pol_route(net, vrf->fib6_table, ifindex, fl6, skb, flags);
-}
+	वापस ip6_pol_route(net, vrf->fib6_table, अगरindex, fl6, skb, flags);
+पूर्ण
 
-static void vrf_ip6_input_dst(struct sk_buff *skb, struct net_device *vrf_dev,
-			      int ifindex)
-{
-	const struct ipv6hdr *iph = ipv6_hdr(skb);
-	struct flowi6 fl6 = {
-		.flowi6_iif     = ifindex,
+अटल व्योम vrf_ip6_input_dst(काष्ठा sk_buff *skb, काष्ठा net_device *vrf_dev,
+			      पूर्णांक अगरindex)
+अणु
+	स्थिर काष्ठा ipv6hdr *iph = ipv6_hdr(skb);
+	काष्ठा flowi6 fl6 = अणु
+		.flowi6_iअगर     = अगरindex,
 		.flowi6_mark    = skb->mark,
 		.flowi6_proto   = iph->nexthdr,
 		.daddr          = iph->daddr,
 		.saddr          = iph->saddr,
 		.flowlabel      = ip6_flowinfo(iph),
-	};
-	struct net *net = dev_net(vrf_dev);
-	struct rt6_info *rt6;
+	पूर्ण;
+	काष्ठा net *net = dev_net(vrf_dev);
+	काष्ठा rt6_info *rt6;
 
-	rt6 = vrf_ip6_route_lookup(net, vrf_dev, &fl6, ifindex, skb,
+	rt6 = vrf_ip6_route_lookup(net, vrf_dev, &fl6, अगरindex, skb,
 				   RT6_LOOKUP_F_HAS_SADDR | RT6_LOOKUP_F_IFACE);
-	if (unlikely(!rt6))
-		return;
+	अगर (unlikely(!rt6))
+		वापस;
 
-	if (unlikely(&rt6->dst == &net->ipv6.ip6_null_entry->dst))
-		return;
+	अगर (unlikely(&rt6->dst == &net->ipv6.ip6_null_entry->dst))
+		वापस;
 
 	skb_dst_set(skb, &rt6->dst);
-}
+पूर्ण
 
-static struct sk_buff *vrf_ip6_rcv(struct net_device *vrf_dev,
-				   struct sk_buff *skb)
-{
-	int orig_iif = skb->skb_iif;
+अटल काष्ठा sk_buff *vrf_ip6_rcv(काष्ठा net_device *vrf_dev,
+				   काष्ठा sk_buff *skb)
+अणु
+	पूर्णांक orig_iअगर = skb->skb_iअगर;
 	bool need_strict = rt6_need_strict(&ipv6_hdr(skb)->daddr);
 	bool is_ndisc = ipv6_ndisc_frame(skb);
 	bool is_ll_src;
 
-	/* loopback, multicast & non-ND link-local traffic; do not push through
-	 * packet taps again. Reset pkt_type for upper layers to process skb.
-	 * for packets with lladdr src, however, skip so that the dst can be
-	 * determine at input using original ifindex in the case that daddr
+	/* loopback, multicast & non-ND link-local traffic; करो not push through
+	 * packet taps again. Reset pkt_type क्रम upper layers to process skb.
+	 * क्रम packets with lladdr src, however, skip so that the dst can be
+	 * determine at input using original अगरindex in the हाल that daddr
 	 * needs strict
 	 */
 	is_ll_src = ipv6_addr_type(&ipv6_hdr(skb)->saddr) & IPV6_ADDR_LINKLOCAL;
-	if (skb->pkt_type == PACKET_LOOPBACK ||
-	    (need_strict && !is_ndisc && !is_ll_src)) {
+	अगर (skb->pkt_type == PACKET_LOOPBACK ||
+	    (need_strict && !is_ndisc && !is_ll_src)) अणु
 		skb->dev = vrf_dev;
-		skb->skb_iif = vrf_dev->ifindex;
+		skb->skb_iअगर = vrf_dev->अगरindex;
 		IP6CB(skb)->flags |= IP6SKB_L3SLAVE;
-		if (skb->pkt_type == PACKET_LOOPBACK)
+		अगर (skb->pkt_type == PACKET_LOOPBACK)
 			skb->pkt_type = PACKET_HOST;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	/* if packet is NDISC then keep the ingress interface */
-	if (!is_ndisc) {
+	/* अगर packet is NDISC then keep the ingress पूर्णांकerface */
+	अगर (!is_ndisc) अणु
 		vrf_rx_stats(vrf_dev, skb->len);
 		skb->dev = vrf_dev;
-		skb->skb_iif = vrf_dev->ifindex;
+		skb->skb_iअगर = vrf_dev->अगरindex;
 
-		if (!list_empty(&vrf_dev->ptype_all)) {
-			int err;
+		अगर (!list_empty(&vrf_dev->ptype_all)) अणु
+			पूर्णांक err;
 
-			err = vrf_add_mac_header_if_unset(skb, vrf_dev,
+			err = vrf_add_mac_header_अगर_unset(skb, vrf_dev,
 							  ETH_P_IPV6);
-			if (likely(!err)) {
+			अगर (likely(!err)) अणु
 				skb_push(skb, skb->mac_len);
 				dev_queue_xmit_nit(skb, vrf_dev);
 				skb_pull(skb, skb->mac_len);
-			}
-		}
+			पूर्ण
+		पूर्ण
 
 		IP6CB(skb)->flags |= IP6SKB_L3SLAVE;
-	}
+	पूर्ण
 
-	if (need_strict)
-		vrf_ip6_input_dst(skb, vrf_dev, orig_iif);
+	अगर (need_strict)
+		vrf_ip6_input_dst(skb, vrf_dev, orig_iअगर);
 
 	skb = vrf_rcv_nfhook(NFPROTO_IPV6, NF_INET_PRE_ROUTING, skb, vrf_dev);
 out:
-	return skb;
-}
+	वापस skb;
+पूर्ण
 
-#else
-static struct sk_buff *vrf_ip6_rcv(struct net_device *vrf_dev,
-				   struct sk_buff *skb)
-{
-	return skb;
-}
-#endif
+#अन्यथा
+अटल काष्ठा sk_buff *vrf_ip6_rcv(काष्ठा net_device *vrf_dev,
+				   काष्ठा sk_buff *skb)
+अणु
+	वापस skb;
+पूर्ण
+#पूर्ण_अगर
 
-static struct sk_buff *vrf_ip_rcv(struct net_device *vrf_dev,
-				  struct sk_buff *skb)
-{
+अटल काष्ठा sk_buff *vrf_ip_rcv(काष्ठा net_device *vrf_dev,
+				  काष्ठा sk_buff *skb)
+अणु
 	skb->dev = vrf_dev;
-	skb->skb_iif = vrf_dev->ifindex;
+	skb->skb_iअगर = vrf_dev->अगरindex;
 	IPCB(skb)->flags |= IPSKB_L3SLAVE;
 
-	if (ipv4_is_multicast(ip_hdr(skb)->daddr))
-		goto out;
+	अगर (ipv4_is_multicast(ip_hdr(skb)->daddr))
+		जाओ out;
 
-	/* loopback traffic; do not push through packet taps again.
-	 * Reset pkt_type for upper layers to process skb
+	/* loopback traffic; करो not push through packet taps again.
+	 * Reset pkt_type क्रम upper layers to process skb
 	 */
-	if (skb->pkt_type == PACKET_LOOPBACK) {
+	अगर (skb->pkt_type == PACKET_LOOPBACK) अणु
 		skb->pkt_type = PACKET_HOST;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	vrf_rx_stats(vrf_dev, skb->len);
 
-	if (!list_empty(&vrf_dev->ptype_all)) {
-		int err;
+	अगर (!list_empty(&vrf_dev->ptype_all)) अणु
+		पूर्णांक err;
 
-		err = vrf_add_mac_header_if_unset(skb, vrf_dev, ETH_P_IP);
-		if (likely(!err)) {
+		err = vrf_add_mac_header_अगर_unset(skb, vrf_dev, ETH_P_IP);
+		अगर (likely(!err)) अणु
 			skb_push(skb, skb->mac_len);
 			dev_queue_xmit_nit(skb, vrf_dev);
 			skb_pull(skb, skb->mac_len);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	skb = vrf_rcv_nfhook(NFPROTO_IPV4, NF_INET_PRE_ROUTING, skb, vrf_dev);
 out:
-	return skb;
-}
+	वापस skb;
+पूर्ण
 
 /* called with rcu lock held */
-static struct sk_buff *vrf_l3_rcv(struct net_device *vrf_dev,
-				  struct sk_buff *skb,
+अटल काष्ठा sk_buff *vrf_l3_rcv(काष्ठा net_device *vrf_dev,
+				  काष्ठा sk_buff *skb,
 				  u16 proto)
-{
-	switch (proto) {
-	case AF_INET:
-		return vrf_ip_rcv(vrf_dev, skb);
-	case AF_INET6:
-		return vrf_ip6_rcv(vrf_dev, skb);
-	}
+अणु
+	चयन (proto) अणु
+	हाल AF_INET:
+		वापस vrf_ip_rcv(vrf_dev, skb);
+	हाल AF_INET6:
+		वापस vrf_ip6_rcv(vrf_dev, skb);
+	पूर्ण
 
-	return skb;
-}
+	वापस skb;
+पूर्ण
 
-#if IS_ENABLED(CONFIG_IPV6)
-/* send to link-local or multicast address via interface enslaved to
- * VRF device. Force lookup to VRF table without changing flow struct
- * Note: Caller to this function must hold rcu_read_lock() and no refcnt
+#अगर IS_ENABLED(CONFIG_IPV6)
+/* send to link-local or multicast address via पूर्णांकerface enslaved to
+ * VRF device. Force lookup to VRF table without changing flow काष्ठा
+ * Note: Caller to this function must hold rcu_पढ़ो_lock() and no refcnt
  * is taken on the dst by this function.
  */
-static struct dst_entry *vrf_link_scope_lookup(const struct net_device *dev,
-					      struct flowi6 *fl6)
-{
-	struct net *net = dev_net(dev);
-	int flags = RT6_LOOKUP_F_IFACE | RT6_LOOKUP_F_DST_NOREF;
-	struct dst_entry *dst = NULL;
-	struct rt6_info *rt;
+अटल काष्ठा dst_entry *vrf_link_scope_lookup(स्थिर काष्ठा net_device *dev,
+					      काष्ठा flowi6 *fl6)
+अणु
+	काष्ठा net *net = dev_net(dev);
+	पूर्णांक flags = RT6_LOOKUP_F_IFACE | RT6_LOOKUP_F_DST_NOREF;
+	काष्ठा dst_entry *dst = शून्य;
+	काष्ठा rt6_info *rt;
 
-	/* VRF device does not have a link-local address and
+	/* VRF device करोes not have a link-local address and
 	 * sending packets to link-local or mcast addresses over
-	 * a VRF device does not make sense
+	 * a VRF device करोes not make sense
 	 */
-	if (fl6->flowi6_oif == dev->ifindex) {
+	अगर (fl6->flowi6_oअगर == dev->अगरindex) अणु
 		dst = &net->ipv6.ip6_null_entry->dst;
-		return dst;
-	}
+		वापस dst;
+	पूर्ण
 
-	if (!ipv6_addr_any(&fl6->saddr))
+	अगर (!ipv6_addr_any(&fl6->saddr))
 		flags |= RT6_LOOKUP_F_HAS_SADDR;
 
-	rt = vrf_ip6_route_lookup(net, dev, fl6, fl6->flowi6_oif, NULL, flags);
-	if (rt)
+	rt = vrf_ip6_route_lookup(net, dev, fl6, fl6->flowi6_oअगर, शून्य, flags);
+	अगर (rt)
 		dst = &rt->dst;
 
-	return dst;
-}
-#endif
+	वापस dst;
+पूर्ण
+#पूर्ण_अगर
 
-static const struct l3mdev_ops vrf_l3mdev_ops = {
+अटल स्थिर काष्ठा l3mdev_ops vrf_l3mdev_ops = अणु
 	.l3mdev_fib_table	= vrf_fib_table,
 	.l3mdev_l3_rcv		= vrf_l3_rcv,
 	.l3mdev_l3_out		= vrf_l3_out,
-#if IS_ENABLED(CONFIG_IPV6)
+#अगर IS_ENABLED(CONFIG_IPV6)
 	.l3mdev_link_scope_lookup = vrf_link_scope_lookup,
-#endif
-};
+#पूर्ण_अगर
+पूर्ण;
 
-static void vrf_get_drvinfo(struct net_device *dev,
-			    struct ethtool_drvinfo *info)
-{
-	strlcpy(info->driver, DRV_NAME, sizeof(info->driver));
-	strlcpy(info->version, DRV_VERSION, sizeof(info->version));
-}
+अटल व्योम vrf_get_drvinfo(काष्ठा net_device *dev,
+			    काष्ठा ethtool_drvinfo *info)
+अणु
+	strlcpy(info->driver, DRV_NAME, माप(info->driver));
+	strlcpy(info->version, DRV_VERSION, माप(info->version));
+पूर्ण
 
-static const struct ethtool_ops vrf_ethtool_ops = {
+अटल स्थिर काष्ठा ethtool_ops vrf_ethtool_ops = अणु
 	.get_drvinfo	= vrf_get_drvinfo,
-};
+पूर्ण;
 
-static inline size_t vrf_fib_rule_nl_size(void)
-{
-	size_t sz;
+अटल अंतरभूत माप_प्रकार vrf_fib_rule_nl_size(व्योम)
+अणु
+	माप_प्रकार sz;
 
-	sz  = NLMSG_ALIGN(sizeof(struct fib_rule_hdr));
-	sz += nla_total_size(sizeof(u8));	/* FRA_L3MDEV */
-	sz += nla_total_size(sizeof(u32));	/* FRA_PRIORITY */
-	sz += nla_total_size(sizeof(u8));       /* FRA_PROTOCOL */
+	sz  = NLMSG_ALIGN(माप(काष्ठा fib_rule_hdr));
+	sz += nla_total_size(माप(u8));	/* FRA_L3MDEV */
+	sz += nla_total_size(माप(u32));	/* FRA_PRIORITY */
+	sz += nla_total_size(माप(u8));       /* FRA_PROTOCOL */
 
-	return sz;
-}
+	वापस sz;
+पूर्ण
 
-static int vrf_fib_rule(const struct net_device *dev, __u8 family, bool add_it)
-{
-	struct fib_rule_hdr *frh;
-	struct nlmsghdr *nlh;
-	struct sk_buff *skb;
-	int err;
+अटल पूर्णांक vrf_fib_rule(स्थिर काष्ठा net_device *dev, __u8 family, bool add_it)
+अणु
+	काष्ठा fib_rule_hdr *frh;
+	काष्ठा nlmsghdr *nlh;
+	काष्ठा sk_buff *skb;
+	पूर्णांक err;
 
-	if ((family == AF_INET6 || family == RTNL_FAMILY_IP6MR) &&
+	अगर ((family == AF_INET6 || family == RTNL_FAMILY_IP6MR) &&
 	    !ipv6_mod_enabled())
-		return 0;
+		वापस 0;
 
 	skb = nlmsg_new(vrf_fib_rule_nl_size(), GFP_KERNEL);
-	if (!skb)
-		return -ENOMEM;
+	अगर (!skb)
+		वापस -ENOMEM;
 
-	nlh = nlmsg_put(skb, 0, 0, 0, sizeof(*frh), 0);
-	if (!nlh)
-		goto nla_put_failure;
+	nlh = nlmsg_put(skb, 0, 0, 0, माप(*frh), 0);
+	अगर (!nlh)
+		जाओ nla_put_failure;
 
 	/* rule only needs to appear once */
 	nlh->nlmsg_flags |= NLM_F_EXCL;
 
 	frh = nlmsg_data(nlh);
-	memset(frh, 0, sizeof(*frh));
+	स_रखो(frh, 0, माप(*frh));
 	frh->family = family;
 	frh->action = FR_ACT_TO_TBL;
 
-	if (nla_put_u8(skb, FRA_PROTOCOL, RTPROT_KERNEL))
-		goto nla_put_failure;
+	अगर (nla_put_u8(skb, FRA_PROTOCOL, RTPROT_KERNEL))
+		जाओ nla_put_failure;
 
-	if (nla_put_u8(skb, FRA_L3MDEV, 1))
-		goto nla_put_failure;
+	अगर (nla_put_u8(skb, FRA_L3MDEV, 1))
+		जाओ nla_put_failure;
 
-	if (nla_put_u32(skb, FRA_PRIORITY, FIB_RULE_PREF))
-		goto nla_put_failure;
+	अगर (nla_put_u32(skb, FRA_PRIORITY, FIB_RULE_PREF))
+		जाओ nla_put_failure;
 
 	nlmsg_end(skb, nlh);
 
-	/* fib_nl_{new,del}rule handling looks for net from skb->sk */
+	/* fib_nl_अणुnew,delपूर्णrule handling looks क्रम net from skb->sk */
 	skb->sk = dev_net(dev)->rtnl;
-	if (add_it) {
-		err = fib_nl_newrule(skb, nlh, NULL);
-		if (err == -EEXIST)
+	अगर (add_it) अणु
+		err = fib_nl_newrule(skb, nlh, शून्य);
+		अगर (err == -EEXIST)
 			err = 0;
-	} else {
-		err = fib_nl_delrule(skb, nlh, NULL);
-		if (err == -ENOENT)
+	पूर्ण अन्यथा अणु
+		err = fib_nl_delrule(skb, nlh, शून्य);
+		अगर (err == -ENOENT)
 			err = 0;
-	}
-	nlmsg_free(skb);
+	पूर्ण
+	nlmsg_मुक्त(skb);
 
-	return err;
+	वापस err;
 
 nla_put_failure:
-	nlmsg_free(skb);
+	nlmsg_मुक्त(skb);
 
-	return -EMSGSIZE;
-}
+	वापस -EMSGSIZE;
+पूर्ण
 
-static int vrf_add_fib_rules(const struct net_device *dev)
-{
-	int err;
+अटल पूर्णांक vrf_add_fib_rules(स्थिर काष्ठा net_device *dev)
+अणु
+	पूर्णांक err;
 
 	err = vrf_fib_rule(dev, AF_INET,  true);
-	if (err < 0)
-		goto out_err;
+	अगर (err < 0)
+		जाओ out_err;
 
 	err = vrf_fib_rule(dev, AF_INET6, true);
-	if (err < 0)
-		goto ipv6_err;
+	अगर (err < 0)
+		जाओ ipv6_err;
 
-#if IS_ENABLED(CONFIG_IP_MROUTE_MULTIPLE_TABLES)
+#अगर IS_ENABLED(CONFIG_IP_MROUTE_MULTIPLE_TABLES)
 	err = vrf_fib_rule(dev, RTNL_FAMILY_IPMR, true);
-	if (err < 0)
-		goto ipmr_err;
-#endif
+	अगर (err < 0)
+		जाओ ipmr_err;
+#पूर्ण_अगर
 
-#if IS_ENABLED(CONFIG_IPV6_MROUTE_MULTIPLE_TABLES)
+#अगर IS_ENABLED(CONFIG_IPV6_MROUTE_MULTIPLE_TABLES)
 	err = vrf_fib_rule(dev, RTNL_FAMILY_IP6MR, true);
-	if (err < 0)
-		goto ip6mr_err;
-#endif
+	अगर (err < 0)
+		जाओ ip6mr_err;
+#पूर्ण_अगर
 
-	return 0;
+	वापस 0;
 
-#if IS_ENABLED(CONFIG_IPV6_MROUTE_MULTIPLE_TABLES)
+#अगर IS_ENABLED(CONFIG_IPV6_MROUTE_MULTIPLE_TABLES)
 ip6mr_err:
 	vrf_fib_rule(dev, RTNL_FAMILY_IPMR,  false);
-#endif
+#पूर्ण_अगर
 
-#if IS_ENABLED(CONFIG_IP_MROUTE_MULTIPLE_TABLES)
+#अगर IS_ENABLED(CONFIG_IP_MROUTE_MULTIPLE_TABLES)
 ipmr_err:
 	vrf_fib_rule(dev, AF_INET6,  false);
-#endif
+#पूर्ण_अगर
 
 ipv6_err:
 	vrf_fib_rule(dev, AF_INET,  false);
 
 out_err:
 	netdev_err(dev, "Failed to add FIB rules.\n");
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void vrf_setup(struct net_device *dev)
-{
+अटल व्योम vrf_setup(काष्ठा net_device *dev)
+अणु
 	ether_setup(dev);
 
-	/* Initialize the device structure. */
+	/* Initialize the device काष्ठाure. */
 	dev->netdev_ops = &vrf_netdev_ops;
 	dev->l3mdev_ops = &vrf_l3mdev_ops;
 	dev->ethtool_ops = &vrf_ethtool_ops;
-	dev->needs_free_netdev = true;
+	dev->needs_मुक्त_netdev = true;
 
-	/* Fill in device structure with ethernet-generic values. */
-	eth_hw_addr_random(dev);
+	/* Fill in device काष्ठाure with ethernet-generic values. */
+	eth_hw_addr_अक्रमom(dev);
 
-	/* don't acquire vrf device's netif_tx_lock when transmitting */
+	/* करोn't acquire vrf device's netअगर_tx_lock when transmitting */
 	dev->features |= NETIF_F_LLTX;
 
-	/* don't allow vrf devices to change network namespaces. */
+	/* करोn't allow vrf devices to change network namespaces. */
 	dev->features |= NETIF_F_NETNS_LOCAL;
 
-	/* does not make sense for a VLAN to be added to a vrf device */
+	/* करोes not make sense क्रम a VLAN to be added to a vrf device */
 	dev->features   |= NETIF_F_VLAN_CHALLENGED;
 
 	/* enable offload features */
@@ -1672,147 +1673,147 @@ static void vrf_setup(struct net_device *dev)
 	dev->hw_features = dev->features;
 	dev->hw_enc_features = dev->features;
 
-	/* default to no qdisc; user can add if desired */
+	/* शेष to no qdisc; user can add अगर desired */
 	dev->priv_flags |= IFF_NO_QUEUE;
 	dev->priv_flags |= IFF_NO_RX_HANDLER;
 	dev->priv_flags |= IFF_LIVE_ADDR_CHANGE;
 
-	/* VRF devices do not care about MTU, but if the MTU is set
+	/* VRF devices करो not care about MTU, but अगर the MTU is set
 	 * too low then the ipv4 and ipv6 protocols are disabled
-	 * which breaks networking.
+	 * which अवरोधs networking.
 	 */
 	dev->min_mtu = IPV6_MIN_MTU;
 	dev->max_mtu = IP6_MAX_MTU;
 	dev->mtu = dev->max_mtu;
-}
+पूर्ण
 
-static int vrf_validate(struct nlattr *tb[], struct nlattr *data[],
-			struct netlink_ext_ack *extack)
-{
-	if (tb[IFLA_ADDRESS]) {
-		if (nla_len(tb[IFLA_ADDRESS]) != ETH_ALEN) {
+अटल पूर्णांक vrf_validate(काष्ठा nlattr *tb[], काष्ठा nlattr *data[],
+			काष्ठा netlink_ext_ack *extack)
+अणु
+	अगर (tb[IFLA_ADDRESS]) अणु
+		अगर (nla_len(tb[IFLA_ADDRESS]) != ETH_ALEN) अणु
 			NL_SET_ERR_MSG(extack, "Invalid hardware address");
-			return -EINVAL;
-		}
-		if (!is_valid_ether_addr(nla_data(tb[IFLA_ADDRESS]))) {
+			वापस -EINVAL;
+		पूर्ण
+		अगर (!is_valid_ether_addr(nla_data(tb[IFLA_ADDRESS]))) अणु
 			NL_SET_ERR_MSG(extack, "Invalid hardware address");
-			return -EADDRNOTAVAIL;
-		}
-	}
-	return 0;
-}
+			वापस -EADDRNOTAVAIL;
+		पूर्ण
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static void vrf_dellink(struct net_device *dev, struct list_head *head)
-{
-	struct net_device *port_dev;
-	struct list_head *iter;
+अटल व्योम vrf_dellink(काष्ठा net_device *dev, काष्ठा list_head *head)
+अणु
+	काष्ठा net_device *port_dev;
+	काष्ठा list_head *iter;
 
-	netdev_for_each_lower_dev(dev, port_dev, iter)
+	netdev_क्रम_each_lower_dev(dev, port_dev, iter)
 		vrf_del_slave(dev, port_dev);
 
-	vrf_map_unregister_dev(dev);
+	vrf_map_unरेजिस्टर_dev(dev);
 
-	unregister_netdevice_queue(dev, head);
-}
+	unरेजिस्टर_netdevice_queue(dev, head);
+पूर्ण
 
-static int vrf_newlink(struct net *src_net, struct net_device *dev,
-		       struct nlattr *tb[], struct nlattr *data[],
-		       struct netlink_ext_ack *extack)
-{
-	struct net_vrf *vrf = netdev_priv(dev);
-	struct netns_vrf *nn_vrf;
+अटल पूर्णांक vrf_newlink(काष्ठा net *src_net, काष्ठा net_device *dev,
+		       काष्ठा nlattr *tb[], काष्ठा nlattr *data[],
+		       काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा net_vrf *vrf = netdev_priv(dev);
+	काष्ठा netns_vrf *nn_vrf;
 	bool *add_fib_rules;
-	struct net *net;
-	int err;
+	काष्ठा net *net;
+	पूर्णांक err;
 
-	if (!data || !data[IFLA_VRF_TABLE]) {
+	अगर (!data || !data[IFLA_VRF_TABLE]) अणु
 		NL_SET_ERR_MSG(extack, "VRF table id is missing");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	vrf->tb_id = nla_get_u32(data[IFLA_VRF_TABLE]);
-	if (vrf->tb_id == RT_TABLE_UNSPEC) {
+	अगर (vrf->tb_id == RT_TABLE_UNSPEC) अणु
 		NL_SET_ERR_MSG_ATTR(extack, data[IFLA_VRF_TABLE],
 				    "Invalid VRF table id");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	dev->priv_flags |= IFF_L3MDEV_MASTER;
 
-	err = register_netdevice(dev);
-	if (err)
-		goto out;
+	err = रेजिस्टर_netdevice(dev);
+	अगर (err)
+		जाओ out;
 
 	/* mapping between table_id and vrf;
-	 * note: such binding could not be done in the dev init function
-	 * because dev->ifindex id is not available yet.
+	 * note: such binding could not be करोne in the dev init function
+	 * because dev->अगरindex id is not available yet.
 	 */
-	vrf->ifindex = dev->ifindex;
+	vrf->अगरindex = dev->अगरindex;
 
-	err = vrf_map_register_dev(dev, extack);
-	if (err) {
-		unregister_netdevice(dev);
-		goto out;
-	}
+	err = vrf_map_रेजिस्टर_dev(dev, extack);
+	अगर (err) अणु
+		unरेजिस्टर_netdevice(dev);
+		जाओ out;
+	पूर्ण
 
 	net = dev_net(dev);
 	nn_vrf = net_generic(net, vrf_net_id);
 
 	add_fib_rules = &nn_vrf->add_fib_rules;
-	if (*add_fib_rules) {
+	अगर (*add_fib_rules) अणु
 		err = vrf_add_fib_rules(dev);
-		if (err) {
-			vrf_map_unregister_dev(dev);
-			unregister_netdevice(dev);
-			goto out;
-		}
+		अगर (err) अणु
+			vrf_map_unरेजिस्टर_dev(dev);
+			unरेजिस्टर_netdevice(dev);
+			जाओ out;
+		पूर्ण
 		*add_fib_rules = false;
-	}
+	पूर्ण
 
 out:
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static size_t vrf_nl_getsize(const struct net_device *dev)
-{
-	return nla_total_size(sizeof(u32));  /* IFLA_VRF_TABLE */
-}
+अटल माप_प्रकार vrf_nl_माला_लोize(स्थिर काष्ठा net_device *dev)
+अणु
+	वापस nla_total_size(माप(u32));  /* IFLA_VRF_TABLE */
+पूर्ण
 
-static int vrf_fillinfo(struct sk_buff *skb,
-			const struct net_device *dev)
-{
-	struct net_vrf *vrf = netdev_priv(dev);
+अटल पूर्णांक vrf_fillinfo(काष्ठा sk_buff *skb,
+			स्थिर काष्ठा net_device *dev)
+अणु
+	काष्ठा net_vrf *vrf = netdev_priv(dev);
 
-	return nla_put_u32(skb, IFLA_VRF_TABLE, vrf->tb_id);
-}
+	वापस nla_put_u32(skb, IFLA_VRF_TABLE, vrf->tb_id);
+पूर्ण
 
-static size_t vrf_get_slave_size(const struct net_device *bond_dev,
-				 const struct net_device *slave_dev)
-{
-	return nla_total_size(sizeof(u32));  /* IFLA_VRF_PORT_TABLE */
-}
+अटल माप_प्रकार vrf_get_slave_size(स्थिर काष्ठा net_device *bond_dev,
+				 स्थिर काष्ठा net_device *slave_dev)
+अणु
+	वापस nla_total_size(माप(u32));  /* IFLA_VRF_PORT_TABLE */
+पूर्ण
 
-static int vrf_fill_slave_info(struct sk_buff *skb,
-			       const struct net_device *vrf_dev,
-			       const struct net_device *slave_dev)
-{
-	struct net_vrf *vrf = netdev_priv(vrf_dev);
+अटल पूर्णांक vrf_fill_slave_info(काष्ठा sk_buff *skb,
+			       स्थिर काष्ठा net_device *vrf_dev,
+			       स्थिर काष्ठा net_device *slave_dev)
+अणु
+	काष्ठा net_vrf *vrf = netdev_priv(vrf_dev);
 
-	if (nla_put_u32(skb, IFLA_VRF_PORT_TABLE, vrf->tb_id))
-		return -EMSGSIZE;
+	अगर (nla_put_u32(skb, IFLA_VRF_PORT_TABLE, vrf->tb_id))
+		वापस -EMSGSIZE;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct nla_policy vrf_nl_policy[IFLA_VRF_MAX + 1] = {
-	[IFLA_VRF_TABLE] = { .type = NLA_U32 },
-};
+अटल स्थिर काष्ठा nla_policy vrf_nl_policy[IFLA_VRF_MAX + 1] = अणु
+	[IFLA_VRF_TABLE] = अणु .type = NLA_U32 पूर्ण,
+पूर्ण;
 
-static struct rtnl_link_ops vrf_link_ops __read_mostly = {
+अटल काष्ठा rtnl_link_ops vrf_link_ops __पढ़ो_mostly = अणु
 	.kind		= DRV_NAME,
-	.priv_size	= sizeof(struct net_vrf),
+	.priv_size	= माप(काष्ठा net_vrf),
 
-	.get_size	= vrf_nl_getsize,
+	.get_size	= vrf_nl_माला_लोize,
 	.policy		= vrf_nl_policy,
 	.validate	= vrf_validate,
 	.fill_info	= vrf_fillinfo,
@@ -1824,223 +1825,223 @@ static struct rtnl_link_ops vrf_link_ops __read_mostly = {
 	.dellink	= vrf_dellink,
 	.setup		= vrf_setup,
 	.maxtype	= IFLA_VRF_MAX,
-};
+पूर्ण;
 
-static int vrf_device_event(struct notifier_block *unused,
-			    unsigned long event, void *ptr)
-{
-	struct net_device *dev = netdev_notifier_info_to_dev(ptr);
+अटल पूर्णांक vrf_device_event(काष्ठा notअगरier_block *unused,
+			    अचिन्हित दीर्घ event, व्योम *ptr)
+अणु
+	काष्ठा net_device *dev = netdev_notअगरier_info_to_dev(ptr);
 
-	/* only care about unregister events to drop slave references */
-	if (event == NETDEV_UNREGISTER) {
-		struct net_device *vrf_dev;
+	/* only care about unरेजिस्टर events to drop slave references */
+	अगर (event == NETDEV_UNREGISTER) अणु
+		काष्ठा net_device *vrf_dev;
 
-		if (!netif_is_l3_slave(dev))
-			goto out;
+		अगर (!netअगर_is_l3_slave(dev))
+			जाओ out;
 
 		vrf_dev = netdev_master_upper_dev_get(dev);
 		vrf_del_slave(vrf_dev, dev);
-	}
+	पूर्ण
 out:
-	return NOTIFY_DONE;
-}
+	वापस NOTIFY_DONE;
+पूर्ण
 
-static struct notifier_block vrf_notifier_block __read_mostly = {
-	.notifier_call = vrf_device_event,
-};
+अटल काष्ठा notअगरier_block vrf_notअगरier_block __पढ़ो_mostly = अणु
+	.notअगरier_call = vrf_device_event,
+पूर्ण;
 
-static int vrf_map_init(struct vrf_map *vmap)
-{
+अटल पूर्णांक vrf_map_init(काष्ठा vrf_map *vmap)
+अणु
 	spin_lock_init(&vmap->vmap_lock);
 	hash_init(vmap->ht);
 
 	vmap->strict_mode = false;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_SYSCTL
-static bool vrf_strict_mode(struct vrf_map *vmap)
-{
+#अगर_घोषित CONFIG_SYSCTL
+अटल bool vrf_strict_mode(काष्ठा vrf_map *vmap)
+अणु
 	bool strict_mode;
 
 	vrf_map_lock(vmap);
 	strict_mode = vmap->strict_mode;
 	vrf_map_unlock(vmap);
 
-	return strict_mode;
-}
+	वापस strict_mode;
+पूर्ण
 
-static int vrf_strict_mode_change(struct vrf_map *vmap, bool new_mode)
-{
+अटल पूर्णांक vrf_strict_mode_change(काष्ठा vrf_map *vmap, bool new_mode)
+अणु
 	bool *cur_mode;
-	int res = 0;
+	पूर्णांक res = 0;
 
 	vrf_map_lock(vmap);
 
 	cur_mode = &vmap->strict_mode;
-	if (*cur_mode == new_mode)
-		goto unlock;
+	अगर (*cur_mode == new_mode)
+		जाओ unlock;
 
-	if (*cur_mode) {
+	अगर (*cur_mode) अणु
 		/* disable strict mode */
 		*cur_mode = false;
-	} else {
-		if (vmap->shared_tables) {
+	पूर्ण अन्यथा अणु
+		अगर (vmap->shared_tables) अणु
 			/* we cannot allow strict_mode because there are some
 			 * vrfs that share one or more tables.
 			 */
 			res = -EBUSY;
-			goto unlock;
-		}
+			जाओ unlock;
+		पूर्ण
 
 		/* no tables are shared among vrfs, so we can go back
 		 * to 1:1 association between a vrf with its table.
 		 */
 		*cur_mode = true;
-	}
+	पूर्ण
 
 unlock:
 	vrf_map_unlock(vmap);
 
-	return res;
-}
+	वापस res;
+पूर्ण
 
-static int vrf_shared_table_handler(struct ctl_table *table, int write,
-				    void *buffer, size_t *lenp, loff_t *ppos)
-{
-	struct net *net = (struct net *)table->extra1;
-	struct vrf_map *vmap = netns_vrf_map(net);
-	int proc_strict_mode = 0;
-	struct ctl_table tmp = {
+अटल पूर्णांक vrf_shared_table_handler(काष्ठा ctl_table *table, पूर्णांक ग_लिखो,
+				    व्योम *buffer, माप_प्रकार *lenp, loff_t *ppos)
+अणु
+	काष्ठा net *net = (काष्ठा net *)table->extra1;
+	काष्ठा vrf_map *vmap = netns_vrf_map(net);
+	पूर्णांक proc_strict_mode = 0;
+	काष्ठा ctl_table पंचांगp = अणु
 		.procname	= table->procname,
 		.data		= &proc_strict_mode,
-		.maxlen		= sizeof(int),
+		.maxlen		= माप(पूर्णांक),
 		.mode		= table->mode,
 		.extra1		= SYSCTL_ZERO,
 		.extra2		= SYSCTL_ONE,
-	};
-	int ret;
+	पूर्ण;
+	पूर्णांक ret;
 
-	if (!write)
+	अगर (!ग_लिखो)
 		proc_strict_mode = vrf_strict_mode(vmap);
 
-	ret = proc_dointvec_minmax(&tmp, write, buffer, lenp, ppos);
+	ret = proc_करोपूर्णांकvec_minmax(&पंचांगp, ग_लिखो, buffer, lenp, ppos);
 
-	if (write && ret == 0)
+	अगर (ग_लिखो && ret == 0)
 		ret = vrf_strict_mode_change(vmap, (bool)proc_strict_mode);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const struct ctl_table vrf_table[] = {
-	{
+अटल स्थिर काष्ठा ctl_table vrf_table[] = अणु
+	अणु
 		.procname	= "strict_mode",
-		.data		= NULL,
-		.maxlen		= sizeof(int),
+		.data		= शून्य,
+		.maxlen		= माप(पूर्णांक),
 		.mode		= 0644,
 		.proc_handler	= vrf_shared_table_handler,
 		/* set by the vrf_netns_init */
-		.extra1		= NULL,
-	},
-	{ },
-};
+		.extra1		= शून्य,
+	पूर्ण,
+	अणु पूर्ण,
+पूर्ण;
 
-static int vrf_netns_init_sysctl(struct net *net, struct netns_vrf *nn_vrf)
-{
-	struct ctl_table *table;
+अटल पूर्णांक vrf_netns_init_sysctl(काष्ठा net *net, काष्ठा netns_vrf *nn_vrf)
+अणु
+	काष्ठा ctl_table *table;
 
-	table = kmemdup(vrf_table, sizeof(vrf_table), GFP_KERNEL);
-	if (!table)
-		return -ENOMEM;
+	table = kmemdup(vrf_table, माप(vrf_table), GFP_KERNEL);
+	अगर (!table)
+		वापस -ENOMEM;
 
 	/* init the extra1 parameter with the reference to current netns */
 	table[0].extra1 = net;
 
-	nn_vrf->ctl_hdr = register_net_sysctl(net, "net/vrf", table);
-	if (!nn_vrf->ctl_hdr) {
-		kfree(table);
-		return -ENOMEM;
-	}
+	nn_vrf->ctl_hdr = रेजिस्टर_net_sysctl(net, "net/vrf", table);
+	अगर (!nn_vrf->ctl_hdr) अणु
+		kमुक्त(table);
+		वापस -ENOMEM;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void vrf_netns_exit_sysctl(struct net *net)
-{
-	struct netns_vrf *nn_vrf = net_generic(net, vrf_net_id);
-	struct ctl_table *table;
+अटल व्योम vrf_netns_निकास_sysctl(काष्ठा net *net)
+अणु
+	काष्ठा netns_vrf *nn_vrf = net_generic(net, vrf_net_id);
+	काष्ठा ctl_table *table;
 
 	table = nn_vrf->ctl_hdr->ctl_table_arg;
-	unregister_net_sysctl_table(nn_vrf->ctl_hdr);
-	kfree(table);
-}
-#else
-static int vrf_netns_init_sysctl(struct net *net, struct netns_vrf *nn_vrf)
-{
-	return 0;
-}
+	unरेजिस्टर_net_sysctl_table(nn_vrf->ctl_hdr);
+	kमुक्त(table);
+पूर्ण
+#अन्यथा
+अटल पूर्णांक vrf_netns_init_sysctl(काष्ठा net *net, काष्ठा netns_vrf *nn_vrf)
+अणु
+	वापस 0;
+पूर्ण
 
-static void vrf_netns_exit_sysctl(struct net *net)
-{
-}
-#endif
+अटल व्योम vrf_netns_निकास_sysctl(काष्ठा net *net)
+अणु
+पूर्ण
+#पूर्ण_अगर
 
 /* Initialize per network namespace state */
-static int __net_init vrf_netns_init(struct net *net)
-{
-	struct netns_vrf *nn_vrf = net_generic(net, vrf_net_id);
+अटल पूर्णांक __net_init vrf_netns_init(काष्ठा net *net)
+अणु
+	काष्ठा netns_vrf *nn_vrf = net_generic(net, vrf_net_id);
 
 	nn_vrf->add_fib_rules = true;
 	vrf_map_init(&nn_vrf->vmap);
 
-	return vrf_netns_init_sysctl(net, nn_vrf);
-}
+	वापस vrf_netns_init_sysctl(net, nn_vrf);
+पूर्ण
 
-static void __net_exit vrf_netns_exit(struct net *net)
-{
-	vrf_netns_exit_sysctl(net);
-}
+अटल व्योम __net_निकास vrf_netns_निकास(काष्ठा net *net)
+अणु
+	vrf_netns_निकास_sysctl(net);
+पूर्ण
 
-static struct pernet_operations vrf_net_ops __net_initdata = {
+अटल काष्ठा pernet_operations vrf_net_ops __net_initdata = अणु
 	.init = vrf_netns_init,
-	.exit = vrf_netns_exit,
+	.निकास = vrf_netns_निकास,
 	.id   = &vrf_net_id,
-	.size = sizeof(struct netns_vrf),
-};
+	.size = माप(काष्ठा netns_vrf),
+पूर्ण;
 
-static int __init vrf_init_module(void)
-{
-	int rc;
+अटल पूर्णांक __init vrf_init_module(व्योम)
+अणु
+	पूर्णांक rc;
 
-	register_netdevice_notifier(&vrf_notifier_block);
+	रेजिस्टर_netdevice_notअगरier(&vrf_notअगरier_block);
 
-	rc = register_pernet_subsys(&vrf_net_ops);
-	if (rc < 0)
-		goto error;
+	rc = रेजिस्टर_pernet_subsys(&vrf_net_ops);
+	अगर (rc < 0)
+		जाओ error;
 
-	rc = l3mdev_table_lookup_register(L3MDEV_TYPE_VRF,
-					  vrf_ifindex_lookup_by_table_id);
-	if (rc < 0)
-		goto unreg_pernet;
+	rc = l3mdev_table_lookup_रेजिस्टर(L3MDEV_TYPE_VRF,
+					  vrf_अगरindex_lookup_by_table_id);
+	अगर (rc < 0)
+		जाओ unreg_pernet;
 
-	rc = rtnl_link_register(&vrf_link_ops);
-	if (rc < 0)
-		goto table_lookup_unreg;
+	rc = rtnl_link_रेजिस्टर(&vrf_link_ops);
+	अगर (rc < 0)
+		जाओ table_lookup_unreg;
 
-	return 0;
+	वापस 0;
 
 table_lookup_unreg:
-	l3mdev_table_lookup_unregister(L3MDEV_TYPE_VRF,
-				       vrf_ifindex_lookup_by_table_id);
+	l3mdev_table_lookup_unरेजिस्टर(L3MDEV_TYPE_VRF,
+				       vrf_अगरindex_lookup_by_table_id);
 
 unreg_pernet:
-	unregister_pernet_subsys(&vrf_net_ops);
+	unरेजिस्टर_pernet_subsys(&vrf_net_ops);
 
 error:
-	unregister_netdevice_notifier(&vrf_notifier_block);
-	return rc;
-}
+	unरेजिस्टर_netdevice_notअगरier(&vrf_notअगरier_block);
+	वापस rc;
+पूर्ण
 
 module_init(vrf_init_module);
 MODULE_AUTHOR("Shrijeet Mukherjee, David Ahern");

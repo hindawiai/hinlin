@@ -1,217 +1,218 @@
-// SPDX-License-Identifier: MIT
+<शैली गुरु>
+// SPDX-License-Identअगरier: MIT
 /*
- * Copyright © 2019 Intel Corporation
+ * Copyright तऊ 2019 Intel Corporation
  */
 
-#include <linux/sort.h>
+#समावेश <linux/sort.h>
 
-#include "intel_gt_clock_utils.h"
+#समावेश "intel_gt_clock_utils.h"
 
-#include "selftest_llc.h"
-#include "selftest_rc6.h"
-#include "selftest_rps.h"
+#समावेश "selftest_llc.h"
+#समावेश "selftest_rc6.h"
+#समावेश "selftest_rps.h"
 
-static int cmp_u64(const void *A, const void *B)
-{
-	const u64 *a = A, *b = B;
+अटल पूर्णांक cmp_u64(स्थिर व्योम *A, स्थिर व्योम *B)
+अणु
+	स्थिर u64 *a = A, *b = B;
 
-	if (a < b)
-		return -1;
-	else if (a > b)
-		return 1;
-	else
-		return 0;
-}
+	अगर (a < b)
+		वापस -1;
+	अन्यथा अगर (a > b)
+		वापस 1;
+	अन्यथा
+		वापस 0;
+पूर्ण
 
-static int cmp_u32(const void *A, const void *B)
-{
-	const u32 *a = A, *b = B;
+अटल पूर्णांक cmp_u32(स्थिर व्योम *A, स्थिर व्योम *B)
+अणु
+	स्थिर u32 *a = A, *b = B;
 
-	if (a < b)
-		return -1;
-	else if (a > b)
-		return 1;
-	else
-		return 0;
-}
+	अगर (a < b)
+		वापस -1;
+	अन्यथा अगर (a > b)
+		वापस 1;
+	अन्यथा
+		वापस 0;
+पूर्ण
 
-static void measure_clocks(struct intel_engine_cs *engine,
-			   u32 *out_cycles, ktime_t *out_dt)
-{
-	ktime_t dt[5];
+अटल व्योम measure_घड़ीs(काष्ठा पूर्णांकel_engine_cs *engine,
+			   u32 *out_cycles, kसमय_प्रकार *out_dt)
+अणु
+	kसमय_प्रकार dt[5];
 	u32 cycles[5];
-	int i;
+	पूर्णांक i;
 
-	for (i = 0; i < 5; i++) {
+	क्रम (i = 0; i < 5; i++) अणु
 		preempt_disable();
 		cycles[i] = -ENGINE_READ_FW(engine, RING_TIMESTAMP);
-		dt[i] = ktime_get();
+		dt[i] = kसमय_get();
 
 		udelay(1000);
 
-		dt[i] = ktime_sub(ktime_get(), dt[i]);
+		dt[i] = kसमय_sub(kसमय_get(), dt[i]);
 		cycles[i] += ENGINE_READ_FW(engine, RING_TIMESTAMP);
 		preempt_enable();
-	}
+	पूर्ण
 
-	/* Use the median of both cycle/dt; close enough */
-	sort(cycles, 5, sizeof(*cycles), cmp_u32, NULL);
+	/* Use the median of both cycle/dt; बंद enough */
+	sort(cycles, 5, माप(*cycles), cmp_u32, शून्य);
 	*out_cycles = (cycles[1] + 2 * cycles[2] + cycles[3]) / 4;
 
-	sort(dt, 5, sizeof(*dt), cmp_u64, NULL);
-	*out_dt = div_u64(dt[1] + 2 * dt[2] + dt[3], 4);
-}
+	sort(dt, 5, माप(*dt), cmp_u64, शून्य);
+	*out_dt = भाग_u64(dt[1] + 2 * dt[2] + dt[3], 4);
+पूर्ण
 
-static int live_gt_clocks(void *arg)
-{
-	struct intel_gt *gt = arg;
-	struct intel_engine_cs *engine;
-	enum intel_engine_id id;
-	int err = 0;
+अटल पूर्णांक live_gt_घड़ीs(व्योम *arg)
+अणु
+	काष्ठा पूर्णांकel_gt *gt = arg;
+	काष्ठा पूर्णांकel_engine_cs *engine;
+	क्रमागत पूर्णांकel_engine_id id;
+	पूर्णांक err = 0;
 
-	if (!gt->clock_frequency) { /* unknown */
+	अगर (!gt->घड़ी_frequency) अणु /* unknown */
 		pr_info("CS_TIMESTAMP frequency unknown\n");
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	if (INTEL_GEN(gt->i915) < 4) /* Any CS_TIMESTAMP? */
-		return 0;
+	अगर (INTEL_GEN(gt->i915) < 4) /* Any CS_TIMESTAMP? */
+		वापस 0;
 
-	if (IS_GEN(gt->i915, 5))
+	अगर (IS_GEN(gt->i915, 5))
 		/*
 		 * XXX CS_TIMESTAMP low dword is dysfunctional?
 		 *
 		 * Ville's experiments indicate the high dword still works,
 		 * but at a correspondingly reduced frequency.
 		 */
-		return 0;
+		वापस 0;
 
-	if (IS_GEN(gt->i915, 4))
+	अगर (IS_GEN(gt->i915, 4))
 		/*
 		 * XXX CS_TIMESTAMP appears gibberish
 		 *
 		 * Ville's experiments indicate that it mostly appears 'stuck'
-		 * in that we see the register report the same cycle count
-		 * for a couple of reads.
+		 * in that we see the रेजिस्टर report the same cycle count
+		 * क्रम a couple of पढ़ोs.
 		 */
-		return 0;
+		वापस 0;
 
-	intel_gt_pm_get(gt);
-	intel_uncore_forcewake_get(gt->uncore, FORCEWAKE_ALL);
+	पूर्णांकel_gt_pm_get(gt);
+	पूर्णांकel_uncore_क्रमcewake_get(gt->uncore, FORCEWAKE_ALL);
 
-	for_each_engine(engine, gt, id) {
+	क्रम_each_engine(engine, gt, id) अणु
 		u32 cycles;
 		u32 expected;
-		u64 time;
+		u64 समय;
 		u64 dt;
 
-		if (INTEL_GEN(engine->i915) < 7 && engine->id != RCS0)
-			continue;
+		अगर (INTEL_GEN(engine->i915) < 7 && engine->id != RCS0)
+			जारी;
 
-		measure_clocks(engine, &cycles, &dt);
+		measure_घड़ीs(engine, &cycles, &dt);
 
-		time = intel_gt_clock_interval_to_ns(engine->gt, cycles);
-		expected = intel_gt_ns_to_clock_interval(engine->gt, dt);
+		समय = पूर्णांकel_gt_घड़ी_पूर्णांकerval_to_ns(engine->gt, cycles);
+		expected = पूर्णांकel_gt_ns_to_घड़ी_पूर्णांकerval(engine->gt, dt);
 
 		pr_info("%s: TIMESTAMP %d cycles [%lldns] in %lldns [%d cycles], using CS clock frequency of %uKHz\n",
-			engine->name, cycles, time, dt, expected,
-			engine->gt->clock_frequency / 1000);
+			engine->name, cycles, समय, dt, expected,
+			engine->gt->घड़ी_frequency / 1000);
 
-		if (9 * time < 8 * dt || 8 * time > 9 * dt) {
+		अगर (9 * समय < 8 * dt || 8 * समय > 9 * dt) अणु
 			pr_err("%s: CS ticks did not match walltime!\n",
 			       engine->name);
 			err = -EINVAL;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		if (9 * expected < 8 * cycles || 8 * expected > 9 * cycles) {
+		अगर (9 * expected < 8 * cycles || 8 * expected > 9 * cycles) अणु
 			pr_err("%s: walltime did not match CS ticks!\n",
 			       engine->name);
 			err = -EINVAL;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	intel_uncore_forcewake_put(gt->uncore, FORCEWAKE_ALL);
-	intel_gt_pm_put(gt);
+	पूर्णांकel_uncore_क्रमcewake_put(gt->uncore, FORCEWAKE_ALL);
+	पूर्णांकel_gt_pm_put(gt);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int live_gt_resume(void *arg)
-{
-	struct intel_gt *gt = arg;
-	IGT_TIMEOUT(end_time);
-	int err;
+अटल पूर्णांक live_gt_resume(व्योम *arg)
+अणु
+	काष्ठा पूर्णांकel_gt *gt = arg;
+	IGT_TIMEOUT(end_समय);
+	पूर्णांक err;
 
-	/* Do several suspend/resume cycles to check we don't explode! */
-	do {
-		intel_gt_suspend_prepare(gt);
-		intel_gt_suspend_late(gt);
+	/* Do several suspend/resume cycles to check we करोn't explode! */
+	करो अणु
+		पूर्णांकel_gt_suspend_prepare(gt);
+		पूर्णांकel_gt_suspend_late(gt);
 
-		if (gt->rc6.enabled) {
+		अगर (gt->rc6.enabled) अणु
 			pr_err("rc6 still enabled after suspend!\n");
-			intel_gt_set_wedged_on_init(gt);
+			पूर्णांकel_gt_set_wedged_on_init(gt);
 			err = -EINVAL;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		err = intel_gt_resume(gt);
-		if (err)
-			break;
+		err = पूर्णांकel_gt_resume(gt);
+		अगर (err)
+			अवरोध;
 
-		if (gt->rc6.supported && !gt->rc6.enabled) {
+		अगर (gt->rc6.supported && !gt->rc6.enabled) अणु
 			pr_err("rc6 not enabled upon resume!\n");
-			intel_gt_set_wedged_on_init(gt);
+			पूर्णांकel_gt_set_wedged_on_init(gt);
 			err = -EINVAL;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		err = st_llc_verify(&gt->llc);
-		if (err) {
+		err = st_llc_verअगरy(&gt->llc);
+		अगर (err) अणु
 			pr_err("llc state not restored upon resume!\n");
-			intel_gt_set_wedged_on_init(gt);
-			break;
-		}
-	} while (!__igt_timeout(end_time, NULL));
+			पूर्णांकel_gt_set_wedged_on_init(gt);
+			अवरोध;
+		पूर्ण
+	पूर्ण जबतक (!__igt_समयout(end_समय, शून्य));
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-int intel_gt_pm_live_selftests(struct drm_i915_private *i915)
-{
-	static const struct i915_subtest tests[] = {
-		SUBTEST(live_gt_clocks),
+पूर्णांक पूर्णांकel_gt_pm_live_selftests(काष्ठा drm_i915_निजी *i915)
+अणु
+	अटल स्थिर काष्ठा i915_subtest tests[] = अणु
+		SUBTEST(live_gt_घड़ीs),
 		SUBTEST(live_rc6_manual),
-		SUBTEST(live_rps_clock_interval),
+		SUBTEST(live_rps_घड़ी_पूर्णांकerval),
 		SUBTEST(live_rps_control),
 		SUBTEST(live_rps_frequency_cs),
 		SUBTEST(live_rps_frequency_srm),
-		SUBTEST(live_rps_power),
-		SUBTEST(live_rps_interrupt),
+		SUBTEST(live_rps_घातer),
+		SUBTEST(live_rps_पूर्णांकerrupt),
 		SUBTEST(live_rps_dynamic),
 		SUBTEST(live_gt_resume),
-	};
+	पूर्ण;
 
-	if (intel_gt_is_wedged(&i915->gt))
-		return 0;
+	अगर (पूर्णांकel_gt_is_wedged(&i915->gt))
+		वापस 0;
 
-	return intel_gt_live_subtests(tests, &i915->gt);
-}
+	वापस पूर्णांकel_gt_live_subtests(tests, &i915->gt);
+पूर्ण
 
-int intel_gt_pm_late_selftests(struct drm_i915_private *i915)
-{
-	static const struct i915_subtest tests[] = {
+पूर्णांक पूर्णांकel_gt_pm_late_selftests(काष्ठा drm_i915_निजी *i915)
+अणु
+	अटल स्थिर काष्ठा i915_subtest tests[] = अणु
 		/*
-		 * These tests may leave the system in an undesirable state.
-		 * They are intended to be run last in CI and the system
+		 * These tests may leave the प्रणाली in an undesirable state.
+		 * They are पूर्णांकended to be run last in CI and the प्रणाली
 		 * rebooted afterwards.
 		 */
 		SUBTEST(live_rc6_ctx_wa),
-	};
+	पूर्ण;
 
-	if (intel_gt_is_wedged(&i915->gt))
-		return 0;
+	अगर (पूर्णांकel_gt_is_wedged(&i915->gt))
+		वापस 0;
 
-	return intel_gt_live_subtests(tests, &i915->gt);
-}
+	वापस पूर्णांकel_gt_live_subtests(tests, &i915->gt);
+पूर्ण

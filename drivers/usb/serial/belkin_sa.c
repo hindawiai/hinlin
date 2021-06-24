@@ -1,122 +1,123 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
  * Belkin USB Serial Adapter Driver
  *
  *  Copyright (C) 2000		William Greathouse (wgreathouse@smva.com)
- *  Copyright (C) 2000-2001	Greg Kroah-Hartman (greg@kroah.com)
+ *  Copyright (C) 2000-2001	Greg Kroah-Harपंचांगan (greg@kroah.com)
  *  Copyright (C) 2010		Johan Hovold (jhovold@gmail.com)
  *
  *  This program is largely derived from work by the linux-usb group
- *  and associated source files.  Please see the usb/serial files for
- *  individual credits and copyrights.
+ *  and associated source files.  Please see the usb/serial files क्रम
+ *  inभागidual credits and copyrights.
  *
- * See Documentation/usb/usb-serial.rst for more information on using this
+ * See Documentation/usb/usb-serial.rst क्रम more inक्रमmation on using this
  * driver
  *
  * TODO:
  * -- Add true modem control line query capability.  Currently we track the
- *    states reported by the interrupt and the states we request.
- * -- Add support for flush commands
+ *    states reported by the पूर्णांकerrupt and the states we request.
+ * -- Add support क्रम flush commands
  */
 
-#include <linux/kernel.h>
-#include <linux/errno.h>
-#include <linux/slab.h>
-#include <linux/tty.h>
-#include <linux/tty_driver.h>
-#include <linux/tty_flip.h>
-#include <linux/module.h>
-#include <linux/spinlock.h>
-#include <linux/uaccess.h>
-#include <linux/usb.h>
-#include <linux/usb/serial.h>
-#include "belkin_sa.h"
+#समावेश <linux/kernel.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/slab.h>
+#समावेश <linux/tty.h>
+#समावेश <linux/tty_driver.h>
+#समावेश <linux/tty_flip.h>
+#समावेश <linux/module.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/uaccess.h>
+#समावेश <linux/usb.h>
+#समावेश <linux/usb/serial.h>
+#समावेश "belkin_sa.h"
 
-#define DRIVER_AUTHOR "William Greathouse <wgreathouse@smva.com>"
-#define DRIVER_DESC "USB Belkin Serial converter driver"
+#घोषणा DRIVER_AUTHOR "William Greathouse <wgreathouse@smva.com>"
+#घोषणा DRIVER_DESC "USB Belkin Serial converter driver"
 
-/* function prototypes for a Belkin USB Serial Adapter F5U103 */
-static int belkin_sa_port_probe(struct usb_serial_port *port);
-static void belkin_sa_port_remove(struct usb_serial_port *port);
-static int  belkin_sa_open(struct tty_struct *tty,
-			struct usb_serial_port *port);
-static void belkin_sa_close(struct usb_serial_port *port);
-static void belkin_sa_read_int_callback(struct urb *urb);
-static void belkin_sa_process_read_urb(struct urb *urb);
-static void belkin_sa_set_termios(struct tty_struct *tty,
-			struct usb_serial_port *port, struct ktermios * old);
-static void belkin_sa_break_ctl(struct tty_struct *tty, int break_state);
-static int  belkin_sa_tiocmget(struct tty_struct *tty);
-static int  belkin_sa_tiocmset(struct tty_struct *tty,
-					unsigned int set, unsigned int clear);
+/* function prototypes क्रम a Belkin USB Serial Adapter F5U103 */
+अटल पूर्णांक belkin_sa_port_probe(काष्ठा usb_serial_port *port);
+अटल व्योम belkin_sa_port_हटाओ(काष्ठा usb_serial_port *port);
+अटल पूर्णांक  belkin_sa_खोलो(काष्ठा tty_काष्ठा *tty,
+			काष्ठा usb_serial_port *port);
+अटल व्योम belkin_sa_बंद(काष्ठा usb_serial_port *port);
+अटल व्योम belkin_sa_पढ़ो_पूर्णांक_callback(काष्ठा urb *urb);
+अटल व्योम belkin_sa_process_पढ़ो_urb(काष्ठा urb *urb);
+अटल व्योम belkin_sa_set_termios(काष्ठा tty_काष्ठा *tty,
+			काष्ठा usb_serial_port *port, काष्ठा ktermios * old);
+अटल व्योम belkin_sa_अवरोध_ctl(काष्ठा tty_काष्ठा *tty, पूर्णांक अवरोध_state);
+अटल पूर्णांक  belkin_sa_tiocmget(काष्ठा tty_काष्ठा *tty);
+अटल पूर्णांक  belkin_sa_tiocmset(काष्ठा tty_काष्ठा *tty,
+					अचिन्हित पूर्णांक set, अचिन्हित पूर्णांक clear);
 
 
-static const struct usb_device_id id_table[] = {
-	{ USB_DEVICE(BELKIN_SA_VID, BELKIN_SA_PID) },
-	{ USB_DEVICE(BELKIN_OLD_VID, BELKIN_OLD_PID) },
-	{ USB_DEVICE(PERACOM_VID, PERACOM_PID) },
-	{ USB_DEVICE(GOHUBS_VID, GOHUBS_PID) },
-	{ USB_DEVICE(GOHUBS_VID, HANDYLINK_PID) },
-	{ USB_DEVICE(BELKIN_DOCKSTATION_VID, BELKIN_DOCKSTATION_PID) },
-	{ }	/* Terminating entry */
-};
+अटल स्थिर काष्ठा usb_device_id id_table[] = अणु
+	अणु USB_DEVICE(BELKIN_SA_VID, BELKIN_SA_PID) पूर्ण,
+	अणु USB_DEVICE(BELKIN_OLD_VID, BELKIN_OLD_PID) पूर्ण,
+	अणु USB_DEVICE(PERACOM_VID, PERACOM_PID) पूर्ण,
+	अणु USB_DEVICE(GOHUBS_VID, GOHUBS_PID) पूर्ण,
+	अणु USB_DEVICE(GOHUBS_VID, HANDYLINK_PID) पूर्ण,
+	अणु USB_DEVICE(BELKIN_DOCKSTATION_VID, BELKIN_DOCKSTATION_PID) पूर्ण,
+	अणु पूर्ण	/* Terminating entry */
+पूर्ण;
 MODULE_DEVICE_TABLE(usb, id_table);
 
-/* All of the device info needed for the serial converters */
-static struct usb_serial_driver belkin_device = {
-	.driver = {
+/* All of the device info needed क्रम the serial converters */
+अटल काष्ठा usb_serial_driver belkin_device = अणु
+	.driver = अणु
 		.owner =	THIS_MODULE,
 		.name =		"belkin",
-	},
+	पूर्ण,
 	.description =		"Belkin / Peracom / GoHubs USB Serial Adapter",
 	.id_table =		id_table,
 	.num_ports =		1,
-	.open =			belkin_sa_open,
-	.close =		belkin_sa_close,
-	.read_int_callback =	belkin_sa_read_int_callback,
-	.process_read_urb =	belkin_sa_process_read_urb,
+	.खोलो =			belkin_sa_खोलो,
+	.बंद =		belkin_sa_बंद,
+	.पढ़ो_पूर्णांक_callback =	belkin_sa_पढ़ो_पूर्णांक_callback,
+	.process_पढ़ो_urb =	belkin_sa_process_पढ़ो_urb,
 	.set_termios =		belkin_sa_set_termios,
-	.break_ctl =		belkin_sa_break_ctl,
+	.अवरोध_ctl =		belkin_sa_अवरोध_ctl,
 	.tiocmget =		belkin_sa_tiocmget,
 	.tiocmset =		belkin_sa_tiocmset,
 	.port_probe =		belkin_sa_port_probe,
-	.port_remove =		belkin_sa_port_remove,
-};
+	.port_हटाओ =		belkin_sa_port_हटाओ,
+पूर्ण;
 
-static struct usb_serial_driver * const serial_drivers[] = {
-	&belkin_device, NULL
-};
+अटल काष्ठा usb_serial_driver * स्थिर serial_drivers[] = अणु
+	&belkin_device, शून्य
+पूर्ण;
 
-struct belkin_sa_private {
+काष्ठा belkin_sa_निजी अणु
 	spinlock_t		lock;
-	unsigned long		control_state;
-	unsigned char		last_lsr;
-	unsigned char		last_msr;
-	int			bad_flow_control;
-};
+	अचिन्हित दीर्घ		control_state;
+	अचिन्हित अक्षर		last_lsr;
+	अचिन्हित अक्षर		last_msr;
+	पूर्णांक			bad_flow_control;
+पूर्ण;
 
 
 /*
  * ***************************************************************************
- * Belkin USB Serial Adapter F5U103 specific driver functions
+ * Belkin USB Serial Adapter F5U103 specअगरic driver functions
  * ***************************************************************************
  */
 
-#define WDR_TIMEOUT 5000 /* default urb timeout */
+#घोषणा WDR_TIMEOUT 5000 /* शेष urb समयout */
 
-/* assumes that struct usb_serial *serial is available */
-#define BSA_USB_CMD(c, v) usb_control_msg(serial->dev, usb_sndctrlpipe(serial->dev, 0), \
+/* assumes that काष्ठा usb_serial *serial is available */
+#घोषणा BSA_USB_CMD(c, v) usb_control_msg(serial->dev, usb_sndctrlpipe(serial->dev, 0), \
 					    (c), BELKIN_SA_SET_REQUEST_TYPE, \
-					    (v), 0, NULL, 0, WDR_TIMEOUT)
+					    (v), 0, शून्य, 0, WDR_TIMEOUT)
 
-static int belkin_sa_port_probe(struct usb_serial_port *port)
-{
-	struct usb_device *dev = port->serial->dev;
-	struct belkin_sa_private *priv;
+अटल पूर्णांक belkin_sa_port_probe(काष्ठा usb_serial_port *port)
+अणु
+	काष्ठा usb_device *dev = port->serial->dev;
+	काष्ठा belkin_sa_निजी *priv;
 
-	priv = kmalloc(sizeof(struct belkin_sa_private), GFP_KERNEL);
-	if (!priv)
-		return -ENOMEM;
+	priv = kदो_स्मृति(माप(काष्ठा belkin_sa_निजी), GFP_KERNEL);
+	अगर (!priv)
+		वापस -ENOMEM;
 
 	spin_lock_init(&priv->lock);
 	priv->control_state = 0;
@@ -131,70 +132,70 @@ static int belkin_sa_port_probe(struct usb_serial_port *port)
 
 	usb_set_serial_port_data(port, priv);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void belkin_sa_port_remove(struct usb_serial_port *port)
-{
-	struct belkin_sa_private *priv;
+अटल व्योम belkin_sa_port_हटाओ(काष्ठा usb_serial_port *port)
+अणु
+	काष्ठा belkin_sa_निजी *priv;
 
 	priv = usb_get_serial_port_data(port);
-	kfree(priv);
-}
+	kमुक्त(priv);
+पूर्ण
 
-static int belkin_sa_open(struct tty_struct *tty,
-					struct usb_serial_port *port)
-{
-	int retval;
+अटल पूर्णांक belkin_sa_खोलो(काष्ठा tty_काष्ठा *tty,
+					काष्ठा usb_serial_port *port)
+अणु
+	पूर्णांक retval;
 
-	retval = usb_submit_urb(port->interrupt_in_urb, GFP_KERNEL);
-	if (retval) {
+	retval = usb_submit_urb(port->पूर्णांकerrupt_in_urb, GFP_KERNEL);
+	अगर (retval) अणु
 		dev_err(&port->dev, "usb_submit_urb(read int) failed\n");
-		return retval;
-	}
+		वापस retval;
+	पूर्ण
 
-	retval = usb_serial_generic_open(tty, port);
-	if (retval)
-		usb_kill_urb(port->interrupt_in_urb);
+	retval = usb_serial_generic_खोलो(tty, port);
+	अगर (retval)
+		usb_समाप्त_urb(port->पूर्णांकerrupt_in_urb);
 
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
-static void belkin_sa_close(struct usb_serial_port *port)
-{
-	usb_serial_generic_close(port);
-	usb_kill_urb(port->interrupt_in_urb);
-}
+अटल व्योम belkin_sa_बंद(काष्ठा usb_serial_port *port)
+अणु
+	usb_serial_generic_बंद(port);
+	usb_समाप्त_urb(port->पूर्णांकerrupt_in_urb);
+पूर्ण
 
-static void belkin_sa_read_int_callback(struct urb *urb)
-{
-	struct usb_serial_port *port = urb->context;
-	struct belkin_sa_private *priv;
-	unsigned char *data = urb->transfer_buffer;
-	int retval;
-	int status = urb->status;
-	unsigned long flags;
+अटल व्योम belkin_sa_पढ़ो_पूर्णांक_callback(काष्ठा urb *urb)
+अणु
+	काष्ठा usb_serial_port *port = urb->context;
+	काष्ठा belkin_sa_निजी *priv;
+	अचिन्हित अक्षर *data = urb->transfer_buffer;
+	पूर्णांक retval;
+	पूर्णांक status = urb->status;
+	अचिन्हित दीर्घ flags;
 
-	switch (status) {
-	case 0:
+	चयन (status) अणु
+	हाल 0:
 		/* success */
-		break;
-	case -ECONNRESET:
-	case -ENOENT:
-	case -ESHUTDOWN:
+		अवरोध;
+	हाल -ECONNRESET:
+	हाल -ENOENT:
+	हाल -ESHUTDOWN:
 		/* this urb is terminated, clean up */
 		dev_dbg(&port->dev, "%s - urb shutting down with status: %d\n",
 			__func__, status);
-		return;
-	default:
+		वापस;
+	शेष:
 		dev_dbg(&port->dev, "%s - nonzero urb status received: %d\n",
 			__func__, status);
-		goto exit;
-	}
+		जाओ निकास;
+	पूर्ण
 
 	usb_serial_debug_data(&port->dev, __func__, urb->actual_length, data);
 
-	/* Handle known interrupt data */
+	/* Handle known पूर्णांकerrupt data */
 	/* ignore data[0] and data[1] */
 
 	priv = usb_get_serial_port_data(port);
@@ -202,43 +203,43 @@ static void belkin_sa_read_int_callback(struct urb *urb)
 	priv->last_msr = data[BELKIN_SA_MSR_INDEX];
 
 	/* Record Control Line states */
-	if (priv->last_msr & BELKIN_SA_MSR_DSR)
+	अगर (priv->last_msr & BELKIN_SA_MSR_DSR)
 		priv->control_state |= TIOCM_DSR;
-	else
+	अन्यथा
 		priv->control_state &= ~TIOCM_DSR;
 
-	if (priv->last_msr & BELKIN_SA_MSR_CTS)
+	अगर (priv->last_msr & BELKIN_SA_MSR_CTS)
 		priv->control_state |= TIOCM_CTS;
-	else
+	अन्यथा
 		priv->control_state &= ~TIOCM_CTS;
 
-	if (priv->last_msr & BELKIN_SA_MSR_RI)
+	अगर (priv->last_msr & BELKIN_SA_MSR_RI)
 		priv->control_state |= TIOCM_RI;
-	else
+	अन्यथा
 		priv->control_state &= ~TIOCM_RI;
 
-	if (priv->last_msr & BELKIN_SA_MSR_CD)
+	अगर (priv->last_msr & BELKIN_SA_MSR_CD)
 		priv->control_state |= TIOCM_CD;
-	else
+	अन्यथा
 		priv->control_state &= ~TIOCM_CD;
 
 	priv->last_lsr = data[BELKIN_SA_LSR_INDEX];
 	spin_unlock_irqrestore(&priv->lock, flags);
-exit:
+निकास:
 	retval = usb_submit_urb(urb, GFP_ATOMIC);
-	if (retval)
+	अगर (retval)
 		dev_err(&port->dev, "%s - usb_submit_urb failed with "
 			"result %d\n", __func__, retval);
-}
+पूर्ण
 
-static void belkin_sa_process_read_urb(struct urb *urb)
-{
-	struct usb_serial_port *port = urb->context;
-	struct belkin_sa_private *priv = usb_get_serial_port_data(port);
-	unsigned char *data = urb->transfer_buffer;
-	unsigned long flags;
-	unsigned char status;
-	char tty_flag;
+अटल व्योम belkin_sa_process_पढ़ो_urb(काष्ठा urb *urb)
+अणु
+	काष्ठा usb_serial_port *port = urb->context;
+	काष्ठा belkin_sa_निजी *priv = usb_get_serial_port_data(port);
+	अचिन्हित अक्षर *data = urb->transfer_buffer;
+	अचिन्हित दीर्घ flags;
+	अचिन्हित अक्षर status;
+	अक्षर tty_flag;
 
 	/* Update line status */
 	tty_flag = TTY_NORMAL;
@@ -248,47 +249,47 @@ static void belkin_sa_process_read_urb(struct urb *urb)
 	priv->last_lsr &= ~BELKIN_SA_LSR_ERR;
 	spin_unlock_irqrestore(&priv->lock, flags);
 
-	if (!urb->actual_length)
-		return;
+	अगर (!urb->actual_length)
+		वापस;
 
-	if (status & BELKIN_SA_LSR_ERR) {
+	अगर (status & BELKIN_SA_LSR_ERR) अणु
 		/* Break takes precedence over parity, which takes precedence
 		 * over framing errors. */
-		if (status & BELKIN_SA_LSR_BI)
+		अगर (status & BELKIN_SA_LSR_BI)
 			tty_flag = TTY_BREAK;
-		else if (status & BELKIN_SA_LSR_PE)
+		अन्यथा अगर (status & BELKIN_SA_LSR_PE)
 			tty_flag = TTY_PARITY;
-		else if (status & BELKIN_SA_LSR_FE)
+		अन्यथा अगर (status & BELKIN_SA_LSR_FE)
 			tty_flag = TTY_FRAME;
 		dev_dbg(&port->dev, "tty_flag = %d\n", tty_flag);
 
-		/* Overrun is special, not associated with a char. */
-		if (status & BELKIN_SA_LSR_OE)
-			tty_insert_flip_char(&port->port, 0, TTY_OVERRUN);
-	}
+		/* Overrun is special, not associated with a अक्षर. */
+		अगर (status & BELKIN_SA_LSR_OE)
+			tty_insert_flip_अक्षर(&port->port, 0, TTY_OVERRUN);
+	पूर्ण
 
 	tty_insert_flip_string_fixed_flag(&port->port, data, tty_flag,
 							urb->actual_length);
 	tty_flip_buffer_push(&port->port);
-}
+पूर्ण
 
-static void belkin_sa_set_termios(struct tty_struct *tty,
-		struct usb_serial_port *port, struct ktermios *old_termios)
-{
-	struct usb_serial *serial = port->serial;
-	struct belkin_sa_private *priv = usb_get_serial_port_data(port);
-	unsigned int iflag;
-	unsigned int cflag;
-	unsigned int old_iflag = 0;
-	unsigned int old_cflag = 0;
+अटल व्योम belkin_sa_set_termios(काष्ठा tty_काष्ठा *tty,
+		काष्ठा usb_serial_port *port, काष्ठा ktermios *old_termios)
+अणु
+	काष्ठा usb_serial *serial = port->serial;
+	काष्ठा belkin_sa_निजी *priv = usb_get_serial_port_data(port);
+	अचिन्हित पूर्णांक अगरlag;
+	अचिन्हित पूर्णांक cflag;
+	अचिन्हित पूर्णांक old_अगरlag = 0;
+	अचिन्हित पूर्णांक old_cflag = 0;
 	__u16 urb_value = 0; /* Will hold the new flags */
-	unsigned long flags;
-	unsigned long control_state;
-	int bad_flow_control;
+	अचिन्हित दीर्घ flags;
+	अचिन्हित दीर्घ control_state;
+	पूर्णांक bad_flow_control;
 	speed_t baud;
-	struct ktermios *termios = &tty->termios;
+	काष्ठा ktermios *termios = &tty->termios;
 
-	iflag = termios->c_iflag;
+	अगरlag = termios->c_अगरlag;
 	cflag = termios->c_cflag;
 
 	termios->c_cflag &= ~CMSPAR;
@@ -299,194 +300,194 @@ static void belkin_sa_set_termios(struct tty_struct *tty,
 	bad_flow_control = priv->bad_flow_control;
 	spin_unlock_irqrestore(&priv->lock, flags);
 
-	old_iflag = old_termios->c_iflag;
+	old_अगरlag = old_termios->c_अगरlag;
 	old_cflag = old_termios->c_cflag;
 
 	/* Set the baud rate */
-	if ((cflag & CBAUD) != (old_cflag & CBAUD)) {
-		/* reassert DTR and (maybe) RTS on transition from B0 */
-		if ((old_cflag & CBAUD) == B0) {
+	अगर ((cflag & CBAUD) != (old_cflag & CBAUD)) अणु
+		/* reनिश्चित DTR and (maybe) RTS on transition from B0 */
+		अगर ((old_cflag & CBAUD) == B0) अणु
 			control_state |= (TIOCM_DTR|TIOCM_RTS);
-			if (BSA_USB_CMD(BELKIN_SA_SET_DTR_REQUEST, 1) < 0)
+			अगर (BSA_USB_CMD(BELKIN_SA_SET_DTR_REQUEST, 1) < 0)
 				dev_err(&port->dev, "Set DTR error\n");
-			/* don't set RTS if using hardware flow control */
-			if (!(old_cflag & CRTSCTS))
-				if (BSA_USB_CMD(BELKIN_SA_SET_RTS_REQUEST
+			/* करोn't set RTS अगर using hardware flow control */
+			अगर (!(old_cflag & CRTSCTS))
+				अगर (BSA_USB_CMD(BELKIN_SA_SET_RTS_REQUEST
 								, 1) < 0)
 					dev_err(&port->dev, "Set RTS error\n");
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	baud = tty_get_baud_rate(tty);
-	if (baud) {
+	अगर (baud) अणु
 		urb_value = BELKIN_SA_BAUD(baud);
 		/* Clip to maximum speed */
-		if (urb_value == 0)
+		अगर (urb_value == 0)
 			urb_value = 1;
-		/* Turn it back into a resulting real baud rate */
+		/* Turn it back पूर्णांकo a resulting real baud rate */
 		baud = BELKIN_SA_BAUD(urb_value);
 
 		/* Report the actual baud rate back to the caller */
 		tty_encode_baud_rate(tty, baud, baud);
-		if (BSA_USB_CMD(BELKIN_SA_SET_BAUDRATE_REQUEST, urb_value) < 0)
+		अगर (BSA_USB_CMD(BELKIN_SA_SET_BAUDRATE_REQUEST, urb_value) < 0)
 			dev_err(&port->dev, "Set baudrate error\n");
-	} else {
+	पूर्ण अन्यथा अणु
 		/* Disable flow control */
-		if (BSA_USB_CMD(BELKIN_SA_SET_FLOW_CTRL_REQUEST,
+		अगर (BSA_USB_CMD(BELKIN_SA_SET_FLOW_CTRL_REQUEST,
 						BELKIN_SA_FLOW_NONE) < 0)
 			dev_err(&port->dev, "Disable flowcontrol error\n");
 		/* Drop RTS and DTR */
 		control_state &= ~(TIOCM_DTR | TIOCM_RTS);
-		if (BSA_USB_CMD(BELKIN_SA_SET_DTR_REQUEST, 0) < 0)
+		अगर (BSA_USB_CMD(BELKIN_SA_SET_DTR_REQUEST, 0) < 0)
 			dev_err(&port->dev, "DTR LOW error\n");
-		if (BSA_USB_CMD(BELKIN_SA_SET_RTS_REQUEST, 0) < 0)
+		अगर (BSA_USB_CMD(BELKIN_SA_SET_RTS_REQUEST, 0) < 0)
 			dev_err(&port->dev, "RTS LOW error\n");
-	}
+	पूर्ण
 
 	/* set the parity */
-	if ((cflag ^ old_cflag) & (PARENB | PARODD)) {
-		if (cflag & PARENB)
+	अगर ((cflag ^ old_cflag) & (PARENB | PARODD)) अणु
+		अगर (cflag & PARENB)
 			urb_value = (cflag & PARODD) ?  BELKIN_SA_PARITY_ODD
 						: BELKIN_SA_PARITY_EVEN;
-		else
+		अन्यथा
 			urb_value = BELKIN_SA_PARITY_NONE;
-		if (BSA_USB_CMD(BELKIN_SA_SET_PARITY_REQUEST, urb_value) < 0)
+		अगर (BSA_USB_CMD(BELKIN_SA_SET_PARITY_REQUEST, urb_value) < 0)
 			dev_err(&port->dev, "Set parity error\n");
-	}
+	पूर्ण
 
 	/* set the number of data bits */
-	if ((cflag & CSIZE) != (old_cflag & CSIZE)) {
-		switch (cflag & CSIZE) {
-		case CS5:
+	अगर ((cflag & CSIZE) != (old_cflag & CSIZE)) अणु
+		चयन (cflag & CSIZE) अणु
+		हाल CS5:
 			urb_value = BELKIN_SA_DATA_BITS(5);
-			break;
-		case CS6:
+			अवरोध;
+		हाल CS6:
 			urb_value = BELKIN_SA_DATA_BITS(6);
-			break;
-		case CS7:
+			अवरोध;
+		हाल CS7:
 			urb_value = BELKIN_SA_DATA_BITS(7);
-			break;
-		case CS8:
+			अवरोध;
+		हाल CS8:
 			urb_value = BELKIN_SA_DATA_BITS(8);
-			break;
-		default:
+			अवरोध;
+		शेष:
 			dev_dbg(&port->dev,
 				"CSIZE was not CS5-CS8, using default of 8\n");
 			urb_value = BELKIN_SA_DATA_BITS(8);
-			break;
-		}
-		if (BSA_USB_CMD(BELKIN_SA_SET_DATA_BITS_REQUEST, urb_value) < 0)
+			अवरोध;
+		पूर्ण
+		अगर (BSA_USB_CMD(BELKIN_SA_SET_DATA_BITS_REQUEST, urb_value) < 0)
 			dev_err(&port->dev, "Set data bits error\n");
-	}
+	पूर्ण
 
 	/* set the number of stop bits */
-	if ((cflag & CSTOPB) != (old_cflag & CSTOPB)) {
+	अगर ((cflag & CSTOPB) != (old_cflag & CSTOPB)) अणु
 		urb_value = (cflag & CSTOPB) ? BELKIN_SA_STOP_BITS(2)
 						: BELKIN_SA_STOP_BITS(1);
-		if (BSA_USB_CMD(BELKIN_SA_SET_STOP_BITS_REQUEST,
+		अगर (BSA_USB_CMD(BELKIN_SA_SET_STOP_BITS_REQUEST,
 							urb_value) < 0)
 			dev_err(&port->dev, "Set stop bits error\n");
-	}
+	पूर्ण
 
 	/* Set flow control */
-	if (((iflag ^ old_iflag) & (IXOFF | IXON)) ||
-		((cflag ^ old_cflag) & CRTSCTS)) {
+	अगर (((अगरlag ^ old_अगरlag) & (IXOFF | IXON)) ||
+		((cflag ^ old_cflag) & CRTSCTS)) अणु
 		urb_value = 0;
-		if ((iflag & IXOFF) || (iflag & IXON))
+		अगर ((अगरlag & IXOFF) || (अगरlag & IXON))
 			urb_value |= (BELKIN_SA_FLOW_OXON | BELKIN_SA_FLOW_IXON);
-		else
+		अन्यथा
 			urb_value &= ~(BELKIN_SA_FLOW_OXON | BELKIN_SA_FLOW_IXON);
 
-		if (cflag & CRTSCTS)
+		अगर (cflag & CRTSCTS)
 			urb_value |=  (BELKIN_SA_FLOW_OCTS | BELKIN_SA_FLOW_IRTS);
-		else
+		अन्यथा
 			urb_value &= ~(BELKIN_SA_FLOW_OCTS | BELKIN_SA_FLOW_IRTS);
 
-		if (bad_flow_control)
+		अगर (bad_flow_control)
 			urb_value &= ~(BELKIN_SA_FLOW_IRTS);
 
-		if (BSA_USB_CMD(BELKIN_SA_SET_FLOW_CTRL_REQUEST, urb_value) < 0)
+		अगर (BSA_USB_CMD(BELKIN_SA_SET_FLOW_CTRL_REQUEST, urb_value) < 0)
 			dev_err(&port->dev, "Set flow control error\n");
-	}
+	पूर्ण
 
-	/* save off the modified port settings */
+	/* save off the modअगरied port settings */
 	spin_lock_irqsave(&priv->lock, flags);
 	priv->control_state = control_state;
 	spin_unlock_irqrestore(&priv->lock, flags);
-}
+पूर्ण
 
-static void belkin_sa_break_ctl(struct tty_struct *tty, int break_state)
-{
-	struct usb_serial_port *port = tty->driver_data;
-	struct usb_serial *serial = port->serial;
+अटल व्योम belkin_sa_अवरोध_ctl(काष्ठा tty_काष्ठा *tty, पूर्णांक अवरोध_state)
+अणु
+	काष्ठा usb_serial_port *port = tty->driver_data;
+	काष्ठा usb_serial *serial = port->serial;
 
-	if (BSA_USB_CMD(BELKIN_SA_SET_BREAK_REQUEST, break_state ? 1 : 0) < 0)
-		dev_err(&port->dev, "Set break_ctl %d\n", break_state);
-}
+	अगर (BSA_USB_CMD(BELKIN_SA_SET_BREAK_REQUEST, अवरोध_state ? 1 : 0) < 0)
+		dev_err(&port->dev, "Set break_ctl %d\n", अवरोध_state);
+पूर्ण
 
-static int belkin_sa_tiocmget(struct tty_struct *tty)
-{
-	struct usb_serial_port *port = tty->driver_data;
-	struct belkin_sa_private *priv = usb_get_serial_port_data(port);
-	unsigned long control_state;
-	unsigned long flags;
+अटल पूर्णांक belkin_sa_tiocmget(काष्ठा tty_काष्ठा *tty)
+अणु
+	काष्ठा usb_serial_port *port = tty->driver_data;
+	काष्ठा belkin_sa_निजी *priv = usb_get_serial_port_data(port);
+	अचिन्हित दीर्घ control_state;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&priv->lock, flags);
 	control_state = priv->control_state;
 	spin_unlock_irqrestore(&priv->lock, flags);
 
-	return control_state;
-}
+	वापस control_state;
+पूर्ण
 
-static int belkin_sa_tiocmset(struct tty_struct *tty,
-			       unsigned int set, unsigned int clear)
-{
-	struct usb_serial_port *port = tty->driver_data;
-	struct usb_serial *serial = port->serial;
-	struct belkin_sa_private *priv = usb_get_serial_port_data(port);
-	unsigned long control_state;
-	unsigned long flags;
-	int retval;
-	int rts = 0;
-	int dtr = 0;
+अटल पूर्णांक belkin_sa_tiocmset(काष्ठा tty_काष्ठा *tty,
+			       अचिन्हित पूर्णांक set, अचिन्हित पूर्णांक clear)
+अणु
+	काष्ठा usb_serial_port *port = tty->driver_data;
+	काष्ठा usb_serial *serial = port->serial;
+	काष्ठा belkin_sa_निजी *priv = usb_get_serial_port_data(port);
+	अचिन्हित दीर्घ control_state;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक retval;
+	पूर्णांक rts = 0;
+	पूर्णांक dtr = 0;
 
 	spin_lock_irqsave(&priv->lock, flags);
 	control_state = priv->control_state;
 
-	if (set & TIOCM_RTS) {
+	अगर (set & TIOCM_RTS) अणु
 		control_state |= TIOCM_RTS;
 		rts = 1;
-	}
-	if (set & TIOCM_DTR) {
+	पूर्ण
+	अगर (set & TIOCM_DTR) अणु
 		control_state |= TIOCM_DTR;
 		dtr = 1;
-	}
-	if (clear & TIOCM_RTS) {
+	पूर्ण
+	अगर (clear & TIOCM_RTS) अणु
 		control_state &= ~TIOCM_RTS;
 		rts = 0;
-	}
-	if (clear & TIOCM_DTR) {
+	पूर्ण
+	अगर (clear & TIOCM_DTR) अणु
 		control_state &= ~TIOCM_DTR;
 		dtr = 0;
-	}
+	पूर्ण
 
 	priv->control_state = control_state;
 	spin_unlock_irqrestore(&priv->lock, flags);
 
 	retval = BSA_USB_CMD(BELKIN_SA_SET_RTS_REQUEST, rts);
-	if (retval < 0) {
+	अगर (retval < 0) अणु
 		dev_err(&port->dev, "Set RTS error %d\n", retval);
-		goto exit;
-	}
+		जाओ निकास;
+	पूर्ण
 
 	retval = BSA_USB_CMD(BELKIN_SA_SET_DTR_REQUEST, dtr);
-	if (retval < 0) {
+	अगर (retval < 0) अणु
 		dev_err(&port->dev, "Set DTR error %d\n", retval);
-		goto exit;
-	}
-exit:
-	return retval;
-}
+		जाओ निकास;
+	पूर्ण
+निकास:
+	वापस retval;
+पूर्ण
 
 module_usb_serial_driver(serial_drivers, id_table);
 

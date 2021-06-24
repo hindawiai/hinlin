@@ -1,79 +1,80 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * Copyright (C) 2020 Synopsys, Inc. (www.synopsys.com)
  *
  * Author: Eugeniy Paltsev <Eugeniy.Paltsev@synopsys.com>
  */
-#ifndef __ASM_ARC_DSP_IMPL_H
-#define __ASM_ARC_DSP_IMPL_H
+#अगर_अघोषित __ASM_ARC_DSP_IMPL_H
+#घोषणा __ASM_ARC_DSP_IMPL_H
 
-#include <asm/dsp.h>
+#समावेश <यंत्र/dsp.h>
 
-#define DSP_CTRL_DISABLED_ALL		0
+#घोषणा DSP_CTRL_DISABLED_ALL		0
 
-#ifdef __ASSEMBLY__
+#अगर_घोषित __ASSEMBLY__
 
-/* clobbers r5 register */
+/* clobbers r5 रेजिस्टर */
 .macro DSP_EARLY_INIT
-#ifdef CONFIG_ISA_ARCV2
+#अगर_घोषित CONFIG_ISA_ARCV2
 	lr	r5, [ARC_AUX_DSP_BUILD]
 	bmsk	r5, r5, 7
 	breq    r5, 0, 1f
 	mov	r5, DSP_CTRL_DISABLED_ALL
 	sr	r5, [ARC_AUX_DSP_CTRL]
 1:
-#endif
+#पूर्ण_अगर
 .endm
 
-/* clobbers r10, r11 registers pair */
-.macro DSP_SAVE_REGFILE_IRQ
-#if defined(CONFIG_ARC_DSP_KERNEL)
+/* clobbers r10, r11 रेजिस्टरs pair */
+.macro DSP_SAVE_REGखाता_IRQ
+#अगर defined(CONFIG_ARC_DSP_KERNEL)
 	/*
 	 * Drop any changes to DSP_CTRL made by userspace so userspace won't be
-	 * able to break kernel - reset it to DSP_CTRL_DISABLED_ALL value
+	 * able to अवरोध kernel - reset it to DSP_CTRL_DISABLED_ALL value
 	 */
 	mov	r10, DSP_CTRL_DISABLED_ALL
 	sr	r10, [ARC_AUX_DSP_CTRL]
 
-#elif defined(CONFIG_ARC_DSP_SAVE_RESTORE_REGS)
+#या_अगर defined(CONFIG_ARC_DSP_SAVE_RESTORE_REGS)
 	/*
-	 * Save DSP_CTRL register and reset it to value suitable for kernel
+	 * Save DSP_CTRL रेजिस्टर and reset it to value suitable क्रम kernel
 	 * (DSP_CTRL_DISABLED_ALL)
 	 */
 	mov	r10, DSP_CTRL_DISABLED_ALL
 	aex	r10, [ARC_AUX_DSP_CTRL]
 	st	r10, [sp, PT_DSP_CTRL]
 
-#endif
+#पूर्ण_अगर
 .endm
 
-/* clobbers r10, r11 registers pair */
-.macro DSP_RESTORE_REGFILE_IRQ
-#if defined(CONFIG_ARC_DSP_SAVE_RESTORE_REGS)
+/* clobbers r10, r11 रेजिस्टरs pair */
+.macro DSP_RESTORE_REGखाता_IRQ
+#अगर defined(CONFIG_ARC_DSP_SAVE_RESTORE_REGS)
 	ld	r10, [sp, PT_DSP_CTRL]
 	sr	r10, [ARC_AUX_DSP_CTRL]
 
-#endif
+#पूर्ण_अगर
 .endm
 
-#else /* __ASEMBLY__ */
+#अन्यथा /* __ASEMBLY__ */
 
-#include <linux/sched.h>
-#include <asm/asserts.h>
-#include <asm/switch_to.h>
+#समावेश <linux/sched.h>
+#समावेश <यंत्र/निश्चितs.h>
+#समावेश <यंत्र/चयन_to.h>
 
-#ifdef CONFIG_ARC_DSP_SAVE_RESTORE_REGS
+#अगर_घोषित CONFIG_ARC_DSP_SAVE_RESTORE_REGS
 
 /*
- * As we save new and restore old AUX register value in the same place we
- * can optimize a bit and use AEX instruction (swap contents of an auxiliary
- * register with a core register) instead of LR + SR pair.
+ * As we save new and restore old AUX रेजिस्टर value in the same place we
+ * can optimize a bit and use AEX inकाष्ठाion (swap contents of an auxiliary
+ * रेजिस्टर with a core रेजिस्टर) instead of LR + SR pair.
  */
-#define AUX_SAVE_RESTORE(_saveto, _readfrom, _offt, _aux)		\
-do {									\
-	long unsigned int _scratch;					\
+#घोषणा AUX_SAVE_RESTORE(_saveto, _पढ़ोfrom, _offt, _aux)		\
+करो अणु									\
+	दीर्घ अचिन्हित पूर्णांक _scratch;					\
 									\
-	__asm__ __volatile__(						\
+	__यंत्र__ __अस्थिर__(						\
 		"ld	%0, [%2, %4]			\n"		\
 		"aex	%0, [%3]			\n"		\
 		"st	%0, [%1, %4]			\n"		\
@@ -81,72 +82,72 @@ do {									\
 		  "=&r" (_scratch)	/* must be early clobber */	\
 		:							\
 		   "r" (_saveto),					\
-		   "r" (_readfrom),					\
+		   "r" (_पढ़ोfrom),					\
 		   "Ir" (_aux),						\
 		   "Ir" (_offt)						\
 		:							\
 		  "memory"						\
 	);								\
-} while (0)
+पूर्ण जबतक (0)
 
-#define DSP_AUX_SAVE_RESTORE(_saveto, _readfrom, _aux)			\
-	AUX_SAVE_RESTORE(_saveto, _readfrom,				\
-		offsetof(struct dsp_callee_regs, _aux),			\
+#घोषणा DSP_AUX_SAVE_RESTORE(_saveto, _पढ़ोfrom, _aux)			\
+	AUX_SAVE_RESTORE(_saveto, _पढ़ोfrom,				\
+		दुरत्व(काष्ठा dsp_callee_regs, _aux),			\
 		ARC_AUX_##_aux)
 
-static inline void dsp_save_restore(struct task_struct *prev,
-					struct task_struct *next)
-{
-	long unsigned int *saveto = &prev->thread.dsp.ACC0_GLO;
-	long unsigned int *readfrom = &next->thread.dsp.ACC0_GLO;
+अटल अंतरभूत व्योम dsp_save_restore(काष्ठा task_काष्ठा *prev,
+					काष्ठा task_काष्ठा *next)
+अणु
+	दीर्घ अचिन्हित पूर्णांक *saveto = &prev->thपढ़ो.dsp.ACC0_GLO;
+	दीर्घ अचिन्हित पूर्णांक *पढ़ोfrom = &next->thपढ़ो.dsp.ACC0_GLO;
 
-	DSP_AUX_SAVE_RESTORE(saveto, readfrom, ACC0_GLO);
-	DSP_AUX_SAVE_RESTORE(saveto, readfrom, ACC0_GHI);
+	DSP_AUX_SAVE_RESTORE(saveto, पढ़ोfrom, ACC0_GLO);
+	DSP_AUX_SAVE_RESTORE(saveto, पढ़ोfrom, ACC0_GHI);
 
-	DSP_AUX_SAVE_RESTORE(saveto, readfrom, DSP_BFLY0);
-	DSP_AUX_SAVE_RESTORE(saveto, readfrom, DSP_FFT_CTRL);
+	DSP_AUX_SAVE_RESTORE(saveto, पढ़ोfrom, DSP_BFLY0);
+	DSP_AUX_SAVE_RESTORE(saveto, पढ़ोfrom, DSP_FFT_CTRL);
 
-#ifdef CONFIG_ARC_DSP_AGU_USERSPACE
-	DSP_AUX_SAVE_RESTORE(saveto, readfrom, AGU_AP0);
-	DSP_AUX_SAVE_RESTORE(saveto, readfrom, AGU_AP1);
-	DSP_AUX_SAVE_RESTORE(saveto, readfrom, AGU_AP2);
-	DSP_AUX_SAVE_RESTORE(saveto, readfrom, AGU_AP3);
+#अगर_घोषित CONFIG_ARC_DSP_AGU_USERSPACE
+	DSP_AUX_SAVE_RESTORE(saveto, पढ़ोfrom, AGU_AP0);
+	DSP_AUX_SAVE_RESTORE(saveto, पढ़ोfrom, AGU_AP1);
+	DSP_AUX_SAVE_RESTORE(saveto, पढ़ोfrom, AGU_AP2);
+	DSP_AUX_SAVE_RESTORE(saveto, पढ़ोfrom, AGU_AP3);
 
-	DSP_AUX_SAVE_RESTORE(saveto, readfrom, AGU_OS0);
-	DSP_AUX_SAVE_RESTORE(saveto, readfrom, AGU_OS1);
+	DSP_AUX_SAVE_RESTORE(saveto, पढ़ोfrom, AGU_OS0);
+	DSP_AUX_SAVE_RESTORE(saveto, पढ़ोfrom, AGU_OS1);
 
-	DSP_AUX_SAVE_RESTORE(saveto, readfrom, AGU_MOD0);
-	DSP_AUX_SAVE_RESTORE(saveto, readfrom, AGU_MOD1);
-	DSP_AUX_SAVE_RESTORE(saveto, readfrom, AGU_MOD2);
-	DSP_AUX_SAVE_RESTORE(saveto, readfrom, AGU_MOD3);
-#endif /* CONFIG_ARC_DSP_AGU_USERSPACE */
-}
+	DSP_AUX_SAVE_RESTORE(saveto, पढ़ोfrom, AGU_MOD0);
+	DSP_AUX_SAVE_RESTORE(saveto, पढ़ोfrom, AGU_MOD1);
+	DSP_AUX_SAVE_RESTORE(saveto, पढ़ोfrom, AGU_MOD2);
+	DSP_AUX_SAVE_RESTORE(saveto, पढ़ोfrom, AGU_MOD3);
+#पूर्ण_अगर /* CONFIG_ARC_DSP_AGU_USERSPACE */
+पूर्ण
 
-#else /* !CONFIG_ARC_DSP_SAVE_RESTORE_REGS */
-#define dsp_save_restore(p, n)
-#endif /* CONFIG_ARC_DSP_SAVE_RESTORE_REGS */
+#अन्यथा /* !CONFIG_ARC_DSP_SAVE_RESTORE_REGS */
+#घोषणा dsp_save_restore(p, n)
+#पूर्ण_अगर /* CONFIG_ARC_DSP_SAVE_RESTORE_REGS */
 
-static inline bool dsp_exist(void)
-{
-	struct bcr_generic bcr;
+अटल अंतरभूत bool dsp_exist(व्योम)
+अणु
+	काष्ठा bcr_generic bcr;
 
 	READ_BCR(ARC_AUX_DSP_BUILD, bcr);
-	return !!bcr.ver;
-}
+	वापस !!bcr.ver;
+पूर्ण
 
-static inline bool agu_exist(void)
-{
-	struct bcr_generic bcr;
+अटल अंतरभूत bool agu_exist(व्योम)
+अणु
+	काष्ठा bcr_generic bcr;
 
 	READ_BCR(ARC_AUX_AGU_BUILD, bcr);
-	return !!bcr.ver;
-}
+	वापस !!bcr.ver;
+पूर्ण
 
-static inline void dsp_config_check(void)
-{
+अटल अंतरभूत व्योम dsp_config_check(व्योम)
+अणु
 	CHK_OPT_STRICT(CONFIG_ARC_DSP_HANDLED, dsp_exist());
 	CHK_OPT_WEAK(CONFIG_ARC_DSP_AGU_USERSPACE, agu_exist());
-}
+पूर्ण
 
-#endif /* __ASEMBLY__ */
-#endif /* __ASM_ARC_DSP_IMPL_H */
+#पूर्ण_अगर /* __ASEMBLY__ */
+#पूर्ण_अगर /* __ASM_ARC_DSP_IMPL_H */

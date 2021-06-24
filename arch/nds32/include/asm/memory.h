@@ -1,50 +1,51 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 // Copyright (C) 2005-2017 Andes Technology Corporation
 
-#ifndef __ASM_NDS32_MEMORY_H
-#define __ASM_NDS32_MEMORY_H
+#अगर_अघोषित __ASM_NDS32_MEMORY_H
+#घोषणा __ASM_NDS32_MEMORY_H
 
-#include <linux/compiler.h>
-#include <linux/sizes.h>
+#समावेश <linux/compiler.h>
+#समावेश <linux/sizes.h>
 
-#ifndef __ASSEMBLY__
-#include <asm/page.h>
-#endif
+#अगर_अघोषित __ASSEMBLY__
+#समावेश <यंत्र/page.h>
+#पूर्ण_अगर
 
-#ifndef PHYS_OFFSET
-#define PHYS_OFFSET     (0x0)
-#endif
+#अगर_अघोषित PHYS_OFFSET
+#घोषणा PHYS_OFFSET     (0x0)
+#पूर्ण_अगर
 
 /*
  * TASK_SIZE - the maximum size of a user space task.
  * TASK_UNMAPPED_BASE - the lower boundary of the mmap VM area
  */
-#define TASK_SIZE		((CONFIG_PAGE_OFFSET) - (SZ_32M))
-#define TASK_UNMAPPED_BASE	ALIGN(TASK_SIZE / 3, SZ_32M)
-#define PAGE_OFFSET		(CONFIG_PAGE_OFFSET)
+#घोषणा TASK_SIZE		((CONFIG_PAGE_OFFSET) - (SZ_32M))
+#घोषणा TASK_UNMAPPED_BASE	ALIGN(TASK_SIZE / 3, SZ_32M)
+#घोषणा PAGE_OFFSET		(CONFIG_PAGE_OFFSET)
 
 /*
- * Physical vs virtual RAM address space conversion.  These are
- * private definitions which should NOT be used outside memory.h
+ * Physical vs भव RAM address space conversion.  These are
+ * निजी definitions which should NOT be used outside memory.h
  * files.  Use virt_to_phys/phys_to_virt/__pa/__va instead.
  */
-#ifndef __virt_to_phys
-#define __virt_to_phys(x)	((x) - PAGE_OFFSET + PHYS_OFFSET)
-#define __phys_to_virt(x)	((x) - PHYS_OFFSET + PAGE_OFFSET)
-#endif
+#अगर_अघोषित __virt_to_phys
+#घोषणा __virt_to_phys(x)	((x) - PAGE_OFFSET + PHYS_OFFSET)
+#घोषणा __phys_to_virt(x)	((x) - PHYS_OFFSET + PAGE_OFFSET)
+#पूर्ण_अगर
 
 /*
  * The module space lives between the addresses given by TASK_SIZE
  * and PAGE_OFFSET - it must be within 32MB of the kernel text.
  */
-#define MODULES_END	(PAGE_OFFSET)
-#define MODULES_VADDR	(MODULES_END - SZ_32M)
+#घोषणा MODULES_END	(PAGE_OFFSET)
+#घोषणा MODULES_VADDR	(MODULES_END - SZ_32M)
 
-#if TASK_SIZE > MODULES_VADDR
-#error Top of user space clashes with start of module space
-#endif
+#अगर TASK_SIZE > MODULES_VADDR
+#त्रुटि Top of user space clashes with start of module space
+#पूर्ण_अगर
 
-#ifndef __ASSEMBLY__
+#अगर_अघोषित __ASSEMBLY__
 
 /*
  * PFNs are used to describe any physical page; this means
@@ -54,44 +55,44 @@
  * direct-mapped view.  We assume this is the first page
  * of RAM in the mem_map as well.
  */
-#define PHYS_PFN_OFFSET	(PHYS_OFFSET >> PAGE_SHIFT)
+#घोषणा PHYS_PFN_OFFSET	(PHYS_OFFSET >> PAGE_SHIFT)
 
 /*
  * Drivers should NOT use these either.
  */
-#define __pa(x)			__virt_to_phys((unsigned long)(x))
-#define __va(x)			((void *)__phys_to_virt((unsigned long)(x)))
+#घोषणा __pa(x)			__virt_to_phys((अचिन्हित दीर्घ)(x))
+#घोषणा __va(x)			((व्योम *)__phys_to_virt((अचिन्हित दीर्घ)(x)))
 
 /*
- * Conversion between a struct page and a physical address.
+ * Conversion between a काष्ठा page and a physical address.
  *
  * Note: when converting an unknown physical address to a
- * struct page, the resulting pointer must be validated
- * using VALID_PAGE().  It must return an invalid struct page
- * for any physical address not corresponding to a system
+ * काष्ठा page, the resulting poपूर्णांकer must be validated
+ * using VALID_PAGE().  It must वापस an invalid काष्ठा page
+ * क्रम any physical address not corresponding to a प्रणाली
  * RAM address.
  *
  *  pfn_valid(pfn)	indicates whether a PFN number is valid
  *
- *  virt_to_page(k)	convert a _valid_ virtual address to struct page *
- *  virt_addr_valid(k)	indicates whether a virtual address is valid
+ *  virt_to_page(k)	convert a _valid_ भव address to काष्ठा page *
+ *  virt_addr_valid(k)	indicates whether a भव address is valid
  */
-#ifndef CONFIG_DISCONTIGMEM
+#अगर_अघोषित CONFIG_DISCONTIGMEM
 
-#define ARCH_PFN_OFFSET		PHYS_PFN_OFFSET
-#define pfn_valid(pfn)		((pfn) >= PHYS_PFN_OFFSET && (pfn) < (PHYS_PFN_OFFSET + max_mapnr))
+#घोषणा ARCH_PFN_OFFSET		PHYS_PFN_OFFSET
+#घोषणा pfn_valid(pfn)		((pfn) >= PHYS_PFN_OFFSET && (pfn) < (PHYS_PFN_OFFSET + max_mapnr))
 
-#define virt_to_page(kaddr)	(pfn_to_page(__pa(kaddr) >> PAGE_SHIFT))
-#define virt_addr_valid(kaddr)	((unsigned long)(kaddr) >= PAGE_OFFSET && (unsigned long)(kaddr) < (unsigned long)high_memory)
+#घोषणा virt_to_page(kaddr)	(pfn_to_page(__pa(kaddr) >> PAGE_SHIFT))
+#घोषणा virt_addr_valid(kaddr)	((अचिन्हित दीर्घ)(kaddr) >= PAGE_OFFSET && (अचिन्हित दीर्घ)(kaddr) < (अचिन्हित दीर्घ)high_memory)
 
-#else /* CONFIG_DISCONTIGMEM */
-#error CONFIG_DISCONTIGMEM is not supported yet.
-#endif /* !CONFIG_DISCONTIGMEM */
+#अन्यथा /* CONFIG_DISCONTIGMEM */
+#त्रुटि CONFIG_DISCONTIGMEM is not supported yet.
+#पूर्ण_अगर /* !CONFIG_DISCONTIGMEM */
 
-#define page_to_phys(page)	(page_to_pfn(page) << PAGE_SHIFT)
+#घोषणा page_to_phys(page)	(page_to_pfn(page) << PAGE_SHIFT)
 
-#endif
+#पूर्ण_अगर
 
-#include <asm-generic/memory_model.h>
+#समावेश <यंत्र-generic/memory_model.h>
 
-#endif
+#पूर्ण_अगर

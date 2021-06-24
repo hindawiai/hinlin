@@ -1,11 +1,12 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * QLogic Fibre Channel HBA Driver
  * Copyright (c)  2003-2014 QLogic Corporation
  */
-#define MAX_RETRIES_OF_ISP_ABORT	5
+#घोषणा MAX_RETRIES_OF_ISP_ABORT	5
 
-/* Max time to wait for the loop to be in LOOP_READY state */
-#define MAX_LOOP_TIMEOUT	(60 * 5)
+/* Max समय to रुको क्रम the loop to be in LOOP_READY state */
+#घोषणा MAX_LOOP_TIMEOUT	(60 * 5)
 
-#include "qla_version.h"
+#समावेश "qla_version.h"

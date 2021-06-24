@@ -1,392 +1,393 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Intel(R) Trace Hub Global Trace Hub
  *
  * Copyright (C) 2014-2015 Intel Corporation.
  */
 
-#define pr_fmt(fmt)	KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt)	KBUILD_MODNAME ": " fmt
 
-#include <linux/types.h>
-#include <linux/module.h>
-#include <linux/device.h>
-#include <linux/io.h>
-#include <linux/mm.h>
-#include <linux/slab.h>
-#include <linux/bitmap.h>
-#include <linux/pm_runtime.h>
+#समावेश <linux/types.h>
+#समावेश <linux/module.h>
+#समावेश <linux/device.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/mm.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/biपंचांगap.h>
+#समावेश <linux/pm_runसमय.स>
 
-#include "intel_th.h"
-#include "gth.h"
+#समावेश "intel_th.h"
+#समावेश "gth.h"
 
-struct gth_device;
+काष्ठा gth_device;
 
 /**
- * struct gth_output - GTH view on an output port
+ * काष्ठा gth_output - GTH view on an output port
  * @gth:	backlink to the GTH device
  * @output:	link to output device's output descriptor
  * @index:	output port number
  * @port_type:	one of GTH_* port type values
- * @master:	bitmap of masters configured for this output
+ * @master:	biपंचांगap of masters configured क्रम this output
  */
-struct gth_output {
-	struct gth_device	*gth;
-	struct intel_th_output	*output;
-	unsigned int		index;
-	unsigned int		port_type;
+काष्ठा gth_output अणु
+	काष्ठा gth_device	*gth;
+	काष्ठा पूर्णांकel_th_output	*output;
+	अचिन्हित पूर्णांक		index;
+	अचिन्हित पूर्णांक		port_type;
 	DECLARE_BITMAP(master, TH_CONFIGURABLE_MASTERS + 1);
-};
+पूर्ण;
 
 /**
- * struct gth_device - GTH device
+ * काष्ठा gth_device - GTH device
  * @dev:	driver core's device
- * @base:	register window base address
+ * @base:	रेजिस्टर winकरोw base address
  * @output_group:	attributes describing output ports
  * @master_group:	attributes describing master assignments
  * @output:		output ports
  * @master:		master/output port assignments
  * @gth_lock:		serializes accesses to GTH bits
  */
-struct gth_device {
-	struct device		*dev;
-	void __iomem		*base;
+काष्ठा gth_device अणु
+	काष्ठा device		*dev;
+	व्योम __iomem		*base;
 
-	struct attribute_group	output_group;
-	struct attribute_group	master_group;
-	struct gth_output	output[TH_POSSIBLE_OUTPUTS];
-	signed char		master[TH_CONFIGURABLE_MASTERS + 1];
+	काष्ठा attribute_group	output_group;
+	काष्ठा attribute_group	master_group;
+	काष्ठा gth_output	output[TH_POSSIBLE_OUTPUTS];
+	चिन्हित अक्षर		master[TH_CONFIGURABLE_MASTERS + 1];
 	spinlock_t		gth_lock;
-};
+पूर्ण;
 
-static void gth_output_set(struct gth_device *gth, int port,
-			   unsigned int config)
-{
-	unsigned long reg = port & 4 ? REG_GTH_GTHOPT1 : REG_GTH_GTHOPT0;
+अटल व्योम gth_output_set(काष्ठा gth_device *gth, पूर्णांक port,
+			   अचिन्हित पूर्णांक config)
+अणु
+	अचिन्हित दीर्घ reg = port & 4 ? REG_GTH_GTHOPT1 : REG_GTH_GTHOPT0;
 	u32 val;
-	int shift = (port & 3) * 8;
+	पूर्णांक shअगरt = (port & 3) * 8;
 
-	val = ioread32(gth->base + reg);
-	val &= ~(0xff << shift);
-	val |= config << shift;
-	iowrite32(val, gth->base + reg);
-}
+	val = ioपढ़ो32(gth->base + reg);
+	val &= ~(0xff << shअगरt);
+	val |= config << shअगरt;
+	ioग_लिखो32(val, gth->base + reg);
+पूर्ण
 
-static unsigned int gth_output_get(struct gth_device *gth, int port)
-{
-	unsigned long reg = port & 4 ? REG_GTH_GTHOPT1 : REG_GTH_GTHOPT0;
+अटल अचिन्हित पूर्णांक gth_output_get(काष्ठा gth_device *gth, पूर्णांक port)
+अणु
+	अचिन्हित दीर्घ reg = port & 4 ? REG_GTH_GTHOPT1 : REG_GTH_GTHOPT0;
 	u32 val;
-	int shift = (port & 3) * 8;
+	पूर्णांक shअगरt = (port & 3) * 8;
 
-	val = ioread32(gth->base + reg);
-	val &= 0xff << shift;
-	val >>= shift;
+	val = ioपढ़ो32(gth->base + reg);
+	val &= 0xff << shअगरt;
+	val >>= shअगरt;
 
-	return val;
-}
+	वापस val;
+पूर्ण
 
-static void gth_smcfreq_set(struct gth_device *gth, int port,
-			    unsigned int freq)
-{
-	unsigned long reg = REG_GTH_SMCR0 + ((port / 2) * 4);
-	int shift = (port & 1) * 16;
-	u32 val;
-
-	val = ioread32(gth->base + reg);
-	val &= ~(0xffff << shift);
-	val |= freq << shift;
-	iowrite32(val, gth->base + reg);
-}
-
-static unsigned int gth_smcfreq_get(struct gth_device *gth, int port)
-{
-	unsigned long reg = REG_GTH_SMCR0 + ((port / 2) * 4);
-	int shift = (port & 1) * 16;
+अटल व्योम gth_smcfreq_set(काष्ठा gth_device *gth, पूर्णांक port,
+			    अचिन्हित पूर्णांक freq)
+अणु
+	अचिन्हित दीर्घ reg = REG_GTH_SMCR0 + ((port / 2) * 4);
+	पूर्णांक shअगरt = (port & 1) * 16;
 	u32 val;
 
-	val = ioread32(gth->base + reg);
-	val &= 0xffff << shift;
-	val >>= shift;
+	val = ioपढ़ो32(gth->base + reg);
+	val &= ~(0xffff << shअगरt);
+	val |= freq << shअगरt;
+	ioग_लिखो32(val, gth->base + reg);
+पूर्ण
 
-	return val;
-}
+अटल अचिन्हित पूर्णांक gth_smcfreq_get(काष्ठा gth_device *gth, पूर्णांक port)
+अणु
+	अचिन्हित दीर्घ reg = REG_GTH_SMCR0 + ((port / 2) * 4);
+	पूर्णांक shअगरt = (port & 1) * 16;
+	u32 val;
+
+	val = ioपढ़ो32(gth->base + reg);
+	val &= 0xffff << shअगरt;
+	val >>= shअगरt;
+
+	वापस val;
+पूर्ण
 
 /*
  * "masters" attribute group
  */
 
-struct master_attribute {
-	struct device_attribute	attr;
-	struct gth_device	*gth;
-	unsigned int		master;
-};
+काष्ठा master_attribute अणु
+	काष्ठा device_attribute	attr;
+	काष्ठा gth_device	*gth;
+	अचिन्हित पूर्णांक		master;
+पूर्ण;
 
-static void
-gth_master_set(struct gth_device *gth, unsigned int master, int port)
-{
-	unsigned int reg = REG_GTH_SWDEST0 + ((master >> 1) & ~3u);
-	unsigned int shift = (master & 0x7) * 4;
+अटल व्योम
+gth_master_set(काष्ठा gth_device *gth, अचिन्हित पूर्णांक master, पूर्णांक port)
+अणु
+	अचिन्हित पूर्णांक reg = REG_GTH_SWDEST0 + ((master >> 1) & ~3u);
+	अचिन्हित पूर्णांक shअगरt = (master & 0x7) * 4;
 	u32 val;
 
-	if (master >= 256) {
+	अगर (master >= 256) अणु
 		reg = REG_GTH_GSWTDEST;
-		shift = 0;
-	}
+		shअगरt = 0;
+	पूर्ण
 
-	val = ioread32(gth->base + reg);
-	val &= ~(0xf << shift);
-	if (port >= 0)
-		val |= (0x8 | port) << shift;
-	iowrite32(val, gth->base + reg);
-}
+	val = ioपढ़ो32(gth->base + reg);
+	val &= ~(0xf << shअगरt);
+	अगर (port >= 0)
+		val |= (0x8 | port) << shअगरt;
+	ioग_लिखो32(val, gth->base + reg);
+पूर्ण
 
-static ssize_t master_attr_show(struct device *dev,
-				struct device_attribute *attr,
-				char *buf)
-{
-	struct master_attribute *ma =
-		container_of(attr, struct master_attribute, attr);
-	struct gth_device *gth = ma->gth;
-	size_t count;
-	int port;
+अटल sमाप_प्रकार master_attr_show(काष्ठा device *dev,
+				काष्ठा device_attribute *attr,
+				अक्षर *buf)
+अणु
+	काष्ठा master_attribute *ma =
+		container_of(attr, काष्ठा master_attribute, attr);
+	काष्ठा gth_device *gth = ma->gth;
+	माप_प्रकार count;
+	पूर्णांक port;
 
 	spin_lock(&gth->gth_lock);
 	port = gth->master[ma->master];
 	spin_unlock(&gth->gth_lock);
 
-	if (port >= 0)
-		count = snprintf(buf, PAGE_SIZE, "%x\n", port);
-	else
-		count = snprintf(buf, PAGE_SIZE, "disabled\n");
+	अगर (port >= 0)
+		count = snम_लिखो(buf, PAGE_SIZE, "%x\n", port);
+	अन्यथा
+		count = snम_लिखो(buf, PAGE_SIZE, "disabled\n");
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static ssize_t master_attr_store(struct device *dev,
-				 struct device_attribute *attr,
-				 const char *buf, size_t count)
-{
-	struct master_attribute *ma =
-		container_of(attr, struct master_attribute, attr);
-	struct gth_device *gth = ma->gth;
-	int old_port, port;
+अटल sमाप_प्रकार master_attr_store(काष्ठा device *dev,
+				 काष्ठा device_attribute *attr,
+				 स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	काष्ठा master_attribute *ma =
+		container_of(attr, काष्ठा master_attribute, attr);
+	काष्ठा gth_device *gth = ma->gth;
+	पूर्णांक old_port, port;
 
-	if (kstrtoint(buf, 10, &port) < 0)
-		return -EINVAL;
+	अगर (kstrtoपूर्णांक(buf, 10, &port) < 0)
+		वापस -EINVAL;
 
-	if (port >= TH_POSSIBLE_OUTPUTS || port < -1)
-		return -EINVAL;
+	अगर (port >= TH_POSSIBLE_OUTPUTS || port < -1)
+		वापस -EINVAL;
 
 	spin_lock(&gth->gth_lock);
 
-	/* disconnect from the previous output port, if any */
+	/* disconnect from the previous output port, अगर any */
 	old_port = gth->master[ma->master];
-	if (old_port >= 0) {
+	अगर (old_port >= 0) अणु
 		gth->master[ma->master] = -1;
 		clear_bit(ma->master, gth->output[old_port].master);
 
 		/*
-		 * if the port is active, program this setting,
-		 * implies that runtime PM is on
+		 * अगर the port is active, program this setting,
+		 * implies that runसमय PM is on
 		 */
-		if (gth->output[old_port].output->active)
+		अगर (gth->output[old_port].output->active)
 			gth_master_set(gth, ma->master, -1);
-	}
+	पूर्ण
 
-	/* connect to the new output port, if any */
-	if (port >= 0) {
-		/* check if there's a driver for this port */
-		if (!gth->output[port].output) {
+	/* connect to the new output port, अगर any */
+	अगर (port >= 0) अणु
+		/* check अगर there's a driver क्रम this port */
+		अगर (!gth->output[port].output) अणु
 			count = -ENODEV;
-			goto unlock;
-		}
+			जाओ unlock;
+		पूर्ण
 
 		set_bit(ma->master, gth->output[port].master);
 
-		/* if the port is active, program this setting, see above */
-		if (gth->output[port].output->active)
+		/* अगर the port is active, program this setting, see above */
+		अगर (gth->output[port].output->active)
 			gth_master_set(gth, ma->master, port);
-	}
+	पूर्ण
 
 	gth->master[ma->master] = port;
 
 unlock:
 	spin_unlock(&gth->gth_lock);
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-struct output_attribute {
-	struct device_attribute attr;
-	struct gth_device	*gth;
-	unsigned int		port;
-	unsigned int		parm;
-};
+काष्ठा output_attribute अणु
+	काष्ठा device_attribute attr;
+	काष्ठा gth_device	*gth;
+	अचिन्हित पूर्णांक		port;
+	अचिन्हित पूर्णांक		parm;
+पूर्ण;
 
-#define OUTPUT_PARM(_name, _mask, _r, _w, _what)			\
-	[TH_OUTPUT_PARM(_name)] = { .name = __stringify(_name),		\
+#घोषणा OUTPUT_PARM(_name, _mask, _r, _w, _what)			\
+	[TH_OUTPUT_PARM(_name)] = अणु .name = __stringअगरy(_name),		\
 				    .get = gth_ ## _what ## _get,	\
 				    .set = gth_ ## _what ## _set,	\
 				    .mask = (_mask),			\
-				    .readable = (_r),			\
-				    .writable = (_w) }
+				    .पढ़ोable = (_r),			\
+				    .writable = (_w) पूर्ण
 
-static const struct output_parm {
-	const char	*name;
-	unsigned int	(*get)(struct gth_device *gth, int port);
-	void		(*set)(struct gth_device *gth, int port,
-			       unsigned int val);
-	unsigned int	mask;
-	unsigned int	readable : 1,
+अटल स्थिर काष्ठा output_parm अणु
+	स्थिर अक्षर	*name;
+	अचिन्हित पूर्णांक	(*get)(काष्ठा gth_device *gth, पूर्णांक port);
+	व्योम		(*set)(काष्ठा gth_device *gth, पूर्णांक port,
+			       अचिन्हित पूर्णांक val);
+	अचिन्हित पूर्णांक	mask;
+	अचिन्हित पूर्णांक	पढ़ोable : 1,
 			writable : 1;
-} output_parms[] = {
+पूर्ण output_parms[] = अणु
 	OUTPUT_PARM(port,	0x7,	1, 0, output),
 	OUTPUT_PARM(null,	BIT(3),	1, 1, output),
 	OUTPUT_PARM(drop,	BIT(4),	1, 1, output),
 	OUTPUT_PARM(reset,	BIT(5),	1, 0, output),
 	OUTPUT_PARM(flush,	BIT(7),	0, 1, output),
 	OUTPUT_PARM(smcfreq,	0xffff,	1, 1, smcfreq),
-};
+पूर्ण;
 
-static void
-gth_output_parm_set(struct gth_device *gth, int port, unsigned int parm,
-		    unsigned int val)
-{
-	unsigned int config = output_parms[parm].get(gth, port);
-	unsigned int mask = output_parms[parm].mask;
-	unsigned int shift = __ffs(mask);
+अटल व्योम
+gth_output_parm_set(काष्ठा gth_device *gth, पूर्णांक port, अचिन्हित पूर्णांक parm,
+		    अचिन्हित पूर्णांक val)
+अणु
+	अचिन्हित पूर्णांक config = output_parms[parm].get(gth, port);
+	अचिन्हित पूर्णांक mask = output_parms[parm].mask;
+	अचिन्हित पूर्णांक shअगरt = __ffs(mask);
 
 	config &= ~mask;
-	config |= (val << shift) & mask;
+	config |= (val << shअगरt) & mask;
 	output_parms[parm].set(gth, port, config);
-}
+पूर्ण
 
-static unsigned int
-gth_output_parm_get(struct gth_device *gth, int port, unsigned int parm)
-{
-	unsigned int config = output_parms[parm].get(gth, port);
-	unsigned int mask = output_parms[parm].mask;
-	unsigned int shift = __ffs(mask);
+अटल अचिन्हित पूर्णांक
+gth_output_parm_get(काष्ठा gth_device *gth, पूर्णांक port, अचिन्हित पूर्णांक parm)
+अणु
+	अचिन्हित पूर्णांक config = output_parms[parm].get(gth, port);
+	अचिन्हित पूर्णांक mask = output_parms[parm].mask;
+	अचिन्हित पूर्णांक shअगरt = __ffs(mask);
 
 	config &= mask;
-	config >>= shift;
-	return config;
-}
+	config >>= shअगरt;
+	वापस config;
+पूर्ण
 
 /*
- * Reset outputs and sources
+ * Reset outमाला_दो and sources
  */
-static int intel_th_gth_reset(struct gth_device *gth)
-{
+अटल पूर्णांक पूर्णांकel_th_gth_reset(काष्ठा gth_device *gth)
+अणु
 	u32 reg;
-	int port, i;
+	पूर्णांक port, i;
 
-	reg = ioread32(gth->base + REG_GTH_SCRPD0);
-	if (reg & SCRPD_DEBUGGER_IN_USE)
-		return -EBUSY;
+	reg = ioपढ़ो32(gth->base + REG_GTH_SCRPD0);
+	अगर (reg & SCRPD_DEBUGGER_IN_USE)
+		वापस -EBUSY;
 
-	/* Always save/restore STH and TU registers in S0ix entry/exit */
+	/* Always save/restore STH and TU रेजिस्टरs in S0ix entry/निकास */
 	reg |= SCRPD_STH_IS_ENABLED | SCRPD_TRIGGER_IS_ENABLED;
-	iowrite32(reg, gth->base + REG_GTH_SCRPD0);
+	ioग_लिखो32(reg, gth->base + REG_GTH_SCRPD0);
 
 	/* output ports */
-	for (port = 0; port < 8; port++) {
-		if (gth_output_parm_get(gth, port, TH_OUTPUT_PARM(port)) ==
+	क्रम (port = 0; port < 8; port++) अणु
+		अगर (gth_output_parm_get(gth, port, TH_OUTPUT_PARM(port)) ==
 		    GTH_NONE)
-			continue;
+			जारी;
 
 		gth_output_set(gth, port, 0);
 		gth_smcfreq_set(gth, port, 16);
-	}
+	पूर्ण
 	/* disable overrides */
-	iowrite32(0, gth->base + REG_GTH_DESTOVR);
+	ioग_लिखो32(0, gth->base + REG_GTH_DESTOVR);
 
 	/* masters swdest_0~31 and gswdest */
-	for (i = 0; i < 33; i++)
-		iowrite32(0, gth->base + REG_GTH_SWDEST0 + i * 4);
+	क्रम (i = 0; i < 33; i++)
+		ioग_लिखो32(0, gth->base + REG_GTH_SWDEST0 + i * 4);
 
 	/* sources */
-	iowrite32(0, gth->base + REG_GTH_SCR);
-	iowrite32(0xfc, gth->base + REG_GTH_SCR2);
+	ioग_लिखो32(0, gth->base + REG_GTH_SCR);
+	ioग_लिखो32(0xfc, gth->base + REG_GTH_SCR2);
 
-	/* setup CTS for single trigger */
-	iowrite32(CTS_EVENT_ENABLE_IF_ANYTHING, gth->base + REG_CTS_C0S0_EN);
-	iowrite32(CTS_ACTION_CONTROL_SET_STATE(CTS_STATE_IDLE) |
+	/* setup CTS क्रम single trigger */
+	ioग_लिखो32(CTS_EVENT_ENABLE_IF_ANYTHING, gth->base + REG_CTS_C0S0_EN);
+	ioग_लिखो32(CTS_ACTION_CONTROL_SET_STATE(CTS_STATE_IDLE) |
 		  CTS_ACTION_CONTROL_TRIGGER, gth->base + REG_CTS_C0S0_ACT);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * "outputs" attribute group
  */
 
-static ssize_t output_attr_show(struct device *dev,
-				struct device_attribute *attr,
-				char *buf)
-{
-	struct output_attribute *oa =
-		container_of(attr, struct output_attribute, attr);
-	struct gth_device *gth = oa->gth;
-	size_t count;
+अटल sमाप_प्रकार output_attr_show(काष्ठा device *dev,
+				काष्ठा device_attribute *attr,
+				अक्षर *buf)
+अणु
+	काष्ठा output_attribute *oa =
+		container_of(attr, काष्ठा output_attribute, attr);
+	काष्ठा gth_device *gth = oa->gth;
+	माप_प्रकार count;
 
-	pm_runtime_get_sync(dev);
+	pm_runसमय_get_sync(dev);
 
 	spin_lock(&gth->gth_lock);
-	count = snprintf(buf, PAGE_SIZE, "%x\n",
+	count = snम_लिखो(buf, PAGE_SIZE, "%x\n",
 			 gth_output_parm_get(gth, oa->port, oa->parm));
 	spin_unlock(&gth->gth_lock);
 
-	pm_runtime_put(dev);
+	pm_runसमय_put(dev);
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static ssize_t output_attr_store(struct device *dev,
-				 struct device_attribute *attr,
-				 const char *buf, size_t count)
-{
-	struct output_attribute *oa =
-		container_of(attr, struct output_attribute, attr);
-	struct gth_device *gth = oa->gth;
-	unsigned int config;
+अटल sमाप_प्रकार output_attr_store(काष्ठा device *dev,
+				 काष्ठा device_attribute *attr,
+				 स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	काष्ठा output_attribute *oa =
+		container_of(attr, काष्ठा output_attribute, attr);
+	काष्ठा gth_device *gth = oa->gth;
+	अचिन्हित पूर्णांक config;
 
-	if (kstrtouint(buf, 16, &config) < 0)
-		return -EINVAL;
+	अगर (kstrtouपूर्णांक(buf, 16, &config) < 0)
+		वापस -EINVAL;
 
-	pm_runtime_get_sync(dev);
+	pm_runसमय_get_sync(dev);
 
 	spin_lock(&gth->gth_lock);
 	gth_output_parm_set(gth, oa->port, oa->parm, config);
 	spin_unlock(&gth->gth_lock);
 
-	pm_runtime_put(dev);
+	pm_runसमय_put(dev);
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static int intel_th_master_attributes(struct gth_device *gth)
-{
-	struct master_attribute *master_attrs;
-	struct attribute **attrs;
-	int i, nattrs = TH_CONFIGURABLE_MASTERS + 2;
+अटल पूर्णांक पूर्णांकel_th_master_attributes(काष्ठा gth_device *gth)
+अणु
+	काष्ठा master_attribute *master_attrs;
+	काष्ठा attribute **attrs;
+	पूर्णांक i, nattrs = TH_CONFIGURABLE_MASTERS + 2;
 
-	attrs = devm_kcalloc(gth->dev, nattrs, sizeof(void *), GFP_KERNEL);
-	if (!attrs)
-		return -ENOMEM;
+	attrs = devm_kसुस्मृति(gth->dev, nattrs, माप(व्योम *), GFP_KERNEL);
+	अगर (!attrs)
+		वापस -ENOMEM;
 
-	master_attrs = devm_kcalloc(gth->dev, nattrs,
-				    sizeof(struct master_attribute),
+	master_attrs = devm_kसुस्मृति(gth->dev, nattrs,
+				    माप(काष्ठा master_attribute),
 				    GFP_KERNEL);
-	if (!master_attrs)
-		return -ENOMEM;
+	अगर (!master_attrs)
+		वापस -ENOMEM;
 
-	for (i = 0; i < TH_CONFIGURABLE_MASTERS + 1; i++) {
-		char *name;
+	क्रम (i = 0; i < TH_CONFIGURABLE_MASTERS + 1; i++) अणु
+		अक्षर *name;
 
-		name = devm_kasprintf(gth->dev, GFP_KERNEL, "%d%s", i,
+		name = devm_kaप्र_लिखो(gth->dev, GFP_KERNEL, "%d%s", i,
 				      i == TH_CONFIGURABLE_MASTERS ? "+" : "");
-		if (!name)
-			return -ENOMEM;
+		अगर (!name)
+			वापस -ENOMEM;
 
 		master_attrs[i].attr.attr.name = name;
 		master_attrs[i].attr.attr.mode = S_IRUGO | S_IWUSR;
@@ -398,53 +399,53 @@ static int intel_th_master_attributes(struct gth_device *gth)
 
 		master_attrs[i].gth = gth;
 		master_attrs[i].master = i;
-	}
+	पूर्ण
 
 	gth->master_group.name	= "masters";
 	gth->master_group.attrs = attrs;
 
-	return sysfs_create_group(&gth->dev->kobj, &gth->master_group);
-}
+	वापस sysfs_create_group(&gth->dev->kobj, &gth->master_group);
+पूर्ण
 
-static int intel_th_output_attributes(struct gth_device *gth)
-{
-	struct output_attribute *out_attrs;
-	struct attribute **attrs;
-	int i, j, nouts = TH_POSSIBLE_OUTPUTS;
-	int nparms = ARRAY_SIZE(output_parms);
-	int nattrs = nouts * nparms + 1;
+अटल पूर्णांक पूर्णांकel_th_output_attributes(काष्ठा gth_device *gth)
+अणु
+	काष्ठा output_attribute *out_attrs;
+	काष्ठा attribute **attrs;
+	पूर्णांक i, j, nouts = TH_POSSIBLE_OUTPUTS;
+	पूर्णांक nparms = ARRAY_SIZE(output_parms);
+	पूर्णांक nattrs = nouts * nparms + 1;
 
-	attrs = devm_kcalloc(gth->dev, nattrs, sizeof(void *), GFP_KERNEL);
-	if (!attrs)
-		return -ENOMEM;
+	attrs = devm_kसुस्मृति(gth->dev, nattrs, माप(व्योम *), GFP_KERNEL);
+	अगर (!attrs)
+		वापस -ENOMEM;
 
-	out_attrs = devm_kcalloc(gth->dev, nattrs,
-				 sizeof(struct output_attribute),
+	out_attrs = devm_kसुस्मृति(gth->dev, nattrs,
+				 माप(काष्ठा output_attribute),
 				 GFP_KERNEL);
-	if (!out_attrs)
-		return -ENOMEM;
+	अगर (!out_attrs)
+		वापस -ENOMEM;
 
-	for (i = 0; i < nouts; i++) {
-		for (j = 0; j < nparms; j++) {
-			unsigned int idx = i * nparms + j;
-			char *name;
+	क्रम (i = 0; i < nouts; i++) अणु
+		क्रम (j = 0; j < nparms; j++) अणु
+			अचिन्हित पूर्णांक idx = i * nparms + j;
+			अक्षर *name;
 
-			name = devm_kasprintf(gth->dev, GFP_KERNEL, "%d_%s", i,
+			name = devm_kaप्र_लिखो(gth->dev, GFP_KERNEL, "%d_%s", i,
 					      output_parms[j].name);
-			if (!name)
-				return -ENOMEM;
+			अगर (!name)
+				वापस -ENOMEM;
 
 			out_attrs[idx].attr.attr.name = name;
 
-			if (output_parms[j].readable) {
+			अगर (output_parms[j].पढ़ोable) अणु
 				out_attrs[idx].attr.attr.mode |= S_IRUGO;
 				out_attrs[idx].attr.show = output_attr_show;
-			}
+			पूर्ण
 
-			if (output_parms[j].writable) {
+			अगर (output_parms[j].writable) अणु
 				out_attrs[idx].attr.attr.mode |= S_IWUSR;
 				out_attrs[idx].attr.store = output_attr_store;
-			}
+			पूर्ण
 
 			sysfs_attr_init(&out_attrs[idx].attr.attr);
 			attrs[idx] = &out_attrs[idx].attr.attr;
@@ -452,189 +453,189 @@ static int intel_th_output_attributes(struct gth_device *gth)
 			out_attrs[idx].gth = gth;
 			out_attrs[idx].port = i;
 			out_attrs[idx].parm = j;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	gth->output_group.name	= "outputs";
 	gth->output_group.attrs = attrs;
 
-	return sysfs_create_group(&gth->dev->kobj, &gth->output_group);
-}
+	वापस sysfs_create_group(&gth->dev->kobj, &gth->output_group);
+पूर्ण
 
 /**
- * intel_th_gth_stop() - stop tracing to an output device
+ * पूर्णांकel_th_gth_stop() - stop tracing to an output device
  * @gth:		GTH device
  * @output:		output device's descriptor
- * @capture_done:	set when no more traces will be captured
+ * @capture_करोne:	set when no more traces will be captured
  *
- * This will stop tracing using force storeEn off signal and wait for the
- * pipelines to be empty for the corresponding output port.
+ * This will stop tracing using क्रमce storeEn off संकेत and रुको क्रम the
+ * pipelines to be empty क्रम the corresponding output port.
  */
-static void intel_th_gth_stop(struct gth_device *gth,
-			      struct intel_th_output *output,
-			      bool capture_done)
-{
-	struct intel_th_device *outdev =
-		container_of(output, struct intel_th_device, output);
-	struct intel_th_driver *outdrv =
-		to_intel_th_driver(outdev->dev.driver);
-	unsigned long count;
+अटल व्योम पूर्णांकel_th_gth_stop(काष्ठा gth_device *gth,
+			      काष्ठा पूर्णांकel_th_output *output,
+			      bool capture_करोne)
+अणु
+	काष्ठा पूर्णांकel_th_device *outdev =
+		container_of(output, काष्ठा पूर्णांकel_th_device, output);
+	काष्ठा पूर्णांकel_th_driver *outdrv =
+		to_पूर्णांकel_th_driver(outdev->dev.driver);
+	अचिन्हित दीर्घ count;
 	u32 reg;
-	u32 scr2 = 0xfc | (capture_done ? 1 : 0);
+	u32 scr2 = 0xfc | (capture_करोne ? 1 : 0);
 
-	iowrite32(0, gth->base + REG_GTH_SCR);
-	iowrite32(scr2, gth->base + REG_GTH_SCR2);
+	ioग_लिखो32(0, gth->base + REG_GTH_SCR);
+	ioग_लिखो32(scr2, gth->base + REG_GTH_SCR2);
 
-	/* wait on pipeline empty for the given port */
-	for (reg = 0, count = GTH_PLE_WAITLOOP_DEPTH;
-	     count && !(reg & BIT(output->port)); count--) {
-		reg = ioread32(gth->base + REG_GTH_STAT);
+	/* रुको on pipeline empty क्रम the given port */
+	क्रम (reg = 0, count = GTH_PLE_WAITLOOP_DEPTH;
+	     count && !(reg & BIT(output->port)); count--) अणु
+		reg = ioपढ़ो32(gth->base + REG_GTH_STAT);
 		cpu_relax();
-	}
+	पूर्ण
 
-	if (!count)
+	अगर (!count)
 		dev_dbg(gth->dev, "timeout waiting for GTH[%d] PLE\n",
 			output->port);
 
-	/* wait on output piepline empty */
-	if (outdrv->wait_empty)
-		outdrv->wait_empty(outdev);
+	/* रुको on output piepline empty */
+	अगर (outdrv->रुको_empty)
+		outdrv->रुको_empty(outdev);
 
-	/* clear force capture done for next captures */
-	iowrite32(0xfc, gth->base + REG_GTH_SCR2);
-}
+	/* clear क्रमce capture करोne क्रम next captures */
+	ioग_लिखो32(0xfc, gth->base + REG_GTH_SCR2);
+पूर्ण
 
 /**
- * intel_th_gth_start() - start tracing to an output device
+ * पूर्णांकel_th_gth_start() - start tracing to an output device
  * @gth:	GTH device
  * @output:	output device's descriptor
  *
- * This will start tracing using force storeEn signal.
+ * This will start tracing using क्रमce storeEn संकेत.
  */
-static void intel_th_gth_start(struct gth_device *gth,
-			       struct intel_th_output *output)
-{
+अटल व्योम पूर्णांकel_th_gth_start(काष्ठा gth_device *gth,
+			       काष्ठा पूर्णांकel_th_output *output)
+अणु
 	u32 scr = 0xfc0000;
 
-	if (output->multiblock)
+	अगर (output->multiblock)
 		scr |= 0xff;
 
-	iowrite32(scr, gth->base + REG_GTH_SCR);
-	iowrite32(0, gth->base + REG_GTH_SCR2);
-}
+	ioग_लिखो32(scr, gth->base + REG_GTH_SCR);
+	ioग_लिखो32(0, gth->base + REG_GTH_SCR2);
+पूर्ण
 
 /**
- * intel_th_gth_disable() - disable tracing to an output device
+ * पूर्णांकel_th_gth_disable() - disable tracing to an output device
  * @thdev:	GTH device
  * @output:	output device's descriptor
  *
  * This will deconfigure all masters set to output to this device,
- * disable tracing using force storeEn off signal and wait for the
- * "pipeline empty" bit for corresponding output port.
+ * disable tracing using क्रमce storeEn off संकेत and रुको क्रम the
+ * "pipeline empty" bit क्रम corresponding output port.
  */
-static void intel_th_gth_disable(struct intel_th_device *thdev,
-				 struct intel_th_output *output)
-{
-	struct gth_device *gth = dev_get_drvdata(&thdev->dev);
-	int master;
+अटल व्योम पूर्णांकel_th_gth_disable(काष्ठा पूर्णांकel_th_device *thdev,
+				 काष्ठा पूर्णांकel_th_output *output)
+अणु
+	काष्ठा gth_device *gth = dev_get_drvdata(&thdev->dev);
+	पूर्णांक master;
 	u32 reg;
 
 	spin_lock(&gth->gth_lock);
 	output->active = false;
 
-	for_each_set_bit(master, gth->output[output->port].master,
-			 TH_CONFIGURABLE_MASTERS + 1) {
+	क्रम_each_set_bit(master, gth->output[output->port].master,
+			 TH_CONFIGURABLE_MASTERS + 1) अणु
 		gth_master_set(gth, master, -1);
-	}
+	पूर्ण
 	spin_unlock(&gth->gth_lock);
 
-	intel_th_gth_stop(gth, output, true);
+	पूर्णांकel_th_gth_stop(gth, output, true);
 
-	reg = ioread32(gth->base + REG_GTH_SCRPD0);
+	reg = ioपढ़ो32(gth->base + REG_GTH_SCRPD0);
 	reg &= ~output->scratchpad;
-	iowrite32(reg, gth->base + REG_GTH_SCRPD0);
-}
+	ioग_लिखो32(reg, gth->base + REG_GTH_SCRPD0);
+पूर्ण
 
-static void gth_tscu_resync(struct gth_device *gth)
-{
+अटल व्योम gth_tscu_resync(काष्ठा gth_device *gth)
+अणु
 	u32 reg;
 
-	reg = ioread32(gth->base + REG_TSCU_TSUCTRL);
+	reg = ioपढ़ो32(gth->base + REG_TSCU_TSUCTRL);
 	reg &= ~TSUCTRL_CTCRESYNC;
-	iowrite32(reg, gth->base + REG_TSCU_TSUCTRL);
-}
+	ioग_लिखो32(reg, gth->base + REG_TSCU_TSUCTRL);
+पूर्ण
 
 /**
- * intel_th_gth_enable() - enable tracing to an output device
+ * पूर्णांकel_th_gth_enable() - enable tracing to an output device
  * @thdev:	GTH device
  * @output:	output device's descriptor
  *
  * This will configure all masters set to output to this device and
- * enable tracing using force storeEn signal.
+ * enable tracing using क्रमce storeEn संकेत.
  */
-static void intel_th_gth_enable(struct intel_th_device *thdev,
-				struct intel_th_output *output)
-{
-	struct gth_device *gth = dev_get_drvdata(&thdev->dev);
-	struct intel_th *th = to_intel_th(thdev);
-	int master;
+अटल व्योम पूर्णांकel_th_gth_enable(काष्ठा पूर्णांकel_th_device *thdev,
+				काष्ठा पूर्णांकel_th_output *output)
+अणु
+	काष्ठा gth_device *gth = dev_get_drvdata(&thdev->dev);
+	काष्ठा पूर्णांकel_th *th = to_पूर्णांकel_th(thdev);
+	पूर्णांक master;
 	u32 scrpd;
 
 	spin_lock(&gth->gth_lock);
-	for_each_set_bit(master, gth->output[output->port].master,
-			 TH_CONFIGURABLE_MASTERS + 1) {
+	क्रम_each_set_bit(master, gth->output[output->port].master,
+			 TH_CONFIGURABLE_MASTERS + 1) अणु
 		gth_master_set(gth, master, output->port);
-	}
+	पूर्ण
 
 	output->active = true;
 	spin_unlock(&gth->gth_lock);
 
-	if (INTEL_TH_CAP(th, tscu_enable))
+	अगर (INTEL_TH_CAP(th, tscu_enable))
 		gth_tscu_resync(gth);
 
-	scrpd = ioread32(gth->base + REG_GTH_SCRPD0);
+	scrpd = ioपढ़ो32(gth->base + REG_GTH_SCRPD0);
 	scrpd |= output->scratchpad;
-	iowrite32(scrpd, gth->base + REG_GTH_SCRPD0);
+	ioग_लिखो32(scrpd, gth->base + REG_GTH_SCRPD0);
 
-	intel_th_gth_start(gth, output);
-}
+	पूर्णांकel_th_gth_start(gth, output);
+पूर्ण
 
 /**
- * intel_th_gth_switch() - execute a switch sequence
+ * पूर्णांकel_th_gth_चयन() - execute a चयन sequence
  * @thdev:	GTH device
  * @output:	output device's descriptor
  *
- * This will execute a switch sequence that will trigger a switch window
+ * This will execute a चयन sequence that will trigger a चयन winकरोw
  * when tracing to MSC in multi-block mode.
  */
-static void intel_th_gth_switch(struct intel_th_device *thdev,
-				struct intel_th_output *output)
-{
-	struct gth_device *gth = dev_get_drvdata(&thdev->dev);
-	unsigned long count;
+अटल व्योम पूर्णांकel_th_gth_चयन(काष्ठा पूर्णांकel_th_device *thdev,
+				काष्ठा पूर्णांकel_th_output *output)
+अणु
+	काष्ठा gth_device *gth = dev_get_drvdata(&thdev->dev);
+	अचिन्हित दीर्घ count;
 	u32 reg;
 
 	/* trigger */
-	iowrite32(0, gth->base + REG_CTS_CTL);
-	iowrite32(CTS_CTL_SEQUENCER_ENABLE, gth->base + REG_CTS_CTL);
-	/* wait on trigger status */
-	for (reg = 0, count = CTS_TRIG_WAITLOOP_DEPTH;
-	     count && !(reg & BIT(4)); count--) {
-		reg = ioread32(gth->base + REG_CTS_STAT);
+	ioग_लिखो32(0, gth->base + REG_CTS_CTL);
+	ioग_लिखो32(CTS_CTL_SEQUENCER_ENABLE, gth->base + REG_CTS_CTL);
+	/* रुको on trigger status */
+	क्रम (reg = 0, count = CTS_TRIG_WAITLOOP_DEPTH;
+	     count && !(reg & BIT(4)); count--) अणु
+		reg = ioपढ़ो32(gth->base + REG_CTS_STAT);
 		cpu_relax();
-	}
-	if (!count)
+	पूर्ण
+	अगर (!count)
 		dev_dbg(&thdev->dev, "timeout waiting for CTS Trigger\n");
 
-	/* De-assert the trigger */
-	iowrite32(0, gth->base + REG_CTS_CTL);
+	/* De-निश्चित the trigger */
+	ioग_लिखो32(0, gth->base + REG_CTS_CTL);
 
-	intel_th_gth_stop(gth, output, false);
-	intel_th_gth_start(gth, output);
-}
+	पूर्णांकel_th_gth_stop(gth, output, false);
+	पूर्णांकel_th_gth_start(gth, output);
+पूर्ण
 
 /**
- * intel_th_gth_assign() - assign output device to a GTH output port
+ * पूर्णांकel_th_gth_assign() - assign output device to a GTH output port
  * @thdev:	GTH device
  * @othdev:	output device
  *
@@ -642,31 +643,31 @@ static void intel_th_gth_switch(struct intel_th_device *thdev,
  * output ports on the GTH and fill out relevant bits in output device's
  * descriptor.
  *
- * Return:	0 on success, -errno on error.
+ * Return:	0 on success, -त्रुटि_सं on error.
  */
-static int intel_th_gth_assign(struct intel_th_device *thdev,
-			       struct intel_th_device *othdev)
-{
-	struct gth_device *gth = dev_get_drvdata(&thdev->dev);
-	int i, id;
+अटल पूर्णांक पूर्णांकel_th_gth_assign(काष्ठा पूर्णांकel_th_device *thdev,
+			       काष्ठा पूर्णांकel_th_device *othdev)
+अणु
+	काष्ठा gth_device *gth = dev_get_drvdata(&thdev->dev);
+	पूर्णांक i, id;
 
-	if (thdev->host_mode)
-		return -EBUSY;
+	अगर (thdev->host_mode)
+		वापस -EBUSY;
 
-	if (othdev->type != INTEL_TH_OUTPUT)
-		return -EINVAL;
+	अगर (othdev->type != INTEL_TH_OUTPUT)
+		वापस -EINVAL;
 
-	for (i = 0, id = 0; i < TH_POSSIBLE_OUTPUTS; i++) {
-		if (gth->output[i].port_type != othdev->output.type)
-			continue;
+	क्रम (i = 0, id = 0; i < TH_POSSIBLE_OUTPUTS; i++) अणु
+		अगर (gth->output[i].port_type != othdev->output.type)
+			जारी;
 
-		if (othdev->id == -1 || othdev->id == id)
-			goto found;
+		अगर (othdev->id == -1 || othdev->id == id)
+			जाओ found;
 
 		id++;
-	}
+	पूर्ण
 
-	return -ENOENT;
+	वापस -ENOENT;
 
 found:
 	spin_lock(&gth->gth_lock);
@@ -675,77 +676,77 @@ found:
 	gth->output[i].output = &othdev->output;
 	spin_unlock(&gth->gth_lock);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * intel_th_gth_unassign() - deassociate an output device from its output port
+ * पूर्णांकel_th_gth_unassign() - deassociate an output device from its output port
  * @thdev:	GTH device
  * @othdev:	output device
  */
-static void intel_th_gth_unassign(struct intel_th_device *thdev,
-				  struct intel_th_device *othdev)
-{
-	struct gth_device *gth = dev_get_drvdata(&thdev->dev);
-	int port = othdev->output.port;
-	int master;
+अटल व्योम पूर्णांकel_th_gth_unassign(काष्ठा पूर्णांकel_th_device *thdev,
+				  काष्ठा पूर्णांकel_th_device *othdev)
+अणु
+	काष्ठा gth_device *gth = dev_get_drvdata(&thdev->dev);
+	पूर्णांक port = othdev->output.port;
+	पूर्णांक master;
 
-	if (thdev->host_mode)
-		return;
+	अगर (thdev->host_mode)
+		वापस;
 
 	spin_lock(&gth->gth_lock);
 	othdev->output.port = -1;
 	othdev->output.active = false;
-	gth->output[port].output = NULL;
-	for (master = 0; master < TH_CONFIGURABLE_MASTERS + 1; master++)
-		if (gth->master[master] == port)
+	gth->output[port].output = शून्य;
+	क्रम (master = 0; master < TH_CONFIGURABLE_MASTERS + 1; master++)
+		अगर (gth->master[master] == port)
 			gth->master[master] = -1;
 	spin_unlock(&gth->gth_lock);
-}
+पूर्ण
 
-static int
-intel_th_gth_set_output(struct intel_th_device *thdev, unsigned int master)
-{
-	struct gth_device *gth = dev_get_drvdata(&thdev->dev);
-	int port = 0; /* FIXME: make default output configurable */
+अटल पूर्णांक
+पूर्णांकel_th_gth_set_output(काष्ठा पूर्णांकel_th_device *thdev, अचिन्हित पूर्णांक master)
+अणु
+	काष्ठा gth_device *gth = dev_get_drvdata(&thdev->dev);
+	पूर्णांक port = 0; /* FIXME: make शेष output configurable */
 
 	/*
 	 * everything above TH_CONFIGURABLE_MASTERS is controlled by the
-	 * same register
+	 * same रेजिस्टर
 	 */
-	if (master > TH_CONFIGURABLE_MASTERS)
+	अगर (master > TH_CONFIGURABLE_MASTERS)
 		master = TH_CONFIGURABLE_MASTERS;
 
 	spin_lock(&gth->gth_lock);
-	if (gth->master[master] == -1) {
+	अगर (gth->master[master] == -1) अणु
 		set_bit(master, gth->output[port].master);
 		gth->master[master] = port;
-	}
+	पूर्ण
 	spin_unlock(&gth->gth_lock);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int intel_th_gth_probe(struct intel_th_device *thdev)
-{
-	struct device *dev = &thdev->dev;
-	struct intel_th *th = dev_get_drvdata(dev->parent);
-	struct gth_device *gth;
-	struct resource *res;
-	void __iomem *base;
-	int i, ret;
+अटल पूर्णांक पूर्णांकel_th_gth_probe(काष्ठा पूर्णांकel_th_device *thdev)
+अणु
+	काष्ठा device *dev = &thdev->dev;
+	काष्ठा पूर्णांकel_th *th = dev_get_drvdata(dev->parent);
+	काष्ठा gth_device *gth;
+	काष्ठा resource *res;
+	व्योम __iomem *base;
+	पूर्णांक i, ret;
 
-	res = intel_th_device_get_resource(thdev, IORESOURCE_MEM, 0);
-	if (!res)
-		return -ENODEV;
+	res = पूर्णांकel_th_device_get_resource(thdev, IORESOURCE_MEM, 0);
+	अगर (!res)
+		वापस -ENODEV;
 
 	base = devm_ioremap(dev, res->start, resource_size(res));
-	if (!base)
-		return -ENOMEM;
+	अगर (!base)
+		वापस -ENOMEM;
 
-	gth = devm_kzalloc(dev, sizeof(*gth), GFP_KERNEL);
-	if (!gth)
-		return -ENOMEM;
+	gth = devm_kzalloc(dev, माप(*gth), GFP_KERNEL);
+	अगर (!gth)
+		वापस -ENOMEM;
 
 	gth->dev = dev;
 	gth->base = base;
@@ -754,79 +755,79 @@ static int intel_th_gth_probe(struct intel_th_device *thdev)
 	dev_set_drvdata(dev, gth);
 
 	/*
-	 * Host mode can be signalled via SW means or via SCRPD_DEBUGGER_IN_USE
-	 * bit. Either way, don't reset HW in this case, and don't export any
+	 * Host mode can be संकेतled via SW means or via SCRPD_DEBUGGER_IN_USE
+	 * bit. Either way, करोn't reset HW in this case, and don't export any
 	 * capture configuration attributes. Also, refuse to assign output
-	 * drivers to ports, see intel_th_gth_assign().
+	 * drivers to ports, see पूर्णांकel_th_gth_assign().
 	 */
-	if (thdev->host_mode)
-		return 0;
+	अगर (thdev->host_mode)
+		वापस 0;
 
-	ret = intel_th_gth_reset(gth);
-	if (ret) {
-		if (ret != -EBUSY)
-			return ret;
+	ret = पूर्णांकel_th_gth_reset(gth);
+	अगर (ret) अणु
+		अगर (ret != -EBUSY)
+			वापस ret;
 
 		thdev->host_mode = true;
 
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	for (i = 0; i < TH_CONFIGURABLE_MASTERS + 1; i++)
+	क्रम (i = 0; i < TH_CONFIGURABLE_MASTERS + 1; i++)
 		gth->master[i] = -1;
 
-	for (i = 0; i < TH_POSSIBLE_OUTPUTS; i++) {
+	क्रम (i = 0; i < TH_POSSIBLE_OUTPUTS; i++) अणु
 		gth->output[i].gth = gth;
 		gth->output[i].index = i;
 		gth->output[i].port_type =
 			gth_output_parm_get(gth, i, TH_OUTPUT_PARM(port));
-		if (gth->output[i].port_type == GTH_NONE)
-			continue;
+		अगर (gth->output[i].port_type == GTH_NONE)
+			जारी;
 
-		ret = intel_th_output_enable(th, gth->output[i].port_type);
-		/* -ENODEV is ok, we just won't have that device enumerated */
-		if (ret && ret != -ENODEV)
-			return ret;
-	}
+		ret = पूर्णांकel_th_output_enable(th, gth->output[i].port_type);
+		/* -ENODEV is ok, we just won't have that device क्रमागतerated */
+		अगर (ret && ret != -ENODEV)
+			वापस ret;
+	पूर्ण
 
-	if (intel_th_output_attributes(gth) ||
-	    intel_th_master_attributes(gth)) {
+	अगर (पूर्णांकel_th_output_attributes(gth) ||
+	    पूर्णांकel_th_master_attributes(gth)) अणु
 		pr_warn("Can't initialize sysfs attributes\n");
 
-		if (gth->output_group.attrs)
-			sysfs_remove_group(&gth->dev->kobj, &gth->output_group);
-		return -ENOMEM;
-	}
+		अगर (gth->output_group.attrs)
+			sysfs_हटाओ_group(&gth->dev->kobj, &gth->output_group);
+		वापस -ENOMEM;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void intel_th_gth_remove(struct intel_th_device *thdev)
-{
-	struct gth_device *gth = dev_get_drvdata(&thdev->dev);
+अटल व्योम पूर्णांकel_th_gth_हटाओ(काष्ठा पूर्णांकel_th_device *thdev)
+अणु
+	काष्ठा gth_device *gth = dev_get_drvdata(&thdev->dev);
 
-	sysfs_remove_group(&gth->dev->kobj, &gth->output_group);
-	sysfs_remove_group(&gth->dev->kobj, &gth->master_group);
-}
+	sysfs_हटाओ_group(&gth->dev->kobj, &gth->output_group);
+	sysfs_हटाओ_group(&gth->dev->kobj, &gth->master_group);
+पूर्ण
 
-static struct intel_th_driver intel_th_gth_driver = {
-	.probe		= intel_th_gth_probe,
-	.remove		= intel_th_gth_remove,
-	.assign		= intel_th_gth_assign,
-	.unassign	= intel_th_gth_unassign,
-	.set_output	= intel_th_gth_set_output,
-	.enable		= intel_th_gth_enable,
-	.trig_switch	= intel_th_gth_switch,
-	.disable	= intel_th_gth_disable,
-	.driver	= {
+अटल काष्ठा पूर्णांकel_th_driver पूर्णांकel_th_gth_driver = अणु
+	.probe		= पूर्णांकel_th_gth_probe,
+	.हटाओ		= पूर्णांकel_th_gth_हटाओ,
+	.assign		= पूर्णांकel_th_gth_assign,
+	.unassign	= पूर्णांकel_th_gth_unassign,
+	.set_output	= पूर्णांकel_th_gth_set_output,
+	.enable		= पूर्णांकel_th_gth_enable,
+	.trig_चयन	= पूर्णांकel_th_gth_चयन,
+	.disable	= पूर्णांकel_th_gth_disable,
+	.driver	= अणु
 		.name	= "gth",
 		.owner	= THIS_MODULE,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-module_driver(intel_th_gth_driver,
-	      intel_th_driver_register,
-	      intel_th_driver_unregister);
+module_driver(पूर्णांकel_th_gth_driver,
+	      पूर्णांकel_th_driver_रेजिस्टर,
+	      पूर्णांकel_th_driver_unरेजिस्टर);
 
 MODULE_ALIAS("intel_th_switch");
 MODULE_LICENSE("GPL v2");

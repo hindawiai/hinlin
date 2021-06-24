@@ -1,43 +1,44 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * linux/arch/arm/lib/xor-neon.c
  *
  * Copyright (C) 2013 Linaro Ltd <ard.biesheuvel@linaro.org>
  */
 
-#include <linux/raid/xor.h>
-#include <linux/module.h>
+#समावेश <linux/raid/xor.h>
+#समावेश <linux/module.h>
 
 MODULE_LICENSE("GPL");
 
-#ifndef __ARM_NEON__
-#error You should compile this file with '-march=armv7-a -mfloat-abi=softfp -mfpu=neon'
-#endif
+#अगर_अघोषित __ARM_NEON__
+#त्रुटि You should compile this file with '-march=armv7-a -mfloat-abi=softfp -mfpu=neon'
+#पूर्ण_अगर
 
 /*
- * Pull in the reference implementations while instructing GCC (through
+ * Pull in the reference implementations जबतक inकाष्ठाing GCC (through
  * -ftree-vectorize) to attempt to exploit implicit parallelism and emit
- * NEON instructions.
+ * NEON inकाष्ठाions.
  */
-#if __GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6)
-#pragma GCC optimize "tree-vectorize"
-#else
+#अगर __GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6)
+#आशय GCC optimize "tree-vectorize"
+#अन्यथा
 /*
- * While older versions of GCC do not generate incorrect code, they fail to
+ * While older versions of GCC करो not generate incorrect code, they fail to
  * recognize the parallel nature of these functions, and emit plain ARM code,
- * which is known to be slower than the optimized ARM code in asm-arm/xor.h.
+ * which is known to be slower than the optimized ARM code in यंत्र-arm/xor.h.
  */
 #warning This code requires at least version 4.6 of GCC
-#endif
+#पूर्ण_अगर
 
-#pragma GCC diagnostic ignored "-Wunused-variable"
-#include <asm-generic/xor.h>
+#आशय GCC diagnostic ignored "-Wunused-variable"
+#समावेश <यंत्र-generic/xor.h>
 
-struct xor_block_template const xor_block_neon_inner = {
+काष्ठा xor_block_ढाँचा स्थिर xor_block_neon_inner = अणु
 	.name	= "__inner_neon__",
-	.do_2	= xor_8regs_2,
-	.do_3	= xor_8regs_3,
-	.do_4	= xor_8regs_4,
-	.do_5	= xor_8regs_5,
-};
+	.करो_2	= xor_8regs_2,
+	.करो_3	= xor_8regs_3,
+	.करो_4	= xor_8regs_4,
+	.करो_5	= xor_8regs_5,
+पूर्ण;
 EXPORT_SYMBOL(xor_block_neon_inner);

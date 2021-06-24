@@ -1,5 +1,6 @@
-#ifndef __ASM_MCS_SPINLOCK_H
-#define __ASM_MCS_SPINLOCK_H
+<शैली गुरु>
+#अगर_अघोषित __ASM_MCS_SPINLOCK_H
+#घोषणा __ASM_MCS_SPINLOCK_H
 
 /*
  * Architectures can define their own:
@@ -10,4 +11,4 @@
  * See kernel/locking/mcs_spinlock.c.
  */
 
-#endif /* __ASM_MCS_SPINLOCK_H */
+#पूर्ण_अगर /* __ASM_MCS_SPINLOCK_H */

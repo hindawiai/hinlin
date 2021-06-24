@@ -1,47 +1,48 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /* Copyright (c) 2019 Facebook */
 
-#include <test_progs.h>
-#include "test_ksyms.skel.h"
-#include <sys/stat.h>
+#समावेश <test_progs.h>
+#समावेश "test_ksyms.skel.h"
+#समावेश <sys/स्थिति.स>
 
-static int duration;
+अटल पूर्णांक duration;
 
-void test_ksyms(void)
-{
-	const char *btf_path = "/sys/kernel/btf/vmlinux";
-	struct test_ksyms *skel;
-	struct test_ksyms__data *data;
+व्योम test_ksyms(व्योम)
+अणु
+	स्थिर अक्षर *btf_path = "/sys/kernel/btf/vmlinux";
+	काष्ठा test_ksyms *skel;
+	काष्ठा test_ksyms__data *data;
 	__u64 link_fops_addr, per_cpu_start_addr;
-	struct stat st;
+	काष्ठा stat st;
 	__u64 btf_size;
-	int err;
+	पूर्णांक err;
 
 	err = kallsyms_find("bpf_link_fops", &link_fops_addr);
-	if (CHECK(err == -EINVAL, "kallsyms_fopen", "failed to open: %d\n", errno))
-		return;
-	if (CHECK(err == -ENOENT, "ksym_find", "symbol 'bpf_link_fops' not found\n"))
-		return;
+	अगर (CHECK(err == -EINVAL, "kallsyms_fopen", "failed to open: %d\n", त्रुटि_सं))
+		वापस;
+	अगर (CHECK(err == -ENOENT, "ksym_find", "symbol 'bpf_link_fops' not found\n"))
+		वापस;
 
 	err = kallsyms_find("__per_cpu_start", &per_cpu_start_addr);
-	if (CHECK(err == -EINVAL, "kallsyms_fopen", "failed to open: %d\n", errno))
-		return;
-	if (CHECK(err == -ENOENT, "ksym_find", "symbol 'per_cpu_start' not found\n"))
-		return;
+	अगर (CHECK(err == -EINVAL, "kallsyms_fopen", "failed to open: %d\n", त्रुटि_सं))
+		वापस;
+	अगर (CHECK(err == -ENOENT, "ksym_find", "symbol 'per_cpu_start' not found\n"))
+		वापस;
 
-	if (CHECK(stat(btf_path, &st), "stat_btf", "err %d\n", errno))
-		return;
+	अगर (CHECK(stat(btf_path, &st), "stat_btf", "err %d\n", त्रुटि_सं))
+		वापस;
 	btf_size = st.st_size;
 
-	skel = test_ksyms__open_and_load();
-	if (CHECK(!skel, "skel_open", "failed to open and load skeleton\n"))
-		return;
+	skel = test_ksyms__खोलो_and_load();
+	अगर (CHECK(!skel, "skel_open", "failed to open and load skeleton\n"))
+		वापस;
 
 	err = test_ksyms__attach(skel);
-	if (CHECK(err, "skel_attach", "skeleton attach failed: %d\n", err))
-		goto cleanup;
+	अगर (CHECK(err, "skel_attach", "skeleton attach failed: %d\n", err))
+		जाओ cleanup;
 
-	/* trigger tracepoint */
+	/* trigger tracepoपूर्णांक */
 	usleep(1);
 
 	data = skel->data;
@@ -58,4 +59,4 @@ void test_ksyms(void)
 
 cleanup:
 	test_ksyms__destroy(skel);
-}
+पूर्ण

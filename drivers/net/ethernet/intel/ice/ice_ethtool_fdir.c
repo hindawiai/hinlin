@@ -1,34 +1,35 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /* Copyright (C) 2018-2020, Intel Corporation. */
 
-/* flow director ethtool support for ice */
+/* flow director ethtool support क्रम ice */
 
-#include "ice.h"
-#include "ice_lib.h"
-#include "ice_flow.h"
+#समावेश "ice.h"
+#समावेश "ice_lib.h"
+#समावेश "ice_flow.h"
 
-static struct in6_addr full_ipv6_addr_mask = {
-	.in6_u = {
-		.u6_addr8 = {
+अटल काष्ठा in6_addr full_ipv6_addr_mask = अणु
+	.in6_u = अणु
+		.u6_addr8 = अणु
 			0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
 			0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
-		}
-	}
-};
+		पूर्ण
+	पूर्ण
+पूर्ण;
 
-static struct in6_addr zero_ipv6_addr_mask = {
-	.in6_u = {
-		.u6_addr8 = {
+अटल काष्ठा in6_addr zero_ipv6_addr_mask = अणु
+	.in6_u = अणु
+		.u6_addr8 = अणु
 			0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 			0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-		}
-	}
-};
+		पूर्ण
+	पूर्ण
+पूर्ण;
 
 /* calls to ice_flow_add_prof require the number of segments in the array
- * for segs_cnt. In this code that is one more than the index.
+ * क्रम segs_cnt. In this code that is one more than the index.
  */
-#define TNL_SEG_CNT(_TNL_) ((_TNL_) + 1)
+#घोषणा TNL_SEG_CNT(_TNL_) ((_TNL_) + 1)
 
 /**
  * ice_fltr_to_ethtool_flow - convert filter type values to ethtool
@@ -37,106 +38,106 @@ static struct in6_addr zero_ipv6_addr_mask = {
  *
  * Returns the corresponding ethtool flow type.
  */
-static int ice_fltr_to_ethtool_flow(enum ice_fltr_ptype flow)
-{
-	switch (flow) {
-	case ICE_FLTR_PTYPE_NONF_IPV4_TCP:
-		return TCP_V4_FLOW;
-	case ICE_FLTR_PTYPE_NONF_IPV4_UDP:
-		return UDP_V4_FLOW;
-	case ICE_FLTR_PTYPE_NONF_IPV4_SCTP:
-		return SCTP_V4_FLOW;
-	case ICE_FLTR_PTYPE_NONF_IPV4_OTHER:
-		return IPV4_USER_FLOW;
-	case ICE_FLTR_PTYPE_NONF_IPV6_TCP:
-		return TCP_V6_FLOW;
-	case ICE_FLTR_PTYPE_NONF_IPV6_UDP:
-		return UDP_V6_FLOW;
-	case ICE_FLTR_PTYPE_NONF_IPV6_SCTP:
-		return SCTP_V6_FLOW;
-	case ICE_FLTR_PTYPE_NONF_IPV6_OTHER:
-		return IPV6_USER_FLOW;
-	default:
+अटल पूर्णांक ice_fltr_to_ethtool_flow(क्रमागत ice_fltr_ptype flow)
+अणु
+	चयन (flow) अणु
+	हाल ICE_FLTR_PTYPE_NONF_IPV4_TCP:
+		वापस TCP_V4_FLOW;
+	हाल ICE_FLTR_PTYPE_NONF_IPV4_UDP:
+		वापस UDP_V4_FLOW;
+	हाल ICE_FLTR_PTYPE_NONF_IPV4_SCTP:
+		वापस SCTP_V4_FLOW;
+	हाल ICE_FLTR_PTYPE_NONF_IPV4_OTHER:
+		वापस IPV4_USER_FLOW;
+	हाल ICE_FLTR_PTYPE_NONF_IPV6_TCP:
+		वापस TCP_V6_FLOW;
+	हाल ICE_FLTR_PTYPE_NONF_IPV6_UDP:
+		वापस UDP_V6_FLOW;
+	हाल ICE_FLTR_PTYPE_NONF_IPV6_SCTP:
+		वापस SCTP_V6_FLOW;
+	हाल ICE_FLTR_PTYPE_NONF_IPV6_OTHER:
+		वापस IPV6_USER_FLOW;
+	शेष:
 		/* 0 is undefined ethtool flow */
-		return 0;
-	}
-}
+		वापस 0;
+	पूर्ण
+पूर्ण
 
 /**
- * ice_ethtool_flow_to_fltr - convert ethtool flow type to filter enum
+ * ice_ethtool_flow_to_fltr - convert ethtool flow type to filter क्रमागत
  * @eth: Ethtool flow type to be converted
  *
- * Returns flow enum
+ * Returns flow क्रमागत
  */
-static enum ice_fltr_ptype ice_ethtool_flow_to_fltr(int eth)
-{
-	switch (eth) {
-	case TCP_V4_FLOW:
-		return ICE_FLTR_PTYPE_NONF_IPV4_TCP;
-	case UDP_V4_FLOW:
-		return ICE_FLTR_PTYPE_NONF_IPV4_UDP;
-	case SCTP_V4_FLOW:
-		return ICE_FLTR_PTYPE_NONF_IPV4_SCTP;
-	case IPV4_USER_FLOW:
-		return ICE_FLTR_PTYPE_NONF_IPV4_OTHER;
-	case TCP_V6_FLOW:
-		return ICE_FLTR_PTYPE_NONF_IPV6_TCP;
-	case UDP_V6_FLOW:
-		return ICE_FLTR_PTYPE_NONF_IPV6_UDP;
-	case SCTP_V6_FLOW:
-		return ICE_FLTR_PTYPE_NONF_IPV6_SCTP;
-	case IPV6_USER_FLOW:
-		return ICE_FLTR_PTYPE_NONF_IPV6_OTHER;
-	default:
-		return ICE_FLTR_PTYPE_NONF_NONE;
-	}
-}
+अटल क्रमागत ice_fltr_ptype ice_ethtool_flow_to_fltr(पूर्णांक eth)
+अणु
+	चयन (eth) अणु
+	हाल TCP_V4_FLOW:
+		वापस ICE_FLTR_PTYPE_NONF_IPV4_TCP;
+	हाल UDP_V4_FLOW:
+		वापस ICE_FLTR_PTYPE_NONF_IPV4_UDP;
+	हाल SCTP_V4_FLOW:
+		वापस ICE_FLTR_PTYPE_NONF_IPV4_SCTP;
+	हाल IPV4_USER_FLOW:
+		वापस ICE_FLTR_PTYPE_NONF_IPV4_OTHER;
+	हाल TCP_V6_FLOW:
+		वापस ICE_FLTR_PTYPE_NONF_IPV6_TCP;
+	हाल UDP_V6_FLOW:
+		वापस ICE_FLTR_PTYPE_NONF_IPV6_UDP;
+	हाल SCTP_V6_FLOW:
+		वापस ICE_FLTR_PTYPE_NONF_IPV6_SCTP;
+	हाल IPV6_USER_FLOW:
+		वापस ICE_FLTR_PTYPE_NONF_IPV6_OTHER;
+	शेष:
+		वापस ICE_FLTR_PTYPE_NONF_NONE;
+	पूर्ण
+पूर्ण
 
 /**
  * ice_is_mask_valid - check mask field set
  * @mask: full mask to check
- * @field: field for which mask should be valid
+ * @field: field क्रम which mask should be valid
  *
- * If the mask is fully set return true. If it is not valid for field return
+ * If the mask is fully set वापस true. If it is not valid क्रम field वापस
  * false.
  */
-static bool ice_is_mask_valid(u64 mask, u64 field)
-{
-	return (mask & field) == field;
-}
+अटल bool ice_is_mask_valid(u64 mask, u64 field)
+अणु
+	वापस (mask & field) == field;
+पूर्ण
 
 /**
- * ice_get_ethtool_fdir_entry - fill ethtool structure with fdir filter data
- * @hw: hardware structure that contains filter list
- * @cmd: ethtool command data structure to receive the filter data
+ * ice_get_ethtool_fdir_entry - fill ethtool काष्ठाure with fdir filter data
+ * @hw: hardware काष्ठाure that contains filter list
+ * @cmd: ethtool command data काष्ठाure to receive the filter data
  *
  * Returns 0 on success and -EINVAL on failure
  */
-int ice_get_ethtool_fdir_entry(struct ice_hw *hw, struct ethtool_rxnfc *cmd)
-{
-	struct ethtool_rx_flow_spec *fsp;
-	struct ice_fdir_fltr *rule;
-	int ret = 0;
+पूर्णांक ice_get_ethtool_fdir_entry(काष्ठा ice_hw *hw, काष्ठा ethtool_rxnfc *cmd)
+अणु
+	काष्ठा ethtool_rx_flow_spec *fsp;
+	काष्ठा ice_fdir_fltr *rule;
+	पूर्णांक ret = 0;
 	u16 idx;
 
-	fsp = (struct ethtool_rx_flow_spec *)&cmd->fs;
+	fsp = (काष्ठा ethtool_rx_flow_spec *)&cmd->fs;
 
 	mutex_lock(&hw->fdir_fltr_lock);
 
 	rule = ice_fdir_find_fltr_by_idx(hw, fsp->location);
 
-	if (!rule || fsp->location != rule->fltr_id) {
+	अगर (!rule || fsp->location != rule->fltr_id) अणु
 		ret = -EINVAL;
-		goto release_lock;
-	}
+		जाओ release_lock;
+	पूर्ण
 
 	fsp->flow_type = ice_fltr_to_ethtool_flow(rule->flow_type);
 
-	memset(&fsp->m_u, 0, sizeof(fsp->m_u));
-	memset(&fsp->m_ext, 0, sizeof(fsp->m_ext));
+	स_रखो(&fsp->m_u, 0, माप(fsp->m_u));
+	स_रखो(&fsp->m_ext, 0, माप(fsp->m_ext));
 
-	switch (fsp->flow_type) {
-	case IPV4_USER_FLOW:
+	चयन (fsp->flow_type) अणु
+	हाल IPV4_USER_FLOW:
 		fsp->h_u.usr_ip4_spec.ip_ver = ETH_RX_NFC_IP4;
 		fsp->h_u.usr_ip4_spec.proto = 0;
 		fsp->h_u.usr_ip4_spec.l4_4_bytes = rule->ip.v4.l4_header;
@@ -149,10 +150,10 @@ int ice_get_ethtool_fdir_entry(struct ice_hw *hw, struct ethtool_rxnfc *cmd)
 		fsp->m_u.usr_ip4_spec.proto = 0;
 		fsp->m_u.usr_ip4_spec.l4_4_bytes = rule->mask.v4.l4_header;
 		fsp->m_u.usr_ip4_spec.tos = rule->mask.v4.tos;
-		break;
-	case TCP_V4_FLOW:
-	case UDP_V4_FLOW:
-	case SCTP_V4_FLOW:
+		अवरोध;
+	हाल TCP_V4_FLOW:
+	हाल UDP_V4_FLOW:
+	हाल SCTP_V4_FLOW:
 		fsp->h_u.tcp_ip4_spec.psrc = rule->ip.v4.src_port;
 		fsp->h_u.tcp_ip4_spec.pdst = rule->ip.v4.dst_port;
 		fsp->h_u.tcp_ip4_spec.ip4src = rule->ip.v4.src_ip;
@@ -161,221 +162,221 @@ int ice_get_ethtool_fdir_entry(struct ice_hw *hw, struct ethtool_rxnfc *cmd)
 		fsp->m_u.tcp_ip4_spec.pdst = rule->mask.v4.dst_port;
 		fsp->m_u.tcp_ip4_spec.ip4src = rule->mask.v4.src_ip;
 		fsp->m_u.tcp_ip4_spec.ip4dst = rule->mask.v4.dst_ip;
-		break;
-	case IPV6_USER_FLOW:
+		अवरोध;
+	हाल IPV6_USER_FLOW:
 		fsp->h_u.usr_ip6_spec.l4_4_bytes = rule->ip.v6.l4_header;
 		fsp->h_u.usr_ip6_spec.tclass = rule->ip.v6.tc;
 		fsp->h_u.usr_ip6_spec.l4_proto = rule->ip.v6.proto;
-		memcpy(fsp->h_u.tcp_ip6_spec.ip6src, rule->ip.v6.src_ip,
-		       sizeof(struct in6_addr));
-		memcpy(fsp->h_u.tcp_ip6_spec.ip6dst, rule->ip.v6.dst_ip,
-		       sizeof(struct in6_addr));
-		memcpy(fsp->m_u.tcp_ip6_spec.ip6src, rule->mask.v6.src_ip,
-		       sizeof(struct in6_addr));
-		memcpy(fsp->m_u.tcp_ip6_spec.ip6dst, rule->mask.v6.dst_ip,
-		       sizeof(struct in6_addr));
+		स_नकल(fsp->h_u.tcp_ip6_spec.ip6src, rule->ip.v6.src_ip,
+		       माप(काष्ठा in6_addr));
+		स_नकल(fsp->h_u.tcp_ip6_spec.ip6dst, rule->ip.v6.dst_ip,
+		       माप(काष्ठा in6_addr));
+		स_नकल(fsp->m_u.tcp_ip6_spec.ip6src, rule->mask.v6.src_ip,
+		       माप(काष्ठा in6_addr));
+		स_नकल(fsp->m_u.tcp_ip6_spec.ip6dst, rule->mask.v6.dst_ip,
+		       माप(काष्ठा in6_addr));
 		fsp->m_u.usr_ip6_spec.l4_4_bytes = rule->mask.v6.l4_header;
 		fsp->m_u.usr_ip6_spec.tclass = rule->mask.v6.tc;
 		fsp->m_u.usr_ip6_spec.l4_proto = rule->mask.v6.proto;
-		break;
-	case TCP_V6_FLOW:
-	case UDP_V6_FLOW:
-	case SCTP_V6_FLOW:
-		memcpy(fsp->h_u.tcp_ip6_spec.ip6src, rule->ip.v6.src_ip,
-		       sizeof(struct in6_addr));
-		memcpy(fsp->h_u.tcp_ip6_spec.ip6dst, rule->ip.v6.dst_ip,
-		       sizeof(struct in6_addr));
+		अवरोध;
+	हाल TCP_V6_FLOW:
+	हाल UDP_V6_FLOW:
+	हाल SCTP_V6_FLOW:
+		स_नकल(fsp->h_u.tcp_ip6_spec.ip6src, rule->ip.v6.src_ip,
+		       माप(काष्ठा in6_addr));
+		स_नकल(fsp->h_u.tcp_ip6_spec.ip6dst, rule->ip.v6.dst_ip,
+		       माप(काष्ठा in6_addr));
 		fsp->h_u.tcp_ip6_spec.psrc = rule->ip.v6.src_port;
 		fsp->h_u.tcp_ip6_spec.pdst = rule->ip.v6.dst_port;
-		memcpy(fsp->m_u.tcp_ip6_spec.ip6src,
+		स_नकल(fsp->m_u.tcp_ip6_spec.ip6src,
 		       rule->mask.v6.src_ip,
-		       sizeof(struct in6_addr));
-		memcpy(fsp->m_u.tcp_ip6_spec.ip6dst,
+		       माप(काष्ठा in6_addr));
+		स_नकल(fsp->m_u.tcp_ip6_spec.ip6dst,
 		       rule->mask.v6.dst_ip,
-		       sizeof(struct in6_addr));
+		       माप(काष्ठा in6_addr));
 		fsp->m_u.tcp_ip6_spec.psrc = rule->mask.v6.src_port;
 		fsp->m_u.tcp_ip6_spec.pdst = rule->mask.v6.dst_port;
 		fsp->h_u.tcp_ip6_spec.tclass = rule->ip.v6.tc;
 		fsp->m_u.tcp_ip6_spec.tclass = rule->mask.v6.tc;
-		break;
-	default:
-		break;
-	}
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	if (rule->dest_ctl == ICE_FLTR_PRGM_DESC_DEST_DROP_PKT)
+	अगर (rule->dest_ctl == ICE_FLTR_PRGM_DESC_DEST_DROP_PKT)
 		fsp->ring_cookie = RX_CLS_FLOW_DISC;
-	else
+	अन्यथा
 		fsp->ring_cookie = rule->q_index;
 
 	idx = ice_ethtool_flow_to_fltr(fsp->flow_type);
-	if (idx == ICE_FLTR_PTYPE_NONF_NONE) {
+	अगर (idx == ICE_FLTR_PTYPE_NONF_NONE) अणु
 		dev_err(ice_hw_to_dev(hw), "Missing input index for flow_type %d\n",
 			rule->flow_type);
 		ret = -EINVAL;
-	}
+	पूर्ण
 
 release_lock:
 	mutex_unlock(&hw->fdir_fltr_lock);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
  * ice_get_fdir_fltr_ids - fill buffer with filter IDs of active filters
- * @hw: hardware structure containing the filter list
- * @cmd: ethtool command data structure
+ * @hw: hardware काष्ठाure containing the filter list
+ * @cmd: ethtool command data काष्ठाure
  * @rule_locs: ethtool array passed in from OS to receive filter IDs
  *
- * Returns 0 as expected for success by ethtool
+ * Returns 0 as expected क्रम success by ethtool
  */
-int
-ice_get_fdir_fltr_ids(struct ice_hw *hw, struct ethtool_rxnfc *cmd,
+पूर्णांक
+ice_get_fdir_fltr_ids(काष्ठा ice_hw *hw, काष्ठा ethtool_rxnfc *cmd,
 		      u32 *rule_locs)
-{
-	struct ice_fdir_fltr *f_rule;
-	unsigned int cnt = 0;
-	int val = 0;
+अणु
+	काष्ठा ice_fdir_fltr *f_rule;
+	अचिन्हित पूर्णांक cnt = 0;
+	पूर्णांक val = 0;
 
 	/* report total rule count */
 	cmd->data = ice_get_fdir_cnt_all(hw);
 
 	mutex_lock(&hw->fdir_fltr_lock);
 
-	list_for_each_entry(f_rule, &hw->fdir_list_head, fltr_node) {
-		if (cnt == cmd->rule_cnt) {
+	list_क्रम_each_entry(f_rule, &hw->fdir_list_head, fltr_node) अणु
+		अगर (cnt == cmd->rule_cnt) अणु
 			val = -EMSGSIZE;
-			goto release_lock;
-		}
+			जाओ release_lock;
+		पूर्ण
 		rule_locs[cnt] = f_rule->fltr_id;
 		cnt++;
-	}
+	पूर्ण
 
 release_lock:
 	mutex_unlock(&hw->fdir_fltr_lock);
-	if (!val)
+	अगर (!val)
 		cmd->rule_cnt = cnt;
-	return val;
-}
+	वापस val;
+पूर्ण
 
 /**
- * ice_fdir_get_hw_prof - return the ice_fd_hw_proc associated with a flow
- * @hw: hardware structure containing the filter list
+ * ice_fdir_get_hw_prof - वापस the ice_fd_hw_proc associated with a flow
+ * @hw: hardware काष्ठाure containing the filter list
  * @blk: hardware block
  * @flow: FDir flow type to release
  */
-static struct ice_fd_hw_prof *
-ice_fdir_get_hw_prof(struct ice_hw *hw, enum ice_block blk, int flow)
-{
-	if (blk == ICE_BLK_FD && hw->fdir_prof)
-		return hw->fdir_prof[flow];
+अटल काष्ठा ice_fd_hw_prof *
+ice_fdir_get_hw_prof(काष्ठा ice_hw *hw, क्रमागत ice_block blk, पूर्णांक flow)
+अणु
+	अगर (blk == ICE_BLK_FD && hw->fdir_prof)
+		वापस hw->fdir_prof[flow];
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
 /**
- * ice_fdir_erase_flow_from_hw - remove a flow from the HW profile tables
- * @hw: hardware structure containing the filter list
+ * ice_fdir_erase_flow_from_hw - हटाओ a flow from the HW profile tables
+ * @hw: hardware काष्ठाure containing the filter list
  * @blk: hardware block
  * @flow: FDir flow type to release
  */
-static void
-ice_fdir_erase_flow_from_hw(struct ice_hw *hw, enum ice_block blk, int flow)
-{
-	struct ice_fd_hw_prof *prof = ice_fdir_get_hw_prof(hw, blk, flow);
-	int tun;
+अटल व्योम
+ice_fdir_erase_flow_from_hw(काष्ठा ice_hw *hw, क्रमागत ice_block blk, पूर्णांक flow)
+अणु
+	काष्ठा ice_fd_hw_prof *prof = ice_fdir_get_hw_prof(hw, blk, flow);
+	पूर्णांक tun;
 
-	if (!prof)
-		return;
+	अगर (!prof)
+		वापस;
 
-	for (tun = 0; tun < ICE_FD_HW_SEG_MAX; tun++) {
+	क्रम (tun = 0; tun < ICE_FD_HW_SEG_MAX; tun++) अणु
 		u64 prof_id;
-		int j;
+		पूर्णांक j;
 
 		prof_id = flow + tun * ICE_FLTR_PTYPE_MAX;
-		for (j = 0; j < prof->cnt; j++) {
+		क्रम (j = 0; j < prof->cnt; j++) अणु
 			u16 vsi_num;
 
-			if (!prof->entry_h[j][tun] || !prof->vsi_h[j])
-				continue;
+			अगर (!prof->entry_h[j][tun] || !prof->vsi_h[j])
+				जारी;
 			vsi_num = ice_get_hw_vsi_num(hw, prof->vsi_h[j]);
 			ice_rem_prof_id_flow(hw, blk, vsi_num, prof_id);
 			ice_flow_rem_entry(hw, blk, prof->entry_h[j][tun]);
 			prof->entry_h[j][tun] = 0;
-		}
+		पूर्ण
 		ice_flow_rem_prof(hw, blk, prof_id);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
- * ice_fdir_rem_flow - release the ice_flow structures for a filter type
- * @hw: hardware structure containing the filter list
+ * ice_fdir_rem_flow - release the ice_flow काष्ठाures क्रम a filter type
+ * @hw: hardware काष्ठाure containing the filter list
  * @blk: hardware block
  * @flow_type: FDir flow type to release
  */
-static void
-ice_fdir_rem_flow(struct ice_hw *hw, enum ice_block blk,
-		  enum ice_fltr_ptype flow_type)
-{
-	int flow = (int)flow_type & ~FLOW_EXT;
-	struct ice_fd_hw_prof *prof;
-	int tun, i;
+अटल व्योम
+ice_fdir_rem_flow(काष्ठा ice_hw *hw, क्रमागत ice_block blk,
+		  क्रमागत ice_fltr_ptype flow_type)
+अणु
+	पूर्णांक flow = (पूर्णांक)flow_type & ~FLOW_EXT;
+	काष्ठा ice_fd_hw_prof *prof;
+	पूर्णांक tun, i;
 
 	prof = ice_fdir_get_hw_prof(hw, blk, flow);
-	if (!prof)
-		return;
+	अगर (!prof)
+		वापस;
 
 	ice_fdir_erase_flow_from_hw(hw, blk, flow);
-	for (i = 0; i < prof->cnt; i++)
+	क्रम (i = 0; i < prof->cnt; i++)
 		prof->vsi_h[i] = 0;
-	for (tun = 0; tun < ICE_FD_HW_SEG_MAX; tun++) {
-		if (!prof->fdir_seg[tun])
-			continue;
-		devm_kfree(ice_hw_to_dev(hw), prof->fdir_seg[tun]);
-		prof->fdir_seg[tun] = NULL;
-	}
+	क्रम (tun = 0; tun < ICE_FD_HW_SEG_MAX; tun++) अणु
+		अगर (!prof->fdir_seg[tun])
+			जारी;
+		devm_kमुक्त(ice_hw_to_dev(hw), prof->fdir_seg[tun]);
+		prof->fdir_seg[tun] = शून्य;
+	पूर्ण
 	prof->cnt = 0;
-}
+पूर्ण
 
 /**
- * ice_fdir_release_flows - release all flows in use for later replay
- * @hw: pointer to HW instance
+ * ice_fdir_release_flows - release all flows in use क्रम later replay
+ * @hw: poपूर्णांकer to HW instance
  */
-void ice_fdir_release_flows(struct ice_hw *hw)
-{
-	int flow;
+व्योम ice_fdir_release_flows(काष्ठा ice_hw *hw)
+अणु
+	पूर्णांक flow;
 
 	/* release Flow Director HW table entries */
-	for (flow = 0; flow < ICE_FLTR_PTYPE_MAX; flow++)
+	क्रम (flow = 0; flow < ICE_FLTR_PTYPE_MAX; flow++)
 		ice_fdir_erase_flow_from_hw(hw, ICE_BLK_FD, flow);
-}
+पूर्ण
 
 /**
  * ice_fdir_replay_flows - replay HW Flow Director filter info
- * @hw: pointer to HW instance
+ * @hw: poपूर्णांकer to HW instance
  */
-void ice_fdir_replay_flows(struct ice_hw *hw)
-{
-	int flow;
+व्योम ice_fdir_replay_flows(काष्ठा ice_hw *hw)
+अणु
+	पूर्णांक flow;
 
-	for (flow = 0; flow < ICE_FLTR_PTYPE_MAX; flow++) {
-		int tun;
+	क्रम (flow = 0; flow < ICE_FLTR_PTYPE_MAX; flow++) अणु
+		पूर्णांक tun;
 
-		if (!hw->fdir_prof[flow] || !hw->fdir_prof[flow]->cnt)
-			continue;
-		for (tun = 0; tun < ICE_FD_HW_SEG_MAX; tun++) {
-			struct ice_flow_prof *hw_prof;
-			struct ice_fd_hw_prof *prof;
+		अगर (!hw->fdir_prof[flow] || !hw->fdir_prof[flow]->cnt)
+			जारी;
+		क्रम (tun = 0; tun < ICE_FD_HW_SEG_MAX; tun++) अणु
+			काष्ठा ice_flow_prof *hw_prof;
+			काष्ठा ice_fd_hw_prof *prof;
 			u64 prof_id;
-			int j;
+			पूर्णांक j;
 
 			prof = hw->fdir_prof[flow];
 			prof_id = flow + tun * ICE_FLTR_PTYPE_MAX;
 			ice_flow_add_prof(hw, ICE_BLK_FD, ICE_FLOW_RX, prof_id,
 					  prof->fdir_seg[tun], TNL_SEG_CNT(tun),
 					  &hw_prof);
-			for (j = 0; j < prof->cnt; j++) {
-				enum ice_flow_priority prio;
+			क्रम (j = 0; j < prof->cnt; j++) अणु
+				क्रमागत ice_flow_priority prio;
 				u64 entry_h = 0;
-				int err;
+				पूर्णांक err;
 
 				prio = ICE_FLOW_PRIO_NORMAL;
 				err = ice_flow_add_entry(hw, ICE_BLK_FD,
@@ -384,282 +385,282 @@ void ice_fdir_replay_flows(struct ice_hw *hw)
 							 prof->vsi_h[j],
 							 prio, prof->fdir_seg,
 							 &entry_h);
-				if (err) {
+				अगर (err) अणु
 					dev_err(ice_hw_to_dev(hw), "Could not replay Flow Director, flow type %d\n",
 						flow);
-					continue;
-				}
+					जारी;
+				पूर्ण
 				prof->entry_h[j][tun] = entry_h;
-			}
-		}
-	}
-}
+			पूर्ण
+		पूर्ण
+	पूर्ण
+पूर्ण
 
 /**
- * ice_parse_rx_flow_user_data - deconstruct user-defined data
- * @fsp: pointer to ethtool Rx flow specification
- * @data: pointer to userdef data structure for storage
+ * ice_parse_rx_flow_user_data - deस्थिरruct user-defined data
+ * @fsp: poपूर्णांकer to ethtool Rx flow specअगरication
+ * @data: poपूर्णांकer to userdef data काष्ठाure क्रम storage
  *
  * Returns 0 on success, negative error value on failure
  */
-static int
-ice_parse_rx_flow_user_data(struct ethtool_rx_flow_spec *fsp,
-			    struct ice_rx_flow_userdef *data)
-{
+अटल पूर्णांक
+ice_parse_rx_flow_user_data(काष्ठा ethtool_rx_flow_spec *fsp,
+			    काष्ठा ice_rx_flow_userdef *data)
+अणु
 	u64 value, mask;
 
-	memset(data, 0, sizeof(*data));
-	if (!(fsp->flow_type & FLOW_EXT))
-		return 0;
+	स_रखो(data, 0, माप(*data));
+	अगर (!(fsp->flow_type & FLOW_EXT))
+		वापस 0;
 
-	value = be64_to_cpu(*((__force __be64 *)fsp->h_ext.data));
-	mask = be64_to_cpu(*((__force __be64 *)fsp->m_ext.data));
-	if (!mask)
-		return 0;
+	value = be64_to_cpu(*((__क्रमce __be64 *)fsp->h_ext.data));
+	mask = be64_to_cpu(*((__क्रमce __be64 *)fsp->m_ext.data));
+	अगर (!mask)
+		वापस 0;
 
-#define ICE_USERDEF_FLEX_WORD_M	GENMASK_ULL(15, 0)
-#define ICE_USERDEF_FLEX_OFFS_S	16
-#define ICE_USERDEF_FLEX_OFFS_M	GENMASK_ULL(31, ICE_USERDEF_FLEX_OFFS_S)
-#define ICE_USERDEF_FLEX_FLTR_M	GENMASK_ULL(31, 0)
+#घोषणा ICE_USERDEF_FLEX_WORD_M	GENMASK_ULL(15, 0)
+#घोषणा ICE_USERDEF_FLEX_OFFS_S	16
+#घोषणा ICE_USERDEF_FLEX_OFFS_M	GENMASK_ULL(31, ICE_USERDEF_FLEX_OFFS_S)
+#घोषणा ICE_USERDEF_FLEX_FLTR_M	GENMASK_ULL(31, 0)
 
-	/* 0x1fe is the maximum value for offsets stored in the internal
+	/* 0x1fe is the maximum value क्रम offsets stored in the पूर्णांकernal
 	 * filtering tables.
 	 */
-#define ICE_USERDEF_FLEX_MAX_OFFS_VAL 0x1fe
+#घोषणा ICE_USERDEF_FLEX_MAX_OFFS_VAL 0x1fe
 
-	if (!ice_is_mask_valid(mask, ICE_USERDEF_FLEX_FLTR_M) ||
+	अगर (!ice_is_mask_valid(mask, ICE_USERDEF_FLEX_FLTR_M) ||
 	    value > ICE_USERDEF_FLEX_FLTR_M)
-		return -EINVAL;
+		वापस -EINVAL;
 
 	data->flex_word = value & ICE_USERDEF_FLEX_WORD_M;
 	data->flex_offset = (value & ICE_USERDEF_FLEX_OFFS_M) >>
 			     ICE_USERDEF_FLEX_OFFS_S;
-	if (data->flex_offset > ICE_USERDEF_FLEX_MAX_OFFS_VAL)
-		return -EINVAL;
+	अगर (data->flex_offset > ICE_USERDEF_FLEX_MAX_OFFS_VAL)
+		वापस -EINVAL;
 
 	data->flex_fltr = true;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * ice_fdir_num_avail_fltr - return the number of unused flow director filters
- * @hw: pointer to hardware structure
- * @vsi: software VSI structure
+ * ice_fdir_num_avail_fltr - वापस the number of unused flow director filters
+ * @hw: poपूर्णांकer to hardware काष्ठाure
+ * @vsi: software VSI काष्ठाure
  *
- * There are 2 filter pools: guaranteed and best effort(shared). Each VSI can
- * use filters from either pool. The guaranteed pool is divided between VSIs.
- * The best effort filter pool is common to all VSIs and is a device shared
+ * There are 2 filter pools: guaranteed and best efक्रमt(shared). Each VSI can
+ * use filters from either pool. The guaranteed pool is भागided between VSIs.
+ * The best efक्रमt filter pool is common to all VSIs and is a device shared
  * resource pool. The number of filters available to this VSI is the sum of
- * the VSIs guaranteed filter pool and the global available best effort
+ * the VSIs guaranteed filter pool and the global available best efक्रमt
  * filter pool.
  *
  * Returns the number of available flow director filters to this VSI
  */
-static int ice_fdir_num_avail_fltr(struct ice_hw *hw, struct ice_vsi *vsi)
-{
+अटल पूर्णांक ice_fdir_num_avail_fltr(काष्ठा ice_hw *hw, काष्ठा ice_vsi *vsi)
+अणु
 	u16 vsi_num = ice_get_hw_vsi_num(hw, vsi->idx);
 	u16 num_guar;
 	u16 num_be;
 
-	/* total guaranteed filters assigned to this VSI */
+	/* total guaranteed filters asचिन्हित to this VSI */
 	num_guar = vsi->num_gfltr;
 
 	/* minus the guaranteed filters programed by this VSI */
 	num_guar -= (rd32(hw, VSIQF_FD_CNT(vsi_num)) &
 		     VSIQF_FD_CNT_FD_GCNT_M) >> VSIQF_FD_CNT_FD_GCNT_S;
 
-	/* total global best effort filters */
-	num_be = hw->func_caps.fd_fltr_best_effort;
+	/* total global best efक्रमt filters */
+	num_be = hw->func_caps.fd_fltr_best_efक्रमt;
 
-	/* minus the global best effort filters programmed */
+	/* minus the global best efक्रमt filters programmed */
 	num_be -= (rd32(hw, GLQF_FD_CNT) & GLQF_FD_CNT_FD_BCNT_M) >>
 		   GLQF_FD_CNT_FD_BCNT_S;
 
-	return num_guar + num_be;
-}
+	वापस num_guar + num_be;
+पूर्ण
 
 /**
- * ice_fdir_alloc_flow_prof - allocate FDir flow profile structure(s)
- * @hw: HW structure containing the FDir flow profile structure(s)
- * @flow: flow type to allocate the flow profile for
+ * ice_fdir_alloc_flow_prof - allocate FDir flow profile काष्ठाure(s)
+ * @hw: HW काष्ठाure containing the FDir flow profile काष्ठाure(s)
+ * @flow: flow type to allocate the flow profile क्रम
  *
- * Allocate the fdir_prof and fdir_prof[flow] if not already created. Return 0
+ * Allocate the fdir_prof and fdir_prof[flow] अगर not alपढ़ोy created. Return 0
  * on success and negative on error.
  */
-static int
-ice_fdir_alloc_flow_prof(struct ice_hw *hw, enum ice_fltr_ptype flow)
-{
-	if (!hw)
-		return -EINVAL;
+अटल पूर्णांक
+ice_fdir_alloc_flow_prof(काष्ठा ice_hw *hw, क्रमागत ice_fltr_ptype flow)
+अणु
+	अगर (!hw)
+		वापस -EINVAL;
 
-	if (!hw->fdir_prof) {
-		hw->fdir_prof = devm_kcalloc(ice_hw_to_dev(hw),
+	अगर (!hw->fdir_prof) अणु
+		hw->fdir_prof = devm_kसुस्मृति(ice_hw_to_dev(hw),
 					     ICE_FLTR_PTYPE_MAX,
-					     sizeof(*hw->fdir_prof),
+					     माप(*hw->fdir_prof),
 					     GFP_KERNEL);
-		if (!hw->fdir_prof)
-			return -ENOMEM;
-	}
+		अगर (!hw->fdir_prof)
+			वापस -ENOMEM;
+	पूर्ण
 
-	if (!hw->fdir_prof[flow]) {
+	अगर (!hw->fdir_prof[flow]) अणु
 		hw->fdir_prof[flow] = devm_kzalloc(ice_hw_to_dev(hw),
-						   sizeof(**hw->fdir_prof),
+						   माप(**hw->fdir_prof),
 						   GFP_KERNEL);
-		if (!hw->fdir_prof[flow])
-			return -ENOMEM;
-	}
+		अगर (!hw->fdir_prof[flow])
+			वापस -ENOMEM;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * ice_fdir_set_hw_fltr_rule - Configure HW tables to generate a FDir rule
- * @pf: pointer to the PF structure
- * @seg: protocol header description pointer
- * @flow: filter enum
+ * @pf: poपूर्णांकer to the PF काष्ठाure
+ * @seg: protocol header description poपूर्णांकer
+ * @flow: filter क्रमागत
  * @tun: FDir segment to program
  */
-static int
-ice_fdir_set_hw_fltr_rule(struct ice_pf *pf, struct ice_flow_seg_info *seg,
-			  enum ice_fltr_ptype flow, enum ice_fd_hw_seg tun)
-{
-	struct device *dev = ice_pf_to_dev(pf);
-	struct ice_vsi *main_vsi, *ctrl_vsi;
-	struct ice_flow_seg_info *old_seg;
-	struct ice_flow_prof *prof = NULL;
-	struct ice_fd_hw_prof *hw_prof;
-	struct ice_hw *hw = &pf->hw;
-	enum ice_status status;
+अटल पूर्णांक
+ice_fdir_set_hw_fltr_rule(काष्ठा ice_pf *pf, काष्ठा ice_flow_seg_info *seg,
+			  क्रमागत ice_fltr_ptype flow, क्रमागत ice_fd_hw_seg tun)
+अणु
+	काष्ठा device *dev = ice_pf_to_dev(pf);
+	काष्ठा ice_vsi *मुख्य_vsi, *ctrl_vsi;
+	काष्ठा ice_flow_seg_info *old_seg;
+	काष्ठा ice_flow_prof *prof = शून्य;
+	काष्ठा ice_fd_hw_prof *hw_prof;
+	काष्ठा ice_hw *hw = &pf->hw;
+	क्रमागत ice_status status;
 	u64 entry1_h = 0;
 	u64 entry2_h = 0;
 	u64 prof_id;
-	int err;
+	पूर्णांक err;
 
-	main_vsi = ice_get_main_vsi(pf);
-	if (!main_vsi)
-		return -EINVAL;
+	मुख्य_vsi = ice_get_मुख्य_vsi(pf);
+	अगर (!मुख्य_vsi)
+		वापस -EINVAL;
 
 	ctrl_vsi = ice_get_ctrl_vsi(pf);
-	if (!ctrl_vsi)
-		return -EINVAL;
+	अगर (!ctrl_vsi)
+		वापस -EINVAL;
 
 	err = ice_fdir_alloc_flow_prof(hw, flow);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	hw_prof = hw->fdir_prof[flow];
 	old_seg = hw_prof->fdir_seg[tun];
-	if (old_seg) {
-		/* This flow_type already has a changed input set.
+	अगर (old_seg) अणु
+		/* This flow_type alपढ़ोy has a changed input set.
 		 * If it matches the requested input set then we are
-		 * done. Or, if it's different then it's an error.
+		 * करोne. Or, अगर it's different then it's an error.
 		 */
-		if (!memcmp(old_seg, seg, sizeof(*seg)))
-			return -EEXIST;
+		अगर (!स_भेद(old_seg, seg, माप(*seg)))
+			वापस -EEXIST;
 
-		/* if there are FDir filters using this flow,
-		 * then return error.
+		/* अगर there are FDir filters using this flow,
+		 * then वापस error.
 		 */
-		if (hw->fdir_fltr_cnt[flow]) {
+		अगर (hw->fdir_fltr_cnt[flow]) अणु
 			dev_err(dev, "Failed to add filter.  Flow director filters on each port must have the same input set.\n");
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
-		if (ice_is_arfs_using_perfect_flow(hw, flow)) {
+		अगर (ice_is_arfs_using_perfect_flow(hw, flow)) अणु
 			dev_err(dev, "aRFS using perfect flow type %d, cannot change input set\n",
 				flow);
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
-		/* remove HW filter definition */
+		/* हटाओ HW filter definition */
 		ice_fdir_rem_flow(hw, ICE_BLK_FD, flow);
-	}
+	पूर्ण
 
 	/* Adding a profile, but there is only one header supported.
 	 * That is the final parameters are 1 header (segment), no
-	 * actions (NULL) and zero actions 0.
+	 * actions (शून्य) and zero actions 0.
 	 */
 	prof_id = flow + tun * ICE_FLTR_PTYPE_MAX;
 	status = ice_flow_add_prof(hw, ICE_BLK_FD, ICE_FLOW_RX, prof_id, seg,
 				   TNL_SEG_CNT(tun), &prof);
-	if (status)
-		return ice_status_to_errno(status);
-	status = ice_flow_add_entry(hw, ICE_BLK_FD, prof_id, main_vsi->idx,
-				    main_vsi->idx, ICE_FLOW_PRIO_NORMAL,
+	अगर (status)
+		वापस ice_status_to_त्रुटि_सं(status);
+	status = ice_flow_add_entry(hw, ICE_BLK_FD, prof_id, मुख्य_vsi->idx,
+				    मुख्य_vsi->idx, ICE_FLOW_PRIO_NORMAL,
 				    seg, &entry1_h);
-	if (status) {
-		err = ice_status_to_errno(status);
-		goto err_prof;
-	}
-	status = ice_flow_add_entry(hw, ICE_BLK_FD, prof_id, main_vsi->idx,
+	अगर (status) अणु
+		err = ice_status_to_त्रुटि_सं(status);
+		जाओ err_prof;
+	पूर्ण
+	status = ice_flow_add_entry(hw, ICE_BLK_FD, prof_id, मुख्य_vsi->idx,
 				    ctrl_vsi->idx, ICE_FLOW_PRIO_NORMAL,
 				    seg, &entry2_h);
-	if (status) {
-		err = ice_status_to_errno(status);
-		goto err_entry;
-	}
+	अगर (status) अणु
+		err = ice_status_to_त्रुटि_सं(status);
+		जाओ err_entry;
+	पूर्ण
 
 	hw_prof->fdir_seg[tun] = seg;
 	hw_prof->entry_h[0][tun] = entry1_h;
 	hw_prof->entry_h[1][tun] = entry2_h;
-	hw_prof->vsi_h[0] = main_vsi->idx;
+	hw_prof->vsi_h[0] = मुख्य_vsi->idx;
 	hw_prof->vsi_h[1] = ctrl_vsi->idx;
-	if (!hw_prof->cnt)
+	अगर (!hw_prof->cnt)
 		hw_prof->cnt = 2;
 
-	return 0;
+	वापस 0;
 
 err_entry:
 	ice_rem_prof_id_flow(hw, ICE_BLK_FD,
-			     ice_get_hw_vsi_num(hw, main_vsi->idx), prof_id);
+			     ice_get_hw_vsi_num(hw, मुख्य_vsi->idx), prof_id);
 	ice_flow_rem_entry(hw, ICE_BLK_FD, entry1_h);
 err_prof:
 	ice_flow_rem_prof(hw, ICE_BLK_FD, prof_id);
 	dev_err(dev, "Failed to add filter.  Flow director filters on each port must have the same input set.\n");
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /**
  * ice_set_init_fdir_seg
- * @seg: flow segment for programming
+ * @seg: flow segment क्रम programming
  * @l3_proto: ICE_FLOW_SEG_HDR_IPV4 or ICE_FLOW_SEG_HDR_IPV6
  * @l4_proto: ICE_FLOW_SEG_HDR_TCP or ICE_FLOW_SEG_HDR_UDP
  *
- * Set the configuration for perfect filters to the provided flow segment for
+ * Set the configuration क्रम perfect filters to the provided flow segment क्रम
  * programming the HW filter. This is to be called only when initializing
  * filters as this function it assumes no filters exist.
  */
-static int
-ice_set_init_fdir_seg(struct ice_flow_seg_info *seg,
-		      enum ice_flow_seg_hdr l3_proto,
-		      enum ice_flow_seg_hdr l4_proto)
-{
-	enum ice_flow_field src_addr, dst_addr, src_port, dst_port;
+अटल पूर्णांक
+ice_set_init_fdir_seg(काष्ठा ice_flow_seg_info *seg,
+		      क्रमागत ice_flow_seg_hdr l3_proto,
+		      क्रमागत ice_flow_seg_hdr l4_proto)
+अणु
+	क्रमागत ice_flow_field src_addr, dst_addr, src_port, dst_port;
 
-	if (!seg)
-		return -EINVAL;
+	अगर (!seg)
+		वापस -EINVAL;
 
-	if (l3_proto == ICE_FLOW_SEG_HDR_IPV4) {
+	अगर (l3_proto == ICE_FLOW_SEG_HDR_IPV4) अणु
 		src_addr = ICE_FLOW_FIELD_IDX_IPV4_SA;
 		dst_addr = ICE_FLOW_FIELD_IDX_IPV4_DA;
-	} else if (l3_proto == ICE_FLOW_SEG_HDR_IPV6) {
+	पूर्ण अन्यथा अगर (l3_proto == ICE_FLOW_SEG_HDR_IPV6) अणु
 		src_addr = ICE_FLOW_FIELD_IDX_IPV6_SA;
 		dst_addr = ICE_FLOW_FIELD_IDX_IPV6_DA;
-	} else {
-		return -EINVAL;
-	}
+	पूर्ण अन्यथा अणु
+		वापस -EINVAL;
+	पूर्ण
 
-	if (l4_proto == ICE_FLOW_SEG_HDR_TCP) {
+	अगर (l4_proto == ICE_FLOW_SEG_HDR_TCP) अणु
 		src_port = ICE_FLOW_FIELD_IDX_TCP_SRC_PORT;
 		dst_port = ICE_FLOW_FIELD_IDX_TCP_DST_PORT;
-	} else if (l4_proto == ICE_FLOW_SEG_HDR_UDP) {
+	पूर्ण अन्यथा अगर (l4_proto == ICE_FLOW_SEG_HDR_UDP) अणु
 		src_port = ICE_FLOW_FIELD_IDX_UDP_SRC_PORT;
 		dst_port = ICE_FLOW_FIELD_IDX_UDP_DST_PORT;
-	} else {
-		return -EINVAL;
-	}
+	पूर्ण अन्यथा अणु
+		वापस -EINVAL;
+	पूर्ण
 
 	ICE_FLOW_SET_HDRS(seg, l3_proto | l4_proto);
 
@@ -679,451 +680,451 @@ ice_set_init_fdir_seg(struct ice_flow_seg_info *seg,
 	ice_flow_set_fld(seg, dst_port, ICE_FLOW_FLD_OFF_INVAL,
 			 ICE_FLOW_FLD_OFF_INVAL, ICE_FLOW_FLD_OFF_INVAL, false);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * ice_create_init_fdir_rule
- * @pf: PF structure
- * @flow: filter enum
+ * @pf: PF काष्ठाure
+ * @flow: filter क्रमागत
  *
  * Return error value or 0 on success.
  */
-static int
-ice_create_init_fdir_rule(struct ice_pf *pf, enum ice_fltr_ptype flow)
-{
-	struct ice_flow_seg_info *seg, *tun_seg;
-	struct device *dev = ice_pf_to_dev(pf);
-	struct ice_hw *hw = &pf->hw;
-	int ret;
+अटल पूर्णांक
+ice_create_init_fdir_rule(काष्ठा ice_pf *pf, क्रमागत ice_fltr_ptype flow)
+अणु
+	काष्ठा ice_flow_seg_info *seg, *tun_seg;
+	काष्ठा device *dev = ice_pf_to_dev(pf);
+	काष्ठा ice_hw *hw = &pf->hw;
+	पूर्णांक ret;
 
-	/* if there is already a filter rule for kind return -EINVAL */
-	if (hw->fdir_prof && hw->fdir_prof[flow] &&
+	/* अगर there is alपढ़ोy a filter rule क्रम kind वापस -EINVAL */
+	अगर (hw->fdir_prof && hw->fdir_prof[flow] &&
 	    hw->fdir_prof[flow]->fdir_seg[0])
-		return -EINVAL;
+		वापस -EINVAL;
 
-	seg = devm_kzalloc(dev, sizeof(*seg), GFP_KERNEL);
-	if (!seg)
-		return -ENOMEM;
+	seg = devm_kzalloc(dev, माप(*seg), GFP_KERNEL);
+	अगर (!seg)
+		वापस -ENOMEM;
 
-	tun_seg = devm_kzalloc(dev, sizeof(*seg) * ICE_FD_HW_SEG_MAX,
+	tun_seg = devm_kzalloc(dev, माप(*seg) * ICE_FD_HW_SEG_MAX,
 			       GFP_KERNEL);
-	if (!tun_seg) {
-		devm_kfree(dev, seg);
-		return -ENOMEM;
-	}
+	अगर (!tun_seg) अणु
+		devm_kमुक्त(dev, seg);
+		वापस -ENOMEM;
+	पूर्ण
 
-	if (flow == ICE_FLTR_PTYPE_NONF_IPV4_TCP)
+	अगर (flow == ICE_FLTR_PTYPE_NONF_IPV4_TCP)
 		ret = ice_set_init_fdir_seg(seg, ICE_FLOW_SEG_HDR_IPV4,
 					    ICE_FLOW_SEG_HDR_TCP);
-	else if (flow == ICE_FLTR_PTYPE_NONF_IPV4_UDP)
+	अन्यथा अगर (flow == ICE_FLTR_PTYPE_NONF_IPV4_UDP)
 		ret = ice_set_init_fdir_seg(seg, ICE_FLOW_SEG_HDR_IPV4,
 					    ICE_FLOW_SEG_HDR_UDP);
-	else if (flow == ICE_FLTR_PTYPE_NONF_IPV6_TCP)
+	अन्यथा अगर (flow == ICE_FLTR_PTYPE_NONF_IPV6_TCP)
 		ret = ice_set_init_fdir_seg(seg, ICE_FLOW_SEG_HDR_IPV6,
 					    ICE_FLOW_SEG_HDR_TCP);
-	else if (flow == ICE_FLTR_PTYPE_NONF_IPV6_UDP)
+	अन्यथा अगर (flow == ICE_FLTR_PTYPE_NONF_IPV6_UDP)
 		ret = ice_set_init_fdir_seg(seg, ICE_FLOW_SEG_HDR_IPV6,
 					    ICE_FLOW_SEG_HDR_UDP);
-	else
+	अन्यथा
 		ret = -EINVAL;
-	if (ret)
-		goto err_exit;
+	अगर (ret)
+		जाओ err_निकास;
 
-	/* add filter for outer headers */
+	/* add filter क्रम outer headers */
 	ret = ice_fdir_set_hw_fltr_rule(pf, seg, flow, ICE_FD_HW_SEG_NON_TUN);
-	if (ret)
-		/* could not write filter, free memory */
-		goto err_exit;
+	अगर (ret)
+		/* could not ग_लिखो filter, मुक्त memory */
+		जाओ err_निकास;
 
-	/* make tunneled filter HW entries if possible */
-	memcpy(&tun_seg[1], seg, sizeof(*seg));
+	/* make tunneled filter HW entries अगर possible */
+	स_नकल(&tun_seg[1], seg, माप(*seg));
 	ret = ice_fdir_set_hw_fltr_rule(pf, tun_seg, flow, ICE_FD_HW_SEG_TUN);
-	if (ret)
-		/* could not write tunnel filter, but outer header filter
+	अगर (ret)
+		/* could not ग_लिखो tunnel filter, but outer header filter
 		 * exists
 		 */
-		devm_kfree(dev, tun_seg);
+		devm_kमुक्त(dev, tun_seg);
 
 	set_bit(flow, hw->fdir_perfect_fltr);
-	return ret;
-err_exit:
-	devm_kfree(dev, tun_seg);
-	devm_kfree(dev, seg);
+	वापस ret;
+err_निकास:
+	devm_kमुक्त(dev, tun_seg);
+	devm_kमुक्त(dev, seg);
 
-	return -EOPNOTSUPP;
-}
+	वापस -EOPNOTSUPP;
+पूर्ण
 
 /**
  * ice_set_fdir_ip4_seg
- * @seg: flow segment for programming
+ * @seg: flow segment क्रम programming
  * @tcp_ip4_spec: mask data from ethtool
  * @l4_proto: Layer 4 protocol to program
- * @perfect_fltr: only valid on success; returns true if perfect filter,
- *		  false if not
+ * @perfect_fltr: only valid on success; वापसs true अगर perfect filter,
+ *		  false अगर not
  *
- * Set the mask data into the flow segment to be used to program HW
- * table based on provided L4 protocol for IPv4
+ * Set the mask data पूर्णांकo the flow segment to be used to program HW
+ * table based on provided L4 protocol क्रम IPv4
  */
-static int
-ice_set_fdir_ip4_seg(struct ice_flow_seg_info *seg,
-		     struct ethtool_tcpip4_spec *tcp_ip4_spec,
-		     enum ice_flow_seg_hdr l4_proto, bool *perfect_fltr)
-{
-	enum ice_flow_field src_port, dst_port;
+अटल पूर्णांक
+ice_set_fdir_ip4_seg(काष्ठा ice_flow_seg_info *seg,
+		     काष्ठा ethtool_tcpip4_spec *tcp_ip4_spec,
+		     क्रमागत ice_flow_seg_hdr l4_proto, bool *perfect_fltr)
+अणु
+	क्रमागत ice_flow_field src_port, dst_port;
 
-	/* make sure we don't have any empty rule */
-	if (!tcp_ip4_spec->psrc && !tcp_ip4_spec->ip4src &&
+	/* make sure we करोn't have any empty rule */
+	अगर (!tcp_ip4_spec->psrc && !tcp_ip4_spec->ip4src &&
 	    !tcp_ip4_spec->pdst && !tcp_ip4_spec->ip4dst)
-		return -EINVAL;
+		वापस -EINVAL;
 
 	/* filtering on TOS not supported */
-	if (tcp_ip4_spec->tos)
-		return -EOPNOTSUPP;
+	अगर (tcp_ip4_spec->tos)
+		वापस -EOPNOTSUPP;
 
-	if (l4_proto == ICE_FLOW_SEG_HDR_TCP) {
+	अगर (l4_proto == ICE_FLOW_SEG_HDR_TCP) अणु
 		src_port = ICE_FLOW_FIELD_IDX_TCP_SRC_PORT;
 		dst_port = ICE_FLOW_FIELD_IDX_TCP_DST_PORT;
-	} else if (l4_proto == ICE_FLOW_SEG_HDR_UDP) {
+	पूर्ण अन्यथा अगर (l4_proto == ICE_FLOW_SEG_HDR_UDP) अणु
 		src_port = ICE_FLOW_FIELD_IDX_UDP_SRC_PORT;
 		dst_port = ICE_FLOW_FIELD_IDX_UDP_DST_PORT;
-	} else if (l4_proto == ICE_FLOW_SEG_HDR_SCTP) {
+	पूर्ण अन्यथा अगर (l4_proto == ICE_FLOW_SEG_HDR_SCTP) अणु
 		src_port = ICE_FLOW_FIELD_IDX_SCTP_SRC_PORT;
 		dst_port = ICE_FLOW_FIELD_IDX_SCTP_DST_PORT;
-	} else {
-		return -EOPNOTSUPP;
-	}
+	पूर्ण अन्यथा अणु
+		वापस -EOPNOTSUPP;
+	पूर्ण
 
 	*perfect_fltr = true;
 	ICE_FLOW_SET_HDRS(seg, ICE_FLOW_SEG_HDR_IPV4 | l4_proto);
 
 	/* IP source address */
-	if (tcp_ip4_spec->ip4src == htonl(0xFFFFFFFF))
+	अगर (tcp_ip4_spec->ip4src == htonl(0xFFFFFFFF))
 		ice_flow_set_fld(seg, ICE_FLOW_FIELD_IDX_IPV4_SA,
 				 ICE_FLOW_FLD_OFF_INVAL, ICE_FLOW_FLD_OFF_INVAL,
 				 ICE_FLOW_FLD_OFF_INVAL, false);
-	else if (!tcp_ip4_spec->ip4src)
+	अन्यथा अगर (!tcp_ip4_spec->ip4src)
 		*perfect_fltr = false;
-	else
-		return -EOPNOTSUPP;
+	अन्यथा
+		वापस -EOPNOTSUPP;
 
 	/* IP destination address */
-	if (tcp_ip4_spec->ip4dst == htonl(0xFFFFFFFF))
+	अगर (tcp_ip4_spec->ip4dst == htonl(0xFFFFFFFF))
 		ice_flow_set_fld(seg, ICE_FLOW_FIELD_IDX_IPV4_DA,
 				 ICE_FLOW_FLD_OFF_INVAL, ICE_FLOW_FLD_OFF_INVAL,
 				 ICE_FLOW_FLD_OFF_INVAL, false);
-	else if (!tcp_ip4_spec->ip4dst)
+	अन्यथा अगर (!tcp_ip4_spec->ip4dst)
 		*perfect_fltr = false;
-	else
-		return -EOPNOTSUPP;
+	अन्यथा
+		वापस -EOPNOTSUPP;
 
 	/* Layer 4 source port */
-	if (tcp_ip4_spec->psrc == htons(0xFFFF))
+	अगर (tcp_ip4_spec->psrc == htons(0xFFFF))
 		ice_flow_set_fld(seg, src_port, ICE_FLOW_FLD_OFF_INVAL,
 				 ICE_FLOW_FLD_OFF_INVAL, ICE_FLOW_FLD_OFF_INVAL,
 				 false);
-	else if (!tcp_ip4_spec->psrc)
+	अन्यथा अगर (!tcp_ip4_spec->psrc)
 		*perfect_fltr = false;
-	else
-		return -EOPNOTSUPP;
+	अन्यथा
+		वापस -EOPNOTSUPP;
 
 	/* Layer 4 destination port */
-	if (tcp_ip4_spec->pdst == htons(0xFFFF))
+	अगर (tcp_ip4_spec->pdst == htons(0xFFFF))
 		ice_flow_set_fld(seg, dst_port, ICE_FLOW_FLD_OFF_INVAL,
 				 ICE_FLOW_FLD_OFF_INVAL, ICE_FLOW_FLD_OFF_INVAL,
 				 false);
-	else if (!tcp_ip4_spec->pdst)
+	अन्यथा अगर (!tcp_ip4_spec->pdst)
 		*perfect_fltr = false;
-	else
-		return -EOPNOTSUPP;
+	अन्यथा
+		वापस -EOPNOTSUPP;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * ice_set_fdir_ip4_usr_seg
- * @seg: flow segment for programming
+ * @seg: flow segment क्रम programming
  * @usr_ip4_spec: ethtool userdef packet offset
- * @perfect_fltr: only valid on success; returns true if perfect filter,
- *		  false if not
+ * @perfect_fltr: only valid on success; वापसs true अगर perfect filter,
+ *		  false अगर not
  *
- * Set the offset data into the flow segment to be used to program HW
- * table for IPv4
+ * Set the offset data पूर्णांकo the flow segment to be used to program HW
+ * table क्रम IPv4
  */
-static int
-ice_set_fdir_ip4_usr_seg(struct ice_flow_seg_info *seg,
-			 struct ethtool_usrip4_spec *usr_ip4_spec,
+अटल पूर्णांक
+ice_set_fdir_ip4_usr_seg(काष्ठा ice_flow_seg_info *seg,
+			 काष्ठा ethtool_usrip4_spec *usr_ip4_spec,
 			 bool *perfect_fltr)
-{
+अणु
 	/* first 4 bytes of Layer 4 header */
-	if (usr_ip4_spec->l4_4_bytes)
-		return -EINVAL;
-	if (usr_ip4_spec->tos)
-		return -EINVAL;
-	if (usr_ip4_spec->ip_ver)
-		return -EINVAL;
+	अगर (usr_ip4_spec->l4_4_bytes)
+		वापस -EINVAL;
+	अगर (usr_ip4_spec->tos)
+		वापस -EINVAL;
+	अगर (usr_ip4_spec->ip_ver)
+		वापस -EINVAL;
 	/* Filtering on Layer 4 protocol not supported */
-	if (usr_ip4_spec->proto)
-		return -EOPNOTSUPP;
+	अगर (usr_ip4_spec->proto)
+		वापस -EOPNOTSUPP;
 	/* empty rules are not valid */
-	if (!usr_ip4_spec->ip4src && !usr_ip4_spec->ip4dst)
-		return -EINVAL;
+	अगर (!usr_ip4_spec->ip4src && !usr_ip4_spec->ip4dst)
+		वापस -EINVAL;
 
 	*perfect_fltr = true;
 	ICE_FLOW_SET_HDRS(seg, ICE_FLOW_SEG_HDR_IPV4);
 
 	/* IP source address */
-	if (usr_ip4_spec->ip4src == htonl(0xFFFFFFFF))
+	अगर (usr_ip4_spec->ip4src == htonl(0xFFFFFFFF))
 		ice_flow_set_fld(seg, ICE_FLOW_FIELD_IDX_IPV4_SA,
 				 ICE_FLOW_FLD_OFF_INVAL, ICE_FLOW_FLD_OFF_INVAL,
 				 ICE_FLOW_FLD_OFF_INVAL, false);
-	else if (!usr_ip4_spec->ip4src)
+	अन्यथा अगर (!usr_ip4_spec->ip4src)
 		*perfect_fltr = false;
-	else
-		return -EOPNOTSUPP;
+	अन्यथा
+		वापस -EOPNOTSUPP;
 
 	/* IP destination address */
-	if (usr_ip4_spec->ip4dst == htonl(0xFFFFFFFF))
+	अगर (usr_ip4_spec->ip4dst == htonl(0xFFFFFFFF))
 		ice_flow_set_fld(seg, ICE_FLOW_FIELD_IDX_IPV4_DA,
 				 ICE_FLOW_FLD_OFF_INVAL, ICE_FLOW_FLD_OFF_INVAL,
 				 ICE_FLOW_FLD_OFF_INVAL, false);
-	else if (!usr_ip4_spec->ip4dst)
+	अन्यथा अगर (!usr_ip4_spec->ip4dst)
 		*perfect_fltr = false;
-	else
-		return -EOPNOTSUPP;
+	अन्यथा
+		वापस -EOPNOTSUPP;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * ice_set_fdir_ip6_seg
- * @seg: flow segment for programming
+ * @seg: flow segment क्रम programming
  * @tcp_ip6_spec: mask data from ethtool
  * @l4_proto: Layer 4 protocol to program
- * @perfect_fltr: only valid on success; returns true if perfect filter,
- *		  false if not
+ * @perfect_fltr: only valid on success; वापसs true अगर perfect filter,
+ *		  false अगर not
  *
- * Set the mask data into the flow segment to be used to program HW
- * table based on provided L4 protocol for IPv6
+ * Set the mask data पूर्णांकo the flow segment to be used to program HW
+ * table based on provided L4 protocol क्रम IPv6
  */
-static int
-ice_set_fdir_ip6_seg(struct ice_flow_seg_info *seg,
-		     struct ethtool_tcpip6_spec *tcp_ip6_spec,
-		     enum ice_flow_seg_hdr l4_proto, bool *perfect_fltr)
-{
-	enum ice_flow_field src_port, dst_port;
+अटल पूर्णांक
+ice_set_fdir_ip6_seg(काष्ठा ice_flow_seg_info *seg,
+		     काष्ठा ethtool_tcpip6_spec *tcp_ip6_spec,
+		     क्रमागत ice_flow_seg_hdr l4_proto, bool *perfect_fltr)
+अणु
+	क्रमागत ice_flow_field src_port, dst_port;
 
-	/* make sure we don't have any empty rule */
-	if (!memcmp(tcp_ip6_spec->ip6src, &zero_ipv6_addr_mask,
-		    sizeof(struct in6_addr)) &&
-	    !memcmp(tcp_ip6_spec->ip6dst, &zero_ipv6_addr_mask,
-		    sizeof(struct in6_addr)) &&
+	/* make sure we करोn't have any empty rule */
+	अगर (!स_भेद(tcp_ip6_spec->ip6src, &zero_ipv6_addr_mask,
+		    माप(काष्ठा in6_addr)) &&
+	    !स_भेद(tcp_ip6_spec->ip6dst, &zero_ipv6_addr_mask,
+		    माप(काष्ठा in6_addr)) &&
 	    !tcp_ip6_spec->psrc && !tcp_ip6_spec->pdst)
-		return -EINVAL;
+		वापस -EINVAL;
 
 	/* filtering on TC not supported */
-	if (tcp_ip6_spec->tclass)
-		return -EOPNOTSUPP;
+	अगर (tcp_ip6_spec->tclass)
+		वापस -EOPNOTSUPP;
 
-	if (l4_proto == ICE_FLOW_SEG_HDR_TCP) {
+	अगर (l4_proto == ICE_FLOW_SEG_HDR_TCP) अणु
 		src_port = ICE_FLOW_FIELD_IDX_TCP_SRC_PORT;
 		dst_port = ICE_FLOW_FIELD_IDX_TCP_DST_PORT;
-	} else if (l4_proto == ICE_FLOW_SEG_HDR_UDP) {
+	पूर्ण अन्यथा अगर (l4_proto == ICE_FLOW_SEG_HDR_UDP) अणु
 		src_port = ICE_FLOW_FIELD_IDX_UDP_SRC_PORT;
 		dst_port = ICE_FLOW_FIELD_IDX_UDP_DST_PORT;
-	} else if (l4_proto == ICE_FLOW_SEG_HDR_SCTP) {
+	पूर्ण अन्यथा अगर (l4_proto == ICE_FLOW_SEG_HDR_SCTP) अणु
 		src_port = ICE_FLOW_FIELD_IDX_SCTP_SRC_PORT;
 		dst_port = ICE_FLOW_FIELD_IDX_SCTP_DST_PORT;
-	} else {
-		return -EINVAL;
-	}
+	पूर्ण अन्यथा अणु
+		वापस -EINVAL;
+	पूर्ण
 
 	*perfect_fltr = true;
 	ICE_FLOW_SET_HDRS(seg, ICE_FLOW_SEG_HDR_IPV6 | l4_proto);
 
-	if (!memcmp(tcp_ip6_spec->ip6src, &full_ipv6_addr_mask,
-		    sizeof(struct in6_addr)))
+	अगर (!स_भेद(tcp_ip6_spec->ip6src, &full_ipv6_addr_mask,
+		    माप(काष्ठा in6_addr)))
 		ice_flow_set_fld(seg, ICE_FLOW_FIELD_IDX_IPV6_SA,
 				 ICE_FLOW_FLD_OFF_INVAL, ICE_FLOW_FLD_OFF_INVAL,
 				 ICE_FLOW_FLD_OFF_INVAL, false);
-	else if (!memcmp(tcp_ip6_spec->ip6src, &zero_ipv6_addr_mask,
-			 sizeof(struct in6_addr)))
+	अन्यथा अगर (!स_भेद(tcp_ip6_spec->ip6src, &zero_ipv6_addr_mask,
+			 माप(काष्ठा in6_addr)))
 		*perfect_fltr = false;
-	else
-		return -EOPNOTSUPP;
+	अन्यथा
+		वापस -EOPNOTSUPP;
 
-	if (!memcmp(tcp_ip6_spec->ip6dst, &full_ipv6_addr_mask,
-		    sizeof(struct in6_addr)))
+	अगर (!स_भेद(tcp_ip6_spec->ip6dst, &full_ipv6_addr_mask,
+		    माप(काष्ठा in6_addr)))
 		ice_flow_set_fld(seg, ICE_FLOW_FIELD_IDX_IPV6_DA,
 				 ICE_FLOW_FLD_OFF_INVAL, ICE_FLOW_FLD_OFF_INVAL,
 				 ICE_FLOW_FLD_OFF_INVAL, false);
-	else if (!memcmp(tcp_ip6_spec->ip6dst, &zero_ipv6_addr_mask,
-			 sizeof(struct in6_addr)))
+	अन्यथा अगर (!स_भेद(tcp_ip6_spec->ip6dst, &zero_ipv6_addr_mask,
+			 माप(काष्ठा in6_addr)))
 		*perfect_fltr = false;
-	else
-		return -EOPNOTSUPP;
+	अन्यथा
+		वापस -EOPNOTSUPP;
 
 	/* Layer 4 source port */
-	if (tcp_ip6_spec->psrc == htons(0xFFFF))
+	अगर (tcp_ip6_spec->psrc == htons(0xFFFF))
 		ice_flow_set_fld(seg, src_port, ICE_FLOW_FLD_OFF_INVAL,
 				 ICE_FLOW_FLD_OFF_INVAL, ICE_FLOW_FLD_OFF_INVAL,
 				 false);
-	else if (!tcp_ip6_spec->psrc)
+	अन्यथा अगर (!tcp_ip6_spec->psrc)
 		*perfect_fltr = false;
-	else
-		return -EOPNOTSUPP;
+	अन्यथा
+		वापस -EOPNOTSUPP;
 
 	/* Layer 4 destination port */
-	if (tcp_ip6_spec->pdst == htons(0xFFFF))
+	अगर (tcp_ip6_spec->pdst == htons(0xFFFF))
 		ice_flow_set_fld(seg, dst_port, ICE_FLOW_FLD_OFF_INVAL,
 				 ICE_FLOW_FLD_OFF_INVAL, ICE_FLOW_FLD_OFF_INVAL,
 				 false);
-	else if (!tcp_ip6_spec->pdst)
+	अन्यथा अगर (!tcp_ip6_spec->pdst)
 		*perfect_fltr = false;
-	else
-		return -EOPNOTSUPP;
+	अन्यथा
+		वापस -EOPNOTSUPP;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * ice_set_fdir_ip6_usr_seg
- * @seg: flow segment for programming
+ * @seg: flow segment क्रम programming
  * @usr_ip6_spec: ethtool userdef packet offset
- * @perfect_fltr: only valid on success; returns true if perfect filter,
- *		  false if not
+ * @perfect_fltr: only valid on success; वापसs true अगर perfect filter,
+ *		  false अगर not
  *
- * Set the offset data into the flow segment to be used to program HW
- * table for IPv6
+ * Set the offset data पूर्णांकo the flow segment to be used to program HW
+ * table क्रम IPv6
  */
-static int
-ice_set_fdir_ip6_usr_seg(struct ice_flow_seg_info *seg,
-			 struct ethtool_usrip6_spec *usr_ip6_spec,
+अटल पूर्णांक
+ice_set_fdir_ip6_usr_seg(काष्ठा ice_flow_seg_info *seg,
+			 काष्ठा ethtool_usrip6_spec *usr_ip6_spec,
 			 bool *perfect_fltr)
-{
+अणु
 	/* filtering on Layer 4 bytes not supported */
-	if (usr_ip6_spec->l4_4_bytes)
-		return -EOPNOTSUPP;
+	अगर (usr_ip6_spec->l4_4_bytes)
+		वापस -EOPNOTSUPP;
 	/* filtering on TC not supported */
-	if (usr_ip6_spec->tclass)
-		return -EOPNOTSUPP;
+	अगर (usr_ip6_spec->tclass)
+		वापस -EOPNOTSUPP;
 	/* filtering on Layer 4 protocol not supported */
-	if (usr_ip6_spec->l4_proto)
-		return -EOPNOTSUPP;
+	अगर (usr_ip6_spec->l4_proto)
+		वापस -EOPNOTSUPP;
 	/* empty rules are not valid */
-	if (!memcmp(usr_ip6_spec->ip6src, &zero_ipv6_addr_mask,
-		    sizeof(struct in6_addr)) &&
-	    !memcmp(usr_ip6_spec->ip6dst, &zero_ipv6_addr_mask,
-		    sizeof(struct in6_addr)))
-		return -EINVAL;
+	अगर (!स_भेद(usr_ip6_spec->ip6src, &zero_ipv6_addr_mask,
+		    माप(काष्ठा in6_addr)) &&
+	    !स_भेद(usr_ip6_spec->ip6dst, &zero_ipv6_addr_mask,
+		    माप(काष्ठा in6_addr)))
+		वापस -EINVAL;
 
 	*perfect_fltr = true;
 	ICE_FLOW_SET_HDRS(seg, ICE_FLOW_SEG_HDR_IPV6);
 
-	if (!memcmp(usr_ip6_spec->ip6src, &full_ipv6_addr_mask,
-		    sizeof(struct in6_addr)))
+	अगर (!स_भेद(usr_ip6_spec->ip6src, &full_ipv6_addr_mask,
+		    माप(काष्ठा in6_addr)))
 		ice_flow_set_fld(seg, ICE_FLOW_FIELD_IDX_IPV6_SA,
 				 ICE_FLOW_FLD_OFF_INVAL, ICE_FLOW_FLD_OFF_INVAL,
 				 ICE_FLOW_FLD_OFF_INVAL, false);
-	else if (!memcmp(usr_ip6_spec->ip6src, &zero_ipv6_addr_mask,
-			 sizeof(struct in6_addr)))
+	अन्यथा अगर (!स_भेद(usr_ip6_spec->ip6src, &zero_ipv6_addr_mask,
+			 माप(काष्ठा in6_addr)))
 		*perfect_fltr = false;
-	else
-		return -EOPNOTSUPP;
+	अन्यथा
+		वापस -EOPNOTSUPP;
 
-	if (!memcmp(usr_ip6_spec->ip6dst, &full_ipv6_addr_mask,
-		    sizeof(struct in6_addr)))
+	अगर (!स_भेद(usr_ip6_spec->ip6dst, &full_ipv6_addr_mask,
+		    माप(काष्ठा in6_addr)))
 		ice_flow_set_fld(seg, ICE_FLOW_FIELD_IDX_IPV6_DA,
 				 ICE_FLOW_FLD_OFF_INVAL, ICE_FLOW_FLD_OFF_INVAL,
 				 ICE_FLOW_FLD_OFF_INVAL, false);
-	else if (!memcmp(usr_ip6_spec->ip6dst, &zero_ipv6_addr_mask,
-			 sizeof(struct in6_addr)))
+	अन्यथा अगर (!स_भेद(usr_ip6_spec->ip6dst, &zero_ipv6_addr_mask,
+			 माप(काष्ठा in6_addr)))
 		*perfect_fltr = false;
-	else
-		return -EOPNOTSUPP;
+	अन्यथा
+		वापस -EOPNOTSUPP;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * ice_cfg_fdir_xtrct_seq - Configure extraction sequence for the given filter
- * @pf: PF structure
- * @fsp: pointer to ethtool Rx flow specification
- * @user: user defined data from flow specification
+ * ice_cfg_fdir_xtrct_seq - Configure extraction sequence क्रम the given filter
+ * @pf: PF काष्ठाure
+ * @fsp: poपूर्णांकer to ethtool Rx flow specअगरication
+ * @user: user defined data from flow specअगरication
  *
  * Returns 0 on success.
  */
-static int
-ice_cfg_fdir_xtrct_seq(struct ice_pf *pf, struct ethtool_rx_flow_spec *fsp,
-		       struct ice_rx_flow_userdef *user)
-{
-	struct ice_flow_seg_info *seg, *tun_seg;
-	struct device *dev = ice_pf_to_dev(pf);
-	enum ice_fltr_ptype fltr_idx;
-	struct ice_hw *hw = &pf->hw;
+अटल पूर्णांक
+ice_cfg_fdir_xtrct_seq(काष्ठा ice_pf *pf, काष्ठा ethtool_rx_flow_spec *fsp,
+		       काष्ठा ice_rx_flow_userdef *user)
+अणु
+	काष्ठा ice_flow_seg_info *seg, *tun_seg;
+	काष्ठा device *dev = ice_pf_to_dev(pf);
+	क्रमागत ice_fltr_ptype fltr_idx;
+	काष्ठा ice_hw *hw = &pf->hw;
 	bool perfect_filter;
-	int ret;
+	पूर्णांक ret;
 
-	seg = devm_kzalloc(dev, sizeof(*seg), GFP_KERNEL);
-	if (!seg)
-		return -ENOMEM;
+	seg = devm_kzalloc(dev, माप(*seg), GFP_KERNEL);
+	अगर (!seg)
+		वापस -ENOMEM;
 
-	tun_seg = devm_kzalloc(dev, sizeof(*seg) * ICE_FD_HW_SEG_MAX,
+	tun_seg = devm_kzalloc(dev, माप(*seg) * ICE_FD_HW_SEG_MAX,
 			       GFP_KERNEL);
-	if (!tun_seg) {
-		devm_kfree(dev, seg);
-		return -ENOMEM;
-	}
+	अगर (!tun_seg) अणु
+		devm_kमुक्त(dev, seg);
+		वापस -ENOMEM;
+	पूर्ण
 
-	switch (fsp->flow_type & ~FLOW_EXT) {
-	case TCP_V4_FLOW:
+	चयन (fsp->flow_type & ~FLOW_EXT) अणु
+	हाल TCP_V4_FLOW:
 		ret = ice_set_fdir_ip4_seg(seg, &fsp->m_u.tcp_ip4_spec,
 					   ICE_FLOW_SEG_HDR_TCP,
 					   &perfect_filter);
-		break;
-	case UDP_V4_FLOW:
+		अवरोध;
+	हाल UDP_V4_FLOW:
 		ret = ice_set_fdir_ip4_seg(seg, &fsp->m_u.tcp_ip4_spec,
 					   ICE_FLOW_SEG_HDR_UDP,
 					   &perfect_filter);
-		break;
-	case SCTP_V4_FLOW:
+		अवरोध;
+	हाल SCTP_V4_FLOW:
 		ret = ice_set_fdir_ip4_seg(seg, &fsp->m_u.tcp_ip4_spec,
 					   ICE_FLOW_SEG_HDR_SCTP,
 					   &perfect_filter);
-		break;
-	case IPV4_USER_FLOW:
+		अवरोध;
+	हाल IPV4_USER_FLOW:
 		ret = ice_set_fdir_ip4_usr_seg(seg, &fsp->m_u.usr_ip4_spec,
 					       &perfect_filter);
-		break;
-	case TCP_V6_FLOW:
+		अवरोध;
+	हाल TCP_V6_FLOW:
 		ret = ice_set_fdir_ip6_seg(seg, &fsp->m_u.tcp_ip6_spec,
 					   ICE_FLOW_SEG_HDR_TCP,
 					   &perfect_filter);
-		break;
-	case UDP_V6_FLOW:
+		अवरोध;
+	हाल UDP_V6_FLOW:
 		ret = ice_set_fdir_ip6_seg(seg, &fsp->m_u.tcp_ip6_spec,
 					   ICE_FLOW_SEG_HDR_UDP,
 					   &perfect_filter);
-		break;
-	case SCTP_V6_FLOW:
+		अवरोध;
+	हाल SCTP_V6_FLOW:
 		ret = ice_set_fdir_ip6_seg(seg, &fsp->m_u.tcp_ip6_spec,
 					   ICE_FLOW_SEG_HDR_SCTP,
 					   &perfect_filter);
-		break;
-	case IPV6_USER_FLOW:
+		अवरोध;
+	हाल IPV6_USER_FLOW:
 		ret = ice_set_fdir_ip6_usr_seg(seg, &fsp->m_u.usr_ip6_spec,
 					       &perfect_filter);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		ret = -EINVAL;
-	}
-	if (ret)
-		goto err_exit;
+	पूर्ण
+	अगर (ret)
+		जाओ err_निकास;
 
-	/* tunnel segments are shifted up one. */
-	memcpy(&tun_seg[1], seg, sizeof(*seg));
+	/* tunnel segments are shअगरted up one. */
+	स_नकल(&tun_seg[1], seg, माप(*seg));
 
-	if (user && user->flex_fltr) {
+	अगर (user && user->flex_fltr) अणु
 		perfect_filter = false;
 		ice_flow_add_fld_raw(seg, user->flex_offset,
 				     ICE_FLTR_PRGM_FLEX_WORD_SIZE,
@@ -1133,375 +1134,375 @@ ice_cfg_fdir_xtrct_seq(struct ice_pf *pf, struct ethtool_rx_flow_spec *fsp,
 				     ICE_FLTR_PRGM_FLEX_WORD_SIZE,
 				     ICE_FLOW_FLD_OFF_INVAL,
 				     ICE_FLOW_FLD_OFF_INVAL);
-	}
+	पूर्ण
 
-	/* add filter for outer headers */
+	/* add filter क्रम outer headers */
 	fltr_idx = ice_ethtool_flow_to_fltr(fsp->flow_type & ~FLOW_EXT);
 	ret = ice_fdir_set_hw_fltr_rule(pf, seg, fltr_idx,
 					ICE_FD_HW_SEG_NON_TUN);
-	if (ret == -EEXIST)
-		/* Rule already exists, free memory and continue */
-		devm_kfree(dev, seg);
-	else if (ret)
-		/* could not write filter, free memory */
-		goto err_exit;
+	अगर (ret == -EEXIST)
+		/* Rule alपढ़ोy exists, मुक्त memory and जारी */
+		devm_kमुक्त(dev, seg);
+	अन्यथा अगर (ret)
+		/* could not ग_लिखो filter, मुक्त memory */
+		जाओ err_निकास;
 
-	/* make tunneled filter HW entries if possible */
-	memcpy(&tun_seg[1], seg, sizeof(*seg));
+	/* make tunneled filter HW entries अगर possible */
+	स_नकल(&tun_seg[1], seg, माप(*seg));
 	ret = ice_fdir_set_hw_fltr_rule(pf, tun_seg, fltr_idx,
 					ICE_FD_HW_SEG_TUN);
-	if (ret == -EEXIST) {
-		/* Rule already exists, free memory and count as success */
-		devm_kfree(dev, tun_seg);
+	अगर (ret == -EEXIST) अणु
+		/* Rule alपढ़ोy exists, मुक्त memory and count as success */
+		devm_kमुक्त(dev, tun_seg);
 		ret = 0;
-	} else if (ret) {
-		/* could not write tunnel filter, but outer filter exists */
-		devm_kfree(dev, tun_seg);
-	}
+	पूर्ण अन्यथा अगर (ret) अणु
+		/* could not ग_लिखो tunnel filter, but outer filter exists */
+		devm_kमुक्त(dev, tun_seg);
+	पूर्ण
 
-	if (perfect_filter)
+	अगर (perfect_filter)
 		set_bit(fltr_idx, hw->fdir_perfect_fltr);
-	else
+	अन्यथा
 		clear_bit(fltr_idx, hw->fdir_perfect_fltr);
 
-	return ret;
+	वापस ret;
 
-err_exit:
-	devm_kfree(dev, tun_seg);
-	devm_kfree(dev, seg);
+err_निकास:
+	devm_kमुक्त(dev, tun_seg);
+	devm_kमुक्त(dev, seg);
 
-	return -EOPNOTSUPP;
-}
+	वापस -EOPNOTSUPP;
+पूर्ण
 
 /**
- * ice_fdir_write_fltr - send a flow director filter to the hardware
- * @pf: PF data structure
- * @input: filter structure
- * @add: true adds filter and false removed filter
+ * ice_fdir_ग_लिखो_fltr - send a flow director filter to the hardware
+ * @pf: PF data काष्ठाure
+ * @input: filter काष्ठाure
+ * @add: true adds filter and false हटाओd filter
  * @is_tun: true adds inner filter on tunnel and false outer headers
  *
- * returns 0 on success and negative value on error
+ * वापसs 0 on success and negative value on error
  */
-int
-ice_fdir_write_fltr(struct ice_pf *pf, struct ice_fdir_fltr *input, bool add,
+पूर्णांक
+ice_fdir_ग_लिखो_fltr(काष्ठा ice_pf *pf, काष्ठा ice_fdir_fltr *input, bool add,
 		    bool is_tun)
-{
-	struct device *dev = ice_pf_to_dev(pf);
-	struct ice_hw *hw = &pf->hw;
-	struct ice_fltr_desc desc;
-	struct ice_vsi *ctrl_vsi;
-	enum ice_status status;
+अणु
+	काष्ठा device *dev = ice_pf_to_dev(pf);
+	काष्ठा ice_hw *hw = &pf->hw;
+	काष्ठा ice_fltr_desc desc;
+	काष्ठा ice_vsi *ctrl_vsi;
+	क्रमागत ice_status status;
 	u8 *pkt, *frag_pkt;
 	bool has_frag;
-	int err;
+	पूर्णांक err;
 
 	ctrl_vsi = ice_get_ctrl_vsi(pf);
-	if (!ctrl_vsi)
-		return -EINVAL;
+	अगर (!ctrl_vsi)
+		वापस -EINVAL;
 
-	pkt = devm_kzalloc(dev, ICE_FDIR_MAX_RAW_PKT_SIZE, GFP_KERNEL);
-	if (!pkt)
-		return -ENOMEM;
-	frag_pkt = devm_kzalloc(dev, ICE_FDIR_MAX_RAW_PKT_SIZE, GFP_KERNEL);
-	if (!frag_pkt) {
+	pkt = devm_kzalloc(dev, ICE_Fसूची_MAX_RAW_PKT_SIZE, GFP_KERNEL);
+	अगर (!pkt)
+		वापस -ENOMEM;
+	frag_pkt = devm_kzalloc(dev, ICE_Fसूची_MAX_RAW_PKT_SIZE, GFP_KERNEL);
+	अगर (!frag_pkt) अणु
 		err = -ENOMEM;
-		goto err_free;
-	}
+		जाओ err_मुक्त;
+	पूर्ण
 
 	ice_fdir_get_prgm_desc(hw, input, &desc, add);
 	status = ice_fdir_get_gen_prgm_pkt(hw, input, pkt, false, is_tun);
-	if (status) {
-		err = ice_status_to_errno(status);
-		goto err_free_all;
-	}
+	अगर (status) अणु
+		err = ice_status_to_त्रुटि_सं(status);
+		जाओ err_मुक्त_all;
+	पूर्ण
 	err = ice_prgm_fdir_fltr(ctrl_vsi, &desc, pkt);
-	if (err)
-		goto err_free_all;
+	अगर (err)
+		जाओ err_मुक्त_all;
 
-	/* repeat for fragment packet */
+	/* repeat क्रम fragment packet */
 	has_frag = ice_fdir_has_frag(input->flow_type);
-	if (has_frag) {
-		/* does not return error */
+	अगर (has_frag) अणु
+		/* करोes not वापस error */
 		ice_fdir_get_prgm_desc(hw, input, &desc, add);
 		status = ice_fdir_get_gen_prgm_pkt(hw, input, frag_pkt, true,
 						   is_tun);
-		if (status) {
-			err = ice_status_to_errno(status);
-			goto err_frag;
-		}
+		अगर (status) अणु
+			err = ice_status_to_त्रुटि_सं(status);
+			जाओ err_frag;
+		पूर्ण
 		err = ice_prgm_fdir_fltr(ctrl_vsi, &desc, frag_pkt);
-		if (err)
-			goto err_frag;
-	} else {
-		devm_kfree(dev, frag_pkt);
-	}
+		अगर (err)
+			जाओ err_frag;
+	पूर्ण अन्यथा अणु
+		devm_kमुक्त(dev, frag_pkt);
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
-err_free_all:
-	devm_kfree(dev, frag_pkt);
-err_free:
-	devm_kfree(dev, pkt);
-	return err;
+err_मुक्त_all:
+	devm_kमुक्त(dev, frag_pkt);
+err_मुक्त:
+	devm_kमुक्त(dev, pkt);
+	वापस err;
 
 err_frag:
-	devm_kfree(dev, frag_pkt);
-	return err;
-}
+	devm_kमुक्त(dev, frag_pkt);
+	वापस err;
+पूर्ण
 
 /**
- * ice_fdir_write_all_fltr - send a flow director filter to the hardware
- * @pf: PF data structure
- * @input: filter structure
- * @add: true adds filter and false removed filter
+ * ice_fdir_ग_लिखो_all_fltr - send a flow director filter to the hardware
+ * @pf: PF data काष्ठाure
+ * @input: filter काष्ठाure
+ * @add: true adds filter and false हटाओd filter
  *
- * returns 0 on success and negative value on error
+ * वापसs 0 on success and negative value on error
  */
-static int
-ice_fdir_write_all_fltr(struct ice_pf *pf, struct ice_fdir_fltr *input,
+अटल पूर्णांक
+ice_fdir_ग_लिखो_all_fltr(काष्ठा ice_pf *pf, काष्ठा ice_fdir_fltr *input,
 			bool add)
-{
+अणु
 	u16 port_num;
-	int tun;
+	पूर्णांक tun;
 
-	for (tun = 0; tun < ICE_FD_HW_SEG_MAX; tun++) {
+	क्रम (tun = 0; tun < ICE_FD_HW_SEG_MAX; tun++) अणु
 		bool is_tun = tun == ICE_FD_HW_SEG_TUN;
-		int err;
+		पूर्णांक err;
 
-		if (is_tun && !ice_get_open_tunnel_port(&pf->hw, &port_num))
-			continue;
-		err = ice_fdir_write_fltr(pf, input, add, is_tun);
-		if (err)
-			return err;
-	}
-	return 0;
-}
+		अगर (is_tun && !ice_get_खोलो_tunnel_port(&pf->hw, &port_num))
+			जारी;
+		err = ice_fdir_ग_लिखो_fltr(pf, input, add, is_tun);
+		अगर (err)
+			वापस err;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /**
  * ice_fdir_replay_fltrs - replay filters from the HW filter list
- * @pf: board private structure
+ * @pf: board निजी काष्ठाure
  */
-void ice_fdir_replay_fltrs(struct ice_pf *pf)
-{
-	struct ice_fdir_fltr *f_rule;
-	struct ice_hw *hw = &pf->hw;
+व्योम ice_fdir_replay_fltrs(काष्ठा ice_pf *pf)
+अणु
+	काष्ठा ice_fdir_fltr *f_rule;
+	काष्ठा ice_hw *hw = &pf->hw;
 
-	list_for_each_entry(f_rule, &hw->fdir_list_head, fltr_node) {
-		int err = ice_fdir_write_all_fltr(pf, f_rule, true);
+	list_क्रम_each_entry(f_rule, &hw->fdir_list_head, fltr_node) अणु
+		पूर्णांक err = ice_fdir_ग_लिखो_all_fltr(pf, f_rule, true);
 
-		if (err)
+		अगर (err)
 			dev_dbg(ice_pf_to_dev(pf), "Flow Director error %d, could not reprogram filter %d\n",
 				err, f_rule->fltr_id);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
- * ice_fdir_create_dflt_rules - create default perfect filters
- * @pf: PF data structure
+ * ice_fdir_create_dflt_rules - create शेष perfect filters
+ * @pf: PF data काष्ठाure
  *
- * Returns 0 for success or error.
+ * Returns 0 क्रम success or error.
  */
-int ice_fdir_create_dflt_rules(struct ice_pf *pf)
-{
-	int err;
+पूर्णांक ice_fdir_create_dflt_rules(काष्ठा ice_pf *pf)
+अणु
+	पूर्णांक err;
 
 	/* Create perfect TCP and UDP rules in hardware. */
 	err = ice_create_init_fdir_rule(pf, ICE_FLTR_PTYPE_NONF_IPV4_TCP);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	err = ice_create_init_fdir_rule(pf, ICE_FLTR_PTYPE_NONF_IPV4_UDP);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	err = ice_create_init_fdir_rule(pf, ICE_FLTR_PTYPE_NONF_IPV6_TCP);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	err = ice_create_init_fdir_rule(pf, ICE_FLTR_PTYPE_NONF_IPV6_UDP);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /**
  * ice_vsi_manage_fdir - turn on/off flow director
  * @vsi: the VSI being changed
- * @ena: boolean value indicating if this is an enable or disable request
+ * @ena: boolean value indicating अगर this is an enable or disable request
  */
-void ice_vsi_manage_fdir(struct ice_vsi *vsi, bool ena)
-{
-	struct ice_fdir_fltr *f_rule, *tmp;
-	struct ice_pf *pf = vsi->back;
-	struct ice_hw *hw = &pf->hw;
-	enum ice_fltr_ptype flow;
+व्योम ice_vsi_manage_fdir(काष्ठा ice_vsi *vsi, bool ena)
+अणु
+	काष्ठा ice_fdir_fltr *f_rule, *पंचांगp;
+	काष्ठा ice_pf *pf = vsi->back;
+	काष्ठा ice_hw *hw = &pf->hw;
+	क्रमागत ice_fltr_ptype flow;
 
-	if (ena) {
+	अगर (ena) अणु
 		set_bit(ICE_FLAG_FD_ENA, pf->flags);
 		ice_fdir_create_dflt_rules(pf);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	mutex_lock(&hw->fdir_fltr_lock);
-	if (!test_and_clear_bit(ICE_FLAG_FD_ENA, pf->flags))
-		goto release_lock;
-	list_for_each_entry_safe(f_rule, tmp, &hw->fdir_list_head, fltr_node) {
-		/* ignore return value */
-		ice_fdir_write_all_fltr(pf, f_rule, false);
+	अगर (!test_and_clear_bit(ICE_FLAG_FD_ENA, pf->flags))
+		जाओ release_lock;
+	list_क्रम_each_entry_safe(f_rule, पंचांगp, &hw->fdir_list_head, fltr_node) अणु
+		/* ignore वापस value */
+		ice_fdir_ग_लिखो_all_fltr(pf, f_rule, false);
 		ice_fdir_update_cntrs(hw, f_rule->flow_type, false);
 		list_del(&f_rule->fltr_node);
-		devm_kfree(ice_hw_to_dev(hw), f_rule);
-	}
+		devm_kमुक्त(ice_hw_to_dev(hw), f_rule);
+	पूर्ण
 
-	if (hw->fdir_prof)
-		for (flow = ICE_FLTR_PTYPE_NONF_NONE; flow < ICE_FLTR_PTYPE_MAX;
+	अगर (hw->fdir_prof)
+		क्रम (flow = ICE_FLTR_PTYPE_NONF_NONE; flow < ICE_FLTR_PTYPE_MAX;
 		     flow++)
-			if (hw->fdir_prof[flow])
+			अगर (hw->fdir_prof[flow])
 				ice_fdir_rem_flow(hw, ICE_BLK_FD, flow);
 
 release_lock:
 	mutex_unlock(&hw->fdir_fltr_lock);
-}
+पूर्ण
 
 /**
- * ice_fdir_do_rem_flow - delete flow and possibly add perfect flow
- * @pf: PF structure
+ * ice_fdir_करो_rem_flow - delete flow and possibly add perfect flow
+ * @pf: PF काष्ठाure
  * @flow_type: FDir flow type to release
  */
-static void
-ice_fdir_do_rem_flow(struct ice_pf *pf, enum ice_fltr_ptype flow_type)
-{
-	struct ice_hw *hw = &pf->hw;
+अटल व्योम
+ice_fdir_करो_rem_flow(काष्ठा ice_pf *pf, क्रमागत ice_fltr_ptype flow_type)
+अणु
+	काष्ठा ice_hw *hw = &pf->hw;
 	bool need_perfect = false;
 
-	if (flow_type == ICE_FLTR_PTYPE_NONF_IPV4_TCP ||
+	अगर (flow_type == ICE_FLTR_PTYPE_NONF_IPV4_TCP ||
 	    flow_type == ICE_FLTR_PTYPE_NONF_IPV4_UDP ||
 	    flow_type == ICE_FLTR_PTYPE_NONF_IPV6_TCP ||
 	    flow_type == ICE_FLTR_PTYPE_NONF_IPV6_UDP)
 		need_perfect = true;
 
-	if (need_perfect && test_bit(flow_type, hw->fdir_perfect_fltr))
-		return;
+	अगर (need_perfect && test_bit(flow_type, hw->fdir_perfect_fltr))
+		वापस;
 
 	ice_fdir_rem_flow(hw, ICE_BLK_FD, flow_type);
-	if (need_perfect)
+	अगर (need_perfect)
 		ice_create_init_fdir_rule(pf, flow_type);
-}
+पूर्ण
 
 /**
  * ice_fdir_update_list_entry - add or delete a filter from the filter list
- * @pf: PF structure
- * @input: filter structure
- * @fltr_idx: ethtool index of filter to modify
+ * @pf: PF काष्ठाure
+ * @input: filter काष्ठाure
+ * @fltr_idx: ethtool index of filter to modअगरy
  *
- * returns 0 on success and negative on errors
+ * वापसs 0 on success and negative on errors
  */
-static int
-ice_fdir_update_list_entry(struct ice_pf *pf, struct ice_fdir_fltr *input,
-			   int fltr_idx)
-{
-	struct ice_fdir_fltr *old_fltr;
-	struct ice_hw *hw = &pf->hw;
-	int err = -ENOENT;
+अटल पूर्णांक
+ice_fdir_update_list_entry(काष्ठा ice_pf *pf, काष्ठा ice_fdir_fltr *input,
+			   पूर्णांक fltr_idx)
+अणु
+	काष्ठा ice_fdir_fltr *old_fltr;
+	काष्ठा ice_hw *hw = &pf->hw;
+	पूर्णांक err = -ENOENT;
 
 	/* Do not update filters during reset */
-	if (ice_is_reset_in_progress(pf->state))
-		return -EBUSY;
+	अगर (ice_is_reset_in_progress(pf->state))
+		वापस -EBUSY;
 
 	old_fltr = ice_fdir_find_fltr_by_idx(hw, fltr_idx);
-	if (old_fltr) {
-		err = ice_fdir_write_all_fltr(pf, old_fltr, false);
-		if (err)
-			return err;
+	अगर (old_fltr) अणु
+		err = ice_fdir_ग_लिखो_all_fltr(pf, old_fltr, false);
+		अगर (err)
+			वापस err;
 		ice_fdir_update_cntrs(hw, old_fltr->flow_type, false);
-		if (!input && !hw->fdir_fltr_cnt[old_fltr->flow_type])
+		अगर (!input && !hw->fdir_fltr_cnt[old_fltr->flow_type])
 			/* we just deleted the last filter of flow_type so we
 			 * should also delete the HW filter info.
 			 */
-			ice_fdir_do_rem_flow(pf, old_fltr->flow_type);
+			ice_fdir_करो_rem_flow(pf, old_fltr->flow_type);
 		list_del(&old_fltr->fltr_node);
-		devm_kfree(ice_hw_to_dev(hw), old_fltr);
-	}
-	if (!input)
-		return err;
+		devm_kमुक्त(ice_hw_to_dev(hw), old_fltr);
+	पूर्ण
+	अगर (!input)
+		वापस err;
 	ice_fdir_list_add_fltr(hw, input);
 	ice_fdir_update_cntrs(hw, input->flow_type, true);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * ice_del_fdir_ethtool - delete Flow Director filter
- * @vsi: pointer to target VSI
+ * @vsi: poपूर्णांकer to target VSI
  * @cmd: command to add or delete Flow Director filter
  *
- * Returns 0 on success and negative values for failure
+ * Returns 0 on success and negative values क्रम failure
  */
-int ice_del_fdir_ethtool(struct ice_vsi *vsi, struct ethtool_rxnfc *cmd)
-{
-	struct ethtool_rx_flow_spec *fsp =
-		(struct ethtool_rx_flow_spec *)&cmd->fs;
-	struct ice_pf *pf = vsi->back;
-	struct ice_hw *hw = &pf->hw;
-	int val;
+पूर्णांक ice_del_fdir_ethtool(काष्ठा ice_vsi *vsi, काष्ठा ethtool_rxnfc *cmd)
+अणु
+	काष्ठा ethtool_rx_flow_spec *fsp =
+		(काष्ठा ethtool_rx_flow_spec *)&cmd->fs;
+	काष्ठा ice_pf *pf = vsi->back;
+	काष्ठा ice_hw *hw = &pf->hw;
+	पूर्णांक val;
 
-	if (!test_bit(ICE_FLAG_FD_ENA, pf->flags))
-		return -EOPNOTSUPP;
+	अगर (!test_bit(ICE_FLAG_FD_ENA, pf->flags))
+		वापस -EOPNOTSUPP;
 
 	/* Do not delete filters during reset */
-	if (ice_is_reset_in_progress(pf->state)) {
+	अगर (ice_is_reset_in_progress(pf->state)) अणु
 		dev_err(ice_pf_to_dev(pf), "Device is resetting - deleting Flow Director filters not supported during reset\n");
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 
-	if (test_bit(ICE_FD_FLUSH_REQ, pf->state))
-		return -EBUSY;
+	अगर (test_bit(ICE_FD_FLUSH_REQ, pf->state))
+		वापस -EBUSY;
 
 	mutex_lock(&hw->fdir_fltr_lock);
-	val = ice_fdir_update_list_entry(pf, NULL, fsp->location);
+	val = ice_fdir_update_list_entry(pf, शून्य, fsp->location);
 	mutex_unlock(&hw->fdir_fltr_lock);
 
-	return val;
-}
+	वापस val;
+पूर्ण
 
 /**
- * ice_set_fdir_input_set - Set the input set for Flow Director
- * @vsi: pointer to target VSI
- * @fsp: pointer to ethtool Rx flow specification
- * @input: filter structure
+ * ice_set_fdir_input_set - Set the input set क्रम Flow Director
+ * @vsi: poपूर्णांकer to target VSI
+ * @fsp: poपूर्णांकer to ethtool Rx flow specअगरication
+ * @input: filter काष्ठाure
  */
-static int
-ice_set_fdir_input_set(struct ice_vsi *vsi, struct ethtool_rx_flow_spec *fsp,
-		       struct ice_fdir_fltr *input)
-{
+अटल पूर्णांक
+ice_set_fdir_input_set(काष्ठा ice_vsi *vsi, काष्ठा ethtool_rx_flow_spec *fsp,
+		       काष्ठा ice_fdir_fltr *input)
+अणु
 	u16 dest_vsi, q_index = 0;
-	struct ice_pf *pf;
-	struct ice_hw *hw;
-	int flow_type;
+	काष्ठा ice_pf *pf;
+	काष्ठा ice_hw *hw;
+	पूर्णांक flow_type;
 	u8 dest_ctl;
 
-	if (!vsi || !fsp || !input)
-		return -EINVAL;
+	अगर (!vsi || !fsp || !input)
+		वापस -EINVAL;
 
 	pf = vsi->back;
 	hw = &pf->hw;
 
 	dest_vsi = vsi->idx;
-	if (fsp->ring_cookie == RX_CLS_FLOW_DISC) {
+	अगर (fsp->ring_cookie == RX_CLS_FLOW_DISC) अणु
 		dest_ctl = ICE_FLTR_PRGM_DESC_DEST_DROP_PKT;
-	} else {
+	पूर्ण अन्यथा अणु
 		u32 ring = ethtool_get_flow_spec_ring(fsp->ring_cookie);
 		u8 vf = ethtool_get_flow_spec_ring_vf(fsp->ring_cookie);
 
-		if (vf) {
+		अगर (vf) अणु
 			dev_err(ice_pf_to_dev(pf), "Failed to add filter. Flow director filters are not supported on VF queues.\n");
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
-		if (ring >= vsi->num_rxq)
-			return -EINVAL;
+		अगर (ring >= vsi->num_rxq)
+			वापस -EINVAL;
 
-		dest_ctl = ICE_FLTR_PRGM_DESC_DEST_DIRECT_PKT_QINDEX;
+		dest_ctl = ICE_FLTR_PRGM_DESC_DEST_सूचीECT_PKT_QINDEX;
 		q_index = ring;
-	}
+	पूर्ण
 
 	input->fltr_id = fsp->location;
 	input->q_index = q_index;
@@ -1513,21 +1514,21 @@ ice_set_fdir_input_set(struct ice_vsi *vsi, struct ethtool_rx_flow_spec *fsp,
 	input->cnt_index = ICE_FD_SB_STAT_IDX(hw->fd_ctr_base);
 	input->flow_type = ice_ethtool_flow_to_fltr(flow_type);
 
-	if (fsp->flow_type & FLOW_EXT) {
-		memcpy(input->ext_data.usr_def, fsp->h_ext.data,
-		       sizeof(input->ext_data.usr_def));
+	अगर (fsp->flow_type & FLOW_EXT) अणु
+		स_नकल(input->ext_data.usr_def, fsp->h_ext.data,
+		       माप(input->ext_data.usr_def));
 		input->ext_data.vlan_type = fsp->h_ext.vlan_etype;
 		input->ext_data.vlan_tag = fsp->h_ext.vlan_tci;
-		memcpy(input->ext_mask.usr_def, fsp->m_ext.data,
-		       sizeof(input->ext_mask.usr_def));
+		स_नकल(input->ext_mask.usr_def, fsp->m_ext.data,
+		       माप(input->ext_mask.usr_def));
 		input->ext_mask.vlan_type = fsp->m_ext.vlan_etype;
 		input->ext_mask.vlan_tag = fsp->m_ext.vlan_tci;
-	}
+	पूर्ण
 
-	switch (flow_type) {
-	case TCP_V4_FLOW:
-	case UDP_V4_FLOW:
-	case SCTP_V4_FLOW:
+	चयन (flow_type) अणु
+	हाल TCP_V4_FLOW:
+	हाल UDP_V4_FLOW:
+	हाल SCTP_V4_FLOW:
 		input->ip.v4.dst_port = fsp->h_u.tcp_ip4_spec.pdst;
 		input->ip.v4.src_port = fsp->h_u.tcp_ip4_spec.psrc;
 		input->ip.v4.dst_ip = fsp->h_u.tcp_ip4_spec.ip4dst;
@@ -1536,8 +1537,8 @@ ice_set_fdir_input_set(struct ice_vsi *vsi, struct ethtool_rx_flow_spec *fsp,
 		input->mask.v4.src_port = fsp->m_u.tcp_ip4_spec.psrc;
 		input->mask.v4.dst_ip = fsp->m_u.tcp_ip4_spec.ip4dst;
 		input->mask.v4.src_ip = fsp->m_u.tcp_ip4_spec.ip4src;
-		break;
-	case IPV4_USER_FLOW:
+		अवरोध;
+	हाल IPV4_USER_FLOW:
 		input->ip.v4.dst_ip = fsp->h_u.usr_ip4_spec.ip4dst;
 		input->ip.v4.src_ip = fsp->h_u.usr_ip4_spec.ip4src;
 		input->ip.v4.l4_header = fsp->h_u.usr_ip4_spec.l4_4_bytes;
@@ -1550,156 +1551,156 @@ ice_set_fdir_input_set(struct ice_vsi *vsi, struct ethtool_rx_flow_spec *fsp,
 		input->mask.v4.proto = fsp->m_u.usr_ip4_spec.proto;
 		input->mask.v4.ip_ver = fsp->m_u.usr_ip4_spec.ip_ver;
 		input->mask.v4.tos = fsp->m_u.usr_ip4_spec.tos;
-		break;
-	case TCP_V6_FLOW:
-	case UDP_V6_FLOW:
-	case SCTP_V6_FLOW:
-		memcpy(input->ip.v6.dst_ip, fsp->h_u.usr_ip6_spec.ip6dst,
-		       sizeof(struct in6_addr));
-		memcpy(input->ip.v6.src_ip, fsp->h_u.usr_ip6_spec.ip6src,
-		       sizeof(struct in6_addr));
+		अवरोध;
+	हाल TCP_V6_FLOW:
+	हाल UDP_V6_FLOW:
+	हाल SCTP_V6_FLOW:
+		स_नकल(input->ip.v6.dst_ip, fsp->h_u.usr_ip6_spec.ip6dst,
+		       माप(काष्ठा in6_addr));
+		स_नकल(input->ip.v6.src_ip, fsp->h_u.usr_ip6_spec.ip6src,
+		       माप(काष्ठा in6_addr));
 		input->ip.v6.dst_port = fsp->h_u.tcp_ip6_spec.pdst;
 		input->ip.v6.src_port = fsp->h_u.tcp_ip6_spec.psrc;
 		input->ip.v6.tc = fsp->h_u.tcp_ip6_spec.tclass;
-		memcpy(input->mask.v6.dst_ip, fsp->m_u.tcp_ip6_spec.ip6dst,
-		       sizeof(struct in6_addr));
-		memcpy(input->mask.v6.src_ip, fsp->m_u.tcp_ip6_spec.ip6src,
-		       sizeof(struct in6_addr));
+		स_नकल(input->mask.v6.dst_ip, fsp->m_u.tcp_ip6_spec.ip6dst,
+		       माप(काष्ठा in6_addr));
+		स_नकल(input->mask.v6.src_ip, fsp->m_u.tcp_ip6_spec.ip6src,
+		       माप(काष्ठा in6_addr));
 		input->mask.v6.dst_port = fsp->m_u.tcp_ip6_spec.pdst;
 		input->mask.v6.src_port = fsp->m_u.tcp_ip6_spec.psrc;
 		input->mask.v6.tc = fsp->m_u.tcp_ip6_spec.tclass;
-		break;
-	case IPV6_USER_FLOW:
-		memcpy(input->ip.v6.dst_ip, fsp->h_u.usr_ip6_spec.ip6dst,
-		       sizeof(struct in6_addr));
-		memcpy(input->ip.v6.src_ip, fsp->h_u.usr_ip6_spec.ip6src,
-		       sizeof(struct in6_addr));
+		अवरोध;
+	हाल IPV6_USER_FLOW:
+		स_नकल(input->ip.v6.dst_ip, fsp->h_u.usr_ip6_spec.ip6dst,
+		       माप(काष्ठा in6_addr));
+		स_नकल(input->ip.v6.src_ip, fsp->h_u.usr_ip6_spec.ip6src,
+		       माप(काष्ठा in6_addr));
 		input->ip.v6.l4_header = fsp->h_u.usr_ip6_spec.l4_4_bytes;
 		input->ip.v6.tc = fsp->h_u.usr_ip6_spec.tclass;
 
-		/* if no protocol requested, use IPPROTO_NONE */
-		if (!fsp->m_u.usr_ip6_spec.l4_proto)
+		/* अगर no protocol requested, use IPPROTO_NONE */
+		अगर (!fsp->m_u.usr_ip6_spec.l4_proto)
 			input->ip.v6.proto = IPPROTO_NONE;
-		else
+		अन्यथा
 			input->ip.v6.proto = fsp->h_u.usr_ip6_spec.l4_proto;
 
-		memcpy(input->mask.v6.dst_ip, fsp->m_u.usr_ip6_spec.ip6dst,
-		       sizeof(struct in6_addr));
-		memcpy(input->mask.v6.src_ip, fsp->m_u.usr_ip6_spec.ip6src,
-		       sizeof(struct in6_addr));
+		स_नकल(input->mask.v6.dst_ip, fsp->m_u.usr_ip6_spec.ip6dst,
+		       माप(काष्ठा in6_addr));
+		स_नकल(input->mask.v6.src_ip, fsp->m_u.usr_ip6_spec.ip6src,
+		       माप(काष्ठा in6_addr));
 		input->mask.v6.l4_header = fsp->m_u.usr_ip6_spec.l4_4_bytes;
 		input->mask.v6.tc = fsp->m_u.usr_ip6_spec.tclass;
 		input->mask.v6.proto = fsp->m_u.usr_ip6_spec.l4_proto;
-		break;
-	default:
-		/* not doing un-parsed flow types */
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		/* not करोing un-parsed flow types */
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * ice_add_fdir_ethtool - Add/Remove Flow Director filter
- * @vsi: pointer to target VSI
+ * @vsi: poपूर्णांकer to target VSI
  * @cmd: command to add or delete Flow Director filter
  *
- * Returns 0 on success and negative values for failure
+ * Returns 0 on success and negative values क्रम failure
  */
-int ice_add_fdir_ethtool(struct ice_vsi *vsi, struct ethtool_rxnfc *cmd)
-{
-	struct ice_rx_flow_userdef userdata;
-	struct ethtool_rx_flow_spec *fsp;
-	struct ice_fdir_fltr *input;
-	struct device *dev;
-	struct ice_pf *pf;
-	struct ice_hw *hw;
-	int fltrs_needed;
+पूर्णांक ice_add_fdir_ethtool(काष्ठा ice_vsi *vsi, काष्ठा ethtool_rxnfc *cmd)
+अणु
+	काष्ठा ice_rx_flow_userdef userdata;
+	काष्ठा ethtool_rx_flow_spec *fsp;
+	काष्ठा ice_fdir_fltr *input;
+	काष्ठा device *dev;
+	काष्ठा ice_pf *pf;
+	काष्ठा ice_hw *hw;
+	पूर्णांक fltrs_needed;
 	u16 tunnel_port;
-	int ret;
+	पूर्णांक ret;
 
-	if (!vsi)
-		return -EINVAL;
+	अगर (!vsi)
+		वापस -EINVAL;
 
 	pf = vsi->back;
 	hw = &pf->hw;
 	dev = ice_pf_to_dev(pf);
 
-	if (!test_bit(ICE_FLAG_FD_ENA, pf->flags))
-		return -EOPNOTSUPP;
+	अगर (!test_bit(ICE_FLAG_FD_ENA, pf->flags))
+		वापस -EOPNOTSUPP;
 
 	/* Do not program filters during reset */
-	if (ice_is_reset_in_progress(pf->state)) {
+	अगर (ice_is_reset_in_progress(pf->state)) अणु
 		dev_err(dev, "Device is resetting - adding Flow Director filters not supported during reset\n");
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 
-	fsp = (struct ethtool_rx_flow_spec *)&cmd->fs;
+	fsp = (काष्ठा ethtool_rx_flow_spec *)&cmd->fs;
 
-	if (ice_parse_rx_flow_user_data(fsp, &userdata))
-		return -EINVAL;
+	अगर (ice_parse_rx_flow_user_data(fsp, &userdata))
+		वापस -EINVAL;
 
-	if (fsp->flow_type & FLOW_MAC_EXT)
-		return -EINVAL;
+	अगर (fsp->flow_type & FLOW_MAC_EXT)
+		वापस -EINVAL;
 
 	ret = ice_cfg_fdir_xtrct_seq(pf, fsp, &userdata);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	if (fsp->location >= ice_get_fdir_cnt_all(hw)) {
+	अगर (fsp->location >= ice_get_fdir_cnt_all(hw)) अणु
 		dev_err(dev, "Failed to add filter.  The maximum number of flow director filters has been reached.\n");
-		return -ENOSPC;
-	}
+		वापस -ENOSPC;
+	पूर्ण
 
-	/* return error if not an update and no available filters */
-	fltrs_needed = ice_get_open_tunnel_port(hw, &tunnel_port) ? 2 : 1;
-	if (!ice_fdir_find_fltr_by_idx(hw, fsp->location) &&
-	    ice_fdir_num_avail_fltr(hw, pf->vsi[vsi->idx]) < fltrs_needed) {
+	/* वापस error अगर not an update and no available filters */
+	fltrs_needed = ice_get_खोलो_tunnel_port(hw, &tunnel_port) ? 2 : 1;
+	अगर (!ice_fdir_find_fltr_by_idx(hw, fsp->location) &&
+	    ice_fdir_num_avail_fltr(hw, pf->vsi[vsi->idx]) < fltrs_needed) अणु
 		dev_err(dev, "Failed to add filter.  The maximum number of flow director filters has been reached.\n");
-		return -ENOSPC;
-	}
+		वापस -ENOSPC;
+	पूर्ण
 
-	input = devm_kzalloc(dev, sizeof(*input), GFP_KERNEL);
-	if (!input)
-		return -ENOMEM;
+	input = devm_kzalloc(dev, माप(*input), GFP_KERNEL);
+	अगर (!input)
+		वापस -ENOMEM;
 
 	ret = ice_set_fdir_input_set(vsi, fsp, input);
-	if (ret)
-		goto free_input;
+	अगर (ret)
+		जाओ मुक्त_input;
 
 	mutex_lock(&hw->fdir_fltr_lock);
-	if (ice_fdir_is_dup_fltr(hw, input)) {
+	अगर (ice_fdir_is_dup_fltr(hw, input)) अणु
 		ret = -EINVAL;
-		goto release_lock;
-	}
+		जाओ release_lock;
+	पूर्ण
 
-	if (userdata.flex_fltr) {
+	अगर (userdata.flex_fltr) अणु
 		input->flex_fltr = true;
 		input->flex_word = cpu_to_be16(userdata.flex_word);
 		input->flex_offset = userdata.flex_offset;
-	}
+	पूर्ण
 
 	input->cnt_ena = ICE_FXD_FLTR_QW0_STAT_ENA_PKTS;
 	input->fdid_prio = ICE_FXD_FLTR_QW1_FDID_PRI_THREE;
 	input->comp_report = ICE_FXD_FLTR_QW0_COMP_REPORT_SW_FAIL;
 
-	/* input struct is added to the HW filter list */
+	/* input काष्ठा is added to the HW filter list */
 	ice_fdir_update_list_entry(pf, input, fsp->location);
 
-	ret = ice_fdir_write_all_fltr(pf, input, true);
-	if (ret)
-		goto remove_sw_rule;
+	ret = ice_fdir_ग_लिखो_all_fltr(pf, input, true);
+	अगर (ret)
+		जाओ हटाओ_sw_rule;
 
-	goto release_lock;
+	जाओ release_lock;
 
-remove_sw_rule:
+हटाओ_sw_rule:
 	ice_fdir_update_cntrs(hw, input->flow_type, false);
 	list_del(&input->fltr_node);
 release_lock:
 	mutex_unlock(&hw->fdir_fltr_lock);
-free_input:
-	if (ret)
-		devm_kfree(dev, input);
+मुक्त_input:
+	अगर (ret)
+		devm_kमुक्त(dev, input);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण

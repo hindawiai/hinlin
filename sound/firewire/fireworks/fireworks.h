@@ -1,144 +1,145 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
- * fireworks.h - a part of driver for Fireworks based devices
+ * fireworks.h - a part of driver क्रम Fireworks based devices
  *
  * Copyright (c) 2009-2010 Clemens Ladisch
  * Copyright (c) 2013-2014 Takashi Sakamoto
  */
-#ifndef SOUND_FIREWORKS_H_INCLUDED
-#define SOUND_FIREWORKS_H_INCLUDED
+#अगर_अघोषित SOUND_FIREWORKS_H_INCLUDED
+#घोषणा SOUND_FIREWORKS_H_INCLUDED
 
-#include <linux/compat.h>
-#include <linux/device.h>
-#include <linux/firewire.h>
-#include <linux/firewire-constants.h>
-#include <linux/module.h>
-#include <linux/mod_devicetable.h>
-#include <linux/delay.h>
-#include <linux/slab.h>
-#include <linux/sched/signal.h>
+#समावेश <linux/compat.h>
+#समावेश <linux/device.h>
+#समावेश <linux/firewire.h>
+#समावेश <linux/firewire-स्थिरants.h>
+#समावेश <linux/module.h>
+#समावेश <linux/mod_devicetable.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/sched/संकेत.स>
 
-#include <sound/core.h>
-#include <sound/initval.h>
-#include <sound/pcm.h>
-#include <sound/info.h>
-#include <sound/rawmidi.h>
-#include <sound/pcm_params.h>
-#include <sound/firewire.h>
-#include <sound/hwdep.h>
+#समावेश <sound/core.h>
+#समावेश <sound/initval.h>
+#समावेश <sound/pcm.h>
+#समावेश <sound/info.h>
+#समावेश <sound/rawmidi.h>
+#समावेश <sound/pcm_params.h>
+#समावेश <sound/firewire.h>
+#समावेश <sound/hwdep.h>
 
-#include "../packets-buffer.h"
-#include "../iso-resources.h"
-#include "../amdtp-am824.h"
-#include "../cmp.h"
-#include "../lib.h"
+#समावेश "../packets-buffer.h"
+#समावेश "../iso-resources.h"
+#समावेश "../amdtp-am824.h"
+#समावेश "../cmp.h"
+#समावेश "../lib.h"
 
-#define SND_EFW_MAX_MIDI_OUT_PORTS	2
-#define SND_EFW_MAX_MIDI_IN_PORTS	2
+#घोषणा SND_EFW_MAX_MIDI_OUT_PORTS	2
+#घोषणा SND_EFW_MAX_MIDI_IN_PORTS	2
 
-#define SND_EFW_MULTIPLIER_MODES	3
-#define HWINFO_NAME_SIZE_BYTES		32
-#define HWINFO_MAX_CAPS_GROUPS		8
+#घोषणा SND_EFW_MULTIPLIER_MODES	3
+#घोषणा HWINFO_NAME_SIZE_BYTES		32
+#घोषणा HWINFO_MAX_CAPS_GROUPS		8
 
 /*
- * This should be greater than maximum bytes for EFW response content.
- * Currently response against command for isochronous channel mapping is
- * confirmed to be the maximum one. But for flexibility, use maximum data
- * payload for asynchronous primary packets at S100 (Cable base rate) in
+ * This should be greater than maximum bytes क्रम EFW response content.
+ * Currently response against command क्रम isochronous channel mapping is
+ * confirmed to be the maximum one. But क्रम flexibility, use maximum data
+ * payload क्रम asynchronous primary packets at S100 (Cable base rate) in
  * IEEE Std 1394-1995.
  */
-#define SND_EFW_RESPONSE_MAXIMUM_BYTES	0x200U
+#घोषणा SND_EFW_RESPONSE_MAXIMUM_BYTES	0x200U
 
-extern unsigned int snd_efw_resp_buf_size;
-extern bool snd_efw_resp_buf_debug;
+बाह्य अचिन्हित पूर्णांक snd_efw_resp_buf_size;
+बाह्य bool snd_efw_resp_buf_debug;
 
-struct snd_efw_phys_grp {
-	u8 type;	/* see enum snd_efw_grp_type */
+काष्ठा snd_efw_phys_grp अणु
+	u8 type;	/* see क्रमागत snd_efw_grp_type */
 	u8 count;
-} __packed;
+पूर्ण __packed;
 
-struct snd_efw {
-	struct snd_card *card;
-	struct fw_unit *unit;
-	int card_index;
+काष्ठा snd_efw अणु
+	काष्ठा snd_card *card;
+	काष्ठा fw_unit *unit;
+	पूर्णांक card_index;
 
-	struct mutex mutex;
+	काष्ठा mutex mutex;
 	spinlock_t lock;
 
-	bool registered;
-	struct delayed_work dwork;
+	bool रेजिस्टरed;
+	काष्ठा delayed_work dwork;
 
-	/* for transaction */
+	/* क्रम transaction */
 	u32 seqnum;
 	bool resp_addr_changable;
 
-	/* for quirks */
+	/* क्रम quirks */
 	bool is_af9;
 	bool is_fireworks3;
 	u32 firmware_version;
 
-	unsigned int midi_in_ports;
-	unsigned int midi_out_ports;
+	अचिन्हित पूर्णांक midi_in_ports;
+	अचिन्हित पूर्णांक midi_out_ports;
 
-	unsigned int supported_sampling_rate;
-	unsigned int pcm_capture_channels[SND_EFW_MULTIPLIER_MODES];
-	unsigned int pcm_playback_channels[SND_EFW_MULTIPLIER_MODES];
+	अचिन्हित पूर्णांक supported_sampling_rate;
+	अचिन्हित पूर्णांक pcm_capture_channels[SND_EFW_MULTIPLIER_MODES];
+	अचिन्हित पूर्णांक pcm_playback_channels[SND_EFW_MULTIPLIER_MODES];
 
-	struct amdtp_stream tx_stream;
-	struct amdtp_stream rx_stream;
-	struct cmp_connection out_conn;
-	struct cmp_connection in_conn;
-	unsigned int substreams_counter;
+	काष्ठा amdtp_stream tx_stream;
+	काष्ठा amdtp_stream rx_stream;
+	काष्ठा cmp_connection out_conn;
+	काष्ठा cmp_connection in_conn;
+	अचिन्हित पूर्णांक substreams_counter;
 
 	/* hardware metering parameters */
-	unsigned int phys_out;
-	unsigned int phys_in;
-	unsigned int phys_out_grp_count;
-	unsigned int phys_in_grp_count;
-	struct snd_efw_phys_grp phys_out_grps[HWINFO_MAX_CAPS_GROUPS];
-	struct snd_efw_phys_grp phys_in_grps[HWINFO_MAX_CAPS_GROUPS];
+	अचिन्हित पूर्णांक phys_out;
+	अचिन्हित पूर्णांक phys_in;
+	अचिन्हित पूर्णांक phys_out_grp_count;
+	अचिन्हित पूर्णांक phys_in_grp_count;
+	काष्ठा snd_efw_phys_grp phys_out_grps[HWINFO_MAX_CAPS_GROUPS];
+	काष्ठा snd_efw_phys_grp phys_in_grps[HWINFO_MAX_CAPS_GROUPS];
 
-	/* for uapi */
-	int dev_lock_count;
+	/* क्रम uapi */
+	पूर्णांक dev_lock_count;
 	bool dev_lock_changed;
-	wait_queue_head_t hwdep_wait;
+	रुको_queue_head_t hwdep_रुको;
 
 	/* response queue */
 	u8 *resp_buf;
 	u8 *pull_ptr;
 	u8 *push_ptr;
 
-	struct amdtp_domain domain;
-};
+	काष्ठा amdtp_करोमुख्य करोमुख्य;
+पूर्ण;
 
-int snd_efw_transaction_cmd(struct fw_unit *unit,
-			    const void *cmd, unsigned int size);
-int snd_efw_transaction_run(struct fw_unit *unit,
-			    const void *cmd, unsigned int cmd_size,
-			    void *resp, unsigned int resp_size);
-int snd_efw_transaction_register(void);
-void snd_efw_transaction_unregister(void);
-void snd_efw_transaction_bus_reset(struct fw_unit *unit);
-void snd_efw_transaction_add_instance(struct snd_efw *efw);
-void snd_efw_transaction_remove_instance(struct snd_efw *efw);
+पूर्णांक snd_efw_transaction_cmd(काष्ठा fw_unit *unit,
+			    स्थिर व्योम *cmd, अचिन्हित पूर्णांक size);
+पूर्णांक snd_efw_transaction_run(काष्ठा fw_unit *unit,
+			    स्थिर व्योम *cmd, अचिन्हित पूर्णांक cmd_size,
+			    व्योम *resp, अचिन्हित पूर्णांक resp_size);
+पूर्णांक snd_efw_transaction_रेजिस्टर(व्योम);
+व्योम snd_efw_transaction_unरेजिस्टर(व्योम);
+व्योम snd_efw_transaction_bus_reset(काष्ठा fw_unit *unit);
+व्योम snd_efw_transaction_add_instance(काष्ठा snd_efw *efw);
+व्योम snd_efw_transaction_हटाओ_instance(काष्ठा snd_efw *efw);
 
-struct snd_efw_hwinfo {
+काष्ठा snd_efw_hwinfo अणु
 	u32 flags;
 	u32 guid_hi;
 	u32 guid_lo;
 	u32 type;
 	u32 version;
-	char vendor_name[HWINFO_NAME_SIZE_BYTES];
-	char model_name[HWINFO_NAME_SIZE_BYTES];
-	u32 supported_clocks;
+	अक्षर venकरोr_name[HWINFO_NAME_SIZE_BYTES];
+	अक्षर model_name[HWINFO_NAME_SIZE_BYTES];
+	u32 supported_घड़ीs;
 	u32 amdtp_rx_pcm_channels;
 	u32 amdtp_tx_pcm_channels;
 	u32 phys_out;
 	u32 phys_in;
 	u32 phys_out_grp_count;
-	struct snd_efw_phys_grp phys_out_grps[HWINFO_MAX_CAPS_GROUPS];
+	काष्ठा snd_efw_phys_grp phys_out_grps[HWINFO_MAX_CAPS_GROUPS];
 	u32 phys_in_grp_count;
-	struct snd_efw_phys_grp phys_in_grps[HWINFO_MAX_CAPS_GROUPS];
+	काष्ठा snd_efw_phys_grp phys_in_grps[HWINFO_MAX_CAPS_GROUPS];
 	u32 midi_out_ports;
 	u32 midi_in_ports;
 	u32 max_sample_rate;
@@ -153,8 +154,8 @@ struct snd_efw_hwinfo {
 	u32 amdtp_rx_pcm_channels_4x;
 	u32 amdtp_tx_pcm_channels_4x;
 	u32 reserved[16];
-} __packed;
-enum snd_efw_grp_type {
+पूर्ण __packed;
+क्रमागत snd_efw_grp_type अणु
 	SND_EFW_CH_TYPE_ANALOG			= 0,
 	SND_EFW_CH_TYPE_SPDIF			= 1,
 	SND_EFW_CH_TYPE_ADAT			= 2,
@@ -166,9 +167,9 @@ enum snd_efw_grp_type {
 	SND_EFW_CH_TYPE_PIEZO_GUITAR		= 8,
 	SND_EFW_CH_TYPE_GUITAR_STRING		= 9,
 	SND_EFW_CH_TYPE_DUMMY
-};
-struct snd_efw_phys_meters {
-	u32 status;	/* guitar state/midi signal/clock input detect */
+पूर्ण;
+काष्ठा snd_efw_phys_meters अणु
+	u32 status;	/* guitar state/midi संकेत/घड़ी input detect */
 	u32 reserved0;
 	u32 reserved1;
 	u32 reserved2;
@@ -178,61 +179,61 @@ struct snd_efw_phys_meters {
 	u32 reserved4;
 	u32 reserved5;
 	u32 values[];
-} __packed;
-enum snd_efw_clock_source {
+पूर्ण __packed;
+क्रमागत snd_efw_घड़ी_source अणु
 	SND_EFW_CLOCK_SOURCE_INTERNAL	= 0,
 	SND_EFW_CLOCK_SOURCE_SYTMATCH	= 1,
 	SND_EFW_CLOCK_SOURCE_WORDCLOCK	= 2,
 	SND_EFW_CLOCK_SOURCE_SPDIF	= 3,
 	SND_EFW_CLOCK_SOURCE_ADAT_1	= 4,
 	SND_EFW_CLOCK_SOURCE_ADAT_2	= 5,
-	SND_EFW_CLOCK_SOURCE_CONTINUOUS	= 6	/* internal variable clock */
-};
-enum snd_efw_transport_mode {
+	SND_EFW_CLOCK_SOURCE_CONTINUOUS	= 6	/* पूर्णांकernal variable घड़ी */
+पूर्ण;
+क्रमागत snd_efw_transport_mode अणु
 	SND_EFW_TRANSPORT_MODE_WINDOWS	= 0,
 	SND_EFW_TRANSPORT_MODE_IEC61883	= 1,
-};
-int snd_efw_command_set_resp_addr(struct snd_efw *efw,
+पूर्ण;
+पूर्णांक snd_efw_command_set_resp_addr(काष्ठा snd_efw *efw,
 				  u16 addr_high, u32 addr_low);
-int snd_efw_command_set_tx_mode(struct snd_efw *efw,
-				enum snd_efw_transport_mode mode);
-int snd_efw_command_get_hwinfo(struct snd_efw *efw,
-			       struct snd_efw_hwinfo *hwinfo);
-int snd_efw_command_get_phys_meters(struct snd_efw *efw,
-				    struct snd_efw_phys_meters *meters,
-				    unsigned int len);
-int snd_efw_command_get_clock_source(struct snd_efw *efw,
-				     enum snd_efw_clock_source *source);
-int snd_efw_command_get_sampling_rate(struct snd_efw *efw, unsigned int *rate);
-int snd_efw_command_set_sampling_rate(struct snd_efw *efw, unsigned int rate);
+पूर्णांक snd_efw_command_set_tx_mode(काष्ठा snd_efw *efw,
+				क्रमागत snd_efw_transport_mode mode);
+पूर्णांक snd_efw_command_get_hwinfo(काष्ठा snd_efw *efw,
+			       काष्ठा snd_efw_hwinfo *hwinfo);
+पूर्णांक snd_efw_command_get_phys_meters(काष्ठा snd_efw *efw,
+				    काष्ठा snd_efw_phys_meters *meters,
+				    अचिन्हित पूर्णांक len);
+पूर्णांक snd_efw_command_get_घड़ी_source(काष्ठा snd_efw *efw,
+				     क्रमागत snd_efw_घड़ी_source *source);
+पूर्णांक snd_efw_command_get_sampling_rate(काष्ठा snd_efw *efw, अचिन्हित पूर्णांक *rate);
+पूर्णांक snd_efw_command_set_sampling_rate(काष्ठा snd_efw *efw, अचिन्हित पूर्णांक rate);
 
-int snd_efw_stream_init_duplex(struct snd_efw *efw);
-int snd_efw_stream_reserve_duplex(struct snd_efw *efw, unsigned int rate,
-				  unsigned int frames_per_period,
-				  unsigned int frames_per_buffer);
-int snd_efw_stream_start_duplex(struct snd_efw *efw);
-void snd_efw_stream_stop_duplex(struct snd_efw *efw);
-void snd_efw_stream_update_duplex(struct snd_efw *efw);
-void snd_efw_stream_destroy_duplex(struct snd_efw *efw);
-void snd_efw_stream_lock_changed(struct snd_efw *efw);
-int snd_efw_stream_lock_try(struct snd_efw *efw);
-void snd_efw_stream_lock_release(struct snd_efw *efw);
+पूर्णांक snd_efw_stream_init_duplex(काष्ठा snd_efw *efw);
+पूर्णांक snd_efw_stream_reserve_duplex(काष्ठा snd_efw *efw, अचिन्हित पूर्णांक rate,
+				  अचिन्हित पूर्णांक frames_per_period,
+				  अचिन्हित पूर्णांक frames_per_buffer);
+पूर्णांक snd_efw_stream_start_duplex(काष्ठा snd_efw *efw);
+व्योम snd_efw_stream_stop_duplex(काष्ठा snd_efw *efw);
+व्योम snd_efw_stream_update_duplex(काष्ठा snd_efw *efw);
+व्योम snd_efw_stream_destroy_duplex(काष्ठा snd_efw *efw);
+व्योम snd_efw_stream_lock_changed(काष्ठा snd_efw *efw);
+पूर्णांक snd_efw_stream_lock_try(काष्ठा snd_efw *efw);
+व्योम snd_efw_stream_lock_release(काष्ठा snd_efw *efw);
 
-void snd_efw_proc_init(struct snd_efw *efw);
+व्योम snd_efw_proc_init(काष्ठा snd_efw *efw);
 
-int snd_efw_create_midi_devices(struct snd_efw *efw);
+पूर्णांक snd_efw_create_midi_devices(काष्ठा snd_efw *efw);
 
-int snd_efw_create_pcm_devices(struct snd_efw *efw);
-int snd_efw_get_multiplier_mode(unsigned int sampling_rate, unsigned int *mode);
+पूर्णांक snd_efw_create_pcm_devices(काष्ठा snd_efw *efw);
+पूर्णांक snd_efw_get_multiplier_mode(अचिन्हित पूर्णांक sampling_rate, अचिन्हित पूर्णांक *mode);
 
-int snd_efw_create_hwdep_device(struct snd_efw *efw);
+पूर्णांक snd_efw_create_hwdep_device(काष्ठा snd_efw *efw);
 
-#define SND_EFW_DEV_ENTRY(vendor, model) \
-{ \
+#घोषणा SND_EFW_DEV_ENTRY(venकरोr, model) \
+अणु \
 	.match_flags	= IEEE1394_MATCH_VENDOR_ID | \
 			  IEEE1394_MATCH_MODEL_ID, \
-	.vendor_id	= vendor,\
+	.venकरोr_id	= venकरोr,\
 	.model_id	= model \
-}
+पूर्ण
 
-#endif
+#पूर्ण_अगर

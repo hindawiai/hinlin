@@ -1,49 +1,50 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
- * mft.h - Defines for mft record handling in NTFS Linux kernel driver.
+ * mft.h - Defines क्रम mft record handling in NTFS Linux kernel driver.
  *	   Part of the Linux-NTFS project.
  *
  * Copyright (c) 2001-2004 Anton Altaparmakov
  */
 
-#ifndef _LINUX_NTFS_MFT_H
-#define _LINUX_NTFS_MFT_H
+#अगर_अघोषित _LINUX_NTFS_MFT_H
+#घोषणा _LINUX_NTFS_MFT_H
 
-#include <linux/fs.h>
-#include <linux/highmem.h>
-#include <linux/pagemap.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/highस्मृति.स>
+#समावेश <linux/pagemap.h>
 
-#include "inode.h"
+#समावेश "inode.h"
 
-extern MFT_RECORD *map_mft_record(ntfs_inode *ni);
-extern void unmap_mft_record(ntfs_inode *ni);
+बाह्य MFT_RECORD *map_mft_record(ntfs_inode *ni);
+बाह्य व्योम unmap_mft_record(ntfs_inode *ni);
 
-extern MFT_RECORD *map_extent_mft_record(ntfs_inode *base_ni, MFT_REF mref,
+बाह्य MFT_RECORD *map_extent_mft_record(ntfs_inode *base_ni, MFT_REF mref,
 		ntfs_inode **ntfs_ino);
 
-static inline void unmap_extent_mft_record(ntfs_inode *ni)
-{
+अटल अंतरभूत व्योम unmap_extent_mft_record(ntfs_inode *ni)
+अणु
 	unmap_mft_record(ni);
-	return;
-}
+	वापस;
+पूर्ण
 
-#ifdef NTFS_RW
+#अगर_घोषित NTFS_RW
 
 /**
- * flush_dcache_mft_record_page - flush_dcache_page() for mft records
- * @ni:		ntfs inode structure of mft record
+ * flush_dcache_mft_record_page - flush_dcache_page() क्रम mft records
+ * @ni:		ntfs inode काष्ठाure of mft record
  *
- * Call flush_dcache_page() for the page in which an mft record resides.
+ * Call flush_dcache_page() क्रम the page in which an mft record resides.
  *
- * This must be called every time an mft record is modified, just after the
- * modification.
+ * This must be called every समय an mft record is modअगरied, just after the
+ * modअगरication.
  */
-static inline void flush_dcache_mft_record_page(ntfs_inode *ni)
-{
+अटल अंतरभूत व्योम flush_dcache_mft_record_page(ntfs_inode *ni)
+अणु
 	flush_dcache_page(ni->page);
-}
+पूर्ण
 
-extern void __mark_mft_record_dirty(ntfs_inode *ni);
+बाह्य व्योम __mark_mft_record_dirty(ntfs_inode *ni);
 
 /**
  * mark_mft_record_dirty - set the mft record and the page containing it dirty
@@ -54,57 +55,57 @@ extern void __mark_mft_record_dirty(ntfs_inode *ni);
  * vfs inode dirty.  This ensures that any changes to the mft record are
  * written out to disk.
  *
- * NOTE:  Do not do anything if the mft record is already marked dirty.
+ * NOTE:  Do not करो anything अगर the mft record is alपढ़ोy marked dirty.
  */
-static inline void mark_mft_record_dirty(ntfs_inode *ni)
-{
-	if (!NInoTestSetDirty(ni))
+अटल अंतरभूत व्योम mark_mft_record_dirty(ntfs_inode *ni)
+अणु
+	अगर (!NInoTestSetDirty(ni))
 		__mark_mft_record_dirty(ni);
-}
+पूर्ण
 
-extern int ntfs_sync_mft_mirror(ntfs_volume *vol, const unsigned long mft_no,
-		MFT_RECORD *m, int sync);
+बाह्य पूर्णांक ntfs_sync_mft_mirror(ntfs_volume *vol, स्थिर अचिन्हित दीर्घ mft_no,
+		MFT_RECORD *m, पूर्णांक sync);
 
-extern int write_mft_record_nolock(ntfs_inode *ni, MFT_RECORD *m, int sync);
+बाह्य पूर्णांक ग_लिखो_mft_record_nolock(ntfs_inode *ni, MFT_RECORD *m, पूर्णांक sync);
 
 /**
- * write_mft_record - write out a mapped (extent) mft record
+ * ग_लिखो_mft_record - ग_लिखो out a mapped (extent) mft record
  * @ni:		ntfs inode describing the mapped (extent) mft record
- * @m:		mapped (extent) mft record to write
- * @sync:	if true, wait for i/o completion
+ * @m:		mapped (extent) mft record to ग_लिखो
+ * @sync:	अगर true, रुको क्रम i/o completion
  *
- * This is just a wrapper for write_mft_record_nolock() (see mft.c), which
- * locks the page for the duration of the write.  This ensures that there are
+ * This is just a wrapper क्रम ग_लिखो_mft_record_nolock() (see mft.c), which
+ * locks the page क्रम the duration of the ग_लिखो.  This ensures that there are
  * no race conditions between writing the mft record via the dirty inode code
- * paths and via the page cache write back code paths or between writing
+ * paths and via the page cache ग_लिखो back code paths or between writing
  * neighbouring mft records residing in the same page.
  *
- * Locking the page also serializes us against ->readpage() if the page is not
+ * Locking the page also serializes us against ->पढ़ोpage() अगर the page is not
  * uptodate.
  *
- * On success, clean the mft record and return 0.  On error, leave the mft
- * record dirty and return -errno.
+ * On success, clean the mft record and वापस 0.  On error, leave the mft
+ * record dirty and वापस -त्रुटि_सं.
  */
-static inline int write_mft_record(ntfs_inode *ni, MFT_RECORD *m, int sync)
-{
-	struct page *page = ni->page;
-	int err;
+अटल अंतरभूत पूर्णांक ग_लिखो_mft_record(ntfs_inode *ni, MFT_RECORD *m, पूर्णांक sync)
+अणु
+	काष्ठा page *page = ni->page;
+	पूर्णांक err;
 
 	BUG_ON(!page);
 	lock_page(page);
-	err = write_mft_record_nolock(ni, m, sync);
+	err = ग_लिखो_mft_record_nolock(ni, m, sync);
 	unlock_page(page);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-extern bool ntfs_may_write_mft_record(ntfs_volume *vol,
-		const unsigned long mft_no, const MFT_RECORD *m,
+बाह्य bool ntfs_may_ग_लिखो_mft_record(ntfs_volume *vol,
+		स्थिर अचिन्हित दीर्घ mft_no, स्थिर MFT_RECORD *m,
 		ntfs_inode **locked_ni);
 
-extern ntfs_inode *ntfs_mft_record_alloc(ntfs_volume *vol, const int mode,
+बाह्य ntfs_inode *ntfs_mft_record_alloc(ntfs_volume *vol, स्थिर पूर्णांक mode,
 		ntfs_inode *base_ni, MFT_RECORD **mrec);
-extern int ntfs_extent_mft_record_free(ntfs_inode *ni, MFT_RECORD *m);
+बाह्य पूर्णांक ntfs_extent_mft_record_मुक्त(ntfs_inode *ni, MFT_RECORD *m);
 
-#endif /* NTFS_RW */
+#पूर्ण_अगर /* NTFS_RW */
 
-#endif /* _LINUX_NTFS_MFT_H */
+#पूर्ण_अगर /* _LINUX_NTFS_MFT_H */

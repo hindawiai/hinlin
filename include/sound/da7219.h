@@ -1,51 +1,52 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
- * da7219.h - DA7219 ASoC Codec Driver Platform Data
+ * da7219.h - DA7219 ASoC Codec Driver Platक्रमm Data
  *
  * Copyright (c) 2015 Dialog Semiconductor
  *
  * Author: Adam Thomson <Adam.Thomson.Opensource@diasemi.com>
  */
 
-#ifndef __DA7219_PDATA_H
-#define __DA7219_PDATA_H
+#अगर_अघोषित __DA7219_PDATA_H
+#घोषणा __DA7219_PDATA_H
 
 /* Mic Bias */
-enum da7219_micbias_voltage {
+क्रमागत da7219_micbias_voltage अणु
 	DA7219_MICBIAS_1_6V = 0,
 	DA7219_MICBIAS_1_8V,
 	DA7219_MICBIAS_2_0V,
 	DA7219_MICBIAS_2_2V,
 	DA7219_MICBIAS_2_4V,
 	DA7219_MICBIAS_2_6V,
-};
+पूर्ण;
 
 /* Mic input type */
-enum da7219_mic_amp_in_sel {
+क्रमागत da7219_mic_amp_in_sel अणु
 	DA7219_MIC_AMP_IN_SEL_DIFF = 0,
 	DA7219_MIC_AMP_IN_SEL_SE_P,
 	DA7219_MIC_AMP_IN_SEL_SE_N,
-};
+पूर्ण;
 
-struct da7219_aad_pdata;
+काष्ठा da7219_aad_pdata;
 
-enum da7219_dai_clks {
+क्रमागत da7219_dai_clks अणु
 	DA7219_DAI_WCLK_IDX = 0,
 	DA7219_DAI_BCLK_IDX,
 	DA7219_DAI_NUM_CLKS,
-};
+पूर्ण;
 
-struct da7219_pdata {
+काष्ठा da7219_pdata अणु
 	bool wakeup_source;
 
-	const char *dai_clk_names[DA7219_DAI_NUM_CLKS];
+	स्थिर अक्षर *dai_clk_names[DA7219_DAI_NUM_CLKS];
 
 	/* Mic */
-	enum da7219_micbias_voltage micbias_lvl;
-	enum da7219_mic_amp_in_sel mic_amp_in_sel;
+	क्रमागत da7219_micbias_voltage micbias_lvl;
+	क्रमागत da7219_mic_amp_in_sel mic_amp_in_sel;
 
 	/* AAD */
-	struct da7219_aad_pdata *aad_pdata;
-};
+	काष्ठा da7219_aad_pdata *aad_pdata;
+पूर्ण;
 
-#endif /* __DA7219_PDATA_H */
+#पूर्ण_अगर /* __DA7219_PDATA_H */

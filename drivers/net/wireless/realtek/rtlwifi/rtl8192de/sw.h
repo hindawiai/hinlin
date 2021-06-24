@@ -1,11 +1,12 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /* Copyright(c) 2009-2012  Realtek Corporation.*/
 
-#ifndef __RTL92DE_SW_H__
-#define __RTL92DE_SW_H__
+#अगर_अघोषित __RTL92DE_SW_H__
+#घोषणा __RTL92DE_SW_H__
 
-extern spinlock_t globalmutex_power;
-extern spinlock_t globalmutex_for_fwdownload;
-extern spinlock_t globalmutex_for_power_and_efuse;
+बाह्य spinlock_t globalmutex_घातer;
+बाह्य spinlock_t globalmutex_क्रम_fwकरोwnload;
+बाह्य spinlock_t globalmutex_क्रम_घातer_and_efuse;
 
-#endif
+#पूर्ण_अगर

@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * OSS compatible sequencer driver
  *
@@ -7,690 +8,690 @@
  * Copyright (C) 1998,99 Takashi Iwai <tiwai@suse.de>
  */
 
-#include <sound/asoundef.h>
-#include "seq_oss_midi.h"
-#include "seq_oss_readq.h"
-#include "seq_oss_timer.h"
-#include "seq_oss_event.h"
-#include <sound/seq_midi_event.h>
-#include "../seq_lock.h"
-#include <linux/init.h>
-#include <linux/slab.h>
-#include <linux/nospec.h>
+#समावेश <sound/asoundef.h>
+#समावेश "seq_oss_midi.h"
+#समावेश "seq_oss_readq.h"
+#समावेश "seq_oss_timer.h"
+#समावेश "seq_oss_event.h"
+#समावेश <sound/seq_midi_event.h>
+#समावेश "../seq_lock.h"
+#समावेश <linux/init.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/nospec.h>
 
 
 /*
- * constants
+ * स्थिरants
  */
-#define SNDRV_SEQ_OSS_MAX_MIDI_NAME	30
+#घोषणा SNDRV_SEQ_OSS_MAX_MIDI_NAME	30
 
 /*
  * definition of midi device record
  */
-struct seq_oss_midi {
-	int seq_device;		/* device number */
-	int client;		/* sequencer client number */
-	int port;		/* sequencer port number */
-	unsigned int flags;	/* port capability */
-	int opened;		/* flag for opening */
-	unsigned char name[SNDRV_SEQ_OSS_MAX_MIDI_NAME];
-	struct snd_midi_event *coder;	/* MIDI event coder */
-	struct seq_oss_devinfo *devinfo;	/* assigned OSSseq device */
+काष्ठा seq_oss_midi अणु
+	पूर्णांक seq_device;		/* device number */
+	पूर्णांक client;		/* sequencer client number */
+	पूर्णांक port;		/* sequencer port number */
+	अचिन्हित पूर्णांक flags;	/* port capability */
+	पूर्णांक खोलोed;		/* flag क्रम खोलोing */
+	अचिन्हित अक्षर name[SNDRV_SEQ_OSS_MAX_MIDI_NAME];
+	काष्ठा snd_midi_event *coder;	/* MIDI event coder */
+	काष्ठा seq_oss_devinfo *devinfo;	/* asचिन्हित OSSseq device */
 	snd_use_lock_t use_lock;
-};
+पूर्ण;
 
 
 /*
  * midi device table
  */
-static int max_midi_devs;
-static struct seq_oss_midi *midi_devs[SNDRV_SEQ_OSS_MAX_MIDI_DEVS];
+अटल पूर्णांक max_midi_devs;
+अटल काष्ठा seq_oss_midi *midi_devs[SNDRV_SEQ_OSS_MAX_MIDI_DEVS];
 
-static DEFINE_SPINLOCK(register_lock);
+अटल DEFINE_SPINLOCK(रेजिस्टर_lock);
 
 /*
  * prototypes
  */
-static struct seq_oss_midi *get_mdev(int dev);
-static struct seq_oss_midi *get_mididev(struct seq_oss_devinfo *dp, int dev);
-static int send_synth_event(struct seq_oss_devinfo *dp, struct snd_seq_event *ev, int dev);
-static int send_midi_event(struct seq_oss_devinfo *dp, struct snd_seq_event *ev, struct seq_oss_midi *mdev);
+अटल काष्ठा seq_oss_midi *get_mdev(पूर्णांक dev);
+अटल काष्ठा seq_oss_midi *get_mididev(काष्ठा seq_oss_devinfo *dp, पूर्णांक dev);
+अटल पूर्णांक send_synth_event(काष्ठा seq_oss_devinfo *dp, काष्ठा snd_seq_event *ev, पूर्णांक dev);
+अटल पूर्णांक send_midi_event(काष्ठा seq_oss_devinfo *dp, काष्ठा snd_seq_event *ev, काष्ठा seq_oss_midi *mdev);
 
 /*
  * look up the existing ports
  * this looks a very exhausting job.
  */
-int
-snd_seq_oss_midi_lookup_ports(int client)
-{
-	struct snd_seq_client_info *clinfo;
-	struct snd_seq_port_info *pinfo;
+पूर्णांक
+snd_seq_oss_midi_lookup_ports(पूर्णांक client)
+अणु
+	काष्ठा snd_seq_client_info *clinfo;
+	काष्ठा snd_seq_port_info *pinfo;
 
-	clinfo = kzalloc(sizeof(*clinfo), GFP_KERNEL);
-	pinfo = kzalloc(sizeof(*pinfo), GFP_KERNEL);
-	if (! clinfo || ! pinfo) {
-		kfree(clinfo);
-		kfree(pinfo);
-		return -ENOMEM;
-	}
+	clinfo = kzalloc(माप(*clinfo), GFP_KERNEL);
+	pinfo = kzalloc(माप(*pinfo), GFP_KERNEL);
+	अगर (! clinfo || ! pinfo) अणु
+		kमुक्त(clinfo);
+		kमुक्त(pinfo);
+		वापस -ENOMEM;
+	पूर्ण
 	clinfo->client = -1;
-	while (snd_seq_kernel_client_ctl(client, SNDRV_SEQ_IOCTL_QUERY_NEXT_CLIENT, clinfo) == 0) {
-		if (clinfo->client == client)
-			continue; /* ignore myself */
+	जबतक (snd_seq_kernel_client_ctl(client, SNDRV_SEQ_IOCTL_QUERY_NEXT_CLIENT, clinfo) == 0) अणु
+		अगर (clinfo->client == client)
+			जारी; /* ignore myself */
 		pinfo->addr.client = clinfo->client;
 		pinfo->addr.port = -1;
-		while (snd_seq_kernel_client_ctl(client, SNDRV_SEQ_IOCTL_QUERY_NEXT_PORT, pinfo) == 0)
+		जबतक (snd_seq_kernel_client_ctl(client, SNDRV_SEQ_IOCTL_QUERY_NEXT_PORT, pinfo) == 0)
 			snd_seq_oss_midi_check_new_port(pinfo);
-	}
-	kfree(clinfo);
-	kfree(pinfo);
-	return 0;
-}
+	पूर्ण
+	kमुक्त(clinfo);
+	kमुक्त(pinfo);
+	वापस 0;
+पूर्ण
 
 
 /*
  */
-static struct seq_oss_midi *
-get_mdev(int dev)
-{
-	struct seq_oss_midi *mdev;
-	unsigned long flags;
+अटल काष्ठा seq_oss_midi *
+get_mdev(पूर्णांक dev)
+अणु
+	काष्ठा seq_oss_midi *mdev;
+	अचिन्हित दीर्घ flags;
 
-	spin_lock_irqsave(&register_lock, flags);
+	spin_lock_irqsave(&रेजिस्टर_lock, flags);
 	mdev = midi_devs[dev];
-	if (mdev)
+	अगर (mdev)
 		snd_use_lock_use(&mdev->use_lock);
-	spin_unlock_irqrestore(&register_lock, flags);
-	return mdev;
-}
+	spin_unlock_irqrestore(&रेजिस्टर_lock, flags);
+	वापस mdev;
+पूर्ण
 
 /*
- * look for the identical slot
+ * look क्रम the identical slot
  */
-static struct seq_oss_midi *
-find_slot(int client, int port)
-{
-	int i;
-	struct seq_oss_midi *mdev;
-	unsigned long flags;
+अटल काष्ठा seq_oss_midi *
+find_slot(पूर्णांक client, पूर्णांक port)
+अणु
+	पूर्णांक i;
+	काष्ठा seq_oss_midi *mdev;
+	अचिन्हित दीर्घ flags;
 
-	spin_lock_irqsave(&register_lock, flags);
-	for (i = 0; i < max_midi_devs; i++) {
+	spin_lock_irqsave(&रेजिस्टर_lock, flags);
+	क्रम (i = 0; i < max_midi_devs; i++) अणु
 		mdev = midi_devs[i];
-		if (mdev && mdev->client == client && mdev->port == port) {
+		अगर (mdev && mdev->client == client && mdev->port == port) अणु
 			/* found! */
 			snd_use_lock_use(&mdev->use_lock);
-			spin_unlock_irqrestore(&register_lock, flags);
-			return mdev;
-		}
-	}
-	spin_unlock_irqrestore(&register_lock, flags);
-	return NULL;
-}
+			spin_unlock_irqrestore(&रेजिस्टर_lock, flags);
+			वापस mdev;
+		पूर्ण
+	पूर्ण
+	spin_unlock_irqrestore(&रेजिस्टर_lock, flags);
+	वापस शून्य;
+पूर्ण
 
 
-#define PERM_WRITE (SNDRV_SEQ_PORT_CAP_WRITE|SNDRV_SEQ_PORT_CAP_SUBS_WRITE)
-#define PERM_READ (SNDRV_SEQ_PORT_CAP_READ|SNDRV_SEQ_PORT_CAP_SUBS_READ)
+#घोषणा PERM_WRITE (SNDRV_SEQ_PORT_CAP_WRITE|SNDRV_SEQ_PORT_CAP_SUBS_WRITE)
+#घोषणा PERM_READ (SNDRV_SEQ_PORT_CAP_READ|SNDRV_SEQ_PORT_CAP_SUBS_READ)
 /*
- * register a new port if it doesn't exist yet
+ * रेजिस्टर a new port अगर it करोesn't exist yet
  */
-int
-snd_seq_oss_midi_check_new_port(struct snd_seq_port_info *pinfo)
-{
-	int i;
-	struct seq_oss_midi *mdev;
-	unsigned long flags;
+पूर्णांक
+snd_seq_oss_midi_check_new_port(काष्ठा snd_seq_port_info *pinfo)
+अणु
+	पूर्णांक i;
+	काष्ठा seq_oss_midi *mdev;
+	अचिन्हित दीर्घ flags;
 
 	/* the port must include generic midi */
-	if (! (pinfo->type & SNDRV_SEQ_PORT_TYPE_MIDI_GENERIC))
-		return 0;
-	/* either read or write subscribable */
-	if ((pinfo->capability & PERM_WRITE) != PERM_WRITE &&
+	अगर (! (pinfo->type & SNDRV_SEQ_PORT_TYPE_MIDI_GENERIC))
+		वापस 0;
+	/* either पढ़ो or ग_लिखो subscribable */
+	अगर ((pinfo->capability & PERM_WRITE) != PERM_WRITE &&
 	    (pinfo->capability & PERM_READ) != PERM_READ)
-		return 0;
+		वापस 0;
 
 	/*
-	 * look for the identical slot
+	 * look क्रम the identical slot
 	 */
-	if ((mdev = find_slot(pinfo->addr.client, pinfo->addr.port)) != NULL) {
-		/* already exists */
-		snd_use_lock_free(&mdev->use_lock);
-		return 0;
-	}
+	अगर ((mdev = find_slot(pinfo->addr.client, pinfo->addr.port)) != शून्य) अणु
+		/* alपढ़ोy exists */
+		snd_use_lock_मुक्त(&mdev->use_lock);
+		वापस 0;
+	पूर्ण
 
 	/*
 	 * allocate midi info record
 	 */
-	mdev = kzalloc(sizeof(*mdev), GFP_KERNEL);
-	if (!mdev)
-		return -ENOMEM;
+	mdev = kzalloc(माप(*mdev), GFP_KERNEL);
+	अगर (!mdev)
+		वापस -ENOMEM;
 
-	/* copy the port information */
+	/* copy the port inक्रमmation */
 	mdev->client = pinfo->addr.client;
 	mdev->port = pinfo->addr.port;
 	mdev->flags = pinfo->capability;
-	mdev->opened = 0;
+	mdev->खोलोed = 0;
 	snd_use_lock_init(&mdev->use_lock);
 
 	/* copy and truncate the name of synth device */
-	strscpy(mdev->name, pinfo->name, sizeof(mdev->name));
+	strscpy(mdev->name, pinfo->name, माप(mdev->name));
 
 	/* create MIDI coder */
-	if (snd_midi_event_new(MAX_MIDI_EVENT_BUF, &mdev->coder) < 0) {
+	अगर (snd_midi_event_new(MAX_MIDI_EVENT_BUF, &mdev->coder) < 0) अणु
 		pr_err("ALSA: seq_oss: can't malloc midi coder\n");
-		kfree(mdev);
-		return -ENOMEM;
-	}
+		kमुक्त(mdev);
+		वापस -ENOMEM;
+	पूर्ण
 	/* OSS sequencer adds running status to all sequences */
 	snd_midi_event_no_status(mdev->coder, 1);
 
 	/*
-	 * look for en empty slot
+	 * look क्रम en empty slot
 	 */
-	spin_lock_irqsave(&register_lock, flags);
-	for (i = 0; i < max_midi_devs; i++) {
-		if (midi_devs[i] == NULL)
-			break;
-	}
-	if (i >= max_midi_devs) {
-		if (max_midi_devs >= SNDRV_SEQ_OSS_MAX_MIDI_DEVS) {
-			spin_unlock_irqrestore(&register_lock, flags);
-			snd_midi_event_free(mdev->coder);
-			kfree(mdev);
-			return -ENOMEM;
-		}
+	spin_lock_irqsave(&रेजिस्टर_lock, flags);
+	क्रम (i = 0; i < max_midi_devs; i++) अणु
+		अगर (midi_devs[i] == शून्य)
+			अवरोध;
+	पूर्ण
+	अगर (i >= max_midi_devs) अणु
+		अगर (max_midi_devs >= SNDRV_SEQ_OSS_MAX_MIDI_DEVS) अणु
+			spin_unlock_irqrestore(&रेजिस्टर_lock, flags);
+			snd_midi_event_मुक्त(mdev->coder);
+			kमुक्त(mdev);
+			वापस -ENOMEM;
+		पूर्ण
 		max_midi_devs++;
-	}
+	पूर्ण
 	mdev->seq_device = i;
 	midi_devs[mdev->seq_device] = mdev;
-	spin_unlock_irqrestore(&register_lock, flags);
+	spin_unlock_irqrestore(&रेजिस्टर_lock, flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * release the midi device if it was registered
+ * release the midi device अगर it was रेजिस्टरed
  */
-int
-snd_seq_oss_midi_check_exit_port(int client, int port)
-{
-	struct seq_oss_midi *mdev;
-	unsigned long flags;
-	int index;
+पूर्णांक
+snd_seq_oss_midi_check_निकास_port(पूर्णांक client, पूर्णांक port)
+अणु
+	काष्ठा seq_oss_midi *mdev;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक index;
 
-	if ((mdev = find_slot(client, port)) != NULL) {
-		spin_lock_irqsave(&register_lock, flags);
-		midi_devs[mdev->seq_device] = NULL;
-		spin_unlock_irqrestore(&register_lock, flags);
-		snd_use_lock_free(&mdev->use_lock);
+	अगर ((mdev = find_slot(client, port)) != शून्य) अणु
+		spin_lock_irqsave(&रेजिस्टर_lock, flags);
+		midi_devs[mdev->seq_device] = शून्य;
+		spin_unlock_irqrestore(&रेजिस्टर_lock, flags);
+		snd_use_lock_मुक्त(&mdev->use_lock);
 		snd_use_lock_sync(&mdev->use_lock);
-		snd_midi_event_free(mdev->coder);
-		kfree(mdev);
-	}
-	spin_lock_irqsave(&register_lock, flags);
-	for (index = max_midi_devs - 1; index >= 0; index--) {
-		if (midi_devs[index])
-			break;
-	}
+		snd_midi_event_मुक्त(mdev->coder);
+		kमुक्त(mdev);
+	पूर्ण
+	spin_lock_irqsave(&रेजिस्टर_lock, flags);
+	क्रम (index = max_midi_devs - 1; index >= 0; index--) अणु
+		अगर (midi_devs[index])
+			अवरोध;
+	पूर्ण
 	max_midi_devs = index + 1;
-	spin_unlock_irqrestore(&register_lock, flags);
-	return 0;
-}
+	spin_unlock_irqrestore(&रेजिस्टर_lock, flags);
+	वापस 0;
+पूर्ण
 
 
 /*
- * release the midi device if it was registered
+ * release the midi device अगर it was रेजिस्टरed
  */
-void
-snd_seq_oss_midi_clear_all(void)
-{
-	int i;
-	struct seq_oss_midi *mdev;
-	unsigned long flags;
+व्योम
+snd_seq_oss_midi_clear_all(व्योम)
+अणु
+	पूर्णांक i;
+	काष्ठा seq_oss_midi *mdev;
+	अचिन्हित दीर्घ flags;
 
-	spin_lock_irqsave(&register_lock, flags);
-	for (i = 0; i < max_midi_devs; i++) {
-		if ((mdev = midi_devs[i]) != NULL) {
-			snd_midi_event_free(mdev->coder);
-			kfree(mdev);
-			midi_devs[i] = NULL;
-		}
-	}
+	spin_lock_irqsave(&रेजिस्टर_lock, flags);
+	क्रम (i = 0; i < max_midi_devs; i++) अणु
+		अगर ((mdev = midi_devs[i]) != शून्य) अणु
+			snd_midi_event_मुक्त(mdev->coder);
+			kमुक्त(mdev);
+			midi_devs[i] = शून्य;
+		पूर्ण
+	पूर्ण
 	max_midi_devs = 0;
-	spin_unlock_irqrestore(&register_lock, flags);
-}
+	spin_unlock_irqrestore(&रेजिस्टर_lock, flags);
+पूर्ण
 
 
 /*
  * set up midi tables
  */
-void
-snd_seq_oss_midi_setup(struct seq_oss_devinfo *dp)
-{
+व्योम
+snd_seq_oss_midi_setup(काष्ठा seq_oss_devinfo *dp)
+अणु
 	dp->max_mididev = max_midi_devs;
-}
+पूर्ण
 
 /*
  * clean up midi tables
  */
-void
-snd_seq_oss_midi_cleanup(struct seq_oss_devinfo *dp)
-{
-	int i;
-	for (i = 0; i < dp->max_mididev; i++)
-		snd_seq_oss_midi_close(dp, i);
+व्योम
+snd_seq_oss_midi_cleanup(काष्ठा seq_oss_devinfo *dp)
+अणु
+	पूर्णांक i;
+	क्रम (i = 0; i < dp->max_mididev; i++)
+		snd_seq_oss_midi_बंद(dp, i);
 	dp->max_mididev = 0;
-}
+पूर्ण
 
 
 /*
- * open all midi devices.  ignore errors.
+ * खोलो all midi devices.  ignore errors.
  */
-void
-snd_seq_oss_midi_open_all(struct seq_oss_devinfo *dp, int file_mode)
-{
-	int i;
-	for (i = 0; i < dp->max_mididev; i++)
-		snd_seq_oss_midi_open(dp, i, file_mode);
-}
+व्योम
+snd_seq_oss_midi_खोलो_all(काष्ठा seq_oss_devinfo *dp, पूर्णांक file_mode)
+अणु
+	पूर्णांक i;
+	क्रम (i = 0; i < dp->max_mididev; i++)
+		snd_seq_oss_midi_खोलो(dp, i, file_mode);
+पूर्ण
 
 
 /*
- * get the midi device information
+ * get the midi device inक्रमmation
  */
-static struct seq_oss_midi *
-get_mididev(struct seq_oss_devinfo *dp, int dev)
-{
-	if (dev < 0 || dev >= dp->max_mididev)
-		return NULL;
+अटल काष्ठा seq_oss_midi *
+get_mididev(काष्ठा seq_oss_devinfo *dp, पूर्णांक dev)
+अणु
+	अगर (dev < 0 || dev >= dp->max_mididev)
+		वापस शून्य;
 	dev = array_index_nospec(dev, dp->max_mididev);
-	return get_mdev(dev);
-}
+	वापस get_mdev(dev);
+पूर्ण
 
 
 /*
- * open the midi device if not opened yet
+ * खोलो the midi device अगर not खोलोed yet
  */
-int
-snd_seq_oss_midi_open(struct seq_oss_devinfo *dp, int dev, int fmode)
-{
-	int perm;
-	struct seq_oss_midi *mdev;
-	struct snd_seq_port_subscribe subs;
+पूर्णांक
+snd_seq_oss_midi_खोलो(काष्ठा seq_oss_devinfo *dp, पूर्णांक dev, पूर्णांक भ_शेषe)
+अणु
+	पूर्णांक perm;
+	काष्ठा seq_oss_midi *mdev;
+	काष्ठा snd_seq_port_subscribe subs;
 
-	if ((mdev = get_mididev(dp, dev)) == NULL)
-		return -ENODEV;
+	अगर ((mdev = get_mididev(dp, dev)) == शून्य)
+		वापस -ENODEV;
 
-	/* already used? */
-	if (mdev->opened && mdev->devinfo != dp) {
-		snd_use_lock_free(&mdev->use_lock);
-		return -EBUSY;
-	}
+	/* alपढ़ोy used? */
+	अगर (mdev->खोलोed && mdev->devinfo != dp) अणु
+		snd_use_lock_मुक्त(&mdev->use_lock);
+		वापस -EBUSY;
+	पूर्ण
 
 	perm = 0;
-	if (is_write_mode(fmode))
+	अगर (is_ग_लिखो_mode(भ_शेषe))
 		perm |= PERM_WRITE;
-	if (is_read_mode(fmode))
+	अगर (is_पढ़ो_mode(भ_शेषe))
 		perm |= PERM_READ;
 	perm &= mdev->flags;
-	if (perm == 0) {
-		snd_use_lock_free(&mdev->use_lock);
-		return -ENXIO;
-	}
+	अगर (perm == 0) अणु
+		snd_use_lock_मुक्त(&mdev->use_lock);
+		वापस -ENXIO;
+	पूर्ण
 
-	/* already opened? */
-	if ((mdev->opened & perm) == perm) {
-		snd_use_lock_free(&mdev->use_lock);
-		return 0;
-	}
+	/* alपढ़ोy खोलोed? */
+	अगर ((mdev->खोलोed & perm) == perm) अणु
+		snd_use_lock_मुक्त(&mdev->use_lock);
+		वापस 0;
+	पूर्ण
 
-	perm &= ~mdev->opened;
+	perm &= ~mdev->खोलोed;
 
-	memset(&subs, 0, sizeof(subs));
+	स_रखो(&subs, 0, माप(subs));
 
-	if (perm & PERM_WRITE) {
+	अगर (perm & PERM_WRITE) अणु
 		subs.sender = dp->addr;
 		subs.dest.client = mdev->client;
 		subs.dest.port = mdev->port;
-		if (snd_seq_kernel_client_ctl(dp->cseq, SNDRV_SEQ_IOCTL_SUBSCRIBE_PORT, &subs) >= 0)
-			mdev->opened |= PERM_WRITE;
-	}
-	if (perm & PERM_READ) {
+		अगर (snd_seq_kernel_client_ctl(dp->cseq, SNDRV_SEQ_IOCTL_SUBSCRIBE_PORT, &subs) >= 0)
+			mdev->खोलोed |= PERM_WRITE;
+	पूर्ण
+	अगर (perm & PERM_READ) अणु
 		subs.sender.client = mdev->client;
 		subs.sender.port = mdev->port;
 		subs.dest = dp->addr;
 		subs.flags = SNDRV_SEQ_PORT_SUBS_TIMESTAMP;
-		subs.queue = dp->queue;		/* queue for timestamps */
-		if (snd_seq_kernel_client_ctl(dp->cseq, SNDRV_SEQ_IOCTL_SUBSCRIBE_PORT, &subs) >= 0)
-			mdev->opened |= PERM_READ;
-	}
+		subs.queue = dp->queue;		/* queue क्रम बारtamps */
+		अगर (snd_seq_kernel_client_ctl(dp->cseq, SNDRV_SEQ_IOCTL_SUBSCRIBE_PORT, &subs) >= 0)
+			mdev->खोलोed |= PERM_READ;
+	पूर्ण
 
-	if (! mdev->opened) {
-		snd_use_lock_free(&mdev->use_lock);
-		return -ENXIO;
-	}
+	अगर (! mdev->खोलोed) अणु
+		snd_use_lock_मुक्त(&mdev->use_lock);
+		वापस -ENXIO;
+	पूर्ण
 
 	mdev->devinfo = dp;
-	snd_use_lock_free(&mdev->use_lock);
-	return 0;
-}
+	snd_use_lock_मुक्त(&mdev->use_lock);
+	वापस 0;
+पूर्ण
 
 /*
- * close the midi device if already opened
+ * बंद the midi device अगर alपढ़ोy खोलोed
  */
-int
-snd_seq_oss_midi_close(struct seq_oss_devinfo *dp, int dev)
-{
-	struct seq_oss_midi *mdev;
-	struct snd_seq_port_subscribe subs;
+पूर्णांक
+snd_seq_oss_midi_बंद(काष्ठा seq_oss_devinfo *dp, पूर्णांक dev)
+अणु
+	काष्ठा seq_oss_midi *mdev;
+	काष्ठा snd_seq_port_subscribe subs;
 
-	if ((mdev = get_mididev(dp, dev)) == NULL)
-		return -ENODEV;
-	if (! mdev->opened || mdev->devinfo != dp) {
-		snd_use_lock_free(&mdev->use_lock);
-		return 0;
-	}
+	अगर ((mdev = get_mididev(dp, dev)) == शून्य)
+		वापस -ENODEV;
+	अगर (! mdev->खोलोed || mdev->devinfo != dp) अणु
+		snd_use_lock_मुक्त(&mdev->use_lock);
+		वापस 0;
+	पूर्ण
 
-	memset(&subs, 0, sizeof(subs));
-	if (mdev->opened & PERM_WRITE) {
+	स_रखो(&subs, 0, माप(subs));
+	अगर (mdev->खोलोed & PERM_WRITE) अणु
 		subs.sender = dp->addr;
 		subs.dest.client = mdev->client;
 		subs.dest.port = mdev->port;
 		snd_seq_kernel_client_ctl(dp->cseq, SNDRV_SEQ_IOCTL_UNSUBSCRIBE_PORT, &subs);
-	}
-	if (mdev->opened & PERM_READ) {
+	पूर्ण
+	अगर (mdev->खोलोed & PERM_READ) अणु
 		subs.sender.client = mdev->client;
 		subs.sender.port = mdev->port;
 		subs.dest = dp->addr;
 		snd_seq_kernel_client_ctl(dp->cseq, SNDRV_SEQ_IOCTL_UNSUBSCRIBE_PORT, &subs);
-	}
+	पूर्ण
 
-	mdev->opened = 0;
-	mdev->devinfo = NULL;
+	mdev->खोलोed = 0;
+	mdev->devinfo = शून्य;
 
-	snd_use_lock_free(&mdev->use_lock);
-	return 0;
-}
+	snd_use_lock_मुक्त(&mdev->use_lock);
+	वापस 0;
+पूर्ण
 
 /*
  * change seq capability flags to file mode flags
  */
-int
-snd_seq_oss_midi_filemode(struct seq_oss_devinfo *dp, int dev)
-{
-	struct seq_oss_midi *mdev;
-	int mode;
+पूर्णांक
+snd_seq_oss_midi_filemode(काष्ठा seq_oss_devinfo *dp, पूर्णांक dev)
+अणु
+	काष्ठा seq_oss_midi *mdev;
+	पूर्णांक mode;
 
-	if ((mdev = get_mididev(dp, dev)) == NULL)
-		return 0;
+	अगर ((mdev = get_mididev(dp, dev)) == शून्य)
+		वापस 0;
 
 	mode = 0;
-	if (mdev->opened & PERM_WRITE)
-		mode |= SNDRV_SEQ_OSS_FILE_WRITE;
-	if (mdev->opened & PERM_READ)
-		mode |= SNDRV_SEQ_OSS_FILE_READ;
+	अगर (mdev->खोलोed & PERM_WRITE)
+		mode |= SNDRV_SEQ_OSS_खाता_WRITE;
+	अगर (mdev->खोलोed & PERM_READ)
+		mode |= SNDRV_SEQ_OSS_खाता_READ;
 
-	snd_use_lock_free(&mdev->use_lock);
-	return mode;
-}
+	snd_use_lock_मुक्त(&mdev->use_lock);
+	वापस mode;
+पूर्ण
 
 /*
- * reset the midi device and close it:
- * so far, only close the device.
+ * reset the midi device and बंद it:
+ * so far, only बंद the device.
  */
-void
-snd_seq_oss_midi_reset(struct seq_oss_devinfo *dp, int dev)
-{
-	struct seq_oss_midi *mdev;
+व्योम
+snd_seq_oss_midi_reset(काष्ठा seq_oss_devinfo *dp, पूर्णांक dev)
+अणु
+	काष्ठा seq_oss_midi *mdev;
 
-	if ((mdev = get_mididev(dp, dev)) == NULL)
-		return;
-	if (! mdev->opened) {
-		snd_use_lock_free(&mdev->use_lock);
-		return;
-	}
+	अगर ((mdev = get_mididev(dp, dev)) == शून्य)
+		वापस;
+	अगर (! mdev->खोलोed) अणु
+		snd_use_lock_मुक्त(&mdev->use_lock);
+		वापस;
+	पूर्ण
 
-	if (mdev->opened & PERM_WRITE) {
-		struct snd_seq_event ev;
-		int c;
+	अगर (mdev->खोलोed & PERM_WRITE) अणु
+		काष्ठा snd_seq_event ev;
+		पूर्णांक c;
 
-		memset(&ev, 0, sizeof(ev));
+		स_रखो(&ev, 0, माप(ev));
 		ev.dest.client = mdev->client;
 		ev.dest.port = mdev->port;
 		ev.queue = dp->queue;
 		ev.source.port = dp->port;
-		if (dp->seq_mode == SNDRV_SEQ_OSS_MODE_SYNTH) {
+		अगर (dp->seq_mode == SNDRV_SEQ_OSS_MODE_SYNTH) अणु
 			ev.type = SNDRV_SEQ_EVENT_SENSING;
 			snd_seq_oss_dispatch(dp, &ev, 0, 0);
-		}
-		for (c = 0; c < 16; c++) {
+		पूर्ण
+		क्रम (c = 0; c < 16; c++) अणु
 			ev.type = SNDRV_SEQ_EVENT_CONTROLLER;
 			ev.data.control.channel = c;
 			ev.data.control.param = MIDI_CTL_ALL_NOTES_OFF;
 			snd_seq_oss_dispatch(dp, &ev, 0, 0);
-			if (dp->seq_mode == SNDRV_SEQ_OSS_MODE_MUSIC) {
+			अगर (dp->seq_mode == SNDRV_SEQ_OSS_MODE_MUSIC) अणु
 				ev.data.control.param =
 					MIDI_CTL_RESET_CONTROLLERS;
 				snd_seq_oss_dispatch(dp, &ev, 0, 0);
 				ev.type = SNDRV_SEQ_EVENT_PITCHBEND;
 				ev.data.control.value = 0;
 				snd_seq_oss_dispatch(dp, &ev, 0, 0);
-			}
-		}
-	}
-	// snd_seq_oss_midi_close(dp, dev);
-	snd_use_lock_free(&mdev->use_lock);
-}
+			पूर्ण
+		पूर्ण
+	पूर्ण
+	// snd_seq_oss_midi_बंद(dp, dev);
+	snd_use_lock_मुक्त(&mdev->use_lock);
+पूर्ण
 
 
 /*
- * get client/port of the specified MIDI device
+ * get client/port of the specअगरied MIDI device
  */
-void
-snd_seq_oss_midi_get_addr(struct seq_oss_devinfo *dp, int dev, struct snd_seq_addr *addr)
-{
-	struct seq_oss_midi *mdev;
+व्योम
+snd_seq_oss_midi_get_addr(काष्ठा seq_oss_devinfo *dp, पूर्णांक dev, काष्ठा snd_seq_addr *addr)
+अणु
+	काष्ठा seq_oss_midi *mdev;
 
-	if ((mdev = get_mididev(dp, dev)) == NULL)
-		return;
+	अगर ((mdev = get_mididev(dp, dev)) == शून्य)
+		वापस;
 	addr->client = mdev->client;
 	addr->port = mdev->port;
-	snd_use_lock_free(&mdev->use_lock);
-}
+	snd_use_lock_मुक्त(&mdev->use_lock);
+पूर्ण
 
 
 /*
  * input callback - this can be atomic
  */
-int
-snd_seq_oss_midi_input(struct snd_seq_event *ev, int direct, void *private_data)
-{
-	struct seq_oss_devinfo *dp = (struct seq_oss_devinfo *)private_data;
-	struct seq_oss_midi *mdev;
-	int rc;
+पूर्णांक
+snd_seq_oss_midi_input(काष्ठा snd_seq_event *ev, पूर्णांक direct, व्योम *निजी_data)
+अणु
+	काष्ठा seq_oss_devinfo *dp = (काष्ठा seq_oss_devinfo *)निजी_data;
+	काष्ठा seq_oss_midi *mdev;
+	पूर्णांक rc;
 
-	if (dp->readq == NULL)
-		return 0;
-	if ((mdev = find_slot(ev->source.client, ev->source.port)) == NULL)
-		return 0;
-	if (! (mdev->opened & PERM_READ)) {
-		snd_use_lock_free(&mdev->use_lock);
-		return 0;
-	}
+	अगर (dp->पढ़ोq == शून्य)
+		वापस 0;
+	अगर ((mdev = find_slot(ev->source.client, ev->source.port)) == शून्य)
+		वापस 0;
+	अगर (! (mdev->खोलोed & PERM_READ)) अणु
+		snd_use_lock_मुक्त(&mdev->use_lock);
+		वापस 0;
+	पूर्ण
 
-	if (dp->seq_mode == SNDRV_SEQ_OSS_MODE_MUSIC)
+	अगर (dp->seq_mode == SNDRV_SEQ_OSS_MODE_MUSIC)
 		rc = send_synth_event(dp, ev, mdev->seq_device);
-	else
+	अन्यथा
 		rc = send_midi_event(dp, ev, mdev);
 
-	snd_use_lock_free(&mdev->use_lock);
-	return rc;
-}
+	snd_use_lock_मुक्त(&mdev->use_lock);
+	वापस rc;
+पूर्ण
 
 /*
  * convert ALSA sequencer event to OSS synth event
  */
-static int
-send_synth_event(struct seq_oss_devinfo *dp, struct snd_seq_event *ev, int dev)
-{
-	union evrec ossev;
+अटल पूर्णांक
+send_synth_event(काष्ठा seq_oss_devinfo *dp, काष्ठा snd_seq_event *ev, पूर्णांक dev)
+अणु
+	जोड़ evrec ossev;
 
-	memset(&ossev, 0, sizeof(ossev));
+	स_रखो(&ossev, 0, माप(ossev));
 
-	switch (ev->type) {
-	case SNDRV_SEQ_EVENT_NOTEON:
-		ossev.v.cmd = MIDI_NOTEON; break;
-	case SNDRV_SEQ_EVENT_NOTEOFF:
-		ossev.v.cmd = MIDI_NOTEOFF; break;
-	case SNDRV_SEQ_EVENT_KEYPRESS:
-		ossev.v.cmd = MIDI_KEY_PRESSURE; break;
-	case SNDRV_SEQ_EVENT_CONTROLLER:
-		ossev.l.cmd = MIDI_CTL_CHANGE; break;
-	case SNDRV_SEQ_EVENT_PGMCHANGE:
-		ossev.l.cmd = MIDI_PGM_CHANGE; break;
-	case SNDRV_SEQ_EVENT_CHANPRESS:
-		ossev.l.cmd = MIDI_CHN_PRESSURE; break;
-	case SNDRV_SEQ_EVENT_PITCHBEND:
-		ossev.l.cmd = MIDI_PITCH_BEND; break;
-	default:
-		return 0; /* not supported */
-	}
+	चयन (ev->type) अणु
+	हाल SNDRV_SEQ_EVENT_NOTEON:
+		ossev.v.cmd = MIDI_NOTEON; अवरोध;
+	हाल SNDRV_SEQ_EVENT_NOTखातापूर्णF:
+		ossev.v.cmd = MIDI_NOTखातापूर्णF; अवरोध;
+	हाल SNDRV_SEQ_EVENT_KEYPRESS:
+		ossev.v.cmd = MIDI_KEY_PRESSURE; अवरोध;
+	हाल SNDRV_SEQ_EVENT_CONTROLLER:
+		ossev.l.cmd = MIDI_CTL_CHANGE; अवरोध;
+	हाल SNDRV_SEQ_EVENT_PGMCHANGE:
+		ossev.l.cmd = MIDI_PGM_CHANGE; अवरोध;
+	हाल SNDRV_SEQ_EVENT_CHANPRESS:
+		ossev.l.cmd = MIDI_CHN_PRESSURE; अवरोध;
+	हाल SNDRV_SEQ_EVENT_PITCHBEND:
+		ossev.l.cmd = MIDI_PITCH_BEND; अवरोध;
+	शेष:
+		वापस 0; /* not supported */
+	पूर्ण
 
 	ossev.v.dev = dev;
 
-	switch (ev->type) {
-	case SNDRV_SEQ_EVENT_NOTEON:
-	case SNDRV_SEQ_EVENT_NOTEOFF:
-	case SNDRV_SEQ_EVENT_KEYPRESS:
+	चयन (ev->type) अणु
+	हाल SNDRV_SEQ_EVENT_NOTEON:
+	हाल SNDRV_SEQ_EVENT_NOTखातापूर्णF:
+	हाल SNDRV_SEQ_EVENT_KEYPRESS:
 		ossev.v.code = EV_CHN_VOICE;
 		ossev.v.note = ev->data.note.note;
 		ossev.v.parm = ev->data.note.velocity;
 		ossev.v.chn = ev->data.note.channel;
-		break;
-	case SNDRV_SEQ_EVENT_CONTROLLER:
-	case SNDRV_SEQ_EVENT_PGMCHANGE:
-	case SNDRV_SEQ_EVENT_CHANPRESS:
+		अवरोध;
+	हाल SNDRV_SEQ_EVENT_CONTROLLER:
+	हाल SNDRV_SEQ_EVENT_PGMCHANGE:
+	हाल SNDRV_SEQ_EVENT_CHANPRESS:
 		ossev.l.code = EV_CHN_COMMON;
 		ossev.l.p1 = ev->data.control.param;
 		ossev.l.val = ev->data.control.value;
 		ossev.l.chn = ev->data.control.channel;
-		break;
-	case SNDRV_SEQ_EVENT_PITCHBEND:
+		अवरोध;
+	हाल SNDRV_SEQ_EVENT_PITCHBEND:
 		ossev.l.code = EV_CHN_COMMON;
 		ossev.l.val = ev->data.control.value + 8192;
 		ossev.l.chn = ev->data.control.channel;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 	
-	snd_seq_oss_readq_put_timestamp(dp->readq, ev->time.tick, dp->seq_mode);
-	snd_seq_oss_readq_put_event(dp->readq, &ossev);
+	snd_seq_oss_पढ़ोq_put_बारtamp(dp->पढ़ोq, ev->समय.tick, dp->seq_mode);
+	snd_seq_oss_पढ़ोq_put_event(dp->पढ़ोq, &ossev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * decode event and send MIDI bytes to read queue
+ * decode event and send MIDI bytes to पढ़ो queue
  */
-static int
-send_midi_event(struct seq_oss_devinfo *dp, struct snd_seq_event *ev, struct seq_oss_midi *mdev)
-{
-	char msg[32];
-	int len;
+अटल पूर्णांक
+send_midi_event(काष्ठा seq_oss_devinfo *dp, काष्ठा snd_seq_event *ev, काष्ठा seq_oss_midi *mdev)
+अणु
+	अक्षर msg[32];
+	पूर्णांक len;
 	
-	snd_seq_oss_readq_put_timestamp(dp->readq, ev->time.tick, dp->seq_mode);
-	if (!dp->timer->running)
-		len = snd_seq_oss_timer_start(dp->timer);
-	if (ev->type == SNDRV_SEQ_EVENT_SYSEX) {
-		snd_seq_oss_readq_sysex(dp->readq, mdev->seq_device, ev);
+	snd_seq_oss_पढ़ोq_put_बारtamp(dp->पढ़ोq, ev->समय.tick, dp->seq_mode);
+	अगर (!dp->समयr->running)
+		len = snd_seq_oss_समयr_start(dp->समयr);
+	अगर (ev->type == SNDRV_SEQ_EVENT_SYSEX) अणु
+		snd_seq_oss_पढ़ोq_sysex(dp->पढ़ोq, mdev->seq_device, ev);
 		snd_midi_event_reset_decode(mdev->coder);
-	} else {
-		len = snd_midi_event_decode(mdev->coder, msg, sizeof(msg), ev);
-		if (len > 0)
-			snd_seq_oss_readq_puts(dp->readq, mdev->seq_device, msg, len);
-	}
+	पूर्ण अन्यथा अणु
+		len = snd_midi_event_decode(mdev->coder, msg, माप(msg), ev);
+		अगर (len > 0)
+			snd_seq_oss_पढ़ोq_माला_दो(dp->पढ़ोq, mdev->seq_device, msg, len);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
 /*
  * dump midi data
- * return 0 : enqueued
+ * वापस 0 : enqueued
  *        non-zero : invalid - ignored
  */
-int
-snd_seq_oss_midi_putc(struct seq_oss_devinfo *dp, int dev, unsigned char c, struct snd_seq_event *ev)
-{
-	struct seq_oss_midi *mdev;
+पूर्णांक
+snd_seq_oss_midi_अ_दो(काष्ठा seq_oss_devinfo *dp, पूर्णांक dev, अचिन्हित अक्षर c, काष्ठा snd_seq_event *ev)
+अणु
+	काष्ठा seq_oss_midi *mdev;
 
-	if ((mdev = get_mididev(dp, dev)) == NULL)
-		return -ENODEV;
-	if (snd_midi_event_encode_byte(mdev->coder, c, ev)) {
+	अगर ((mdev = get_mididev(dp, dev)) == शून्य)
+		वापस -ENODEV;
+	अगर (snd_midi_event_encode_byte(mdev->coder, c, ev)) अणु
 		snd_seq_oss_fill_addr(dp, ev, mdev->client, mdev->port);
-		snd_use_lock_free(&mdev->use_lock);
-		return 0;
-	}
-	snd_use_lock_free(&mdev->use_lock);
-	return -EINVAL;
-}
+		snd_use_lock_मुक्त(&mdev->use_lock);
+		वापस 0;
+	पूर्ण
+	snd_use_lock_मुक्त(&mdev->use_lock);
+	वापस -EINVAL;
+पूर्ण
 
 /*
  * create OSS compatible midi_info record
  */
-int
-snd_seq_oss_midi_make_info(struct seq_oss_devinfo *dp, int dev, struct midi_info *inf)
-{
-	struct seq_oss_midi *mdev;
+पूर्णांक
+snd_seq_oss_midi_make_info(काष्ठा seq_oss_devinfo *dp, पूर्णांक dev, काष्ठा midi_info *inf)
+अणु
+	काष्ठा seq_oss_midi *mdev;
 
-	if ((mdev = get_mididev(dp, dev)) == NULL)
-		return -ENXIO;
+	अगर ((mdev = get_mididev(dp, dev)) == शून्य)
+		वापस -ENXIO;
 	inf->device = dev;
 	inf->dev_type = 0; /* FIXME: ?? */
 	inf->capabilities = 0; /* FIXME: ?? */
-	strscpy(inf->name, mdev->name, sizeof(inf->name));
-	snd_use_lock_free(&mdev->use_lock);
-	return 0;
-}
+	strscpy(inf->name, mdev->name, माप(inf->name));
+	snd_use_lock_मुक्त(&mdev->use_lock);
+	वापस 0;
+पूर्ण
 
 
-#ifdef CONFIG_SND_PROC_FS
+#अगर_घोषित CONFIG_SND_PROC_FS
 /*
- * proc interface
+ * proc पूर्णांकerface
  */
-static char *
-capmode_str(int val)
-{
+अटल अक्षर *
+capmode_str(पूर्णांक val)
+अणु
 	val &= PERM_READ|PERM_WRITE;
-	if (val == (PERM_READ|PERM_WRITE))
-		return "read/write";
-	else if (val == PERM_READ)
-		return "read";
-	else if (val == PERM_WRITE)
-		return "write";
-	else
-		return "none";
-}
+	अगर (val == (PERM_READ|PERM_WRITE))
+		वापस "read/write";
+	अन्यथा अगर (val == PERM_READ)
+		वापस "read";
+	अन्यथा अगर (val == PERM_WRITE)
+		वापस "write";
+	अन्यथा
+		वापस "none";
+पूर्ण
 
-void
-snd_seq_oss_midi_info_read(struct snd_info_buffer *buf)
-{
-	int i;
-	struct seq_oss_midi *mdev;
+व्योम
+snd_seq_oss_midi_info_पढ़ो(काष्ठा snd_info_buffer *buf)
+अणु
+	पूर्णांक i;
+	काष्ठा seq_oss_midi *mdev;
 
-	snd_iprintf(buf, "\nNumber of MIDI devices: %d\n", max_midi_devs);
-	for (i = 0; i < max_midi_devs; i++) {
-		snd_iprintf(buf, "\nmidi %d: ", i);
+	snd_iम_लिखो(buf, "\nNumber of MIDI devices: %d\n", max_midi_devs);
+	क्रम (i = 0; i < max_midi_devs; i++) अणु
+		snd_iम_लिखो(buf, "\nmidi %d: ", i);
 		mdev = get_mdev(i);
-		if (mdev == NULL) {
-			snd_iprintf(buf, "*empty*\n");
-			continue;
-		}
-		snd_iprintf(buf, "[%s] ALSA port %d:%d\n", mdev->name,
+		अगर (mdev == शून्य) अणु
+			snd_iम_लिखो(buf, "*empty*\n");
+			जारी;
+		पूर्ण
+		snd_iम_लिखो(buf, "[%s] ALSA port %d:%d\n", mdev->name,
 			    mdev->client, mdev->port);
-		snd_iprintf(buf, "  capability %s / opened %s\n",
+		snd_iम_लिखो(buf, "  capability %s / opened %s\n",
 			    capmode_str(mdev->flags),
-			    capmode_str(mdev->opened));
-		snd_use_lock_free(&mdev->use_lock);
-	}
-}
-#endif /* CONFIG_SND_PROC_FS */
+			    capmode_str(mdev->खोलोed));
+		snd_use_lock_मुक्त(&mdev->use_lock);
+	पूर्ण
+पूर्ण
+#पूर्ण_अगर /* CONFIG_SND_PROC_FS */

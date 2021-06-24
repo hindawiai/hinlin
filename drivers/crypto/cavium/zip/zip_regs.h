@@ -1,3 +1,4 @@
+<शैली गुरु>
 /***********************license start************************************
  * Copyright (c) 2003-2017 Cavium, Inc.
  * All rights reserved.
@@ -7,23 +8,23 @@
  * This file is provided under the terms of the Cavium License (see below)
  * or under the terms of GNU General Public License, Version 2, as
  * published by the Free Software Foundation. When using or redistributing
- * this file, you may do so under either license.
+ * this file, you may करो so under either license.
  *
- * Cavium License:  Redistribution and use in source and binary forms, with
- * or without modification, are permitted provided that the following
+ * Cavium License:  Redistribution and use in source and binary क्रमms, with
+ * or without modअगरication, are permitted provided that the following
  * conditions are met:
  *
  *  * Redistributions of source code must retain the above copyright
  *    notice, this list of conditions and the following disclaimer.
  *
- *  * Redistributions in binary form must reproduce the above
+ *  * Redistributions in binary क्रमm must reproduce the above
  *    copyright notice, this list of conditions and the following
- *    disclaimer in the documentation and/or other materials provided
+ *    disclaimer in the करोcumentation and/or other materials provided
  *    with the distribution.
  *
  *  * Neither the name of Cavium Inc. nor the names of its contributors may be
- *    used to endorse or promote products derived from this software without
- *    specific prior written permission.
+ *    used to enकरोrse or promote products derived from this software without
+ *    specअगरic prior written permission.
  *
  * This Software, including technical data, may be subject to U.S. export
  * control laws, including the U.S. Export Administration Act and its
@@ -43,62 +44,62 @@
  * WITH YOU.
  ***********************license end**************************************/
 
-#ifndef __ZIP_REGS_H__
-#define __ZIP_REGS_H__
+#अगर_अघोषित __ZIP_REGS_H__
+#घोषणा __ZIP_REGS_H__
 
 /*
- * Configuration and status register (CSR) address and type definitions for
+ * Configuration and status रेजिस्टर (CSR) address and type definitions क्रम
  * Cavium ZIP.
  */
 
-#include <linux/kern_levels.h>
+#समावेश <linux/kern_levels.h>
 
 /* ZIP invocation result completion status codes */
-#define ZIP_CMD_NOTDONE        0x0
+#घोषणा ZIP_CMD_NOTDONE        0x0
 
 /* Successful completion. */
-#define ZIP_CMD_SUCCESS        0x1
+#घोषणा ZIP_CMD_SUCCESS        0x1
 
 /* Output truncated */
-#define ZIP_CMD_DTRUNC         0x2
+#घोषणा ZIP_CMD_DTRUNC         0x2
 
 /* Dynamic Stop */
-#define ZIP_CMD_DYNAMIC_STOP   0x3
+#घोषणा ZIP_CMD_DYNAMIC_STOP   0x3
 
 /* Uncompress ran out of input data when IWORD0[EF] was set */
-#define ZIP_CMD_ITRUNC         0x4
+#घोषणा ZIP_CMD_ITRUNC         0x4
 
 /* Uncompress found the reserved block type 3 */
-#define ZIP_CMD_RBLOCK         0x5
+#घोषणा ZIP_CMD_RBLOCK         0x5
 
 /*
  * Uncompress found LEN != ZIP_CMD_NLEN in an uncompressed block in the input.
  */
-#define ZIP_CMD_NLEN           0x6
+#घोषणा ZIP_CMD_NLEN           0x6
 
-/* Uncompress found a bad code in the main Huffman codes. */
-#define ZIP_CMD_BADCODE        0x7
+/* Uncompress found a bad code in the मुख्य Huffman codes. */
+#घोषणा ZIP_CMD_BADCODE        0x7
 
 /* Uncompress found a bad code in the 19 Huffman codes encoding lengths. */
-#define ZIP_CMD_BADCODE2       0x8
+#घोषणा ZIP_CMD_BADCODE2       0x8
 
 /* Compress found a zero-length input. */
-#define ZIP_CMD_ZERO_LEN       0x9
+#घोषणा ZIP_CMD_ZERO_LEN       0x9
 
-/* The compress or decompress encountered an internal parity error. */
-#define ZIP_CMD_PARITY         0xA
+/* The compress or decompress encountered an पूर्णांकernal parity error. */
+#घोषणा ZIP_CMD_PARITY         0xA
 
 /*
- * Uncompress found a string identifier that precedes the uncompressed data and
+ * Uncompress found a string identअगरier that precedes the uncompressed data and
  * decompression history.
  */
-#define ZIP_CMD_FATAL          0xB
+#घोषणा ZIP_CMD_FATAL          0xB
 
 /**
- * enum zip_int_vec_e - ZIP MSI-X Vector Enumeration, enumerates the MSI-X
- * interrupt vectors.
+ * क्रमागत zip_पूर्णांक_vec_e - ZIP MSI-X Vector Enumeration, क्रमागतerates the MSI-X
+ * पूर्णांकerrupt vectors.
  */
-enum zip_int_vec_e {
+क्रमागत zip_पूर्णांक_vec_e अणु
 	ZIP_INT_VEC_E_ECCE = 0x10,
 	ZIP_INT_VEC_E_FIFE = 0x11,
 	ZIP_INT_VEC_E_QUE0_DONE = 0x0,
@@ -118,63 +119,63 @@ enum zip_int_vec_e {
 	ZIP_INT_VEC_E_QUE7_DONE = 0x7,
 	ZIP_INT_VEC_E_QUE7_ERR = 0xf,
 	ZIP_INT_VEC_E_ENUM_LAST = 0x12,
-};
+पूर्ण;
 
 /**
- * union zip_zptr_addr_s - ZIP Generic Pointer Structure for ADDR.
+ * जोड़ zip_zptr_addr_s - ZIP Generic Poपूर्णांकer Structure क्रम ADDR.
  *
- * It is the generic format of pointers in ZIP_INST_S.
+ * It is the generic क्रमmat of poपूर्णांकers in ZIP_INST_S.
  */
-union zip_zptr_addr_s {
+जोड़ zip_zptr_addr_s अणु
 	u64 u_reg64;
-	struct {
-#if defined(__BIG_ENDIAN_BITFIELD)
+	काष्ठा अणु
+#अगर defined(__BIG_ENDIAN_BITFIELD)
 		u64 reserved_49_63              : 15;
 		u64 addr                        : 49;
-#elif defined(__LITTLE_ENDIAN_BITFIELD)
+#या_अगर defined(__LITTLE_ENDIAN_BITFIELD)
 		u64 addr                        : 49;
 		u64 reserved_49_63              : 15;
-#endif
-	} s;
+#पूर्ण_अगर
+	पूर्ण s;
 
-};
+पूर्ण;
 
 /**
- * union zip_zptr_ctl_s - ZIP Generic Pointer Structure for CTL.
+ * जोड़ zip_zptr_ctl_s - ZIP Generic Poपूर्णांकer Structure क्रम CTL.
  *
- * It is the generic format of pointers in ZIP_INST_S.
+ * It is the generic क्रमmat of poपूर्णांकers in ZIP_INST_S.
  */
-union zip_zptr_ctl_s {
+जोड़ zip_zptr_ctl_s अणु
 	u64 u_reg64;
-	struct {
-#if defined(__BIG_ENDIAN_BITFIELD)
+	काष्ठा अणु
+#अगर defined(__BIG_ENDIAN_BITFIELD)
 		u64 reserved_112_127            : 16;
 		u64 length                      : 16;
 		u64 reserved_67_95              : 29;
 		u64 fw                          : 1;
 		u64 nc                          : 1;
 		u64 data_be                     : 1;
-#elif defined(__LITTLE_ENDIAN_BITFIELD)
+#या_अगर defined(__LITTLE_ENDIAN_BITFIELD)
 		u64 data_be                     : 1;
 		u64 nc                          : 1;
 		u64 fw                          : 1;
 		u64 reserved_67_95              : 29;
 		u64 length                      : 16;
 		u64 reserved_112_127            : 16;
-#endif
-	} s;
-};
+#पूर्ण_अगर
+	पूर्ण s;
+पूर्ण;
 
 /**
- * union zip_inst_s - ZIP Instruction Structure.
- * Each ZIP instruction has 16 words (they are called IWORD0 to IWORD15 within
- * the structure).
+ * जोड़ zip_inst_s - ZIP Inकाष्ठाion Structure.
+ * Each ZIP inकाष्ठाion has 16 words (they are called IWORD0 to IWORD15 within
+ * the काष्ठाure).
  */
-union zip_inst_s {
+जोड़ zip_inst_s अणु
 	u64 u_reg64[16];
-	struct {
-#if defined(__BIG_ENDIAN_BITFIELD)
-		u64 doneint                     : 1;
+	काष्ठा अणु
+#अगर defined(__BIG_ENDIAN_BITFIELD)
+		u64 करोneपूर्णांक                     : 1;
 		u64 reserved_56_62              : 7;
 		u64 totaloutputlength           : 24;
 		u64 reserved_27_31              : 5;
@@ -192,7 +193,7 @@ union zip_inst_s {
 		u64 ds                          : 1;
 		u64 dg                          : 1;
 		u64 hg                          : 1;
-#elif defined(__LITTLE_ENDIAN_BITFIELD)
+#या_अगर defined(__LITTLE_ENDIAN_BITFIELD)
 		u64 hg                          : 1;
 		u64 dg                          : 1;
 		u64 ds                          : 1;
@@ -210,141 +211,141 @@ union zip_inst_s {
 		u64 reserved_27_31              : 5;
 		u64 totaloutputlength           : 24;
 		u64 reserved_56_62              : 7;
-		u64 doneint                     : 1;
-#endif
-#if defined(__BIG_ENDIAN_BITFIELD)
+		u64 करोneपूर्णांक                     : 1;
+#पूर्ण_अगर
+#अगर defined(__BIG_ENDIAN_BITFIELD)
 		u64 historylength               : 16;
 		u64 reserved_96_111             : 16;
 		u64 adlercrc32                  : 32;
-#elif defined(__LITTLE_ENDIAN_BITFIELD)
+#या_अगर defined(__LITTLE_ENDIAN_BITFIELD)
 		u64 adlercrc32                  : 32;
 		u64 reserved_96_111             : 16;
 		u64 historylength               : 16;
-#endif
-		union zip_zptr_addr_s ctx_ptr_addr;
-		union zip_zptr_ctl_s ctx_ptr_ctl;
-		union zip_zptr_addr_s his_ptr_addr;
-		union zip_zptr_ctl_s his_ptr_ctl;
-		union zip_zptr_addr_s inp_ptr_addr;
-		union zip_zptr_ctl_s inp_ptr_ctl;
-		union zip_zptr_addr_s out_ptr_addr;
-		union zip_zptr_ctl_s out_ptr_ctl;
-		union zip_zptr_addr_s res_ptr_addr;
-		union zip_zptr_ctl_s res_ptr_ctl;
-#if defined(__BIG_ENDIAN_BITFIELD)
+#पूर्ण_अगर
+		जोड़ zip_zptr_addr_s ctx_ptr_addr;
+		जोड़ zip_zptr_ctl_s ctx_ptr_ctl;
+		जोड़ zip_zptr_addr_s his_ptr_addr;
+		जोड़ zip_zptr_ctl_s his_ptr_ctl;
+		जोड़ zip_zptr_addr_s inp_ptr_addr;
+		जोड़ zip_zptr_ctl_s inp_ptr_ctl;
+		जोड़ zip_zptr_addr_s out_ptr_addr;
+		जोड़ zip_zptr_ctl_s out_ptr_ctl;
+		जोड़ zip_zptr_addr_s res_ptr_addr;
+		जोड़ zip_zptr_ctl_s res_ptr_ctl;
+#अगर defined(__BIG_ENDIAN_BITFIELD)
 		u64 reserved_817_831            : 15;
 		u64 wq_ptr                      : 49;
-#elif defined(__LITTLE_ENDIAN_BITFIELD)
+#या_अगर defined(__LITTLE_ENDIAN_BITFIELD)
 		u64 wq_ptr                      : 49;
 		u64 reserved_817_831            : 15;
-#endif
-#if defined(__BIG_ENDIAN_BITFIELD)
+#पूर्ण_अगर
+#अगर defined(__BIG_ENDIAN_BITFIELD)
 		u64 reserved_882_895            : 14;
 		u64 tt                          : 2;
 		u64 reserved_874_879            : 6;
 		u64 grp                         : 10;
 		u64 tag                         : 32;
-#elif defined(__LITTLE_ENDIAN_BITFIELD)
+#या_अगर defined(__LITTLE_ENDIAN_BITFIELD)
 		u64 tag                         : 32;
 		u64 grp                         : 10;
 		u64 reserved_874_879            : 6;
 		u64 tt                          : 2;
 		u64 reserved_882_895            : 14;
-#endif
-#if defined(__BIG_ENDIAN_BITFIELD)
+#पूर्ण_अगर
+#अगर defined(__BIG_ENDIAN_BITFIELD)
 		u64 reserved_896_959            : 64;
-#elif defined(__LITTLE_ENDIAN_BITFIELD)
+#या_अगर defined(__LITTLE_ENDIAN_BITFIELD)
 		u64 reserved_896_959            : 64;
-#endif
-#if defined(__BIG_ENDIAN_BITFIELD)
+#पूर्ण_अगर
+#अगर defined(__BIG_ENDIAN_BITFIELD)
 		u64 reserved_960_1023           : 64;
-#elif defined(__LITTLE_ENDIAN_BITFIELD)
+#या_अगर defined(__LITTLE_ENDIAN_BITFIELD)
 		u64 reserved_960_1023           : 64;
-#endif
-	} s;
-};
+#पूर्ण_अगर
+	पूर्ण s;
+पूर्ण;
 
 /**
- * union zip_nptr_s - ZIP Instruction Next-Chunk-Buffer Pointer (NPTR)
+ * जोड़ zip_nptr_s - ZIP Inकाष्ठाion Next-Chunk-Buffer Poपूर्णांकer (NPTR)
  * Structure
  *
- * ZIP_NPTR structure is used to chain all the zip instruction buffers
- * together. ZIP instruction buffers are managed (allocated and released) by
+ * ZIP_NPTR काष्ठाure is used to chain all the zip inकाष्ठाion buffers
+ * together. ZIP inकाष्ठाion buffers are managed (allocated and released) by
  * the software.
  */
-union zip_nptr_s {
+जोड़ zip_nptr_s अणु
 	u64 u_reg64;
-	struct {
-#if defined(__BIG_ENDIAN_BITFIELD)
+	काष्ठा अणु
+#अगर defined(__BIG_ENDIAN_BITFIELD)
 		u64 reserved_49_63              : 15;
 		u64 addr                        : 49;
-#elif defined(__LITTLE_ENDIAN_BITFIELD)
+#या_अगर defined(__LITTLE_ENDIAN_BITFIELD)
 		u64 addr                        : 49;
 		u64 reserved_49_63              : 15;
-#endif
-	} s;
-};
+#पूर्ण_अगर
+	पूर्ण s;
+पूर्ण;
 
 /**
- * union zip_zptr_s - ZIP Generic Pointer Structure.
+ * जोड़ zip_zptr_s - ZIP Generic Poपूर्णांकer Structure.
  *
- * It is the generic format of pointers in ZIP_INST_S.
+ * It is the generic क्रमmat of poपूर्णांकers in ZIP_INST_S.
  */
-union zip_zptr_s {
+जोड़ zip_zptr_s अणु
 	u64 u_reg64[2];
-	struct {
-#if defined(__BIG_ENDIAN_BITFIELD)
+	काष्ठा अणु
+#अगर defined(__BIG_ENDIAN_BITFIELD)
 		u64 reserved_49_63              : 15;
 		u64 addr                        : 49;
-#elif defined(__LITTLE_ENDIAN_BITFIELD)
+#या_अगर defined(__LITTLE_ENDIAN_BITFIELD)
 		u64 addr                        : 49;
 		u64 reserved_49_63              : 15;
-#endif
-#if defined(__BIG_ENDIAN_BITFIELD)
+#पूर्ण_अगर
+#अगर defined(__BIG_ENDIAN_BITFIELD)
 		u64 reserved_112_127            : 16;
 		u64 length                      : 16;
 		u64 reserved_67_95              : 29;
 		u64 fw                          : 1;
 		u64 nc                          : 1;
 		u64 data_be                     : 1;
-#elif defined(__LITTLE_ENDIAN_BITFIELD)
+#या_अगर defined(__LITTLE_ENDIAN_BITFIELD)
 		u64 data_be                     : 1;
 		u64 nc                          : 1;
 		u64 fw                          : 1;
 		u64 reserved_67_95              : 29;
 		u64 length                      : 16;
 		u64 reserved_112_127            : 16;
-#endif
-	} s;
-};
+#पूर्ण_अगर
+	पूर्ण s;
+पूर्ण;
 
 /**
- * union zip_zres_s - ZIP Result Structure
+ * जोड़ zip_zres_s - ZIP Result Structure
  *
- * The ZIP coprocessor writes the result structure after it completes the
- * invocation. The result structure is exactly 24 bytes, and each invocation of
- * the ZIP coprocessor produces exactly one result structure.
+ * The ZIP coprocessor ग_लिखोs the result काष्ठाure after it completes the
+ * invocation. The result काष्ठाure is exactly 24 bytes, and each invocation of
+ * the ZIP coprocessor produces exactly one result काष्ठाure.
  */
-union zip_zres_s {
+जोड़ zip_zres_s अणु
 	u64 u_reg64[3];
-	struct {
-#if defined(__BIG_ENDIAN_BITFIELD)
+	काष्ठा अणु
+#अगर defined(__BIG_ENDIAN_BITFIELD)
 		u64 crc32                       : 32;
 		u64 adler32                     : 32;
-#elif defined(__LITTLE_ENDIAN_BITFIELD)
+#या_अगर defined(__LITTLE_ENDIAN_BITFIELD)
 		u64 adler32                     : 32;
 		u64 crc32                       : 32;
-#endif
-#if defined(__BIG_ENDIAN_BITFIELD)
+#पूर्ण_अगर
+#अगर defined(__BIG_ENDIAN_BITFIELD)
 		u64 totalbyteswritten           : 32;
-		u64 totalbytesread              : 32;
-#elif defined(__LITTLE_ENDIAN_BITFIELD)
-		u64 totalbytesread              : 32;
+		u64 totalbytesपढ़ो              : 32;
+#या_अगर defined(__LITTLE_ENDIAN_BITFIELD)
+		u64 totalbytesपढ़ो              : 32;
 		u64 totalbyteswritten           : 32;
-#endif
-#if defined(__BIG_ENDIAN_BITFIELD)
+#पूर्ण_अगर
+#अगर defined(__BIG_ENDIAN_BITFIELD)
 		u64 totalbitsprocessed          : 32;
-		u64 doneint                     : 1;
+		u64 करोneपूर्णांक                     : 1;
 		u64 reserved_155_158            : 4;
 		u64 exn                         : 3;
 		u64 reserved_151_151            : 1;
@@ -352,52 +353,52 @@ union zip_zres_s {
 		u64 reserved_137_143            : 7;
 		u64 ef                          : 1;
 
-		volatile u64 compcode           : 8;
-#elif defined(__LITTLE_ENDIAN_BITFIELD)
+		अस्थिर u64 compcode           : 8;
+#या_अगर defined(__LITTLE_ENDIAN_BITFIELD)
 
-		volatile u64 compcode           : 8;
+		अस्थिर u64 compcode           : 8;
 		u64 ef                          : 1;
 		u64 reserved_137_143            : 7;
 		u64 exbits                      : 7;
 		u64 reserved_151_151            : 1;
 		u64 exn                         : 3;
 		u64 reserved_155_158            : 4;
-		u64 doneint                     : 1;
+		u64 करोneपूर्णांक                     : 1;
 		u64 totalbitsprocessed          : 32;
-#endif
-	} s;
-};
+#पूर्ण_अगर
+	पूर्ण s;
+पूर्ण;
 
 /**
- * union zip_cmd_ctl - Structure representing the register that controls
- * clock and reset.
+ * जोड़ zip_cmd_ctl - Structure representing the रेजिस्टर that controls
+ * घड़ी and reset.
  */
-union zip_cmd_ctl {
+जोड़ zip_cmd_ctl अणु
 	u64 u_reg64;
-	struct zip_cmd_ctl_s {
-#if defined(__BIG_ENDIAN_BITFIELD)
+	काष्ठा zip_cmd_ctl_s अणु
+#अगर defined(__BIG_ENDIAN_BITFIELD)
 		u64 reserved_2_63               : 62;
-		u64 forceclk                    : 1;
+		u64 क्रमceclk                    : 1;
 		u64 reset                       : 1;
-#elif defined(__LITTLE_ENDIAN_BITFIELD)
+#या_अगर defined(__LITTLE_ENDIAN_BITFIELD)
 		u64 reset                       : 1;
-		u64 forceclk                    : 1;
+		u64 क्रमceclk                    : 1;
 		u64 reserved_2_63               : 62;
-#endif
-	} s;
-};
+#पूर्ण_अगर
+	पूर्ण s;
+पूर्ण;
 
-#define ZIP_CMD_CTL 0x0ull
+#घोषणा ZIP_CMD_CTL 0x0ull
 
 /**
- * union zip_constants - Data structure representing the register that contains
+ * जोड़ zip_स्थिरants - Data काष्ठाure representing the रेजिस्टर that contains
  * all of the current implementation-related parameters of the zip core in this
  * chip.
  */
-union zip_constants {
+जोड़ zip_स्थिरants अणु
 	u64 u_reg64;
-	struct zip_constants_s {
-#if defined(__BIG_ENDIAN_BITFIELD)
+	काष्ठा zip_स्थिरants_s अणु
+#अगर defined(__BIG_ENDIAN_BITFIELD)
 		u64 nexec                       : 8;
 		u64 reserved_49_55              : 7;
 		u64 syncflush_capable           : 1;
@@ -406,7 +407,7 @@ union zip_constants {
 		u64 ctxsize                     : 12;
 		u64 reserved_1_7                : 7;
 		u64 disabled                    : 1;
-#elif defined(__LITTLE_ENDIAN_BITFIELD)
+#या_अगर defined(__LITTLE_ENDIAN_BITFIELD)
 		u64 disabled                    : 1;
 		u64 reserved_1_7                : 7;
 		u64 ctxsize                     : 12;
@@ -415,74 +416,74 @@ union zip_constants {
 		u64 syncflush_capable           : 1;
 		u64 reserved_49_55              : 7;
 		u64 nexec                       : 8;
-#endif
-	} s;
-};
+#पूर्ण_अगर
+	पूर्ण s;
+पूर्ण;
 
-#define ZIP_CONSTANTS 0x00A0ull
+#घोषणा ZIP_CONSTANTS 0x00A0ull
 
 /**
- * union zip_corex_bist_status - Represents registers which have the BIST
+ * जोड़ zip_corex_bist_status - Represents रेजिस्टरs which have the BIST
  * status of memories in zip cores.
  *
- * Each bit is the BIST result of an individual memory
+ * Each bit is the BIST result of an inभागidual memory
  * (per bit, 0 = pass and 1 = fail).
  */
-union zip_corex_bist_status {
+जोड़ zip_corex_bist_status अणु
 	u64 u_reg64;
-	struct zip_corex_bist_status_s {
-#if defined(__BIG_ENDIAN_BITFIELD)
+	काष्ठा zip_corex_bist_status_s अणु
+#अगर defined(__BIG_ENDIAN_BITFIELD)
 		u64 reserved_53_63              : 11;
 		u64 bstatus                     : 53;
-#elif defined(__LITTLE_ENDIAN_BITFIELD)
+#या_अगर defined(__LITTLE_ENDIAN_BITFIELD)
 		u64 bstatus                     : 53;
 		u64 reserved_53_63              : 11;
-#endif
-	} s;
-};
+#पूर्ण_अगर
+	पूर्ण s;
+पूर्ण;
 
-static inline u64 ZIP_COREX_BIST_STATUS(u64 param1)
-{
-	if (param1 <= 1)
-		return 0x0520ull + (param1 & 1) * 0x8ull;
+अटल अंतरभूत u64 ZIP_COREX_BIST_STATUS(u64 param1)
+अणु
+	अगर (param1 <= 1)
+		वापस 0x0520ull + (param1 & 1) * 0x8ull;
 	pr_err("ZIP_COREX_BIST_STATUS: %llu\n", param1);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * union zip_ctl_bist_status - Represents register that has the BIST status of
- * memories in ZIP_CTL (instruction buffer, G/S pointer FIFO, input data
+ * जोड़ zip_ctl_bist_status - Represents रेजिस्टर that has the BIST status of
+ * memories in ZIP_CTL (inकाष्ठाion buffer, G/S poपूर्णांकer FIFO, input data
  * buffer, output data buffers).
  *
- * Each bit is the BIST result of an individual memory
+ * Each bit is the BIST result of an inभागidual memory
  * (per bit, 0 = pass and 1 = fail).
  */
-union zip_ctl_bist_status {
+जोड़ zip_ctl_bist_status अणु
 	u64 u_reg64;
-	struct zip_ctl_bist_status_s {
-#if defined(__BIG_ENDIAN_BITFIELD)
+	काष्ठा zip_ctl_bist_status_s अणु
+#अगर defined(__BIG_ENDIAN_BITFIELD)
 		u64 reserved_9_63               : 55;
 		u64 bstatus                     : 9;
-#elif defined(__LITTLE_ENDIAN_BITFIELD)
+#या_अगर defined(__LITTLE_ENDIAN_BITFIELD)
 		u64 bstatus                     : 9;
 		u64 reserved_9_63               : 55;
-#endif
-	} s;
-};
+#पूर्ण_अगर
+	पूर्ण s;
+पूर्ण;
 
-#define ZIP_CTL_BIST_STATUS 0x0510ull
+#घोषणा ZIP_CTL_BIST_STATUS 0x0510ull
 
 /**
- * union zip_ctl_cfg - Represents the register that controls the behavior of
+ * जोड़ zip_ctl_cfg - Represents the रेजिस्टर that controls the behavior of
  * the ZIP DMA engines.
  *
- * It is recommended to keep default values for normal operation. Changing the
- * values of the fields may be useful for diagnostics.
+ * It is recommended to keep शेष values क्रम normal operation. Changing the
+ * values of the fields may be useful क्रम diagnostics.
  */
-union zip_ctl_cfg {
+जोड़ zip_ctl_cfg अणु
 	u64 u_reg64;
-	struct zip_ctl_cfg_s {
-#if defined(__BIG_ENDIAN_BITFIELD)
+	काष्ठा zip_ctl_cfg_s अणु
+#अगर defined(__BIG_ENDIAN_BITFIELD)
 		u64 reserved_52_63              : 12;
 		u64 ildf                        : 4;
 		u64 reserved_36_47              : 12;
@@ -494,7 +495,7 @@ union zip_ctl_cfg {
 		u64 reserved_2_15               : 14;
 		u64 busy                        : 1;
 		u64 reserved_0_0                : 1;
-#elif defined(__LITTLE_ENDIAN_BITFIELD)
+#या_अगर defined(__LITTLE_ENDIAN_BITFIELD)
 		u64 reserved_0_0                : 1;
 		u64 busy                        : 1;
 		u64 reserved_2_15               : 14;
@@ -506,115 +507,115 @@ union zip_ctl_cfg {
 		u64 reserved_36_47              : 12;
 		u64 ildf                        : 4;
 		u64 reserved_52_63              : 12;
-#endif
-	} s;
-};
+#पूर्ण_अगर
+	पूर्ण s;
+पूर्ण;
 
-#define ZIP_CTL_CFG 0x0560ull
+#घोषणा ZIP_CTL_CFG 0x0560ull
 
 /**
- * union zip_dbg_corex_inst - Represents the registers that reflect the status
- * of the current instruction that the ZIP core is executing or has executed.
+ * जोड़ zip_dbg_corex_inst - Represents the रेजिस्टरs that reflect the status
+ * of the current inकाष्ठाion that the ZIP core is executing or has executed.
  *
- * These registers are only for debug use.
+ * These रेजिस्टरs are only क्रम debug use.
  */
-union zip_dbg_corex_inst {
+जोड़ zip_dbg_corex_inst अणु
 	u64 u_reg64;
-	struct zip_dbg_corex_inst_s {
-#if defined(__BIG_ENDIAN_BITFIELD)
+	काष्ठा zip_dbg_corex_inst_s अणु
+#अगर defined(__BIG_ENDIAN_BITFIELD)
 		u64 busy                        : 1;
 		u64 reserved_35_62              : 28;
 		u64 qid                         : 3;
 		u64 iid                         : 32;
-#elif defined(__LITTLE_ENDIAN_BITFIELD)
+#या_अगर defined(__LITTLE_ENDIAN_BITFIELD)
 		u64 iid                         : 32;
 		u64 qid                         : 3;
 		u64 reserved_35_62              : 28;
 		u64 busy                        : 1;
-#endif
-	} s;
-};
+#पूर्ण_अगर
+	पूर्ण s;
+पूर्ण;
 
-static inline u64 ZIP_DBG_COREX_INST(u64 param1)
-{
-	if (param1 <= 1)
-		return 0x0640ull + (param1 & 1) * 0x8ull;
+अटल अंतरभूत u64 ZIP_DBG_COREX_INST(u64 param1)
+अणु
+	अगर (param1 <= 1)
+		वापस 0x0640ull + (param1 & 1) * 0x8ull;
 	pr_err("ZIP_DBG_COREX_INST: %llu\n", param1);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * union zip_dbg_corex_sta - Represents registers that reflect the status of
+ * जोड़ zip_dbg_corex_sta - Represents रेजिस्टरs that reflect the status of
  * the zip cores.
  *
- * They are for debug use only.
+ * They are क्रम debug use only.
  */
-union zip_dbg_corex_sta {
+जोड़ zip_dbg_corex_sta अणु
 	u64 u_reg64;
-	struct zip_dbg_corex_sta_s {
-#if defined(__BIG_ENDIAN_BITFIELD)
+	काष्ठा zip_dbg_corex_sta_s अणु
+#अगर defined(__BIG_ENDIAN_BITFIELD)
 		u64 busy                        : 1;
 		u64 reserved_37_62              : 26;
 		u64 ist                         : 5;
 		u64 nie                         : 32;
-#elif defined(__LITTLE_ENDIAN_BITFIELD)
+#या_अगर defined(__LITTLE_ENDIAN_BITFIELD)
 		u64 nie                         : 32;
 		u64 ist                         : 5;
 		u64 reserved_37_62              : 26;
 		u64 busy                        : 1;
-#endif
-	} s;
-};
+#पूर्ण_अगर
+	पूर्ण s;
+पूर्ण;
 
-static inline u64 ZIP_DBG_COREX_STA(u64 param1)
-{
-	if (param1 <= 1)
-		return 0x0680ull + (param1 & 1) * 0x8ull;
+अटल अंतरभूत u64 ZIP_DBG_COREX_STA(u64 param1)
+अणु
+	अगर (param1 <= 1)
+		वापस 0x0680ull + (param1 & 1) * 0x8ull;
 	pr_err("ZIP_DBG_COREX_STA: %llu\n", param1);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * union zip_dbg_quex_sta - Represets registers that reflect status of the zip
- * instruction queues.
+ * जोड़ zip_dbg_quex_sta - Represets रेजिस्टरs that reflect status of the zip
+ * inकाष्ठाion queues.
  *
- * They are for debug use only.
+ * They are क्रम debug use only.
  */
-union zip_dbg_quex_sta {
+जोड़ zip_dbg_quex_sta अणु
 	u64 u_reg64;
-	struct zip_dbg_quex_sta_s {
-#if defined(__BIG_ENDIAN_BITFIELD)
+	काष्ठा zip_dbg_quex_sta_s अणु
+#अगर defined(__BIG_ENDIAN_BITFIELD)
 		u64 busy                        : 1;
 		u64 reserved_56_62              : 7;
 		u64 rqwc                        : 24;
 		u64 nii                         : 32;
-#elif defined(__LITTLE_ENDIAN_BITFIELD)
+#या_अगर defined(__LITTLE_ENDIAN_BITFIELD)
 		u64 nii                         : 32;
 		u64 rqwc                        : 24;
 		u64 reserved_56_62              : 7;
 		u64 busy                        : 1;
-#endif
-	} s;
-};
+#पूर्ण_अगर
+	पूर्ण s;
+पूर्ण;
 
-static inline u64 ZIP_DBG_QUEX_STA(u64 param1)
-{
-	if (param1 <= 7)
-		return 0x1800ull + (param1 & 7) * 0x8ull;
+अटल अंतरभूत u64 ZIP_DBG_QUEX_STA(u64 param1)
+अणु
+	अगर (param1 <= 7)
+		वापस 0x1800ull + (param1 & 7) * 0x8ull;
 	pr_err("ZIP_DBG_QUEX_STA: %llu\n", param1);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * union zip_ecc_ctl - Represents the register that enables ECC for each
- * individual internal memory that requires ECC.
+ * जोड़ zip_ecc_ctl - Represents the रेजिस्टर that enables ECC क्रम each
+ * inभागidual पूर्णांकernal memory that requires ECC.
  *
  * For debug purpose, it can also flip one or two bits in the ECC data.
  */
-union zip_ecc_ctl {
+जोड़ zip_ecc_ctl अणु
 	u64 u_reg64;
-	struct zip_ecc_ctl_s {
-#if defined(__BIG_ENDIAN_BITFIELD)
+	काष्ठा zip_ecc_ctl_s अणु
+#अगर defined(__BIG_ENDIAN_BITFIELD)
 		u64 reserved_19_63              : 45;
 		u64 vmem_cdis                   : 1;
 		u64 vmem_fs                     : 2;
@@ -630,7 +631,7 @@ union zip_ecc_ctl {
 		u64 reserved_3_3                : 1;
 		u64 iqf_cdis                    : 1;
 		u64 iqf_fs                      : 2;
-#elif defined(__LITTLE_ENDIAN_BITFIELD)
+#या_अगर defined(__LITTLE_ENDIAN_BITFIELD)
 		u64 iqf_fs                      : 2;
 		u64 iqf_cdis                    : 1;
 		u64 reserved_3_3                : 1;
@@ -646,615 +647,615 @@ union zip_ecc_ctl {
 		u64 vmem_fs                     : 2;
 		u64 vmem_cdis                   : 1;
 		u64 reserved_19_63              : 45;
-#endif
-	} s;
-};
+#पूर्ण_अगर
+	पूर्ण s;
+पूर्ण;
 
-#define ZIP_ECC_CTL 0x0568ull
+#घोषणा ZIP_ECC_CTL 0x0568ull
 
 /* NCB - zip_ecce_ena_w1c */
-union zip_ecce_ena_w1c {
+जोड़ zip_ecce_ena_w1c अणु
 	u64 u_reg64;
-	struct zip_ecce_ena_w1c_s {
-#if defined(__BIG_ENDIAN_BITFIELD)
+	काष्ठा zip_ecce_ena_w1c_s अणु
+#अगर defined(__BIG_ENDIAN_BITFIELD)
 		u64 reserved_37_63              : 27;
 		u64 dbe                         : 5;
 		u64 reserved_5_31               : 27;
 		u64 sbe                         : 5;
-#elif defined(__LITTLE_ENDIAN_BITFIELD)
+#या_अगर defined(__LITTLE_ENDIAN_BITFIELD)
 		u64 sbe                         : 5;
 		u64 reserved_5_31               : 27;
 		u64 dbe                         : 5;
 		u64 reserved_37_63              : 27;
-#endif
-	} s;
-};
+#पूर्ण_अगर
+	पूर्ण s;
+पूर्ण;
 
-#define ZIP_ECCE_ENA_W1C 0x0598ull
+#घोषणा ZIP_ECCE_ENA_W1C 0x0598ull
 
 /* NCB - zip_ecce_ena_w1s */
-union zip_ecce_ena_w1s {
+जोड़ zip_ecce_ena_w1s अणु
 	u64 u_reg64;
-	struct zip_ecce_ena_w1s_s {
-#if defined(__BIG_ENDIAN_BITFIELD)
+	काष्ठा zip_ecce_ena_w1s_s अणु
+#अगर defined(__BIG_ENDIAN_BITFIELD)
 		u64 reserved_37_63              : 27;
 		u64 dbe                         : 5;
 		u64 reserved_5_31               : 27;
 		u64 sbe                         : 5;
-#elif defined(__LITTLE_ENDIAN_BITFIELD)
+#या_अगर defined(__LITTLE_ENDIAN_BITFIELD)
 		u64 sbe                         : 5;
 		u64 reserved_5_31               : 27;
 		u64 dbe                         : 5;
 		u64 reserved_37_63              : 27;
-#endif
-	} s;
-};
+#पूर्ण_अगर
+	पूर्ण s;
+पूर्ण;
 
-#define ZIP_ECCE_ENA_W1S 0x0590ull
+#घोषणा ZIP_ECCE_ENA_W1S 0x0590ull
 
 /**
- * union zip_ecce_int - Represents the register that contains the status of the
- * ECC interrupt sources.
+ * जोड़ zip_ecce_पूर्णांक - Represents the रेजिस्टर that contains the status of the
+ * ECC पूर्णांकerrupt sources.
  */
-union zip_ecce_int {
+जोड़ zip_ecce_पूर्णांक अणु
 	u64 u_reg64;
-	struct zip_ecce_int_s {
-#if defined(__BIG_ENDIAN_BITFIELD)
+	काष्ठा zip_ecce_पूर्णांक_s अणु
+#अगर defined(__BIG_ENDIAN_BITFIELD)
 		u64 reserved_37_63              : 27;
 		u64 dbe                         : 5;
 		u64 reserved_5_31               : 27;
 		u64 sbe                         : 5;
-#elif defined(__LITTLE_ENDIAN_BITFIELD)
+#या_अगर defined(__LITTLE_ENDIAN_BITFIELD)
 		u64 sbe                         : 5;
 		u64 reserved_5_31               : 27;
 		u64 dbe                         : 5;
 		u64 reserved_37_63              : 27;
-#endif
-	} s;
-};
+#पूर्ण_अगर
+	पूर्ण s;
+पूर्ण;
 
-#define ZIP_ECCE_INT 0x0580ull
+#घोषणा ZIP_ECCE_INT 0x0580ull
 
-/* NCB - zip_ecce_int_w1s */
-union zip_ecce_int_w1s {
+/* NCB - zip_ecce_पूर्णांक_w1s */
+जोड़ zip_ecce_पूर्णांक_w1s अणु
 	u64 u_reg64;
-	struct zip_ecce_int_w1s_s {
-#if defined(__BIG_ENDIAN_BITFIELD)
+	काष्ठा zip_ecce_पूर्णांक_w1s_s अणु
+#अगर defined(__BIG_ENDIAN_BITFIELD)
 		u64 reserved_37_63              : 27;
 		u64 dbe                         : 5;
 		u64 reserved_5_31               : 27;
 		u64 sbe                         : 5;
-#elif defined(__LITTLE_ENDIAN_BITFIELD)
+#या_अगर defined(__LITTLE_ENDIAN_BITFIELD)
 		u64 sbe                         : 5;
 		u64 reserved_5_31               : 27;
 		u64 dbe                         : 5;
 		u64 reserved_37_63              : 27;
-#endif
-	} s;
-};
+#पूर्ण_अगर
+	पूर्ण s;
+पूर्ण;
 
-#define ZIP_ECCE_INT_W1S 0x0588ull
+#घोषणा ZIP_ECCE_INT_W1S 0x0588ull
 
-/* NCB - zip_fife_ena_w1c */
-union zip_fife_ena_w1c {
+/* NCB - zip_fअगरe_ena_w1c */
+जोड़ zip_fअगरe_ena_w1c अणु
 	u64 u_reg64;
-	struct zip_fife_ena_w1c_s {
-#if defined(__BIG_ENDIAN_BITFIELD)
+	काष्ठा zip_fअगरe_ena_w1c_s अणु
+#अगर defined(__BIG_ENDIAN_BITFIELD)
 		u64 reserved_42_63              : 22;
-		u64 asserts                     : 42;
-#elif defined(__LITTLE_ENDIAN_BITFIELD)
-		u64 asserts                     : 42;
+		u64 निश्चितs                     : 42;
+#या_अगर defined(__LITTLE_ENDIAN_BITFIELD)
+		u64 निश्चितs                     : 42;
 		u64 reserved_42_63              : 22;
-#endif
-	} s;
-};
+#पूर्ण_अगर
+	पूर्ण s;
+पूर्ण;
 
-#define ZIP_FIFE_ENA_W1C 0x0090ull
+#घोषणा ZIP_FIFE_ENA_W1C 0x0090ull
 
-/* NCB - zip_fife_ena_w1s */
-union zip_fife_ena_w1s {
+/* NCB - zip_fअगरe_ena_w1s */
+जोड़ zip_fअगरe_ena_w1s अणु
 	u64 u_reg64;
-	struct zip_fife_ena_w1s_s {
-#if defined(__BIG_ENDIAN_BITFIELD)
+	काष्ठा zip_fअगरe_ena_w1s_s अणु
+#अगर defined(__BIG_ENDIAN_BITFIELD)
 		u64 reserved_42_63              : 22;
-		u64 asserts                     : 42;
-#elif defined(__LITTLE_ENDIAN_BITFIELD)
-		u64 asserts                     : 42;
+		u64 निश्चितs                     : 42;
+#या_अगर defined(__LITTLE_ENDIAN_BITFIELD)
+		u64 निश्चितs                     : 42;
 		u64 reserved_42_63              : 22;
-#endif
-	} s;
-};
+#पूर्ण_अगर
+	पूर्ण s;
+पूर्ण;
 
-#define ZIP_FIFE_ENA_W1S 0x0088ull
+#घोषणा ZIP_FIFE_ENA_W1S 0x0088ull
 
-/* NCB - zip_fife_int */
-union zip_fife_int {
+/* NCB - zip_fअगरe_पूर्णांक */
+जोड़ zip_fअगरe_पूर्णांक अणु
 	u64 u_reg64;
-	struct zip_fife_int_s {
-#if defined(__BIG_ENDIAN_BITFIELD)
+	काष्ठा zip_fअगरe_पूर्णांक_s अणु
+#अगर defined(__BIG_ENDIAN_BITFIELD)
 		u64 reserved_42_63              : 22;
-		u64 asserts                     : 42;
-#elif defined(__LITTLE_ENDIAN_BITFIELD)
-		u64 asserts                     : 42;
+		u64 निश्चितs                     : 42;
+#या_अगर defined(__LITTLE_ENDIAN_BITFIELD)
+		u64 निश्चितs                     : 42;
 		u64 reserved_42_63              : 22;
-#endif
-	} s;
-};
+#पूर्ण_अगर
+	पूर्ण s;
+पूर्ण;
 
-#define ZIP_FIFE_INT 0x0078ull
+#घोषणा ZIP_FIFE_INT 0x0078ull
 
-/* NCB - zip_fife_int_w1s */
-union zip_fife_int_w1s {
+/* NCB - zip_fअगरe_पूर्णांक_w1s */
+जोड़ zip_fअगरe_पूर्णांक_w1s अणु
 	u64 u_reg64;
-	struct zip_fife_int_w1s_s {
-#if defined(__BIG_ENDIAN_BITFIELD)
+	काष्ठा zip_fअगरe_पूर्णांक_w1s_s अणु
+#अगर defined(__BIG_ENDIAN_BITFIELD)
 		u64 reserved_42_63              : 22;
-		u64 asserts                     : 42;
-#elif defined(__LITTLE_ENDIAN_BITFIELD)
-		u64 asserts                     : 42;
+		u64 निश्चितs                     : 42;
+#या_अगर defined(__LITTLE_ENDIAN_BITFIELD)
+		u64 निश्चितs                     : 42;
 		u64 reserved_42_63              : 22;
-#endif
-	} s;
-};
+#पूर्ण_अगर
+	पूर्ण s;
+पूर्ण;
 
-#define ZIP_FIFE_INT_W1S 0x0080ull
+#घोषणा ZIP_FIFE_INT_W1S 0x0080ull
 
 /**
- * union zip_msix_pbax - Represents the register that is the MSI-X PBA table
+ * जोड़ zip_msix_pbax - Represents the रेजिस्टर that is the MSI-X PBA table
  *
- * The bit number is indexed by the ZIP_INT_VEC_E enumeration.
+ * The bit number is indexed by the ZIP_INT_VEC_E क्रमागतeration.
  */
-union zip_msix_pbax {
+जोड़ zip_msix_pbax अणु
 	u64 u_reg64;
-	struct zip_msix_pbax_s {
-#if defined(__BIG_ENDIAN_BITFIELD)
+	काष्ठा zip_msix_pbax_s अणु
+#अगर defined(__BIG_ENDIAN_BITFIELD)
 		u64 pend                        : 64;
-#elif defined(__LITTLE_ENDIAN_BITFIELD)
+#या_अगर defined(__LITTLE_ENDIAN_BITFIELD)
 		u64 pend                        : 64;
-#endif
-	} s;
-};
+#पूर्ण_अगर
+	पूर्ण s;
+पूर्ण;
 
-static inline u64 ZIP_MSIX_PBAX(u64 param1)
-{
-	if (param1 == 0)
-		return 0x0000838000FF0000ull;
+अटल अंतरभूत u64 ZIP_MSIX_PBAX(u64 param1)
+अणु
+	अगर (param1 == 0)
+		वापस 0x0000838000FF0000ull;
 	pr_err("ZIP_MSIX_PBAX: %llu\n", param1);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * union zip_msix_vecx_addr - Represents the register that is the MSI-X vector
- * table, indexed by the ZIP_INT_VEC_E enumeration.
+ * जोड़ zip_msix_vecx_addr - Represents the रेजिस्टर that is the MSI-X vector
+ * table, indexed by the ZIP_INT_VEC_E क्रमागतeration.
  */
-union zip_msix_vecx_addr {
+जोड़ zip_msix_vecx_addr अणु
 	u64 u_reg64;
-	struct zip_msix_vecx_addr_s {
-#if defined(__BIG_ENDIAN_BITFIELD)
+	काष्ठा zip_msix_vecx_addr_s अणु
+#अगर defined(__BIG_ENDIAN_BITFIELD)
 		u64 reserved_49_63              : 15;
 		u64 addr                        : 47;
 		u64 reserved_1_1                : 1;
 		u64 secvec                      : 1;
-#elif defined(__LITTLE_ENDIAN_BITFIELD)
+#या_अगर defined(__LITTLE_ENDIAN_BITFIELD)
 		u64 secvec                      : 1;
 		u64 reserved_1_1                : 1;
 		u64 addr                        : 47;
 		u64 reserved_49_63              : 15;
-#endif
-	} s;
-};
+#पूर्ण_अगर
+	पूर्ण s;
+पूर्ण;
 
-static inline u64 ZIP_MSIX_VECX_ADDR(u64 param1)
-{
-	if (param1 <= 17)
-		return 0x0000838000F00000ull + (param1 & 31) * 0x10ull;
+अटल अंतरभूत u64 ZIP_MSIX_VECX_ADDR(u64 param1)
+अणु
+	अगर (param1 <= 17)
+		वापस 0x0000838000F00000ull + (param1 & 31) * 0x10ull;
 	pr_err("ZIP_MSIX_VECX_ADDR: %llu\n", param1);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * union zip_msix_vecx_ctl - Represents the register that is the MSI-X vector
- * table, indexed by the ZIP_INT_VEC_E enumeration.
+ * जोड़ zip_msix_vecx_ctl - Represents the रेजिस्टर that is the MSI-X vector
+ * table, indexed by the ZIP_INT_VEC_E क्रमागतeration.
  */
-union zip_msix_vecx_ctl {
+जोड़ zip_msix_vecx_ctl अणु
 	u64 u_reg64;
-	struct zip_msix_vecx_ctl_s {
-#if defined(__BIG_ENDIAN_BITFIELD)
+	काष्ठा zip_msix_vecx_ctl_s अणु
+#अगर defined(__BIG_ENDIAN_BITFIELD)
 		u64 reserved_33_63              : 31;
 		u64 mask                        : 1;
 		u64 reserved_20_31              : 12;
 		u64 data                        : 20;
-#elif defined(__LITTLE_ENDIAN_BITFIELD)
+#या_अगर defined(__LITTLE_ENDIAN_BITFIELD)
 		u64 data                        : 20;
 		u64 reserved_20_31              : 12;
 		u64 mask                        : 1;
 		u64 reserved_33_63              : 31;
-#endif
-	} s;
-};
+#पूर्ण_अगर
+	पूर्ण s;
+पूर्ण;
 
-static inline u64 ZIP_MSIX_VECX_CTL(u64 param1)
-{
-	if (param1 <= 17)
-		return 0x0000838000F00008ull + (param1 & 31) * 0x10ull;
+अटल अंतरभूत u64 ZIP_MSIX_VECX_CTL(u64 param1)
+अणु
+	अगर (param1 <= 17)
+		वापस 0x0000838000F00008ull + (param1 & 31) * 0x10ull;
 	pr_err("ZIP_MSIX_VECX_CTL: %llu\n", param1);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * union zip_quex_done - Represents the registers that contain the per-queue
- * instruction done count.
+ * जोड़ zip_quex_करोne - Represents the रेजिस्टरs that contain the per-queue
+ * inकाष्ठाion करोne count.
  */
-union zip_quex_done {
+जोड़ zip_quex_करोne अणु
 	u64 u_reg64;
-	struct zip_quex_done_s {
-#if defined(__BIG_ENDIAN_BITFIELD)
+	काष्ठा zip_quex_करोne_s अणु
+#अगर defined(__BIG_ENDIAN_BITFIELD)
 		u64 reserved_20_63              : 44;
-		u64 done                        : 20;
-#elif defined(__LITTLE_ENDIAN_BITFIELD)
-		u64 done                        : 20;
+		u64 करोne                        : 20;
+#या_अगर defined(__LITTLE_ENDIAN_BITFIELD)
+		u64 करोne                        : 20;
 		u64 reserved_20_63              : 44;
-#endif
-	} s;
-};
+#पूर्ण_अगर
+	पूर्ण s;
+पूर्ण;
 
-static inline u64 ZIP_QUEX_DONE(u64 param1)
-{
-	if (param1 <= 7)
-		return 0x2000ull + (param1 & 7) * 0x8ull;
+अटल अंतरभूत u64 ZIP_QUEX_DONE(u64 param1)
+अणु
+	अगर (param1 <= 7)
+		वापस 0x2000ull + (param1 & 7) * 0x8ull;
 	pr_err("ZIP_QUEX_DONE: %llu\n", param1);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * union zip_quex_done_ack - Represents the registers on write to which will
- * decrement the per-queue instructiona done count.
+ * जोड़ zip_quex_करोne_ack - Represents the रेजिस्टरs on ग_लिखो to which will
+ * decrement the per-queue inकाष्ठाiona करोne count.
  */
-union zip_quex_done_ack {
+जोड़ zip_quex_करोne_ack अणु
 	u64 u_reg64;
-	struct zip_quex_done_ack_s {
-#if defined(__BIG_ENDIAN_BITFIELD)
+	काष्ठा zip_quex_करोne_ack_s अणु
+#अगर defined(__BIG_ENDIAN_BITFIELD)
 		u64 reserved_20_63              : 44;
-		u64 done_ack                    : 20;
-#elif defined(__LITTLE_ENDIAN_BITFIELD)
-		u64 done_ack                    : 20;
+		u64 करोne_ack                    : 20;
+#या_अगर defined(__LITTLE_ENDIAN_BITFIELD)
+		u64 करोne_ack                    : 20;
 		u64 reserved_20_63              : 44;
-#endif
-	} s;
-};
+#पूर्ण_अगर
+	पूर्ण s;
+पूर्ण;
 
-static inline u64 ZIP_QUEX_DONE_ACK(u64 param1)
-{
-	if (param1 <= 7)
-		return 0x2200ull + (param1 & 7) * 0x8ull;
+अटल अंतरभूत u64 ZIP_QUEX_DONE_ACK(u64 param1)
+अणु
+	अगर (param1 <= 7)
+		वापस 0x2200ull + (param1 & 7) * 0x8ull;
 	pr_err("ZIP_QUEX_DONE_ACK: %llu\n", param1);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * union zip_quex_done_ena_w1c - Represents the register which when written
- * 1 to will disable the DONEINT interrupt for the queue.
+ * जोड़ zip_quex_करोne_ena_w1c - Represents the रेजिस्टर which when written
+ * 1 to will disable the DONEINT पूर्णांकerrupt क्रम the queue.
  */
-union zip_quex_done_ena_w1c {
+जोड़ zip_quex_करोne_ena_w1c अणु
 	u64 u_reg64;
-	struct zip_quex_done_ena_w1c_s {
-#if defined(__BIG_ENDIAN_BITFIELD)
+	काष्ठा zip_quex_करोne_ena_w1c_s अणु
+#अगर defined(__BIG_ENDIAN_BITFIELD)
 		u64 reserved_1_63               : 63;
-		u64 done_ena                    : 1;
-#elif defined(__LITTLE_ENDIAN_BITFIELD)
-		u64 done_ena                    : 1;
+		u64 करोne_ena                    : 1;
+#या_अगर defined(__LITTLE_ENDIAN_BITFIELD)
+		u64 करोne_ena                    : 1;
 		u64 reserved_1_63               : 63;
-#endif
-	} s;
-};
+#पूर्ण_अगर
+	पूर्ण s;
+पूर्ण;
 
-static inline u64 ZIP_QUEX_DONE_ENA_W1C(u64 param1)
-{
-	if (param1 <= 7)
-		return 0x2600ull + (param1 & 7) * 0x8ull;
+अटल अंतरभूत u64 ZIP_QUEX_DONE_ENA_W1C(u64 param1)
+अणु
+	अगर (param1 <= 7)
+		वापस 0x2600ull + (param1 & 7) * 0x8ull;
 	pr_err("ZIP_QUEX_DONE_ENA_W1C: %llu\n", param1);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * union zip_quex_done_ena_w1s - Represents the register that when written 1 to
- * will enable the DONEINT interrupt for the queue.
+ * जोड़ zip_quex_करोne_ena_w1s - Represents the रेजिस्टर that when written 1 to
+ * will enable the DONEINT पूर्णांकerrupt क्रम the queue.
  */
-union zip_quex_done_ena_w1s {
+जोड़ zip_quex_करोne_ena_w1s अणु
 	u64 u_reg64;
-	struct zip_quex_done_ena_w1s_s {
-#if defined(__BIG_ENDIAN_BITFIELD)
+	काष्ठा zip_quex_करोne_ena_w1s_s अणु
+#अगर defined(__BIG_ENDIAN_BITFIELD)
 		u64 reserved_1_63               : 63;
-		u64 done_ena                    : 1;
-#elif defined(__LITTLE_ENDIAN_BITFIELD)
-		u64 done_ena                    : 1;
+		u64 करोne_ena                    : 1;
+#या_अगर defined(__LITTLE_ENDIAN_BITFIELD)
+		u64 करोne_ena                    : 1;
 		u64 reserved_1_63               : 63;
-#endif
-	} s;
-};
+#पूर्ण_अगर
+	पूर्ण s;
+पूर्ण;
 
-static inline u64 ZIP_QUEX_DONE_ENA_W1S(u64 param1)
-{
-	if (param1 <= 7)
-		return 0x2400ull + (param1 & 7) * 0x8ull;
+अटल अंतरभूत u64 ZIP_QUEX_DONE_ENA_W1S(u64 param1)
+अणु
+	अगर (param1 <= 7)
+		वापस 0x2400ull + (param1 & 7) * 0x8ull;
 	pr_err("ZIP_QUEX_DONE_ENA_W1S: %llu\n", param1);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * union zip_quex_done_wait - Represents the register that specifies the per
- * queue interrupt coalescing settings.
+ * जोड़ zip_quex_करोne_रुको - Represents the रेजिस्टर that specअगरies the per
+ * queue पूर्णांकerrupt coalescing settings.
  */
-union zip_quex_done_wait {
+जोड़ zip_quex_करोne_रुको अणु
 	u64 u_reg64;
-	struct zip_quex_done_wait_s {
-#if defined(__BIG_ENDIAN_BITFIELD)
+	काष्ठा zip_quex_करोne_रुको_s अणु
+#अगर defined(__BIG_ENDIAN_BITFIELD)
 		u64 reserved_48_63              : 16;
-		u64 time_wait                   : 16;
+		u64 समय_रुको                   : 16;
 		u64 reserved_20_31              : 12;
-		u64 num_wait                    : 20;
-#elif defined(__LITTLE_ENDIAN_BITFIELD)
-		u64 num_wait                    : 20;
+		u64 num_रुको                    : 20;
+#या_अगर defined(__LITTLE_ENDIAN_BITFIELD)
+		u64 num_रुको                    : 20;
 		u64 reserved_20_31              : 12;
-		u64 time_wait                   : 16;
+		u64 समय_रुको                   : 16;
 		u64 reserved_48_63              : 16;
-#endif
-	} s;
-};
+#पूर्ण_अगर
+	पूर्ण s;
+पूर्ण;
 
-static inline u64 ZIP_QUEX_DONE_WAIT(u64 param1)
-{
-	if (param1 <= 7)
-		return 0x2800ull + (param1 & 7) * 0x8ull;
+अटल अंतरभूत u64 ZIP_QUEX_DONE_WAIT(u64 param1)
+अणु
+	अगर (param1 <= 7)
+		वापस 0x2800ull + (param1 & 7) * 0x8ull;
 	pr_err("ZIP_QUEX_DONE_WAIT: %llu\n", param1);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * union zip_quex_doorbell - Represents doorbell registers for the ZIP
- * instruction queues.
+ * जोड़ zip_quex_करोorbell - Represents करोorbell रेजिस्टरs क्रम the ZIP
+ * inकाष्ठाion queues.
  */
-union zip_quex_doorbell {
+जोड़ zip_quex_करोorbell अणु
 	u64 u_reg64;
-	struct zip_quex_doorbell_s {
-#if defined(__BIG_ENDIAN_BITFIELD)
+	काष्ठा zip_quex_करोorbell_s अणु
+#अगर defined(__BIG_ENDIAN_BITFIELD)
 		u64 reserved_20_63              : 44;
 		u64 dbell_cnt                   : 20;
-#elif defined(__LITTLE_ENDIAN_BITFIELD)
+#या_अगर defined(__LITTLE_ENDIAN_BITFIELD)
 		u64 dbell_cnt                   : 20;
 		u64 reserved_20_63              : 44;
-#endif
-	} s;
-};
+#पूर्ण_अगर
+	पूर्ण s;
+पूर्ण;
 
-static inline u64 ZIP_QUEX_DOORBELL(u64 param1)
-{
-	if (param1 <= 7)
-		return 0x4000ull + (param1 & 7) * 0x8ull;
+अटल अंतरभूत u64 ZIP_QUEX_DOORBELL(u64 param1)
+अणु
+	अगर (param1 <= 7)
+		वापस 0x4000ull + (param1 & 7) * 0x8ull;
 	pr_err("ZIP_QUEX_DOORBELL: %llu\n", param1);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-union zip_quex_err_ena_w1c {
+जोड़ zip_quex_err_ena_w1c अणु
 	u64 u_reg64;
-	struct zip_quex_err_ena_w1c_s {
-#if defined(__BIG_ENDIAN_BITFIELD)
+	काष्ठा zip_quex_err_ena_w1c_s अणु
+#अगर defined(__BIG_ENDIAN_BITFIELD)
 		u64 reserved_5_63               : 59;
 		u64 mdbe                        : 1;
 		u64 nwrp                        : 1;
 		u64 nrrp                        : 1;
 		u64 irde                        : 1;
-		u64 dovf                        : 1;
-#elif defined(__LITTLE_ENDIAN_BITFIELD)
-		u64 dovf                        : 1;
+		u64 करोvf                        : 1;
+#या_अगर defined(__LITTLE_ENDIAN_BITFIELD)
+		u64 करोvf                        : 1;
 		u64 irde                        : 1;
 		u64 nrrp                        : 1;
 		u64 nwrp                        : 1;
 		u64 mdbe                        : 1;
 		u64 reserved_5_63               : 59;
-#endif
-	} s;
-};
+#पूर्ण_अगर
+	पूर्ण s;
+पूर्ण;
 
-static inline u64 ZIP_QUEX_ERR_ENA_W1C(u64 param1)
-{
-	if (param1 <= 7)
-		return 0x3600ull + (param1 & 7) * 0x8ull;
+अटल अंतरभूत u64 ZIP_QUEX_ERR_ENA_W1C(u64 param1)
+अणु
+	अगर (param1 <= 7)
+		वापस 0x3600ull + (param1 & 7) * 0x8ull;
 	pr_err("ZIP_QUEX_ERR_ENA_W1C: %llu\n", param1);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-union zip_quex_err_ena_w1s {
+जोड़ zip_quex_err_ena_w1s अणु
 	u64 u_reg64;
-	struct zip_quex_err_ena_w1s_s {
-#if defined(__BIG_ENDIAN_BITFIELD)
+	काष्ठा zip_quex_err_ena_w1s_s अणु
+#अगर defined(__BIG_ENDIAN_BITFIELD)
 		u64 reserved_5_63               : 59;
 		u64 mdbe                        : 1;
 		u64 nwrp                        : 1;
 		u64 nrrp                        : 1;
 		u64 irde                        : 1;
-		u64 dovf                        : 1;
-#elif defined(__LITTLE_ENDIAN_BITFIELD)
-		u64 dovf                        : 1;
+		u64 करोvf                        : 1;
+#या_अगर defined(__LITTLE_ENDIAN_BITFIELD)
+		u64 करोvf                        : 1;
 		u64 irde                        : 1;
 		u64 nrrp                        : 1;
 		u64 nwrp                        : 1;
 		u64 mdbe                        : 1;
 		u64 reserved_5_63               : 59;
-#endif
-	} s;
-};
+#पूर्ण_अगर
+	पूर्ण s;
+पूर्ण;
 
-static inline u64 ZIP_QUEX_ERR_ENA_W1S(u64 param1)
-{
-	if (param1 <= 7)
-		return 0x3400ull + (param1 & 7) * 0x8ull;
+अटल अंतरभूत u64 ZIP_QUEX_ERR_ENA_W1S(u64 param1)
+अणु
+	अगर (param1 <= 7)
+		वापस 0x3400ull + (param1 & 7) * 0x8ull;
 	pr_err("ZIP_QUEX_ERR_ENA_W1S: %llu\n", param1);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * union zip_quex_err_int - Represents registers that contain the per-queue
- * error interrupts.
+ * जोड़ zip_quex_err_पूर्णांक - Represents रेजिस्टरs that contain the per-queue
+ * error पूर्णांकerrupts.
  */
-union zip_quex_err_int {
+जोड़ zip_quex_err_पूर्णांक अणु
 	u64 u_reg64;
-	struct zip_quex_err_int_s {
-#if defined(__BIG_ENDIAN_BITFIELD)
+	काष्ठा zip_quex_err_पूर्णांक_s अणु
+#अगर defined(__BIG_ENDIAN_BITFIELD)
 		u64 reserved_5_63               : 59;
 		u64 mdbe                        : 1;
 		u64 nwrp                        : 1;
 		u64 nrrp                        : 1;
 		u64 irde                        : 1;
-		u64 dovf                        : 1;
-#elif defined(__LITTLE_ENDIAN_BITFIELD)
-		u64 dovf                        : 1;
+		u64 करोvf                        : 1;
+#या_अगर defined(__LITTLE_ENDIAN_BITFIELD)
+		u64 करोvf                        : 1;
 		u64 irde                        : 1;
 		u64 nrrp                        : 1;
 		u64 nwrp                        : 1;
 		u64 mdbe                        : 1;
 		u64 reserved_5_63               : 59;
-#endif
-	} s;
-};
+#पूर्ण_अगर
+	पूर्ण s;
+पूर्ण;
 
-static inline u64 ZIP_QUEX_ERR_INT(u64 param1)
-{
-	if (param1 <= 7)
-		return 0x3000ull + (param1 & 7) * 0x8ull;
+अटल अंतरभूत u64 ZIP_QUEX_ERR_INT(u64 param1)
+अणु
+	अगर (param1 <= 7)
+		वापस 0x3000ull + (param1 & 7) * 0x8ull;
 	pr_err("ZIP_QUEX_ERR_INT: %llu\n", param1);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* NCB - zip_que#_err_int_w1s */
-union zip_quex_err_int_w1s {
+/* NCB - zip_que#_err_पूर्णांक_w1s */
+जोड़ zip_quex_err_पूर्णांक_w1s अणु
 	u64 u_reg64;
-	struct zip_quex_err_int_w1s_s {
-#if defined(__BIG_ENDIAN_BITFIELD)
+	काष्ठा zip_quex_err_पूर्णांक_w1s_s अणु
+#अगर defined(__BIG_ENDIAN_BITFIELD)
 		u64 reserved_5_63               : 59;
 		u64 mdbe                        : 1;
 		u64 nwrp                        : 1;
 		u64 nrrp                        : 1;
 		u64 irde                        : 1;
-		u64 dovf                        : 1;
-#elif defined(__LITTLE_ENDIAN_BITFIELD)
-		u64 dovf                        : 1;
+		u64 करोvf                        : 1;
+#या_अगर defined(__LITTLE_ENDIAN_BITFIELD)
+		u64 करोvf                        : 1;
 		u64 irde                        : 1;
 		u64 nrrp                        : 1;
 		u64 nwrp                        : 1;
 		u64 mdbe                        : 1;
 		u64 reserved_5_63               : 59;
-#endif
-	} s;
-};
+#पूर्ण_अगर
+	पूर्ण s;
+पूर्ण;
 
-static inline u64 ZIP_QUEX_ERR_INT_W1S(u64 param1)
-{
-	if (param1 <= 7)
-		return 0x3200ull + (param1 & 7) * 0x8ull;
+अटल अंतरभूत u64 ZIP_QUEX_ERR_INT_W1S(u64 param1)
+अणु
+	अगर (param1 <= 7)
+		वापस 0x3200ull + (param1 & 7) * 0x8ull;
 	pr_err("ZIP_QUEX_ERR_INT_W1S: %llu\n", param1);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * union zip_quex_gcfg - Represents the registers that reflect status of the
- * zip instruction queues,debug use only.
+ * जोड़ zip_quex_gcfg - Represents the रेजिस्टरs that reflect status of the
+ * zip inकाष्ठाion queues,debug use only.
  */
-union zip_quex_gcfg {
+जोड़ zip_quex_gcfg अणु
 	u64 u_reg64;
-	struct zip_quex_gcfg_s {
-#if defined(__BIG_ENDIAN_BITFIELD)
+	काष्ठा zip_quex_gcfg_s अणु
+#अगर defined(__BIG_ENDIAN_BITFIELD)
 		u64 reserved_4_63               : 60;
 		u64 iqb_ldwb                    : 1;
 		u64 cbw_sty                     : 1;
 		u64 l2ld_cmd                    : 2;
-#elif defined(__LITTLE_ENDIAN_BITFIELD)
+#या_अगर defined(__LITTLE_ENDIAN_BITFIELD)
 		u64 l2ld_cmd                    : 2;
 		u64 cbw_sty                     : 1;
 		u64 iqb_ldwb                    : 1;
 		u64 reserved_4_63               : 60;
-#endif
-	} s;
-};
+#पूर्ण_अगर
+	पूर्ण s;
+पूर्ण;
 
-static inline u64 ZIP_QUEX_GCFG(u64 param1)
-{
-	if (param1 <= 7)
-		return 0x1A00ull + (param1 & 7) * 0x8ull;
+अटल अंतरभूत u64 ZIP_QUEX_GCFG(u64 param1)
+अणु
+	अगर (param1 <= 7)
+		वापस 0x1A00ull + (param1 & 7) * 0x8ull;
 	pr_err("ZIP_QUEX_GCFG: %llu\n", param1);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * union zip_quex_map - Represents the registers that control how each
- * instruction queue maps to zip cores.
+ * जोड़ zip_quex_map - Represents the रेजिस्टरs that control how each
+ * inकाष्ठाion queue maps to zip cores.
  */
-union zip_quex_map {
+जोड़ zip_quex_map अणु
 	u64 u_reg64;
-	struct zip_quex_map_s {
-#if defined(__BIG_ENDIAN_BITFIELD)
+	काष्ठा zip_quex_map_s अणु
+#अगर defined(__BIG_ENDIAN_BITFIELD)
 		u64 reserved_2_63               : 62;
 		u64 zce                         : 2;
-#elif defined(__LITTLE_ENDIAN_BITFIELD)
+#या_अगर defined(__LITTLE_ENDIAN_BITFIELD)
 		u64 zce                         : 2;
 		u64 reserved_2_63               : 62;
-#endif
-	} s;
-};
+#पूर्ण_अगर
+	पूर्ण s;
+पूर्ण;
 
-static inline u64 ZIP_QUEX_MAP(u64 param1)
-{
-	if (param1 <= 7)
-		return 0x1400ull + (param1 & 7) * 0x8ull;
+अटल अंतरभूत u64 ZIP_QUEX_MAP(u64 param1)
+अणु
+	अगर (param1 <= 7)
+		वापस 0x1400ull + (param1 & 7) * 0x8ull;
 	pr_err("ZIP_QUEX_MAP: %llu\n", param1);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * union zip_quex_sbuf_addr - Represents the registers that set the buffer
- * parameters for the instruction queues.
+ * जोड़ zip_quex_sbuf_addr - Represents the रेजिस्टरs that set the buffer
+ * parameters क्रम the inकाष्ठाion queues.
  *
- * When quiescent (i.e. outstanding doorbell count is 0), it is safe to rewrite
- * this register to effectively reset the command buffer state machine.
- * These registers must be programmed after SW programs the corresponding
+ * When quiescent (i.e. outstanding करोorbell count is 0), it is safe to reग_लिखो
+ * this रेजिस्टर to effectively reset the command buffer state machine.
+ * These रेजिस्टरs must be programmed after SW programs the corresponding
  * ZIP_QUE(0..7)_SBUF_CTL.
  */
-union zip_quex_sbuf_addr {
+जोड़ zip_quex_sbuf_addr अणु
 	u64 u_reg64;
-	struct zip_quex_sbuf_addr_s {
-#if defined(__BIG_ENDIAN_BITFIELD)
+	काष्ठा zip_quex_sbuf_addr_s अणु
+#अगर defined(__BIG_ENDIAN_BITFIELD)
 		u64 reserved_49_63              : 15;
 		u64 ptr                         : 42;
 		u64 off                         : 7;
-#elif defined(__LITTLE_ENDIAN_BITFIELD)
+#या_अगर defined(__LITTLE_ENDIAN_BITFIELD)
 		u64 off                         : 7;
 		u64 ptr                         : 42;
 		u64 reserved_49_63              : 15;
-#endif
-	} s;
-};
+#पूर्ण_अगर
+	पूर्ण s;
+पूर्ण;
 
-static inline u64 ZIP_QUEX_SBUF_ADDR(u64 param1)
-{
-	if (param1 <= 7)
-		return 0x1000ull + (param1 & 7) * 0x8ull;
+अटल अंतरभूत u64 ZIP_QUEX_SBUF_ADDR(u64 param1)
+अणु
+	अगर (param1 <= 7)
+		वापस 0x1000ull + (param1 & 7) * 0x8ull;
 	pr_err("ZIP_QUEX_SBUF_ADDR: %llu\n", param1);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * union zip_quex_sbuf_ctl - Represents the registers that set the buffer
- * parameters for the instruction queues.
+ * जोड़ zip_quex_sbuf_ctl - Represents the रेजिस्टरs that set the buffer
+ * parameters क्रम the inकाष्ठाion queues.
  *
- * When quiescent (i.e. outstanding doorbell count is 0), it is safe to rewrite
- * this register to effectively reset the command buffer state machine.
- * These registers must be programmed before SW programs the corresponding
+ * When quiescent (i.e. outstanding करोorbell count is 0), it is safe to reग_लिखो
+ * this रेजिस्टर to effectively reset the command buffer state machine.
+ * These रेजिस्टरs must be programmed beक्रमe SW programs the corresponding
  * ZIP_QUE(0..7)_SBUF_ADDR.
  */
-union zip_quex_sbuf_ctl {
+जोड़ zip_quex_sbuf_ctl अणु
 	u64 u_reg64;
-	struct zip_quex_sbuf_ctl_s {
-#if defined(__BIG_ENDIAN_BITFIELD)
+	काष्ठा zip_quex_sbuf_ctl_s अणु
+#अगर defined(__BIG_ENDIAN_BITFIELD)
 		u64 reserved_45_63              : 19;
 		u64 size                        : 13;
 		u64 inst_be                     : 1;
@@ -1262,7 +1263,7 @@ union zip_quex_sbuf_ctl {
 		u64 stream_id                   : 8;
 		u64 reserved_12_15              : 4;
 		u64 aura                        : 12;
-#elif defined(__LITTLE_ENDIAN_BITFIELD)
+#या_अगर defined(__LITTLE_ENDIAN_BITFIELD)
 		u64 aura                        : 12;
 		u64 reserved_12_15              : 4;
 		u64 stream_id                   : 8;
@@ -1270,78 +1271,78 @@ union zip_quex_sbuf_ctl {
 		u64 inst_be                     : 1;
 		u64 size                        : 13;
 		u64 reserved_45_63              : 19;
-#endif
-	} s;
-};
+#पूर्ण_अगर
+	पूर्ण s;
+पूर्ण;
 
-static inline u64 ZIP_QUEX_SBUF_CTL(u64 param1)
-{
-	if (param1 <= 7)
-		return 0x1200ull + (param1 & 7) * 0x8ull;
+अटल अंतरभूत u64 ZIP_QUEX_SBUF_CTL(u64 param1)
+अणु
+	अगर (param1 <= 7)
+		वापस 0x1200ull + (param1 & 7) * 0x8ull;
 	pr_err("ZIP_QUEX_SBUF_CTL: %llu\n", param1);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * union zip_que_ena - Represents queue enable register
+ * जोड़ zip_que_ena - Represents queue enable रेजिस्टर
  *
- * If a queue is disabled, ZIP_CTL stops fetching instructions from the queue.
+ * If a queue is disabled, ZIP_CTL stops fetching inकाष्ठाions from the queue.
  */
-union zip_que_ena {
+जोड़ zip_que_ena अणु
 	u64 u_reg64;
-	struct zip_que_ena_s {
-#if defined(__BIG_ENDIAN_BITFIELD)
+	काष्ठा zip_que_ena_s अणु
+#अगर defined(__BIG_ENDIAN_BITFIELD)
 		u64 reserved_8_63               : 56;
 		u64 ena                         : 8;
-#elif defined(__LITTLE_ENDIAN_BITFIELD)
+#या_अगर defined(__LITTLE_ENDIAN_BITFIELD)
 		u64 ena                         : 8;
 		u64 reserved_8_63               : 56;
-#endif
-	} s;
-};
+#पूर्ण_अगर
+	पूर्ण s;
+पूर्ण;
 
-#define ZIP_QUE_ENA 0x0500ull
+#घोषणा ZIP_QUE_ENA 0x0500ull
 
 /**
- * union zip_que_pri - Represents the register that defines the priority
- * between instruction queues.
+ * जोड़ zip_que_pri - Represents the रेजिस्टर that defines the priority
+ * between inकाष्ठाion queues.
  */
-union zip_que_pri {
+जोड़ zip_que_pri अणु
 	u64 u_reg64;
-	struct zip_que_pri_s {
-#if defined(__BIG_ENDIAN_BITFIELD)
+	काष्ठा zip_que_pri_s अणु
+#अगर defined(__BIG_ENDIAN_BITFIELD)
 		u64 reserved_8_63               : 56;
 		u64 pri                         : 8;
-#elif defined(__LITTLE_ENDIAN_BITFIELD)
+#या_अगर defined(__LITTLE_ENDIAN_BITFIELD)
 		u64 pri                         : 8;
 		u64 reserved_8_63               : 56;
-#endif
-	} s;
-};
+#पूर्ण_अगर
+	पूर्ण s;
+पूर्ण;
 
-#define ZIP_QUE_PRI 0x0508ull
+#घोषणा ZIP_QUE_PRI 0x0508ull
 
 /**
- * union zip_throttle - Represents the register that controls the maximum
+ * जोड़ zip_throttle - Represents the रेजिस्टर that controls the maximum
  * number of in-flight X2I data fetch transactions.
  *
- * Writing 0 to this register causes the ZIP module to temporarily suspend NCB
- * accesses; it is not recommended for normal operation, but may be useful for
+ * Writing 0 to this रेजिस्टर causes the ZIP module to temporarily suspend NCB
+ * accesses; it is not recommended क्रम normal operation, but may be useful क्रम
  * diagnostics.
  */
-union zip_throttle {
+जोड़ zip_throttle अणु
 	u64 u_reg64;
-	struct zip_throttle_s {
-#if defined(__BIG_ENDIAN_BITFIELD)
+	काष्ठा zip_throttle_s अणु
+#अगर defined(__BIG_ENDIAN_BITFIELD)
 		u64 reserved_6_63               : 58;
 		u64 ld_infl                     : 6;
-#elif defined(__LITTLE_ENDIAN_BITFIELD)
+#या_अगर defined(__LITTLE_ENDIAN_BITFIELD)
 		u64 ld_infl                     : 6;
 		u64 reserved_6_63               : 58;
-#endif
-	} s;
-};
+#पूर्ण_अगर
+	पूर्ण s;
+पूर्ण;
 
-#define ZIP_THROTTLE 0x0010ull
+#घोषणा ZIP_THROTTLE 0x0010ull
 
-#endif /* _CSRS_ZIP__ */
+#पूर्ण_अगर /* _CSRS_ZIP__ */

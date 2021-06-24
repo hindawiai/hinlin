@@ -1,53 +1,54 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /* Copyright (c) 2018 Facebook */
-#include <stddef.h>
-#include <linux/bpf.h>
-#include <linux/types.h>
-#include <bpf/bpf_helpers.h>
+#समावेश <मानकघोष.स>
+#समावेश <linux/bpf.h>
+#समावेश <linux/types.h>
+#समावेश <bpf/bpf_helpers.h>
 
-struct {
-	__uint(type, BPF_MAP_TYPE_ARRAY_OF_MAPS);
-	__uint(max_entries, 1);
-	__uint(map_flags, 0);
-	__uint(key_size, sizeof(__u32));
-	/* must be sizeof(__u32) for map in map */
-	__uint(value_size, sizeof(__u32));
-} mim_array SEC(".maps");
+काष्ठा अणु
+	__uपूर्णांक(type, BPF_MAP_TYPE_ARRAY_OF_MAPS);
+	__uपूर्णांक(max_entries, 1);
+	__uपूर्णांक(map_flags, 0);
+	__uपूर्णांक(key_size, माप(__u32));
+	/* must be माप(__u32) क्रम map in map */
+	__uपूर्णांक(value_size, माप(__u32));
+पूर्ण mim_array SEC(".maps");
 
-struct {
-	__uint(type, BPF_MAP_TYPE_HASH_OF_MAPS);
-	__uint(max_entries, 1);
-	__uint(map_flags, 0);
-	__uint(key_size, sizeof(int));
-	/* must be sizeof(__u32) for map in map */
-	__uint(value_size, sizeof(__u32));
-} mim_hash SEC(".maps");
+काष्ठा अणु
+	__uपूर्णांक(type, BPF_MAP_TYPE_HASH_OF_MAPS);
+	__uपूर्णांक(max_entries, 1);
+	__uपूर्णांक(map_flags, 0);
+	__uपूर्णांक(key_size, माप(पूर्णांक));
+	/* must be माप(__u32) क्रम map in map */
+	__uपूर्णांक(value_size, माप(__u32));
+पूर्ण mim_hash SEC(".maps");
 
 SEC("xdp_mimtest")
-int xdp_mimtest0(struct xdp_md *ctx)
-{
-	int value = 123;
-	int *value_p;
-	int key = 0;
-	void *map;
+पूर्णांक xdp_mimtest0(काष्ठा xdp_md *ctx)
+अणु
+	पूर्णांक value = 123;
+	पूर्णांक *value_p;
+	पूर्णांक key = 0;
+	व्योम *map;
 
 	map = bpf_map_lookup_elem(&mim_array, &key);
-	if (!map)
-		return XDP_DROP;
+	अगर (!map)
+		वापस XDP_DROP;
 
 	bpf_map_update_elem(map, &key, &value, 0);
 	value_p = bpf_map_lookup_elem(map, &key);
-	if (!value_p || *value_p != 123)
-		return XDP_DROP;
+	अगर (!value_p || *value_p != 123)
+		वापस XDP_DROP;
 
 	map = bpf_map_lookup_elem(&mim_hash, &key);
-	if (!map)
-		return XDP_DROP;
+	अगर (!map)
+		वापस XDP_DROP;
 
 	bpf_map_update_elem(map, &key, &value, 0);
 
-	return XDP_PASS;
-}
+	वापस XDP_PASS;
+पूर्ण
 
-int _version SEC("version") = 1;
-char _license[] SEC("license") = "GPL";
+पूर्णांक _version SEC("version") = 1;
+अक्षर _license[] SEC("license") = "GPL";

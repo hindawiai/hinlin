@@ -1,220 +1,221 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * MAX44000 Ambient and Infrared Proximity Sensor
  *
  * Copyright (c) 2016, Intel Corporation.
  *
- * Data sheet: https://datasheets.maximintegrated.com/en/ds/MAX44000.pdf
+ * Data sheet: https://datasheets.maximपूर्णांकegrated.com/en/ds/MAX44000.pdf
  *
  * 7-bit I2C slave address 0x4a
  */
 
-#include <linux/module.h>
-#include <linux/init.h>
-#include <linux/i2c.h>
-#include <linux/regmap.h>
-#include <linux/util_macros.h>
-#include <linux/iio/iio.h>
-#include <linux/iio/sysfs.h>
-#include <linux/iio/buffer.h>
-#include <linux/iio/trigger_consumer.h>
-#include <linux/iio/triggered_buffer.h>
-#include <linux/acpi.h>
+#समावेश <linux/module.h>
+#समावेश <linux/init.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/regmap.h>
+#समावेश <linux/util_macros.h>
+#समावेश <linux/iio/iपन.स>
+#समावेश <linux/iio/sysfs.h>
+#समावेश <linux/iio/buffer.h>
+#समावेश <linux/iio/trigger_consumer.h>
+#समावेश <linux/iio/triggered_buffer.h>
+#समावेश <linux/acpi.h>
 
-#define MAX44000_DRV_NAME		"max44000"
+#घोषणा MAX44000_DRV_NAME		"max44000"
 
 /* Registers in datasheet order */
-#define MAX44000_REG_STATUS		0x00
-#define MAX44000_REG_CFG_MAIN		0x01
-#define MAX44000_REG_CFG_RX		0x02
-#define MAX44000_REG_CFG_TX		0x03
-#define MAX44000_REG_ALS_DATA_HI	0x04
-#define MAX44000_REG_ALS_DATA_LO	0x05
-#define MAX44000_REG_PRX_DATA		0x16
-#define MAX44000_REG_ALS_UPTHR_HI	0x06
-#define MAX44000_REG_ALS_UPTHR_LO	0x07
-#define MAX44000_REG_ALS_LOTHR_HI	0x08
-#define MAX44000_REG_ALS_LOTHR_LO	0x09
-#define MAX44000_REG_PST		0x0a
-#define MAX44000_REG_PRX_IND		0x0b
-#define MAX44000_REG_PRX_THR		0x0c
-#define MAX44000_REG_TRIM_GAIN_GREEN	0x0f
-#define MAX44000_REG_TRIM_GAIN_IR	0x10
+#घोषणा MAX44000_REG_STATUS		0x00
+#घोषणा MAX44000_REG_CFG_MAIN		0x01
+#घोषणा MAX44000_REG_CFG_RX		0x02
+#घोषणा MAX44000_REG_CFG_TX		0x03
+#घोषणा MAX44000_REG_ALS_DATA_HI	0x04
+#घोषणा MAX44000_REG_ALS_DATA_LO	0x05
+#घोषणा MAX44000_REG_PRX_DATA		0x16
+#घोषणा MAX44000_REG_ALS_UPTHR_HI	0x06
+#घोषणा MAX44000_REG_ALS_UPTHR_LO	0x07
+#घोषणा MAX44000_REG_ALS_LOTHR_HI	0x08
+#घोषणा MAX44000_REG_ALS_LOTHR_LO	0x09
+#घोषणा MAX44000_REG_PST		0x0a
+#घोषणा MAX44000_REG_PRX_IND		0x0b
+#घोषणा MAX44000_REG_PRX_THR		0x0c
+#घोषणा MAX44000_REG_TRIM_GAIN_GREEN	0x0f
+#घोषणा MAX44000_REG_TRIM_GAIN_IR	0x10
 
 /* REG_CFG bits */
-#define MAX44000_CFG_ALSINTE            0x01
-#define MAX44000_CFG_PRXINTE            0x02
-#define MAX44000_CFG_MASK               0x1c
-#define MAX44000_CFG_MODE_SHUTDOWN      0x00
-#define MAX44000_CFG_MODE_ALS_GIR       0x04
-#define MAX44000_CFG_MODE_ALS_G         0x08
-#define MAX44000_CFG_MODE_ALS_IR        0x0c
-#define MAX44000_CFG_MODE_ALS_PRX       0x10
-#define MAX44000_CFG_MODE_PRX           0x14
-#define MAX44000_CFG_TRIM               0x20
+#घोषणा MAX44000_CFG_ALSINTE            0x01
+#घोषणा MAX44000_CFG_PRXINTE            0x02
+#घोषणा MAX44000_CFG_MASK               0x1c
+#घोषणा MAX44000_CFG_MODE_SHUTDOWN      0x00
+#घोषणा MAX44000_CFG_MODE_ALS_GIR       0x04
+#घोषणा MAX44000_CFG_MODE_ALS_G         0x08
+#घोषणा MAX44000_CFG_MODE_ALS_IR        0x0c
+#घोषणा MAX44000_CFG_MODE_ALS_PRX       0x10
+#घोषणा MAX44000_CFG_MODE_PRX           0x14
+#घोषणा MAX44000_CFG_TRIM               0x20
 
 /*
- * Upper 4 bits are not documented but start as 1 on powerup
+ * Upper 4 bits are not करोcumented but start as 1 on घातerup
  * Setting them to 0 causes proximity to misbehave so set them to 1
  */
-#define MAX44000_REG_CFG_RX_DEFAULT 0xf0
+#घोषणा MAX44000_REG_CFG_RX_DEFAULT 0xf0
 
 /* REG_RX bits */
-#define MAX44000_CFG_RX_ALSTIM_MASK	0x0c
-#define MAX44000_CFG_RX_ALSTIM_SHIFT	2
-#define MAX44000_CFG_RX_ALSPGA_MASK	0x03
-#define MAX44000_CFG_RX_ALSPGA_SHIFT	0
+#घोषणा MAX44000_CFG_RX_ALSTIM_MASK	0x0c
+#घोषणा MAX44000_CFG_RX_ALSTIM_SHIFT	2
+#घोषणा MAX44000_CFG_RX_ALSPGA_MASK	0x03
+#घोषणा MAX44000_CFG_RX_ALSPGA_SHIFT	0
 
 /* REG_TX bits */
-#define MAX44000_LED_CURRENT_MASK	0xf
-#define MAX44000_LED_CURRENT_MAX	11
-#define MAX44000_LED_CURRENT_DEFAULT	6
+#घोषणा MAX44000_LED_CURRENT_MASK	0xf
+#घोषणा MAX44000_LED_CURRENT_MAX	11
+#घोषणा MAX44000_LED_CURRENT_DEFAULT	6
 
-#define MAX44000_ALSDATA_OVERFLOW	0x4000
+#घोषणा MAX44000_ALSDATA_OVERFLOW	0x4000
 
-struct max44000_data {
-	struct mutex lock;
-	struct regmap *regmap;
-	/* Ensure naturally aligned timestamp */
-	struct {
+काष्ठा max44000_data अणु
+	काष्ठा mutex lock;
+	काष्ठा regmap *regmap;
+	/* Ensure naturally aligned बारtamp */
+	काष्ठा अणु
 		u16 channels[2];
 		s64 ts __aligned(8);
-	} scan;
-};
+	पूर्ण scan;
+पूर्ण;
 
 /* Default scale is set to the minimum of 0.03125 or 1 / (1 << 5) lux */
-#define MAX44000_ALS_TO_LUX_DEFAULT_FRACTION_LOG2 5
+#घोषणा MAX44000_ALS_TO_LUX_DEFAULT_FRACTION_LOG2 5
 
-/* Scale can be multiplied by up to 128x via ALSPGA for measurement gain */
-static const int max44000_alspga_shift[] = {0, 2, 4, 7};
-#define MAX44000_ALSPGA_MAX_SHIFT 7
+/* Scale can be multiplied by up to 128x via ALSPGA क्रम measurement gain */
+अटल स्थिर पूर्णांक max44000_alspga_shअगरt[] = अणु0, 2, 4, 7पूर्ण;
+#घोषणा MAX44000_ALSPGA_MAX_SHIFT 7
 
 /*
  * Scale can be multiplied by up to 64x via ALSTIM because of lost resolution
  *
- * This scaling factor is hidden from userspace and instead accounted for when
- * reading raw values from the device.
+ * This scaling factor is hidden from userspace and instead accounted क्रम when
+ * पढ़ोing raw values from the device.
  *
  * This makes it possible to cleanly expose ALSPGA as IIO_CHAN_INFO_SCALE and
  * ALSTIM as IIO_CHAN_INFO_INT_TIME without the values affecting each other.
  *
- * Handling this internally is also required for buffer support because the
- * channel's scan_type can't be modified dynamically.
+ * Handling this पूर्णांकernally is also required क्रम buffer support because the
+ * channel's scan_type can't be modअगरied dynamically.
  */
-#define MAX44000_ALSTIM_SHIFT(alstim) (2 * (alstim))
+#घोषणा MAX44000_ALSTIM_SHIFT(alstim) (2 * (alstim))
 
-/* Available integration times with pretty manual alignment: */
-static const int max44000_int_time_avail_ns_array[] = {
+/* Available पूर्णांकegration बार with pretty manual alignment: */
+अटल स्थिर पूर्णांक max44000_पूर्णांक_समय_avail_ns_array[] = अणु
 	   100000000,
 	    25000000,
 	     6250000,
 	     1562500,
-};
-static const char max44000_int_time_avail_str[] =
+पूर्ण;
+अटल स्थिर अक्षर max44000_पूर्णांक_समय_avail_str[] =
 	"0.100 "
 	"0.025 "
 	"0.00625 "
 	"0.0015625";
 
-/* Available scales (internal to ulux) with pretty manual alignment: */
-static const int max44000_scale_avail_ulux_array[] = {
+/* Available scales (पूर्णांकernal to ulux) with pretty manual alignment: */
+अटल स्थिर पूर्णांक max44000_scale_avail_ulux_array[] = अणु
 	    31250,
 	   125000,
 	   500000,
 	  4000000,
-};
-static const char max44000_scale_avail_str[] =
+पूर्ण;
+अटल स्थिर अक्षर max44000_scale_avail_str[] =
 	"0.03125 "
 	"0.125 "
 	"0.5 "
 	 "4";
 
-#define MAX44000_SCAN_INDEX_ALS 0
-#define MAX44000_SCAN_INDEX_PRX 1
+#घोषणा MAX44000_SCAN_INDEX_ALS 0
+#घोषणा MAX44000_SCAN_INDEX_PRX 1
 
-static const struct iio_chan_spec max44000_channels[] = {
-	{
+अटल स्थिर काष्ठा iio_chan_spec max44000_channels[] = अणु
+	अणु
 		.type = IIO_LIGHT,
 		.info_mask_separate = BIT(IIO_CHAN_INFO_RAW),
 		.info_mask_shared_by_type = BIT(IIO_CHAN_INFO_SCALE) |
 					    BIT(IIO_CHAN_INFO_INT_TIME),
 		.scan_index = MAX44000_SCAN_INDEX_ALS,
-		.scan_type = {
+		.scan_type = अणु
 			.sign		= 'u',
 			.realbits	= 14,
 			.storagebits	= 16,
-		}
-	},
-	{
+		पूर्ण
+	पूर्ण,
+	अणु
 		.type = IIO_PROXIMITY,
 		.info_mask_separate = BIT(IIO_CHAN_INFO_RAW),
 		.scan_index = MAX44000_SCAN_INDEX_PRX,
-		.scan_type = {
+		.scan_type = अणु
 			.sign		= 'u',
 			.realbits	= 8,
 			.storagebits	= 16,
-		}
-	},
+		पूर्ण
+	पूर्ण,
 	IIO_CHAN_SOFT_TIMESTAMP(2),
-	{
+	अणु
 		.type = IIO_CURRENT,
 		.info_mask_separate = BIT(IIO_CHAN_INFO_RAW) |
 				      BIT(IIO_CHAN_INFO_SCALE),
 		.extend_name = "led",
 		.output = 1,
 		.scan_index = -1,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static int max44000_read_alstim(struct max44000_data *data)
-{
-	unsigned int val;
-	int ret;
+अटल पूर्णांक max44000_पढ़ो_alstim(काष्ठा max44000_data *data)
+अणु
+	अचिन्हित पूर्णांक val;
+	पूर्णांक ret;
 
-	ret = regmap_read(data->regmap, MAX44000_REG_CFG_RX, &val);
-	if (ret < 0)
-		return ret;
-	return (val & MAX44000_CFG_RX_ALSTIM_MASK) >> MAX44000_CFG_RX_ALSTIM_SHIFT;
-}
+	ret = regmap_पढ़ो(data->regmap, MAX44000_REG_CFG_RX, &val);
+	अगर (ret < 0)
+		वापस ret;
+	वापस (val & MAX44000_CFG_RX_ALSTIM_MASK) >> MAX44000_CFG_RX_ALSTIM_SHIFT;
+पूर्ण
 
-static int max44000_write_alstim(struct max44000_data *data, int val)
-{
-	return regmap_write_bits(data->regmap, MAX44000_REG_CFG_RX,
+अटल पूर्णांक max44000_ग_लिखो_alstim(काष्ठा max44000_data *data, पूर्णांक val)
+अणु
+	वापस regmap_ग_लिखो_bits(data->regmap, MAX44000_REG_CFG_RX,
 				 MAX44000_CFG_RX_ALSTIM_MASK,
 				 val << MAX44000_CFG_RX_ALSTIM_SHIFT);
-}
+पूर्ण
 
-static int max44000_read_alspga(struct max44000_data *data)
-{
-	unsigned int val;
-	int ret;
+अटल पूर्णांक max44000_पढ़ो_alspga(काष्ठा max44000_data *data)
+अणु
+	अचिन्हित पूर्णांक val;
+	पूर्णांक ret;
 
-	ret = regmap_read(data->regmap, MAX44000_REG_CFG_RX, &val);
-	if (ret < 0)
-		return ret;
-	return (val & MAX44000_CFG_RX_ALSPGA_MASK) >> MAX44000_CFG_RX_ALSPGA_SHIFT;
-}
+	ret = regmap_पढ़ो(data->regmap, MAX44000_REG_CFG_RX, &val);
+	अगर (ret < 0)
+		वापस ret;
+	वापस (val & MAX44000_CFG_RX_ALSPGA_MASK) >> MAX44000_CFG_RX_ALSPGA_SHIFT;
+पूर्ण
 
-static int max44000_write_alspga(struct max44000_data *data, int val)
-{
-	return regmap_write_bits(data->regmap, MAX44000_REG_CFG_RX,
+अटल पूर्णांक max44000_ग_लिखो_alspga(काष्ठा max44000_data *data, पूर्णांक val)
+अणु
+	वापस regmap_ग_लिखो_bits(data->regmap, MAX44000_REG_CFG_RX,
 				 MAX44000_CFG_RX_ALSPGA_MASK,
 				 val << MAX44000_CFG_RX_ALSPGA_SHIFT);
-}
+पूर्ण
 
-static int max44000_read_alsval(struct max44000_data *data)
-{
+अटल पूर्णांक max44000_पढ़ो_alsval(काष्ठा max44000_data *data)
+अणु
 	u16 regval;
 	__be16 val;
-	int alstim, ret;
+	पूर्णांक alstim, ret;
 
-	ret = regmap_bulk_read(data->regmap, MAX44000_REG_ALS_DATA_HI,
-			       &val, sizeof(val));
-	if (ret < 0)
-		return ret;
-	alstim = ret = max44000_read_alstim(data);
-	if (ret < 0)
-		return ret;
+	ret = regmap_bulk_पढ़ो(data->regmap, MAX44000_REG_ALS_DATA_HI,
+			       &val, माप(val));
+	अगर (ret < 0)
+		वापस ret;
+	alstim = ret = max44000_पढ़ो_alstim(data);
+	अगर (ret < 0)
+		वापस ret;
 
 	regval = be16_to_cpu(val);
 
@@ -222,323 +223,323 @@ static int max44000_read_alsval(struct max44000_data *data)
 	 * Overflow is explained on datasheet page 17.
 	 *
 	 * It's a warning that either the G or IR channel has become saturated
-	 * and that the value in the register is likely incorrect.
+	 * and that the value in the रेजिस्टर is likely incorrect.
 	 *
 	 * The recommendation is to change the scale (ALSPGA).
-	 * The driver just returns the max representable value.
+	 * The driver just वापसs the max representable value.
 	 */
-	if (regval & MAX44000_ALSDATA_OVERFLOW)
-		return 0x3FFF;
+	अगर (regval & MAX44000_ALSDATA_OVERFLOW)
+		वापस 0x3FFF;
 
-	return regval << MAX44000_ALSTIM_SHIFT(alstim);
-}
+	वापस regval << MAX44000_ALSTIM_SHIFT(alstim);
+पूर्ण
 
-static int max44000_write_led_current_raw(struct max44000_data *data, int val)
-{
+अटल पूर्णांक max44000_ग_लिखो_led_current_raw(काष्ठा max44000_data *data, पूर्णांक val)
+अणु
 	/* Maybe we should clamp the value instead? */
-	if (val < 0 || val > MAX44000_LED_CURRENT_MAX)
-		return -ERANGE;
-	if (val >= 8)
+	अगर (val < 0 || val > MAX44000_LED_CURRENT_MAX)
+		वापस -दुस्फल;
+	अगर (val >= 8)
 		val += 4;
-	return regmap_write_bits(data->regmap, MAX44000_REG_CFG_TX,
+	वापस regmap_ग_लिखो_bits(data->regmap, MAX44000_REG_CFG_TX,
 				 MAX44000_LED_CURRENT_MASK, val);
-}
+पूर्ण
 
-static int max44000_read_led_current_raw(struct max44000_data *data)
-{
-	unsigned int regval;
-	int ret;
+अटल पूर्णांक max44000_पढ़ो_led_current_raw(काष्ठा max44000_data *data)
+अणु
+	अचिन्हित पूर्णांक regval;
+	पूर्णांक ret;
 
-	ret = regmap_read(data->regmap, MAX44000_REG_CFG_TX, &regval);
-	if (ret < 0)
-		return ret;
+	ret = regmap_पढ़ो(data->regmap, MAX44000_REG_CFG_TX, &regval);
+	अगर (ret < 0)
+		वापस ret;
 	regval &= MAX44000_LED_CURRENT_MASK;
-	if (regval >= 8)
+	अगर (regval >= 8)
 		regval -= 4;
-	return regval;
-}
+	वापस regval;
+पूर्ण
 
-static int max44000_read_raw(struct iio_dev *indio_dev,
-			     struct iio_chan_spec const *chan,
-			     int *val, int *val2, long mask)
-{
-	struct max44000_data *data = iio_priv(indio_dev);
-	int alstim, alspga;
-	unsigned int regval;
-	int ret;
+अटल पूर्णांक max44000_पढ़ो_raw(काष्ठा iio_dev *indio_dev,
+			     काष्ठा iio_chan_spec स्थिर *chan,
+			     पूर्णांक *val, पूर्णांक *val2, दीर्घ mask)
+अणु
+	काष्ठा max44000_data *data = iio_priv(indio_dev);
+	पूर्णांक alstim, alspga;
+	अचिन्हित पूर्णांक regval;
+	पूर्णांक ret;
 
-	switch (mask) {
-	case IIO_CHAN_INFO_RAW:
-		switch (chan->type) {
-		case IIO_LIGHT:
+	चयन (mask) अणु
+	हाल IIO_CHAN_INFO_RAW:
+		चयन (chan->type) अणु
+		हाल IIO_LIGHT:
 			mutex_lock(&data->lock);
-			ret = max44000_read_alsval(data);
+			ret = max44000_पढ़ो_alsval(data);
 			mutex_unlock(&data->lock);
-			if (ret < 0)
-				return ret;
+			अगर (ret < 0)
+				वापस ret;
 			*val = ret;
-			return IIO_VAL_INT;
+			वापस IIO_VAL_INT;
 
-		case IIO_PROXIMITY:
+		हाल IIO_PROXIMITY:
 			mutex_lock(&data->lock);
-			ret = regmap_read(data->regmap, MAX44000_REG_PRX_DATA, &regval);
+			ret = regmap_पढ़ो(data->regmap, MAX44000_REG_PRX_DATA, &regval);
 			mutex_unlock(&data->lock);
-			if (ret < 0)
-				return ret;
+			अगर (ret < 0)
+				वापस ret;
 			*val = regval;
-			return IIO_VAL_INT;
+			वापस IIO_VAL_INT;
 
-		case IIO_CURRENT:
+		हाल IIO_CURRENT:
 			mutex_lock(&data->lock);
-			ret = max44000_read_led_current_raw(data);
+			ret = max44000_पढ़ो_led_current_raw(data);
 			mutex_unlock(&data->lock);
-			if (ret < 0)
-				return ret;
+			अगर (ret < 0)
+				वापस ret;
 			*val = ret;
-			return IIO_VAL_INT;
+			वापस IIO_VAL_INT;
 
-		default:
-			return -EINVAL;
-		}
+		शेष:
+			वापस -EINVAL;
+		पूर्ण
 
-	case IIO_CHAN_INFO_SCALE:
-		switch (chan->type) {
-		case IIO_CURRENT:
-			/* Output register is in 10s of miliamps */
+	हाल IIO_CHAN_INFO_SCALE:
+		चयन (chan->type) अणु
+		हाल IIO_CURRENT:
+			/* Output रेजिस्टर is in 10s of miliamps */
 			*val = 10;
-			return IIO_VAL_INT;
+			वापस IIO_VAL_INT;
 
-		case IIO_LIGHT:
+		हाल IIO_LIGHT:
 			mutex_lock(&data->lock);
-			alspga = ret = max44000_read_alspga(data);
+			alspga = ret = max44000_पढ़ो_alspga(data);
 			mutex_unlock(&data->lock);
-			if (ret < 0)
-				return ret;
+			अगर (ret < 0)
+				वापस ret;
 
-			/* Avoid negative shifts */
+			/* Aव्योम negative shअगरts */
 			*val = (1 << MAX44000_ALSPGA_MAX_SHIFT);
 			*val2 = MAX44000_ALS_TO_LUX_DEFAULT_FRACTION_LOG2
 					+ MAX44000_ALSPGA_MAX_SHIFT
-					- max44000_alspga_shift[alspga];
-			return IIO_VAL_FRACTIONAL_LOG2;
+					- max44000_alspga_shअगरt[alspga];
+			वापस IIO_VAL_FRACTIONAL_LOG2;
 
-		default:
-			return -EINVAL;
-		}
+		शेष:
+			वापस -EINVAL;
+		पूर्ण
 
-	case IIO_CHAN_INFO_INT_TIME:
+	हाल IIO_CHAN_INFO_INT_TIME:
 		mutex_lock(&data->lock);
-		alstim = ret = max44000_read_alstim(data);
+		alstim = ret = max44000_पढ़ो_alstim(data);
 		mutex_unlock(&data->lock);
 
-		if (ret < 0)
-			return ret;
+		अगर (ret < 0)
+			वापस ret;
 		*val = 0;
-		*val2 = max44000_int_time_avail_ns_array[alstim];
-		return IIO_VAL_INT_PLUS_NANO;
+		*val2 = max44000_पूर्णांक_समय_avail_ns_array[alstim];
+		वापस IIO_VAL_INT_PLUS_न_अंकO;
 
-	default:
-		return -EINVAL;
-	}
-}
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+पूर्ण
 
-static int max44000_write_raw(struct iio_dev *indio_dev,
-			      struct iio_chan_spec const *chan,
-			      int val, int val2, long mask)
-{
-	struct max44000_data *data = iio_priv(indio_dev);
-	int ret;
+अटल पूर्णांक max44000_ग_लिखो_raw(काष्ठा iio_dev *indio_dev,
+			      काष्ठा iio_chan_spec स्थिर *chan,
+			      पूर्णांक val, पूर्णांक val2, दीर्घ mask)
+अणु
+	काष्ठा max44000_data *data = iio_priv(indio_dev);
+	पूर्णांक ret;
 
-	if (mask == IIO_CHAN_INFO_RAW && chan->type == IIO_CURRENT) {
+	अगर (mask == IIO_CHAN_INFO_RAW && chan->type == IIO_CURRENT) अणु
 		mutex_lock(&data->lock);
-		ret = max44000_write_led_current_raw(data, val);
+		ret = max44000_ग_लिखो_led_current_raw(data, val);
 		mutex_unlock(&data->lock);
-		return ret;
-	} else if (mask == IIO_CHAN_INFO_INT_TIME && chan->type == IIO_LIGHT) {
+		वापस ret;
+	पूर्ण अन्यथा अगर (mask == IIO_CHAN_INFO_INT_TIME && chan->type == IIO_LIGHT) अणु
 		s64 valns = val * NSEC_PER_SEC + val2;
-		int alstim = find_closest_descending(valns,
-				max44000_int_time_avail_ns_array,
-				ARRAY_SIZE(max44000_int_time_avail_ns_array));
+		पूर्णांक alstim = find_बंदst_descending(valns,
+				max44000_पूर्णांक_समय_avail_ns_array,
+				ARRAY_SIZE(max44000_पूर्णांक_समय_avail_ns_array));
 		mutex_lock(&data->lock);
-		ret = max44000_write_alstim(data, alstim);
+		ret = max44000_ग_लिखो_alstim(data, alstim);
 		mutex_unlock(&data->lock);
-		return ret;
-	} else if (mask == IIO_CHAN_INFO_SCALE && chan->type == IIO_LIGHT) {
+		वापस ret;
+	पूर्ण अन्यथा अगर (mask == IIO_CHAN_INFO_SCALE && chan->type == IIO_LIGHT) अणु
 		s64 valus = val * USEC_PER_SEC + val2;
-		int alspga = find_closest(valus,
+		पूर्णांक alspga = find_बंदst(valus,
 				max44000_scale_avail_ulux_array,
 				ARRAY_SIZE(max44000_scale_avail_ulux_array));
 		mutex_lock(&data->lock);
-		ret = max44000_write_alspga(data, alspga);
+		ret = max44000_ग_लिखो_alspga(data, alspga);
 		mutex_unlock(&data->lock);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static int max44000_write_raw_get_fmt(struct iio_dev *indio_dev,
-				      struct iio_chan_spec const *chan,
-				      long mask)
-{
-	if (mask == IIO_CHAN_INFO_INT_TIME && chan->type == IIO_LIGHT)
-		return IIO_VAL_INT_PLUS_NANO;
-	else if (mask == IIO_CHAN_INFO_SCALE && chan->type == IIO_LIGHT)
-		return IIO_VAL_INT_PLUS_MICRO;
-	else
-		return IIO_VAL_INT;
-}
+अटल पूर्णांक max44000_ग_लिखो_raw_get_fmt(काष्ठा iio_dev *indio_dev,
+				      काष्ठा iio_chan_spec स्थिर *chan,
+				      दीर्घ mask)
+अणु
+	अगर (mask == IIO_CHAN_INFO_INT_TIME && chan->type == IIO_LIGHT)
+		वापस IIO_VAL_INT_PLUS_न_अंकO;
+	अन्यथा अगर (mask == IIO_CHAN_INFO_SCALE && chan->type == IIO_LIGHT)
+		वापस IIO_VAL_INT_PLUS_MICRO;
+	अन्यथा
+		वापस IIO_VAL_INT;
+पूर्ण
 
-static IIO_CONST_ATTR(illuminance_integration_time_available, max44000_int_time_avail_str);
-static IIO_CONST_ATTR(illuminance_scale_available, max44000_scale_avail_str);
+अटल IIO_CONST_ATTR(illuminance_पूर्णांकegration_समय_available, max44000_पूर्णांक_समय_avail_str);
+अटल IIO_CONST_ATTR(illuminance_scale_available, max44000_scale_avail_str);
 
-static struct attribute *max44000_attributes[] = {
-	&iio_const_attr_illuminance_integration_time_available.dev_attr.attr,
-	&iio_const_attr_illuminance_scale_available.dev_attr.attr,
-	NULL
-};
+अटल काष्ठा attribute *max44000_attributes[] = अणु
+	&iio_स्थिर_attr_illuminance_पूर्णांकegration_समय_available.dev_attr.attr,
+	&iio_स्थिर_attr_illuminance_scale_available.dev_attr.attr,
+	शून्य
+पूर्ण;
 
-static const struct attribute_group max44000_attribute_group = {
+अटल स्थिर काष्ठा attribute_group max44000_attribute_group = अणु
 	.attrs = max44000_attributes,
-};
+पूर्ण;
 
-static const struct iio_info max44000_info = {
-	.read_raw		= max44000_read_raw,
-	.write_raw		= max44000_write_raw,
-	.write_raw_get_fmt	= max44000_write_raw_get_fmt,
+अटल स्थिर काष्ठा iio_info max44000_info = अणु
+	.पढ़ो_raw		= max44000_पढ़ो_raw,
+	.ग_लिखो_raw		= max44000_ग_लिखो_raw,
+	.ग_लिखो_raw_get_fmt	= max44000_ग_लिखो_raw_get_fmt,
 	.attrs			= &max44000_attribute_group,
-};
+पूर्ण;
 
-static bool max44000_readable_reg(struct device *dev, unsigned int reg)
-{
-	switch (reg) {
-	case MAX44000_REG_STATUS:
-	case MAX44000_REG_CFG_MAIN:
-	case MAX44000_REG_CFG_RX:
-	case MAX44000_REG_CFG_TX:
-	case MAX44000_REG_ALS_DATA_HI:
-	case MAX44000_REG_ALS_DATA_LO:
-	case MAX44000_REG_PRX_DATA:
-	case MAX44000_REG_ALS_UPTHR_HI:
-	case MAX44000_REG_ALS_UPTHR_LO:
-	case MAX44000_REG_ALS_LOTHR_HI:
-	case MAX44000_REG_ALS_LOTHR_LO:
-	case MAX44000_REG_PST:
-	case MAX44000_REG_PRX_IND:
-	case MAX44000_REG_PRX_THR:
-	case MAX44000_REG_TRIM_GAIN_GREEN:
-	case MAX44000_REG_TRIM_GAIN_IR:
-		return true;
-	default:
-		return false;
-	}
-}
+अटल bool max44000_पढ़ोable_reg(काष्ठा device *dev, अचिन्हित पूर्णांक reg)
+अणु
+	चयन (reg) अणु
+	हाल MAX44000_REG_STATUS:
+	हाल MAX44000_REG_CFG_MAIN:
+	हाल MAX44000_REG_CFG_RX:
+	हाल MAX44000_REG_CFG_TX:
+	हाल MAX44000_REG_ALS_DATA_HI:
+	हाल MAX44000_REG_ALS_DATA_LO:
+	हाल MAX44000_REG_PRX_DATA:
+	हाल MAX44000_REG_ALS_UPTHR_HI:
+	हाल MAX44000_REG_ALS_UPTHR_LO:
+	हाल MAX44000_REG_ALS_LOTHR_HI:
+	हाल MAX44000_REG_ALS_LOTHR_LO:
+	हाल MAX44000_REG_PST:
+	हाल MAX44000_REG_PRX_IND:
+	हाल MAX44000_REG_PRX_THR:
+	हाल MAX44000_REG_TRIM_GAIN_GREEN:
+	हाल MAX44000_REG_TRIM_GAIN_IR:
+		वापस true;
+	शेष:
+		वापस false;
+	पूर्ण
+पूर्ण
 
-static bool max44000_writeable_reg(struct device *dev, unsigned int reg)
-{
-	switch (reg) {
-	case MAX44000_REG_CFG_MAIN:
-	case MAX44000_REG_CFG_RX:
-	case MAX44000_REG_CFG_TX:
-	case MAX44000_REG_ALS_UPTHR_HI:
-	case MAX44000_REG_ALS_UPTHR_LO:
-	case MAX44000_REG_ALS_LOTHR_HI:
-	case MAX44000_REG_ALS_LOTHR_LO:
-	case MAX44000_REG_PST:
-	case MAX44000_REG_PRX_IND:
-	case MAX44000_REG_PRX_THR:
-	case MAX44000_REG_TRIM_GAIN_GREEN:
-	case MAX44000_REG_TRIM_GAIN_IR:
-		return true;
-	default:
-		return false;
-	}
-}
+अटल bool max44000_ग_लिखोable_reg(काष्ठा device *dev, अचिन्हित पूर्णांक reg)
+अणु
+	चयन (reg) अणु
+	हाल MAX44000_REG_CFG_MAIN:
+	हाल MAX44000_REG_CFG_RX:
+	हाल MAX44000_REG_CFG_TX:
+	हाल MAX44000_REG_ALS_UPTHR_HI:
+	हाल MAX44000_REG_ALS_UPTHR_LO:
+	हाल MAX44000_REG_ALS_LOTHR_HI:
+	हाल MAX44000_REG_ALS_LOTHR_LO:
+	हाल MAX44000_REG_PST:
+	हाल MAX44000_REG_PRX_IND:
+	हाल MAX44000_REG_PRX_THR:
+	हाल MAX44000_REG_TRIM_GAIN_GREEN:
+	हाल MAX44000_REG_TRIM_GAIN_IR:
+		वापस true;
+	शेष:
+		वापस false;
+	पूर्ण
+पूर्ण
 
-static bool max44000_volatile_reg(struct device *dev, unsigned int reg)
-{
-	switch (reg) {
-	case MAX44000_REG_STATUS:
-	case MAX44000_REG_ALS_DATA_HI:
-	case MAX44000_REG_ALS_DATA_LO:
-	case MAX44000_REG_PRX_DATA:
-		return true;
-	default:
-		return false;
-	}
-}
+अटल bool max44000_अस्थिर_reg(काष्ठा device *dev, अचिन्हित पूर्णांक reg)
+अणु
+	चयन (reg) अणु
+	हाल MAX44000_REG_STATUS:
+	हाल MAX44000_REG_ALS_DATA_HI:
+	हाल MAX44000_REG_ALS_DATA_LO:
+	हाल MAX44000_REG_PRX_DATA:
+		वापस true;
+	शेष:
+		वापस false;
+	पूर्ण
+पूर्ण
 
-static bool max44000_precious_reg(struct device *dev, unsigned int reg)
-{
-	return reg == MAX44000_REG_STATUS;
-}
+अटल bool max44000_precious_reg(काष्ठा device *dev, अचिन्हित पूर्णांक reg)
+अणु
+	वापस reg == MAX44000_REG_STATUS;
+पूर्ण
 
-static const struct regmap_config max44000_regmap_config = {
+अटल स्थिर काष्ठा regmap_config max44000_regmap_config = अणु
 	.reg_bits		= 8,
 	.val_bits		= 8,
 
-	.max_register		= MAX44000_REG_PRX_DATA,
-	.readable_reg		= max44000_readable_reg,
-	.writeable_reg		= max44000_writeable_reg,
-	.volatile_reg		= max44000_volatile_reg,
+	.max_रेजिस्टर		= MAX44000_REG_PRX_DATA,
+	.पढ़ोable_reg		= max44000_पढ़ोable_reg,
+	.ग_लिखोable_reg		= max44000_ग_लिखोable_reg,
+	.अस्थिर_reg		= max44000_अस्थिर_reg,
 	.precious_reg		= max44000_precious_reg,
 
-	.use_single_read	= true,
-	.use_single_write	= true,
+	.use_single_पढ़ो	= true,
+	.use_single_ग_लिखो	= true,
 	.cache_type		= REGCACHE_RBTREE,
-};
+पूर्ण;
 
-static irqreturn_t max44000_trigger_handler(int irq, void *p)
-{
-	struct iio_poll_func *pf = p;
-	struct iio_dev *indio_dev = pf->indio_dev;
-	struct max44000_data *data = iio_priv(indio_dev);
-	int index = 0;
-	unsigned int regval;
-	int ret;
+अटल irqवापस_t max44000_trigger_handler(पूर्णांक irq, व्योम *p)
+अणु
+	काष्ठा iio_poll_func *pf = p;
+	काष्ठा iio_dev *indio_dev = pf->indio_dev;
+	काष्ठा max44000_data *data = iio_priv(indio_dev);
+	पूर्णांक index = 0;
+	अचिन्हित पूर्णांक regval;
+	पूर्णांक ret;
 
 	mutex_lock(&data->lock);
-	if (test_bit(MAX44000_SCAN_INDEX_ALS, indio_dev->active_scan_mask)) {
-		ret = max44000_read_alsval(data);
-		if (ret < 0)
-			goto out_unlock;
+	अगर (test_bit(MAX44000_SCAN_INDEX_ALS, indio_dev->active_scan_mask)) अणु
+		ret = max44000_पढ़ो_alsval(data);
+		अगर (ret < 0)
+			जाओ out_unlock;
 		data->scan.channels[index++] = ret;
-	}
-	if (test_bit(MAX44000_SCAN_INDEX_PRX, indio_dev->active_scan_mask)) {
-		ret = regmap_read(data->regmap, MAX44000_REG_PRX_DATA, &regval);
-		if (ret < 0)
-			goto out_unlock;
+	पूर्ण
+	अगर (test_bit(MAX44000_SCAN_INDEX_PRX, indio_dev->active_scan_mask)) अणु
+		ret = regmap_पढ़ो(data->regmap, MAX44000_REG_PRX_DATA, &regval);
+		अगर (ret < 0)
+			जाओ out_unlock;
 		data->scan.channels[index] = regval;
-	}
+	पूर्ण
 	mutex_unlock(&data->lock);
 
-	iio_push_to_buffers_with_timestamp(indio_dev, &data->scan,
-					   iio_get_time_ns(indio_dev));
-	iio_trigger_notify_done(indio_dev->trig);
-	return IRQ_HANDLED;
+	iio_push_to_buffers_with_बारtamp(indio_dev, &data->scan,
+					   iio_get_समय_ns(indio_dev));
+	iio_trigger_notअगरy_करोne(indio_dev->trig);
+	वापस IRQ_HANDLED;
 
 out_unlock:
 	mutex_unlock(&data->lock);
-	iio_trigger_notify_done(indio_dev->trig);
-	return IRQ_HANDLED;
-}
+	iio_trigger_notअगरy_करोne(indio_dev->trig);
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static int max44000_probe(struct i2c_client *client,
-			  const struct i2c_device_id *id)
-{
-	struct max44000_data *data;
-	struct iio_dev *indio_dev;
-	int ret, reg;
+अटल पूर्णांक max44000_probe(काष्ठा i2c_client *client,
+			  स्थिर काष्ठा i2c_device_id *id)
+अणु
+	काष्ठा max44000_data *data;
+	काष्ठा iio_dev *indio_dev;
+	पूर्णांक ret, reg;
 
-	indio_dev = devm_iio_device_alloc(&client->dev, sizeof(*data));
-	if (!indio_dev)
-		return -ENOMEM;
+	indio_dev = devm_iio_device_alloc(&client->dev, माप(*data));
+	अगर (!indio_dev)
+		वापस -ENOMEM;
 	data = iio_priv(indio_dev);
 	data->regmap = devm_regmap_init_i2c(client, &max44000_regmap_config);
-	if (IS_ERR(data->regmap)) {
+	अगर (IS_ERR(data->regmap)) अणु
 		dev_err(&client->dev, "regmap_init failed!\n");
-		return PTR_ERR(data->regmap);
-	}
+		वापस PTR_ERR(data->regmap);
+	पूर्ण
 
 	i2c_set_clientdata(client, indio_dev);
 	mutex_init(&data->lock);
@@ -548,89 +549,89 @@ static int max44000_probe(struct i2c_client *client,
 	indio_dev->num_channels = ARRAY_SIZE(max44000_channels);
 
 	/*
-	 * The device doesn't have a reset function so we just clear some
-	 * important bits at probe time to ensure sane operation.
+	 * The device करोesn't have a reset function so we just clear some
+	 * important bits at probe समय to ensure sane operation.
 	 *
-	 * Since we don't support interrupts/events the threshold values are
-	 * not important. We also don't touch trim values.
+	 * Since we करोn't support पूर्णांकerrupts/events the threshold values are
+	 * not important. We also करोn't touch trim values.
 	 */
 
 	/* Reset ALS scaling bits */
-	ret = regmap_write(data->regmap, MAX44000_REG_CFG_RX,
+	ret = regmap_ग_लिखो(data->regmap, MAX44000_REG_CFG_RX,
 			   MAX44000_REG_CFG_RX_DEFAULT);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(&client->dev, "failed to write default CFG_RX: %d\n",
 			ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	/*
-	 * By default the LED pulse used for the proximity sensor is disabled.
-	 * Set a middle value so that we get some sort of valid data by default.
+	 * By शेष the LED pulse used क्रम the proximity sensor is disabled.
+	 * Set a middle value so that we get some sort of valid data by शेष.
 	 */
-	ret = max44000_write_led_current_raw(data, MAX44000_LED_CURRENT_DEFAULT);
-	if (ret < 0) {
+	ret = max44000_ग_लिखो_led_current_raw(data, MAX44000_LED_CURRENT_DEFAULT);
+	अगर (ret < 0) अणु
 		dev_err(&client->dev, "failed to write init config: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	/* Reset CFG bits to ALS_PRX mode which allows easy reading of both values. */
+	/* Reset CFG bits to ALS_PRX mode which allows easy पढ़ोing of both values. */
 	reg = MAX44000_CFG_TRIM | MAX44000_CFG_MODE_ALS_PRX;
-	ret = regmap_write(data->regmap, MAX44000_REG_CFG_MAIN, reg);
-	if (ret < 0) {
+	ret = regmap_ग_लिखो(data->regmap, MAX44000_REG_CFG_MAIN, reg);
+	अगर (ret < 0) अणु
 		dev_err(&client->dev, "failed to write init config: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	/* Read status at least once to clear any stale interrupt bits. */
-	ret = regmap_read(data->regmap, MAX44000_REG_STATUS, &reg);
-	if (ret < 0) {
+	/* Read status at least once to clear any stale पूर्णांकerrupt bits. */
+	ret = regmap_पढ़ो(data->regmap, MAX44000_REG_STATUS, &reg);
+	अगर (ret < 0) अणु
 		dev_err(&client->dev, "failed to read init status: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	ret = iio_triggered_buffer_setup(indio_dev, NULL, max44000_trigger_handler, NULL);
-	if (ret < 0) {
+	ret = iio_triggered_buffer_setup(indio_dev, शून्य, max44000_trigger_handler, शून्य);
+	अगर (ret < 0) अणु
 		dev_err(&client->dev, "iio triggered buffer setup failed\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return iio_device_register(indio_dev);
-}
+	वापस iio_device_रेजिस्टर(indio_dev);
+पूर्ण
 
-static int max44000_remove(struct i2c_client *client)
-{
-	struct iio_dev *indio_dev = i2c_get_clientdata(client);
+अटल पूर्णांक max44000_हटाओ(काष्ठा i2c_client *client)
+अणु
+	काष्ठा iio_dev *indio_dev = i2c_get_clientdata(client);
 
-	iio_device_unregister(indio_dev);
+	iio_device_unरेजिस्टर(indio_dev);
 	iio_triggered_buffer_cleanup(indio_dev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct i2c_device_id max44000_id[] = {
-	{"max44000", 0},
-	{ }
-};
+अटल स्थिर काष्ठा i2c_device_id max44000_id[] = अणु
+	अणु"max44000", 0पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(i2c, max44000_id);
 
-#ifdef CONFIG_ACPI
-static const struct acpi_device_id max44000_acpi_match[] = {
-	{"MAX44000", 0},
-	{ }
-};
+#अगर_घोषित CONFIG_ACPI
+अटल स्थिर काष्ठा acpi_device_id max44000_acpi_match[] = अणु
+	अणु"MAX44000", 0पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(acpi, max44000_acpi_match);
-#endif
+#पूर्ण_अगर
 
-static struct i2c_driver max44000_driver = {
-	.driver = {
+अटल काष्ठा i2c_driver max44000_driver = अणु
+	.driver = अणु
 		.name	= MAX44000_DRV_NAME,
 		.acpi_match_table = ACPI_PTR(max44000_acpi_match),
-	},
+	पूर्ण,
 	.probe		= max44000_probe,
-	.remove		= max44000_remove,
+	.हटाओ		= max44000_हटाओ,
 	.id_table	= max44000_id,
-};
+पूर्ण;
 
 module_i2c_driver(max44000_driver);
 

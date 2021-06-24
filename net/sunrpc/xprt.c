@@ -1,1037 +1,1038 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  *  linux/net/sunrpc/xprt.c
  *
- *  This is a generic RPC call interface supporting congestion avoidance,
+ *  This is a generic RPC call पूर्णांकerface supporting congestion aव्योमance,
  *  and asynchronous calls.
  *
- *  The interface works like this:
+ *  The पूर्णांकerface works like this:
  *
- *  -	When a process places a call, it allocates a request slot if
+ *  -	When a process places a call, it allocates a request slot अगर
  *	one is available. Otherwise, it sleeps on the backlog queue
  *	(xprt_reserve).
- *  -	Next, the caller puts together the RPC message, stuffs it into
- *	the request struct, and calls xprt_transmit().
+ *  -	Next, the caller माला_दो together the RPC message, stuffs it पूर्णांकo
+ *	the request काष्ठा, and calls xprt_transmit().
  *  -	xprt_transmit sends the message and installs the caller on the
- *	transport's wait list. At the same time, if a reply is expected,
- *	it installs a timer that is run after the packet's timeout has
+ *	transport's रुको list. At the same समय, अगर a reply is expected,
+ *	it installs a समयr that is run after the packet's समयout has
  *	expired.
- *  -	When a packet arrives, the data_ready handler walks the list of
- *	pending requests for that transport. If a matching XID is found, the
- *	caller is woken up, and the timer removed.
- *  -	When no reply arrives within the timeout interval, the timer is
- *	fired by the kernel and runs xprt_timer(). It either adjusts the
- *	timeout values (minor timeout) or wakes up the caller with a status
+ *  -	When a packet arrives, the data_पढ़ोy handler walks the list of
+ *	pending requests क्रम that transport. If a matching XID is found, the
+ *	caller is woken up, and the समयr हटाओd.
+ *  -	When no reply arrives within the समयout पूर्णांकerval, the समयr is
+ *	fired by the kernel and runs xprt_समयr(). It either adjusts the
+ *	समयout values (minor समयout) or wakes up the caller with a status
  *	of -ETIMEDOUT.
- *  -	When the caller receives a notification from RPC that a reply arrived,
+ *  -	When the caller receives a notअगरication from RPC that a reply arrived,
  *	it should release the RPC slot, and process the reply.
- *	If the call timed out, it may choose to retry the operation by
- *	adjusting the initial timeout value, and simply calling rpc_call
+ *	If the call समयd out, it may choose to retry the operation by
+ *	adjusting the initial समयout value, and simply calling rpc_call
  *	again.
  *
- *  Support for async RPC is done through a set of RPC-specific scheduling
- *  primitives that `transparently' work for processes as well as async
+ *  Support क्रम async RPC is करोne through a set of RPC-specअगरic scheduling
+ *  primitives that `transparently' work क्रम processes as well as async
  *  tasks that rely on callbacks.
  *
  *  Copyright (C) 1995-1997, Olaf Kirch <okir@monad.swb.de>
  *
- *  Transport switch API copyright (C) 2005, Chuck Lever <cel@netapp.com>
+ *  Transport चयन API copyright (C) 2005, Chuck Lever <cel@netapp.com>
  */
 
-#include <linux/module.h>
+#समावेश <linux/module.h>
 
-#include <linux/types.h>
-#include <linux/interrupt.h>
-#include <linux/workqueue.h>
-#include <linux/net.h>
-#include <linux/ktime.h>
+#समावेश <linux/types.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/workqueue.h>
+#समावेश <linux/net.h>
+#समावेश <linux/kसमय.स>
 
-#include <linux/sunrpc/clnt.h>
-#include <linux/sunrpc/metrics.h>
-#include <linux/sunrpc/bc_xprt.h>
-#include <linux/rcupdate.h>
-#include <linux/sched/mm.h>
+#समावेश <linux/sunrpc/clnt.h>
+#समावेश <linux/sunrpc/metrics.h>
+#समावेश <linux/sunrpc/bc_xprt.h>
+#समावेश <linux/rcupdate.h>
+#समावेश <linux/sched/mm.h>
 
-#include <trace/events/sunrpc.h>
+#समावेश <trace/events/sunrpc.h>
 
-#include "sunrpc.h"
+#समावेश "sunrpc.h"
 
 /*
  * Local variables
  */
 
-#if IS_ENABLED(CONFIG_SUNRPC_DEBUG)
+#अगर IS_ENABLED(CONFIG_SUNRPC_DEBUG)
 # define RPCDBG_FACILITY	RPCDBG_XPRT
-#endif
+#पूर्ण_अगर
 
 /*
  * Local functions
  */
-static void	 xprt_init(struct rpc_xprt *xprt, struct net *net);
-static __be32	xprt_alloc_xid(struct rpc_xprt *xprt);
-static void	 xprt_destroy(struct rpc_xprt *xprt);
-static void	 xprt_request_init(struct rpc_task *task);
+अटल व्योम	 xprt_init(काष्ठा rpc_xprt *xprt, काष्ठा net *net);
+अटल __be32	xprt_alloc_xid(काष्ठा rpc_xprt *xprt);
+अटल व्योम	 xprt_destroy(काष्ठा rpc_xprt *xprt);
+अटल व्योम	 xprt_request_init(काष्ठा rpc_task *task);
 
-static DEFINE_SPINLOCK(xprt_list_lock);
-static LIST_HEAD(xprt_list);
+अटल DEFINE_SPINLOCK(xprt_list_lock);
+अटल LIST_HEAD(xprt_list);
 
-static unsigned long xprt_request_timeout(const struct rpc_rqst *req)
-{
-	unsigned long timeout = jiffies + req->rq_timeout;
+अटल अचिन्हित दीर्घ xprt_request_समयout(स्थिर काष्ठा rpc_rqst *req)
+अणु
+	अचिन्हित दीर्घ समयout = jअगरfies + req->rq_समयout;
 
-	if (time_before(timeout, req->rq_majortimeo))
-		return timeout;
-	return req->rq_majortimeo;
-}
+	अगर (समय_beक्रमe(समयout, req->rq_majorसमयo))
+		वापस समयout;
+	वापस req->rq_majorसमयo;
+पूर्ण
 
 /**
- * xprt_register_transport - register a transport implementation
- * @transport: transport to register
+ * xprt_रेजिस्टर_transport - रेजिस्टर a transport implementation
+ * @transport: transport to रेजिस्टर
  *
  * If a transport implementation is loaded as a kernel module, it can
- * call this interface to make itself known to the RPC client.
+ * call this पूर्णांकerface to make itself known to the RPC client.
  *
  * Returns:
- * 0:		transport successfully registered
- * -EEXIST:	transport already registered
+ * 0:		transport successfully रेजिस्टरed
+ * -EEXIST:	transport alपढ़ोy रेजिस्टरed
  * -EINVAL:	transport module being unloaded
  */
-int xprt_register_transport(struct xprt_class *transport)
-{
-	struct xprt_class *t;
-	int result;
+पूर्णांक xprt_रेजिस्टर_transport(काष्ठा xprt_class *transport)
+अणु
+	काष्ठा xprt_class *t;
+	पूर्णांक result;
 
 	result = -EEXIST;
 	spin_lock(&xprt_list_lock);
-	list_for_each_entry(t, &xprt_list, list) {
-		/* don't register the same transport class twice */
-		if (t->ident == transport->ident)
-			goto out;
-	}
+	list_क्रम_each_entry(t, &xprt_list, list) अणु
+		/* करोn't रेजिस्टर the same transport class twice */
+		अगर (t->ident == transport->ident)
+			जाओ out;
+	पूर्ण
 
 	list_add_tail(&transport->list, &xprt_list);
-	printk(KERN_INFO "RPC: Registered %s transport module.\n",
+	prपूर्णांकk(KERN_INFO "RPC: Registered %s transport module.\n",
 	       transport->name);
 	result = 0;
 
 out:
 	spin_unlock(&xprt_list_lock);
-	return result;
-}
-EXPORT_SYMBOL_GPL(xprt_register_transport);
+	वापस result;
+पूर्ण
+EXPORT_SYMBOL_GPL(xprt_रेजिस्टर_transport);
 
 /**
- * xprt_unregister_transport - unregister a transport implementation
- * @transport: transport to unregister
+ * xprt_unरेजिस्टर_transport - unरेजिस्टर a transport implementation
+ * @transport: transport to unरेजिस्टर
  *
  * Returns:
- * 0:		transport successfully unregistered
- * -ENOENT:	transport never registered
+ * 0:		transport successfully unरेजिस्टरed
+ * -ENOENT:	transport never रेजिस्टरed
  */
-int xprt_unregister_transport(struct xprt_class *transport)
-{
-	struct xprt_class *t;
-	int result;
+पूर्णांक xprt_unरेजिस्टर_transport(काष्ठा xprt_class *transport)
+अणु
+	काष्ठा xprt_class *t;
+	पूर्णांक result;
 
 	result = 0;
 	spin_lock(&xprt_list_lock);
-	list_for_each_entry(t, &xprt_list, list) {
-		if (t == transport) {
-			printk(KERN_INFO
+	list_क्रम_each_entry(t, &xprt_list, list) अणु
+		अगर (t == transport) अणु
+			prपूर्णांकk(KERN_INFO
 				"RPC: Unregistered %s transport module.\n",
 				transport->name);
 			list_del_init(&transport->list);
-			goto out;
-		}
-	}
+			जाओ out;
+		पूर्ण
+	पूर्ण
 	result = -ENOENT;
 
 out:
 	spin_unlock(&xprt_list_lock);
-	return result;
-}
-EXPORT_SYMBOL_GPL(xprt_unregister_transport);
+	वापस result;
+पूर्ण
+EXPORT_SYMBOL_GPL(xprt_unरेजिस्टर_transport);
 
-static void
-xprt_class_release(const struct xprt_class *t)
-{
+अटल व्योम
+xprt_class_release(स्थिर काष्ठा xprt_class *t)
+अणु
 	module_put(t->owner);
-}
+पूर्ण
 
-static const struct xprt_class *
-xprt_class_find_by_ident_locked(int ident)
-{
-	const struct xprt_class *t;
+अटल स्थिर काष्ठा xprt_class *
+xprt_class_find_by_ident_locked(पूर्णांक ident)
+अणु
+	स्थिर काष्ठा xprt_class *t;
 
-	list_for_each_entry(t, &xprt_list, list) {
-		if (t->ident != ident)
-			continue;
-		if (!try_module_get(t->owner))
-			continue;
-		return t;
-	}
-	return NULL;
-}
+	list_क्रम_each_entry(t, &xprt_list, list) अणु
+		अगर (t->ident != ident)
+			जारी;
+		अगर (!try_module_get(t->owner))
+			जारी;
+		वापस t;
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
-static const struct xprt_class *
-xprt_class_find_by_ident(int ident)
-{
-	const struct xprt_class *t;
+अटल स्थिर काष्ठा xprt_class *
+xprt_class_find_by_ident(पूर्णांक ident)
+अणु
+	स्थिर काष्ठा xprt_class *t;
 
 	spin_lock(&xprt_list_lock);
 	t = xprt_class_find_by_ident_locked(ident);
 	spin_unlock(&xprt_list_lock);
-	return t;
-}
+	वापस t;
+पूर्ण
 
-static const struct xprt_class *
-xprt_class_find_by_netid_locked(const char *netid)
-{
-	const struct xprt_class *t;
-	unsigned int i;
+अटल स्थिर काष्ठा xprt_class *
+xprt_class_find_by_netid_locked(स्थिर अक्षर *netid)
+अणु
+	स्थिर काष्ठा xprt_class *t;
+	अचिन्हित पूर्णांक i;
 
-	list_for_each_entry(t, &xprt_list, list) {
-		for (i = 0; t->netid[i][0] != '\0'; i++) {
-			if (strcmp(t->netid[i], netid) != 0)
-				continue;
-			if (!try_module_get(t->owner))
-				continue;
-			return t;
-		}
-	}
-	return NULL;
-}
+	list_क्रम_each_entry(t, &xprt_list, list) अणु
+		क्रम (i = 0; t->netid[i][0] != '\0'; i++) अणु
+			अगर (म_भेद(t->netid[i], netid) != 0)
+				जारी;
+			अगर (!try_module_get(t->owner))
+				जारी;
+			वापस t;
+		पूर्ण
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
-static const struct xprt_class *
-xprt_class_find_by_netid(const char *netid)
-{
-	const struct xprt_class *t;
+अटल स्थिर काष्ठा xprt_class *
+xprt_class_find_by_netid(स्थिर अक्षर *netid)
+अणु
+	स्थिर काष्ठा xprt_class *t;
 
 	spin_lock(&xprt_list_lock);
 	t = xprt_class_find_by_netid_locked(netid);
-	if (!t) {
+	अगर (!t) अणु
 		spin_unlock(&xprt_list_lock);
 		request_module("rpc%s", netid);
 		spin_lock(&xprt_list_lock);
 		t = xprt_class_find_by_netid_locked(netid);
-	}
+	पूर्ण
 	spin_unlock(&xprt_list_lock);
-	return t;
-}
+	वापस t;
+पूर्ण
 
 /**
- * xprt_find_transport_ident - convert a netid into a transport identifier
+ * xprt_find_transport_ident - convert a netid पूर्णांकo a transport identअगरier
  * @netid: transport to load
  *
  * Returns:
- * > 0:		transport identifier
+ * > 0:		transport identअगरier
  * -ENOENT:	transport module not available
  */
-int xprt_find_transport_ident(const char *netid)
-{
-	const struct xprt_class *t;
-	int ret;
+पूर्णांक xprt_find_transport_ident(स्थिर अक्षर *netid)
+अणु
+	स्थिर काष्ठा xprt_class *t;
+	पूर्णांक ret;
 
 	t = xprt_class_find_by_netid(netid);
-	if (!t)
-		return -ENOENT;
+	अगर (!t)
+		वापस -ENOENT;
 	ret = t->ident;
 	xprt_class_release(t);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(xprt_find_transport_ident);
 
-static void xprt_clear_locked(struct rpc_xprt *xprt)
-{
-	xprt->snd_task = NULL;
-	if (!test_bit(XPRT_CLOSE_WAIT, &xprt->state)) {
-		smp_mb__before_atomic();
+अटल व्योम xprt_clear_locked(काष्ठा rpc_xprt *xprt)
+अणु
+	xprt->snd_task = शून्य;
+	अगर (!test_bit(XPRT_CLOSE_WAIT, &xprt->state)) अणु
+		smp_mb__beक्रमe_atomic();
 		clear_bit(XPRT_LOCKED, &xprt->state);
 		smp_mb__after_atomic();
-	} else
+	पूर्ण अन्यथा
 		queue_work(xprtiod_workqueue, &xprt->task_cleanup);
-}
+पूर्ण
 
 /**
- * xprt_reserve_xprt - serialize write access to transports
+ * xprt_reserve_xprt - serialize ग_लिखो access to transports
  * @task: task that is requesting access to the transport
- * @xprt: pointer to the target transport
+ * @xprt: poपूर्णांकer to the target transport
  *
  * This prevents mixing the payload of separate requests, and prevents
- * transport connects from colliding with writes.  No congestion control
+ * transport connects from colliding with ग_लिखोs.  No congestion control
  * is provided.
  */
-int xprt_reserve_xprt(struct rpc_xprt *xprt, struct rpc_task *task)
-{
-	struct rpc_rqst *req = task->tk_rqstp;
+पूर्णांक xprt_reserve_xprt(काष्ठा rpc_xprt *xprt, काष्ठा rpc_task *task)
+अणु
+	काष्ठा rpc_rqst *req = task->tk_rqstp;
 
-	if (test_and_set_bit(XPRT_LOCKED, &xprt->state)) {
-		if (task == xprt->snd_task)
-			goto out_locked;
-		goto out_sleep;
-	}
-	if (test_bit(XPRT_WRITE_SPACE, &xprt->state))
-		goto out_unlock;
+	अगर (test_and_set_bit(XPRT_LOCKED, &xprt->state)) अणु
+		अगर (task == xprt->snd_task)
+			जाओ out_locked;
+		जाओ out_sleep;
+	पूर्ण
+	अगर (test_bit(XPRT_WRITE_SPACE, &xprt->state))
+		जाओ out_unlock;
 	xprt->snd_task = task;
 
 out_locked:
 	trace_xprt_reserve_xprt(xprt, task);
-	return 1;
+	वापस 1;
 
 out_unlock:
 	xprt_clear_locked(xprt);
 out_sleep:
 	task->tk_status = -EAGAIN;
-	if  (RPC_IS_SOFT(task))
-		rpc_sleep_on_timeout(&xprt->sending, task, NULL,
-				xprt_request_timeout(req));
-	else
-		rpc_sleep_on(&xprt->sending, task, NULL);
-	return 0;
-}
+	अगर  (RPC_IS_SOFT(task))
+		rpc_sleep_on_समयout(&xprt->sending, task, शून्य,
+				xprt_request_समयout(req));
+	अन्यथा
+		rpc_sleep_on(&xprt->sending, task, शून्य);
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(xprt_reserve_xprt);
 
-static bool
-xprt_need_congestion_window_wait(struct rpc_xprt *xprt)
-{
-	return test_bit(XPRT_CWND_WAIT, &xprt->state);
-}
+अटल bool
+xprt_need_congestion_winकरोw_रुको(काष्ठा rpc_xprt *xprt)
+अणु
+	वापस test_bit(XPRT_CWND_WAIT, &xprt->state);
+पूर्ण
 
-static void
-xprt_set_congestion_window_wait(struct rpc_xprt *xprt)
-{
-	if (!list_empty(&xprt->xmit_queue)) {
-		/* Peek at head of queue to see if it can make progress */
-		if (list_first_entry(&xprt->xmit_queue, struct rpc_rqst,
+अटल व्योम
+xprt_set_congestion_winकरोw_रुको(काष्ठा rpc_xprt *xprt)
+अणु
+	अगर (!list_empty(&xprt->xmit_queue)) अणु
+		/* Peek at head of queue to see अगर it can make progress */
+		अगर (list_first_entry(&xprt->xmit_queue, काष्ठा rpc_rqst,
 					rq_xmit)->rq_cong)
-			return;
-	}
+			वापस;
+	पूर्ण
 	set_bit(XPRT_CWND_WAIT, &xprt->state);
-}
+पूर्ण
 
-static void
-xprt_test_and_clear_congestion_window_wait(struct rpc_xprt *xprt)
-{
-	if (!RPCXPRT_CONGESTED(xprt))
+अटल व्योम
+xprt_test_and_clear_congestion_winकरोw_रुको(काष्ठा rpc_xprt *xprt)
+अणु
+	अगर (!RPCXPRT_CONGESTED(xprt))
 		clear_bit(XPRT_CWND_WAIT, &xprt->state);
-}
+पूर्ण
 
 /*
- * xprt_reserve_xprt_cong - serialize write access to transports
+ * xprt_reserve_xprt_cong - serialize ग_लिखो access to transports
  * @task: task that is requesting access to the transport
  *
  * Same as xprt_reserve_xprt, but Van Jacobson congestion control is
- * integrated into the decision of whether a request is allowed to be
+ * पूर्णांकegrated पूर्णांकo the decision of whether a request is allowed to be
  * woken up and given access to the transport.
- * Note that the lock is only granted if we know there are free slots.
+ * Note that the lock is only granted अगर we know there are मुक्त slots.
  */
-int xprt_reserve_xprt_cong(struct rpc_xprt *xprt, struct rpc_task *task)
-{
-	struct rpc_rqst *req = task->tk_rqstp;
+पूर्णांक xprt_reserve_xprt_cong(काष्ठा rpc_xprt *xprt, काष्ठा rpc_task *task)
+अणु
+	काष्ठा rpc_rqst *req = task->tk_rqstp;
 
-	if (test_and_set_bit(XPRT_LOCKED, &xprt->state)) {
-		if (task == xprt->snd_task)
-			goto out_locked;
-		goto out_sleep;
-	}
-	if (req == NULL) {
+	अगर (test_and_set_bit(XPRT_LOCKED, &xprt->state)) अणु
+		अगर (task == xprt->snd_task)
+			जाओ out_locked;
+		जाओ out_sleep;
+	पूर्ण
+	अगर (req == शून्य) अणु
 		xprt->snd_task = task;
-		goto out_locked;
-	}
-	if (test_bit(XPRT_WRITE_SPACE, &xprt->state))
-		goto out_unlock;
-	if (!xprt_need_congestion_window_wait(xprt)) {
+		जाओ out_locked;
+	पूर्ण
+	अगर (test_bit(XPRT_WRITE_SPACE, &xprt->state))
+		जाओ out_unlock;
+	अगर (!xprt_need_congestion_winकरोw_रुको(xprt)) अणु
 		xprt->snd_task = task;
-		goto out_locked;
-	}
+		जाओ out_locked;
+	पूर्ण
 out_unlock:
 	xprt_clear_locked(xprt);
 out_sleep:
 	task->tk_status = -EAGAIN;
-	if (RPC_IS_SOFT(task))
-		rpc_sleep_on_timeout(&xprt->sending, task, NULL,
-				xprt_request_timeout(req));
-	else
-		rpc_sleep_on(&xprt->sending, task, NULL);
-	return 0;
+	अगर (RPC_IS_SOFT(task))
+		rpc_sleep_on_समयout(&xprt->sending, task, शून्य,
+				xprt_request_समयout(req));
+	अन्यथा
+		rpc_sleep_on(&xprt->sending, task, शून्य);
+	वापस 0;
 out_locked:
 	trace_xprt_reserve_cong(xprt, task);
-	return 1;
-}
+	वापस 1;
+पूर्ण
 EXPORT_SYMBOL_GPL(xprt_reserve_xprt_cong);
 
-static inline int xprt_lock_write(struct rpc_xprt *xprt, struct rpc_task *task)
-{
-	int retval;
+अटल अंतरभूत पूर्णांक xprt_lock_ग_लिखो(काष्ठा rpc_xprt *xprt, काष्ठा rpc_task *task)
+अणु
+	पूर्णांक retval;
 
-	if (test_bit(XPRT_LOCKED, &xprt->state) && xprt->snd_task == task)
-		return 1;
+	अगर (test_bit(XPRT_LOCKED, &xprt->state) && xprt->snd_task == task)
+		वापस 1;
 	spin_lock(&xprt->transport_lock);
 	retval = xprt->ops->reserve_xprt(xprt, task);
 	spin_unlock(&xprt->transport_lock);
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
-static bool __xprt_lock_write_func(struct rpc_task *task, void *data)
-{
-	struct rpc_xprt *xprt = data;
+अटल bool __xprt_lock_ग_लिखो_func(काष्ठा rpc_task *task, व्योम *data)
+अणु
+	काष्ठा rpc_xprt *xprt = data;
 
 	xprt->snd_task = task;
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static void __xprt_lock_write_next(struct rpc_xprt *xprt)
-{
-	if (test_and_set_bit(XPRT_LOCKED, &xprt->state))
-		return;
-	if (test_bit(XPRT_WRITE_SPACE, &xprt->state))
-		goto out_unlock;
-	if (rpc_wake_up_first_on_wq(xprtiod_workqueue, &xprt->sending,
-				__xprt_lock_write_func, xprt))
-		return;
+अटल व्योम __xprt_lock_ग_लिखो_next(काष्ठा rpc_xprt *xprt)
+अणु
+	अगर (test_and_set_bit(XPRT_LOCKED, &xprt->state))
+		वापस;
+	अगर (test_bit(XPRT_WRITE_SPACE, &xprt->state))
+		जाओ out_unlock;
+	अगर (rpc_wake_up_first_on_wq(xprtiod_workqueue, &xprt->sending,
+				__xprt_lock_ग_लिखो_func, xprt))
+		वापस;
 out_unlock:
 	xprt_clear_locked(xprt);
-}
+पूर्ण
 
-static void __xprt_lock_write_next_cong(struct rpc_xprt *xprt)
-{
-	if (test_and_set_bit(XPRT_LOCKED, &xprt->state))
-		return;
-	if (test_bit(XPRT_WRITE_SPACE, &xprt->state))
-		goto out_unlock;
-	if (xprt_need_congestion_window_wait(xprt))
-		goto out_unlock;
-	if (rpc_wake_up_first_on_wq(xprtiod_workqueue, &xprt->sending,
-				__xprt_lock_write_func, xprt))
-		return;
+अटल व्योम __xprt_lock_ग_लिखो_next_cong(काष्ठा rpc_xprt *xprt)
+अणु
+	अगर (test_and_set_bit(XPRT_LOCKED, &xprt->state))
+		वापस;
+	अगर (test_bit(XPRT_WRITE_SPACE, &xprt->state))
+		जाओ out_unlock;
+	अगर (xprt_need_congestion_winकरोw_रुको(xprt))
+		जाओ out_unlock;
+	अगर (rpc_wake_up_first_on_wq(xprtiod_workqueue, &xprt->sending,
+				__xprt_lock_ग_लिखो_func, xprt))
+		वापस;
 out_unlock:
 	xprt_clear_locked(xprt);
-}
+पूर्ण
 
 /**
  * xprt_release_xprt - allow other requests to use a transport
- * @xprt: transport with other tasks potentially waiting
+ * @xprt: transport with other tasks potentially रुकोing
  * @task: task that is releasing access to the transport
  *
- * Note that "task" can be NULL.  No congestion control is provided.
+ * Note that "task" can be शून्य.  No congestion control is provided.
  */
-void xprt_release_xprt(struct rpc_xprt *xprt, struct rpc_task *task)
-{
-	if (xprt->snd_task == task) {
+व्योम xprt_release_xprt(काष्ठा rpc_xprt *xprt, काष्ठा rpc_task *task)
+अणु
+	अगर (xprt->snd_task == task) अणु
 		xprt_clear_locked(xprt);
-		__xprt_lock_write_next(xprt);
-	}
+		__xprt_lock_ग_लिखो_next(xprt);
+	पूर्ण
 	trace_xprt_release_xprt(xprt, task);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(xprt_release_xprt);
 
 /**
  * xprt_release_xprt_cong - allow other requests to use a transport
- * @xprt: transport with other tasks potentially waiting
+ * @xprt: transport with other tasks potentially रुकोing
  * @task: task that is releasing access to the transport
  *
- * Note that "task" can be NULL.  Another task is awoken to use the
- * transport if the transport's congestion window allows it.
+ * Note that "task" can be शून्य.  Another task is awoken to use the
+ * transport अगर the transport's congestion winकरोw allows it.
  */
-void xprt_release_xprt_cong(struct rpc_xprt *xprt, struct rpc_task *task)
-{
-	if (xprt->snd_task == task) {
+व्योम xprt_release_xprt_cong(काष्ठा rpc_xprt *xprt, काष्ठा rpc_task *task)
+अणु
+	अगर (xprt->snd_task == task) अणु
 		xprt_clear_locked(xprt);
-		__xprt_lock_write_next_cong(xprt);
-	}
+		__xprt_lock_ग_लिखो_next_cong(xprt);
+	पूर्ण
 	trace_xprt_release_cong(xprt, task);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(xprt_release_xprt_cong);
 
-static inline void xprt_release_write(struct rpc_xprt *xprt, struct rpc_task *task)
-{
-	if (xprt->snd_task != task)
-		return;
+अटल अंतरभूत व्योम xprt_release_ग_लिखो(काष्ठा rpc_xprt *xprt, काष्ठा rpc_task *task)
+अणु
+	अगर (xprt->snd_task != task)
+		वापस;
 	spin_lock(&xprt->transport_lock);
 	xprt->ops->release_xprt(xprt, task);
 	spin_unlock(&xprt->transport_lock);
-}
+पूर्ण
 
 /*
- * Van Jacobson congestion avoidance. Check if the congestion window
- * overflowed. Put the task to sleep if this is the case.
+ * Van Jacobson congestion aव्योमance. Check अगर the congestion winकरोw
+ * overflowed. Put the task to sleep अगर this is the हाल.
  */
-static int
-__xprt_get_cong(struct rpc_xprt *xprt, struct rpc_rqst *req)
-{
-	if (req->rq_cong)
-		return 1;
+अटल पूर्णांक
+__xprt_get_cong(काष्ठा rpc_xprt *xprt, काष्ठा rpc_rqst *req)
+अणु
+	अगर (req->rq_cong)
+		वापस 1;
 	trace_xprt_get_cong(xprt, req->rq_task);
-	if (RPCXPRT_CONGESTED(xprt)) {
-		xprt_set_congestion_window_wait(xprt);
-		return 0;
-	}
+	अगर (RPCXPRT_CONGESTED(xprt)) अणु
+		xprt_set_congestion_winकरोw_रुको(xprt);
+		वापस 0;
+	पूर्ण
 	req->rq_cong = 1;
 	xprt->cong += RPC_CWNDSCALE;
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
 /*
- * Adjust the congestion window, and wake up the next task
+ * Adjust the congestion winकरोw, and wake up the next task
  * that has been sleeping due to congestion
  */
-static void
-__xprt_put_cong(struct rpc_xprt *xprt, struct rpc_rqst *req)
-{
-	if (!req->rq_cong)
-		return;
+अटल व्योम
+__xprt_put_cong(काष्ठा rpc_xprt *xprt, काष्ठा rpc_rqst *req)
+अणु
+	अगर (!req->rq_cong)
+		वापस;
 	req->rq_cong = 0;
 	xprt->cong -= RPC_CWNDSCALE;
-	xprt_test_and_clear_congestion_window_wait(xprt);
+	xprt_test_and_clear_congestion_winकरोw_रुको(xprt);
 	trace_xprt_put_cong(xprt, req->rq_task);
-	__xprt_lock_write_next_cong(xprt);
-}
+	__xprt_lock_ग_लिखो_next_cong(xprt);
+पूर्ण
 
 /**
  * xprt_request_get_cong - Request congestion control credits
- * @xprt: pointer to transport
- * @req: pointer to RPC request
+ * @xprt: poपूर्णांकer to transport
+ * @req: poपूर्णांकer to RPC request
  *
- * Useful for transports that require congestion control.
+ * Useful क्रम transports that require congestion control.
  */
 bool
-xprt_request_get_cong(struct rpc_xprt *xprt, struct rpc_rqst *req)
-{
+xprt_request_get_cong(काष्ठा rpc_xprt *xprt, काष्ठा rpc_rqst *req)
+अणु
 	bool ret = false;
 
-	if (req->rq_cong)
-		return true;
+	अगर (req->rq_cong)
+		वापस true;
 	spin_lock(&xprt->transport_lock);
 	ret = __xprt_get_cong(xprt, req) != 0;
 	spin_unlock(&xprt->transport_lock);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(xprt_request_get_cong);
 
 /**
  * xprt_release_rqst_cong - housekeeping when request is complete
  * @task: RPC request that recently completed
  *
- * Useful for transports that require congestion control.
+ * Useful क्रम transports that require congestion control.
  */
-void xprt_release_rqst_cong(struct rpc_task *task)
-{
-	struct rpc_rqst *req = task->tk_rqstp;
+व्योम xprt_release_rqst_cong(काष्ठा rpc_task *task)
+अणु
+	काष्ठा rpc_rqst *req = task->tk_rqstp;
 
 	__xprt_put_cong(req->rq_xprt, req);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(xprt_release_rqst_cong);
 
-static void xprt_clear_congestion_window_wait_locked(struct rpc_xprt *xprt)
-{
-	if (test_and_clear_bit(XPRT_CWND_WAIT, &xprt->state))
-		__xprt_lock_write_next_cong(xprt);
-}
+अटल व्योम xprt_clear_congestion_winकरोw_रुको_locked(काष्ठा rpc_xprt *xprt)
+अणु
+	अगर (test_and_clear_bit(XPRT_CWND_WAIT, &xprt->state))
+		__xprt_lock_ग_लिखो_next_cong(xprt);
+पूर्ण
 
 /*
- * Clear the congestion window wait flag and wake up the next
+ * Clear the congestion winकरोw रुको flag and wake up the next
  * entry on xprt->sending
  */
-static void
-xprt_clear_congestion_window_wait(struct rpc_xprt *xprt)
-{
-	if (test_and_clear_bit(XPRT_CWND_WAIT, &xprt->state)) {
+अटल व्योम
+xprt_clear_congestion_winकरोw_रुको(काष्ठा rpc_xprt *xprt)
+अणु
+	अगर (test_and_clear_bit(XPRT_CWND_WAIT, &xprt->state)) अणु
 		spin_lock(&xprt->transport_lock);
-		__xprt_lock_write_next_cong(xprt);
+		__xprt_lock_ग_लिखो_next_cong(xprt);
 		spin_unlock(&xprt->transport_lock);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
- * xprt_adjust_cwnd - adjust transport congestion window
- * @xprt: pointer to xprt
- * @task: recently completed RPC request used to adjust window
+ * xprt_adjust_cwnd - adjust transport congestion winकरोw
+ * @xprt: poपूर्णांकer to xprt
+ * @task: recently completed RPC request used to adjust winकरोw
  * @result: result code of completed RPC request
  *
- * The transport code maintains an estimate on the maximum number of out-
+ * The transport code मुख्यtains an estimate on the maximum number of out-
  * standing RPC requests, using a smoothed version of the congestion
- * avoidance implemented in 44BSD. This is basically the Van Jacobson
- * congestion algorithm: If a retransmit occurs, the congestion window is
+ * aव्योमance implemented in 44BSD. This is basically the Van Jacobson
+ * congestion algorithm: If a retransmit occurs, the congestion winकरोw is
  * halved; otherwise, it is incremented by 1/cwnd when
  *
  *	-	a reply is received and
  *	-	a full number of requests are outstanding and
- *	-	the congestion window hasn't been updated recently.
+ *	-	the congestion winकरोw hasn't been updated recently.
  */
-void xprt_adjust_cwnd(struct rpc_xprt *xprt, struct rpc_task *task, int result)
-{
-	struct rpc_rqst *req = task->tk_rqstp;
-	unsigned long cwnd = xprt->cwnd;
+व्योम xprt_adjust_cwnd(काष्ठा rpc_xprt *xprt, काष्ठा rpc_task *task, पूर्णांक result)
+अणु
+	काष्ठा rpc_rqst *req = task->tk_rqstp;
+	अचिन्हित दीर्घ cwnd = xprt->cwnd;
 
-	if (result >= 0 && cwnd <= xprt->cong) {
+	अगर (result >= 0 && cwnd <= xprt->cong) अणु
 		/* The (cwnd >> 1) term makes sure
-		 * the result gets rounded properly. */
+		 * the result माला_लो rounded properly. */
 		cwnd += (RPC_CWNDSCALE * RPC_CWNDSCALE + (cwnd >> 1)) / cwnd;
-		if (cwnd > RPC_MAXCWND(xprt))
+		अगर (cwnd > RPC_MAXCWND(xprt))
 			cwnd = RPC_MAXCWND(xprt);
-		__xprt_lock_write_next_cong(xprt);
-	} else if (result == -ETIMEDOUT) {
+		__xprt_lock_ग_लिखो_next_cong(xprt);
+	पूर्ण अन्यथा अगर (result == -ETIMEDOUT) अणु
 		cwnd >>= 1;
-		if (cwnd < RPC_CWNDSCALE)
+		अगर (cwnd < RPC_CWNDSCALE)
 			cwnd = RPC_CWNDSCALE;
-	}
-	dprintk("RPC:       cong %ld, cwnd was %ld, now %ld\n",
+	पूर्ण
+	dprपूर्णांकk("RPC:       cong %ld, cwnd was %ld, now %ld\n",
 			xprt->cong, xprt->cwnd, cwnd);
 	xprt->cwnd = cwnd;
 	__xprt_put_cong(xprt, req);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(xprt_adjust_cwnd);
 
 /**
  * xprt_wake_pending_tasks - wake all tasks on a transport's pending queue
- * @xprt: transport with waiting tasks
- * @status: result code to plant in each task before waking it
+ * @xprt: transport with रुकोing tasks
+ * @status: result code to plant in each task beक्रमe waking it
  *
  */
-void xprt_wake_pending_tasks(struct rpc_xprt *xprt, int status)
-{
-	if (status < 0)
+व्योम xprt_wake_pending_tasks(काष्ठा rpc_xprt *xprt, पूर्णांक status)
+अणु
+	अगर (status < 0)
 		rpc_wake_up_status(&xprt->pending, status);
-	else
+	अन्यथा
 		rpc_wake_up(&xprt->pending);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(xprt_wake_pending_tasks);
 
 /**
- * xprt_wait_for_buffer_space - wait for transport output buffer to clear
+ * xprt_रुको_क्रम_buffer_space - रुको क्रम transport output buffer to clear
  * @xprt: transport
  *
- * Note that we only set the timer for the case of RPC_IS_SOFT(), since
- * we don't in general want to force a socket disconnection due to
+ * Note that we only set the समयr क्रम the हाल of RPC_IS_SOFT(), since
+ * we करोn't in general want to क्रमce a socket disconnection due to
  * an incomplete RPC call transmission.
  */
-void xprt_wait_for_buffer_space(struct rpc_xprt *xprt)
-{
+व्योम xprt_रुको_क्रम_buffer_space(काष्ठा rpc_xprt *xprt)
+अणु
 	set_bit(XPRT_WRITE_SPACE, &xprt->state);
-}
-EXPORT_SYMBOL_GPL(xprt_wait_for_buffer_space);
+पूर्ण
+EXPORT_SYMBOL_GPL(xprt_रुको_क्रम_buffer_space);
 
-static bool
-xprt_clear_write_space_locked(struct rpc_xprt *xprt)
-{
-	if (test_and_clear_bit(XPRT_WRITE_SPACE, &xprt->state)) {
-		__xprt_lock_write_next(xprt);
-		dprintk("RPC:       write space: waking waiting task on "
+अटल bool
+xprt_clear_ग_लिखो_space_locked(काष्ठा rpc_xprt *xprt)
+अणु
+	अगर (test_and_clear_bit(XPRT_WRITE_SPACE, &xprt->state)) अणु
+		__xprt_lock_ग_लिखो_next(xprt);
+		dprपूर्णांकk("RPC:       write space: waking waiting task on "
 				"xprt %p\n", xprt);
-		return true;
-	}
-	return false;
-}
+		वापस true;
+	पूर्ण
+	वापस false;
+पूर्ण
 
 /**
- * xprt_write_space - wake the task waiting for transport output buffer space
- * @xprt: transport with waiting tasks
+ * xprt_ग_लिखो_space - wake the task रुकोing क्रम transport output buffer space
+ * @xprt: transport with रुकोing tasks
  *
- * Can be called in a soft IRQ context, so xprt_write_space never sleeps.
+ * Can be called in a soft IRQ context, so xprt_ग_लिखो_space never sleeps.
  */
-bool xprt_write_space(struct rpc_xprt *xprt)
-{
+bool xprt_ग_लिखो_space(काष्ठा rpc_xprt *xprt)
+अणु
 	bool ret;
 
-	if (!test_bit(XPRT_WRITE_SPACE, &xprt->state))
-		return false;
+	अगर (!test_bit(XPRT_WRITE_SPACE, &xprt->state))
+		वापस false;
 	spin_lock(&xprt->transport_lock);
-	ret = xprt_clear_write_space_locked(xprt);
+	ret = xprt_clear_ग_लिखो_space_locked(xprt);
 	spin_unlock(&xprt->transport_lock);
-	return ret;
-}
-EXPORT_SYMBOL_GPL(xprt_write_space);
+	वापस ret;
+पूर्ण
+EXPORT_SYMBOL_GPL(xprt_ग_लिखो_space);
 
-static unsigned long xprt_abs_ktime_to_jiffies(ktime_t abstime)
-{
-	s64 delta = ktime_to_ns(ktime_get() - abstime);
-	return likely(delta >= 0) ?
-		jiffies - nsecs_to_jiffies(delta) :
-		jiffies + nsecs_to_jiffies(-delta);
-}
+अटल अचिन्हित दीर्घ xprt_असल_kसमय_प्रकारo_jअगरfies(kसमय_प्रकार असलसमय)
+अणु
+	s64 delta = kसमय_प्रकारo_ns(kसमय_get() - असलसमय);
+	वापस likely(delta >= 0) ?
+		jअगरfies - nsecs_to_jअगरfies(delta) :
+		jअगरfies + nsecs_to_jअगरfies(-delta);
+पूर्ण
 
-static unsigned long xprt_calc_majortimeo(struct rpc_rqst *req)
-{
-	const struct rpc_timeout *to = req->rq_task->tk_client->cl_timeout;
-	unsigned long majortimeo = req->rq_timeout;
+अटल अचिन्हित दीर्घ xprt_calc_majorसमयo(काष्ठा rpc_rqst *req)
+अणु
+	स्थिर काष्ठा rpc_समयout *to = req->rq_task->tk_client->cl_समयout;
+	अचिन्हित दीर्घ majorसमयo = req->rq_समयout;
 
-	if (to->to_exponential)
-		majortimeo <<= to->to_retries;
-	else
-		majortimeo += to->to_increment * to->to_retries;
-	if (majortimeo > to->to_maxval || majortimeo == 0)
-		majortimeo = to->to_maxval;
-	return majortimeo;
-}
+	अगर (to->to_exponential)
+		majorसमयo <<= to->to_retries;
+	अन्यथा
+		majorसमयo += to->to_increment * to->to_retries;
+	अगर (majorसमयo > to->to_maxval || majorसमयo == 0)
+		majorसमयo = to->to_maxval;
+	वापस majorसमयo;
+पूर्ण
 
-static void xprt_reset_majortimeo(struct rpc_rqst *req)
-{
-	req->rq_majortimeo += xprt_calc_majortimeo(req);
-}
+अटल व्योम xprt_reset_majorसमयo(काष्ठा rpc_rqst *req)
+अणु
+	req->rq_majorसमयo += xprt_calc_majorसमयo(req);
+पूर्ण
 
-static void xprt_reset_minortimeo(struct rpc_rqst *req)
-{
-	req->rq_minortimeo += req->rq_timeout;
-}
+अटल व्योम xprt_reset_minorसमयo(काष्ठा rpc_rqst *req)
+अणु
+	req->rq_minorसमयo += req->rq_समयout;
+पूर्ण
 
-static void xprt_init_majortimeo(struct rpc_task *task, struct rpc_rqst *req)
-{
-	unsigned long time_init;
-	struct rpc_xprt *xprt = req->rq_xprt;
+अटल व्योम xprt_init_majorसमयo(काष्ठा rpc_task *task, काष्ठा rpc_rqst *req)
+अणु
+	अचिन्हित दीर्घ समय_init;
+	काष्ठा rpc_xprt *xprt = req->rq_xprt;
 
-	if (likely(xprt && xprt_connected(xprt)))
-		time_init = jiffies;
-	else
-		time_init = xprt_abs_ktime_to_jiffies(task->tk_start);
-	req->rq_timeout = task->tk_client->cl_timeout->to_initval;
-	req->rq_majortimeo = time_init + xprt_calc_majortimeo(req);
-	req->rq_minortimeo = time_init + req->rq_timeout;
-}
+	अगर (likely(xprt && xprt_connected(xprt)))
+		समय_init = jअगरfies;
+	अन्यथा
+		समय_init = xprt_असल_kसमय_प्रकारo_jअगरfies(task->tk_start);
+	req->rq_समयout = task->tk_client->cl_समयout->to_initval;
+	req->rq_majorसमयo = समय_init + xprt_calc_majorसमयo(req);
+	req->rq_minorसमयo = समय_init + req->rq_समयout;
+पूर्ण
 
 /**
- * xprt_adjust_timeout - adjust timeout values for next retransmit
- * @req: RPC request containing parameters to use for the adjustment
+ * xprt_adjust_समयout - adjust समयout values क्रम next retransmit
+ * @req: RPC request containing parameters to use क्रम the adjusपंचांगent
  *
  */
-int xprt_adjust_timeout(struct rpc_rqst *req)
-{
-	struct rpc_xprt *xprt = req->rq_xprt;
-	const struct rpc_timeout *to = req->rq_task->tk_client->cl_timeout;
-	int status = 0;
+पूर्णांक xprt_adjust_समयout(काष्ठा rpc_rqst *req)
+अणु
+	काष्ठा rpc_xprt *xprt = req->rq_xprt;
+	स्थिर काष्ठा rpc_समयout *to = req->rq_task->tk_client->cl_समयout;
+	पूर्णांक status = 0;
 
-	if (time_before(jiffies, req->rq_majortimeo)) {
-		if (time_before(jiffies, req->rq_minortimeo))
-			return status;
-		if (to->to_exponential)
-			req->rq_timeout <<= 1;
-		else
-			req->rq_timeout += to->to_increment;
-		if (to->to_maxval && req->rq_timeout >= to->to_maxval)
-			req->rq_timeout = to->to_maxval;
+	अगर (समय_beक्रमe(jअगरfies, req->rq_majorसमयo)) अणु
+		अगर (समय_beक्रमe(jअगरfies, req->rq_minorसमयo))
+			वापस status;
+		अगर (to->to_exponential)
+			req->rq_समयout <<= 1;
+		अन्यथा
+			req->rq_समयout += to->to_increment;
+		अगर (to->to_maxval && req->rq_समयout >= to->to_maxval)
+			req->rq_समयout = to->to_maxval;
 		req->rq_retries++;
-	} else {
-		req->rq_timeout = to->to_initval;
+	पूर्ण अन्यथा अणु
+		req->rq_समयout = to->to_initval;
 		req->rq_retries = 0;
-		xprt_reset_majortimeo(req);
+		xprt_reset_majorसमयo(req);
 		/* Reset the RTT counters == "slow start" */
 		spin_lock(&xprt->transport_lock);
 		rpc_init_rtt(req->rq_task->tk_client->cl_rtt, to->to_initval);
 		spin_unlock(&xprt->transport_lock);
 		status = -ETIMEDOUT;
-	}
-	xprt_reset_minortimeo(req);
+	पूर्ण
+	xprt_reset_minorसमयo(req);
 
-	if (req->rq_timeout == 0) {
-		printk(KERN_WARNING "xprt_adjust_timeout: rq_timeout = 0!\n");
-		req->rq_timeout = 5 * HZ;
-	}
-	return status;
-}
+	अगर (req->rq_समयout == 0) अणु
+		prपूर्णांकk(KERN_WARNING "xprt_adjust_timeout: rq_timeout = 0!\n");
+		req->rq_समयout = 5 * HZ;
+	पूर्ण
+	वापस status;
+पूर्ण
 
-static void xprt_autoclose(struct work_struct *work)
-{
-	struct rpc_xprt *xprt =
-		container_of(work, struct rpc_xprt, task_cleanup);
-	unsigned int pflags = memalloc_nofs_save();
+अटल व्योम xprt_स्वतःबंद(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा rpc_xprt *xprt =
+		container_of(work, काष्ठा rpc_xprt, task_cleanup);
+	अचिन्हित पूर्णांक pflags = meदो_स्मृति_nofs_save();
 
-	trace_xprt_disconnect_auto(xprt);
+	trace_xprt_disconnect_स्वतः(xprt);
 	clear_bit(XPRT_CLOSE_WAIT, &xprt->state);
-	xprt->ops->close(xprt);
-	xprt_release_write(xprt, NULL);
+	xprt->ops->बंद(xprt);
+	xprt_release_ग_लिखो(xprt, शून्य);
 	wake_up_bit(&xprt->state, XPRT_LOCKED);
-	memalloc_nofs_restore(pflags);
-}
+	meदो_स्मृति_nofs_restore(pflags);
+पूर्ण
 
 /**
- * xprt_disconnect_done - mark a transport as disconnected
- * @xprt: transport to flag for disconnect
+ * xprt_disconnect_करोne - mark a transport as disconnected
+ * @xprt: transport to flag क्रम disconnect
  *
  */
-void xprt_disconnect_done(struct rpc_xprt *xprt)
-{
-	trace_xprt_disconnect_done(xprt);
+व्योम xprt_disconnect_करोne(काष्ठा rpc_xprt *xprt)
+अणु
+	trace_xprt_disconnect_करोne(xprt);
 	spin_lock(&xprt->transport_lock);
 	xprt_clear_connected(xprt);
-	xprt_clear_write_space_locked(xprt);
-	xprt_clear_congestion_window_wait_locked(xprt);
+	xprt_clear_ग_लिखो_space_locked(xprt);
+	xprt_clear_congestion_winकरोw_रुको_locked(xprt);
 	xprt_wake_pending_tasks(xprt, -ENOTCONN);
 	spin_unlock(&xprt->transport_lock);
-}
-EXPORT_SYMBOL_GPL(xprt_disconnect_done);
+पूर्ण
+EXPORT_SYMBOL_GPL(xprt_disconnect_करोne);
 
 /**
- * xprt_force_disconnect - force a transport to disconnect
+ * xprt_क्रमce_disconnect - क्रमce a transport to disconnect
  * @xprt: transport to disconnect
  *
  */
-void xprt_force_disconnect(struct rpc_xprt *xprt)
-{
-	trace_xprt_disconnect_force(xprt);
+व्योम xprt_क्रमce_disconnect(काष्ठा rpc_xprt *xprt)
+अणु
+	trace_xprt_disconnect_क्रमce(xprt);
 
 	/* Don't race with the test_bit() in xprt_clear_locked() */
 	spin_lock(&xprt->transport_lock);
 	set_bit(XPRT_CLOSE_WAIT, &xprt->state);
-	/* Try to schedule an autoclose RPC call */
-	if (test_and_set_bit(XPRT_LOCKED, &xprt->state) == 0)
+	/* Try to schedule an स्वतःबंद RPC call */
+	अगर (test_and_set_bit(XPRT_LOCKED, &xprt->state) == 0)
 		queue_work(xprtiod_workqueue, &xprt->task_cleanup);
-	else if (xprt->snd_task)
+	अन्यथा अगर (xprt->snd_task)
 		rpc_wake_up_queued_task_set_status(&xprt->pending,
 				xprt->snd_task, -ENOTCONN);
 	spin_unlock(&xprt->transport_lock);
-}
-EXPORT_SYMBOL_GPL(xprt_force_disconnect);
+पूर्ण
+EXPORT_SYMBOL_GPL(xprt_क्रमce_disconnect);
 
-static unsigned int
-xprt_connect_cookie(struct rpc_xprt *xprt)
-{
-	return READ_ONCE(xprt->connect_cookie);
-}
+अटल अचिन्हित पूर्णांक
+xprt_connect_cookie(काष्ठा rpc_xprt *xprt)
+अणु
+	वापस READ_ONCE(xprt->connect_cookie);
+पूर्ण
 
-static bool
-xprt_request_retransmit_after_disconnect(struct rpc_task *task)
-{
-	struct rpc_rqst *req = task->tk_rqstp;
-	struct rpc_xprt *xprt = req->rq_xprt;
+अटल bool
+xprt_request_retransmit_after_disconnect(काष्ठा rpc_task *task)
+अणु
+	काष्ठा rpc_rqst *req = task->tk_rqstp;
+	काष्ठा rpc_xprt *xprt = req->rq_xprt;
 
-	return req->rq_connect_cookie != xprt_connect_cookie(xprt) ||
+	वापस req->rq_connect_cookie != xprt_connect_cookie(xprt) ||
 		!xprt_connected(xprt);
-}
+पूर्ण
 
 /**
- * xprt_conditional_disconnect - force a transport to disconnect
+ * xprt_conditional_disconnect - क्रमce a transport to disconnect
  * @xprt: transport to disconnect
  * @cookie: 'connection cookie'
  *
- * This attempts to break the connection if and only if 'cookie' matches
+ * This attempts to अवरोध the connection अगर and only अगर 'cookie' matches
  * the current transport 'connection cookie'. It ensures that we don't
- * try to break the connection more than once when we need to retransmit
+ * try to अवरोध the connection more than once when we need to retransmit
  * a batch of RPC requests.
  *
  */
-void xprt_conditional_disconnect(struct rpc_xprt *xprt, unsigned int cookie)
-{
+व्योम xprt_conditional_disconnect(काष्ठा rpc_xprt *xprt, अचिन्हित पूर्णांक cookie)
+अणु
 	/* Don't race with the test_bit() in xprt_clear_locked() */
 	spin_lock(&xprt->transport_lock);
-	if (cookie != xprt->connect_cookie)
-		goto out;
-	if (test_bit(XPRT_CLOSING, &xprt->state))
-		goto out;
+	अगर (cookie != xprt->connect_cookie)
+		जाओ out;
+	अगर (test_bit(XPRT_CLOSING, &xprt->state))
+		जाओ out;
 	set_bit(XPRT_CLOSE_WAIT, &xprt->state);
-	/* Try to schedule an autoclose RPC call */
-	if (test_and_set_bit(XPRT_LOCKED, &xprt->state) == 0)
+	/* Try to schedule an स्वतःबंद RPC call */
+	अगर (test_and_set_bit(XPRT_LOCKED, &xprt->state) == 0)
 		queue_work(xprtiod_workqueue, &xprt->task_cleanup);
 	xprt_wake_pending_tasks(xprt, -EAGAIN);
 out:
 	spin_unlock(&xprt->transport_lock);
-}
+पूर्ण
 
-static bool
-xprt_has_timer(const struct rpc_xprt *xprt)
-{
-	return xprt->idle_timeout != 0;
-}
+अटल bool
+xprt_has_समयr(स्थिर काष्ठा rpc_xprt *xprt)
+अणु
+	वापस xprt->idle_समयout != 0;
+पूर्ण
 
-static void
-xprt_schedule_autodisconnect(struct rpc_xprt *xprt)
+अटल व्योम
+xprt_schedule_स्वतःdisconnect(काष्ठा rpc_xprt *xprt)
 	__must_hold(&xprt->transport_lock)
-{
-	xprt->last_used = jiffies;
-	if (RB_EMPTY_ROOT(&xprt->recv_queue) && xprt_has_timer(xprt))
-		mod_timer(&xprt->timer, xprt->last_used + xprt->idle_timeout);
-}
+अणु
+	xprt->last_used = jअगरfies;
+	अगर (RB_EMPTY_ROOT(&xprt->recv_queue) && xprt_has_समयr(xprt))
+		mod_समयr(&xprt->समयr, xprt->last_used + xprt->idle_समयout);
+पूर्ण
 
-static void
-xprt_init_autodisconnect(struct timer_list *t)
-{
-	struct rpc_xprt *xprt = from_timer(xprt, t, timer);
+अटल व्योम
+xprt_init_स्वतःdisconnect(काष्ठा समयr_list *t)
+अणु
+	काष्ठा rpc_xprt *xprt = from_समयr(xprt, t, समयr);
 
-	if (!RB_EMPTY_ROOT(&xprt->recv_queue))
-		return;
-	/* Reset xprt->last_used to avoid connect/autodisconnect cycling */
-	xprt->last_used = jiffies;
-	if (test_and_set_bit(XPRT_LOCKED, &xprt->state))
-		return;
+	अगर (!RB_EMPTY_ROOT(&xprt->recv_queue))
+		वापस;
+	/* Reset xprt->last_used to aव्योम connect/स्वतःdisconnect cycling */
+	xprt->last_used = jअगरfies;
+	अगर (test_and_set_bit(XPRT_LOCKED, &xprt->state))
+		वापस;
 	queue_work(xprtiod_workqueue, &xprt->task_cleanup);
-}
+पूर्ण
 
-bool xprt_lock_connect(struct rpc_xprt *xprt,
-		struct rpc_task *task,
-		void *cookie)
-{
+bool xprt_lock_connect(काष्ठा rpc_xprt *xprt,
+		काष्ठा rpc_task *task,
+		व्योम *cookie)
+अणु
 	bool ret = false;
 
 	spin_lock(&xprt->transport_lock);
-	if (!test_bit(XPRT_LOCKED, &xprt->state))
-		goto out;
-	if (xprt->snd_task != task)
-		goto out;
+	अगर (!test_bit(XPRT_LOCKED, &xprt->state))
+		जाओ out;
+	अगर (xprt->snd_task != task)
+		जाओ out;
 	xprt->snd_task = cookie;
 	ret = true;
 out:
 	spin_unlock(&xprt->transport_lock);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-void xprt_unlock_connect(struct rpc_xprt *xprt, void *cookie)
-{
+व्योम xprt_unlock_connect(काष्ठा rpc_xprt *xprt, व्योम *cookie)
+अणु
 	spin_lock(&xprt->transport_lock);
-	if (xprt->snd_task != cookie)
-		goto out;
-	if (!test_bit(XPRT_LOCKED, &xprt->state))
-		goto out;
-	xprt->snd_task =NULL;
-	xprt->ops->release_xprt(xprt, NULL);
-	xprt_schedule_autodisconnect(xprt);
+	अगर (xprt->snd_task != cookie)
+		जाओ out;
+	अगर (!test_bit(XPRT_LOCKED, &xprt->state))
+		जाओ out;
+	xprt->snd_task =शून्य;
+	xprt->ops->release_xprt(xprt, शून्य);
+	xprt_schedule_स्वतःdisconnect(xprt);
 out:
 	spin_unlock(&xprt->transport_lock);
 	wake_up_bit(&xprt->state, XPRT_LOCKED);
-}
+पूर्ण
 
 /**
  * xprt_connect - schedule a transport connect operation
  * @task: RPC task that is requesting the connect
  *
  */
-void xprt_connect(struct rpc_task *task)
-{
-	struct rpc_xprt	*xprt = task->tk_rqstp->rq_xprt;
+व्योम xprt_connect(काष्ठा rpc_task *task)
+अणु
+	काष्ठा rpc_xprt	*xprt = task->tk_rqstp->rq_xprt;
 
 	trace_xprt_connect(xprt);
 
-	if (!xprt_bound(xprt)) {
+	अगर (!xprt_bound(xprt)) अणु
 		task->tk_status = -EAGAIN;
-		return;
-	}
-	if (!xprt_lock_write(xprt, task))
-		return;
+		वापस;
+	पूर्ण
+	अगर (!xprt_lock_ग_लिखो(xprt, task))
+		वापस;
 
-	if (test_and_clear_bit(XPRT_CLOSE_WAIT, &xprt->state)) {
+	अगर (test_and_clear_bit(XPRT_CLOSE_WAIT, &xprt->state)) अणु
 		trace_xprt_disconnect_cleanup(xprt);
-		xprt->ops->close(xprt);
-	}
+		xprt->ops->बंद(xprt);
+	पूर्ण
 
-	if (!xprt_connected(xprt)) {
+	अगर (!xprt_connected(xprt)) अणु
 		task->tk_rqstp->rq_connect_cookie = xprt->connect_cookie;
-		rpc_sleep_on_timeout(&xprt->pending, task, NULL,
-				xprt_request_timeout(task->tk_rqstp));
+		rpc_sleep_on_समयout(&xprt->pending, task, शून्य,
+				xprt_request_समयout(task->tk_rqstp));
 
-		if (test_bit(XPRT_CLOSING, &xprt->state))
-			return;
-		if (xprt_test_and_set_connecting(xprt))
-			return;
-		/* Race breaker */
-		if (!xprt_connected(xprt)) {
-			xprt->stat.connect_start = jiffies;
+		अगर (test_bit(XPRT_CLOSING, &xprt->state))
+			वापस;
+		अगर (xprt_test_and_set_connecting(xprt))
+			वापस;
+		/* Race अवरोधer */
+		अगर (!xprt_connected(xprt)) अणु
+			xprt->stat.connect_start = jअगरfies;
 			xprt->ops->connect(xprt, task);
-		} else {
+		पूर्ण अन्यथा अणु
 			xprt_clear_connecting(xprt);
 			task->tk_status = 0;
 			rpc_wake_up_queued_task(&xprt->pending, task);
-		}
-	}
-	xprt_release_write(xprt, task);
-}
+		पूर्ण
+	पूर्ण
+	xprt_release_ग_लिखो(xprt, task);
+पूर्ण
 
 /**
- * xprt_reconnect_delay - compute the wait before scheduling a connect
+ * xprt_reconnect_delay - compute the रुको beक्रमe scheduling a connect
  * @xprt: transport instance
  *
  */
-unsigned long xprt_reconnect_delay(const struct rpc_xprt *xprt)
-{
-	unsigned long start, now = jiffies;
+अचिन्हित दीर्घ xprt_reconnect_delay(स्थिर काष्ठा rpc_xprt *xprt)
+अणु
+	अचिन्हित दीर्घ start, now = jअगरfies;
 
-	start = xprt->stat.connect_start + xprt->reestablish_timeout;
-	if (time_after(start, now))
-		return start - now;
-	return 0;
-}
+	start = xprt->stat.connect_start + xprt->reestablish_समयout;
+	अगर (समय_after(start, now))
+		वापस start - now;
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(xprt_reconnect_delay);
 
 /**
- * xprt_reconnect_backoff - compute the new re-establish timeout
+ * xprt_reconnect_backoff - compute the new re-establish समयout
  * @xprt: transport instance
- * @init_to: initial reestablish timeout
+ * @init_to: initial reestablish समयout
  *
  */
-void xprt_reconnect_backoff(struct rpc_xprt *xprt, unsigned long init_to)
-{
-	xprt->reestablish_timeout <<= 1;
-	if (xprt->reestablish_timeout > xprt->max_reconnect_timeout)
-		xprt->reestablish_timeout = xprt->max_reconnect_timeout;
-	if (xprt->reestablish_timeout < init_to)
-		xprt->reestablish_timeout = init_to;
-}
+व्योम xprt_reconnect_backoff(काष्ठा rpc_xprt *xprt, अचिन्हित दीर्घ init_to)
+अणु
+	xprt->reestablish_समयout <<= 1;
+	अगर (xprt->reestablish_समयout > xprt->max_reconnect_समयout)
+		xprt->reestablish_समयout = xprt->max_reconnect_समयout;
+	अगर (xprt->reestablish_समयout < init_to)
+		xprt->reestablish_समयout = init_to;
+पूर्ण
 EXPORT_SYMBOL_GPL(xprt_reconnect_backoff);
 
-enum xprt_xid_rb_cmp {
+क्रमागत xprt_xid_rb_cmp अणु
 	XID_RB_EQUAL,
 	XID_RB_LEFT,
 	XID_RB_RIGHT,
-};
-static enum xprt_xid_rb_cmp
+पूर्ण;
+अटल क्रमागत xprt_xid_rb_cmp
 xprt_xid_cmp(__be32 xid1, __be32 xid2)
-{
-	if (xid1 == xid2)
-		return XID_RB_EQUAL;
-	if ((__force u32)xid1 < (__force u32)xid2)
-		return XID_RB_LEFT;
-	return XID_RB_RIGHT;
-}
+अणु
+	अगर (xid1 == xid2)
+		वापस XID_RB_EQUAL;
+	अगर ((__क्रमce u32)xid1 < (__क्रमce u32)xid2)
+		वापस XID_RB_LEFT;
+	वापस XID_RB_RIGHT;
+पूर्ण
 
-static struct rpc_rqst *
-xprt_request_rb_find(struct rpc_xprt *xprt, __be32 xid)
-{
-	struct rb_node *n = xprt->recv_queue.rb_node;
-	struct rpc_rqst *req;
+अटल काष्ठा rpc_rqst *
+xprt_request_rb_find(काष्ठा rpc_xprt *xprt, __be32 xid)
+अणु
+	काष्ठा rb_node *n = xprt->recv_queue.rb_node;
+	काष्ठा rpc_rqst *req;
 
-	while (n != NULL) {
-		req = rb_entry(n, struct rpc_rqst, rq_recv);
-		switch (xprt_xid_cmp(xid, req->rq_xid)) {
-		case XID_RB_LEFT:
+	जबतक (n != शून्य) अणु
+		req = rb_entry(n, काष्ठा rpc_rqst, rq_recv);
+		चयन (xprt_xid_cmp(xid, req->rq_xid)) अणु
+		हाल XID_RB_LEFT:
 			n = n->rb_left;
-			break;
-		case XID_RB_RIGHT:
+			अवरोध;
+		हाल XID_RB_RIGHT:
 			n = n->rb_right;
-			break;
-		case XID_RB_EQUAL:
-			return req;
-		}
-	}
-	return NULL;
-}
+			अवरोध;
+		हाल XID_RB_EQUAL:
+			वापस req;
+		पूर्ण
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
-static void
-xprt_request_rb_insert(struct rpc_xprt *xprt, struct rpc_rqst *new)
-{
-	struct rb_node **p = &xprt->recv_queue.rb_node;
-	struct rb_node *n = NULL;
-	struct rpc_rqst *req;
+अटल व्योम
+xprt_request_rb_insert(काष्ठा rpc_xprt *xprt, काष्ठा rpc_rqst *new)
+अणु
+	काष्ठा rb_node **p = &xprt->recv_queue.rb_node;
+	काष्ठा rb_node *n = शून्य;
+	काष्ठा rpc_rqst *req;
 
-	while (*p != NULL) {
+	जबतक (*p != शून्य) अणु
 		n = *p;
-		req = rb_entry(n, struct rpc_rqst, rq_recv);
-		switch(xprt_xid_cmp(new->rq_xid, req->rq_xid)) {
-		case XID_RB_LEFT:
+		req = rb_entry(n, काष्ठा rpc_rqst, rq_recv);
+		चयन(xprt_xid_cmp(new->rq_xid, req->rq_xid)) अणु
+		हाल XID_RB_LEFT:
 			p = &n->rb_left;
-			break;
-		case XID_RB_RIGHT:
+			अवरोध;
+		हाल XID_RB_RIGHT:
 			p = &n->rb_right;
-			break;
-		case XID_RB_EQUAL:
+			अवरोध;
+		हाल XID_RB_EQUAL:
 			WARN_ON_ONCE(new != req);
-			return;
-		}
-	}
+			वापस;
+		पूर्ण
+	पूर्ण
 	rb_link_node(&new->rq_recv, n, p);
 	rb_insert_color(&new->rq_recv, &xprt->recv_queue);
-}
+पूर्ण
 
-static void
-xprt_request_rb_remove(struct rpc_xprt *xprt, struct rpc_rqst *req)
-{
+अटल व्योम
+xprt_request_rb_हटाओ(काष्ठा rpc_xprt *xprt, काष्ठा rpc_rqst *req)
+अणु
 	rb_erase(&req->rq_recv, &xprt->recv_queue);
-}
+पूर्ण
 
 /**
  * xprt_lookup_rqst - find an RPC request corresponding to an XID
@@ -1040,30 +1041,30 @@ xprt_request_rb_remove(struct rpc_xprt *xprt, struct rpc_rqst *req)
  *
  * Caller holds xprt->queue_lock.
  */
-struct rpc_rqst *xprt_lookup_rqst(struct rpc_xprt *xprt, __be32 xid)
-{
-	struct rpc_rqst *entry;
+काष्ठा rpc_rqst *xprt_lookup_rqst(काष्ठा rpc_xprt *xprt, __be32 xid)
+अणु
+	काष्ठा rpc_rqst *entry;
 
 	entry = xprt_request_rb_find(xprt, xid);
-	if (entry != NULL) {
+	अगर (entry != शून्य) अणु
 		trace_xprt_lookup_rqst(xprt, xid, 0);
-		entry->rq_rtt = ktime_sub(ktime_get(), entry->rq_xtime);
-		return entry;
-	}
+		entry->rq_rtt = kसमय_sub(kसमय_get(), entry->rq_xसमय);
+		वापस entry;
+	पूर्ण
 
-	dprintk("RPC:       xprt_lookup_rqst did not find xid %08x\n",
+	dprपूर्णांकk("RPC:       xprt_lookup_rqst did not find xid %08x\n",
 			ntohl(xid));
 	trace_xprt_lookup_rqst(xprt, xid, -ENOENT);
 	xprt->stat.bad_xids++;
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 EXPORT_SYMBOL_GPL(xprt_lookup_rqst);
 
-static bool
-xprt_is_pinned_rqst(struct rpc_rqst *req)
-{
-	return atomic_read(&req->rq_pin) != 0;
-}
+अटल bool
+xprt_is_pinned_rqst(काष्ठा rpc_rqst *req)
+अणु
+	वापस atomic_पढ़ो(&req->rq_pin) != 0;
+पूर्ण
 
 /**
  * xprt_pin_rqst - Pin a request on the transport receive list
@@ -1072,10 +1073,10 @@ xprt_is_pinned_rqst(struct rpc_rqst *req)
  * Caller must ensure this is atomic with the call to xprt_lookup_rqst()
  * so should be holding xprt->queue_lock.
  */
-void xprt_pin_rqst(struct rpc_rqst *req)
-{
+व्योम xprt_pin_rqst(काष्ठा rpc_rqst *req)
+अणु
 	atomic_inc(&req->rq_pin);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(xprt_pin_rqst);
 
 /**
@@ -1084,65 +1085,65 @@ EXPORT_SYMBOL_GPL(xprt_pin_rqst);
  *
  * Caller should be holding xprt->queue_lock.
  */
-void xprt_unpin_rqst(struct rpc_rqst *req)
-{
-	if (!test_bit(RPC_TASK_MSG_PIN_WAIT, &req->rq_task->tk_runstate)) {
+व्योम xprt_unpin_rqst(काष्ठा rpc_rqst *req)
+अणु
+	अगर (!test_bit(RPC_TASK_MSG_PIN_WAIT, &req->rq_task->tk_runstate)) अणु
 		atomic_dec(&req->rq_pin);
-		return;
-	}
-	if (atomic_dec_and_test(&req->rq_pin))
+		वापस;
+	पूर्ण
+	अगर (atomic_dec_and_test(&req->rq_pin))
 		wake_up_var(&req->rq_pin);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(xprt_unpin_rqst);
 
-static void xprt_wait_on_pinned_rqst(struct rpc_rqst *req)
-{
-	wait_var_event(&req->rq_pin, !xprt_is_pinned_rqst(req));
-}
+अटल व्योम xprt_रुको_on_pinned_rqst(काष्ठा rpc_rqst *req)
+अणु
+	रुको_var_event(&req->rq_pin, !xprt_is_pinned_rqst(req));
+पूर्ण
 
-static bool
-xprt_request_data_received(struct rpc_task *task)
-{
-	return !test_bit(RPC_TASK_NEED_RECV, &task->tk_runstate) &&
+अटल bool
+xprt_request_data_received(काष्ठा rpc_task *task)
+अणु
+	वापस !test_bit(RPC_TASK_NEED_RECV, &task->tk_runstate) &&
 		READ_ONCE(task->tk_rqstp->rq_reply_bytes_recvd) != 0;
-}
+पूर्ण
 
-static bool
-xprt_request_need_enqueue_receive(struct rpc_task *task, struct rpc_rqst *req)
-{
-	return !test_bit(RPC_TASK_NEED_RECV, &task->tk_runstate) &&
+अटल bool
+xprt_request_need_enqueue_receive(काष्ठा rpc_task *task, काष्ठा rpc_rqst *req)
+अणु
+	वापस !test_bit(RPC_TASK_NEED_RECV, &task->tk_runstate) &&
 		READ_ONCE(task->tk_rqstp->rq_reply_bytes_recvd) == 0;
-}
+पूर्ण
 
 /**
  * xprt_request_enqueue_receive - Add an request to the receive queue
  * @task: RPC task
  *
  */
-void
-xprt_request_enqueue_receive(struct rpc_task *task)
-{
-	struct rpc_rqst *req = task->tk_rqstp;
-	struct rpc_xprt *xprt = req->rq_xprt;
+व्योम
+xprt_request_enqueue_receive(काष्ठा rpc_task *task)
+अणु
+	काष्ठा rpc_rqst *req = task->tk_rqstp;
+	काष्ठा rpc_xprt *xprt = req->rq_xprt;
 
-	if (!xprt_request_need_enqueue_receive(task, req))
-		return;
+	अगर (!xprt_request_need_enqueue_receive(task, req))
+		वापस;
 
 	xprt_request_prepare(task->tk_rqstp);
 	spin_lock(&xprt->queue_lock);
 
 	/* Update the softirq receive buffer */
-	memcpy(&req->rq_private_buf, &req->rq_rcv_buf,
-			sizeof(req->rq_private_buf));
+	स_नकल(&req->rq_निजी_buf, &req->rq_rcv_buf,
+			माप(req->rq_निजी_buf));
 
 	/* Add request to the receive list */
 	xprt_request_rb_insert(xprt, req);
 	set_bit(RPC_TASK_NEED_RECV, &task->tk_runstate);
 	spin_unlock(&xprt->queue_lock);
 
-	/* Turn off autodisconnect */
-	del_singleshot_timer_sync(&xprt->timer);
-}
+	/* Turn off स्वतःdisconnect */
+	del_singleshot_समयr_sync(&xprt->समयr);
+पूर्ण
 
 /**
  * xprt_request_dequeue_receive_locked - Remove a request from the receive queue
@@ -1150,14 +1151,14 @@ xprt_request_enqueue_receive(struct rpc_task *task)
  *
  * Caller must hold xprt->queue_lock.
  */
-static void
-xprt_request_dequeue_receive_locked(struct rpc_task *task)
-{
-	struct rpc_rqst *req = task->tk_rqstp;
+अटल व्योम
+xprt_request_dequeue_receive_locked(काष्ठा rpc_task *task)
+अणु
+	काष्ठा rpc_rqst *req = task->tk_rqstp;
 
-	if (test_and_clear_bit(RPC_TASK_NEED_RECV, &task->tk_runstate))
-		xprt_request_rb_remove(req->rq_xprt, req);
-}
+	अगर (test_and_clear_bit(RPC_TASK_NEED_RECV, &task->tk_runstate))
+		xprt_request_rb_हटाओ(req->rq_xprt, req);
+पूर्ण
 
 /**
  * xprt_update_rtt - Update RPC RTT statistics
@@ -1165,19 +1166,19 @@ xprt_request_dequeue_receive_locked(struct rpc_task *task)
  *
  * Caller holds xprt->queue_lock.
  */
-void xprt_update_rtt(struct rpc_task *task)
-{
-	struct rpc_rqst *req = task->tk_rqstp;
-	struct rpc_rtt *rtt = task->tk_client->cl_rtt;
-	unsigned int timer = task->tk_msg.rpc_proc->p_timer;
-	long m = usecs_to_jiffies(ktime_to_us(req->rq_rtt));
+व्योम xprt_update_rtt(काष्ठा rpc_task *task)
+अणु
+	काष्ठा rpc_rqst *req = task->tk_rqstp;
+	काष्ठा rpc_rtt *rtt = task->tk_client->cl_rtt;
+	अचिन्हित पूर्णांक समयr = task->tk_msg.rpc_proc->p_समयr;
+	दीर्घ m = usecs_to_jअगरfies(kसमय_प्रकारo_us(req->rq_rtt));
 
-	if (timer) {
-		if (req->rq_ntrans == 1)
-			rpc_update_rtt(rtt, timer, m);
-		rpc_set_timeo(rtt, timer, req->rq_ntrans - 1);
-	}
-}
+	अगर (समयr) अणु
+		अगर (req->rq_ntrans == 1)
+			rpc_update_rtt(rtt, समयr, m);
+		rpc_set_समयo(rtt, समयr, req->rq_ntrans - 1);
+	पूर्ण
+पूर्ण
 EXPORT_SYMBOL_GPL(xprt_update_rtt);
 
 /**
@@ -1187,346 +1188,346 @@ EXPORT_SYMBOL_GPL(xprt_update_rtt);
  *
  * Caller holds xprt->queue_lock.
  */
-void xprt_complete_rqst(struct rpc_task *task, int copied)
-{
-	struct rpc_rqst *req = task->tk_rqstp;
-	struct rpc_xprt *xprt = req->rq_xprt;
+व्योम xprt_complete_rqst(काष्ठा rpc_task *task, पूर्णांक copied)
+अणु
+	काष्ठा rpc_rqst *req = task->tk_rqstp;
+	काष्ठा rpc_xprt *xprt = req->rq_xprt;
 
 	xprt->stat.recvs++;
 
-	req->rq_private_buf.len = copied;
-	/* Ensure all writes are done before we update */
+	req->rq_निजी_buf.len = copied;
+	/* Ensure all ग_लिखोs are करोne beक्रमe we update */
 	/* req->rq_reply_bytes_recvd */
 	smp_wmb();
 	req->rq_reply_bytes_recvd = copied;
 	xprt_request_dequeue_receive_locked(task);
 	rpc_wake_up_queued_task(&xprt->pending, task);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(xprt_complete_rqst);
 
-static void xprt_timer(struct rpc_task *task)
-{
-	struct rpc_rqst *req = task->tk_rqstp;
-	struct rpc_xprt *xprt = req->rq_xprt;
+अटल व्योम xprt_समयr(काष्ठा rpc_task *task)
+अणु
+	काष्ठा rpc_rqst *req = task->tk_rqstp;
+	काष्ठा rpc_xprt *xprt = req->rq_xprt;
 
-	if (task->tk_status != -ETIMEDOUT)
-		return;
+	अगर (task->tk_status != -ETIMEDOUT)
+		वापस;
 
-	trace_xprt_timer(xprt, req->rq_xid, task->tk_status);
-	if (!req->rq_reply_bytes_recvd) {
-		if (xprt->ops->timer)
-			xprt->ops->timer(xprt, task);
-	} else
+	trace_xprt_समयr(xprt, req->rq_xid, task->tk_status);
+	अगर (!req->rq_reply_bytes_recvd) अणु
+		अगर (xprt->ops->समयr)
+			xprt->ops->समयr(xprt, task);
+	पूर्ण अन्यथा
 		task->tk_status = 0;
-}
+पूर्ण
 
 /**
- * xprt_wait_for_reply_request_def - wait for reply
- * @task: pointer to rpc_task
+ * xprt_रुको_क्रम_reply_request_def - रुको क्रम reply
+ * @task: poपूर्णांकer to rpc_task
  *
  * Set a request's retransmit timeout based on the transport's
- * default timeout parameters.  Used by transports that don't adjust
- * the retransmit timeout based on round-trip time estimation,
+ * शेष समयout parameters.  Used by transports that करोn't adjust
+ * the retransmit समयout based on round-trip समय estimation,
  * and put the task to sleep on the pending queue.
  */
-void xprt_wait_for_reply_request_def(struct rpc_task *task)
-{
-	struct rpc_rqst *req = task->tk_rqstp;
+व्योम xprt_रुको_क्रम_reply_request_def(काष्ठा rpc_task *task)
+अणु
+	काष्ठा rpc_rqst *req = task->tk_rqstp;
 
-	rpc_sleep_on_timeout(&req->rq_xprt->pending, task, xprt_timer,
-			xprt_request_timeout(req));
-}
-EXPORT_SYMBOL_GPL(xprt_wait_for_reply_request_def);
+	rpc_sleep_on_समयout(&req->rq_xprt->pending, task, xprt_समयr,
+			xprt_request_समयout(req));
+पूर्ण
+EXPORT_SYMBOL_GPL(xprt_रुको_क्रम_reply_request_def);
 
 /**
- * xprt_wait_for_reply_request_rtt - wait for reply using RTT estimator
- * @task: pointer to rpc_task
+ * xprt_रुको_क्रम_reply_request_rtt - रुको क्रम reply using RTT estimator
+ * @task: poपूर्णांकer to rpc_task
  *
- * Set a request's retransmit timeout using the RTT estimator,
+ * Set a request's retransmit समयout using the RTT estimator,
  * and put the task to sleep on the pending queue.
  */
-void xprt_wait_for_reply_request_rtt(struct rpc_task *task)
-{
-	int timer = task->tk_msg.rpc_proc->p_timer;
-	struct rpc_clnt *clnt = task->tk_client;
-	struct rpc_rtt *rtt = clnt->cl_rtt;
-	struct rpc_rqst *req = task->tk_rqstp;
-	unsigned long max_timeout = clnt->cl_timeout->to_maxval;
-	unsigned long timeout;
+व्योम xprt_रुको_क्रम_reply_request_rtt(काष्ठा rpc_task *task)
+अणु
+	पूर्णांक समयr = task->tk_msg.rpc_proc->p_समयr;
+	काष्ठा rpc_clnt *clnt = task->tk_client;
+	काष्ठा rpc_rtt *rtt = clnt->cl_rtt;
+	काष्ठा rpc_rqst *req = task->tk_rqstp;
+	अचिन्हित दीर्घ max_समयout = clnt->cl_समयout->to_maxval;
+	अचिन्हित दीर्घ समयout;
 
-	timeout = rpc_calc_rto(rtt, timer);
-	timeout <<= rpc_ntimeo(rtt, timer) + req->rq_retries;
-	if (timeout > max_timeout || timeout == 0)
-		timeout = max_timeout;
-	rpc_sleep_on_timeout(&req->rq_xprt->pending, task, xprt_timer,
-			jiffies + timeout);
-}
-EXPORT_SYMBOL_GPL(xprt_wait_for_reply_request_rtt);
+	समयout = rpc_calc_rto(rtt, समयr);
+	समयout <<= rpc_nसमयo(rtt, समयr) + req->rq_retries;
+	अगर (समयout > max_समयout || समयout == 0)
+		समयout = max_समयout;
+	rpc_sleep_on_समयout(&req->rq_xprt->pending, task, xprt_समयr,
+			jअगरfies + समयout);
+पूर्ण
+EXPORT_SYMBOL_GPL(xprt_रुको_क्रम_reply_request_rtt);
 
 /**
- * xprt_request_wait_receive - wait for the reply to an RPC request
+ * xprt_request_रुको_receive - रुको क्रम the reply to an RPC request
  * @task: RPC task about to send a request
  *
  */
-void xprt_request_wait_receive(struct rpc_task *task)
-{
-	struct rpc_rqst *req = task->tk_rqstp;
-	struct rpc_xprt *xprt = req->rq_xprt;
+व्योम xprt_request_रुको_receive(काष्ठा rpc_task *task)
+अणु
+	काष्ठा rpc_rqst *req = task->tk_rqstp;
+	काष्ठा rpc_xprt *xprt = req->rq_xprt;
 
-	if (!test_bit(RPC_TASK_NEED_RECV, &task->tk_runstate))
-		return;
+	अगर (!test_bit(RPC_TASK_NEED_RECV, &task->tk_runstate))
+		वापस;
 	/*
-	 * Sleep on the pending queue if we're expecting a reply.
+	 * Sleep on the pending queue अगर we're expecting a reply.
 	 * The spinlock ensures atomicity between the test of
 	 * req->rq_reply_bytes_recvd, and the call to rpc_sleep_on().
 	 */
 	spin_lock(&xprt->queue_lock);
-	if (test_bit(RPC_TASK_NEED_RECV, &task->tk_runstate)) {
-		xprt->ops->wait_for_reply_request(task);
+	अगर (test_bit(RPC_TASK_NEED_RECV, &task->tk_runstate)) अणु
+		xprt->ops->रुको_क्रम_reply_request(task);
 		/*
-		 * Send an extra queue wakeup call if the
-		 * connection was dropped in case the call to
+		 * Send an extra queue wakeup call अगर the
+		 * connection was dropped in हाल the call to
 		 * rpc_sleep_on() raced.
 		 */
-		if (xprt_request_retransmit_after_disconnect(task))
+		अगर (xprt_request_retransmit_after_disconnect(task))
 			rpc_wake_up_queued_task_set_status(&xprt->pending,
 					task, -ENOTCONN);
-	}
+	पूर्ण
 	spin_unlock(&xprt->queue_lock);
-}
+पूर्ण
 
-static bool
-xprt_request_need_enqueue_transmit(struct rpc_task *task, struct rpc_rqst *req)
-{
-	return !test_bit(RPC_TASK_NEED_XMIT, &task->tk_runstate);
-}
+अटल bool
+xprt_request_need_enqueue_transmit(काष्ठा rpc_task *task, काष्ठा rpc_rqst *req)
+अणु
+	वापस !test_bit(RPC_TASK_NEED_XMIT, &task->tk_runstate);
+पूर्ण
 
 /**
- * xprt_request_enqueue_transmit - queue a task for transmission
- * @task: pointer to rpc_task
+ * xprt_request_enqueue_transmit - queue a task क्रम transmission
+ * @task: poपूर्णांकer to rpc_task
  *
  * Add a task to the transmission queue.
  */
-void
-xprt_request_enqueue_transmit(struct rpc_task *task)
-{
-	struct rpc_rqst *pos, *req = task->tk_rqstp;
-	struct rpc_xprt *xprt = req->rq_xprt;
+व्योम
+xprt_request_enqueue_transmit(काष्ठा rpc_task *task)
+अणु
+	काष्ठा rpc_rqst *pos, *req = task->tk_rqstp;
+	काष्ठा rpc_xprt *xprt = req->rq_xprt;
 
-	if (xprt_request_need_enqueue_transmit(task, req)) {
+	अगर (xprt_request_need_enqueue_transmit(task, req)) अणु
 		req->rq_bytes_sent = 0;
 		spin_lock(&xprt->queue_lock);
 		/*
 		 * Requests that carry congestion control credits are added
-		 * to the head of the list to avoid starvation issues.
+		 * to the head of the list to aव्योम starvation issues.
 		 */
-		if (req->rq_cong) {
-			xprt_clear_congestion_window_wait(xprt);
-			list_for_each_entry(pos, &xprt->xmit_queue, rq_xmit) {
-				if (pos->rq_cong)
-					continue;
-				/* Note: req is added _before_ pos */
+		अगर (req->rq_cong) अणु
+			xprt_clear_congestion_winकरोw_रुको(xprt);
+			list_क्रम_each_entry(pos, &xprt->xmit_queue, rq_xmit) अणु
+				अगर (pos->rq_cong)
+					जारी;
+				/* Note: req is added _beक्रमe_ pos */
 				list_add_tail(&req->rq_xmit, &pos->rq_xmit);
 				INIT_LIST_HEAD(&req->rq_xmit2);
-				goto out;
-			}
-		} else if (RPC_IS_SWAPPER(task)) {
-			list_for_each_entry(pos, &xprt->xmit_queue, rq_xmit) {
-				if (pos->rq_cong || pos->rq_bytes_sent)
-					continue;
-				if (RPC_IS_SWAPPER(pos->rq_task))
-					continue;
-				/* Note: req is added _before_ pos */
+				जाओ out;
+			पूर्ण
+		पूर्ण अन्यथा अगर (RPC_IS_SWAPPER(task)) अणु
+			list_क्रम_each_entry(pos, &xprt->xmit_queue, rq_xmit) अणु
+				अगर (pos->rq_cong || pos->rq_bytes_sent)
+					जारी;
+				अगर (RPC_IS_SWAPPER(pos->rq_task))
+					जारी;
+				/* Note: req is added _beक्रमe_ pos */
 				list_add_tail(&req->rq_xmit, &pos->rq_xmit);
 				INIT_LIST_HEAD(&req->rq_xmit2);
-				goto out;
-			}
-		} else if (!req->rq_seqno) {
-			list_for_each_entry(pos, &xprt->xmit_queue, rq_xmit) {
-				if (pos->rq_task->tk_owner != task->tk_owner)
-					continue;
+				जाओ out;
+			पूर्ण
+		पूर्ण अन्यथा अगर (!req->rq_seqno) अणु
+			list_क्रम_each_entry(pos, &xprt->xmit_queue, rq_xmit) अणु
+				अगर (pos->rq_task->tk_owner != task->tk_owner)
+					जारी;
 				list_add_tail(&req->rq_xmit2, &pos->rq_xmit2);
 				INIT_LIST_HEAD(&req->rq_xmit);
-				goto out;
-			}
-		}
+				जाओ out;
+			पूर्ण
+		पूर्ण
 		list_add_tail(&req->rq_xmit, &xprt->xmit_queue);
 		INIT_LIST_HEAD(&req->rq_xmit2);
 out:
-		atomic_long_inc(&xprt->xmit_queuelen);
+		atomic_दीर्घ_inc(&xprt->xmit_queuelen);
 		set_bit(RPC_TASK_NEED_XMIT, &task->tk_runstate);
 		spin_unlock(&xprt->queue_lock);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
- * xprt_request_dequeue_transmit_locked - remove a task from the transmission queue
- * @task: pointer to rpc_task
+ * xprt_request_dequeue_transmit_locked - हटाओ a task from the transmission queue
+ * @task: poपूर्णांकer to rpc_task
  *
  * Remove a task from the transmission queue
  * Caller must hold xprt->queue_lock
  */
-static void
-xprt_request_dequeue_transmit_locked(struct rpc_task *task)
-{
-	struct rpc_rqst *req = task->tk_rqstp;
+अटल व्योम
+xprt_request_dequeue_transmit_locked(काष्ठा rpc_task *task)
+अणु
+	काष्ठा rpc_rqst *req = task->tk_rqstp;
 
-	if (!test_and_clear_bit(RPC_TASK_NEED_XMIT, &task->tk_runstate))
-		return;
-	if (!list_empty(&req->rq_xmit)) {
+	अगर (!test_and_clear_bit(RPC_TASK_NEED_XMIT, &task->tk_runstate))
+		वापस;
+	अगर (!list_empty(&req->rq_xmit)) अणु
 		list_del(&req->rq_xmit);
-		if (!list_empty(&req->rq_xmit2)) {
-			struct rpc_rqst *next = list_first_entry(&req->rq_xmit2,
-					struct rpc_rqst, rq_xmit2);
+		अगर (!list_empty(&req->rq_xmit2)) अणु
+			काष्ठा rpc_rqst *next = list_first_entry(&req->rq_xmit2,
+					काष्ठा rpc_rqst, rq_xmit2);
 			list_del(&req->rq_xmit2);
 			list_add_tail(&next->rq_xmit, &next->rq_xprt->xmit_queue);
-		}
-	} else
+		पूर्ण
+	पूर्ण अन्यथा
 		list_del(&req->rq_xmit2);
-	atomic_long_dec(&req->rq_xprt->xmit_queuelen);
-}
+	atomic_दीर्घ_dec(&req->rq_xprt->xmit_queuelen);
+पूर्ण
 
 /**
- * xprt_request_dequeue_transmit - remove a task from the transmission queue
- * @task: pointer to rpc_task
+ * xprt_request_dequeue_transmit - हटाओ a task from the transmission queue
+ * @task: poपूर्णांकer to rpc_task
  *
  * Remove a task from the transmission queue
  */
-static void
-xprt_request_dequeue_transmit(struct rpc_task *task)
-{
-	struct rpc_rqst *req = task->tk_rqstp;
-	struct rpc_xprt *xprt = req->rq_xprt;
+अटल व्योम
+xprt_request_dequeue_transmit(काष्ठा rpc_task *task)
+अणु
+	काष्ठा rpc_rqst *req = task->tk_rqstp;
+	काष्ठा rpc_xprt *xprt = req->rq_xprt;
 
 	spin_lock(&xprt->queue_lock);
 	xprt_request_dequeue_transmit_locked(task);
 	spin_unlock(&xprt->queue_lock);
-}
+पूर्ण
 
 /**
- * xprt_request_dequeue_xprt - remove a task from the transmit+receive queue
- * @task: pointer to rpc_task
+ * xprt_request_dequeue_xprt - हटाओ a task from the transmit+receive queue
+ * @task: poपूर्णांकer to rpc_task
  *
  * Remove a task from the transmit and receive queues, and ensure that
  * it is not pinned by the receive work item.
  */
-void
-xprt_request_dequeue_xprt(struct rpc_task *task)
-{
-	struct rpc_rqst	*req = task->tk_rqstp;
-	struct rpc_xprt *xprt = req->rq_xprt;
+व्योम
+xprt_request_dequeue_xprt(काष्ठा rpc_task *task)
+अणु
+	काष्ठा rpc_rqst	*req = task->tk_rqstp;
+	काष्ठा rpc_xprt *xprt = req->rq_xprt;
 
-	if (test_bit(RPC_TASK_NEED_XMIT, &task->tk_runstate) ||
+	अगर (test_bit(RPC_TASK_NEED_XMIT, &task->tk_runstate) ||
 	    test_bit(RPC_TASK_NEED_RECV, &task->tk_runstate) ||
-	    xprt_is_pinned_rqst(req)) {
+	    xprt_is_pinned_rqst(req)) अणु
 		spin_lock(&xprt->queue_lock);
 		xprt_request_dequeue_transmit_locked(task);
 		xprt_request_dequeue_receive_locked(task);
-		while (xprt_is_pinned_rqst(req)) {
+		जबतक (xprt_is_pinned_rqst(req)) अणु
 			set_bit(RPC_TASK_MSG_PIN_WAIT, &task->tk_runstate);
 			spin_unlock(&xprt->queue_lock);
-			xprt_wait_on_pinned_rqst(req);
+			xprt_रुको_on_pinned_rqst(req);
 			spin_lock(&xprt->queue_lock);
 			clear_bit(RPC_TASK_MSG_PIN_WAIT, &task->tk_runstate);
-		}
+		पूर्ण
 		spin_unlock(&xprt->queue_lock);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
- * xprt_request_prepare - prepare an encoded request for transport
- * @req: pointer to rpc_rqst
+ * xprt_request_prepare - prepare an encoded request क्रम transport
+ * @req: poपूर्णांकer to rpc_rqst
  *
- * Calls into the transport layer to do whatever is needed to prepare
- * the request for transmission or receive.
+ * Calls पूर्णांकo the transport layer to करो whatever is needed to prepare
+ * the request क्रम transmission or receive.
  */
-void
-xprt_request_prepare(struct rpc_rqst *req)
-{
-	struct rpc_xprt *xprt = req->rq_xprt;
+व्योम
+xprt_request_prepare(काष्ठा rpc_rqst *req)
+अणु
+	काष्ठा rpc_xprt *xprt = req->rq_xprt;
 
-	if (xprt->ops->prepare_request)
+	अगर (xprt->ops->prepare_request)
 		xprt->ops->prepare_request(req);
-}
+पूर्ण
 
 /**
- * xprt_request_need_retransmit - Test if a task needs retransmission
- * @task: pointer to rpc_task
+ * xprt_request_need_retransmit - Test अगर a task needs retransmission
+ * @task: poपूर्णांकer to rpc_task
  *
- * Test for whether a connection breakage requires the task to retransmit
+ * Test क्रम whether a connection अवरोधage requires the task to retransmit
  */
 bool
-xprt_request_need_retransmit(struct rpc_task *task)
-{
-	return xprt_request_retransmit_after_disconnect(task);
-}
+xprt_request_need_retransmit(काष्ठा rpc_task *task)
+अणु
+	वापस xprt_request_retransmit_after_disconnect(task);
+पूर्ण
 
 /**
- * xprt_prepare_transmit - reserve the transport before sending a request
+ * xprt_prepare_transmit - reserve the transport beक्रमe sending a request
  * @task: RPC task about to send a request
  *
  */
-bool xprt_prepare_transmit(struct rpc_task *task)
-{
-	struct rpc_rqst	*req = task->tk_rqstp;
-	struct rpc_xprt	*xprt = req->rq_xprt;
+bool xprt_prepare_transmit(काष्ठा rpc_task *task)
+अणु
+	काष्ठा rpc_rqst	*req = task->tk_rqstp;
+	काष्ठा rpc_xprt	*xprt = req->rq_xprt;
 
-	if (!xprt_lock_write(xprt, task)) {
-		/* Race breaker: someone may have transmitted us */
-		if (!test_bit(RPC_TASK_NEED_XMIT, &task->tk_runstate))
+	अगर (!xprt_lock_ग_लिखो(xprt, task)) अणु
+		/* Race अवरोधer: someone may have transmitted us */
+		अगर (!test_bit(RPC_TASK_NEED_XMIT, &task->tk_runstate))
 			rpc_wake_up_queued_task_set_status(&xprt->sending,
 					task, 0);
-		return false;
+		वापस false;
 
-	}
-	return true;
-}
+	पूर्ण
+	वापस true;
+पूर्ण
 
-void xprt_end_transmit(struct rpc_task *task)
-{
-	struct rpc_xprt	*xprt = task->tk_rqstp->rq_xprt;
+व्योम xprt_end_transmit(काष्ठा rpc_task *task)
+अणु
+	काष्ठा rpc_xprt	*xprt = task->tk_rqstp->rq_xprt;
 
 	xprt_inject_disconnect(xprt);
-	xprt_release_write(xprt, task);
-}
+	xprt_release_ग_लिखो(xprt, task);
+पूर्ण
 
 /**
  * xprt_request_transmit - send an RPC request on a transport
- * @req: pointer to request to transmit
+ * @req: poपूर्णांकer to request to transmit
  * @snd_task: RPC task that owns the transport lock
  *
- * This performs the transmission of a single request.
- * Note that if the request is not the same as snd_task, then it
- * does need to be pinned.
+ * This perक्रमms the transmission of a single request.
+ * Note that अगर the request is not the same as snd_task, then it
+ * करोes need to be pinned.
  * Returns '0' on success.
  */
-static int
-xprt_request_transmit(struct rpc_rqst *req, struct rpc_task *snd_task)
-{
-	struct rpc_xprt *xprt = req->rq_xprt;
-	struct rpc_task *task = req->rq_task;
-	unsigned int connect_cookie;
-	int is_retrans = RPC_WAS_SENT(task);
-	int status;
+अटल पूर्णांक
+xprt_request_transmit(काष्ठा rpc_rqst *req, काष्ठा rpc_task *snd_task)
+अणु
+	काष्ठा rpc_xprt *xprt = req->rq_xprt;
+	काष्ठा rpc_task *task = req->rq_task;
+	अचिन्हित पूर्णांक connect_cookie;
+	पूर्णांक is_retrans = RPC_WAS_SENT(task);
+	पूर्णांक status;
 
-	if (!req->rq_bytes_sent) {
-		if (xprt_request_data_received(task)) {
+	अगर (!req->rq_bytes_sent) अणु
+		अगर (xprt_request_data_received(task)) अणु
 			status = 0;
-			goto out_dequeue;
-		}
-		/* Verify that our message lies in the RPCSEC_GSS window */
-		if (rpcauth_xmit_need_reencode(task)) {
+			जाओ out_dequeue;
+		पूर्ण
+		/* Verअगरy that our message lies in the RPCSEC_GSS winकरोw */
+		अगर (rpcauth_xmit_need_reencode(task)) अणु
 			status = -EBADMSG;
-			goto out_dequeue;
-		}
-		if (RPC_SIGNALLED(task)) {
+			जाओ out_dequeue;
+		पूर्ण
+		अगर (RPC_SIGNALLED(task)) अणु
 			status = -ERESTARTSYS;
-			goto out_dequeue;
-		}
-	}
+			जाओ out_dequeue;
+		पूर्ण
+	पूर्ण
 
 	/*
-	 * Update req->rq_ntrans before transmitting to avoid races with
+	 * Update req->rq_ntrans beक्रमe transmitting to aव्योम races with
 	 * xprt_update_rtt(), which needs to know that it is recording a
 	 * reply to the first transmission.
 	 */
@@ -1535,16 +1536,16 @@ xprt_request_transmit(struct rpc_rqst *req, struct rpc_task *snd_task)
 	trace_rpc_xdr_sendto(task, &req->rq_snd_buf);
 	connect_cookie = xprt->connect_cookie;
 	status = xprt->ops->send_request(req);
-	if (status != 0) {
+	अगर (status != 0) अणु
 		req->rq_ntrans--;
 		trace_xprt_transmit(req, status);
-		return status;
-	}
+		वापस status;
+	पूर्ण
 
-	if (is_retrans) {
+	अगर (is_retrans) अणु
 		task->tk_client->cl_stats->rpcretrans++;
 		trace_xprt_retransmit(req);
-	}
+	पूर्ण
 
 	xprt_inject_disconnect(xprt);
 
@@ -1563,307 +1564,307 @@ out_dequeue:
 	trace_xprt_transmit(req, status);
 	xprt_request_dequeue_transmit(task);
 	rpc_wake_up_queued_task_set_status(&xprt->sending, task, status);
-	return status;
-}
+	वापस status;
+पूर्ण
 
 /**
  * xprt_transmit - send an RPC request on a transport
  * @task: controlling RPC task
  *
- * Attempts to drain the transmit queue. On exit, either the transport
- * signalled an error that needs to be handled before transmission can
- * resume, or @task finished transmitting, and detected that it already
+ * Attempts to drain the transmit queue. On निकास, either the transport
+ * संकेतled an error that needs to be handled beक्रमe transmission can
+ * resume, or @task finished transmitting, and detected that it alपढ़ोy
  * received a reply.
  */
-void
-xprt_transmit(struct rpc_task *task)
-{
-	struct rpc_rqst *next, *req = task->tk_rqstp;
-	struct rpc_xprt	*xprt = req->rq_xprt;
-	int counter, status;
+व्योम
+xprt_transmit(काष्ठा rpc_task *task)
+अणु
+	काष्ठा rpc_rqst *next, *req = task->tk_rqstp;
+	काष्ठा rpc_xprt	*xprt = req->rq_xprt;
+	पूर्णांक counter, status;
 
 	spin_lock(&xprt->queue_lock);
 	counter = 0;
-	while (!list_empty(&xprt->xmit_queue)) {
-		if (++counter == 20)
-			break;
+	जबतक (!list_empty(&xprt->xmit_queue)) अणु
+		अगर (++counter == 20)
+			अवरोध;
 		next = list_first_entry(&xprt->xmit_queue,
-				struct rpc_rqst, rq_xmit);
+				काष्ठा rpc_rqst, rq_xmit);
 		xprt_pin_rqst(next);
 		spin_unlock(&xprt->queue_lock);
 		status = xprt_request_transmit(next, task);
-		if (status == -EBADMSG && next != req)
+		अगर (status == -EBADMSG && next != req)
 			status = 0;
 		spin_lock(&xprt->queue_lock);
 		xprt_unpin_rqst(next);
-		if (status == 0) {
-			if (!xprt_request_data_received(task) ||
+		अगर (status == 0) अणु
+			अगर (!xprt_request_data_received(task) ||
 			    test_bit(RPC_TASK_NEED_XMIT, &task->tk_runstate))
-				continue;
-		} else if (test_bit(RPC_TASK_NEED_XMIT, &task->tk_runstate))
+				जारी;
+		पूर्ण अन्यथा अगर (test_bit(RPC_TASK_NEED_XMIT, &task->tk_runstate))
 			task->tk_status = status;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 	spin_unlock(&xprt->queue_lock);
-}
+पूर्ण
 
-static void xprt_complete_request_init(struct rpc_task *task)
-{
-	if (task->tk_rqstp)
+अटल व्योम xprt_complete_request_init(काष्ठा rpc_task *task)
+अणु
+	अगर (task->tk_rqstp)
 		xprt_request_init(task);
-}
+पूर्ण
 
-void xprt_add_backlog(struct rpc_xprt *xprt, struct rpc_task *task)
-{
+व्योम xprt_add_backlog(काष्ठा rpc_xprt *xprt, काष्ठा rpc_task *task)
+अणु
 	set_bit(XPRT_CONGESTED, &xprt->state);
 	rpc_sleep_on(&xprt->backlog, task, xprt_complete_request_init);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(xprt_add_backlog);
 
-static bool __xprt_set_rq(struct rpc_task *task, void *data)
-{
-	struct rpc_rqst *req = data;
+अटल bool __xprt_set_rq(काष्ठा rpc_task *task, व्योम *data)
+अणु
+	काष्ठा rpc_rqst *req = data;
 
-	if (task->tk_rqstp == NULL) {
-		memset(req, 0, sizeof(*req));	/* mark unused */
+	अगर (task->tk_rqstp == शून्य) अणु
+		स_रखो(req, 0, माप(*req));	/* mark unused */
 		task->tk_rqstp = req;
-		return true;
-	}
-	return false;
-}
+		वापस true;
+	पूर्ण
+	वापस false;
+पूर्ण
 
-bool xprt_wake_up_backlog(struct rpc_xprt *xprt, struct rpc_rqst *req)
-{
-	if (rpc_wake_up_first(&xprt->backlog, __xprt_set_rq, req) == NULL) {
+bool xprt_wake_up_backlog(काष्ठा rpc_xprt *xprt, काष्ठा rpc_rqst *req)
+अणु
+	अगर (rpc_wake_up_first(&xprt->backlog, __xprt_set_rq, req) == शून्य) अणु
 		clear_bit(XPRT_CONGESTED, &xprt->state);
-		return false;
-	}
-	return true;
-}
+		वापस false;
+	पूर्ण
+	वापस true;
+पूर्ण
 EXPORT_SYMBOL_GPL(xprt_wake_up_backlog);
 
-static bool xprt_throttle_congested(struct rpc_xprt *xprt, struct rpc_task *task)
-{
+अटल bool xprt_throttle_congested(काष्ठा rpc_xprt *xprt, काष्ठा rpc_task *task)
+अणु
 	bool ret = false;
 
-	if (!test_bit(XPRT_CONGESTED, &xprt->state))
-		goto out;
+	अगर (!test_bit(XPRT_CONGESTED, &xprt->state))
+		जाओ out;
 	spin_lock(&xprt->reserve_lock);
-	if (test_bit(XPRT_CONGESTED, &xprt->state)) {
+	अगर (test_bit(XPRT_CONGESTED, &xprt->state)) अणु
 		xprt_add_backlog(xprt, task);
 		ret = true;
-	}
+	पूर्ण
 	spin_unlock(&xprt->reserve_lock);
 out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static struct rpc_rqst *xprt_dynamic_alloc_slot(struct rpc_xprt *xprt)
-{
-	struct rpc_rqst *req = ERR_PTR(-EAGAIN);
+अटल काष्ठा rpc_rqst *xprt_dynamic_alloc_slot(काष्ठा rpc_xprt *xprt)
+अणु
+	काष्ठा rpc_rqst *req = ERR_PTR(-EAGAIN);
 
-	if (xprt->num_reqs >= xprt->max_reqs)
-		goto out;
+	अगर (xprt->num_reqs >= xprt->max_reqs)
+		जाओ out;
 	++xprt->num_reqs;
 	spin_unlock(&xprt->reserve_lock);
-	req = kzalloc(sizeof(struct rpc_rqst), GFP_NOFS);
+	req = kzalloc(माप(काष्ठा rpc_rqst), GFP_NOFS);
 	spin_lock(&xprt->reserve_lock);
-	if (req != NULL)
-		goto out;
+	अगर (req != शून्य)
+		जाओ out;
 	--xprt->num_reqs;
 	req = ERR_PTR(-ENOMEM);
 out:
-	return req;
-}
+	वापस req;
+पूर्ण
 
-static bool xprt_dynamic_free_slot(struct rpc_xprt *xprt, struct rpc_rqst *req)
-{
-	if (xprt->num_reqs > xprt->min_reqs) {
+अटल bool xprt_dynamic_मुक्त_slot(काष्ठा rpc_xprt *xprt, काष्ठा rpc_rqst *req)
+अणु
+	अगर (xprt->num_reqs > xprt->min_reqs) अणु
 		--xprt->num_reqs;
-		kfree(req);
-		return true;
-	}
-	return false;
-}
+		kमुक्त(req);
+		वापस true;
+	पूर्ण
+	वापस false;
+पूर्ण
 
-void xprt_alloc_slot(struct rpc_xprt *xprt, struct rpc_task *task)
-{
-	struct rpc_rqst *req;
+व्योम xprt_alloc_slot(काष्ठा rpc_xprt *xprt, काष्ठा rpc_task *task)
+अणु
+	काष्ठा rpc_rqst *req;
 
 	spin_lock(&xprt->reserve_lock);
-	if (!list_empty(&xprt->free)) {
-		req = list_entry(xprt->free.next, struct rpc_rqst, rq_list);
+	अगर (!list_empty(&xprt->मुक्त)) अणु
+		req = list_entry(xprt->मुक्त.next, काष्ठा rpc_rqst, rq_list);
 		list_del(&req->rq_list);
-		goto out_init_req;
-	}
+		जाओ out_init_req;
+	पूर्ण
 	req = xprt_dynamic_alloc_slot(xprt);
-	if (!IS_ERR(req))
-		goto out_init_req;
-	switch (PTR_ERR(req)) {
-	case -ENOMEM:
-		dprintk("RPC:       dynamic allocation of request slot "
+	अगर (!IS_ERR(req))
+		जाओ out_init_req;
+	चयन (PTR_ERR(req)) अणु
+	हाल -ENOMEM:
+		dprपूर्णांकk("RPC:       dynamic allocation of request slot "
 				"failed! Retrying\n");
 		task->tk_status = -ENOMEM;
-		break;
-	case -EAGAIN:
+		अवरोध;
+	हाल -EAGAIN:
 		xprt_add_backlog(xprt, task);
-		dprintk("RPC:       waiting for request slot\n");
+		dprपूर्णांकk("RPC:       waiting for request slot\n");
 		fallthrough;
-	default:
+	शेष:
 		task->tk_status = -EAGAIN;
-	}
+	पूर्ण
 	spin_unlock(&xprt->reserve_lock);
-	return;
+	वापस;
 out_init_req:
-	xprt->stat.max_slots = max_t(unsigned int, xprt->stat.max_slots,
+	xprt->stat.max_slots = max_t(अचिन्हित पूर्णांक, xprt->stat.max_slots,
 				     xprt->num_reqs);
 	spin_unlock(&xprt->reserve_lock);
 
 	task->tk_status = 0;
 	task->tk_rqstp = req;
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(xprt_alloc_slot);
 
-void xprt_free_slot(struct rpc_xprt *xprt, struct rpc_rqst *req)
-{
+व्योम xprt_मुक्त_slot(काष्ठा rpc_xprt *xprt, काष्ठा rpc_rqst *req)
+अणु
 	spin_lock(&xprt->reserve_lock);
-	if (!xprt_wake_up_backlog(xprt, req) &&
-	    !xprt_dynamic_free_slot(xprt, req)) {
-		memset(req, 0, sizeof(*req));	/* mark unused */
-		list_add(&req->rq_list, &xprt->free);
-	}
+	अगर (!xprt_wake_up_backlog(xprt, req) &&
+	    !xprt_dynamic_मुक्त_slot(xprt, req)) अणु
+		स_रखो(req, 0, माप(*req));	/* mark unused */
+		list_add(&req->rq_list, &xprt->मुक्त);
+	पूर्ण
 	spin_unlock(&xprt->reserve_lock);
-}
-EXPORT_SYMBOL_GPL(xprt_free_slot);
+पूर्ण
+EXPORT_SYMBOL_GPL(xprt_मुक्त_slot);
 
-static void xprt_free_all_slots(struct rpc_xprt *xprt)
-{
-	struct rpc_rqst *req;
-	while (!list_empty(&xprt->free)) {
-		req = list_first_entry(&xprt->free, struct rpc_rqst, rq_list);
+अटल व्योम xprt_मुक्त_all_slots(काष्ठा rpc_xprt *xprt)
+अणु
+	काष्ठा rpc_rqst *req;
+	जबतक (!list_empty(&xprt->मुक्त)) अणु
+		req = list_first_entry(&xprt->मुक्त, काष्ठा rpc_rqst, rq_list);
 		list_del(&req->rq_list);
-		kfree(req);
-	}
-}
+		kमुक्त(req);
+	पूर्ण
+पूर्ण
 
-struct rpc_xprt *xprt_alloc(struct net *net, size_t size,
-		unsigned int num_prealloc,
-		unsigned int max_alloc)
-{
-	struct rpc_xprt *xprt;
-	struct rpc_rqst *req;
-	int i;
+काष्ठा rpc_xprt *xprt_alloc(काष्ठा net *net, माप_प्रकार size,
+		अचिन्हित पूर्णांक num_pपुनः_स्मृति,
+		अचिन्हित पूर्णांक max_alloc)
+अणु
+	काष्ठा rpc_xprt *xprt;
+	काष्ठा rpc_rqst *req;
+	पूर्णांक i;
 
 	xprt = kzalloc(size, GFP_KERNEL);
-	if (xprt == NULL)
-		goto out;
+	अगर (xprt == शून्य)
+		जाओ out;
 
 	xprt_init(xprt, net);
 
-	for (i = 0; i < num_prealloc; i++) {
-		req = kzalloc(sizeof(struct rpc_rqst), GFP_KERNEL);
-		if (!req)
-			goto out_free;
-		list_add(&req->rq_list, &xprt->free);
-	}
-	if (max_alloc > num_prealloc)
+	क्रम (i = 0; i < num_pपुनः_स्मृति; i++) अणु
+		req = kzalloc(माप(काष्ठा rpc_rqst), GFP_KERNEL);
+		अगर (!req)
+			जाओ out_मुक्त;
+		list_add(&req->rq_list, &xprt->मुक्त);
+	पूर्ण
+	अगर (max_alloc > num_pपुनः_स्मृति)
 		xprt->max_reqs = max_alloc;
-	else
-		xprt->max_reqs = num_prealloc;
-	xprt->min_reqs = num_prealloc;
-	xprt->num_reqs = num_prealloc;
+	अन्यथा
+		xprt->max_reqs = num_pपुनः_स्मृति;
+	xprt->min_reqs = num_pपुनः_स्मृति;
+	xprt->num_reqs = num_pपुनः_स्मृति;
 
-	return xprt;
+	वापस xprt;
 
-out_free:
-	xprt_free(xprt);
+out_मुक्त:
+	xprt_मुक्त(xprt);
 out:
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 EXPORT_SYMBOL_GPL(xprt_alloc);
 
-void xprt_free(struct rpc_xprt *xprt)
-{
+व्योम xprt_मुक्त(काष्ठा rpc_xprt *xprt)
+अणु
 	put_net(xprt->xprt_net);
-	xprt_free_all_slots(xprt);
-	kfree_rcu(xprt, rcu);
-}
-EXPORT_SYMBOL_GPL(xprt_free);
+	xprt_मुक्त_all_slots(xprt);
+	kमुक्त_rcu(xprt, rcu);
+पूर्ण
+EXPORT_SYMBOL_GPL(xprt_मुक्त);
 
-static void
-xprt_init_connect_cookie(struct rpc_rqst *req, struct rpc_xprt *xprt)
-{
+अटल व्योम
+xprt_init_connect_cookie(काष्ठा rpc_rqst *req, काष्ठा rpc_xprt *xprt)
+अणु
 	req->rq_connect_cookie = xprt_connect_cookie(xprt) - 1;
-}
+पूर्ण
 
-static __be32
-xprt_alloc_xid(struct rpc_xprt *xprt)
-{
+अटल __be32
+xprt_alloc_xid(काष्ठा rpc_xprt *xprt)
+अणु
 	__be32 xid;
 
 	spin_lock(&xprt->reserve_lock);
-	xid = (__force __be32)xprt->xid++;
+	xid = (__क्रमce __be32)xprt->xid++;
 	spin_unlock(&xprt->reserve_lock);
-	return xid;
-}
+	वापस xid;
+पूर्ण
 
-static void
-xprt_init_xid(struct rpc_xprt *xprt)
-{
-	xprt->xid = prandom_u32();
-}
+अटल व्योम
+xprt_init_xid(काष्ठा rpc_xprt *xprt)
+अणु
+	xprt->xid = pअक्रमom_u32();
+पूर्ण
 
-static void
-xprt_request_init(struct rpc_task *task)
-{
-	struct rpc_xprt *xprt = task->tk_xprt;
-	struct rpc_rqst	*req = task->tk_rqstp;
+अटल व्योम
+xprt_request_init(काष्ठा rpc_task *task)
+अणु
+	काष्ठा rpc_xprt *xprt = task->tk_xprt;
+	काष्ठा rpc_rqst	*req = task->tk_rqstp;
 
 	req->rq_task	= task;
 	req->rq_xprt    = xprt;
-	req->rq_buffer  = NULL;
+	req->rq_buffer  = शून्य;
 	req->rq_xid	= xprt_alloc_xid(xprt);
 	xprt_init_connect_cookie(req, xprt);
 	req->rq_snd_buf.len = 0;
 	req->rq_snd_buf.buflen = 0;
 	req->rq_rcv_buf.len = 0;
 	req->rq_rcv_buf.buflen = 0;
-	req->rq_snd_buf.bvec = NULL;
-	req->rq_rcv_buf.bvec = NULL;
-	req->rq_release_snd_buf = NULL;
-	xprt_init_majortimeo(task, req);
+	req->rq_snd_buf.bvec = शून्य;
+	req->rq_rcv_buf.bvec = शून्य;
+	req->rq_release_snd_buf = शून्य;
+	xprt_init_majorसमयo(task, req);
 
 	trace_xprt_reserve(req);
-}
+पूर्ण
 
-static void
-xprt_do_reserve(struct rpc_xprt *xprt, struct rpc_task *task)
-{
+अटल व्योम
+xprt_करो_reserve(काष्ठा rpc_xprt *xprt, काष्ठा rpc_task *task)
+अणु
 	xprt->ops->alloc_slot(xprt, task);
-	if (task->tk_rqstp != NULL)
+	अगर (task->tk_rqstp != शून्य)
 		xprt_request_init(task);
-}
+पूर्ण
 
 /**
  * xprt_reserve - allocate an RPC request slot
  * @task: RPC task requesting a slot allocation
  *
- * If the transport is marked as being congested, or if no more
+ * If the transport is marked as being congested, or अगर no more
  * slots are available, place the task on the transport's
  * backlog queue.
  */
-void xprt_reserve(struct rpc_task *task)
-{
-	struct rpc_xprt *xprt = task->tk_xprt;
+व्योम xprt_reserve(काष्ठा rpc_task *task)
+अणु
+	काष्ठा rpc_xprt *xprt = task->tk_xprt;
 
 	task->tk_status = 0;
-	if (task->tk_rqstp != NULL)
-		return;
+	अगर (task->tk_rqstp != शून्य)
+		वापस;
 
 	task->tk_status = -EAGAIN;
-	if (!xprt_throttle_congested(xprt, task))
-		xprt_do_reserve(xprt, task);
-}
+	अगर (!xprt_throttle_congested(xprt, task))
+		xprt_करो_reserve(xprt, task);
+पूर्ण
 
 /**
  * xprt_retry_reserve - allocate an RPC request slot
@@ -1871,230 +1872,230 @@ void xprt_reserve(struct rpc_task *task)
  *
  * If no more slots are available, place the task on the transport's
  * backlog queue.
- * Note that the only difference with xprt_reserve is that we now
+ * Note that the only dअगरference with xprt_reserve is that we now
  * ignore the value of the XPRT_CONGESTED flag.
  */
-void xprt_retry_reserve(struct rpc_task *task)
-{
-	struct rpc_xprt *xprt = task->tk_xprt;
+व्योम xprt_retry_reserve(काष्ठा rpc_task *task)
+अणु
+	काष्ठा rpc_xprt *xprt = task->tk_xprt;
 
 	task->tk_status = 0;
-	if (task->tk_rqstp != NULL)
-		return;
+	अगर (task->tk_rqstp != शून्य)
+		वापस;
 
 	task->tk_status = -EAGAIN;
-	xprt_do_reserve(xprt, task);
-}
+	xprt_करो_reserve(xprt, task);
+पूर्ण
 
 /**
  * xprt_release - release an RPC request slot
  * @task: task which is finished with the slot
  *
  */
-void xprt_release(struct rpc_task *task)
-{
-	struct rpc_xprt	*xprt;
-	struct rpc_rqst	*req = task->tk_rqstp;
+व्योम xprt_release(काष्ठा rpc_task *task)
+अणु
+	काष्ठा rpc_xprt	*xprt;
+	काष्ठा rpc_rqst	*req = task->tk_rqstp;
 
-	if (req == NULL) {
-		if (task->tk_client) {
+	अगर (req == शून्य) अणु
+		अगर (task->tk_client) अणु
 			xprt = task->tk_xprt;
-			xprt_release_write(xprt, task);
-		}
-		return;
-	}
+			xprt_release_ग_लिखो(xprt, task);
+		पूर्ण
+		वापस;
+	पूर्ण
 
 	xprt = req->rq_xprt;
 	xprt_request_dequeue_xprt(task);
 	spin_lock(&xprt->transport_lock);
 	xprt->ops->release_xprt(xprt, task);
-	if (xprt->ops->release_request)
+	अगर (xprt->ops->release_request)
 		xprt->ops->release_request(task);
-	xprt_schedule_autodisconnect(xprt);
+	xprt_schedule_स्वतःdisconnect(xprt);
 	spin_unlock(&xprt->transport_lock);
-	if (req->rq_buffer)
-		xprt->ops->buf_free(task);
-	xdr_free_bvec(&req->rq_rcv_buf);
-	xdr_free_bvec(&req->rq_snd_buf);
-	if (req->rq_cred != NULL)
+	अगर (req->rq_buffer)
+		xprt->ops->buf_मुक्त(task);
+	xdr_मुक्त_bvec(&req->rq_rcv_buf);
+	xdr_मुक्त_bvec(&req->rq_snd_buf);
+	अगर (req->rq_cred != शून्य)
 		put_rpccred(req->rq_cred);
-	if (req->rq_release_snd_buf)
+	अगर (req->rq_release_snd_buf)
 		req->rq_release_snd_buf(req);
 
-	task->tk_rqstp = NULL;
-	if (likely(!bc_prealloc(req)))
-		xprt->ops->free_slot(xprt, req);
-	else
-		xprt_free_bc_request(req);
-}
+	task->tk_rqstp = शून्य;
+	अगर (likely(!bc_pपुनः_स्मृति(req)))
+		xprt->ops->मुक्त_slot(xprt, req);
+	अन्यथा
+		xprt_मुक्त_bc_request(req);
+पूर्ण
 
-#ifdef CONFIG_SUNRPC_BACKCHANNEL
-void
-xprt_init_bc_request(struct rpc_rqst *req, struct rpc_task *task)
-{
-	struct xdr_buf *xbufp = &req->rq_snd_buf;
+#अगर_घोषित CONFIG_SUNRPC_BACKCHANNEL
+व्योम
+xprt_init_bc_request(काष्ठा rpc_rqst *req, काष्ठा rpc_task *task)
+अणु
+	काष्ठा xdr_buf *xbufp = &req->rq_snd_buf;
 
 	task->tk_rqstp = req;
 	req->rq_task = task;
 	xprt_init_connect_cookie(req, req->rq_xprt);
 	/*
 	 * Set up the xdr_buf length.
-	 * This also indicates that the buffer is XDR encoded already.
+	 * This also indicates that the buffer is XDR encoded alपढ़ोy.
 	 */
 	xbufp->len = xbufp->head[0].iov_len + xbufp->page_len +
 		xbufp->tail[0].iov_len;
-}
-#endif
+पूर्ण
+#पूर्ण_अगर
 
-static void xprt_init(struct rpc_xprt *xprt, struct net *net)
-{
+अटल व्योम xprt_init(काष्ठा rpc_xprt *xprt, काष्ठा net *net)
+अणु
 	kref_init(&xprt->kref);
 
 	spin_lock_init(&xprt->transport_lock);
 	spin_lock_init(&xprt->reserve_lock);
 	spin_lock_init(&xprt->queue_lock);
 
-	INIT_LIST_HEAD(&xprt->free);
+	INIT_LIST_HEAD(&xprt->मुक्त);
 	xprt->recv_queue = RB_ROOT;
 	INIT_LIST_HEAD(&xprt->xmit_queue);
-#if defined(CONFIG_SUNRPC_BACKCHANNEL)
+#अगर defined(CONFIG_SUNRPC_BACKCHANNEL)
 	spin_lock_init(&xprt->bc_pa_lock);
 	INIT_LIST_HEAD(&xprt->bc_pa_list);
-#endif /* CONFIG_SUNRPC_BACKCHANNEL */
-	INIT_LIST_HEAD(&xprt->xprt_switch);
+#पूर्ण_अगर /* CONFIG_SUNRPC_BACKCHANNEL */
+	INIT_LIST_HEAD(&xprt->xprt_चयन);
 
-	xprt->last_used = jiffies;
+	xprt->last_used = jअगरfies;
 	xprt->cwnd = RPC_INITCWND;
 	xprt->bind_index = 0;
 
-	rpc_init_wait_queue(&xprt->binding, "xprt_binding");
-	rpc_init_wait_queue(&xprt->pending, "xprt_pending");
-	rpc_init_wait_queue(&xprt->sending, "xprt_sending");
-	rpc_init_priority_wait_queue(&xprt->backlog, "xprt_backlog");
+	rpc_init_रुको_queue(&xprt->binding, "xprt_binding");
+	rpc_init_रुको_queue(&xprt->pending, "xprt_pending");
+	rpc_init_रुको_queue(&xprt->sending, "xprt_sending");
+	rpc_init_priority_रुको_queue(&xprt->backlog, "xprt_backlog");
 
 	xprt_init_xid(xprt);
 
 	xprt->xprt_net = get_net(net);
-}
+पूर्ण
 
 /**
  * xprt_create_transport - create an RPC transport
  * @args: rpc transport creation arguments
  *
  */
-struct rpc_xprt *xprt_create_transport(struct xprt_create *args)
-{
-	struct rpc_xprt	*xprt;
-	const struct xprt_class *t;
+काष्ठा rpc_xprt *xprt_create_transport(काष्ठा xprt_create *args)
+अणु
+	काष्ठा rpc_xprt	*xprt;
+	स्थिर काष्ठा xprt_class *t;
 
 	t = xprt_class_find_by_ident(args->ident);
-	if (!t) {
-		dprintk("RPC: transport (%d) not supported\n", args->ident);
-		return ERR_PTR(-EIO);
-	}
+	अगर (!t) अणु
+		dprपूर्णांकk("RPC: transport (%d) not supported\n", args->ident);
+		वापस ERR_PTR(-EIO);
+	पूर्ण
 
 	xprt = t->setup(args);
 	xprt_class_release(t);
 
-	if (IS_ERR(xprt))
-		goto out;
-	if (args->flags & XPRT_CREATE_NO_IDLE_TIMEOUT)
-		xprt->idle_timeout = 0;
-	INIT_WORK(&xprt->task_cleanup, xprt_autoclose);
-	if (xprt_has_timer(xprt))
-		timer_setup(&xprt->timer, xprt_init_autodisconnect, 0);
-	else
-		timer_setup(&xprt->timer, NULL, 0);
+	अगर (IS_ERR(xprt))
+		जाओ out;
+	अगर (args->flags & XPRT_CREATE_NO_IDLE_TIMEOUT)
+		xprt->idle_समयout = 0;
+	INIT_WORK(&xprt->task_cleanup, xprt_स्वतःबंद);
+	अगर (xprt_has_समयr(xprt))
+		समयr_setup(&xprt->समयr, xprt_init_स्वतःdisconnect, 0);
+	अन्यथा
+		समयr_setup(&xprt->समयr, शून्य, 0);
 
-	if (strlen(args->servername) > RPC_MAXNETNAMELEN) {
+	अगर (म_माप(args->servername) > RPC_MAXNETNAMELEN) अणु
 		xprt_destroy(xprt);
-		return ERR_PTR(-EINVAL);
-	}
+		वापस ERR_PTR(-EINVAL);
+	पूर्ण
 	xprt->servername = kstrdup(args->servername, GFP_KERNEL);
-	if (xprt->servername == NULL) {
+	अगर (xprt->servername == शून्य) अणु
 		xprt_destroy(xprt);
-		return ERR_PTR(-ENOMEM);
-	}
+		वापस ERR_PTR(-ENOMEM);
+	पूर्ण
 
-	rpc_xprt_debugfs_register(xprt);
+	rpc_xprt_debugfs_रेजिस्टर(xprt);
 
 	trace_xprt_create(xprt);
 out:
-	return xprt;
-}
+	वापस xprt;
+पूर्ण
 
-static void xprt_destroy_cb(struct work_struct *work)
-{
-	struct rpc_xprt *xprt =
-		container_of(work, struct rpc_xprt, task_cleanup);
+अटल व्योम xprt_destroy_cb(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा rpc_xprt *xprt =
+		container_of(work, काष्ठा rpc_xprt, task_cleanup);
 
 	trace_xprt_destroy(xprt);
 
-	rpc_xprt_debugfs_unregister(xprt);
-	rpc_destroy_wait_queue(&xprt->binding);
-	rpc_destroy_wait_queue(&xprt->pending);
-	rpc_destroy_wait_queue(&xprt->sending);
-	rpc_destroy_wait_queue(&xprt->backlog);
-	kfree(xprt->servername);
+	rpc_xprt_debugfs_unरेजिस्टर(xprt);
+	rpc_destroy_रुको_queue(&xprt->binding);
+	rpc_destroy_रुको_queue(&xprt->pending);
+	rpc_destroy_रुको_queue(&xprt->sending);
+	rpc_destroy_रुको_queue(&xprt->backlog);
+	kमुक्त(xprt->servername);
 	/*
 	 * Destroy any existing back channel
 	 */
-	xprt_destroy_backchannel(xprt, UINT_MAX);
+	xprt_destroy_backchannel(xprt, अच_पूर्णांक_उच्च);
 
 	/*
-	 * Tear down transport state and free the rpc_xprt
+	 * Tear करोwn transport state and मुक्त the rpc_xprt
 	 */
 	xprt->ops->destroy(xprt);
-}
+पूर्ण
 
 /**
- * xprt_destroy - destroy an RPC transport, killing off all requests.
+ * xprt_destroy - destroy an RPC transport, समाप्तing off all requests.
  * @xprt: transport to destroy
  *
  */
-static void xprt_destroy(struct rpc_xprt *xprt)
-{
+अटल व्योम xprt_destroy(काष्ठा rpc_xprt *xprt)
+अणु
 	/*
-	 * Exclude transport connect/disconnect handlers and autoclose
+	 * Exclude transport connect/disconnect handlers and स्वतःबंद
 	 */
-	wait_on_bit_lock(&xprt->state, XPRT_LOCKED, TASK_UNINTERRUPTIBLE);
+	रुको_on_bit_lock(&xprt->state, XPRT_LOCKED, TASK_UNINTERRUPTIBLE);
 
-	del_timer_sync(&xprt->timer);
+	del_समयr_sync(&xprt->समयr);
 
 	/*
-	 * Destroy sockets etc from the system workqueue so they can
+	 * Destroy sockets etc from the प्रणाली workqueue so they can
 	 * safely flush receive work running on rpciod.
 	 */
 	INIT_WORK(&xprt->task_cleanup, xprt_destroy_cb);
 	schedule_work(&xprt->task_cleanup);
-}
+पूर्ण
 
-static void xprt_destroy_kref(struct kref *kref)
-{
-	xprt_destroy(container_of(kref, struct rpc_xprt, kref));
-}
+अटल व्योम xprt_destroy_kref(काष्ठा kref *kref)
+अणु
+	xprt_destroy(container_of(kref, काष्ठा rpc_xprt, kref));
+पूर्ण
 
 /**
- * xprt_get - return a reference to an RPC transport.
- * @xprt: pointer to the transport
+ * xprt_get - वापस a reference to an RPC transport.
+ * @xprt: poपूर्णांकer to the transport
  *
  */
-struct rpc_xprt *xprt_get(struct rpc_xprt *xprt)
-{
-	if (xprt != NULL && kref_get_unless_zero(&xprt->kref))
-		return xprt;
-	return NULL;
-}
+काष्ठा rpc_xprt *xprt_get(काष्ठा rpc_xprt *xprt)
+अणु
+	अगर (xprt != शून्य && kref_get_unless_zero(&xprt->kref))
+		वापस xprt;
+	वापस शून्य;
+पूर्ण
 EXPORT_SYMBOL_GPL(xprt_get);
 
 /**
  * xprt_put - release a reference to an RPC transport.
- * @xprt: pointer to the transport
+ * @xprt: poपूर्णांकer to the transport
  *
  */
-void xprt_put(struct rpc_xprt *xprt)
-{
-	if (xprt != NULL)
+व्योम xprt_put(काष्ठा rpc_xprt *xprt)
+अणु
+	अगर (xprt != शून्य)
 		kref_put(&xprt->kref, xprt_destroy_kref);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(xprt_put);

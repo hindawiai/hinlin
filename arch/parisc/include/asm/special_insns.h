@@ -1,10 +1,11 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __PARISC_SPECIAL_INSNS_H
-#define __PARISC_SPECIAL_INSNS_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __PARISC_SPECIAL_INSNS_H
+#घोषणा __PARISC_SPECIAL_INSNS_H
 
-#define lpa(va)	({			\
-	unsigned long pa;		\
-	__asm__ __volatile__(		\
+#घोषणा lpa(va)	(अणु			\
+	अचिन्हित दीर्घ pa;		\
+	__यंत्र__ __अस्थिर__(		\
 		"copy %%r0,%0\n\t"	\
 		"lpa %%r0(%1),%0"	\
 		: "=r" (pa)		\
@@ -12,11 +13,11 @@
 		: "memory"		\
 	);				\
 	pa;				\
-})
+पूर्ण)
 
-#define lpa_user(va)	({		\
-	unsigned long pa;		\
-	__asm__ __volatile__(		\
+#घोषणा lpa_user(va)	(अणु		\
+	अचिन्हित दीर्घ pa;		\
+	__यंत्र__ __अस्थिर__(		\
 		"copy %%r0,%0\n\t"	\
 		"lpa %%r0(%%sr3,%1),%0"	\
 		: "=r" (pa)		\
@@ -24,45 +25,45 @@
 		: "memory"		\
 	);				\
 	pa;				\
-})
+पूर्ण)
 
-#define mfctl(reg)	({		\
-	unsigned long cr;		\
-	__asm__ __volatile__(		\
+#घोषणा mfctl(reg)	(अणु		\
+	अचिन्हित दीर्घ cr;		\
+	__यंत्र__ __अस्थिर__(		\
 		"mfctl " #reg ",%0" :	\
 		 "=r" (cr)		\
 	);				\
 	cr;				\
-})
+पूर्ण)
 
-#define mtctl(gr, cr) \
-	__asm__ __volatile__("mtctl %0,%1" \
-		: /* no outputs */ \
+#घोषणा mtctl(gr, cr) \
+	__यंत्र__ __अस्थिर__("mtctl %0,%1" \
+		: /* no outमाला_दो */ \
 		: "r" (gr), "i" (cr) : "memory")
 
 /* these are here to de-mystefy the calling code, and to provide hooks */
-/* which I needed for debugging EIEM problems -PB */
-#define get_eiem() mfctl(15)
-static inline void set_eiem(unsigned long val)
-{
+/* which I needed क्रम debugging EIEM problems -PB */
+#घोषणा get_eiem() mfctl(15)
+अटल अंतरभूत व्योम set_eiem(अचिन्हित दीर्घ val)
+अणु
 	mtctl(val, 15);
-}
+पूर्ण
 
-#define mfsp(reg)	({		\
-	unsigned long cr;		\
-	__asm__ __volatile__(		\
+#घोषणा mfsp(reg)	(अणु		\
+	अचिन्हित दीर्घ cr;		\
+	__यंत्र__ __अस्थिर__(		\
 		"mfsp " #reg ",%0" :	\
 		 "=r" (cr)		\
 	);				\
 	cr;				\
-})
+पूर्ण)
 
-#define mtsp(val, cr) \
-	{ if (__builtin_constant_p(val) && ((val) == 0)) \
-	 __asm__ __volatile__("mtsp %%r0,%0" : : "i" (cr) : "memory"); \
-	else \
-	 __asm__ __volatile__("mtsp %0,%1" \
-		: /* no outputs */ \
-		: "r" (val), "i" (cr) : "memory"); }
+#घोषणा mtsp(val, cr) \
+	अणु अगर (__builtin_स्थिरant_p(val) && ((val) == 0)) \
+	 __यंत्र__ __अस्थिर__("mtsp %%r0,%0" : : "i" (cr) : "memory"); \
+	अन्यथा \
+	 __यंत्र__ __अस्थिर__("mtsp %0,%1" \
+		: /* no outमाला_दो */ \
+		: "r" (val), "i" (cr) : "memory"); पूर्ण
 
-#endif /* __PARISC_SPECIAL_INSNS_H */
+#पूर्ण_अगर /* __PARISC_SPECIAL_INSNS_H */

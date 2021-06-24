@@ -1,9 +1,10 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __ASM_UM_HARDIRQ_H
-#define __ASM_UM_HARDIRQ_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __ASM_UM_HARसूचीQ_H
+#घोषणा __ASM_UM_HARसूचीQ_H
 
-#include <asm-generic/hardirq.h>
+#समावेश <यंत्र-generic/hardirq.h>
 
-#define __ARCH_IRQ_EXIT_IRQS_DISABLED 1
+#घोषणा __ARCH_IRQ_EXIT_IRQS_DISABLED 1
 
-#endif /* __ASM_UM_HARDIRQ_H */
+#पूर्ण_अगर /* __ASM_UM_HARसूचीQ_H */

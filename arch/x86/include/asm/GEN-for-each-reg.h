@@ -1,4 +1,5 @@
-#ifdef CONFIG_64BIT
+<शैली गुरु>
+#अगर_घोषित CONFIG_64BIT
 GEN(rax)
 GEN(rbx)
 GEN(rcx)
@@ -14,7 +15,7 @@ GEN(r12)
 GEN(r13)
 GEN(r14)
 GEN(r15)
-#else
+#अन्यथा
 GEN(eax)
 GEN(ebx)
 GEN(ecx)
@@ -22,4 +23,4 @@ GEN(edx)
 GEN(esi)
 GEN(edi)
 GEN(ebp)
-#endif
+#पूर्ण_अगर

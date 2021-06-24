@@ -1,53 +1,54 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (C) 2016 Intel Corporation
  *
- * Author: Gayatri Kammela <gayatri.kammela@intel.com>
- * Author: Megha Dey <megha.dey@linux.intel.com>
+ * Author: Gayatri Kammela <gayatri.kammela@पूर्णांकel.com>
+ * Author: Megha Dey <megha.dey@linux.पूर्णांकel.com>
  */
 
-#ifdef CONFIG_AS_AVX512
+#अगर_घोषित CONFIG_AS_AVX512
 
-#include <linux/raid/pq.h>
-#include "x86.h"
+#समावेश <linux/raid/pq.h>
+#समावेश "x86.h"
 
-static int raid6_has_avx512(void)
-{
-	return boot_cpu_has(X86_FEATURE_AVX2) &&
+अटल पूर्णांक raid6_has_avx512(व्योम)
+अणु
+	वापस boot_cpu_has(X86_FEATURE_AVX2) &&
 		boot_cpu_has(X86_FEATURE_AVX) &&
 		boot_cpu_has(X86_FEATURE_AVX512F) &&
 		boot_cpu_has(X86_FEATURE_AVX512BW) &&
 		boot_cpu_has(X86_FEATURE_AVX512VL) &&
 		boot_cpu_has(X86_FEATURE_AVX512DQ);
-}
+पूर्ण
 
-static void raid6_2data_recov_avx512(int disks, size_t bytes, int faila,
-				     int failb, void **ptrs)
-{
+अटल व्योम raid6_2data_recov_avx512(पूर्णांक disks, माप_प्रकार bytes, पूर्णांक faila,
+				     पूर्णांक failb, व्योम **ptrs)
+अणु
 	u8 *p, *q, *dp, *dq;
-	const u8 *pbmul;	/* P multiplier table for B data */
-	const u8 *qmul;		/* Q multiplier table (for both) */
-	const u8 x0f = 0x0f;
+	स्थिर u8 *pbmul;	/* P multiplier table क्रम B data */
+	स्थिर u8 *qmul;		/* Q multiplier table (क्रम both) */
+	स्थिर u8 x0f = 0x0f;
 
 	p = (u8 *)ptrs[disks-2];
 	q = (u8 *)ptrs[disks-1];
 
 	/*
-	 * Compute syndrome with zero for the missing data pages
-	 * Use the dead data pages as temporary storage for
+	 * Compute syndrome with zero क्रम the missing data pages
+	 * Use the dead data pages as temporary storage क्रम
 	 * delta p and delta q
 	 */
 
 	dp = (u8 *)ptrs[faila];
-	ptrs[faila] = (void *)raid6_empty_zero_page;
+	ptrs[faila] = (व्योम *)raid6_empty_zero_page;
 	ptrs[disks-2] = dp;
 	dq = (u8 *)ptrs[failb];
-	ptrs[failb] = (void *)raid6_empty_zero_page;
+	ptrs[failb] = (व्योम *)raid6_empty_zero_page;
 	ptrs[disks-1] = dq;
 
 	raid6_call.gen_syndrome(disks, bytes, ptrs);
 
-	/* Restore pointer table */
+	/* Restore poपूर्णांकer table */
 	ptrs[faila]   = dp;
 	ptrs[failb]   = dq;
 	ptrs[disks-2] = p;
@@ -61,11 +62,11 @@ static void raid6_2data_recov_avx512(int disks, size_t bytes, int faila,
 	kernel_fpu_begin();
 
 	/* zmm0 = x0f[16] */
-	asm volatile("vpbroadcastb %0, %%zmm7" : : "m" (x0f));
+	यंत्र अस्थिर("vpbroadcastb %0, %%zmm7" : : "m" (x0f));
 
-	while (bytes) {
-#ifdef CONFIG_X86_64
-		asm volatile("vmovdqa64 %0, %%zmm1\n\t"
+	जबतक (bytes) अणु
+#अगर_घोषित CONFIG_X86_64
+		यंत्र अस्थिर("vmovdqa64 %0, %%zmm1\n\t"
 			     "vmovdqa64 %1, %%zmm9\n\t"
 			     "vmovdqa64 %2, %%zmm0\n\t"
 			     "vmovdqa64 %3, %%zmm8\n\t"
@@ -85,12 +86,12 @@ static void raid6_2data_recov_avx512(int disks, size_t bytes, int faila,
 		 * 8 = dp[64] ^ p[64]
 		 */
 
-		asm volatile("vbroadcasti64x2 %0, %%zmm4\n\t"
+		यंत्र अस्थिर("vbroadcasti64x2 %0, %%zmm4\n\t"
 			     "vbroadcasti64x2 %1, %%zmm5"
 			     :
 			     : "m" (qmul[0]), "m" (qmul[16]));
 
-		asm volatile("vpsraw $4, %%zmm1, %%zmm3\n\t"
+		यंत्र अस्थिर("vpsraw $4, %%zmm1, %%zmm3\n\t"
 			     "vpsraw $4, %%zmm9, %%zmm12\n\t"
 			     "vpandq %%zmm7, %%zmm1, %%zmm1\n\t"
 			     "vpandq %%zmm7, %%zmm9, %%zmm9\n\t"
@@ -110,7 +111,7 @@ static void raid6_2data_recov_avx512(int disks, size_t bytes, int faila,
 		 * 15 = qx[64]
 		 */
 
-		asm volatile("vbroadcasti64x2 %0, %%zmm4\n\t"
+		यंत्र अस्थिर("vbroadcasti64x2 %0, %%zmm4\n\t"
 			     "vbroadcasti64x2 %1, %%zmm1\n\t"
 			     "vpsraw $4, %%zmm0, %%zmm2\n\t"
 			     "vpsraw $4, %%zmm8, %%zmm6\n\t"
@@ -131,7 +132,7 @@ static void raid6_2data_recov_avx512(int disks, size_t bytes, int faila,
 		 * 1  = pbmul[px[0]]
 		 * 13 = pbmul[px[64]]
 		 */
-		asm volatile("vpxorq %%zmm5, %%zmm1, %%zmm1\n\t"
+		यंत्र अस्थिर("vpxorq %%zmm5, %%zmm1, %%zmm1\n\t"
 			     "vpxorq %%zmm15, %%zmm13, %%zmm13"
 			     :
 			     : );
@@ -140,14 +141,14 @@ static void raid6_2data_recov_avx512(int disks, size_t bytes, int faila,
 		 * 1 = db = DQ
 		 * 13 = db[64] = DQ[64]
 		 */
-		asm volatile("vmovdqa64 %%zmm1, %0\n\t"
+		यंत्र अस्थिर("vmovdqa64 %%zmm1, %0\n\t"
 			     "vmovdqa64 %%zmm13,%1\n\t"
 			     "vpxorq %%zmm1, %%zmm0, %%zmm0\n\t"
 			     "vpxorq %%zmm13, %%zmm8, %%zmm8"
 			     :
 			     : "m" (dq[0]), "m" (dq[64]));
 
-		asm volatile("vmovdqa64 %%zmm0, %0\n\t"
+		यंत्र अस्थिर("vmovdqa64 %%zmm0, %0\n\t"
 			     "vmovdqa64 %%zmm8, %1"
 			     :
 			     : "m" (dp[0]), "m" (dp[64]));
@@ -157,8 +158,8 @@ static void raid6_2data_recov_avx512(int disks, size_t bytes, int faila,
 		q += 128;
 		dp += 128;
 		dq += 128;
-#else
-		asm volatile("vmovdqa64 %0, %%zmm1\n\t"
+#अन्यथा
+		यंत्र अस्थिर("vmovdqa64 %0, %%zmm1\n\t"
 			     "vmovdqa64 %1, %%zmm0\n\t"
 			     "vpxorq %2, %%zmm1, %%zmm1\n\t"
 			     "vpxorq %3, %%zmm0, %%zmm0"
@@ -167,7 +168,7 @@ static void raid6_2data_recov_avx512(int disks, size_t bytes, int faila,
 
 		/* 1 = dq ^ q;  0 = dp ^ p */
 
-		asm volatile("vbroadcasti64x2 %0, %%zmm4\n\t"
+		यंत्र अस्थिर("vbroadcasti64x2 %0, %%zmm4\n\t"
 			     "vbroadcasti64x2 %1, %%zmm5"
 			     :
 			     : "m" (qmul[0]), "m" (qmul[16]));
@@ -176,7 +177,7 @@ static void raid6_2data_recov_avx512(int disks, size_t bytes, int faila,
 		 * 1 = dq ^ q
 		 * 3 = dq ^ p >> 4
 		 */
-		asm volatile("vpsraw $4, %%zmm1, %%zmm3\n\t"
+		यंत्र अस्थिर("vpsraw $4, %%zmm1, %%zmm3\n\t"
 			     "vpandq %%zmm7, %%zmm1, %%zmm1\n\t"
 			     "vpandq %%zmm7, %%zmm3, %%zmm3\n\t"
 			     "vpshufb %%zmm1, %%zmm4, %%zmm4\n\t"
@@ -187,12 +188,12 @@ static void raid6_2data_recov_avx512(int disks, size_t bytes, int faila,
 
 		/* 5 = qx */
 
-		asm volatile("vbroadcasti64x2 %0, %%zmm4\n\t"
+		यंत्र अस्थिर("vbroadcasti64x2 %0, %%zmm4\n\t"
 			     "vbroadcasti64x2 %1, %%zmm1"
 			     :
 			     : "m" (pbmul[0]), "m" (pbmul[16]));
 
-		asm volatile("vpsraw $4, %%zmm0, %%zmm2\n\t"
+		यंत्र अस्थिर("vpsraw $4, %%zmm0, %%zmm2\n\t"
 			     "vpandq %%zmm7, %%zmm0, %%zmm3\n\t"
 			     "vpandq %%zmm7, %%zmm2, %%zmm2\n\t"
 			     "vpshufb %%zmm3, %%zmm4, %%zmm4\n\t"
@@ -202,13 +203,13 @@ static void raid6_2data_recov_avx512(int disks, size_t bytes, int faila,
 			     : );
 
 		/* 1 = pbmul[px] */
-		asm volatile("vpxorq %%zmm5, %%zmm1, %%zmm1\n\t"
+		यंत्र अस्थिर("vpxorq %%zmm5, %%zmm1, %%zmm1\n\t"
 			     /* 1 = db = DQ */
 			     "vmovdqa64 %%zmm1, %0\n\t"
 			     :
 			     : "m" (dq[0]));
 
-		asm volatile("vpxorq %%zmm1, %%zmm0, %%zmm0\n\t"
+		यंत्र अस्थिर("vpxorq %%zmm1, %%zmm0, %%zmm0\n\t"
 			     "vmovdqa64 %%zmm0, %0"
 			     :
 			     : "m" (dp[0]));
@@ -218,34 +219,34 @@ static void raid6_2data_recov_avx512(int disks, size_t bytes, int faila,
 		q += 64;
 		dp += 64;
 		dq += 64;
-#endif
-	}
+#पूर्ण_अगर
+	पूर्ण
 
 	kernel_fpu_end();
-}
+पूर्ण
 
-static void raid6_datap_recov_avx512(int disks, size_t bytes, int faila,
-				     void **ptrs)
-{
+अटल व्योम raid6_datap_recov_avx512(पूर्णांक disks, माप_प्रकार bytes, पूर्णांक faila,
+				     व्योम **ptrs)
+अणु
 	u8 *p, *q, *dq;
-	const u8 *qmul;		/* Q multiplier table */
-	const u8 x0f = 0x0f;
+	स्थिर u8 *qmul;		/* Q multiplier table */
+	स्थिर u8 x0f = 0x0f;
 
 	p = (u8 *)ptrs[disks-2];
 	q = (u8 *)ptrs[disks-1];
 
 	/*
-	 * Compute syndrome with zero for the missing data page
-	 * Use the dead data page as temporary storage for delta q
+	 * Compute syndrome with zero क्रम the missing data page
+	 * Use the dead data page as temporary storage क्रम delta q
 	 */
 
 	dq = (u8 *)ptrs[faila];
-	ptrs[faila] = (void *)raid6_empty_zero_page;
+	ptrs[faila] = (व्योम *)raid6_empty_zero_page;
 	ptrs[disks-1] = dq;
 
 	raid6_call.gen_syndrome(disks, bytes, ptrs);
 
-	/* Restore pointer table */
+	/* Restore poपूर्णांकer table */
 	ptrs[faila]   = dq;
 	ptrs[disks-1] = q;
 
@@ -254,11 +255,11 @@ static void raid6_datap_recov_avx512(int disks, size_t bytes, int faila,
 
 	kernel_fpu_begin();
 
-	asm volatile("vpbroadcastb %0, %%zmm7" : : "m" (x0f));
+	यंत्र अस्थिर("vpbroadcastb %0, %%zmm7" : : "m" (x0f));
 
-	while (bytes) {
-#ifdef CONFIG_X86_64
-		asm volatile("vmovdqa64 %0, %%zmm3\n\t"
+	जबतक (bytes) अणु
+#अगर_घोषित CONFIG_X86_64
+		यंत्र अस्थिर("vmovdqa64 %0, %%zmm3\n\t"
 			     "vmovdqa64 %1, %%zmm8\n\t"
 			     "vpxorq %2, %%zmm3, %%zmm3\n\t"
 			     "vpxorq %3, %%zmm8, %%zmm8"
@@ -270,14 +271,14 @@ static void raid6_datap_recov_avx512(int disks, size_t bytes, int faila,
 		 * 3 = q[0] ^ dq[0]
 		 * 8 = q[64] ^ dq[64]
 		 */
-		asm volatile("vbroadcasti64x2 %0, %%zmm0\n\t"
+		यंत्र अस्थिर("vbroadcasti64x2 %0, %%zmm0\n\t"
 			     "vmovapd %%zmm0, %%zmm13\n\t"
 			     "vbroadcasti64x2 %1, %%zmm1\n\t"
 			     "vmovapd %%zmm1, %%zmm14"
 			     :
 			     : "m" (qmul[0]), "m" (qmul[16]));
 
-		asm volatile("vpsraw $4, %%zmm3, %%zmm6\n\t"
+		यंत्र अस्थिर("vpsraw $4, %%zmm3, %%zmm6\n\t"
 			     "vpsraw $4, %%zmm8, %%zmm12\n\t"
 			     "vpandq %%zmm7, %%zmm3, %%zmm3\n\t"
 			     "vpandq %%zmm7, %%zmm8, %%zmm8\n\t"
@@ -296,7 +297,7 @@ static void raid6_datap_recov_avx512(int disks, size_t bytes, int faila,
 		 * 1  = qmul[q[0]  ^ dq[0]]
 		 * 14 = qmul[q[64] ^ dq[64]]
 		 */
-		asm volatile("vmovdqa64 %0, %%zmm2\n\t"
+		यंत्र अस्थिर("vmovdqa64 %0, %%zmm2\n\t"
 			     "vmovdqa64 %1, %%zmm12\n\t"
 			     "vpxorq %%zmm1, %%zmm2, %%zmm2\n\t"
 			     "vpxorq %%zmm14, %%zmm12, %%zmm12"
@@ -308,7 +309,7 @@ static void raid6_datap_recov_avx512(int disks, size_t bytes, int faila,
 		 * 12 = p[64] ^ qmul[q[64] ^ dq[64]]
 		 */
 
-		asm volatile("vmovdqa64 %%zmm1, %0\n\t"
+		यंत्र अस्थिर("vmovdqa64 %%zmm1, %0\n\t"
 			     "vmovdqa64 %%zmm14, %1\n\t"
 			     "vmovdqa64 %%zmm2, %2\n\t"
 			     "vmovdqa64 %%zmm12,%3"
@@ -320,20 +321,20 @@ static void raid6_datap_recov_avx512(int disks, size_t bytes, int faila,
 		p += 128;
 		q += 128;
 		dq += 128;
-#else
-		asm volatile("vmovdqa64 %0, %%zmm3\n\t"
+#अन्यथा
+		यंत्र अस्थिर("vmovdqa64 %0, %%zmm3\n\t"
 			     "vpxorq %1, %%zmm3, %%zmm3"
 			     :
 			     : "m" (dq[0]), "m" (q[0]));
 
 		/* 3 = q ^ dq */
 
-		asm volatile("vbroadcasti64x2 %0, %%zmm0\n\t"
+		यंत्र अस्थिर("vbroadcasti64x2 %0, %%zmm0\n\t"
 			     "vbroadcasti64x2 %1, %%zmm1"
 			     :
 			     : "m" (qmul[0]), "m" (qmul[16]));
 
-		asm volatile("vpsraw $4, %%zmm3, %%zmm6\n\t"
+		यंत्र अस्थिर("vpsraw $4, %%zmm3, %%zmm6\n\t"
 			     "vpandq %%zmm7, %%zmm3, %%zmm3\n\t"
 			     "vpandq %%zmm7, %%zmm6, %%zmm6\n\t"
 			     "vpshufb %%zmm3, %%zmm0, %%zmm0\n\t"
@@ -344,14 +345,14 @@ static void raid6_datap_recov_avx512(int disks, size_t bytes, int faila,
 
 		/* 1 = qmul[q ^ dq] */
 
-		asm volatile("vmovdqa64 %0, %%zmm2\n\t"
+		यंत्र अस्थिर("vmovdqa64 %0, %%zmm2\n\t"
 			     "vpxorq %%zmm1, %%zmm2, %%zmm2"
 			     :
 			     : "m" (p[0]));
 
 		/* 2 = p ^ qmul[q ^ dq] */
 
-		asm volatile("vmovdqa64 %%zmm1, %0\n\t"
+		यंत्र अस्थिर("vmovdqa64 %%zmm1, %0\n\t"
 			     "vmovdqa64 %%zmm2, %1"
 			     :
 			     : "m" (dq[0]), "m" (p[0]));
@@ -360,24 +361,24 @@ static void raid6_datap_recov_avx512(int disks, size_t bytes, int faila,
 		p += 64;
 		q += 64;
 		dq += 64;
-#endif
-	}
+#पूर्ण_अगर
+	पूर्ण
 
 	kernel_fpu_end();
-}
+पूर्ण
 
-const struct raid6_recov_calls raid6_recov_avx512 = {
+स्थिर काष्ठा raid6_recov_calls raid6_recov_avx512 = अणु
 	.data2 = raid6_2data_recov_avx512,
 	.datap = raid6_datap_recov_avx512,
 	.valid = raid6_has_avx512,
-#ifdef CONFIG_X86_64
+#अगर_घोषित CONFIG_X86_64
 	.name = "avx512x2",
-#else
+#अन्यथा
 	.name = "avx512x1",
-#endif
+#पूर्ण_अगर
 	.priority = 3,
-};
+पूर्ण;
 
-#else
+#अन्यथा
 #warning "your version of binutils lacks AVX512 support"
-#endif
+#पूर्ण_अगर

@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * mt8173_afe_common.h  --  Mediatek 8173 audio driver common definitions
  *
@@ -9,13 +10,13 @@
  *             Ir Lian <ir.lian@mediatek.com>
  */
 
-#ifndef _MT8173_AFE_COMMON_H_
-#define _MT8173_AFE_COMMON_H_
+#अगर_अघोषित _MT8173_AFE_COMMON_H_
+#घोषणा _MT8173_AFE_COMMON_H_
 
-#include <linux/clk.h>
-#include <linux/regmap.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/regmap.h>
 
-enum {
+क्रमागत अणु
 	MT8173_AFE_MEMIF_DL1,
 	MT8173_AFE_MEMIF_DL2,
 	MT8173_AFE_MEMIF_VUL,
@@ -35,9 +36,9 @@ enum {
 	MT8173_AFE_IO_MRG_I,
 	MT8173_AFE_IO_DAIBT,
 	MT8173_AFE_IO_HDMI,
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	MT8173_AFE_IRQ_DL1,
 	MT8173_AFE_IRQ_DL2,
 	MT8173_AFE_IRQ_VUL,
@@ -46,9 +47,9 @@ enum {
 	MT8173_AFE_IRQ_MOD_DAI,
 	MT8173_AFE_IRQ_HDMI,
 	MT8173_AFE_IRQ_NUM,
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	MT8173_CLK_INFRASYS_AUD,
 	MT8173_CLK_TOP_PDN_AUD,
 	MT8173_CLK_TOP_PDN_AUD_BUS,
@@ -60,6 +61,6 @@ enum {
 	MT8173_CLK_BCK0,
 	MT8173_CLK_BCK1,
 	MT8173_CLK_NUM
-};
+पूर्ण;
 
-#endif
+#पूर्ण_अगर

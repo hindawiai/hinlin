@@ -1,18 +1,19 @@
+<शैली गुरु>
 /*
  * Copyright (C) 2006-2009 Red Hat, Inc.
  *
  * This file is released under the LGPL.
  */
 
-#ifndef __DM_LOG_USERSPACE_TRANSFER_H__
-#define __DM_LOG_USERSPACE_TRANSFER_H__
+#अगर_अघोषित __DM_LOG_USERSPACE_TRANSFER_H__
+#घोषणा __DM_LOG_USERSPACE_TRANSFER_H__
 
-#define DM_MSG_PREFIX "dm-log-userspace"
+#घोषणा DM_MSG_PREFIX "dm-log-userspace"
 
-int dm_ulog_tfr_init(void);
-void dm_ulog_tfr_exit(void);
-int dm_consult_userspace(const char *uuid, uint64_t luid, int request_type,
-			 char *data, size_t data_size,
-			 char *rdata, size_t *rdata_size);
+पूर्णांक dm_ulog_tfr_init(व्योम);
+व्योम dm_ulog_tfr_निकास(व्योम);
+पूर्णांक dm_consult_userspace(स्थिर अक्षर *uuid, uपूर्णांक64_t luid, पूर्णांक request_type,
+			 अक्षर *data, माप_प्रकार data_size,
+			 अक्षर *rdata, माप_प्रकार *rdata_size);
 
-#endif /* __DM_LOG_USERSPACE_TRANSFER_H__ */
+#पूर्ण_अगर /* __DM_LOG_USERSPACE_TRANSFER_H__ */

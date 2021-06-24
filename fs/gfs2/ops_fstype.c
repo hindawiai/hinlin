@@ -1,114 +1,115 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (C) Sistina Software, Inc.  1997-2003 All rights reserved.
  * Copyright (C) 2004-2008 Red Hat, Inc.  All rights reserved.
  */
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include <linux/sched.h>
-#include <linux/slab.h>
-#include <linux/spinlock.h>
-#include <linux/completion.h>
-#include <linux/buffer_head.h>
-#include <linux/blkdev.h>
-#include <linux/kthread.h>
-#include <linux/export.h>
-#include <linux/namei.h>
-#include <linux/mount.h>
-#include <linux/gfs2_ondisk.h>
-#include <linux/quotaops.h>
-#include <linux/lockdep.h>
-#include <linux/module.h>
-#include <linux/backing-dev.h>
-#include <linux/fs_parser.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/completion.h>
+#समावेश <linux/buffer_head.h>
+#समावेश <linux/blkdev.h>
+#समावेश <linux/kthपढ़ो.h>
+#समावेश <linux/export.h>
+#समावेश <linux/namei.h>
+#समावेश <linux/mount.h>
+#समावेश <linux/gfs2_ondisk.h>
+#समावेश <linux/quotaops.h>
+#समावेश <linux/lockdep.h>
+#समावेश <linux/module.h>
+#समावेश <linux/backing-dev.h>
+#समावेश <linux/fs_parser.h>
 
-#include "gfs2.h"
-#include "incore.h"
-#include "bmap.h"
-#include "glock.h"
-#include "glops.h"
-#include "inode.h"
-#include "recovery.h"
-#include "rgrp.h"
-#include "super.h"
-#include "sys.h"
-#include "util.h"
-#include "log.h"
-#include "quota.h"
-#include "dir.h"
-#include "meta_io.h"
-#include "trace_gfs2.h"
-#include "lops.h"
+#समावेश "gfs2.h"
+#समावेश "incore.h"
+#समावेश "bmap.h"
+#समावेश "glock.h"
+#समावेश "glops.h"
+#समावेश "inode.h"
+#समावेश "recovery.h"
+#समावेश "rgrp.h"
+#समावेश "super.h"
+#समावेश "sys.h"
+#समावेश "util.h"
+#समावेश "log.h"
+#समावेश "quota.h"
+#समावेश "dir.h"
+#समावेश "meta_io.h"
+#समावेश "trace_gfs2.h"
+#समावेश "lops.h"
 
-#define DO 0
-#define UNDO 1
+#घोषणा DO 0
+#घोषणा UNDO 1
 
 /**
- * gfs2_tune_init - Fill a gfs2_tune structure with default values
+ * gfs2_tune_init - Fill a gfs2_tune काष्ठाure with शेष values
  * @gt: tune
  *
  */
 
-static void gfs2_tune_init(struct gfs2_tune *gt)
-{
+अटल व्योम gfs2_tune_init(काष्ठा gfs2_tune *gt)
+अणु
 	spin_lock_init(&gt->gt_spin);
 
 	gt->gt_quota_warn_period = 10;
 	gt->gt_quota_scale_num = 1;
 	gt->gt_quota_scale_den = 1;
 	gt->gt_new_files_jdata = 0;
-	gt->gt_max_readahead = BIT(18);
+	gt->gt_max_पढ़ोahead = BIT(18);
 	gt->gt_complain_secs = 10;
-}
+पूर्ण
 
-void free_sbd(struct gfs2_sbd *sdp)
-{
-	if (sdp->sd_lkstats)
-		free_percpu(sdp->sd_lkstats);
-	kfree(sdp);
-}
+व्योम मुक्त_sbd(काष्ठा gfs2_sbd *sdp)
+अणु
+	अगर (sdp->sd_lkstats)
+		मुक्त_percpu(sdp->sd_lkstats);
+	kमुक्त(sdp);
+पूर्ण
 
-static struct gfs2_sbd *init_sbd(struct super_block *sb)
-{
-	struct gfs2_sbd *sdp;
-	struct address_space *mapping;
+अटल काष्ठा gfs2_sbd *init_sbd(काष्ठा super_block *sb)
+अणु
+	काष्ठा gfs2_sbd *sdp;
+	काष्ठा address_space *mapping;
 
-	sdp = kzalloc(sizeof(struct gfs2_sbd), GFP_KERNEL);
-	if (!sdp)
-		return NULL;
+	sdp = kzalloc(माप(काष्ठा gfs2_sbd), GFP_KERNEL);
+	अगर (!sdp)
+		वापस शून्य;
 
 	sdp->sd_vfs = sb;
-	sdp->sd_lkstats = alloc_percpu(struct gfs2_pcpu_lkstats);
-	if (!sdp->sd_lkstats)
-		goto fail;
+	sdp->sd_lkstats = alloc_percpu(काष्ठा gfs2_pcpu_lkstats);
+	अगर (!sdp->sd_lkstats)
+		जाओ fail;
 	sb->s_fs_info = sdp;
 
 	set_bit(SDF_NOJOURNALID, &sdp->sd_flags);
 	gfs2_tune_init(&sdp->sd_tune);
 
-	init_waitqueue_head(&sdp->sd_glock_wait);
-	init_waitqueue_head(&sdp->sd_async_glock_wait);
+	init_रुकोqueue_head(&sdp->sd_glock_रुको);
+	init_रुकोqueue_head(&sdp->sd_async_glock_रुको);
 	atomic_set(&sdp->sd_glock_disposal, 0);
 	init_completion(&sdp->sd_locking_init);
 	init_completion(&sdp->sd_wdack);
 	spin_lock_init(&sdp->sd_statfs_spin);
 
 	spin_lock_init(&sdp->sd_rindex_spin);
-	sdp->sd_rindex_tree.rb_node = NULL;
+	sdp->sd_rindex_tree.rb_node = शून्य;
 
 	INIT_LIST_HEAD(&sdp->sd_jindex_list);
 	spin_lock_init(&sdp->sd_jindex_spin);
 	mutex_init(&sdp->sd_jindex_mutex);
-	init_completion(&sdp->sd_journal_ready);
+	init_completion(&sdp->sd_journal_पढ़ोy);
 
 	INIT_LIST_HEAD(&sdp->sd_quota_list);
 	mutex_init(&sdp->sd_quota_mutex);
 	mutex_init(&sdp->sd_quota_sync_mutex);
-	init_waitqueue_head(&sdp->sd_quota_wait);
+	init_रुकोqueue_head(&sdp->sd_quota_रुको);
 	INIT_LIST_HEAD(&sdp->sd_trunc_list);
 	spin_lock_init(&sdp->sd_trunc_lock);
-	spin_lock_init(&sdp->sd_bitmap_lock);
+	spin_lock_init(&sdp->sd_biपंचांगap_lock);
 
 	INIT_LIST_HEAD(&sdp->sd_sc_inodes_list);
 
@@ -119,8 +120,8 @@ static struct gfs2_sbd *init_sbd(struct super_block *sb)
 	mapping->host = sb->s_bdev->bd_inode;
 	mapping->flags = 0;
 	mapping_set_gfp_mask(mapping, GFP_NOFS);
-	mapping->private_data = NULL;
-	mapping->writeback_index = 0;
+	mapping->निजी_data = शून्य;
+	mapping->ग_लिखोback_index = 0;
 
 	spin_lock_init(&sdp->sd_log_lock);
 	atomic_set(&sdp->sd_log_pinned, 0);
@@ -128,124 +129,124 @@ static struct gfs2_sbd *init_sbd(struct super_block *sb)
 	INIT_LIST_HEAD(&sdp->sd_log_ordered);
 	spin_lock_init(&sdp->sd_ordered_lock);
 
-	init_waitqueue_head(&sdp->sd_log_waitq);
-	init_waitqueue_head(&sdp->sd_logd_waitq);
+	init_रुकोqueue_head(&sdp->sd_log_रुकोq);
+	init_रुकोqueue_head(&sdp->sd_logd_रुकोq);
 	spin_lock_init(&sdp->sd_ail_lock);
 	INIT_LIST_HEAD(&sdp->sd_ail1_list);
 	INIT_LIST_HEAD(&sdp->sd_ail2_list);
 
 	init_rwsem(&sdp->sd_log_flush_lock);
 	atomic_set(&sdp->sd_log_in_flight, 0);
-	init_waitqueue_head(&sdp->sd_log_flush_wait);
-	atomic_set(&sdp->sd_freeze_state, SFS_UNFROZEN);
-	mutex_init(&sdp->sd_freeze_mutex);
+	init_रुकोqueue_head(&sdp->sd_log_flush_रुको);
+	atomic_set(&sdp->sd_मुक्तze_state, SFS_UNFROZEN);
+	mutex_init(&sdp->sd_मुक्तze_mutex);
 
-	return sdp;
+	वापस sdp;
 
 fail:
-	free_sbd(sdp);
-	return NULL;
-}
+	मुक्त_sbd(sdp);
+	वापस शून्य;
+पूर्ण
 
 /**
  * gfs2_check_sb - Check superblock
- * @sdp: the filesystem
- * @silent: Don't print a message if the check fails
+ * @sdp: the fileप्रणाली
+ * @silent: Don't prपूर्णांक a message अगर the check fails
  *
  * Checks the version code of the FS is one that we understand how to
- * read and that the sizes of the various on-disk structures have not
+ * पढ़ो and that the sizes of the various on-disk काष्ठाures have not
  * changed.
  */
 
-static int gfs2_check_sb(struct gfs2_sbd *sdp, int silent)
-{
-	struct gfs2_sb_host *sb = &sdp->sd_sb;
+अटल पूर्णांक gfs2_check_sb(काष्ठा gfs2_sbd *sdp, पूर्णांक silent)
+अणु
+	काष्ठा gfs2_sb_host *sb = &sdp->sd_sb;
 
-	if (sb->sb_magic != GFS2_MAGIC ||
-	    sb->sb_type != GFS2_METATYPE_SB) {
-		if (!silent)
+	अगर (sb->sb_magic != GFS2_MAGIC ||
+	    sb->sb_type != GFS2_METATYPE_SB) अणु
+		अगर (!silent)
 			pr_warn("not a GFS2 filesystem\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (sb->sb_fs_format < GFS2_FS_FORMAT_MIN ||
-	    sb->sb_fs_format > GFS2_FS_FORMAT_MAX ||
-	    sb->sb_multihost_format != GFS2_FORMAT_MULTI) {
+	अगर (sb->sb_fs_क्रमmat < GFS2_FS_FORMAT_MIN ||
+	    sb->sb_fs_क्रमmat > GFS2_FS_FORMAT_MAX ||
+	    sb->sb_multihost_क्रमmat != GFS2_FORMAT_MULTI) अणु
 		fs_warn(sdp, "Unknown on-disk format, unable to mount\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (sb->sb_bsize < 512 || sb->sb_bsize > PAGE_SIZE ||
-	    (sb->sb_bsize & (sb->sb_bsize - 1))) {
+	अगर (sb->sb_bsize < 512 || sb->sb_bsize > PAGE_SIZE ||
+	    (sb->sb_bsize & (sb->sb_bsize - 1))) अणु
 		pr_warn("Invalid block size\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void end_bio_io_page(struct bio *bio)
-{
-	struct page *page = bio->bi_private;
+अटल व्योम end_bio_io_page(काष्ठा bio *bio)
+अणु
+	काष्ठा page *page = bio->bi_निजी;
 
-	if (!bio->bi_status)
+	अगर (!bio->bi_status)
 		SetPageUptodate(page);
-	else
+	अन्यथा
 		pr_warn("error %d reading superblock\n", bio->bi_status);
 	unlock_page(page);
-}
+पूर्ण
 
-static void gfs2_sb_in(struct gfs2_sbd *sdp, const void *buf)
-{
-	struct gfs2_sb_host *sb = &sdp->sd_sb;
-	struct super_block *s = sdp->sd_vfs;
-	const struct gfs2_sb *str = buf;
+अटल व्योम gfs2_sb_in(काष्ठा gfs2_sbd *sdp, स्थिर व्योम *buf)
+अणु
+	काष्ठा gfs2_sb_host *sb = &sdp->sd_sb;
+	काष्ठा super_block *s = sdp->sd_vfs;
+	स्थिर काष्ठा gfs2_sb *str = buf;
 
 	sb->sb_magic = be32_to_cpu(str->sb_header.mh_magic);
 	sb->sb_type = be32_to_cpu(str->sb_header.mh_type);
-	sb->sb_fs_format = be32_to_cpu(str->sb_fs_format);
-	sb->sb_multihost_format = be32_to_cpu(str->sb_multihost_format);
+	sb->sb_fs_क्रमmat = be32_to_cpu(str->sb_fs_क्रमmat);
+	sb->sb_multihost_क्रमmat = be32_to_cpu(str->sb_multihost_क्रमmat);
 	sb->sb_bsize = be32_to_cpu(str->sb_bsize);
-	sb->sb_bsize_shift = be32_to_cpu(str->sb_bsize_shift);
+	sb->sb_bsize_shअगरt = be32_to_cpu(str->sb_bsize_shअगरt);
 	sb->sb_master_dir.no_addr = be64_to_cpu(str->sb_master_dir.no_addr);
-	sb->sb_master_dir.no_formal_ino = be64_to_cpu(str->sb_master_dir.no_formal_ino);
+	sb->sb_master_dir.no_क्रमmal_ino = be64_to_cpu(str->sb_master_dir.no_क्रमmal_ino);
 	sb->sb_root_dir.no_addr = be64_to_cpu(str->sb_root_dir.no_addr);
-	sb->sb_root_dir.no_formal_ino = be64_to_cpu(str->sb_root_dir.no_formal_ino);
+	sb->sb_root_dir.no_क्रमmal_ino = be64_to_cpu(str->sb_root_dir.no_क्रमmal_ino);
 
-	memcpy(sb->sb_lockproto, str->sb_lockproto, GFS2_LOCKNAME_LEN);
-	memcpy(sb->sb_locktable, str->sb_locktable, GFS2_LOCKNAME_LEN);
-	memcpy(&s->s_uuid, str->sb_uuid, 16);
-}
+	स_नकल(sb->sb_lockproto, str->sb_lockproto, GFS2_LOCKNAME_LEN);
+	स_नकल(sb->sb_locktable, str->sb_locktable, GFS2_LOCKNAME_LEN);
+	स_नकल(&s->s_uuid, str->sb_uuid, 16);
+पूर्ण
 
 /**
- * gfs2_read_super - Read the gfs2 super block from disk
+ * gfs2_पढ़ो_super - Read the gfs2 super block from disk
  * @sdp: The GFS2 super block
  * @sector: The location of the super block
- * @silent: Don't print a message if the check fails
+ * @silent: Don't prपूर्णांक a message अगर the check fails
  *
- * This uses the bio functions to read the super block from disk
- * because we want to be 100% sure that we never read cached data.
- * A super block is read twice only during each GFS2 mount and is
- * never written to by the filesystem. The first time its read no
+ * This uses the bio functions to पढ़ो the super block from disk
+ * because we want to be 100% sure that we never पढ़ो cached data.
+ * A super block is पढ़ो twice only during each GFS2 mount and is
+ * never written to by the fileप्रणाली. The first समय its पढ़ो no
  * locks are held, and the only details which are looked at are those
  * relating to the locking protocol. Once locking is up and working,
- * the sb is read again under the lock to establish the location of
- * the master directory (contains pointers to journals etc) and the
+ * the sb is पढ़ो again under the lock to establish the location of
+ * the master directory (contains poपूर्णांकers to journals etc) and the
  * root directory.
  *
  * Returns: 0 on success or error
  */
 
-static int gfs2_read_super(struct gfs2_sbd *sdp, sector_t sector, int silent)
-{
-	struct super_block *sb = sdp->sd_vfs;
-	struct gfs2_sb *p;
-	struct page *page;
-	struct bio *bio;
+अटल पूर्णांक gfs2_पढ़ो_super(काष्ठा gfs2_sbd *sdp, sector_t sector, पूर्णांक silent)
+अणु
+	काष्ठा super_block *sb = sdp->sd_vfs;
+	काष्ठा gfs2_sb *p;
+	काष्ठा page *page;
+	काष्ठा bio *bio;
 
 	page = alloc_page(GFP_NOFS);
-	if (unlikely(!page))
-		return -ENOMEM;
+	अगर (unlikely(!page))
+		वापस -ENOMEM;
 
 	ClearPageUptodate(page);
 	ClearPageDirty(page);
@@ -257,362 +258,362 @@ static int gfs2_read_super(struct gfs2_sbd *sdp, sector_t sector, int silent)
 	bio_add_page(bio, page, PAGE_SIZE, 0);
 
 	bio->bi_end_io = end_bio_io_page;
-	bio->bi_private = page;
+	bio->bi_निजी = page;
 	bio_set_op_attrs(bio, REQ_OP_READ, REQ_META);
 	submit_bio(bio);
-	wait_on_page_locked(page);
+	रुको_on_page_locked(page);
 	bio_put(bio);
-	if (!PageUptodate(page)) {
-		__free_page(page);
-		return -EIO;
-	}
+	अगर (!PageUptodate(page)) अणु
+		__मुक्त_page(page);
+		वापस -EIO;
+	पूर्ण
 	p = kmap(page);
 	gfs2_sb_in(sdp, p);
 	kunmap(page);
-	__free_page(page);
-	return gfs2_check_sb(sdp, silent);
-}
+	__मुक्त_page(page);
+	वापस gfs2_check_sb(sdp, silent);
+पूर्ण
 
 /**
- * gfs2_read_sb - Read super block
+ * gfs2_पढ़ो_sb - Read super block
  * @sdp: The GFS2 superblock
- * @silent: Don't print message if mount fails
+ * @silent: Don't prपूर्णांक message अगर mount fails
  *
  */
 
-static int gfs2_read_sb(struct gfs2_sbd *sdp, int silent)
-{
+अटल पूर्णांक gfs2_पढ़ो_sb(काष्ठा gfs2_sbd *sdp, पूर्णांक silent)
+अणु
 	u32 hash_blocks, ind_blocks, leaf_blocks;
-	u32 tmp_blocks;
-	unsigned int x;
-	int error;
+	u32 पंचांगp_blocks;
+	अचिन्हित पूर्णांक x;
+	पूर्णांक error;
 
-	error = gfs2_read_super(sdp, GFS2_SB_ADDR >> sdp->sd_fsb2bb_shift, silent);
-	if (error) {
-		if (!silent)
+	error = gfs2_पढ़ो_super(sdp, GFS2_SB_ADDR >> sdp->sd_fsb2bb_shअगरt, silent);
+	अगर (error) अणु
+		अगर (!silent)
 			fs_err(sdp, "can't read superblock\n");
-		return error;
-	}
+		वापस error;
+	पूर्ण
 
-	sdp->sd_fsb2bb_shift = sdp->sd_sb.sb_bsize_shift -
+	sdp->sd_fsb2bb_shअगरt = sdp->sd_sb.sb_bsize_shअगरt -
 			       GFS2_BASIC_BLOCK_SHIFT;
-	sdp->sd_fsb2bb = BIT(sdp->sd_fsb2bb_shift);
+	sdp->sd_fsb2bb = BIT(sdp->sd_fsb2bb_shअगरt);
 	sdp->sd_diptrs = (sdp->sd_sb.sb_bsize -
-			  sizeof(struct gfs2_dinode)) / sizeof(u64);
+			  माप(काष्ठा gfs2_dinode)) / माप(u64);
 	sdp->sd_inptrs = (sdp->sd_sb.sb_bsize -
-			  sizeof(struct gfs2_meta_header)) / sizeof(u64);
+			  माप(काष्ठा gfs2_meta_header)) / माप(u64);
 	sdp->sd_ldptrs = (sdp->sd_sb.sb_bsize -
-			  sizeof(struct gfs2_log_descriptor)) / sizeof(u64);
-	sdp->sd_jbsize = sdp->sd_sb.sb_bsize - sizeof(struct gfs2_meta_header);
+			  माप(काष्ठा gfs2_log_descriptor)) / माप(u64);
+	sdp->sd_jbsize = sdp->sd_sb.sb_bsize - माप(काष्ठा gfs2_meta_header);
 	sdp->sd_hash_bsize = sdp->sd_sb.sb_bsize / 2;
-	sdp->sd_hash_bsize_shift = sdp->sd_sb.sb_bsize_shift - 1;
-	sdp->sd_hash_ptrs = sdp->sd_hash_bsize / sizeof(u64);
+	sdp->sd_hash_bsize_shअगरt = sdp->sd_sb.sb_bsize_shअगरt - 1;
+	sdp->sd_hash_ptrs = sdp->sd_hash_bsize / माप(u64);
 	sdp->sd_qc_per_block = (sdp->sd_sb.sb_bsize -
-				sizeof(struct gfs2_meta_header)) /
-			        sizeof(struct gfs2_quota_change);
-	sdp->sd_blocks_per_bitmap = (sdp->sd_sb.sb_bsize -
-				     sizeof(struct gfs2_meta_header))
-		* GFS2_NBBY; /* not the rgrp bitmap, subsequent bitmaps only */
+				माप(काष्ठा gfs2_meta_header)) /
+			        माप(काष्ठा gfs2_quota_change);
+	sdp->sd_blocks_per_biपंचांगap = (sdp->sd_sb.sb_bsize -
+				     माप(काष्ठा gfs2_meta_header))
+		* GFS2_NBBY; /* not the rgrp biपंचांगap, subsequent biपंचांगaps only */
 
 	/*
-	 * We always keep at least one block reserved for revokes in
-	 * transactions.  This greatly simplifies allocating additional
+	 * We always keep at least one block reserved क्रम revokes in
+	 * transactions.  This greatly simplअगरies allocating additional
 	 * revoke blocks.
 	 */
 	atomic_set(&sdp->sd_log_revokes_available, sdp->sd_ldptrs);
 
 	/* Compute maximum reservation required to add a entry to a directory */
 
-	hash_blocks = DIV_ROUND_UP(sizeof(u64) * BIT(GFS2_DIR_MAX_DEPTH),
+	hash_blocks = DIV_ROUND_UP(माप(u64) * BIT(GFS2_सूची_MAX_DEPTH),
 			     sdp->sd_jbsize);
 
 	ind_blocks = 0;
-	for (tmp_blocks = hash_blocks; tmp_blocks > sdp->sd_diptrs;) {
-		tmp_blocks = DIV_ROUND_UP(tmp_blocks, sdp->sd_inptrs);
-		ind_blocks += tmp_blocks;
-	}
+	क्रम (पंचांगp_blocks = hash_blocks; पंचांगp_blocks > sdp->sd_diptrs;) अणु
+		पंचांगp_blocks = DIV_ROUND_UP(पंचांगp_blocks, sdp->sd_inptrs);
+		ind_blocks += पंचांगp_blocks;
+	पूर्ण
 
-	leaf_blocks = 2 + GFS2_DIR_MAX_DEPTH;
+	leaf_blocks = 2 + GFS2_सूची_MAX_DEPTH;
 
 	sdp->sd_max_dirres = hash_blocks + ind_blocks + leaf_blocks;
 
 	sdp->sd_heightsize[0] = sdp->sd_sb.sb_bsize -
-				sizeof(struct gfs2_dinode);
+				माप(काष्ठा gfs2_dinode);
 	sdp->sd_heightsize[1] = sdp->sd_sb.sb_bsize * sdp->sd_diptrs;
-	for (x = 2;; x++) {
+	क्रम (x = 2;; x++) अणु
 		u64 space, d;
 		u32 m;
 
 		space = sdp->sd_heightsize[x - 1] * sdp->sd_inptrs;
 		d = space;
-		m = do_div(d, sdp->sd_inptrs);
+		m = करो_भाग(d, sdp->sd_inptrs);
 
-		if (d != sdp->sd_heightsize[x - 1] || m)
-			break;
+		अगर (d != sdp->sd_heightsize[x - 1] || m)
+			अवरोध;
 		sdp->sd_heightsize[x] = space;
-	}
+	पूर्ण
 	sdp->sd_max_height = x;
 	sdp->sd_heightsize[x] = ~0;
-	gfs2_assert(sdp, sdp->sd_max_height <= GFS2_MAX_META_HEIGHT);
+	gfs2_निश्चित(sdp, sdp->sd_max_height <= GFS2_MAX_META_HEIGHT);
 
 	sdp->sd_max_dents_per_leaf = (sdp->sd_sb.sb_bsize -
-				      sizeof(struct gfs2_leaf)) /
-				     GFS2_MIN_DIRENT_SIZE;
-	return 0;
-}
+				      माप(काष्ठा gfs2_leaf)) /
+				     GFS2_MIN_सूचीENT_SIZE;
+	वापस 0;
+पूर्ण
 
-static int init_names(struct gfs2_sbd *sdp, int silent)
-{
-	char *proto, *table;
-	int error = 0;
+अटल पूर्णांक init_names(काष्ठा gfs2_sbd *sdp, पूर्णांक silent)
+अणु
+	अक्षर *proto, *table;
+	पूर्णांक error = 0;
 
 	proto = sdp->sd_args.ar_lockproto;
 	table = sdp->sd_args.ar_locktable;
 
-	/*  Try to autodetect  */
+	/*  Try to स्वतःdetect  */
 
-	if (!proto[0] || !table[0]) {
-		error = gfs2_read_super(sdp, GFS2_SB_ADDR >> sdp->sd_fsb2bb_shift, silent);
-		if (error)
-			return error;
+	अगर (!proto[0] || !table[0]) अणु
+		error = gfs2_पढ़ो_super(sdp, GFS2_SB_ADDR >> sdp->sd_fsb2bb_shअगरt, silent);
+		अगर (error)
+			वापस error;
 
-		if (!proto[0])
+		अगर (!proto[0])
 			proto = sdp->sd_sb.sb_lockproto;
-		if (!table[0])
+		अगर (!table[0])
 			table = sdp->sd_sb.sb_locktable;
-	}
+	पूर्ण
 
-	if (!table[0])
+	अगर (!table[0])
 		table = sdp->sd_vfs->s_id;
 
 	strlcpy(sdp->sd_proto_name, proto, GFS2_FSNAME_LEN);
 	strlcpy(sdp->sd_table_name, table, GFS2_FSNAME_LEN);
 
 	table = sdp->sd_table_name;
-	while ((table = strchr(table, '/')))
+	जबतक ((table = म_अक्षर(table, '/')))
 		*table = '_';
 
-	return error;
-}
+	वापस error;
+पूर्ण
 
-static int init_locking(struct gfs2_sbd *sdp, struct gfs2_holder *mount_gh,
-			int undo)
-{
-	int error = 0;
+अटल पूर्णांक init_locking(काष्ठा gfs2_sbd *sdp, काष्ठा gfs2_holder *mount_gh,
+			पूर्णांक unकरो)
+अणु
+	पूर्णांक error = 0;
 
-	if (undo)
-		goto fail_trans;
+	अगर (unकरो)
+		जाओ fail_trans;
 
 	error = gfs2_glock_nq_num(sdp,
 				  GFS2_MOUNT_LOCK, &gfs2_nondisk_glops,
 				  LM_ST_EXCLUSIVE, LM_FLAG_NOEXP | GL_NOCACHE,
 				  mount_gh);
-	if (error) {
+	अगर (error) अणु
 		fs_err(sdp, "can't acquire mount glock: %d\n", error);
-		goto fail;
-	}
+		जाओ fail;
+	पूर्ण
 
 	error = gfs2_glock_nq_num(sdp,
 				  GFS2_LIVE_LOCK, &gfs2_nondisk_glops,
 				  LM_ST_SHARED,
 				  LM_FLAG_NOEXP | GL_EXACT,
 				  &sdp->sd_live_gh);
-	if (error) {
+	अगर (error) अणु
 		fs_err(sdp, "can't acquire live glock: %d\n", error);
-		goto fail_mount;
-	}
+		जाओ fail_mount;
+	पूर्ण
 
 	error = gfs2_glock_get(sdp, GFS2_RENAME_LOCK, &gfs2_nondisk_glops,
-			       CREATE, &sdp->sd_rename_gl);
-	if (error) {
+			       CREATE, &sdp->sd_नाम_gl);
+	अगर (error) अणु
 		fs_err(sdp, "can't create rename glock: %d\n", error);
-		goto fail_live;
-	}
+		जाओ fail_live;
+	पूर्ण
 
-	error = gfs2_glock_get(sdp, GFS2_FREEZE_LOCK, &gfs2_freeze_glops,
-			       CREATE, &sdp->sd_freeze_gl);
-	if (error) {
+	error = gfs2_glock_get(sdp, GFS2_FREEZE_LOCK, &gfs2_मुक्तze_glops,
+			       CREATE, &sdp->sd_मुक्तze_gl);
+	अगर (error) अणु
 		fs_err(sdp, "can't create transaction glock: %d\n", error);
-		goto fail_rename;
-	}
+		जाओ fail_नाम;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 fail_trans:
-	gfs2_glock_put(sdp->sd_freeze_gl);
-fail_rename:
-	gfs2_glock_put(sdp->sd_rename_gl);
+	gfs2_glock_put(sdp->sd_मुक्तze_gl);
+fail_नाम:
+	gfs2_glock_put(sdp->sd_नाम_gl);
 fail_live:
 	gfs2_glock_dq_uninit(&sdp->sd_live_gh);
 fail_mount:
 	gfs2_glock_dq_uninit(mount_gh);
 fail:
-	return error;
-}
+	वापस error;
+पूर्ण
 
-static int gfs2_lookup_root(struct super_block *sb, struct dentry **dptr,
-			    u64 no_addr, const char *name)
-{
-	struct gfs2_sbd *sdp = sb->s_fs_info;
-	struct dentry *dentry;
-	struct inode *inode;
+अटल पूर्णांक gfs2_lookup_root(काष्ठा super_block *sb, काष्ठा dentry **dptr,
+			    u64 no_addr, स्थिर अक्षर *name)
+अणु
+	काष्ठा gfs2_sbd *sdp = sb->s_fs_info;
+	काष्ठा dentry *dentry;
+	काष्ठा inode *inode;
 
-	inode = gfs2_inode_lookup(sb, DT_DIR, no_addr, 0,
+	inode = gfs2_inode_lookup(sb, DT_सूची, no_addr, 0,
 				  GFS2_BLKST_FREE /* ignore */);
-	if (IS_ERR(inode)) {
+	अगर (IS_ERR(inode)) अणु
 		fs_err(sdp, "can't read in %s inode: %ld\n", name, PTR_ERR(inode));
-		return PTR_ERR(inode);
-	}
+		वापस PTR_ERR(inode);
+	पूर्ण
 	dentry = d_make_root(inode);
-	if (!dentry) {
+	अगर (!dentry) अणु
 		fs_err(sdp, "can't alloc %s dentry\n", name);
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 	*dptr = dentry;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int init_sb(struct gfs2_sbd *sdp, int silent)
-{
-	struct super_block *sb = sdp->sd_vfs;
-	struct gfs2_holder sb_gh;
+अटल पूर्णांक init_sb(काष्ठा gfs2_sbd *sdp, पूर्णांक silent)
+अणु
+	काष्ठा super_block *sb = sdp->sd_vfs;
+	काष्ठा gfs2_holder sb_gh;
 	u64 no_addr;
-	int ret;
+	पूर्णांक ret;
 
 	ret = gfs2_glock_nq_num(sdp, GFS2_SB_LOCK, &gfs2_meta_glops,
 				LM_ST_SHARED, 0, &sb_gh);
-	if (ret) {
+	अगर (ret) अणु
 		fs_err(sdp, "can't acquire superblock glock: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	ret = gfs2_read_sb(sdp, silent);
-	if (ret) {
+	ret = gfs2_पढ़ो_sb(sdp, silent);
+	अगर (ret) अणु
 		fs_err(sdp, "can't read superblock: %d\n", ret);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	switch(sdp->sd_sb.sb_fs_format) {
-	case GFS2_FS_FORMAT_MAX:
+	चयन(sdp->sd_sb.sb_fs_क्रमmat) अणु
+	हाल GFS2_FS_FORMAT_MAX:
 		sb->s_xattr = gfs2_xattr_handlers_max;
-		break;
+		अवरोध;
 
-	case GFS2_FS_FORMAT_MIN:
+	हाल GFS2_FS_FORMAT_MIN:
 		sb->s_xattr = gfs2_xattr_handlers_min;
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		BUG();
-	}
+	पूर्ण
 
-	/* Set up the buffer cache and SB for real */
-	if (sdp->sd_sb.sb_bsize < bdev_logical_block_size(sb->s_bdev)) {
+	/* Set up the buffer cache and SB क्रम real */
+	अगर (sdp->sd_sb.sb_bsize < bdev_logical_block_size(sb->s_bdev)) अणु
 		ret = -EINVAL;
 		fs_err(sdp, "FS block size (%u) is too small for device "
 		       "block size (%u)\n",
 		       sdp->sd_sb.sb_bsize, bdev_logical_block_size(sb->s_bdev));
-		goto out;
-	}
-	if (sdp->sd_sb.sb_bsize > PAGE_SIZE) {
+		जाओ out;
+	पूर्ण
+	अगर (sdp->sd_sb.sb_bsize > PAGE_SIZE) अणु
 		ret = -EINVAL;
 		fs_err(sdp, "FS block size (%u) is too big for machine "
 		       "page size (%u)\n",
-		       sdp->sd_sb.sb_bsize, (unsigned int)PAGE_SIZE);
-		goto out;
-	}
+		       sdp->sd_sb.sb_bsize, (अचिन्हित पूर्णांक)PAGE_SIZE);
+		जाओ out;
+	पूर्ण
 	sb_set_blocksize(sb, sdp->sd_sb.sb_bsize);
 
 	/* Get the root inode */
 	no_addr = sdp->sd_sb.sb_root_dir.no_addr;
 	ret = gfs2_lookup_root(sb, &sdp->sd_root_dir, no_addr, "root");
-	if (ret)
-		goto out;
+	अगर (ret)
+		जाओ out;
 
 	/* Get the master inode */
 	no_addr = sdp->sd_sb.sb_master_dir.no_addr;
 	ret = gfs2_lookup_root(sb, &sdp->sd_master_dir, no_addr, "master");
-	if (ret) {
+	अगर (ret) अणु
 		dput(sdp->sd_root_dir);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 	sb->s_root = dget(sdp->sd_args.ar_meta ? sdp->sd_master_dir : sdp->sd_root_dir);
 out:
 	gfs2_glock_dq_uninit(&sb_gh);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void gfs2_others_may_mount(struct gfs2_sbd *sdp)
-{
-	char *message = "FIRSTMOUNT=Done";
-	char *envp[] = { message, NULL };
+अटल व्योम gfs2_others_may_mount(काष्ठा gfs2_sbd *sdp)
+अणु
+	अक्षर *message = "FIRSTMOUNT=Done";
+	अक्षर *envp[] = अणु message, शून्य पूर्ण;
 
 	fs_info(sdp, "first mount done, others may mount\n");
 
-	if (sdp->sd_lockstruct.ls_ops->lm_first_done)
-		sdp->sd_lockstruct.ls_ops->lm_first_done(sdp);
+	अगर (sdp->sd_lockकाष्ठा.ls_ops->lm_first_करोne)
+		sdp->sd_lockकाष्ठा.ls_ops->lm_first_करोne(sdp);
 
 	kobject_uevent_env(&sdp->sd_kobj, KOBJ_CHANGE, envp);
-}
+पूर्ण
 
 /**
  * gfs2_jindex_hold - Grab a lock on the jindex
  * @sdp: The GFS2 superblock
- * @ji_gh: the holder for the jindex glock
+ * @ji_gh: the holder क्रम the jindex glock
  *
- * Returns: errno
+ * Returns: त्रुटि_सं
  */
 
-static int gfs2_jindex_hold(struct gfs2_sbd *sdp, struct gfs2_holder *ji_gh)
-{
-	struct gfs2_inode *dip = GFS2_I(sdp->sd_jindex);
-	struct qstr name;
-	char buf[20];
-	struct gfs2_jdesc *jd;
-	int error;
+अटल पूर्णांक gfs2_jindex_hold(काष्ठा gfs2_sbd *sdp, काष्ठा gfs2_holder *ji_gh)
+अणु
+	काष्ठा gfs2_inode *dip = GFS2_I(sdp->sd_jindex);
+	काष्ठा qstr name;
+	अक्षर buf[20];
+	काष्ठा gfs2_jdesc *jd;
+	पूर्णांक error;
 
 	name.name = buf;
 
 	mutex_lock(&sdp->sd_jindex_mutex);
 
-	for (;;) {
-		struct gfs2_inode *jip;
+	क्रम (;;) अणु
+		काष्ठा gfs2_inode *jip;
 
 		error = gfs2_glock_nq_init(dip->i_gl, LM_ST_SHARED, 0, ji_gh);
-		if (error)
-			break;
+		अगर (error)
+			अवरोध;
 
-		name.len = sprintf(buf, "journal%u", sdp->sd_journals);
+		name.len = प्र_लिखो(buf, "journal%u", sdp->sd_journals);
 		name.hash = gfs2_disk_hash(name.name, name.len);
 
-		error = gfs2_dir_check(sdp->sd_jindex, &name, NULL);
-		if (error == -ENOENT) {
+		error = gfs2_dir_check(sdp->sd_jindex, &name, शून्य);
+		अगर (error == -ENOENT) अणु
 			error = 0;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		gfs2_glock_dq_uninit(ji_gh);
 
-		if (error)
-			break;
+		अगर (error)
+			अवरोध;
 
 		error = -ENOMEM;
-		jd = kzalloc(sizeof(struct gfs2_jdesc), GFP_KERNEL);
-		if (!jd)
-			break;
+		jd = kzalloc(माप(काष्ठा gfs2_jdesc), GFP_KERNEL);
+		अगर (!jd)
+			अवरोध;
 
 		INIT_LIST_HEAD(&jd->extent_list);
 		INIT_LIST_HEAD(&jd->jd_revoke_list);
 
 		INIT_WORK(&jd->jd_work, gfs2_recover_func);
 		jd->jd_inode = gfs2_lookupi(sdp->sd_jindex, &name, 1);
-		if (IS_ERR_OR_NULL(jd->jd_inode)) {
-			if (!jd->jd_inode)
+		अगर (IS_ERR_OR_शून्य(jd->jd_inode)) अणु
+			अगर (!jd->jd_inode)
 				error = -ENOENT;
-			else
+			अन्यथा
 				error = PTR_ERR(jd->jd_inode);
-			kfree(jd);
-			break;
-		}
+			kमुक्त(jd);
+			अवरोध;
+		पूर्ण
 
 		spin_lock(&sdp->sd_jindex_spin);
 		jd->jd_jid = sdp->sd_journals++;
@@ -620,290 +621,290 @@ static int gfs2_jindex_hold(struct gfs2_sbd *sdp, struct gfs2_holder *ji_gh)
 		jd->jd_no_addr = jip->i_no_addr;
 		list_add_tail(&jd->jd_list, &sdp->sd_jindex_list);
 		spin_unlock(&sdp->sd_jindex_spin);
-	}
+	पूर्ण
 
 	mutex_unlock(&sdp->sd_jindex_mutex);
 
-	return error;
-}
+	वापस error;
+पूर्ण
 
 /**
  * init_statfs - look up and initialize master and local (per node) statfs inodes
  * @sdp: The GFS2 superblock
  *
  * This should be called after the jindex is initialized in init_journal() and
- * before gfs2_journal_recovery() is called because we need to be able to write
+ * beक्रमe gfs2_journal_recovery() is called because we need to be able to ग_लिखो
  * to these inodes during recovery.
  *
- * Returns: errno
+ * Returns: त्रुटि_सं
  */
-static int init_statfs(struct gfs2_sbd *sdp)
-{
-	int error = 0;
-	struct inode *master = d_inode(sdp->sd_master_dir);
-	struct inode *pn = NULL;
-	char buf[30];
-	struct gfs2_jdesc *jd;
-	struct gfs2_inode *ip;
+अटल पूर्णांक init_statfs(काष्ठा gfs2_sbd *sdp)
+अणु
+	पूर्णांक error = 0;
+	काष्ठा inode *master = d_inode(sdp->sd_master_dir);
+	काष्ठा inode *pn = शून्य;
+	अक्षर buf[30];
+	काष्ठा gfs2_jdesc *jd;
+	काष्ठा gfs2_inode *ip;
 
 	sdp->sd_statfs_inode = gfs2_lookup_simple(master, "statfs");
-	if (IS_ERR(sdp->sd_statfs_inode)) {
+	अगर (IS_ERR(sdp->sd_statfs_inode)) अणु
 		error = PTR_ERR(sdp->sd_statfs_inode);
 		fs_err(sdp, "can't read in statfs inode: %d\n", error);
-		goto out;
-	}
-	if (sdp->sd_args.ar_spectator)
-		goto out;
+		जाओ out;
+	पूर्ण
+	अगर (sdp->sd_args.ar_spectator)
+		जाओ out;
 
 	pn = gfs2_lookup_simple(master, "per_node");
-	if (IS_ERR(pn)) {
+	अगर (IS_ERR(pn)) अणु
 		error = PTR_ERR(pn);
 		fs_err(sdp, "can't find per_node directory: %d\n", error);
-		goto put_statfs;
-	}
+		जाओ put_statfs;
+	पूर्ण
 
 	/* For each jid, lookup the corresponding local statfs inode in the
 	 * per_node metafs directory and save it in the sdp->sd_sc_inodes_list. */
-	list_for_each_entry(jd, &sdp->sd_jindex_list, jd_list) {
-		struct local_statfs_inode *lsi =
-			kmalloc(sizeof(struct local_statfs_inode), GFP_NOFS);
-		if (!lsi) {
+	list_क्रम_each_entry(jd, &sdp->sd_jindex_list, jd_list) अणु
+		काष्ठा local_statfs_inode *lsi =
+			kदो_स्मृति(माप(काष्ठा local_statfs_inode), GFP_NOFS);
+		अगर (!lsi) अणु
 			error = -ENOMEM;
-			goto free_local;
-		}
-		sprintf(buf, "statfs_change%u", jd->jd_jid);
+			जाओ मुक्त_local;
+		पूर्ण
+		प्र_लिखो(buf, "statfs_change%u", jd->jd_jid);
 		lsi->si_sc_inode = gfs2_lookup_simple(pn, buf);
-		if (IS_ERR(lsi->si_sc_inode)) {
+		अगर (IS_ERR(lsi->si_sc_inode)) अणु
 			error = PTR_ERR(lsi->si_sc_inode);
 			fs_err(sdp, "can't find local \"sc\" file#%u: %d\n",
 			       jd->jd_jid, error);
-			goto free_local;
-		}
+			जाओ मुक्त_local;
+		पूर्ण
 		lsi->si_jid = jd->jd_jid;
-		if (jd->jd_jid == sdp->sd_jdesc->jd_jid)
+		अगर (jd->jd_jid == sdp->sd_jdesc->jd_jid)
 			sdp->sd_sc_inode = lsi->si_sc_inode;
 
 		list_add_tail(&lsi->si_list, &sdp->sd_sc_inodes_list);
-	}
+	पूर्ण
 
 	iput(pn);
 	ip = GFS2_I(sdp->sd_sc_inode);
 	error = gfs2_glock_nq_init(ip->i_gl, LM_ST_EXCLUSIVE, 0,
 				   &sdp->sd_sc_gh);
-	if (error) {
+	अगर (error) अणु
 		fs_err(sdp, "can't lock local \"sc\" file: %d\n", error);
-		goto free_local;
-	}
-	return 0;
+		जाओ मुक्त_local;
+	पूर्ण
+	वापस 0;
 
-free_local:
-	free_local_statfs_inodes(sdp);
+मुक्त_local:
+	मुक्त_local_statfs_inodes(sdp);
 	iput(pn);
 put_statfs:
 	iput(sdp->sd_statfs_inode);
 out:
-	return error;
-}
+	वापस error;
+पूर्ण
 
-/* Uninitialize and free up memory used by the list of statfs inodes */
-static void uninit_statfs(struct gfs2_sbd *sdp)
-{
-	if (!sdp->sd_args.ar_spectator) {
+/* Uninitialize and मुक्त up memory used by the list of statfs inodes */
+अटल व्योम uninit_statfs(काष्ठा gfs2_sbd *sdp)
+अणु
+	अगर (!sdp->sd_args.ar_spectator) अणु
 		gfs2_glock_dq_uninit(&sdp->sd_sc_gh);
-		free_local_statfs_inodes(sdp);
-	}
+		मुक्त_local_statfs_inodes(sdp);
+	पूर्ण
 	iput(sdp->sd_statfs_inode);
-}
+पूर्ण
 
-static int init_journal(struct gfs2_sbd *sdp, int undo)
-{
-	struct inode *master = d_inode(sdp->sd_master_dir);
-	struct gfs2_holder ji_gh;
-	struct gfs2_inode *ip;
-	int jindex = 1;
-	int error = 0;
+अटल पूर्णांक init_journal(काष्ठा gfs2_sbd *sdp, पूर्णांक unकरो)
+अणु
+	काष्ठा inode *master = d_inode(sdp->sd_master_dir);
+	काष्ठा gfs2_holder ji_gh;
+	काष्ठा gfs2_inode *ip;
+	पूर्णांक jindex = 1;
+	पूर्णांक error = 0;
 
-	if (undo) {
+	अगर (unकरो) अणु
 		jindex = 0;
-		goto fail_statfs;
-	}
+		जाओ fail_statfs;
+	पूर्ण
 
 	sdp->sd_jindex = gfs2_lookup_simple(master, "jindex");
-	if (IS_ERR(sdp->sd_jindex)) {
+	अगर (IS_ERR(sdp->sd_jindex)) अणु
 		fs_err(sdp, "can't lookup journal index: %d\n", error);
-		return PTR_ERR(sdp->sd_jindex);
-	}
+		वापस PTR_ERR(sdp->sd_jindex);
+	पूर्ण
 
 	/* Load in the journal index special file */
 
 	error = gfs2_jindex_hold(sdp, &ji_gh);
-	if (error) {
+	अगर (error) अणु
 		fs_err(sdp, "can't read journal index: %d\n", error);
-		goto fail;
-	}
+		जाओ fail;
+	पूर्ण
 
 	error = -EUSERS;
-	if (!gfs2_jindex_size(sdp)) {
+	अगर (!gfs2_jindex_size(sdp)) अणु
 		fs_err(sdp, "no journals!\n");
-		goto fail_jindex;
-	}
+		जाओ fail_jindex;
+	पूर्ण
 
 	atomic_set(&sdp->sd_log_blks_needed, 0);
-	if (sdp->sd_args.ar_spectator) {
+	अगर (sdp->sd_args.ar_spectator) अणु
 		sdp->sd_jdesc = gfs2_jdesc_find(sdp, 0);
-		atomic_set(&sdp->sd_log_blks_free, sdp->sd_jdesc->jd_blocks);
+		atomic_set(&sdp->sd_log_blks_मुक्त, sdp->sd_jdesc->jd_blocks);
 		atomic_set(&sdp->sd_log_thresh1, 2*sdp->sd_jdesc->jd_blocks/5);
 		atomic_set(&sdp->sd_log_thresh2, 4*sdp->sd_jdesc->jd_blocks/5);
-	} else {
-		if (sdp->sd_lockstruct.ls_jid >= gfs2_jindex_size(sdp)) {
+	पूर्ण अन्यथा अणु
+		अगर (sdp->sd_lockकाष्ठा.ls_jid >= gfs2_jindex_size(sdp)) अणु
 			fs_err(sdp, "can't mount journal #%u\n",
-			       sdp->sd_lockstruct.ls_jid);
+			       sdp->sd_lockकाष्ठा.ls_jid);
 			fs_err(sdp, "there are only %u journals (0 - %u)\n",
 			       gfs2_jindex_size(sdp),
 			       gfs2_jindex_size(sdp) - 1);
-			goto fail_jindex;
-		}
-		sdp->sd_jdesc = gfs2_jdesc_find(sdp, sdp->sd_lockstruct.ls_jid);
+			जाओ fail_jindex;
+		पूर्ण
+		sdp->sd_jdesc = gfs2_jdesc_find(sdp, sdp->sd_lockकाष्ठा.ls_jid);
 
-		error = gfs2_glock_nq_num(sdp, sdp->sd_lockstruct.ls_jid,
+		error = gfs2_glock_nq_num(sdp, sdp->sd_lockकाष्ठा.ls_jid,
 					  &gfs2_journal_glops,
 					  LM_ST_EXCLUSIVE,
 					  LM_FLAG_NOEXP | GL_NOCACHE,
 					  &sdp->sd_journal_gh);
-		if (error) {
+		अगर (error) अणु
 			fs_err(sdp, "can't acquire journal glock: %d\n", error);
-			goto fail_jindex;
-		}
+			जाओ fail_jindex;
+		पूर्ण
 
 		ip = GFS2_I(sdp->sd_jdesc->jd_inode);
 		sdp->sd_jinode_gl = ip->i_gl;
 		error = gfs2_glock_nq_init(ip->i_gl, LM_ST_SHARED,
 					   LM_FLAG_NOEXP | GL_EXACT | GL_NOCACHE,
 					   &sdp->sd_jinode_gh);
-		if (error) {
+		अगर (error) अणु
 			fs_err(sdp, "can't acquire journal inode glock: %d\n",
 			       error);
-			goto fail_journal_gh;
-		}
+			जाओ fail_journal_gh;
+		पूर्ण
 
 		error = gfs2_jdesc_check(sdp->sd_jdesc);
-		if (error) {
+		अगर (error) अणु
 			fs_err(sdp, "my journal (%u) is bad: %d\n",
 			       sdp->sd_jdesc->jd_jid, error);
-			goto fail_jinode_gh;
-		}
-		atomic_set(&sdp->sd_log_blks_free, sdp->sd_jdesc->jd_blocks);
+			जाओ fail_jinode_gh;
+		पूर्ण
+		atomic_set(&sdp->sd_log_blks_मुक्त, sdp->sd_jdesc->jd_blocks);
 		atomic_set(&sdp->sd_log_thresh1, 2*sdp->sd_jdesc->jd_blocks/5);
 		atomic_set(&sdp->sd_log_thresh2, 4*sdp->sd_jdesc->jd_blocks/5);
 
-		/* Map the extents for this journal's blocks */
+		/* Map the extents क्रम this journal's blocks */
 		gfs2_map_journal_extents(sdp, sdp->sd_jdesc);
-	}
-	trace_gfs2_log_blocks(sdp, atomic_read(&sdp->sd_log_blks_free));
+	पूर्ण
+	trace_gfs2_log_blocks(sdp, atomic_पढ़ो(&sdp->sd_log_blks_मुक्त));
 
 	/* Lookup statfs inodes here so journal recovery can use them. */
 	error = init_statfs(sdp);
-	if (error)
-		goto fail_jinode_gh;
+	अगर (error)
+		जाओ fail_jinode_gh;
 
-	if (sdp->sd_lockstruct.ls_first) {
-		unsigned int x;
-		for (x = 0; x < sdp->sd_journals; x++) {
-			struct gfs2_jdesc *jd = gfs2_jdesc_find(sdp, x);
+	अगर (sdp->sd_lockकाष्ठा.ls_first) अणु
+		अचिन्हित पूर्णांक x;
+		क्रम (x = 0; x < sdp->sd_journals; x++) अणु
+			काष्ठा gfs2_jdesc *jd = gfs2_jdesc_find(sdp, x);
 
-			if (sdp->sd_args.ar_spectator) {
+			अगर (sdp->sd_args.ar_spectator) अणु
 				error = check_journal_clean(sdp, jd, true);
-				if (error)
-					goto fail_statfs;
-				continue;
-			}
+				अगर (error)
+					जाओ fail_statfs;
+				जारी;
+			पूर्ण
 			error = gfs2_recover_journal(jd, true);
-			if (error) {
+			अगर (error) अणु
 				fs_err(sdp, "error recovering journal %u: %d\n",
 				       x, error);
-				goto fail_statfs;
-			}
-		}
+				जाओ fail_statfs;
+			पूर्ण
+		पूर्ण
 
 		gfs2_others_may_mount(sdp);
-	} else if (!sdp->sd_args.ar_spectator) {
+	पूर्ण अन्यथा अगर (!sdp->sd_args.ar_spectator) अणु
 		error = gfs2_recover_journal(sdp->sd_jdesc, true);
-		if (error) {
+		अगर (error) अणु
 			fs_err(sdp, "error recovering my journal: %d\n", error);
-			goto fail_statfs;
-		}
-	}
+			जाओ fail_statfs;
+		पूर्ण
+	पूर्ण
 
 	sdp->sd_log_idle = 1;
 	set_bit(SDF_JOURNAL_CHECKED, &sdp->sd_flags);
 	gfs2_glock_dq_uninit(&ji_gh);
 	jindex = 0;
-	INIT_WORK(&sdp->sd_freeze_work, gfs2_freeze_func);
-	return 0;
+	INIT_WORK(&sdp->sd_मुक्तze_work, gfs2_मुक्तze_func);
+	वापस 0;
 
 fail_statfs:
 	uninit_statfs(sdp);
 fail_jinode_gh:
-	/* A withdraw may have done dq/uninit so now we need to check it */
-	if (!sdp->sd_args.ar_spectator &&
+	/* A withdraw may have करोne dq/uninit so now we need to check it */
+	अगर (!sdp->sd_args.ar_spectator &&
 	    gfs2_holder_initialized(&sdp->sd_jinode_gh))
 		gfs2_glock_dq_uninit(&sdp->sd_jinode_gh);
 fail_journal_gh:
-	if (!sdp->sd_args.ar_spectator &&
+	अगर (!sdp->sd_args.ar_spectator &&
 	    gfs2_holder_initialized(&sdp->sd_journal_gh))
 		gfs2_glock_dq_uninit(&sdp->sd_journal_gh);
 fail_jindex:
-	gfs2_jindex_free(sdp);
-	if (jindex)
+	gfs2_jindex_मुक्त(sdp);
+	अगर (jindex)
 		gfs2_glock_dq_uninit(&ji_gh);
 fail:
 	iput(sdp->sd_jindex);
-	return error;
-}
+	वापस error;
+पूर्ण
 
-static struct lock_class_key gfs2_quota_imutex_key;
+अटल काष्ठा lock_class_key gfs2_quota_imutex_key;
 
-static int init_inodes(struct gfs2_sbd *sdp, int undo)
-{
-	int error = 0;
-	struct inode *master = d_inode(sdp->sd_master_dir);
+अटल पूर्णांक init_inodes(काष्ठा gfs2_sbd *sdp, पूर्णांक unकरो)
+अणु
+	पूर्णांक error = 0;
+	काष्ठा inode *master = d_inode(sdp->sd_master_dir);
 
-	if (undo)
-		goto fail_qinode;
+	अगर (unकरो)
+		जाओ fail_qinode;
 
-	error = init_journal(sdp, undo);
-	complete_all(&sdp->sd_journal_ready);
-	if (error)
-		goto fail;
+	error = init_journal(sdp, unकरो);
+	complete_all(&sdp->sd_journal_पढ़ोy);
+	अगर (error)
+		जाओ fail;
 
 	/* Read in the resource index inode */
 	sdp->sd_rindex = gfs2_lookup_simple(master, "rindex");
-	if (IS_ERR(sdp->sd_rindex)) {
+	अगर (IS_ERR(sdp->sd_rindex)) अणु
 		error = PTR_ERR(sdp->sd_rindex);
 		fs_err(sdp, "can't get resource index inode: %d\n", error);
-		goto fail_journal;
-	}
+		जाओ fail_journal;
+	पूर्ण
 	sdp->sd_rindex_uptodate = 0;
 
 	/* Read in the quota inode */
 	sdp->sd_quota_inode = gfs2_lookup_simple(master, "quota");
-	if (IS_ERR(sdp->sd_quota_inode)) {
+	अगर (IS_ERR(sdp->sd_quota_inode)) अणु
 		error = PTR_ERR(sdp->sd_quota_inode);
 		fs_err(sdp, "can't get quota file inode: %d\n", error);
-		goto fail_rindex;
-	}
+		जाओ fail_rindex;
+	पूर्ण
 	/*
-	 * i_rwsem on quota files is special. Since this inode is hidden system
+	 * i_rwsem on quota files is special. Since this inode is hidden प्रणाली
 	 * file, we are safe to define locking ourselves.
 	 */
 	lockdep_set_class(&sdp->sd_quota_inode->i_rwsem,
 			  &gfs2_quota_imutex_key);
 
 	error = gfs2_rindex_update(sdp);
-	if (error)
-		goto fail_qinode;
+	अगर (error)
+		जाओ fail_qinode;
 
-	return 0;
+	वापस 0;
 
 fail_qinode:
 	iput(sdp->sd_quota_inode);
@@ -913,50 +914,50 @@ fail_rindex:
 fail_journal:
 	init_journal(sdp, UNDO);
 fail:
-	return error;
-}
+	वापस error;
+पूर्ण
 
-static int init_per_node(struct gfs2_sbd *sdp, int undo)
-{
-	struct inode *pn = NULL;
-	char buf[30];
-	int error = 0;
-	struct gfs2_inode *ip;
-	struct inode *master = d_inode(sdp->sd_master_dir);
+अटल पूर्णांक init_per_node(काष्ठा gfs2_sbd *sdp, पूर्णांक unकरो)
+अणु
+	काष्ठा inode *pn = शून्य;
+	अक्षर buf[30];
+	पूर्णांक error = 0;
+	काष्ठा gfs2_inode *ip;
+	काष्ठा inode *master = d_inode(sdp->sd_master_dir);
 
-	if (sdp->sd_args.ar_spectator)
-		return 0;
+	अगर (sdp->sd_args.ar_spectator)
+		वापस 0;
 
-	if (undo)
-		goto fail_qc_gh;
+	अगर (unकरो)
+		जाओ fail_qc_gh;
 
 	pn = gfs2_lookup_simple(master, "per_node");
-	if (IS_ERR(pn)) {
+	अगर (IS_ERR(pn)) अणु
 		error = PTR_ERR(pn);
 		fs_err(sdp, "can't find per_node directory: %d\n", error);
-		return error;
-	}
+		वापस error;
+	पूर्ण
 
-	sprintf(buf, "quota_change%u", sdp->sd_jdesc->jd_jid);
+	प्र_लिखो(buf, "quota_change%u", sdp->sd_jdesc->jd_jid);
 	sdp->sd_qc_inode = gfs2_lookup_simple(pn, buf);
-	if (IS_ERR(sdp->sd_qc_inode)) {
+	अगर (IS_ERR(sdp->sd_qc_inode)) अणु
 		error = PTR_ERR(sdp->sd_qc_inode);
 		fs_err(sdp, "can't find local \"qc\" file: %d\n", error);
-		goto fail_ut_i;
-	}
+		जाओ fail_ut_i;
+	पूर्ण
 
 	iput(pn);
-	pn = NULL;
+	pn = शून्य;
 
 	ip = GFS2_I(sdp->sd_qc_inode);
 	error = gfs2_glock_nq_init(ip->i_gl, LM_ST_EXCLUSIVE, 0,
 				   &sdp->sd_qc_gh);
-	if (error) {
+	अगर (error) अणु
 		fs_err(sdp, "can't lock local \"qc\" file: %d\n", error);
-		goto fail_qc_i;
-	}
+		जाओ fail_qc_i;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 fail_qc_gh:
 	gfs2_glock_dq_uninit(&sdp->sd_qc_gh);
@@ -964,333 +965,333 @@ fail_qc_i:
 	iput(sdp->sd_qc_inode);
 fail_ut_i:
 	iput(pn);
-	return error;
-}
+	वापस error;
+पूर्ण
 
-static const match_table_t nolock_tokens = {
-	{ Opt_jid, "jid=%d", },
-	{ Opt_err, NULL },
-};
+अटल स्थिर match_table_t nolock_tokens = अणु
+	अणु Opt_jid, "jid=%d", पूर्ण,
+	अणु Opt_err, शून्य पूर्ण,
+पूर्ण;
 
-static const struct lm_lockops nolock_ops = {
+अटल स्थिर काष्ठा lm_lockops nolock_ops = अणु
 	.lm_proto_name = "lock_nolock",
-	.lm_put_lock = gfs2_glock_free,
+	.lm_put_lock = gfs2_glock_मुक्त,
 	.lm_tokens = &nolock_tokens,
-};
+पूर्ण;
 
 /**
  * gfs2_lm_mount - mount a locking protocol
- * @sdp: the filesystem
- * @silent: if 1, don't complain if the FS isn't a GFS2 fs
+ * @sdp: the fileप्रणाली
+ * @silent: अगर 1, करोn't complain if the FS isn't a GFS2 fs
  *
- * Returns: errno
+ * Returns: त्रुटि_सं
  */
 
-static int gfs2_lm_mount(struct gfs2_sbd *sdp, int silent)
-{
-	const struct lm_lockops *lm;
-	struct lm_lockstruct *ls = &sdp->sd_lockstruct;
-	struct gfs2_args *args = &sdp->sd_args;
-	const char *proto = sdp->sd_proto_name;
-	const char *table = sdp->sd_table_name;
-	char *o, *options;
-	int ret;
+अटल पूर्णांक gfs2_lm_mount(काष्ठा gfs2_sbd *sdp, पूर्णांक silent)
+अणु
+	स्थिर काष्ठा lm_lockops *lm;
+	काष्ठा lm_lockकाष्ठा *ls = &sdp->sd_lockकाष्ठा;
+	काष्ठा gfs2_args *args = &sdp->sd_args;
+	स्थिर अक्षर *proto = sdp->sd_proto_name;
+	स्थिर अक्षर *table = sdp->sd_table_name;
+	अक्षर *o, *options;
+	पूर्णांक ret;
 
-	if (!strcmp("lock_nolock", proto)) {
+	अगर (!म_भेद("lock_nolock", proto)) अणु
 		lm = &nolock_ops;
 		sdp->sd_args.ar_localflocks = 1;
-#ifdef CONFIG_GFS2_FS_LOCKING_DLM
-	} else if (!strcmp("lock_dlm", proto)) {
+#अगर_घोषित CONFIG_GFS2_FS_LOCKING_DLM
+	पूर्ण अन्यथा अगर (!म_भेद("lock_dlm", proto)) अणु
 		lm = &gfs2_dlm_ops;
-#endif
-	} else {
+#पूर्ण_अगर
+	पूर्ण अन्यथा अणु
 		pr_info("can't find protocol %s\n", proto);
-		return -ENOENT;
-	}
+		वापस -ENOENT;
+	पूर्ण
 
 	fs_info(sdp, "Trying to join cluster \"%s\", \"%s\"\n", proto, table);
 
 	ls->ls_ops = lm;
 	ls->ls_first = 1;
 
-	for (options = args->ar_hostdata; (o = strsep(&options, ":")); ) {
-		substring_t tmp[MAX_OPT_ARGS];
-		int token, option;
+	क्रम (options = args->ar_hostdata; (o = strsep(&options, ":")); ) अणु
+		substring_t पंचांगp[MAX_OPT_ARGS];
+		पूर्णांक token, option;
 
-		if (!o || !*o)
-			continue;
+		अगर (!o || !*o)
+			जारी;
 
-		token = match_token(o, *lm->lm_tokens, tmp);
-		switch (token) {
-		case Opt_jid:
-			ret = match_int(&tmp[0], &option);
-			if (ret || option < 0) 
-				goto hostdata_error;
-			if (test_and_clear_bit(SDF_NOJOURNALID, &sdp->sd_flags))
+		token = match_token(o, *lm->lm_tokens, पंचांगp);
+		चयन (token) अणु
+		हाल Opt_jid:
+			ret = match_पूर्णांक(&पंचांगp[0], &option);
+			अगर (ret || option < 0) 
+				जाओ hostdata_error;
+			अगर (test_and_clear_bit(SDF_NOJOURNALID, &sdp->sd_flags))
 				ls->ls_jid = option;
-			break;
-		case Opt_id:
-		case Opt_nodir:
-			/* Obsolete, but left for backward compat purposes */
-			break;
-		case Opt_first:
-			ret = match_int(&tmp[0], &option);
-			if (ret || (option != 0 && option != 1))
-				goto hostdata_error;
+			अवरोध;
+		हाल Opt_id:
+		हाल Opt_nodir:
+			/* Obsolete, but left क्रम backward compat purposes */
+			अवरोध;
+		हाल Opt_first:
+			ret = match_पूर्णांक(&पंचांगp[0], &option);
+			अगर (ret || (option != 0 && option != 1))
+				जाओ hostdata_error;
 			ls->ls_first = option;
-			break;
-		case Opt_err:
-		default:
+			अवरोध;
+		हाल Opt_err:
+		शेष:
 hostdata_error:
 			fs_info(sdp, "unknown hostdata (%s)\n", o);
-			return -EINVAL;
-		}
-	}
+			वापस -EINVAL;
+		पूर्ण
+	पूर्ण
 
-	if (lm->lm_mount == NULL) {
-		fs_info(sdp, "Now mounting FS (format %u)...\n", sdp->sd_sb.sb_fs_format);
+	अगर (lm->lm_mount == शून्य) अणु
+		fs_info(sdp, "Now mounting FS (format %u)...\n", sdp->sd_sb.sb_fs_क्रमmat);
 		complete_all(&sdp->sd_locking_init);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 	ret = lm->lm_mount(sdp, table);
-	if (ret == 0)
+	अगर (ret == 0)
 		fs_info(sdp, "Joined cluster. Now mounting FS (format %u)...\n",
-		        sdp->sd_sb.sb_fs_format);
+		        sdp->sd_sb.sb_fs_क्रमmat);
 	complete_all(&sdp->sd_locking_init);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-void gfs2_lm_unmount(struct gfs2_sbd *sdp)
-{
-	const struct lm_lockops *lm = sdp->sd_lockstruct.ls_ops;
-	if (likely(!gfs2_withdrawn(sdp)) && lm->lm_unmount)
+व्योम gfs2_lm_unmount(काष्ठा gfs2_sbd *sdp)
+अणु
+	स्थिर काष्ठा lm_lockops *lm = sdp->sd_lockकाष्ठा.ls_ops;
+	अगर (likely(!gfs2_withdrawn(sdp)) && lm->lm_unmount)
 		lm->lm_unmount(sdp);
-}
+पूर्ण
 
-static int wait_on_journal(struct gfs2_sbd *sdp)
-{
-	if (sdp->sd_lockstruct.ls_ops->lm_mount == NULL)
-		return 0;
+अटल पूर्णांक रुको_on_journal(काष्ठा gfs2_sbd *sdp)
+अणु
+	अगर (sdp->sd_lockकाष्ठा.ls_ops->lm_mount == शून्य)
+		वापस 0;
 
-	return wait_on_bit(&sdp->sd_flags, SDF_NOJOURNALID, TASK_INTERRUPTIBLE)
+	वापस रुको_on_bit(&sdp->sd_flags, SDF_NOJOURNALID, TASK_INTERRUPTIBLE)
 		? -EINTR : 0;
-}
+पूर्ण
 
-void gfs2_online_uevent(struct gfs2_sbd *sdp)
-{
-	struct super_block *sb = sdp->sd_vfs;
-	char ro[20];
-	char spectator[20];
-	char *envp[] = { ro, spectator, NULL };
-	sprintf(ro, "RDONLY=%d", sb_rdonly(sb));
-	sprintf(spectator, "SPECTATOR=%d", sdp->sd_args.ar_spectator ? 1 : 0);
+व्योम gfs2_online_uevent(काष्ठा gfs2_sbd *sdp)
+अणु
+	काष्ठा super_block *sb = sdp->sd_vfs;
+	अक्षर ro[20];
+	अक्षर spectator[20];
+	अक्षर *envp[] = अणु ro, spectator, शून्य पूर्ण;
+	प्र_लिखो(ro, "RDONLY=%d", sb_rकरोnly(sb));
+	प्र_लिखो(spectator, "SPECTATOR=%d", sdp->sd_args.ar_spectator ? 1 : 0);
 	kobject_uevent_env(&sdp->sd_kobj, KOBJ_ONLINE, envp);
-}
+पूर्ण
 
 /**
  * gfs2_fill_super - Read in superblock
  * @sb: The VFS superblock
  * @fc: Mount options and flags
  *
- * Returns: -errno
+ * Returns: -त्रुटि_सं
  */
-static int gfs2_fill_super(struct super_block *sb, struct fs_context *fc)
-{
-	struct gfs2_args *args = fc->fs_private;
-	int silent = fc->sb_flags & SB_SILENT;
-	struct gfs2_sbd *sdp;
-	struct gfs2_holder mount_gh;
-	struct gfs2_holder freeze_gh;
-	int error;
+अटल पूर्णांक gfs2_fill_super(काष्ठा super_block *sb, काष्ठा fs_context *fc)
+अणु
+	काष्ठा gfs2_args *args = fc->fs_निजी;
+	पूर्णांक silent = fc->sb_flags & SB_SILENT;
+	काष्ठा gfs2_sbd *sdp;
+	काष्ठा gfs2_holder mount_gh;
+	काष्ठा gfs2_holder मुक्तze_gh;
+	पूर्णांक error;
 
 	sdp = init_sbd(sb);
-	if (!sdp) {
+	अगर (!sdp) अणु
 		pr_warn("can't alloc struct gfs2_sbd\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 	sdp->sd_args = *args;
 
-	if (sdp->sd_args.ar_spectator) {
+	अगर (sdp->sd_args.ar_spectator) अणु
                 sb->s_flags |= SB_RDONLY;
 		set_bit(SDF_RORECOVERY, &sdp->sd_flags);
-	}
-	if (sdp->sd_args.ar_posix_acl)
+	पूर्ण
+	अगर (sdp->sd_args.ar_posix_acl)
 		sb->s_flags |= SB_POSIXACL;
-	if (sdp->sd_args.ar_nobarrier)
+	अगर (sdp->sd_args.ar_nobarrier)
 		set_bit(SDF_NOBARRIERS, &sdp->sd_flags);
 
 	sb->s_flags |= SB_NOSEC;
 	sb->s_magic = GFS2_MAGIC;
 	sb->s_op = &gfs2_super_ops;
-	sb->s_d_op = &gfs2_dops;
+	sb->s_d_op = &gfs2_करोps;
 	sb->s_export_op = &gfs2_export_ops;
 	sb->s_qcop = &gfs2_quotactl_ops;
 	sb->s_quota_types = QTYPE_MASK_USR | QTYPE_MASK_GRP;
-	sb_dqopt(sb)->flags |= DQUOT_QUOTA_SYS_FILE;
-	sb->s_time_gran = 1;
-	sb->s_maxbytes = MAX_LFS_FILESIZE;
+	sb_dqopt(sb)->flags |= DQUOT_QUOTA_SYS_खाता;
+	sb->s_समय_gran = 1;
+	sb->s_maxbytes = MAX_LFS_खाताSIZE;
 
 	/* Set up the buffer cache and fill in some fake block size values
-	   to allow us to read-in the on-disk superblock. */
+	   to allow us to पढ़ो-in the on-disk superblock. */
 	sdp->sd_sb.sb_bsize = sb_min_blocksize(sb, GFS2_BASIC_BLOCK);
-	sdp->sd_sb.sb_bsize_shift = sb->s_blocksize_bits;
-	sdp->sd_fsb2bb_shift = sdp->sd_sb.sb_bsize_shift -
+	sdp->sd_sb.sb_bsize_shअगरt = sb->s_blocksize_bits;
+	sdp->sd_fsb2bb_shअगरt = sdp->sd_sb.sb_bsize_shअगरt -
                                GFS2_BASIC_BLOCK_SHIFT;
-	sdp->sd_fsb2bb = BIT(sdp->sd_fsb2bb_shift);
+	sdp->sd_fsb2bb = BIT(sdp->sd_fsb2bb_shअगरt);
 
 	sdp->sd_tune.gt_logd_secs = sdp->sd_args.ar_commit;
 	sdp->sd_tune.gt_quota_quantum = sdp->sd_args.ar_quota_quantum;
-	if (sdp->sd_args.ar_statfs_quantum) {
+	अगर (sdp->sd_args.ar_statfs_quantum) अणु
 		sdp->sd_tune.gt_statfs_slow = 0;
 		sdp->sd_tune.gt_statfs_quantum = sdp->sd_args.ar_statfs_quantum;
-	} else {
+	पूर्ण अन्यथा अणु
 		sdp->sd_tune.gt_statfs_slow = 1;
 		sdp->sd_tune.gt_statfs_quantum = 30;
-	}
+	पूर्ण
 
 	error = init_names(sdp, silent);
-	if (error)
-		goto fail_free;
+	अगर (error)
+		जाओ fail_मुक्त;
 
-	snprintf(sdp->sd_fsname, sizeof(sdp->sd_fsname), "%s", sdp->sd_table_name);
+	snम_लिखो(sdp->sd_fsname, माप(sdp->sd_fsname), "%s", sdp->sd_table_name);
 
 	error = gfs2_sys_fs_add(sdp);
-	if (error)
-		goto fail_free;
+	अगर (error)
+		जाओ fail_मुक्त;
 
 	gfs2_create_debugfs_file(sdp);
 
 	error = gfs2_lm_mount(sdp, silent);
-	if (error)
-		goto fail_debug;
+	अगर (error)
+		जाओ fail_debug;
 
 	error = init_locking(sdp, &mount_gh, DO);
-	if (error)
-		goto fail_lm;
+	अगर (error)
+		जाओ fail_lm;
 
 	error = init_sb(sdp, silent);
-	if (error)
-		goto fail_locking;
+	अगर (error)
+		जाओ fail_locking;
 
-	/* Turn rgrplvb on by default if fs format is recent enough */
-	if (!sdp->sd_args.ar_got_rgrplvb && sdp->sd_sb.sb_fs_format > 1801)
+	/* Turn rgrplvb on by शेष अगर fs क्रमmat is recent enough */
+	अगर (!sdp->sd_args.ar_got_rgrplvb && sdp->sd_sb.sb_fs_क्रमmat > 1801)
 		sdp->sd_args.ar_rgrplvb = 1;
 
-	error = wait_on_journal(sdp);
-	if (error)
-		goto fail_sb;
+	error = रुको_on_journal(sdp);
+	अगर (error)
+		जाओ fail_sb;
 
 	/*
 	 * If user space has failed to join the cluster or some similar
 	 * failure has occurred, then the journal id will contain a
-	 * negative (error) number. This will then be returned to the
-	 * caller (of the mount syscall). We do this even for spectator
-	 * mounts (which just write a jid of 0 to indicate "ok" even though
-	 * the jid is unused in the spectator case)
+	 * negative (error) number. This will then be वापसed to the
+	 * caller (of the mount syscall). We करो this even क्रम spectator
+	 * mounts (which just ग_लिखो a jid of 0 to indicate "ok" even though
+	 * the jid is unused in the spectator हाल)
 	 */
-	if (sdp->sd_lockstruct.ls_jid < 0) {
-		error = sdp->sd_lockstruct.ls_jid;
-		sdp->sd_lockstruct.ls_jid = 0;
-		goto fail_sb;
-	}
+	अगर (sdp->sd_lockकाष्ठा.ls_jid < 0) अणु
+		error = sdp->sd_lockकाष्ठा.ls_jid;
+		sdp->sd_lockकाष्ठा.ls_jid = 0;
+		जाओ fail_sb;
+	पूर्ण
 
-	if (sdp->sd_args.ar_spectator)
-		snprintf(sdp->sd_fsname, sizeof(sdp->sd_fsname), "%s.s",
+	अगर (sdp->sd_args.ar_spectator)
+		snम_लिखो(sdp->sd_fsname, माप(sdp->sd_fsname), "%s.s",
 			 sdp->sd_table_name);
-	else
-		snprintf(sdp->sd_fsname, sizeof(sdp->sd_fsname), "%s.%u",
-			 sdp->sd_table_name, sdp->sd_lockstruct.ls_jid);
+	अन्यथा
+		snम_लिखो(sdp->sd_fsname, माप(sdp->sd_fsname), "%s.%u",
+			 sdp->sd_table_name, sdp->sd_lockकाष्ठा.ls_jid);
 
 	error = init_inodes(sdp, DO);
-	if (error)
-		goto fail_sb;
+	अगर (error)
+		जाओ fail_sb;
 
 	error = init_per_node(sdp, DO);
-	if (error)
-		goto fail_inodes;
+	अगर (error)
+		जाओ fail_inodes;
 
 	error = gfs2_statfs_init(sdp);
-	if (error) {
+	अगर (error) अणु
 		fs_err(sdp, "can't initialize statfs subsystem: %d\n", error);
-		goto fail_per_node;
-	}
+		जाओ fail_per_node;
+	पूर्ण
 
-	error = gfs2_freeze_lock(sdp, &freeze_gh, 0);
-	if (error)
-		goto fail_per_node;
+	error = gfs2_मुक्तze_lock(sdp, &मुक्तze_gh, 0);
+	अगर (error)
+		जाओ fail_per_node;
 
-	if (!sb_rdonly(sb))
+	अगर (!sb_rकरोnly(sb))
 		error = gfs2_make_fs_rw(sdp);
 
-	gfs2_freeze_unlock(&freeze_gh);
-	if (error) {
+	gfs2_मुक्तze_unlock(&मुक्तze_gh);
+	अगर (error) अणु
 		fs_err(sdp, "can't make FS RW: %d\n", error);
-		goto fail_per_node;
-	}
+		जाओ fail_per_node;
+	पूर्ण
 	gfs2_glock_dq_uninit(&mount_gh);
 	gfs2_online_uevent(sdp);
-	return 0;
+	वापस 0;
 
 fail_per_node:
 	init_per_node(sdp, UNDO);
 fail_inodes:
 	init_inodes(sdp, UNDO);
 fail_sb:
-	if (sdp->sd_root_dir)
+	अगर (sdp->sd_root_dir)
 		dput(sdp->sd_root_dir);
-	if (sdp->sd_master_dir)
+	अगर (sdp->sd_master_dir)
 		dput(sdp->sd_master_dir);
-	if (sb->s_root)
+	अगर (sb->s_root)
 		dput(sb->s_root);
-	sb->s_root = NULL;
+	sb->s_root = शून्य;
 fail_locking:
 	init_locking(sdp, &mount_gh, UNDO);
 fail_lm:
-	complete_all(&sdp->sd_journal_ready);
+	complete_all(&sdp->sd_journal_पढ़ोy);
 	gfs2_gl_hash_clear(sdp);
 	gfs2_lm_unmount(sdp);
 fail_debug:
 	gfs2_delete_debugfs_file(sdp);
 	gfs2_sys_fs_del(sdp);
-fail_free:
-	free_sbd(sdp);
-	sb->s_fs_info = NULL;
-	return error;
-}
+fail_मुक्त:
+	मुक्त_sbd(sdp);
+	sb->s_fs_info = शून्य;
+	वापस error;
+पूर्ण
 
 /**
  * gfs2_get_tree - Get the GFS2 superblock and root directory
- * @fc: The filesystem context
+ * @fc: The fileप्रणाली context
  *
- * Returns: 0 or -errno on error
+ * Returns: 0 or -त्रुटि_सं on error
  */
-static int gfs2_get_tree(struct fs_context *fc)
-{
-	struct gfs2_args *args = fc->fs_private;
-	struct gfs2_sbd *sdp;
-	int error;
+अटल पूर्णांक gfs2_get_tree(काष्ठा fs_context *fc)
+अणु
+	काष्ठा gfs2_args *args = fc->fs_निजी;
+	काष्ठा gfs2_sbd *sdp;
+	पूर्णांक error;
 
 	error = get_tree_bdev(fc, gfs2_fill_super);
-	if (error)
-		return error;
+	अगर (error)
+		वापस error;
 
 	sdp = fc->root->d_sb->s_fs_info;
 	dput(fc->root);
-	if (args->ar_meta)
+	अगर (args->ar_meta)
 		fc->root = dget(sdp->sd_master_dir);
-	else
+	अन्यथा
 		fc->root = dget(sdp->sd_root_dir);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void gfs2_fc_free(struct fs_context *fc)
-{
-	struct gfs2_args *args = fc->fs_private;
+अटल व्योम gfs2_fc_मुक्त(काष्ठा fs_context *fc)
+अणु
+	काष्ठा gfs2_args *args = fc->fs_निजी;
 
-	kfree(args);
-}
+	kमुक्त(args);
+पूर्ण
 
-enum gfs2_param {
+क्रमागत gfs2_param अणु
 	Opt_lockproto,
 	Opt_locktable,
 	Opt_hostdata,
@@ -1315,38 +1316,38 @@ enum gfs2_param {
 	Opt_barrier,
 	Opt_rgrplvb,
 	Opt_loccookie,
-};
+पूर्ण;
 
-static const struct constant_table gfs2_param_quota[] = {
-	{"off",        GFS2_QUOTA_OFF},
-	{"account",    GFS2_QUOTA_ACCOUNT},
-	{"on",         GFS2_QUOTA_ON},
-	{}
-};
+अटल स्थिर काष्ठा स्थिरant_table gfs2_param_quota[] = अणु
+	अणु"off",        GFS2_QUOTA_OFFपूर्ण,
+	अणु"account",    GFS2_QUOTA_ACCOUNTपूर्ण,
+	अणु"on",         GFS2_QUOTA_ONपूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
-enum opt_data {
-	Opt_data_writeback = GFS2_DATA_WRITEBACK,
+क्रमागत opt_data अणु
+	Opt_data_ग_लिखोback = GFS2_DATA_WRITEBACK,
 	Opt_data_ordered   = GFS2_DATA_ORDERED,
-};
+पूर्ण;
 
-static const struct constant_table gfs2_param_data[] = {
-	{"writeback",  Opt_data_writeback },
-	{"ordered",    Opt_data_ordered },
-	{}
-};
+अटल स्थिर काष्ठा स्थिरant_table gfs2_param_data[] = अणु
+	अणु"writeback",  Opt_data_ग_लिखोback पूर्ण,
+	अणु"ordered",    Opt_data_ordered पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
-enum opt_errors {
+क्रमागत opt_errors अणु
 	Opt_errors_withdraw = GFS2_ERRORS_WITHDRAW,
 	Opt_errors_panic    = GFS2_ERRORS_PANIC,
-};
+पूर्ण;
 
-static const struct constant_table gfs2_param_errors[] = {
-	{"withdraw",   Opt_errors_withdraw },
-	{"panic",      Opt_errors_panic },
-	{}
-};
+अटल स्थिर काष्ठा स्थिरant_table gfs2_param_errors[] = अणु
+	अणु"withdraw",   Opt_errors_withdraw पूर्ण,
+	अणु"panic",      Opt_errors_panic पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
-static const struct fs_parameter_spec gfs2_fs_parameters[] = {
+अटल स्थिर काष्ठा fs_parameter_spec gfs2_fs_parameters[] = अणु
 	fsparam_string ("lockproto",          Opt_lockproto),
 	fsparam_string ("locktable",          Opt_locktable),
 	fsparam_string ("hostdata",           Opt_hostdata),
@@ -1359,342 +1360,342 @@ static const struct fs_parameter_spec gfs2_fs_parameters[] = {
 	fsparam_flag   ("upgrade",            Opt_upgrade),
 	fsparam_flag_no("acl",                Opt_acl),
 	fsparam_flag_no("suiddir",            Opt_suiddir),
-	fsparam_enum   ("data",               Opt_data, gfs2_param_data),
+	fsparam_क्रमागत   ("data",               Opt_data, gfs2_param_data),
 	fsparam_flag   ("meta",               Opt_meta),
 	fsparam_flag_no("discard",            Opt_discard),
 	fsparam_s32    ("commit",             Opt_commit),
-	fsparam_enum   ("errors",             Opt_errors, gfs2_param_errors),
+	fsparam_क्रमागत   ("errors",             Opt_errors, gfs2_param_errors),
 	fsparam_s32    ("statfs_quantum",     Opt_statfs_quantum),
 	fsparam_s32    ("statfs_percent",     Opt_statfs_percent),
 	fsparam_s32    ("quota_quantum",      Opt_quota_quantum),
 	fsparam_flag_no("barrier",            Opt_barrier),
 	fsparam_flag_no("rgrplvb",            Opt_rgrplvb),
 	fsparam_flag_no("loccookie",          Opt_loccookie),
-	/* quota can be a flag or an enum so it gets special treatment */
+	/* quota can be a flag or an क्रमागत so it माला_लो special treaपंचांगent */
 	fsparam_flag_no("quota",	      Opt_quota_flag),
-	fsparam_enum("quota",		      Opt_quota, gfs2_param_quota),
-	{}
-};
+	fsparam_क्रमागत("quota",		      Opt_quota, gfs2_param_quota),
+	अणुपूर्ण
+पूर्ण;
 
 /* Parse a single mount parameter */
-static int gfs2_parse_param(struct fs_context *fc, struct fs_parameter *param)
-{
-	struct gfs2_args *args = fc->fs_private;
-	struct fs_parse_result result;
-	int o;
+अटल पूर्णांक gfs2_parse_param(काष्ठा fs_context *fc, काष्ठा fs_parameter *param)
+अणु
+	काष्ठा gfs2_args *args = fc->fs_निजी;
+	काष्ठा fs_parse_result result;
+	पूर्णांक o;
 
 	o = fs_parse(fc, gfs2_fs_parameters, param, &result);
-	if (o < 0)
-		return o;
+	अगर (o < 0)
+		वापस o;
 
-	switch (o) {
-	case Opt_lockproto:
+	चयन (o) अणु
+	हाल Opt_lockproto:
 		strlcpy(args->ar_lockproto, param->string, GFS2_LOCKNAME_LEN);
-		break;
-	case Opt_locktable:
+		अवरोध;
+	हाल Opt_locktable:
 		strlcpy(args->ar_locktable, param->string, GFS2_LOCKNAME_LEN);
-		break;
-	case Opt_hostdata:
+		अवरोध;
+	हाल Opt_hostdata:
 		strlcpy(args->ar_hostdata, param->string, GFS2_LOCKNAME_LEN);
-		break;
-	case Opt_spectator:
+		अवरोध;
+	हाल Opt_spectator:
 		args->ar_spectator = 1;
-		break;
-	case Opt_ignore_local_fs:
-		/* Retained for backwards compat only */
-		break;
-	case Opt_localflocks:
+		अवरोध;
+	हाल Opt_ignore_local_fs:
+		/* Retained क्रम backwards compat only */
+		अवरोध;
+	हाल Opt_localflocks:
 		args->ar_localflocks = 1;
-		break;
-	case Opt_localcaching:
-		/* Retained for backwards compat only */
-		break;
-	case Opt_debug:
-		if (result.boolean && args->ar_errors == GFS2_ERRORS_PANIC)
-			return invalfc(fc, "-o debug and -o errors=panic are mutually exclusive");
+		अवरोध;
+	हाल Opt_localcaching:
+		/* Retained क्रम backwards compat only */
+		अवरोध;
+	हाल Opt_debug:
+		अगर (result.boolean && args->ar_errors == GFS2_ERRORS_PANIC)
+			वापस invalfc(fc, "-o debug and -o errors=panic are mutually exclusive");
 		args->ar_debug = result.boolean;
-		break;
-	case Opt_upgrade:
-		/* Retained for backwards compat only */
-		break;
-	case Opt_acl:
+		अवरोध;
+	हाल Opt_upgrade:
+		/* Retained क्रम backwards compat only */
+		अवरोध;
+	हाल Opt_acl:
 		args->ar_posix_acl = result.boolean;
-		break;
-	case Opt_quota_flag:
+		अवरोध;
+	हाल Opt_quota_flag:
 		args->ar_quota = result.negated ? GFS2_QUOTA_OFF : GFS2_QUOTA_ON;
-		break;
-	case Opt_quota:
-		args->ar_quota = result.int_32;
-		break;
-	case Opt_suiddir:
+		अवरोध;
+	हाल Opt_quota:
+		args->ar_quota = result.पूर्णांक_32;
+		अवरोध;
+	हाल Opt_suiddir:
 		args->ar_suiddir = result.boolean;
-		break;
-	case Opt_data:
-		/* The uint_32 result maps directly to GFS2_DATA_* */
-		args->ar_data = result.uint_32;
-		break;
-	case Opt_meta:
+		अवरोध;
+	हाल Opt_data:
+		/* The uपूर्णांक_32 result maps directly to GFS2_DATA_* */
+		args->ar_data = result.uपूर्णांक_32;
+		अवरोध;
+	हाल Opt_meta:
 		args->ar_meta = 1;
-		break;
-	case Opt_discard:
+		अवरोध;
+	हाल Opt_discard:
 		args->ar_discard = result.boolean;
-		break;
-	case Opt_commit:
-		if (result.int_32 <= 0)
-			return invalfc(fc, "commit mount option requires a positive numeric argument");
-		args->ar_commit = result.int_32;
-		break;
-	case Opt_statfs_quantum:
-		if (result.int_32 < 0)
-			return invalfc(fc, "statfs_quantum mount option requires a non-negative numeric argument");
-		args->ar_statfs_quantum = result.int_32;
-		break;
-	case Opt_quota_quantum:
-		if (result.int_32 <= 0)
-			return invalfc(fc, "quota_quantum mount option requires a positive numeric argument");
-		args->ar_quota_quantum = result.int_32;
-		break;
-	case Opt_statfs_percent:
-		if (result.int_32 < 0 || result.int_32 > 100)
-			return invalfc(fc, "statfs_percent mount option requires a numeric argument between 0 and 100");
-		args->ar_statfs_percent = result.int_32;
-		break;
-	case Opt_errors:
-		if (args->ar_debug && result.uint_32 == GFS2_ERRORS_PANIC)
-			return invalfc(fc, "-o debug and -o errors=panic are mutually exclusive");
-		args->ar_errors = result.uint_32;
-		break;
-	case Opt_barrier:
+		अवरोध;
+	हाल Opt_commit:
+		अगर (result.पूर्णांक_32 <= 0)
+			वापस invalfc(fc, "commit mount option requires a positive numeric argument");
+		args->ar_commit = result.पूर्णांक_32;
+		अवरोध;
+	हाल Opt_statfs_quantum:
+		अगर (result.पूर्णांक_32 < 0)
+			वापस invalfc(fc, "statfs_quantum mount option requires a non-negative numeric argument");
+		args->ar_statfs_quantum = result.पूर्णांक_32;
+		अवरोध;
+	हाल Opt_quota_quantum:
+		अगर (result.पूर्णांक_32 <= 0)
+			वापस invalfc(fc, "quota_quantum mount option requires a positive numeric argument");
+		args->ar_quota_quantum = result.पूर्णांक_32;
+		अवरोध;
+	हाल Opt_statfs_percent:
+		अगर (result.पूर्णांक_32 < 0 || result.पूर्णांक_32 > 100)
+			वापस invalfc(fc, "statfs_percent mount option requires a numeric argument between 0 and 100");
+		args->ar_statfs_percent = result.पूर्णांक_32;
+		अवरोध;
+	हाल Opt_errors:
+		अगर (args->ar_debug && result.uपूर्णांक_32 == GFS2_ERRORS_PANIC)
+			वापस invalfc(fc, "-o debug and -o errors=panic are mutually exclusive");
+		args->ar_errors = result.uपूर्णांक_32;
+		अवरोध;
+	हाल Opt_barrier:
 		args->ar_nobarrier = result.boolean;
-		break;
-	case Opt_rgrplvb:
+		अवरोध;
+	हाल Opt_rgrplvb:
 		args->ar_rgrplvb = result.boolean;
 		args->ar_got_rgrplvb = 1;
-		break;
-	case Opt_loccookie:
+		अवरोध;
+	हाल Opt_loccookie:
 		args->ar_loccookie = result.boolean;
-		break;
-	default:
-		return invalfc(fc, "invalid mount option: %s", param->key);
-	}
-	return 0;
-}
+		अवरोध;
+	शेष:
+		वापस invalfc(fc, "invalid mount option: %s", param->key);
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int gfs2_reconfigure(struct fs_context *fc)
-{
-	struct super_block *sb = fc->root->d_sb;
-	struct gfs2_sbd *sdp = sb->s_fs_info;
-	struct gfs2_args *oldargs = &sdp->sd_args;
-	struct gfs2_args *newargs = fc->fs_private;
-	struct gfs2_tune *gt = &sdp->sd_tune;
-	int error = 0;
+अटल पूर्णांक gfs2_reconfigure(काष्ठा fs_context *fc)
+अणु
+	काष्ठा super_block *sb = fc->root->d_sb;
+	काष्ठा gfs2_sbd *sdp = sb->s_fs_info;
+	काष्ठा gfs2_args *oldargs = &sdp->sd_args;
+	काष्ठा gfs2_args *newargs = fc->fs_निजी;
+	काष्ठा gfs2_tune *gt = &sdp->sd_tune;
+	पूर्णांक error = 0;
 
-	sync_filesystem(sb);
+	sync_fileप्रणाली(sb);
 
 	spin_lock(&gt->gt_spin);
 	oldargs->ar_commit = gt->gt_logd_secs;
 	oldargs->ar_quota_quantum = gt->gt_quota_quantum;
-	if (gt->gt_statfs_slow)
+	अगर (gt->gt_statfs_slow)
 		oldargs->ar_statfs_quantum = 0;
-	else
+	अन्यथा
 		oldargs->ar_statfs_quantum = gt->gt_statfs_quantum;
 	spin_unlock(&gt->gt_spin);
 
-	if (strcmp(newargs->ar_lockproto, oldargs->ar_lockproto)) {
+	अगर (म_भेद(newargs->ar_lockproto, oldargs->ar_lockproto)) अणु
 		errorfc(fc, "reconfiguration of locking protocol not allowed");
-		return -EINVAL;
-	}
-	if (strcmp(newargs->ar_locktable, oldargs->ar_locktable)) {
+		वापस -EINVAL;
+	पूर्ण
+	अगर (म_भेद(newargs->ar_locktable, oldargs->ar_locktable)) अणु
 		errorfc(fc, "reconfiguration of lock table not allowed");
-		return -EINVAL;
-	}
-	if (strcmp(newargs->ar_hostdata, oldargs->ar_hostdata)) {
+		वापस -EINVAL;
+	पूर्ण
+	अगर (म_भेद(newargs->ar_hostdata, oldargs->ar_hostdata)) अणु
 		errorfc(fc, "reconfiguration of host data not allowed");
-		return -EINVAL;
-	}
-	if (newargs->ar_spectator != oldargs->ar_spectator) {
+		वापस -EINVAL;
+	पूर्ण
+	अगर (newargs->ar_spectator != oldargs->ar_spectator) अणु
 		errorfc(fc, "reconfiguration of spectator mode not allowed");
-		return -EINVAL;
-	}
-	if (newargs->ar_localflocks != oldargs->ar_localflocks) {
+		वापस -EINVAL;
+	पूर्ण
+	अगर (newargs->ar_localflocks != oldargs->ar_localflocks) अणु
 		errorfc(fc, "reconfiguration of localflocks not allowed");
-		return -EINVAL;
-	}
-	if (newargs->ar_meta != oldargs->ar_meta) {
+		वापस -EINVAL;
+	पूर्ण
+	अगर (newargs->ar_meta != oldargs->ar_meta) अणु
 		errorfc(fc, "switching between gfs2 and gfs2meta not allowed");
-		return -EINVAL;
-	}
-	if (oldargs->ar_spectator)
+		वापस -EINVAL;
+	पूर्ण
+	अगर (oldargs->ar_spectator)
 		fc->sb_flags |= SB_RDONLY;
 
-	if ((sb->s_flags ^ fc->sb_flags) & SB_RDONLY) {
-		struct gfs2_holder freeze_gh;
+	अगर ((sb->s_flags ^ fc->sb_flags) & SB_RDONLY) अणु
+		काष्ठा gfs2_holder मुक्तze_gh;
 
-		error = gfs2_freeze_lock(sdp, &freeze_gh, 0);
-		if (error)
-			return -EINVAL;
+		error = gfs2_मुक्तze_lock(sdp, &मुक्तze_gh, 0);
+		अगर (error)
+			वापस -EINVAL;
 
-		if (fc->sb_flags & SB_RDONLY) {
+		अगर (fc->sb_flags & SB_RDONLY) अणु
 			gfs2_make_fs_ro(sdp);
-		} else {
+		पूर्ण अन्यथा अणु
 			error = gfs2_make_fs_rw(sdp);
-			if (error)
+			अगर (error)
 				errorfc(fc, "unable to remount read-write");
-		}
-		gfs2_freeze_unlock(&freeze_gh);
-	}
+		पूर्ण
+		gfs2_मुक्तze_unlock(&मुक्तze_gh);
+	पूर्ण
 	sdp->sd_args = *newargs;
 
-	if (sdp->sd_args.ar_posix_acl)
+	अगर (sdp->sd_args.ar_posix_acl)
 		sb->s_flags |= SB_POSIXACL;
-	else
+	अन्यथा
 		sb->s_flags &= ~SB_POSIXACL;
-	if (sdp->sd_args.ar_nobarrier)
+	अगर (sdp->sd_args.ar_nobarrier)
 		set_bit(SDF_NOBARRIERS, &sdp->sd_flags);
-	else
+	अन्यथा
 		clear_bit(SDF_NOBARRIERS, &sdp->sd_flags);
 	spin_lock(&gt->gt_spin);
 	gt->gt_logd_secs = newargs->ar_commit;
 	gt->gt_quota_quantum = newargs->ar_quota_quantum;
-	if (newargs->ar_statfs_quantum) {
+	अगर (newargs->ar_statfs_quantum) अणु
 		gt->gt_statfs_slow = 0;
 		gt->gt_statfs_quantum = newargs->ar_statfs_quantum;
-	}
-	else {
+	पूर्ण
+	अन्यथा अणु
 		gt->gt_statfs_slow = 1;
 		gt->gt_statfs_quantum = 30;
-	}
+	पूर्ण
 	spin_unlock(&gt->gt_spin);
 
 	gfs2_online_uevent(sdp);
-	return error;
-}
+	वापस error;
+पूर्ण
 
-static const struct fs_context_operations gfs2_context_ops = {
-	.free        = gfs2_fc_free,
+अटल स्थिर काष्ठा fs_context_operations gfs2_context_ops = अणु
+	.मुक्त        = gfs2_fc_मुक्त,
 	.parse_param = gfs2_parse_param,
 	.get_tree    = gfs2_get_tree,
 	.reconfigure = gfs2_reconfigure,
-};
+पूर्ण;
 
-/* Set up the filesystem mount context */
-static int gfs2_init_fs_context(struct fs_context *fc)
-{
-	struct gfs2_args *args;
+/* Set up the fileप्रणाली mount context */
+अटल पूर्णांक gfs2_init_fs_context(काष्ठा fs_context *fc)
+अणु
+	काष्ठा gfs2_args *args;
 
-	args = kmalloc(sizeof(*args), GFP_KERNEL);
-	if (args == NULL)
-		return -ENOMEM;
+	args = kदो_स्मृति(माप(*args), GFP_KERNEL);
+	अगर (args == शून्य)
+		वापस -ENOMEM;
 
-	if (fc->purpose == FS_CONTEXT_FOR_RECONFIGURE) {
-		struct gfs2_sbd *sdp = fc->root->d_sb->s_fs_info;
+	अगर (fc->purpose == FS_CONTEXT_FOR_RECONFIGURE) अणु
+		काष्ठा gfs2_sbd *sdp = fc->root->d_sb->s_fs_info;
 
 		*args = sdp->sd_args;
-	} else {
-		memset(args, 0, sizeof(*args));
+	पूर्ण अन्यथा अणु
+		स_रखो(args, 0, माप(*args));
 		args->ar_quota = GFS2_QUOTA_DEFAULT;
 		args->ar_data = GFS2_DATA_DEFAULT;
 		args->ar_commit = 30;
 		args->ar_statfs_quantum = 30;
 		args->ar_quota_quantum = 60;
 		args->ar_errors = GFS2_ERRORS_DEFAULT;
-	}
-	fc->fs_private = args;
+	पूर्ण
+	fc->fs_निजी = args;
 	fc->ops = &gfs2_context_ops;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int set_meta_super(struct super_block *s, struct fs_context *fc)
-{
-	return -EINVAL;
-}
+अटल पूर्णांक set_meta_super(काष्ठा super_block *s, काष्ठा fs_context *fc)
+अणु
+	वापस -EINVAL;
+पूर्ण
 
-static int test_meta_super(struct super_block *s, struct fs_context *fc)
-{
-	return (fc->sget_key == s->s_bdev);
-}
+अटल पूर्णांक test_meta_super(काष्ठा super_block *s, काष्ठा fs_context *fc)
+अणु
+	वापस (fc->sget_key == s->s_bdev);
+पूर्ण
 
-static int gfs2_meta_get_tree(struct fs_context *fc)
-{
-	struct super_block *s;
-	struct gfs2_sbd *sdp;
-	struct path path;
-	int error;
+अटल पूर्णांक gfs2_meta_get_tree(काष्ठा fs_context *fc)
+अणु
+	काष्ठा super_block *s;
+	काष्ठा gfs2_sbd *sdp;
+	काष्ठा path path;
+	पूर्णांक error;
 
-	if (!fc->source || !*fc->source)
-		return -EINVAL;
+	अगर (!fc->source || !*fc->source)
+		वापस -EINVAL;
 
 	error = kern_path(fc->source, LOOKUP_FOLLOW, &path);
-	if (error) {
+	अगर (error) अणु
 		pr_warn("path_lookup on %s returned error %d\n",
 		        fc->source, error);
-		return error;
-	}
+		वापस error;
+	पूर्ण
 	fc->fs_type = &gfs2_fs_type;
 	fc->sget_key = path.dentry->d_sb->s_bdev;
 	s = sget_fc(fc, test_meta_super, set_meta_super);
 	path_put(&path);
-	if (IS_ERR(s)) {
+	अगर (IS_ERR(s)) अणु
 		pr_warn("gfs2 mount does not exist\n");
-		return PTR_ERR(s);
-	}
-	if ((fc->sb_flags ^ s->s_flags) & SB_RDONLY) {
+		वापस PTR_ERR(s);
+	पूर्ण
+	अगर ((fc->sb_flags ^ s->s_flags) & SB_RDONLY) अणु
 		deactivate_locked_super(s);
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 	sdp = s->s_fs_info;
 	fc->root = dget(sdp->sd_master_dir);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct fs_context_operations gfs2_meta_context_ops = {
-	.free        = gfs2_fc_free,
+अटल स्थिर काष्ठा fs_context_operations gfs2_meta_context_ops = अणु
+	.मुक्त        = gfs2_fc_मुक्त,
 	.get_tree    = gfs2_meta_get_tree,
-};
+पूर्ण;
 
-static int gfs2_meta_init_fs_context(struct fs_context *fc)
-{
-	int ret = gfs2_init_fs_context(fc);
+अटल पूर्णांक gfs2_meta_init_fs_context(काष्ठा fs_context *fc)
+अणु
+	पूर्णांक ret = gfs2_init_fs_context(fc);
 
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	fc->ops = &gfs2_meta_context_ops;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void gfs2_kill_sb(struct super_block *sb)
-{
-	struct gfs2_sbd *sdp = sb->s_fs_info;
+अटल व्योम gfs2_समाप्त_sb(काष्ठा super_block *sb)
+अणु
+	काष्ठा gfs2_sbd *sdp = sb->s_fs_info;
 
-	if (sdp == NULL) {
-		kill_block_super(sb);
-		return;
-	}
+	अगर (sdp == शून्य) अणु
+		समाप्त_block_super(sb);
+		वापस;
+	पूर्ण
 
-	gfs2_log_flush(sdp, NULL, GFS2_LOG_HEAD_FLUSH_SYNC | GFS2_LFC_KILL_SB);
+	gfs2_log_flush(sdp, शून्य, GFS2_LOG_HEAD_FLUSH_SYNC | GFS2_LFC_KILL_SB);
 	dput(sdp->sd_root_dir);
 	dput(sdp->sd_master_dir);
-	sdp->sd_root_dir = NULL;
-	sdp->sd_master_dir = NULL;
+	sdp->sd_root_dir = शून्य;
+	sdp->sd_master_dir = शून्य;
 	shrink_dcache_sb(sb);
-	kill_block_super(sb);
-}
+	समाप्त_block_super(sb);
+पूर्ण
 
-struct file_system_type gfs2_fs_type = {
+काष्ठा file_प्रणाली_type gfs2_fs_type = अणु
 	.name = "gfs2",
 	.fs_flags = FS_REQUIRES_DEV,
 	.init_fs_context = gfs2_init_fs_context,
 	.parameters = gfs2_fs_parameters,
-	.kill_sb = gfs2_kill_sb,
+	.समाप्त_sb = gfs2_समाप्त_sb,
 	.owner = THIS_MODULE,
-};
+पूर्ण;
 MODULE_ALIAS_FS("gfs2");
 
-struct file_system_type gfs2meta_fs_type = {
+काष्ठा file_प्रणाली_type gfs2meta_fs_type = अणु
 	.name = "gfs2meta",
 	.fs_flags = FS_REQUIRES_DEV,
 	.init_fs_context = gfs2_meta_init_fs_context,
 	.owner = THIS_MODULE,
-};
+पूर्ण;
 MODULE_ALIAS_FS("gfs2meta");

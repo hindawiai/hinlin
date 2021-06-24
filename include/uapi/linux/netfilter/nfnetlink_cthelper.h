@@ -1,18 +1,19 @@
-/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
-#ifndef _NFNL_CTHELPER_H_
-#define _NFNL_CTHELPER_H_
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
+#अगर_अघोषित _NFNL_CTHELPER_H_
+#घोषणा _NFNL_CTHELPER_H_
 
-#define NFCT_HELPER_STATUS_DISABLED	0
-#define NFCT_HELPER_STATUS_ENABLED	1
+#घोषणा NFCT_HELPER_STATUS_DISABLED	0
+#घोषणा NFCT_HELPER_STATUS_ENABLED	1
 
-enum nfnl_cthelper_msg_types {
+क्रमागत nfnl_cthelper_msg_types अणु
 	NFNL_MSG_CTHELPER_NEW,
 	NFNL_MSG_CTHELPER_GET,
 	NFNL_MSG_CTHELPER_DEL,
 	NFNL_MSG_CTHELPER_MAX
-};
+पूर्ण;
 
-enum nfnl_cthelper_type {
+क्रमागत nfnl_cthelper_type अणु
 	NFCTH_UNSPEC,
 	NFCTH_NAME,
 	NFCTH_TUPLE,
@@ -21,10 +22,10 @@ enum nfnl_cthelper_type {
 	NFCTH_PRIV_DATA_LEN,
 	NFCTH_STATUS,
 	__NFCTH_MAX
-};
-#define NFCTH_MAX (__NFCTH_MAX - 1)
+पूर्ण;
+#घोषणा NFCTH_MAX (__NFCTH_MAX - 1)
 
-enum nfnl_cthelper_policy_type {
+क्रमागत nfnl_cthelper_policy_type अणु
 	NFCTH_POLICY_SET_UNSPEC,
 	NFCTH_POLICY_SET_NUM,
 	NFCTH_POLICY_SET,
@@ -33,24 +34,24 @@ enum nfnl_cthelper_policy_type {
 	NFCTH_POLICY_SET3,
 	NFCTH_POLICY_SET4,
 	__NFCTH_POLICY_SET_MAX
-};
-#define NFCTH_POLICY_SET_MAX (__NFCTH_POLICY_SET_MAX - 1)
+पूर्ण;
+#घोषणा NFCTH_POLICY_SET_MAX (__NFCTH_POLICY_SET_MAX - 1)
 
-enum nfnl_cthelper_pol_type {
+क्रमागत nfnl_cthelper_pol_type अणु
 	NFCTH_POLICY_UNSPEC,
 	NFCTH_POLICY_NAME,
 	NFCTH_POLICY_EXPECT_MAX,
 	NFCTH_POLICY_EXPECT_TIMEOUT,
 	__NFCTH_POLICY_MAX
-};
-#define NFCTH_POLICY_MAX (__NFCTH_POLICY_MAX - 1)
+पूर्ण;
+#घोषणा NFCTH_POLICY_MAX (__NFCTH_POLICY_MAX - 1)
 
-enum nfnl_cthelper_tuple_type {
+क्रमागत nfnl_cthelper_tuple_type अणु
 	NFCTH_TUPLE_UNSPEC,
 	NFCTH_TUPLE_L3PROTONUM,
 	NFCTH_TUPLE_L4PROTONUM,
 	__NFCTH_TUPLE_MAX,
-};
-#define NFCTH_TUPLE_MAX (__NFCTH_TUPLE_MAX - 1)
+पूर्ण;
+#घोषणा NFCTH_TUPLE_MAX (__NFCTH_TUPLE_MAX - 1)
 
-#endif /* _NFNL_CTHELPER_H */
+#पूर्ण_अगर /* _NFNL_CTHELPER_H */

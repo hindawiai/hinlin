@@ -1,189 +1,190 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * I2C Link Layer for Samsung S3FWRN5 NCI based Driver
+ * I2C Link Layer क्रम Samsung S3FWRN5 NCI based Driver
  *
  * Copyright (C) 2015 Samsung Electrnoics
  * Robert Baldyga <r.baldyga@samsung.com>
  */
 
-#include <linux/i2c.h>
-#include <linux/gpio.h>
-#include <linux/delay.h>
-#include <linux/of_gpio.h>
-#include <linux/of_irq.h>
-#include <linux/module.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/gpपन.स>
+#समावेश <linux/delay.h>
+#समावेश <linux/of_gpपन.स>
+#समावेश <linux/of_irq.h>
+#समावेश <linux/module.h>
 
-#include <net/nfc/nfc.h>
+#समावेश <net/nfc/nfc.h>
 
-#include "phy_common.h"
+#समावेश "phy_common.h"
 
-#define S3FWRN5_I2C_DRIVER_NAME "s3fwrn5_i2c"
+#घोषणा S3FWRN5_I2C_DRIVER_NAME "s3fwrn5_i2c"
 
-struct s3fwrn5_i2c_phy {
-	struct phy_common common;
-	struct i2c_client *i2c_dev;
+काष्ठा s3fwrn5_i2c_phy अणु
+	काष्ठा phy_common common;
+	काष्ठा i2c_client *i2c_dev;
 
-	unsigned int irq_skip:1;
-};
+	अचिन्हित पूर्णांक irq_skip:1;
+पूर्ण;
 
-static void s3fwrn5_i2c_set_mode(void *phy_id, enum s3fwrn5_mode mode)
-{
-	struct s3fwrn5_i2c_phy *phy = phy_id;
+अटल व्योम s3fwrn5_i2c_set_mode(व्योम *phy_id, क्रमागत s3fwrn5_mode mode)
+अणु
+	काष्ठा s3fwrn5_i2c_phy *phy = phy_id;
 
 	mutex_lock(&phy->common.mutex);
 
-	if (s3fwrn5_phy_power_ctrl(&phy->common, mode) == false)
-		goto out;
+	अगर (s3fwrn5_phy_घातer_ctrl(&phy->common, mode) == false)
+		जाओ out;
 
 	phy->irq_skip = true;
 
 out:
 	mutex_unlock(&phy->common.mutex);
-}
+पूर्ण
 
-static int s3fwrn5_i2c_write(void *phy_id, struct sk_buff *skb)
-{
-	struct s3fwrn5_i2c_phy *phy = phy_id;
-	int ret;
+अटल पूर्णांक s3fwrn5_i2c_ग_लिखो(व्योम *phy_id, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा s3fwrn5_i2c_phy *phy = phy_id;
+	पूर्णांक ret;
 
 	mutex_lock(&phy->common.mutex);
 
 	phy->irq_skip = false;
 
 	ret = i2c_master_send(phy->i2c_dev, skb->data, skb->len);
-	if (ret == -EREMOTEIO) {
+	अगर (ret == -EREMOTEIO) अणु
 		/* Retry, chip was in standby */
 		usleep_range(110000, 120000);
 		ret  = i2c_master_send(phy->i2c_dev, skb->data, skb->len);
-	}
+	पूर्ण
 
 	mutex_unlock(&phy->common.mutex);
 
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	if (ret != skb->len)
-		return -EREMOTEIO;
+	अगर (ret != skb->len)
+		वापस -EREMOTEIO;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct s3fwrn5_phy_ops i2c_phy_ops = {
+अटल स्थिर काष्ठा s3fwrn5_phy_ops i2c_phy_ops = अणु
 	.set_wake = s3fwrn5_phy_set_wake,
 	.set_mode = s3fwrn5_i2c_set_mode,
 	.get_mode = s3fwrn5_phy_get_mode,
-	.write = s3fwrn5_i2c_write,
-};
+	.ग_लिखो = s3fwrn5_i2c_ग_लिखो,
+पूर्ण;
 
-static int s3fwrn5_i2c_read(struct s3fwrn5_i2c_phy *phy)
-{
-	struct sk_buff *skb;
-	size_t hdr_size;
-	size_t data_len;
-	char hdr[4];
-	int ret;
+अटल पूर्णांक s3fwrn5_i2c_पढ़ो(काष्ठा s3fwrn5_i2c_phy *phy)
+अणु
+	काष्ठा sk_buff *skb;
+	माप_प्रकार hdr_size;
+	माप_प्रकार data_len;
+	अक्षर hdr[4];
+	पूर्णांक ret;
 
 	hdr_size = (phy->common.mode == S3FWRN5_MODE_NCI) ?
 		NCI_CTRL_HDR_SIZE : S3FWRN5_FW_HDR_SIZE;
 	ret = i2c_master_recv(phy->i2c_dev, hdr, hdr_size);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	if (ret < hdr_size)
-		return -EBADMSG;
+	अगर (ret < hdr_size)
+		वापस -EBADMSG;
 
 	data_len = (phy->common.mode == S3FWRN5_MODE_NCI) ?
-		((struct nci_ctrl_hdr *)hdr)->plen :
-		((struct s3fwrn5_fw_header *)hdr)->len;
+		((काष्ठा nci_ctrl_hdr *)hdr)->plen :
+		((काष्ठा s3fwrn5_fw_header *)hdr)->len;
 
 	skb = alloc_skb(hdr_size + data_len, GFP_KERNEL);
-	if (!skb)
-		return -ENOMEM;
+	अगर (!skb)
+		वापस -ENOMEM;
 
 	skb_put_data(skb, hdr, hdr_size);
 
-	if (data_len == 0)
-		goto out;
+	अगर (data_len == 0)
+		जाओ out;
 
 	ret = i2c_master_recv(phy->i2c_dev, skb_put(skb, data_len), data_len);
-	if (ret != data_len) {
-		kfree_skb(skb);
-		return -EBADMSG;
-	}
+	अगर (ret != data_len) अणु
+		kमुक्त_skb(skb);
+		वापस -EBADMSG;
+	पूर्ण
 
 out:
-	return s3fwrn5_recv_frame(phy->common.ndev, skb, phy->common.mode);
-}
+	वापस s3fwrn5_recv_frame(phy->common.ndev, skb, phy->common.mode);
+पूर्ण
 
-static irqreturn_t s3fwrn5_i2c_irq_thread_fn(int irq, void *phy_id)
-{
-	struct s3fwrn5_i2c_phy *phy = phy_id;
+अटल irqवापस_t s3fwrn5_i2c_irq_thपढ़ो_fn(पूर्णांक irq, व्योम *phy_id)
+अणु
+	काष्ठा s3fwrn5_i2c_phy *phy = phy_id;
 
-	if (!phy || !phy->common.ndev) {
+	अगर (!phy || !phy->common.ndev) अणु
 		WARN_ON_ONCE(1);
-		return IRQ_NONE;
-	}
+		वापस IRQ_NONE;
+	पूर्ण
 
 	mutex_lock(&phy->common.mutex);
 
-	if (phy->irq_skip)
-		goto out;
+	अगर (phy->irq_skip)
+		जाओ out;
 
-	switch (phy->common.mode) {
-	case S3FWRN5_MODE_NCI:
-	case S3FWRN5_MODE_FW:
-		s3fwrn5_i2c_read(phy);
-		break;
-	case S3FWRN5_MODE_COLD:
-		break;
-	}
+	चयन (phy->common.mode) अणु
+	हाल S3FWRN5_MODE_NCI:
+	हाल S3FWRN5_MODE_FW:
+		s3fwrn5_i2c_पढ़ो(phy);
+		अवरोध;
+	हाल S3FWRN5_MODE_COLD:
+		अवरोध;
+	पूर्ण
 
 out:
 	mutex_unlock(&phy->common.mutex);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static int s3fwrn5_i2c_parse_dt(struct i2c_client *client)
-{
-	struct s3fwrn5_i2c_phy *phy = i2c_get_clientdata(client);
-	struct device_node *np = client->dev.of_node;
+अटल पूर्णांक s3fwrn5_i2c_parse_dt(काष्ठा i2c_client *client)
+अणु
+	काष्ठा s3fwrn5_i2c_phy *phy = i2c_get_clientdata(client);
+	काष्ठा device_node *np = client->dev.of_node;
 
-	if (!np)
-		return -ENODEV;
+	अगर (!np)
+		वापस -ENODEV;
 
 	phy->common.gpio_en = of_get_named_gpio(np, "en-gpios", 0);
-	if (!gpio_is_valid(phy->common.gpio_en)) {
+	अगर (!gpio_is_valid(phy->common.gpio_en)) अणु
 		/* Support also deprecated property */
 		phy->common.gpio_en = of_get_named_gpio(np,
 							"s3fwrn5,en-gpios",
 							0);
-		if (!gpio_is_valid(phy->common.gpio_en))
-			return -ENODEV;
-	}
+		अगर (!gpio_is_valid(phy->common.gpio_en))
+			वापस -ENODEV;
+	पूर्ण
 
 	phy->common.gpio_fw_wake = of_get_named_gpio(np, "wake-gpios", 0);
-	if (!gpio_is_valid(phy->common.gpio_fw_wake)) {
+	अगर (!gpio_is_valid(phy->common.gpio_fw_wake)) अणु
 		/* Support also deprecated property */
 		phy->common.gpio_fw_wake = of_get_named_gpio(np,
 							     "s3fwrn5,fw-gpios",
 							     0);
-		if (!gpio_is_valid(phy->common.gpio_fw_wake))
-			return -ENODEV;
-	}
+		अगर (!gpio_is_valid(phy->common.gpio_fw_wake))
+			वापस -ENODEV;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int s3fwrn5_i2c_probe(struct i2c_client *client,
-				  const struct i2c_device_id *id)
-{
-	struct s3fwrn5_i2c_phy *phy;
-	int ret;
+अटल पूर्णांक s3fwrn5_i2c_probe(काष्ठा i2c_client *client,
+				  स्थिर काष्ठा i2c_device_id *id)
+अणु
+	काष्ठा s3fwrn5_i2c_phy *phy;
+	पूर्णांक ret;
 
-	phy = devm_kzalloc(&client->dev, sizeof(*phy), GFP_KERNEL);
-	if (!phy)
-		return -ENOMEM;
+	phy = devm_kzalloc(&client->dev, माप(*phy), GFP_KERNEL);
+	अगर (!phy)
+		वापस -ENOMEM;
 
 	mutex_init(&phy->common.mutex);
 	phy->common.mode = S3FWRN5_MODE_COLD;
@@ -193,64 +194,64 @@ static int s3fwrn5_i2c_probe(struct i2c_client *client,
 	i2c_set_clientdata(client, phy);
 
 	ret = s3fwrn5_i2c_parse_dt(client);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	ret = devm_gpio_request_one(&phy->i2c_dev->dev, phy->common.gpio_en,
 				    GPIOF_OUT_INIT_HIGH, "s3fwrn5_en");
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	ret = devm_gpio_request_one(&phy->i2c_dev->dev,
 				    phy->common.gpio_fw_wake,
 				    GPIOF_OUT_INIT_LOW, "s3fwrn5_fw_wake");
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	ret = s3fwrn5_probe(&phy->common.ndev, phy, &phy->i2c_dev->dev,
 			    &i2c_phy_ops);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	ret = devm_request_threaded_irq(&client->dev, phy->i2c_dev->irq, NULL,
-		s3fwrn5_i2c_irq_thread_fn, IRQF_ONESHOT,
+	ret = devm_request_thपढ़ोed_irq(&client->dev, phy->i2c_dev->irq, शून्य,
+		s3fwrn5_i2c_irq_thपढ़ो_fn, IRQF_ONESHOT,
 		S3FWRN5_I2C_DRIVER_NAME, phy);
-	if (ret)
-		s3fwrn5_remove(phy->common.ndev);
+	अगर (ret)
+		s3fwrn5_हटाओ(phy->common.ndev);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int s3fwrn5_i2c_remove(struct i2c_client *client)
-{
-	struct s3fwrn5_i2c_phy *phy = i2c_get_clientdata(client);
+अटल पूर्णांक s3fwrn5_i2c_हटाओ(काष्ठा i2c_client *client)
+अणु
+	काष्ठा s3fwrn5_i2c_phy *phy = i2c_get_clientdata(client);
 
-	s3fwrn5_remove(phy->common.ndev);
+	s3fwrn5_हटाओ(phy->common.ndev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct i2c_device_id s3fwrn5_i2c_id_table[] = {
-	{S3FWRN5_I2C_DRIVER_NAME, 0},
-	{}
-};
+अटल स्थिर काष्ठा i2c_device_id s3fwrn5_i2c_id_table[] = अणु
+	अणुS3FWRN5_I2C_DRIVER_NAME, 0पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(i2c, s3fwrn5_i2c_id_table);
 
-static const struct of_device_id of_s3fwrn5_i2c_match[] = {
-	{ .compatible = "samsung,s3fwrn5-i2c", },
-	{}
-};
+अटल स्थिर काष्ठा of_device_id of_s3fwrn5_i2c_match[] = अणु
+	अणु .compatible = "samsung,s3fwrn5-i2c", पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, of_s3fwrn5_i2c_match);
 
-static struct i2c_driver s3fwrn5_i2c_driver = {
-	.driver = {
+अटल काष्ठा i2c_driver s3fwrn5_i2c_driver = अणु
+	.driver = अणु
 		.name = S3FWRN5_I2C_DRIVER_NAME,
 		.of_match_table = of_match_ptr(of_s3fwrn5_i2c_match),
-	},
+	पूर्ण,
 	.probe = s3fwrn5_i2c_probe,
-	.remove = s3fwrn5_i2c_remove,
+	.हटाओ = s3fwrn5_i2c_हटाओ,
 	.id_table = s3fwrn5_i2c_id_table,
-};
+पूर्ण;
 
 module_i2c_driver(s3fwrn5_i2c_driver);
 

@@ -1,22 +1,23 @@
+<शैली गुरु>
 /*
  *  linux/cluster/ssi/cfs/symlink.c
  *
- *	This program is free software; you can redistribute it and/or
- *	modify it under the terms of the GNU General Public License as
+ *	This program is मुक्त software; you can redistribute it and/or
+ *	modअगरy it under the terms of the GNU General Public License as
  *	published by the Free Software Foundation; either version 2 of
  *	the License, or (at your option) any later version.
  *
  *	This program is distributed in the hope that it will be useful,
  *	but WITHOUT ANY WARRANTY; without even the implied warranty of
  *	MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE, GOOD TITLE
- *	or NON INFRINGEMENT.  See the GNU General Public License for more
+ *	or NON INFRINGEMENT.  See the GNU General Public License क्रम more
  *	details.
  *
  * 	You should have received a copy of the GNU General Public License
- * 	along with this program; if not, write to the Free Software
+ * 	aदीर्घ with this program; अगर not, ग_लिखो to the Free Software
  * 	Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- *	Questions/Comments/Bugfixes to ssic-linux-devel@lists.sourceforge.net
+ *	Questions/Comments/Bugfixes to ssic-linux-devel@lists.sourceक्रमge.net
  *
  *  Copyright (C) 1992  Rick Sladkey
  *
@@ -32,62 +33,62 @@
  *
  */
 
-#include <linux/fs.h>
-#include <linux/types.h>
-#include <linux/slab.h>
-#include <linux/pagemap.h>
-#include <linux/namei.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/types.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/pagemap.h>
+#समावेश <linux/namei.h>
 
-#include <cluster/masklog.h>
+#समावेश <cluster/masklog.h>
 
-#include "ocfs2.h"
+#समावेश "ocfs2.h"
 
-#include "alloc.h"
-#include "file.h"
-#include "inode.h"
-#include "journal.h"
-#include "symlink.h"
-#include "xattr.h"
+#समावेश "alloc.h"
+#समावेश "file.h"
+#समावेश "inode.h"
+#समावेश "journal.h"
+#समावेश "symlink.h"
+#समावेश "xattr.h"
 
-#include "buffer_head_io.h"
+#समावेश "buffer_head_io.h"
 
 
-static int ocfs2_fast_symlink_readpage(struct file *unused, struct page *page)
-{
-	struct inode *inode = page->mapping->host;
-	struct buffer_head *bh = NULL;
-	int status = ocfs2_read_inode_block(inode, &bh);
-	struct ocfs2_dinode *fe;
-	const char *link;
-	void *kaddr;
-	size_t len;
+अटल पूर्णांक ocfs2_fast_symlink_पढ़ोpage(काष्ठा file *unused, काष्ठा page *page)
+अणु
+	काष्ठा inode *inode = page->mapping->host;
+	काष्ठा buffer_head *bh = शून्य;
+	पूर्णांक status = ocfs2_पढ़ो_inode_block(inode, &bh);
+	काष्ठा ocfs2_dinode *fe;
+	स्थिर अक्षर *link;
+	व्योम *kaddr;
+	माप_प्रकार len;
 
-	if (status < 0) {
-		mlog_errno(status);
-		return status;
-	}
+	अगर (status < 0) अणु
+		mlog_त्रुटि_सं(status);
+		वापस status;
+	पूर्ण
 
-	fe = (struct ocfs2_dinode *) bh->b_data;
-	link = (char *) fe->id2.i_symlink;
+	fe = (काष्ठा ocfs2_dinode *) bh->b_data;
+	link = (अक्षर *) fe->id2.i_symlink;
 	/* will be less than a page size */
-	len = strnlen(link, ocfs2_fast_symlink_chars(inode->i_sb));
+	len = strnlen(link, ocfs2_fast_symlink_अक्षरs(inode->i_sb));
 	kaddr = kmap_atomic(page);
-	memcpy(kaddr, link, len + 1);
+	स_नकल(kaddr, link, len + 1);
 	kunmap_atomic(kaddr);
 	SetPageUptodate(page);
 	unlock_page(page);
-	brelse(bh);
-	return 0;
-}
+	brअन्यथा(bh);
+	वापस 0;
+पूर्ण
 
-const struct address_space_operations ocfs2_fast_symlink_aops = {
-	.readpage		= ocfs2_fast_symlink_readpage,
-};
+स्थिर काष्ठा address_space_operations ocfs2_fast_symlink_aops = अणु
+	.पढ़ोpage		= ocfs2_fast_symlink_पढ़ोpage,
+पूर्ण;
 
-const struct inode_operations ocfs2_symlink_inode_operations = {
+स्थिर काष्ठा inode_operations ocfs2_symlink_inode_operations = अणु
 	.get_link	= page_get_link,
 	.getattr	= ocfs2_getattr,
 	.setattr	= ocfs2_setattr,
 	.listxattr	= ocfs2_listxattr,
 	.fiemap		= ocfs2_fiemap,
-};
+पूर्ण;

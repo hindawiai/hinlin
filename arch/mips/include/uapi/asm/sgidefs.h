@@ -1,37 +1,38 @@
-/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
 /*
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the main directory of this archive
- * for more details.
+ * License.  See the file "COPYING" in the मुख्य directory of this archive
+ * क्रम more details.
  *
  * Copyright (C) 1996, 1999, 2001 Ralf Baechle
  * Copyright (C) 1999 Silicon Graphics, Inc.
  * Copyright (C) 2001 MIPS Technologies, Inc.
  */
-#ifndef __ASM_SGIDEFS_H
-#define __ASM_SGIDEFS_H
+#अगर_अघोषित __ASM_SGIDEFS_H
+#घोषणा __ASM_SGIDEFS_H
 
 /*
- * Definitions for the ISA levels
+ * Definitions क्रम the ISA levels
  *
- * With the introduction of MIPS32 / MIPS64 instruction sets definitions
- * MIPS ISAs are no longer subsets of each other.  Therefore comparisons
+ * With the पूर्णांकroduction of MIPS32 / MIPS64 inकाष्ठाion sets definitions
+ * MIPS ISAs are no दीर्घer subsets of each other.  Thereक्रमe comparisons
  * on these symbols except with == may result in unexpected results and
- * are forbidden!
+ * are क्रमbidden!
  */
-#define _MIPS_ISA_MIPS1		1
-#define _MIPS_ISA_MIPS2		2
-#define _MIPS_ISA_MIPS3		3
-#define _MIPS_ISA_MIPS4		4
-#define _MIPS_ISA_MIPS5		5
-#define _MIPS_ISA_MIPS32	6
-#define _MIPS_ISA_MIPS64	7
+#घोषणा _MIPS_ISA_MIPS1		1
+#घोषणा _MIPS_ISA_MIPS2		2
+#घोषणा _MIPS_ISA_MIPS3		3
+#घोषणा _MIPS_ISA_MIPS4		4
+#घोषणा _MIPS_ISA_MIPS5		5
+#घोषणा _MIPS_ISA_MIPS32	6
+#घोषणा _MIPS_ISA_MIPS64	7
 
 /*
  * Subprogram calling convention
  */
-#define _MIPS_SIM_ABI32		1
-#define _MIPS_SIM_NABI32	2
-#define _MIPS_SIM_ABI64		3
+#घोषणा _MIPS_SIM_ABI32		1
+#घोषणा _MIPS_SIM_NABI32	2
+#घोषणा _MIPS_SIM_ABI64		3
 
-#endif /* __ASM_SGIDEFS_H */
+#पूर्ण_अगर /* __ASM_SGIDEFS_H */

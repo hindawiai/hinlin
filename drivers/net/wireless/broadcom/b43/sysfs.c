@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
 
   Broadcom B43 wireless driver
@@ -10,132 +11,132 @@
 
 */
 
-#include <linux/capability.h>
-#include <linux/io.h>
+#समावेश <linux/capability.h>
+#समावेश <linux/पन.स>
 
-#include "b43.h"
-#include "sysfs.h"
-#include "main.h"
-#include "phy_common.h"
+#समावेश "b43.h"
+#समावेश "sysfs.h"
+#समावेश "main.h"
+#समावेश "phy_common.h"
 
-#define GENERIC_FILESIZE	64
+#घोषणा GENERIC_खाताSIZE	64
 
-static int get_integer(const char *buf, size_t count)
-{
-	char tmp[10 + 1] = { 0 };
-	int ret = -EINVAL;
+अटल पूर्णांक get_पूर्णांकeger(स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	अक्षर पंचांगp[10 + 1] = अणु 0 पूर्ण;
+	पूर्णांक ret = -EINVAL;
 
-	if (count == 0)
-		goto out;
-	count = min_t(size_t, count, 10);
-	memcpy(tmp, buf, count);
-	ret = simple_strtol(tmp, NULL, 10);
+	अगर (count == 0)
+		जाओ out;
+	count = min_t(माप_प्रकार, count, 10);
+	स_नकल(पंचांगp, buf, count);
+	ret = simple_म_से_दीर्घ(पंचांगp, शून्य, 10);
       out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static ssize_t b43_attr_interfmode_show(struct device *dev,
-					struct device_attribute *attr,
-					char *buf)
-{
-	struct b43_wldev *wldev = dev_to_b43_wldev(dev);
-	ssize_t count = 0;
+अटल sमाप_प्रकार b43_attr_पूर्णांकerभ_शेषe_show(काष्ठा device *dev,
+					काष्ठा device_attribute *attr,
+					अक्षर *buf)
+अणु
+	काष्ठा b43_wldev *wldev = dev_to_b43_wldev(dev);
+	sमाप_प्रकार count = 0;
 
-	if (!capable(CAP_NET_ADMIN))
-		return -EPERM;
+	अगर (!capable(CAP_NET_ADMIN))
+		वापस -EPERM;
 
 	mutex_lock(&wldev->wl->mutex);
 
-	if (wldev->phy.type != B43_PHYTYPE_G) {
+	अगर (wldev->phy.type != B43_PHYTYPE_G) अणु
 		mutex_unlock(&wldev->wl->mutex);
-		return -ENOSYS;
-	}
+		वापस -ENOSYS;
+	पूर्ण
 
-	switch (wldev->phy.g->interfmode) {
-	case B43_INTERFMODE_NONE:
+	चयन (wldev->phy.g->पूर्णांकerभ_शेषe) अणु
+	हाल B43_INTERFMODE_NONE:
 		count =
-		    snprintf(buf, PAGE_SIZE,
+		    snम_लिखो(buf, PAGE_SIZE,
 			     "0 (No Interference Mitigation)\n");
-		break;
-	case B43_INTERFMODE_NONWLAN:
+		अवरोध;
+	हाल B43_INTERFMODE_NONWLAN:
 		count =
-		    snprintf(buf, PAGE_SIZE,
+		    snम_लिखो(buf, PAGE_SIZE,
 			     "1 (Non-WLAN Interference Mitigation)\n");
-		break;
-	case B43_INTERFMODE_MANUALWLAN:
+		अवरोध;
+	हाल B43_INTERFMODE_MANUALWLAN:
 		count =
-		    snprintf(buf, PAGE_SIZE,
+		    snम_लिखो(buf, PAGE_SIZE,
 			     "2 (WLAN Interference Mitigation)\n");
-		break;
-	default:
+		अवरोध;
+	शेष:
 		B43_WARN_ON(1);
-	}
+	पूर्ण
 
 	mutex_unlock(&wldev->wl->mutex);
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static ssize_t b43_attr_interfmode_store(struct device *dev,
-					 struct device_attribute *attr,
-					 const char *buf, size_t count)
-{
-	struct b43_wldev *wldev = dev_to_b43_wldev(dev);
-	int err;
-	int mode;
+अटल sमाप_प्रकार b43_attr_पूर्णांकerभ_शेषe_store(काष्ठा device *dev,
+					 काष्ठा device_attribute *attr,
+					 स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	काष्ठा b43_wldev *wldev = dev_to_b43_wldev(dev);
+	पूर्णांक err;
+	पूर्णांक mode;
 
-	if (!capable(CAP_NET_ADMIN))
-		return -EPERM;
+	अगर (!capable(CAP_NET_ADMIN))
+		वापस -EPERM;
 
-	mode = get_integer(buf, count);
-	switch (mode) {
-	case 0:
+	mode = get_पूर्णांकeger(buf, count);
+	चयन (mode) अणु
+	हाल 0:
 		mode = B43_INTERFMODE_NONE;
-		break;
-	case 1:
+		अवरोध;
+	हाल 1:
 		mode = B43_INTERFMODE_NONWLAN;
-		break;
-	case 2:
+		अवरोध;
+	हाल 2:
 		mode = B43_INTERFMODE_MANUALWLAN;
-		break;
-	case 3:
+		अवरोध;
+	हाल 3:
 		mode = B43_INTERFMODE_AUTOWLAN;
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
 	mutex_lock(&wldev->wl->mutex);
 
-	if (wldev->phy.ops->interf_mitigation) {
-		err = wldev->phy.ops->interf_mitigation(wldev, mode);
-		if (err) {
+	अगर (wldev->phy.ops->पूर्णांकerf_mitigation) अणु
+		err = wldev->phy.ops->पूर्णांकerf_mitigation(wldev, mode);
+		अगर (err) अणु
 			b43err(wldev->wl, "Interference Mitigation not "
 			       "supported by device\n");
-		}
-	} else
+		पूर्ण
+	पूर्ण अन्यथा
 		err = -ENOSYS;
 
 	mutex_unlock(&wldev->wl->mutex);
 
-	return err ? err : count;
-}
+	वापस err ? err : count;
+पूर्ण
 
-static DEVICE_ATTR(interference, 0644,
-		   b43_attr_interfmode_show, b43_attr_interfmode_store);
+अटल DEVICE_ATTR(पूर्णांकerference, 0644,
+		   b43_attr_पूर्णांकerभ_शेषe_show, b43_attr_पूर्णांकerभ_शेषe_store);
 
-int b43_sysfs_register(struct b43_wldev *wldev)
-{
-	struct device *dev = wldev->dev->dev;
+पूर्णांक b43_sysfs_रेजिस्टर(काष्ठा b43_wldev *wldev)
+अणु
+	काष्ठा device *dev = wldev->dev->dev;
 
 	B43_WARN_ON(b43_status(wldev) != B43_STAT_INITIALIZED);
 
-	return device_create_file(dev, &dev_attr_interference);
-}
+	वापस device_create_file(dev, &dev_attr_पूर्णांकerference);
+पूर्ण
 
-void b43_sysfs_unregister(struct b43_wldev *wldev)
-{
-	struct device *dev = wldev->dev->dev;
+व्योम b43_sysfs_unरेजिस्टर(काष्ठा b43_wldev *wldev)
+अणु
+	काष्ठा device *dev = wldev->dev->dev;
 
-	device_remove_file(dev, &dev_attr_interference);
-}
+	device_हटाओ_file(dev, &dev_attr_पूर्णांकerference);
+पूर्ण

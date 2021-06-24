@@ -1,193 +1,194 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * linux/lib/cmdline.c
- * Helper functions generally used for parsing kernel command line
+ * Helper functions generally used क्रम parsing kernel command line
  * and module options.
  *
- * Code and copyrights come from init/main.c and arch/i386/kernel/setup.c.
+ * Code and copyrights come from init/मुख्य.c and arch/i386/kernel/setup.c.
  *
- * GNU Indent formatting options for this file: -kr -i8 -npsl -pcs
+ * GNU Indent क्रमmatting options क्रम this file: -kr -i8 -npsl -pcs
  */
 
-#include <linux/export.h>
-#include <linux/kernel.h>
-#include <linux/string.h>
-#include <linux/ctype.h>
+#समावेश <linux/export.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/प्रकार.स>
 
 /*
  *	If a hyphen was found in get_option, this will handle the
  *	range of numbers, M-N.  This will expand the range and insert
- *	the values[M, M+1, ..., N] into the ints array in get_options.
+ *	the values[M, M+1, ..., N] पूर्णांकo the पूर्णांकs array in get_options.
  */
 
-static int get_range(char **str, int *pint, int n)
-{
-	int x, inc_counter, upper_range;
+अटल पूर्णांक get_range(अक्षर **str, पूर्णांक *pपूर्णांक, पूर्णांक n)
+अणु
+	पूर्णांक x, inc_counter, upper_range;
 
 	(*str)++;
-	upper_range = simple_strtol((*str), NULL, 0);
-	inc_counter = upper_range - *pint;
-	for (x = *pint; n && x < upper_range; x++, n--)
-		*pint++ = x;
-	return inc_counter;
-}
+	upper_range = simple_म_से_दीर्घ((*str), शून्य, 0);
+	inc_counter = upper_range - *pपूर्णांक;
+	क्रम (x = *pपूर्णांक; n && x < upper_range; x++, n--)
+		*pपूर्णांक++ = x;
+	वापस inc_counter;
+पूर्ण
 
 /**
- *	get_option - Parse integer from an option string
+ *	get_option - Parse पूर्णांकeger from an option string
  *	@str: option string
- *	@pint: (optional output) integer value parsed from @str
+ *	@pपूर्णांक: (optional output) पूर्णांकeger value parsed from @str
  *
- *	Read an int from an option string; if available accept a subsequent
+ *	Read an पूर्णांक from an option string; अगर available accept a subsequent
  *	comma as well.
  *
- *	When @pint is NULL the function can be used as a validator of
+ *	When @pपूर्णांक is शून्य the function can be used as a validator of
  *	the current option in the string.
  *
  *	Return values:
- *	0 - no int in string
- *	1 - int found, no subsequent comma
- *	2 - int found including a subsequent comma
+ *	0 - no पूर्णांक in string
+ *	1 - पूर्णांक found, no subsequent comma
+ *	2 - पूर्णांक found including a subsequent comma
  *	3 - hyphen found to denote a range
  *
- *	Leading hyphen without integer is no integer case, but we consume it
- *	for the sake of simplification.
+ *	Leading hyphen without पूर्णांकeger is no पूर्णांकeger हाल, but we consume it
+ *	क्रम the sake of simplअगरication.
  */
 
-int get_option(char **str, int *pint)
-{
-	char *cur = *str;
-	int value;
+पूर्णांक get_option(अक्षर **str, पूर्णांक *pपूर्णांक)
+अणु
+	अक्षर *cur = *str;
+	पूर्णांक value;
 
-	if (!cur || !(*cur))
-		return 0;
-	if (*cur == '-')
-		value = -simple_strtoull(++cur, str, 0);
-	else
-		value = simple_strtoull(cur, str, 0);
-	if (pint)
-		*pint = value;
-	if (cur == *str)
-		return 0;
-	if (**str == ',') {
+	अगर (!cur || !(*cur))
+		वापस 0;
+	अगर (*cur == '-')
+		value = -simple_म_से_अदीर्घl(++cur, str, 0);
+	अन्यथा
+		value = simple_म_से_अदीर्घl(cur, str, 0);
+	अगर (pपूर्णांक)
+		*pपूर्णांक = value;
+	अगर (cur == *str)
+		वापस 0;
+	अगर (**str == ',') अणु
 		(*str)++;
-		return 2;
-	}
-	if (**str == '-')
-		return 3;
+		वापस 2;
+	पूर्ण
+	अगर (**str == '-')
+		वापस 3;
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 EXPORT_SYMBOL(get_option);
 
 /**
- *	get_options - Parse a string into a list of integers
+ *	get_options - Parse a string पूर्णांकo a list of पूर्णांकegers
  *	@str: String to be parsed
- *	@nints: size of integer array
- *	@ints: integer array (must have room for at least one element)
+ *	@nपूर्णांकs: size of पूर्णांकeger array
+ *	@पूर्णांकs: पूर्णांकeger array (must have room क्रम at least one element)
  *
  *	This function parses a string containing a comma-separated
- *	list of integers, a hyphen-separated range of _positive_ integers,
+ *	list of पूर्णांकegers, a hyphen-separated range of _positive_ पूर्णांकegers,
  *	or a combination of both.  The parse halts when the array is
  *	full, or when no more numbers can be retrieved from the
  *	string.
  *
- *	When @nints is 0, the function just validates the given @str and
- *	returns the amount of parseable integers as described below.
+ *	When @nपूर्णांकs is 0, the function just validates the given @str and
+ *	वापसs the amount of parseable पूर्णांकegers as described below.
  *
  *	Returns:
  *
- *	The first element is filled by the number of collected integers
+ *	The first element is filled by the number of collected पूर्णांकegers
  *	in the range. The rest is what was parsed from the @str.
  *
- *	Return value is the character in the string which caused
- *	the parse to end (typically a null terminator, if @str is
+ *	Return value is the अक्षरacter in the string which caused
+ *	the parse to end (typically a null terminator, अगर @str is
  *	completely parseable).
  */
 
-char *get_options(const char *str, int nints, int *ints)
-{
-	bool validate = (nints == 0);
-	int res, i = 1;
+अक्षर *get_options(स्थिर अक्षर *str, पूर्णांक nपूर्णांकs, पूर्णांक *पूर्णांकs)
+अणु
+	bool validate = (nपूर्णांकs == 0);
+	पूर्णांक res, i = 1;
 
-	while (i < nints || validate) {
-		int *pint = validate ? ints : ints + i;
+	जबतक (i < nपूर्णांकs || validate) अणु
+		पूर्णांक *pपूर्णांक = validate ? पूर्णांकs : पूर्णांकs + i;
 
-		res = get_option((char **)&str, pint);
-		if (res == 0)
-			break;
-		if (res == 3) {
-			int n = validate ? 0 : nints - i;
-			int range_nums;
+		res = get_option((अक्षर **)&str, pपूर्णांक);
+		अगर (res == 0)
+			अवरोध;
+		अगर (res == 3) अणु
+			पूर्णांक n = validate ? 0 : nपूर्णांकs - i;
+			पूर्णांक range_nums;
 
-			range_nums = get_range((char **)&str, pint, n);
-			if (range_nums < 0)
-				break;
+			range_nums = get_range((अक्षर **)&str, pपूर्णांक, n);
+			अगर (range_nums < 0)
+				अवरोध;
 			/*
 			 * Decrement the result by one to leave out the
 			 * last number in the range.  The next iteration
 			 * will handle the upper number in the range
 			 */
 			i += (range_nums - 1);
-		}
+		पूर्ण
 		i++;
-		if (res == 1)
-			break;
-	}
-	ints[0] = i - 1;
-	return (char *)str;
-}
+		अगर (res == 1)
+			अवरोध;
+	पूर्ण
+	पूर्णांकs[0] = i - 1;
+	वापस (अक्षर *)str;
+पूर्ण
 EXPORT_SYMBOL(get_options);
 
 /**
- *	memparse - parse a string with mem suffixes into a number
+ *	memparse - parse a string with mem suffixes पूर्णांकo a number
  *	@ptr: Where parse begins
- *	@retptr: (output) Optional pointer to next char after parse completes
+ *	@retptr: (output) Optional poपूर्णांकer to next अक्षर after parse completes
  *
- *	Parses a string into a number.  The number stored at @ptr is
+ *	Parses a string पूर्णांकo a number.  The number stored at @ptr is
  *	potentially suffixed with K, M, G, T, P, E.
  */
 
-unsigned long long memparse(const char *ptr, char **retptr)
-{
-	char *endptr;	/* local pointer to end of parsed string */
+अचिन्हित दीर्घ दीर्घ memparse(स्थिर अक्षर *ptr, अक्षर **retptr)
+अणु
+	अक्षर *endptr;	/* local poपूर्णांकer to end of parsed string */
 
-	unsigned long long ret = simple_strtoull(ptr, &endptr, 0);
+	अचिन्हित दीर्घ दीर्घ ret = simple_म_से_अदीर्घl(ptr, &endptr, 0);
 
-	switch (*endptr) {
-	case 'E':
-	case 'e':
+	चयन (*endptr) अणु
+	हाल 'E':
+	हाल 'e':
 		ret <<= 10;
 		fallthrough;
-	case 'P':
-	case 'p':
+	हाल 'P':
+	हाल 'p':
 		ret <<= 10;
 		fallthrough;
-	case 'T':
-	case 't':
+	हाल 'T':
+	हाल 't':
 		ret <<= 10;
 		fallthrough;
-	case 'G':
-	case 'g':
+	हाल 'G':
+	हाल 'g':
 		ret <<= 10;
 		fallthrough;
-	case 'M':
-	case 'm':
+	हाल 'M':
+	हाल 'm':
 		ret <<= 10;
 		fallthrough;
-	case 'K':
-	case 'k':
+	हाल 'K':
+	हाल 'k':
 		ret <<= 10;
 		endptr++;
 		fallthrough;
-	default:
-		break;
-	}
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	if (retptr)
+	अगर (retptr)
 		*retptr = endptr;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL(memparse);
 
 /**
@@ -198,78 +199,78 @@ EXPORT_SYMBOL(memparse);
  *	This function parses a string containing a comma-separated list of
  *	strings like a=b,c.
  *
- *	Return true if there's such option in the string, or return false.
+ *	Return true अगर there's such option in the string, or वापस false.
  */
-bool parse_option_str(const char *str, const char *option)
-{
-	while (*str) {
-		if (!strncmp(str, option, strlen(option))) {
-			str += strlen(option);
-			if (!*str || *str == ',')
-				return true;
-		}
+bool parse_option_str(स्थिर अक्षर *str, स्थिर अक्षर *option)
+अणु
+	जबतक (*str) अणु
+		अगर (!म_भेदन(str, option, म_माप(option))) अणु
+			str += म_माप(option);
+			अगर (!*str || *str == ',')
+				वापस true;
+		पूर्ण
 
-		while (*str && *str != ',')
+		जबतक (*str && *str != ',')
 			str++;
 
-		if (*str == ',')
+		अगर (*str == ',')
 			str++;
-	}
+	पूर्ण
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
 /*
  * Parse a string to get a param value pair.
  * You can use " around spaces, but can't escape ".
  * Hyphens and underscores equivalent in parameter names.
  */
-char *next_arg(char *args, char **param, char **val)
-{
-	unsigned int i, equals = 0;
-	int in_quote = 0, quoted = 0;
+अक्षर *next_arg(अक्षर *args, अक्षर **param, अक्षर **val)
+अणु
+	अचिन्हित पूर्णांक i, equals = 0;
+	पूर्णांक in_quote = 0, quoted = 0;
 
-	if (*args == '"') {
+	अगर (*args == '"') अणु
 		args++;
 		in_quote = 1;
 		quoted = 1;
-	}
+	पूर्ण
 
-	for (i = 0; args[i]; i++) {
-		if (isspace(args[i]) && !in_quote)
-			break;
-		if (equals == 0) {
-			if (args[i] == '=')
+	क्रम (i = 0; args[i]; i++) अणु
+		अगर (है_खाली(args[i]) && !in_quote)
+			अवरोध;
+		अगर (equals == 0) अणु
+			अगर (args[i] == '=')
 				equals = i;
-		}
-		if (args[i] == '"')
+		पूर्ण
+		अगर (args[i] == '"')
 			in_quote = !in_quote;
-	}
+	पूर्ण
 
 	*param = args;
-	if (!equals)
-		*val = NULL;
-	else {
+	अगर (!equals)
+		*val = शून्य;
+	अन्यथा अणु
 		args[equals] = '\0';
 		*val = args + equals + 1;
 
 		/* Don't include quotes in value. */
-		if (**val == '"') {
+		अगर (**val == '"') अणु
 			(*val)++;
-			if (args[i-1] == '"')
+			अगर (args[i-1] == '"')
 				args[i-1] = '\0';
-		}
-	}
-	if (quoted && args[i-1] == '"')
+		पूर्ण
+	पूर्ण
+	अगर (quoted && args[i-1] == '"')
 		args[i-1] = '\0';
 
-	if (args[i]) {
+	अगर (args[i]) अणु
 		args[i] = '\0';
 		args += i + 1;
-	} else
+	पूर्ण अन्यथा
 		args += i;
 
 	/* Chew up trailing spaces. */
-	return skip_spaces(args);
-}
+	वापस skip_spaces(args);
+पूर्ण
 EXPORT_SYMBOL(next_arg);

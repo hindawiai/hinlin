@@ -1,67 +1,68 @@
-// SPDX-License-Identifier: GPL-2.0-only
-#include <linux/string.h>
-#include <linux/kernel.h>
-#include <linux/of.h>
-#include <linux/export.h>
-#include <linux/mod_devicetable.h>
-#include <linux/errno.h>
-#include <linux/irq.h>
-#include <linux/of_platform.h>
-#include <linux/of_address.h>
-#include <linux/of_device.h>
-#include <linux/of_irq.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
+#समावेश <linux/माला.स>
+#समावेश <linux/kernel.h>
+#समावेश <linux/of.h>
+#समावेश <linux/export.h>
+#समावेश <linux/mod_devicetable.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/irq.h>
+#समावेश <linux/of_platक्रमm.h>
+#समावेश <linux/of_address.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/of_irq.h>
 
-#include "of_device_common.h"
+#समावेश "of_device_common.h"
 
-unsigned int irq_of_parse_and_map(struct device_node *node, int index)
-{
-	struct platform_device *op = of_find_device_by_node(node);
+अचिन्हित पूर्णांक irq_of_parse_and_map(काष्ठा device_node *node, पूर्णांक index)
+अणु
+	काष्ठा platक्रमm_device *op = of_find_device_by_node(node);
 
-	if (!op || index >= op->archdata.num_irqs)
-		return 0;
+	अगर (!op || index >= op->archdata.num_irqs)
+		वापस 0;
 
-	return op->archdata.irqs[index];
-}
+	वापस op->archdata.irqs[index];
+पूर्ण
 EXPORT_SYMBOL(irq_of_parse_and_map);
 
-int of_address_to_resource(struct device_node *node, int index,
-			   struct resource *r)
-{
-	struct platform_device *op = of_find_device_by_node(node);
+पूर्णांक of_address_to_resource(काष्ठा device_node *node, पूर्णांक index,
+			   काष्ठा resource *r)
+अणु
+	काष्ठा platक्रमm_device *op = of_find_device_by_node(node);
 
-	if (!op || index >= op->num_resources)
-		return -EINVAL;
+	अगर (!op || index >= op->num_resources)
+		वापस -EINVAL;
 
-	memcpy(r, &op->archdata.resource[index], sizeof(*r));
-	return 0;
-}
+	स_नकल(r, &op->archdata.resource[index], माप(*r));
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(of_address_to_resource);
 
-void __iomem *of_iomap(struct device_node *node, int index)
-{
-	struct platform_device *op = of_find_device_by_node(node);
-	struct resource *r;
+व्योम __iomem *of_iomap(काष्ठा device_node *node, पूर्णांक index)
+अणु
+	काष्ठा platक्रमm_device *op = of_find_device_by_node(node);
+	काष्ठा resource *r;
 
-	if (!op || index >= op->num_resources)
-		return NULL;
+	अगर (!op || index >= op->num_resources)
+		वापस शून्य;
 
 	r = &op->archdata.resource[index];
 
-	return of_ioremap(r, 0, resource_size(r), (char *) r->name);
-}
+	वापस of_ioremap(r, 0, resource_size(r), (अक्षर *) r->name);
+पूर्ण
 EXPORT_SYMBOL(of_iomap);
 
-/* Take the archdata values for IOMMU, STC, and HOSTDATA found in
- * BUS and propagate to all child platform_device objects.
+/* Take the archdata values क्रम IOMMU, STC, and HOSTDATA found in
+ * BUS and propagate to all child platक्रमm_device objects.
  */
-void of_propagate_archdata(struct platform_device *bus)
-{
-	struct dev_archdata *bus_sd = &bus->dev.archdata;
-	struct device_node *bus_dp = bus->dev.of_node;
-	struct device_node *dp;
+व्योम of_propagate_archdata(काष्ठा platक्रमm_device *bus)
+अणु
+	काष्ठा dev_archdata *bus_sd = &bus->dev.archdata;
+	काष्ठा device_node *bus_dp = bus->dev.of_node;
+	काष्ठा device_node *dp;
 
-	for (dp = bus_dp->child; dp; dp = dp->sibling) {
-		struct platform_device *op = of_find_device_by_node(dp);
+	क्रम (dp = bus_dp->child; dp; dp = dp->sibling) अणु
+		काष्ठा platक्रमm_device *op = of_find_device_by_node(dp);
 
 		op->dev.archdata.iommu = bus_sd->iommu;
 		op->dev.archdata.stc = bus_sd->stc;
@@ -69,112 +70,112 @@ void of_propagate_archdata(struct platform_device *bus)
 		op->dev.archdata.numa_node = bus_sd->numa_node;
 		op->dev.dma_ops = bus->dev.dma_ops;
 
-		if (dp->child)
+		अगर (dp->child)
 			of_propagate_archdata(op);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void get_cells(struct device_node *dp, int *addrc, int *sizec)
-{
-	if (addrc)
+अटल व्योम get_cells(काष्ठा device_node *dp, पूर्णांक *addrc, पूर्णांक *sizec)
+अणु
+	अगर (addrc)
 		*addrc = of_n_addr_cells(dp);
-	if (sizec)
+	अगर (sizec)
 		*sizec = of_n_size_cells(dp);
-}
+पूर्ण
 
 /*
  * Default translator (generic bus)
  */
 
-void of_bus_default_count_cells(struct device_node *dev, int *addrc, int *sizec)
-{
+व्योम of_bus_शेष_count_cells(काष्ठा device_node *dev, पूर्णांक *addrc, पूर्णांक *sizec)
+अणु
 	get_cells(dev, addrc, sizec);
-}
+पूर्ण
 
-/* Make sure the least significant 64-bits are in-range.  Even
- * for 3 or 4 cell values it is a good enough approximation.
+/* Make sure the least signअगरicant 64-bits are in-range.  Even
+ * क्रम 3 or 4 cell values it is a good enough approximation.
  */
-int of_out_of_range(const u32 *addr, const u32 *base,
-		    const u32 *size, int na, int ns)
-{
-	u64 a = of_read_addr(addr, na);
-	u64 b = of_read_addr(base, na);
+पूर्णांक of_out_of_range(स्थिर u32 *addr, स्थिर u32 *base,
+		    स्थिर u32 *size, पूर्णांक na, पूर्णांक ns)
+अणु
+	u64 a = of_पढ़ो_addr(addr, na);
+	u64 b = of_पढ़ो_addr(base, na);
 
-	if (a < b)
-		return 1;
+	अगर (a < b)
+		वापस 1;
 
-	b += of_read_addr(size, ns);
-	if (a >= b)
-		return 1;
+	b += of_पढ़ो_addr(size, ns);
+	अगर (a >= b)
+		वापस 1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int of_bus_default_map(u32 *addr, const u32 *range, int na, int ns, int pna)
-{
+पूर्णांक of_bus_शेष_map(u32 *addr, स्थिर u32 *range, पूर्णांक na, पूर्णांक ns, पूर्णांक pna)
+अणु
 	u32 result[OF_MAX_ADDR_CELLS];
-	int i;
+	पूर्णांक i;
 
-	if (ns > 2) {
-		printk("of_device: Cannot handle size cells (%d) > 2.", ns);
-		return -EINVAL;
-	}
+	अगर (ns > 2) अणु
+		prपूर्णांकk("of_device: Cannot handle size cells (%d) > 2.", ns);
+		वापस -EINVAL;
+	पूर्ण
 
-	if (of_out_of_range(addr, range, range + na + pna, na, ns))
-		return -EINVAL;
+	अगर (of_out_of_range(addr, range, range + na + pna, na, ns))
+		वापस -EINVAL;
 
 	/* Start with the parent range base.  */
-	memcpy(result, range + na, pna * 4);
+	स_नकल(result, range + na, pna * 4);
 
 	/* Add in the child address offset.  */
-	for (i = 0; i < na; i++)
+	क्रम (i = 0; i < na; i++)
 		result[pna - 1 - i] +=
 			(addr[na - 1 - i] -
 			 range[na - 1 - i]);
 
-	memcpy(addr, result, pna * 4);
+	स_नकल(addr, result, pna * 4);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-unsigned long of_bus_default_get_flags(const u32 *addr, unsigned long flags)
-{
-	if (flags)
-		return flags;
-	return IORESOURCE_MEM;
-}
+अचिन्हित दीर्घ of_bus_शेष_get_flags(स्थिर u32 *addr, अचिन्हित दीर्घ flags)
+अणु
+	अगर (flags)
+		वापस flags;
+	वापस IORESOURCE_MEM;
+पूर्ण
 
 /*
- * SBUS bus specific translator
+ * SBUS bus specअगरic translator
  */
 
-int of_bus_sbus_match(struct device_node *np)
-{
-	struct device_node *dp = np;
+पूर्णांक of_bus_sbus_match(काष्ठा device_node *np)
+अणु
+	काष्ठा device_node *dp = np;
 
-	while (dp) {
-		if (of_node_name_eq(dp, "sbus") ||
+	जबतक (dp) अणु
+		अगर (of_node_name_eq(dp, "sbus") ||
 		    of_node_name_eq(dp, "sbi"))
-			return 1;
+			वापस 1;
 
 		/* Have a look at use_1to1_mapping().  We're trying
-		 * to match SBUS if that's the top-level bus and we
-		 * don't have some intervening real bus that provides
+		 * to match SBUS अगर that's the top-level bus and we
+		 * करोn't have some पूर्णांकervening real bus that provides
 		 * ranges based translations.
 		 */
-		if (of_find_property(dp, "ranges", NULL) != NULL)
-			break;
+		अगर (of_find_property(dp, "ranges", शून्य) != शून्य)
+			अवरोध;
 
 		dp = dp->parent;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void of_bus_sbus_count_cells(struct device_node *child, int *addrc, int *sizec)
-{
-	if (addrc)
+व्योम of_bus_sbus_count_cells(काष्ठा device_node *child, पूर्णांक *addrc, पूर्णांक *sizec)
+अणु
+	अगर (addrc)
 		*addrc = 2;
-	if (sizec)
+	अगर (sizec)
 		*sizec = 1;
-}
+पूर्ण

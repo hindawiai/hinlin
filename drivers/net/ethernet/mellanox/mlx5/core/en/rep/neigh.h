@@ -1,35 +1,36 @@
-/* SPDX-License-Identifier: GPL-2.0 OR Linux-OpenIB */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 OR Linux-OpenIB */
 /* Copyright (c) 2020 Mellanox Technologies. */
 
-#ifndef __MLX5_EN_REP_NEIGH__
-#define __MLX5_EN_REP_NEIGH__
+#अगर_अघोषित __MLX5_EN_REP_NEIGH__
+#घोषणा __MLX5_EN_REP_NEIGH__
 
-#include "en.h"
-#include "en_rep.h"
+#समावेश "en.h"
+#समावेश "en_rep.h"
 
-#if IS_ENABLED(CONFIG_MLX5_CLS_ACT)
+#अगर IS_ENABLED(CONFIG_MLX5_CLS_ACT)
 
-int mlx5e_rep_neigh_init(struct mlx5e_rep_priv *rpriv);
-void mlx5e_rep_neigh_cleanup(struct mlx5e_rep_priv *rpriv);
+पूर्णांक mlx5e_rep_neigh_init(काष्ठा mlx5e_rep_priv *rpriv);
+व्योम mlx5e_rep_neigh_cleanup(काष्ठा mlx5e_rep_priv *rpriv);
 
-struct mlx5e_neigh_hash_entry *
-mlx5e_rep_neigh_entry_lookup(struct mlx5e_priv *priv,
-			     struct mlx5e_neigh *m_neigh);
-int mlx5e_rep_neigh_entry_create(struct mlx5e_priv *priv,
-				 struct mlx5e_neigh *m_neigh,
-				 struct net_device *neigh_dev,
-				 struct mlx5e_neigh_hash_entry **nhe);
-void mlx5e_rep_neigh_entry_release(struct mlx5e_neigh_hash_entry *nhe);
+काष्ठा mlx5e_neigh_hash_entry *
+mlx5e_rep_neigh_entry_lookup(काष्ठा mlx5e_priv *priv,
+			     काष्ठा mlx5e_neigh *m_neigh);
+पूर्णांक mlx5e_rep_neigh_entry_create(काष्ठा mlx5e_priv *priv,
+				 काष्ठा mlx5e_neigh *m_neigh,
+				 काष्ठा net_device *neigh_dev,
+				 काष्ठा mlx5e_neigh_hash_entry **nhe);
+व्योम mlx5e_rep_neigh_entry_release(काष्ठा mlx5e_neigh_hash_entry *nhe);
 
-void mlx5e_rep_queue_neigh_stats_work(struct mlx5e_priv *priv);
+व्योम mlx5e_rep_queue_neigh_stats_work(काष्ठा mlx5e_priv *priv);
 
-#else /* CONFIG_MLX5_CLS_ACT */
+#अन्यथा /* CONFIG_MLX5_CLS_ACT */
 
-static inline int
-mlx5e_rep_neigh_init(struct mlx5e_rep_priv *rpriv) { return 0; }
-static inline void
-mlx5e_rep_neigh_cleanup(struct mlx5e_rep_priv *rpriv) {}
+अटल अंतरभूत पूर्णांक
+mlx5e_rep_neigh_init(काष्ठा mlx5e_rep_priv *rpriv) अणु वापस 0; पूर्ण
+अटल अंतरभूत व्योम
+mlx5e_rep_neigh_cleanup(काष्ठा mlx5e_rep_priv *rpriv) अणुपूर्ण
 
-#endif /* CONFIG_MLX5_CLS_ACT */
+#पूर्ण_अगर /* CONFIG_MLX5_CLS_ACT */
 
-#endif /* __MLX5_EN_REP_NEIGH__ */
+#पूर्ण_अगर /* __MLX5_EN_REP_NEIGH__ */

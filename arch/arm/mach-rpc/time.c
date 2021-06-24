@@ -1,97 +1,98 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- *  linux/arch/arm/common/time-acorn.c
+ *  linux/arch/arm/common/समय-acorn.c
  *
  *  Copyright (c) 1996-2000 Russell King.
  *
  *  Changelog:
  *   24-Sep-1996	RMK	Created
  *   10-Oct-1996	RMK	Brought up to date with arch-sa110eval
- *   04-Dec-1997	RMK	Updated for new arch/arm/time.c
+ *   04-Dec-1997	RMK	Updated क्रम new arch/arm/समय.c
  *   13=Jun-2004	DS	Moved to arch/arm/common b/c shared w/CLPS7500
  */
-#include <linux/clocksource.h>
-#include <linux/init.h>
-#include <linux/interrupt.h>
-#include <linux/irq.h>
-#include <linux/io.h>
+#समावेश <linux/घड़ीsource.h>
+#समावेश <linux/init.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/irq.h>
+#समावेश <linux/पन.स>
 
-#include <mach/hardware.h>
-#include <asm/hardware/ioc.h>
+#समावेश <mach/hardware.h>
+#समावेश <यंत्र/hardware/ioc.h>
 
-#include <asm/mach/time.h>
+#समावेश <यंत्र/mach/समय.स>
 
-#define RPC_CLOCK_FREQ 2000000
-#define RPC_LATCH DIV_ROUND_CLOSEST(RPC_CLOCK_FREQ, HZ)
+#घोषणा RPC_CLOCK_FREQ 2000000
+#घोषणा RPC_LATCH DIV_ROUND_CLOSEST(RPC_CLOCK_FREQ, HZ)
 
-static u32 ioc_time;
+अटल u32 ioc_समय;
 
-static u64 ioc_timer_read(struct clocksource *cs)
-{
-	unsigned int count1, count2, status;
-	unsigned long flags;
+अटल u64 ioc_समयr_पढ़ो(काष्ठा घड़ीsource *cs)
+अणु
+	अचिन्हित पूर्णांक count1, count2, status;
+	अचिन्हित दीर्घ flags;
 	u32 ticks;
 
 	local_irq_save(flags);
-	ioc_writeb (0, IOC_T0LATCH);
+	ioc_ग_लिखोb (0, IOC_T0LATCH);
 	barrier ();
-	count1 = ioc_readb(IOC_T0CNTL) | (ioc_readb(IOC_T0CNTH) << 8);
+	count1 = ioc_पढ़ोb(IOC_T0CNTL) | (ioc_पढ़ोb(IOC_T0CNTH) << 8);
 	barrier ();
-	status = ioc_readb(IOC_IRQREQA);
+	status = ioc_पढ़ोb(IOC_IRQREQA);
 	barrier ();
-	ioc_writeb (0, IOC_T0LATCH);
+	ioc_ग_लिखोb (0, IOC_T0LATCH);
 	barrier ();
-	count2 = ioc_readb(IOC_T0CNTL) | (ioc_readb(IOC_T0CNTH) << 8);
-	ticks = ioc_time + RPC_LATCH - count2;
+	count2 = ioc_पढ़ोb(IOC_T0CNTL) | (ioc_पढ़ोb(IOC_T0CNTH) << 8);
+	ticks = ioc_समय + RPC_LATCH - count2;
 	local_irq_restore(flags);
 
-	if (count2 < count1) {
+	अगर (count2 < count1) अणु
 		/*
-		 * The timer has not reloaded between reading count1 and
-		 * count2, check whether an interrupt was actually pending.
+		 * The समयr has not reloaded between पढ़ोing count1 and
+		 * count2, check whether an पूर्णांकerrupt was actually pending.
 		 */
-		if (status & (1 << 5))
+		अगर (status & (1 << 5))
 			ticks += RPC_LATCH;
-	} else if (count2 > count1) {
+	पूर्ण अन्यथा अगर (count2 > count1) अणु
 		/*
-		 * The timer has reloaded, so count2 indicates the new
-		 * count since the wrap.  The interrupt would not have
+		 * The समयr has reloaded, so count2 indicates the new
+		 * count since the wrap.  The पूर्णांकerrupt would not have
 		 * been processed, so add the missed ticks.
 		 */
 		ticks += RPC_LATCH;
-	}
+	पूर्ण
 
-	return ticks;
-}
+	वापस ticks;
+पूर्ण
 
-static struct clocksource ioctime_clocksource = {
-	.read = ioc_timer_read,
+अटल काष्ठा घड़ीsource ioस_समय_घड़ीsource = अणु
+	.पढ़ो = ioc_समयr_पढ़ो,
 	.mask = CLOCKSOURCE_MASK(32),
 	.rating = 100,
-};
+पूर्ण;
 
-void __init ioctime_init(void)
-{
-	ioc_writeb(RPC_LATCH & 255, IOC_T0LTCHL);
-	ioc_writeb(RPC_LATCH >> 8, IOC_T0LTCHH);
-	ioc_writeb(0, IOC_T0GO);
-}
+व्योम __init ioस_समय_init(व्योम)
+अणु
+	ioc_ग_लिखोb(RPC_LATCH & 255, IOC_T0LTCHL);
+	ioc_ग_लिखोb(RPC_LATCH >> 8, IOC_T0LTCHH);
+	ioc_ग_लिखोb(0, IOC_T0GO);
+पूर्ण
 
-static irqreturn_t
-ioc_timer_interrupt(int irq, void *dev_id)
-{
-	ioc_time += RPC_LATCH;
-	legacy_timer_tick(1);
-	return IRQ_HANDLED;
-}
+अटल irqवापस_t
+ioc_समयr_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id)
+अणु
+	ioc_समय += RPC_LATCH;
+	legacy_समयr_tick(1);
+	वापस IRQ_HANDLED;
+पूर्ण
 
 /*
- * Set up timer interrupt.
+ * Set up समयr पूर्णांकerrupt.
  */
-void __init ioc_timer_init(void)
-{
-	WARN_ON(clocksource_register_hz(&ioctime_clocksource, RPC_CLOCK_FREQ));
-	ioctime_init();
-	if (request_irq(IRQ_TIMER0, ioc_timer_interrupt, 0, "timer", NULL))
+व्योम __init ioc_समयr_init(व्योम)
+अणु
+	WARN_ON(घड़ीsource_रेजिस्टर_hz(&ioस_समय_घड़ीsource, RPC_CLOCK_FREQ));
+	ioस_समय_init();
+	अगर (request_irq(IRQ_TIMER0, ioc_समयr_पूर्णांकerrupt, 0, "timer", शून्य))
 		pr_err("Failed to request irq %d (timer)\n", IRQ_TIMER0);
-}
+पूर्ण

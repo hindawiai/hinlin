@@ -1,509 +1,510 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * drivers/uio/uio.c
  *
  * Copyright(C) 2005, Benedikt Spranger <b.spranger@linutronix.de>
  * Copyright(C) 2005, Thomas Gleixner <tglx@linutronix.de>
  * Copyright(C) 2006, Hans J. Koch <hjk@hansjkoch.de>
- * Copyright(C) 2006, Greg Kroah-Hartman <greg@kroah.com>
+ * Copyright(C) 2006, Greg Kroah-Harपंचांगan <greg@kroah.com>
  *
  * Userspace IO
  *
  * Base Functions
  */
 
-#include <linux/module.h>
-#include <linux/init.h>
-#include <linux/poll.h>
-#include <linux/device.h>
-#include <linux/slab.h>
-#include <linux/mm.h>
-#include <linux/idr.h>
-#include <linux/sched/signal.h>
-#include <linux/string.h>
-#include <linux/kobject.h>
-#include <linux/cdev.h>
-#include <linux/uio_driver.h>
+#समावेश <linux/module.h>
+#समावेश <linux/init.h>
+#समावेश <linux/poll.h>
+#समावेश <linux/device.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/idr.h>
+#समावेश <linux/sched/संकेत.स>
+#समावेश <linux/माला.स>
+#समावेश <linux/kobject.h>
+#समावेश <linux/cdev.h>
+#समावेश <linux/uio_driver.h>
 
-#define UIO_MAX_DEVICES		(1U << MINORBITS)
+#घोषणा UIO_MAX_DEVICES		(1U << MINORBITS)
 
-static int uio_major;
-static struct cdev *uio_cdev;
-static DEFINE_IDR(uio_idr);
-static const struct file_operations uio_fops;
+अटल पूर्णांक uio_major;
+अटल काष्ठा cdev *uio_cdev;
+अटल DEFINE_IDR(uio_idr);
+अटल स्थिर काष्ठा file_operations uio_fops;
 
 /* Protect idr accesses */
-static DEFINE_MUTEX(minor_lock);
+अटल DEFINE_MUTEX(minor_lock);
 
 /*
  * attributes
  */
 
-struct uio_map {
-	struct kobject kobj;
-	struct uio_mem *mem;
-};
-#define to_map(map) container_of(map, struct uio_map, kobj)
+काष्ठा uio_map अणु
+	काष्ठा kobject kobj;
+	काष्ठा uio_mem *mem;
+पूर्ण;
+#घोषणा to_map(map) container_of(map, काष्ठा uio_map, kobj)
 
-static ssize_t map_name_show(struct uio_mem *mem, char *buf)
-{
-	if (unlikely(!mem->name))
+अटल sमाप_प्रकार map_name_show(काष्ठा uio_mem *mem, अक्षर *buf)
+अणु
+	अगर (unlikely(!mem->name))
 		mem->name = "";
 
-	return sprintf(buf, "%s\n", mem->name);
-}
+	वापस प्र_लिखो(buf, "%s\n", mem->name);
+पूर्ण
 
-static ssize_t map_addr_show(struct uio_mem *mem, char *buf)
-{
-	return sprintf(buf, "%pa\n", &mem->addr);
-}
+अटल sमाप_प्रकार map_addr_show(काष्ठा uio_mem *mem, अक्षर *buf)
+अणु
+	वापस प्र_लिखो(buf, "%pa\n", &mem->addr);
+पूर्ण
 
-static ssize_t map_size_show(struct uio_mem *mem, char *buf)
-{
-	return sprintf(buf, "%pa\n", &mem->size);
-}
+अटल sमाप_प्रकार map_size_show(काष्ठा uio_mem *mem, अक्षर *buf)
+अणु
+	वापस प्र_लिखो(buf, "%pa\n", &mem->size);
+पूर्ण
 
-static ssize_t map_offset_show(struct uio_mem *mem, char *buf)
-{
-	return sprintf(buf, "0x%llx\n", (unsigned long long)mem->offs);
-}
+अटल sमाप_प्रकार map_offset_show(काष्ठा uio_mem *mem, अक्षर *buf)
+अणु
+	वापस प्र_लिखो(buf, "0x%llx\n", (अचिन्हित दीर्घ दीर्घ)mem->offs);
+पूर्ण
 
-struct map_sysfs_entry {
-	struct attribute attr;
-	ssize_t (*show)(struct uio_mem *, char *);
-	ssize_t (*store)(struct uio_mem *, const char *, size_t);
-};
+काष्ठा map_sysfs_entry अणु
+	काष्ठा attribute attr;
+	sमाप_प्रकार (*show)(काष्ठा uio_mem *, अक्षर *);
+	sमाप_प्रकार (*store)(काष्ठा uio_mem *, स्थिर अक्षर *, माप_प्रकार);
+पूर्ण;
 
-static struct map_sysfs_entry name_attribute =
-	__ATTR(name, S_IRUGO, map_name_show, NULL);
-static struct map_sysfs_entry addr_attribute =
-	__ATTR(addr, S_IRUGO, map_addr_show, NULL);
-static struct map_sysfs_entry size_attribute =
-	__ATTR(size, S_IRUGO, map_size_show, NULL);
-static struct map_sysfs_entry offset_attribute =
-	__ATTR(offset, S_IRUGO, map_offset_show, NULL);
+अटल काष्ठा map_sysfs_entry name_attribute =
+	__ATTR(name, S_IRUGO, map_name_show, शून्य);
+अटल काष्ठा map_sysfs_entry addr_attribute =
+	__ATTR(addr, S_IRUGO, map_addr_show, शून्य);
+अटल काष्ठा map_sysfs_entry size_attribute =
+	__ATTR(size, S_IRUGO, map_size_show, शून्य);
+अटल काष्ठा map_sysfs_entry offset_attribute =
+	__ATTR(offset, S_IRUGO, map_offset_show, शून्य);
 
-static struct attribute *attrs[] = {
+अटल काष्ठा attribute *attrs[] = अणु
 	&name_attribute.attr,
 	&addr_attribute.attr,
 	&size_attribute.attr,
 	&offset_attribute.attr,
-	NULL,	/* need to NULL terminate the list of attributes */
-};
+	शून्य,	/* need to शून्य terminate the list of attributes */
+पूर्ण;
 
-static void map_release(struct kobject *kobj)
-{
-	struct uio_map *map = to_map(kobj);
-	kfree(map);
-}
+अटल व्योम map_release(काष्ठा kobject *kobj)
+अणु
+	काष्ठा uio_map *map = to_map(kobj);
+	kमुक्त(map);
+पूर्ण
 
-static ssize_t map_type_show(struct kobject *kobj, struct attribute *attr,
-			     char *buf)
-{
-	struct uio_map *map = to_map(kobj);
-	struct uio_mem *mem = map->mem;
-	struct map_sysfs_entry *entry;
+अटल sमाप_प्रकार map_type_show(काष्ठा kobject *kobj, काष्ठा attribute *attr,
+			     अक्षर *buf)
+अणु
+	काष्ठा uio_map *map = to_map(kobj);
+	काष्ठा uio_mem *mem = map->mem;
+	काष्ठा map_sysfs_entry *entry;
 
-	entry = container_of(attr, struct map_sysfs_entry, attr);
+	entry = container_of(attr, काष्ठा map_sysfs_entry, attr);
 
-	if (!entry->show)
-		return -EIO;
+	अगर (!entry->show)
+		वापस -EIO;
 
-	return entry->show(mem, buf);
-}
+	वापस entry->show(mem, buf);
+पूर्ण
 
-static const struct sysfs_ops map_sysfs_ops = {
+अटल स्थिर काष्ठा sysfs_ops map_sysfs_ops = अणु
 	.show = map_type_show,
-};
+पूर्ण;
 
-static struct kobj_type map_attr_type = {
+अटल काष्ठा kobj_type map_attr_type = अणु
 	.release	= map_release,
 	.sysfs_ops	= &map_sysfs_ops,
-	.default_attrs	= attrs,
-};
+	.शेष_attrs	= attrs,
+पूर्ण;
 
-struct uio_portio {
-	struct kobject kobj;
-	struct uio_port *port;
-};
-#define to_portio(portio) container_of(portio, struct uio_portio, kobj)
+काष्ठा uio_portio अणु
+	काष्ठा kobject kobj;
+	काष्ठा uio_port *port;
+पूर्ण;
+#घोषणा to_portio(portio) container_of(portio, काष्ठा uio_portio, kobj)
 
-static ssize_t portio_name_show(struct uio_port *port, char *buf)
-{
-	if (unlikely(!port->name))
+अटल sमाप_प्रकार portio_name_show(काष्ठा uio_port *port, अक्षर *buf)
+अणु
+	अगर (unlikely(!port->name))
 		port->name = "";
 
-	return sprintf(buf, "%s\n", port->name);
-}
+	वापस प्र_लिखो(buf, "%s\n", port->name);
+पूर्ण
 
-static ssize_t portio_start_show(struct uio_port *port, char *buf)
-{
-	return sprintf(buf, "0x%lx\n", port->start);
-}
+अटल sमाप_प्रकार portio_start_show(काष्ठा uio_port *port, अक्षर *buf)
+अणु
+	वापस प्र_लिखो(buf, "0x%lx\n", port->start);
+पूर्ण
 
-static ssize_t portio_size_show(struct uio_port *port, char *buf)
-{
-	return sprintf(buf, "0x%lx\n", port->size);
-}
+अटल sमाप_प्रकार portio_size_show(काष्ठा uio_port *port, अक्षर *buf)
+अणु
+	वापस प्र_लिखो(buf, "0x%lx\n", port->size);
+पूर्ण
 
-static ssize_t portio_porttype_show(struct uio_port *port, char *buf)
-{
-	const char *porttypes[] = {"none", "x86", "gpio", "other"};
+अटल sमाप_प्रकार portio_porttype_show(काष्ठा uio_port *port, अक्षर *buf)
+अणु
+	स्थिर अक्षर *porttypes[] = अणु"none", "x86", "gpio", "other"पूर्ण;
 
-	if ((port->porttype < 0) || (port->porttype > UIO_PORT_OTHER))
-		return -EINVAL;
+	अगर ((port->porttype < 0) || (port->porttype > UIO_PORT_OTHER))
+		वापस -EINVAL;
 
-	return sprintf(buf, "port_%s\n", porttypes[port->porttype]);
-}
+	वापस प्र_लिखो(buf, "port_%s\n", porttypes[port->porttype]);
+पूर्ण
 
-struct portio_sysfs_entry {
-	struct attribute attr;
-	ssize_t (*show)(struct uio_port *, char *);
-	ssize_t (*store)(struct uio_port *, const char *, size_t);
-};
+काष्ठा portio_sysfs_entry अणु
+	काष्ठा attribute attr;
+	sमाप_प्रकार (*show)(काष्ठा uio_port *, अक्षर *);
+	sमाप_प्रकार (*store)(काष्ठा uio_port *, स्थिर अक्षर *, माप_प्रकार);
+पूर्ण;
 
-static struct portio_sysfs_entry portio_name_attribute =
-	__ATTR(name, S_IRUGO, portio_name_show, NULL);
-static struct portio_sysfs_entry portio_start_attribute =
-	__ATTR(start, S_IRUGO, portio_start_show, NULL);
-static struct portio_sysfs_entry portio_size_attribute =
-	__ATTR(size, S_IRUGO, portio_size_show, NULL);
-static struct portio_sysfs_entry portio_porttype_attribute =
-	__ATTR(porttype, S_IRUGO, portio_porttype_show, NULL);
+अटल काष्ठा portio_sysfs_entry portio_name_attribute =
+	__ATTR(name, S_IRUGO, portio_name_show, शून्य);
+अटल काष्ठा portio_sysfs_entry portio_start_attribute =
+	__ATTR(start, S_IRUGO, portio_start_show, शून्य);
+अटल काष्ठा portio_sysfs_entry portio_size_attribute =
+	__ATTR(size, S_IRUGO, portio_size_show, शून्य);
+अटल काष्ठा portio_sysfs_entry portio_porttype_attribute =
+	__ATTR(porttype, S_IRUGO, portio_porttype_show, शून्य);
 
-static struct attribute *portio_attrs[] = {
+अटल काष्ठा attribute *portio_attrs[] = अणु
 	&portio_name_attribute.attr,
 	&portio_start_attribute.attr,
 	&portio_size_attribute.attr,
 	&portio_porttype_attribute.attr,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-static void portio_release(struct kobject *kobj)
-{
-	struct uio_portio *portio = to_portio(kobj);
-	kfree(portio);
-}
+अटल व्योम portio_release(काष्ठा kobject *kobj)
+अणु
+	काष्ठा uio_portio *portio = to_portio(kobj);
+	kमुक्त(portio);
+पूर्ण
 
-static ssize_t portio_type_show(struct kobject *kobj, struct attribute *attr,
-			     char *buf)
-{
-	struct uio_portio *portio = to_portio(kobj);
-	struct uio_port *port = portio->port;
-	struct portio_sysfs_entry *entry;
+अटल sमाप_प्रकार portio_type_show(काष्ठा kobject *kobj, काष्ठा attribute *attr,
+			     अक्षर *buf)
+अणु
+	काष्ठा uio_portio *portio = to_portio(kobj);
+	काष्ठा uio_port *port = portio->port;
+	काष्ठा portio_sysfs_entry *entry;
 
-	entry = container_of(attr, struct portio_sysfs_entry, attr);
+	entry = container_of(attr, काष्ठा portio_sysfs_entry, attr);
 
-	if (!entry->show)
-		return -EIO;
+	अगर (!entry->show)
+		वापस -EIO;
 
-	return entry->show(port, buf);
-}
+	वापस entry->show(port, buf);
+पूर्ण
 
-static const struct sysfs_ops portio_sysfs_ops = {
+अटल स्थिर काष्ठा sysfs_ops portio_sysfs_ops = अणु
 	.show = portio_type_show,
-};
+पूर्ण;
 
-static struct kobj_type portio_attr_type = {
+अटल काष्ठा kobj_type portio_attr_type = अणु
 	.release	= portio_release,
 	.sysfs_ops	= &portio_sysfs_ops,
-	.default_attrs	= portio_attrs,
-};
+	.शेष_attrs	= portio_attrs,
+पूर्ण;
 
-static ssize_t name_show(struct device *dev,
-			 struct device_attribute *attr, char *buf)
-{
-	struct uio_device *idev = dev_get_drvdata(dev);
-	int ret;
+अटल sमाप_प्रकार name_show(काष्ठा device *dev,
+			 काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा uio_device *idev = dev_get_drvdata(dev);
+	पूर्णांक ret;
 
 	mutex_lock(&idev->info_lock);
-	if (!idev->info) {
+	अगर (!idev->info) अणु
 		ret = -EINVAL;
 		dev_err(dev, "the device has been unregistered\n");
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	ret = sprintf(buf, "%s\n", idev->info->name);
+	ret = प्र_लिखो(buf, "%s\n", idev->info->name);
 
 out:
 	mutex_unlock(&idev->info_lock);
-	return ret;
-}
-static DEVICE_ATTR_RO(name);
+	वापस ret;
+पूर्ण
+अटल DEVICE_ATTR_RO(name);
 
-static ssize_t version_show(struct device *dev,
-			    struct device_attribute *attr, char *buf)
-{
-	struct uio_device *idev = dev_get_drvdata(dev);
-	int ret;
+अटल sमाप_प्रकार version_show(काष्ठा device *dev,
+			    काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा uio_device *idev = dev_get_drvdata(dev);
+	पूर्णांक ret;
 
 	mutex_lock(&idev->info_lock);
-	if (!idev->info) {
+	अगर (!idev->info) अणु
 		ret = -EINVAL;
 		dev_err(dev, "the device has been unregistered\n");
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	ret = sprintf(buf, "%s\n", idev->info->version);
+	ret = प्र_लिखो(buf, "%s\n", idev->info->version);
 
 out:
 	mutex_unlock(&idev->info_lock);
-	return ret;
-}
-static DEVICE_ATTR_RO(version);
+	वापस ret;
+पूर्ण
+अटल DEVICE_ATTR_RO(version);
 
-static ssize_t event_show(struct device *dev,
-			  struct device_attribute *attr, char *buf)
-{
-	struct uio_device *idev = dev_get_drvdata(dev);
-	return sprintf(buf, "%u\n", (unsigned int)atomic_read(&idev->event));
-}
-static DEVICE_ATTR_RO(event);
+अटल sमाप_प्रकार event_show(काष्ठा device *dev,
+			  काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा uio_device *idev = dev_get_drvdata(dev);
+	वापस प्र_लिखो(buf, "%u\n", (अचिन्हित पूर्णांक)atomic_पढ़ो(&idev->event));
+पूर्ण
+अटल DEVICE_ATTR_RO(event);
 
-static struct attribute *uio_attrs[] = {
+अटल काष्ठा attribute *uio_attrs[] = अणु
 	&dev_attr_name.attr,
 	&dev_attr_version.attr,
 	&dev_attr_event.attr,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 ATTRIBUTE_GROUPS(uio);
 
-/* UIO class infrastructure */
-static struct class uio_class = {
+/* UIO class infraकाष्ठाure */
+अटल काष्ठा class uio_class = अणु
 	.name = "uio",
 	.dev_groups = uio_groups,
-};
+पूर्ण;
 
-static bool uio_class_registered;
+अटल bool uio_class_रेजिस्टरed;
 
 /*
  * device functions
  */
-static int uio_dev_add_attributes(struct uio_device *idev)
-{
-	int ret;
-	int mi, pi;
-	int map_found = 0;
-	int portio_found = 0;
-	struct uio_mem *mem;
-	struct uio_map *map;
-	struct uio_port *port;
-	struct uio_portio *portio;
+अटल पूर्णांक uio_dev_add_attributes(काष्ठा uio_device *idev)
+अणु
+	पूर्णांक ret;
+	पूर्णांक mi, pi;
+	पूर्णांक map_found = 0;
+	पूर्णांक portio_found = 0;
+	काष्ठा uio_mem *mem;
+	काष्ठा uio_map *map;
+	काष्ठा uio_port *port;
+	काष्ठा uio_portio *portio;
 
-	for (mi = 0; mi < MAX_UIO_MAPS; mi++) {
+	क्रम (mi = 0; mi < MAX_UIO_MAPS; mi++) अणु
 		mem = &idev->info->mem[mi];
-		if (mem->size == 0)
-			break;
-		if (!map_found) {
+		अगर (mem->size == 0)
+			अवरोध;
+		अगर (!map_found) अणु
 			map_found = 1;
 			idev->map_dir = kobject_create_and_add("maps",
 							&idev->dev.kobj);
-			if (!idev->map_dir) {
+			अगर (!idev->map_dir) अणु
 				ret = -ENOMEM;
-				goto err_map;
-			}
-		}
-		map = kzalloc(sizeof(*map), GFP_KERNEL);
-		if (!map) {
+				जाओ err_map;
+			पूर्ण
+		पूर्ण
+		map = kzalloc(माप(*map), GFP_KERNEL);
+		अगर (!map) अणु
 			ret = -ENOMEM;
-			goto err_map;
-		}
+			जाओ err_map;
+		पूर्ण
 		kobject_init(&map->kobj, &map_attr_type);
 		map->mem = mem;
 		mem->map = map;
 		ret = kobject_add(&map->kobj, idev->map_dir, "map%d", mi);
-		if (ret)
-			goto err_map_kobj;
+		अगर (ret)
+			जाओ err_map_kobj;
 		ret = kobject_uevent(&map->kobj, KOBJ_ADD);
-		if (ret)
-			goto err_map_kobj;
-	}
+		अगर (ret)
+			जाओ err_map_kobj;
+	पूर्ण
 
-	for (pi = 0; pi < MAX_UIO_PORT_REGIONS; pi++) {
+	क्रम (pi = 0; pi < MAX_UIO_PORT_REGIONS; pi++) अणु
 		port = &idev->info->port[pi];
-		if (port->size == 0)
-			break;
-		if (!portio_found) {
+		अगर (port->size == 0)
+			अवरोध;
+		अगर (!portio_found) अणु
 			portio_found = 1;
 			idev->portio_dir = kobject_create_and_add("portio",
 							&idev->dev.kobj);
-			if (!idev->portio_dir) {
+			अगर (!idev->portio_dir) अणु
 				ret = -ENOMEM;
-				goto err_portio;
-			}
-		}
-		portio = kzalloc(sizeof(*portio), GFP_KERNEL);
-		if (!portio) {
+				जाओ err_portio;
+			पूर्ण
+		पूर्ण
+		portio = kzalloc(माप(*portio), GFP_KERNEL);
+		अगर (!portio) अणु
 			ret = -ENOMEM;
-			goto err_portio;
-		}
+			जाओ err_portio;
+		पूर्ण
 		kobject_init(&portio->kobj, &portio_attr_type);
 		portio->port = port;
 		port->portio = portio;
 		ret = kobject_add(&portio->kobj, idev->portio_dir,
 							"port%d", pi);
-		if (ret)
-			goto err_portio_kobj;
+		अगर (ret)
+			जाओ err_portio_kobj;
 		ret = kobject_uevent(&portio->kobj, KOBJ_ADD);
-		if (ret)
-			goto err_portio_kobj;
-	}
+		अगर (ret)
+			जाओ err_portio_kobj;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 err_portio:
 	pi--;
 err_portio_kobj:
-	for (; pi >= 0; pi--) {
+	क्रम (; pi >= 0; pi--) अणु
 		port = &idev->info->port[pi];
 		portio = port->portio;
 		kobject_put(&portio->kobj);
-	}
+	पूर्ण
 	kobject_put(idev->portio_dir);
 err_map:
 	mi--;
 err_map_kobj:
-	for (; mi >= 0; mi--) {
+	क्रम (; mi >= 0; mi--) अणु
 		mem = &idev->info->mem[mi];
 		map = mem->map;
 		kobject_put(&map->kobj);
-	}
+	पूर्ण
 	kobject_put(idev->map_dir);
 	dev_err(&idev->dev, "error creating sysfs files (%d)\n", ret);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void uio_dev_del_attributes(struct uio_device *idev)
-{
-	int i;
-	struct uio_mem *mem;
-	struct uio_port *port;
+अटल व्योम uio_dev_del_attributes(काष्ठा uio_device *idev)
+अणु
+	पूर्णांक i;
+	काष्ठा uio_mem *mem;
+	काष्ठा uio_port *port;
 
-	for (i = 0; i < MAX_UIO_MAPS; i++) {
+	क्रम (i = 0; i < MAX_UIO_MAPS; i++) अणु
 		mem = &idev->info->mem[i];
-		if (mem->size == 0)
-			break;
+		अगर (mem->size == 0)
+			अवरोध;
 		kobject_put(&mem->map->kobj);
-	}
+	पूर्ण
 	kobject_put(idev->map_dir);
 
-	for (i = 0; i < MAX_UIO_PORT_REGIONS; i++) {
+	क्रम (i = 0; i < MAX_UIO_PORT_REGIONS; i++) अणु
 		port = &idev->info->port[i];
-		if (port->size == 0)
-			break;
+		अगर (port->size == 0)
+			अवरोध;
 		kobject_put(&port->portio->kobj);
-	}
+	पूर्ण
 	kobject_put(idev->portio_dir);
-}
+पूर्ण
 
-static int uio_get_minor(struct uio_device *idev)
-{
-	int retval;
+अटल पूर्णांक uio_get_minor(काष्ठा uio_device *idev)
+अणु
+	पूर्णांक retval;
 
 	mutex_lock(&minor_lock);
 	retval = idr_alloc(&uio_idr, idev, 0, UIO_MAX_DEVICES, GFP_KERNEL);
-	if (retval >= 0) {
+	अगर (retval >= 0) अणु
 		idev->minor = retval;
 		retval = 0;
-	} else if (retval == -ENOSPC) {
+	पूर्ण अन्यथा अगर (retval == -ENOSPC) अणु
 		dev_err(&idev->dev, "too many uio devices\n");
 		retval = -EINVAL;
-	}
+	पूर्ण
 	mutex_unlock(&minor_lock);
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
-static void uio_free_minor(unsigned long minor)
-{
+अटल व्योम uio_मुक्त_minor(अचिन्हित दीर्घ minor)
+अणु
 	mutex_lock(&minor_lock);
-	idr_remove(&uio_idr, minor);
+	idr_हटाओ(&uio_idr, minor);
 	mutex_unlock(&minor_lock);
-}
+पूर्ण
 
 /**
- * uio_event_notify - trigger an interrupt event
+ * uio_event_notअगरy - trigger an पूर्णांकerrupt event
  * @info: UIO device capabilities
  */
-void uio_event_notify(struct uio_info *info)
-{
-	struct uio_device *idev = info->uio_dev;
+व्योम uio_event_notअगरy(काष्ठा uio_info *info)
+अणु
+	काष्ठा uio_device *idev = info->uio_dev;
 
 	atomic_inc(&idev->event);
-	wake_up_interruptible(&idev->wait);
-	kill_fasync(&idev->async_queue, SIGIO, POLL_IN);
-}
-EXPORT_SYMBOL_GPL(uio_event_notify);
+	wake_up_पूर्णांकerruptible(&idev->रुको);
+	समाप्त_fasync(&idev->async_queue, SIGIO, POLL_IN);
+पूर्ण
+EXPORT_SYMBOL_GPL(uio_event_notअगरy);
 
 /**
- * uio_interrupt - hardware interrupt handler
- * @irq: IRQ number, can be UIO_IRQ_CYCLIC for cyclic timer
- * @dev_id: Pointer to the devices uio_device structure
+ * uio_पूर्णांकerrupt - hardware पूर्णांकerrupt handler
+ * @irq: IRQ number, can be UIO_IRQ_CYCLIC क्रम cyclic समयr
+ * @dev_id: Poपूर्णांकer to the devices uio_device काष्ठाure
  */
-static irqreturn_t uio_interrupt(int irq, void *dev_id)
-{
-	struct uio_device *idev = (struct uio_device *)dev_id;
-	irqreturn_t ret;
+अटल irqवापस_t uio_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा uio_device *idev = (काष्ठा uio_device *)dev_id;
+	irqवापस_t ret;
 
 	ret = idev->info->handler(irq, idev->info);
-	if (ret == IRQ_HANDLED)
-		uio_event_notify(idev->info);
+	अगर (ret == IRQ_HANDLED)
+		uio_event_notअगरy(idev->info);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-struct uio_listener {
-	struct uio_device *dev;
+काष्ठा uio_listener अणु
+	काष्ठा uio_device *dev;
 	s32 event_count;
-};
+पूर्ण;
 
-static int uio_open(struct inode *inode, struct file *filep)
-{
-	struct uio_device *idev;
-	struct uio_listener *listener;
-	int ret = 0;
+अटल पूर्णांक uio_खोलो(काष्ठा inode *inode, काष्ठा file *filep)
+अणु
+	काष्ठा uio_device *idev;
+	काष्ठा uio_listener *listener;
+	पूर्णांक ret = 0;
 
 	mutex_lock(&minor_lock);
 	idev = idr_find(&uio_idr, iminor(inode));
 	mutex_unlock(&minor_lock);
-	if (!idev) {
+	अगर (!idev) अणु
 		ret = -ENODEV;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	get_device(&idev->dev);
 
-	if (!try_module_get(idev->owner)) {
+	अगर (!try_module_get(idev->owner)) अणु
 		ret = -ENODEV;
-		goto err_module_get;
-	}
+		जाओ err_module_get;
+	पूर्ण
 
-	listener = kmalloc(sizeof(*listener), GFP_KERNEL);
-	if (!listener) {
+	listener = kदो_स्मृति(माप(*listener), GFP_KERNEL);
+	अगर (!listener) अणु
 		ret = -ENOMEM;
-		goto err_alloc_listener;
-	}
+		जाओ err_alloc_listener;
+	पूर्ण
 
 	listener->dev = idev;
-	listener->event_count = atomic_read(&idev->event);
-	filep->private_data = listener;
+	listener->event_count = atomic_पढ़ो(&idev->event);
+	filep->निजी_data = listener;
 
 	mutex_lock(&idev->info_lock);
-	if (!idev->info) {
+	अगर (!idev->info) अणु
 		mutex_unlock(&idev->info_lock);
 		ret = -EINVAL;
-		goto err_infoopen;
-	}
+		जाओ err_infoखोलो;
+	पूर्ण
 
-	if (idev->info->open)
-		ret = idev->info->open(idev->info, inode);
+	अगर (idev->info->खोलो)
+		ret = idev->info->खोलो(idev->info, inode);
 	mutex_unlock(&idev->info_lock);
-	if (ret)
-		goto err_infoopen;
+	अगर (ret)
+		जाओ err_infoखोलो;
 
-	return 0;
+	वापस 0;
 
-err_infoopen:
-	kfree(listener);
+err_infoखोलो:
+	kमुक्त(listener);
 
 err_alloc_listener:
 	module_put(idev->owner);
@@ -512,178 +513,178 @@ err_module_get:
 	put_device(&idev->dev);
 
 out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int uio_fasync(int fd, struct file *filep, int on)
-{
-	struct uio_listener *listener = filep->private_data;
-	struct uio_device *idev = listener->dev;
+अटल पूर्णांक uio_fasync(पूर्णांक fd, काष्ठा file *filep, पूर्णांक on)
+अणु
+	काष्ठा uio_listener *listener = filep->निजी_data;
+	काष्ठा uio_device *idev = listener->dev;
 
-	return fasync_helper(fd, filep, on, &idev->async_queue);
-}
+	वापस fasync_helper(fd, filep, on, &idev->async_queue);
+पूर्ण
 
-static int uio_release(struct inode *inode, struct file *filep)
-{
-	int ret = 0;
-	struct uio_listener *listener = filep->private_data;
-	struct uio_device *idev = listener->dev;
+अटल पूर्णांक uio_release(काष्ठा inode *inode, काष्ठा file *filep)
+अणु
+	पूर्णांक ret = 0;
+	काष्ठा uio_listener *listener = filep->निजी_data;
+	काष्ठा uio_device *idev = listener->dev;
 
 	mutex_lock(&idev->info_lock);
-	if (idev->info && idev->info->release)
+	अगर (idev->info && idev->info->release)
 		ret = idev->info->release(idev->info, inode);
 	mutex_unlock(&idev->info_lock);
 
 	module_put(idev->owner);
-	kfree(listener);
+	kमुक्त(listener);
 	put_device(&idev->dev);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static __poll_t uio_poll(struct file *filep, poll_table *wait)
-{
-	struct uio_listener *listener = filep->private_data;
-	struct uio_device *idev = listener->dev;
+अटल __poll_t uio_poll(काष्ठा file *filep, poll_table *रुको)
+अणु
+	काष्ठा uio_listener *listener = filep->निजी_data;
+	काष्ठा uio_device *idev = listener->dev;
 	__poll_t ret = 0;
 
 	mutex_lock(&idev->info_lock);
-	if (!idev->info || !idev->info->irq)
+	अगर (!idev->info || !idev->info->irq)
 		ret = -EIO;
 	mutex_unlock(&idev->info_lock);
 
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	poll_wait(filep, &idev->wait, wait);
-	if (listener->event_count != atomic_read(&idev->event))
-		return EPOLLIN | EPOLLRDNORM;
-	return 0;
-}
+	poll_रुको(filep, &idev->रुको, रुको);
+	अगर (listener->event_count != atomic_पढ़ो(&idev->event))
+		वापस EPOLLIN | EPOLLRDNORM;
+	वापस 0;
+पूर्ण
 
-static ssize_t uio_read(struct file *filep, char __user *buf,
-			size_t count, loff_t *ppos)
-{
-	struct uio_listener *listener = filep->private_data;
-	struct uio_device *idev = listener->dev;
-	DECLARE_WAITQUEUE(wait, current);
-	ssize_t retval = 0;
+अटल sमाप_प्रकार uio_पढ़ो(काष्ठा file *filep, अक्षर __user *buf,
+			माप_प्रकार count, loff_t *ppos)
+अणु
+	काष्ठा uio_listener *listener = filep->निजी_data;
+	काष्ठा uio_device *idev = listener->dev;
+	DECLARE_WAITQUEUE(रुको, current);
+	sमाप_प्रकार retval = 0;
 	s32 event_count;
 
-	if (count != sizeof(s32))
-		return -EINVAL;
+	अगर (count != माप(s32))
+		वापस -EINVAL;
 
-	add_wait_queue(&idev->wait, &wait);
+	add_रुको_queue(&idev->रुको, &रुको);
 
-	do {
+	करो अणु
 		mutex_lock(&idev->info_lock);
-		if (!idev->info || !idev->info->irq) {
+		अगर (!idev->info || !idev->info->irq) अणु
 			retval = -EIO;
 			mutex_unlock(&idev->info_lock);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		mutex_unlock(&idev->info_lock);
 
 		set_current_state(TASK_INTERRUPTIBLE);
 
-		event_count = atomic_read(&idev->event);
-		if (event_count != listener->event_count) {
+		event_count = atomic_पढ़ो(&idev->event);
+		अगर (event_count != listener->event_count) अणु
 			__set_current_state(TASK_RUNNING);
-			if (copy_to_user(buf, &event_count, count))
+			अगर (copy_to_user(buf, &event_count, count))
 				retval = -EFAULT;
-			else {
+			अन्यथा अणु
 				listener->event_count = event_count;
 				retval = count;
-			}
-			break;
-		}
+			पूर्ण
+			अवरोध;
+		पूर्ण
 
-		if (filep->f_flags & O_NONBLOCK) {
+		अगर (filep->f_flags & O_NONBLOCK) अणु
 			retval = -EAGAIN;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		if (signal_pending(current)) {
+		अगर (संकेत_pending(current)) अणु
 			retval = -ERESTARTSYS;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		schedule();
-	} while (1);
+	पूर्ण जबतक (1);
 
 	__set_current_state(TASK_RUNNING);
-	remove_wait_queue(&idev->wait, &wait);
+	हटाओ_रुको_queue(&idev->रुको, &रुको);
 
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
-static ssize_t uio_write(struct file *filep, const char __user *buf,
-			size_t count, loff_t *ppos)
-{
-	struct uio_listener *listener = filep->private_data;
-	struct uio_device *idev = listener->dev;
-	ssize_t retval;
+अटल sमाप_प्रकार uio_ग_लिखो(काष्ठा file *filep, स्थिर अक्षर __user *buf,
+			माप_प्रकार count, loff_t *ppos)
+अणु
+	काष्ठा uio_listener *listener = filep->निजी_data;
+	काष्ठा uio_device *idev = listener->dev;
+	sमाप_प्रकार retval;
 	s32 irq_on;
 
-	if (count != sizeof(s32))
-		return -EINVAL;
+	अगर (count != माप(s32))
+		वापस -EINVAL;
 
-	if (copy_from_user(&irq_on, buf, count))
-		return -EFAULT;
+	अगर (copy_from_user(&irq_on, buf, count))
+		वापस -EFAULT;
 
 	mutex_lock(&idev->info_lock);
-	if (!idev->info) {
+	अगर (!idev->info) अणु
 		retval = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (!idev->info->irq) {
+	अगर (!idev->info->irq) अणु
 		retval = -EIO;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (!idev->info->irqcontrol) {
+	अगर (!idev->info->irqcontrol) अणु
 		retval = -ENOSYS;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	retval = idev->info->irqcontrol(idev->info, irq_on);
 
 out:
 	mutex_unlock(&idev->info_lock);
-	return retval ? retval : sizeof(s32);
-}
+	वापस retval ? retval : माप(s32);
+पूर्ण
 
-static int uio_find_mem_index(struct vm_area_struct *vma)
-{
-	struct uio_device *idev = vma->vm_private_data;
+अटल पूर्णांक uio_find_mem_index(काष्ठा vm_area_काष्ठा *vma)
+अणु
+	काष्ठा uio_device *idev = vma->vm_निजी_data;
 
-	if (vma->vm_pgoff < MAX_UIO_MAPS) {
-		if (idev->info->mem[vma->vm_pgoff].size == 0)
-			return -1;
-		return (int)vma->vm_pgoff;
-	}
-	return -1;
-}
+	अगर (vma->vm_pgoff < MAX_UIO_MAPS) अणु
+		अगर (idev->info->mem[vma->vm_pgoff].size == 0)
+			वापस -1;
+		वापस (पूर्णांक)vma->vm_pgoff;
+	पूर्ण
+	वापस -1;
+पूर्ण
 
-static vm_fault_t uio_vma_fault(struct vm_fault *vmf)
-{
-	struct uio_device *idev = vmf->vma->vm_private_data;
-	struct page *page;
-	unsigned long offset;
-	void *addr;
+अटल vm_fault_t uio_vma_fault(काष्ठा vm_fault *vmf)
+अणु
+	काष्ठा uio_device *idev = vmf->vma->vm_निजी_data;
+	काष्ठा page *page;
+	अचिन्हित दीर्घ offset;
+	व्योम *addr;
 	vm_fault_t ret = 0;
-	int mi;
+	पूर्णांक mi;
 
 	mutex_lock(&idev->info_lock);
-	if (!idev->info) {
+	अगर (!idev->info) अणु
 		ret = VM_FAULT_SIGBUS;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	mi = uio_find_mem_index(vmf->vma);
-	if (mi < 0) {
+	अगर (mi < 0) अणु
 		ret = VM_FAULT_SIGBUS;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	/*
 	 * We need to subtract mi because userspace uses offset = N*PAGE_SIZE
@@ -691,259 +692,259 @@ static vm_fault_t uio_vma_fault(struct vm_fault *vmf)
 	 */
 	offset = (vmf->pgoff - mi) << PAGE_SHIFT;
 
-	addr = (void *)(unsigned long)idev->info->mem[mi].addr + offset;
-	if (idev->info->mem[mi].memtype == UIO_MEM_LOGICAL)
+	addr = (व्योम *)(अचिन्हित दीर्घ)idev->info->mem[mi].addr + offset;
+	अगर (idev->info->mem[mi].memtype == UIO_MEM_LOGICAL)
 		page = virt_to_page(addr);
-	else
-		page = vmalloc_to_page(addr);
+	अन्यथा
+		page = vदो_स्मृति_to_page(addr);
 	get_page(page);
 	vmf->page = page;
 
 out:
 	mutex_unlock(&idev->info_lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const struct vm_operations_struct uio_logical_vm_ops = {
+अटल स्थिर काष्ठा vm_operations_काष्ठा uio_logical_vm_ops = अणु
 	.fault = uio_vma_fault,
-};
+पूर्ण;
 
-static int uio_mmap_logical(struct vm_area_struct *vma)
-{
+अटल पूर्णांक uio_mmap_logical(काष्ठा vm_area_काष्ठा *vma)
+अणु
 	vma->vm_flags |= VM_DONTEXPAND | VM_DONTDUMP;
 	vma->vm_ops = &uio_logical_vm_ops;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct vm_operations_struct uio_physical_vm_ops = {
-#ifdef CONFIG_HAVE_IOREMAP_PROT
+अटल स्थिर काष्ठा vm_operations_काष्ठा uio_physical_vm_ops = अणु
+#अगर_घोषित CONFIG_HAVE_IOREMAP_PROT
 	.access = generic_access_phys,
-#endif
-};
+#पूर्ण_अगर
+पूर्ण;
 
-static int uio_mmap_physical(struct vm_area_struct *vma)
-{
-	struct uio_device *idev = vma->vm_private_data;
-	int mi = uio_find_mem_index(vma);
-	struct uio_mem *mem;
+अटल पूर्णांक uio_mmap_physical(काष्ठा vm_area_काष्ठा *vma)
+अणु
+	काष्ठा uio_device *idev = vma->vm_निजी_data;
+	पूर्णांक mi = uio_find_mem_index(vma);
+	काष्ठा uio_mem *mem;
 
-	if (mi < 0)
-		return -EINVAL;
+	अगर (mi < 0)
+		वापस -EINVAL;
 	mem = idev->info->mem + mi;
 
-	if (mem->addr & ~PAGE_MASK)
-		return -ENODEV;
-	if (vma->vm_end - vma->vm_start > mem->size)
-		return -EINVAL;
+	अगर (mem->addr & ~PAGE_MASK)
+		वापस -ENODEV;
+	अगर (vma->vm_end - vma->vm_start > mem->size)
+		वापस -EINVAL;
 
 	vma->vm_ops = &uio_physical_vm_ops;
-	if (idev->info->mem[mi].memtype == UIO_MEM_PHYS)
+	अगर (idev->info->mem[mi].memtype == UIO_MEM_PHYS)
 		vma->vm_page_prot = pgprot_noncached(vma->vm_page_prot);
 
 	/*
 	 * We cannot use the vm_iomap_memory() helper here,
 	 * because vma->vm_pgoff is the map index we looked
 	 * up above in uio_find_mem_index(), rather than an
-	 * actual page offset into the mmap.
+	 * actual page offset पूर्णांकo the mmap.
 	 *
-	 * So we just do the physical mmap without a page
+	 * So we just करो the physical mmap without a page
 	 * offset.
 	 */
-	return remap_pfn_range(vma,
+	वापस remap_pfn_range(vma,
 			       vma->vm_start,
 			       mem->addr >> PAGE_SHIFT,
 			       vma->vm_end - vma->vm_start,
 			       vma->vm_page_prot);
-}
+पूर्ण
 
-static int uio_mmap(struct file *filep, struct vm_area_struct *vma)
-{
-	struct uio_listener *listener = filep->private_data;
-	struct uio_device *idev = listener->dev;
-	int mi;
-	unsigned long requested_pages, actual_pages;
-	int ret = 0;
+अटल पूर्णांक uio_mmap(काष्ठा file *filep, काष्ठा vm_area_काष्ठा *vma)
+अणु
+	काष्ठा uio_listener *listener = filep->निजी_data;
+	काष्ठा uio_device *idev = listener->dev;
+	पूर्णांक mi;
+	अचिन्हित दीर्घ requested_pages, actual_pages;
+	पूर्णांक ret = 0;
 
-	if (vma->vm_end < vma->vm_start)
-		return -EINVAL;
+	अगर (vma->vm_end < vma->vm_start)
+		वापस -EINVAL;
 
-	vma->vm_private_data = idev;
+	vma->vm_निजी_data = idev;
 
 	mutex_lock(&idev->info_lock);
-	if (!idev->info) {
+	अगर (!idev->info) अणु
 		ret = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	mi = uio_find_mem_index(vma);
-	if (mi < 0) {
+	अगर (mi < 0) अणु
 		ret = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	requested_pages = vma_pages(vma);
 	actual_pages = ((idev->info->mem[mi].addr & ~PAGE_MASK)
 			+ idev->info->mem[mi].size + PAGE_SIZE -1) >> PAGE_SHIFT;
-	if (requested_pages > actual_pages) {
+	अगर (requested_pages > actual_pages) अणु
 		ret = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (idev->info->mmap) {
+	अगर (idev->info->mmap) अणु
 		ret = idev->info->mmap(idev->info, vma);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	switch (idev->info->mem[mi].memtype) {
-	case UIO_MEM_IOVA:
-	case UIO_MEM_PHYS:
+	चयन (idev->info->mem[mi].memtype) अणु
+	हाल UIO_MEM_IOVA:
+	हाल UIO_MEM_PHYS:
 		ret = uio_mmap_physical(vma);
-		break;
-	case UIO_MEM_LOGICAL:
-	case UIO_MEM_VIRTUAL:
+		अवरोध;
+	हाल UIO_MEM_LOGICAL:
+	हाल UIO_MEM_VIRTUAL:
 		ret = uio_mmap_logical(vma);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		ret = -EINVAL;
-	}
+	पूर्ण
 
  out:
 	mutex_unlock(&idev->info_lock);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const struct file_operations uio_fops = {
+अटल स्थिर काष्ठा file_operations uio_fops = अणु
 	.owner		= THIS_MODULE,
-	.open		= uio_open,
+	.खोलो		= uio_खोलो,
 	.release	= uio_release,
-	.read		= uio_read,
-	.write		= uio_write,
+	.पढ़ो		= uio_पढ़ो,
+	.ग_लिखो		= uio_ग_लिखो,
 	.mmap		= uio_mmap,
 	.poll		= uio_poll,
 	.fasync		= uio_fasync,
 	.llseek		= noop_llseek,
-};
+पूर्ण;
 
-static int uio_major_init(void)
-{
-	static const char name[] = "uio";
-	struct cdev *cdev = NULL;
+अटल पूर्णांक uio_major_init(व्योम)
+अणु
+	अटल स्थिर अक्षर name[] = "uio";
+	काष्ठा cdev *cdev = शून्य;
 	dev_t uio_dev = 0;
-	int result;
+	पूर्णांक result;
 
 	result = alloc_chrdev_region(&uio_dev, 0, UIO_MAX_DEVICES, name);
-	if (result)
-		goto out;
+	अगर (result)
+		जाओ out;
 
 	result = -ENOMEM;
 	cdev = cdev_alloc();
-	if (!cdev)
-		goto out_unregister;
+	अगर (!cdev)
+		जाओ out_unरेजिस्टर;
 
 	cdev->owner = THIS_MODULE;
 	cdev->ops = &uio_fops;
 	kobject_set_name(&cdev->kobj, "%s", name);
 
 	result = cdev_add(cdev, uio_dev, UIO_MAX_DEVICES);
-	if (result)
-		goto out_put;
+	अगर (result)
+		जाओ out_put;
 
 	uio_major = MAJOR(uio_dev);
 	uio_cdev = cdev;
-	return 0;
+	वापस 0;
 out_put:
 	kobject_put(&cdev->kobj);
-out_unregister:
-	unregister_chrdev_region(uio_dev, UIO_MAX_DEVICES);
+out_unरेजिस्टर:
+	unरेजिस्टर_chrdev_region(uio_dev, UIO_MAX_DEVICES);
 out:
-	return result;
-}
+	वापस result;
+पूर्ण
 
-static void uio_major_cleanup(void)
-{
-	unregister_chrdev_region(MKDEV(uio_major, 0), UIO_MAX_DEVICES);
+अटल व्योम uio_major_cleanup(व्योम)
+अणु
+	unरेजिस्टर_chrdev_region(MKDEV(uio_major, 0), UIO_MAX_DEVICES);
 	cdev_del(uio_cdev);
-}
+पूर्ण
 
-static int init_uio_class(void)
-{
-	int ret;
+अटल पूर्णांक init_uio_class(व्योम)
+अणु
+	पूर्णांक ret;
 
-	/* This is the first time in here, set everything up properly */
+	/* This is the first समय in here, set everything up properly */
 	ret = uio_major_init();
-	if (ret)
-		goto exit;
+	अगर (ret)
+		जाओ निकास;
 
-	ret = class_register(&uio_class);
-	if (ret) {
-		printk(KERN_ERR "class_register failed for uio\n");
-		goto err_class_register;
-	}
+	ret = class_रेजिस्टर(&uio_class);
+	अगर (ret) अणु
+		prपूर्णांकk(KERN_ERR "class_register failed for uio\n");
+		जाओ err_class_रेजिस्टर;
+	पूर्ण
 
-	uio_class_registered = true;
+	uio_class_रेजिस्टरed = true;
 
-	return 0;
+	वापस 0;
 
-err_class_register:
+err_class_रेजिस्टर:
 	uio_major_cleanup();
-exit:
-	return ret;
-}
+निकास:
+	वापस ret;
+पूर्ण
 
-static void release_uio_class(void)
-{
-	uio_class_registered = false;
-	class_unregister(&uio_class);
+अटल व्योम release_uio_class(व्योम)
+अणु
+	uio_class_रेजिस्टरed = false;
+	class_unरेजिस्टर(&uio_class);
 	uio_major_cleanup();
-}
+पूर्ण
 
-static void uio_device_release(struct device *dev)
-{
-	struct uio_device *idev = dev_get_drvdata(dev);
+अटल व्योम uio_device_release(काष्ठा device *dev)
+अणु
+	काष्ठा uio_device *idev = dev_get_drvdata(dev);
 
-	kfree(idev);
-}
+	kमुक्त(idev);
+पूर्ण
 
 /**
- * __uio_register_device - register a new userspace IO device
+ * __uio_रेजिस्टर_device - रेजिस्टर a new userspace IO device
  * @owner:	module that creates the new device
  * @parent:	parent device
  * @info:	UIO device capabilities
  *
- * returns zero on success or a negative error code.
+ * वापसs zero on success or a negative error code.
  */
-int __uio_register_device(struct module *owner,
-			  struct device *parent,
-			  struct uio_info *info)
-{
-	struct uio_device *idev;
-	int ret = 0;
+पूर्णांक __uio_रेजिस्टर_device(काष्ठा module *owner,
+			  काष्ठा device *parent,
+			  काष्ठा uio_info *info)
+अणु
+	काष्ठा uio_device *idev;
+	पूर्णांक ret = 0;
 
-	if (!uio_class_registered)
-		return -EPROBE_DEFER;
+	अगर (!uio_class_रेजिस्टरed)
+		वापस -EPROBE_DEFER;
 
-	if (!parent || !info || !info->name || !info->version)
-		return -EINVAL;
+	अगर (!parent || !info || !info->name || !info->version)
+		वापस -EINVAL;
 
-	info->uio_dev = NULL;
+	info->uio_dev = शून्य;
 
-	idev = kzalloc(sizeof(*idev), GFP_KERNEL);
-	if (!idev) {
-		return -ENOMEM;
-	}
+	idev = kzalloc(माप(*idev), GFP_KERNEL);
+	अगर (!idev) अणु
+		वापस -ENOMEM;
+	पूर्ण
 
 	idev->owner = owner;
 	idev->info = info;
 	mutex_init(&idev->info_lock);
-	init_waitqueue_head(&idev->wait);
+	init_रुकोqueue_head(&idev->रुको);
 	atomic_set(&idev->event, 0);
 
 	ret = uio_get_minor(idev);
-	if (ret) {
-		kfree(idev);
-		return ret;
-	}
+	अगर (ret) अणु
+		kमुक्त(idev);
+		वापस ret;
+	पूर्ण
 
 	device_initialize(&idev->dev);
 	idev->dev.devt = MKDEV(uio_major, idev->minor);
@@ -953,99 +954,99 @@ int __uio_register_device(struct module *owner,
 	dev_set_drvdata(&idev->dev, idev);
 
 	ret = dev_set_name(&idev->dev, "uio%d", idev->minor);
-	if (ret)
-		goto err_device_create;
+	अगर (ret)
+		जाओ err_device_create;
 
 	ret = device_add(&idev->dev);
-	if (ret)
-		goto err_device_create;
+	अगर (ret)
+		जाओ err_device_create;
 
 	ret = uio_dev_add_attributes(idev);
-	if (ret)
-		goto err_uio_dev_add_attributes;
+	अगर (ret)
+		जाओ err_uio_dev_add_attributes;
 
 	info->uio_dev = idev;
 
-	if (info->irq && (info->irq != UIO_IRQ_CUSTOM)) {
+	अगर (info->irq && (info->irq != UIO_IRQ_CUSTOM)) अणु
 		/*
-		 * Note that we deliberately don't use devm_request_irq
-		 * here. The parent module can unregister the UIO device
+		 * Note that we deliberately करोn't use devm_request_irq
+		 * here. The parent module can unरेजिस्टर the UIO device
 		 * and call pci_disable_msi, which requires that this
-		 * irq has been freed. However, the device may have open
-		 * FDs at the time of unregister and therefore may not be
-		 * freed until they are released.
+		 * irq has been मुक्तd. However, the device may have खोलो
+		 * FDs at the समय of unरेजिस्टर and thereक्रमe may not be
+		 * मुक्तd until they are released.
 		 */
-		ret = request_irq(info->irq, uio_interrupt,
+		ret = request_irq(info->irq, uio_पूर्णांकerrupt,
 				  info->irq_flags, info->name, idev);
-		if (ret) {
-			info->uio_dev = NULL;
-			goto err_request_irq;
-		}
-	}
+		अगर (ret) अणु
+			info->uio_dev = शून्य;
+			जाओ err_request_irq;
+		पूर्ण
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 err_request_irq:
 	uio_dev_del_attributes(idev);
 err_uio_dev_add_attributes:
 	device_del(&idev->dev);
 err_device_create:
-	uio_free_minor(idev->minor);
+	uio_मुक्त_minor(idev->minor);
 	put_device(&idev->dev);
-	return ret;
-}
-EXPORT_SYMBOL_GPL(__uio_register_device);
+	वापस ret;
+पूर्ण
+EXPORT_SYMBOL_GPL(__uio_रेजिस्टर_device);
 
-static void devm_uio_unregister_device(struct device *dev, void *res)
-{
-	uio_unregister_device(*(struct uio_info **)res);
-}
+अटल व्योम devm_uio_unरेजिस्टर_device(काष्ठा device *dev, व्योम *res)
+अणु
+	uio_unरेजिस्टर_device(*(काष्ठा uio_info **)res);
+पूर्ण
 
 /**
- * __devm_uio_register_device - Resource managed uio_register_device()
+ * __devm_uio_रेजिस्टर_device - Resource managed uio_रेजिस्टर_device()
  * @owner:	module that creates the new device
  * @parent:	parent device
  * @info:	UIO device capabilities
  *
- * returns zero on success or a negative error code.
+ * वापसs zero on success or a negative error code.
  */
-int __devm_uio_register_device(struct module *owner,
-			       struct device *parent,
-			       struct uio_info *info)
-{
-	struct uio_info **ptr;
-	int ret;
+पूर्णांक __devm_uio_रेजिस्टर_device(काष्ठा module *owner,
+			       काष्ठा device *parent,
+			       काष्ठा uio_info *info)
+अणु
+	काष्ठा uio_info **ptr;
+	पूर्णांक ret;
 
-	ptr = devres_alloc(devm_uio_unregister_device, sizeof(*ptr),
+	ptr = devres_alloc(devm_uio_unरेजिस्टर_device, माप(*ptr),
 			   GFP_KERNEL);
-	if (!ptr)
-		return -ENOMEM;
+	अगर (!ptr)
+		वापस -ENOMEM;
 
 	*ptr = info;
-	ret = __uio_register_device(owner, parent, info);
-	if (ret) {
-		devres_free(ptr);
-		return ret;
-	}
+	ret = __uio_रेजिस्टर_device(owner, parent, info);
+	अगर (ret) अणु
+		devres_मुक्त(ptr);
+		वापस ret;
+	पूर्ण
 
 	devres_add(parent, ptr);
 
-	return 0;
-}
-EXPORT_SYMBOL_GPL(__devm_uio_register_device);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL_GPL(__devm_uio_रेजिस्टर_device);
 
 /**
- * uio_unregister_device - unregister a industrial IO device
+ * uio_unरेजिस्टर_device - unरेजिस्टर a industrial IO device
  * @info:	UIO device capabilities
  *
  */
-void uio_unregister_device(struct uio_info *info)
-{
-	struct uio_device *idev;
-	unsigned long minor;
+व्योम uio_unरेजिस्टर_device(काष्ठा uio_info *info)
+अणु
+	काष्ठा uio_device *idev;
+	अचिन्हित दीर्घ minor;
 
-	if (!info || !info->uio_dev)
-		return;
+	अगर (!info || !info->uio_dev)
+		वापस;
 
 	idev = info->uio_dev;
 	minor = idev->minor;
@@ -1053,34 +1054,34 @@ void uio_unregister_device(struct uio_info *info)
 	mutex_lock(&idev->info_lock);
 	uio_dev_del_attributes(idev);
 
-	if (info->irq && info->irq != UIO_IRQ_CUSTOM)
-		free_irq(info->irq, idev);
+	अगर (info->irq && info->irq != UIO_IRQ_CUSTOM)
+		मुक्त_irq(info->irq, idev);
 
-	idev->info = NULL;
+	idev->info = शून्य;
 	mutex_unlock(&idev->info_lock);
 
-	wake_up_interruptible(&idev->wait);
-	kill_fasync(&idev->async_queue, SIGIO, POLL_HUP);
+	wake_up_पूर्णांकerruptible(&idev->रुको);
+	समाप्त_fasync(&idev->async_queue, SIGIO, POLL_HUP);
 
-	device_unregister(&idev->dev);
+	device_unरेजिस्टर(&idev->dev);
 
-	uio_free_minor(minor);
+	uio_मुक्त_minor(minor);
 
-	return;
-}
-EXPORT_SYMBOL_GPL(uio_unregister_device);
+	वापस;
+पूर्ण
+EXPORT_SYMBOL_GPL(uio_unरेजिस्टर_device);
 
-static int __init uio_init(void)
-{
-	return init_uio_class();
-}
+अटल पूर्णांक __init uio_init(व्योम)
+अणु
+	वापस init_uio_class();
+पूर्ण
 
-static void __exit uio_exit(void)
-{
+अटल व्योम __निकास uio_निकास(व्योम)
+अणु
 	release_uio_class();
 	idr_destroy(&uio_idr);
-}
+पूर्ण
 
 module_init(uio_init)
-module_exit(uio_exit)
+module_निकास(uio_निकास)
 MODULE_LICENSE("GPL v2");

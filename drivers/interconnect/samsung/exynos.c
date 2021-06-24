@@ -1,127 +1,128 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * Exynos generic interconnect provider driver
+ * Exynos generic पूर्णांकerconnect provider driver
  *
  * Copyright (c) 2020 Samsung Electronics Co., Ltd.
  *
- * Authors: Artur Świgoń <a.swigon@samsung.com>
+ * Authors: Artur धwigoध <a.swigon@samsung.com>
  *          Sylwester Nawrocki <s.nawrocki@samsung.com>
  */
-#include <linux/device.h>
-#include <linux/interconnect-provider.h>
-#include <linux/module.h>
-#include <linux/of.h>
-#include <linux/platform_device.h>
-#include <linux/pm_qos.h>
-#include <linux/slab.h>
+#समावेश <linux/device.h>
+#समावेश <linux/पूर्णांकerconnect-provider.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/pm_qos.h>
+#समावेश <linux/slab.h>
 
-#define EXYNOS_ICC_DEFAULT_BUS_CLK_RATIO	8
+#घोषणा EXYNOS_ICC_DEFAULT_BUS_CLK_RATIO	8
 
-struct exynos_icc_priv {
-	struct device *dev;
+काष्ठा exynos_icc_priv अणु
+	काष्ठा device *dev;
 
-	/* One interconnect node per provider */
-	struct icc_provider provider;
-	struct icc_node *node;
+	/* One पूर्णांकerconnect node per provider */
+	काष्ठा icc_provider provider;
+	काष्ठा icc_node *node;
 
-	struct dev_pm_qos_request qos_req;
+	काष्ठा dev_pm_qos_request qos_req;
 	u32 bus_clk_ratio;
-};
+पूर्ण;
 
-static struct icc_node *exynos_icc_get_parent(struct device_node *np)
-{
-	struct of_phandle_args args;
-	struct icc_node_data *icc_node_data;
-	struct icc_node *icc_node;
-	int num, ret;
+अटल काष्ठा icc_node *exynos_icc_get_parent(काष्ठा device_node *np)
+अणु
+	काष्ठा of_phandle_args args;
+	काष्ठा icc_node_data *icc_node_data;
+	काष्ठा icc_node *icc_node;
+	पूर्णांक num, ret;
 
 	num = of_count_phandle_with_args(np, "interconnects",
 					 "#interconnect-cells");
-	if (num < 1)
-		return NULL; /* parent nodes are optional */
+	अगर (num < 1)
+		वापस शून्य; /* parent nodes are optional */
 
-	/* Get the interconnect target node */
+	/* Get the पूर्णांकerconnect target node */
 	ret = of_parse_phandle_with_args(np, "interconnects",
 					"#interconnect-cells", 0, &args);
-	if (ret < 0)
-		return ERR_PTR(ret);
+	अगर (ret < 0)
+		वापस ERR_PTR(ret);
 
 	icc_node_data = of_icc_get_from_provider(&args);
 	of_node_put(args.np);
 
-	if (IS_ERR(icc_node_data))
-		return ERR_CAST(icc_node_data);
+	अगर (IS_ERR(icc_node_data))
+		वापस ERR_CAST(icc_node_data);
 
 	icc_node = icc_node_data->node;
-	kfree(icc_node_data);
+	kमुक्त(icc_node_data);
 
-	return icc_node;
-}
+	वापस icc_node;
+पूर्ण
 
-static int exynos_generic_icc_set(struct icc_node *src, struct icc_node *dst)
-{
-	struct exynos_icc_priv *src_priv = src->data, *dst_priv = dst->data;
+अटल पूर्णांक exynos_generic_icc_set(काष्ठा icc_node *src, काष्ठा icc_node *dst)
+अणु
+	काष्ठा exynos_icc_priv *src_priv = src->data, *dst_priv = dst->data;
 	s32 src_freq = max(src->avg_bw, src->peak_bw) / src_priv->bus_clk_ratio;
 	s32 dst_freq = max(dst->avg_bw, dst->peak_bw) / dst_priv->bus_clk_ratio;
-	int ret;
+	पूर्णांक ret;
 
 	ret = dev_pm_qos_update_request(&src_priv->qos_req, src_freq);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(src_priv->dev, "failed to update PM QoS of %s (src)\n",
 			src->name);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	ret = dev_pm_qos_update_request(&dst_priv->qos_req, dst_freq);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(dst_priv->dev, "failed to update PM QoS of %s (dst)\n",
 			dst->name);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct icc_node *exynos_generic_icc_xlate(struct of_phandle_args *spec,
-						 void *data)
-{
-	struct exynos_icc_priv *priv = data;
+अटल काष्ठा icc_node *exynos_generic_icc_xlate(काष्ठा of_phandle_args *spec,
+						 व्योम *data)
+अणु
+	काष्ठा exynos_icc_priv *priv = data;
 
-	if (spec->np != priv->dev->parent->of_node)
-		return ERR_PTR(-EINVAL);
+	अगर (spec->np != priv->dev->parent->of_node)
+		वापस ERR_PTR(-EINVAL);
 
-	return priv->node;
-}
+	वापस priv->node;
+पूर्ण
 
-static int exynos_generic_icc_remove(struct platform_device *pdev)
-{
-	struct exynos_icc_priv *priv = platform_get_drvdata(pdev);
-	struct icc_node *parent_node, *node = priv->node;
+अटल पूर्णांक exynos_generic_icc_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा exynos_icc_priv *priv = platक्रमm_get_drvdata(pdev);
+	काष्ठा icc_node *parent_node, *node = priv->node;
 
 	parent_node = exynos_icc_get_parent(priv->dev->parent->of_node);
-	if (parent_node && !IS_ERR(parent_node))
+	अगर (parent_node && !IS_ERR(parent_node))
 		icc_link_destroy(node, parent_node);
 
-	icc_nodes_remove(&priv->provider);
+	icc_nodes_हटाओ(&priv->provider);
 	icc_provider_del(&priv->provider);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int exynos_generic_icc_probe(struct platform_device *pdev)
-{
-	struct device *bus_dev = pdev->dev.parent;
-	struct exynos_icc_priv *priv;
-	struct icc_provider *provider;
-	struct icc_node *icc_node, *icc_parent_node;
-	int ret;
+अटल पूर्णांक exynos_generic_icc_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device *bus_dev = pdev->dev.parent;
+	काष्ठा exynos_icc_priv *priv;
+	काष्ठा icc_provider *provider;
+	काष्ठा icc_node *icc_node, *icc_parent_node;
+	पूर्णांक ret;
 
-	priv = devm_kzalloc(&pdev->dev, sizeof(*priv), GFP_KERNEL);
-	if (!priv)
-		return -ENOMEM;
+	priv = devm_kzalloc(&pdev->dev, माप(*priv), GFP_KERNEL);
+	अगर (!priv)
+		वापस -ENOMEM;
 
 	priv->dev = &pdev->dev;
-	platform_set_drvdata(pdev, priv);
+	platक्रमm_set_drvdata(pdev, priv);
 
 	provider = &priv->provider;
 
@@ -129,71 +130,71 @@ static int exynos_generic_icc_probe(struct platform_device *pdev)
 	provider->aggregate = icc_std_aggregate;
 	provider->xlate = exynos_generic_icc_xlate;
 	provider->dev = bus_dev;
-	provider->inter_set = true;
+	provider->पूर्णांकer_set = true;
 	provider->data = priv;
 
 	ret = icc_provider_add(provider);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	icc_node = icc_node_create(pdev->id);
-	if (IS_ERR(icc_node)) {
+	अगर (IS_ERR(icc_node)) अणु
 		ret = PTR_ERR(icc_node);
-		goto err_prov_del;
-	}
+		जाओ err_prov_del;
+	पूर्ण
 
 	priv->node = icc_node;
-	icc_node->name = devm_kasprintf(&pdev->dev, GFP_KERNEL, "%pOFn",
+	icc_node->name = devm_kaप्र_लिखो(&pdev->dev, GFP_KERNEL, "%pOFn",
 					bus_dev->of_node);
-	if (of_property_read_u32(bus_dev->of_node, "samsung,data-clock-ratio",
+	अगर (of_property_पढ़ो_u32(bus_dev->of_node, "samsung,data-clock-ratio",
 				 &priv->bus_clk_ratio))
 		priv->bus_clk_ratio = EXYNOS_ICC_DEFAULT_BUS_CLK_RATIO;
 
 	/*
-	 * Register a PM QoS request for the parent (devfreq) device.
+	 * Register a PM QoS request क्रम the parent (devfreq) device.
 	 */
 	ret = dev_pm_qos_add_request(bus_dev, &priv->qos_req,
 				     DEV_PM_QOS_MIN_FREQUENCY, 0);
-	if (ret < 0)
-		goto err_node_del;
+	अगर (ret < 0)
+		जाओ err_node_del;
 
 	icc_node->data = priv;
 	icc_node_add(icc_node, provider);
 
 	icc_parent_node = exynos_icc_get_parent(bus_dev->of_node);
-	if (IS_ERR(icc_parent_node)) {
+	अगर (IS_ERR(icc_parent_node)) अणु
 		ret = PTR_ERR(icc_parent_node);
-		goto err_pmqos_del;
-	}
-	if (icc_parent_node) {
+		जाओ err_pmqos_del;
+	पूर्ण
+	अगर (icc_parent_node) अणु
 		ret = icc_link_create(icc_node, icc_parent_node->id);
-		if (ret < 0)
-			goto err_pmqos_del;
-	}
+		अगर (ret < 0)
+			जाओ err_pmqos_del;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 err_pmqos_del:
-	dev_pm_qos_remove_request(&priv->qos_req);
+	dev_pm_qos_हटाओ_request(&priv->qos_req);
 err_node_del:
-	icc_nodes_remove(provider);
+	icc_nodes_हटाओ(provider);
 err_prov_del:
 	icc_provider_del(provider);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static struct platform_driver exynos_generic_icc_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver exynos_generic_icc_driver = अणु
+	.driver = अणु
 		.name = "exynos-generic-icc",
 		.sync_state = icc_sync_state,
-	},
+	पूर्ण,
 	.probe = exynos_generic_icc_probe,
-	.remove = exynos_generic_icc_remove,
-};
-module_platform_driver(exynos_generic_icc_driver);
+	.हटाओ = exynos_generic_icc_हटाओ,
+पूर्ण;
+module_platक्रमm_driver(exynos_generic_icc_driver);
 
 MODULE_DESCRIPTION("Exynos generic interconnect driver");
-MODULE_AUTHOR("Artur Świgoń <a.swigon@samsung.com>");
+MODULE_AUTHOR("Artur धwigoध <a.swigon@samsung.com>");
 MODULE_AUTHOR("Sylwester Nawrocki <s.nawrocki@samsung.com>");
 MODULE_LICENSE("GPL v2");
 MODULE_ALIAS("platform:exynos-generic-icc");

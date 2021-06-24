@@ -1,91 +1,92 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Copyright (c) 2017 Linaro Limited. All rights reserved.
  *
  * Author: Leo Yan <leo.yan@linaro.org>
  */
-#include <linux/amba/bus.h>
-#include <linux/coresight.h>
-#include <linux/cpu.h>
-#include <linux/debugfs.h>
-#include <linux/delay.h>
-#include <linux/device.h>
-#include <linux/err.h>
-#include <linux/init.h>
-#include <linux/io.h>
-#include <linux/iopoll.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/moduleparam.h>
-#include <linux/pm_qos.h>
-#include <linux/slab.h>
-#include <linux/smp.h>
-#include <linux/types.h>
-#include <linux/uaccess.h>
+#समावेश <linux/amba/bus.h>
+#समावेश <linux/coresight.h>
+#समावेश <linux/cpu.h>
+#समावेश <linux/debugfs.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/device.h>
+#समावेश <linux/err.h>
+#समावेश <linux/init.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/iopoll.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/moduleparam.h>
+#समावेश <linux/pm_qos.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/smp.h>
+#समावेश <linux/types.h>
+#समावेश <linux/uaccess.h>
 
-#include "coresight-priv.h"
+#समावेश "coresight-priv.h"
 
-#define EDPCSR				0x0A0
-#define EDCIDSR				0x0A4
-#define EDVIDSR				0x0A8
-#define EDPCSR_HI			0x0AC
-#define EDOSLAR				0x300
-#define EDPRCR				0x310
-#define EDPRSR				0x314
-#define EDDEVID1			0xFC4
-#define EDDEVID				0xFC8
+#घोषणा EDPCSR				0x0A0
+#घोषणा EDCIDSR				0x0A4
+#घोषणा EDVIDSR				0x0A8
+#घोषणा EDPCSR_HI			0x0AC
+#घोषणा EDOSLAR				0x300
+#घोषणा EDPRCR				0x310
+#घोषणा EDPRSR				0x314
+#घोषणा EDDEVID1			0xFC4
+#घोषणा EDDEVID				0xFC8
 
-#define EDPCSR_PROHIBITED		0xFFFFFFFF
+#घोषणा EDPCSR_PROHIBITED		0xFFFFFFFF
 
-/* bits definition for EDPCSR */
-#define EDPCSR_THUMB			BIT(0)
-#define EDPCSR_ARM_INST_MASK		GENMASK(31, 2)
-#define EDPCSR_THUMB_INST_MASK		GENMASK(31, 1)
+/* bits definition क्रम EDPCSR */
+#घोषणा EDPCSR_THUMB			BIT(0)
+#घोषणा EDPCSR_ARM_INST_MASK		GENMASK(31, 2)
+#घोषणा EDPCSR_THUMB_INST_MASK		GENMASK(31, 1)
 
-/* bits definition for EDPRCR */
-#define EDPRCR_COREPURQ			BIT(3)
-#define EDPRCR_CORENPDRQ		BIT(0)
+/* bits definition क्रम EDPRCR */
+#घोषणा EDPRCR_COREPURQ			BIT(3)
+#घोषणा EDPRCR_CORENPDRQ		BIT(0)
 
-/* bits definition for EDPRSR */
-#define EDPRSR_DLK			BIT(6)
-#define EDPRSR_PU			BIT(0)
+/* bits definition क्रम EDPRSR */
+#घोषणा EDPRSR_DLK			BIT(6)
+#घोषणा EDPRSR_PU			BIT(0)
 
-/* bits definition for EDVIDSR */
-#define EDVIDSR_NS			BIT(31)
-#define EDVIDSR_E2			BIT(30)
-#define EDVIDSR_E3			BIT(29)
-#define EDVIDSR_HV			BIT(28)
-#define EDVIDSR_VMID			GENMASK(7, 0)
+/* bits definition क्रम EDVIDSR */
+#घोषणा EDVIDSR_NS			BIT(31)
+#घोषणा EDVIDSR_E2			BIT(30)
+#घोषणा EDVIDSR_E3			BIT(29)
+#घोषणा EDVIDSR_HV			BIT(28)
+#घोषणा EDVIDSR_VMID			GENMASK(7, 0)
 
 /*
- * bits definition for EDDEVID1:PSCROffset
+ * bits definition क्रम EDDEVID1:PSCROffset
  *
- * NOTE: armv8 and armv7 have different definition for the register,
+ * NOTE: armv8 and armv7 have dअगरferent definition क्रम the रेजिस्टर,
  * so consolidate the bits definition as below:
  *
- * 0b0000 - Sample offset applies based on the instruction state, we
- *          rely on EDDEVID to check if EDPCSR is implemented or not
+ * 0b0000 - Sample offset applies based on the inकाष्ठाion state, we
+ *          rely on EDDEVID to check अगर EDPCSR is implemented or not
  * 0b0001 - No offset applies.
- * 0b0010 - No offset applies, but do not use in AArch32 mode
+ * 0b0010 - No offset applies, but करो not use in AArch32 mode
  *
  */
-#define EDDEVID1_PCSR_OFFSET_MASK	GENMASK(3, 0)
-#define EDDEVID1_PCSR_OFFSET_INS_SET	(0x0)
-#define EDDEVID1_PCSR_NO_OFFSET_DIS_AARCH32	(0x2)
+#घोषणा EDDEVID1_PCSR_OFFSET_MASK	GENMASK(3, 0)
+#घोषणा EDDEVID1_PCSR_OFFSET_INS_SET	(0x0)
+#घोषणा EDDEVID1_PCSR_NO_OFFSET_DIS_AARCH32	(0x2)
 
-/* bits definition for EDDEVID */
-#define EDDEVID_PCSAMPLE_MODE		GENMASK(3, 0)
-#define EDDEVID_IMPL_EDPCSR		(0x1)
-#define EDDEVID_IMPL_EDPCSR_EDCIDSR	(0x2)
-#define EDDEVID_IMPL_FULL		(0x3)
+/* bits definition क्रम EDDEVID */
+#घोषणा EDDEVID_PCSAMPLE_MODE		GENMASK(3, 0)
+#घोषणा EDDEVID_IMPL_EDPCSR		(0x1)
+#घोषणा EDDEVID_IMPL_EDPCSR_EDCIDSR	(0x2)
+#घोषणा EDDEVID_IMPL_FULL		(0x3)
 
-#define DEBUG_WAIT_SLEEP		1000
-#define DEBUG_WAIT_TIMEOUT		32000
+#घोषणा DEBUG_WAIT_SLEEP		1000
+#घोषणा DEBUG_WAIT_TIMEOUT		32000
 
-struct debug_drvdata {
-	void __iomem	*base;
-	struct device	*dev;
-	int		cpu;
+काष्ठा debug_drvdata अणु
+	व्योम __iomem	*base;
+	काष्ठा device	*dev;
+	पूर्णांक		cpu;
 
 	bool		edpcsr_present;
 	bool		edcidsr_present;
@@ -97,98 +98,98 @@ struct debug_drvdata {
 	u32		edprsr;
 	u32		edvidsr;
 	u32		edcidsr;
-};
+पूर्ण;
 
-static DEFINE_MUTEX(debug_lock);
-static DEFINE_PER_CPU(struct debug_drvdata *, debug_drvdata);
-static int debug_count;
-static struct dentry *debug_debugfs_dir;
+अटल DEFINE_MUTEX(debug_lock);
+अटल DEFINE_PER_CPU(काष्ठा debug_drvdata *, debug_drvdata);
+अटल पूर्णांक debug_count;
+अटल काष्ठा dentry *debug_debugfs_dir;
 
-static bool debug_enable;
+अटल bool debug_enable;
 module_param_named(enable, debug_enable, bool, 0600);
 MODULE_PARM_DESC(enable, "Control to enable coresight CPU debug functionality");
 
-static void debug_os_unlock(struct debug_drvdata *drvdata)
-{
-	/* Unlocks the debug registers */
-	writel_relaxed(0x0, drvdata->base + EDOSLAR);
+अटल व्योम debug_os_unlock(काष्ठा debug_drvdata *drvdata)
+अणु
+	/* Unlocks the debug रेजिस्टरs */
+	ग_लिखोl_relaxed(0x0, drvdata->base + EDOSLAR);
 
-	/* Make sure the registers are unlocked before accessing */
+	/* Make sure the रेजिस्टरs are unlocked beक्रमe accessing */
 	wmb();
-}
+पूर्ण
 
 /*
- * According to ARM DDI 0487A.k, before access external debug
- * registers should firstly check the access permission; if any
+ * According to ARM DDI 0487A.k, beक्रमe access बाह्यal debug
+ * रेजिस्टरs should firstly check the access permission; अगर any
  * below condition has been met then cannot access debug
- * registers to avoid lockup issue:
+ * रेजिस्टरs to aव्योम lockup issue:
  *
- * - CPU power domain is powered off;
+ * - CPU घातer करोमुख्य is घातered off;
  * - The OS Double Lock is locked;
  *
- * By checking EDPRSR can get to know if meet these conditions.
+ * By checking EDPRSR can get to know अगर meet these conditions.
  */
-static bool debug_access_permitted(struct debug_drvdata *drvdata)
-{
-	/* CPU is powered off */
-	if (!(drvdata->edprsr & EDPRSR_PU))
-		return false;
+अटल bool debug_access_permitted(काष्ठा debug_drvdata *drvdata)
+अणु
+	/* CPU is घातered off */
+	अगर (!(drvdata->edprsr & EDPRSR_PU))
+		वापस false;
 
 	/* The OS Double Lock is locked */
-	if (drvdata->edprsr & EDPRSR_DLK)
-		return false;
+	अगर (drvdata->edprsr & EDPRSR_DLK)
+		वापस false;
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static void debug_force_cpu_powered_up(struct debug_drvdata *drvdata)
-{
+अटल व्योम debug_क्रमce_cpu_घातered_up(काष्ठा debug_drvdata *drvdata)
+अणु
 	u32 edprcr;
 
 try_again:
 
 	/*
-	 * Send request to power management controller and assert
-	 * DBGPWRUPREQ signal; if power management controller has
-	 * sane implementation, it should enable CPU power domain
-	 * in case CPU is in low power state.
+	 * Send request to घातer management controller and निश्चित
+	 * DBGPWRUPREQ संकेत; अगर घातer management controller has
+	 * sane implementation, it should enable CPU घातer करोमुख्य
+	 * in हाल CPU is in low घातer state.
 	 */
-	edprcr = readl_relaxed(drvdata->base + EDPRCR);
+	edprcr = पढ़ोl_relaxed(drvdata->base + EDPRCR);
 	edprcr |= EDPRCR_COREPURQ;
-	writel_relaxed(edprcr, drvdata->base + EDPRCR);
+	ग_लिखोl_relaxed(edprcr, drvdata->base + EDPRCR);
 
-	/* Wait for CPU to be powered up (timeout~=32ms) */
-	if (readx_poll_timeout_atomic(readl_relaxed, drvdata->base + EDPRSR,
+	/* Wait क्रम CPU to be घातered up (समयout~=32ms) */
+	अगर (पढ़ोx_poll_समयout_atomic(पढ़ोl_relaxed, drvdata->base + EDPRSR,
 			drvdata->edprsr, (drvdata->edprsr & EDPRSR_PU),
-			DEBUG_WAIT_SLEEP, DEBUG_WAIT_TIMEOUT)) {
+			DEBUG_WAIT_SLEEP, DEBUG_WAIT_TIMEOUT)) अणु
 		/*
-		 * Unfortunately the CPU cannot be powered up, so return
+		 * Unक्रमtunately the CPU cannot be घातered up, so वापस
 		 * back and later has no permission to access other
-		 * registers. For this case, should disable CPU low power
-		 * states to ensure CPU power domain is enabled!
+		 * रेजिस्टरs. For this हाल, should disable CPU low घातer
+		 * states to ensure CPU घातer करोमुख्य is enabled!
 		 */
 		dev_err(drvdata->dev, "%s: power up request for CPU%d failed\n",
 			__func__, drvdata->cpu);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/*
-	 * At this point the CPU is powered up, so set the no powerdown
-	 * request bit so we don't lose power and emulate power down.
+	 * At this poपूर्णांक the CPU is घातered up, so set the no घातerकरोwn
+	 * request bit so we करोn't lose घातer and emulate घातer करोwn.
 	 */
-	edprcr = readl_relaxed(drvdata->base + EDPRCR);
+	edprcr = पढ़ोl_relaxed(drvdata->base + EDPRCR);
 	edprcr |= EDPRCR_COREPURQ | EDPRCR_CORENPDRQ;
-	writel_relaxed(edprcr, drvdata->base + EDPRCR);
+	ग_लिखोl_relaxed(edprcr, drvdata->base + EDPRCR);
 
-	drvdata->edprsr = readl_relaxed(drvdata->base + EDPRSR);
+	drvdata->edprsr = पढ़ोl_relaxed(drvdata->base + EDPRSR);
 
-	/* The core power domain got switched off on use, try again */
-	if (unlikely(!(drvdata->edprsr & EDPRSR_PU)))
-		goto try_again;
-}
+	/* The core घातer करोमुख्य got चयनed off on use, try again */
+	अगर (unlikely(!(drvdata->edprsr & EDPRSR_PU)))
+		जाओ try_again;
+पूर्ण
 
-static void debug_read_regs(struct debug_drvdata *drvdata)
-{
+अटल व्योम debug_पढ़ो_regs(काष्ठा debug_drvdata *drvdata)
+अणु
 	u32 save_edprcr;
 
 	CS_UNLOCK(drvdata->base);
@@ -196,119 +197,119 @@ static void debug_read_regs(struct debug_drvdata *drvdata)
 	/* Unlock os lock */
 	debug_os_unlock(drvdata);
 
-	/* Save EDPRCR register */
-	save_edprcr = readl_relaxed(drvdata->base + EDPRCR);
+	/* Save EDPRCR रेजिस्टर */
+	save_edprcr = पढ़ोl_relaxed(drvdata->base + EDPRCR);
 
 	/*
-	 * Ensure CPU power domain is enabled to let registers
+	 * Ensure CPU घातer करोमुख्य is enabled to let रेजिस्टरs
 	 * are accessiable.
 	 */
-	debug_force_cpu_powered_up(drvdata);
+	debug_क्रमce_cpu_घातered_up(drvdata);
 
-	if (!debug_access_permitted(drvdata))
-		goto out;
+	अगर (!debug_access_permitted(drvdata))
+		जाओ out;
 
-	drvdata->edpcsr = readl_relaxed(drvdata->base + EDPCSR);
+	drvdata->edpcsr = पढ़ोl_relaxed(drvdata->base + EDPCSR);
 
 	/*
-	 * As described in ARM DDI 0487A.k, if the processing
+	 * As described in ARM DDI 0487A.k, अगर the processing
 	 * element (PE) is in debug state, or sample-based
-	 * profiling is prohibited, EDPCSR reads as 0xFFFFFFFF;
-	 * EDCIDSR, EDVIDSR and EDPCSR_HI registers also become
-	 * UNKNOWN state. So directly bail out for this case.
+	 * profiling is prohibited, EDPCSR पढ़ोs as 0xFFFFFFFF;
+	 * EDCIDSR, EDVIDSR and EDPCSR_HI रेजिस्टरs also become
+	 * UNKNOWN state. So directly bail out क्रम this हाल.
 	 */
-	if (drvdata->edpcsr == EDPCSR_PROHIBITED)
-		goto out;
+	अगर (drvdata->edpcsr == EDPCSR_PROHIBITED)
+		जाओ out;
 
 	/*
-	 * A read of the EDPCSR normally has the side-effect of
+	 * A पढ़ो of the EDPCSR normally has the side-effect of
 	 * indirectly writing to EDCIDSR, EDVIDSR and EDPCSR_HI;
-	 * at this point it's safe to read value from them.
+	 * at this poपूर्णांक it's safe to पढ़ो value from them.
 	 */
-	if (IS_ENABLED(CONFIG_64BIT))
-		drvdata->edpcsr_hi = readl_relaxed(drvdata->base + EDPCSR_HI);
+	अगर (IS_ENABLED(CONFIG_64BIT))
+		drvdata->edpcsr_hi = पढ़ोl_relaxed(drvdata->base + EDPCSR_HI);
 
-	if (drvdata->edcidsr_present)
-		drvdata->edcidsr = readl_relaxed(drvdata->base + EDCIDSR);
+	अगर (drvdata->edcidsr_present)
+		drvdata->edcidsr = पढ़ोl_relaxed(drvdata->base + EDCIDSR);
 
-	if (drvdata->edvidsr_present)
-		drvdata->edvidsr = readl_relaxed(drvdata->base + EDVIDSR);
+	अगर (drvdata->edvidsr_present)
+		drvdata->edvidsr = पढ़ोl_relaxed(drvdata->base + EDVIDSR);
 
 out:
-	/* Restore EDPRCR register */
-	writel_relaxed(save_edprcr, drvdata->base + EDPRCR);
+	/* Restore EDPRCR रेजिस्टर */
+	ग_लिखोl_relaxed(save_edprcr, drvdata->base + EDPRCR);
 
 	CS_LOCK(drvdata->base);
-}
+पूर्ण
 
-#ifdef CONFIG_64BIT
-static unsigned long debug_adjust_pc(struct debug_drvdata *drvdata)
-{
-	return (unsigned long)drvdata->edpcsr_hi << 32 |
-	       (unsigned long)drvdata->edpcsr;
-}
-#else
-static unsigned long debug_adjust_pc(struct debug_drvdata *drvdata)
-{
-	unsigned long arm_inst_offset = 0, thumb_inst_offset = 0;
-	unsigned long pc;
+#अगर_घोषित CONFIG_64BIT
+अटल अचिन्हित दीर्घ debug_adjust_pc(काष्ठा debug_drvdata *drvdata)
+अणु
+	वापस (अचिन्हित दीर्घ)drvdata->edpcsr_hi << 32 |
+	       (अचिन्हित दीर्घ)drvdata->edpcsr;
+पूर्ण
+#अन्यथा
+अटल अचिन्हित दीर्घ debug_adjust_pc(काष्ठा debug_drvdata *drvdata)
+अणु
+	अचिन्हित दीर्घ arm_inst_offset = 0, thumb_inst_offset = 0;
+	अचिन्हित दीर्घ pc;
 
-	pc = (unsigned long)drvdata->edpcsr;
+	pc = (अचिन्हित दीर्घ)drvdata->edpcsr;
 
-	if (drvdata->pc_has_offset) {
+	अगर (drvdata->pc_has_offset) अणु
 		arm_inst_offset = 8;
 		thumb_inst_offset = 4;
-	}
+	पूर्ण
 
-	/* Handle thumb instruction */
-	if (pc & EDPCSR_THUMB) {
+	/* Handle thumb inकाष्ठाion */
+	अगर (pc & EDPCSR_THUMB) अणु
 		pc = (pc & EDPCSR_THUMB_INST_MASK) - thumb_inst_offset;
-		return pc;
-	}
+		वापस pc;
+	पूर्ण
 
 	/*
-	 * Handle arm instruction offset, if the arm instruction
-	 * is not 4 byte alignment then it's possible the case
-	 * for implementation defined; keep original value for this
-	 * case and print info for notice.
+	 * Handle arm inकाष्ठाion offset, अगर the arm inकाष्ठाion
+	 * is not 4 byte alignment then it's possible the हाल
+	 * क्रम implementation defined; keep original value क्रम this
+	 * हाल and prपूर्णांक info क्रम notice.
 	 */
-	if (pc & BIT(1))
+	अगर (pc & BIT(1))
 		dev_emerg(drvdata->dev,
 			  "Instruction offset is implementation defined\n");
-	else
+	अन्यथा
 		pc = (pc & EDPCSR_ARM_INST_MASK) - arm_inst_offset;
 
-	return pc;
-}
-#endif
+	वापस pc;
+पूर्ण
+#पूर्ण_अगर
 
-static void debug_dump_regs(struct debug_drvdata *drvdata)
-{
-	struct device *dev = drvdata->dev;
-	unsigned long pc;
+अटल व्योम debug_dump_regs(काष्ठा debug_drvdata *drvdata)
+अणु
+	काष्ठा device *dev = drvdata->dev;
+	अचिन्हित दीर्घ pc;
 
 	dev_emerg(dev, " EDPRSR:  %08x (Power:%s DLK:%s)\n",
 		  drvdata->edprsr,
 		  drvdata->edprsr & EDPRSR_PU ? "On" : "Off",
 		  drvdata->edprsr & EDPRSR_DLK ? "Lock" : "Unlock");
 
-	if (!debug_access_permitted(drvdata)) {
+	अगर (!debug_access_permitted(drvdata)) अणु
 		dev_emerg(dev, "No permission to access debug registers!\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (drvdata->edpcsr == EDPCSR_PROHIBITED) {
+	अगर (drvdata->edpcsr == EDPCSR_PROHIBITED) अणु
 		dev_emerg(dev, "CPU is in Debug state or profiling is prohibited!\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	pc = debug_adjust_pc(drvdata);
-	dev_emerg(dev, " EDPCSR:  %pS\n", (void *)pc);
+	dev_emerg(dev, " EDPCSR:  %pS\n", (व्योम *)pc);
 
-	if (drvdata->edcidsr_present)
+	अगर (drvdata->edcidsr_present)
 		dev_emerg(dev, " EDCIDSR: %08x\n", drvdata->edcidsr);
 
-	if (drvdata->edvidsr_present)
+	अगर (drvdata->edvidsr_present)
 		dev_emerg(dev, " EDVIDSR: %08x (State:%s Mode:%s Width:%dbits VMID:%x)\n",
 			  drvdata->edvidsr,
 			  drvdata->edvidsr & EDVIDSR_NS ?
@@ -318,19 +319,19 @@ static void debug_dump_regs(struct debug_drvdata *drvdata)
 				 "EL2" : "EL1/0"),
 			  drvdata->edvidsr & EDVIDSR_HV ? 64 : 32,
 			  drvdata->edvidsr & (u32)EDVIDSR_VMID);
-}
+पूर्ण
 
-static void debug_init_arch_data(void *info)
-{
-	struct debug_drvdata *drvdata = info;
+अटल व्योम debug_init_arch_data(व्योम *info)
+अणु
+	काष्ठा debug_drvdata *drvdata = info;
 	u32 mode, pcsr_offset;
 	u32 eddevid, eddevid1;
 
 	CS_UNLOCK(drvdata->base);
 
 	/* Read device info */
-	eddevid  = readl_relaxed(drvdata->base + EDDEVID);
-	eddevid1 = readl_relaxed(drvdata->base + EDDEVID1);
+	eddevid  = पढ़ोl_relaxed(drvdata->base + EDDEVID);
+	eddevid1 = पढ़ोl_relaxed(drvdata->base + EDDEVID1);
 
 	CS_LOCK(drvdata->base);
 
@@ -343,19 +344,19 @@ static void debug_init_arch_data(void *info)
 	drvdata->edvidsr_present = false;
 	drvdata->pc_has_offset   = false;
 
-	switch (mode) {
-	case EDDEVID_IMPL_FULL:
+	चयन (mode) अणु
+	हाल EDDEVID_IMPL_FULL:
 		drvdata->edvidsr_present = true;
 		fallthrough;
-	case EDDEVID_IMPL_EDPCSR_EDCIDSR:
+	हाल EDDEVID_IMPL_EDPCSR_EDCIDSR:
 		drvdata->edcidsr_present = true;
 		fallthrough;
-	case EDDEVID_IMPL_EDPCSR:
+	हाल EDDEVID_IMPL_EDPCSR:
 		/*
 		 * In ARM DDI 0487A.k, the EDDEVID1.PCSROffset is used to
-		 * define if has the offset for PC sampling value; if read
+		 * define अगर has the offset क्रम PC sampling value; अगर पढ़ो
 		 * back EDDEVID1.PCSROffset == 0x2, then this means the debug
-		 * module does not sample the instruction set state when
+		 * module करोes not sample the inकाष्ठाion set state when
 		 * armv8 CPU in AArch32 state.
 		 */
 		drvdata->edpcsr_present =
@@ -364,226 +365,226 @@ static void debug_init_arch_data(void *info)
 
 		drvdata->pc_has_offset =
 			(pcsr_offset == EDDEVID1_PCSR_OFFSET_INS_SET);
-		break;
-	default:
-		break;
-	}
-}
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
+पूर्ण
 
 /*
- * Dump out information on panic.
+ * Dump out inक्रमmation on panic.
  */
-static int debug_notifier_call(struct notifier_block *self,
-			       unsigned long v, void *p)
-{
-	int cpu;
-	struct debug_drvdata *drvdata;
+अटल पूर्णांक debug_notअगरier_call(काष्ठा notअगरier_block *self,
+			       अचिन्हित दीर्घ v, व्योम *p)
+अणु
+	पूर्णांक cpu;
+	काष्ठा debug_drvdata *drvdata;
 
 	mutex_lock(&debug_lock);
 
-	/* Bail out if the functionality is disabled */
-	if (!debug_enable)
-		goto skip_dump;
+	/* Bail out अगर the functionality is disabled */
+	अगर (!debug_enable)
+		जाओ skip_dump;
 
 	pr_emerg("ARM external debug module:\n");
 
-	for_each_possible_cpu(cpu) {
+	क्रम_each_possible_cpu(cpu) अणु
 		drvdata = per_cpu(debug_drvdata, cpu);
-		if (!drvdata)
-			continue;
+		अगर (!drvdata)
+			जारी;
 
 		dev_emerg(drvdata->dev, "CPU[%d]:\n", drvdata->cpu);
 
-		debug_read_regs(drvdata);
+		debug_पढ़ो_regs(drvdata);
 		debug_dump_regs(drvdata);
-	}
+	पूर्ण
 
 skip_dump:
 	mutex_unlock(&debug_lock);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct notifier_block debug_notifier = {
-	.notifier_call = debug_notifier_call,
-};
+अटल काष्ठा notअगरier_block debug_notअगरier = अणु
+	.notअगरier_call = debug_notअगरier_call,
+पूर्ण;
 
-static int debug_enable_func(void)
-{
-	struct debug_drvdata *drvdata;
-	int cpu, ret = 0;
+अटल पूर्णांक debug_enable_func(व्योम)
+अणु
+	काष्ठा debug_drvdata *drvdata;
+	पूर्णांक cpu, ret = 0;
 	cpumask_t mask;
 
 	/*
-	 * Use cpumask to track which debug power domains have
-	 * been powered on and use it to handle failure case.
+	 * Use cpumask to track which debug घातer करोमुख्यs have
+	 * been घातered on and use it to handle failure हाल.
 	 */
 	cpumask_clear(&mask);
 
-	for_each_possible_cpu(cpu) {
+	क्रम_each_possible_cpu(cpu) अणु
 		drvdata = per_cpu(debug_drvdata, cpu);
-		if (!drvdata)
-			continue;
+		अगर (!drvdata)
+			जारी;
 
-		ret = pm_runtime_get_sync(drvdata->dev);
-		if (ret < 0)
-			goto err;
-		else
+		ret = pm_runसमय_get_sync(drvdata->dev);
+		अगर (ret < 0)
+			जाओ err;
+		अन्यथा
 			cpumask_set_cpu(cpu, &mask);
-	}
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 err:
 	/*
-	 * If pm_runtime_get_sync() has failed, need rollback on
-	 * all the other CPUs that have been enabled before that.
+	 * If pm_runसमय_get_sync() has failed, need rollback on
+	 * all the other CPUs that have been enabled beक्रमe that.
 	 */
-	for_each_cpu(cpu, &mask) {
+	क्रम_each_cpu(cpu, &mask) अणु
 		drvdata = per_cpu(debug_drvdata, cpu);
-		pm_runtime_put_noidle(drvdata->dev);
-	}
+		pm_runसमय_put_noidle(drvdata->dev);
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int debug_disable_func(void)
-{
-	struct debug_drvdata *drvdata;
-	int cpu, ret, err = 0;
+अटल पूर्णांक debug_disable_func(व्योम)
+अणु
+	काष्ठा debug_drvdata *drvdata;
+	पूर्णांक cpu, ret, err = 0;
 
 	/*
-	 * Disable debug power domains, records the error and keep
+	 * Disable debug घातer करोमुख्यs, records the error and keep
 	 * circling through all other CPUs when an error has been
 	 * encountered.
 	 */
-	for_each_possible_cpu(cpu) {
+	क्रम_each_possible_cpu(cpu) अणु
 		drvdata = per_cpu(debug_drvdata, cpu);
-		if (!drvdata)
-			continue;
+		अगर (!drvdata)
+			जारी;
 
-		ret = pm_runtime_put(drvdata->dev);
-		if (ret < 0)
+		ret = pm_runसमय_put(drvdata->dev);
+		अगर (ret < 0)
 			err = ret;
-	}
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static ssize_t debug_func_knob_write(struct file *f,
-		const char __user *buf, size_t count, loff_t *ppos)
-{
+अटल sमाप_प्रकार debug_func_knob_ग_लिखो(काष्ठा file *f,
+		स्थिर अक्षर __user *buf, माप_प्रकार count, loff_t *ppos)
+अणु
 	u8 val;
-	int ret;
+	पूर्णांक ret;
 
 	ret = kstrtou8_from_user(buf, count, 2, &val);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	mutex_lock(&debug_lock);
 
-	if (val == debug_enable)
-		goto out;
+	अगर (val == debug_enable)
+		जाओ out;
 
-	if (val)
+	अगर (val)
 		ret = debug_enable_func();
-	else
+	अन्यथा
 		ret = debug_disable_func();
 
-	if (ret) {
+	अगर (ret) अणु
 		pr_err("%s: unable to %s debug function: %d\n",
 		       __func__, val ? "enable" : "disable", ret);
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
 	debug_enable = val;
 out:
 	ret = count;
 err:
 	mutex_unlock(&debug_lock);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static ssize_t debug_func_knob_read(struct file *f,
-		char __user *ubuf, size_t count, loff_t *ppos)
-{
-	ssize_t ret;
-	char buf[3];
+अटल sमाप_प्रकार debug_func_knob_पढ़ो(काष्ठा file *f,
+		अक्षर __user *ubuf, माप_प्रकार count, loff_t *ppos)
+अणु
+	sमाप_प्रकार ret;
+	अक्षर buf[3];
 
 	mutex_lock(&debug_lock);
-	snprintf(buf, sizeof(buf), "%d\n", debug_enable);
+	snम_लिखो(buf, माप(buf), "%d\n", debug_enable);
 	mutex_unlock(&debug_lock);
 
-	ret = simple_read_from_buffer(ubuf, count, ppos, buf, sizeof(buf));
-	return ret;
-}
+	ret = simple_पढ़ो_from_buffer(ubuf, count, ppos, buf, माप(buf));
+	वापस ret;
+पूर्ण
 
-static const struct file_operations debug_func_knob_fops = {
-	.open	= simple_open,
-	.read	= debug_func_knob_read,
-	.write	= debug_func_knob_write,
-};
+अटल स्थिर काष्ठा file_operations debug_func_knob_fops = अणु
+	.खोलो	= simple_खोलो,
+	.पढ़ो	= debug_func_knob_पढ़ो,
+	.ग_लिखो	= debug_func_knob_ग_लिखो,
+पूर्ण;
 
-static int debug_func_init(void)
-{
-	int ret;
+अटल पूर्णांक debug_func_init(व्योम)
+अणु
+	पूर्णांक ret;
 
 	/* Create debugfs node */
-	debug_debugfs_dir = debugfs_create_dir("coresight_cpu_debug", NULL);
-	debugfs_create_file("enable", 0644, debug_debugfs_dir, NULL,
+	debug_debugfs_dir = debugfs_create_dir("coresight_cpu_debug", शून्य);
+	debugfs_create_file("enable", 0644, debug_debugfs_dir, शून्य,
 			    &debug_func_knob_fops);
 
-	/* Register function to be called for panic */
-	ret = atomic_notifier_chain_register(&panic_notifier_list,
-					     &debug_notifier);
-	if (ret) {
+	/* Register function to be called क्रम panic */
+	ret = atomic_notअगरier_chain_रेजिस्टर(&panic_notअगरier_list,
+					     &debug_notअगरier);
+	अगर (ret) अणु
 		pr_err("%s: unable to register notifier: %d\n",
 		       __func__, ret);
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 err:
-	debugfs_remove_recursive(debug_debugfs_dir);
-	return ret;
-}
+	debugfs_हटाओ_recursive(debug_debugfs_dir);
+	वापस ret;
+पूर्ण
 
-static void debug_func_exit(void)
-{
-	atomic_notifier_chain_unregister(&panic_notifier_list,
-					 &debug_notifier);
-	debugfs_remove_recursive(debug_debugfs_dir);
-}
+अटल व्योम debug_func_निकास(व्योम)
+अणु
+	atomic_notअगरier_chain_unरेजिस्टर(&panic_notअगरier_list,
+					 &debug_notअगरier);
+	debugfs_हटाओ_recursive(debug_debugfs_dir);
+पूर्ण
 
-static int debug_probe(struct amba_device *adev, const struct amba_id *id)
-{
-	void __iomem *base;
-	struct device *dev = &adev->dev;
-	struct debug_drvdata *drvdata;
-	struct resource *res = &adev->res;
-	int ret;
+अटल पूर्णांक debug_probe(काष्ठा amba_device *adev, स्थिर काष्ठा amba_id *id)
+अणु
+	व्योम __iomem *base;
+	काष्ठा device *dev = &adev->dev;
+	काष्ठा debug_drvdata *drvdata;
+	काष्ठा resource *res = &adev->res;
+	पूर्णांक ret;
 
-	drvdata = devm_kzalloc(dev, sizeof(*drvdata), GFP_KERNEL);
-	if (!drvdata)
-		return -ENOMEM;
+	drvdata = devm_kzalloc(dev, माप(*drvdata), GFP_KERNEL);
+	अगर (!drvdata)
+		वापस -ENOMEM;
 
 	drvdata->cpu = coresight_get_cpu(dev);
-	if (drvdata->cpu < 0)
-		return drvdata->cpu;
+	अगर (drvdata->cpu < 0)
+		वापस drvdata->cpu;
 
-	if (per_cpu(debug_drvdata, drvdata->cpu)) {
+	अगर (per_cpu(debug_drvdata, drvdata->cpu)) अणु
 		dev_err(dev, "CPU%d drvdata has already been initialized\n",
 			drvdata->cpu);
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 
 	drvdata->dev = &adev->dev;
 	amba_set_drvdata(adev, drvdata);
 
-	/* Validity for the resource is already checked by the AMBA core */
+	/* Validity क्रम the resource is alपढ़ोy checked by the AMBA core */
 	base = devm_ioremap_resource(dev, res);
-	if (IS_ERR(base))
-		return PTR_ERR(base);
+	अगर (IS_ERR(base))
+		वापस PTR_ERR(base);
 
 	drvdata->base = base;
 
@@ -593,87 +594,87 @@ static int debug_probe(struct amba_device *adev, const struct amba_id *id)
 				       drvdata, 1);
 	put_online_cpus();
 
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev, "CPU%d debug arch init failed\n", drvdata->cpu);
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
-	if (!drvdata->edpcsr_present) {
+	अगर (!drvdata->edpcsr_present) अणु
 		dev_err(dev, "CPU%d sample-based profiling isn't implemented\n",
 			drvdata->cpu);
 		ret = -ENXIO;
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
-	if (!debug_count++) {
+	अगर (!debug_count++) अणु
 		ret = debug_func_init();
-		if (ret)
-			goto err_func_init;
-	}
+		अगर (ret)
+			जाओ err_func_init;
+	पूर्ण
 
 	mutex_lock(&debug_lock);
-	/* Turn off debug power domain if debugging is disabled */
-	if (!debug_enable)
-		pm_runtime_put(dev);
+	/* Turn off debug घातer करोमुख्य अगर debugging is disabled */
+	अगर (!debug_enable)
+		pm_runसमय_put(dev);
 	mutex_unlock(&debug_lock);
 
 	dev_info(dev, "Coresight debug-CPU%d initialized\n", drvdata->cpu);
-	return 0;
+	वापस 0;
 
 err_func_init:
 	debug_count--;
 err:
-	per_cpu(debug_drvdata, drvdata->cpu) = NULL;
-	return ret;
-}
+	per_cpu(debug_drvdata, drvdata->cpu) = शून्य;
+	वापस ret;
+पूर्ण
 
-static void debug_remove(struct amba_device *adev)
-{
-	struct device *dev = &adev->dev;
-	struct debug_drvdata *drvdata = amba_get_drvdata(adev);
+अटल व्योम debug_हटाओ(काष्ठा amba_device *adev)
+अणु
+	काष्ठा device *dev = &adev->dev;
+	काष्ठा debug_drvdata *drvdata = amba_get_drvdata(adev);
 
-	per_cpu(debug_drvdata, drvdata->cpu) = NULL;
+	per_cpu(debug_drvdata, drvdata->cpu) = शून्य;
 
 	mutex_lock(&debug_lock);
-	/* Turn off debug power domain before rmmod the module */
-	if (debug_enable)
-		pm_runtime_put(dev);
+	/* Turn off debug घातer करोमुख्य beक्रमe rmmod the module */
+	अगर (debug_enable)
+		pm_runसमय_put(dev);
 	mutex_unlock(&debug_lock);
 
-	if (!--debug_count)
-		debug_func_exit();
-}
+	अगर (!--debug_count)
+		debug_func_निकास();
+पूर्ण
 
-static const struct amba_cs_uci_id uci_id_debug[] = {
-	{
+अटल स्थिर काष्ठा amba_cs_uci_id uci_id_debug[] = अणु
+	अणु
 		/*  CPU Debug UCI data */
 		.devarch	= 0x47706a15,
 		.devarch_mask	= 0xfff0ffff,
 		.devtype	= 0x00000015,
-	}
-};
+	पूर्ण
+पूर्ण;
 
-static const struct amba_id debug_ids[] = {
+अटल स्थिर काष्ठा amba_id debug_ids[] = अणु
 	CS_AMBA_ID(0x000bbd03),				/* Cortex-A53 */
 	CS_AMBA_ID(0x000bbd07),				/* Cortex-A57 */
 	CS_AMBA_ID(0x000bbd08),				/* Cortex-A72 */
 	CS_AMBA_ID(0x000bbd09),				/* Cortex-A73 */
 	CS_AMBA_UCI_ID(0x000f0205, uci_id_debug),	/* Qualcomm Kryo */
 	CS_AMBA_UCI_ID(0x000f0211, uci_id_debug),	/* Qualcomm Kryo */
-	{},
-};
+	अणुपूर्ण,
+पूर्ण;
 
 MODULE_DEVICE_TABLE(amba, debug_ids);
 
-static struct amba_driver debug_driver = {
-	.drv = {
+अटल काष्ठा amba_driver debug_driver = अणु
+	.drv = अणु
 		.name   = "coresight-cpu-debug",
 		.suppress_bind_attrs = true,
-	},
+	पूर्ण,
 	.probe		= debug_probe,
-	.remove		= debug_remove,
+	.हटाओ		= debug_हटाओ,
 	.id_table	= debug_ids,
-};
+पूर्ण;
 
 module_amba_driver(debug_driver);
 

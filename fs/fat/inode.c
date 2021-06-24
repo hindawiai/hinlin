@@ -1,47 +1,48 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  *  linux/fs/fat/inode.c
  *
  *  Written 1992,1993 by Werner Almesberger
- *  VFAT extensions by Gordon Chaffee, merged with msdos fs by Henrik Storner
- *  Rewritten for the constant inumbers support by Al Viro
+ *  VFAT extensions by Gorकरोn Chaffee, merged with msकरोs fs by Henrik Storner
+ *  Rewritten क्रम the स्थिरant inumbers support by Al Viro
  *
  *  Fixes:
  *
  *	Max Cohan: Fixed invalid FSINFO offset when info_sector is 0
  */
 
-#include <linux/module.h>
-#include <linux/pagemap.h>
-#include <linux/mpage.h>
-#include <linux/vfs.h>
-#include <linux/seq_file.h>
-#include <linux/parser.h>
-#include <linux/uio.h>
-#include <linux/blkdev.h>
-#include <linux/backing-dev.h>
-#include <asm/unaligned.h>
-#include <linux/random.h>
-#include <linux/iversion.h>
-#include "fat.h"
+#समावेश <linux/module.h>
+#समावेश <linux/pagemap.h>
+#समावेश <linux/mpage.h>
+#समावेश <linux/vfs.h>
+#समावेश <linux/seq_file.h>
+#समावेश <linux/parser.h>
+#समावेश <linux/uपन.स>
+#समावेश <linux/blkdev.h>
+#समावेश <linux/backing-dev.h>
+#समावेश <यंत्र/unaligned.h>
+#समावेश <linux/अक्रमom.h>
+#समावेश <linux/iversion.h>
+#समावेश "fat.h"
 
-#ifndef CONFIG_FAT_DEFAULT_IOCHARSET
-/* if user don't select VFAT, this is undefined. */
-#define CONFIG_FAT_DEFAULT_IOCHARSET	""
-#endif
+#अगर_अघोषित CONFIG_FAT_DEFAULT_IOCHARSET
+/* अगर user करोn't select VFAT, this is undefined. */
+#घोषणा CONFIG_FAT_DEFAULT_IOCHARSET	""
+#पूर्ण_अगर
 
-#define KB_IN_SECTORS 2
+#घोषणा KB_IN_SECTORS 2
 
 /* DOS dates from 1980/1/1 through 2107/12/31 */
-#define FAT_DATE_MIN (0<<9 | 1<<5 | 1)
-#define FAT_DATE_MAX (127<<9 | 12<<5 | 31)
-#define FAT_TIME_MAX (23<<11 | 59<<5 | 29)
+#घोषणा FAT_DATE_MIN (0<<9 | 1<<5 | 1)
+#घोषणा FAT_DATE_MAX (127<<9 | 12<<5 | 31)
+#घोषणा FAT_TIME_MAX (23<<11 | 59<<5 | 29)
 
 /*
- * A deserialized copy of the on-disk structure laid out in struct
+ * A deserialized copy of the on-disk काष्ठाure laid out in काष्ठा
  * fat_boot_sector.
  */
-struct fat_bios_param_block {
+काष्ठा fat_bios_param_block अणु
 	u16	fat_sector_size;
 	u8	fat_sec_per_clus;
 	u16	fat_reserved;
@@ -59,471 +60,471 @@ struct fat_bios_param_block {
 	u16	fat32_info_sector;
 	u8	fat32_state;
 	u32	fat32_vol_id;
-};
+पूर्ण;
 
-static int fat_default_codepage = CONFIG_FAT_DEFAULT_CODEPAGE;
-static char fat_default_iocharset[] = CONFIG_FAT_DEFAULT_IOCHARSET;
+अटल पूर्णांक fat_शेष_codepage = CONFIG_FAT_DEFAULT_CODEPAGE;
+अटल अक्षर fat_शेष_ioअक्षरset[] = CONFIG_FAT_DEFAULT_IOCHARSET;
 
-static struct fat_floppy_defaults {
-	unsigned nr_sectors;
-	unsigned sec_per_clus;
-	unsigned dir_entries;
-	unsigned media;
-	unsigned fat_length;
-} floppy_defaults[] = {
-{
+अटल काष्ठा fat_floppy_शेषs अणु
+	अचिन्हित nr_sectors;
+	अचिन्हित sec_per_clus;
+	अचिन्हित dir_entries;
+	अचिन्हित media;
+	अचिन्हित fat_length;
+पूर्ण floppy_शेषs[] = अणु
+अणु
 	.nr_sectors = 160 * KB_IN_SECTORS,
 	.sec_per_clus = 1,
 	.dir_entries = 64,
 	.media = 0xFE,
 	.fat_length = 1,
-},
-{
+पूर्ण,
+अणु
 	.nr_sectors = 180 * KB_IN_SECTORS,
 	.sec_per_clus = 1,
 	.dir_entries = 64,
 	.media = 0xFC,
 	.fat_length = 2,
-},
-{
+पूर्ण,
+अणु
 	.nr_sectors = 320 * KB_IN_SECTORS,
 	.sec_per_clus = 2,
 	.dir_entries = 112,
 	.media = 0xFF,
 	.fat_length = 1,
-},
-{
+पूर्ण,
+अणु
 	.nr_sectors = 360 * KB_IN_SECTORS,
 	.sec_per_clus = 2,
 	.dir_entries = 112,
 	.media = 0xFD,
 	.fat_length = 2,
-},
-};
+पूर्ण,
+पूर्ण;
 
-int fat_add_cluster(struct inode *inode)
-{
-	int err, cluster;
+पूर्णांक fat_add_cluster(काष्ठा inode *inode)
+अणु
+	पूर्णांक err, cluster;
 
 	err = fat_alloc_clusters(inode, &cluster, 1);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 	/* FIXME: this cluster should be added after data of this
-	 * cluster is writed */
+	 * cluster is ग_लिखोd */
 	err = fat_chain_add(inode, cluster, 1);
-	if (err)
-		fat_free_clusters(inode, cluster);
-	return err;
-}
+	अगर (err)
+		fat_मुक्त_clusters(inode, cluster);
+	वापस err;
+पूर्ण
 
-static inline int __fat_get_block(struct inode *inode, sector_t iblock,
-				  unsigned long *max_blocks,
-				  struct buffer_head *bh_result, int create)
-{
-	struct super_block *sb = inode->i_sb;
-	struct msdos_sb_info *sbi = MSDOS_SB(sb);
-	unsigned long mapped_blocks;
+अटल अंतरभूत पूर्णांक __fat_get_block(काष्ठा inode *inode, sector_t iblock,
+				  अचिन्हित दीर्घ *max_blocks,
+				  काष्ठा buffer_head *bh_result, पूर्णांक create)
+अणु
+	काष्ठा super_block *sb = inode->i_sb;
+	काष्ठा msकरोs_sb_info *sbi = MSDOS_SB(sb);
+	अचिन्हित दीर्घ mapped_blocks;
 	sector_t phys, last_block;
-	int err, offset;
+	पूर्णांक err, offset;
 
 	err = fat_bmap(inode, iblock, &phys, &mapped_blocks, create, false);
-	if (err)
-		return err;
-	if (phys) {
+	अगर (err)
+		वापस err;
+	अगर (phys) अणु
 		map_bh(bh_result, sb, phys);
 		*max_blocks = min(mapped_blocks, *max_blocks);
-		return 0;
-	}
-	if (!create)
-		return 0;
+		वापस 0;
+	पूर्ण
+	अगर (!create)
+		वापस 0;
 
-	if (iblock != MSDOS_I(inode)->mmu_private >> sb->s_blocksize_bits) {
+	अगर (iblock != MSDOS_I(inode)->mmu_निजी >> sb->s_blocksize_bits) अणु
 		fat_fs_error(sb, "corrupted file size (i_pos %lld, %lld)",
-			MSDOS_I(inode)->i_pos, MSDOS_I(inode)->mmu_private);
-		return -EIO;
-	}
+			MSDOS_I(inode)->i_pos, MSDOS_I(inode)->mmu_निजी);
+		वापस -EIO;
+	पूर्ण
 
 	last_block = inode->i_blocks >> (sb->s_blocksize_bits - 9);
-	offset = (unsigned long)iblock & (sbi->sec_per_clus - 1);
+	offset = (अचिन्हित दीर्घ)iblock & (sbi->sec_per_clus - 1);
 	/*
 	 * allocate a cluster according to the following.
 	 * 1) no more available blocks
 	 * 2) not part of fallocate region
 	 */
-	if (!offset && !(iblock < last_block)) {
+	अगर (!offset && !(iblock < last_block)) अणु
 		/* TODO: multiple cluster allocation would be desirable. */
 		err = fat_add_cluster(inode);
-		if (err)
-			return err;
-	}
+		अगर (err)
+			वापस err;
+	पूर्ण
 	/* available blocks on this cluster */
 	mapped_blocks = sbi->sec_per_clus - offset;
 
 	*max_blocks = min(mapped_blocks, *max_blocks);
-	MSDOS_I(inode)->mmu_private += *max_blocks << sb->s_blocksize_bits;
+	MSDOS_I(inode)->mmu_निजी += *max_blocks << sb->s_blocksize_bits;
 
 	err = fat_bmap(inode, iblock, &phys, &mapped_blocks, create, false);
-	if (err)
-		return err;
-	if (!phys) {
+	अगर (err)
+		वापस err;
+	अगर (!phys) अणु
 		fat_fs_error(sb,
 			     "invalid FAT chain (i_pos %lld, last_block %llu)",
 			     MSDOS_I(inode)->i_pos,
-			     (unsigned long long)last_block);
-		return -EIO;
-	}
+			     (अचिन्हित दीर्घ दीर्घ)last_block);
+		वापस -EIO;
+	पूर्ण
 
 	BUG_ON(*max_blocks != mapped_blocks);
 	set_buffer_new(bh_result);
 	map_bh(bh_result, sb, phys);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int fat_get_block(struct inode *inode, sector_t iblock,
-			 struct buffer_head *bh_result, int create)
-{
-	struct super_block *sb = inode->i_sb;
-	unsigned long max_blocks = bh_result->b_size >> inode->i_blkbits;
-	int err;
+अटल पूर्णांक fat_get_block(काष्ठा inode *inode, sector_t iblock,
+			 काष्ठा buffer_head *bh_result, पूर्णांक create)
+अणु
+	काष्ठा super_block *sb = inode->i_sb;
+	अचिन्हित दीर्घ max_blocks = bh_result->b_size >> inode->i_blkbits;
+	पूर्णांक err;
 
 	err = __fat_get_block(inode, iblock, &max_blocks, bh_result, create);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 	bh_result->b_size = max_blocks << sb->s_blocksize_bits;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int fat_writepage(struct page *page, struct writeback_control *wbc)
-{
-	return block_write_full_page(page, fat_get_block, wbc);
-}
+अटल पूर्णांक fat_ग_लिखोpage(काष्ठा page *page, काष्ठा ग_लिखोback_control *wbc)
+अणु
+	वापस block_ग_लिखो_full_page(page, fat_get_block, wbc);
+पूर्ण
 
-static int fat_writepages(struct address_space *mapping,
-			  struct writeback_control *wbc)
-{
-	return mpage_writepages(mapping, wbc, fat_get_block);
-}
+अटल पूर्णांक fat_ग_लिखोpages(काष्ठा address_space *mapping,
+			  काष्ठा ग_लिखोback_control *wbc)
+अणु
+	वापस mpage_ग_लिखोpages(mapping, wbc, fat_get_block);
+पूर्ण
 
-static int fat_readpage(struct file *file, struct page *page)
-{
-	return mpage_readpage(page, fat_get_block);
-}
+अटल पूर्णांक fat_पढ़ोpage(काष्ठा file *file, काष्ठा page *page)
+अणु
+	वापस mpage_पढ़ोpage(page, fat_get_block);
+पूर्ण
 
-static void fat_readahead(struct readahead_control *rac)
-{
-	mpage_readahead(rac, fat_get_block);
-}
+अटल व्योम fat_पढ़ोahead(काष्ठा पढ़ोahead_control *rac)
+अणु
+	mpage_पढ़ोahead(rac, fat_get_block);
+पूर्ण
 
-static void fat_write_failed(struct address_space *mapping, loff_t to)
-{
-	struct inode *inode = mapping->host;
+अटल व्योम fat_ग_लिखो_failed(काष्ठा address_space *mapping, loff_t to)
+अणु
+	काष्ठा inode *inode = mapping->host;
 
-	if (to > inode->i_size) {
+	अगर (to > inode->i_size) अणु
 		truncate_pagecache(inode, inode->i_size);
 		fat_truncate_blocks(inode, inode->i_size);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int fat_write_begin(struct file *file, struct address_space *mapping,
-			loff_t pos, unsigned len, unsigned flags,
-			struct page **pagep, void **fsdata)
-{
-	int err;
+अटल पूर्णांक fat_ग_लिखो_begin(काष्ठा file *file, काष्ठा address_space *mapping,
+			loff_t pos, अचिन्हित len, अचिन्हित flags,
+			काष्ठा page **pagep, व्योम **fsdata)
+अणु
+	पूर्णांक err;
 
-	*pagep = NULL;
-	err = cont_write_begin(file, mapping, pos, len, flags,
+	*pagep = शून्य;
+	err = cont_ग_लिखो_begin(file, mapping, pos, len, flags,
 				pagep, fsdata, fat_get_block,
-				&MSDOS_I(mapping->host)->mmu_private);
-	if (err < 0)
-		fat_write_failed(mapping, pos + len);
-	return err;
-}
+				&MSDOS_I(mapping->host)->mmu_निजी);
+	अगर (err < 0)
+		fat_ग_लिखो_failed(mapping, pos + len);
+	वापस err;
+पूर्ण
 
-static int fat_write_end(struct file *file, struct address_space *mapping,
-			loff_t pos, unsigned len, unsigned copied,
-			struct page *pagep, void *fsdata)
-{
-	struct inode *inode = mapping->host;
-	int err;
-	err = generic_write_end(file, mapping, pos, len, copied, pagep, fsdata);
-	if (err < len)
-		fat_write_failed(mapping, pos + len);
-	if (!(err < 0) && !(MSDOS_I(inode)->i_attrs & ATTR_ARCH)) {
-		fat_truncate_time(inode, NULL, S_CTIME|S_MTIME);
+अटल पूर्णांक fat_ग_लिखो_end(काष्ठा file *file, काष्ठा address_space *mapping,
+			loff_t pos, अचिन्हित len, अचिन्हित copied,
+			काष्ठा page *pagep, व्योम *fsdata)
+अणु
+	काष्ठा inode *inode = mapping->host;
+	पूर्णांक err;
+	err = generic_ग_लिखो_end(file, mapping, pos, len, copied, pagep, fsdata);
+	अगर (err < len)
+		fat_ग_लिखो_failed(mapping, pos + len);
+	अगर (!(err < 0) && !(MSDOS_I(inode)->i_attrs & ATTR_ARCH)) अणु
+		fat_truncate_समय(inode, शून्य, S_CTIME|S_MTIME);
 		MSDOS_I(inode)->i_attrs |= ATTR_ARCH;
 		mark_inode_dirty(inode);
-	}
-	return err;
-}
+	पूर्ण
+	वापस err;
+पूर्ण
 
-static ssize_t fat_direct_IO(struct kiocb *iocb, struct iov_iter *iter)
-{
-	struct file *file = iocb->ki_filp;
-	struct address_space *mapping = file->f_mapping;
-	struct inode *inode = mapping->host;
-	size_t count = iov_iter_count(iter);
+अटल sमाप_प्रकार fat_direct_IO(काष्ठा kiocb *iocb, काष्ठा iov_iter *iter)
+अणु
+	काष्ठा file *file = iocb->ki_filp;
+	काष्ठा address_space *mapping = file->f_mapping;
+	काष्ठा inode *inode = mapping->host;
+	माप_प्रकार count = iov_iter_count(iter);
 	loff_t offset = iocb->ki_pos;
-	ssize_t ret;
+	sमाप_प्रकार ret;
 
-	if (iov_iter_rw(iter) == WRITE) {
+	अगर (iov_iter_rw(iter) == WRITE) अणु
 		/*
-		 * FIXME: blockdev_direct_IO() doesn't use ->write_begin(),
-		 * so we need to update the ->mmu_private to block boundary.
+		 * FIXME: blockdev_direct_IO() करोesn't use ->ग_लिखो_begin(),
+		 * so we need to update the ->mmu_निजी to block boundary.
 		 *
-		 * But we must fill the remaining area or hole by nul for
-		 * updating ->mmu_private.
+		 * But we must fill the reमुख्यing area or hole by nul क्रम
+		 * updating ->mmu_निजी.
 		 *
-		 * Return 0, and fallback to normal buffered write.
+		 * Return 0, and fallback to normal buffered ग_लिखो.
 		 */
 		loff_t size = offset + count;
-		if (MSDOS_I(inode)->mmu_private < size)
-			return 0;
-	}
+		अगर (MSDOS_I(inode)->mmu_निजी < size)
+			वापस 0;
+	पूर्ण
 
 	/*
-	 * FAT need to use the DIO_LOCKING for avoiding the race
+	 * FAT need to use the DIO_LOCKING क्रम aव्योमing the race
 	 * condition of fat_get_block() and ->truncate().
 	 */
 	ret = blockdev_direct_IO(iocb, inode, iter, fat_get_block);
-	if (ret < 0 && iov_iter_rw(iter) == WRITE)
-		fat_write_failed(mapping, offset + count);
+	अगर (ret < 0 && iov_iter_rw(iter) == WRITE)
+		fat_ग_लिखो_failed(mapping, offset + count);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int fat_get_block_bmap(struct inode *inode, sector_t iblock,
-		struct buffer_head *bh_result, int create)
-{
-	struct super_block *sb = inode->i_sb;
-	unsigned long max_blocks = bh_result->b_size >> inode->i_blkbits;
-	int err;
+अटल पूर्णांक fat_get_block_bmap(काष्ठा inode *inode, sector_t iblock,
+		काष्ठा buffer_head *bh_result, पूर्णांक create)
+अणु
+	काष्ठा super_block *sb = inode->i_sb;
+	अचिन्हित दीर्घ max_blocks = bh_result->b_size >> inode->i_blkbits;
+	पूर्णांक err;
 	sector_t bmap;
-	unsigned long mapped_blocks;
+	अचिन्हित दीर्घ mapped_blocks;
 
 	BUG_ON(create != 0);
 
 	err = fat_bmap(inode, iblock, &bmap, &mapped_blocks, create, true);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	if (bmap) {
+	अगर (bmap) अणु
 		map_bh(bh_result, sb, bmap);
 		max_blocks = min(mapped_blocks, max_blocks);
-	}
+	पूर्ण
 
 	bh_result->b_size = max_blocks << sb->s_blocksize_bits;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static sector_t _fat_bmap(struct address_space *mapping, sector_t block)
-{
+अटल sector_t _fat_bmap(काष्ठा address_space *mapping, sector_t block)
+अणु
 	sector_t blocknr;
 
 	/* fat_get_cluster() assumes the requested blocknr isn't truncated. */
-	down_read(&MSDOS_I(mapping->host)->truncate_lock);
+	करोwn_पढ़ो(&MSDOS_I(mapping->host)->truncate_lock);
 	blocknr = generic_block_bmap(mapping, block, fat_get_block_bmap);
-	up_read(&MSDOS_I(mapping->host)->truncate_lock);
+	up_पढ़ो(&MSDOS_I(mapping->host)->truncate_lock);
 
-	return blocknr;
-}
+	वापस blocknr;
+पूर्ण
 
 /*
  * fat_block_truncate_page() zeroes out a mapping from file offset `from'
  * up to the end of the block which corresponds to `from'.
  * This is required during truncate to physically zeroout the tail end
- * of that block so it doesn't yield old data if the file is later grown.
- * Also, avoid causing failure from fsx for cases of "data past EOF"
+ * of that block so it करोesn't yield old data अगर the file is later grown.
+ * Also, aव्योम causing failure from fsx क्रम हालs of "data past EOF"
  */
-int fat_block_truncate_page(struct inode *inode, loff_t from)
-{
-	return block_truncate_page(inode->i_mapping, from, fat_get_block);
-}
+पूर्णांक fat_block_truncate_page(काष्ठा inode *inode, loff_t from)
+अणु
+	वापस block_truncate_page(inode->i_mapping, from, fat_get_block);
+पूर्ण
 
-static const struct address_space_operations fat_aops = {
-	.readpage	= fat_readpage,
-	.readahead	= fat_readahead,
-	.writepage	= fat_writepage,
-	.writepages	= fat_writepages,
-	.write_begin	= fat_write_begin,
-	.write_end	= fat_write_end,
+अटल स्थिर काष्ठा address_space_operations fat_aops = अणु
+	.पढ़ोpage	= fat_पढ़ोpage,
+	.पढ़ोahead	= fat_पढ़ोahead,
+	.ग_लिखोpage	= fat_ग_लिखोpage,
+	.ग_लिखोpages	= fat_ग_लिखोpages,
+	.ग_लिखो_begin	= fat_ग_लिखो_begin,
+	.ग_लिखो_end	= fat_ग_लिखो_end,
 	.direct_IO	= fat_direct_IO,
 	.bmap		= _fat_bmap
-};
+पूर्ण;
 
 /*
- * New FAT inode stuff. We do the following:
- *	a) i_ino is constant and has nothing with on-disk location.
+ * New FAT inode stuff. We करो the following:
+ *	a) i_ino is स्थिरant and has nothing with on-disk location.
  *	b) FAT manages its own cache of directory entries.
  *	c) *This* cache is indexed by on-disk location.
  *	d) inode has an associated directory entry, all right, but
  *		it may be unhashed.
- *	e) currently entries are stored within struct inode. That should
+ *	e) currently entries are stored within काष्ठा inode. That should
  *		change.
  *	f) we deal with races in the following way:
- *		1. readdir() and lookup() do FAT-dir-cache lookup.
- *		2. rename() unhashes the F-d-c entry and rehashes it in
+ *		1. सूची_पढ़ो() and lookup() करो FAT-dir-cache lookup.
+ *		2. नाम() unhashes the F-d-c entry and rehashes it in
  *			a new place.
- *		3. unlink() and rmdir() unhash F-d-c entry.
- *		4. fat_write_inode() checks whether the thing is unhashed.
- *			If it is we silently return. If it isn't we do bread(),
- *			check if the location is still valid and retry if it
- *			isn't. Otherwise we do changes.
+ *		3. unlink() and सूची_हटाओ() unhash F-d-c entry.
+ *		4. fat_ग_लिखो_inode() checks whether the thing is unhashed.
+ *			If it is we silently वापस. If it isn't we करो bपढ़ो(),
+ *			check अगर the location is still valid and retry अगर it
+ *			isn't. Otherwise we करो changes.
  *		5. Spinlock is used to protect hash/unhash/location check/lookup
  *		6. fat_evict_inode() unhashes the F-d-c entry.
- *		7. lookup() and readdir() do igrab() if they find a F-d-c entry
+ *		7. lookup() and सूची_पढ़ो() करो igrab() अगर they find a F-d-c entry
  *			and consider negative result as cache miss.
  */
 
-static void fat_hash_init(struct super_block *sb)
-{
-	struct msdos_sb_info *sbi = MSDOS_SB(sb);
-	int i;
+अटल व्योम fat_hash_init(काष्ठा super_block *sb)
+अणु
+	काष्ठा msकरोs_sb_info *sbi = MSDOS_SB(sb);
+	पूर्णांक i;
 
 	spin_lock_init(&sbi->inode_hash_lock);
-	for (i = 0; i < FAT_HASH_SIZE; i++)
+	क्रम (i = 0; i < FAT_HASH_SIZE; i++)
 		INIT_HLIST_HEAD(&sbi->inode_hashtable[i]);
-}
+पूर्ण
 
-static inline unsigned long fat_hash(loff_t i_pos)
-{
-	return hash_32(i_pos, FAT_HASH_BITS);
-}
+अटल अंतरभूत अचिन्हित दीर्घ fat_hash(loff_t i_pos)
+अणु
+	वापस hash_32(i_pos, FAT_HASH_BITS);
+पूर्ण
 
-static void dir_hash_init(struct super_block *sb)
-{
-	struct msdos_sb_info *sbi = MSDOS_SB(sb);
-	int i;
+अटल व्योम dir_hash_init(काष्ठा super_block *sb)
+अणु
+	काष्ठा msकरोs_sb_info *sbi = MSDOS_SB(sb);
+	पूर्णांक i;
 
 	spin_lock_init(&sbi->dir_hash_lock);
-	for (i = 0; i < FAT_HASH_SIZE; i++)
+	क्रम (i = 0; i < FAT_HASH_SIZE; i++)
 		INIT_HLIST_HEAD(&sbi->dir_hashtable[i]);
-}
+पूर्ण
 
-void fat_attach(struct inode *inode, loff_t i_pos)
-{
-	struct msdos_sb_info *sbi = MSDOS_SB(inode->i_sb);
+व्योम fat_attach(काष्ठा inode *inode, loff_t i_pos)
+अणु
+	काष्ठा msकरोs_sb_info *sbi = MSDOS_SB(inode->i_sb);
 
-	if (inode->i_ino != MSDOS_ROOT_INO) {
-		struct hlist_head *head =   sbi->inode_hashtable
+	अगर (inode->i_ino != MSDOS_ROOT_INO) अणु
+		काष्ठा hlist_head *head =   sbi->inode_hashtable
 					  + fat_hash(i_pos);
 
 		spin_lock(&sbi->inode_hash_lock);
 		MSDOS_I(inode)->i_pos = i_pos;
 		hlist_add_head(&MSDOS_I(inode)->i_fat_hash, head);
 		spin_unlock(&sbi->inode_hash_lock);
-	}
+	पूर्ण
 
 	/* If NFS support is enabled, cache the mapping of start cluster
 	 * to directory inode. This is used during reconnection of
-	 * dentries to the filesystem root.
+	 * dentries to the fileप्रणाली root.
 	 */
-	if (S_ISDIR(inode->i_mode) && sbi->options.nfs) {
-		struct hlist_head *d_head = sbi->dir_hashtable;
+	अगर (S_ISसूची(inode->i_mode) && sbi->options.nfs) अणु
+		काष्ठा hlist_head *d_head = sbi->dir_hashtable;
 		d_head += fat_dir_hash(MSDOS_I(inode)->i_logstart);
 
 		spin_lock(&sbi->dir_hash_lock);
 		hlist_add_head(&MSDOS_I(inode)->i_dir_hash, d_head);
 		spin_unlock(&sbi->dir_hash_lock);
-	}
-}
+	पूर्ण
+पूर्ण
 EXPORT_SYMBOL_GPL(fat_attach);
 
-void fat_detach(struct inode *inode)
-{
-	struct msdos_sb_info *sbi = MSDOS_SB(inode->i_sb);
+व्योम fat_detach(काष्ठा inode *inode)
+अणु
+	काष्ठा msकरोs_sb_info *sbi = MSDOS_SB(inode->i_sb);
 	spin_lock(&sbi->inode_hash_lock);
 	MSDOS_I(inode)->i_pos = 0;
 	hlist_del_init(&MSDOS_I(inode)->i_fat_hash);
 	spin_unlock(&sbi->inode_hash_lock);
 
-	if (S_ISDIR(inode->i_mode) && sbi->options.nfs) {
+	अगर (S_ISसूची(inode->i_mode) && sbi->options.nfs) अणु
 		spin_lock(&sbi->dir_hash_lock);
 		hlist_del_init(&MSDOS_I(inode)->i_dir_hash);
 		spin_unlock(&sbi->dir_hash_lock);
-	}
-}
+	पूर्ण
+पूर्ण
 EXPORT_SYMBOL_GPL(fat_detach);
 
-struct inode *fat_iget(struct super_block *sb, loff_t i_pos)
-{
-	struct msdos_sb_info *sbi = MSDOS_SB(sb);
-	struct hlist_head *head = sbi->inode_hashtable + fat_hash(i_pos);
-	struct msdos_inode_info *i;
-	struct inode *inode = NULL;
+काष्ठा inode *fat_iget(काष्ठा super_block *sb, loff_t i_pos)
+अणु
+	काष्ठा msकरोs_sb_info *sbi = MSDOS_SB(sb);
+	काष्ठा hlist_head *head = sbi->inode_hashtable + fat_hash(i_pos);
+	काष्ठा msकरोs_inode_info *i;
+	काष्ठा inode *inode = शून्य;
 
 	spin_lock(&sbi->inode_hash_lock);
-	hlist_for_each_entry(i, head, i_fat_hash) {
+	hlist_क्रम_each_entry(i, head, i_fat_hash) अणु
 		BUG_ON(i->vfs_inode.i_sb != sb);
-		if (i->i_pos != i_pos)
-			continue;
+		अगर (i->i_pos != i_pos)
+			जारी;
 		inode = igrab(&i->vfs_inode);
-		if (inode)
-			break;
-	}
+		अगर (inode)
+			अवरोध;
+	पूर्ण
 	spin_unlock(&sbi->inode_hash_lock);
-	return inode;
-}
+	वापस inode;
+पूर्ण
 
-static int is_exec(unsigned char *extension)
-{
-	unsigned char exe_extensions[] = "EXECOMBAT", *walk;
+अटल पूर्णांक is_exec(अचिन्हित अक्षर *extension)
+अणु
+	अचिन्हित अक्षर exe_extensions[] = "EXECOMBAT", *walk;
 
-	for (walk = exe_extensions; *walk; walk += 3)
-		if (!strncmp(extension, walk, 3))
-			return 1;
-	return 0;
-}
+	क्रम (walk = exe_extensions; *walk; walk += 3)
+		अगर (!म_भेदन(extension, walk, 3))
+			वापस 1;
+	वापस 0;
+पूर्ण
 
-static int fat_calc_dir_size(struct inode *inode)
-{
-	struct msdos_sb_info *sbi = MSDOS_SB(inode->i_sb);
-	int ret, fclus, dclus;
+अटल पूर्णांक fat_calc_dir_size(काष्ठा inode *inode)
+अणु
+	काष्ठा msकरोs_sb_info *sbi = MSDOS_SB(inode->i_sb);
+	पूर्णांक ret, fclus, dclus;
 
 	inode->i_size = 0;
-	if (MSDOS_I(inode)->i_start == 0)
-		return 0;
+	अगर (MSDOS_I(inode)->i_start == 0)
+		वापस 0;
 
-	ret = fat_get_cluster(inode, FAT_ENT_EOF, &fclus, &dclus);
-	if (ret < 0)
-		return ret;
+	ret = fat_get_cluster(inode, FAT_ENT_खातापूर्ण, &fclus, &dclus);
+	अगर (ret < 0)
+		वापस ret;
 	inode->i_size = (fclus + 1) << sbi->cluster_bits;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int fat_validate_dir(struct inode *dir)
-{
-	struct super_block *sb = dir->i_sb;
+अटल पूर्णांक fat_validate_dir(काष्ठा inode *dir)
+अणु
+	काष्ठा super_block *sb = dir->i_sb;
 
-	if (dir->i_nlink < 2) {
+	अगर (dir->i_nlink < 2) अणु
 		/* Directory should have "."/".." entries at least. */
 		fat_fs_error(sb, "corrupted directory (invalid entries)");
-		return -EIO;
-	}
-	if (MSDOS_I(dir)->i_start == 0 ||
-	    MSDOS_I(dir)->i_start == MSDOS_SB(sb)->root_cluster) {
-		/* Directory should point valid cluster. */
+		वापस -EIO;
+	पूर्ण
+	अगर (MSDOS_I(dir)->i_start == 0 ||
+	    MSDOS_I(dir)->i_start == MSDOS_SB(sb)->root_cluster) अणु
+		/* Directory should poपूर्णांक valid cluster. */
 		fat_fs_error(sb, "corrupted directory (invalid i_start)");
-		return -EIO;
-	}
-	return 0;
-}
+		वापस -EIO;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-/* doesn't deal with root inode */
-int fat_fill_inode(struct inode *inode, struct msdos_dir_entry *de)
-{
-	struct msdos_sb_info *sbi = MSDOS_SB(inode->i_sb);
-	int error;
+/* करोesn't deal with root inode */
+पूर्णांक fat_fill_inode(काष्ठा inode *inode, काष्ठा msकरोs_dir_entry *de)
+अणु
+	काष्ठा msकरोs_sb_info *sbi = MSDOS_SB(inode->i_sb);
+	पूर्णांक error;
 
 	MSDOS_I(inode)->i_pos = 0;
 	inode->i_uid = sbi->options.fs_uid;
 	inode->i_gid = sbi->options.fs_gid;
 	inode_inc_iversion(inode);
-	inode->i_generation = prandom_u32();
+	inode->i_generation = pअक्रमom_u32();
 
-	if ((de->attr & ATTR_DIR) && !IS_FREE(de->name)) {
+	अगर ((de->attr & ATTR_सूची) && !IS_FREE(de->name)) अणु
 		inode->i_generation &= ~1;
 		inode->i_mode = fat_make_mode(sbi, de->attr, S_IRWXUGO);
 		inode->i_op = sbi->dir_ops;
@@ -532,16 +533,16 @@ int fat_fill_inode(struct inode *inode, struct msdos_dir_entry *de)
 		MSDOS_I(inode)->i_start = fat_get_start(sbi, de);
 		MSDOS_I(inode)->i_logstart = MSDOS_I(inode)->i_start;
 		error = fat_calc_dir_size(inode);
-		if (error < 0)
-			return error;
-		MSDOS_I(inode)->mmu_private = inode->i_size;
+		अगर (error < 0)
+			वापस error;
+		MSDOS_I(inode)->mmu_निजी = inode->i_size;
 
 		set_nlink(inode, fat_subdirs(inode));
 
 		error = fat_validate_dir(inode);
-		if (error < 0)
-			return error;
-	} else { /* not a directory */
+		अगर (error < 0)
+			वापस error;
+	पूर्ण अन्यथा अणु /* not a directory */
 		inode->i_generation |= 1;
 		inode->i_mode = fat_make_mode(sbi, de->attr,
 			((sbi->options.showexec && !is_exec(de->name + 8))
@@ -553,220 +554,220 @@ int fat_fill_inode(struct inode *inode, struct msdos_dir_entry *de)
 		inode->i_op = &fat_file_inode_operations;
 		inode->i_fop = &fat_file_operations;
 		inode->i_mapping->a_ops = &fat_aops;
-		MSDOS_I(inode)->mmu_private = inode->i_size;
-	}
-	if (de->attr & ATTR_SYS) {
-		if (sbi->options.sys_immutable)
+		MSDOS_I(inode)->mmu_निजी = inode->i_size;
+	पूर्ण
+	अगर (de->attr & ATTR_SYS) अणु
+		अगर (sbi->options.sys_immutable)
 			inode->i_flags |= S_IMMUTABLE;
-	}
+	पूर्ण
 	fat_save_attrs(inode, de->attr);
 
 	inode->i_blocks = ((inode->i_size + (sbi->cluster_size - 1))
 			   & ~((loff_t)sbi->cluster_size - 1)) >> 9;
 
-	fat_time_fat2unix(sbi, &inode->i_mtime, de->time, de->date, 0);
-	if (sbi->options.isvfat) {
-		fat_time_fat2unix(sbi, &inode->i_ctime, de->ctime,
-				  de->cdate, de->ctime_cs);
-		fat_time_fat2unix(sbi, &inode->i_atime, 0, de->adate, 0);
-	} else
-		fat_truncate_time(inode, &inode->i_mtime, S_ATIME|S_CTIME);
+	fat_समय_fat2unix(sbi, &inode->i_mसमय, de->समय, de->date, 0);
+	अगर (sbi->options.isvfat) अणु
+		fat_समय_fat2unix(sbi, &inode->i_स_समय, de->स_समय,
+				  de->cdate, de->स_समय_cs);
+		fat_समय_fat2unix(sbi, &inode->i_aसमय, 0, de->adate, 0);
+	पूर्ण अन्यथा
+		fat_truncate_समय(inode, &inode->i_mसमय, S_ATIME|S_CTIME);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static inline void fat_lock_build_inode(struct msdos_sb_info *sbi)
-{
-	if (sbi->options.nfs == FAT_NFS_NOSTALE_RO)
+अटल अंतरभूत व्योम fat_lock_build_inode(काष्ठा msकरोs_sb_info *sbi)
+अणु
+	अगर (sbi->options.nfs == FAT_NFS_NOSTALE_RO)
 		mutex_lock(&sbi->nfs_build_inode_lock);
-}
+पूर्ण
 
-static inline void fat_unlock_build_inode(struct msdos_sb_info *sbi)
-{
-	if (sbi->options.nfs == FAT_NFS_NOSTALE_RO)
+अटल अंतरभूत व्योम fat_unlock_build_inode(काष्ठा msकरोs_sb_info *sbi)
+अणु
+	अगर (sbi->options.nfs == FAT_NFS_NOSTALE_RO)
 		mutex_unlock(&sbi->nfs_build_inode_lock);
-}
+पूर्ण
 
-struct inode *fat_build_inode(struct super_block *sb,
-			struct msdos_dir_entry *de, loff_t i_pos)
-{
-	struct inode *inode;
-	int err;
+काष्ठा inode *fat_build_inode(काष्ठा super_block *sb,
+			काष्ठा msकरोs_dir_entry *de, loff_t i_pos)
+अणु
+	काष्ठा inode *inode;
+	पूर्णांक err;
 
 	fat_lock_build_inode(MSDOS_SB(sb));
 	inode = fat_iget(sb, i_pos);
-	if (inode)
-		goto out;
+	अगर (inode)
+		जाओ out;
 	inode = new_inode(sb);
-	if (!inode) {
+	अगर (!inode) अणु
 		inode = ERR_PTR(-ENOMEM);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 	inode->i_ino = iunique(sb, MSDOS_ROOT_INO);
 	inode_set_iversion(inode, 1);
 	err = fat_fill_inode(inode, de);
-	if (err) {
+	अगर (err) अणु
 		iput(inode);
 		inode = ERR_PTR(err);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 	fat_attach(inode, i_pos);
 	insert_inode_hash(inode);
 out:
 	fat_unlock_build_inode(MSDOS_SB(sb));
-	return inode;
-}
+	वापस inode;
+पूर्ण
 
 EXPORT_SYMBOL_GPL(fat_build_inode);
 
-static int __fat_write_inode(struct inode *inode, int wait);
+अटल पूर्णांक __fat_ग_लिखो_inode(काष्ठा inode *inode, पूर्णांक रुको);
 
-static void fat_free_eofblocks(struct inode *inode)
-{
+अटल व्योम fat_मुक्त_eofblocks(काष्ठा inode *inode)
+अणु
 	/* Release unwritten fallocated blocks on inode eviction. */
-	if ((inode->i_blocks << 9) >
-			round_up(MSDOS_I(inode)->mmu_private,
-				MSDOS_SB(inode->i_sb)->cluster_size)) {
-		int err;
+	अगर ((inode->i_blocks << 9) >
+			round_up(MSDOS_I(inode)->mmu_निजी,
+				MSDOS_SB(inode->i_sb)->cluster_size)) अणु
+		पूर्णांक err;
 
-		fat_truncate_blocks(inode, MSDOS_I(inode)->mmu_private);
+		fat_truncate_blocks(inode, MSDOS_I(inode)->mmu_निजी);
 		/* Fallocate results in updating the i_start/iogstart
-		 * for the zero byte file. So, make it return to
-		 * original state during evict and commit it to avoid
+		 * क्रम the zero byte file. So, make it वापस to
+		 * original state during evict and commit it to aव्योम
 		 * any corruption on the next access to the cluster
-		 * chain for the file.
+		 * chain क्रम the file.
 		 */
-		err = __fat_write_inode(inode, inode_needs_sync(inode));
-		if (err) {
+		err = __fat_ग_लिखो_inode(inode, inode_needs_sync(inode));
+		अगर (err) अणु
 			fat_msg(inode->i_sb, KERN_WARNING, "Failed to "
 					"update on disk inode for unused "
 					"fallocated blocks, inode could be "
 					"corrupted. Please run fsck");
-		}
+		पूर्ण
 
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void fat_evict_inode(struct inode *inode)
-{
+अटल व्योम fat_evict_inode(काष्ठा inode *inode)
+अणु
 	truncate_inode_pages_final(&inode->i_data);
-	if (!inode->i_nlink) {
+	अगर (!inode->i_nlink) अणु
 		inode->i_size = 0;
 		fat_truncate_blocks(inode, 0);
-	} else
-		fat_free_eofblocks(inode);
+	पूर्ण अन्यथा
+		fat_मुक्त_eofblocks(inode);
 
 	invalidate_inode_buffers(inode);
 	clear_inode(inode);
 	fat_cache_inval_inode(inode);
 	fat_detach(inode);
-}
+पूर्ण
 
-static void fat_set_state(struct super_block *sb,
-			unsigned int set, unsigned int force)
-{
-	struct buffer_head *bh;
-	struct fat_boot_sector *b;
-	struct msdos_sb_info *sbi = MSDOS_SB(sb);
+अटल व्योम fat_set_state(काष्ठा super_block *sb,
+			अचिन्हित पूर्णांक set, अचिन्हित पूर्णांक क्रमce)
+अणु
+	काष्ठा buffer_head *bh;
+	काष्ठा fat_boot_sector *b;
+	काष्ठा msकरोs_sb_info *sbi = MSDOS_SB(sb);
 
-	/* do not change any thing if mounted read only */
-	if (sb_rdonly(sb) && !force)
-		return;
+	/* करो not change any thing अगर mounted पढ़ो only */
+	अगर (sb_rकरोnly(sb) && !क्रमce)
+		वापस;
 
-	/* do not change state if fs was dirty */
-	if (sbi->dirty) {
+	/* करो not change state अगर fs was dirty */
+	अगर (sbi->dirty) अणु
 		/* warn only on set (mount). */
-		if (set)
+		अगर (set)
 			fat_msg(sb, KERN_WARNING, "Volume was not properly "
 				"unmounted. Some data may be corrupt. "
 				"Please run fsck.");
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	bh = sb_bread(sb, 0);
-	if (bh == NULL) {
+	bh = sb_bपढ़ो(sb, 0);
+	अगर (bh == शून्य) अणु
 		fat_msg(sb, KERN_ERR, "unable to read boot sector "
 			"to mark fs as dirty");
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	b = (struct fat_boot_sector *) bh->b_data;
+	b = (काष्ठा fat_boot_sector *) bh->b_data;
 
-	if (is_fat32(sbi)) {
-		if (set)
-			b->fat32.state |= FAT_STATE_DIRTY;
-		else
-			b->fat32.state &= ~FAT_STATE_DIRTY;
-	} else /* fat 16 and 12 */ {
-		if (set)
-			b->fat16.state |= FAT_STATE_DIRTY;
-		else
-			b->fat16.state &= ~FAT_STATE_DIRTY;
-	}
+	अगर (is_fat32(sbi)) अणु
+		अगर (set)
+			b->fat32.state |= FAT_STATE_सूचीTY;
+		अन्यथा
+			b->fat32.state &= ~FAT_STATE_सूचीTY;
+	पूर्ण अन्यथा /* fat 16 and 12 */ अणु
+		अगर (set)
+			b->fat16.state |= FAT_STATE_सूचीTY;
+		अन्यथा
+			b->fat16.state &= ~FAT_STATE_सूचीTY;
+	पूर्ण
 
 	mark_buffer_dirty(bh);
 	sync_dirty_buffer(bh);
-	brelse(bh);
-}
+	brअन्यथा(bh);
+पूर्ण
 
-static void fat_reset_iocharset(struct fat_mount_options *opts)
-{
-	if (opts->iocharset != fat_default_iocharset) {
-		/* Note: opts->iocharset can be NULL here */
-		kfree(opts->iocharset);
-		opts->iocharset = fat_default_iocharset;
-	}
-}
+अटल व्योम fat_reset_ioअक्षरset(काष्ठा fat_mount_options *opts)
+अणु
+	अगर (opts->ioअक्षरset != fat_शेष_ioअक्षरset) अणु
+		/* Note: opts->ioअक्षरset can be शून्य here */
+		kमुक्त(opts->ioअक्षरset);
+		opts->ioअक्षरset = fat_शेष_ioअक्षरset;
+	पूर्ण
+पूर्ण
 
-static void delayed_free(struct rcu_head *p)
-{
-	struct msdos_sb_info *sbi = container_of(p, struct msdos_sb_info, rcu);
+अटल व्योम delayed_मुक्त(काष्ठा rcu_head *p)
+अणु
+	काष्ठा msकरोs_sb_info *sbi = container_of(p, काष्ठा msकरोs_sb_info, rcu);
 	unload_nls(sbi->nls_disk);
 	unload_nls(sbi->nls_io);
-	fat_reset_iocharset(&sbi->options);
-	kfree(sbi);
-}
+	fat_reset_ioअक्षरset(&sbi->options);
+	kमुक्त(sbi);
+पूर्ण
 
-static void fat_put_super(struct super_block *sb)
-{
-	struct msdos_sb_info *sbi = MSDOS_SB(sb);
+अटल व्योम fat_put_super(काष्ठा super_block *sb)
+अणु
+	काष्ठा msकरोs_sb_info *sbi = MSDOS_SB(sb);
 
 	fat_set_state(sb, 0, 0);
 
 	iput(sbi->fsinfo_inode);
 	iput(sbi->fat_inode);
 
-	call_rcu(&sbi->rcu, delayed_free);
-}
+	call_rcu(&sbi->rcu, delayed_मुक्त);
+पूर्ण
 
-static struct kmem_cache *fat_inode_cachep;
+अटल काष्ठा kmem_cache *fat_inode_cachep;
 
-static struct inode *fat_alloc_inode(struct super_block *sb)
-{
-	struct msdos_inode_info *ei;
+अटल काष्ठा inode *fat_alloc_inode(काष्ठा super_block *sb)
+अणु
+	काष्ठा msकरोs_inode_info *ei;
 	ei = kmem_cache_alloc(fat_inode_cachep, GFP_NOFS);
-	if (!ei)
-		return NULL;
+	अगर (!ei)
+		वापस शून्य;
 
 	init_rwsem(&ei->truncate_lock);
-	/* Zeroing to allow iput() even if partial initialized inode. */
-	ei->mmu_private = 0;
+	/* Zeroing to allow iput() even अगर partial initialized inode. */
+	ei->mmu_निजी = 0;
 	ei->i_start = 0;
 	ei->i_logstart = 0;
 	ei->i_attrs = 0;
 	ei->i_pos = 0;
 
-	return &ei->vfs_inode;
-}
+	वापस &ei->vfs_inode;
+पूर्ण
 
-static void fat_free_inode(struct inode *inode)
-{
-	kmem_cache_free(fat_inode_cachep, MSDOS_I(inode));
-}
+अटल व्योम fat_मुक्त_inode(काष्ठा inode *inode)
+अणु
+	kmem_cache_मुक्त(fat_inode_cachep, MSDOS_I(inode));
+पूर्ण
 
-static void init_once(void *foo)
-{
-	struct msdos_inode_info *ei = (struct msdos_inode_info *)foo;
+अटल व्योम init_once(व्योम *foo)
+अणु
+	काष्ठा msकरोs_inode_info *ei = (काष्ठा msकरोs_inode_info *)foo;
 
 	spin_lock_init(&ei->cache_lru_lock);
 	ei->nr_caches = 0;
@@ -775,382 +776,382 @@ static void init_once(void *foo)
 	INIT_HLIST_NODE(&ei->i_fat_hash);
 	INIT_HLIST_NODE(&ei->i_dir_hash);
 	inode_init_once(&ei->vfs_inode);
-}
+पूर्ण
 
-static int __init fat_init_inodecache(void)
-{
+अटल पूर्णांक __init fat_init_inodecache(व्योम)
+अणु
 	fat_inode_cachep = kmem_cache_create("fat_inode_cache",
-					     sizeof(struct msdos_inode_info),
+					     माप(काष्ठा msकरोs_inode_info),
 					     0, (SLAB_RECLAIM_ACCOUNT|
 						SLAB_MEM_SPREAD|SLAB_ACCOUNT),
 					     init_once);
-	if (fat_inode_cachep == NULL)
-		return -ENOMEM;
-	return 0;
-}
+	अगर (fat_inode_cachep == शून्य)
+		वापस -ENOMEM;
+	वापस 0;
+पूर्ण
 
-static void __exit fat_destroy_inodecache(void)
-{
+अटल व्योम __निकास fat_destroy_inodecache(व्योम)
+अणु
 	/*
-	 * Make sure all delayed rcu free inodes are flushed before we
+	 * Make sure all delayed rcu मुक्त inodes are flushed beक्रमe we
 	 * destroy cache.
 	 */
 	rcu_barrier();
 	kmem_cache_destroy(fat_inode_cachep);
-}
+पूर्ण
 
-static int fat_remount(struct super_block *sb, int *flags, char *data)
-{
-	bool new_rdonly;
-	struct msdos_sb_info *sbi = MSDOS_SB(sb);
-	*flags |= SB_NODIRATIME | (sbi->options.isvfat ? 0 : SB_NOATIME);
+अटल पूर्णांक fat_remount(काष्ठा super_block *sb, पूर्णांक *flags, अक्षर *data)
+अणु
+	bool new_rकरोnly;
+	काष्ठा msकरोs_sb_info *sbi = MSDOS_SB(sb);
+	*flags |= SB_NOसूचीATIME | (sbi->options.isvfat ? 0 : SB_NOATIME);
 
-	sync_filesystem(sb);
+	sync_fileप्रणाली(sb);
 
 	/* make sure we update state on remount. */
-	new_rdonly = *flags & SB_RDONLY;
-	if (new_rdonly != sb_rdonly(sb)) {
-		if (new_rdonly)
+	new_rकरोnly = *flags & SB_RDONLY;
+	अगर (new_rकरोnly != sb_rकरोnly(sb)) अणु
+		अगर (new_rकरोnly)
 			fat_set_state(sb, 0, 0);
-		else
+		अन्यथा
 			fat_set_state(sb, 1, 1);
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int fat_statfs(struct dentry *dentry, struct kstatfs *buf)
-{
-	struct super_block *sb = dentry->d_sb;
-	struct msdos_sb_info *sbi = MSDOS_SB(sb);
+अटल पूर्णांक fat_statfs(काष्ठा dentry *dentry, काष्ठा kstatfs *buf)
+अणु
+	काष्ठा super_block *sb = dentry->d_sb;
+	काष्ठा msकरोs_sb_info *sbi = MSDOS_SB(sb);
 	u64 id = huge_encode_dev(sb->s_bdev->bd_dev);
 
-	/* If the count of free cluster is still unknown, counts it here. */
-	if (sbi->free_clusters == -1 || !sbi->free_clus_valid) {
-		int err = fat_count_free_clusters(dentry->d_sb);
-		if (err)
-			return err;
-	}
+	/* If the count of मुक्त cluster is still unknown, counts it here. */
+	अगर (sbi->मुक्त_clusters == -1 || !sbi->मुक्त_clus_valid) अणु
+		पूर्णांक err = fat_count_मुक्त_clusters(dentry->d_sb);
+		अगर (err)
+			वापस err;
+	पूर्ण
 
 	buf->f_type = dentry->d_sb->s_magic;
 	buf->f_bsize = sbi->cluster_size;
 	buf->f_blocks = sbi->max_cluster - FAT_START_ENT;
-	buf->f_bfree = sbi->free_clusters;
-	buf->f_bavail = sbi->free_clusters;
+	buf->f_bमुक्त = sbi->मुक्त_clusters;
+	buf->f_bavail = sbi->मुक्त_clusters;
 	buf->f_fsid = u64_to_fsid(id);
 	buf->f_namelen =
 		(sbi->options.isvfat ? FAT_LFN_LEN : 12) * NLS_MAX_CHARSET_SIZE;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __fat_write_inode(struct inode *inode, int wait)
-{
-	struct super_block *sb = inode->i_sb;
-	struct msdos_sb_info *sbi = MSDOS_SB(sb);
-	struct buffer_head *bh;
-	struct msdos_dir_entry *raw_entry;
+अटल पूर्णांक __fat_ग_लिखो_inode(काष्ठा inode *inode, पूर्णांक रुको)
+अणु
+	काष्ठा super_block *sb = inode->i_sb;
+	काष्ठा msकरोs_sb_info *sbi = MSDOS_SB(sb);
+	काष्ठा buffer_head *bh;
+	काष्ठा msकरोs_dir_entry *raw_entry;
 	loff_t i_pos;
 	sector_t blocknr;
-	int err, offset;
+	पूर्णांक err, offset;
 
-	if (inode->i_ino == MSDOS_ROOT_INO)
-		return 0;
+	अगर (inode->i_ino == MSDOS_ROOT_INO)
+		वापस 0;
 
 retry:
-	i_pos = fat_i_pos_read(sbi, inode);
-	if (!i_pos)
-		return 0;
+	i_pos = fat_i_pos_पढ़ो(sbi, inode);
+	अगर (!i_pos)
+		वापस 0;
 
 	fat_get_blknr_offset(sbi, i_pos, &blocknr, &offset);
-	bh = sb_bread(sb, blocknr);
-	if (!bh) {
+	bh = sb_bपढ़ो(sb, blocknr);
+	अगर (!bh) अणु
 		fat_msg(sb, KERN_ERR, "unable to read inode block "
 		       "for updating (i_pos %lld)", i_pos);
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 	spin_lock(&sbi->inode_hash_lock);
-	if (i_pos != MSDOS_I(inode)->i_pos) {
+	अगर (i_pos != MSDOS_I(inode)->i_pos) अणु
 		spin_unlock(&sbi->inode_hash_lock);
-		brelse(bh);
-		goto retry;
-	}
+		brअन्यथा(bh);
+		जाओ retry;
+	पूर्ण
 
-	raw_entry = &((struct msdos_dir_entry *) (bh->b_data))[offset];
-	if (S_ISDIR(inode->i_mode))
+	raw_entry = &((काष्ठा msकरोs_dir_entry *) (bh->b_data))[offset];
+	अगर (S_ISसूची(inode->i_mode))
 		raw_entry->size = 0;
-	else
+	अन्यथा
 		raw_entry->size = cpu_to_le32(inode->i_size);
 	raw_entry->attr = fat_make_attrs(inode);
 	fat_set_start(raw_entry, MSDOS_I(inode)->i_logstart);
-	fat_time_unix2fat(sbi, &inode->i_mtime, &raw_entry->time,
-			  &raw_entry->date, NULL);
-	if (sbi->options.isvfat) {
-		__le16 atime;
-		fat_time_unix2fat(sbi, &inode->i_ctime, &raw_entry->ctime,
-				  &raw_entry->cdate, &raw_entry->ctime_cs);
-		fat_time_unix2fat(sbi, &inode->i_atime, &atime,
-				  &raw_entry->adate, NULL);
-	}
+	fat_समय_unix2fat(sbi, &inode->i_mसमय, &raw_entry->समय,
+			  &raw_entry->date, शून्य);
+	अगर (sbi->options.isvfat) अणु
+		__le16 aसमय;
+		fat_समय_unix2fat(sbi, &inode->i_स_समय, &raw_entry->स_समय,
+				  &raw_entry->cdate, &raw_entry->स_समय_cs);
+		fat_समय_unix2fat(sbi, &inode->i_aसमय, &aसमय,
+				  &raw_entry->adate, शून्य);
+	पूर्ण
 	spin_unlock(&sbi->inode_hash_lock);
 	mark_buffer_dirty(bh);
 	err = 0;
-	if (wait)
+	अगर (रुको)
 		err = sync_dirty_buffer(bh);
-	brelse(bh);
-	return err;
-}
+	brअन्यथा(bh);
+	वापस err;
+पूर्ण
 
-static int fat_write_inode(struct inode *inode, struct writeback_control *wbc)
-{
-	int err;
+अटल पूर्णांक fat_ग_लिखो_inode(काष्ठा inode *inode, काष्ठा ग_लिखोback_control *wbc)
+अणु
+	पूर्णांक err;
 
-	if (inode->i_ino == MSDOS_FSINFO_INO) {
-		struct super_block *sb = inode->i_sb;
+	अगर (inode->i_ino == MSDOS_FSINFO_INO) अणु
+		काष्ठा super_block *sb = inode->i_sb;
 
 		mutex_lock(&MSDOS_SB(sb)->s_lock);
 		err = fat_clusters_flush(sb);
 		mutex_unlock(&MSDOS_SB(sb)->s_lock);
-	} else
-		err = __fat_write_inode(inode, wbc->sync_mode == WB_SYNC_ALL);
+	पूर्ण अन्यथा
+		err = __fat_ग_लिखो_inode(inode, wbc->sync_mode == WB_SYNC_ALL);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-int fat_sync_inode(struct inode *inode)
-{
-	return __fat_write_inode(inode, 1);
-}
+पूर्णांक fat_sync_inode(काष्ठा inode *inode)
+अणु
+	वापस __fat_ग_लिखो_inode(inode, 1);
+पूर्ण
 
 EXPORT_SYMBOL_GPL(fat_sync_inode);
 
-static int fat_show_options(struct seq_file *m, struct dentry *root);
-static const struct super_operations fat_sops = {
+अटल पूर्णांक fat_show_options(काष्ठा seq_file *m, काष्ठा dentry *root);
+अटल स्थिर काष्ठा super_operations fat_sops = अणु
 	.alloc_inode	= fat_alloc_inode,
-	.free_inode	= fat_free_inode,
-	.write_inode	= fat_write_inode,
+	.मुक्त_inode	= fat_मुक्त_inode,
+	.ग_लिखो_inode	= fat_ग_लिखो_inode,
 	.evict_inode	= fat_evict_inode,
 	.put_super	= fat_put_super,
 	.statfs		= fat_statfs,
 	.remount_fs	= fat_remount,
 
 	.show_options	= fat_show_options,
-};
+पूर्ण;
 
-static int fat_show_options(struct seq_file *m, struct dentry *root)
-{
-	struct msdos_sb_info *sbi = MSDOS_SB(root->d_sb);
-	struct fat_mount_options *opts = &sbi->options;
-	int isvfat = opts->isvfat;
+अटल पूर्णांक fat_show_options(काष्ठा seq_file *m, काष्ठा dentry *root)
+अणु
+	काष्ठा msकरोs_sb_info *sbi = MSDOS_SB(root->d_sb);
+	काष्ठा fat_mount_options *opts = &sbi->options;
+	पूर्णांक isvfat = opts->isvfat;
 
-	if (!uid_eq(opts->fs_uid, GLOBAL_ROOT_UID))
-		seq_printf(m, ",uid=%u",
+	अगर (!uid_eq(opts->fs_uid, GLOBAL_ROOT_UID))
+		seq_म_लिखो(m, ",uid=%u",
 				from_kuid_munged(&init_user_ns, opts->fs_uid));
-	if (!gid_eq(opts->fs_gid, GLOBAL_ROOT_GID))
-		seq_printf(m, ",gid=%u",
+	अगर (!gid_eq(opts->fs_gid, GLOBAL_ROOT_GID))
+		seq_म_लिखो(m, ",gid=%u",
 				from_kgid_munged(&init_user_ns, opts->fs_gid));
-	seq_printf(m, ",fmask=%04o", opts->fs_fmask);
-	seq_printf(m, ",dmask=%04o", opts->fs_dmask);
-	if (opts->allow_utime)
-		seq_printf(m, ",allow_utime=%04o", opts->allow_utime);
-	if (sbi->nls_disk)
+	seq_म_लिखो(m, ",fmask=%04o", opts->fs_fmask);
+	seq_म_लिखो(m, ",dmask=%04o", opts->fs_dmask);
+	अगर (opts->allow_uसमय)
+		seq_म_लिखो(m, ",allow_utime=%04o", opts->allow_uसमय);
+	अगर (sbi->nls_disk)
 		/* strip "cp" prefix from displayed option */
-		seq_printf(m, ",codepage=%s", &sbi->nls_disk->charset[2]);
-	if (isvfat) {
-		if (sbi->nls_io)
-			seq_printf(m, ",iocharset=%s", sbi->nls_io->charset);
+		seq_म_लिखो(m, ",codepage=%s", &sbi->nls_disk->अक्षरset[2]);
+	अगर (isvfat) अणु
+		अगर (sbi->nls_io)
+			seq_म_लिखो(m, ",iocharset=%s", sbi->nls_io->अक्षरset);
 
-		switch (opts->shortname) {
-		case VFAT_SFN_DISPLAY_WIN95 | VFAT_SFN_CREATE_WIN95:
-			seq_puts(m, ",shortname=win95");
-			break;
-		case VFAT_SFN_DISPLAY_WINNT | VFAT_SFN_CREATE_WINNT:
-			seq_puts(m, ",shortname=winnt");
-			break;
-		case VFAT_SFN_DISPLAY_WINNT | VFAT_SFN_CREATE_WIN95:
-			seq_puts(m, ",shortname=mixed");
-			break;
-		case VFAT_SFN_DISPLAY_LOWER | VFAT_SFN_CREATE_WIN95:
-			seq_puts(m, ",shortname=lower");
-			break;
-		default:
-			seq_puts(m, ",shortname=unknown");
-			break;
-		}
-	}
-	if (opts->name_check != 'n')
-		seq_printf(m, ",check=%c", opts->name_check);
-	if (opts->usefree)
-		seq_puts(m, ",usefree");
-	if (opts->quiet)
-		seq_puts(m, ",quiet");
-	if (opts->showexec)
-		seq_puts(m, ",showexec");
-	if (opts->sys_immutable)
-		seq_puts(m, ",sys_immutable");
-	if (!isvfat) {
-		if (opts->dotsOK)
-			seq_puts(m, ",dotsOK=yes");
-		if (opts->nocase)
-			seq_puts(m, ",nocase");
-	} else {
-		if (opts->utf8)
-			seq_puts(m, ",utf8");
-		if (opts->unicode_xlate)
-			seq_puts(m, ",uni_xlate");
-		if (!opts->numtail)
-			seq_puts(m, ",nonumtail");
-		if (opts->rodir)
-			seq_puts(m, ",rodir");
-	}
-	if (opts->flush)
-		seq_puts(m, ",flush");
-	if (opts->tz_set) {
-		if (opts->time_offset)
-			seq_printf(m, ",time_offset=%d", opts->time_offset);
-		else
-			seq_puts(m, ",tz=UTC");
-	}
-	if (opts->errors == FAT_ERRORS_CONT)
-		seq_puts(m, ",errors=continue");
-	else if (opts->errors == FAT_ERRORS_PANIC)
-		seq_puts(m, ",errors=panic");
-	else
-		seq_puts(m, ",errors=remount-ro");
-	if (opts->nfs == FAT_NFS_NOSTALE_RO)
-		seq_puts(m, ",nfs=nostale_ro");
-	else if (opts->nfs)
-		seq_puts(m, ",nfs=stale_rw");
-	if (opts->discard)
-		seq_puts(m, ",discard");
-	if (opts->dos1xfloppy)
-		seq_puts(m, ",dos1xfloppy");
+		चयन (opts->लघुname) अणु
+		हाल VFAT_SFN_DISPLAY_WIN95 | VFAT_SFN_CREATE_WIN95:
+			seq_माला_दो(m, ",shortname=win95");
+			अवरोध;
+		हाल VFAT_SFN_DISPLAY_WINNT | VFAT_SFN_CREATE_WINNT:
+			seq_माला_दो(m, ",shortname=winnt");
+			अवरोध;
+		हाल VFAT_SFN_DISPLAY_WINNT | VFAT_SFN_CREATE_WIN95:
+			seq_माला_दो(m, ",shortname=mixed");
+			अवरोध;
+		हाल VFAT_SFN_DISPLAY_LOWER | VFAT_SFN_CREATE_WIN95:
+			seq_माला_दो(m, ",shortname=lower");
+			अवरोध;
+		शेष:
+			seq_माला_दो(m, ",shortname=unknown");
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	अगर (opts->name_check != 'n')
+		seq_म_लिखो(m, ",check=%c", opts->name_check);
+	अगर (opts->useमुक्त)
+		seq_माला_दो(m, ",usefree");
+	अगर (opts->quiet)
+		seq_माला_दो(m, ",quiet");
+	अगर (opts->showexec)
+		seq_माला_दो(m, ",showexec");
+	अगर (opts->sys_immutable)
+		seq_माला_दो(m, ",sys_immutable");
+	अगर (!isvfat) अणु
+		अगर (opts->करोtsOK)
+			seq_माला_दो(m, ",dotsOK=yes");
+		अगर (opts->noहाल)
+			seq_माला_दो(m, ",nocase");
+	पूर्ण अन्यथा अणु
+		अगर (opts->utf8)
+			seq_माला_दो(m, ",utf8");
+		अगर (opts->unicode_xlate)
+			seq_माला_दो(m, ",uni_xlate");
+		अगर (!opts->numtail)
+			seq_माला_दो(m, ",nonumtail");
+		अगर (opts->rodir)
+			seq_माला_दो(m, ",rodir");
+	पूर्ण
+	अगर (opts->flush)
+		seq_माला_दो(m, ",flush");
+	अगर (opts->tz_set) अणु
+		अगर (opts->समय_offset)
+			seq_म_लिखो(m, ",time_offset=%d", opts->समय_offset);
+		अन्यथा
+			seq_माला_दो(m, ",tz=UTC");
+	पूर्ण
+	अगर (opts->errors == FAT_ERRORS_CONT)
+		seq_माला_दो(m, ",errors=continue");
+	अन्यथा अगर (opts->errors == FAT_ERRORS_PANIC)
+		seq_माला_दो(m, ",errors=panic");
+	अन्यथा
+		seq_माला_दो(m, ",errors=remount-ro");
+	अगर (opts->nfs == FAT_NFS_NOSTALE_RO)
+		seq_माला_दो(m, ",nfs=nostale_ro");
+	अन्यथा अगर (opts->nfs)
+		seq_माला_दो(m, ",nfs=stale_rw");
+	अगर (opts->discard)
+		seq_माला_दो(m, ",discard");
+	अगर (opts->करोs1xfloppy)
+		seq_माला_दो(m, ",dos1xfloppy");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-enum {
+क्रमागत अणु
 	Opt_check_n, Opt_check_r, Opt_check_s, Opt_uid, Opt_gid,
-	Opt_umask, Opt_dmask, Opt_fmask, Opt_allow_utime, Opt_codepage,
-	Opt_usefree, Opt_nocase, Opt_quiet, Opt_showexec, Opt_debug,
-	Opt_immutable, Opt_dots, Opt_nodots,
-	Opt_charset, Opt_shortname_lower, Opt_shortname_win95,
-	Opt_shortname_winnt, Opt_shortname_mixed, Opt_utf8_no, Opt_utf8_yes,
+	Opt_umask, Opt_dmask, Opt_fmask, Opt_allow_uसमय, Opt_codepage,
+	Opt_useमुक्त, Opt_noहाल, Opt_quiet, Opt_showexec, Opt_debug,
+	Opt_immutable, Opt_करोts, Opt_noकरोts,
+	Opt_अक्षरset, Opt_लघुname_lower, Opt_लघुname_win95,
+	Opt_लघुname_winnt, Opt_लघुname_mixed, Opt_utf8_no, Opt_utf8_yes,
 	Opt_uni_xl_no, Opt_uni_xl_yes, Opt_nonumtail_no, Opt_nonumtail_yes,
 	Opt_obsolete, Opt_flush, Opt_tz_utc, Opt_rodir, Opt_err_cont,
-	Opt_err_panic, Opt_err_ro, Opt_discard, Opt_nfs, Opt_time_offset,
-	Opt_nfs_stale_rw, Opt_nfs_nostale_ro, Opt_err, Opt_dos1xfloppy,
-};
+	Opt_err_panic, Opt_err_ro, Opt_discard, Opt_nfs, Opt_समय_offset,
+	Opt_nfs_stale_rw, Opt_nfs_nostale_ro, Opt_err, Opt_करोs1xfloppy,
+पूर्ण;
 
-static const match_table_t fat_tokens = {
-	{Opt_check_r, "check=relaxed"},
-	{Opt_check_s, "check=strict"},
-	{Opt_check_n, "check=normal"},
-	{Opt_check_r, "check=r"},
-	{Opt_check_s, "check=s"},
-	{Opt_check_n, "check=n"},
-	{Opt_uid, "uid=%u"},
-	{Opt_gid, "gid=%u"},
-	{Opt_umask, "umask=%o"},
-	{Opt_dmask, "dmask=%o"},
-	{Opt_fmask, "fmask=%o"},
-	{Opt_allow_utime, "allow_utime=%o"},
-	{Opt_codepage, "codepage=%u"},
-	{Opt_usefree, "usefree"},
-	{Opt_nocase, "nocase"},
-	{Opt_quiet, "quiet"},
-	{Opt_showexec, "showexec"},
-	{Opt_debug, "debug"},
-	{Opt_immutable, "sys_immutable"},
-	{Opt_flush, "flush"},
-	{Opt_tz_utc, "tz=UTC"},
-	{Opt_time_offset, "time_offset=%d"},
-	{Opt_err_cont, "errors=continue"},
-	{Opt_err_panic, "errors=panic"},
-	{Opt_err_ro, "errors=remount-ro"},
-	{Opt_discard, "discard"},
-	{Opt_nfs_stale_rw, "nfs"},
-	{Opt_nfs_stale_rw, "nfs=stale_rw"},
-	{Opt_nfs_nostale_ro, "nfs=nostale_ro"},
-	{Opt_dos1xfloppy, "dos1xfloppy"},
-	{Opt_obsolete, "conv=binary"},
-	{Opt_obsolete, "conv=text"},
-	{Opt_obsolete, "conv=auto"},
-	{Opt_obsolete, "conv=b"},
-	{Opt_obsolete, "conv=t"},
-	{Opt_obsolete, "conv=a"},
-	{Opt_obsolete, "fat=%u"},
-	{Opt_obsolete, "blocksize=%u"},
-	{Opt_obsolete, "cvf_format=%20s"},
-	{Opt_obsolete, "cvf_options=%100s"},
-	{Opt_obsolete, "posix"},
-	{Opt_err, NULL},
-};
-static const match_table_t msdos_tokens = {
-	{Opt_nodots, "nodots"},
-	{Opt_nodots, "dotsOK=no"},
-	{Opt_dots, "dots"},
-	{Opt_dots, "dotsOK=yes"},
-	{Opt_err, NULL}
-};
-static const match_table_t vfat_tokens = {
-	{Opt_charset, "iocharset=%s"},
-	{Opt_shortname_lower, "shortname=lower"},
-	{Opt_shortname_win95, "shortname=win95"},
-	{Opt_shortname_winnt, "shortname=winnt"},
-	{Opt_shortname_mixed, "shortname=mixed"},
-	{Opt_utf8_no, "utf8=0"},		/* 0 or no or false */
-	{Opt_utf8_no, "utf8=no"},
-	{Opt_utf8_no, "utf8=false"},
-	{Opt_utf8_yes, "utf8=1"},		/* empty or 1 or yes or true */
-	{Opt_utf8_yes, "utf8=yes"},
-	{Opt_utf8_yes, "utf8=true"},
-	{Opt_utf8_yes, "utf8"},
-	{Opt_uni_xl_no, "uni_xlate=0"},		/* 0 or no or false */
-	{Opt_uni_xl_no, "uni_xlate=no"},
-	{Opt_uni_xl_no, "uni_xlate=false"},
-	{Opt_uni_xl_yes, "uni_xlate=1"},	/* empty or 1 or yes or true */
-	{Opt_uni_xl_yes, "uni_xlate=yes"},
-	{Opt_uni_xl_yes, "uni_xlate=true"},
-	{Opt_uni_xl_yes, "uni_xlate"},
-	{Opt_nonumtail_no, "nonumtail=0"},	/* 0 or no or false */
-	{Opt_nonumtail_no, "nonumtail=no"},
-	{Opt_nonumtail_no, "nonumtail=false"},
-	{Opt_nonumtail_yes, "nonumtail=1"},	/* empty or 1 or yes or true */
-	{Opt_nonumtail_yes, "nonumtail=yes"},
-	{Opt_nonumtail_yes, "nonumtail=true"},
-	{Opt_nonumtail_yes, "nonumtail"},
-	{Opt_rodir, "rodir"},
-	{Opt_err, NULL}
-};
+अटल स्थिर match_table_t fat_tokens = अणु
+	अणुOpt_check_r, "check=relaxed"पूर्ण,
+	अणुOpt_check_s, "check=strict"पूर्ण,
+	अणुOpt_check_n, "check=normal"पूर्ण,
+	अणुOpt_check_r, "check=r"पूर्ण,
+	अणुOpt_check_s, "check=s"पूर्ण,
+	अणुOpt_check_n, "check=n"पूर्ण,
+	अणुOpt_uid, "uid=%u"पूर्ण,
+	अणुOpt_gid, "gid=%u"पूर्ण,
+	अणुOpt_umask, "umask=%o"पूर्ण,
+	अणुOpt_dmask, "dmask=%o"पूर्ण,
+	अणुOpt_fmask, "fmask=%o"पूर्ण,
+	अणुOpt_allow_uसमय, "allow_utime=%o"पूर्ण,
+	अणुOpt_codepage, "codepage=%u"पूर्ण,
+	अणुOpt_useमुक्त, "usefree"पूर्ण,
+	अणुOpt_noहाल, "nocase"पूर्ण,
+	अणुOpt_quiet, "quiet"पूर्ण,
+	अणुOpt_showexec, "showexec"पूर्ण,
+	अणुOpt_debug, "debug"पूर्ण,
+	अणुOpt_immutable, "sys_immutable"पूर्ण,
+	अणुOpt_flush, "flush"पूर्ण,
+	अणुOpt_tz_utc, "tz=UTC"पूर्ण,
+	अणुOpt_समय_offset, "time_offset=%d"पूर्ण,
+	अणुOpt_err_cont, "errors=continue"पूर्ण,
+	अणुOpt_err_panic, "errors=panic"पूर्ण,
+	अणुOpt_err_ro, "errors=remount-ro"पूर्ण,
+	अणुOpt_discard, "discard"पूर्ण,
+	अणुOpt_nfs_stale_rw, "nfs"पूर्ण,
+	अणुOpt_nfs_stale_rw, "nfs=stale_rw"पूर्ण,
+	अणुOpt_nfs_nostale_ro, "nfs=nostale_ro"पूर्ण,
+	अणुOpt_करोs1xfloppy, "dos1xfloppy"पूर्ण,
+	अणुOpt_obsolete, "conv=binary"पूर्ण,
+	अणुOpt_obsolete, "conv=text"पूर्ण,
+	अणुOpt_obsolete, "conv=auto"पूर्ण,
+	अणुOpt_obsolete, "conv=b"पूर्ण,
+	अणुOpt_obsolete, "conv=t"पूर्ण,
+	अणुOpt_obsolete, "conv=a"पूर्ण,
+	अणुOpt_obsolete, "fat=%u"पूर्ण,
+	अणुOpt_obsolete, "blocksize=%u"पूर्ण,
+	अणुOpt_obsolete, "cvf_format=%20s"पूर्ण,
+	अणुOpt_obsolete, "cvf_options=%100s"पूर्ण,
+	अणुOpt_obsolete, "posix"पूर्ण,
+	अणुOpt_err, शून्यपूर्ण,
+पूर्ण;
+अटल स्थिर match_table_t msकरोs_tokens = अणु
+	अणुOpt_noकरोts, "nodots"पूर्ण,
+	अणुOpt_noकरोts, "dotsOK=no"पूर्ण,
+	अणुOpt_करोts, "dots"पूर्ण,
+	अणुOpt_करोts, "dotsOK=yes"पूर्ण,
+	अणुOpt_err, शून्यपूर्ण
+पूर्ण;
+अटल स्थिर match_table_t vfat_tokens = अणु
+	अणुOpt_अक्षरset, "iocharset=%s"पूर्ण,
+	अणुOpt_लघुname_lower, "shortname=lower"पूर्ण,
+	अणुOpt_लघुname_win95, "shortname=win95"पूर्ण,
+	अणुOpt_लघुname_winnt, "shortname=winnt"पूर्ण,
+	अणुOpt_लघुname_mixed, "shortname=mixed"पूर्ण,
+	अणुOpt_utf8_no, "utf8=0"पूर्ण,		/* 0 or no or false */
+	अणुOpt_utf8_no, "utf8=no"पूर्ण,
+	अणुOpt_utf8_no, "utf8=false"पूर्ण,
+	अणुOpt_utf8_yes, "utf8=1"पूर्ण,		/* empty or 1 or yes or true */
+	अणुOpt_utf8_yes, "utf8=yes"पूर्ण,
+	अणुOpt_utf8_yes, "utf8=true"पूर्ण,
+	अणुOpt_utf8_yes, "utf8"पूर्ण,
+	अणुOpt_uni_xl_no, "uni_xlate=0"पूर्ण,		/* 0 or no or false */
+	अणुOpt_uni_xl_no, "uni_xlate=no"पूर्ण,
+	अणुOpt_uni_xl_no, "uni_xlate=false"पूर्ण,
+	अणुOpt_uni_xl_yes, "uni_xlate=1"पूर्ण,	/* empty or 1 or yes or true */
+	अणुOpt_uni_xl_yes, "uni_xlate=yes"पूर्ण,
+	अणुOpt_uni_xl_yes, "uni_xlate=true"पूर्ण,
+	अणुOpt_uni_xl_yes, "uni_xlate"पूर्ण,
+	अणुOpt_nonumtail_no, "nonumtail=0"पूर्ण,	/* 0 or no or false */
+	अणुOpt_nonumtail_no, "nonumtail=no"पूर्ण,
+	अणुOpt_nonumtail_no, "nonumtail=false"पूर्ण,
+	अणुOpt_nonumtail_yes, "nonumtail=1"पूर्ण,	/* empty or 1 or yes or true */
+	अणुOpt_nonumtail_yes, "nonumtail=yes"पूर्ण,
+	अणुOpt_nonumtail_yes, "nonumtail=true"पूर्ण,
+	अणुOpt_nonumtail_yes, "nonumtail"पूर्ण,
+	अणुOpt_rodir, "rodir"पूर्ण,
+	अणुOpt_err, शून्यपूर्ण
+पूर्ण;
 
-static int parse_options(struct super_block *sb, char *options, int is_vfat,
-			 int silent, int *debug, struct fat_mount_options *opts)
-{
-	char *p;
+अटल पूर्णांक parse_options(काष्ठा super_block *sb, अक्षर *options, पूर्णांक is_vfat,
+			 पूर्णांक silent, पूर्णांक *debug, काष्ठा fat_mount_options *opts)
+अणु
+	अक्षर *p;
 	substring_t args[MAX_OPT_ARGS];
-	int option;
-	char *iocharset;
+	पूर्णांक option;
+	अक्षर *ioअक्षरset;
 
 	opts->isvfat = is_vfat;
 
 	opts->fs_uid = current_uid();
 	opts->fs_gid = current_gid();
 	opts->fs_fmask = opts->fs_dmask = current_umask();
-	opts->allow_utime = -1;
-	opts->codepage = fat_default_codepage;
-	fat_reset_iocharset(opts);
-	if (is_vfat) {
-		opts->shortname = VFAT_SFN_DISPLAY_WINNT|VFAT_SFN_CREATE_WIN95;
+	opts->allow_uसमय = -1;
+	opts->codepage = fat_शेष_codepage;
+	fat_reset_ioअक्षरset(opts);
+	अगर (is_vfat) अणु
+		opts->लघुname = VFAT_SFN_DISPLAY_WINNT|VFAT_SFN_CREATE_WIN95;
 		opts->rodir = 0;
-	} else {
-		opts->shortname = 0;
+	पूर्ण अन्यथा अणु
+		opts->लघुname = 0;
 		opts->rodir = 1;
-	}
+	पूर्ण
 	opts->name_check = 'n';
-	opts->quiet = opts->showexec = opts->sys_immutable = opts->dotsOK =  0;
+	opts->quiet = opts->showexec = opts->sys_immutable = opts->करोtsOK =  0;
 	opts->unicode_xlate = 0;
 	opts->numtail = 1;
-	opts->usefree = opts->nocase = 0;
+	opts->useमुक्त = opts->noहाल = 0;
 	opts->tz_set = 0;
 	opts->nfs = 0;
 	opts->errors = FAT_ERRORS_RO;
@@ -1158,307 +1159,307 @@ static int parse_options(struct super_block *sb, char *options, int is_vfat,
 
 	opts->utf8 = IS_ENABLED(CONFIG_FAT_DEFAULT_UTF8) && is_vfat;
 
-	if (!options)
-		goto out;
+	अगर (!options)
+		जाओ out;
 
-	while ((p = strsep(&options, ",")) != NULL) {
-		int token;
-		if (!*p)
-			continue;
+	जबतक ((p = strsep(&options, ",")) != शून्य) अणु
+		पूर्णांक token;
+		अगर (!*p)
+			जारी;
 
 		token = match_token(p, fat_tokens, args);
-		if (token == Opt_err) {
-			if (is_vfat)
+		अगर (token == Opt_err) अणु
+			अगर (is_vfat)
 				token = match_token(p, vfat_tokens, args);
-			else
-				token = match_token(p, msdos_tokens, args);
-		}
-		switch (token) {
-		case Opt_check_s:
+			अन्यथा
+				token = match_token(p, msकरोs_tokens, args);
+		पूर्ण
+		चयन (token) अणु
+		हाल Opt_check_s:
 			opts->name_check = 's';
-			break;
-		case Opt_check_r:
+			अवरोध;
+		हाल Opt_check_r:
 			opts->name_check = 'r';
-			break;
-		case Opt_check_n:
+			अवरोध;
+		हाल Opt_check_n:
 			opts->name_check = 'n';
-			break;
-		case Opt_usefree:
-			opts->usefree = 1;
-			break;
-		case Opt_nocase:
-			if (!is_vfat)
-				opts->nocase = 1;
-			else {
-				/* for backward compatibility */
-				opts->shortname = VFAT_SFN_DISPLAY_WIN95
+			अवरोध;
+		हाल Opt_useमुक्त:
+			opts->useमुक्त = 1;
+			अवरोध;
+		हाल Opt_noहाल:
+			अगर (!is_vfat)
+				opts->noहाल = 1;
+			अन्यथा अणु
+				/* क्रम backward compatibility */
+				opts->लघुname = VFAT_SFN_DISPLAY_WIN95
 					| VFAT_SFN_CREATE_WIN95;
-			}
-			break;
-		case Opt_quiet:
+			पूर्ण
+			अवरोध;
+		हाल Opt_quiet:
 			opts->quiet = 1;
-			break;
-		case Opt_showexec:
+			अवरोध;
+		हाल Opt_showexec:
 			opts->showexec = 1;
-			break;
-		case Opt_debug:
+			अवरोध;
+		हाल Opt_debug:
 			*debug = 1;
-			break;
-		case Opt_immutable:
+			अवरोध;
+		हाल Opt_immutable:
 			opts->sys_immutable = 1;
-			break;
-		case Opt_uid:
-			if (match_int(&args[0], &option))
-				return -EINVAL;
+			अवरोध;
+		हाल Opt_uid:
+			अगर (match_पूर्णांक(&args[0], &option))
+				वापस -EINVAL;
 			opts->fs_uid = make_kuid(current_user_ns(), option);
-			if (!uid_valid(opts->fs_uid))
-				return -EINVAL;
-			break;
-		case Opt_gid:
-			if (match_int(&args[0], &option))
-				return -EINVAL;
+			अगर (!uid_valid(opts->fs_uid))
+				वापस -EINVAL;
+			अवरोध;
+		हाल Opt_gid:
+			अगर (match_पूर्णांक(&args[0], &option))
+				वापस -EINVAL;
 			opts->fs_gid = make_kgid(current_user_ns(), option);
-			if (!gid_valid(opts->fs_gid))
-				return -EINVAL;
-			break;
-		case Opt_umask:
-			if (match_octal(&args[0], &option))
-				return -EINVAL;
+			अगर (!gid_valid(opts->fs_gid))
+				वापस -EINVAL;
+			अवरोध;
+		हाल Opt_umask:
+			अगर (match_octal(&args[0], &option))
+				वापस -EINVAL;
 			opts->fs_fmask = opts->fs_dmask = option;
-			break;
-		case Opt_dmask:
-			if (match_octal(&args[0], &option))
-				return -EINVAL;
+			अवरोध;
+		हाल Opt_dmask:
+			अगर (match_octal(&args[0], &option))
+				वापस -EINVAL;
 			opts->fs_dmask = option;
-			break;
-		case Opt_fmask:
-			if (match_octal(&args[0], &option))
-				return -EINVAL;
+			अवरोध;
+		हाल Opt_fmask:
+			अगर (match_octal(&args[0], &option))
+				वापस -EINVAL;
 			opts->fs_fmask = option;
-			break;
-		case Opt_allow_utime:
-			if (match_octal(&args[0], &option))
-				return -EINVAL;
-			opts->allow_utime = option & (S_IWGRP | S_IWOTH);
-			break;
-		case Opt_codepage:
-			if (match_int(&args[0], &option))
-				return -EINVAL;
+			अवरोध;
+		हाल Opt_allow_uसमय:
+			अगर (match_octal(&args[0], &option))
+				वापस -EINVAL;
+			opts->allow_uसमय = option & (S_IWGRP | S_IWOTH);
+			अवरोध;
+		हाल Opt_codepage:
+			अगर (match_पूर्णांक(&args[0], &option))
+				वापस -EINVAL;
 			opts->codepage = option;
-			break;
-		case Opt_flush:
+			अवरोध;
+		हाल Opt_flush:
 			opts->flush = 1;
-			break;
-		case Opt_time_offset:
-			if (match_int(&args[0], &option))
-				return -EINVAL;
+			अवरोध;
+		हाल Opt_समय_offset:
+			अगर (match_पूर्णांक(&args[0], &option))
+				वापस -EINVAL;
 			/*
 			 * GMT+-12 zones may have DST corrections so at least
-			 * 13 hours difference is needed. Make the limit 24
-			 * just in case someone invents something unusual.
+			 * 13 hours dअगरference is needed. Make the limit 24
+			 * just in हाल someone invents something unusual.
 			 */
-			if (option < -24 * 60 || option > 24 * 60)
-				return -EINVAL;
+			अगर (option < -24 * 60 || option > 24 * 60)
+				वापस -EINVAL;
 			opts->tz_set = 1;
-			opts->time_offset = option;
-			break;
-		case Opt_tz_utc:
+			opts->समय_offset = option;
+			अवरोध;
+		हाल Opt_tz_utc:
 			opts->tz_set = 1;
-			opts->time_offset = 0;
-			break;
-		case Opt_err_cont:
+			opts->समय_offset = 0;
+			अवरोध;
+		हाल Opt_err_cont:
 			opts->errors = FAT_ERRORS_CONT;
-			break;
-		case Opt_err_panic:
+			अवरोध;
+		हाल Opt_err_panic:
 			opts->errors = FAT_ERRORS_PANIC;
-			break;
-		case Opt_err_ro:
+			अवरोध;
+		हाल Opt_err_ro:
 			opts->errors = FAT_ERRORS_RO;
-			break;
-		case Opt_nfs_stale_rw:
+			अवरोध;
+		हाल Opt_nfs_stale_rw:
 			opts->nfs = FAT_NFS_STALE_RW;
-			break;
-		case Opt_nfs_nostale_ro:
+			अवरोध;
+		हाल Opt_nfs_nostale_ro:
 			opts->nfs = FAT_NFS_NOSTALE_RO;
-			break;
-		case Opt_dos1xfloppy:
-			opts->dos1xfloppy = 1;
-			break;
+			अवरोध;
+		हाल Opt_करोs1xfloppy:
+			opts->करोs1xfloppy = 1;
+			अवरोध;
 
-		/* msdos specific */
-		case Opt_dots:
-			opts->dotsOK = 1;
-			break;
-		case Opt_nodots:
-			opts->dotsOK = 0;
-			break;
+		/* msकरोs specअगरic */
+		हाल Opt_करोts:
+			opts->करोtsOK = 1;
+			अवरोध;
+		हाल Opt_noकरोts:
+			opts->करोtsOK = 0;
+			अवरोध;
 
-		/* vfat specific */
-		case Opt_charset:
-			fat_reset_iocharset(opts);
-			iocharset = match_strdup(&args[0]);
-			if (!iocharset)
-				return -ENOMEM;
-			opts->iocharset = iocharset;
-			break;
-		case Opt_shortname_lower:
-			opts->shortname = VFAT_SFN_DISPLAY_LOWER
+		/* vfat specअगरic */
+		हाल Opt_अक्षरset:
+			fat_reset_ioअक्षरset(opts);
+			ioअक्षरset = match_strdup(&args[0]);
+			अगर (!ioअक्षरset)
+				वापस -ENOMEM;
+			opts->ioअक्षरset = ioअक्षरset;
+			अवरोध;
+		हाल Opt_लघुname_lower:
+			opts->लघुname = VFAT_SFN_DISPLAY_LOWER
 					| VFAT_SFN_CREATE_WIN95;
-			break;
-		case Opt_shortname_win95:
-			opts->shortname = VFAT_SFN_DISPLAY_WIN95
+			अवरोध;
+		हाल Opt_लघुname_win95:
+			opts->लघुname = VFAT_SFN_DISPLAY_WIN95
 					| VFAT_SFN_CREATE_WIN95;
-			break;
-		case Opt_shortname_winnt:
-			opts->shortname = VFAT_SFN_DISPLAY_WINNT
+			अवरोध;
+		हाल Opt_लघुname_winnt:
+			opts->लघुname = VFAT_SFN_DISPLAY_WINNT
 					| VFAT_SFN_CREATE_WINNT;
-			break;
-		case Opt_shortname_mixed:
-			opts->shortname = VFAT_SFN_DISPLAY_WINNT
+			अवरोध;
+		हाल Opt_लघुname_mixed:
+			opts->लघुname = VFAT_SFN_DISPLAY_WINNT
 					| VFAT_SFN_CREATE_WIN95;
-			break;
-		case Opt_utf8_no:		/* 0 or no or false */
+			अवरोध;
+		हाल Opt_utf8_no:		/* 0 or no or false */
 			opts->utf8 = 0;
-			break;
-		case Opt_utf8_yes:		/* empty or 1 or yes or true */
+			अवरोध;
+		हाल Opt_utf8_yes:		/* empty or 1 or yes or true */
 			opts->utf8 = 1;
-			break;
-		case Opt_uni_xl_no:		/* 0 or no or false */
+			अवरोध;
+		हाल Opt_uni_xl_no:		/* 0 or no or false */
 			opts->unicode_xlate = 0;
-			break;
-		case Opt_uni_xl_yes:		/* empty or 1 or yes or true */
+			अवरोध;
+		हाल Opt_uni_xl_yes:		/* empty or 1 or yes or true */
 			opts->unicode_xlate = 1;
-			break;
-		case Opt_nonumtail_no:		/* 0 or no or false */
+			अवरोध;
+		हाल Opt_nonumtail_no:		/* 0 or no or false */
 			opts->numtail = 1;	/* negated option */
-			break;
-		case Opt_nonumtail_yes:		/* empty or 1 or yes or true */
+			अवरोध;
+		हाल Opt_nonumtail_yes:		/* empty or 1 or yes or true */
 			opts->numtail = 0;	/* negated option */
-			break;
-		case Opt_rodir:
+			अवरोध;
+		हाल Opt_rodir:
 			opts->rodir = 1;
-			break;
-		case Opt_discard:
+			अवरोध;
+		हाल Opt_discard:
 			opts->discard = 1;
-			break;
+			अवरोध;
 
 		/* obsolete mount options */
-		case Opt_obsolete:
+		हाल Opt_obsolete:
 			fat_msg(sb, KERN_INFO, "\"%s\" option is obsolete, "
 			       "not supported now", p);
-			break;
+			अवरोध;
 		/* unknown option */
-		default:
-			if (!silent) {
+		शेष:
+			अगर (!silent) अणु
 				fat_msg(sb, KERN_ERR,
 				       "Unrecognized mount option \"%s\" "
 				       "or missing value", p);
-			}
-			return -EINVAL;
-		}
-	}
+			पूर्ण
+			वापस -EINVAL;
+		पूर्ण
+	पूर्ण
 
 out:
-	/* UTF-8 doesn't provide FAT semantics */
-	if (!strcmp(opts->iocharset, "utf8")) {
+	/* UTF-8 करोesn't provide FAT semantics */
+	अगर (!म_भेद(opts->ioअक्षरset, "utf8")) अणु
 		fat_msg(sb, KERN_WARNING, "utf8 is not a recommended IO charset"
 		       " for FAT filesystems, filesystem will be "
 		       "case sensitive!");
-	}
+	पूर्ण
 
-	/* If user doesn't specify allow_utime, it's initialized from dmask. */
-	if (opts->allow_utime == (unsigned short)-1)
-		opts->allow_utime = ~opts->fs_dmask & (S_IWGRP | S_IWOTH);
-	if (opts->unicode_xlate)
+	/* If user करोesn't specify allow_utime, it's initialized from dmask. */
+	अगर (opts->allow_uसमय == (अचिन्हित लघु)-1)
+		opts->allow_uसमय = ~opts->fs_dmask & (S_IWGRP | S_IWOTH);
+	अगर (opts->unicode_xlate)
 		opts->utf8 = 0;
-	if (opts->nfs == FAT_NFS_NOSTALE_RO) {
+	अगर (opts->nfs == FAT_NFS_NOSTALE_RO) अणु
 		sb->s_flags |= SB_RDONLY;
 		sb->s_export_op = &fat_export_ops_nostale;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int fat_read_root(struct inode *inode)
-{
-	struct msdos_sb_info *sbi = MSDOS_SB(inode->i_sb);
-	int error;
+अटल पूर्णांक fat_पढ़ो_root(काष्ठा inode *inode)
+अणु
+	काष्ठा msकरोs_sb_info *sbi = MSDOS_SB(inode->i_sb);
+	पूर्णांक error;
 
 	MSDOS_I(inode)->i_pos = MSDOS_ROOT_INO;
 	inode->i_uid = sbi->options.fs_uid;
 	inode->i_gid = sbi->options.fs_gid;
 	inode_inc_iversion(inode);
 	inode->i_generation = 0;
-	inode->i_mode = fat_make_mode(sbi, ATTR_DIR, S_IRWXUGO);
+	inode->i_mode = fat_make_mode(sbi, ATTR_सूची, S_IRWXUGO);
 	inode->i_op = sbi->dir_ops;
 	inode->i_fop = &fat_dir_operations;
-	if (is_fat32(sbi)) {
+	अगर (is_fat32(sbi)) अणु
 		MSDOS_I(inode)->i_start = sbi->root_cluster;
 		error = fat_calc_dir_size(inode);
-		if (error < 0)
-			return error;
-	} else {
+		अगर (error < 0)
+			वापस error;
+	पूर्ण अन्यथा अणु
 		MSDOS_I(inode)->i_start = 0;
-		inode->i_size = sbi->dir_entries * sizeof(struct msdos_dir_entry);
-	}
+		inode->i_size = sbi->dir_entries * माप(काष्ठा msकरोs_dir_entry);
+	पूर्ण
 	inode->i_blocks = ((inode->i_size + (sbi->cluster_size - 1))
 			   & ~((loff_t)sbi->cluster_size - 1)) >> 9;
 	MSDOS_I(inode)->i_logstart = 0;
-	MSDOS_I(inode)->mmu_private = inode->i_size;
+	MSDOS_I(inode)->mmu_निजी = inode->i_size;
 
-	fat_save_attrs(inode, ATTR_DIR);
-	inode->i_mtime.tv_sec = inode->i_atime.tv_sec = inode->i_ctime.tv_sec = 0;
-	inode->i_mtime.tv_nsec = inode->i_atime.tv_nsec = inode->i_ctime.tv_nsec = 0;
+	fat_save_attrs(inode, ATTR_सूची);
+	inode->i_mसमय.tv_sec = inode->i_aसमय.tv_sec = inode->i_स_समय.tv_sec = 0;
+	inode->i_mसमय.tv_nsec = inode->i_aसमय.tv_nsec = inode->i_स_समय.tv_nsec = 0;
 	set_nlink(inode, fat_subdirs(inode)+2);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static unsigned long calc_fat_clusters(struct super_block *sb)
-{
-	struct msdos_sb_info *sbi = MSDOS_SB(sb);
+अटल अचिन्हित दीर्घ calc_fat_clusters(काष्ठा super_block *sb)
+अणु
+	काष्ठा msकरोs_sb_info *sbi = MSDOS_SB(sb);
 
-	/* Divide first to avoid overflow */
-	if (!is_fat12(sbi)) {
-		unsigned long ent_per_sec = sb->s_blocksize * 8 / sbi->fat_bits;
-		return ent_per_sec * sbi->fat_length;
-	}
+	/* Divide first to aव्योम overflow */
+	अगर (!is_fat12(sbi)) अणु
+		अचिन्हित दीर्घ ent_per_sec = sb->s_blocksize * 8 / sbi->fat_bits;
+		वापस ent_per_sec * sbi->fat_length;
+	पूर्ण
 
-	return sbi->fat_length * sb->s_blocksize * 8 / sbi->fat_bits;
-}
+	वापस sbi->fat_length * sb->s_blocksize * 8 / sbi->fat_bits;
+पूर्ण
 
-static bool fat_bpb_is_zero(struct fat_boot_sector *b)
-{
-	if (get_unaligned_le16(&b->sector_size))
-		return false;
-	if (b->sec_per_clus)
-		return false;
-	if (b->reserved)
-		return false;
-	if (b->fats)
-		return false;
-	if (get_unaligned_le16(&b->dir_entries))
-		return false;
-	if (get_unaligned_le16(&b->sectors))
-		return false;
-	if (b->media)
-		return false;
-	if (b->fat_length)
-		return false;
-	if (b->secs_track)
-		return false;
-	if (b->heads)
-		return false;
-	return true;
-}
+अटल bool fat_bpb_is_zero(काष्ठा fat_boot_sector *b)
+अणु
+	अगर (get_unaligned_le16(&b->sector_size))
+		वापस false;
+	अगर (b->sec_per_clus)
+		वापस false;
+	अगर (b->reserved)
+		वापस false;
+	अगर (b->fats)
+		वापस false;
+	अगर (get_unaligned_le16(&b->dir_entries))
+		वापस false;
+	अगर (get_unaligned_le16(&b->sectors))
+		वापस false;
+	अगर (b->media)
+		वापस false;
+	अगर (b->fat_length)
+		वापस false;
+	अगर (b->secs_track)
+		वापस false;
+	अगर (b->heads)
+		वापस false;
+	वापस true;
+पूर्ण
 
-static int fat_read_bpb(struct super_block *sb, struct fat_boot_sector *b,
-	int silent, struct fat_bios_param_block *bpb)
-{
-	int error = -EINVAL;
+अटल पूर्णांक fat_पढ़ो_bpb(काष्ठा super_block *sb, काष्ठा fat_boot_sector *b,
+	पूर्णांक silent, काष्ठा fat_bios_param_block *bpb)
+अणु
+	पूर्णांक error = -EINVAL;
 
 	/* Read in BPB ... */
-	memset(bpb, 0, sizeof(*bpb));
+	स_रखो(bpb, 0, माप(*bpb));
 	bpb->fat_sector_size = get_unaligned_le16(&b->sector_size);
 	bpb->fat_sec_per_clus = b->sec_per_clus;
 	bpb->fat_reserved = le16_to_cpu(b->reserved);
@@ -1477,222 +1478,222 @@ static int fat_read_bpb(struct super_block *sb, struct fat_boot_sector *b,
 	bpb->fat32_state = b->fat32.state;
 	bpb->fat32_vol_id = get_unaligned_le32(b->fat32.vol_id);
 
-	/* Validate this looks like a FAT filesystem BPB */
-	if (!bpb->fat_reserved) {
-		if (!silent)
+	/* Validate this looks like a FAT fileप्रणाली BPB */
+	अगर (!bpb->fat_reserved) अणु
+		अगर (!silent)
 			fat_msg(sb, KERN_ERR,
 				"bogus number of reserved sectors");
-		goto out;
-	}
-	if (!bpb->fat_fats) {
-		if (!silent)
+		जाओ out;
+	पूर्ण
+	अगर (!bpb->fat_fats) अणु
+		अगर (!silent)
 			fat_msg(sb, KERN_ERR, "bogus number of FAT structure");
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	/*
 	 * Earlier we checked here that b->secs_track and b->head are nonzero,
-	 * but it turns out valid FAT filesystems can have zero there.
+	 * but it turns out valid FAT fileप्रणालीs can have zero there.
 	 */
 
-	if (!fat_valid_media(b->media)) {
-		if (!silent)
+	अगर (!fat_valid_media(b->media)) अणु
+		अगर (!silent)
 			fat_msg(sb, KERN_ERR, "invalid media value (0x%02x)",
-				(unsigned)b->media);
-		goto out;
-	}
+				(अचिन्हित)b->media);
+		जाओ out;
+	पूर्ण
 
-	if (!is_power_of_2(bpb->fat_sector_size)
+	अगर (!is_घातer_of_2(bpb->fat_sector_size)
 	    || (bpb->fat_sector_size < 512)
-	    || (bpb->fat_sector_size > 4096)) {
-		if (!silent)
+	    || (bpb->fat_sector_size > 4096)) अणु
+		अगर (!silent)
 			fat_msg(sb, KERN_ERR, "bogus logical sector size %u",
-			       (unsigned)bpb->fat_sector_size);
-		goto out;
-	}
+			       (अचिन्हित)bpb->fat_sector_size);
+		जाओ out;
+	पूर्ण
 
-	if (!is_power_of_2(bpb->fat_sec_per_clus)) {
-		if (!silent)
+	अगर (!is_घातer_of_2(bpb->fat_sec_per_clus)) अणु
+		अगर (!silent)
 			fat_msg(sb, KERN_ERR, "bogus sectors per cluster %u",
-				(unsigned)bpb->fat_sec_per_clus);
-		goto out;
-	}
+				(अचिन्हित)bpb->fat_sec_per_clus);
+		जाओ out;
+	पूर्ण
 
-	if (bpb->fat_fat_length == 0 && bpb->fat32_length == 0) {
-		if (!silent)
+	अगर (bpb->fat_fat_length == 0 && bpb->fat32_length == 0) अणु
+		अगर (!silent)
 			fat_msg(sb, KERN_ERR, "bogus number of FAT sectors");
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	error = 0;
 
 out:
-	return error;
-}
+	वापस error;
+पूर्ण
 
-static int fat_read_static_bpb(struct super_block *sb,
-	struct fat_boot_sector *b, int silent,
-	struct fat_bios_param_block *bpb)
-{
-	static const char *notdos1x = "This doesn't look like a DOS 1.x volume";
+अटल पूर्णांक fat_पढ़ो_अटल_bpb(काष्ठा super_block *sb,
+	काष्ठा fat_boot_sector *b, पूर्णांक silent,
+	काष्ठा fat_bios_param_block *bpb)
+अणु
+	अटल स्थिर अक्षर *notकरोs1x = "This doesn't look like a DOS 1.x volume";
 
-	struct fat_floppy_defaults *fdefaults = NULL;
-	int error = -EINVAL;
+	काष्ठा fat_floppy_शेषs *fशेषs = शून्य;
+	पूर्णांक error = -EINVAL;
 	sector_t bd_sects;
-	unsigned i;
+	अचिन्हित i;
 
-	bd_sects = i_size_read(sb->s_bdev->bd_inode) / SECTOR_SIZE;
+	bd_sects = i_size_पढ़ो(sb->s_bdev->bd_inode) / SECTOR_SIZE;
 
-	/* 16-bit DOS 1.x reliably wrote bootstrap short-jmp code */
-	if (b->ignored[0] != 0xeb || b->ignored[2] != 0x90) {
-		if (!silent)
+	/* 16-bit DOS 1.x reliably wrote bootstrap लघु-jmp code */
+	अगर (b->ignored[0] != 0xeb || b->ignored[2] != 0x90) अणु
+		अगर (!silent)
 			fat_msg(sb, KERN_ERR,
-				"%s; no bootstrapping code", notdos1x);
-		goto out;
-	}
+				"%s; no bootstrapping code", notकरोs1x);
+		जाओ out;
+	पूर्ण
 
 	/*
 	 * If any value in this region is non-zero, it isn't archaic
 	 * DOS.
 	 */
-	if (!fat_bpb_is_zero(b)) {
-		if (!silent)
+	अगर (!fat_bpb_is_zero(b)) अणु
+		अगर (!silent)
 			fat_msg(sb, KERN_ERR,
-				"%s; DOS 2.x BPB is non-zero", notdos1x);
-		goto out;
-	}
+				"%s; DOS 2.x BPB is non-zero", notकरोs1x);
+		जाओ out;
+	पूर्ण
 
-	for (i = 0; i < ARRAY_SIZE(floppy_defaults); i++) {
-		if (floppy_defaults[i].nr_sectors == bd_sects) {
-			fdefaults = &floppy_defaults[i];
-			break;
-		}
-	}
+	क्रम (i = 0; i < ARRAY_SIZE(floppy_शेषs); i++) अणु
+		अगर (floppy_शेषs[i].nr_sectors == bd_sects) अणु
+			fशेषs = &floppy_शेषs[i];
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	if (fdefaults == NULL) {
-		if (!silent)
+	अगर (fशेषs == शून्य) अणु
+		अगर (!silent)
 			fat_msg(sb, KERN_WARNING,
 				"This looks like a DOS 1.x volume, but isn't a recognized floppy size (%llu sectors)",
 				(u64)bd_sects);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (!silent)
+	अगर (!silent)
 		fat_msg(sb, KERN_INFO,
 			"This looks like a DOS 1.x volume; assuming default BPB values");
 
-	memset(bpb, 0, sizeof(*bpb));
+	स_रखो(bpb, 0, माप(*bpb));
 	bpb->fat_sector_size = SECTOR_SIZE;
-	bpb->fat_sec_per_clus = fdefaults->sec_per_clus;
+	bpb->fat_sec_per_clus = fशेषs->sec_per_clus;
 	bpb->fat_reserved = 1;
 	bpb->fat_fats = 2;
-	bpb->fat_dir_entries = fdefaults->dir_entries;
-	bpb->fat_sectors = fdefaults->nr_sectors;
-	bpb->fat_fat_length = fdefaults->fat_length;
+	bpb->fat_dir_entries = fशेषs->dir_entries;
+	bpb->fat_sectors = fशेषs->nr_sectors;
+	bpb->fat_fat_length = fशेषs->fat_length;
 
 	error = 0;
 
 out:
-	return error;
-}
+	वापस error;
+पूर्ण
 
 /*
  * Read the super block of an MS-DOS FS.
  */
-int fat_fill_super(struct super_block *sb, void *data, int silent, int isvfat,
-		   void (*setup)(struct super_block *))
-{
-	struct inode *root_inode = NULL, *fat_inode = NULL;
-	struct inode *fsinfo_inode = NULL;
-	struct buffer_head *bh;
-	struct fat_bios_param_block bpb;
-	struct msdos_sb_info *sbi;
+पूर्णांक fat_fill_super(काष्ठा super_block *sb, व्योम *data, पूर्णांक silent, पूर्णांक isvfat,
+		   व्योम (*setup)(काष्ठा super_block *))
+अणु
+	काष्ठा inode *root_inode = शून्य, *fat_inode = शून्य;
+	काष्ठा inode *fsinfo_inode = शून्य;
+	काष्ठा buffer_head *bh;
+	काष्ठा fat_bios_param_block bpb;
+	काष्ठा msकरोs_sb_info *sbi;
 	u16 logical_sector_size;
 	u32 total_sectors, total_clusters, fat_clusters, rootdir_sectors;
-	int debug;
-	long error;
-	char buf[50];
-	struct timespec64 ts;
+	पूर्णांक debug;
+	दीर्घ error;
+	अक्षर buf[50];
+	काष्ठा बारpec64 ts;
 
 	/*
-	 * GFP_KERNEL is ok here, because while we do hold the
-	 * superblock lock, memory pressure can't call back into
-	 * the filesystem, since we're only just about to mount
+	 * GFP_KERNEL is ok here, because जबतक we करो hold the
+	 * superblock lock, memory pressure can't call back पूर्णांकo
+	 * the fileप्रणाली, since we're only just about to mount
 	 * it and have no inodes etc active!
 	 */
-	sbi = kzalloc(sizeof(struct msdos_sb_info), GFP_KERNEL);
-	if (!sbi)
-		return -ENOMEM;
+	sbi = kzalloc(माप(काष्ठा msकरोs_sb_info), GFP_KERNEL);
+	अगर (!sbi)
+		वापस -ENOMEM;
 	sb->s_fs_info = sbi;
 
-	sb->s_flags |= SB_NODIRATIME;
+	sb->s_flags |= SB_NOसूचीATIME;
 	sb->s_magic = MSDOS_SUPER_MAGIC;
 	sb->s_op = &fat_sops;
 	sb->s_export_op = &fat_export_ops;
 	/*
-	 * fat timestamps are complex and truncated by fat itself, so
+	 * fat बारtamps are complex and truncated by fat itself, so
 	 * we set 1 here to be fast
 	 */
-	sb->s_time_gran = 1;
+	sb->s_समय_gran = 1;
 	mutex_init(&sbi->nfs_build_inode_lock);
 	ratelimit_state_init(&sbi->ratelimit, DEFAULT_RATELIMIT_INTERVAL,
 			     DEFAULT_RATELIMIT_BURST);
 
 	error = parse_options(sb, data, isvfat, silent, &debug, &sbi->options);
-	if (error)
-		goto out_fail;
+	अगर (error)
+		जाओ out_fail;
 
-	setup(sb); /* flavour-specific stuff that needs options */
+	setup(sb); /* flavour-specअगरic stuff that needs options */
 
 	error = -EIO;
 	sb_min_blocksize(sb, 512);
-	bh = sb_bread(sb, 0);
-	if (bh == NULL) {
+	bh = sb_bपढ़ो(sb, 0);
+	अगर (bh == शून्य) अणु
 		fat_msg(sb, KERN_ERR, "unable to read boot sector");
-		goto out_fail;
-	}
+		जाओ out_fail;
+	पूर्ण
 
-	error = fat_read_bpb(sb, (struct fat_boot_sector *)bh->b_data, silent,
+	error = fat_पढ़ो_bpb(sb, (काष्ठा fat_boot_sector *)bh->b_data, silent,
 		&bpb);
-	if (error == -EINVAL && sbi->options.dos1xfloppy)
-		error = fat_read_static_bpb(sb,
-			(struct fat_boot_sector *)bh->b_data, silent, &bpb);
-	brelse(bh);
+	अगर (error == -EINVAL && sbi->options.करोs1xfloppy)
+		error = fat_पढ़ो_अटल_bpb(sb,
+			(काष्ठा fat_boot_sector *)bh->b_data, silent, &bpb);
+	brअन्यथा(bh);
 
-	if (error == -EINVAL)
-		goto out_invalid;
-	else if (error)
-		goto out_fail;
+	अगर (error == -EINVAL)
+		जाओ out_invalid;
+	अन्यथा अगर (error)
+		जाओ out_fail;
 
 	logical_sector_size = bpb.fat_sector_size;
 	sbi->sec_per_clus = bpb.fat_sec_per_clus;
 
 	error = -EIO;
-	if (logical_sector_size < sb->s_blocksize) {
+	अगर (logical_sector_size < sb->s_blocksize) अणु
 		fat_msg(sb, KERN_ERR, "logical sector size too small for device"
 		       " (logical sector size = %u)", logical_sector_size);
-		goto out_fail;
-	}
+		जाओ out_fail;
+	पूर्ण
 
-	if (logical_sector_size > sb->s_blocksize) {
-		struct buffer_head *bh_resize;
+	अगर (logical_sector_size > sb->s_blocksize) अणु
+		काष्ठा buffer_head *bh_resize;
 
-		if (!sb_set_blocksize(sb, logical_sector_size)) {
+		अगर (!sb_set_blocksize(sb, logical_sector_size)) अणु
 			fat_msg(sb, KERN_ERR, "unable to set blocksize %u",
 			       logical_sector_size);
-			goto out_fail;
-		}
+			जाओ out_fail;
+		पूर्ण
 
-		/* Verify that the larger boot sector is fully readable */
-		bh_resize = sb_bread(sb, 0);
-		if (bh_resize == NULL) {
+		/* Verअगरy that the larger boot sector is fully पढ़ोable */
+		bh_resize = sb_bपढ़ो(sb, 0);
+		अगर (bh_resize == शून्य) अणु
 			fat_msg(sb, KERN_ERR, "unable to read boot sector"
 			       " (logical sector size = %lu)",
 			       sb->s_blocksize);
-			goto out_fail;
-		}
-		brelse(bh_resize);
-	}
+			जाओ out_fail;
+		पूर्ण
+		brअन्यथा(bh_resize);
+	पूर्ण
 
 	mutex_init(&sbi->s_lock);
 	sbi->cluster_size = sb->s_blocksize * sbi->sec_per_clus;
@@ -1702,111 +1703,111 @@ int fat_fill_super(struct super_block *sb, void *data, int silent, int isvfat,
 	sbi->fat_start = bpb.fat_reserved;
 	sbi->fat_length = bpb.fat_fat_length;
 	sbi->root_cluster = 0;
-	sbi->free_clusters = -1;	/* Don't know yet */
-	sbi->free_clus_valid = 0;
-	sbi->prev_free = FAT_START_ENT;
+	sbi->मुक्त_clusters = -1;	/* Don't know yet */
+	sbi->मुक्त_clus_valid = 0;
+	sbi->prev_मुक्त = FAT_START_ENT;
 	sb->s_maxbytes = 0xffffffff;
-	fat_time_fat2unix(sbi, &ts, 0, cpu_to_le16(FAT_DATE_MIN), 0);
-	sb->s_time_min = ts.tv_sec;
+	fat_समय_fat2unix(sbi, &ts, 0, cpu_to_le16(FAT_DATE_MIN), 0);
+	sb->s_समय_min = ts.tv_sec;
 
-	fat_time_fat2unix(sbi, &ts, cpu_to_le16(FAT_TIME_MAX),
+	fat_समय_fat2unix(sbi, &ts, cpu_to_le16(FAT_TIME_MAX),
 			  cpu_to_le16(FAT_DATE_MAX), 0);
-	sb->s_time_max = ts.tv_sec;
+	sb->s_समय_max = ts.tv_sec;
 
-	if (!sbi->fat_length && bpb.fat32_length) {
-		struct fat_boot_fsinfo *fsinfo;
-		struct buffer_head *fsinfo_bh;
+	अगर (!sbi->fat_length && bpb.fat32_length) अणु
+		काष्ठा fat_boot_fsinfo *fsinfo;
+		काष्ठा buffer_head *fsinfo_bh;
 
 		/* Must be FAT32 */
 		sbi->fat_bits = 32;
 		sbi->fat_length = bpb.fat32_length;
 		sbi->root_cluster = bpb.fat32_root_cluster;
 
-		/* MC - if info_sector is 0, don't multiply by 0 */
+		/* MC - अगर info_sector is 0, करोn't multiply by 0 */
 		sbi->fsinfo_sector = bpb.fat32_info_sector;
-		if (sbi->fsinfo_sector == 0)
+		अगर (sbi->fsinfo_sector == 0)
 			sbi->fsinfo_sector = 1;
 
-		fsinfo_bh = sb_bread(sb, sbi->fsinfo_sector);
-		if (fsinfo_bh == NULL) {
+		fsinfo_bh = sb_bपढ़ो(sb, sbi->fsinfo_sector);
+		अगर (fsinfo_bh == शून्य) अणु
 			fat_msg(sb, KERN_ERR, "bread failed, FSINFO block"
 			       " (sector = %lu)", sbi->fsinfo_sector);
-			goto out_fail;
-		}
+			जाओ out_fail;
+		पूर्ण
 
-		fsinfo = (struct fat_boot_fsinfo *)fsinfo_bh->b_data;
-		if (!IS_FSINFO(fsinfo)) {
+		fsinfo = (काष्ठा fat_boot_fsinfo *)fsinfo_bh->b_data;
+		अगर (!IS_FSINFO(fsinfo)) अणु
 			fat_msg(sb, KERN_WARNING, "Invalid FSINFO signature: "
 			       "0x%08x, 0x%08x (sector = %lu)",
 			       le32_to_cpu(fsinfo->signature1),
 			       le32_to_cpu(fsinfo->signature2),
 			       sbi->fsinfo_sector);
-		} else {
-			if (sbi->options.usefree)
-				sbi->free_clus_valid = 1;
-			sbi->free_clusters = le32_to_cpu(fsinfo->free_clusters);
-			sbi->prev_free = le32_to_cpu(fsinfo->next_cluster);
-		}
+		पूर्ण अन्यथा अणु
+			अगर (sbi->options.useमुक्त)
+				sbi->मुक्त_clus_valid = 1;
+			sbi->मुक्त_clusters = le32_to_cpu(fsinfo->मुक्त_clusters);
+			sbi->prev_मुक्त = le32_to_cpu(fsinfo->next_cluster);
+		पूर्ण
 
-		brelse(fsinfo_bh);
-	}
+		brअन्यथा(fsinfo_bh);
+	पूर्ण
 
-	/* interpret volume ID as a little endian 32 bit integer */
-	if (is_fat32(sbi))
+	/* पूर्णांकerpret volume ID as a little endian 32 bit पूर्णांकeger */
+	अगर (is_fat32(sbi))
 		sbi->vol_id = bpb.fat32_vol_id;
-	else /* fat 16 or 12 */
+	अन्यथा /* fat 16 or 12 */
 		sbi->vol_id = bpb.fat16_vol_id;
 
-	sbi->dir_per_block = sb->s_blocksize / sizeof(struct msdos_dir_entry);
+	sbi->dir_per_block = sb->s_blocksize / माप(काष्ठा msकरोs_dir_entry);
 	sbi->dir_per_block_bits = ffs(sbi->dir_per_block) - 1;
 
 	sbi->dir_start = sbi->fat_start + sbi->fats * sbi->fat_length;
 	sbi->dir_entries = bpb.fat_dir_entries;
-	if (sbi->dir_entries & (sbi->dir_per_block - 1)) {
-		if (!silent)
+	अगर (sbi->dir_entries & (sbi->dir_per_block - 1)) अणु
+		अगर (!silent)
 			fat_msg(sb, KERN_ERR, "bogus number of directory entries"
 			       " (%u)", sbi->dir_entries);
-		goto out_invalid;
-	}
+		जाओ out_invalid;
+	पूर्ण
 
 	rootdir_sectors = sbi->dir_entries
-		* sizeof(struct msdos_dir_entry) / sb->s_blocksize;
+		* माप(काष्ठा msकरोs_dir_entry) / sb->s_blocksize;
 	sbi->data_start = sbi->dir_start + rootdir_sectors;
 	total_sectors = bpb.fat_sectors;
-	if (total_sectors == 0)
+	अगर (total_sectors == 0)
 		total_sectors = bpb.fat_total_sect;
 
 	total_clusters = (total_sectors - sbi->data_start) / sbi->sec_per_clus;
 
-	if (!is_fat32(sbi))
+	अगर (!is_fat32(sbi))
 		sbi->fat_bits = (total_clusters > MAX_FAT12) ? 16 : 12;
 
-	/* some OSes set FAT_STATE_DIRTY and clean it on unmount. */
-	if (is_fat32(sbi))
-		sbi->dirty = bpb.fat32_state & FAT_STATE_DIRTY;
-	else /* fat 16 or 12 */
-		sbi->dirty = bpb.fat16_state & FAT_STATE_DIRTY;
+	/* some OSes set FAT_STATE_सूचीTY and clean it on unmount. */
+	अगर (is_fat32(sbi))
+		sbi->dirty = bpb.fat32_state & FAT_STATE_सूचीTY;
+	अन्यथा /* fat 16 or 12 */
+		sbi->dirty = bpb.fat16_state & FAT_STATE_सूचीTY;
 
-	/* check that FAT table does not overflow */
+	/* check that FAT table करोes not overflow */
 	fat_clusters = calc_fat_clusters(sb);
 	total_clusters = min(total_clusters, fat_clusters - FAT_START_ENT);
-	if (total_clusters > max_fat(sb)) {
-		if (!silent)
+	अगर (total_clusters > max_fat(sb)) अणु
+		अगर (!silent)
 			fat_msg(sb, KERN_ERR, "count of clusters too big (%u)",
 			       total_clusters);
-		goto out_invalid;
-	}
+		जाओ out_invalid;
+	पूर्ण
 
 	sbi->max_cluster = total_clusters + FAT_START_ENT;
-	/* check the free_clusters, it's not necessarily correct */
-	if (sbi->free_clusters != -1 && sbi->free_clusters > total_clusters)
-		sbi->free_clusters = -1;
-	/* check the prev_free, it's not necessarily correct */
-	sbi->prev_free %= sbi->max_cluster;
-	if (sbi->prev_free < FAT_START_ENT)
-		sbi->prev_free = FAT_START_ENT;
+	/* check the मुक्त_clusters, it's not necessarily correct */
+	अगर (sbi->मुक्त_clusters != -1 && sbi->मुक्त_clusters > total_clusters)
+		sbi->मुक्त_clusters = -1;
+	/* check the prev_मुक्त, it's not necessarily correct */
+	sbi->prev_मुक्त %= sbi->max_cluster;
+	अगर (sbi->prev_मुक्त < FAT_START_ENT)
+		sbi->prev_मुक्त = FAT_START_ENT;
 
-	/* set up enough so that it can read an inode */
+	/* set up enough so that it can पढ़ो an inode */
 	fat_hash_init(sb);
 	dir_hash_init(sb);
 	fat_ent_access_init(sb);
@@ -1814,168 +1815,168 @@ int fat_fill_super(struct super_block *sb, void *data, int silent, int isvfat,
 	/*
 	 * The low byte of the first FAT entry must have the same value as
 	 * the media field of the boot sector. But in real world, too many
-	 * devices are writing wrong values. So, removed that validity check.
+	 * devices are writing wrong values. So, हटाओd that validity check.
 	 *
-	 * The removed check compared the first FAT entry to a value dependent
+	 * The हटाओd check compared the first FAT entry to a value dependent
 	 * on the media field like this:
-	 * == (0x0F00 | media), for FAT12
-	 * == (0XFF00 | media), for FAT16
-	 * == (0x0FFFFF | media), for FAT32
+	 * == (0x0F00 | media), क्रम FAT12
+	 * == (0XFF00 | media), क्रम FAT16
+	 * == (0x0FFFFF | media), क्रम FAT32
 	 */
 
 	error = -EINVAL;
-	sprintf(buf, "cp%d", sbi->options.codepage);
+	प्र_लिखो(buf, "cp%d", sbi->options.codepage);
 	sbi->nls_disk = load_nls(buf);
-	if (!sbi->nls_disk) {
+	अगर (!sbi->nls_disk) अणु
 		fat_msg(sb, KERN_ERR, "codepage %s not found", buf);
-		goto out_fail;
-	}
+		जाओ out_fail;
+	पूर्ण
 
-	/* FIXME: utf8 is using iocharset for upper/lower conversion */
-	if (sbi->options.isvfat) {
-		sbi->nls_io = load_nls(sbi->options.iocharset);
-		if (!sbi->nls_io) {
+	/* FIXME: utf8 is using ioअक्षरset क्रम upper/lower conversion */
+	अगर (sbi->options.isvfat) अणु
+		sbi->nls_io = load_nls(sbi->options.ioअक्षरset);
+		अगर (!sbi->nls_io) अणु
 			fat_msg(sb, KERN_ERR, "IO charset %s not found",
-			       sbi->options.iocharset);
-			goto out_fail;
-		}
-	}
+			       sbi->options.ioअक्षरset);
+			जाओ out_fail;
+		पूर्ण
+	पूर्ण
 
 	error = -ENOMEM;
 	fat_inode = new_inode(sb);
-	if (!fat_inode)
-		goto out_fail;
+	अगर (!fat_inode)
+		जाओ out_fail;
 	sbi->fat_inode = fat_inode;
 
 	fsinfo_inode = new_inode(sb);
-	if (!fsinfo_inode)
-		goto out_fail;
+	अगर (!fsinfo_inode)
+		जाओ out_fail;
 	fsinfo_inode->i_ino = MSDOS_FSINFO_INO;
 	sbi->fsinfo_inode = fsinfo_inode;
 	insert_inode_hash(fsinfo_inode);
 
 	root_inode = new_inode(sb);
-	if (!root_inode)
-		goto out_fail;
+	अगर (!root_inode)
+		जाओ out_fail;
 	root_inode->i_ino = MSDOS_ROOT_INO;
 	inode_set_iversion(root_inode, 1);
-	error = fat_read_root(root_inode);
-	if (error < 0) {
+	error = fat_पढ़ो_root(root_inode);
+	अगर (error < 0) अणु
 		iput(root_inode);
-		goto out_fail;
-	}
+		जाओ out_fail;
+	पूर्ण
 	error = -ENOMEM;
 	insert_inode_hash(root_inode);
 	fat_attach(root_inode, 0);
 	sb->s_root = d_make_root(root_inode);
-	if (!sb->s_root) {
+	अगर (!sb->s_root) अणु
 		fat_msg(sb, KERN_ERR, "get root inode failed");
-		goto out_fail;
-	}
+		जाओ out_fail;
+	पूर्ण
 
-	if (sbi->options.discard) {
-		struct request_queue *q = bdev_get_queue(sb->s_bdev);
-		if (!blk_queue_discard(q))
+	अगर (sbi->options.discard) अणु
+		काष्ठा request_queue *q = bdev_get_queue(sb->s_bdev);
+		अगर (!blk_queue_discard(q))
 			fat_msg(sb, KERN_WARNING,
 					"mounting with \"discard\" option, but "
 					"the device does not support discard");
-	}
+	पूर्ण
 
 	fat_set_state(sb, 1, 0);
-	return 0;
+	वापस 0;
 
 out_invalid:
 	error = -EINVAL;
-	if (!silent)
+	अगर (!silent)
 		fat_msg(sb, KERN_INFO, "Can't find a valid FAT filesystem");
 
 out_fail:
-	if (fsinfo_inode)
+	अगर (fsinfo_inode)
 		iput(fsinfo_inode);
-	if (fat_inode)
+	अगर (fat_inode)
 		iput(fat_inode);
 	unload_nls(sbi->nls_io);
 	unload_nls(sbi->nls_disk);
-	fat_reset_iocharset(&sbi->options);
-	sb->s_fs_info = NULL;
-	kfree(sbi);
-	return error;
-}
+	fat_reset_ioअक्षरset(&sbi->options);
+	sb->s_fs_info = शून्य;
+	kमुक्त(sbi);
+	वापस error;
+पूर्ण
 
 EXPORT_SYMBOL_GPL(fat_fill_super);
 
 /*
- * helper function for fat_flush_inodes.  This writes both the inode
- * and the file data blocks, waiting for in flight data blocks before
- * the start of the call.  It does not wait for any io started
+ * helper function क्रम fat_flush_inodes.  This ग_लिखोs both the inode
+ * and the file data blocks, रुकोing क्रम in flight data blocks beक्रमe
+ * the start of the call.  It करोes not रुको क्रम any io started
  * during the call
  */
-static int writeback_inode(struct inode *inode)
-{
+अटल पूर्णांक ग_लिखोback_inode(काष्ठा inode *inode)
+अणु
 
-	int ret;
+	पूर्णांक ret;
 
-	/* if we used wait=1, sync_inode_metadata waits for the io for the
-	* inode to finish.  So wait=0 is sent down to sync_inode_metadata
-	* and filemap_fdatawrite is used for the data blocks
+	/* अगर we used रुको=1, sync_inode_metadata रुकोs क्रम the io क्रम the
+	* inode to finish.  So रुको=0 is sent करोwn to sync_inode_metadata
+	* and filemap_fdataग_लिखो is used क्रम the data blocks
 	*/
 	ret = sync_inode_metadata(inode, 0);
-	if (!ret)
-		ret = filemap_fdatawrite(inode->i_mapping);
-	return ret;
-}
+	अगर (!ret)
+		ret = filemap_fdataग_लिखो(inode->i_mapping);
+	वापस ret;
+पूर्ण
 
 /*
- * write data and metadata corresponding to i1 and i2.  The io is
- * started but we do not wait for any of it to finish.
+ * ग_लिखो data and metadata corresponding to i1 and i2.  The io is
+ * started but we करो not रुको क्रम any of it to finish.
  *
- * filemap_flush is used for the block device, so if there is a dirty
- * page for a block already in flight, we will not wait and start the
+ * filemap_flush is used क्रम the block device, so अगर there is a dirty
+ * page क्रम a block alपढ़ोy in flight, we will not रुको and start the
  * io over again
  */
-int fat_flush_inodes(struct super_block *sb, struct inode *i1, struct inode *i2)
-{
-	int ret = 0;
-	if (!MSDOS_SB(sb)->options.flush)
-		return 0;
-	if (i1)
-		ret = writeback_inode(i1);
-	if (!ret && i2)
-		ret = writeback_inode(i2);
-	if (!ret) {
-		struct address_space *mapping = sb->s_bdev->bd_inode->i_mapping;
+पूर्णांक fat_flush_inodes(काष्ठा super_block *sb, काष्ठा inode *i1, काष्ठा inode *i2)
+अणु
+	पूर्णांक ret = 0;
+	अगर (!MSDOS_SB(sb)->options.flush)
+		वापस 0;
+	अगर (i1)
+		ret = ग_लिखोback_inode(i1);
+	अगर (!ret && i2)
+		ret = ग_लिखोback_inode(i2);
+	अगर (!ret) अणु
+		काष्ठा address_space *mapping = sb->s_bdev->bd_inode->i_mapping;
 		ret = filemap_flush(mapping);
-	}
-	return ret;
-}
+	पूर्ण
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(fat_flush_inodes);
 
-static int __init init_fat_fs(void)
-{
-	int err;
+अटल पूर्णांक __init init_fat_fs(व्योम)
+अणु
+	पूर्णांक err;
 
 	err = fat_cache_init();
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	err = fat_init_inodecache();
-	if (err)
-		goto failed;
+	अगर (err)
+		जाओ failed;
 
-	return 0;
+	वापस 0;
 
 failed:
 	fat_cache_destroy();
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void __exit exit_fat_fs(void)
-{
+अटल व्योम __निकास निकास_fat_fs(व्योम)
+अणु
 	fat_cache_destroy();
 	fat_destroy_inodecache();
-}
+पूर्ण
 
 module_init(init_fat_fs)
-module_exit(exit_fat_fs)
+module_निकास(निकास_fat_fs)
 
 MODULE_LICENSE("GPL");

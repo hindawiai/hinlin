@@ -1,378 +1,379 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
- * direct.c - NILFS direct block pointer.
+ * direct.c - NILFS direct block poपूर्णांकer.
  *
  * Copyright (C) 2006-2008 Nippon Telegraph and Telephone Corporation.
  *
  * Written by Koji Sato.
  */
 
-#include <linux/errno.h>
-#include "nilfs.h"
-#include "page.h"
-#include "direct.h"
-#include "alloc.h"
-#include "dat.h"
+#समावेश <linux/त्रुटिसं.स>
+#समावेश "nilfs.h"
+#समावेश "page.h"
+#समावेश "direct.h"
+#समावेश "alloc.h"
+#समावेश "dat.h"
 
-static inline __le64 *nilfs_direct_dptrs(const struct nilfs_bmap *direct)
-{
-	return (__le64 *)
-		((struct nilfs_direct_node *)direct->b_u.u_data + 1);
-}
+अटल अंतरभूत __le64 *nilfs_direct_dptrs(स्थिर काष्ठा nilfs_bmap *direct)
+अणु
+	वापस (__le64 *)
+		((काष्ठा nilfs_direct_node *)direct->b_u.u_data + 1);
+पूर्ण
 
-static inline __u64
-nilfs_direct_get_ptr(const struct nilfs_bmap *direct, __u64 key)
-{
-	return le64_to_cpu(*(nilfs_direct_dptrs(direct) + key));
-}
+अटल अंतरभूत __u64
+nilfs_direct_get_ptr(स्थिर काष्ठा nilfs_bmap *direct, __u64 key)
+अणु
+	वापस le64_to_cpu(*(nilfs_direct_dptrs(direct) + key));
+पूर्ण
 
-static inline void nilfs_direct_set_ptr(struct nilfs_bmap *direct,
+अटल अंतरभूत व्योम nilfs_direct_set_ptr(काष्ठा nilfs_bmap *direct,
 					__u64 key, __u64 ptr)
-{
+अणु
 	*(nilfs_direct_dptrs(direct) + key) = cpu_to_le64(ptr);
-}
+पूर्ण
 
-static int nilfs_direct_lookup(const struct nilfs_bmap *direct,
-			       __u64 key, int level, __u64 *ptrp)
-{
+अटल पूर्णांक nilfs_direct_lookup(स्थिर काष्ठा nilfs_bmap *direct,
+			       __u64 key, पूर्णांक level, __u64 *ptrp)
+अणु
 	__u64 ptr;
 
-	if (key > NILFS_DIRECT_KEY_MAX || level != 1)
-		return -ENOENT;
+	अगर (key > NILFS_सूचीECT_KEY_MAX || level != 1)
+		वापस -ENOENT;
 	ptr = nilfs_direct_get_ptr(direct, key);
-	if (ptr == NILFS_BMAP_INVALID_PTR)
-		return -ENOENT;
+	अगर (ptr == NILFS_BMAP_INVALID_PTR)
+		वापस -ENOENT;
 
 	*ptrp = ptr;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int nilfs_direct_lookup_contig(const struct nilfs_bmap *direct,
+अटल पूर्णांक nilfs_direct_lookup_contig(स्थिर काष्ठा nilfs_bmap *direct,
 				      __u64 key, __u64 *ptrp,
-				      unsigned int maxblocks)
-{
-	struct inode *dat = NULL;
+				      अचिन्हित पूर्णांक maxblocks)
+अणु
+	काष्ठा inode *dat = शून्य;
 	__u64 ptr, ptr2;
 	sector_t blocknr;
-	int ret, cnt;
+	पूर्णांक ret, cnt;
 
-	if (key > NILFS_DIRECT_KEY_MAX)
-		return -ENOENT;
+	अगर (key > NILFS_सूचीECT_KEY_MAX)
+		वापस -ENOENT;
 	ptr = nilfs_direct_get_ptr(direct, key);
-	if (ptr == NILFS_BMAP_INVALID_PTR)
-		return -ENOENT;
+	अगर (ptr == NILFS_BMAP_INVALID_PTR)
+		वापस -ENOENT;
 
-	if (NILFS_BMAP_USE_VBN(direct)) {
+	अगर (NILFS_BMAP_USE_VBN(direct)) अणु
 		dat = nilfs_bmap_get_dat(direct);
 		ret = nilfs_dat_translate(dat, ptr, &blocknr);
-		if (ret < 0)
-			return ret;
+		अगर (ret < 0)
+			वापस ret;
 		ptr = blocknr;
-	}
+	पूर्ण
 
-	maxblocks = min_t(unsigned int, maxblocks,
-			  NILFS_DIRECT_KEY_MAX - key + 1);
-	for (cnt = 1; cnt < maxblocks &&
+	maxblocks = min_t(अचिन्हित पूर्णांक, maxblocks,
+			  NILFS_सूचीECT_KEY_MAX - key + 1);
+	क्रम (cnt = 1; cnt < maxblocks &&
 		     (ptr2 = nilfs_direct_get_ptr(direct, key + cnt)) !=
 		     NILFS_BMAP_INVALID_PTR;
-	     cnt++) {
-		if (dat) {
+	     cnt++) अणु
+		अगर (dat) अणु
 			ret = nilfs_dat_translate(dat, ptr2, &blocknr);
-			if (ret < 0)
-				return ret;
+			अगर (ret < 0)
+				वापस ret;
 			ptr2 = blocknr;
-		}
-		if (ptr2 != ptr + cnt)
-			break;
-	}
+		पूर्ण
+		अगर (ptr2 != ptr + cnt)
+			अवरोध;
+	पूर्ण
 	*ptrp = ptr;
-	return cnt;
-}
+	वापस cnt;
+पूर्ण
 
-static __u64
-nilfs_direct_find_target_v(const struct nilfs_bmap *direct, __u64 key)
-{
+अटल __u64
+nilfs_direct_find_target_v(स्थिर काष्ठा nilfs_bmap *direct, __u64 key)
+अणु
 	__u64 ptr;
 
 	ptr = nilfs_bmap_find_target_seq(direct, key);
-	if (ptr != NILFS_BMAP_INVALID_PTR)
+	अगर (ptr != NILFS_BMAP_INVALID_PTR)
 		/* sequential access */
-		return ptr;
+		वापस ptr;
 
 	/* block group */
-	return nilfs_bmap_find_target_in_group(direct);
-}
+	वापस nilfs_bmap_find_target_in_group(direct);
+पूर्ण
 
-static int nilfs_direct_insert(struct nilfs_bmap *bmap, __u64 key, __u64 ptr)
-{
-	union nilfs_bmap_ptr_req req;
-	struct inode *dat = NULL;
-	struct buffer_head *bh;
-	int ret;
+अटल पूर्णांक nilfs_direct_insert(काष्ठा nilfs_bmap *bmap, __u64 key, __u64 ptr)
+अणु
+	जोड़ nilfs_bmap_ptr_req req;
+	काष्ठा inode *dat = शून्य;
+	काष्ठा buffer_head *bh;
+	पूर्णांक ret;
 
-	if (key > NILFS_DIRECT_KEY_MAX)
-		return -ENOENT;
-	if (nilfs_direct_get_ptr(bmap, key) != NILFS_BMAP_INVALID_PTR)
-		return -EEXIST;
+	अगर (key > NILFS_सूचीECT_KEY_MAX)
+		वापस -ENOENT;
+	अगर (nilfs_direct_get_ptr(bmap, key) != NILFS_BMAP_INVALID_PTR)
+		वापस -EEXIST;
 
-	if (NILFS_BMAP_USE_VBN(bmap)) {
+	अगर (NILFS_BMAP_USE_VBN(bmap)) अणु
 		req.bpr_ptr = nilfs_direct_find_target_v(bmap, key);
 		dat = nilfs_bmap_get_dat(bmap);
-	}
+	पूर्ण
 	ret = nilfs_bmap_prepare_alloc_ptr(bmap, &req, dat);
-	if (!ret) {
-		/* ptr must be a pointer to a buffer head. */
-		bh = (struct buffer_head *)((unsigned long)ptr);
-		set_buffer_nilfs_volatile(bh);
+	अगर (!ret) अणु
+		/* ptr must be a poपूर्णांकer to a buffer head. */
+		bh = (काष्ठा buffer_head *)((अचिन्हित दीर्घ)ptr);
+		set_buffer_nilfs_अस्थिर(bh);
 
 		nilfs_bmap_commit_alloc_ptr(bmap, &req, dat);
 		nilfs_direct_set_ptr(bmap, key, req.bpr_ptr);
 
-		if (!nilfs_bmap_dirty(bmap))
+		अगर (!nilfs_bmap_dirty(bmap))
 			nilfs_bmap_set_dirty(bmap);
 
-		if (NILFS_BMAP_USE_VBN(bmap))
+		अगर (NILFS_BMAP_USE_VBN(bmap))
 			nilfs_bmap_set_target_v(bmap, key, req.bpr_ptr);
 
 		nilfs_inode_add_blocks(bmap->b_inode, 1);
-	}
-	return ret;
-}
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static int nilfs_direct_delete(struct nilfs_bmap *bmap, __u64 key)
-{
-	union nilfs_bmap_ptr_req req;
-	struct inode *dat;
-	int ret;
+अटल पूर्णांक nilfs_direct_delete(काष्ठा nilfs_bmap *bmap, __u64 key)
+अणु
+	जोड़ nilfs_bmap_ptr_req req;
+	काष्ठा inode *dat;
+	पूर्णांक ret;
 
-	if (key > NILFS_DIRECT_KEY_MAX ||
+	अगर (key > NILFS_सूचीECT_KEY_MAX ||
 	    nilfs_direct_get_ptr(bmap, key) == NILFS_BMAP_INVALID_PTR)
-		return -ENOENT;
+		वापस -ENOENT;
 
-	dat = NILFS_BMAP_USE_VBN(bmap) ? nilfs_bmap_get_dat(bmap) : NULL;
+	dat = NILFS_BMAP_USE_VBN(bmap) ? nilfs_bmap_get_dat(bmap) : शून्य;
 	req.bpr_ptr = nilfs_direct_get_ptr(bmap, key);
 
 	ret = nilfs_bmap_prepare_end_ptr(bmap, &req, dat);
-	if (!ret) {
+	अगर (!ret) अणु
 		nilfs_bmap_commit_end_ptr(bmap, &req, dat);
 		nilfs_direct_set_ptr(bmap, key, NILFS_BMAP_INVALID_PTR);
 		nilfs_inode_sub_blocks(bmap->b_inode, 1);
-	}
-	return ret;
-}
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static int nilfs_direct_seek_key(const struct nilfs_bmap *direct, __u64 start,
+अटल पूर्णांक nilfs_direct_seek_key(स्थिर काष्ठा nilfs_bmap *direct, __u64 start,
 				 __u64 *keyp)
-{
+अणु
 	__u64 key;
 
-	for (key = start; key <= NILFS_DIRECT_KEY_MAX; key++) {
-		if (nilfs_direct_get_ptr(direct, key) !=
-		    NILFS_BMAP_INVALID_PTR) {
+	क्रम (key = start; key <= NILFS_सूचीECT_KEY_MAX; key++) अणु
+		अगर (nilfs_direct_get_ptr(direct, key) !=
+		    NILFS_BMAP_INVALID_PTR) अणु
 			*keyp = key;
-			return 0;
-		}
-	}
-	return -ENOENT;
-}
+			वापस 0;
+		पूर्ण
+	पूर्ण
+	वापस -ENOENT;
+पूर्ण
 
-static int nilfs_direct_last_key(const struct nilfs_bmap *direct, __u64 *keyp)
-{
+अटल पूर्णांक nilfs_direct_last_key(स्थिर काष्ठा nilfs_bmap *direct, __u64 *keyp)
+अणु
 	__u64 key, lastkey;
 
-	lastkey = NILFS_DIRECT_KEY_MAX + 1;
-	for (key = NILFS_DIRECT_KEY_MIN; key <= NILFS_DIRECT_KEY_MAX; key++)
-		if (nilfs_direct_get_ptr(direct, key) !=
+	lastkey = NILFS_सूचीECT_KEY_MAX + 1;
+	क्रम (key = NILFS_सूचीECT_KEY_MIN; key <= NILFS_सूचीECT_KEY_MAX; key++)
+		अगर (nilfs_direct_get_ptr(direct, key) !=
 		    NILFS_BMAP_INVALID_PTR)
 			lastkey = key;
 
-	if (lastkey == NILFS_DIRECT_KEY_MAX + 1)
-		return -ENOENT;
+	अगर (lastkey == NILFS_सूचीECT_KEY_MAX + 1)
+		वापस -ENOENT;
 
 	*keyp = lastkey;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int nilfs_direct_check_insert(const struct nilfs_bmap *bmap, __u64 key)
-{
-	return key > NILFS_DIRECT_KEY_MAX;
-}
+अटल पूर्णांक nilfs_direct_check_insert(स्थिर काष्ठा nilfs_bmap *bmap, __u64 key)
+अणु
+	वापस key > NILFS_सूचीECT_KEY_MAX;
+पूर्ण
 
-static int nilfs_direct_gather_data(struct nilfs_bmap *direct,
-				    __u64 *keys, __u64 *ptrs, int nitems)
-{
+अटल पूर्णांक nilfs_direct_gather_data(काष्ठा nilfs_bmap *direct,
+				    __u64 *keys, __u64 *ptrs, पूर्णांक nitems)
+अणु
 	__u64 key;
 	__u64 ptr;
-	int n;
+	पूर्णांक n;
 
-	if (nitems > NILFS_DIRECT_NBLOCKS)
-		nitems = NILFS_DIRECT_NBLOCKS;
+	अगर (nitems > NILFS_सूचीECT_NBLOCKS)
+		nitems = NILFS_सूचीECT_NBLOCKS;
 	n = 0;
-	for (key = 0; key < nitems; key++) {
+	क्रम (key = 0; key < nitems; key++) अणु
 		ptr = nilfs_direct_get_ptr(direct, key);
-		if (ptr != NILFS_BMAP_INVALID_PTR) {
+		अगर (ptr != NILFS_BMAP_INVALID_PTR) अणु
 			keys[n] = key;
 			ptrs[n] = ptr;
 			n++;
-		}
-	}
-	return n;
-}
+		पूर्ण
+	पूर्ण
+	वापस n;
+पूर्ण
 
-int nilfs_direct_delete_and_convert(struct nilfs_bmap *bmap,
-				    __u64 key, __u64 *keys, __u64 *ptrs, int n)
-{
+पूर्णांक nilfs_direct_delete_and_convert(काष्ठा nilfs_bmap *bmap,
+				    __u64 key, __u64 *keys, __u64 *ptrs, पूर्णांक n)
+अणु
 	__le64 *dptrs;
-	int ret, i, j;
+	पूर्णांक ret, i, j;
 
-	/* no need to allocate any resource for conversion */
+	/* no need to allocate any resource क्रम conversion */
 
 	/* delete */
 	ret = bmap->b_ops->bop_delete(bmap, key);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	/* free resources */
-	if (bmap->b_ops->bop_clear != NULL)
+	/* मुक्त resources */
+	अगर (bmap->b_ops->bop_clear != शून्य)
 		bmap->b_ops->bop_clear(bmap);
 
 	/* convert */
 	dptrs = nilfs_direct_dptrs(bmap);
-	for (i = 0, j = 0; i < NILFS_DIRECT_NBLOCKS; i++) {
-		if ((j < n) && (i == keys[j])) {
+	क्रम (i = 0, j = 0; i < NILFS_सूचीECT_NBLOCKS; i++) अणु
+		अगर ((j < n) && (i == keys[j])) अणु
 			dptrs[i] = (i != key) ?
 				cpu_to_le64(ptrs[j]) :
 				NILFS_BMAP_INVALID_PTR;
 			j++;
-		} else
+		पूर्ण अन्यथा
 			dptrs[i] = NILFS_BMAP_INVALID_PTR;
-	}
+	पूर्ण
 
 	nilfs_direct_init(bmap);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int nilfs_direct_propagate(struct nilfs_bmap *bmap,
-				  struct buffer_head *bh)
-{
-	struct nilfs_palloc_req oldreq, newreq;
-	struct inode *dat;
+अटल पूर्णांक nilfs_direct_propagate(काष्ठा nilfs_bmap *bmap,
+				  काष्ठा buffer_head *bh)
+अणु
+	काष्ठा nilfs_palloc_req oldreq, newreq;
+	काष्ठा inode *dat;
 	__u64 key;
 	__u64 ptr;
-	int ret;
+	पूर्णांक ret;
 
-	if (!NILFS_BMAP_USE_VBN(bmap))
-		return 0;
+	अगर (!NILFS_BMAP_USE_VBN(bmap))
+		वापस 0;
 
 	dat = nilfs_bmap_get_dat(bmap);
 	key = nilfs_bmap_data_get_key(bmap, bh);
 	ptr = nilfs_direct_get_ptr(bmap, key);
-	if (!buffer_nilfs_volatile(bh)) {
+	अगर (!buffer_nilfs_अस्थिर(bh)) अणु
 		oldreq.pr_entry_nr = ptr;
 		newreq.pr_entry_nr = ptr;
 		ret = nilfs_dat_prepare_update(dat, &oldreq, &newreq);
-		if (ret < 0)
-			return ret;
+		अगर (ret < 0)
+			वापस ret;
 		nilfs_dat_commit_update(dat, &oldreq, &newreq,
 					bmap->b_ptr_type == NILFS_BMAP_PTR_VS);
-		set_buffer_nilfs_volatile(bh);
+		set_buffer_nilfs_अस्थिर(bh);
 		nilfs_direct_set_ptr(bmap, key, newreq.pr_entry_nr);
-	} else
+	पूर्ण अन्यथा
 		ret = nilfs_dat_mark_dirty(dat, ptr);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int nilfs_direct_assign_v(struct nilfs_bmap *direct,
+अटल पूर्णांक nilfs_direct_assign_v(काष्ठा nilfs_bmap *direct,
 				 __u64 key, __u64 ptr,
-				 struct buffer_head **bh,
+				 काष्ठा buffer_head **bh,
 				 sector_t blocknr,
-				 union nilfs_binfo *binfo)
-{
-	struct inode *dat = nilfs_bmap_get_dat(direct);
-	union nilfs_bmap_ptr_req req;
-	int ret;
+				 जोड़ nilfs_binfo *binfo)
+अणु
+	काष्ठा inode *dat = nilfs_bmap_get_dat(direct);
+	जोड़ nilfs_bmap_ptr_req req;
+	पूर्णांक ret;
 
 	req.bpr_ptr = ptr;
 	ret = nilfs_dat_prepare_start(dat, &req.bpr_req);
-	if (!ret) {
+	अगर (!ret) अणु
 		nilfs_dat_commit_start(dat, &req.bpr_req, blocknr);
 		binfo->bi_v.bi_vblocknr = cpu_to_le64(ptr);
 		binfo->bi_v.bi_blkoff = cpu_to_le64(key);
-	}
-	return ret;
-}
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static int nilfs_direct_assign_p(struct nilfs_bmap *direct,
+अटल पूर्णांक nilfs_direct_assign_p(काष्ठा nilfs_bmap *direct,
 				 __u64 key, __u64 ptr,
-				 struct buffer_head **bh,
+				 काष्ठा buffer_head **bh,
 				 sector_t blocknr,
-				 union nilfs_binfo *binfo)
-{
+				 जोड़ nilfs_binfo *binfo)
+अणु
 	nilfs_direct_set_ptr(direct, key, blocknr);
 
 	binfo->bi_dat.bi_blkoff = cpu_to_le64(key);
 	binfo->bi_dat.bi_level = 0;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int nilfs_direct_assign(struct nilfs_bmap *bmap,
-			       struct buffer_head **bh,
+अटल पूर्णांक nilfs_direct_assign(काष्ठा nilfs_bmap *bmap,
+			       काष्ठा buffer_head **bh,
 			       sector_t blocknr,
-			       union nilfs_binfo *binfo)
-{
+			       जोड़ nilfs_binfo *binfo)
+अणु
 	__u64 key;
 	__u64 ptr;
 
 	key = nilfs_bmap_data_get_key(bmap, *bh);
-	if (unlikely(key > NILFS_DIRECT_KEY_MAX)) {
+	अगर (unlikely(key > NILFS_सूचीECT_KEY_MAX)) अणु
 		nilfs_crit(bmap->b_inode->i_sb,
 			   "%s (ino=%lu): invalid key: %llu",
 			   __func__,
-			   bmap->b_inode->i_ino, (unsigned long long)key);
-		return -EINVAL;
-	}
+			   bmap->b_inode->i_ino, (अचिन्हित दीर्घ दीर्घ)key);
+		वापस -EINVAL;
+	पूर्ण
 	ptr = nilfs_direct_get_ptr(bmap, key);
-	if (unlikely(ptr == NILFS_BMAP_INVALID_PTR)) {
+	अगर (unlikely(ptr == NILFS_BMAP_INVALID_PTR)) अणु
 		nilfs_crit(bmap->b_inode->i_sb,
 			   "%s (ino=%lu): invalid pointer: %llu",
 			   __func__,
-			   bmap->b_inode->i_ino, (unsigned long long)ptr);
-		return -EINVAL;
-	}
+			   bmap->b_inode->i_ino, (अचिन्हित दीर्घ दीर्घ)ptr);
+		वापस -EINVAL;
+	पूर्ण
 
-	return NILFS_BMAP_USE_VBN(bmap) ?
+	वापस NILFS_BMAP_USE_VBN(bmap) ?
 		nilfs_direct_assign_v(bmap, key, ptr, bh, blocknr, binfo) :
 		nilfs_direct_assign_p(bmap, key, ptr, bh, blocknr, binfo);
-}
+पूर्ण
 
-static const struct nilfs_bmap_operations nilfs_direct_ops = {
+अटल स्थिर काष्ठा nilfs_bmap_operations nilfs_direct_ops = अणु
 	.bop_lookup		=	nilfs_direct_lookup,
 	.bop_lookup_contig	=	nilfs_direct_lookup_contig,
 	.bop_insert		=	nilfs_direct_insert,
 	.bop_delete		=	nilfs_direct_delete,
-	.bop_clear		=	NULL,
+	.bop_clear		=	शून्य,
 
 	.bop_propagate		=	nilfs_direct_propagate,
 
-	.bop_lookup_dirty_buffers	=	NULL,
+	.bop_lookup_dirty_buffers	=	शून्य,
 
 	.bop_assign		=	nilfs_direct_assign,
-	.bop_mark		=	NULL,
+	.bop_mark		=	शून्य,
 
 	.bop_seek_key		=	nilfs_direct_seek_key,
 	.bop_last_key		=	nilfs_direct_last_key,
 
 	.bop_check_insert	=	nilfs_direct_check_insert,
-	.bop_check_delete	=	NULL,
+	.bop_check_delete	=	शून्य,
 	.bop_gather_data	=	nilfs_direct_gather_data,
-};
+पूर्ण;
 
 
-int nilfs_direct_init(struct nilfs_bmap *bmap)
-{
+पूर्णांक nilfs_direct_init(काष्ठा nilfs_bmap *bmap)
+अणु
 	bmap->b_ops = &nilfs_direct_ops;
-	return 0;
-}
+	वापस 0;
+पूर्ण

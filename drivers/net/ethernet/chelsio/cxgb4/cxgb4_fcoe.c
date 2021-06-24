@@ -1,25 +1,26 @@
+<शैली गुरु>
 /*
- * This file is part of the Chelsio T4 Ethernet driver for Linux.
+ * This file is part of the Chelsio T4 Ethernet driver क्रम Linux.
  *
  * Copyright (c) 2015 Chelsio Communications, Inc. All rights reserved.
  *
  * This software is available to you under a choice of one of two
  * licenses.  You may choose to be licensed under the terms of the GNU
  * General Public License (GPL) Version 2, available from the file
- * COPYING in the main directory of this source tree, or the
+ * COPYING in the मुख्य directory of this source tree, or the
  * OpenIB.org BSD license below:
  *
- *     Redistribution and use in source and binary forms, with or
- *     without modification, are permitted provided that the following
+ *     Redistribution and use in source and binary क्रमms, with or
+ *     without modअगरication, are permitted provided that the following
  *     conditions are met:
  *
  *      - Redistributions of source code must retain the above
  *        copyright notice, this list of conditions and the following
  *        disclaimer.
  *
- *      - Redistributions in binary form must reproduce the above
+ *      - Redistributions in binary क्रमm must reproduce the above
  *        copyright notice, this list of conditions and the following
- *        disclaimer in the documentation and/or other materials
+ *        disclaimer in the करोcumentation and/or other materials
  *        provided with the distribution.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
@@ -32,32 +33,32 @@
  * SOFTWARE.
  */
 
-#ifdef CONFIG_CHELSIO_T4_FCOE
+#अगर_घोषित CONFIG_CHELSIO_T4_FCOE
 
-#include <scsi/fc/fc_fs.h>
-#include <scsi/libfcoe.h>
-#include "cxgb4.h"
+#समावेश <scsi/fc/fc_fs.h>
+#समावेश <scsi/libfcoe.h>
+#समावेश "cxgb4.h"
 
-bool cxgb_fcoe_sof_eof_supported(struct adapter *adap, struct sk_buff *skb)
-{
-	struct fcoe_hdr *fcoeh = (struct fcoe_hdr *)skb_network_header(skb);
+bool cxgb_fcoe_sof_eof_supported(काष्ठा adapter *adap, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा fcoe_hdr *fcoeh = (काष्ठा fcoe_hdr *)skb_network_header(skb);
 	u8 sof = fcoeh->fcoe_sof;
 	u8 eof = 0;
 
-	if ((sof != FC_SOF_I3) && (sof != FC_SOF_N3)) {
+	अगर ((sof != FC_SOF_I3) && (sof != FC_SOF_N3)) अणु
 		dev_err(adap->pdev_dev, "Unsupported SOF 0x%x\n", sof);
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
 	skb_copy_bits(skb, skb->len - 4, &eof, 1);
 
-	if ((eof != FC_EOF_N) && (eof != FC_EOF_T)) {
+	अगर ((eof != FC_खातापूर्ण_N) && (eof != FC_खातापूर्ण_T)) अणु
 		dev_err(adap->pdev_dev, "Unsupported EOF 0x%x\n", eof);
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
 /**
  * cxgb_fcoe_enable - enable FCoE offload features
@@ -65,17 +66,17 @@ bool cxgb_fcoe_sof_eof_supported(struct adapter *adap, struct sk_buff *skb)
  *
  * Returns 0 on success or -EINVAL on failure.
  */
-int cxgb_fcoe_enable(struct net_device *netdev)
-{
-	struct port_info *pi = netdev_priv(netdev);
-	struct adapter *adap = pi->adapter;
-	struct cxgb_fcoe *fcoe = &pi->fcoe;
+पूर्णांक cxgb_fcoe_enable(काष्ठा net_device *netdev)
+अणु
+	काष्ठा port_info *pi = netdev_priv(netdev);
+	काष्ठा adapter *adap = pi->adapter;
+	काष्ठा cxgb_fcoe *fcoe = &pi->fcoe;
 
-	if (is_t4(adap->params.chip))
-		return -EINVAL;
+	अगर (is_t4(adap->params.chip))
+		वापस -EINVAL;
 
-	if (!(adap->flags & CXGB4_FULL_INIT_DONE))
-		return -EINVAL;
+	अगर (!(adap->flags & CXGB4_FULL_INIT_DONE))
+		वापस -EINVAL;
 
 	dev_info(adap->pdev_dev, "Enabling FCoE offload features\n");
 
@@ -88,8 +89,8 @@ int cxgb_fcoe_enable(struct net_device *netdev)
 
 	fcoe->flags |= CXGB_FCOE_ENABLED;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * cxgb_fcoe_disable - disable FCoE offload
@@ -97,14 +98,14 @@ int cxgb_fcoe_enable(struct net_device *netdev)
  *
  * Returns 0 on success or -EINVAL on failure.
  */
-int cxgb_fcoe_disable(struct net_device *netdev)
-{
-	struct port_info *pi = netdev_priv(netdev);
-	struct adapter *adap = pi->adapter;
-	struct cxgb_fcoe *fcoe = &pi->fcoe;
+पूर्णांक cxgb_fcoe_disable(काष्ठा net_device *netdev)
+अणु
+	काष्ठा port_info *pi = netdev_priv(netdev);
+	काष्ठा adapter *adap = pi->adapter;
+	काष्ठा cxgb_fcoe *fcoe = &pi->fcoe;
 
-	if (!(fcoe->flags & CXGB_FCOE_ENABLED))
-		return -EINVAL;
+	अगर (!(fcoe->flags & CXGB_FCOE_ENABLED))
+		वापस -EINVAL;
 
 	dev_info(adap->pdev_dev, "Disabling FCoE offload features\n");
 
@@ -117,6 +118,6 @@ int cxgb_fcoe_disable(struct net_device *netdev)
 
 	netdev_features_change(netdev);
 
-	return 0;
-}
-#endif /* CONFIG_CHELSIO_T4_FCOE */
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर /* CONFIG_CHELSIO_T4_FCOE */

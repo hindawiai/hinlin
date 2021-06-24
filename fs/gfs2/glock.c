@@ -1,176 +1,177 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (C) Sistina Software, Inc.  1997-2003 All rights reserved.
  * Copyright (C) 2004-2008 Red Hat, Inc.  All rights reserved.
  */
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include <linux/sched.h>
-#include <linux/slab.h>
-#include <linux/spinlock.h>
-#include <linux/buffer_head.h>
-#include <linux/delay.h>
-#include <linux/sort.h>
-#include <linux/hash.h>
-#include <linux/jhash.h>
-#include <linux/kallsyms.h>
-#include <linux/gfs2_ondisk.h>
-#include <linux/list.h>
-#include <linux/wait.h>
-#include <linux/module.h>
-#include <linux/uaccess.h>
-#include <linux/seq_file.h>
-#include <linux/debugfs.h>
-#include <linux/kthread.h>
-#include <linux/freezer.h>
-#include <linux/workqueue.h>
-#include <linux/jiffies.h>
-#include <linux/rcupdate.h>
-#include <linux/rculist_bl.h>
-#include <linux/bit_spinlock.h>
-#include <linux/percpu.h>
-#include <linux/list_sort.h>
-#include <linux/lockref.h>
-#include <linux/rhashtable.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/buffer_head.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/sort.h>
+#समावेश <linux/hash.h>
+#समावेश <linux/jhash.h>
+#समावेश <linux/kallsyms.h>
+#समावेश <linux/gfs2_ondisk.h>
+#समावेश <linux/list.h>
+#समावेश <linux/रुको.h>
+#समावेश <linux/module.h>
+#समावेश <linux/uaccess.h>
+#समावेश <linux/seq_file.h>
+#समावेश <linux/debugfs.h>
+#समावेश <linux/kthपढ़ो.h>
+#समावेश <linux/मुक्तzer.h>
+#समावेश <linux/workqueue.h>
+#समावेश <linux/jअगरfies.h>
+#समावेश <linux/rcupdate.h>
+#समावेश <linux/rculist_bl.h>
+#समावेश <linux/bit_spinlock.h>
+#समावेश <linux/percpu.h>
+#समावेश <linux/list_sort.h>
+#समावेश <linux/lockref.h>
+#समावेश <linux/rhashtable.h>
 
-#include "gfs2.h"
-#include "incore.h"
-#include "glock.h"
-#include "glops.h"
-#include "inode.h"
-#include "lops.h"
-#include "meta_io.h"
-#include "quota.h"
-#include "super.h"
-#include "util.h"
-#include "bmap.h"
-#define CREATE_TRACE_POINTS
-#include "trace_gfs2.h"
+#समावेश "gfs2.h"
+#समावेश "incore.h"
+#समावेश "glock.h"
+#समावेश "glops.h"
+#समावेश "inode.h"
+#समावेश "lops.h"
+#समावेश "meta_io.h"
+#समावेश "quota.h"
+#समावेश "super.h"
+#समावेश "util.h"
+#समावेश "bmap.h"
+#घोषणा CREATE_TRACE_POINTS
+#समावेश "trace_gfs2.h"
 
-struct gfs2_glock_iter {
-	struct gfs2_sbd *sdp;		/* incore superblock           */
-	struct rhashtable_iter hti;	/* rhashtable iterator         */
-	struct gfs2_glock *gl;		/* current glock struct        */
+काष्ठा gfs2_glock_iter अणु
+	काष्ठा gfs2_sbd *sdp;		/* incore superblock           */
+	काष्ठा rhashtable_iter hti;	/* rhashtable iterator         */
+	काष्ठा gfs2_glock *gl;		/* current glock काष्ठा        */
 	loff_t last_pos;		/* last position               */
-};
+पूर्ण;
 
-typedef void (*glock_examiner) (struct gfs2_glock * gl);
+प्रकार व्योम (*glock_examiner) (काष्ठा gfs2_glock * gl);
 
-static void do_xmote(struct gfs2_glock *gl, struct gfs2_holder *gh, unsigned int target);
+अटल व्योम करो_xmote(काष्ठा gfs2_glock *gl, काष्ठा gfs2_holder *gh, अचिन्हित पूर्णांक target);
 
-static struct dentry *gfs2_root;
-static struct workqueue_struct *glock_workqueue;
-struct workqueue_struct *gfs2_delete_workqueue;
-static LIST_HEAD(lru_list);
-static atomic_t lru_count = ATOMIC_INIT(0);
-static DEFINE_SPINLOCK(lru_lock);
+अटल काष्ठा dentry *gfs2_root;
+अटल काष्ठा workqueue_काष्ठा *glock_workqueue;
+काष्ठा workqueue_काष्ठा *gfs2_delete_workqueue;
+अटल LIST_HEAD(lru_list);
+अटल atomic_t lru_count = ATOMIC_INIT(0);
+अटल DEFINE_SPINLOCK(lru_lock);
 
-#define GFS2_GL_HASH_SHIFT      15
-#define GFS2_GL_HASH_SIZE       BIT(GFS2_GL_HASH_SHIFT)
+#घोषणा GFS2_GL_HASH_SHIFT      15
+#घोषणा GFS2_GL_HASH_SIZE       BIT(GFS2_GL_HASH_SHIFT)
 
-static const struct rhashtable_params ht_parms = {
-	.nelem_hint = GFS2_GL_HASH_SIZE * 3 / 4,
-	.key_len = offsetofend(struct lm_lockname, ln_type),
-	.key_offset = offsetof(struct gfs2_glock, gl_name),
-	.head_offset = offsetof(struct gfs2_glock, gl_node),
-};
+अटल स्थिर काष्ठा rhashtable_params ht_parms = अणु
+	.nelem_hपूर्णांक = GFS2_GL_HASH_SIZE * 3 / 4,
+	.key_len = दुरत्वend(काष्ठा lm_lockname, ln_type),
+	.key_offset = दुरत्व(काष्ठा gfs2_glock, gl_name),
+	.head_offset = दुरत्व(काष्ठा gfs2_glock, gl_node),
+पूर्ण;
 
-static struct rhashtable gl_hash_table;
+अटल काष्ठा rhashtable gl_hash_table;
 
-#define GLOCK_WAIT_TABLE_BITS 12
-#define GLOCK_WAIT_TABLE_SIZE (1 << GLOCK_WAIT_TABLE_BITS)
-static wait_queue_head_t glock_wait_table[GLOCK_WAIT_TABLE_SIZE] __cacheline_aligned;
+#घोषणा GLOCK_WAIT_TABLE_BITS 12
+#घोषणा GLOCK_WAIT_TABLE_SIZE (1 << GLOCK_WAIT_TABLE_BITS)
+अटल रुको_queue_head_t glock_रुको_table[GLOCK_WAIT_TABLE_SIZE] __cacheline_aligned;
 
-struct wait_glock_queue {
-	struct lm_lockname *name;
-	wait_queue_entry_t wait;
-};
+काष्ठा रुको_glock_queue अणु
+	काष्ठा lm_lockname *name;
+	रुको_queue_entry_t रुको;
+पूर्ण;
 
-static int glock_wake_function(wait_queue_entry_t *wait, unsigned int mode,
-			       int sync, void *key)
-{
-	struct wait_glock_queue *wait_glock =
-		container_of(wait, struct wait_glock_queue, wait);
-	struct lm_lockname *wait_name = wait_glock->name;
-	struct lm_lockname *wake_name = key;
+अटल पूर्णांक glock_wake_function(रुको_queue_entry_t *रुको, अचिन्हित पूर्णांक mode,
+			       पूर्णांक sync, व्योम *key)
+अणु
+	काष्ठा रुको_glock_queue *रुको_glock =
+		container_of(रुको, काष्ठा रुको_glock_queue, रुको);
+	काष्ठा lm_lockname *रुको_name = रुको_glock->name;
+	काष्ठा lm_lockname *wake_name = key;
 
-	if (wake_name->ln_sbd != wait_name->ln_sbd ||
-	    wake_name->ln_number != wait_name->ln_number ||
-	    wake_name->ln_type != wait_name->ln_type)
-		return 0;
-	return autoremove_wake_function(wait, mode, sync, key);
-}
+	अगर (wake_name->ln_sbd != रुको_name->ln_sbd ||
+	    wake_name->ln_number != रुको_name->ln_number ||
+	    wake_name->ln_type != रुको_name->ln_type)
+		वापस 0;
+	वापस स्वतःहटाओ_wake_function(रुको, mode, sync, key);
+पूर्ण
 
-static wait_queue_head_t *glock_waitqueue(struct lm_lockname *name)
-{
+अटल रुको_queue_head_t *glock_रुकोqueue(काष्ठा lm_lockname *name)
+अणु
 	u32 hash = jhash2((u32 *)name, ht_parms.key_len / 4, 0);
 
-	return glock_wait_table + hash_32(hash, GLOCK_WAIT_TABLE_BITS);
-}
+	वापस glock_रुको_table + hash_32(hash, GLOCK_WAIT_TABLE_BITS);
+पूर्ण
 
 /**
- * wake_up_glock  -  Wake up waiters on a glock
+ * wake_up_glock  -  Wake up रुकोers on a glock
  * @gl: the glock
  */
-static void wake_up_glock(struct gfs2_glock *gl)
-{
-	wait_queue_head_t *wq = glock_waitqueue(&gl->gl_name);
+अटल व्योम wake_up_glock(काष्ठा gfs2_glock *gl)
+अणु
+	रुको_queue_head_t *wq = glock_रुकोqueue(&gl->gl_name);
 
-	if (waitqueue_active(wq))
+	अगर (रुकोqueue_active(wq))
 		__wake_up(wq, TASK_NORMAL, 1, &gl->gl_name);
-}
+पूर्ण
 
-static void gfs2_glock_dealloc(struct rcu_head *rcu)
-{
-	struct gfs2_glock *gl = container_of(rcu, struct gfs2_glock, gl_rcu);
+अटल व्योम gfs2_glock_dealloc(काष्ठा rcu_head *rcu)
+अणु
+	काष्ठा gfs2_glock *gl = container_of(rcu, काष्ठा gfs2_glock, gl_rcu);
 
-	kfree(gl->gl_lksb.sb_lvbptr);
-	if (gl->gl_ops->go_flags & GLOF_ASPACE)
-		kmem_cache_free(gfs2_glock_aspace_cachep, gl);
-	else
-		kmem_cache_free(gfs2_glock_cachep, gl);
-}
+	kमुक्त(gl->gl_lksb.sb_lvbptr);
+	अगर (gl->gl_ops->go_flags & GLOF_ASPACE)
+		kmem_cache_मुक्त(gfs2_glock_aspace_cachep, gl);
+	अन्यथा
+		kmem_cache_मुक्त(gfs2_glock_cachep, gl);
+पूर्ण
 
 /**
- * glock_blocked_by_withdraw - determine if we can still use a glock
+ * glock_blocked_by_withdraw - determine अगर we can still use a glock
  * @gl: the glock
  *
  * We need to allow some glocks to be enqueued, dequeued, promoted, and demoted
- * when we're withdrawn. For example, to maintain metadata integrity, we should
+ * when we're withdrawn. For example, to मुख्यtain metadata पूर्णांकegrity, we should
  * disallow the use of inode and rgrp glocks when withdrawn. Other glocks, like
- * iopen or the transaction glocks may be safely used because none of their
+ * iखोलो or the transaction glocks may be safely used because none of their
  * metadata goes through the journal. So in general, we should disallow all
  * glocks that are journaled, and allow all the others. One exception is:
  * we need to allow our active journal to be promoted and demoted so others
- * may recover it and we can reacquire it when they're done.
+ * may recover it and we can reacquire it when they're करोne.
  */
-static bool glock_blocked_by_withdraw(struct gfs2_glock *gl)
-{
-	struct gfs2_sbd *sdp = gl->gl_name.ln_sbd;
+अटल bool glock_blocked_by_withdraw(काष्ठा gfs2_glock *gl)
+अणु
+	काष्ठा gfs2_sbd *sdp = gl->gl_name.ln_sbd;
 
-	if (likely(!gfs2_withdrawn(sdp)))
-		return false;
-	if (gl->gl_ops->go_flags & GLOF_NONDISK)
-		return false;
-	if (!sdp->sd_jdesc ||
+	अगर (likely(!gfs2_withdrawn(sdp)))
+		वापस false;
+	अगर (gl->gl_ops->go_flags & GLOF_NONDISK)
+		वापस false;
+	अगर (!sdp->sd_jdesc ||
 	    gl->gl_name.ln_number == sdp->sd_jdesc->jd_no_addr)
-		return false;
-	return true;
-}
+		वापस false;
+	वापस true;
+पूर्ण
 
-void gfs2_glock_free(struct gfs2_glock *gl)
-{
-	struct gfs2_sbd *sdp = gl->gl_name.ln_sbd;
+व्योम gfs2_glock_मुक्त(काष्ठा gfs2_glock *gl)
+अणु
+	काष्ठा gfs2_sbd *sdp = gl->gl_name.ln_sbd;
 
-	gfs2_glock_assert_withdraw(gl, atomic_read(&gl->gl_revokes) == 0);
-	rhashtable_remove_fast(&gl_hash_table, &gl->gl_node, ht_parms);
+	gfs2_glock_निश्चित_withdraw(gl, atomic_पढ़ो(&gl->gl_revokes) == 0);
+	rhashtable_हटाओ_fast(&gl_hash_table, &gl->gl_node, ht_parms);
 	smp_mb();
 	wake_up_glock(gl);
 	call_rcu(&gl->gl_rcu, gfs2_glock_dealloc);
-	if (atomic_dec_and_test(&sdp->sd_glock_disposal))
-		wake_up(&sdp->sd_glock_wait);
-}
+	अगर (atomic_dec_and_test(&sdp->sd_glock_disposal))
+		wake_up(&sdp->sd_glock_रुको);
+पूर्ण
 
 /**
  * gfs2_glock_hold() - increment reference count on glock
@@ -178,114 +179,114 @@ void gfs2_glock_free(struct gfs2_glock *gl)
  *
  */
 
-void gfs2_glock_hold(struct gfs2_glock *gl)
-{
+व्योम gfs2_glock_hold(काष्ठा gfs2_glock *gl)
+अणु
 	GLOCK_BUG_ON(gl, __lockref_is_dead(&gl->gl_lockref));
 	lockref_get(&gl->gl_lockref);
-}
+पूर्ण
 
 /**
- * demote_ok - Check to see if it's ok to unlock a glock
+ * demote_ok - Check to see अगर it's ok to unlock a glock
  * @gl: the glock
  *
- * Returns: 1 if it's ok
+ * Returns: 1 अगर it's ok
  */
 
-static int demote_ok(const struct gfs2_glock *gl)
-{
-	const struct gfs2_glock_operations *glops = gl->gl_ops;
+अटल पूर्णांक demote_ok(स्थिर काष्ठा gfs2_glock *gl)
+अणु
+	स्थिर काष्ठा gfs2_glock_operations *glops = gl->gl_ops;
 
-	if (gl->gl_state == LM_ST_UNLOCKED)
-		return 0;
-	if (!list_empty(&gl->gl_holders))
-		return 0;
-	if (glops->go_demote_ok)
-		return glops->go_demote_ok(gl);
-	return 1;
-}
+	अगर (gl->gl_state == LM_ST_UNLOCKED)
+		वापस 0;
+	अगर (!list_empty(&gl->gl_holders))
+		वापस 0;
+	अगर (glops->go_demote_ok)
+		वापस glops->go_demote_ok(gl);
+	वापस 1;
+पूर्ण
 
 
-void gfs2_glock_add_to_lru(struct gfs2_glock *gl)
-{
-	if (!(gl->gl_ops->go_flags & GLOF_LRU))
-		return;
+व्योम gfs2_glock_add_to_lru(काष्ठा gfs2_glock *gl)
+अणु
+	अगर (!(gl->gl_ops->go_flags & GLOF_LRU))
+		वापस;
 
 	spin_lock(&lru_lock);
 
 	list_del(&gl->gl_lru);
 	list_add_tail(&gl->gl_lru, &lru_list);
 
-	if (!test_bit(GLF_LRU, &gl->gl_flags)) {
+	अगर (!test_bit(GLF_LRU, &gl->gl_flags)) अणु
 		set_bit(GLF_LRU, &gl->gl_flags);
 		atomic_inc(&lru_count);
-	}
+	पूर्ण
 
 	spin_unlock(&lru_lock);
-}
+पूर्ण
 
-static void gfs2_glock_remove_from_lru(struct gfs2_glock *gl)
-{
-	if (!(gl->gl_ops->go_flags & GLOF_LRU))
-		return;
+अटल व्योम gfs2_glock_हटाओ_from_lru(काष्ठा gfs2_glock *gl)
+अणु
+	अगर (!(gl->gl_ops->go_flags & GLOF_LRU))
+		वापस;
 
 	spin_lock(&lru_lock);
-	if (test_bit(GLF_LRU, &gl->gl_flags)) {
+	अगर (test_bit(GLF_LRU, &gl->gl_flags)) अणु
 		list_del_init(&gl->gl_lru);
 		atomic_dec(&lru_count);
 		clear_bit(GLF_LRU, &gl->gl_flags);
-	}
+	पूर्ण
 	spin_unlock(&lru_lock);
-}
+पूर्ण
 
 /*
  * Enqueue the glock on the work queue.  Passes one glock reference on to the
  * work queue.
  */
-static void __gfs2_glock_queue_work(struct gfs2_glock *gl, unsigned long delay) {
-	if (!queue_delayed_work(glock_workqueue, &gl->gl_work, delay)) {
+अटल व्योम __gfs2_glock_queue_work(काष्ठा gfs2_glock *gl, अचिन्हित दीर्घ delay) अणु
+	अगर (!queue_delayed_work(glock_workqueue, &gl->gl_work, delay)) अणु
 		/*
 		 * We are holding the lockref spinlock, and the work was still
 		 * queued above.  The queued work (glock_work_func) takes that
-		 * spinlock before dropping its glock reference(s), so it
-		 * cannot have dropped them in the meantime.
+		 * spinlock beक्रमe dropping its glock reference(s), so it
+		 * cannot have dropped them in the meanसमय.
 		 */
 		GLOCK_BUG_ON(gl, gl->gl_lockref.count < 2);
 		gl->gl_lockref.count--;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void gfs2_glock_queue_work(struct gfs2_glock *gl, unsigned long delay) {
+अटल व्योम gfs2_glock_queue_work(काष्ठा gfs2_glock *gl, अचिन्हित दीर्घ delay) अणु
 	spin_lock(&gl->gl_lockref.lock);
 	__gfs2_glock_queue_work(gl, delay);
 	spin_unlock(&gl->gl_lockref.lock);
-}
+पूर्ण
 
-static void __gfs2_glock_put(struct gfs2_glock *gl)
-{
-	struct gfs2_sbd *sdp = gl->gl_name.ln_sbd;
-	struct address_space *mapping = gfs2_glock2aspace(gl);
+अटल व्योम __gfs2_glock_put(काष्ठा gfs2_glock *gl)
+अणु
+	काष्ठा gfs2_sbd *sdp = gl->gl_name.ln_sbd;
+	काष्ठा address_space *mapping = gfs2_glock2aspace(gl);
 
 	lockref_mark_dead(&gl->gl_lockref);
 
-	gfs2_glock_remove_from_lru(gl);
+	gfs2_glock_हटाओ_from_lru(gl);
 	spin_unlock(&gl->gl_lockref.lock);
 	GLOCK_BUG_ON(gl, !list_empty(&gl->gl_holders));
-	if (mapping) {
+	अगर (mapping) अणु
 		truncate_inode_pages_final(mapping);
-		if (!gfs2_withdrawn(sdp))
+		अगर (!gfs2_withdrawn(sdp))
 			GLOCK_BUG_ON(gl, !mapping_empty(mapping));
-	}
+	पूर्ण
 	trace_gfs2_glock_put(gl);
-	sdp->sd_lockstruct.ls_ops->lm_put_lock(gl);
-}
+	sdp->sd_lockकाष्ठा.ls_ops->lm_put_lock(gl);
+पूर्ण
 
 /*
  * Cause the glock to be put in work queue context.
  */
-void gfs2_glock_queue_put(struct gfs2_glock *gl)
-{
+व्योम gfs2_glock_queue_put(काष्ठा gfs2_glock *gl)
+अणु
 	gfs2_glock_queue_work(gl, 0);
-}
+पूर्ण
 
 /**
  * gfs2_glock_put() - Decrement reference count on glock
@@ -293,208 +294,208 @@ void gfs2_glock_queue_put(struct gfs2_glock *gl)
  *
  */
 
-void gfs2_glock_put(struct gfs2_glock *gl)
-{
-	if (lockref_put_or_lock(&gl->gl_lockref))
-		return;
+व्योम gfs2_glock_put(काष्ठा gfs2_glock *gl)
+अणु
+	अगर (lockref_put_or_lock(&gl->gl_lockref))
+		वापस;
 
 	__gfs2_glock_put(gl);
-}
+पूर्ण
 
 /**
- * may_grant - check if its ok to grant a new lock
+ * may_grant - check अगर its ok to grant a new lock
  * @gl: The glock
  * @gh: The lock request which we wish to grant
  *
- * Returns: true if its ok to grant the lock
+ * Returns: true अगर its ok to grant the lock
  */
 
-static inline int may_grant(const struct gfs2_glock *gl, const struct gfs2_holder *gh)
-{
-	const struct gfs2_holder *gh_head = list_first_entry(&gl->gl_holders, const struct gfs2_holder, gh_list);
+अटल अंतरभूत पूर्णांक may_grant(स्थिर काष्ठा gfs2_glock *gl, स्थिर काष्ठा gfs2_holder *gh)
+अणु
+	स्थिर काष्ठा gfs2_holder *gh_head = list_first_entry(&gl->gl_holders, स्थिर काष्ठा gfs2_holder, gh_list);
 
-	if (gh != gh_head) {
+	अगर (gh != gh_head) अणु
 		/**
 		 * Here we make a special exception to grant holders who agree
 		 * to share the EX lock with other holders who also have the
 		 * bit set. If the original holder has the LM_FLAG_NODE_SCOPE bit
 		 * is set, we grant more holders with the bit set.
 		 */
-		if (gh_head->gh_state == LM_ST_EXCLUSIVE &&
+		अगर (gh_head->gh_state == LM_ST_EXCLUSIVE &&
 		    (gh_head->gh_flags & LM_FLAG_NODE_SCOPE) &&
 		    gh->gh_state == LM_ST_EXCLUSIVE &&
 		    (gh->gh_flags & LM_FLAG_NODE_SCOPE))
-			return 1;
-		if ((gh->gh_state == LM_ST_EXCLUSIVE ||
+			वापस 1;
+		अगर ((gh->gh_state == LM_ST_EXCLUSIVE ||
 		     gh_head->gh_state == LM_ST_EXCLUSIVE))
-			return 0;
-	}
-	if (gl->gl_state == gh->gh_state)
-		return 1;
-	if (gh->gh_flags & GL_EXACT)
-		return 0;
-	if (gl->gl_state == LM_ST_EXCLUSIVE) {
-		if (gh->gh_state == LM_ST_SHARED && gh_head->gh_state == LM_ST_SHARED)
-			return 1;
-		if (gh->gh_state == LM_ST_DEFERRED && gh_head->gh_state == LM_ST_DEFERRED)
-			return 1;
-	}
-	if (gl->gl_state != LM_ST_UNLOCKED && (gh->gh_flags & LM_FLAG_ANY))
-		return 1;
-	return 0;
-}
+			वापस 0;
+	पूर्ण
+	अगर (gl->gl_state == gh->gh_state)
+		वापस 1;
+	अगर (gh->gh_flags & GL_EXACT)
+		वापस 0;
+	अगर (gl->gl_state == LM_ST_EXCLUSIVE) अणु
+		अगर (gh->gh_state == LM_ST_SHARED && gh_head->gh_state == LM_ST_SHARED)
+			वापस 1;
+		अगर (gh->gh_state == LM_ST_DEFERRED && gh_head->gh_state == LM_ST_DEFERRED)
+			वापस 1;
+	पूर्ण
+	अगर (gl->gl_state != LM_ST_UNLOCKED && (gh->gh_flags & LM_FLAG_ANY))
+		वापस 1;
+	वापस 0;
+पूर्ण
 
-static void gfs2_holder_wake(struct gfs2_holder *gh)
-{
-	clear_bit(HIF_WAIT, &gh->gh_iflags);
+अटल व्योम gfs2_holder_wake(काष्ठा gfs2_holder *gh)
+अणु
+	clear_bit(HIF_WAIT, &gh->gh_अगरlags);
 	smp_mb__after_atomic();
-	wake_up_bit(&gh->gh_iflags, HIF_WAIT);
-	if (gh->gh_flags & GL_ASYNC) {
-		struct gfs2_sbd *sdp = gh->gh_gl->gl_name.ln_sbd;
+	wake_up_bit(&gh->gh_अगरlags, HIF_WAIT);
+	अगर (gh->gh_flags & GL_ASYNC) अणु
+		काष्ठा gfs2_sbd *sdp = gh->gh_gl->gl_name.ln_sbd;
 
-		wake_up(&sdp->sd_async_glock_wait);
-	}
-}
+		wake_up(&sdp->sd_async_glock_रुको);
+	पूर्ण
+पूर्ण
 
 /**
- * do_error - Something unexpected has happened during a lock request
+ * करो_error - Something unexpected has happened during a lock request
  * @gl: The glock
  * @ret: The status from the DLM
  */
 
-static void do_error(struct gfs2_glock *gl, const int ret)
-{
-	struct gfs2_holder *gh, *tmp;
+अटल व्योम करो_error(काष्ठा gfs2_glock *gl, स्थिर पूर्णांक ret)
+अणु
+	काष्ठा gfs2_holder *gh, *पंचांगp;
 
-	list_for_each_entry_safe(gh, tmp, &gl->gl_holders, gh_list) {
-		if (test_bit(HIF_HOLDER, &gh->gh_iflags))
-			continue;
-		if (ret & LM_OUT_ERROR)
+	list_क्रम_each_entry_safe(gh, पंचांगp, &gl->gl_holders, gh_list) अणु
+		अगर (test_bit(HIF_HOLDER, &gh->gh_अगरlags))
+			जारी;
+		अगर (ret & LM_OUT_ERROR)
 			gh->gh_error = -EIO;
-		else if (gh->gh_flags & (LM_FLAG_TRY | LM_FLAG_TRY_1CB))
+		अन्यथा अगर (gh->gh_flags & (LM_FLAG_TRY | LM_FLAG_TRY_1CB))
 			gh->gh_error = GLR_TRYFAILED;
-		else
-			continue;
+		अन्यथा
+			जारी;
 		list_del_init(&gh->gh_list);
 		trace_gfs2_glock_queue(gh, 0);
 		gfs2_holder_wake(gh);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
- * do_promote - promote as many requests as possible on the current queue
+ * करो_promote - promote as many requests as possible on the current queue
  * @gl: The glock
  * 
- * Returns: 1 if there is a blocked holder at the head of the list, or 2
- *          if a type specific operation is underway.
+ * Returns: 1 अगर there is a blocked holder at the head of the list, or 2
+ *          अगर a type specअगरic operation is underway.
  */
 
-static int do_promote(struct gfs2_glock *gl)
+अटल पूर्णांक करो_promote(काष्ठा gfs2_glock *gl)
 __releases(&gl->gl_lockref.lock)
 __acquires(&gl->gl_lockref.lock)
-{
-	const struct gfs2_glock_operations *glops = gl->gl_ops;
-	struct gfs2_holder *gh, *tmp;
-	int ret;
+अणु
+	स्थिर काष्ठा gfs2_glock_operations *glops = gl->gl_ops;
+	काष्ठा gfs2_holder *gh, *पंचांगp;
+	पूर्णांक ret;
 
 restart:
-	list_for_each_entry_safe(gh, tmp, &gl->gl_holders, gh_list) {
-		if (test_bit(HIF_HOLDER, &gh->gh_iflags))
-			continue;
-		if (may_grant(gl, gh)) {
-			if (gh->gh_list.prev == &gl->gl_holders &&
-			    glops->go_lock) {
+	list_क्रम_each_entry_safe(gh, पंचांगp, &gl->gl_holders, gh_list) अणु
+		अगर (test_bit(HIF_HOLDER, &gh->gh_अगरlags))
+			जारी;
+		अगर (may_grant(gl, gh)) अणु
+			अगर (gh->gh_list.prev == &gl->gl_holders &&
+			    glops->go_lock) अणु
 				spin_unlock(&gl->gl_lockref.lock);
 				/* FIXME: eliminate this eventually */
 				ret = glops->go_lock(gh);
 				spin_lock(&gl->gl_lockref.lock);
-				if (ret) {
-					if (ret == 1)
-						return 2;
+				अगर (ret) अणु
+					अगर (ret == 1)
+						वापस 2;
 					gh->gh_error = ret;
 					list_del_init(&gh->gh_list);
 					trace_gfs2_glock_queue(gh, 0);
 					gfs2_holder_wake(gh);
-					goto restart;
-				}
-				set_bit(HIF_HOLDER, &gh->gh_iflags);
+					जाओ restart;
+				पूर्ण
+				set_bit(HIF_HOLDER, &gh->gh_अगरlags);
 				trace_gfs2_promote(gh, 1);
 				gfs2_holder_wake(gh);
-				goto restart;
-			}
-			set_bit(HIF_HOLDER, &gh->gh_iflags);
+				जाओ restart;
+			पूर्ण
+			set_bit(HIF_HOLDER, &gh->gh_अगरlags);
 			trace_gfs2_promote(gh, 0);
 			gfs2_holder_wake(gh);
-			continue;
-		}
-		if (gh->gh_list.prev == &gl->gl_holders)
-			return 1;
-		do_error(gl, 0);
-		break;
-	}
-	return 0;
-}
+			जारी;
+		पूर्ण
+		अगर (gh->gh_list.prev == &gl->gl_holders)
+			वापस 1;
+		करो_error(gl, 0);
+		अवरोध;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /**
- * find_first_waiter - find the first gh that's waiting for the glock
+ * find_first_रुकोer - find the first gh that's रुकोing क्रम the glock
  * @gl: the glock
  */
 
-static inline struct gfs2_holder *find_first_waiter(const struct gfs2_glock *gl)
-{
-	struct gfs2_holder *gh;
+अटल अंतरभूत काष्ठा gfs2_holder *find_first_रुकोer(स्थिर काष्ठा gfs2_glock *gl)
+अणु
+	काष्ठा gfs2_holder *gh;
 
-	list_for_each_entry(gh, &gl->gl_holders, gh_list) {
-		if (!test_bit(HIF_HOLDER, &gh->gh_iflags))
-			return gh;
-	}
-	return NULL;
-}
+	list_क्रम_each_entry(gh, &gl->gl_holders, gh_list) अणु
+		अगर (!test_bit(HIF_HOLDER, &gh->gh_अगरlags))
+			वापस gh;
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
 /**
- * state_change - record that the glock is now in a different state
+ * state_change - record that the glock is now in a dअगरferent state
  * @gl: the glock
  * @new_state: the new state
  */
 
-static void state_change(struct gfs2_glock *gl, unsigned int new_state)
-{
-	int held1, held2;
+अटल व्योम state_change(काष्ठा gfs2_glock *gl, अचिन्हित पूर्णांक new_state)
+अणु
+	पूर्णांक held1, held2;
 
 	held1 = (gl->gl_state != LM_ST_UNLOCKED);
 	held2 = (new_state != LM_ST_UNLOCKED);
 
-	if (held1 != held2) {
+	अगर (held1 != held2) अणु
 		GLOCK_BUG_ON(gl, __lockref_is_dead(&gl->gl_lockref));
-		if (held2)
+		अगर (held2)
 			gl->gl_lockref.count++;
-		else
+		अन्यथा
 			gl->gl_lockref.count--;
-	}
-	if (new_state != gl->gl_target)
-		/* shorten our minimum hold time */
-		gl->gl_hold_time = max(gl->gl_hold_time - GL_GLOCK_HOLD_DECR,
+	पूर्ण
+	अगर (new_state != gl->gl_target)
+		/* लघुen our minimum hold समय */
+		gl->gl_hold_समय = max(gl->gl_hold_समय - GL_GLOCK_HOLD_DECR,
 				       GL_GLOCK_MIN_HOLD);
 	gl->gl_state = new_state;
-	gl->gl_tchange = jiffies;
-}
+	gl->gl_tchange = jअगरfies;
+पूर्ण
 
-static void gfs2_set_demote(struct gfs2_glock *gl)
-{
-	struct gfs2_sbd *sdp = gl->gl_name.ln_sbd;
+अटल व्योम gfs2_set_demote(काष्ठा gfs2_glock *gl)
+अणु
+	काष्ठा gfs2_sbd *sdp = gl->gl_name.ln_sbd;
 
 	set_bit(GLF_DEMOTE, &gl->gl_flags);
 	smp_mb();
-	wake_up(&sdp->sd_async_glock_wait);
-}
+	wake_up(&sdp->sd_async_glock_रुको);
+पूर्ण
 
-static void gfs2_demote_wake(struct gfs2_glock *gl)
-{
+अटल व्योम gfs2_demote_wake(काष्ठा gfs2_glock *gl)
+अणु
 	gl->gl_demote_state = LM_ST_EXCLUSIVE;
 	clear_bit(GLF_DEMOTE, &gl->gl_flags);
 	smp_mb__after_atomic();
 	wake_up_bit(&gl->gl_flags, GLF_DEMOTE);
-}
+पूर्ण
 
 /**
  * finish_xmote - The DLM has replied to one of our lock requests
@@ -503,561 +504,561 @@ static void gfs2_demote_wake(struct gfs2_glock *gl)
  *
  */
 
-static void finish_xmote(struct gfs2_glock *gl, unsigned int ret)
-{
-	const struct gfs2_glock_operations *glops = gl->gl_ops;
-	struct gfs2_holder *gh;
-	unsigned state = ret & LM_OUT_ST_MASK;
-	int rv;
+अटल व्योम finish_xmote(काष्ठा gfs2_glock *gl, अचिन्हित पूर्णांक ret)
+अणु
+	स्थिर काष्ठा gfs2_glock_operations *glops = gl->gl_ops;
+	काष्ठा gfs2_holder *gh;
+	अचिन्हित state = ret & LM_OUT_ST_MASK;
+	पूर्णांक rv;
 
 	spin_lock(&gl->gl_lockref.lock);
 	trace_gfs2_glock_state_change(gl, state);
 	state_change(gl, state);
-	gh = find_first_waiter(gl);
+	gh = find_first_रुकोer(gl);
 
 	/* Demote to UN request arrived during demote to SH or DF */
-	if (test_bit(GLF_DEMOTE_IN_PROGRESS, &gl->gl_flags) &&
+	अगर (test_bit(GLF_DEMOTE_IN_PROGRESS, &gl->gl_flags) &&
 	    state != LM_ST_UNLOCKED && gl->gl_demote_state == LM_ST_UNLOCKED)
 		gl->gl_target = LM_ST_UNLOCKED;
 
-	/* Check for state != intended state */
-	if (unlikely(state != gl->gl_target)) {
-		if (gh && !test_bit(GLF_DEMOTE_IN_PROGRESS, &gl->gl_flags)) {
+	/* Check क्रम state != पूर्णांकended state */
+	अगर (unlikely(state != gl->gl_target)) अणु
+		अगर (gh && !test_bit(GLF_DEMOTE_IN_PROGRESS, &gl->gl_flags)) अणु
 			/* move to back of queue and try next entry */
-			if (ret & LM_OUT_CANCELED) {
-				if ((gh->gh_flags & LM_FLAG_PRIORITY) == 0)
+			अगर (ret & LM_OUT_CANCELED) अणु
+				अगर ((gh->gh_flags & LM_FLAG_PRIORITY) == 0)
 					list_move_tail(&gh->gh_list, &gl->gl_holders);
-				gh = find_first_waiter(gl);
+				gh = find_first_रुकोer(gl);
 				gl->gl_target = gh->gh_state;
-				goto retry;
-			}
+				जाओ retry;
+			पूर्ण
 			/* Some error or failed "try lock" - report it */
-			if ((ret & LM_OUT_ERROR) ||
-			    (gh->gh_flags & (LM_FLAG_TRY | LM_FLAG_TRY_1CB))) {
+			अगर ((ret & LM_OUT_ERROR) ||
+			    (gh->gh_flags & (LM_FLAG_TRY | LM_FLAG_TRY_1CB))) अणु
 				gl->gl_target = gl->gl_state;
-				do_error(gl, ret);
-				goto out;
-			}
-		}
-		switch(state) {
+				करो_error(gl, ret);
+				जाओ out;
+			पूर्ण
+		पूर्ण
+		चयन(state) अणु
 		/* Unlocked due to conversion deadlock, try again */
-		case LM_ST_UNLOCKED:
+		हाल LM_ST_UNLOCKED:
 retry:
-			do_xmote(gl, gh, gl->gl_target);
-			break;
+			करो_xmote(gl, gh, gl->gl_target);
+			अवरोध;
 		/* Conversion fails, unlock and try again */
-		case LM_ST_SHARED:
-		case LM_ST_DEFERRED:
-			do_xmote(gl, gh, LM_ST_UNLOCKED);
-			break;
-		default: /* Everything else */
+		हाल LM_ST_SHARED:
+		हाल LM_ST_DEFERRED:
+			करो_xmote(gl, gh, LM_ST_UNLOCKED);
+			अवरोध;
+		शेष: /* Everything अन्यथा */
 			fs_err(gl->gl_name.ln_sbd, "wanted %u got %u\n",
 			       gl->gl_target, state);
 			GLOCK_BUG_ON(gl, 1);
-		}
+		पूर्ण
 		spin_unlock(&gl->gl_lockref.lock);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	/* Fast path - we got what we asked for */
-	if (test_and_clear_bit(GLF_DEMOTE_IN_PROGRESS, &gl->gl_flags))
+	/* Fast path - we got what we asked क्रम */
+	अगर (test_and_clear_bit(GLF_DEMOTE_IN_PROGRESS, &gl->gl_flags))
 		gfs2_demote_wake(gl);
-	if (state != LM_ST_UNLOCKED) {
-		if (glops->go_xmote_bh) {
+	अगर (state != LM_ST_UNLOCKED) अणु
+		अगर (glops->go_xmote_bh) अणु
 			spin_unlock(&gl->gl_lockref.lock);
 			rv = glops->go_xmote_bh(gl);
 			spin_lock(&gl->gl_lockref.lock);
-			if (rv) {
-				do_error(gl, rv);
-				goto out;
-			}
-		}
-		rv = do_promote(gl);
-		if (rv == 2)
-			goto out_locked;
-	}
+			अगर (rv) अणु
+				करो_error(gl, rv);
+				जाओ out;
+			पूर्ण
+		पूर्ण
+		rv = करो_promote(gl);
+		अगर (rv == 2)
+			जाओ out_locked;
+	पूर्ण
 out:
 	clear_bit(GLF_LOCK, &gl->gl_flags);
 out_locked:
 	spin_unlock(&gl->gl_lockref.lock);
-}
+पूर्ण
 
-static bool is_system_glock(struct gfs2_glock *gl)
-{
-	struct gfs2_sbd *sdp = gl->gl_name.ln_sbd;
-	struct gfs2_inode *m_ip = GFS2_I(sdp->sd_statfs_inode);
+अटल bool is_प्रणाली_glock(काष्ठा gfs2_glock *gl)
+अणु
+	काष्ठा gfs2_sbd *sdp = gl->gl_name.ln_sbd;
+	काष्ठा gfs2_inode *m_ip = GFS2_I(sdp->sd_statfs_inode);
 
-	if (gl == m_ip->i_gl)
-		return true;
-	return false;
-}
+	अगर (gl == m_ip->i_gl)
+		वापस true;
+	वापस false;
+पूर्ण
 
 /**
- * do_xmote - Calls the DLM to change the state of a lock
+ * करो_xmote - Calls the DLM to change the state of a lock
  * @gl: The lock state
- * @gh: The holder (only for promotes)
+ * @gh: The holder (only क्रम promotes)
  * @target: The target lock state
  *
  */
 
-static void do_xmote(struct gfs2_glock *gl, struct gfs2_holder *gh, unsigned int target)
+अटल व्योम करो_xmote(काष्ठा gfs2_glock *gl, काष्ठा gfs2_holder *gh, अचिन्हित पूर्णांक target)
 __releases(&gl->gl_lockref.lock)
 __acquires(&gl->gl_lockref.lock)
-{
-	const struct gfs2_glock_operations *glops = gl->gl_ops;
-	struct gfs2_sbd *sdp = gl->gl_name.ln_sbd;
-	unsigned int lck_flags = (unsigned int)(gh ? gh->gh_flags : 0);
-	int ret;
+अणु
+	स्थिर काष्ठा gfs2_glock_operations *glops = gl->gl_ops;
+	काष्ठा gfs2_sbd *sdp = gl->gl_name.ln_sbd;
+	अचिन्हित पूर्णांक lck_flags = (अचिन्हित पूर्णांक)(gh ? gh->gh_flags : 0);
+	पूर्णांक ret;
 
-	if (target != LM_ST_UNLOCKED && glock_blocked_by_withdraw(gl) &&
+	अगर (target != LM_ST_UNLOCKED && glock_blocked_by_withdraw(gl) &&
 	    gh && !(gh->gh_flags & LM_FLAG_NOEXP))
-		return;
+		वापस;
 	lck_flags &= (LM_FLAG_TRY | LM_FLAG_TRY_1CB | LM_FLAG_NOEXP |
 		      LM_FLAG_PRIORITY);
 	GLOCK_BUG_ON(gl, gl->gl_state == target);
 	GLOCK_BUG_ON(gl, gl->gl_state == gl->gl_target);
-	if ((target == LM_ST_UNLOCKED || target == LM_ST_DEFERRED) &&
-	    glops->go_inval) {
+	अगर ((target == LM_ST_UNLOCKED || target == LM_ST_DEFERRED) &&
+	    glops->go_inval) अणु
 		/*
-		 * If another process is already doing the invalidate, let that
+		 * If another process is alपढ़ोy करोing the invalidate, let that
 		 * finish first.  The glock state machine will get back to this
 		 * holder again later.
 		 */
-		if (test_and_set_bit(GLF_INVALIDATE_IN_PROGRESS,
+		अगर (test_and_set_bit(GLF_INVALIDATE_IN_PROGRESS,
 				     &gl->gl_flags))
-			return;
-		do_error(gl, 0); /* Fail queued try locks */
-	}
+			वापस;
+		करो_error(gl, 0); /* Fail queued try locks */
+	पूर्ण
 	gl->gl_req = target;
 	set_bit(GLF_BLOCKING, &gl->gl_flags);
-	if ((gl->gl_req == LM_ST_UNLOCKED) ||
+	अगर ((gl->gl_req == LM_ST_UNLOCKED) ||
 	    (gl->gl_state == LM_ST_EXCLUSIVE) ||
 	    (lck_flags & (LM_FLAG_TRY|LM_FLAG_TRY_1CB)))
 		clear_bit(GLF_BLOCKING, &gl->gl_flags);
 	spin_unlock(&gl->gl_lockref.lock);
-	if (glops->go_sync) {
+	अगर (glops->go_sync) अणु
 		ret = glops->go_sync(gl);
 		/* If we had a problem syncing (due to io errors or whatever,
 		 * we should not invalidate the metadata or tell dlm to
 		 * release the glock to other nodes.
 		 */
-		if (ret) {
-			if (cmpxchg(&sdp->sd_log_error, 0, ret)) {
+		अगर (ret) अणु
+			अगर (cmpxchg(&sdp->sd_log_error, 0, ret)) अणु
 				fs_err(sdp, "Error %d syncing glock \n", ret);
-				gfs2_dump_glock(NULL, gl, true);
-			}
-			goto skip_inval;
-		}
-	}
-	if (test_bit(GLF_INVALIDATE_IN_PROGRESS, &gl->gl_flags)) {
+				gfs2_dump_glock(शून्य, gl, true);
+			पूर्ण
+			जाओ skip_inval;
+		पूर्ण
+	पूर्ण
+	अगर (test_bit(GLF_INVALIDATE_IN_PROGRESS, &gl->gl_flags)) अणु
 		/*
 		 * The call to go_sync should have cleared out the ail list.
 		 * If there are still items, we have a problem. We ought to
 		 * withdraw, but we can't because the withdraw code also uses
 		 * glocks. Warn about the error, dump the glock, then fall
-		 * through and wait for logd to do the withdraw for us.
+		 * through and रुको क्रम logd to करो the withdraw क्रम us.
 		 */
-		if ((atomic_read(&gl->gl_ail_count) != 0) &&
-		    (!cmpxchg(&sdp->sd_log_error, 0, -EIO))) {
-			gfs2_glock_assert_warn(gl,
-					       !atomic_read(&gl->gl_ail_count));
-			gfs2_dump_glock(NULL, gl, true);
-		}
+		अगर ((atomic_पढ़ो(&gl->gl_ail_count) != 0) &&
+		    (!cmpxchg(&sdp->sd_log_error, 0, -EIO))) अणु
+			gfs2_glock_निश्चित_warn(gl,
+					       !atomic_पढ़ो(&gl->gl_ail_count));
+			gfs2_dump_glock(शून्य, gl, true);
+		पूर्ण
 		glops->go_inval(gl, target == LM_ST_DEFERRED ? 0 : DIO_METADATA);
 		clear_bit(GLF_INVALIDATE_IN_PROGRESS, &gl->gl_flags);
-	}
+	पूर्ण
 
 skip_inval:
 	gfs2_glock_hold(gl);
 	/*
-	 * Check for an error encountered since we called go_sync and go_inval.
+	 * Check क्रम an error encountered since we called go_sync and go_inval.
 	 * If so, we can't withdraw from the glock code because the withdraw
-	 * code itself uses glocks (see function signal_our_withdraw) to
-	 * change the mount to read-only. Most importantly, we must not call
+	 * code itself uses glocks (see function संकेत_our_withdraw) to
+	 * change the mount to पढ़ो-only. Most importantly, we must not call
 	 * dlm to unlock the glock until the journal is in a known good state
 	 * (after journal replay) otherwise other nodes may use the object
 	 * (rgrp or dinode) and then later, journal replay will corrupt the
-	 * file system. The best we can do here is wait for the logd daemon
-	 * to see sd_log_error and withdraw, and in the meantime, requeue the
-	 * work for later.
+	 * file प्रणाली. The best we can करो here is रुको क्रम the logd daemon
+	 * to see sd_log_error and withdraw, and in the meanसमय, requeue the
+	 * work क्रम later.
 	 *
-	 * We make a special exception for some system glocks, such as the
-	 * system statfs inode glock, which needs to be granted before the
-	 * gfs2_quotad daemon can exit, and that exit needs to finish before
-	 * we can unmount the withdrawn file system.
+	 * We make a special exception क्रम some प्रणाली glocks, such as the
+	 * प्रणाली statfs inode glock, which needs to be granted beक्रमe the
+	 * gfs2_quotad daemon can निकास, and that निकास needs to finish beक्रमe
+	 * we can unmount the withdrawn file प्रणाली.
 	 *
-	 * However, if we're just unlocking the lock (say, for unmount, when
+	 * However, अगर we're just unlocking the lock (say, क्रम unmount, when
 	 * gfs2_gl_hash_clear calls clear_glock) and recovery is complete
 	 * then it's okay to tell dlm to unlock it.
 	 */
-	if (unlikely(sdp->sd_log_error && !gfs2_withdrawn(sdp)))
+	अगर (unlikely(sdp->sd_log_error && !gfs2_withdrawn(sdp)))
 		gfs2_withdraw_delayed(sdp);
-	if (glock_blocked_by_withdraw(gl) &&
+	अगर (glock_blocked_by_withdraw(gl) &&
 	    (target != LM_ST_UNLOCKED ||
-	     test_bit(SDF_WITHDRAW_RECOVERY, &sdp->sd_flags))) {
-		if (!is_system_glock(gl)) {
+	     test_bit(SDF_WITHDRAW_RECOVERY, &sdp->sd_flags))) अणु
+		अगर (!is_प्रणाली_glock(gl)) अणु
 			gfs2_glock_queue_work(gl, GL_GLOCK_DFT_HOLD);
-			goto out;
-		} else {
+			जाओ out;
+		पूर्ण अन्यथा अणु
 			clear_bit(GLF_INVALIDATE_IN_PROGRESS, &gl->gl_flags);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (sdp->sd_lockstruct.ls_ops->lm_lock)	{
+	अगर (sdp->sd_lockकाष्ठा.ls_ops->lm_lock)	अणु
 		/* lock_dlm */
-		ret = sdp->sd_lockstruct.ls_ops->lm_lock(gl, target, lck_flags);
-		if (ret == -EINVAL && gl->gl_target == LM_ST_UNLOCKED &&
+		ret = sdp->sd_lockकाष्ठा.ls_ops->lm_lock(gl, target, lck_flags);
+		अगर (ret == -EINVAL && gl->gl_target == LM_ST_UNLOCKED &&
 		    target == LM_ST_UNLOCKED &&
-		    test_bit(SDF_SKIP_DLM_UNLOCK, &sdp->sd_flags)) {
+		    test_bit(SDF_SKIP_DLM_UNLOCK, &sdp->sd_flags)) अणु
 			finish_xmote(gl, target);
 			gfs2_glock_queue_work(gl, 0);
-		} else if (ret) {
+		पूर्ण अन्यथा अगर (ret) अणु
 			fs_err(sdp, "lm_lock ret %d\n", ret);
 			GLOCK_BUG_ON(gl, !gfs2_withdrawn(sdp));
-		}
-	} else { /* lock_nolock */
+		पूर्ण
+	पूर्ण अन्यथा अणु /* lock_nolock */
 		finish_xmote(gl, target);
 		gfs2_glock_queue_work(gl, 0);
-	}
+	पूर्ण
 out:
 	spin_lock(&gl->gl_lockref.lock);
-}
+पूर्ण
 
 /**
  * find_first_holder - find the first "holder" gh
  * @gl: the glock
  */
 
-static inline struct gfs2_holder *find_first_holder(const struct gfs2_glock *gl)
-{
-	struct gfs2_holder *gh;
+अटल अंतरभूत काष्ठा gfs2_holder *find_first_holder(स्थिर काष्ठा gfs2_glock *gl)
+अणु
+	काष्ठा gfs2_holder *gh;
 
-	if (!list_empty(&gl->gl_holders)) {
-		gh = list_first_entry(&gl->gl_holders, struct gfs2_holder, gh_list);
-		if (test_bit(HIF_HOLDER, &gh->gh_iflags))
-			return gh;
-	}
-	return NULL;
-}
+	अगर (!list_empty(&gl->gl_holders)) अणु
+		gh = list_first_entry(&gl->gl_holders, काष्ठा gfs2_holder, gh_list);
+		अगर (test_bit(HIF_HOLDER, &gh->gh_अगरlags))
+			वापस gh;
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
 /**
- * run_queue - do all outstanding tasks related to a glock
+ * run_queue - करो all outstanding tasks related to a glock
  * @gl: The glock in question
- * @nonblock: True if we must not block in run_queue
+ * @nonblock: True अगर we must not block in run_queue
  *
  */
 
-static void run_queue(struct gfs2_glock *gl, const int nonblock)
+अटल व्योम run_queue(काष्ठा gfs2_glock *gl, स्थिर पूर्णांक nonblock)
 __releases(&gl->gl_lockref.lock)
 __acquires(&gl->gl_lockref.lock)
-{
-	struct gfs2_holder *gh = NULL;
-	int ret;
+अणु
+	काष्ठा gfs2_holder *gh = शून्य;
+	पूर्णांक ret;
 
-	if (test_and_set_bit(GLF_LOCK, &gl->gl_flags))
-		return;
+	अगर (test_and_set_bit(GLF_LOCK, &gl->gl_flags))
+		वापस;
 
 	GLOCK_BUG_ON(gl, test_bit(GLF_DEMOTE_IN_PROGRESS, &gl->gl_flags));
 
-	if (test_bit(GLF_DEMOTE, &gl->gl_flags) &&
-	    gl->gl_demote_state != gl->gl_state) {
-		if (find_first_holder(gl))
-			goto out_unlock;
-		if (nonblock)
-			goto out_sched;
+	अगर (test_bit(GLF_DEMOTE, &gl->gl_flags) &&
+	    gl->gl_demote_state != gl->gl_state) अणु
+		अगर (find_first_holder(gl))
+			जाओ out_unlock;
+		अगर (nonblock)
+			जाओ out_sched;
 		set_bit(GLF_DEMOTE_IN_PROGRESS, &gl->gl_flags);
 		GLOCK_BUG_ON(gl, gl->gl_demote_state == LM_ST_EXCLUSIVE);
 		gl->gl_target = gl->gl_demote_state;
-	} else {
-		if (test_bit(GLF_DEMOTE, &gl->gl_flags))
+	पूर्ण अन्यथा अणु
+		अगर (test_bit(GLF_DEMOTE, &gl->gl_flags))
 			gfs2_demote_wake(gl);
-		ret = do_promote(gl);
-		if (ret == 0)
-			goto out_unlock;
-		if (ret == 2)
-			goto out;
-		gh = find_first_waiter(gl);
+		ret = करो_promote(gl);
+		अगर (ret == 0)
+			जाओ out_unlock;
+		अगर (ret == 2)
+			जाओ out;
+		gh = find_first_रुकोer(gl);
 		gl->gl_target = gh->gh_state;
-		if (!(gh->gh_flags & (LM_FLAG_TRY | LM_FLAG_TRY_1CB)))
-			do_error(gl, 0); /* Fail queued try locks */
-	}
-	do_xmote(gl, gh, gl->gl_target);
+		अगर (!(gh->gh_flags & (LM_FLAG_TRY | LM_FLAG_TRY_1CB)))
+			करो_error(gl, 0); /* Fail queued try locks */
+	पूर्ण
+	करो_xmote(gl, gh, gl->gl_target);
 out:
-	return;
+	वापस;
 
 out_sched:
 	clear_bit(GLF_LOCK, &gl->gl_flags);
 	smp_mb__after_atomic();
 	gl->gl_lockref.count++;
 	__gfs2_glock_queue_work(gl, 0);
-	return;
+	वापस;
 
 out_unlock:
 	clear_bit(GLF_LOCK, &gl->gl_flags);
 	smp_mb__after_atomic();
-	return;
-}
+	वापस;
+पूर्ण
 
-void gfs2_inode_remember_delete(struct gfs2_glock *gl, u64 generation)
-{
-	struct gfs2_inode_lvb *ri = (void *)gl->gl_lksb.sb_lvbptr;
+व्योम gfs2_inode_remember_delete(काष्ठा gfs2_glock *gl, u64 generation)
+अणु
+	काष्ठा gfs2_inode_lvb *ri = (व्योम *)gl->gl_lksb.sb_lvbptr;
 
-	if (ri->ri_magic == 0)
+	अगर (ri->ri_magic == 0)
 		ri->ri_magic = cpu_to_be32(GFS2_MAGIC);
-	if (ri->ri_magic == cpu_to_be32(GFS2_MAGIC))
+	अगर (ri->ri_magic == cpu_to_be32(GFS2_MAGIC))
 		ri->ri_generation_deleted = cpu_to_be64(generation);
-}
+पूर्ण
 
-bool gfs2_inode_already_deleted(struct gfs2_glock *gl, u64 generation)
-{
-	struct gfs2_inode_lvb *ri = (void *)gl->gl_lksb.sb_lvbptr;
+bool gfs2_inode_alपढ़ोy_deleted(काष्ठा gfs2_glock *gl, u64 generation)
+अणु
+	काष्ठा gfs2_inode_lvb *ri = (व्योम *)gl->gl_lksb.sb_lvbptr;
 
-	if (ri->ri_magic != cpu_to_be32(GFS2_MAGIC))
-		return false;
-	return generation <= be64_to_cpu(ri->ri_generation_deleted);
-}
+	अगर (ri->ri_magic != cpu_to_be32(GFS2_MAGIC))
+		वापस false;
+	वापस generation <= be64_to_cpu(ri->ri_generation_deleted);
+पूर्ण
 
-static void gfs2_glock_poke(struct gfs2_glock *gl)
-{
-	int flags = LM_FLAG_TRY_1CB | LM_FLAG_ANY | GL_SKIP;
-	struct gfs2_holder gh;
-	int error;
+अटल व्योम gfs2_glock_poke(काष्ठा gfs2_glock *gl)
+अणु
+	पूर्णांक flags = LM_FLAG_TRY_1CB | LM_FLAG_ANY | GL_SKIP;
+	काष्ठा gfs2_holder gh;
+	पूर्णांक error;
 
 	gfs2_holder_init(gl, LM_ST_SHARED, flags, &gh);
 	error = gfs2_glock_nq(&gh);
-	if (!error)
+	अगर (!error)
 		gfs2_glock_dq(&gh);
 	gfs2_holder_uninit(&gh);
-}
+पूर्ण
 
-static bool gfs2_try_evict(struct gfs2_glock *gl)
-{
-	struct gfs2_inode *ip;
+अटल bool gfs2_try_evict(काष्ठा gfs2_glock *gl)
+अणु
+	काष्ठा gfs2_inode *ip;
 	bool evicted = false;
 
 	/*
-	 * If there is contention on the iopen glock and we have an inode, try
+	 * If there is contention on the iखोलो glock and we have an inode, try
 	 * to grab and release the inode so that it can be evicted.  This will
 	 * allow the remote node to go ahead and delete the inode without us
-	 * having to do it, which will avoid rgrp glock thrashing.
+	 * having to करो it, which will aव्योम rgrp glock thrashing.
 	 *
 	 * The remote node is likely still holding the corresponding inode
-	 * glock, so it will run before we get to verify that the delete has
+	 * glock, so it will run beक्रमe we get to verअगरy that the delete has
 	 * happened below.
 	 */
 	spin_lock(&gl->gl_lockref.lock);
 	ip = gl->gl_object;
-	if (ip && !igrab(&ip->i_inode))
-		ip = NULL;
+	अगर (ip && !igrab(&ip->i_inode))
+		ip = शून्य;
 	spin_unlock(&gl->gl_lockref.lock);
-	if (ip) {
-		struct gfs2_glock *inode_gl = NULL;
+	अगर (ip) अणु
+		काष्ठा gfs2_glock *inode_gl = शून्य;
 
-		gl->gl_no_formal_ino = ip->i_no_formal_ino;
+		gl->gl_no_क्रमmal_ino = ip->i_no_क्रमmal_ino;
 		set_bit(GIF_DEFERRED_DELETE, &ip->i_flags);
 		d_prune_aliases(&ip->i_inode);
 		iput(&ip->i_inode);
 
-		/* If the inode was evicted, gl->gl_object will now be NULL. */
+		/* If the inode was evicted, gl->gl_object will now be शून्य. */
 		spin_lock(&gl->gl_lockref.lock);
 		ip = gl->gl_object;
-		if (ip) {
+		अगर (ip) अणु
 			inode_gl = ip->i_gl;
 			lockref_get(&inode_gl->gl_lockref);
 			clear_bit(GIF_DEFERRED_DELETE, &ip->i_flags);
-		}
+		पूर्ण
 		spin_unlock(&gl->gl_lockref.lock);
-		if (inode_gl) {
+		अगर (inode_gl) अणु
 			gfs2_glock_poke(inode_gl);
 			gfs2_glock_put(inode_gl);
-		}
+		पूर्ण
 		evicted = !ip;
-	}
-	return evicted;
-}
+	पूर्ण
+	वापस evicted;
+पूर्ण
 
-static void delete_work_func(struct work_struct *work)
-{
-	struct delayed_work *dwork = to_delayed_work(work);
-	struct gfs2_glock *gl = container_of(dwork, struct gfs2_glock, gl_delete);
-	struct gfs2_sbd *sdp = gl->gl_name.ln_sbd;
-	struct inode *inode;
+अटल व्योम delete_work_func(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा delayed_work *dwork = to_delayed_work(work);
+	काष्ठा gfs2_glock *gl = container_of(dwork, काष्ठा gfs2_glock, gl_delete);
+	काष्ठा gfs2_sbd *sdp = gl->gl_name.ln_sbd;
+	काष्ठा inode *inode;
 	u64 no_addr = gl->gl_name.ln_number;
 
 	spin_lock(&gl->gl_lockref.lock);
 	clear_bit(GLF_PENDING_DELETE, &gl->gl_flags);
 	spin_unlock(&gl->gl_lockref.lock);
 
-	if (test_bit(GLF_DEMOTE, &gl->gl_flags)) {
+	अगर (test_bit(GLF_DEMOTE, &gl->gl_flags)) अणु
 		/*
 		 * If we can evict the inode, give the remote node trying to
-		 * delete the inode some time before verifying that the delete
-		 * has happened.  Otherwise, if we cause contention on the inode glock
+		 * delete the inode some समय beक्रमe verअगरying that the delete
+		 * has happened.  Otherwise, अगर we cause contention on the inode glock
 		 * immediately, the remote node will think that we still have
-		 * the inode in use, and so it will give up waiting.
+		 * the inode in use, and so it will give up रुकोing.
 		 *
-		 * If we can't evict the inode, signal to the remote node that
+		 * If we can't evict the inode, संकेत to the remote node that
 		 * the inode is still in use.  We'll later try to delete the
 		 * inode locally in gfs2_evict_inode.
 		 *
-		 * FIXME: We only need to verify that the remote node has
-		 * deleted the inode because nodes before this remote delete
-		 * rework won't cooperate.  At a later time, when we no longer
+		 * FIXME: We only need to verअगरy that the remote node has
+		 * deleted the inode because nodes beक्रमe this remote delete
+		 * rework won't cooperate.  At a later समय, when we no दीर्घer
 		 * care about compatibility with such nodes, we can skip this
 		 * step entirely.
 		 */
-		if (gfs2_try_evict(gl)) {
-			if (gfs2_queue_delete_work(gl, 5 * HZ))
-				return;
-		}
-		goto out;
-	}
+		अगर (gfs2_try_evict(gl)) अणु
+			अगर (gfs2_queue_delete_work(gl, 5 * HZ))
+				वापस;
+		पूर्ण
+		जाओ out;
+	पूर्ण
 
-	inode = gfs2_lookup_by_inum(sdp, no_addr, gl->gl_no_formal_ino,
+	inode = gfs2_lookup_by_inum(sdp, no_addr, gl->gl_no_क्रमmal_ino,
 				    GFS2_BLKST_UNLINKED);
-	if (!IS_ERR_OR_NULL(inode)) {
+	अगर (!IS_ERR_OR_शून्य(inode)) अणु
 		d_prune_aliases(inode);
 		iput(inode);
-	}
+	पूर्ण
 out:
 	gfs2_glock_put(gl);
-}
+पूर्ण
 
-static void glock_work_func(struct work_struct *work)
-{
-	unsigned long delay = 0;
-	struct gfs2_glock *gl = container_of(work, struct gfs2_glock, gl_work.work);
-	unsigned int drop_refs = 1;
+अटल व्योम glock_work_func(काष्ठा work_काष्ठा *work)
+अणु
+	अचिन्हित दीर्घ delay = 0;
+	काष्ठा gfs2_glock *gl = container_of(work, काष्ठा gfs2_glock, gl_work.work);
+	अचिन्हित पूर्णांक drop_refs = 1;
 
-	if (test_and_clear_bit(GLF_REPLY_PENDING, &gl->gl_flags)) {
+	अगर (test_and_clear_bit(GLF_REPLY_PENDING, &gl->gl_flags)) अणु
 		finish_xmote(gl, gl->gl_reply);
 		drop_refs++;
-	}
+	पूर्ण
 	spin_lock(&gl->gl_lockref.lock);
-	if (test_bit(GLF_PENDING_DEMOTE, &gl->gl_flags) &&
+	अगर (test_bit(GLF_PENDING_DEMOTE, &gl->gl_flags) &&
 	    gl->gl_state != LM_ST_UNLOCKED &&
-	    gl->gl_demote_state != LM_ST_EXCLUSIVE) {
-		unsigned long holdtime, now = jiffies;
+	    gl->gl_demote_state != LM_ST_EXCLUSIVE) अणु
+		अचिन्हित दीर्घ holdसमय, now = jअगरfies;
 
-		holdtime = gl->gl_tchange + gl->gl_hold_time;
-		if (time_before(now, holdtime))
-			delay = holdtime - now;
+		holdसमय = gl->gl_tchange + gl->gl_hold_समय;
+		अगर (समय_beक्रमe(now, holdसमय))
+			delay = holdसमय - now;
 
-		if (!delay) {
+		अगर (!delay) अणु
 			clear_bit(GLF_PENDING_DEMOTE, &gl->gl_flags);
 			gfs2_set_demote(gl);
-		}
-	}
+		पूर्ण
+	पूर्ण
 	run_queue(gl, 0);
-	if (delay) {
-		/* Keep one glock reference for the work we requeue. */
+	अगर (delay) अणु
+		/* Keep one glock reference क्रम the work we requeue. */
 		drop_refs--;
-		if (gl->gl_name.ln_type != LM_TYPE_INODE)
+		अगर (gl->gl_name.ln_type != LM_TYPE_INODE)
 			delay = 0;
 		__gfs2_glock_queue_work(gl, delay);
-	}
+	पूर्ण
 
 	/*
-	 * Drop the remaining glock references manually here. (Mind that
+	 * Drop the reमुख्यing glock references manually here. (Mind that
 	 * __gfs2_glock_queue_work depends on the lockref spinlock begin held
 	 * here as well.)
 	 */
 	gl->gl_lockref.count -= drop_refs;
-	if (!gl->gl_lockref.count) {
+	अगर (!gl->gl_lockref.count) अणु
 		__gfs2_glock_put(gl);
-		return;
-	}
+		वापस;
+	पूर्ण
 	spin_unlock(&gl->gl_lockref.lock);
-}
+पूर्ण
 
-static struct gfs2_glock *find_insert_glock(struct lm_lockname *name,
-					    struct gfs2_glock *new)
-{
-	struct wait_glock_queue wait;
-	wait_queue_head_t *wq = glock_waitqueue(name);
-	struct gfs2_glock *gl;
+अटल काष्ठा gfs2_glock *find_insert_glock(काष्ठा lm_lockname *name,
+					    काष्ठा gfs2_glock *new)
+अणु
+	काष्ठा रुको_glock_queue रुको;
+	रुको_queue_head_t *wq = glock_रुकोqueue(name);
+	काष्ठा gfs2_glock *gl;
 
-	wait.name = name;
-	init_wait(&wait.wait);
-	wait.wait.func = glock_wake_function;
+	रुको.name = name;
+	init_रुको(&रुको.रुको);
+	रुको.रुको.func = glock_wake_function;
 
 again:
-	prepare_to_wait(wq, &wait.wait, TASK_UNINTERRUPTIBLE);
-	rcu_read_lock();
-	if (new) {
+	prepare_to_रुको(wq, &रुको.रुको, TASK_UNINTERRUPTIBLE);
+	rcu_पढ़ो_lock();
+	अगर (new) अणु
 		gl = rhashtable_lookup_get_insert_fast(&gl_hash_table,
 			&new->gl_node, ht_parms);
-		if (IS_ERR(gl))
-			goto out;
-	} else {
+		अगर (IS_ERR(gl))
+			जाओ out;
+	पूर्ण अन्यथा अणु
 		gl = rhashtable_lookup_fast(&gl_hash_table,
 			name, ht_parms);
-	}
-	if (gl && !lockref_get_not_dead(&gl->gl_lockref)) {
-		rcu_read_unlock();
+	पूर्ण
+	अगर (gl && !lockref_get_not_dead(&gl->gl_lockref)) अणु
+		rcu_पढ़ो_unlock();
 		schedule();
-		goto again;
-	}
+		जाओ again;
+	पूर्ण
 out:
-	rcu_read_unlock();
-	finish_wait(wq, &wait.wait);
-	return gl;
-}
+	rcu_पढ़ो_unlock();
+	finish_रुको(wq, &रुको.रुको);
+	वापस gl;
+पूर्ण
 
 /**
- * gfs2_glock_get() - Get a glock, or create one if one doesn't exist
+ * gfs2_glock_get() - Get a glock, or create one अगर one करोesn't exist
  * @sdp: The GFS2 superblock
  * @number: the lock number
  * @glops: The glock_operations to use
- * @create: If 0, don't create the glock if it doesn't exist
- * @glp: the glock is returned here
+ * @create: If 0, करोn't create the glock if it doesn't exist
+ * @glp: the glock is वापसed here
  *
- * This does not lock a glock, just finds/creates structures for one.
+ * This करोes not lock a glock, just finds/creates काष्ठाures क्रम one.
  *
- * Returns: errno
+ * Returns: त्रुटि_सं
  */
 
-int gfs2_glock_get(struct gfs2_sbd *sdp, u64 number,
-		   const struct gfs2_glock_operations *glops, int create,
-		   struct gfs2_glock **glp)
-{
-	struct super_block *s = sdp->sd_vfs;
-	struct lm_lockname name = { .ln_number = number,
+पूर्णांक gfs2_glock_get(काष्ठा gfs2_sbd *sdp, u64 number,
+		   स्थिर काष्ठा gfs2_glock_operations *glops, पूर्णांक create,
+		   काष्ठा gfs2_glock **glp)
+अणु
+	काष्ठा super_block *s = sdp->sd_vfs;
+	काष्ठा lm_lockname name = अणु .ln_number = number,
 				    .ln_type = glops->go_type,
-				    .ln_sbd = sdp };
-	struct gfs2_glock *gl, *tmp;
-	struct address_space *mapping;
-	struct kmem_cache *cachep;
-	int ret = 0;
+				    .ln_sbd = sdp पूर्ण;
+	काष्ठा gfs2_glock *gl, *पंचांगp;
+	काष्ठा address_space *mapping;
+	काष्ठा kmem_cache *cachep;
+	पूर्णांक ret = 0;
 
-	gl = find_insert_glock(&name, NULL);
-	if (gl) {
+	gl = find_insert_glock(&name, शून्य);
+	अगर (gl) अणु
 		*glp = gl;
-		return 0;
-	}
-	if (!create)
-		return -ENOENT;
+		वापस 0;
+	पूर्ण
+	अगर (!create)
+		वापस -ENOENT;
 
-	if (glops->go_flags & GLOF_ASPACE)
+	अगर (glops->go_flags & GLOF_ASPACE)
 		cachep = gfs2_glock_aspace_cachep;
-	else
+	अन्यथा
 		cachep = gfs2_glock_cachep;
 	gl = kmem_cache_alloc(cachep, GFP_NOFS);
-	if (!gl)
-		return -ENOMEM;
+	अगर (!gl)
+		वापस -ENOMEM;
 
-	memset(&gl->gl_lksb, 0, sizeof(struct dlm_lksb));
+	स_रखो(&gl->gl_lksb, 0, माप(काष्ठा dlm_lksb));
 
-	if (glops->go_flags & GLOF_LVB) {
+	अगर (glops->go_flags & GLOF_LVB) अणु
 		gl->gl_lksb.sb_lvbptr = kzalloc(GDLM_LVB_SIZE, GFP_NOFS);
-		if (!gl->gl_lksb.sb_lvbptr) {
-			kmem_cache_free(cachep, gl);
-			return -ENOMEM;
-		}
-	}
+		अगर (!gl->gl_lksb.sb_lvbptr) अणु
+			kmem_cache_मुक्त(cachep, gl);
+			वापस -ENOMEM;
+		पूर्ण
+	पूर्ण
 
 	atomic_inc(&sdp->sd_glock_disposal);
-	gl->gl_node.next = NULL;
+	gl->gl_node.next = शून्य;
 	gl->gl_flags = 0;
 	gl->gl_name = name;
 	lockdep_set_subclass(&gl->gl_lockref.lock, glops->go_subclass);
@@ -1073,56 +1074,56 @@ int gfs2_glock_get(struct gfs2_sbd *sdp, u64 number,
 	preempt_enable();
 	gl->gl_stats.stats[GFS2_LKS_DCOUNT] = 0;
 	gl->gl_stats.stats[GFS2_LKS_QCOUNT] = 0;
-	gl->gl_tchange = jiffies;
-	gl->gl_object = NULL;
-	gl->gl_hold_time = GL_GLOCK_DFT_HOLD;
+	gl->gl_tchange = jअगरfies;
+	gl->gl_object = शून्य;
+	gl->gl_hold_समय = GL_GLOCK_DFT_HOLD;
 	INIT_DELAYED_WORK(&gl->gl_work, glock_work_func);
-	if (gl->gl_name.ln_type == LM_TYPE_IOPEN)
+	अगर (gl->gl_name.ln_type == LM_TYPE_IOPEN)
 		INIT_DELAYED_WORK(&gl->gl_delete, delete_work_func);
 
 	mapping = gfs2_glock2aspace(gl);
-	if (mapping) {
+	अगर (mapping) अणु
                 mapping->a_ops = &gfs2_meta_aops;
 		mapping->host = s->s_bdev->bd_inode;
 		mapping->flags = 0;
 		mapping_set_gfp_mask(mapping, GFP_NOFS);
-		mapping->private_data = NULL;
-		mapping->writeback_index = 0;
-	}
+		mapping->निजी_data = शून्य;
+		mapping->ग_लिखोback_index = 0;
+	पूर्ण
 
-	tmp = find_insert_glock(&name, gl);
-	if (!tmp) {
+	पंचांगp = find_insert_glock(&name, gl);
+	अगर (!पंचांगp) अणु
 		*glp = gl;
-		goto out;
-	}
-	if (IS_ERR(tmp)) {
-		ret = PTR_ERR(tmp);
-		goto out_free;
-	}
-	*glp = tmp;
+		जाओ out;
+	पूर्ण
+	अगर (IS_ERR(पंचांगp)) अणु
+		ret = PTR_ERR(पंचांगp);
+		जाओ out_मुक्त;
+	पूर्ण
+	*glp = पंचांगp;
 
-out_free:
-	kfree(gl->gl_lksb.sb_lvbptr);
-	kmem_cache_free(cachep, gl);
-	if (atomic_dec_and_test(&sdp->sd_glock_disposal))
-		wake_up(&sdp->sd_glock_wait);
+out_मुक्त:
+	kमुक्त(gl->gl_lksb.sb_lvbptr);
+	kmem_cache_मुक्त(cachep, gl);
+	अगर (atomic_dec_and_test(&sdp->sd_glock_disposal))
+		wake_up(&sdp->sd_glock_रुको);
 
 out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * gfs2_holder_init - initialize a struct gfs2_holder in the default way
+ * gfs2_holder_init - initialize a काष्ठा gfs2_holder in the शेष way
  * @gl: the glock
  * @state: the state we're requesting
- * @flags: the modifier flags
- * @gh: the holder structure
+ * @flags: the modअगरier flags
+ * @gh: the holder काष्ठाure
  *
  */
 
-void gfs2_holder_init(struct gfs2_glock *gl, unsigned int state, u16 flags,
-		      struct gfs2_holder *gh)
-{
+व्योम gfs2_holder_init(काष्ठा gfs2_glock *gl, अचिन्हित पूर्णांक state, u16 flags,
+		      काष्ठा gfs2_holder *gh)
+अणु
 	INIT_LIST_HEAD(&gh->gh_list);
 	gh->gh_gl = gl;
 	gh->gh_ip = _RET_IP_;
@@ -1130,209 +1131,209 @@ void gfs2_holder_init(struct gfs2_glock *gl, unsigned int state, u16 flags,
 	gh->gh_state = state;
 	gh->gh_flags = flags;
 	gh->gh_error = 0;
-	gh->gh_iflags = 0;
+	gh->gh_अगरlags = 0;
 	gfs2_glock_hold(gl);
-}
+पूर्ण
 
 /**
- * gfs2_holder_reinit - reinitialize a struct gfs2_holder so we can requeue it
+ * gfs2_holder_reinit - reinitialize a काष्ठा gfs2_holder so we can requeue it
  * @state: the state we're requesting
- * @flags: the modifier flags
- * @gh: the holder structure
+ * @flags: the modअगरier flags
+ * @gh: the holder काष्ठाure
  *
  * Don't mess with the glock.
  *
  */
 
-void gfs2_holder_reinit(unsigned int state, u16 flags, struct gfs2_holder *gh)
-{
+व्योम gfs2_holder_reinit(अचिन्हित पूर्णांक state, u16 flags, काष्ठा gfs2_holder *gh)
+अणु
 	gh->gh_state = state;
 	gh->gh_flags = flags;
-	gh->gh_iflags = 0;
+	gh->gh_अगरlags = 0;
 	gh->gh_ip = _RET_IP_;
 	put_pid(gh->gh_owner_pid);
 	gh->gh_owner_pid = get_pid(task_pid(current));
-}
+पूर्ण
 
 /**
- * gfs2_holder_uninit - uninitialize a holder structure (drop glock reference)
- * @gh: the holder structure
+ * gfs2_holder_uninit - uninitialize a holder काष्ठाure (drop glock reference)
+ * @gh: the holder काष्ठाure
  *
  */
 
-void gfs2_holder_uninit(struct gfs2_holder *gh)
-{
+व्योम gfs2_holder_uninit(काष्ठा gfs2_holder *gh)
+अणु
 	put_pid(gh->gh_owner_pid);
 	gfs2_glock_put(gh->gh_gl);
 	gfs2_holder_mark_uninitialized(gh);
 	gh->gh_ip = 0;
-}
+पूर्ण
 
-static void gfs2_glock_update_hold_time(struct gfs2_glock *gl,
-					unsigned long start_time)
-{
-	/* Have we waited longer that a second? */
-	if (time_after(jiffies, start_time + HZ)) {
-		/* Lengthen the minimum hold time. */
-		gl->gl_hold_time = min(gl->gl_hold_time + GL_GLOCK_HOLD_INCR,
+अटल व्योम gfs2_glock_update_hold_समय(काष्ठा gfs2_glock *gl,
+					अचिन्हित दीर्घ start_समय)
+अणु
+	/* Have we रुकोed दीर्घer that a second? */
+	अगर (समय_after(jअगरfies, start_समय + HZ)) अणु
+		/* Lengthen the minimum hold समय. */
+		gl->gl_hold_समय = min(gl->gl_hold_समय + GL_GLOCK_HOLD_INCR,
 				       GL_GLOCK_MAX_HOLD);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
- * gfs2_glock_wait - wait on a glock acquisition
+ * gfs2_glock_रुको - रुको on a glock acquisition
  * @gh: the glock holder
  *
  * Returns: 0 on success
  */
 
-int gfs2_glock_wait(struct gfs2_holder *gh)
-{
-	unsigned long start_time = jiffies;
+पूर्णांक gfs2_glock_रुको(काष्ठा gfs2_holder *gh)
+अणु
+	अचिन्हित दीर्घ start_समय = jअगरfies;
 
 	might_sleep();
-	wait_on_bit(&gh->gh_iflags, HIF_WAIT, TASK_UNINTERRUPTIBLE);
-	gfs2_glock_update_hold_time(gh->gh_gl, start_time);
-	return gh->gh_error;
-}
+	रुको_on_bit(&gh->gh_अगरlags, HIF_WAIT, TASK_UNINTERRUPTIBLE);
+	gfs2_glock_update_hold_समय(gh->gh_gl, start_समय);
+	वापस gh->gh_error;
+पूर्ण
 
-static int glocks_pending(unsigned int num_gh, struct gfs2_holder *ghs)
-{
-	int i;
+अटल पूर्णांक glocks_pending(अचिन्हित पूर्णांक num_gh, काष्ठा gfs2_holder *ghs)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < num_gh; i++)
-		if (test_bit(HIF_WAIT, &ghs[i].gh_iflags))
-			return 1;
-	return 0;
-}
+	क्रम (i = 0; i < num_gh; i++)
+		अगर (test_bit(HIF_WAIT, &ghs[i].gh_अगरlags))
+			वापस 1;
+	वापस 0;
+पूर्ण
 
 /**
- * gfs2_glock_async_wait - wait on multiple asynchronous glock acquisitions
+ * gfs2_glock_async_रुको - रुको on multiple asynchronous glock acquisitions
  * @num_gh: the number of holders in the array
  * @ghs: the glock holder array
  *
  * Returns: 0 on success, meaning all glocks have been granted and are held.
- *          -ESTALE if the request timed out, meaning all glocks were released,
+ *          -ESTALE अगर the request समयd out, meaning all glocks were released,
  *          and the caller should retry the operation.
  */
 
-int gfs2_glock_async_wait(unsigned int num_gh, struct gfs2_holder *ghs)
-{
-	struct gfs2_sbd *sdp = ghs[0].gh_gl->gl_name.ln_sbd;
-	int i, ret = 0, timeout = 0;
-	unsigned long start_time = jiffies;
-	bool keep_waiting;
+पूर्णांक gfs2_glock_async_रुको(अचिन्हित पूर्णांक num_gh, काष्ठा gfs2_holder *ghs)
+अणु
+	काष्ठा gfs2_sbd *sdp = ghs[0].gh_gl->gl_name.ln_sbd;
+	पूर्णांक i, ret = 0, समयout = 0;
+	अचिन्हित दीर्घ start_समय = jअगरfies;
+	bool keep_रुकोing;
 
 	might_sleep();
 	/*
-	 * Total up the (minimum hold time * 2) of all glocks and use that to
-	 * determine the max amount of time we should wait.
+	 * Total up the (minimum hold समय * 2) of all glocks and use that to
+	 * determine the max amount of समय we should रुको.
 	 */
-	for (i = 0; i < num_gh; i++)
-		timeout += ghs[i].gh_gl->gl_hold_time << 1;
+	क्रम (i = 0; i < num_gh; i++)
+		समयout += ghs[i].gh_gl->gl_hold_समय << 1;
 
-wait_for_dlm:
-	if (!wait_event_timeout(sdp->sd_async_glock_wait,
-				!glocks_pending(num_gh, ghs), timeout))
-		ret = -ESTALE; /* request timed out. */
+रुको_क्रम_dlm:
+	अगर (!रुको_event_समयout(sdp->sd_async_glock_रुको,
+				!glocks_pending(num_gh, ghs), समयout))
+		ret = -ESTALE; /* request समयd out. */
 
 	/*
 	 * If dlm granted all our requests, we need to adjust the glock
-	 * minimum hold time values according to how long we waited.
+	 * minimum hold समय values according to how दीर्घ we रुकोed.
 	 *
-	 * If our request timed out, we need to repeatedly release any held
-	 * glocks we acquired thus far to allow dlm to acquire the remaining
+	 * If our request समयd out, we need to repeatedly release any held
+	 * glocks we acquired thus far to allow dlm to acquire the reमुख्यing
 	 * glocks without deadlocking.  We cannot currently cancel outstanding
 	 * glock acquisitions.
 	 *
 	 * The HIF_WAIT bit tells us which requests still need a response from
 	 * dlm.
 	 *
-	 * If dlm sent us any errors, we return the first error we find.
+	 * If dlm sent us any errors, we वापस the first error we find.
 	 */
-	keep_waiting = false;
-	for (i = 0; i < num_gh; i++) {
-		/* Skip holders we have already dequeued below. */
-		if (!gfs2_holder_queued(&ghs[i]))
-			continue;
+	keep_रुकोing = false;
+	क्रम (i = 0; i < num_gh; i++) अणु
+		/* Skip holders we have alपढ़ोy dequeued below. */
+		अगर (!gfs2_holder_queued(&ghs[i]))
+			जारी;
 		/* Skip holders with a pending DLM response. */
-		if (test_bit(HIF_WAIT, &ghs[i].gh_iflags)) {
-			keep_waiting = true;
-			continue;
-		}
+		अगर (test_bit(HIF_WAIT, &ghs[i].gh_अगरlags)) अणु
+			keep_रुकोing = true;
+			जारी;
+		पूर्ण
 
-		if (test_bit(HIF_HOLDER, &ghs[i].gh_iflags)) {
-			if (ret == -ESTALE)
+		अगर (test_bit(HIF_HOLDER, &ghs[i].gh_अगरlags)) अणु
+			अगर (ret == -ESTALE)
 				gfs2_glock_dq(&ghs[i]);
-			else
-				gfs2_glock_update_hold_time(ghs[i].gh_gl,
-							    start_time);
-		}
-		if (!ret)
+			अन्यथा
+				gfs2_glock_update_hold_समय(ghs[i].gh_gl,
+							    start_समय);
+		पूर्ण
+		अगर (!ret)
 			ret = ghs[i].gh_error;
-	}
+	पूर्ण
 
-	if (keep_waiting)
-		goto wait_for_dlm;
+	अगर (keep_रुकोing)
+		जाओ रुको_क्रम_dlm;
 
 	/*
-	 * At this point, we've either acquired all locks or released them all.
+	 * At this poपूर्णांक, we've either acquired all locks or released them all.
 	 */
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
  * handle_callback - process a demote request
  * @gl: the glock
  * @state: the state the caller wants us to change to
  * @delay: zero to demote immediately; otherwise pending demote
- * @remote: true if this came from a different cluster node
+ * @remote: true अगर this came from a dअगरferent cluster node
  *
  * There are only two requests that we are going to see in actual
  * practise: LM_ST_SHARED and LM_ST_UNLOCKED
  */
 
-static void handle_callback(struct gfs2_glock *gl, unsigned int state,
-			    unsigned long delay, bool remote)
-{
-	if (delay)
+अटल व्योम handle_callback(काष्ठा gfs2_glock *gl, अचिन्हित पूर्णांक state,
+			    अचिन्हित दीर्घ delay, bool remote)
+अणु
+	अगर (delay)
 		set_bit(GLF_PENDING_DEMOTE, &gl->gl_flags);
-	else
+	अन्यथा
 		gfs2_set_demote(gl);
-	if (gl->gl_demote_state == LM_ST_EXCLUSIVE) {
+	अगर (gl->gl_demote_state == LM_ST_EXCLUSIVE) अणु
 		gl->gl_demote_state = state;
-		gl->gl_demote_time = jiffies;
-	} else if (gl->gl_demote_state != LM_ST_UNLOCKED &&
-			gl->gl_demote_state != state) {
+		gl->gl_demote_समय = jअगरfies;
+	पूर्ण अन्यथा अगर (gl->gl_demote_state != LM_ST_UNLOCKED &&
+			gl->gl_demote_state != state) अणु
 		gl->gl_demote_state = LM_ST_UNLOCKED;
-	}
-	if (gl->gl_ops->go_callback)
+	पूर्ण
+	अगर (gl->gl_ops->go_callback)
 		gl->gl_ops->go_callback(gl, remote);
 	trace_gfs2_demote_rq(gl, remote);
-}
+पूर्ण
 
-void gfs2_print_dbg(struct seq_file *seq, const char *fmt, ...)
-{
-	struct va_format vaf;
-	va_list args;
+व्योम gfs2_prपूर्णांक_dbg(काष्ठा seq_file *seq, स्थिर अक्षर *fmt, ...)
+अणु
+	काष्ठा va_क्रमmat vaf;
+	बहु_सूची args;
 
-	va_start(args, fmt);
+	बहु_शुरू(args, fmt);
 
-	if (seq) {
-		seq_vprintf(seq, fmt, args);
-	} else {
+	अगर (seq) अणु
+		seq_भ_लिखो(seq, fmt, args);
+	पूर्ण अन्यथा अणु
 		vaf.fmt = fmt;
 		vaf.va = &args;
 
 		pr_err("%pV", &vaf);
-	}
+	पूर्ण
 
-	va_end(args);
-}
+	बहु_पूर्ण(args);
+पूर्ण
 
 /**
- * add_to_queue - Add a holder to the wait queue (but look for recursion)
- * @gh: the holder structure to add
+ * add_to_queue - Add a holder to the रुको queue (but look क्रम recursion)
+ * @gh: the holder काष्ठाure to add
  *
  * Eventually we should move the recursive locking trap to a
  * debugging option or something like that. This is the fast
@@ -1340,485 +1341,485 @@ void gfs2_print_dbg(struct seq_file *seq, const char *fmt, ...)
  * 
  */
 
-static inline void add_to_queue(struct gfs2_holder *gh)
+अटल अंतरभूत व्योम add_to_queue(काष्ठा gfs2_holder *gh)
 __releases(&gl->gl_lockref.lock)
 __acquires(&gl->gl_lockref.lock)
-{
-	struct gfs2_glock *gl = gh->gh_gl;
-	struct gfs2_sbd *sdp = gl->gl_name.ln_sbd;
-	struct list_head *insert_pt = NULL;
-	struct gfs2_holder *gh2;
-	int try_futile = 0;
+अणु
+	काष्ठा gfs2_glock *gl = gh->gh_gl;
+	काष्ठा gfs2_sbd *sdp = gl->gl_name.ln_sbd;
+	काष्ठा list_head *insert_pt = शून्य;
+	काष्ठा gfs2_holder *gh2;
+	पूर्णांक try_futile = 0;
 
-	GLOCK_BUG_ON(gl, gh->gh_owner_pid == NULL);
-	if (test_and_set_bit(HIF_WAIT, &gh->gh_iflags))
+	GLOCK_BUG_ON(gl, gh->gh_owner_pid == शून्य);
+	अगर (test_and_set_bit(HIF_WAIT, &gh->gh_अगरlags))
 		GLOCK_BUG_ON(gl, true);
 
-	if (gh->gh_flags & (LM_FLAG_TRY | LM_FLAG_TRY_1CB)) {
-		if (test_bit(GLF_LOCK, &gl->gl_flags))
+	अगर (gh->gh_flags & (LM_FLAG_TRY | LM_FLAG_TRY_1CB)) अणु
+		अगर (test_bit(GLF_LOCK, &gl->gl_flags))
 			try_futile = !may_grant(gl, gh);
-		if (test_bit(GLF_INVALIDATE_IN_PROGRESS, &gl->gl_flags))
-			goto fail;
-	}
+		अगर (test_bit(GLF_INVALIDATE_IN_PROGRESS, &gl->gl_flags))
+			जाओ fail;
+	पूर्ण
 
-	list_for_each_entry(gh2, &gl->gl_holders, gh_list) {
-		if (unlikely(gh2->gh_owner_pid == gh->gh_owner_pid &&
+	list_क्रम_each_entry(gh2, &gl->gl_holders, gh_list) अणु
+		अगर (unlikely(gh2->gh_owner_pid == gh->gh_owner_pid &&
 		    (gh->gh_gl->gl_ops->go_type != LM_TYPE_FLOCK)))
-			goto trap_recursive;
-		if (try_futile &&
-		    !(gh2->gh_flags & (LM_FLAG_TRY | LM_FLAG_TRY_1CB))) {
+			जाओ trap_recursive;
+		अगर (try_futile &&
+		    !(gh2->gh_flags & (LM_FLAG_TRY | LM_FLAG_TRY_1CB))) अणु
 fail:
 			gh->gh_error = GLR_TRYFAILED;
 			gfs2_holder_wake(gh);
-			return;
-		}
-		if (test_bit(HIF_HOLDER, &gh2->gh_iflags))
-			continue;
-		if (unlikely((gh->gh_flags & LM_FLAG_PRIORITY) && !insert_pt))
+			वापस;
+		पूर्ण
+		अगर (test_bit(HIF_HOLDER, &gh2->gh_अगरlags))
+			जारी;
+		अगर (unlikely((gh->gh_flags & LM_FLAG_PRIORITY) && !insert_pt))
 			insert_pt = &gh2->gh_list;
-	}
+	पूर्ण
 	trace_gfs2_glock_queue(gh, 1);
 	gfs2_glstats_inc(gl, GFS2_LKS_QCOUNT);
 	gfs2_sbstats_inc(gl, GFS2_LKS_QCOUNT);
-	if (likely(insert_pt == NULL)) {
+	अगर (likely(insert_pt == शून्य)) अणु
 		list_add_tail(&gh->gh_list, &gl->gl_holders);
-		if (unlikely(gh->gh_flags & LM_FLAG_PRIORITY))
-			goto do_cancel;
-		return;
-	}
+		अगर (unlikely(gh->gh_flags & LM_FLAG_PRIORITY))
+			जाओ करो_cancel;
+		वापस;
+	पूर्ण
 	list_add_tail(&gh->gh_list, insert_pt);
-do_cancel:
-	gh = list_first_entry(&gl->gl_holders, struct gfs2_holder, gh_list);
-	if (!(gh->gh_flags & LM_FLAG_PRIORITY)) {
+करो_cancel:
+	gh = list_first_entry(&gl->gl_holders, काष्ठा gfs2_holder, gh_list);
+	अगर (!(gh->gh_flags & LM_FLAG_PRIORITY)) अणु
 		spin_unlock(&gl->gl_lockref.lock);
-		if (sdp->sd_lockstruct.ls_ops->lm_cancel)
-			sdp->sd_lockstruct.ls_ops->lm_cancel(gl);
+		अगर (sdp->sd_lockकाष्ठा.ls_ops->lm_cancel)
+			sdp->sd_lockकाष्ठा.ls_ops->lm_cancel(gl);
 		spin_lock(&gl->gl_lockref.lock);
-	}
-	return;
+	पूर्ण
+	वापस;
 
 trap_recursive:
-	fs_err(sdp, "original: %pSR\n", (void *)gh2->gh_ip);
+	fs_err(sdp, "original: %pSR\n", (व्योम *)gh2->gh_ip);
 	fs_err(sdp, "pid: %d\n", pid_nr(gh2->gh_owner_pid));
 	fs_err(sdp, "lock type: %d req lock state : %d\n",
 	       gh2->gh_gl->gl_name.ln_type, gh2->gh_state);
-	fs_err(sdp, "new: %pSR\n", (void *)gh->gh_ip);
+	fs_err(sdp, "new: %pSR\n", (व्योम *)gh->gh_ip);
 	fs_err(sdp, "pid: %d\n", pid_nr(gh->gh_owner_pid));
 	fs_err(sdp, "lock type: %d req lock state : %d\n",
 	       gh->gh_gl->gl_name.ln_type, gh->gh_state);
-	gfs2_dump_glock(NULL, gl, true);
+	gfs2_dump_glock(शून्य, gl, true);
 	BUG();
-}
+पूर्ण
 
 /**
- * gfs2_glock_nq - enqueue a struct gfs2_holder onto a glock (acquire a glock)
- * @gh: the holder structure
+ * gfs2_glock_nq - enqueue a काष्ठा gfs2_holder onto a glock (acquire a glock)
+ * @gh: the holder काष्ठाure
  *
- * if (gh->gh_flags & GL_ASYNC), this never returns an error
+ * अगर (gh->gh_flags & GL_ASYNC), this never वापसs an error
  *
- * Returns: 0, GLR_TRYFAILED, or errno on failure
+ * Returns: 0, GLR_TRYFAILED, or त्रुटि_सं on failure
  */
 
-int gfs2_glock_nq(struct gfs2_holder *gh)
-{
-	struct gfs2_glock *gl = gh->gh_gl;
-	int error = 0;
+पूर्णांक gfs2_glock_nq(काष्ठा gfs2_holder *gh)
+अणु
+	काष्ठा gfs2_glock *gl = gh->gh_gl;
+	पूर्णांक error = 0;
 
-	if (glock_blocked_by_withdraw(gl) && !(gh->gh_flags & LM_FLAG_NOEXP))
-		return -EIO;
+	अगर (glock_blocked_by_withdraw(gl) && !(gh->gh_flags & LM_FLAG_NOEXP))
+		वापस -EIO;
 
-	if (test_bit(GLF_LRU, &gl->gl_flags))
-		gfs2_glock_remove_from_lru(gl);
+	अगर (test_bit(GLF_LRU, &gl->gl_flags))
+		gfs2_glock_हटाओ_from_lru(gl);
 
 	spin_lock(&gl->gl_lockref.lock);
 	add_to_queue(gh);
-	if (unlikely((LM_FLAG_NOEXP & gh->gh_flags) &&
-		     test_and_clear_bit(GLF_FROZEN, &gl->gl_flags))) {
+	अगर (unlikely((LM_FLAG_NOEXP & gh->gh_flags) &&
+		     test_and_clear_bit(GLF_FROZEN, &gl->gl_flags))) अणु
 		set_bit(GLF_REPLY_PENDING, &gl->gl_flags);
 		gl->gl_lockref.count++;
 		__gfs2_glock_queue_work(gl, 0);
-	}
+	पूर्ण
 	run_queue(gl, 1);
 	spin_unlock(&gl->gl_lockref.lock);
 
-	if (!(gh->gh_flags & GL_ASYNC))
-		error = gfs2_glock_wait(gh);
+	अगर (!(gh->gh_flags & GL_ASYNC))
+		error = gfs2_glock_रुको(gh);
 
-	return error;
-}
+	वापस error;
+पूर्ण
 
 /**
- * gfs2_glock_poll - poll to see if an async request has been completed
+ * gfs2_glock_poll - poll to see अगर an async request has been completed
  * @gh: the holder
  *
- * Returns: 1 if the request is ready to be gfs2_glock_wait()ed on
+ * Returns: 1 अगर the request is पढ़ोy to be gfs2_glock_रुको()ed on
  */
 
-int gfs2_glock_poll(struct gfs2_holder *gh)
-{
-	return test_bit(HIF_WAIT, &gh->gh_iflags) ? 0 : 1;
-}
+पूर्णांक gfs2_glock_poll(काष्ठा gfs2_holder *gh)
+अणु
+	वापस test_bit(HIF_WAIT, &gh->gh_अगरlags) ? 0 : 1;
+पूर्ण
 
 /**
- * gfs2_glock_dq - dequeue a struct gfs2_holder from a glock (release a glock)
+ * gfs2_glock_dq - dequeue a काष्ठा gfs2_holder from a glock (release a glock)
  * @gh: the glock holder
  *
  */
 
-void gfs2_glock_dq(struct gfs2_holder *gh)
-{
-	struct gfs2_glock *gl = gh->gh_gl;
-	struct gfs2_sbd *sdp = gl->gl_name.ln_sbd;
-	unsigned delay = 0;
-	int fast_path = 0;
+व्योम gfs2_glock_dq(काष्ठा gfs2_holder *gh)
+अणु
+	काष्ठा gfs2_glock *gl = gh->gh_gl;
+	काष्ठा gfs2_sbd *sdp = gl->gl_name.ln_sbd;
+	अचिन्हित delay = 0;
+	पूर्णांक fast_path = 0;
 
 	spin_lock(&gl->gl_lockref.lock);
 	/*
-	 * If we're in the process of file system withdraw, we cannot just
+	 * If we're in the process of file प्रणाली withdraw, we cannot just
 	 * dequeue any glocks until our journal is recovered, lest we
-	 * introduce file system corruption. We need two exceptions to this
+	 * पूर्णांकroduce file प्रणाली corruption. We need two exceptions to this
 	 * rule: We need to allow unlocking of nondisk glocks and the glock
-	 * for our own journal that needs recovery.
+	 * क्रम our own journal that needs recovery.
 	 */
-	if (test_bit(SDF_WITHDRAW_RECOVERY, &sdp->sd_flags) &&
+	अगर (test_bit(SDF_WITHDRAW_RECOVERY, &sdp->sd_flags) &&
 	    glock_blocked_by_withdraw(gl) &&
-	    gh->gh_gl != sdp->sd_jinode_gl) {
+	    gh->gh_gl != sdp->sd_jinode_gl) अणु
 		sdp->sd_glock_dqs_held++;
 		spin_unlock(&gl->gl_lockref.lock);
 		might_sleep();
-		wait_on_bit(&sdp->sd_flags, SDF_WITHDRAW_RECOVERY,
+		रुको_on_bit(&sdp->sd_flags, SDF_WITHDRAW_RECOVERY,
 			    TASK_UNINTERRUPTIBLE);
 		spin_lock(&gl->gl_lockref.lock);
-	}
-	if (gh->gh_flags & GL_NOCACHE)
+	पूर्ण
+	अगर (gh->gh_flags & GL_NOCACHE)
 		handle_callback(gl, LM_ST_UNLOCKED, 0, false);
 
 	list_del_init(&gh->gh_list);
-	clear_bit(HIF_HOLDER, &gh->gh_iflags);
-	if (find_first_holder(gl) == NULL) {
-		if (list_empty(&gl->gl_holders) &&
+	clear_bit(HIF_HOLDER, &gh->gh_अगरlags);
+	अगर (find_first_holder(gl) == शून्य) अणु
+		अगर (list_empty(&gl->gl_holders) &&
 		    !test_bit(GLF_PENDING_DEMOTE, &gl->gl_flags) &&
 		    !test_bit(GLF_DEMOTE, &gl->gl_flags))
 			fast_path = 1;
-	}
-	if (!test_bit(GLF_LFLUSH, &gl->gl_flags) && demote_ok(gl))
+	पूर्ण
+	अगर (!test_bit(GLF_LFLUSH, &gl->gl_flags) && demote_ok(gl))
 		gfs2_glock_add_to_lru(gl);
 
 	trace_gfs2_glock_queue(gh, 0);
-	if (unlikely(!fast_path)) {
+	अगर (unlikely(!fast_path)) अणु
 		gl->gl_lockref.count++;
-		if (test_bit(GLF_PENDING_DEMOTE, &gl->gl_flags) &&
+		अगर (test_bit(GLF_PENDING_DEMOTE, &gl->gl_flags) &&
 		    !test_bit(GLF_DEMOTE, &gl->gl_flags) &&
 		    gl->gl_name.ln_type == LM_TYPE_INODE)
-			delay = gl->gl_hold_time;
+			delay = gl->gl_hold_समय;
 		__gfs2_glock_queue_work(gl, delay);
-	}
+	पूर्ण
 	spin_unlock(&gl->gl_lockref.lock);
-}
+पूर्ण
 
-void gfs2_glock_dq_wait(struct gfs2_holder *gh)
-{
-	struct gfs2_glock *gl = gh->gh_gl;
+व्योम gfs2_glock_dq_रुको(काष्ठा gfs2_holder *gh)
+अणु
+	काष्ठा gfs2_glock *gl = gh->gh_gl;
 	gfs2_glock_dq(gh);
 	might_sleep();
-	wait_on_bit(&gl->gl_flags, GLF_DEMOTE, TASK_UNINTERRUPTIBLE);
-}
+	रुको_on_bit(&gl->gl_flags, GLF_DEMOTE, TASK_UNINTERRUPTIBLE);
+पूर्ण
 
 /**
  * gfs2_glock_dq_uninit - dequeue a holder from a glock and initialize it
- * @gh: the holder structure
+ * @gh: the holder काष्ठाure
  *
  */
 
-void gfs2_glock_dq_uninit(struct gfs2_holder *gh)
-{
+व्योम gfs2_glock_dq_uninit(काष्ठा gfs2_holder *gh)
+अणु
 	gfs2_glock_dq(gh);
 	gfs2_holder_uninit(gh);
-}
+पूर्ण
 
 /**
  * gfs2_glock_nq_num - acquire a glock based on lock number
- * @sdp: the filesystem
+ * @sdp: the fileप्रणाली
  * @number: the lock number
- * @glops: the glock operations for the type of glock
+ * @glops: the glock operations क्रम the type of glock
  * @state: the state to acquire the glock in
- * @flags: modifier flags for the acquisition
- * @gh: the struct gfs2_holder
+ * @flags: modअगरier flags क्रम the acquisition
+ * @gh: the काष्ठा gfs2_holder
  *
- * Returns: errno
+ * Returns: त्रुटि_सं
  */
 
-int gfs2_glock_nq_num(struct gfs2_sbd *sdp, u64 number,
-		      const struct gfs2_glock_operations *glops,
-		      unsigned int state, u16 flags, struct gfs2_holder *gh)
-{
-	struct gfs2_glock *gl;
-	int error;
+पूर्णांक gfs2_glock_nq_num(काष्ठा gfs2_sbd *sdp, u64 number,
+		      स्थिर काष्ठा gfs2_glock_operations *glops,
+		      अचिन्हित पूर्णांक state, u16 flags, काष्ठा gfs2_holder *gh)
+अणु
+	काष्ठा gfs2_glock *gl;
+	पूर्णांक error;
 
 	error = gfs2_glock_get(sdp, number, glops, CREATE, &gl);
-	if (!error) {
+	अगर (!error) अणु
 		error = gfs2_glock_nq_init(gl, state, flags, gh);
 		gfs2_glock_put(gl);
-	}
+	पूर्ण
 
-	return error;
-}
+	वापस error;
+पूर्ण
 
 /**
- * glock_compare - Compare two struct gfs2_glock structures for sorting
- * @arg_a: the first structure
- * @arg_b: the second structure
+ * glock_compare - Compare two काष्ठा gfs2_glock काष्ठाures क्रम sorting
+ * @arg_a: the first काष्ठाure
+ * @arg_b: the second काष्ठाure
  *
  */
 
-static int glock_compare(const void *arg_a, const void *arg_b)
-{
-	const struct gfs2_holder *gh_a = *(const struct gfs2_holder **)arg_a;
-	const struct gfs2_holder *gh_b = *(const struct gfs2_holder **)arg_b;
-	const struct lm_lockname *a = &gh_a->gh_gl->gl_name;
-	const struct lm_lockname *b = &gh_b->gh_gl->gl_name;
+अटल पूर्णांक glock_compare(स्थिर व्योम *arg_a, स्थिर व्योम *arg_b)
+अणु
+	स्थिर काष्ठा gfs2_holder *gh_a = *(स्थिर काष्ठा gfs2_holder **)arg_a;
+	स्थिर काष्ठा gfs2_holder *gh_b = *(स्थिर काष्ठा gfs2_holder **)arg_b;
+	स्थिर काष्ठा lm_lockname *a = &gh_a->gh_gl->gl_name;
+	स्थिर काष्ठा lm_lockname *b = &gh_b->gh_gl->gl_name;
 
-	if (a->ln_number > b->ln_number)
-		return 1;
-	if (a->ln_number < b->ln_number)
-		return -1;
+	अगर (a->ln_number > b->ln_number)
+		वापस 1;
+	अगर (a->ln_number < b->ln_number)
+		वापस -1;
 	BUG_ON(gh_a->gh_gl->gl_ops->go_type == gh_b->gh_gl->gl_ops->go_type);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * nq_m_sync - synchonously acquire more than one glock in deadlock free order
- * @num_gh: the number of structures
- * @ghs: an array of struct gfs2_holder structures
- * @p: placeholder for the holder structure to pass back
+ * nq_m_sync - synchonously acquire more than one glock in deadlock मुक्त order
+ * @num_gh: the number of काष्ठाures
+ * @ghs: an array of काष्ठा gfs2_holder काष्ठाures
+ * @p: placeholder क्रम the holder काष्ठाure to pass back
  *
  * Returns: 0 on success (all glocks acquired),
- *          errno on failure (no glocks acquired)
+ *          त्रुटि_सं on failure (no glocks acquired)
  */
 
-static int nq_m_sync(unsigned int num_gh, struct gfs2_holder *ghs,
-		     struct gfs2_holder **p)
-{
-	unsigned int x;
-	int error = 0;
+अटल पूर्णांक nq_m_sync(अचिन्हित पूर्णांक num_gh, काष्ठा gfs2_holder *ghs,
+		     काष्ठा gfs2_holder **p)
+अणु
+	अचिन्हित पूर्णांक x;
+	पूर्णांक error = 0;
 
-	for (x = 0; x < num_gh; x++)
+	क्रम (x = 0; x < num_gh; x++)
 		p[x] = &ghs[x];
 
-	sort(p, num_gh, sizeof(struct gfs2_holder *), glock_compare, NULL);
+	sort(p, num_gh, माप(काष्ठा gfs2_holder *), glock_compare, शून्य);
 
-	for (x = 0; x < num_gh; x++) {
+	क्रम (x = 0; x < num_gh; x++) अणु
 		p[x]->gh_flags &= ~(LM_FLAG_TRY | GL_ASYNC);
 
 		error = gfs2_glock_nq(p[x]);
-		if (error) {
-			while (x--)
+		अगर (error) अणु
+			जबतक (x--)
 				gfs2_glock_dq(p[x]);
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	return error;
-}
+	वापस error;
+पूर्ण
 
 /**
  * gfs2_glock_nq_m - acquire multiple glocks
- * @num_gh: the number of structures
- * @ghs: an array of struct gfs2_holder structures
+ * @num_gh: the number of काष्ठाures
+ * @ghs: an array of काष्ठा gfs2_holder काष्ठाures
  *
  *
  * Returns: 0 on success (all glocks acquired),
- *          errno on failure (no glocks acquired)
+ *          त्रुटि_सं on failure (no glocks acquired)
  */
 
-int gfs2_glock_nq_m(unsigned int num_gh, struct gfs2_holder *ghs)
-{
-	struct gfs2_holder *tmp[4];
-	struct gfs2_holder **pph = tmp;
-	int error = 0;
+पूर्णांक gfs2_glock_nq_m(अचिन्हित पूर्णांक num_gh, काष्ठा gfs2_holder *ghs)
+अणु
+	काष्ठा gfs2_holder *पंचांगp[4];
+	काष्ठा gfs2_holder **pph = पंचांगp;
+	पूर्णांक error = 0;
 
-	switch(num_gh) {
-	case 0:
-		return 0;
-	case 1:
+	चयन(num_gh) अणु
+	हाल 0:
+		वापस 0;
+	हाल 1:
 		ghs->gh_flags &= ~(LM_FLAG_TRY | GL_ASYNC);
-		return gfs2_glock_nq(ghs);
-	default:
-		if (num_gh <= 4)
-			break;
-		pph = kmalloc_array(num_gh, sizeof(struct gfs2_holder *),
+		वापस gfs2_glock_nq(ghs);
+	शेष:
+		अगर (num_gh <= 4)
+			अवरोध;
+		pph = kदो_स्मृति_array(num_gh, माप(काष्ठा gfs2_holder *),
 				    GFP_NOFS);
-		if (!pph)
-			return -ENOMEM;
-	}
+		अगर (!pph)
+			वापस -ENOMEM;
+	पूर्ण
 
 	error = nq_m_sync(num_gh, ghs, pph);
 
-	if (pph != tmp)
-		kfree(pph);
+	अगर (pph != पंचांगp)
+		kमुक्त(pph);
 
-	return error;
-}
+	वापस error;
+पूर्ण
 
 /**
  * gfs2_glock_dq_m - release multiple glocks
- * @num_gh: the number of structures
- * @ghs: an array of struct gfs2_holder structures
+ * @num_gh: the number of काष्ठाures
+ * @ghs: an array of काष्ठा gfs2_holder काष्ठाures
  *
  */
 
-void gfs2_glock_dq_m(unsigned int num_gh, struct gfs2_holder *ghs)
-{
-	while (num_gh--)
+व्योम gfs2_glock_dq_m(अचिन्हित पूर्णांक num_gh, काष्ठा gfs2_holder *ghs)
+अणु
+	जबतक (num_gh--)
 		gfs2_glock_dq(&ghs[num_gh]);
-}
+पूर्ण
 
-void gfs2_glock_cb(struct gfs2_glock *gl, unsigned int state)
-{
-	unsigned long delay = 0;
-	unsigned long holdtime;
-	unsigned long now = jiffies;
+व्योम gfs2_glock_cb(काष्ठा gfs2_glock *gl, अचिन्हित पूर्णांक state)
+अणु
+	अचिन्हित दीर्घ delay = 0;
+	अचिन्हित दीर्घ holdसमय;
+	अचिन्हित दीर्घ now = jअगरfies;
 
 	gfs2_glock_hold(gl);
 	spin_lock(&gl->gl_lockref.lock);
-	holdtime = gl->gl_tchange + gl->gl_hold_time;
-	if (!list_empty(&gl->gl_holders) &&
-	    gl->gl_name.ln_type == LM_TYPE_INODE) {
-		if (time_before(now, holdtime))
-			delay = holdtime - now;
-		if (test_bit(GLF_REPLY_PENDING, &gl->gl_flags))
-			delay = gl->gl_hold_time;
-	}
+	holdसमय = gl->gl_tchange + gl->gl_hold_समय;
+	अगर (!list_empty(&gl->gl_holders) &&
+	    gl->gl_name.ln_type == LM_TYPE_INODE) अणु
+		अगर (समय_beक्रमe(now, holdसमय))
+			delay = holdसमय - now;
+		अगर (test_bit(GLF_REPLY_PENDING, &gl->gl_flags))
+			delay = gl->gl_hold_समय;
+	पूर्ण
 	handle_callback(gl, state, delay, true);
 	__gfs2_glock_queue_work(gl, delay);
 	spin_unlock(&gl->gl_lockref.lock);
-}
+पूर्ण
 
 /**
- * gfs2_should_freeze - Figure out if glock should be frozen
+ * gfs2_should_मुक्तze - Figure out अगर glock should be frozen
  * @gl: The glock in question
  *
- * Glocks are not frozen if (a) the result of the dlm operation is
+ * Glocks are not frozen अगर (a) the result of the dlm operation is
  * an error, (b) the locking operation was an unlock operation or
- * (c) if there is a "noexp" flagged request anywhere in the queue
+ * (c) अगर there is a "noexp" flagged request anywhere in the queue
  *
- * Returns: 1 if freezing should occur, 0 otherwise
+ * Returns: 1 अगर मुक्तzing should occur, 0 otherwise
  */
 
-static int gfs2_should_freeze(const struct gfs2_glock *gl)
-{
-	const struct gfs2_holder *gh;
+अटल पूर्णांक gfs2_should_मुक्तze(स्थिर काष्ठा gfs2_glock *gl)
+अणु
+	स्थिर काष्ठा gfs2_holder *gh;
 
-	if (gl->gl_reply & ~LM_OUT_ST_MASK)
-		return 0;
-	if (gl->gl_target == LM_ST_UNLOCKED)
-		return 0;
+	अगर (gl->gl_reply & ~LM_OUT_ST_MASK)
+		वापस 0;
+	अगर (gl->gl_target == LM_ST_UNLOCKED)
+		वापस 0;
 
-	list_for_each_entry(gh, &gl->gl_holders, gh_list) {
-		if (test_bit(HIF_HOLDER, &gh->gh_iflags))
-			continue;
-		if (LM_FLAG_NOEXP & gh->gh_flags)
-			return 0;
-	}
+	list_क्रम_each_entry(gh, &gl->gl_holders, gh_list) अणु
+		अगर (test_bit(HIF_HOLDER, &gh->gh_अगरlags))
+			जारी;
+		अगर (LM_FLAG_NOEXP & gh->gh_flags)
+			वापस 0;
+	पूर्ण
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
 /**
  * gfs2_glock_complete - Callback used by locking
- * @gl: Pointer to the glock
- * @ret: The return value from the dlm
+ * @gl: Poपूर्णांकer to the glock
+ * @ret: The वापस value from the dlm
  *
  * The gl_reply field is under the gl_lockref.lock lock so that it is ok
  * to use a bitfield shared with other glock state fields.
  */
 
-void gfs2_glock_complete(struct gfs2_glock *gl, int ret)
-{
-	struct lm_lockstruct *ls = &gl->gl_name.ln_sbd->sd_lockstruct;
+व्योम gfs2_glock_complete(काष्ठा gfs2_glock *gl, पूर्णांक ret)
+अणु
+	काष्ठा lm_lockकाष्ठा *ls = &gl->gl_name.ln_sbd->sd_lockकाष्ठा;
 
 	spin_lock(&gl->gl_lockref.lock);
 	gl->gl_reply = ret;
 
-	if (unlikely(test_bit(DFL_BLOCK_LOCKS, &ls->ls_recover_flags))) {
-		if (gfs2_should_freeze(gl)) {
+	अगर (unlikely(test_bit(DFL_BLOCK_LOCKS, &ls->ls_recover_flags))) अणु
+		अगर (gfs2_should_मुक्तze(gl)) अणु
 			set_bit(GLF_FROZEN, &gl->gl_flags);
 			spin_unlock(&gl->gl_lockref.lock);
-			return;
-		}
-	}
+			वापस;
+		पूर्ण
+	पूर्ण
 
 	gl->gl_lockref.count++;
 	set_bit(GLF_REPLY_PENDING, &gl->gl_flags);
 	__gfs2_glock_queue_work(gl, 0);
 	spin_unlock(&gl->gl_lockref.lock);
-}
+पूर्ण
 
-static int glock_cmp(void *priv, const struct list_head *a,
-		     const struct list_head *b)
-{
-	struct gfs2_glock *gla, *glb;
+अटल पूर्णांक glock_cmp(व्योम *priv, स्थिर काष्ठा list_head *a,
+		     स्थिर काष्ठा list_head *b)
+अणु
+	काष्ठा gfs2_glock *gla, *glb;
 
-	gla = list_entry(a, struct gfs2_glock, gl_lru);
-	glb = list_entry(b, struct gfs2_glock, gl_lru);
+	gla = list_entry(a, काष्ठा gfs2_glock, gl_lru);
+	glb = list_entry(b, काष्ठा gfs2_glock, gl_lru);
 
-	if (gla->gl_name.ln_number > glb->gl_name.ln_number)
-		return 1;
-	if (gla->gl_name.ln_number < glb->gl_name.ln_number)
-		return -1;
+	अगर (gla->gl_name.ln_number > glb->gl_name.ln_number)
+		वापस 1;
+	अगर (gla->gl_name.ln_number < glb->gl_name.ln_number)
+		वापस -1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * gfs2_dispose_glock_lru - Demote a list of glocks
  * @list: The list to dispose of
  *
  * Disposing of glocks may involve disk accesses, so that here we sort
- * the glocks by number (i.e. disk location of the inodes) so that if
+ * the glocks by number (i.e. disk location of the inodes) so that अगर
  * there are any such accesses, they'll be sent in order (mostly).
  *
  * Must be called under the lru_lock, but may drop and retake this
  * lock. While the lru_lock is dropped, entries may vanish from the
  * list, but no new entries will appear on the list (since it is
- * private)
+ * निजी)
  */
 
-static void gfs2_dispose_glock_lru(struct list_head *list)
+अटल व्योम gfs2_dispose_glock_lru(काष्ठा list_head *list)
 __releases(&lru_lock)
 __acquires(&lru_lock)
-{
-	struct gfs2_glock *gl;
+अणु
+	काष्ठा gfs2_glock *gl;
 
-	list_sort(NULL, list, glock_cmp);
+	list_sort(शून्य, list, glock_cmp);
 
-	while(!list_empty(list)) {
-		gl = list_first_entry(list, struct gfs2_glock, gl_lru);
+	जबतक(!list_empty(list)) अणु
+		gl = list_first_entry(list, काष्ठा gfs2_glock, gl_lru);
 		list_del_init(&gl->gl_lru);
 		clear_bit(GLF_LRU, &gl->gl_flags);
-		if (!spin_trylock(&gl->gl_lockref.lock)) {
+		अगर (!spin_trylock(&gl->gl_lockref.lock)) अणु
 add_back_to_lru:
 			list_add(&gl->gl_lru, &lru_list);
 			set_bit(GLF_LRU, &gl->gl_flags);
 			atomic_inc(&lru_count);
-			continue;
-		}
-		if (test_and_set_bit(GLF_LOCK, &gl->gl_flags)) {
+			जारी;
+		पूर्ण
+		अगर (test_and_set_bit(GLF_LOCK, &gl->gl_flags)) अणु
 			spin_unlock(&gl->gl_lockref.lock);
-			goto add_back_to_lru;
-		}
+			जाओ add_back_to_lru;
+		पूर्ण
 		gl->gl_lockref.count++;
-		if (demote_ok(gl))
+		अगर (demote_ok(gl))
 			handle_callback(gl, LM_ST_UNLOCKED, 0, false);
 		WARN_ON(!test_and_clear_bit(GLF_LOCK, &gl->gl_flags));
 		__gfs2_glock_queue_work(gl, 0);
 		spin_unlock(&gl->gl_lockref.lock);
 		cond_resched_lock(&lru_lock);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
- * gfs2_scan_glock_lru - Scan the LRU looking for locks to demote
+ * gfs2_scan_glock_lru - Scan the LRU looking क्रम locks to demote
  * @nr: The number of entries to scan
  *
  * This function selects the entries on the LRU which are able to
@@ -1826,161 +1827,161 @@ add_back_to_lru:
  * gfs2_dispose_glock_lru() above.
  */
 
-static long gfs2_scan_glock_lru(int nr)
-{
-	struct gfs2_glock *gl;
+अटल दीर्घ gfs2_scan_glock_lru(पूर्णांक nr)
+अणु
+	काष्ठा gfs2_glock *gl;
 	LIST_HEAD(skipped);
 	LIST_HEAD(dispose);
-	long freed = 0;
+	दीर्घ मुक्तd = 0;
 
 	spin_lock(&lru_lock);
-	while ((nr-- >= 0) && !list_empty(&lru_list)) {
-		gl = list_first_entry(&lru_list, struct gfs2_glock, gl_lru);
+	जबतक ((nr-- >= 0) && !list_empty(&lru_list)) अणु
+		gl = list_first_entry(&lru_list, काष्ठा gfs2_glock, gl_lru);
 
-		/* Test for being demotable */
-		if (!test_bit(GLF_LOCK, &gl->gl_flags)) {
+		/* Test क्रम being demotable */
+		अगर (!test_bit(GLF_LOCK, &gl->gl_flags)) अणु
 			list_move(&gl->gl_lru, &dispose);
 			atomic_dec(&lru_count);
-			freed++;
-			continue;
-		}
+			मुक्तd++;
+			जारी;
+		पूर्ण
 
 		list_move(&gl->gl_lru, &skipped);
-	}
+	पूर्ण
 	list_splice(&skipped, &lru_list);
-	if (!list_empty(&dispose))
+	अगर (!list_empty(&dispose))
 		gfs2_dispose_glock_lru(&dispose);
 	spin_unlock(&lru_lock);
 
-	return freed;
-}
+	वापस मुक्तd;
+पूर्ण
 
-static unsigned long gfs2_glock_shrink_scan(struct shrinker *shrink,
-					    struct shrink_control *sc)
-{
-	if (!(sc->gfp_mask & __GFP_FS))
-		return SHRINK_STOP;
-	return gfs2_scan_glock_lru(sc->nr_to_scan);
-}
+अटल अचिन्हित दीर्घ gfs2_glock_shrink_scan(काष्ठा shrinker *shrink,
+					    काष्ठा shrink_control *sc)
+अणु
+	अगर (!(sc->gfp_mask & __GFP_FS))
+		वापस SHRINK_STOP;
+	वापस gfs2_scan_glock_lru(sc->nr_to_scan);
+पूर्ण
 
-static unsigned long gfs2_glock_shrink_count(struct shrinker *shrink,
-					     struct shrink_control *sc)
-{
-	return vfs_pressure_ratio(atomic_read(&lru_count));
-}
+अटल अचिन्हित दीर्घ gfs2_glock_shrink_count(काष्ठा shrinker *shrink,
+					     काष्ठा shrink_control *sc)
+अणु
+	वापस vfs_pressure_ratio(atomic_पढ़ो(&lru_count));
+पूर्ण
 
-static struct shrinker glock_shrinker = {
+अटल काष्ठा shrinker glock_shrinker = अणु
 	.seeks = DEFAULT_SEEKS,
 	.count_objects = gfs2_glock_shrink_count,
 	.scan_objects = gfs2_glock_shrink_scan,
-};
+पूर्ण;
 
 /**
- * glock_hash_walk - Call a function for glock in a hash bucket
+ * glock_hash_walk - Call a function क्रम glock in a hash bucket
  * @examiner: the function
- * @sdp: the filesystem
+ * @sdp: the fileप्रणाली
  *
- * Note that the function can be called multiple times on the same
+ * Note that the function can be called multiple बार on the same
  * object.  So the user must ensure that the function can cope with
  * that.
  */
 
-static void glock_hash_walk(glock_examiner examiner, const struct gfs2_sbd *sdp)
-{
-	struct gfs2_glock *gl;
-	struct rhashtable_iter iter;
+अटल व्योम glock_hash_walk(glock_examiner examiner, स्थिर काष्ठा gfs2_sbd *sdp)
+अणु
+	काष्ठा gfs2_glock *gl;
+	काष्ठा rhashtable_iter iter;
 
 	rhashtable_walk_enter(&gl_hash_table, &iter);
 
-	do {
+	करो अणु
 		rhashtable_walk_start(&iter);
 
-		while ((gl = rhashtable_walk_next(&iter)) && !IS_ERR(gl))
-			if (gl->gl_name.ln_sbd == sdp &&
+		जबतक ((gl = rhashtable_walk_next(&iter)) && !IS_ERR(gl))
+			अगर (gl->gl_name.ln_sbd == sdp &&
 			    lockref_get_not_dead(&gl->gl_lockref))
 				examiner(gl);
 
 		rhashtable_walk_stop(&iter);
-	} while (cond_resched(), gl == ERR_PTR(-EAGAIN));
+	पूर्ण जबतक (cond_resched(), gl == ERR_PTR(-EAGAIN));
 
-	rhashtable_walk_exit(&iter);
-}
+	rhashtable_walk_निकास(&iter);
+पूर्ण
 
-bool gfs2_queue_delete_work(struct gfs2_glock *gl, unsigned long delay)
-{
+bool gfs2_queue_delete_work(काष्ठा gfs2_glock *gl, अचिन्हित दीर्घ delay)
+अणु
 	bool queued;
 
 	spin_lock(&gl->gl_lockref.lock);
 	queued = queue_delayed_work(gfs2_delete_workqueue,
 				    &gl->gl_delete, delay);
-	if (queued)
+	अगर (queued)
 		set_bit(GLF_PENDING_DELETE, &gl->gl_flags);
 	spin_unlock(&gl->gl_lockref.lock);
-	return queued;
-}
+	वापस queued;
+पूर्ण
 
-void gfs2_cancel_delete_work(struct gfs2_glock *gl)
-{
-	if (cancel_delayed_work_sync(&gl->gl_delete)) {
+व्योम gfs2_cancel_delete_work(काष्ठा gfs2_glock *gl)
+अणु
+	अगर (cancel_delayed_work_sync(&gl->gl_delete)) अणु
 		clear_bit(GLF_PENDING_DELETE, &gl->gl_flags);
 		gfs2_glock_put(gl);
-	}
-}
+	पूर्ण
+पूर्ण
 
-bool gfs2_delete_work_queued(const struct gfs2_glock *gl)
-{
-	return test_bit(GLF_PENDING_DELETE, &gl->gl_flags);
-}
+bool gfs2_delete_work_queued(स्थिर काष्ठा gfs2_glock *gl)
+अणु
+	वापस test_bit(GLF_PENDING_DELETE, &gl->gl_flags);
+पूर्ण
 
-static void flush_delete_work(struct gfs2_glock *gl)
-{
-	if (gl->gl_name.ln_type == LM_TYPE_IOPEN) {
-		if (cancel_delayed_work(&gl->gl_delete)) {
+अटल व्योम flush_delete_work(काष्ठा gfs2_glock *gl)
+अणु
+	अगर (gl->gl_name.ln_type == LM_TYPE_IOPEN) अणु
+		अगर (cancel_delayed_work(&gl->gl_delete)) अणु
 			queue_delayed_work(gfs2_delete_workqueue,
 					   &gl->gl_delete, 0);
-		}
-	}
+		पूर्ण
+	पूर्ण
 	gfs2_glock_queue_work(gl, 0);
-}
+पूर्ण
 
-void gfs2_flush_delete_work(struct gfs2_sbd *sdp)
-{
+व्योम gfs2_flush_delete_work(काष्ठा gfs2_sbd *sdp)
+अणु
 	glock_hash_walk(flush_delete_work, sdp);
 	flush_workqueue(gfs2_delete_workqueue);
-}
+पूर्ण
 
 /**
- * thaw_glock - thaw out a glock which has an unprocessed reply waiting
+ * thaw_glock - thaw out a glock which has an unprocessed reply रुकोing
  * @gl: The glock to thaw
  *
  */
 
-static void thaw_glock(struct gfs2_glock *gl)
-{
-	if (!test_and_clear_bit(GLF_FROZEN, &gl->gl_flags)) {
+अटल व्योम thaw_glock(काष्ठा gfs2_glock *gl)
+अणु
+	अगर (!test_and_clear_bit(GLF_FROZEN, &gl->gl_flags)) अणु
 		gfs2_glock_put(gl);
-		return;
-	}
+		वापस;
+	पूर्ण
 	set_bit(GLF_REPLY_PENDING, &gl->gl_flags);
 	gfs2_glock_queue_work(gl, 0);
-}
+पूर्ण
 
 /**
- * clear_glock - look at a glock and see if we can free it from glock cache
+ * clear_glock - look at a glock and see अगर we can मुक्त it from glock cache
  * @gl: the glock to look at
  *
  */
 
-static void clear_glock(struct gfs2_glock *gl)
-{
-	gfs2_glock_remove_from_lru(gl);
+अटल व्योम clear_glock(काष्ठा gfs2_glock *gl)
+अणु
+	gfs2_glock_हटाओ_from_lru(gl);
 
 	spin_lock(&gl->gl_lockref.lock);
-	if (gl->gl_state != LM_ST_UNLOCKED)
+	अगर (gl->gl_state != LM_ST_UNLOCKED)
 		handle_callback(gl, LM_ST_UNLOCKED, 0, false);
 	__gfs2_glock_queue_work(gl, 0);
 	spin_unlock(&gl->gl_lockref.lock);
-}
+पूर्ण
 
 /**
  * gfs2_glock_thaw - Thaw any frozen glocks
@@ -1988,248 +1989,248 @@ static void clear_glock(struct gfs2_glock *gl)
  *
  */
 
-void gfs2_glock_thaw(struct gfs2_sbd *sdp)
-{
+व्योम gfs2_glock_thaw(काष्ठा gfs2_sbd *sdp)
+अणु
 	glock_hash_walk(thaw_glock, sdp);
-}
+पूर्ण
 
-static void dump_glock(struct seq_file *seq, struct gfs2_glock *gl, bool fsid)
-{
+अटल व्योम dump_glock(काष्ठा seq_file *seq, काष्ठा gfs2_glock *gl, bool fsid)
+अणु
 	spin_lock(&gl->gl_lockref.lock);
 	gfs2_dump_glock(seq, gl, fsid);
 	spin_unlock(&gl->gl_lockref.lock);
-}
+पूर्ण
 
-static void dump_glock_func(struct gfs2_glock *gl)
-{
-	dump_glock(NULL, gl, true);
-}
+अटल व्योम dump_glock_func(काष्ठा gfs2_glock *gl)
+अणु
+	dump_glock(शून्य, gl, true);
+पूर्ण
 
 /**
  * gfs2_gl_hash_clear - Empty out the glock hash table
- * @sdp: the filesystem
+ * @sdp: the fileप्रणाली
  *
- * Called when unmounting the filesystem.
+ * Called when unmounting the fileप्रणाली.
  */
 
-void gfs2_gl_hash_clear(struct gfs2_sbd *sdp)
-{
+व्योम gfs2_gl_hash_clear(काष्ठा gfs2_sbd *sdp)
+अणु
 	set_bit(SDF_SKIP_DLM_UNLOCK, &sdp->sd_flags);
 	flush_workqueue(glock_workqueue);
 	glock_hash_walk(clear_glock, sdp);
 	flush_workqueue(glock_workqueue);
-	wait_event_timeout(sdp->sd_glock_wait,
-			   atomic_read(&sdp->sd_glock_disposal) == 0,
+	रुको_event_समयout(sdp->sd_glock_रुको,
+			   atomic_पढ़ो(&sdp->sd_glock_disposal) == 0,
 			   HZ * 600);
 	glock_hash_walk(dump_glock_func, sdp);
-}
+पूर्ण
 
-void gfs2_glock_finish_truncate(struct gfs2_inode *ip)
-{
-	struct gfs2_glock *gl = ip->i_gl;
-	int ret;
+व्योम gfs2_glock_finish_truncate(काष्ठा gfs2_inode *ip)
+अणु
+	काष्ठा gfs2_glock *gl = ip->i_gl;
+	पूर्णांक ret;
 
 	ret = gfs2_truncatei_resume(ip);
-	gfs2_glock_assert_withdraw(gl, ret == 0);
+	gfs2_glock_निश्चित_withdraw(gl, ret == 0);
 
 	spin_lock(&gl->gl_lockref.lock);
 	clear_bit(GLF_LOCK, &gl->gl_flags);
 	run_queue(gl, 1);
 	spin_unlock(&gl->gl_lockref.lock);
-}
+पूर्ण
 
-static const char *state2str(unsigned state)
-{
-	switch(state) {
-	case LM_ST_UNLOCKED:
-		return "UN";
-	case LM_ST_SHARED:
-		return "SH";
-	case LM_ST_DEFERRED:
-		return "DF";
-	case LM_ST_EXCLUSIVE:
-		return "EX";
-	}
-	return "??";
-}
+अटल स्थिर अक्षर *state2str(अचिन्हित state)
+अणु
+	चयन(state) अणु
+	हाल LM_ST_UNLOCKED:
+		वापस "UN";
+	हाल LM_ST_SHARED:
+		वापस "SH";
+	हाल LM_ST_DEFERRED:
+		वापस "DF";
+	हाल LM_ST_EXCLUSIVE:
+		वापस "EX";
+	पूर्ण
+	वापस "??";
+पूर्ण
 
-static const char *hflags2str(char *buf, u16 flags, unsigned long iflags)
-{
-	char *p = buf;
-	if (flags & LM_FLAG_TRY)
+अटल स्थिर अक्षर *hflags2str(अक्षर *buf, u16 flags, अचिन्हित दीर्घ अगरlags)
+अणु
+	अक्षर *p = buf;
+	अगर (flags & LM_FLAG_TRY)
 		*p++ = 't';
-	if (flags & LM_FLAG_TRY_1CB)
+	अगर (flags & LM_FLAG_TRY_1CB)
 		*p++ = 'T';
-	if (flags & LM_FLAG_NOEXP)
+	अगर (flags & LM_FLAG_NOEXP)
 		*p++ = 'e';
-	if (flags & LM_FLAG_ANY)
+	अगर (flags & LM_FLAG_ANY)
 		*p++ = 'A';
-	if (flags & LM_FLAG_PRIORITY)
+	अगर (flags & LM_FLAG_PRIORITY)
 		*p++ = 'p';
-	if (flags & LM_FLAG_NODE_SCOPE)
+	अगर (flags & LM_FLAG_NODE_SCOPE)
 		*p++ = 'n';
-	if (flags & GL_ASYNC)
+	अगर (flags & GL_ASYNC)
 		*p++ = 'a';
-	if (flags & GL_EXACT)
+	अगर (flags & GL_EXACT)
 		*p++ = 'E';
-	if (flags & GL_NOCACHE)
+	अगर (flags & GL_NOCACHE)
 		*p++ = 'c';
-	if (test_bit(HIF_HOLDER, &iflags))
+	अगर (test_bit(HIF_HOLDER, &अगरlags))
 		*p++ = 'H';
-	if (test_bit(HIF_WAIT, &iflags))
+	अगर (test_bit(HIF_WAIT, &अगरlags))
 		*p++ = 'W';
-	if (test_bit(HIF_FIRST, &iflags))
+	अगर (test_bit(HIF_FIRST, &अगरlags))
 		*p++ = 'F';
 	*p = 0;
-	return buf;
-}
+	वापस buf;
+पूर्ण
 
 /**
- * dump_holder - print information about a glock holder
- * @seq: the seq_file struct
+ * dump_holder - prपूर्णांक inक्रमmation about a glock holder
+ * @seq: the seq_file काष्ठा
  * @gh: the glock holder
- * @fs_id_buf: pointer to file system id (if requested)
+ * @fs_id_buf: poपूर्णांकer to file प्रणाली id (अगर requested)
  *
  */
 
-static void dump_holder(struct seq_file *seq, const struct gfs2_holder *gh,
-			const char *fs_id_buf)
-{
-	struct task_struct *gh_owner = NULL;
-	char flags_buf[32];
+अटल व्योम dump_holder(काष्ठा seq_file *seq, स्थिर काष्ठा gfs2_holder *gh,
+			स्थिर अक्षर *fs_id_buf)
+अणु
+	काष्ठा task_काष्ठा *gh_owner = शून्य;
+	अक्षर flags_buf[32];
 
-	rcu_read_lock();
-	if (gh->gh_owner_pid)
+	rcu_पढ़ो_lock();
+	अगर (gh->gh_owner_pid)
 		gh_owner = pid_task(gh->gh_owner_pid, PIDTYPE_PID);
-	gfs2_print_dbg(seq, "%s H: s:%s f:%s e:%d p:%ld [%s] %pS\n",
+	gfs2_prपूर्णांक_dbg(seq, "%s H: s:%s f:%s e:%d p:%ld [%s] %pS\n",
 		       fs_id_buf, state2str(gh->gh_state),
-		       hflags2str(flags_buf, gh->gh_flags, gh->gh_iflags),
+		       hflags2str(flags_buf, gh->gh_flags, gh->gh_अगरlags),
 		       gh->gh_error,
-		       gh->gh_owner_pid ? (long)pid_nr(gh->gh_owner_pid) : -1,
+		       gh->gh_owner_pid ? (दीर्घ)pid_nr(gh->gh_owner_pid) : -1,
 		       gh_owner ? gh_owner->comm : "(ended)",
-		       (void *)gh->gh_ip);
-	rcu_read_unlock();
-}
+		       (व्योम *)gh->gh_ip);
+	rcu_पढ़ो_unlock();
+पूर्ण
 
-static const char *gflags2str(char *buf, const struct gfs2_glock *gl)
-{
-	const unsigned long *gflags = &gl->gl_flags;
-	char *p = buf;
+अटल स्थिर अक्षर *gflags2str(अक्षर *buf, स्थिर काष्ठा gfs2_glock *gl)
+अणु
+	स्थिर अचिन्हित दीर्घ *gflags = &gl->gl_flags;
+	अक्षर *p = buf;
 
-	if (test_bit(GLF_LOCK, gflags))
+	अगर (test_bit(GLF_LOCK, gflags))
 		*p++ = 'l';
-	if (test_bit(GLF_DEMOTE, gflags))
+	अगर (test_bit(GLF_DEMOTE, gflags))
 		*p++ = 'D';
-	if (test_bit(GLF_PENDING_DEMOTE, gflags))
+	अगर (test_bit(GLF_PENDING_DEMOTE, gflags))
 		*p++ = 'd';
-	if (test_bit(GLF_DEMOTE_IN_PROGRESS, gflags))
+	अगर (test_bit(GLF_DEMOTE_IN_PROGRESS, gflags))
 		*p++ = 'p';
-	if (test_bit(GLF_DIRTY, gflags))
+	अगर (test_bit(GLF_सूचीTY, gflags))
 		*p++ = 'y';
-	if (test_bit(GLF_LFLUSH, gflags))
+	अगर (test_bit(GLF_LFLUSH, gflags))
 		*p++ = 'f';
-	if (test_bit(GLF_INVALIDATE_IN_PROGRESS, gflags))
+	अगर (test_bit(GLF_INVALIDATE_IN_PROGRESS, gflags))
 		*p++ = 'i';
-	if (test_bit(GLF_REPLY_PENDING, gflags))
+	अगर (test_bit(GLF_REPLY_PENDING, gflags))
 		*p++ = 'r';
-	if (test_bit(GLF_INITIAL, gflags))
+	अगर (test_bit(GLF_INITIAL, gflags))
 		*p++ = 'I';
-	if (test_bit(GLF_FROZEN, gflags))
+	अगर (test_bit(GLF_FROZEN, gflags))
 		*p++ = 'F';
-	if (!list_empty(&gl->gl_holders))
+	अगर (!list_empty(&gl->gl_holders))
 		*p++ = 'q';
-	if (test_bit(GLF_LRU, gflags))
+	अगर (test_bit(GLF_LRU, gflags))
 		*p++ = 'L';
-	if (gl->gl_object)
+	अगर (gl->gl_object)
 		*p++ = 'o';
-	if (test_bit(GLF_BLOCKING, gflags))
+	अगर (test_bit(GLF_BLOCKING, gflags))
 		*p++ = 'b';
-	if (test_bit(GLF_PENDING_DELETE, gflags))
+	अगर (test_bit(GLF_PENDING_DELETE, gflags))
 		*p++ = 'P';
-	if (test_bit(GLF_FREEING, gflags))
+	अगर (test_bit(GLF_FREEING, gflags))
 		*p++ = 'x';
 	*p = 0;
-	return buf;
-}
+	वापस buf;
+पूर्ण
 
 /**
- * gfs2_dump_glock - print information about a glock
- * @seq: The seq_file struct
+ * gfs2_dump_glock - prपूर्णांक inक्रमmation about a glock
+ * @seq: The seq_file काष्ठा
  * @gl: the glock
- * @fsid: If true, also dump the file system id
+ * @fsid: If true, also dump the file प्रणाली id
  *
- * The file format is as follows:
+ * The file क्रमmat is as follows:
  * One line per object, capital letters are used to indicate objects
  * G = glock, I = Inode, R = rgrp, H = holder. Glocks are not indented,
  * other objects are indented by a single space and follow the glock to
- * which they are related. Fields are indicated by lower case letters
- * followed by a colon and the field value, except for strings which are in
- * [] so that its possible to see if they are composed of spaces for
+ * which they are related. Fields are indicated by lower हाल letters
+ * followed by a colon and the field value, except क्रम strings which are in
+ * [] so that its possible to see अगर they are composed of spaces क्रम
  * example. The field's are n = number (id of the object), f = flags,
  * t = type, s = state, r = refcount, e = error, p = pid.
  *
  */
 
-void gfs2_dump_glock(struct seq_file *seq, struct gfs2_glock *gl, bool fsid)
-{
-	const struct gfs2_glock_operations *glops = gl->gl_ops;
-	unsigned long long dtime;
-	const struct gfs2_holder *gh;
-	char gflags_buf[32];
-	struct gfs2_sbd *sdp = gl->gl_name.ln_sbd;
-	char fs_id_buf[sizeof(sdp->sd_fsname) + 7];
-	unsigned long nrpages = 0;
+व्योम gfs2_dump_glock(काष्ठा seq_file *seq, काष्ठा gfs2_glock *gl, bool fsid)
+अणु
+	स्थिर काष्ठा gfs2_glock_operations *glops = gl->gl_ops;
+	अचिन्हित दीर्घ दीर्घ dसमय;
+	स्थिर काष्ठा gfs2_holder *gh;
+	अक्षर gflags_buf[32];
+	काष्ठा gfs2_sbd *sdp = gl->gl_name.ln_sbd;
+	अक्षर fs_id_buf[माप(sdp->sd_fsname) + 7];
+	अचिन्हित दीर्घ nrpages = 0;
 
-	if (gl->gl_ops->go_flags & GLOF_ASPACE) {
-		struct address_space *mapping = gfs2_glock2aspace(gl);
+	अगर (gl->gl_ops->go_flags & GLOF_ASPACE) अणु
+		काष्ठा address_space *mapping = gfs2_glock2aspace(gl);
 
 		nrpages = mapping->nrpages;
-	}
-	memset(fs_id_buf, 0, sizeof(fs_id_buf));
-	if (fsid && sdp) /* safety precaution */
-		sprintf(fs_id_buf, "fsid=%s: ", sdp->sd_fsname);
-	dtime = jiffies - gl->gl_demote_time;
-	dtime *= 1000000/HZ; /* demote time in uSec */
-	if (!test_bit(GLF_DEMOTE, &gl->gl_flags))
-		dtime = 0;
-	gfs2_print_dbg(seq, "%sG:  s:%s n:%u/%llx f:%s t:%s d:%s/%llu a:%d "
+	पूर्ण
+	स_रखो(fs_id_buf, 0, माप(fs_id_buf));
+	अगर (fsid && sdp) /* safety precaution */
+		प्र_लिखो(fs_id_buf, "fsid=%s: ", sdp->sd_fsname);
+	dसमय = jअगरfies - gl->gl_demote_समय;
+	dसमय *= 1000000/HZ; /* demote समय in uSec */
+	अगर (!test_bit(GLF_DEMOTE, &gl->gl_flags))
+		dसमय = 0;
+	gfs2_prपूर्णांक_dbg(seq, "%sG:  s:%s n:%u/%llx f:%s t:%s d:%s/%llu a:%d "
 		       "v:%d r:%d m:%ld p:%lu\n",
 		       fs_id_buf, state2str(gl->gl_state),
 		       gl->gl_name.ln_type,
-		       (unsigned long long)gl->gl_name.ln_number,
+		       (अचिन्हित दीर्घ दीर्घ)gl->gl_name.ln_number,
 		       gflags2str(gflags_buf, gl),
 		       state2str(gl->gl_target),
-		       state2str(gl->gl_demote_state), dtime,
-		       atomic_read(&gl->gl_ail_count),
-		       atomic_read(&gl->gl_revokes),
-		       (int)gl->gl_lockref.count, gl->gl_hold_time, nrpages);
+		       state2str(gl->gl_demote_state), dसमय,
+		       atomic_पढ़ो(&gl->gl_ail_count),
+		       atomic_पढ़ो(&gl->gl_revokes),
+		       (पूर्णांक)gl->gl_lockref.count, gl->gl_hold_समय, nrpages);
 
-	list_for_each_entry(gh, &gl->gl_holders, gh_list)
+	list_क्रम_each_entry(gh, &gl->gl_holders, gh_list)
 		dump_holder(seq, gh, fs_id_buf);
 
-	if (gl->gl_state != LM_ST_UNLOCKED && glops->go_dump)
+	अगर (gl->gl_state != LM_ST_UNLOCKED && glops->go_dump)
 		glops->go_dump(seq, gl, fs_id_buf);
-}
+पूर्ण
 
-static int gfs2_glstats_seq_show(struct seq_file *seq, void *iter_ptr)
-{
-	struct gfs2_glock *gl = iter_ptr;
+अटल पूर्णांक gfs2_glstats_seq_show(काष्ठा seq_file *seq, व्योम *iter_ptr)
+अणु
+	काष्ठा gfs2_glock *gl = iter_ptr;
 
-	seq_printf(seq, "G: n:%u/%llx rtt:%llu/%llu rttb:%llu/%llu irt:%llu/%llu dcnt: %llu qcnt: %llu\n",
+	seq_म_लिखो(seq, "G: n:%u/%llx rtt:%llu/%llu rttb:%llu/%llu irt:%llu/%llu dcnt: %llu qcnt: %llu\n",
 		   gl->gl_name.ln_type,
-		   (unsigned long long)gl->gl_name.ln_number,
-		   (unsigned long long)gl->gl_stats.stats[GFS2_LKS_SRTT],
-		   (unsigned long long)gl->gl_stats.stats[GFS2_LKS_SRTTVAR],
-		   (unsigned long long)gl->gl_stats.stats[GFS2_LKS_SRTTB],
-		   (unsigned long long)gl->gl_stats.stats[GFS2_LKS_SRTTVARB],
-		   (unsigned long long)gl->gl_stats.stats[GFS2_LKS_SIRT],
-		   (unsigned long long)gl->gl_stats.stats[GFS2_LKS_SIRTVAR],
-		   (unsigned long long)gl->gl_stats.stats[GFS2_LKS_DCOUNT],
-		   (unsigned long long)gl->gl_stats.stats[GFS2_LKS_QCOUNT]);
-	return 0;
-}
+		   (अचिन्हित दीर्घ दीर्घ)gl->gl_name.ln_number,
+		   (अचिन्हित दीर्घ दीर्घ)gl->gl_stats.stats[GFS2_LKS_SRTT],
+		   (अचिन्हित दीर्घ दीर्घ)gl->gl_stats.stats[GFS2_LKS_SRTTVAR],
+		   (अचिन्हित दीर्घ दीर्घ)gl->gl_stats.stats[GFS2_LKS_SRTTB],
+		   (अचिन्हित दीर्घ दीर्घ)gl->gl_stats.stats[GFS2_LKS_SRTTVARB],
+		   (अचिन्हित दीर्घ दीर्घ)gl->gl_stats.stats[GFS2_LKS_SIRT],
+		   (अचिन्हित दीर्घ दीर्घ)gl->gl_stats.stats[GFS2_LKS_SIRTVAR],
+		   (अचिन्हित दीर्घ दीर्घ)gl->gl_stats.stats[GFS2_LKS_DCOUNT],
+		   (अचिन्हित दीर्घ दीर्घ)gl->gl_stats.stats[GFS2_LKS_QCOUNT]);
+	वापस 0;
+पूर्ण
 
-static const char *gfs2_gltype[] = {
+अटल स्थिर अक्षर *gfs2_gltype[] = अणु
 	"type",
 	"reserved",
 	"nondisk",
@@ -2241,9 +2242,9 @@ static const char *gfs2_gltype[] = {
 	"plock",
 	"quota",
 	"journal",
-};
+पूर्ण;
 
-static const char *gfs2_stype[] = {
+अटल स्थिर अक्षर *gfs2_stype[] = अणु
 	[GFS2_LKS_SRTT]		= "srtt",
 	[GFS2_LKS_SRTTVAR]	= "srttvar",
 	[GFS2_LKS_SRTTB]	= "srttb",
@@ -2252,276 +2253,276 @@ static const char *gfs2_stype[] = {
 	[GFS2_LKS_SIRTVAR]	= "sirtvar",
 	[GFS2_LKS_DCOUNT]	= "dlm",
 	[GFS2_LKS_QCOUNT]	= "queue",
-};
+पूर्ण;
 
-#define GFS2_NR_SBSTATS (ARRAY_SIZE(gfs2_gltype) * ARRAY_SIZE(gfs2_stype))
+#घोषणा GFS2_NR_SBSTATS (ARRAY_SIZE(gfs2_gltype) * ARRAY_SIZE(gfs2_stype))
 
-static int gfs2_sbstats_seq_show(struct seq_file *seq, void *iter_ptr)
-{
-	struct gfs2_sbd *sdp = seq->private;
+अटल पूर्णांक gfs2_sbstats_seq_show(काष्ठा seq_file *seq, व्योम *iter_ptr)
+अणु
+	काष्ठा gfs2_sbd *sdp = seq->निजी;
 	loff_t pos = *(loff_t *)iter_ptr;
-	unsigned index = pos >> 3;
-	unsigned subindex = pos & 0x07;
-	int i;
+	अचिन्हित index = pos >> 3;
+	अचिन्हित subindex = pos & 0x07;
+	पूर्णांक i;
 
-	if (index == 0 && subindex != 0)
-		return 0;
+	अगर (index == 0 && subindex != 0)
+		वापस 0;
 
-	seq_printf(seq, "%-10s %8s:", gfs2_gltype[index],
+	seq_म_लिखो(seq, "%-10s %8s:", gfs2_gltype[index],
 		   (index == 0) ? "cpu": gfs2_stype[subindex]);
 
-	for_each_possible_cpu(i) {
-                const struct gfs2_pcpu_lkstats *lkstats = per_cpu_ptr(sdp->sd_lkstats, i);
+	क्रम_each_possible_cpu(i) अणु
+                स्थिर काष्ठा gfs2_pcpu_lkstats *lkstats = per_cpu_ptr(sdp->sd_lkstats, i);
 
-		if (index == 0)
-			seq_printf(seq, " %15u", i);
-		else
-			seq_printf(seq, " %15llu", (unsigned long long)lkstats->
+		अगर (index == 0)
+			seq_म_लिखो(seq, " %15u", i);
+		अन्यथा
+			seq_म_लिखो(seq, " %15llu", (अचिन्हित दीर्घ दीर्घ)lkstats->
 				   lkstats[index - 1].stats[subindex]);
-	}
-	seq_putc(seq, '\n');
-	return 0;
-}
+	पूर्ण
+	seq_अ_दो(seq, '\n');
+	वापस 0;
+पूर्ण
 
-int __init gfs2_glock_init(void)
-{
-	int i, ret;
+पूर्णांक __init gfs2_glock_init(व्योम)
+अणु
+	पूर्णांक i, ret;
 
 	ret = rhashtable_init(&gl_hash_table, &ht_parms);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	glock_workqueue = alloc_workqueue("glock_workqueue", WQ_MEM_RECLAIM |
 					  WQ_HIGHPRI | WQ_FREEZABLE, 0);
-	if (!glock_workqueue) {
+	अगर (!glock_workqueue) अणु
 		rhashtable_destroy(&gl_hash_table);
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 	gfs2_delete_workqueue = alloc_workqueue("delete_workqueue",
 						WQ_MEM_RECLAIM | WQ_FREEZABLE,
 						0);
-	if (!gfs2_delete_workqueue) {
+	अगर (!gfs2_delete_workqueue) अणु
 		destroy_workqueue(glock_workqueue);
 		rhashtable_destroy(&gl_hash_table);
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
-	ret = register_shrinker(&glock_shrinker);
-	if (ret) {
+	ret = रेजिस्टर_shrinker(&glock_shrinker);
+	अगर (ret) अणु
 		destroy_workqueue(gfs2_delete_workqueue);
 		destroy_workqueue(glock_workqueue);
 		rhashtable_destroy(&gl_hash_table);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	for (i = 0; i < GLOCK_WAIT_TABLE_SIZE; i++)
-		init_waitqueue_head(glock_wait_table + i);
+	क्रम (i = 0; i < GLOCK_WAIT_TABLE_SIZE; i++)
+		init_रुकोqueue_head(glock_रुको_table + i);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void gfs2_glock_exit(void)
-{
-	unregister_shrinker(&glock_shrinker);
+व्योम gfs2_glock_निकास(व्योम)
+अणु
+	unरेजिस्टर_shrinker(&glock_shrinker);
 	rhashtable_destroy(&gl_hash_table);
 	destroy_workqueue(glock_workqueue);
 	destroy_workqueue(gfs2_delete_workqueue);
-}
+पूर्ण
 
-static void gfs2_glock_iter_next(struct gfs2_glock_iter *gi, loff_t n)
-{
-	struct gfs2_glock *gl = gi->gl;
+अटल व्योम gfs2_glock_iter_next(काष्ठा gfs2_glock_iter *gi, loff_t n)
+अणु
+	काष्ठा gfs2_glock *gl = gi->gl;
 
-	if (gl) {
-		if (n == 0)
-			return;
-		if (!lockref_put_not_zero(&gl->gl_lockref))
+	अगर (gl) अणु
+		अगर (n == 0)
+			वापस;
+		अगर (!lockref_put_not_zero(&gl->gl_lockref))
 			gfs2_glock_queue_put(gl);
-	}
-	for (;;) {
+	पूर्ण
+	क्रम (;;) अणु
 		gl = rhashtable_walk_next(&gi->hti);
-		if (IS_ERR_OR_NULL(gl)) {
-			if (gl == ERR_PTR(-EAGAIN)) {
+		अगर (IS_ERR_OR_शून्य(gl)) अणु
+			अगर (gl == ERR_PTR(-EAGAIN)) अणु
 				n = 1;
-				continue;
-			}
-			gl = NULL;
-			break;
-		}
-		if (gl->gl_name.ln_sbd != gi->sdp)
-			continue;
-		if (n <= 1) {
-			if (!lockref_get_not_dead(&gl->gl_lockref))
-				continue;
-			break;
-		} else {
-			if (__lockref_is_dead(&gl->gl_lockref))
-				continue;
+				जारी;
+			पूर्ण
+			gl = शून्य;
+			अवरोध;
+		पूर्ण
+		अगर (gl->gl_name.ln_sbd != gi->sdp)
+			जारी;
+		अगर (n <= 1) अणु
+			अगर (!lockref_get_not_dead(&gl->gl_lockref))
+				जारी;
+			अवरोध;
+		पूर्ण अन्यथा अणु
+			अगर (__lockref_is_dead(&gl->gl_lockref))
+				जारी;
 			n--;
-		}
-	}
+		पूर्ण
+	पूर्ण
 	gi->gl = gl;
-}
+पूर्ण
 
-static void *gfs2_glock_seq_start(struct seq_file *seq, loff_t *pos)
+अटल व्योम *gfs2_glock_seq_start(काष्ठा seq_file *seq, loff_t *pos)
 	__acquires(RCU)
-{
-	struct gfs2_glock_iter *gi = seq->private;
+अणु
+	काष्ठा gfs2_glock_iter *gi = seq->निजी;
 	loff_t n;
 
 	/*
 	 * We can either stay where we are, skip to the next hash table
 	 * entry, or start from the beginning.
 	 */
-	if (*pos < gi->last_pos) {
-		rhashtable_walk_exit(&gi->hti);
+	अगर (*pos < gi->last_pos) अणु
+		rhashtable_walk_निकास(&gi->hti);
 		rhashtable_walk_enter(&gl_hash_table, &gi->hti);
 		n = *pos + 1;
-	} else {
+	पूर्ण अन्यथा अणु
 		n = *pos - gi->last_pos;
-	}
+	पूर्ण
 
 	rhashtable_walk_start(&gi->hti);
 
 	gfs2_glock_iter_next(gi, n);
 	gi->last_pos = *pos;
-	return gi->gl;
-}
+	वापस gi->gl;
+पूर्ण
 
-static void *gfs2_glock_seq_next(struct seq_file *seq, void *iter_ptr,
+अटल व्योम *gfs2_glock_seq_next(काष्ठा seq_file *seq, व्योम *iter_ptr,
 				 loff_t *pos)
-{
-	struct gfs2_glock_iter *gi = seq->private;
+अणु
+	काष्ठा gfs2_glock_iter *gi = seq->निजी;
 
 	(*pos)++;
 	gi->last_pos = *pos;
 	gfs2_glock_iter_next(gi, 1);
-	return gi->gl;
-}
+	वापस gi->gl;
+पूर्ण
 
-static void gfs2_glock_seq_stop(struct seq_file *seq, void *iter_ptr)
+अटल व्योम gfs2_glock_seq_stop(काष्ठा seq_file *seq, व्योम *iter_ptr)
 	__releases(RCU)
-{
-	struct gfs2_glock_iter *gi = seq->private;
+अणु
+	काष्ठा gfs2_glock_iter *gi = seq->निजी;
 
 	rhashtable_walk_stop(&gi->hti);
-}
+पूर्ण
 
-static int gfs2_glock_seq_show(struct seq_file *seq, void *iter_ptr)
-{
+अटल पूर्णांक gfs2_glock_seq_show(काष्ठा seq_file *seq, व्योम *iter_ptr)
+अणु
 	dump_glock(seq, iter_ptr, false);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void *gfs2_sbstats_seq_start(struct seq_file *seq, loff_t *pos)
-{
+अटल व्योम *gfs2_sbstats_seq_start(काष्ठा seq_file *seq, loff_t *pos)
+अणु
 	preempt_disable();
-	if (*pos >= GFS2_NR_SBSTATS)
-		return NULL;
-	return pos;
-}
+	अगर (*pos >= GFS2_NR_SBSTATS)
+		वापस शून्य;
+	वापस pos;
+पूर्ण
 
-static void *gfs2_sbstats_seq_next(struct seq_file *seq, void *iter_ptr,
+अटल व्योम *gfs2_sbstats_seq_next(काष्ठा seq_file *seq, व्योम *iter_ptr,
 				   loff_t *pos)
-{
+अणु
 	(*pos)++;
-	if (*pos >= GFS2_NR_SBSTATS)
-		return NULL;
-	return pos;
-}
+	अगर (*pos >= GFS2_NR_SBSTATS)
+		वापस शून्य;
+	वापस pos;
+पूर्ण
 
-static void gfs2_sbstats_seq_stop(struct seq_file *seq, void *iter_ptr)
-{
+अटल व्योम gfs2_sbstats_seq_stop(काष्ठा seq_file *seq, व्योम *iter_ptr)
+अणु
 	preempt_enable();
-}
+पूर्ण
 
-static const struct seq_operations gfs2_glock_seq_ops = {
+अटल स्थिर काष्ठा seq_operations gfs2_glock_seq_ops = अणु
 	.start = gfs2_glock_seq_start,
 	.next  = gfs2_glock_seq_next,
 	.stop  = gfs2_glock_seq_stop,
 	.show  = gfs2_glock_seq_show,
-};
+पूर्ण;
 
-static const struct seq_operations gfs2_glstats_seq_ops = {
+अटल स्थिर काष्ठा seq_operations gfs2_glstats_seq_ops = अणु
 	.start = gfs2_glock_seq_start,
 	.next  = gfs2_glock_seq_next,
 	.stop  = gfs2_glock_seq_stop,
 	.show  = gfs2_glstats_seq_show,
-};
+पूर्ण;
 
-static const struct seq_operations gfs2_sbstats_sops = {
+अटल स्थिर काष्ठा seq_operations gfs2_sbstats_sops = अणु
 	.start = gfs2_sbstats_seq_start,
 	.next  = gfs2_sbstats_seq_next,
 	.stop  = gfs2_sbstats_seq_stop,
 	.show  = gfs2_sbstats_seq_show,
-};
+पूर्ण;
 
-#define GFS2_SEQ_GOODSIZE min(PAGE_SIZE << PAGE_ALLOC_COSTLY_ORDER, 65536UL)
+#घोषणा GFS2_SEQ_GOODSIZE min(PAGE_SIZE << PAGE_ALLOC_COSTLY_ORDER, 65536UL)
 
-static int __gfs2_glocks_open(struct inode *inode, struct file *file,
-			      const struct seq_operations *ops)
-{
-	int ret = seq_open_private(file, ops, sizeof(struct gfs2_glock_iter));
-	if (ret == 0) {
-		struct seq_file *seq = file->private_data;
-		struct gfs2_glock_iter *gi = seq->private;
+अटल पूर्णांक __gfs2_glocks_खोलो(काष्ठा inode *inode, काष्ठा file *file,
+			      स्थिर काष्ठा seq_operations *ops)
+अणु
+	पूर्णांक ret = seq_खोलो_निजी(file, ops, माप(काष्ठा gfs2_glock_iter));
+	अगर (ret == 0) अणु
+		काष्ठा seq_file *seq = file->निजी_data;
+		काष्ठा gfs2_glock_iter *gi = seq->निजी;
 
-		gi->sdp = inode->i_private;
-		seq->buf = kmalloc(GFS2_SEQ_GOODSIZE, GFP_KERNEL | __GFP_NOWARN);
-		if (seq->buf)
+		gi->sdp = inode->i_निजी;
+		seq->buf = kदो_स्मृति(GFS2_SEQ_GOODSIZE, GFP_KERNEL | __GFP_NOWARN);
+		अगर (seq->buf)
 			seq->size = GFS2_SEQ_GOODSIZE;
 		/*
 		 * Initially, we are "before" the first hash table entry; the
-		 * first call to rhashtable_walk_next gets us the first entry.
+		 * first call to rhashtable_walk_next माला_लो us the first entry.
 		 */
 		gi->last_pos = -1;
-		gi->gl = NULL;
+		gi->gl = शून्य;
 		rhashtable_walk_enter(&gl_hash_table, &gi->hti);
-	}
-	return ret;
-}
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static int gfs2_glocks_open(struct inode *inode, struct file *file)
-{
-	return __gfs2_glocks_open(inode, file, &gfs2_glock_seq_ops);
-}
+अटल पूर्णांक gfs2_glocks_खोलो(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	वापस __gfs2_glocks_खोलो(inode, file, &gfs2_glock_seq_ops);
+पूर्ण
 
-static int gfs2_glocks_release(struct inode *inode, struct file *file)
-{
-	struct seq_file *seq = file->private_data;
-	struct gfs2_glock_iter *gi = seq->private;
+अटल पूर्णांक gfs2_glocks_release(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	काष्ठा seq_file *seq = file->निजी_data;
+	काष्ठा gfs2_glock_iter *gi = seq->निजी;
 
-	if (gi->gl)
+	अगर (gi->gl)
 		gfs2_glock_put(gi->gl);
-	rhashtable_walk_exit(&gi->hti);
-	return seq_release_private(inode, file);
-}
+	rhashtable_walk_निकास(&gi->hti);
+	वापस seq_release_निजी(inode, file);
+पूर्ण
 
-static int gfs2_glstats_open(struct inode *inode, struct file *file)
-{
-	return __gfs2_glocks_open(inode, file, &gfs2_glstats_seq_ops);
-}
+अटल पूर्णांक gfs2_glstats_खोलो(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	वापस __gfs2_glocks_खोलो(inode, file, &gfs2_glstats_seq_ops);
+पूर्ण
 
-static const struct file_operations gfs2_glocks_fops = {
+अटल स्थिर काष्ठा file_operations gfs2_glocks_fops = अणु
 	.owner   = THIS_MODULE,
-	.open    = gfs2_glocks_open,
-	.read    = seq_read,
+	.खोलो    = gfs2_glocks_खोलो,
+	.पढ़ो    = seq_पढ़ो,
 	.llseek  = seq_lseek,
 	.release = gfs2_glocks_release,
-};
+पूर्ण;
 
-static const struct file_operations gfs2_glstats_fops = {
+अटल स्थिर काष्ठा file_operations gfs2_glstats_fops = अणु
 	.owner   = THIS_MODULE,
-	.open    = gfs2_glstats_open,
-	.read    = seq_read,
+	.खोलो    = gfs2_glstats_खोलो,
+	.पढ़ो    = seq_पढ़ो,
 	.llseek  = seq_lseek,
 	.release = gfs2_glocks_release,
-};
+पूर्ण;
 
 DEFINE_SEQ_ATTRIBUTE(gfs2_sbstats);
 
-void gfs2_create_debugfs_file(struct gfs2_sbd *sdp)
-{
+व्योम gfs2_create_debugfs_file(काष्ठा gfs2_sbd *sdp)
+अणु
 	sdp->debugfs_dir = debugfs_create_dir(sdp->sd_table_name, gfs2_root);
 
 	debugfs_create_file("glocks", S_IFREG | S_IRUGO, sdp->debugfs_dir, sdp,
@@ -2532,21 +2533,21 @@ void gfs2_create_debugfs_file(struct gfs2_sbd *sdp)
 
 	debugfs_create_file("sbstats", S_IFREG | S_IRUGO, sdp->debugfs_dir, sdp,
 			    &gfs2_sbstats_fops);
-}
+पूर्ण
 
-void gfs2_delete_debugfs_file(struct gfs2_sbd *sdp)
-{
-	debugfs_remove_recursive(sdp->debugfs_dir);
-	sdp->debugfs_dir = NULL;
-}
+व्योम gfs2_delete_debugfs_file(काष्ठा gfs2_sbd *sdp)
+अणु
+	debugfs_हटाओ_recursive(sdp->debugfs_dir);
+	sdp->debugfs_dir = शून्य;
+पूर्ण
 
-void gfs2_register_debugfs(void)
-{
-	gfs2_root = debugfs_create_dir("gfs2", NULL);
-}
+व्योम gfs2_रेजिस्टर_debugfs(व्योम)
+अणु
+	gfs2_root = debugfs_create_dir("gfs2", शून्य);
+पूर्ण
 
-void gfs2_unregister_debugfs(void)
-{
-	debugfs_remove(gfs2_root);
-	gfs2_root = NULL;
-}
+व्योम gfs2_unरेजिस्टर_debugfs(व्योम)
+अणु
+	debugfs_हटाओ(gfs2_root);
+	gfs2_root = शून्य;
+पूर्ण

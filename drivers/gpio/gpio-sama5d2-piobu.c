@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * SAMA5D2 PIOBU GPIO controller
  *
@@ -7,189 +8,189 @@
  * Author: Andrei Stefanescu <andrei.stefanescu@microchip.com>
  *
  */
-#include <linux/bits.h>
-#include <linux/gpio/driver.h>
-#include <linux/init.h>
-#include <linux/kernel.h>
-#include <linux/mfd/syscon.h>
-#include <linux/module.h>
-#include <linux/of.h>
-#include <linux/platform_device.h>
-#include <linux/regmap.h>
+#समावेश <linux/bits.h>
+#समावेश <linux/gpio/driver.h>
+#समावेश <linux/init.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/mfd/syscon.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/regmap.h>
 
-#define PIOBU_NUM 8
-#define PIOBU_REG_SIZE 4
+#घोषणा PIOBU_NUM 8
+#घोषणा PIOBU_REG_SIZE 4
 
 /*
- * backup mode protection register for tamper detection
- * normal mode protection register for tamper detection
- * wakeup signal generation
+ * backup mode protection रेजिस्टर क्रम tamper detection
+ * normal mode protection रेजिस्टर क्रम tamper detection
+ * wakeup संकेत generation
  */
-#define PIOBU_BMPR 0x7C
-#define PIOBU_NMPR 0x80
-#define PIOBU_WKPR 0x90
+#घोषणा PIOBU_BMPR 0x7C
+#घोषणा PIOBU_NMPR 0x80
+#घोषणा PIOBU_WKPR 0x90
 
-#define PIOBU_BASE 0x18 /* PIOBU offset from SECUMOD base register address. */
+#घोषणा PIOBU_BASE 0x18 /* PIOBU offset from SECUMOD base रेजिस्टर address. */
 
-#define PIOBU_DET_OFFSET 16
+#घोषणा PIOBU_DET_OFFSET 16
 
 /* In the datasheet this bit is called OUTPUT */
-#define PIOBU_DIRECTION BIT(8)
-#define PIOBU_OUT BIT(8)
-#define PIOBU_IN 0
+#घोषणा PIOBU_सूचीECTION BIT(8)
+#घोषणा PIOBU_OUT BIT(8)
+#घोषणा PIOBU_IN 0
 
-#define PIOBU_SOD BIT(9)
-#define PIOBU_PDS BIT(10)
+#घोषणा PIOBU_SOD BIT(9)
+#घोषणा PIOBU_PDS BIT(10)
 
-#define PIOBU_HIGH BIT(9)
-#define PIOBU_LOW 0
+#घोषणा PIOBU_HIGH BIT(9)
+#घोषणा PIOBU_LOW 0
 
-struct sama5d2_piobu {
-	struct gpio_chip chip;
-	struct regmap *regmap;
-};
+काष्ठा sama5d2_piobu अणु
+	काष्ठा gpio_chip chip;
+	काष्ठा regmap *regmap;
+पूर्ण;
 
 /*
- * sama5d2_piobu_setup_pin() - prepares a pin for set_direction call
+ * sama5d2_piobu_setup_pin() - prepares a pin क्रम set_direction call
  *
- * Do not consider pin for tamper detection (normal and backup modes)
- * Do not consider pin as tamper wakeup interrupt source
+ * Do not consider pin क्रम tamper detection (normal and backup modes)
+ * Do not consider pin as tamper wakeup पूर्णांकerrupt source
  */
-static int sama5d2_piobu_setup_pin(struct gpio_chip *chip, unsigned int pin)
-{
-	int ret;
-	struct sama5d2_piobu *piobu = container_of(chip, struct sama5d2_piobu,
+अटल पूर्णांक sama5d2_piobu_setup_pin(काष्ठा gpio_chip *chip, अचिन्हित पूर्णांक pin)
+अणु
+	पूर्णांक ret;
+	काष्ठा sama5d2_piobu *piobu = container_of(chip, काष्ठा sama5d2_piobu,
 						   chip);
-	unsigned int mask = BIT(PIOBU_DET_OFFSET + pin);
+	अचिन्हित पूर्णांक mask = BIT(PIOBU_DET_OFFSET + pin);
 
 	ret = regmap_update_bits(piobu->regmap, PIOBU_BMPR, mask, 0);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ret = regmap_update_bits(piobu->regmap, PIOBU_NMPR, mask, 0);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	return regmap_update_bits(piobu->regmap, PIOBU_WKPR, mask, 0);
-}
+	वापस regmap_update_bits(piobu->regmap, PIOBU_WKPR, mask, 0);
+पूर्ण
 
 /*
- * sama5d2_piobu_write_value() - writes value & mask at the pin's PIOBU register
+ * sama5d2_piobu_ग_लिखो_value() - ग_लिखोs value & mask at the pin's PIOBU रेजिस्टर
  */
-static int sama5d2_piobu_write_value(struct gpio_chip *chip, unsigned int pin,
-				     unsigned int mask, unsigned int value)
-{
-	int reg;
-	struct sama5d2_piobu *piobu = container_of(chip, struct sama5d2_piobu,
+अटल पूर्णांक sama5d2_piobu_ग_लिखो_value(काष्ठा gpio_chip *chip, अचिन्हित पूर्णांक pin,
+				     अचिन्हित पूर्णांक mask, अचिन्हित पूर्णांक value)
+अणु
+	पूर्णांक reg;
+	काष्ठा sama5d2_piobu *piobu = container_of(chip, काष्ठा sama5d2_piobu,
 						   chip);
 
 	reg = PIOBU_BASE + pin * PIOBU_REG_SIZE;
 
-	return regmap_update_bits(piobu->regmap, reg, mask, value);
-}
+	वापस regmap_update_bits(piobu->regmap, reg, mask, value);
+पूर्ण
 
 /*
- * sama5d2_piobu_read_value() - read the value with masking from the pin's PIOBU
- *			      register
+ * sama5d2_piobu_पढ़ो_value() - पढ़ो the value with masking from the pin's PIOBU
+ *			      रेजिस्टर
  */
-static int sama5d2_piobu_read_value(struct gpio_chip *chip, unsigned int pin,
-				    unsigned int mask)
-{
-	struct sama5d2_piobu *piobu = container_of(chip, struct sama5d2_piobu,
+अटल पूर्णांक sama5d2_piobu_पढ़ो_value(काष्ठा gpio_chip *chip, अचिन्हित पूर्णांक pin,
+				    अचिन्हित पूर्णांक mask)
+अणु
+	काष्ठा sama5d2_piobu *piobu = container_of(chip, काष्ठा sama5d2_piobu,
 						   chip);
-	unsigned int val, reg;
-	int ret;
+	अचिन्हित पूर्णांक val, reg;
+	पूर्णांक ret;
 
 	reg = PIOBU_BASE + pin * PIOBU_REG_SIZE;
-	ret = regmap_read(piobu->regmap, reg, &val);
-	if (ret < 0)
-		return ret;
+	ret = regmap_पढ़ो(piobu->regmap, reg, &val);
+	अगर (ret < 0)
+		वापस ret;
 
-	return val & mask;
-}
+	वापस val & mask;
+पूर्ण
 
 /*
  * sama5d2_piobu_get_direction() - gpiochip get_direction
  */
-static int sama5d2_piobu_get_direction(struct gpio_chip *chip,
-				       unsigned int pin)
-{
-	int ret = sama5d2_piobu_read_value(chip, pin, PIOBU_DIRECTION);
+अटल पूर्णांक sama5d2_piobu_get_direction(काष्ठा gpio_chip *chip,
+				       अचिन्हित पूर्णांक pin)
+अणु
+	पूर्णांक ret = sama5d2_piobu_पढ़ो_value(chip, pin, PIOBU_सूचीECTION);
 
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	return (ret == PIOBU_IN) ? GPIO_LINE_DIRECTION_IN :
-				   GPIO_LINE_DIRECTION_OUT;
-}
+	वापस (ret == PIOBU_IN) ? GPIO_LINE_सूचीECTION_IN :
+				   GPIO_LINE_सूचीECTION_OUT;
+पूर्ण
 
 /*
  * sama5d2_piobu_direction_input() - gpiochip direction_input
  */
-static int sama5d2_piobu_direction_input(struct gpio_chip *chip,
-					 unsigned int pin)
-{
-	return sama5d2_piobu_write_value(chip, pin, PIOBU_DIRECTION, PIOBU_IN);
-}
+अटल पूर्णांक sama5d2_piobu_direction_input(काष्ठा gpio_chip *chip,
+					 अचिन्हित पूर्णांक pin)
+अणु
+	वापस sama5d2_piobu_ग_लिखो_value(chip, pin, PIOBU_सूचीECTION, PIOBU_IN);
+पूर्ण
 
 /*
  * sama5d2_piobu_direction_output() - gpiochip direction_output
  */
-static int sama5d2_piobu_direction_output(struct gpio_chip *chip,
-					  unsigned int pin, int value)
-{
-	unsigned int val = PIOBU_OUT;
+अटल पूर्णांक sama5d2_piobu_direction_output(काष्ठा gpio_chip *chip,
+					  अचिन्हित पूर्णांक pin, पूर्णांक value)
+अणु
+	अचिन्हित पूर्णांक val = PIOBU_OUT;
 
-	if (value)
+	अगर (value)
 		val |= PIOBU_HIGH;
 
-	return sama5d2_piobu_write_value(chip, pin, PIOBU_DIRECTION | PIOBU_SOD,
+	वापस sama5d2_piobu_ग_लिखो_value(chip, pin, PIOBU_सूचीECTION | PIOBU_SOD,
 					 val);
-}
+पूर्ण
 
 /*
  * sama5d2_piobu_get() - gpiochip get
  */
-static int sama5d2_piobu_get(struct gpio_chip *chip, unsigned int pin)
-{
-	/* if pin is input, read value from PDS else read from SOD */
-	int ret = sama5d2_piobu_get_direction(chip, pin);
+अटल पूर्णांक sama5d2_piobu_get(काष्ठा gpio_chip *chip, अचिन्हित पूर्णांक pin)
+अणु
+	/* अगर pin is input, पढ़ो value from PDS अन्यथा पढ़ो from SOD */
+	पूर्णांक ret = sama5d2_piobu_get_direction(chip, pin);
 
-	if (ret == GPIO_LINE_DIRECTION_IN)
-		ret = sama5d2_piobu_read_value(chip, pin, PIOBU_PDS);
-	else if (ret == GPIO_LINE_DIRECTION_OUT)
-		ret = sama5d2_piobu_read_value(chip, pin, PIOBU_SOD);
+	अगर (ret == GPIO_LINE_सूचीECTION_IN)
+		ret = sama5d2_piobu_पढ़ो_value(chip, pin, PIOBU_PDS);
+	अन्यथा अगर (ret == GPIO_LINE_सूचीECTION_OUT)
+		ret = sama5d2_piobu_पढ़ो_value(chip, pin, PIOBU_SOD);
 
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	return !!ret;
-}
+	वापस !!ret;
+पूर्ण
 
 /*
  * sama5d2_piobu_set() - gpiochip set
  */
-static void sama5d2_piobu_set(struct gpio_chip *chip, unsigned int pin,
-			      int value)
-{
-	if (!value)
+अटल व्योम sama5d2_piobu_set(काष्ठा gpio_chip *chip, अचिन्हित पूर्णांक pin,
+			      पूर्णांक value)
+अणु
+	अगर (!value)
 		value = PIOBU_LOW;
-	else
+	अन्यथा
 		value = PIOBU_HIGH;
 
-	sama5d2_piobu_write_value(chip, pin, PIOBU_SOD, value);
-}
+	sama5d2_piobu_ग_लिखो_value(chip, pin, PIOBU_SOD, value);
+पूर्ण
 
-static int sama5d2_piobu_probe(struct platform_device *pdev)
-{
-	struct sama5d2_piobu *piobu;
-	int ret, i;
+अटल पूर्णांक sama5d2_piobu_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा sama5d2_piobu *piobu;
+	पूर्णांक ret, i;
 
-	piobu = devm_kzalloc(&pdev->dev, sizeof(*piobu), GFP_KERNEL);
-	if (!piobu)
-		return -ENOMEM;
+	piobu = devm_kzalloc(&pdev->dev, माप(*piobu), GFP_KERNEL);
+	अगर (!piobu)
+		वापस -ENOMEM;
 
-	platform_set_drvdata(pdev, piobu);
+	platक्रमm_set_drvdata(pdev, piobu);
 	piobu->chip.label = pdev->name;
 	piobu->chip.parent = &pdev->dev;
 	piobu->chip.of_node = pdev->dev.of_node;
@@ -204,45 +205,45 @@ static int sama5d2_piobu_probe(struct platform_device *pdev)
 	piobu->chip.can_sleep = 0,
 
 	piobu->regmap = syscon_node_to_regmap(pdev->dev.of_node);
-	if (IS_ERR(piobu->regmap)) {
+	अगर (IS_ERR(piobu->regmap)) अणु
 		dev_err(&pdev->dev, "Failed to get syscon regmap %ld\n",
 			PTR_ERR(piobu->regmap));
-		return PTR_ERR(piobu->regmap);
-	}
+		वापस PTR_ERR(piobu->regmap);
+	पूर्ण
 
 	ret = devm_gpiochip_add_data(&pdev->dev, &piobu->chip, piobu);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&pdev->dev, "Failed to add gpiochip %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	for (i = 0; i < PIOBU_NUM; ++i) {
+	क्रम (i = 0; i < PIOBU_NUM; ++i) अणु
 		ret = sama5d2_piobu_setup_pin(&piobu->chip, i);
-		if (ret) {
+		अगर (ret) अणु
 			dev_err(&pdev->dev, "Failed to setup pin: %d %d\n",
 				i, ret);
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct of_device_id sama5d2_piobu_ids[] = {
-	{ .compatible = "atmel,sama5d2-secumod" },
-	{},
-};
+अटल स्थिर काष्ठा of_device_id sama5d2_piobu_ids[] = अणु
+	अणु .compatible = "atmel,sama5d2-secumod" पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, sama5d2_piobu_ids);
 
-static struct platform_driver sama5d2_piobu_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver sama5d2_piobu_driver = अणु
+	.driver = अणु
 		.name		= "sama5d2-piobu",
 		.of_match_table	= of_match_ptr(sama5d2_piobu_ids)
-	},
+	पूर्ण,
 	.probe = sama5d2_piobu_probe,
-};
+पूर्ण;
 
-module_platform_driver(sama5d2_piobu_driver);
+module_platक्रमm_driver(sama5d2_piobu_driver);
 
 MODULE_LICENSE("GPL v2");
 MODULE_DESCRIPTION("SAMA5D2 PIOBU controller driver");

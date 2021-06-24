@@ -1,170 +1,171 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * ALSA SoC WM9090 driver
  *
  * Copyright 2009-12 Wolfson Microelectronics
  *
- * Author: Mark Brown <broonie@opensource.wolfsonmicro.com>
+ * Author: Mark Brown <broonie@खोलोsource.wolfsonmicro.com>
  */
 
-#include <linux/module.h>
-#include <linux/errno.h>
-#include <linux/device.h>
-#include <linux/i2c.h>
-#include <linux/delay.h>
-#include <linux/regmap.h>
-#include <linux/slab.h>
-#include <sound/initval.h>
-#include <sound/soc.h>
-#include <sound/tlv.h>
-#include <sound/wm9090.h>
+#समावेश <linux/module.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/device.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/regmap.h>
+#समावेश <linux/slab.h>
+#समावेश <sound/initval.h>
+#समावेश <sound/soc.h>
+#समावेश <sound/tlv.h>
+#समावेश <sound/wm9090.h>
 
-#include "wm9090.h"
+#समावेश "wm9090.h"
 
-static const struct reg_default wm9090_reg_defaults[] = {
-	{ 1,  0x0006 },     /* R1   - Power Management (1) */
-	{ 2,  0x6000 },     /* R2   - Power Management (2) */
-	{ 3,  0x0000 },     /* R3   - Power Management (3) */
-	{ 6,  0x01C0 },     /* R6   - Clocking 1 */
-	{ 22, 0x0003 },     /* R22  - IN1 Line Control */
-	{ 23, 0x0003 },     /* R23  - IN2 Line Control */
-	{ 24, 0x0083 },     /* R24  - IN1 Line Input A Volume */
-	{ 25, 0x0083 },     /* R25  - IN1  Line Input B Volume */
-	{ 26, 0x0083 },     /* R26  - IN2 Line Input A Volume */
-	{ 27, 0x0083 },     /* R27  - IN2 Line Input B Volume */
-	{ 28, 0x002D },     /* R28  - Left Output Volume */
-	{ 29, 0x002D },     /* R29  - Right Output Volume */
-	{ 34, 0x0100 },     /* R34  - SPKMIXL Attenuation */
-	{ 35, 0x0010 },     /* R36  - SPKOUT Mixers */
-	{ 37, 0x0140 },     /* R37  - ClassD3 */
-	{ 38, 0x0039 },     /* R38  - Speaker Volume Left */
-	{ 45, 0x0000 },     /* R45  - Output Mixer1 */
-	{ 46, 0x0000 },     /* R46  - Output Mixer2 */
-	{ 47, 0x0100 },     /* R47  - Output Mixer3 */
-	{ 48, 0x0100 },     /* R48  - Output Mixer4 */
-	{ 54, 0x0000 },     /* R54  - Speaker Mixer */
-	{ 57, 0x000D },     /* R57  - AntiPOP2 */
-	{ 70, 0x0000 },     /* R70  - Write Sequencer 0 */
-	{ 71, 0x0000 },     /* R71  - Write Sequencer 1 */
-	{ 72, 0x0000 },     /* R72  - Write Sequencer 2 */
-	{ 73, 0x0000 },     /* R73  - Write Sequencer 3 */
-	{ 74, 0x0000 },     /* R74  - Write Sequencer 4 */
-	{ 75, 0x0000 },     /* R75  - Write Sequencer 5 */
-	{ 76, 0x1F25 },     /* R76  - Charge Pump 1 */
-	{ 85, 0x054A },     /* R85  - DC Servo 1 */
-	{ 87, 0x0000 },     /* R87  - DC Servo 3 */
-	{ 96, 0x0100 },     /* R96  - Analogue HP 0 */
-	{ 98, 0x8640 },     /* R98  - AGC Control 0 */
-	{ 99, 0xC000 },     /* R99  - AGC Control 1 */
-	{ 100, 0x0200 },     /* R100 - AGC Control 2 */
-};
+अटल स्थिर काष्ठा reg_शेष wm9090_reg_शेषs[] = अणु
+	अणु 1,  0x0006 पूर्ण,     /* R1   - Power Management (1) */
+	अणु 2,  0x6000 पूर्ण,     /* R2   - Power Management (2) */
+	अणु 3,  0x0000 पूर्ण,     /* R3   - Power Management (3) */
+	अणु 6,  0x01C0 पूर्ण,     /* R6   - Clocking 1 */
+	अणु 22, 0x0003 पूर्ण,     /* R22  - IN1 Line Control */
+	अणु 23, 0x0003 पूर्ण,     /* R23  - IN2 Line Control */
+	अणु 24, 0x0083 पूर्ण,     /* R24  - IN1 Line Input A Volume */
+	अणु 25, 0x0083 पूर्ण,     /* R25  - IN1  Line Input B Volume */
+	अणु 26, 0x0083 पूर्ण,     /* R26  - IN2 Line Input A Volume */
+	अणु 27, 0x0083 पूर्ण,     /* R27  - IN2 Line Input B Volume */
+	अणु 28, 0x002D पूर्ण,     /* R28  - Left Output Volume */
+	अणु 29, 0x002D पूर्ण,     /* R29  - Right Output Volume */
+	अणु 34, 0x0100 पूर्ण,     /* R34  - SPKMIXL Attenuation */
+	अणु 35, 0x0010 पूर्ण,     /* R36  - SPKOUT Mixers */
+	अणु 37, 0x0140 पूर्ण,     /* R37  - ClassD3 */
+	अणु 38, 0x0039 पूर्ण,     /* R38  - Speaker Volume Left */
+	अणु 45, 0x0000 पूर्ण,     /* R45  - Output Mixer1 */
+	अणु 46, 0x0000 पूर्ण,     /* R46  - Output Mixer2 */
+	अणु 47, 0x0100 पूर्ण,     /* R47  - Output Mixer3 */
+	अणु 48, 0x0100 पूर्ण,     /* R48  - Output Mixer4 */
+	अणु 54, 0x0000 पूर्ण,     /* R54  - Speaker Mixer */
+	अणु 57, 0x000D पूर्ण,     /* R57  - AntiPOP2 */
+	अणु 70, 0x0000 पूर्ण,     /* R70  - Write Sequencer 0 */
+	अणु 71, 0x0000 पूर्ण,     /* R71  - Write Sequencer 1 */
+	अणु 72, 0x0000 पूर्ण,     /* R72  - Write Sequencer 2 */
+	अणु 73, 0x0000 पूर्ण,     /* R73  - Write Sequencer 3 */
+	अणु 74, 0x0000 पूर्ण,     /* R74  - Write Sequencer 4 */
+	अणु 75, 0x0000 पूर्ण,     /* R75  - Write Sequencer 5 */
+	अणु 76, 0x1F25 पूर्ण,     /* R76  - Charge Pump 1 */
+	अणु 85, 0x054A पूर्ण,     /* R85  - DC Servo 1 */
+	अणु 87, 0x0000 पूर्ण,     /* R87  - DC Servo 3 */
+	अणु 96, 0x0100 पूर्ण,     /* R96  - Analogue HP 0 */
+	अणु 98, 0x8640 पूर्ण,     /* R98  - AGC Control 0 */
+	अणु 99, 0xC000 पूर्ण,     /* R99  - AGC Control 1 */
+	अणु 100, 0x0200 पूर्ण,     /* R100 - AGC Control 2 */
+पूर्ण;
 
-/* This struct is used to save the context */
-struct wm9090_priv {
-	struct wm9090_platform_data pdata;
-	struct regmap *regmap;
-};
+/* This काष्ठा is used to save the context */
+काष्ठा wm9090_priv अणु
+	काष्ठा wm9090_platक्रमm_data pdata;
+	काष्ठा regmap *regmap;
+पूर्ण;
 
-static bool wm9090_volatile(struct device *dev, unsigned int reg)
-{
-	switch (reg) {
-	case WM9090_SOFTWARE_RESET:
-	case WM9090_DC_SERVO_0:
-	case WM9090_DC_SERVO_READBACK_0:
-	case WM9090_DC_SERVO_READBACK_1:
-	case WM9090_DC_SERVO_READBACK_2:
-		return true;
+अटल bool wm9090_अस्थिर(काष्ठा device *dev, अचिन्हित पूर्णांक reg)
+अणु
+	चयन (reg) अणु
+	हाल WM9090_SOFTWARE_RESET:
+	हाल WM9090_DC_SERVO_0:
+	हाल WM9090_DC_SERVO_READBACK_0:
+	हाल WM9090_DC_SERVO_READBACK_1:
+	हाल WM9090_DC_SERVO_READBACK_2:
+		वापस true;
 
-	default:
-		return false;
-	}
-}
+	शेष:
+		वापस false;
+	पूर्ण
+पूर्ण
 
-static bool wm9090_readable(struct device *dev, unsigned int reg)
-{
-	switch (reg) {
-	case WM9090_SOFTWARE_RESET:
-	case WM9090_POWER_MANAGEMENT_1:
-	case WM9090_POWER_MANAGEMENT_2:
-	case WM9090_POWER_MANAGEMENT_3:
-	case WM9090_CLOCKING_1:
-	case WM9090_IN1_LINE_CONTROL:
-	case WM9090_IN2_LINE_CONTROL:
-	case WM9090_IN1_LINE_INPUT_A_VOLUME:
-	case WM9090_IN1_LINE_INPUT_B_VOLUME:
-	case WM9090_IN2_LINE_INPUT_A_VOLUME:
-	case WM9090_IN2_LINE_INPUT_B_VOLUME:
-	case WM9090_LEFT_OUTPUT_VOLUME:
-	case WM9090_RIGHT_OUTPUT_VOLUME:
-	case WM9090_SPKMIXL_ATTENUATION:
-	case WM9090_SPKOUT_MIXERS:
-	case WM9090_CLASSD3:
-	case WM9090_SPEAKER_VOLUME_LEFT:
-	case WM9090_OUTPUT_MIXER1:
-	case WM9090_OUTPUT_MIXER2:
-	case WM9090_OUTPUT_MIXER3:
-	case WM9090_OUTPUT_MIXER4:
-	case WM9090_SPEAKER_MIXER:
-	case WM9090_ANTIPOP2:
-	case WM9090_WRITE_SEQUENCER_0:
-	case WM9090_WRITE_SEQUENCER_1:
-	case WM9090_WRITE_SEQUENCER_2:
-	case WM9090_WRITE_SEQUENCER_3:
-	case WM9090_WRITE_SEQUENCER_4:
-	case WM9090_WRITE_SEQUENCER_5:
-	case WM9090_CHARGE_PUMP_1:
-	case WM9090_DC_SERVO_0:
-	case WM9090_DC_SERVO_1:
-	case WM9090_DC_SERVO_3:
-	case WM9090_DC_SERVO_READBACK_0:
-	case WM9090_DC_SERVO_READBACK_1:
-	case WM9090_DC_SERVO_READBACK_2:
-	case WM9090_ANALOGUE_HP_0:
-	case WM9090_AGC_CONTROL_0:
-	case WM9090_AGC_CONTROL_1:
-	case WM9090_AGC_CONTROL_2:
-		return true;
+अटल bool wm9090_पढ़ोable(काष्ठा device *dev, अचिन्हित पूर्णांक reg)
+अणु
+	चयन (reg) अणु
+	हाल WM9090_SOFTWARE_RESET:
+	हाल WM9090_POWER_MANAGEMENT_1:
+	हाल WM9090_POWER_MANAGEMENT_2:
+	हाल WM9090_POWER_MANAGEMENT_3:
+	हाल WM9090_CLOCKING_1:
+	हाल WM9090_IN1_LINE_CONTROL:
+	हाल WM9090_IN2_LINE_CONTROL:
+	हाल WM9090_IN1_LINE_INPUT_A_VOLUME:
+	हाल WM9090_IN1_LINE_INPUT_B_VOLUME:
+	हाल WM9090_IN2_LINE_INPUT_A_VOLUME:
+	हाल WM9090_IN2_LINE_INPUT_B_VOLUME:
+	हाल WM9090_LEFT_OUTPUT_VOLUME:
+	हाल WM9090_RIGHT_OUTPUT_VOLUME:
+	हाल WM9090_SPKMIXL_ATTENUATION:
+	हाल WM9090_SPKOUT_MIXERS:
+	हाल WM9090_CLASSD3:
+	हाल WM9090_SPEAKER_VOLUME_LEFT:
+	हाल WM9090_OUTPUT_MIXER1:
+	हाल WM9090_OUTPUT_MIXER2:
+	हाल WM9090_OUTPUT_MIXER3:
+	हाल WM9090_OUTPUT_MIXER4:
+	हाल WM9090_SPEAKER_MIXER:
+	हाल WM9090_ANTIPOP2:
+	हाल WM9090_WRITE_SEQUENCER_0:
+	हाल WM9090_WRITE_SEQUENCER_1:
+	हाल WM9090_WRITE_SEQUENCER_2:
+	हाल WM9090_WRITE_SEQUENCER_3:
+	हाल WM9090_WRITE_SEQUENCER_4:
+	हाल WM9090_WRITE_SEQUENCER_5:
+	हाल WM9090_CHARGE_PUMP_1:
+	हाल WM9090_DC_SERVO_0:
+	हाल WM9090_DC_SERVO_1:
+	हाल WM9090_DC_SERVO_3:
+	हाल WM9090_DC_SERVO_READBACK_0:
+	हाल WM9090_DC_SERVO_READBACK_1:
+	हाल WM9090_DC_SERVO_READBACK_2:
+	हाल WM9090_ANALOGUE_HP_0:
+	हाल WM9090_AGC_CONTROL_0:
+	हाल WM9090_AGC_CONTROL_1:
+	हाल WM9090_AGC_CONTROL_2:
+		वापस true;
 
-	default:
-		return false;
-	}
-}
+	शेष:
+		वापस false;
+	पूर्ण
+पूर्ण
 
-static void wait_for_dc_servo(struct snd_soc_component *component)
-{
-	unsigned int reg;
-	int count = 0;
+अटल व्योम रुको_क्रम_dc_servo(काष्ठा snd_soc_component *component)
+अणु
+	अचिन्हित पूर्णांक reg;
+	पूर्णांक count = 0;
 
 	dev_dbg(component->dev, "Waiting for DC servo...\n");
-	do {
+	करो अणु
 		count++;
 		msleep(1);
-		reg = snd_soc_component_read(component, WM9090_DC_SERVO_READBACK_0);
+		reg = snd_soc_component_पढ़ो(component, WM9090_DC_SERVO_READBACK_0);
 		dev_dbg(component->dev, "DC servo status: %x\n", reg);
-	} while ((reg & WM9090_DCS_CAL_COMPLETE_MASK)
+	पूर्ण जबतक ((reg & WM9090_DCS_CAL_COMPLETE_MASK)
 		 != WM9090_DCS_CAL_COMPLETE_MASK && count < 1000);
 
-	if ((reg & WM9090_DCS_CAL_COMPLETE_MASK)
+	अगर ((reg & WM9090_DCS_CAL_COMPLETE_MASK)
 	    != WM9090_DCS_CAL_COMPLETE_MASK)
 		dev_err(component->dev, "Timed out waiting for DC Servo\n");
-}
+पूर्ण
 
-static const DECLARE_TLV_DB_RANGE(in_tlv,
+अटल स्थिर DECLARE_TLV_DB_RANGE(in_tlv,
 	0, 0, TLV_DB_SCALE_ITEM(-600, 0, 0),
 	1, 3, TLV_DB_SCALE_ITEM(-350, 350, 0),
 	4, 6, TLV_DB_SCALE_ITEM(600, 600, 0)
 );
-static const DECLARE_TLV_DB_RANGE(mix_tlv,
+अटल स्थिर DECLARE_TLV_DB_RANGE(mix_tlv,
 	0, 2, TLV_DB_SCALE_ITEM(-1200, 300, 0),
 	3, 3, TLV_DB_SCALE_ITEM(0, 0, 0)
 );
-static const DECLARE_TLV_DB_SCALE(out_tlv, -5700, 100, 0);
-static const DECLARE_TLV_DB_RANGE(spkboost_tlv,
+अटल स्थिर DECLARE_TLV_DB_SCALE(out_tlv, -5700, 100, 0);
+अटल स्थिर DECLARE_TLV_DB_RANGE(spkboost_tlv,
 	0, 6, TLV_DB_SCALE_ITEM(0, 150, 0),
 	7, 7, TLV_DB_SCALE_ITEM(1200, 0, 0)
 );
 
-static const struct snd_kcontrol_new wm9090_controls[] = {
+अटल स्थिर काष्ठा snd_kcontrol_new wm9090_controls[] = अणु
 SOC_SINGLE_TLV("IN1A Volume", WM9090_IN1_LINE_INPUT_A_VOLUME, 0, 6, 0,
 	       in_tlv),
 SOC_SINGLE("IN1A Switch", WM9090_IN1_LINE_INPUT_A_VOLUME, 7, 1, 1),
@@ -205,9 +206,9 @@ SOC_SINGLE_TLV("Speaker Volume", WM9090_SPEAKER_VOLUME_LEFT, 0, 63, 0,
 SOC_SINGLE("Speaker Switch", WM9090_SPEAKER_VOLUME_LEFT, 6, 1, 1),
 SOC_SINGLE("Speaker ZC Switch", WM9090_SPEAKER_VOLUME_LEFT, 7, 1, 0),
 SOC_SINGLE_TLV("Speaker Boost Volume", WM9090_CLASSD3, 3, 7, 0, spkboost_tlv),
-};
+पूर्ण;
 
-static const struct snd_kcontrol_new wm9090_in1_se_controls[] = {
+अटल स्थिर काष्ठा snd_kcontrol_new wm9090_in1_se_controls[] = अणु
 SOC_SINGLE_TLV("IN1B Volume", WM9090_IN1_LINE_INPUT_B_VOLUME, 0, 6, 0,
 	       in_tlv),
 SOC_SINGLE("IN1B Switch", WM9090_IN1_LINE_INPUT_B_VOLUME, 7, 1, 1),
@@ -219,9 +220,9 @@ SOC_SINGLE_TLV("MIXOUTL IN1B Volume", WM9090_OUTPUT_MIXER3, 4, 3, 1,
 	       mix_tlv),
 SOC_SINGLE_TLV("MIXOUTR IN1B Volume", WM9090_OUTPUT_MIXER4, 4, 3, 1,
 	       mix_tlv),
-};
+पूर्ण;
 
-static const struct snd_kcontrol_new wm9090_in2_se_controls[] = {
+अटल स्थिर काष्ठा snd_kcontrol_new wm9090_in2_se_controls[] = अणु
 SOC_SINGLE_TLV("IN2B Volume", WM9090_IN2_LINE_INPUT_B_VOLUME, 0, 6, 0,
 	       in_tlv),
 SOC_SINGLE("IN2B Switch", WM9090_IN2_LINE_INPUT_B_VOLUME, 7, 1, 1),
@@ -233,16 +234,16 @@ SOC_SINGLE_TLV("MIXOUTL IN2B Volume", WM9090_OUTPUT_MIXER3, 0, 3, 1,
 	       mix_tlv),
 SOC_SINGLE_TLV("MIXOUTR IN2B Volume", WM9090_OUTPUT_MIXER4, 0, 3, 1,
 	       mix_tlv),
-};
+पूर्ण;
 
-static int hp_ev(struct snd_soc_dapm_widget *w,
-		 struct snd_kcontrol *kcontrol, int event)
-{
-	struct snd_soc_component *component = snd_soc_dapm_to_component(w->dapm);
-	unsigned int reg = snd_soc_component_read(component, WM9090_ANALOGUE_HP_0);
+अटल पूर्णांक hp_ev(काष्ठा snd_soc_dapm_widget *w,
+		 काष्ठा snd_kcontrol *kcontrol, पूर्णांक event)
+अणु
+	काष्ठा snd_soc_component *component = snd_soc_dapm_to_component(w->dapm);
+	अचिन्हित पूर्णांक reg = snd_soc_component_पढ़ो(component, WM9090_ANALOGUE_HP_0);
 
-	switch (event) {
-	case SND_SOC_DAPM_POST_PMU:
+	चयन (event) अणु
+	हाल SND_SOC_DAPM_POST_PMU:
 		snd_soc_component_update_bits(component, WM9090_CHARGE_PUMP_1,
 				    WM9090_CP_ENA, WM9090_CP_ENA);
 
@@ -253,27 +254,27 @@ static int hp_ev(struct snd_soc_dapm_widget *w,
 				    WM9090_HPOUT1L_ENA | WM9090_HPOUT1R_ENA);
 
 		reg |= WM9090_HPOUT1L_DLY | WM9090_HPOUT1R_DLY;
-		snd_soc_component_write(component, WM9090_ANALOGUE_HP_0, reg);
+		snd_soc_component_ग_लिखो(component, WM9090_ANALOGUE_HP_0, reg);
 
-		/* Start the DC servo.  We don't currently use the
-		 * ability to save the state since we don't have full
+		/* Start the DC servo.  We करोn't currently use the
+		 * ability to save the state since we करोn't have full
 		 * control of the analogue paths and they can change
-		 * DC offsets; see the WM8904 driver for an example of
-		 * doing so.
+		 * DC offsets; see the WM8904 driver क्रम an example of
+		 * करोing so.
 		 */
-		snd_soc_component_write(component, WM9090_DC_SERVO_0,
+		snd_soc_component_ग_लिखो(component, WM9090_DC_SERVO_0,
 			      WM9090_DCS_ENA_CHAN_0 |
 			      WM9090_DCS_ENA_CHAN_1 |
 			      WM9090_DCS_TRIG_STARTUP_1 |
 			      WM9090_DCS_TRIG_STARTUP_0);
-		wait_for_dc_servo(component);
+		रुको_क्रम_dc_servo(component);
 
 		reg |= WM9090_HPOUT1R_OUTP | WM9090_HPOUT1R_RMV_SHORT |
 			WM9090_HPOUT1L_OUTP | WM9090_HPOUT1L_RMV_SHORT;
-		snd_soc_component_write(component, WM9090_ANALOGUE_HP_0, reg);
-		break;
+		snd_soc_component_ग_लिखो(component, WM9090_ANALOGUE_HP_0, reg);
+		अवरोध;
 
-	case SND_SOC_DAPM_PRE_PMD:
+	हाल SND_SOC_DAPM_PRE_PMD:
 		reg &= ~(WM9090_HPOUT1L_RMV_SHORT |
 			 WM9090_HPOUT1L_DLY |
 			 WM9090_HPOUT1L_OUTP |
@@ -281,9 +282,9 @@ static int hp_ev(struct snd_soc_dapm_widget *w,
 			 WM9090_HPOUT1R_DLY |
 			 WM9090_HPOUT1R_OUTP);
 
-		snd_soc_component_write(component, WM9090_ANALOGUE_HP_0, reg);
+		snd_soc_component_ग_लिखो(component, WM9090_ANALOGUE_HP_0, reg);
 
-		snd_soc_component_write(component, WM9090_DC_SERVO_0, 0);
+		snd_soc_component_ग_लिखो(component, WM9090_DC_SERVO_0, 0);
 
 		snd_soc_component_update_bits(component, WM9090_POWER_MANAGEMENT_1,
 				    WM9090_HPOUT1L_ENA | WM9090_HPOUT1R_ENA,
@@ -291,49 +292,49 @@ static int hp_ev(struct snd_soc_dapm_widget *w,
 
 		snd_soc_component_update_bits(component, WM9090_CHARGE_PUMP_1,
 				    WM9090_CP_ENA, 0);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct snd_kcontrol_new spkmix[] = {
+अटल स्थिर काष्ठा snd_kcontrol_new spkmix[] = अणु
 SOC_DAPM_SINGLE("IN1A Switch", WM9090_SPEAKER_MIXER, 6, 1, 0),
 SOC_DAPM_SINGLE("IN1B Switch", WM9090_SPEAKER_MIXER, 4, 1, 0),
 SOC_DAPM_SINGLE("IN2A Switch", WM9090_SPEAKER_MIXER, 2, 1, 0),
 SOC_DAPM_SINGLE("IN2B Switch", WM9090_SPEAKER_MIXER, 0, 1, 0),
-};
+पूर्ण;
 
-static const struct snd_kcontrol_new spkout[] = {
+अटल स्थिर काष्ठा snd_kcontrol_new spkout[] = अणु
 SOC_DAPM_SINGLE("Mixer Switch", WM9090_SPKOUT_MIXERS, 4, 1, 0),
-};
+पूर्ण;
 
-static const struct snd_kcontrol_new mixoutl[] = {
+अटल स्थिर काष्ठा snd_kcontrol_new mixoutl[] = अणु
 SOC_DAPM_SINGLE("IN1A Switch", WM9090_OUTPUT_MIXER1, 6, 1, 0),
 SOC_DAPM_SINGLE("IN1B Switch", WM9090_OUTPUT_MIXER1, 4, 1, 0),
 SOC_DAPM_SINGLE("IN2A Switch", WM9090_OUTPUT_MIXER1, 2, 1, 0),
 SOC_DAPM_SINGLE("IN2B Switch", WM9090_OUTPUT_MIXER1, 0, 1, 0),
-};
+पूर्ण;
 
-static const struct snd_kcontrol_new mixoutr[] = {
+अटल स्थिर काष्ठा snd_kcontrol_new mixoutr[] = अणु
 SOC_DAPM_SINGLE("IN1A Switch", WM9090_OUTPUT_MIXER2, 6, 1, 0),
 SOC_DAPM_SINGLE("IN1B Switch", WM9090_OUTPUT_MIXER2, 4, 1, 0),
 SOC_DAPM_SINGLE("IN2A Switch", WM9090_OUTPUT_MIXER2, 2, 1, 0),
 SOC_DAPM_SINGLE("IN2B Switch", WM9090_OUTPUT_MIXER2, 0, 1, 0),
-};
+पूर्ण;
 
-static const struct snd_soc_dapm_widget wm9090_dapm_widgets[] = {
+अटल स्थिर काष्ठा snd_soc_dapm_widget wm9090_dapm_widमाला_लो[] = अणु
 SND_SOC_DAPM_INPUT("IN1+"),
 SND_SOC_DAPM_INPUT("IN1-"),
 SND_SOC_DAPM_INPUT("IN2+"),
 SND_SOC_DAPM_INPUT("IN2-"),
 
-SND_SOC_DAPM_SUPPLY("OSC", WM9090_POWER_MANAGEMENT_1, 3, 0, NULL, 0),
+SND_SOC_DAPM_SUPPLY("OSC", WM9090_POWER_MANAGEMENT_1, 3, 0, शून्य, 0),
 
-SND_SOC_DAPM_PGA("IN1A PGA", WM9090_POWER_MANAGEMENT_2, 7, 0, NULL, 0),
-SND_SOC_DAPM_PGA("IN1B PGA", WM9090_POWER_MANAGEMENT_2, 6, 0, NULL, 0),
-SND_SOC_DAPM_PGA("IN2A PGA", WM9090_POWER_MANAGEMENT_2, 5, 0, NULL, 0),
-SND_SOC_DAPM_PGA("IN2B PGA", WM9090_POWER_MANAGEMENT_2, 4, 0, NULL, 0),
+SND_SOC_DAPM_PGA("IN1A PGA", WM9090_POWER_MANAGEMENT_2, 7, 0, शून्य, 0),
+SND_SOC_DAPM_PGA("IN1B PGA", WM9090_POWER_MANAGEMENT_2, 6, 0, शून्य, 0),
+SND_SOC_DAPM_PGA("IN2A PGA", WM9090_POWER_MANAGEMENT_2, 5, 0, शून्य, 0),
+SND_SOC_DAPM_PGA("IN2B PGA", WM9090_POWER_MANAGEMENT_2, 4, 0, शून्य, 0),
 
 SND_SOC_DAPM_MIXER("SPKMIX", WM9090_POWER_MANAGEMENT_3, 3, 0,
 		   spkmix, ARRAY_SIZE(spkmix)),
@@ -342,133 +343,133 @@ SND_SOC_DAPM_MIXER("MIXOUTL", WM9090_POWER_MANAGEMENT_3, 5, 0,
 SND_SOC_DAPM_MIXER("MIXOUTR", WM9090_POWER_MANAGEMENT_3, 4, 0,
 		   mixoutr, ARRAY_SIZE(mixoutr)),
 
-SND_SOC_DAPM_PGA_E("HP PGA", SND_SOC_NOPM, 0, 0, NULL, 0,
+SND_SOC_DAPM_PGA_E("HP PGA", SND_SOC_NOPM, 0, 0, शून्य, 0,
 		   hp_ev, SND_SOC_DAPM_POST_PMU | SND_SOC_DAPM_PRE_PMD),
 
-SND_SOC_DAPM_PGA("SPKPGA", WM9090_POWER_MANAGEMENT_3, 8, 0, NULL, 0),
+SND_SOC_DAPM_PGA("SPKPGA", WM9090_POWER_MANAGEMENT_3, 8, 0, शून्य, 0),
 SND_SOC_DAPM_MIXER("SPKOUT", WM9090_POWER_MANAGEMENT_1, 12, 0,
 		   spkout, ARRAY_SIZE(spkout)),
 
 SND_SOC_DAPM_OUTPUT("HPR"),
 SND_SOC_DAPM_OUTPUT("HPL"),
 SND_SOC_DAPM_OUTPUT("Speaker"),
-};
+पूर्ण;
 
-static const struct snd_soc_dapm_route audio_map[] = {
-	{ "IN1A PGA", NULL, "IN1+" },
-	{ "IN2A PGA", NULL, "IN2+" },
+अटल स्थिर काष्ठा snd_soc_dapm_route audio_map[] = अणु
+	अणु "IN1A PGA", शून्य, "IN1+" पूर्ण,
+	अणु "IN2A PGA", शून्य, "IN2+" पूर्ण,
 
-	{ "SPKMIX", "IN1A Switch", "IN1A PGA" },
-	{ "SPKMIX", "IN2A Switch", "IN2A PGA" },
+	अणु "SPKMIX", "IN1A Switch", "IN1A PGA" पूर्ण,
+	अणु "SPKMIX", "IN2A Switch", "IN2A PGA" पूर्ण,
 
-	{ "MIXOUTL", "IN1A Switch", "IN1A PGA" },
-	{ "MIXOUTL", "IN2A Switch", "IN2A PGA" },
+	अणु "MIXOUTL", "IN1A Switch", "IN1A PGA" पूर्ण,
+	अणु "MIXOUTL", "IN2A Switch", "IN2A PGA" पूर्ण,
 
-	{ "MIXOUTR", "IN1A Switch", "IN1A PGA" },
-	{ "MIXOUTR", "IN2A Switch", "IN2A PGA" },
+	अणु "MIXOUTR", "IN1A Switch", "IN1A PGA" पूर्ण,
+	अणु "MIXOUTR", "IN2A Switch", "IN2A PGA" पूर्ण,
 
-	{ "HP PGA", NULL, "OSC" },
-	{ "HP PGA", NULL, "MIXOUTL" },
-	{ "HP PGA", NULL, "MIXOUTR" },
+	अणु "HP PGA", शून्य, "OSC" पूर्ण,
+	अणु "HP PGA", शून्य, "MIXOUTL" पूर्ण,
+	अणु "HP PGA", शून्य, "MIXOUTR" पूर्ण,
 
-	{ "HPL", NULL, "HP PGA" },
-	{ "HPR", NULL, "HP PGA" },
+	अणु "HPL", शून्य, "HP PGA" पूर्ण,
+	अणु "HPR", शून्य, "HP PGA" पूर्ण,
 
-	{ "SPKPGA", NULL, "OSC" },
-	{ "SPKPGA", NULL, "SPKMIX" },
+	अणु "SPKPGA", शून्य, "OSC" पूर्ण,
+	अणु "SPKPGA", शून्य, "SPKMIX" पूर्ण,
 
-	{ "SPKOUT", "Mixer Switch", "SPKPGA" },
+	अणु "SPKOUT", "Mixer Switch", "SPKPGA" पूर्ण,
 
-	{ "Speaker", NULL, "SPKOUT" },
-};
+	अणु "Speaker", शून्य, "SPKOUT" पूर्ण,
+पूर्ण;
 
-static const struct snd_soc_dapm_route audio_map_in1_se[] = {
-	{ "IN1B PGA", NULL, "IN1-" },	
+अटल स्थिर काष्ठा snd_soc_dapm_route audio_map_in1_se[] = अणु
+	अणु "IN1B PGA", शून्य, "IN1-" पूर्ण,	
 
-	{ "SPKMIX", "IN1B Switch", "IN1B PGA" },
-	{ "MIXOUTL", "IN1B Switch", "IN1B PGA" },
-	{ "MIXOUTR", "IN1B Switch", "IN1B PGA" },
-};
+	अणु "SPKMIX", "IN1B Switch", "IN1B PGA" पूर्ण,
+	अणु "MIXOUTL", "IN1B Switch", "IN1B PGA" पूर्ण,
+	अणु "MIXOUTR", "IN1B Switch", "IN1B PGA" पूर्ण,
+पूर्ण;
 
-static const struct snd_soc_dapm_route audio_map_in1_diff[] = {
-	{ "IN1A PGA", NULL, "IN1-" },	
-};
+अटल स्थिर काष्ठा snd_soc_dapm_route audio_map_in1_dअगरf[] = अणु
+	अणु "IN1A PGA", शून्य, "IN1-" पूर्ण,	
+पूर्ण;
 
-static const struct snd_soc_dapm_route audio_map_in2_se[] = {
-	{ "IN2B PGA", NULL, "IN2-" },	
+अटल स्थिर काष्ठा snd_soc_dapm_route audio_map_in2_se[] = अणु
+	अणु "IN2B PGA", शून्य, "IN2-" पूर्ण,	
 
-	{ "SPKMIX", "IN2B Switch", "IN2B PGA" },
-	{ "MIXOUTL", "IN2B Switch", "IN2B PGA" },
-	{ "MIXOUTR", "IN2B Switch", "IN2B PGA" },
-};
+	अणु "SPKMIX", "IN2B Switch", "IN2B PGA" पूर्ण,
+	अणु "MIXOUTL", "IN2B Switch", "IN2B PGA" पूर्ण,
+	अणु "MIXOUTR", "IN2B Switch", "IN2B PGA" पूर्ण,
+पूर्ण;
 
-static const struct snd_soc_dapm_route audio_map_in2_diff[] = {
-	{ "IN2A PGA", NULL, "IN2-" },	
-};
+अटल स्थिर काष्ठा snd_soc_dapm_route audio_map_in2_dअगरf[] = अणु
+	अणु "IN2A PGA", शून्य, "IN2-" पूर्ण,	
+पूर्ण;
 
-static int wm9090_add_controls(struct snd_soc_component *component)
-{
-	struct wm9090_priv *wm9090 = snd_soc_component_get_drvdata(component);
-	struct snd_soc_dapm_context *dapm = snd_soc_component_get_dapm(component);
-	int i;
+अटल पूर्णांक wm9090_add_controls(काष्ठा snd_soc_component *component)
+अणु
+	काष्ठा wm9090_priv *wm9090 = snd_soc_component_get_drvdata(component);
+	काष्ठा snd_soc_dapm_context *dapm = snd_soc_component_get_dapm(component);
+	पूर्णांक i;
 
-	snd_soc_dapm_new_controls(dapm, wm9090_dapm_widgets,
-				  ARRAY_SIZE(wm9090_dapm_widgets));
+	snd_soc_dapm_new_controls(dapm, wm9090_dapm_widमाला_लो,
+				  ARRAY_SIZE(wm9090_dapm_widमाला_लो));
 
 	snd_soc_dapm_add_routes(dapm, audio_map, ARRAY_SIZE(audio_map));
 
 	snd_soc_add_component_controls(component, wm9090_controls,
 			     ARRAY_SIZE(wm9090_controls));
 
-	if (wm9090->pdata.lin1_diff) {
-		snd_soc_dapm_add_routes(dapm, audio_map_in1_diff,
-					ARRAY_SIZE(audio_map_in1_diff));
-	} else {
+	अगर (wm9090->pdata.lin1_dअगरf) अणु
+		snd_soc_dapm_add_routes(dapm, audio_map_in1_dअगरf,
+					ARRAY_SIZE(audio_map_in1_dअगरf));
+	पूर्ण अन्यथा अणु
 		snd_soc_dapm_add_routes(dapm, audio_map_in1_se,
 					ARRAY_SIZE(audio_map_in1_se));
 		snd_soc_add_component_controls(component, wm9090_in1_se_controls,
 				     ARRAY_SIZE(wm9090_in1_se_controls));
-	}
+	पूर्ण
 
-	if (wm9090->pdata.lin2_diff) {
-		snd_soc_dapm_add_routes(dapm, audio_map_in2_diff,
-					ARRAY_SIZE(audio_map_in2_diff));
-	} else {
+	अगर (wm9090->pdata.lin2_dअगरf) अणु
+		snd_soc_dapm_add_routes(dapm, audio_map_in2_dअगरf,
+					ARRAY_SIZE(audio_map_in2_dअगरf));
+	पूर्ण अन्यथा अणु
 		snd_soc_dapm_add_routes(dapm, audio_map_in2_se,
 					ARRAY_SIZE(audio_map_in2_se));
 		snd_soc_add_component_controls(component, wm9090_in2_se_controls,
 				     ARRAY_SIZE(wm9090_in2_se_controls));
-	}
+	पूर्ण
 
-	if (wm9090->pdata.agc_ena) {
-		for (i = 0; i < ARRAY_SIZE(wm9090->pdata.agc); i++)
-			snd_soc_component_write(component, WM9090_AGC_CONTROL_0 + i,
+	अगर (wm9090->pdata.agc_ena) अणु
+		क्रम (i = 0; i < ARRAY_SIZE(wm9090->pdata.agc); i++)
+			snd_soc_component_ग_लिखो(component, WM9090_AGC_CONTROL_0 + i,
 				      wm9090->pdata.agc[i]);
 		snd_soc_component_update_bits(component, WM9090_POWER_MANAGEMENT_3,
 				    WM9090_AGC_ENA, WM9090_AGC_ENA);
-	} else {
+	पूर्ण अन्यथा अणु
 		snd_soc_component_update_bits(component, WM9090_POWER_MANAGEMENT_3,
 				    WM9090_AGC_ENA, 0);
-	}
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
-}
+पूर्ण
 
 /*
- * The machine driver should call this from their set_bias_level; if there
+ * The machine driver should call this from their set_bias_level; अगर there
  * isn't one then this can just be set as the set_bias_level function.
  */
-static int wm9090_set_bias_level(struct snd_soc_component *component,
-				 enum snd_soc_bias_level level)
-{
-	struct wm9090_priv *wm9090 = snd_soc_component_get_drvdata(component);
+अटल पूर्णांक wm9090_set_bias_level(काष्ठा snd_soc_component *component,
+				 क्रमागत snd_soc_bias_level level)
+अणु
+	काष्ठा wm9090_priv *wm9090 = snd_soc_component_get_drvdata(component);
 
-	switch (level) {
-	case SND_SOC_BIAS_ON:
-		break;
+	चयन (level) अणु
+	हाल SND_SOC_BIAS_ON:
+		अवरोध;
 
-	case SND_SOC_BIAS_PREPARE:
+	हाल SND_SOC_BIAS_PREPARE:
 		snd_soc_component_update_bits(component, WM9090_ANTIPOP2, WM9090_VMID_ENA,
 				    WM9090_VMID_ENA);
 		snd_soc_component_update_bits(component, WM9090_POWER_MANAGEMENT_1,
@@ -477,34 +478,34 @@ static int wm9090_set_bias_level(struct snd_soc_component *component,
 				    WM9090_BIAS_ENA |
 				    1 << WM9090_VMID_RES_SHIFT);
 		msleep(1);  /* Probably an overestimate */
-		break;
+		अवरोध;
 
-	case SND_SOC_BIAS_STANDBY:
-		if (snd_soc_component_get_bias_level(component) == SND_SOC_BIAS_OFF) {
-			/* Restore the register cache */
+	हाल SND_SOC_BIAS_STANDBY:
+		अगर (snd_soc_component_get_bias_level(component) == SND_SOC_BIAS_OFF) अणु
+			/* Restore the रेजिस्टर cache */
 			regcache_sync(wm9090->regmap);
-		}
+		पूर्ण
 
 		/* We keep VMID off during standby since the combination of
-		 * ground referenced outputs and class D speaker mean that
+		 * ground referenced outमाला_दो and class D speaker mean that
 		 * latency is not an issue.
 		 */
 		snd_soc_component_update_bits(component, WM9090_POWER_MANAGEMENT_1,
 				    WM9090_BIAS_ENA | WM9090_VMID_RES_MASK, 0);
 		snd_soc_component_update_bits(component, WM9090_ANTIPOP2,
 				    WM9090_VMID_ENA, 0);
-		break;
+		अवरोध;
 
-	case SND_SOC_BIAS_OFF:
-		break;
-	}
+	हाल SND_SOC_BIAS_OFF:
+		अवरोध;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int wm9090_probe(struct snd_soc_component *component)
-{
-	/* Configure some defaults; they will be written out when we
+अटल पूर्णांक wm9090_probe(काष्ठा snd_soc_component *component)
+अणु
+	/* Configure some शेषs; they will be written out when we
 	 * bring the bias up.
 	 */
 	snd_soc_component_update_bits(component, WM9090_IN1_LINE_INPUT_A_VOLUME,
@@ -534,94 +535,94 @@ static int wm9090_probe(struct snd_soc_component *component)
 
 	wm9090_add_controls(component);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct snd_soc_component_driver soc_component_dev_wm9090 = {
+अटल स्थिर काष्ठा snd_soc_component_driver soc_component_dev_wm9090 = अणु
 	.probe			= wm9090_probe,
 	.set_bias_level		= wm9090_set_bias_level,
 	.suspend_bias_off	= 1,
 	.idle_bias_on		= 1,
-	.use_pmdown_time	= 1,
+	.use_pmकरोwn_समय	= 1,
 	.endianness		= 1,
 	.non_legacy_dai_naming	= 1,
-};
+पूर्ण;
 
-static const struct regmap_config wm9090_regmap = {
+अटल स्थिर काष्ठा regmap_config wm9090_regmap = अणु
 	.reg_bits = 8,
 	.val_bits = 16,
 
-	.max_register = WM9090_MAX_REGISTER,
-	.volatile_reg = wm9090_volatile,
-	.readable_reg = wm9090_readable,
+	.max_रेजिस्टर = WM9090_MAX_REGISTER,
+	.अस्थिर_reg = wm9090_अस्थिर,
+	.पढ़ोable_reg = wm9090_पढ़ोable,
 
 	.cache_type = REGCACHE_RBTREE,
-	.reg_defaults = wm9090_reg_defaults,
-	.num_reg_defaults = ARRAY_SIZE(wm9090_reg_defaults),
-};
+	.reg_शेषs = wm9090_reg_शेषs,
+	.num_reg_शेषs = ARRAY_SIZE(wm9090_reg_शेषs),
+पूर्ण;
 
 
-static int wm9090_i2c_probe(struct i2c_client *i2c,
-			    const struct i2c_device_id *id)
-{
-	struct wm9090_priv *wm9090;
-	unsigned int reg;
-	int ret;
+अटल पूर्णांक wm9090_i2c_probe(काष्ठा i2c_client *i2c,
+			    स्थिर काष्ठा i2c_device_id *id)
+अणु
+	काष्ठा wm9090_priv *wm9090;
+	अचिन्हित पूर्णांक reg;
+	पूर्णांक ret;
 
-	wm9090 = devm_kzalloc(&i2c->dev, sizeof(*wm9090), GFP_KERNEL);
-	if (!wm9090)
-		return -ENOMEM;
+	wm9090 = devm_kzalloc(&i2c->dev, माप(*wm9090), GFP_KERNEL);
+	अगर (!wm9090)
+		वापस -ENOMEM;
 
 	wm9090->regmap = devm_regmap_init_i2c(i2c, &wm9090_regmap);
-	if (IS_ERR(wm9090->regmap)) {
+	अगर (IS_ERR(wm9090->regmap)) अणु
 		ret = PTR_ERR(wm9090->regmap);
 		dev_err(&i2c->dev, "Failed to allocate regmap: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	ret = regmap_read(wm9090->regmap, WM9090_SOFTWARE_RESET, &reg);
-	if (ret < 0)
-		return ret;
+	ret = regmap_पढ़ो(wm9090->regmap, WM9090_SOFTWARE_RESET, &reg);
+	अगर (ret < 0)
+		वापस ret;
 
-	if (reg != 0x9093) {
+	अगर (reg != 0x9093) अणु
 		dev_err(&i2c->dev, "Device is not a WM9090, ID=%x\n", reg);
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	ret = regmap_write(wm9090->regmap, WM9090_SOFTWARE_RESET, 0);
-	if (ret < 0)
-		return ret;
+	ret = regmap_ग_लिखो(wm9090->regmap, WM9090_SOFTWARE_RESET, 0);
+	अगर (ret < 0)
+		वापस ret;
 
-	if (i2c->dev.platform_data)
-		memcpy(&wm9090->pdata, i2c->dev.platform_data,
-		       sizeof(wm9090->pdata));
+	अगर (i2c->dev.platक्रमm_data)
+		स_नकल(&wm9090->pdata, i2c->dev.platक्रमm_data,
+		       माप(wm9090->pdata));
 
 	i2c_set_clientdata(i2c, wm9090);
 
-	ret =  devm_snd_soc_register_component(&i2c->dev,
-			&soc_component_dev_wm9090,  NULL, 0);
-	if (ret != 0) {
+	ret =  devm_snd_soc_रेजिस्टर_component(&i2c->dev,
+			&soc_component_dev_wm9090,  शून्य, 0);
+	अगर (ret != 0) अणु
 		dev_err(&i2c->dev, "Failed to register CODEC: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct i2c_device_id wm9090_id[] = {
-	{ "wm9090", 0 },
-	{ "wm9093", 0 },
-	{ }
-};
+अटल स्थिर काष्ठा i2c_device_id wm9090_id[] = अणु
+	अणु "wm9090", 0 पूर्ण,
+	अणु "wm9093", 0 पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(i2c, wm9090_id);
 
-static struct i2c_driver wm9090_i2c_driver = {
-	.driver = {
+अटल काष्ठा i2c_driver wm9090_i2c_driver = अणु
+	.driver = अणु
 		.name = "wm9090",
-	},
+	पूर्ण,
 	.probe = wm9090_i2c_probe,
 	.id_table = wm9090_id,
-};
+पूर्ण;
 
 module_i2c_driver(wm9090_i2c_driver);
 

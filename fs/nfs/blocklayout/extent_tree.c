@@ -1,396 +1,397 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Copyright (c) 2014-2016 Christoph Hellwig.
  */
 
-#include <linux/vmalloc.h>
+#समावेश <linux/vदो_स्मृति.h>
 
-#include "blocklayout.h"
+#समावेश "blocklayout.h"
 
-#define NFSDBG_FACILITY		NFSDBG_PNFS_LD
+#घोषणा NFSDBG_FACILITY		NFSDBG_PNFS_LD
 
-static inline struct pnfs_block_extent *
-ext_node(struct rb_node *node)
-{
-	return rb_entry(node, struct pnfs_block_extent, be_node);
-}
+अटल अंतरभूत काष्ठा pnfs_block_extent *
+ext_node(काष्ठा rb_node *node)
+अणु
+	वापस rb_entry(node, काष्ठा pnfs_block_extent, be_node);
+पूर्ण
 
-static struct pnfs_block_extent *
-ext_tree_first(struct rb_root *root)
-{
-	struct rb_node *node = rb_first(root);
-	return node ? ext_node(node) : NULL;
-}
+अटल काष्ठा pnfs_block_extent *
+ext_tree_first(काष्ठा rb_root *root)
+अणु
+	काष्ठा rb_node *node = rb_first(root);
+	वापस node ? ext_node(node) : शून्य;
+पूर्ण
 
-static struct pnfs_block_extent *
-ext_tree_prev(struct pnfs_block_extent *be)
-{
-	struct rb_node *node = rb_prev(&be->be_node);
-	return node ? ext_node(node) : NULL;
-}
+अटल काष्ठा pnfs_block_extent *
+ext_tree_prev(काष्ठा pnfs_block_extent *be)
+अणु
+	काष्ठा rb_node *node = rb_prev(&be->be_node);
+	वापस node ? ext_node(node) : शून्य;
+पूर्ण
 
-static struct pnfs_block_extent *
-ext_tree_next(struct pnfs_block_extent *be)
-{
-	struct rb_node *node = rb_next(&be->be_node);
-	return node ? ext_node(node) : NULL;
-}
+अटल काष्ठा pnfs_block_extent *
+ext_tree_next(काष्ठा pnfs_block_extent *be)
+अणु
+	काष्ठा rb_node *node = rb_next(&be->be_node);
+	वापस node ? ext_node(node) : शून्य;
+पूर्ण
 
-static inline sector_t
-ext_f_end(struct pnfs_block_extent *be)
-{
-	return be->be_f_offset + be->be_length;
-}
+अटल अंतरभूत sector_t
+ext_f_end(काष्ठा pnfs_block_extent *be)
+अणु
+	वापस be->be_f_offset + be->be_length;
+पूर्ण
 
-static struct pnfs_block_extent *
-__ext_tree_search(struct rb_root *root, sector_t start)
-{
-	struct rb_node *node = root->rb_node;
-	struct pnfs_block_extent *be = NULL;
+अटल काष्ठा pnfs_block_extent *
+__ext_tree_search(काष्ठा rb_root *root, sector_t start)
+अणु
+	काष्ठा rb_node *node = root->rb_node;
+	काष्ठा pnfs_block_extent *be = शून्य;
 
-	while (node) {
+	जबतक (node) अणु
 		be = ext_node(node);
-		if (start < be->be_f_offset)
+		अगर (start < be->be_f_offset)
 			node = node->rb_left;
-		else if (start >= ext_f_end(be))
+		अन्यथा अगर (start >= ext_f_end(be))
 			node = node->rb_right;
-		else
-			return be;
-	}
+		अन्यथा
+			वापस be;
+	पूर्ण
 
-	if (be) {
-		if (start < be->be_f_offset)
-			return be;
+	अगर (be) अणु
+		अगर (start < be->be_f_offset)
+			वापस be;
 
-		if (start >= ext_f_end(be))
-			return ext_tree_next(be);
-	}
+		अगर (start >= ext_f_end(be))
+			वापस ext_tree_next(be);
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static bool
-ext_can_merge(struct pnfs_block_extent *be1, struct pnfs_block_extent *be2)
-{
-	if (be1->be_state != be2->be_state)
-		return false;
-	if (be1->be_device != be2->be_device)
-		return false;
+अटल bool
+ext_can_merge(काष्ठा pnfs_block_extent *be1, काष्ठा pnfs_block_extent *be2)
+अणु
+	अगर (be1->be_state != be2->be_state)
+		वापस false;
+	अगर (be1->be_device != be2->be_device)
+		वापस false;
 
-	if (be1->be_f_offset + be1->be_length != be2->be_f_offset)
-		return false;
+	अगर (be1->be_f_offset + be1->be_length != be2->be_f_offset)
+		वापस false;
 
-	if (be1->be_state != PNFS_BLOCK_NONE_DATA &&
+	अगर (be1->be_state != PNFS_BLOCK_NONE_DATA &&
 	    (be1->be_v_offset + be1->be_length != be2->be_v_offset))
-		return false;
+		वापस false;
 
-	if (be1->be_state == PNFS_BLOCK_INVALID_DATA &&
+	अगर (be1->be_state == PNFS_BLOCK_INVALID_DATA &&
 	    be1->be_tag != be2->be_tag)
-		return false;
+		वापस false;
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static struct pnfs_block_extent *
-ext_try_to_merge_left(struct rb_root *root, struct pnfs_block_extent *be)
-{
-	struct pnfs_block_extent *left = ext_tree_prev(be);
+अटल काष्ठा pnfs_block_extent *
+ext_try_to_merge_left(काष्ठा rb_root *root, काष्ठा pnfs_block_extent *be)
+अणु
+	काष्ठा pnfs_block_extent *left = ext_tree_prev(be);
 
-	if (left && ext_can_merge(left, be)) {
+	अगर (left && ext_can_merge(left, be)) अणु
 		left->be_length += be->be_length;
 		rb_erase(&be->be_node, root);
 		nfs4_put_deviceid_node(be->be_device);
-		kfree(be);
-		return left;
-	}
+		kमुक्त(be);
+		वापस left;
+	पूर्ण
 
-	return be;
-}
+	वापस be;
+पूर्ण
 
-static struct pnfs_block_extent *
-ext_try_to_merge_right(struct rb_root *root, struct pnfs_block_extent *be)
-{
-	struct pnfs_block_extent *right = ext_tree_next(be);
+अटल काष्ठा pnfs_block_extent *
+ext_try_to_merge_right(काष्ठा rb_root *root, काष्ठा pnfs_block_extent *be)
+अणु
+	काष्ठा pnfs_block_extent *right = ext_tree_next(be);
 
-	if (right && ext_can_merge(be, right)) {
+	अगर (right && ext_can_merge(be, right)) अणु
 		be->be_length += right->be_length;
 		rb_erase(&right->be_node, root);
 		nfs4_put_deviceid_node(right->be_device);
-		kfree(right);
-	}
+		kमुक्त(right);
+	पूर्ण
 
-	return be;
-}
+	वापस be;
+पूर्ण
 
-static void __ext_put_deviceids(struct list_head *head)
-{
-	struct pnfs_block_extent *be, *tmp;
+अटल व्योम __ext_put_deviceids(काष्ठा list_head *head)
+अणु
+	काष्ठा pnfs_block_extent *be, *पंचांगp;
 
-	list_for_each_entry_safe(be, tmp, head, be_list) {
+	list_क्रम_each_entry_safe(be, पंचांगp, head, be_list) अणु
 		nfs4_put_deviceid_node(be->be_device);
-		kfree(be);
-	}
-}
+		kमुक्त(be);
+	पूर्ण
+पूर्ण
 
-static void
-__ext_tree_insert(struct rb_root *root,
-		struct pnfs_block_extent *new, bool merge_ok)
-{
-	struct rb_node **p = &root->rb_node, *parent = NULL;
-	struct pnfs_block_extent *be;
+अटल व्योम
+__ext_tree_insert(काष्ठा rb_root *root,
+		काष्ठा pnfs_block_extent *new, bool merge_ok)
+अणु
+	काष्ठा rb_node **p = &root->rb_node, *parent = शून्य;
+	काष्ठा pnfs_block_extent *be;
 
-	while (*p) {
+	जबतक (*p) अणु
 		parent = *p;
 		be = ext_node(parent);
 
-		if (new->be_f_offset < be->be_f_offset) {
-			if (merge_ok && ext_can_merge(new, be)) {
+		अगर (new->be_f_offset < be->be_f_offset) अणु
+			अगर (merge_ok && ext_can_merge(new, be)) अणु
 				be->be_f_offset = new->be_f_offset;
-				if (be->be_state != PNFS_BLOCK_NONE_DATA)
+				अगर (be->be_state != PNFS_BLOCK_NONE_DATA)
 					be->be_v_offset = new->be_v_offset;
 				be->be_length += new->be_length;
 				be = ext_try_to_merge_left(root, be);
-				goto free_new;
-			}
+				जाओ मुक्त_new;
+			पूर्ण
 			p = &(*p)->rb_left;
-		} else if (new->be_f_offset >= ext_f_end(be)) {
-			if (merge_ok && ext_can_merge(be, new)) {
+		पूर्ण अन्यथा अगर (new->be_f_offset >= ext_f_end(be)) अणु
+			अगर (merge_ok && ext_can_merge(be, new)) अणु
 				be->be_length += new->be_length;
 				be = ext_try_to_merge_right(root, be);
-				goto free_new;
-			}
+				जाओ मुक्त_new;
+			पूर्ण
 			p = &(*p)->rb_right;
-		} else {
+		पूर्ण अन्यथा अणु
 			BUG();
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	rb_link_node(&new->be_node, parent, p);
 	rb_insert_color(&new->be_node, root);
-	return;
-free_new:
+	वापस;
+मुक्त_new:
 	nfs4_put_deviceid_node(new->be_device);
-	kfree(new);
-}
+	kमुक्त(new);
+पूर्ण
 
-static int
-__ext_tree_remove(struct rb_root *root,
-		sector_t start, sector_t end, struct list_head *tmp)
-{
-	struct pnfs_block_extent *be;
+अटल पूर्णांक
+__ext_tree_हटाओ(काष्ठा rb_root *root,
+		sector_t start, sector_t end, काष्ठा list_head *पंचांगp)
+अणु
+	काष्ठा pnfs_block_extent *be;
 	sector_t len1 = 0, len2 = 0;
 	sector_t orig_v_offset;
 	sector_t orig_len;
 
 	be = __ext_tree_search(root, start);
-	if (!be)
-		return 0;
-	if (be->be_f_offset >= end)
-		return 0;
+	अगर (!be)
+		वापस 0;
+	अगर (be->be_f_offset >= end)
+		वापस 0;
 
 	orig_v_offset = be->be_v_offset;
 	orig_len = be->be_length;
 
-	if (start > be->be_f_offset)
+	अगर (start > be->be_f_offset)
 		len1 = start - be->be_f_offset;
-	if (ext_f_end(be) > end)
+	अगर (ext_f_end(be) > end)
 		len2 = ext_f_end(be) - end;
 
-	if (len2 > 0) {
-		if (len1 > 0) {
-			struct pnfs_block_extent *new;
+	अगर (len2 > 0) अणु
+		अगर (len1 > 0) अणु
+			काष्ठा pnfs_block_extent *new;
 
-			new = kzalloc(sizeof(*new), GFP_ATOMIC);
-			if (!new)
-				return -ENOMEM;
+			new = kzalloc(माप(*new), GFP_ATOMIC);
+			अगर (!new)
+				वापस -ENOMEM;
 
 			be->be_length = len1;
 
 			new->be_f_offset = end;
-			if (be->be_state != PNFS_BLOCK_NONE_DATA) {
+			अगर (be->be_state != PNFS_BLOCK_NONE_DATA) अणु
 				new->be_v_offset =
 					orig_v_offset + orig_len - len2;
-			}
+			पूर्ण
 			new->be_length = len2;
 			new->be_state = be->be_state;
 			new->be_tag = be->be_tag;
 			new->be_device = nfs4_get_deviceid(be->be_device);
 
 			__ext_tree_insert(root, new, true);
-		} else {
+		पूर्ण अन्यथा अणु
 			be->be_f_offset = end;
-			if (be->be_state != PNFS_BLOCK_NONE_DATA) {
+			अगर (be->be_state != PNFS_BLOCK_NONE_DATA) अणु
 				be->be_v_offset =
 					orig_v_offset + orig_len - len2;
-			}
+			पूर्ण
 			be->be_length = len2;
-		}
-	} else {
-		if (len1 > 0) {
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		अगर (len1 > 0) अणु
 			be->be_length = len1;
 			be = ext_tree_next(be);
-		}
+		पूर्ण
 
-		while (be && ext_f_end(be) <= end) {
-			struct pnfs_block_extent *next = ext_tree_next(be);
+		जबतक (be && ext_f_end(be) <= end) अणु
+			काष्ठा pnfs_block_extent *next = ext_tree_next(be);
 
 			rb_erase(&be->be_node, root);
-			list_add_tail(&be->be_list, tmp);
+			list_add_tail(&be->be_list, पंचांगp);
 			be = next;
-		}
+		पूर्ण
 
-		if (be && be->be_f_offset < end) {
+		अगर (be && be->be_f_offset < end) अणु
 			len1 = ext_f_end(be) - end;
 			be->be_f_offset = end;
-			if (be->be_state != PNFS_BLOCK_NONE_DATA)
+			अगर (be->be_state != PNFS_BLOCK_NONE_DATA)
 				be->be_v_offset += be->be_length - len1;
 			be->be_length = len1;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int
-ext_tree_insert(struct pnfs_block_layout *bl, struct pnfs_block_extent *new)
-{
-	struct pnfs_block_extent *be;
-	struct rb_root *root;
-	int err = 0;
+पूर्णांक
+ext_tree_insert(काष्ठा pnfs_block_layout *bl, काष्ठा pnfs_block_extent *new)
+अणु
+	काष्ठा pnfs_block_extent *be;
+	काष्ठा rb_root *root;
+	पूर्णांक err = 0;
 
-	switch (new->be_state) {
-	case PNFS_BLOCK_READWRITE_DATA:
-	case PNFS_BLOCK_INVALID_DATA:
+	चयन (new->be_state) अणु
+	हाल PNFS_BLOCK_READWRITE_DATA:
+	हाल PNFS_BLOCK_INVALID_DATA:
 		root = &bl->bl_ext_rw;
-		break;
-	case PNFS_BLOCK_READ_DATA:
-	case PNFS_BLOCK_NONE_DATA:
+		अवरोध;
+	हाल PNFS_BLOCK_READ_DATA:
+	हाल PNFS_BLOCK_NONE_DATA:
 		root = &bl->bl_ext_ro;
-		break;
-	default:
-		dprintk("invalid extent type\n");
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		dprपूर्णांकk("invalid extent type\n");
+		वापस -EINVAL;
+	पूर्ण
 
 	spin_lock(&bl->bl_ext_lock);
 retry:
 	be = __ext_tree_search(root, new->be_f_offset);
-	if (!be || be->be_f_offset >= ext_f_end(new)) {
+	अगर (!be || be->be_f_offset >= ext_f_end(new)) अणु
 		__ext_tree_insert(root, new, true);
-	} else if (new->be_f_offset >= be->be_f_offset) {
-		if (ext_f_end(new) <= ext_f_end(be)) {
+	पूर्ण अन्यथा अगर (new->be_f_offset >= be->be_f_offset) अणु
+		अगर (ext_f_end(new) <= ext_f_end(be)) अणु
 			nfs4_put_deviceid_node(new->be_device);
-			kfree(new);
-		} else {
+			kमुक्त(new);
+		पूर्ण अन्यथा अणु
 			sector_t new_len = ext_f_end(new) - ext_f_end(be);
-			sector_t diff = new->be_length - new_len;
+			sector_t dअगरf = new->be_length - new_len;
 
-			new->be_f_offset += diff;
-			new->be_v_offset += diff;
+			new->be_f_offset += dअगरf;
+			new->be_v_offset += dअगरf;
 			new->be_length = new_len;
-			goto retry;
-		}
-	} else if (ext_f_end(new) <= ext_f_end(be)) {
+			जाओ retry;
+		पूर्ण
+	पूर्ण अन्यथा अगर (ext_f_end(new) <= ext_f_end(be)) अणु
 		new->be_length = be->be_f_offset - new->be_f_offset;
 		__ext_tree_insert(root, new, true);
-	} else {
-		struct pnfs_block_extent *split;
+	पूर्ण अन्यथा अणु
+		काष्ठा pnfs_block_extent *split;
 		sector_t new_len = ext_f_end(new) - ext_f_end(be);
-		sector_t diff = new->be_length - new_len;
+		sector_t dअगरf = new->be_length - new_len;
 
-		split = kmemdup(new, sizeof(*new), GFP_ATOMIC);
-		if (!split) {
+		split = kmemdup(new, माप(*new), GFP_ATOMIC);
+		अगर (!split) अणु
 			err = -EINVAL;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
 		split->be_length = be->be_f_offset - split->be_f_offset;
 		split->be_device = nfs4_get_deviceid(new->be_device);
 		__ext_tree_insert(root, split, true);
 
-		new->be_f_offset += diff;
-		new->be_v_offset += diff;
+		new->be_f_offset += dअगरf;
+		new->be_v_offset += dअगरf;
 		new->be_length = new_len;
-		goto retry;
-	}
+		जाओ retry;
+	पूर्ण
 out:
 	spin_unlock(&bl->bl_ext_lock);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static bool
-__ext_tree_lookup(struct rb_root *root, sector_t isect,
-		struct pnfs_block_extent *ret)
-{
-	struct rb_node *node;
-	struct pnfs_block_extent *be;
+अटल bool
+__ext_tree_lookup(काष्ठा rb_root *root, sector_t isect,
+		काष्ठा pnfs_block_extent *ret)
+अणु
+	काष्ठा rb_node *node;
+	काष्ठा pnfs_block_extent *be;
 
 	node = root->rb_node;
-	while (node) {
+	जबतक (node) अणु
 		be = ext_node(node);
-		if (isect < be->be_f_offset)
+		अगर (isect < be->be_f_offset)
 			node = node->rb_left;
-		else if (isect >= ext_f_end(be))
+		अन्यथा अगर (isect >= ext_f_end(be))
 			node = node->rb_right;
-		else {
+		अन्यथा अणु
 			*ret = *be;
-			return true;
-		}
-	}
+			वापस true;
+		पूर्ण
+	पूर्ण
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
 bool
-ext_tree_lookup(struct pnfs_block_layout *bl, sector_t isect,
-	    struct pnfs_block_extent *ret, bool rw)
-{
+ext_tree_lookup(काष्ठा pnfs_block_layout *bl, sector_t isect,
+	    काष्ठा pnfs_block_extent *ret, bool rw)
+अणु
 	bool found = false;
 
 	spin_lock(&bl->bl_ext_lock);
-	if (!rw)
+	अगर (!rw)
 		found = __ext_tree_lookup(&bl->bl_ext_ro, isect, ret);
-	if (!found)
+	अगर (!found)
 		found = __ext_tree_lookup(&bl->bl_ext_rw, isect, ret);
 	spin_unlock(&bl->bl_ext_lock);
 
-	return found;
-}
+	वापस found;
+पूर्ण
 
-int ext_tree_remove(struct pnfs_block_layout *bl, bool rw,
+पूर्णांक ext_tree_हटाओ(काष्ठा pnfs_block_layout *bl, bool rw,
 		sector_t start, sector_t end)
-{
-	int err, err2;
-	LIST_HEAD(tmp);
+अणु
+	पूर्णांक err, err2;
+	LIST_HEAD(पंचांगp);
 
 	spin_lock(&bl->bl_ext_lock);
-	err = __ext_tree_remove(&bl->bl_ext_ro, start, end, &tmp);
-	if (rw) {
-		err2 = __ext_tree_remove(&bl->bl_ext_rw, start, end, &tmp);
-		if (!err)
+	err = __ext_tree_हटाओ(&bl->bl_ext_ro, start, end, &पंचांगp);
+	अगर (rw) अणु
+		err2 = __ext_tree_हटाओ(&bl->bl_ext_rw, start, end, &पंचांगp);
+		अगर (!err)
 			err = err2;
-	}
+	पूर्ण
 	spin_unlock(&bl->bl_ext_lock);
 
-	__ext_put_deviceids(&tmp);
-	return err;
-}
+	__ext_put_deviceids(&पंचांगp);
+	वापस err;
+पूर्ण
 
-static int
-ext_tree_split(struct rb_root *root, struct pnfs_block_extent *be,
+अटल पूर्णांक
+ext_tree_split(काष्ठा rb_root *root, काष्ठा pnfs_block_extent *be,
 		sector_t split)
-{
-	struct pnfs_block_extent *new;
+अणु
+	काष्ठा pnfs_block_extent *new;
 	sector_t orig_len = be->be_length;
 
-	new = kzalloc(sizeof(*new), GFP_ATOMIC);
-	if (!new)
-		return -ENOMEM;
+	new = kzalloc(माप(*new), GFP_ATOMIC);
+	अगर (!new)
+		वापस -ENOMEM;
 
 	be->be_length = split - be->be_f_offset;
 
 	new->be_f_offset = split;
-	if (be->be_state != PNFS_BLOCK_NONE_DATA)
+	अगर (be->be_state != PNFS_BLOCK_NONE_DATA)
 		new->be_v_offset = be->be_v_offset + be->be_length;
 	new->be_length = orig_len - be->be_length;
 	new->be_state = be->be_state;
@@ -398,250 +399,250 @@ ext_tree_split(struct rb_root *root, struct pnfs_block_extent *be,
 	new->be_device = nfs4_get_deviceid(be->be_device);
 
 	__ext_tree_insert(root, new, false);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int
-ext_tree_mark_written(struct pnfs_block_layout *bl, sector_t start,
+पूर्णांक
+ext_tree_mark_written(काष्ठा pnfs_block_layout *bl, sector_t start,
 		sector_t len, u64 lwb)
-{
-	struct rb_root *root = &bl->bl_ext_rw;
+अणु
+	काष्ठा rb_root *root = &bl->bl_ext_rw;
 	sector_t end = start + len;
-	struct pnfs_block_extent *be;
-	int err = 0;
-	LIST_HEAD(tmp);
+	काष्ठा pnfs_block_extent *be;
+	पूर्णांक err = 0;
+	LIST_HEAD(पंचांगp);
 
 	spin_lock(&bl->bl_ext_lock);
 	/*
-	 * First remove all COW extents or holes from written to range.
+	 * First हटाओ all COW extents or holes from written to range.
 	 */
-	err = __ext_tree_remove(&bl->bl_ext_ro, start, end, &tmp);
-	if (err)
-		goto out;
+	err = __ext_tree_हटाओ(&bl->bl_ext_ro, start, end, &पंचांगp);
+	अगर (err)
+		जाओ out;
 
 	/*
 	 * Then mark all invalid extents in the range as written to.
 	 */
-	for (be = __ext_tree_search(root, start); be; be = ext_tree_next(be)) {
-		if (be->be_f_offset >= end)
-			break;
+	क्रम (be = __ext_tree_search(root, start); be; be = ext_tree_next(be)) अणु
+		अगर (be->be_f_offset >= end)
+			अवरोध;
 
-		if (be->be_state != PNFS_BLOCK_INVALID_DATA || be->be_tag)
-			continue;
+		अगर (be->be_state != PNFS_BLOCK_INVALID_DATA || be->be_tag)
+			जारी;
 
-		if (be->be_f_offset < start) {
-			struct pnfs_block_extent *left = ext_tree_prev(be);
+		अगर (be->be_f_offset < start) अणु
+			काष्ठा pnfs_block_extent *left = ext_tree_prev(be);
 
-			if (left && ext_can_merge(left, be)) {
-				sector_t diff = start - be->be_f_offset;
+			अगर (left && ext_can_merge(left, be)) अणु
+				sector_t dअगरf = start - be->be_f_offset;
 
-				left->be_length += diff;
+				left->be_length += dअगरf;
 
-				be->be_f_offset += diff;
-				be->be_v_offset += diff;
-				be->be_length -= diff;
-			} else {
+				be->be_f_offset += dअगरf;
+				be->be_v_offset += dअगरf;
+				be->be_length -= dअगरf;
+			पूर्ण अन्यथा अणु
 				err = ext_tree_split(root, be, start);
-				if (err)
-					goto out;
-			}
-		}
+				अगर (err)
+					जाओ out;
+			पूर्ण
+		पूर्ण
 
-		if (ext_f_end(be) > end) {
-			struct pnfs_block_extent *right = ext_tree_next(be);
+		अगर (ext_f_end(be) > end) अणु
+			काष्ठा pnfs_block_extent *right = ext_tree_next(be);
 
-			if (right && ext_can_merge(be, right)) {
-				sector_t diff = end - be->be_f_offset;
+			अगर (right && ext_can_merge(be, right)) अणु
+				sector_t dअगरf = end - be->be_f_offset;
 
-				be->be_length -= diff;
+				be->be_length -= dअगरf;
 
-				right->be_f_offset -= diff;
-				right->be_v_offset -= diff;
-				right->be_length += diff;
-			} else {
+				right->be_f_offset -= dअगरf;
+				right->be_v_offset -= dअगरf;
+				right->be_length += dअगरf;
+			पूर्ण अन्यथा अणु
 				err = ext_tree_split(root, be, end);
-				if (err)
-					goto out;
-			}
-		}
+				अगर (err)
+					जाओ out;
+			पूर्ण
+		पूर्ण
 
-		if (be->be_f_offset >= start && ext_f_end(be) <= end) {
+		अगर (be->be_f_offset >= start && ext_f_end(be) <= end) अणु
 			be->be_tag = EXTENT_WRITTEN;
 			be = ext_try_to_merge_left(root, be);
 			be = ext_try_to_merge_right(root, be);
-		}
-	}
+		पूर्ण
+	पूर्ण
 out:
-	if (bl->bl_lwb < lwb)
+	अगर (bl->bl_lwb < lwb)
 		bl->bl_lwb = lwb;
 	spin_unlock(&bl->bl_ext_lock);
 
-	__ext_put_deviceids(&tmp);
-	return err;
-}
+	__ext_put_deviceids(&पंचांगp);
+	वापस err;
+पूर्ण
 
-static size_t ext_tree_layoutupdate_size(struct pnfs_block_layout *bl, size_t count)
-{
-	if (bl->bl_scsi_layout)
-		return sizeof(__be32) + PNFS_SCSI_RANGE_SIZE * count;
-	else
-		return sizeof(__be32) + PNFS_BLOCK_EXTENT_SIZE * count;
-}
+अटल माप_प्रकार ext_tree_layoutupdate_size(काष्ठा pnfs_block_layout *bl, माप_प्रकार count)
+अणु
+	अगर (bl->bl_scsi_layout)
+		वापस माप(__be32) + PNFS_SCSI_RANGE_SIZE * count;
+	अन्यथा
+		वापस माप(__be32) + PNFS_BLOCK_EXTENT_SIZE * count;
+पूर्ण
 
-static void ext_tree_free_commitdata(struct nfs4_layoutcommit_args *arg,
-		size_t buffer_size)
-{
-	if (arg->layoutupdate_pages != &arg->layoutupdate_page) {
-		int nr_pages = DIV_ROUND_UP(buffer_size, PAGE_SIZE), i;
+अटल व्योम ext_tree_मुक्त_commitdata(काष्ठा nfs4_layoutcommit_args *arg,
+		माप_प्रकार buffer_size)
+अणु
+	अगर (arg->layoutupdate_pages != &arg->layoutupdate_page) अणु
+		पूर्णांक nr_pages = DIV_ROUND_UP(buffer_size, PAGE_SIZE), i;
 
-		for (i = 0; i < nr_pages; i++)
+		क्रम (i = 0; i < nr_pages; i++)
 			put_page(arg->layoutupdate_pages[i]);
-		vfree(arg->start_p);
-		kfree(arg->layoutupdate_pages);
-	} else {
+		vमुक्त(arg->start_p);
+		kमुक्त(arg->layoutupdate_pages);
+	पूर्ण अन्यथा अणु
 		put_page(arg->layoutupdate_page);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static __be32 *encode_block_extent(struct pnfs_block_extent *be, __be32 *p)
-{
+अटल __be32 *encode_block_extent(काष्ठा pnfs_block_extent *be, __be32 *p)
+अणु
 	p = xdr_encode_opaque_fixed(p, be->be_device->deviceid.data,
 			NFS4_DEVICEID4_SIZE);
 	p = xdr_encode_hyper(p, be->be_f_offset << SECTOR_SHIFT);
 	p = xdr_encode_hyper(p, be->be_length << SECTOR_SHIFT);
 	p = xdr_encode_hyper(p, 0LL);
 	*p++ = cpu_to_be32(PNFS_BLOCK_READWRITE_DATA);
-	return p;
-}
+	वापस p;
+पूर्ण
 
-static __be32 *encode_scsi_range(struct pnfs_block_extent *be, __be32 *p)
-{
+अटल __be32 *encode_scsi_range(काष्ठा pnfs_block_extent *be, __be32 *p)
+अणु
 	p = xdr_encode_hyper(p, be->be_f_offset << SECTOR_SHIFT);
-	return xdr_encode_hyper(p, be->be_length << SECTOR_SHIFT);
-}
+	वापस xdr_encode_hyper(p, be->be_length << SECTOR_SHIFT);
+पूर्ण
 
-static int ext_tree_encode_commit(struct pnfs_block_layout *bl, __be32 *p,
-		size_t buffer_size, size_t *count, __u64 *lastbyte)
-{
-	struct pnfs_block_extent *be;
-	int ret = 0;
+अटल पूर्णांक ext_tree_encode_commit(काष्ठा pnfs_block_layout *bl, __be32 *p,
+		माप_प्रकार buffer_size, माप_प्रकार *count, __u64 *lastbyte)
+अणु
+	काष्ठा pnfs_block_extent *be;
+	पूर्णांक ret = 0;
 
 	spin_lock(&bl->bl_ext_lock);
-	for (be = ext_tree_first(&bl->bl_ext_rw); be; be = ext_tree_next(be)) {
-		if (be->be_state != PNFS_BLOCK_INVALID_DATA ||
+	क्रम (be = ext_tree_first(&bl->bl_ext_rw); be; be = ext_tree_next(be)) अणु
+		अगर (be->be_state != PNFS_BLOCK_INVALID_DATA ||
 		    be->be_tag != EXTENT_WRITTEN)
-			continue;
+			जारी;
 
 		(*count)++;
-		if (ext_tree_layoutupdate_size(bl, *count) > buffer_size) {
+		अगर (ext_tree_layoutupdate_size(bl, *count) > buffer_size) अणु
 			/* keep counting.. */
 			ret = -ENOSPC;
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		if (bl->bl_scsi_layout)
+		अगर (bl->bl_scsi_layout)
 			p = encode_scsi_range(be, p);
-		else
+		अन्यथा
 			p = encode_block_extent(be, p);
 		be->be_tag = EXTENT_COMMITTING;
-	}
+	पूर्ण
 	*lastbyte = bl->bl_lwb - 1;
 	bl->bl_lwb = 0;
 	spin_unlock(&bl->bl_ext_lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int
-ext_tree_prepare_commit(struct nfs4_layoutcommit_args *arg)
-{
-	struct pnfs_block_layout *bl = BLK_LO2EXT(NFS_I(arg->inode)->layout);
-	size_t count = 0, buffer_size = PAGE_SIZE;
+पूर्णांक
+ext_tree_prepare_commit(काष्ठा nfs4_layoutcommit_args *arg)
+अणु
+	काष्ठा pnfs_block_layout *bl = BLK_LO2EXT(NFS_I(arg->inode)->layout);
+	माप_प्रकार count = 0, buffer_size = PAGE_SIZE;
 	__be32 *start_p;
-	int ret;
+	पूर्णांक ret;
 
-	dprintk("%s enter\n", __func__);
+	dprपूर्णांकk("%s enter\n", __func__);
 
 	arg->layoutupdate_page = alloc_page(GFP_NOFS);
-	if (!arg->layoutupdate_page)
-		return -ENOMEM;
+	अगर (!arg->layoutupdate_page)
+		वापस -ENOMEM;
 	start_p = page_address(arg->layoutupdate_page);
 	arg->layoutupdate_pages = &arg->layoutupdate_page;
 
 retry:
 	ret = ext_tree_encode_commit(bl, start_p + 1, buffer_size, &count, &arg->lastbytewritten);
-	if (unlikely(ret)) {
-		ext_tree_free_commitdata(arg, buffer_size);
+	अगर (unlikely(ret)) अणु
+		ext_tree_मुक्त_commitdata(arg, buffer_size);
 
 		buffer_size = ext_tree_layoutupdate_size(bl, count);
 		count = 0;
 
 		arg->layoutupdate_pages =
-			kcalloc(DIV_ROUND_UP(buffer_size, PAGE_SIZE),
-				sizeof(struct page *), GFP_NOFS);
-		if (!arg->layoutupdate_pages)
-			return -ENOMEM;
+			kसुस्मृति(DIV_ROUND_UP(buffer_size, PAGE_SIZE),
+				माप(काष्ठा page *), GFP_NOFS);
+		अगर (!arg->layoutupdate_pages)
+			वापस -ENOMEM;
 
-		start_p = __vmalloc(buffer_size, GFP_NOFS);
-		if (!start_p) {
-			kfree(arg->layoutupdate_pages);
-			return -ENOMEM;
-		}
+		start_p = __vदो_स्मृति(buffer_size, GFP_NOFS);
+		अगर (!start_p) अणु
+			kमुक्त(arg->layoutupdate_pages);
+			वापस -ENOMEM;
+		पूर्ण
 
-		goto retry;
-	}
+		जाओ retry;
+	पूर्ण
 
 	*start_p = cpu_to_be32(count);
 	arg->layoutupdate_len = ext_tree_layoutupdate_size(bl, count);
 
-	if (unlikely(arg->layoutupdate_pages != &arg->layoutupdate_page)) {
-		void *p = start_p, *end = p + arg->layoutupdate_len;
-		struct page *page = NULL;
-		int i = 0;
+	अगर (unlikely(arg->layoutupdate_pages != &arg->layoutupdate_page)) अणु
+		व्योम *p = start_p, *end = p + arg->layoutupdate_len;
+		काष्ठा page *page = शून्य;
+		पूर्णांक i = 0;
 
 		arg->start_p = start_p;
-		for ( ; p < end; p += PAGE_SIZE) {
-			page = vmalloc_to_page(p);
+		क्रम ( ; p < end; p += PAGE_SIZE) अणु
+			page = vदो_स्मृति_to_page(p);
 			arg->layoutupdate_pages[i++] = page;
 			get_page(page);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	dprintk("%s found %zu ranges\n", __func__, count);
-	return 0;
-}
+	dprपूर्णांकk("%s found %zu ranges\n", __func__, count);
+	वापस 0;
+पूर्ण
 
-void
-ext_tree_mark_committed(struct nfs4_layoutcommit_args *arg, int status)
-{
-	struct pnfs_block_layout *bl = BLK_LO2EXT(NFS_I(arg->inode)->layout);
-	struct rb_root *root = &bl->bl_ext_rw;
-	struct pnfs_block_extent *be;
+व्योम
+ext_tree_mark_committed(काष्ठा nfs4_layoutcommit_args *arg, पूर्णांक status)
+अणु
+	काष्ठा pnfs_block_layout *bl = BLK_LO2EXT(NFS_I(arg->inode)->layout);
+	काष्ठा rb_root *root = &bl->bl_ext_rw;
+	काष्ठा pnfs_block_extent *be;
 
-	dprintk("%s status %d\n", __func__, status);
+	dprपूर्णांकk("%s status %d\n", __func__, status);
 
-	ext_tree_free_commitdata(arg, arg->layoutupdate_len);
+	ext_tree_मुक्त_commitdata(arg, arg->layoutupdate_len);
 
 	spin_lock(&bl->bl_ext_lock);
-	for (be = ext_tree_first(root); be; be = ext_tree_next(be)) {
-		if (be->be_state != PNFS_BLOCK_INVALID_DATA ||
+	क्रम (be = ext_tree_first(root); be; be = ext_tree_next(be)) अणु
+		अगर (be->be_state != PNFS_BLOCK_INVALID_DATA ||
 		    be->be_tag != EXTENT_COMMITTING)
-			continue;
+			जारी;
 
-		if (status) {
+		अगर (status) अणु
 			/*
 			 * Mark as written and try again.
 			 *
 			 * XXX: some real error handling here wouldn't hurt..
 			 */
 			be->be_tag = EXTENT_WRITTEN;
-		} else {
+		पूर्ण अन्यथा अणु
 			be->be_state = PNFS_BLOCK_READWRITE_DATA;
 			be->be_tag = 0;
-		}
+		पूर्ण
 
 		be = ext_try_to_merge_left(root, be);
 		be = ext_try_to_merge_right(root, be);
-	}
+	पूर्ण
 	spin_unlock(&bl->bl_ext_lock);
-}
+पूर्ण

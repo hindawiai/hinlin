@@ -1,658 +1,659 @@
+<शैली गुरु>
 /*
  * Copyright (C) 2002 Sistina Software (UK) Limited.
  * Copyright (C) 2006 Red Hat GmbH
  *
  * This file is released under the GPL.
  *
- * Kcopyd provides a simple interface for copying an area of one
+ * Kcopyd provides a simple पूर्णांकerface क्रम copying an area of one
  * block-device to one or more other block-devices, with an asynchronous
- * completion notification.
+ * completion notअगरication.
  */
 
-#include <linux/types.h>
-#include <linux/atomic.h>
-#include <linux/blkdev.h>
-#include <linux/fs.h>
-#include <linux/init.h>
-#include <linux/list.h>
-#include <linux/mempool.h>
-#include <linux/module.h>
-#include <linux/pagemap.h>
-#include <linux/slab.h>
-#include <linux/vmalloc.h>
-#include <linux/workqueue.h>
-#include <linux/mutex.h>
-#include <linux/delay.h>
-#include <linux/device-mapper.h>
-#include <linux/dm-kcopyd.h>
+#समावेश <linux/types.h>
+#समावेश <linux/atomic.h>
+#समावेश <linux/blkdev.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/init.h>
+#समावेश <linux/list.h>
+#समावेश <linux/mempool.h>
+#समावेश <linux/module.h>
+#समावेश <linux/pagemap.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/vदो_स्मृति.h>
+#समावेश <linux/workqueue.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/device-mapper.h>
+#समावेश <linux/dm-kcopyd.h>
 
-#include "dm-core.h"
+#समावेश "dm-core.h"
 
-#define SPLIT_COUNT	8
-#define MIN_JOBS	8
+#घोषणा SPLIT_COUNT	8
+#घोषणा MIN_JOBS	8
 
-#define DEFAULT_SUB_JOB_SIZE_KB 512
-#define MAX_SUB_JOB_SIZE_KB     1024
+#घोषणा DEFAULT_SUB_JOB_SIZE_KB 512
+#घोषणा MAX_SUB_JOB_SIZE_KB     1024
 
-static unsigned kcopyd_subjob_size_kb = DEFAULT_SUB_JOB_SIZE_KB;
+अटल अचिन्हित kcopyd_subjob_size_kb = DEFAULT_SUB_JOB_SIZE_KB;
 
-module_param(kcopyd_subjob_size_kb, uint, S_IRUGO | S_IWUSR);
+module_param(kcopyd_subjob_size_kb, uपूर्णांक, S_IRUGO | S_IWUSR);
 MODULE_PARM_DESC(kcopyd_subjob_size_kb, "Sub-job size for dm-kcopyd clients");
 
-static unsigned dm_get_kcopyd_subjob_size(void)
-{
-	unsigned sub_job_size_kb;
+अटल अचिन्हित dm_get_kcopyd_subjob_size(व्योम)
+अणु
+	अचिन्हित sub_job_size_kb;
 
 	sub_job_size_kb = __dm_get_module_param(&kcopyd_subjob_size_kb,
 						DEFAULT_SUB_JOB_SIZE_KB,
 						MAX_SUB_JOB_SIZE_KB);
 
-	return sub_job_size_kb << 1;
-}
+	वापस sub_job_size_kb << 1;
+पूर्ण
 
 /*-----------------------------------------------------------------
- * Each kcopyd client has its own little pool of preallocated
- * pages for kcopyd io.
+ * Each kcopyd client has its own little pool of pपुनः_स्मृतिated
+ * pages क्रम kcopyd io.
  *---------------------------------------------------------------*/
-struct dm_kcopyd_client {
-	struct page_list *pages;
-	unsigned nr_reserved_pages;
-	unsigned nr_free_pages;
-	unsigned sub_job_size;
+काष्ठा dm_kcopyd_client अणु
+	काष्ठा page_list *pages;
+	अचिन्हित nr_reserved_pages;
+	अचिन्हित nr_मुक्त_pages;
+	अचिन्हित sub_job_size;
 
-	struct dm_io_client *io_client;
+	काष्ठा dm_io_client *io_client;
 
-	wait_queue_head_t destroyq;
+	रुको_queue_head_t destroyq;
 
 	mempool_t job_pool;
 
-	struct workqueue_struct *kcopyd_wq;
-	struct work_struct kcopyd_work;
+	काष्ठा workqueue_काष्ठा *kcopyd_wq;
+	काष्ठा work_काष्ठा kcopyd_work;
 
-	struct dm_kcopyd_throttle *throttle;
+	काष्ठा dm_kcopyd_throttle *throttle;
 
 	atomic_t nr_jobs;
 
 /*
- * We maintain four lists of jobs:
+ * We मुख्यtain four lists of jobs:
  *
- * i)   jobs waiting for pages
- * ii)  jobs that have pages, and are waiting for the io to be issued.
- * iii) jobs that don't need to do any IO and just run a callback
+ * i)   jobs रुकोing क्रम pages
+ * ii)  jobs that have pages, and are रुकोing क्रम the io to be issued.
+ * iii) jobs that करोn't need to करो any IO and just run a callback
  * iv) jobs that have completed.
  *
- * All four of these are protected by job_lock.
+ * All four of these are रक्षित by job_lock.
  */
 	spinlock_t job_lock;
-	struct list_head callback_jobs;
-	struct list_head complete_jobs;
-	struct list_head io_jobs;
-	struct list_head pages_jobs;
-};
+	काष्ठा list_head callback_jobs;
+	काष्ठा list_head complete_jobs;
+	काष्ठा list_head io_jobs;
+	काष्ठा list_head pages_jobs;
+पूर्ण;
 
-static struct page_list zero_page_list;
+अटल काष्ठा page_list zero_page_list;
 
-static DEFINE_SPINLOCK(throttle_spinlock);
+अटल DEFINE_SPINLOCK(throttle_spinlock);
 
 /*
  * IO/IDLE accounting slowly decays after (1 << ACCOUNT_INTERVAL_SHIFT) period.
- * When total_period >= (1 << ACCOUNT_INTERVAL_SHIFT) the counters are divided
+ * When total_period >= (1 << ACCOUNT_INTERVAL_SHIFT) the counters are भागided
  * by 2.
  */
-#define ACCOUNT_INTERVAL_SHIFT		SHIFT_HZ
+#घोषणा ACCOUNT_INTERVAL_SHIFT		SHIFT_HZ
 
 /*
  * Sleep this number of milliseconds.
  *
  * The value was decided experimentally.
  * Smaller values seem to cause an increased copy rate above the limit.
- * The reason for this is unknown but possibly due to jiffies rounding errors
- * or read/write cache inside the disk.
+ * The reason क्रम this is unknown but possibly due to jअगरfies rounding errors
+ * or पढ़ो/ग_लिखो cache inside the disk.
  */
-#define SLEEP_MSEC			100
+#घोषणा SLEEP_MSEC			100
 
 /*
- * Maximum number of sleep events. There is a theoretical livelock if more
- * kcopyd clients do work simultaneously which this limit avoids.
+ * Maximum number of sleep events. There is a theoretical livelock अगर more
+ * kcopyd clients करो work simultaneously which this limit aव्योमs.
  */
-#define MAX_SLEEPS			10
+#घोषणा MAX_SLEEPS			10
 
-static void io_job_start(struct dm_kcopyd_throttle *t)
-{
-	unsigned throttle, now, difference;
-	int slept = 0, skew;
+अटल व्योम io_job_start(काष्ठा dm_kcopyd_throttle *t)
+अणु
+	अचिन्हित throttle, now, dअगरference;
+	पूर्णांक slept = 0, skew;
 
-	if (unlikely(!t))
-		return;
+	अगर (unlikely(!t))
+		वापस;
 
 try_again:
 	spin_lock_irq(&throttle_spinlock);
 
 	throttle = READ_ONCE(t->throttle);
 
-	if (likely(throttle >= 100))
-		goto skip_limit;
+	अगर (likely(throttle >= 100))
+		जाओ skip_limit;
 
-	now = jiffies;
-	difference = now - t->last_jiffies;
-	t->last_jiffies = now;
-	if (t->num_io_jobs)
-		t->io_period += difference;
-	t->total_period += difference;
+	now = jअगरfies;
+	dअगरference = now - t->last_jअगरfies;
+	t->last_jअगरfies = now;
+	अगर (t->num_io_jobs)
+		t->io_period += dअगरference;
+	t->total_period += dअगरference;
 
 	/*
-	 * Maintain sane values if we got a temporary overflow.
+	 * Maपूर्णांकain sane values अगर we got a temporary overflow.
 	 */
-	if (unlikely(t->io_period > t->total_period))
+	अगर (unlikely(t->io_period > t->total_period))
 		t->io_period = t->total_period;
 
-	if (unlikely(t->total_period >= (1 << ACCOUNT_INTERVAL_SHIFT))) {
-		int shift = fls(t->total_period >> ACCOUNT_INTERVAL_SHIFT);
-		t->total_period >>= shift;
-		t->io_period >>= shift;
-	}
+	अगर (unlikely(t->total_period >= (1 << ACCOUNT_INTERVAL_SHIFT))) अणु
+		पूर्णांक shअगरt = fls(t->total_period >> ACCOUNT_INTERVAL_SHIFT);
+		t->total_period >>= shअगरt;
+		t->io_period >>= shअगरt;
+	पूर्ण
 
 	skew = t->io_period - throttle * t->total_period / 100;
 
-	if (unlikely(skew > 0) && slept < MAX_SLEEPS) {
+	अगर (unlikely(skew > 0) && slept < MAX_SLEEPS) अणु
 		slept++;
 		spin_unlock_irq(&throttle_spinlock);
 		msleep(SLEEP_MSEC);
-		goto try_again;
-	}
+		जाओ try_again;
+	पूर्ण
 
 skip_limit:
 	t->num_io_jobs++;
 
 	spin_unlock_irq(&throttle_spinlock);
-}
+पूर्ण
 
-static void io_job_finish(struct dm_kcopyd_throttle *t)
-{
-	unsigned long flags;
+अटल व्योम io_job_finish(काष्ठा dm_kcopyd_throttle *t)
+अणु
+	अचिन्हित दीर्घ flags;
 
-	if (unlikely(!t))
-		return;
+	अगर (unlikely(!t))
+		वापस;
 
 	spin_lock_irqsave(&throttle_spinlock, flags);
 
 	t->num_io_jobs--;
 
-	if (likely(READ_ONCE(t->throttle) >= 100))
-		goto skip_limit;
+	अगर (likely(READ_ONCE(t->throttle) >= 100))
+		जाओ skip_limit;
 
-	if (!t->num_io_jobs) {
-		unsigned now, difference;
+	अगर (!t->num_io_jobs) अणु
+		अचिन्हित now, dअगरference;
 
-		now = jiffies;
-		difference = now - t->last_jiffies;
-		t->last_jiffies = now;
+		now = jअगरfies;
+		dअगरference = now - t->last_jअगरfies;
+		t->last_jअगरfies = now;
 
-		t->io_period += difference;
-		t->total_period += difference;
+		t->io_period += dअगरference;
+		t->total_period += dअगरference;
 
 		/*
-		 * Maintain sane values if we got a temporary overflow.
+		 * Maपूर्णांकain sane values अगर we got a temporary overflow.
 		 */
-		if (unlikely(t->io_period > t->total_period))
+		अगर (unlikely(t->io_period > t->total_period))
 			t->io_period = t->total_period;
-	}
+	पूर्ण
 
 skip_limit:
 	spin_unlock_irqrestore(&throttle_spinlock, flags);
-}
+पूर्ण
 
 
-static void wake(struct dm_kcopyd_client *kc)
-{
+अटल व्योम wake(काष्ठा dm_kcopyd_client *kc)
+अणु
 	queue_work(kc->kcopyd_wq, &kc->kcopyd_work);
-}
+पूर्ण
 
 /*
- * Obtain one page for the use of kcopyd.
+ * Obtain one page क्रम the use of kcopyd.
  */
-static struct page_list *alloc_pl(gfp_t gfp)
-{
-	struct page_list *pl;
+अटल काष्ठा page_list *alloc_pl(gfp_t gfp)
+अणु
+	काष्ठा page_list *pl;
 
-	pl = kmalloc(sizeof(*pl), gfp);
-	if (!pl)
-		return NULL;
+	pl = kदो_स्मृति(माप(*pl), gfp);
+	अगर (!pl)
+		वापस शून्य;
 
 	pl->page = alloc_page(gfp);
-	if (!pl->page) {
-		kfree(pl);
-		return NULL;
-	}
+	अगर (!pl->page) अणु
+		kमुक्त(pl);
+		वापस शून्य;
+	पूर्ण
 
-	return pl;
-}
+	वापस pl;
+पूर्ण
 
-static void free_pl(struct page_list *pl)
-{
-	__free_page(pl->page);
-	kfree(pl);
-}
+अटल व्योम मुक्त_pl(काष्ठा page_list *pl)
+अणु
+	__मुक्त_page(pl->page);
+	kमुक्त(pl);
+पूर्ण
 
 /*
- * Add the provided pages to a client's free page list, releasing
- * back to the system any beyond the reserved_pages limit.
+ * Add the provided pages to a client's मुक्त page list, releasing
+ * back to the प्रणाली any beyond the reserved_pages limit.
  */
-static void kcopyd_put_pages(struct dm_kcopyd_client *kc, struct page_list *pl)
-{
-	struct page_list *next;
+अटल व्योम kcopyd_put_pages(काष्ठा dm_kcopyd_client *kc, काष्ठा page_list *pl)
+अणु
+	काष्ठा page_list *next;
 
-	do {
+	करो अणु
 		next = pl->next;
 
-		if (kc->nr_free_pages >= kc->nr_reserved_pages)
-			free_pl(pl);
-		else {
+		अगर (kc->nr_मुक्त_pages >= kc->nr_reserved_pages)
+			मुक्त_pl(pl);
+		अन्यथा अणु
 			pl->next = kc->pages;
 			kc->pages = pl;
-			kc->nr_free_pages++;
-		}
+			kc->nr_मुक्त_pages++;
+		पूर्ण
 
 		pl = next;
-	} while (pl);
-}
+	पूर्ण जबतक (pl);
+पूर्ण
 
-static int kcopyd_get_pages(struct dm_kcopyd_client *kc,
-			    unsigned int nr, struct page_list **pages)
-{
-	struct page_list *pl;
+अटल पूर्णांक kcopyd_get_pages(काष्ठा dm_kcopyd_client *kc,
+			    अचिन्हित पूर्णांक nr, काष्ठा page_list **pages)
+अणु
+	काष्ठा page_list *pl;
 
-	*pages = NULL;
+	*pages = शून्य;
 
-	do {
+	करो अणु
 		pl = alloc_pl(__GFP_NOWARN | __GFP_NORETRY | __GFP_KSWAPD_RECLAIM);
-		if (unlikely(!pl)) {
+		अगर (unlikely(!pl)) अणु
 			/* Use reserved pages */
 			pl = kc->pages;
-			if (unlikely(!pl))
-				goto out_of_memory;
+			अगर (unlikely(!pl))
+				जाओ out_of_memory;
 			kc->pages = pl->next;
-			kc->nr_free_pages--;
-		}
+			kc->nr_मुक्त_pages--;
+		पूर्ण
 		pl->next = *pages;
 		*pages = pl;
-	} while (--nr);
+	पूर्ण जबतक (--nr);
 
-	return 0;
+	वापस 0;
 
 out_of_memory:
-	if (*pages)
+	अगर (*pages)
 		kcopyd_put_pages(kc, *pages);
-	return -ENOMEM;
-}
+	वापस -ENOMEM;
+पूर्ण
 
 /*
  * These three functions resize the page pool.
  */
-static void drop_pages(struct page_list *pl)
-{
-	struct page_list *next;
+अटल व्योम drop_pages(काष्ठा page_list *pl)
+अणु
+	काष्ठा page_list *next;
 
-	while (pl) {
+	जबतक (pl) अणु
 		next = pl->next;
-		free_pl(pl);
+		मुक्त_pl(pl);
 		pl = next;
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
- * Allocate and reserve nr_pages for the use of a specific client.
+ * Allocate and reserve nr_pages क्रम the use of a specअगरic client.
  */
-static int client_reserve_pages(struct dm_kcopyd_client *kc, unsigned nr_pages)
-{
-	unsigned i;
-	struct page_list *pl = NULL, *next;
+अटल पूर्णांक client_reserve_pages(काष्ठा dm_kcopyd_client *kc, अचिन्हित nr_pages)
+अणु
+	अचिन्हित i;
+	काष्ठा page_list *pl = शून्य, *next;
 
-	for (i = 0; i < nr_pages; i++) {
+	क्रम (i = 0; i < nr_pages; i++) अणु
 		next = alloc_pl(GFP_KERNEL);
-		if (!next) {
-			if (pl)
+		अगर (!next) अणु
+			अगर (pl)
 				drop_pages(pl);
-			return -ENOMEM;
-		}
+			वापस -ENOMEM;
+		पूर्ण
 		next->next = pl;
 		pl = next;
-	}
+	पूर्ण
 
 	kc->nr_reserved_pages += nr_pages;
 	kcopyd_put_pages(kc, pl);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void client_free_pages(struct dm_kcopyd_client *kc)
-{
-	BUG_ON(kc->nr_free_pages != kc->nr_reserved_pages);
+अटल व्योम client_मुक्त_pages(काष्ठा dm_kcopyd_client *kc)
+अणु
+	BUG_ON(kc->nr_मुक्त_pages != kc->nr_reserved_pages);
 	drop_pages(kc->pages);
-	kc->pages = NULL;
-	kc->nr_free_pages = kc->nr_reserved_pages = 0;
-}
+	kc->pages = शून्य;
+	kc->nr_मुक्त_pages = kc->nr_reserved_pages = 0;
+पूर्ण
 
 /*-----------------------------------------------------------------
  * kcopyd_jobs need to be allocated by the *clients* of kcopyd,
- * for this reason we use a mempool to prevent the client from
- * ever having to do io (which could cause a deadlock).
+ * क्रम this reason we use a mempool to prevent the client from
+ * ever having to करो io (which could cause a deadlock).
  *---------------------------------------------------------------*/
-struct kcopyd_job {
-	struct dm_kcopyd_client *kc;
-	struct list_head list;
-	unsigned long flags;
+काष्ठा kcopyd_job अणु
+	काष्ठा dm_kcopyd_client *kc;
+	काष्ठा list_head list;
+	अचिन्हित दीर्घ flags;
 
 	/*
 	 * Error state of the job.
 	 */
-	int read_err;
-	unsigned long write_err;
+	पूर्णांक पढ़ो_err;
+	अचिन्हित दीर्घ ग_लिखो_err;
 
 	/*
 	 * Either READ or WRITE
 	 */
-	int rw;
-	struct dm_io_region source;
+	पूर्णांक rw;
+	काष्ठा dm_io_region source;
 
 	/*
-	 * The destinations for the transfer.
+	 * The destinations क्रम the transfer.
 	 */
-	unsigned int num_dests;
-	struct dm_io_region dests[DM_KCOPYD_MAX_REGIONS];
+	अचिन्हित पूर्णांक num_dests;
+	काष्ठा dm_io_region dests[DM_KCOPYD_MAX_REGIONS];
 
-	struct page_list *pages;
-
-	/*
-	 * Set this to ensure you are notified when the job has
-	 * completed.  'context' is for callback to use.
-	 */
-	dm_kcopyd_notify_fn fn;
-	void *context;
+	काष्ठा page_list *pages;
 
 	/*
-	 * These fields are only used if the job has been split
-	 * into more manageable parts.
+	 * Set this to ensure you are notअगरied when the job has
+	 * completed.  'context' is क्रम callback to use.
 	 */
-	struct mutex lock;
+	dm_kcopyd_notअगरy_fn fn;
+	व्योम *context;
+
+	/*
+	 * These fields are only used अगर the job has been split
+	 * पूर्णांकo more manageable parts.
+	 */
+	काष्ठा mutex lock;
 	atomic_t sub_jobs;
 	sector_t progress;
-	sector_t write_offset;
+	sector_t ग_लिखो_offset;
 
-	struct kcopyd_job *master_job;
-};
+	काष्ठा kcopyd_job *master_job;
+पूर्ण;
 
-static struct kmem_cache *_job_cache;
+अटल काष्ठा kmem_cache *_job_cache;
 
-int __init dm_kcopyd_init(void)
-{
+पूर्णांक __init dm_kcopyd_init(व्योम)
+अणु
 	_job_cache = kmem_cache_create("kcopyd_job",
-				sizeof(struct kcopyd_job) * (SPLIT_COUNT + 1),
-				__alignof__(struct kcopyd_job), 0, NULL);
-	if (!_job_cache)
-		return -ENOMEM;
+				माप(काष्ठा kcopyd_job) * (SPLIT_COUNT + 1),
+				__alignof__(काष्ठा kcopyd_job), 0, शून्य);
+	अगर (!_job_cache)
+		वापस -ENOMEM;
 
 	zero_page_list.next = &zero_page_list;
 	zero_page_list.page = ZERO_PAGE(0);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void dm_kcopyd_exit(void)
-{
+व्योम dm_kcopyd_निकास(व्योम)
+अणु
 	kmem_cache_destroy(_job_cache);
-	_job_cache = NULL;
-}
+	_job_cache = शून्य;
+पूर्ण
 
 /*
  * Functions to push and pop a job onto the head of a given job
  * list.
  */
-static struct kcopyd_job *pop_io_job(struct list_head *jobs,
-				     struct dm_kcopyd_client *kc)
-{
-	struct kcopyd_job *job;
+अटल काष्ठा kcopyd_job *pop_io_job(काष्ठा list_head *jobs,
+				     काष्ठा dm_kcopyd_client *kc)
+अणु
+	काष्ठा kcopyd_job *job;
 
 	/*
-	 * For I/O jobs, pop any read, any write without sequential write
-	 * constraint and sequential writes that are at the right position.
+	 * For I/O jobs, pop any पढ़ो, any ग_लिखो without sequential ग_लिखो
+	 * स्थिरraपूर्णांक and sequential ग_लिखोs that are at the right position.
 	 */
-	list_for_each_entry(job, jobs, list) {
-		if (job->rw == READ || !test_bit(DM_KCOPYD_WRITE_SEQ, &job->flags)) {
+	list_क्रम_each_entry(job, jobs, list) अणु
+		अगर (job->rw == READ || !test_bit(DM_KCOPYD_WRITE_SEQ, &job->flags)) अणु
 			list_del(&job->list);
-			return job;
-		}
+			वापस job;
+		पूर्ण
 
-		if (job->write_offset == job->master_job->write_offset) {
-			job->master_job->write_offset += job->source.count;
+		अगर (job->ग_लिखो_offset == job->master_job->ग_लिखो_offset) अणु
+			job->master_job->ग_लिखो_offset += job->source.count;
 			list_del(&job->list);
-			return job;
-		}
-	}
+			वापस job;
+		पूर्ण
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static struct kcopyd_job *pop(struct list_head *jobs,
-			      struct dm_kcopyd_client *kc)
-{
-	struct kcopyd_job *job = NULL;
-	unsigned long flags;
+अटल काष्ठा kcopyd_job *pop(काष्ठा list_head *jobs,
+			      काष्ठा dm_kcopyd_client *kc)
+अणु
+	काष्ठा kcopyd_job *job = शून्य;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&kc->job_lock, flags);
 
-	if (!list_empty(jobs)) {
-		if (jobs == &kc->io_jobs)
+	अगर (!list_empty(jobs)) अणु
+		अगर (jobs == &kc->io_jobs)
 			job = pop_io_job(jobs, kc);
-		else {
-			job = list_entry(jobs->next, struct kcopyd_job, list);
+		अन्यथा अणु
+			job = list_entry(jobs->next, काष्ठा kcopyd_job, list);
 			list_del(&job->list);
-		}
-	}
+		पूर्ण
+	पूर्ण
 	spin_unlock_irqrestore(&kc->job_lock, flags);
 
-	return job;
-}
+	वापस job;
+पूर्ण
 
-static void push(struct list_head *jobs, struct kcopyd_job *job)
-{
-	unsigned long flags;
-	struct dm_kcopyd_client *kc = job->kc;
+अटल व्योम push(काष्ठा list_head *jobs, काष्ठा kcopyd_job *job)
+अणु
+	अचिन्हित दीर्घ flags;
+	काष्ठा dm_kcopyd_client *kc = job->kc;
 
 	spin_lock_irqsave(&kc->job_lock, flags);
 	list_add_tail(&job->list, jobs);
 	spin_unlock_irqrestore(&kc->job_lock, flags);
-}
+पूर्ण
 
 
-static void push_head(struct list_head *jobs, struct kcopyd_job *job)
-{
-	unsigned long flags;
-	struct dm_kcopyd_client *kc = job->kc;
+अटल व्योम push_head(काष्ठा list_head *jobs, काष्ठा kcopyd_job *job)
+अणु
+	अचिन्हित दीर्घ flags;
+	काष्ठा dm_kcopyd_client *kc = job->kc;
 
 	spin_lock_irqsave(&kc->job_lock, flags);
 	list_add(&job->list, jobs);
 	spin_unlock_irqrestore(&kc->job_lock, flags);
-}
+पूर्ण
 
 /*
  * These three functions process 1 item from the corresponding
  * job list.
  *
- * They return:
+ * They वापस:
  * < 0: error
  *   0: success
  * > 0: can't process yet.
  */
-static int run_complete_job(struct kcopyd_job *job)
-{
-	void *context = job->context;
-	int read_err = job->read_err;
-	unsigned long write_err = job->write_err;
-	dm_kcopyd_notify_fn fn = job->fn;
-	struct dm_kcopyd_client *kc = job->kc;
+अटल पूर्णांक run_complete_job(काष्ठा kcopyd_job *job)
+अणु
+	व्योम *context = job->context;
+	पूर्णांक पढ़ो_err = job->पढ़ो_err;
+	अचिन्हित दीर्घ ग_लिखो_err = job->ग_लिखो_err;
+	dm_kcopyd_notअगरy_fn fn = job->fn;
+	काष्ठा dm_kcopyd_client *kc = job->kc;
 
-	if (job->pages && job->pages != &zero_page_list)
+	अगर (job->pages && job->pages != &zero_page_list)
 		kcopyd_put_pages(kc, job->pages);
 	/*
-	 * If this is the master job, the sub jobs have already
-	 * completed so we can free everything.
+	 * If this is the master job, the sub jobs have alपढ़ोy
+	 * completed so we can मुक्त everything.
 	 */
-	if (job->master_job == job) {
+	अगर (job->master_job == job) अणु
 		mutex_destroy(&job->lock);
-		mempool_free(job, &kc->job_pool);
-	}
-	fn(read_err, write_err, context);
+		mempool_मुक्त(job, &kc->job_pool);
+	पूर्ण
+	fn(पढ़ो_err, ग_लिखो_err, context);
 
-	if (atomic_dec_and_test(&kc->nr_jobs))
+	अगर (atomic_dec_and_test(&kc->nr_jobs))
 		wake_up(&kc->destroyq);
 
 	cond_resched();
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void complete_io(unsigned long error, void *context)
-{
-	struct kcopyd_job *job = (struct kcopyd_job *) context;
-	struct dm_kcopyd_client *kc = job->kc;
+अटल व्योम complete_io(अचिन्हित दीर्घ error, व्योम *context)
+अणु
+	काष्ठा kcopyd_job *job = (काष्ठा kcopyd_job *) context;
+	काष्ठा dm_kcopyd_client *kc = job->kc;
 
 	io_job_finish(kc->throttle);
 
-	if (error) {
-		if (op_is_write(job->rw))
-			job->write_err |= error;
-		else
-			job->read_err = 1;
+	अगर (error) अणु
+		अगर (op_is_ग_लिखो(job->rw))
+			job->ग_लिखो_err |= error;
+		अन्यथा
+			job->पढ़ो_err = 1;
 
-		if (!test_bit(DM_KCOPYD_IGNORE_ERROR, &job->flags)) {
+		अगर (!test_bit(DM_KCOPYD_IGNORE_ERROR, &job->flags)) अणु
 			push(&kc->complete_jobs, job);
 			wake(kc);
-			return;
-		}
-	}
+			वापस;
+		पूर्ण
+	पूर्ण
 
-	if (op_is_write(job->rw))
+	अगर (op_is_ग_लिखो(job->rw))
 		push(&kc->complete_jobs, job);
 
-	else {
+	अन्यथा अणु
 		job->rw = WRITE;
 		push(&kc->io_jobs, job);
-	}
+	पूर्ण
 
 	wake(kc);
-}
+पूर्ण
 
 /*
- * Request io on as many buffer heads as we can currently get for
+ * Request io on as many buffer heads as we can currently get क्रम
  * a particular job.
  */
-static int run_io_job(struct kcopyd_job *job)
-{
-	int r;
-	struct dm_io_request io_req = {
+अटल पूर्णांक run_io_job(काष्ठा kcopyd_job *job)
+अणु
+	पूर्णांक r;
+	काष्ठा dm_io_request io_req = अणु
 		.bi_op = job->rw,
 		.bi_op_flags = 0,
 		.mem.type = DM_IO_PAGE_LIST,
 		.mem.ptr.pl = job->pages,
 		.mem.offset = 0,
-		.notify.fn = complete_io,
-		.notify.context = job,
+		.notअगरy.fn = complete_io,
+		.notअगरy.context = job,
 		.client = job->kc->io_client,
-	};
+	पूर्ण;
 
 	/*
-	 * If we need to write sequentially and some reads or writes failed,
-	 * no point in continuing.
+	 * If we need to ग_लिखो sequentially and some पढ़ोs or ग_लिखोs failed,
+	 * no poपूर्णांक in continuing.
 	 */
-	if (test_bit(DM_KCOPYD_WRITE_SEQ, &job->flags) &&
-	    job->master_job->write_err) {
-		job->write_err = job->master_job->write_err;
-		return -EIO;
-	}
+	अगर (test_bit(DM_KCOPYD_WRITE_SEQ, &job->flags) &&
+	    job->master_job->ग_लिखो_err) अणु
+		job->ग_लिखो_err = job->master_job->ग_लिखो_err;
+		वापस -EIO;
+	पूर्ण
 
 	io_job_start(job->kc->throttle);
 
-	if (job->rw == READ)
-		r = dm_io(&io_req, 1, &job->source, NULL);
-	else
-		r = dm_io(&io_req, job->num_dests, job->dests, NULL);
+	अगर (job->rw == READ)
+		r = dm_io(&io_req, 1, &job->source, शून्य);
+	अन्यथा
+		r = dm_io(&io_req, job->num_dests, job->dests, शून्य);
 
-	return r;
-}
+	वापस r;
+पूर्ण
 
-static int run_pages_job(struct kcopyd_job *job)
-{
-	int r;
-	unsigned nr_pages = dm_div_up(job->dests[0].count, PAGE_SIZE >> 9);
+अटल पूर्णांक run_pages_job(काष्ठा kcopyd_job *job)
+अणु
+	पूर्णांक r;
+	अचिन्हित nr_pages = dm_भाग_up(job->dests[0].count, PAGE_SIZE >> 9);
 
 	r = kcopyd_get_pages(job->kc, nr_pages, &job->pages);
-	if (!r) {
-		/* this job is ready for io */
+	अगर (!r) अणु
+		/* this job is पढ़ोy क्रम io */
 		push(&job->kc->io_jobs, job);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	if (r == -ENOMEM)
+	अगर (r == -ENOMEM)
 		/* can't complete now */
-		return 1;
+		वापस 1;
 
-	return r;
-}
+	वापस r;
+पूर्ण
 
 /*
- * Run through a list for as long as possible.  Returns the count
+ * Run through a list क्रम as दीर्घ as possible.  Returns the count
  * of successful jobs.
  */
-static int process_jobs(struct list_head *jobs, struct dm_kcopyd_client *kc,
-			int (*fn) (struct kcopyd_job *))
-{
-	struct kcopyd_job *job;
-	int r, count = 0;
+अटल पूर्णांक process_jobs(काष्ठा list_head *jobs, काष्ठा dm_kcopyd_client *kc,
+			पूर्णांक (*fn) (काष्ठा kcopyd_job *))
+अणु
+	काष्ठा kcopyd_job *job;
+	पूर्णांक r, count = 0;
 
-	while ((job = pop(jobs, kc))) {
+	जबतक ((job = pop(jobs, kc))) अणु
 
 		r = fn(job);
 
-		if (r < 0) {
+		अगर (r < 0) अणु
 			/* error this rogue job */
-			if (op_is_write(job->rw))
-				job->write_err = (unsigned long) -1L;
-			else
-				job->read_err = 1;
+			अगर (op_is_ग_लिखो(job->rw))
+				job->ग_लिखो_err = (अचिन्हित दीर्घ) -1L;
+			अन्यथा
+				job->पढ़ो_err = 1;
 			push(&kc->complete_jobs, job);
 			wake(kc);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		if (r > 0) {
+		अगर (r > 0) अणु
 			/*
 			 * We couldn't service this job ATM, so
 			 * push this job back onto the list.
 			 */
 			push_head(jobs, job);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		count++;
-	}
+	पूर्ण
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
 /*
- * kcopyd does this every time it's woken up.
+ * kcopyd करोes this every समय it's woken up.
  */
-static void do_work(struct work_struct *work)
-{
-	struct dm_kcopyd_client *kc = container_of(work,
-					struct dm_kcopyd_client, kcopyd_work);
-	struct blk_plug plug;
-	unsigned long flags;
+अटल व्योम करो_work(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा dm_kcopyd_client *kc = container_of(work,
+					काष्ठा dm_kcopyd_client, kcopyd_work);
+	काष्ठा blk_plug plug;
+	अचिन्हित दीर्घ flags;
 
 	/*
 	 * The order that these are called is *very* important.
-	 * complete jobs can free some pages for pages jobs.
+	 * complete jobs can मुक्त some pages क्रम pages jobs.
 	 * Pages jobs when successful will jump onto the io jobs
 	 * list.  io jobs call wake when they complete and it all
 	 * starts again.
@@ -666,117 +667,117 @@ static void do_work(struct work_struct *work)
 	process_jobs(&kc->pages_jobs, kc, run_pages_job);
 	process_jobs(&kc->io_jobs, kc, run_io_job);
 	blk_finish_plug(&plug);
-}
+पूर्ण
 
 /*
  * If we are copying a small region we just dispatch a single job
- * to do the copy, otherwise the io has to be split up into many
+ * to करो the copy, otherwise the io has to be split up पूर्णांकo many
  * jobs.
  */
-static void dispatch_job(struct kcopyd_job *job)
-{
-	struct dm_kcopyd_client *kc = job->kc;
+अटल व्योम dispatch_job(काष्ठा kcopyd_job *job)
+अणु
+	काष्ठा dm_kcopyd_client *kc = job->kc;
 	atomic_inc(&kc->nr_jobs);
-	if (unlikely(!job->source.count))
+	अगर (unlikely(!job->source.count))
 		push(&kc->callback_jobs, job);
-	else if (job->pages == &zero_page_list)
+	अन्यथा अगर (job->pages == &zero_page_list)
 		push(&kc->io_jobs, job);
-	else
+	अन्यथा
 		push(&kc->pages_jobs, job);
 	wake(kc);
-}
+पूर्ण
 
-static void segment_complete(int read_err, unsigned long write_err,
-			     void *context)
-{
+अटल व्योम segment_complete(पूर्णांक पढ़ो_err, अचिन्हित दीर्घ ग_लिखो_err,
+			     व्योम *context)
+अणु
 	/* FIXME: tidy this function */
 	sector_t progress = 0;
 	sector_t count = 0;
-	struct kcopyd_job *sub_job = (struct kcopyd_job *) context;
-	struct kcopyd_job *job = sub_job->master_job;
-	struct dm_kcopyd_client *kc = job->kc;
+	काष्ठा kcopyd_job *sub_job = (काष्ठा kcopyd_job *) context;
+	काष्ठा kcopyd_job *job = sub_job->master_job;
+	काष्ठा dm_kcopyd_client *kc = job->kc;
 
 	mutex_lock(&job->lock);
 
 	/* update the error */
-	if (read_err)
-		job->read_err = 1;
+	अगर (पढ़ो_err)
+		job->पढ़ो_err = 1;
 
-	if (write_err)
-		job->write_err |= write_err;
+	अगर (ग_लिखो_err)
+		job->ग_लिखो_err |= ग_लिखो_err;
 
 	/*
-	 * Only dispatch more work if there hasn't been an error.
+	 * Only dispatch more work अगर there hasn't been an error.
 	 */
-	if ((!job->read_err && !job->write_err) ||
-	    test_bit(DM_KCOPYD_IGNORE_ERROR, &job->flags)) {
+	अगर ((!job->पढ़ो_err && !job->ग_लिखो_err) ||
+	    test_bit(DM_KCOPYD_IGNORE_ERROR, &job->flags)) अणु
 		/* get the next chunk of work */
 		progress = job->progress;
 		count = job->source.count - progress;
-		if (count) {
-			if (count > kc->sub_job_size)
+		अगर (count) अणु
+			अगर (count > kc->sub_job_size)
 				count = kc->sub_job_size;
 
 			job->progress += count;
-		}
-	}
+		पूर्ण
+	पूर्ण
 	mutex_unlock(&job->lock);
 
-	if (count) {
-		int i;
+	अगर (count) अणु
+		पूर्णांक i;
 
 		*sub_job = *job;
-		sub_job->write_offset = progress;
+		sub_job->ग_लिखो_offset = progress;
 		sub_job->source.sector += progress;
 		sub_job->source.count = count;
 
-		for (i = 0; i < job->num_dests; i++) {
+		क्रम (i = 0; i < job->num_dests; i++) अणु
 			sub_job->dests[i].sector += progress;
 			sub_job->dests[i].count = count;
-		}
+		पूर्ण
 
 		sub_job->fn = segment_complete;
 		sub_job->context = sub_job;
 		dispatch_job(sub_job);
 
-	} else if (atomic_dec_and_test(&job->sub_jobs)) {
+	पूर्ण अन्यथा अगर (atomic_dec_and_test(&job->sub_jobs)) अणु
 
 		/*
-		 * Queue the completion callback to the kcopyd thread.
+		 * Queue the completion callback to the kcopyd thपढ़ो.
 		 *
 		 * Some callers assume that all the completions are called
-		 * from a single thread and don't race with each other.
+		 * from a single thपढ़ो and करोn't race with each other.
 		 *
 		 * We must not call the callback directly here because this
-		 * code may not be executing in the thread.
+		 * code may not be executing in the thपढ़ो.
 		 */
 		push(&kc->complete_jobs, job);
 		wake(kc);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
  * Create some sub jobs to share the work between them.
  */
-static void split_job(struct kcopyd_job *master_job)
-{
-	int i;
+अटल व्योम split_job(काष्ठा kcopyd_job *master_job)
+अणु
+	पूर्णांक i;
 
 	atomic_inc(&master_job->kc->nr_jobs);
 
 	atomic_set(&master_job->sub_jobs, SPLIT_COUNT);
-	for (i = 0; i < SPLIT_COUNT; i++) {
+	क्रम (i = 0; i < SPLIT_COUNT; i++) अणु
 		master_job[i + 1].master_job = master_job;
 		segment_complete(0, 0u, &master_job[i + 1]);
-	}
-}
+	पूर्ण
+पूर्ण
 
-void dm_kcopyd_copy(struct dm_kcopyd_client *kc, struct dm_io_region *from,
-		    unsigned int num_dests, struct dm_io_region *dests,
-		    unsigned int flags, dm_kcopyd_notify_fn fn, void *context)
-{
-	struct kcopyd_job *job;
-	int i;
+व्योम dm_kcopyd_copy(काष्ठा dm_kcopyd_client *kc, काष्ठा dm_io_region *from,
+		    अचिन्हित पूर्णांक num_dests, काष्ठा dm_io_region *dests,
+		    अचिन्हित पूर्णांक flags, dm_kcopyd_notअगरy_fn fn, व्योम *context)
+अणु
+	काष्ठा kcopyd_job *job;
+	पूर्णांक i;
 
 	/*
 	 * Allocate an array of jobs consisting of one master job
@@ -786,87 +787,87 @@ void dm_kcopyd_copy(struct dm_kcopyd_client *kc, struct dm_io_region *from,
 	mutex_init(&job->lock);
 
 	/*
-	 * set up for the read.
+	 * set up क्रम the पढ़ो.
 	 */
 	job->kc = kc;
 	job->flags = flags;
-	job->read_err = 0;
-	job->write_err = 0;
+	job->पढ़ो_err = 0;
+	job->ग_लिखो_err = 0;
 
 	job->num_dests = num_dests;
-	memcpy(&job->dests, dests, sizeof(*dests) * num_dests);
+	स_नकल(&job->dests, dests, माप(*dests) * num_dests);
 
 	/*
 	 * If one of the destination is a host-managed zoned block device,
-	 * we need to write sequentially. If one of the destination is a
-	 * host-aware device, then leave it to the caller to choose what to do.
+	 * we need to ग_लिखो sequentially. If one of the destination is a
+	 * host-aware device, then leave it to the caller to choose what to करो.
 	 */
-	if (!test_bit(DM_KCOPYD_WRITE_SEQ, &job->flags)) {
-		for (i = 0; i < job->num_dests; i++) {
-			if (bdev_zoned_model(dests[i].bdev) == BLK_ZONED_HM) {
+	अगर (!test_bit(DM_KCOPYD_WRITE_SEQ, &job->flags)) अणु
+		क्रम (i = 0; i < job->num_dests; i++) अणु
+			अगर (bdev_zoned_model(dests[i].bdev) == BLK_ZONED_HM) अणु
 				set_bit(DM_KCOPYD_WRITE_SEQ, &job->flags);
-				break;
-			}
-		}
-	}
+				अवरोध;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
 	/*
-	 * If we need to write sequentially, errors cannot be ignored.
+	 * If we need to ग_लिखो sequentially, errors cannot be ignored.
 	 */
-	if (test_bit(DM_KCOPYD_WRITE_SEQ, &job->flags) &&
+	अगर (test_bit(DM_KCOPYD_WRITE_SEQ, &job->flags) &&
 	    test_bit(DM_KCOPYD_IGNORE_ERROR, &job->flags))
 		clear_bit(DM_KCOPYD_IGNORE_ERROR, &job->flags);
 
-	if (from) {
+	अगर (from) अणु
 		job->source = *from;
-		job->pages = NULL;
+		job->pages = शून्य;
 		job->rw = READ;
-	} else {
-		memset(&job->source, 0, sizeof job->source);
+	पूर्ण अन्यथा अणु
+		स_रखो(&job->source, 0, माप job->source);
 		job->source.count = job->dests[0].count;
 		job->pages = &zero_page_list;
 
 		/*
-		 * Use WRITE ZEROES to optimize zeroing if all dests support it.
+		 * Use WRITE ZEROES to optimize zeroing अगर all dests support it.
 		 */
 		job->rw = REQ_OP_WRITE_ZEROES;
-		for (i = 0; i < job->num_dests; i++)
-			if (!bdev_write_zeroes_sectors(job->dests[i].bdev)) {
+		क्रम (i = 0; i < job->num_dests; i++)
+			अगर (!bdev_ग_लिखो_zeroes_sectors(job->dests[i].bdev)) अणु
 				job->rw = WRITE;
-				break;
-			}
-	}
+				अवरोध;
+			पूर्ण
+	पूर्ण
 
 	job->fn = fn;
 	job->context = context;
 	job->master_job = job;
-	job->write_offset = 0;
+	job->ग_लिखो_offset = 0;
 
-	if (job->source.count <= kc->sub_job_size)
+	अगर (job->source.count <= kc->sub_job_size)
 		dispatch_job(job);
-	else {
+	अन्यथा अणु
 		job->progress = 0;
 		split_job(job);
-	}
-}
+	पूर्ण
+पूर्ण
 EXPORT_SYMBOL(dm_kcopyd_copy);
 
-void dm_kcopyd_zero(struct dm_kcopyd_client *kc,
-		    unsigned num_dests, struct dm_io_region *dests,
-		    unsigned flags, dm_kcopyd_notify_fn fn, void *context)
-{
-	dm_kcopyd_copy(kc, NULL, num_dests, dests, flags, fn, context);
-}
+व्योम dm_kcopyd_zero(काष्ठा dm_kcopyd_client *kc,
+		    अचिन्हित num_dests, काष्ठा dm_io_region *dests,
+		    अचिन्हित flags, dm_kcopyd_notअगरy_fn fn, व्योम *context)
+अणु
+	dm_kcopyd_copy(kc, शून्य, num_dests, dests, flags, fn, context);
+पूर्ण
 EXPORT_SYMBOL(dm_kcopyd_zero);
 
-void *dm_kcopyd_prepare_callback(struct dm_kcopyd_client *kc,
-				 dm_kcopyd_notify_fn fn, void *context)
-{
-	struct kcopyd_job *job;
+व्योम *dm_kcopyd_prepare_callback(काष्ठा dm_kcopyd_client *kc,
+				 dm_kcopyd_notअगरy_fn fn, व्योम *context)
+अणु
+	काष्ठा kcopyd_job *job;
 
 	job = mempool_alloc(&kc->job_pool, GFP_NOIO);
 
-	memset(job, 0, sizeof(struct kcopyd_job));
+	स_रखो(job, 0, माप(काष्ठा kcopyd_job));
 	job->kc = kc;
 	job->fn = fn;
 	job->context = context;
@@ -874,47 +875,47 @@ void *dm_kcopyd_prepare_callback(struct dm_kcopyd_client *kc,
 
 	atomic_inc(&kc->nr_jobs);
 
-	return job;
-}
+	वापस job;
+पूर्ण
 EXPORT_SYMBOL(dm_kcopyd_prepare_callback);
 
-void dm_kcopyd_do_callback(void *j, int read_err, unsigned long write_err)
-{
-	struct kcopyd_job *job = j;
-	struct dm_kcopyd_client *kc = job->kc;
+व्योम dm_kcopyd_करो_callback(व्योम *j, पूर्णांक पढ़ो_err, अचिन्हित दीर्घ ग_लिखो_err)
+अणु
+	काष्ठा kcopyd_job *job = j;
+	काष्ठा dm_kcopyd_client *kc = job->kc;
 
-	job->read_err = read_err;
-	job->write_err = write_err;
+	job->पढ़ो_err = पढ़ो_err;
+	job->ग_लिखो_err = ग_लिखो_err;
 
 	push(&kc->callback_jobs, job);
 	wake(kc);
-}
-EXPORT_SYMBOL(dm_kcopyd_do_callback);
+पूर्ण
+EXPORT_SYMBOL(dm_kcopyd_करो_callback);
 
 /*
  * Cancels a kcopyd job, eg. someone might be deactivating a
  * mirror.
  */
-#if 0
-int kcopyd_cancel(struct kcopyd_job *job, int block)
-{
+#अगर 0
+पूर्णांक kcopyd_cancel(काष्ठा kcopyd_job *job, पूर्णांक block)
+अणु
 	/* FIXME: finish */
-	return -1;
-}
-#endif  /*  0  */
+	वापस -1;
+पूर्ण
+#पूर्ण_अगर  /*  0  */
 
 /*-----------------------------------------------------------------
  * Client setup
  *---------------------------------------------------------------*/
-struct dm_kcopyd_client *dm_kcopyd_client_create(struct dm_kcopyd_throttle *throttle)
-{
-	int r;
-	unsigned reserve_pages;
-	struct dm_kcopyd_client *kc;
+काष्ठा dm_kcopyd_client *dm_kcopyd_client_create(काष्ठा dm_kcopyd_throttle *throttle)
+अणु
+	पूर्णांक r;
+	अचिन्हित reserve_pages;
+	काष्ठा dm_kcopyd_client *kc;
 
-	kc = kzalloc(sizeof(*kc), GFP_KERNEL);
-	if (!kc)
-		return ERR_PTR(-ENOMEM);
+	kc = kzalloc(माप(*kc), GFP_KERNEL);
+	अगर (!kc)
+		वापस ERR_PTR(-ENOMEM);
 
 	spin_lock_init(&kc->job_lock);
 	INIT_LIST_HEAD(&kc->callback_jobs);
@@ -924,53 +925,53 @@ struct dm_kcopyd_client *dm_kcopyd_client_create(struct dm_kcopyd_throttle *thro
 	kc->throttle = throttle;
 
 	r = mempool_init_slab_pool(&kc->job_pool, MIN_JOBS, _job_cache);
-	if (r)
-		goto bad_slab;
+	अगर (r)
+		जाओ bad_slab;
 
-	INIT_WORK(&kc->kcopyd_work, do_work);
+	INIT_WORK(&kc->kcopyd_work, करो_work);
 	kc->kcopyd_wq = alloc_workqueue("kcopyd", WQ_MEM_RECLAIM, 0);
-	if (!kc->kcopyd_wq) {
+	अगर (!kc->kcopyd_wq) अणु
 		r = -ENOMEM;
-		goto bad_workqueue;
-	}
+		जाओ bad_workqueue;
+	पूर्ण
 
 	kc->sub_job_size = dm_get_kcopyd_subjob_size();
 	reserve_pages = DIV_ROUND_UP(kc->sub_job_size << SECTOR_SHIFT, PAGE_SIZE);
 
-	kc->pages = NULL;
-	kc->nr_reserved_pages = kc->nr_free_pages = 0;
+	kc->pages = शून्य;
+	kc->nr_reserved_pages = kc->nr_मुक्त_pages = 0;
 	r = client_reserve_pages(kc, reserve_pages);
-	if (r)
-		goto bad_client_pages;
+	अगर (r)
+		जाओ bad_client_pages;
 
 	kc->io_client = dm_io_client_create();
-	if (IS_ERR(kc->io_client)) {
+	अगर (IS_ERR(kc->io_client)) अणु
 		r = PTR_ERR(kc->io_client);
-		goto bad_io_client;
-	}
+		जाओ bad_io_client;
+	पूर्ण
 
-	init_waitqueue_head(&kc->destroyq);
+	init_रुकोqueue_head(&kc->destroyq);
 	atomic_set(&kc->nr_jobs, 0);
 
-	return kc;
+	वापस kc;
 
 bad_io_client:
-	client_free_pages(kc);
+	client_मुक्त_pages(kc);
 bad_client_pages:
 	destroy_workqueue(kc->kcopyd_wq);
 bad_workqueue:
-	mempool_exit(&kc->job_pool);
+	mempool_निकास(&kc->job_pool);
 bad_slab:
-	kfree(kc);
+	kमुक्त(kc);
 
-	return ERR_PTR(r);
-}
+	वापस ERR_PTR(r);
+पूर्ण
 EXPORT_SYMBOL(dm_kcopyd_client_create);
 
-void dm_kcopyd_client_destroy(struct dm_kcopyd_client *kc)
-{
-	/* Wait for completion of all jobs submitted by this client. */
-	wait_event(kc->destroyq, !atomic_read(&kc->nr_jobs));
+व्योम dm_kcopyd_client_destroy(काष्ठा dm_kcopyd_client *kc)
+अणु
+	/* Wait क्रम completion of all jobs submitted by this client. */
+	रुको_event(kc->destroyq, !atomic_पढ़ो(&kc->nr_jobs));
 
 	BUG_ON(!list_empty(&kc->callback_jobs));
 	BUG_ON(!list_empty(&kc->complete_jobs));
@@ -978,8 +979,8 @@ void dm_kcopyd_client_destroy(struct dm_kcopyd_client *kc)
 	BUG_ON(!list_empty(&kc->pages_jobs));
 	destroy_workqueue(kc->kcopyd_wq);
 	dm_io_client_destroy(kc->io_client);
-	client_free_pages(kc);
-	mempool_exit(&kc->job_pool);
-	kfree(kc);
-}
+	client_मुक्त_pages(kc);
+	mempool_निकास(&kc->job_pool);
+	kमुक्त(kc);
+पूर्ण
 EXPORT_SYMBOL(dm_kcopyd_client_destroy);

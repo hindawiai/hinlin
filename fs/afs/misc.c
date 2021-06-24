@@ -1,170 +1,171 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /* miscellaneous bits
  *
  * Copyright (C) 2002, 2007 Red Hat, Inc. All Rights Reserved.
  * Written by David Howells (dhowells@redhat.com)
  */
 
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/errno.h>
-#include "internal.h"
-#include "afs_fs.h"
-#include "protocol_uae.h"
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश "internal.h"
+#समावेश "afs_fs.h"
+#समावेश "protocol_uae.h"
 
 /*
- * convert an AFS abort code to a Linux error number
+ * convert an AFS पात code to a Linux error number
  */
-int afs_abort_to_error(u32 abort_code)
-{
-	switch (abort_code) {
-		/* Low errno codes inserted into abort namespace */
-	case 13:		return -EACCES;
-	case 27:		return -EFBIG;
-	case 30:		return -EROFS;
+पूर्णांक afs_पात_to_error(u32 पात_code)
+अणु
+	चयन (पात_code) अणु
+		/* Low त्रुटि_सं codes inserted पूर्णांकo पात namespace */
+	हाल 13:		वापस -EACCES;
+	हाल 27:		वापस -EFBIG;
+	हाल 30:		वापस -EROFS;
 
 		/* VICE "special error" codes; 101 - 111 */
-	case VSALVAGE:		return -EIO;
-	case VNOVNODE:		return -ENOENT;
-	case VNOVOL:		return -ENOMEDIUM;
-	case VVOLEXISTS:	return -EEXIST;
-	case VNOSERVICE:	return -EIO;
-	case VOFFLINE:		return -ENOENT;
-	case VONLINE:		return -EEXIST;
-	case VDISKFULL:		return -ENOSPC;
-	case VOVERQUOTA:	return -EDQUOT;
-	case VBUSY:		return -EBUSY;
-	case VMOVED:		return -ENXIO;
+	हाल VSALVAGE:		वापस -EIO;
+	हाल VNOVNODE:		वापस -ENOENT;
+	हाल VNOVOL:		वापस -ENOMEDIUM;
+	हाल VVOLEXISTS:	वापस -EEXIST;
+	हाल VNOSERVICE:	वापस -EIO;
+	हाल VOFFLINE:		वापस -ENOENT;
+	हाल VONLINE:		वापस -EEXIST;
+	हाल VDISKFULL:		वापस -ENOSPC;
+	हाल VOVERQUOTA:	वापस -EDQUOT;
+	हाल VBUSY:		वापस -EBUSY;
+	हाल VMOVED:		वापस -ENXIO;
 
 		/* Volume Location server errors */
-	case AFSVL_IDEXIST:		return -EEXIST;
-	case AFSVL_IO:			return -EREMOTEIO;
-	case AFSVL_NAMEEXIST:		return -EEXIST;
-	case AFSVL_CREATEFAIL:		return -EREMOTEIO;
-	case AFSVL_NOENT:		return -ENOMEDIUM;
-	case AFSVL_EMPTY:		return -ENOMEDIUM;
-	case AFSVL_ENTDELETED:		return -ENOMEDIUM;
-	case AFSVL_BADNAME:		return -EINVAL;
-	case AFSVL_BADINDEX:		return -EINVAL;
-	case AFSVL_BADVOLTYPE:		return -EINVAL;
-	case AFSVL_BADSERVER:		return -EINVAL;
-	case AFSVL_BADPARTITION:	return -EINVAL;
-	case AFSVL_REPSFULL:		return -EFBIG;
-	case AFSVL_NOREPSERVER:		return -ENOENT;
-	case AFSVL_DUPREPSERVER:	return -EEXIST;
-	case AFSVL_RWNOTFOUND:		return -ENOENT;
-	case AFSVL_BADREFCOUNT:		return -EINVAL;
-	case AFSVL_SIZEEXCEEDED:	return -EINVAL;
-	case AFSVL_BADENTRY:		return -EINVAL;
-	case AFSVL_BADVOLIDBUMP:	return -EINVAL;
-	case AFSVL_IDALREADYHASHED:	return -EINVAL;
-	case AFSVL_ENTRYLOCKED:		return -EBUSY;
-	case AFSVL_BADVOLOPER:		return -EBADRQC;
-	case AFSVL_BADRELLOCKTYPE:	return -EINVAL;
-	case AFSVL_RERELEASE:		return -EREMOTEIO;
-	case AFSVL_BADSERVERFLAG:	return -EINVAL;
-	case AFSVL_PERM:		return -EACCES;
-	case AFSVL_NOMEM:		return -EREMOTEIO;
+	हाल AFSVL_IDEXIST:		वापस -EEXIST;
+	हाल AFSVL_IO:			वापस -EREMOTEIO;
+	हाल AFSVL_NAMEEXIST:		वापस -EEXIST;
+	हाल AFSVL_CREATEFAIL:		वापस -EREMOTEIO;
+	हाल AFSVL_NOENT:		वापस -ENOMEDIUM;
+	हाल AFSVL_EMPTY:		वापस -ENOMEDIUM;
+	हाल AFSVL_ENTDELETED:		वापस -ENOMEDIUM;
+	हाल AFSVL_BADNAME:		वापस -EINVAL;
+	हाल AFSVL_BADINDEX:		वापस -EINVAL;
+	हाल AFSVL_BADVOLTYPE:		वापस -EINVAL;
+	हाल AFSVL_BADSERVER:		वापस -EINVAL;
+	हाल AFSVL_BADPARTITION:	वापस -EINVAL;
+	हाल AFSVL_REPSFULL:		वापस -EFBIG;
+	हाल AFSVL_NOREPSERVER:		वापस -ENOENT;
+	हाल AFSVL_DUPREPSERVER:	वापस -EEXIST;
+	हाल AFSVL_RWNOTFOUND:		वापस -ENOENT;
+	हाल AFSVL_BADREFCOUNT:		वापस -EINVAL;
+	हाल AFSVL_SIZEEXCEEDED:	वापस -EINVAL;
+	हाल AFSVL_BADENTRY:		वापस -EINVAL;
+	हाल AFSVL_BADVOLIDBUMP:	वापस -EINVAL;
+	हाल AFSVL_IDALREADYHASHED:	वापस -EINVAL;
+	हाल AFSVL_ENTRYLOCKED:		वापस -EBUSY;
+	हाल AFSVL_BADVOLOPER:		वापस -EBADRQC;
+	हाल AFSVL_BADRELLOCKTYPE:	वापस -EINVAL;
+	हाल AFSVL_RERELEASE:		वापस -EREMOTEIO;
+	हाल AFSVL_BADSERVERFLAG:	वापस -EINVAL;
+	हाल AFSVL_PERM:		वापस -EACCES;
+	हाल AFSVL_NOMEM:		वापस -EREMOTEIO;
 
-		/* Unified AFS error table */
-	case UAEPERM:			return -EPERM;
-	case UAENOENT:			return -ENOENT;
-	case UAEACCES:			return -EACCES;
-	case UAEBUSY:			return -EBUSY;
-	case UAEEXIST:			return -EEXIST;
-	case UAENOTDIR:			return -ENOTDIR;
-	case UAEISDIR:			return -EISDIR;
-	case UAEFBIG:			return -EFBIG;
-	case UAENOSPC:			return -ENOSPC;
-	case UAEROFS:			return -EROFS;
-	case UAEMLINK:			return -EMLINK;
-	case UAEDEADLK:			return -EDEADLK;
-	case UAENAMETOOLONG:		return -ENAMETOOLONG;
-	case UAENOLCK:			return -ENOLCK;
-	case UAENOTEMPTY:		return -ENOTEMPTY;
-	case UAELOOP:			return -ELOOP;
-	case UAEOVERFLOW:		return -EOVERFLOW;
-	case UAENOMEDIUM:		return -ENOMEDIUM;
-	case UAEDQUOT:			return -EDQUOT;
+		/* Unअगरied AFS error table */
+	हाल UAEPERM:			वापस -EPERM;
+	हाल UAENOENT:			वापस -ENOENT;
+	हाल UAEACCES:			वापस -EACCES;
+	हाल UAEBUSY:			वापस -EBUSY;
+	हाल UAEEXIST:			वापस -EEXIST;
+	हाल UAENOTसूची:			वापस -ENOTसूची;
+	हाल UAEISसूची:			वापस -EISसूची;
+	हाल UAEFBIG:			वापस -EFBIG;
+	हाल UAENOSPC:			वापस -ENOSPC;
+	हाल UAEROFS:			वापस -EROFS;
+	हाल UAEMLINK:			वापस -EMLINK;
+	हाल UAEDEADLK:			वापस -EDEADLK;
+	हाल UAENAMETOOLONG:		वापस -ENAMETOOLONG;
+	हाल UAENOLCK:			वापस -ENOLCK;
+	हाल UAENOTEMPTY:		वापस -ENOTEMPTY;
+	हाल UAELOOP:			वापस -ELOOP;
+	हाल UAEOVERFLOW:		वापस -EOVERFLOW;
+	हाल UAENOMEDIUM:		वापस -ENOMEDIUM;
+	हाल UAEDQUOT:			वापस -EDQUOT;
 
-		/* RXKAD abort codes; from include/rxrpc/packet.h.  ET "RXK" == 0x1260B00 */
-	case RXKADINCONSISTENCY: return -EPROTO;
-	case RXKADPACKETSHORT:	return -EPROTO;
-	case RXKADLEVELFAIL:	return -EKEYREJECTED;
-	case RXKADTICKETLEN:	return -EKEYREJECTED;
-	case RXKADOUTOFSEQUENCE: return -EPROTO;
-	case RXKADNOAUTH:	return -EKEYREJECTED;
-	case RXKADBADKEY:	return -EKEYREJECTED;
-	case RXKADBADTICKET:	return -EKEYREJECTED;
-	case RXKADUNKNOWNKEY:	return -EKEYREJECTED;
-	case RXKADEXPIRED:	return -EKEYEXPIRED;
-	case RXKADSEALEDINCON:	return -EKEYREJECTED;
-	case RXKADDATALEN:	return -EKEYREJECTED;
-	case RXKADILLEGALLEVEL:	return -EKEYREJECTED;
+		/* RXKAD पात codes; from include/rxrpc/packet.h.  ET "RXK" == 0x1260B00 */
+	हाल RXKADINCONSISTENCY: वापस -EPROTO;
+	हाल RXKADPACKETSHORT:	वापस -EPROTO;
+	हाल RXKADLEVELFAIL:	वापस -EKEYREJECTED;
+	हाल RXKADTICKETLEN:	वापस -EKEYREJECTED;
+	हाल RXKADOUTOFSEQUENCE: वापस -EPROTO;
+	हाल RXKADNOAUTH:	वापस -EKEYREJECTED;
+	हाल RXKADBADKEY:	वापस -EKEYREJECTED;
+	हाल RXKADBADTICKET:	वापस -EKEYREJECTED;
+	हाल RXKADUNKNOWNKEY:	वापस -EKEYREJECTED;
+	हाल RXKADEXPIRED:	वापस -EKEYEXPIRED;
+	हाल RXKADSEALEDINCON:	वापस -EKEYREJECTED;
+	हाल RXKADDATALEN:	वापस -EKEYREJECTED;
+	हाल RXKADILLEGALLEVEL:	वापस -EKEYREJECTED;
 
-	case RXGEN_OPCODE:	return -ENOTSUPP;
+	हाल RXGEN_OPCODE:	वापस -ENOTSUPP;
 
-	default:		return -EREMOTEIO;
-	}
-}
+	शेष:		वापस -EREMOTEIO;
+	पूर्ण
+पूर्ण
 
 /*
  * Select the error to report from a set of errors.
  */
-void afs_prioritise_error(struct afs_error *e, int error, u32 abort_code)
-{
-	switch (error) {
-	case 0:
-		return;
-	default:
-		if (e->error == -ETIMEDOUT ||
+व्योम afs_prioritise_error(काष्ठा afs_error *e, पूर्णांक error, u32 पात_code)
+अणु
+	चयन (error) अणु
+	हाल 0:
+		वापस;
+	शेष:
+		अगर (e->error == -ETIMEDOUT ||
 		    e->error == -ETIME)
-			return;
+			वापस;
 		fallthrough;
-	case -ETIMEDOUT:
-	case -ETIME:
-		if (e->error == -ENOMEM ||
+	हाल -ETIMEDOUT:
+	हाल -ETIME:
+		अगर (e->error == -ENOMEM ||
 		    e->error == -ENONET)
-			return;
+			वापस;
 		fallthrough;
-	case -ENOMEM:
-	case -ENONET:
-		if (e->error == -ERFKILL)
-			return;
+	हाल -ENOMEM:
+	हाल -ENONET:
+		अगर (e->error == -ERFKILL)
+			वापस;
 		fallthrough;
-	case -ERFKILL:
-		if (e->error == -EADDRNOTAVAIL)
-			return;
+	हाल -ERFKILL:
+		अगर (e->error == -EADDRNOTAVAIL)
+			वापस;
 		fallthrough;
-	case -EADDRNOTAVAIL:
-		if (e->error == -ENETUNREACH)
-			return;
+	हाल -EADDRNOTAVAIL:
+		अगर (e->error == -ENETUNREACH)
+			वापस;
 		fallthrough;
-	case -ENETUNREACH:
-		if (e->error == -EHOSTUNREACH)
-			return;
+	हाल -ENETUNREACH:
+		अगर (e->error == -EHOSTUNREACH)
+			वापस;
 		fallthrough;
-	case -EHOSTUNREACH:
-		if (e->error == -EHOSTDOWN)
-			return;
+	हाल -EHOSTUNREACH:
+		अगर (e->error == -EHOSTDOWN)
+			वापस;
 		fallthrough;
-	case -EHOSTDOWN:
-		if (e->error == -ECONNREFUSED)
-			return;
+	हाल -EHOSTDOWN:
+		अगर (e->error == -ECONNREFUSED)
+			वापस;
 		fallthrough;
-	case -ECONNREFUSED:
-		if (e->error == -ECONNRESET)
-			return;
+	हाल -ECONNREFUSED:
+		अगर (e->error == -ECONNRESET)
+			वापस;
 		fallthrough;
-	case -ECONNRESET: /* Responded, but call expired. */
-		if (e->responded)
-			return;
+	हाल -ECONNRESET: /* Responded, but call expired. */
+		अगर (e->responded)
+			वापस;
 		e->error = error;
-		return;
+		वापस;
 
-	case -ECONNABORTED:
+	हाल -ECONNABORTED:
 		e->responded = true;
-		e->error = afs_abort_to_error(abort_code);
-		return;
-	}
-}
+		e->error = afs_पात_to_error(पात_code);
+		वापस;
+	पूर्ण
+पूर्ण

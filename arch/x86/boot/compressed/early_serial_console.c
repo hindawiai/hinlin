@@ -1,5 +1,6 @@
-#include "misc.h"
+<शैली गुरु>
+#समावेश "misc.h"
 
-int early_serial_base;
+पूर्णांक early_serial_base;
 
-#include "../early_serial_console.c"
+#समावेश "../early_serial_console.c"

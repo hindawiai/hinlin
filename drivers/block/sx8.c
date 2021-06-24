@@ -1,48 +1,49 @@
+<शैली गुरु>
 /*
- *  sx8.c: Driver for Promise SATA SX8 looks-like-I2O hardware
+ *  sx8.c: Driver क्रम Promise SATA SX8 looks-like-I2O hardware
  *
  *  Copyright 2004-2005 Red Hat, Inc.
  *
- *  Author/maintainer:  Jeff Garzik <jgarzik@pobox.com>
+ *  Author/मुख्यtainer:  Jeff Garzik <jgarzik@pobox.com>
  *
  *  This file is subject to the terms and conditions of the GNU General Public
- *  License.  See the file "COPYING" in the main directory of this archive
- *  for more details.
+ *  License.  See the file "COPYING" in the मुख्य directory of this archive
+ *  क्रम more details.
  */
 
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/init.h>
-#include <linux/pci.h>
-#include <linux/slab.h>
-#include <linux/spinlock.h>
-#include <linux/blk-mq.h>
-#include <linux/sched.h>
-#include <linux/interrupt.h>
-#include <linux/compiler.h>
-#include <linux/workqueue.h>
-#include <linux/bitops.h>
-#include <linux/delay.h>
-#include <linux/ktime.h>
-#include <linux/hdreg.h>
-#include <linux/dma-mapping.h>
-#include <linux/completion.h>
-#include <linux/scatterlist.h>
-#include <asm/io.h>
-#include <linux/uaccess.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/init.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/blk-mq.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/compiler.h>
+#समावेश <linux/workqueue.h>
+#समावेश <linux/bitops.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/kसमय.स>
+#समावेश <linux/hdreg.h>
+#समावेश <linux/dma-mapping.h>
+#समावेश <linux/completion.h>
+#समावेश <linux/scatterlist.h>
+#समावेश <यंत्र/पन.स>
+#समावेश <linux/uaccess.h>
 
-#if 0
-#define CARM_DEBUG
-#define CARM_VERBOSE_DEBUG
-#else
-#undef CARM_DEBUG
-#undef CARM_VERBOSE_DEBUG
-#endif
-#undef CARM_NDEBUG
+#अगर 0
+#घोषणा CARM_DEBUG
+#घोषणा CARM_VERBOSE_DEBUG
+#अन्यथा
+#अघोषित CARM_DEBUG
+#अघोषित CARM_VERBOSE_DEBUG
+#पूर्ण_अगर
+#अघोषित CARM_न_संशोधन
 
-#define DRV_NAME "sx8"
-#define DRV_VERSION "1.0"
-#define PFX DRV_NAME ": "
+#घोषणा DRV_NAME "sx8"
+#घोषणा DRV_VERSION "1.0"
+#घोषणा PFX DRV_NAME ": "
 
 MODULE_AUTHOR("Jeff Garzik");
 MODULE_LICENSE("GPL");
@@ -50,60 +51,60 @@ MODULE_DESCRIPTION("Promise SATA SX8 block driver");
 MODULE_VERSION(DRV_VERSION);
 
 /*
- * SX8 hardware has a single message queue for all ATA ports.
+ * SX8 hardware has a single message queue क्रम all ATA ports.
  * When this driver was written, the hardware (firmware?) would
- * corrupt data eventually, if more than one request was outstanding.
+ * corrupt data eventually, अगर more than one request was outstanding.
  * As one can imagine, having 8 ports bottlenecking on a single
- * command hurts performance.
+ * command hurts perक्रमmance.
  *
  * Based on user reports, later versions of the hardware (firmware?)
  * seem to be able to survive with more than one command queued.
  *
- * Therefore, we default to the safe option -- 1 command -- but
+ * Thereक्रमe, we शेष to the safe option -- 1 command -- but
  * allow the user to increase this.
  *
  * SX8 should be able to support up to ~60 queued commands (CARM_MAX_REQ),
  * but problems seem to occur when you exceed ~30, even on newer hardware.
  */
-static int max_queue = 1;
-module_param(max_queue, int, 0444);
+अटल पूर्णांक max_queue = 1;
+module_param(max_queue, पूर्णांक, 0444);
 MODULE_PARM_DESC(max_queue, "Maximum number of queued commands. (min==1, max==30, safe==1)");
 
 
-#define NEXT_RESP(idx)	((idx + 1) % RMSG_Q_LEN)
+#घोषणा NEXT_RESP(idx)	((idx + 1) % RMSG_Q_LEN)
 
 /* 0xf is just arbitrary, non-zero noise; this is sorta like poisoning */
-#define TAG_ENCODE(tag)	(((tag) << 16) | 0xf)
-#define TAG_DECODE(tag)	(((tag) >> 16) & 0x1f)
-#define TAG_VALID(tag)	((((tag) & 0xf) == 0xf) && (TAG_DECODE(tag) < 32))
+#घोषणा TAG_ENCODE(tag)	(((tag) << 16) | 0xf)
+#घोषणा TAG_DECODE(tag)	(((tag) >> 16) & 0x1f)
+#घोषणा TAG_VALID(tag)	((((tag) & 0xf) == 0xf) && (TAG_DECODE(tag) < 32))
 
-/* note: prints function name for you */
-#ifdef CARM_DEBUG
-#define DPRINTK(fmt, args...) printk(KERN_ERR "%s: " fmt, __func__, ## args)
-#ifdef CARM_VERBOSE_DEBUG
-#define VPRINTK(fmt, args...) printk(KERN_ERR "%s: " fmt, __func__, ## args)
-#else
-#define VPRINTK(fmt, args...)
-#endif	/* CARM_VERBOSE_DEBUG */
-#else
-#define DPRINTK(fmt, args...)
-#define VPRINTK(fmt, args...)
-#endif	/* CARM_DEBUG */
+/* note: prपूर्णांकs function name क्रम you */
+#अगर_घोषित CARM_DEBUG
+#घोषणा DPRINTK(fmt, args...) prपूर्णांकk(KERN_ERR "%s: " fmt, __func__, ## args)
+#अगर_घोषित CARM_VERBOSE_DEBUG
+#घोषणा VPRINTK(fmt, args...) prपूर्णांकk(KERN_ERR "%s: " fmt, __func__, ## args)
+#अन्यथा
+#घोषणा VPRINTK(fmt, args...)
+#पूर्ण_अगर	/* CARM_VERBOSE_DEBUG */
+#अन्यथा
+#घोषणा DPRINTK(fmt, args...)
+#घोषणा VPRINTK(fmt, args...)
+#पूर्ण_अगर	/* CARM_DEBUG */
 
-#ifdef CARM_NDEBUG
-#define assert(expr)
-#else
-#define assert(expr) \
-        if(unlikely(!(expr))) {                                   \
-        printk(KERN_ERR "Assertion failed! %s,%s,%s,line=%d\n", \
-	#expr, __FILE__, __func__, __LINE__);          \
-        }
-#endif
+#अगर_घोषित CARM_न_संशोधन
+#घोषणा निश्चित(expr)
+#अन्यथा
+#घोषणा निश्चित(expr) \
+        अगर(unlikely(!(expr))) अणु                                   \
+        prपूर्णांकk(KERN_ERR "Assertion failed! %s,%s,%s,line=%d\n", \
+	#expr, __खाता__, __func__, __LINE__);          \
+        पूर्ण
+#पूर्ण_अगर
 
-/* defines only for the constants which don't work well as enums */
-struct carm_host;
+/* defines only क्रम the स्थिरants which करोn't work well as क्रमागतs */
+काष्ठा carm_host;
 
-enum {
+क्रमागत अणु
 	/* adapter-wide limits */
 	CARM_MAX_PORTS		= 8,
 	CARM_SHM_SIZE		= (4096 << 7),
@@ -119,10 +120,10 @@ enum {
 	CARM_MAX_HOST_SG	= 600,		/* max s/g entries per host */
 	CARM_SG_LOW_WATER	= (CARM_MAX_HOST_SG / 4),   /* re-fill mark */
 
-	/* hardware registers */
+	/* hardware रेजिस्टरs */
 	CARM_IHQP		= 0x1c,
-	CARM_INT_STAT		= 0x10, /* interrupt status */
-	CARM_INT_MASK		= 0x14, /* interrupt mask */
+	CARM_INT_STAT		= 0x10, /* पूर्णांकerrupt status */
+	CARM_INT_MASK		= 0x14, /* पूर्णांकerrupt mask */
 	CARM_HMUC		= 0x18, /* host message unit control */
 	RBUF_ADDR_LO		= 0x20, /* response msg DMA buf low 32 bits */
 	RBUF_ADDR_HI		= 0x24, /* response msg DMA buf high 32 bits */
@@ -133,17 +134,17 @@ enum {
 	CARM_HMPHA		= 0x6c,
 	CARM_INITC		= 0xb5,
 
-	/* bits in CARM_INT_{STAT,MASK} */
+	/* bits in CARM_INT_अणुSTAT,MASKपूर्ण */
 	INT_RESERVED		= 0xfffffff0,
-	INT_WATCHDOG		= (1 << 3),	/* watchdog timer */
+	INT_WATCHDOG		= (1 << 3),	/* watchकरोg समयr */
 	INT_Q_OVERFLOW		= (1 << 2),	/* cmd msg q overflow */
-	INT_Q_AVAILABLE		= (1 << 1),	/* cmd msg q has free space */
+	INT_Q_AVAILABLE		= (1 << 1),	/* cmd msg q has मुक्त space */
 	INT_RESPONSE		= (1 << 0),	/* response msg available */
 	INT_ACK_MASK		= INT_WATCHDOG | INT_Q_OVERFLOW,
 	INT_DEF_MASK		= INT_RESERVED | INT_Q_OVERFLOW |
 				  INT_RESPONSE,
 
-	/* command messages, and related register bits */
+	/* command messages, and related रेजिस्टर bits */
 	CARM_HAVE_RESP		= 0x01,
 	CARM_MSG_READ		= 1,
 	CARM_MSG_WRITE		= 2,
@@ -162,7 +163,7 @@ enum {
 	CARM_Q_LEN		= 48,
 
 	/* CARM_MSG_IOCTL messages */
-	CARM_IOC_SCAN_CHAN	= 5,	/* scan channels for devices */
+	CARM_IOC_SCAN_CHAN	= 5,	/* scan channels क्रम devices */
 	CARM_IOC_GET_TCQ	= 13,	/* get tcq/ncq depth */
 	CARM_IOC_SET_TCQ	= 14,	/* set tcq/ncq depth */
 
@@ -175,7 +176,7 @@ enum {
 	ARRAY_NO_EXIST		= (1 << 31),
 
 	/* response messages */
-	RMSG_SZ			= 8,	/* sizeof(struct carm_response) */
+	RMSG_SZ			= 8,	/* माप(काष्ठा carm_response) */
 	RMSG_Q_LEN		= 48,	/* resp. msg list length */
 	RMSG_OK			= 1,	/* bit indicating msg was successful */
 					/* length of entire resp. msg buffer */
@@ -198,33 +199,33 @@ enum {
 	FL_4PORT		= FW_VER_4PORT,
 	FL_FW_VER_MASK		= (FW_VER_NON_RAID | FW_VER_4PORT),
 	FL_DYN_MAJOR		= (1 << 17),
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	CARM_SG_BOUNDARY	= 0xffffUL,	    /* s/g segment boundary */
-};
+पूर्ण;
 
-enum scatter_gather_types {
+क्रमागत scatter_gather_types अणु
 	SGT_32BIT		= 0,
 	SGT_64BIT		= 1,
-};
+पूर्ण;
 
-enum host_states {
+क्रमागत host_states अणु
 	HST_INVALID,		/* invalid state; never used */
 	HST_ALLOC_BUF,		/* setting up master SHM area */
 	HST_ERROR,		/* we never leave here */
 	HST_PORT_SCAN,		/* start dev scan */
 	HST_DEV_SCAN_START,	/* start per-device probe */
-	HST_DEV_SCAN,		/* continue per-device probe */
+	HST_DEV_SCAN,		/* जारी per-device probe */
 	HST_DEV_ACTIVATE,	/* activate devices we found */
 	HST_PROBE_FINISHED,	/* probe is complete */
 	HST_PROBE_START,	/* initiate probe */
-	HST_SYNC_TIME,		/* tell firmware what time it is */
+	HST_SYNC_TIME,		/* tell firmware what समय it is */
 	HST_GET_FW_VER,		/* get firmware version, adapter port cnt */
-};
+पूर्ण;
 
-#ifdef CARM_DEBUG
-static const char *state_name[] = {
+#अगर_घोषित CARM_DEBUG
+अटल स्थिर अक्षर *state_name[] = अणु
 	"HST_INVALID",
 	"HST_ALLOC_BUF",
 	"HST_ERROR",
@@ -236,81 +237,81 @@ static const char *state_name[] = {
 	"HST_PROBE_START",
 	"HST_SYNC_TIME",
 	"HST_GET_FW_VER",
-};
-#endif
+पूर्ण;
+#पूर्ण_अगर
 
-struct carm_port {
-	unsigned int			port_no;
-	struct gendisk			*disk;
-	struct carm_host		*host;
+काष्ठा carm_port अणु
+	अचिन्हित पूर्णांक			port_no;
+	काष्ठा gendisk			*disk;
+	काष्ठा carm_host		*host;
 
-	/* attached device characteristics */
+	/* attached device अक्षरacteristics */
 	u64				capacity;
-	char				name[41];
+	अक्षर				name[41];
 	u16				dev_geom_head;
 	u16				dev_geom_sect;
 	u16				dev_geom_cyl;
-};
+पूर्ण;
 
-struct carm_request {
-	int				n_elem;
-	unsigned int			msg_type;
-	unsigned int			msg_subtype;
-	unsigned int			msg_bucket;
-	struct scatterlist		sg[CARM_MAX_REQ_SG];
-};
+काष्ठा carm_request अणु
+	पूर्णांक				n_elem;
+	अचिन्हित पूर्णांक			msg_type;
+	अचिन्हित पूर्णांक			msg_subtype;
+	अचिन्हित पूर्णांक			msg_bucket;
+	काष्ठा scatterlist		sg[CARM_MAX_REQ_SG];
+पूर्ण;
 
-struct carm_host {
-	unsigned long			flags;
-	void				__iomem *mmio;
-	void				*shm;
+काष्ठा carm_host अणु
+	अचिन्हित दीर्घ			flags;
+	व्योम				__iomem *mmio;
+	व्योम				*shm;
 	dma_addr_t			shm_dma;
 
-	int				major;
-	int				id;
-	char				name[32];
+	पूर्णांक				major;
+	पूर्णांक				id;
+	अक्षर				name[32];
 
 	spinlock_t			lock;
-	struct pci_dev			*pdev;
-	unsigned int			state;
+	काष्ठा pci_dev			*pdev;
+	अचिन्हित पूर्णांक			state;
 	u32				fw_ver;
 
-	struct blk_mq_tag_set		tag_set;
-	struct request_queue		*oob_q;
-	unsigned int			n_oob;
+	काष्ठा blk_mq_tag_set		tag_set;
+	काष्ठा request_queue		*oob_q;
+	अचिन्हित पूर्णांक			n_oob;
 
-	unsigned int			hw_sg_used;
+	अचिन्हित पूर्णांक			hw_sg_used;
 
-	unsigned int			resp_idx;
+	अचिन्हित पूर्णांक			resp_idx;
 
-	unsigned int			wait_q_prod;
-	unsigned int			wait_q_cons;
-	struct request_queue		*wait_q[CARM_MAX_WAIT_Q];
+	अचिन्हित पूर्णांक			रुको_q_prod;
+	अचिन्हित पूर्णांक			रुको_q_cons;
+	काष्ठा request_queue		*रुको_q[CARM_MAX_WAIT_Q];
 
-	void				*msg_base;
+	व्योम				*msg_base;
 	dma_addr_t			msg_dma;
 
-	int				cur_scan_dev;
-	unsigned long			dev_active;
-	unsigned long			dev_present;
-	struct carm_port		port[CARM_MAX_PORTS];
+	पूर्णांक				cur_scan_dev;
+	अचिन्हित दीर्घ			dev_active;
+	अचिन्हित दीर्घ			dev_present;
+	काष्ठा carm_port		port[CARM_MAX_PORTS];
 
-	struct work_struct		fsm_task;
+	काष्ठा work_काष्ठा		fsm_task;
 
-	struct completion		probe_comp;
-};
+	काष्ठा completion		probe_comp;
+पूर्ण;
 
-struct carm_response {
+काष्ठा carm_response अणु
 	__le32 ret_handle;
 	__le32 status;
-}  __attribute__((packed));
+पूर्ण  __attribute__((packed));
 
-struct carm_msg_sg {
+काष्ठा carm_msg_sg अणु
 	__le32 start;
 	__le32 len;
-}  __attribute__((packed));
+पूर्ण  __attribute__((packed));
 
-struct carm_msg_rw {
+काष्ठा carm_msg_rw अणु
 	u8 type;
 	u8 id;
 	u8 sg_count;
@@ -319,10 +320,10 @@ struct carm_msg_rw {
 	__le32 lba;
 	__le16 lba_count;
 	__le16 lba_high;
-	struct carm_msg_sg sg[32];
-}  __attribute__((packed));
+	काष्ठा carm_msg_sg sg[32];
+पूर्ण  __attribute__((packed));
 
-struct carm_msg_allocbuf {
+काष्ठा carm_msg_allocbuf अणु
 	u8 type;
 	u8 subtype;
 	u8 n_sg;
@@ -336,10 +337,10 @@ struct carm_msg_allocbuf {
 	__le32 n_rbuf;
 	__le32 msg_pool;
 	__le32 n_msg;
-	struct carm_msg_sg sg[8];
-}  __attribute__((packed));
+	काष्ठा carm_msg_sg sg[8];
+पूर्ण  __attribute__((packed));
 
-struct carm_msg_ioctl {
+काष्ठा carm_msg_ioctl अणु
 	u8 type;
 	u8 subtype;
 	u8 array_id;
@@ -347,34 +348,34 @@ struct carm_msg_ioctl {
 	__le32 handle;
 	__le32 data_addr;
 	u32 reserved2;
-}  __attribute__((packed));
+पूर्ण  __attribute__((packed));
 
-struct carm_msg_sync_time {
+काष्ठा carm_msg_sync_समय अणु
 	u8 type;
 	u8 subtype;
 	u16 reserved1;
 	__le32 handle;
 	u32 reserved2;
-	__le32 timestamp;
-}  __attribute__((packed));
+	__le32 बारtamp;
+पूर्ण  __attribute__((packed));
 
-struct carm_msg_get_fw_ver {
+काष्ठा carm_msg_get_fw_ver अणु
 	u8 type;
 	u8 subtype;
 	u16 reserved1;
 	__le32 handle;
 	__le32 data_addr;
 	u32 reserved2;
-}  __attribute__((packed));
+पूर्ण  __attribute__((packed));
 
-struct carm_fw_ver {
+काष्ठा carm_fw_ver अणु
 	__le32 version;
 	u8 features;
 	u8 reserved1;
 	u16 reserved2;
-}  __attribute__((packed));
+पूर्ण  __attribute__((packed));
 
-struct carm_array_info {
+काष्ठा carm_array_info अणु
 	__le32 size;
 
 	__le16 size_hi;
@@ -392,141 +393,141 @@ struct carm_array_info {
 	u8 array_id;
 	u8 reserved2;
 
-	char name[40];
+	अक्षर name[40];
 
 	__le32 array_status;
 
-	/* device list continues beyond this point? */
-}  __attribute__((packed));
+	/* device list जारीs beyond this poपूर्णांक? */
+पूर्ण  __attribute__((packed));
 
-static int carm_init_one (struct pci_dev *pdev, const struct pci_device_id *ent);
-static void carm_remove_one (struct pci_dev *pdev);
-static int carm_bdev_getgeo(struct block_device *bdev, struct hd_geometry *geo);
+अटल पूर्णांक carm_init_one (काष्ठा pci_dev *pdev, स्थिर काष्ठा pci_device_id *ent);
+अटल व्योम carm_हटाओ_one (काष्ठा pci_dev *pdev);
+अटल पूर्णांक carm_bdev_getgeo(काष्ठा block_device *bdev, काष्ठा hd_geometry *geo);
 
-static const struct pci_device_id carm_pci_tbl[] = {
-	{ PCI_VENDOR_ID_PROMISE, 0x8000, PCI_ANY_ID, PCI_ANY_ID, 0, 0, },
-	{ PCI_VENDOR_ID_PROMISE, 0x8002, PCI_ANY_ID, PCI_ANY_ID, 0, 0, },
-	{ }	/* terminate list */
-};
+अटल स्थिर काष्ठा pci_device_id carm_pci_tbl[] = अणु
+	अणु PCI_VENDOR_ID_PROMISE, 0x8000, PCI_ANY_ID, PCI_ANY_ID, 0, 0, पूर्ण,
+	अणु PCI_VENDOR_ID_PROMISE, 0x8002, PCI_ANY_ID, PCI_ANY_ID, 0, 0, पूर्ण,
+	अणु पूर्ण	/* terminate list */
+पूर्ण;
 MODULE_DEVICE_TABLE(pci, carm_pci_tbl);
 
-static struct pci_driver carm_driver = {
+अटल काष्ठा pci_driver carm_driver = अणु
 	.name		= DRV_NAME,
 	.id_table	= carm_pci_tbl,
 	.probe		= carm_init_one,
-	.remove		= carm_remove_one,
-};
+	.हटाओ		= carm_हटाओ_one,
+पूर्ण;
 
-static const struct block_device_operations carm_bd_ops = {
+अटल स्थिर काष्ठा block_device_operations carm_bd_ops = अणु
 	.owner		= THIS_MODULE,
 	.getgeo		= carm_bdev_getgeo,
-};
+पूर्ण;
 
-static unsigned int carm_host_id;
-static unsigned long carm_major_alloc;
+अटल अचिन्हित पूर्णांक carm_host_id;
+अटल अचिन्हित दीर्घ carm_major_alloc;
 
 
 
-static int carm_bdev_getgeo(struct block_device *bdev, struct hd_geometry *geo)
-{
-	struct carm_port *port = bdev->bd_disk->private_data;
+अटल पूर्णांक carm_bdev_getgeo(काष्ठा block_device *bdev, काष्ठा hd_geometry *geo)
+अणु
+	काष्ठा carm_port *port = bdev->bd_disk->निजी_data;
 
 	geo->heads = (u8) port->dev_geom_head;
 	geo->sectors = (u8) port->dev_geom_sect;
 	geo->cylinders = port->dev_geom_cyl;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const u32 msg_sizes[] = { 32, 64, 128, CARM_MSG_SIZE };
+अटल स्थिर u32 msg_sizes[] = अणु 32, 64, 128, CARM_MSG_SIZE पूर्ण;
 
-static inline int carm_lookup_bucket(u32 msg_size)
-{
-	int i;
+अटल अंतरभूत पूर्णांक carm_lookup_bucket(u32 msg_size)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < ARRAY_SIZE(msg_sizes); i++)
-		if (msg_size <= msg_sizes[i])
-			return i;
+	क्रम (i = 0; i < ARRAY_SIZE(msg_sizes); i++)
+		अगर (msg_size <= msg_sizes[i])
+			वापस i;
 
-	return -ENOENT;
-}
+	वापस -ENOENT;
+पूर्ण
 
-static void carm_init_buckets(void __iomem *mmio)
-{
-	unsigned int i;
+अटल व्योम carm_init_buckets(व्योम __iomem *mmio)
+अणु
+	अचिन्हित पूर्णांक i;
 
-	for (i = 0; i < ARRAY_SIZE(msg_sizes); i++)
-		writel(msg_sizes[i], mmio + CARM_CMS0 + (4 * i));
-}
+	क्रम (i = 0; i < ARRAY_SIZE(msg_sizes); i++)
+		ग_लिखोl(msg_sizes[i], mmio + CARM_CMS0 + (4 * i));
+पूर्ण
 
-static inline void *carm_ref_msg(struct carm_host *host,
-				 unsigned int msg_idx)
-{
-	return host->msg_base + (msg_idx * CARM_MSG_SIZE);
-}
+अटल अंतरभूत व्योम *carm_ref_msg(काष्ठा carm_host *host,
+				 अचिन्हित पूर्णांक msg_idx)
+अणु
+	वापस host->msg_base + (msg_idx * CARM_MSG_SIZE);
+पूर्ण
 
-static inline dma_addr_t carm_ref_msg_dma(struct carm_host *host,
-					  unsigned int msg_idx)
-{
-	return host->msg_dma + (msg_idx * CARM_MSG_SIZE);
-}
+अटल अंतरभूत dma_addr_t carm_ref_msg_dma(काष्ठा carm_host *host,
+					  अचिन्हित पूर्णांक msg_idx)
+अणु
+	वापस host->msg_dma + (msg_idx * CARM_MSG_SIZE);
+पूर्ण
 
-static int carm_send_msg(struct carm_host *host,
-			 struct carm_request *crq, unsigned tag)
-{
-	void __iomem *mmio = host->mmio;
+अटल पूर्णांक carm_send_msg(काष्ठा carm_host *host,
+			 काष्ठा carm_request *crq, अचिन्हित tag)
+अणु
+	व्योम __iomem *mmio = host->mmio;
 	u32 msg = (u32) carm_ref_msg_dma(host, tag);
 	u32 cm_bucket = crq->msg_bucket;
-	u32 tmp;
-	int rc = 0;
+	u32 पंचांगp;
+	पूर्णांक rc = 0;
 
 	VPRINTK("ENTER\n");
 
-	tmp = readl(mmio + CARM_HMUC);
-	if (tmp & CARM_Q_FULL) {
-#if 0
-		tmp = readl(mmio + CARM_INT_MASK);
-		tmp |= INT_Q_AVAILABLE;
-		writel(tmp, mmio + CARM_INT_MASK);
-		readl(mmio + CARM_INT_MASK);	/* flush */
-#endif
+	पंचांगp = पढ़ोl(mmio + CARM_HMUC);
+	अगर (पंचांगp & CARM_Q_FULL) अणु
+#अगर 0
+		पंचांगp = पढ़ोl(mmio + CARM_INT_MASK);
+		पंचांगp |= INT_Q_AVAILABLE;
+		ग_लिखोl(पंचांगp, mmio + CARM_INT_MASK);
+		पढ़ोl(mmio + CARM_INT_MASK);	/* flush */
+#पूर्ण_अगर
 		DPRINTK("host msg queue full\n");
 		rc = -EBUSY;
-	} else {
-		writel(msg | (cm_bucket << 1), mmio + CARM_IHQP);
-		readl(mmio + CARM_IHQP);	/* flush */
-	}
+	पूर्ण अन्यथा अणु
+		ग_लिखोl(msg | (cm_bucket << 1), mmio + CARM_IHQP);
+		पढ़ोl(mmio + CARM_IHQP);	/* flush */
+	पूर्ण
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int carm_array_info (struct carm_host *host, unsigned int array_idx)
-{
-	struct carm_msg_ioctl *ioc;
+अटल पूर्णांक carm_array_info (काष्ठा carm_host *host, अचिन्हित पूर्णांक array_idx)
+अणु
+	काष्ठा carm_msg_ioctl *ioc;
 	u32 msg_data;
 	dma_addr_t msg_dma;
-	struct carm_request *crq;
-	struct request *rq;
-	int rc;
+	काष्ठा carm_request *crq;
+	काष्ठा request *rq;
+	पूर्णांक rc;
 
 	rq = blk_mq_alloc_request(host->oob_q, REQ_OP_DRV_OUT, 0);
-	if (IS_ERR(rq)) {
+	अगर (IS_ERR(rq)) अणु
 		rc = -ENOMEM;
-		goto err_out;
-	}
+		जाओ err_out;
+	पूर्ण
 	crq = blk_mq_rq_to_pdu(rq);
 
 	ioc = carm_ref_msg(host, rq->tag);
 	msg_dma = carm_ref_msg_dma(host, rq->tag);
-	msg_data = (u32) (msg_dma + sizeof(struct carm_array_info));
+	msg_data = (u32) (msg_dma + माप(काष्ठा carm_array_info));
 
 	crq->msg_type = CARM_MSG_ARRAY;
 	crq->msg_subtype = CARM_ARRAY_INFO;
-	rc = carm_lookup_bucket(sizeof(struct carm_msg_ioctl) +
-				sizeof(struct carm_array_info));
+	rc = carm_lookup_bucket(माप(काष्ठा carm_msg_ioctl) +
+				माप(काष्ठा carm_array_info));
 	BUG_ON(rc < 0);
 	crq->msg_bucket = (u32) rc;
 
-	memset(ioc, 0, sizeof(*ioc));
+	स_रखो(ioc, 0, माप(*ioc));
 	ioc->type	= CARM_MSG_ARRAY;
 	ioc->subtype	= CARM_ARRAY_INFO;
 	ioc->array_id	= (u8) array_idx;
@@ -534,36 +535,36 @@ static int carm_array_info (struct carm_host *host, unsigned int array_idx)
 	ioc->data_addr	= cpu_to_le32(msg_data);
 
 	spin_lock_irq(&host->lock);
-	assert(host->state == HST_DEV_SCAN_START ||
+	निश्चित(host->state == HST_DEV_SCAN_START ||
 	       host->state == HST_DEV_SCAN);
 	spin_unlock_irq(&host->lock);
 
 	DPRINTK("blk_execute_rq_nowait, tag == %u\n", rq->tag);
-	blk_execute_rq_nowait(NULL, rq, true, NULL);
+	blk_execute_rq_noरुको(शून्य, rq, true, शून्य);
 
-	return 0;
+	वापस 0;
 
 err_out:
 	spin_lock_irq(&host->lock);
 	host->state = HST_ERROR;
 	spin_unlock_irq(&host->lock);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-typedef unsigned int (*carm_sspc_t)(struct carm_host *, unsigned int, void *);
+प्रकार अचिन्हित पूर्णांक (*carm_sspc_t)(काष्ठा carm_host *, अचिन्हित पूर्णांक, व्योम *);
 
-static int carm_send_special (struct carm_host *host, carm_sspc_t func)
-{
-	struct request *rq;
-	struct carm_request *crq;
-	struct carm_msg_ioctl *ioc;
-	void *mem;
-	unsigned int msg_size;
-	int rc;
+अटल पूर्णांक carm_send_special (काष्ठा carm_host *host, carm_sspc_t func)
+अणु
+	काष्ठा request *rq;
+	काष्ठा carm_request *crq;
+	काष्ठा carm_msg_ioctl *ioc;
+	व्योम *mem;
+	अचिन्हित पूर्णांक msg_size;
+	पूर्णांक rc;
 
 	rq = blk_mq_alloc_request(host->oob_q, REQ_OP_DRV_OUT, 0);
-	if (IS_ERR(rq))
-		return -ENOMEM;
+	अगर (IS_ERR(rq))
+		वापस -ENOMEM;
 	crq = blk_mq_rq_to_pdu(rq);
 
 	mem = carm_ref_msg(host, rq->tag);
@@ -578,33 +579,33 @@ static int carm_send_special (struct carm_host *host, carm_sspc_t func)
 	crq->msg_bucket = (u32) rc;
 
 	DPRINTK("blk_execute_rq_nowait, tag == %u\n", rq->tag);
-	blk_execute_rq_nowait(NULL, rq, true, NULL);
+	blk_execute_rq_noरुको(शून्य, rq, true, शून्य);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static unsigned int carm_fill_sync_time(struct carm_host *host,
-					unsigned int idx, void *mem)
-{
-	struct carm_msg_sync_time *st = mem;
+अटल अचिन्हित पूर्णांक carm_fill_sync_समय(काष्ठा carm_host *host,
+					अचिन्हित पूर्णांक idx, व्योम *mem)
+अणु
+	काष्ठा carm_msg_sync_समय *st = mem;
 
-	time64_t tv = ktime_get_real_seconds();
+	समय64_t tv = kसमय_get_real_seconds();
 
-	memset(st, 0, sizeof(*st));
+	स_रखो(st, 0, माप(*st));
 	st->type	= CARM_MSG_MISC;
 	st->subtype	= MISC_SET_TIME;
 	st->handle	= cpu_to_le32(TAG_ENCODE(idx));
-	st->timestamp	= cpu_to_le32(tv);
+	st->बारtamp	= cpu_to_le32(tv);
 
-	return sizeof(struct carm_msg_sync_time);
-}
+	वापस माप(काष्ठा carm_msg_sync_समय);
+पूर्ण
 
-static unsigned int carm_fill_alloc_buf(struct carm_host *host,
-					unsigned int idx, void *mem)
-{
-	struct carm_msg_allocbuf *ab = mem;
+अटल अचिन्हित पूर्णांक carm_fill_alloc_buf(काष्ठा carm_host *host,
+					अचिन्हित पूर्णांक idx, व्योम *mem)
+अणु
+	काष्ठा carm_msg_allocbuf *ab = mem;
 
-	memset(ab, 0, sizeof(*ab));
+	स_रखो(ab, 0, माप(*ab));
 	ab->type	= CARM_MSG_MISC;
 	ab->subtype	= MISC_ALLOC_MEM;
 	ab->handle	= cpu_to_le32(TAG_ENCODE(idx));
@@ -621,97 +622,97 @@ static unsigned int carm_fill_alloc_buf(struct carm_host *host,
 	ab->sg[0].start	= cpu_to_le32(host->shm_dma + (PDC_SHM_SIZE >> 1));
 	ab->sg[0].len	= cpu_to_le32(65536);
 
-	return sizeof(struct carm_msg_allocbuf);
-}
+	वापस माप(काष्ठा carm_msg_allocbuf);
+पूर्ण
 
-static unsigned int carm_fill_scan_channels(struct carm_host *host,
-					    unsigned int idx, void *mem)
-{
-	struct carm_msg_ioctl *ioc = mem;
+अटल अचिन्हित पूर्णांक carm_fill_scan_channels(काष्ठा carm_host *host,
+					    अचिन्हित पूर्णांक idx, व्योम *mem)
+अणु
+	काष्ठा carm_msg_ioctl *ioc = mem;
 	u32 msg_data = (u32) (carm_ref_msg_dma(host, idx) +
 			      IOC_SCAN_CHAN_OFFSET);
 
-	memset(ioc, 0, sizeof(*ioc));
+	स_रखो(ioc, 0, माप(*ioc));
 	ioc->type	= CARM_MSG_IOCTL;
 	ioc->subtype	= CARM_IOC_SCAN_CHAN;
 	ioc->handle	= cpu_to_le32(TAG_ENCODE(idx));
 	ioc->data_addr	= cpu_to_le32(msg_data);
 
-	/* fill output data area with "no device" default values */
+	/* fill output data area with "no device" शेष values */
 	mem += IOC_SCAN_CHAN_OFFSET;
-	memset(mem, IOC_SCAN_CHAN_NODEV, CARM_MAX_PORTS);
+	स_रखो(mem, IOC_SCAN_CHAN_NODEV, CARM_MAX_PORTS);
 
-	return IOC_SCAN_CHAN_OFFSET + CARM_MAX_PORTS;
-}
+	वापस IOC_SCAN_CHAN_OFFSET + CARM_MAX_PORTS;
+पूर्ण
 
-static unsigned int carm_fill_get_fw_ver(struct carm_host *host,
-					 unsigned int idx, void *mem)
-{
-	struct carm_msg_get_fw_ver *ioc = mem;
-	u32 msg_data = (u32) (carm_ref_msg_dma(host, idx) + sizeof(*ioc));
+अटल अचिन्हित पूर्णांक carm_fill_get_fw_ver(काष्ठा carm_host *host,
+					 अचिन्हित पूर्णांक idx, व्योम *mem)
+अणु
+	काष्ठा carm_msg_get_fw_ver *ioc = mem;
+	u32 msg_data = (u32) (carm_ref_msg_dma(host, idx) + माप(*ioc));
 
-	memset(ioc, 0, sizeof(*ioc));
+	स_रखो(ioc, 0, माप(*ioc));
 	ioc->type	= CARM_MSG_MISC;
 	ioc->subtype	= MISC_GET_FW_VER;
 	ioc->handle	= cpu_to_le32(TAG_ENCODE(idx));
 	ioc->data_addr	= cpu_to_le32(msg_data);
 
-	return sizeof(struct carm_msg_get_fw_ver) +
-	       sizeof(struct carm_fw_ver);
-}
+	वापस माप(काष्ठा carm_msg_get_fw_ver) +
+	       माप(काष्ठा carm_fw_ver);
+पूर्ण
 
-static inline void carm_push_q (struct carm_host *host, struct request_queue *q)
-{
-	unsigned int idx = host->wait_q_prod % CARM_MAX_WAIT_Q;
+अटल अंतरभूत व्योम carm_push_q (काष्ठा carm_host *host, काष्ठा request_queue *q)
+अणु
+	अचिन्हित पूर्णांक idx = host->रुको_q_prod % CARM_MAX_WAIT_Q;
 
 	blk_mq_stop_hw_queues(q);
 	VPRINTK("STOPPED QUEUE %p\n", q);
 
-	host->wait_q[idx] = q;
-	host->wait_q_prod++;
-	BUG_ON(host->wait_q_prod == host->wait_q_cons); /* overrun */
-}
+	host->रुको_q[idx] = q;
+	host->रुको_q_prod++;
+	BUG_ON(host->रुको_q_prod == host->रुको_q_cons); /* overrun */
+पूर्ण
 
-static inline struct request_queue *carm_pop_q(struct carm_host *host)
-{
-	unsigned int idx;
+अटल अंतरभूत काष्ठा request_queue *carm_pop_q(काष्ठा carm_host *host)
+अणु
+	अचिन्हित पूर्णांक idx;
 
-	if (host->wait_q_prod == host->wait_q_cons)
-		return NULL;
+	अगर (host->रुको_q_prod == host->रुको_q_cons)
+		वापस शून्य;
 
-	idx = host->wait_q_cons % CARM_MAX_WAIT_Q;
-	host->wait_q_cons++;
+	idx = host->रुको_q_cons % CARM_MAX_WAIT_Q;
+	host->रुको_q_cons++;
 
-	return host->wait_q[idx];
-}
+	वापस host->रुको_q[idx];
+पूर्ण
 
-static inline void carm_round_robin(struct carm_host *host)
-{
-	struct request_queue *q = carm_pop_q(host);
-	if (q) {
+अटल अंतरभूत व्योम carm_round_robin(काष्ठा carm_host *host)
+अणु
+	काष्ठा request_queue *q = carm_pop_q(host);
+	अगर (q) अणु
 		blk_mq_start_hw_queues(q);
 		VPRINTK("STARTED QUEUE %p\n", q);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static inline enum dma_data_direction carm_rq_dir(struct request *rq)
-{
-	return op_is_write(req_op(rq)) ? DMA_TO_DEVICE : DMA_FROM_DEVICE;
-}
+अटल अंतरभूत क्रमागत dma_data_direction carm_rq_dir(काष्ठा request *rq)
+अणु
+	वापस op_is_ग_लिखो(req_op(rq)) ? DMA_TO_DEVICE : DMA_FROM_DEVICE;
+पूर्ण
 
-static blk_status_t carm_queue_rq(struct blk_mq_hw_ctx *hctx,
-				  const struct blk_mq_queue_data *bd)
-{
-	struct request_queue *q = hctx->queue;
-	struct request *rq = bd->rq;
-	struct carm_port *port = q->queuedata;
-	struct carm_host *host = port->host;
-	struct carm_request *crq = blk_mq_rq_to_pdu(rq);
-	struct carm_msg_rw *msg;
-	struct scatterlist *sg;
-	int i, n_elem = 0, rc;
-	unsigned int msg_size;
-	u32 tmp;
+अटल blk_status_t carm_queue_rq(काष्ठा blk_mq_hw_ctx *hctx,
+				  स्थिर काष्ठा blk_mq_queue_data *bd)
+अणु
+	काष्ठा request_queue *q = hctx->queue;
+	काष्ठा request *rq = bd->rq;
+	काष्ठा carm_port *port = q->queuedata;
+	काष्ठा carm_host *host = port->host;
+	काष्ठा carm_request *crq = blk_mq_rq_to_pdu(rq);
+	काष्ठा carm_msg_rw *msg;
+	काष्ठा scatterlist *sg;
+	पूर्णांक i, n_elem = 0, rc;
+	अचिन्हित पूर्णांक msg_size;
+	u32 पंचांगp;
 
 	crq->n_elem = 0;
 	sg_init_table(crq->sg, CARM_MAX_REQ_SG);
@@ -719,112 +720,112 @@ static blk_status_t carm_queue_rq(struct blk_mq_hw_ctx *hctx,
 	blk_mq_start_request(rq);
 
 	spin_lock_irq(&host->lock);
-	if (req_op(rq) == REQ_OP_DRV_OUT)
-		goto send_msg;
+	अगर (req_op(rq) == REQ_OP_DRV_OUT)
+		जाओ send_msg;
 
 	/* get scatterlist from block layer */
 	sg = &crq->sg[0];
 	n_elem = blk_rq_map_sg(q, rq, sg);
-	if (n_elem <= 0)
-		goto out_ioerr;
+	अगर (n_elem <= 0)
+		जाओ out_ioerr;
 
 	/* map scatterlist to PCI bus addresses */
 	n_elem = dma_map_sg(&host->pdev->dev, sg, n_elem, carm_rq_dir(rq));
-	if (n_elem <= 0)
-		goto out_ioerr;
+	अगर (n_elem <= 0)
+		जाओ out_ioerr;
 
 	/* obey global hardware limit on S/G entries */
-	if (host->hw_sg_used >= CARM_MAX_HOST_SG - n_elem)
-		goto out_resource;
+	अगर (host->hw_sg_used >= CARM_MAX_HOST_SG - n_elem)
+		जाओ out_resource;
 
 	crq->n_elem = n_elem;
 	host->hw_sg_used += n_elem;
 
 	/*
-	 * build read/write message
+	 * build पढ़ो/ग_लिखो message
 	 */
 
 	VPRINTK("build msg\n");
-	msg = (struct carm_msg_rw *) carm_ref_msg(host, rq->tag);
+	msg = (काष्ठा carm_msg_rw *) carm_ref_msg(host, rq->tag);
 
-	if (rq_data_dir(rq) == WRITE) {
+	अगर (rq_data_dir(rq) == WRITE) अणु
 		msg->type = CARM_MSG_WRITE;
 		crq->msg_type = CARM_MSG_WRITE;
-	} else {
+	पूर्ण अन्यथा अणु
 		msg->type = CARM_MSG_READ;
 		crq->msg_type = CARM_MSG_READ;
-	}
+	पूर्ण
 
 	msg->id		= port->port_no;
 	msg->sg_count	= n_elem;
 	msg->sg_type	= SGT_32BIT;
 	msg->handle	= cpu_to_le32(TAG_ENCODE(rq->tag));
 	msg->lba	= cpu_to_le32(blk_rq_pos(rq) & 0xffffffff);
-	tmp		= (blk_rq_pos(rq) >> 16) >> 16;
-	msg->lba_high	= cpu_to_le16( (u16) tmp );
+	पंचांगp		= (blk_rq_pos(rq) >> 16) >> 16;
+	msg->lba_high	= cpu_to_le16( (u16) पंचांगp );
 	msg->lba_count	= cpu_to_le16(blk_rq_sectors(rq));
 
-	msg_size = sizeof(struct carm_msg_rw) - sizeof(msg->sg);
-	for (i = 0; i < n_elem; i++) {
-		struct carm_msg_sg *carm_sg = &msg->sg[i];
+	msg_size = माप(काष्ठा carm_msg_rw) - माप(msg->sg);
+	क्रम (i = 0; i < n_elem; i++) अणु
+		काष्ठा carm_msg_sg *carm_sg = &msg->sg[i];
 		carm_sg->start = cpu_to_le32(sg_dma_address(&crq->sg[i]));
 		carm_sg->len = cpu_to_le32(sg_dma_len(&crq->sg[i]));
-		msg_size += sizeof(struct carm_msg_sg);
-	}
+		msg_size += माप(काष्ठा carm_msg_sg);
+	पूर्ण
 
 	rc = carm_lookup_bucket(msg_size);
 	BUG_ON(rc < 0);
 	crq->msg_bucket = (u32) rc;
 send_msg:
 	/*
-	 * queue read/write message to hardware
+	 * queue पढ़ो/ग_लिखो message to hardware
 	 */
 	VPRINTK("send msg, tag == %u\n", rq->tag);
 	rc = carm_send_msg(host, crq, rq->tag);
-	if (rc) {
+	अगर (rc) अणु
 		host->hw_sg_used -= n_elem;
-		goto out_resource;
-	}
+		जाओ out_resource;
+	पूर्ण
 
 	spin_unlock_irq(&host->lock);
-	return BLK_STS_OK;
+	वापस BLK_STS_OK;
 out_resource:
 	dma_unmap_sg(&host->pdev->dev, &crq->sg[0], n_elem, carm_rq_dir(rq));
 	carm_push_q(host, q);
 	spin_unlock_irq(&host->lock);
-	return BLK_STS_DEV_RESOURCE;
+	वापस BLK_STS_DEV_RESOURCE;
 out_ioerr:
 	carm_round_robin(host);
 	spin_unlock_irq(&host->lock);
-	return BLK_STS_IOERR;
-}
+	वापस BLK_STS_IOERR;
+पूर्ण
 
-static void carm_handle_array_info(struct carm_host *host,
-				   struct carm_request *crq, u8 *mem,
+अटल व्योम carm_handle_array_info(काष्ठा carm_host *host,
+				   काष्ठा carm_request *crq, u8 *mem,
 				   blk_status_t error)
-{
-	struct carm_port *port;
-	u8 *msg_data = mem + sizeof(struct carm_array_info);
-	struct carm_array_info *desc = (struct carm_array_info *) msg_data;
+अणु
+	काष्ठा carm_port *port;
+	u8 *msg_data = mem + माप(काष्ठा carm_array_info);
+	काष्ठा carm_array_info *desc = (काष्ठा carm_array_info *) msg_data;
 	u64 lo, hi;
-	int cur_port;
-	size_t slen;
+	पूर्णांक cur_port;
+	माप_प्रकार slen;
 
 	DPRINTK("ENTER\n");
 
-	if (error)
-		goto out;
-	if (le32_to_cpu(desc->array_status) & ARRAY_NO_EXIST)
-		goto out;
+	अगर (error)
+		जाओ out;
+	अगर (le32_to_cpu(desc->array_status) & ARRAY_NO_EXIST)
+		जाओ out;
 
 	cur_port = host->cur_scan_dev;
 
 	/* should never occur */
-	if ((cur_port < 0) || (cur_port >= CARM_MAX_PORTS)) {
-		printk(KERN_ERR PFX "BUG: cur_scan_dev==%d, array_id==%d\n",
-		       cur_port, (int) desc->array_id);
-		goto out;
-	}
+	अगर ((cur_port < 0) || (cur_port >= CARM_MAX_PORTS)) अणु
+		prपूर्णांकk(KERN_ERR PFX "BUG: cur_scan_dev==%d, array_id==%d\n",
+		       cur_port, (पूर्णांक) desc->array_id);
+		जाओ out;
+	पूर्ण
 
 	port = &host->port[cur_port];
 
@@ -838,87 +839,87 @@ static void carm_handle_array_info(struct carm_host *host,
 
 	host->dev_active |= (1 << cur_port);
 
-	strncpy(port->name, desc->name, sizeof(port->name));
-	port->name[sizeof(port->name) - 1] = 0;
-	slen = strlen(port->name);
-	while (slen && (port->name[slen - 1] == ' ')) {
+	म_नकलन(port->name, desc->name, माप(port->name));
+	port->name[माप(port->name) - 1] = 0;
+	slen = म_माप(port->name);
+	जबतक (slen && (port->name[slen - 1] == ' ')) अणु
 		port->name[slen - 1] = 0;
 		slen--;
-	}
+	पूर्ण
 
-	printk(KERN_INFO DRV_NAME "(%s): port %u device %Lu sectors\n",
+	prपूर्णांकk(KERN_INFO DRV_NAME "(%s): port %u device %Lu sectors\n",
 	       pci_name(host->pdev), port->port_no,
-	       (unsigned long long) port->capacity);
-	printk(KERN_INFO DRV_NAME "(%s): port %u device \"%s\"\n",
+	       (अचिन्हित दीर्घ दीर्घ) port->capacity);
+	prपूर्णांकk(KERN_INFO DRV_NAME "(%s): port %u device \"%s\"\n",
 	       pci_name(host->pdev), port->port_no, port->name);
 
 out:
-	assert(host->state == HST_DEV_SCAN);
+	निश्चित(host->state == HST_DEV_SCAN);
 	schedule_work(&host->fsm_task);
-}
+पूर्ण
 
-static void carm_handle_scan_chan(struct carm_host *host,
-				  struct carm_request *crq, u8 *mem,
+अटल व्योम carm_handle_scan_chan(काष्ठा carm_host *host,
+				  काष्ठा carm_request *crq, u8 *mem,
 				  blk_status_t error)
-{
+अणु
 	u8 *msg_data = mem + IOC_SCAN_CHAN_OFFSET;
-	unsigned int i, dev_count = 0;
-	int new_state = HST_DEV_SCAN_START;
+	अचिन्हित पूर्णांक i, dev_count = 0;
+	पूर्णांक new_state = HST_DEV_SCAN_START;
 
 	DPRINTK("ENTER\n");
 
-	if (error) {
+	अगर (error) अणु
 		new_state = HST_ERROR;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	/* TODO: scan and support non-disk devices */
-	for (i = 0; i < 8; i++)
-		if (msg_data[i] == 0) { /* direct-access device (disk) */
+	क्रम (i = 0; i < 8; i++)
+		अगर (msg_data[i] == 0) अणु /* direct-access device (disk) */
 			host->dev_present |= (1 << i);
 			dev_count++;
-		}
+		पूर्ण
 
-	printk(KERN_INFO DRV_NAME "(%s): found %u interesting devices\n",
+	prपूर्णांकk(KERN_INFO DRV_NAME "(%s): found %u interesting devices\n",
 	       pci_name(host->pdev), dev_count);
 
 out:
-	assert(host->state == HST_PORT_SCAN);
+	निश्चित(host->state == HST_PORT_SCAN);
 	host->state = new_state;
 	schedule_work(&host->fsm_task);
-}
+पूर्ण
 
-static void carm_handle_generic(struct carm_host *host,
-				struct carm_request *crq, blk_status_t error,
-				int cur_state, int next_state)
-{
+अटल व्योम carm_handle_generic(काष्ठा carm_host *host,
+				काष्ठा carm_request *crq, blk_status_t error,
+				पूर्णांक cur_state, पूर्णांक next_state)
+अणु
 	DPRINTK("ENTER\n");
 
-	assert(host->state == cur_state);
-	if (error)
+	निश्चित(host->state == cur_state);
+	अगर (error)
 		host->state = HST_ERROR;
-	else
+	अन्यथा
 		host->state = next_state;
 	schedule_work(&host->fsm_task);
-}
+पूर्ण
 
-static inline void carm_handle_resp(struct carm_host *host,
+अटल अंतरभूत व्योम carm_handle_resp(काष्ठा carm_host *host,
 				    __le32 ret_handle_le, u32 status)
-{
+अणु
 	u32 handle = le32_to_cpu(ret_handle_le);
-	unsigned int msg_idx;
-	struct request *rq;
-	struct carm_request *crq;
+	अचिन्हित पूर्णांक msg_idx;
+	काष्ठा request *rq;
+	काष्ठा carm_request *crq;
 	blk_status_t error = (status == RMSG_OK) ? 0 : BLK_STS_IOERR;
 	u8 *mem;
 
 	VPRINTK("ENTER, handle == 0x%x\n", handle);
 
-	if (unlikely(!TAG_VALID(handle))) {
-		printk(KERN_ERR DRV_NAME "(%s): BUG: invalid tag 0x%x\n",
+	अगर (unlikely(!TAG_VALID(handle))) अणु
+		prपूर्णांकk(KERN_ERR DRV_NAME "(%s): BUG: invalid tag 0x%x\n",
 		       pci_name(host->pdev), handle);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	msg_idx = TAG_DECODE(handle);
 	VPRINTK("tag == %u\n", msg_idx);
@@ -927,180 +928,180 @@ static inline void carm_handle_resp(struct carm_host *host,
 	crq = blk_mq_rq_to_pdu(rq);
 
 	/* fast path */
-	if (likely(crq->msg_type == CARM_MSG_READ ||
-		   crq->msg_type == CARM_MSG_WRITE)) {
+	अगर (likely(crq->msg_type == CARM_MSG_READ ||
+		   crq->msg_type == CARM_MSG_WRITE)) अणु
 		dma_unmap_sg(&host->pdev->dev, &crq->sg[0], crq->n_elem,
 			     carm_rq_dir(rq));
-		goto done;
-	}
+		जाओ करोne;
+	पूर्ण
 
 	mem = carm_ref_msg(host, msg_idx);
 
-	switch (crq->msg_type) {
-	case CARM_MSG_IOCTL: {
-		switch (crq->msg_subtype) {
-		case CARM_IOC_SCAN_CHAN:
+	चयन (crq->msg_type) अणु
+	हाल CARM_MSG_IOCTL: अणु
+		चयन (crq->msg_subtype) अणु
+		हाल CARM_IOC_SCAN_CHAN:
 			carm_handle_scan_chan(host, crq, mem, error);
-			goto done;
-		default:
+			जाओ करोne;
+		शेष:
 			/* unknown / invalid response */
-			goto err_out;
-		}
-		break;
-	}
+			जाओ err_out;
+		पूर्ण
+		अवरोध;
+	पूर्ण
 
-	case CARM_MSG_MISC: {
-		switch (crq->msg_subtype) {
-		case MISC_ALLOC_MEM:
+	हाल CARM_MSG_MISC: अणु
+		चयन (crq->msg_subtype) अणु
+		हाल MISC_ALLOC_MEM:
 			carm_handle_generic(host, crq, error,
 					    HST_ALLOC_BUF, HST_SYNC_TIME);
-			goto done;
-		case MISC_SET_TIME:
+			जाओ करोne;
+		हाल MISC_SET_TIME:
 			carm_handle_generic(host, crq, error,
 					    HST_SYNC_TIME, HST_GET_FW_VER);
-			goto done;
-		case MISC_GET_FW_VER: {
-			struct carm_fw_ver *ver = (struct carm_fw_ver *)
-				(mem + sizeof(struct carm_msg_get_fw_ver));
-			if (!error) {
+			जाओ करोne;
+		हाल MISC_GET_FW_VER: अणु
+			काष्ठा carm_fw_ver *ver = (काष्ठा carm_fw_ver *)
+				(mem + माप(काष्ठा carm_msg_get_fw_ver));
+			अगर (!error) अणु
 				host->fw_ver = le32_to_cpu(ver->version);
 				host->flags |= (ver->features & FL_FW_VER_MASK);
-			}
+			पूर्ण
 			carm_handle_generic(host, crq, error,
 					    HST_GET_FW_VER, HST_PORT_SCAN);
-			goto done;
-		}
-		default:
+			जाओ करोne;
+		पूर्ण
+		शेष:
 			/* unknown / invalid response */
-			goto err_out;
-		}
-		break;
-	}
+			जाओ err_out;
+		पूर्ण
+		अवरोध;
+	पूर्ण
 
-	case CARM_MSG_ARRAY: {
-		switch (crq->msg_subtype) {
-		case CARM_ARRAY_INFO:
+	हाल CARM_MSG_ARRAY: अणु
+		चयन (crq->msg_subtype) अणु
+		हाल CARM_ARRAY_INFO:
 			carm_handle_array_info(host, crq, mem, error);
-			break;
-		default:
+			अवरोध;
+		शेष:
 			/* unknown / invalid response */
-			goto err_out;
-		}
-		break;
-	}
+			जाओ err_out;
+		पूर्ण
+		अवरोध;
+	पूर्ण
 
-	default:
+	शेष:
 		/* unknown / invalid response */
-		goto err_out;
-	}
+		जाओ err_out;
+	पूर्ण
 
-	return;
+	वापस;
 
 err_out:
-	printk(KERN_WARNING DRV_NAME "(%s): BUG: unhandled message type %d/%d\n",
+	prपूर्णांकk(KERN_WARNING DRV_NAME "(%s): BUG: unhandled message type %d/%d\n",
 	       pci_name(host->pdev), crq->msg_type, crq->msg_subtype);
 	error = BLK_STS_IOERR;
-done:
+करोne:
 	host->hw_sg_used -= crq->n_elem;
 	blk_mq_end_request(blk_mq_rq_from_pdu(crq), error);
 
-	if (host->hw_sg_used <= CARM_SG_LOW_WATER)
+	अगर (host->hw_sg_used <= CARM_SG_LOW_WATER)
 		carm_round_robin(host);
-}
+पूर्ण
 
-static inline void carm_handle_responses(struct carm_host *host)
-{
-	void __iomem *mmio = host->mmio;
-	struct carm_response *resp = (struct carm_response *) host->shm;
-	unsigned int work = 0;
-	unsigned int idx = host->resp_idx % RMSG_Q_LEN;
+अटल अंतरभूत व्योम carm_handle_responses(काष्ठा carm_host *host)
+अणु
+	व्योम __iomem *mmio = host->mmio;
+	काष्ठा carm_response *resp = (काष्ठा carm_response *) host->shm;
+	अचिन्हित पूर्णांक work = 0;
+	अचिन्हित पूर्णांक idx = host->resp_idx % RMSG_Q_LEN;
 
-	while (1) {
+	जबतक (1) अणु
 		u32 status = le32_to_cpu(resp[idx].status);
 
-		if (status == 0xffffffff) {
+		अगर (status == 0xffffffff) अणु
 			VPRINTK("ending response on index %u\n", idx);
-			writel(idx << 3, mmio + CARM_RESP_IDX);
-			break;
-		}
+			ग_लिखोl(idx << 3, mmio + CARM_RESP_IDX);
+			अवरोध;
+		पूर्ण
 
 		/* response to a message we sent */
-		else if ((status & (1 << 31)) == 0) {
+		अन्यथा अगर ((status & (1 << 31)) == 0) अणु
 			VPRINTK("handling msg response on index %u\n", idx);
 			carm_handle_resp(host, resp[idx].ret_handle, status);
 			resp[idx].status = cpu_to_le32(0xffffffff);
-		}
+		पूर्ण
 
 		/* asynchronous events the hardware throws our way */
-		else if ((status & 0xff000000) == (1 << 31)) {
+		अन्यथा अगर ((status & 0xff000000) == (1 << 31)) अणु
 			u8 *evt_type_ptr = (u8 *) &resp[idx];
 			u8 evt_type = *evt_type_ptr;
-			printk(KERN_WARNING DRV_NAME "(%s): unhandled event type %d\n",
-			       pci_name(host->pdev), (int) evt_type);
+			prपूर्णांकk(KERN_WARNING DRV_NAME "(%s): unhandled event type %d\n",
+			       pci_name(host->pdev), (पूर्णांक) evt_type);
 			resp[idx].status = cpu_to_le32(0xffffffff);
-		}
+		पूर्ण
 
 		idx = NEXT_RESP(idx);
 		work++;
-	}
+	पूर्ण
 
 	VPRINTK("EXIT, work==%u\n", work);
 	host->resp_idx += work;
-}
+पूर्ण
 
-static irqreturn_t carm_interrupt(int irq, void *__host)
-{
-	struct carm_host *host = __host;
-	void __iomem *mmio;
+अटल irqवापस_t carm_पूर्णांकerrupt(पूर्णांक irq, व्योम *__host)
+अणु
+	काष्ठा carm_host *host = __host;
+	व्योम __iomem *mmio;
 	u32 mask;
-	int handled = 0;
-	unsigned long flags;
+	पूर्णांक handled = 0;
+	अचिन्हित दीर्घ flags;
 
-	if (!host) {
+	अगर (!host) अणु
 		VPRINTK("no host\n");
-		return IRQ_NONE;
-	}
+		वापस IRQ_NONE;
+	पूर्ण
 
 	spin_lock_irqsave(&host->lock, flags);
 
 	mmio = host->mmio;
 
-	/* reading should also clear interrupts */
-	mask = readl(mmio + CARM_INT_STAT);
+	/* पढ़ोing should also clear पूर्णांकerrupts */
+	mask = पढ़ोl(mmio + CARM_INT_STAT);
 
-	if (mask == 0 || mask == 0xffffffff) {
+	अगर (mask == 0 || mask == 0xffffffff) अणु
 		VPRINTK("no work, mask == 0x%x\n", mask);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (mask & INT_ACK_MASK)
-		writel(mask, mmio + CARM_INT_STAT);
+	अगर (mask & INT_ACK_MASK)
+		ग_लिखोl(mask, mmio + CARM_INT_STAT);
 
-	if (unlikely(host->state == HST_INVALID)) {
+	अगर (unlikely(host->state == HST_INVALID)) अणु
 		VPRINTK("not initialized yet, mask = 0x%x\n", mask);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (mask & CARM_HAVE_RESP) {
+	अगर (mask & CARM_HAVE_RESP) अणु
 		handled = 1;
 		carm_handle_responses(host);
-	}
+	पूर्ण
 
 out:
 	spin_unlock_irqrestore(&host->lock, flags);
 	VPRINTK("EXIT\n");
-	return IRQ_RETVAL(handled);
-}
+	वापस IRQ_RETVAL(handled);
+पूर्ण
 
-static void carm_fsm_task (struct work_struct *work)
-{
-	struct carm_host *host =
-		container_of(work, struct carm_host, fsm_task);
-	unsigned long flags;
-	unsigned int state;
-	int rc, i, next_dev;
-	int reschedule = 0;
-	int new_state = HST_INVALID;
+अटल व्योम carm_fsm_task (काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा carm_host *host =
+		container_of(work, काष्ठा carm_host, fsm_task);
+	अचिन्हित दीर्घ flags;
+	अचिन्हित पूर्णांक state;
+	पूर्णांक rc, i, next_dev;
+	पूर्णांक reschedule = 0;
+	पूर्णांक new_state = HST_INVALID;
 
 	spin_lock_irqsave(&host->lock, flags);
 	state = host->state;
@@ -1108,332 +1109,332 @@ static void carm_fsm_task (struct work_struct *work)
 
 	DPRINTK("ENTER, state == %s\n", state_name[state]);
 
-	switch (state) {
-	case HST_PROBE_START:
+	चयन (state) अणु
+	हाल HST_PROBE_START:
 		new_state = HST_ALLOC_BUF;
 		reschedule = 1;
-		break;
+		अवरोध;
 
-	case HST_ALLOC_BUF:
+	हाल HST_ALLOC_BUF:
 		rc = carm_send_special(host, carm_fill_alloc_buf);
-		if (rc) {
+		अगर (rc) अणु
 			new_state = HST_ERROR;
 			reschedule = 1;
-		}
-		break;
+		पूर्ण
+		अवरोध;
 
-	case HST_SYNC_TIME:
-		rc = carm_send_special(host, carm_fill_sync_time);
-		if (rc) {
+	हाल HST_SYNC_TIME:
+		rc = carm_send_special(host, carm_fill_sync_समय);
+		अगर (rc) अणु
 			new_state = HST_ERROR;
 			reschedule = 1;
-		}
-		break;
+		पूर्ण
+		अवरोध;
 
-	case HST_GET_FW_VER:
+	हाल HST_GET_FW_VER:
 		rc = carm_send_special(host, carm_fill_get_fw_ver);
-		if (rc) {
+		अगर (rc) अणु
 			new_state = HST_ERROR;
 			reschedule = 1;
-		}
-		break;
+		पूर्ण
+		अवरोध;
 
-	case HST_PORT_SCAN:
+	हाल HST_PORT_SCAN:
 		rc = carm_send_special(host, carm_fill_scan_channels);
-		if (rc) {
+		अगर (rc) अणु
 			new_state = HST_ERROR;
 			reschedule = 1;
-		}
-		break;
+		पूर्ण
+		अवरोध;
 
-	case HST_DEV_SCAN_START:
+	हाल HST_DEV_SCAN_START:
 		host->cur_scan_dev = -1;
 		new_state = HST_DEV_SCAN;
 		reschedule = 1;
-		break;
+		अवरोध;
 
-	case HST_DEV_SCAN:
+	हाल HST_DEV_SCAN:
 		next_dev = -1;
-		for (i = host->cur_scan_dev + 1; i < CARM_MAX_PORTS; i++)
-			if (host->dev_present & (1 << i)) {
+		क्रम (i = host->cur_scan_dev + 1; i < CARM_MAX_PORTS; i++)
+			अगर (host->dev_present & (1 << i)) अणु
 				next_dev = i;
-				break;
-			}
+				अवरोध;
+			पूर्ण
 
-		if (next_dev >= 0) {
+		अगर (next_dev >= 0) अणु
 			host->cur_scan_dev = next_dev;
 			rc = carm_array_info(host, next_dev);
-			if (rc) {
+			अगर (rc) अणु
 				new_state = HST_ERROR;
 				reschedule = 1;
-			}
-		} else {
+			पूर्ण
+		पूर्ण अन्यथा अणु
 			new_state = HST_DEV_ACTIVATE;
 			reschedule = 1;
-		}
-		break;
+		पूर्ण
+		अवरोध;
 
-	case HST_DEV_ACTIVATE: {
-		int activated = 0;
-		for (i = 0; i < CARM_MAX_PORTS; i++)
-			if (host->dev_active & (1 << i)) {
-				struct carm_port *port = &host->port[i];
-				struct gendisk *disk = port->disk;
+	हाल HST_DEV_ACTIVATE: अणु
+		पूर्णांक activated = 0;
+		क्रम (i = 0; i < CARM_MAX_PORTS; i++)
+			अगर (host->dev_active & (1 << i)) अणु
+				काष्ठा carm_port *port = &host->port[i];
+				काष्ठा gendisk *disk = port->disk;
 
 				set_capacity(disk, port->capacity);
 				add_disk(disk);
 				activated++;
-			}
+			पूर्ण
 
-		printk(KERN_INFO DRV_NAME "(%s): %d ports activated\n",
+		prपूर्णांकk(KERN_INFO DRV_NAME "(%s): %d ports activated\n",
 		       pci_name(host->pdev), activated);
 
 		new_state = HST_PROBE_FINISHED;
 		reschedule = 1;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	case HST_PROBE_FINISHED:
+	हाल HST_PROBE_FINISHED:
 		complete(&host->probe_comp);
-		break;
+		अवरोध;
 
-	case HST_ERROR:
+	हाल HST_ERROR:
 		/* FIXME: TODO */
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		/* should never occur */
-		printk(KERN_ERR PFX "BUG: unknown state %d\n", state);
-		assert(0);
-		break;
-	}
+		prपूर्णांकk(KERN_ERR PFX "BUG: unknown state %d\n", state);
+		निश्चित(0);
+		अवरोध;
+	पूर्ण
 
-	if (new_state != HST_INVALID) {
+	अगर (new_state != HST_INVALID) अणु
 		spin_lock_irqsave(&host->lock, flags);
 		host->state = new_state;
 		spin_unlock_irqrestore(&host->lock, flags);
-	}
-	if (reschedule)
+	पूर्ण
+	अगर (reschedule)
 		schedule_work(&host->fsm_task);
-}
+पूर्ण
 
-static int carm_init_wait(void __iomem *mmio, u32 bits, unsigned int test_bit)
-{
-	unsigned int i;
+अटल पूर्णांक carm_init_रुको(व्योम __iomem *mmio, u32 bits, अचिन्हित पूर्णांक test_bit)
+अणु
+	अचिन्हित पूर्णांक i;
 
-	for (i = 0; i < 50000; i++) {
-		u32 tmp = readl(mmio + CARM_LMUC);
+	क्रम (i = 0; i < 50000; i++) अणु
+		u32 पंचांगp = पढ़ोl(mmio + CARM_LMUC);
 		udelay(100);
 
-		if (test_bit) {
-			if ((tmp & bits) == bits)
-				return 0;
-		} else {
-			if ((tmp & bits) == 0)
-				return 0;
-		}
+		अगर (test_bit) अणु
+			अगर ((पंचांगp & bits) == bits)
+				वापस 0;
+		पूर्ण अन्यथा अणु
+			अगर ((पंचांगp & bits) == 0)
+				वापस 0;
+		पूर्ण
 
 		cond_resched();
-	}
+	पूर्ण
 
-	printk(KERN_ERR PFX "carm_init_wait timeout, bits == 0x%x, test_bit == %s\n",
+	prपूर्णांकk(KERN_ERR PFX "carm_init_wait timeout, bits == 0x%x, test_bit == %s\n",
 	       bits, test_bit ? "yes" : "no");
-	return -EBUSY;
-}
+	वापस -EBUSY;
+पूर्ण
 
-static void carm_init_responses(struct carm_host *host)
-{
-	void __iomem *mmio = host->mmio;
-	unsigned int i;
-	struct carm_response *resp = (struct carm_response *) host->shm;
+अटल व्योम carm_init_responses(काष्ठा carm_host *host)
+अणु
+	व्योम __iomem *mmio = host->mmio;
+	अचिन्हित पूर्णांक i;
+	काष्ठा carm_response *resp = (काष्ठा carm_response *) host->shm;
 
-	for (i = 0; i < RMSG_Q_LEN; i++)
+	क्रम (i = 0; i < RMSG_Q_LEN; i++)
 		resp[i].status = cpu_to_le32(0xffffffff);
 
-	writel(0, mmio + CARM_RESP_IDX);
-}
+	ग_लिखोl(0, mmio + CARM_RESP_IDX);
+पूर्ण
 
-static int carm_init_host(struct carm_host *host)
-{
-	void __iomem *mmio = host->mmio;
-	u32 tmp;
-	u8 tmp8;
-	int rc;
+अटल पूर्णांक carm_init_host(काष्ठा carm_host *host)
+अणु
+	व्योम __iomem *mmio = host->mmio;
+	u32 पंचांगp;
+	u8 पंचांगp8;
+	पूर्णांक rc;
 
 	DPRINTK("ENTER\n");
 
-	writel(0, mmio + CARM_INT_MASK);
+	ग_लिखोl(0, mmio + CARM_INT_MASK);
 
-	tmp8 = readb(mmio + CARM_INITC);
-	if (tmp8 & 0x01) {
-		tmp8 &= ~0x01;
-		writeb(tmp8, mmio + CARM_INITC);
-		readb(mmio + CARM_INITC);	/* flush */
+	पंचांगp8 = पढ़ोb(mmio + CARM_INITC);
+	अगर (पंचांगp8 & 0x01) अणु
+		पंचांगp8 &= ~0x01;
+		ग_लिखोb(पंचांगp8, mmio + CARM_INITC);
+		पढ़ोb(mmio + CARM_INITC);	/* flush */
 
 		DPRINTK("snooze...\n");
 		msleep(5000);
-	}
+	पूर्ण
 
-	tmp = readl(mmio + CARM_HMUC);
-	if (tmp & CARM_CME) {
+	पंचांगp = पढ़ोl(mmio + CARM_HMUC);
+	अगर (पंचांगp & CARM_CME) अणु
 		DPRINTK("CME bit present, waiting\n");
-		rc = carm_init_wait(mmio, CARM_CME, 1);
-		if (rc) {
+		rc = carm_init_रुको(mmio, CARM_CME, 1);
+		अगर (rc) अणु
 			DPRINTK("EXIT, carm_init_wait 1 failed\n");
-			return rc;
-		}
-	}
-	if (tmp & CARM_RME) {
+			वापस rc;
+		पूर्ण
+	पूर्ण
+	अगर (पंचांगp & CARM_RME) अणु
 		DPRINTK("RME bit present, waiting\n");
-		rc = carm_init_wait(mmio, CARM_RME, 1);
-		if (rc) {
+		rc = carm_init_रुको(mmio, CARM_RME, 1);
+		अगर (rc) अणु
 			DPRINTK("EXIT, carm_init_wait 2 failed\n");
-			return rc;
-		}
-	}
+			वापस rc;
+		पूर्ण
+	पूर्ण
 
-	tmp &= ~(CARM_RME | CARM_CME);
-	writel(tmp, mmio + CARM_HMUC);
-	readl(mmio + CARM_HMUC);	/* flush */
+	पंचांगp &= ~(CARM_RME | CARM_CME);
+	ग_लिखोl(पंचांगp, mmio + CARM_HMUC);
+	पढ़ोl(mmio + CARM_HMUC);	/* flush */
 
-	rc = carm_init_wait(mmio, CARM_RME | CARM_CME, 0);
-	if (rc) {
+	rc = carm_init_रुको(mmio, CARM_RME | CARM_CME, 0);
+	अगर (rc) अणु
 		DPRINTK("EXIT, carm_init_wait 3 failed\n");
-		return rc;
-	}
+		वापस rc;
+	पूर्ण
 
 	carm_init_buckets(mmio);
 
-	writel(host->shm_dma & 0xffffffff, mmio + RBUF_ADDR_LO);
-	writel((host->shm_dma >> 16) >> 16, mmio + RBUF_ADDR_HI);
-	writel(RBUF_LEN, mmio + RBUF_BYTE_SZ);
+	ग_लिखोl(host->shm_dma & 0xffffffff, mmio + RBUF_ADDR_LO);
+	ग_लिखोl((host->shm_dma >> 16) >> 16, mmio + RBUF_ADDR_HI);
+	ग_लिखोl(RBUF_LEN, mmio + RBUF_BYTE_SZ);
 
-	tmp = readl(mmio + CARM_HMUC);
-	tmp |= (CARM_RME | CARM_CME | CARM_WZBC);
-	writel(tmp, mmio + CARM_HMUC);
-	readl(mmio + CARM_HMUC);	/* flush */
+	पंचांगp = पढ़ोl(mmio + CARM_HMUC);
+	पंचांगp |= (CARM_RME | CARM_CME | CARM_WZBC);
+	ग_लिखोl(पंचांगp, mmio + CARM_HMUC);
+	पढ़ोl(mmio + CARM_HMUC);	/* flush */
 
-	rc = carm_init_wait(mmio, CARM_RME | CARM_CME, 1);
-	if (rc) {
+	rc = carm_init_रुको(mmio, CARM_RME | CARM_CME, 1);
+	अगर (rc) अणु
 		DPRINTK("EXIT, carm_init_wait 4 failed\n");
-		return rc;
-	}
+		वापस rc;
+	पूर्ण
 
-	writel(0, mmio + CARM_HMPHA);
-	writel(INT_DEF_MASK, mmio + CARM_INT_MASK);
+	ग_लिखोl(0, mmio + CARM_HMPHA);
+	ग_लिखोl(INT_DEF_MASK, mmio + CARM_INT_MASK);
 
 	carm_init_responses(host);
 
 	/* start initialization, probing state machine */
 	spin_lock_irq(&host->lock);
-	assert(host->state == HST_INVALID);
+	निश्चित(host->state == HST_INVALID);
 	host->state = HST_PROBE_START;
 	spin_unlock_irq(&host->lock);
 	schedule_work(&host->fsm_task);
 
 	DPRINTK("EXIT\n");
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct blk_mq_ops carm_mq_ops = {
+अटल स्थिर काष्ठा blk_mq_ops carm_mq_ops = अणु
 	.queue_rq	= carm_queue_rq,
-};
+पूर्ण;
 
-static int carm_init_disk(struct carm_host *host, unsigned int port_no)
-{
-	struct carm_port *port = &host->port[port_no];
-	struct gendisk *disk;
-	struct request_queue *q;
+अटल पूर्णांक carm_init_disk(काष्ठा carm_host *host, अचिन्हित पूर्णांक port_no)
+अणु
+	काष्ठा carm_port *port = &host->port[port_no];
+	काष्ठा gendisk *disk;
+	काष्ठा request_queue *q;
 
 	port->host = host;
 	port->port_no = port_no;
 
 	disk = alloc_disk(CARM_MINORS_PER_MAJOR);
-	if (!disk)
-		return -ENOMEM;
+	अगर (!disk)
+		वापस -ENOMEM;
 
 	port->disk = disk;
-	sprintf(disk->disk_name, DRV_NAME "/%u",
-		(unsigned int)host->id * CARM_MAX_PORTS + port_no);
+	प्र_लिखो(disk->disk_name, DRV_NAME "/%u",
+		(अचिन्हित पूर्णांक)host->id * CARM_MAX_PORTS + port_no);
 	disk->major = host->major;
 	disk->first_minor = port_no * CARM_MINORS_PER_MAJOR;
 	disk->fops = &carm_bd_ops;
-	disk->private_data = port;
+	disk->निजी_data = port;
 
 	q = blk_mq_init_queue(&host->tag_set);
-	if (IS_ERR(q))
-		return PTR_ERR(q);
+	अगर (IS_ERR(q))
+		वापस PTR_ERR(q);
 
 	blk_queue_max_segments(q, CARM_MAX_REQ_SG);
 	blk_queue_segment_boundary(q, CARM_SG_BOUNDARY);
 
 	q->queuedata = port;
 	disk->queue = q;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void carm_free_disk(struct carm_host *host, unsigned int port_no)
-{
-	struct carm_port *port = &host->port[port_no];
-	struct gendisk *disk = port->disk;
+अटल व्योम carm_मुक्त_disk(काष्ठा carm_host *host, अचिन्हित पूर्णांक port_no)
+अणु
+	काष्ठा carm_port *port = &host->port[port_no];
+	काष्ठा gendisk *disk = port->disk;
 
-	if (!disk)
-		return;
+	अगर (!disk)
+		वापस;
 
-	if (disk->flags & GENHD_FL_UP)
+	अगर (disk->flags & GENHD_FL_UP)
 		del_gendisk(disk);
-	if (disk->queue)
+	अगर (disk->queue)
 		blk_cleanup_queue(disk->queue);
 	put_disk(disk);
-}
+पूर्ण
 
-static int carm_init_shm(struct carm_host *host)
-{
+अटल पूर्णांक carm_init_shm(काष्ठा carm_host *host)
+अणु
 	host->shm = dma_alloc_coherent(&host->pdev->dev, CARM_SHM_SIZE,
 				       &host->shm_dma, GFP_KERNEL);
-	if (!host->shm)
-		return -ENOMEM;
+	अगर (!host->shm)
+		वापस -ENOMEM;
 
 	host->msg_base = host->shm + RBUF_LEN;
 	host->msg_dma = host->shm_dma + RBUF_LEN;
 
-	memset(host->shm, 0xff, RBUF_LEN);
-	memset(host->msg_base, 0, PDC_SHM_SIZE - RBUF_LEN);
+	स_रखो(host->shm, 0xff, RBUF_LEN);
+	स_रखो(host->msg_base, 0, PDC_SHM_SIZE - RBUF_LEN);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int carm_init_one (struct pci_dev *pdev, const struct pci_device_id *ent)
-{
-	struct carm_host *host;
-	int rc;
-	struct request_queue *q;
-	unsigned int i;
+अटल पूर्णांक carm_init_one (काष्ठा pci_dev *pdev, स्थिर काष्ठा pci_device_id *ent)
+अणु
+	काष्ठा carm_host *host;
+	पूर्णांक rc;
+	काष्ठा request_queue *q;
+	अचिन्हित पूर्णांक i;
 
-	printk_once(KERN_DEBUG DRV_NAME " version " DRV_VERSION "\n");
+	prपूर्णांकk_once(KERN_DEBUG DRV_NAME " version " DRV_VERSION "\n");
 
 	rc = pci_enable_device(pdev);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
 	rc = pci_request_regions(pdev, DRV_NAME);
-	if (rc)
-		goto err_out;
+	अगर (rc)
+		जाओ err_out;
 
 	rc = dma_set_mask(&pdev->dev, DMA_BIT_MASK(32));
-	if (rc) {
-		printk(KERN_ERR DRV_NAME "(%s): DMA mask failure\n",
+	अगर (rc) अणु
+		prपूर्णांकk(KERN_ERR DRV_NAME "(%s): DMA mask failure\n",
 			pci_name(pdev));
-		goto err_out_regions;
-	}
+		जाओ err_out_regions;
+	पूर्ण
 
-	host = kzalloc(sizeof(*host), GFP_KERNEL);
-	if (!host) {
-		printk(KERN_ERR DRV_NAME "(%s): memory alloc failure\n",
+	host = kzalloc(माप(*host), GFP_KERNEL);
+	अगर (!host) अणु
+		prपूर्णांकk(KERN_ERR DRV_NAME "(%s): memory alloc failure\n",
 		       pci_name(pdev));
 		rc = -ENOMEM;
-		goto err_out_regions;
-	}
+		जाओ err_out_regions;
+	पूर्ण
 
 	host->pdev = pdev;
 	spin_lock_init(&host->lock);
@@ -1442,23 +1443,23 @@ static int carm_init_one (struct pci_dev *pdev, const struct pci_device_id *ent)
 
 	host->mmio = ioremap(pci_resource_start(pdev, 0),
 			     pci_resource_len(pdev, 0));
-	if (!host->mmio) {
-		printk(KERN_ERR DRV_NAME "(%s): MMIO alloc failure\n",
+	अगर (!host->mmio) अणु
+		prपूर्णांकk(KERN_ERR DRV_NAME "(%s): MMIO alloc failure\n",
 		       pci_name(pdev));
 		rc = -ENOMEM;
-		goto err_out_kfree;
-	}
+		जाओ err_out_kमुक्त;
+	पूर्ण
 
 	rc = carm_init_shm(host);
-	if (rc) {
-		printk(KERN_ERR DRV_NAME "(%s): DMA SHM alloc failure\n",
+	अगर (rc) अणु
+		prपूर्णांकk(KERN_ERR DRV_NAME "(%s): DMA SHM alloc failure\n",
 		       pci_name(pdev));
-		goto err_out_iounmap;
-	}
+		जाओ err_out_iounmap;
+	पूर्ण
 
-	memset(&host->tag_set, 0, sizeof(host->tag_set));
+	स_रखो(&host->tag_set, 0, माप(host->tag_set));
 	host->tag_set.ops = &carm_mq_ops;
-	host->tag_set.cmd_size = sizeof(struct carm_request);
+	host->tag_set.cmd_size = माप(काष्ठा carm_request);
 	host->tag_set.nr_hw_queues = 1;
 	host->tag_set.nr_maps = 1;
 	host->tag_set.queue_depth = max_queue;
@@ -1466,15 +1467,15 @@ static int carm_init_one (struct pci_dev *pdev, const struct pci_device_id *ent)
 	host->tag_set.flags = BLK_MQ_F_SHOULD_MERGE;
 
 	rc = blk_mq_alloc_tag_set(&host->tag_set);
-	if (rc)
-		goto err_out_dma_free;
+	अगर (rc)
+		जाओ err_out_dma_मुक्त;
 
 	q = blk_mq_init_queue(&host->tag_set);
-	if (IS_ERR(q)) {
+	अगर (IS_ERR(q)) अणु
 		rc = PTR_ERR(q);
-		blk_mq_free_tag_set(&host->tag_set);
-		goto err_out_dma_free;
-	}
+		blk_mq_मुक्त_tag_set(&host->tag_set);
+		जाओ err_out_dma_मुक्त;
+	पूर्ण
 
 	host->oob_q = q;
 	q->queuedata = host;
@@ -1482,105 +1483,105 @@ static int carm_init_one (struct pci_dev *pdev, const struct pci_device_id *ent)
 	/*
 	 * Figure out which major to use: 160, 161, or dynamic
 	 */
-	if (!test_and_set_bit(0, &carm_major_alloc))
+	अगर (!test_and_set_bit(0, &carm_major_alloc))
 		host->major = 160;
-	else if (!test_and_set_bit(1, &carm_major_alloc))
+	अन्यथा अगर (!test_and_set_bit(1, &carm_major_alloc))
 		host->major = 161;
-	else
+	अन्यथा
 		host->flags |= FL_DYN_MAJOR;
 
 	host->id = carm_host_id;
-	sprintf(host->name, DRV_NAME "%d", carm_host_id);
+	प्र_लिखो(host->name, DRV_NAME "%d", carm_host_id);
 
-	rc = register_blkdev(host->major, host->name);
-	if (rc < 0)
-		goto err_out_free_majors;
-	if (host->flags & FL_DYN_MAJOR)
+	rc = रेजिस्टर_blkdev(host->major, host->name);
+	अगर (rc < 0)
+		जाओ err_out_मुक्त_majors;
+	अगर (host->flags & FL_DYN_MAJOR)
 		host->major = rc;
 
-	for (i = 0; i < CARM_MAX_PORTS; i++) {
+	क्रम (i = 0; i < CARM_MAX_PORTS; i++) अणु
 		rc = carm_init_disk(host, i);
-		if (rc)
-			goto err_out_blkdev_disks;
-	}
+		अगर (rc)
+			जाओ err_out_blkdev_disks;
+	पूर्ण
 
 	pci_set_master(pdev);
 
-	rc = request_irq(pdev->irq, carm_interrupt, IRQF_SHARED, DRV_NAME, host);
-	if (rc) {
-		printk(KERN_ERR DRV_NAME "(%s): irq alloc failure\n",
+	rc = request_irq(pdev->irq, carm_पूर्णांकerrupt, IRQF_SHARED, DRV_NAME, host);
+	अगर (rc) अणु
+		prपूर्णांकk(KERN_ERR DRV_NAME "(%s): irq alloc failure\n",
 		       pci_name(pdev));
-		goto err_out_blkdev_disks;
-	}
+		जाओ err_out_blkdev_disks;
+	पूर्ण
 
 	rc = carm_init_host(host);
-	if (rc)
-		goto err_out_free_irq;
+	अगर (rc)
+		जाओ err_out_मुक्त_irq;
 
 	DPRINTK("waiting for probe_comp\n");
-	wait_for_completion(&host->probe_comp);
+	रुको_क्रम_completion(&host->probe_comp);
 
-	printk(KERN_INFO "%s: pci %s, ports %d, io %llx, irq %u, major %d\n",
-	       host->name, pci_name(pdev), (int) CARM_MAX_PORTS,
-	       (unsigned long long)pci_resource_start(pdev, 0),
+	prपूर्णांकk(KERN_INFO "%s: pci %s, ports %d, io %llx, irq %u, major %d\n",
+	       host->name, pci_name(pdev), (पूर्णांक) CARM_MAX_PORTS,
+	       (अचिन्हित दीर्घ दीर्घ)pci_resource_start(pdev, 0),
 		   pdev->irq, host->major);
 
 	carm_host_id++;
 	pci_set_drvdata(pdev, host);
-	return 0;
+	वापस 0;
 
-err_out_free_irq:
-	free_irq(pdev->irq, host);
+err_out_मुक्त_irq:
+	मुक्त_irq(pdev->irq, host);
 err_out_blkdev_disks:
-	for (i = 0; i < CARM_MAX_PORTS; i++)
-		carm_free_disk(host, i);
-	unregister_blkdev(host->major, host->name);
-err_out_free_majors:
-	if (host->major == 160)
+	क्रम (i = 0; i < CARM_MAX_PORTS; i++)
+		carm_मुक्त_disk(host, i);
+	unरेजिस्टर_blkdev(host->major, host->name);
+err_out_मुक्त_majors:
+	अगर (host->major == 160)
 		clear_bit(0, &carm_major_alloc);
-	else if (host->major == 161)
+	अन्यथा अगर (host->major == 161)
 		clear_bit(1, &carm_major_alloc);
 	blk_cleanup_queue(host->oob_q);
-	blk_mq_free_tag_set(&host->tag_set);
-err_out_dma_free:
-	dma_free_coherent(&pdev->dev, CARM_SHM_SIZE, host->shm, host->shm_dma);
+	blk_mq_मुक्त_tag_set(&host->tag_set);
+err_out_dma_मुक्त:
+	dma_मुक्त_coherent(&pdev->dev, CARM_SHM_SIZE, host->shm, host->shm_dma);
 err_out_iounmap:
 	iounmap(host->mmio);
-err_out_kfree:
-	kfree(host);
+err_out_kमुक्त:
+	kमुक्त(host);
 err_out_regions:
 	pci_release_regions(pdev);
 err_out:
 	pci_disable_device(pdev);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static void carm_remove_one (struct pci_dev *pdev)
-{
-	struct carm_host *host = pci_get_drvdata(pdev);
-	unsigned int i;
+अटल व्योम carm_हटाओ_one (काष्ठा pci_dev *pdev)
+अणु
+	काष्ठा carm_host *host = pci_get_drvdata(pdev);
+	अचिन्हित पूर्णांक i;
 
-	if (!host) {
-		printk(KERN_ERR PFX "BUG: no host data for PCI(%s)\n",
+	अगर (!host) अणु
+		prपूर्णांकk(KERN_ERR PFX "BUG: no host data for PCI(%s)\n",
 		       pci_name(pdev));
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	free_irq(pdev->irq, host);
-	for (i = 0; i < CARM_MAX_PORTS; i++)
-		carm_free_disk(host, i);
-	unregister_blkdev(host->major, host->name);
-	if (host->major == 160)
+	मुक्त_irq(pdev->irq, host);
+	क्रम (i = 0; i < CARM_MAX_PORTS; i++)
+		carm_मुक्त_disk(host, i);
+	unरेजिस्टर_blkdev(host->major, host->name);
+	अगर (host->major == 160)
 		clear_bit(0, &carm_major_alloc);
-	else if (host->major == 161)
+	अन्यथा अगर (host->major == 161)
 		clear_bit(1, &carm_major_alloc);
 	blk_cleanup_queue(host->oob_q);
-	blk_mq_free_tag_set(&host->tag_set);
-	dma_free_coherent(&pdev->dev, CARM_SHM_SIZE, host->shm, host->shm_dma);
+	blk_mq_मुक्त_tag_set(&host->tag_set);
+	dma_मुक्त_coherent(&pdev->dev, CARM_SHM_SIZE, host->shm, host->shm_dma);
 	iounmap(host->mmio);
-	kfree(host);
+	kमुक्त(host);
 	pci_release_regions(pdev);
 	pci_disable_device(pdev);
-}
+पूर्ण
 
 module_pci_driver(carm_driver);

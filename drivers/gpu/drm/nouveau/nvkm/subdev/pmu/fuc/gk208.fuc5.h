@@ -1,5 +1,6 @@
-/* SPDX-License-Identifier: MIT */
-static uint32_t gk208_pmu_data[] = {
+<शैली गुरु>
+/* SPDX-License-Identअगरier: MIT */
+अटल uपूर्णांक32_t gk208_pmu_data[] = अणु
 /* 0x0000: proc_kern */
 	0x52544e49,
 	0x00000000,
@@ -157,13 +158,11 @@ static uint32_t gk208_pmu_data[] = {
 	0x00000000,
 	0x00000000,
 /* 0x0268: proc_list_tail */
-/* 0x0268: time_prev */
+/* 0x0268: समय_prev */
 	0x00000000,
-/* 0x026c: time_next */
+/* 0x026c: समय_next */
 	0x00000000,
-/* 0x0270: fifo_queue */
-	0x00000000,
-	0x00000000,
+/* 0x0270: fअगरo_queue */
 	0x00000000,
 	0x00000000,
 	0x00000000,
@@ -194,7 +193,9 @@ static uint32_t gk208_pmu_data[] = {
 	0x00000000,
 	0x00000000,
 	0x00000000,
-/* 0x02f0: rfifo_queue */
+	0x00000000,
+	0x00000000,
+/* 0x02f0: rfअगरo_queue */
 	0x00000000,
 	0x00000000,
 	0x00000000,
@@ -914,9 +915,9 @@ static uint32_t gk208_pmu_data[] = {
 	0x00000000,
 	0x00000000,
 	0x00000000,
-};
+पूर्ण;
 
-static uint32_t gk208_pmu_code[] = {
+अटल uपूर्णांक32_t gk208_pmu_code[] = अणु
 	0x02f90ef5,
 /* 0x0004: rd32 */
 	0xf607a040,
@@ -924,7 +925,7 @@ static uint32_t gk208_pmu_code[] = {
 	0x0100018d,
 	0xf607ac40,
 	0x04bd000d,
-/* 0x0018: rd32_wait */
+/* 0x0018: rd32_रुको */
 	0xcf07ac4d,
 	0xd4f100dd,
 	0x1bf47000,
@@ -938,7 +939,7 @@ static uint32_t gk208_pmu_code[] = {
 	0x00f28d04,
 	0x07ac4001,
 	0xbd000df6,
-/* 0x0049: wr32_wait */
+/* 0x0049: wr32_रुको */
 	0x07ac4d04,
 	0xf100ddcf,
 	0xf47000d4,
@@ -952,10 +953,10 @@ static uint32_t gk208_pmu_code[] = {
 	0xf49ea602,
 	0x80fcf61e,
 	0x00f890fc,
-/* 0x0074: wait */
+/* 0x0074: रुको */
 	0x80f990f9,
 	0x88cf2c08,
-/* 0x007d: wait_loop */
+/* 0x007d: रुको_loop */
 	0x7eeeb200,
 	0xb2000004,
 	0x04adfdda,
@@ -963,10 +964,10 @@ static uint32_t gk208_pmu_code[] = {
 	0xcf2c0910,
 	0x98bb0099,
 	0xf49ba602,
-/* 0x009a: wait_done */
+/* 0x009a: रुको_करोne */
 	0x80fce61e,
 	0x00f890fc,
-/* 0x00a0: intr_watchdog */
+/* 0x00a0: पूर्णांकr_watchकरोg */
 	0xb003e998,
 	0x0bf40096,
 	0x9a0a9828,
@@ -974,18 +975,18 @@ static uint32_t gk208_pmu_code[] = {
 	0x010d0e1c,
 	0x00023e7e,
 	0x0ef494bd,
-/* 0x00bd: intr_watchdog_next_time */
+/* 0x00bd: पूर्णांकr_watchकरोg_next_समय */
 	0x9b0a9814,
 	0xf400a6b0,
 	0x9aa6080b,
-/* 0x00cb: intr_watchdog_next_time_set */
+/* 0x00cb: पूर्णांकr_watchकरोg_next_समय_set */
 	0xb5061cf4,
-/* 0x00ce: intr_watchdog_next_proc */
+/* 0x00ce: पूर्णांकr_watchकरोg_next_proc */
 	0xe9b59b09,
 	0x58e0b603,
 	0x0268e6b1,
 	0xf8c81bf4,
-/* 0x00dd: intr */
+/* 0x00dd: पूर्णांकr */
 	0xbd00f900,
 	0xf980f904,
 	0xf9a0f990,
@@ -1007,7 +1008,7 @@ static uint32_t gk208_pmu_code[] = {
 	0x34000d0b,
 	0xbd0009f6,
 	0x9a09b504,
-/* 0x0130: intr_skip_watchdog */
+/* 0x0130: पूर्णांकr_skip_watchकरोg */
 	0x080089e4,
 	0x49340bf4,
 	0x99cf0688,
@@ -1020,10 +1021,10 @@ static uint32_t gk208_pmu_code[] = {
 	0xc0fc0002,
 	0xf604c040,
 	0x04bd000c,
-/* 0x0160: intr_subintr_skip_fifo */
+/* 0x0160: पूर्णांकr_subपूर्णांकr_skip_fअगरo */
 	0xf6068840,
 	0x04bd0009,
-/* 0x0168: intr_skip_subintr */
+/* 0x0168: पूर्णांकr_skip_subपूर्णांकr */
 	0xbd00e049,
 	0x0489fd90,
 	0x08f60400,
@@ -1058,7 +1059,7 @@ static uint32_t gk208_pmu_code[] = {
 /* 0x01d6: ticks_to_us */
 	0x444d00f8,
 	0xecedff01,
-/* 0x01de: timer */
+/* 0x01de: समयr */
 	0x90f900f8,
 	0x32f480f9,
 	0x03f89810,
@@ -1076,14 +1077,14 @@ static uint32_t gk208_pmu_code[] = {
 	0x0088cf34,
 	0x0bf4e0a6,
 	0xf4e8a608,
-/* 0x0222: timer_reset */
+/* 0x0222: समयr_reset */
 	0x34000d1c,
 	0xbd000ef6,
 	0x9a0eb504,
-/* 0x022c: timer_enable */
+/* 0x022c: समयr_enable */
 	0x38000108,
 	0xbd0008f6,
-/* 0x0235: timer_done */
+/* 0x0235: समयr_करोne */
 	0x1031f404,
 	0x90fc80fc,
 /* 0x023e: send_proc */
@@ -1101,7 +1102,7 @@ static uint32_t gk208_pmu_code[] = {
 	0xb6038bb5,
 	0x94f00190,
 	0x04e9b507,
-/* 0x0277: send_done */
+/* 0x0277: send_करोne */
 	0xfc0231f4,
 	0xf880fc90,
 /* 0x027d: find */
@@ -1113,7 +1114,7 @@ static uint32_t gk208_pmu_code[] = {
 	0xb15880b6,
 	0xf4026886,
 	0x32f4f11b,
-/* 0x0299: find_done */
+/* 0x0299: find_करोne */
 	0xfc8eb201,
 /* 0x029f: send */
 	0x7e00f880,
@@ -1138,7 +1139,7 @@ static uint32_t gk208_pmu_code[] = {
 	0xf900ee98,
 	0xfef0fca5,
 	0x31f400f8,
-/* 0x02f3: recv_done */
+/* 0x02f3: recv_करोne */
 	0xfcf0fc01,
 	0xf890fc80,
 /* 0x02f9: init */
@@ -1202,12 +1203,12 @@ static uint32_t gk208_pmu_code[] = {
 	0xb0400f1e,
 	0x000ef604,
 	0x0ef404bd,
-/* 0x03dd: host_send_done */
+/* 0x03dd: host_send_करोne */
 /* 0x03df: host_recv */
 	0xd100f8c7,
 	0x52544e49,
 	0x0bf4e1a6,
-/* 0x03e9: host_recv_wait */
+/* 0x03e9: host_recv_रुको */
 	0x04cc41bb,
 	0x420011cf,
 	0x22cf04c8,
@@ -1261,7 +1262,7 @@ static uint32_t gk208_pmu_code[] = {
 	0x00002d7e,
 	0xe0400406,
 	0x0006f607,
-/* 0x04b6: memx_func_enter_wait */
+/* 0x04b6: memx_func_enter_रुको */
 	0xc04604bd,
 	0x0066cf07,
 	0xf40464f0,
@@ -1273,7 +1274,7 @@ static uint32_t gk208_pmu_code[] = {
 	0xf206b500,
 	0xe4400406,
 	0x0006f607,
-/* 0x04de: memx_func_leave_wait */
+/* 0x04de: memx_func_leave_रुको */
 	0xc04604bd,
 	0x0066cf07,
 	0xf40464f0,
@@ -1298,7 +1299,7 @@ static uint32_t gk208_pmu_code[] = {
 	0xd0fc80f9,
 	0x2d7ee0fc,
 	0x00f80000,
-/* 0x053c: memx_func_wait_vblank */
+/* 0x053c: memx_func_रुको_vblank */
 	0xf80410b6,
 /* 0x0541: memx_func_wr32 */
 	0x00169800,
@@ -1308,7 +1309,7 @@ static uint32_t gk208_pmu_code[] = {
 	0x2d7ee0fc,
 	0x42b60000,
 	0xe81bf402,
-/* 0x055e: memx_func_wait */
+/* 0x055e: memx_func_रुको */
 	0x2c0800f8,
 	0x980088cf,
 	0x1d98001e,
@@ -1381,25 +1382,25 @@ static uint32_t gk208_pmu_code[] = {
 	0x33cf07c4,
 	0x0431fd00,
 	0xf4060bf4,
-/* 0x063a: i2c_sense_scl_done */
+/* 0x063a: i2c_sense_scl_करोne */
 	0x00f80131,
 /* 0x063c: i2c_sense_sda */
 	0x430132f4,
 	0x33cf07c4,
 	0x0432fd00,
 	0xf4060bf4,
-/* 0x064e: i2c_sense_sda_done */
+/* 0x064e: i2c_sense_sda_करोne */
 	0x00f80131,
-/* 0x0650: i2c_raise_scl */
+/* 0x0650: i2c_उठाओ_scl */
 	0x984440f9,
 	0x7e010308,
-/* 0x065b: i2c_raise_scl_wait */
+/* 0x065b: i2c_उठाओ_scl_रुको */
 	0x4e0005f4,
 	0x587e03e8,
 	0x287e0000,
 	0x01f40006,
 	0x0142b609,
-/* 0x066f: i2c_raise_scl_done */
+/* 0x066f: i2c_उठाओ_scl_करोne */
 	0xfcef1bf4,
 /* 0x0673: i2c_start */
 	0x7e00f840,
@@ -1476,7 +1477,7 @@ static uint32_t gk208_pmu_code[] = {
 	0x7e13884e,
 	0xf0000058,
 	0x31f4013c,
-/* 0x077d: i2c_bitr_done */
+/* 0x077d: i2c_bitr_करोne */
 /* 0x077f: i2c_get_byte */
 	0x0500f801,
 /* 0x0783: i2c_get_byte_next */
@@ -1499,7 +1500,7 @@ static uint32_t gk208_pmu_code[] = {
 	0xfc0475fd,
 	0x06fa7e50,
 	0x0464b600,
-/* 0x07cc: i2c_get_byte_done */
+/* 0x07cc: i2c_get_byte_करोne */
 /* 0x07ce: i2c_put_byte */
 	0x080400f8,
 /* 0x07d0: i2c_put_byte_next */
@@ -1524,7 +1525,7 @@ static uint32_t gk208_pmu_code[] = {
 	0x76bb0f11,
 	0x0136b000,
 	0xf4061bf4,
-/* 0x0826: i2c_put_byte_done */
+/* 0x0826: i2c_put_byte_करोne */
 	0x00f80132,
 /* 0x0828: i2c_addr */
 	0xb60076bb,
@@ -1544,7 +1545,7 @@ static uint32_t gk208_pmu_code[] = {
 	0x0475fd50,
 	0xce7e50fc,
 	0x64b60007,
-/* 0x086d: i2c_addr_done */
+/* 0x086d: i2c_addr_करोne */
 /* 0x086f: i2c_acquire_addr */
 	0xc700f804,
 	0xe4b6f8ce,
@@ -1643,13 +1644,13 @@ static uint32_t gk208_pmu_code[] = {
 	0xf4091bf4,
 	0x0ef40232,
 /* 0x09dd: i2c_recv_not_wr08 */
-/* 0x09dd: i2c_recv_done */
+/* 0x09dd: i2c_recv_करोne */
 	0xf8cec703,
 	0x00088c7e,
 	0xd0fce0fc,
 	0xb20912f4,
 	0x029f7e7c,
-/* 0x09f1: i2c_recv_exit */
+/* 0x09f1: i2c_recv_निकास */
 /* 0x09f3: i2c_init */
 	0xf800f800,
 /* 0x09f5: test_recv */
@@ -1727,4 +1728,4 @@ static uint32_t gk208_pmu_code[] = {
 	0x00000000,
 	0x00000000,
 	0x00000000,
-};
+पूर्ण;

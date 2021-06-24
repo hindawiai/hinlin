@@ -1,341 +1,342 @@
+<शैली गुरु>
 /*
  * Qualcomm Atheros IPQ806x GMAC glue layer
  *
  * Copyright (C) 2015 The Linux Foundation
  *
- * Permission to use, copy, modify, and/or distribute this software for any
+ * Permission to use, copy, modअगरy, and/or distribute this software क्रम any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
  * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
  * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
- * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * ANY SPECIAL, सूचीECT, INसूचीECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
  * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <linux/device.h>
-#include <linux/platform_device.h>
-#include <linux/phy.h>
-#include <linux/regmap.h>
-#include <linux/clk.h>
-#include <linux/reset.h>
-#include <linux/of_net.h>
-#include <linux/mfd/syscon.h>
-#include <linux/stmmac.h>
-#include <linux/of_mdio.h>
-#include <linux/module.h>
+#समावेश <linux/device.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/phy.h>
+#समावेश <linux/regmap.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/reset.h>
+#समावेश <linux/of_net.h>
+#समावेश <linux/mfd/syscon.h>
+#समावेश <linux/sपंचांगmac.h>
+#समावेश <linux/of_mdपन.स>
+#समावेश <linux/module.h>
 
-#include "stmmac_platform.h"
+#समावेश "stmmac_platform.h"
 
-#define NSS_COMMON_CLK_GATE			0x8
-#define NSS_COMMON_CLK_GATE_PTP_EN(x)		BIT(0x10 + x)
-#define NSS_COMMON_CLK_GATE_RGMII_RX_EN(x)	BIT(0x9 + (x * 2))
-#define NSS_COMMON_CLK_GATE_RGMII_TX_EN(x)	BIT(0x8 + (x * 2))
-#define NSS_COMMON_CLK_GATE_GMII_RX_EN(x)	BIT(0x4 + x)
-#define NSS_COMMON_CLK_GATE_GMII_TX_EN(x)	BIT(0x0 + x)
+#घोषणा NSS_COMMON_CLK_GATE			0x8
+#घोषणा NSS_COMMON_CLK_GATE_PTP_EN(x)		BIT(0x10 + x)
+#घोषणा NSS_COMMON_CLK_GATE_RGMII_RX_EN(x)	BIT(0x9 + (x * 2))
+#घोषणा NSS_COMMON_CLK_GATE_RGMII_TX_EN(x)	BIT(0x8 + (x * 2))
+#घोषणा NSS_COMMON_CLK_GATE_GMII_RX_EN(x)	BIT(0x4 + x)
+#घोषणा NSS_COMMON_CLK_GATE_GMII_TX_EN(x)	BIT(0x0 + x)
 
-#define NSS_COMMON_CLK_DIV0			0xC
-#define NSS_COMMON_CLK_DIV_OFFSET(x)		(x * 8)
-#define NSS_COMMON_CLK_DIV_MASK			0x7f
+#घोषणा NSS_COMMON_CLK_DIV0			0xC
+#घोषणा NSS_COMMON_CLK_DIV_OFFSET(x)		(x * 8)
+#घोषणा NSS_COMMON_CLK_DIV_MASK			0x7f
 
-#define NSS_COMMON_CLK_SRC_CTRL			0x14
-#define NSS_COMMON_CLK_SRC_CTRL_OFFSET(x)	(x)
-/* Mode is coded on 1 bit but is different depending on the MAC ID:
+#घोषणा NSS_COMMON_CLK_SRC_CTRL			0x14
+#घोषणा NSS_COMMON_CLK_SRC_CTRL_OFFSET(x)	(x)
+/* Mode is coded on 1 bit but is dअगरferent depending on the MAC ID:
  * MAC0: QSGMII=0 RGMII=1
  * MAC1: QSGMII=0 SGMII=0 RGMII=1
  * MAC2 & MAC3: QSGMII=0 SGMII=1
  */
-#define NSS_COMMON_CLK_SRC_CTRL_RGMII(x)	1
-#define NSS_COMMON_CLK_SRC_CTRL_SGMII(x)	((x >= 2) ? 1 : 0)
+#घोषणा NSS_COMMON_CLK_SRC_CTRL_RGMII(x)	1
+#घोषणा NSS_COMMON_CLK_SRC_CTRL_SGMII(x)	((x >= 2) ? 1 : 0)
 
-#define NSS_COMMON_GMAC_CTL(x)			(0x30 + (x * 4))
-#define NSS_COMMON_GMAC_CTL_CSYS_REQ		BIT(19)
-#define NSS_COMMON_GMAC_CTL_PHY_IFACE_SEL	BIT(16)
-#define NSS_COMMON_GMAC_CTL_IFG_LIMIT_OFFSET	8
-#define NSS_COMMON_GMAC_CTL_IFG_OFFSET		0
+#घोषणा NSS_COMMON_GMAC_CTL(x)			(0x30 + (x * 4))
+#घोषणा NSS_COMMON_GMAC_CTL_CSYS_REQ		BIT(19)
+#घोषणा NSS_COMMON_GMAC_CTL_PHY_IFACE_SEL	BIT(16)
+#घोषणा NSS_COMMON_GMAC_CTL_IFG_LIMIT_OFFSET	8
+#घोषणा NSS_COMMON_GMAC_CTL_IFG_OFFSET		0
 
-#define NSS_COMMON_CLK_DIV_RGMII_1000		1
-#define NSS_COMMON_CLK_DIV_RGMII_100		9
-#define NSS_COMMON_CLK_DIV_RGMII_10		99
-#define NSS_COMMON_CLK_DIV_SGMII_1000		0
-#define NSS_COMMON_CLK_DIV_SGMII_100		4
-#define NSS_COMMON_CLK_DIV_SGMII_10		49
+#घोषणा NSS_COMMON_CLK_DIV_RGMII_1000		1
+#घोषणा NSS_COMMON_CLK_DIV_RGMII_100		9
+#घोषणा NSS_COMMON_CLK_DIV_RGMII_10		99
+#घोषणा NSS_COMMON_CLK_DIV_SGMII_1000		0
+#घोषणा NSS_COMMON_CLK_DIV_SGMII_100		4
+#घोषणा NSS_COMMON_CLK_DIV_SGMII_10		49
 
-#define QSGMII_PCS_CAL_LCKDT_CTL		0x120
-#define QSGMII_PCS_CAL_LCKDT_CTL_RST		BIT(19)
+#घोषणा QSGMII_PCS_CAL_LCKDT_CTL		0x120
+#घोषणा QSGMII_PCS_CAL_LCKDT_CTL_RST		BIT(19)
 
-/* Only GMAC1/2/3 support SGMII and their CTL register are not contiguous */
-#define QSGMII_PHY_SGMII_CTL(x)			((x == 1) ? 0x134 : \
+/* Only GMAC1/2/3 support SGMII and their CTL रेजिस्टर are not contiguous */
+#घोषणा QSGMII_PHY_SGMII_CTL(x)			((x == 1) ? 0x134 : \
 						 (0x13c + (4 * (x - 2))))
-#define QSGMII_PHY_CDR_EN			BIT(0)
-#define QSGMII_PHY_RX_FRONT_EN			BIT(1)
-#define QSGMII_PHY_RX_SIGNAL_DETECT_EN		BIT(2)
-#define QSGMII_PHY_TX_DRIVER_EN			BIT(3)
-#define QSGMII_PHY_QSGMII_EN			BIT(7)
-#define QSGMII_PHY_PHASE_LOOP_GAIN_OFFSET	12
-#define QSGMII_PHY_RX_DC_BIAS_OFFSET		18
-#define QSGMII_PHY_RX_INPUT_EQU_OFFSET		20
-#define QSGMII_PHY_CDR_PI_SLEW_OFFSET		22
-#define QSGMII_PHY_TX_DRV_AMP_OFFSET		28
+#घोषणा QSGMII_PHY_CDR_EN			BIT(0)
+#घोषणा QSGMII_PHY_RX_FRONT_EN			BIT(1)
+#घोषणा QSGMII_PHY_RX_SIGNAL_DETECT_EN		BIT(2)
+#घोषणा QSGMII_PHY_TX_DRIVER_EN			BIT(3)
+#घोषणा QSGMII_PHY_QSGMII_EN			BIT(7)
+#घोषणा QSGMII_PHY_PHASE_LOOP_GAIN_OFFSET	12
+#घोषणा QSGMII_PHY_RX_DC_BIAS_OFFSET		18
+#घोषणा QSGMII_PHY_RX_INPUT_EQU_OFFSET		20
+#घोषणा QSGMII_PHY_CDR_PI_SLEW_OFFSET		22
+#घोषणा QSGMII_PHY_TX_DRV_AMP_OFFSET		28
 
-struct ipq806x_gmac {
-	struct platform_device *pdev;
-	struct regmap *nss_common;
-	struct regmap *qsgmii_csr;
-	uint32_t id;
-	struct clk *core_clk;
-	phy_interface_t phy_mode;
-};
+काष्ठा ipq806x_gmac अणु
+	काष्ठा platक्रमm_device *pdev;
+	काष्ठा regmap *nss_common;
+	काष्ठा regmap *qsgmii_csr;
+	uपूर्णांक32_t id;
+	काष्ठा clk *core_clk;
+	phy_पूर्णांकerface_t phy_mode;
+पूर्ण;
 
-static int get_clk_div_sgmii(struct ipq806x_gmac *gmac, unsigned int speed)
-{
-	struct device *dev = &gmac->pdev->dev;
-	int div;
+अटल पूर्णांक get_clk_भाग_sgmii(काष्ठा ipq806x_gmac *gmac, अचिन्हित पूर्णांक speed)
+अणु
+	काष्ठा device *dev = &gmac->pdev->dev;
+	पूर्णांक भाग;
 
-	switch (speed) {
-	case SPEED_1000:
-		div = NSS_COMMON_CLK_DIV_SGMII_1000;
-		break;
+	चयन (speed) अणु
+	हाल SPEED_1000:
+		भाग = NSS_COMMON_CLK_DIV_SGMII_1000;
+		अवरोध;
 
-	case SPEED_100:
-		div = NSS_COMMON_CLK_DIV_SGMII_100;
-		break;
+	हाल SPEED_100:
+		भाग = NSS_COMMON_CLK_DIV_SGMII_100;
+		अवरोध;
 
-	case SPEED_10:
-		div = NSS_COMMON_CLK_DIV_SGMII_10;
-		break;
+	हाल SPEED_10:
+		भाग = NSS_COMMON_CLK_DIV_SGMII_10;
+		अवरोध;
 
-	default:
+	शेष:
 		dev_err(dev, "Speed %dMbps not supported in SGMII\n", speed);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return div;
-}
+	वापस भाग;
+पूर्ण
 
-static int get_clk_div_rgmii(struct ipq806x_gmac *gmac, unsigned int speed)
-{
-	struct device *dev = &gmac->pdev->dev;
-	int div;
+अटल पूर्णांक get_clk_भाग_rgmii(काष्ठा ipq806x_gmac *gmac, अचिन्हित पूर्णांक speed)
+अणु
+	काष्ठा device *dev = &gmac->pdev->dev;
+	पूर्णांक भाग;
 
-	switch (speed) {
-	case SPEED_1000:
-		div = NSS_COMMON_CLK_DIV_RGMII_1000;
-		break;
+	चयन (speed) अणु
+	हाल SPEED_1000:
+		भाग = NSS_COMMON_CLK_DIV_RGMII_1000;
+		अवरोध;
 
-	case SPEED_100:
-		div = NSS_COMMON_CLK_DIV_RGMII_100;
-		break;
+	हाल SPEED_100:
+		भाग = NSS_COMMON_CLK_DIV_RGMII_100;
+		अवरोध;
 
-	case SPEED_10:
-		div = NSS_COMMON_CLK_DIV_RGMII_10;
-		break;
+	हाल SPEED_10:
+		भाग = NSS_COMMON_CLK_DIV_RGMII_10;
+		अवरोध;
 
-	default:
+	शेष:
 		dev_err(dev, "Speed %dMbps not supported in RGMII\n", speed);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return div;
-}
+	वापस भाग;
+पूर्ण
 
-static int ipq806x_gmac_set_speed(struct ipq806x_gmac *gmac, unsigned int speed)
-{
-	uint32_t clk_bits, val;
-	int div;
+अटल पूर्णांक ipq806x_gmac_set_speed(काष्ठा ipq806x_gmac *gmac, अचिन्हित पूर्णांक speed)
+अणु
+	uपूर्णांक32_t clk_bits, val;
+	पूर्णांक भाग;
 
-	switch (gmac->phy_mode) {
-	case PHY_INTERFACE_MODE_RGMII:
-		div = get_clk_div_rgmii(gmac, speed);
+	चयन (gmac->phy_mode) अणु
+	हाल PHY_INTERFACE_MODE_RGMII:
+		भाग = get_clk_भाग_rgmii(gmac, speed);
 		clk_bits = NSS_COMMON_CLK_GATE_RGMII_RX_EN(gmac->id) |
 			   NSS_COMMON_CLK_GATE_RGMII_TX_EN(gmac->id);
-		break;
+		अवरोध;
 
-	case PHY_INTERFACE_MODE_SGMII:
-		div = get_clk_div_sgmii(gmac, speed);
+	हाल PHY_INTERFACE_MODE_SGMII:
+		भाग = get_clk_भाग_sgmii(gmac, speed);
 		clk_bits = NSS_COMMON_CLK_GATE_GMII_RX_EN(gmac->id) |
 			   NSS_COMMON_CLK_GATE_GMII_TX_EN(gmac->id);
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		dev_err(&gmac->pdev->dev, "Unsupported PHY mode: \"%s\"\n",
 			phy_modes(gmac->phy_mode));
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	/* Disable the clocks */
-	regmap_read(gmac->nss_common, NSS_COMMON_CLK_GATE, &val);
+	/* Disable the घड़ीs */
+	regmap_पढ़ो(gmac->nss_common, NSS_COMMON_CLK_GATE, &val);
 	val &= ~clk_bits;
-	regmap_write(gmac->nss_common, NSS_COMMON_CLK_GATE, val);
+	regmap_ग_लिखो(gmac->nss_common, NSS_COMMON_CLK_GATE, val);
 
-	/* Set the divider */
-	regmap_read(gmac->nss_common, NSS_COMMON_CLK_DIV0, &val);
+	/* Set the भागider */
+	regmap_पढ़ो(gmac->nss_common, NSS_COMMON_CLK_DIV0, &val);
 	val &= ~(NSS_COMMON_CLK_DIV_MASK
 		 << NSS_COMMON_CLK_DIV_OFFSET(gmac->id));
-	val |= div << NSS_COMMON_CLK_DIV_OFFSET(gmac->id);
-	regmap_write(gmac->nss_common, NSS_COMMON_CLK_DIV0, val);
+	val |= भाग << NSS_COMMON_CLK_DIV_OFFSET(gmac->id);
+	regmap_ग_लिखो(gmac->nss_common, NSS_COMMON_CLK_DIV0, val);
 
-	/* Enable the clock back */
-	regmap_read(gmac->nss_common, NSS_COMMON_CLK_GATE, &val);
+	/* Enable the घड़ी back */
+	regmap_पढ़ो(gmac->nss_common, NSS_COMMON_CLK_GATE, &val);
 	val |= clk_bits;
-	regmap_write(gmac->nss_common, NSS_COMMON_CLK_GATE, val);
+	regmap_ग_लिखो(gmac->nss_common, NSS_COMMON_CLK_GATE, val);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ipq806x_gmac_of_parse(struct ipq806x_gmac *gmac)
-{
-	struct device *dev = &gmac->pdev->dev;
-	int ret;
+अटल पूर्णांक ipq806x_gmac_of_parse(काष्ठा ipq806x_gmac *gmac)
+अणु
+	काष्ठा device *dev = &gmac->pdev->dev;
+	पूर्णांक ret;
 
 	ret = of_get_phy_mode(dev->of_node, &gmac->phy_mode);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev, "missing phy mode property\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (of_property_read_u32(dev->of_node, "qcom,id", &gmac->id) < 0) {
+	अगर (of_property_पढ़ो_u32(dev->of_node, "qcom,id", &gmac->id) < 0) अणु
 		dev_err(dev, "missing qcom id property\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	/* The GMACs are called 1 to 4 in the documentation, but to simplify the
+	/* The GMACs are called 1 to 4 in the करोcumentation, but to simplअगरy the
 	 * code and keep it consistent with the Linux convention, we'll number
 	 * them from 0 to 3 here.
 	 */
-	if (gmac->id > 3) {
+	अगर (gmac->id > 3) अणु
 		dev_err(dev, "invalid gmac id\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	gmac->core_clk = devm_clk_get(dev, "stmmaceth");
-	if (IS_ERR(gmac->core_clk)) {
+	अगर (IS_ERR(gmac->core_clk)) अणु
 		dev_err(dev, "missing stmmaceth clk property\n");
-		return PTR_ERR(gmac->core_clk);
-	}
+		वापस PTR_ERR(gmac->core_clk);
+	पूर्ण
 	clk_set_rate(gmac->core_clk, 266000000);
 
-	/* Setup the register map for the nss common registers */
+	/* Setup the रेजिस्टर map क्रम the nss common रेजिस्टरs */
 	gmac->nss_common = syscon_regmap_lookup_by_phandle(dev->of_node,
 							   "qcom,nss-common");
-	if (IS_ERR(gmac->nss_common)) {
+	अगर (IS_ERR(gmac->nss_common)) अणु
 		dev_err(dev, "missing nss-common node\n");
-		return PTR_ERR(gmac->nss_common);
-	}
+		वापस PTR_ERR(gmac->nss_common);
+	पूर्ण
 
-	/* Setup the register map for the qsgmii csr registers */
+	/* Setup the रेजिस्टर map क्रम the qsgmii csr रेजिस्टरs */
 	gmac->qsgmii_csr = syscon_regmap_lookup_by_phandle(dev->of_node,
 							   "qcom,qsgmii-csr");
-	if (IS_ERR(gmac->qsgmii_csr))
+	अगर (IS_ERR(gmac->qsgmii_csr))
 		dev_err(dev, "missing qsgmii-csr node\n");
 
-	return PTR_ERR_OR_ZERO(gmac->qsgmii_csr);
-}
+	वापस PTR_ERR_OR_ZERO(gmac->qsgmii_csr);
+पूर्ण
 
-static void ipq806x_gmac_fix_mac_speed(void *priv, unsigned int speed)
-{
-	struct ipq806x_gmac *gmac = priv;
+अटल व्योम ipq806x_gmac_fix_mac_speed(व्योम *priv, अचिन्हित पूर्णांक speed)
+अणु
+	काष्ठा ipq806x_gmac *gmac = priv;
 
 	ipq806x_gmac_set_speed(gmac, speed);
-}
+पूर्ण
 
-static int ipq806x_gmac_probe(struct platform_device *pdev)
-{
-	struct plat_stmmacenet_data *plat_dat;
-	struct stmmac_resources stmmac_res;
-	struct device *dev = &pdev->dev;
-	struct ipq806x_gmac *gmac;
-	int val;
-	int err;
+अटल पूर्णांक ipq806x_gmac_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा plat_sपंचांगmacenet_data *plat_dat;
+	काष्ठा sपंचांगmac_resources sपंचांगmac_res;
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा ipq806x_gmac *gmac;
+	पूर्णांक val;
+	पूर्णांक err;
 
-	val = stmmac_get_platform_resources(pdev, &stmmac_res);
-	if (val)
-		return val;
+	val = sपंचांगmac_get_platक्रमm_resources(pdev, &sपंचांगmac_res);
+	अगर (val)
+		वापस val;
 
-	plat_dat = stmmac_probe_config_dt(pdev, stmmac_res.mac);
-	if (IS_ERR(plat_dat))
-		return PTR_ERR(plat_dat);
+	plat_dat = sपंचांगmac_probe_config_dt(pdev, sपंचांगmac_res.mac);
+	अगर (IS_ERR(plat_dat))
+		वापस PTR_ERR(plat_dat);
 
-	gmac = devm_kzalloc(dev, sizeof(*gmac), GFP_KERNEL);
-	if (!gmac) {
+	gmac = devm_kzalloc(dev, माप(*gmac), GFP_KERNEL);
+	अगर (!gmac) अणु
 		err = -ENOMEM;
-		goto err_remove_config_dt;
-	}
+		जाओ err_हटाओ_config_dt;
+	पूर्ण
 
 	gmac->pdev = pdev;
 
 	err = ipq806x_gmac_of_parse(gmac);
-	if (err) {
+	अगर (err) अणु
 		dev_err(dev, "device tree parsing error\n");
-		goto err_remove_config_dt;
-	}
+		जाओ err_हटाओ_config_dt;
+	पूर्ण
 
-	regmap_write(gmac->qsgmii_csr, QSGMII_PCS_CAL_LCKDT_CTL,
+	regmap_ग_लिखो(gmac->qsgmii_csr, QSGMII_PCS_CAL_LCKDT_CTL,
 		     QSGMII_PCS_CAL_LCKDT_CTL_RST);
 
 	/* Inter frame gap is set to 12 */
 	val = 12 << NSS_COMMON_GMAC_CTL_IFG_OFFSET |
 	      12 << NSS_COMMON_GMAC_CTL_IFG_LIMIT_OFFSET;
-	/* We also initiate an AXI low power exit request */
+	/* We also initiate an AXI low घातer निकास request */
 	val |= NSS_COMMON_GMAC_CTL_CSYS_REQ;
-	switch (gmac->phy_mode) {
-	case PHY_INTERFACE_MODE_RGMII:
+	चयन (gmac->phy_mode) अणु
+	हाल PHY_INTERFACE_MODE_RGMII:
 		val |= NSS_COMMON_GMAC_CTL_PHY_IFACE_SEL;
-		break;
-	case PHY_INTERFACE_MODE_SGMII:
+		अवरोध;
+	हाल PHY_INTERFACE_MODE_SGMII:
 		val &= ~NSS_COMMON_GMAC_CTL_PHY_IFACE_SEL;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		dev_err(&pdev->dev, "Unsupported PHY mode: \"%s\"\n",
 			phy_modes(gmac->phy_mode));
 		err = -EINVAL;
-		goto err_remove_config_dt;
-	}
-	regmap_write(gmac->nss_common, NSS_COMMON_GMAC_CTL(gmac->id), val);
+		जाओ err_हटाओ_config_dt;
+	पूर्ण
+	regmap_ग_लिखो(gmac->nss_common, NSS_COMMON_GMAC_CTL(gmac->id), val);
 
-	/* Configure the clock src according to the mode */
-	regmap_read(gmac->nss_common, NSS_COMMON_CLK_SRC_CTRL, &val);
+	/* Configure the घड़ी src according to the mode */
+	regmap_पढ़ो(gmac->nss_common, NSS_COMMON_CLK_SRC_CTRL, &val);
 	val &= ~(1 << NSS_COMMON_CLK_SRC_CTRL_OFFSET(gmac->id));
-	switch (gmac->phy_mode) {
-	case PHY_INTERFACE_MODE_RGMII:
+	चयन (gmac->phy_mode) अणु
+	हाल PHY_INTERFACE_MODE_RGMII:
 		val |= NSS_COMMON_CLK_SRC_CTRL_RGMII(gmac->id) <<
 			NSS_COMMON_CLK_SRC_CTRL_OFFSET(gmac->id);
-		break;
-	case PHY_INTERFACE_MODE_SGMII:
+		अवरोध;
+	हाल PHY_INTERFACE_MODE_SGMII:
 		val |= NSS_COMMON_CLK_SRC_CTRL_SGMII(gmac->id) <<
 			NSS_COMMON_CLK_SRC_CTRL_OFFSET(gmac->id);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		dev_err(&pdev->dev, "Unsupported PHY mode: \"%s\"\n",
 			phy_modes(gmac->phy_mode));
 		err = -EINVAL;
-		goto err_remove_config_dt;
-	}
-	regmap_write(gmac->nss_common, NSS_COMMON_CLK_SRC_CTRL, val);
+		जाओ err_हटाओ_config_dt;
+	पूर्ण
+	regmap_ग_लिखो(gmac->nss_common, NSS_COMMON_CLK_SRC_CTRL, val);
 
-	/* Enable PTP clock */
-	regmap_read(gmac->nss_common, NSS_COMMON_CLK_GATE, &val);
+	/* Enable PTP घड़ी */
+	regmap_पढ़ो(gmac->nss_common, NSS_COMMON_CLK_GATE, &val);
 	val |= NSS_COMMON_CLK_GATE_PTP_EN(gmac->id);
-	switch (gmac->phy_mode) {
-	case PHY_INTERFACE_MODE_RGMII:
+	चयन (gmac->phy_mode) अणु
+	हाल PHY_INTERFACE_MODE_RGMII:
 		val |= NSS_COMMON_CLK_GATE_RGMII_RX_EN(gmac->id) |
 			NSS_COMMON_CLK_GATE_RGMII_TX_EN(gmac->id);
-		break;
-	case PHY_INTERFACE_MODE_SGMII:
+		अवरोध;
+	हाल PHY_INTERFACE_MODE_SGMII:
 		val |= NSS_COMMON_CLK_GATE_GMII_RX_EN(gmac->id) |
 				NSS_COMMON_CLK_GATE_GMII_TX_EN(gmac->id);
-		break;
-	default:
-		/* We don't get here; the switch above will have errored out */
+		अवरोध;
+	शेष:
+		/* We करोn't get here; the चयन above will have errored out */
 		unreachable();
-	}
-	regmap_write(gmac->nss_common, NSS_COMMON_CLK_GATE, val);
+	पूर्ण
+	regmap_ग_लिखो(gmac->nss_common, NSS_COMMON_CLK_GATE, val);
 
-	if (gmac->phy_mode == PHY_INTERFACE_MODE_SGMII) {
-		regmap_write(gmac->qsgmii_csr, QSGMII_PHY_SGMII_CTL(gmac->id),
+	अगर (gmac->phy_mode == PHY_INTERFACE_MODE_SGMII) अणु
+		regmap_ग_लिखो(gmac->qsgmii_csr, QSGMII_PHY_SGMII_CTL(gmac->id),
 			     QSGMII_PHY_CDR_EN |
 			     QSGMII_PHY_RX_FRONT_EN |
 			     QSGMII_PHY_RX_SIGNAL_DETECT_EN |
@@ -346,43 +347,43 @@ static int ipq806x_gmac_probe(struct platform_device *pdev)
 			     0x1ul << QSGMII_PHY_RX_INPUT_EQU_OFFSET |
 			     0x2ul << QSGMII_PHY_CDR_PI_SLEW_OFFSET |
 			     0xCul << QSGMII_PHY_TX_DRV_AMP_OFFSET);
-	}
+	पूर्ण
 
 	plat_dat->has_gmac = true;
 	plat_dat->bsp_priv = gmac;
 	plat_dat->fix_mac_speed = ipq806x_gmac_fix_mac_speed;
 	plat_dat->multicast_filter_bins = 0;
-	plat_dat->tx_fifo_size = 8192;
-	plat_dat->rx_fifo_size = 8192;
+	plat_dat->tx_fअगरo_size = 8192;
+	plat_dat->rx_fअगरo_size = 8192;
 
-	err = stmmac_dvr_probe(&pdev->dev, plat_dat, &stmmac_res);
-	if (err)
-		goto err_remove_config_dt;
+	err = sपंचांगmac_dvr_probe(&pdev->dev, plat_dat, &sपंचांगmac_res);
+	अगर (err)
+		जाओ err_हटाओ_config_dt;
 
-	return 0;
+	वापस 0;
 
-err_remove_config_dt:
-	stmmac_remove_config_dt(pdev, plat_dat);
+err_हटाओ_config_dt:
+	sपंचांगmac_हटाओ_config_dt(pdev, plat_dat);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static const struct of_device_id ipq806x_gmac_dwmac_match[] = {
-	{ .compatible = "qcom,ipq806x-gmac" },
-	{ }
-};
+अटल स्थिर काष्ठा of_device_id ipq806x_gmac_dwmac_match[] = अणु
+	अणु .compatible = "qcom,ipq806x-gmac" पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, ipq806x_gmac_dwmac_match);
 
-static struct platform_driver ipq806x_gmac_dwmac_driver = {
+अटल काष्ठा platक्रमm_driver ipq806x_gmac_dwmac_driver = अणु
 	.probe = ipq806x_gmac_probe,
-	.remove = stmmac_pltfr_remove,
-	.driver = {
+	.हटाओ = sपंचांगmac_pltfr_हटाओ,
+	.driver = अणु
 		.name		= "ipq806x-gmac-dwmac",
-		.pm		= &stmmac_pltfr_pm_ops,
+		.pm		= &sपंचांगmac_pltfr_pm_ops,
 		.of_match_table	= ipq806x_gmac_dwmac_match,
-	},
-};
-module_platform_driver(ipq806x_gmac_dwmac_driver);
+	पूर्ण,
+पूर्ण;
+module_platक्रमm_driver(ipq806x_gmac_dwmac_driver);
 
 MODULE_AUTHOR("Mathieu Olivari <mathieu@codeaurora.org>");
 MODULE_DESCRIPTION("Qualcomm Atheros IPQ806x DWMAC specific glue layer");

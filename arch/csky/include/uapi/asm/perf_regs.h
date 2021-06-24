@@ -1,10 +1,11 @@
-/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
 
-#ifndef _ASM_CSKY_PERF_REGS_H
-#define _ASM_CSKY_PERF_REGS_H
+#अगर_अघोषित _ASM_CSKY_PERF_REGS_H
+#घोषणा _ASM_CSKY_PERF_REGS_H
 
-/* Index of struct pt_regs */
-enum perf_event_csky_regs {
+/* Index of काष्ठा pt_regs */
+क्रमागत perf_event_csky_regs अणु
 	PERF_REG_CSKY_TLS,
 	PERF_REG_CSKY_LR,
 	PERF_REG_CSKY_PC,
@@ -25,7 +26,7 @@ enum perf_event_csky_regs {
 	PERF_REG_CSKY_REGS7,
 	PERF_REG_CSKY_REGS8,
 	PERF_REG_CSKY_REGS9,
-#if defined(__CSKYABIV2__)
+#अगर defined(__CSKYABIV2__)
 	PERF_REG_CSKY_EXREGS0,
 	PERF_REG_CSKY_EXREGS1,
 	PERF_REG_CSKY_EXREGS2,
@@ -44,7 +45,7 @@ enum perf_event_csky_regs {
 	PERF_REG_CSKY_HI,
 	PERF_REG_CSKY_LO,
 	PERF_REG_CSKY_DCSR,
-#endif
+#पूर्ण_अगर
 	PERF_REG_CSKY_MAX,
-};
-#endif /* _ASM_CSKY_PERF_REGS_H */
+पूर्ण;
+#पूर्ण_अगर /* _ASM_CSKY_PERF_REGS_H */

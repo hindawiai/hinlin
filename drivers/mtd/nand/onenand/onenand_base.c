@@ -1,45 +1,46 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- *  Copyright © 2005-2009 Samsung Electronics
- *  Copyright © 2007 Nokia Corporation
+ *  Copyright तऊ 2005-2009 Samsung Electronics
+ *  Copyright तऊ 2007 Nokia Corporation
  *
  *  Kyungmin Park <kyungmin.park@samsung.com>
  *
  *  Credits:
  *	Adrian Hunter <ext-adrian.hunter@nokia.com>:
- *	auto-placement support, read-while load support, various fixes
+ *	स्वतः-placement support, पढ़ो-जबतक load support, various fixes
  *
  *	Vishak G <vishak.g at samsung.com>, Rohit Hagargundgi <h.rohit at samsung.com>
- *	Flex-OneNAND support
+ *	Flex-Oneन_अंकD support
  *	Amul Kumar Saha <amul.saha at samsung.com>
  *	OTP support
  */
 
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/moduleparam.h>
-#include <linux/slab.h>
-#include <linux/sched.h>
-#include <linux/delay.h>
-#include <linux/interrupt.h>
-#include <linux/jiffies.h>
-#include <linux/mtd/mtd.h>
-#include <linux/mtd/onenand.h>
-#include <linux/mtd/partitions.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/moduleparam.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/jअगरfies.h>
+#समावेश <linux/mtd/mtd.h>
+#समावेश <linux/mtd/onenand.h>
+#समावेश <linux/mtd/partitions.h>
 
-#include <asm/io.h>
+#समावेश <यंत्र/पन.स>
 
 /*
- * Multiblock erase if number of blocks to erase is 2 or more.
- * Maximum number of blocks for simultaneous erase is 64.
+ * Multiblock erase अगर number of blocks to erase is 2 or more.
+ * Maximum number of blocks क्रम simultaneous erase is 64.
  */
-#define MB_ERASE_MIN_BLK_COUNT 2
-#define MB_ERASE_MAX_BLK_COUNT 64
+#घोषणा MB_ERASE_MIN_BLK_COUNT 2
+#घोषणा MB_ERASE_MAX_BLK_COUNT 64
 
-/* Default Flex-OneNAND boundary and lock respectively */
-static int flex_bdry[MAX_DIES * 2] = { -1, 0, -1, 0 };
+/* Default Flex-Oneन_अंकD boundary and lock respectively */
+अटल पूर्णांक flex_bdry[MAX_DIES * 2] = अणु -1, 0, -1, 0 पूर्ण;
 
-module_param_array(flex_bdry, int, NULL, 0400);
+module_param_array(flex_bdry, पूर्णांक, शून्य, 0400);
 MODULE_PARM_DESC(flex_bdry,	"SLC Boundary information for Flex-OneNAND"
 				"Syntax:flex_bdry=DIE_BDRY,LOCK,..."
 				"DIE_BDRY: SLC boundary of the die"
@@ -47,10 +48,10 @@ MODULE_PARM_DESC(flex_bdry,	"SLC Boundary information for Flex-OneNAND"
 				"    : 0->Set boundary in unlocked status"
 				"    : 1->Set boundary in locked status");
 
-/* Default OneNAND/Flex-OneNAND OTP options*/
-static int otp;
+/* Default Oneन_अंकD/Flex-Oneन_अंकD OTP options*/
+अटल पूर्णांक otp;
 
-module_param(otp, int, 0400);
+module_param(otp, पूर्णांक, 0400);
 MODULE_PARM_DESC(otp,	"Corresponding behaviour of OneNAND in OTP"
 			"Syntax : otp=LOCK_TYPE"
 			"LOCK_TYPE : Keys issued, for specific OTP Lock type"
@@ -60,118 +61,118 @@ MODULE_PARM_DESC(otp,	"Corresponding behaviour of OneNAND in OTP"
 			"	   : 3 -> BOTH OTP Block and 1st Block lock");
 
 /*
- * flexonenand_oob_128 - oob info for Flex-Onenand with 4KB page
+ * flexonenand_oob_128 - oob info क्रम Flex-Onenand with 4KB page
  * For now, we expose only 64 out of 80 ecc bytes
  */
-static int flexonenand_ooblayout_ecc(struct mtd_info *mtd, int section,
-				     struct mtd_oob_region *oobregion)
-{
-	if (section > 7)
-		return -ERANGE;
+अटल पूर्णांक flexonenand_ooblayout_ecc(काष्ठा mtd_info *mtd, पूर्णांक section,
+				     काष्ठा mtd_oob_region *oobregion)
+अणु
+	अगर (section > 7)
+		वापस -दुस्फल;
 
 	oobregion->offset = (section * 16) + 6;
 	oobregion->length = 10;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int flexonenand_ooblayout_free(struct mtd_info *mtd, int section,
-				      struct mtd_oob_region *oobregion)
-{
-	if (section > 7)
-		return -ERANGE;
+अटल पूर्णांक flexonenand_ooblayout_मुक्त(काष्ठा mtd_info *mtd, पूर्णांक section,
+				      काष्ठा mtd_oob_region *oobregion)
+अणु
+	अगर (section > 7)
+		वापस -दुस्फल;
 
 	oobregion->offset = (section * 16) + 2;
 	oobregion->length = 4;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct mtd_ooblayout_ops flexonenand_ooblayout_ops = {
+अटल स्थिर काष्ठा mtd_ooblayout_ops flexonenand_ooblayout_ops = अणु
 	.ecc = flexonenand_ooblayout_ecc,
-	.free = flexonenand_ooblayout_free,
-};
+	.मुक्त = flexonenand_ooblayout_मुक्त,
+पूर्ण;
 
 /*
- * onenand_oob_128 - oob info for OneNAND with 4KB page
+ * onenand_oob_128 - oob info क्रम Oneन_अंकD with 4KB page
  *
- * Based on specification:
- * 4Gb M-die OneNAND Flash (KFM4G16Q4M, KFN8G16Q4M). Rev. 1.3, Apr. 2010
+ * Based on specअगरication:
+ * 4Gb M-die Oneन_अंकD Flash (KFM4G16Q4M, KFN8G16Q4M). Rev. 1.3, Apr. 2010
  *
  */
-static int onenand_ooblayout_128_ecc(struct mtd_info *mtd, int section,
-				     struct mtd_oob_region *oobregion)
-{
-	if (section > 7)
-		return -ERANGE;
+अटल पूर्णांक onenand_ooblayout_128_ecc(काष्ठा mtd_info *mtd, पूर्णांक section,
+				     काष्ठा mtd_oob_region *oobregion)
+अणु
+	अगर (section > 7)
+		वापस -दुस्फल;
 
 	oobregion->offset = (section * 16) + 7;
 	oobregion->length = 9;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int onenand_ooblayout_128_free(struct mtd_info *mtd, int section,
-				      struct mtd_oob_region *oobregion)
-{
-	if (section >= 8)
-		return -ERANGE;
+अटल पूर्णांक onenand_ooblayout_128_मुक्त(काष्ठा mtd_info *mtd, पूर्णांक section,
+				      काष्ठा mtd_oob_region *oobregion)
+अणु
+	अगर (section >= 8)
+		वापस -दुस्फल;
 
 	/*
-	 * free bytes are using the spare area fields marked as
+	 * मुक्त bytes are using the spare area fields marked as
 	 * "Managed by internal ECC logic for Logical Sector Number area"
 	 */
 	oobregion->offset = (section * 16) + 2;
 	oobregion->length = 3;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct mtd_ooblayout_ops onenand_oob_128_ooblayout_ops = {
+अटल स्थिर काष्ठा mtd_ooblayout_ops onenand_oob_128_ooblayout_ops = अणु
 	.ecc = onenand_ooblayout_128_ecc,
-	.free = onenand_ooblayout_128_free,
-};
+	.मुक्त = onenand_ooblayout_128_मुक्त,
+पूर्ण;
 
 /*
- * onenand_oob_32_64 - oob info for large (2KB) page
+ * onenand_oob_32_64 - oob info क्रम large (2KB) page
  */
-static int onenand_ooblayout_32_64_ecc(struct mtd_info *mtd, int section,
-				       struct mtd_oob_region *oobregion)
-{
-	if (section > 3)
-		return -ERANGE;
+अटल पूर्णांक onenand_ooblayout_32_64_ecc(काष्ठा mtd_info *mtd, पूर्णांक section,
+				       काष्ठा mtd_oob_region *oobregion)
+अणु
+	अगर (section > 3)
+		वापस -दुस्फल;
 
 	oobregion->offset = (section * 16) + 8;
 	oobregion->length = 5;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int onenand_ooblayout_32_64_free(struct mtd_info *mtd, int section,
-					struct mtd_oob_region *oobregion)
-{
-	int sections = (mtd->oobsize / 32) * 2;
+अटल पूर्णांक onenand_ooblayout_32_64_मुक्त(काष्ठा mtd_info *mtd, पूर्णांक section,
+					काष्ठा mtd_oob_region *oobregion)
+अणु
+	पूर्णांक sections = (mtd->oobsize / 32) * 2;
 
-	if (section >= sections)
-		return -ERANGE;
+	अगर (section >= sections)
+		वापस -दुस्फल;
 
-	if (section & 1) {
+	अगर (section & 1) अणु
 		oobregion->offset = ((section - 1) * 16) + 14;
 		oobregion->length = 2;
-	} else  {
+	पूर्ण अन्यथा  अणु
 		oobregion->offset = (section * 16) + 2;
 		oobregion->length = 3;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct mtd_ooblayout_ops onenand_oob_32_64_ooblayout_ops = {
+अटल स्थिर काष्ठा mtd_ooblayout_ops onenand_oob_32_64_ooblayout_ops = अणु
 	.ecc = onenand_ooblayout_32_64_ecc,
-	.free = onenand_ooblayout_32_64_free,
-};
+	.मुक्त = onenand_ooblayout_32_64_मुक्त,
+पूर्ण;
 
-static const unsigned char ffchars[] = {
+अटल स्थिर अचिन्हित अक्षर ffअक्षरs[] = अणु
 	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
 	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,	/* 16 */
 	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
@@ -188,83 +189,83 @@ static const unsigned char ffchars[] = {
 	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,	/* 112 */
 	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
 	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,	/* 128 */
-};
+पूर्ण;
 
 /**
- * onenand_readw - [OneNAND Interface] Read OneNAND register
- * @addr:		address to read
+ * onenand_पढ़ोw - [Oneन_अंकD Interface] Read Oneन_अंकD रेजिस्टर
+ * @addr:		address to पढ़ो
  *
- * Read OneNAND register
+ * Read Oneन_अंकD रेजिस्टर
  */
-static unsigned short onenand_readw(void __iomem *addr)
-{
-	return readw(addr);
-}
+अटल अचिन्हित लघु onenand_पढ़ोw(व्योम __iomem *addr)
+अणु
+	वापस पढ़ोw(addr);
+पूर्ण
 
 /**
- * onenand_writew - [OneNAND Interface] Write OneNAND register with value
- * @value:		value to write
- * @addr:		address to write
+ * onenand_ग_लिखोw - [Oneन_अंकD Interface] Write Oneन_अंकD रेजिस्टर with value
+ * @value:		value to ग_लिखो
+ * @addr:		address to ग_लिखो
  *
- * Write OneNAND register with value
+ * Write Oneन_अंकD रेजिस्टर with value
  */
-static void onenand_writew(unsigned short value, void __iomem *addr)
-{
-	writew(value, addr);
-}
+अटल व्योम onenand_ग_लिखोw(अचिन्हित लघु value, व्योम __iomem *addr)
+अणु
+	ग_लिखोw(value, addr);
+पूर्ण
 
 /**
  * onenand_block_address - [DEFAULT] Get block address
- * @this:		onenand chip data structure
+ * @this:		onenand chip data काष्ठाure
  * @block:		the block
- * @return		translated block address if DDP, otherwise same
+ * @वापस		translated block address अगर DDP, otherwise same
  *
  * Setup Start Address 1 Register (F100h)
  */
-static int onenand_block_address(struct onenand_chip *this, int block)
-{
-	/* Device Flash Core select, NAND Flash Block Address */
-	if (block & this->density_mask)
-		return ONENAND_DDP_CHIP1 | (block ^ this->density_mask);
+अटल पूर्णांक onenand_block_address(काष्ठा onenand_chip *this, पूर्णांक block)
+अणु
+	/* Device Flash Core select, न_अंकD Flash Block Address */
+	अगर (block & this->density_mask)
+		वापस ONEन_अंकD_DDP_CHIP1 | (block ^ this->density_mask);
 
-	return block;
-}
+	वापस block;
+पूर्ण
 
 /**
  * onenand_bufferram_address - [DEFAULT] Get bufferram address
- * @this:		onenand chip data structure
+ * @this:		onenand chip data काष्ठाure
  * @block:		the block
- * @return		set DBS value if DDP, otherwise 0
+ * @वापस		set DBS value अगर DDP, otherwise 0
  *
- * Setup Start Address 2 Register (F101h) for DDP
+ * Setup Start Address 2 Register (F101h) क्रम DDP
  */
-static int onenand_bufferram_address(struct onenand_chip *this, int block)
-{
+अटल पूर्णांक onenand_bufferram_address(काष्ठा onenand_chip *this, पूर्णांक block)
+अणु
 	/* Device BufferRAM Select */
-	if (block & this->density_mask)
-		return ONENAND_DDP_CHIP1;
+	अगर (block & this->density_mask)
+		वापस ONEन_अंकD_DDP_CHIP1;
 
-	return ONENAND_DDP_CHIP0;
-}
+	वापस ONEन_अंकD_DDP_CHIP0;
+पूर्ण
 
 /**
  * onenand_page_address - [DEFAULT] Get page address
  * @page:		the page address
  * @sector:	the sector address
- * @return		combined page and sector address
+ * @वापस		combined page and sector address
  *
  * Setup Start Address 8 Register (F107h)
  */
-static int onenand_page_address(int page, int sector)
-{
+अटल पूर्णांक onenand_page_address(पूर्णांक page, पूर्णांक sector)
+अणु
 	/* Flash Page Address, Flash Sector Address */
-	int fpa, fsa;
+	पूर्णांक fpa, fsa;
 
-	fpa = page & ONENAND_FPA_MASK;
-	fsa = sector & ONENAND_FSA_MASK;
+	fpa = page & ONEन_अंकD_FPA_MASK;
+	fsa = sector & ONEन_अंकD_FSA_MASK;
 
-	return ((fpa << ONENAND_FPA_SHIFT) | fsa);
-}
+	वापस ((fpa << ONEन_अंकD_FPA_SHIFT) | fsa);
+पूर्ण
 
 /**
  * onenand_buffer_address - [DEFAULT] Get buffer address
@@ -275,575 +276,575 @@ static int onenand_page_address(int page, int sector)
  *
  * Setup Start Buffer Register (F200h)
  */
-static int onenand_buffer_address(int dataram1, int sectors, int count)
-{
-	int bsa, bsc;
+अटल पूर्णांक onenand_buffer_address(पूर्णांक dataram1, पूर्णांक sectors, पूर्णांक count)
+अणु
+	पूर्णांक bsa, bsc;
 
 	/* BufferRAM Sector Address */
-	bsa = sectors & ONENAND_BSA_MASK;
+	bsa = sectors & ONEन_अंकD_BSA_MASK;
 
-	if (dataram1)
-		bsa |= ONENAND_BSA_DATARAM1;	/* DataRAM1 */
-	else
-		bsa |= ONENAND_BSA_DATARAM0;	/* DataRAM0 */
+	अगर (dataram1)
+		bsa |= ONEन_अंकD_BSA_DATARAM1;	/* DataRAM1 */
+	अन्यथा
+		bsa |= ONEन_अंकD_BSA_DATARAM0;	/* DataRAM0 */
 
 	/* BufferRAM Sector Count */
-	bsc = count & ONENAND_BSC_MASK;
+	bsc = count & ONEन_अंकD_BSC_MASK;
 
-	return ((bsa << ONENAND_BSA_SHIFT) | bsc);
-}
+	वापस ((bsa << ONEन_अंकD_BSA_SHIFT) | bsc);
+पूर्ण
 
 /**
- * flexonenand_block- For given address return block number
- * @this:         - OneNAND device structure
- * @addr:		- Address for which block number is needed
+ * flexonenand_block- For given address वापस block number
+ * @this:         - Oneन_अंकD device काष्ठाure
+ * @addr:		- Address क्रम which block number is needed
  */
-static unsigned flexonenand_block(struct onenand_chip *this, loff_t addr)
-{
-	unsigned boundary, blk, die = 0;
+अटल अचिन्हित flexonenand_block(काष्ठा onenand_chip *this, loff_t addr)
+अणु
+	अचिन्हित boundary, blk, die = 0;
 
-	if (ONENAND_IS_DDP(this) && addr >= this->diesize[0]) {
+	अगर (ONEन_अंकD_IS_DDP(this) && addr >= this->diesize[0]) अणु
 		die = 1;
 		addr -= this->diesize[0];
-	}
+	पूर्ण
 
 	boundary = this->boundary[die];
 
-	blk = addr >> (this->erase_shift - 1);
-	if (blk > boundary)
+	blk = addr >> (this->erase_shअगरt - 1);
+	अगर (blk > boundary)
 		blk = (blk + boundary + 1) >> 1;
 
 	blk += die ? this->density_mask : 0;
-	return blk;
-}
+	वापस blk;
+पूर्ण
 
-inline unsigned onenand_block(struct onenand_chip *this, loff_t addr)
-{
-	if (!FLEXONENAND(this))
-		return addr >> this->erase_shift;
-	return flexonenand_block(this, addr);
-}
+अंतरभूत अचिन्हित onenand_block(काष्ठा onenand_chip *this, loff_t addr)
+अणु
+	अगर (!FLEXONEन_अंकD(this))
+		वापस addr >> this->erase_shअगरt;
+	वापस flexonenand_block(this, addr);
+पूर्ण
 
 /**
  * flexonenand_addr - Return address of the block
- * @this:		OneNAND device structure
- * @block:		Block number on Flex-OneNAND
+ * @this:		Oneन_अंकD device काष्ठाure
+ * @block:		Block number on Flex-Oneन_अंकD
  *
  * Return address of the block
  */
-static loff_t flexonenand_addr(struct onenand_chip *this, int block)
-{
+अटल loff_t flexonenand_addr(काष्ठा onenand_chip *this, पूर्णांक block)
+अणु
 	loff_t ofs = 0;
-	int die = 0, boundary;
+	पूर्णांक die = 0, boundary;
 
-	if (ONENAND_IS_DDP(this) && block >= this->density_mask) {
+	अगर (ONEन_अंकD_IS_DDP(this) && block >= this->density_mask) अणु
 		block -= this->density_mask;
 		die = 1;
 		ofs = this->diesize[0];
-	}
+	पूर्ण
 
 	boundary = this->boundary[die];
-	ofs += (loff_t)block << (this->erase_shift - 1);
-	if (block > (boundary + 1))
-		ofs += (loff_t)(block - boundary - 1) << (this->erase_shift - 1);
-	return ofs;
-}
+	ofs += (loff_t)block << (this->erase_shअगरt - 1);
+	अगर (block > (boundary + 1))
+		ofs += (loff_t)(block - boundary - 1) << (this->erase_shअगरt - 1);
+	वापस ofs;
+पूर्ण
 
-loff_t onenand_addr(struct onenand_chip *this, int block)
-{
-	if (!FLEXONENAND(this))
-		return (loff_t)block << this->erase_shift;
-	return flexonenand_addr(this, block);
-}
+loff_t onenand_addr(काष्ठा onenand_chip *this, पूर्णांक block)
+अणु
+	अगर (!FLEXONEन_अंकD(this))
+		वापस (loff_t)block << this->erase_shअगरt;
+	वापस flexonenand_addr(this, block);
+पूर्ण
 EXPORT_SYMBOL(onenand_addr);
 
 /**
- * onenand_get_density - [DEFAULT] Get OneNAND density
- * @dev_id:	OneNAND device ID
+ * onenand_get_density - [DEFAULT] Get Oneन_अंकD density
+ * @dev_id:	Oneन_अंकD device ID
  *
- * Get OneNAND density from device ID
+ * Get Oneन_अंकD density from device ID
  */
-static inline int onenand_get_density(int dev_id)
-{
-	int density = dev_id >> ONENAND_DEVICE_DENSITY_SHIFT;
-	return (density & ONENAND_DEVICE_DENSITY_MASK);
-}
+अटल अंतरभूत पूर्णांक onenand_get_density(पूर्णांक dev_id)
+अणु
+	पूर्णांक density = dev_id >> ONEन_अंकD_DEVICE_DENSITY_SHIFT;
+	वापस (density & ONEन_अंकD_DEVICE_DENSITY_MASK);
+पूर्ण
 
 /**
- * flexonenand_region - [Flex-OneNAND] Return erase region of addr
- * @mtd:		MTD device structure
- * @addr:		address whose erase region needs to be identified
+ * flexonenand_region - [Flex-Oneन_अंकD] Return erase region of addr
+ * @mtd:		MTD device काष्ठाure
+ * @addr:		address whose erase region needs to be identअगरied
  */
-int flexonenand_region(struct mtd_info *mtd, loff_t addr)
-{
-	int i;
+पूर्णांक flexonenand_region(काष्ठा mtd_info *mtd, loff_t addr)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < mtd->numeraseregions; i++)
-		if (addr < mtd->eraseregions[i].offset)
-			break;
-	return i - 1;
-}
+	क्रम (i = 0; i < mtd->numeraseregions; i++)
+		अगर (addr < mtd->eraseregions[i].offset)
+			अवरोध;
+	वापस i - 1;
+पूर्ण
 EXPORT_SYMBOL(flexonenand_region);
 
 /**
- * onenand_command - [DEFAULT] Send command to OneNAND device
- * @mtd:		MTD device structure
+ * onenand_command - [DEFAULT] Send command to Oneन_अंकD device
+ * @mtd:		MTD device काष्ठाure
  * @cmd:		the command to be sent
- * @addr:		offset to read from or write to
- * @len:		number of bytes to read or write
+ * @addr:		offset to पढ़ो from or ग_लिखो to
+ * @len:		number of bytes to पढ़ो or ग_लिखो
  *
- * Send command to OneNAND device. This function is used for middle/large page
+ * Send command to Oneन_अंकD device. This function is used क्रम middle/large page
  * devices (1KB/2KB Bytes per page)
  */
-static int onenand_command(struct mtd_info *mtd, int cmd, loff_t addr, size_t len)
-{
-	struct onenand_chip *this = mtd->priv;
-	int value, block, page;
+अटल पूर्णांक onenand_command(काष्ठा mtd_info *mtd, पूर्णांक cmd, loff_t addr, माप_प्रकार len)
+अणु
+	काष्ठा onenand_chip *this = mtd->priv;
+	पूर्णांक value, block, page;
 
 	/* Address translation */
-	switch (cmd) {
-	case ONENAND_CMD_UNLOCK:
-	case ONENAND_CMD_LOCK:
-	case ONENAND_CMD_LOCK_TIGHT:
-	case ONENAND_CMD_UNLOCK_ALL:
+	चयन (cmd) अणु
+	हाल ONEन_अंकD_CMD_UNLOCK:
+	हाल ONEन_अंकD_CMD_LOCK:
+	हाल ONEन_अंकD_CMD_LOCK_TIGHT:
+	हाल ONEन_अंकD_CMD_UNLOCK_ALL:
 		block = -1;
 		page = -1;
-		break;
+		अवरोध;
 
-	case FLEXONENAND_CMD_PI_ACCESS:
+	हाल FLEXONEन_अंकD_CMD_PI_ACCESS:
 		/* addr contains die index */
 		block = addr * this->density_mask;
 		page = -1;
-		break;
+		अवरोध;
 
-	case ONENAND_CMD_ERASE:
-	case ONENAND_CMD_MULTIBLOCK_ERASE:
-	case ONENAND_CMD_ERASE_VERIFY:
-	case ONENAND_CMD_BUFFERRAM:
-	case ONENAND_CMD_OTP_ACCESS:
+	हाल ONEन_अंकD_CMD_ERASE:
+	हाल ONEन_अंकD_CMD_MULTIBLOCK_ERASE:
+	हाल ONEन_अंकD_CMD_ERASE_VERIFY:
+	हाल ONEन_अंकD_CMD_BUFFERRAM:
+	हाल ONEन_अंकD_CMD_OTP_ACCESS:
 		block = onenand_block(this, addr);
 		page = -1;
-		break;
+		अवरोध;
 
-	case FLEXONENAND_CMD_READ_PI:
-		cmd = ONENAND_CMD_READ;
+	हाल FLEXONEन_अंकD_CMD_READ_PI:
+		cmd = ONEन_अंकD_CMD_READ;
 		block = addr * this->density_mask;
 		page = 0;
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		block = onenand_block(this, addr);
-		if (FLEXONENAND(this))
-			page = (int) (addr - onenand_addr(this, block))>>\
-				this->page_shift;
-		else
-			page = (int) (addr >> this->page_shift);
-		if (ONENAND_IS_2PLANE(this)) {
+		अगर (FLEXONEन_अंकD(this))
+			page = (पूर्णांक) (addr - onenand_addr(this, block))>>\
+				this->page_shअगरt;
+		अन्यथा
+			page = (पूर्णांक) (addr >> this->page_shअगरt);
+		अगर (ONEन_अंकD_IS_2PLANE(this)) अणु
 			/* Make the even block number */
 			block &= ~1;
 			/* Is it the odd plane? */
-			if (addr & this->writesize)
+			अगर (addr & this->ग_लिखोsize)
 				block++;
 			page >>= 1;
-		}
+		पूर्ण
 		page &= this->page_mask;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	/* NOTE: The setting order of the registers is very important! */
-	if (cmd == ONENAND_CMD_BUFFERRAM) {
-		/* Select DataRAM for DDP */
+	/* NOTE: The setting order of the रेजिस्टरs is very important! */
+	अगर (cmd == ONEन_अंकD_CMD_BUFFERRAM) अणु
+		/* Select DataRAM क्रम DDP */
 		value = onenand_bufferram_address(this, block);
-		this->write_word(value, this->base + ONENAND_REG_START_ADDRESS2);
+		this->ग_लिखो_word(value, this->base + ONEन_अंकD_REG_START_ADDRESS2);
 
-		if (ONENAND_IS_2PLANE(this) || ONENAND_IS_4KB_PAGE(this))
+		अगर (ONEन_अंकD_IS_2PLANE(this) || ONEन_अंकD_IS_4KB_PAGE(this))
 			/* It is always BufferRAM0 */
-			ONENAND_SET_BUFFERRAM0(this);
-		else
+			ONEन_अंकD_SET_BUFFERRAM0(this);
+		अन्यथा
 			/* Switch to the next data buffer */
-			ONENAND_SET_NEXT_BUFFERRAM(this);
+			ONEन_अंकD_SET_NEXT_BUFFERRAM(this);
 
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	if (block != -1) {
+	अगर (block != -1) अणु
 		/* Write 'DFS, FBA' of Flash */
 		value = onenand_block_address(this, block);
-		this->write_word(value, this->base + ONENAND_REG_START_ADDRESS1);
+		this->ग_लिखो_word(value, this->base + ONEन_अंकD_REG_START_ADDRESS1);
 
-		/* Select DataRAM for DDP */
+		/* Select DataRAM क्रम DDP */
 		value = onenand_bufferram_address(this, block);
-		this->write_word(value, this->base + ONENAND_REG_START_ADDRESS2);
-	}
+		this->ग_लिखो_word(value, this->base + ONEन_अंकD_REG_START_ADDRESS2);
+	पूर्ण
 
-	if (page != -1) {
+	अगर (page != -1) अणु
 		/* Now we use page size operation */
-		int sectors = 0, count = 0;
-		int dataram;
+		पूर्णांक sectors = 0, count = 0;
+		पूर्णांक dataram;
 
-		switch (cmd) {
-		case FLEXONENAND_CMD_RECOVER_LSB:
-		case ONENAND_CMD_READ:
-		case ONENAND_CMD_READOOB:
-			if (ONENAND_IS_4KB_PAGE(this))
+		चयन (cmd) अणु
+		हाल FLEXONEन_अंकD_CMD_RECOVER_LSB:
+		हाल ONEन_अंकD_CMD_READ:
+		हाल ONEन_अंकD_CMD_READOOB:
+			अगर (ONEन_अंकD_IS_4KB_PAGE(this))
 				/* It is always BufferRAM0 */
-				dataram = ONENAND_SET_BUFFERRAM0(this);
-			else
-				dataram = ONENAND_SET_NEXT_BUFFERRAM(this);
-			break;
+				dataram = ONEन_अंकD_SET_BUFFERRAM0(this);
+			अन्यथा
+				dataram = ONEन_अंकD_SET_NEXT_BUFFERRAM(this);
+			अवरोध;
 
-		default:
-			if (ONENAND_IS_2PLANE(this) && cmd == ONENAND_CMD_PROG)
-				cmd = ONENAND_CMD_2X_PROG;
-			dataram = ONENAND_CURRENT_BUFFERRAM(this);
-			break;
-		}
+		शेष:
+			अगर (ONEन_अंकD_IS_2PLANE(this) && cmd == ONEन_अंकD_CMD_PROG)
+				cmd = ONEन_अंकD_CMD_2X_PROG;
+			dataram = ONEन_अंकD_CURRENT_BUFFERRAM(this);
+			अवरोध;
+		पूर्ण
 
 		/* Write 'FPA, FSA' of Flash */
 		value = onenand_page_address(page, sectors);
-		this->write_word(value, this->base + ONENAND_REG_START_ADDRESS8);
+		this->ग_लिखो_word(value, this->base + ONEन_अंकD_REG_START_ADDRESS8);
 
 		/* Write 'BSA, BSC' of DataRAM */
 		value = onenand_buffer_address(dataram, sectors, count);
-		this->write_word(value, this->base + ONENAND_REG_START_BUFFER);
-	}
+		this->ग_लिखो_word(value, this->base + ONEन_अंकD_REG_START_BUFFER);
+	पूर्ण
 
 	/* Interrupt clear */
-	this->write_word(ONENAND_INT_CLEAR, this->base + ONENAND_REG_INTERRUPT);
+	this->ग_लिखो_word(ONEन_अंकD_INT_CLEAR, this->base + ONEन_अंकD_REG_INTERRUPT);
 
 	/* Write command */
-	this->write_word(cmd, this->base + ONENAND_REG_COMMAND);
+	this->ग_लिखो_word(cmd, this->base + ONEन_अंकD_REG_COMMAND);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * onenand_read_ecc - return ecc status
- * @this:		onenand chip structure
+ * onenand_पढ़ो_ecc - वापस ecc status
+ * @this:		onenand chip काष्ठाure
  */
-static inline int onenand_read_ecc(struct onenand_chip *this)
-{
-	int ecc, i, result = 0;
+अटल अंतरभूत पूर्णांक onenand_पढ़ो_ecc(काष्ठा onenand_chip *this)
+अणु
+	पूर्णांक ecc, i, result = 0;
 
-	if (!FLEXONENAND(this) && !ONENAND_IS_4KB_PAGE(this))
-		return this->read_word(this->base + ONENAND_REG_ECC_STATUS);
+	अगर (!FLEXONEन_अंकD(this) && !ONEन_अंकD_IS_4KB_PAGE(this))
+		वापस this->पढ़ो_word(this->base + ONEन_अंकD_REG_ECC_STATUS);
 
-	for (i = 0; i < 4; i++) {
-		ecc = this->read_word(this->base + ONENAND_REG_ECC_STATUS + i*2);
-		if (likely(!ecc))
-			continue;
-		if (ecc & FLEXONENAND_UNCORRECTABLE_ERROR)
-			return ONENAND_ECC_2BIT_ALL;
-		else
-			result = ONENAND_ECC_1BIT_ALL;
-	}
+	क्रम (i = 0; i < 4; i++) अणु
+		ecc = this->पढ़ो_word(this->base + ONEन_अंकD_REG_ECC_STATUS + i*2);
+		अगर (likely(!ecc))
+			जारी;
+		अगर (ecc & FLEXONEन_अंकD_UNCORRECTABLE_ERROR)
+			वापस ONEन_अंकD_ECC_2BIT_ALL;
+		अन्यथा
+			result = ONEन_अंकD_ECC_1BIT_ALL;
+	पूर्ण
 
-	return result;
-}
+	वापस result;
+पूर्ण
 
 /**
- * onenand_wait - [DEFAULT] wait until the command is done
- * @mtd:		MTD device structure
- * @state:		state to select the max. timeout value
+ * onenand_रुको - [DEFAULT] रुको until the command is करोne
+ * @mtd:		MTD device काष्ठाure
+ * @state:		state to select the max. समयout value
  *
- * Wait for command done. This applies to all OneNAND command
+ * Wait क्रम command करोne. This applies to all Oneन_अंकD command
  * Read can take up to 30us, erase up to 2ms and program up to 350us
- * according to general OneNAND specs
+ * according to general Oneन_अंकD specs
  */
-static int onenand_wait(struct mtd_info *mtd, int state)
-{
-	struct onenand_chip * this = mtd->priv;
-	unsigned long timeout;
-	unsigned int flags = ONENAND_INT_MASTER;
-	unsigned int interrupt = 0;
-	unsigned int ctrl;
+अटल पूर्णांक onenand_रुको(काष्ठा mtd_info *mtd, पूर्णांक state)
+अणु
+	काष्ठा onenand_chip * this = mtd->priv;
+	अचिन्हित दीर्घ समयout;
+	अचिन्हित पूर्णांक flags = ONEन_अंकD_INT_MASTER;
+	अचिन्हित पूर्णांक पूर्णांकerrupt = 0;
+	अचिन्हित पूर्णांक ctrl;
 
 	/* The 20 msec is enough */
-	timeout = jiffies + msecs_to_jiffies(20);
-	while (time_before(jiffies, timeout)) {
-		interrupt = this->read_word(this->base + ONENAND_REG_INTERRUPT);
+	समयout = jअगरfies + msecs_to_jअगरfies(20);
+	जबतक (समय_beक्रमe(jअगरfies, समयout)) अणु
+		पूर्णांकerrupt = this->पढ़ो_word(this->base + ONEन_अंकD_REG_INTERRUPT);
 
-		if (interrupt & flags)
-			break;
+		अगर (पूर्णांकerrupt & flags)
+			अवरोध;
 
-		if (state != FL_READING && state != FL_PREPARING_ERASE)
+		अगर (state != FL_READING && state != FL_PREPARING_ERASE)
 			cond_resched();
-	}
-	/* To get correct interrupt status in timeout case */
-	interrupt = this->read_word(this->base + ONENAND_REG_INTERRUPT);
+	पूर्ण
+	/* To get correct पूर्णांकerrupt status in समयout हाल */
+	पूर्णांकerrupt = this->पढ़ो_word(this->base + ONEन_अंकD_REG_INTERRUPT);
 
-	ctrl = this->read_word(this->base + ONENAND_REG_CTRL_STATUS);
+	ctrl = this->पढ़ो_word(this->base + ONEन_अंकD_REG_CTRL_STATUS);
 
 	/*
 	 * In the Spec. it checks the controller status first
-	 * However if you get the correct information in case of
-	 * power off recovery (POR) test, it should read ECC status first
+	 * However अगर you get the correct inक्रमmation in हाल of
+	 * घातer off recovery (POR) test, it should पढ़ो ECC status first
 	 */
-	if (interrupt & ONENAND_INT_READ) {
-		int ecc = onenand_read_ecc(this);
-		if (ecc) {
-			if (ecc & ONENAND_ECC_2BIT_ALL) {
-				printk(KERN_ERR "%s: ECC error = 0x%04x\n",
+	अगर (पूर्णांकerrupt & ONEन_अंकD_INT_READ) अणु
+		पूर्णांक ecc = onenand_पढ़ो_ecc(this);
+		अगर (ecc) अणु
+			अगर (ecc & ONEन_अंकD_ECC_2BIT_ALL) अणु
+				prपूर्णांकk(KERN_ERR "%s: ECC error = 0x%04x\n",
 					__func__, ecc);
 				mtd->ecc_stats.failed++;
-				return -EBADMSG;
-			} else if (ecc & ONENAND_ECC_1BIT_ALL) {
-				printk(KERN_DEBUG "%s: correctable ECC error = 0x%04x\n",
+				वापस -EBADMSG;
+			पूर्ण अन्यथा अगर (ecc & ONEन_अंकD_ECC_1BIT_ALL) अणु
+				prपूर्णांकk(KERN_DEBUG "%s: correctable ECC error = 0x%04x\n",
 					__func__, ecc);
 				mtd->ecc_stats.corrected++;
-			}
-		}
-	} else if (state == FL_READING) {
-		printk(KERN_ERR "%s: read timeout! ctrl=0x%04x intr=0x%04x\n",
-			__func__, ctrl, interrupt);
-		return -EIO;
-	}
+			पूर्ण
+		पूर्ण
+	पूर्ण अन्यथा अगर (state == FL_READING) अणु
+		prपूर्णांकk(KERN_ERR "%s: read timeout! ctrl=0x%04x intr=0x%04x\n",
+			__func__, ctrl, पूर्णांकerrupt);
+		वापस -EIO;
+	पूर्ण
 
-	if (state == FL_PREPARING_ERASE && !(interrupt & ONENAND_INT_ERASE)) {
-		printk(KERN_ERR "%s: mb erase timeout! ctrl=0x%04x intr=0x%04x\n",
-		       __func__, ctrl, interrupt);
-		return -EIO;
-	}
+	अगर (state == FL_PREPARING_ERASE && !(पूर्णांकerrupt & ONEन_अंकD_INT_ERASE)) अणु
+		prपूर्णांकk(KERN_ERR "%s: mb erase timeout! ctrl=0x%04x intr=0x%04x\n",
+		       __func__, ctrl, पूर्णांकerrupt);
+		वापस -EIO;
+	पूर्ण
 
-	if (!(interrupt & ONENAND_INT_MASTER)) {
-		printk(KERN_ERR "%s: timeout! ctrl=0x%04x intr=0x%04x\n",
-		       __func__, ctrl, interrupt);
-		return -EIO;
-	}
+	अगर (!(पूर्णांकerrupt & ONEन_अंकD_INT_MASTER)) अणु
+		prपूर्णांकk(KERN_ERR "%s: timeout! ctrl=0x%04x intr=0x%04x\n",
+		       __func__, ctrl, पूर्णांकerrupt);
+		वापस -EIO;
+	पूर्ण
 
 	/* If there's controller error, it's a real error */
-	if (ctrl & ONENAND_CTRL_ERROR) {
-		printk(KERN_ERR "%s: controller error = 0x%04x\n",
+	अगर (ctrl & ONEन_अंकD_CTRL_ERROR) अणु
+		prपूर्णांकk(KERN_ERR "%s: controller error = 0x%04x\n",
 			__func__, ctrl);
-		if (ctrl & ONENAND_CTRL_LOCK)
-			printk(KERN_ERR "%s: it's locked error.\n", __func__);
-		return -EIO;
-	}
+		अगर (ctrl & ONEन_अंकD_CTRL_LOCK)
+			prपूर्णांकk(KERN_ERR "%s: it's locked error.\n", __func__);
+		वापस -EIO;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * onenand_interrupt - [DEFAULT] onenand interrupt handler
- * @irq:		onenand interrupt number
- * @dev_id:	interrupt data
+ * onenand_पूर्णांकerrupt - [DEFAULT] onenand पूर्णांकerrupt handler
+ * @irq:		onenand पूर्णांकerrupt number
+ * @dev_id:	पूर्णांकerrupt data
  *
  * complete the work
  */
-static irqreturn_t onenand_interrupt(int irq, void *data)
-{
-	struct onenand_chip *this = data;
+अटल irqवापस_t onenand_पूर्णांकerrupt(पूर्णांक irq, व्योम *data)
+अणु
+	काष्ठा onenand_chip *this = data;
 
-	/* To handle shared interrupt */
-	if (!this->complete.done)
+	/* To handle shared पूर्णांकerrupt */
+	अगर (!this->complete.करोne)
 		complete(&this->complete);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
 /*
- * onenand_interrupt_wait - [DEFAULT] wait until the command is done
- * @mtd:		MTD device structure
- * @state:		state to select the max. timeout value
+ * onenand_पूर्णांकerrupt_रुको - [DEFAULT] रुको until the command is करोne
+ * @mtd:		MTD device काष्ठाure
+ * @state:		state to select the max. समयout value
  *
- * Wait for command done.
+ * Wait क्रम command करोne.
  */
-static int onenand_interrupt_wait(struct mtd_info *mtd, int state)
-{
-	struct onenand_chip *this = mtd->priv;
+अटल पूर्णांक onenand_पूर्णांकerrupt_रुको(काष्ठा mtd_info *mtd, पूर्णांक state)
+अणु
+	काष्ठा onenand_chip *this = mtd->priv;
 
-	wait_for_completion(&this->complete);
+	रुको_क्रम_completion(&this->complete);
 
-	return onenand_wait(mtd, state);
-}
+	वापस onenand_रुको(mtd, state);
+पूर्ण
 
 /*
- * onenand_try_interrupt_wait - [DEFAULT] try interrupt wait
- * @mtd:		MTD device structure
- * @state:		state to select the max. timeout value
+ * onenand_try_पूर्णांकerrupt_रुको - [DEFAULT] try पूर्णांकerrupt रुको
+ * @mtd:		MTD device काष्ठाure
+ * @state:		state to select the max. समयout value
  *
- * Try interrupt based wait (It is used one-time)
+ * Try पूर्णांकerrupt based रुको (It is used one-समय)
  */
-static int onenand_try_interrupt_wait(struct mtd_info *mtd, int state)
-{
-	struct onenand_chip *this = mtd->priv;
-	unsigned long remain, timeout;
+अटल पूर्णांक onenand_try_पूर्णांकerrupt_रुको(काष्ठा mtd_info *mtd, पूर्णांक state)
+अणु
+	काष्ठा onenand_chip *this = mtd->priv;
+	अचिन्हित दीर्घ reमुख्य, समयout;
 
-	/* We use interrupt wait first */
-	this->wait = onenand_interrupt_wait;
+	/* We use पूर्णांकerrupt रुको first */
+	this->रुको = onenand_पूर्णांकerrupt_रुको;
 
-	timeout = msecs_to_jiffies(100);
-	remain = wait_for_completion_timeout(&this->complete, timeout);
-	if (!remain) {
-		printk(KERN_INFO "OneNAND: There's no interrupt. "
+	समयout = msecs_to_jअगरfies(100);
+	reमुख्य = रुको_क्रम_completion_समयout(&this->complete, समयout);
+	अगर (!reमुख्य) अणु
+		prपूर्णांकk(KERN_INFO "OneNAND: There's no interrupt. "
 				"We use the normal wait\n");
 
 		/* Release the irq */
-		free_irq(this->irq, this);
+		मुक्त_irq(this->irq, this);
 
-		this->wait = onenand_wait;
-	}
+		this->रुको = onenand_रुको;
+	पूर्ण
 
-	return onenand_wait(mtd, state);
-}
+	वापस onenand_रुको(mtd, state);
+पूर्ण
 
 /*
- * onenand_setup_wait - [OneNAND Interface] setup onenand wait method
- * @mtd:		MTD device structure
+ * onenand_setup_रुको - [Oneन_अंकD Interface] setup onenand रुको method
+ * @mtd:		MTD device काष्ठाure
  *
- * There's two method to wait onenand work
- * 1. polling - read interrupt status register
- * 2. interrupt - use the kernel interrupt method
+ * There's two method to रुको onenand work
+ * 1. polling - पढ़ो पूर्णांकerrupt status रेजिस्टर
+ * 2. पूर्णांकerrupt - use the kernel पूर्णांकerrupt method
  */
-static void onenand_setup_wait(struct mtd_info *mtd)
-{
-	struct onenand_chip *this = mtd->priv;
-	int syscfg;
+अटल व्योम onenand_setup_रुको(काष्ठा mtd_info *mtd)
+अणु
+	काष्ठा onenand_chip *this = mtd->priv;
+	पूर्णांक syscfg;
 
 	init_completion(&this->complete);
 
-	if (this->irq <= 0) {
-		this->wait = onenand_wait;
-		return;
-	}
+	अगर (this->irq <= 0) अणु
+		this->रुको = onenand_रुको;
+		वापस;
+	पूर्ण
 
-	if (request_irq(this->irq, &onenand_interrupt,
-				IRQF_SHARED, "onenand", this)) {
-		/* If we can't get irq, use the normal wait */
-		this->wait = onenand_wait;
-		return;
-	}
+	अगर (request_irq(this->irq, &onenand_पूर्णांकerrupt,
+				IRQF_SHARED, "onenand", this)) अणु
+		/* If we can't get irq, use the normal रुको */
+		this->रुको = onenand_रुको;
+		वापस;
+	पूर्ण
 
-	/* Enable interrupt */
-	syscfg = this->read_word(this->base + ONENAND_REG_SYS_CFG1);
-	syscfg |= ONENAND_SYS_CFG1_IOBE;
-	this->write_word(syscfg, this->base + ONENAND_REG_SYS_CFG1);
+	/* Enable पूर्णांकerrupt */
+	syscfg = this->पढ़ो_word(this->base + ONEन_अंकD_REG_SYS_CFG1);
+	syscfg |= ONEन_अंकD_SYS_CFG1_IOBE;
+	this->ग_लिखो_word(syscfg, this->base + ONEन_अंकD_REG_SYS_CFG1);
 
-	this->wait = onenand_try_interrupt_wait;
-}
+	this->रुको = onenand_try_पूर्णांकerrupt_रुको;
+पूर्ण
 
 /**
  * onenand_bufferram_offset - [DEFAULT] BufferRAM offset
- * @mtd:		MTD data structure
+ * @mtd:		MTD data काष्ठाure
  * @area:		BufferRAM area
- * @return		offset given area
+ * @वापस		offset given area
  *
  * Return BufferRAM offset given area
  */
-static inline int onenand_bufferram_offset(struct mtd_info *mtd, int area)
-{
-	struct onenand_chip *this = mtd->priv;
+अटल अंतरभूत पूर्णांक onenand_bufferram_offset(काष्ठा mtd_info *mtd, पूर्णांक area)
+अणु
+	काष्ठा onenand_chip *this = mtd->priv;
 
-	if (ONENAND_CURRENT_BUFFERRAM(this)) {
+	अगर (ONEन_अंकD_CURRENT_BUFFERRAM(this)) अणु
 		/* Note: the 'this->writesize' is a real page size */
-		if (area == ONENAND_DATARAM)
-			return this->writesize;
-		if (area == ONENAND_SPARERAM)
-			return mtd->oobsize;
-	}
+		अगर (area == ONEन_अंकD_DATARAM)
+			वापस this->ग_लिखोsize;
+		अगर (area == ONEन_अंकD_SPARERAM)
+			वापस mtd->oobsize;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * onenand_read_bufferram - [OneNAND Interface] Read the bufferram area
- * @mtd:		MTD data structure
+ * onenand_पढ़ो_bufferram - [Oneन_अंकD Interface] Read the bufferram area
+ * @mtd:		MTD data काष्ठाure
  * @area:		BufferRAM area
  * @buffer:	the databuffer to put/get data
- * @offset:	offset to read from or write to
- * @count:		number of bytes to read/write
+ * @offset:	offset to पढ़ो from or ग_लिखो to
+ * @count:		number of bytes to पढ़ो/ग_लिखो
  *
  * Read the BufferRAM area
  */
-static int onenand_read_bufferram(struct mtd_info *mtd, int area,
-		unsigned char *buffer, int offset, size_t count)
-{
-	struct onenand_chip *this = mtd->priv;
-	void __iomem *bufferram;
+अटल पूर्णांक onenand_पढ़ो_bufferram(काष्ठा mtd_info *mtd, पूर्णांक area,
+		अचिन्हित अक्षर *buffer, पूर्णांक offset, माप_प्रकार count)
+अणु
+	काष्ठा onenand_chip *this = mtd->priv;
+	व्योम __iomem *bufferram;
 
 	bufferram = this->base + area;
 
 	bufferram += onenand_bufferram_offset(mtd, area);
 
-	if (ONENAND_CHECK_BYTE_ACCESS(count)) {
-		unsigned short word;
+	अगर (ONEन_अंकD_CHECK_BYTE_ACCESS(count)) अणु
+		अचिन्हित लघु word;
 
 		/* Align with word(16-bit) size */
 		count--;
 
 		/* Read word and save byte */
-		word = this->read_word(bufferram + offset + count);
+		word = this->पढ़ो_word(bufferram + offset + count);
 		buffer[count] = (word & 0xff);
-	}
+	पूर्ण
 
-	memcpy(buffer, bufferram + offset, count);
+	स_नकल(buffer, bufferram + offset, count);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * onenand_sync_read_bufferram - [OneNAND Interface] Read the bufferram area with Sync. Burst mode
- * @mtd:		MTD data structure
+ * onenand_sync_पढ़ो_bufferram - [Oneन_अंकD Interface] Read the bufferram area with Sync. Burst mode
+ * @mtd:		MTD data काष्ठाure
  * @area:		BufferRAM area
  * @buffer:	the databuffer to put/get data
- * @offset:	offset to read from or write to
- * @count:		number of bytes to read/write
+ * @offset:	offset to पढ़ो from or ग_लिखो to
+ * @count:		number of bytes to पढ़ो/ग_लिखो
  *
  * Read the BufferRAM area with Sync. Burst Mode
  */
-static int onenand_sync_read_bufferram(struct mtd_info *mtd, int area,
-		unsigned char *buffer, int offset, size_t count)
-{
-	struct onenand_chip *this = mtd->priv;
-	void __iomem *bufferram;
+अटल पूर्णांक onenand_sync_पढ़ो_bufferram(काष्ठा mtd_info *mtd, पूर्णांक area,
+		अचिन्हित अक्षर *buffer, पूर्णांक offset, माप_प्रकार count)
+अणु
+	काष्ठा onenand_chip *this = mtd->priv;
+	व्योम __iomem *bufferram;
 
 	bufferram = this->base + area;
 
 	bufferram += onenand_bufferram_offset(mtd, area);
 
-	this->mmcontrol(mtd, ONENAND_SYS_CFG1_SYNC_READ);
+	this->mmcontrol(mtd, ONEन_अंकD_SYS_CFG1_SYNC_READ);
 
-	if (ONENAND_CHECK_BYTE_ACCESS(count)) {
-		unsigned short word;
+	अगर (ONEन_अंकD_CHECK_BYTE_ACCESS(count)) अणु
+		अचिन्हित लघु word;
 
 		/* Align with word(16-bit) size */
 		count--;
 
 		/* Read word and save byte */
-		word = this->read_word(bufferram + offset + count);
+		word = this->पढ़ो_word(bufferram + offset + count);
 		buffer[count] = (word & 0xff);
-	}
+	पूर्ण
 
-	memcpy(buffer, bufferram + offset, count);
+	स_नकल(buffer, bufferram + offset, count);
 
 	this->mmcontrol(mtd, 0);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * onenand_write_bufferram - [OneNAND Interface] Write the bufferram area
- * @mtd:		MTD data structure
+ * onenand_ग_लिखो_bufferram - [Oneन_अंकD Interface] Write the bufferram area
+ * @mtd:		MTD data काष्ठाure
  * @area:		BufferRAM area
  * @buffer:	the databuffer to put/get data
- * @offset:	offset to read from or write to
- * @count:		number of bytes to read/write
+ * @offset:	offset to पढ़ो from or ग_लिखो to
+ * @count:		number of bytes to पढ़ो/ग_लिखो
  *
  * Write the BufferRAM area
  */
-static int onenand_write_bufferram(struct mtd_info *mtd, int area,
-		const unsigned char *buffer, int offset, size_t count)
-{
-	struct onenand_chip *this = mtd->priv;
-	void __iomem *bufferram;
+अटल पूर्णांक onenand_ग_लिखो_bufferram(काष्ठा mtd_info *mtd, पूर्णांक area,
+		स्थिर अचिन्हित अक्षर *buffer, पूर्णांक offset, माप_प्रकार count)
+अणु
+	काष्ठा onenand_chip *this = mtd->priv;
+	व्योम __iomem *bufferram;
 
 	bufferram = this->base + area;
 
 	bufferram += onenand_bufferram_offset(mtd, area);
 
-	if (ONENAND_CHECK_BYTE_ACCESS(count)) {
-		unsigned short word;
-		int byte_offset;
+	अगर (ONEन_अंकD_CHECK_BYTE_ACCESS(count)) अणु
+		अचिन्हित लघु word;
+		पूर्णांक byte_offset;
 
 		/* Align with word(16-bit) size */
 		count--;
@@ -852,1087 +853,1087 @@ static int onenand_write_bufferram(struct mtd_info *mtd, int area,
 		byte_offset = offset + count;
 
 		/* Read word and save byte */
-		word = this->read_word(bufferram + byte_offset);
+		word = this->पढ़ो_word(bufferram + byte_offset);
 		word = (word & ~0xff) | buffer[count];
-		this->write_word(word, bufferram + byte_offset);
-	}
+		this->ग_लिखो_word(word, bufferram + byte_offset);
+	पूर्ण
 
-	memcpy(bufferram + offset, buffer, count);
+	स_नकल(bufferram + offset, buffer, count);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * onenand_get_2x_blockpage - [GENERIC] Get blockpage at 2x program mode
- * @mtd:		MTD data structure
+ * @mtd:		MTD data काष्ठाure
  * @addr:		address to check
- * @return		blockpage address
+ * @वापस		blockpage address
  *
  * Get blockpage address at 2x program mode
  */
-static int onenand_get_2x_blockpage(struct mtd_info *mtd, loff_t addr)
-{
-	struct onenand_chip *this = mtd->priv;
-	int blockpage, block, page;
+अटल पूर्णांक onenand_get_2x_blockpage(काष्ठा mtd_info *mtd, loff_t addr)
+अणु
+	काष्ठा onenand_chip *this = mtd->priv;
+	पूर्णांक blockpage, block, page;
 
 	/* Calculate the even block number */
-	block = (int) (addr >> this->erase_shift) & ~1;
+	block = (पूर्णांक) (addr >> this->erase_shअगरt) & ~1;
 	/* Is it the odd plane? */
-	if (addr & this->writesize)
+	अगर (addr & this->ग_लिखोsize)
 		block++;
-	page = (int) (addr >> (this->page_shift + 1)) & this->page_mask;
+	page = (पूर्णांक) (addr >> (this->page_shअगरt + 1)) & this->page_mask;
 	blockpage = (block << 7) | page;
 
-	return blockpage;
-}
+	वापस blockpage;
+पूर्ण
 
 /**
- * onenand_check_bufferram - [GENERIC] Check BufferRAM information
- * @mtd:		MTD data structure
+ * onenand_check_bufferram - [GENERIC] Check BufferRAM inक्रमmation
+ * @mtd:		MTD data काष्ठाure
  * @addr:		address to check
- * @return		1 if there are valid data, otherwise 0
+ * @वापस		1 अगर there are valid data, otherwise 0
  *
- * Check bufferram if there is data we required
+ * Check bufferram अगर there is data we required
  */
-static int onenand_check_bufferram(struct mtd_info *mtd, loff_t addr)
-{
-	struct onenand_chip *this = mtd->priv;
-	int blockpage, found = 0;
-	unsigned int i;
+अटल पूर्णांक onenand_check_bufferram(काष्ठा mtd_info *mtd, loff_t addr)
+अणु
+	काष्ठा onenand_chip *this = mtd->priv;
+	पूर्णांक blockpage, found = 0;
+	अचिन्हित पूर्णांक i;
 
-	if (ONENAND_IS_2PLANE(this))
+	अगर (ONEन_अंकD_IS_2PLANE(this))
 		blockpage = onenand_get_2x_blockpage(mtd, addr);
-	else
-		blockpage = (int) (addr >> this->page_shift);
+	अन्यथा
+		blockpage = (पूर्णांक) (addr >> this->page_shअगरt);
 
 	/* Is there valid data? */
-	i = ONENAND_CURRENT_BUFFERRAM(this);
-	if (this->bufferram[i].blockpage == blockpage)
+	i = ONEन_अंकD_CURRENT_BUFFERRAM(this);
+	अगर (this->bufferram[i].blockpage == blockpage)
 		found = 1;
-	else {
+	अन्यथा अणु
 		/* Check another BufferRAM */
-		i = ONENAND_NEXT_BUFFERRAM(this);
-		if (this->bufferram[i].blockpage == blockpage) {
-			ONENAND_SET_NEXT_BUFFERRAM(this);
+		i = ONEन_अंकD_NEXT_BUFFERRAM(this);
+		अगर (this->bufferram[i].blockpage == blockpage) अणु
+			ONEन_अंकD_SET_NEXT_BUFFERRAM(this);
 			found = 1;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (found && ONENAND_IS_DDP(this)) {
-		/* Select DataRAM for DDP */
-		int block = onenand_block(this, addr);
-		int value = onenand_bufferram_address(this, block);
-		this->write_word(value, this->base + ONENAND_REG_START_ADDRESS2);
-	}
+	अगर (found && ONEन_अंकD_IS_DDP(this)) अणु
+		/* Select DataRAM क्रम DDP */
+		पूर्णांक block = onenand_block(this, addr);
+		पूर्णांक value = onenand_bufferram_address(this, block);
+		this->ग_लिखो_word(value, this->base + ONEन_अंकD_REG_START_ADDRESS2);
+	पूर्ण
 
-	return found;
-}
+	वापस found;
+पूर्ण
 
 /**
- * onenand_update_bufferram - [GENERIC] Update BufferRAM information
- * @mtd:		MTD data structure
+ * onenand_update_bufferram - [GENERIC] Update BufferRAM inक्रमmation
+ * @mtd:		MTD data काष्ठाure
  * @addr:		address to update
  * @valid:		valid flag
  *
- * Update BufferRAM information
+ * Update BufferRAM inक्रमmation
  */
-static void onenand_update_bufferram(struct mtd_info *mtd, loff_t addr,
-		int valid)
-{
-	struct onenand_chip *this = mtd->priv;
-	int blockpage;
-	unsigned int i;
+अटल व्योम onenand_update_bufferram(काष्ठा mtd_info *mtd, loff_t addr,
+		पूर्णांक valid)
+अणु
+	काष्ठा onenand_chip *this = mtd->priv;
+	पूर्णांक blockpage;
+	अचिन्हित पूर्णांक i;
 
-	if (ONENAND_IS_2PLANE(this))
+	अगर (ONEन_अंकD_IS_2PLANE(this))
 		blockpage = onenand_get_2x_blockpage(mtd, addr);
-	else
-		blockpage = (int) (addr >> this->page_shift);
+	अन्यथा
+		blockpage = (पूर्णांक) (addr >> this->page_shअगरt);
 
 	/* Invalidate another BufferRAM */
-	i = ONENAND_NEXT_BUFFERRAM(this);
-	if (this->bufferram[i].blockpage == blockpage)
+	i = ONEन_अंकD_NEXT_BUFFERRAM(this);
+	अगर (this->bufferram[i].blockpage == blockpage)
 		this->bufferram[i].blockpage = -1;
 
 	/* Update BufferRAM */
-	i = ONENAND_CURRENT_BUFFERRAM(this);
-	if (valid)
+	i = ONEन_अंकD_CURRENT_BUFFERRAM(this);
+	अगर (valid)
 		this->bufferram[i].blockpage = blockpage;
-	else
+	अन्यथा
 		this->bufferram[i].blockpage = -1;
-}
+पूर्ण
 
 /**
- * onenand_invalidate_bufferram - [GENERIC] Invalidate BufferRAM information
- * @mtd:		MTD data structure
+ * onenand_invalidate_bufferram - [GENERIC] Invalidate BufferRAM inक्रमmation
+ * @mtd:		MTD data काष्ठाure
  * @addr:		start address to invalidate
  * @len:		length to invalidate
  *
- * Invalidate BufferRAM information
+ * Invalidate BufferRAM inक्रमmation
  */
-static void onenand_invalidate_bufferram(struct mtd_info *mtd, loff_t addr,
-		unsigned int len)
-{
-	struct onenand_chip *this = mtd->priv;
-	int i;
+अटल व्योम onenand_invalidate_bufferram(काष्ठा mtd_info *mtd, loff_t addr,
+		अचिन्हित पूर्णांक len)
+अणु
+	काष्ठा onenand_chip *this = mtd->priv;
+	पूर्णांक i;
 	loff_t end_addr = addr + len;
 
 	/* Invalidate BufferRAM */
-	for (i = 0; i < MAX_BUFFERRAM; i++) {
-		loff_t buf_addr = this->bufferram[i].blockpage << this->page_shift;
-		if (buf_addr >= addr && buf_addr < end_addr)
+	क्रम (i = 0; i < MAX_BUFFERRAM; i++) अणु
+		loff_t buf_addr = this->bufferram[i].blockpage << this->page_shअगरt;
+		अगर (buf_addr >= addr && buf_addr < end_addr)
 			this->bufferram[i].blockpage = -1;
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
- * onenand_get_device - [GENERIC] Get chip for selected access
- * @mtd:		MTD device structure
+ * onenand_get_device - [GENERIC] Get chip क्रम selected access
+ * @mtd:		MTD device काष्ठाure
  * @new_state:	the state which is requested
  *
- * Get the device and lock it for exclusive access
+ * Get the device and lock it क्रम exclusive access
  */
-static int onenand_get_device(struct mtd_info *mtd, int new_state)
-{
-	struct onenand_chip *this = mtd->priv;
-	DECLARE_WAITQUEUE(wait, current);
+अटल पूर्णांक onenand_get_device(काष्ठा mtd_info *mtd, पूर्णांक new_state)
+अणु
+	काष्ठा onenand_chip *this = mtd->priv;
+	DECLARE_WAITQUEUE(रुको, current);
 
 	/*
-	 * Grab the lock and see if the device is available
+	 * Grab the lock and see अगर the device is available
 	 */
-	while (1) {
+	जबतक (1) अणु
 		spin_lock(&this->chip_lock);
-		if (this->state == FL_READY) {
+		अगर (this->state == FL_READY) अणु
 			this->state = new_state;
 			spin_unlock(&this->chip_lock);
-			if (new_state != FL_PM_SUSPENDED && this->enable)
+			अगर (new_state != FL_PM_SUSPENDED && this->enable)
 				this->enable(mtd);
-			break;
-		}
-		if (new_state == FL_PM_SUSPENDED) {
+			अवरोध;
+		पूर्ण
+		अगर (new_state == FL_PM_SUSPENDED) अणु
 			spin_unlock(&this->chip_lock);
-			return (this->state == FL_PM_SUSPENDED) ? 0 : -EAGAIN;
-		}
+			वापस (this->state == FL_PM_SUSPENDED) ? 0 : -EAGAIN;
+		पूर्ण
 		set_current_state(TASK_UNINTERRUPTIBLE);
-		add_wait_queue(&this->wq, &wait);
+		add_रुको_queue(&this->wq, &रुको);
 		spin_unlock(&this->chip_lock);
 		schedule();
-		remove_wait_queue(&this->wq, &wait);
-	}
+		हटाओ_रुको_queue(&this->wq, &रुको);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * onenand_release_device - [GENERIC] release chip
- * @mtd:		MTD device structure
+ * @mtd:		MTD device काष्ठाure
  *
- * Deselect, release chip lock and wake up anyone waiting on the device
+ * Deselect, release chip lock and wake up anyone रुकोing on the device
  */
-static void onenand_release_device(struct mtd_info *mtd)
-{
-	struct onenand_chip *this = mtd->priv;
+अटल व्योम onenand_release_device(काष्ठा mtd_info *mtd)
+अणु
+	काष्ठा onenand_chip *this = mtd->priv;
 
-	if (this->state != FL_PM_SUSPENDED && this->disable)
+	अगर (this->state != FL_PM_SUSPENDED && this->disable)
 		this->disable(mtd);
 	/* Release the chip */
 	spin_lock(&this->chip_lock);
 	this->state = FL_READY;
 	wake_up(&this->wq);
 	spin_unlock(&this->chip_lock);
-}
+पूर्ण
 
 /**
- * onenand_transfer_auto_oob - [INTERN] oob auto-placement transfer
- * @mtd:		MTD device structure
+ * onenand_transfer_स्वतः_oob - [INTERN] oob स्वतः-placement transfer
+ * @mtd:		MTD device काष्ठाure
  * @buf:		destination address
- * @column:	oob offset to read from
- * @thislen:	oob length to read
+ * @column:	oob offset to पढ़ो from
+ * @thislen:	oob length to पढ़ो
  */
-static int onenand_transfer_auto_oob(struct mtd_info *mtd, uint8_t *buf, int column,
-				int thislen)
-{
-	struct onenand_chip *this = mtd->priv;
+अटल पूर्णांक onenand_transfer_स्वतः_oob(काष्ठा mtd_info *mtd, uपूर्णांक8_t *buf, पूर्णांक column,
+				पूर्णांक thislen)
+अणु
+	काष्ठा onenand_chip *this = mtd->priv;
 
-	this->read_bufferram(mtd, ONENAND_SPARERAM, this->oob_buf, 0,
+	this->पढ़ो_bufferram(mtd, ONEन_अंकD_SPARERAM, this->oob_buf, 0,
 			     mtd->oobsize);
-	return mtd_ooblayout_get_databytes(mtd, buf, this->oob_buf,
+	वापस mtd_ooblayout_get_databytes(mtd, buf, this->oob_buf,
 					   column, thislen);
-}
+पूर्ण
 
 /**
- * onenand_recover_lsb - [Flex-OneNAND] Recover LSB page data
- * @mtd:		MTD device structure
+ * onenand_recover_lsb - [Flex-Oneन_अंकD] Recover LSB page data
+ * @mtd:		MTD device काष्ठाure
  * @addr:		address to recover
- * @status:	return value from onenand_wait / onenand_bbt_wait
+ * @status:	वापस value from onenand_रुको / onenand_bbt_रुको
  *
- * MLC NAND Flash cell has paired pages - LSB page and MSB page. LSB page has
+ * MLC न_अंकD Flash cell has paired pages - LSB page and MSB page. LSB page has
  * lower page address and MSB page has higher page address in paired pages.
- * If power off occurs during MSB page program, the paired LSB page data can
- * become corrupt. LSB page recovery read is a way to read LSB page though page
+ * If घातer off occurs during MSB page program, the paired LSB page data can
+ * become corrupt. LSB page recovery पढ़ो is a way to पढ़ो LSB page though page
  * data are corrupted. When uncorrectable error occurs as a result of LSB page
- * read after power up, issue LSB page recovery read.
+ * पढ़ो after घातer up, issue LSB page recovery पढ़ो.
  */
-static int onenand_recover_lsb(struct mtd_info *mtd, loff_t addr, int status)
-{
-	struct onenand_chip *this = mtd->priv;
-	int i;
+अटल पूर्णांक onenand_recover_lsb(काष्ठा mtd_info *mtd, loff_t addr, पूर्णांक status)
+अणु
+	काष्ठा onenand_chip *this = mtd->priv;
+	पूर्णांक i;
 
-	/* Recovery is only for Flex-OneNAND */
-	if (!FLEXONENAND(this))
-		return status;
+	/* Recovery is only क्रम Flex-Oneन_अंकD */
+	अगर (!FLEXONEन_अंकD(this))
+		वापस status;
 
-	/* check if we failed due to uncorrectable error */
-	if (!mtd_is_eccerr(status) && status != ONENAND_BBT_READ_ECC_ERROR)
-		return status;
+	/* check अगर we failed due to uncorrectable error */
+	अगर (!mtd_is_eccerr(status) && status != ONEन_अंकD_BBT_READ_ECC_ERROR)
+		वापस status;
 
-	/* check if address lies in MLC region */
+	/* check अगर address lies in MLC region */
 	i = flexonenand_region(mtd, addr);
-	if (mtd->eraseregions[i].erasesize < (1 << this->erase_shift))
-		return status;
+	अगर (mtd->eraseregions[i].erasesize < (1 << this->erase_shअगरt))
+		वापस status;
 
-	/* We are attempting to reread, so decrement stats.failed
-	 * which was incremented by onenand_wait due to read failure
+	/* We are attempting to reपढ़ो, so decrement stats.failed
+	 * which was incremented by onenand_रुको due to पढ़ो failure
 	 */
-	printk(KERN_INFO "%s: Attempting to recover from uncorrectable read\n",
+	prपूर्णांकk(KERN_INFO "%s: Attempting to recover from uncorrectable read\n",
 		__func__);
 	mtd->ecc_stats.failed--;
 
 	/* Issue the LSB page recovery command */
-	this->command(mtd, FLEXONENAND_CMD_RECOVER_LSB, addr, this->writesize);
-	return this->wait(mtd, FL_READING);
-}
+	this->command(mtd, FLEXONEन_अंकD_CMD_RECOVER_LSB, addr, this->ग_लिखोsize);
+	वापस this->रुको(mtd, FL_READING);
+पूर्ण
 
 /**
- * onenand_mlc_read_ops_nolock - MLC OneNAND read main and/or out-of-band
- * @mtd:		MTD device structure
- * @from:		offset to read from
- * @ops:		oob operation description structure
+ * onenand_mlc_पढ़ो_ops_nolock - MLC Oneन_अंकD पढ़ो मुख्य and/or out-of-band
+ * @mtd:		MTD device काष्ठाure
+ * @from:		offset to पढ़ो from
+ * @ops:		oob operation description काष्ठाure
  *
- * MLC OneNAND / Flex-OneNAND has 4KB page size and 4KB dataram.
- * So, read-while-load is not present.
+ * MLC Oneन_अंकD / Flex-Oneन_अंकD has 4KB page size and 4KB dataram.
+ * So, पढ़ो-जबतक-load is not present.
  */
-static int onenand_mlc_read_ops_nolock(struct mtd_info *mtd, loff_t from,
-				struct mtd_oob_ops *ops)
-{
-	struct onenand_chip *this = mtd->priv;
-	struct mtd_ecc_stats stats;
-	size_t len = ops->len;
-	size_t ooblen = ops->ooblen;
-	u_char *buf = ops->datbuf;
-	u_char *oobbuf = ops->oobbuf;
-	int read = 0, column, thislen;
-	int oobread = 0, oobcolumn, thisooblen, oobsize;
-	int ret = 0;
-	int writesize = this->writesize;
+अटल पूर्णांक onenand_mlc_पढ़ो_ops_nolock(काष्ठा mtd_info *mtd, loff_t from,
+				काष्ठा mtd_oob_ops *ops)
+अणु
+	काष्ठा onenand_chip *this = mtd->priv;
+	काष्ठा mtd_ecc_stats stats;
+	माप_प्रकार len = ops->len;
+	माप_प्रकार ooblen = ops->ooblen;
+	u_अक्षर *buf = ops->datbuf;
+	u_अक्षर *oobbuf = ops->oobbuf;
+	पूर्णांक पढ़ो = 0, column, thislen;
+	पूर्णांक oobपढ़ो = 0, oobcolumn, thisooblen, oobsize;
+	पूर्णांक ret = 0;
+	पूर्णांक ग_लिखोsize = this->ग_लिखोsize;
 
-	pr_debug("%s: from = 0x%08x, len = %i\n", __func__, (unsigned int)from,
-			(int)len);
+	pr_debug("%s: from = 0x%08x, len = %i\n", __func__, (अचिन्हित पूर्णांक)from,
+			(पूर्णांक)len);
 
 	oobsize = mtd_oobavail(mtd, ops);
 	oobcolumn = from & (mtd->oobsize - 1);
 
-	/* Do not allow reads past end of device */
-	if (from + len > mtd->size) {
-		printk(KERN_ERR "%s: Attempt read beyond end of device\n",
+	/* Do not allow पढ़ोs past end of device */
+	अगर (from + len > mtd->size) अणु
+		prपूर्णांकk(KERN_ERR "%s: Attempt read beyond end of device\n",
 			__func__);
 		ops->retlen = 0;
 		ops->oobretlen = 0;
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	stats = mtd->ecc_stats;
 
-	while (read < len) {
+	जबतक (पढ़ो < len) अणु
 		cond_resched();
 
-		thislen = min_t(int, writesize, len - read);
+		thislen = min_t(पूर्णांक, ग_लिखोsize, len - पढ़ो);
 
-		column = from & (writesize - 1);
-		if (column + thislen > writesize)
-			thislen = writesize - column;
+		column = from & (ग_लिखोsize - 1);
+		अगर (column + thislen > ग_लिखोsize)
+			thislen = ग_लिखोsize - column;
 
-		if (!onenand_check_bufferram(mtd, from)) {
-			this->command(mtd, ONENAND_CMD_READ, from, writesize);
+		अगर (!onenand_check_bufferram(mtd, from)) अणु
+			this->command(mtd, ONEन_अंकD_CMD_READ, from, ग_लिखोsize);
 
-			ret = this->wait(mtd, FL_READING);
-			if (unlikely(ret))
+			ret = this->रुको(mtd, FL_READING);
+			अगर (unlikely(ret))
 				ret = onenand_recover_lsb(mtd, from, ret);
 			onenand_update_bufferram(mtd, from, !ret);
-			if (mtd_is_eccerr(ret))
+			अगर (mtd_is_eccerr(ret))
 				ret = 0;
-			if (ret)
-				break;
-		}
+			अगर (ret)
+				अवरोध;
+		पूर्ण
 
-		this->read_bufferram(mtd, ONENAND_DATARAM, buf, column, thislen);
-		if (oobbuf) {
+		this->पढ़ो_bufferram(mtd, ONEन_अंकD_DATARAM, buf, column, thislen);
+		अगर (oobbuf) अणु
 			thisooblen = oobsize - oobcolumn;
-			thisooblen = min_t(int, thisooblen, ooblen - oobread);
+			thisooblen = min_t(पूर्णांक, thisooblen, ooblen - oobपढ़ो);
 
-			if (ops->mode == MTD_OPS_AUTO_OOB)
-				onenand_transfer_auto_oob(mtd, oobbuf, oobcolumn, thisooblen);
-			else
-				this->read_bufferram(mtd, ONENAND_SPARERAM, oobbuf, oobcolumn, thisooblen);
-			oobread += thisooblen;
+			अगर (ops->mode == MTD_OPS_AUTO_OOB)
+				onenand_transfer_स्वतः_oob(mtd, oobbuf, oobcolumn, thisooblen);
+			अन्यथा
+				this->पढ़ो_bufferram(mtd, ONEन_अंकD_SPARERAM, oobbuf, oobcolumn, thisooblen);
+			oobपढ़ो += thisooblen;
 			oobbuf += thisooblen;
 			oobcolumn = 0;
-		}
+		पूर्ण
 
-		read += thislen;
-		if (read == len)
-			break;
+		पढ़ो += thislen;
+		अगर (पढ़ो == len)
+			अवरोध;
 
 		from += thislen;
 		buf += thislen;
-	}
+	पूर्ण
 
 	/*
-	 * Return success, if no ECC failures, else -EBADMSG
+	 * Return success, अगर no ECC failures, अन्यथा -EBADMSG
 	 * fs driver will take care of that, because
 	 * retlen == desired len and result == -EBADMSG
 	 */
-	ops->retlen = read;
-	ops->oobretlen = oobread;
+	ops->retlen = पढ़ो;
+	ops->oobretlen = oobपढ़ो;
 
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	if (mtd->ecc_stats.failed - stats.failed)
-		return -EBADMSG;
+	अगर (mtd->ecc_stats.failed - stats.failed)
+		वापस -EBADMSG;
 
-	/* return max bitflips per ecc step; ONENANDs correct 1 bit only */
-	return mtd->ecc_stats.corrected != stats.corrected ? 1 : 0;
-}
+	/* वापस max bitflips per ecc step; ONEन_अंकDs correct 1 bit only */
+	वापस mtd->ecc_stats.corrected != stats.corrected ? 1 : 0;
+पूर्ण
 
 /**
- * onenand_read_ops_nolock - [OneNAND Interface] OneNAND read main and/or out-of-band
- * @mtd:		MTD device structure
- * @from:		offset to read from
- * @ops:		oob operation description structure
+ * onenand_पढ़ो_ops_nolock - [Oneन_अंकD Interface] Oneन_अंकD पढ़ो मुख्य and/or out-of-band
+ * @mtd:		MTD device काष्ठाure
+ * @from:		offset to पढ़ो from
+ * @ops:		oob operation description काष्ठाure
  *
- * OneNAND read main and/or out-of-band data
+ * Oneन_अंकD पढ़ो मुख्य and/or out-of-band data
  */
-static int onenand_read_ops_nolock(struct mtd_info *mtd, loff_t from,
-				struct mtd_oob_ops *ops)
-{
-	struct onenand_chip *this = mtd->priv;
-	struct mtd_ecc_stats stats;
-	size_t len = ops->len;
-	size_t ooblen = ops->ooblen;
-	u_char *buf = ops->datbuf;
-	u_char *oobbuf = ops->oobbuf;
-	int read = 0, column, thislen;
-	int oobread = 0, oobcolumn, thisooblen, oobsize;
-	int ret = 0, boundary = 0;
-	int writesize = this->writesize;
+अटल पूर्णांक onenand_पढ़ो_ops_nolock(काष्ठा mtd_info *mtd, loff_t from,
+				काष्ठा mtd_oob_ops *ops)
+अणु
+	काष्ठा onenand_chip *this = mtd->priv;
+	काष्ठा mtd_ecc_stats stats;
+	माप_प्रकार len = ops->len;
+	माप_प्रकार ooblen = ops->ooblen;
+	u_अक्षर *buf = ops->datbuf;
+	u_अक्षर *oobbuf = ops->oobbuf;
+	पूर्णांक पढ़ो = 0, column, thislen;
+	पूर्णांक oobपढ़ो = 0, oobcolumn, thisooblen, oobsize;
+	पूर्णांक ret = 0, boundary = 0;
+	पूर्णांक ग_लिखोsize = this->ग_लिखोsize;
 
-	pr_debug("%s: from = 0x%08x, len = %i\n", __func__, (unsigned int)from,
-			(int)len);
+	pr_debug("%s: from = 0x%08x, len = %i\n", __func__, (अचिन्हित पूर्णांक)from,
+			(पूर्णांक)len);
 
 	oobsize = mtd_oobavail(mtd, ops);
 	oobcolumn = from & (mtd->oobsize - 1);
 
-	/* Do not allow reads past end of device */
-	if ((from + len) > mtd->size) {
-		printk(KERN_ERR "%s: Attempt read beyond end of device\n",
+	/* Do not allow पढ़ोs past end of device */
+	अगर ((from + len) > mtd->size) अणु
+		prपूर्णांकk(KERN_ERR "%s: Attempt read beyond end of device\n",
 			__func__);
 		ops->retlen = 0;
 		ops->oobretlen = 0;
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	stats = mtd->ecc_stats;
 
-	/* Read-while-load method */
+	/* Read-जबतक-load method */
 
 	/* Do first load to bufferRAM */
-	if (read < len) {
-		if (!onenand_check_bufferram(mtd, from)) {
-			this->command(mtd, ONENAND_CMD_READ, from, writesize);
-			ret = this->wait(mtd, FL_READING);
+	अगर (पढ़ो < len) अणु
+		अगर (!onenand_check_bufferram(mtd, from)) अणु
+			this->command(mtd, ONEन_अंकD_CMD_READ, from, ग_लिखोsize);
+			ret = this->रुको(mtd, FL_READING);
 			onenand_update_bufferram(mtd, from, !ret);
-			if (mtd_is_eccerr(ret))
+			अगर (mtd_is_eccerr(ret))
 				ret = 0;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	thislen = min_t(int, writesize, len - read);
-	column = from & (writesize - 1);
-	if (column + thislen > writesize)
-		thislen = writesize - column;
+	thislen = min_t(पूर्णांक, ग_लिखोsize, len - पढ़ो);
+	column = from & (ग_लिखोsize - 1);
+	अगर (column + thislen > ग_लिखोsize)
+		thislen = ग_लिखोsize - column;
 
-	while (!ret) {
+	जबतक (!ret) अणु
 		/* If there is more to load then start next load */
 		from += thislen;
-		if (read + thislen < len) {
-			this->command(mtd, ONENAND_CMD_READ, from, writesize);
+		अगर (पढ़ो + thislen < len) अणु
+			this->command(mtd, ONEन_अंकD_CMD_READ, from, ग_लिखोsize);
 			/*
 			 * Chip boundary handling in DDP
-			 * Now we issued chip 1 read and pointed chip 1
-			 * bufferram so we have to point chip 0 bufferram.
+			 * Now we issued chip 1 पढ़ो and poपूर्णांकed chip 1
+			 * bufferram so we have to poपूर्णांक chip 0 bufferram.
 			 */
-			if (ONENAND_IS_DDP(this) &&
-			    unlikely(from == (this->chipsize >> 1))) {
-				this->write_word(ONENAND_DDP_CHIP0, this->base + ONENAND_REG_START_ADDRESS2);
+			अगर (ONEन_अंकD_IS_DDP(this) &&
+			    unlikely(from == (this->chipsize >> 1))) अणु
+				this->ग_लिखो_word(ONEन_अंकD_DDP_CHIP0, this->base + ONEन_अंकD_REG_START_ADDRESS2);
 				boundary = 1;
-			} else
+			पूर्ण अन्यथा
 				boundary = 0;
-			ONENAND_SET_PREV_BUFFERRAM(this);
-		}
-		/* While load is going, read from last bufferRAM */
-		this->read_bufferram(mtd, ONENAND_DATARAM, buf, column, thislen);
+			ONEन_अंकD_SET_PREV_BUFFERRAM(this);
+		पूर्ण
+		/* While load is going, पढ़ो from last bufferRAM */
+		this->पढ़ो_bufferram(mtd, ONEन_अंकD_DATARAM, buf, column, thislen);
 
-		/* Read oob area if needed */
-		if (oobbuf) {
+		/* Read oob area अगर needed */
+		अगर (oobbuf) अणु
 			thisooblen = oobsize - oobcolumn;
-			thisooblen = min_t(int, thisooblen, ooblen - oobread);
+			thisooblen = min_t(पूर्णांक, thisooblen, ooblen - oobपढ़ो);
 
-			if (ops->mode == MTD_OPS_AUTO_OOB)
-				onenand_transfer_auto_oob(mtd, oobbuf, oobcolumn, thisooblen);
-			else
-				this->read_bufferram(mtd, ONENAND_SPARERAM, oobbuf, oobcolumn, thisooblen);
-			oobread += thisooblen;
+			अगर (ops->mode == MTD_OPS_AUTO_OOB)
+				onenand_transfer_स्वतः_oob(mtd, oobbuf, oobcolumn, thisooblen);
+			अन्यथा
+				this->पढ़ो_bufferram(mtd, ONEन_अंकD_SPARERAM, oobbuf, oobcolumn, thisooblen);
+			oobपढ़ो += thisooblen;
 			oobbuf += thisooblen;
 			oobcolumn = 0;
-		}
+		पूर्ण
 
-		/* See if we are done */
-		read += thislen;
-		if (read == len)
-			break;
-		/* Set up for next read from bufferRAM */
-		if (unlikely(boundary))
-			this->write_word(ONENAND_DDP_CHIP1, this->base + ONENAND_REG_START_ADDRESS2);
-		ONENAND_SET_NEXT_BUFFERRAM(this);
+		/* See अगर we are करोne */
+		पढ़ो += thislen;
+		अगर (पढ़ो == len)
+			अवरोध;
+		/* Set up क्रम next पढ़ो from bufferRAM */
+		अगर (unlikely(boundary))
+			this->ग_लिखो_word(ONEन_अंकD_DDP_CHIP1, this->base + ONEन_अंकD_REG_START_ADDRESS2);
+		ONEन_अंकD_SET_NEXT_BUFFERRAM(this);
 		buf += thislen;
-		thislen = min_t(int, writesize, len - read);
+		thislen = min_t(पूर्णांक, ग_लिखोsize, len - पढ़ो);
 		column = 0;
 		cond_resched();
-		/* Now wait for load */
-		ret = this->wait(mtd, FL_READING);
+		/* Now रुको क्रम load */
+		ret = this->रुको(mtd, FL_READING);
 		onenand_update_bufferram(mtd, from, !ret);
-		if (mtd_is_eccerr(ret))
+		अगर (mtd_is_eccerr(ret))
 			ret = 0;
-	}
+	पूर्ण
 
 	/*
-	 * Return success, if no ECC failures, else -EBADMSG
+	 * Return success, अगर no ECC failures, अन्यथा -EBADMSG
 	 * fs driver will take care of that, because
 	 * retlen == desired len and result == -EBADMSG
 	 */
-	ops->retlen = read;
-	ops->oobretlen = oobread;
+	ops->retlen = पढ़ो;
+	ops->oobretlen = oobपढ़ो;
 
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	if (mtd->ecc_stats.failed - stats.failed)
-		return -EBADMSG;
+	अगर (mtd->ecc_stats.failed - stats.failed)
+		वापस -EBADMSG;
 
-	/* return max bitflips per ecc step; ONENANDs correct 1 bit only */
-	return mtd->ecc_stats.corrected != stats.corrected ? 1 : 0;
-}
+	/* वापस max bitflips per ecc step; ONEन_अंकDs correct 1 bit only */
+	वापस mtd->ecc_stats.corrected != stats.corrected ? 1 : 0;
+पूर्ण
 
 /**
- * onenand_read_oob_nolock - [MTD Interface] OneNAND read out-of-band
- * @mtd:		MTD device structure
- * @from:		offset to read from
- * @ops:		oob operation description structure
+ * onenand_पढ़ो_oob_nolock - [MTD Interface] Oneन_अंकD पढ़ो out-of-band
+ * @mtd:		MTD device काष्ठाure
+ * @from:		offset to पढ़ो from
+ * @ops:		oob operation description काष्ठाure
  *
- * OneNAND read out-of-band data from the spare area
+ * Oneन_अंकD पढ़ो out-of-band data from the spare area
  */
-static int onenand_read_oob_nolock(struct mtd_info *mtd, loff_t from,
-			struct mtd_oob_ops *ops)
-{
-	struct onenand_chip *this = mtd->priv;
-	struct mtd_ecc_stats stats;
-	int read = 0, thislen, column, oobsize;
-	size_t len = ops->ooblen;
-	unsigned int mode = ops->mode;
-	u_char *buf = ops->oobbuf;
-	int ret = 0, readcmd;
+अटल पूर्णांक onenand_पढ़ो_oob_nolock(काष्ठा mtd_info *mtd, loff_t from,
+			काष्ठा mtd_oob_ops *ops)
+अणु
+	काष्ठा onenand_chip *this = mtd->priv;
+	काष्ठा mtd_ecc_stats stats;
+	पूर्णांक पढ़ो = 0, thislen, column, oobsize;
+	माप_प्रकार len = ops->ooblen;
+	अचिन्हित पूर्णांक mode = ops->mode;
+	u_अक्षर *buf = ops->oobbuf;
+	पूर्णांक ret = 0, पढ़ोcmd;
 
 	from += ops->ooboffs;
 
-	pr_debug("%s: from = 0x%08x, len = %i\n", __func__, (unsigned int)from,
-			(int)len);
+	pr_debug("%s: from = 0x%08x, len = %i\n", __func__, (अचिन्हित पूर्णांक)from,
+			(पूर्णांक)len);
 
-	/* Initialize return length value */
+	/* Initialize वापस length value */
 	ops->oobretlen = 0;
 
-	if (mode == MTD_OPS_AUTO_OOB)
+	अगर (mode == MTD_OPS_AUTO_OOB)
 		oobsize = mtd->oobavail;
-	else
+	अन्यथा
 		oobsize = mtd->oobsize;
 
 	column = from & (mtd->oobsize - 1);
 
-	if (unlikely(column >= oobsize)) {
-		printk(KERN_ERR "%s: Attempted to start read outside oob\n",
+	अगर (unlikely(column >= oobsize)) अणु
+		prपूर्णांकk(KERN_ERR "%s: Attempted to start read outside oob\n",
 			__func__);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	stats = mtd->ecc_stats;
 
-	readcmd = ONENAND_IS_4KB_PAGE(this) ? ONENAND_CMD_READ : ONENAND_CMD_READOOB;
+	पढ़ोcmd = ONEन_अंकD_IS_4KB_PAGE(this) ? ONEन_अंकD_CMD_READ : ONEन_अंकD_CMD_READOOB;
 
-	while (read < len) {
+	जबतक (पढ़ो < len) अणु
 		cond_resched();
 
 		thislen = oobsize - column;
-		thislen = min_t(int, thislen, len);
+		thislen = min_t(पूर्णांक, thislen, len);
 
-		this->command(mtd, readcmd, from, mtd->oobsize);
+		this->command(mtd, पढ़ोcmd, from, mtd->oobsize);
 
 		onenand_update_bufferram(mtd, from, 0);
 
-		ret = this->wait(mtd, FL_READING);
-		if (unlikely(ret))
+		ret = this->रुको(mtd, FL_READING);
+		अगर (unlikely(ret))
 			ret = onenand_recover_lsb(mtd, from, ret);
 
-		if (ret && !mtd_is_eccerr(ret)) {
-			printk(KERN_ERR "%s: read failed = 0x%x\n",
+		अगर (ret && !mtd_is_eccerr(ret)) अणु
+			prपूर्णांकk(KERN_ERR "%s: read failed = 0x%x\n",
 				__func__, ret);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		if (mode == MTD_OPS_AUTO_OOB)
-			onenand_transfer_auto_oob(mtd, buf, column, thislen);
-		else
-			this->read_bufferram(mtd, ONENAND_SPARERAM, buf, column, thislen);
+		अगर (mode == MTD_OPS_AUTO_OOB)
+			onenand_transfer_स्वतः_oob(mtd, buf, column, thislen);
+		अन्यथा
+			this->पढ़ो_bufferram(mtd, ONEन_अंकD_SPARERAM, buf, column, thislen);
 
-		read += thislen;
+		पढ़ो += thislen;
 
-		if (read == len)
-			break;
+		अगर (पढ़ो == len)
+			अवरोध;
 
 		buf += thislen;
 
 		/* Read more? */
-		if (read < len) {
+		अगर (पढ़ो < len) अणु
 			/* Page size */
-			from += mtd->writesize;
+			from += mtd->ग_लिखोsize;
 			column = 0;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	ops->oobretlen = read;
+	ops->oobretlen = पढ़ो;
 
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	if (mtd->ecc_stats.failed - stats.failed)
-		return -EBADMSG;
+	अगर (mtd->ecc_stats.failed - stats.failed)
+		वापस -EBADMSG;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * onenand_read_oob - [MTD Interface] Read main and/or out-of-band
- * @mtd:		MTD device structure
- * @from:		offset to read from
- * @ops:		oob operation description structure
+ * onenand_पढ़ो_oob - [MTD Interface] Read मुख्य and/or out-of-band
+ * @mtd:		MTD device काष्ठाure
+ * @from:		offset to पढ़ो from
+ * @ops:		oob operation description काष्ठाure
  *
- * Read main and/or out-of-band
+ * Read मुख्य and/or out-of-band
  */
-static int onenand_read_oob(struct mtd_info *mtd, loff_t from,
-			    struct mtd_oob_ops *ops)
-{
-	struct onenand_chip *this = mtd->priv;
-	int ret;
+अटल पूर्णांक onenand_पढ़ो_oob(काष्ठा mtd_info *mtd, loff_t from,
+			    काष्ठा mtd_oob_ops *ops)
+अणु
+	काष्ठा onenand_chip *this = mtd->priv;
+	पूर्णांक ret;
 
-	switch (ops->mode) {
-	case MTD_OPS_PLACE_OOB:
-	case MTD_OPS_AUTO_OOB:
-		break;
-	case MTD_OPS_RAW:
+	चयन (ops->mode) अणु
+	हाल MTD_OPS_PLACE_OOB:
+	हाल MTD_OPS_AUTO_OOB:
+		अवरोध;
+	हाल MTD_OPS_RAW:
 		/* Not implemented yet */
-	default:
-		return -EINVAL;
-	}
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
 	onenand_get_device(mtd, FL_READING);
-	if (ops->datbuf)
-		ret = ONENAND_IS_4KB_PAGE(this) ?
-			onenand_mlc_read_ops_nolock(mtd, from, ops) :
-			onenand_read_ops_nolock(mtd, from, ops);
-	else
-		ret = onenand_read_oob_nolock(mtd, from, ops);
+	अगर (ops->datbuf)
+		ret = ONEन_अंकD_IS_4KB_PAGE(this) ?
+			onenand_mlc_पढ़ो_ops_nolock(mtd, from, ops) :
+			onenand_पढ़ो_ops_nolock(mtd, from, ops);
+	अन्यथा
+		ret = onenand_पढ़ो_oob_nolock(mtd, from, ops);
 	onenand_release_device(mtd);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * onenand_bbt_wait - [DEFAULT] wait until the command is done
- * @mtd:		MTD device structure
- * @state:		state to select the max. timeout value
+ * onenand_bbt_रुको - [DEFAULT] रुको until the command is करोne
+ * @mtd:		MTD device काष्ठाure
+ * @state:		state to select the max. समयout value
  *
- * Wait for command done.
+ * Wait क्रम command करोne.
  */
-static int onenand_bbt_wait(struct mtd_info *mtd, int state)
-{
-	struct onenand_chip *this = mtd->priv;
-	unsigned long timeout;
-	unsigned int interrupt, ctrl, ecc, addr1, addr8;
+अटल पूर्णांक onenand_bbt_रुको(काष्ठा mtd_info *mtd, पूर्णांक state)
+अणु
+	काष्ठा onenand_chip *this = mtd->priv;
+	अचिन्हित दीर्घ समयout;
+	अचिन्हित पूर्णांक पूर्णांकerrupt, ctrl, ecc, addr1, addr8;
 
 	/* The 20 msec is enough */
-	timeout = jiffies + msecs_to_jiffies(20);
-	while (time_before(jiffies, timeout)) {
-		interrupt = this->read_word(this->base + ONENAND_REG_INTERRUPT);
-		if (interrupt & ONENAND_INT_MASTER)
-			break;
-	}
-	/* To get correct interrupt status in timeout case */
-	interrupt = this->read_word(this->base + ONENAND_REG_INTERRUPT);
-	ctrl = this->read_word(this->base + ONENAND_REG_CTRL_STATUS);
-	addr1 = this->read_word(this->base + ONENAND_REG_START_ADDRESS1);
-	addr8 = this->read_word(this->base + ONENAND_REG_START_ADDRESS8);
+	समयout = jअगरfies + msecs_to_jअगरfies(20);
+	जबतक (समय_beक्रमe(jअगरfies, समयout)) अणु
+		पूर्णांकerrupt = this->पढ़ो_word(this->base + ONEन_अंकD_REG_INTERRUPT);
+		अगर (पूर्णांकerrupt & ONEन_अंकD_INT_MASTER)
+			अवरोध;
+	पूर्ण
+	/* To get correct पूर्णांकerrupt status in समयout हाल */
+	पूर्णांकerrupt = this->पढ़ो_word(this->base + ONEन_अंकD_REG_INTERRUPT);
+	ctrl = this->पढ़ो_word(this->base + ONEन_अंकD_REG_CTRL_STATUS);
+	addr1 = this->पढ़ो_word(this->base + ONEन_अंकD_REG_START_ADDRESS1);
+	addr8 = this->पढ़ो_word(this->base + ONEन_अंकD_REG_START_ADDRESS8);
 
-	if (interrupt & ONENAND_INT_READ) {
-		ecc = onenand_read_ecc(this);
-		if (ecc & ONENAND_ECC_2BIT_ALL) {
-			printk(KERN_DEBUG "%s: ecc 0x%04x ctrl 0x%04x "
+	अगर (पूर्णांकerrupt & ONEन_अंकD_INT_READ) अणु
+		ecc = onenand_पढ़ो_ecc(this);
+		अगर (ecc & ONEन_अंकD_ECC_2BIT_ALL) अणु
+			prपूर्णांकk(KERN_DEBUG "%s: ecc 0x%04x ctrl 0x%04x "
 			       "intr 0x%04x addr1 %#x addr8 %#x\n",
-			       __func__, ecc, ctrl, interrupt, addr1, addr8);
-			return ONENAND_BBT_READ_ECC_ERROR;
-		}
-	} else {
-		printk(KERN_ERR "%s: read timeout! ctrl 0x%04x "
+			       __func__, ecc, ctrl, पूर्णांकerrupt, addr1, addr8);
+			वापस ONEन_अंकD_BBT_READ_ECC_ERROR;
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		prपूर्णांकk(KERN_ERR "%s: read timeout! ctrl 0x%04x "
 		       "intr 0x%04x addr1 %#x addr8 %#x\n",
-		       __func__, ctrl, interrupt, addr1, addr8);
-		return ONENAND_BBT_READ_FATAL_ERROR;
-	}
+		       __func__, ctrl, पूर्णांकerrupt, addr1, addr8);
+		वापस ONEन_अंकD_BBT_READ_FATAL_ERROR;
+	पूर्ण
 
-	/* Initial bad block case: 0x2400 or 0x0400 */
-	if (ctrl & ONENAND_CTRL_ERROR) {
-		printk(KERN_DEBUG "%s: ctrl 0x%04x intr 0x%04x addr1 %#x "
-		       "addr8 %#x\n", __func__, ctrl, interrupt, addr1, addr8);
-		return ONENAND_BBT_READ_ERROR;
-	}
+	/* Initial bad block हाल: 0x2400 or 0x0400 */
+	अगर (ctrl & ONEन_अंकD_CTRL_ERROR) अणु
+		prपूर्णांकk(KERN_DEBUG "%s: ctrl 0x%04x intr 0x%04x addr1 %#x "
+		       "addr8 %#x\n", __func__, ctrl, पूर्णांकerrupt, addr1, addr8);
+		वापस ONEन_अंकD_BBT_READ_ERROR;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * onenand_bbt_read_oob - [MTD Interface] OneNAND read out-of-band for bbt scan
- * @mtd:		MTD device structure
- * @from:		offset to read from
- * @ops:		oob operation description structure
+ * onenand_bbt_पढ़ो_oob - [MTD Interface] Oneन_अंकD पढ़ो out-of-band क्रम bbt scan
+ * @mtd:		MTD device काष्ठाure
+ * @from:		offset to पढ़ो from
+ * @ops:		oob operation description काष्ठाure
  *
- * OneNAND read out-of-band data from the spare area for bbt scan
+ * Oneन_अंकD पढ़ो out-of-band data from the spare area क्रम bbt scan
  */
-int onenand_bbt_read_oob(struct mtd_info *mtd, loff_t from, 
-			    struct mtd_oob_ops *ops)
-{
-	struct onenand_chip *this = mtd->priv;
-	int read = 0, thislen, column;
-	int ret = 0, readcmd;
-	size_t len = ops->ooblen;
-	u_char *buf = ops->oobbuf;
+पूर्णांक onenand_bbt_पढ़ो_oob(काष्ठा mtd_info *mtd, loff_t from, 
+			    काष्ठा mtd_oob_ops *ops)
+अणु
+	काष्ठा onenand_chip *this = mtd->priv;
+	पूर्णांक पढ़ो = 0, thislen, column;
+	पूर्णांक ret = 0, पढ़ोcmd;
+	माप_प्रकार len = ops->ooblen;
+	u_अक्षर *buf = ops->oobbuf;
 
-	pr_debug("%s: from = 0x%08x, len = %zi\n", __func__, (unsigned int)from,
+	pr_debug("%s: from = 0x%08x, len = %zi\n", __func__, (अचिन्हित पूर्णांक)from,
 			len);
 
-	/* Initialize return value */
+	/* Initialize वापस value */
 	ops->oobretlen = 0;
 
-	/* Do not allow reads past end of device */
-	if (unlikely((from + len) > mtd->size)) {
-		printk(KERN_ERR "%s: Attempt read beyond end of device\n",
+	/* Do not allow पढ़ोs past end of device */
+	अगर (unlikely((from + len) > mtd->size)) अणु
+		prपूर्णांकk(KERN_ERR "%s: Attempt read beyond end of device\n",
 			__func__);
-		return ONENAND_BBT_READ_FATAL_ERROR;
-	}
+		वापस ONEन_अंकD_BBT_READ_FATAL_ERROR;
+	पूर्ण
 
-	/* Grab the lock and see if the device is available */
+	/* Grab the lock and see अगर the device is available */
 	onenand_get_device(mtd, FL_READING);
 
 	column = from & (mtd->oobsize - 1);
 
-	readcmd = ONENAND_IS_4KB_PAGE(this) ? ONENAND_CMD_READ : ONENAND_CMD_READOOB;
+	पढ़ोcmd = ONEन_अंकD_IS_4KB_PAGE(this) ? ONEन_अंकD_CMD_READ : ONEन_अंकD_CMD_READOOB;
 
-	while (read < len) {
+	जबतक (पढ़ो < len) अणु
 		cond_resched();
 
 		thislen = mtd->oobsize - column;
-		thislen = min_t(int, thislen, len);
+		thislen = min_t(पूर्णांक, thislen, len);
 
-		this->command(mtd, readcmd, from, mtd->oobsize);
+		this->command(mtd, पढ़ोcmd, from, mtd->oobsize);
 
 		onenand_update_bufferram(mtd, from, 0);
 
-		ret = this->bbt_wait(mtd, FL_READING);
-		if (unlikely(ret))
+		ret = this->bbt_रुको(mtd, FL_READING);
+		अगर (unlikely(ret))
 			ret = onenand_recover_lsb(mtd, from, ret);
 
-		if (ret)
-			break;
+		अगर (ret)
+			अवरोध;
 
-		this->read_bufferram(mtd, ONENAND_SPARERAM, buf, column, thislen);
-		read += thislen;
-		if (read == len)
-			break;
+		this->पढ़ो_bufferram(mtd, ONEन_अंकD_SPARERAM, buf, column, thislen);
+		पढ़ो += thislen;
+		अगर (पढ़ो == len)
+			अवरोध;
 
 		buf += thislen;
 
 		/* Read more? */
-		if (read < len) {
+		अगर (पढ़ो < len) अणु
 			/* Update Page size */
-			from += this->writesize;
+			from += this->ग_लिखोsize;
 			column = 0;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	/* Deselect and wake up anyone waiting on the device */
+	/* Deselect and wake up anyone रुकोing on the device */
 	onenand_release_device(mtd);
 
-	ops->oobretlen = read;
-	return ret;
-}
+	ops->oobretlen = पढ़ो;
+	वापस ret;
+पूर्ण
 
-#ifdef CONFIG_MTD_ONENAND_VERIFY_WRITE
+#अगर_घोषित CONFIG_MTD_ONEन_अंकD_VERIFY_WRITE
 /**
- * onenand_verify_oob - [GENERIC] verify the oob contents after a write
- * @mtd:		MTD device structure
- * @buf:		the databuffer to verify
- * @to:		offset to read from
+ * onenand_verअगरy_oob - [GENERIC] verअगरy the oob contents after a ग_लिखो
+ * @mtd:		MTD device काष्ठाure
+ * @buf:		the databuffer to verअगरy
+ * @to:		offset to पढ़ो from
  */
-static int onenand_verify_oob(struct mtd_info *mtd, const u_char *buf, loff_t to)
-{
-	struct onenand_chip *this = mtd->priv;
-	u_char *oob_buf = this->oob_buf;
-	int status, i, readcmd;
+अटल पूर्णांक onenand_verअगरy_oob(काष्ठा mtd_info *mtd, स्थिर u_अक्षर *buf, loff_t to)
+अणु
+	काष्ठा onenand_chip *this = mtd->priv;
+	u_अक्षर *oob_buf = this->oob_buf;
+	पूर्णांक status, i, पढ़ोcmd;
 
-	readcmd = ONENAND_IS_4KB_PAGE(this) ? ONENAND_CMD_READ : ONENAND_CMD_READOOB;
+	पढ़ोcmd = ONEन_अंकD_IS_4KB_PAGE(this) ? ONEन_अंकD_CMD_READ : ONEन_अंकD_CMD_READOOB;
 
-	this->command(mtd, readcmd, to, mtd->oobsize);
+	this->command(mtd, पढ़ोcmd, to, mtd->oobsize);
 	onenand_update_bufferram(mtd, to, 0);
-	status = this->wait(mtd, FL_READING);
-	if (status)
-		return status;
+	status = this->रुको(mtd, FL_READING);
+	अगर (status)
+		वापस status;
 
-	this->read_bufferram(mtd, ONENAND_SPARERAM, oob_buf, 0, mtd->oobsize);
-	for (i = 0; i < mtd->oobsize; i++)
-		if (buf[i] != 0xFF && buf[i] != oob_buf[i])
-			return -EBADMSG;
+	this->पढ़ो_bufferram(mtd, ONEन_अंकD_SPARERAM, oob_buf, 0, mtd->oobsize);
+	क्रम (i = 0; i < mtd->oobsize; i++)
+		अगर (buf[i] != 0xFF && buf[i] != oob_buf[i])
+			वापस -EBADMSG;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * onenand_verify - [GENERIC] verify the chip contents after a write
- * @mtd:          MTD device structure
- * @buf:          the databuffer to verify
- * @addr:         offset to read from
- * @len:          number of bytes to read and compare
+ * onenand_verअगरy - [GENERIC] verअगरy the chip contents after a ग_लिखो
+ * @mtd:          MTD device काष्ठाure
+ * @buf:          the databuffer to verअगरy
+ * @addr:         offset to पढ़ो from
+ * @len:          number of bytes to पढ़ो and compare
  */
-static int onenand_verify(struct mtd_info *mtd, const u_char *buf, loff_t addr, size_t len)
-{
-	struct onenand_chip *this = mtd->priv;
-	int ret = 0;
-	int thislen, column;
+अटल पूर्णांक onenand_verअगरy(काष्ठा mtd_info *mtd, स्थिर u_अक्षर *buf, loff_t addr, माप_प्रकार len)
+अणु
+	काष्ठा onenand_chip *this = mtd->priv;
+	पूर्णांक ret = 0;
+	पूर्णांक thislen, column;
 
-	column = addr & (this->writesize - 1);
+	column = addr & (this->ग_लिखोsize - 1);
 
-	while (len != 0) {
-		thislen = min_t(int, this->writesize - column, len);
+	जबतक (len != 0) अणु
+		thislen = min_t(पूर्णांक, this->ग_लिखोsize - column, len);
 
-		this->command(mtd, ONENAND_CMD_READ, addr, this->writesize);
+		this->command(mtd, ONEन_अंकD_CMD_READ, addr, this->ग_लिखोsize);
 
 		onenand_update_bufferram(mtd, addr, 0);
 
-		ret = this->wait(mtd, FL_READING);
-		if (ret)
-			return ret;
+		ret = this->रुको(mtd, FL_READING);
+		अगर (ret)
+			वापस ret;
 
 		onenand_update_bufferram(mtd, addr, 1);
 
-		this->read_bufferram(mtd, ONENAND_DATARAM, this->verify_buf, 0, mtd->writesize);
+		this->पढ़ो_bufferram(mtd, ONEन_अंकD_DATARAM, this->verअगरy_buf, 0, mtd->ग_लिखोsize);
 
-		if (memcmp(buf, this->verify_buf + column, thislen))
-			return -EBADMSG;
+		अगर (स_भेद(buf, this->verअगरy_buf + column, thislen))
+			वापस -EBADMSG;
 
 		len -= thislen;
 		buf += thislen;
 		addr += thislen;
 		column = 0;
-	}
+	पूर्ण
 
-	return 0;
-}
-#else
-#define onenand_verify(...)		(0)
-#define onenand_verify_oob(...)		(0)
-#endif
+	वापस 0;
+पूर्ण
+#अन्यथा
+#घोषणा onenand_verअगरy(...)		(0)
+#घोषणा onenand_verअगरy_oob(...)		(0)
+#पूर्ण_अगर
 
-#define NOTALIGNED(x)	((x & (this->subpagesize - 1)) != 0)
+#घोषणा NOTALIGNED(x)	((x & (this->subpagesize - 1)) != 0)
 
-static void onenand_panic_wait(struct mtd_info *mtd)
-{
-	struct onenand_chip *this = mtd->priv;
-	unsigned int interrupt;
-	int i;
+अटल व्योम onenand_panic_रुको(काष्ठा mtd_info *mtd)
+अणु
+	काष्ठा onenand_chip *this = mtd->priv;
+	अचिन्हित पूर्णांक पूर्णांकerrupt;
+	पूर्णांक i;
 	
-	for (i = 0; i < 2000; i++) {
-		interrupt = this->read_word(this->base + ONENAND_REG_INTERRUPT);
-		if (interrupt & ONENAND_INT_MASTER)
-			break;
+	क्रम (i = 0; i < 2000; i++) अणु
+		पूर्णांकerrupt = this->पढ़ो_word(this->base + ONEन_अंकD_REG_INTERRUPT);
+		अगर (पूर्णांकerrupt & ONEन_अंकD_INT_MASTER)
+			अवरोध;
 		udelay(10);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
- * onenand_panic_write - [MTD Interface] write buffer to FLASH in a panic context
- * @mtd:		MTD device structure
- * @to:		offset to write to
- * @len:		number of bytes to write
- * @retlen:	pointer to variable to store the number of written bytes
- * @buf:		the data to write
+ * onenand_panic_ग_लिखो - [MTD Interface] ग_लिखो buffer to FLASH in a panic context
+ * @mtd:		MTD device काष्ठाure
+ * @to:		offset to ग_लिखो to
+ * @len:		number of bytes to ग_लिखो
+ * @retlen:	poपूर्णांकer to variable to store the number of written bytes
+ * @buf:		the data to ग_लिखो
  *
  * Write with ECC
  */
-static int onenand_panic_write(struct mtd_info *mtd, loff_t to, size_t len,
-			 size_t *retlen, const u_char *buf)
-{
-	struct onenand_chip *this = mtd->priv;
-	int column, subpage;
-	int written = 0;
+अटल पूर्णांक onenand_panic_ग_लिखो(काष्ठा mtd_info *mtd, loff_t to, माप_प्रकार len,
+			 माप_प्रकार *retlen, स्थिर u_अक्षर *buf)
+अणु
+	काष्ठा onenand_chip *this = mtd->priv;
+	पूर्णांक column, subpage;
+	पूर्णांक written = 0;
 
-	if (this->state == FL_PM_SUSPENDED)
-		return -EBUSY;
+	अगर (this->state == FL_PM_SUSPENDED)
+		वापस -EBUSY;
 
-	/* Wait for any existing operation to clear */
-	onenand_panic_wait(mtd);
+	/* Wait क्रम any existing operation to clear */
+	onenand_panic_रुको(mtd);
 
-	pr_debug("%s: to = 0x%08x, len = %i\n", __func__, (unsigned int)to,
-			(int)len);
+	pr_debug("%s: to = 0x%08x, len = %i\n", __func__, (अचिन्हित पूर्णांक)to,
+			(पूर्णांक)len);
 
-	/* Reject writes, which are not page aligned */
-        if (unlikely(NOTALIGNED(to) || NOTALIGNED(len))) {
-		printk(KERN_ERR "%s: Attempt to write not page aligned data\n",
+	/* Reject ग_लिखोs, which are not page aligned */
+        अगर (unlikely(NOTALIGNED(to) || NOTALIGNED(len))) अणु
+		prपूर्णांकk(KERN_ERR "%s: Attempt to write not page aligned data\n",
 			__func__);
-                return -EINVAL;
-        }
+                वापस -EINVAL;
+        पूर्ण
 
-	column = to & (mtd->writesize - 1);
+	column = to & (mtd->ग_लिखोsize - 1);
 
-	/* Loop until all data write */
-	while (written < len) {
-		int thislen = min_t(int, mtd->writesize - column, len - written);
-		u_char *wbuf = (u_char *) buf;
+	/* Loop until all data ग_लिखो */
+	जबतक (written < len) अणु
+		पूर्णांक thislen = min_t(पूर्णांक, mtd->ग_लिखोsize - column, len - written);
+		u_अक्षर *wbuf = (u_अक्षर *) buf;
 
-		this->command(mtd, ONENAND_CMD_BUFFERRAM, to, thislen);
+		this->command(mtd, ONEन_अंकD_CMD_BUFFERRAM, to, thislen);
 
-		/* Partial page write */
-		subpage = thislen < mtd->writesize;
-		if (subpage) {
-			memset(this->page_buf, 0xff, mtd->writesize);
-			memcpy(this->page_buf + column, buf, thislen);
+		/* Partial page ग_लिखो */
+		subpage = thislen < mtd->ग_लिखोsize;
+		अगर (subpage) अणु
+			स_रखो(this->page_buf, 0xff, mtd->ग_लिखोsize);
+			स_नकल(this->page_buf + column, buf, thislen);
 			wbuf = this->page_buf;
-		}
+		पूर्ण
 
-		this->write_bufferram(mtd, ONENAND_DATARAM, wbuf, 0, mtd->writesize);
-		this->write_bufferram(mtd, ONENAND_SPARERAM, ffchars, 0, mtd->oobsize);
+		this->ग_लिखो_bufferram(mtd, ONEन_अंकD_DATARAM, wbuf, 0, mtd->ग_लिखोsize);
+		this->ग_लिखो_bufferram(mtd, ONEन_अंकD_SPARERAM, ffअक्षरs, 0, mtd->oobsize);
 
-		this->command(mtd, ONENAND_CMD_PROG, to, mtd->writesize);
+		this->command(mtd, ONEन_अंकD_CMD_PROG, to, mtd->ग_लिखोsize);
 
-		onenand_panic_wait(mtd);
+		onenand_panic_रुको(mtd);
 
-		/* In partial page write we don't update bufferram */
+		/* In partial page ग_लिखो we करोn't update bufferram */
 		onenand_update_bufferram(mtd, to, !subpage);
-		if (ONENAND_IS_2PLANE(this)) {
-			ONENAND_SET_BUFFERRAM1(this);
-			onenand_update_bufferram(mtd, to + this->writesize, !subpage);
-		}
+		अगर (ONEन_अंकD_IS_2PLANE(this)) अणु
+			ONEन_अंकD_SET_BUFFERRAM1(this);
+			onenand_update_bufferram(mtd, to + this->ग_लिखोsize, !subpage);
+		पूर्ण
 
 		written += thislen;
 
-		if (written == len)
-			break;
+		अगर (written == len)
+			अवरोध;
 
 		column = 0;
 		to += thislen;
 		buf += thislen;
-	}
+	पूर्ण
 
 	*retlen = written;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * onenand_fill_auto_oob - [INTERN] oob auto-placement transfer
- * @mtd:		MTD device structure
+ * onenand_fill_स्वतः_oob - [INTERN] oob स्वतः-placement transfer
+ * @mtd:		MTD device काष्ठाure
  * @oob_buf:	oob buffer
  * @buf:		source address
- * @column:	oob offset to write to
- * @thislen:	oob length to write
+ * @column:	oob offset to ग_लिखो to
+ * @thislen:	oob length to ग_लिखो
  */
-static int onenand_fill_auto_oob(struct mtd_info *mtd, u_char *oob_buf,
-				  const u_char *buf, int column, int thislen)
-{
-	return mtd_ooblayout_set_databytes(mtd, buf, oob_buf, column, thislen);
-}
+अटल पूर्णांक onenand_fill_स्वतः_oob(काष्ठा mtd_info *mtd, u_अक्षर *oob_buf,
+				  स्थिर u_अक्षर *buf, पूर्णांक column, पूर्णांक thislen)
+अणु
+	वापस mtd_ooblayout_set_databytes(mtd, buf, oob_buf, column, thislen);
+पूर्ण
 
 /**
- * onenand_write_ops_nolock - [OneNAND Interface] write main and/or out-of-band
- * @mtd:		MTD device structure
- * @to:		offset to write to
- * @ops:		oob operation description structure
+ * onenand_ग_लिखो_ops_nolock - [Oneन_अंकD Interface] ग_लिखो मुख्य and/or out-of-band
+ * @mtd:		MTD device काष्ठाure
+ * @to:		offset to ग_लिखो to
+ * @ops:		oob operation description काष्ठाure
  *
- * Write main and/or oob with ECC
+ * Write मुख्य and/or oob with ECC
  */
-static int onenand_write_ops_nolock(struct mtd_info *mtd, loff_t to,
-				struct mtd_oob_ops *ops)
-{
-	struct onenand_chip *this = mtd->priv;
-	int written = 0, column, thislen = 0, subpage = 0;
-	int prev = 0, prevlen = 0, prev_subpage = 0, first = 1;
-	int oobwritten = 0, oobcolumn, thisooblen, oobsize;
-	size_t len = ops->len;
-	size_t ooblen = ops->ooblen;
-	const u_char *buf = ops->datbuf;
-	const u_char *oob = ops->oobbuf;
-	u_char *oobbuf;
-	int ret = 0, cmd;
+अटल पूर्णांक onenand_ग_लिखो_ops_nolock(काष्ठा mtd_info *mtd, loff_t to,
+				काष्ठा mtd_oob_ops *ops)
+अणु
+	काष्ठा onenand_chip *this = mtd->priv;
+	पूर्णांक written = 0, column, thislen = 0, subpage = 0;
+	पूर्णांक prev = 0, prevlen = 0, prev_subpage = 0, first = 1;
+	पूर्णांक oobwritten = 0, oobcolumn, thisooblen, oobsize;
+	माप_प्रकार len = ops->len;
+	माप_प्रकार ooblen = ops->ooblen;
+	स्थिर u_अक्षर *buf = ops->datbuf;
+	स्थिर u_अक्षर *oob = ops->oobbuf;
+	u_अक्षर *oobbuf;
+	पूर्णांक ret = 0, cmd;
 
-	pr_debug("%s: to = 0x%08x, len = %i\n", __func__, (unsigned int)to,
-			(int)len);
+	pr_debug("%s: to = 0x%08x, len = %i\n", __func__, (अचिन्हित पूर्णांक)to,
+			(पूर्णांक)len);
 
-	/* Initialize retlen, in case of early exit */
+	/* Initialize retlen, in हाल of early निकास */
 	ops->retlen = 0;
 	ops->oobretlen = 0;
 
-	/* Reject writes, which are not page aligned */
-        if (unlikely(NOTALIGNED(to) || NOTALIGNED(len))) {
-		printk(KERN_ERR "%s: Attempt to write not page aligned data\n",
+	/* Reject ग_लिखोs, which are not page aligned */
+        अगर (unlikely(NOTALIGNED(to) || NOTALIGNED(len))) अणु
+		prपूर्णांकk(KERN_ERR "%s: Attempt to write not page aligned data\n",
 			__func__);
-                return -EINVAL;
-        }
+                वापस -EINVAL;
+        पूर्ण
 
 	/* Check zero length */
-	if (!len)
-		return 0;
+	अगर (!len)
+		वापस 0;
 	oobsize = mtd_oobavail(mtd, ops);
 	oobcolumn = to & (mtd->oobsize - 1);
 
-	column = to & (mtd->writesize - 1);
+	column = to & (mtd->ग_लिखोsize - 1);
 
-	/* Loop until all data write */
-	while (1) {
-		if (written < len) {
-			u_char *wbuf = (u_char *) buf;
+	/* Loop until all data ग_लिखो */
+	जबतक (1) अणु
+		अगर (written < len) अणु
+			u_अक्षर *wbuf = (u_अक्षर *) buf;
 
-			thislen = min_t(int, mtd->writesize - column, len - written);
-			thisooblen = min_t(int, oobsize - oobcolumn, ooblen - oobwritten);
+			thislen = min_t(पूर्णांक, mtd->ग_लिखोsize - column, len - written);
+			thisooblen = min_t(पूर्णांक, oobsize - oobcolumn, ooblen - oobwritten);
 
 			cond_resched();
 
-			this->command(mtd, ONENAND_CMD_BUFFERRAM, to, thislen);
+			this->command(mtd, ONEन_अंकD_CMD_BUFFERRAM, to, thislen);
 
-			/* Partial page write */
-			subpage = thislen < mtd->writesize;
-			if (subpage) {
-				memset(this->page_buf, 0xff, mtd->writesize);
-				memcpy(this->page_buf + column, buf, thislen);
+			/* Partial page ग_लिखो */
+			subpage = thislen < mtd->ग_लिखोsize;
+			अगर (subpage) अणु
+				स_रखो(this->page_buf, 0xff, mtd->ग_लिखोsize);
+				स_नकल(this->page_buf + column, buf, thislen);
 				wbuf = this->page_buf;
-			}
+			पूर्ण
 
-			this->write_bufferram(mtd, ONENAND_DATARAM, wbuf, 0, mtd->writesize);
+			this->ग_लिखो_bufferram(mtd, ONEन_अंकD_DATARAM, wbuf, 0, mtd->ग_लिखोsize);
 
-			if (oob) {
+			अगर (oob) अणु
 				oobbuf = this->oob_buf;
 
 				/* We send data to spare ram with oobsize
 				 * to prevent byte access */
-				memset(oobbuf, 0xff, mtd->oobsize);
-				if (ops->mode == MTD_OPS_AUTO_OOB)
-					onenand_fill_auto_oob(mtd, oobbuf, oob, oobcolumn, thisooblen);
-				else
-					memcpy(oobbuf + oobcolumn, oob, thisooblen);
+				स_रखो(oobbuf, 0xff, mtd->oobsize);
+				अगर (ops->mode == MTD_OPS_AUTO_OOB)
+					onenand_fill_स्वतः_oob(mtd, oobbuf, oob, oobcolumn, thisooblen);
+				अन्यथा
+					स_नकल(oobbuf + oobcolumn, oob, thisooblen);
 
 				oobwritten += thisooblen;
 				oob += thisooblen;
 				oobcolumn = 0;
-			} else
-				oobbuf = (u_char *) ffchars;
+			पूर्ण अन्यथा
+				oobbuf = (u_अक्षर *) ffअक्षरs;
 
-			this->write_bufferram(mtd, ONENAND_SPARERAM, oobbuf, 0, mtd->oobsize);
-		} else
-			ONENAND_SET_NEXT_BUFFERRAM(this);
+			this->ग_लिखो_bufferram(mtd, ONEन_अंकD_SPARERAM, oobbuf, 0, mtd->oobsize);
+		पूर्ण अन्यथा
+			ONEन_अंकD_SET_NEXT_BUFFERRAM(this);
 
 		/*
-		 * 2 PLANE, MLC, and Flex-OneNAND do not support
-		 * write-while-program feature.
+		 * 2 PLANE, MLC, and Flex-Oneन_अंकD करो not support
+		 * ग_लिखो-जबतक-program feature.
 		 */
-		if (!ONENAND_IS_2PLANE(this) && !ONENAND_IS_4KB_PAGE(this) && !first) {
-			ONENAND_SET_PREV_BUFFERRAM(this);
+		अगर (!ONEन_अंकD_IS_2PLANE(this) && !ONEन_अंकD_IS_4KB_PAGE(this) && !first) अणु
+			ONEन_अंकD_SET_PREV_BUFFERRAM(this);
 
-			ret = this->wait(mtd, FL_WRITING);
+			ret = this->रुको(mtd, FL_WRITING);
 
-			/* In partial page write we don't update bufferram */
+			/* In partial page ग_लिखो we करोn't update bufferram */
 			onenand_update_bufferram(mtd, prev, !ret && !prev_subpage);
-			if (ret) {
+			अगर (ret) अणु
 				written -= prevlen;
-				printk(KERN_ERR "%s: write failed %d\n",
+				prपूर्णांकk(KERN_ERR "%s: write failed %d\n",
 					__func__, ret);
-				break;
-			}
+				अवरोध;
+			पूर्ण
 
-			if (written == len) {
-				/* Only check verify write turn on */
-				ret = onenand_verify(mtd, buf - len, to - len, len);
-				if (ret)
-					printk(KERN_ERR "%s: verify failed %d\n",
+			अगर (written == len) अणु
+				/* Only check verअगरy ग_लिखो turn on */
+				ret = onenand_verअगरy(mtd, buf - len, to - len, len);
+				अगर (ret)
+					prपूर्णांकk(KERN_ERR "%s: verify failed %d\n",
 						__func__, ret);
-				break;
-			}
+				अवरोध;
+			पूर्ण
 
-			ONENAND_SET_NEXT_BUFFERRAM(this);
-		}
+			ONEन_अंकD_SET_NEXT_BUFFERRAM(this);
+		पूर्ण
 
 		this->ongoing = 0;
-		cmd = ONENAND_CMD_PROG;
+		cmd = ONEन_अंकD_CMD_PROG;
 
-		/* Exclude 1st OTP and OTP blocks for cache program feature */
-		if (ONENAND_IS_CACHE_PROGRAM(this) &&
+		/* Exclude 1st OTP and OTP blocks क्रम cache program feature */
+		अगर (ONEन_अंकD_IS_CACHE_PROGRAM(this) &&
 		    likely(onenand_block(this, to) != 0) &&
-		    ONENAND_IS_4KB_PAGE(this) &&
-		    ((written + thislen) < len)) {
-			cmd = ONENAND_CMD_2X_CACHE_PROG;
+		    ONEन_अंकD_IS_4KB_PAGE(this) &&
+		    ((written + thislen) < len)) अणु
+			cmd = ONEन_अंकD_CMD_2X_CACHE_PROG;
 			this->ongoing = 1;
-		}
+		पूर्ण
 
-		this->command(mtd, cmd, to, mtd->writesize);
+		this->command(mtd, cmd, to, mtd->ग_लिखोsize);
 
 		/*
-		 * 2 PLANE, MLC, and Flex-OneNAND wait here
+		 * 2 PLANE, MLC, and Flex-Oneन_अंकD रुको here
 		 */
-		if (ONENAND_IS_2PLANE(this) || ONENAND_IS_4KB_PAGE(this)) {
-			ret = this->wait(mtd, FL_WRITING);
+		अगर (ONEन_अंकD_IS_2PLANE(this) || ONEन_अंकD_IS_4KB_PAGE(this)) अणु
+			ret = this->रुको(mtd, FL_WRITING);
 
-			/* In partial page write we don't update bufferram */
+			/* In partial page ग_लिखो we करोn't update bufferram */
 			onenand_update_bufferram(mtd, to, !ret && !subpage);
-			if (ret) {
-				printk(KERN_ERR "%s: write failed %d\n",
+			अगर (ret) अणु
+				prपूर्णांकk(KERN_ERR "%s: write failed %d\n",
 					__func__, ret);
-				break;
-			}
+				अवरोध;
+			पूर्ण
 
-			/* Only check verify write turn on */
-			ret = onenand_verify(mtd, buf, to, thislen);
-			if (ret) {
-				printk(KERN_ERR "%s: verify failed %d\n",
+			/* Only check verअगरy ग_लिखो turn on */
+			ret = onenand_verअगरy(mtd, buf, to, thislen);
+			अगर (ret) अणु
+				prपूर्णांकk(KERN_ERR "%s: verify failed %d\n",
 					__func__, ret);
-				break;
-			}
+				अवरोध;
+			पूर्ण
 
 			written += thislen;
 
-			if (written == len)
-				break;
+			अगर (written == len)
+				अवरोध;
 
-		} else
+		पूर्ण अन्यथा
 			written += thislen;
 
 		column = 0;
@@ -1942,409 +1943,409 @@ static int onenand_write_ops_nolock(struct mtd_info *mtd, loff_t to,
 		to += thislen;
 		buf += thislen;
 		first = 0;
-	}
+	पूर्ण
 
-	/* In error case, clear all bufferrams */
-	if (written != len)
+	/* In error हाल, clear all bufferrams */
+	अगर (written != len)
 		onenand_invalidate_bufferram(mtd, 0, -1);
 
 	ops->retlen = written;
 	ops->oobretlen = oobwritten;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 
 /**
- * onenand_write_oob_nolock - [INTERN] OneNAND write out-of-band
- * @mtd:		MTD device structure
- * @to:			offset to write to
- * @ops:                oob operation description structure
+ * onenand_ग_लिखो_oob_nolock - [INTERN] Oneन_अंकD ग_लिखो out-of-band
+ * @mtd:		MTD device काष्ठाure
+ * @to:			offset to ग_लिखो to
+ * @ops:                oob operation description काष्ठाure
  *
- * OneNAND write out-of-band
+ * Oneन_अंकD ग_लिखो out-of-band
  */
-static int onenand_write_oob_nolock(struct mtd_info *mtd, loff_t to,
-				    struct mtd_oob_ops *ops)
-{
-	struct onenand_chip *this = mtd->priv;
-	int column, ret = 0, oobsize;
-	int written = 0, oobcmd;
-	u_char *oobbuf;
-	size_t len = ops->ooblen;
-	const u_char *buf = ops->oobbuf;
-	unsigned int mode = ops->mode;
+अटल पूर्णांक onenand_ग_लिखो_oob_nolock(काष्ठा mtd_info *mtd, loff_t to,
+				    काष्ठा mtd_oob_ops *ops)
+अणु
+	काष्ठा onenand_chip *this = mtd->priv;
+	पूर्णांक column, ret = 0, oobsize;
+	पूर्णांक written = 0, oobcmd;
+	u_अक्षर *oobbuf;
+	माप_प्रकार len = ops->ooblen;
+	स्थिर u_अक्षर *buf = ops->oobbuf;
+	अचिन्हित पूर्णांक mode = ops->mode;
 
 	to += ops->ooboffs;
 
-	pr_debug("%s: to = 0x%08x, len = %i\n", __func__, (unsigned int)to,
-			(int)len);
+	pr_debug("%s: to = 0x%08x, len = %i\n", __func__, (अचिन्हित पूर्णांक)to,
+			(पूर्णांक)len);
 
-	/* Initialize retlen, in case of early exit */
+	/* Initialize retlen, in हाल of early निकास */
 	ops->oobretlen = 0;
 
-	if (mode == MTD_OPS_AUTO_OOB)
+	अगर (mode == MTD_OPS_AUTO_OOB)
 		oobsize = mtd->oobavail;
-	else
+	अन्यथा
 		oobsize = mtd->oobsize;
 
 	column = to & (mtd->oobsize - 1);
 
-	if (unlikely(column >= oobsize)) {
-		printk(KERN_ERR "%s: Attempted to start write outside oob\n",
+	अगर (unlikely(column >= oobsize)) अणु
+		prपूर्णांकk(KERN_ERR "%s: Attempted to start write outside oob\n",
 			__func__);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	/* For compatibility with NAND: Do not allow write past end of page */
-	if (unlikely(column + len > oobsize)) {
-		printk(KERN_ERR "%s: Attempt to write past end of page\n",
+	/* For compatibility with न_अंकD: Do not allow ग_लिखो past end of page */
+	अगर (unlikely(column + len > oobsize)) अणु
+		prपूर्णांकk(KERN_ERR "%s: Attempt to write past end of page\n",
 			__func__);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	oobbuf = this->oob_buf;
 
-	oobcmd = ONENAND_IS_4KB_PAGE(this) ? ONENAND_CMD_PROG : ONENAND_CMD_PROGOOB;
+	oobcmd = ONEन_अंकD_IS_4KB_PAGE(this) ? ONEन_अंकD_CMD_PROG : ONEन_अंकD_CMD_PROGOOB;
 
-	/* Loop until all data write */
-	while (written < len) {
-		int thislen = min_t(int, oobsize, len - written);
+	/* Loop until all data ग_लिखो */
+	जबतक (written < len) अणु
+		पूर्णांक thislen = min_t(पूर्णांक, oobsize, len - written);
 
 		cond_resched();
 
-		this->command(mtd, ONENAND_CMD_BUFFERRAM, to, mtd->oobsize);
+		this->command(mtd, ONEन_अंकD_CMD_BUFFERRAM, to, mtd->oobsize);
 
 		/* We send data to spare ram with oobsize
 		 * to prevent byte access */
-		memset(oobbuf, 0xff, mtd->oobsize);
-		if (mode == MTD_OPS_AUTO_OOB)
-			onenand_fill_auto_oob(mtd, oobbuf, buf, column, thislen);
-		else
-			memcpy(oobbuf + column, buf, thislen);
-		this->write_bufferram(mtd, ONENAND_SPARERAM, oobbuf, 0, mtd->oobsize);
+		स_रखो(oobbuf, 0xff, mtd->oobsize);
+		अगर (mode == MTD_OPS_AUTO_OOB)
+			onenand_fill_स्वतः_oob(mtd, oobbuf, buf, column, thislen);
+		अन्यथा
+			स_नकल(oobbuf + column, buf, thislen);
+		this->ग_लिखो_bufferram(mtd, ONEन_अंकD_SPARERAM, oobbuf, 0, mtd->oobsize);
 
-		if (ONENAND_IS_4KB_PAGE(this)) {
-			/* Set main area of DataRAM to 0xff*/
-			memset(this->page_buf, 0xff, mtd->writesize);
-			this->write_bufferram(mtd, ONENAND_DATARAM,
-					 this->page_buf, 0, mtd->writesize);
-		}
+		अगर (ONEन_अंकD_IS_4KB_PAGE(this)) अणु
+			/* Set मुख्य area of DataRAM to 0xff*/
+			स_रखो(this->page_buf, 0xff, mtd->ग_लिखोsize);
+			this->ग_लिखो_bufferram(mtd, ONEन_अंकD_DATARAM,
+					 this->page_buf, 0, mtd->ग_लिखोsize);
+		पूर्ण
 
 		this->command(mtd, oobcmd, to, mtd->oobsize);
 
 		onenand_update_bufferram(mtd, to, 0);
-		if (ONENAND_IS_2PLANE(this)) {
-			ONENAND_SET_BUFFERRAM1(this);
-			onenand_update_bufferram(mtd, to + this->writesize, 0);
-		}
+		अगर (ONEन_अंकD_IS_2PLANE(this)) अणु
+			ONEन_अंकD_SET_BUFFERRAM1(this);
+			onenand_update_bufferram(mtd, to + this->ग_लिखोsize, 0);
+		पूर्ण
 
-		ret = this->wait(mtd, FL_WRITING);
-		if (ret) {
-			printk(KERN_ERR "%s: write failed %d\n", __func__, ret);
-			break;
-		}
+		ret = this->रुको(mtd, FL_WRITING);
+		अगर (ret) अणु
+			prपूर्णांकk(KERN_ERR "%s: write failed %d\n", __func__, ret);
+			अवरोध;
+		पूर्ण
 
-		ret = onenand_verify_oob(mtd, oobbuf, to);
-		if (ret) {
-			printk(KERN_ERR "%s: verify failed %d\n",
+		ret = onenand_verअगरy_oob(mtd, oobbuf, to);
+		अगर (ret) अणु
+			prपूर्णांकk(KERN_ERR "%s: verify failed %d\n",
 				__func__, ret);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		written += thislen;
-		if (written == len)
-			break;
+		अगर (written == len)
+			अवरोध;
 
-		to += mtd->writesize;
+		to += mtd->ग_लिखोsize;
 		buf += thislen;
 		column = 0;
-	}
+	पूर्ण
 
 	ops->oobretlen = written;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * onenand_write_oob - [MTD Interface] NAND write data and/or out-of-band
- * @mtd:		MTD device structure
- * @to:			offset to write
- * @ops:		oob operation description structure
+ * onenand_ग_लिखो_oob - [MTD Interface] न_अंकD ग_लिखो data and/or out-of-band
+ * @mtd:		MTD device काष्ठाure
+ * @to:			offset to ग_लिखो
+ * @ops:		oob operation description काष्ठाure
  */
-static int onenand_write_oob(struct mtd_info *mtd, loff_t to,
-			     struct mtd_oob_ops *ops)
-{
-	int ret;
+अटल पूर्णांक onenand_ग_लिखो_oob(काष्ठा mtd_info *mtd, loff_t to,
+			     काष्ठा mtd_oob_ops *ops)
+अणु
+	पूर्णांक ret;
 
-	switch (ops->mode) {
-	case MTD_OPS_PLACE_OOB:
-	case MTD_OPS_AUTO_OOB:
-		break;
-	case MTD_OPS_RAW:
+	चयन (ops->mode) अणु
+	हाल MTD_OPS_PLACE_OOB:
+	हाल MTD_OPS_AUTO_OOB:
+		अवरोध;
+	हाल MTD_OPS_RAW:
 		/* Not implemented yet */
-	default:
-		return -EINVAL;
-	}
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
 	onenand_get_device(mtd, FL_WRITING);
-	if (ops->datbuf)
-		ret = onenand_write_ops_nolock(mtd, to, ops);
-	else
-		ret = onenand_write_oob_nolock(mtd, to, ops);
+	अगर (ops->datbuf)
+		ret = onenand_ग_लिखो_ops_nolock(mtd, to, ops);
+	अन्यथा
+		ret = onenand_ग_लिखो_oob_nolock(mtd, to, ops);
 	onenand_release_device(mtd);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * onenand_block_isbad_nolock - [GENERIC] Check if a block is marked bad
- * @mtd:		MTD device structure
+ * onenand_block_isbad_nolock - [GENERIC] Check अगर a block is marked bad
+ * @mtd:		MTD device काष्ठाure
  * @ofs:		offset from device start
- * @allowbbt:	1, if its allowed to access the bbt area
+ * @allowbbt:	1, अगर its allowed to access the bbt area
  *
- * Check, if the block is bad. Either by reading the bad block table or
+ * Check, अगर the block is bad. Either by पढ़ोing the bad block table or
  * calling of the scan function.
  */
-static int onenand_block_isbad_nolock(struct mtd_info *mtd, loff_t ofs, int allowbbt)
-{
-	struct onenand_chip *this = mtd->priv;
-	struct bbm_info *bbm = this->bbm;
+अटल पूर्णांक onenand_block_isbad_nolock(काष्ठा mtd_info *mtd, loff_t ofs, पूर्णांक allowbbt)
+अणु
+	काष्ठा onenand_chip *this = mtd->priv;
+	काष्ठा bbm_info *bbm = this->bbm;
 
 	/* Return info from the table */
-	return bbm->isbad_bbt(mtd, ofs, allowbbt);
-}
+	वापस bbm->isbad_bbt(mtd, ofs, allowbbt);
+पूर्ण
 
 
-static int onenand_multiblock_erase_verify(struct mtd_info *mtd,
-					   struct erase_info *instr)
-{
-	struct onenand_chip *this = mtd->priv;
+अटल पूर्णांक onenand_multiblock_erase_verअगरy(काष्ठा mtd_info *mtd,
+					   काष्ठा erase_info *instr)
+अणु
+	काष्ठा onenand_chip *this = mtd->priv;
 	loff_t addr = instr->addr;
-	int len = instr->len;
-	unsigned int block_size = (1 << this->erase_shift);
-	int ret = 0;
+	पूर्णांक len = instr->len;
+	अचिन्हित पूर्णांक block_size = (1 << this->erase_shअगरt);
+	पूर्णांक ret = 0;
 
-	while (len) {
-		this->command(mtd, ONENAND_CMD_ERASE_VERIFY, addr, block_size);
-		ret = this->wait(mtd, FL_VERIFYING_ERASE);
-		if (ret) {
-			printk(KERN_ERR "%s: Failed verify, block %d\n",
+	जबतक (len) अणु
+		this->command(mtd, ONEन_अंकD_CMD_ERASE_VERIFY, addr, block_size);
+		ret = this->रुको(mtd, FL_VERIFYING_ERASE);
+		अगर (ret) अणु
+			prपूर्णांकk(KERN_ERR "%s: Failed verify, block %d\n",
 			       __func__, onenand_block(this, addr));
 			instr->fail_addr = addr;
-			return -1;
-		}
+			वापस -1;
+		पूर्ण
 		len -= block_size;
 		addr += block_size;
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /**
  * onenand_multiblock_erase - [INTERN] erase block(s) using multiblock erase
- * @mtd:		MTD device structure
- * @instr:		erase instruction
+ * @mtd:		MTD device काष्ठाure
+ * @instr:		erase inकाष्ठाion
  * @block_size:		block size
  *
- * Erase one or more blocks up to 64 block at a time
+ * Erase one or more blocks up to 64 block at a समय
  */
-static int onenand_multiblock_erase(struct mtd_info *mtd,
-				    struct erase_info *instr,
-				    unsigned int block_size)
-{
-	struct onenand_chip *this = mtd->priv;
+अटल पूर्णांक onenand_multiblock_erase(काष्ठा mtd_info *mtd,
+				    काष्ठा erase_info *instr,
+				    अचिन्हित पूर्णांक block_size)
+अणु
+	काष्ठा onenand_chip *this = mtd->priv;
 	loff_t addr = instr->addr;
-	int len = instr->len;
-	int eb_count = 0;
-	int ret = 0;
-	int bdry_block = 0;
+	पूर्णांक len = instr->len;
+	पूर्णांक eb_count = 0;
+	पूर्णांक ret = 0;
+	पूर्णांक bdry_block = 0;
 
-	if (ONENAND_IS_DDP(this)) {
+	अगर (ONEन_अंकD_IS_DDP(this)) अणु
 		loff_t bdry_addr = this->chipsize >> 1;
-		if (addr < bdry_addr && (addr + len) > bdry_addr)
-			bdry_block = bdry_addr >> this->erase_shift;
-	}
+		अगर (addr < bdry_addr && (addr + len) > bdry_addr)
+			bdry_block = bdry_addr >> this->erase_shअगरt;
+	पूर्ण
 
 	/* Pre-check bbs */
-	while (len) {
-		/* Check if we have a bad block, we do not erase bad blocks */
-		if (onenand_block_isbad_nolock(mtd, addr, 0)) {
-			printk(KERN_WARNING "%s: attempt to erase a bad block "
+	जबतक (len) अणु
+		/* Check अगर we have a bad block, we करो not erase bad blocks */
+		अगर (onenand_block_isbad_nolock(mtd, addr, 0)) अणु
+			prपूर्णांकk(KERN_WARNING "%s: attempt to erase a bad block "
 			       "at addr 0x%012llx\n",
-			       __func__, (unsigned long long) addr);
-			return -EIO;
-		}
+			       __func__, (अचिन्हित दीर्घ दीर्घ) addr);
+			वापस -EIO;
+		पूर्ण
 		len -= block_size;
 		addr += block_size;
-	}
+	पूर्ण
 
 	len = instr->len;
 	addr = instr->addr;
 
 	/* loop over 64 eb batches */
-	while (len) {
-		struct erase_info verify_instr = *instr;
-		int max_eb_count = MB_ERASE_MAX_BLK_COUNT;
+	जबतक (len) अणु
+		काष्ठा erase_info verअगरy_instr = *instr;
+		पूर्णांक max_eb_count = MB_ERASE_MAX_BLK_COUNT;
 
-		verify_instr.addr = addr;
-		verify_instr.len = 0;
+		verअगरy_instr.addr = addr;
+		verअगरy_instr.len = 0;
 
-		/* do not cross chip boundary */
-		if (bdry_block) {
-			int this_block = (addr >> this->erase_shift);
+		/* करो not cross chip boundary */
+		अगर (bdry_block) अणु
+			पूर्णांक this_block = (addr >> this->erase_shअगरt);
 
-			if (this_block < bdry_block) {
+			अगर (this_block < bdry_block) अणु
 				max_eb_count = min(max_eb_count,
 						   (bdry_block - this_block));
-			}
-		}
+			पूर्ण
+		पूर्ण
 
 		eb_count = 0;
 
-		while (len > block_size && eb_count < (max_eb_count - 1)) {
-			this->command(mtd, ONENAND_CMD_MULTIBLOCK_ERASE,
+		जबतक (len > block_size && eb_count < (max_eb_count - 1)) अणु
+			this->command(mtd, ONEन_अंकD_CMD_MULTIBLOCK_ERASE,
 				      addr, block_size);
 			onenand_invalidate_bufferram(mtd, addr, block_size);
 
-			ret = this->wait(mtd, FL_PREPARING_ERASE);
-			if (ret) {
-				printk(KERN_ERR "%s: Failed multiblock erase, "
+			ret = this->रुको(mtd, FL_PREPARING_ERASE);
+			अगर (ret) अणु
+				prपूर्णांकk(KERN_ERR "%s: Failed multiblock erase, "
 				       "block %d\n", __func__,
 				       onenand_block(this, addr));
 				instr->fail_addr = MTD_FAIL_ADDR_UNKNOWN;
-				return -EIO;
-			}
+				वापस -EIO;
+			पूर्ण
 
 			len -= block_size;
 			addr += block_size;
 			eb_count++;
-		}
+		पूर्ण
 
 		/* last block of 64-eb series */
 		cond_resched();
-		this->command(mtd, ONENAND_CMD_ERASE, addr, block_size);
+		this->command(mtd, ONEन_अंकD_CMD_ERASE, addr, block_size);
 		onenand_invalidate_bufferram(mtd, addr, block_size);
 
-		ret = this->wait(mtd, FL_ERASING);
-		/* Check if it is write protected */
-		if (ret) {
-			printk(KERN_ERR "%s: Failed erase, block %d\n",
+		ret = this->रुको(mtd, FL_ERASING);
+		/* Check अगर it is ग_लिखो रक्षित */
+		अगर (ret) अणु
+			prपूर्णांकk(KERN_ERR "%s: Failed erase, block %d\n",
 			       __func__, onenand_block(this, addr));
 			instr->fail_addr = MTD_FAIL_ADDR_UNKNOWN;
-			return -EIO;
-		}
+			वापस -EIO;
+		पूर्ण
 
 		len -= block_size;
 		addr += block_size;
 		eb_count++;
 
-		/* verify */
-		verify_instr.len = eb_count * block_size;
-		if (onenand_multiblock_erase_verify(mtd, &verify_instr)) {
-			instr->fail_addr = verify_instr.fail_addr;
-			return -EIO;
-		}
+		/* verअगरy */
+		verअगरy_instr.len = eb_count * block_size;
+		अगर (onenand_multiblock_erase_verअगरy(mtd, &verअगरy_instr)) अणु
+			instr->fail_addr = verअगरy_instr.fail_addr;
+			वापस -EIO;
+		पूर्ण
 
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 
 /**
  * onenand_block_by_block_erase - [INTERN] erase block(s) using regular erase
- * @mtd:		MTD device structure
- * @instr:		erase instruction
+ * @mtd:		MTD device काष्ठाure
+ * @instr:		erase inकाष्ठाion
  * @region:	erase region
  * @block_size:	erase block size
  *
- * Erase one or more blocks one block at a time
+ * Erase one or more blocks one block at a समय
  */
-static int onenand_block_by_block_erase(struct mtd_info *mtd,
-					struct erase_info *instr,
-					struct mtd_erase_region_info *region,
-					unsigned int block_size)
-{
-	struct onenand_chip *this = mtd->priv;
+अटल पूर्णांक onenand_block_by_block_erase(काष्ठा mtd_info *mtd,
+					काष्ठा erase_info *instr,
+					काष्ठा mtd_erase_region_info *region,
+					अचिन्हित पूर्णांक block_size)
+अणु
+	काष्ठा onenand_chip *this = mtd->priv;
 	loff_t addr = instr->addr;
-	int len = instr->len;
+	पूर्णांक len = instr->len;
 	loff_t region_end = 0;
-	int ret = 0;
+	पूर्णांक ret = 0;
 
-	if (region) {
-		/* region is set for Flex-OneNAND */
+	अगर (region) अणु
+		/* region is set क्रम Flex-Oneन_अंकD */
 		region_end = region->offset + region->erasesize * region->numblocks;
-	}
+	पूर्ण
 
 	/* Loop through the blocks */
-	while (len) {
+	जबतक (len) अणु
 		cond_resched();
 
-		/* Check if we have a bad block, we do not erase bad blocks */
-		if (onenand_block_isbad_nolock(mtd, addr, 0)) {
-			printk(KERN_WARNING "%s: attempt to erase a bad block "
+		/* Check अगर we have a bad block, we करो not erase bad blocks */
+		अगर (onenand_block_isbad_nolock(mtd, addr, 0)) अणु
+			prपूर्णांकk(KERN_WARNING "%s: attempt to erase a bad block "
 					"at addr 0x%012llx\n",
-					__func__, (unsigned long long) addr);
-			return -EIO;
-		}
+					__func__, (अचिन्हित दीर्घ दीर्घ) addr);
+			वापस -EIO;
+		पूर्ण
 
-		this->command(mtd, ONENAND_CMD_ERASE, addr, block_size);
+		this->command(mtd, ONEन_अंकD_CMD_ERASE, addr, block_size);
 
 		onenand_invalidate_bufferram(mtd, addr, block_size);
 
-		ret = this->wait(mtd, FL_ERASING);
-		/* Check, if it is write protected */
-		if (ret) {
-			printk(KERN_ERR "%s: Failed erase, block %d\n",
+		ret = this->रुको(mtd, FL_ERASING);
+		/* Check, अगर it is ग_लिखो रक्षित */
+		अगर (ret) अणु
+			prपूर्णांकk(KERN_ERR "%s: Failed erase, block %d\n",
 				__func__, onenand_block(this, addr));
 			instr->fail_addr = addr;
-			return -EIO;
-		}
+			वापस -EIO;
+		पूर्ण
 
 		len -= block_size;
 		addr += block_size;
 
-		if (region && addr == region_end) {
-			if (!len)
-				break;
+		अगर (region && addr == region_end) अणु
+			अगर (!len)
+				अवरोध;
 			region++;
 
 			block_size = region->erasesize;
 			region_end = region->offset + region->erasesize * region->numblocks;
 
-			if (len & (block_size - 1)) {
+			अगर (len & (block_size - 1)) अणु
 				/* FIXME: This should be handled at MTD partitioning level. */
-				printk(KERN_ERR "%s: Unaligned address\n",
+				prपूर्णांकk(KERN_ERR "%s: Unaligned address\n",
 					__func__);
-				return -EIO;
-			}
-		}
-	}
-	return 0;
-}
+				वापस -EIO;
+			पूर्ण
+		पूर्ण
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /**
  * onenand_erase - [MTD Interface] erase block(s)
- * @mtd:		MTD device structure
- * @instr:		erase instruction
+ * @mtd:		MTD device काष्ठाure
+ * @instr:		erase inकाष्ठाion
  *
  * Erase one or more blocks
  */
-static int onenand_erase(struct mtd_info *mtd, struct erase_info *instr)
-{
-	struct onenand_chip *this = mtd->priv;
-	unsigned int block_size;
+अटल पूर्णांक onenand_erase(काष्ठा mtd_info *mtd, काष्ठा erase_info *instr)
+अणु
+	काष्ठा onenand_chip *this = mtd->priv;
+	अचिन्हित पूर्णांक block_size;
 	loff_t addr = instr->addr;
 	loff_t len = instr->len;
-	int ret = 0;
-	struct mtd_erase_region_info *region = NULL;
+	पूर्णांक ret = 0;
+	काष्ठा mtd_erase_region_info *region = शून्य;
 	loff_t region_offset = 0;
 
 	pr_debug("%s: start=0x%012llx, len=%llu\n", __func__,
-			(unsigned long long)instr->addr,
-			(unsigned long long)instr->len);
+			(अचिन्हित दीर्घ दीर्घ)instr->addr,
+			(अचिन्हित दीर्घ दीर्घ)instr->len);
 
-	if (FLEXONENAND(this)) {
+	अगर (FLEXONEन_अंकD(this)) अणु
 		/* Find the eraseregion of this address */
-		int i = flexonenand_region(mtd, addr);
+		पूर्णांक i = flexonenand_region(mtd, addr);
 
 		region = &mtd->eraseregions[i];
 		block_size = region->erasesize;
@@ -2353,428 +2354,428 @@ static int onenand_erase(struct mtd_info *mtd, struct erase_info *instr)
 		 * Erase region's start offset is always block start address.
 		 */
 		region_offset = region->offset;
-	} else
-		block_size = 1 << this->erase_shift;
+	पूर्ण अन्यथा
+		block_size = 1 << this->erase_shअगरt;
 
 	/* Start address must align on block boundary */
-	if (unlikely((addr - region_offset) & (block_size - 1))) {
-		printk(KERN_ERR "%s: Unaligned address\n", __func__);
-		return -EINVAL;
-	}
+	अगर (unlikely((addr - region_offset) & (block_size - 1))) अणु
+		prपूर्णांकk(KERN_ERR "%s: Unaligned address\n", __func__);
+		वापस -EINVAL;
+	पूर्ण
 
 	/* Length must align on block boundary */
-	if (unlikely(len & (block_size - 1))) {
-		printk(KERN_ERR "%s: Length not block aligned\n", __func__);
-		return -EINVAL;
-	}
+	अगर (unlikely(len & (block_size - 1))) अणु
+		prपूर्णांकk(KERN_ERR "%s: Length not block aligned\n", __func__);
+		वापस -EINVAL;
+	पूर्ण
 
-	/* Grab the lock and see if the device is available */
+	/* Grab the lock and see अगर the device is available */
 	onenand_get_device(mtd, FL_ERASING);
 
-	if (ONENAND_IS_4KB_PAGE(this) || region ||
-	    instr->len < MB_ERASE_MIN_BLK_COUNT * block_size) {
-		/* region is set for Flex-OneNAND (no mb erase) */
+	अगर (ONEन_अंकD_IS_4KB_PAGE(this) || region ||
+	    instr->len < MB_ERASE_MIN_BLK_COUNT * block_size) अणु
+		/* region is set क्रम Flex-Oneन_अंकD (no mb erase) */
 		ret = onenand_block_by_block_erase(mtd, instr,
 						   region, block_size);
-	} else {
+	पूर्ण अन्यथा अणु
 		ret = onenand_multiblock_erase(mtd, instr, block_size);
-	}
+	पूर्ण
 
-	/* Deselect and wake up anyone waiting on the device */
+	/* Deselect and wake up anyone रुकोing on the device */
 	onenand_release_device(mtd);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
  * onenand_sync - [MTD Interface] sync
- * @mtd:		MTD device structure
+ * @mtd:		MTD device काष्ठाure
  *
- * Sync is actually a wait for chip ready function
+ * Sync is actually a रुको क्रम chip पढ़ोy function
  */
-static void onenand_sync(struct mtd_info *mtd)
-{
+अटल व्योम onenand_sync(काष्ठा mtd_info *mtd)
+अणु
 	pr_debug("%s: called\n", __func__);
 
-	/* Grab the lock and see if the device is available */
+	/* Grab the lock and see अगर the device is available */
 	onenand_get_device(mtd, FL_SYNCING);
 
 	/* Release it and go back */
 	onenand_release_device(mtd);
-}
+पूर्ण
 
 /**
  * onenand_block_isbad - [MTD Interface] Check whether the block at the given offset is bad
- * @mtd:		MTD device structure
+ * @mtd:		MTD device काष्ठाure
  * @ofs:		offset relative to mtd start
  *
  * Check whether the block is bad
  */
-static int onenand_block_isbad(struct mtd_info *mtd, loff_t ofs)
-{
-	int ret;
+अटल पूर्णांक onenand_block_isbad(काष्ठा mtd_info *mtd, loff_t ofs)
+अणु
+	पूर्णांक ret;
 
 	onenand_get_device(mtd, FL_READING);
 	ret = onenand_block_isbad_nolock(mtd, ofs, 0);
 	onenand_release_device(mtd);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * onenand_default_block_markbad - [DEFAULT] mark a block bad
- * @mtd:		MTD device structure
+ * onenand_शेष_block_markbad - [DEFAULT] mark a block bad
+ * @mtd:		MTD device काष्ठाure
  * @ofs:		offset from device start
  *
- * This is the default implementation, which can be overridden by
- * a hardware specific driver.
+ * This is the शेष implementation, which can be overridden by
+ * a hardware specअगरic driver.
  */
-static int onenand_default_block_markbad(struct mtd_info *mtd, loff_t ofs)
-{
-	struct onenand_chip *this = mtd->priv;
-	struct bbm_info *bbm = this->bbm;
-	u_char buf[2] = {0, 0};
-	struct mtd_oob_ops ops = {
+अटल पूर्णांक onenand_शेष_block_markbad(काष्ठा mtd_info *mtd, loff_t ofs)
+अणु
+	काष्ठा onenand_chip *this = mtd->priv;
+	काष्ठा bbm_info *bbm = this->bbm;
+	u_अक्षर buf[2] = अणु0, 0पूर्ण;
+	काष्ठा mtd_oob_ops ops = अणु
 		.mode = MTD_OPS_PLACE_OOB,
 		.ooblen = 2,
 		.oobbuf = buf,
 		.ooboffs = 0,
-	};
-	int block;
+	पूर्ण;
+	पूर्णांक block;
 
 	/* Get block number */
 	block = onenand_block(this, ofs);
-        if (bbm->bbt)
+        अगर (bbm->bbt)
                 bbm->bbt[block >> 2] |= 0x01 << ((block & 0x03) << 1);
 
-        /* We write two bytes, so we don't have to mess with 16-bit access */
+        /* We ग_लिखो two bytes, so we करोn't have to mess with 16-bit access */
         ofs += mtd->oobsize + (this->badblockpos & ~0x01);
-	/* FIXME : What to do when marking SLC block in partition
+	/* FIXME : What to करो when marking SLC block in partition
 	 * 	   with MLC erasesize? For now, it is not advisable to
 	 *	   create partitions containing both SLC and MLC regions.
 	 */
-	return onenand_write_oob_nolock(mtd, ofs, &ops);
-}
+	वापस onenand_ग_लिखो_oob_nolock(mtd, ofs, &ops);
+पूर्ण
 
 /**
  * onenand_block_markbad - [MTD Interface] Mark the block at the given offset as bad
- * @mtd:		MTD device structure
+ * @mtd:		MTD device काष्ठाure
  * @ofs:		offset relative to mtd start
  *
  * Mark the block as bad
  */
-static int onenand_block_markbad(struct mtd_info *mtd, loff_t ofs)
-{
-	struct onenand_chip *this = mtd->priv;
-	int ret;
+अटल पूर्णांक onenand_block_markbad(काष्ठा mtd_info *mtd, loff_t ofs)
+अणु
+	काष्ठा onenand_chip *this = mtd->priv;
+	पूर्णांक ret;
 
 	ret = onenand_block_isbad(mtd, ofs);
-	if (ret) {
-		/* If it was bad already, return success and do nothing */
-		if (ret > 0)
-			return 0;
-		return ret;
-	}
+	अगर (ret) अणु
+		/* If it was bad alपढ़ोy, वापस success and करो nothing */
+		अगर (ret > 0)
+			वापस 0;
+		वापस ret;
+	पूर्ण
 
 	onenand_get_device(mtd, FL_WRITING);
 	ret = this->block_markbad(mtd, ofs);
 	onenand_release_device(mtd);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * onenand_do_lock_cmd - [OneNAND Interface] Lock or unlock block(s)
- * @mtd:		MTD device structure
+ * onenand_करो_lock_cmd - [Oneन_अंकD Interface] Lock or unlock block(s)
+ * @mtd:		MTD device काष्ठाure
  * @ofs:		offset relative to mtd start
  * @len:		number of bytes to lock or unlock
  * @cmd:		lock or unlock command
  *
  * Lock or unlock one or more blocks
  */
-static int onenand_do_lock_cmd(struct mtd_info *mtd, loff_t ofs, size_t len, int cmd)
-{
-	struct onenand_chip *this = mtd->priv;
-	int start, end, block, value, status;
-	int wp_status_mask;
+अटल पूर्णांक onenand_करो_lock_cmd(काष्ठा mtd_info *mtd, loff_t ofs, माप_प्रकार len, पूर्णांक cmd)
+अणु
+	काष्ठा onenand_chip *this = mtd->priv;
+	पूर्णांक start, end, block, value, status;
+	पूर्णांक wp_status_mask;
 
 	start = onenand_block(this, ofs);
 	end = onenand_block(this, ofs + len) - 1;
 
-	if (cmd == ONENAND_CMD_LOCK)
-		wp_status_mask = ONENAND_WP_LS;
-	else
-		wp_status_mask = ONENAND_WP_US;
+	अगर (cmd == ONEन_अंकD_CMD_LOCK)
+		wp_status_mask = ONEन_अंकD_WP_LS;
+	अन्यथा
+		wp_status_mask = ONEन_अंकD_WP_US;
 
 	/* Continuous lock scheme */
-	if (this->options & ONENAND_HAS_CONT_LOCK) {
+	अगर (this->options & ONEन_अंकD_HAS_CONT_LOCK) अणु
 		/* Set start block address */
-		this->write_word(start, this->base + ONENAND_REG_START_BLOCK_ADDRESS);
+		this->ग_लिखो_word(start, this->base + ONEन_अंकD_REG_START_BLOCK_ADDRESS);
 		/* Set end block address */
-		this->write_word(end, this->base +  ONENAND_REG_END_BLOCK_ADDRESS);
+		this->ग_लिखो_word(end, this->base +  ONEन_अंकD_REG_END_BLOCK_ADDRESS);
 		/* Write lock command */
 		this->command(mtd, cmd, 0, 0);
 
-		/* There's no return value */
-		this->wait(mtd, FL_LOCKING);
+		/* There's no वापस value */
+		this->रुको(mtd, FL_LOCKING);
 
 		/* Sanity check */
-		while (this->read_word(this->base + ONENAND_REG_CTRL_STATUS)
-		    & ONENAND_CTRL_ONGO)
-			continue;
+		जबतक (this->पढ़ो_word(this->base + ONEन_अंकD_REG_CTRL_STATUS)
+		    & ONEन_अंकD_CTRL_ONGO)
+			जारी;
 
 		/* Check lock status */
-		status = this->read_word(this->base + ONENAND_REG_WP_STATUS);
-		if (!(status & wp_status_mask))
-			printk(KERN_ERR "%s: wp status = 0x%x\n",
+		status = this->पढ़ो_word(this->base + ONEन_अंकD_REG_WP_STATUS);
+		अगर (!(status & wp_status_mask))
+			prपूर्णांकk(KERN_ERR "%s: wp status = 0x%x\n",
 				__func__, status);
 
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	/* Block lock scheme */
-	for (block = start; block < end + 1; block++) {
+	क्रम (block = start; block < end + 1; block++) अणु
 		/* Set block address */
 		value = onenand_block_address(this, block);
-		this->write_word(value, this->base + ONENAND_REG_START_ADDRESS1);
-		/* Select DataRAM for DDP */
+		this->ग_लिखो_word(value, this->base + ONEन_अंकD_REG_START_ADDRESS1);
+		/* Select DataRAM क्रम DDP */
 		value = onenand_bufferram_address(this, block);
-		this->write_word(value, this->base + ONENAND_REG_START_ADDRESS2);
+		this->ग_लिखो_word(value, this->base + ONEन_अंकD_REG_START_ADDRESS2);
 		/* Set start block address */
-		this->write_word(block, this->base + ONENAND_REG_START_BLOCK_ADDRESS);
+		this->ग_लिखो_word(block, this->base + ONEन_अंकD_REG_START_BLOCK_ADDRESS);
 		/* Write lock command */
 		this->command(mtd, cmd, 0, 0);
 
-		/* There's no return value */
-		this->wait(mtd, FL_LOCKING);
+		/* There's no वापस value */
+		this->रुको(mtd, FL_LOCKING);
 
 		/* Sanity check */
-		while (this->read_word(this->base + ONENAND_REG_CTRL_STATUS)
-		    & ONENAND_CTRL_ONGO)
-			continue;
+		जबतक (this->पढ़ो_word(this->base + ONEन_अंकD_REG_CTRL_STATUS)
+		    & ONEन_अंकD_CTRL_ONGO)
+			जारी;
 
 		/* Check lock status */
-		status = this->read_word(this->base + ONENAND_REG_WP_STATUS);
-		if (!(status & wp_status_mask))
-			printk(KERN_ERR "%s: block = %d, wp status = 0x%x\n",
+		status = this->पढ़ो_word(this->base + ONEन_अंकD_REG_WP_STATUS);
+		अगर (!(status & wp_status_mask))
+			prपूर्णांकk(KERN_ERR "%s: block = %d, wp status = 0x%x\n",
 				__func__, block, status);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * onenand_lock - [MTD Interface] Lock block(s)
- * @mtd:		MTD device structure
+ * @mtd:		MTD device काष्ठाure
  * @ofs:		offset relative to mtd start
  * @len:		number of bytes to unlock
  *
  * Lock one or more blocks
  */
-static int onenand_lock(struct mtd_info *mtd, loff_t ofs, uint64_t len)
-{
-	int ret;
+अटल पूर्णांक onenand_lock(काष्ठा mtd_info *mtd, loff_t ofs, uपूर्णांक64_t len)
+अणु
+	पूर्णांक ret;
 
 	onenand_get_device(mtd, FL_LOCKING);
-	ret = onenand_do_lock_cmd(mtd, ofs, len, ONENAND_CMD_LOCK);
+	ret = onenand_करो_lock_cmd(mtd, ofs, len, ONEन_अंकD_CMD_LOCK);
 	onenand_release_device(mtd);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
  * onenand_unlock - [MTD Interface] Unlock block(s)
- * @mtd:		MTD device structure
+ * @mtd:		MTD device काष्ठाure
  * @ofs:		offset relative to mtd start
  * @len:		number of bytes to unlock
  *
  * Unlock one or more blocks
  */
-static int onenand_unlock(struct mtd_info *mtd, loff_t ofs, uint64_t len)
-{
-	int ret;
+अटल पूर्णांक onenand_unlock(काष्ठा mtd_info *mtd, loff_t ofs, uपूर्णांक64_t len)
+अणु
+	पूर्णांक ret;
 
 	onenand_get_device(mtd, FL_LOCKING);
-	ret = onenand_do_lock_cmd(mtd, ofs, len, ONENAND_CMD_UNLOCK);
+	ret = onenand_करो_lock_cmd(mtd, ofs, len, ONEन_अंकD_CMD_UNLOCK);
 	onenand_release_device(mtd);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * onenand_check_lock_status - [OneNAND Interface] Check lock status
- * @this:		onenand chip data structure
+ * onenand_check_lock_status - [Oneन_अंकD Interface] Check lock status
+ * @this:		onenand chip data काष्ठाure
  *
  * Check lock status
  */
-static int onenand_check_lock_status(struct onenand_chip *this)
-{
-	unsigned int value, block, status;
-	unsigned int end;
+अटल पूर्णांक onenand_check_lock_status(काष्ठा onenand_chip *this)
+अणु
+	अचिन्हित पूर्णांक value, block, status;
+	अचिन्हित पूर्णांक end;
 
-	end = this->chipsize >> this->erase_shift;
-	for (block = 0; block < end; block++) {
+	end = this->chipsize >> this->erase_shअगरt;
+	क्रम (block = 0; block < end; block++) अणु
 		/* Set block address */
 		value = onenand_block_address(this, block);
-		this->write_word(value, this->base + ONENAND_REG_START_ADDRESS1);
-		/* Select DataRAM for DDP */
+		this->ग_लिखो_word(value, this->base + ONEन_अंकD_REG_START_ADDRESS1);
+		/* Select DataRAM क्रम DDP */
 		value = onenand_bufferram_address(this, block);
-		this->write_word(value, this->base + ONENAND_REG_START_ADDRESS2);
+		this->ग_लिखो_word(value, this->base + ONEन_अंकD_REG_START_ADDRESS2);
 		/* Set start block address */
-		this->write_word(block, this->base + ONENAND_REG_START_BLOCK_ADDRESS);
+		this->ग_लिखो_word(block, this->base + ONEन_अंकD_REG_START_BLOCK_ADDRESS);
 
 		/* Check lock status */
-		status = this->read_word(this->base + ONENAND_REG_WP_STATUS);
-		if (!(status & ONENAND_WP_US)) {
-			printk(KERN_ERR "%s: block = %d, wp status = 0x%x\n",
+		status = this->पढ़ो_word(this->base + ONEन_अंकD_REG_WP_STATUS);
+		अगर (!(status & ONEन_अंकD_WP_US)) अणु
+			prपूर्णांकk(KERN_ERR "%s: block = %d, wp status = 0x%x\n",
 				__func__, block, status);
-			return 0;
-		}
-	}
+			वापस 0;
+		पूर्ण
+	पूर्ण
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
 /**
- * onenand_unlock_all - [OneNAND Interface] unlock all blocks
- * @mtd:		MTD device structure
+ * onenand_unlock_all - [Oneन_अंकD Interface] unlock all blocks
+ * @mtd:		MTD device काष्ठाure
  *
  * Unlock all blocks
  */
-static void onenand_unlock_all(struct mtd_info *mtd)
-{
-	struct onenand_chip *this = mtd->priv;
+अटल व्योम onenand_unlock_all(काष्ठा mtd_info *mtd)
+अणु
+	काष्ठा onenand_chip *this = mtd->priv;
 	loff_t ofs = 0;
 	loff_t len = mtd->size;
 
-	if (this->options & ONENAND_HAS_UNLOCK_ALL) {
+	अगर (this->options & ONEन_अंकD_HAS_UNLOCK_ALL) अणु
 		/* Set start block address */
-		this->write_word(0, this->base + ONENAND_REG_START_BLOCK_ADDRESS);
+		this->ग_लिखो_word(0, this->base + ONEन_अंकD_REG_START_BLOCK_ADDRESS);
 		/* Write unlock command */
-		this->command(mtd, ONENAND_CMD_UNLOCK_ALL, 0, 0);
+		this->command(mtd, ONEन_अंकD_CMD_UNLOCK_ALL, 0, 0);
 
-		/* There's no return value */
-		this->wait(mtd, FL_LOCKING);
+		/* There's no वापस value */
+		this->रुको(mtd, FL_LOCKING);
 
 		/* Sanity check */
-		while (this->read_word(this->base + ONENAND_REG_CTRL_STATUS)
-		    & ONENAND_CTRL_ONGO)
-			continue;
+		जबतक (this->पढ़ो_word(this->base + ONEन_अंकD_REG_CTRL_STATUS)
+		    & ONEन_अंकD_CTRL_ONGO)
+			जारी;
 
 		/* Don't check lock status */
-		if (this->options & ONENAND_SKIP_UNLOCK_CHECK)
-			return;
+		अगर (this->options & ONEन_अंकD_SKIP_UNLOCK_CHECK)
+			वापस;
 
 		/* Check lock status */
-		if (onenand_check_lock_status(this))
-			return;
+		अगर (onenand_check_lock_status(this))
+			वापस;
 
-		/* Workaround for all block unlock in DDP */
-		if (ONENAND_IS_DDP(this) && !FLEXONENAND(this)) {
+		/* Workaround क्रम all block unlock in DDP */
+		अगर (ONEन_अंकD_IS_DDP(this) && !FLEXONEन_अंकD(this)) अणु
 			/* All blocks on another chip */
 			ofs = this->chipsize >> 1;
 			len = this->chipsize >> 1;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	onenand_do_lock_cmd(mtd, ofs, len, ONENAND_CMD_UNLOCK);
-}
+	onenand_करो_lock_cmd(mtd, ofs, len, ONEन_अंकD_CMD_UNLOCK);
+पूर्ण
 
-#ifdef CONFIG_MTD_ONENAND_OTP
+#अगर_घोषित CONFIG_MTD_ONEन_अंकD_OTP
 
 /**
- * onenand_otp_command - Send OTP specific command to OneNAND device
- * @mtd:	 MTD device structure
+ * onenand_otp_command - Send OTP specअगरic command to Oneन_अंकD device
+ * @mtd:	 MTD device काष्ठाure
  * @cmd:	 the command to be sent
- * @addr:	 offset to read from or write to
- * @len:	 number of bytes to read or write
+ * @addr:	 offset to पढ़ो from or ग_लिखो to
+ * @len:	 number of bytes to पढ़ो or ग_लिखो
  */
-static int onenand_otp_command(struct mtd_info *mtd, int cmd, loff_t addr,
-				size_t len)
-{
-	struct onenand_chip *this = mtd->priv;
-	int value, block, page;
+अटल पूर्णांक onenand_otp_command(काष्ठा mtd_info *mtd, पूर्णांक cmd, loff_t addr,
+				माप_प्रकार len)
+अणु
+	काष्ठा onenand_chip *this = mtd->priv;
+	पूर्णांक value, block, page;
 
 	/* Address translation */
-	switch (cmd) {
-	case ONENAND_CMD_OTP_ACCESS:
-		block = (int) (addr >> this->erase_shift);
+	चयन (cmd) अणु
+	हाल ONEन_अंकD_CMD_OTP_ACCESS:
+		block = (पूर्णांक) (addr >> this->erase_shअगरt);
 		page = -1;
-		break;
+		अवरोध;
 
-	default:
-		block = (int) (addr >> this->erase_shift);
-		page = (int) (addr >> this->page_shift);
+	शेष:
+		block = (पूर्णांक) (addr >> this->erase_shअगरt);
+		page = (पूर्णांक) (addr >> this->page_shअगरt);
 
-		if (ONENAND_IS_2PLANE(this)) {
+		अगर (ONEन_अंकD_IS_2PLANE(this)) अणु
 			/* Make the even block number */
 			block &= ~1;
 			/* Is it the odd plane? */
-			if (addr & this->writesize)
+			अगर (addr & this->ग_लिखोsize)
 				block++;
 			page >>= 1;
-		}
+		पूर्ण
 		page &= this->page_mask;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	if (block != -1) {
+	अगर (block != -1) अणु
 		/* Write 'DFS, FBA' of Flash */
 		value = onenand_block_address(this, block);
-		this->write_word(value, this->base +
-				ONENAND_REG_START_ADDRESS1);
-	}
+		this->ग_लिखो_word(value, this->base +
+				ONEन_अंकD_REG_START_ADDRESS1);
+	पूर्ण
 
-	if (page != -1) {
+	अगर (page != -1) अणु
 		/* Now we use page size operation */
-		int sectors = 4, count = 4;
-		int dataram;
+		पूर्णांक sectors = 4, count = 4;
+		पूर्णांक dataram;
 
-		switch (cmd) {
-		default:
-			if (ONENAND_IS_2PLANE(this) && cmd == ONENAND_CMD_PROG)
-				cmd = ONENAND_CMD_2X_PROG;
-			dataram = ONENAND_CURRENT_BUFFERRAM(this);
-			break;
-		}
+		चयन (cmd) अणु
+		शेष:
+			अगर (ONEन_अंकD_IS_2PLANE(this) && cmd == ONEन_अंकD_CMD_PROG)
+				cmd = ONEन_अंकD_CMD_2X_PROG;
+			dataram = ONEन_अंकD_CURRENT_BUFFERRAM(this);
+			अवरोध;
+		पूर्ण
 
 		/* Write 'FPA, FSA' of Flash */
 		value = onenand_page_address(page, sectors);
-		this->write_word(value, this->base +
-				ONENAND_REG_START_ADDRESS8);
+		this->ग_लिखो_word(value, this->base +
+				ONEन_अंकD_REG_START_ADDRESS8);
 
 		/* Write 'BSA, BSC' of DataRAM */
 		value = onenand_buffer_address(dataram, sectors, count);
-		this->write_word(value, this->base + ONENAND_REG_START_BUFFER);
-	}
+		this->ग_लिखो_word(value, this->base + ONEन_अंकD_REG_START_BUFFER);
+	पूर्ण
 
 	/* Interrupt clear */
-	this->write_word(ONENAND_INT_CLEAR, this->base + ONENAND_REG_INTERRUPT);
+	this->ग_लिखो_word(ONEन_अंकD_INT_CLEAR, this->base + ONEन_अंकD_REG_INTERRUPT);
 
 	/* Write command */
-	this->write_word(cmd, this->base + ONENAND_REG_COMMAND);
+	this->ग_लिखो_word(cmd, this->base + ONEन_अंकD_REG_COMMAND);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * onenand_otp_write_oob_nolock - [INTERN] OneNAND write out-of-band, specific to OTP
- * @mtd:		MTD device structure
- * @to:			offset to write to
- * @ops:                oob operation description structure
+ * onenand_otp_ग_लिखो_oob_nolock - [INTERN] Oneन_अंकD ग_लिखो out-of-band, specअगरic to OTP
+ * @mtd:		MTD device काष्ठाure
+ * @to:			offset to ग_लिखो to
+ * @ops:                oob operation description काष्ठाure
  *
- * OneNAND write out-of-band only for OTP
+ * Oneन_अंकD ग_लिखो out-of-band only क्रम OTP
  */
-static int onenand_otp_write_oob_nolock(struct mtd_info *mtd, loff_t to,
-				    struct mtd_oob_ops *ops)
-{
-	struct onenand_chip *this = mtd->priv;
-	int column, ret = 0, oobsize;
-	int written = 0;
-	u_char *oobbuf;
-	size_t len = ops->ooblen;
-	const u_char *buf = ops->oobbuf;
-	int block, value, status;
+अटल पूर्णांक onenand_otp_ग_लिखो_oob_nolock(काष्ठा mtd_info *mtd, loff_t to,
+				    काष्ठा mtd_oob_ops *ops)
+अणु
+	काष्ठा onenand_chip *this = mtd->priv;
+	पूर्णांक column, ret = 0, oobsize;
+	पूर्णांक written = 0;
+	u_अक्षर *oobbuf;
+	माप_प्रकार len = ops->ooblen;
+	स्थिर u_अक्षर *buf = ops->oobbuf;
+	पूर्णांक block, value, status;
 
 	to += ops->ooboffs;
 
-	/* Initialize retlen, in case of early exit */
+	/* Initialize retlen, in हाल of early निकास */
 	ops->oobretlen = 0;
 
 	oobsize = mtd->oobsize;
@@ -2783,424 +2784,424 @@ static int onenand_otp_write_oob_nolock(struct mtd_info *mtd, loff_t to,
 
 	oobbuf = this->oob_buf;
 
-	/* Loop until all data write */
-	while (written < len) {
-		int thislen = min_t(int, oobsize, len - written);
+	/* Loop until all data ग_लिखो */
+	जबतक (written < len) अणु
+		पूर्णांक thislen = min_t(पूर्णांक, oobsize, len - written);
 
 		cond_resched();
 
-		block = (int) (to >> this->erase_shift);
+		block = (पूर्णांक) (to >> this->erase_shअगरt);
 		/*
 		 * Write 'DFS, FBA' of Flash
 		 * Add: F100h DQ=DFS, FBA
 		 */
 
 		value = onenand_block_address(this, block);
-		this->write_word(value, this->base +
-				ONENAND_REG_START_ADDRESS1);
+		this->ग_लिखो_word(value, this->base +
+				ONEन_अंकD_REG_START_ADDRESS1);
 
 		/*
-		 * Select DataRAM for DDP
+		 * Select DataRAM क्रम DDP
 		 * Add: F101h DQ=DBS
 		 */
 
 		value = onenand_bufferram_address(this, block);
-		this->write_word(value, this->base +
-				ONENAND_REG_START_ADDRESS2);
-		ONENAND_SET_NEXT_BUFFERRAM(this);
+		this->ग_लिखो_word(value, this->base +
+				ONEन_अंकD_REG_START_ADDRESS2);
+		ONEन_अंकD_SET_NEXT_BUFFERRAM(this);
 
 		/*
 		 * Enter OTP access mode
 		 */
-		this->command(mtd, ONENAND_CMD_OTP_ACCESS, 0, 0);
-		this->wait(mtd, FL_OTPING);
+		this->command(mtd, ONEन_अंकD_CMD_OTP_ACCESS, 0, 0);
+		this->रुको(mtd, FL_OTPING);
 
 		/* We send data to spare ram with oobsize
 		 * to prevent byte access */
-		memcpy(oobbuf + column, buf, thislen);
+		स_नकल(oobbuf + column, buf, thislen);
 
 		/*
-		 * Write Data into DataRAM
+		 * Write Data पूर्णांकo DataRAM
 		 * Add: 8th Word
 		 * in sector0/spare/page0
 		 * DQ=XXFCh
 		 */
-		this->write_bufferram(mtd, ONENAND_SPARERAM,
+		this->ग_लिखो_bufferram(mtd, ONEन_अंकD_SPARERAM,
 					oobbuf, 0, mtd->oobsize);
 
-		onenand_otp_command(mtd, ONENAND_CMD_PROGOOB, to, mtd->oobsize);
+		onenand_otp_command(mtd, ONEन_अंकD_CMD_PROGOOB, to, mtd->oobsize);
 		onenand_update_bufferram(mtd, to, 0);
-		if (ONENAND_IS_2PLANE(this)) {
-			ONENAND_SET_BUFFERRAM1(this);
-			onenand_update_bufferram(mtd, to + this->writesize, 0);
-		}
+		अगर (ONEन_अंकD_IS_2PLANE(this)) अणु
+			ONEन_अंकD_SET_BUFFERRAM1(this);
+			onenand_update_bufferram(mtd, to + this->ग_लिखोsize, 0);
+		पूर्ण
 
-		ret = this->wait(mtd, FL_WRITING);
-		if (ret) {
-			printk(KERN_ERR "%s: write failed %d\n", __func__, ret);
-			break;
-		}
+		ret = this->रुको(mtd, FL_WRITING);
+		अगर (ret) अणु
+			prपूर्णांकk(KERN_ERR "%s: write failed %d\n", __func__, ret);
+			अवरोध;
+		पूर्ण
 
 		/* Exit OTP access mode */
-		this->command(mtd, ONENAND_CMD_RESET, 0, 0);
-		this->wait(mtd, FL_RESETTING);
+		this->command(mtd, ONEन_अंकD_CMD_RESET, 0, 0);
+		this->रुको(mtd, FL_RESETTING);
 
-		status = this->read_word(this->base + ONENAND_REG_CTRL_STATUS);
+		status = this->पढ़ो_word(this->base + ONEन_अंकD_REG_CTRL_STATUS);
 		status &= 0x60;
 
-		if (status == 0x60) {
-			printk(KERN_DEBUG "\nBLOCK\tSTATUS\n");
-			printk(KERN_DEBUG "1st Block\tLOCKED\n");
-			printk(KERN_DEBUG "OTP Block\tLOCKED\n");
-		} else if (status == 0x20) {
-			printk(KERN_DEBUG "\nBLOCK\tSTATUS\n");
-			printk(KERN_DEBUG "1st Block\tLOCKED\n");
-			printk(KERN_DEBUG "OTP Block\tUN-LOCKED\n");
-		} else if (status == 0x40) {
-			printk(KERN_DEBUG "\nBLOCK\tSTATUS\n");
-			printk(KERN_DEBUG "1st Block\tUN-LOCKED\n");
-			printk(KERN_DEBUG "OTP Block\tLOCKED\n");
-		} else {
-			printk(KERN_DEBUG "Reboot to check\n");
-		}
+		अगर (status == 0x60) अणु
+			prपूर्णांकk(KERN_DEBUG "\nBLOCK\tSTATUS\n");
+			prपूर्णांकk(KERN_DEBUG "1st Block\tLOCKED\n");
+			prपूर्णांकk(KERN_DEBUG "OTP Block\tLOCKED\n");
+		पूर्ण अन्यथा अगर (status == 0x20) अणु
+			prपूर्णांकk(KERN_DEBUG "\nBLOCK\tSTATUS\n");
+			prपूर्णांकk(KERN_DEBUG "1st Block\tLOCKED\n");
+			prपूर्णांकk(KERN_DEBUG "OTP Block\tUN-LOCKED\n");
+		पूर्ण अन्यथा अगर (status == 0x40) अणु
+			prपूर्णांकk(KERN_DEBUG "\nBLOCK\tSTATUS\n");
+			prपूर्णांकk(KERN_DEBUG "1st Block\tUN-LOCKED\n");
+			prपूर्णांकk(KERN_DEBUG "OTP Block\tLOCKED\n");
+		पूर्ण अन्यथा अणु
+			prपूर्णांकk(KERN_DEBUG "Reboot to check\n");
+		पूर्ण
 
 		written += thislen;
-		if (written == len)
-			break;
+		अगर (written == len)
+			अवरोध;
 
-		to += mtd->writesize;
+		to += mtd->ग_लिखोsize;
 		buf += thislen;
 		column = 0;
-	}
+	पूर्ण
 
 	ops->oobretlen = written;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /* Internal OTP operation */
-typedef int (*otp_op_t)(struct mtd_info *mtd, loff_t form, size_t len,
-		size_t *retlen, u_char *buf);
+प्रकार पूर्णांक (*otp_op_t)(काष्ठा mtd_info *mtd, loff_t क्रमm, माप_प्रकार len,
+		माप_प्रकार *retlen, u_अक्षर *buf);
 
 /**
- * do_otp_read - [DEFAULT] Read OTP block area
- * @mtd:		MTD device structure
- * @from:		The offset to read
- * @len:		number of bytes to read
- * @retlen:	pointer to variable to store the number of readbytes
+ * करो_otp_पढ़ो - [DEFAULT] Read OTP block area
+ * @mtd:		MTD device काष्ठाure
+ * @from:		The offset to पढ़ो
+ * @len:		number of bytes to पढ़ो
+ * @retlen:	poपूर्णांकer to variable to store the number of पढ़ोbytes
  * @buf:		the databuffer to put/get data
  *
  * Read OTP block area.
  */
-static int do_otp_read(struct mtd_info *mtd, loff_t from, size_t len,
-		size_t *retlen, u_char *buf)
-{
-	struct onenand_chip *this = mtd->priv;
-	struct mtd_oob_ops ops = {
+अटल पूर्णांक करो_otp_पढ़ो(काष्ठा mtd_info *mtd, loff_t from, माप_प्रकार len,
+		माप_प्रकार *retlen, u_अक्षर *buf)
+अणु
+	काष्ठा onenand_chip *this = mtd->priv;
+	काष्ठा mtd_oob_ops ops = अणु
 		.len	= len,
 		.ooblen	= 0,
 		.datbuf	= buf,
-		.oobbuf	= NULL,
-	};
-	int ret;
+		.oobbuf	= शून्य,
+	पूर्ण;
+	पूर्णांक ret;
 
 	/* Enter OTP access mode */
-	this->command(mtd, ONENAND_CMD_OTP_ACCESS, 0, 0);
-	this->wait(mtd, FL_OTPING);
+	this->command(mtd, ONEन_अंकD_CMD_OTP_ACCESS, 0, 0);
+	this->रुको(mtd, FL_OTPING);
 
-	ret = ONENAND_IS_4KB_PAGE(this) ?
-		onenand_mlc_read_ops_nolock(mtd, from, &ops) :
-		onenand_read_ops_nolock(mtd, from, &ops);
+	ret = ONEन_अंकD_IS_4KB_PAGE(this) ?
+		onenand_mlc_पढ़ो_ops_nolock(mtd, from, &ops) :
+		onenand_पढ़ो_ops_nolock(mtd, from, &ops);
 
 	/* Exit OTP access mode */
-	this->command(mtd, ONENAND_CMD_RESET, 0, 0);
-	this->wait(mtd, FL_RESETTING);
+	this->command(mtd, ONEन_अंकD_CMD_RESET, 0, 0);
+	this->रुको(mtd, FL_RESETTING);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * do_otp_write - [DEFAULT] Write OTP block area
- * @mtd:		MTD device structure
- * @to:		The offset to write
- * @len:		number of bytes to write
- * @retlen:	pointer to variable to store the number of write bytes
+ * करो_otp_ग_लिखो - [DEFAULT] Write OTP block area
+ * @mtd:		MTD device काष्ठाure
+ * @to:		The offset to ग_लिखो
+ * @len:		number of bytes to ग_लिखो
+ * @retlen:	poपूर्णांकer to variable to store the number of ग_लिखो bytes
  * @buf:		the databuffer to put/get data
  *
  * Write OTP block area.
  */
-static int do_otp_write(struct mtd_info *mtd, loff_t to, size_t len,
-		size_t *retlen, u_char *buf)
-{
-	struct onenand_chip *this = mtd->priv;
-	unsigned char *pbuf = buf;
-	int ret;
-	struct mtd_oob_ops ops;
+अटल पूर्णांक करो_otp_ग_लिखो(काष्ठा mtd_info *mtd, loff_t to, माप_प्रकार len,
+		माप_प्रकार *retlen, u_अक्षर *buf)
+अणु
+	काष्ठा onenand_chip *this = mtd->priv;
+	अचिन्हित अक्षर *pbuf = buf;
+	पूर्णांक ret;
+	काष्ठा mtd_oob_ops ops;
 
 	/* Force buffer page aligned */
-	if (len < mtd->writesize) {
-		memcpy(this->page_buf, buf, len);
-		memset(this->page_buf + len, 0xff, mtd->writesize - len);
+	अगर (len < mtd->ग_लिखोsize) अणु
+		स_नकल(this->page_buf, buf, len);
+		स_रखो(this->page_buf + len, 0xff, mtd->ग_लिखोsize - len);
 		pbuf = this->page_buf;
-		len = mtd->writesize;
-	}
+		len = mtd->ग_लिखोsize;
+	पूर्ण
 
 	/* Enter OTP access mode */
-	this->command(mtd, ONENAND_CMD_OTP_ACCESS, 0, 0);
-	this->wait(mtd, FL_OTPING);
+	this->command(mtd, ONEन_अंकD_CMD_OTP_ACCESS, 0, 0);
+	this->रुको(mtd, FL_OTPING);
 
 	ops.len = len;
 	ops.ooblen = 0;
 	ops.datbuf = pbuf;
-	ops.oobbuf = NULL;
-	ret = onenand_write_ops_nolock(mtd, to, &ops);
+	ops.oobbuf = शून्य;
+	ret = onenand_ग_लिखो_ops_nolock(mtd, to, &ops);
 	*retlen = ops.retlen;
 
 	/* Exit OTP access mode */
-	this->command(mtd, ONENAND_CMD_RESET, 0, 0);
-	this->wait(mtd, FL_RESETTING);
+	this->command(mtd, ONEन_अंकD_CMD_RESET, 0, 0);
+	this->रुको(mtd, FL_RESETTING);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * do_otp_lock - [DEFAULT] Lock OTP block area
- * @mtd:		MTD device structure
+ * करो_otp_lock - [DEFAULT] Lock OTP block area
+ * @mtd:		MTD device काष्ठाure
  * @from:		The offset to lock
  * @len:		number of bytes to lock
- * @retlen:	pointer to variable to store the number of lock bytes
+ * @retlen:	poपूर्णांकer to variable to store the number of lock bytes
  * @buf:		the databuffer to put/get data
  *
  * Lock OTP block area.
  */
-static int do_otp_lock(struct mtd_info *mtd, loff_t from, size_t len,
-		size_t *retlen, u_char *buf)
-{
-	struct onenand_chip *this = mtd->priv;
-	struct mtd_oob_ops ops;
-	int ret;
+अटल पूर्णांक करो_otp_lock(काष्ठा mtd_info *mtd, loff_t from, माप_प्रकार len,
+		माप_प्रकार *retlen, u_अक्षर *buf)
+अणु
+	काष्ठा onenand_chip *this = mtd->priv;
+	काष्ठा mtd_oob_ops ops;
+	पूर्णांक ret;
 
-	if (FLEXONENAND(this)) {
+	अगर (FLEXONEन_अंकD(this)) अणु
 
 		/* Enter OTP access mode */
-		this->command(mtd, ONENAND_CMD_OTP_ACCESS, 0, 0);
-		this->wait(mtd, FL_OTPING);
+		this->command(mtd, ONEन_अंकD_CMD_OTP_ACCESS, 0, 0);
+		this->रुको(mtd, FL_OTPING);
 		/*
-		 * For Flex-OneNAND, we write lock mark to 1st word of sector 4 of
-		 * main area of page 49.
+		 * For Flex-Oneन_अंकD, we ग_लिखो lock mark to 1st word of sector 4 of
+		 * मुख्य area of page 49.
 		 */
-		ops.len = mtd->writesize;
+		ops.len = mtd->ग_लिखोsize;
 		ops.ooblen = 0;
 		ops.datbuf = buf;
-		ops.oobbuf = NULL;
-		ret = onenand_write_ops_nolock(mtd, mtd->writesize * 49, &ops);
+		ops.oobbuf = शून्य;
+		ret = onenand_ग_लिखो_ops_nolock(mtd, mtd->ग_लिखोsize * 49, &ops);
 		*retlen = ops.retlen;
 
 		/* Exit OTP access mode */
-		this->command(mtd, ONENAND_CMD_RESET, 0, 0);
-		this->wait(mtd, FL_RESETTING);
-	} else {
+		this->command(mtd, ONEन_अंकD_CMD_RESET, 0, 0);
+		this->रुको(mtd, FL_RESETTING);
+	पूर्ण अन्यथा अणु
 		ops.mode = MTD_OPS_PLACE_OOB;
 		ops.ooblen = len;
 		ops.oobbuf = buf;
 		ops.ooboffs = 0;
-		ret = onenand_otp_write_oob_nolock(mtd, from, &ops);
+		ret = onenand_otp_ग_लिखो_oob_nolock(mtd, from, &ops);
 		*retlen = ops.oobretlen;
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
  * onenand_otp_walk - [DEFAULT] Handle OTP operation
- * @mtd:		MTD device structure
- * @from:		The offset to read/write
- * @len:		number of bytes to read/write
- * @retlen:	pointer to variable to store the number of read bytes
+ * @mtd:		MTD device काष्ठाure
+ * @from:		The offset to पढ़ो/ग_लिखो
+ * @len:		number of bytes to पढ़ो/ग_लिखो
+ * @retlen:	poपूर्णांकer to variable to store the number of पढ़ो bytes
  * @buf:		the databuffer to put/get data
- * @action:	do given action
- * @mode:		specify user and factory
+ * @action:	करो given action
+ * @mode:		specअगरy user and factory
  *
  * Handle OTP operation.
  */
-static int onenand_otp_walk(struct mtd_info *mtd, loff_t from, size_t len,
-			size_t *retlen, u_char *buf,
-			otp_op_t action, int mode)
-{
-	struct onenand_chip *this = mtd->priv;
-	int otp_pages;
-	int density;
-	int ret = 0;
+अटल पूर्णांक onenand_otp_walk(काष्ठा mtd_info *mtd, loff_t from, माप_प्रकार len,
+			माप_प्रकार *retlen, u_अक्षर *buf,
+			otp_op_t action, पूर्णांक mode)
+अणु
+	काष्ठा onenand_chip *this = mtd->priv;
+	पूर्णांक otp_pages;
+	पूर्णांक density;
+	पूर्णांक ret = 0;
 
 	*retlen = 0;
 
 	density = onenand_get_density(this->device_id);
-	if (density < ONENAND_DEVICE_DENSITY_512Mb)
+	अगर (density < ONEन_अंकD_DEVICE_DENSITY_512Mb)
 		otp_pages = 20;
-	else
+	अन्यथा
 		otp_pages = 50;
 
-	if (mode == MTD_OTP_FACTORY) {
-		from += mtd->writesize * otp_pages;
-		otp_pages = ONENAND_PAGES_PER_BLOCK - otp_pages;
-	}
+	अगर (mode == MTD_OTP_FACTORY) अणु
+		from += mtd->ग_लिखोsize * otp_pages;
+		otp_pages = ONEन_अंकD_PAGES_PER_BLOCK - otp_pages;
+	पूर्ण
 
 	/* Check User/Factory boundary */
-	if (mode == MTD_OTP_USER) {
-		if (mtd->writesize * otp_pages < from + len)
-			return 0;
-	} else {
-		if (mtd->writesize * otp_pages <  len)
-			return 0;
-	}
+	अगर (mode == MTD_OTP_USER) अणु
+		अगर (mtd->ग_लिखोsize * otp_pages < from + len)
+			वापस 0;
+	पूर्ण अन्यथा अणु
+		अगर (mtd->ग_लिखोsize * otp_pages <  len)
+			वापस 0;
+	पूर्ण
 
 	onenand_get_device(mtd, FL_OTPING);
-	while (len > 0 && otp_pages > 0) {
-		if (!action) {	/* OTP Info functions */
-			struct otp_info *otpinfo;
+	जबतक (len > 0 && otp_pages > 0) अणु
+		अगर (!action) अणु	/* OTP Info functions */
+			काष्ठा otp_info *otpinfo;
 
-			len -= sizeof(struct otp_info);
-			if (len <= 0) {
+			len -= माप(काष्ठा otp_info);
+			अगर (len <= 0) अणु
 				ret = -ENOSPC;
-				break;
-			}
+				अवरोध;
+			पूर्ण
 
-			otpinfo = (struct otp_info *) buf;
+			otpinfo = (काष्ठा otp_info *) buf;
 			otpinfo->start = from;
-			otpinfo->length = mtd->writesize;
+			otpinfo->length = mtd->ग_लिखोsize;
 			otpinfo->locked = 0;
 
-			from += mtd->writesize;
-			buf += sizeof(struct otp_info);
-			*retlen += sizeof(struct otp_info);
-		} else {
-			size_t tmp_retlen;
+			from += mtd->ग_लिखोsize;
+			buf += माप(काष्ठा otp_info);
+			*retlen += माप(काष्ठा otp_info);
+		पूर्ण अन्यथा अणु
+			माप_प्रकार पंचांगp_retlen;
 
-			ret = action(mtd, from, len, &tmp_retlen, buf);
-			if (ret)
-				break;
+			ret = action(mtd, from, len, &पंचांगp_retlen, buf);
+			अगर (ret)
+				अवरोध;
 
-			buf += tmp_retlen;
-			len -= tmp_retlen;
-			*retlen += tmp_retlen;
+			buf += पंचांगp_retlen;
+			len -= पंचांगp_retlen;
+			*retlen += पंचांगp_retlen;
 
-		}
+		पूर्ण
 		otp_pages--;
-	}
+	पूर्ण
 	onenand_release_device(mtd);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
  * onenand_get_fact_prot_info - [MTD Interface] Read factory OTP info
- * @mtd:		MTD device structure
- * @len:		number of bytes to read
- * @retlen:	pointer to variable to store the number of read bytes
+ * @mtd:		MTD device काष्ठाure
+ * @len:		number of bytes to पढ़ो
+ * @retlen:	poपूर्णांकer to variable to store the number of पढ़ो bytes
  * @buf:		the databuffer to put/get data
  *
  * Read factory OTP info.
  */
-static int onenand_get_fact_prot_info(struct mtd_info *mtd, size_t len,
-				      size_t *retlen, struct otp_info *buf)
-{
-	return onenand_otp_walk(mtd, 0, len, retlen, (u_char *) buf, NULL,
+अटल पूर्णांक onenand_get_fact_prot_info(काष्ठा mtd_info *mtd, माप_प्रकार len,
+				      माप_प्रकार *retlen, काष्ठा otp_info *buf)
+अणु
+	वापस onenand_otp_walk(mtd, 0, len, retlen, (u_अक्षर *) buf, शून्य,
 				MTD_OTP_FACTORY);
-}
+पूर्ण
 
 /**
- * onenand_read_fact_prot_reg - [MTD Interface] Read factory OTP area
- * @mtd:		MTD device structure
- * @from:		The offset to read
- * @len:		number of bytes to read
- * @retlen:	pointer to variable to store the number of read bytes
+ * onenand_पढ़ो_fact_prot_reg - [MTD Interface] Read factory OTP area
+ * @mtd:		MTD device काष्ठाure
+ * @from:		The offset to पढ़ो
+ * @len:		number of bytes to पढ़ो
+ * @retlen:	poपूर्णांकer to variable to store the number of पढ़ो bytes
  * @buf:		the databuffer to put/get data
  *
  * Read factory OTP area.
  */
-static int onenand_read_fact_prot_reg(struct mtd_info *mtd, loff_t from,
-			size_t len, size_t *retlen, u_char *buf)
-{
-	return onenand_otp_walk(mtd, from, len, retlen, buf, do_otp_read, MTD_OTP_FACTORY);
-}
+अटल पूर्णांक onenand_पढ़ो_fact_prot_reg(काष्ठा mtd_info *mtd, loff_t from,
+			माप_प्रकार len, माप_प्रकार *retlen, u_अक्षर *buf)
+अणु
+	वापस onenand_otp_walk(mtd, from, len, retlen, buf, करो_otp_पढ़ो, MTD_OTP_FACTORY);
+पूर्ण
 
 /**
  * onenand_get_user_prot_info - [MTD Interface] Read user OTP info
- * @mtd:		MTD device structure
- * @retlen:	pointer to variable to store the number of read bytes
- * @len:		number of bytes to read
+ * @mtd:		MTD device काष्ठाure
+ * @retlen:	poपूर्णांकer to variable to store the number of पढ़ो bytes
+ * @len:		number of bytes to पढ़ो
  * @buf:		the databuffer to put/get data
  *
  * Read user OTP info.
  */
-static int onenand_get_user_prot_info(struct mtd_info *mtd, size_t len,
-				      size_t *retlen, struct otp_info *buf)
-{
-	return onenand_otp_walk(mtd, 0, len, retlen, (u_char *) buf, NULL,
+अटल पूर्णांक onenand_get_user_prot_info(काष्ठा mtd_info *mtd, माप_प्रकार len,
+				      माप_प्रकार *retlen, काष्ठा otp_info *buf)
+अणु
+	वापस onenand_otp_walk(mtd, 0, len, retlen, (u_अक्षर *) buf, शून्य,
 				MTD_OTP_USER);
-}
+पूर्ण
 
 /**
- * onenand_read_user_prot_reg - [MTD Interface] Read user OTP area
- * @mtd:		MTD device structure
- * @from:		The offset to read
- * @len:		number of bytes to read
- * @retlen:	pointer to variable to store the number of read bytes
+ * onenand_पढ़ो_user_prot_reg - [MTD Interface] Read user OTP area
+ * @mtd:		MTD device काष्ठाure
+ * @from:		The offset to पढ़ो
+ * @len:		number of bytes to पढ़ो
+ * @retlen:	poपूर्णांकer to variable to store the number of पढ़ो bytes
  * @buf:		the databuffer to put/get data
  *
  * Read user OTP area.
  */
-static int onenand_read_user_prot_reg(struct mtd_info *mtd, loff_t from,
-			size_t len, size_t *retlen, u_char *buf)
-{
-	return onenand_otp_walk(mtd, from, len, retlen, buf, do_otp_read, MTD_OTP_USER);
-}
+अटल पूर्णांक onenand_पढ़ो_user_prot_reg(काष्ठा mtd_info *mtd, loff_t from,
+			माप_प्रकार len, माप_प्रकार *retlen, u_अक्षर *buf)
+अणु
+	वापस onenand_otp_walk(mtd, from, len, retlen, buf, करो_otp_पढ़ो, MTD_OTP_USER);
+पूर्ण
 
 /**
- * onenand_write_user_prot_reg - [MTD Interface] Write user OTP area
- * @mtd:		MTD device structure
- * @from:		The offset to write
- * @len:		number of bytes to write
- * @retlen:	pointer to variable to store the number of write bytes
+ * onenand_ग_लिखो_user_prot_reg - [MTD Interface] Write user OTP area
+ * @mtd:		MTD device काष्ठाure
+ * @from:		The offset to ग_लिखो
+ * @len:		number of bytes to ग_लिखो
+ * @retlen:	poपूर्णांकer to variable to store the number of ग_लिखो bytes
  * @buf:		the databuffer to put/get data
  *
  * Write user OTP area.
  */
-static int onenand_write_user_prot_reg(struct mtd_info *mtd, loff_t from,
-			size_t len, size_t *retlen, const u_char *buf)
-{
-	return onenand_otp_walk(mtd, from, len, retlen, (u_char *)buf,
-				do_otp_write, MTD_OTP_USER);
-}
+अटल पूर्णांक onenand_ग_लिखो_user_prot_reg(काष्ठा mtd_info *mtd, loff_t from,
+			माप_प्रकार len, माप_प्रकार *retlen, स्थिर u_अक्षर *buf)
+अणु
+	वापस onenand_otp_walk(mtd, from, len, retlen, (u_अक्षर *)buf,
+				करो_otp_ग_लिखो, MTD_OTP_USER);
+पूर्ण
 
 /**
  * onenand_lock_user_prot_reg - [MTD Interface] Lock user OTP area
- * @mtd:		MTD device structure
+ * @mtd:		MTD device काष्ठाure
  * @from:		The offset to lock
  * @len:		number of bytes to unlock
  *
  * Write lock mark on spare area in page 0 in OTP block
  */
-static int onenand_lock_user_prot_reg(struct mtd_info *mtd, loff_t from,
-			size_t len)
-{
-	struct onenand_chip *this = mtd->priv;
-	u_char *buf = FLEXONENAND(this) ? this->page_buf : this->oob_buf;
-	size_t retlen;
-	int ret;
-	unsigned int otp_lock_offset = ONENAND_OTP_LOCK_OFFSET;
+अटल पूर्णांक onenand_lock_user_prot_reg(काष्ठा mtd_info *mtd, loff_t from,
+			माप_प्रकार len)
+अणु
+	काष्ठा onenand_chip *this = mtd->priv;
+	u_अक्षर *buf = FLEXONEन_अंकD(this) ? this->page_buf : this->oob_buf;
+	माप_प्रकार retlen;
+	पूर्णांक ret;
+	अचिन्हित पूर्णांक otp_lock_offset = ONEन_अंकD_OTP_LOCK_OFFSET;
 
-	memset(buf, 0xff, FLEXONENAND(this) ? this->writesize
+	स_रखो(buf, 0xff, FLEXONEन_अंकD(this) ? this->ग_लिखोsize
 						 : mtd->oobsize);
 	/*
 	 * Write lock mark to 8th word of sector0 of page0 of the spare0.
-	 * We write 16 bytes spare area instead of 2 bytes.
-	 * For Flex-OneNAND, we write lock mark to 1st word of sector 4 of
-	 * main area of page 49.
+	 * We ग_लिखो 16 bytes spare area instead of 2 bytes.
+	 * For Flex-Oneन_अंकD, we ग_लिखो lock mark to 1st word of sector 4 of
+	 * मुख्य area of page 49.
 	 */
 
 	from = 0;
-	len = FLEXONENAND(this) ? mtd->writesize : 16;
+	len = FLEXONEन_अंकD(this) ? mtd->ग_लिखोsize : 16;
 
 	/*
 	 * Note: OTP lock operation
@@ -3208,146 +3209,146 @@ static int onenand_lock_user_prot_reg(struct mtd_info *mtd, loff_t from,
 	 *       1st block : 0xXXF3 (If chip support)	XX 1111 0011
 	 *       Both      : 0xXXF0 (If chip support)	XX 1111 0000
 	 */
-	if (FLEXONENAND(this))
-		otp_lock_offset = FLEXONENAND_OTP_LOCK_OFFSET;
+	अगर (FLEXONEन_अंकD(this))
+		otp_lock_offset = FLEXONEन_अंकD_OTP_LOCK_OFFSET;
 
-	/* ONENAND_OTP_AREA | ONENAND_OTP_BLOCK0 | ONENAND_OTP_AREA_BLOCK0 */
-	if (otp == 1)
+	/* ONEन_अंकD_OTP_AREA | ONEन_अंकD_OTP_BLOCK0 | ONEन_अंकD_OTP_AREA_BLOCK0 */
+	अगर (otp == 1)
 		buf[otp_lock_offset] = 0xFC;
-	else if (otp == 2)
+	अन्यथा अगर (otp == 2)
 		buf[otp_lock_offset] = 0xF3;
-	else if (otp == 3)
+	अन्यथा अगर (otp == 3)
 		buf[otp_lock_offset] = 0xF0;
-	else if (otp != 0)
-		printk(KERN_DEBUG "[OneNAND] Invalid option selected for OTP\n");
+	अन्यथा अगर (otp != 0)
+		prपूर्णांकk(KERN_DEBUG "[OneNAND] Invalid option selected for OTP\n");
 
-	ret = onenand_otp_walk(mtd, from, len, &retlen, buf, do_otp_lock, MTD_OTP_USER);
+	ret = onenand_otp_walk(mtd, from, len, &retlen, buf, करो_otp_lock, MTD_OTP_USER);
 
-	return ret ? : retlen;
-}
+	वापस ret ? : retlen;
+पूर्ण
 
-#endif	/* CONFIG_MTD_ONENAND_OTP */
+#पूर्ण_अगर	/* CONFIG_MTD_ONEन_अंकD_OTP */
 
 /**
- * onenand_check_features - Check and set OneNAND features
- * @mtd:		MTD data structure
+ * onenand_check_features - Check and set Oneन_अंकD features
+ * @mtd:		MTD data काष्ठाure
  *
- * Check and set OneNAND features
+ * Check and set Oneन_अंकD features
  * - lock scheme
  * - two plane
  */
-static void onenand_check_features(struct mtd_info *mtd)
-{
-	struct onenand_chip *this = mtd->priv;
-	unsigned int density, process, numbufs;
+अटल व्योम onenand_check_features(काष्ठा mtd_info *mtd)
+अणु
+	काष्ठा onenand_chip *this = mtd->priv;
+	अचिन्हित पूर्णांक density, process, numbufs;
 
 	/* Lock scheme depends on density and process */
 	density = onenand_get_density(this->device_id);
-	process = this->version_id >> ONENAND_VERSION_PROCESS_SHIFT;
-	numbufs = this->read_word(this->base + ONENAND_REG_NUM_BUFFERS) >> 8;
+	process = this->version_id >> ONEन_अंकD_VERSION_PROCESS_SHIFT;
+	numbufs = this->पढ़ो_word(this->base + ONEन_अंकD_REG_NUM_BUFFERS) >> 8;
 
 	/* Lock scheme */
-	switch (density) {
-	case ONENAND_DEVICE_DENSITY_8Gb:
-		this->options |= ONENAND_HAS_NOP_1;
+	चयन (density) अणु
+	हाल ONEन_अंकD_DEVICE_DENSITY_8Gb:
+		this->options |= ONEन_अंकD_HAS_NOP_1;
 		fallthrough;
-	case ONENAND_DEVICE_DENSITY_4Gb:
-		if (ONENAND_IS_DDP(this))
-			this->options |= ONENAND_HAS_2PLANE;
-		else if (numbufs == 1) {
-			this->options |= ONENAND_HAS_4KB_PAGE;
-			this->options |= ONENAND_HAS_CACHE_PROGRAM;
+	हाल ONEन_अंकD_DEVICE_DENSITY_4Gb:
+		अगर (ONEन_अंकD_IS_DDP(this))
+			this->options |= ONEन_अंकD_HAS_2PLANE;
+		अन्यथा अगर (numbufs == 1) अणु
+			this->options |= ONEन_अंकD_HAS_4KB_PAGE;
+			this->options |= ONEन_अंकD_HAS_CACHE_PROGRAM;
 			/*
-			 * There are two different 4KiB pagesize chips
+			 * There are two dअगरferent 4KiB pagesize chips
 			 * and no way to detect it by H/W config values.
 			 *
-			 * To detect the correct NOP for each chips,
+			 * To detect the correct NOP क्रम each chips,
 			 * It should check the version ID as workaround.
 			 *
 			 * Now it has as following
 			 * KFM4G16Q4M has NOP 4 with version ID 0x0131
 			 * KFM4G16Q5M has NOP 1 with versoin ID 0x013e
 			 */
-			if ((this->version_id & 0xf) == 0xe)
-				this->options |= ONENAND_HAS_NOP_1;
-		}
-		this->options |= ONENAND_HAS_UNLOCK_ALL;
-		break;
+			अगर ((this->version_id & 0xf) == 0xe)
+				this->options |= ONEन_अंकD_HAS_NOP_1;
+		पूर्ण
+		this->options |= ONEन_अंकD_HAS_UNLOCK_ALL;
+		अवरोध;
 
-	case ONENAND_DEVICE_DENSITY_2Gb:
-		/* 2Gb DDP does not have 2 plane */
-		if (!ONENAND_IS_DDP(this))
-			this->options |= ONENAND_HAS_2PLANE;
-		this->options |= ONENAND_HAS_UNLOCK_ALL;
-		break;
+	हाल ONEन_अंकD_DEVICE_DENSITY_2Gb:
+		/* 2Gb DDP करोes not have 2 plane */
+		अगर (!ONEन_अंकD_IS_DDP(this))
+			this->options |= ONEन_अंकD_HAS_2PLANE;
+		this->options |= ONEन_अंकD_HAS_UNLOCK_ALL;
+		अवरोध;
 
-	case ONENAND_DEVICE_DENSITY_1Gb:
+	हाल ONEन_अंकD_DEVICE_DENSITY_1Gb:
 		/* A-Die has all block unlock */
-		if (process)
-			this->options |= ONENAND_HAS_UNLOCK_ALL;
-		break;
+		अगर (process)
+			this->options |= ONEन_अंकD_HAS_UNLOCK_ALL;
+		अवरोध;
 
-	default:
-		/* Some OneNAND has continuous lock scheme */
-		if (!process)
-			this->options |= ONENAND_HAS_CONT_LOCK;
-		break;
-	}
+	शेष:
+		/* Some Oneन_अंकD has continuous lock scheme */
+		अगर (!process)
+			this->options |= ONEन_अंकD_HAS_CONT_LOCK;
+		अवरोध;
+	पूर्ण
 
 	/* The MLC has 4KiB pagesize. */
-	if (ONENAND_IS_MLC(this))
-		this->options |= ONENAND_HAS_4KB_PAGE;
+	अगर (ONEन_अंकD_IS_MLC(this))
+		this->options |= ONEन_अंकD_HAS_4KB_PAGE;
 
-	if (ONENAND_IS_4KB_PAGE(this))
-		this->options &= ~ONENAND_HAS_2PLANE;
+	अगर (ONEन_अंकD_IS_4KB_PAGE(this))
+		this->options &= ~ONEन_अंकD_HAS_2PLANE;
 
-	if (FLEXONENAND(this)) {
-		this->options &= ~ONENAND_HAS_CONT_LOCK;
-		this->options |= ONENAND_HAS_UNLOCK_ALL;
-	}
+	अगर (FLEXONEन_अंकD(this)) अणु
+		this->options &= ~ONEन_अंकD_HAS_CONT_LOCK;
+		this->options |= ONEन_अंकD_HAS_UNLOCK_ALL;
+	पूर्ण
 
-	if (this->options & ONENAND_HAS_CONT_LOCK)
-		printk(KERN_DEBUG "Lock scheme is Continuous Lock\n");
-	if (this->options & ONENAND_HAS_UNLOCK_ALL)
-		printk(KERN_DEBUG "Chip support all block unlock\n");
-	if (this->options & ONENAND_HAS_2PLANE)
-		printk(KERN_DEBUG "Chip has 2 plane\n");
-	if (this->options & ONENAND_HAS_4KB_PAGE)
-		printk(KERN_DEBUG "Chip has 4KiB pagesize\n");
-	if (this->options & ONENAND_HAS_CACHE_PROGRAM)
-		printk(KERN_DEBUG "Chip has cache program feature\n");
-}
+	अगर (this->options & ONEन_अंकD_HAS_CONT_LOCK)
+		prपूर्णांकk(KERN_DEBUG "Lock scheme is Continuous Lock\n");
+	अगर (this->options & ONEन_अंकD_HAS_UNLOCK_ALL)
+		prपूर्णांकk(KERN_DEBUG "Chip support all block unlock\n");
+	अगर (this->options & ONEन_अंकD_HAS_2PLANE)
+		prपूर्णांकk(KERN_DEBUG "Chip has 2 plane\n");
+	अगर (this->options & ONEन_अंकD_HAS_4KB_PAGE)
+		prपूर्णांकk(KERN_DEBUG "Chip has 4KiB pagesize\n");
+	अगर (this->options & ONEन_अंकD_HAS_CACHE_PROGRAM)
+		prपूर्णांकk(KERN_DEBUG "Chip has cache program feature\n");
+पूर्ण
 
 /**
- * onenand_print_device_info - Print device & version ID
+ * onenand_prपूर्णांक_device_info - Prपूर्णांक device & version ID
  * @device:        device ID
  * @version:	version ID
  *
- * Print device & version ID
+ * Prपूर्णांक device & version ID
  */
-static void onenand_print_device_info(int device, int version)
-{
-	int vcc, demuxed, ddp, density, flexonenand;
+अटल व्योम onenand_prपूर्णांक_device_info(पूर्णांक device, पूर्णांक version)
+अणु
+	पूर्णांक vcc, demuxed, ddp, density, flexonenand;
 
-        vcc = device & ONENAND_DEVICE_VCC_MASK;
-        demuxed = device & ONENAND_DEVICE_IS_DEMUX;
-        ddp = device & ONENAND_DEVICE_IS_DDP;
+        vcc = device & ONEन_अंकD_DEVICE_VCC_MASK;
+        demuxed = device & ONEन_अंकD_DEVICE_IS_DEMUX;
+        ddp = device & ONEन_अंकD_DEVICE_IS_DDP;
         density = onenand_get_density(device);
-	flexonenand = device & DEVICE_IS_FLEXONENAND;
-	printk(KERN_INFO "%s%sOneNAND%s %dMB %sV 16-bit (0x%02x)\n",
+	flexonenand = device & DEVICE_IS_FLEXONEन_अंकD;
+	prपूर्णांकk(KERN_INFO "%s%sOneNAND%s %dMB %sV 16-bit (0x%02x)\n",
 		demuxed ? "" : "Muxed ",
 		flexonenand ? "Flex-" : "",
                 ddp ? "(DDP)" : "",
                 (16 << density),
                 vcc ? "2.65/3.3" : "1.8",
                 device);
-	printk(KERN_INFO "OneNAND version = 0x%04x\n", version);
-}
+	prपूर्णांकk(KERN_INFO "OneNAND version = 0x%04x\n", version);
+पूर्ण
 
-static const struct onenand_manufacturers onenand_manuf_ids[] = {
-        {ONENAND_MFR_SAMSUNG, "Samsung"},
-	{ONENAND_MFR_NUMONYX, "Numonyx"},
-};
+अटल स्थिर काष्ठा onenand_manufacturers onenand_manuf_ids[] = अणु
+        अणुONEन_अंकD_MFR_SAMSUNG, "Samsung"पूर्ण,
+	अणुONEन_अंकD_MFR_NUMONYX, "Numonyx"पूर्ण,
+पूर्ण;
 
 /**
  * onenand_check_maf - Check manufacturer ID
@@ -3355,83 +3356,83 @@ static const struct onenand_manufacturers onenand_manuf_ids[] = {
  *
  * Check manufacturer ID
  */
-static int onenand_check_maf(int manuf)
-{
-	int size = ARRAY_SIZE(onenand_manuf_ids);
-	char *name;
-        int i;
+अटल पूर्णांक onenand_check_maf(पूर्णांक manuf)
+अणु
+	पूर्णांक size = ARRAY_SIZE(onenand_manuf_ids);
+	अक्षर *name;
+        पूर्णांक i;
 
-	for (i = 0; i < size; i++)
-                if (manuf == onenand_manuf_ids[i].id)
-                        break;
+	क्रम (i = 0; i < size; i++)
+                अगर (manuf == onenand_manuf_ids[i].id)
+                        अवरोध;
 
-	if (i < size)
+	अगर (i < size)
 		name = onenand_manuf_ids[i].name;
-	else
+	अन्यथा
 		name = "Unknown";
 
-	printk(KERN_DEBUG "OneNAND Manufacturer: %s (0x%0x)\n", name, manuf);
+	prपूर्णांकk(KERN_DEBUG "OneNAND Manufacturer: %s (0x%0x)\n", name, manuf);
 
-	return (i == size);
-}
+	वापस (i == size);
+पूर्ण
 
 /**
  * flexonenand_get_boundary	- Reads the SLC boundary
- * @mtd:		MTD data structure
+ * @mtd:		MTD data काष्ठाure
  */
-static int flexonenand_get_boundary(struct mtd_info *mtd)
-{
-	struct onenand_chip *this = mtd->priv;
-	unsigned die, bdry;
-	int syscfg, locked;
+अटल पूर्णांक flexonenand_get_boundary(काष्ठा mtd_info *mtd)
+अणु
+	काष्ठा onenand_chip *this = mtd->priv;
+	अचिन्हित die, bdry;
+	पूर्णांक syscfg, locked;
 
 	/* Disable ECC */
-	syscfg = this->read_word(this->base + ONENAND_REG_SYS_CFG1);
-	this->write_word((syscfg | 0x0100), this->base + ONENAND_REG_SYS_CFG1);
+	syscfg = this->पढ़ो_word(this->base + ONEन_अंकD_REG_SYS_CFG1);
+	this->ग_लिखो_word((syscfg | 0x0100), this->base + ONEन_अंकD_REG_SYS_CFG1);
 
-	for (die = 0; die < this->dies; die++) {
-		this->command(mtd, FLEXONENAND_CMD_PI_ACCESS, die, 0);
-		this->wait(mtd, FL_SYNCING);
+	क्रम (die = 0; die < this->dies; die++) अणु
+		this->command(mtd, FLEXONEन_अंकD_CMD_PI_ACCESS, die, 0);
+		this->रुको(mtd, FL_SYNCING);
 
-		this->command(mtd, FLEXONENAND_CMD_READ_PI, die, 0);
-		this->wait(mtd, FL_READING);
+		this->command(mtd, FLEXONEन_अंकD_CMD_READ_PI, die, 0);
+		this->रुको(mtd, FL_READING);
 
-		bdry = this->read_word(this->base + ONENAND_DATARAM);
-		if ((bdry >> FLEXONENAND_PI_UNLOCK_SHIFT) == 3)
+		bdry = this->पढ़ो_word(this->base + ONEन_अंकD_DATARAM);
+		अगर ((bdry >> FLEXONEन_अंकD_PI_UNLOCK_SHIFT) == 3)
 			locked = 0;
-		else
+		अन्यथा
 			locked = 1;
-		this->boundary[die] = bdry & FLEXONENAND_PI_MASK;
+		this->boundary[die] = bdry & FLEXONEन_अंकD_PI_MASK;
 
-		this->command(mtd, ONENAND_CMD_RESET, 0, 0);
-		this->wait(mtd, FL_RESETTING);
+		this->command(mtd, ONEन_अंकD_CMD_RESET, 0, 0);
+		this->रुको(mtd, FL_RESETTING);
 
-		printk(KERN_INFO "Die %d boundary: %d%s\n", die,
+		prपूर्णांकk(KERN_INFO "Die %d boundary: %d%s\n", die,
 		       this->boundary[die], locked ? "(Locked)" : "(Unlocked)");
-	}
+	पूर्ण
 
 	/* Enable ECC */
-	this->write_word(syscfg, this->base + ONENAND_REG_SYS_CFG1);
-	return 0;
-}
+	this->ग_लिखो_word(syscfg, this->base + ONEन_अंकD_REG_SYS_CFG1);
+	वापस 0;
+पूर्ण
 
 /**
  * flexonenand_get_size - Fill up fields in onenand_chip and mtd_info
  * 			  boundary[], diesize[], mtd->size, mtd->erasesize
- * @mtd:		- MTD device structure
+ * @mtd:		- MTD device काष्ठाure
  */
-static void flexonenand_get_size(struct mtd_info *mtd)
-{
-	struct onenand_chip *this = mtd->priv;
-	int die, i, eraseshift, density;
-	int blksperdie, maxbdry;
+अटल व्योम flexonenand_get_size(काष्ठा mtd_info *mtd)
+अणु
+	काष्ठा onenand_chip *this = mtd->priv;
+	पूर्णांक die, i, eraseshअगरt, density;
+	पूर्णांक blksperdie, maxbdry;
 	loff_t ofs;
 
 	density = onenand_get_density(this->device_id);
-	blksperdie = ((loff_t)(16 << density) << 20) >> (this->erase_shift);
-	blksperdie >>= ONENAND_IS_DDP(this) ? 1 : 0;
+	blksperdie = ((loff_t)(16 << density) << 20) >> (this->erase_shअगरt);
+	blksperdie >>= ONEन_अंकD_IS_DDP(this) ? 1 : 0;
 	maxbdry = blksperdie - 1;
-	eraseshift = this->erase_shift - 1;
+	eraseshअगरt = this->erase_shअगरt - 1;
 
 	mtd->numeraseregions = this->dies << 1;
 
@@ -3439,516 +3440,516 @@ static void flexonenand_get_size(struct mtd_info *mtd)
 	flexonenand_get_boundary(mtd);
 	die = ofs = 0;
 	i = -1;
-	for (; die < this->dies; die++) {
-		if (!die || this->boundary[die-1] != maxbdry) {
+	क्रम (; die < this->dies; die++) अणु
+		अगर (!die || this->boundary[die-1] != maxbdry) अणु
 			i++;
 			mtd->eraseregions[i].offset = ofs;
-			mtd->eraseregions[i].erasesize = 1 << eraseshift;
+			mtd->eraseregions[i].erasesize = 1 << eraseshअगरt;
 			mtd->eraseregions[i].numblocks =
 							this->boundary[die] + 1;
-			ofs += mtd->eraseregions[i].numblocks << eraseshift;
-			eraseshift++;
-		} else {
+			ofs += mtd->eraseregions[i].numblocks << eraseshअगरt;
+			eraseshअगरt++;
+		पूर्ण अन्यथा अणु
 			mtd->numeraseregions -= 1;
 			mtd->eraseregions[i].numblocks +=
 							this->boundary[die] + 1;
-			ofs += (this->boundary[die] + 1) << (eraseshift - 1);
-		}
-		if (this->boundary[die] != maxbdry) {
+			ofs += (this->boundary[die] + 1) << (eraseshअगरt - 1);
+		पूर्ण
+		अगर (this->boundary[die] != maxbdry) अणु
 			i++;
 			mtd->eraseregions[i].offset = ofs;
-			mtd->eraseregions[i].erasesize = 1 << eraseshift;
+			mtd->eraseregions[i].erasesize = 1 << eraseshअगरt;
 			mtd->eraseregions[i].numblocks = maxbdry ^
 							 this->boundary[die];
-			ofs += mtd->eraseregions[i].numblocks << eraseshift;
-			eraseshift--;
-		} else
+			ofs += mtd->eraseregions[i].numblocks << eraseshअगरt;
+			eraseshअगरt--;
+		पूर्ण अन्यथा
 			mtd->numeraseregions -= 1;
-	}
+	पूर्ण
 
 	/* Expose MLC erase size except when all blocks are SLC */
-	mtd->erasesize = 1 << this->erase_shift;
-	if (mtd->numeraseregions == 1)
+	mtd->erasesize = 1 << this->erase_shअगरt;
+	अगर (mtd->numeraseregions == 1)
 		mtd->erasesize >>= 1;
 
-	printk(KERN_INFO "Device has %d eraseregions\n", mtd->numeraseregions);
-	for (i = 0; i < mtd->numeraseregions; i++)
-		printk(KERN_INFO "[offset: 0x%08x, erasesize: 0x%05x,"
+	prपूर्णांकk(KERN_INFO "Device has %d eraseregions\n", mtd->numeraseregions);
+	क्रम (i = 0; i < mtd->numeraseregions; i++)
+		prपूर्णांकk(KERN_INFO "[offset: 0x%08x, erasesize: 0x%05x,"
 			" numblocks: %04u]\n",
-			(unsigned int) mtd->eraseregions[i].offset,
+			(अचिन्हित पूर्णांक) mtd->eraseregions[i].offset,
 			mtd->eraseregions[i].erasesize,
 			mtd->eraseregions[i].numblocks);
 
-	for (die = 0, mtd->size = 0; die < this->dies; die++) {
-		this->diesize[die] = (loff_t)blksperdie << this->erase_shift;
+	क्रम (die = 0, mtd->size = 0; die < this->dies; die++) अणु
+		this->diesize[die] = (loff_t)blksperdie << this->erase_shअगरt;
 		this->diesize[die] -= (loff_t)(this->boundary[die] + 1)
-						 << (this->erase_shift - 1);
+						 << (this->erase_shअगरt - 1);
 		mtd->size += this->diesize[die];
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
- * flexonenand_check_blocks_erased - Check if blocks are erased
- * @mtd:	mtd info structure
+ * flexonenand_check_blocks_erased - Check अगर blocks are erased
+ * @mtd:	mtd info काष्ठाure
  * @start:	first erase block to check
  * @end:	last erase block to check
  *
  * Converting an unerased block from MLC to SLC
  * causes byte values to change. Since both data and its ECC
- * have changed, reads on the block give uncorrectable error.
+ * have changed, पढ़ोs on the block give uncorrectable error.
  * This might lead to the block being detected as bad.
  *
- * Avoid this by ensuring that the block to be converted is
+ * Aव्योम this by ensuring that the block to be converted is
  * erased.
  */
-static int flexonenand_check_blocks_erased(struct mtd_info *mtd, int start, int end)
-{
-	struct onenand_chip *this = mtd->priv;
-	int i, ret;
-	int block;
-	struct mtd_oob_ops ops = {
+अटल पूर्णांक flexonenand_check_blocks_erased(काष्ठा mtd_info *mtd, पूर्णांक start, पूर्णांक end)
+अणु
+	काष्ठा onenand_chip *this = mtd->priv;
+	पूर्णांक i, ret;
+	पूर्णांक block;
+	काष्ठा mtd_oob_ops ops = अणु
 		.mode = MTD_OPS_PLACE_OOB,
 		.ooboffs = 0,
 		.ooblen	= mtd->oobsize,
-		.datbuf	= NULL,
+		.datbuf	= शून्य,
 		.oobbuf	= this->oob_buf,
-	};
+	पूर्ण;
 	loff_t addr;
 
-	printk(KERN_DEBUG "Check blocks from %d to %d\n", start, end);
+	prपूर्णांकk(KERN_DEBUG "Check blocks from %d to %d\n", start, end);
 
-	for (block = start; block <= end; block++) {
+	क्रम (block = start; block <= end; block++) अणु
 		addr = flexonenand_addr(this, block);
-		if (onenand_block_isbad_nolock(mtd, addr, 0))
-			continue;
+		अगर (onenand_block_isbad_nolock(mtd, addr, 0))
+			जारी;
 
 		/*
-		 * Since main area write results in ECC write to spare,
-		 * it is sufficient to check only ECC bytes for change.
+		 * Since मुख्य area ग_लिखो results in ECC ग_लिखो to spare,
+		 * it is sufficient to check only ECC bytes क्रम change.
 		 */
-		ret = onenand_read_oob_nolock(mtd, addr, &ops);
-		if (ret)
-			return ret;
+		ret = onenand_पढ़ो_oob_nolock(mtd, addr, &ops);
+		अगर (ret)
+			वापस ret;
 
-		for (i = 0; i < mtd->oobsize; i++)
-			if (this->oob_buf[i] != 0xff)
-				break;
+		क्रम (i = 0; i < mtd->oobsize; i++)
+			अगर (this->oob_buf[i] != 0xff)
+				अवरोध;
 
-		if (i != mtd->oobsize) {
-			printk(KERN_WARNING "%s: Block %d not erased.\n",
+		अगर (i != mtd->oobsize) अणु
+			prपूर्णांकk(KERN_WARNING "%s: Block %d not erased.\n",
 				__func__, block);
-			return 1;
-		}
-	}
+			वापस 1;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * flexonenand_set_boundary	- Writes the SLC boundary
  */
-static int flexonenand_set_boundary(struct mtd_info *mtd, int die,
-				    int boundary, int lock)
-{
-	struct onenand_chip *this = mtd->priv;
-	int ret, density, blksperdie, old, new, thisboundary;
+अटल पूर्णांक flexonenand_set_boundary(काष्ठा mtd_info *mtd, पूर्णांक die,
+				    पूर्णांक boundary, पूर्णांक lock)
+अणु
+	काष्ठा onenand_chip *this = mtd->priv;
+	पूर्णांक ret, density, blksperdie, old, new, thisboundary;
 	loff_t addr;
 
-	/* Change only once for SDP Flex-OneNAND */
-	if (die && (!ONENAND_IS_DDP(this)))
-		return 0;
+	/* Change only once क्रम SDP Flex-Oneन_अंकD */
+	अगर (die && (!ONEन_अंकD_IS_DDP(this)))
+		वापस 0;
 
 	/* boundary value of -1 indicates no required change */
-	if (boundary < 0 || boundary == this->boundary[die])
-		return 0;
+	अगर (boundary < 0 || boundary == this->boundary[die])
+		वापस 0;
 
 	density = onenand_get_density(this->device_id);
-	blksperdie = ((16 << density) << 20) >> this->erase_shift;
-	blksperdie >>= ONENAND_IS_DDP(this) ? 1 : 0;
+	blksperdie = ((16 << density) << 20) >> this->erase_shअगरt;
+	blksperdie >>= ONEन_अंकD_IS_DDP(this) ? 1 : 0;
 
-	if (boundary >= blksperdie) {
-		printk(KERN_ERR "%s: Invalid boundary value. "
+	अगर (boundary >= blksperdie) अणु
+		prपूर्णांकk(KERN_ERR "%s: Invalid boundary value. "
 				"Boundary not changed.\n", __func__);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	/* Check if converting blocks are erased */
+	/* Check अगर converting blocks are erased */
 	old = this->boundary[die] + (die * this->density_mask);
 	new = boundary + (die * this->density_mask);
 	ret = flexonenand_check_blocks_erased(mtd, min(old, new) + 1, max(old, new));
-	if (ret) {
-		printk(KERN_ERR "%s: Please erase blocks "
+	अगर (ret) अणु
+		prपूर्णांकk(KERN_ERR "%s: Please erase blocks "
 				"before boundary change\n", __func__);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	this->command(mtd, FLEXONENAND_CMD_PI_ACCESS, die, 0);
-	this->wait(mtd, FL_SYNCING);
+	this->command(mtd, FLEXONEन_अंकD_CMD_PI_ACCESS, die, 0);
+	this->रुको(mtd, FL_SYNCING);
 
 	/* Check is boundary is locked */
-	this->command(mtd, FLEXONENAND_CMD_READ_PI, die, 0);
-	this->wait(mtd, FL_READING);
+	this->command(mtd, FLEXONEन_अंकD_CMD_READ_PI, die, 0);
+	this->रुको(mtd, FL_READING);
 
-	thisboundary = this->read_word(this->base + ONENAND_DATARAM);
-	if ((thisboundary >> FLEXONENAND_PI_UNLOCK_SHIFT) != 3) {
-		printk(KERN_ERR "%s: boundary locked\n", __func__);
+	thisboundary = this->पढ़ो_word(this->base + ONEन_अंकD_DATARAM);
+	अगर ((thisboundary >> FLEXONEन_अंकD_PI_UNLOCK_SHIFT) != 3) अणु
+		prपूर्णांकk(KERN_ERR "%s: boundary locked\n", __func__);
 		ret = 1;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	printk(KERN_INFO "Changing die %d boundary: %d%s\n",
+	prपूर्णांकk(KERN_INFO "Changing die %d boundary: %d%s\n",
 			die, boundary, lock ? "(Locked)" : "(Unlocked)");
 
 	addr = die ? this->diesize[0] : 0;
 
-	boundary &= FLEXONENAND_PI_MASK;
-	boundary |= lock ? 0 : (3 << FLEXONENAND_PI_UNLOCK_SHIFT);
+	boundary &= FLEXONEन_अंकD_PI_MASK;
+	boundary |= lock ? 0 : (3 << FLEXONEन_अंकD_PI_UNLOCK_SHIFT);
 
-	this->command(mtd, ONENAND_CMD_ERASE, addr, 0);
-	ret = this->wait(mtd, FL_ERASING);
-	if (ret) {
-		printk(KERN_ERR "%s: Failed PI erase for Die %d\n",
+	this->command(mtd, ONEन_अंकD_CMD_ERASE, addr, 0);
+	ret = this->रुको(mtd, FL_ERASING);
+	अगर (ret) अणु
+		prपूर्णांकk(KERN_ERR "%s: Failed PI erase for Die %d\n",
 		       __func__, die);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	this->write_word(boundary, this->base + ONENAND_DATARAM);
-	this->command(mtd, ONENAND_CMD_PROG, addr, 0);
-	ret = this->wait(mtd, FL_WRITING);
-	if (ret) {
-		printk(KERN_ERR "%s: Failed PI write for Die %d\n",
+	this->ग_लिखो_word(boundary, this->base + ONEन_अंकD_DATARAM);
+	this->command(mtd, ONEन_अंकD_CMD_PROG, addr, 0);
+	ret = this->रुको(mtd, FL_WRITING);
+	अगर (ret) अणु
+		prपूर्णांकk(KERN_ERR "%s: Failed PI write for Die %d\n",
 			__func__, die);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	this->command(mtd, FLEXONENAND_CMD_PI_UPDATE, die, 0);
-	ret = this->wait(mtd, FL_WRITING);
+	this->command(mtd, FLEXONEन_अंकD_CMD_PI_UPDATE, die, 0);
+	ret = this->रुको(mtd, FL_WRITING);
 out:
-	this->write_word(ONENAND_CMD_RESET, this->base + ONENAND_REG_COMMAND);
-	this->wait(mtd, FL_RESETTING);
-	if (!ret)
+	this->ग_लिखो_word(ONEन_अंकD_CMD_RESET, this->base + ONEन_अंकD_REG_COMMAND);
+	this->रुको(mtd, FL_RESETTING);
+	अगर (!ret)
 		/* Recalculate device size on boundary change*/
 		flexonenand_get_size(mtd);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * onenand_chip_probe - [OneNAND Interface] The generic chip probe
- * @mtd:		MTD device structure
+ * onenand_chip_probe - [Oneन_अंकD Interface] The generic chip probe
+ * @mtd:		MTD device काष्ठाure
  *
- * OneNAND detection method:
- *   Compare the values from command with ones from register
+ * Oneन_अंकD detection method:
+ *   Compare the values from command with ones from रेजिस्टर
  */
-static int onenand_chip_probe(struct mtd_info *mtd)
-{
-	struct onenand_chip *this = mtd->priv;
-	int bram_maf_id, bram_dev_id, maf_id, dev_id;
-	int syscfg;
+अटल पूर्णांक onenand_chip_probe(काष्ठा mtd_info *mtd)
+अणु
+	काष्ठा onenand_chip *this = mtd->priv;
+	पूर्णांक bram_maf_id, bram_dev_id, maf_id, dev_id;
+	पूर्णांक syscfg;
 
-	/* Save system configuration 1 */
-	syscfg = this->read_word(this->base + ONENAND_REG_SYS_CFG1);
-	/* Clear Sync. Burst Read mode to read BootRAM */
-	this->write_word((syscfg & ~ONENAND_SYS_CFG1_SYNC_READ & ~ONENAND_SYS_CFG1_SYNC_WRITE), this->base + ONENAND_REG_SYS_CFG1);
+	/* Save प्रणाली configuration 1 */
+	syscfg = this->पढ़ो_word(this->base + ONEन_अंकD_REG_SYS_CFG1);
+	/* Clear Sync. Burst Read mode to पढ़ो BootRAM */
+	this->ग_लिखो_word((syscfg & ~ONEन_अंकD_SYS_CFG1_SYNC_READ & ~ONEन_अंकD_SYS_CFG1_SYNC_WRITE), this->base + ONEन_अंकD_REG_SYS_CFG1);
 
-	/* Send the command for reading device ID from BootRAM */
-	this->write_word(ONENAND_CMD_READID, this->base + ONENAND_BOOTRAM);
+	/* Send the command क्रम पढ़ोing device ID from BootRAM */
+	this->ग_लिखो_word(ONEन_अंकD_CMD_READID, this->base + ONEन_अंकD_BOOTRAM);
 
 	/* Read manufacturer and device IDs from BootRAM */
-	bram_maf_id = this->read_word(this->base + ONENAND_BOOTRAM + 0x0);
-	bram_dev_id = this->read_word(this->base + ONENAND_BOOTRAM + 0x2);
+	bram_maf_id = this->पढ़ो_word(this->base + ONEन_अंकD_BOOTRAM + 0x0);
+	bram_dev_id = this->पढ़ो_word(this->base + ONEन_अंकD_BOOTRAM + 0x2);
 
-	/* Reset OneNAND to read default register values */
-	this->write_word(ONENAND_CMD_RESET, this->base + ONENAND_BOOTRAM);
+	/* Reset Oneन_अंकD to पढ़ो शेष रेजिस्टर values */
+	this->ग_लिखो_word(ONEन_अंकD_CMD_RESET, this->base + ONEन_अंकD_BOOTRAM);
 	/* Wait reset */
-	this->wait(mtd, FL_RESETTING);
+	this->रुको(mtd, FL_RESETTING);
 
-	/* Restore system configuration 1 */
-	this->write_word(syscfg, this->base + ONENAND_REG_SYS_CFG1);
+	/* Restore प्रणाली configuration 1 */
+	this->ग_लिखो_word(syscfg, this->base + ONEन_अंकD_REG_SYS_CFG1);
 
 	/* Check manufacturer ID */
-	if (onenand_check_maf(bram_maf_id))
-		return -ENXIO;
+	अगर (onenand_check_maf(bram_maf_id))
+		वापस -ENXIO;
 
 	/* Read manufacturer and device IDs from Register */
-	maf_id = this->read_word(this->base + ONENAND_REG_MANUFACTURER_ID);
-	dev_id = this->read_word(this->base + ONENAND_REG_DEVICE_ID);
+	maf_id = this->पढ़ो_word(this->base + ONEन_अंकD_REG_MANUFACTURER_ID);
+	dev_id = this->पढ़ो_word(this->base + ONEन_अंकD_REG_DEVICE_ID);
 
-	/* Check OneNAND device */
-	if (maf_id != bram_maf_id || dev_id != bram_dev_id)
-		return -ENXIO;
+	/* Check Oneन_अंकD device */
+	अगर (maf_id != bram_maf_id || dev_id != bram_dev_id)
+		वापस -ENXIO;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * onenand_probe - [OneNAND Interface] Probe the OneNAND device
- * @mtd:		MTD device structure
+ * onenand_probe - [Oneन_अंकD Interface] Probe the Oneन_अंकD device
+ * @mtd:		MTD device काष्ठाure
  */
-static int onenand_probe(struct mtd_info *mtd)
-{
-	struct onenand_chip *this = mtd->priv;
-	int dev_id, ver_id;
-	int density;
-	int ret;
+अटल पूर्णांक onenand_probe(काष्ठा mtd_info *mtd)
+अणु
+	काष्ठा onenand_chip *this = mtd->priv;
+	पूर्णांक dev_id, ver_id;
+	पूर्णांक density;
+	पूर्णांक ret;
 
 	ret = this->chip_probe(mtd);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	/* Device and version IDs from Register */
-	dev_id = this->read_word(this->base + ONENAND_REG_DEVICE_ID);
-	ver_id = this->read_word(this->base + ONENAND_REG_VERSION_ID);
-	this->technology = this->read_word(this->base + ONENAND_REG_TECHNOLOGY);
+	dev_id = this->पढ़ो_word(this->base + ONEन_अंकD_REG_DEVICE_ID);
+	ver_id = this->पढ़ो_word(this->base + ONEन_अंकD_REG_VERSION_ID);
+	this->technology = this->पढ़ो_word(this->base + ONEन_अंकD_REG_TECHNOLOGY);
 
-	/* Flash device information */
-	onenand_print_device_info(dev_id, ver_id);
+	/* Flash device inक्रमmation */
+	onenand_prपूर्णांक_device_info(dev_id, ver_id);
 	this->device_id = dev_id;
 	this->version_id = ver_id;
 
-	/* Check OneNAND features */
+	/* Check Oneन_अंकD features */
 	onenand_check_features(mtd);
 
 	density = onenand_get_density(dev_id);
-	if (FLEXONENAND(this)) {
-		this->dies = ONENAND_IS_DDP(this) ? 2 : 1;
+	अगर (FLEXONEन_अंकD(this)) अणु
+		this->dies = ONEन_अंकD_IS_DDP(this) ? 2 : 1;
 		/* Maximum possible erase regions */
 		mtd->numeraseregions = this->dies << 1;
 		mtd->eraseregions =
-			kcalloc(this->dies << 1,
-				sizeof(struct mtd_erase_region_info),
+			kसुस्मृति(this->dies << 1,
+				माप(काष्ठा mtd_erase_region_info),
 				GFP_KERNEL);
-		if (!mtd->eraseregions)
-			return -ENOMEM;
-	}
+		अगर (!mtd->eraseregions)
+			वापस -ENOMEM;
+	पूर्ण
 
 	/*
-	 * For Flex-OneNAND, chipsize represents maximum possible device size.
+	 * For Flex-Oneन_अंकD, chipsize represents maximum possible device size.
 	 * mtd->size represents the actual device size.
 	 */
 	this->chipsize = (16 << density) << 20;
 
-	/* OneNAND page size & block size */
+	/* Oneन_अंकD page size & block size */
 	/* The data buffer size is equal to page size */
-	mtd->writesize = this->read_word(this->base + ONENAND_REG_DATA_BUFFER_SIZE);
+	mtd->ग_लिखोsize = this->पढ़ो_word(this->base + ONEन_अंकD_REG_DATA_BUFFER_SIZE);
 	/* We use the full BufferRAM */
-	if (ONENAND_IS_4KB_PAGE(this))
-		mtd->writesize <<= 1;
+	अगर (ONEन_अंकD_IS_4KB_PAGE(this))
+		mtd->ग_लिखोsize <<= 1;
 
-	mtd->oobsize = mtd->writesize >> 5;
-	/* Pages per a block are always 64 in OneNAND */
-	mtd->erasesize = mtd->writesize << 6;
+	mtd->oobsize = mtd->ग_लिखोsize >> 5;
+	/* Pages per a block are always 64 in Oneन_अंकD */
+	mtd->erasesize = mtd->ग_लिखोsize << 6;
 	/*
-	 * Flex-OneNAND SLC area has 64 pages per block.
-	 * Flex-OneNAND MLC area has 128 pages per block.
-	 * Expose MLC erase size to find erase_shift and page_mask.
+	 * Flex-Oneन_अंकD SLC area has 64 pages per block.
+	 * Flex-Oneन_अंकD MLC area has 128 pages per block.
+	 * Expose MLC erase size to find erase_shअगरt and page_mask.
 	 */
-	if (FLEXONENAND(this))
+	अगर (FLEXONEन_अंकD(this))
 		mtd->erasesize <<= 1;
 
-	this->erase_shift = ffs(mtd->erasesize) - 1;
-	this->page_shift = ffs(mtd->writesize) - 1;
-	this->page_mask = (1 << (this->erase_shift - this->page_shift)) - 1;
-	/* Set density mask. it is used for DDP */
-	if (ONENAND_IS_DDP(this))
-		this->density_mask = this->chipsize >> (this->erase_shift + 1);
+	this->erase_shअगरt = ffs(mtd->erasesize) - 1;
+	this->page_shअगरt = ffs(mtd->ग_लिखोsize) - 1;
+	this->page_mask = (1 << (this->erase_shअगरt - this->page_shअगरt)) - 1;
+	/* Set density mask. it is used क्रम DDP */
+	अगर (ONEन_अंकD_IS_DDP(this))
+		this->density_mask = this->chipsize >> (this->erase_shअगरt + 1);
 	/* It's real page size */
-	this->writesize = mtd->writesize;
+	this->ग_लिखोsize = mtd->ग_लिखोsize;
 
 	/* REVISIT: Multichip handling */
 
-	if (FLEXONENAND(this))
+	अगर (FLEXONEन_अंकD(this))
 		flexonenand_get_size(mtd);
-	else
+	अन्यथा
 		mtd->size = this->chipsize;
 
 	/*
 	 * We emulate the 4KiB page and 256KiB erase block size
 	 * But oobsize is still 64 bytes.
-	 * It is only valid if you turn on 2X program support,
+	 * It is only valid अगर you turn on 2X program support,
 	 * Otherwise it will be ignored by compiler.
 	 */
-	if (ONENAND_IS_2PLANE(this)) {
-		mtd->writesize <<= 1;
+	अगर (ONEन_अंकD_IS_2PLANE(this)) अणु
+		mtd->ग_लिखोsize <<= 1;
 		mtd->erasesize <<= 1;
-	}
+	पूर्ण
 
-	return 0;
-}
-
-/**
- * onenand_suspend - [MTD Interface] Suspend the OneNAND flash
- * @mtd:		MTD device structure
- */
-static int onenand_suspend(struct mtd_info *mtd)
-{
-	return onenand_get_device(mtd, FL_PM_SUSPENDED);
-}
+	वापस 0;
+पूर्ण
 
 /**
- * onenand_resume - [MTD Interface] Resume the OneNAND flash
- * @mtd:		MTD device structure
+ * onenand_suspend - [MTD Interface] Suspend the Oneन_अंकD flash
+ * @mtd:		MTD device काष्ठाure
  */
-static void onenand_resume(struct mtd_info *mtd)
-{
-	struct onenand_chip *this = mtd->priv;
+अटल पूर्णांक onenand_suspend(काष्ठा mtd_info *mtd)
+अणु
+	वापस onenand_get_device(mtd, FL_PM_SUSPENDED);
+पूर्ण
 
-	if (this->state == FL_PM_SUSPENDED)
+/**
+ * onenand_resume - [MTD Interface] Resume the Oneन_अंकD flash
+ * @mtd:		MTD device काष्ठाure
+ */
+अटल व्योम onenand_resume(काष्ठा mtd_info *mtd)
+अणु
+	काष्ठा onenand_chip *this = mtd->priv;
+
+	अगर (this->state == FL_PM_SUSPENDED)
 		onenand_release_device(mtd);
-	else
-		printk(KERN_ERR "%s: resume() called for the chip which is not "
+	अन्यथा
+		prपूर्णांकk(KERN_ERR "%s: resume() called for the chip which is not "
 				"in suspended state\n", __func__);
-}
+पूर्ण
 
 /**
- * onenand_scan - [OneNAND Interface] Scan for the OneNAND device
- * @mtd:		MTD device structure
- * @maxchips:	Number of chips to scan for
+ * onenand_scan - [Oneन_अंकD Interface] Scan क्रम the Oneन_अंकD device
+ * @mtd:		MTD device काष्ठाure
+ * @maxchips:	Number of chips to scan क्रम
  *
- * This fills out all the not initialized function pointers
- * with the defaults.
- * The flash ID is read and the mtd/chip structures are
+ * This fills out all the not initialized function poपूर्णांकers
+ * with the शेषs.
+ * The flash ID is पढ़ो and the mtd/chip काष्ठाures are
  * filled with the appropriate values.
  */
-int onenand_scan(struct mtd_info *mtd, int maxchips)
-{
-	int i, ret;
-	struct onenand_chip *this = mtd->priv;
+पूर्णांक onenand_scan(काष्ठा mtd_info *mtd, पूर्णांक maxchips)
+अणु
+	पूर्णांक i, ret;
+	काष्ठा onenand_chip *this = mtd->priv;
 
-	if (!this->read_word)
-		this->read_word = onenand_readw;
-	if (!this->write_word)
-		this->write_word = onenand_writew;
+	अगर (!this->पढ़ो_word)
+		this->पढ़ो_word = onenand_पढ़ोw;
+	अगर (!this->ग_लिखो_word)
+		this->ग_लिखो_word = onenand_ग_लिखोw;
 
-	if (!this->command)
+	अगर (!this->command)
 		this->command = onenand_command;
-	if (!this->wait)
-		onenand_setup_wait(mtd);
-	if (!this->bbt_wait)
-		this->bbt_wait = onenand_bbt_wait;
-	if (!this->unlock_all)
+	अगर (!this->रुको)
+		onenand_setup_रुको(mtd);
+	अगर (!this->bbt_रुको)
+		this->bbt_रुको = onenand_bbt_रुको;
+	अगर (!this->unlock_all)
 		this->unlock_all = onenand_unlock_all;
 
-	if (!this->chip_probe)
+	अगर (!this->chip_probe)
 		this->chip_probe = onenand_chip_probe;
 
-	if (!this->read_bufferram)
-		this->read_bufferram = onenand_read_bufferram;
-	if (!this->write_bufferram)
-		this->write_bufferram = onenand_write_bufferram;
+	अगर (!this->पढ़ो_bufferram)
+		this->पढ़ो_bufferram = onenand_पढ़ो_bufferram;
+	अगर (!this->ग_लिखो_bufferram)
+		this->ग_लिखो_bufferram = onenand_ग_लिखो_bufferram;
 
-	if (!this->block_markbad)
-		this->block_markbad = onenand_default_block_markbad;
-	if (!this->scan_bbt)
-		this->scan_bbt = onenand_default_bbt;
+	अगर (!this->block_markbad)
+		this->block_markbad = onenand_शेष_block_markbad;
+	अगर (!this->scan_bbt)
+		this->scan_bbt = onenand_शेष_bbt;
 
-	if (onenand_probe(mtd))
-		return -ENXIO;
+	अगर (onenand_probe(mtd))
+		वापस -ENXIO;
 
 	/* Set Sync. Burst Read after probing */
-	if (this->mmcontrol) {
-		printk(KERN_INFO "OneNAND Sync. Burst Read support\n");
-		this->read_bufferram = onenand_sync_read_bufferram;
-	}
+	अगर (this->mmcontrol) अणु
+		prपूर्णांकk(KERN_INFO "OneNAND Sync. Burst Read support\n");
+		this->पढ़ो_bufferram = onenand_sync_पढ़ो_bufferram;
+	पूर्ण
 
-	/* Allocate buffers, if necessary */
-	if (!this->page_buf) {
-		this->page_buf = kzalloc(mtd->writesize, GFP_KERNEL);
-		if (!this->page_buf)
-			return -ENOMEM;
-#ifdef CONFIG_MTD_ONENAND_VERIFY_WRITE
-		this->verify_buf = kzalloc(mtd->writesize, GFP_KERNEL);
-		if (!this->verify_buf) {
-			kfree(this->page_buf);
-			return -ENOMEM;
-		}
-#endif
-		this->options |= ONENAND_PAGEBUF_ALLOC;
-	}
-	if (!this->oob_buf) {
+	/* Allocate buffers, अगर necessary */
+	अगर (!this->page_buf) अणु
+		this->page_buf = kzalloc(mtd->ग_लिखोsize, GFP_KERNEL);
+		अगर (!this->page_buf)
+			वापस -ENOMEM;
+#अगर_घोषित CONFIG_MTD_ONEन_अंकD_VERIFY_WRITE
+		this->verअगरy_buf = kzalloc(mtd->ग_लिखोsize, GFP_KERNEL);
+		अगर (!this->verअगरy_buf) अणु
+			kमुक्त(this->page_buf);
+			वापस -ENOMEM;
+		पूर्ण
+#पूर्ण_अगर
+		this->options |= ONEन_अंकD_PAGEBUF_ALLOC;
+	पूर्ण
+	अगर (!this->oob_buf) अणु
 		this->oob_buf = kzalloc(mtd->oobsize, GFP_KERNEL);
-		if (!this->oob_buf) {
-			if (this->options & ONENAND_PAGEBUF_ALLOC) {
-				this->options &= ~ONENAND_PAGEBUF_ALLOC;
-#ifdef CONFIG_MTD_ONENAND_VERIFY_WRITE
-				kfree(this->verify_buf);
-#endif
-				kfree(this->page_buf);
-			}
-			return -ENOMEM;
-		}
-		this->options |= ONENAND_OOBBUF_ALLOC;
-	}
+		अगर (!this->oob_buf) अणु
+			अगर (this->options & ONEन_अंकD_PAGEBUF_ALLOC) अणु
+				this->options &= ~ONEन_अंकD_PAGEBUF_ALLOC;
+#अगर_घोषित CONFIG_MTD_ONEन_अंकD_VERIFY_WRITE
+				kमुक्त(this->verअगरy_buf);
+#पूर्ण_अगर
+				kमुक्त(this->page_buf);
+			पूर्ण
+			वापस -ENOMEM;
+		पूर्ण
+		this->options |= ONEन_अंकD_OOBBUF_ALLOC;
+	पूर्ण
 
 	this->state = FL_READY;
-	init_waitqueue_head(&this->wq);
+	init_रुकोqueue_head(&this->wq);
 	spin_lock_init(&this->chip_lock);
 
 	/*
-	 * Allow subpage writes up to oobsize.
+	 * Allow subpage ग_लिखोs up to oobsize.
 	 */
-	switch (mtd->oobsize) {
-	case 128:
-		if (FLEXONENAND(this)) {
+	चयन (mtd->oobsize) अणु
+	हाल 128:
+		अगर (FLEXONEन_अंकD(this)) अणु
 			mtd_set_ooblayout(mtd, &flexonenand_ooblayout_ops);
 			mtd->subpage_sft = 0;
-		} else {
+		पूर्ण अन्यथा अणु
 			mtd_set_ooblayout(mtd, &onenand_oob_128_ooblayout_ops);
 			mtd->subpage_sft = 2;
-		}
-		if (ONENAND_IS_NOP_1(this))
+		पूर्ण
+		अगर (ONEन_अंकD_IS_NOP_1(this))
 			mtd->subpage_sft = 0;
-		break;
-	case 64:
+		अवरोध;
+	हाल 64:
 		mtd_set_ooblayout(mtd, &onenand_oob_32_64_ooblayout_ops);
 		mtd->subpage_sft = 2;
-		break;
+		अवरोध;
 
-	case 32:
+	हाल 32:
 		mtd_set_ooblayout(mtd, &onenand_oob_32_64_ooblayout_ops);
 		mtd->subpage_sft = 1;
-		break;
+		अवरोध;
 
-	default:
-		printk(KERN_WARNING "%s: No OOB scheme defined for oobsize %d\n",
+	शेष:
+		prपूर्णांकk(KERN_WARNING "%s: No OOB scheme defined for oobsize %d\n",
 			__func__, mtd->oobsize);
 		mtd->subpage_sft = 0;
 		/* To prevent kernel oops */
 		mtd_set_ooblayout(mtd, &onenand_oob_32_64_ooblayout_ops);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	this->subpagesize = mtd->writesize >> mtd->subpage_sft;
+	this->subpagesize = mtd->ग_लिखोsize >> mtd->subpage_sft;
 
 	/*
-	 * The number of bytes available for a client to place data into
+	 * The number of bytes available क्रम a client to place data पूर्णांकo
 	 * the out of band area
 	 */
-	ret = mtd_ooblayout_count_freebytes(mtd);
-	if (ret < 0)
+	ret = mtd_ooblayout_count_मुक्तbytes(mtd);
+	अगर (ret < 0)
 		ret = 0;
 
 	mtd->oobavail = ret;
 
 	mtd->ecc_strength = 1;
 
-	/* Fill in remaining MTD driver data */
-	mtd->type = ONENAND_IS_MLC(this) ? MTD_MLCNANDFLASH : MTD_NANDFLASH;
-	mtd->flags = MTD_CAP_NANDFLASH;
+	/* Fill in reमुख्यing MTD driver data */
+	mtd->type = ONEन_अंकD_IS_MLC(this) ? MTD_MLCन_अंकDFLASH : MTD_न_अंकDFLASH;
+	mtd->flags = MTD_CAP_न_अंकDFLASH;
 	mtd->_erase = onenand_erase;
-	mtd->_point = NULL;
-	mtd->_unpoint = NULL;
-	mtd->_read_oob = onenand_read_oob;
-	mtd->_write_oob = onenand_write_oob;
-	mtd->_panic_write = onenand_panic_write;
-#ifdef CONFIG_MTD_ONENAND_OTP
+	mtd->_poपूर्णांक = शून्य;
+	mtd->_unpoपूर्णांक = शून्य;
+	mtd->_पढ़ो_oob = onenand_पढ़ो_oob;
+	mtd->_ग_लिखो_oob = onenand_ग_लिखो_oob;
+	mtd->_panic_ग_लिखो = onenand_panic_ग_लिखो;
+#अगर_घोषित CONFIG_MTD_ONEन_अंकD_OTP
 	mtd->_get_fact_prot_info = onenand_get_fact_prot_info;
-	mtd->_read_fact_prot_reg = onenand_read_fact_prot_reg;
+	mtd->_पढ़ो_fact_prot_reg = onenand_पढ़ो_fact_prot_reg;
 	mtd->_get_user_prot_info = onenand_get_user_prot_info;
-	mtd->_read_user_prot_reg = onenand_read_user_prot_reg;
-	mtd->_write_user_prot_reg = onenand_write_user_prot_reg;
+	mtd->_पढ़ो_user_prot_reg = onenand_पढ़ो_user_prot_reg;
+	mtd->_ग_लिखो_user_prot_reg = onenand_ग_लिखो_user_prot_reg;
 	mtd->_lock_user_prot_reg = onenand_lock_user_prot_reg;
-#endif
+#पूर्ण_अगर
 	mtd->_sync = onenand_sync;
 	mtd->_lock = onenand_lock;
 	mtd->_unlock = onenand_unlock;
@@ -3957,55 +3958,55 @@ int onenand_scan(struct mtd_info *mtd, int maxchips)
 	mtd->_block_isbad = onenand_block_isbad;
 	mtd->_block_markbad = onenand_block_markbad;
 	mtd->owner = THIS_MODULE;
-	mtd->writebufsize = mtd->writesize;
+	mtd->ग_लिखोbufsize = mtd->ग_लिखोsize;
 
 	/* Unlock whole block */
-	if (!(this->options & ONENAND_SKIP_INITIAL_UNLOCKING))
+	अगर (!(this->options & ONEन_अंकD_SKIP_INITIAL_UNLOCKING))
 		this->unlock_all(mtd);
 
 	/* Set the bad block marker position */
-	this->badblockpos = ONENAND_BADBLOCK_POS;
+	this->badblockpos = ONEन_अंकD_BADBLOCK_POS;
 
 	ret = this->scan_bbt(mtd);
-	if ((!FLEXONENAND(this)) || ret)
-		return ret;
+	अगर ((!FLEXONEन_अंकD(this)) || ret)
+		वापस ret;
 
-	/* Change Flex-OneNAND boundaries if required */
-	for (i = 0; i < MAX_DIES; i++)
+	/* Change Flex-Oneन_अंकD boundaries अगर required */
+	क्रम (i = 0; i < MAX_DIES; i++)
 		flexonenand_set_boundary(mtd, i, flex_bdry[2 * i],
 						 flex_bdry[(2 * i) + 1]);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * onenand_release - [OneNAND Interface] Free resources held by the OneNAND device
- * @mtd:		MTD device structure
+ * onenand_release - [Oneन_अंकD Interface] Free resources held by the Oneन_अंकD device
+ * @mtd:		MTD device काष्ठाure
  */
-void onenand_release(struct mtd_info *mtd)
-{
-	struct onenand_chip *this = mtd->priv;
+व्योम onenand_release(काष्ठा mtd_info *mtd)
+अणु
+	काष्ठा onenand_chip *this = mtd->priv;
 
-	/* Deregister partitions */
-	mtd_device_unregister(mtd);
+	/* Deरेजिस्टर partitions */
+	mtd_device_unरेजिस्टर(mtd);
 
-	/* Free bad block table memory, if allocated */
-	if (this->bbm) {
-		struct bbm_info *bbm = this->bbm;
-		kfree(bbm->bbt);
-		kfree(this->bbm);
-	}
+	/* Free bad block table memory, अगर allocated */
+	अगर (this->bbm) अणु
+		काष्ठा bbm_info *bbm = this->bbm;
+		kमुक्त(bbm->bbt);
+		kमुक्त(this->bbm);
+	पूर्ण
 	/* Buffers allocated by onenand_scan */
-	if (this->options & ONENAND_PAGEBUF_ALLOC) {
-		kfree(this->page_buf);
-#ifdef CONFIG_MTD_ONENAND_VERIFY_WRITE
-		kfree(this->verify_buf);
-#endif
-	}
-	if (this->options & ONENAND_OOBBUF_ALLOC)
-		kfree(this->oob_buf);
-	kfree(mtd->eraseregions);
-}
+	अगर (this->options & ONEन_अंकD_PAGEBUF_ALLOC) अणु
+		kमुक्त(this->page_buf);
+#अगर_घोषित CONFIG_MTD_ONEन_अंकD_VERIFY_WRITE
+		kमुक्त(this->verअगरy_buf);
+#पूर्ण_अगर
+	पूर्ण
+	अगर (this->options & ONEन_अंकD_OOBBUF_ALLOC)
+		kमुक्त(this->oob_buf);
+	kमुक्त(mtd->eraseregions);
+पूर्ण
 
 EXPORT_SYMBOL_GPL(onenand_scan);
 EXPORT_SYMBOL_GPL(onenand_release);

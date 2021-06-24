@@ -1,299 +1,300 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <linux/file.h>
-#include <linux/mount.h>
-#include <linux/namei.h>
-#include <linux/utime.h>
-#include <linux/syscalls.h>
-#include <linux/uaccess.h>
-#include <linux/compat.h>
-#include <asm/unistd.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <linux/file.h>
+#समावेश <linux/mount.h>
+#समावेश <linux/namei.h>
+#समावेश <linux/uसमय.स>
+#समावेश <linux/syscalls.h>
+#समावेश <linux/uaccess.h>
+#समावेश <linux/compat.h>
+#समावेश <यंत्र/unistd.h>
 
-static bool nsec_valid(long nsec)
-{
-	if (nsec == UTIME_OMIT || nsec == UTIME_NOW)
-		return true;
+अटल bool nsec_valid(दीर्घ nsec)
+अणु
+	अगर (nsec == UTIME_OMIT || nsec == UTIME_NOW)
+		वापस true;
 
-	return nsec >= 0 && nsec <= 999999999;
-}
+	वापस nsec >= 0 && nsec <= 999999999;
+पूर्ण
 
-int vfs_utimes(const struct path *path, struct timespec64 *times)
-{
-	int error;
-	struct iattr newattrs;
-	struct inode *inode = path->dentry->d_inode;
-	struct inode *delegated_inode = NULL;
+पूर्णांक vfs_uबार(स्थिर काष्ठा path *path, काष्ठा बारpec64 *बार)
+अणु
+	पूर्णांक error;
+	काष्ठा iattr newattrs;
+	काष्ठा inode *inode = path->dentry->d_inode;
+	काष्ठा inode *delegated_inode = शून्य;
 
-	if (times) {
-		if (!nsec_valid(times[0].tv_nsec) ||
-		    !nsec_valid(times[1].tv_nsec))
-			return -EINVAL;
-		if (times[0].tv_nsec == UTIME_NOW &&
-		    times[1].tv_nsec == UTIME_NOW)
-			times = NULL;
-	}
+	अगर (बार) अणु
+		अगर (!nsec_valid(बार[0].tv_nsec) ||
+		    !nsec_valid(बार[1].tv_nsec))
+			वापस -EINVAL;
+		अगर (बार[0].tv_nsec == UTIME_NOW &&
+		    बार[1].tv_nsec == UTIME_NOW)
+			बार = शून्य;
+	पूर्ण
 
-	error = mnt_want_write(path->mnt);
-	if (error)
-		goto out;
+	error = mnt_want_ग_लिखो(path->mnt);
+	अगर (error)
+		जाओ out;
 
 	newattrs.ia_valid = ATTR_CTIME | ATTR_MTIME | ATTR_ATIME;
-	if (times) {
-		if (times[0].tv_nsec == UTIME_OMIT)
+	अगर (बार) अणु
+		अगर (बार[0].tv_nsec == UTIME_OMIT)
 			newattrs.ia_valid &= ~ATTR_ATIME;
-		else if (times[0].tv_nsec != UTIME_NOW) {
-			newattrs.ia_atime = times[0];
+		अन्यथा अगर (बार[0].tv_nsec != UTIME_NOW) अणु
+			newattrs.ia_aसमय = बार[0];
 			newattrs.ia_valid |= ATTR_ATIME_SET;
-		}
+		पूर्ण
 
-		if (times[1].tv_nsec == UTIME_OMIT)
+		अगर (बार[1].tv_nsec == UTIME_OMIT)
 			newattrs.ia_valid &= ~ATTR_MTIME;
-		else if (times[1].tv_nsec != UTIME_NOW) {
-			newattrs.ia_mtime = times[1];
+		अन्यथा अगर (बार[1].tv_nsec != UTIME_NOW) अणु
+			newattrs.ia_mसमय = बार[1];
 			newattrs.ia_valid |= ATTR_MTIME_SET;
-		}
+		पूर्ण
 		/*
-		 * Tell setattr_prepare(), that this is an explicit time
-		 * update, even if neither ATTR_ATIME_SET nor ATTR_MTIME_SET
+		 * Tell setattr_prepare(), that this is an explicit समय
+		 * update, even अगर neither ATTR_ATIME_SET nor ATTR_MTIME_SET
 		 * were used.
 		 */
 		newattrs.ia_valid |= ATTR_TIMES_SET;
-	} else {
+	पूर्ण अन्यथा अणु
 		newattrs.ia_valid |= ATTR_TOUCH;
-	}
+	पूर्ण
 retry_deleg:
 	inode_lock(inode);
-	error = notify_change(mnt_user_ns(path->mnt), path->dentry, &newattrs,
+	error = notअगरy_change(mnt_user_ns(path->mnt), path->dentry, &newattrs,
 			      &delegated_inode);
 	inode_unlock(inode);
-	if (delegated_inode) {
-		error = break_deleg_wait(&delegated_inode);
-		if (!error)
-			goto retry_deleg;
-	}
+	अगर (delegated_inode) अणु
+		error = अवरोध_deleg_रुको(&delegated_inode);
+		अगर (!error)
+			जाओ retry_deleg;
+	पूर्ण
 
-	mnt_drop_write(path->mnt);
+	mnt_drop_ग_लिखो(path->mnt);
 out:
-	return error;
-}
+	वापस error;
+पूर्ण
 
-static int do_utimes_path(int dfd, const char __user *filename,
-		struct timespec64 *times, int flags)
-{
-	struct path path;
-	int lookup_flags = 0, error;
+अटल पूर्णांक करो_uबार_path(पूर्णांक dfd, स्थिर अक्षर __user *filename,
+		काष्ठा बारpec64 *बार, पूर्णांक flags)
+अणु
+	काष्ठा path path;
+	पूर्णांक lookup_flags = 0, error;
 
-	if (flags & ~(AT_SYMLINK_NOFOLLOW | AT_EMPTY_PATH))
-		return -EINVAL;
+	अगर (flags & ~(AT_SYMLINK_NOFOLLOW | AT_EMPTY_PATH))
+		वापस -EINVAL;
 
-	if (!(flags & AT_SYMLINK_NOFOLLOW))
+	अगर (!(flags & AT_SYMLINK_NOFOLLOW))
 		lookup_flags |= LOOKUP_FOLLOW;
-	if (flags & AT_EMPTY_PATH)
+	अगर (flags & AT_EMPTY_PATH)
 		lookup_flags |= LOOKUP_EMPTY;
 
 retry:
 	error = user_path_at(dfd, filename, lookup_flags, &path);
-	if (error)
-		return error;
+	अगर (error)
+		वापस error;
 
-	error = vfs_utimes(&path, times);
+	error = vfs_uबार(&path, बार);
 	path_put(&path);
-	if (retry_estale(error, lookup_flags)) {
+	अगर (retry_estale(error, lookup_flags)) अणु
 		lookup_flags |= LOOKUP_REVAL;
-		goto retry;
-	}
+		जाओ retry;
+	पूर्ण
 
-	return error;
-}
+	वापस error;
+पूर्ण
 
-static int do_utimes_fd(int fd, struct timespec64 *times, int flags)
-{
-	struct fd f;
-	int error;
+अटल पूर्णांक करो_uबार_fd(पूर्णांक fd, काष्ठा बारpec64 *बार, पूर्णांक flags)
+अणु
+	काष्ठा fd f;
+	पूर्णांक error;
 
-	if (flags)
-		return -EINVAL;
+	अगर (flags)
+		वापस -EINVAL;
 
 	f = fdget(fd);
-	if (!f.file)
-		return -EBADF;
-	error = vfs_utimes(&f.file->f_path, times);
+	अगर (!f.file)
+		वापस -EBADF;
+	error = vfs_uबार(&f.file->f_path, बार);
 	fdput(f);
-	return error;
-}
+	वापस error;
+पूर्ण
 
 /*
- * do_utimes - change times on filename or file descriptor
- * @dfd: open file descriptor, -1 or AT_FDCWD
- * @filename: path name or NULL
- * @times: new times or NULL
- * @flags: zero or more flags (only AT_SYMLINK_NOFOLLOW for the moment)
+ * करो_uबार - change बार on filename or file descriptor
+ * @dfd: खोलो file descriptor, -1 or AT_FDCWD
+ * @filename: path name or शून्य
+ * @बार: new बार or शून्य
+ * @flags: zero or more flags (only AT_SYMLINK_NOFOLLOW क्रम the moment)
  *
- * If filename is NULL and dfd refers to an open file, then operate on
+ * If filename is शून्य and dfd refers to an खोलो file, then operate on
  * the file.  Otherwise look up filename, possibly using dfd as a
- * starting point.
+ * starting poपूर्णांक.
  *
- * If times==NULL, set access and modification to current time,
- * must be owner or have write permission.
- * Else, update from *times, must be owner or super user.
+ * If बार==शून्य, set access and modअगरication to current समय,
+ * must be owner or have ग_लिखो permission.
+ * Else, update from *बार, must be owner or super user.
  */
-long do_utimes(int dfd, const char __user *filename, struct timespec64 *times,
-	       int flags)
-{
-	if (filename == NULL && dfd != AT_FDCWD)
-		return do_utimes_fd(dfd, times, flags);
-	return do_utimes_path(dfd, filename, times, flags);
-}
+दीर्घ करो_uबार(पूर्णांक dfd, स्थिर अक्षर __user *filename, काष्ठा बारpec64 *बार,
+	       पूर्णांक flags)
+अणु
+	अगर (filename == शून्य && dfd != AT_FDCWD)
+		वापस करो_uबार_fd(dfd, बार, flags);
+	वापस करो_uबार_path(dfd, filename, बार, flags);
+पूर्ण
 
-SYSCALL_DEFINE4(utimensat, int, dfd, const char __user *, filename,
-		struct __kernel_timespec __user *, utimes, int, flags)
-{
-	struct timespec64 tstimes[2];
+SYSCALL_DEFINE4(uसमयnsat, पूर्णांक, dfd, स्थिर अक्षर __user *, filename,
+		काष्ठा __kernel_बारpec __user *, uबार, पूर्णांक, flags)
+अणु
+	काष्ठा बारpec64 tsबार[2];
 
-	if (utimes) {
-		if ((get_timespec64(&tstimes[0], &utimes[0]) ||
-			get_timespec64(&tstimes[1], &utimes[1])))
-			return -EFAULT;
+	अगर (uबार) अणु
+		अगर ((get_बारpec64(&tsबार[0], &uबार[0]) ||
+			get_बारpec64(&tsबार[1], &uबार[1])))
+			वापस -EFAULT;
 
-		/* Nothing to do, we must not even check the path.  */
-		if (tstimes[0].tv_nsec == UTIME_OMIT &&
-		    tstimes[1].tv_nsec == UTIME_OMIT)
-			return 0;
-	}
+		/* Nothing to करो, we must not even check the path.  */
+		अगर (tsबार[0].tv_nsec == UTIME_OMIT &&
+		    tsबार[1].tv_nsec == UTIME_OMIT)
+			वापस 0;
+	पूर्ण
 
-	return do_utimes(dfd, filename, utimes ? tstimes : NULL, flags);
-}
+	वापस करो_uबार(dfd, filename, uबार ? tsबार : शून्य, flags);
+पूर्ण
 
-#ifdef __ARCH_WANT_SYS_UTIME
+#अगर_घोषित __ARCH_WANT_SYS_UTIME
 /*
- * futimesat(), utimes() and utime() are older versions of utimensat()
- * that are provided for compatibility with traditional C libraries.
+ * fuबारat(), uबार() and uसमय() are older versions of uसमयnsat()
+ * that are provided क्रम compatibility with traditional C libraries.
  * On modern architectures, we always use libc wrappers around
- * utimensat() instead.
+ * uसमयnsat() instead.
  */
-static long do_futimesat(int dfd, const char __user *filename,
-			 struct __kernel_old_timeval __user *utimes)
-{
-	struct __kernel_old_timeval times[2];
-	struct timespec64 tstimes[2];
+अटल दीर्घ करो_fuबारat(पूर्णांक dfd, स्थिर अक्षर __user *filename,
+			 काष्ठा __kernel_old_समयval __user *uबार)
+अणु
+	काष्ठा __kernel_old_समयval बार[2];
+	काष्ठा बारpec64 tsबार[2];
 
-	if (utimes) {
-		if (copy_from_user(&times, utimes, sizeof(times)))
-			return -EFAULT;
+	अगर (uबार) अणु
+		अगर (copy_from_user(&बार, uबार, माप(बार)))
+			वापस -EFAULT;
 
 		/* This test is needed to catch all invalid values.  If we
-		   would test only in do_utimes we would miss those invalid
+		   would test only in करो_uबार we would miss those invalid
 		   values truncated by the multiplication with 1000.  Note
-		   that we also catch UTIME_{NOW,OMIT} here which are only
-		   valid for utimensat.  */
-		if (times[0].tv_usec >= 1000000 || times[0].tv_usec < 0 ||
-		    times[1].tv_usec >= 1000000 || times[1].tv_usec < 0)
-			return -EINVAL;
+		   that we also catch UTIME_अणुNOW,OMITपूर्ण here which are only
+		   valid क्रम uसमयnsat.  */
+		अगर (बार[0].tv_usec >= 1000000 || बार[0].tv_usec < 0 ||
+		    बार[1].tv_usec >= 1000000 || बार[1].tv_usec < 0)
+			वापस -EINVAL;
 
-		tstimes[0].tv_sec = times[0].tv_sec;
-		tstimes[0].tv_nsec = 1000 * times[0].tv_usec;
-		tstimes[1].tv_sec = times[1].tv_sec;
-		tstimes[1].tv_nsec = 1000 * times[1].tv_usec;
-	}
+		tsबार[0].tv_sec = बार[0].tv_sec;
+		tsबार[0].tv_nsec = 1000 * बार[0].tv_usec;
+		tsबार[1].tv_sec = बार[1].tv_sec;
+		tsबार[1].tv_nsec = 1000 * बार[1].tv_usec;
+	पूर्ण
 
-	return do_utimes(dfd, filename, utimes ? tstimes : NULL, 0);
-}
+	वापस करो_uबार(dfd, filename, uबार ? tsबार : शून्य, 0);
+पूर्ण
 
 
-SYSCALL_DEFINE3(futimesat, int, dfd, const char __user *, filename,
-		struct __kernel_old_timeval __user *, utimes)
-{
-	return do_futimesat(dfd, filename, utimes);
-}
+SYSCALL_DEFINE3(fuबारat, पूर्णांक, dfd, स्थिर अक्षर __user *, filename,
+		काष्ठा __kernel_old_समयval __user *, uबार)
+अणु
+	वापस करो_fuबारat(dfd, filename, uबार);
+पूर्ण
 
-SYSCALL_DEFINE2(utimes, char __user *, filename,
-		struct __kernel_old_timeval __user *, utimes)
-{
-	return do_futimesat(AT_FDCWD, filename, utimes);
-}
+SYSCALL_DEFINE2(uबार, अक्षर __user *, filename,
+		काष्ठा __kernel_old_समयval __user *, uबार)
+अणु
+	वापस करो_fuबारat(AT_FDCWD, filename, uबार);
+पूर्ण
 
-SYSCALL_DEFINE2(utime, char __user *, filename, struct utimbuf __user *, times)
-{
-	struct timespec64 tv[2];
+SYSCALL_DEFINE2(uसमय, अक्षर __user *, filename, काष्ठा utimbuf __user *, बार)
+अणु
+	काष्ठा बारpec64 tv[2];
 
-	if (times) {
-		if (get_user(tv[0].tv_sec, &times->actime) ||
-		    get_user(tv[1].tv_sec, &times->modtime))
-			return -EFAULT;
+	अगर (बार) अणु
+		अगर (get_user(tv[0].tv_sec, &बार->aस_समय) ||
+		    get_user(tv[1].tv_sec, &बार->modसमय))
+			वापस -EFAULT;
 		tv[0].tv_nsec = 0;
 		tv[1].tv_nsec = 0;
-	}
-	return do_utimes(AT_FDCWD, filename, times ? tv : NULL, 0);
-}
-#endif
+	पूर्ण
+	वापस करो_uबार(AT_FDCWD, filename, बार ? tv : शून्य, 0);
+पूर्ण
+#पूर्ण_अगर
 
-#ifdef CONFIG_COMPAT_32BIT_TIME
+#अगर_घोषित CONFIG_COMPAT_32BIT_TIME
 /*
- * Not all architectures have sys_utime, so implement this in terms
- * of sys_utimes.
+ * Not all architectures have sys_uसमय, so implement this in terms
+ * of sys_uबार.
  */
-#ifdef __ARCH_WANT_SYS_UTIME32
-SYSCALL_DEFINE2(utime32, const char __user *, filename,
-		struct old_utimbuf32 __user *, t)
-{
-	struct timespec64 tv[2];
+#अगर_घोषित __ARCH_WANT_SYS_UTIME32
+SYSCALL_DEFINE2(uसमय32, स्थिर अक्षर __user *, filename,
+		काष्ठा old_utimbuf32 __user *, t)
+अणु
+	काष्ठा बारpec64 tv[2];
 
-	if (t) {
-		if (get_user(tv[0].tv_sec, &t->actime) ||
-		    get_user(tv[1].tv_sec, &t->modtime))
-			return -EFAULT;
+	अगर (t) अणु
+		अगर (get_user(tv[0].tv_sec, &t->aस_समय) ||
+		    get_user(tv[1].tv_sec, &t->modसमय))
+			वापस -EFAULT;
 		tv[0].tv_nsec = 0;
 		tv[1].tv_nsec = 0;
-	}
-	return do_utimes(AT_FDCWD, filename, t ? tv : NULL, 0);
-}
-#endif
+	पूर्ण
+	वापस करो_uबार(AT_FDCWD, filename, t ? tv : शून्य, 0);
+पूर्ण
+#पूर्ण_अगर
 
-SYSCALL_DEFINE4(utimensat_time32, unsigned int, dfd, const char __user *, filename, struct old_timespec32 __user *, t, int, flags)
-{
-	struct timespec64 tv[2];
+SYSCALL_DEFINE4(uसमयnsat_समय32, अचिन्हित पूर्णांक, dfd, स्थिर अक्षर __user *, filename, काष्ठा old_बारpec32 __user *, t, पूर्णांक, flags)
+अणु
+	काष्ठा बारpec64 tv[2];
 
-	if  (t) {
-		if (get_old_timespec32(&tv[0], &t[0]) ||
-		    get_old_timespec32(&tv[1], &t[1]))
-			return -EFAULT;
+	अगर  (t) अणु
+		अगर (get_old_बारpec32(&tv[0], &t[0]) ||
+		    get_old_बारpec32(&tv[1], &t[1]))
+			वापस -EFAULT;
 
-		if (tv[0].tv_nsec == UTIME_OMIT && tv[1].tv_nsec == UTIME_OMIT)
-			return 0;
-	}
-	return do_utimes(dfd, filename, t ? tv : NULL, flags);
-}
+		अगर (tv[0].tv_nsec == UTIME_OMIT && tv[1].tv_nsec == UTIME_OMIT)
+			वापस 0;
+	पूर्ण
+	वापस करो_uबार(dfd, filename, t ? tv : शून्य, flags);
+पूर्ण
 
-#ifdef __ARCH_WANT_SYS_UTIME32
-static long do_compat_futimesat(unsigned int dfd, const char __user *filename,
-				struct old_timeval32 __user *t)
-{
-	struct timespec64 tv[2];
+#अगर_घोषित __ARCH_WANT_SYS_UTIME32
+अटल दीर्घ करो_compat_fuबारat(अचिन्हित पूर्णांक dfd, स्थिर अक्षर __user *filename,
+				काष्ठा old_समयval32 __user *t)
+अणु
+	काष्ठा बारpec64 tv[2];
 
-	if (t) {
-		if (get_user(tv[0].tv_sec, &t[0].tv_sec) ||
+	अगर (t) अणु
+		अगर (get_user(tv[0].tv_sec, &t[0].tv_sec) ||
 		    get_user(tv[0].tv_nsec, &t[0].tv_usec) ||
 		    get_user(tv[1].tv_sec, &t[1].tv_sec) ||
 		    get_user(tv[1].tv_nsec, &t[1].tv_usec))
-			return -EFAULT;
-		if (tv[0].tv_nsec >= 1000000 || tv[0].tv_nsec < 0 ||
+			वापस -EFAULT;
+		अगर (tv[0].tv_nsec >= 1000000 || tv[0].tv_nsec < 0 ||
 		    tv[1].tv_nsec >= 1000000 || tv[1].tv_nsec < 0)
-			return -EINVAL;
+			वापस -EINVAL;
 		tv[0].tv_nsec *= 1000;
 		tv[1].tv_nsec *= 1000;
-	}
-	return do_utimes(dfd, filename, t ? tv : NULL, 0);
-}
+	पूर्ण
+	वापस करो_uबार(dfd, filename, t ? tv : शून्य, 0);
+पूर्ण
 
-SYSCALL_DEFINE3(futimesat_time32, unsigned int, dfd,
-		       const char __user *, filename,
-		       struct old_timeval32 __user *, t)
-{
-	return do_compat_futimesat(dfd, filename, t);
-}
+SYSCALL_DEFINE3(fuबारat_समय32, अचिन्हित पूर्णांक, dfd,
+		       स्थिर अक्षर __user *, filename,
+		       काष्ठा old_समयval32 __user *, t)
+अणु
+	वापस करो_compat_fuबारat(dfd, filename, t);
+पूर्ण
 
-SYSCALL_DEFINE2(utimes_time32, const char __user *, filename, struct old_timeval32 __user *, t)
-{
-	return do_compat_futimesat(AT_FDCWD, filename, t);
-}
-#endif
-#endif
+SYSCALL_DEFINE2(uबार_समय32, स्थिर अक्षर __user *, filename, काष्ठा old_समयval32 __user *, t)
+अणु
+	वापस करो_compat_fuबारat(AT_FDCWD, filename, t);
+पूर्ण
+#पूर्ण_अगर
+#पूर्ण_अगर

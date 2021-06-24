@@ -1,63 +1,64 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * Sysctl operations for Coda filesystem
+ * Sysctl operations क्रम Coda fileप्रणाली
  * Original version: (C) 1996 P. Braam and M. Callahan
- * Rewritten for Linux 2.1. (C) 1997 Carnegie Mellon University
+ * Rewritten क्रम Linux 2.1. (C) 1997 Carnegie Mellon University
  * 
  * Carnegie Mellon encourages users to contribute improvements to
  * the Coda project. Contact Peter Braam (coda@cs.cmu.edu).
  */
 
-#include <linux/sysctl.h>
+#समावेश <linux/sysctl.h>
 
-#include "coda_int.h"
+#समावेश "coda_int.h"
 
-static struct ctl_table_header *fs_table_header;
+अटल काष्ठा ctl_table_header *fs_table_header;
 
-static struct ctl_table coda_table[] = {
-	{
+अटल काष्ठा ctl_table coda_table[] = अणु
+	अणु
 		.procname	= "timeout",
-		.data		= &coda_timeout,
-		.maxlen		= sizeof(int),
+		.data		= &coda_समयout,
+		.maxlen		= माप(पूर्णांक),
 		.mode		= 0644,
-		.proc_handler	= proc_dointvec
-	},
-	{
+		.proc_handler	= proc_करोपूर्णांकvec
+	पूर्ण,
+	अणु
 		.procname	= "hard",
 		.data		= &coda_hard,
-		.maxlen		= sizeof(int),
+		.maxlen		= माप(पूर्णांक),
 		.mode		= 0644,
-		.proc_handler	= proc_dointvec
-	},
-	{
+		.proc_handler	= proc_करोपूर्णांकvec
+	पूर्ण,
+	अणु
 		.procname	= "fake_statfs",
 		.data		= &coda_fake_statfs,
-		.maxlen		= sizeof(int),
+		.maxlen		= माप(पूर्णांक),
 		.mode		= 0600,
-		.proc_handler	= proc_dointvec
-	},
-	{}
-};
+		.proc_handler	= proc_करोपूर्णांकvec
+	पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
-static struct ctl_table fs_table[] = {
-	{
+अटल काष्ठा ctl_table fs_table[] = अणु
+	अणु
 		.procname	= "coda",
 		.mode		= 0555,
 		.child		= coda_table
-	},
-	{}
-};
+	पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
-void coda_sysctl_init(void)
-{
-	if ( !fs_table_header )
-		fs_table_header = register_sysctl_table(fs_table);
-}
+व्योम coda_sysctl_init(व्योम)
+अणु
+	अगर ( !fs_table_header )
+		fs_table_header = रेजिस्टर_sysctl_table(fs_table);
+पूर्ण
 
-void coda_sysctl_clean(void)
-{
-	if ( fs_table_header ) {
-		unregister_sysctl_table(fs_table_header);
-		fs_table_header = NULL;
-	}
-}
+व्योम coda_sysctl_clean(व्योम)
+अणु
+	अगर ( fs_table_header ) अणु
+		unरेजिस्टर_sysctl_table(fs_table_header);
+		fs_table_header = शून्य;
+	पूर्ण
+पूर्ण

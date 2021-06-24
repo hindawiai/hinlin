@@ -1,28 +1,29 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _M68K_PTRACE_H
-#define _M68K_PTRACE_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _M68K_PTRACE_H
+#घोषणा _M68K_PTRACE_H
 
-#include <uapi/asm/ptrace.h>
+#समावेश <uapi/यंत्र/ptrace.h>
 
-#ifndef __ASSEMBLY__
+#अगर_अघोषित __ASSEMBLY__
 
-#ifndef PS_S
-#define PS_S  (0x2000)
-#define PS_M  (0x1000)
-#endif
+#अगर_अघोषित PS_S
+#घोषणा PS_S  (0x2000)
+#घोषणा PS_M  (0x1000)
+#पूर्ण_अगर
 
-#define user_mode(regs) (!((regs)->sr & PS_S))
-#define instruction_pointer(regs) ((regs)->pc)
-#define profile_pc(regs) instruction_pointer(regs)
-#define current_pt_regs() \
-	(struct pt_regs *)((char *)current_thread_info() + THREAD_SIZE) - 1
-#define current_user_stack_pointer() rdusp()
+#घोषणा user_mode(regs) (!((regs)->sr & PS_S))
+#घोषणा inकाष्ठाion_poपूर्णांकer(regs) ((regs)->pc)
+#घोषणा profile_pc(regs) inकाष्ठाion_poपूर्णांकer(regs)
+#घोषणा current_pt_regs() \
+	(काष्ठा pt_regs *)((अक्षर *)current_thपढ़ो_info() + THREAD_SIZE) - 1
+#घोषणा current_user_stack_poपूर्णांकer() rdusp()
 
-#define arch_has_single_step()	(1)
+#घोषणा arch_has_single_step()	(1)
 
-#ifdef CONFIG_MMU
-#define arch_has_block_step()	(1)
-#endif
+#अगर_घोषित CONFIG_MMU
+#घोषणा arch_has_block_step()	(1)
+#पूर्ण_अगर
 
-#endif /* __ASSEMBLY__ */
-#endif /* _M68K_PTRACE_H */
+#पूर्ण_अगर /* __ASSEMBLY__ */
+#पूर्ण_अगर /* _M68K_PTRACE_H */

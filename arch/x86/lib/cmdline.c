@@ -1,214 +1,215 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  *
- * Misc librarized functions for cmdline poking.
+ * Misc librarized functions क्रम cmdline poking.
  */
-#include <linux/kernel.h>
-#include <linux/string.h>
-#include <linux/ctype.h>
-#include <asm/setup.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/प्रकार.स>
+#समावेश <यंत्र/setup.h>
 
-static inline int myisspace(u8 c)
-{
-	return c <= ' ';	/* Close enough approximation */
-}
+अटल अंतरभूत पूर्णांक myहै_खाली(u8 c)
+अणु
+	वापस c <= ' ';	/* Close enough approximation */
+पूर्ण
 
 /**
  * Find a boolean option (like quiet,noapic,nosmp....)
  *
  * @cmdline: the cmdline string
- * @option: option string to look for
+ * @option: option string to look क्रम
  *
  * Returns the position of that @option (starts counting with 1)
- * or 0 on not found.  @option will only be found if it is found
- * as an entire word in @cmdline.  For instance, if @option="car"
+ * or 0 on not found.  @option will only be found अगर it is found
+ * as an entire word in @cmdline.  For instance, अगर @option="car"
  * then a cmdline which contains "cart" will not match.
  */
-static int
-__cmdline_find_option_bool(const char *cmdline, int max_cmdline_size,
-			   const char *option)
-{
-	char c;
-	int pos = 0, wstart = 0;
-	const char *opptr = NULL;
-	enum {
+अटल पूर्णांक
+__cmdline_find_option_bool(स्थिर अक्षर *cmdline, पूर्णांक max_cmdline_size,
+			   स्थिर अक्षर *option)
+अणु
+	अक्षर c;
+	पूर्णांक pos = 0, wstart = 0;
+	स्थिर अक्षर *opptr = शून्य;
+	क्रमागत अणु
 		st_wordstart = 0,	/* Start of word/after whitespace */
 		st_wordcmp,	/* Comparing this word */
 		st_wordskip,	/* Miscompare, skip */
-	} state = st_wordstart;
+	पूर्ण state = st_wordstart;
 
-	if (!cmdline)
-		return -1;      /* No command line */
+	अगर (!cmdline)
+		वापस -1;      /* No command line */
 
 	/*
-	 * This 'pos' check ensures we do not overrun
-	 * a non-NULL-terminated 'cmdline'
+	 * This 'pos' check ensures we करो not overrun
+	 * a non-शून्य-terminated 'cmdline'
 	 */
-	while (pos < max_cmdline_size) {
-		c = *(char *)cmdline++;
+	जबतक (pos < max_cmdline_size) अणु
+		c = *(अक्षर *)cmdline++;
 		pos++;
 
-		switch (state) {
-		case st_wordstart:
-			if (!c)
-				return 0;
-			else if (myisspace(c))
-				break;
+		चयन (state) अणु
+		हाल st_wordstart:
+			अगर (!c)
+				वापस 0;
+			अन्यथा अगर (myहै_खाली(c))
+				अवरोध;
 
 			state = st_wordcmp;
 			opptr = option;
 			wstart = pos;
 			fallthrough;
 
-		case st_wordcmp:
-			if (!*opptr) {
+		हाल st_wordcmp:
+			अगर (!*opptr) अणु
 				/*
 				 * We matched all the way to the end of the
-				 * option we were looking for.  If the
+				 * option we were looking क्रम.  If the
 				 * command-line has a space _or_ ends, then
 				 * we matched!
 				 */
-				if (!c || myisspace(c))
-					return wstart;
+				अगर (!c || myहै_खाली(c))
+					वापस wstart;
 				/*
 				 * We hit the end of the option, but _not_
 				 * the end of a word on the cmdline.  Not
 				 * a match.
 				 */
-			} else if (!c) {
+			पूर्ण अन्यथा अगर (!c) अणु
 				/*
-				 * Hit the NULL terminator on the end of
+				 * Hit the शून्य terminator on the end of
 				 * cmdline.
 				 */
-				return 0;
-			} else if (c == *opptr++) {
+				वापस 0;
+			पूर्ण अन्यथा अगर (c == *opptr++) अणु
 				/*
-				 * We are currently matching, so continue
-				 * to the next character on the cmdline.
+				 * We are currently matching, so जारी
+				 * to the next अक्षरacter on the cmdline.
 				 */
-				break;
-			}
+				अवरोध;
+			पूर्ण
 			state = st_wordskip;
 			fallthrough;
 
-		case st_wordskip:
-			if (!c)
-				return 0;
-			else if (myisspace(c))
+		हाल st_wordskip:
+			अगर (!c)
+				वापस 0;
+			अन्यथा अगर (myहै_खाली(c))
 				state = st_wordstart;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	return 0;	/* Buffer overrun */
-}
+	वापस 0;	/* Buffer overrun */
+पूर्ण
 
 /*
  * Find a non-boolean option (i.e. option=argument). In accordance with
- * standard Linux practice, if this option is repeated, this returns the
+ * standard Linux practice, अगर this option is repeated, this वापसs the
  * last instance on the command line.
  *
  * @cmdline: the cmdline string
  * @max_cmdline_size: the maximum size of cmdline
- * @option: option string to look for
- * @buffer: memory buffer to return the option argument
+ * @option: option string to look क्रम
+ * @buffer: memory buffer to वापस the option argument
  * @bufsize: size of the supplied memory buffer
  *
- * Returns the length of the argument (regardless of if it was
+ * Returns the length of the argument (regardless of अगर it was
  * truncated to fit in the buffer), or -1 on not found.
  */
-static int
-__cmdline_find_option(const char *cmdline, int max_cmdline_size,
-		      const char *option, char *buffer, int bufsize)
-{
-	char c;
-	int pos = 0, len = -1;
-	const char *opptr = NULL;
-	char *bufptr = buffer;
-	enum {
+अटल पूर्णांक
+__cmdline_find_option(स्थिर अक्षर *cmdline, पूर्णांक max_cmdline_size,
+		      स्थिर अक्षर *option, अक्षर *buffer, पूर्णांक bufsize)
+अणु
+	अक्षर c;
+	पूर्णांक pos = 0, len = -1;
+	स्थिर अक्षर *opptr = शून्य;
+	अक्षर *bufptr = buffer;
+	क्रमागत अणु
 		st_wordstart = 0,	/* Start of word/after whitespace */
 		st_wordcmp,	/* Comparing this word */
 		st_wordskip,	/* Miscompare, skip */
 		st_bufcpy,	/* Copying this to buffer */
-	} state = st_wordstart;
+	पूर्ण state = st_wordstart;
 
-	if (!cmdline)
-		return -1;      /* No command line */
+	अगर (!cmdline)
+		वापस -1;      /* No command line */
 
 	/*
-	 * This 'pos' check ensures we do not overrun
-	 * a non-NULL-terminated 'cmdline'
+	 * This 'pos' check ensures we करो not overrun
+	 * a non-शून्य-terminated 'cmdline'
 	 */
-	while (pos++ < max_cmdline_size) {
-		c = *(char *)cmdline++;
-		if (!c)
-			break;
+	जबतक (pos++ < max_cmdline_size) अणु
+		c = *(अक्षर *)cmdline++;
+		अगर (!c)
+			अवरोध;
 
-		switch (state) {
-		case st_wordstart:
-			if (myisspace(c))
-				break;
+		चयन (state) अणु
+		हाल st_wordstart:
+			अगर (myहै_खाली(c))
+				अवरोध;
 
 			state = st_wordcmp;
 			opptr = option;
 			fallthrough;
 
-		case st_wordcmp:
-			if ((c == '=') && !*opptr) {
+		हाल st_wordcmp:
+			अगर ((c == '=') && !*opptr) अणु
 				/*
 				 * We matched all the way to the end of the
-				 * option we were looking for, prepare to
+				 * option we were looking क्रम, prepare to
 				 * copy the argument.
 				 */
 				len = 0;
 				bufptr = buffer;
 				state = st_bufcpy;
-				break;
-			} else if (c == *opptr++) {
+				अवरोध;
+			पूर्ण अन्यथा अगर (c == *opptr++) अणु
 				/*
-				 * We are currently matching, so continue
-				 * to the next character on the cmdline.
+				 * We are currently matching, so जारी
+				 * to the next अक्षरacter on the cmdline.
 				 */
-				break;
-			}
+				अवरोध;
+			पूर्ण
 			state = st_wordskip;
 			fallthrough;
 
-		case st_wordskip:
-			if (myisspace(c))
+		हाल st_wordskip:
+			अगर (myहै_खाली(c))
 				state = st_wordstart;
-			break;
+			अवरोध;
 
-		case st_bufcpy:
-			if (myisspace(c)) {
+		हाल st_bufcpy:
+			अगर (myहै_खाली(c)) अणु
 				state = st_wordstart;
-			} else {
+			पूर्ण अन्यथा अणु
 				/*
-				 * Increment len, but don't overrun the
-				 * supplied buffer and leave room for the
-				 * NULL terminator.
+				 * Increment len, but करोn't overrun the
+				 * supplied buffer and leave room क्रम the
+				 * शून्य terminator.
 				 */
-				if (++len < bufsize)
+				अगर (++len < bufsize)
 					*bufptr++ = c;
-			}
-			break;
-		}
-	}
+			पूर्ण
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	if (bufsize)
+	अगर (bufsize)
 		*bufptr = '\0';
 
-	return len;
-}
+	वापस len;
+पूर्ण
 
-int cmdline_find_option_bool(const char *cmdline, const char *option)
-{
-	return __cmdline_find_option_bool(cmdline, COMMAND_LINE_SIZE, option);
-}
+पूर्णांक cmdline_find_option_bool(स्थिर अक्षर *cmdline, स्थिर अक्षर *option)
+अणु
+	वापस __cmdline_find_option_bool(cmdline, COMMAND_LINE_SIZE, option);
+पूर्ण
 
-int cmdline_find_option(const char *cmdline, const char *option, char *buffer,
-			int bufsize)
-{
-	return __cmdline_find_option(cmdline, COMMAND_LINE_SIZE, option,
+पूर्णांक cmdline_find_option(स्थिर अक्षर *cmdline, स्थिर अक्षर *option, अक्षर *buffer,
+			पूर्णांक bufsize)
+अणु
+	वापस __cmdline_find_option(cmdline, COMMAND_LINE_SIZE, option,
 				     buffer, bufsize);
-}
+पूर्ण

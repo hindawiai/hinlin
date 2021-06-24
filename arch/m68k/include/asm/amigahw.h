@@ -1,55 +1,56 @@
+<शैली गुरु>
 /*
-** asm-m68k/amigahw.h -- This header defines some macros and pointers for
-**                    the various Amiga custom hardware registers.
-**                    The naming conventions used here conform to those
+** यंत्र-m68k/amigahw.h -- This header defines some macros and poपूर्णांकers क्रम
+**                    the various Amiga custom hardware रेजिस्टरs.
+**                    The naming conventions used here conक्रमm to those
 **                    used in the Amiga Hardware Reference Manual, 3rd Edition
 **
 ** Copyright 1992 by Greg Harp
 **
 ** This file is subject to the terms and conditions of the GNU General Public
-** License.  See the file COPYING in the main directory of this archive
-** for more details.
+** License.  See the file COPYING in the मुख्य directory of this archive
+** क्रम more details.
 **
 ** Created: 9/24/92 by Greg Harp
 */
 
-#ifndef _M68K_AMIGAHW_H
-#define _M68K_AMIGAHW_H
+#अगर_अघोषित _M68K_AMIGAHW_H
+#घोषणा _M68K_AMIGAHW_H
 
-#include <linux/ioport.h>
+#समावेश <linux/ioport.h>
 
-#include <asm/bootinfo-amiga.h>
+#समावेश <यंत्र/bootinfo-amiga.h>
 
 
     /*
      *  Chipsets
      */
 
-extern unsigned long amiga_chipset;
+बाह्य अचिन्हित दीर्घ amiga_chipset;
 
 
     /*
      *  Miscellaneous
      */
 
-extern unsigned long amiga_eclock;	/* 700 kHz E Peripheral Clock */
-extern unsigned long amiga_colorclock;	/* 3.5 MHz Color Clock */
-extern unsigned long amiga_chip_size;	/* Chip RAM Size (bytes) */
-extern unsigned char amiga_vblank;	/* VBLANK Frequency */
+बाह्य अचिन्हित दीर्घ amiga_eघड़ी;	/* 700 kHz E Peripheral Clock */
+बाह्य अचिन्हित दीर्घ amiga_colorघड़ी;	/* 3.5 MHz Color Clock */
+बाह्य अचिन्हित दीर्घ amiga_chip_size;	/* Chip RAM Size (bytes) */
+बाह्य अचिन्हित अक्षर amiga_vblank;	/* VBLANK Frequency */
 
 
-#define AMIGAHW_DECLARE(name)	unsigned name : 1
-#define AMIGAHW_SET(name)	(amiga_hw_present.name = 1)
-#define AMIGAHW_PRESENT(name)	(amiga_hw_present.name)
+#घोषणा AMIGAHW_DECLARE(name)	अचिन्हित name : 1
+#घोषणा AMIGAHW_SET(name)	(amiga_hw_present.name = 1)
+#घोषणा AMIGAHW_PRESENT(name)	(amiga_hw_present.name)
 
-struct amiga_hw_present {
+काष्ठा amiga_hw_present अणु
     /* video hardware */
     AMIGAHW_DECLARE(AMI_VIDEO);		/* Amiga Video */
     AMIGAHW_DECLARE(AMI_BLITTER);	/* Amiga Blitter */
     AMIGAHW_DECLARE(AMBER_FF);		/* Amber Flicker Fixer */
     /* sound hardware */
     AMIGAHW_DECLARE(AMI_AUDIO);		/* Amiga Audio */
-    /* disk storage interfaces */
+    /* disk storage पूर्णांकerfaces */
     AMIGAHW_DECLARE(AMI_FLOPPY);	/* Amiga Floppy */
     AMIGAHW_DECLARE(A3000_SCSI);	/* SCSI (wd33c93, A3000 alike) */
     AMIGAHW_DECLARE(A4000_SCSI);	/* SCSI (ncr53c710, A4000T alike) */
@@ -61,7 +62,7 @@ struct amiga_hw_present {
     AMIGAHW_DECLARE(AMI_MOUSE);		/* Amiga Mouse */
     AMIGAHW_DECLARE(AMI_SERIAL);	/* Amiga Serial */
     AMIGAHW_DECLARE(AMI_PARALLEL);	/* Amiga Parallel */
-    /* real time clocks */
+    /* real समय घड़ीs */
     AMIGAHW_DECLARE(A2000_CLK);		/* Hardware Clock (A2000 alike) */
     AMIGAHW_DECLARE(A3000_CLK);		/* Hardware Clock (A3000 alike) */
     /* supporting hardware */
@@ -80,246 +81,246 @@ struct amiga_hw_present {
     AMIGAHW_DECLARE(PCMCIA);		/* PCMCIA Slot */
     AMIGAHW_DECLARE(ZORRO);		/* Zorro AutoConfig */
     AMIGAHW_DECLARE(ZORRO3);		/* Zorro III */
-};
+पूर्ण;
 
-extern struct amiga_hw_present amiga_hw_present;
+बाह्य काष्ठा amiga_hw_present amiga_hw_present;
 
-struct CUSTOM {
-    unsigned short bltddat;
-    unsigned short dmaconr;
-    unsigned short vposr;
-    unsigned short vhposr;
-    unsigned short dskdatr;
-    unsigned short joy0dat;
-    unsigned short joy1dat;
-    unsigned short clxdat;
-    unsigned short adkconr;
-    unsigned short pot0dat;
-    unsigned short pot1dat;
-    unsigned short potgor;
-    unsigned short serdatr;
-    unsigned short dskbytr;
-    unsigned short intenar;
-    unsigned short intreqr;
-    unsigned char  *dskptr;
-    unsigned short dsklen;
-    unsigned short dskdat;
-    unsigned short refptr;
-    unsigned short vposw;
-    unsigned short vhposw;
-    unsigned short copcon;
-    unsigned short serdat;
-    unsigned short serper;
-    unsigned short potgo;
-    unsigned short joytest;
-    unsigned short strequ;
-    unsigned short strvbl;
-    unsigned short strhor;
-    unsigned short strlong;
-    unsigned short bltcon0;
-    unsigned short bltcon1;
-    unsigned short bltafwm;
-    unsigned short bltalwm;
-    unsigned char  *bltcpt;
-    unsigned char  *bltbpt;
-    unsigned char  *bltapt;
-    unsigned char  *bltdpt;
-    unsigned short bltsize;
-    unsigned char  pad2d;
-    unsigned char  bltcon0l;
-    unsigned short bltsizv;
-    unsigned short bltsizh;
-    unsigned short bltcmod;
-    unsigned short bltbmod;
-    unsigned short bltamod;
-    unsigned short bltdmod;
-    unsigned short spare2[4];
-    unsigned short bltcdat;
-    unsigned short bltbdat;
-    unsigned short bltadat;
-    unsigned short spare3[3];
-    unsigned short deniseid;
-    unsigned short dsksync;
-    unsigned short *cop1lc;
-    unsigned short *cop2lc;
-    unsigned short copjmp1;
-    unsigned short copjmp2;
-    unsigned short copins;
-    unsigned short diwstrt;
-    unsigned short diwstop;
-    unsigned short ddfstrt;
-    unsigned short ddfstop;
-    unsigned short dmacon;
-    unsigned short clxcon;
-    unsigned short intena;
-    unsigned short intreq;
-    unsigned short adkcon;
-    struct {
-	unsigned short	*audlc;
-	unsigned short audlen;
-	unsigned short audper;
-	unsigned short audvol;
-	unsigned short auddat;
-	unsigned short audspare[2];
-    } aud[4];
-    unsigned char  *bplpt[8];
-    unsigned short bplcon0;
-    unsigned short bplcon1;
-    unsigned short bplcon2;
-    unsigned short bplcon3;
-    unsigned short bpl1mod;
-    unsigned short bpl2mod;
-    unsigned short bplcon4;
-    unsigned short clxcon2;
-    unsigned short bpldat[8];
-    unsigned char  *sprpt[8];
-    struct {
-	unsigned short pos;
-	unsigned short ctl;
-	unsigned short dataa;
-	unsigned short datab;
-    } spr[8];
-    unsigned short color[32];
-    unsigned short htotal;
-    unsigned short hsstop;
-    unsigned short hbstrt;
-    unsigned short hbstop;
-    unsigned short vtotal;
-    unsigned short vsstop;
-    unsigned short vbstrt;
-    unsigned short vbstop;
-    unsigned short sprhstrt;
-    unsigned short sprhstop;
-    unsigned short bplhstrt;
-    unsigned short bplhstop;
-    unsigned short hhposw;
-    unsigned short hhposr;
-    unsigned short beamcon0;
-    unsigned short hsstrt;
-    unsigned short vsstrt;
-    unsigned short hcenter;
-    unsigned short diwhigh;
-    unsigned short spare4[11];
-    unsigned short fmode;
-};
+काष्ठा CUSTOM अणु
+    अचिन्हित लघु bltddat;
+    अचिन्हित लघु dmaconr;
+    अचिन्हित लघु vposr;
+    अचिन्हित लघु vhposr;
+    अचिन्हित लघु dskdatr;
+    अचिन्हित लघु joy0dat;
+    अचिन्हित लघु joy1dat;
+    अचिन्हित लघु clxdat;
+    अचिन्हित लघु adkconr;
+    अचिन्हित लघु pot0dat;
+    अचिन्हित लघु pot1dat;
+    अचिन्हित लघु potgor;
+    अचिन्हित लघु serdatr;
+    अचिन्हित लघु dskbytr;
+    अचिन्हित लघु पूर्णांकenar;
+    अचिन्हित लघु पूर्णांकreqr;
+    अचिन्हित अक्षर  *dskptr;
+    अचिन्हित लघु dsklen;
+    अचिन्हित लघु dskdat;
+    अचिन्हित लघु refptr;
+    अचिन्हित लघु vposw;
+    अचिन्हित लघु vhposw;
+    अचिन्हित लघु copcon;
+    अचिन्हित लघु serdat;
+    अचिन्हित लघु serper;
+    अचिन्हित लघु potgo;
+    अचिन्हित लघु joytest;
+    अचिन्हित लघु strequ;
+    अचिन्हित लघु strvbl;
+    अचिन्हित लघु strhor;
+    अचिन्हित लघु strदीर्घ;
+    अचिन्हित लघु bltcon0;
+    अचिन्हित लघु bltcon1;
+    अचिन्हित लघु bltafwm;
+    अचिन्हित लघु bltalwm;
+    अचिन्हित अक्षर  *bltcpt;
+    अचिन्हित अक्षर  *bltbpt;
+    अचिन्हित अक्षर  *bltapt;
+    अचिन्हित अक्षर  *bltdpt;
+    अचिन्हित लघु bltsize;
+    अचिन्हित अक्षर  pad2d;
+    अचिन्हित अक्षर  bltcon0l;
+    अचिन्हित लघु bltsizv;
+    अचिन्हित लघु bltsizh;
+    अचिन्हित लघु bltcmod;
+    अचिन्हित लघु bltbmod;
+    अचिन्हित लघु bltamod;
+    अचिन्हित लघु bltdmod;
+    अचिन्हित लघु spare2[4];
+    अचिन्हित लघु bltcdat;
+    अचिन्हित लघु bltbdat;
+    अचिन्हित लघु bltadat;
+    अचिन्हित लघु spare3[3];
+    अचिन्हित लघु deniseid;
+    अचिन्हित लघु dsksync;
+    अचिन्हित लघु *cop1lc;
+    अचिन्हित लघु *cop2lc;
+    अचिन्हित लघु copjmp1;
+    अचिन्हित लघु copjmp2;
+    अचिन्हित लघु copins;
+    अचिन्हित लघु diwstrt;
+    अचिन्हित लघु diwstop;
+    अचिन्हित लघु ddfstrt;
+    अचिन्हित लघु ddfstop;
+    अचिन्हित लघु dmacon;
+    अचिन्हित लघु clxcon;
+    अचिन्हित लघु पूर्णांकena;
+    अचिन्हित लघु पूर्णांकreq;
+    अचिन्हित लघु adkcon;
+    काष्ठा अणु
+	अचिन्हित लघु	*audlc;
+	अचिन्हित लघु audlen;
+	अचिन्हित लघु audper;
+	अचिन्हित लघु audvol;
+	अचिन्हित लघु auddat;
+	अचिन्हित लघु audspare[2];
+    पूर्ण aud[4];
+    अचिन्हित अक्षर  *bplpt[8];
+    अचिन्हित लघु bplcon0;
+    अचिन्हित लघु bplcon1;
+    अचिन्हित लघु bplcon2;
+    अचिन्हित लघु bplcon3;
+    अचिन्हित लघु bpl1mod;
+    अचिन्हित लघु bpl2mod;
+    अचिन्हित लघु bplcon4;
+    अचिन्हित लघु clxcon2;
+    अचिन्हित लघु bpldat[8];
+    अचिन्हित अक्षर  *sprpt[8];
+    काष्ठा अणु
+	अचिन्हित लघु pos;
+	अचिन्हित लघु ctl;
+	अचिन्हित लघु dataa;
+	अचिन्हित लघु datab;
+    पूर्ण spr[8];
+    अचिन्हित लघु color[32];
+    अचिन्हित लघु htotal;
+    अचिन्हित लघु hsstop;
+    अचिन्हित लघु hbstrt;
+    अचिन्हित लघु hbstop;
+    अचिन्हित लघु vtotal;
+    अचिन्हित लघु vsstop;
+    अचिन्हित लघु vbstrt;
+    अचिन्हित लघु vbstop;
+    अचिन्हित लघु sprhstrt;
+    अचिन्हित लघु sprhstop;
+    अचिन्हित लघु bplhstrt;
+    अचिन्हित लघु bplhstop;
+    अचिन्हित लघु hhposw;
+    अचिन्हित लघु hhposr;
+    अचिन्हित लघु beamcon0;
+    अचिन्हित लघु hsstrt;
+    अचिन्हित लघु vsstrt;
+    अचिन्हित लघु hcenter;
+    अचिन्हित लघु diwhigh;
+    अचिन्हित लघु spare4[11];
+    अचिन्हित लघु भ_शेषe;
+पूर्ण;
 
 /*
- * DMA register bits
+ * DMA रेजिस्टर bits
  */
-#define DMAF_SETCLR		(0x8000)
-#define DMAF_AUD0		(0x0001)
-#define DMAF_AUD1		(0x0002)
-#define DMAF_AUD2		(0x0004)
-#define DMAF_AUD3		(0x0008)
-#define DMAF_DISK		(0x0010)
-#define DMAF_SPRITE		(0x0020)
-#define DMAF_BLITTER		(0x0040)
-#define DMAF_COPPER		(0x0080)
-#define DMAF_RASTER		(0x0100)
-#define DMAF_MASTER		(0x0200)
-#define DMAF_BLITHOG		(0x0400)
-#define DMAF_BLTNZERO		(0x2000)
-#define DMAF_BLTDONE		(0x4000)
-#define DMAF_ALL		(0x01FF)
+#घोषणा DMAF_SETCLR		(0x8000)
+#घोषणा DMAF_AUD0		(0x0001)
+#घोषणा DMAF_AUD1		(0x0002)
+#घोषणा DMAF_AUD2		(0x0004)
+#घोषणा DMAF_AUD3		(0x0008)
+#घोषणा DMAF_DISK		(0x0010)
+#घोषणा DMAF_SPRITE		(0x0020)
+#घोषणा DMAF_BLITTER		(0x0040)
+#घोषणा DMAF_COPPER		(0x0080)
+#घोषणा DMAF_RASTER		(0x0100)
+#घोषणा DMAF_MASTER		(0x0200)
+#घोषणा DMAF_BLITHOG		(0x0400)
+#घोषणा DMAF_BLTNZERO		(0x2000)
+#घोषणा DMAF_BLTDONE		(0x4000)
+#घोषणा DMAF_ALL		(0x01FF)
 
-struct CIA {
-    unsigned char pra;		char pad0[0xff];
-    unsigned char prb;		char pad1[0xff];
-    unsigned char ddra;		char pad2[0xff];
-    unsigned char ddrb;		char pad3[0xff];
-    unsigned char talo;		char pad4[0xff];
-    unsigned char tahi;		char pad5[0xff];
-    unsigned char tblo;		char pad6[0xff];
-    unsigned char tbhi;		char pad7[0xff];
-    unsigned char todlo;	char pad8[0xff];
-    unsigned char todmid;	char pad9[0xff];
-    unsigned char todhi;	char pada[0x1ff];
-    unsigned char sdr;		char padb[0xff];
-    unsigned char icr;		char padc[0xff];
-    unsigned char cra;		char padd[0xff];
-    unsigned char crb;		char pade[0xff];
-};
+काष्ठा CIA अणु
+    अचिन्हित अक्षर pra;		अक्षर pad0[0xff];
+    अचिन्हित अक्षर prb;		अक्षर pad1[0xff];
+    अचिन्हित अक्षर ddra;		अक्षर pad2[0xff];
+    अचिन्हित अक्षर ddrb;		अक्षर pad3[0xff];
+    अचिन्हित अक्षर talo;		अक्षर pad4[0xff];
+    अचिन्हित अक्षर tahi;		अक्षर pad5[0xff];
+    अचिन्हित अक्षर tblo;		अक्षर pad6[0xff];
+    अचिन्हित अक्षर tbhi;		अक्षर pad7[0xff];
+    अचिन्हित अक्षर todlo;	अक्षर pad8[0xff];
+    अचिन्हित अक्षर todmid;	अक्षर pad9[0xff];
+    अचिन्हित अक्षर todhi;	अक्षर pada[0x1ff];
+    अचिन्हित अक्षर sdr;		अक्षर padb[0xff];
+    अचिन्हित अक्षर icr;		अक्षर padc[0xff];
+    अचिन्हित अक्षर cra;		अक्षर padd[0xff];
+    अचिन्हित अक्षर crb;		अक्षर pade[0xff];
+पूर्ण;
 
-#define zTwoBase (0x80000000)
-#define ZTWO_PADDR(x) (((unsigned long)(x))-zTwoBase)
-#define ZTWO_VADDR(x) ((void __iomem *)(((unsigned long)(x))+zTwoBase))
+#घोषणा zTwoBase (0x80000000)
+#घोषणा ZTWO_PADDR(x) (((अचिन्हित दीर्घ)(x))-zTwoBase)
+#घोषणा ZTWO_VADDR(x) ((व्योम __iomem *)(((अचिन्हित दीर्घ)(x))+zTwoBase))
 
-#define CUSTOM_PHYSADDR     (0xdff000)
-#define amiga_custom ((*(volatile struct CUSTOM *)(zTwoBase+CUSTOM_PHYSADDR)))
+#घोषणा CUSTOM_PHYSADDR     (0xdff000)
+#घोषणा amiga_custom ((*(अस्थिर काष्ठा CUSTOM *)(zTwoBase+CUSTOM_PHYSADDR)))
 
-#define CIAA_PHYSADDR	  (0xbfe001)
-#define CIAB_PHYSADDR	  (0xbfd000)
-#define ciaa   ((*(volatile struct CIA *)(zTwoBase + CIAA_PHYSADDR)))
-#define ciab   ((*(volatile struct CIA *)(zTwoBase + CIAB_PHYSADDR)))
+#घोषणा CIAA_PHYSADDR	  (0xbfe001)
+#घोषणा CIAB_PHYSADDR	  (0xbfd000)
+#घोषणा ciaa   ((*(अस्थिर काष्ठा CIA *)(zTwoBase + CIAA_PHYSADDR)))
+#घोषणा ciab   ((*(अस्थिर काष्ठा CIA *)(zTwoBase + CIAB_PHYSADDR)))
 
-#define CHIP_PHYSADDR	    (0x000000)
+#घोषणा CHIP_PHYSADDR	    (0x000000)
 
-void amiga_chip_init (void);
-void *amiga_chip_alloc(unsigned long size, const char *name);
-void *amiga_chip_alloc_res(unsigned long size, struct resource *res);
-void amiga_chip_free(void *ptr);
-unsigned long amiga_chip_avail( void ); /*MILAN*/
-extern volatile unsigned short amiga_audio_min_period;
+व्योम amiga_chip_init (व्योम);
+व्योम *amiga_chip_alloc(अचिन्हित दीर्घ size, स्थिर अक्षर *name);
+व्योम *amiga_chip_alloc_res(अचिन्हित दीर्घ size, काष्ठा resource *res);
+व्योम amiga_chip_मुक्त(व्योम *ptr);
+अचिन्हित दीर्घ amiga_chip_avail( व्योम ); /*MILAN*/
+बाह्य अस्थिर अचिन्हित लघु amiga_audio_min_period;
 
-static inline void amifb_video_off(void)
-{
-	if (amiga_chipset == CS_ECS || amiga_chipset == CS_AGA) {
-		/* program Denise/Lisa for a higher maximum play rate */
+अटल अंतरभूत व्योम amअगरb_video_off(व्योम)
+अणु
+	अगर (amiga_chipset == CS_ECS || amiga_chipset == CS_AGA) अणु
+		/* program Denise/Lisa क्रम a higher maximum play rate */
 		amiga_custom.htotal = 113;        /* 31 kHz */
 		amiga_custom.vtotal = 223;        /* 70 Hz */
-		amiga_custom.beamcon0 = 0x4390;   /* HARDDIS, VAR{BEAM,VSY,HSY,CSY}EN */
+		amiga_custom.beamcon0 = 0x4390;   /* HARDDIS, VARअणुBEAM,VSY,HSY,CSYपूर्णEN */
 		/* suspend the monitor */
 		amiga_custom.hsstrt = amiga_custom.hsstop = 116;
 		amiga_custom.vsstrt = amiga_custom.vsstop = 226;
 		amiga_audio_min_period = 57;
-	}
-}
+	पूर्ण
+पूर्ण
 
-struct tod3000 {
-  unsigned int  :28, second2:4;	/* lower digit */
-  unsigned int  :28, second1:4;	/* upper digit */
-  unsigned int  :28, minute2:4;	/* lower digit */
-  unsigned int  :28, minute1:4;	/* upper digit */
-  unsigned int  :28, hour2:4;	/* lower digit */
-  unsigned int  :28, hour1:4;	/* upper digit */
-  unsigned int  :28, weekday:4;
-  unsigned int  :28, day2:4;	/* lower digit */
-  unsigned int  :28, day1:4;	/* upper digit */
-  unsigned int  :28, month2:4;	/* lower digit */
-  unsigned int  :28, month1:4;	/* upper digit */
-  unsigned int  :28, year2:4;	/* lower digit */
-  unsigned int  :28, year1:4;	/* upper digit */
-  unsigned int  :28, cntrl1:4;	/* control-byte 1 */
-  unsigned int  :28, cntrl2:4;	/* control-byte 2 */
-  unsigned int  :28, cntrl3:4;	/* control-byte 3 */
-};
-#define TOD3000_CNTRL1_HOLD	0
-#define TOD3000_CNTRL1_FREE	9
-#define tod_3000 ((*(volatile struct tod3000 *)(zTwoBase+0xDC0000)))
+काष्ठा tod3000 अणु
+  अचिन्हित पूर्णांक  :28, second2:4;	/* lower digit */
+  अचिन्हित पूर्णांक  :28, second1:4;	/* upper digit */
+  अचिन्हित पूर्णांक  :28, minute2:4;	/* lower digit */
+  अचिन्हित पूर्णांक  :28, minute1:4;	/* upper digit */
+  अचिन्हित पूर्णांक  :28, hour2:4;	/* lower digit */
+  अचिन्हित पूर्णांक  :28, hour1:4;	/* upper digit */
+  अचिन्हित पूर्णांक  :28, weekday:4;
+  अचिन्हित पूर्णांक  :28, day2:4;	/* lower digit */
+  अचिन्हित पूर्णांक  :28, day1:4;	/* upper digit */
+  अचिन्हित पूर्णांक  :28, month2:4;	/* lower digit */
+  अचिन्हित पूर्णांक  :28, month1:4;	/* upper digit */
+  अचिन्हित पूर्णांक  :28, year2:4;	/* lower digit */
+  अचिन्हित पूर्णांक  :28, year1:4;	/* upper digit */
+  अचिन्हित पूर्णांक  :28, cntrl1:4;	/* control-byte 1 */
+  अचिन्हित पूर्णांक  :28, cntrl2:4;	/* control-byte 2 */
+  अचिन्हित पूर्णांक  :28, cntrl3:4;	/* control-byte 3 */
+पूर्ण;
+#घोषणा TOD3000_CNTRL1_HOLD	0
+#घोषणा TOD3000_CNTRL1_FREE	9
+#घोषणा tod_3000 ((*(अस्थिर काष्ठा tod3000 *)(zTwoBase+0xDC0000)))
 
-struct tod2000 {
-  unsigned int  :28, second2:4;	/* lower digit */
-  unsigned int  :28, second1:4;	/* upper digit */
-  unsigned int  :28, minute2:4;	/* lower digit */
-  unsigned int  :28, minute1:4;	/* upper digit */
-  unsigned int  :28, hour2:4;	/* lower digit */
-  unsigned int  :28, hour1:4;	/* upper digit */
-  unsigned int  :28, day2:4;	/* lower digit */
-  unsigned int  :28, day1:4;	/* upper digit */
-  unsigned int  :28, month2:4;	/* lower digit */
-  unsigned int  :28, month1:4;	/* upper digit */
-  unsigned int  :28, year2:4;	/* lower digit */
-  unsigned int  :28, year1:4;	/* upper digit */
-  unsigned int  :28, weekday:4;
-  unsigned int  :28, cntrl1:4;	/* control-byte 1 */
-  unsigned int  :28, cntrl2:4;	/* control-byte 2 */
-  unsigned int  :28, cntrl3:4;	/* control-byte 3 */
-};
+काष्ठा tod2000 अणु
+  अचिन्हित पूर्णांक  :28, second2:4;	/* lower digit */
+  अचिन्हित पूर्णांक  :28, second1:4;	/* upper digit */
+  अचिन्हित पूर्णांक  :28, minute2:4;	/* lower digit */
+  अचिन्हित पूर्णांक  :28, minute1:4;	/* upper digit */
+  अचिन्हित पूर्णांक  :28, hour2:4;	/* lower digit */
+  अचिन्हित पूर्णांक  :28, hour1:4;	/* upper digit */
+  अचिन्हित पूर्णांक  :28, day2:4;	/* lower digit */
+  अचिन्हित पूर्णांक  :28, day1:4;	/* upper digit */
+  अचिन्हित पूर्णांक  :28, month2:4;	/* lower digit */
+  अचिन्हित पूर्णांक  :28, month1:4;	/* upper digit */
+  अचिन्हित पूर्णांक  :28, year2:4;	/* lower digit */
+  अचिन्हित पूर्णांक  :28, year1:4;	/* upper digit */
+  अचिन्हित पूर्णांक  :28, weekday:4;
+  अचिन्हित पूर्णांक  :28, cntrl1:4;	/* control-byte 1 */
+  अचिन्हित पूर्णांक  :28, cntrl2:4;	/* control-byte 2 */
+  अचिन्हित पूर्णांक  :28, cntrl3:4;	/* control-byte 3 */
+पूर्ण;
 
-#define TOD2000_CNTRL1_HOLD	(1<<0)
-#define TOD2000_CNTRL1_BUSY	(1<<1)
-#define TOD2000_CNTRL3_24HMODE	(1<<2)
-#define TOD2000_HOUR1_PM	(1<<2)
-#define tod_2000 ((*(volatile struct tod2000 *)(zTwoBase+0xDC0000)))
+#घोषणा TOD2000_CNTRL1_HOLD	(1<<0)
+#घोषणा TOD2000_CNTRL1_BUSY	(1<<1)
+#घोषणा TOD2000_CNTRL3_24HMODE	(1<<2)
+#घोषणा TOD2000_HOUR1_PM	(1<<2)
+#घोषणा tod_2000 ((*(अस्थिर काष्ठा tod2000 *)(zTwoBase+0xDC0000)))
 
-#endif /* _M68K_AMIGAHW_H */
+#पूर्ण_अगर /* _M68K_AMIGAHW_H */

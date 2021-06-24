@@ -1,281 +1,282 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * Driver for NXP PN533 NFC Chip - I2C transport layer
+ * Driver क्रम NXP PN533 NFC Chip - I2C transport layer
  *
  * Copyright (C) 2011 Instituto Nokia de Tecnologia
  * Copyright (C) 2012-2013 Tieto Poland
  * Copyright (C) 2016 HALE electronic
  */
 
-#include <linux/device.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/slab.h>
-#include <linux/i2c.h>
-#include <linux/nfc.h>
-#include <linux/netdevice.h>
-#include <linux/interrupt.h>
-#include <net/nfc/nfc.h>
-#include "pn533.h"
+#समावेश <linux/device.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/nfc.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <net/nfc/nfc.h>
+#समावेश "pn533.h"
 
-#define VERSION "0.1"
+#घोषणा VERSION "0.1"
 
-#define PN533_I2C_DRIVER_NAME "pn533_i2c"
+#घोषणा PN533_I2C_DRIVER_NAME "pn533_i2c"
 
-struct pn533_i2c_phy {
-	struct i2c_client *i2c_dev;
-	struct pn533 *priv;
+काष्ठा pn533_i2c_phy अणु
+	काष्ठा i2c_client *i2c_dev;
+	काष्ठा pn533 *priv;
 
-	bool aborted;
+	bool पातed;
 
-	int hard_fault;		/*
-				 * < 0 if hardware error occurred (e.g. i2c err)
+	पूर्णांक hard_fault;		/*
+				 * < 0 अगर hardware error occurred (e.g. i2c err)
 				 * and prevents normal operation.
 				 */
-};
+पूर्ण;
 
-static int pn533_i2c_send_ack(struct pn533 *dev, gfp_t flags)
-{
-	struct pn533_i2c_phy *phy = dev->phy;
-	struct i2c_client *client = phy->i2c_dev;
-	static const u8 ack[6] = {0x00, 0x00, 0xff, 0x00, 0xff, 0x00};
+अटल पूर्णांक pn533_i2c_send_ack(काष्ठा pn533 *dev, gfp_t flags)
+अणु
+	काष्ठा pn533_i2c_phy *phy = dev->phy;
+	काष्ठा i2c_client *client = phy->i2c_dev;
+	अटल स्थिर u8 ack[6] = अणु0x00, 0x00, 0xff, 0x00, 0xff, 0x00पूर्ण;
 	/* spec 6.2.1.3:  Preamble, SoPC (2), ACK Code (2), Postamble */
 
-	return i2c_master_send(client, ack, 6);
-}
+	वापस i2c_master_send(client, ack, 6);
+पूर्ण
 
-static int pn533_i2c_send_frame(struct pn533 *dev,
-				struct sk_buff *out)
-{
-	struct pn533_i2c_phy *phy = dev->phy;
-	struct i2c_client *client = phy->i2c_dev;
-	int rc;
+अटल पूर्णांक pn533_i2c_send_frame(काष्ठा pn533 *dev,
+				काष्ठा sk_buff *out)
+अणु
+	काष्ठा pn533_i2c_phy *phy = dev->phy;
+	काष्ठा i2c_client *client = phy->i2c_dev;
+	पूर्णांक rc;
 
-	if (phy->hard_fault != 0)
-		return phy->hard_fault;
+	अगर (phy->hard_fault != 0)
+		वापस phy->hard_fault;
 
-	if (phy->priv == NULL)
+	अगर (phy->priv == शून्य)
 		phy->priv = dev;
 
-	phy->aborted = false;
+	phy->पातed = false;
 
-	print_hex_dump_debug("PN533_i2c TX: ", DUMP_PREFIX_NONE, 16, 1,
+	prपूर्णांक_hex_dump_debug("PN533_i2c TX: ", DUMP_PREFIX_NONE, 16, 1,
 			     out->data, out->len, false);
 
 	rc = i2c_master_send(client, out->data, out->len);
 
-	if (rc == -EREMOTEIO) { /* Retry, chip was in power down */
+	अगर (rc == -EREMOTEIO) अणु /* Retry, chip was in घातer करोwn */
 		usleep_range(6000, 10000);
 		rc = i2c_master_send(client, out->data, out->len);
-	}
+	पूर्ण
 
-	if (rc >= 0) {
-		if (rc != out->len)
+	अगर (rc >= 0) अणु
+		अगर (rc != out->len)
 			rc = -EREMOTEIO;
-		else
+		अन्यथा
 			rc = 0;
-	}
+	पूर्ण
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static void pn533_i2c_abort_cmd(struct pn533 *dev, gfp_t flags)
-{
-	struct pn533_i2c_phy *phy = dev->phy;
+अटल व्योम pn533_i2c_पात_cmd(काष्ठा pn533 *dev, gfp_t flags)
+अणु
+	काष्ठा pn533_i2c_phy *phy = dev->phy;
 
-	phy->aborted = true;
+	phy->पातed = true;
 
 	/* An ack will cancel the last issued command */
 	pn533_i2c_send_ack(dev, flags);
 
 	/* schedule cmd_complete_work to finish current command execution */
-	pn533_recv_frame(phy->priv, NULL, -ENOENT);
-}
+	pn533_recv_frame(phy->priv, शून्य, -ENOENT);
+पूर्ण
 
-static int pn533_i2c_read(struct pn533_i2c_phy *phy, struct sk_buff **skb)
-{
-	struct i2c_client *client = phy->i2c_dev;
-	int len = PN533_EXT_FRAME_HEADER_LEN +
+अटल पूर्णांक pn533_i2c_पढ़ो(काष्ठा pn533_i2c_phy *phy, काष्ठा sk_buff **skb)
+अणु
+	काष्ठा i2c_client *client = phy->i2c_dev;
+	पूर्णांक len = PN533_EXT_FRAME_HEADER_LEN +
 		  PN533_STD_FRAME_MAX_PAYLOAD_LEN +
 		  PN533_STD_FRAME_TAIL_LEN + 1;
-	int r;
+	पूर्णांक r;
 
 	*skb = alloc_skb(len, GFP_KERNEL);
-	if (*skb == NULL)
-		return -ENOMEM;
+	अगर (*skb == शून्य)
+		वापस -ENOMEM;
 
 	r = i2c_master_recv(client, skb_put(*skb, len), len);
-	if (r != len) {
+	अगर (r != len) अणु
 		nfc_err(&client->dev, "cannot read. r=%d len=%d\n", r, len);
-		kfree_skb(*skb);
-		return -EREMOTEIO;
-	}
+		kमुक्त_skb(*skb);
+		वापस -EREMOTEIO;
+	पूर्ण
 
-	if (!((*skb)->data[0] & 0x01)) {
+	अगर (!((*skb)->data[0] & 0x01)) अणु
 		nfc_err(&client->dev, "READY flag not set");
-		kfree_skb(*skb);
-		return -EBUSY;
-	}
+		kमुक्त_skb(*skb);
+		वापस -EBUSY;
+	पूर्ण
 
-	/* remove READY byte */
+	/* हटाओ READY byte */
 	skb_pull(*skb, 1);
 	/* trim to frame size */
 	skb_trim(*skb, phy->priv->ops->rx_frame_size((*skb)->data));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static irqreturn_t pn533_i2c_irq_thread_fn(int irq, void *data)
-{
-	struct pn533_i2c_phy *phy = data;
-	struct i2c_client *client;
-	struct sk_buff *skb = NULL;
-	int r;
+अटल irqवापस_t pn533_i2c_irq_thपढ़ो_fn(पूर्णांक irq, व्योम *data)
+अणु
+	काष्ठा pn533_i2c_phy *phy = data;
+	काष्ठा i2c_client *client;
+	काष्ठा sk_buff *skb = शून्य;
+	पूर्णांक r;
 
-	if (!phy || irq != phy->i2c_dev->irq) {
+	अगर (!phy || irq != phy->i2c_dev->irq) अणु
 		WARN_ON_ONCE(1);
-		return IRQ_NONE;
-	}
+		वापस IRQ_NONE;
+	पूर्ण
 
 	client = phy->i2c_dev;
 	dev_dbg(&client->dev, "IRQ\n");
 
-	if (phy->hard_fault != 0)
-		return IRQ_HANDLED;
+	अगर (phy->hard_fault != 0)
+		वापस IRQ_HANDLED;
 
-	r = pn533_i2c_read(phy, &skb);
-	if (r == -EREMOTEIO) {
+	r = pn533_i2c_पढ़ो(phy, &skb);
+	अगर (r == -EREMOTEIO) अणु
 		phy->hard_fault = r;
 
-		pn533_recv_frame(phy->priv, NULL, -EREMOTEIO);
+		pn533_recv_frame(phy->priv, शून्य, -EREMOTEIO);
 
-		return IRQ_HANDLED;
-	} else if ((r == -ENOMEM) || (r == -EBADMSG) || (r == -EBUSY)) {
-		return IRQ_HANDLED;
-	}
+		वापस IRQ_HANDLED;
+	पूर्ण अन्यथा अगर ((r == -ENOMEM) || (r == -EBADMSG) || (r == -EBUSY)) अणु
+		वापस IRQ_HANDLED;
+	पूर्ण
 
-	if (!phy->aborted)
+	अगर (!phy->पातed)
 		pn533_recv_frame(phy->priv, skb, 0);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static struct pn533_phy_ops i2c_phy_ops = {
+अटल काष्ठा pn533_phy_ops i2c_phy_ops = अणु
 	.send_frame = pn533_i2c_send_frame,
 	.send_ack = pn533_i2c_send_ack,
-	.abort_cmd = pn533_i2c_abort_cmd,
-};
+	.पात_cmd = pn533_i2c_पात_cmd,
+पूर्ण;
 
 
-static int pn533_i2c_probe(struct i2c_client *client,
-			       const struct i2c_device_id *id)
-{
-	struct pn533_i2c_phy *phy;
-	struct pn533 *priv;
-	int r = 0;
+अटल पूर्णांक pn533_i2c_probe(काष्ठा i2c_client *client,
+			       स्थिर काष्ठा i2c_device_id *id)
+अणु
+	काष्ठा pn533_i2c_phy *phy;
+	काष्ठा pn533 *priv;
+	पूर्णांक r = 0;
 
 	dev_dbg(&client->dev, "%s\n", __func__);
 	dev_dbg(&client->dev, "IRQ: %d\n", client->irq);
 
-	if (!i2c_check_functionality(client->adapter, I2C_FUNC_I2C)) {
+	अगर (!i2c_check_functionality(client->adapter, I2C_FUNC_I2C)) अणु
 		nfc_err(&client->dev, "Need I2C_FUNC_I2C\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	phy = devm_kzalloc(&client->dev, sizeof(struct pn533_i2c_phy),
+	phy = devm_kzalloc(&client->dev, माप(काष्ठा pn533_i2c_phy),
 			   GFP_KERNEL);
-	if (!phy)
-		return -ENOMEM;
+	अगर (!phy)
+		वापस -ENOMEM;
 
 	phy->i2c_dev = client;
 	i2c_set_clientdata(client, phy);
 
 	priv = pn53x_common_init(PN533_DEVICE_PN532,
 				PN533_PROTO_REQ_ACK_RESP,
-				phy, &i2c_phy_ops, NULL,
+				phy, &i2c_phy_ops, शून्य,
 				&phy->i2c_dev->dev);
 
-	if (IS_ERR(priv)) {
-		return PTR_ERR(priv);
-	}
+	अगर (IS_ERR(priv)) अणु
+		वापस PTR_ERR(priv);
+	पूर्ण
 
 	phy->priv = priv;
 	r = pn532_i2c_nfc_alloc(priv, PN533_NO_TYPE_B_PROTOCOLS, &client->dev);
-	if (r)
-		goto nfc_alloc_err;
+	अगर (r)
+		जाओ nfc_alloc_err;
 
-	r = request_threaded_irq(client->irq, NULL, pn533_i2c_irq_thread_fn,
+	r = request_thपढ़ोed_irq(client->irq, शून्य, pn533_i2c_irq_thपढ़ो_fn,
 				IRQF_TRIGGER_FALLING |
 				IRQF_SHARED | IRQF_ONESHOT,
 				PN533_I2C_DRIVER_NAME, phy);
-	if (r < 0) {
+	अगर (r < 0) अणु
 		nfc_err(&client->dev, "Unable to register IRQ handler\n");
-		goto irq_rqst_err;
-	}
+		जाओ irq_rqst_err;
+	पूर्ण
 
 	r = pn533_finalize_setup(priv);
-	if (r)
-		goto fn_setup_err;
+	अगर (r)
+		जाओ fn_setup_err;
 
-	r = nfc_register_device(priv->nfc_dev);
-	if (r)
-		goto fn_setup_err;
+	r = nfc_रेजिस्टर_device(priv->nfc_dev);
+	अगर (r)
+		जाओ fn_setup_err;
 
-	return r;
+	वापस r;
 
 fn_setup_err:
-	free_irq(client->irq, phy);
+	मुक्त_irq(client->irq, phy);
 
 irq_rqst_err:
-	nfc_free_device(priv->nfc_dev);
+	nfc_मुक्त_device(priv->nfc_dev);
 
 nfc_alloc_err:
 	pn53x_common_clean(phy->priv);
 
-	return r;
-}
+	वापस r;
+पूर्ण
 
-static int pn533_i2c_remove(struct i2c_client *client)
-{
-	struct pn533_i2c_phy *phy = i2c_get_clientdata(client);
+अटल पूर्णांक pn533_i2c_हटाओ(काष्ठा i2c_client *client)
+अणु
+	काष्ठा pn533_i2c_phy *phy = i2c_get_clientdata(client);
 
 	dev_dbg(&client->dev, "%s\n", __func__);
 
-	free_irq(client->irq, phy);
+	मुक्त_irq(client->irq, phy);
 
-	pn53x_unregister_nfc(phy->priv);
+	pn53x_unरेजिस्टर_nfc(phy->priv);
 	pn53x_common_clean(phy->priv);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct of_device_id of_pn533_i2c_match[] = {
-	{ .compatible = "nxp,pn532", },
+अटल स्थिर काष्ठा of_device_id of_pn533_i2c_match[] = अणु
+	अणु .compatible = "nxp,pn532", पूर्ण,
 	/*
 	 * NOTE: The use of the compatibles with the trailing "...-i2c" is
-	 * deprecated and will be removed.
+	 * deprecated and will be हटाओd.
 	 */
-	{ .compatible = "nxp,pn533-i2c", },
-	{ .compatible = "nxp,pn532-i2c", },
-	{},
-};
+	अणु .compatible = "nxp,pn533-i2c", पूर्ण,
+	अणु .compatible = "nxp,pn532-i2c", पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, of_pn533_i2c_match);
 
-static const struct i2c_device_id pn533_i2c_id_table[] = {
-	{ PN533_I2C_DRIVER_NAME, 0 },
-	{}
-};
+अटल स्थिर काष्ठा i2c_device_id pn533_i2c_id_table[] = अणु
+	अणु PN533_I2C_DRIVER_NAME, 0 पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(i2c, pn533_i2c_id_table);
 
-static struct i2c_driver pn533_i2c_driver = {
-	.driver = {
+अटल काष्ठा i2c_driver pn533_i2c_driver = अणु
+	.driver = अणु
 		   .name = PN533_I2C_DRIVER_NAME,
 		   .of_match_table = of_match_ptr(of_pn533_i2c_match),
-		  },
+		  पूर्ण,
 	.probe = pn533_i2c_probe,
 	.id_table = pn533_i2c_id_table,
-	.remove = pn533_i2c_remove,
-};
+	.हटाओ = pn533_i2c_हटाओ,
+पूर्ण;
 
 module_i2c_driver(pn533_i2c_driver);
 

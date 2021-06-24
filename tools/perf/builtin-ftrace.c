@@ -1,903 +1,904 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * builtin-ftrace.c
  *
  * Copyright (c) 2013  LG Electronics,  Namhyung Kim <namhyung@kernel.org>
- * Copyright (c) 2020  Changbin Du <changbin.du@gmail.com>, significant enhancement.
+ * Copyright (c) 2020  Changbin Du <changbin.du@gmail.com>, signअगरicant enhancement.
  */
 
-#include "builtin.h"
+#समावेश "builtin.h"
 
-#include <errno.h>
-#include <unistd.h>
-#include <signal.h>
-#include <stdlib.h>
-#include <fcntl.h>
-#include <poll.h>
-#include <linux/capability.h>
-#include <linux/string.h>
+#समावेश <त्रुटिसं.स>
+#समावेश <unistd.h>
+#समावेश <संकेत.स>
+#समावेश <मानककोष.स>
+#समावेश <fcntl.h>
+#समावेश <poll.h>
+#समावेश <linux/capability.h>
+#समावेश <linux/माला.स>
 
-#include "debug.h"
-#include <subcmd/pager.h>
-#include <subcmd/parse-options.h>
-#include <api/fs/tracing_path.h>
-#include "evlist.h"
-#include "target.h"
-#include "cpumap.h"
-#include "thread_map.h"
-#include "strfilter.h"
-#include "util/cap.h"
-#include "util/config.h"
-#include "util/units.h"
-#include "util/parse-sublevel-options.h"
+#समावेश "debug.h"
+#समावेश <subcmd/pager.h>
+#समावेश <subcmd/parse-options.h>
+#समावेश <api/fs/tracing_path.h>
+#समावेश "evlist.h"
+#समावेश "target.h"
+#समावेश "cpumap.h"
+#समावेश "thread_map.h"
+#समावेश "strfilter.h"
+#समावेश "util/cap.h"
+#समावेश "util/config.h"
+#समावेश "util/units.h"
+#समावेश "util/parse-sublevel-options.h"
 
-#define DEFAULT_TRACER  "function_graph"
+#घोषणा DEFAULT_TRACER  "function_graph"
 
-struct perf_ftrace {
-	struct evlist		*evlist;
-	struct target		target;
-	const char		*tracer;
-	struct list_head	filters;
-	struct list_head	notrace;
-	struct list_head	graph_funcs;
-	struct list_head	nograph_funcs;
-	int			graph_depth;
-	unsigned long		percpu_buffer_size;
+काष्ठा perf_ftrace अणु
+	काष्ठा evlist		*evlist;
+	काष्ठा target		target;
+	स्थिर अक्षर		*tracer;
+	काष्ठा list_head	filters;
+	काष्ठा list_head	notrace;
+	काष्ठा list_head	graph_funcs;
+	काष्ठा list_head	nograph_funcs;
+	पूर्णांक			graph_depth;
+	अचिन्हित दीर्घ		percpu_buffer_size;
 	bool			inherit;
-	int			func_stack_trace;
-	int			func_irq_info;
-	int			graph_nosleep_time;
-	int			graph_noirqs;
-	int			graph_verbose;
-	int			graph_thresh;
-	unsigned int		initial_delay;
-};
+	पूर्णांक			func_stack_trace;
+	पूर्णांक			func_irq_info;
+	पूर्णांक			graph_nosleep_समय;
+	पूर्णांक			graph_noirqs;
+	पूर्णांक			graph_verbose;
+	पूर्णांक			graph_thresh;
+	अचिन्हित पूर्णांक		initial_delay;
+पूर्ण;
 
-struct filter_entry {
-	struct list_head	list;
-	char			name[];
-};
+काष्ठा filter_entry अणु
+	काष्ठा list_head	list;
+	अक्षर			name[];
+पूर्ण;
 
-static volatile int workload_exec_errno;
-static bool done;
+अटल अस्थिर पूर्णांक workload_exec_त्रुटि_सं;
+अटल bool करोne;
 
-static void sig_handler(int sig __maybe_unused)
-{
-	done = true;
-}
+अटल व्योम sig_handler(पूर्णांक sig __maybe_unused)
+अणु
+	करोne = true;
+पूर्ण
 
 /*
- * evlist__prepare_workload will send a SIGUSR1 if the fork fails, since
+ * evlist__prepare_workload will send a SIGUSR1 अगर the विभाजन fails, since
  * we asked by setting its exec_error to the function below,
- * ftrace__workload_exec_failed_signal.
+ * ftrace__workload_exec_failed_संकेत.
  *
  * XXX We need to handle this more appropriately, emitting an error, etc.
  */
-static void ftrace__workload_exec_failed_signal(int signo __maybe_unused,
+अटल व्योम ftrace__workload_exec_failed_संकेत(पूर्णांक signo __maybe_unused,
 						siginfo_t *info __maybe_unused,
-						void *ucontext __maybe_unused)
-{
-	workload_exec_errno = info->si_value.sival_int;
-	done = true;
-}
+						व्योम *ucontext __maybe_unused)
+अणु
+	workload_exec_त्रुटि_सं = info->si_value.sival_पूर्णांक;
+	करोne = true;
+पूर्ण
 
-static int __write_tracing_file(const char *name, const char *val, bool append)
-{
-	char *file;
-	int fd, ret = -1;
-	ssize_t size = strlen(val);
-	int flags = O_WRONLY;
-	char errbuf[512];
-	char *val_copy;
+अटल पूर्णांक __ग_लिखो_tracing_file(स्थिर अक्षर *name, स्थिर अक्षर *val, bool append)
+अणु
+	अक्षर *file;
+	पूर्णांक fd, ret = -1;
+	sमाप_प्रकार size = म_माप(val);
+	पूर्णांक flags = O_WRONLY;
+	अक्षर errbuf[512];
+	अक्षर *val_copy;
 
 	file = get_tracing_file(name);
-	if (!file) {
+	अगर (!file) अणु
 		pr_debug("cannot get tracing file: %s\n", name);
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
-	if (append)
+	अगर (append)
 		flags |= O_APPEND;
-	else
+	अन्यथा
 		flags |= O_TRUNC;
 
-	fd = open(file, flags);
-	if (fd < 0) {
+	fd = खोलो(file, flags);
+	अगर (fd < 0) अणु
 		pr_debug("cannot open tracing file: %s: %s\n",
-			 name, str_error_r(errno, errbuf, sizeof(errbuf)));
-		goto out;
-	}
+			 name, str_error_r(त्रुटि_सं, errbuf, माप(errbuf)));
+		जाओ out;
+	पूर्ण
 
 	/*
 	 * Copy the original value and append a '\n'. Without this,
 	 * the kernel can hide possible errors.
 	 */
 	val_copy = strdup(val);
-	if (!val_copy)
-		goto out_close;
+	अगर (!val_copy)
+		जाओ out_बंद;
 	val_copy[size] = '\n';
 
-	if (write(fd, val_copy, size + 1) == size + 1)
+	अगर (ग_लिखो(fd, val_copy, size + 1) == size + 1)
 		ret = 0;
-	else
+	अन्यथा
 		pr_debug("write '%s' to tracing/%s failed: %s\n",
-			 val, name, str_error_r(errno, errbuf, sizeof(errbuf)));
+			 val, name, str_error_r(त्रुटि_सं, errbuf, माप(errbuf)));
 
-	free(val_copy);
-out_close:
-	close(fd);
+	मुक्त(val_copy);
+out_बंद:
+	बंद(fd);
 out:
 	put_tracing_file(file);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int write_tracing_file(const char *name, const char *val)
-{
-	return __write_tracing_file(name, val, false);
-}
+अटल पूर्णांक ग_लिखो_tracing_file(स्थिर अक्षर *name, स्थिर अक्षर *val)
+अणु
+	वापस __ग_लिखो_tracing_file(name, val, false);
+पूर्ण
 
-static int append_tracing_file(const char *name, const char *val)
-{
-	return __write_tracing_file(name, val, true);
-}
+अटल पूर्णांक append_tracing_file(स्थिर अक्षर *name, स्थिर अक्षर *val)
+अणु
+	वापस __ग_लिखो_tracing_file(name, val, true);
+पूर्ण
 
-static int read_tracing_file_to_stdout(const char *name)
-{
-	char buf[4096];
-	char *file;
-	int fd;
-	int ret = -1;
+अटल पूर्णांक पढ़ो_tracing_file_to_मानक_निकास(स्थिर अक्षर *name)
+अणु
+	अक्षर buf[4096];
+	अक्षर *file;
+	पूर्णांक fd;
+	पूर्णांक ret = -1;
 
 	file = get_tracing_file(name);
-	if (!file) {
+	अगर (!file) अणु
 		pr_debug("cannot get tracing file: %s\n", name);
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
-	fd = open(file, O_RDONLY);
-	if (fd < 0) {
+	fd = खोलो(file, O_RDONLY);
+	अगर (fd < 0) अणु
 		pr_debug("cannot open tracing file: %s: %s\n",
-			 name, str_error_r(errno, buf, sizeof(buf)));
-		goto out;
-	}
+			 name, str_error_r(त्रुटि_सं, buf, माप(buf)));
+		जाओ out;
+	पूर्ण
 
-	/* read contents to stdout */
-	while (true) {
-		int n = read(fd, buf, sizeof(buf));
-		if (n == 0)
-			break;
-		else if (n < 0)
-			goto out_close;
+	/* पढ़ो contents to मानक_निकास */
+	जबतक (true) अणु
+		पूर्णांक n = पढ़ो(fd, buf, माप(buf));
+		अगर (n == 0)
+			अवरोध;
+		अन्यथा अगर (n < 0)
+			जाओ out_बंद;
 
-		if (fwrite(buf, n, 1, stdout) != 1)
-			goto out_close;
-	}
+		अगर (ख_डालो(buf, n, 1, मानक_निकास) != 1)
+			जाओ out_बंद;
+	पूर्ण
 	ret = 0;
 
-out_close:
-	close(fd);
+out_बंद:
+	बंद(fd);
 out:
 	put_tracing_file(file);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int read_tracing_file_by_line(const char *name,
-				     void (*cb)(char *str, void *arg),
-				     void *cb_arg)
-{
-	char *line = NULL;
-	size_t len = 0;
-	char *file;
-	FILE *fp;
+अटल पूर्णांक पढ़ो_tracing_file_by_line(स्थिर अक्षर *name,
+				     व्योम (*cb)(अक्षर *str, व्योम *arg),
+				     व्योम *cb_arg)
+अणु
+	अक्षर *line = शून्य;
+	माप_प्रकार len = 0;
+	अक्षर *file;
+	खाता *fp;
 
 	file = get_tracing_file(name);
-	if (!file) {
+	अगर (!file) अणु
 		pr_debug("cannot get tracing file: %s\n", name);
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
-	fp = fopen(file, "r");
-	if (fp == NULL) {
+	fp = ख_खोलो(file, "r");
+	अगर (fp == शून्य) अणु
 		pr_debug("cannot open tracing file: %s\n", name);
 		put_tracing_file(file);
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
-	while (getline(&line, &len, fp) != -1) {
+	जबतक (getline(&line, &len, fp) != -1) अणु
 		cb(line, cb_arg);
-	}
+	पूर्ण
 
-	if (line)
-		free(line);
+	अगर (line)
+		मुक्त(line);
 
-	fclose(fp);
+	ख_बंद(fp);
 	put_tracing_file(file);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int write_tracing_file_int(const char *name, int value)
-{
-	char buf[16];
+अटल पूर्णांक ग_लिखो_tracing_file_पूर्णांक(स्थिर अक्षर *name, पूर्णांक value)
+अणु
+	अक्षर buf[16];
 
-	snprintf(buf, sizeof(buf), "%d", value);
-	if (write_tracing_file(name, buf) < 0)
-		return -1;
+	snम_लिखो(buf, माप(buf), "%d", value);
+	अगर (ग_लिखो_tracing_file(name, buf) < 0)
+		वापस -1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int write_tracing_option_file(const char *name, const char *val)
-{
-	char *file;
-	int ret;
+अटल पूर्णांक ग_लिखो_tracing_option_file(स्थिर अक्षर *name, स्थिर अक्षर *val)
+अणु
+	अक्षर *file;
+	पूर्णांक ret;
 
-	if (asprintf(&file, "options/%s", name) < 0)
-		return -1;
+	अगर (aप्र_लिखो(&file, "options/%s", name) < 0)
+		वापस -1;
 
-	ret = __write_tracing_file(file, val, false);
-	free(file);
-	return ret;
-}
+	ret = __ग_लिखो_tracing_file(file, val, false);
+	मुक्त(file);
+	वापस ret;
+पूर्ण
 
-static int reset_tracing_cpu(void);
-static void reset_tracing_filters(void);
+अटल पूर्णांक reset_tracing_cpu(व्योम);
+अटल व्योम reset_tracing_filters(व्योम);
 
-static void reset_tracing_options(struct perf_ftrace *ftrace __maybe_unused)
-{
-	write_tracing_option_file("function-fork", "0");
-	write_tracing_option_file("func_stack_trace", "0");
-	write_tracing_option_file("sleep-time", "1");
-	write_tracing_option_file("funcgraph-irqs", "1");
-	write_tracing_option_file("funcgraph-proc", "0");
-	write_tracing_option_file("funcgraph-abstime", "0");
-	write_tracing_option_file("latency-format", "0");
-	write_tracing_option_file("irq-info", "0");
-}
+अटल व्योम reset_tracing_options(काष्ठा perf_ftrace *ftrace __maybe_unused)
+अणु
+	ग_लिखो_tracing_option_file("function-fork", "0");
+	ग_लिखो_tracing_option_file("func_stack_trace", "0");
+	ग_लिखो_tracing_option_file("sleep-time", "1");
+	ग_लिखो_tracing_option_file("funcgraph-irqs", "1");
+	ग_लिखो_tracing_option_file("funcgraph-proc", "0");
+	ग_लिखो_tracing_option_file("funcgraph-abstime", "0");
+	ग_लिखो_tracing_option_file("latency-format", "0");
+	ग_लिखो_tracing_option_file("irq-info", "0");
+पूर्ण
 
-static int reset_tracing_files(struct perf_ftrace *ftrace __maybe_unused)
-{
-	if (write_tracing_file("tracing_on", "0") < 0)
-		return -1;
+अटल पूर्णांक reset_tracing_files(काष्ठा perf_ftrace *ftrace __maybe_unused)
+अणु
+	अगर (ग_लिखो_tracing_file("tracing_on", "0") < 0)
+		वापस -1;
 
-	if (write_tracing_file("current_tracer", "nop") < 0)
-		return -1;
+	अगर (ग_लिखो_tracing_file("current_tracer", "nop") < 0)
+		वापस -1;
 
-	if (write_tracing_file("set_ftrace_pid", " ") < 0)
-		return -1;
+	अगर (ग_लिखो_tracing_file("set_ftrace_pid", " ") < 0)
+		वापस -1;
 
-	if (reset_tracing_cpu() < 0)
-		return -1;
+	अगर (reset_tracing_cpu() < 0)
+		वापस -1;
 
-	if (write_tracing_file("max_graph_depth", "0") < 0)
-		return -1;
+	अगर (ग_लिखो_tracing_file("max_graph_depth", "0") < 0)
+		वापस -1;
 
-	if (write_tracing_file("tracing_thresh", "0") < 0)
-		return -1;
+	अगर (ग_लिखो_tracing_file("tracing_thresh", "0") < 0)
+		वापस -1;
 
 	reset_tracing_filters();
 	reset_tracing_options(ftrace);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int set_tracing_pid(struct perf_ftrace *ftrace)
-{
-	int i;
-	char buf[16];
+अटल पूर्णांक set_tracing_pid(काष्ठा perf_ftrace *ftrace)
+अणु
+	पूर्णांक i;
+	अक्षर buf[16];
 
-	if (target__has_cpu(&ftrace->target))
-		return 0;
+	अगर (target__has_cpu(&ftrace->target))
+		वापस 0;
 
-	for (i = 0; i < perf_thread_map__nr(ftrace->evlist->core.threads); i++) {
-		scnprintf(buf, sizeof(buf), "%d",
-			  perf_thread_map__pid(ftrace->evlist->core.threads, i));
-		if (append_tracing_file("set_ftrace_pid", buf) < 0)
-			return -1;
-	}
-	return 0;
-}
+	क्रम (i = 0; i < perf_thपढ़ो_map__nr(ftrace->evlist->core.thपढ़ोs); i++) अणु
+		scnम_लिखो(buf, माप(buf), "%d",
+			  perf_thपढ़ो_map__pid(ftrace->evlist->core.thपढ़ोs, i));
+		अगर (append_tracing_file("set_ftrace_pid", buf) < 0)
+			वापस -1;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int set_tracing_cpumask(struct perf_cpu_map *cpumap)
-{
-	char *cpumask;
-	size_t mask_size;
-	int ret;
-	int last_cpu;
+अटल पूर्णांक set_tracing_cpumask(काष्ठा perf_cpu_map *cpumap)
+अणु
+	अक्षर *cpumask;
+	माप_प्रकार mask_size;
+	पूर्णांक ret;
+	पूर्णांक last_cpu;
 
 	last_cpu = cpu_map__cpu(cpumap, cpumap->nr - 1);
-	mask_size = last_cpu / 4 + 2; /* one more byte for EOS */
-	mask_size += last_cpu / 32; /* ',' is needed for every 32th cpus */
+	mask_size = last_cpu / 4 + 2; /* one more byte क्रम EOS */
+	mask_size += last_cpu / 32; /* ',' is needed क्रम every 32th cpus */
 
-	cpumask = malloc(mask_size);
-	if (cpumask == NULL) {
+	cpumask = दो_स्मृति(mask_size);
+	अगर (cpumask == शून्य) अणु
 		pr_debug("failed to allocate cpu mask\n");
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
-	cpu_map__snprint_mask(cpumap, cpumask, mask_size);
+	cpu_map__snprपूर्णांक_mask(cpumap, cpumask, mask_size);
 
-	ret = write_tracing_file("tracing_cpumask", cpumask);
+	ret = ग_लिखो_tracing_file("tracing_cpumask", cpumask);
 
-	free(cpumask);
-	return ret;
-}
+	मुक्त(cpumask);
+	वापस ret;
+पूर्ण
 
-static int set_tracing_cpu(struct perf_ftrace *ftrace)
-{
-	struct perf_cpu_map *cpumap = ftrace->evlist->core.cpus;
+अटल पूर्णांक set_tracing_cpu(काष्ठा perf_ftrace *ftrace)
+अणु
+	काष्ठा perf_cpu_map *cpumap = ftrace->evlist->core.cpus;
 
-	if (!target__has_cpu(&ftrace->target))
-		return 0;
+	अगर (!target__has_cpu(&ftrace->target))
+		वापस 0;
 
-	return set_tracing_cpumask(cpumap);
-}
+	वापस set_tracing_cpumask(cpumap);
+पूर्ण
 
-static int set_tracing_func_stack_trace(struct perf_ftrace *ftrace)
-{
-	if (!ftrace->func_stack_trace)
-		return 0;
+अटल पूर्णांक set_tracing_func_stack_trace(काष्ठा perf_ftrace *ftrace)
+अणु
+	अगर (!ftrace->func_stack_trace)
+		वापस 0;
 
-	if (write_tracing_option_file("func_stack_trace", "1") < 0)
-		return -1;
+	अगर (ग_लिखो_tracing_option_file("func_stack_trace", "1") < 0)
+		वापस -1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int set_tracing_func_irqinfo(struct perf_ftrace *ftrace)
-{
-	if (!ftrace->func_irq_info)
-		return 0;
+अटल पूर्णांक set_tracing_func_irqinfo(काष्ठा perf_ftrace *ftrace)
+अणु
+	अगर (!ftrace->func_irq_info)
+		वापस 0;
 
-	if (write_tracing_option_file("irq-info", "1") < 0)
-		return -1;
+	अगर (ग_लिखो_tracing_option_file("irq-info", "1") < 0)
+		वापस -1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int reset_tracing_cpu(void)
-{
-	struct perf_cpu_map *cpumap = perf_cpu_map__new(NULL);
-	int ret;
+अटल पूर्णांक reset_tracing_cpu(व्योम)
+अणु
+	काष्ठा perf_cpu_map *cpumap = perf_cpu_map__new(शून्य);
+	पूर्णांक ret;
 
 	ret = set_tracing_cpumask(cpumap);
 	perf_cpu_map__put(cpumap);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int __set_tracing_filter(const char *filter_file, struct list_head *funcs)
-{
-	struct filter_entry *pos;
+अटल पूर्णांक __set_tracing_filter(स्थिर अक्षर *filter_file, काष्ठा list_head *funcs)
+अणु
+	काष्ठा filter_entry *pos;
 
-	list_for_each_entry(pos, funcs, list) {
-		if (append_tracing_file(filter_file, pos->name) < 0)
-			return -1;
-	}
+	list_क्रम_each_entry(pos, funcs, list) अणु
+		अगर (append_tracing_file(filter_file, pos->name) < 0)
+			वापस -1;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int set_tracing_filters(struct perf_ftrace *ftrace)
-{
-	int ret;
+अटल पूर्णांक set_tracing_filters(काष्ठा perf_ftrace *ftrace)
+अणु
+	पूर्णांक ret;
 
 	ret = __set_tracing_filter("set_ftrace_filter", &ftrace->filters);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	ret = __set_tracing_filter("set_ftrace_notrace", &ftrace->notrace);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	ret = __set_tracing_filter("set_graph_function", &ftrace->graph_funcs);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	/* old kernels do not have this filter */
+	/* old kernels करो not have this filter */
 	__set_tracing_filter("set_graph_notrace", &ftrace->nograph_funcs);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void reset_tracing_filters(void)
-{
-	write_tracing_file("set_ftrace_filter", " ");
-	write_tracing_file("set_ftrace_notrace", " ");
-	write_tracing_file("set_graph_function", " ");
-	write_tracing_file("set_graph_notrace", " ");
-}
+अटल व्योम reset_tracing_filters(व्योम)
+अणु
+	ग_लिखो_tracing_file("set_ftrace_filter", " ");
+	ग_लिखो_tracing_file("set_ftrace_notrace", " ");
+	ग_लिखो_tracing_file("set_graph_function", " ");
+	ग_लिखो_tracing_file("set_graph_notrace", " ");
+पूर्ण
 
-static int set_tracing_depth(struct perf_ftrace *ftrace)
-{
-	if (ftrace->graph_depth == 0)
-		return 0;
+अटल पूर्णांक set_tracing_depth(काष्ठा perf_ftrace *ftrace)
+अणु
+	अगर (ftrace->graph_depth == 0)
+		वापस 0;
 
-	if (ftrace->graph_depth < 0) {
+	अगर (ftrace->graph_depth < 0) अणु
 		pr_err("invalid graph depth: %d\n", ftrace->graph_depth);
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
-	if (write_tracing_file_int("max_graph_depth", ftrace->graph_depth) < 0)
-		return -1;
+	अगर (ग_लिखो_tracing_file_पूर्णांक("max_graph_depth", ftrace->graph_depth) < 0)
+		वापस -1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int set_tracing_percpu_buffer_size(struct perf_ftrace *ftrace)
-{
-	int ret;
+अटल पूर्णांक set_tracing_percpu_buffer_size(काष्ठा perf_ftrace *ftrace)
+अणु
+	पूर्णांक ret;
 
-	if (ftrace->percpu_buffer_size == 0)
-		return 0;
+	अगर (ftrace->percpu_buffer_size == 0)
+		वापस 0;
 
-	ret = write_tracing_file_int("buffer_size_kb",
+	ret = ग_लिखो_tracing_file_पूर्णांक("buffer_size_kb",
 				     ftrace->percpu_buffer_size / 1024);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int set_tracing_trace_inherit(struct perf_ftrace *ftrace)
-{
-	if (!ftrace->inherit)
-		return 0;
+अटल पूर्णांक set_tracing_trace_inherit(काष्ठा perf_ftrace *ftrace)
+अणु
+	अगर (!ftrace->inherit)
+		वापस 0;
 
-	if (write_tracing_option_file("function-fork", "1") < 0)
-		return -1;
+	अगर (ग_लिखो_tracing_option_file("function-fork", "1") < 0)
+		वापस -1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int set_tracing_sleep_time(struct perf_ftrace *ftrace)
-{
-	if (!ftrace->graph_nosleep_time)
-		return 0;
+अटल पूर्णांक set_tracing_sleep_समय(काष्ठा perf_ftrace *ftrace)
+अणु
+	अगर (!ftrace->graph_nosleep_समय)
+		वापस 0;
 
-	if (write_tracing_option_file("sleep-time", "0") < 0)
-		return -1;
+	अगर (ग_लिखो_tracing_option_file("sleep-time", "0") < 0)
+		वापस -1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int set_tracing_funcgraph_irqs(struct perf_ftrace *ftrace)
-{
-	if (!ftrace->graph_noirqs)
-		return 0;
+अटल पूर्णांक set_tracing_funcgraph_irqs(काष्ठा perf_ftrace *ftrace)
+अणु
+	अगर (!ftrace->graph_noirqs)
+		वापस 0;
 
-	if (write_tracing_option_file("funcgraph-irqs", "0") < 0)
-		return -1;
+	अगर (ग_लिखो_tracing_option_file("funcgraph-irqs", "0") < 0)
+		वापस -1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int set_tracing_funcgraph_verbose(struct perf_ftrace *ftrace)
-{
-	if (!ftrace->graph_verbose)
-		return 0;
+अटल पूर्णांक set_tracing_funcgraph_verbose(काष्ठा perf_ftrace *ftrace)
+अणु
+	अगर (!ftrace->graph_verbose)
+		वापस 0;
 
-	if (write_tracing_option_file("funcgraph-proc", "1") < 0)
-		return -1;
+	अगर (ग_लिखो_tracing_option_file("funcgraph-proc", "1") < 0)
+		वापस -1;
 
-	if (write_tracing_option_file("funcgraph-abstime", "1") < 0)
-		return -1;
+	अगर (ग_लिखो_tracing_option_file("funcgraph-abstime", "1") < 0)
+		वापस -1;
 
-	if (write_tracing_option_file("latency-format", "1") < 0)
-		return -1;
+	अगर (ग_लिखो_tracing_option_file("latency-format", "1") < 0)
+		वापस -1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int set_tracing_thresh(struct perf_ftrace *ftrace)
-{
-	int ret;
+अटल पूर्णांक set_tracing_thresh(काष्ठा perf_ftrace *ftrace)
+अणु
+	पूर्णांक ret;
 
-	if (ftrace->graph_thresh == 0)
-		return 0;
+	अगर (ftrace->graph_thresh == 0)
+		वापस 0;
 
-	ret = write_tracing_file_int("tracing_thresh", ftrace->graph_thresh);
-	if (ret < 0)
-		return ret;
+	ret = ग_लिखो_tracing_file_पूर्णांक("tracing_thresh", ftrace->graph_thresh);
+	अगर (ret < 0)
+		वापस ret;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int set_tracing_options(struct perf_ftrace *ftrace)
-{
-	if (set_tracing_pid(ftrace) < 0) {
+अटल पूर्णांक set_tracing_options(काष्ठा perf_ftrace *ftrace)
+अणु
+	अगर (set_tracing_pid(ftrace) < 0) अणु
 		pr_err("failed to set ftrace pid\n");
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
-	if (set_tracing_cpu(ftrace) < 0) {
+	अगर (set_tracing_cpu(ftrace) < 0) अणु
 		pr_err("failed to set tracing cpumask\n");
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
-	if (set_tracing_func_stack_trace(ftrace) < 0) {
+	अगर (set_tracing_func_stack_trace(ftrace) < 0) अणु
 		pr_err("failed to set tracing option func_stack_trace\n");
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
-	if (set_tracing_func_irqinfo(ftrace) < 0) {
+	अगर (set_tracing_func_irqinfo(ftrace) < 0) अणु
 		pr_err("failed to set tracing option irq-info\n");
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
-	if (set_tracing_filters(ftrace) < 0) {
+	अगर (set_tracing_filters(ftrace) < 0) अणु
 		pr_err("failed to set tracing filters\n");
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
-	if (set_tracing_depth(ftrace) < 0) {
+	अगर (set_tracing_depth(ftrace) < 0) अणु
 		pr_err("failed to set graph depth\n");
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
-	if (set_tracing_percpu_buffer_size(ftrace) < 0) {
+	अगर (set_tracing_percpu_buffer_size(ftrace) < 0) अणु
 		pr_err("failed to set tracing per-cpu buffer size\n");
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
-	if (set_tracing_trace_inherit(ftrace) < 0) {
+	अगर (set_tracing_trace_inherit(ftrace) < 0) अणु
 		pr_err("failed to set tracing option function-fork\n");
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
-	if (set_tracing_sleep_time(ftrace) < 0) {
+	अगर (set_tracing_sleep_समय(ftrace) < 0) अणु
 		pr_err("failed to set tracing option sleep-time\n");
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
-	if (set_tracing_funcgraph_irqs(ftrace) < 0) {
+	अगर (set_tracing_funcgraph_irqs(ftrace) < 0) अणु
 		pr_err("failed to set tracing option funcgraph-irqs\n");
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
-	if (set_tracing_funcgraph_verbose(ftrace) < 0) {
+	अगर (set_tracing_funcgraph_verbose(ftrace) < 0) अणु
 		pr_err("failed to set tracing option funcgraph-proc/funcgraph-abstime\n");
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
-	if (set_tracing_thresh(ftrace) < 0) {
+	अगर (set_tracing_thresh(ftrace) < 0) अणु
 		pr_err("failed to set tracing thresh\n");
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __cmd_ftrace(struct perf_ftrace *ftrace, int argc, const char **argv)
-{
-	char *trace_file;
-	int trace_fd;
-	char buf[4096];
-	struct pollfd pollfd = {
+अटल पूर्णांक __cmd_ftrace(काष्ठा perf_ftrace *ftrace, पूर्णांक argc, स्थिर अक्षर **argv)
+अणु
+	अक्षर *trace_file;
+	पूर्णांक trace_fd;
+	अक्षर buf[4096];
+	काष्ठा pollfd pollfd = अणु
 		.events = POLLIN,
-	};
+	पूर्ण;
 
-	if (!(perf_cap__capable(CAP_PERFMON) ||
-	      perf_cap__capable(CAP_SYS_ADMIN))) {
+	अगर (!(perf_cap__capable(CAP_PERFMON) ||
+	      perf_cap__capable(CAP_SYS_ADMIN))) अणु
 		pr_err("ftrace only works for %s!\n",
-#ifdef HAVE_LIBCAP_SUPPORT
+#अगर_घोषित HAVE_LIBCAP_SUPPORT
 		"users with the CAP_PERFMON or CAP_SYS_ADMIN capability"
-#else
+#अन्यथा
 		"root"
-#endif
+#पूर्ण_अगर
 		);
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
-	signal(SIGINT, sig_handler);
-	signal(SIGUSR1, sig_handler);
-	signal(SIGCHLD, sig_handler);
-	signal(SIGPIPE, sig_handler);
+	संकेत(संक_विघ्न, sig_handler);
+	संकेत(SIGUSR1, sig_handler);
+	संकेत(SIGCHLD, sig_handler);
+	संकेत(SIGPIPE, sig_handler);
 
-	if (reset_tracing_files(ftrace) < 0) {
+	अगर (reset_tracing_files(ftrace) < 0) अणु
 		pr_err("failed to reset ftrace\n");
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	/* reset ftrace buffer */
-	if (write_tracing_file("trace", "0") < 0)
-		goto out;
+	अगर (ग_लिखो_tracing_file("trace", "0") < 0)
+		जाओ out;
 
-	if (argc && evlist__prepare_workload(ftrace->evlist, &ftrace->target, argv, false,
-					     ftrace__workload_exec_failed_signal) < 0) {
-		goto out;
-	}
+	अगर (argc && evlist__prepare_workload(ftrace->evlist, &ftrace->target, argv, false,
+					     ftrace__workload_exec_failed_संकेत) < 0) अणु
+		जाओ out;
+	पूर्ण
 
-	if (set_tracing_options(ftrace) < 0)
-		goto out_reset;
+	अगर (set_tracing_options(ftrace) < 0)
+		जाओ out_reset;
 
-	if (write_tracing_file("current_tracer", ftrace->tracer) < 0) {
+	अगर (ग_लिखो_tracing_file("current_tracer", ftrace->tracer) < 0) अणु
 		pr_err("failed to set current_tracer to %s\n", ftrace->tracer);
-		goto out_reset;
-	}
+		जाओ out_reset;
+	पूर्ण
 
 	setup_pager();
 
 	trace_file = get_tracing_file("trace_pipe");
-	if (!trace_file) {
+	अगर (!trace_file) अणु
 		pr_err("failed to open trace_pipe\n");
-		goto out_reset;
-	}
+		जाओ out_reset;
+	पूर्ण
 
-	trace_fd = open(trace_file, O_RDONLY);
+	trace_fd = खोलो(trace_file, O_RDONLY);
 
 	put_tracing_file(trace_file);
 
-	if (trace_fd < 0) {
+	अगर (trace_fd < 0) अणु
 		pr_err("failed to open trace_pipe\n");
-		goto out_reset;
-	}
+		जाओ out_reset;
+	पूर्ण
 
 	fcntl(trace_fd, F_SETFL, O_NONBLOCK);
 	pollfd.fd = trace_fd;
 
 	/* display column headers */
-	read_tracing_file_to_stdout("trace");
+	पढ़ो_tracing_file_to_मानक_निकास("trace");
 
-	if (!ftrace->initial_delay) {
-		if (write_tracing_file("tracing_on", "1") < 0) {
+	अगर (!ftrace->initial_delay) अणु
+		अगर (ग_लिखो_tracing_file("tracing_on", "1") < 0) अणु
 			pr_err("can't enable tracing\n");
-			goto out_close_fd;
-		}
-	}
+			जाओ out_बंद_fd;
+		पूर्ण
+	पूर्ण
 
 	evlist__start_workload(ftrace->evlist);
 
-	if (ftrace->initial_delay) {
+	अगर (ftrace->initial_delay) अणु
 		usleep(ftrace->initial_delay * 1000);
-		if (write_tracing_file("tracing_on", "1") < 0) {
+		अगर (ग_लिखो_tracing_file("tracing_on", "1") < 0) अणु
 			pr_err("can't enable tracing\n");
-			goto out_close_fd;
-		}
-	}
+			जाओ out_बंद_fd;
+		पूर्ण
+	पूर्ण
 
-	while (!done) {
-		if (poll(&pollfd, 1, -1) < 0)
-			break;
+	जबतक (!करोne) अणु
+		अगर (poll(&pollfd, 1, -1) < 0)
+			अवरोध;
 
-		if (pollfd.revents & POLLIN) {
-			int n = read(trace_fd, buf, sizeof(buf));
-			if (n < 0)
-				break;
-			if (fwrite(buf, n, 1, stdout) != 1)
-				break;
-		}
-	}
+		अगर (pollfd.revents & POLLIN) अणु
+			पूर्णांक n = पढ़ो(trace_fd, buf, माप(buf));
+			अगर (n < 0)
+				अवरोध;
+			अगर (ख_डालो(buf, n, 1, मानक_निकास) != 1)
+				अवरोध;
+		पूर्ण
+	पूर्ण
 
-	write_tracing_file("tracing_on", "0");
+	ग_लिखो_tracing_file("tracing_on", "0");
 
-	if (workload_exec_errno) {
-		const char *emsg = str_error_r(workload_exec_errno, buf, sizeof(buf));
-		/* flush stdout first so below error msg appears at the end. */
-		fflush(stdout);
+	अगर (workload_exec_त्रुटि_सं) अणु
+		स्थिर अक्षर *emsg = str_error_r(workload_exec_त्रुटि_सं, buf, माप(buf));
+		/* flush मानक_निकास first so below error msg appears at the end. */
+		ख_साफ(मानक_निकास);
 		pr_err("workload failed: %s\n", emsg);
-		goto out_close_fd;
-	}
+		जाओ out_बंद_fd;
+	पूर्ण
 
-	/* read remaining buffer contents */
-	while (true) {
-		int n = read(trace_fd, buf, sizeof(buf));
-		if (n <= 0)
-			break;
-		if (fwrite(buf, n, 1, stdout) != 1)
-			break;
-	}
+	/* पढ़ो reमुख्यing buffer contents */
+	जबतक (true) अणु
+		पूर्णांक n = पढ़ो(trace_fd, buf, माप(buf));
+		अगर (n <= 0)
+			अवरोध;
+		अगर (ख_डालो(buf, n, 1, मानक_निकास) != 1)
+			अवरोध;
+	पूर्ण
 
-out_close_fd:
-	close(trace_fd);
+out_बंद_fd:
+	बंद(trace_fd);
 out_reset:
 	reset_tracing_files(ftrace);
 out:
-	return (done && !workload_exec_errno) ? 0 : -1;
-}
+	वापस (करोne && !workload_exec_त्रुटि_सं) ? 0 : -1;
+पूर्ण
 
-static int perf_ftrace_config(const char *var, const char *value, void *cb)
-{
-	struct perf_ftrace *ftrace = cb;
+अटल पूर्णांक perf_ftrace_config(स्थिर अक्षर *var, स्थिर अक्षर *value, व्योम *cb)
+अणु
+	काष्ठा perf_ftrace *ftrace = cb;
 
-	if (!strstarts(var, "ftrace."))
-		return 0;
+	अगर (!strstarts(var, "ftrace."))
+		वापस 0;
 
-	if (strcmp(var, "ftrace.tracer"))
-		return -1;
+	अगर (म_भेद(var, "ftrace.tracer"))
+		वापस -1;
 
-	if (!strcmp(value, "function_graph") ||
-	    !strcmp(value, "function")) {
+	अगर (!म_भेद(value, "function_graph") ||
+	    !म_भेद(value, "function")) अणु
 		ftrace->tracer = value;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	pr_err("Please select \"function_graph\" (default) or \"function\"\n");
-	return -1;
-}
+	वापस -1;
+पूर्ण
 
-static void list_function_cb(char *str, void *arg)
-{
-	struct strfilter *filter = (struct strfilter *)arg;
+अटल व्योम list_function_cb(अक्षर *str, व्योम *arg)
+अणु
+	काष्ठा strfilter *filter = (काष्ठा strfilter *)arg;
 
-	if (strfilter__compare(filter, str))
-		printf("%s", str);
-}
+	अगर (strfilter__compare(filter, str))
+		म_लिखो("%s", str);
+पूर्ण
 
-static int opt_list_avail_functions(const struct option *opt __maybe_unused,
-				    const char *str, int unset)
-{
-	struct strfilter *filter;
-	const char *err = NULL;
-	int ret;
+अटल पूर्णांक opt_list_avail_functions(स्थिर काष्ठा option *opt __maybe_unused,
+				    स्थिर अक्षर *str, पूर्णांक unset)
+अणु
+	काष्ठा strfilter *filter;
+	स्थिर अक्षर *err = शून्य;
+	पूर्णांक ret;
 
-	if (unset || !str)
-		return -1;
+	अगर (unset || !str)
+		वापस -1;
 
 	filter = strfilter__new(str, &err);
-	if (!filter)
-		return err ? -EINVAL : -ENOMEM;
+	अगर (!filter)
+		वापस err ? -EINVAL : -ENOMEM;
 
 	ret = strfilter__or(filter, str, &err);
-	if (ret == -EINVAL) {
+	अगर (ret == -EINVAL) अणु
 		pr_err("Filter parse error at %td.\n", err - str + 1);
 		pr_err("Source: \"%s\"\n", str);
-		pr_err("         %*c\n", (int)(err - str + 1), '^');
+		pr_err("         %*c\n", (पूर्णांक)(err - str + 1), '^');
 		strfilter__delete(filter);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	ret = read_tracing_file_by_line("available_filter_functions",
+	ret = पढ़ो_tracing_file_by_line("available_filter_functions",
 					list_function_cb, filter);
 	strfilter__delete(filter);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	exit(0);
-}
+	निकास(0);
+पूर्ण
 
-static int parse_filter_func(const struct option *opt, const char *str,
-			     int unset __maybe_unused)
-{
-	struct list_head *head = opt->value;
-	struct filter_entry *entry;
+अटल पूर्णांक parse_filter_func(स्थिर काष्ठा option *opt, स्थिर अक्षर *str,
+			     पूर्णांक unset __maybe_unused)
+अणु
+	काष्ठा list_head *head = opt->value;
+	काष्ठा filter_entry *entry;
 
-	entry = malloc(sizeof(*entry) + strlen(str) + 1);
-	if (entry == NULL)
-		return -ENOMEM;
+	entry = दो_स्मृति(माप(*entry) + म_माप(str) + 1);
+	अगर (entry == शून्य)
+		वापस -ENOMEM;
 
-	strcpy(entry->name, str);
+	म_नकल(entry->name, str);
 	list_add_tail(&entry->list, head);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void delete_filter_func(struct list_head *head)
-{
-	struct filter_entry *pos, *tmp;
+अटल व्योम delete_filter_func(काष्ठा list_head *head)
+अणु
+	काष्ठा filter_entry *pos, *पंचांगp;
 
-	list_for_each_entry_safe(pos, tmp, head, list) {
+	list_क्रम_each_entry_safe(pos, पंचांगp, head, list) अणु
 		list_del_init(&pos->list);
-		free(pos);
-	}
-}
+		मुक्त(pos);
+	पूर्ण
+पूर्ण
 
-static int parse_buffer_size(const struct option *opt,
-			     const char *str, int unset)
-{
-	unsigned long *s = (unsigned long *)opt->value;
-	static struct parse_tag tags_size[] = {
-		{ .tag  = 'B', .mult = 1       },
-		{ .tag  = 'K', .mult = 1 << 10 },
-		{ .tag  = 'M', .mult = 1 << 20 },
-		{ .tag  = 'G', .mult = 1 << 30 },
-		{ .tag  = 0 },
-	};
-	unsigned long val;
+अटल पूर्णांक parse_buffer_size(स्थिर काष्ठा option *opt,
+			     स्थिर अक्षर *str, पूर्णांक unset)
+अणु
+	अचिन्हित दीर्घ *s = (अचिन्हित दीर्घ *)opt->value;
+	अटल काष्ठा parse_tag tags_size[] = अणु
+		अणु .tag  = 'B', .mult = 1       पूर्ण,
+		अणु .tag  = 'K', .mult = 1 << 10 पूर्ण,
+		अणु .tag  = 'M', .mult = 1 << 20 पूर्ण,
+		अणु .tag  = 'G', .mult = 1 << 30 पूर्ण,
+		अणु .tag  = 0 पूर्ण,
+	पूर्ण;
+	अचिन्हित दीर्घ val;
 
-	if (unset) {
+	अगर (unset) अणु
 		*s = 0;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	val = parse_tag_value(str, tags_size);
-	if (val != (unsigned long) -1) {
-		if (val < 1024) {
+	अगर (val != (अचिन्हित दीर्घ) -1) अणु
+		अगर (val < 1024) अणु
 			pr_err("buffer size too small, must larger than 1KB.");
-			return -1;
-		}
+			वापस -1;
+		पूर्ण
 		*s = val;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	return -1;
-}
+	वापस -1;
+पूर्ण
 
-static int parse_func_tracer_opts(const struct option *opt,
-				  const char *str, int unset)
-{
-	int ret;
-	struct perf_ftrace *ftrace = (struct perf_ftrace *) opt->value;
-	struct sublevel_option func_tracer_opts[] = {
-		{ .name = "call-graph",	.value_ptr = &ftrace->func_stack_trace },
-		{ .name = "irq-info",	.value_ptr = &ftrace->func_irq_info },
-		{ .name = NULL, }
-	};
+अटल पूर्णांक parse_func_tracer_opts(स्थिर काष्ठा option *opt,
+				  स्थिर अक्षर *str, पूर्णांक unset)
+अणु
+	पूर्णांक ret;
+	काष्ठा perf_ftrace *ftrace = (काष्ठा perf_ftrace *) opt->value;
+	काष्ठा sublevel_option func_tracer_opts[] = अणु
+		अणु .name = "call-graph",	.value_ptr = &ftrace->func_stack_trace पूर्ण,
+		अणु .name = "irq-info",	.value_ptr = &ftrace->func_irq_info पूर्ण,
+		अणु .name = शून्य, पूर्ण
+	पूर्ण;
 
-	if (unset)
-		return 0;
+	अगर (unset)
+		वापस 0;
 
 	ret = perf_parse_sublevel_options(str, func_tracer_opts);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int parse_graph_tracer_opts(const struct option *opt,
-				  const char *str, int unset)
-{
-	int ret;
-	struct perf_ftrace *ftrace = (struct perf_ftrace *) opt->value;
-	struct sublevel_option graph_tracer_opts[] = {
-		{ .name = "nosleep-time",	.value_ptr = &ftrace->graph_nosleep_time },
-		{ .name = "noirqs",		.value_ptr = &ftrace->graph_noirqs },
-		{ .name = "verbose",		.value_ptr = &ftrace->graph_verbose },
-		{ .name = "thresh",		.value_ptr = &ftrace->graph_thresh },
-		{ .name = "depth",		.value_ptr = &ftrace->graph_depth },
-		{ .name = NULL, }
-	};
+अटल पूर्णांक parse_graph_tracer_opts(स्थिर काष्ठा option *opt,
+				  स्थिर अक्षर *str, पूर्णांक unset)
+अणु
+	पूर्णांक ret;
+	काष्ठा perf_ftrace *ftrace = (काष्ठा perf_ftrace *) opt->value;
+	काष्ठा sublevel_option graph_tracer_opts[] = अणु
+		अणु .name = "nosleep-time",	.value_ptr = &ftrace->graph_nosleep_समय पूर्ण,
+		अणु .name = "noirqs",		.value_ptr = &ftrace->graph_noirqs पूर्ण,
+		अणु .name = "verbose",		.value_ptr = &ftrace->graph_verbose पूर्ण,
+		अणु .name = "thresh",		.value_ptr = &ftrace->graph_thresh पूर्ण,
+		अणु .name = "depth",		.value_ptr = &ftrace->graph_depth पूर्ण,
+		अणु .name = शून्य, पूर्ण
+	पूर्ण;
 
-	if (unset)
-		return 0;
+	अगर (unset)
+		वापस 0;
 
 	ret = perf_parse_sublevel_options(str, graph_tracer_opts);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void select_tracer(struct perf_ftrace *ftrace)
-{
+अटल व्योम select_tracer(काष्ठा perf_ftrace *ftrace)
+अणु
 	bool graph = !list_empty(&ftrace->graph_funcs) ||
 		     !list_empty(&ftrace->nograph_funcs);
 	bool func = !list_empty(&ftrace->filters) ||
 		    !list_empty(&ftrace->notrace);
 
 	/* The function_graph has priority over function tracer. */
-	if (graph)
+	अगर (graph)
 		ftrace->tracer = "function_graph";
-	else if (func)
+	अन्यथा अगर (func)
 		ftrace->tracer = "function";
-	/* Otherwise, the default tracer is used. */
+	/* Otherwise, the शेष tracer is used. */
 
 	pr_debug("%s tracer is used\n", ftrace->tracer);
-}
+पूर्ण
 
-int cmd_ftrace(int argc, const char **argv)
-{
-	int ret;
-	struct perf_ftrace ftrace = {
+पूर्णांक cmd_ftrace(पूर्णांक argc, स्थिर अक्षर **argv)
+अणु
+	पूर्णांक ret;
+	काष्ठा perf_ftrace ftrace = अणु
 		.tracer = DEFAULT_TRACER,
-		.target = { .uid = UINT_MAX, },
-	};
-	const char * const ftrace_usage[] = {
+		.target = अणु .uid = अच_पूर्णांक_उच्च, पूर्ण,
+	पूर्ण;
+	स्थिर अक्षर * स्थिर ftrace_usage[] = अणु
 		"perf ftrace [<options>] [<command>]",
 		"perf ftrace [<options>] -- <command> [<options>]",
-		NULL
-	};
-	const struct option ftrace_options[] = {
+		शून्य
+	पूर्ण;
+	स्थिर काष्ठा option ftrace_options[] = अणु
 	OPT_STRING('t', "tracer", &ftrace.tracer, "tracer",
 		   "Tracer to use: function_graph(default) or function"),
-	OPT_CALLBACK_DEFAULT('F', "funcs", NULL, "[FILTER]",
+	OPT_CALLBACK_DEFAULT('F', "funcs", शून्य, "[FILTER]",
 			     "Show available functions to filter",
 			     opt_list_avail_functions, "*"),
 	OPT_STRING('p', "pid", &ftrace.target.pid, "pid",
 		   "Trace on existing process id"),
-	/* TODO: Add short option -t after -t/--tracer can be removed. */
+	/* TODO: Add लघु option -t after -t/--tracer can be हटाओd. */
 	OPT_STRING(0, "tid", &ftrace.target.tid, "tid",
 		   "Trace on existing thread id (exclusive to --pid)"),
 	OPT_INCR('v', "verbose", &verbose,
 		 "Be more verbose"),
-	OPT_BOOLEAN('a', "all-cpus", &ftrace.target.system_wide,
+	OPT_BOOLEAN('a', "all-cpus", &ftrace.target.प्रणाली_wide,
 		    "System-wide collection from all CPUs"),
 	OPT_STRING('C', "cpu", &ftrace.target.cpu_list, "cpu",
 		    "List of cpus to monitor"),
@@ -924,7 +925,7 @@ int cmd_ftrace(int argc, const char **argv)
 	OPT_UINTEGER('D', "delay", &ftrace.initial_delay,
 		     "Number of milliseconds to wait before starting tracing after program start"),
 	OPT_END()
-	};
+	पूर्ण;
 
 	INIT_LIST_HEAD(&ftrace.filters);
 	INIT_LIST_HEAD(&ftrace.notrace);
@@ -932,34 +933,34 @@ int cmd_ftrace(int argc, const char **argv)
 	INIT_LIST_HEAD(&ftrace.nograph_funcs);
 
 	ret = perf_config(perf_ftrace_config, &ftrace);
-	if (ret < 0)
-		return -1;
+	अगर (ret < 0)
+		वापस -1;
 
 	argc = parse_options(argc, argv, ftrace_options, ftrace_usage,
 			    PARSE_OPT_STOP_AT_NON_OPTION);
-	if (!argc && target__none(&ftrace.target))
-		ftrace.target.system_wide = true;
+	अगर (!argc && target__none(&ftrace.target))
+		ftrace.target.प्रणाली_wide = true;
 
 	select_tracer(&ftrace);
 
 	ret = target__validate(&ftrace.target);
-	if (ret) {
-		char errbuf[512];
+	अगर (ret) अणु
+		अक्षर errbuf[512];
 
-		target__strerror(&ftrace.target, ret, errbuf, 512);
+		target__म_त्रुटि(&ftrace.target, ret, errbuf, 512);
 		pr_err("%s\n", errbuf);
-		goto out_delete_filters;
-	}
+		जाओ out_delete_filters;
+	पूर्ण
 
 	ftrace.evlist = evlist__new();
-	if (ftrace.evlist == NULL) {
+	अगर (ftrace.evlist == शून्य) अणु
 		ret = -ENOMEM;
-		goto out_delete_filters;
-	}
+		जाओ out_delete_filters;
+	पूर्ण
 
 	ret = evlist__create_maps(ftrace.evlist, &ftrace.target);
-	if (ret < 0)
-		goto out_delete_evlist;
+	अगर (ret < 0)
+		जाओ out_delete_evlist;
 
 	ret = __cmd_ftrace(&ftrace, argc, argv);
 
@@ -972,5 +973,5 @@ out_delete_filters:
 	delete_filter_func(&ftrace.graph_funcs);
 	delete_filter_func(&ftrace.nograph_funcs);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण

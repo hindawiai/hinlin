@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * ati_remote2 - ATI/Philips USB RF remote driver
  *
@@ -6,11 +7,11 @@
  * Copyright (C) 2007-2008 Peter Stokes <linux@dadeos.co.uk>
  */
 
-#include <linux/usb/input.h>
-#include <linux/slab.h>
-#include <linux/module.h>
+#समावेश <linux/usb/input.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/module.h>
 
-#define DRIVER_DESC    "ATI/Philips USB RF remote driver"
+#घोषणा DRIVER_DESC    "ATI/Philips USB RF remote driver"
 
 MODULE_DESCRIPTION(DRIVER_DESC);
 MODULE_AUTHOR("Ville Syrjala <syrjala@sci.fi>");
@@ -19,200 +20,200 @@ MODULE_LICENSE("GPL");
 /*
  * ATI Remote Wonder II Channel Configuration
  *
- * The remote control can be assigned one of sixteen "channels" in order to facilitate
+ * The remote control can be asचिन्हित one of sixteen "channels" in order to facilitate
  * the use of multiple remote controls within range of each other.
- * A remote's "channel" may be altered by pressing and holding the "PC" button for
+ * A remote's "channel" may be altered by pressing and holding the "PC" button क्रम
  * approximately 3 seconds, after which the button will slowly flash the count of the
  * currently configured "channel", using the numeric keypad enter a number between 1 and
  * 16 and then press the "PC" button again, the button will slowly flash the count of the
  * newly configured "channel".
  */
 
-enum {
+क्रमागत अणु
 	ATI_REMOTE2_MAX_CHANNEL_MASK = 0xFFFF,
 	ATI_REMOTE2_MAX_MODE_MASK = 0x1F,
-};
+पूर्ण;
 
-static int ati_remote2_set_mask(const char *val,
-				const struct kernel_param *kp,
-				unsigned int max)
-{
-	unsigned int mask;
-	int ret;
+अटल पूर्णांक ati_remote2_set_mask(स्थिर अक्षर *val,
+				स्थिर काष्ठा kernel_param *kp,
+				अचिन्हित पूर्णांक max)
+अणु
+	अचिन्हित पूर्णांक mask;
+	पूर्णांक ret;
 
-	if (!val)
-		return -EINVAL;
+	अगर (!val)
+		वापस -EINVAL;
 
-	ret = kstrtouint(val, 0, &mask);
-	if (ret)
-		return ret;
+	ret = kstrtouपूर्णांक(val, 0, &mask);
+	अगर (ret)
+		वापस ret;
 
-	if (mask & ~max)
-		return -EINVAL;
+	अगर (mask & ~max)
+		वापस -EINVAL;
 
-	*(unsigned int *)kp->arg = mask;
+	*(अचिन्हित पूर्णांक *)kp->arg = mask;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ati_remote2_set_channel_mask(const char *val,
-					const struct kernel_param *kp)
-{
+अटल पूर्णांक ati_remote2_set_channel_mask(स्थिर अक्षर *val,
+					स्थिर काष्ठा kernel_param *kp)
+अणु
 	pr_debug("%s()\n", __func__);
 
-	return ati_remote2_set_mask(val, kp, ATI_REMOTE2_MAX_CHANNEL_MASK);
-}
+	वापस ati_remote2_set_mask(val, kp, ATI_REMOTE2_MAX_CHANNEL_MASK);
+पूर्ण
 
-static int ati_remote2_get_channel_mask(char *buffer,
-					const struct kernel_param *kp)
-{
+अटल पूर्णांक ati_remote2_get_channel_mask(अक्षर *buffer,
+					स्थिर काष्ठा kernel_param *kp)
+अणु
 	pr_debug("%s()\n", __func__);
 
-	return sprintf(buffer, "0x%04x\n", *(unsigned int *)kp->arg);
-}
+	वापस प्र_लिखो(buffer, "0x%04x\n", *(अचिन्हित पूर्णांक *)kp->arg);
+पूर्ण
 
-static int ati_remote2_set_mode_mask(const char *val,
-				     const struct kernel_param *kp)
-{
+अटल पूर्णांक ati_remote2_set_mode_mask(स्थिर अक्षर *val,
+				     स्थिर काष्ठा kernel_param *kp)
+अणु
 	pr_debug("%s()\n", __func__);
 
-	return ati_remote2_set_mask(val, kp, ATI_REMOTE2_MAX_MODE_MASK);
-}
+	वापस ati_remote2_set_mask(val, kp, ATI_REMOTE2_MAX_MODE_MASK);
+पूर्ण
 
-static int ati_remote2_get_mode_mask(char *buffer,
-				     const struct kernel_param *kp)
-{
+अटल पूर्णांक ati_remote2_get_mode_mask(अक्षर *buffer,
+				     स्थिर काष्ठा kernel_param *kp)
+अणु
 	pr_debug("%s()\n", __func__);
 
-	return sprintf(buffer, "0x%02x\n", *(unsigned int *)kp->arg);
-}
+	वापस प्र_लिखो(buffer, "0x%02x\n", *(अचिन्हित पूर्णांक *)kp->arg);
+पूर्ण
 
-static unsigned int channel_mask = ATI_REMOTE2_MAX_CHANNEL_MASK;
-#define param_check_channel_mask(name, p) __param_check(name, p, unsigned int)
-static const struct kernel_param_ops param_ops_channel_mask = {
+अटल अचिन्हित पूर्णांक channel_mask = ATI_REMOTE2_MAX_CHANNEL_MASK;
+#घोषणा param_check_channel_mask(name, p) __param_check(name, p, अचिन्हित पूर्णांक)
+अटल स्थिर काष्ठा kernel_param_ops param_ops_channel_mask = अणु
 	.set = ati_remote2_set_channel_mask,
 	.get = ati_remote2_get_channel_mask,
-};
+पूर्ण;
 module_param(channel_mask, channel_mask, 0644);
 MODULE_PARM_DESC(channel_mask, "Bitmask of channels to accept <15:Channel16>...<1:Channel2><0:Channel1>");
 
-static unsigned int mode_mask = ATI_REMOTE2_MAX_MODE_MASK;
-#define param_check_mode_mask(name, p) __param_check(name, p, unsigned int)
-static const struct kernel_param_ops param_ops_mode_mask = {
+अटल अचिन्हित पूर्णांक mode_mask = ATI_REMOTE2_MAX_MODE_MASK;
+#घोषणा param_check_mode_mask(name, p) __param_check(name, p, अचिन्हित पूर्णांक)
+अटल स्थिर काष्ठा kernel_param_ops param_ops_mode_mask = अणु
 	.set = ati_remote2_set_mode_mask,
 	.get = ati_remote2_get_mode_mask,
-};
+पूर्ण;
 module_param(mode_mask, mode_mask, 0644);
 MODULE_PARM_DESC(mode_mask, "Bitmask of modes to accept <4:PC><3:AUX4><2:AUX3><1:AUX2><0:AUX1>");
 
-static const struct usb_device_id ati_remote2_id_table[] = {
-	{ USB_DEVICE(0x0471, 0x0602) },	/* ATI Remote Wonder II */
-	{ }
-};
+अटल स्थिर काष्ठा usb_device_id ati_remote2_id_table[] = अणु
+	अणु USB_DEVICE(0x0471, 0x0602) पूर्ण,	/* ATI Remote Wonder II */
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(usb, ati_remote2_id_table);
 
-static DEFINE_MUTEX(ati_remote2_mutex);
+अटल DEFINE_MUTEX(ati_remote2_mutex);
 
-enum {
+क्रमागत अणु
 	ATI_REMOTE2_OPENED = 0x1,
 	ATI_REMOTE2_SUSPENDED = 0x2,
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	ATI_REMOTE2_AUX1,
 	ATI_REMOTE2_AUX2,
 	ATI_REMOTE2_AUX3,
 	ATI_REMOTE2_AUX4,
 	ATI_REMOTE2_PC,
 	ATI_REMOTE2_MODES,
-};
+पूर्ण;
 
-static const struct {
+अटल स्थिर काष्ठा अणु
 	u8  hw_code;
 	u16 keycode;
-} ati_remote2_key_table[] = {
-	{ 0x00, KEY_0 },
-	{ 0x01, KEY_1 },
-	{ 0x02, KEY_2 },
-	{ 0x03, KEY_3 },
-	{ 0x04, KEY_4 },
-	{ 0x05, KEY_5 },
-	{ 0x06, KEY_6 },
-	{ 0x07, KEY_7 },
-	{ 0x08, KEY_8 },
-	{ 0x09, KEY_9 },
-	{ 0x0c, KEY_POWER },
-	{ 0x0d, KEY_MUTE },
-	{ 0x10, KEY_VOLUMEUP },
-	{ 0x11, KEY_VOLUMEDOWN },
-	{ 0x20, KEY_CHANNELUP },
-	{ 0x21, KEY_CHANNELDOWN },
-	{ 0x28, KEY_FORWARD },
-	{ 0x29, KEY_REWIND },
-	{ 0x2c, KEY_PLAY },
-	{ 0x30, KEY_PAUSE },
-	{ 0x31, KEY_STOP },
-	{ 0x37, KEY_RECORD },
-	{ 0x38, KEY_DVD },
-	{ 0x39, KEY_TV },
-	{ 0x3f, KEY_PROG1 }, /* AUX1-AUX4 and PC */
-	{ 0x54, KEY_MENU },
-	{ 0x58, KEY_UP },
-	{ 0x59, KEY_DOWN },
-	{ 0x5a, KEY_LEFT },
-	{ 0x5b, KEY_RIGHT },
-	{ 0x5c, KEY_OK },
-	{ 0x78, KEY_A },
-	{ 0x79, KEY_B },
-	{ 0x7a, KEY_C },
-	{ 0x7b, KEY_D },
-	{ 0x7c, KEY_E },
-	{ 0x7d, KEY_F },
-	{ 0x82, KEY_ENTER },
-	{ 0x8e, KEY_VENDOR },
-	{ 0x96, KEY_COFFEE },
-	{ 0xa9, BTN_LEFT },
-	{ 0xaa, BTN_RIGHT },
-	{ 0xbe, KEY_QUESTION },
-	{ 0xd0, KEY_EDIT },
-	{ 0xd5, KEY_FRONT },
-	{ 0xf9, KEY_INFO },
-};
+पूर्ण ati_remote2_key_table[] = अणु
+	अणु 0x00, KEY_0 पूर्ण,
+	अणु 0x01, KEY_1 पूर्ण,
+	अणु 0x02, KEY_2 पूर्ण,
+	अणु 0x03, KEY_3 पूर्ण,
+	अणु 0x04, KEY_4 पूर्ण,
+	अणु 0x05, KEY_5 पूर्ण,
+	अणु 0x06, KEY_6 पूर्ण,
+	अणु 0x07, KEY_7 पूर्ण,
+	अणु 0x08, KEY_8 पूर्ण,
+	अणु 0x09, KEY_9 पूर्ण,
+	अणु 0x0c, KEY_POWER पूर्ण,
+	अणु 0x0d, KEY_MUTE पूर्ण,
+	अणु 0x10, KEY_VOLUMEUP पूर्ण,
+	अणु 0x11, KEY_VOLUMEDOWN पूर्ण,
+	अणु 0x20, KEY_CHANNELUP पूर्ण,
+	अणु 0x21, KEY_CHANNELDOWN पूर्ण,
+	अणु 0x28, KEY_FORWARD पूर्ण,
+	अणु 0x29, KEY_REWIND पूर्ण,
+	अणु 0x2c, KEY_PLAY पूर्ण,
+	अणु 0x30, KEY_PAUSE पूर्ण,
+	अणु 0x31, KEY_STOP पूर्ण,
+	अणु 0x37, KEY_RECORD पूर्ण,
+	अणु 0x38, KEY_DVD पूर्ण,
+	अणु 0x39, KEY_TV पूर्ण,
+	अणु 0x3f, KEY_PROG1 पूर्ण, /* AUX1-AUX4 and PC */
+	अणु 0x54, KEY_MENU पूर्ण,
+	अणु 0x58, KEY_UP पूर्ण,
+	अणु 0x59, KEY_DOWN पूर्ण,
+	अणु 0x5a, KEY_LEFT पूर्ण,
+	अणु 0x5b, KEY_RIGHT पूर्ण,
+	अणु 0x5c, KEY_OK पूर्ण,
+	अणु 0x78, KEY_A पूर्ण,
+	अणु 0x79, KEY_B पूर्ण,
+	अणु 0x7a, KEY_C पूर्ण,
+	अणु 0x7b, KEY_D पूर्ण,
+	अणु 0x7c, KEY_E पूर्ण,
+	अणु 0x7d, KEY_F पूर्ण,
+	अणु 0x82, KEY_ENTER पूर्ण,
+	अणु 0x8e, KEY_VENDOR पूर्ण,
+	अणु 0x96, KEY_COFFEE पूर्ण,
+	अणु 0xa9, BTN_LEFT पूर्ण,
+	अणु 0xaa, BTN_RIGHT पूर्ण,
+	अणु 0xbe, KEY_QUESTION पूर्ण,
+	अणु 0xd0, KEY_EDIT पूर्ण,
+	अणु 0xd5, KEY_FRONT पूर्ण,
+	अणु 0xf9, KEY_INFO पूर्ण,
+पूर्ण;
 
-struct ati_remote2 {
-	struct input_dev *idev;
-	struct usb_device *udev;
+काष्ठा ati_remote2 अणु
+	काष्ठा input_dev *idev;
+	काष्ठा usb_device *udev;
 
-	struct usb_interface *intf[2];
-	struct usb_endpoint_descriptor *ep[2];
-	struct urb *urb[2];
-	void *buf[2];
+	काष्ठा usb_पूर्णांकerface *पूर्णांकf[2];
+	काष्ठा usb_endpoपूर्णांक_descriptor *ep[2];
+	काष्ठा urb *urb[2];
+	व्योम *buf[2];
 	dma_addr_t buf_dma[2];
 
-	unsigned long jiffies;
-	int mode;
+	अचिन्हित दीर्घ jअगरfies;
+	पूर्णांक mode;
 
-	char name[64];
-	char phys[64];
+	अक्षर name[64];
+	अक्षर phys[64];
 
 	/* Each mode (AUX1-AUX4 and PC) can have an independent keymap. */
 	u16 keycode[ATI_REMOTE2_MODES][ARRAY_SIZE(ati_remote2_key_table)];
 
-	unsigned int flags;
+	अचिन्हित पूर्णांक flags;
 
-	unsigned int channel_mask;
-	unsigned int mode_mask;
-};
+	अचिन्हित पूर्णांक channel_mask;
+	अचिन्हित पूर्णांक mode_mask;
+पूर्ण;
 
-static int ati_remote2_probe(struct usb_interface *interface, const struct usb_device_id *id);
-static void ati_remote2_disconnect(struct usb_interface *interface);
-static int ati_remote2_suspend(struct usb_interface *interface, pm_message_t message);
-static int ati_remote2_resume(struct usb_interface *interface);
-static int ati_remote2_reset_resume(struct usb_interface *interface);
-static int ati_remote2_pre_reset(struct usb_interface *interface);
-static int ati_remote2_post_reset(struct usb_interface *interface);
+अटल पूर्णांक ati_remote2_probe(काष्ठा usb_पूर्णांकerface *पूर्णांकerface, स्थिर काष्ठा usb_device_id *id);
+अटल व्योम ati_remote2_disconnect(काष्ठा usb_पूर्णांकerface *पूर्णांकerface);
+अटल पूर्णांक ati_remote2_suspend(काष्ठा usb_पूर्णांकerface *पूर्णांकerface, pm_message_t message);
+अटल पूर्णांक ati_remote2_resume(काष्ठा usb_पूर्णांकerface *पूर्णांकerface);
+अटल पूर्णांक ati_remote2_reset_resume(काष्ठा usb_पूर्णांकerface *पूर्णांकerface);
+अटल पूर्णांक ati_remote2_pre_reset(काष्ठा usb_पूर्णांकerface *पूर्णांकerface);
+अटल पूर्णांक ati_remote2_post_reset(काष्ठा usb_पूर्णांकerface *पूर्णांकerface);
 
-static struct usb_driver ati_remote2_driver = {
+अटल काष्ठा usb_driver ati_remote2_driver = अणु
 	.name       = "ati_remote2",
 	.probe      = ati_remote2_probe,
 	.disconnect = ati_remote2_disconnect,
@@ -222,357 +223,357 @@ static struct usb_driver ati_remote2_driver = {
 	.reset_resume = ati_remote2_reset_resume,
 	.pre_reset  = ati_remote2_pre_reset,
 	.post_reset = ati_remote2_post_reset,
-	.supports_autosuspend = 1,
-};
+	.supports_स्वतःsuspend = 1,
+पूर्ण;
 
-static int ati_remote2_submit_urbs(struct ati_remote2 *ar2)
-{
-	int r;
+अटल पूर्णांक ati_remote2_submit_urbs(काष्ठा ati_remote2 *ar2)
+अणु
+	पूर्णांक r;
 
 	r = usb_submit_urb(ar2->urb[0], GFP_KERNEL);
-	if (r) {
-		dev_err(&ar2->intf[0]->dev,
+	अगर (r) अणु
+		dev_err(&ar2->पूर्णांकf[0]->dev,
 			"%s(): usb_submit_urb() = %d\n", __func__, r);
-		return r;
-	}
+		वापस r;
+	पूर्ण
 	r = usb_submit_urb(ar2->urb[1], GFP_KERNEL);
-	if (r) {
-		usb_kill_urb(ar2->urb[0]);
-		dev_err(&ar2->intf[1]->dev,
+	अगर (r) अणु
+		usb_समाप्त_urb(ar2->urb[0]);
+		dev_err(&ar2->पूर्णांकf[1]->dev,
 			"%s(): usb_submit_urb() = %d\n", __func__, r);
-		return r;
-	}
+		वापस r;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void ati_remote2_kill_urbs(struct ati_remote2 *ar2)
-{
-	usb_kill_urb(ar2->urb[1]);
-	usb_kill_urb(ar2->urb[0]);
-}
+अटल व्योम ati_remote2_समाप्त_urbs(काष्ठा ati_remote2 *ar2)
+अणु
+	usb_समाप्त_urb(ar2->urb[1]);
+	usb_समाप्त_urb(ar2->urb[0]);
+पूर्ण
 
-static int ati_remote2_open(struct input_dev *idev)
-{
-	struct ati_remote2 *ar2 = input_get_drvdata(idev);
-	int r;
+अटल पूर्णांक ati_remote2_खोलो(काष्ठा input_dev *idev)
+अणु
+	काष्ठा ati_remote2 *ar2 = input_get_drvdata(idev);
+	पूर्णांक r;
 
-	dev_dbg(&ar2->intf[0]->dev, "%s()\n", __func__);
+	dev_dbg(&ar2->पूर्णांकf[0]->dev, "%s()\n", __func__);
 
-	r = usb_autopm_get_interface(ar2->intf[0]);
-	if (r) {
-		dev_err(&ar2->intf[0]->dev,
+	r = usb_स्वतःpm_get_पूर्णांकerface(ar2->पूर्णांकf[0]);
+	अगर (r) अणु
+		dev_err(&ar2->पूर्णांकf[0]->dev,
 			"%s(): usb_autopm_get_interface() = %d\n", __func__, r);
-		goto fail1;
-	}
+		जाओ fail1;
+	पूर्ण
 
 	mutex_lock(&ati_remote2_mutex);
 
-	if (!(ar2->flags & ATI_REMOTE2_SUSPENDED)) {
+	अगर (!(ar2->flags & ATI_REMOTE2_SUSPENDED)) अणु
 		r = ati_remote2_submit_urbs(ar2);
-		if (r)
-			goto fail2;
-	}
+		अगर (r)
+			जाओ fail2;
+	पूर्ण
 
 	ar2->flags |= ATI_REMOTE2_OPENED;
 
 	mutex_unlock(&ati_remote2_mutex);
 
-	usb_autopm_put_interface(ar2->intf[0]);
+	usb_स्वतःpm_put_पूर्णांकerface(ar2->पूर्णांकf[0]);
 
-	return 0;
+	वापस 0;
 
  fail2:
 	mutex_unlock(&ati_remote2_mutex);
-	usb_autopm_put_interface(ar2->intf[0]);
+	usb_स्वतःpm_put_पूर्णांकerface(ar2->पूर्णांकf[0]);
  fail1:
-	return r;
-}
+	वापस r;
+पूर्ण
 
-static void ati_remote2_close(struct input_dev *idev)
-{
-	struct ati_remote2 *ar2 = input_get_drvdata(idev);
+अटल व्योम ati_remote2_बंद(काष्ठा input_dev *idev)
+अणु
+	काष्ठा ati_remote2 *ar2 = input_get_drvdata(idev);
 
-	dev_dbg(&ar2->intf[0]->dev, "%s()\n", __func__);
+	dev_dbg(&ar2->पूर्णांकf[0]->dev, "%s()\n", __func__);
 
 	mutex_lock(&ati_remote2_mutex);
 
-	if (!(ar2->flags & ATI_REMOTE2_SUSPENDED))
-		ati_remote2_kill_urbs(ar2);
+	अगर (!(ar2->flags & ATI_REMOTE2_SUSPENDED))
+		ati_remote2_समाप्त_urbs(ar2);
 
 	ar2->flags &= ~ATI_REMOTE2_OPENED;
 
 	mutex_unlock(&ati_remote2_mutex);
-}
+पूर्ण
 
-static void ati_remote2_input_mouse(struct ati_remote2 *ar2)
-{
-	struct input_dev *idev = ar2->idev;
+अटल व्योम ati_remote2_input_mouse(काष्ठा ati_remote2 *ar2)
+अणु
+	काष्ठा input_dev *idev = ar2->idev;
 	u8 *data = ar2->buf[0];
-	int channel, mode;
+	पूर्णांक channel, mode;
 
 	channel = data[0] >> 4;
 
-	if (!((1 << channel) & ar2->channel_mask))
-		return;
+	अगर (!((1 << channel) & ar2->channel_mask))
+		वापस;
 
 	mode = data[0] & 0x0F;
 
-	if (mode > ATI_REMOTE2_PC) {
-		dev_err(&ar2->intf[0]->dev,
+	अगर (mode > ATI_REMOTE2_PC) अणु
+		dev_err(&ar2->पूर्णांकf[0]->dev,
 			"Unknown mode byte (%02x %02x %02x %02x)\n",
 			data[3], data[2], data[1], data[0]);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (!((1 << mode) & ar2->mode_mask))
-		return;
+	अगर (!((1 << mode) & ar2->mode_mask))
+		वापस;
 
 	input_event(idev, EV_REL, REL_X, (s8) data[1]);
 	input_event(idev, EV_REL, REL_Y, (s8) data[2]);
 	input_sync(idev);
-}
+पूर्ण
 
-static int ati_remote2_lookup(unsigned int hw_code)
-{
-	int i;
+अटल पूर्णांक ati_remote2_lookup(अचिन्हित पूर्णांक hw_code)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < ARRAY_SIZE(ati_remote2_key_table); i++)
-		if (ati_remote2_key_table[i].hw_code == hw_code)
-			return i;
+	क्रम (i = 0; i < ARRAY_SIZE(ati_remote2_key_table); i++)
+		अगर (ati_remote2_key_table[i].hw_code == hw_code)
+			वापस i;
 
-	return -1;
-}
+	वापस -1;
+पूर्ण
 
-static void ati_remote2_input_key(struct ati_remote2 *ar2)
-{
-	struct input_dev *idev = ar2->idev;
+अटल व्योम ati_remote2_input_key(काष्ठा ati_remote2 *ar2)
+अणु
+	काष्ठा input_dev *idev = ar2->idev;
 	u8 *data = ar2->buf[1];
-	int channel, mode, hw_code, index;
+	पूर्णांक channel, mode, hw_code, index;
 
 	channel = data[0] >> 4;
 
-	if (!((1 << channel) & ar2->channel_mask))
-		return;
+	अगर (!((1 << channel) & ar2->channel_mask))
+		वापस;
 
 	mode = data[0] & 0x0F;
 
-	if (mode > ATI_REMOTE2_PC) {
-		dev_err(&ar2->intf[1]->dev,
+	अगर (mode > ATI_REMOTE2_PC) अणु
+		dev_err(&ar2->पूर्णांकf[1]->dev,
 			"Unknown mode byte (%02x %02x %02x %02x)\n",
 			data[3], data[2], data[1], data[0]);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	hw_code = data[2];
-	if (hw_code == 0x3f) {
+	अगर (hw_code == 0x3f) अणु
 		/*
 		 * For some incomprehensible reason the mouse pad generates
 		 * events which look identical to the events from the last
-		 * pressed mode key. Naturally we don't want to generate key
-		 * events for the mouse pad so we filter out any subsequent
+		 * pressed mode key. Naturally we करोn't want to generate key
+		 * events क्रम the mouse pad so we filter out any subsequent
 		 * events from the same mode key.
 		 */
-		if (ar2->mode == mode)
-			return;
+		अगर (ar2->mode == mode)
+			वापस;
 
-		if (data[1] == 0)
+		अगर (data[1] == 0)
 			ar2->mode = mode;
-	}
+	पूर्ण
 
-	if (!((1 << mode) & ar2->mode_mask))
-		return;
+	अगर (!((1 << mode) & ar2->mode_mask))
+		वापस;
 
 	index = ati_remote2_lookup(hw_code);
-	if (index < 0) {
-		dev_err(&ar2->intf[1]->dev,
+	अगर (index < 0) अणु
+		dev_err(&ar2->पूर्णांकf[1]->dev,
 			"Unknown code byte (%02x %02x %02x %02x)\n",
 			data[3], data[2], data[1], data[0]);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	switch (data[1]) {
-	case 0:	/* release */
-		break;
-	case 1:	/* press */
-		ar2->jiffies = jiffies + msecs_to_jiffies(idev->rep[REP_DELAY]);
-		break;
-	case 2:	/* repeat */
+	चयन (data[1]) अणु
+	हाल 0:	/* release */
+		अवरोध;
+	हाल 1:	/* press */
+		ar2->jअगरfies = jअगरfies + msecs_to_jअगरfies(idev->rep[REP_DELAY]);
+		अवरोध;
+	हाल 2:	/* repeat */
 
-		/* No repeat for mouse buttons. */
-		if (ar2->keycode[mode][index] == BTN_LEFT ||
+		/* No repeat क्रम mouse buttons. */
+		अगर (ar2->keycode[mode][index] == BTN_LEFT ||
 		    ar2->keycode[mode][index] == BTN_RIGHT)
-			return;
+			वापस;
 
-		if (!time_after_eq(jiffies, ar2->jiffies))
-			return;
+		अगर (!समय_after_eq(jअगरfies, ar2->jअगरfies))
+			वापस;
 
-		ar2->jiffies = jiffies + msecs_to_jiffies(idev->rep[REP_PERIOD]);
-		break;
-	default:
-		dev_err(&ar2->intf[1]->dev,
+		ar2->jअगरfies = jअगरfies + msecs_to_jअगरfies(idev->rep[REP_PERIOD]);
+		अवरोध;
+	शेष:
+		dev_err(&ar2->पूर्णांकf[1]->dev,
 			"Unknown state byte (%02x %02x %02x %02x)\n",
 			data[3], data[2], data[1], data[0]);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	input_event(idev, EV_KEY, ar2->keycode[mode][index], data[1]);
 	input_sync(idev);
-}
+पूर्ण
 
-static void ati_remote2_complete_mouse(struct urb *urb)
-{
-	struct ati_remote2 *ar2 = urb->context;
-	int r;
+अटल व्योम ati_remote2_complete_mouse(काष्ठा urb *urb)
+अणु
+	काष्ठा ati_remote2 *ar2 = urb->context;
+	पूर्णांक r;
 
-	switch (urb->status) {
-	case 0:
+	चयन (urb->status) अणु
+	हाल 0:
 		usb_mark_last_busy(ar2->udev);
 		ati_remote2_input_mouse(ar2);
-		break;
-	case -ENOENT:
-	case -EILSEQ:
-	case -ECONNRESET:
-	case -ESHUTDOWN:
-		dev_dbg(&ar2->intf[0]->dev,
+		अवरोध;
+	हाल -ENOENT:
+	हाल -EILSEQ:
+	हाल -ECONNRESET:
+	हाल -ESHUTDOWN:
+		dev_dbg(&ar2->पूर्णांकf[0]->dev,
 			"%s(): urb status = %d\n", __func__, urb->status);
-		return;
-	default:
+		वापस;
+	शेष:
 		usb_mark_last_busy(ar2->udev);
-		dev_err(&ar2->intf[0]->dev,
+		dev_err(&ar2->पूर्णांकf[0]->dev,
 			"%s(): urb status = %d\n", __func__, urb->status);
-	}
+	पूर्ण
 
 	r = usb_submit_urb(urb, GFP_ATOMIC);
-	if (r)
-		dev_err(&ar2->intf[0]->dev,
+	अगर (r)
+		dev_err(&ar2->पूर्णांकf[0]->dev,
 			"%s(): usb_submit_urb() = %d\n", __func__, r);
-}
+पूर्ण
 
-static void ati_remote2_complete_key(struct urb *urb)
-{
-	struct ati_remote2 *ar2 = urb->context;
-	int r;
+अटल व्योम ati_remote2_complete_key(काष्ठा urb *urb)
+अणु
+	काष्ठा ati_remote2 *ar2 = urb->context;
+	पूर्णांक r;
 
-	switch (urb->status) {
-	case 0:
+	चयन (urb->status) अणु
+	हाल 0:
 		usb_mark_last_busy(ar2->udev);
 		ati_remote2_input_key(ar2);
-		break;
-	case -ENOENT:
-	case -EILSEQ:
-	case -ECONNRESET:
-	case -ESHUTDOWN:
-		dev_dbg(&ar2->intf[1]->dev,
+		अवरोध;
+	हाल -ENOENT:
+	हाल -EILSEQ:
+	हाल -ECONNRESET:
+	हाल -ESHUTDOWN:
+		dev_dbg(&ar2->पूर्णांकf[1]->dev,
 			"%s(): urb status = %d\n", __func__, urb->status);
-		return;
-	default:
+		वापस;
+	शेष:
 		usb_mark_last_busy(ar2->udev);
-		dev_err(&ar2->intf[1]->dev,
+		dev_err(&ar2->पूर्णांकf[1]->dev,
 			"%s(): urb status = %d\n", __func__, urb->status);
-	}
+	पूर्ण
 
 	r = usb_submit_urb(urb, GFP_ATOMIC);
-	if (r)
-		dev_err(&ar2->intf[1]->dev,
+	अगर (r)
+		dev_err(&ar2->पूर्णांकf[1]->dev,
 			"%s(): usb_submit_urb() = %d\n", __func__, r);
-}
+पूर्ण
 
-static int ati_remote2_getkeycode(struct input_dev *idev,
-				  struct input_keymap_entry *ke)
-{
-	struct ati_remote2 *ar2 = input_get_drvdata(idev);
-	unsigned int mode;
-	int offset;
-	unsigned int index;
-	unsigned int scancode;
+अटल पूर्णांक ati_remote2_getkeycode(काष्ठा input_dev *idev,
+				  काष्ठा input_keymap_entry *ke)
+अणु
+	काष्ठा ati_remote2 *ar2 = input_get_drvdata(idev);
+	अचिन्हित पूर्णांक mode;
+	पूर्णांक offset;
+	अचिन्हित पूर्णांक index;
+	अचिन्हित पूर्णांक scancode;
 
-	if (ke->flags & INPUT_KEYMAP_BY_INDEX) {
+	अगर (ke->flags & INPUT_KEYMAP_BY_INDEX) अणु
 		index = ke->index;
-		if (index >= ATI_REMOTE2_MODES *
+		अगर (index >= ATI_REMOTE2_MODES *
 				ARRAY_SIZE(ati_remote2_key_table))
-			return -EINVAL;
+			वापस -EINVAL;
 
 		mode = ke->index / ARRAY_SIZE(ati_remote2_key_table);
 		offset = ke->index % ARRAY_SIZE(ati_remote2_key_table);
 		scancode = (mode << 8) + ati_remote2_key_table[offset].hw_code;
-	} else {
-		if (input_scancode_to_scalar(ke, &scancode))
-			return -EINVAL;
+	पूर्ण अन्यथा अणु
+		अगर (input_scancode_to_scalar(ke, &scancode))
+			वापस -EINVAL;
 
 		mode = scancode >> 8;
-		if (mode > ATI_REMOTE2_PC)
-			return -EINVAL;
+		अगर (mode > ATI_REMOTE2_PC)
+			वापस -EINVAL;
 
 		offset = ati_remote2_lookup(scancode & 0xff);
-		if (offset < 0)
-			return -EINVAL;
+		अगर (offset < 0)
+			वापस -EINVAL;
 
 		index = mode * ARRAY_SIZE(ati_remote2_key_table) + offset;
-	}
+	पूर्ण
 
 	ke->keycode = ar2->keycode[mode][offset];
-	ke->len = sizeof(scancode);
-	memcpy(&ke->scancode, &scancode, sizeof(scancode));
+	ke->len = माप(scancode);
+	स_नकल(&ke->scancode, &scancode, माप(scancode));
 	ke->index = index;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ati_remote2_setkeycode(struct input_dev *idev,
-				  const struct input_keymap_entry *ke,
-				  unsigned int *old_keycode)
-{
-	struct ati_remote2 *ar2 = input_get_drvdata(idev);
-	unsigned int mode;
-	int offset;
-	unsigned int index;
-	unsigned int scancode;
+अटल पूर्णांक ati_remote2_setkeycode(काष्ठा input_dev *idev,
+				  स्थिर काष्ठा input_keymap_entry *ke,
+				  अचिन्हित पूर्णांक *old_keycode)
+अणु
+	काष्ठा ati_remote2 *ar2 = input_get_drvdata(idev);
+	अचिन्हित पूर्णांक mode;
+	पूर्णांक offset;
+	अचिन्हित पूर्णांक index;
+	अचिन्हित पूर्णांक scancode;
 
-	if (ke->flags & INPUT_KEYMAP_BY_INDEX) {
-		if (ke->index >= ATI_REMOTE2_MODES *
+	अगर (ke->flags & INPUT_KEYMAP_BY_INDEX) अणु
+		अगर (ke->index >= ATI_REMOTE2_MODES *
 				ARRAY_SIZE(ati_remote2_key_table))
-			return -EINVAL;
+			वापस -EINVAL;
 
 		mode = ke->index / ARRAY_SIZE(ati_remote2_key_table);
 		offset = ke->index % ARRAY_SIZE(ati_remote2_key_table);
-	} else {
-		if (input_scancode_to_scalar(ke, &scancode))
-			return -EINVAL;
+	पूर्ण अन्यथा अणु
+		अगर (input_scancode_to_scalar(ke, &scancode))
+			वापस -EINVAL;
 
 		mode = scancode >> 8;
-		if (mode > ATI_REMOTE2_PC)
-			return -EINVAL;
+		अगर (mode > ATI_REMOTE2_PC)
+			वापस -EINVAL;
 
 		offset = ati_remote2_lookup(scancode & 0xff);
-		if (offset < 0)
-			return -EINVAL;
-	}
+		अगर (offset < 0)
+			वापस -EINVAL;
+	पूर्ण
 
 	*old_keycode = ar2->keycode[mode][offset];
 	ar2->keycode[mode][offset] = ke->keycode;
 	__set_bit(ke->keycode, idev->keybit);
 
-	for (mode = 0; mode < ATI_REMOTE2_MODES; mode++) {
-		for (index = 0; index < ARRAY_SIZE(ati_remote2_key_table); index++) {
-			if (ar2->keycode[mode][index] == *old_keycode)
-				return 0;
-		}
-	}
+	क्रम (mode = 0; mode < ATI_REMOTE2_MODES; mode++) अणु
+		क्रम (index = 0; index < ARRAY_SIZE(ati_remote2_key_table); index++) अणु
+			अगर (ar2->keycode[mode][index] == *old_keycode)
+				वापस 0;
+		पूर्ण
+	पूर्ण
 
 	__clear_bit(*old_keycode, idev->keybit);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ati_remote2_input_init(struct ati_remote2 *ar2)
-{
-	struct input_dev *idev;
-	int index, mode, retval;
+अटल पूर्णांक ati_remote2_input_init(काष्ठा ati_remote2 *ar2)
+अणु
+	काष्ठा input_dev *idev;
+	पूर्णांक index, mode, retval;
 
 	idev = input_allocate_device();
-	if (!idev)
-		return -ENOMEM;
+	अगर (!idev)
+		वापस -ENOMEM;
 
 	ar2->idev = idev;
 	input_set_drvdata(idev, ar2);
@@ -582,12 +583,12 @@ static int ati_remote2_input_init(struct ati_remote2 *ar2)
 		BIT_MASK(BTN_RIGHT);
 	idev->relbit[0] = BIT_MASK(REL_X) | BIT_MASK(REL_Y);
 
-	for (mode = 0; mode < ATI_REMOTE2_MODES; mode++) {
-		for (index = 0; index < ARRAY_SIZE(ati_remote2_key_table); index++) {
+	क्रम (mode = 0; mode < ATI_REMOTE2_MODES; mode++) अणु
+		क्रम (index = 0; index < ARRAY_SIZE(ati_remote2_key_table); index++) अणु
 			ar2->keycode[mode][index] = ati_remote2_key_table[index].keycode;
 			__set_bit(ar2->keycode[mode][index], idev->keybit);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	/* AUX1-AUX4 and PC generate the same scancode. */
 	index = ati_remote2_lookup(0x3f);
@@ -605,8 +606,8 @@ static int ati_remote2_input_init(struct ati_remote2 *ar2)
 	idev->rep[REP_DELAY]  = 250;
 	idev->rep[REP_PERIOD] = 33;
 
-	idev->open = ati_remote2_open;
-	idev->close = ati_remote2_close;
+	idev->खोलो = ati_remote2_खोलो;
+	idev->बंद = ati_remote2_बंद;
 
 	idev->getkeycode = ati_remote2_getkeycode;
 	idev->setkeycode = ati_remote2_setkeycode;
@@ -617,54 +618,54 @@ static int ati_remote2_input_init(struct ati_remote2 *ar2)
 	usb_to_input_id(ar2->udev, &idev->id);
 	idev->dev.parent = &ar2->udev->dev;
 
-	retval = input_register_device(idev);
-	if (retval)
-		input_free_device(idev);
+	retval = input_रेजिस्टर_device(idev);
+	अगर (retval)
+		input_मुक्त_device(idev);
 
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
-static int ati_remote2_urb_init(struct ati_remote2 *ar2)
-{
-	struct usb_device *udev = ar2->udev;
-	int i, pipe, maxp;
+अटल पूर्णांक ati_remote2_urb_init(काष्ठा ati_remote2 *ar2)
+अणु
+	काष्ठा usb_device *udev = ar2->udev;
+	पूर्णांक i, pipe, maxp;
 
-	for (i = 0; i < 2; i++) {
+	क्रम (i = 0; i < 2; i++) अणु
 		ar2->buf[i] = usb_alloc_coherent(udev, 4, GFP_KERNEL, &ar2->buf_dma[i]);
-		if (!ar2->buf[i])
-			return -ENOMEM;
+		अगर (!ar2->buf[i])
+			वापस -ENOMEM;
 
 		ar2->urb[i] = usb_alloc_urb(0, GFP_KERNEL);
-		if (!ar2->urb[i])
-			return -ENOMEM;
+		अगर (!ar2->urb[i])
+			वापस -ENOMEM;
 
-		pipe = usb_rcvintpipe(udev, ar2->ep[i]->bEndpointAddress);
+		pipe = usb_rcvपूर्णांकpipe(udev, ar2->ep[i]->bEndpoपूर्णांकAddress);
 		maxp = usb_maxpacket(udev, pipe, usb_pipeout(pipe));
 		maxp = maxp > 4 ? 4 : maxp;
 
-		usb_fill_int_urb(ar2->urb[i], udev, pipe, ar2->buf[i], maxp,
+		usb_fill_पूर्णांक_urb(ar2->urb[i], udev, pipe, ar2->buf[i], maxp,
 				 i ? ati_remote2_complete_key : ati_remote2_complete_mouse,
 				 ar2, ar2->ep[i]->bInterval);
 		ar2->urb[i]->transfer_dma = ar2->buf_dma[i];
 		ar2->urb[i]->transfer_flags |= URB_NO_TRANSFER_DMA_MAP;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void ati_remote2_urb_cleanup(struct ati_remote2 *ar2)
-{
-	int i;
+अटल व्योम ati_remote2_urb_cleanup(काष्ठा ati_remote2 *ar2)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < 2; i++) {
-		usb_free_urb(ar2->urb[i]);
-		usb_free_coherent(ar2->udev, 4, ar2->buf[i], ar2->buf_dma[i]);
-	}
-}
+	क्रम (i = 0; i < 2; i++) अणु
+		usb_मुक्त_urb(ar2->urb[i]);
+		usb_मुक्त_coherent(ar2->udev, 4, ar2->buf[i], ar2->buf_dma[i]);
+	पूर्ण
+पूर्ण
 
-static int ati_remote2_setup(struct ati_remote2 *ar2, unsigned int ch_mask)
-{
-	int r, i, channel;
+अटल पूर्णांक ati_remote2_setup(काष्ठा ati_remote2 *ar2, अचिन्हित पूर्णांक ch_mask)
+अणु
+	पूर्णांक r, i, channel;
 
 	/*
 	 * Configure receiver to only accept input from remote "channel"
@@ -676,360 +677,360 @@ static int ati_remote2_setup(struct ati_remote2 *ar2, unsigned int ch_mask)
 	 */
 
 	channel = 0;
-	for (i = 0; i < 16; i++) {
-		if ((1 << i) & ch_mask) {
-			if (!(~(1 << i) & ch_mask))
+	क्रम (i = 0; i < 16; i++) अणु
+		अगर ((1 << i) & ch_mask) अणु
+			अगर (!(~(1 << i) & ch_mask))
 				channel = i + 1;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
 	r = usb_control_msg(ar2->udev, usb_sndctrlpipe(ar2->udev, 0),
 			    0x20,
-			    USB_DIR_OUT | USB_TYPE_VENDOR | USB_RECIP_INTERFACE,
-			    channel, 0x0, NULL, 0, USB_CTRL_SET_TIMEOUT);
-	if (r) {
+			    USB_सूची_OUT | USB_TYPE_VENDOR | USB_RECIP_INTERFACE,
+			    channel, 0x0, शून्य, 0, USB_CTRL_SET_TIMEOUT);
+	अगर (r) अणु
 		dev_err(&ar2->udev->dev, "%s - failed to set channel due to error: %d\n",
 			__func__, r);
-		return r;
-	}
+		वापस r;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static ssize_t ati_remote2_show_channel_mask(struct device *dev,
-					     struct device_attribute *attr,
-					     char *buf)
-{
-	struct usb_device *udev = to_usb_device(dev);
-	struct usb_interface *intf = usb_ifnum_to_if(udev, 0);
-	struct ati_remote2 *ar2 = usb_get_intfdata(intf);
+अटल sमाप_प्रकार ati_remote2_show_channel_mask(काष्ठा device *dev,
+					     काष्ठा device_attribute *attr,
+					     अक्षर *buf)
+अणु
+	काष्ठा usb_device *udev = to_usb_device(dev);
+	काष्ठा usb_पूर्णांकerface *पूर्णांकf = usb_अगरnum_to_अगर(udev, 0);
+	काष्ठा ati_remote2 *ar2 = usb_get_पूर्णांकfdata(पूर्णांकf);
 
-	return sprintf(buf, "0x%04x\n", ar2->channel_mask);
-}
+	वापस प्र_लिखो(buf, "0x%04x\n", ar2->channel_mask);
+पूर्ण
 
-static ssize_t ati_remote2_store_channel_mask(struct device *dev,
-					      struct device_attribute *attr,
-					      const char *buf, size_t count)
-{
-	struct usb_device *udev = to_usb_device(dev);
-	struct usb_interface *intf = usb_ifnum_to_if(udev, 0);
-	struct ati_remote2 *ar2 = usb_get_intfdata(intf);
-	unsigned int mask;
-	int r;
+अटल sमाप_प्रकार ati_remote2_store_channel_mask(काष्ठा device *dev,
+					      काष्ठा device_attribute *attr,
+					      स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	काष्ठा usb_device *udev = to_usb_device(dev);
+	काष्ठा usb_पूर्णांकerface *पूर्णांकf = usb_अगरnum_to_अगर(udev, 0);
+	काष्ठा ati_remote2 *ar2 = usb_get_पूर्णांकfdata(पूर्णांकf);
+	अचिन्हित पूर्णांक mask;
+	पूर्णांक r;
 
-	r = kstrtouint(buf, 0, &mask);
-	if (r)
-		return r;
+	r = kstrtouपूर्णांक(buf, 0, &mask);
+	अगर (r)
+		वापस r;
 
-	if (mask & ~ATI_REMOTE2_MAX_CHANNEL_MASK)
-		return -EINVAL;
+	अगर (mask & ~ATI_REMOTE2_MAX_CHANNEL_MASK)
+		वापस -EINVAL;
 
-	r = usb_autopm_get_interface(ar2->intf[0]);
-	if (r) {
-		dev_err(&ar2->intf[0]->dev,
+	r = usb_स्वतःpm_get_पूर्णांकerface(ar2->पूर्णांकf[0]);
+	अगर (r) अणु
+		dev_err(&ar2->पूर्णांकf[0]->dev,
 			"%s(): usb_autopm_get_interface() = %d\n", __func__, r);
-		return r;
-	}
+		वापस r;
+	पूर्ण
 
 	mutex_lock(&ati_remote2_mutex);
 
-	if (mask != ar2->channel_mask) {
+	अगर (mask != ar2->channel_mask) अणु
 		r = ati_remote2_setup(ar2, mask);
-		if (!r)
+		अगर (!r)
 			ar2->channel_mask = mask;
-	}
+	पूर्ण
 
 	mutex_unlock(&ati_remote2_mutex);
 
-	usb_autopm_put_interface(ar2->intf[0]);
+	usb_स्वतःpm_put_पूर्णांकerface(ar2->पूर्णांकf[0]);
 
-	return r ? r : count;
-}
+	वापस r ? r : count;
+पूर्ण
 
-static ssize_t ati_remote2_show_mode_mask(struct device *dev,
-					  struct device_attribute *attr,
-					  char *buf)
-{
-	struct usb_device *udev = to_usb_device(dev);
-	struct usb_interface *intf = usb_ifnum_to_if(udev, 0);
-	struct ati_remote2 *ar2 = usb_get_intfdata(intf);
+अटल sमाप_प्रकार ati_remote2_show_mode_mask(काष्ठा device *dev,
+					  काष्ठा device_attribute *attr,
+					  अक्षर *buf)
+अणु
+	काष्ठा usb_device *udev = to_usb_device(dev);
+	काष्ठा usb_पूर्णांकerface *पूर्णांकf = usb_अगरnum_to_अगर(udev, 0);
+	काष्ठा ati_remote2 *ar2 = usb_get_पूर्णांकfdata(पूर्णांकf);
 
-	return sprintf(buf, "0x%02x\n", ar2->mode_mask);
-}
+	वापस प्र_लिखो(buf, "0x%02x\n", ar2->mode_mask);
+पूर्ण
 
-static ssize_t ati_remote2_store_mode_mask(struct device *dev,
-					   struct device_attribute *attr,
-					   const char *buf, size_t count)
-{
-	struct usb_device *udev = to_usb_device(dev);
-	struct usb_interface *intf = usb_ifnum_to_if(udev, 0);
-	struct ati_remote2 *ar2 = usb_get_intfdata(intf);
-	unsigned int mask;
-	int err;
+अटल sमाप_प्रकार ati_remote2_store_mode_mask(काष्ठा device *dev,
+					   काष्ठा device_attribute *attr,
+					   स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	काष्ठा usb_device *udev = to_usb_device(dev);
+	काष्ठा usb_पूर्णांकerface *पूर्णांकf = usb_अगरnum_to_अगर(udev, 0);
+	काष्ठा ati_remote2 *ar2 = usb_get_पूर्णांकfdata(पूर्णांकf);
+	अचिन्हित पूर्णांक mask;
+	पूर्णांक err;
 
-	err = kstrtouint(buf, 0, &mask);
-	if (err)
-		return err;
+	err = kstrtouपूर्णांक(buf, 0, &mask);
+	अगर (err)
+		वापस err;
 
-	if (mask & ~ATI_REMOTE2_MAX_MODE_MASK)
-		return -EINVAL;
+	अगर (mask & ~ATI_REMOTE2_MAX_MODE_MASK)
+		वापस -EINVAL;
 
 	ar2->mode_mask = mask;
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static DEVICE_ATTR(channel_mask, 0644, ati_remote2_show_channel_mask,
+अटल DEVICE_ATTR(channel_mask, 0644, ati_remote2_show_channel_mask,
 		   ati_remote2_store_channel_mask);
 
-static DEVICE_ATTR(mode_mask, 0644, ati_remote2_show_mode_mask,
+अटल DEVICE_ATTR(mode_mask, 0644, ati_remote2_show_mode_mask,
 		   ati_remote2_store_mode_mask);
 
-static struct attribute *ati_remote2_attrs[] = {
+अटल काष्ठा attribute *ati_remote2_attrs[] = अणु
 	&dev_attr_channel_mask.attr,
 	&dev_attr_mode_mask.attr,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-static struct attribute_group ati_remote2_attr_group = {
+अटल काष्ठा attribute_group ati_remote2_attr_group = अणु
 	.attrs = ati_remote2_attrs,
-};
+पूर्ण;
 
-static int ati_remote2_probe(struct usb_interface *interface, const struct usb_device_id *id)
-{
-	struct usb_device *udev = interface_to_usbdev(interface);
-	struct usb_host_interface *alt = interface->cur_altsetting;
-	struct ati_remote2 *ar2;
-	int r;
+अटल पूर्णांक ati_remote2_probe(काष्ठा usb_पूर्णांकerface *पूर्णांकerface, स्थिर काष्ठा usb_device_id *id)
+अणु
+	काष्ठा usb_device *udev = पूर्णांकerface_to_usbdev(पूर्णांकerface);
+	काष्ठा usb_host_पूर्णांकerface *alt = पूर्णांकerface->cur_altsetting;
+	काष्ठा ati_remote2 *ar2;
+	पूर्णांक r;
 
-	if (alt->desc.bInterfaceNumber)
-		return -ENODEV;
+	अगर (alt->desc.bInterfaceNumber)
+		वापस -ENODEV;
 
-	ar2 = kzalloc(sizeof (struct ati_remote2), GFP_KERNEL);
-	if (!ar2)
-		return -ENOMEM;
+	ar2 = kzalloc(माप (काष्ठा ati_remote2), GFP_KERNEL);
+	अगर (!ar2)
+		वापस -ENOMEM;
 
 	ar2->udev = udev;
 
-	/* Sanity check, first interface must have an endpoint */
-	if (alt->desc.bNumEndpoints < 1 || !alt->endpoint) {
-		dev_err(&interface->dev,
+	/* Sanity check, first पूर्णांकerface must have an endpoपूर्णांक */
+	अगर (alt->desc.bNumEndpoपूर्णांकs < 1 || !alt->endpoपूर्णांक) अणु
+		dev_err(&पूर्णांकerface->dev,
 			"%s(): interface 0 must have an endpoint\n", __func__);
 		r = -ENODEV;
-		goto fail1;
-	}
-	ar2->intf[0] = interface;
-	ar2->ep[0] = &alt->endpoint[0].desc;
+		जाओ fail1;
+	पूर्ण
+	ar2->पूर्णांकf[0] = पूर्णांकerface;
+	ar2->ep[0] = &alt->endpoपूर्णांक[0].desc;
 
-	/* Sanity check, the device must have two interfaces */
-	ar2->intf[1] = usb_ifnum_to_if(udev, 1);
-	if ((udev->actconfig->desc.bNumInterfaces < 2) || !ar2->intf[1]) {
-		dev_err(&interface->dev, "%s(): need 2 interfaces, found %d\n",
+	/* Sanity check, the device must have two पूर्णांकerfaces */
+	ar2->पूर्णांकf[1] = usb_अगरnum_to_अगर(udev, 1);
+	अगर ((udev->actconfig->desc.bNumInterfaces < 2) || !ar2->पूर्णांकf[1]) अणु
+		dev_err(&पूर्णांकerface->dev, "%s(): need 2 interfaces, found %d\n",
 			__func__, udev->actconfig->desc.bNumInterfaces);
 		r = -ENODEV;
-		goto fail1;
-	}
+		जाओ fail1;
+	पूर्ण
 
-	r = usb_driver_claim_interface(&ati_remote2_driver, ar2->intf[1], ar2);
-	if (r)
-		goto fail1;
+	r = usb_driver_claim_पूर्णांकerface(&ati_remote2_driver, ar2->पूर्णांकf[1], ar2);
+	अगर (r)
+		जाओ fail1;
 
-	/* Sanity check, second interface must have an endpoint */
-	alt = ar2->intf[1]->cur_altsetting;
-	if (alt->desc.bNumEndpoints < 1 || !alt->endpoint) {
-		dev_err(&interface->dev,
+	/* Sanity check, second पूर्णांकerface must have an endpoपूर्णांक */
+	alt = ar2->पूर्णांकf[1]->cur_altsetting;
+	अगर (alt->desc.bNumEndpoपूर्णांकs < 1 || !alt->endpoपूर्णांक) अणु
+		dev_err(&पूर्णांकerface->dev,
 			"%s(): interface 1 must have an endpoint\n", __func__);
 		r = -ENODEV;
-		goto fail2;
-	}
-	ar2->ep[1] = &alt->endpoint[0].desc;
+		जाओ fail2;
+	पूर्ण
+	ar2->ep[1] = &alt->endpoपूर्णांक[0].desc;
 
 	r = ati_remote2_urb_init(ar2);
-	if (r)
-		goto fail3;
+	अगर (r)
+		जाओ fail3;
 
 	ar2->channel_mask = channel_mask;
 	ar2->mode_mask = mode_mask;
 
 	r = ati_remote2_setup(ar2, ar2->channel_mask);
-	if (r)
-		goto fail3;
+	अगर (r)
+		जाओ fail3;
 
-	usb_make_path(udev, ar2->phys, sizeof(ar2->phys));
-	strlcat(ar2->phys, "/input0", sizeof(ar2->phys));
+	usb_make_path(udev, ar2->phys, माप(ar2->phys));
+	strlcat(ar2->phys, "/input0", माप(ar2->phys));
 
-	strlcat(ar2->name, "ATI Remote Wonder II", sizeof(ar2->name));
+	strlcat(ar2->name, "ATI Remote Wonder II", माप(ar2->name));
 
 	r = sysfs_create_group(&udev->dev.kobj, &ati_remote2_attr_group);
-	if (r)
-		goto fail3;
+	अगर (r)
+		जाओ fail3;
 
 	r = ati_remote2_input_init(ar2);
-	if (r)
-		goto fail4;
+	अगर (r)
+		जाओ fail4;
 
-	usb_set_intfdata(interface, ar2);
+	usb_set_पूर्णांकfdata(पूर्णांकerface, ar2);
 
-	interface->needs_remote_wakeup = 1;
+	पूर्णांकerface->needs_remote_wakeup = 1;
 
-	return 0;
+	वापस 0;
 
  fail4:
-	sysfs_remove_group(&udev->dev.kobj, &ati_remote2_attr_group);
+	sysfs_हटाओ_group(&udev->dev.kobj, &ati_remote2_attr_group);
  fail3:
 	ati_remote2_urb_cleanup(ar2);
  fail2:
-	usb_driver_release_interface(&ati_remote2_driver, ar2->intf[1]);
+	usb_driver_release_पूर्णांकerface(&ati_remote2_driver, ar2->पूर्णांकf[1]);
  fail1:
-	kfree(ar2);
+	kमुक्त(ar2);
 
-	return r;
-}
+	वापस r;
+पूर्ण
 
-static void ati_remote2_disconnect(struct usb_interface *interface)
-{
-	struct ati_remote2 *ar2;
-	struct usb_host_interface *alt = interface->cur_altsetting;
+अटल व्योम ati_remote2_disconnect(काष्ठा usb_पूर्णांकerface *पूर्णांकerface)
+अणु
+	काष्ठा ati_remote2 *ar2;
+	काष्ठा usb_host_पूर्णांकerface *alt = पूर्णांकerface->cur_altsetting;
 
-	if (alt->desc.bInterfaceNumber)
-		return;
+	अगर (alt->desc.bInterfaceNumber)
+		वापस;
 
-	ar2 = usb_get_intfdata(interface);
-	usb_set_intfdata(interface, NULL);
+	ar2 = usb_get_पूर्णांकfdata(पूर्णांकerface);
+	usb_set_पूर्णांकfdata(पूर्णांकerface, शून्य);
 
-	input_unregister_device(ar2->idev);
+	input_unरेजिस्टर_device(ar2->idev);
 
-	sysfs_remove_group(&ar2->udev->dev.kobj, &ati_remote2_attr_group);
+	sysfs_हटाओ_group(&ar2->udev->dev.kobj, &ati_remote2_attr_group);
 
 	ati_remote2_urb_cleanup(ar2);
 
-	usb_driver_release_interface(&ati_remote2_driver, ar2->intf[1]);
+	usb_driver_release_पूर्णांकerface(&ati_remote2_driver, ar2->पूर्णांकf[1]);
 
-	kfree(ar2);
-}
+	kमुक्त(ar2);
+पूर्ण
 
-static int ati_remote2_suspend(struct usb_interface *interface,
+अटल पूर्णांक ati_remote2_suspend(काष्ठा usb_पूर्णांकerface *पूर्णांकerface,
 			       pm_message_t message)
-{
-	struct ati_remote2 *ar2;
-	struct usb_host_interface *alt = interface->cur_altsetting;
+अणु
+	काष्ठा ati_remote2 *ar2;
+	काष्ठा usb_host_पूर्णांकerface *alt = पूर्णांकerface->cur_altsetting;
 
-	if (alt->desc.bInterfaceNumber)
-		return 0;
+	अगर (alt->desc.bInterfaceNumber)
+		वापस 0;
 
-	ar2 = usb_get_intfdata(interface);
+	ar2 = usb_get_पूर्णांकfdata(पूर्णांकerface);
 
-	dev_dbg(&ar2->intf[0]->dev, "%s()\n", __func__);
+	dev_dbg(&ar2->पूर्णांकf[0]->dev, "%s()\n", __func__);
 
 	mutex_lock(&ati_remote2_mutex);
 
-	if (ar2->flags & ATI_REMOTE2_OPENED)
-		ati_remote2_kill_urbs(ar2);
+	अगर (ar2->flags & ATI_REMOTE2_OPENED)
+		ati_remote2_समाप्त_urbs(ar2);
 
 	ar2->flags |= ATI_REMOTE2_SUSPENDED;
 
 	mutex_unlock(&ati_remote2_mutex);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ati_remote2_resume(struct usb_interface *interface)
-{
-	struct ati_remote2 *ar2;
-	struct usb_host_interface *alt = interface->cur_altsetting;
-	int r = 0;
+अटल पूर्णांक ati_remote2_resume(काष्ठा usb_पूर्णांकerface *पूर्णांकerface)
+अणु
+	काष्ठा ati_remote2 *ar2;
+	काष्ठा usb_host_पूर्णांकerface *alt = पूर्णांकerface->cur_altsetting;
+	पूर्णांक r = 0;
 
-	if (alt->desc.bInterfaceNumber)
-		return 0;
+	अगर (alt->desc.bInterfaceNumber)
+		वापस 0;
 
-	ar2 = usb_get_intfdata(interface);
+	ar2 = usb_get_पूर्णांकfdata(पूर्णांकerface);
 
-	dev_dbg(&ar2->intf[0]->dev, "%s()\n", __func__);
+	dev_dbg(&ar2->पूर्णांकf[0]->dev, "%s()\n", __func__);
 
 	mutex_lock(&ati_remote2_mutex);
 
-	if (ar2->flags & ATI_REMOTE2_OPENED)
+	अगर (ar2->flags & ATI_REMOTE2_OPENED)
 		r = ati_remote2_submit_urbs(ar2);
 
-	if (!r)
+	अगर (!r)
 		ar2->flags &= ~ATI_REMOTE2_SUSPENDED;
 
 	mutex_unlock(&ati_remote2_mutex);
 
-	return r;
-}
+	वापस r;
+पूर्ण
 
-static int ati_remote2_reset_resume(struct usb_interface *interface)
-{
-	struct ati_remote2 *ar2;
-	struct usb_host_interface *alt = interface->cur_altsetting;
-	int r = 0;
+अटल पूर्णांक ati_remote2_reset_resume(काष्ठा usb_पूर्णांकerface *पूर्णांकerface)
+अणु
+	काष्ठा ati_remote2 *ar2;
+	काष्ठा usb_host_पूर्णांकerface *alt = पूर्णांकerface->cur_altsetting;
+	पूर्णांक r = 0;
 
-	if (alt->desc.bInterfaceNumber)
-		return 0;
+	अगर (alt->desc.bInterfaceNumber)
+		वापस 0;
 
-	ar2 = usb_get_intfdata(interface);
+	ar2 = usb_get_पूर्णांकfdata(पूर्णांकerface);
 
-	dev_dbg(&ar2->intf[0]->dev, "%s()\n", __func__);
+	dev_dbg(&ar2->पूर्णांकf[0]->dev, "%s()\n", __func__);
 
 	mutex_lock(&ati_remote2_mutex);
 
 	r = ati_remote2_setup(ar2, ar2->channel_mask);
-	if (r)
-		goto out;
+	अगर (r)
+		जाओ out;
 
-	if (ar2->flags & ATI_REMOTE2_OPENED)
+	अगर (ar2->flags & ATI_REMOTE2_OPENED)
 		r = ati_remote2_submit_urbs(ar2);
 
-	if (!r)
+	अगर (!r)
 		ar2->flags &= ~ATI_REMOTE2_SUSPENDED;
 
  out:
 	mutex_unlock(&ati_remote2_mutex);
 
-	return r;
-}
+	वापस r;
+पूर्ण
 
-static int ati_remote2_pre_reset(struct usb_interface *interface)
-{
-	struct ati_remote2 *ar2;
-	struct usb_host_interface *alt = interface->cur_altsetting;
+अटल पूर्णांक ati_remote2_pre_reset(काष्ठा usb_पूर्णांकerface *पूर्णांकerface)
+अणु
+	काष्ठा ati_remote2 *ar2;
+	काष्ठा usb_host_पूर्णांकerface *alt = पूर्णांकerface->cur_altsetting;
 
-	if (alt->desc.bInterfaceNumber)
-		return 0;
+	अगर (alt->desc.bInterfaceNumber)
+		वापस 0;
 
-	ar2 = usb_get_intfdata(interface);
+	ar2 = usb_get_पूर्णांकfdata(पूर्णांकerface);
 
-	dev_dbg(&ar2->intf[0]->dev, "%s()\n", __func__);
+	dev_dbg(&ar2->पूर्णांकf[0]->dev, "%s()\n", __func__);
 
 	mutex_lock(&ati_remote2_mutex);
 
-	if (ar2->flags == ATI_REMOTE2_OPENED)
-		ati_remote2_kill_urbs(ar2);
+	अगर (ar2->flags == ATI_REMOTE2_OPENED)
+		ati_remote2_समाप्त_urbs(ar2);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ati_remote2_post_reset(struct usb_interface *interface)
-{
-	struct ati_remote2 *ar2;
-	struct usb_host_interface *alt = interface->cur_altsetting;
-	int r = 0;
+अटल पूर्णांक ati_remote2_post_reset(काष्ठा usb_पूर्णांकerface *पूर्णांकerface)
+अणु
+	काष्ठा ati_remote2 *ar2;
+	काष्ठा usb_host_पूर्णांकerface *alt = पूर्णांकerface->cur_altsetting;
+	पूर्णांक r = 0;
 
-	if (alt->desc.bInterfaceNumber)
-		return 0;
+	अगर (alt->desc.bInterfaceNumber)
+		वापस 0;
 
-	ar2 = usb_get_intfdata(interface);
+	ar2 = usb_get_पूर्णांकfdata(पूर्णांकerface);
 
-	dev_dbg(&ar2->intf[0]->dev, "%s()\n", __func__);
+	dev_dbg(&ar2->पूर्णांकf[0]->dev, "%s()\n", __func__);
 
-	if (ar2->flags == ATI_REMOTE2_OPENED)
+	अगर (ar2->flags == ATI_REMOTE2_OPENED)
 		r = ati_remote2_submit_urbs(ar2);
 
 	mutex_unlock(&ati_remote2_mutex);
 
-	return r;
-}
+	वापस r;
+पूर्ण
 
 module_usb_driver(ati_remote2_driver);

@@ -1,292 +1,293 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * HD-audio codec driver binding
  * Copyright (c) Takashi Iwai <tiwai@suse.de>
  */
 
-#include <linux/init.h>
-#include <linux/slab.h>
-#include <linux/mutex.h>
-#include <linux/module.h>
-#include <linux/export.h>
-#include <linux/pm.h>
-#include <linux/pm_runtime.h>
-#include <sound/core.h>
-#include <sound/hda_codec.h>
-#include "hda_local.h"
+#समावेश <linux/init.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/module.h>
+#समावेश <linux/export.h>
+#समावेश <linux/pm.h>
+#समावेश <linux/pm_runसमय.स>
+#समावेश <sound/core.h>
+#समावेश <sound/hda_codec.h>
+#समावेश "hda_local.h"
 
 /*
  * find a matching codec id
  */
-static int hda_codec_match(struct hdac_device *dev, struct hdac_driver *drv)
-{
-	struct hda_codec *codec = container_of(dev, struct hda_codec, core);
-	struct hda_codec_driver *driver =
-		container_of(drv, struct hda_codec_driver, core);
-	const struct hda_device_id *list;
-	/* check probe_id instead of vendor_id if set */
-	u32 id = codec->probe_id ? codec->probe_id : codec->core.vendor_id;
+अटल पूर्णांक hda_codec_match(काष्ठा hdac_device *dev, काष्ठा hdac_driver *drv)
+अणु
+	काष्ठा hda_codec *codec = container_of(dev, काष्ठा hda_codec, core);
+	काष्ठा hda_codec_driver *driver =
+		container_of(drv, काष्ठा hda_codec_driver, core);
+	स्थिर काष्ठा hda_device_id *list;
+	/* check probe_id instead of venकरोr_id अगर set */
+	u32 id = codec->probe_id ? codec->probe_id : codec->core.venकरोr_id;
 	u32 rev_id = codec->core.revision_id;
 
-	for (list = driver->id; list->vendor_id; list++) {
-		if (list->vendor_id == id &&
-		    (!list->rev_id || list->rev_id == rev_id)) {
+	क्रम (list = driver->id; list->venकरोr_id; list++) अणु
+		अगर (list->venकरोr_id == id &&
+		    (!list->rev_id || list->rev_id == rev_id)) अणु
 			codec->preset = list;
-			return 1;
-		}
-	}
-	return 0;
-}
+			वापस 1;
+		पूर्ण
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /* process an unsolicited event */
-static void hda_codec_unsol_event(struct hdac_device *dev, unsigned int ev)
-{
-	struct hda_codec *codec = container_of(dev, struct hda_codec, core);
+अटल व्योम hda_codec_unsol_event(काष्ठा hdac_device *dev, अचिन्हित पूर्णांक ev)
+अणु
+	काष्ठा hda_codec *codec = container_of(dev, काष्ठा hda_codec, core);
 
-	/* ignore unsol events during shutdown */
-	if (codec->bus->shutdown)
-		return;
+	/* ignore unsol events during shutकरोwn */
+	अगर (codec->bus->shutकरोwn)
+		वापस;
 
-	/* ignore unsol events during system suspend/resume */
-	if (codec->core.dev.power.power_state.event != PM_EVENT_ON)
-		return;
+	/* ignore unsol events during प्रणाली suspend/resume */
+	अगर (codec->core.dev.घातer.घातer_state.event != PM_EVENT_ON)
+		वापस;
 
-	if (codec->patch_ops.unsol_event)
+	अगर (codec->patch_ops.unsol_event)
 		codec->patch_ops.unsol_event(codec, ev);
-}
+पूर्ण
 
 /**
  * snd_hda_codec_set_name - set the codec name
  * @codec: the HDA codec
  * @name: name string to set
  */
-int snd_hda_codec_set_name(struct hda_codec *codec, const char *name)
-{
-	int err;
+पूर्णांक snd_hda_codec_set_name(काष्ठा hda_codec *codec, स्थिर अक्षर *name)
+अणु
+	पूर्णांक err;
 
-	if (!name)
-		return 0;
+	अगर (!name)
+		वापस 0;
 	err = snd_hdac_device_set_chip_name(&codec->core, name);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
 	/* update the mixer name */
-	if (!*codec->card->mixername ||
-	    codec->bus->mixer_assigned >= codec->core.addr) {
-		snprintf(codec->card->mixername,
-			 sizeof(codec->card->mixername), "%s %s",
-			 codec->core.vendor_name, codec->core.chip_name);
-		codec->bus->mixer_assigned = codec->core.addr;
-	}
+	अगर (!*codec->card->mixername ||
+	    codec->bus->mixer_asचिन्हित >= codec->core.addr) अणु
+		snम_लिखो(codec->card->mixername,
+			 माप(codec->card->mixername), "%s %s",
+			 codec->core.venकरोr_name, codec->core.chip_name);
+		codec->bus->mixer_asचिन्हित = codec->core.addr;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(snd_hda_codec_set_name);
 
-static int hda_codec_driver_probe(struct device *dev)
-{
-	struct hda_codec *codec = dev_to_hda_codec(dev);
-	struct module *owner = dev->driver->owner;
+अटल पूर्णांक hda_codec_driver_probe(काष्ठा device *dev)
+अणु
+	काष्ठा hda_codec *codec = dev_to_hda_codec(dev);
+	काष्ठा module *owner = dev->driver->owner;
 	hda_codec_patch_t patch;
-	int err;
+	पूर्णांक err;
 
-	if (codec->bus->core.ext_ops) {
-		if (WARN_ON(!codec->bus->core.ext_ops->hdev_attach))
-			return -EINVAL;
-		return codec->bus->core.ext_ops->hdev_attach(&codec->core);
-	}
+	अगर (codec->bus->core.ext_ops) अणु
+		अगर (WARN_ON(!codec->bus->core.ext_ops->hdev_attach))
+			वापस -EINVAL;
+		वापस codec->bus->core.ext_ops->hdev_attach(&codec->core);
+	पूर्ण
 
-	if (WARN_ON(!codec->preset))
-		return -EINVAL;
+	अगर (WARN_ON(!codec->preset))
+		वापस -EINVAL;
 
 	err = snd_hda_codec_set_name(codec, codec->preset->name);
-	if (err < 0)
-		goto error;
+	अगर (err < 0)
+		जाओ error;
 	err = snd_hdac_regmap_init(&codec->core);
-	if (err < 0)
-		goto error;
+	अगर (err < 0)
+		जाओ error;
 
-	if (!try_module_get(owner)) {
+	अगर (!try_module_get(owner)) अणु
 		err = -EINVAL;
-		goto error;
-	}
+		जाओ error;
+	पूर्ण
 
 	patch = (hda_codec_patch_t)codec->preset->driver_data;
-	if (patch) {
+	अगर (patch) अणु
 		err = patch(codec);
-		if (err < 0)
-			goto error_module_put;
-	}
+		अगर (err < 0)
+			जाओ error_module_put;
+	पूर्ण
 
 	err = snd_hda_codec_build_pcms(codec);
-	if (err < 0)
-		goto error_module;
+	अगर (err < 0)
+		जाओ error_module;
 	err = snd_hda_codec_build_controls(codec);
-	if (err < 0)
-		goto error_module;
-	/* only register after the bus probe finished; otherwise it's racy */
-	if (!codec->bus->bus_probing && codec->card->registered) {
-		err = snd_card_register(codec->card);
-		if (err < 0)
-			goto error_module;
-		snd_hda_codec_register(codec);
-	}
+	अगर (err < 0)
+		जाओ error_module;
+	/* only रेजिस्टर after the bus probe finished; otherwise it's racy */
+	अगर (!codec->bus->bus_probing && codec->card->रेजिस्टरed) अणु
+		err = snd_card_रेजिस्टर(codec->card);
+		अगर (err < 0)
+			जाओ error_module;
+		snd_hda_codec_रेजिस्टर(codec);
+	पूर्ण
 
 	codec->core.lazy_cache = true;
-	return 0;
+	वापस 0;
 
  error_module:
-	if (codec->patch_ops.free)
-		codec->patch_ops.free(codec);
+	अगर (codec->patch_ops.मुक्त)
+		codec->patch_ops.मुक्त(codec);
  error_module_put:
 	module_put(owner);
 
  error:
-	snd_hda_codec_cleanup_for_unbind(codec);
-	return err;
-}
+	snd_hda_codec_cleanup_क्रम_unbind(codec);
+	वापस err;
+पूर्ण
 
-static int hda_codec_driver_remove(struct device *dev)
-{
-	struct hda_codec *codec = dev_to_hda_codec(dev);
+अटल पूर्णांक hda_codec_driver_हटाओ(काष्ठा device *dev)
+अणु
+	काष्ठा hda_codec *codec = dev_to_hda_codec(dev);
 
-	if (codec->bus->core.ext_ops) {
-		if (WARN_ON(!codec->bus->core.ext_ops->hdev_detach))
-			return -EINVAL;
-		return codec->bus->core.ext_ops->hdev_detach(&codec->core);
-	}
+	अगर (codec->bus->core.ext_ops) अणु
+		अगर (WARN_ON(!codec->bus->core.ext_ops->hdev_detach))
+			वापस -EINVAL;
+		वापस codec->bus->core.ext_ops->hdev_detach(&codec->core);
+	पूर्ण
 
-	if (codec->patch_ops.free)
-		codec->patch_ops.free(codec);
-	snd_hda_codec_cleanup_for_unbind(codec);
+	अगर (codec->patch_ops.मुक्त)
+		codec->patch_ops.मुक्त(codec);
+	snd_hda_codec_cleanup_क्रम_unbind(codec);
 	module_put(dev->driver->owner);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void hda_codec_driver_shutdown(struct device *dev)
-{
-	struct hda_codec *codec = dev_to_hda_codec(dev);
+अटल व्योम hda_codec_driver_shutकरोwn(काष्ठा device *dev)
+अणु
+	काष्ठा hda_codec *codec = dev_to_hda_codec(dev);
 
-	if (!pm_runtime_suspended(dev) && codec->patch_ops.reboot_notify)
-		codec->patch_ops.reboot_notify(codec);
-}
+	अगर (!pm_runसमय_suspended(dev) && codec->patch_ops.reboot_notअगरy)
+		codec->patch_ops.reboot_notअगरy(codec);
+पूर्ण
 
-int __hda_codec_driver_register(struct hda_codec_driver *drv, const char *name,
-			       struct module *owner)
-{
+पूर्णांक __hda_codec_driver_रेजिस्टर(काष्ठा hda_codec_driver *drv, स्थिर अक्षर *name,
+			       काष्ठा module *owner)
+अणु
 	drv->core.driver.name = name;
 	drv->core.driver.owner = owner;
 	drv->core.driver.bus = &snd_hda_bus_type;
 	drv->core.driver.probe = hda_codec_driver_probe;
-	drv->core.driver.remove = hda_codec_driver_remove;
-	drv->core.driver.shutdown = hda_codec_driver_shutdown;
+	drv->core.driver.हटाओ = hda_codec_driver_हटाओ;
+	drv->core.driver.shutकरोwn = hda_codec_driver_shutकरोwn;
 	drv->core.driver.pm = &hda_codec_driver_pm;
 	drv->core.type = HDA_DEV_LEGACY;
 	drv->core.match = hda_codec_match;
 	drv->core.unsol_event = hda_codec_unsol_event;
-	return driver_register(&drv->core.driver);
-}
-EXPORT_SYMBOL_GPL(__hda_codec_driver_register);
+	वापस driver_रेजिस्टर(&drv->core.driver);
+पूर्ण
+EXPORT_SYMBOL_GPL(__hda_codec_driver_रेजिस्टर);
 
-void hda_codec_driver_unregister(struct hda_codec_driver *drv)
-{
-	driver_unregister(&drv->core.driver);
-}
-EXPORT_SYMBOL_GPL(hda_codec_driver_unregister);
+व्योम hda_codec_driver_unरेजिस्टर(काष्ठा hda_codec_driver *drv)
+अणु
+	driver_unरेजिस्टर(&drv->core.driver);
+पूर्ण
+EXPORT_SYMBOL_GPL(hda_codec_driver_unरेजिस्टर);
 
-static inline bool codec_probed(struct hda_codec *codec)
-{
-	return device_attach(hda_codec_dev(codec)) > 0 && codec->preset;
-}
+अटल अंतरभूत bool codec_probed(काष्ठा hda_codec *codec)
+अणु
+	वापस device_attach(hda_codec_dev(codec)) > 0 && codec->preset;
+पूर्ण
 
-/* try to auto-load codec module */
-static void request_codec_module(struct hda_codec *codec)
-{
-#ifdef MODULE
-	char modalias[32];
-	const char *mod = NULL;
+/* try to स्वतः-load codec module */
+अटल व्योम request_codec_module(काष्ठा hda_codec *codec)
+अणु
+#अगर_घोषित MODULE
+	अक्षर modalias[32];
+	स्थिर अक्षर *mod = शून्य;
 
-	switch (codec->probe_id) {
-	case HDA_CODEC_ID_GENERIC_HDMI:
-#if IS_MODULE(CONFIG_SND_HDA_CODEC_HDMI)
+	चयन (codec->probe_id) अणु
+	हाल HDA_CODEC_ID_GENERIC_HDMI:
+#अगर IS_MODULE(CONFIG_SND_HDA_CODEC_HDMI)
 		mod = "snd-hda-codec-hdmi";
-#endif
-		break;
-	case HDA_CODEC_ID_GENERIC:
-#if IS_MODULE(CONFIG_SND_HDA_GENERIC)
+#पूर्ण_अगर
+		अवरोध;
+	हाल HDA_CODEC_ID_GENERIC:
+#अगर IS_MODULE(CONFIG_SND_HDA_GENERIC)
 		mod = "snd-hda-codec-generic";
-#endif
-		break;
-	default:
-		snd_hdac_codec_modalias(&codec->core, modalias, sizeof(modalias));
+#पूर्ण_अगर
+		अवरोध;
+	शेष:
+		snd_hdac_codec_modalias(&codec->core, modalias, माप(modalias));
 		mod = modalias;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	if (mod)
+	अगर (mod)
 		request_module(mod);
-#endif /* MODULE */
-}
+#पूर्ण_अगर /* MODULE */
+पूर्ण
 
-/* try to auto-load and bind the codec module */
-static void codec_bind_module(struct hda_codec *codec)
-{
-#ifdef MODULE
+/* try to स्वतः-load and bind the codec module */
+अटल व्योम codec_bind_module(काष्ठा hda_codec *codec)
+अणु
+#अगर_घोषित MODULE
 	request_codec_module(codec);
-	if (codec_probed(codec))
-		return;
-#endif
-}
+	अगर (codec_probed(codec))
+		वापस;
+#पूर्ण_अगर
+पूर्ण
 
-#if IS_ENABLED(CONFIG_SND_HDA_CODEC_HDMI)
-/* if all audio out widgets are digital, let's assume the codec as a HDMI/DP */
-static bool is_likely_hdmi_codec(struct hda_codec *codec)
-{
+#अगर IS_ENABLED(CONFIG_SND_HDA_CODEC_HDMI)
+/* अगर all audio out widमाला_लो are digital, let's assume the codec as a HDMI/DP */
+अटल bool is_likely_hdmi_codec(काष्ठा hda_codec *codec)
+अणु
 	hda_nid_t nid;
 
-	for_each_hda_codec_node(nid, codec) {
-		unsigned int wcaps = get_wcaps(codec, nid);
-		switch (get_wcaps_type(wcaps)) {
-		case AC_WID_AUD_IN:
-			return false; /* HDMI parser supports only HDMI out */
-		case AC_WID_AUD_OUT:
-			if (!(wcaps & AC_WCAP_DIGITAL))
-				return false;
-			break;
-		}
-	}
-	return true;
-}
-#else
+	क्रम_each_hda_codec_node(nid, codec) अणु
+		अचिन्हित पूर्णांक wcaps = get_wcaps(codec, nid);
+		चयन (get_wcaps_type(wcaps)) अणु
+		हाल AC_WID_AUD_IN:
+			वापस false; /* HDMI parser supports only HDMI out */
+		हाल AC_WID_AUD_OUT:
+			अगर (!(wcaps & AC_WCAP_DIGITAL))
+				वापस false;
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	वापस true;
+पूर्ण
+#अन्यथा
 /* no HDMI codec parser support */
-#define is_likely_hdmi_codec(codec)	false
-#endif /* CONFIG_SND_HDA_CODEC_HDMI */
+#घोषणा is_likely_hdmi_codec(codec)	false
+#पूर्ण_अगर /* CONFIG_SND_HDA_CODEC_HDMI */
 
-static int codec_bind_generic(struct hda_codec *codec)
-{
-	if (codec->probe_id)
-		return -ENODEV;
+अटल पूर्णांक codec_bind_generic(काष्ठा hda_codec *codec)
+अणु
+	अगर (codec->probe_id)
+		वापस -ENODEV;
 
-	if (is_likely_hdmi_codec(codec)) {
+	अगर (is_likely_hdmi_codec(codec)) अणु
 		codec->probe_id = HDA_CODEC_ID_GENERIC_HDMI;
 		request_codec_module(codec);
-		if (codec_probed(codec))
-			return 0;
-	}
+		अगर (codec_probed(codec))
+			वापस 0;
+	पूर्ण
 
 	codec->probe_id = HDA_CODEC_ID_GENERIC;
 	request_codec_module(codec);
-	if (codec_probed(codec))
-		return 0;
-	return -ENODEV;
-}
+	अगर (codec_probed(codec))
+		वापस 0;
+	वापस -ENODEV;
+पूर्ण
 
-#if IS_ENABLED(CONFIG_SND_HDA_GENERIC)
-#define is_generic_config(codec) \
-	(codec->modelname && !strcmp(codec->modelname, "generic"))
-#else
-#define is_generic_config(codec)	0
-#endif
+#अगर IS_ENABLED(CONFIG_SND_HDA_GENERIC)
+#घोषणा is_generic_config(codec) \
+	(codec->modelname && !म_भेद(codec->modelname, "generic"))
+#अन्यथा
+#घोषणा is_generic_config(codec)	0
+#पूर्ण_अगर
 
 /**
  * snd_hda_codec_configure - (Re-)configure the HD-audio codec
@@ -295,35 +296,35 @@ static int codec_bind_generic(struct hda_codec *codec)
  * Start parsing of the given codec tree and (re-)initialize the whole
  * patch instance.
  *
- * Returns 0 if successful or a negative error code.
+ * Returns 0 अगर successful or a negative error code.
  */
-int snd_hda_codec_configure(struct hda_codec *codec)
-{
-	int err;
+पूर्णांक snd_hda_codec_configure(काष्ठा hda_codec *codec)
+अणु
+	पूर्णांक err;
 
-	if (is_generic_config(codec))
+	अगर (is_generic_config(codec))
 		codec->probe_id = HDA_CODEC_ID_GENERIC;
-	else
+	अन्यथा
 		codec->probe_id = 0;
 
-	err = snd_hdac_device_register(&codec->core);
-	if (err < 0)
-		return err;
+	err = snd_hdac_device_रेजिस्टर(&codec->core);
+	अगर (err < 0)
+		वापस err;
 
-	if (!codec->preset)
+	अगर (!codec->preset)
 		codec_bind_module(codec);
-	if (!codec->preset) {
+	अगर (!codec->preset) अणु
 		err = codec_bind_generic(codec);
-		if (err < 0) {
+		अगर (err < 0) अणु
 			codec_err(codec, "Unable to bind the codec\n");
-			goto error;
-		}
-	}
+			जाओ error;
+		पूर्ण
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
  error:
-	snd_hdac_device_unregister(&codec->core);
-	return err;
-}
+	snd_hdac_device_unरेजिस्टर(&codec->core);
+	वापस err;
+पूर्ण
 EXPORT_SYMBOL_GPL(snd_hda_codec_configure);

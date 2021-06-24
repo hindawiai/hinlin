@@ -1,113 +1,114 @@
+<शैली गुरु>
 /*
  * Suspend/resume support. Currently supporting Armada XP only.
  *
  * Copyright (C) 2014 Marvell
  *
- * Thomas Petazzoni <thomas.petazzoni@free-electrons.com>
+ * Thomas Petazzoni <thomas.petazzoni@मुक्त-electrons.com>
  *
  * This file is licensed under the terms of the GNU General Public
  * License version 2.  This program is licensed "as is" without any
  * warranty of any kind, whether express or implied.
  */
 
-#include <linux/cpu_pm.h>
-#include <linux/delay.h>
-#include <linux/gpio.h>
-#include <linux/io.h>
-#include <linux/kernel.h>
-#include <linux/mbus.h>
-#include <linux/of_address.h>
-#include <linux/suspend.h>
-#include <asm/cacheflush.h>
-#include <asm/outercache.h>
-#include <asm/suspend.h>
+#समावेश <linux/cpu_pm.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/gpपन.स>
+#समावेश <linux/पन.स>
+#समावेश <linux/kernel.h>
+#समावेश <linux/mbus.h>
+#समावेश <linux/of_address.h>
+#समावेश <linux/suspend.h>
+#समावेश <यंत्र/cacheflush.h>
+#समावेश <यंत्र/outercache.h>
+#समावेश <यंत्र/suspend.h>
 
-#include "coherency.h"
-#include "common.h"
-#include "pmsu.h"
+#समावेश "coherency.h"
+#समावेश "common.h"
+#समावेश "pmsu.h"
 
-#define SDRAM_CONFIG_OFFS                  0x0
-#define  SDRAM_CONFIG_SR_MODE_BIT          BIT(24)
-#define SDRAM_OPERATION_OFFS               0x18
-#define  SDRAM_OPERATION_SELF_REFRESH      0x7
-#define SDRAM_DLB_EVICTION_OFFS            0x30c
-#define  SDRAM_DLB_EVICTION_THRESHOLD_MASK 0xff
+#घोषणा SDRAM_CONFIG_OFFS                  0x0
+#घोषणा  SDRAM_CONFIG_SR_MODE_BIT          BIT(24)
+#घोषणा SDRAM_OPERATION_OFFS               0x18
+#घोषणा  SDRAM_OPERATION_SELF_REFRESH      0x7
+#घोषणा SDRAM_DLB_EVICTION_OFFS            0x30c
+#घोषणा  SDRAM_DLB_EVICTION_THRESHOLD_MASK 0xff
 
-static void (*mvebu_board_pm_enter)(void __iomem *sdram_reg, u32 srcmd);
-static void __iomem *sdram_ctrl;
+अटल व्योम (*mvebu_board_pm_enter)(व्योम __iomem *sdram_reg, u32 srcmd);
+अटल व्योम __iomem *sdram_ctrl;
 
-static int mvebu_pm_powerdown(unsigned long data)
-{
+अटल पूर्णांक mvebu_pm_घातerकरोwn(अचिन्हित दीर्घ data)
+अणु
 	u32 reg, srcmd;
 
 	flush_cache_all();
 	outer_flush_all();
 
 	/*
-	 * Issue a Data Synchronization Barrier instruction to ensure
+	 * Issue a Data Synchronization Barrier inकाष्ठाion to ensure
 	 * that all state saving has been completed.
 	 */
 	dsb();
 
-	/* Flush the DLB and wait ~7 usec */
-	reg = readl(sdram_ctrl + SDRAM_DLB_EVICTION_OFFS);
+	/* Flush the DLB and रुको ~7 usec */
+	reg = पढ़ोl(sdram_ctrl + SDRAM_DLB_EVICTION_OFFS);
 	reg &= ~SDRAM_DLB_EVICTION_THRESHOLD_MASK;
-	writel(reg, sdram_ctrl + SDRAM_DLB_EVICTION_OFFS);
+	ग_लिखोl(reg, sdram_ctrl + SDRAM_DLB_EVICTION_OFFS);
 
 	udelay(7);
 
 	/* Set DRAM in battery backup mode */
-	reg = readl(sdram_ctrl + SDRAM_CONFIG_OFFS);
+	reg = पढ़ोl(sdram_ctrl + SDRAM_CONFIG_OFFS);
 	reg &= ~SDRAM_CONFIG_SR_MODE_BIT;
-	writel(reg, sdram_ctrl + SDRAM_CONFIG_OFFS);
+	ग_लिखोl(reg, sdram_ctrl + SDRAM_CONFIG_OFFS);
 
 	/* Prepare to go to self-refresh */
 
-	srcmd = readl(sdram_ctrl + SDRAM_OPERATION_OFFS);
+	srcmd = पढ़ोl(sdram_ctrl + SDRAM_OPERATION_OFFS);
 	srcmd &= ~0x1F;
 	srcmd |= SDRAM_OPERATION_SELF_REFRESH;
 
 	mvebu_board_pm_enter(sdram_ctrl + SDRAM_OPERATION_OFFS, srcmd);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#define BOOT_INFO_ADDR      0x3000
-#define BOOT_MAGIC_WORD	    0xdeadb002
-#define BOOT_MAGIC_LIST_END 0xffffffff
+#घोषणा BOOT_INFO_ADDR      0x3000
+#घोषणा BOOT_MAGIC_WORD	    0xdeadb002
+#घोषणा BOOT_MAGIC_LIST_END 0xffffffff
 
 /*
- * Those registers are accessed before switching the internal register
+ * Those रेजिस्टरs are accessed beक्रमe चयनing the पूर्णांकernal रेजिस्टर
  * base, which is why we hardcode the 0xd0000000 base address, the one
  * used by the SoC out of reset.
  */
-#define MBUS_WINDOW_12_CTRL       0xd00200b0
-#define MBUS_INTERNAL_REG_ADDRESS 0xd0020080
+#घोषणा MBUS_WINDOW_12_CTRL       0xd00200b0
+#घोषणा MBUS_INTERNAL_REG_ADDRESS 0xd0020080
 
-#define SDRAM_WIN_BASE_REG(x)	(0x20180 + (0x8*x))
-#define SDRAM_WIN_CTRL_REG(x)	(0x20184 + (0x8*x))
+#घोषणा SDRAM_WIN_BASE_REG(x)	(0x20180 + (0x8*x))
+#घोषणा SDRAM_WIN_CTRL_REG(x)	(0x20184 + (0x8*x))
 
-static phys_addr_t mvebu_internal_reg_base(void)
-{
-	struct device_node *np;
+अटल phys_addr_t mvebu_पूर्णांकernal_reg_base(व्योम)
+अणु
+	काष्ठा device_node *np;
 	__be32 in_addr[2];
 
-	np = of_find_node_by_name(NULL, "internal-regs");
+	np = of_find_node_by_name(शून्य, "internal-regs");
 	BUG_ON(!np);
 
 	/*
-	 * Ask the DT what is the internal register address on this
-	 * platform. In the mvebu-mbus DT binding, 0xf0010000
-	 * corresponds to the internal register window.
+	 * Ask the DT what is the पूर्णांकernal रेजिस्टर address on this
+	 * platक्रमm. In the mvebu-mbus DT binding, 0xf0010000
+	 * corresponds to the पूर्णांकernal रेजिस्टर winकरोw.
 	 */
 	in_addr[0] = cpu_to_be32(0xf0010000);
 	in_addr[1] = 0x0;
 
-	return of_translate_address(np, in_addr);
-}
+	वापस of_translate_address(np, in_addr);
+पूर्ण
 
-static void mvebu_pm_store_armadaxp_bootinfo(u32 *store_addr)
-{
+अटल व्योम mvebu_pm_store_armadaxp_bootinfo(u32 *store_addr)
+अणु
 	phys_addr_t resume_pc;
 
 	resume_pc = __pa_symbol(armada_370_xp_cpu_resume);
@@ -117,154 +118,154 @@ static void mvebu_pm_store_armadaxp_bootinfo(u32 *store_addr)
 	 * value (BOOT_MAGIC_WORD), followed by the address of the
 	 * resume code to jump to. Then, it expects a sequence of
 	 * (address, value) pairs, which can be used to restore the
-	 * value of certain registers. This sequence must end with the
+	 * value of certain रेजिस्टरs. This sequence must end with the
 	 * BOOT_MAGIC_LIST_END magic value.
 	 */
 
-	writel(BOOT_MAGIC_WORD, store_addr++);
-	writel(resume_pc, store_addr++);
+	ग_लिखोl(BOOT_MAGIC_WORD, store_addr++);
+	ग_लिखोl(resume_pc, store_addr++);
 
 	/*
-	 * Some platforms remap their internal register base address
-	 * to 0xf1000000. However, out of reset, window 12 starts at
+	 * Some platक्रमms remap their पूर्णांकernal रेजिस्टर base address
+	 * to 0xf1000000. However, out of reset, winकरोw 12 starts at
 	 * 0xf0000000 and ends at 0xf7ffffff, which would overlap with
-	 * the internal registers. Therefore, disable window 12.
+	 * the पूर्णांकernal रेजिस्टरs. Thereक्रमe, disable winकरोw 12.
 	 */
-	writel(MBUS_WINDOW_12_CTRL, store_addr++);
-	writel(0x0, store_addr++);
+	ग_लिखोl(MBUS_WINDOW_12_CTRL, store_addr++);
+	ग_लिखोl(0x0, store_addr++);
 
 	/*
-	 * Set the internal register base address to the value
-	 * expected by Linux, as read from the Device Tree.
+	 * Set the पूर्णांकernal रेजिस्टर base address to the value
+	 * expected by Linux, as पढ़ो from the Device Tree.
 	 */
-	writel(MBUS_INTERNAL_REG_ADDRESS, store_addr++);
-	writel(mvebu_internal_reg_base(), store_addr++);
+	ग_लिखोl(MBUS_INTERNAL_REG_ADDRESS, store_addr++);
+	ग_लिखोl(mvebu_पूर्णांकernal_reg_base(), store_addr++);
 
 	/*
-	 * Ask the mvebu-mbus driver to store the SDRAM window
+	 * Ask the mvebu-mbus driver to store the SDRAM winकरोw
 	 * configuration, which has to be restored by the bootloader
-	 * before re-entering the kernel on resume.
+	 * beक्रमe re-entering the kernel on resume.
 	 */
 	store_addr += mvebu_mbus_save_cpu_target(store_addr);
 
-	writel(BOOT_MAGIC_LIST_END, store_addr);
-}
+	ग_लिखोl(BOOT_MAGIC_LIST_END, store_addr);
+पूर्ण
 
-static int mvebu_pm_store_bootinfo(void)
-{
+अटल पूर्णांक mvebu_pm_store_bootinfo(व्योम)
+अणु
 	u32 *store_addr;
 
 	store_addr = phys_to_virt(BOOT_INFO_ADDR);
 
-	if (of_machine_is_compatible("marvell,armadaxp"))
+	अगर (of_machine_is_compatible("marvell,armadaxp"))
 		mvebu_pm_store_armadaxp_bootinfo(store_addr);
-	else
-		return -ENODEV;
+	अन्यथा
+		वापस -ENODEV;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mvebu_enter_suspend(void)
-{
-	int ret;
+अटल पूर्णांक mvebu_enter_suspend(व्योम)
+अणु
+	पूर्णांक ret;
 
 	ret = mvebu_pm_store_bootinfo();
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	cpu_pm_enter();
 
-	cpu_suspend(0, mvebu_pm_powerdown);
+	cpu_suspend(0, mvebu_pm_घातerकरोwn);
 
 	outer_resume();
 
-	mvebu_v7_pmsu_idle_exit();
+	mvebu_v7_pmsu_idle_निकास();
 
 	set_cpu_coherent();
 
-	cpu_pm_exit();
-	return 0;
-}
+	cpu_pm_निकास();
+	वापस 0;
+पूर्ण
 
-static int mvebu_pm_enter(suspend_state_t state)
-{
-	switch (state) {
-	case PM_SUSPEND_STANDBY:
-		cpu_do_idle();
-		break;
-	case PM_SUSPEND_MEM:
+अटल पूर्णांक mvebu_pm_enter(suspend_state_t state)
+अणु
+	चयन (state) अणु
+	हाल PM_SUSPEND_STANDBY:
+		cpu_करो_idle();
+		अवरोध;
+	हाल PM_SUSPEND_MEM:
 		pr_warn("Entering suspend to RAM. Only special wake-up sources will resume the system\n");
-		return mvebu_enter_suspend();
-	default:
-		return -EINVAL;
-	}
-	return 0;
-}
+		वापस mvebu_enter_suspend();
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int mvebu_pm_valid(suspend_state_t state)
-{
-	if (state == PM_SUSPEND_STANDBY)
-		return 1;
+अटल पूर्णांक mvebu_pm_valid(suspend_state_t state)
+अणु
+	अगर (state == PM_SUSPEND_STANDBY)
+		वापस 1;
 
-	if (state == PM_SUSPEND_MEM && mvebu_board_pm_enter != NULL)
-		return 1;
+	अगर (state == PM_SUSPEND_MEM && mvebu_board_pm_enter != शून्य)
+		वापस 1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct platform_suspend_ops mvebu_pm_ops = {
+अटल स्थिर काष्ठा platक्रमm_suspend_ops mvebu_pm_ops = अणु
 	.enter = mvebu_pm_enter,
 	.valid = mvebu_pm_valid,
-};
+पूर्ण;
 
-static int __init mvebu_pm_init(void)
-{
-	if (!of_machine_is_compatible("marvell,armadaxp") &&
+अटल पूर्णांक __init mvebu_pm_init(व्योम)
+अणु
+	अगर (!of_machine_is_compatible("marvell,armadaxp") &&
 	    !of_machine_is_compatible("marvell,armada370") &&
 	    !of_machine_is_compatible("marvell,armada380") &&
 	    !of_machine_is_compatible("marvell,armada390"))
-		return -ENODEV;
+		वापस -ENODEV;
 
 	suspend_set_ops(&mvebu_pm_ops);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
 late_initcall(mvebu_pm_init);
 
-int __init mvebu_pm_suspend_init(void (*board_pm_enter)(void __iomem *sdram_reg,
+पूर्णांक __init mvebu_pm_suspend_init(व्योम (*board_pm_enter)(व्योम __iomem *sdram_reg,
 							u32 srcmd))
-{
-	struct device_node *np;
-	struct resource res;
+अणु
+	काष्ठा device_node *np;
+	काष्ठा resource res;
 
-	np = of_find_compatible_node(NULL, NULL,
+	np = of_find_compatible_node(शून्य, शून्य,
 				     "marvell,armada-xp-sdram-controller");
-	if (!np)
-		return -ENODEV;
+	अगर (!np)
+		वापस -ENODEV;
 
-	if (of_address_to_resource(np, 0, &res)) {
+	अगर (of_address_to_resource(np, 0, &res)) अणु
 		of_node_put(np);
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	if (!request_mem_region(res.start, resource_size(&res),
-				np->full_name)) {
+	अगर (!request_mem_region(res.start, resource_size(&res),
+				np->full_name)) अणु
 		of_node_put(np);
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 
 	sdram_ctrl = ioremap(res.start, resource_size(&res));
-	if (!sdram_ctrl) {
+	अगर (!sdram_ctrl) अणु
 		release_mem_region(res.start, resource_size(&res));
 		of_node_put(np);
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	of_node_put(np);
 
 	mvebu_board_pm_enter = board_pm_enter;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

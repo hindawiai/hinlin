@@ -1,48 +1,49 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 
-#include <linux/dma-fence.h>
+#समावेश <linux/dma-fence.h>
 
-#include <drm/drm_atomic.h>
-#include <drm/drm_atomic_helper.h>
-#include <drm/drm_probe_helper.h>
-#include <drm/drm_vblank.h>
+#समावेश <drm/drm_atomic.h>
+#समावेश <drm/drm_atomic_helper.h>
+#समावेश <drm/drm_probe_helper.h>
+#समावेश <drm/drm_vblank.h>
 
-#include "vkms_drv.h"
+#समावेश "vkms_drv.h"
 
-static enum hrtimer_restart vkms_vblank_simulate(struct hrtimer *timer)
-{
-	struct vkms_output *output = container_of(timer, struct vkms_output,
-						  vblank_hrtimer);
-	struct drm_crtc *crtc = &output->crtc;
-	struct vkms_crtc_state *state;
+अटल क्रमागत hrसमयr_restart vkms_vblank_simulate(काष्ठा hrसमयr *समयr)
+अणु
+	काष्ठा vkms_output *output = container_of(समयr, काष्ठा vkms_output,
+						  vblank_hrसमयr);
+	काष्ठा drm_crtc *crtc = &output->crtc;
+	काष्ठा vkms_crtc_state *state;
 	u64 ret_overrun;
 	bool ret, fence_cookie;
 
-	fence_cookie = dma_fence_begin_signalling();
+	fence_cookie = dma_fence_begin_संकेतling();
 
-	ret_overrun = hrtimer_forward_now(&output->vblank_hrtimer,
+	ret_overrun = hrसमयr_क्रमward_now(&output->vblank_hrसमयr,
 					  output->period_ns);
-	if (ret_overrun != 1)
+	अगर (ret_overrun != 1)
 		pr_warn("%s: vblank timer overrun\n", __func__);
 
 	spin_lock(&output->lock);
 	ret = drm_crtc_handle_vblank(crtc);
-	if (!ret)
+	अगर (!ret)
 		DRM_ERROR("vkms failure on handling vblank");
 
 	state = output->composer_state;
 	spin_unlock(&output->lock);
 
-	if (state && output->composer_enabled) {
+	अगर (state && output->composer_enabled) अणु
 		u64 frame = drm_crtc_accurate_vblank_count(crtc);
 
-		/* update frame_start only if a queued vkms_composer_worker()
-		 * has read the data
+		/* update frame_start only अगर a queued vkms_composer_worker()
+		 * has पढ़ो the data
 		 */
 		spin_lock(&output->composer_lock);
-		if (!state->crc_pending)
+		अगर (!state->crc_pending)
 			state->frame_start = frame;
-		else
+		अन्यथा
 			DRM_DEBUG_DRIVER("crc worker falling behind, frame_start: %llu, frame_end: %llu\n",
 					 state->frame_start, frame);
 		state->frame_end = frame;
@@ -50,116 +51,116 @@ static enum hrtimer_restart vkms_vblank_simulate(struct hrtimer *timer)
 		spin_unlock(&output->composer_lock);
 
 		ret = queue_work(output->composer_workq, &state->composer_work);
-		if (!ret)
+		अगर (!ret)
 			DRM_DEBUG_DRIVER("Composer worker already queued\n");
-	}
+	पूर्ण
 
-	dma_fence_end_signalling(fence_cookie);
+	dma_fence_end_संकेतling(fence_cookie);
 
-	return HRTIMER_RESTART;
-}
+	वापस HRTIMER_RESTART;
+पूर्ण
 
-static int vkms_enable_vblank(struct drm_crtc *crtc)
-{
-	struct drm_device *dev = crtc->dev;
-	unsigned int pipe = drm_crtc_index(crtc);
-	struct drm_vblank_crtc *vblank = &dev->vblank[pipe];
-	struct vkms_output *out = drm_crtc_to_vkms_output(crtc);
+अटल पूर्णांक vkms_enable_vblank(काष्ठा drm_crtc *crtc)
+अणु
+	काष्ठा drm_device *dev = crtc->dev;
+	अचिन्हित पूर्णांक pipe = drm_crtc_index(crtc);
+	काष्ठा drm_vblank_crtc *vblank = &dev->vblank[pipe];
+	काष्ठा vkms_output *out = drm_crtc_to_vkms_output(crtc);
 
-	drm_calc_timestamping_constants(crtc, &crtc->mode);
+	drm_calc_बारtamping_स्थिरants(crtc, &crtc->mode);
 
-	hrtimer_init(&out->vblank_hrtimer, CLOCK_MONOTONIC, HRTIMER_MODE_REL);
-	out->vblank_hrtimer.function = &vkms_vblank_simulate;
-	out->period_ns = ktime_set(0, vblank->framedur_ns);
-	hrtimer_start(&out->vblank_hrtimer, out->period_ns, HRTIMER_MODE_REL);
+	hrसमयr_init(&out->vblank_hrसमयr, CLOCK_MONOTONIC, HRTIMER_MODE_REL);
+	out->vblank_hrसमयr.function = &vkms_vblank_simulate;
+	out->period_ns = kसमय_set(0, vblank->framedur_ns);
+	hrसमयr_start(&out->vblank_hrसमयr, out->period_ns, HRTIMER_MODE_REL);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void vkms_disable_vblank(struct drm_crtc *crtc)
-{
-	struct vkms_output *out = drm_crtc_to_vkms_output(crtc);
+अटल व्योम vkms_disable_vblank(काष्ठा drm_crtc *crtc)
+अणु
+	काष्ठा vkms_output *out = drm_crtc_to_vkms_output(crtc);
 
-	hrtimer_cancel(&out->vblank_hrtimer);
-}
+	hrसमयr_cancel(&out->vblank_hrसमयr);
+पूर्ण
 
-static bool vkms_get_vblank_timestamp(struct drm_crtc *crtc,
-				      int *max_error, ktime_t *vblank_time,
+अटल bool vkms_get_vblank_बारtamp(काष्ठा drm_crtc *crtc,
+				      पूर्णांक *max_error, kसमय_प्रकार *vblank_समय,
 				      bool in_vblank_irq)
-{
-	struct drm_device *dev = crtc->dev;
-	unsigned int pipe = crtc->index;
-	struct vkms_device *vkmsdev = drm_device_to_vkms_device(dev);
-	struct vkms_output *output = &vkmsdev->output;
-	struct drm_vblank_crtc *vblank = &dev->vblank[pipe];
+अणु
+	काष्ठा drm_device *dev = crtc->dev;
+	अचिन्हित पूर्णांक pipe = crtc->index;
+	काष्ठा vkms_device *vkmsdev = drm_device_to_vkms_device(dev);
+	काष्ठा vkms_output *output = &vkmsdev->output;
+	काष्ठा drm_vblank_crtc *vblank = &dev->vblank[pipe];
 
-	if (!READ_ONCE(vblank->enabled)) {
-		*vblank_time = ktime_get();
-		return true;
-	}
+	अगर (!READ_ONCE(vblank->enabled)) अणु
+		*vblank_समय = kसमय_get();
+		वापस true;
+	पूर्ण
 
-	*vblank_time = READ_ONCE(output->vblank_hrtimer.node.expires);
+	*vblank_समय = READ_ONCE(output->vblank_hrसमयr.node.expires);
 
-	if (WARN_ON(*vblank_time == vblank->time))
-		return true;
+	अगर (WARN_ON(*vblank_समय == vblank->समय))
+		वापस true;
 
 	/*
-	 * To prevent races we roll the hrtimer forward before we do any
-	 * interrupt processing - this is how real hw works (the interrupt is
-	 * only generated after all the vblank registers are updated) and what
-	 * the vblank core expects. Therefore we need to always correct the
-	 * timestampe by one frame.
+	 * To prevent races we roll the hrसमयr क्रमward beक्रमe we करो any
+	 * पूर्णांकerrupt processing - this is how real hw works (the पूर्णांकerrupt is
+	 * only generated after all the vblank रेजिस्टरs are updated) and what
+	 * the vblank core expects. Thereक्रमe we need to always correct the
+	 * बारtampe by one frame.
 	 */
-	*vblank_time -= output->period_ns;
+	*vblank_समय -= output->period_ns;
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static struct drm_crtc_state *
-vkms_atomic_crtc_duplicate_state(struct drm_crtc *crtc)
-{
-	struct vkms_crtc_state *vkms_state;
+अटल काष्ठा drm_crtc_state *
+vkms_atomic_crtc_duplicate_state(काष्ठा drm_crtc *crtc)
+अणु
+	काष्ठा vkms_crtc_state *vkms_state;
 
-	if (WARN_ON(!crtc->state))
-		return NULL;
+	अगर (WARN_ON(!crtc->state))
+		वापस शून्य;
 
-	vkms_state = kzalloc(sizeof(*vkms_state), GFP_KERNEL);
-	if (!vkms_state)
-		return NULL;
+	vkms_state = kzalloc(माप(*vkms_state), GFP_KERNEL);
+	अगर (!vkms_state)
+		वापस शून्य;
 
 	__drm_atomic_helper_crtc_duplicate_state(crtc, &vkms_state->base);
 
 	INIT_WORK(&vkms_state->composer_work, vkms_composer_worker);
 
-	return &vkms_state->base;
-}
+	वापस &vkms_state->base;
+पूर्ण
 
-static void vkms_atomic_crtc_destroy_state(struct drm_crtc *crtc,
-					   struct drm_crtc_state *state)
-{
-	struct vkms_crtc_state *vkms_state = to_vkms_crtc_state(state);
+अटल व्योम vkms_atomic_crtc_destroy_state(काष्ठा drm_crtc *crtc,
+					   काष्ठा drm_crtc_state *state)
+अणु
+	काष्ठा vkms_crtc_state *vkms_state = to_vkms_crtc_state(state);
 
 	__drm_atomic_helper_crtc_destroy_state(state);
 
 	WARN_ON(work_pending(&vkms_state->composer_work));
-	kfree(vkms_state->active_planes);
-	kfree(vkms_state);
-}
+	kमुक्त(vkms_state->active_planes);
+	kमुक्त(vkms_state);
+पूर्ण
 
-static void vkms_atomic_crtc_reset(struct drm_crtc *crtc)
-{
-	struct vkms_crtc_state *vkms_state =
-		kzalloc(sizeof(*vkms_state), GFP_KERNEL);
+अटल व्योम vkms_atomic_crtc_reset(काष्ठा drm_crtc *crtc)
+अणु
+	काष्ठा vkms_crtc_state *vkms_state =
+		kzalloc(माप(*vkms_state), GFP_KERNEL);
 
-	if (crtc->state)
+	अगर (crtc->state)
 		vkms_atomic_crtc_destroy_state(crtc, crtc->state);
 
 	__drm_atomic_helper_crtc_reset(crtc, &vkms_state->base);
-	if (vkms_state)
+	अगर (vkms_state)
 		INIT_WORK(&vkms_state->composer_work, vkms_composer_worker);
-}
+पूर्ण
 
-static const struct drm_crtc_funcs vkms_crtc_funcs = {
+अटल स्थिर काष्ठा drm_crtc_funcs vkms_crtc_funcs = अणु
 	.set_config             = drm_atomic_helper_set_config,
 	.destroy                = drm_crtc_cleanup,
 	.page_flip              = drm_atomic_helper_page_flip,
@@ -168,126 +169,126 @@ static const struct drm_crtc_funcs vkms_crtc_funcs = {
 	.atomic_destroy_state   = vkms_atomic_crtc_destroy_state,
 	.enable_vblank		= vkms_enable_vblank,
 	.disable_vblank		= vkms_disable_vblank,
-	.get_vblank_timestamp	= vkms_get_vblank_timestamp,
+	.get_vblank_बारtamp	= vkms_get_vblank_बारtamp,
 	.get_crc_sources	= vkms_get_crc_sources,
 	.set_crc_source		= vkms_set_crc_source,
-	.verify_crc_source	= vkms_verify_crc_source,
-};
+	.verअगरy_crc_source	= vkms_verअगरy_crc_source,
+पूर्ण;
 
-static int vkms_crtc_atomic_check(struct drm_crtc *crtc,
-				  struct drm_atomic_state *state)
-{
-	struct drm_crtc_state *crtc_state = drm_atomic_get_new_crtc_state(state,
+अटल पूर्णांक vkms_crtc_atomic_check(काष्ठा drm_crtc *crtc,
+				  काष्ठा drm_atomic_state *state)
+अणु
+	काष्ठा drm_crtc_state *crtc_state = drm_atomic_get_new_crtc_state(state,
 									  crtc);
-	struct vkms_crtc_state *vkms_state = to_vkms_crtc_state(crtc_state);
-	struct drm_plane *plane;
-	struct drm_plane_state *plane_state;
-	int i = 0, ret;
+	काष्ठा vkms_crtc_state *vkms_state = to_vkms_crtc_state(crtc_state);
+	काष्ठा drm_plane *plane;
+	काष्ठा drm_plane_state *plane_state;
+	पूर्णांक i = 0, ret;
 
-	if (vkms_state->active_planes)
-		return 0;
+	अगर (vkms_state->active_planes)
+		वापस 0;
 
 	ret = drm_atomic_add_affected_planes(crtc_state->state, crtc);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	drm_for_each_plane_mask(plane, crtc->dev, crtc_state->plane_mask) {
+	drm_क्रम_each_plane_mask(plane, crtc->dev, crtc_state->plane_mask) अणु
 		plane_state = drm_atomic_get_existing_plane_state(crtc_state->state,
 								  plane);
 		WARN_ON(!plane_state);
 
-		if (!plane_state->visible)
-			continue;
+		अगर (!plane_state->visible)
+			जारी;
 
 		i++;
-	}
+	पूर्ण
 
-	vkms_state->active_planes = kcalloc(i, sizeof(plane), GFP_KERNEL);
-	if (!vkms_state->active_planes)
-		return -ENOMEM;
+	vkms_state->active_planes = kसुस्मृति(i, माप(plane), GFP_KERNEL);
+	अगर (!vkms_state->active_planes)
+		वापस -ENOMEM;
 	vkms_state->num_active_planes = i;
 
 	i = 0;
-	drm_for_each_plane_mask(plane, crtc->dev, crtc_state->plane_mask) {
+	drm_क्रम_each_plane_mask(plane, crtc->dev, crtc_state->plane_mask) अणु
 		plane_state = drm_atomic_get_existing_plane_state(crtc_state->state,
 								  plane);
 
-		if (!plane_state->visible)
-			continue;
+		अगर (!plane_state->visible)
+			जारी;
 
 		vkms_state->active_planes[i++] =
 			to_vkms_plane_state(plane_state);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void vkms_crtc_atomic_enable(struct drm_crtc *crtc,
-				    struct drm_atomic_state *state)
-{
+अटल व्योम vkms_crtc_atomic_enable(काष्ठा drm_crtc *crtc,
+				    काष्ठा drm_atomic_state *state)
+अणु
 	drm_crtc_vblank_on(crtc);
-}
+पूर्ण
 
-static void vkms_crtc_atomic_disable(struct drm_crtc *crtc,
-				     struct drm_atomic_state *state)
-{
+अटल व्योम vkms_crtc_atomic_disable(काष्ठा drm_crtc *crtc,
+				     काष्ठा drm_atomic_state *state)
+अणु
 	drm_crtc_vblank_off(crtc);
-}
+पूर्ण
 
-static void vkms_crtc_atomic_begin(struct drm_crtc *crtc,
-				   struct drm_atomic_state *state)
-{
-	struct vkms_output *vkms_output = drm_crtc_to_vkms_output(crtc);
+अटल व्योम vkms_crtc_atomic_begin(काष्ठा drm_crtc *crtc,
+				   काष्ठा drm_atomic_state *state)
+अणु
+	काष्ठा vkms_output *vkms_output = drm_crtc_to_vkms_output(crtc);
 
-	/* This lock is held across the atomic commit to block vblank timer
+	/* This lock is held across the atomic commit to block vblank समयr
 	 * from scheduling vkms_composer_worker until the composer is updated
 	 */
 	spin_lock_irq(&vkms_output->lock);
-}
+पूर्ण
 
-static void vkms_crtc_atomic_flush(struct drm_crtc *crtc,
-				   struct drm_atomic_state *state)
-{
-	struct vkms_output *vkms_output = drm_crtc_to_vkms_output(crtc);
+अटल व्योम vkms_crtc_atomic_flush(काष्ठा drm_crtc *crtc,
+				   काष्ठा drm_atomic_state *state)
+अणु
+	काष्ठा vkms_output *vkms_output = drm_crtc_to_vkms_output(crtc);
 
-	if (crtc->state->event) {
+	अगर (crtc->state->event) अणु
 		spin_lock(&crtc->dev->event_lock);
 
-		if (drm_crtc_vblank_get(crtc) != 0)
+		अगर (drm_crtc_vblank_get(crtc) != 0)
 			drm_crtc_send_vblank_event(crtc, crtc->state->event);
-		else
+		अन्यथा
 			drm_crtc_arm_vblank_event(crtc, crtc->state->event);
 
 		spin_unlock(&crtc->dev->event_lock);
 
-		crtc->state->event = NULL;
-	}
+		crtc->state->event = शून्य;
+	पूर्ण
 
 	vkms_output->composer_state = to_vkms_crtc_state(crtc->state);
 
 	spin_unlock_irq(&vkms_output->lock);
-}
+पूर्ण
 
-static const struct drm_crtc_helper_funcs vkms_crtc_helper_funcs = {
+अटल स्थिर काष्ठा drm_crtc_helper_funcs vkms_crtc_helper_funcs = अणु
 	.atomic_check	= vkms_crtc_atomic_check,
 	.atomic_begin	= vkms_crtc_atomic_begin,
 	.atomic_flush	= vkms_crtc_atomic_flush,
 	.atomic_enable	= vkms_crtc_atomic_enable,
 	.atomic_disable	= vkms_crtc_atomic_disable,
-};
+पूर्ण;
 
-int vkms_crtc_init(struct drm_device *dev, struct drm_crtc *crtc,
-		   struct drm_plane *primary, struct drm_plane *cursor)
-{
-	struct vkms_output *vkms_out = drm_crtc_to_vkms_output(crtc);
-	int ret;
+पूर्णांक vkms_crtc_init(काष्ठा drm_device *dev, काष्ठा drm_crtc *crtc,
+		   काष्ठा drm_plane *primary, काष्ठा drm_plane *cursor)
+अणु
+	काष्ठा vkms_output *vkms_out = drm_crtc_to_vkms_output(crtc);
+	पूर्णांक ret;
 
 	ret = drm_crtc_init_with_planes(dev, crtc, primary, cursor,
-					&vkms_crtc_funcs, NULL);
-	if (ret) {
+					&vkms_crtc_funcs, शून्य);
+	अगर (ret) अणु
 		DRM_ERROR("Failed to init CRTC\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	drm_crtc_helper_add(crtc, &vkms_crtc_helper_funcs);
 
@@ -295,8 +296,8 @@ int vkms_crtc_init(struct drm_device *dev, struct drm_crtc *crtc,
 	spin_lock_init(&vkms_out->composer_lock);
 
 	vkms_out->composer_workq = alloc_ordered_workqueue("vkms_composer", 0);
-	if (!vkms_out->composer_workq)
-		return -ENOMEM;
+	अगर (!vkms_out->composer_workq)
+		वापस -ENOMEM;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण

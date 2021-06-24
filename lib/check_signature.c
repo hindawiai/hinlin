@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <linux/io.h>
-#include <linux/export.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <linux/पन.स>
+#समावेश <linux/export.h>
 
 /**
  *	check_signature		-	find BIOS signatures
@@ -8,20 +9,20 @@
  *	@signature:  signature block
  *	@length: length of signature
  *
- *	Perform a signature comparison with the mmio address io_addr. This
+ *	Perक्रमm a signature comparison with the mmio address io_addr. This
  *	address should have been obtained by ioremap.
  *	Returns 1 on a match.
  */
 
-int check_signature(const volatile void __iomem *io_addr,
-			const unsigned char *signature, int length)
-{
-	while (length--) {
-		if (readb(io_addr) != *signature)
-			return 0;
+पूर्णांक check_signature(स्थिर अस्थिर व्योम __iomem *io_addr,
+			स्थिर अचिन्हित अक्षर *signature, पूर्णांक length)
+अणु
+	जबतक (length--) अणु
+		अगर (पढ़ोb(io_addr) != *signature)
+			वापस 0;
 		io_addr++;
 		signature++;
-	}
-	return 1;
-}
+	पूर्ण
+	वापस 1;
+पूर्ण
 EXPORT_SYMBOL(check_signature);

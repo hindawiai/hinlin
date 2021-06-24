@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Copyright (C) 2008-2017 Andes Technology Corporation
  *
@@ -6,136 +7,136 @@
  * 2010 (c) MontaVista Software, LLC.
  */
 
-#include <linux/perf_event.h>
-#include <linux/bitmap.h>
-#include <linux/export.h>
-#include <linux/kernel.h>
-#include <linux/of.h>
-#include <linux/platform_device.h>
-#include <linux/slab.h>
-#include <linux/spinlock.h>
-#include <linux/pm_runtime.h>
-#include <linux/ftrace.h>
-#include <linux/uaccess.h>
-#include <linux/sched/clock.h>
-#include <linux/percpu-defs.h>
+#समावेश <linux/perf_event.h>
+#समावेश <linux/biपंचांगap.h>
+#समावेश <linux/export.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/of.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/pm_runसमय.स>
+#समावेश <linux/ftrace.h>
+#समावेश <linux/uaccess.h>
+#समावेश <linux/sched/घड़ी.h>
+#समावेश <linux/percpu-defs.h>
 
-#include <asm/pmu.h>
-#include <asm/irq_regs.h>
-#include <asm/nds32.h>
-#include <asm/stacktrace.h>
-#include <asm/perf_event.h>
-#include <nds32_intrinsic.h>
+#समावेश <यंत्र/pmu.h>
+#समावेश <यंत्र/irq_regs.h>
+#समावेश <यंत्र/nds32.h>
+#समावेश <यंत्र/stacktrace.h>
+#समावेश <यंत्र/perf_event.h>
+#समावेश <nds32_पूर्णांकrinsic.h>
 
-/* Set at runtime when we know what CPU type we are. */
-static struct nds32_pmu *cpu_pmu;
+/* Set at runसमय when we know what CPU type we are. */
+अटल काष्ठा nds32_pmu *cpu_pmu;
 
-static DEFINE_PER_CPU(struct pmu_hw_events, cpu_hw_events);
-static void nds32_pmu_start(struct nds32_pmu *cpu_pmu);
-static void nds32_pmu_stop(struct nds32_pmu *cpu_pmu);
-static struct platform_device_id cpu_pmu_plat_device_ids[] = {
-	{.name = "nds32-pfm"},
-	{},
-};
+अटल DEFINE_PER_CPU(काष्ठा pmu_hw_events, cpu_hw_events);
+अटल व्योम nds32_pmu_start(काष्ठा nds32_pmu *cpu_pmu);
+अटल व्योम nds32_pmu_stop(काष्ठा nds32_pmu *cpu_pmu);
+अटल काष्ठा platक्रमm_device_id cpu_pmu_plat_device_ids[] = अणु
+	अणु.name = "nds32-pfm"पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 
-static int nds32_pmu_map_cache_event(const unsigned int (*cache_map)
+अटल पूर्णांक nds32_pmu_map_cache_event(स्थिर अचिन्हित पूर्णांक (*cache_map)
 				  [PERF_COUNT_HW_CACHE_MAX]
 				  [PERF_COUNT_HW_CACHE_OP_MAX]
 				  [PERF_COUNT_HW_CACHE_RESULT_MAX], u64 config)
-{
-	unsigned int cache_type, cache_op, cache_result, ret;
+अणु
+	अचिन्हित पूर्णांक cache_type, cache_op, cache_result, ret;
 
 	cache_type = (config >> 0) & 0xff;
-	if (cache_type >= PERF_COUNT_HW_CACHE_MAX)
-		return -EINVAL;
+	अगर (cache_type >= PERF_COUNT_HW_CACHE_MAX)
+		वापस -EINVAL;
 
 	cache_op = (config >> 8) & 0xff;
-	if (cache_op >= PERF_COUNT_HW_CACHE_OP_MAX)
-		return -EINVAL;
+	अगर (cache_op >= PERF_COUNT_HW_CACHE_OP_MAX)
+		वापस -EINVAL;
 
 	cache_result = (config >> 16) & 0xff;
-	if (cache_result >= PERF_COUNT_HW_CACHE_RESULT_MAX)
-		return -EINVAL;
+	अगर (cache_result >= PERF_COUNT_HW_CACHE_RESULT_MAX)
+		वापस -EINVAL;
 
-	ret = (int)(*cache_map)[cache_type][cache_op][cache_result];
+	ret = (पूर्णांक)(*cache_map)[cache_type][cache_op][cache_result];
 
-	if (ret == CACHE_OP_UNSUPPORTED)
-		return -ENOENT;
+	अगर (ret == CACHE_OP_UNSUPPORTED)
+		वापस -ENOENT;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int
-nds32_pmu_map_hw_event(const unsigned int (*event_map)[PERF_COUNT_HW_MAX],
+अटल पूर्णांक
+nds32_pmu_map_hw_event(स्थिर अचिन्हित पूर्णांक (*event_map)[PERF_COUNT_HW_MAX],
 		       u64 config)
-{
-	int mapping;
+अणु
+	पूर्णांक mapping;
 
-	if (config >= PERF_COUNT_HW_MAX)
-		return -ENOENT;
+	अगर (config >= PERF_COUNT_HW_MAX)
+		वापस -ENOENT;
 
 	mapping = (*event_map)[config];
-	return mapping == HW_OP_UNSUPPORTED ? -ENOENT : mapping;
-}
+	वापस mapping == HW_OP_UNSUPPORTED ? -ENOENT : mapping;
+पूर्ण
 
-static int nds32_pmu_map_raw_event(u32 raw_event_mask, u64 config)
-{
-	int ev_type = (int)(config & raw_event_mask);
-	int idx = config >> 8;
+अटल पूर्णांक nds32_pmu_map_raw_event(u32 raw_event_mask, u64 config)
+अणु
+	पूर्णांक ev_type = (पूर्णांक)(config & raw_event_mask);
+	पूर्णांक idx = config >> 8;
 
-	switch (idx) {
-	case 0:
+	चयन (idx) अणु
+	हाल 0:
 		ev_type = PFM_OFFSET_MAGIC_0 + ev_type;
-		if (ev_type >= SPAV3_0_SEL_LAST || ev_type <= SPAV3_0_SEL_BASE)
-			return -ENOENT;
-		break;
-	case 1:
+		अगर (ev_type >= SPAV3_0_SEL_LAST || ev_type <= SPAV3_0_SEL_BASE)
+			वापस -ENOENT;
+		अवरोध;
+	हाल 1:
 		ev_type = PFM_OFFSET_MAGIC_1 + ev_type;
-		if (ev_type >= SPAV3_1_SEL_LAST || ev_type <= SPAV3_1_SEL_BASE)
-			return -ENOENT;
-		break;
-	case 2:
+		अगर (ev_type >= SPAV3_1_SEL_LAST || ev_type <= SPAV3_1_SEL_BASE)
+			वापस -ENOENT;
+		अवरोध;
+	हाल 2:
 		ev_type = PFM_OFFSET_MAGIC_2 + ev_type;
-		if (ev_type >= SPAV3_2_SEL_LAST || ev_type <= SPAV3_2_SEL_BASE)
-			return -ENOENT;
-		break;
-	default:
-		return -ENOENT;
-	}
+		अगर (ev_type >= SPAV3_2_SEL_LAST || ev_type <= SPAV3_2_SEL_BASE)
+			वापस -ENOENT;
+		अवरोध;
+	शेष:
+		वापस -ENOENT;
+	पूर्ण
 
-	return ev_type;
-}
+	वापस ev_type;
+पूर्ण
 
-int
-nds32_pmu_map_event(struct perf_event *event,
-		    const unsigned int (*event_map)[PERF_COUNT_HW_MAX],
-		    const unsigned int (*cache_map)
+पूर्णांक
+nds32_pmu_map_event(काष्ठा perf_event *event,
+		    स्थिर अचिन्हित पूर्णांक (*event_map)[PERF_COUNT_HW_MAX],
+		    स्थिर अचिन्हित पूर्णांक (*cache_map)
 		    [PERF_COUNT_HW_CACHE_MAX]
 		    [PERF_COUNT_HW_CACHE_OP_MAX]
 		    [PERF_COUNT_HW_CACHE_RESULT_MAX], u32 raw_event_mask)
-{
+अणु
 	u64 config = event->attr.config;
 
-	switch (event->attr.type) {
-	case PERF_TYPE_HARDWARE:
-		return nds32_pmu_map_hw_event(event_map, config);
-	case PERF_TYPE_HW_CACHE:
-		return nds32_pmu_map_cache_event(cache_map, config);
-	case PERF_TYPE_RAW:
-		return nds32_pmu_map_raw_event(raw_event_mask, config);
-	}
+	चयन (event->attr.type) अणु
+	हाल PERF_TYPE_HARDWARE:
+		वापस nds32_pmu_map_hw_event(event_map, config);
+	हाल PERF_TYPE_HW_CACHE:
+		वापस nds32_pmu_map_cache_event(cache_map, config);
+	हाल PERF_TYPE_RAW:
+		वापस nds32_pmu_map_raw_event(raw_event_mask, config);
+	पूर्ण
 
-	return -ENOENT;
-}
+	वापस -ENOENT;
+पूर्ण
 
-static int nds32_spav3_map_event(struct perf_event *event)
-{
-	return nds32_pmu_map_event(event, &nds32_pfm_perf_map,
+अटल पूर्णांक nds32_spav3_map_event(काष्ठा perf_event *event)
+अणु
+	वापस nds32_pmu_map_event(event, &nds32_pfm_perf_map,
 				&nds32_pfm_perf_cache_map, SOFTWARE_EVENT_MASK);
-}
+पूर्ण
 
-static inline u32 nds32_pfm_getreset_flags(void)
-{
+अटल अंतरभूत u32 nds32_pfm_getreset_flags(व्योम)
+अणु
 	/* Read overflow status */
 	u32 val = __nds32__mfsr(NDS32_SR_PFM_CTL);
 	u32 old_val = val;
@@ -145,68 +146,68 @@ static inline u32 nds32_pfm_getreset_flags(void)
 
 	__nds32__mtsr(val | ov_flag, NDS32_SR_PFM_CTL);
 
-	return old_val;
-}
+	वापस old_val;
+पूर्ण
 
-static inline int nds32_pfm_has_overflowed(u32 pfm)
-{
+अटल अंतरभूत पूर्णांक nds32_pfm_has_overflowed(u32 pfm)
+अणु
 	u32 ov_flag = PFM_CTL_OVF[0] | PFM_CTL_OVF[1] | PFM_CTL_OVF[2];
 
-	return pfm & ov_flag;
-}
+	वापस pfm & ov_flag;
+पूर्ण
 
-static inline int nds32_pfm_counter_has_overflowed(u32 pfm, int idx)
-{
+अटल अंतरभूत पूर्णांक nds32_pfm_counter_has_overflowed(u32 pfm, पूर्णांक idx)
+अणु
 	u32 mask = 0;
 
-	switch (idx) {
-	case 0:
+	चयन (idx) अणु
+	हाल 0:
 		mask = PFM_CTL_OVF[0];
-		break;
-	case 1:
+		अवरोध;
+	हाल 1:
 		mask = PFM_CTL_OVF[1];
-		break;
-	case 2:
+		अवरोध;
+	हाल 2:
 		mask = PFM_CTL_OVF[2];
-		break;
-	default:
+		अवरोध;
+	शेष:
 		pr_err("%s index wrong\n", __func__);
-		break;
-	}
-	return pfm & mask;
-}
+		अवरोध;
+	पूर्ण
+	वापस pfm & mask;
+पूर्ण
 
 /*
  * Set the next IRQ period, based on the hwc->period_left value.
  * To be called with the event disabled in hw:
  */
-int nds32_pmu_event_set_period(struct perf_event *event)
-{
-	struct nds32_pmu *nds32_pmu = to_nds32_pmu(event->pmu);
-	struct hw_perf_event *hwc = &event->hw;
-	s64 left = local64_read(&hwc->period_left);
+पूर्णांक nds32_pmu_event_set_period(काष्ठा perf_event *event)
+अणु
+	काष्ठा nds32_pmu *nds32_pmu = to_nds32_pmu(event->pmu);
+	काष्ठा hw_perf_event *hwc = &event->hw;
+	s64 left = local64_पढ़ो(&hwc->period_left);
 	s64 period = hwc->sample_period;
-	int ret = 0;
+	पूर्णांक ret = 0;
 
 	/* The period may have been changed by PERF_EVENT_IOC_PERIOD */
-	if (unlikely(period != hwc->last_period))
+	अगर (unlikely(period != hwc->last_period))
 		left = period - (hwc->last_period - left);
 
-	if (unlikely(left <= -period)) {
+	अगर (unlikely(left <= -period)) अणु
 		left = period;
 		local64_set(&hwc->period_left, left);
 		hwc->last_period = period;
 		ret = 1;
-	}
+	पूर्ण
 
-	if (unlikely(left <= 0)) {
+	अगर (unlikely(left <= 0)) अणु
 		left += period;
 		local64_set(&hwc->period_left, left);
 		hwc->last_period = period;
 		ret = 1;
-	}
+	पूर्ण
 
-	if (left > (s64)nds32_pmu->max_period)
+	अगर (left > (s64)nds32_pmu->max_period)
 		left = nds32_pmu->max_period;
 
 	/*
@@ -215,21 +216,21 @@ int nds32_pmu_event_set_period(struct perf_event *event)
 	 */
 	local64_set(&hwc->prev_count, (u64)(-left));
 
-	nds32_pmu->write_counter(event, (u64)(-left) & nds32_pmu->max_period);
+	nds32_pmu->ग_लिखो_counter(event, (u64)(-left) & nds32_pmu->max_period);
 
 	perf_event_update_userpage(event);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static irqreturn_t nds32_pmu_handle_irq(int irq_num, void *dev)
-{
+अटल irqवापस_t nds32_pmu_handle_irq(पूर्णांक irq_num, व्योम *dev)
+अणु
 	u32 pfm;
-	struct perf_sample_data data;
-	struct nds32_pmu *cpu_pmu = (struct nds32_pmu *)dev;
-	struct pmu_hw_events *cpuc = cpu_pmu->get_hw_events();
-	struct pt_regs *regs;
-	int idx;
+	काष्ठा perf_sample_data data;
+	काष्ठा nds32_pmu *cpu_pmu = (काष्ठा nds32_pmu *)dev;
+	काष्ठा pmu_hw_events *cpuc = cpu_pmu->get_hw_events();
+	काष्ठा pt_regs *regs;
+	पूर्णांक idx;
 	/*
 	 * Get and reset the IRQ flags
 	 */
@@ -238,8 +239,8 @@ static irqreturn_t nds32_pmu_handle_irq(int irq_num, void *dev)
 	/*
 	 * Did an overflow occur?
 	 */
-	if (!nds32_pfm_has_overflowed(pfm))
-		return IRQ_NONE;
+	अगर (!nds32_pfm_has_overflowed(pfm))
+		वापस IRQ_NONE;
 
 	/*
 	 * Handle the counter(s) overflow(s)
@@ -247,95 +248,95 @@ static irqreturn_t nds32_pmu_handle_irq(int irq_num, void *dev)
 	regs = get_irq_regs();
 
 	nds32_pmu_stop(cpu_pmu);
-	for (idx = 0; idx < cpu_pmu->num_events; ++idx) {
-		struct perf_event *event = cpuc->events[idx];
-		struct hw_perf_event *hwc;
+	क्रम (idx = 0; idx < cpu_pmu->num_events; ++idx) अणु
+		काष्ठा perf_event *event = cpuc->events[idx];
+		काष्ठा hw_perf_event *hwc;
 
-		/* Ignore if we don't have an event. */
-		if (!event)
-			continue;
+		/* Ignore अगर we करोn't have an event. */
+		अगर (!event)
+			जारी;
 
 		/*
-		 * We have a single interrupt for all counters. Check that
-		 * each counter has overflowed before we process it.
+		 * We have a single पूर्णांकerrupt क्रम all counters. Check that
+		 * each counter has overflowed beक्रमe we process it.
 		 */
-		if (!nds32_pfm_counter_has_overflowed(pfm, idx))
-			continue;
+		अगर (!nds32_pfm_counter_has_overflowed(pfm, idx))
+			जारी;
 
 		hwc = &event->hw;
 		nds32_pmu_event_update(event);
 		perf_sample_data_init(&data, 0, hwc->last_period);
-		if (!nds32_pmu_event_set_period(event))
-			continue;
+		अगर (!nds32_pmu_event_set_period(event))
+			जारी;
 
-		if (perf_event_overflow(event, &data, regs))
+		अगर (perf_event_overflow(event, &data, regs))
 			cpu_pmu->disable(event);
-	}
+	पूर्ण
 	nds32_pmu_start(cpu_pmu);
 	/*
 	 * Handle the pending perf events.
 	 *
-	 * Note: this call *must* be run with interrupts disabled. For
-	 * platforms that can have the PMU interrupts raised as an NMI, this
+	 * Note: this call *must* be run with पूर्णांकerrupts disabled. For
+	 * platक्रमms that can have the PMU पूर्णांकerrupts उठाओd as an NMI, this
 	 * will not work.
 	 */
 	irq_work_run();
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static inline int nds32_pfm_counter_valid(struct nds32_pmu *cpu_pmu, int idx)
-{
-	return ((idx >= 0) && (idx < cpu_pmu->num_events));
-}
+अटल अंतरभूत पूर्णांक nds32_pfm_counter_valid(काष्ठा nds32_pmu *cpu_pmu, पूर्णांक idx)
+अणु
+	वापस ((idx >= 0) && (idx < cpu_pmu->num_events));
+पूर्ण
 
-static inline int nds32_pfm_disable_counter(int idx)
-{
-	unsigned int val = __nds32__mfsr(NDS32_SR_PFM_CTL);
+अटल अंतरभूत पूर्णांक nds32_pfm_disable_counter(पूर्णांक idx)
+अणु
+	अचिन्हित पूर्णांक val = __nds32__mfsr(NDS32_SR_PFM_CTL);
 	u32 mask = 0;
 
 	mask = PFM_CTL_EN[idx];
 	val &= ~mask;
 	val &= ~(PFM_CTL_OVF[0] | PFM_CTL_OVF[1] | PFM_CTL_OVF[2]);
 	__nds32__mtsr_isb(val, NDS32_SR_PFM_CTL);
-	return idx;
-}
+	वापस idx;
+पूर्ण
 
 /*
  * Add an event filter to a given event.
  */
-static int nds32_pmu_set_event_filter(struct hw_perf_event *event,
-				      struct perf_event_attr *attr)
-{
-	unsigned long config_base = 0;
-	int idx = event->idx;
-	unsigned long no_kernel_tracing = 0;
-	unsigned long no_user_tracing = 0;
-	/* If index is -1, do not do anything */
-	if (idx == -1)
-		return 0;
+अटल पूर्णांक nds32_pmu_set_event_filter(काष्ठा hw_perf_event *event,
+				      काष्ठा perf_event_attr *attr)
+अणु
+	अचिन्हित दीर्घ config_base = 0;
+	पूर्णांक idx = event->idx;
+	अचिन्हित दीर्घ no_kernel_tracing = 0;
+	अचिन्हित दीर्घ no_user_tracing = 0;
+	/* If index is -1, करो not करो anything */
+	अगर (idx == -1)
+		वापस 0;
 
 	no_kernel_tracing = PFM_CTL_KS[idx];
 	no_user_tracing = PFM_CTL_KU[idx];
 	/*
 	 * Default: enable both kernel and user mode tracing.
 	 */
-	if (attr->exclude_user)
+	अगर (attr->exclude_user)
 		config_base |= no_user_tracing;
 
-	if (attr->exclude_kernel)
+	अगर (attr->exclude_kernel)
 		config_base |= no_kernel_tracing;
 
 	/*
-	 * Install the filter into config_base as this is used to
-	 * construct the event type.
+	 * Install the filter पूर्णांकo config_base as this is used to
+	 * स्थिरruct the event type.
 	 */
 	event->config_base |= config_base;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static inline void nds32_pfm_write_evtsel(int idx, u32 evnum)
-{
+अटल अंतरभूत व्योम nds32_pfm_ग_लिखो_evtsel(पूर्णांक idx, u32 evnum)
+अणु
 	u32 offset = 0;
 	u32 ori_val = __nds32__mfsr(NDS32_SR_PFM_CTL);
 	u32 ev_mask = 0;
@@ -344,15 +345,15 @@ static inline void nds32_pfm_write_evtsel(int idx, u32 evnum)
 	u32 val;
 
 	offset = PFM_CTL_OFFSEL[idx];
-	/* Clear previous mode selection, and write new one */
+	/* Clear previous mode selection, and ग_लिखो new one */
 	no_kernel_mask = PFM_CTL_KS[idx];
 	no_user_mask = PFM_CTL_KU[idx];
 	ori_val &= ~no_kernel_mask;
 	ori_val &= ~no_user_mask;
-	if (evnum & no_kernel_mask)
+	अगर (evnum & no_kernel_mask)
 		ori_val |= no_kernel_mask;
 
-	if (evnum & no_user_mask)
+	अगर (evnum & no_user_mask)
 		ori_val |= no_user_mask;
 
 	/* Clear previous event selection */
@@ -360,72 +361,72 @@ static inline void nds32_pfm_write_evtsel(int idx, u32 evnum)
 	ori_val &= ~ev_mask;
 	evnum &= SOFTWARE_EVENT_MASK;
 
-	/* undo the linear mapping */
+	/* unकरो the linear mapping */
 	evnum = get_converted_evet_hw_num(evnum);
 	val = ori_val | (evnum << offset);
 	val &= ~(PFM_CTL_OVF[0] | PFM_CTL_OVF[1] | PFM_CTL_OVF[2]);
 	__nds32__mtsr_isb(val, NDS32_SR_PFM_CTL);
-}
+पूर्ण
 
-static inline int nds32_pfm_enable_counter(int idx)
-{
-	unsigned int val = __nds32__mfsr(NDS32_SR_PFM_CTL);
+अटल अंतरभूत पूर्णांक nds32_pfm_enable_counter(पूर्णांक idx)
+अणु
+	अचिन्हित पूर्णांक val = __nds32__mfsr(NDS32_SR_PFM_CTL);
 	u32 mask = 0;
 
 	mask = PFM_CTL_EN[idx];
 	val |= mask;
 	val &= ~(PFM_CTL_OVF[0] | PFM_CTL_OVF[1] | PFM_CTL_OVF[2]);
 	__nds32__mtsr_isb(val, NDS32_SR_PFM_CTL);
-	return idx;
-}
+	वापस idx;
+पूर्ण
 
-static inline int nds32_pfm_enable_intens(int idx)
-{
-	unsigned int val = __nds32__mfsr(NDS32_SR_PFM_CTL);
+अटल अंतरभूत पूर्णांक nds32_pfm_enable_पूर्णांकens(पूर्णांक idx)
+अणु
+	अचिन्हित पूर्णांक val = __nds32__mfsr(NDS32_SR_PFM_CTL);
 	u32 mask = 0;
 
 	mask = PFM_CTL_IE[idx];
 	val |= mask;
 	val &= ~(PFM_CTL_OVF[0] | PFM_CTL_OVF[1] | PFM_CTL_OVF[2]);
 	__nds32__mtsr_isb(val, NDS32_SR_PFM_CTL);
-	return idx;
-}
+	वापस idx;
+पूर्ण
 
-static inline int nds32_pfm_disable_intens(int idx)
-{
-	unsigned int val = __nds32__mfsr(NDS32_SR_PFM_CTL);
+अटल अंतरभूत पूर्णांक nds32_pfm_disable_पूर्णांकens(पूर्णांक idx)
+अणु
+	अचिन्हित पूर्णांक val = __nds32__mfsr(NDS32_SR_PFM_CTL);
 	u32 mask = 0;
 
 	mask = PFM_CTL_IE[idx];
 	val &= ~mask;
 	val &= ~(PFM_CTL_OVF[0] | PFM_CTL_OVF[1] | PFM_CTL_OVF[2]);
 	__nds32__mtsr_isb(val, NDS32_SR_PFM_CTL);
-	return idx;
-}
+	वापस idx;
+पूर्ण
 
-static int event_requires_mode_exclusion(struct perf_event_attr *attr)
-{
-	/* Other modes NDS32 does not support */
-	return attr->exclude_user || attr->exclude_kernel;
-}
+अटल पूर्णांक event_requires_mode_exclusion(काष्ठा perf_event_attr *attr)
+अणु
+	/* Other modes NDS32 करोes not support */
+	वापस attr->exclude_user || attr->exclude_kernel;
+पूर्ण
 
-static void nds32_pmu_enable_event(struct perf_event *event)
-{
-	unsigned long flags;
-	unsigned int evnum = 0;
-	struct hw_perf_event *hwc = &event->hw;
-	struct nds32_pmu *cpu_pmu = to_nds32_pmu(event->pmu);
-	struct pmu_hw_events *events = cpu_pmu->get_hw_events();
-	int idx = hwc->idx;
+अटल व्योम nds32_pmu_enable_event(काष्ठा perf_event *event)
+अणु
+	अचिन्हित दीर्घ flags;
+	अचिन्हित पूर्णांक evnum = 0;
+	काष्ठा hw_perf_event *hwc = &event->hw;
+	काष्ठा nds32_pmu *cpu_pmu = to_nds32_pmu(event->pmu);
+	काष्ठा pmu_hw_events *events = cpu_pmu->get_hw_events();
+	पूर्णांक idx = hwc->idx;
 
-	if (!nds32_pfm_counter_valid(cpu_pmu, idx)) {
+	अगर (!nds32_pfm_counter_valid(cpu_pmu, idx)) अणु
 		pr_err("CPU enabling wrong pfm counter IRQ enable\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/*
-	 * Enable counter and interrupt, and set the counter to count
-	 * the event that we're interested in.
+	 * Enable counter and पूर्णांकerrupt, and set the counter to count
+	 * the event that we're पूर्णांकerested in.
 	 */
 	raw_spin_lock_irqsave(&events->pmu_lock, flags);
 
@@ -437,21 +438,21 @@ static void nds32_pmu_enable_event(struct perf_event *event)
 	/*
 	 * Check whether we need to exclude the counter from certain modes.
 	 */
-	if ((!cpu_pmu->set_event_filter ||
+	अगर ((!cpu_pmu->set_event_filter ||
 	     cpu_pmu->set_event_filter(hwc, &event->attr)) &&
-	     event_requires_mode_exclusion(&event->attr)) {
+	     event_requires_mode_exclusion(&event->attr)) अणु
 		pr_notice
 		("NDS32 performance counters do not support mode exclusion\n");
 		hwc->config_base = 0;
-	}
+	पूर्ण
 	/* Write event */
 	evnum = hwc->config_base;
-	nds32_pfm_write_evtsel(idx, evnum);
+	nds32_pfm_ग_लिखो_evtsel(idx, evnum);
 
 	/*
-	 * Enable interrupt for this counter
+	 * Enable पूर्णांकerrupt क्रम this counter
 	 */
-	nds32_pfm_enable_intens(idx);
+	nds32_pfm_enable_पूर्णांकens(idx);
 
 	/*
 	 * Enable counter
@@ -459,23 +460,23 @@ static void nds32_pmu_enable_event(struct perf_event *event)
 	nds32_pfm_enable_counter(idx);
 
 	raw_spin_unlock_irqrestore(&events->pmu_lock, flags);
-}
+पूर्ण
 
-static void nds32_pmu_disable_event(struct perf_event *event)
-{
-	unsigned long flags;
-	struct hw_perf_event *hwc = &event->hw;
-	struct nds32_pmu *cpu_pmu = to_nds32_pmu(event->pmu);
-	struct pmu_hw_events *events = cpu_pmu->get_hw_events();
-	int idx = hwc->idx;
+अटल व्योम nds32_pmu_disable_event(काष्ठा perf_event *event)
+अणु
+	अचिन्हित दीर्घ flags;
+	काष्ठा hw_perf_event *hwc = &event->hw;
+	काष्ठा nds32_pmu *cpu_pmu = to_nds32_pmu(event->pmu);
+	काष्ठा pmu_hw_events *events = cpu_pmu->get_hw_events();
+	पूर्णांक idx = hwc->idx;
 
-	if (!nds32_pfm_counter_valid(cpu_pmu, idx)) {
+	अगर (!nds32_pfm_counter_valid(cpu_pmu, idx)) अणु
 		pr_err("CPU disabling wrong pfm counter IRQ enable %d\n", idx);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/*
-	 * Disable counter and interrupt
+	 * Disable counter and पूर्णांकerrupt
 	 */
 	raw_spin_lock_irqsave(&events->pmu_lock, flags);
 
@@ -485,118 +486,118 @@ static void nds32_pmu_disable_event(struct perf_event *event)
 	nds32_pfm_disable_counter(idx);
 
 	/*
-	 * Disable interrupt for this counter
+	 * Disable पूर्णांकerrupt क्रम this counter
 	 */
-	nds32_pfm_disable_intens(idx);
+	nds32_pfm_disable_पूर्णांकens(idx);
 
 	raw_spin_unlock_irqrestore(&events->pmu_lock, flags);
-}
+पूर्ण
 
-static inline u32 nds32_pmu_read_counter(struct perf_event *event)
-{
-	struct nds32_pmu *cpu_pmu = to_nds32_pmu(event->pmu);
-	struct hw_perf_event *hwc = &event->hw;
-	int idx = hwc->idx;
+अटल अंतरभूत u32 nds32_pmu_पढ़ो_counter(काष्ठा perf_event *event)
+अणु
+	काष्ठा nds32_pmu *cpu_pmu = to_nds32_pmu(event->pmu);
+	काष्ठा hw_perf_event *hwc = &event->hw;
+	पूर्णांक idx = hwc->idx;
 	u32 count = 0;
 
-	if (!nds32_pfm_counter_valid(cpu_pmu, idx)) {
+	अगर (!nds32_pfm_counter_valid(cpu_pmu, idx)) अणु
 		pr_err("CPU reading wrong counter %d\n", idx);
-	} else {
-		switch (idx) {
-		case PFMC0:
+	पूर्ण अन्यथा अणु
+		चयन (idx) अणु
+		हाल PFMC0:
 			count = __nds32__mfsr(NDS32_SR_PFMC0);
-			break;
-		case PFMC1:
+			अवरोध;
+		हाल PFMC1:
 			count = __nds32__mfsr(NDS32_SR_PFMC1);
-			break;
-		case PFMC2:
+			अवरोध;
+		हाल PFMC2:
 			count = __nds32__mfsr(NDS32_SR_PFMC2);
-			break;
-		default:
+			अवरोध;
+		शेष:
 			pr_err
 			    ("%s: CPU has no performance counters %d\n",
 			     __func__, idx);
-		}
-	}
-	return count;
-}
+		पूर्ण
+	पूर्ण
+	वापस count;
+पूर्ण
 
-static inline void nds32_pmu_write_counter(struct perf_event *event, u32 value)
-{
-	struct nds32_pmu *cpu_pmu = to_nds32_pmu(event->pmu);
-	struct hw_perf_event *hwc = &event->hw;
-	int idx = hwc->idx;
+अटल अंतरभूत व्योम nds32_pmu_ग_लिखो_counter(काष्ठा perf_event *event, u32 value)
+अणु
+	काष्ठा nds32_pmu *cpu_pmu = to_nds32_pmu(event->pmu);
+	काष्ठा hw_perf_event *hwc = &event->hw;
+	पूर्णांक idx = hwc->idx;
 
-	if (!nds32_pfm_counter_valid(cpu_pmu, idx)) {
+	अगर (!nds32_pfm_counter_valid(cpu_pmu, idx)) अणु
 		pr_err("CPU writing wrong counter %d\n", idx);
-	} else {
-		switch (idx) {
-		case PFMC0:
+	पूर्ण अन्यथा अणु
+		चयन (idx) अणु
+		हाल PFMC0:
 			__nds32__mtsr_isb(value, NDS32_SR_PFMC0);
-			break;
-		case PFMC1:
+			अवरोध;
+		हाल PFMC1:
 			__nds32__mtsr_isb(value, NDS32_SR_PFMC1);
-			break;
-		case PFMC2:
+			अवरोध;
+		हाल PFMC2:
 			__nds32__mtsr_isb(value, NDS32_SR_PFMC2);
-			break;
-		default:
+			अवरोध;
+		शेष:
 			pr_err
 			    ("%s: CPU has no performance counters %d\n",
 			     __func__, idx);
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static int nds32_pmu_get_event_idx(struct pmu_hw_events *cpuc,
-				   struct perf_event *event)
-{
-	int idx;
-	struct hw_perf_event *hwc = &event->hw;
+अटल पूर्णांक nds32_pmu_get_event_idx(काष्ठा pmu_hw_events *cpuc,
+				   काष्ठा perf_event *event)
+अणु
+	पूर्णांक idx;
+	काष्ठा hw_perf_event *hwc = &event->hw;
 	/*
-	 * Current implementation maps cycles, instruction count and cache-miss
-	 * to specific counter.
+	 * Current implementation maps cycles, inकाष्ठाion count and cache-miss
+	 * to specअगरic counter.
 	 * However, multiple of the 3 counters are able to count these events.
 	 *
 	 *
-	 * SOFTWARE_EVENT_MASK mask for getting event num ,
+	 * SOFTWARE_EVENT_MASK mask क्रम getting event num ,
 	 * This is defined by Jia-Rung, you can change the polocies.
-	 * However, do not exceed 8 bits. This is hardware specific.
+	 * However, करो not exceed 8 bits. This is hardware specअगरic.
 	 * The last number is SPAv3_2_SEL_LAST.
 	 */
-	unsigned long evtype = hwc->config_base & SOFTWARE_EVENT_MASK;
+	अचिन्हित दीर्घ evtype = hwc->config_base & SOFTWARE_EVENT_MASK;
 
 	idx = get_converted_event_idx(evtype);
 	/*
-	 * Try to get the counter for correpsonding event
+	 * Try to get the counter क्रम correpsonding event
 	 */
-	if (evtype == SPAV3_0_SEL_TOTAL_CYCLES) {
-		if (!test_and_set_bit(idx, cpuc->used_mask))
-			return idx;
-		if (!test_and_set_bit(NDS32_IDX_COUNTER0, cpuc->used_mask))
-			return NDS32_IDX_COUNTER0;
-		if (!test_and_set_bit(NDS32_IDX_COUNTER1, cpuc->used_mask))
-			return NDS32_IDX_COUNTER1;
-	} else if (evtype == SPAV3_1_SEL_COMPLETED_INSTRUCTION) {
-		if (!test_and_set_bit(idx, cpuc->used_mask))
-			return idx;
-		else if (!test_and_set_bit(NDS32_IDX_COUNTER1, cpuc->used_mask))
-			return NDS32_IDX_COUNTER1;
-		else if (!test_and_set_bit
+	अगर (evtype == SPAV3_0_SEL_TOTAL_CYCLES) अणु
+		अगर (!test_and_set_bit(idx, cpuc->used_mask))
+			वापस idx;
+		अगर (!test_and_set_bit(NDS32_IDX_COUNTER0, cpuc->used_mask))
+			वापस NDS32_IDX_COUNTER0;
+		अगर (!test_and_set_bit(NDS32_IDX_COUNTER1, cpuc->used_mask))
+			वापस NDS32_IDX_COUNTER1;
+	पूर्ण अन्यथा अगर (evtype == SPAV3_1_SEL_COMPLETED_INSTRUCTION) अणु
+		अगर (!test_and_set_bit(idx, cpuc->used_mask))
+			वापस idx;
+		अन्यथा अगर (!test_and_set_bit(NDS32_IDX_COUNTER1, cpuc->used_mask))
+			वापस NDS32_IDX_COUNTER1;
+		अन्यथा अगर (!test_and_set_bit
 			 (NDS32_IDX_CYCLE_COUNTER, cpuc->used_mask))
-			return NDS32_IDX_CYCLE_COUNTER;
-	} else {
-		if (!test_and_set_bit(idx, cpuc->used_mask))
-			return idx;
-	}
-	return -EAGAIN;
-}
+			वापस NDS32_IDX_CYCLE_COUNTER;
+	पूर्ण अन्यथा अणु
+		अगर (!test_and_set_bit(idx, cpuc->used_mask))
+			वापस idx;
+	पूर्ण
+	वापस -EAGAIN;
+पूर्ण
 
-static void nds32_pmu_start(struct nds32_pmu *cpu_pmu)
-{
-	unsigned long flags;
-	unsigned int val;
-	struct pmu_hw_events *events = cpu_pmu->get_hw_events();
+अटल व्योम nds32_pmu_start(काष्ठा nds32_pmu *cpu_pmu)
+अणु
+	अचिन्हित दीर्घ flags;
+	अचिन्हित पूर्णांक val;
+	काष्ठा pmu_hw_events *events = cpu_pmu->get_hw_events();
 
 	raw_spin_lock_irqsave(&events->pmu_lock, flags);
 
@@ -607,13 +608,13 @@ static void nds32_pmu_start(struct nds32_pmu *cpu_pmu)
 	__nds32__mtsr_isb(val, NDS32_SR_PFM_CTL);
 
 	raw_spin_unlock_irqrestore(&events->pmu_lock, flags);
-}
+पूर्ण
 
-static void nds32_pmu_stop(struct nds32_pmu *cpu_pmu)
-{
-	unsigned long flags;
-	unsigned int val;
-	struct pmu_hw_events *events = cpu_pmu->get_hw_events();
+अटल व्योम nds32_pmu_stop(काष्ठा nds32_pmu *cpu_pmu)
+अणु
+	अचिन्हित दीर्घ flags;
+	अचिन्हित पूर्णांक val;
+	काष्ठा pmu_hw_events *events = cpu_pmu->get_hw_events();
 
 	raw_spin_lock_irqsave(&events->pmu_lock, flags);
 
@@ -624,10 +625,10 @@ static void nds32_pmu_stop(struct nds32_pmu *cpu_pmu)
 	__nds32__mtsr_isb(val, NDS32_SR_PFM_CTL);
 
 	raw_spin_unlock_irqrestore(&events->pmu_lock, flags);
-}
+पूर्ण
 
-static void nds32_pmu_reset(void *info)
-{
+अटल व्योम nds32_pmu_reset(व्योम *info)
+अणु
 	u32 val = 0;
 
 	val |= (PFM_CTL_OVF[0] | PFM_CTL_OVF[1] | PFM_CTL_OVF[2]);
@@ -636,48 +637,48 @@ static void nds32_pmu_reset(void *info)
 	__nds32__mtsr(0, NDS32_SR_PFMC0);
 	__nds32__mtsr(0, NDS32_SR_PFMC1);
 	__nds32__mtsr(0, NDS32_SR_PFMC2);
-}
+पूर्ण
 
-static void nds32_pmu_init(struct nds32_pmu *cpu_pmu)
-{
+अटल व्योम nds32_pmu_init(काष्ठा nds32_pmu *cpu_pmu)
+अणु
 	cpu_pmu->handle_irq = nds32_pmu_handle_irq;
 	cpu_pmu->enable = nds32_pmu_enable_event;
 	cpu_pmu->disable = nds32_pmu_disable_event;
-	cpu_pmu->read_counter = nds32_pmu_read_counter;
-	cpu_pmu->write_counter = nds32_pmu_write_counter;
+	cpu_pmu->पढ़ो_counter = nds32_pmu_पढ़ो_counter;
+	cpu_pmu->ग_लिखो_counter = nds32_pmu_ग_लिखो_counter;
 	cpu_pmu->get_event_idx = nds32_pmu_get_event_idx;
 	cpu_pmu->start = nds32_pmu_start;
 	cpu_pmu->stop = nds32_pmu_stop;
 	cpu_pmu->reset = nds32_pmu_reset;
 	cpu_pmu->max_period = 0xFFFFFFFF;	/* Maximum counts */
-};
+पूर्ण;
 
-static u32 nds32_read_num_pfm_events(void)
-{
+अटल u32 nds32_पढ़ो_num_pfm_events(व्योम)
+अणु
 	/* NDS32 SPAv3 PMU support 3 counter */
-	return 3;
-}
+	वापस 3;
+पूर्ण
 
-static int device_pmu_init(struct nds32_pmu *cpu_pmu)
-{
+अटल पूर्णांक device_pmu_init(काष्ठा nds32_pmu *cpu_pmu)
+अणु
 	nds32_pmu_init(cpu_pmu);
 	/*
-	 * This name should be devive-specific name, whatever you like :)
+	 * This name should be devive-specअगरic name, whatever you like :)
 	 * I think "PMU" will be a good generic name.
 	 */
 	cpu_pmu->name = "nds32v3-pmu";
 	cpu_pmu->map_event = nds32_spav3_map_event;
-	cpu_pmu->num_events = nds32_read_num_pfm_events();
+	cpu_pmu->num_events = nds32_पढ़ो_num_pfm_events();
 	cpu_pmu->set_event_filter = nds32_pmu_set_event_filter;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * CPU PMU identification and probing.
+ * CPU PMU identअगरication and probing.
  */
-static int probe_current_pmu(struct nds32_pmu *pmu)
-{
-	int ret;
+अटल पूर्णांक probe_current_pmu(काष्ठा nds32_pmu *pmu)
+अणु
+	पूर्णांक ret;
 
 	get_cpu();
 	ret = -ENODEV;
@@ -688,130 +689,130 @@ static int probe_current_pmu(struct nds32_pmu *pmu)
 	 */
 	device_pmu_init(pmu);
 	put_cpu();
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void nds32_pmu_enable(struct pmu *pmu)
-{
-	struct nds32_pmu *nds32_pmu = to_nds32_pmu(pmu);
-	struct pmu_hw_events *hw_events = nds32_pmu->get_hw_events();
-	int enabled = bitmap_weight(hw_events->used_mask,
+अटल व्योम nds32_pmu_enable(काष्ठा pmu *pmu)
+अणु
+	काष्ठा nds32_pmu *nds32_pmu = to_nds32_pmu(pmu);
+	काष्ठा pmu_hw_events *hw_events = nds32_pmu->get_hw_events();
+	पूर्णांक enabled = biपंचांगap_weight(hw_events->used_mask,
 				    nds32_pmu->num_events);
 
-	if (enabled)
+	अगर (enabled)
 		nds32_pmu->start(nds32_pmu);
-}
+पूर्ण
 
-static void nds32_pmu_disable(struct pmu *pmu)
-{
-	struct nds32_pmu *nds32_pmu = to_nds32_pmu(pmu);
+अटल व्योम nds32_pmu_disable(काष्ठा pmu *pmu)
+अणु
+	काष्ठा nds32_pmu *nds32_pmu = to_nds32_pmu(pmu);
 
 	nds32_pmu->stop(nds32_pmu);
-}
+पूर्ण
 
-static void nds32_pmu_release_hardware(struct nds32_pmu *nds32_pmu)
-{
-	nds32_pmu->free_irq(nds32_pmu);
-	pm_runtime_put_sync(&nds32_pmu->plat_device->dev);
-}
+अटल व्योम nds32_pmu_release_hardware(काष्ठा nds32_pmu *nds32_pmu)
+अणु
+	nds32_pmu->मुक्त_irq(nds32_pmu);
+	pm_runसमय_put_sync(&nds32_pmu->plat_device->dev);
+पूर्ण
 
-static irqreturn_t nds32_pmu_dispatch_irq(int irq, void *dev)
-{
-	struct nds32_pmu *nds32_pmu = (struct nds32_pmu *)dev;
-	int ret;
-	u64 start_clock, finish_clock;
+अटल irqवापस_t nds32_pmu_dispatch_irq(पूर्णांक irq, व्योम *dev)
+अणु
+	काष्ठा nds32_pmu *nds32_pmu = (काष्ठा nds32_pmu *)dev;
+	पूर्णांक ret;
+	u64 start_घड़ी, finish_घड़ी;
 
-	start_clock = local_clock();
+	start_घड़ी = local_घड़ी();
 	ret = nds32_pmu->handle_irq(irq, dev);
-	finish_clock = local_clock();
+	finish_घड़ी = local_घड़ी();
 
-	perf_sample_event_took(finish_clock - start_clock);
-	return ret;
-}
+	perf_sample_event_took(finish_घड़ी - start_घड़ी);
+	वापस ret;
+पूर्ण
 
-static int nds32_pmu_reserve_hardware(struct nds32_pmu *nds32_pmu)
-{
-	int err;
-	struct platform_device *pmu_device = nds32_pmu->plat_device;
+अटल पूर्णांक nds32_pmu_reserve_hardware(काष्ठा nds32_pmu *nds32_pmu)
+अणु
+	पूर्णांक err;
+	काष्ठा platक्रमm_device *pmu_device = nds32_pmu->plat_device;
 
-	if (!pmu_device)
-		return -ENODEV;
+	अगर (!pmu_device)
+		वापस -ENODEV;
 
-	pm_runtime_get_sync(&pmu_device->dev);
+	pm_runसमय_get_sync(&pmu_device->dev);
 	err = nds32_pmu->request_irq(nds32_pmu, nds32_pmu_dispatch_irq);
-	if (err) {
+	अगर (err) अणु
 		nds32_pmu_release_hardware(nds32_pmu);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-validate_event(struct pmu *pmu, struct pmu_hw_events *hw_events,
-	       struct perf_event *event)
-{
-	struct nds32_pmu *nds32_pmu = to_nds32_pmu(event->pmu);
+अटल पूर्णांक
+validate_event(काष्ठा pmu *pmu, काष्ठा pmu_hw_events *hw_events,
+	       काष्ठा perf_event *event)
+अणु
+	काष्ठा nds32_pmu *nds32_pmu = to_nds32_pmu(event->pmu);
 
-	if (is_software_event(event))
-		return 1;
+	अगर (is_software_event(event))
+		वापस 1;
 
-	if (event->pmu != pmu)
-		return 0;
+	अगर (event->pmu != pmu)
+		वापस 0;
 
-	if (event->state < PERF_EVENT_STATE_OFF)
-		return 1;
+	अगर (event->state < PERF_EVENT_STATE_OFF)
+		वापस 1;
 
-	if (event->state == PERF_EVENT_STATE_OFF && !event->attr.enable_on_exec)
-		return 1;
+	अगर (event->state == PERF_EVENT_STATE_OFF && !event->attr.enable_on_exec)
+		वापस 1;
 
-	return nds32_pmu->get_event_idx(hw_events, event) >= 0;
-}
+	वापस nds32_pmu->get_event_idx(hw_events, event) >= 0;
+पूर्ण
 
-static int validate_group(struct perf_event *event)
-{
-	struct perf_event *sibling, *leader = event->group_leader;
-	struct pmu_hw_events fake_pmu;
+अटल पूर्णांक validate_group(काष्ठा perf_event *event)
+अणु
+	काष्ठा perf_event *sibling, *leader = event->group_leader;
+	काष्ठा pmu_hw_events fake_pmu;
 	DECLARE_BITMAP(fake_used_mask, MAX_COUNTERS);
 	/*
 	 * Initialize the fake PMU. We only need to populate the
-	 * used_mask for the purposes of validation.
+	 * used_mask क्रम the purposes of validation.
 	 */
-	memset(fake_used_mask, 0, sizeof(fake_used_mask));
+	स_रखो(fake_used_mask, 0, माप(fake_used_mask));
 
-	if (!validate_event(event->pmu, &fake_pmu, leader))
-		return -EINVAL;
+	अगर (!validate_event(event->pmu, &fake_pmu, leader))
+		वापस -EINVAL;
 
-	for_each_sibling_event(sibling, leader) {
-		if (!validate_event(event->pmu, &fake_pmu, sibling))
-			return -EINVAL;
-	}
+	क्रम_each_sibling_event(sibling, leader) अणु
+		अगर (!validate_event(event->pmu, &fake_pmu, sibling))
+			वापस -EINVAL;
+	पूर्ण
 
-	if (!validate_event(event->pmu, &fake_pmu, event))
-		return -EINVAL;
+	अगर (!validate_event(event->pmu, &fake_pmu, event))
+		वापस -EINVAL;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __hw_perf_event_init(struct perf_event *event)
-{
-	struct nds32_pmu *nds32_pmu = to_nds32_pmu(event->pmu);
-	struct hw_perf_event *hwc = &event->hw;
-	int mapping;
+अटल पूर्णांक __hw_perf_event_init(काष्ठा perf_event *event)
+अणु
+	काष्ठा nds32_pmu *nds32_pmu = to_nds32_pmu(event->pmu);
+	काष्ठा hw_perf_event *hwc = &event->hw;
+	पूर्णांक mapping;
 
 	mapping = nds32_pmu->map_event(event);
 
-	if (mapping < 0) {
+	अगर (mapping < 0) अणु
 		pr_debug("event %x:%llx not supported\n", event->attr.type,
 			 event->attr.config);
-		return mapping;
-	}
+		वापस mapping;
+	पूर्ण
 
 	/*
-	 * We don't assign an index until we actually place the event onto
-	 * hardware. Use -1 to signify that we haven't decided where to put it
-	 * yet. For SMP systems, each core has it's own PMU so we can't do any
-	 * clever allocation or constraints checking at this point.
+	 * We करोn't assign an index until we actually place the event onto
+	 * hardware. Use -1 to signअगरy that we haven't decided where to put it
+	 * yet. For SMP प्रणालीs, each core has it's own PMU so we can't करो any
+	 * clever allocation or स्थिरraपूर्णांकs checking at this poपूर्णांक.
 	 */
 	hwc->idx = -1;
 	hwc->config_base = 0;
@@ -821,20 +822,20 @@ static int __hw_perf_event_init(struct perf_event *event)
 	/*
 	 * Check whether we need to exclude the counter from certain modes.
 	 */
-	if ((!nds32_pmu->set_event_filter ||
+	अगर ((!nds32_pmu->set_event_filter ||
 	     nds32_pmu->set_event_filter(hwc, &event->attr)) &&
-	    event_requires_mode_exclusion(&event->attr)) {
+	    event_requires_mode_exclusion(&event->attr)) अणु
 		pr_debug
 			("NDS performance counters do not support mode exclusion\n");
-		return -EOPNOTSUPP;
-	}
+		वापस -EOPNOTSUPP;
+	पूर्ण
 
 	/*
-	 * Store the event encoding into the config_base field.
+	 * Store the event encoding पूर्णांकo the config_base field.
 	 */
-	hwc->config_base |= (unsigned long)mapping;
+	hwc->config_base |= (अचिन्हित दीर्घ)mapping;
 
-	if (!hwc->sample_period) {
+	अगर (!hwc->sample_period) अणु
 		/*
 		 * For non-sampling runs, limit the sample_period to half
 		 * of the counter width. That way, the new counter value
@@ -844,81 +845,81 @@ static int __hw_perf_event_init(struct perf_event *event)
 		hwc->sample_period = nds32_pmu->max_period >> 1;
 		hwc->last_period = hwc->sample_period;
 		local64_set(&hwc->period_left, hwc->sample_period);
-	}
+	पूर्ण
 
-	if (event->group_leader != event) {
-		if (validate_group(event) != 0)
-			return -EINVAL;
-	}
+	अगर (event->group_leader != event) अणु
+		अगर (validate_group(event) != 0)
+			वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int nds32_pmu_event_init(struct perf_event *event)
-{
-	struct nds32_pmu *nds32_pmu = to_nds32_pmu(event->pmu);
-	int err = 0;
+अटल पूर्णांक nds32_pmu_event_init(काष्ठा perf_event *event)
+अणु
+	काष्ठा nds32_pmu *nds32_pmu = to_nds32_pmu(event->pmu);
+	पूर्णांक err = 0;
 	atomic_t *active_events = &nds32_pmu->active_events;
 
-	/* does not support taken branch sampling */
-	if (has_branch_stack(event))
-		return -EOPNOTSUPP;
+	/* करोes not support taken branch sampling */
+	अगर (has_branch_stack(event))
+		वापस -EOPNOTSUPP;
 
-	if (nds32_pmu->map_event(event) == -ENOENT)
-		return -ENOENT;
+	अगर (nds32_pmu->map_event(event) == -ENOENT)
+		वापस -ENOENT;
 
-	if (!atomic_inc_not_zero(active_events)) {
-		if (atomic_read(active_events) == 0) {
+	अगर (!atomic_inc_not_zero(active_events)) अणु
+		अगर (atomic_पढ़ो(active_events) == 0) अणु
 			/* Register irq handler */
 			err = nds32_pmu_reserve_hardware(nds32_pmu);
-		}
+		पूर्ण
 
-		if (!err)
+		अगर (!err)
 			atomic_inc(active_events);
-	}
+	पूर्ण
 
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	err = __hw_perf_event_init(event);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void nds32_start(struct perf_event *event, int flags)
-{
-	struct nds32_pmu *nds32_pmu = to_nds32_pmu(event->pmu);
-	struct hw_perf_event *hwc = &event->hw;
+अटल व्योम nds32_start(काष्ठा perf_event *event, पूर्णांक flags)
+अणु
+	काष्ठा nds32_pmu *nds32_pmu = to_nds32_pmu(event->pmu);
+	काष्ठा hw_perf_event *hwc = &event->hw;
 	/*
 	 * NDS pmu always has to reprogram the period, so ignore
 	 * PERF_EF_RELOAD, see the comment below.
 	 */
-	if (flags & PERF_EF_RELOAD)
+	अगर (flags & PERF_EF_RELOAD)
 		WARN_ON_ONCE(!(hwc->state & PERF_HES_UPTODATE));
 
 	hwc->state = 0;
-	/* Set the period for the event. */
+	/* Set the period क्रम the event. */
 	nds32_pmu_event_set_period(event);
 
 	nds32_pmu->enable(event);
-}
+पूर्ण
 
-static int nds32_pmu_add(struct perf_event *event, int flags)
-{
-	struct nds32_pmu *nds32_pmu = to_nds32_pmu(event->pmu);
-	struct pmu_hw_events *hw_events = nds32_pmu->get_hw_events();
-	struct hw_perf_event *hwc = &event->hw;
-	int idx;
-	int err = 0;
+अटल पूर्णांक nds32_pmu_add(काष्ठा perf_event *event, पूर्णांक flags)
+अणु
+	काष्ठा nds32_pmu *nds32_pmu = to_nds32_pmu(event->pmu);
+	काष्ठा pmu_hw_events *hw_events = nds32_pmu->get_hw_events();
+	काष्ठा hw_perf_event *hwc = &event->hw;
+	पूर्णांक idx;
+	पूर्णांक err = 0;
 
 	perf_pmu_disable(event->pmu);
 
-	/* If we don't have a space for the counter then finish early. */
+	/* If we करोn't have a space क्रम the counter then finish early. */
 	idx = nds32_pmu->get_event_idx(hw_events, event);
-	if (idx < 0) {
+	अगर (idx < 0) अणु
 		err = idx;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	/*
 	 * If there is an event in the counter we are going to use then make
@@ -929,7 +930,7 @@ static int nds32_pmu_add(struct perf_event *event, int flags)
 	hw_events->events[idx] = event;
 
 	hwc->state = PERF_HES_STOPPED | PERF_HES_UPTODATE;
-	if (flags & PERF_EF_START)
+	अगर (flags & PERF_EF_START)
 		nds32_start(event, PERF_EF_RELOAD);
 
 	/* Propagate our changes to the userspace mapping. */
@@ -937,23 +938,23 @@ static int nds32_pmu_add(struct perf_event *event, int flags)
 
 out:
 	perf_pmu_enable(event->pmu);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-u64 nds32_pmu_event_update(struct perf_event *event)
-{
-	struct nds32_pmu *nds32_pmu = to_nds32_pmu(event->pmu);
-	struct hw_perf_event *hwc = &event->hw;
+u64 nds32_pmu_event_update(काष्ठा perf_event *event)
+अणु
+	काष्ठा nds32_pmu *nds32_pmu = to_nds32_pmu(event->pmu);
+	काष्ठा hw_perf_event *hwc = &event->hw;
 	u64 delta, prev_raw_count, new_raw_count;
 
 again:
-	prev_raw_count = local64_read(&hwc->prev_count);
-	new_raw_count = nds32_pmu->read_counter(event);
+	prev_raw_count = local64_पढ़ो(&hwc->prev_count);
+	new_raw_count = nds32_pmu->पढ़ो_counter(event);
 
-	if (local64_cmpxchg(&hwc->prev_count, prev_raw_count,
-			    new_raw_count) != prev_raw_count) {
-		goto again;
-	}
+	अगर (local64_cmpxchg(&hwc->prev_count, prev_raw_count,
+			    new_raw_count) != prev_raw_count) अणु
+		जाओ again;
+	पूर्ण
 	/*
 	 * Whether overflow or not, "unsigned substraction"
 	 * will always get their delta
@@ -963,85 +964,85 @@ again:
 	local64_add(delta, &event->count);
 	local64_sub(delta, &hwc->period_left);
 
-	return new_raw_count;
-}
+	वापस new_raw_count;
+पूर्ण
 
-static void nds32_stop(struct perf_event *event, int flags)
-{
-	struct nds32_pmu *nds32_pmu = to_nds32_pmu(event->pmu);
-	struct hw_perf_event *hwc = &event->hw;
+अटल व्योम nds32_stop(काष्ठा perf_event *event, पूर्णांक flags)
+अणु
+	काष्ठा nds32_pmu *nds32_pmu = to_nds32_pmu(event->pmu);
+	काष्ठा hw_perf_event *hwc = &event->hw;
 	/*
 	 * NDS pmu always has to update the counter, so ignore
 	 * PERF_EF_UPDATE, see comments in nds32_start().
 	 */
-	if (!(hwc->state & PERF_HES_STOPPED)) {
+	अगर (!(hwc->state & PERF_HES_STOPPED)) अणु
 		nds32_pmu->disable(event);
 		nds32_pmu_event_update(event);
 		hwc->state |= PERF_HES_STOPPED | PERF_HES_UPTODATE;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void nds32_pmu_del(struct perf_event *event, int flags)
-{
-	struct nds32_pmu *nds32_pmu = to_nds32_pmu(event->pmu);
-	struct pmu_hw_events *hw_events = nds32_pmu->get_hw_events();
-	struct hw_perf_event *hwc = &event->hw;
-	int idx = hwc->idx;
+अटल व्योम nds32_pmu_del(काष्ठा perf_event *event, पूर्णांक flags)
+अणु
+	काष्ठा nds32_pmu *nds32_pmu = to_nds32_pmu(event->pmu);
+	काष्ठा pmu_hw_events *hw_events = nds32_pmu->get_hw_events();
+	काष्ठा hw_perf_event *hwc = &event->hw;
+	पूर्णांक idx = hwc->idx;
 
 	nds32_stop(event, PERF_EF_UPDATE);
-	hw_events->events[idx] = NULL;
+	hw_events->events[idx] = शून्य;
 	clear_bit(idx, hw_events->used_mask);
 
 	perf_event_update_userpage(event);
-}
+पूर्ण
 
-static void nds32_pmu_read(struct perf_event *event)
-{
+अटल व्योम nds32_pmu_पढ़ो(काष्ठा perf_event *event)
+अणु
 	nds32_pmu_event_update(event);
-}
+पूर्ण
 
-/* Please refer to SPAv3 for more hardware specific details */
+/* Please refer to SPAv3 क्रम more hardware specअगरic details */
 PMU_FORMAT_ATTR(event, "config:0-63");
 
-static struct attribute *nds32_arch_formats_attr[] = {
-	&format_attr_event.attr,
-	NULL,
-};
+अटल काष्ठा attribute *nds32_arch_क्रमmats_attr[] = अणु
+	&क्रमmat_attr_event.attr,
+	शून्य,
+पूर्ण;
 
-static struct attribute_group nds32_pmu_format_group = {
+अटल काष्ठा attribute_group nds32_pmu_क्रमmat_group = अणु
 	.name = "format",
-	.attrs = nds32_arch_formats_attr,
-};
+	.attrs = nds32_arch_क्रमmats_attr,
+पूर्ण;
 
-static ssize_t nds32_pmu_cpumask_show(struct device *dev,
-				      struct device_attribute *attr,
-				      char *buf)
-{
-	return 0;
-}
+अटल sमाप_प्रकार nds32_pmu_cpumask_show(काष्ठा device *dev,
+				      काष्ठा device_attribute *attr,
+				      अक्षर *buf)
+अणु
+	वापस 0;
+पूर्ण
 
-static DEVICE_ATTR(cpus, 0444, nds32_pmu_cpumask_show, NULL);
+अटल DEVICE_ATTR(cpus, 0444, nds32_pmu_cpumask_show, शून्य);
 
-static struct attribute *nds32_pmu_common_attrs[] = {
+अटल काष्ठा attribute *nds32_pmu_common_attrs[] = अणु
 	&dev_attr_cpus.attr,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-static struct attribute_group nds32_pmu_common_group = {
+अटल काष्ठा attribute_group nds32_pmu_common_group = अणु
 	.attrs = nds32_pmu_common_attrs,
-};
+पूर्ण;
 
-static const struct attribute_group *nds32_pmu_attr_groups[] = {
-	&nds32_pmu_format_group,
+अटल स्थिर काष्ठा attribute_group *nds32_pmu_attr_groups[] = अणु
+	&nds32_pmu_क्रमmat_group,
 	&nds32_pmu_common_group,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-static void nds32_init(struct nds32_pmu *nds32_pmu)
-{
+अटल व्योम nds32_init(काष्ठा nds32_pmu *nds32_pmu)
+अणु
 	atomic_set(&nds32_pmu->active_events, 0);
 
-	nds32_pmu->pmu = (struct pmu) {
+	nds32_pmu->pmu = (काष्ठा pmu) अणु
 		.pmu_enable = nds32_pmu_enable,
 		.pmu_disable = nds32_pmu_disable,
 		.attr_groups = nds32_pmu_attr_groups,
@@ -1050,188 +1051,188 @@ static void nds32_init(struct nds32_pmu *nds32_pmu)
 		.del = nds32_pmu_del,
 		.start = nds32_start,
 		.stop = nds32_stop,
-		.read = nds32_pmu_read,
-	};
-}
+		.पढ़ो = nds32_pmu_पढ़ो,
+	पूर्ण;
+पूर्ण
 
-int nds32_pmu_register(struct nds32_pmu *nds32_pmu, int type)
-{
+पूर्णांक nds32_pmu_रेजिस्टर(काष्ठा nds32_pmu *nds32_pmu, पूर्णांक type)
+अणु
 	nds32_init(nds32_pmu);
-	pm_runtime_enable(&nds32_pmu->plat_device->dev);
+	pm_runसमय_enable(&nds32_pmu->plat_device->dev);
 	pr_info("enabled with %s PMU driver, %d counters available\n",
 		nds32_pmu->name, nds32_pmu->num_events);
-	return perf_pmu_register(&nds32_pmu->pmu, nds32_pmu->name, type);
-}
+	वापस perf_pmu_रेजिस्टर(&nds32_pmu->pmu, nds32_pmu->name, type);
+पूर्ण
 
-static struct pmu_hw_events *cpu_pmu_get_cpu_events(void)
-{
-	return this_cpu_ptr(&cpu_hw_events);
-}
+अटल काष्ठा pmu_hw_events *cpu_pmu_get_cpu_events(व्योम)
+अणु
+	वापस this_cpu_ptr(&cpu_hw_events);
+पूर्ण
 
-static int cpu_pmu_request_irq(struct nds32_pmu *cpu_pmu, irq_handler_t handler)
-{
-	int err, irq, irqs;
-	struct platform_device *pmu_device = cpu_pmu->plat_device;
+अटल पूर्णांक cpu_pmu_request_irq(काष्ठा nds32_pmu *cpu_pmu, irq_handler_t handler)
+अणु
+	पूर्णांक err, irq, irqs;
+	काष्ठा platक्रमm_device *pmu_device = cpu_pmu->plat_device;
 
-	if (!pmu_device)
-		return -ENODEV;
+	अगर (!pmu_device)
+		वापस -ENODEV;
 
 	irqs = min(pmu_device->num_resources, num_possible_cpus());
-	if (irqs < 1) {
+	अगर (irqs < 1) अणु
 		pr_err("no irqs for PMUs defined\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	irq = platform_get_irq(pmu_device, 0);
+	irq = platक्रमm_get_irq(pmu_device, 0);
 	err = request_irq(irq, handler, IRQF_NOBALANCING, "nds32-pfm",
 			  cpu_pmu);
-	if (err) {
+	अगर (err) अणु
 		pr_err("unable to request IRQ%d for NDS PMU counters\n",
 		       irq);
-		return err;
-	}
-	return 0;
-}
+		वापस err;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static void cpu_pmu_free_irq(struct nds32_pmu *cpu_pmu)
-{
-	int irq;
-	struct platform_device *pmu_device = cpu_pmu->plat_device;
+अटल व्योम cpu_pmu_मुक्त_irq(काष्ठा nds32_pmu *cpu_pmu)
+अणु
+	पूर्णांक irq;
+	काष्ठा platक्रमm_device *pmu_device = cpu_pmu->plat_device;
 
-	irq = platform_get_irq(pmu_device, 0);
-	if (irq >= 0)
-		free_irq(irq, cpu_pmu);
-}
+	irq = platक्रमm_get_irq(pmu_device, 0);
+	अगर (irq >= 0)
+		मुक्त_irq(irq, cpu_pmu);
+पूर्ण
 
-static void cpu_pmu_init(struct nds32_pmu *cpu_pmu)
-{
-	int cpu;
-	struct pmu_hw_events *events = &per_cpu(cpu_hw_events, cpu);
+अटल व्योम cpu_pmu_init(काष्ठा nds32_pmu *cpu_pmu)
+अणु
+	पूर्णांक cpu;
+	काष्ठा pmu_hw_events *events = &per_cpu(cpu_hw_events, cpu);
 
 	raw_spin_lock_init(&events->pmu_lock);
 
 	cpu_pmu->get_hw_events = cpu_pmu_get_cpu_events;
 	cpu_pmu->request_irq = cpu_pmu_request_irq;
-	cpu_pmu->free_irq = cpu_pmu_free_irq;
+	cpu_pmu->मुक्त_irq = cpu_pmu_मुक्त_irq;
 
 	/* Ensure the PMU has sane values out of reset. */
-	if (cpu_pmu->reset)
+	अगर (cpu_pmu->reset)
 		on_each_cpu(cpu_pmu->reset, cpu_pmu, 1);
-}
+पूर्ण
 
-static const struct of_device_id cpu_pmu_of_device_ids[] = {
-	{.compatible = "andestech,nds32v3-pmu",
-	 .data = device_pmu_init},
-	{},
-};
+अटल स्थिर काष्ठा of_device_id cpu_pmu_of_device_ids[] = अणु
+	अणु.compatible = "andestech,nds32v3-pmu",
+	 .data = device_pmu_initपूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 
-static int cpu_pmu_device_probe(struct platform_device *pdev)
-{
-	const struct of_device_id *of_id;
-	int (*init_fn)(struct nds32_pmu *nds32_pmu);
-	struct device_node *node = pdev->dev.of_node;
-	struct nds32_pmu *pmu;
-	int ret = -ENODEV;
+अटल पूर्णांक cpu_pmu_device_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	स्थिर काष्ठा of_device_id *of_id;
+	पूर्णांक (*init_fn)(काष्ठा nds32_pmu *nds32_pmu);
+	काष्ठा device_node *node = pdev->dev.of_node;
+	काष्ठा nds32_pmu *pmu;
+	पूर्णांक ret = -ENODEV;
 
-	if (cpu_pmu) {
+	अगर (cpu_pmu) अणु
 		pr_notice("[perf] attempt to register multiple PMU devices!\n");
-		return -ENOSPC;
-	}
+		वापस -ENOSPC;
+	पूर्ण
 
-	pmu = kzalloc(sizeof(*pmu), GFP_KERNEL);
-	if (!pmu)
-		return -ENOMEM;
+	pmu = kzalloc(माप(*pmu), GFP_KERNEL);
+	अगर (!pmu)
+		वापस -ENOMEM;
 
 	of_id = of_match_node(cpu_pmu_of_device_ids, pdev->dev.of_node);
-	if (node && of_id) {
+	अगर (node && of_id) अणु
 		init_fn = of_id->data;
 		ret = init_fn(pmu);
-	} else {
+	पूर्ण अन्यथा अणु
 		ret = probe_current_pmu(pmu);
-	}
+	पूर्ण
 
-	if (ret) {
+	अगर (ret) अणु
 		pr_notice("[perf] failed to probe PMU!\n");
-		goto out_free;
-	}
+		जाओ out_मुक्त;
+	पूर्ण
 
 	cpu_pmu = pmu;
 	cpu_pmu->plat_device = pdev;
 	cpu_pmu_init(cpu_pmu);
-	ret = nds32_pmu_register(cpu_pmu, PERF_TYPE_RAW);
+	ret = nds32_pmu_रेजिस्टर(cpu_pmu, PERF_TYPE_RAW);
 
-	if (!ret)
-		return 0;
+	अगर (!ret)
+		वापस 0;
 
-out_free:
+out_मुक्त:
 	pr_notice("[perf] failed to register PMU devices!\n");
-	kfree(pmu);
-	return ret;
-}
+	kमुक्त(pmu);
+	वापस ret;
+पूर्ण
 
-static struct platform_driver cpu_pmu_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver cpu_pmu_driver = अणु
+	.driver = अणु
 		   .name = "nds32-pfm",
 		   .of_match_table = cpu_pmu_of_device_ids,
-		   },
+		   पूर्ण,
 	.probe = cpu_pmu_device_probe,
 	.id_table = cpu_pmu_plat_device_ids,
-};
+पूर्ण;
 
-static int __init register_pmu_driver(void)
-{
-	int err = 0;
+अटल पूर्णांक __init रेजिस्टर_pmu_driver(व्योम)
+अणु
+	पूर्णांक err = 0;
 
-	err = platform_driver_register(&cpu_pmu_driver);
-	if (err)
+	err = platक्रमm_driver_रेजिस्टर(&cpu_pmu_driver);
+	अगर (err)
 		pr_notice("[perf] PMU initialization failed\n");
-	else
+	अन्यथा
 		pr_notice("[perf] PMU initialization done\n");
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-device_initcall(register_pmu_driver);
+device_initcall(रेजिस्टर_pmu_driver);
 
 /*
  * References: arch/nds32/kernel/traps.c:__dump()
  * You will need to know the NDS ABI first.
  */
-static int unwind_frame_kernel(struct stackframe *frame)
-{
-	int graph = 0;
-#ifdef CONFIG_FRAME_POINTER
+अटल पूर्णांक unwind_frame_kernel(काष्ठा stackframe *frame)
+अणु
+	पूर्णांक graph = 0;
+#अगर_घोषित CONFIG_FRAME_POINTER
 	/* 0x3 means misalignment */
-	if (!kstack_end((void *)frame->fp) &&
-	    !((unsigned long)frame->fp & 0x3) &&
-	    ((unsigned long)frame->fp >= TASK_SIZE)) {
+	अगर (!kstack_end((व्योम *)frame->fp) &&
+	    !((अचिन्हित दीर्घ)frame->fp & 0x3) &&
+	    ((अचिन्हित दीर्घ)frame->fp >= TASK_SIZE)) अणु
 		/*
 		 *	The array index is based on the ABI, the below graph
 		 *	illustrate the reasons.
 		 *	Function call procedure: "smw" and "lmw" will always
-		 *	update SP and FP for you automatically.
+		 *	update SP and FP क्रम you स्वतःmatically.
 		 *
 		 *	Stack                                 Relative Address
 		 *	|  |                                          0
 		 *	----
-		 *	|LP| <-- SP(before smw)  <-- FP(after smw)   -1
+		 *	|LP| <-- SP(beक्रमe smw)  <-- FP(after smw)   -1
 		 *	----
 		 *	|FP|                                         -2
 		 *	----
 		 *	|  | <-- SP(after smw)                       -3
 		 */
-		frame->lp = ((unsigned long *)frame->fp)[-1];
-		frame->fp = ((unsigned long *)frame->fp)[FP_OFFSET];
+		frame->lp = ((अचिन्हित दीर्घ *)frame->fp)[-1];
+		frame->fp = ((अचिन्हित दीर्घ *)frame->fp)[FP_OFFSET];
 		/* make sure CONFIG_FUNCTION_GRAPH_TRACER is turned on */
-		if (__kernel_text_address(frame->lp))
+		अगर (__kernel_text_address(frame->lp))
 			frame->lp = ftrace_graph_ret_addr
-						(NULL, &graph, frame->lp, NULL);
+						(शून्य, &graph, frame->lp, शून्य);
 
-		return 0;
-	} else {
-		return -EPERM;
-	}
-#else
+		वापस 0;
+	पूर्ण अन्यथा अणु
+		वापस -EPERM;
+	पूर्ण
+#अन्यथा
 	/*
 	 * You can refer to arch/nds32/kernel/traps.c:__dump()
 	 * Treat "sp" as "fp", but the "sp" is one frame ahead of "fp".
@@ -1240,113 +1241,113 @@ static int unwind_frame_kernel(struct stackframe *frame)
 	 *   Stack                                 Relative Address
 	 *   |  |                                          0
 	 *   ----
-	 *   |LP| <-- SP(before smw)                      -1
+	 *   |LP| <-- SP(beक्रमe smw)                      -1
 	 *   ----
 	 *   |  | <-- SP(after smw)                       -2
 	 *   ----
 	 */
-	if (!kstack_end((void *)frame->sp)) {
-		frame->lp = ((unsigned long *)frame->sp)[1];
+	अगर (!kstack_end((व्योम *)frame->sp)) अणु
+		frame->lp = ((अचिन्हित दीर्घ *)frame->sp)[1];
 		/* TODO: How to deal with the value in first
 		 * "sp" is not correct?
 		 */
-		if (__kernel_text_address(frame->lp))
+		अगर (__kernel_text_address(frame->lp))
 			frame->lp = ftrace_graph_ret_addr
-						(tsk, &graph, frame->lp, NULL);
+						(tsk, &graph, frame->lp, शून्य);
 
-		frame->sp = ((unsigned long *)frame->sp) + 1;
+		frame->sp = ((अचिन्हित दीर्घ *)frame->sp) + 1;
 
-		return 0;
-	} else {
-		return -EPERM;
-	}
-#endif
-}
+		वापस 0;
+	पूर्ण अन्यथा अणु
+		वापस -EPERM;
+	पूर्ण
+#पूर्ण_अगर
+पूर्ण
 
-static void notrace
-walk_stackframe(struct stackframe *frame,
-		int (*fn_record)(struct stackframe *, void *),
-		void *data)
-{
-	while (1) {
-		int ret;
+अटल व्योम notrace
+walk_stackframe(काष्ठा stackframe *frame,
+		पूर्णांक (*fn_record)(काष्ठा stackframe *, व्योम *),
+		व्योम *data)
+अणु
+	जबतक (1) अणु
+		पूर्णांक ret;
 
-		if (fn_record(frame, data))
-			break;
+		अगर (fn_record(frame, data))
+			अवरोध;
 
 		ret = unwind_frame_kernel(frame);
-		if (ret < 0)
-			break;
-	}
-}
+		अगर (ret < 0)
+			अवरोध;
+	पूर्ण
+पूर्ण
 
 /*
- * Gets called by walk_stackframe() for every stackframe. This will be called
- * whist unwinding the stackframe and is like a subroutine return so we use
+ * Gets called by walk_stackframe() क्रम every stackframe. This will be called
+ * whist unwinding the stackframe and is like a subroutine वापस so we use
  * the PC.
  */
-static int callchain_trace(struct stackframe *fr, void *data)
-{
-	struct perf_callchain_entry_ctx *entry = data;
+अटल पूर्णांक callchain_trace(काष्ठा stackframe *fr, व्योम *data)
+अणु
+	काष्ठा perf_callchain_entry_ctx *entry = data;
 
 	perf_callchain_store(entry, fr->lp);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * Get the return address for a single stackframe and return a pointer to the
+ * Get the वापस address क्रम a single stackframe and वापस a poपूर्णांकer to the
  * next frame tail.
  */
-static unsigned long
-user_backtrace(struct perf_callchain_entry_ctx *entry, unsigned long fp)
-{
-	struct frame_tail buftail;
-	unsigned long lp = 0;
-	unsigned long *user_frame_tail =
-		(unsigned long *)(fp - (unsigned long)sizeof(buftail));
+अटल अचिन्हित दीर्घ
+user_backtrace(काष्ठा perf_callchain_entry_ctx *entry, अचिन्हित दीर्घ fp)
+अणु
+	काष्ठा frame_tail buftail;
+	अचिन्हित दीर्घ lp = 0;
+	अचिन्हित दीर्घ *user_frame_tail =
+		(अचिन्हित दीर्घ *)(fp - (अचिन्हित दीर्घ)माप(buftail));
 
-	/* Check accessibility of one struct frame_tail beyond */
-	if (!access_ok(user_frame_tail, sizeof(buftail)))
-		return 0;
-	if (__copy_from_user_inatomic
-		(&buftail, user_frame_tail, sizeof(buftail)))
-		return 0;
-
-	/*
-	 * Refer to unwind_frame_kernel() for more illurstration
-	 */
-	lp = buftail.stack_lp;  /* ((unsigned long *)fp)[-1] */
-	fp = buftail.stack_fp;  /* ((unsigned long *)fp)[FP_OFFSET] */
-	perf_callchain_store(entry, lp);
-	return fp;
-}
-
-static unsigned long
-user_backtrace_opt_size(struct perf_callchain_entry_ctx *entry,
-			unsigned long fp)
-{
-	struct frame_tail_opt_size buftail;
-	unsigned long lp = 0;
-
-	unsigned long *user_frame_tail =
-		(unsigned long *)(fp - (unsigned long)sizeof(buftail));
-
-	/* Check accessibility of one struct frame_tail beyond */
-	if (!access_ok(user_frame_tail, sizeof(buftail)))
-		return 0;
-	if (__copy_from_user_inatomic
-		(&buftail, user_frame_tail, sizeof(buftail)))
-		return 0;
+	/* Check accessibility of one काष्ठा frame_tail beyond */
+	अगर (!access_ok(user_frame_tail, माप(buftail)))
+		वापस 0;
+	अगर (__copy_from_user_inatomic
+		(&buftail, user_frame_tail, माप(buftail)))
+		वापस 0;
 
 	/*
-	 * Refer to unwind_frame_kernel() for more illurstration
+	 * Refer to unwind_frame_kernel() क्रम more illurstration
 	 */
-	lp = buftail.stack_lp;  /* ((unsigned long *)fp)[-1] */
-	fp = buftail.stack_fp;  /* ((unsigned long *)fp)[FP_OFFSET] */
+	lp = buftail.stack_lp;  /* ((अचिन्हित दीर्घ *)fp)[-1] */
+	fp = buftail.stack_fp;  /* ((अचिन्हित दीर्घ *)fp)[FP_OFFSET] */
+	perf_callchain_store(entry, lp);
+	वापस fp;
+पूर्ण
+
+अटल अचिन्हित दीर्घ
+user_backtrace_opt_size(काष्ठा perf_callchain_entry_ctx *entry,
+			अचिन्हित दीर्घ fp)
+अणु
+	काष्ठा frame_tail_opt_size buftail;
+	अचिन्हित दीर्घ lp = 0;
+
+	अचिन्हित दीर्घ *user_frame_tail =
+		(अचिन्हित दीर्घ *)(fp - (अचिन्हित दीर्घ)माप(buftail));
+
+	/* Check accessibility of one काष्ठा frame_tail beyond */
+	अगर (!access_ok(user_frame_tail, माप(buftail)))
+		वापस 0;
+	अगर (__copy_from_user_inatomic
+		(&buftail, user_frame_tail, माप(buftail)))
+		वापस 0;
+
+	/*
+	 * Refer to unwind_frame_kernel() क्रम more illurstration
+	 */
+	lp = buftail.stack_lp;  /* ((अचिन्हित दीर्घ *)fp)[-1] */
+	fp = buftail.stack_fp;  /* ((अचिन्हित दीर्घ *)fp)[FP_OFFSET] */
 
 	perf_callchain_store(entry, lp);
-	return fp;
-}
+	वापस fp;
+पूर्ण
 
 /*
  * This will be called when the target is in user mode
@@ -1355,167 +1356,167 @@ user_backtrace_opt_size(struct perf_callchain_entry_ctx *entry,
  * kernel/events/core.c:perf_prepare_sample()
  *
  * How to trigger perf_callchain_[user/kernel] :
- * $ perf record -e cpu-clock --call-graph fp ./program
+ * $ perf record -e cpu-घड़ी --call-graph fp ./program
  * $ perf report --call-graph
  */
-unsigned long leaf_fp;
-void
-perf_callchain_user(struct perf_callchain_entry_ctx *entry,
-		    struct pt_regs *regs)
-{
-	unsigned long fp = 0;
-	unsigned long gp = 0;
-	unsigned long lp = 0;
-	unsigned long sp = 0;
-	unsigned long *user_frame_tail;
+अचिन्हित दीर्घ leaf_fp;
+व्योम
+perf_callchain_user(काष्ठा perf_callchain_entry_ctx *entry,
+		    काष्ठा pt_regs *regs)
+अणु
+	अचिन्हित दीर्घ fp = 0;
+	अचिन्हित दीर्घ gp = 0;
+	अचिन्हित दीर्घ lp = 0;
+	अचिन्हित दीर्घ sp = 0;
+	अचिन्हित दीर्घ *user_frame_tail;
 
 	leaf_fp = 0;
 
-	if (perf_guest_cbs && perf_guest_cbs->is_in_guest()) {
-		/* We don't support guest os callchain now */
-		return;
-	}
+	अगर (perf_guest_cbs && perf_guest_cbs->is_in_guest()) अणु
+		/* We करोn't support guest os callchain now */
+		वापस;
+	पूर्ण
 
 	perf_callchain_store(entry, regs->ipc);
 	fp = regs->fp;
 	gp = regs->gp;
 	lp = regs->lp;
 	sp = regs->sp;
-	if (entry->nr < PERF_MAX_STACK_DEPTH &&
-	    (unsigned long)fp && !((unsigned long)fp & 0x7) && fp > sp) {
+	अगर (entry->nr < PERF_MAX_STACK_DEPTH &&
+	    (अचिन्हित दीर्घ)fp && !((अचिन्हित दीर्घ)fp & 0x7) && fp > sp) अणु
 		user_frame_tail =
-			(unsigned long *)(fp - (unsigned long)sizeof(fp));
+			(अचिन्हित दीर्घ *)(fp - (अचिन्हित दीर्घ)माप(fp));
 
-		if (!access_ok(user_frame_tail, sizeof(fp)))
-			return;
+		अगर (!access_ok(user_frame_tail, माप(fp)))
+			वापस;
 
-		if (__copy_from_user_inatomic
-			(&leaf_fp, user_frame_tail, sizeof(fp)))
-			return;
+		अगर (__copy_from_user_inatomic
+			(&leaf_fp, user_frame_tail, माप(fp)))
+			वापस;
 
-		if (leaf_fp == lp) {
+		अगर (leaf_fp == lp) अणु
 			/*
 			 * Maybe this is non leaf function
-			 * with optimize for size,
+			 * with optimize क्रम size,
 			 * or maybe this is the function
-			 * with optimize for size
+			 * with optimize क्रम size
 			 */
-			struct frame_tail buftail;
+			काष्ठा frame_tail buftail;
 
 			user_frame_tail =
-				(unsigned long *)(fp -
-					(unsigned long)sizeof(buftail));
+				(अचिन्हित दीर्घ *)(fp -
+					(अचिन्हित दीर्घ)माप(buftail));
 
-			if (!access_ok(user_frame_tail, sizeof(buftail)))
-				return;
+			अगर (!access_ok(user_frame_tail, माप(buftail)))
+				वापस;
 
-			if (__copy_from_user_inatomic
-				(&buftail, user_frame_tail, sizeof(buftail)))
-				return;
+			अगर (__copy_from_user_inatomic
+				(&buftail, user_frame_tail, माप(buftail)))
+				वापस;
 
-			if (buftail.stack_fp == gp) {
+			अगर (buftail.stack_fp == gp) अणु
 				/* non leaf function with optimize
-				 * for size condition
+				 * क्रम size condition
 				 */
-				struct frame_tail_opt_size buftail_opt_size;
+				काष्ठा frame_tail_opt_size buftail_opt_size;
 
 				user_frame_tail =
-					(unsigned long *)(fp - (unsigned long)
-						sizeof(buftail_opt_size));
+					(अचिन्हित दीर्घ *)(fp - (अचिन्हित दीर्घ)
+						माप(buftail_opt_size));
 
-				if (!access_ok(user_frame_tail,
-					       sizeof(buftail_opt_size)))
-					return;
+				अगर (!access_ok(user_frame_tail,
+					       माप(buftail_opt_size)))
+					वापस;
 
-				if (__copy_from_user_inatomic
+				अगर (__copy_from_user_inatomic
 				   (&buftail_opt_size, user_frame_tail,
-				   sizeof(buftail_opt_size)))
-					return;
+				   माप(buftail_opt_size)))
+					वापस;
 
 				perf_callchain_store(entry, lp);
 				fp = buftail_opt_size.stack_fp;
 
-				while ((entry->nr < PERF_MAX_STACK_DEPTH) &&
-				       (unsigned long)fp &&
-						!((unsigned long)fp & 0x7) &&
-						fp > sp) {
+				जबतक ((entry->nr < PERF_MAX_STACK_DEPTH) &&
+				       (अचिन्हित दीर्घ)fp &&
+						!((अचिन्हित दीर्घ)fp & 0x7) &&
+						fp > sp) अणु
 					sp = fp;
 					fp = user_backtrace_opt_size(entry, fp);
-				}
+				पूर्ण
 
-			} else {
+			पूर्ण अन्यथा अणु
 				/* this is the function
-				 * without optimize for size
+				 * without optimize क्रम size
 				 */
 				fp = buftail.stack_fp;
 				perf_callchain_store(entry, lp);
-				while ((entry->nr < PERF_MAX_STACK_DEPTH) &&
-				       (unsigned long)fp &&
-						!((unsigned long)fp & 0x7) &&
-						fp > sp) {
+				जबतक ((entry->nr < PERF_MAX_STACK_DEPTH) &&
+				       (अचिन्हित दीर्घ)fp &&
+						!((अचिन्हित दीर्घ)fp & 0x7) &&
+						fp > sp) अणु
 					sp = fp;
 					fp = user_backtrace(entry, fp);
-				}
-			}
-		} else {
+				पूर्ण
+			पूर्ण
+		पूर्ण अन्यथा अणु
 			/* this is leaf function */
 			fp = leaf_fp;
 			perf_callchain_store(entry, lp);
 
 			/* previous function callcahin  */
-			while ((entry->nr < PERF_MAX_STACK_DEPTH) &&
-			       (unsigned long)fp &&
-				   !((unsigned long)fp & 0x7) && fp > sp) {
+			जबतक ((entry->nr < PERF_MAX_STACK_DEPTH) &&
+			       (अचिन्हित दीर्घ)fp &&
+				   !((अचिन्हित दीर्घ)fp & 0x7) && fp > sp) अणु
 				sp = fp;
 				fp = user_backtrace(entry, fp);
-			}
-		}
-		return;
-	}
-}
+			पूर्ण
+		पूर्ण
+		वापस;
+	पूर्ण
+पूर्ण
 
 /* This will be called when the target is in kernel mode */
-void
-perf_callchain_kernel(struct perf_callchain_entry_ctx *entry,
-		      struct pt_regs *regs)
-{
-	struct stackframe fr;
+व्योम
+perf_callchain_kernel(काष्ठा perf_callchain_entry_ctx *entry,
+		      काष्ठा pt_regs *regs)
+अणु
+	काष्ठा stackframe fr;
 
-	if (perf_guest_cbs && perf_guest_cbs->is_in_guest()) {
-		/* We don't support guest os callchain now */
-		return;
-	}
+	अगर (perf_guest_cbs && perf_guest_cbs->is_in_guest()) अणु
+		/* We करोn't support guest os callchain now */
+		वापस;
+	पूर्ण
 	fr.fp = regs->fp;
 	fr.lp = regs->lp;
 	fr.sp = regs->sp;
 	walk_stackframe(&fr, callchain_trace, entry);
-}
+पूर्ण
 
-unsigned long perf_instruction_pointer(struct pt_regs *regs)
-{
-	/* However, NDS32 does not support virtualization */
-	if (perf_guest_cbs && perf_guest_cbs->is_in_guest())
-		return perf_guest_cbs->get_guest_ip();
+अचिन्हित दीर्घ perf_inकाष्ठाion_poपूर्णांकer(काष्ठा pt_regs *regs)
+अणु
+	/* However, NDS32 करोes not support भवization */
+	अगर (perf_guest_cbs && perf_guest_cbs->is_in_guest())
+		वापस perf_guest_cbs->get_guest_ip();
 
-	return instruction_pointer(regs);
-}
+	वापस inकाष्ठाion_poपूर्णांकer(regs);
+पूर्ण
 
-unsigned long perf_misc_flags(struct pt_regs *regs)
-{
-	int misc = 0;
+अचिन्हित दीर्घ perf_misc_flags(काष्ठा pt_regs *regs)
+अणु
+	पूर्णांक misc = 0;
 
-	/* However, NDS32 does not support virtualization */
-	if (perf_guest_cbs && perf_guest_cbs->is_in_guest()) {
-		if (perf_guest_cbs->is_user_mode())
+	/* However, NDS32 करोes not support भवization */
+	अगर (perf_guest_cbs && perf_guest_cbs->is_in_guest()) अणु
+		अगर (perf_guest_cbs->is_user_mode())
 			misc |= PERF_RECORD_MISC_GUEST_USER;
-		else
+		अन्यथा
 			misc |= PERF_RECORD_MISC_GUEST_KERNEL;
-	} else {
-		if (user_mode(regs))
+	पूर्ण अन्यथा अणु
+		अगर (user_mode(regs))
 			misc |= PERF_RECORD_MISC_USER;
-		else
+		अन्यथा
 			misc |= PERF_RECORD_MISC_KERNEL;
-	}
+	पूर्ण
 
-	return misc;
-}
+	वापस misc;
+पूर्ण

@@ -1,60 +1,61 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  *
  *  Copyright (C) 2012 John Crispin <john@phrozen.org>
  *  Copyright (C) 2010 Sameer Ahmad, Lantiq GmbH
  */
 
-#include <linux/ioport.h>
-#include <linux/of_platform.h>
+#समावेश <linux/ioport.h>
+#समावेश <linux/of_platक्रमm.h>
 
-#include <lantiq_soc.h>
+#समावेश <lantiq_soc.h>
 
 /* Bias and regulator Setup Register */
-#define DCDC_BIAS_VREG0	0xa
+#घोषणा DCDC_BIAS_VREG0	0xa
 /* Bias and regulator Setup Register */
-#define DCDC_BIAS_VREG1	0xb
+#घोषणा DCDC_BIAS_VREG1	0xb
 
-#define dcdc_w8(x, y)	ltq_w8((x), dcdc_membase + (y))
-#define dcdc_r8(x)	ltq_r8(dcdc_membase + (x))
+#घोषणा dcdc_w8(x, y)	ltq_w8((x), dcdc_membase + (y))
+#घोषणा dcdc_r8(x)	ltq_r8(dcdc_membase + (x))
 
-static void __iomem *dcdc_membase;
+अटल व्योम __iomem *dcdc_membase;
 
-static int dcdc_probe(struct platform_device *pdev)
-{
-	struct resource *res;
+अटल पूर्णांक dcdc_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा resource *res;
 
-	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
 	dcdc_membase = devm_ioremap_resource(&pdev->dev, res);
-	if (IS_ERR(dcdc_membase))
-		return PTR_ERR(dcdc_membase);
+	अगर (IS_ERR(dcdc_membase))
+		वापस PTR_ERR(dcdc_membase);
 
 	dev_info(&pdev->dev, "Core Voltage : %d mV\n",
 		dcdc_r8(DCDC_BIAS_VREG1) * 8);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct of_device_id dcdc_match[] = {
-	{ .compatible = "lantiq,dcdc-xrx200" },
-	{},
-};
+अटल स्थिर काष्ठा of_device_id dcdc_match[] = अणु
+	अणु .compatible = "lantiq,dcdc-xrx200" पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 
-static struct platform_driver dcdc_driver = {
+अटल काष्ठा platक्रमm_driver dcdc_driver = अणु
 	.probe = dcdc_probe,
-	.driver = {
+	.driver = अणु
 		.name = "dcdc-xrx200",
 		.of_match_table = dcdc_match,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-int __init dcdc_init(void)
-{
-	int ret = platform_driver_register(&dcdc_driver);
+पूर्णांक __init dcdc_init(व्योम)
+अणु
+	पूर्णांक ret = platक्रमm_driver_रेजिस्टर(&dcdc_driver);
 
-	if (ret)
+	अगर (ret)
 		pr_info("dcdc: Error registering platform driver\n");
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 arch_initcall(dcdc_init);

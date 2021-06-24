@@ -1,97 +1,98 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * Multiplexer subsystem
+ * Multiplexer subप्रणाली
  *
  * Copyright (C) 2017 Axentia Technologies AB
  *
  * Author: Peter Rosin <peda@axentia.se>
  */
 
-#define pr_fmt(fmt) "mux-core: " fmt
+#घोषणा pr_fmt(fmt) "mux-core: " fmt
 
-#include <linux/device.h>
-#include <linux/err.h>
-#include <linux/export.h>
-#include <linux/idr.h>
-#include <linux/init.h>
-#include <linux/module.h>
-#include <linux/mux/consumer.h>
-#include <linux/mux/driver.h>
-#include <linux/of.h>
-#include <linux/of_platform.h>
-#include <linux/slab.h>
+#समावेश <linux/device.h>
+#समावेश <linux/err.h>
+#समावेश <linux/export.h>
+#समावेश <linux/idr.h>
+#समावेश <linux/init.h>
+#समावेश <linux/module.h>
+#समावेश <linux/mux/consumer.h>
+#समावेश <linux/mux/driver.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_platक्रमm.h>
+#समावेश <linux/slab.h>
 
 /*
  * The idle-as-is "state" is not an actual state that may be selected, it
  * only implies that the state should not be changed. So, use that state
  * as indication that the cached state of the multiplexer is unknown.
  */
-#define MUX_CACHE_UNKNOWN MUX_IDLE_AS_IS
+#घोषणा MUX_CACHE_UNKNOWN MUX_IDLE_AS_IS
 
-static struct class mux_class = {
+अटल काष्ठा class mux_class = अणु
 	.name = "mux",
 	.owner = THIS_MODULE,
-};
+पूर्ण;
 
-static DEFINE_IDA(mux_ida);
+अटल DEFINE_IDA(mux_ida);
 
-static int __init mux_init(void)
-{
+अटल पूर्णांक __init mux_init(व्योम)
+अणु
 	ida_init(&mux_ida);
-	return class_register(&mux_class);
-}
+	वापस class_रेजिस्टर(&mux_class);
+पूर्ण
 
-static void __exit mux_exit(void)
-{
-	class_unregister(&mux_class);
+अटल व्योम __निकास mux_निकास(व्योम)
+अणु
+	class_unरेजिस्टर(&mux_class);
 	ida_destroy(&mux_ida);
-}
+पूर्ण
 
-static void mux_chip_release(struct device *dev)
-{
-	struct mux_chip *mux_chip = to_mux_chip(dev);
+अटल व्योम mux_chip_release(काष्ठा device *dev)
+अणु
+	काष्ठा mux_chip *mux_chip = to_mux_chip(dev);
 
-	ida_simple_remove(&mux_ida, mux_chip->id);
-	kfree(mux_chip);
-}
+	ida_simple_हटाओ(&mux_ida, mux_chip->id);
+	kमुक्त(mux_chip);
+पूर्ण
 
-static const struct device_type mux_type = {
+अटल स्थिर काष्ठा device_type mux_type = अणु
 	.name = "mux-chip",
 	.release = mux_chip_release,
-};
+पूर्ण;
 
 /**
  * mux_chip_alloc() - Allocate a mux-chip.
- * @dev: The parent device implementing the mux interface.
- * @controllers: The number of mux controllers to allocate for this chip.
- * @sizeof_priv: Size of extra memory area for private use by the caller.
+ * @dev: The parent device implementing the mux पूर्णांकerface.
+ * @controllers: The number of mux controllers to allocate क्रम this chip.
+ * @माप_priv: Size of extra memory area क्रम निजी use by the caller.
  *
  * After allocating the mux-chip with the desired number of mux controllers
- * but before registering the chip, the mux driver is required to configure
+ * but beक्रमe रेजिस्टरing the chip, the mux driver is required to configure
  * the number of valid mux states in the mux_chip->mux[N].states members and
- * the desired idle state in the returned mux_chip->mux[N].idle_state members.
- * The default idle state is MUX_IDLE_AS_IS. The mux driver also needs to
- * provide a pointer to the operations struct in the mux_chip->ops member
- * before registering the mux-chip with mux_chip_register.
+ * the desired idle state in the वापसed mux_chip->mux[N].idle_state members.
+ * The शेष idle state is MUX_IDLE_AS_IS. The mux driver also needs to
+ * provide a poपूर्णांकer to the operations काष्ठा in the mux_chip->ops member
+ * beक्रमe रेजिस्टरing the mux-chip with mux_chip_रेजिस्टर.
  *
- * Return: A pointer to the new mux-chip, or an ERR_PTR with a negative errno.
+ * Return: A poपूर्णांकer to the new mux-chip, or an ERR_PTR with a negative त्रुटि_सं.
  */
-struct mux_chip *mux_chip_alloc(struct device *dev,
-				unsigned int controllers, size_t sizeof_priv)
-{
-	struct mux_chip *mux_chip;
-	int i;
+काष्ठा mux_chip *mux_chip_alloc(काष्ठा device *dev,
+				अचिन्हित पूर्णांक controllers, माप_प्रकार माप_priv)
+अणु
+	काष्ठा mux_chip *mux_chip;
+	पूर्णांक i;
 
-	if (WARN_ON(!dev || !controllers))
-		return ERR_PTR(-EINVAL);
+	अगर (WARN_ON(!dev || !controllers))
+		वापस ERR_PTR(-EINVAL);
 
-	mux_chip = kzalloc(sizeof(*mux_chip) +
-			   controllers * sizeof(*mux_chip->mux) +
-			   sizeof_priv, GFP_KERNEL);
-	if (!mux_chip)
-		return ERR_PTR(-ENOMEM);
+	mux_chip = kzalloc(माप(*mux_chip) +
+			   controllers * माप(*mux_chip->mux) +
+			   माप_priv, GFP_KERNEL);
+	अगर (!mux_chip)
+		वापस ERR_PTR(-ENOMEM);
 
-	mux_chip->mux = (struct mux_control *)(mux_chip + 1);
+	mux_chip->mux = (काष्ठा mux_control *)(mux_chip + 1);
 	mux_chip->dev.class = &mux_class;
 	mux_chip->dev.type = &mux_type;
 	mux_chip->dev.parent = dev;
@@ -99,184 +100,184 @@ struct mux_chip *mux_chip_alloc(struct device *dev,
 	dev_set_drvdata(&mux_chip->dev, mux_chip);
 
 	mux_chip->id = ida_simple_get(&mux_ida, 0, 0, GFP_KERNEL);
-	if (mux_chip->id < 0) {
-		int err = mux_chip->id;
+	अगर (mux_chip->id < 0) अणु
+		पूर्णांक err = mux_chip->id;
 
 		pr_err("muxchipX failed to get a device id\n");
-		kfree(mux_chip);
-		return ERR_PTR(err);
-	}
+		kमुक्त(mux_chip);
+		वापस ERR_PTR(err);
+	पूर्ण
 	dev_set_name(&mux_chip->dev, "muxchip%d", mux_chip->id);
 
 	mux_chip->controllers = controllers;
-	for (i = 0; i < controllers; ++i) {
-		struct mux_control *mux = &mux_chip->mux[i];
+	क्रम (i = 0; i < controllers; ++i) अणु
+		काष्ठा mux_control *mux = &mux_chip->mux[i];
 
 		mux->chip = mux_chip;
 		sema_init(&mux->lock, 1);
 		mux->cached_state = MUX_CACHE_UNKNOWN;
 		mux->idle_state = MUX_IDLE_AS_IS;
-	}
+	पूर्ण
 
 	device_initialize(&mux_chip->dev);
 
-	return mux_chip;
-}
+	वापस mux_chip;
+पूर्ण
 EXPORT_SYMBOL_GPL(mux_chip_alloc);
 
-static int mux_control_set(struct mux_control *mux, int state)
-{
-	int ret = mux->chip->ops->set(mux, state);
+अटल पूर्णांक mux_control_set(काष्ठा mux_control *mux, पूर्णांक state)
+अणु
+	पूर्णांक ret = mux->chip->ops->set(mux, state);
 
 	mux->cached_state = ret < 0 ? MUX_CACHE_UNKNOWN : state;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * mux_chip_register() - Register a mux-chip, thus readying the controllers
- *			 for use.
- * @mux_chip: The mux-chip to register.
+ * mux_chip_रेजिस्टर() - Register a mux-chip, thus पढ़ोying the controllers
+ *			 क्रम use.
+ * @mux_chip: The mux-chip to रेजिस्टर.
  *
  * Do not retry registration of the same mux-chip on failure. You should
- * instead put it away with mux_chip_free() and allocate a new one, if you
- * for some reason would like to retry registration.
+ * instead put it away with mux_chip_मुक्त() and allocate a new one, अगर you
+ * क्रम some reason would like to retry registration.
  *
- * Return: Zero on success or a negative errno on error.
+ * Return: Zero on success or a negative त्रुटि_सं on error.
  */
-int mux_chip_register(struct mux_chip *mux_chip)
-{
-	int i;
-	int ret;
+पूर्णांक mux_chip_रेजिस्टर(काष्ठा mux_chip *mux_chip)
+अणु
+	पूर्णांक i;
+	पूर्णांक ret;
 
-	for (i = 0; i < mux_chip->controllers; ++i) {
-		struct mux_control *mux = &mux_chip->mux[i];
+	क्रम (i = 0; i < mux_chip->controllers; ++i) अणु
+		काष्ठा mux_control *mux = &mux_chip->mux[i];
 
-		if (mux->idle_state == mux->cached_state)
-			continue;
+		अगर (mux->idle_state == mux->cached_state)
+			जारी;
 
 		ret = mux_control_set(mux, mux->idle_state);
-		if (ret < 0) {
+		अगर (ret < 0) अणु
 			dev_err(&mux_chip->dev, "unable to set idle state\n");
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
 	ret = device_add(&mux_chip->dev);
-	if (ret < 0)
+	अगर (ret < 0)
 		dev_err(&mux_chip->dev,
 			"device_add failed in %s: %d\n", __func__, ret);
-	return ret;
-}
-EXPORT_SYMBOL_GPL(mux_chip_register);
+	वापस ret;
+पूर्ण
+EXPORT_SYMBOL_GPL(mux_chip_रेजिस्टर);
 
 /**
- * mux_chip_unregister() - Take the mux-chip off-line.
- * @mux_chip: The mux-chip to unregister.
+ * mux_chip_unरेजिस्टर() - Take the mux-chip off-line.
+ * @mux_chip: The mux-chip to unरेजिस्टर.
  *
- * mux_chip_unregister() reverses the effects of mux_chip_register().
- * But not completely, you should not try to call mux_chip_register()
- * on a mux-chip that has been registered before.
+ * mux_chip_unरेजिस्टर() reverses the effects of mux_chip_रेजिस्टर().
+ * But not completely, you should not try to call mux_chip_रेजिस्टर()
+ * on a mux-chip that has been रेजिस्टरed beक्रमe.
  */
-void mux_chip_unregister(struct mux_chip *mux_chip)
-{
+व्योम mux_chip_unरेजिस्टर(काष्ठा mux_chip *mux_chip)
+अणु
 	device_del(&mux_chip->dev);
-}
-EXPORT_SYMBOL_GPL(mux_chip_unregister);
+पूर्ण
+EXPORT_SYMBOL_GPL(mux_chip_unरेजिस्टर);
 
 /**
- * mux_chip_free() - Free the mux-chip for good.
- * @mux_chip: The mux-chip to free.
+ * mux_chip_मुक्त() - Free the mux-chip क्रम good.
+ * @mux_chip: The mux-chip to मुक्त.
  *
- * mux_chip_free() reverses the effects of mux_chip_alloc().
+ * mux_chip_मुक्त() reverses the effects of mux_chip_alloc().
  */
-void mux_chip_free(struct mux_chip *mux_chip)
-{
-	if (!mux_chip)
-		return;
+व्योम mux_chip_मुक्त(काष्ठा mux_chip *mux_chip)
+अणु
+	अगर (!mux_chip)
+		वापस;
 
 	put_device(&mux_chip->dev);
-}
-EXPORT_SYMBOL_GPL(mux_chip_free);
+पूर्ण
+EXPORT_SYMBOL_GPL(mux_chip_मुक्त);
 
-static void devm_mux_chip_release(struct device *dev, void *res)
-{
-	struct mux_chip *mux_chip = *(struct mux_chip **)res;
+अटल व्योम devm_mux_chip_release(काष्ठा device *dev, व्योम *res)
+अणु
+	काष्ठा mux_chip *mux_chip = *(काष्ठा mux_chip **)res;
 
-	mux_chip_free(mux_chip);
-}
+	mux_chip_मुक्त(mux_chip);
+पूर्ण
 
 /**
  * devm_mux_chip_alloc() - Resource-managed version of mux_chip_alloc().
- * @dev: The parent device implementing the mux interface.
- * @controllers: The number of mux controllers to allocate for this chip.
- * @sizeof_priv: Size of extra memory area for private use by the caller.
+ * @dev: The parent device implementing the mux पूर्णांकerface.
+ * @controllers: The number of mux controllers to allocate क्रम this chip.
+ * @माप_priv: Size of extra memory area क्रम निजी use by the caller.
  *
- * See mux_chip_alloc() for more details.
+ * See mux_chip_alloc() क्रम more details.
  *
- * Return: A pointer to the new mux-chip, or an ERR_PTR with a negative errno.
+ * Return: A poपूर्णांकer to the new mux-chip, or an ERR_PTR with a negative त्रुटि_सं.
  */
-struct mux_chip *devm_mux_chip_alloc(struct device *dev,
-				     unsigned int controllers,
-				     size_t sizeof_priv)
-{
-	struct mux_chip **ptr, *mux_chip;
+काष्ठा mux_chip *devm_mux_chip_alloc(काष्ठा device *dev,
+				     अचिन्हित पूर्णांक controllers,
+				     माप_प्रकार माप_priv)
+अणु
+	काष्ठा mux_chip **ptr, *mux_chip;
 
-	ptr = devres_alloc(devm_mux_chip_release, sizeof(*ptr), GFP_KERNEL);
-	if (!ptr)
-		return ERR_PTR(-ENOMEM);
+	ptr = devres_alloc(devm_mux_chip_release, माप(*ptr), GFP_KERNEL);
+	अगर (!ptr)
+		वापस ERR_PTR(-ENOMEM);
 
-	mux_chip = mux_chip_alloc(dev, controllers, sizeof_priv);
-	if (IS_ERR(mux_chip)) {
-		devres_free(ptr);
-		return mux_chip;
-	}
+	mux_chip = mux_chip_alloc(dev, controllers, माप_priv);
+	अगर (IS_ERR(mux_chip)) अणु
+		devres_मुक्त(ptr);
+		वापस mux_chip;
+	पूर्ण
 
 	*ptr = mux_chip;
 	devres_add(dev, ptr);
 
-	return mux_chip;
-}
+	वापस mux_chip;
+पूर्ण
 EXPORT_SYMBOL_GPL(devm_mux_chip_alloc);
 
-static void devm_mux_chip_reg_release(struct device *dev, void *res)
-{
-	struct mux_chip *mux_chip = *(struct mux_chip **)res;
+अटल व्योम devm_mux_chip_reg_release(काष्ठा device *dev, व्योम *res)
+अणु
+	काष्ठा mux_chip *mux_chip = *(काष्ठा mux_chip **)res;
 
-	mux_chip_unregister(mux_chip);
-}
+	mux_chip_unरेजिस्टर(mux_chip);
+पूर्ण
 
 /**
- * devm_mux_chip_register() - Resource-managed version mux_chip_register().
- * @dev: The parent device implementing the mux interface.
- * @mux_chip: The mux-chip to register.
+ * devm_mux_chip_रेजिस्टर() - Resource-managed version mux_chip_रेजिस्टर().
+ * @dev: The parent device implementing the mux पूर्णांकerface.
+ * @mux_chip: The mux-chip to रेजिस्टर.
  *
- * See mux_chip_register() for more details.
+ * See mux_chip_रेजिस्टर() क्रम more details.
  *
- * Return: Zero on success or a negative errno on error.
+ * Return: Zero on success or a negative त्रुटि_सं on error.
  */
-int devm_mux_chip_register(struct device *dev,
-			   struct mux_chip *mux_chip)
-{
-	struct mux_chip **ptr;
-	int res;
+पूर्णांक devm_mux_chip_रेजिस्टर(काष्ठा device *dev,
+			   काष्ठा mux_chip *mux_chip)
+अणु
+	काष्ठा mux_chip **ptr;
+	पूर्णांक res;
 
-	ptr = devres_alloc(devm_mux_chip_reg_release, sizeof(*ptr), GFP_KERNEL);
-	if (!ptr)
-		return -ENOMEM;
+	ptr = devres_alloc(devm_mux_chip_reg_release, माप(*ptr), GFP_KERNEL);
+	अगर (!ptr)
+		वापस -ENOMEM;
 
-	res = mux_chip_register(mux_chip);
-	if (res) {
-		devres_free(ptr);
-		return res;
-	}
+	res = mux_chip_रेजिस्टर(mux_chip);
+	अगर (res) अणु
+		devres_मुक्त(ptr);
+		वापस res;
+	पूर्ण
 
 	*ptr = mux_chip;
 	devres_add(dev, ptr);
 
-	return res;
-}
-EXPORT_SYMBOL_GPL(devm_mux_chip_register);
+	वापस res;
+पूर्ण
+EXPORT_SYMBOL_GPL(devm_mux_chip_रेजिस्टर);
 
 /**
  * mux_control_states() - Query the number of multiplexer states.
@@ -284,35 +285,35 @@ EXPORT_SYMBOL_GPL(devm_mux_chip_register);
  *
  * Return: The number of multiplexer states.
  */
-unsigned int mux_control_states(struct mux_control *mux)
-{
-	return mux->states;
-}
+अचिन्हित पूर्णांक mux_control_states(काष्ठा mux_control *mux)
+अणु
+	वापस mux->states;
+पूर्ण
 EXPORT_SYMBOL_GPL(mux_control_states);
 
 /*
- * The mux->lock must be down when calling this function.
+ * The mux->lock must be करोwn when calling this function.
  */
-static int __mux_control_select(struct mux_control *mux, int state)
-{
-	int ret;
+अटल पूर्णांक __mux_control_select(काष्ठा mux_control *mux, पूर्णांक state)
+अणु
+	पूर्णांक ret;
 
-	if (WARN_ON(state < 0 || state >= mux->states))
-		return -EINVAL;
+	अगर (WARN_ON(state < 0 || state >= mux->states))
+		वापस -EINVAL;
 
-	if (mux->cached_state == state)
-		return 0;
+	अगर (mux->cached_state == state)
+		वापस 0;
 
 	ret = mux_control_set(mux, state);
-	if (ret >= 0)
-		return 0;
+	अगर (ret >= 0)
+		वापस 0;
 
-	/* The mux update failed, try to revert if appropriate... */
-	if (mux->idle_state != MUX_IDLE_AS_IS)
+	/* The mux update failed, try to revert अगर appropriate... */
+	अगर (mux->idle_state != MUX_IDLE_AS_IS)
 		mux_control_set(mux, mux->idle_state);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
  * mux_control_select() - Select the given multiplexer state.
@@ -320,32 +321,32 @@ static int __mux_control_select(struct mux_control *mux, int state)
  * @state: The new requested state.
  *
  * On successfully selecting the mux-control state, it will be locked until
- * there is a call to mux_control_deselect(). If the mux-control is already
+ * there is a call to mux_control_deselect(). If the mux-control is alपढ़ोy
  * selected when mux_control_select() is called, the caller will be blocked
- * until mux_control_deselect() is called (by someone else).
+ * until mux_control_deselect() is called (by someone अन्यथा).
  *
- * Therefore, make sure to call mux_control_deselect() when the operation is
- * complete and the mux-control is free for others to use, but do not call
- * mux_control_deselect() if mux_control_select() fails.
+ * Thereक्रमe, make sure to call mux_control_deselect() when the operation is
+ * complete and the mux-control is मुक्त क्रम others to use, but करो not call
+ * mux_control_deselect() अगर mux_control_select() fails.
  *
  * Return: 0 when the mux-control state has the requested state or a negative
- * errno on error.
+ * त्रुटि_सं on error.
  */
-int mux_control_select(struct mux_control *mux, unsigned int state)
-{
-	int ret;
+पूर्णांक mux_control_select(काष्ठा mux_control *mux, अचिन्हित पूर्णांक state)
+अणु
+	पूर्णांक ret;
 
-	ret = down_killable(&mux->lock);
-	if (ret < 0)
-		return ret;
+	ret = करोwn_समाप्तable(&mux->lock);
+	अगर (ret < 0)
+		वापस ret;
 
 	ret = __mux_control_select(mux, state);
 
-	if (ret < 0)
+	अगर (ret < 0)
 		up(&mux->lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(mux_control_select);
 
 /**
@@ -356,185 +357,185 @@ EXPORT_SYMBOL_GPL(mux_control_select);
  * On successfully selecting the mux-control state, it will be locked until
  * mux_control_deselect() called.
  *
- * Therefore, make sure to call mux_control_deselect() when the operation is
- * complete and the mux-control is free for others to use, but do not call
- * mux_control_deselect() if mux_control_try_select() fails.
+ * Thereक्रमe, make sure to call mux_control_deselect() when the operation is
+ * complete and the mux-control is मुक्त क्रम others to use, but करो not call
+ * mux_control_deselect() अगर mux_control_try_select() fails.
  *
  * Return: 0 when the mux-control state has the requested state or a negative
- * errno on error. Specifically -EBUSY if the mux-control is contended.
+ * त्रुटि_सं on error. Specअगरically -EBUSY अगर the mux-control is contended.
  */
-int mux_control_try_select(struct mux_control *mux, unsigned int state)
-{
-	int ret;
+पूर्णांक mux_control_try_select(काष्ठा mux_control *mux, अचिन्हित पूर्णांक state)
+अणु
+	पूर्णांक ret;
 
-	if (down_trylock(&mux->lock))
-		return -EBUSY;
+	अगर (करोwn_trylock(&mux->lock))
+		वापस -EBUSY;
 
 	ret = __mux_control_select(mux, state);
 
-	if (ret < 0)
+	अगर (ret < 0)
 		up(&mux->lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(mux_control_try_select);
 
 /**
  * mux_control_deselect() - Deselect the previously selected multiplexer state.
  * @mux: The mux-control to deselect.
  *
- * It is required that a single call is made to mux_control_deselect() for
+ * It is required that a single call is made to mux_control_deselect() क्रम
  * each and every successful call made to either of mux_control_select() or
  * mux_control_try_select().
  *
- * Return: 0 on success and a negative errno on error. An error can only
- * occur if the mux has an idle state. Note that even if an error occurs, the
- * mux-control is unlocked and is thus free for the next access.
+ * Return: 0 on success and a negative त्रुटि_सं on error. An error can only
+ * occur अगर the mux has an idle state. Note that even अगर an error occurs, the
+ * mux-control is unlocked and is thus मुक्त क्रम the next access.
  */
-int mux_control_deselect(struct mux_control *mux)
-{
-	int ret = 0;
+पूर्णांक mux_control_deselect(काष्ठा mux_control *mux)
+अणु
+	पूर्णांक ret = 0;
 
-	if (mux->idle_state != MUX_IDLE_AS_IS &&
+	अगर (mux->idle_state != MUX_IDLE_AS_IS &&
 	    mux->idle_state != mux->cached_state)
 		ret = mux_control_set(mux, mux->idle_state);
 
 	up(&mux->lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(mux_control_deselect);
 
-/* Note this function returns a reference to the mux_chip dev. */
-static struct mux_chip *of_find_mux_chip_by_node(struct device_node *np)
-{
-	struct device *dev;
+/* Note this function वापसs a reference to the mux_chip dev. */
+अटल काष्ठा mux_chip *of_find_mux_chip_by_node(काष्ठा device_node *np)
+अणु
+	काष्ठा device *dev;
 
 	dev = class_find_device_by_of_node(&mux_class, np);
 
-	return dev ? to_mux_chip(dev) : NULL;
-}
+	वापस dev ? to_mux_chip(dev) : शून्य;
+पूर्ण
 
 /**
- * mux_control_get() - Get the mux-control for a device.
+ * mux_control_get() - Get the mux-control क्रम a device.
  * @dev: The device that needs a mux-control.
- * @mux_name: The name identifying the mux-control.
+ * @mux_name: The name identअगरying the mux-control.
  *
- * Return: A pointer to the mux-control, or an ERR_PTR with a negative errno.
+ * Return: A poपूर्णांकer to the mux-control, or an ERR_PTR with a negative त्रुटि_सं.
  */
-struct mux_control *mux_control_get(struct device *dev, const char *mux_name)
-{
-	struct device_node *np = dev->of_node;
-	struct of_phandle_args args;
-	struct mux_chip *mux_chip;
-	unsigned int controller;
-	int index = 0;
-	int ret;
+काष्ठा mux_control *mux_control_get(काष्ठा device *dev, स्थिर अक्षर *mux_name)
+अणु
+	काष्ठा device_node *np = dev->of_node;
+	काष्ठा of_phandle_args args;
+	काष्ठा mux_chip *mux_chip;
+	अचिन्हित पूर्णांक controller;
+	पूर्णांक index = 0;
+	पूर्णांक ret;
 
-	if (mux_name) {
+	अगर (mux_name) अणु
 		index = of_property_match_string(np, "mux-control-names",
 						 mux_name);
-		if (index < 0) {
+		अगर (index < 0) अणु
 			dev_err(dev, "mux controller '%s' not found\n",
 				mux_name);
-			return ERR_PTR(index);
-		}
-	}
+			वापस ERR_PTR(index);
+		पूर्ण
+	पूर्ण
 
 	ret = of_parse_phandle_with_args(np,
 					 "mux-controls", "#mux-control-cells",
 					 index, &args);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev, "%pOF: failed to get mux-control %s(%i)\n",
 			np, mux_name ?: "", index);
-		return ERR_PTR(ret);
-	}
+		वापस ERR_PTR(ret);
+	पूर्ण
 
 	mux_chip = of_find_mux_chip_by_node(args.np);
 	of_node_put(args.np);
-	if (!mux_chip)
-		return ERR_PTR(-EPROBE_DEFER);
+	अगर (!mux_chip)
+		वापस ERR_PTR(-EPROBE_DEFER);
 
-	if (args.args_count > 1 ||
-	    (!args.args_count && (mux_chip->controllers > 1))) {
+	अगर (args.args_count > 1 ||
+	    (!args.args_count && (mux_chip->controllers > 1))) अणु
 		dev_err(dev, "%pOF: wrong #mux-control-cells for %pOF\n",
 			np, args.np);
 		put_device(&mux_chip->dev);
-		return ERR_PTR(-EINVAL);
-	}
+		वापस ERR_PTR(-EINVAL);
+	पूर्ण
 
 	controller = 0;
-	if (args.args_count)
+	अगर (args.args_count)
 		controller = args.args[0];
 
-	if (controller >= mux_chip->controllers) {
+	अगर (controller >= mux_chip->controllers) अणु
 		dev_err(dev, "%pOF: bad mux controller %u specified in %pOF\n",
 			np, controller, args.np);
 		put_device(&mux_chip->dev);
-		return ERR_PTR(-EINVAL);
-	}
+		वापस ERR_PTR(-EINVAL);
+	पूर्ण
 
-	return &mux_chip->mux[controller];
-}
+	वापस &mux_chip->mux[controller];
+पूर्ण
 EXPORT_SYMBOL_GPL(mux_control_get);
 
 /**
- * mux_control_put() - Put away the mux-control for good.
+ * mux_control_put() - Put away the mux-control क्रम good.
  * @mux: The mux-control to put away.
  *
  * mux_control_put() reverses the effects of mux_control_get().
  */
-void mux_control_put(struct mux_control *mux)
-{
+व्योम mux_control_put(काष्ठा mux_control *mux)
+अणु
 	put_device(&mux->chip->dev);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(mux_control_put);
 
-static void devm_mux_control_release(struct device *dev, void *res)
-{
-	struct mux_control *mux = *(struct mux_control **)res;
+अटल व्योम devm_mux_control_release(काष्ठा device *dev, व्योम *res)
+अणु
+	काष्ठा mux_control *mux = *(काष्ठा mux_control **)res;
 
 	mux_control_put(mux);
-}
+पूर्ण
 
 /**
- * devm_mux_control_get() - Get the mux-control for a device, with resource
+ * devm_mux_control_get() - Get the mux-control क्रम a device, with resource
  *			    management.
  * @dev: The device that needs a mux-control.
- * @mux_name: The name identifying the mux-control.
+ * @mux_name: The name identअगरying the mux-control.
  *
- * Return: Pointer to the mux-control, or an ERR_PTR with a negative errno.
+ * Return: Poपूर्णांकer to the mux-control, or an ERR_PTR with a negative त्रुटि_सं.
  */
-struct mux_control *devm_mux_control_get(struct device *dev,
-					 const char *mux_name)
-{
-	struct mux_control **ptr, *mux;
+काष्ठा mux_control *devm_mux_control_get(काष्ठा device *dev,
+					 स्थिर अक्षर *mux_name)
+अणु
+	काष्ठा mux_control **ptr, *mux;
 
-	ptr = devres_alloc(devm_mux_control_release, sizeof(*ptr), GFP_KERNEL);
-	if (!ptr)
-		return ERR_PTR(-ENOMEM);
+	ptr = devres_alloc(devm_mux_control_release, माप(*ptr), GFP_KERNEL);
+	अगर (!ptr)
+		वापस ERR_PTR(-ENOMEM);
 
 	mux = mux_control_get(dev, mux_name);
-	if (IS_ERR(mux)) {
-		devres_free(ptr);
-		return mux;
-	}
+	अगर (IS_ERR(mux)) अणु
+		devres_मुक्त(ptr);
+		वापस mux;
+	पूर्ण
 
 	*ptr = mux;
 	devres_add(dev, ptr);
 
-	return mux;
-}
+	वापस mux;
+पूर्ण
 EXPORT_SYMBOL_GPL(devm_mux_control_get);
 
 /*
- * Using subsys_initcall instead of module_init here to try to ensure - for
- * the non-modular case - that the subsystem is initialized when mux consumers
+ * Using subsys_initcall instead of module_init here to try to ensure - क्रम
+ * the non-modular हाल - that the subप्रणाली is initialized when mux consumers
  * and mux controllers start to use it.
- * For the modular case, the ordering is ensured with module dependencies.
+ * For the modular हाल, the ordering is ensured with module dependencies.
  */
 subsys_initcall(mux_init);
-module_exit(mux_exit);
+module_निकास(mux_निकास);
 
 MODULE_DESCRIPTION("Multiplexer subsystem");
 MODULE_AUTHOR("Peter Rosin <peda@axentia.se>");

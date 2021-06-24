@@ -1,70 +1,71 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _DVB_USB_DIGITV_H_
-#define _DVB_USB_DIGITV_H_
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _DVB_USB_DIGITV_H_
+#घोषणा _DVB_USB_DIGITV_H_
 
-#define DVB_USB_LOG_PREFIX "digitv"
-#include "dvb-usb.h"
+#घोषणा DVB_USB_LOG_PREFIX "digitv"
+#समावेश "dvb-usb.h"
 
-struct digitv_state {
-	int is_nxt6000;
+काष्ठा digitv_state अणु
+	पूर्णांक is_nxt6000;
 
-	unsigned char sndbuf[7];
-	unsigned char rcvbuf[7];
-};
+	अचिन्हित अक्षर sndbuf[7];
+	अचिन्हित अक्षर rcvbuf[7];
+पूर्ण;
 
 /* protocol (from usblogging and the SDK:
  *
- * Always 7 bytes bulk message(s) for controlling
+ * Always 7 bytes bulk message(s) क्रम controlling
  *
  * First byte describes the command. Reads are 2 consecutive transfer (as always).
  *
- * General structure:
+ * General काष्ठाure:
  *
- * write or first message of a read:
+ * ग_लिखो or first message of a पढ़ो:
  * <cmdbyte> VV <len> B0 B1 B2 B3
  *
- * second message of a read
+ * second message of a पढ़ो
  * <cmdbyte> VV <len> R0 R1 R2 R3
  *
  * whereas 0 < len <= 4
  *
  * I2C address is stored somewhere inside the device.
  *
- * 0x01 read from EEPROM
+ * 0x01 पढ़ो from EEPROM
  *  VV = offset; B* = 0; R* = value(s)
  *
- * 0x02 read register of the COFDM
- *  VV = register; B* = 0; R* = value(s)
+ * 0x02 पढ़ो रेजिस्टर of the COFDM
+ *  VV = रेजिस्टर; B* = 0; R* = value(s)
  *
- * 0x05 write register of the COFDM
- *  VV = register; B* = value(s);
+ * 0x05 ग_लिखो रेजिस्टर of the COFDM
+ *  VV = रेजिस्टर; B* = value(s);
  *
- * 0x06 write to the tuner (only for NXT6000)
+ * 0x06 ग_लिखो to the tuner (only क्रम NXT6000)
  *  VV = 0; B* = PLL data; len = 4;
  *
- * 0x03 read remote control
+ * 0x03 पढ़ो remote control
  *  VV = 0; B* = 0; len = 4; R* = key
  *
- * 0x07 write to the remote (don't know why one should this, resetting ?)
+ * 0x07 ग_लिखो to the remote (करोn't know why one should this, resetting ?)
  *  VV = 0; B* = key; len = 4;
  *
- * 0x08 write remote type
+ * 0x08 ग_लिखो remote type
  *  VV = 0; B[0] = 0x01, len = 4
  *
- * 0x09 write device init
+ * 0x09 ग_लिखो device init
  *  TODO
  */
-#define USB_READ_EEPROM         1
+#घोषणा USB_READ_EEPROM         1
 
-#define USB_READ_COFDM          2
-#define USB_WRITE_COFDM         5
+#घोषणा USB_READ_COFDM          2
+#घोषणा USB_WRITE_COFDM         5
 
-#define USB_WRITE_TUNER         6
+#घोषणा USB_WRITE_TUNER         6
 
-#define USB_READ_REMOTE         3
-#define USB_WRITE_REMOTE        7
-#define USB_WRITE_REMOTE_TYPE   8
+#घोषणा USB_READ_REMOTE         3
+#घोषणा USB_WRITE_REMOTE        7
+#घोषणा USB_WRITE_REMOTE_TYPE   8
 
-#define USB_DEV_INIT            9
+#घोषणा USB_DEV_INIT            9
 
-#endif
+#पूर्ण_अगर

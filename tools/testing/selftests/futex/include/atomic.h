@@ -1,42 +1,43 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /******************************************************************************
  *
- *   Copyright © International Business Machines  Corp., 2009
+ *   Copyright तऊ International Business Machines  Corp., 2009
  *
  * DESCRIPTION
  *      GCC atomic builtin wrappers
- *      http://gcc.gnu.org/onlinedocs/gcc-4.1.0/gcc/Atomic-Builtins.html
+ *      http://gcc.gnu.org/onlineकरोcs/gcc-4.1.0/gcc/Atomic-Builtins.hपंचांगl
  *
  * AUTHOR
- *      Darren Hart <dvhart@linux.intel.com>
+ *      Darren Hart <dvhart@linux.पूर्णांकel.com>
  *
  * HISTORY
- *      2009-Nov-17: Initial version by Darren Hart <dvhart@linux.intel.com>
+ *      2009-Nov-17: Initial version by Darren Hart <dvhart@linux.पूर्णांकel.com>
  *
  *****************************************************************************/
 
-#ifndef _ATOMIC_H
-#define _ATOMIC_H
+#अगर_अघोषित _ATOMIC_H
+#घोषणा _ATOMIC_H
 
-typedef struct {
-	volatile int val;
-} atomic_t;
+प्रकार काष्ठा अणु
+	अस्थिर पूर्णांक val;
+पूर्ण atomic_t;
 
-#define ATOMIC_INITIALIZER { 0 }
+#घोषणा ATOMIC_INITIALIZER अणु 0 पूर्ण
 
 /**
  * atomic_cmpxchg() - Atomic compare and exchange
- * @uaddr:	The address of the futex to be modified
+ * @uaddr:	The address of the futex to be modअगरied
  * @oldval:	The expected value of the futex
  * @newval:	The new value to try and assign the futex
  *
  * Return the old value of addr->val.
  */
-static inline int
-atomic_cmpxchg(atomic_t *addr, int oldval, int newval)
-{
-	return __sync_val_compare_and_swap(&addr->val, oldval, newval);
-}
+अटल अंतरभूत पूर्णांक
+atomic_cmpxchg(atomic_t *addr, पूर्णांक oldval, पूर्णांक newval)
+अणु
+	वापस __sync_val_compare_and_swap(&addr->val, oldval, newval);
+पूर्ण
 
 /**
  * atomic_inc() - Atomic incrememnt
@@ -44,11 +45,11 @@ atomic_cmpxchg(atomic_t *addr, int oldval, int newval)
  *
  * Return the new value of addr->val.
  */
-static inline int
+अटल अंतरभूत पूर्णांक
 atomic_inc(atomic_t *addr)
-{
-	return __sync_add_and_fetch(&addr->val, 1);
-}
+अणु
+	वापस __sync_add_and_fetch(&addr->val, 1);
+पूर्ण
 
 /**
  * atomic_dec() - Atomic decrement
@@ -56,24 +57,24 @@ atomic_inc(atomic_t *addr)
  *
  * Return the new value of addr-val.
  */
-static inline int
+अटल अंतरभूत पूर्णांक
 atomic_dec(atomic_t *addr)
-{
-	return __sync_sub_and_fetch(&addr->val, 1);
-}
+अणु
+	वापस __sync_sub_and_fetch(&addr->val, 1);
+पूर्ण
 
 /**
  * atomic_set() - Atomic set
  * @addr:	Address of the variable to set
- * @newval:	New value for the atomic_t
+ * @newval:	New value क्रम the atomic_t
  *
  * Return the new value of addr->val.
  */
-static inline int
-atomic_set(atomic_t *addr, int newval)
-{
+अटल अंतरभूत पूर्णांक
+atomic_set(atomic_t *addr, पूर्णांक newval)
+अणु
 	addr->val = newval;
-	return newval;
-}
+	वापस newval;
+पूर्ण
 
-#endif
+#पूर्ण_अगर

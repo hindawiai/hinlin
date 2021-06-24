@@ -1,777 +1,778 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
- * Surface Book (gen. 2 and later) detachment system (DTX) driver.
+ * Surface Book (gen. 2 and later) detachment प्रणाली (DTX) driver.
  *
- * Provides a user-space interface to properly handle clipboard/tablet
+ * Provides a user-space पूर्णांकerface to properly handle clipboard/tablet
  * (containing screen and processor) detachment from the base of the device
  * (containing the keyboard and optionally a discrete GPU). Allows to
- * acknowledge (to speed things up), abort (e.g. in case the dGPU is still in
+ * acknowledge (to speed things up), पात (e.g. in हाल the dGPU is still in
  * use), or request detachment via user-space.
  *
  * Copyright (C) 2019-2021 Maximilian Luz <luzmaximilian@gmail.com>
  */
 
-#include <linux/fs.h>
-#include <linux/input.h>
-#include <linux/ioctl.h>
-#include <linux/kernel.h>
-#include <linux/kfifo.h>
-#include <linux/kref.h>
-#include <linux/miscdevice.h>
-#include <linux/module.h>
-#include <linux/mutex.h>
-#include <linux/platform_device.h>
-#include <linux/poll.h>
-#include <linux/rwsem.h>
-#include <linux/slab.h>
-#include <linux/workqueue.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/input.h>
+#समावेश <linux/ioctl.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/kfअगरo.h>
+#समावेश <linux/kref.h>
+#समावेश <linux/miscdevice.h>
+#समावेश <linux/module.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/poll.h>
+#समावेश <linux/rwsem.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/workqueue.h>
 
-#include <linux/surface_aggregator/controller.h>
-#include <linux/surface_aggregator/device.h>
-#include <linux/surface_aggregator/dtx.h>
+#समावेश <linux/surface_aggregator/controller.h>
+#समावेश <linux/surface_aggregator/device.h>
+#समावेश <linux/surface_aggregator/dtx.h>
 
 
-/* -- SSAM interface. ------------------------------------------------------- */
+/* -- SSAM पूर्णांकerface. ------------------------------------------------------- */
 
-enum sam_event_cid_bas {
+क्रमागत sam_event_cid_bas अणु
 	SAM_EVENT_CID_DTX_CONNECTION			= 0x0c,
 	SAM_EVENT_CID_DTX_REQUEST			= 0x0e,
 	SAM_EVENT_CID_DTX_CANCEL			= 0x0f,
 	SAM_EVENT_CID_DTX_LATCH_STATUS			= 0x11,
-};
+पूर्ण;
 
-enum ssam_bas_base_state {
+क्रमागत ssam_bas_base_state अणु
 	SSAM_BAS_BASE_STATE_DETACH_SUCCESS		= 0x00,
 	SSAM_BAS_BASE_STATE_ATTACHED			= 0x01,
 	SSAM_BAS_BASE_STATE_NOT_FEASIBLE		= 0x02,
-};
+पूर्ण;
 
-enum ssam_bas_latch_status {
+क्रमागत ssam_bas_latch_status अणु
 	SSAM_BAS_LATCH_STATUS_CLOSED			= 0x00,
 	SSAM_BAS_LATCH_STATUS_OPENED			= 0x01,
 	SSAM_BAS_LATCH_STATUS_FAILED_TO_OPEN		= 0x02,
 	SSAM_BAS_LATCH_STATUS_FAILED_TO_REMAIN_OPEN	= 0x03,
 	SSAM_BAS_LATCH_STATUS_FAILED_TO_CLOSE		= 0x04,
-};
+पूर्ण;
 
-enum ssam_bas_cancel_reason {
+क्रमागत ssam_bas_cancel_reason अणु
 	SSAM_BAS_CANCEL_REASON_NOT_FEASIBLE		= 0x00,  /* Low battery. */
 	SSAM_BAS_CANCEL_REASON_TIMEOUT			= 0x02,
 	SSAM_BAS_CANCEL_REASON_FAILED_TO_OPEN		= 0x03,
 	SSAM_BAS_CANCEL_REASON_FAILED_TO_REMAIN_OPEN	= 0x04,
 	SSAM_BAS_CANCEL_REASON_FAILED_TO_CLOSE		= 0x05,
-};
+पूर्ण;
 
-struct ssam_bas_base_info {
+काष्ठा ssam_bas_base_info अणु
 	u8 state;
 	u8 base_id;
-} __packed;
+पूर्ण __packed;
 
-static_assert(sizeof(struct ssam_bas_base_info) == 2);
+अटल_निश्चित(माप(काष्ठा ssam_bas_base_info) == 2);
 
-SSAM_DEFINE_SYNC_REQUEST_N(ssam_bas_latch_lock, {
+SSAM_DEFINE_SYNC_REQUEST_N(ssam_bas_latch_lock, अणु
 	.target_category = SSAM_SSH_TC_BAS,
 	.target_id       = 0x01,
 	.command_id      = 0x06,
 	.instance_id     = 0x00,
-});
+पूर्ण);
 
-SSAM_DEFINE_SYNC_REQUEST_N(ssam_bas_latch_unlock, {
+SSAM_DEFINE_SYNC_REQUEST_N(ssam_bas_latch_unlock, अणु
 	.target_category = SSAM_SSH_TC_BAS,
 	.target_id       = 0x01,
 	.command_id      = 0x07,
 	.instance_id     = 0x00,
-});
+पूर्ण);
 
-SSAM_DEFINE_SYNC_REQUEST_N(ssam_bas_latch_request, {
+SSAM_DEFINE_SYNC_REQUEST_N(ssam_bas_latch_request, अणु
 	.target_category = SSAM_SSH_TC_BAS,
 	.target_id       = 0x01,
 	.command_id      = 0x08,
 	.instance_id     = 0x00,
-});
+पूर्ण);
 
-SSAM_DEFINE_SYNC_REQUEST_N(ssam_bas_latch_confirm, {
+SSAM_DEFINE_SYNC_REQUEST_N(ssam_bas_latch_confirm, अणु
 	.target_category = SSAM_SSH_TC_BAS,
 	.target_id       = 0x01,
 	.command_id      = 0x09,
 	.instance_id     = 0x00,
-});
+पूर्ण);
 
-SSAM_DEFINE_SYNC_REQUEST_N(ssam_bas_latch_heartbeat, {
+SSAM_DEFINE_SYNC_REQUEST_N(ssam_bas_latch_heartbeat, अणु
 	.target_category = SSAM_SSH_TC_BAS,
 	.target_id       = 0x01,
 	.command_id      = 0x0a,
 	.instance_id     = 0x00,
-});
+पूर्ण);
 
-SSAM_DEFINE_SYNC_REQUEST_N(ssam_bas_latch_cancel, {
+SSAM_DEFINE_SYNC_REQUEST_N(ssam_bas_latch_cancel, अणु
 	.target_category = SSAM_SSH_TC_BAS,
 	.target_id       = 0x01,
 	.command_id      = 0x0b,
 	.instance_id     = 0x00,
-});
+पूर्ण);
 
-SSAM_DEFINE_SYNC_REQUEST_R(ssam_bas_get_base, struct ssam_bas_base_info, {
+SSAM_DEFINE_SYNC_REQUEST_R(ssam_bas_get_base, काष्ठा ssam_bas_base_info, अणु
 	.target_category = SSAM_SSH_TC_BAS,
 	.target_id       = 0x01,
 	.command_id      = 0x0c,
 	.instance_id     = 0x00,
-});
+पूर्ण);
 
-SSAM_DEFINE_SYNC_REQUEST_R(ssam_bas_get_device_mode, u8, {
+SSAM_DEFINE_SYNC_REQUEST_R(ssam_bas_get_device_mode, u8, अणु
 	.target_category = SSAM_SSH_TC_BAS,
 	.target_id       = 0x01,
 	.command_id      = 0x0d,
 	.instance_id     = 0x00,
-});
+पूर्ण);
 
-SSAM_DEFINE_SYNC_REQUEST_R(ssam_bas_get_latch_status, u8, {
+SSAM_DEFINE_SYNC_REQUEST_R(ssam_bas_get_latch_status, u8, अणु
 	.target_category = SSAM_SSH_TC_BAS,
 	.target_id       = 0x01,
 	.command_id      = 0x11,
 	.instance_id     = 0x00,
-});
+पूर्ण);
 
 
-/* -- Main structures. ------------------------------------------------------ */
+/* -- Main काष्ठाures. ------------------------------------------------------ */
 
-enum sdtx_device_state {
+क्रमागत sdtx_device_state अणु
 	SDTX_DEVICE_SHUTDOWN_BIT    = BIT(0),
-	SDTX_DEVICE_DIRTY_BASE_BIT  = BIT(1),
-	SDTX_DEVICE_DIRTY_MODE_BIT  = BIT(2),
-	SDTX_DEVICE_DIRTY_LATCH_BIT = BIT(3),
-};
+	SDTX_DEVICE_सूचीTY_BASE_BIT  = BIT(1),
+	SDTX_DEVICE_सूचीTY_MODE_BIT  = BIT(2),
+	SDTX_DEVICE_सूचीTY_LATCH_BIT = BIT(3),
+पूर्ण;
 
-struct sdtx_device {
-	struct kref kref;
-	struct rw_semaphore lock;         /* Guards device and controller reference. */
+काष्ठा sdtx_device अणु
+	काष्ठा kref kref;
+	काष्ठा rw_semaphore lock;         /* Guards device and controller reference. */
 
-	struct device *dev;
-	struct ssam_controller *ctrl;
-	unsigned long flags;
+	काष्ठा device *dev;
+	काष्ठा ssam_controller *ctrl;
+	अचिन्हित दीर्घ flags;
 
-	struct miscdevice mdev;
-	wait_queue_head_t waitq;
-	struct mutex write_lock;          /* Guards order of events/notifications. */
-	struct rw_semaphore client_lock;  /* Guards client list.                   */
-	struct list_head client_list;
+	काष्ठा miscdevice mdev;
+	रुको_queue_head_t रुकोq;
+	काष्ठा mutex ग_लिखो_lock;          /* Guards order of events/notअगरications. */
+	काष्ठा rw_semaphore client_lock;  /* Guards client list.                   */
+	काष्ठा list_head client_list;
 
-	struct delayed_work state_work;
-	struct {
-		struct ssam_bas_base_info base;
+	काष्ठा delayed_work state_work;
+	काष्ठा अणु
+		काष्ठा ssam_bas_base_info base;
 		u8 device_mode;
 		u8 latch_status;
-	} state;
+	पूर्ण state;
 
-	struct delayed_work mode_work;
-	struct input_dev *mode_switch;
+	काष्ठा delayed_work mode_work;
+	काष्ठा input_dev *mode_चयन;
 
-	struct ssam_event_notifier notif;
-};
+	काष्ठा ssam_event_notअगरier notअगर;
+पूर्ण;
 
-enum sdtx_client_state {
+क्रमागत sdtx_client_state अणु
 	SDTX_CLIENT_EVENTS_ENABLED_BIT = BIT(0),
-};
+पूर्ण;
 
-struct sdtx_client {
-	struct sdtx_device *ddev;
-	struct list_head node;
-	unsigned long flags;
+काष्ठा sdtx_client अणु
+	काष्ठा sdtx_device *ddev;
+	काष्ठा list_head node;
+	अचिन्हित दीर्घ flags;
 
-	struct fasync_struct *fasync;
+	काष्ठा fasync_काष्ठा *fasync;
 
-	struct mutex read_lock;           /* Guards FIFO buffer read access. */
+	काष्ठा mutex पढ़ो_lock;           /* Guards FIFO buffer पढ़ो access. */
 	DECLARE_KFIFO(buffer, u8, 512);
-};
+पूर्ण;
 
-static void __sdtx_device_release(struct kref *kref)
-{
-	struct sdtx_device *ddev = container_of(kref, struct sdtx_device, kref);
+अटल व्योम __sdtx_device_release(काष्ठा kref *kref)
+अणु
+	काष्ठा sdtx_device *ddev = container_of(kref, काष्ठा sdtx_device, kref);
 
-	mutex_destroy(&ddev->write_lock);
-	kfree(ddev);
-}
+	mutex_destroy(&ddev->ग_लिखो_lock);
+	kमुक्त(ddev);
+पूर्ण
 
-static struct sdtx_device *sdtx_device_get(struct sdtx_device *ddev)
-{
-	if (ddev)
+अटल काष्ठा sdtx_device *sdtx_device_get(काष्ठा sdtx_device *ddev)
+अणु
+	अगर (ddev)
 		kref_get(&ddev->kref);
 
-	return ddev;
-}
+	वापस ddev;
+पूर्ण
 
-static void sdtx_device_put(struct sdtx_device *ddev)
-{
-	if (ddev)
+अटल व्योम sdtx_device_put(काष्ठा sdtx_device *ddev)
+अणु
+	अगर (ddev)
 		kref_put(&ddev->kref, __sdtx_device_release);
-}
+पूर्ण
 
 
 /* -- Firmware value translations. ------------------------------------------ */
 
-static u16 sdtx_translate_base_state(struct sdtx_device *ddev, u8 state)
-{
-	switch (state) {
-	case SSAM_BAS_BASE_STATE_ATTACHED:
-		return SDTX_BASE_ATTACHED;
+अटल u16 sdtx_translate_base_state(काष्ठा sdtx_device *ddev, u8 state)
+अणु
+	चयन (state) अणु
+	हाल SSAM_BAS_BASE_STATE_ATTACHED:
+		वापस SDTX_BASE_ATTACHED;
 
-	case SSAM_BAS_BASE_STATE_DETACH_SUCCESS:
-		return SDTX_BASE_DETACHED;
+	हाल SSAM_BAS_BASE_STATE_DETACH_SUCCESS:
+		वापस SDTX_BASE_DETACHED;
 
-	case SSAM_BAS_BASE_STATE_NOT_FEASIBLE:
-		return SDTX_DETACH_NOT_FEASIBLE;
+	हाल SSAM_BAS_BASE_STATE_NOT_FEASIBLE:
+		वापस SDTX_DETACH_NOT_FEASIBLE;
 
-	default:
+	शेष:
 		dev_err(ddev->dev, "unknown base state: %#04x\n", state);
-		return SDTX_UNKNOWN(state);
-	}
-}
+		वापस SDTX_UNKNOWN(state);
+	पूर्ण
+पूर्ण
 
-static u16 sdtx_translate_latch_status(struct sdtx_device *ddev, u8 status)
-{
-	switch (status) {
-	case SSAM_BAS_LATCH_STATUS_CLOSED:
-		return SDTX_LATCH_CLOSED;
+अटल u16 sdtx_translate_latch_status(काष्ठा sdtx_device *ddev, u8 status)
+अणु
+	चयन (status) अणु
+	हाल SSAM_BAS_LATCH_STATUS_CLOSED:
+		वापस SDTX_LATCH_CLOSED;
 
-	case SSAM_BAS_LATCH_STATUS_OPENED:
-		return SDTX_LATCH_OPENED;
+	हाल SSAM_BAS_LATCH_STATUS_OPENED:
+		वापस SDTX_LATCH_OPENED;
 
-	case SSAM_BAS_LATCH_STATUS_FAILED_TO_OPEN:
-		return SDTX_ERR_FAILED_TO_OPEN;
+	हाल SSAM_BAS_LATCH_STATUS_FAILED_TO_OPEN:
+		वापस SDTX_ERR_FAILED_TO_OPEN;
 
-	case SSAM_BAS_LATCH_STATUS_FAILED_TO_REMAIN_OPEN:
-		return SDTX_ERR_FAILED_TO_REMAIN_OPEN;
+	हाल SSAM_BAS_LATCH_STATUS_FAILED_TO_REMAIN_OPEN:
+		वापस SDTX_ERR_FAILED_TO_REMAIN_OPEN;
 
-	case SSAM_BAS_LATCH_STATUS_FAILED_TO_CLOSE:
-		return SDTX_ERR_FAILED_TO_CLOSE;
+	हाल SSAM_BAS_LATCH_STATUS_FAILED_TO_CLOSE:
+		वापस SDTX_ERR_FAILED_TO_CLOSE;
 
-	default:
+	शेष:
 		dev_err(ddev->dev, "unknown latch status: %#04x\n", status);
-		return SDTX_UNKNOWN(status);
-	}
-}
+		वापस SDTX_UNKNOWN(status);
+	पूर्ण
+पूर्ण
 
-static u16 sdtx_translate_cancel_reason(struct sdtx_device *ddev, u8 reason)
-{
-	switch (reason) {
-	case SSAM_BAS_CANCEL_REASON_NOT_FEASIBLE:
-		return SDTX_DETACH_NOT_FEASIBLE;
+अटल u16 sdtx_translate_cancel_reason(काष्ठा sdtx_device *ddev, u8 reason)
+अणु
+	चयन (reason) अणु
+	हाल SSAM_BAS_CANCEL_REASON_NOT_FEASIBLE:
+		वापस SDTX_DETACH_NOT_FEASIBLE;
 
-	case SSAM_BAS_CANCEL_REASON_TIMEOUT:
-		return SDTX_DETACH_TIMEDOUT;
+	हाल SSAM_BAS_CANCEL_REASON_TIMEOUT:
+		वापस SDTX_DETACH_TIMEDOUT;
 
-	case SSAM_BAS_CANCEL_REASON_FAILED_TO_OPEN:
-		return SDTX_ERR_FAILED_TO_OPEN;
+	हाल SSAM_BAS_CANCEL_REASON_FAILED_TO_OPEN:
+		वापस SDTX_ERR_FAILED_TO_OPEN;
 
-	case SSAM_BAS_CANCEL_REASON_FAILED_TO_REMAIN_OPEN:
-		return SDTX_ERR_FAILED_TO_REMAIN_OPEN;
+	हाल SSAM_BAS_CANCEL_REASON_FAILED_TO_REMAIN_OPEN:
+		वापस SDTX_ERR_FAILED_TO_REMAIN_OPEN;
 
-	case SSAM_BAS_CANCEL_REASON_FAILED_TO_CLOSE:
-		return SDTX_ERR_FAILED_TO_CLOSE;
+	हाल SSAM_BAS_CANCEL_REASON_FAILED_TO_CLOSE:
+		वापस SDTX_ERR_FAILED_TO_CLOSE;
 
-	default:
+	शेष:
 		dev_err(ddev->dev, "unknown cancel reason: %#04x\n", reason);
-		return SDTX_UNKNOWN(reason);
-	}
-}
+		वापस SDTX_UNKNOWN(reason);
+	पूर्ण
+पूर्ण
 
 
 /* -- IOCTLs. --------------------------------------------------------------- */
 
-static int sdtx_ioctl_get_base_info(struct sdtx_device *ddev,
-				    struct sdtx_base_info __user *buf)
-{
-	struct ssam_bas_base_info raw;
-	struct sdtx_base_info info;
-	int status;
+अटल पूर्णांक sdtx_ioctl_get_base_info(काष्ठा sdtx_device *ddev,
+				    काष्ठा sdtx_base_info __user *buf)
+अणु
+	काष्ठा ssam_bas_base_info raw;
+	काष्ठा sdtx_base_info info;
+	पूर्णांक status;
 
-	lockdep_assert_held_read(&ddev->lock);
+	lockdep_निश्चित_held_पढ़ो(&ddev->lock);
 
 	status = ssam_retry(ssam_bas_get_base, ddev->ctrl, &raw);
-	if (status < 0)
-		return status;
+	अगर (status < 0)
+		वापस status;
 
 	info.state = sdtx_translate_base_state(ddev, raw.state);
 	info.base_id = SDTX_BASE_TYPE_SSH(raw.base_id);
 
-	if (copy_to_user(buf, &info, sizeof(info)))
-		return -EFAULT;
+	अगर (copy_to_user(buf, &info, माप(info)))
+		वापस -EFAULT;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sdtx_ioctl_get_device_mode(struct sdtx_device *ddev, u16 __user *buf)
-{
+अटल पूर्णांक sdtx_ioctl_get_device_mode(काष्ठा sdtx_device *ddev, u16 __user *buf)
+अणु
 	u8 mode;
-	int status;
+	पूर्णांक status;
 
-	lockdep_assert_held_read(&ddev->lock);
+	lockdep_निश्चित_held_पढ़ो(&ddev->lock);
 
 	status = ssam_retry(ssam_bas_get_device_mode, ddev->ctrl, &mode);
-	if (status < 0)
-		return status;
+	अगर (status < 0)
+		वापस status;
 
-	return put_user(mode, buf);
-}
+	वापस put_user(mode, buf);
+पूर्ण
 
-static int sdtx_ioctl_get_latch_status(struct sdtx_device *ddev, u16 __user *buf)
-{
+अटल पूर्णांक sdtx_ioctl_get_latch_status(काष्ठा sdtx_device *ddev, u16 __user *buf)
+अणु
 	u8 latch;
-	int status;
+	पूर्णांक status;
 
-	lockdep_assert_held_read(&ddev->lock);
+	lockdep_निश्चित_held_पढ़ो(&ddev->lock);
 
 	status = ssam_retry(ssam_bas_get_latch_status, ddev->ctrl, &latch);
-	if (status < 0)
-		return status;
+	अगर (status < 0)
+		वापस status;
 
-	return put_user(sdtx_translate_latch_status(ddev, latch), buf);
-}
+	वापस put_user(sdtx_translate_latch_status(ddev, latch), buf);
+पूर्ण
 
-static long __surface_dtx_ioctl(struct sdtx_client *client, unsigned int cmd, unsigned long arg)
-{
-	struct sdtx_device *ddev = client->ddev;
+अटल दीर्घ __surface_dtx_ioctl(काष्ठा sdtx_client *client, अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
+अणु
+	काष्ठा sdtx_device *ddev = client->ddev;
 
-	lockdep_assert_held_read(&ddev->lock);
+	lockdep_निश्चित_held_पढ़ो(&ddev->lock);
 
-	switch (cmd) {
-	case SDTX_IOCTL_EVENTS_ENABLE:
+	चयन (cmd) अणु
+	हाल SDTX_IOCTL_EVENTS_ENABLE:
 		set_bit(SDTX_CLIENT_EVENTS_ENABLED_BIT, &client->flags);
-		return 0;
+		वापस 0;
 
-	case SDTX_IOCTL_EVENTS_DISABLE:
+	हाल SDTX_IOCTL_EVENTS_DISABLE:
 		clear_bit(SDTX_CLIENT_EVENTS_ENABLED_BIT, &client->flags);
-		return 0;
+		वापस 0;
 
-	case SDTX_IOCTL_LATCH_LOCK:
-		return ssam_retry(ssam_bas_latch_lock, ddev->ctrl);
+	हाल SDTX_IOCTL_LATCH_LOCK:
+		वापस ssam_retry(ssam_bas_latch_lock, ddev->ctrl);
 
-	case SDTX_IOCTL_LATCH_UNLOCK:
-		return ssam_retry(ssam_bas_latch_unlock, ddev->ctrl);
+	हाल SDTX_IOCTL_LATCH_UNLOCK:
+		वापस ssam_retry(ssam_bas_latch_unlock, ddev->ctrl);
 
-	case SDTX_IOCTL_LATCH_REQUEST:
-		return ssam_retry(ssam_bas_latch_request, ddev->ctrl);
+	हाल SDTX_IOCTL_LATCH_REQUEST:
+		वापस ssam_retry(ssam_bas_latch_request, ddev->ctrl);
 
-	case SDTX_IOCTL_LATCH_CONFIRM:
-		return ssam_retry(ssam_bas_latch_confirm, ddev->ctrl);
+	हाल SDTX_IOCTL_LATCH_CONFIRM:
+		वापस ssam_retry(ssam_bas_latch_confirm, ddev->ctrl);
 
-	case SDTX_IOCTL_LATCH_HEARTBEAT:
-		return ssam_retry(ssam_bas_latch_heartbeat, ddev->ctrl);
+	हाल SDTX_IOCTL_LATCH_HEARTBEAT:
+		वापस ssam_retry(ssam_bas_latch_heartbeat, ddev->ctrl);
 
-	case SDTX_IOCTL_LATCH_CANCEL:
-		return ssam_retry(ssam_bas_latch_cancel, ddev->ctrl);
+	हाल SDTX_IOCTL_LATCH_CANCEL:
+		वापस ssam_retry(ssam_bas_latch_cancel, ddev->ctrl);
 
-	case SDTX_IOCTL_GET_BASE_INFO:
-		return sdtx_ioctl_get_base_info(ddev, (struct sdtx_base_info __user *)arg);
+	हाल SDTX_IOCTL_GET_BASE_INFO:
+		वापस sdtx_ioctl_get_base_info(ddev, (काष्ठा sdtx_base_info __user *)arg);
 
-	case SDTX_IOCTL_GET_DEVICE_MODE:
-		return sdtx_ioctl_get_device_mode(ddev, (u16 __user *)arg);
+	हाल SDTX_IOCTL_GET_DEVICE_MODE:
+		वापस sdtx_ioctl_get_device_mode(ddev, (u16 __user *)arg);
 
-	case SDTX_IOCTL_GET_LATCH_STATUS:
-		return sdtx_ioctl_get_latch_status(ddev, (u16 __user *)arg);
+	हाल SDTX_IOCTL_GET_LATCH_STATUS:
+		वापस sdtx_ioctl_get_latch_status(ddev, (u16 __user *)arg);
 
-	default:
-		return -EINVAL;
-	}
-}
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+पूर्ण
 
-static long surface_dtx_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
-{
-	struct sdtx_client *client = file->private_data;
-	long status;
+अटल दीर्घ surface_dtx_ioctl(काष्ठा file *file, अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
+अणु
+	काष्ठा sdtx_client *client = file->निजी_data;
+	दीर्घ status;
 
-	if (down_read_killable(&client->ddev->lock))
-		return -ERESTARTSYS;
+	अगर (करोwn_पढ़ो_समाप्तable(&client->ddev->lock))
+		वापस -ERESTARTSYS;
 
-	if (test_bit(SDTX_DEVICE_SHUTDOWN_BIT, &client->ddev->flags)) {
-		up_read(&client->ddev->lock);
-		return -ENODEV;
-	}
+	अगर (test_bit(SDTX_DEVICE_SHUTDOWN_BIT, &client->ddev->flags)) अणु
+		up_पढ़ो(&client->ddev->lock);
+		वापस -ENODEV;
+	पूर्ण
 
 	status = __surface_dtx_ioctl(client, cmd, arg);
 
-	up_read(&client->ddev->lock);
-	return status;
-}
+	up_पढ़ो(&client->ddev->lock);
+	वापस status;
+पूर्ण
 
 
 /* -- File operations. ------------------------------------------------------ */
 
-static int surface_dtx_open(struct inode *inode, struct file *file)
-{
-	struct sdtx_device *ddev = container_of(file->private_data, struct sdtx_device, mdev);
-	struct sdtx_client *client;
+अटल पूर्णांक surface_dtx_खोलो(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	काष्ठा sdtx_device *ddev = container_of(file->निजी_data, काष्ठा sdtx_device, mdev);
+	काष्ठा sdtx_client *client;
 
 	/* Initialize client. */
-	client = kzalloc(sizeof(*client), GFP_KERNEL);
-	if (!client)
-		return -ENOMEM;
+	client = kzalloc(माप(*client), GFP_KERNEL);
+	अगर (!client)
+		वापस -ENOMEM;
 
 	client->ddev = sdtx_device_get(ddev);
 
 	INIT_LIST_HEAD(&client->node);
 
-	mutex_init(&client->read_lock);
+	mutex_init(&client->पढ़ो_lock);
 	INIT_KFIFO(client->buffer);
 
-	file->private_data = client;
+	file->निजी_data = client;
 
 	/* Attach client. */
-	down_write(&ddev->client_lock);
+	करोwn_ग_लिखो(&ddev->client_lock);
 
 	/*
-	 * Do not add a new client if the device has been shut down. Note that
-	 * it's enough to hold the client_lock here as, during shutdown, we
-	 * only acquire that lock and remove clients after marking the device
-	 * as shut down.
+	 * Do not add a new client अगर the device has been shut करोwn. Note that
+	 * it's enough to hold the client_lock here as, during shutकरोwn, we
+	 * only acquire that lock and हटाओ clients after marking the device
+	 * as shut करोwn.
 	 */
-	if (test_bit(SDTX_DEVICE_SHUTDOWN_BIT, &ddev->flags)) {
-		up_write(&ddev->client_lock);
-		mutex_destroy(&client->read_lock);
+	अगर (test_bit(SDTX_DEVICE_SHUTDOWN_BIT, &ddev->flags)) अणु
+		up_ग_लिखो(&ddev->client_lock);
+		mutex_destroy(&client->पढ़ो_lock);
 		sdtx_device_put(client->ddev);
-		kfree(client);
-		return -ENODEV;
-	}
+		kमुक्त(client);
+		वापस -ENODEV;
+	पूर्ण
 
 	list_add_tail(&client->node, &ddev->client_list);
-	up_write(&ddev->client_lock);
+	up_ग_लिखो(&ddev->client_lock);
 
-	stream_open(inode, file);
-	return 0;
-}
+	stream_खोलो(inode, file);
+	वापस 0;
+पूर्ण
 
-static int surface_dtx_release(struct inode *inode, struct file *file)
-{
-	struct sdtx_client *client = file->private_data;
+अटल पूर्णांक surface_dtx_release(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	काष्ठा sdtx_client *client = file->निजी_data;
 
 	/* Detach client. */
-	down_write(&client->ddev->client_lock);
+	करोwn_ग_लिखो(&client->ddev->client_lock);
 	list_del(&client->node);
-	up_write(&client->ddev->client_lock);
+	up_ग_लिखो(&client->ddev->client_lock);
 
 	/* Free client. */
 	sdtx_device_put(client->ddev);
-	mutex_destroy(&client->read_lock);
-	kfree(client);
+	mutex_destroy(&client->पढ़ो_lock);
+	kमुक्त(client);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static ssize_t surface_dtx_read(struct file *file, char __user *buf, size_t count, loff_t *offs)
-{
-	struct sdtx_client *client = file->private_data;
-	struct sdtx_device *ddev = client->ddev;
-	unsigned int copied;
-	int status = 0;
+अटल sमाप_प्रकार surface_dtx_पढ़ो(काष्ठा file *file, अक्षर __user *buf, माप_प्रकार count, loff_t *offs)
+अणु
+	काष्ठा sdtx_client *client = file->निजी_data;
+	काष्ठा sdtx_device *ddev = client->ddev;
+	अचिन्हित पूर्णांक copied;
+	पूर्णांक status = 0;
 
-	if (down_read_killable(&ddev->lock))
-		return -ERESTARTSYS;
+	अगर (करोwn_पढ़ो_समाप्तable(&ddev->lock))
+		वापस -ERESTARTSYS;
 
-	/* Make sure we're not shut down. */
-	if (test_bit(SDTX_DEVICE_SHUTDOWN_BIT, &ddev->flags)) {
-		up_read(&ddev->lock);
-		return -ENODEV;
-	}
+	/* Make sure we're not shut करोwn. */
+	अगर (test_bit(SDTX_DEVICE_SHUTDOWN_BIT, &ddev->flags)) अणु
+		up_पढ़ो(&ddev->lock);
+		वापस -ENODEV;
+	पूर्ण
 
-	do {
-		/* Check availability, wait if necessary. */
-		if (kfifo_is_empty(&client->buffer)) {
-			up_read(&ddev->lock);
+	करो अणु
+		/* Check availability, रुको अगर necessary. */
+		अगर (kfअगरo_is_empty(&client->buffer)) अणु
+			up_पढ़ो(&ddev->lock);
 
-			if (file->f_flags & O_NONBLOCK)
-				return -EAGAIN;
+			अगर (file->f_flags & O_NONBLOCK)
+				वापस -EAGAIN;
 
-			status = wait_event_interruptible(ddev->waitq,
-							  !kfifo_is_empty(&client->buffer) ||
+			status = रुको_event_पूर्णांकerruptible(ddev->रुकोq,
+							  !kfअगरo_is_empty(&client->buffer) ||
 							  test_bit(SDTX_DEVICE_SHUTDOWN_BIT,
 								   &ddev->flags));
-			if (status < 0)
-				return status;
+			अगर (status < 0)
+				वापस status;
 
-			if (down_read_killable(&ddev->lock))
-				return -ERESTARTSYS;
+			अगर (करोwn_पढ़ो_समाप्तable(&ddev->lock))
+				वापस -ERESTARTSYS;
 
-			/* Need to check that we're not shut down again. */
-			if (test_bit(SDTX_DEVICE_SHUTDOWN_BIT, &ddev->flags)) {
-				up_read(&ddev->lock);
-				return -ENODEV;
-			}
-		}
+			/* Need to check that we're not shut करोwn again. */
+			अगर (test_bit(SDTX_DEVICE_SHUTDOWN_BIT, &ddev->flags)) अणु
+				up_पढ़ो(&ddev->lock);
+				वापस -ENODEV;
+			पूर्ण
+		पूर्ण
 
-		/* Try to read from FIFO. */
-		if (mutex_lock_interruptible(&client->read_lock)) {
-			up_read(&ddev->lock);
-			return -ERESTARTSYS;
-		}
+		/* Try to पढ़ो from FIFO. */
+		अगर (mutex_lock_पूर्णांकerruptible(&client->पढ़ो_lock)) अणु
+			up_पढ़ो(&ddev->lock);
+			वापस -ERESTARTSYS;
+		पूर्ण
 
-		status = kfifo_to_user(&client->buffer, buf, count, &copied);
-		mutex_unlock(&client->read_lock);
+		status = kfअगरo_to_user(&client->buffer, buf, count, &copied);
+		mutex_unlock(&client->पढ़ो_lock);
 
-		if (status < 0) {
-			up_read(&ddev->lock);
-			return status;
-		}
+		अगर (status < 0) अणु
+			up_पढ़ो(&ddev->lock);
+			वापस status;
+		पूर्ण
 
 		/* We might not have gotten anything, check this here. */
-		if (copied == 0 && (file->f_flags & O_NONBLOCK)) {
-			up_read(&ddev->lock);
-			return -EAGAIN;
-		}
-	} while (copied == 0);
+		अगर (copied == 0 && (file->f_flags & O_NONBLOCK)) अणु
+			up_पढ़ो(&ddev->lock);
+			वापस -EAGAIN;
+		पूर्ण
+	पूर्ण जबतक (copied == 0);
 
-	up_read(&ddev->lock);
-	return copied;
-}
+	up_पढ़ो(&ddev->lock);
+	वापस copied;
+पूर्ण
 
-static __poll_t surface_dtx_poll(struct file *file, struct poll_table_struct *pt)
-{
-	struct sdtx_client *client = file->private_data;
+अटल __poll_t surface_dtx_poll(काष्ठा file *file, काष्ठा poll_table_काष्ठा *pt)
+अणु
+	काष्ठा sdtx_client *client = file->निजी_data;
 	__poll_t events = 0;
 
-	if (test_bit(SDTX_DEVICE_SHUTDOWN_BIT, &client->ddev->flags))
-		return EPOLLHUP | EPOLLERR;
+	अगर (test_bit(SDTX_DEVICE_SHUTDOWN_BIT, &client->ddev->flags))
+		वापस EPOLLHUP | EPOLLERR;
 
-	poll_wait(file, &client->ddev->waitq, pt);
+	poll_रुको(file, &client->ddev->रुकोq, pt);
 
-	if (!kfifo_is_empty(&client->buffer))
+	अगर (!kfअगरo_is_empty(&client->buffer))
 		events |= EPOLLIN | EPOLLRDNORM;
 
-	return events;
-}
+	वापस events;
+पूर्ण
 
-static int surface_dtx_fasync(int fd, struct file *file, int on)
-{
-	struct sdtx_client *client = file->private_data;
+अटल पूर्णांक surface_dtx_fasync(पूर्णांक fd, काष्ठा file *file, पूर्णांक on)
+अणु
+	काष्ठा sdtx_client *client = file->निजी_data;
 
-	return fasync_helper(fd, file, on, &client->fasync);
-}
+	वापस fasync_helper(fd, file, on, &client->fasync);
+पूर्ण
 
-static const struct file_operations surface_dtx_fops = {
+अटल स्थिर काष्ठा file_operations surface_dtx_fops = अणु
 	.owner          = THIS_MODULE,
-	.open           = surface_dtx_open,
+	.खोलो           = surface_dtx_खोलो,
 	.release        = surface_dtx_release,
-	.read           = surface_dtx_read,
+	.पढ़ो           = surface_dtx_पढ़ो,
 	.poll           = surface_dtx_poll,
 	.fasync         = surface_dtx_fasync,
 	.unlocked_ioctl = surface_dtx_ioctl,
 	.compat_ioctl   = surface_dtx_ioctl,
 	.llseek         = no_llseek,
-};
+पूर्ण;
 
 
-/* -- Event handling/forwarding. -------------------------------------------- */
+/* -- Event handling/क्रमwarding. -------------------------------------------- */
 
 /*
  * The device operation mode is not immediately updated on the EC when the
  * base has been connected, i.e. querying the device mode inside the
  * connection event callback yields an outdated value. Thus, we can only
- * determine the new tablet-mode switch and device mode values after some
- * time.
+ * determine the new tablet-mode चयन and device mode values after some
+ * समय.
  *
  * These delays have been chosen by experimenting. We first delay on connect
  * events, then check and validate the device mode against the base state and
- * if invalid delay again by the "recheck" delay.
+ * अगर invalid delay again by the "recheck" delay.
  */
-#define SDTX_DEVICE_MODE_DELAY_CONNECT	msecs_to_jiffies(100)
-#define SDTX_DEVICE_MODE_DELAY_RECHECK	msecs_to_jiffies(100)
+#घोषणा SDTX_DEVICE_MODE_DELAY_CONNECT	msecs_to_jअगरfies(100)
+#घोषणा SDTX_DEVICE_MODE_DELAY_RECHECK	msecs_to_jअगरfies(100)
 
-struct sdtx_status_event {
-	struct sdtx_event e;
+काष्ठा sdtx_status_event अणु
+	काष्ठा sdtx_event e;
 	__u16 v;
-} __packed;
+पूर्ण __packed;
 
-struct sdtx_base_info_event {
-	struct sdtx_event e;
-	struct sdtx_base_info v;
-} __packed;
+काष्ठा sdtx_base_info_event अणु
+	काष्ठा sdtx_event e;
+	काष्ठा sdtx_base_info v;
+पूर्ण __packed;
 
-union sdtx_generic_event {
-	struct sdtx_event common;
-	struct sdtx_status_event status;
-	struct sdtx_base_info_event base;
-};
+जोड़ sdtx_generic_event अणु
+	काष्ठा sdtx_event common;
+	काष्ठा sdtx_status_event status;
+	काष्ठा sdtx_base_info_event base;
+पूर्ण;
 
-static void sdtx_update_device_mode(struct sdtx_device *ddev, unsigned long delay);
+अटल व्योम sdtx_update_device_mode(काष्ठा sdtx_device *ddev, अचिन्हित दीर्घ delay);
 
-/* Must be executed with ddev->write_lock held. */
-static void sdtx_push_event(struct sdtx_device *ddev, struct sdtx_event *evt)
-{
-	const size_t len = sizeof(struct sdtx_event) + evt->length;
-	struct sdtx_client *client;
+/* Must be executed with ddev->ग_लिखो_lock held. */
+अटल व्योम sdtx_push_event(काष्ठा sdtx_device *ddev, काष्ठा sdtx_event *evt)
+अणु
+	स्थिर माप_प्रकार len = माप(काष्ठा sdtx_event) + evt->length;
+	काष्ठा sdtx_client *client;
 
-	lockdep_assert_held(&ddev->write_lock);
+	lockdep_निश्चित_held(&ddev->ग_लिखो_lock);
 
-	down_read(&ddev->client_lock);
-	list_for_each_entry(client, &ddev->client_list, node) {
-		if (!test_bit(SDTX_CLIENT_EVENTS_ENABLED_BIT, &client->flags))
-			continue;
+	करोwn_पढ़ो(&ddev->client_lock);
+	list_क्रम_each_entry(client, &ddev->client_list, node) अणु
+		अगर (!test_bit(SDTX_CLIENT_EVENTS_ENABLED_BIT, &client->flags))
+			जारी;
 
-		if (likely(kfifo_avail(&client->buffer) >= len))
-			kfifo_in(&client->buffer, (const u8 *)evt, len);
-		else
+		अगर (likely(kfअगरo_avail(&client->buffer) >= len))
+			kfअगरo_in(&client->buffer, (स्थिर u8 *)evt, len);
+		अन्यथा
 			dev_warn(ddev->dev, "event buffer overrun\n");
 
-		kill_fasync(&client->fasync, SIGIO, POLL_IN);
-	}
-	up_read(&ddev->client_lock);
+		समाप्त_fasync(&client->fasync, SIGIO, POLL_IN);
+	पूर्ण
+	up_पढ़ो(&ddev->client_lock);
 
-	wake_up_interruptible(&ddev->waitq);
-}
+	wake_up_पूर्णांकerruptible(&ddev->रुकोq);
+पूर्ण
 
-static u32 sdtx_notifier(struct ssam_event_notifier *nf, const struct ssam_event *in)
-{
-	struct sdtx_device *ddev = container_of(nf, struct sdtx_device, notif);
-	union sdtx_generic_event event;
-	size_t len;
+अटल u32 sdtx_notअगरier(काष्ठा ssam_event_notअगरier *nf, स्थिर काष्ठा ssam_event *in)
+अणु
+	काष्ठा sdtx_device *ddev = container_of(nf, काष्ठा sdtx_device, notअगर);
+	जोड़ sdtx_generic_event event;
+	माप_प्रकार len;
 
 	/* Validate event payload length. */
-	switch (in->command_id) {
-	case SAM_EVENT_CID_DTX_CONNECTION:
-		len = 2 * sizeof(u8);
-		break;
+	चयन (in->command_id) अणु
+	हाल SAM_EVENT_CID_DTX_CONNECTION:
+		len = 2 * माप(u8);
+		अवरोध;
 
-	case SAM_EVENT_CID_DTX_REQUEST:
+	हाल SAM_EVENT_CID_DTX_REQUEST:
 		len = 0;
-		break;
+		अवरोध;
 
-	case SAM_EVENT_CID_DTX_CANCEL:
-		len = sizeof(u8);
-		break;
+	हाल SAM_EVENT_CID_DTX_CANCEL:
+		len = माप(u8);
+		अवरोध;
 
-	case SAM_EVENT_CID_DTX_LATCH_STATUS:
-		len = sizeof(u8);
-		break;
+	हाल SAM_EVENT_CID_DTX_LATCH_STATUS:
+		len = माप(u8);
+		अवरोध;
 
-	default:
-		return 0;
-	}
+	शेष:
+		वापस 0;
+	पूर्ण
 
-	if (in->length != len) {
+	अगर (in->length != len) अणु
 		dev_err(ddev->dev,
 			"unexpected payload size for event %#04x: got %u, expected %zu\n",
 			in->command_id, in->length, len);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	mutex_lock(&ddev->write_lock);
+	mutex_lock(&ddev->ग_लिखो_lock);
 
 	/* Translate event. */
-	switch (in->command_id) {
-	case SAM_EVENT_CID_DTX_CONNECTION:
-		clear_bit(SDTX_DEVICE_DIRTY_BASE_BIT, &ddev->flags);
+	चयन (in->command_id) अणु
+	हाल SAM_EVENT_CID_DTX_CONNECTION:
+		clear_bit(SDTX_DEVICE_सूचीTY_BASE_BIT, &ddev->flags);
 
-		/* If state has not changed: do not send new event. */
-		if (ddev->state.base.state == in->data[0] &&
+		/* If state has not changed: करो not send new event. */
+		अगर (ddev->state.base.state == in->data[0] &&
 		    ddev->state.base.base_id == in->data[1])
-			goto out;
+			जाओ out;
 
 		ddev->state.base.state = in->data[0];
 		ddev->state.base.base_id = in->data[1];
 
-		event.base.e.length = sizeof(struct sdtx_base_info);
+		event.base.e.length = माप(काष्ठा sdtx_base_info);
 		event.base.e.code = SDTX_EVENT_BASE_CONNECTION;
 		event.base.v.state = sdtx_translate_base_state(ddev, in->data[0]);
 		event.base.v.base_id = SDTX_BASE_TYPE_SSH(in->data[1]);
-		break;
+		अवरोध;
 
-	case SAM_EVENT_CID_DTX_REQUEST:
+	हाल SAM_EVENT_CID_DTX_REQUEST:
 		event.common.code = SDTX_EVENT_REQUEST;
 		event.common.length = 0;
-		break;
+		अवरोध;
 
-	case SAM_EVENT_CID_DTX_CANCEL:
-		event.status.e.length = sizeof(u16);
+	हाल SAM_EVENT_CID_DTX_CANCEL:
+		event.status.e.length = माप(u16);
 		event.status.e.code = SDTX_EVENT_CANCEL;
 		event.status.v = sdtx_translate_cancel_reason(ddev, in->data[0]);
-		break;
+		अवरोध;
 
-	case SAM_EVENT_CID_DTX_LATCH_STATUS:
-		clear_bit(SDTX_DEVICE_DIRTY_LATCH_BIT, &ddev->flags);
+	हाल SAM_EVENT_CID_DTX_LATCH_STATUS:
+		clear_bit(SDTX_DEVICE_सूचीTY_LATCH_BIT, &ddev->flags);
 
-		/* If state has not changed: do not send new event. */
-		if (ddev->state.latch_status == in->data[0])
-			goto out;
+		/* If state has not changed: करो not send new event. */
+		अगर (ddev->state.latch_status == in->data[0])
+			जाओ out;
 
 		ddev->state.latch_status = in->data[0];
 
-		event.status.e.length = sizeof(u16);
+		event.status.e.length = माप(u16);
 		event.status.e.code = SDTX_EVENT_LATCH_STATUS;
 		event.status.v = sdtx_translate_latch_status(ddev, in->data[0]);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	sdtx_push_event(ddev, &event.common);
 
 	/* Update device mode on base connection change. */
-	if (in->command_id == SAM_EVENT_CID_DTX_CONNECTION) {
-		unsigned long delay;
+	अगर (in->command_id == SAM_EVENT_CID_DTX_CONNECTION) अणु
+		अचिन्हित दीर्घ delay;
 
 		delay = in->data[0] ? SDTX_DEVICE_MODE_DELAY_CONNECT : 0;
 		sdtx_update_device_mode(ddev, delay);
-	}
+	पूर्ण
 
 out:
-	mutex_unlock(&ddev->write_lock);
-	return SSAM_NOTIF_HANDLED;
-}
+	mutex_unlock(&ddev->ग_लिखो_lock);
+	वापस SSAM_NOTIF_HANDLED;
+पूर्ण
 
 
 /* -- State update functions. ----------------------------------------------- */
 
-static bool sdtx_device_mode_invalid(u8 mode, u8 base_state)
-{
-	return ((base_state == SSAM_BAS_BASE_STATE_ATTACHED) &&
+अटल bool sdtx_device_mode_invalid(u8 mode, u8 base_state)
+अणु
+	वापस ((base_state == SSAM_BAS_BASE_STATE_ATTACHED) &&
 		(mode == SDTX_DEVICE_MODE_TABLET)) ||
 	       ((base_state == SSAM_BAS_BASE_STATE_DETACH_SUCCESS) &&
 		(mode != SDTX_DEVICE_MODE_TABLET));
-}
+पूर्ण
 
-static void sdtx_device_mode_workfn(struct work_struct *work)
-{
-	struct sdtx_device *ddev = container_of(work, struct sdtx_device, mode_work.work);
-	struct sdtx_status_event event;
-	struct ssam_bas_base_info base;
-	int status, tablet;
+अटल व्योम sdtx_device_mode_workfn(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा sdtx_device *ddev = container_of(work, काष्ठा sdtx_device, mode_work.work);
+	काष्ठा sdtx_status_event event;
+	काष्ठा ssam_bas_base_info base;
+	पूर्णांक status, tablet;
 	u8 mode;
 
 	/* Get operation mode. */
 	status = ssam_retry(ssam_bas_get_device_mode, ddev->ctrl, &mode);
-	if (status) {
+	अगर (status) अणु
 		dev_err(ddev->dev, "failed to get device mode: %d\n", status);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/* Get base info. */
 	status = ssam_retry(ssam_bas_get_base, ddev->ctrl, &base);
-	if (status) {
+	अगर (status) अणु
 		dev_err(ddev->dev, "failed to get base info: %d\n", status);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/*
-	 * In some cases (specifically when attaching the base), the device
-	 * mode isn't updated right away. Thus we check if the device mode
-	 * makes sense for the given base state and try again later if it
-	 * doesn't.
+	 * In some हालs (specअगरically when attaching the base), the device
+	 * mode isn't updated right away. Thus we check अगर the device mode
+	 * makes sense क्रम the given base state and try again later अगर it
+	 * करोesn't.
 	 */
-	if (sdtx_device_mode_invalid(mode, base.state)) {
+	अगर (sdtx_device_mode_invalid(mode, base.state)) अणु
 		dev_dbg(ddev->dev, "device mode is invalid, trying again\n");
 		sdtx_update_device_mode(ddev, SDTX_DEVICE_MODE_DELAY_RECHECK);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	mutex_lock(&ddev->write_lock);
-	clear_bit(SDTX_DEVICE_DIRTY_MODE_BIT, &ddev->flags);
+	mutex_lock(&ddev->ग_लिखो_lock);
+	clear_bit(SDTX_DEVICE_सूचीTY_MODE_BIT, &ddev->flags);
 
-	/* Avoid sending duplicate device-mode events. */
-	if (ddev->state.device_mode == mode) {
-		mutex_unlock(&ddev->write_lock);
-		return;
-	}
+	/* Aव्योम sending duplicate device-mode events. */
+	अगर (ddev->state.device_mode == mode) अणु
+		mutex_unlock(&ddev->ग_लिखो_lock);
+		वापस;
+	पूर्ण
 
 	ddev->state.device_mode = mode;
 
-	event.e.length = sizeof(u16);
+	event.e.length = माप(u16);
 	event.e.code = SDTX_EVENT_DEVICE_MODE;
 	event.v = mode;
 
@@ -779,45 +780,45 @@ static void sdtx_device_mode_workfn(struct work_struct *work)
 
 	/* Send SW_TABLET_MODE event. */
 	tablet = mode != SDTX_DEVICE_MODE_LAPTOP;
-	input_report_switch(ddev->mode_switch, SW_TABLET_MODE, tablet);
-	input_sync(ddev->mode_switch);
+	input_report_चयन(ddev->mode_चयन, SW_TABLET_MODE, tablet);
+	input_sync(ddev->mode_चयन);
 
-	mutex_unlock(&ddev->write_lock);
-}
+	mutex_unlock(&ddev->ग_लिखो_lock);
+पूर्ण
 
-static void sdtx_update_device_mode(struct sdtx_device *ddev, unsigned long delay)
-{
+अटल व्योम sdtx_update_device_mode(काष्ठा sdtx_device *ddev, अचिन्हित दीर्घ delay)
+अणु
 	schedule_delayed_work(&ddev->mode_work, delay);
-}
+पूर्ण
 
-/* Must be executed with ddev->write_lock held. */
-static void __sdtx_device_state_update_base(struct sdtx_device *ddev,
-					    struct ssam_bas_base_info info)
-{
-	struct sdtx_base_info_event event;
+/* Must be executed with ddev->ग_लिखो_lock held. */
+अटल व्योम __sdtx_device_state_update_base(काष्ठा sdtx_device *ddev,
+					    काष्ठा ssam_bas_base_info info)
+अणु
+	काष्ठा sdtx_base_info_event event;
 
-	lockdep_assert_held(&ddev->write_lock);
+	lockdep_निश्चित_held(&ddev->ग_लिखो_lock);
 
 	/* Prevent duplicate events. */
-	if (ddev->state.base.state == info.state &&
+	अगर (ddev->state.base.state == info.state &&
 	    ddev->state.base.base_id == info.base_id)
-		return;
+		वापस;
 
 	ddev->state.base = info;
 
-	event.e.length = sizeof(struct sdtx_base_info);
+	event.e.length = माप(काष्ठा sdtx_base_info);
 	event.e.code = SDTX_EVENT_BASE_CONNECTION;
 	event.v.state = sdtx_translate_base_state(ddev, info.state);
 	event.v.base_id = SDTX_BASE_TYPE_SSH(info.base_id);
 
 	sdtx_push_event(ddev, &event.e);
-}
+पूर्ण
 
-/* Must be executed with ddev->write_lock held. */
-static void __sdtx_device_state_update_mode(struct sdtx_device *ddev, u8 mode)
-{
-	struct sdtx_status_event event;
-	int tablet;
+/* Must be executed with ddev->ग_लिखो_lock held. */
+अटल व्योम __sdtx_device_state_update_mode(काष्ठा sdtx_device *ddev, u8 mode)
+अणु
+	काष्ठा sdtx_status_event event;
+	पूर्णांक tablet;
 
 	/*
 	 * Note: This function must be called after updating the base state
@@ -825,22 +826,22 @@ static void __sdtx_device_state_update_mode(struct sdtx_device *ddev, u8 mode)
 	 * base state value in the validity check below.
 	 */
 
-	lockdep_assert_held(&ddev->write_lock);
+	lockdep_निश्चित_held(&ddev->ग_लिखो_lock);
 
-	if (sdtx_device_mode_invalid(mode, ddev->state.base.state)) {
+	अगर (sdtx_device_mode_invalid(mode, ddev->state.base.state)) अणु
 		dev_dbg(ddev->dev, "device mode is invalid, trying again\n");
 		sdtx_update_device_mode(ddev, SDTX_DEVICE_MODE_DELAY_RECHECK);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/* Prevent duplicate events. */
-	if (ddev->state.device_mode == mode)
-		return;
+	अगर (ddev->state.device_mode == mode)
+		वापस;
 
 	ddev->state.device_mode = mode;
 
 	/* Send event. */
-	event.e.length = sizeof(u16);
+	event.e.length = माप(u16);
 	event.e.code = SDTX_EVENT_DEVICE_MODE;
 	event.v = mode;
 
@@ -848,102 +849,102 @@ static void __sdtx_device_state_update_mode(struct sdtx_device *ddev, u8 mode)
 
 	/* Send SW_TABLET_MODE event. */
 	tablet = mode != SDTX_DEVICE_MODE_LAPTOP;
-	input_report_switch(ddev->mode_switch, SW_TABLET_MODE, tablet);
-	input_sync(ddev->mode_switch);
-}
+	input_report_चयन(ddev->mode_चयन, SW_TABLET_MODE, tablet);
+	input_sync(ddev->mode_चयन);
+पूर्ण
 
-/* Must be executed with ddev->write_lock held. */
-static void __sdtx_device_state_update_latch(struct sdtx_device *ddev, u8 status)
-{
-	struct sdtx_status_event event;
+/* Must be executed with ddev->ग_लिखो_lock held. */
+अटल व्योम __sdtx_device_state_update_latch(काष्ठा sdtx_device *ddev, u8 status)
+अणु
+	काष्ठा sdtx_status_event event;
 
-	lockdep_assert_held(&ddev->write_lock);
+	lockdep_निश्चित_held(&ddev->ग_लिखो_lock);
 
 	/* Prevent duplicate events. */
-	if (ddev->state.latch_status == status)
-		return;
+	अगर (ddev->state.latch_status == status)
+		वापस;
 
 	ddev->state.latch_status = status;
 
-	event.e.length = sizeof(struct sdtx_base_info);
+	event.e.length = माप(काष्ठा sdtx_base_info);
 	event.e.code = SDTX_EVENT_BASE_CONNECTION;
 	event.v = sdtx_translate_latch_status(ddev, status);
 
 	sdtx_push_event(ddev, &event.e);
-}
+पूर्ण
 
-static void sdtx_device_state_workfn(struct work_struct *work)
-{
-	struct sdtx_device *ddev = container_of(work, struct sdtx_device, state_work.work);
-	struct ssam_bas_base_info base;
+अटल व्योम sdtx_device_state_workfn(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा sdtx_device *ddev = container_of(work, काष्ठा sdtx_device, state_work.work);
+	काष्ठा ssam_bas_base_info base;
 	u8 mode, latch;
-	int status;
+	पूर्णांक status;
 
 	/* Mark everything as dirty. */
-	set_bit(SDTX_DEVICE_DIRTY_BASE_BIT, &ddev->flags);
-	set_bit(SDTX_DEVICE_DIRTY_MODE_BIT, &ddev->flags);
-	set_bit(SDTX_DEVICE_DIRTY_LATCH_BIT, &ddev->flags);
+	set_bit(SDTX_DEVICE_सूचीTY_BASE_BIT, &ddev->flags);
+	set_bit(SDTX_DEVICE_सूचीTY_MODE_BIT, &ddev->flags);
+	set_bit(SDTX_DEVICE_सूचीTY_LATCH_BIT, &ddev->flags);
 
 	/*
-	 * Ensure that the state gets marked as dirty before continuing to
+	 * Ensure that the state माला_लो marked as dirty beक्रमe continuing to
 	 * query it. Necessary to ensure that clear_bit() calls in
-	 * sdtx_notifier() and sdtx_device_mode_workfn() actually clear these
-	 * bits if an event is received while updating the state here.
+	 * sdtx_notअगरier() and sdtx_device_mode_workfn() actually clear these
+	 * bits अगर an event is received जबतक updating the state here.
 	 */
 	smp_mb__after_atomic();
 
 	status = ssam_retry(ssam_bas_get_base, ddev->ctrl, &base);
-	if (status) {
+	अगर (status) अणु
 		dev_err(ddev->dev, "failed to get base state: %d\n", status);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	status = ssam_retry(ssam_bas_get_device_mode, ddev->ctrl, &mode);
-	if (status) {
+	अगर (status) अणु
 		dev_err(ddev->dev, "failed to get device mode: %d\n", status);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	status = ssam_retry(ssam_bas_get_latch_status, ddev->ctrl, &latch);
-	if (status) {
+	अगर (status) अणु
 		dev_err(ddev->dev, "failed to get latch status: %d\n", status);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	mutex_lock(&ddev->write_lock);
+	mutex_lock(&ddev->ग_लिखो_lock);
 
 	/*
 	 * If the respective dirty-bit has been cleared, an event has been
 	 * received, updating this state. The queried state may thus be out of
-	 * date. At this point, we can safely assume that the state provided
+	 * date. At this poपूर्णांक, we can safely assume that the state provided
 	 * by the event is either up to date, or we're about to receive
 	 * another event updating it.
 	 */
 
-	if (test_and_clear_bit(SDTX_DEVICE_DIRTY_BASE_BIT, &ddev->flags))
+	अगर (test_and_clear_bit(SDTX_DEVICE_सूचीTY_BASE_BIT, &ddev->flags))
 		__sdtx_device_state_update_base(ddev, base);
 
-	if (test_and_clear_bit(SDTX_DEVICE_DIRTY_MODE_BIT, &ddev->flags))
+	अगर (test_and_clear_bit(SDTX_DEVICE_सूचीTY_MODE_BIT, &ddev->flags))
 		__sdtx_device_state_update_mode(ddev, mode);
 
-	if (test_and_clear_bit(SDTX_DEVICE_DIRTY_LATCH_BIT, &ddev->flags))
+	अगर (test_and_clear_bit(SDTX_DEVICE_सूचीTY_LATCH_BIT, &ddev->flags))
 		__sdtx_device_state_update_latch(ddev, latch);
 
-	mutex_unlock(&ddev->write_lock);
-}
+	mutex_unlock(&ddev->ग_लिखो_lock);
+पूर्ण
 
-static void sdtx_update_device_state(struct sdtx_device *ddev, unsigned long delay)
-{
+अटल व्योम sdtx_update_device_state(काष्ठा sdtx_device *ddev, अचिन्हित दीर्घ delay)
+अणु
 	schedule_delayed_work(&ddev->state_work, delay);
-}
+पूर्ण
 
 
 /* -- Common device initialization. ----------------------------------------- */
 
-static int sdtx_device_init(struct sdtx_device *ddev, struct device *dev,
-			    struct ssam_controller *ctrl)
-{
-	int status, tablet_mode;
+अटल पूर्णांक sdtx_device_init(काष्ठा sdtx_device *ddev, काष्ठा device *dev,
+			    काष्ठा ssam_controller *ctrl)
+अणु
+	पूर्णांक status, tablet_mode;
 
 	/* Basic initialization. */
 	kref_init(&ddev->kref);
@@ -956,16 +957,16 @@ static int sdtx_device_init(struct sdtx_device *ddev, struct device *dev,
 	ddev->mdev.nodename = "surface/dtx";
 	ddev->mdev.fops = &surface_dtx_fops;
 
-	ddev->notif.base.priority = 1;
-	ddev->notif.base.fn = sdtx_notifier;
-	ddev->notif.event.reg = SSAM_EVENT_REGISTRY_SAM;
-	ddev->notif.event.id.target_category = SSAM_SSH_TC_BAS;
-	ddev->notif.event.id.instance = 0;
-	ddev->notif.event.mask = SSAM_EVENT_MASK_NONE;
-	ddev->notif.event.flags = SSAM_EVENT_SEQUENCED;
+	ddev->notअगर.base.priority = 1;
+	ddev->notअगर.base.fn = sdtx_notअगरier;
+	ddev->notअगर.event.reg = SSAM_EVENT_REGISTRY_SAM;
+	ddev->notअगर.event.id.target_category = SSAM_SSH_TC_BAS;
+	ddev->notअगर.event.id.instance = 0;
+	ddev->notअगर.event.mask = SSAM_EVENT_MASK_NONE;
+	ddev->notअगर.event.flags = SSAM_EVENT_SEQUENCED;
 
-	init_waitqueue_head(&ddev->waitq);
-	mutex_init(&ddev->write_lock);
+	init_रुकोqueue_head(&ddev->रुकोq);
+	mutex_init(&ddev->ग_लिखो_lock);
 	init_rwsem(&ddev->client_lock);
 	INIT_LIST_HEAD(&ddev->client_list);
 
@@ -977,307 +978,307 @@ static int sdtx_device_init(struct sdtx_device *ddev, struct device *dev,
 	 * sent when state actually changes. Thus we cannot use special
 	 * "uninitialized" values, as that would cause problems when manually
 	 * querying the state in surface_dtx_pm_complete(). I.e. we would not
-	 * be able to detect state changes there if no change event has been
+	 * be able to detect state changes there अगर no change event has been
 	 * received between driver initialization and first device suspension.
 	 *
-	 * Note that we also need to do this before registering the event
-	 * notifier, as that may access the state values.
+	 * Note that we also need to करो this beक्रमe रेजिस्टरing the event
+	 * notअगरier, as that may access the state values.
 	 */
 	status = ssam_retry(ssam_bas_get_base, ddev->ctrl, &ddev->state.base);
-	if (status)
-		return status;
+	अगर (status)
+		वापस status;
 
 	status = ssam_retry(ssam_bas_get_device_mode, ddev->ctrl, &ddev->state.device_mode);
-	if (status)
-		return status;
+	अगर (status)
+		वापस status;
 
 	status = ssam_retry(ssam_bas_get_latch_status, ddev->ctrl, &ddev->state.latch_status);
-	if (status)
-		return status;
+	अगर (status)
+		वापस status;
 
-	/* Set up tablet mode switch. */
-	ddev->mode_switch = input_allocate_device();
-	if (!ddev->mode_switch)
-		return -ENOMEM;
+	/* Set up tablet mode चयन. */
+	ddev->mode_चयन = input_allocate_device();
+	अगर (!ddev->mode_चयन)
+		वापस -ENOMEM;
 
-	ddev->mode_switch->name = "Microsoft Surface DTX Device Mode Switch";
-	ddev->mode_switch->phys = "ssam/01:11:01:00:00/input0";
-	ddev->mode_switch->id.bustype = BUS_HOST;
-	ddev->mode_switch->dev.parent = ddev->dev;
+	ddev->mode_चयन->name = "Microsoft Surface DTX Device Mode Switch";
+	ddev->mode_चयन->phys = "ssam/01:11:01:00:00/input0";
+	ddev->mode_चयन->id.bustype = BUS_HOST;
+	ddev->mode_चयन->dev.parent = ddev->dev;
 
 	tablet_mode = (ddev->state.device_mode != SDTX_DEVICE_MODE_LAPTOP);
-	input_set_capability(ddev->mode_switch, EV_SW, SW_TABLET_MODE);
-	input_report_switch(ddev->mode_switch, SW_TABLET_MODE, tablet_mode);
+	input_set_capability(ddev->mode_चयन, EV_SW, SW_TABLET_MODE);
+	input_report_चयन(ddev->mode_चयन, SW_TABLET_MODE, tablet_mode);
 
-	status = input_register_device(ddev->mode_switch);
-	if (status) {
-		input_free_device(ddev->mode_switch);
-		return status;
-	}
+	status = input_रेजिस्टर_device(ddev->mode_चयन);
+	अगर (status) अणु
+		input_मुक्त_device(ddev->mode_चयन);
+		वापस status;
+	पूर्ण
 
-	/* Set up event notifier. */
-	status = ssam_notifier_register(ddev->ctrl, &ddev->notif);
-	if (status)
-		goto err_notif;
+	/* Set up event notअगरier. */
+	status = ssam_notअगरier_रेजिस्टर(ddev->ctrl, &ddev->notअगर);
+	अगर (status)
+		जाओ err_notअगर;
 
 	/* Register miscdevice. */
-	status = misc_register(&ddev->mdev);
-	if (status)
-		goto err_mdev;
+	status = misc_रेजिस्टर(&ddev->mdev);
+	अगर (status)
+		जाओ err_mdev;
 
 	/*
-	 * Update device state in case it has changed between getting the
-	 * initial mode and registering the event notifier.
+	 * Update device state in हाल it has changed between getting the
+	 * initial mode and रेजिस्टरing the event notअगरier.
 	 */
 	sdtx_update_device_state(ddev, 0);
-	return 0;
+	वापस 0;
 
-err_notif:
-	ssam_notifier_unregister(ddev->ctrl, &ddev->notif);
+err_notअगर:
+	ssam_notअगरier_unरेजिस्टर(ddev->ctrl, &ddev->notअगर);
 	cancel_delayed_work_sync(&ddev->mode_work);
 err_mdev:
-	input_unregister_device(ddev->mode_switch);
-	return status;
-}
+	input_unरेजिस्टर_device(ddev->mode_चयन);
+	वापस status;
+पूर्ण
 
-static struct sdtx_device *sdtx_device_create(struct device *dev, struct ssam_controller *ctrl)
-{
-	struct sdtx_device *ddev;
-	int status;
+अटल काष्ठा sdtx_device *sdtx_device_create(काष्ठा device *dev, काष्ठा ssam_controller *ctrl)
+अणु
+	काष्ठा sdtx_device *ddev;
+	पूर्णांक status;
 
-	ddev = kzalloc(sizeof(*ddev), GFP_KERNEL);
-	if (!ddev)
-		return ERR_PTR(-ENOMEM);
+	ddev = kzalloc(माप(*ddev), GFP_KERNEL);
+	अगर (!ddev)
+		वापस ERR_PTR(-ENOMEM);
 
 	status = sdtx_device_init(ddev, dev, ctrl);
-	if (status) {
+	अगर (status) अणु
 		sdtx_device_put(ddev);
-		return ERR_PTR(status);
-	}
+		वापस ERR_PTR(status);
+	पूर्ण
 
-	return ddev;
-}
+	वापस ddev;
+पूर्ण
 
-static void sdtx_device_destroy(struct sdtx_device *ddev)
-{
-	struct sdtx_client *client;
+अटल व्योम sdtx_device_destroy(काष्ठा sdtx_device *ddev)
+अणु
+	काष्ठा sdtx_client *client;
 
 	/*
-	 * Mark device as shut-down. Prevent new clients from being added and
+	 * Mark device as shut-करोwn. Prevent new clients from being added and
 	 * new operations from being executed.
 	 */
 	set_bit(SDTX_DEVICE_SHUTDOWN_BIT, &ddev->flags);
 
-	/* Disable notifiers, prevent new events from arriving. */
-	ssam_notifier_unregister(ddev->ctrl, &ddev->notif);
+	/* Disable notअगरiers, prevent new events from arriving. */
+	ssam_notअगरier_unरेजिस्टर(ddev->ctrl, &ddev->notअगर);
 
-	/* Stop mode_work, prevent access to mode_switch. */
+	/* Stop mode_work, prevent access to mode_चयन. */
 	cancel_delayed_work_sync(&ddev->mode_work);
 
 	/* Stop state_work. */
 	cancel_delayed_work_sync(&ddev->state_work);
 
-	/* With mode_work canceled, we can unregister the mode_switch. */
-	input_unregister_device(ddev->mode_switch);
+	/* With mode_work canceled, we can unरेजिस्टर the mode_चयन. */
+	input_unरेजिस्टर_device(ddev->mode_चयन);
 
 	/* Wake up async clients. */
-	down_write(&ddev->client_lock);
-	list_for_each_entry(client, &ddev->client_list, node) {
-		kill_fasync(&client->fasync, SIGIO, POLL_HUP);
-	}
-	up_write(&ddev->client_lock);
+	करोwn_ग_लिखो(&ddev->client_lock);
+	list_क्रम_each_entry(client, &ddev->client_list, node) अणु
+		समाप्त_fasync(&client->fasync, SIGIO, POLL_HUP);
+	पूर्ण
+	up_ग_लिखो(&ddev->client_lock);
 
 	/* Wake up blocking clients. */
-	wake_up_interruptible(&ddev->waitq);
+	wake_up_पूर्णांकerruptible(&ddev->रुकोq);
 
 	/*
-	 * Wait for clients to finish their current operation. After this, the
-	 * controller and device references are guaranteed to be no longer in
+	 * Wait क्रम clients to finish their current operation. After this, the
+	 * controller and device references are guaranteed to be no दीर्घer in
 	 * use.
 	 */
-	down_write(&ddev->lock);
-	ddev->dev = NULL;
-	ddev->ctrl = NULL;
-	up_write(&ddev->lock);
+	करोwn_ग_लिखो(&ddev->lock);
+	ddev->dev = शून्य;
+	ddev->ctrl = शून्य;
+	up_ग_लिखो(&ddev->lock);
 
-	/* Finally remove the misc-device. */
-	misc_deregister(&ddev->mdev);
+	/* Finally हटाओ the misc-device. */
+	misc_deरेजिस्टर(&ddev->mdev);
 
 	/*
 	 * We're now guaranteed that sdtx_device_open() won't be called any
 	 * more, so we can now drop out reference.
 	 */
 	sdtx_device_put(ddev);
-}
+पूर्ण
 
 
 /* -- PM ops. --------------------------------------------------------------- */
 
-#ifdef CONFIG_PM_SLEEP
+#अगर_घोषित CONFIG_PM_SLEEP
 
-static void surface_dtx_pm_complete(struct device *dev)
-{
-	struct sdtx_device *ddev = dev_get_drvdata(dev);
+अटल व्योम surface_dtx_pm_complete(काष्ठा device *dev)
+अणु
+	काष्ठा sdtx_device *ddev = dev_get_drvdata(dev);
 
 	/*
-	 * Normally, the EC will store events while suspended (i.e. in
+	 * Normally, the EC will store events जबतक suspended (i.e. in
 	 * display-off state) and release them when resumed (i.e. transitioned
 	 * to display-on state). During hibernation, however, the EC will be
-	 * shut down and does not store events. Furthermore, events might be
-	 * dropped during prolonged suspension (it is currently unknown how
+	 * shut करोwn and करोes not store events. Furthermore, events might be
+	 * dropped during proदीर्घed suspension (it is currently unknown how
 	 * big this event buffer is and how it behaves on overruns).
 	 *
-	 * To prevent any problems, we update the device state here. We do
+	 * To prevent any problems, we update the device state here. We करो
 	 * this delayed to ensure that any events sent by the EC directly
 	 * after resuming will be handled first. The delay below has been
-	 * chosen (experimentally), so that there should be ample time for
-	 * these events to be handled, before we check and, if necessary,
+	 * chosen (experimentally), so that there should be ample समय क्रम
+	 * these events to be handled, beक्रमe we check and, अगर necessary,
 	 * update the state.
 	 */
-	sdtx_update_device_state(ddev, msecs_to_jiffies(1000));
-}
+	sdtx_update_device_state(ddev, msecs_to_jअगरfies(1000));
+पूर्ण
 
-static const struct dev_pm_ops surface_dtx_pm_ops = {
+अटल स्थिर काष्ठा dev_pm_ops surface_dtx_pm_ops = अणु
 	.complete = surface_dtx_pm_complete,
-};
+पूर्ण;
 
-#else /* CONFIG_PM_SLEEP */
+#अन्यथा /* CONFIG_PM_SLEEP */
 
-static const struct dev_pm_ops surface_dtx_pm_ops = {};
+अटल स्थिर काष्ठा dev_pm_ops surface_dtx_pm_ops = अणुपूर्ण;
 
-#endif /* CONFIG_PM_SLEEP */
+#पूर्ण_अगर /* CONFIG_PM_SLEEP */
 
 
-/* -- Platform driver. ------------------------------------------------------ */
+/* -- Platक्रमm driver. ------------------------------------------------------ */
 
-static int surface_dtx_platform_probe(struct platform_device *pdev)
-{
-	struct ssam_controller *ctrl;
-	struct sdtx_device *ddev;
+अटल पूर्णांक surface_dtx_platक्रमm_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा ssam_controller *ctrl;
+	काष्ठा sdtx_device *ddev;
 
 	/* Link to EC. */
 	ctrl = ssam_client_bind(&pdev->dev);
-	if (IS_ERR(ctrl))
-		return PTR_ERR(ctrl) == -ENODEV ? -EPROBE_DEFER : PTR_ERR(ctrl);
+	अगर (IS_ERR(ctrl))
+		वापस PTR_ERR(ctrl) == -ENODEV ? -EPROBE_DEFER : PTR_ERR(ctrl);
 
 	ddev = sdtx_device_create(&pdev->dev, ctrl);
-	if (IS_ERR(ddev))
-		return PTR_ERR(ddev);
+	अगर (IS_ERR(ddev))
+		वापस PTR_ERR(ddev);
 
-	platform_set_drvdata(pdev, ddev);
-	return 0;
-}
+	platक्रमm_set_drvdata(pdev, ddev);
+	वापस 0;
+पूर्ण
 
-static int surface_dtx_platform_remove(struct platform_device *pdev)
-{
-	sdtx_device_destroy(platform_get_drvdata(pdev));
-	return 0;
-}
+अटल पूर्णांक surface_dtx_platक्रमm_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	sdtx_device_destroy(platक्रमm_get_drvdata(pdev));
+	वापस 0;
+पूर्ण
 
-static const struct acpi_device_id surface_dtx_acpi_match[] = {
-	{ "MSHW0133", 0 },
-	{ },
-};
+अटल स्थिर काष्ठा acpi_device_id surface_dtx_acpi_match[] = अणु
+	अणु "MSHW0133", 0 पूर्ण,
+	अणु पूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(acpi, surface_dtx_acpi_match);
 
-static struct platform_driver surface_dtx_platform_driver = {
-	.probe = surface_dtx_platform_probe,
-	.remove = surface_dtx_platform_remove,
-	.driver = {
+अटल काष्ठा platक्रमm_driver surface_dtx_platक्रमm_driver = अणु
+	.probe = surface_dtx_platक्रमm_probe,
+	.हटाओ = surface_dtx_platक्रमm_हटाओ,
+	.driver = अणु
 		.name = "surface_dtx_pltf",
 		.acpi_match_table = surface_dtx_acpi_match,
 		.pm = &surface_dtx_pm_ops,
 		.probe_type = PROBE_PREFER_ASYNCHRONOUS,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
 
 /* -- SSAM device driver. --------------------------------------------------- */
 
-#ifdef CONFIG_SURFACE_AGGREGATOR_BUS
+#अगर_घोषित CONFIG_SURFACE_AGGREGATOR_BUS
 
-static int surface_dtx_ssam_probe(struct ssam_device *sdev)
-{
-	struct sdtx_device *ddev;
+अटल पूर्णांक surface_dtx_ssam_probe(काष्ठा ssam_device *sdev)
+अणु
+	काष्ठा sdtx_device *ddev;
 
 	ddev = sdtx_device_create(&sdev->dev, sdev->ctrl);
-	if (IS_ERR(ddev))
-		return PTR_ERR(ddev);
+	अगर (IS_ERR(ddev))
+		वापस PTR_ERR(ddev);
 
 	ssam_device_set_drvdata(sdev, ddev);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void surface_dtx_ssam_remove(struct ssam_device *sdev)
-{
+अटल व्योम surface_dtx_ssam_हटाओ(काष्ठा ssam_device *sdev)
+अणु
 	sdtx_device_destroy(ssam_device_get_drvdata(sdev));
-}
+पूर्ण
 
-static const struct ssam_device_id surface_dtx_ssam_match[] = {
-	{ SSAM_SDEV(BAS, 0x01, 0x00, 0x00) },
-	{ },
-};
+अटल स्थिर काष्ठा ssam_device_id surface_dtx_ssam_match[] = अणु
+	अणु SSAM_SDEV(BAS, 0x01, 0x00, 0x00) पूर्ण,
+	अणु पूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(ssam, surface_dtx_ssam_match);
 
-static struct ssam_device_driver surface_dtx_ssam_driver = {
+अटल काष्ठा ssam_device_driver surface_dtx_ssam_driver = अणु
 	.probe = surface_dtx_ssam_probe,
-	.remove = surface_dtx_ssam_remove,
+	.हटाओ = surface_dtx_ssam_हटाओ,
 	.match_table = surface_dtx_ssam_match,
-	.driver = {
+	.driver = अणु
 		.name = "surface_dtx",
 		.pm = &surface_dtx_pm_ops,
 		.probe_type = PROBE_PREFER_ASYNCHRONOUS,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static int ssam_dtx_driver_register(void)
-{
-	return ssam_device_driver_register(&surface_dtx_ssam_driver);
-}
+अटल पूर्णांक ssam_dtx_driver_रेजिस्टर(व्योम)
+अणु
+	वापस ssam_device_driver_रेजिस्टर(&surface_dtx_ssam_driver);
+पूर्ण
 
-static void ssam_dtx_driver_unregister(void)
-{
-	ssam_device_driver_unregister(&surface_dtx_ssam_driver);
-}
+अटल व्योम ssam_dtx_driver_unरेजिस्टर(व्योम)
+अणु
+	ssam_device_driver_unरेजिस्टर(&surface_dtx_ssam_driver);
+पूर्ण
 
-#else /* CONFIG_SURFACE_AGGREGATOR_BUS */
+#अन्यथा /* CONFIG_SURFACE_AGGREGATOR_BUS */
 
-static int ssam_dtx_driver_register(void)
-{
-	return 0;
-}
+अटल पूर्णांक ssam_dtx_driver_रेजिस्टर(व्योम)
+अणु
+	वापस 0;
+पूर्ण
 
-static void ssam_dtx_driver_unregister(void)
-{
-}
+अटल व्योम ssam_dtx_driver_unरेजिस्टर(व्योम)
+अणु
+पूर्ण
 
-#endif /* CONFIG_SURFACE_AGGREGATOR_BUS */
+#पूर्ण_अगर /* CONFIG_SURFACE_AGGREGATOR_BUS */
 
 
 /* -- Module setup. --------------------------------------------------------- */
 
-static int __init surface_dtx_init(void)
-{
-	int status;
+अटल पूर्णांक __init surface_dtx_init(व्योम)
+अणु
+	पूर्णांक status;
 
-	status = ssam_dtx_driver_register();
-	if (status)
-		return status;
+	status = ssam_dtx_driver_रेजिस्टर();
+	अगर (status)
+		वापस status;
 
-	status = platform_driver_register(&surface_dtx_platform_driver);
-	if (status)
-		ssam_dtx_driver_unregister();
+	status = platक्रमm_driver_रेजिस्टर(&surface_dtx_platक्रमm_driver);
+	अगर (status)
+		ssam_dtx_driver_unरेजिस्टर();
 
-	return status;
-}
+	वापस status;
+पूर्ण
 module_init(surface_dtx_init);
 
-static void __exit surface_dtx_exit(void)
-{
-	platform_driver_unregister(&surface_dtx_platform_driver);
-	ssam_dtx_driver_unregister();
-}
-module_exit(surface_dtx_exit);
+अटल व्योम __निकास surface_dtx_निकास(व्योम)
+अणु
+	platक्रमm_driver_unरेजिस्टर(&surface_dtx_platक्रमm_driver);
+	ssam_dtx_driver_unरेजिस्टर();
+पूर्ण
+module_निकास(surface_dtx_निकास);
 
 MODULE_AUTHOR("Maximilian Luz <luzmaximilian@gmail.com>");
 MODULE_DESCRIPTION("Detachment-system driver for Surface System Aggregator Module");

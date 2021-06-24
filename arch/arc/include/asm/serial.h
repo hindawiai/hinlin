@@ -1,19 +1,20 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * Copyright (C) 2012 Synopsys, Inc. (www.synopsys.com)
  */
 
-#ifndef _ASM_ARC_SERIAL_H
-#define _ASM_ARC_SERIAL_H
+#अगर_अघोषित _ASM_ARC_SERIAL_H
+#घोषणा _ASM_ARC_SERIAL_H
 
 /*
  * early 8250 (now earlycon) requires BASE_BAUD to be defined in this header.
- * However to still determine it dynamically (for multi-platform images)
- * we do this in a helper by parsing the FDT early
+ * However to still determine it dynamically (क्रम multi-platक्रमm images)
+ * we करो this in a helper by parsing the FDT early
  */
 
-extern unsigned int __init arc_early_base_baud(void);
+बाह्य अचिन्हित पूर्णांक __init arc_early_base_baud(व्योम);
 
-#define BASE_BAUD	arc_early_base_baud()
+#घोषणा BASE_BAUD	arc_early_base_baud()
 
-#endif /* _ASM_ARC_SERIAL_H */
+#पूर्ण_अगर /* _ASM_ARC_SERIAL_H */

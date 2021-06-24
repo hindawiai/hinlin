@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2019 Red Hat Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -19,46 +20,46 @@
  * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  * OTHER DEALINGS IN THE SOFTWARE.
  */
-#include "ctxgf100.h"
+#समावेश "ctxgf100.h"
 
-static void
-tu102_grctx_generate_r419c0c(struct gf100_gr *gr)
-{
-	struct nvkm_device *device = gr->base.engine.subdev.device;
+अटल व्योम
+tu102_grctx_generate_r419c0c(काष्ठा gf100_gr *gr)
+अणु
+	काष्ठा nvkm_device *device = gr->base.engine.subdev.device;
 	nvkm_mask(device, 0x419c0c, 0x80000000, 0x80000000);
 	nvkm_mask(device, 0x40584c, 0x00000008, 0x00000000);
 	nvkm_mask(device, 0x400080, 0x00000000, 0x00000000);
-}
+पूर्ण
 
-static void
-tu102_grctx_generate_sm_id(struct gf100_gr *gr, int gpc, int tpc, int sm)
-{
-	struct nvkm_device *device = gr->base.engine.subdev.device;
+अटल व्योम
+tu102_grctx_generate_sm_id(काष्ठा gf100_gr *gr, पूर्णांक gpc, पूर्णांक tpc, पूर्णांक sm)
+अणु
+	काष्ठा nvkm_device *device = gr->base.engine.subdev.device;
 	nvkm_wr32(device, TPC_UNIT(gpc, tpc, 0x608), sm);
 	nvkm_wr32(device, TPC_UNIT(gpc, tpc, 0x088), sm);
-}
+पूर्ण
 
-static const struct gf100_gr_init
-tu102_grctx_init_unknown_bundle_init_0[] = {
-	{ 0x00001000,  1, 0x00000001, 0x00000004 },
-	{ 0x00002020, 64, 0x00000001, 0x00000000 },
-	{ 0x0001e100,  1, 0x00000001, 0x00000001 },
-	{}
-};
+अटल स्थिर काष्ठा gf100_gr_init
+tu102_grctx_init_unknown_bundle_init_0[] = अणु
+	अणु 0x00001000,  1, 0x00000001, 0x00000004 पूर्ण,
+	अणु 0x00002020, 64, 0x00000001, 0x00000000 पूर्ण,
+	अणु 0x0001e100,  1, 0x00000001, 0x00000001 पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
-static const struct gf100_gr_pack
-tu102_grctx_pack_sw_veid_bundle_init[] = {
-	{ gv100_grctx_init_sw_veid_bundle_init_0 },
-	{ tu102_grctx_init_unknown_bundle_init_0 },
-	{}
-};
+अटल स्थिर काष्ठा gf100_gr_pack
+tu102_grctx_pack_sw_veid_bundle_init[] = अणु
+	अणु gv100_grctx_init_sw_veid_bundle_init_0 पूर्ण,
+	अणु tu102_grctx_init_unknown_bundle_init_0 पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
-static void
-tu102_grctx_generate_attrib(struct gf100_grctx *info)
-{
-	const u64 size = 0x80000; /*XXX: educated guess */
-	const int s = 8;
-	const int b = mmio_vram(info, size, (1 << s), true);
+अटल व्योम
+tu102_grctx_generate_attrib(काष्ठा gf100_grctx *info)
+अणु
+	स्थिर u64 size = 0x80000; /*XXX: educated guess */
+	स्थिर पूर्णांक s = 8;
+	स्थिर पूर्णांक b = mmio_vram(info, size, (1 << s), true);
 
 	gv100_grctx_generate_attrib(info);
 
@@ -66,17 +67,17 @@ tu102_grctx_generate_attrib(struct gf100_grctx *info)
 	mmio_wr32(info, 0x408074, size >> s); /*XXX: guess */
 	mmio_refn(info, 0x419034, 0x00000000, s, b);
 	mmio_wr32(info, 0x408078, 0x00000000);
-}
+पूर्ण
 
-const struct gf100_grctx_func
-tu102_grctx = {
+स्थिर काष्ठा gf100_grctx_func
+tu102_grctx = अणु
 	.unkn88c = gv100_grctx_unkn88c,
-	.main = gf100_grctx_generate_main,
+	.मुख्य = gf100_grctx_generate_मुख्य,
 	.unkn = gv100_grctx_generate_unkn,
 	.sw_veid_bundle_init = tu102_grctx_pack_sw_veid_bundle_init,
 	.bundle = gm107_grctx_generate_bundle,
 	.bundle_size = 0x3000,
-	.bundle_min_gpm_fifo_depth = 0x180,
+	.bundle_min_gpm_fअगरo_depth = 0x180,
 	.bundle_token_limit = 0xa80,
 	.pagepool = gp100_grctx_generate_pagepool,
 	.pagepool_size = 0x20000,
@@ -92,4 +93,4 @@ tu102_grctx = {
 	.r406500 = gm200_grctx_generate_r406500,
 	.r400088 = gv100_grctx_generate_r400088,
 	.r419c0c = tu102_grctx_generate_r419c0c,
-};
+पूर्ण;

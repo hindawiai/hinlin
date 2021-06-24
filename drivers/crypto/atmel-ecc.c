@@ -1,325 +1,326 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * Microchip / Atmel ECC (I2C) driver.
+ * Microchip / Aपंचांगel ECC (I2C) driver.
  *
  * Copyright (c) 2017, Microchip Technology Inc.
- * Author: Tudor Ambarus <tudor.ambarus@microchip.com>
+ * Author: Tuकरोr Ambarus <tuकरोr.ambarus@microchip.com>
  */
 
-#include <linux/delay.h>
-#include <linux/device.h>
-#include <linux/err.h>
-#include <linux/errno.h>
-#include <linux/i2c.h>
-#include <linux/init.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/of_device.h>
-#include <linux/scatterlist.h>
-#include <linux/slab.h>
-#include <linux/workqueue.h>
-#include <crypto/internal/kpp.h>
-#include <crypto/ecdh.h>
-#include <crypto/kpp.h>
-#include "atmel-i2c.h"
+#समावेश <linux/delay.h>
+#समावेश <linux/device.h>
+#समावेश <linux/err.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/i2c.h>
+#समावेश <linux/init.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/scatterlist.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/workqueue.h>
+#समावेश <crypto/पूर्णांकernal/kpp.h>
+#समावेश <crypto/ecdh.h>
+#समावेश <crypto/kpp.h>
+#समावेश "atmel-i2c.h"
 
-static struct atmel_ecc_driver_data driver_data;
+अटल काष्ठा aपंचांगel_ecc_driver_data driver_data;
 
 /**
- * struct atmel_ecdh_ctx - transformation context
- * @client     : pointer to i2c client device
- * @fallback   : used for unsupported curves or when user wants to use its own
- *               private key.
- * @public_key : generated when calling set_secret(). It's the responsibility
- *               of the user to not call set_secret() while
- *               generate_public_key() or compute_shared_secret() are in flight.
+ * काष्ठा aपंचांगel_ecdh_ctx - transक्रमmation context
+ * @client     : poपूर्णांकer to i2c client device
+ * @fallback   : used क्रम unsupported curves or when user wants to use its own
+ *               निजी key.
+ * @खुला_key : generated when calling set_secret(). It's the responsibility
+ *               of the user to not call set_secret() जबतक
+ *               generate_खुला_key() or compute_shared_secret() are in flight.
  * @curve_id   : elliptic curve id
- * @do_fallback: true when the device doesn't support the curve or when the user
- *               wants to use its own private key.
+ * @करो_fallback: true when the device करोesn't support the curve or when the user
+ *               wants to use its own निजी key.
  */
-struct atmel_ecdh_ctx {
-	struct i2c_client *client;
-	struct crypto_kpp *fallback;
-	const u8 *public_key;
-	unsigned int curve_id;
-	bool do_fallback;
-};
+काष्ठा aपंचांगel_ecdh_ctx अणु
+	काष्ठा i2c_client *client;
+	काष्ठा crypto_kpp *fallback;
+	स्थिर u8 *खुला_key;
+	अचिन्हित पूर्णांक curve_id;
+	bool करो_fallback;
+पूर्ण;
 
-static void atmel_ecdh_done(struct atmel_i2c_work_data *work_data, void *areq,
-			    int status)
-{
-	struct kpp_request *req = areq;
-	struct atmel_i2c_cmd *cmd = &work_data->cmd;
-	size_t copied, n_sz;
+अटल व्योम aपंचांगel_ecdh_करोne(काष्ठा aपंचांगel_i2c_work_data *work_data, व्योम *areq,
+			    पूर्णांक status)
+अणु
+	काष्ठा kpp_request *req = areq;
+	काष्ठा aपंचांगel_i2c_cmd *cmd = &work_data->cmd;
+	माप_प्रकार copied, n_sz;
 
-	if (status)
-		goto free_work_data;
+	अगर (status)
+		जाओ मुक्त_work_data;
 
 	/* might want less than we've got */
-	n_sz = min_t(size_t, ATMEL_ECC_NIST_P256_N_SIZE, req->dst_len);
+	n_sz = min_t(माप_प्रकार, ATMEL_ECC_NIST_P256_N_SIZE, req->dst_len);
 
 	/* copy the shared secret */
-	copied = sg_copy_from_buffer(req->dst, sg_nents_for_len(req->dst, n_sz),
+	copied = sg_copy_from_buffer(req->dst, sg_nents_क्रम_len(req->dst, n_sz),
 				     &cmd->data[RSP_DATA_IDX], n_sz);
-	if (copied != n_sz)
+	अगर (copied != n_sz)
 		status = -EINVAL;
 
 	/* fall through */
-free_work_data:
-	kfree_sensitive(work_data);
+मुक्त_work_data:
+	kमुक्त_sensitive(work_data);
 	kpp_request_complete(req, status);
-}
+पूर्ण
 
 /*
- * A random private key is generated and stored in the device. The device
- * returns the pair public key.
+ * A अक्रमom निजी key is generated and stored in the device. The device
+ * वापसs the pair खुला key.
  */
-static int atmel_ecdh_set_secret(struct crypto_kpp *tfm, const void *buf,
-				 unsigned int len)
-{
-	struct atmel_ecdh_ctx *ctx = kpp_tfm_ctx(tfm);
-	struct atmel_i2c_cmd *cmd;
-	void *public_key;
-	struct ecdh params;
-	int ret = -ENOMEM;
+अटल पूर्णांक aपंचांगel_ecdh_set_secret(काष्ठा crypto_kpp *tfm, स्थिर व्योम *buf,
+				 अचिन्हित पूर्णांक len)
+अणु
+	काष्ठा aपंचांगel_ecdh_ctx *ctx = kpp_tfm_ctx(tfm);
+	काष्ठा aपंचांगel_i2c_cmd *cmd;
+	व्योम *खुला_key;
+	काष्ठा ecdh params;
+	पूर्णांक ret = -ENOMEM;
 
-	/* free the old public key, if any */
-	kfree(ctx->public_key);
-	/* make sure you don't free the old public key twice */
-	ctx->public_key = NULL;
+	/* मुक्त the old खुला key, अगर any */
+	kमुक्त(ctx->खुला_key);
+	/* make sure you करोn't मुक्त the old खुला key twice */
+	ctx->खुला_key = शून्य;
 
-	if (crypto_ecdh_decode_key(buf, len, &params) < 0) {
+	अगर (crypto_ecdh_decode_key(buf, len, &params) < 0) अणु
 		dev_err(&ctx->client->dev, "crypto_ecdh_decode_key failed\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (params.key_size) {
+	अगर (params.key_size) अणु
 		/* fallback to ecdh software implementation */
-		ctx->do_fallback = true;
-		return crypto_kpp_set_secret(ctx->fallback, buf, len);
-	}
+		ctx->करो_fallback = true;
+		वापस crypto_kpp_set_secret(ctx->fallback, buf, len);
+	पूर्ण
 
-	cmd = kmalloc(sizeof(*cmd), GFP_KERNEL);
-	if (!cmd)
-		return -ENOMEM;
+	cmd = kदो_स्मृति(माप(*cmd), GFP_KERNEL);
+	अगर (!cmd)
+		वापस -ENOMEM;
 
 	/*
-	 * The device only supports NIST P256 ECC keys. The public key size will
-	 * always be the same. Use a macro for the key size to avoid unnecessary
+	 * The device only supports NIST P256 ECC keys. The खुला key size will
+	 * always be the same. Use a macro क्रम the key size to aव्योम unnecessary
 	 * computations.
 	 */
-	public_key = kmalloc(ATMEL_ECC_PUBKEY_SIZE, GFP_KERNEL);
-	if (!public_key)
-		goto free_cmd;
+	खुला_key = kदो_स्मृति(ATMEL_ECC_PUBKEY_SIZE, GFP_KERNEL);
+	अगर (!खुला_key)
+		जाओ मुक्त_cmd;
 
-	ctx->do_fallback = false;
+	ctx->करो_fallback = false;
 
-	atmel_i2c_init_genkey_cmd(cmd, DATA_SLOT_2);
+	aपंचांगel_i2c_init_genkey_cmd(cmd, DATA_SLOT_2);
 
-	ret = atmel_i2c_send_receive(ctx->client, cmd);
-	if (ret)
-		goto free_public_key;
+	ret = aपंचांगel_i2c_send_receive(ctx->client, cmd);
+	अगर (ret)
+		जाओ मुक्त_खुला_key;
 
-	/* save the public key */
-	memcpy(public_key, &cmd->data[RSP_DATA_IDX], ATMEL_ECC_PUBKEY_SIZE);
-	ctx->public_key = public_key;
+	/* save the खुला key */
+	स_नकल(खुला_key, &cmd->data[RSP_DATA_IDX], ATMEL_ECC_PUBKEY_SIZE);
+	ctx->खुला_key = खुला_key;
 
-	kfree(cmd);
-	return 0;
+	kमुक्त(cmd);
+	वापस 0;
 
-free_public_key:
-	kfree(public_key);
-free_cmd:
-	kfree(cmd);
-	return ret;
-}
+मुक्त_खुला_key:
+	kमुक्त(खुला_key);
+मुक्त_cmd:
+	kमुक्त(cmd);
+	वापस ret;
+पूर्ण
 
-static int atmel_ecdh_generate_public_key(struct kpp_request *req)
-{
-	struct crypto_kpp *tfm = crypto_kpp_reqtfm(req);
-	struct atmel_ecdh_ctx *ctx = kpp_tfm_ctx(tfm);
-	size_t copied, nbytes;
-	int ret = 0;
+अटल पूर्णांक aपंचांगel_ecdh_generate_खुला_key(काष्ठा kpp_request *req)
+अणु
+	काष्ठा crypto_kpp *tfm = crypto_kpp_reqtfm(req);
+	काष्ठा aपंचांगel_ecdh_ctx *ctx = kpp_tfm_ctx(tfm);
+	माप_प्रकार copied, nbytes;
+	पूर्णांक ret = 0;
 
-	if (ctx->do_fallback) {
+	अगर (ctx->करो_fallback) अणु
 		kpp_request_set_tfm(req, ctx->fallback);
-		return crypto_kpp_generate_public_key(req);
-	}
+		वापस crypto_kpp_generate_खुला_key(req);
+	पूर्ण
 
-	if (!ctx->public_key)
-		return -EINVAL;
+	अगर (!ctx->खुला_key)
+		वापस -EINVAL;
 
 	/* might want less than we've got */
-	nbytes = min_t(size_t, ATMEL_ECC_PUBKEY_SIZE, req->dst_len);
+	nbytes = min_t(माप_प्रकार, ATMEL_ECC_PUBKEY_SIZE, req->dst_len);
 
-	/* public key was saved at private key generation */
+	/* खुला key was saved at निजी key generation */
 	copied = sg_copy_from_buffer(req->dst,
-				     sg_nents_for_len(req->dst, nbytes),
-				     ctx->public_key, nbytes);
-	if (copied != nbytes)
+				     sg_nents_क्रम_len(req->dst, nbytes),
+				     ctx->खुला_key, nbytes);
+	अगर (copied != nbytes)
 		ret = -EINVAL;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int atmel_ecdh_compute_shared_secret(struct kpp_request *req)
-{
-	struct crypto_kpp *tfm = crypto_kpp_reqtfm(req);
-	struct atmel_ecdh_ctx *ctx = kpp_tfm_ctx(tfm);
-	struct atmel_i2c_work_data *work_data;
+अटल पूर्णांक aपंचांगel_ecdh_compute_shared_secret(काष्ठा kpp_request *req)
+अणु
+	काष्ठा crypto_kpp *tfm = crypto_kpp_reqtfm(req);
+	काष्ठा aपंचांगel_ecdh_ctx *ctx = kpp_tfm_ctx(tfm);
+	काष्ठा aपंचांगel_i2c_work_data *work_data;
 	gfp_t gfp;
-	int ret;
+	पूर्णांक ret;
 
-	if (ctx->do_fallback) {
+	अगर (ctx->करो_fallback) अणु
 		kpp_request_set_tfm(req, ctx->fallback);
-		return crypto_kpp_compute_shared_secret(req);
-	}
+		वापस crypto_kpp_compute_shared_secret(req);
+	पूर्ण
 
-	/* must have exactly two points to be on the curve */
-	if (req->src_len != ATMEL_ECC_PUBKEY_SIZE)
-		return -EINVAL;
+	/* must have exactly two poपूर्णांकs to be on the curve */
+	अगर (req->src_len != ATMEL_ECC_PUBKEY_SIZE)
+		वापस -EINVAL;
 
 	gfp = (req->base.flags & CRYPTO_TFM_REQ_MAY_SLEEP) ? GFP_KERNEL :
 							     GFP_ATOMIC;
 
-	work_data = kmalloc(sizeof(*work_data), gfp);
-	if (!work_data)
-		return -ENOMEM;
+	work_data = kदो_स्मृति(माप(*work_data), gfp);
+	अगर (!work_data)
+		वापस -ENOMEM;
 
 	work_data->ctx = ctx;
 	work_data->client = ctx->client;
 
-	ret = atmel_i2c_init_ecdh_cmd(&work_data->cmd, req->src);
-	if (ret)
-		goto free_work_data;
+	ret = aपंचांगel_i2c_init_ecdh_cmd(&work_data->cmd, req->src);
+	अगर (ret)
+		जाओ मुक्त_work_data;
 
-	atmel_i2c_enqueue(work_data, atmel_ecdh_done, req);
+	aपंचांगel_i2c_enqueue(work_data, aपंचांगel_ecdh_करोne, req);
 
-	return -EINPROGRESS;
+	वापस -EINPROGRESS;
 
-free_work_data:
-	kfree(work_data);
-	return ret;
-}
+मुक्त_work_data:
+	kमुक्त(work_data);
+	वापस ret;
+पूर्ण
 
-static struct i2c_client *atmel_ecc_i2c_client_alloc(void)
-{
-	struct atmel_i2c_client_priv *i2c_priv, *min_i2c_priv = NULL;
-	struct i2c_client *client = ERR_PTR(-ENODEV);
-	int min_tfm_cnt = INT_MAX;
-	int tfm_cnt;
+अटल काष्ठा i2c_client *aपंचांगel_ecc_i2c_client_alloc(व्योम)
+अणु
+	काष्ठा aपंचांगel_i2c_client_priv *i2c_priv, *min_i2c_priv = शून्य;
+	काष्ठा i2c_client *client = ERR_PTR(-ENODEV);
+	पूर्णांक min_tfm_cnt = पूर्णांक_उच्च;
+	पूर्णांक tfm_cnt;
 
 	spin_lock(&driver_data.i2c_list_lock);
 
-	if (list_empty(&driver_data.i2c_client_list)) {
+	अगर (list_empty(&driver_data.i2c_client_list)) अणु
 		spin_unlock(&driver_data.i2c_list_lock);
-		return ERR_PTR(-ENODEV);
-	}
+		वापस ERR_PTR(-ENODEV);
+	पूर्ण
 
-	list_for_each_entry(i2c_priv, &driver_data.i2c_client_list,
-			    i2c_client_list_node) {
-		tfm_cnt = atomic_read(&i2c_priv->tfm_count);
-		if (tfm_cnt < min_tfm_cnt) {
+	list_क्रम_each_entry(i2c_priv, &driver_data.i2c_client_list,
+			    i2c_client_list_node) अणु
+		tfm_cnt = atomic_पढ़ो(&i2c_priv->tfm_count);
+		अगर (tfm_cnt < min_tfm_cnt) अणु
 			min_tfm_cnt = tfm_cnt;
 			min_i2c_priv = i2c_priv;
-		}
-		if (!min_tfm_cnt)
-			break;
-	}
+		पूर्ण
+		अगर (!min_tfm_cnt)
+			अवरोध;
+	पूर्ण
 
-	if (min_i2c_priv) {
+	अगर (min_i2c_priv) अणु
 		atomic_inc(&min_i2c_priv->tfm_count);
 		client = min_i2c_priv->client;
-	}
+	पूर्ण
 
 	spin_unlock(&driver_data.i2c_list_lock);
 
-	return client;
-}
+	वापस client;
+पूर्ण
 
-static void atmel_ecc_i2c_client_free(struct i2c_client *client)
-{
-	struct atmel_i2c_client_priv *i2c_priv = i2c_get_clientdata(client);
+अटल व्योम aपंचांगel_ecc_i2c_client_मुक्त(काष्ठा i2c_client *client)
+अणु
+	काष्ठा aपंचांगel_i2c_client_priv *i2c_priv = i2c_get_clientdata(client);
 
 	atomic_dec(&i2c_priv->tfm_count);
-}
+पूर्ण
 
-static int atmel_ecdh_init_tfm(struct crypto_kpp *tfm)
-{
-	const char *alg = kpp_alg_name(tfm);
-	struct crypto_kpp *fallback;
-	struct atmel_ecdh_ctx *ctx = kpp_tfm_ctx(tfm);
+अटल पूर्णांक aपंचांगel_ecdh_init_tfm(काष्ठा crypto_kpp *tfm)
+अणु
+	स्थिर अक्षर *alg = kpp_alg_name(tfm);
+	काष्ठा crypto_kpp *fallback;
+	काष्ठा aपंचांगel_ecdh_ctx *ctx = kpp_tfm_ctx(tfm);
 
 	ctx->curve_id = ECC_CURVE_NIST_P256;
-	ctx->client = atmel_ecc_i2c_client_alloc();
-	if (IS_ERR(ctx->client)) {
+	ctx->client = aपंचांगel_ecc_i2c_client_alloc();
+	अगर (IS_ERR(ctx->client)) अणु
 		pr_err("tfm - i2c_client binding failed\n");
-		return PTR_ERR(ctx->client);
-	}
+		वापस PTR_ERR(ctx->client);
+	पूर्ण
 
 	fallback = crypto_alloc_kpp(alg, 0, CRYPTO_ALG_NEED_FALLBACK);
-	if (IS_ERR(fallback)) {
+	अगर (IS_ERR(fallback)) अणु
 		dev_err(&ctx->client->dev, "Failed to allocate transformation for '%s': %ld\n",
 			alg, PTR_ERR(fallback));
-		return PTR_ERR(fallback);
-	}
+		वापस PTR_ERR(fallback);
+	पूर्ण
 
 	crypto_kpp_set_flags(fallback, crypto_kpp_get_flags(tfm));
 	ctx->fallback = fallback;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void atmel_ecdh_exit_tfm(struct crypto_kpp *tfm)
-{
-	struct atmel_ecdh_ctx *ctx = kpp_tfm_ctx(tfm);
+अटल व्योम aपंचांगel_ecdh_निकास_tfm(काष्ठा crypto_kpp *tfm)
+अणु
+	काष्ठा aपंचांगel_ecdh_ctx *ctx = kpp_tfm_ctx(tfm);
 
-	kfree(ctx->public_key);
-	crypto_free_kpp(ctx->fallback);
-	atmel_ecc_i2c_client_free(ctx->client);
-}
+	kमुक्त(ctx->खुला_key);
+	crypto_मुक्त_kpp(ctx->fallback);
+	aपंचांगel_ecc_i2c_client_मुक्त(ctx->client);
+पूर्ण
 
-static unsigned int atmel_ecdh_max_size(struct crypto_kpp *tfm)
-{
-	struct atmel_ecdh_ctx *ctx = kpp_tfm_ctx(tfm);
+अटल अचिन्हित पूर्णांक aपंचांगel_ecdh_max_size(काष्ठा crypto_kpp *tfm)
+अणु
+	काष्ठा aपंचांगel_ecdh_ctx *ctx = kpp_tfm_ctx(tfm);
 
-	if (ctx->fallback)
-		return crypto_kpp_maxsize(ctx->fallback);
+	अगर (ctx->fallback)
+		वापस crypto_kpp_maxsize(ctx->fallback);
 
 	/*
-	 * The device only supports NIST P256 ECC keys. The public key size will
-	 * always be the same. Use a macro for the key size to avoid unnecessary
+	 * The device only supports NIST P256 ECC keys. The खुला key size will
+	 * always be the same. Use a macro क्रम the key size to aव्योम unnecessary
 	 * computations.
 	 */
-	return ATMEL_ECC_PUBKEY_SIZE;
-}
+	वापस ATMEL_ECC_PUBKEY_SIZE;
+पूर्ण
 
-static struct kpp_alg atmel_ecdh_nist_p256 = {
-	.set_secret = atmel_ecdh_set_secret,
-	.generate_public_key = atmel_ecdh_generate_public_key,
-	.compute_shared_secret = atmel_ecdh_compute_shared_secret,
-	.init = atmel_ecdh_init_tfm,
-	.exit = atmel_ecdh_exit_tfm,
-	.max_size = atmel_ecdh_max_size,
-	.base = {
+अटल काष्ठा kpp_alg aपंचांगel_ecdh_nist_p256 = अणु
+	.set_secret = aपंचांगel_ecdh_set_secret,
+	.generate_खुला_key = aपंचांगel_ecdh_generate_खुला_key,
+	.compute_shared_secret = aपंचांगel_ecdh_compute_shared_secret,
+	.init = aपंचांगel_ecdh_init_tfm,
+	.निकास = aपंचांगel_ecdh_निकास_tfm,
+	.max_size = aपंचांगel_ecdh_max_size,
+	.base = अणु
 		.cra_flags = CRYPTO_ALG_NEED_FALLBACK,
 		.cra_name = "ecdh-nist-p256",
 		.cra_driver_name = "atmel-ecdh",
 		.cra_priority = ATMEL_ECC_PRIORITY,
 		.cra_module = THIS_MODULE,
-		.cra_ctxsize = sizeof(struct atmel_ecdh_ctx),
-	},
-};
+		.cra_ctxsize = माप(काष्ठा aपंचांगel_ecdh_ctx),
+	पूर्ण,
+पूर्ण;
 
-static int atmel_ecc_probe(struct i2c_client *client,
-			   const struct i2c_device_id *id)
-{
-	struct atmel_i2c_client_priv *i2c_priv;
-	int ret;
+अटल पूर्णांक aपंचांगel_ecc_probe(काष्ठा i2c_client *client,
+			   स्थिर काष्ठा i2c_device_id *id)
+अणु
+	काष्ठा aपंचांगel_i2c_client_priv *i2c_priv;
+	पूर्णांक ret;
 
-	ret = atmel_i2c_probe(client, id);
-	if (ret)
-		return ret;
+	ret = aपंचांगel_i2c_probe(client, id);
+	अगर (ret)
+		वापस ret;
 
 	i2c_priv = i2c_get_clientdata(client);
 
@@ -328,82 +329,82 @@ static int atmel_ecc_probe(struct i2c_client *client,
 		      &driver_data.i2c_client_list);
 	spin_unlock(&driver_data.i2c_list_lock);
 
-	ret = crypto_register_kpp(&atmel_ecdh_nist_p256);
-	if (ret) {
+	ret = crypto_रेजिस्टर_kpp(&aपंचांगel_ecdh_nist_p256);
+	अगर (ret) अणु
 		spin_lock(&driver_data.i2c_list_lock);
 		list_del(&i2c_priv->i2c_client_list_node);
 		spin_unlock(&driver_data.i2c_list_lock);
 
 		dev_err(&client->dev, "%s alg registration failed\n",
-			atmel_ecdh_nist_p256.base.cra_driver_name);
-	} else {
+			aपंचांगel_ecdh_nist_p256.base.cra_driver_name);
+	पूर्ण अन्यथा अणु
 		dev_info(&client->dev, "atmel ecc algorithms registered in /proc/crypto\n");
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int atmel_ecc_remove(struct i2c_client *client)
-{
-	struct atmel_i2c_client_priv *i2c_priv = i2c_get_clientdata(client);
+अटल पूर्णांक aपंचांगel_ecc_हटाओ(काष्ठा i2c_client *client)
+अणु
+	काष्ठा aपंचांगel_i2c_client_priv *i2c_priv = i2c_get_clientdata(client);
 
-	/* Return EBUSY if i2c client already allocated. */
-	if (atomic_read(&i2c_priv->tfm_count)) {
+	/* Return EBUSY अगर i2c client alपढ़ोy allocated. */
+	अगर (atomic_पढ़ो(&i2c_priv->tfm_count)) अणु
 		dev_err(&client->dev, "Device is busy\n");
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 
-	crypto_unregister_kpp(&atmel_ecdh_nist_p256);
+	crypto_unरेजिस्टर_kpp(&aपंचांगel_ecdh_nist_p256);
 
 	spin_lock(&driver_data.i2c_list_lock);
 	list_del(&i2c_priv->i2c_client_list_node);
 	spin_unlock(&driver_data.i2c_list_lock);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_OF
-static const struct of_device_id atmel_ecc_dt_ids[] = {
-	{
+#अगर_घोषित CONFIG_OF
+अटल स्थिर काष्ठा of_device_id aपंचांगel_ecc_dt_ids[] = अणु
+	अणु
 		.compatible = "atmel,atecc508a",
-	}, {
+	पूर्ण, अणु
 		/* sentinel */
-	}
-};
-MODULE_DEVICE_TABLE(of, atmel_ecc_dt_ids);
-#endif
+	पूर्ण
+पूर्ण;
+MODULE_DEVICE_TABLE(of, aपंचांगel_ecc_dt_ids);
+#पूर्ण_अगर
 
-static const struct i2c_device_id atmel_ecc_id[] = {
-	{ "atecc508a", 0 },
-	{ }
-};
-MODULE_DEVICE_TABLE(i2c, atmel_ecc_id);
+अटल स्थिर काष्ठा i2c_device_id aपंचांगel_ecc_id[] = अणु
+	अणु "atecc508a", 0 पूर्ण,
+	अणु पूर्ण
+पूर्ण;
+MODULE_DEVICE_TABLE(i2c, aपंचांगel_ecc_id);
 
-static struct i2c_driver atmel_ecc_driver = {
-	.driver = {
+अटल काष्ठा i2c_driver aपंचांगel_ecc_driver = अणु
+	.driver = अणु
 		.name	= "atmel-ecc",
-		.of_match_table = of_match_ptr(atmel_ecc_dt_ids),
-	},
-	.probe		= atmel_ecc_probe,
-	.remove		= atmel_ecc_remove,
-	.id_table	= atmel_ecc_id,
-};
+		.of_match_table = of_match_ptr(aपंचांगel_ecc_dt_ids),
+	पूर्ण,
+	.probe		= aपंचांगel_ecc_probe,
+	.हटाओ		= aपंचांगel_ecc_हटाओ,
+	.id_table	= aपंचांगel_ecc_id,
+पूर्ण;
 
-static int __init atmel_ecc_init(void)
-{
+अटल पूर्णांक __init aपंचांगel_ecc_init(व्योम)
+अणु
 	spin_lock_init(&driver_data.i2c_list_lock);
 	INIT_LIST_HEAD(&driver_data.i2c_client_list);
-	return i2c_add_driver(&atmel_ecc_driver);
-}
+	वापस i2c_add_driver(&aपंचांगel_ecc_driver);
+पूर्ण
 
-static void __exit atmel_ecc_exit(void)
-{
+अटल व्योम __निकास aपंचांगel_ecc_निकास(व्योम)
+अणु
 	flush_scheduled_work();
-	i2c_del_driver(&atmel_ecc_driver);
-}
+	i2c_del_driver(&aपंचांगel_ecc_driver);
+पूर्ण
 
-module_init(atmel_ecc_init);
-module_exit(atmel_ecc_exit);
+module_init(aपंचांगel_ecc_init);
+module_निकास(aपंचांगel_ecc_निकास);
 
 MODULE_AUTHOR("Tudor Ambarus <tudor.ambarus@microchip.com>");
 MODULE_DESCRIPTION("Microchip / Atmel ECC (I2C) driver");

@@ -1,157 +1,158 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * RTC subsystem, dev interface
+ * RTC subप्रणाली, dev पूर्णांकerface
  *
  * Copyright (C) 2005 Tower Technologies
  * Author: Alessandro Zummo <a.zummo@towertech.it>
  *
- * based on arch/arm/common/rtctime.c
+ * based on arch/arm/common/rtस_समय.c
  */
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include <linux/compat.h>
-#include <linux/module.h>
-#include <linux/rtc.h>
-#include <linux/sched/signal.h>
-#include "rtc-core.h"
+#समावेश <linux/compat.h>
+#समावेश <linux/module.h>
+#समावेश <linux/rtc.h>
+#समावेश <linux/sched/संकेत.स>
+#समावेश "rtc-core.h"
 
-static dev_t rtc_devt;
+अटल dev_t rtc_devt;
 
-#define RTC_DEV_MAX 16 /* 16 RTCs should be enough for everyone... */
+#घोषणा RTC_DEV_MAX 16 /* 16 RTCs should be enough क्रम everyone... */
 
-static int rtc_dev_open(struct inode *inode, struct file *file)
-{
-	struct rtc_device *rtc = container_of(inode->i_cdev,
-					struct rtc_device, char_dev);
+अटल पूर्णांक rtc_dev_खोलो(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	काष्ठा rtc_device *rtc = container_of(inode->i_cdev,
+					काष्ठा rtc_device, अक्षर_dev);
 
-	if (test_and_set_bit_lock(RTC_DEV_BUSY, &rtc->flags))
-		return -EBUSY;
+	अगर (test_and_set_bit_lock(RTC_DEV_BUSY, &rtc->flags))
+		वापस -EBUSY;
 
-	file->private_data = rtc;
+	file->निजी_data = rtc;
 
 	spin_lock_irq(&rtc->irq_lock);
 	rtc->irq_data = 0;
 	spin_unlock_irq(&rtc->irq_lock);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_RTC_INTF_DEV_UIE_EMUL
+#अगर_घोषित CONFIG_RTC_INTF_DEV_UIE_EMUL
 /*
- * Routine to poll RTC seconds field for change as often as possible,
- * after first RTC_UIE use timer to reduce polling
+ * Routine to poll RTC seconds field क्रम change as often as possible,
+ * after first RTC_UIE use समयr to reduce polling
  */
-static void rtc_uie_task(struct work_struct *work)
-{
-	struct rtc_device *rtc =
-		container_of(work, struct rtc_device, uie_task);
-	struct rtc_time tm;
-	int num = 0;
-	int err;
+अटल व्योम rtc_uie_task(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा rtc_device *rtc =
+		container_of(work, काष्ठा rtc_device, uie_task);
+	काष्ठा rtc_समय पंचांग;
+	पूर्णांक num = 0;
+	पूर्णांक err;
 
-	err = rtc_read_time(rtc, &tm);
+	err = rtc_पढ़ो_समय(rtc, &पंचांग);
 
 	spin_lock_irq(&rtc->irq_lock);
-	if (rtc->stop_uie_polling || err) {
+	अगर (rtc->stop_uie_polling || err) अणु
 		rtc->uie_task_active = 0;
-	} else if (rtc->oldsecs != tm.tm_sec) {
-		num = (tm.tm_sec + 60 - rtc->oldsecs) % 60;
-		rtc->oldsecs = tm.tm_sec;
-		rtc->uie_timer.expires = jiffies + HZ - (HZ / 10);
-		rtc->uie_timer_active = 1;
+	पूर्ण अन्यथा अगर (rtc->oldsecs != पंचांग.पंचांग_sec) अणु
+		num = (पंचांग.पंचांग_sec + 60 - rtc->oldsecs) % 60;
+		rtc->oldsecs = पंचांग.पंचांग_sec;
+		rtc->uie_समयr.expires = jअगरfies + HZ - (HZ / 10);
+		rtc->uie_समयr_active = 1;
 		rtc->uie_task_active = 0;
-		add_timer(&rtc->uie_timer);
-	} else if (schedule_work(&rtc->uie_task) == 0) {
+		add_समयr(&rtc->uie_समयr);
+	पूर्ण अन्यथा अगर (schedule_work(&rtc->uie_task) == 0) अणु
 		rtc->uie_task_active = 0;
-	}
+	पूर्ण
 	spin_unlock_irq(&rtc->irq_lock);
-	if (num)
+	अगर (num)
 		rtc_handle_legacy_irq(rtc, num, RTC_UF);
-}
+पूर्ण
 
-static void rtc_uie_timer(struct timer_list *t)
-{
-	struct rtc_device *rtc = from_timer(rtc, t, uie_timer);
-	unsigned long flags;
+अटल व्योम rtc_uie_समयr(काष्ठा समयr_list *t)
+अणु
+	काष्ठा rtc_device *rtc = from_समयr(rtc, t, uie_समयr);
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&rtc->irq_lock, flags);
-	rtc->uie_timer_active = 0;
+	rtc->uie_समयr_active = 0;
 	rtc->uie_task_active = 1;
-	if ((schedule_work(&rtc->uie_task) == 0))
+	अगर ((schedule_work(&rtc->uie_task) == 0))
 		rtc->uie_task_active = 0;
 	spin_unlock_irqrestore(&rtc->irq_lock, flags);
-}
+पूर्ण
 
-static int clear_uie(struct rtc_device *rtc)
-{
+अटल पूर्णांक clear_uie(काष्ठा rtc_device *rtc)
+अणु
 	spin_lock_irq(&rtc->irq_lock);
-	if (rtc->uie_irq_active) {
+	अगर (rtc->uie_irq_active) अणु
 		rtc->stop_uie_polling = 1;
-		if (rtc->uie_timer_active) {
+		अगर (rtc->uie_समयr_active) अणु
 			spin_unlock_irq(&rtc->irq_lock);
-			del_timer_sync(&rtc->uie_timer);
+			del_समयr_sync(&rtc->uie_समयr);
 			spin_lock_irq(&rtc->irq_lock);
-			rtc->uie_timer_active = 0;
-		}
-		if (rtc->uie_task_active) {
+			rtc->uie_समयr_active = 0;
+		पूर्ण
+		अगर (rtc->uie_task_active) अणु
 			spin_unlock_irq(&rtc->irq_lock);
 			flush_scheduled_work();
 			spin_lock_irq(&rtc->irq_lock);
-		}
+		पूर्ण
 		rtc->uie_irq_active = 0;
-	}
+	पूर्ण
 	spin_unlock_irq(&rtc->irq_lock);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int set_uie(struct rtc_device *rtc)
-{
-	struct rtc_time tm;
-	int err;
+अटल पूर्णांक set_uie(काष्ठा rtc_device *rtc)
+अणु
+	काष्ठा rtc_समय पंचांग;
+	पूर्णांक err;
 
-	err = rtc_read_time(rtc, &tm);
-	if (err)
-		return err;
+	err = rtc_पढ़ो_समय(rtc, &पंचांग);
+	अगर (err)
+		वापस err;
 	spin_lock_irq(&rtc->irq_lock);
-	if (!rtc->uie_irq_active) {
+	अगर (!rtc->uie_irq_active) अणु
 		rtc->uie_irq_active = 1;
 		rtc->stop_uie_polling = 0;
-		rtc->oldsecs = tm.tm_sec;
+		rtc->oldsecs = पंचांग.पंचांग_sec;
 		rtc->uie_task_active = 1;
-		if (schedule_work(&rtc->uie_task) == 0)
+		अगर (schedule_work(&rtc->uie_task) == 0)
 			rtc->uie_task_active = 0;
-	}
+	पूर्ण
 	rtc->irq_data = 0;
 	spin_unlock_irq(&rtc->irq_lock);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int rtc_dev_update_irq_enable_emul(struct rtc_device *rtc, unsigned int enabled)
-{
-	if (enabled)
-		return set_uie(rtc);
-	else
-		return clear_uie(rtc);
-}
+पूर्णांक rtc_dev_update_irq_enable_emul(काष्ठा rtc_device *rtc, अचिन्हित पूर्णांक enabled)
+अणु
+	अगर (enabled)
+		वापस set_uie(rtc);
+	अन्यथा
+		वापस clear_uie(rtc);
+पूर्ण
 EXPORT_SYMBOL(rtc_dev_update_irq_enable_emul);
 
-#endif /* CONFIG_RTC_INTF_DEV_UIE_EMUL */
+#पूर्ण_अगर /* CONFIG_RTC_INTF_DEV_UIE_EMUL */
 
-static ssize_t
-rtc_dev_read(struct file *file, char __user *buf, size_t count, loff_t *ppos)
-{
-	struct rtc_device *rtc = file->private_data;
+अटल sमाप_प्रकार
+rtc_dev_पढ़ो(काष्ठा file *file, अक्षर __user *buf, माप_प्रकार count, loff_t *ppos)
+अणु
+	काष्ठा rtc_device *rtc = file->निजी_data;
 
-	DECLARE_WAITQUEUE(wait, current);
-	unsigned long data;
-	ssize_t ret;
+	DECLARE_WAITQUEUE(रुको, current);
+	अचिन्हित दीर्घ data;
+	sमाप_प्रकार ret;
 
-	if (count != sizeof(unsigned int) && count < sizeof(unsigned long))
-		return -EINVAL;
+	अगर (count != माप(अचिन्हित पूर्णांक) && count < माप(अचिन्हित दीर्घ))
+		वापस -EINVAL;
 
-	add_wait_queue(&rtc->irq_queue, &wait);
-	do {
+	add_रुको_queue(&rtc->irq_queue, &रुको);
+	करो अणु
 		__set_current_state(TASK_INTERRUPTIBLE);
 
 		spin_lock_irq(&rtc->irq_lock);
@@ -159,291 +160,291 @@ rtc_dev_read(struct file *file, char __user *buf, size_t count, loff_t *ppos)
 		rtc->irq_data = 0;
 		spin_unlock_irq(&rtc->irq_lock);
 
-		if (data != 0) {
+		अगर (data != 0) अणु
 			ret = 0;
-			break;
-		}
-		if (file->f_flags & O_NONBLOCK) {
+			अवरोध;
+		पूर्ण
+		अगर (file->f_flags & O_NONBLOCK) अणु
 			ret = -EAGAIN;
-			break;
-		}
-		if (signal_pending(current)) {
+			अवरोध;
+		पूर्ण
+		अगर (संकेत_pending(current)) अणु
 			ret = -ERESTARTSYS;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		schedule();
-	} while (1);
+	पूर्ण जबतक (1);
 	set_current_state(TASK_RUNNING);
-	remove_wait_queue(&rtc->irq_queue, &wait);
+	हटाओ_रुको_queue(&rtc->irq_queue, &रुको);
 
-	if (ret == 0) {
-		if (sizeof(int) != sizeof(long) &&
-		    count == sizeof(unsigned int))
-			ret = put_user(data, (unsigned int __user *)buf) ?:
-				sizeof(unsigned int);
-		else
-			ret = put_user(data, (unsigned long __user *)buf) ?:
-				sizeof(unsigned long);
-	}
-	return ret;
-}
+	अगर (ret == 0) अणु
+		अगर (माप(पूर्णांक) != माप(दीर्घ) &&
+		    count == माप(अचिन्हित पूर्णांक))
+			ret = put_user(data, (अचिन्हित पूर्णांक __user *)buf) ?:
+				माप(अचिन्हित पूर्णांक);
+		अन्यथा
+			ret = put_user(data, (अचिन्हित दीर्घ __user *)buf) ?:
+				माप(अचिन्हित दीर्घ);
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static __poll_t rtc_dev_poll(struct file *file, poll_table *wait)
-{
-	struct rtc_device *rtc = file->private_data;
-	unsigned long data;
+अटल __poll_t rtc_dev_poll(काष्ठा file *file, poll_table *रुको)
+अणु
+	काष्ठा rtc_device *rtc = file->निजी_data;
+	अचिन्हित दीर्घ data;
 
-	poll_wait(file, &rtc->irq_queue, wait);
+	poll_रुको(file, &rtc->irq_queue, रुको);
 
 	data = rtc->irq_data;
 
-	return (data != 0) ? (EPOLLIN | EPOLLRDNORM) : 0;
-}
+	वापस (data != 0) ? (EPOLLIN | EPOLLRDNORM) : 0;
+पूर्ण
 
-static long rtc_dev_ioctl(struct file *file,
-			  unsigned int cmd, unsigned long arg)
-{
-	int err = 0;
-	struct rtc_device *rtc = file->private_data;
-	const struct rtc_class_ops *ops = rtc->ops;
-	struct rtc_time tm;
-	struct rtc_wkalrm alarm;
-	void __user *uarg = (void __user *)arg;
+अटल दीर्घ rtc_dev_ioctl(काष्ठा file *file,
+			  अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
+अणु
+	पूर्णांक err = 0;
+	काष्ठा rtc_device *rtc = file->निजी_data;
+	स्थिर काष्ठा rtc_class_ops *ops = rtc->ops;
+	काष्ठा rtc_समय पंचांग;
+	काष्ठा rtc_wkalrm alarm;
+	व्योम __user *uarg = (व्योम __user *)arg;
 
-	err = mutex_lock_interruptible(&rtc->ops_lock);
-	if (err)
-		return err;
+	err = mutex_lock_पूर्णांकerruptible(&rtc->ops_lock);
+	अगर (err)
+		वापस err;
 
 	/* check that the calling task has appropriate permissions
-	 * for certain ioctls. doing this check here is useful
-	 * to avoid duplicate code in each driver.
+	 * क्रम certain ioctls. करोing this check here is useful
+	 * to aव्योम duplicate code in each driver.
 	 */
-	switch (cmd) {
-	case RTC_EPOCH_SET:
-	case RTC_SET_TIME:
-		if (!capable(CAP_SYS_TIME))
+	चयन (cmd) अणु
+	हाल RTC_EPOCH_SET:
+	हाल RTC_SET_TIME:
+		अगर (!capable(CAP_SYS_TIME))
 			err = -EACCES;
-		break;
+		अवरोध;
 
-	case RTC_IRQP_SET:
-		if (arg > rtc->max_user_freq && !capable(CAP_SYS_RESOURCE))
+	हाल RTC_IRQP_SET:
+		अगर (arg > rtc->max_user_freq && !capable(CAP_SYS_RESOURCE))
 			err = -EACCES;
-		break;
+		अवरोध;
 
-	case RTC_PIE_ON:
-		if (rtc->irq_freq > rtc->max_user_freq &&
+	हाल RTC_PIE_ON:
+		अगर (rtc->irq_freq > rtc->max_user_freq &&
 		    !capable(CAP_SYS_RESOURCE))
 			err = -EACCES;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	if (err)
-		goto done;
+	अगर (err)
+		जाओ करोne;
 
 	/*
 	 * Drivers *SHOULD NOT* provide ioctl implementations
-	 * for these requests.  Instead, provide methods to
-	 * support the following code, so that the RTC's main
+	 * क्रम these requests.  Instead, provide methods to
+	 * support the following code, so that the RTC's मुख्य
 	 * features are accessible without using ioctls.
 	 *
-	 * RTC and alarm times will be in UTC, by preference,
-	 * but dual-booting with MS-Windows implies RTCs must
-	 * use the local wall clock time.
+	 * RTC and alarm बार will be in UTC, by preference,
+	 * but dual-booting with MS-Winकरोws implies RTCs must
+	 * use the local wall घड़ी समय.
 	 */
 
-	switch (cmd) {
-	case RTC_ALM_READ:
+	चयन (cmd) अणु
+	हाल RTC_ALM_READ:
 		mutex_unlock(&rtc->ops_lock);
 
-		err = rtc_read_alarm(rtc, &alarm);
-		if (err < 0)
-			return err;
+		err = rtc_पढ़ो_alarm(rtc, &alarm);
+		अगर (err < 0)
+			वापस err;
 
-		if (copy_to_user(uarg, &alarm.time, sizeof(tm)))
+		अगर (copy_to_user(uarg, &alarm.समय, माप(पंचांग)))
 			err = -EFAULT;
-		return err;
+		वापस err;
 
-	case RTC_ALM_SET:
+	हाल RTC_ALM_SET:
 		mutex_unlock(&rtc->ops_lock);
 
-		if (copy_from_user(&alarm.time, uarg, sizeof(tm)))
-			return -EFAULT;
+		अगर (copy_from_user(&alarm.समय, uarg, माप(पंचांग)))
+			वापस -EFAULT;
 
 		alarm.enabled = 0;
 		alarm.pending = 0;
-		alarm.time.tm_wday = -1;
-		alarm.time.tm_yday = -1;
-		alarm.time.tm_isdst = -1;
+		alarm.समय.पंचांग_wday = -1;
+		alarm.समय.पंचांग_yday = -1;
+		alarm.समय.पंचांग_isdst = -1;
 
 		/* RTC_ALM_SET alarms may be up to 24 hours in the future.
 		 * Rather than expecting every RTC to implement "don't care"
-		 * for day/month/year fields, just force the alarm to have
-		 * the right values for those fields.
+		 * क्रम day/month/year fields, just क्रमce the alarm to have
+		 * the right values क्रम those fields.
 		 *
-		 * RTC_WKALM_SET should be used instead.  Not only does it
-		 * eliminate the need for a separate RTC_AIE_ON call, it
-		 * doesn't have the "alarm 23:59:59 in the future" race.
+		 * RTC_WKALM_SET should be used instead.  Not only करोes it
+		 * eliminate the need क्रम a separate RTC_AIE_ON call, it
+		 * करोesn't have the "alarm 23:59:59 in the future" race.
 		 *
 		 * NOTE:  some legacy code may have used invalid fields as
 		 * wildcards, exposing hardware "periodic alarm" capabilities.
 		 * Not supported here.
 		 */
-		{
-			time64_t now, then;
+		अणु
+			समय64_t now, then;
 
-			err = rtc_read_time(rtc, &tm);
-			if (err < 0)
-				return err;
-			now = rtc_tm_to_time64(&tm);
+			err = rtc_पढ़ो_समय(rtc, &पंचांग);
+			अगर (err < 0)
+				वापस err;
+			now = rtc_पंचांग_to_समय64(&पंचांग);
 
-			alarm.time.tm_mday = tm.tm_mday;
-			alarm.time.tm_mon = tm.tm_mon;
-			alarm.time.tm_year = tm.tm_year;
-			err  = rtc_valid_tm(&alarm.time);
-			if (err < 0)
-				return err;
-			then = rtc_tm_to_time64(&alarm.time);
+			alarm.समय.पंचांग_mday = पंचांग.पंचांग_mday;
+			alarm.समय.पंचांग_mon = पंचांग.पंचांग_mon;
+			alarm.समय.पंचांग_year = पंचांग.पंचांग_year;
+			err  = rtc_valid_पंचांग(&alarm.समय);
+			अगर (err < 0)
+				वापस err;
+			then = rtc_पंचांग_to_समय64(&alarm.समय);
 
-			/* alarm may need to wrap into tomorrow */
-			if (then < now) {
-				rtc_time64_to_tm(now + 24 * 60 * 60, &tm);
-				alarm.time.tm_mday = tm.tm_mday;
-				alarm.time.tm_mon = tm.tm_mon;
-				alarm.time.tm_year = tm.tm_year;
-			}
-		}
+			/* alarm may need to wrap पूर्णांकo tomorrow */
+			अगर (then < now) अणु
+				rtc_समय64_to_पंचांग(now + 24 * 60 * 60, &पंचांग);
+				alarm.समय.पंचांग_mday = पंचांग.पंचांग_mday;
+				alarm.समय.पंचांग_mon = पंचांग.पंचांग_mon;
+				alarm.समय.पंचांग_year = पंचांग.पंचांग_year;
+			पूर्ण
+		पूर्ण
 
-		return rtc_set_alarm(rtc, &alarm);
+		वापस rtc_set_alarm(rtc, &alarm);
 
-	case RTC_RD_TIME:
+	हाल RTC_RD_TIME:
 		mutex_unlock(&rtc->ops_lock);
 
-		err = rtc_read_time(rtc, &tm);
-		if (err < 0)
-			return err;
+		err = rtc_पढ़ो_समय(rtc, &पंचांग);
+		अगर (err < 0)
+			वापस err;
 
-		if (copy_to_user(uarg, &tm, sizeof(tm)))
+		अगर (copy_to_user(uarg, &पंचांग, माप(पंचांग)))
 			err = -EFAULT;
-		return err;
+		वापस err;
 
-	case RTC_SET_TIME:
+	हाल RTC_SET_TIME:
 		mutex_unlock(&rtc->ops_lock);
 
-		if (copy_from_user(&tm, uarg, sizeof(tm)))
-			return -EFAULT;
+		अगर (copy_from_user(&पंचांग, uarg, माप(पंचांग)))
+			वापस -EFAULT;
 
-		return rtc_set_time(rtc, &tm);
+		वापस rtc_set_समय(rtc, &पंचांग);
 
-	case RTC_PIE_ON:
+	हाल RTC_PIE_ON:
 		err = rtc_irq_set_state(rtc, 1);
-		break;
+		अवरोध;
 
-	case RTC_PIE_OFF:
+	हाल RTC_PIE_OFF:
 		err = rtc_irq_set_state(rtc, 0);
-		break;
+		अवरोध;
 
-	case RTC_AIE_ON:
+	हाल RTC_AIE_ON:
 		mutex_unlock(&rtc->ops_lock);
-		return rtc_alarm_irq_enable(rtc, 1);
+		वापस rtc_alarm_irq_enable(rtc, 1);
 
-	case RTC_AIE_OFF:
+	हाल RTC_AIE_OFF:
 		mutex_unlock(&rtc->ops_lock);
-		return rtc_alarm_irq_enable(rtc, 0);
+		वापस rtc_alarm_irq_enable(rtc, 0);
 
-	case RTC_UIE_ON:
+	हाल RTC_UIE_ON:
 		mutex_unlock(&rtc->ops_lock);
-		return rtc_update_irq_enable(rtc, 1);
+		वापस rtc_update_irq_enable(rtc, 1);
 
-	case RTC_UIE_OFF:
+	हाल RTC_UIE_OFF:
 		mutex_unlock(&rtc->ops_lock);
-		return rtc_update_irq_enable(rtc, 0);
+		वापस rtc_update_irq_enable(rtc, 0);
 
-	case RTC_IRQP_SET:
+	हाल RTC_IRQP_SET:
 		err = rtc_irq_set_freq(rtc, arg);
-		break;
-	case RTC_IRQP_READ:
-		err = put_user(rtc->irq_freq, (unsigned long __user *)uarg);
-		break;
+		अवरोध;
+	हाल RTC_IRQP_READ:
+		err = put_user(rtc->irq_freq, (अचिन्हित दीर्घ __user *)uarg);
+		अवरोध;
 
-	case RTC_WKALM_SET:
+	हाल RTC_WKALM_SET:
 		mutex_unlock(&rtc->ops_lock);
-		if (copy_from_user(&alarm, uarg, sizeof(alarm)))
-			return -EFAULT;
+		अगर (copy_from_user(&alarm, uarg, माप(alarm)))
+			वापस -EFAULT;
 
-		return rtc_set_alarm(rtc, &alarm);
+		वापस rtc_set_alarm(rtc, &alarm);
 
-	case RTC_WKALM_RD:
+	हाल RTC_WKALM_RD:
 		mutex_unlock(&rtc->ops_lock);
-		err = rtc_read_alarm(rtc, &alarm);
-		if (err < 0)
-			return err;
+		err = rtc_पढ़ो_alarm(rtc, &alarm);
+		अगर (err < 0)
+			वापस err;
 
-		if (copy_to_user(uarg, &alarm, sizeof(alarm)))
+		अगर (copy_to_user(uarg, &alarm, माप(alarm)))
 			err = -EFAULT;
-		return err;
+		वापस err;
 
-	default:
-		/* Finally try the driver's ioctl interface */
-		if (ops->ioctl) {
+	शेष:
+		/* Finally try the driver's ioctl पूर्णांकerface */
+		अगर (ops->ioctl) अणु
 			err = ops->ioctl(rtc->dev.parent, cmd, arg);
-			if (err == -ENOIOCTLCMD)
+			अगर (err == -ENOIOCTLCMD)
 				err = -ENOTTY;
-		} else {
+		पूर्ण अन्यथा अणु
 			err = -ENOTTY;
-		}
-		break;
-	}
+		पूर्ण
+		अवरोध;
+	पूर्ण
 
-done:
+करोne:
 	mutex_unlock(&rtc->ops_lock);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-#ifdef CONFIG_COMPAT
-#define RTC_IRQP_SET32		_IOW('p', 0x0c, __u32)
-#define RTC_IRQP_READ32		_IOR('p', 0x0b, __u32)
-#define RTC_EPOCH_SET32		_IOW('p', 0x0e, __u32)
+#अगर_घोषित CONFIG_COMPAT
+#घोषणा RTC_IRQP_SET32		_IOW('p', 0x0c, __u32)
+#घोषणा RTC_IRQP_READ32		_IOR('p', 0x0b, __u32)
+#घोषणा RTC_EPOCH_SET32		_IOW('p', 0x0e, __u32)
 
-static long rtc_dev_compat_ioctl(struct file *file,
-				 unsigned int cmd, unsigned long arg)
-{
-	struct rtc_device *rtc = file->private_data;
-	void __user *uarg = compat_ptr(arg);
+अटल दीर्घ rtc_dev_compat_ioctl(काष्ठा file *file,
+				 अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
+अणु
+	काष्ठा rtc_device *rtc = file->निजी_data;
+	व्योम __user *uarg = compat_ptr(arg);
 
-	switch (cmd) {
-	case RTC_IRQP_READ32:
-		return put_user(rtc->irq_freq, (__u32 __user *)uarg);
+	चयन (cmd) अणु
+	हाल RTC_IRQP_READ32:
+		वापस put_user(rtc->irq_freq, (__u32 __user *)uarg);
 
-	case RTC_IRQP_SET32:
-		/* arg is a plain integer, not pointer */
-		return rtc_dev_ioctl(file, RTC_IRQP_SET, arg);
+	हाल RTC_IRQP_SET32:
+		/* arg is a plain पूर्णांकeger, not poपूर्णांकer */
+		वापस rtc_dev_ioctl(file, RTC_IRQP_SET, arg);
 
-	case RTC_EPOCH_SET32:
-		/* arg is a plain integer, not pointer */
-		return rtc_dev_ioctl(file, RTC_EPOCH_SET, arg);
-	}
+	हाल RTC_EPOCH_SET32:
+		/* arg is a plain पूर्णांकeger, not poपूर्णांकer */
+		वापस rtc_dev_ioctl(file, RTC_EPOCH_SET, arg);
+	पूर्ण
 
-	return rtc_dev_ioctl(file, cmd, (unsigned long)uarg);
-}
-#endif
+	वापस rtc_dev_ioctl(file, cmd, (अचिन्हित दीर्घ)uarg);
+पूर्ण
+#पूर्ण_अगर
 
-static int rtc_dev_fasync(int fd, struct file *file, int on)
-{
-	struct rtc_device *rtc = file->private_data;
+अटल पूर्णांक rtc_dev_fasync(पूर्णांक fd, काष्ठा file *file, पूर्णांक on)
+अणु
+	काष्ठा rtc_device *rtc = file->निजी_data;
 
-	return fasync_helper(fd, file, on, &rtc->async_queue);
-}
+	वापस fasync_helper(fd, file, on, &rtc->async_queue);
+पूर्ण
 
-static int rtc_dev_release(struct inode *inode, struct file *file)
-{
-	struct rtc_device *rtc = file->private_data;
+अटल पूर्णांक rtc_dev_release(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	काष्ठा rtc_device *rtc = file->निजी_data;
 
-	/* We shut down the repeating IRQs that userspace enabled,
+	/* We shut करोwn the repeating IRQs that userspace enabled,
 	 * since nothing is listening to them.
 	 *  - Update (UIE) ... currently only managed through ioctls
-	 *  - Periodic (PIE) ... also used through rtc_*() interface calls
+	 *  - Periodic (PIE) ... also used through rtc_*() पूर्णांकerface calls
 	 *
-	 * Leave the alarm alone; it may be set to trigger a system wakeup
+	 * Leave the alarm alone; it may be set to trigger a प्रणाली wakeup
 	 * later, or be used by kernel code, and is a one-shot event anyway.
 	 */
 
@@ -453,57 +454,57 @@ static int rtc_dev_release(struct inode *inode, struct file *file)
 	rtc_irq_set_state(rtc, 0);
 
 	clear_bit_unlock(RTC_DEV_BUSY, &rtc->flags);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct file_operations rtc_dev_fops = {
+अटल स्थिर काष्ठा file_operations rtc_dev_fops = अणु
 	.owner		= THIS_MODULE,
 	.llseek		= no_llseek,
-	.read		= rtc_dev_read,
+	.पढ़ो		= rtc_dev_पढ़ो,
 	.poll		= rtc_dev_poll,
 	.unlocked_ioctl	= rtc_dev_ioctl,
-#ifdef CONFIG_COMPAT
+#अगर_घोषित CONFIG_COMPAT
 	.compat_ioctl	= rtc_dev_compat_ioctl,
-#endif
-	.open		= rtc_dev_open,
+#पूर्ण_अगर
+	.खोलो		= rtc_dev_खोलो,
 	.release	= rtc_dev_release,
 	.fasync		= rtc_dev_fasync,
-};
+पूर्ण;
 
 /* insertion/removal hooks */
 
-void rtc_dev_prepare(struct rtc_device *rtc)
-{
-	if (!rtc_devt)
-		return;
+व्योम rtc_dev_prepare(काष्ठा rtc_device *rtc)
+अणु
+	अगर (!rtc_devt)
+		वापस;
 
-	if (rtc->id >= RTC_DEV_MAX) {
+	अगर (rtc->id >= RTC_DEV_MAX) अणु
 		dev_dbg(&rtc->dev, "too many RTC devices\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	rtc->dev.devt = MKDEV(MAJOR(rtc_devt), rtc->id);
 
-#ifdef CONFIG_RTC_INTF_DEV_UIE_EMUL
+#अगर_घोषित CONFIG_RTC_INTF_DEV_UIE_EMUL
 	INIT_WORK(&rtc->uie_task, rtc_uie_task);
-	timer_setup(&rtc->uie_timer, rtc_uie_timer, 0);
-#endif
+	समयr_setup(&rtc->uie_समयr, rtc_uie_समयr, 0);
+#पूर्ण_अगर
 
-	cdev_init(&rtc->char_dev, &rtc_dev_fops);
-	rtc->char_dev.owner = rtc->owner;
-}
+	cdev_init(&rtc->अक्षर_dev, &rtc_dev_fops);
+	rtc->अक्षर_dev.owner = rtc->owner;
+पूर्ण
 
-void __init rtc_dev_init(void)
-{
-	int err;
+व्योम __init rtc_dev_init(व्योम)
+अणु
+	पूर्णांक err;
 
 	err = alloc_chrdev_region(&rtc_devt, 0, RTC_DEV_MAX, "rtc");
-	if (err < 0)
+	अगर (err < 0)
 		pr_err("failed to allocate char dev region\n");
-}
+पूर्ण
 
-void __exit rtc_dev_exit(void)
-{
-	if (rtc_devt)
-		unregister_chrdev_region(rtc_devt, RTC_DEV_MAX);
-}
+व्योम __निकास rtc_dev_निकास(व्योम)
+अणु
+	अगर (rtc_devt)
+		unरेजिस्टर_chrdev_region(rtc_devt, RTC_DEV_MAX);
+पूर्ण

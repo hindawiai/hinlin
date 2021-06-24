@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
  * TI OMAP4 ISS V4L2 Driver - CSI PHY module
  *
@@ -7,15 +8,15 @@
  * Author: Sergio Aguirre <sergio.a.aguirre@gmail.com>
  */
 
-#include <linux/delay.h>
-#include <linux/device.h>
-#include <linux/regmap.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/device.h>
+#समावेश <linux/regmap.h>
 
-#include "../../../../arch/arm/mach-omap2/control.h"
+#समावेश "../../../../arch/arm/mach-omap2/control.h"
 
-#include "iss.h"
-#include "iss_regs.h"
-#include "iss_csiphy.h"
+#समावेश "iss.h"
+#समावेश "iss_regs.h"
+#समावेश "iss_csiphy.h"
 
 /*
  * csiphy_lanes_config - Configuration of CSIPHY lanes.
@@ -23,78 +24,78 @@
  * Updates HW configuration.
  * Called with phy->mutex taken.
  */
-static void csiphy_lanes_config(struct iss_csiphy *phy)
-{
-	unsigned int i;
+अटल व्योम csiphy_lanes_config(काष्ठा iss_csiphy *phy)
+अणु
+	अचिन्हित पूर्णांक i;
 	u32 reg;
 
-	reg = iss_reg_read(phy->iss, phy->cfg_regs, CSI2_COMPLEXIO_CFG);
+	reg = iss_reg_पढ़ो(phy->iss, phy->cfg_regs, CSI2_COMPLEXIO_CFG);
 
-	for (i = 0; i < phy->max_data_lanes; i++) {
+	क्रम (i = 0; i < phy->max_data_lanes; i++) अणु
 		reg &= ~(CSI2_COMPLEXIO_CFG_DATA_POL(i + 1) |
 			 CSI2_COMPLEXIO_CFG_DATA_POSITION_MASK(i + 1));
 		reg |= (phy->lanes.data[i].pol ?
 			CSI2_COMPLEXIO_CFG_DATA_POL(i + 1) : 0);
 		reg |= (phy->lanes.data[i].pos <<
 			CSI2_COMPLEXIO_CFG_DATA_POSITION_SHIFT(i + 1));
-	}
+	पूर्ण
 
 	reg &= ~(CSI2_COMPLEXIO_CFG_CLOCK_POL |
 		 CSI2_COMPLEXIO_CFG_CLOCK_POSITION_MASK);
 	reg |= phy->lanes.clk.pol ? CSI2_COMPLEXIO_CFG_CLOCK_POL : 0;
 	reg |= phy->lanes.clk.pos << CSI2_COMPLEXIO_CFG_CLOCK_POSITION_SHIFT;
 
-	iss_reg_write(phy->iss, phy->cfg_regs, CSI2_COMPLEXIO_CFG, reg);
-}
+	iss_reg_ग_लिखो(phy->iss, phy->cfg_regs, CSI2_COMPLEXIO_CFG, reg);
+पूर्ण
 
 /*
- * csiphy_set_power
- * @power: Power state to be set.
+ * csiphy_set_घातer
+ * @घातer: Power state to be set.
  *
- * Returns 0 if successful, or -EBUSY if the retry count is exceeded.
+ * Returns 0 अगर successful, or -EBUSY अगर the retry count is exceeded.
  */
-static int csiphy_set_power(struct iss_csiphy *phy, u32 power)
-{
+अटल पूर्णांक csiphy_set_घातer(काष्ठा iss_csiphy *phy, u32 घातer)
+अणु
 	u32 reg;
 	u8 retry_count;
 
 	iss_reg_update(phy->iss, phy->cfg_regs, CSI2_COMPLEXIO_CFG,
 		       CSI2_COMPLEXIO_CFG_PWD_CMD_MASK,
-		       power | CSI2_COMPLEXIO_CFG_PWR_AUTO);
+		       घातer | CSI2_COMPLEXIO_CFG_PWR_AUTO);
 
 	retry_count = 0;
-	do {
+	करो अणु
 		udelay(1);
-		reg = iss_reg_read(phy->iss, phy->cfg_regs, CSI2_COMPLEXIO_CFG)
+		reg = iss_reg_पढ़ो(phy->iss, phy->cfg_regs, CSI2_COMPLEXIO_CFG)
 		    & CSI2_COMPLEXIO_CFG_PWD_STATUS_MASK;
 
-		if (reg != power >> 2)
+		अगर (reg != घातer >> 2)
 			retry_count++;
 
-	} while ((reg != power >> 2) && (retry_count < 250));
+	पूर्ण जबतक ((reg != घातer >> 2) && (retry_count < 250));
 
-	if (retry_count == 250) {
+	अगर (retry_count == 250) अणु
 		dev_err(phy->iss->dev, "CSI2 CIO set power failed!\n");
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * csiphy_dphy_config - Configure CSI2 D-PHY parameters.
  *
  * Called with phy->mutex taken.
  */
-static void csiphy_dphy_config(struct iss_csiphy *phy)
-{
+अटल व्योम csiphy_dphy_config(काष्ठा iss_csiphy *phy)
+अणु
 	u32 reg;
 
 	/* Set up REGISTER0 */
 	reg = phy->dphy.ths_term << REGISTER0_THS_TERM_SHIFT;
 	reg |= phy->dphy.ths_settle << REGISTER0_THS_SETTLE_SHIFT;
 
-	iss_reg_write(phy->iss, phy->phy_regs, REGISTER0, reg);
+	iss_reg_ग_लिखो(phy->iss, phy->phy_regs, REGISTER0, reg);
 
 	/* Set up REGISTER1 */
 	reg = phy->dphy.tclk_term << REGISTER1_TCLK_TERM_SHIFT;
@@ -102,28 +103,28 @@ static void csiphy_dphy_config(struct iss_csiphy *phy)
 	reg |= phy->dphy.tclk_settle << REGISTER1_TCLK_SETTLE_SHIFT;
 	reg |= 0xb8 << REGISTER1_DPHY_HS_SYNC_PATTERN_SHIFT;
 
-	iss_reg_write(phy->iss, phy->phy_regs, REGISTER1, reg);
-}
+	iss_reg_ग_लिखो(phy->iss, phy->phy_regs, REGISTER1, reg);
+पूर्ण
 
 /*
  * TCLK values are OK at their reset values
  */
-#define TCLK_TERM	0
-#define TCLK_MISS	1
-#define TCLK_SETTLE	14
+#घोषणा TCLK_TERM	0
+#घोषणा TCLK_MISS	1
+#घोषणा TCLK_SETTLE	14
 
-int omap4iss_csiphy_config(struct iss_device *iss,
-			   struct v4l2_subdev *csi2_subdev)
-{
-	struct iss_csi2_device *csi2 = v4l2_get_subdevdata(csi2_subdev);
-	struct iss_pipeline *pipe = to_iss_pipeline(&csi2_subdev->entity);
-	struct iss_v4l2_subdevs_group *subdevs = pipe->external->host_priv;
-	struct iss_csiphy_dphy_cfg csi2phy;
-	int csi2_ddrclk_khz;
-	struct iss_csiphy_lanes_cfg *lanes;
-	unsigned int used_lanes = 0;
+पूर्णांक omap4iss_csiphy_config(काष्ठा iss_device *iss,
+			   काष्ठा v4l2_subdev *csi2_subdev)
+अणु
+	काष्ठा iss_csi2_device *csi2 = v4l2_get_subdevdata(csi2_subdev);
+	काष्ठा iss_pipeline *pipe = to_iss_pipeline(&csi2_subdev->entity);
+	काष्ठा iss_v4l2_subdevs_group *subdevs = pipe->बाह्यal->host_priv;
+	काष्ठा iss_csiphy_dphy_cfg csi2phy;
+	पूर्णांक csi2_ddrclk_khz;
+	काष्ठा iss_csiphy_lanes_cfg *lanes;
+	अचिन्हित पूर्णांक used_lanes = 0;
 	u32 cam_rx_ctrl;
-	unsigned int i;
+	अचिन्हित पूर्णांक i;
 
 	lanes = &subdevs->bus.csi2.lanecfg;
 
@@ -138,68 +139,68 @@ int omap4iss_csiphy_config(struct iss_device *iss,
 	 * - bit [17:16] : CSIPHY1 config: 00 d-phy, 01/10 ccp2
 	 */
 	/*
-	 * TODO: When implementing DT support specify the CONTROL_CAMERA_RX
-	 * register offset in the syscon property instead of hardcoding it.
+	 * TODO: When implementing DT support specअगरy the CONTROL_CAMERA_RX
+	 * रेजिस्टर offset in the syscon property instead of hardcoding it.
 	 */
-	regmap_read(iss->syscon, 0x68, &cam_rx_ctrl);
+	regmap_पढ़ो(iss->syscon, 0x68, &cam_rx_ctrl);
 
-	if (subdevs->interface == ISS_INTERFACE_CSI2A_PHY1) {
+	अगर (subdevs->पूर्णांकerface == ISS_INTERFACE_CSI2A_PHY1) अणु
 		cam_rx_ctrl &= ~(OMAP4_CAMERARX_CSI21_LANEENABLE_MASK |
 				OMAP4_CAMERARX_CSI21_CAMMODE_MASK);
 		/* NOTE: Leave CSIPHY1 config to 0x0: D-PHY mode */
-		/* Enable all lanes for now */
+		/* Enable all lanes क्रम now */
 		cam_rx_ctrl |=
 			0x1f << OMAP4_CAMERARX_CSI21_LANEENABLE_SHIFT;
 		/* Enable CTRLCLK */
 		cam_rx_ctrl |= OMAP4_CAMERARX_CSI21_CTRLCLKEN_MASK;
-	}
+	पूर्ण
 
-	if (subdevs->interface == ISS_INTERFACE_CSI2B_PHY2) {
+	अगर (subdevs->पूर्णांकerface == ISS_INTERFACE_CSI2B_PHY2) अणु
 		cam_rx_ctrl &= ~(OMAP4_CAMERARX_CSI22_LANEENABLE_MASK |
 				OMAP4_CAMERARX_CSI22_CAMMODE_MASK);
 		/* NOTE: Leave CSIPHY2 config to 0x0: D-PHY mode */
-		/* Enable all lanes for now */
+		/* Enable all lanes क्रम now */
 		cam_rx_ctrl |=
 			0x3 << OMAP4_CAMERARX_CSI22_LANEENABLE_SHIFT;
 		/* Enable CTRLCLK */
 		cam_rx_ctrl |= OMAP4_CAMERARX_CSI22_CTRLCLKEN_MASK;
-	}
+	पूर्ण
 
-	regmap_write(iss->syscon, 0x68, cam_rx_ctrl);
+	regmap_ग_लिखो(iss->syscon, 0x68, cam_rx_ctrl);
 
 	/* Reset used lane count */
 	csi2->phy->used_data_lanes = 0;
 
-	/* Clock and data lanes verification */
-	for (i = 0; i < csi2->phy->max_data_lanes; i++) {
-		if (lanes->data[i].pos == 0)
-			continue;
+	/* Clock and data lanes verअगरication */
+	क्रम (i = 0; i < csi2->phy->max_data_lanes; i++) अणु
+		अगर (lanes->data[i].pos == 0)
+			जारी;
 
-		if (lanes->data[i].pol > 1 ||
+		अगर (lanes->data[i].pol > 1 ||
 		    lanes->data[i].pos > (csi2->phy->max_data_lanes + 1))
-			return -EINVAL;
+			वापस -EINVAL;
 
-		if (used_lanes & (1 << lanes->data[i].pos))
-			return -EINVAL;
+		अगर (used_lanes & (1 << lanes->data[i].pos))
+			वापस -EINVAL;
 
 		used_lanes |= 1 << lanes->data[i].pos;
 		csi2->phy->used_data_lanes++;
-	}
+	पूर्ण
 
-	if (lanes->clk.pol > 1 ||
+	अगर (lanes->clk.pol > 1 ||
 	    lanes->clk.pos > (csi2->phy->max_data_lanes + 1))
-		return -EINVAL;
+		वापस -EINVAL;
 
-	if (lanes->clk.pos == 0 || used_lanes & (1 << lanes->clk.pos))
-		return -EINVAL;
+	अगर (lanes->clk.pos == 0 || used_lanes & (1 << lanes->clk.pos))
+		वापस -EINVAL;
 
-	csi2_ddrclk_khz = pipe->external_rate / 1000
+	csi2_ddrclk_khz = pipe->बाह्यal_rate / 1000
 		/ (2 * csi2->phy->used_data_lanes)
-		* pipe->external_bpp;
+		* pipe->बाह्यal_bpp;
 
 	/*
-	 * THS_TERM: Programmed value = ceil(12.5 ns/DDRClk period) - 1.
-	 * THS_SETTLE: Programmed value = ceil(90 ns/DDRClk period) + 3.
+	 * THS_TERM: Programmed value = उच्चमान(12.5 ns/DDRClk period) - 1.
+	 * THS_SETTLE: Programmed value = उच्चमान(90 ns/DDRClk period) + 3.
 	 */
 	csi2phy.ths_term = DIV_ROUND_UP(25 * csi2_ddrclk_khz, 2000000) - 1;
 	csi2phy.ths_settle = DIV_ROUND_UP(90 * csi2_ddrclk_khz, 1000000) + 3;
@@ -212,50 +213,50 @@ int omap4iss_csiphy_config(struct iss_device *iss,
 	csi2->phy->lanes = *lanes;
 	mutex_unlock(&csi2->phy->mutex);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int omap4iss_csiphy_acquire(struct iss_csiphy *phy)
-{
-	int rval;
+पूर्णांक omap4iss_csiphy_acquire(काष्ठा iss_csiphy *phy)
+अणु
+	पूर्णांक rval;
 
 	mutex_lock(&phy->mutex);
 
 	rval = omap4iss_csi2_reset(phy->csi2);
-	if (rval)
-		goto done;
+	अगर (rval)
+		जाओ करोne;
 
 	csiphy_dphy_config(phy);
 	csiphy_lanes_config(phy);
 
-	rval = csiphy_set_power(phy, CSI2_COMPLEXIO_CFG_PWD_CMD_ON);
-	if (rval)
-		goto done;
+	rval = csiphy_set_घातer(phy, CSI2_COMPLEXIO_CFG_PWD_CMD_ON);
+	अगर (rval)
+		जाओ करोne;
 
 	phy->phy_in_use = 1;
 
-done:
+करोne:
 	mutex_unlock(&phy->mutex);
-	return rval;
-}
+	वापस rval;
+पूर्ण
 
-void omap4iss_csiphy_release(struct iss_csiphy *phy)
-{
+व्योम omap4iss_csiphy_release(काष्ठा iss_csiphy *phy)
+अणु
 	mutex_lock(&phy->mutex);
-	if (phy->phy_in_use) {
-		csiphy_set_power(phy, CSI2_COMPLEXIO_CFG_PWD_CMD_OFF);
+	अगर (phy->phy_in_use) अणु
+		csiphy_set_घातer(phy, CSI2_COMPLEXIO_CFG_PWD_CMD_OFF);
 		phy->phy_in_use = 0;
-	}
+	पूर्ण
 	mutex_unlock(&phy->mutex);
-}
+पूर्ण
 
 /*
  * omap4iss_csiphy_init - Initialize the CSI PHY frontends
  */
-int omap4iss_csiphy_init(struct iss_device *iss)
-{
-	struct iss_csiphy *phy1 = &iss->csiphy1;
-	struct iss_csiphy *phy2 = &iss->csiphy2;
+पूर्णांक omap4iss_csiphy_init(काष्ठा iss_device *iss)
+अणु
+	काष्ठा iss_csiphy *phy1 = &iss->csiphy1;
+	काष्ठा iss_csiphy *phy2 = &iss->csiphy2;
 
 	phy1->iss = iss;
 	phy1->csi2 = &iss->csi2a;
@@ -273,5 +274,5 @@ int omap4iss_csiphy_init(struct iss_device *iss)
 	phy2->phy_regs = OMAP4_ISS_MEM_CAMERARX_CORE2;
 	mutex_init(&phy2->mutex);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

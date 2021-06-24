@@ -1,157 +1,158 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (c) 2012-2020, The Linux Foundation. All rights reserved.
  */
 
-#include <linux/delay.h>
-#include <drm/drm_print.h>
+#समावेश <linux/delay.h>
+#समावेश <drm/drm_prपूर्णांक.h>
 
-#include "dp_reg.h"
-#include "dp_aux.h"
+#समावेश "dp_reg.h"
+#समावेश "dp_aux.h"
 
-#define DP_AUX_ENUM_STR(x)		#x
+#घोषणा DP_AUX_ENUM_STR(x)		#x
 
-struct dp_aux_private {
-	struct device *dev;
-	struct dp_catalog *catalog;
+काष्ठा dp_aux_निजी अणु
+	काष्ठा device *dev;
+	काष्ठा dp_catalog *catalog;
 
-	struct mutex mutex;
-	struct completion comp;
+	काष्ठा mutex mutex;
+	काष्ठा completion comp;
 
 	u32 aux_error_num;
 	u32 retry_cnt;
 	bool cmd_busy;
 	bool native;
-	bool read;
+	bool पढ़ो;
 	bool no_send_addr;
 	bool no_send_stop;
 	u32 offset;
 	u32 segment;
 	u32 isr;
 
-	struct drm_dp_aux dp_aux;
-};
+	काष्ठा drm_dp_aux dp_aux;
+पूर्ण;
 
-#define MAX_AUX_RETRIES			5
+#घोषणा MAX_AUX_RETRIES			5
 
-static const char *dp_aux_get_error(u32 aux_error)
-{
-	switch (aux_error) {
-	case DP_AUX_ERR_NONE:
-		return DP_AUX_ENUM_STR(DP_AUX_ERR_NONE);
-	case DP_AUX_ERR_ADDR:
-		return DP_AUX_ENUM_STR(DP_AUX_ERR_ADDR);
-	case DP_AUX_ERR_TOUT:
-		return DP_AUX_ENUM_STR(DP_AUX_ERR_TOUT);
-	case DP_AUX_ERR_NACK:
-		return DP_AUX_ENUM_STR(DP_AUX_ERR_NACK);
-	case DP_AUX_ERR_DEFER:
-		return DP_AUX_ENUM_STR(DP_AUX_ERR_DEFER);
-	case DP_AUX_ERR_NACK_DEFER:
-		return DP_AUX_ENUM_STR(DP_AUX_ERR_NACK_DEFER);
-	default:
-		return "unknown";
-	}
-}
+अटल स्थिर अक्षर *dp_aux_get_error(u32 aux_error)
+अणु
+	चयन (aux_error) अणु
+	हाल DP_AUX_ERR_NONE:
+		वापस DP_AUX_ENUM_STR(DP_AUX_ERR_NONE);
+	हाल DP_AUX_ERR_ADDR:
+		वापस DP_AUX_ENUM_STR(DP_AUX_ERR_ADDR);
+	हाल DP_AUX_ERR_TOUT:
+		वापस DP_AUX_ENUM_STR(DP_AUX_ERR_TOUT);
+	हाल DP_AUX_ERR_NACK:
+		वापस DP_AUX_ENUM_STR(DP_AUX_ERR_NACK);
+	हाल DP_AUX_ERR_DEFER:
+		वापस DP_AUX_ENUM_STR(DP_AUX_ERR_DEFER);
+	हाल DP_AUX_ERR_NACK_DEFER:
+		वापस DP_AUX_ENUM_STR(DP_AUX_ERR_NACK_DEFER);
+	शेष:
+		वापस "unknown";
+	पूर्ण
+पूर्ण
 
-static u32 dp_aux_write(struct dp_aux_private *aux,
-			struct drm_dp_aux_msg *msg)
-{
+अटल u32 dp_aux_ग_लिखो(काष्ठा dp_aux_निजी *aux,
+			काष्ठा drm_dp_aux_msg *msg)
+अणु
 	u32 data[4], reg, len;
 	u8 *msgdata = msg->buffer;
-	int const AUX_CMD_FIFO_LEN = 128;
-	int i = 0;
+	पूर्णांक स्थिर AUX_CMD_FIFO_LEN = 128;
+	पूर्णांक i = 0;
 
-	if (aux->read)
+	अगर (aux->पढ़ो)
 		len = 4;
-	else
+	अन्यथा
 		len = msg->size + 4;
 
 	/*
-	 * cmd fifo only has depth of 144 bytes
+	 * cmd fअगरo only has depth of 144 bytes
 	 * limit buf length to 128 bytes here
 	 */
-	if (len > AUX_CMD_FIFO_LEN) {
+	अगर (len > AUX_CMD_FIFO_LEN) अणु
 		DRM_ERROR("buf size greater than allowed size of 128 bytes\n");
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	/* Pack cmd and write to HW */
+	/* Pack cmd and ग_लिखो to HW */
 	data[0] = (msg->address >> 16) & 0xf; /* addr[19:16] */
-	if (aux->read)
+	अगर (aux->पढ़ो)
 		data[0] |=  BIT(4); /* R/W */
 
 	data[1] = (msg->address >> 8) & 0xff;	/* addr[15:8] */
 	data[2] = msg->address & 0xff;		/* addr[7:0] */
 	data[3] = (msg->size - 1) & 0xff;	/* len[7:0] */
 
-	for (i = 0; i < len; i++) {
+	क्रम (i = 0; i < len; i++) अणु
 		reg = (i < 4) ? data[i] : msgdata[i - 4];
-		/* index = 0, write */
+		/* index = 0, ग_लिखो */
 		reg = (((reg) << DP_AUX_DATA_OFFSET)
 		       & DP_AUX_DATA_MASK) | DP_AUX_DATA_WRITE;
-		if (i == 0)
+		अगर (i == 0)
 			reg |= DP_AUX_DATA_INDEX_WRITE;
 		aux->catalog->aux_data = reg;
-		dp_catalog_aux_write_data(aux->catalog);
-	}
+		dp_catalog_aux_ग_लिखो_data(aux->catalog);
+	पूर्ण
 
 	dp_catalog_aux_clear_trans(aux->catalog, false);
-	dp_catalog_aux_clear_hw_interrupts(aux->catalog);
+	dp_catalog_aux_clear_hw_पूर्णांकerrupts(aux->catalog);
 
 	reg = 0; /* Transaction number == 1 */
-	if (!aux->native) { /* i2c */
+	अगर (!aux->native) अणु /* i2c */
 		reg |= DP_AUX_TRANS_CTRL_I2C;
 
-		if (aux->no_send_addr)
+		अगर (aux->no_send_addr)
 			reg |= DP_AUX_TRANS_CTRL_NO_SEND_ADDR;
 
-		if (aux->no_send_stop)
+		अगर (aux->no_send_stop)
 			reg |= DP_AUX_TRANS_CTRL_NO_SEND_STOP;
-	}
+	पूर्ण
 
 	reg |= DP_AUX_TRANS_CTRL_GO;
 	aux->catalog->aux_data = reg;
-	dp_catalog_aux_write_trans(aux->catalog);
+	dp_catalog_aux_ग_लिखो_trans(aux->catalog);
 
-	return len;
-}
+	वापस len;
+पूर्ण
 
-static int dp_aux_cmd_fifo_tx(struct dp_aux_private *aux,
-			      struct drm_dp_aux_msg *msg)
-{
-	u32 ret, len, timeout;
-	int aux_timeout_ms = HZ/4;
+अटल पूर्णांक dp_aux_cmd_fअगरo_tx(काष्ठा dp_aux_निजी *aux,
+			      काष्ठा drm_dp_aux_msg *msg)
+अणु
+	u32 ret, len, समयout;
+	पूर्णांक aux_समयout_ms = HZ/4;
 
 	reinit_completion(&aux->comp);
 
-	len = dp_aux_write(aux, msg);
-	if (len == 0) {
+	len = dp_aux_ग_लिखो(aux, msg);
+	अगर (len == 0) अणु
 		DRM_ERROR("DP AUX write failed\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	timeout = wait_for_completion_timeout(&aux->comp, aux_timeout_ms);
-	if (!timeout) {
-		DRM_ERROR("aux %s timeout\n", (aux->read ? "read" : "write"));
-		return -ETIMEDOUT;
-	}
+	समयout = रुको_क्रम_completion_समयout(&aux->comp, aux_समयout_ms);
+	अगर (!समयout) अणु
+		DRM_ERROR("aux %s timeout\n", (aux->पढ़ो ? "read" : "write"));
+		वापस -ETIMEDOUT;
+	पूर्ण
 
-	if (aux->aux_error_num == DP_AUX_ERR_NONE) {
+	अगर (aux->aux_error_num == DP_AUX_ERR_NONE) अणु
 		ret = len;
-	} else {
+	पूर्ण अन्यथा अणु
 		DRM_ERROR_RATELIMITED("aux err: %s\n",
 			dp_aux_get_error(aux->aux_error_num));
 
 		ret = -EINVAL;
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void dp_aux_cmd_fifo_rx(struct dp_aux_private *aux,
-		struct drm_dp_aux_msg *msg)
-{
+अटल व्योम dp_aux_cmd_fअगरo_rx(काष्ठा dp_aux_निजी *aux,
+		काष्ठा drm_dp_aux_msg *msg)
+अणु
 	u32 data;
 	u8 *dp;
 	u32 i, actual_i;
@@ -160,354 +161,354 @@ static void dp_aux_cmd_fifo_rx(struct dp_aux_private *aux,
 	dp_catalog_aux_clear_trans(aux->catalog, true);
 
 	data = DP_AUX_DATA_INDEX_WRITE; /* INDEX_WRITE */
-	data |= DP_AUX_DATA_READ;  /* read */
+	data |= DP_AUX_DATA_READ;  /* पढ़ो */
 
 	aux->catalog->aux_data = data;
-	dp_catalog_aux_write_data(aux->catalog);
+	dp_catalog_aux_ग_लिखो_data(aux->catalog);
 
 	dp = msg->buffer;
 
 	/* discard first byte */
-	data = dp_catalog_aux_read_data(aux->catalog);
+	data = dp_catalog_aux_पढ़ो_data(aux->catalog);
 
-	for (i = 0; i < len; i++) {
-		data = dp_catalog_aux_read_data(aux->catalog);
+	क्रम (i = 0; i < len; i++) अणु
+		data = dp_catalog_aux_पढ़ो_data(aux->catalog);
 		*dp++ = (u8)((data >> DP_AUX_DATA_OFFSET) & 0xff);
 
 		actual_i = (data >> DP_AUX_DATA_INDEX_OFFSET) & 0xFF;
-		if (i != actual_i)
+		अगर (i != actual_i)
 			DRM_ERROR("Index mismatch: expected %d, found %d\n",
 				i, actual_i);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void dp_aux_native_handler(struct dp_aux_private *aux)
-{
+अटल व्योम dp_aux_native_handler(काष्ठा dp_aux_निजी *aux)
+अणु
 	u32 isr = aux->isr;
 
-	if (isr & DP_INTR_AUX_I2C_DONE)
+	अगर (isr & DP_INTR_AUX_I2C_DONE)
 		aux->aux_error_num = DP_AUX_ERR_NONE;
-	else if (isr & DP_INTR_WRONG_ADDR)
+	अन्यथा अगर (isr & DP_INTR_WRONG_ADDR)
 		aux->aux_error_num = DP_AUX_ERR_ADDR;
-	else if (isr & DP_INTR_TIMEOUT)
+	अन्यथा अगर (isr & DP_INTR_TIMEOUT)
 		aux->aux_error_num = DP_AUX_ERR_TOUT;
-	if (isr & DP_INTR_NACK_DEFER)
+	अगर (isr & DP_INTR_NACK_DEFER)
 		aux->aux_error_num = DP_AUX_ERR_NACK;
-	if (isr & DP_INTR_AUX_ERROR) {
+	अगर (isr & DP_INTR_AUX_ERROR) अणु
 		aux->aux_error_num = DP_AUX_ERR_PHY;
-		dp_catalog_aux_clear_hw_interrupts(aux->catalog);
-	}
+		dp_catalog_aux_clear_hw_पूर्णांकerrupts(aux->catalog);
+	पूर्ण
 
 	complete(&aux->comp);
-}
+पूर्ण
 
-static void dp_aux_i2c_handler(struct dp_aux_private *aux)
-{
+अटल व्योम dp_aux_i2c_handler(काष्ठा dp_aux_निजी *aux)
+अणु
 	u32 isr = aux->isr;
 
-	if (isr & DP_INTR_AUX_I2C_DONE) {
-		if (isr & (DP_INTR_I2C_NACK | DP_INTR_I2C_DEFER))
+	अगर (isr & DP_INTR_AUX_I2C_DONE) अणु
+		अगर (isr & (DP_INTR_I2C_NACK | DP_INTR_I2C_DEFER))
 			aux->aux_error_num = DP_AUX_ERR_NACK;
-		else
+		अन्यथा
 			aux->aux_error_num = DP_AUX_ERR_NONE;
-	} else {
-		if (isr & DP_INTR_WRONG_ADDR)
+	पूर्ण अन्यथा अणु
+		अगर (isr & DP_INTR_WRONG_ADDR)
 			aux->aux_error_num = DP_AUX_ERR_ADDR;
-		else if (isr & DP_INTR_TIMEOUT)
+		अन्यथा अगर (isr & DP_INTR_TIMEOUT)
 			aux->aux_error_num = DP_AUX_ERR_TOUT;
-		if (isr & DP_INTR_NACK_DEFER)
+		अगर (isr & DP_INTR_NACK_DEFER)
 			aux->aux_error_num = DP_AUX_ERR_NACK_DEFER;
-		if (isr & DP_INTR_I2C_NACK)
+		अगर (isr & DP_INTR_I2C_NACK)
 			aux->aux_error_num = DP_AUX_ERR_NACK;
-		if (isr & DP_INTR_I2C_DEFER)
+		अगर (isr & DP_INTR_I2C_DEFER)
 			aux->aux_error_num = DP_AUX_ERR_DEFER;
-		if (isr & DP_INTR_AUX_ERROR) {
+		अगर (isr & DP_INTR_AUX_ERROR) अणु
 			aux->aux_error_num = DP_AUX_ERR_PHY;
-			dp_catalog_aux_clear_hw_interrupts(aux->catalog);
-		}
-	}
+			dp_catalog_aux_clear_hw_पूर्णांकerrupts(aux->catalog);
+		पूर्ण
+	पूर्ण
 
 	complete(&aux->comp);
-}
+पूर्ण
 
-static void dp_aux_update_offset_and_segment(struct dp_aux_private *aux,
-					     struct drm_dp_aux_msg *input_msg)
-{
+अटल व्योम dp_aux_update_offset_and_segment(काष्ठा dp_aux_निजी *aux,
+					     काष्ठा drm_dp_aux_msg *input_msg)
+अणु
 	u32 edid_address = 0x50;
 	u32 segment_address = 0x30;
-	bool i2c_read = input_msg->request &
+	bool i2c_पढ़ो = input_msg->request &
 		(DP_AUX_I2C_READ & DP_AUX_NATIVE_READ);
 	u8 *data;
 
-	if (aux->native || i2c_read || ((input_msg->address != edid_address) &&
+	अगर (aux->native || i2c_पढ़ो || ((input_msg->address != edid_address) &&
 		(input_msg->address != segment_address)))
-		return;
+		वापस;
 
 
 	data = input_msg->buffer;
-	if (input_msg->address == segment_address)
+	अगर (input_msg->address == segment_address)
 		aux->segment = *data;
-	else
+	अन्यथा
 		aux->offset = *data;
-}
+पूर्ण
 
 /**
- * dp_aux_transfer_helper() - helper function for EDID read transactions
+ * dp_aux_transfer_helper() - helper function क्रम EDID पढ़ो transactions
  *
- * @aux: DP AUX private structure
+ * @aux: DP AUX निजी काष्ठाure
  * @input_msg: input message from DRM upstream APIs
  * @send_seg: send the segment to sink
  *
- * return: void
+ * वापस: व्योम
  *
- * This helper function is used to fix EDID reads for non-compliant
- * sinks that do not handle the i2c middle-of-transaction flag correctly.
+ * This helper function is used to fix EDID पढ़ोs क्रम non-compliant
+ * sinks that करो not handle the i2c middle-of-transaction flag correctly.
  */
-static void dp_aux_transfer_helper(struct dp_aux_private *aux,
-				   struct drm_dp_aux_msg *input_msg,
+अटल व्योम dp_aux_transfer_helper(काष्ठा dp_aux_निजी *aux,
+				   काष्ठा drm_dp_aux_msg *input_msg,
 				   bool send_seg)
-{
-	struct drm_dp_aux_msg helper_msg;
+अणु
+	काष्ठा drm_dp_aux_msg helper_msg;
 	u32 message_size = 0x10;
 	u32 segment_address = 0x30;
-	u32 const edid_block_length = 0x80;
+	u32 स्थिर edid_block_length = 0x80;
 	bool i2c_mot = input_msg->request & DP_AUX_I2C_MOT;
-	bool i2c_read = input_msg->request &
+	bool i2c_पढ़ो = input_msg->request &
 		(DP_AUX_I2C_READ & DP_AUX_NATIVE_READ);
 
-	if (!i2c_mot || !i2c_read || (input_msg->size == 0))
-		return;
+	अगर (!i2c_mot || !i2c_पढ़ो || (input_msg->size == 0))
+		वापस;
 
 	/*
-	 * Sending the segment value and EDID offset will be performed
-	 * from the DRM upstream EDID driver for each block. Avoid
-	 * duplicate AUX transactions related to this while reading the
+	 * Sending the segment value and EDID offset will be perक्रमmed
+	 * from the DRM upstream EDID driver क्रम each block. Aव्योम
+	 * duplicate AUX transactions related to this जबतक पढ़ोing the
 	 * first 16 bytes of each block.
 	 */
-	if (!(aux->offset % edid_block_length) || !send_seg)
-		goto end;
+	अगर (!(aux->offset % edid_block_length) || !send_seg)
+		जाओ end;
 
-	aux->read = false;
+	aux->पढ़ो = false;
 	aux->cmd_busy = true;
 	aux->no_send_addr = true;
 	aux->no_send_stop = true;
 
 	/*
-	 * Send the segment address for every i2c read in which the
+	 * Send the segment address क्रम every i2c पढ़ो in which the
 	 * middle-of-tranaction flag is set. This is required to support EDID
-	 * reads of more than 2 blocks as the segment address is reset to 0
-	 * since we are overriding the middle-of-transaction flag for read
+	 * पढ़ोs of more than 2 blocks as the segment address is reset to 0
+	 * since we are overriding the middle-of-transaction flag क्रम पढ़ो
 	 * transactions.
 	 */
 
-	if (aux->segment) {
-		memset(&helper_msg, 0, sizeof(helper_msg));
+	अगर (aux->segment) अणु
+		स_रखो(&helper_msg, 0, माप(helper_msg));
 		helper_msg.address = segment_address;
 		helper_msg.buffer = &aux->segment;
 		helper_msg.size = 1;
-		dp_aux_cmd_fifo_tx(aux, &helper_msg);
-	}
+		dp_aux_cmd_fअगरo_tx(aux, &helper_msg);
+	पूर्ण
 
 	/*
-	 * Send the offset address for every i2c read in which the
+	 * Send the offset address क्रम every i2c पढ़ो in which the
 	 * middle-of-transaction flag is set. This will ensure that the sink
-	 * will update its read pointer and return the correct portion of the
-	 * EDID buffer in the subsequent i2c read trasntion triggered in the
+	 * will update its पढ़ो poपूर्णांकer and वापस the correct portion of the
+	 * EDID buffer in the subsequent i2c पढ़ो trasntion triggered in the
 	 * native AUX transfer function.
 	 */
-	memset(&helper_msg, 0, sizeof(helper_msg));
+	स_रखो(&helper_msg, 0, माप(helper_msg));
 	helper_msg.address = input_msg->address;
 	helper_msg.buffer = &aux->offset;
 	helper_msg.size = 1;
-	dp_aux_cmd_fifo_tx(aux, &helper_msg);
+	dp_aux_cmd_fअगरo_tx(aux, &helper_msg);
 
 end:
 	aux->offset += message_size;
-	if (aux->offset == 0x80 || aux->offset == 0x100)
+	अगर (aux->offset == 0x80 || aux->offset == 0x100)
 		aux->segment = 0x0; /* reset segment at end of block */
-}
+पूर्ण
 
 /*
- * This function does the real job to process an AUX transaction.
+ * This function करोes the real job to process an AUX transaction.
  * It will call aux_reset() function to reset the AUX channel,
- * if the waiting is timeout.
+ * अगर the रुकोing is समयout.
  */
-static ssize_t dp_aux_transfer(struct drm_dp_aux *dp_aux,
-			       struct drm_dp_aux_msg *msg)
-{
-	ssize_t ret;
-	int const aux_cmd_native_max = 16;
-	int const aux_cmd_i2c_max = 128;
-	struct dp_aux_private *aux = container_of(dp_aux,
-		struct dp_aux_private, dp_aux);
+अटल sमाप_प्रकार dp_aux_transfer(काष्ठा drm_dp_aux *dp_aux,
+			       काष्ठा drm_dp_aux_msg *msg)
+अणु
+	sमाप_प्रकार ret;
+	पूर्णांक स्थिर aux_cmd_native_max = 16;
+	पूर्णांक स्थिर aux_cmd_i2c_max = 128;
+	काष्ठा dp_aux_निजी *aux = container_of(dp_aux,
+		काष्ठा dp_aux_निजी, dp_aux);
 
 	mutex_lock(&aux->mutex);
 
 	aux->native = msg->request & (DP_AUX_NATIVE_WRITE & DP_AUX_NATIVE_READ);
 
 	/* Ignore address only message */
-	if ((msg->size == 0) || (msg->buffer == NULL)) {
+	अगर ((msg->size == 0) || (msg->buffer == शून्य)) अणु
 		msg->reply = aux->native ?
 			DP_AUX_NATIVE_REPLY_ACK : DP_AUX_I2C_REPLY_ACK;
 		ret = msg->size;
-		goto unlock_exit;
-	}
+		जाओ unlock_निकास;
+	पूर्ण
 
 	/* msg sanity check */
-	if ((aux->native && (msg->size > aux_cmd_native_max)) ||
-		(msg->size > aux_cmd_i2c_max)) {
+	अगर ((aux->native && (msg->size > aux_cmd_native_max)) ||
+		(msg->size > aux_cmd_i2c_max)) अणु
 		DRM_ERROR("%s: invalid msg: size(%zu), request(%x)\n",
 			__func__, msg->size, msg->request);
 		ret = -EINVAL;
-		goto unlock_exit;
-	}
+		जाओ unlock_निकास;
+	पूर्ण
 
 	dp_aux_update_offset_and_segment(aux, msg);
 	dp_aux_transfer_helper(aux, msg, true);
 
-	aux->read = msg->request & (DP_AUX_I2C_READ & DP_AUX_NATIVE_READ);
+	aux->पढ़ो = msg->request & (DP_AUX_I2C_READ & DP_AUX_NATIVE_READ);
 	aux->cmd_busy = true;
 
-	if (aux->read) {
+	अगर (aux->पढ़ो) अणु
 		aux->no_send_addr = true;
 		aux->no_send_stop = false;
-	} else {
+	पूर्ण अन्यथा अणु
 		aux->no_send_addr = true;
 		aux->no_send_stop = true;
-	}
+	पूर्ण
 
-	ret = dp_aux_cmd_fifo_tx(aux, msg);
+	ret = dp_aux_cmd_fअगरo_tx(aux, msg);
 
-	if (ret < 0) {
-		if (aux->native) {
+	अगर (ret < 0) अणु
+		अगर (aux->native) अणु
 			aux->retry_cnt++;
-			if (!(aux->retry_cnt % MAX_AUX_RETRIES))
+			अगर (!(aux->retry_cnt % MAX_AUX_RETRIES))
 				dp_catalog_aux_update_cfg(aux->catalog);
-		}
+		पूर्ण
 		usleep_range(400, 500); /* at least 400us to next try */
-		goto unlock_exit;
-	}
+		जाओ unlock_निकास;
+	पूर्ण
 
-	if (aux->aux_error_num == DP_AUX_ERR_NONE) {
-		if (aux->read)
-			dp_aux_cmd_fifo_rx(aux, msg);
+	अगर (aux->aux_error_num == DP_AUX_ERR_NONE) अणु
+		अगर (aux->पढ़ो)
+			dp_aux_cmd_fअगरo_rx(aux, msg);
 
 		msg->reply = aux->native ?
 			DP_AUX_NATIVE_REPLY_ACK : DP_AUX_I2C_REPLY_ACK;
-	} else {
+	पूर्ण अन्यथा अणु
 		/* Reply defer to retry */
 		msg->reply = aux->native ?
 			DP_AUX_NATIVE_REPLY_DEFER : DP_AUX_I2C_REPLY_DEFER;
-	}
+	पूर्ण
 
-	/* Return requested size for success or retry */
+	/* Return requested size क्रम success or retry */
 	ret = msg->size;
 	aux->retry_cnt = 0;
 
-unlock_exit:
+unlock_निकास:
 	aux->cmd_busy = false;
 	mutex_unlock(&aux->mutex);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-void dp_aux_isr(struct drm_dp_aux *dp_aux)
-{
-	struct dp_aux_private *aux;
+व्योम dp_aux_isr(काष्ठा drm_dp_aux *dp_aux)
+अणु
+	काष्ठा dp_aux_निजी *aux;
 
-	if (!dp_aux) {
+	अगर (!dp_aux) अणु
 		DRM_ERROR("invalid input\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	aux = container_of(dp_aux, struct dp_aux_private, dp_aux);
+	aux = container_of(dp_aux, काष्ठा dp_aux_निजी, dp_aux);
 
 	aux->isr = dp_catalog_aux_get_irq(aux->catalog);
 
-	if (!aux->cmd_busy)
-		return;
+	अगर (!aux->cmd_busy)
+		वापस;
 
-	if (aux->native)
+	अगर (aux->native)
 		dp_aux_native_handler(aux);
-	else
+	अन्यथा
 		dp_aux_i2c_handler(aux);
-}
+पूर्ण
 
-void dp_aux_reconfig(struct drm_dp_aux *dp_aux)
-{
-	struct dp_aux_private *aux;
+व्योम dp_aux_reconfig(काष्ठा drm_dp_aux *dp_aux)
+अणु
+	काष्ठा dp_aux_निजी *aux;
 
-	aux = container_of(dp_aux, struct dp_aux_private, dp_aux);
+	aux = container_of(dp_aux, काष्ठा dp_aux_निजी, dp_aux);
 
 	dp_catalog_aux_update_cfg(aux->catalog);
 	dp_catalog_aux_reset(aux->catalog);
-}
+पूर्ण
 
-void dp_aux_init(struct drm_dp_aux *dp_aux)
-{
-	struct dp_aux_private *aux;
+व्योम dp_aux_init(काष्ठा drm_dp_aux *dp_aux)
+अणु
+	काष्ठा dp_aux_निजी *aux;
 
-	if (!dp_aux) {
+	अगर (!dp_aux) अणु
 		DRM_ERROR("invalid input\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	aux = container_of(dp_aux, struct dp_aux_private, dp_aux);
+	aux = container_of(dp_aux, काष्ठा dp_aux_निजी, dp_aux);
 
 	dp_catalog_aux_enable(aux->catalog, true);
 	aux->retry_cnt = 0;
-}
+पूर्ण
 
-void dp_aux_deinit(struct drm_dp_aux *dp_aux)
-{
-	struct dp_aux_private *aux;
+व्योम dp_aux_deinit(काष्ठा drm_dp_aux *dp_aux)
+अणु
+	काष्ठा dp_aux_निजी *aux;
 
-	aux = container_of(dp_aux, struct dp_aux_private, dp_aux);
+	aux = container_of(dp_aux, काष्ठा dp_aux_निजी, dp_aux);
 
 	dp_catalog_aux_enable(aux->catalog, false);
-}
+पूर्ण
 
-int dp_aux_register(struct drm_dp_aux *dp_aux)
-{
-	struct dp_aux_private *aux;
-	int ret;
+पूर्णांक dp_aux_रेजिस्टर(काष्ठा drm_dp_aux *dp_aux)
+अणु
+	काष्ठा dp_aux_निजी *aux;
+	पूर्णांक ret;
 
-	if (!dp_aux) {
+	अगर (!dp_aux) अणु
 		DRM_ERROR("invalid input\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	aux = container_of(dp_aux, struct dp_aux_private, dp_aux);
+	aux = container_of(dp_aux, काष्ठा dp_aux_निजी, dp_aux);
 
 	aux->dp_aux.name = "dpu_dp_aux";
 	aux->dp_aux.dev = aux->dev;
 	aux->dp_aux.transfer = dp_aux_transfer;
-	ret = drm_dp_aux_register(&aux->dp_aux);
-	if (ret) {
+	ret = drm_dp_aux_रेजिस्टर(&aux->dp_aux);
+	अगर (ret) अणु
 		DRM_ERROR("%s: failed to register drm aux: %d\n", __func__,
 				ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void dp_aux_unregister(struct drm_dp_aux *dp_aux)
-{
-	drm_dp_aux_unregister(dp_aux);
-}
+व्योम dp_aux_unरेजिस्टर(काष्ठा drm_dp_aux *dp_aux)
+अणु
+	drm_dp_aux_unरेजिस्टर(dp_aux);
+पूर्ण
 
-struct drm_dp_aux *dp_aux_get(struct device *dev, struct dp_catalog *catalog)
-{
-	struct dp_aux_private *aux;
+काष्ठा drm_dp_aux *dp_aux_get(काष्ठा device *dev, काष्ठा dp_catalog *catalog)
+अणु
+	काष्ठा dp_aux_निजी *aux;
 
-	if (!catalog) {
+	अगर (!catalog) अणु
 		DRM_ERROR("invalid input\n");
-		return ERR_PTR(-ENODEV);
-	}
+		वापस ERR_PTR(-ENODEV);
+	पूर्ण
 
-	aux = devm_kzalloc(dev, sizeof(*aux), GFP_KERNEL);
-	if (!aux)
-		return ERR_PTR(-ENOMEM);
+	aux = devm_kzalloc(dev, माप(*aux), GFP_KERNEL);
+	अगर (!aux)
+		वापस ERR_PTR(-ENOMEM);
 
 	init_completion(&aux->comp);
 	aux->cmd_busy = false;
@@ -517,19 +518,19 @@ struct drm_dp_aux *dp_aux_get(struct device *dev, struct dp_catalog *catalog)
 	aux->catalog = catalog;
 	aux->retry_cnt = 0;
 
-	return &aux->dp_aux;
-}
+	वापस &aux->dp_aux;
+पूर्ण
 
-void dp_aux_put(struct drm_dp_aux *dp_aux)
-{
-	struct dp_aux_private *aux;
+व्योम dp_aux_put(काष्ठा drm_dp_aux *dp_aux)
+अणु
+	काष्ठा dp_aux_निजी *aux;
 
-	if (!dp_aux)
-		return;
+	अगर (!dp_aux)
+		वापस;
 
-	aux = container_of(dp_aux, struct dp_aux_private, dp_aux);
+	aux = container_of(dp_aux, काष्ठा dp_aux_निजी, dp_aux);
 
 	mutex_destroy(&aux->mutex);
 
-	devm_kfree(aux->dev, aux);
-}
+	devm_kमुक्त(aux->dev, aux);
+पूर्ण

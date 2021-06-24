@@ -1,13 +1,14 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- * This header provides constants for gpio keys bindings.
+ * This header provides स्थिरants क्रम gpio keys bindings.
  */
 
-#ifndef _DT_BINDINGS_GPIO_KEYS_H
-#define _DT_BINDINGS_GPIO_KEYS_H
+#अगर_अघोषित _DT_BINDINGS_GPIO_KEYS_H
+#घोषणा _DT_BINDINGS_GPIO_KEYS_H
 
-#define EV_ACT_ANY		0x00	/* asserted or deasserted */
-#define EV_ACT_ASSERTED		0x01	/* asserted */
-#define EV_ACT_DEASSERTED	0x02	/* deasserted */
+#घोषणा EV_ACT_ANY		0x00	/* निश्चितed or deनिश्चितed */
+#घोषणा EV_ACT_ASSERTED		0x01	/* निश्चितed */
+#घोषणा EV_ACT_DEASSERTED	0x02	/* deनिश्चितed */
 
-#endif /* _DT_BINDINGS_GPIO_KEYS_H */
+#पूर्ण_अगर /* _DT_BINDINGS_GPIO_KEYS_H */

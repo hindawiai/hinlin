@@ -1,34 +1,35 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * Support for Intel Camera Imaging ISP subsystem.
+ * Support क्रम Intel Camera Imaging ISP subप्रणाली.
  * Copyright (c) 2015, Intel Corporation.
  *
- * This program is free software; you can redistribute it and/or modify it
+ * This program is मुक्त software; you can redistribute it and/or modअगरy it
  * under the terms and conditions of the GNU General Public License,
  * version 2, as published by the Free Software Foundation.
  *
  * This program is distributed in the hope it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License क्रम
  * more details.
  */
 
-#include "ia_css_queue.h"
-#include <math_support.h>
-#include <ia_css_circbuf.h>
-#include <ia_css_circbuf_desc.h>
-#include "queue_access.h"
+#समावेश "ia_css_queue.h"
+#समावेश <math_support.h>
+#समावेश <ia_css_circbuf.h>
+#समावेश <ia_css_circbuf_desc.h>
+#समावेश "queue_access.h"
 
 /*****************************************************************************
  * Queue Public APIs
  *****************************************************************************/
-int ia_css_queue_local_init(ia_css_queue_t *qhandle, ia_css_queue_local_t *desc)
-{
-	if (NULL == qhandle || NULL == desc
-	    || NULL == desc->cb_elems || NULL == desc->cb_desc) {
-		/* Invalid parameters, return error*/
-		return -EINVAL;
-	}
+पूर्णांक ia_css_queue_local_init(ia_css_queue_t *qhandle, ia_css_queue_local_t *desc)
+अणु
+	अगर (शून्य == qhandle || शून्य == desc
+	    || शून्य == desc->cb_elems || शून्य == desc->cb_desc) अणु
+		/* Invalid parameters, वापस error*/
+		वापस -EINVAL;
+	पूर्ण
 
 	/* Mark the queue as Local */
 	qhandle->type = IA_CSS_QUEUE_TYPE_LOCAL;
@@ -38,15 +39,15 @@ int ia_css_queue_local_init(ia_css_queue_t *qhandle, ia_css_queue_local_t *desc)
 			      desc->cb_elems,
 			      desc->cb_desc);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int ia_css_queue_remote_init(ia_css_queue_t *qhandle, ia_css_queue_remote_t *desc)
-{
-	if (NULL == qhandle || NULL == desc) {
-		/* Invalid parameters, return error*/
-		return -EINVAL;
-	}
+पूर्णांक ia_css_queue_remote_init(ia_css_queue_t *qhandle, ia_css_queue_remote_t *desc)
+अणु
+	अगर (शून्य == qhandle || शून्य == desc) अणु
+		/* Invalid parameters, वापस error*/
+		वापस -EINVAL;
+	पूर्ण
 
 	/* Mark the queue as remote*/
 	qhandle->type = IA_CSS_QUEUE_TYPE_REMOTE;
@@ -58,47 +59,47 @@ int ia_css_queue_remote_init(ia_css_queue_t *qhandle, ia_css_queue_remote_t *des
 	qhandle->desc.remote.cb_elems_addr = desc->cb_elems_addr;
 
 	/* If queue is remote, we let the local processor
-	 * do its init, before using it. This is just to get us
-	 * started, we can remove this restriction as we go ahead
+	 * करो its init, beक्रमe using it. This is just to get us
+	 * started, we can हटाओ this restriction as we go ahead
 	 */
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int ia_css_queue_uninit(ia_css_queue_t *qhandle)
-{
-	if (!qhandle)
-		return -EINVAL;
+पूर्णांक ia_css_queue_uninit(ia_css_queue_t *qhandle)
+अणु
+	अगर (!qhandle)
+		वापस -EINVAL;
 
 	/* Load the required queue object */
-	if (qhandle->type == IA_CSS_QUEUE_TYPE_LOCAL) {
+	अगर (qhandle->type == IA_CSS_QUEUE_TYPE_LOCAL) अणु
 		/* Local queues are created. Destroy it*/
 		ia_css_circbuf_destroy(&qhandle->desc.cb_local);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int ia_css_queue_enqueue(ia_css_queue_t *qhandle, uint32_t item)
-{
-	int error = 0;
+पूर्णांक ia_css_queue_enqueue(ia_css_queue_t *qhandle, uपूर्णांक32_t item)
+अणु
+	पूर्णांक error = 0;
 
-	if (!qhandle)
-		return -EINVAL;
+	अगर (!qhandle)
+		वापस -EINVAL;
 
 	/* 1. Load the required queue object */
-	if (qhandle->type == IA_CSS_QUEUE_TYPE_LOCAL) {
+	अगर (qhandle->type == IA_CSS_QUEUE_TYPE_LOCAL) अणु
 		/* Directly de-ref the object and
 		 * operate on the queue
 		 */
-		if (ia_css_circbuf_is_full(&qhandle->desc.cb_local)) {
+		अगर (ia_css_circbuf_is_full(&qhandle->desc.cb_local)) अणु
 			/* Cannot push the element. Return*/
-			return -ENOBUFS;
-		}
+			वापस -ENOBUFS;
+		पूर्ण
 
 		/* Push the element*/
 		ia_css_circbuf_push(&qhandle->desc.cb_local, item);
-	} else if (qhandle->type == IA_CSS_QUEUE_TYPE_REMOTE) {
+	पूर्ण अन्यथा अगर (qhandle->type == IA_CSS_QUEUE_TYPE_REMOTE) अणु
 		ia_css_circbuf_desc_t cb_desc;
 		ia_css_circbuf_elem_t cb_elem;
 		u32 ignore_desc_flags = QUEUE_IGNORE_STEP_FLAG;
@@ -106,55 +107,55 @@ int ia_css_queue_enqueue(ia_css_queue_t *qhandle, uint32_t item)
 		/* a. Load the queue cb_desc from remote */
 		QUEUE_CB_DESC_INIT(&cb_desc);
 		error = ia_css_queue_load(qhandle, &cb_desc, ignore_desc_flags);
-		if (error != 0)
-			return error;
+		अगर (error != 0)
+			वापस error;
 
 		/* b. Operate on the queue */
-		if (ia_css_circbuf_desc_is_full(&cb_desc))
-			return -ENOBUFS;
+		अगर (ia_css_circbuf_desc_is_full(&cb_desc))
+			वापस -ENOBUFS;
 
 		cb_elem.val = item;
 
 		error = ia_css_queue_item_store(qhandle, cb_desc.end, &cb_elem);
-		if (error != 0)
-			return error;
+		अगर (error != 0)
+			वापस error;
 
 		cb_desc.end = (cb_desc.end + 1) % cb_desc.size;
 
 		/* c. Store the queue object */
 		/* Set only fields requiring update with
-		 * valid value. Avoids uncessary calls
+		 * valid value. Aव्योमs uncessary calls
 		 * to load/store functions
 		 */
 		ignore_desc_flags = QUEUE_IGNORE_SIZE_START_STEP_FLAGS;
 
 		error = ia_css_queue_store(qhandle, &cb_desc, ignore_desc_flags);
-		if (error != 0)
-			return error;
-	}
+		अगर (error != 0)
+			वापस error;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int ia_css_queue_dequeue(ia_css_queue_t *qhandle, uint32_t *item)
-{
-	int error = 0;
+पूर्णांक ia_css_queue_dequeue(ia_css_queue_t *qhandle, uपूर्णांक32_t *item)
+अणु
+	पूर्णांक error = 0;
 
-	if (!qhandle || NULL == item)
-		return -EINVAL;
+	अगर (!qhandle || शून्य == item)
+		वापस -EINVAL;
 
 	/* 1. Load the required queue object */
-	if (qhandle->type == IA_CSS_QUEUE_TYPE_LOCAL) {
+	अगर (qhandle->type == IA_CSS_QUEUE_TYPE_LOCAL) अणु
 		/* Directly de-ref the object and
 		 * operate on the queue
 		 */
-		if (ia_css_circbuf_is_empty(&qhandle->desc.cb_local)) {
+		अगर (ia_css_circbuf_is_empty(&qhandle->desc.cb_local)) अणु
 			/* Nothing to pop. Return empty queue*/
-			return -ENODATA;
-		}
+			वापस -ENODATA;
+		पूर्ण
 
 		*item = ia_css_circbuf_pop(&qhandle->desc.cb_local);
-	} else if (qhandle->type == IA_CSS_QUEUE_TYPE_REMOTE) {
+	पूर्ण अन्यथा अगर (qhandle->type == IA_CSS_QUEUE_TYPE_REMOTE) अणु
 		/* a. Load the queue from remote */
 		ia_css_circbuf_desc_t cb_desc;
 		ia_css_circbuf_elem_t cb_elem;
@@ -163,16 +164,16 @@ int ia_css_queue_dequeue(ia_css_queue_t *qhandle, uint32_t *item)
 		QUEUE_CB_DESC_INIT(&cb_desc);
 
 		error = ia_css_queue_load(qhandle, &cb_desc, ignore_desc_flags);
-		if (error != 0)
-			return error;
+		अगर (error != 0)
+			वापस error;
 
 		/* b. Operate on the queue */
-		if (ia_css_circbuf_desc_is_empty(&cb_desc))
-			return -ENODATA;
+		अगर (ia_css_circbuf_desc_is_empty(&cb_desc))
+			वापस -ENODATA;
 
 		error = ia_css_queue_item_load(qhandle, cb_desc.start, &cb_elem);
-		if (error != 0)
-			return error;
+		अगर (error != 0)
+			वापस error;
 
 		*item = cb_elem.val;
 
@@ -180,134 +181,134 @@ int ia_css_queue_dequeue(ia_css_queue_t *qhandle, uint32_t *item)
 
 		/* c. Store the queue object */
 		/* Set only fields requiring update with
-		 * valid value. Avoids uncessary calls
+		 * valid value. Aव्योमs uncessary calls
 		 * to load/store functions
 		 */
 		ignore_desc_flags = QUEUE_IGNORE_SIZE_END_STEP_FLAGS;
 		error = ia_css_queue_store(qhandle, &cb_desc, ignore_desc_flags);
-		if (error != 0)
-			return error;
-	}
-	return 0;
-}
+		अगर (error != 0)
+			वापस error;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-int ia_css_queue_is_full(ia_css_queue_t *qhandle, bool *is_full)
-{
-	int error = 0;
+पूर्णांक ia_css_queue_is_full(ia_css_queue_t *qhandle, bool *is_full)
+अणु
+	पूर्णांक error = 0;
 
-	if ((!qhandle) || (!is_full))
-		return -EINVAL;
+	अगर ((!qhandle) || (!is_full))
+		वापस -EINVAL;
 
 	/* 1. Load the required queue object */
-	if (qhandle->type == IA_CSS_QUEUE_TYPE_LOCAL) {
+	अगर (qhandle->type == IA_CSS_QUEUE_TYPE_LOCAL) अणु
 		/* Directly de-ref the object and
 		 * operate on the queue
 		 */
 		*is_full = ia_css_circbuf_is_full(&qhandle->desc.cb_local);
-		return 0;
-	} else if (qhandle->type == IA_CSS_QUEUE_TYPE_REMOTE) {
+		वापस 0;
+	पूर्ण अन्यथा अगर (qhandle->type == IA_CSS_QUEUE_TYPE_REMOTE) अणु
 		/* a. Load the queue from remote */
 		ia_css_circbuf_desc_t cb_desc;
 		u32 ignore_desc_flags = QUEUE_IGNORE_STEP_FLAG;
 
 		QUEUE_CB_DESC_INIT(&cb_desc);
 		error = ia_css_queue_load(qhandle, &cb_desc, ignore_desc_flags);
-		if (error != 0)
-			return error;
+		अगर (error != 0)
+			वापस error;
 
 		/* b. Operate on the queue */
 		*is_full = ia_css_circbuf_desc_is_full(&cb_desc);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-int ia_css_queue_get_free_space(ia_css_queue_t *qhandle, uint32_t *size)
-{
-	int error = 0;
+पूर्णांक ia_css_queue_get_मुक्त_space(ia_css_queue_t *qhandle, uपूर्णांक32_t *size)
+अणु
+	पूर्णांक error = 0;
 
-	if ((!qhandle) || (!size))
-		return -EINVAL;
+	अगर ((!qhandle) || (!size))
+		वापस -EINVAL;
 
 	/* 1. Load the required queue object */
-	if (qhandle->type == IA_CSS_QUEUE_TYPE_LOCAL) {
+	अगर (qhandle->type == IA_CSS_QUEUE_TYPE_LOCAL) अणु
 		/* Directly de-ref the object and
 		 * operate on the queue
 		 */
-		*size = ia_css_circbuf_get_free_elems(&qhandle->desc.cb_local);
-		return 0;
-	} else if (qhandle->type == IA_CSS_QUEUE_TYPE_REMOTE) {
+		*size = ia_css_circbuf_get_मुक्त_elems(&qhandle->desc.cb_local);
+		वापस 0;
+	पूर्ण अन्यथा अगर (qhandle->type == IA_CSS_QUEUE_TYPE_REMOTE) अणु
 		/* a. Load the queue from remote */
 		ia_css_circbuf_desc_t cb_desc;
 		u32 ignore_desc_flags = QUEUE_IGNORE_STEP_FLAG;
 
 		QUEUE_CB_DESC_INIT(&cb_desc);
 		error = ia_css_queue_load(qhandle, &cb_desc, ignore_desc_flags);
-		if (error != 0)
-			return error;
+		अगर (error != 0)
+			वापस error;
 
 		/* b. Operate on the queue */
-		*size = ia_css_circbuf_desc_get_free_elems(&cb_desc);
-		return 0;
-	}
+		*size = ia_css_circbuf_desc_get_मुक्त_elems(&cb_desc);
+		वापस 0;
+	पूर्ण
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-int ia_css_queue_get_used_space(ia_css_queue_t *qhandle, uint32_t *size)
-{
-	int error = 0;
+पूर्णांक ia_css_queue_get_used_space(ia_css_queue_t *qhandle, uपूर्णांक32_t *size)
+अणु
+	पूर्णांक error = 0;
 
-	if ((!qhandle) || (!size))
-		return -EINVAL;
+	अगर ((!qhandle) || (!size))
+		वापस -EINVAL;
 
 	/* 1. Load the required queue object */
-	if (qhandle->type == IA_CSS_QUEUE_TYPE_LOCAL) {
+	अगर (qhandle->type == IA_CSS_QUEUE_TYPE_LOCAL) अणु
 		/* Directly de-ref the object and
 		 * operate on the queue
 		 */
 		*size = ia_css_circbuf_get_num_elems(&qhandle->desc.cb_local);
-		return 0;
-	} else if (qhandle->type == IA_CSS_QUEUE_TYPE_REMOTE) {
+		वापस 0;
+	पूर्ण अन्यथा अगर (qhandle->type == IA_CSS_QUEUE_TYPE_REMOTE) अणु
 		/* a. Load the queue from remote */
 		ia_css_circbuf_desc_t cb_desc;
 		u32 ignore_desc_flags = QUEUE_IGNORE_STEP_FLAG;
 
 		QUEUE_CB_DESC_INIT(&cb_desc);
 		error = ia_css_queue_load(qhandle, &cb_desc, ignore_desc_flags);
-		if (error != 0)
-			return error;
+		अगर (error != 0)
+			वापस error;
 
 		/* b. Operate on the queue */
 		*size = ia_css_circbuf_desc_get_num_elems(&cb_desc);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-int ia_css_queue_peek(ia_css_queue_t *qhandle, u32 offset, uint32_t *element)
-{
+पूर्णांक ia_css_queue_peek(ia_css_queue_t *qhandle, u32 offset, uपूर्णांक32_t *element)
+अणु
 	u32 num_elems = 0;
-	int error = 0;
+	पूर्णांक error = 0;
 
-	if ((!qhandle) || (!element))
-		return -EINVAL;
+	अगर ((!qhandle) || (!element))
+		वापस -EINVAL;
 
 	/* 1. Load the required queue object */
-	if (qhandle->type == IA_CSS_QUEUE_TYPE_LOCAL) {
+	अगर (qhandle->type == IA_CSS_QUEUE_TYPE_LOCAL) अणु
 		/* Directly de-ref the object and
 		 * operate on the queue
 		 */
-		/* Check if offset is valid */
+		/* Check अगर offset is valid */
 		num_elems = ia_css_circbuf_get_num_elems(&qhandle->desc.cb_local);
-		if (offset > num_elems)
-			return -EINVAL;
+		अगर (offset > num_elems)
+			वापस -EINVAL;
 
-		*element = ia_css_circbuf_peek_from_start(&qhandle->desc.cb_local, (int)offset);
-		return 0;
-	} else if (qhandle->type == IA_CSS_QUEUE_TYPE_REMOTE) {
+		*element = ia_css_circbuf_peek_from_start(&qhandle->desc.cb_local, (पूर्णांक)offset);
+		वापस 0;
+	पूर्ण अन्यथा अगर (qhandle->type == IA_CSS_QUEUE_TYPE_REMOTE) अणु
 		/* a. Load the queue from remote */
 		ia_css_circbuf_desc_t cb_desc;
 		ia_css_circbuf_elem_t cb_elem;
@@ -316,73 +317,73 @@ int ia_css_queue_peek(ia_css_queue_t *qhandle, u32 offset, uint32_t *element)
 		QUEUE_CB_DESC_INIT(&cb_desc);
 
 		error =  ia_css_queue_load(qhandle, &cb_desc, ignore_desc_flags);
-		if (error != 0)
-			return error;
+		अगर (error != 0)
+			वापस error;
 
-		/* Check if offset is valid */
+		/* Check अगर offset is valid */
 		num_elems = ia_css_circbuf_desc_get_num_elems(&cb_desc);
-		if (offset > num_elems)
-			return -EINVAL;
+		अगर (offset > num_elems)
+			वापस -EINVAL;
 
 		offset = OP_std_modadd(cb_desc.start, offset, cb_desc.size);
-		error = ia_css_queue_item_load(qhandle, (uint8_t)offset, &cb_elem);
-		if (error != 0)
-			return error;
+		error = ia_css_queue_item_load(qhandle, (uपूर्णांक8_t)offset, &cb_elem);
+		अगर (error != 0)
+			वापस error;
 
 		*element = cb_elem.val;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-int ia_css_queue_is_empty(ia_css_queue_t *qhandle, bool *is_empty)
-{
-	int error = 0;
+पूर्णांक ia_css_queue_is_empty(ia_css_queue_t *qhandle, bool *is_empty)
+अणु
+	पूर्णांक error = 0;
 
-	if ((!qhandle) || (!is_empty))
-		return -EINVAL;
+	अगर ((!qhandle) || (!is_empty))
+		वापस -EINVAL;
 
 	/* 1. Load the required queue object */
-	if (qhandle->type == IA_CSS_QUEUE_TYPE_LOCAL) {
+	अगर (qhandle->type == IA_CSS_QUEUE_TYPE_LOCAL) अणु
 		/* Directly de-ref the object and
 		 * operate on the queue
 		 */
 		*is_empty = ia_css_circbuf_is_empty(&qhandle->desc.cb_local);
-		return 0;
-	} else if (qhandle->type == IA_CSS_QUEUE_TYPE_REMOTE) {
+		वापस 0;
+	पूर्ण अन्यथा अगर (qhandle->type == IA_CSS_QUEUE_TYPE_REMOTE) अणु
 		/* a. Load the queue from remote */
 		ia_css_circbuf_desc_t cb_desc;
 		u32 ignore_desc_flags = QUEUE_IGNORE_STEP_FLAG;
 
 		QUEUE_CB_DESC_INIT(&cb_desc);
 		error = ia_css_queue_load(qhandle, &cb_desc, ignore_desc_flags);
-		if (error != 0)
-			return error;
+		अगर (error != 0)
+			वापस error;
 
 		/* b. Operate on the queue */
 		*is_empty = ia_css_circbuf_desc_is_empty(&cb_desc);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-int ia_css_queue_get_size(ia_css_queue_t *qhandle, uint32_t *size)
-{
-	int error = 0;
+पूर्णांक ia_css_queue_get_size(ia_css_queue_t *qhandle, uपूर्णांक32_t *size)
+अणु
+	पूर्णांक error = 0;
 
-	if ((!qhandle) || (!size))
-		return -EINVAL;
+	अगर ((!qhandle) || (!size))
+		वापस -EINVAL;
 
 	/* 1. Load the required queue object */
-	if (qhandle->type == IA_CSS_QUEUE_TYPE_LOCAL) {
+	अगर (qhandle->type == IA_CSS_QUEUE_TYPE_LOCAL) अणु
 		/* Directly de-ref the object and
 		 * operate on the queue
 		 */
 		/* Return maximum usable capacity */
 		*size = ia_css_circbuf_get_size(&qhandle->desc.cb_local);
-	} else if (qhandle->type == IA_CSS_QUEUE_TYPE_REMOTE) {
+	पूर्ण अन्यथा अगर (qhandle->type == IA_CSS_QUEUE_TYPE_REMOTE) अणु
 		/* a. Load the queue from remote */
 		ia_css_circbuf_desc_t cb_desc;
 		u32 ignore_desc_flags = QUEUE_IGNORE_START_END_STEP_FLAGS;
@@ -390,12 +391,12 @@ int ia_css_queue_get_size(ia_css_queue_t *qhandle, uint32_t *size)
 		QUEUE_CB_DESC_INIT(&cb_desc);
 
 		error = ia_css_queue_load(qhandle, &cb_desc, ignore_desc_flags);
-		if (error != 0)
-			return error;
+		अगर (error != 0)
+			वापस error;
 
 		/* Return maximum usable capacity */
 		*size = cb_desc.size;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

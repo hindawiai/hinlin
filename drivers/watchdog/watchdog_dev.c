@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
- *	watchdog_dev.c
+ *	watchकरोg_dev.c
  *
  *	(c) Copyright 2008-2011 Alan Cox <alan@lxorguk.ukuu.org.uk>,
  *						All Rights Reserved.
@@ -9,344 +10,344 @@
  *
  *
  *	This source code is part of the generic code that can be used
- *	by all the watchdog timer drivers.
+ *	by all the watchकरोg समयr drivers.
  *
  *	This part of the generic code takes care of the following
- *	misc device: /dev/watchdog.
+ *	misc device: /dev/watchकरोg.
  *
  *	Based on source code of the following authors:
  *	  Matt Domsch <Matt_Domsch@dell.com>,
  *	  Rob Radez <rob@osinvestor.com>,
- *	  Rusty Lynch <rusty@linux.co.intel.com>
+ *	  Rusty Lynch <rusty@linux.co.पूर्णांकel.com>
  *	  Satyam Sharma <satyam@infradead.org>
- *	  Randy Dunlap <randy.dunlap@oracle.com>
+ *	  Randy Dunlap <अक्रमy.dunlap@oracle.com>
  *
  *	Neither Alan Cox, CymruNet Ltd., Wim Van Sebroeck nor Iguana vzw.
- *	admit liability nor provide warranty for any of this software.
- *	This material is provided "AS-IS" and at no charge.
+ *	admit liability nor provide warranty क्रम any of this software.
+ *	This material is provided "AS-IS" and at no अक्षरge.
  */
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include <linux/cdev.h>		/* For character device */
-#include <linux/errno.h>	/* For the -ENODEV/... values */
-#include <linux/fs.h>		/* For file operations */
-#include <linux/init.h>		/* For __init/__exit/... */
-#include <linux/hrtimer.h>	/* For hrtimers */
-#include <linux/kernel.h>	/* For printk/panic/... */
-#include <linux/kthread.h>	/* For kthread_work */
-#include <linux/miscdevice.h>	/* For handling misc devices */
-#include <linux/module.h>	/* For module stuff/... */
-#include <linux/mutex.h>	/* For mutexes */
-#include <linux/slab.h>		/* For memory functions */
-#include <linux/types.h>	/* For standard types (like size_t) */
-#include <linux/watchdog.h>	/* For watchdog specific items */
-#include <linux/uaccess.h>	/* For copy_to_user/put_user/... */
+#समावेश <linux/cdev.h>		/* For अक्षरacter device */
+#समावेश <linux/त्रुटिसं.स>	/* For the -ENODEV/... values */
+#समावेश <linux/fs.h>		/* For file operations */
+#समावेश <linux/init.h>		/* For __init/__निकास/... */
+#समावेश <linux/hrसमयr.h>	/* For hrसमयrs */
+#समावेश <linux/kernel.h>	/* For prपूर्णांकk/panic/... */
+#समावेश <linux/kthपढ़ो.h>	/* For kthपढ़ो_work */
+#समावेश <linux/miscdevice.h>	/* For handling misc devices */
+#समावेश <linux/module.h>	/* For module stuff/... */
+#समावेश <linux/mutex.h>	/* For mutexes */
+#समावेश <linux/slab.h>		/* For memory functions */
+#समावेश <linux/types.h>	/* For standard types (like माप_प्रकार) */
+#समावेश <linux/watchकरोg.h>	/* For watchकरोg specअगरic items */
+#समावेश <linux/uaccess.h>	/* For copy_to_user/put_user/... */
 
-#include "watchdog_core.h"
-#include "watchdog_pretimeout.h"
+#समावेश "watchdog_core.h"
+#समावेश "watchdog_pretimeout.h"
 
 /*
- * struct watchdog_core_data - watchdog core internal data
- * @dev:	The watchdog's internal device
- * @cdev:	The watchdog's Character device.
- * @wdd:	Pointer to watchdog device.
- * @lock:	Lock for watchdog core.
- * @status:	Watchdog core internal status bits.
+ * काष्ठा watchकरोg_core_data - watchकरोg core पूर्णांकernal data
+ * @dev:	The watchकरोg's पूर्णांकernal device
+ * @cdev:	The watchकरोg's Character device.
+ * @wdd:	Poपूर्णांकer to watchकरोg device.
+ * @lock:	Lock क्रम watchकरोg core.
+ * @status:	Watchकरोg core पूर्णांकernal status bits.
  */
-struct watchdog_core_data {
-	struct device dev;
-	struct cdev cdev;
-	struct watchdog_device *wdd;
-	struct mutex lock;
-	ktime_t last_keepalive;
-	ktime_t last_hw_keepalive;
-	ktime_t open_deadline;
-	struct hrtimer timer;
-	struct kthread_work work;
-	unsigned long status;		/* Internal status bits */
-#define _WDOG_DEV_OPEN		0	/* Opened ? */
-#define _WDOG_ALLOW_RELEASE	1	/* Did we receive the magic char ? */
-#define _WDOG_KEEPALIVE		2	/* Did we receive a keepalive ? */
-};
+काष्ठा watchकरोg_core_data अणु
+	काष्ठा device dev;
+	काष्ठा cdev cdev;
+	काष्ठा watchकरोg_device *wdd;
+	काष्ठा mutex lock;
+	kसमय_प्रकार last_keepalive;
+	kसमय_प्रकार last_hw_keepalive;
+	kसमय_प्रकार खोलो_deadline;
+	काष्ठा hrसमयr समयr;
+	काष्ठा kthपढ़ो_work work;
+	अचिन्हित दीर्घ status;		/* Internal status bits */
+#घोषणा _WDOG_DEV_OPEN		0	/* Opened ? */
+#घोषणा _WDOG_ALLOW_RELEASE	1	/* Did we receive the magic अक्षर ? */
+#घोषणा _WDOG_KEEPALIVE		2	/* Did we receive a keepalive ? */
+पूर्ण;
 
-/* the dev_t structure to store the dynamically allocated watchdog devices */
-static dev_t watchdog_devt;
-/* Reference to watchdog device behind /dev/watchdog */
-static struct watchdog_core_data *old_wd_data;
+/* the dev_t काष्ठाure to store the dynamically allocated watchकरोg devices */
+अटल dev_t watchकरोg_devt;
+/* Reference to watchकरोg device behind /dev/watchकरोg */
+अटल काष्ठा watchकरोg_core_data *old_wd_data;
 
-static struct kthread_worker *watchdog_kworker;
+अटल काष्ठा kthपढ़ो_worker *watchकरोg_kworker;
 
-static bool handle_boot_enabled =
+अटल bool handle_boot_enabled =
 	IS_ENABLED(CONFIG_WATCHDOG_HANDLE_BOOT_ENABLED);
 
-static unsigned open_timeout = CONFIG_WATCHDOG_OPEN_TIMEOUT;
+अटल अचिन्हित खोलो_समयout = CONFIG_WATCHDOG_OPEN_TIMEOUT;
 
-static bool watchdog_past_open_deadline(struct watchdog_core_data *data)
-{
-	return ktime_after(ktime_get(), data->open_deadline);
-}
+अटल bool watchकरोg_past_खोलो_deadline(काष्ठा watchकरोg_core_data *data)
+अणु
+	वापस kसमय_after(kसमय_get(), data->खोलो_deadline);
+पूर्ण
 
-static void watchdog_set_open_deadline(struct watchdog_core_data *data)
-{
-	data->open_deadline = open_timeout ?
-		ktime_get() + ktime_set(open_timeout, 0) : KTIME_MAX;
-}
+अटल व्योम watchकरोg_set_खोलो_deadline(काष्ठा watchकरोg_core_data *data)
+अणु
+	data->खोलो_deadline = खोलो_समयout ?
+		kसमय_get() + kसमय_set(खोलो_समयout, 0) : KTIME_MAX;
+पूर्ण
 
-static inline bool watchdog_need_worker(struct watchdog_device *wdd)
-{
+अटल अंतरभूत bool watchकरोg_need_worker(काष्ठा watchकरोg_device *wdd)
+अणु
 	/* All variables in milli-seconds */
-	unsigned int hm = wdd->max_hw_heartbeat_ms;
-	unsigned int t = wdd->timeout * 1000;
+	अचिन्हित पूर्णांक hm = wdd->max_hw_heartbeat_ms;
+	अचिन्हित पूर्णांक t = wdd->समयout * 1000;
 
 	/*
-	 * A worker to generate heartbeat requests is needed if all of the
+	 * A worker to generate heartbeat requests is needed अगर all of the
 	 * following conditions are true.
-	 * - Userspace activated the watchdog.
-	 * - The driver provided a value for the maximum hardware timeout, and
+	 * - Userspace activated the watchकरोg.
+	 * - The driver provided a value क्रम the maximum hardware समयout, and
 	 *   thus is aware that the framework supports generating heartbeat
 	 *   requests.
-	 * - Userspace requests a longer timeout than the hardware can handle.
+	 * - Userspace requests a दीर्घer समयout than the hardware can handle.
 	 *
-	 * Alternatively, if userspace has not opened the watchdog
-	 * device, we take care of feeding the watchdog if it is
+	 * Alternatively, अगर userspace has not खोलोed the watchकरोg
+	 * device, we take care of feeding the watchकरोg अगर it is
 	 * running.
 	 */
-	return (hm && watchdog_active(wdd) && t > hm) ||
-		(t && !watchdog_active(wdd) && watchdog_hw_running(wdd));
-}
+	वापस (hm && watchकरोg_active(wdd) && t > hm) ||
+		(t && !watchकरोg_active(wdd) && watchकरोg_hw_running(wdd));
+पूर्ण
 
-static ktime_t watchdog_next_keepalive(struct watchdog_device *wdd)
-{
-	struct watchdog_core_data *wd_data = wdd->wd_data;
-	unsigned int timeout_ms = wdd->timeout * 1000;
-	ktime_t keepalive_interval;
-	ktime_t last_heartbeat, latest_heartbeat;
-	ktime_t virt_timeout;
-	unsigned int hw_heartbeat_ms;
+अटल kसमय_प्रकार watchकरोg_next_keepalive(काष्ठा watchकरोg_device *wdd)
+अणु
+	काष्ठा watchकरोg_core_data *wd_data = wdd->wd_data;
+	अचिन्हित पूर्णांक समयout_ms = wdd->समयout * 1000;
+	kसमय_प्रकार keepalive_पूर्णांकerval;
+	kसमय_प्रकार last_heartbeat, latest_heartbeat;
+	kसमय_प्रकार virt_समयout;
+	अचिन्हित पूर्णांक hw_heartbeat_ms;
 
-	if (watchdog_active(wdd))
-		virt_timeout = ktime_add(wd_data->last_keepalive,
-					 ms_to_ktime(timeout_ms));
-	else
-		virt_timeout = wd_data->open_deadline;
+	अगर (watchकरोg_active(wdd))
+		virt_समयout = kसमय_add(wd_data->last_keepalive,
+					 ms_to_kसमय(समयout_ms));
+	अन्यथा
+		virt_समयout = wd_data->खोलो_deadline;
 
-	hw_heartbeat_ms = min_not_zero(timeout_ms, wdd->max_hw_heartbeat_ms);
-	keepalive_interval = ms_to_ktime(hw_heartbeat_ms / 2);
+	hw_heartbeat_ms = min_not_zero(समयout_ms, wdd->max_hw_heartbeat_ms);
+	keepalive_पूर्णांकerval = ms_to_kसमय(hw_heartbeat_ms / 2);
 
 	/*
-	 * To ensure that the watchdog times out wdd->timeout seconds
+	 * To ensure that the watchकरोg बार out wdd->समयout seconds
 	 * after the most recent ping from userspace, the last
-	 * worker ping has to come in hw_heartbeat_ms before this timeout.
+	 * worker ping has to come in hw_heartbeat_ms beक्रमe this समयout.
 	 */
-	last_heartbeat = ktime_sub(virt_timeout, ms_to_ktime(hw_heartbeat_ms));
-	latest_heartbeat = ktime_sub(last_heartbeat, ktime_get());
-	if (ktime_before(latest_heartbeat, keepalive_interval))
-		return latest_heartbeat;
-	return keepalive_interval;
-}
+	last_heartbeat = kसमय_sub(virt_समयout, ms_to_kसमय(hw_heartbeat_ms));
+	latest_heartbeat = kसमय_sub(last_heartbeat, kसमय_get());
+	अगर (kसमय_beक्रमe(latest_heartbeat, keepalive_पूर्णांकerval))
+		वापस latest_heartbeat;
+	वापस keepalive_पूर्णांकerval;
+पूर्ण
 
-static inline void watchdog_update_worker(struct watchdog_device *wdd)
-{
-	struct watchdog_core_data *wd_data = wdd->wd_data;
+अटल अंतरभूत व्योम watchकरोg_update_worker(काष्ठा watchकरोg_device *wdd)
+अणु
+	काष्ठा watchकरोg_core_data *wd_data = wdd->wd_data;
 
-	if (watchdog_need_worker(wdd)) {
-		ktime_t t = watchdog_next_keepalive(wdd);
+	अगर (watchकरोg_need_worker(wdd)) अणु
+		kसमय_प्रकार t = watchकरोg_next_keepalive(wdd);
 
-		if (t > 0)
-			hrtimer_start(&wd_data->timer, t,
+		अगर (t > 0)
+			hrसमयr_start(&wd_data->समयr, t,
 				      HRTIMER_MODE_REL_HARD);
-	} else {
-		hrtimer_cancel(&wd_data->timer);
-	}
-}
+	पूर्ण अन्यथा अणु
+		hrसमयr_cancel(&wd_data->समयr);
+	पूर्ण
+पूर्ण
 
-static int __watchdog_ping(struct watchdog_device *wdd)
-{
-	struct watchdog_core_data *wd_data = wdd->wd_data;
-	ktime_t earliest_keepalive, now;
-	int err;
+अटल पूर्णांक __watchकरोg_ping(काष्ठा watchकरोg_device *wdd)
+अणु
+	काष्ठा watchकरोg_core_data *wd_data = wdd->wd_data;
+	kसमय_प्रकार earliest_keepalive, now;
+	पूर्णांक err;
 
-	earliest_keepalive = ktime_add(wd_data->last_hw_keepalive,
-				       ms_to_ktime(wdd->min_hw_heartbeat_ms));
-	now = ktime_get();
+	earliest_keepalive = kसमय_add(wd_data->last_hw_keepalive,
+				       ms_to_kसमय(wdd->min_hw_heartbeat_ms));
+	now = kसमय_get();
 
-	if (ktime_after(earliest_keepalive, now)) {
-		hrtimer_start(&wd_data->timer,
-			      ktime_sub(earliest_keepalive, now),
+	अगर (kसमय_after(earliest_keepalive, now)) अणु
+		hrसमयr_start(&wd_data->समयr,
+			      kसमय_sub(earliest_keepalive, now),
 			      HRTIMER_MODE_REL_HARD);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	wd_data->last_hw_keepalive = now;
 
-	if (wdd->ops->ping)
-		err = wdd->ops->ping(wdd);  /* ping the watchdog */
-	else
-		err = wdd->ops->start(wdd); /* restart watchdog */
+	अगर (wdd->ops->ping)
+		err = wdd->ops->ping(wdd);  /* ping the watchकरोg */
+	अन्यथा
+		err = wdd->ops->start(wdd); /* restart watchकरोg */
 
-	watchdog_update_worker(wdd);
+	watchकरोg_update_worker(wdd);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /*
- *	watchdog_ping: ping the watchdog.
- *	@wdd: the watchdog device to ping
+ *	watchकरोg_ping: ping the watchकरोg.
+ *	@wdd: the watchकरोg device to ping
  *
  *	The caller must hold wd_data->lock.
  *
- *	If the watchdog has no own ping operation then it needs to be
- *	restarted via the start operation. This wrapper function does
+ *	If the watchकरोg has no own ping operation then it needs to be
+ *	restarted via the start operation. This wrapper function करोes
  *	exactly that.
- *	We only ping when the watchdog device is running.
+ *	We only ping when the watchकरोg device is running.
  */
 
-static int watchdog_ping(struct watchdog_device *wdd)
-{
-	struct watchdog_core_data *wd_data = wdd->wd_data;
+अटल पूर्णांक watchकरोg_ping(काष्ठा watchकरोg_device *wdd)
+अणु
+	काष्ठा watchकरोg_core_data *wd_data = wdd->wd_data;
 
-	if (!watchdog_active(wdd) && !watchdog_hw_running(wdd))
-		return 0;
+	अगर (!watchकरोg_active(wdd) && !watchकरोg_hw_running(wdd))
+		वापस 0;
 
 	set_bit(_WDOG_KEEPALIVE, &wd_data->status);
 
-	wd_data->last_keepalive = ktime_get();
-	return __watchdog_ping(wdd);
-}
+	wd_data->last_keepalive = kसमय_get();
+	वापस __watchकरोg_ping(wdd);
+पूर्ण
 
-static bool watchdog_worker_should_ping(struct watchdog_core_data *wd_data)
-{
-	struct watchdog_device *wdd = wd_data->wdd;
+अटल bool watchकरोg_worker_should_ping(काष्ठा watchकरोg_core_data *wd_data)
+अणु
+	काष्ठा watchकरोg_device *wdd = wd_data->wdd;
 
-	if (!wdd)
-		return false;
+	अगर (!wdd)
+		वापस false;
 
-	if (watchdog_active(wdd))
-		return true;
+	अगर (watchकरोg_active(wdd))
+		वापस true;
 
-	return watchdog_hw_running(wdd) && !watchdog_past_open_deadline(wd_data);
-}
+	वापस watchकरोg_hw_running(wdd) && !watchकरोg_past_खोलो_deadline(wd_data);
+पूर्ण
 
-static void watchdog_ping_work(struct kthread_work *work)
-{
-	struct watchdog_core_data *wd_data;
+अटल व्योम watchकरोg_ping_work(काष्ठा kthपढ़ो_work *work)
+अणु
+	काष्ठा watchकरोg_core_data *wd_data;
 
-	wd_data = container_of(work, struct watchdog_core_data, work);
+	wd_data = container_of(work, काष्ठा watchकरोg_core_data, work);
 
 	mutex_lock(&wd_data->lock);
-	if (watchdog_worker_should_ping(wd_data))
-		__watchdog_ping(wd_data->wdd);
+	अगर (watchकरोg_worker_should_ping(wd_data))
+		__watchकरोg_ping(wd_data->wdd);
 	mutex_unlock(&wd_data->lock);
-}
+पूर्ण
 
-static enum hrtimer_restart watchdog_timer_expired(struct hrtimer *timer)
-{
-	struct watchdog_core_data *wd_data;
+अटल क्रमागत hrसमयr_restart watchकरोg_समयr_expired(काष्ठा hrसमयr *समयr)
+अणु
+	काष्ठा watchकरोg_core_data *wd_data;
 
-	wd_data = container_of(timer, struct watchdog_core_data, timer);
+	wd_data = container_of(समयr, काष्ठा watchकरोg_core_data, समयr);
 
-	kthread_queue_work(watchdog_kworker, &wd_data->work);
-	return HRTIMER_NORESTART;
-}
+	kthपढ़ो_queue_work(watchकरोg_kworker, &wd_data->work);
+	वापस HRTIMER_NORESTART;
+पूर्ण
 
 /*
- *	watchdog_start: wrapper to start the watchdog.
- *	@wdd: the watchdog device to start
+ *	watchकरोg_start: wrapper to start the watchकरोg.
+ *	@wdd: the watchकरोg device to start
  *
  *	The caller must hold wd_data->lock.
  *
- *	Start the watchdog if it is not active and mark it active.
- *	This function returns zero on success or a negative errno code for
+ *	Start the watchकरोg अगर it is not active and mark it active.
+ *	This function वापसs zero on success or a negative त्रुटि_सं code क्रम
  *	failure.
  */
 
-static int watchdog_start(struct watchdog_device *wdd)
-{
-	struct watchdog_core_data *wd_data = wdd->wd_data;
-	ktime_t started_at;
-	int err;
+अटल पूर्णांक watchकरोg_start(काष्ठा watchकरोg_device *wdd)
+अणु
+	काष्ठा watchकरोg_core_data *wd_data = wdd->wd_data;
+	kसमय_प्रकार started_at;
+	पूर्णांक err;
 
-	if (watchdog_active(wdd))
-		return 0;
+	अगर (watchकरोg_active(wdd))
+		वापस 0;
 
 	set_bit(_WDOG_KEEPALIVE, &wd_data->status);
 
-	started_at = ktime_get();
-	if (watchdog_hw_running(wdd) && wdd->ops->ping) {
-		err = __watchdog_ping(wdd);
-		if (err == 0)
+	started_at = kसमय_get();
+	अगर (watchकरोg_hw_running(wdd) && wdd->ops->ping) अणु
+		err = __watchकरोg_ping(wdd);
+		अगर (err == 0)
 			set_bit(WDOG_ACTIVE, &wdd->status);
-	} else {
+	पूर्ण अन्यथा अणु
 		err = wdd->ops->start(wdd);
-		if (err == 0) {
+		अगर (err == 0) अणु
 			set_bit(WDOG_ACTIVE, &wdd->status);
 			wd_data->last_keepalive = started_at;
 			wd_data->last_hw_keepalive = started_at;
-			watchdog_update_worker(wdd);
-		}
-	}
+			watchकरोg_update_worker(wdd);
+		पूर्ण
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /*
- *	watchdog_stop: wrapper to stop the watchdog.
- *	@wdd: the watchdog device to stop
+ *	watchकरोg_stop: wrapper to stop the watchकरोg.
+ *	@wdd: the watchकरोg device to stop
  *
  *	The caller must hold wd_data->lock.
  *
- *	Stop the watchdog if it is still active and unmark it active.
- *	This function returns zero on success or a negative errno code for
+ *	Stop the watchकरोg अगर it is still active and unmark it active.
+ *	This function वापसs zero on success or a negative त्रुटि_सं code क्रम
  *	failure.
- *	If the 'nowayout' feature was set, the watchdog cannot be stopped.
+ *	If the 'nowayout' feature was set, the watchकरोg cannot be stopped.
  */
 
-static int watchdog_stop(struct watchdog_device *wdd)
-{
-	int err = 0;
+अटल पूर्णांक watchकरोg_stop(काष्ठा watchकरोg_device *wdd)
+अणु
+	पूर्णांक err = 0;
 
-	if (!watchdog_active(wdd))
-		return 0;
+	अगर (!watchकरोg_active(wdd))
+		वापस 0;
 
-	if (test_bit(WDOG_NO_WAY_OUT, &wdd->status)) {
+	अगर (test_bit(WDOG_NO_WAY_OUT, &wdd->status)) अणु
 		pr_info("watchdog%d: nowayout prevents watchdog being stopped!\n",
 			wdd->id);
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 
-	if (wdd->ops->stop) {
+	अगर (wdd->ops->stop) अणु
 		clear_bit(WDOG_HW_RUNNING, &wdd->status);
 		err = wdd->ops->stop(wdd);
-	} else {
+	पूर्ण अन्यथा अणु
 		set_bit(WDOG_HW_RUNNING, &wdd->status);
-	}
+	पूर्ण
 
-	if (err == 0) {
+	अगर (err == 0) अणु
 		clear_bit(WDOG_ACTIVE, &wdd->status);
-		watchdog_update_worker(wdd);
-	}
+		watchकरोg_update_worker(wdd);
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /*
- *	watchdog_get_status: wrapper to get the watchdog status
- *	@wdd: the watchdog device to get the status from
+ *	watchकरोg_get_status: wrapper to get the watchकरोg status
+ *	@wdd: the watchकरोg device to get the status from
  *
  *	The caller must hold wd_data->lock.
  *
- *	Get the watchdog's status flags.
+ *	Get the watchकरोg's status flags.
  */
 
-static unsigned int watchdog_get_status(struct watchdog_device *wdd)
-{
-	struct watchdog_core_data *wd_data = wdd->wd_data;
-	unsigned int status;
+अटल अचिन्हित पूर्णांक watchकरोg_get_status(काष्ठा watchकरोg_device *wdd)
+अणु
+	काष्ठा watchकरोg_core_data *wd_data = wdd->wd_data;
+	अचिन्हित पूर्णांक status;
 
-	if (wdd->ops->status)
+	अगर (wdd->ops->status)
 		status = wdd->ops->status(wdd);
-	else
+	अन्यथा
 		status = wdd->bootstatus & (WDIOF_CARDRESET |
 					    WDIOF_OVERHEAT |
 					    WDIOF_FANFAULT |
@@ -355,876 +356,876 @@ static unsigned int watchdog_get_status(struct watchdog_device *wdd)
 					    WDIOF_POWERUNDER |
 					    WDIOF_POWEROVER);
 
-	if (test_bit(_WDOG_ALLOW_RELEASE, &wd_data->status))
+	अगर (test_bit(_WDOG_ALLOW_RELEASE, &wd_data->status))
 		status |= WDIOF_MAGICCLOSE;
 
-	if (test_and_clear_bit(_WDOG_KEEPALIVE, &wd_data->status))
+	अगर (test_and_clear_bit(_WDOG_KEEPALIVE, &wd_data->status))
 		status |= WDIOF_KEEPALIVEPING;
 
-	return status;
-}
+	वापस status;
+पूर्ण
 
 /*
- *	watchdog_set_timeout: set the watchdog timer timeout
- *	@wdd: the watchdog device to set the timeout for
- *	@timeout: timeout to set in seconds
+ *	watchकरोg_set_समयout: set the watchकरोg समयr समयout
+ *	@wdd: the watchकरोg device to set the समयout क्रम
+ *	@समयout: समयout to set in seconds
  *
  *	The caller must hold wd_data->lock.
  */
 
-static int watchdog_set_timeout(struct watchdog_device *wdd,
-							unsigned int timeout)
-{
-	int err = 0;
+अटल पूर्णांक watchकरोg_set_समयout(काष्ठा watchकरोg_device *wdd,
+							अचिन्हित पूर्णांक समयout)
+अणु
+	पूर्णांक err = 0;
 
-	if (!(wdd->info->options & WDIOF_SETTIMEOUT))
-		return -EOPNOTSUPP;
+	अगर (!(wdd->info->options & WDIOF_SETTIMEOUT))
+		वापस -EOPNOTSUPP;
 
-	if (watchdog_timeout_invalid(wdd, timeout))
-		return -EINVAL;
+	अगर (watchकरोg_समयout_invalid(wdd, समयout))
+		वापस -EINVAL;
 
-	if (wdd->ops->set_timeout) {
-		err = wdd->ops->set_timeout(wdd, timeout);
-	} else {
-		wdd->timeout = timeout;
-		/* Disable pretimeout if it doesn't fit the new timeout */
-		if (wdd->pretimeout >= wdd->timeout)
-			wdd->pretimeout = 0;
-	}
+	अगर (wdd->ops->set_समयout) अणु
+		err = wdd->ops->set_समयout(wdd, समयout);
+	पूर्ण अन्यथा अणु
+		wdd->समयout = समयout;
+		/* Disable preसमयout अगर it करोesn't fit the new समयout */
+		अगर (wdd->preसमयout >= wdd->समयout)
+			wdd->preसमयout = 0;
+	पूर्ण
 
-	watchdog_update_worker(wdd);
+	watchकरोg_update_worker(wdd);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /*
- *	watchdog_set_pretimeout: set the watchdog timer pretimeout
- *	@wdd: the watchdog device to set the timeout for
- *	@timeout: pretimeout to set in seconds
+ *	watchकरोg_set_preसमयout: set the watchकरोg समयr preसमयout
+ *	@wdd: the watchकरोg device to set the समयout क्रम
+ *	@समयout: preसमयout to set in seconds
  */
 
-static int watchdog_set_pretimeout(struct watchdog_device *wdd,
-				   unsigned int timeout)
-{
-	int err = 0;
+अटल पूर्णांक watchकरोg_set_preसमयout(काष्ठा watchकरोg_device *wdd,
+				   अचिन्हित पूर्णांक समयout)
+अणु
+	पूर्णांक err = 0;
 
-	if (!(wdd->info->options & WDIOF_PRETIMEOUT))
-		return -EOPNOTSUPP;
+	अगर (!(wdd->info->options & WDIOF_PRETIMEOUT))
+		वापस -EOPNOTSUPP;
 
-	if (watchdog_pretimeout_invalid(wdd, timeout))
-		return -EINVAL;
+	अगर (watchकरोg_preसमयout_invalid(wdd, समयout))
+		वापस -EINVAL;
 
-	if (wdd->ops->set_pretimeout)
-		err = wdd->ops->set_pretimeout(wdd, timeout);
-	else
-		wdd->pretimeout = timeout;
+	अगर (wdd->ops->set_preसमयout)
+		err = wdd->ops->set_preसमयout(wdd, समयout);
+	अन्यथा
+		wdd->preसमयout = समयout;
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /*
- *	watchdog_get_timeleft: wrapper to get the time left before a reboot
- *	@wdd: the watchdog device to get the remaining time from
- *	@timeleft: the time that's left
+ *	watchकरोg_get_समयleft: wrapper to get the समय left beक्रमe a reboot
+ *	@wdd: the watchकरोg device to get the reमुख्यing समय from
+ *	@समयleft: the समय that's left
  *
  *	The caller must hold wd_data->lock.
  *
- *	Get the time before a watchdog will reboot (if not pinged).
+ *	Get the समय beक्रमe a watchकरोg will reboot (अगर not pinged).
  */
 
-static int watchdog_get_timeleft(struct watchdog_device *wdd,
-							unsigned int *timeleft)
-{
-	*timeleft = 0;
+अटल पूर्णांक watchकरोg_get_समयleft(काष्ठा watchकरोg_device *wdd,
+							अचिन्हित पूर्णांक *समयleft)
+अणु
+	*समयleft = 0;
 
-	if (!wdd->ops->get_timeleft)
-		return -EOPNOTSUPP;
+	अगर (!wdd->ops->get_समयleft)
+		वापस -EOPNOTSUPP;
 
-	*timeleft = wdd->ops->get_timeleft(wdd);
+	*समयleft = wdd->ops->get_समयleft(wdd);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_WATCHDOG_SYSFS
-static ssize_t nowayout_show(struct device *dev, struct device_attribute *attr,
-				char *buf)
-{
-	struct watchdog_device *wdd = dev_get_drvdata(dev);
+#अगर_घोषित CONFIG_WATCHDOG_SYSFS
+अटल sमाप_प्रकार nowayout_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
+				अक्षर *buf)
+अणु
+	काष्ठा watchकरोg_device *wdd = dev_get_drvdata(dev);
 
-	return sprintf(buf, "%d\n", !!test_bit(WDOG_NO_WAY_OUT, &wdd->status));
-}
+	वापस प्र_लिखो(buf, "%d\n", !!test_bit(WDOG_NO_WAY_OUT, &wdd->status));
+पूर्ण
 
-static ssize_t nowayout_store(struct device *dev, struct device_attribute *attr,
-				const char *buf, size_t len)
-{
-	struct watchdog_device *wdd = dev_get_drvdata(dev);
-	unsigned int value;
-	int ret;
+अटल sमाप_प्रकार nowayout_store(काष्ठा device *dev, काष्ठा device_attribute *attr,
+				स्थिर अक्षर *buf, माप_प्रकार len)
+अणु
+	काष्ठा watchकरोg_device *wdd = dev_get_drvdata(dev);
+	अचिन्हित पूर्णांक value;
+	पूर्णांक ret;
 
-	ret = kstrtouint(buf, 0, &value);
-	if (ret)
-		return ret;
-	if (value > 1)
-		return -EINVAL;
+	ret = kstrtouपूर्णांक(buf, 0, &value);
+	अगर (ret)
+		वापस ret;
+	अगर (value > 1)
+		वापस -EINVAL;
 	/* nowayout cannot be disabled once set */
-	if (test_bit(WDOG_NO_WAY_OUT, &wdd->status) && !value)
-		return -EPERM;
-	watchdog_set_nowayout(wdd, value);
-	return len;
-}
-static DEVICE_ATTR_RW(nowayout);
+	अगर (test_bit(WDOG_NO_WAY_OUT, &wdd->status) && !value)
+		वापस -EPERM;
+	watchकरोg_set_nowayout(wdd, value);
+	वापस len;
+पूर्ण
+अटल DEVICE_ATTR_RW(nowayout);
 
-static ssize_t status_show(struct device *dev, struct device_attribute *attr,
-				char *buf)
-{
-	struct watchdog_device *wdd = dev_get_drvdata(dev);
-	struct watchdog_core_data *wd_data = wdd->wd_data;
-	unsigned int status;
-
-	mutex_lock(&wd_data->lock);
-	status = watchdog_get_status(wdd);
-	mutex_unlock(&wd_data->lock);
-
-	return sprintf(buf, "0x%x\n", status);
-}
-static DEVICE_ATTR_RO(status);
-
-static ssize_t bootstatus_show(struct device *dev,
-				struct device_attribute *attr, char *buf)
-{
-	struct watchdog_device *wdd = dev_get_drvdata(dev);
-
-	return sprintf(buf, "%u\n", wdd->bootstatus);
-}
-static DEVICE_ATTR_RO(bootstatus);
-
-static ssize_t timeleft_show(struct device *dev, struct device_attribute *attr,
-				char *buf)
-{
-	struct watchdog_device *wdd = dev_get_drvdata(dev);
-	struct watchdog_core_data *wd_data = wdd->wd_data;
-	ssize_t status;
-	unsigned int val;
+अटल sमाप_प्रकार status_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
+				अक्षर *buf)
+अणु
+	काष्ठा watchकरोg_device *wdd = dev_get_drvdata(dev);
+	काष्ठा watchकरोg_core_data *wd_data = wdd->wd_data;
+	अचिन्हित पूर्णांक status;
 
 	mutex_lock(&wd_data->lock);
-	status = watchdog_get_timeleft(wdd, &val);
+	status = watchकरोg_get_status(wdd);
 	mutex_unlock(&wd_data->lock);
-	if (!status)
-		status = sprintf(buf, "%u\n", val);
 
-	return status;
-}
-static DEVICE_ATTR_RO(timeleft);
+	वापस प्र_लिखो(buf, "0x%x\n", status);
+पूर्ण
+अटल DEVICE_ATTR_RO(status);
 
-static ssize_t timeout_show(struct device *dev, struct device_attribute *attr,
-				char *buf)
-{
-	struct watchdog_device *wdd = dev_get_drvdata(dev);
+अटल sमाप_प्रकार bootstatus_show(काष्ठा device *dev,
+				काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा watchकरोg_device *wdd = dev_get_drvdata(dev);
 
-	return sprintf(buf, "%u\n", wdd->timeout);
-}
-static DEVICE_ATTR_RO(timeout);
+	वापस प्र_लिखो(buf, "%u\n", wdd->bootstatus);
+पूर्ण
+अटल DEVICE_ATTR_RO(bootstatus);
 
-static ssize_t pretimeout_show(struct device *dev,
-			       struct device_attribute *attr, char *buf)
-{
-	struct watchdog_device *wdd = dev_get_drvdata(dev);
+अटल sमाप_प्रकार समयleft_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
+				अक्षर *buf)
+अणु
+	काष्ठा watchकरोg_device *wdd = dev_get_drvdata(dev);
+	काष्ठा watchकरोg_core_data *wd_data = wdd->wd_data;
+	sमाप_प्रकार status;
+	अचिन्हित पूर्णांक val;
 
-	return sprintf(buf, "%u\n", wdd->pretimeout);
-}
-static DEVICE_ATTR_RO(pretimeout);
+	mutex_lock(&wd_data->lock);
+	status = watchकरोg_get_समयleft(wdd, &val);
+	mutex_unlock(&wd_data->lock);
+	अगर (!status)
+		status = प्र_लिखो(buf, "%u\n", val);
 
-static ssize_t identity_show(struct device *dev, struct device_attribute *attr,
-				char *buf)
-{
-	struct watchdog_device *wdd = dev_get_drvdata(dev);
+	वापस status;
+पूर्ण
+अटल DEVICE_ATTR_RO(समयleft);
 
-	return sprintf(buf, "%s\n", wdd->info->identity);
-}
-static DEVICE_ATTR_RO(identity);
+अटल sमाप_प्रकार समयout_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
+				अक्षर *buf)
+अणु
+	काष्ठा watchकरोg_device *wdd = dev_get_drvdata(dev);
 
-static ssize_t state_show(struct device *dev, struct device_attribute *attr,
-				char *buf)
-{
-	struct watchdog_device *wdd = dev_get_drvdata(dev);
+	वापस प्र_लिखो(buf, "%u\n", wdd->समयout);
+पूर्ण
+अटल DEVICE_ATTR_RO(समयout);
 
-	if (watchdog_active(wdd))
-		return sprintf(buf, "active\n");
+अटल sमाप_प्रकार preसमयout_show(काष्ठा device *dev,
+			       काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा watchकरोg_device *wdd = dev_get_drvdata(dev);
 
-	return sprintf(buf, "inactive\n");
-}
-static DEVICE_ATTR_RO(state);
+	वापस प्र_लिखो(buf, "%u\n", wdd->preसमयout);
+पूर्ण
+अटल DEVICE_ATTR_RO(preसमयout);
 
-static ssize_t pretimeout_available_governors_show(struct device *dev,
-				   struct device_attribute *attr, char *buf)
-{
-	return watchdog_pretimeout_available_governors_get(buf);
-}
-static DEVICE_ATTR_RO(pretimeout_available_governors);
+अटल sमाप_प्रकार identity_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
+				अक्षर *buf)
+अणु
+	काष्ठा watchकरोg_device *wdd = dev_get_drvdata(dev);
 
-static ssize_t pretimeout_governor_show(struct device *dev,
-					struct device_attribute *attr,
-					char *buf)
-{
-	struct watchdog_device *wdd = dev_get_drvdata(dev);
+	वापस प्र_लिखो(buf, "%s\n", wdd->info->identity);
+पूर्ण
+अटल DEVICE_ATTR_RO(identity);
 
-	return watchdog_pretimeout_governor_get(wdd, buf);
-}
+अटल sमाप_प्रकार state_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
+				अक्षर *buf)
+अणु
+	काष्ठा watchकरोg_device *wdd = dev_get_drvdata(dev);
 
-static ssize_t pretimeout_governor_store(struct device *dev,
-					 struct device_attribute *attr,
-					 const char *buf, size_t count)
-{
-	struct watchdog_device *wdd = dev_get_drvdata(dev);
-	int ret = watchdog_pretimeout_governor_set(wdd, buf);
+	अगर (watchकरोg_active(wdd))
+		वापस प्र_लिखो(buf, "active\n");
 
-	if (!ret)
+	वापस प्र_लिखो(buf, "inactive\n");
+पूर्ण
+अटल DEVICE_ATTR_RO(state);
+
+अटल sमाप_प्रकार preसमयout_available_governors_show(काष्ठा device *dev,
+				   काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	वापस watchकरोg_preसमयout_available_governors_get(buf);
+पूर्ण
+अटल DEVICE_ATTR_RO(preसमयout_available_governors);
+
+अटल sमाप_प्रकार preसमयout_governor_show(काष्ठा device *dev,
+					काष्ठा device_attribute *attr,
+					अक्षर *buf)
+अणु
+	काष्ठा watchकरोg_device *wdd = dev_get_drvdata(dev);
+
+	वापस watchकरोg_preसमयout_governor_get(wdd, buf);
+पूर्ण
+
+अटल sमाप_प्रकार preसमयout_governor_store(काष्ठा device *dev,
+					 काष्ठा device_attribute *attr,
+					 स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	काष्ठा watchकरोg_device *wdd = dev_get_drvdata(dev);
+	पूर्णांक ret = watchकरोg_preसमयout_governor_set(wdd, buf);
+
+	अगर (!ret)
 		ret = count;
 
-	return ret;
-}
-static DEVICE_ATTR_RW(pretimeout_governor);
+	वापस ret;
+पूर्ण
+अटल DEVICE_ATTR_RW(preसमयout_governor);
 
-static umode_t wdt_is_visible(struct kobject *kobj, struct attribute *attr,
-				int n)
-{
-	struct device *dev = kobj_to_dev(kobj);
-	struct watchdog_device *wdd = dev_get_drvdata(dev);
+अटल umode_t wdt_is_visible(काष्ठा kobject *kobj, काष्ठा attribute *attr,
+				पूर्णांक n)
+अणु
+	काष्ठा device *dev = kobj_to_dev(kobj);
+	काष्ठा watchकरोg_device *wdd = dev_get_drvdata(dev);
 	umode_t mode = attr->mode;
 
-	if (attr == &dev_attr_timeleft.attr && !wdd->ops->get_timeleft)
+	अगर (attr == &dev_attr_समयleft.attr && !wdd->ops->get_समयleft)
 		mode = 0;
-	else if (attr == &dev_attr_pretimeout.attr &&
+	अन्यथा अगर (attr == &dev_attr_preसमयout.attr &&
 		 !(wdd->info->options & WDIOF_PRETIMEOUT))
 		mode = 0;
-	else if ((attr == &dev_attr_pretimeout_governor.attr ||
-		  attr == &dev_attr_pretimeout_available_governors.attr) &&
+	अन्यथा अगर ((attr == &dev_attr_preसमयout_governor.attr ||
+		  attr == &dev_attr_preसमयout_available_governors.attr) &&
 		 (!(wdd->info->options & WDIOF_PRETIMEOUT) ||
 		  !IS_ENABLED(CONFIG_WATCHDOG_PRETIMEOUT_GOV)))
 		mode = 0;
 
-	return mode;
-}
-static struct attribute *wdt_attrs[] = {
+	वापस mode;
+पूर्ण
+अटल काष्ठा attribute *wdt_attrs[] = अणु
 	&dev_attr_state.attr,
 	&dev_attr_identity.attr,
-	&dev_attr_timeout.attr,
-	&dev_attr_pretimeout.attr,
-	&dev_attr_timeleft.attr,
+	&dev_attr_समयout.attr,
+	&dev_attr_preसमयout.attr,
+	&dev_attr_समयleft.attr,
 	&dev_attr_bootstatus.attr,
 	&dev_attr_status.attr,
 	&dev_attr_nowayout.attr,
-	&dev_attr_pretimeout_governor.attr,
-	&dev_attr_pretimeout_available_governors.attr,
-	NULL,
-};
+	&dev_attr_preसमयout_governor.attr,
+	&dev_attr_preसमयout_available_governors.attr,
+	शून्य,
+पूर्ण;
 
-static const struct attribute_group wdt_group = {
+अटल स्थिर काष्ठा attribute_group wdt_group = अणु
 	.attrs = wdt_attrs,
 	.is_visible = wdt_is_visible,
-};
+पूर्ण;
 __ATTRIBUTE_GROUPS(wdt);
-#else
-#define wdt_groups	NULL
-#endif
+#अन्यथा
+#घोषणा wdt_groups	शून्य
+#पूर्ण_अगर
 
 /*
- *	watchdog_ioctl_op: call the watchdog drivers ioctl op if defined
- *	@wdd: the watchdog device to do the ioctl on
- *	@cmd: watchdog command
- *	@arg: argument pointer
+ *	watchकरोg_ioctl_op: call the watchकरोg drivers ioctl op अगर defined
+ *	@wdd: the watchकरोg device to करो the ioctl on
+ *	@cmd: watchकरोg command
+ *	@arg: argument poपूर्णांकer
  *
  *	The caller must hold wd_data->lock.
  */
 
-static int watchdog_ioctl_op(struct watchdog_device *wdd, unsigned int cmd,
-							unsigned long arg)
-{
-	if (!wdd->ops->ioctl)
-		return -ENOIOCTLCMD;
+अटल पूर्णांक watchकरोg_ioctl_op(काष्ठा watchकरोg_device *wdd, अचिन्हित पूर्णांक cmd,
+							अचिन्हित दीर्घ arg)
+अणु
+	अगर (!wdd->ops->ioctl)
+		वापस -ENOIOCTLCMD;
 
-	return wdd->ops->ioctl(wdd, cmd, arg);
-}
+	वापस wdd->ops->ioctl(wdd, cmd, arg);
+पूर्ण
 
 /*
- *	watchdog_write: writes to the watchdog.
+ *	watchकरोg_ग_लिखो: ग_लिखोs to the watchकरोg.
  *	@file: file from VFS
  *	@data: user address of data
  *	@len: length of data
- *	@ppos: pointer to the file offset
+ *	@ppos: poपूर्णांकer to the file offset
  *
- *	A write to a watchdog device is defined as a keepalive ping.
- *	Writing the magic 'V' sequence allows the next close to turn
- *	off the watchdog (if 'nowayout' is not set).
+ *	A ग_लिखो to a watchकरोg device is defined as a keepalive ping.
+ *	Writing the magic 'V' sequence allows the next बंद to turn
+ *	off the watchकरोg (अगर 'nowayout' is not set).
  */
 
-static ssize_t watchdog_write(struct file *file, const char __user *data,
-						size_t len, loff_t *ppos)
-{
-	struct watchdog_core_data *wd_data = file->private_data;
-	struct watchdog_device *wdd;
-	int err;
-	size_t i;
-	char c;
+अटल sमाप_प्रकार watchकरोg_ग_लिखो(काष्ठा file *file, स्थिर अक्षर __user *data,
+						माप_प्रकार len, loff_t *ppos)
+अणु
+	काष्ठा watchकरोg_core_data *wd_data = file->निजी_data;
+	काष्ठा watchकरोg_device *wdd;
+	पूर्णांक err;
+	माप_प्रकार i;
+	अक्षर c;
 
-	if (len == 0)
-		return 0;
+	अगर (len == 0)
+		वापस 0;
 
 	/*
-	 * Note: just in case someone wrote the magic character
+	 * Note: just in हाल someone wrote the magic अक्षरacter
 	 * five months ago...
 	 */
 	clear_bit(_WDOG_ALLOW_RELEASE, &wd_data->status);
 
-	/* scan to see whether or not we got the magic character */
-	for (i = 0; i != len; i++) {
-		if (get_user(c, data + i))
-			return -EFAULT;
-		if (c == 'V')
+	/* scan to see whether or not we got the magic अक्षरacter */
+	क्रम (i = 0; i != len; i++) अणु
+		अगर (get_user(c, data + i))
+			वापस -EFAULT;
+		अगर (c == 'V')
 			set_bit(_WDOG_ALLOW_RELEASE, &wd_data->status);
-	}
+	पूर्ण
 
-	/* someone wrote to us, so we send the watchdog a keepalive ping */
+	/* someone wrote to us, so we send the watchकरोg a keepalive ping */
 
 	err = -ENODEV;
 	mutex_lock(&wd_data->lock);
 	wdd = wd_data->wdd;
-	if (wdd)
-		err = watchdog_ping(wdd);
+	अगर (wdd)
+		err = watchकरोg_ping(wdd);
 	mutex_unlock(&wd_data->lock);
 
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
-	return len;
-}
+	वापस len;
+पूर्ण
 
 /*
- *	watchdog_ioctl: handle the different ioctl's for the watchdog device.
+ *	watchकरोg_ioctl: handle the dअगरferent ioctl's क्रम the watchकरोg device.
  *	@file: file handle to the device
- *	@cmd: watchdog command
- *	@arg: argument pointer
+ *	@cmd: watchकरोg command
+ *	@arg: argument poपूर्णांकer
  *
- *	The watchdog API defines a common set of functions for all watchdogs
+ *	The watchकरोg API defines a common set of functions क्रम all watchकरोgs
  *	according to their available features.
  */
 
-static long watchdog_ioctl(struct file *file, unsigned int cmd,
-							unsigned long arg)
-{
-	struct watchdog_core_data *wd_data = file->private_data;
-	void __user *argp = (void __user *)arg;
-	struct watchdog_device *wdd;
-	int __user *p = argp;
-	unsigned int val;
-	int err;
+अटल दीर्घ watchकरोg_ioctl(काष्ठा file *file, अचिन्हित पूर्णांक cmd,
+							अचिन्हित दीर्घ arg)
+अणु
+	काष्ठा watchकरोg_core_data *wd_data = file->निजी_data;
+	व्योम __user *argp = (व्योम __user *)arg;
+	काष्ठा watchकरोg_device *wdd;
+	पूर्णांक __user *p = argp;
+	अचिन्हित पूर्णांक val;
+	पूर्णांक err;
 
 	mutex_lock(&wd_data->lock);
 
 	wdd = wd_data->wdd;
-	if (!wdd) {
+	अगर (!wdd) अणु
 		err = -ENODEV;
-		goto out_ioctl;
-	}
+		जाओ out_ioctl;
+	पूर्ण
 
-	err = watchdog_ioctl_op(wdd, cmd, arg);
-	if (err != -ENOIOCTLCMD)
-		goto out_ioctl;
+	err = watchकरोg_ioctl_op(wdd, cmd, arg);
+	अगर (err != -ENOIOCTLCMD)
+		जाओ out_ioctl;
 
-	switch (cmd) {
-	case WDIOC_GETSUPPORT:
+	चयन (cmd) अणु
+	हाल WDIOC_GETSUPPORT:
 		err = copy_to_user(argp, wdd->info,
-			sizeof(struct watchdog_info)) ? -EFAULT : 0;
-		break;
-	case WDIOC_GETSTATUS:
-		val = watchdog_get_status(wdd);
+			माप(काष्ठा watchकरोg_info)) ? -EFAULT : 0;
+		अवरोध;
+	हाल WDIOC_GETSTATUS:
+		val = watchकरोg_get_status(wdd);
 		err = put_user(val, p);
-		break;
-	case WDIOC_GETBOOTSTATUS:
+		अवरोध;
+	हाल WDIOC_GETBOOTSTATUS:
 		err = put_user(wdd->bootstatus, p);
-		break;
-	case WDIOC_SETOPTIONS:
-		if (get_user(val, p)) {
+		अवरोध;
+	हाल WDIOC_SETOPTIONS:
+		अगर (get_user(val, p)) अणु
 			err = -EFAULT;
-			break;
-		}
-		if (val & WDIOS_DISABLECARD) {
-			err = watchdog_stop(wdd);
-			if (err < 0)
-				break;
-		}
-		if (val & WDIOS_ENABLECARD)
-			err = watchdog_start(wdd);
-		break;
-	case WDIOC_KEEPALIVE:
-		if (!(wdd->info->options & WDIOF_KEEPALIVEPING)) {
+			अवरोध;
+		पूर्ण
+		अगर (val & WDIOS_DISABLECARD) अणु
+			err = watchकरोg_stop(wdd);
+			अगर (err < 0)
+				अवरोध;
+		पूर्ण
+		अगर (val & WDIOS_ENABLECARD)
+			err = watchकरोg_start(wdd);
+		अवरोध;
+	हाल WDIOC_KEEPALIVE:
+		अगर (!(wdd->info->options & WDIOF_KEEPALIVEPING)) अणु
 			err = -EOPNOTSUPP;
-			break;
-		}
-		err = watchdog_ping(wdd);
-		break;
-	case WDIOC_SETTIMEOUT:
-		if (get_user(val, p)) {
+			अवरोध;
+		पूर्ण
+		err = watchकरोg_ping(wdd);
+		अवरोध;
+	हाल WDIOC_SETTIMEOUT:
+		अगर (get_user(val, p)) अणु
 			err = -EFAULT;
-			break;
-		}
-		err = watchdog_set_timeout(wdd, val);
-		if (err < 0)
-			break;
-		/* If the watchdog is active then we send a keepalive ping
-		 * to make sure that the watchdog keep's running (and if
-		 * possible that it takes the new timeout) */
-		err = watchdog_ping(wdd);
-		if (err < 0)
-			break;
+			अवरोध;
+		पूर्ण
+		err = watchकरोg_set_समयout(wdd, val);
+		अगर (err < 0)
+			अवरोध;
+		/* If the watchकरोg is active then we send a keepalive ping
+		 * to make sure that the watchकरोg keep's running (and अगर
+		 * possible that it takes the new समयout) */
+		err = watchकरोg_ping(wdd);
+		अगर (err < 0)
+			अवरोध;
 		fallthrough;
-	case WDIOC_GETTIMEOUT:
-		/* timeout == 0 means that we don't know the timeout */
-		if (wdd->timeout == 0) {
+	हाल WDIOC_GETTIMEOUT:
+		/* समयout == 0 means that we करोn't know the समयout */
+		अगर (wdd->समयout == 0) अणु
 			err = -EOPNOTSUPP;
-			break;
-		}
-		err = put_user(wdd->timeout, p);
-		break;
-	case WDIOC_GETTIMELEFT:
-		err = watchdog_get_timeleft(wdd, &val);
-		if (err < 0)
-			break;
+			अवरोध;
+		पूर्ण
+		err = put_user(wdd->समयout, p);
+		अवरोध;
+	हाल WDIOC_GETTIMELEFT:
+		err = watchकरोg_get_समयleft(wdd, &val);
+		अगर (err < 0)
+			अवरोध;
 		err = put_user(val, p);
-		break;
-	case WDIOC_SETPRETIMEOUT:
-		if (get_user(val, p)) {
+		अवरोध;
+	हाल WDIOC_SETPRETIMEOUT:
+		अगर (get_user(val, p)) अणु
 			err = -EFAULT;
-			break;
-		}
-		err = watchdog_set_pretimeout(wdd, val);
-		break;
-	case WDIOC_GETPRETIMEOUT:
-		err = put_user(wdd->pretimeout, p);
-		break;
-	default:
+			अवरोध;
+		पूर्ण
+		err = watchकरोg_set_preसमयout(wdd, val);
+		अवरोध;
+	हाल WDIOC_GETPRETIMEOUT:
+		err = put_user(wdd->preसमयout, p);
+		अवरोध;
+	शेष:
 		err = -ENOTTY;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 out_ioctl:
 	mutex_unlock(&wd_data->lock);
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /*
- *	watchdog_open: open the /dev/watchdog* devices.
+ *	watchकरोg_खोलो: खोलो the /dev/watchकरोg* devices.
  *	@inode: inode of device
  *	@file: file handle to device
  *
- *	When the /dev/watchdog* device gets opened, we start the watchdog.
- *	Watch out: the /dev/watchdog device is single open, so we make sure
- *	it can only be opened once.
+ *	When the /dev/watchकरोg* device माला_लो खोलोed, we start the watchकरोg.
+ *	Watch out: the /dev/watchकरोg device is single खोलो, so we make sure
+ *	it can only be खोलोed once.
  */
 
-static int watchdog_open(struct inode *inode, struct file *file)
-{
-	struct watchdog_core_data *wd_data;
-	struct watchdog_device *wdd;
+अटल पूर्णांक watchकरोg_खोलो(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	काष्ठा watchकरोg_core_data *wd_data;
+	काष्ठा watchकरोg_device *wdd;
 	bool hw_running;
-	int err;
+	पूर्णांक err;
 
-	/* Get the corresponding watchdog device */
-	if (imajor(inode) == MISC_MAJOR)
+	/* Get the corresponding watchकरोg device */
+	अगर (imajor(inode) == MISC_MAJOR)
 		wd_data = old_wd_data;
-	else
-		wd_data = container_of(inode->i_cdev, struct watchdog_core_data,
+	अन्यथा
+		wd_data = container_of(inode->i_cdev, काष्ठा watchकरोg_core_data,
 				       cdev);
 
-	/* the watchdog is single open! */
-	if (test_and_set_bit(_WDOG_DEV_OPEN, &wd_data->status))
-		return -EBUSY;
+	/* the watchकरोg is single खोलो! */
+	अगर (test_and_set_bit(_WDOG_DEV_OPEN, &wd_data->status))
+		वापस -EBUSY;
 
 	wdd = wd_data->wdd;
 
 	/*
-	 * If the /dev/watchdog device is open, we don't want the module
+	 * If the /dev/watchकरोg device is खोलो, we करोn't want the module
 	 * to be unloaded.
 	 */
-	hw_running = watchdog_hw_running(wdd);
-	if (!hw_running && !try_module_get(wdd->ops->owner)) {
+	hw_running = watchकरोg_hw_running(wdd);
+	अगर (!hw_running && !try_module_get(wdd->ops->owner)) अणु
 		err = -EBUSY;
-		goto out_clear;
-	}
+		जाओ out_clear;
+	पूर्ण
 
-	err = watchdog_start(wdd);
-	if (err < 0)
-		goto out_mod;
+	err = watchकरोg_start(wdd);
+	अगर (err < 0)
+		जाओ out_mod;
 
-	file->private_data = wd_data;
+	file->निजी_data = wd_data;
 
-	if (!hw_running)
+	अगर (!hw_running)
 		get_device(&wd_data->dev);
 
 	/*
-	 * open_timeout only applies for the first open from
-	 * userspace. Set open_deadline to infinity so that the kernel
-	 * will take care of an always-running hardware watchdog in
-	 * case the device gets magic-closed or WDIOS_DISABLECARD is
+	 * खोलो_समयout only applies क्रम the first खोलो from
+	 * userspace. Set खोलो_deadline to infinity so that the kernel
+	 * will take care of an always-running hardware watchकरोg in
+	 * हाल the device माला_लो magic-बंदd or WDIOS_DISABLECARD is
 	 * applied.
 	 */
-	wd_data->open_deadline = KTIME_MAX;
+	wd_data->खोलो_deadline = KTIME_MAX;
 
-	/* dev/watchdog is a virtual (and thus non-seekable) filesystem */
-	return stream_open(inode, file);
+	/* dev/watchकरोg is a भव (and thus non-seekable) fileप्रणाली */
+	वापस stream_खोलो(inode, file);
 
 out_mod:
 	module_put(wd_data->wdd->ops->owner);
 out_clear:
 	clear_bit(_WDOG_DEV_OPEN, &wd_data->status);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void watchdog_core_data_release(struct device *dev)
-{
-	struct watchdog_core_data *wd_data;
+अटल व्योम watchकरोg_core_data_release(काष्ठा device *dev)
+अणु
+	काष्ठा watchकरोg_core_data *wd_data;
 
-	wd_data = container_of(dev, struct watchdog_core_data, dev);
+	wd_data = container_of(dev, काष्ठा watchकरोg_core_data, dev);
 
-	kfree(wd_data);
-}
+	kमुक्त(wd_data);
+पूर्ण
 
 /*
- *	watchdog_release: release the watchdog device.
+ *	watchकरोg_release: release the watchकरोg device.
  *	@inode: inode of device
  *	@file: file handle to device
  *
- *	This is the code for when /dev/watchdog gets closed. We will only
- *	stop the watchdog when we have received the magic char (and nowayout
- *	was not set), else the watchdog will keep running.
+ *	This is the code क्रम when /dev/watchकरोg माला_लो बंदd. We will only
+ *	stop the watchकरोg when we have received the magic अक्षर (and nowayout
+ *	was not set), अन्यथा the watchकरोg will keep running.
  */
 
-static int watchdog_release(struct inode *inode, struct file *file)
-{
-	struct watchdog_core_data *wd_data = file->private_data;
-	struct watchdog_device *wdd;
-	int err = -EBUSY;
+अटल पूर्णांक watchकरोg_release(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	काष्ठा watchकरोg_core_data *wd_data = file->निजी_data;
+	काष्ठा watchकरोg_device *wdd;
+	पूर्णांक err = -EBUSY;
 	bool running;
 
 	mutex_lock(&wd_data->lock);
 
 	wdd = wd_data->wdd;
-	if (!wdd)
-		goto done;
+	अगर (!wdd)
+		जाओ करोne;
 
 	/*
-	 * We only stop the watchdog if we received the magic character
-	 * or if WDIOF_MAGICCLOSE is not set. If nowayout was set then
-	 * watchdog_stop will fail.
+	 * We only stop the watchकरोg अगर we received the magic अक्षरacter
+	 * or अगर WDIOF_MAGICCLOSE is not set. If nowayout was set then
+	 * watchकरोg_stop will fail.
 	 */
-	if (!watchdog_active(wdd))
+	अगर (!watchकरोg_active(wdd))
 		err = 0;
-	else if (test_and_clear_bit(_WDOG_ALLOW_RELEASE, &wd_data->status) ||
+	अन्यथा अगर (test_and_clear_bit(_WDOG_ALLOW_RELEASE, &wd_data->status) ||
 		 !(wdd->info->options & WDIOF_MAGICCLOSE))
-		err = watchdog_stop(wdd);
+		err = watchकरोg_stop(wdd);
 
-	/* If the watchdog was not stopped, send a keepalive ping */
-	if (err < 0) {
+	/* If the watchकरोg was not stopped, send a keepalive ping */
+	अगर (err < 0) अणु
 		pr_crit("watchdog%d: watchdog did not stop!\n", wdd->id);
-		watchdog_ping(wdd);
-	}
+		watchकरोg_ping(wdd);
+	पूर्ण
 
-	watchdog_update_worker(wdd);
+	watchकरोg_update_worker(wdd);
 
-	/* make sure that /dev/watchdog can be re-opened */
+	/* make sure that /dev/watchकरोg can be re-खोलोed */
 	clear_bit(_WDOG_DEV_OPEN, &wd_data->status);
 
-done:
-	running = wdd && watchdog_hw_running(wdd);
+करोne:
+	running = wdd && watchकरोg_hw_running(wdd);
 	mutex_unlock(&wd_data->lock);
 	/*
-	 * Allow the owner module to be unloaded again unless the watchdog
-	 * is still running. If the watchdog is still running, it can not
+	 * Allow the owner module to be unloaded again unless the watchकरोg
+	 * is still running. If the watchकरोg is still running, it can not
 	 * be stopped, and its driver must not be unloaded.
 	 */
-	if (!running) {
+	अगर (!running) अणु
 		module_put(wd_data->cdev.owner);
 		put_device(&wd_data->dev);
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static const struct file_operations watchdog_fops = {
+अटल स्थिर काष्ठा file_operations watchकरोg_fops = अणु
 	.owner		= THIS_MODULE,
-	.write		= watchdog_write,
-	.unlocked_ioctl	= watchdog_ioctl,
+	.ग_लिखो		= watchकरोg_ग_लिखो,
+	.unlocked_ioctl	= watchकरोg_ioctl,
 	.compat_ioctl	= compat_ptr_ioctl,
-	.open		= watchdog_open,
-	.release	= watchdog_release,
-};
+	.खोलो		= watchकरोg_खोलो,
+	.release	= watchकरोg_release,
+पूर्ण;
 
-static struct miscdevice watchdog_miscdev = {
+अटल काष्ठा miscdevice watchकरोg_miscdev = अणु
 	.minor		= WATCHDOG_MINOR,
 	.name		= "watchdog",
-	.fops		= &watchdog_fops,
-};
+	.fops		= &watchकरोg_fops,
+पूर्ण;
 
-static struct class watchdog_class = {
+अटल काष्ठा class watchकरोg_class = अणु
 	.name =		"watchdog",
 	.owner =	THIS_MODULE,
 	.dev_groups =	wdt_groups,
-};
+पूर्ण;
 
 /*
- *	watchdog_cdev_register: register watchdog character device
- *	@wdd: watchdog device
+ *	watchकरोg_cdev_रेजिस्टर: रेजिस्टर watchकरोg अक्षरacter device
+ *	@wdd: watchकरोg device
  *
- *	Register a watchdog character device including handling the legacy
- *	/dev/watchdog node. /dev/watchdog is actually a miscdevice and
+ *	Register a watchकरोg अक्षरacter device including handling the legacy
+ *	/dev/watchकरोg node. /dev/watchकरोg is actually a miscdevice and
  *	thus we set it up like that.
  */
 
-static int watchdog_cdev_register(struct watchdog_device *wdd)
-{
-	struct watchdog_core_data *wd_data;
-	int err;
+अटल पूर्णांक watchकरोg_cdev_रेजिस्टर(काष्ठा watchकरोg_device *wdd)
+अणु
+	काष्ठा watchकरोg_core_data *wd_data;
+	पूर्णांक err;
 
-	wd_data = kzalloc(sizeof(struct watchdog_core_data), GFP_KERNEL);
-	if (!wd_data)
-		return -ENOMEM;
+	wd_data = kzalloc(माप(काष्ठा watchकरोg_core_data), GFP_KERNEL);
+	अगर (!wd_data)
+		वापस -ENOMEM;
 	mutex_init(&wd_data->lock);
 
 	wd_data->wdd = wdd;
 	wdd->wd_data = wd_data;
 
-	if (IS_ERR_OR_NULL(watchdog_kworker)) {
-		kfree(wd_data);
-		return -ENODEV;
-	}
+	अगर (IS_ERR_OR_शून्य(watchकरोg_kworker)) अणु
+		kमुक्त(wd_data);
+		वापस -ENODEV;
+	पूर्ण
 
 	device_initialize(&wd_data->dev);
-	wd_data->dev.devt = MKDEV(MAJOR(watchdog_devt), wdd->id);
-	wd_data->dev.class = &watchdog_class;
+	wd_data->dev.devt = MKDEV(MAJOR(watchकरोg_devt), wdd->id);
+	wd_data->dev.class = &watchकरोg_class;
 	wd_data->dev.parent = wdd->parent;
 	wd_data->dev.groups = wdd->groups;
-	wd_data->dev.release = watchdog_core_data_release;
+	wd_data->dev.release = watchकरोg_core_data_release;
 	dev_set_drvdata(&wd_data->dev, wdd);
 	dev_set_name(&wd_data->dev, "watchdog%d", wdd->id);
 
-	kthread_init_work(&wd_data->work, watchdog_ping_work);
-	hrtimer_init(&wd_data->timer, CLOCK_MONOTONIC, HRTIMER_MODE_REL_HARD);
-	wd_data->timer.function = watchdog_timer_expired;
+	kthपढ़ो_init_work(&wd_data->work, watchकरोg_ping_work);
+	hrसमयr_init(&wd_data->समयr, CLOCK_MONOTONIC, HRTIMER_MODE_REL_HARD);
+	wd_data->समयr.function = watchकरोg_समयr_expired;
 
-	if (wdd->id == 0) {
+	अगर (wdd->id == 0) अणु
 		old_wd_data = wd_data;
-		watchdog_miscdev.parent = wdd->parent;
-		err = misc_register(&watchdog_miscdev);
-		if (err != 0) {
+		watchकरोg_miscdev.parent = wdd->parent;
+		err = misc_रेजिस्टर(&watchकरोg_miscdev);
+		अगर (err != 0) अणु
 			pr_err("%s: cannot register miscdev on minor=%d (err=%d).\n",
 				wdd->info->identity, WATCHDOG_MINOR, err);
-			if (err == -EBUSY)
+			अगर (err == -EBUSY)
 				pr_err("%s: a legacy watchdog module is probably present.\n",
 					wdd->info->identity);
-			old_wd_data = NULL;
+			old_wd_data = शून्य;
 			put_device(&wd_data->dev);
-			return err;
-		}
-	}
+			वापस err;
+		पूर्ण
+	पूर्ण
 
-	/* Fill in the data structures */
-	cdev_init(&wd_data->cdev, &watchdog_fops);
+	/* Fill in the data काष्ठाures */
+	cdev_init(&wd_data->cdev, &watchकरोg_fops);
 
 	/* Add the device */
 	err = cdev_device_add(&wd_data->cdev, &wd_data->dev);
-	if (err) {
+	अगर (err) अणु
 		pr_err("watchdog%d unable to add device %d:%d\n",
-			wdd->id,  MAJOR(watchdog_devt), wdd->id);
-		if (wdd->id == 0) {
-			misc_deregister(&watchdog_miscdev);
-			old_wd_data = NULL;
+			wdd->id,  MAJOR(watchकरोg_devt), wdd->id);
+		अगर (wdd->id == 0) अणु
+			misc_deरेजिस्टर(&watchकरोg_miscdev);
+			old_wd_data = शून्य;
 			put_device(&wd_data->dev);
-		}
-		return err;
-	}
+		पूर्ण
+		वापस err;
+	पूर्ण
 
 	wd_data->cdev.owner = wdd->ops->owner;
 
-	/* Record time of most recent heartbeat as 'just before now'. */
-	wd_data->last_hw_keepalive = ktime_sub(ktime_get(), 1);
-	watchdog_set_open_deadline(wd_data);
+	/* Record समय of most recent heartbeat as 'just before now'. */
+	wd_data->last_hw_keepalive = kसमय_sub(kसमय_get(), 1);
+	watchकरोg_set_खोलो_deadline(wd_data);
 
 	/*
-	 * If the watchdog is running, prevent its driver from being unloaded,
+	 * If the watchकरोg is running, prevent its driver from being unloaded,
 	 * and schedule an immediate ping.
 	 */
-	if (watchdog_hw_running(wdd)) {
+	अगर (watchकरोg_hw_running(wdd)) अणु
 		__module_get(wdd->ops->owner);
 		get_device(&wd_data->dev);
-		if (handle_boot_enabled)
-			hrtimer_start(&wd_data->timer, 0,
+		अगर (handle_boot_enabled)
+			hrसमयr_start(&wd_data->समयr, 0,
 				      HRTIMER_MODE_REL_HARD);
-		else
+		अन्यथा
 			pr_info("watchdog%d running and kernel based pre-userspace handler disabled\n",
 				wdd->id);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- *	watchdog_cdev_unregister: unregister watchdog character device
- *	@watchdog: watchdog device
+ *	watchकरोg_cdev_unरेजिस्टर: unरेजिस्टर watchकरोg अक्षरacter device
+ *	@watchकरोg: watchकरोg device
  *
- *	Unregister watchdog character device and if needed the legacy
- *	/dev/watchdog device.
+ *	Unरेजिस्टर watchकरोg अक्षरacter device and अगर needed the legacy
+ *	/dev/watchकरोg device.
  */
 
-static void watchdog_cdev_unregister(struct watchdog_device *wdd)
-{
-	struct watchdog_core_data *wd_data = wdd->wd_data;
+अटल व्योम watchकरोg_cdev_unरेजिस्टर(काष्ठा watchकरोg_device *wdd)
+अणु
+	काष्ठा watchकरोg_core_data *wd_data = wdd->wd_data;
 
 	cdev_device_del(&wd_data->cdev, &wd_data->dev);
-	if (wdd->id == 0) {
-		misc_deregister(&watchdog_miscdev);
-		old_wd_data = NULL;
-	}
+	अगर (wdd->id == 0) अणु
+		misc_deरेजिस्टर(&watchकरोg_miscdev);
+		old_wd_data = शून्य;
+	पूर्ण
 
-	if (watchdog_active(wdd) &&
-	    test_bit(WDOG_STOP_ON_UNREGISTER, &wdd->status)) {
-		watchdog_stop(wdd);
-	}
+	अगर (watchकरोg_active(wdd) &&
+	    test_bit(WDOG_STOP_ON_UNREGISTER, &wdd->status)) अणु
+		watchकरोg_stop(wdd);
+	पूर्ण
 
 	mutex_lock(&wd_data->lock);
-	wd_data->wdd = NULL;
-	wdd->wd_data = NULL;
+	wd_data->wdd = शून्य;
+	wdd->wd_data = शून्य;
 	mutex_unlock(&wd_data->lock);
 
-	hrtimer_cancel(&wd_data->timer);
-	kthread_cancel_work_sync(&wd_data->work);
+	hrसमयr_cancel(&wd_data->समयr);
+	kthपढ़ो_cancel_work_sync(&wd_data->work);
 
 	put_device(&wd_data->dev);
-}
+पूर्ण
 
 /*
- *	watchdog_dev_register: register a watchdog device
- *	@wdd: watchdog device
+ *	watchकरोg_dev_रेजिस्टर: रेजिस्टर a watchकरोg device
+ *	@wdd: watchकरोg device
  *
- *	Register a watchdog device including handling the legacy
- *	/dev/watchdog node. /dev/watchdog is actually a miscdevice and
+ *	Register a watchकरोg device including handling the legacy
+ *	/dev/watchकरोg node. /dev/watchकरोg is actually a miscdevice and
  *	thus we set it up like that.
  */
 
-int watchdog_dev_register(struct watchdog_device *wdd)
-{
-	int ret;
+पूर्णांक watchकरोg_dev_रेजिस्टर(काष्ठा watchकरोg_device *wdd)
+अणु
+	पूर्णांक ret;
 
-	ret = watchdog_cdev_register(wdd);
-	if (ret)
-		return ret;
+	ret = watchकरोg_cdev_रेजिस्टर(wdd);
+	अगर (ret)
+		वापस ret;
 
-	ret = watchdog_register_pretimeout(wdd);
-	if (ret)
-		watchdog_cdev_unregister(wdd);
+	ret = watchकरोg_रेजिस्टर_preसमयout(wdd);
+	अगर (ret)
+		watchकरोg_cdev_unरेजिस्टर(wdd);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
- *	watchdog_dev_unregister: unregister a watchdog device
- *	@watchdog: watchdog device
+ *	watchकरोg_dev_unरेजिस्टर: unरेजिस्टर a watchकरोg device
+ *	@watchकरोg: watchकरोg device
  *
- *	Unregister watchdog device and if needed the legacy
- *	/dev/watchdog device.
+ *	Unरेजिस्टर watchकरोg device and अगर needed the legacy
+ *	/dev/watchकरोg device.
  */
 
-void watchdog_dev_unregister(struct watchdog_device *wdd)
-{
-	watchdog_unregister_pretimeout(wdd);
-	watchdog_cdev_unregister(wdd);
-}
+व्योम watchकरोg_dev_unरेजिस्टर(काष्ठा watchकरोg_device *wdd)
+अणु
+	watchकरोg_unरेजिस्टर_preसमयout(wdd);
+	watchकरोg_cdev_unरेजिस्टर(wdd);
+पूर्ण
 
 /*
- *	watchdog_set_last_hw_keepalive: set last HW keepalive time for watchdog
- *	@wdd: watchdog device
- *	@last_ping_ms: time since last HW heartbeat
+ *	watchकरोg_set_last_hw_keepalive: set last HW keepalive समय क्रम watchकरोg
+ *	@wdd: watchकरोg device
+ *	@last_ping_ms: समय since last HW heartbeat
  *
- *	Adjusts the last known HW keepalive time for a watchdog timer.
- *	This is needed if the watchdog is already running when the probe
+ *	Adjusts the last known HW keepalive समय क्रम a watchकरोg समयr.
+ *	This is needed अगर the watchकरोg is alपढ़ोy running when the probe
  *	function is called, and it can't be pinged immediately. This
- *	function must be called immediately after watchdog registration,
- *	and min_hw_heartbeat_ms must be set for this to be useful.
+ *	function must be called immediately after watchकरोg registration,
+ *	and min_hw_heartbeat_ms must be set क्रम this to be useful.
  */
-int watchdog_set_last_hw_keepalive(struct watchdog_device *wdd,
-				   unsigned int last_ping_ms)
-{
-	struct watchdog_core_data *wd_data;
-	ktime_t now;
+पूर्णांक watchकरोg_set_last_hw_keepalive(काष्ठा watchकरोg_device *wdd,
+				   अचिन्हित पूर्णांक last_ping_ms)
+अणु
+	काष्ठा watchकरोg_core_data *wd_data;
+	kसमय_प्रकार now;
 
-	if (!wdd)
-		return -EINVAL;
+	अगर (!wdd)
+		वापस -EINVAL;
 
 	wd_data = wdd->wd_data;
 
-	now = ktime_get();
+	now = kसमय_get();
 
-	wd_data->last_hw_keepalive = ktime_sub(now, ms_to_ktime(last_ping_ms));
+	wd_data->last_hw_keepalive = kसमय_sub(now, ms_to_kसमय(last_ping_ms));
 
-	return __watchdog_ping(wdd);
-}
-EXPORT_SYMBOL_GPL(watchdog_set_last_hw_keepalive);
+	वापस __watchकरोg_ping(wdd);
+पूर्ण
+EXPORT_SYMBOL_GPL(watchकरोg_set_last_hw_keepalive);
 
 /*
- *	watchdog_dev_init: init dev part of watchdog core
+ *	watchकरोg_dev_init: init dev part of watchकरोg core
  *
- *	Allocate a range of chardev nodes to use for watchdog devices
+ *	Allocate a range of अक्षरdev nodes to use क्रम watchकरोg devices
  */
 
-int __init watchdog_dev_init(void)
-{
-	int err;
+पूर्णांक __init watchकरोg_dev_init(व्योम)
+अणु
+	पूर्णांक err;
 
-	watchdog_kworker = kthread_create_worker(0, "watchdogd");
-	if (IS_ERR(watchdog_kworker)) {
+	watchकरोg_kworker = kthपढ़ो_create_worker(0, "watchdogd");
+	अगर (IS_ERR(watchकरोg_kworker)) अणु
 		pr_err("Failed to create watchdog kworker\n");
-		return PTR_ERR(watchdog_kworker);
-	}
-	sched_set_fifo(watchdog_kworker->task);
+		वापस PTR_ERR(watchकरोg_kworker);
+	पूर्ण
+	sched_set_fअगरo(watchकरोg_kworker->task);
 
-	err = class_register(&watchdog_class);
-	if (err < 0) {
+	err = class_रेजिस्टर(&watchकरोg_class);
+	अगर (err < 0) अणु
 		pr_err("couldn't register class\n");
-		goto err_register;
-	}
+		जाओ err_रेजिस्टर;
+	पूर्ण
 
-	err = alloc_chrdev_region(&watchdog_devt, 0, MAX_DOGS, "watchdog");
-	if (err < 0) {
+	err = alloc_chrdev_region(&watchकरोg_devt, 0, MAX_DOGS, "watchdog");
+	अगर (err < 0) अणु
 		pr_err("watchdog: unable to allocate char dev region\n");
-		goto err_alloc;
-	}
+		जाओ err_alloc;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 err_alloc:
-	class_unregister(&watchdog_class);
-err_register:
-	kthread_destroy_worker(watchdog_kworker);
-	return err;
-}
+	class_unरेजिस्टर(&watchकरोg_class);
+err_रेजिस्टर:
+	kthपढ़ो_destroy_worker(watchकरोg_kworker);
+	वापस err;
+पूर्ण
 
 /*
- *	watchdog_dev_exit: exit dev part of watchdog core
+ *	watchकरोg_dev_निकास: निकास dev part of watchकरोg core
  *
- *	Release the range of chardev nodes used for watchdog devices
+ *	Release the range of अक्षरdev nodes used क्रम watchकरोg devices
  */
 
-void __exit watchdog_dev_exit(void)
-{
-	unregister_chrdev_region(watchdog_devt, MAX_DOGS);
-	class_unregister(&watchdog_class);
-	kthread_destroy_worker(watchdog_kworker);
-}
+व्योम __निकास watchकरोg_dev_निकास(व्योम)
+अणु
+	unरेजिस्टर_chrdev_region(watchकरोg_devt, MAX_DOGS);
+	class_unरेजिस्टर(&watchकरोg_class);
+	kthपढ़ो_destroy_worker(watchकरोg_kworker);
+पूर्ण
 
 module_param(handle_boot_enabled, bool, 0444);
 MODULE_PARM_DESC(handle_boot_enabled,
 	"Watchdog core auto-updates boot enabled watchdogs before userspace takes over (default="
 	__MODULE_STRING(IS_ENABLED(CONFIG_WATCHDOG_HANDLE_BOOT_ENABLED)) ")");
 
-module_param(open_timeout, uint, 0644);
-MODULE_PARM_DESC(open_timeout,
+module_param(खोलो_समयout, uपूर्णांक, 0644);
+MODULE_PARM_DESC(खोलो_समयout,
 	"Maximum time (in seconds, 0 means infinity) for userspace to take over a running watchdog (default="
 	__MODULE_STRING(CONFIG_WATCHDOG_OPEN_TIMEOUT) ")");

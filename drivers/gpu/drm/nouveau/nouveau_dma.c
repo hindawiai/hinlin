@@ -1,13 +1,14 @@
+<शैली गुरु>
 /*
  * Copyright (C) 2007 Ben Skeggs.
  * All Rights Reserved.
  *
- * Permission is hereby granted, free of charge, to any person obtaining
- * a copy of this software and associated documentation files (the
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining
+ * a copy of this software and associated करोcumentation files (the
  * "Software"), to deal in the Software without restriction, including
- * without limitation the rights to use, copy, modify, merge, publish,
+ * without limitation the rights to use, copy, modअगरy, merge, publish,
  * distribute, sublicense, and/or sell copies of the Software, and to
- * permit persons to whom the Software is furnished to do so, subject to
+ * permit persons to whom the Software is furnished to करो so, subject to
  * the following conditions:
  *
  * The above copyright notice and this permission notice (including the
@@ -24,58 +25,58 @@
  *
  */
 
-#include "nouveau_drv.h"
-#include "nouveau_dma.h"
-#include "nouveau_vmm.h"
+#समावेश "nouveau_drv.h"
+#समावेश "nouveau_dma.h"
+#समावेश "nouveau_vmm.h"
 
-#include <nvif/user.h>
+#समावेश <nvअगर/user.h>
 
-/* Fetch and adjust GPU GET pointer
+/* Fetch and adjust GPU GET poपूर्णांकer
  *
  * Returns:
- *  value >= 0, the adjusted GET pointer
- *  -EINVAL if GET pointer currently outside main push buffer
- *  -EBUSY if timeout exceeded
+ *  value >= 0, the adjusted GET poपूर्णांकer
+ *  -EINVAL अगर GET poपूर्णांकer currently outside मुख्य push buffer
+ *  -EBUSY अगर समयout exceeded
  */
-static inline int
-READ_GET(struct nouveau_channel *chan, uint64_t *prev_get, int *timeout)
-{
-	uint64_t val;
+अटल अंतरभूत पूर्णांक
+READ_GET(काष्ठा nouveau_channel *chan, uपूर्णांक64_t *prev_get, पूर्णांक *समयout)
+अणु
+	uपूर्णांक64_t val;
 
-	val = nvif_rd32(&chan->user, chan->user_get);
-        if (chan->user_get_hi)
-                val |= (uint64_t)nvif_rd32(&chan->user, chan->user_get_hi) << 32;
+	val = nvअगर_rd32(&chan->user, chan->user_get);
+        अगर (chan->user_get_hi)
+                val |= (uपूर्णांक64_t)nvअगर_rd32(&chan->user, chan->user_get_hi) << 32;
 
-	/* reset counter as long as GET is still advancing, this is
-	 * to avoid misdetecting a GPU lockup if the GPU happens to
-	 * just be processing an operation that takes a long time
+	/* reset counter as दीर्घ as GET is still advancing, this is
+	 * to aव्योम misdetecting a GPU lockup अगर the GPU happens to
+	 * just be processing an operation that takes a दीर्घ समय
 	 */
-	if (val != *prev_get) {
+	अगर (val != *prev_get) अणु
 		*prev_get = val;
-		*timeout = 0;
-	}
+		*समयout = 0;
+	पूर्ण
 
-	if ((++*timeout & 0xff) == 0) {
+	अगर ((++*समयout & 0xff) == 0) अणु
 		udelay(1);
-		if (*timeout > 100000)
-			return -EBUSY;
-	}
+		अगर (*समयout > 100000)
+			वापस -EBUSY;
+	पूर्ण
 
-	if (val < chan->push.addr ||
+	अगर (val < chan->push.addr ||
 	    val > chan->push.addr + (chan->dma.max << 2))
-		return -EINVAL;
+		वापस -EINVAL;
 
-	return (val - chan->push.addr) >> 2;
-}
+	वापस (val - chan->push.addr) >> 2;
+पूर्ण
 
-void
-nv50_dma_push(struct nouveau_channel *chan, u64 offset, int length)
-{
-	struct nvif_user *user = &chan->drm->client.device.user;
-	struct nouveau_bo *pb = chan->push.buffer;
-	int ip = (chan->dma.ib_put * 2) + chan->dma.ib_base;
+व्योम
+nv50_dma_push(काष्ठा nouveau_channel *chan, u64 offset, पूर्णांक length)
+अणु
+	काष्ठा nvअगर_user *user = &chan->drm->client.device.user;
+	काष्ठा nouveau_bo *pb = chan->push.buffer;
+	पूर्णांक ip = (chan->dma.ib_put * 2) + chan->dma.ib_base;
 
-	BUG_ON(chan->dma.ib_free < 1);
+	BUG_ON(chan->dma.ib_मुक्त < 1);
 
 	nouveau_bo_wr32(pb, ip++, lower_32_bits(offset));
 	nouveau_bo_wr32(pb, ip++, upper_32_bits(offset) | length << 8);
@@ -83,146 +84,146 @@ nv50_dma_push(struct nouveau_channel *chan, u64 offset, int length)
 	chan->dma.ib_put = (chan->dma.ib_put + 1) & chan->dma.ib_max;
 
 	mb();
-	/* Flush writes. */
+	/* Flush ग_लिखोs. */
 	nouveau_bo_rd32(pb, 0);
 
-	nvif_wr32(&chan->user, 0x8c, chan->dma.ib_put);
-	if (user->func && user->func->doorbell)
-		user->func->doorbell(user, chan->token);
-	chan->dma.ib_free--;
-}
+	nvअगर_wr32(&chan->user, 0x8c, chan->dma.ib_put);
+	अगर (user->func && user->func->करोorbell)
+		user->func->करोorbell(user, chan->token);
+	chan->dma.ib_मुक्त--;
+पूर्ण
 
-static int
-nv50_dma_push_wait(struct nouveau_channel *chan, int count)
-{
-	uint32_t cnt = 0, prev_get = 0;
+अटल पूर्णांक
+nv50_dma_push_रुको(काष्ठा nouveau_channel *chan, पूर्णांक count)
+अणु
+	uपूर्णांक32_t cnt = 0, prev_get = 0;
 
-	while (chan->dma.ib_free < count) {
-		uint32_t get = nvif_rd32(&chan->user, 0x88);
-		if (get != prev_get) {
+	जबतक (chan->dma.ib_मुक्त < count) अणु
+		uपूर्णांक32_t get = nvअगर_rd32(&chan->user, 0x88);
+		अगर (get != prev_get) अणु
 			prev_get = get;
 			cnt = 0;
-		}
+		पूर्ण
 
-		if ((++cnt & 0xff) == 0) {
+		अगर ((++cnt & 0xff) == 0) अणु
 			udelay(1);
-			if (cnt > 100000)
-				return -EBUSY;
-		}
+			अगर (cnt > 100000)
+				वापस -EBUSY;
+		पूर्ण
 
-		chan->dma.ib_free = get - chan->dma.ib_put;
-		if (chan->dma.ib_free <= 0)
-			chan->dma.ib_free += chan->dma.ib_max;
-	}
+		chan->dma.ib_मुक्त = get - chan->dma.ib_put;
+		अगर (chan->dma.ib_मुक्त <= 0)
+			chan->dma.ib_मुक्त += chan->dma.ib_max;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-nv50_dma_wait(struct nouveau_channel *chan, int slots, int count)
-{
-	uint64_t prev_get = 0;
-	int ret, cnt = 0;
+अटल पूर्णांक
+nv50_dma_रुको(काष्ठा nouveau_channel *chan, पूर्णांक slots, पूर्णांक count)
+अणु
+	uपूर्णांक64_t prev_get = 0;
+	पूर्णांक ret, cnt = 0;
 
-	ret = nv50_dma_push_wait(chan, slots + 1);
-	if (unlikely(ret))
-		return ret;
+	ret = nv50_dma_push_रुको(chan, slots + 1);
+	अगर (unlikely(ret))
+		वापस ret;
 
-	while (chan->dma.free < count) {
-		int get = READ_GET(chan, &prev_get, &cnt);
-		if (unlikely(get < 0)) {
-			if (get == -EINVAL)
-				continue;
+	जबतक (chan->dma.मुक्त < count) अणु
+		पूर्णांक get = READ_GET(chan, &prev_get, &cnt);
+		अगर (unlikely(get < 0)) अणु
+			अगर (get == -EINVAL)
+				जारी;
 
-			return get;
-		}
+			वापस get;
+		पूर्ण
 
-		if (get <= chan->dma.cur) {
-			chan->dma.free = chan->dma.max - chan->dma.cur;
-			if (chan->dma.free >= count)
-				break;
+		अगर (get <= chan->dma.cur) अणु
+			chan->dma.मुक्त = chan->dma.max - chan->dma.cur;
+			अगर (chan->dma.मुक्त >= count)
+				अवरोध;
 
 			FIRE_RING(chan);
-			do {
+			करो अणु
 				get = READ_GET(chan, &prev_get, &cnt);
-				if (unlikely(get < 0)) {
-					if (get == -EINVAL)
-						continue;
-					return get;
-				}
-			} while (get == 0);
+				अगर (unlikely(get < 0)) अणु
+					अगर (get == -EINVAL)
+						जारी;
+					वापस get;
+				पूर्ण
+			पूर्ण जबतक (get == 0);
 			chan->dma.cur = 0;
 			chan->dma.put = 0;
-		}
+		पूर्ण
 
-		chan->dma.free = get - chan->dma.cur - 1;
-	}
+		chan->dma.मुक्त = get - chan->dma.cur - 1;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int
-nouveau_dma_wait(struct nouveau_channel *chan, int slots, int size)
-{
-	uint64_t prev_get = 0;
-	int cnt = 0, get;
+पूर्णांक
+nouveau_dma_रुको(काष्ठा nouveau_channel *chan, पूर्णांक slots, पूर्णांक size)
+अणु
+	uपूर्णांक64_t prev_get = 0;
+	पूर्णांक cnt = 0, get;
 
-	if (chan->dma.ib_max)
-		return nv50_dma_wait(chan, slots, size);
+	अगर (chan->dma.ib_max)
+		वापस nv50_dma_रुको(chan, slots, size);
 
-	while (chan->dma.free < size) {
+	जबतक (chan->dma.मुक्त < size) अणु
 		get = READ_GET(chan, &prev_get, &cnt);
-		if (unlikely(get == -EBUSY))
-			return -EBUSY;
+		अगर (unlikely(get == -EBUSY))
+			वापस -EBUSY;
 
-		/* loop until we have a usable GET pointer.  the value
-		 * we read from the GPU may be outside the main ring if
-		 * PFIFO is processing a buffer called from the main ring,
+		/* loop until we have a usable GET poपूर्णांकer.  the value
+		 * we पढ़ो from the GPU may be outside the मुख्य ring अगर
+		 * PFIFO is processing a buffer called from the मुख्य ring,
 		 * discard these values until something sensible is seen.
 		 *
-		 * the other case we discard GET is while the GPU is fetching
-		 * from the SKIPS area, so the code below doesn't have to deal
-		 * with some fun corner cases.
+		 * the other हाल we discard GET is जबतक the GPU is fetching
+		 * from the SKIPS area, so the code below करोesn't have to deal
+		 * with some fun corner हालs.
 		 */
-		if (unlikely(get == -EINVAL) || get < NOUVEAU_DMA_SKIPS)
-			continue;
+		अगर (unlikely(get == -EINVAL) || get < NOUVEAU_DMA_SKIPS)
+			जारी;
 
-		if (get <= chan->dma.cur) {
+		अगर (get <= chan->dma.cur) अणु
 			/* engine is fetching behind us, or is completely
-			 * idle (GET == PUT) so we have free space up until
+			 * idle (GET == PUT) so we have मुक्त space up until
 			 * the end of the push buffer
 			 *
 			 * we can only hit that path once per call due to
 			 * looping back to the beginning of the push buffer,
 			 * we'll hit the fetching-ahead-of-us path from that
-			 * point on.
+			 * poपूर्णांक on.
 			 *
-			 * the *one* exception to that rule is if we read
-			 * GET==PUT, in which case the below conditional will
-			 * always succeed and break us out of the wait loop.
+			 * the *one* exception to that rule is अगर we पढ़ो
+			 * GET==PUT, in which हाल the below conditional will
+			 * always succeed and अवरोध us out of the रुको loop.
 			 */
-			chan->dma.free = chan->dma.max - chan->dma.cur;
-			if (chan->dma.free >= size)
-				break;
+			chan->dma.मुक्त = chan->dma.max - chan->dma.cur;
+			अगर (chan->dma.मुक्त >= size)
+				अवरोध;
 
 			/* not enough space left at the end of the push buffer,
-			 * instruct the GPU to jump back to the start right
+			 * inकाष्ठा the GPU to jump back to the start right
 			 * after processing the currently pending commands.
 			 */
 			OUT_RING(chan, chan->push.addr | 0x20000000);
 
-			/* wait for GET to depart from the skips area.
+			/* रुको क्रम GET to depart from the skips area.
 			 * prevents writing GET==PUT and causing a race
 			 * condition that causes us to think the GPU is
 			 * idle when it's not.
 			 */
-			do {
+			करो अणु
 				get = READ_GET(chan, &prev_get, &cnt);
-				if (unlikely(get == -EBUSY))
-					return -EBUSY;
-				if (unlikely(get == -EINVAL))
-					continue;
-			} while (get <= NOUVEAU_DMA_SKIPS);
+				अगर (unlikely(get == -EBUSY))
+					वापस -EBUSY;
+				अगर (unlikely(get == -EINVAL))
+					जारी;
+			पूर्ण जबतक (get <= NOUVEAU_DMA_SKIPS);
 			WRITE_PUT(NOUVEAU_DMA_SKIPS);
 
 			/* we're now submitting commands at the start of
@@ -230,17 +231,17 @@ nouveau_dma_wait(struct nouveau_channel *chan, int slots, int size)
 			 */
 			chan->dma.cur  =
 			chan->dma.put  = NOUVEAU_DMA_SKIPS;
-		}
+		पूर्ण
 
 		/* engine fetching ahead of us, we have space up until the
-		 * current GET pointer.  the "- 1" is to ensure there's
+		 * current GET poपूर्णांकer.  the "- 1" is to ensure there's
 		 * space left to emit a jump back to the beginning of the
-		 * push buffer if we require it.  we can never get GET == PUT
+		 * push buffer अगर we require it.  we can never get GET == PUT
 		 * here, so this is safe.
 		 */
-		chan->dma.free = get - chan->dma.cur - 1;
-	}
+		chan->dma.मुक्त = get - chan->dma.cur - 1;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 

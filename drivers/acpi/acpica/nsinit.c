@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: BSD-3-Clause OR GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: BSD-3-Clause OR GPL-2.0
 /******************************************************************************
  *
  * Module Name: nsinit - namespace initialization
@@ -7,28 +8,28 @@
  *
  *****************************************************************************/
 
-#include <acpi/acpi.h>
-#include "accommon.h"
-#include "acnamesp.h"
-#include "acdispat.h"
-#include "acinterp.h"
-#include "acevents.h"
+#समावेश <acpi/acpi.h>
+#समावेश "accommon.h"
+#समावेश "acnamesp.h"
+#समावेश "acdispat.h"
+#समावेश "acinterp.h"
+#समावेश "acevents.h"
 
-#define _COMPONENT          ACPI_NAMESPACE
+#घोषणा _COMPONENT          ACPI_NAMESPACE
 ACPI_MODULE_NAME("nsinit")
 
 /* Local prototypes */
-static acpi_status
+अटल acpi_status
 acpi_ns_init_one_object(acpi_handle obj_handle,
-			u32 level, void *context, void **return_value);
+			u32 level, व्योम *context, व्योम **वापस_value);
 
-static acpi_status
+अटल acpi_status
 acpi_ns_init_one_device(acpi_handle obj_handle,
-			u32 nesting_level, void *context, void **return_value);
+			u32 nesting_level, व्योम *context, व्योम **वापस_value);
 
-static acpi_status
+अटल acpi_status
 acpi_ns_find_ini_methods(acpi_handle obj_handle,
-			 u32 nesting_level, void *context, void **return_value);
+			 u32 nesting_level, व्योम *context, व्योम **वापस_value);
 
 /*******************************************************************************
  *
@@ -38,15 +39,15 @@ acpi_ns_find_ini_methods(acpi_handle obj_handle,
  *
  * RETURN:      Status
  *
- * DESCRIPTION: Walk the entire namespace and perform any necessary
+ * DESCRIPTION: Walk the entire namespace and perक्रमm any necessary
  *              initialization on the objects found therein
  *
  ******************************************************************************/
 
-acpi_status acpi_ns_initialize_objects(void)
-{
+acpi_status acpi_ns_initialize_objects(व्योम)
+अणु
 	acpi_status status;
-	struct acpi_init_walk_info info;
+	काष्ठा acpi_init_walk_info info;
 
 	ACPI_FUNCTION_TRACE(ns_initialize_objects);
 
@@ -59,21 +60,21 @@ acpi_status acpi_ns_initialize_objects(void)
 
 	/* Clear the info block */
 
-	memset(&info, 0, sizeof(struct acpi_init_walk_info));
+	स_रखो(&info, 0, माप(काष्ठा acpi_init_walk_info));
 
 	/* Walk entire namespace from the supplied root */
 
 	/*
 	 * TBD: will become ACPI_TYPE_PACKAGE as this type object
 	 * is now the only one that supports deferred initialization
-	 * (forward references).
+	 * (क्रमward references).
 	 */
 	status = acpi_walk_namespace(ACPI_TYPE_ANY, ACPI_ROOT_OBJECT,
 				     ACPI_UINT32_MAX, acpi_ns_init_one_object,
-				     NULL, &info, NULL);
-	if (ACPI_FAILURE(status)) {
+				     शून्य, &info, शून्य);
+	अगर (ACPI_FAILURE(status)) अणु
 		ACPI_EXCEPTION((AE_INFO, status, "During WalkNamespace"));
-	}
+	पूर्ण
 
 	ACPI_DEBUG_PRINT_RAW((ACPI_DB_INIT,
 			      "Namespace contains %u (0x%X) objects\n",
@@ -83,8 +84,8 @@ acpi_status acpi_ns_initialize_objects(void)
 			  "%u Control Methods found\n%u Op Regions found\n",
 			  info.method_count, info.op_region_count));
 
-	return_ACPI_STATUS(AE_OK);
-}
+	वापस_ACPI_STATUS(AE_OK);
+पूर्ण
 
 /*******************************************************************************
  *
@@ -103,14 +104,14 @@ acpi_status acpi_ns_initialize_objects(void)
  ******************************************************************************/
 
 acpi_status acpi_ns_initialize_devices(u32 flags)
-{
+अणु
 	acpi_status status = AE_OK;
-	struct acpi_device_walk_info info;
+	काष्ठा acpi_device_walk_info info;
 	acpi_handle handle;
 
 	ACPI_FUNCTION_TRACE(ns_initialize_devices);
 
-	if (!(flags & ACPI_NO_DEVICE_INIT)) {
+	अगर (!(flags & ACPI_NO_DEVICE_INIT)) अणु
 		ACPI_DEBUG_PRINT((ACPI_DB_EXEC,
 				  "[Init] Initializing ACPI Devices\n"));
 
@@ -128,117 +129,117 @@ acpi_status acpi_ns_initialize_devices(u32 flags)
 
 		status = acpi_ns_walk_namespace(ACPI_TYPE_ANY, ACPI_ROOT_OBJECT,
 						ACPI_UINT32_MAX, FALSE,
-						acpi_ns_find_ini_methods, NULL,
-						&info, NULL);
-		if (ACPI_FAILURE(status)) {
-			goto error_exit;
-		}
+						acpi_ns_find_ini_methods, शून्य,
+						&info, शून्य);
+		अगर (ACPI_FAILURE(status)) अणु
+			जाओ error_निकास;
+		पूर्ण
 
-		/* Allocate the evaluation information block */
+		/* Allocate the evaluation inक्रमmation block */
 
 		info.evaluate_info =
-		    ACPI_ALLOCATE_ZEROED(sizeof(struct acpi_evaluate_info));
-		if (!info.evaluate_info) {
+		    ACPI_ALLOCATE_ZEROED(माप(काष्ठा acpi_evaluate_info));
+		अगर (!info.evaluate_info) अणु
 			status = AE_NO_MEMORY;
-			goto error_exit;
-		}
+			जाओ error_निकास;
+		पूर्ण
 
 		/*
 		 * Execute the "global" _INI method that may appear at the root.
-		 * This support is provided for Windows compatibility (Vista+) and
-		 * is not part of the ACPI specification.
+		 * This support is provided क्रम Winकरोws compatibility (Vista+) and
+		 * is not part of the ACPI specअगरication.
 		 */
 		info.evaluate_info->prefix_node = acpi_gbl_root_node;
 		info.evaluate_info->relative_pathname = METHOD_NAME__INI;
-		info.evaluate_info->parameters = NULL;
+		info.evaluate_info->parameters = शून्य;
 		info.evaluate_info->flags = ACPI_IGNORE_RETURN_VALUE;
 
 		status = acpi_ns_evaluate(info.evaluate_info);
-		if (ACPI_SUCCESS(status)) {
+		अगर (ACPI_SUCCESS(status)) अणु
 			info.num_INI++;
-		}
+		पूर्ण
 
 		/*
 		 * Execute \_SB._INI.
-		 * There appears to be a strict order requirement for \_SB._INI,
-		 * which should be evaluated before any _REG evaluations.
+		 * There appears to be a strict order requirement क्रम \_SB._INI,
+		 * which should be evaluated beक्रमe any _REG evaluations.
 		 */
-		status = acpi_get_handle(NULL, "\\_SB", &handle);
-		if (ACPI_SUCCESS(status)) {
-			memset(info.evaluate_info, 0,
-			       sizeof(struct acpi_evaluate_info));
+		status = acpi_get_handle(शून्य, "\\_SB", &handle);
+		अगर (ACPI_SUCCESS(status)) अणु
+			स_रखो(info.evaluate_info, 0,
+			       माप(काष्ठा acpi_evaluate_info));
 			info.evaluate_info->prefix_node = handle;
 			info.evaluate_info->relative_pathname =
 			    METHOD_NAME__INI;
-			info.evaluate_info->parameters = NULL;
+			info.evaluate_info->parameters = शून्य;
 			info.evaluate_info->flags = ACPI_IGNORE_RETURN_VALUE;
 
 			status = acpi_ns_evaluate(info.evaluate_info);
-			if (ACPI_SUCCESS(status)) {
+			अगर (ACPI_SUCCESS(status)) अणु
 				info.num_INI++;
-			}
-		}
-	}
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
 	/*
 	 * Run all _REG methods
 	 *
-	 * Note: Any objects accessed by the _REG methods will be automatically
-	 * initialized, even if they contain executable AML (see the call to
+	 * Note: Any objects accessed by the _REG methods will be स्वतःmatically
+	 * initialized, even अगर they contain executable AML (see the call to
 	 * acpi_ns_initialize_objects below).
 	 *
-	 * Note: According to the ACPI specification, we actually needn't execute
-	 * _REG for system_memory/system_io operation regions, but for PCI_Config
-	 * operation regions, it is required to evaluate _REG for those on a PCI
-	 * root bus that doesn't contain _BBN object. So this code is kept here
-	 * in order not to break things.
+	 * Note: According to the ACPI specअगरication, we actually needn't execute
+	 * _REG क्रम प्रणाली_memory/प्रणाली_io operation regions, but क्रम PCI_Config
+	 * operation regions, it is required to evaluate _REG क्रम those on a PCI
+	 * root bus that करोesn't contain _BBN object. So this code is kept here
+	 * in order not to अवरोध things.
 	 */
-	if (!(flags & ACPI_NO_ADDRESS_SPACE_INIT)) {
+	अगर (!(flags & ACPI_NO_ADDRESS_SPACE_INIT)) अणु
 		ACPI_DEBUG_PRINT((ACPI_DB_EXEC,
 				  "[Init] Executing _REG OpRegion methods\n"));
 
 		status = acpi_ev_initialize_op_regions();
-		if (ACPI_FAILURE(status)) {
-			goto error_exit;
-		}
-	}
+		अगर (ACPI_FAILURE(status)) अणु
+			जाओ error_निकास;
+		पूर्ण
+	पूर्ण
 
-	if (!(flags & ACPI_NO_DEVICE_INIT)) {
+	अगर (!(flags & ACPI_NO_DEVICE_INIT)) अणु
 
 		/* Walk namespace to execute all _INIs on present devices */
 
 		status = acpi_ns_walk_namespace(ACPI_TYPE_ANY, ACPI_ROOT_OBJECT,
 						ACPI_UINT32_MAX, FALSE,
-						acpi_ns_init_one_device, NULL,
-						&info, NULL);
+						acpi_ns_init_one_device, शून्य,
+						&info, शून्य);
 
 		/*
 		 * Any _OSI requests should be completed by now. If the BIOS has
-		 * requested any Windows OSI strings, we will always truncate
-		 * I/O addresses to 16 bits -- for Windows compatibility.
+		 * requested any Winकरोws OSI strings, we will always truncate
+		 * I/O addresses to 16 bits -- क्रम Winकरोws compatibility.
 		 */
-		if (acpi_gbl_osi_data >= ACPI_OSI_WIN_2000) {
+		अगर (acpi_gbl_osi_data >= ACPI_OSI_WIN_2000) अणु
 			acpi_gbl_truncate_io_addresses = TRUE;
-		}
+		पूर्ण
 
 		ACPI_FREE(info.evaluate_info);
-		if (ACPI_FAILURE(status)) {
-			goto error_exit;
-		}
+		अगर (ACPI_FAILURE(status)) अणु
+			जाओ error_निकास;
+		पूर्ण
 
 		ACPI_DEBUG_PRINT_RAW((ACPI_DB_INIT,
 				      "    Executed %u _INI methods requiring %u _STA executions "
 				      "(examined %u objects)\n",
 				      info.num_INI, info.num_STA,
 				      info.device_count));
-	}
+	पूर्ण
 
-	return_ACPI_STATUS(status);
+	वापस_ACPI_STATUS(status);
 
-error_exit:
+error_निकास:
 	ACPI_EXCEPTION((AE_INFO, status, "During device initialization"));
-	return_ACPI_STATUS(status);
-}
+	वापस_ACPI_STATUS(status);
+पूर्ण
 
 /*******************************************************************************
  *
@@ -247,50 +248,50 @@ error_exit:
  * PARAMETERS:  obj_handle      - Node
  *              level           - Current nesting level
  *              context         - Not used
- *              return_value    - Not used
+ *              वापस_value    - Not used
  *
  * RETURN:      Status
  *
- * DESCRIPTION: Callback from acpi_walk_namespace. Invoked for every package
+ * DESCRIPTION: Callback from acpi_walk_namespace. Invoked क्रम every package
  *              within the namespace. Used during dynamic load of an SSDT.
  *
  ******************************************************************************/
 
 acpi_status
 acpi_ns_init_one_package(acpi_handle obj_handle,
-			 u32 level, void *context, void **return_value)
-{
+			 u32 level, व्योम *context, व्योम **वापस_value)
+अणु
 	acpi_status status;
-	union acpi_operand_object *obj_desc;
-	struct acpi_namespace_node *node =
-	    (struct acpi_namespace_node *)obj_handle;
+	जोड़ acpi_opeअक्रम_object *obj_desc;
+	काष्ठा acpi_namespace_node *node =
+	    (काष्ठा acpi_namespace_node *)obj_handle;
 
 	obj_desc = acpi_ns_get_attached_object(node);
-	if (!obj_desc) {
-		return (AE_OK);
-	}
+	अगर (!obj_desc) अणु
+		वापस (AE_OK);
+	पूर्ण
 
-	/* Exit if package is already initialized */
+	/* Exit अगर package is alपढ़ोy initialized */
 
-	if (obj_desc->package.flags & AOPOBJ_DATA_VALID) {
-		return (AE_OK);
-	}
+	अगर (obj_desc->package.flags & AOPOBJ_DATA_VALID) अणु
+		वापस (AE_OK);
+	पूर्ण
 
 	status = acpi_ds_get_package_arguments(obj_desc);
-	if (ACPI_FAILURE(status)) {
-		return (AE_OK);
-	}
+	अगर (ACPI_FAILURE(status)) अणु
+		वापस (AE_OK);
+	पूर्ण
 
 	status =
-	    acpi_ut_walk_package_tree(obj_desc, NULL,
-				      acpi_ds_init_package_element, NULL);
-	if (ACPI_FAILURE(status)) {
-		return (AE_OK);
-	}
+	    acpi_ut_walk_package_tree(obj_desc, शून्य,
+				      acpi_ds_init_package_element, शून्य);
+	अगर (ACPI_FAILURE(status)) अणु
+		वापस (AE_OK);
+	पूर्ण
 
 	obj_desc->package.flags |= AOPOBJ_DATA_VALID;
-	return (AE_OK);
-}
+	वापस (AE_OK);
+पूर्ण
 
 /*******************************************************************************
  *
@@ -298,12 +299,12 @@ acpi_ns_init_one_package(acpi_handle obj_handle,
  *
  * PARAMETERS:  obj_handle      - Node
  *              level           - Current nesting level
- *              context         - Points to a init info struct
- *              return_value    - Not used
+ *              context         - Poपूर्णांकs to a init info काष्ठा
+ *              वापस_value    - Not used
  *
  * RETURN:      Status
  *
- * DESCRIPTION: Callback from acpi_walk_namespace. Invoked for every object
+ * DESCRIPTION: Callback from acpi_walk_namespace. Invoked क्रम every object
  *              within the namespace.
  *
  *              Currently, the only objects that require initialization are:
@@ -312,98 +313,98 @@ acpi_ns_init_one_package(acpi_handle obj_handle,
  *
  ******************************************************************************/
 
-static acpi_status
+अटल acpi_status
 acpi_ns_init_one_object(acpi_handle obj_handle,
-			u32 level, void *context, void **return_value)
-{
+			u32 level, व्योम *context, व्योम **वापस_value)
+अणु
 	acpi_object_type type;
 	acpi_status status = AE_OK;
-	struct acpi_init_walk_info *info =
-	    (struct acpi_init_walk_info *)context;
-	struct acpi_namespace_node *node =
-	    (struct acpi_namespace_node *)obj_handle;
-	union acpi_operand_object *obj_desc;
+	काष्ठा acpi_init_walk_info *info =
+	    (काष्ठा acpi_init_walk_info *)context;
+	काष्ठा acpi_namespace_node *node =
+	    (काष्ठा acpi_namespace_node *)obj_handle;
+	जोड़ acpi_opeअक्रम_object *obj_desc;
 
 	ACPI_FUNCTION_NAME(ns_init_one_object);
 
 	info->object_count++;
 
-	/* And even then, we are only interested in a few object types */
+	/* And even then, we are only पूर्णांकerested in a few object types */
 
 	type = acpi_ns_get_type(obj_handle);
 	obj_desc = acpi_ns_get_attached_object(node);
-	if (!obj_desc) {
-		return (AE_OK);
-	}
+	अगर (!obj_desc) अणु
+		वापस (AE_OK);
+	पूर्ण
 
-	/* Increment counters for object types we are looking for */
+	/* Increment counters क्रम object types we are looking क्रम */
 
-	switch (type) {
-	case ACPI_TYPE_REGION:
+	चयन (type) अणु
+	हाल ACPI_TYPE_REGION:
 
 		info->op_region_count++;
-		break;
+		अवरोध;
 
-	case ACPI_TYPE_BUFFER_FIELD:
-
-		info->field_count++;
-		break;
-
-	case ACPI_TYPE_LOCAL_BANK_FIELD:
+	हाल ACPI_TYPE_BUFFER_FIELD:
 
 		info->field_count++;
-		break;
+		अवरोध;
 
-	case ACPI_TYPE_BUFFER:
+	हाल ACPI_TYPE_LOCAL_BANK_FIELD:
+
+		info->field_count++;
+		अवरोध;
+
+	हाल ACPI_TYPE_BUFFER:
 
 		info->buffer_count++;
-		break;
+		अवरोध;
 
-	case ACPI_TYPE_PACKAGE:
+	हाल ACPI_TYPE_PACKAGE:
 
 		info->package_count++;
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 
-		/* No init required, just exit now */
+		/* No init required, just निकास now */
 
-		return (AE_OK);
-	}
+		वापस (AE_OK);
+	पूर्ण
 
-	/* If the object is already initialized, nothing else to do */
+	/* If the object is alपढ़ोy initialized, nothing अन्यथा to करो */
 
-	if (obj_desc->common.flags & AOPOBJ_DATA_VALID) {
-		return (AE_OK);
-	}
+	अगर (obj_desc->common.flags & AOPOBJ_DATA_VALID) अणु
+		वापस (AE_OK);
+	पूर्ण
 
-	/* Must lock the interpreter before executing AML code */
+	/* Must lock the पूर्णांकerpreter beक्रमe executing AML code */
 
-	acpi_ex_enter_interpreter();
+	acpi_ex_enter_पूर्णांकerpreter();
 
 	/*
 	 * Only initialization of Package objects can be deferred, in order
-	 * to support forward references.
+	 * to support क्रमward references.
 	 */
-	switch (type) {
-	case ACPI_TYPE_LOCAL_BANK_FIELD:
+	चयन (type) अणु
+	हाल ACPI_TYPE_LOCAL_BANK_FIELD:
 
-		/* TBD: bank_fields do not require deferred init, remove this code */
+		/* TBD: bank_fields करो not require deferred init, हटाओ this code */
 
 		info->field_init++;
 		status = acpi_ds_get_bank_field_arguments(obj_desc);
-		break;
+		अवरोध;
 
-	case ACPI_TYPE_PACKAGE:
+	हाल ACPI_TYPE_PACKAGE:
 
 		/* Complete the initialization/resolution of the package object */
 
 		info->package_init++;
 		status =
-		    acpi_ns_init_one_package(obj_handle, level, NULL, NULL);
-		break;
+		    acpi_ns_init_one_package(obj_handle, level, शून्य, शून्य);
+		अवरोध;
 
-	default:
+	शेष:
 
 		/* No other types should get here */
 
@@ -412,23 +413,23 @@ acpi_ns_init_one_object(acpi_handle obj_handle,
 				"Opcode is not deferred [%4.4s] (%s)",
 				acpi_ut_get_node_name(node),
 				acpi_ut_get_type_name(type)));
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	if (ACPI_FAILURE(status)) {
+	अगर (ACPI_FAILURE(status)) अणु
 		ACPI_EXCEPTION((AE_INFO, status,
 				"Could not execute arguments for [%4.4s] (%s)",
 				acpi_ut_get_node_name(node),
 				acpi_ut_get_type_name(type)));
-	}
+	पूर्ण
 
 	/*
-	 * We ignore errors from above, and always return OK, since we don't want
-	 * to abort the walk on any single error.
+	 * We ignore errors from above, and always वापस OK, since we करोn't want
+	 * to पात the walk on any single error.
 	 */
-	acpi_ex_exit_interpreter();
-	return (AE_OK);
-}
+	acpi_ex_निकास_पूर्णांकerpreter();
+	वापस (AE_OK);
+पूर्ण
 
 /*******************************************************************************
  *
@@ -441,61 +442,61 @@ acpi_ns_init_one_object(acpi_handle obj_handle,
  * DESCRIPTION: Called during namespace walk. Finds objects named _INI under
  *              device/processor/thermal objects, and marks the entire subtree
  *              with a SUBTREE_HAS_INI flag. This flag is used during the
- *              subsequent device initialization walk to avoid entire subtrees
- *              that do not contain an _INI.
+ *              subsequent device initialization walk to aव्योम entire subtrees
+ *              that करो not contain an _INI.
  *
  ******************************************************************************/
 
-static acpi_status
+अटल acpi_status
 acpi_ns_find_ini_methods(acpi_handle obj_handle,
-			 u32 nesting_level, void *context, void **return_value)
-{
-	struct acpi_device_walk_info *info =
-	    ACPI_CAST_PTR(struct acpi_device_walk_info, context);
-	struct acpi_namespace_node *node;
-	struct acpi_namespace_node *parent_node;
+			 u32 nesting_level, व्योम *context, व्योम **वापस_value)
+अणु
+	काष्ठा acpi_device_walk_info *info =
+	    ACPI_CAST_PTR(काष्ठा acpi_device_walk_info, context);
+	काष्ठा acpi_namespace_node *node;
+	काष्ठा acpi_namespace_node *parent_node;
 
 	/* Keep count of device/processor/thermal objects */
 
-	node = ACPI_CAST_PTR(struct acpi_namespace_node, obj_handle);
-	if ((node->type == ACPI_TYPE_DEVICE) ||
+	node = ACPI_CAST_PTR(काष्ठा acpi_namespace_node, obj_handle);
+	अगर ((node->type == ACPI_TYPE_DEVICE) ||
 	    (node->type == ACPI_TYPE_PROCESSOR) ||
-	    (node->type == ACPI_TYPE_THERMAL)) {
+	    (node->type == ACPI_TYPE_THERMAL)) अणु
 		info->device_count++;
-		return (AE_OK);
-	}
+		वापस (AE_OK);
+	पूर्ण
 
-	/* We are only looking for methods named _INI */
+	/* We are only looking क्रम methods named _INI */
 
-	if (!ACPI_COMPARE_NAMESEG(node->name.ascii, METHOD_NAME__INI)) {
-		return (AE_OK);
-	}
+	अगर (!ACPI_COMPARE_NAMESEG(node->name.ascii, METHOD_NAME__INI)) अणु
+		वापस (AE_OK);
+	पूर्ण
 
 	/*
 	 * The only _INI methods that we care about are those that are
 	 * present under Device, Processor, and Thermal objects.
 	 */
 	parent_node = node->parent;
-	switch (parent_node->type) {
-	case ACPI_TYPE_DEVICE:
-	case ACPI_TYPE_PROCESSOR:
-	case ACPI_TYPE_THERMAL:
+	चयन (parent_node->type) अणु
+	हाल ACPI_TYPE_DEVICE:
+	हाल ACPI_TYPE_PROCESSOR:
+	हाल ACPI_TYPE_THERMAL:
 
 		/* Mark parent and bubble up the INI present flag to the root */
 
-		while (parent_node) {
+		जबतक (parent_node) अणु
 			parent_node->flags |= ANOBJ_SUBTREE_HAS_INI;
 			parent_node = parent_node->parent;
-		}
-		break;
+		पूर्ण
+		अवरोध;
 
-	default:
+	शेष:
 
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return (AE_OK);
-}
+	वापस (AE_OK);
+पूर्ण
 
 /*******************************************************************************
  *
@@ -506,174 +507,174 @@ acpi_ns_find_ini_methods(acpi_handle obj_handle,
  * RETURN:      acpi_status
  *
  * DESCRIPTION: This is called once per device soon after ACPI is enabled
- *              to initialize each device. It determines if the device is
- *              present, and if so, calls _INI.
+ *              to initialize each device. It determines अगर the device is
+ *              present, and अगर so, calls _INI.
  *
  ******************************************************************************/
 
-static acpi_status
+अटल acpi_status
 acpi_ns_init_one_device(acpi_handle obj_handle,
-			u32 nesting_level, void *context, void **return_value)
-{
-	struct acpi_device_walk_info *walk_info =
-	    ACPI_CAST_PTR(struct acpi_device_walk_info, context);
-	struct acpi_evaluate_info *info = walk_info->evaluate_info;
+			u32 nesting_level, व्योम *context, व्योम **वापस_value)
+अणु
+	काष्ठा acpi_device_walk_info *walk_info =
+	    ACPI_CAST_PTR(काष्ठा acpi_device_walk_info, context);
+	काष्ठा acpi_evaluate_info *info = walk_info->evaluate_info;
 	u32 flags;
 	acpi_status status;
-	struct acpi_namespace_node *device_node;
+	काष्ठा acpi_namespace_node *device_node;
 
 	ACPI_FUNCTION_TRACE(ns_init_one_device);
 
-	/* We are interested in Devices, Processors and thermal_zones only */
+	/* We are पूर्णांकerested in Devices, Processors and thermal_zones only */
 
-	device_node = ACPI_CAST_PTR(struct acpi_namespace_node, obj_handle);
-	if ((device_node->type != ACPI_TYPE_DEVICE) &&
+	device_node = ACPI_CAST_PTR(काष्ठा acpi_namespace_node, obj_handle);
+	अगर ((device_node->type != ACPI_TYPE_DEVICE) &&
 	    (device_node->type != ACPI_TYPE_PROCESSOR) &&
-	    (device_node->type != ACPI_TYPE_THERMAL)) {
-		return_ACPI_STATUS(AE_OK);
-	}
+	    (device_node->type != ACPI_TYPE_THERMAL)) अणु
+		वापस_ACPI_STATUS(AE_OK);
+	पूर्ण
 
 	/*
 	 * Because of an earlier namespace analysis, all subtrees that contain an
 	 * _INI method are tagged.
 	 *
-	 * If this device subtree does not contain any _INI methods, we
-	 * can exit now and stop traversing this entire subtree.
+	 * If this device subtree करोes not contain any _INI methods, we
+	 * can निकास now and stop traversing this entire subtree.
 	 */
-	if (!(device_node->flags & ANOBJ_SUBTREE_HAS_INI)) {
-		return_ACPI_STATUS(AE_CTRL_DEPTH);
-	}
+	अगर (!(device_node->flags & ANOBJ_SUBTREE_HAS_INI)) अणु
+		वापस_ACPI_STATUS(AE_CTRL_DEPTH);
+	पूर्ण
 
 	/*
-	 * Run _STA to determine if this device is present and functioning. We
-	 * must know this information for two important reasons (from ACPI spec):
+	 * Run _STA to determine अगर this device is present and functioning. We
+	 * must know this inक्रमmation क्रम two important reasons (from ACPI spec):
 	 *
-	 * 1) We can only run _INI if the device is present.
-	 * 2) We must abort the device tree walk on this subtree if the device is
+	 * 1) We can only run _INI अगर the device is present.
+	 * 2) We must पात the device tree walk on this subtree अगर the device is
 	 *    not present and is not functional (we will not examine the children)
 	 *
 	 * The _STA method is not required to be present under the device, we
-	 * assume the device is present if _STA does not exist.
+	 * assume the device is present अगर _STA करोes not exist.
 	 */
 	ACPI_DEBUG_EXEC(acpi_ut_display_init_pathname
 			(ACPI_TYPE_METHOD, device_node, METHOD_NAME__STA));
 
 	status = acpi_ut_execute_STA(device_node, &flags);
-	if (ACPI_FAILURE(status)) {
+	अगर (ACPI_FAILURE(status)) अणु
 
 		/* Ignore error and move on to next device */
 
-		return_ACPI_STATUS(AE_OK);
-	}
+		वापस_ACPI_STATUS(AE_OK);
+	पूर्ण
 
 	/*
-	 * Flags == -1 means that _STA was not found. In this case, we assume that
+	 * Flags == -1 means that _STA was not found. In this हाल, we assume that
 	 * the device is both present and functional.
 	 *
 	 * From the ACPI spec, description of _STA:
 	 *
-	 * "If a device object (including the processor object) does not have an
+	 * "If a device object (including the processor object) करोes not have an
 	 * _STA object, then OSPM assumes that all of the above bits are set (in
 	 * other words, the device is present, ..., and functioning)"
 	 */
-	if (flags != ACPI_UINT32_MAX) {
+	अगर (flags != ACPI_UINT32_MAX) अणु
 		walk_info->num_STA++;
-	}
+	पूर्ण
 
 	/*
 	 * Examine the PRESENT and FUNCTIONING status bits
 	 *
-	 * Note: ACPI spec does not seem to specify behavior for the present but
-	 * not functioning case, so we assume functioning if present.
+	 * Note: ACPI spec करोes not seem to specअगरy behavior क्रम the present but
+	 * not functioning हाल, so we assume functioning अगर present.
 	 */
-	if (!(flags & ACPI_STA_DEVICE_PRESENT)) {
+	अगर (!(flags & ACPI_STA_DEVICE_PRESENT)) अणु
 
 		/* Device is not present, we must examine the Functioning bit */
 
-		if (flags & ACPI_STA_DEVICE_FUNCTIONING) {
+		अगर (flags & ACPI_STA_DEVICE_FUNCTIONING) अणु
 			/*
-			 * Device is not present but is "functioning". In this case,
-			 * we will not run _INI, but we continue to examine the children
+			 * Device is not present but is "functioning". In this हाल,
+			 * we will not run _INI, but we जारी to examine the children
 			 * of this device.
 			 *
 			 * From the ACPI spec, description of _STA: (note - no mention
 			 * of whether to run _INI or not on the device in question)
 			 *
-			 * "_STA may return bit 0 clear (not present) with bit 3 set
-			 * (device is functional). This case is used to indicate a valid
-			 * device for which no device driver should be loaded (for example,
+			 * "_STA may वापस bit 0 clear (not present) with bit 3 set
+			 * (device is functional). This हाल is used to indicate a valid
+			 * device क्रम which no device driver should be loaded (क्रम example,
 			 * a bridge device.) Children of this device may be present and
-			 * valid. OSPM should continue enumeration below a device whose
-			 * _STA returns this bit combination"
+			 * valid. OSPM should जारी क्रमागतeration below a device whose
+			 * _STA वापसs this bit combination"
 			 */
-			return_ACPI_STATUS(AE_OK);
-		} else {
+			वापस_ACPI_STATUS(AE_OK);
+		पूर्ण अन्यथा अणु
 			/*
-			 * Device is not present and is not functioning. We must abort the
-			 * walk of this subtree immediately -- don't look at the children
+			 * Device is not present and is not functioning. We must पात the
+			 * walk of this subtree immediately -- करोn't look at the children
 			 * of such a device.
 			 *
 			 * From the ACPI spec, description of _INI:
 			 *
 			 * "If the _STA method indicates that the device is not present,
 			 * OSPM will not run the _INI and will not examine the children
-			 * of the device for _INI methods"
+			 * of the device क्रम _INI methods"
 			 */
-			return_ACPI_STATUS(AE_CTRL_DEPTH);
-		}
-	}
+			वापस_ACPI_STATUS(AE_CTRL_DEPTH);
+		पूर्ण
+	पूर्ण
 
 	/*
-	 * The device is present or is assumed present if no _STA exists.
-	 * Run the _INI if it exists (not required to exist)
+	 * The device is present or is assumed present अगर no _STA exists.
+	 * Run the _INI अगर it exists (not required to exist)
 	 *
 	 * Note: We know there is an _INI within this subtree, but it may not be
 	 * under this particular device, it may be lower in the branch.
 	 */
-	if (!ACPI_COMPARE_NAMESEG(device_node->name.ascii, "_SB_") ||
-	    device_node->parent != acpi_gbl_root_node) {
+	अगर (!ACPI_COMPARE_NAMESEG(device_node->name.ascii, "_SB_") ||
+	    device_node->parent != acpi_gbl_root_node) अणु
 		ACPI_DEBUG_EXEC(acpi_ut_display_init_pathname
 				(ACPI_TYPE_METHOD, device_node,
 				 METHOD_NAME__INI));
 
-		memset(info, 0, sizeof(struct acpi_evaluate_info));
+		स_रखो(info, 0, माप(काष्ठा acpi_evaluate_info));
 		info->prefix_node = device_node;
 		info->relative_pathname = METHOD_NAME__INI;
-		info->parameters = NULL;
+		info->parameters = शून्य;
 		info->flags = ACPI_IGNORE_RETURN_VALUE;
 
 		status = acpi_ns_evaluate(info);
-		if (ACPI_SUCCESS(status)) {
+		अगर (ACPI_SUCCESS(status)) अणु
 			walk_info->num_INI++;
-		}
-#ifdef ACPI_DEBUG_OUTPUT
-		else if (status != AE_NOT_FOUND) {
+		पूर्ण
+#अगर_घोषित ACPI_DEBUG_OUTPUT
+		अन्यथा अगर (status != AE_NOT_FOUND) अणु
 
 			/* Ignore error and move on to next device */
 
-			char *scope_name =
+			अक्षर *scope_name =
 			    acpi_ns_get_normalized_pathname(device_node, TRUE);
 
 			ACPI_EXCEPTION((AE_INFO, status,
 					"during %s._INI execution",
 					scope_name));
 			ACPI_FREE(scope_name);
-		}
-#endif
-	}
+		पूर्ण
+#पूर्ण_अगर
+	पूर्ण
 
 	/* Ignore errors from above */
 
 	status = AE_OK;
 
 	/*
-	 * The _INI method has been run if present; call the Global Initialization
-	 * Handler for this device.
+	 * The _INI method has been run अगर present; call the Global Initialization
+	 * Handler क्रम this device.
 	 */
-	if (acpi_gbl_init_handler) {
+	अगर (acpi_gbl_init_handler) अणु
 		status =
 		    acpi_gbl_init_handler(device_node, ACPI_INIT_DEVICE_INI);
-	}
+	पूर्ण
 
-	return_ACPI_STATUS(status);
-}
+	वापस_ACPI_STATUS(status);
+पूर्ण

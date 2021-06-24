@@ -1,15 +1,16 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * vivid-osd.h - output overlay support functions.
  *
  * Copyright 2014 Cisco Systems, Inc. and/or its affiliates. All rights reserved.
  */
 
-#ifndef _VIVID_OSD_H_
-#define _VIVID_OSD_H_
+#अगर_अघोषित _VIVID_OSD_H_
+#घोषणा _VIVID_OSD_H_
 
-int vivid_fb_init(struct vivid_dev *dev);
-void vivid_fb_release_buffers(struct vivid_dev *dev);
-void vivid_clear_fb(struct vivid_dev *dev);
+पूर्णांक vivid_fb_init(काष्ठा vivid_dev *dev);
+व्योम vivid_fb_release_buffers(काष्ठा vivid_dev *dev);
+व्योम vivid_clear_fb(काष्ठा vivid_dev *dev);
 
-#endif
+#पूर्ण_अगर

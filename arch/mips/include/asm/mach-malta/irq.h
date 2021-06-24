@@ -1,10 +1,11 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __ASM_MACH_MIPS_IRQ_H
-#define __ASM_MACH_MIPS_IRQ_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __ASM_MACH_MIPS_IRQ_H
+#घोषणा __ASM_MACH_MIPS_IRQ_H
 
 
-#define NR_IRQS 256
+#घोषणा NR_IRQS 256
 
-#include <asm/mach-generic/irq.h>
+#समावेश <यंत्र/mach-generic/irq.h>
 
-#endif /* __ASM_MACH_MIPS_IRQ_H */
+#पूर्ण_अगर /* __ASM_MACH_MIPS_IRQ_H */

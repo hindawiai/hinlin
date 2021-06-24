@@ -1,30 +1,31 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 
-#ifndef __ASM_CSKY_SMP_H
-#define __ASM_CSKY_SMP_H
+#अगर_अघोषित __ASM_CSKY_SMP_H
+#घोषणा __ASM_CSKY_SMP_H
 
-#include <linux/cpumask.h>
-#include <linux/irqreturn.h>
-#include <linux/threads.h>
+#समावेश <linux/cpumask.h>
+#समावेश <linux/irqवापस.h>
+#समावेश <linux/thपढ़ोs.h>
 
-#ifdef CONFIG_SMP
+#अगर_घोषित CONFIG_SMP
 
-void __init setup_smp(void);
+व्योम __init setup_smp(व्योम);
 
-void __init setup_smp_ipi(void);
+व्योम __init setup_smp_ipi(व्योम);
 
-void arch_send_call_function_ipi_mask(struct cpumask *mask);
+व्योम arch_send_call_function_ipi_mask(काष्ठा cpumask *mask);
 
-void arch_send_call_function_single_ipi(int cpu);
+व्योम arch_send_call_function_single_ipi(पूर्णांक cpu);
 
-void __init set_send_ipi(void (*func)(const struct cpumask *mask), int irq);
+व्योम __init set_send_ipi(व्योम (*func)(स्थिर काष्ठा cpumask *mask), पूर्णांक irq);
 
-#define raw_smp_processor_id()	(current_thread_info()->cpu)
+#घोषणा raw_smp_processor_id()	(current_thपढ़ो_info()->cpu)
 
-int __cpu_disable(void);
+पूर्णांक __cpu_disable(व्योम);
 
-void __cpu_die(unsigned int cpu);
+व्योम __cpu_die(अचिन्हित पूर्णांक cpu);
 
-#endif /* CONFIG_SMP */
+#पूर्ण_अगर /* CONFIG_SMP */
 
-#endif /* __ASM_CSKY_SMP_H */
+#पूर्ण_अगर /* __ASM_CSKY_SMP_H */

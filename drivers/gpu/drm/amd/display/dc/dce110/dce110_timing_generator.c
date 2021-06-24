@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2012-15 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -23,32 +24,32 @@
  *
  */
 
-#include "dm_services.h"
+#समावेश "dm_services.h"
 
-/* include DCE11 register header files */
-#include "dce/dce_11_0_d.h"
-#include "dce/dce_11_0_sh_mask.h"
+/* include DCE11 रेजिस्टर header files */
+#समावेश "dce/dce_11_0_d.h"
+#समावेश "dce/dce_11_0_sh_mask.h"
 
-#include "dc_types.h"
-#include "dc_bios_types.h"
-#include "dc.h"
+#समावेश "dc_types.h"
+#समावेश "dc_bios_types.h"
+#समावेश "dc.h"
 
-#include "include/grph_object_id.h"
-#include "include/logger_interface.h"
-#include "dce110_timing_generator.h"
+#समावेश "include/grph_object_id.h"
+#समावेश "include/logger_interface.h"
+#समावेश "dce110_timing_generator.h"
 
-#include "timing_generator.h"
+#समावेश "timing_generator.h"
 
 
-#define NUMBER_OF_FRAME_TO_WAIT_ON_TRIGGERED_RESET 10
+#घोषणा NUMBER_OF_FRAME_TO_WAIT_ON_TRIGGERED_RESET 10
 
-#define MAX_H_TOTAL (CRTC_H_TOTAL__CRTC_H_TOTAL_MASK + 1)
-#define MAX_V_TOTAL (CRTC_V_TOTAL__CRTC_V_TOTAL_MASKhw + 1)
+#घोषणा MAX_H_TOTAL (CRTC_H_TOTAL__CRTC_H_TOTAL_MASK + 1)
+#घोषणा MAX_V_TOTAL (CRTC_V_TOTAL__CRTC_V_TOTAL_MASKhw + 1)
 
-#define CRTC_REG(reg) (reg + tg110->offsets.crtc)
-#define DCP_REG(reg) (reg + tg110->offsets.dcp)
+#घोषणा CRTC_REG(reg) (reg + tg110->offsets.crtc)
+#घोषणा DCP_REG(reg) (reg + tg110->offsets.dcp)
 
-/* Flowing register offsets are same in files of
+/* Flowing रेजिस्टर offsets are same in files of
  * dce/dce_11_0_d.h
  * dce/vi_polaris10_p/vi_polaris10_d.h
  *
@@ -59,73 +60,73 @@
 /*
 * apply_front_porch_workaround
 *
-* This is a workaround for a bug that has existed since R5xx and has not been
-* fixed keep Front porch at minimum 2 for Interlaced mode or 1 for progressive.
+* This is a workaround क्रम a bug that has existed since R5xx and has not been
+* fixed keep Front porch at minimum 2 क्रम Interlaced mode or 1 क्रम progressive.
 */
-static void dce110_timing_generator_apply_front_porch_workaround(
-	struct timing_generator *tg,
-	struct dc_crtc_timing *timing)
-{
-	if (timing->flags.INTERLACE == 1) {
-		if (timing->v_front_porch < 2)
+अटल व्योम dce110_timing_generator_apply_front_porch_workaround(
+	काष्ठा timing_generator *tg,
+	काष्ठा dc_crtc_timing *timing)
+अणु
+	अगर (timing->flags.INTERLACE == 1) अणु
+		अगर (timing->v_front_porch < 2)
 			timing->v_front_porch = 2;
-	} else {
-		if (timing->v_front_porch < 1)
+	पूर्ण अन्यथा अणु
+		अगर (timing->v_front_porch < 1)
 			timing->v_front_porch = 1;
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
  *****************************************************************************
  *  Function: is_in_vertical_blank
  *
  *  @brief
- *     check the current status of CRTC to check if we are in Vertical Blank
+ *     check the current status of CRTC to check अगर we are in Vertical Blank
  *     regioneased" state
  *
- *  @return
- *     true if currently in blank region, false otherwise
+ *  @वापस
+ *     true अगर currently in blank region, false otherwise
  *
  *****************************************************************************
  */
-static bool dce110_timing_generator_is_in_vertical_blank(
-		struct timing_generator *tg)
-{
-	uint32_t addr = 0;
-	uint32_t value = 0;
-	uint32_t field = 0;
-	struct dce110_timing_generator *tg110 = DCE110TG_FROM_TG(tg);
+अटल bool dce110_timing_generator_is_in_vertical_blank(
+		काष्ठा timing_generator *tg)
+अणु
+	uपूर्णांक32_t addr = 0;
+	uपूर्णांक32_t value = 0;
+	uपूर्णांक32_t field = 0;
+	काष्ठा dce110_timing_generator *tg110 = DCE110TG_FROM_TG(tg);
 
 	addr = CRTC_REG(mmCRTC_STATUS);
-	value = dm_read_reg(tg->ctx, addr);
+	value = dm_पढ़ो_reg(tg->ctx, addr);
 	field = get_reg_field_value(value, CRTC_STATUS, CRTC_V_BLANK);
-	return field == 1;
-}
+	वापस field == 1;
+पूर्ण
 
-void dce110_timing_generator_set_early_control(
-		struct timing_generator *tg,
-		uint32_t early_cntl)
-{
-	uint32_t regval;
-	struct dce110_timing_generator *tg110 = DCE110TG_FROM_TG(tg);
-	uint32_t address = CRTC_REG(mmCRTC_CONTROL);
+व्योम dce110_timing_generator_set_early_control(
+		काष्ठा timing_generator *tg,
+		uपूर्णांक32_t early_cntl)
+अणु
+	uपूर्णांक32_t regval;
+	काष्ठा dce110_timing_generator *tg110 = DCE110TG_FROM_TG(tg);
+	uपूर्णांक32_t address = CRTC_REG(mmCRTC_CONTROL);
 
-	regval = dm_read_reg(tg->ctx, address);
+	regval = dm_पढ़ो_reg(tg->ctx, address);
 	set_reg_field_value(regval, early_cntl,
 			CRTC_CONTROL, CRTC_HBLANK_EARLY_CONTROL);
-	dm_write_reg(tg->ctx, address, regval);
-}
+	dm_ग_लिखो_reg(tg->ctx, address, regval);
+पूर्ण
 
 /*
  * Enable CRTC
  * Enable CRTC - call ASIC Control Object to enable Timing generator.
  */
-bool dce110_timing_generator_enable_crtc(struct timing_generator *tg)
-{
-	enum bp_result result;
+bool dce110_timing_generator_enable_crtc(काष्ठा timing_generator *tg)
+अणु
+	क्रमागत bp_result result;
 
-	struct dce110_timing_generator *tg110 = DCE110TG_FROM_TG(tg);
-	uint32_t value = 0;
+	काष्ठा dce110_timing_generator *tg110 = DCE110TG_FROM_TG(tg);
+	uपूर्णांक32_t value = 0;
 
 	/*
 	 * 3 is used to make sure V_UPDATE occurs at the beginning of the first
@@ -137,24 +138,24 @@ bool dce110_timing_generator_enable_crtc(struct timing_generator *tg)
 		CRTC_MASTER_UPDATE_MODE,
 		MASTER_UPDATE_MODE);
 
-	dm_write_reg(tg->ctx, CRTC_REG(mmCRTC_MASTER_UPDATE_MODE), value);
+	dm_ग_लिखो_reg(tg->ctx, CRTC_REG(mmCRTC_MASTER_UPDATE_MODE), value);
 
 	/* TODO: may want this on to catch underflow */
 	value = 0;
-	dm_write_reg(tg->ctx, CRTC_REG(mmCRTC_MASTER_UPDATE_LOCK), value);
+	dm_ग_लिखो_reg(tg->ctx, CRTC_REG(mmCRTC_MASTER_UPDATE_LOCK), value);
 
 	result = tg->bp->funcs->enable_crtc(tg->bp, tg110->controller_id, true);
 
-	return result == BP_RESULT_OK;
-}
+	वापस result == BP_RESULT_OK;
+पूर्ण
 
-void dce110_timing_generator_program_blank_color(
-		struct timing_generator *tg,
-		const struct tg_color *black_color)
-{
-	struct dce110_timing_generator *tg110 = DCE110TG_FROM_TG(tg);
-	uint32_t addr = CRTC_REG(mmCRTC_BLACK_COLOR);
-	uint32_t value = dm_read_reg(tg->ctx, addr);
+व्योम dce110_timing_generator_program_blank_color(
+		काष्ठा timing_generator *tg,
+		स्थिर काष्ठा tg_color *black_color)
+अणु
+	काष्ठा dce110_timing_generator *tg110 = DCE110TG_FROM_TG(tg);
+	uपूर्णांक32_t addr = CRTC_REG(mmCRTC_BLACK_COLOR);
+	uपूर्णांक32_t value = dm_पढ़ो_reg(tg->ctx, addr);
 
 	set_reg_field_value(
 		value,
@@ -172,8 +173,8 @@ void dce110_timing_generator_program_blank_color(
 		CRTC_BLACK_COLOR,
 		CRTC_BLACK_COLOR_R_CR);
 
-	dm_write_reg(tg->ctx, addr, value);
-}
+	dm_ग_लिखो_reg(tg->ctx, addr, value);
+पूर्ण
 
 /*
  *****************************************************************************
@@ -184,19 +185,19 @@ void dce110_timing_generator_program_blank_color(
  *     Frame Packing need to be disabled in vBlank or when CRTC not running
  *****************************************************************************
  */
-#if 0
+#अगर 0
 @TODOSTEREO
-static void disable_stereo(struct timing_generator *tg)
-{
-	struct dce110_timing_generator *tg110 = DCE110TG_FROM_TG(tg);
-	uint32_t addr = CRTC_REG(mmCRTC_3D_STRUCTURE_CONTROL);
-	uint32_t value = 0;
-	uint32_t test = 0;
-	uint32_t field = 0;
-	uint32_t struc_en = 0;
-	uint32_t struc_stereo_sel_ovr = 0;
+अटल व्योम disable_stereo(काष्ठा timing_generator *tg)
+अणु
+	काष्ठा dce110_timing_generator *tg110 = DCE110TG_FROM_TG(tg);
+	uपूर्णांक32_t addr = CRTC_REG(mmCRTC_3D_STRUCTURE_CONTROL);
+	uपूर्णांक32_t value = 0;
+	uपूर्णांक32_t test = 0;
+	uपूर्णांक32_t field = 0;
+	uपूर्णांक32_t struc_en = 0;
+	uपूर्णांक32_t struc_stereo_sel_ovr = 0;
 
-	value = dm_read_reg(tg->ctx, addr);
+	value = dm_पढ़ो_reg(tg->ctx, addr);
 	struc_en = get_reg_field_value(
 			value,
 			CRTC_3D_STRUCTURE_CONTROL,
@@ -209,31 +210,31 @@ static void disable_stereo(struct timing_generator *tg)
 
 	/*
 	 * When disabling Frame Packing in 2 step mode, we need to program both
-	 * registers at the same frame
+	 * रेजिस्टरs at the same frame
 	 * Programming it in the beginning of VActive makes sure we are ok
 	 */
 
-	if (struc_en != 0 && struc_stereo_sel_ovr == 0) {
-		tg->funcs->wait_for_vblank(tg);
-		tg->funcs->wait_for_vactive(tg);
-	}
+	अगर (struc_en != 0 && struc_stereo_sel_ovr == 0) अणु
+		tg->funcs->रुको_क्रम_vblank(tg);
+		tg->funcs->रुको_क्रम_vactive(tg);
+	पूर्ण
 
 	value = 0;
-	dm_write_reg(tg->ctx, addr, value);
+	dm_ग_लिखो_reg(tg->ctx, addr, value);
 
 	addr = tg->regs[IDX_CRTC_STEREO_CONTROL];
-	dm_write_reg(tg->ctx, addr, value);
-}
-#endif
+	dm_ग_लिखो_reg(tg->ctx, addr, value);
+पूर्ण
+#पूर्ण_अगर
 
 /*
  * disable_crtc - call ASIC Control Object to disable Timing generator.
  */
-bool dce110_timing_generator_disable_crtc(struct timing_generator *tg)
-{
-	enum bp_result result;
+bool dce110_timing_generator_disable_crtc(काष्ठा timing_generator *tg)
+अणु
+	क्रमागत bp_result result;
 
-	struct dce110_timing_generator *tg110 = DCE110TG_FROM_TG(tg);
+	काष्ठा dce110_timing_generator *tg110 = DCE110TG_FROM_TG(tg);
 
 	result = tg->bp->funcs->enable_crtc(tg->bp, tg110->controller_id, false);
 
@@ -244,33 +245,33 @@ bool dce110_timing_generator_disable_crtc(struct timing_generator *tg)
 	 * tg->funcs->disable_stereo(tg);
 	 */
 
-	return result == BP_RESULT_OK;
-}
+	वापस result == BP_RESULT_OK;
+पूर्ण
 
 /*
  * program_horz_count_by_2
- * Programs DxCRTC_HORZ_COUNT_BY2_EN - 1 for DVI 30bpp mode, 0 otherwise
+ * Programs DxCRTC_HORZ_COUNT_BY2_EN - 1 क्रम DVI 30bpp mode, 0 otherwise
  */
-static void program_horz_count_by_2(
-	struct timing_generator *tg,
-	const struct dc_crtc_timing *timing)
-{
-	uint32_t regval;
-	struct dce110_timing_generator *tg110 = DCE110TG_FROM_TG(tg);
+अटल व्योम program_horz_count_by_2(
+	काष्ठा timing_generator *tg,
+	स्थिर काष्ठा dc_crtc_timing *timing)
+अणु
+	uपूर्णांक32_t regval;
+	काष्ठा dce110_timing_generator *tg110 = DCE110TG_FROM_TG(tg);
 
-	regval = dm_read_reg(tg->ctx,
+	regval = dm_पढ़ो_reg(tg->ctx,
 			CRTC_REG(mmCRTC_COUNT_CONTROL));
 
 	set_reg_field_value(regval, 0, CRTC_COUNT_CONTROL,
 			CRTC_HORZ_COUNT_BY2_EN);
 
-	if (timing->flags.HORZ_COUNT_BY_TWO)
+	अगर (timing->flags.HORZ_COUNT_BY_TWO)
 		set_reg_field_value(regval, 1, CRTC_COUNT_CONTROL,
 					CRTC_HORZ_COUNT_BY2_EN);
 
-	dm_write_reg(tg->ctx,
+	dm_ग_लिखो_reg(tg->ctx,
 			CRTC_REG(mmCRTC_COUNT_CONTROL), regval);
-}
+पूर्ण
 
 /*
  * program_timing_generator
@@ -278,23 +279,23 @@ static void program_horz_count_by_2(
  * Call ASIC Control Object to program Timings.
  */
 bool dce110_timing_generator_program_timing_generator(
-	struct timing_generator *tg,
-	const struct dc_crtc_timing *dc_crtc_timing)
-{
-	enum bp_result result;
-	struct bp_hw_crtc_timing_parameters bp_params;
-	struct dc_crtc_timing patched_crtc_timing;
-	struct dce110_timing_generator *tg110 = DCE110TG_FROM_TG(tg);
+	काष्ठा timing_generator *tg,
+	स्थिर काष्ठा dc_crtc_timing *dc_crtc_timing)
+अणु
+	क्रमागत bp_result result;
+	काष्ठा bp_hw_crtc_timing_parameters bp_params;
+	काष्ठा dc_crtc_timing patched_crtc_timing;
+	काष्ठा dce110_timing_generator *tg110 = DCE110TG_FROM_TG(tg);
 
-	uint32_t vsync_offset = dc_crtc_timing->v_border_bottom +
+	uपूर्णांक32_t vsync_offset = dc_crtc_timing->v_border_bottom +
 			dc_crtc_timing->v_front_porch;
-	uint32_t v_sync_start =dc_crtc_timing->v_addressable + vsync_offset;
+	uपूर्णांक32_t v_sync_start =dc_crtc_timing->v_addressable + vsync_offset;
 
-	uint32_t hsync_offset = dc_crtc_timing->h_border_right +
+	uपूर्णांक32_t hsync_offset = dc_crtc_timing->h_border_right +
 			dc_crtc_timing->h_front_porch;
-	uint32_t h_sync_start = dc_crtc_timing->h_addressable + hsync_offset;
+	uपूर्णांक32_t h_sync_start = dc_crtc_timing->h_addressable + hsync_offset;
 
-	memset(&bp_params, 0, sizeof(struct bp_hw_crtc_timing_parameters));
+	स_रखो(&bp_params, 0, माप(काष्ठा bp_hw_crtc_timing_parameters));
 
 	/* Due to an asic bug we need to apply the Front Porch workaround prior
 	 * to programming the timing.
@@ -327,16 +328,16 @@ bool dce110_timing_generator_program_timing_generator(
 		patched_crtc_timing.v_border_bottom;
 
 	/* Set flags */
-	if (patched_crtc_timing.flags.HSYNC_POSITIVE_POLARITY == 1)
+	अगर (patched_crtc_timing.flags.HSYNC_POSITIVE_POLARITY == 1)
 		bp_params.flags.HSYNC_POSITIVE_POLARITY = 1;
 
-	if (patched_crtc_timing.flags.VSYNC_POSITIVE_POLARITY == 1)
+	अगर (patched_crtc_timing.flags.VSYNC_POSITIVE_POLARITY == 1)
 		bp_params.flags.VSYNC_POSITIVE_POLARITY = 1;
 
-	if (patched_crtc_timing.flags.INTERLACE == 1)
+	अगर (patched_crtc_timing.flags.INTERLACE == 1)
 		bp_params.flags.INTERLACE = 1;
 
-	if (patched_crtc_timing.flags.HORZ_COUNT_BY_TWO == 1)
+	अगर (patched_crtc_timing.flags.HORZ_COUNT_BY_TWO == 1)
 		bp_params.flags.HORZ_COUNT_BY_TWO = 1;
 
 	result = tg->bp->funcs->program_crtc_timing(tg->bp, &bp_params);
@@ -348,44 +349,44 @@ bool dce110_timing_generator_program_timing_generator(
 	/* Enable stereo - only when we need to pack 3D frame. Other types
 	 * of stereo handled in explicit call */
 
-	return result == BP_RESULT_OK;
-}
+	वापस result == BP_RESULT_OK;
+पूर्ण
 
 /*
  *****************************************************************************
  *  Function: set_drr
  *
  *  @brief
- *     Program dynamic refresh rate registers m_DxCRTC_V_TOTAL_*.
+ *     Program dynamic refresh rate रेजिस्टरs m_DxCRTC_V_TOTAL_*.
  *
- *  @param [in] pHwCrtcTiming: point to H
- *  wCrtcTiming struct
+ *  @param [in] pHwCrtcTiming: poपूर्णांक to H
+ *  wCrtcTiming काष्ठा
  *****************************************************************************
  */
-void dce110_timing_generator_set_drr(
-	struct timing_generator *tg,
-	const struct drr_params *params)
-{
-	/* register values */
-	uint32_t v_total_min = 0;
-	uint32_t v_total_max = 0;
-	uint32_t v_total_cntl = 0;
-	struct dce110_timing_generator *tg110 = DCE110TG_FROM_TG(tg);
+व्योम dce110_timing_generator_set_drr(
+	काष्ठा timing_generator *tg,
+	स्थिर काष्ठा drr_params *params)
+अणु
+	/* रेजिस्टर values */
+	uपूर्णांक32_t v_total_min = 0;
+	uपूर्णांक32_t v_total_max = 0;
+	uपूर्णांक32_t v_total_cntl = 0;
+	काष्ठा dce110_timing_generator *tg110 = DCE110TG_FROM_TG(tg);
 
-	uint32_t addr = 0;
+	uपूर्णांक32_t addr = 0;
 
 	addr = CRTC_REG(mmCRTC_V_TOTAL_MIN);
-	v_total_min = dm_read_reg(tg->ctx, addr);
+	v_total_min = dm_पढ़ो_reg(tg->ctx, addr);
 
 	addr = CRTC_REG(mmCRTC_V_TOTAL_MAX);
-	v_total_max = dm_read_reg(tg->ctx, addr);
+	v_total_max = dm_पढ़ो_reg(tg->ctx, addr);
 
 	addr = CRTC_REG(mmCRTC_V_TOTAL_CONTROL);
-	v_total_cntl = dm_read_reg(tg->ctx, addr);
+	v_total_cntl = dm_पढ़ो_reg(tg->ctx, addr);
 
-	if (params != NULL &&
+	अगर (params != शून्य &&
 		params->vertical_total_max > 0 &&
-		params->vertical_total_min > 0) {
+		params->vertical_total_min > 0) अणु
 
 		set_reg_field_value(v_total_max,
 				params->vertical_total_max - 1,
@@ -425,7 +426,7 @@ void dce110_timing_generator_set_drr(
 				0,
 				CRTC_V_TOTAL_CONTROL,
 				CRTC_SET_V_TOTAL_MIN_MASK);
-	} else {
+	पूर्ण अन्यथा अणु
 		set_reg_field_value(v_total_cntl,
 			0,
 			CRTC_V_TOTAL_CONTROL,
@@ -454,71 +455,71 @@ void dce110_timing_generator_set_drr(
 				0,
 				CRTC_V_TOTAL_CONTROL,
 				CRTC_FORCE_LOCK_TO_MASTER_VSYNC);
-	}
+	पूर्ण
 
 	addr = CRTC_REG(mmCRTC_V_TOTAL_MIN);
-	dm_write_reg(tg->ctx, addr, v_total_min);
+	dm_ग_लिखो_reg(tg->ctx, addr, v_total_min);
 
 	addr = CRTC_REG(mmCRTC_V_TOTAL_MAX);
-	dm_write_reg(tg->ctx, addr, v_total_max);
+	dm_ग_लिखो_reg(tg->ctx, addr, v_total_max);
 
 	addr = CRTC_REG(mmCRTC_V_TOTAL_CONTROL);
-	dm_write_reg(tg->ctx, addr, v_total_cntl);
-}
+	dm_ग_लिखो_reg(tg->ctx, addr, v_total_cntl);
+पूर्ण
 
-void dce110_timing_generator_set_static_screen_control(
-	struct timing_generator *tg,
-	uint32_t event_triggers,
-	uint32_t num_frames)
-{
-	struct dce110_timing_generator *tg110 = DCE110TG_FROM_TG(tg);
-	uint32_t static_screen_cntl = 0;
-	uint32_t addr = 0;
+व्योम dce110_timing_generator_set_अटल_screen_control(
+	काष्ठा timing_generator *tg,
+	uपूर्णांक32_t event_triggers,
+	uपूर्णांक32_t num_frames)
+अणु
+	काष्ठा dce110_timing_generator *tg110 = DCE110TG_FROM_TG(tg);
+	uपूर्णांक32_t अटल_screen_cntl = 0;
+	uपूर्णांक32_t addr = 0;
 
-	// By register spec, it only takes 8 bit value
-	if (num_frames > 0xFF)
+	// By रेजिस्टर spec, it only takes 8 bit value
+	अगर (num_frames > 0xFF)
 		num_frames = 0xFF;
 
 	addr = CRTC_REG(mmCRTC_STATIC_SCREEN_CONTROL);
-	static_screen_cntl = dm_read_reg(tg->ctx, addr);
+	अटल_screen_cntl = dm_पढ़ो_reg(tg->ctx, addr);
 
-	set_reg_field_value(static_screen_cntl,
+	set_reg_field_value(अटल_screen_cntl,
 				event_triggers,
 				CRTC_STATIC_SCREEN_CONTROL,
 				CRTC_STATIC_SCREEN_EVENT_MASK);
 
-	set_reg_field_value(static_screen_cntl,
+	set_reg_field_value(अटल_screen_cntl,
 				num_frames,
 				CRTC_STATIC_SCREEN_CONTROL,
 				CRTC_STATIC_SCREEN_FRAME_COUNT);
 
-	dm_write_reg(tg->ctx, addr, static_screen_cntl);
-}
+	dm_ग_लिखो_reg(tg->ctx, addr, अटल_screen_cntl);
+पूर्ण
 
 /*
  * get_vblank_counter
  *
  * @brief
- * Get counter for vertical blanks. use register CRTC_STATUS_FRAME_COUNT which
+ * Get counter क्रम vertical blanks. use रेजिस्टर CRTC_STATUS_FRAME_COUNT which
  * holds the counter of frames.
  *
  * @param
- * struct timing_generator *tg - [in] timing generator which controls the
+ * काष्ठा timing_generator *tg - [in] timing generator which controls the
  * desired CRTC
  *
- * @return
+ * @वापस
  * Counter of frames, which should equal to number of vblanks.
  */
-uint32_t dce110_timing_generator_get_vblank_counter(struct timing_generator *tg)
-{
-	struct dce110_timing_generator *tg110 = DCE110TG_FROM_TG(tg);
-	uint32_t addr = CRTC_REG(mmCRTC_STATUS_FRAME_COUNT);
-	uint32_t value = dm_read_reg(tg->ctx, addr);
-	uint32_t field = get_reg_field_value(
+uपूर्णांक32_t dce110_timing_generator_get_vblank_counter(काष्ठा timing_generator *tg)
+अणु
+	काष्ठा dce110_timing_generator *tg110 = DCE110TG_FROM_TG(tg);
+	uपूर्णांक32_t addr = CRTC_REG(mmCRTC_STATUS_FRAME_COUNT);
+	uपूर्णांक32_t value = dm_पढ़ो_reg(tg->ctx, addr);
+	uपूर्णांक32_t field = get_reg_field_value(
 			value, CRTC_STATUS_FRAME_COUNT, CRTC_FRAME_COUNT);
 
-	return field;
-}
+	वापस field;
+पूर्ण
 
 /*
  *****************************************************************************
@@ -530,13 +531,13 @@ uint32_t dce110_timing_generator_get_vblank_counter(struct timing_generator *tg)
  *  @param [out] position
  *****************************************************************************
  */
-void dce110_timing_generator_get_position(struct timing_generator *tg,
-	struct crtc_position *position)
-{
-	uint32_t value;
-	struct dce110_timing_generator *tg110 = DCE110TG_FROM_TG(tg);
+व्योम dce110_timing_generator_get_position(काष्ठा timing_generator *tg,
+	काष्ठा crtc_position *position)
+अणु
+	uपूर्णांक32_t value;
+	काष्ठा dce110_timing_generator *tg110 = DCE110TG_FROM_TG(tg);
 
-	value = dm_read_reg(tg->ctx, CRTC_REG(mmCRTC_STATUS_POSITION));
+	value = dm_पढ़ो_reg(tg->ctx, CRTC_REG(mmCRTC_STATUS_POSITION));
 
 	position->horizontal_count = get_reg_field_value(
 			value,
@@ -548,13 +549,13 @@ void dce110_timing_generator_get_position(struct timing_generator *tg,
 			CRTC_STATUS_POSITION,
 			CRTC_VERT_COUNT);
 
-	value = dm_read_reg(tg->ctx, CRTC_REG(mmCRTC_NOM_VERT_POSITION));
+	value = dm_पढ़ो_reg(tg->ctx, CRTC_REG(mmCRTC_NOM_VERT_POSITION));
 
 	position->nominal_vcount = get_reg_field_value(
 			value,
 			CRTC_NOM_VERT_POSITION,
 			CRTC_VERT_COUNT_NOM);
-}
+पूर्ण
 
 /*
  *****************************************************************************
@@ -566,17 +567,17 @@ void dce110_timing_generator_get_position(struct timing_generator *tg,
  *  @param [out] vpos, hpos
  *****************************************************************************
  */
-void dce110_timing_generator_get_crtc_scanoutpos(
-	struct timing_generator *tg,
-	uint32_t *v_blank_start,
-	uint32_t *v_blank_end,
-	uint32_t *h_position,
-	uint32_t *v_position)
-{
-	struct dce110_timing_generator *tg110 = DCE110TG_FROM_TG(tg);
-	struct crtc_position position;
+व्योम dce110_timing_generator_get_crtc_scanoutpos(
+	काष्ठा timing_generator *tg,
+	uपूर्णांक32_t *v_blank_start,
+	uपूर्णांक32_t *v_blank_end,
+	uपूर्णांक32_t *h_position,
+	uपूर्णांक32_t *v_position)
+अणु
+	काष्ठा dce110_timing_generator *tg110 = DCE110TG_FROM_TG(tg);
+	काष्ठा crtc_position position;
 
-	uint32_t value  = dm_read_reg(tg->ctx,
+	uपूर्णांक32_t value  = dm_पढ़ो_reg(tg->ctx,
 			CRTC_REG(mmCRTC_V_BLANK_START_END));
 
 	*v_blank_start = get_reg_field_value(value,
@@ -591,169 +592,169 @@ void dce110_timing_generator_get_crtc_scanoutpos(
 
 	*h_position = position.horizontal_count;
 	*v_position = position.vertical_count;
-}
+पूर्ण
 
-/* TODO: is it safe to assume that mask/shift of Primary and Underlay
+/* TODO: is it safe to assume that mask/shअगरt of Primary and Underlay
  * are the same?
  * For example: today CRTC_H_TOTAL == CRTCV_H_TOTAL but is it always
  * guaranteed? */
-void dce110_timing_generator_program_blanking(
-	struct timing_generator *tg,
-	const struct dc_crtc_timing *timing)
-{
-	uint32_t vsync_offset = timing->v_border_bottom +
+व्योम dce110_timing_generator_program_blanking(
+	काष्ठा timing_generator *tg,
+	स्थिर काष्ठा dc_crtc_timing *timing)
+अणु
+	uपूर्णांक32_t vsync_offset = timing->v_border_bottom +
 			timing->v_front_porch;
-	uint32_t v_sync_start =timing->v_addressable + vsync_offset;
+	uपूर्णांक32_t v_sync_start =timing->v_addressable + vsync_offset;
 
-	uint32_t hsync_offset = timing->h_border_right +
+	uपूर्णांक32_t hsync_offset = timing->h_border_right +
 			timing->h_front_porch;
-	uint32_t h_sync_start = timing->h_addressable + hsync_offset;
-	struct dce110_timing_generator *tg110 = DCE110TG_FROM_TG(tg);
+	uपूर्णांक32_t h_sync_start = timing->h_addressable + hsync_offset;
+	काष्ठा dce110_timing_generator *tg110 = DCE110TG_FROM_TG(tg);
 
-	struct dc_context *ctx = tg->ctx;
-	uint32_t value = 0;
-	uint32_t addr = 0;
-	uint32_t tmp = 0;
+	काष्ठा dc_context *ctx = tg->ctx;
+	uपूर्णांक32_t value = 0;
+	uपूर्णांक32_t addr = 0;
+	uपूर्णांक32_t पंचांगp = 0;
 
 	addr = CRTC_REG(mmCRTC_H_TOTAL);
-	value = dm_read_reg(ctx, addr);
+	value = dm_पढ़ो_reg(ctx, addr);
 	set_reg_field_value(
 		value,
 		timing->h_total - 1,
 		CRTC_H_TOTAL,
 		CRTC_H_TOTAL);
-	dm_write_reg(ctx, addr, value);
+	dm_ग_लिखो_reg(ctx, addr, value);
 
 	addr = CRTC_REG(mmCRTC_V_TOTAL);
-	value = dm_read_reg(ctx, addr);
+	value = dm_पढ़ो_reg(ctx, addr);
 	set_reg_field_value(
 		value,
 		timing->v_total - 1,
 		CRTC_V_TOTAL,
 		CRTC_V_TOTAL);
-	dm_write_reg(ctx, addr, value);
+	dm_ग_लिखो_reg(ctx, addr, value);
 
-	/* In case of V_TOTAL_CONTROL is on, make sure V_TOTAL_MAX and
+	/* In हाल of V_TOTAL_CONTROL is on, make sure V_TOTAL_MAX and
 	 * V_TOTAL_MIN are equal to V_TOTAL.
 	 */
 	addr = CRTC_REG(mmCRTC_V_TOTAL_MAX);
-	value = dm_read_reg(ctx, addr);
+	value = dm_पढ़ो_reg(ctx, addr);
 	set_reg_field_value(
 		value,
 		timing->v_total - 1,
 		CRTC_V_TOTAL_MAX,
 		CRTC_V_TOTAL_MAX);
-	dm_write_reg(ctx, addr, value);
+	dm_ग_लिखो_reg(ctx, addr, value);
 
 	addr = CRTC_REG(mmCRTC_V_TOTAL_MIN);
-	value = dm_read_reg(ctx, addr);
+	value = dm_पढ़ो_reg(ctx, addr);
 	set_reg_field_value(
 		value,
 		timing->v_total - 1,
 		CRTC_V_TOTAL_MIN,
 		CRTC_V_TOTAL_MIN);
-	dm_write_reg(ctx, addr, value);
+	dm_ग_लिखो_reg(ctx, addr, value);
 
 	addr = CRTC_REG(mmCRTC_H_BLANK_START_END);
-	value = dm_read_reg(ctx, addr);
+	value = dm_पढ़ो_reg(ctx, addr);
 
-	tmp = timing->h_total -
+	पंचांगp = timing->h_total -
 		(h_sync_start + timing->h_border_left);
 
 	set_reg_field_value(
 		value,
-		tmp,
+		पंचांगp,
 		CRTC_H_BLANK_START_END,
 		CRTC_H_BLANK_END);
 
-	tmp = tmp + timing->h_addressable +
+	पंचांगp = पंचांगp + timing->h_addressable +
 		timing->h_border_left + timing->h_border_right;
 
 	set_reg_field_value(
 		value,
-		tmp,
+		पंचांगp,
 		CRTC_H_BLANK_START_END,
 		CRTC_H_BLANK_START);
 
-	dm_write_reg(ctx, addr, value);
+	dm_ग_लिखो_reg(ctx, addr, value);
 
 	addr = CRTC_REG(mmCRTC_V_BLANK_START_END);
-	value = dm_read_reg(ctx, addr);
+	value = dm_पढ़ो_reg(ctx, addr);
 
-	tmp = timing->v_total - (v_sync_start + timing->v_border_top);
+	पंचांगp = timing->v_total - (v_sync_start + timing->v_border_top);
 
 	set_reg_field_value(
 		value,
-		tmp,
+		पंचांगp,
 		CRTC_V_BLANK_START_END,
 		CRTC_V_BLANK_END);
 
-	tmp = tmp + timing->v_addressable + timing->v_border_top +
+	पंचांगp = पंचांगp + timing->v_addressable + timing->v_border_top +
 		timing->v_border_bottom;
 
 	set_reg_field_value(
 		value,
-		tmp,
+		पंचांगp,
 		CRTC_V_BLANK_START_END,
 		CRTC_V_BLANK_START);
 
-	dm_write_reg(ctx, addr, value);
-}
+	dm_ग_लिखो_reg(ctx, addr, value);
+पूर्ण
 
-void dce110_timing_generator_set_test_pattern(
-	struct timing_generator *tg,
+व्योम dce110_timing_generator_set_test_pattern(
+	काष्ठा timing_generator *tg,
 	/* TODO: replace 'controller_dp_test_pattern' by 'test_pattern_mode'
-	 * because this is not DP-specific (which is probably somewhere in DP
+	 * because this is not DP-specअगरic (which is probably somewhere in DP
 	 * encoder) */
-	enum controller_dp_test_pattern test_pattern,
-	enum dc_color_depth color_depth)
-{
-	struct dc_context *ctx = tg->ctx;
-	uint32_t value;
-	uint32_t addr;
-	struct dce110_timing_generator *tg110 = DCE110TG_FROM_TG(tg);
-	enum test_pattern_color_format bit_depth;
-	enum test_pattern_dyn_range dyn_range;
-	enum test_pattern_mode mode;
+	क्रमागत controller_dp_test_pattern test_pattern,
+	क्रमागत dc_color_depth color_depth)
+अणु
+	काष्ठा dc_context *ctx = tg->ctx;
+	uपूर्णांक32_t value;
+	uपूर्णांक32_t addr;
+	काष्ठा dce110_timing_generator *tg110 = DCE110TG_FROM_TG(tg);
+	क्रमागत test_pattern_color_क्रमmat bit_depth;
+	क्रमागत test_pattern_dyn_range dyn_range;
+	क्रमागत test_pattern_mode mode;
 	/* color ramp generator mixes 16-bits color */
-	uint32_t src_bpc = 16;
+	uपूर्णांक32_t src_bpc = 16;
 	/* requested bpc */
-	uint32_t dst_bpc;
-	uint32_t index;
+	uपूर्णांक32_t dst_bpc;
+	uपूर्णांक32_t index;
 	/* RGB values of the color bars.
 	 * Produce two RGB colors: RGB0 - white (all Fs)
 	 * and RGB1 - black (all 0s)
-	 * (three RGB components for two colors)
+	 * (three RGB components क्रम two colors)
 	 */
-	uint16_t src_color[6] = {0xFFFF, 0xFFFF, 0xFFFF, 0x0000,
-						0x0000, 0x0000};
-	/* dest color (converted to the specified color format) */
-	uint16_t dst_color[6];
-	uint32_t inc_base;
+	uपूर्णांक16_t src_color[6] = अणु0xFFFF, 0xFFFF, 0xFFFF, 0x0000,
+						0x0000, 0x0000पूर्ण;
+	/* dest color (converted to the specअगरied color क्रमmat) */
+	uपूर्णांक16_t dst_color[6];
+	uपूर्णांक32_t inc_base;
 
 	/* translate to bit depth */
-	switch (color_depth) {
-	case COLOR_DEPTH_666:
+	चयन (color_depth) अणु
+	हाल COLOR_DEPTH_666:
 		bit_depth = TEST_PATTERN_COLOR_FORMAT_BPC_6;
-	break;
-	case COLOR_DEPTH_888:
+	अवरोध;
+	हाल COLOR_DEPTH_888:
 		bit_depth = TEST_PATTERN_COLOR_FORMAT_BPC_8;
-	break;
-	case COLOR_DEPTH_101010:
+	अवरोध;
+	हाल COLOR_DEPTH_101010:
 		bit_depth = TEST_PATTERN_COLOR_FORMAT_BPC_10;
-	break;
-	case COLOR_DEPTH_121212:
+	अवरोध;
+	हाल COLOR_DEPTH_121212:
 		bit_depth = TEST_PATTERN_COLOR_FORMAT_BPC_12;
-	break;
-	default:
+	अवरोध;
+	शेष:
 		bit_depth = TEST_PATTERN_COLOR_FORMAT_BPC_8;
-	break;
-	}
+	अवरोध;
+	पूर्ण
 
-	switch (test_pattern) {
-	case CONTROLLER_DP_TEST_PATTERN_COLORSQUARES:
-	case CONTROLLER_DP_TEST_PATTERN_COLORSQUARES_CEA:
-	{
+	चयन (test_pattern) अणु
+	हाल CONTROLLER_DP_TEST_PATTERN_COLORSQUARES:
+	हाल CONTROLLER_DP_TEST_PATTERN_COLORSQUARES_CEA:
+	अणु
 		dyn_range = (test_pattern ==
 				CONTROLLER_DP_TEST_PATTERN_COLORSQUARES_CEA ?
 				TEST_PATTERN_DYN_RANGE_CEA :
@@ -773,7 +774,7 @@ void dce110_timing_generator_set_test_pattern(
 			CRTC_TEST_PATTERN_PARAMETERS,
 			CRTC_TEST_PATTERN_HRES);
 
-		dm_write_reg(ctx, addr, value);
+		dm_ग_लिखो_reg(ctx, addr, value);
 
 		addr = CRTC_REG(mmCRTC_TEST_PATTERN_CONTROL);
 		value = 0;
@@ -800,35 +801,35 @@ void dce110_timing_generator_set_test_pattern(
 			bit_depth,
 			CRTC_TEST_PATTERN_CONTROL,
 			CRTC_TEST_PATTERN_COLOR_FORMAT);
-		dm_write_reg(ctx, addr, value);
-	}
-	break;
+		dm_ग_लिखो_reg(ctx, addr, value);
+	पूर्ण
+	अवरोध;
 
-	case CONTROLLER_DP_TEST_PATTERN_VERTICALBARS:
-	case CONTROLLER_DP_TEST_PATTERN_HORIZONTALBARS:
-	{
+	हाल CONTROLLER_DP_TEST_PATTERN_VERTICALBARS:
+	हाल CONTROLLER_DP_TEST_PATTERN_HORIZONTALBARS:
+	अणु
 		mode = (test_pattern ==
 			CONTROLLER_DP_TEST_PATTERN_VERTICALBARS ?
 			TEST_PATTERN_MODE_VERTICALBARS :
 			TEST_PATTERN_MODE_HORIZONTALBARS);
 
-		switch (bit_depth) {
-		case TEST_PATTERN_COLOR_FORMAT_BPC_6:
+		चयन (bit_depth) अणु
+		हाल TEST_PATTERN_COLOR_FORMAT_BPC_6:
 			dst_bpc = 6;
-		break;
-		case TEST_PATTERN_COLOR_FORMAT_BPC_8:
+		अवरोध;
+		हाल TEST_PATTERN_COLOR_FORMAT_BPC_8:
 			dst_bpc = 8;
-		break;
-		case TEST_PATTERN_COLOR_FORMAT_BPC_10:
+		अवरोध;
+		हाल TEST_PATTERN_COLOR_FORMAT_BPC_10:
 			dst_bpc = 10;
-		break;
-		default:
+		अवरोध;
+		शेष:
 			dst_bpc = 8;
-		break;
-		}
+		अवरोध;
+		पूर्ण
 
 		/* adjust color to the required colorFormat */
-		for (index = 0; index < 6; index++) {
+		क्रम (index = 0; index < 6; index++) अणु
 			/* dst = 2^dstBpc * src / 2^srcBpc = src >>
 			 * (srcBpc - dstBpc);
 			 */
@@ -837,20 +838,20 @@ void dce110_timing_generator_set_test_pattern(
 		/* CRTC_TEST_PATTERN_DATA has 16 bits,
 		 * lowest 6 are hardwired to ZERO
 		 * color bits should be left aligned aligned to MSB
-		 * XXXXXXXXXX000000 for 10 bit,
-		 * XXXXXXXX00000000 for 8 bit and XXXXXX0000000000 for 6
+		 * XXXXXXXXXX000000 क्रम 10 bit,
+		 * XXXXXXXX00000000 क्रम 8 bit and XXXXXX0000000000 क्रम 6
 		 */
 			dst_color[index] <<= (16 - dst_bpc);
-		}
+		पूर्ण
 
 		value = 0;
 		addr = CRTC_REG(mmCRTC_TEST_PATTERN_PARAMETERS);
-		dm_write_reg(ctx, addr, value);
+		dm_ग_लिखो_reg(ctx, addr, value);
 
-		/* We have to write the mask before data, similar to pipeline.
-		 * For example, for 8 bpc, if we want RGB0 to be magenta,
+		/* We have to ग_लिखो the mask beक्रमe data, similar to pipeline.
+		 * For example, क्रम 8 bpc, अगर we want RGB0 to be magenta,
 		 * and RGB1 to be cyan,
-		 * we need to make 7 writes:
+		 * we need to make 7 ग_लिखोs:
 		 * MASK   DATA
 		 * 000001 00000000 00000000                     set mask to R0
 		 * 000010 11111111 00000000     R0 255, 0xFF00, set mask to G0
@@ -861,22 +862,22 @@ void dce110_timing_generator_set_test_pattern(
 		 * 100000 11111111 00000000     B1 255, 0xFF00
 		 *
 		 * we will make a loop of 6 in which we prepare the mask,
-		 * then write, then prepare the color for next write.
-		 * first iteration will write mask only,
+		 * then ग_लिखो, then prepare the color क्रम next ग_लिखो.
+		 * first iteration will ग_लिखो mask only,
 		 * but each next iteration color prepared in
 		 * previous iteration will be written within new mask,
 		 * the last component will written separately,
-		 * mask is not changing between 6th and 7th write
+		 * mask is not changing between 6th and 7th ग_लिखो
 		 * and color will be prepared by last iteration
 		 */
 
-		/* write color, color values mask in CRTC_TEST_PATTERN_MASK
+		/* ग_लिखो color, color values mask in CRTC_TEST_PATTERN_MASK
 		 * is B1, G1, R1, B0, G0, R0
 		 */
 		value = 0;
 		addr = CRTC_REG(mmCRTC_TEST_PATTERN_COLOR);
-		for (index = 0; index < 6; index++) {
-			/* prepare color mask, first write PATTERN_DATA
+		क्रम (index = 0; index < 6; index++) अणु
+			/* prepare color mask, first ग_लिखो PATTERN_DATA
 			 * will have all zeros
 			 */
 			set_reg_field_value(
@@ -884,8 +885,8 @@ void dce110_timing_generator_set_test_pattern(
 				(1 << index),
 				CRTC_TEST_PATTERN_COLOR,
 				CRTC_TEST_PATTERN_MASK);
-			/* write color component */
-			dm_write_reg(ctx, addr, value);
+			/* ग_लिखो color component */
+			dm_ग_लिखो_reg(ctx, addr, value);
 			/* prepare next color component,
 			 * will be written in the next iteration
 			 */
@@ -894,11 +895,11 @@ void dce110_timing_generator_set_test_pattern(
 				dst_color[index],
 				CRTC_TEST_PATTERN_COLOR,
 				CRTC_TEST_PATTERN_DATA);
-		}
-		/* write last color component,
-		 * it's been already prepared in the loop
+		पूर्ण
+		/* ग_लिखो last color component,
+		 * it's been alपढ़ोy prepared in the loop
 		 */
-		dm_write_reg(ctx, addr, value);
+		dm_ग_लिखो_reg(ctx, addr, value);
 
 		/* enable test pattern */
 		addr = CRTC_REG(mmCRTC_TEST_PATTERN_CONTROL);
@@ -928,34 +929,34 @@ void dce110_timing_generator_set_test_pattern(
 			CRTC_TEST_PATTERN_CONTROL,
 			CRTC_TEST_PATTERN_COLOR_FORMAT);
 
-		dm_write_reg(ctx, addr, value);
-	}
-	break;
+		dm_ग_लिखो_reg(ctx, addr, value);
+	पूर्ण
+	अवरोध;
 
-	case CONTROLLER_DP_TEST_PATTERN_COLORRAMP:
-	{
+	हाल CONTROLLER_DP_TEST_PATTERN_COLORRAMP:
+	अणु
 		mode = (bit_depth ==
 			TEST_PATTERN_COLOR_FORMAT_BPC_10 ?
 			TEST_PATTERN_MODE_DUALRAMP_RGB :
 			TEST_PATTERN_MODE_SINGLERAMP_RGB);
 
-		switch (bit_depth) {
-		case TEST_PATTERN_COLOR_FORMAT_BPC_6:
+		चयन (bit_depth) अणु
+		हाल TEST_PATTERN_COLOR_FORMAT_BPC_6:
 			dst_bpc = 6;
-		break;
-		case TEST_PATTERN_COLOR_FORMAT_BPC_8:
+		अवरोध;
+		हाल TEST_PATTERN_COLOR_FORMAT_BPC_8:
 			dst_bpc = 8;
-		break;
-		case TEST_PATTERN_COLOR_FORMAT_BPC_10:
+		अवरोध;
+		हाल TEST_PATTERN_COLOR_FORMAT_BPC_10:
 			dst_bpc = 10;
-		break;
-		default:
+		अवरोध;
+		शेष:
 			dst_bpc = 8;
-		break;
-		}
+		अवरोध;
+		पूर्ण
 
-		/* increment for the first ramp for one color gradation
-		 * 1 gradation for 6-bit color is 2^10
+		/* increment क्रम the first ramp क्रम one color gradation
+		 * 1 gradation क्रम 6-bit color is 2^10
 		 * gradations in 16-bit color
 		 */
 		inc_base = (src_bpc - dst_bpc);
@@ -963,9 +964,9 @@ void dce110_timing_generator_set_test_pattern(
 		value = 0;
 		addr = CRTC_REG(mmCRTC_TEST_PATTERN_PARAMETERS);
 
-		switch (bit_depth) {
-		case TEST_PATTERN_COLOR_FORMAT_BPC_6:
-		{
+		चयन (bit_depth) अणु
+		हाल TEST_PATTERN_COLOR_FORMAT_BPC_6:
+		अणु
 			set_reg_field_value(
 				value,
 				inc_base,
@@ -991,10 +992,10 @@ void dce110_timing_generator_set_test_pattern(
 				0,
 				CRTC_TEST_PATTERN_PARAMETERS,
 				CRTC_TEST_PATTERN_RAMP0_OFFSET);
-		}
-		break;
-		case TEST_PATTERN_COLOR_FORMAT_BPC_8:
-		{
+		पूर्ण
+		अवरोध;
+		हाल TEST_PATTERN_COLOR_FORMAT_BPC_8:
+		अणु
 			set_reg_field_value(
 				value,
 				inc_base,
@@ -1020,10 +1021,10 @@ void dce110_timing_generator_set_test_pattern(
 				0,
 				CRTC_TEST_PATTERN_PARAMETERS,
 				CRTC_TEST_PATTERN_RAMP0_OFFSET);
-		}
-		break;
-		case TEST_PATTERN_COLOR_FORMAT_BPC_10:
-		{
+		पूर्ण
+		अवरोध;
+		हाल TEST_PATTERN_COLOR_FORMAT_BPC_10:
+		अणु
 			set_reg_field_value(
 				value,
 				inc_base,
@@ -1049,16 +1050,16 @@ void dce110_timing_generator_set_test_pattern(
 				384 << 6,
 				CRTC_TEST_PATTERN_PARAMETERS,
 				CRTC_TEST_PATTERN_RAMP0_OFFSET);
-		}
-		break;
-		default:
-		break;
-		}
-		dm_write_reg(ctx, addr, value);
+		पूर्ण
+		अवरोध;
+		शेष:
+		अवरोध;
+		पूर्ण
+		dm_ग_लिखो_reg(ctx, addr, value);
 
 		value = 0;
 		addr = CRTC_REG(mmCRTC_TEST_PATTERN_COLOR);
-		dm_write_reg(ctx, addr, value);
+		dm_ग_लिखो_reg(ctx, addr, value);
 
 		/* enable test pattern */
 		addr = CRTC_REG(mmCRTC_TEST_PATTERN_CONTROL);
@@ -1088,22 +1089,22 @@ void dce110_timing_generator_set_test_pattern(
 			CRTC_TEST_PATTERN_CONTROL,
 			CRTC_TEST_PATTERN_COLOR_FORMAT);
 
-		dm_write_reg(ctx, addr, value);
-	}
-	break;
-	case CONTROLLER_DP_TEST_PATTERN_VIDEOMODE:
-	{
+		dm_ग_लिखो_reg(ctx, addr, value);
+	पूर्ण
+	अवरोध;
+	हाल CONTROLLER_DP_TEST_PATTERN_VIDEOMODE:
+	अणु
 		value = 0;
-		dm_write_reg(ctx, CRTC_REG(mmCRTC_TEST_PATTERN_CONTROL), value);
-		dm_write_reg(ctx, CRTC_REG(mmCRTC_TEST_PATTERN_COLOR), value);
-		dm_write_reg(ctx, CRTC_REG(mmCRTC_TEST_PATTERN_PARAMETERS),
+		dm_ग_लिखो_reg(ctx, CRTC_REG(mmCRTC_TEST_PATTERN_CONTROL), value);
+		dm_ग_लिखो_reg(ctx, CRTC_REG(mmCRTC_TEST_PATTERN_COLOR), value);
+		dm_ग_लिखो_reg(ctx, CRTC_REG(mmCRTC_TEST_PATTERN_PARAMETERS),
 				value);
-	}
-	break;
-	default:
-	break;
-	}
-}
+	पूर्ण
+	अवरोध;
+	शेष:
+	अवरोध;
+	पूर्ण
+पूर्ण
 
 /*
  * dce110_timing_generator_validate_timing
@@ -1111,121 +1112,121 @@ void dce110_timing_generator_set_test_pattern(
  * including both active display and blanking periods. Check H Total and V Total.
  */
 bool dce110_timing_generator_validate_timing(
-	struct timing_generator *tg,
-	const struct dc_crtc_timing *timing,
-	enum signal_type signal)
-{
-	uint32_t h_blank;
-	uint32_t h_back_porch, hsync_offset, h_sync_start;
+	काष्ठा timing_generator *tg,
+	स्थिर काष्ठा dc_crtc_timing *timing,
+	क्रमागत संकेत_type संकेत)
+अणु
+	uपूर्णांक32_t h_blank;
+	uपूर्णांक32_t h_back_porch, hsync_offset, h_sync_start;
 
-	struct dce110_timing_generator *tg110 = DCE110TG_FROM_TG(tg);
+	काष्ठा dce110_timing_generator *tg110 = DCE110TG_FROM_TG(tg);
 
-	ASSERT(timing != NULL);
+	ASSERT(timing != शून्य);
 
-	if (!timing)
-		return false;
+	अगर (!timing)
+		वापस false;
 
 	hsync_offset = timing->h_border_right + timing->h_front_porch;
 	h_sync_start = timing->h_addressable + hsync_offset;
 
-	/* Currently we don't support 3D, so block all 3D timings */
-	if (timing->timing_3d_format != TIMING_3D_FORMAT_NONE)
-		return false;
+	/* Currently we करोn't support 3D, so block all 3D timings */
+	अगर (timing->timing_3d_क्रमmat != TIMING_3D_FORMAT_NONE)
+		वापस false;
 
-	/* Temporarily blocking interlacing mode until it's supported */
-	if (timing->flags.INTERLACE == 1)
-		return false;
+	/* Temporarily blocking पूर्णांकerlacing mode until it's supported */
+	अगर (timing->flags.INTERLACE == 1)
+		वापस false;
 
 	/* Check maximum number of pixels supported by Timing Generator
 	 * (Currently will never fail, in order to fail needs display which
 	 * needs more than 8192 horizontal and
 	 * more than 8192 vertical total pixels)
 	 */
-	if (timing->h_total > tg110->max_h_total ||
+	अगर (timing->h_total > tg110->max_h_total ||
 		timing->v_total > tg110->max_v_total)
-		return false;
+		वापस false;
 
 	h_blank = (timing->h_total - timing->h_addressable -
 		timing->h_border_right -
 		timing->h_border_left);
 
-	if (h_blank < tg110->min_h_blank)
-		return false;
+	अगर (h_blank < tg110->min_h_blank)
+		वापस false;
 
-	if (timing->h_front_porch < tg110->min_h_front_porch)
-		return false;
+	अगर (timing->h_front_porch < tg110->min_h_front_porch)
+		वापस false;
 
 	h_back_porch = h_blank - (h_sync_start -
 		timing->h_addressable -
 		timing->h_border_right -
 		timing->h_sync_width);
 
-	if (h_back_porch < tg110->min_h_back_porch)
-		return false;
+	अगर (h_back_porch < tg110->min_h_back_porch)
+		वापस false;
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
 /*
  * Wait till we are at the beginning of VBlank.
  */
-void dce110_timing_generator_wait_for_vblank(struct timing_generator *tg)
-{
-	/* We want to catch beginning of VBlank here, so if the first try are
-	 * in VBlank, we might be very close to Active, in this case wait for
+व्योम dce110_timing_generator_रुको_क्रम_vblank(काष्ठा timing_generator *tg)
+अणु
+	/* We want to catch beginning of VBlank here, so अगर the first try are
+	 * in VBlank, we might be very बंद to Active, in this हाल रुको क्रम
 	 * another frame
 	 */
-	while (dce110_timing_generator_is_in_vertical_blank(tg)) {
-		if (!dce110_timing_generator_is_counter_moving(tg)) {
-			/* error - no point to wait if counter is not moving */
-			break;
-		}
-	}
+	जबतक (dce110_timing_generator_is_in_vertical_blank(tg)) अणु
+		अगर (!dce110_timing_generator_is_counter_moving(tg)) अणु
+			/* error - no poपूर्णांक to रुको अगर counter is not moving */
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	while (!dce110_timing_generator_is_in_vertical_blank(tg)) {
-		if (!dce110_timing_generator_is_counter_moving(tg)) {
-			/* error - no point to wait if counter is not moving */
-			break;
-		}
-	}
-}
+	जबतक (!dce110_timing_generator_is_in_vertical_blank(tg)) अणु
+		अगर (!dce110_timing_generator_is_counter_moving(tg)) अणु
+			/* error - no poपूर्णांक to रुको अगर counter is not moving */
+			अवरोध;
+		पूर्ण
+	पूर्ण
+पूर्ण
 
 /*
  * Wait till we are in VActive (anywhere in VActive)
  */
-void dce110_timing_generator_wait_for_vactive(struct timing_generator *tg)
-{
-	while (dce110_timing_generator_is_in_vertical_blank(tg)) {
-		if (!dce110_timing_generator_is_counter_moving(tg)) {
-			/* error - no point to wait if counter is not moving */
-			break;
-		}
-	}
-}
+व्योम dce110_timing_generator_रुको_क्रम_vactive(काष्ठा timing_generator *tg)
+अणु
+	जबतक (dce110_timing_generator_is_in_vertical_blank(tg)) अणु
+		अगर (!dce110_timing_generator_is_counter_moving(tg)) अणु
+			/* error - no poपूर्णांक to रुको अगर counter is not moving */
+			अवरोध;
+		पूर्ण
+	पूर्ण
+पूर्ण
 
 /*
  *****************************************************************************
  *  Function: dce110_timing_generator_setup_global_swap_lock
  *
  *  @brief
- *     Setups Global Swap Lock group for current pipe
+ *     Setups Global Swap Lock group क्रम current pipe
  *     Pipe can join or leave GSL group, become a TimingServer or TimingClient
  *
  *  @param [in] gsl_params: setup data
  *****************************************************************************
  */
-void dce110_timing_generator_setup_global_swap_lock(
-	struct timing_generator *tg,
-	const struct dcp_gsl_params *gsl_params)
-{
-	uint32_t value;
-	struct dce110_timing_generator *tg110 = DCE110TG_FROM_TG(tg);
-	uint32_t address = DCP_REG(mmDCP_GSL_CONTROL);
-	uint32_t check_point = FLIP_READY_BACK_LOOKUP;
+व्योम dce110_timing_generator_setup_global_swap_lock(
+	काष्ठा timing_generator *tg,
+	स्थिर काष्ठा dcp_gsl_params *gsl_params)
+अणु
+	uपूर्णांक32_t value;
+	काष्ठा dce110_timing_generator *tg110 = DCE110TG_FROM_TG(tg);
+	uपूर्णांक32_t address = DCP_REG(mmDCP_GSL_CONTROL);
+	uपूर्णांक32_t check_poपूर्णांक = FLIP_READY_BACK_LOOKUP;
 
-	value = dm_read_reg(tg->ctx, address);
+	value = dm_पढ़ो_reg(tg->ctx, address);
 
-	/* This pipe will belong to GSL Group zero. */
+	/* This pipe will beदीर्घ to GSL Group zero. */
 	set_reg_field_value(value,
 			    1,
 			    DCP_GSL_CONTROL,
@@ -1241,14 +1242,14 @@ void dce110_timing_generator_setup_global_swap_lock(
 			    DCP_GSL_CONTROL,
 			    DCP_GSL_HSYNC_FLIP_FORCE_DELAY);
 
-	/* Keep signal low (pending high) during 6 lines.
-	 * Also defines minimum interval before re-checking signal. */
+	/* Keep संकेत low (pending high) during 6 lines.
+	 * Also defines minimum पूर्णांकerval beक्रमe re-checking संकेत. */
 	set_reg_field_value(value,
 			    HFLIP_CHECK_DELAY,
 			    DCP_GSL_CONTROL,
 			    DCP_GSL_HSYNC_FLIP_CHECK_DELAY);
 
-	dm_write_reg(tg->ctx, CRTC_REG(mmDCP_GSL_CONTROL), value);
+	dm_ग_लिखो_reg(tg->ctx, CRTC_REG(mmDCP_GSL_CONTROL), value);
 	value = 0;
 
 	set_reg_field_value(value,
@@ -1266,13 +1267,13 @@ void dce110_timing_generator_setup_global_swap_lock(
 			    DCIO_GSL0_CNTL,
 			    DCIO_GSL0_GLOBAL_UNLOCK_SEL);
 
-	dm_write_reg(tg->ctx, CRTC_REG(mmDCIO_GSL0_CNTL), value);
+	dm_ग_लिखो_reg(tg->ctx, CRTC_REG(mmDCIO_GSL0_CNTL), value);
 
 
-	{
-		uint32_t value_crtc_vtotal;
+	अणु
+		uपूर्णांक32_t value_crtc_vtotal;
 
-		value_crtc_vtotal = dm_read_reg(tg->ctx,
+		value_crtc_vtotal = dm_पढ़ो_reg(tg->ctx,
 				CRTC_REG(mmCRTC_V_TOTAL));
 
 		set_reg_field_value(value,
@@ -1280,27 +1281,27 @@ void dce110_timing_generator_setup_global_swap_lock(
 				    DCP_GSL_CONTROL,
 				    DCP_GSL_SYNC_SOURCE);
 
-		/* Checkpoint relative to end of frame */
-		check_point = get_reg_field_value(value_crtc_vtotal,
+		/* Checkpoपूर्णांक relative to end of frame */
+		check_poपूर्णांक = get_reg_field_value(value_crtc_vtotal,
 						  CRTC_V_TOTAL,
 						  CRTC_V_TOTAL);
 
-		dm_write_reg(tg->ctx, CRTC_REG(mmCRTC_GSL_WINDOW), 0);
-	}
+		dm_ग_लिखो_reg(tg->ctx, CRTC_REG(mmCRTC_GSL_WINDOW), 0);
+	पूर्ण
 
 	set_reg_field_value(value,
 			    1,
 			    DCP_GSL_CONTROL,
 			    DCP_GSL_DELAY_SURFACE_UPDATE_PENDING);
 
-	dm_write_reg(tg->ctx, address, value);
+	dm_ग_लिखो_reg(tg->ctx, address, value);
 
 	/********************************************************************/
 	address = CRTC_REG(mmCRTC_GSL_CONTROL);
 
-	value = dm_read_reg(tg->ctx, address);
+	value = dm_पढ़ो_reg(tg->ctx, address);
 	set_reg_field_value(value,
-			    check_point - FLIP_READY_BACK_LOOKUP,
+			    check_poपूर्णांक - FLIP_READY_BACK_LOOKUP,
 			    CRTC_GSL_CONTROL,
 			    CRTC_GSL_CHECK_LINE_NUM);
 
@@ -1309,24 +1310,24 @@ void dce110_timing_generator_setup_global_swap_lock(
 			    CRTC_GSL_CONTROL,
 			    CRTC_GSL_FORCE_DELAY);
 
-	dm_write_reg(tg->ctx, address, value);
-}
+	dm_ग_लिखो_reg(tg->ctx, address, value);
+पूर्ण
 
-void dce110_timing_generator_tear_down_global_swap_lock(
-	struct timing_generator *tg)
-{
-	/* Clear all the register writes done by
+व्योम dce110_timing_generator_tear_करोwn_global_swap_lock(
+	काष्ठा timing_generator *tg)
+अणु
+	/* Clear all the रेजिस्टर ग_लिखोs करोne by
 	 * dce110_timing_generator_setup_global_swap_lock
 	 */
 
-	uint32_t value;
-	struct dce110_timing_generator *tg110 = DCE110TG_FROM_TG(tg);
-	uint32_t address = DCP_REG(mmDCP_GSL_CONTROL);
+	uपूर्णांक32_t value;
+	काष्ठा dce110_timing_generator *tg110 = DCE110TG_FROM_TG(tg);
+	uपूर्णांक32_t address = DCP_REG(mmDCP_GSL_CONTROL);
 
 	value = 0;
 
-	/* This pipe will belong to GSL Group zero. */
-	/* Settig HW default values from reg specs */
+	/* This pipe will beदीर्घ to GSL Group zero. */
+	/* Settig HW शेष values from reg specs */
 	set_reg_field_value(value,
 			0,
 			DCP_GSL_CONTROL,
@@ -1348,21 +1349,21 @@ void dce110_timing_generator_tear_down_global_swap_lock(
 			DCP_GSL_HSYNC_FLIP_CHECK_DELAY);
 
 	/* Restore DCP_GSL_PURPOSE_SURFACE_FLIP */
-	{
-		dm_read_reg(tg->ctx, CRTC_REG(mmCRTC_V_TOTAL));
+	अणु
+		dm_पढ़ो_reg(tg->ctx, CRTC_REG(mmCRTC_V_TOTAL));
 
 		set_reg_field_value(value,
 				0,
 				DCP_GSL_CONTROL,
 				DCP_GSL_SYNC_SOURCE);
-	}
+	पूर्ण
 
 	set_reg_field_value(value,
 			0,
 			DCP_GSL_CONTROL,
 			DCP_GSL_DELAY_SURFACE_UPDATE_PENDING);
 
-	dm_write_reg(tg->ctx, address, value);
+	dm_ग_लिखो_reg(tg->ctx, address, value);
 
 	/********************************************************************/
 	address = CRTC_REG(mmCRTC_GSL_CONTROL);
@@ -1378,58 +1379,58 @@ void dce110_timing_generator_tear_down_global_swap_lock(
 			CRTC_GSL_CONTROL,
 			CRTC_GSL_FORCE_DELAY);
 
-	dm_write_reg(tg->ctx, address, value);
-}
+	dm_ग_लिखो_reg(tg->ctx, address, value);
+पूर्ण
 /*
  *****************************************************************************
  *  Function: is_counter_moving
  *
  *  @brief
- *     check if the timing generator is currently going
+ *     check अगर the timing generator is currently going
  *
- *  @return
- *     true if currently going, false if currently paused or stopped.
+ *  @वापस
+ *     true अगर currently going, false अगर currently छोड़ोd or stopped.
  *
  *****************************************************************************
  */
-bool dce110_timing_generator_is_counter_moving(struct timing_generator *tg)
-{
-	struct crtc_position position1, position2;
+bool dce110_timing_generator_is_counter_moving(काष्ठा timing_generator *tg)
+अणु
+	काष्ठा crtc_position position1, position2;
 
 	tg->funcs->get_position(tg, &position1);
 	tg->funcs->get_position(tg, &position2);
 
-	if (position1.horizontal_count == position2.horizontal_count &&
+	अगर (position1.horizontal_count == position2.horizontal_count &&
 		position1.vertical_count == position2.vertical_count)
-		return false;
-	else
-		return true;
-}
+		वापस false;
+	अन्यथा
+		वापस true;
+पूर्ण
 
-void dce110_timing_generator_enable_advanced_request(
-	struct timing_generator *tg,
+व्योम dce110_timing_generator_enable_advanced_request(
+	काष्ठा timing_generator *tg,
 	bool enable,
-	const struct dc_crtc_timing *timing)
-{
-	struct dce110_timing_generator *tg110 = DCE110TG_FROM_TG(tg);
-	uint32_t addr = CRTC_REG(mmCRTC_START_LINE_CONTROL);
-	uint32_t value = dm_read_reg(tg->ctx, addr);
+	स्थिर काष्ठा dc_crtc_timing *timing)
+अणु
+	काष्ठा dce110_timing_generator *tg110 = DCE110TG_FROM_TG(tg);
+	uपूर्णांक32_t addr = CRTC_REG(mmCRTC_START_LINE_CONTROL);
+	uपूर्णांक32_t value = dm_पढ़ो_reg(tg->ctx, addr);
 
-	if (enable) {
+	अगर (enable) अणु
 		set_reg_field_value(
 			value,
 			0,
 			CRTC_START_LINE_CONTROL,
 			CRTC_LEGACY_REQUESTOR_EN);
-	} else {
+	पूर्ण अन्यथा अणु
 		set_reg_field_value(
 			value,
 			1,
 			CRTC_START_LINE_CONTROL,
 			CRTC_LEGACY_REQUESTOR_EN);
-	}
+	पूर्ण
 
-	if ((timing->v_sync_width + timing->v_front_porch) <= 3) {
+	अगर ((timing->v_sync_width + timing->v_front_porch) <= 3) अणु
 		set_reg_field_value(
 			value,
 			3,
@@ -1440,7 +1441,7 @@ void dce110_timing_generator_enable_advanced_request(
 			0,
 			CRTC_START_LINE_CONTROL,
 			CRTC_PREFETCH_EN);
-	} else {
+	पूर्ण अन्यथा अणु
 		set_reg_field_value(
 			value,
 			4,
@@ -1451,7 +1452,7 @@ void dce110_timing_generator_enable_advanced_request(
 			1,
 			CRTC_START_LINE_CONTROL,
 			CRTC_PREFETCH_EN);
-	}
+	पूर्ण
 
 	set_reg_field_value(
 		value,
@@ -1465,17 +1466,17 @@ void dce110_timing_generator_enable_advanced_request(
 		CRTC_START_LINE_CONTROL,
 		CRTC_INTERLACE_START_LINE_EARLY);
 
-	dm_write_reg(tg->ctx, addr, value);
-}
+	dm_ग_लिखो_reg(tg->ctx, addr, value);
+पूर्ण
 
-/*TODO: Figure out if we need this function. */
-void dce110_timing_generator_set_lock_master(struct timing_generator *tg,
+/*TODO: Figure out अगर we need this function. */
+व्योम dce110_timing_generator_set_lock_master(काष्ठा timing_generator *tg,
 		bool lock)
-{
-	struct dc_context *ctx = tg->ctx;
-	struct dce110_timing_generator *tg110 = DCE110TG_FROM_TG(tg);
-	uint32_t addr = CRTC_REG(mmCRTC_MASTER_UPDATE_LOCK);
-	uint32_t value = dm_read_reg(ctx, addr);
+अणु
+	काष्ठा dc_context *ctx = tg->ctx;
+	काष्ठा dce110_timing_generator *tg110 = DCE110TG_FROM_TG(tg);
+	uपूर्णांक32_t addr = CRTC_REG(mmCRTC_MASTER_UPDATE_LOCK);
+	uपूर्णांक32_t value = dm_पढ़ो_reg(ctx, addr);
 
 	set_reg_field_value(
 		value,
@@ -1483,36 +1484,36 @@ void dce110_timing_generator_set_lock_master(struct timing_generator *tg,
 		CRTC_MASTER_UPDATE_LOCK,
 		MASTER_UPDATE_LOCK);
 
-	dm_write_reg(ctx, addr, value);
-}
+	dm_ग_लिखो_reg(ctx, addr, value);
+पूर्ण
 
-void dce110_timing_generator_enable_reset_trigger(
-	struct timing_generator *tg,
-	int source_tg_inst)
-{
-	uint32_t value;
-	uint32_t rising_edge = 0;
-	uint32_t falling_edge = 0;
-	enum trigger_source_select trig_src_select = TRIGGER_SOURCE_SELECT_LOGIC_ZERO;
-	struct dce110_timing_generator *tg110 = DCE110TG_FROM_TG(tg);
+व्योम dce110_timing_generator_enable_reset_trigger(
+	काष्ठा timing_generator *tg,
+	पूर्णांक source_tg_inst)
+अणु
+	uपूर्णांक32_t value;
+	uपूर्णांक32_t rising_edge = 0;
+	uपूर्णांक32_t falling_edge = 0;
+	क्रमागत trigger_source_select trig_src_select = TRIGGER_SOURCE_SELECT_LOGIC_ZERO;
+	काष्ठा dce110_timing_generator *tg110 = DCE110TG_FROM_TG(tg);
 
 	/* Setup trigger edge */
-	{
-		uint32_t pol_value = dm_read_reg(tg->ctx,
+	अणु
+		uपूर्णांक32_t pol_value = dm_पढ़ो_reg(tg->ctx,
 				CRTC_REG(mmCRTC_V_SYNC_A_CNTL));
 
 		/* Register spec has reversed definition:
-		 *	0 for positive, 1 for negative */
-		if (get_reg_field_value(pol_value,
+		 *	0 क्रम positive, 1 क्रम negative */
+		अगर (get_reg_field_value(pol_value,
 				CRTC_V_SYNC_A_CNTL,
-				CRTC_V_SYNC_A_POL) == 0) {
+				CRTC_V_SYNC_A_POL) == 0) अणु
 			rising_edge = 1;
-		} else {
+		पूर्ण अन्यथा अणु
 			falling_edge = 1;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	value = dm_read_reg(tg->ctx, CRTC_REG(mmCRTC_TRIGB_CNTL));
+	value = dm_पढ़ो_reg(tg->ctx, CRTC_REG(mmCRTC_TRIGB_CNTL));
 
 	trig_src_select = TRIGGER_SOURCE_SELECT_GSL_GROUP0;
 
@@ -1537,7 +1538,7 @@ void dce110_timing_generator_enable_reset_trigger(
 			CRTC_TRIGB_FALLING_EDGE_DETECT_CNTL);
 
 	set_reg_field_value(value,
-			0, /* send every signal */
+			0, /* send every संकेत */
 			CRTC_TRIGB_CNTL,
 			CRTC_TRIGB_FREQUENCY_SELECT);
 
@@ -1551,14 +1552,14 @@ void dce110_timing_generator_enable_reset_trigger(
 			CRTC_TRIGB_CNTL,
 			CRTC_TRIGB_CLEAR);
 
-	dm_write_reg(tg->ctx, CRTC_REG(mmCRTC_TRIGB_CNTL), value);
+	dm_ग_लिखो_reg(tg->ctx, CRTC_REG(mmCRTC_TRIGB_CNTL), value);
 
 	/**************************************************************/
 
-	value = dm_read_reg(tg->ctx, CRTC_REG(mmCRTC_FORCE_COUNT_NOW_CNTL));
+	value = dm_पढ़ो_reg(tg->ctx, CRTC_REG(mmCRTC_FORCE_COUNT_NOW_CNTL));
 
 	set_reg_field_value(value,
-			2, /* force H count to H_TOTAL and V count to V_TOTAL */
+			2, /* क्रमce H count to H_TOTAL and V count to V_TOTAL */
 			CRTC_FORCE_COUNT_NOW_CNTL,
 			CRTC_FORCE_COUNT_NOW_MODE);
 
@@ -1572,31 +1573,31 @@ void dce110_timing_generator_enable_reset_trigger(
 			CRTC_FORCE_COUNT_NOW_CNTL,
 			CRTC_FORCE_COUNT_NOW_CLEAR);
 
-	dm_write_reg(tg->ctx, CRTC_REG(mmCRTC_FORCE_COUNT_NOW_CNTL), value);
-}
+	dm_ग_लिखो_reg(tg->ctx, CRTC_REG(mmCRTC_FORCE_COUNT_NOW_CNTL), value);
+पूर्ण
 
-void dce110_timing_generator_enable_crtc_reset(
-		struct timing_generator *tg,
-		int source_tg_inst,
-		struct crtc_trigger_info *crtc_tp)
-{
-	uint32_t value = 0;
-	uint32_t rising_edge = 0;
-	uint32_t falling_edge = 0;
-	struct dce110_timing_generator *tg110 = DCE110TG_FROM_TG(tg);
+व्योम dce110_timing_generator_enable_crtc_reset(
+		काष्ठा timing_generator *tg,
+		पूर्णांक source_tg_inst,
+		काष्ठा crtc_trigger_info *crtc_tp)
+अणु
+	uपूर्णांक32_t value = 0;
+	uपूर्णांक32_t rising_edge = 0;
+	uपूर्णांक32_t falling_edge = 0;
+	काष्ठा dce110_timing_generator *tg110 = DCE110TG_FROM_TG(tg);
 
 	/* Setup trigger edge */
-	switch (crtc_tp->event) {
-	case CRTC_EVENT_VSYNC_RISING:
+	चयन (crtc_tp->event) अणु
+	हाल CRTC_EVENT_VSYNC_RISING:
 			rising_edge = 1;
-			break;
+			अवरोध;
 
-	case CRTC_EVENT_VSYNC_FALLING:
+	हाल CRTC_EVENT_VSYNC_FALLING:
 		falling_edge = 1;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	value = dm_read_reg(tg->ctx, CRTC_REG(mmCRTC_TRIGB_CNTL));
+	value = dm_पढ़ो_reg(tg->ctx, CRTC_REG(mmCRTC_TRIGB_CNTL));
 
 	set_reg_field_value(value,
 			    source_tg_inst,
@@ -1623,16 +1624,16 @@ void dce110_timing_generator_enable_crtc_reset(
 			    CRTC_TRIGB_CNTL,
 			    CRTC_TRIGB_CLEAR);
 
-	dm_write_reg(tg->ctx, CRTC_REG(mmCRTC_TRIGB_CNTL), value);
+	dm_ग_लिखो_reg(tg->ctx, CRTC_REG(mmCRTC_TRIGB_CNTL), value);
 
 	/**************************************************************/
 
-	switch (crtc_tp->delay) {
-	case TRIGGER_DELAY_NEXT_LINE:
-		value = dm_read_reg(tg->ctx, CRTC_REG(mmCRTC_FORCE_COUNT_NOW_CNTL));
+	चयन (crtc_tp->delay) अणु
+	हाल TRIGGER_DELAY_NEXT_LINE:
+		value = dm_पढ़ो_reg(tg->ctx, CRTC_REG(mmCRTC_FORCE_COUNT_NOW_CNTL));
 
 		set_reg_field_value(value,
-				    0, /* force H count to H_TOTAL and V count to V_TOTAL */
+				    0, /* क्रमce H count to H_TOTAL and V count to V_TOTAL */
 				    CRTC_FORCE_COUNT_NOW_CNTL,
 				    CRTC_FORCE_COUNT_NOW_MODE);
 
@@ -1646,9 +1647,9 @@ void dce110_timing_generator_enable_crtc_reset(
 				    CRTC_FORCE_COUNT_NOW_CNTL,
 				    CRTC_FORCE_COUNT_NOW_CLEAR);
 
-		dm_write_reg(tg->ctx, CRTC_REG(mmCRTC_FORCE_COUNT_NOW_CNTL), value);
+		dm_ग_लिखो_reg(tg->ctx, CRTC_REG(mmCRTC_FORCE_COUNT_NOW_CNTL), value);
 
-		value = dm_read_reg(tg->ctx, CRTC_REG(mmCRTC_VERT_SYNC_CONTROL));
+		value = dm_पढ़ो_reg(tg->ctx, CRTC_REG(mmCRTC_VERT_SYNC_CONTROL));
 
 		set_reg_field_value(value,
 				    1,
@@ -1660,10 +1661,10 @@ void dce110_timing_generator_enable_crtc_reset(
 				    CRTC_VERT_SYNC_CONTROL,
 				    CRTC_AUTO_FORCE_VSYNC_MODE);
 
-		break;
+		अवरोध;
 
-	case TRIGGER_DELAY_NEXT_PIXEL:
-		value = dm_read_reg(tg->ctx, CRTC_REG(mmCRTC_VERT_SYNC_CONTROL));
+	हाल TRIGGER_DELAY_NEXT_PIXEL:
+		value = dm_पढ़ो_reg(tg->ctx, CRTC_REG(mmCRTC_VERT_SYNC_CONTROL));
 
 		set_reg_field_value(value,
 				    1,
@@ -1675,12 +1676,12 @@ void dce110_timing_generator_enable_crtc_reset(
 				    CRTC_VERT_SYNC_CONTROL,
 				    CRTC_AUTO_FORCE_VSYNC_MODE);
 
-		dm_write_reg(tg->ctx, CRTC_REG(mmCRTC_VERT_SYNC_CONTROL), value);
+		dm_ग_लिखो_reg(tg->ctx, CRTC_REG(mmCRTC_VERT_SYNC_CONTROL), value);
 
-		value = dm_read_reg(tg->ctx, CRTC_REG(mmCRTC_FORCE_COUNT_NOW_CNTL));
+		value = dm_पढ़ो_reg(tg->ctx, CRTC_REG(mmCRTC_FORCE_COUNT_NOW_CNTL));
 
 		set_reg_field_value(value,
-				    2, /* force H count to H_TOTAL and V count to V_TOTAL */
+				    2, /* क्रमce H count to H_TOTAL and V count to V_TOTAL */
 				    CRTC_FORCE_COUNT_NOW_CNTL,
 				    CRTC_FORCE_COUNT_NOW_MODE);
 
@@ -1694,29 +1695,29 @@ void dce110_timing_generator_enable_crtc_reset(
 				    CRTC_FORCE_COUNT_NOW_CNTL,
 				    CRTC_FORCE_COUNT_NOW_CLEAR);
 
-		dm_write_reg(tg->ctx, CRTC_REG(mmCRTC_FORCE_COUNT_NOW_CNTL), value);
-		break;
-	}
+		dm_ग_लिखो_reg(tg->ctx, CRTC_REG(mmCRTC_FORCE_COUNT_NOW_CNTL), value);
+		अवरोध;
+	पूर्ण
 
-	value = dm_read_reg(tg->ctx, CRTC_REG(mmCRTC_MASTER_UPDATE_MODE));
+	value = dm_पढ़ो_reg(tg->ctx, CRTC_REG(mmCRTC_MASTER_UPDATE_MODE));
 
 	set_reg_field_value(value,
 			    2,
 			    CRTC_MASTER_UPDATE_MODE,
 			    MASTER_UPDATE_MODE);
 
-	dm_write_reg(tg->ctx, CRTC_REG(mmCRTC_MASTER_UPDATE_MODE), value);
-}
-void dce110_timing_generator_disable_reset_trigger(
-	struct timing_generator *tg)
-{
-	uint32_t value;
-	struct dce110_timing_generator *tg110 = DCE110TG_FROM_TG(tg);
+	dm_ग_लिखो_reg(tg->ctx, CRTC_REG(mmCRTC_MASTER_UPDATE_MODE), value);
+पूर्ण
+व्योम dce110_timing_generator_disable_reset_trigger(
+	काष्ठा timing_generator *tg)
+अणु
+	uपूर्णांक32_t value;
+	काष्ठा dce110_timing_generator *tg110 = DCE110TG_FROM_TG(tg);
 
-	value = dm_read_reg(tg->ctx, CRTC_REG(mmCRTC_FORCE_COUNT_NOW_CNTL));
+	value = dm_पढ़ो_reg(tg->ctx, CRTC_REG(mmCRTC_FORCE_COUNT_NOW_CNTL));
 
 	set_reg_field_value(value,
-			    0, /* force counter now mode is disabled */
+			    0, /* क्रमce counter now mode is disabled */
 			    CRTC_FORCE_COUNT_NOW_CNTL,
 			    CRTC_FORCE_COUNT_NOW_MODE);
 
@@ -1725,9 +1726,9 @@ void dce110_timing_generator_disable_reset_trigger(
 			    CRTC_FORCE_COUNT_NOW_CNTL,
 			    CRTC_FORCE_COUNT_NOW_CLEAR);
 
-	dm_write_reg(tg->ctx, CRTC_REG(mmCRTC_FORCE_COUNT_NOW_CNTL), value);
+	dm_ग_लिखो_reg(tg->ctx, CRTC_REG(mmCRTC_FORCE_COUNT_NOW_CNTL), value);
 
-	value = dm_read_reg(tg->ctx, CRTC_REG(mmCRTC_VERT_SYNC_CONTROL));
+	value = dm_पढ़ो_reg(tg->ctx, CRTC_REG(mmCRTC_VERT_SYNC_CONTROL));
 
 	set_reg_field_value(value,
 			    1,
@@ -1739,10 +1740,10 @@ void dce110_timing_generator_disable_reset_trigger(
 			    CRTC_VERT_SYNC_CONTROL,
 			    CRTC_AUTO_FORCE_VSYNC_MODE);
 
-	dm_write_reg(tg->ctx, CRTC_REG(mmCRTC_VERT_SYNC_CONTROL), value);
+	dm_ग_लिखो_reg(tg->ctx, CRTC_REG(mmCRTC_VERT_SYNC_CONTROL), value);
 
 	/********************************************************************/
-	value = dm_read_reg(tg->ctx, CRTC_REG(mmCRTC_TRIGB_CNTL));
+	value = dm_पढ़ो_reg(tg->ctx, CRTC_REG(mmCRTC_TRIGB_CNTL));
 
 	set_reg_field_value(value,
 			    TRIGGER_SOURCE_SELECT_LOGIC_ZERO,
@@ -1759,72 +1760,72 @@ void dce110_timing_generator_disable_reset_trigger(
 			    CRTC_TRIGB_CNTL,
 			    CRTC_TRIGB_CLEAR);
 
-	dm_write_reg(tg->ctx, CRTC_REG(mmCRTC_TRIGB_CNTL), value);
-}
+	dm_ग_लिखो_reg(tg->ctx, CRTC_REG(mmCRTC_TRIGB_CNTL), value);
+पूर्ण
 
 /*
  *****************************************************************************
  *  @brief
  *     Checks whether CRTC triggered reset occurred
  *
- *  @return
- *     true if triggered reset occurred, false otherwise
+ *  @वापस
+ *     true अगर triggered reset occurred, false otherwise
  *****************************************************************************
  */
 bool dce110_timing_generator_did_triggered_reset_occur(
-	struct timing_generator *tg)
-{
-	struct dce110_timing_generator *tg110 = DCE110TG_FROM_TG(tg);
-	uint32_t value = dm_read_reg(tg->ctx,
+	काष्ठा timing_generator *tg)
+अणु
+	काष्ठा dce110_timing_generator *tg110 = DCE110TG_FROM_TG(tg);
+	uपूर्णांक32_t value = dm_पढ़ो_reg(tg->ctx,
 			CRTC_REG(mmCRTC_FORCE_COUNT_NOW_CNTL));
-	uint32_t value1 = dm_read_reg(tg->ctx,
+	uपूर्णांक32_t value1 = dm_पढ़ो_reg(tg->ctx,
 			CRTC_REG(mmCRTC_VERT_SYNC_CONTROL));
-	bool force = get_reg_field_value(value,
+	bool क्रमce = get_reg_field_value(value,
 					 CRTC_FORCE_COUNT_NOW_CNTL,
 					 CRTC_FORCE_COUNT_NOW_OCCURRED) != 0;
 	bool vert_sync = get_reg_field_value(value1,
 					     CRTC_VERT_SYNC_CONTROL,
 					     CRTC_FORCE_VSYNC_NEXT_LINE_OCCURRED) != 0;
 
-	return (force || vert_sync);
-}
+	वापस (क्रमce || vert_sync);
+पूर्ण
 
 /*
  * dce110_timing_generator_disable_vga
  * Turn OFF VGA Mode and Timing  - DxVGA_CONTROL
  * VGA Mode and VGA Timing is used by VBIOS on CRT Monitors;
  */
-void dce110_timing_generator_disable_vga(
-	struct timing_generator *tg)
-{
-	uint32_t addr = 0;
-	uint32_t value = 0;
+व्योम dce110_timing_generator_disable_vga(
+	काष्ठा timing_generator *tg)
+अणु
+	uपूर्णांक32_t addr = 0;
+	uपूर्णांक32_t value = 0;
 
-	struct dce110_timing_generator *tg110 = DCE110TG_FROM_TG(tg);
+	काष्ठा dce110_timing_generator *tg110 = DCE110TG_FROM_TG(tg);
 
-	switch (tg110->controller_id) {
-	case CONTROLLER_ID_D0:
+	चयन (tg110->controller_id) अणु
+	हाल CONTROLLER_ID_D0:
 		addr = mmD1VGA_CONTROL;
-		break;
-	case CONTROLLER_ID_D1:
+		अवरोध;
+	हाल CONTROLLER_ID_D1:
 		addr = mmD2VGA_CONTROL;
-		break;
-	case CONTROLLER_ID_D2:
+		अवरोध;
+	हाल CONTROLLER_ID_D2:
 		addr = mmD3VGA_CONTROL;
-		break;
-	case CONTROLLER_ID_D3:
+		अवरोध;
+	हाल CONTROLLER_ID_D3:
 		addr = mmD4VGA_CONTROL;
-		break;
-	case CONTROLLER_ID_D4:
+		अवरोध;
+	हाल CONTROLLER_ID_D4:
 		addr = mmD5VGA_CONTROL;
-		break;
-	case CONTROLLER_ID_D5:
+		अवरोध;
+	हाल CONTROLLER_ID_D5:
 		addr = mmD6VGA_CONTROL;
-		break;
-	default:
-		break;
-	}
-	value = dm_read_reg(tg->ctx, addr);
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
+	value = dm_पढ़ो_reg(tg->ctx, addr);
 
 	set_reg_field_value(value, 0, D1VGA_CONTROL, D1VGA_MODE_ENABLE);
 	set_reg_field_value(value, 0, D1VGA_CONTROL, D1VGA_TIMING_SELECT);
@@ -1832,24 +1833,24 @@ void dce110_timing_generator_disable_vga(
 			value, 0, D1VGA_CONTROL, D1VGA_SYNC_POLARITY_SELECT);
 	set_reg_field_value(value, 0, D1VGA_CONTROL, D1VGA_OVERSCAN_COLOR_EN);
 
-	dm_write_reg(tg->ctx, addr, value);
-}
+	dm_ग_लिखो_reg(tg->ctx, addr, value);
+पूर्ण
 
 /*
  * set_overscan_color_black
  *
  * @param :black_color is one of the color space
  *    :this routine will set overscan black color according to the color space.
- * @return none
+ * @वापस none
  */
-void dce110_timing_generator_set_overscan_color_black(
-	struct timing_generator *tg,
-	const struct tg_color *color)
-{
-	struct dc_context *ctx = tg->ctx;
-	uint32_t addr;
-	uint32_t value = 0;
-	struct dce110_timing_generator *tg110 = DCE110TG_FROM_TG(tg);
+व्योम dce110_timing_generator_set_overscan_color_black(
+	काष्ठा timing_generator *tg,
+	स्थिर काष्ठा tg_color *color)
+अणु
+	काष्ठा dc_context *ctx = tg->ctx;
+	uपूर्णांक32_t addr;
+	uपूर्णांक32_t value = 0;
+	काष्ठा dce110_timing_generator *tg110 = DCE110TG_FROM_TG(tg);
 
 	set_reg_field_value(
 			value,
@@ -1870,32 +1871,32 @@ void dce110_timing_generator_set_overscan_color_black(
 			CRTC_OVERSCAN_COLOR_GREEN);
 
 	addr = CRTC_REG(mmCRTC_OVERSCAN_COLOR);
-	dm_write_reg(ctx, addr, value);
+	dm_ग_लिखो_reg(ctx, addr, value);
 	addr = CRTC_REG(mmCRTC_BLACK_COLOR);
-	dm_write_reg(ctx, addr, value);
-	/* This is desirable to have a constant DAC output voltage during the
-	 * blank time that is higher than the 0 volt reference level that the
-	 * DAC outputs when the NBLANK signal
-	 * is asserted low, such as for output to an analog TV. */
+	dm_ग_लिखो_reg(ctx, addr, value);
+	/* This is desirable to have a स्थिरant DAC output voltage during the
+	 * blank समय that is higher than the 0 volt reference level that the
+	 * DAC outमाला_दो when the NBLANK संकेत
+	 * is निश्चितed low, such as क्रम output to an analog TV. */
 	addr = CRTC_REG(mmCRTC_BLANK_DATA_COLOR);
-	dm_write_reg(ctx, addr, value);
+	dm_ग_लिखो_reg(ctx, addr, value);
 
-	/* TO DO we have to program EXT registers and we need to know LB DATA
-	 * format because it is used when more 10 , i.e. 12 bits per color
+	/* TO DO we have to program EXT रेजिस्टरs and we need to know LB DATA
+	 * क्रमmat because it is used when more 10 , i.e. 12 bits per color
 	 *
 	 * m_mmDxCRTC_OVERSCAN_COLOR_EXT
 	 * m_mmDxCRTC_BLACK_COLOR_EXT
 	 * m_mmDxCRTC_BLANK_DATA_COLOR_EXT
 	 */
 
-}
+पूर्ण
 
-void dce110_tg_program_blank_color(struct timing_generator *tg,
-		const struct tg_color *black_color)
-{
-	struct dce110_timing_generator *tg110 = DCE110TG_FROM_TG(tg);
-	uint32_t addr = CRTC_REG(mmCRTC_BLACK_COLOR);
-	uint32_t value = dm_read_reg(tg->ctx, addr);
+व्योम dce110_tg_program_blank_color(काष्ठा timing_generator *tg,
+		स्थिर काष्ठा tg_color *black_color)
+अणु
+	काष्ठा dce110_timing_generator *tg110 = DCE110TG_FROM_TG(tg);
+	uपूर्णांक32_t addr = CRTC_REG(mmCRTC_BLACK_COLOR);
+	uपूर्णांक32_t value = dm_पढ़ो_reg(tg->ctx, addr);
 
 	set_reg_field_value(
 		value,
@@ -1913,19 +1914,19 @@ void dce110_tg_program_blank_color(struct timing_generator *tg,
 		CRTC_BLACK_COLOR,
 		CRTC_BLACK_COLOR_R_CR);
 
-	dm_write_reg(tg->ctx, addr, value);
+	dm_ग_लिखो_reg(tg->ctx, addr, value);
 
 	addr = CRTC_REG(mmCRTC_BLANK_DATA_COLOR);
-	dm_write_reg(tg->ctx, addr, value);
-}
+	dm_ग_लिखो_reg(tg->ctx, addr, value);
+पूर्ण
 
-void dce110_tg_set_overscan_color(struct timing_generator *tg,
-	const struct tg_color *overscan_color)
-{
-	struct dc_context *ctx = tg->ctx;
-	uint32_t value = 0;
-	uint32_t addr;
-	struct dce110_timing_generator *tg110 = DCE110TG_FROM_TG(tg);
+व्योम dce110_tg_set_overscan_color(काष्ठा timing_generator *tg,
+	स्थिर काष्ठा tg_color *overscan_color)
+अणु
+	काष्ठा dc_context *ctx = tg->ctx;
+	uपूर्णांक32_t value = 0;
+	uपूर्णांक32_t addr;
+	काष्ठा dce110_timing_generator *tg110 = DCE110TG_FROM_TG(tg);
 
 	set_reg_field_value(
 		value,
@@ -1946,30 +1947,30 @@ void dce110_tg_set_overscan_color(struct timing_generator *tg,
 		CRTC_OVERSCAN_COLOR_RED);
 
 	addr = CRTC_REG(mmCRTC_OVERSCAN_COLOR);
-	dm_write_reg(ctx, addr, value);
-}
+	dm_ग_लिखो_reg(ctx, addr, value);
+पूर्ण
 
-void dce110_tg_program_timing(struct timing_generator *tg,
-	const struct dc_crtc_timing *timing,
-	int vready_offset,
-	int vstartup_start,
-	int vupdate_offset,
-	int vupdate_width,
-	const enum signal_type signal,
+व्योम dce110_tg_program_timing(काष्ठा timing_generator *tg,
+	स्थिर काष्ठा dc_crtc_timing *timing,
+	पूर्णांक vपढ़ोy_offset,
+	पूर्णांक vstartup_start,
+	पूर्णांक vupdate_offset,
+	पूर्णांक vupdate_width,
+	स्थिर क्रमागत संकेत_type संकेत,
 	bool use_vbios)
-{
-	if (use_vbios)
+अणु
+	अगर (use_vbios)
 		dce110_timing_generator_program_timing_generator(tg, timing);
-	else
+	अन्यथा
 		dce110_timing_generator_program_blanking(tg, timing);
-}
+पूर्ण
 
-bool dce110_tg_is_blanked(struct timing_generator *tg)
-{
-	struct dce110_timing_generator *tg110 = DCE110TG_FROM_TG(tg);
-	uint32_t value = dm_read_reg(tg->ctx, CRTC_REG(mmCRTC_BLANK_CONTROL));
+bool dce110_tg_is_blanked(काष्ठा timing_generator *tg)
+अणु
+	काष्ठा dce110_timing_generator *tg110 = DCE110TG_FROM_TG(tg);
+	uपूर्णांक32_t value = dm_पढ़ो_reg(tg->ctx, CRTC_REG(mmCRTC_BLANK_CONTROL));
 
-	if (get_reg_field_value(
+	अगर (get_reg_field_value(
 			value,
 			CRTC_BLANK_CONTROL,
 			CRTC_BLANK_DATA_EN) == 1 &&
@@ -1977,15 +1978,15 @@ bool dce110_tg_is_blanked(struct timing_generator *tg)
 			value,
 			CRTC_BLANK_CONTROL,
 			CRTC_CURRENT_BLANK_STATE) == 1)
-		return true;
-	return false;
-}
+		वापस true;
+	वापस false;
+पूर्ण
 
-void dce110_tg_set_blank(struct timing_generator *tg,
+व्योम dce110_tg_set_blank(काष्ठा timing_generator *tg,
 		bool enable_blanking)
-{
-	struct dce110_timing_generator *tg110 = DCE110TG_FROM_TG(tg);
-	uint32_t value = 0;
+अणु
+	काष्ठा dce110_timing_generator *tg110 = DCE110TG_FROM_TG(tg);
+	uपूर्णांक32_t value = 0;
 
 	set_reg_field_value(
 		value,
@@ -1993,65 +1994,65 @@ void dce110_tg_set_blank(struct timing_generator *tg,
 		CRTC_DOUBLE_BUFFER_CONTROL,
 		CRTC_BLANK_DATA_DOUBLE_BUFFER_EN);
 
-	dm_write_reg(tg->ctx, CRTC_REG(mmCRTC_DOUBLE_BUFFER_CONTROL), value);
+	dm_ग_लिखो_reg(tg->ctx, CRTC_REG(mmCRTC_DOUBLE_BUFFER_CONTROL), value);
 	value = 0;
 
-	if (enable_blanking) {
+	अगर (enable_blanking) अणु
 		set_reg_field_value(
 			value,
 			1,
 			CRTC_BLANK_CONTROL,
 			CRTC_BLANK_DATA_EN);
 
-		dm_write_reg(tg->ctx, CRTC_REG(mmCRTC_BLANK_CONTROL), value);
+		dm_ग_लिखो_reg(tg->ctx, CRTC_REG(mmCRTC_BLANK_CONTROL), value);
 
-	} else
-		dm_write_reg(tg->ctx, CRTC_REG(mmCRTC_BLANK_CONTROL), 0);
-}
+	पूर्ण अन्यथा
+		dm_ग_लिखो_reg(tg->ctx, CRTC_REG(mmCRTC_BLANK_CONTROL), 0);
+पूर्ण
 
-bool dce110_tg_validate_timing(struct timing_generator *tg,
-	const struct dc_crtc_timing *timing)
-{
-	return dce110_timing_generator_validate_timing(tg, timing, SIGNAL_TYPE_NONE);
-}
+bool dce110_tg_validate_timing(काष्ठा timing_generator *tg,
+	स्थिर काष्ठा dc_crtc_timing *timing)
+अणु
+	वापस dce110_timing_generator_validate_timing(tg, timing, SIGNAL_TYPE_NONE);
+पूर्ण
 
-void dce110_tg_wait_for_state(struct timing_generator *tg,
-	enum crtc_state state)
-{
-	switch (state) {
-	case CRTC_STATE_VBLANK:
-		dce110_timing_generator_wait_for_vblank(tg);
-		break;
+व्योम dce110_tg_रुको_क्रम_state(काष्ठा timing_generator *tg,
+	क्रमागत crtc_state state)
+अणु
+	चयन (state) अणु
+	हाल CRTC_STATE_VBLANK:
+		dce110_timing_generator_रुको_क्रम_vblank(tg);
+		अवरोध;
 
-	case CRTC_STATE_VACTIVE:
-		dce110_timing_generator_wait_for_vactive(tg);
-		break;
+	हाल CRTC_STATE_VACTIVE:
+		dce110_timing_generator_रुको_क्रम_vactive(tg);
+		अवरोध;
 
-	default:
-		break;
-	}
-}
+	शेष:
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-void dce110_tg_set_colors(struct timing_generator *tg,
-	const struct tg_color *blank_color,
-	const struct tg_color *overscan_color)
-{
-	if (blank_color != NULL)
+व्योम dce110_tg_set_colors(काष्ठा timing_generator *tg,
+	स्थिर काष्ठा tg_color *blank_color,
+	स्थिर काष्ठा tg_color *overscan_color)
+अणु
+	अगर (blank_color != शून्य)
 		dce110_tg_program_blank_color(tg, blank_color);
-	if (overscan_color != NULL)
+	अगर (overscan_color != शून्य)
 		dce110_tg_set_overscan_color(tg, overscan_color);
-}
+पूर्ण
 
-/* Gets first line of blank region of the display timing for CRTC
- * and programms is as a trigger to fire vertical interrupt
+/* Gets first line of blank region of the display timing क्रम CRTC
+ * and programms is as a trigger to fire vertical पूर्णांकerrupt
  */
-bool dce110_arm_vert_intr(struct timing_generator *tg, uint8_t width)
-{
-	struct dce110_timing_generator *tg110 = DCE110TG_FROM_TG(tg);
-	uint32_t v_blank_start = 0;
-	uint32_t v_blank_end = 0;
-	uint32_t val = 0;
-	uint32_t h_position, v_position;
+bool dce110_arm_vert_पूर्णांकr(काष्ठा timing_generator *tg, uपूर्णांक8_t width)
+अणु
+	काष्ठा dce110_timing_generator *tg110 = DCE110TG_FROM_TG(tg);
+	uपूर्णांक32_t v_blank_start = 0;
+	uपूर्णांक32_t v_blank_end = 0;
+	uपूर्णांक32_t val = 0;
+	uपूर्णांक32_t h_position, v_position;
 
 	tg->funcs->get_scanoutpos(
 			tg,
@@ -2060,8 +2061,8 @@ bool dce110_arm_vert_intr(struct timing_generator *tg, uint8_t width)
 			&h_position,
 			&v_position);
 
-	if (v_blank_start == 0 || v_blank_end == 0)
-		return false;
+	अगर (v_blank_start == 0 || v_blank_end == 0)
+		वापस false;
 
 	set_reg_field_value(
 		val,
@@ -2069,96 +2070,96 @@ bool dce110_arm_vert_intr(struct timing_generator *tg, uint8_t width)
 		CRTC_VERTICAL_INTERRUPT0_POSITION,
 		CRTC_VERTICAL_INTERRUPT0_LINE_START);
 
-	/* Set interval width for interrupt to fire to 1 scanline */
+	/* Set पूर्णांकerval width क्रम पूर्णांकerrupt to fire to 1 scanline */
 	set_reg_field_value(
 		val,
 		v_blank_start + width,
 		CRTC_VERTICAL_INTERRUPT0_POSITION,
 		CRTC_VERTICAL_INTERRUPT0_LINE_END);
 
-	dm_write_reg(tg->ctx, CRTC_REG(mmCRTC_VERTICAL_INTERRUPT0_POSITION), val);
+	dm_ग_लिखो_reg(tg->ctx, CRTC_REG(mmCRTC_VERTICAL_INTERRUPT0_POSITION), val);
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static bool dce110_is_tg_enabled(struct timing_generator *tg)
-{
-	uint32_t addr = 0;
-	uint32_t value = 0;
-	uint32_t field = 0;
-	struct dce110_timing_generator *tg110 = DCE110TG_FROM_TG(tg);
+अटल bool dce110_is_tg_enabled(काष्ठा timing_generator *tg)
+अणु
+	uपूर्णांक32_t addr = 0;
+	uपूर्णांक32_t value = 0;
+	uपूर्णांक32_t field = 0;
+	काष्ठा dce110_timing_generator *tg110 = DCE110TG_FROM_TG(tg);
 
 	addr = CRTC_REG(mmCRTC_CONTROL);
-	value = dm_read_reg(tg->ctx, addr);
+	value = dm_पढ़ो_reg(tg->ctx, addr);
 	field = get_reg_field_value(value, CRTC_CONTROL,
 				    CRTC_CURRENT_MASTER_EN_STATE);
-	return field == 1;
-}
+	वापस field == 1;
+पूर्ण
 
-bool dce110_configure_crc(struct timing_generator *tg,
-			  const struct crc_params *params)
-{
-	uint32_t cntl_addr = 0;
-	uint32_t addr = 0;
-	uint32_t value;
-	struct dce110_timing_generator *tg110 = DCE110TG_FROM_TG(tg);
+bool dce110_configure_crc(काष्ठा timing_generator *tg,
+			  स्थिर काष्ठा crc_params *params)
+अणु
+	uपूर्णांक32_t cntl_addr = 0;
+	uपूर्णांक32_t addr = 0;
+	uपूर्णांक32_t value;
+	काष्ठा dce110_timing_generator *tg110 = DCE110TG_FROM_TG(tg);
 
 	/* Cannot configure crc on a CRTC that is disabled */
-	if (!dce110_is_tg_enabled(tg))
-		return false;
+	अगर (!dce110_is_tg_enabled(tg))
+		वापस false;
 
 	cntl_addr = CRTC_REG(mmCRTC_CRC_CNTL);
 
-	/* First, disable CRC before we configure it. */
-	dm_write_reg(tg->ctx, cntl_addr, 0);
+	/* First, disable CRC beक्रमe we configure it. */
+	dm_ग_लिखो_reg(tg->ctx, cntl_addr, 0);
 
-	if (!params->enable)
-		return true;
+	अगर (!params->enable)
+		वापस true;
 
 	/* Program frame boundaries */
-	/* Window A x axis start and end. */
+	/* Winकरोw A x axis start and end. */
 	value = 0;
 	addr = CRTC_REG(mmCRTC_CRC0_WINDOWA_X_CONTROL);
-	set_reg_field_value(value, params->windowa_x_start,
+	set_reg_field_value(value, params->winकरोwa_x_start,
 			    CRTC_CRC0_WINDOWA_X_CONTROL,
 			    CRTC_CRC0_WINDOWA_X_START);
-	set_reg_field_value(value, params->windowa_x_end,
+	set_reg_field_value(value, params->winकरोwa_x_end,
 			    CRTC_CRC0_WINDOWA_X_CONTROL,
 			    CRTC_CRC0_WINDOWA_X_END);
-	dm_write_reg(tg->ctx, addr, value);
+	dm_ग_लिखो_reg(tg->ctx, addr, value);
 
-	/* Window A y axis start and end. */
+	/* Winकरोw A y axis start and end. */
 	value = 0;
 	addr = CRTC_REG(mmCRTC_CRC0_WINDOWA_Y_CONTROL);
-	set_reg_field_value(value, params->windowa_y_start,
+	set_reg_field_value(value, params->winकरोwa_y_start,
 			    CRTC_CRC0_WINDOWA_Y_CONTROL,
 			    CRTC_CRC0_WINDOWA_Y_START);
-	set_reg_field_value(value, params->windowa_y_end,
+	set_reg_field_value(value, params->winकरोwa_y_end,
 			    CRTC_CRC0_WINDOWA_Y_CONTROL,
 			    CRTC_CRC0_WINDOWA_Y_END);
-	dm_write_reg(tg->ctx, addr, value);
+	dm_ग_लिखो_reg(tg->ctx, addr, value);
 
-	/* Window B x axis start and end. */
+	/* Winकरोw B x axis start and end. */
 	value = 0;
 	addr = CRTC_REG(mmCRTC_CRC0_WINDOWB_X_CONTROL);
-	set_reg_field_value(value, params->windowb_x_start,
+	set_reg_field_value(value, params->winकरोwb_x_start,
 			    CRTC_CRC0_WINDOWB_X_CONTROL,
 			    CRTC_CRC0_WINDOWB_X_START);
-	set_reg_field_value(value, params->windowb_x_end,
+	set_reg_field_value(value, params->winकरोwb_x_end,
 			    CRTC_CRC0_WINDOWB_X_CONTROL,
 			    CRTC_CRC0_WINDOWB_X_END);
-	dm_write_reg(tg->ctx, addr, value);
+	dm_ग_लिखो_reg(tg->ctx, addr, value);
 
-	/* Window B y axis start and end. */
+	/* Winकरोw B y axis start and end. */
 	value = 0;
 	addr = CRTC_REG(mmCRTC_CRC0_WINDOWB_Y_CONTROL);
-	set_reg_field_value(value, params->windowb_y_start,
+	set_reg_field_value(value, params->winकरोwb_y_start,
 			    CRTC_CRC0_WINDOWB_Y_CONTROL,
 			    CRTC_CRC0_WINDOWB_Y_START);
-	set_reg_field_value(value, params->windowb_y_end,
+	set_reg_field_value(value, params->winकरोwb_y_end,
 			    CRTC_CRC0_WINDOWB_Y_CONTROL,
 			    CRTC_CRC0_WINDOWB_Y_END);
-	dm_write_reg(tg->ctx, addr, value);
+	dm_ग_लिखो_reg(tg->ctx, addr, value);
 
 	/* Set crc mode and selection, and enable. Only using CRC0*/
 	value = 0;
@@ -2167,40 +2168,40 @@ bool dce110_configure_crc(struct timing_generator *tg,
 	set_reg_field_value(value, params->selection,
 			    CRTC_CRC_CNTL, CRTC_CRC0_SELECT);
 	set_reg_field_value(value, 1, CRTC_CRC_CNTL, CRTC_CRC_EN);
-	dm_write_reg(tg->ctx, cntl_addr, value);
+	dm_ग_लिखो_reg(tg->ctx, cntl_addr, value);
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-bool dce110_get_crc(struct timing_generator *tg,
-		    uint32_t *r_cr, uint32_t *g_y, uint32_t *b_cb)
-{
-	uint32_t addr = 0;
-	uint32_t value = 0;
-	uint32_t field = 0;
-	struct dce110_timing_generator *tg110 = DCE110TG_FROM_TG(tg);
+bool dce110_get_crc(काष्ठा timing_generator *tg,
+		    uपूर्णांक32_t *r_cr, uपूर्णांक32_t *g_y, uपूर्णांक32_t *b_cb)
+अणु
+	uपूर्णांक32_t addr = 0;
+	uपूर्णांक32_t value = 0;
+	uपूर्णांक32_t field = 0;
+	काष्ठा dce110_timing_generator *tg110 = DCE110TG_FROM_TG(tg);
 
 	addr = CRTC_REG(mmCRTC_CRC_CNTL);
-	value = dm_read_reg(tg->ctx, addr);
+	value = dm_पढ़ो_reg(tg->ctx, addr);
 	field = get_reg_field_value(value, CRTC_CRC_CNTL, CRTC_CRC_EN);
 
-	/* Early return if CRC is not enabled for this CRTC */
-	if (!field)
-		return false;
+	/* Early वापस अगर CRC is not enabled क्रम this CRTC */
+	अगर (!field)
+		वापस false;
 
 	addr = CRTC_REG(mmCRTC_CRC0_DATA_RG);
-	value = dm_read_reg(tg->ctx, addr);
+	value = dm_पढ़ो_reg(tg->ctx, addr);
 	*r_cr = get_reg_field_value(value, CRTC_CRC0_DATA_RG, CRC0_R_CR);
 	*g_y = get_reg_field_value(value, CRTC_CRC0_DATA_RG, CRC0_G_Y);
 
 	addr = CRTC_REG(mmCRTC_CRC0_DATA_B);
-	value = dm_read_reg(tg->ctx, addr);
+	value = dm_पढ़ो_reg(tg->ctx, addr);
 	*b_cb = get_reg_field_value(value, CRTC_CRC0_DATA_B, CRC0_B_CB);
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static const struct timing_generator_funcs dce110_tg_funcs = {
+अटल स्थिर काष्ठा timing_generator_funcs dce110_tg_funcs = अणु
 		.validate_timing = dce110_tg_validate_timing,
 		.program_timing = dce110_tg_program_timing,
 		.enable_crtc = dce110_timing_generator_enable_crtc,
@@ -2210,7 +2211,7 @@ static const struct timing_generator_funcs dce110_tg_funcs = {
 		.get_frame_count = dce110_timing_generator_get_vblank_counter,
 		.get_scanoutpos = dce110_timing_generator_get_crtc_scanoutpos,
 		.set_early_control = dce110_timing_generator_set_early_control,
-		.wait_for_state = dce110_tg_wait_for_state,
+		.रुको_क्रम_state = dce110_tg_रुको_क्रम_state,
 		.set_blank = dce110_tg_set_blank,
 		.is_blanked = dce110_tg_is_blanked,
 		.set_colors = dce110_tg_set_colors,
@@ -2225,27 +2226,27 @@ static const struct timing_generator_funcs dce110_tg_funcs = {
 		.enable_reset_trigger = dce110_timing_generator_enable_reset_trigger,
 		.enable_crtc_reset = dce110_timing_generator_enable_crtc_reset,
 		.disable_reset_trigger = dce110_timing_generator_disable_reset_trigger,
-		.tear_down_global_swap_lock =
-				dce110_timing_generator_tear_down_global_swap_lock,
+		.tear_करोwn_global_swap_lock =
+				dce110_timing_generator_tear_करोwn_global_swap_lock,
 		.enable_advanced_request =
 				dce110_timing_generator_enable_advanced_request,
 		.set_drr =
 				dce110_timing_generator_set_drr,
-		.set_static_screen_control =
-			dce110_timing_generator_set_static_screen_control,
+		.set_अटल_screen_control =
+			dce110_timing_generator_set_अटल_screen_control,
 		.set_test_pattern = dce110_timing_generator_set_test_pattern,
-		.arm_vert_intr = dce110_arm_vert_intr,
+		.arm_vert_पूर्णांकr = dce110_arm_vert_पूर्णांकr,
 		.is_tg_enabled = dce110_is_tg_enabled,
 		.configure_crc = dce110_configure_crc,
 		.get_crc = dce110_get_crc,
-};
+पूर्ण;
 
-void dce110_timing_generator_construct(
-	struct dce110_timing_generator *tg110,
-	struct dc_context *ctx,
-	uint32_t instance,
-	const struct dce110_timing_generator_offsets *offsets)
-{
+व्योम dce110_timing_generator_स्थिरruct(
+	काष्ठा dce110_timing_generator *tg110,
+	काष्ठा dc_context *ctx,
+	uपूर्णांक32_t instance,
+	स्थिर काष्ठा dce110_timing_generator_offsets *offsets)
+अणु
 	tg110->controller_id = CONTROLLER_ID_D0 + instance;
 	tg110->base.inst = instance;
 
@@ -2262,4 +2263,4 @@ void dce110_timing_generator_construct(
 	tg110->min_h_blank = 56;
 	tg110->min_h_front_porch = 4;
 	tg110->min_h_back_porch = 4;
-}
+पूर्ण

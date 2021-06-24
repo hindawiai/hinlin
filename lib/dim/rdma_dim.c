@@ -1,108 +1,109 @@
-// SPDX-License-Identifier: GPL-2.0 OR Linux-OpenIB
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0 OR Linux-OpenIB
 /*
  * Copyright (c) 2019, Mellanox Technologies inc.  All rights reserved.
  */
 
-#include <linux/dim.h>
+#समावेश <linux/dim.h>
 
-static int rdma_dim_step(struct dim *dim)
-{
-	if (dim->tune_state == DIM_GOING_RIGHT) {
-		if (dim->profile_ix == (RDMA_DIM_PARAMS_NUM_PROFILES - 1))
-			return DIM_ON_EDGE;
+अटल पूर्णांक rdma_dim_step(काष्ठा dim *dim)
+अणु
+	अगर (dim->tune_state == DIM_GOING_RIGHT) अणु
+		अगर (dim->profile_ix == (RDMA_DIM_PARAMS_NUM_PROखाताS - 1))
+			वापस DIM_ON_EDGE;
 		dim->profile_ix++;
 		dim->steps_right++;
-	}
-	if (dim->tune_state == DIM_GOING_LEFT) {
-		if (dim->profile_ix == 0)
-			return DIM_ON_EDGE;
+	पूर्ण
+	अगर (dim->tune_state == DIM_GOING_LEFT) अणु
+		अगर (dim->profile_ix == 0)
+			वापस DIM_ON_EDGE;
 		dim->profile_ix--;
 		dim->steps_left++;
-	}
+	पूर्ण
 
-	return DIM_STEPPED;
-}
+	वापस DIM_STEPPED;
+पूर्ण
 
-static int rdma_dim_stats_compare(struct dim_stats *curr,
-				  struct dim_stats *prev)
-{
+अटल पूर्णांक rdma_dim_stats_compare(काष्ठा dim_stats *curr,
+				  काष्ठा dim_stats *prev)
+अणु
 	/* first stat */
-	if (!prev->cpms)
-		return DIM_STATS_SAME;
+	अगर (!prev->cpms)
+		वापस DIM_STATS_SAME;
 
-	if (IS_SIGNIFICANT_DIFF(curr->cpms, prev->cpms))
-		return (curr->cpms > prev->cpms) ? DIM_STATS_BETTER :
+	अगर (IS_SIGNIFICANT_DIFF(curr->cpms, prev->cpms))
+		वापस (curr->cpms > prev->cpms) ? DIM_STATS_BETTER :
 						DIM_STATS_WORSE;
 
-	if (IS_SIGNIFICANT_DIFF(curr->cpe_ratio, prev->cpe_ratio))
-		return (curr->cpe_ratio > prev->cpe_ratio) ? DIM_STATS_BETTER :
+	अगर (IS_SIGNIFICANT_DIFF(curr->cpe_ratio, prev->cpe_ratio))
+		वापस (curr->cpe_ratio > prev->cpe_ratio) ? DIM_STATS_BETTER :
 						DIM_STATS_WORSE;
 
-	return DIM_STATS_SAME;
-}
+	वापस DIM_STATS_SAME;
+पूर्ण
 
-static bool rdma_dim_decision(struct dim_stats *curr_stats, struct dim *dim)
-{
-	int prev_ix = dim->profile_ix;
+अटल bool rdma_dim_decision(काष्ठा dim_stats *curr_stats, काष्ठा dim *dim)
+अणु
+	पूर्णांक prev_ix = dim->profile_ix;
 	u8 state = dim->tune_state;
-	int stats_res;
-	int step_res;
+	पूर्णांक stats_res;
+	पूर्णांक step_res;
 
-	if (state != DIM_PARKING_ON_TOP && state != DIM_PARKING_TIRED) {
+	अगर (state != DIM_PARKING_ON_TOP && state != DIM_PARKING_TIRED) अणु
 		stats_res = rdma_dim_stats_compare(curr_stats,
 						   &dim->prev_stats);
 
-		switch (stats_res) {
-		case DIM_STATS_SAME:
-			if (curr_stats->cpe_ratio <= 50 * prev_ix)
+		चयन (stats_res) अणु
+		हाल DIM_STATS_SAME:
+			अगर (curr_stats->cpe_ratio <= 50 * prev_ix)
 				dim->profile_ix = 0;
-			break;
-		case DIM_STATS_WORSE:
+			अवरोध;
+		हाल DIM_STATS_WORSE:
 			dim_turn(dim);
 			fallthrough;
-		case DIM_STATS_BETTER:
+		हाल DIM_STATS_BETTER:
 			step_res = rdma_dim_step(dim);
-			if (step_res == DIM_ON_EDGE)
+			अगर (step_res == DIM_ON_EDGE)
 				dim_turn(dim);
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
 	dim->prev_stats = *curr_stats;
 
-	return dim->profile_ix != prev_ix;
-}
+	वापस dim->profile_ix != prev_ix;
+पूर्ण
 
-void rdma_dim(struct dim *dim, u64 completions)
-{
-	struct dim_sample *curr_sample = &dim->measuring_sample;
-	struct dim_stats curr_stats;
+व्योम rdma_dim(काष्ठा dim *dim, u64 completions)
+अणु
+	काष्ठा dim_sample *curr_sample = &dim->measuring_sample;
+	काष्ठा dim_stats curr_stats;
 	u32 nevents;
 
 	dim_update_sample_with_comps(curr_sample->event_ctr + 1, 0, 0,
 				     curr_sample->comp_ctr + completions,
 				     &dim->measuring_sample);
 
-	switch (dim->state) {
-	case DIM_MEASURE_IN_PROGRESS:
+	चयन (dim->state) अणु
+	हाल DIM_MEASURE_IN_PROGRESS:
 		nevents = curr_sample->event_ctr - dim->start_sample.event_ctr;
-		if (nevents < DIM_NEVENTS)
-			break;
+		अगर (nevents < DIM_NEVENTS)
+			अवरोध;
 		dim_calc_stats(&dim->start_sample, curr_sample, &curr_stats);
-		if (rdma_dim_decision(&curr_stats, dim)) {
-			dim->state = DIM_APPLY_NEW_PROFILE;
+		अगर (rdma_dim_decision(&curr_stats, dim)) अणु
+			dim->state = DIM_APPLY_NEW_PROखाता;
 			schedule_work(&dim->work);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		fallthrough;
-	case DIM_START_MEASURE:
+	हाल DIM_START_MEASURE:
 		dim->state = DIM_MEASURE_IN_PROGRESS;
 		dim_update_sample_with_comps(curr_sample->event_ctr, 0, 0,
 					     curr_sample->comp_ctr,
 					     &dim->start_sample);
-		break;
-	case DIM_APPLY_NEW_PROFILE:
-		break;
-	}
-}
+		अवरोध;
+	हाल DIM_APPLY_NEW_PROखाता:
+		अवरोध;
+	पूर्ण
+पूर्ण
 EXPORT_SYMBOL(rdma_dim);

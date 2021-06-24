@@ -1,86 +1,87 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * Helpers for IOMMU drivers implementing SVA
+ * Helpers क्रम IOMMU drivers implementing SVA
  */
-#include <linux/mutex.h>
-#include <linux/sched/mm.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/sched/mm.h>
 
-#include "iommu-sva-lib.h"
+#समावेश "iommu-sva-lib.h"
 
-static DEFINE_MUTEX(iommu_sva_lock);
-static DECLARE_IOASID_SET(iommu_sva_pasid);
+अटल DEFINE_MUTEX(iommu_sva_lock);
+अटल DECLARE_IOASID_SET(iommu_sva_pasid);
 
 /**
- * iommu_sva_alloc_pasid - Allocate a PASID for the mm
+ * iommu_sva_alloc_pasid - Allocate a PASID क्रम the mm
  * @mm: the mm
  * @min: minimum PASID value (inclusive)
  * @max: maximum PASID value (inclusive)
  *
- * Try to allocate a PASID for this mm, or take a reference to the existing one
+ * Try to allocate a PASID क्रम this mm, or take a reference to the existing one
  * provided it fits within the [@min, @max] range. On success the PASID is
- * available in mm->pasid, and must be released with iommu_sva_free_pasid().
+ * available in mm->pasid, and must be released with iommu_sva_मुक्त_pasid().
  * @min must be greater than 0, because 0 indicates an unused mm->pasid.
  *
  * Returns 0 on success and < 0 on error.
  */
-int iommu_sva_alloc_pasid(struct mm_struct *mm, ioasid_t min, ioasid_t max)
-{
-	int ret = 0;
+पूर्णांक iommu_sva_alloc_pasid(काष्ठा mm_काष्ठा *mm, ioasid_t min, ioasid_t max)
+अणु
+	पूर्णांक ret = 0;
 	ioasid_t pasid;
 
-	if (min == INVALID_IOASID || max == INVALID_IOASID ||
+	अगर (min == INVALID_IOASID || max == INVALID_IOASID ||
 	    min == 0 || max < min)
-		return -EINVAL;
+		वापस -EINVAL;
 
 	mutex_lock(&iommu_sva_lock);
-	if (mm->pasid) {
-		if (mm->pasid >= min && mm->pasid <= max)
+	अगर (mm->pasid) अणु
+		अगर (mm->pasid >= min && mm->pasid <= max)
 			ioasid_get(mm->pasid);
-		else
+		अन्यथा
 			ret = -EOVERFLOW;
-	} else {
+	पूर्ण अन्यथा अणु
 		pasid = ioasid_alloc(&iommu_sva_pasid, min, max, mm);
-		if (pasid == INVALID_IOASID)
+		अगर (pasid == INVALID_IOASID)
 			ret = -ENOMEM;
-		else
+		अन्यथा
 			mm->pasid = pasid;
-	}
+	पूर्ण
 	mutex_unlock(&iommu_sva_lock);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(iommu_sva_alloc_pasid);
 
 /**
- * iommu_sva_free_pasid - Release the mm's PASID
+ * iommu_sva_मुक्त_pasid - Release the mm's PASID
  * @mm: the mm
  *
  * Drop one reference to a PASID allocated with iommu_sva_alloc_pasid()
  */
-void iommu_sva_free_pasid(struct mm_struct *mm)
-{
+व्योम iommu_sva_मुक्त_pasid(काष्ठा mm_काष्ठा *mm)
+अणु
 	mutex_lock(&iommu_sva_lock);
-	if (ioasid_put(mm->pasid))
+	अगर (ioasid_put(mm->pasid))
 		mm->pasid = 0;
 	mutex_unlock(&iommu_sva_lock);
-}
-EXPORT_SYMBOL_GPL(iommu_sva_free_pasid);
+पूर्ण
+EXPORT_SYMBOL_GPL(iommu_sva_मुक्त_pasid);
 
-/* ioasid_find getter() requires a void * argument */
-static bool __mmget_not_zero(void *mm)
-{
-	return mmget_not_zero(mm);
-}
+/* ioasid_find getter() requires a व्योम * argument */
+अटल bool __mmget_not_zero(व्योम *mm)
+अणु
+	वापस mmget_not_zero(mm);
+पूर्ण
 
 /**
  * iommu_sva_find() - Find mm associated to the given PASID
- * @pasid: Process Address Space ID assigned to the mm
+ * @pasid: Process Address Space ID asचिन्हित to the mm
  *
  * On success a reference to the mm is taken, and must be released with mmput().
  *
- * Returns the mm corresponding to this PASID, or an error if not found.
+ * Returns the mm corresponding to this PASID, or an error अगर not found.
  */
-struct mm_struct *iommu_sva_find(ioasid_t pasid)
-{
-	return ioasid_find(&iommu_sva_pasid, pasid, __mmget_not_zero);
-}
+काष्ठा mm_काष्ठा *iommu_sva_find(ioasid_t pasid)
+अणु
+	वापस ioasid_find(&iommu_sva_pasid, pasid, __mmget_not_zero);
+पूर्ण
 EXPORT_SYMBOL_GPL(iommu_sva_find);

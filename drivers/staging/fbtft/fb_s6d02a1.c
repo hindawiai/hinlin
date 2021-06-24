@@ -1,21 +1,22 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
- * FB driver for the S6D02A1 LCD Controller
+ * FB driver क्रम the S6D02A1 LCD Controller
  *
  * Based on fb_st7735r.c by Noralf Tronnes
  * Init code from UTFT library by Henning Karlsen
  */
 
-#include <linux/module.h>
-#include <linux/kernel.h>
-#include <linux/init.h>
-#include <video/mipi_display.h>
+#समावेश <linux/module.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/init.h>
+#समावेश <video/mipi_display.h>
 
-#include "fbtft.h"
+#समावेश "fbtft.h"
 
-#define DRVNAME "fb_s6d02a1"
+#घोषणा DRVNAME "fb_s6d02a1"
 
-static const s16 default_init_sequence[] = {
+अटल स्थिर s16 शेष_init_sequence[] = अणु
 	-1, 0xf0, 0x5a, 0x5a,
 
 	-1, 0xfc, 0x5a, 0x5a,
@@ -26,7 +27,7 @@ static const s16 default_init_sequence[] = {
 	-1, 0xfb, 0x21, 0x00, 0x02, 0x04, 0x07, 0x0a, 0x0b,
 	0x0c, 0x0c, 0x16, 0x1e, 0x30, 0x3f, 0x01, 0x02,
 
-	/* power setting sequence */
+	/* घातer setting sequence */
 	-1, 0xfd, 0x00, 0x00, 0x00, 0x17, 0x10, 0x00, 0x01,
 	0x01, 0x00, 0x1f, 0x1f,
 
@@ -95,64 +96,64 @@ static const s16 default_init_sequence[] = {
 	/* end marker */
 	-3
 
-};
+पूर्ण;
 
-static void set_addr_win(struct fbtft_par *par, int xs, int ys, int xe, int ye)
-{
-	write_reg(par, MIPI_DCS_SET_COLUMN_ADDRESS,
+अटल व्योम set_addr_win(काष्ठा fbtft_par *par, पूर्णांक xs, पूर्णांक ys, पूर्णांक xe, पूर्णांक ye)
+अणु
+	ग_लिखो_reg(par, MIPI_DCS_SET_COLUMN_ADDRESS,
 		  xs >> 8, xs & 0xFF, xe >> 8, xe & 0xFF);
 
-	write_reg(par, MIPI_DCS_SET_PAGE_ADDRESS,
+	ग_लिखो_reg(par, MIPI_DCS_SET_PAGE_ADDRESS,
 		  ys >> 8, ys & 0xFF, ye >> 8, ye & 0xFF);
 
-	write_reg(par, MIPI_DCS_WRITE_MEMORY_START);
-}
+	ग_लिखो_reg(par, MIPI_DCS_WRITE_MEMORY_START);
+पूर्ण
 
-#define MY BIT(7)
-#define MX BIT(6)
-#define MV BIT(5)
-static int set_var(struct fbtft_par *par)
-{
+#घोषणा MY BIT(7)
+#घोषणा MX BIT(6)
+#घोषणा MV BIT(5)
+अटल पूर्णांक set_var(काष्ठा fbtft_par *par)
+अणु
 	/*
 	 * Memory data access control (0x36h)
 	 * RGB/BGR:
 	 *	1. Mode selection pin SRGB
-	 *		RGB H/W pin for color filter setting: 0=RGB, 1=BGR
+	 *		RGB H/W pin क्रम color filter setting: 0=RGB, 1=BGR
 	 *	2. MADCTL RGB bit
 	 *		RGB-BGR ORDER color filter panel: 0=RGB, 1=BGR
 	 */
-	switch (par->info->var.rotate) {
-	case 0:
-		write_reg(par, MIPI_DCS_SET_ADDRESS_MODE,
+	चयन (par->info->var.rotate) अणु
+	हाल 0:
+		ग_लिखो_reg(par, MIPI_DCS_SET_ADDRESS_MODE,
 			  MX | MY | (par->bgr << 3));
-		break;
-	case 270:
-		write_reg(par, MIPI_DCS_SET_ADDRESS_MODE,
+		अवरोध;
+	हाल 270:
+		ग_लिखो_reg(par, MIPI_DCS_SET_ADDRESS_MODE,
 			  MY | MV | (par->bgr << 3));
-		break;
-	case 180:
-		write_reg(par, MIPI_DCS_SET_ADDRESS_MODE,
+		अवरोध;
+	हाल 180:
+		ग_लिखो_reg(par, MIPI_DCS_SET_ADDRESS_MODE,
 			  par->bgr << 3);
-		break;
-	case 90:
-		write_reg(par, MIPI_DCS_SET_ADDRESS_MODE,
+		अवरोध;
+	हाल 90:
+		ग_लिखो_reg(par, MIPI_DCS_SET_ADDRESS_MODE,
 			  MX | MV | (par->bgr << 3));
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct fbtft_display display = {
+अटल काष्ठा fbtft_display display = अणु
 	.regwidth = 8,
 	.width = 128,
 	.height = 160,
-	.init_sequence = default_init_sequence,
-	.fbtftops = {
+	.init_sequence = शेष_init_sequence,
+	.fbtftops = अणु
 		.set_addr_win = set_addr_win,
 		.set_var = set_var,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
 FBTFT_REGISTER_DRIVER(DRVNAME, "samsung,s6d02a1", &display);
 

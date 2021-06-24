@@ -1,185 +1,186 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- *	IT8712F "Smart Guardian" Watchdog support
+ *	IT8712F "Smart Guardian" Watchकरोg support
  *
  *	Copyright (c) 2006-2007 Jorge Boncompte - DTI2 <jorge@dti2.net>
  *
  *	Based on info and code taken from:
  *
- *	drivers/char/watchdog/scx200_wdt.c
+ *	drivers/अक्षर/watchकरोg/scx200_wdt.c
  *	drivers/hwmon/it87.c
- *	IT8712F EC-LPC I/O Preliminary Specification 0.8.2
- *	IT8712F EC-LPC I/O Preliminary Specification 0.9.3
+ *	IT8712F EC-LPC I/O Preliminary Specअगरication 0.8.2
+ *	IT8712F EC-LPC I/O Preliminary Specअगरication 0.9.3
  *
- *	The author(s) of this software shall not be held liable for damages
+ *	The author(s) of this software shall not be held liable क्रम damages
  *	of any nature resulting due to the use of this software. This
  *	software is provided AS-IS with no warranties.
  */
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include <linux/module.h>
-#include <linux/moduleparam.h>
-#include <linux/init.h>
-#include <linux/miscdevice.h>
-#include <linux/watchdog.h>
-#include <linux/notifier.h>
-#include <linux/reboot.h>
-#include <linux/fs.h>
-#include <linux/spinlock.h>
-#include <linux/uaccess.h>
-#include <linux/io.h>
-#include <linux/ioport.h>
+#समावेश <linux/module.h>
+#समावेश <linux/moduleparam.h>
+#समावेश <linux/init.h>
+#समावेश <linux/miscdevice.h>
+#समावेश <linux/watchकरोg.h>
+#समावेश <linux/notअगरier.h>
+#समावेश <linux/reboot.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/uaccess.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/ioport.h>
 
-#define NAME "it8712f_wdt"
+#घोषणा NAME "it8712f_wdt"
 
 MODULE_AUTHOR("Jorge Boncompte - DTI2 <jorge@dti2.net>");
 MODULE_DESCRIPTION("IT8712F Watchdog Driver");
 MODULE_LICENSE("GPL");
 
-static int max_units = 255;
-static int margin = 60;		/* in seconds */
-module_param(margin, int, 0);
+अटल पूर्णांक max_units = 255;
+अटल पूर्णांक margin = 60;		/* in seconds */
+module_param(margin, पूर्णांक, 0);
 MODULE_PARM_DESC(margin, "Watchdog margin in seconds");
 
-static bool nowayout = WATCHDOG_NOWAYOUT;
+अटल bool nowayout = WATCHDOG_NOWAYOUT;
 module_param(nowayout, bool, 0);
 MODULE_PARM_DESC(nowayout, "Disable watchdog shutdown on close");
 
-static unsigned long wdt_open;
-static unsigned expect_close;
-static unsigned char revision;
+अटल अचिन्हित दीर्घ wdt_खोलो;
+अटल अचिन्हित expect_बंद;
+अटल अचिन्हित अक्षर revision;
 
 /* Dog Food address - We use the game port address */
-static unsigned short address;
+अटल अचिन्हित लघु address;
 
-#define	REG		0x2e	/* The register to read/write */
-#define	VAL		0x2f	/* The value to read/write */
+#घोषणा	REG		0x2e	/* The रेजिस्टर to पढ़ो/ग_लिखो */
+#घोषणा	VAL		0x2f	/* The value to पढ़ो/ग_लिखो */
 
-#define	LDN		0x07	/* Register: Logical device select */
-#define	DEVID		0x20	/* Register: Device ID */
-#define	DEVREV		0x22	/* Register: Device Revision */
-#define ACT_REG		0x30	/* LDN Register: Activation */
-#define BASE_REG	0x60	/* LDN Register: Base address */
+#घोषणा	LDN		0x07	/* Register: Logical device select */
+#घोषणा	DEVID		0x20	/* Register: Device ID */
+#घोषणा	DEVREV		0x22	/* Register: Device Revision */
+#घोषणा ACT_REG		0x30	/* LDN Register: Activation */
+#घोषणा BASE_REG	0x60	/* LDN Register: Base address */
 
-#define IT8712F_DEVID	0x8712
+#घोषणा IT8712F_DEVID	0x8712
 
-#define LDN_GPIO	0x07	/* GPIO and Watch Dog Timer */
-#define LDN_GAME	0x09	/* Game Port */
+#घोषणा LDN_GPIO	0x07	/* GPIO and Watch Dog Timer */
+#घोषणा LDN_GAME	0x09	/* Game Port */
 
-#define WDT_CONTROL	0x71	/* WDT Register: Control */
-#define WDT_CONFIG	0x72	/* WDT Register: Configuration */
-#define WDT_TIMEOUT	0x73	/* WDT Register: Timeout Value */
+#घोषणा WDT_CONTROL	0x71	/* WDT Register: Control */
+#घोषणा WDT_CONFIG	0x72	/* WDT Register: Configuration */
+#घोषणा WDT_TIMEOUT	0x73	/* WDT Register: Timeout Value */
 
-#define WDT_RESET_GAME	0x10	/* Reset timer on read or write to game port */
-#define WDT_RESET_KBD	0x20	/* Reset timer on keyboard interrupt */
-#define WDT_RESET_MOUSE	0x40	/* Reset timer on mouse interrupt */
-#define WDT_RESET_CIR	0x80	/* Reset timer on consumer IR interrupt */
+#घोषणा WDT_RESET_GAME	0x10	/* Reset समयr on पढ़ो or ग_लिखो to game port */
+#घोषणा WDT_RESET_KBD	0x20	/* Reset समयr on keyboard पूर्णांकerrupt */
+#घोषणा WDT_RESET_MOUSE	0x40	/* Reset समयr on mouse पूर्णांकerrupt */
+#घोषणा WDT_RESET_CIR	0x80	/* Reset समयr on consumer IR पूर्णांकerrupt */
 
-#define WDT_UNIT_SEC	0x80	/* If 0 in MINUTES */
+#घोषणा WDT_UNIT_SEC	0x80	/* If 0 in MINUTES */
 
-#define WDT_OUT_PWROK	0x10	/* Pulse PWROK on timeout */
-#define WDT_OUT_KRST	0x40	/* Pulse reset on timeout */
+#घोषणा WDT_OUT_PWROK	0x10	/* Pulse PWROK on समयout */
+#घोषणा WDT_OUT_KRST	0x40	/* Pulse reset on समयout */
 
-static int wdt_control_reg = WDT_RESET_GAME;
-module_param(wdt_control_reg, int, 0);
+अटल पूर्णांक wdt_control_reg = WDT_RESET_GAME;
+module_param(wdt_control_reg, पूर्णांक, 0);
 MODULE_PARM_DESC(wdt_control_reg, "Value to write to watchdog control "
 		"register. The default WDT_RESET_GAME resets the timer on "
 		"game port reads that this driver generates. You can also "
 		"use KBD, MOUSE or CIR if you have some external way to "
 		"generate those interrupts.");
 
-static int superio_inb(int reg)
-{
+अटल पूर्णांक superio_inb(पूर्णांक reg)
+अणु
 	outb(reg, REG);
-	return inb(VAL);
-}
+	वापस inb(VAL);
+पूर्ण
 
-static void superio_outb(int val, int reg)
-{
+अटल व्योम superio_outb(पूर्णांक val, पूर्णांक reg)
+अणु
 	outb(reg, REG);
 	outb(val, VAL);
-}
+पूर्ण
 
-static int superio_inw(int reg)
-{
-	int val;
+अटल पूर्णांक superio_inw(पूर्णांक reg)
+अणु
+	पूर्णांक val;
 	outb(reg++, REG);
 	val = inb(VAL) << 8;
 	outb(reg, REG);
 	val |= inb(VAL);
-	return val;
-}
+	वापस val;
+पूर्ण
 
-static inline void superio_select(int ldn)
-{
+अटल अंतरभूत व्योम superio_select(पूर्णांक ldn)
+अणु
 	outb(LDN, REG);
 	outb(ldn, VAL);
-}
+पूर्ण
 
-static inline int superio_enter(void)
-{
+अटल अंतरभूत पूर्णांक superio_enter(व्योम)
+अणु
 	/*
-	 * Try to reserve REG and REG + 1 for exclusive access.
+	 * Try to reserve REG and REG + 1 क्रम exclusive access.
 	 */
-	if (!request_muxed_region(REG, 2, NAME))
-		return -EBUSY;
+	अगर (!request_muxed_region(REG, 2, NAME))
+		वापस -EBUSY;
 
 	outb(0x87, REG);
 	outb(0x01, REG);
 	outb(0x55, REG);
 	outb(0x55, REG);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static inline void superio_exit(void)
-{
+अटल अंतरभूत व्योम superio_निकास(व्योम)
+अणु
 	outb(0x02, REG);
 	outb(0x02, VAL);
 	release_region(REG, 2);
-}
+पूर्ण
 
-static inline void it8712f_wdt_ping(void)
-{
-	if (wdt_control_reg & WDT_RESET_GAME)
+अटल अंतरभूत व्योम it8712f_wdt_ping(व्योम)
+अणु
+	अगर (wdt_control_reg & WDT_RESET_GAME)
 		inb(address);
-}
+पूर्ण
 
-static void it8712f_wdt_update_margin(void)
-{
-	int config = WDT_OUT_KRST | WDT_OUT_PWROK;
-	int units = margin;
+अटल व्योम it8712f_wdt_update_margin(व्योम)
+अणु
+	पूर्णांक config = WDT_OUT_KRST | WDT_OUT_PWROK;
+	पूर्णांक units = margin;
 
-	/* Switch to minutes precision if the configured margin
-	 * value does not fit within the register width.
+	/* Switch to minutes precision अगर the configured margin
+	 * value करोes not fit within the रेजिस्टर width.
 	 */
-	if (units <= max_units) {
-		config |= WDT_UNIT_SEC; /* else UNIT is MINUTES */
+	अगर (units <= max_units) अणु
+		config |= WDT_UNIT_SEC; /* अन्यथा UNIT is MINUTES */
 		pr_info("timer margin %d seconds\n", units);
-	} else {
+	पूर्ण अन्यथा अणु
 		units /= 60;
 		pr_info("timer margin %d minutes\n", units);
-	}
+	पूर्ण
 	superio_outb(config, WDT_CONFIG);
 
-	if (revision >= 0x08)
+	अगर (revision >= 0x08)
 		superio_outb(units >> 8, WDT_TIMEOUT + 1);
 	superio_outb(units, WDT_TIMEOUT);
-}
+पूर्ण
 
-static int it8712f_wdt_get_status(void)
-{
-	if (superio_inb(WDT_CONTROL) & 0x01)
-		return WDIOF_CARDRESET;
-	else
-		return 0;
-}
+अटल पूर्णांक it8712f_wdt_get_status(व्योम)
+अणु
+	अगर (superio_inb(WDT_CONTROL) & 0x01)
+		वापस WDIOF_CARDRESET;
+	अन्यथा
+		वापस 0;
+पूर्ण
 
-static int it8712f_wdt_enable(void)
-{
-	int ret = superio_enter();
-	if (ret)
-		return ret;
+अटल पूर्णांक it8712f_wdt_enable(व्योम)
+अणु
+	पूर्णांक ret = superio_enter();
+	अगर (ret)
+		वापस ret;
 
 	pr_debug("enabling watchdog timer\n");
 	superio_select(LDN_GPIO);
@@ -188,263 +189,263 @@ static int it8712f_wdt_enable(void)
 
 	it8712f_wdt_update_margin();
 
-	superio_exit();
+	superio_निकास();
 
 	it8712f_wdt_ping();
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int it8712f_wdt_disable(void)
-{
-	int ret = superio_enter();
-	if (ret)
-		return ret;
+अटल पूर्णांक it8712f_wdt_disable(व्योम)
+अणु
+	पूर्णांक ret = superio_enter();
+	अगर (ret)
+		वापस ret;
 
 	pr_debug("disabling watchdog timer\n");
 	superio_select(LDN_GPIO);
 
 	superio_outb(0, WDT_CONFIG);
 	superio_outb(0, WDT_CONTROL);
-	if (revision >= 0x08)
+	अगर (revision >= 0x08)
 		superio_outb(0, WDT_TIMEOUT + 1);
 	superio_outb(0, WDT_TIMEOUT);
 
-	superio_exit();
-	return 0;
-}
+	superio_निकास();
+	वापस 0;
+पूर्ण
 
-static int it8712f_wdt_notify(struct notifier_block *this,
-		    unsigned long code, void *unused)
-{
-	if (code == SYS_HALT || code == SYS_POWER_OFF)
-		if (!nowayout)
+अटल पूर्णांक it8712f_wdt_notअगरy(काष्ठा notअगरier_block *this,
+		    अचिन्हित दीर्घ code, व्योम *unused)
+अणु
+	अगर (code == SYS_HALT || code == SYS_POWER_OFF)
+		अगर (!nowayout)
 			it8712f_wdt_disable();
 
-	return NOTIFY_DONE;
-}
+	वापस NOTIFY_DONE;
+पूर्ण
 
-static struct notifier_block it8712f_wdt_notifier = {
-	.notifier_call = it8712f_wdt_notify,
-};
+अटल काष्ठा notअगरier_block it8712f_wdt_notअगरier = अणु
+	.notअगरier_call = it8712f_wdt_notअगरy,
+पूर्ण;
 
-static ssize_t it8712f_wdt_write(struct file *file, const char __user *data,
-					size_t len, loff_t *ppos)
-{
-	/* check for a magic close character */
-	if (len) {
-		size_t i;
+अटल sमाप_प्रकार it8712f_wdt_ग_लिखो(काष्ठा file *file, स्थिर अक्षर __user *data,
+					माप_प्रकार len, loff_t *ppos)
+अणु
+	/* check क्रम a magic बंद अक्षरacter */
+	अगर (len) अणु
+		माप_प्रकार i;
 
 		it8712f_wdt_ping();
 
-		expect_close = 0;
-		for (i = 0; i < len; ++i) {
-			char c;
-			if (get_user(c, data + i))
-				return -EFAULT;
-			if (c == 'V')
-				expect_close = 42;
-		}
-	}
+		expect_बंद = 0;
+		क्रम (i = 0; i < len; ++i) अणु
+			अक्षर c;
+			अगर (get_user(c, data + i))
+				वापस -EFAULT;
+			अगर (c == 'V')
+				expect_बंद = 42;
+		पूर्ण
+	पूर्ण
 
-	return len;
-}
+	वापस len;
+पूर्ण
 
-static long it8712f_wdt_ioctl(struct file *file, unsigned int cmd,
-							unsigned long arg)
-{
-	void __user *argp = (void __user *)arg;
-	int __user *p = argp;
-	static const struct watchdog_info ident = {
+अटल दीर्घ it8712f_wdt_ioctl(काष्ठा file *file, अचिन्हित पूर्णांक cmd,
+							अचिन्हित दीर्घ arg)
+अणु
+	व्योम __user *argp = (व्योम __user *)arg;
+	पूर्णांक __user *p = argp;
+	अटल स्थिर काष्ठा watchकरोg_info ident = अणु
 		.identity = "IT8712F Watchdog",
 		.firmware_version = 1,
 		.options = WDIOF_SETTIMEOUT | WDIOF_KEEPALIVEPING |
 						WDIOF_MAGICCLOSE,
-	};
-	int value;
-	int ret;
+	पूर्ण;
+	पूर्णांक value;
+	पूर्णांक ret;
 
-	switch (cmd) {
-	case WDIOC_GETSUPPORT:
-		if (copy_to_user(argp, &ident, sizeof(ident)))
-			return -EFAULT;
-		return 0;
-	case WDIOC_GETSTATUS:
+	चयन (cmd) अणु
+	हाल WDIOC_GETSUPPORT:
+		अगर (copy_to_user(argp, &ident, माप(ident)))
+			वापस -EFAULT;
+		वापस 0;
+	हाल WDIOC_GETSTATUS:
 		ret = superio_enter();
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 		superio_select(LDN_GPIO);
 
 		value = it8712f_wdt_get_status();
 
-		superio_exit();
+		superio_निकास();
 
-		return put_user(value, p);
-	case WDIOC_GETBOOTSTATUS:
-		return put_user(0, p);
-	case WDIOC_KEEPALIVE:
+		वापस put_user(value, p);
+	हाल WDIOC_GETBOOTSTATUS:
+		वापस put_user(0, p);
+	हाल WDIOC_KEEPALIVE:
 		it8712f_wdt_ping();
-		return 0;
-	case WDIOC_SETTIMEOUT:
-		if (get_user(value, p))
-			return -EFAULT;
-		if (value < 1)
-			return -EINVAL;
-		if (value > (max_units * 60))
-			return -EINVAL;
+		वापस 0;
+	हाल WDIOC_SETTIMEOUT:
+		अगर (get_user(value, p))
+			वापस -EFAULT;
+		अगर (value < 1)
+			वापस -EINVAL;
+		अगर (value > (max_units * 60))
+			वापस -EINVAL;
 		margin = value;
 		ret = superio_enter();
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 		superio_select(LDN_GPIO);
 
 		it8712f_wdt_update_margin();
 
-		superio_exit();
+		superio_निकास();
 		it8712f_wdt_ping();
 		fallthrough;
-	case WDIOC_GETTIMEOUT:
-		if (put_user(margin, p))
-			return -EFAULT;
-		return 0;
-	default:
-		return -ENOTTY;
-	}
-}
+	हाल WDIOC_GETTIMEOUT:
+		अगर (put_user(margin, p))
+			वापस -EFAULT;
+		वापस 0;
+	शेष:
+		वापस -ENOTTY;
+	पूर्ण
+पूर्ण
 
-static int it8712f_wdt_open(struct inode *inode, struct file *file)
-{
-	int ret;
-	/* only allow one at a time */
-	if (test_and_set_bit(0, &wdt_open))
-		return -EBUSY;
+अटल पूर्णांक it8712f_wdt_खोलो(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	पूर्णांक ret;
+	/* only allow one at a समय */
+	अगर (test_and_set_bit(0, &wdt_खोलो))
+		वापस -EBUSY;
 
 	ret = it8712f_wdt_enable();
-	if (ret)
-		return ret;
-	return stream_open(inode, file);
-}
+	अगर (ret)
+		वापस ret;
+	वापस stream_खोलो(inode, file);
+पूर्ण
 
-static int it8712f_wdt_release(struct inode *inode, struct file *file)
-{
-	if (expect_close != 42) {
+अटल पूर्णांक it8712f_wdt_release(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	अगर (expect_बंद != 42) अणु
 		pr_warn("watchdog device closed unexpectedly, will not disable the watchdog timer\n");
-	} else if (!nowayout) {
-		if (it8712f_wdt_disable())
+	पूर्ण अन्यथा अगर (!nowayout) अणु
+		अगर (it8712f_wdt_disable())
 			pr_warn("Watchdog disable failed\n");
-	}
-	expect_close = 0;
-	clear_bit(0, &wdt_open);
+	पूर्ण
+	expect_बंद = 0;
+	clear_bit(0, &wdt_खोलो);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct file_operations it8712f_wdt_fops = {
+अटल स्थिर काष्ठा file_operations it8712f_wdt_fops = अणु
 	.owner = THIS_MODULE,
 	.llseek = no_llseek,
-	.write = it8712f_wdt_write,
+	.ग_लिखो = it8712f_wdt_ग_लिखो,
 	.unlocked_ioctl = it8712f_wdt_ioctl,
 	.compat_ioctl = compat_ptr_ioctl,
-	.open = it8712f_wdt_open,
+	.खोलो = it8712f_wdt_खोलो,
 	.release = it8712f_wdt_release,
-};
+पूर्ण;
 
-static struct miscdevice it8712f_wdt_miscdev = {
+अटल काष्ठा miscdevice it8712f_wdt_miscdev = अणु
 	.minor = WATCHDOG_MINOR,
 	.name = "watchdog",
 	.fops = &it8712f_wdt_fops,
-};
+पूर्ण;
 
-static int __init it8712f_wdt_find(unsigned short *address)
-{
-	int err = -ENODEV;
-	int chip_type;
-	int ret = superio_enter();
-	if (ret)
-		return ret;
+अटल पूर्णांक __init it8712f_wdt_find(अचिन्हित लघु *address)
+अणु
+	पूर्णांक err = -ENODEV;
+	पूर्णांक chip_type;
+	पूर्णांक ret = superio_enter();
+	अगर (ret)
+		वापस ret;
 
 	chip_type = superio_inw(DEVID);
-	if (chip_type != IT8712F_DEVID)
-		goto exit;
+	अगर (chip_type != IT8712F_DEVID)
+		जाओ निकास;
 
 	superio_select(LDN_GAME);
 	superio_outb(1, ACT_REG);
-	if (!(superio_inb(ACT_REG) & 0x01)) {
+	अगर (!(superio_inb(ACT_REG) & 0x01)) अणु
 		pr_err("Device not activated, skipping\n");
-		goto exit;
-	}
+		जाओ निकास;
+	पूर्ण
 
 	*address = superio_inw(BASE_REG);
-	if (*address == 0) {
+	अगर (*address == 0) अणु
 		pr_err("Base address not set, skipping\n");
-		goto exit;
-	}
+		जाओ निकास;
+	पूर्ण
 
 	err = 0;
 	revision = superio_inb(DEVREV) & 0x0f;
 
 	/* Later revisions have 16-bit values per datasheet 0.9.1 */
-	if (revision >= 0x08)
+	अगर (revision >= 0x08)
 		max_units = 65535;
 
-	if (margin > (max_units * 60))
+	अगर (margin > (max_units * 60))
 		margin = (max_units * 60);
 
 	pr_info("Found IT%04xF chip revision %d - using DogFood address 0x%x\n",
 		chip_type, revision, *address);
 
-exit:
-	superio_exit();
-	return err;
-}
+निकास:
+	superio_निकास();
+	वापस err;
+पूर्ण
 
-static int __init it8712f_wdt_init(void)
-{
-	int err = 0;
+अटल पूर्णांक __init it8712f_wdt_init(व्योम)
+अणु
+	पूर्णांक err = 0;
 
-	if (it8712f_wdt_find(&address))
-		return -ENODEV;
+	अगर (it8712f_wdt_find(&address))
+		वापस -ENODEV;
 
-	if (!request_region(address, 1, "IT8712F Watchdog")) {
+	अगर (!request_region(address, 1, "IT8712F Watchdog")) अणु
 		pr_warn("watchdog I/O region busy\n");
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 
 	err = it8712f_wdt_disable();
-	if (err) {
+	अगर (err) अणु
 		pr_err("unable to disable watchdog timer\n");
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	err = register_reboot_notifier(&it8712f_wdt_notifier);
-	if (err) {
+	err = रेजिस्टर_reboot_notअगरier(&it8712f_wdt_notअगरier);
+	अगर (err) अणु
 		pr_err("unable to register reboot notifier\n");
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	err = misc_register(&it8712f_wdt_miscdev);
-	if (err) {
+	err = misc_रेजिस्टर(&it8712f_wdt_miscdev);
+	अगर (err) अणु
 		pr_err("cannot register miscdev on minor=%d (err=%d)\n",
 		       WATCHDOG_MINOR, err);
-		goto reboot_out;
-	}
+		जाओ reboot_out;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 
 reboot_out:
-	unregister_reboot_notifier(&it8712f_wdt_notifier);
+	unरेजिस्टर_reboot_notअगरier(&it8712f_wdt_notअगरier);
 out:
 	release_region(address, 1);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void __exit it8712f_wdt_exit(void)
-{
-	misc_deregister(&it8712f_wdt_miscdev);
-	unregister_reboot_notifier(&it8712f_wdt_notifier);
+अटल व्योम __निकास it8712f_wdt_निकास(व्योम)
+अणु
+	misc_deरेजिस्टर(&it8712f_wdt_miscdev);
+	unरेजिस्टर_reboot_notअगरier(&it8712f_wdt_notअगरier);
 	release_region(address, 1);
-}
+पूर्ण
 
 module_init(it8712f_wdt_init);
-module_exit(it8712f_wdt_exit);
+module_निकास(it8712f_wdt_निकास);

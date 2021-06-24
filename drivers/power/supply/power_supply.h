@@ -1,41 +1,42 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
- *  Functions private to power supply class
+ *  Functions निजी to घातer supply class
  *
- *  Copyright © 2007  Anton Vorontsov <cbou@mail.ru>
- *  Copyright © 2004  Szabolcs Gyurko
- *  Copyright © 2003  Ian Molton <spyro@f2s.com>
+ *  Copyright तऊ 2007  Anton Vorontsov <cbou@mail.ru>
+ *  Copyright तऊ 2004  Szabolcs Gyurko
+ *  Copyright तऊ 2003  Ian Molton <spyro@f2s.com>
  *
- *  Modified: 2004, Oct     Szabolcs Gyurko
+ *  Modअगरied: 2004, Oct     Szabolcs Gyurko
  */
 
-struct device;
-struct device_type;
-struct power_supply;
+काष्ठा device;
+काष्ठा device_type;
+काष्ठा घातer_supply;
 
-#ifdef CONFIG_SYSFS
+#अगर_घोषित CONFIG_SYSFS
 
-extern void power_supply_init_attrs(struct device_type *dev_type);
-extern int power_supply_uevent(struct device *dev, struct kobj_uevent_env *env);
+बाह्य व्योम घातer_supply_init_attrs(काष्ठा device_type *dev_type);
+बाह्य पूर्णांक घातer_supply_uevent(काष्ठा device *dev, काष्ठा kobj_uevent_env *env);
 
-#else
+#अन्यथा
 
-static inline void power_supply_init_attrs(struct device_type *dev_type) {}
-#define power_supply_uevent NULL
+अटल अंतरभूत व्योम घातer_supply_init_attrs(काष्ठा device_type *dev_type) अणुपूर्ण
+#घोषणा घातer_supply_uevent शून्य
 
-#endif /* CONFIG_SYSFS */
+#पूर्ण_अगर /* CONFIG_SYSFS */
 
-#ifdef CONFIG_LEDS_TRIGGERS
+#अगर_घोषित CONFIG_LEDS_TRIGGERS
 
-extern void power_supply_update_leds(struct power_supply *psy);
-extern int power_supply_create_triggers(struct power_supply *psy);
-extern void power_supply_remove_triggers(struct power_supply *psy);
+बाह्य व्योम घातer_supply_update_leds(काष्ठा घातer_supply *psy);
+बाह्य पूर्णांक घातer_supply_create_triggers(काष्ठा घातer_supply *psy);
+बाह्य व्योम घातer_supply_हटाओ_triggers(काष्ठा घातer_supply *psy);
 
-#else
+#अन्यथा
 
-static inline void power_supply_update_leds(struct power_supply *psy) {}
-static inline int power_supply_create_triggers(struct power_supply *psy)
-{ return 0; }
-static inline void power_supply_remove_triggers(struct power_supply *psy) {}
+अटल अंतरभूत व्योम घातer_supply_update_leds(काष्ठा घातer_supply *psy) अणुपूर्ण
+अटल अंतरभूत पूर्णांक घातer_supply_create_triggers(काष्ठा घातer_supply *psy)
+अणु वापस 0; पूर्ण
+अटल अंतरभूत व्योम घातer_supply_हटाओ_triggers(काष्ठा घातer_supply *psy) अणुपूर्ण
 
-#endif /* CONFIG_LEDS_TRIGGERS */
+#पूर्ण_अगर /* CONFIG_LEDS_TRIGGERS */

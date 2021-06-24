@@ -1,104 +1,105 @@
+<शैली गुरु>
 /*
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the main directory of this archive
- * for more details.
+ * License.  See the file "COPYING" in the मुख्य directory of this archive
+ * क्रम more details.
  *
  * Copyright (C) 2013 Imagination Technologies Ltd.
  */
 
-#include <linux/kernel.h>
-#include <linux/debugfs.h>
-#include <linux/seq_file.h>
-#include <asm/cpu.h>
-#include <asm/debug.h>
-#include <asm/mipsregs.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/debugfs.h>
+#समावेश <linux/seq_file.h>
+#समावेश <यंत्र/cpu.h>
+#समावेश <यंत्र/debug.h>
+#समावेश <यंत्र/mipsregs.h>
 
-static void build_segment_config(char *str, unsigned int cfg)
-{
-	unsigned int am;
-	static const char * const am_str[] = {
+अटल व्योम build_segment_config(अक्षर *str, अचिन्हित पूर्णांक cfg)
+अणु
+	अचिन्हित पूर्णांक am;
+	अटल स्थिर अक्षर * स्थिर am_str[] = अणु
 		"UK", "MK", "MSK", "MUSK", "MUSUK", "USK",
-		"RSRVD", "UUSK"};
+		"RSRVD", "UUSK"पूर्ण;
 
 	/* Segment access mode. */
 	am = (cfg & MIPS_SEGCFG_AM) >> MIPS_SEGCFG_AM_SHIFT;
-	str += sprintf(str, "%-5s", am_str[am]);
+	str += प्र_लिखो(str, "%-5s", am_str[am]);
 
 	/*
-	 * Access modes MK, MSK and MUSK are mapped segments. Therefore
+	 * Access modes MK, MSK and MUSK are mapped segments. Thereक्रमe
 	 * there is no direct physical address mapping unless it becomes
 	 * unmapped uncached at error level due to EU.
 	 */
-	if ((am == 0) || (am > 3) || (cfg & MIPS_SEGCFG_EU))
-		str += sprintf(str, "         %03lx",
+	अगर ((am == 0) || (am > 3) || (cfg & MIPS_SEGCFG_EU))
+		str += प्र_लिखो(str, "         %03lx",
 			((cfg & MIPS_SEGCFG_PA) >> MIPS_SEGCFG_PA_SHIFT));
-	else
-		str += sprintf(str, "         UND");
+	अन्यथा
+		str += प्र_लिखो(str, "         UND");
 
-	if ((am == 0) || (am > 3))
-		str += sprintf(str, "         %01ld",
+	अगर ((am == 0) || (am > 3))
+		str += प्र_लिखो(str, "         %01ld",
 			((cfg & MIPS_SEGCFG_C) >> MIPS_SEGCFG_C_SHIFT));
-	else
-		str += sprintf(str, "         U");
+	अन्यथा
+		str += प्र_लिखो(str, "         U");
 
 	/* Exception configuration. */
-	str += sprintf(str, "       %01ld\n",
+	str += प्र_लिखो(str, "       %01ld\n",
 		((cfg & MIPS_SEGCFG_EU) >> MIPS_SEGCFG_EU_SHIFT));
-}
+पूर्ण
 
-static int show_segments(struct seq_file *m, void *v)
-{
-	unsigned int segcfg;
-	char str[42];
+अटल पूर्णांक show_segments(काष्ठा seq_file *m, व्योम *v)
+अणु
+	अचिन्हित पूर्णांक segcfg;
+	अक्षर str[42];
 
-	seq_puts(m, "Segment   Virtual    Size   Access Mode   Physical   Caching   EU\n");
-	seq_puts(m, "-------   -------    ----   -----------   --------   -------   --\n");
+	seq_माला_दो(m, "Segment   Virtual    Size   Access Mode   Physical   Caching   EU\n");
+	seq_माला_दो(m, "-------   -------    ----   -----------   --------   -------   --\n");
 
-	segcfg = read_c0_segctl0();
+	segcfg = पढ़ो_c0_segctl0();
 	build_segment_config(str, segcfg);
-	seq_printf(m, "   0      e0000000   512M      %s", str);
+	seq_म_लिखो(m, "   0      e0000000   512M      %s", str);
 
 	segcfg >>= 16;
 	build_segment_config(str, segcfg);
-	seq_printf(m, "   1      c0000000   512M      %s", str);
+	seq_म_लिखो(m, "   1      c0000000   512M      %s", str);
 
-	segcfg = read_c0_segctl1();
+	segcfg = पढ़ो_c0_segctl1();
 	build_segment_config(str, segcfg);
-	seq_printf(m, "   2      a0000000   512M      %s", str);
+	seq_म_लिखो(m, "   2      a0000000   512M      %s", str);
 
 	segcfg >>= 16;
 	build_segment_config(str, segcfg);
-	seq_printf(m, "   3      80000000   512M      %s", str);
+	seq_म_लिखो(m, "   3      80000000   512M      %s", str);
 
-	segcfg = read_c0_segctl2();
+	segcfg = पढ़ो_c0_segctl2();
 	build_segment_config(str, segcfg);
-	seq_printf(m, "   4      40000000    1G       %s", str);
+	seq_म_लिखो(m, "   4      40000000    1G       %s", str);
 
 	segcfg >>= 16;
 	build_segment_config(str, segcfg);
-	seq_printf(m, "   5      00000000    1G       %s\n", str);
+	seq_म_लिखो(m, "   5      00000000    1G       %s\n", str);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int segments_open(struct inode *inode, struct file *file)
-{
-	return single_open(file, show_segments, NULL);
-}
+अटल पूर्णांक segments_खोलो(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	वापस single_खोलो(file, show_segments, शून्य);
+पूर्ण
 
-static const struct file_operations segments_fops = {
-	.open		= segments_open,
-	.read		= seq_read,
+अटल स्थिर काष्ठा file_operations segments_fops = अणु
+	.खोलो		= segments_खोलो,
+	.पढ़ो		= seq_पढ़ो,
 	.llseek		= seq_lseek,
 	.release	= single_release,
-};
+पूर्ण;
 
-static int __init segments_info(void)
-{
-	if (cpu_has_segments)
-		debugfs_create_file("segments", S_IRUGO, mips_debugfs_dir, NULL,
+अटल पूर्णांक __init segments_info(व्योम)
+अणु
+	अगर (cpu_has_segments)
+		debugfs_create_file("segments", S_IRUGO, mips_debugfs_dir, शून्य,
 				    &segments_fops);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 device_initcall(segments_info);

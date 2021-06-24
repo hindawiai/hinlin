@@ -1,11 +1,12 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __UM_TLB_H
-#define __UM_TLB_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __UM_TLB_H
+#घोषणा __UM_TLB_H
 
-#include <linux/mm.h>
+#समावेश <linux/mm.h>
 
-#include <asm/tlbflush.h>
-#include <asm-generic/cacheflush.h>
-#include <asm-generic/tlb.h>
+#समावेश <यंत्र/tlbflush.h>
+#समावेश <यंत्र-generic/cacheflush.h>
+#समावेश <यंत्र-generic/tlb.h>
 
-#endif
+#पूर्ण_अगर

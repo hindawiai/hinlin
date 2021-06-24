@@ -1,16 +1,17 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
  * Copyright (ST) 2012 Vipin Kumar (vipin.kumar@st.com)
  */
 
-#ifndef __SOUND_SPDIF_H
-#define __SOUND_SPDIF_H
+#अगर_अघोषित __SOUND_SPDIF_H
+#घोषणा __SOUND_SPDIF_H
 
-struct spear_spdif_platform_data {
+काष्ठा spear_spdअगर_platक्रमm_data अणु
 	/* DMA params */
-	void *dma_params;
-	bool (*filter)(struct dma_chan *chan, void *slave);
-	void (*reset_perip)(void);
-};
+	व्योम *dma_params;
+	bool (*filter)(काष्ठा dma_chan *chan, व्योम *slave);
+	व्योम (*reset_perip)(व्योम);
+पूर्ण;
 
-#endif /* SOUND_SPDIF_H */
+#पूर्ण_अगर /* SOUND_SPDIF_H */

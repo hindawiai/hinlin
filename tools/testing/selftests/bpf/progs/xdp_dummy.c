@@ -1,13 +1,14 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 
-#define KBUILD_MODNAME "xdp_dummy"
-#include <linux/bpf.h>
-#include <bpf/bpf_helpers.h>
+#घोषणा KBUILD_MODNAME "xdp_dummy"
+#समावेश <linux/bpf.h>
+#समावेश <bpf/bpf_helpers.h>
 
 SEC("xdp_dummy")
-int xdp_dummy_prog(struct xdp_md *ctx)
-{
-	return XDP_PASS;
-}
+पूर्णांक xdp_dummy_prog(काष्ठा xdp_md *ctx)
+अणु
+	वापस XDP_PASS;
+पूर्ण
 
-char _license[] SEC("license") = "GPL";
+अक्षर _license[] SEC("license") = "GPL";

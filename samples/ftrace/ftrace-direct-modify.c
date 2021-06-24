@@ -1,24 +1,25 @@
-// SPDX-License-Identifier: GPL-2.0-only
-#include <linux/module.h>
-#include <linux/kthread.h>
-#include <linux/ftrace.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
+#समावेश <linux/module.h>
+#समावेश <linux/kthपढ़ो.h>
+#समावेश <linux/ftrace.h>
 
-void my_direct_func1(void)
-{
-	trace_printk("my direct func1\n");
-}
+व्योम my_direct_func1(व्योम)
+अणु
+	trace_prपूर्णांकk("my direct func1\n");
+पूर्ण
 
-void my_direct_func2(void)
-{
-	trace_printk("my direct func2\n");
-}
+व्योम my_direct_func2(व्योम)
+अणु
+	trace_prपूर्णांकk("my direct func2\n");
+पूर्ण
 
-extern void my_tramp1(void *);
-extern void my_tramp2(void *);
+बाह्य व्योम my_tramp1(व्योम *);
+बाह्य व्योम my_tramp2(व्योम *);
 
-static unsigned long my_ip = (unsigned long)schedule;
+अटल अचिन्हित दीर्घ my_ip = (अचिन्हित दीर्घ)schedule;
 
-asm (
+यंत्र (
 "	.pushsection    .text, \"ax\", @progbits\n"
 "	.type		my_tramp1, @function\n"
 "	.globl		my_tramp1\n"
@@ -41,53 +42,53 @@ asm (
 "	.popsection\n"
 );
 
-static unsigned long my_tramp = (unsigned long)my_tramp1;
-static unsigned long tramps[2] = {
-	(unsigned long)my_tramp1,
-	(unsigned long)my_tramp2,
-};
+अटल अचिन्हित दीर्घ my_tramp = (अचिन्हित दीर्घ)my_tramp1;
+अटल अचिन्हित दीर्घ tramps[2] = अणु
+	(अचिन्हित दीर्घ)my_tramp1,
+	(अचिन्हित दीर्घ)my_tramp2,
+पूर्ण;
 
-static int simple_thread(void *arg)
-{
-	static int t;
-	int ret = 0;
+अटल पूर्णांक simple_thपढ़ो(व्योम *arg)
+अणु
+	अटल पूर्णांक t;
+	पूर्णांक ret = 0;
 
-	while (!kthread_should_stop()) {
+	जबतक (!kthपढ़ो_should_stop()) अणु
 		set_current_state(TASK_INTERRUPTIBLE);
-		schedule_timeout(2 * HZ);
+		schedule_समयout(2 * HZ);
 
-		if (ret)
-			continue;
+		अगर (ret)
+			जारी;
 		t ^= 1;
-		ret = modify_ftrace_direct(my_ip, my_tramp, tramps[t]);
-		if (!ret)
+		ret = modअगरy_ftrace_direct(my_ip, my_tramp, tramps[t]);
+		अगर (!ret)
 			my_tramp = tramps[t];
 		WARN_ON_ONCE(ret);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct task_struct *simple_tsk;
+अटल काष्ठा task_काष्ठा *simple_tsk;
 
-static int __init ftrace_direct_init(void)
-{
-	int ret;
+अटल पूर्णांक __init ftrace_direct_init(व्योम)
+अणु
+	पूर्णांक ret;
 
-	ret = register_ftrace_direct(my_ip, my_tramp);
-	if (!ret)
-		simple_tsk = kthread_run(simple_thread, NULL, "event-sample-fn");
-	return ret;
-}
+	ret = रेजिस्टर_ftrace_direct(my_ip, my_tramp);
+	अगर (!ret)
+		simple_tsk = kthपढ़ो_run(simple_thपढ़ो, शून्य, "event-sample-fn");
+	वापस ret;
+पूर्ण
 
-static void __exit ftrace_direct_exit(void)
-{
-	kthread_stop(simple_tsk);
-	unregister_ftrace_direct(my_ip, my_tramp);
-}
+अटल व्योम __निकास ftrace_direct_निकास(व्योम)
+अणु
+	kthपढ़ो_stop(simple_tsk);
+	unरेजिस्टर_ftrace_direct(my_ip, my_tramp);
+पूर्ण
 
 module_init(ftrace_direct_init);
-module_exit(ftrace_direct_exit);
+module_निकास(ftrace_direct_निकास);
 
 MODULE_AUTHOR("Steven Rostedt");
 MODULE_DESCRIPTION("Example use case of using modify_ftrace_direct()");

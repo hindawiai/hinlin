@@ -1,342 +1,343 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Intel(R) Trace Hub PTI output driver
  *
  * Copyright (C) 2014-2016 Intel Corporation.
  */
 
-#define pr_fmt(fmt)	KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt)	KBUILD_MODNAME ": " fmt
 
-#include <linux/types.h>
-#include <linux/module.h>
-#include <linux/device.h>
-#include <linux/sizes.h>
-#include <linux/printk.h>
-#include <linux/slab.h>
-#include <linux/mm.h>
-#include <linux/io.h>
+#समावेश <linux/types.h>
+#समावेश <linux/module.h>
+#समावेश <linux/device.h>
+#समावेश <linux/sizes.h>
+#समावेश <linux/prपूर्णांकk.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/पन.स>
 
-#include "intel_th.h"
-#include "pti.h"
+#समावेश "intel_th.h"
+#समावेश "pti.h"
 
-struct pti_device {
-	void __iomem		*base;
-	struct intel_th_device	*thdev;
-	unsigned int		mode;
-	unsigned int		freeclk;
-	unsigned int		clkdiv;
-	unsigned int		patgen;
-	unsigned int		lpp_dest_mask;
-	unsigned int		lpp_dest;
-};
+काष्ठा pti_device अणु
+	व्योम __iomem		*base;
+	काष्ठा पूर्णांकel_th_device	*thdev;
+	अचिन्हित पूर्णांक		mode;
+	अचिन्हित पूर्णांक		मुक्तclk;
+	अचिन्हित पूर्णांक		clkभाग;
+	अचिन्हित पूर्णांक		patgen;
+	अचिन्हित पूर्णांक		lpp_dest_mask;
+	अचिन्हित पूर्णांक		lpp_dest;
+पूर्ण;
 
-/* map PTI widths to MODE settings of PTI_CTL register */
-static const unsigned int pti_mode[] = {
+/* map PTI widths to MODE settings of PTI_CTL रेजिस्टर */
+अटल स्थिर अचिन्हित पूर्णांक pti_mode[] = अणु
 	0, 4, 8, 0, 12, 0, 0, 0, 16, 0, 0, 0, 0, 0, 0, 0,
-};
+पूर्ण;
 
-static int pti_width_mode(unsigned int width)
-{
-	int i;
+अटल पूर्णांक pti_width_mode(अचिन्हित पूर्णांक width)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < ARRAY_SIZE(pti_mode); i++)
-		if (pti_mode[i] == width)
-			return i;
+	क्रम (i = 0; i < ARRAY_SIZE(pti_mode); i++)
+		अगर (pti_mode[i] == width)
+			वापस i;
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static ssize_t mode_show(struct device *dev, struct device_attribute *attr,
-			 char *buf)
-{
-	struct pti_device *pti = dev_get_drvdata(dev);
+अटल sमाप_प्रकार mode_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
+			 अक्षर *buf)
+अणु
+	काष्ठा pti_device *pti = dev_get_drvdata(dev);
 
-	return scnprintf(buf, PAGE_SIZE, "%d\n", pti_mode[pti->mode]);
-}
+	वापस scnम_लिखो(buf, PAGE_SIZE, "%d\n", pti_mode[pti->mode]);
+पूर्ण
 
-static ssize_t mode_store(struct device *dev, struct device_attribute *attr,
-			  const char *buf, size_t size)
-{
-	struct pti_device *pti = dev_get_drvdata(dev);
-	unsigned long val;
-	int ret;
+अटल sमाप_प्रकार mode_store(काष्ठा device *dev, काष्ठा device_attribute *attr,
+			  स्थिर अक्षर *buf, माप_प्रकार size)
+अणु
+	काष्ठा pti_device *pti = dev_get_drvdata(dev);
+	अचिन्हित दीर्घ val;
+	पूर्णांक ret;
 
-	ret = kstrtoul(buf, 10, &val);
-	if (ret)
-		return ret;
+	ret = kम_से_अदीर्घ(buf, 10, &val);
+	अगर (ret)
+		वापस ret;
 
 	ret = pti_width_mode(val);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	pti->mode = ret;
 
-	return size;
-}
+	वापस size;
+पूर्ण
 
-static DEVICE_ATTR_RW(mode);
+अटल DEVICE_ATTR_RW(mode);
 
-static ssize_t
-freerunning_clock_show(struct device *dev, struct device_attribute *attr,
-		       char *buf)
-{
-	struct pti_device *pti = dev_get_drvdata(dev);
+अटल sमाप_प्रकार
+मुक्तrunning_घड़ी_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
+		       अक्षर *buf)
+अणु
+	काष्ठा pti_device *pti = dev_get_drvdata(dev);
 
-	return scnprintf(buf, PAGE_SIZE, "%d\n", pti->freeclk);
-}
+	वापस scnम_लिखो(buf, PAGE_SIZE, "%d\n", pti->मुक्तclk);
+पूर्ण
 
-static ssize_t
-freerunning_clock_store(struct device *dev, struct device_attribute *attr,
-			const char *buf, size_t size)
-{
-	struct pti_device *pti = dev_get_drvdata(dev);
-	unsigned long val;
-	int ret;
+अटल sमाप_प्रकार
+मुक्तrunning_घड़ी_store(काष्ठा device *dev, काष्ठा device_attribute *attr,
+			स्थिर अक्षर *buf, माप_प्रकार size)
+अणु
+	काष्ठा pti_device *pti = dev_get_drvdata(dev);
+	अचिन्हित दीर्घ val;
+	पूर्णांक ret;
 
-	ret = kstrtoul(buf, 10, &val);
-	if (ret)
-		return ret;
+	ret = kम_से_अदीर्घ(buf, 10, &val);
+	अगर (ret)
+		वापस ret;
 
-	pti->freeclk = !!val;
+	pti->मुक्तclk = !!val;
 
-	return size;
-}
+	वापस size;
+पूर्ण
 
-static DEVICE_ATTR_RW(freerunning_clock);
+अटल DEVICE_ATTR_RW(मुक्तrunning_घड़ी);
 
-static ssize_t
-clock_divider_show(struct device *dev, struct device_attribute *attr,
-		   char *buf)
-{
-	struct pti_device *pti = dev_get_drvdata(dev);
+अटल sमाप_प्रकार
+घड़ी_भागider_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
+		   अक्षर *buf)
+अणु
+	काष्ठा pti_device *pti = dev_get_drvdata(dev);
 
-	return scnprintf(buf, PAGE_SIZE, "%d\n", 1u << pti->clkdiv);
-}
+	वापस scnम_लिखो(buf, PAGE_SIZE, "%d\n", 1u << pti->clkभाग);
+पूर्ण
 
-static ssize_t
-clock_divider_store(struct device *dev, struct device_attribute *attr,
-		    const char *buf, size_t size)
-{
-	struct pti_device *pti = dev_get_drvdata(dev);
-	unsigned long val;
-	int ret;
+अटल sमाप_प्रकार
+घड़ी_भागider_store(काष्ठा device *dev, काष्ठा device_attribute *attr,
+		    स्थिर अक्षर *buf, माप_प्रकार size)
+अणु
+	काष्ठा pti_device *pti = dev_get_drvdata(dev);
+	अचिन्हित दीर्घ val;
+	पूर्णांक ret;
 
-	ret = kstrtoul(buf, 10, &val);
-	if (ret)
-		return ret;
+	ret = kम_से_अदीर्घ(buf, 10, &val);
+	अगर (ret)
+		वापस ret;
 
-	if (!is_power_of_2(val) || val > 8 || !val)
-		return -EINVAL;
+	अगर (!is_घातer_of_2(val) || val > 8 || !val)
+		वापस -EINVAL;
 
-	pti->clkdiv = val;
+	pti->clkभाग = val;
 
-	return size;
-}
+	वापस size;
+पूर्ण
 
-static DEVICE_ATTR_RW(clock_divider);
+अटल DEVICE_ATTR_RW(घड़ी_भागider);
 
-static struct attribute *pti_output_attrs[] = {
+अटल काष्ठा attribute *pti_output_attrs[] = अणु
 	&dev_attr_mode.attr,
-	&dev_attr_freerunning_clock.attr,
-	&dev_attr_clock_divider.attr,
-	NULL,
-};
+	&dev_attr_मुक्तrunning_घड़ी.attr,
+	&dev_attr_घड़ी_भागider.attr,
+	शून्य,
+पूर्ण;
 
-static const struct attribute_group pti_output_group = {
+अटल स्थिर काष्ठा attribute_group pti_output_group = अणु
 	.attrs	= pti_output_attrs,
-};
+पूर्ण;
 
-static int intel_th_pti_activate(struct intel_th_device *thdev)
-{
-	struct pti_device *pti = dev_get_drvdata(&thdev->dev);
+अटल पूर्णांक पूर्णांकel_th_pti_activate(काष्ठा पूर्णांकel_th_device *thdev)
+अणु
+	काष्ठा pti_device *pti = dev_get_drvdata(&thdev->dev);
 	u32 ctl = PTI_EN;
 
-	if (pti->patgen)
+	अगर (pti->patgen)
 		ctl |= pti->patgen << __ffs(PTI_PATGENMODE);
-	if (pti->freeclk)
+	अगर (pti->मुक्तclk)
 		ctl |= PTI_FCEN;
 	ctl |= pti->mode << __ffs(PTI_MODE);
-	ctl |= pti->clkdiv << __ffs(PTI_CLKDIV);
+	ctl |= pti->clkभाग << __ffs(PTI_CLKDIV);
 	ctl |= pti->lpp_dest << __ffs(LPP_DEST);
 
-	iowrite32(ctl, pti->base + REG_PTI_CTL);
+	ioग_लिखो32(ctl, pti->base + REG_PTI_CTL);
 
-	intel_th_trace_enable(thdev);
+	पूर्णांकel_th_trace_enable(thdev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void intel_th_pti_deactivate(struct intel_th_device *thdev)
-{
-	struct pti_device *pti = dev_get_drvdata(&thdev->dev);
+अटल व्योम पूर्णांकel_th_pti_deactivate(काष्ठा पूर्णांकel_th_device *thdev)
+अणु
+	काष्ठा pti_device *pti = dev_get_drvdata(&thdev->dev);
 
-	intel_th_trace_disable(thdev);
+	पूर्णांकel_th_trace_disable(thdev);
 
-	iowrite32(0, pti->base + REG_PTI_CTL);
-}
+	ioग_लिखो32(0, pti->base + REG_PTI_CTL);
+पूर्ण
 
-static void read_hw_config(struct pti_device *pti)
-{
-	u32 ctl = ioread32(pti->base + REG_PTI_CTL);
+अटल व्योम पढ़ो_hw_config(काष्ठा pti_device *pti)
+अणु
+	u32 ctl = ioपढ़ो32(pti->base + REG_PTI_CTL);
 
 	pti->mode	= (ctl & PTI_MODE) >> __ffs(PTI_MODE);
-	pti->clkdiv	= (ctl & PTI_CLKDIV) >> __ffs(PTI_CLKDIV);
-	pti->freeclk	= !!(ctl & PTI_FCEN);
+	pti->clkभाग	= (ctl & PTI_CLKDIV) >> __ffs(PTI_CLKDIV);
+	pti->मुक्तclk	= !!(ctl & PTI_FCEN);
 
-	if (!pti_mode[pti->mode])
+	अगर (!pti_mode[pti->mode])
 		pti->mode = pti_width_mode(4);
-	if (!pti->clkdiv)
-		pti->clkdiv = 1;
+	अगर (!pti->clkभाग)
+		pti->clkभाग = 1;
 
-	if (pti->thdev->output.type == GTH_LPP) {
-		if (ctl & LPP_PTIPRESENT)
+	अगर (pti->thdev->output.type == GTH_LPP) अणु
+		अगर (ctl & LPP_PTIPRESENT)
 			pti->lpp_dest_mask |= LPP_DEST_PTI;
-		if (ctl & LPP_BSSBPRESENT)
+		अगर (ctl & LPP_BSSBPRESENT)
 			pti->lpp_dest_mask |= LPP_DEST_EXI;
-		if (ctl & LPP_DEST)
+		अगर (ctl & LPP_DEST)
 			pti->lpp_dest = 1;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int intel_th_pti_probe(struct intel_th_device *thdev)
-{
-	struct device *dev = &thdev->dev;
-	struct resource *res;
-	struct pti_device *pti;
-	void __iomem *base;
+अटल पूर्णांक पूर्णांकel_th_pti_probe(काष्ठा पूर्णांकel_th_device *thdev)
+अणु
+	काष्ठा device *dev = &thdev->dev;
+	काष्ठा resource *res;
+	काष्ठा pti_device *pti;
+	व्योम __iomem *base;
 
-	res = intel_th_device_get_resource(thdev, IORESOURCE_MEM, 0);
-	if (!res)
-		return -ENODEV;
+	res = पूर्णांकel_th_device_get_resource(thdev, IORESOURCE_MEM, 0);
+	अगर (!res)
+		वापस -ENODEV;
 
 	base = devm_ioremap(dev, res->start, resource_size(res));
-	if (!base)
-		return -ENOMEM;
+	अगर (!base)
+		वापस -ENOMEM;
 
-	pti = devm_kzalloc(dev, sizeof(*pti), GFP_KERNEL);
-	if (!pti)
-		return -ENOMEM;
+	pti = devm_kzalloc(dev, माप(*pti), GFP_KERNEL);
+	अगर (!pti)
+		वापस -ENOMEM;
 
 	pti->thdev = thdev;
 	pti->base = base;
 
-	read_hw_config(pti);
+	पढ़ो_hw_config(pti);
 
 	dev_set_drvdata(dev, pti);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void intel_th_pti_remove(struct intel_th_device *thdev)
-{
-}
+अटल व्योम पूर्णांकel_th_pti_हटाओ(काष्ठा पूर्णांकel_th_device *thdev)
+अणु
+पूर्ण
 
-static struct intel_th_driver intel_th_pti_driver = {
-	.probe	= intel_th_pti_probe,
-	.remove	= intel_th_pti_remove,
-	.activate	= intel_th_pti_activate,
-	.deactivate	= intel_th_pti_deactivate,
+अटल काष्ठा पूर्णांकel_th_driver पूर्णांकel_th_pti_driver = अणु
+	.probe	= पूर्णांकel_th_pti_probe,
+	.हटाओ	= पूर्णांकel_th_pti_हटाओ,
+	.activate	= पूर्णांकel_th_pti_activate,
+	.deactivate	= पूर्णांकel_th_pti_deactivate,
 	.attr_group	= &pti_output_group,
-	.driver	= {
+	.driver	= अणु
 		.name	= "pti",
 		.owner	= THIS_MODULE,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static const char * const lpp_dest_str[] = { "pti", "exi" };
+अटल स्थिर अक्षर * स्थिर lpp_dest_str[] = अणु "pti", "exi" पूर्ण;
 
-static ssize_t lpp_dest_show(struct device *dev, struct device_attribute *attr,
-			     char *buf)
-{
-	struct pti_device *pti = dev_get_drvdata(dev);
-	ssize_t ret = 0;
-	int i;
+अटल sमाप_प्रकार lpp_dest_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
+			     अक्षर *buf)
+अणु
+	काष्ठा pti_device *pti = dev_get_drvdata(dev);
+	sमाप_प्रकार ret = 0;
+	पूर्णांक i;
 
-	for (i = ARRAY_SIZE(lpp_dest_str) - 1; i >= 0; i--) {
-		const char *fmt = pti->lpp_dest == i ? "[%s] " : "%s ";
+	क्रम (i = ARRAY_SIZE(lpp_dest_str) - 1; i >= 0; i--) अणु
+		स्थिर अक्षर *fmt = pti->lpp_dest == i ? "[%s] " : "%s ";
 
-		if (!(pti->lpp_dest_mask & BIT(i)))
-			continue;
+		अगर (!(pti->lpp_dest_mask & BIT(i)))
+			जारी;
 
-		ret += scnprintf(buf + ret, PAGE_SIZE - ret,
+		ret += scnम_लिखो(buf + ret, PAGE_SIZE - ret,
 				 fmt, lpp_dest_str[i]);
-	}
+	पूर्ण
 
-	if (ret)
+	अगर (ret)
 		buf[ret - 1] = '\n';
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static ssize_t lpp_dest_store(struct device *dev, struct device_attribute *attr,
-			      const char *buf, size_t size)
-{
-	struct pti_device *pti = dev_get_drvdata(dev);
-	int i;
+अटल sमाप_प्रकार lpp_dest_store(काष्ठा device *dev, काष्ठा device_attribute *attr,
+			      स्थिर अक्षर *buf, माप_प्रकार size)
+अणु
+	काष्ठा pti_device *pti = dev_get_drvdata(dev);
+	पूर्णांक i;
 
 	i = sysfs_match_string(lpp_dest_str, buf);
-	if (i < 0)
-		return i;
+	अगर (i < 0)
+		वापस i;
 
-	if (!(pti->lpp_dest_mask & BIT(i)))
-		return -EINVAL;
+	अगर (!(pti->lpp_dest_mask & BIT(i)))
+		वापस -EINVAL;
 
 	pti->lpp_dest = i;
-	return size;
-}
+	वापस size;
+पूर्ण
 
-static DEVICE_ATTR_RW(lpp_dest);
+अटल DEVICE_ATTR_RW(lpp_dest);
 
-static struct attribute *lpp_output_attrs[] = {
+अटल काष्ठा attribute *lpp_output_attrs[] = अणु
 	&dev_attr_mode.attr,
-	&dev_attr_freerunning_clock.attr,
-	&dev_attr_clock_divider.attr,
+	&dev_attr_मुक्तrunning_घड़ी.attr,
+	&dev_attr_घड़ी_भागider.attr,
 	&dev_attr_lpp_dest.attr,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-static const struct attribute_group lpp_output_group = {
+अटल स्थिर काष्ठा attribute_group lpp_output_group = अणु
 	.attrs	= lpp_output_attrs,
-};
+पूर्ण;
 
-static struct intel_th_driver intel_th_lpp_driver = {
-	.probe		= intel_th_pti_probe,
-	.remove		= intel_th_pti_remove,
-	.activate	= intel_th_pti_activate,
-	.deactivate	= intel_th_pti_deactivate,
+अटल काष्ठा पूर्णांकel_th_driver पूर्णांकel_th_lpp_driver = अणु
+	.probe		= पूर्णांकel_th_pti_probe,
+	.हटाओ		= पूर्णांकel_th_pti_हटाओ,
+	.activate	= पूर्णांकel_th_pti_activate,
+	.deactivate	= पूर्णांकel_th_pti_deactivate,
 	.attr_group	= &lpp_output_group,
-	.driver	= {
+	.driver	= अणु
 		.name	= "lpp",
 		.owner	= THIS_MODULE,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static int __init intel_th_pti_lpp_init(void)
-{
-	int err;
+अटल पूर्णांक __init पूर्णांकel_th_pti_lpp_init(व्योम)
+अणु
+	पूर्णांक err;
 
-	err = intel_th_driver_register(&intel_th_pti_driver);
-	if (err)
-		return err;
+	err = पूर्णांकel_th_driver_रेजिस्टर(&पूर्णांकel_th_pti_driver);
+	अगर (err)
+		वापस err;
 
-	err = intel_th_driver_register(&intel_th_lpp_driver);
-	if (err) {
-		intel_th_driver_unregister(&intel_th_pti_driver);
-		return err;
-	}
+	err = पूर्णांकel_th_driver_रेजिस्टर(&पूर्णांकel_th_lpp_driver);
+	अगर (err) अणु
+		पूर्णांकel_th_driver_unरेजिस्टर(&पूर्णांकel_th_pti_driver);
+		वापस err;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-module_init(intel_th_pti_lpp_init);
+module_init(पूर्णांकel_th_pti_lpp_init);
 
-static void __exit intel_th_pti_lpp_exit(void)
-{
-	intel_th_driver_unregister(&intel_th_pti_driver);
-	intel_th_driver_unregister(&intel_th_lpp_driver);
-}
+अटल व्योम __निकास पूर्णांकel_th_pti_lpp_निकास(व्योम)
+अणु
+	पूर्णांकel_th_driver_unरेजिस्टर(&पूर्णांकel_th_pti_driver);
+	पूर्णांकel_th_driver_unरेजिस्टर(&पूर्णांकel_th_lpp_driver);
+पूर्ण
 
-module_exit(intel_th_pti_lpp_exit);
+module_निकास(पूर्णांकel_th_pti_lpp_निकास);
 
 MODULE_LICENSE("GPL v2");
 MODULE_DESCRIPTION("Intel(R) Trace Hub PTI/LPP output driver");

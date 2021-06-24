@@ -1,884 +1,885 @@
-// SPDX-License-Identifier: GPL-2.0
-/* nettest - used for functional tests of networking APIs
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+/* nettest - used क्रम functional tests of networking APIs
  *
  * Copyright (c) 2013-2019 David Ahern <dsahern@gmail.com>. All rights reserved.
  */
 
-#define _GNU_SOURCE
-#include <features.h>
-#include <sys/types.h>
-#include <sys/ioctl.h>
-#include <sys/socket.h>
-#include <sys/wait.h>
-#include <linux/tcp.h>
-#include <arpa/inet.h>
-#include <net/if.h>
-#include <netinet/in.h>
-#include <netdb.h>
-#include <fcntl.h>
-#include <libgen.h>
-#include <limits.h>
-#include <sched.h>
-#include <stdarg.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-#include <time.h>
-#include <errno.h>
+#घोषणा _GNU_SOURCE
+#समावेश <features.h>
+#समावेश <sys/types.h>
+#समावेश <sys/ioctl.h>
+#समावेश <sys/socket.h>
+#समावेश <sys/रुको.h>
+#समावेश <linux/tcp.h>
+#समावेश <arpa/inet.h>
+#समावेश <net/अगर.h>
+#समावेश <netinet/in.h>
+#समावेश <netdb.h>
+#समावेश <fcntl.h>
+#समावेश <libgen.h>
+#समावेश <सीमा.स>
+#समावेश <sched.h>
+#समावेश <मानकतर्क.स>
+#समावेश <मानकपन.स>
+#समावेश <मानककोष.स>
+#समावेश <माला.स>
+#समावेश <unistd.h>
+#समावेश <समय.स>
+#समावेश <त्रुटिसं.स>
 
-#ifndef IPV6_UNICAST_IF
-#define IPV6_UNICAST_IF         76
-#endif
-#ifndef IPV6_MULTICAST_IF
-#define IPV6_MULTICAST_IF       17
-#endif
+#अगर_अघोषित IPV6_UNICAST_IF
+#घोषणा IPV6_UNICAST_IF         76
+#पूर्ण_अगर
+#अगर_अघोषित IPV6_MULTICAST_IF
+#घोषणा IPV6_MULTICAST_IF       17
+#पूर्ण_अगर
 
-#define DEFAULT_PORT 12345
+#घोषणा DEFAULT_PORT 12345
 
-#define NS_PREFIX "/run/netns/"
+#घोषणा NS_PREFIX "/run/netns/"
 
-#ifndef MAX
-#define MAX(a, b)  ((a) > (b) ? (a) : (b))
-#endif
-#ifndef MIN
-#define MIN(a, b)  ((a) < (b) ? (a) : (b))
-#endif
+#अगर_अघोषित MAX
+#घोषणा MAX(a, b)  ((a) > (b) ? (a) : (b))
+#पूर्ण_अगर
+#अगर_अघोषित MIN
+#घोषणा MIN(a, b)  ((a) < (b) ? (a) : (b))
+#पूर्ण_अगर
 
-struct sock_args {
+काष्ठा sock_args अणु
 	/* local address */
-	const char *local_addr_str;
-	const char *client_local_addr_str;
-	union {
-		struct in_addr  in;
-		struct in6_addr in6;
-	} local_addr;
+	स्थिर अक्षर *local_addr_str;
+	स्थिर अक्षर *client_local_addr_str;
+	जोड़ अणु
+		काष्ठा in_addr  in;
+		काष्ठा in6_addr in6;
+	पूर्ण local_addr;
 
 	/* remote address */
-	const char *remote_addr_str;
-	union {
-		struct in_addr  in;
-		struct in6_addr in6;
-	} remote_addr;
-	int scope_id;  /* remote scope; v6 send only */
+	स्थिर अक्षर *remote_addr_str;
+	जोड़ अणु
+		काष्ठा in_addr  in;
+		काष्ठा in6_addr in6;
+	पूर्ण remote_addr;
+	पूर्णांक scope_id;  /* remote scope; v6 send only */
 
-	struct in_addr grp;     /* multicast group */
+	काष्ठा in_addr grp;     /* multicast group */
 
-	unsigned int has_local_ip:1,
+	अचिन्हित पूर्णांक has_local_ip:1,
 		     has_remote_ip:1,
 		     has_grp:1,
 		     has_expected_laddr:1,
 		     has_expected_raddr:1,
 		     bind_test_only:1;
 
-	unsigned short port;
+	अचिन्हित लघु port;
 
-	int type;      /* DGRAM, STREAM, RAW */
-	int protocol;
-	int version;   /* AF_INET/AF_INET6 */
+	पूर्णांक type;      /* DGRAM, STREAM, RAW */
+	पूर्णांक protocol;
+	पूर्णांक version;   /* AF_INET/AF_INET6 */
 
-	int use_setsockopt;
-	int use_cmsg;
-	const char *dev;
-	const char *server_dev;
-	int ifindex;
+	पूर्णांक use_setsockopt;
+	पूर्णांक use_cmsg;
+	स्थिर अक्षर *dev;
+	स्थिर अक्षर *server_dev;
+	पूर्णांक अगरindex;
 
-	const char *clientns;
-	const char *serverns;
+	स्थिर अक्षर *clientns;
+	स्थिर अक्षर *serverns;
 
-	const char *password;
-	const char *client_pw;
-	/* prefix for MD5 password */
-	const char *md5_prefix_str;
-	union {
-		struct sockaddr_in v4;
-		struct sockaddr_in6 v6;
-	} md5_prefix;
-	unsigned int prefix_len;
+	स्थिर अक्षर *password;
+	स्थिर अक्षर *client_pw;
+	/* prefix क्रम MD5 password */
+	स्थिर अक्षर *md5_prefix_str;
+	जोड़ अणु
+		काष्ठा sockaddr_in v4;
+		काष्ठा sockaddr_in6 v6;
+	पूर्ण md5_prefix;
+	अचिन्हित पूर्णांक prefix_len;
 
-	/* expected addresses and device index for connection */
-	const char *expected_dev;
-	const char *expected_server_dev;
-	int expected_ifindex;
+	/* expected addresses and device index क्रम connection */
+	स्थिर अक्षर *expected_dev;
+	स्थिर अक्षर *expected_server_dev;
+	पूर्णांक expected_अगरindex;
 
 	/* local address */
-	const char *expected_laddr_str;
-	union {
-		struct in_addr  in;
-		struct in6_addr in6;
-	} expected_laddr;
+	स्थिर अक्षर *expected_laddr_str;
+	जोड़ अणु
+		काष्ठा in_addr  in;
+		काष्ठा in6_addr in6;
+	पूर्ण expected_laddr;
 
 	/* remote address */
-	const char *expected_raddr_str;
-	union {
-		struct in_addr  in;
-		struct in6_addr in6;
-	} expected_raddr;
-};
+	स्थिर अक्षर *expected_raddr_str;
+	जोड़ अणु
+		काष्ठा in_addr  in;
+		काष्ठा in6_addr in6;
+	पूर्ण expected_raddr;
+पूर्ण;
 
-static int server_mode;
-static unsigned int prog_timeout = 5;
-static unsigned int interactive;
-static int iter = 1;
-static char *msg = "Hello world!";
-static int msglen;
-static int quiet;
-static int try_broadcast = 1;
+अटल पूर्णांक server_mode;
+अटल अचिन्हित पूर्णांक prog_समयout = 5;
+अटल अचिन्हित पूर्णांक पूर्णांकeractive;
+अटल पूर्णांक iter = 1;
+अटल अक्षर *msg = "Hello world!";
+अटल पूर्णांक msglen;
+अटल पूर्णांक quiet;
+अटल पूर्णांक try_broadcast = 1;
 
-static char *timestamp(char *timebuf, int buflen)
-{
-	time_t now;
+अटल अक्षर *बारtamp(अक्षर *समयbuf, पूर्णांक buflen)
+अणु
+	समय_प्रकार now;
 
-	now = time(NULL);
-	if (strftime(timebuf, buflen, "%T", localtime(&now)) == 0) {
-		memset(timebuf, 0, buflen);
-		strncpy(timebuf, "00:00:00", buflen-1);
-	}
+	now = समय(शून्य);
+	अगर (स_माला(समयbuf, buflen, "%T", स_स्थानीय(&now)) == 0) अणु
+		स_रखो(समयbuf, 0, buflen);
+		म_नकलन(समयbuf, "00:00:00", buflen-1);
+	पूर्ण
 
-	return timebuf;
-}
+	वापस समयbuf;
+पूर्ण
 
-static void log_msg(const char *format, ...)
-{
-	char timebuf[64];
-	va_list args;
+अटल व्योम log_msg(स्थिर अक्षर *क्रमmat, ...)
+अणु
+	अक्षर समयbuf[64];
+	बहु_सूची args;
 
-	if (quiet)
-		return;
+	अगर (quiet)
+		वापस;
 
-	fprintf(stdout, "%s %s:",
-		timestamp(timebuf, sizeof(timebuf)),
+	ख_लिखो(मानक_निकास, "%s %s:",
+		बारtamp(समयbuf, माप(समयbuf)),
 		server_mode ? "server" : "client");
-	va_start(args, format);
-	vfprintf(stdout, format, args);
-	va_end(args);
+	बहु_शुरू(args, क्रमmat);
+	भख_लिखो(मानक_निकास, क्रमmat, args);
+	बहु_पूर्ण(args);
 
-	fflush(stdout);
-}
+	ख_साफ(मानक_निकास);
+पूर्ण
 
-static void log_error(const char *format, ...)
-{
-	char timebuf[64];
-	va_list args;
+अटल व्योम log_error(स्थिर अक्षर *क्रमmat, ...)
+अणु
+	अक्षर समयbuf[64];
+	बहु_सूची args;
 
-	if (quiet)
-		return;
+	अगर (quiet)
+		वापस;
 
-	fprintf(stderr, "%s %s:",
-		timestamp(timebuf, sizeof(timebuf)),
+	ख_लिखो(मानक_त्रुटि, "%s %s:",
+		बारtamp(समयbuf, माप(समयbuf)),
 		server_mode ? "server" : "client");
-	va_start(args, format);
-	vfprintf(stderr, format, args);
-	va_end(args);
+	बहु_शुरू(args, क्रमmat);
+	भख_लिखो(मानक_त्रुटि, क्रमmat, args);
+	बहु_पूर्ण(args);
 
-	fflush(stderr);
-}
+	ख_साफ(मानक_त्रुटि);
+पूर्ण
 
-static void log_err_errno(const char *fmt, ...)
-{
-	char timebuf[64];
-	va_list args;
+अटल व्योम log_err_त्रुटि_सं(स्थिर अक्षर *fmt, ...)
+अणु
+	अक्षर समयbuf[64];
+	बहु_सूची args;
 
-	if (quiet)
-		return;
+	अगर (quiet)
+		वापस;
 
-	fprintf(stderr, "%s %s: ",
-		timestamp(timebuf, sizeof(timebuf)),
+	ख_लिखो(मानक_त्रुटि, "%s %s: ",
+		बारtamp(समयbuf, माप(समयbuf)),
 		server_mode ? "server" : "client");
-	va_start(args, fmt);
-	vfprintf(stderr, fmt, args);
-	va_end(args);
+	बहु_शुरू(args, fmt);
+	भख_लिखो(मानक_त्रुटि, fmt, args);
+	बहु_पूर्ण(args);
 
-	fprintf(stderr, ": %d: %s\n", errno, strerror(errno));
-	fflush(stderr);
-}
+	ख_लिखो(मानक_त्रुटि, ": %d: %s\n", त्रुटि_सं, म_त्रुटि(त्रुटि_सं));
+	ख_साफ(मानक_त्रुटि);
+पूर्ण
 
-static void log_address(const char *desc, struct sockaddr *sa)
-{
-	char addrstr[64];
+अटल व्योम log_address(स्थिर अक्षर *desc, काष्ठा sockaddr *sa)
+अणु
+	अक्षर addrstr[64];
 
-	if (quiet)
-		return;
+	अगर (quiet)
+		वापस;
 
-	if (sa->sa_family == AF_INET) {
-		struct sockaddr_in *s = (struct sockaddr_in *) sa;
+	अगर (sa->sa_family == AF_INET) अणु
+		काष्ठा sockaddr_in *s = (काष्ठा sockaddr_in *) sa;
 
 		log_msg("%s %s:%d\n",
 			desc,
 			inet_ntop(AF_INET, &s->sin_addr, addrstr,
-				  sizeof(addrstr)),
+				  माप(addrstr)),
 			ntohs(s->sin_port));
 
-	} else if (sa->sa_family == AF_INET6) {
-		struct sockaddr_in6 *s6 = (struct sockaddr_in6 *) sa;
+	पूर्ण अन्यथा अगर (sa->sa_family == AF_INET6) अणु
+		काष्ठा sockaddr_in6 *s6 = (काष्ठा sockaddr_in6 *) sa;
 
 		log_msg("%s [%s]:%d\n",
 			desc,
 			inet_ntop(AF_INET6, &s6->sin6_addr, addrstr,
-				  sizeof(addrstr)),
+				  माप(addrstr)),
 			ntohs(s6->sin6_port));
-	}
+	पूर्ण
 
-	fflush(stdout);
-}
+	ख_साफ(मानक_निकास);
+पूर्ण
 
-static int switch_ns(const char *ns)
-{
-	char path[PATH_MAX];
-	int fd, ret;
+अटल पूर्णांक चयन_ns(स्थिर अक्षर *ns)
+अणु
+	अक्षर path[PATH_MAX];
+	पूर्णांक fd, ret;
 
-	if (geteuid())
+	अगर (geteuid())
 		log_error("warning: likely need root to set netns %s!\n", ns);
 
-	snprintf(path, sizeof(path), "%s%s", NS_PREFIX, ns);
-	fd = open(path, 0);
-	if (fd < 0) {
-		log_err_errno("Failed to open netns path; can not switch netns");
-		return 1;
-	}
+	snम_लिखो(path, माप(path), "%s%s", NS_PREFIX, ns);
+	fd = खोलो(path, 0);
+	अगर (fd < 0) अणु
+		log_err_त्रुटि_सं("Failed to open netns path; can not switch netns");
+		वापस 1;
+	पूर्ण
 
 	ret = setns(fd, CLONE_NEWNET);
-	close(fd);
+	बंद(fd);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int tcp_md5sig(int sd, void *addr, socklen_t alen, struct sock_args *args)
-{
-	int keylen = strlen(args->password);
-	struct tcp_md5sig md5sig = {};
-	int opt = TCP_MD5SIG;
-	int rc;
+अटल पूर्णांक tcp_md5sig(पूर्णांक sd, व्योम *addr, socklen_t alen, काष्ठा sock_args *args)
+अणु
+	पूर्णांक keylen = म_माप(args->password);
+	काष्ठा tcp_md5sig md5sig = अणुपूर्ण;
+	पूर्णांक opt = TCP_MD5SIG;
+	पूर्णांक rc;
 
 	md5sig.tcpm_keylen = keylen;
-	memcpy(md5sig.tcpm_key, args->password, keylen);
+	स_नकल(md5sig.tcpm_key, args->password, keylen);
 
-	if (args->prefix_len) {
+	अगर (args->prefix_len) अणु
 		opt = TCP_MD5SIG_EXT;
 		md5sig.tcpm_flags |= TCP_MD5SIG_FLAG_PREFIX;
 
 		md5sig.tcpm_prefixlen = args->prefix_len;
 		addr = &args->md5_prefix;
-	}
-	memcpy(&md5sig.tcpm_addr, addr, alen);
+	पूर्ण
+	स_नकल(&md5sig.tcpm_addr, addr, alen);
 
-	if (args->ifindex) {
+	अगर (args->अगरindex) अणु
 		opt = TCP_MD5SIG_EXT;
 		md5sig.tcpm_flags |= TCP_MD5SIG_FLAG_IFINDEX;
 
-		md5sig.tcpm_ifindex = args->ifindex;
-	}
+		md5sig.tcpm_अगरindex = args->अगरindex;
+	पूर्ण
 
-	rc = setsockopt(sd, IPPROTO_TCP, opt, &md5sig, sizeof(md5sig));
-	if (rc < 0) {
+	rc = setsockopt(sd, IPPROTO_TCP, opt, &md5sig, माप(md5sig));
+	अगर (rc < 0) अणु
 		/* ENOENT is harmless. Returned when a password is cleared */
-		if (errno == ENOENT)
+		अगर (त्रुटि_सं == ENOENT)
 			rc = 0;
-		else
-			log_err_errno("setsockopt(TCP_MD5SIG)");
-	}
+		अन्यथा
+			log_err_त्रुटि_सं("setsockopt(TCP_MD5SIG)");
+	पूर्ण
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int tcp_md5_remote(int sd, struct sock_args *args)
-{
-	struct sockaddr_in sin = {
+अटल पूर्णांक tcp_md5_remote(पूर्णांक sd, काष्ठा sock_args *args)
+अणु
+	काष्ठा sockaddr_in sin = अणु
 		.sin_family = AF_INET,
-	};
-	struct sockaddr_in6 sin6 = {
+	पूर्ण;
+	काष्ठा sockaddr_in6 sin6 = अणु
 		.sin6_family = AF_INET6,
-	};
-	void *addr;
-	int alen;
+	पूर्ण;
+	व्योम *addr;
+	पूर्णांक alen;
 
-	switch (args->version) {
-	case AF_INET:
+	चयन (args->version) अणु
+	हाल AF_INET:
 		sin.sin_port = htons(args->port);
 		sin.sin_addr = args->md5_prefix.v4.sin_addr;
 		addr = &sin;
-		alen = sizeof(sin);
-		break;
-	case AF_INET6:
+		alen = माप(sin);
+		अवरोध;
+	हाल AF_INET6:
 		sin6.sin6_port = htons(args->port);
 		sin6.sin6_addr = args->md5_prefix.v6.sin6_addr;
 		addr = &sin6;
-		alen = sizeof(sin6);
-		break;
-	default:
+		alen = माप(sin6);
+		अवरोध;
+	शेष:
 		log_error("unknown address family\n");
-		exit(1);
-	}
+		निकास(1);
+	पूर्ण
 
-	if (tcp_md5sig(sd, addr, alen, args))
-		return -1;
+	अगर (tcp_md5sig(sd, addr, alen, args))
+		वापस -1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int get_ifidx(const char *ifname)
-{
-	struct ifreq ifdata;
-	int sd, rc;
+अटल पूर्णांक get_अगरidx(स्थिर अक्षर *अगरname)
+अणु
+	काष्ठा अगरreq अगरdata;
+	पूर्णांक sd, rc;
 
-	if (!ifname || *ifname == '\0')
-		return -1;
+	अगर (!अगरname || *अगरname == '\0')
+		वापस -1;
 
-	memset(&ifdata, 0, sizeof(ifdata));
+	स_रखो(&अगरdata, 0, माप(अगरdata));
 
-	strcpy(ifdata.ifr_name, ifname);
+	म_नकल(अगरdata.अगरr_name, अगरname);
 
 	sd = socket(PF_INET, SOCK_DGRAM, IPPROTO_IP);
-	if (sd < 0) {
-		log_err_errno("socket failed");
-		return -1;
-	}
+	अगर (sd < 0) अणु
+		log_err_त्रुटि_सं("socket failed");
+		वापस -1;
+	पूर्ण
 
-	rc = ioctl(sd, SIOCGIFINDEX, (char *)&ifdata);
-	close(sd);
-	if (rc != 0) {
-		log_err_errno("ioctl(SIOCGIFINDEX) failed");
-		return -1;
-	}
+	rc = ioctl(sd, SIOCGIFINDEX, (अक्षर *)&अगरdata);
+	बंद(sd);
+	अगर (rc != 0) अणु
+		log_err_त्रुटि_सं("ioctl(SIOCGIFINDEX) failed");
+		वापस -1;
+	पूर्ण
 
-	return ifdata.ifr_ifindex;
-}
+	वापस अगरdata.अगरr_अगरindex;
+पूर्ण
 
-static int bind_to_device(int sd, const char *name)
-{
-	int rc;
+अटल पूर्णांक bind_to_device(पूर्णांक sd, स्थिर अक्षर *name)
+अणु
+	पूर्णांक rc;
 
-	rc = setsockopt(sd, SOL_SOCKET, SO_BINDTODEVICE, name, strlen(name)+1);
-	if (rc < 0)
-		log_err_errno("setsockopt(SO_BINDTODEVICE)");
+	rc = setsockopt(sd, SOL_SOCKET, SO_BINDTODEVICE, name, म_माप(name)+1);
+	अगर (rc < 0)
+		log_err_त्रुटि_सं("setsockopt(SO_BINDTODEVICE)");
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int get_bind_to_device(int sd, char *name, size_t len)
-{
-	int rc;
+अटल पूर्णांक get_bind_to_device(पूर्णांक sd, अक्षर *name, माप_प्रकार len)
+अणु
+	पूर्णांक rc;
 	socklen_t optlen = len;
 
 	name[0] = '\0';
-	rc = getsockopt(sd, SOL_SOCKET, SO_BINDTODEVICE, name, &optlen);
-	if (rc < 0)
-		log_err_errno("setsockopt(SO_BINDTODEVICE)");
+	rc = माला_लोockopt(sd, SOL_SOCKET, SO_BINDTODEVICE, name, &optlen);
+	अगर (rc < 0)
+		log_err_त्रुटि_सं("setsockopt(SO_BINDTODEVICE)");
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int check_device(int sd, struct sock_args *args)
-{
-	int ifindex = 0;
-	char name[32];
+अटल पूर्णांक check_device(पूर्णांक sd, काष्ठा sock_args *args)
+अणु
+	पूर्णांक अगरindex = 0;
+	अक्षर name[32];
 
-	if (get_bind_to_device(sd, name, sizeof(name)))
+	अगर (get_bind_to_device(sd, name, माप(name)))
 		*name = '\0';
-	else
-		ifindex = get_ifidx(name);
+	अन्यथा
+		अगरindex = get_अगरidx(name);
 
 	log_msg("    bound to device %s/%d\n",
-		*name ? name : "<none>", ifindex);
+		*name ? name : "<none>", अगरindex);
 
-	if (!args->expected_ifindex)
-		return 0;
+	अगर (!args->expected_अगरindex)
+		वापस 0;
 
-	if (args->expected_ifindex != ifindex) {
+	अगर (args->expected_अगरindex != अगरindex) अणु
 		log_error("Device index mismatch: expected %d have %d\n",
-			  args->expected_ifindex, ifindex);
-		return 1;
-	}
+			  args->expected_अगरindex, अगरindex);
+		वापस 1;
+	पूर्ण
 
 	log_msg("Device index matches: expected %d have %d\n",
-		args->expected_ifindex, ifindex);
+		args->expected_अगरindex, अगरindex);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int set_pktinfo_v4(int sd)
-{
-	int one = 1;
-	int rc;
+अटल पूर्णांक set_pktinfo_v4(पूर्णांक sd)
+अणु
+	पूर्णांक one = 1;
+	पूर्णांक rc;
 
-	rc = setsockopt(sd, SOL_IP, IP_PKTINFO, &one, sizeof(one));
-	if (rc < 0 && rc != -ENOTSUP)
-		log_err_errno("setsockopt(IP_PKTINFO)");
+	rc = setsockopt(sd, SOL_IP, IP_PKTINFO, &one, माप(one));
+	अगर (rc < 0 && rc != -ENOTSUP)
+		log_err_त्रुटि_सं("setsockopt(IP_PKTINFO)");
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int set_recvpktinfo_v6(int sd)
-{
-	int one = 1;
-	int rc;
+अटल पूर्णांक set_recvpktinfo_v6(पूर्णांक sd)
+अणु
+	पूर्णांक one = 1;
+	पूर्णांक rc;
 
-	rc = setsockopt(sd, SOL_IPV6, IPV6_RECVPKTINFO, &one, sizeof(one));
-	if (rc < 0 && rc != -ENOTSUP)
-		log_err_errno("setsockopt(IPV6_RECVPKTINFO)");
+	rc = setsockopt(sd, SOL_IPV6, IPV6_RECVPKTINFO, &one, माप(one));
+	अगर (rc < 0 && rc != -ENOTSUP)
+		log_err_त्रुटि_सं("setsockopt(IPV6_RECVPKTINFO)");
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int set_recverr_v4(int sd)
-{
-	int one = 1;
-	int rc;
+अटल पूर्णांक set_recverr_v4(पूर्णांक sd)
+अणु
+	पूर्णांक one = 1;
+	पूर्णांक rc;
 
-	rc = setsockopt(sd, SOL_IP, IP_RECVERR, &one, sizeof(one));
-	if (rc < 0 && rc != -ENOTSUP)
-		log_err_errno("setsockopt(IP_RECVERR)");
+	rc = setsockopt(sd, SOL_IP, IP_RECVERR, &one, माप(one));
+	अगर (rc < 0 && rc != -ENOTSUP)
+		log_err_त्रुटि_सं("setsockopt(IP_RECVERR)");
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int set_recverr_v6(int sd)
-{
-	int one = 1;
-	int rc;
+अटल पूर्णांक set_recverr_v6(पूर्णांक sd)
+अणु
+	पूर्णांक one = 1;
+	पूर्णांक rc;
 
-	rc = setsockopt(sd, SOL_IPV6, IPV6_RECVERR, &one, sizeof(one));
-	if (rc < 0 && rc != -ENOTSUP)
-		log_err_errno("setsockopt(IPV6_RECVERR)");
+	rc = setsockopt(sd, SOL_IPV6, IPV6_RECVERR, &one, माप(one));
+	अगर (rc < 0 && rc != -ENOTSUP)
+		log_err_त्रुटि_सं("setsockopt(IPV6_RECVERR)");
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int set_unicast_if(int sd, int ifindex, int version)
-{
-	int opt = IP_UNICAST_IF;
-	int level = SOL_IP;
-	int rc;
+अटल पूर्णांक set_unicast_अगर(पूर्णांक sd, पूर्णांक अगरindex, पूर्णांक version)
+अणु
+	पूर्णांक opt = IP_UNICAST_IF;
+	पूर्णांक level = SOL_IP;
+	पूर्णांक rc;
 
-	ifindex = htonl(ifindex);
+	अगरindex = htonl(अगरindex);
 
-	if (version == AF_INET6) {
+	अगर (version == AF_INET6) अणु
 		opt = IPV6_UNICAST_IF;
 		level = SOL_IPV6;
-	}
-	rc = setsockopt(sd, level, opt, &ifindex, sizeof(ifindex));
-	if (rc < 0)
-		log_err_errno("setsockopt(IP_UNICAST_IF)");
+	पूर्ण
+	rc = setsockopt(sd, level, opt, &अगरindex, माप(अगरindex));
+	अगर (rc < 0)
+		log_err_त्रुटि_सं("setsockopt(IP_UNICAST_IF)");
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int set_multicast_if(int sd, int ifindex)
-{
-	struct ip_mreqn mreq = { .imr_ifindex = ifindex };
-	int rc;
+अटल पूर्णांक set_multicast_अगर(पूर्णांक sd, पूर्णांक अगरindex)
+अणु
+	काष्ठा ip_mreqn mreq = अणु .imr_अगरindex = अगरindex पूर्ण;
+	पूर्णांक rc;
 
-	rc = setsockopt(sd, SOL_IP, IP_MULTICAST_IF, &mreq, sizeof(mreq));
-	if (rc < 0)
-		log_err_errno("setsockopt(IP_MULTICAST_IF)");
+	rc = setsockopt(sd, SOL_IP, IP_MULTICAST_IF, &mreq, माप(mreq));
+	अगर (rc < 0)
+		log_err_त्रुटि_सं("setsockopt(IP_MULTICAST_IF)");
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int set_membership(int sd, uint32_t grp, uint32_t addr, int ifindex)
-{
-	uint32_t if_addr = addr;
-	struct ip_mreqn mreq;
-	int rc;
+अटल पूर्णांक set_membership(पूर्णांक sd, uपूर्णांक32_t grp, uपूर्णांक32_t addr, पूर्णांक अगरindex)
+अणु
+	uपूर्णांक32_t अगर_addr = addr;
+	काष्ठा ip_mreqn mreq;
+	पूर्णांक rc;
 
-	if (addr == htonl(INADDR_ANY) && !ifindex) {
+	अगर (addr == htonl(INADDR_ANY) && !अगरindex) अणु
 		log_error("Either local address or device needs to be given for multicast membership\n");
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
 	mreq.imr_multiaddr.s_addr = grp;
-	mreq.imr_address.s_addr = if_addr;
-	mreq.imr_ifindex = ifindex;
+	mreq.imr_address.s_addr = अगर_addr;
+	mreq.imr_अगरindex = अगरindex;
 
-	rc = setsockopt(sd, IPPROTO_IP, IP_ADD_MEMBERSHIP, &mreq, sizeof(mreq));
-	if (rc < 0) {
-		log_err_errno("setsockopt(IP_ADD_MEMBERSHIP)");
-		return -1;
-	}
+	rc = setsockopt(sd, IPPROTO_IP, IP_ADD_MEMBERSHIP, &mreq, माप(mreq));
+	अगर (rc < 0) अणु
+		log_err_त्रुटि_सं("setsockopt(IP_ADD_MEMBERSHIP)");
+		वापस -1;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int set_broadcast(int sd)
-{
-	unsigned int one = 1;
-	int rc = 0;
+अटल पूर्णांक set_broadcast(पूर्णांक sd)
+अणु
+	अचिन्हित पूर्णांक one = 1;
+	पूर्णांक rc = 0;
 
-	if (setsockopt(sd, SOL_SOCKET, SO_BROADCAST, &one, sizeof(one)) != 0) {
-		log_err_errno("setsockopt(SO_BROADCAST)");
+	अगर (setsockopt(sd, SOL_SOCKET, SO_BROADCAST, &one, माप(one)) != 0) अणु
+		log_err_त्रुटि_सं("setsockopt(SO_BROADCAST)");
 		rc = -1;
-	}
+	पूर्ण
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int set_reuseport(int sd)
-{
-	unsigned int one = 1;
-	int rc = 0;
+अटल पूर्णांक set_reuseport(पूर्णांक sd)
+अणु
+	अचिन्हित पूर्णांक one = 1;
+	पूर्णांक rc = 0;
 
-	if (setsockopt(sd, SOL_SOCKET, SO_REUSEPORT, &one, sizeof(one)) != 0) {
-		log_err_errno("setsockopt(SO_REUSEPORT)");
+	अगर (setsockopt(sd, SOL_SOCKET, SO_REUSEPORT, &one, माप(one)) != 0) अणु
+		log_err_त्रुटि_सं("setsockopt(SO_REUSEPORT)");
 		rc = -1;
-	}
+	पूर्ण
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int set_reuseaddr(int sd)
-{
-	unsigned int one = 1;
-	int rc = 0;
+अटल पूर्णांक set_reuseaddr(पूर्णांक sd)
+अणु
+	अचिन्हित पूर्णांक one = 1;
+	पूर्णांक rc = 0;
 
-	if (setsockopt(sd, SOL_SOCKET, SO_REUSEADDR, &one, sizeof(one)) != 0) {
-		log_err_errno("setsockopt(SO_REUSEADDR)");
+	अगर (setsockopt(sd, SOL_SOCKET, SO_REUSEADDR, &one, माप(one)) != 0) अणु
+		log_err_त्रुटि_सं("setsockopt(SO_REUSEADDR)");
 		rc = -1;
-	}
+	पूर्ण
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int str_to_uint(const char *str, int min, int max, unsigned int *value)
-{
-	int number;
-	char *end;
+अटल पूर्णांक str_to_uपूर्णांक(स्थिर अक्षर *str, पूर्णांक min, पूर्णांक max, अचिन्हित पूर्णांक *value)
+अणु
+	पूर्णांक number;
+	अक्षर *end;
 
-	errno = 0;
-	number = (unsigned int) strtoul(str, &end, 0);
+	त्रुटि_सं = 0;
+	number = (अचिन्हित पूर्णांक) म_से_अदीर्घ(str, &end, 0);
 
 	/* entire string should be consumed by conversion
 	 * and value should be between min and max
 	 */
-	if (((*end == '\0') || (*end == '\n')) && (end != str) &&
-	    (errno != ERANGE) && (min <= number) && (number <= max)) {
+	अगर (((*end == '\0') || (*end == '\n')) && (end != str) &&
+	    (त्रुटि_सं != दुस्फल) && (min <= number) && (number <= max)) अणु
 		*value = number;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	return -1;
-}
+	वापस -1;
+पूर्ण
 
-static int resolve_devices(struct sock_args *args)
-{
-	if (args->dev) {
-		args->ifindex = get_ifidx(args->dev);
-		if (args->ifindex < 0) {
+अटल पूर्णांक resolve_devices(काष्ठा sock_args *args)
+अणु
+	अगर (args->dev) अणु
+		args->अगरindex = get_अगरidx(args->dev);
+		अगर (args->अगरindex < 0) अणु
 			log_error("Invalid device name\n");
-			return 1;
-		}
-	}
+			वापस 1;
+		पूर्ण
+	पूर्ण
 
-	if (args->expected_dev) {
-		unsigned int tmp;
+	अगर (args->expected_dev) अणु
+		अचिन्हित पूर्णांक पंचांगp;
 
-		if (str_to_uint(args->expected_dev, 0, INT_MAX, &tmp) == 0) {
-			args->expected_ifindex = (int)tmp;
-		} else {
-			args->expected_ifindex = get_ifidx(args->expected_dev);
-			if (args->expected_ifindex < 0) {
-				fprintf(stderr, "Invalid expected device\n");
-				return 1;
-			}
-		}
-	}
+		अगर (str_to_uपूर्णांक(args->expected_dev, 0, पूर्णांक_उच्च, &पंचांगp) == 0) अणु
+			args->expected_अगरindex = (पूर्णांक)पंचांगp;
+		पूर्ण अन्यथा अणु
+			args->expected_अगरindex = get_अगरidx(args->expected_dev);
+			अगर (args->expected_अगरindex < 0) अणु
+				ख_लिखो(मानक_त्रुटि, "Invalid expected device\n");
+				वापस 1;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int expected_addr_match(struct sockaddr *sa, void *expected,
-			       const char *desc)
-{
-	char addrstr[64];
-	int rc = 0;
+अटल पूर्णांक expected_addr_match(काष्ठा sockaddr *sa, व्योम *expected,
+			       स्थिर अक्षर *desc)
+अणु
+	अक्षर addrstr[64];
+	पूर्णांक rc = 0;
 
-	if (sa->sa_family == AF_INET) {
-		struct sockaddr_in *s = (struct sockaddr_in *) sa;
-		struct in_addr *exp_in = (struct in_addr *) expected;
+	अगर (sa->sa_family == AF_INET) अणु
+		काष्ठा sockaddr_in *s = (काष्ठा sockaddr_in *) sa;
+		काष्ठा in_addr *exp_in = (काष्ठा in_addr *) expected;
 
-		if (s->sin_addr.s_addr != exp_in->s_addr) {
+		अगर (s->sin_addr.s_addr != exp_in->s_addr) अणु
 			log_error("%s address does not match expected %s\n",
 				  desc,
 				  inet_ntop(AF_INET, exp_in,
-					    addrstr, sizeof(addrstr)));
+					    addrstr, माप(addrstr)));
 			rc = 1;
-		}
-	} else if (sa->sa_family == AF_INET6) {
-		struct sockaddr_in6 *s6 = (struct sockaddr_in6 *) sa;
-		struct in6_addr *exp_in = (struct in6_addr *) expected;
+		पूर्ण
+	पूर्ण अन्यथा अगर (sa->sa_family == AF_INET6) अणु
+		काष्ठा sockaddr_in6 *s6 = (काष्ठा sockaddr_in6 *) sa;
+		काष्ठा in6_addr *exp_in = (काष्ठा in6_addr *) expected;
 
-		if (memcmp(&s6->sin6_addr, exp_in, sizeof(*exp_in))) {
+		अगर (स_भेद(&s6->sin6_addr, exp_in, माप(*exp_in))) अणु
 			log_error("%s address does not match expected %s\n",
 				  desc,
 				  inet_ntop(AF_INET6, exp_in,
-					    addrstr, sizeof(addrstr)));
+					    addrstr, माप(addrstr)));
 			rc = 1;
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		log_error("%s address does not match expected - unknown family\n",
 			  desc);
 		rc = 1;
-	}
+	पूर्ण
 
-	if (!rc)
+	अगर (!rc)
 		log_msg("%s address matches expected\n", desc);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int show_sockstat(int sd, struct sock_args *args)
-{
-	struct sockaddr_in6 local_addr, remote_addr;
-	socklen_t alen = sizeof(local_addr);
-	struct sockaddr *sa;
-	const char *desc;
-	int rc = 0;
+अटल पूर्णांक show_sockstat(पूर्णांक sd, काष्ठा sock_args *args)
+अणु
+	काष्ठा sockaddr_in6 local_addr, remote_addr;
+	socklen_t alen = माप(local_addr);
+	काष्ठा sockaddr *sa;
+	स्थिर अक्षर *desc;
+	पूर्णांक rc = 0;
 
 	desc = server_mode ? "server local:" : "client local:";
-	sa = (struct sockaddr *) &local_addr;
-	if (getsockname(sd, sa, &alen) == 0) {
+	sa = (काष्ठा sockaddr *) &local_addr;
+	अगर (माला_लोockname(sd, sa, &alen) == 0) अणु
 		log_address(desc, sa);
 
-		if (args->has_expected_laddr) {
+		अगर (args->has_expected_laddr) अणु
 			rc = expected_addr_match(sa, &args->expected_laddr,
 						 "local");
-		}
-	} else {
-		log_err_errno("getsockname failed");
-	}
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		log_err_त्रुटि_सं("getsockname failed");
+	पूर्ण
 
-	sa = (struct sockaddr *) &remote_addr;
+	sa = (काष्ठा sockaddr *) &remote_addr;
 	desc = server_mode ? "server peer:" : "client peer:";
-	if (getpeername(sd, sa, &alen) == 0) {
+	अगर (getpeername(sd, sa, &alen) == 0) अणु
 		log_address(desc, sa);
 
-		if (args->has_expected_raddr) {
+		अगर (args->has_expected_raddr) अणु
 			rc |= expected_addr_match(sa, &args->expected_raddr,
 						 "remote");
-		}
-	} else {
-		log_err_errno("getpeername failed");
-	}
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		log_err_त्रुटि_सं("getpeername failed");
+	पूर्ण
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-enum addr_type {
+क्रमागत addr_type अणु
 	ADDR_TYPE_LOCAL,
 	ADDR_TYPE_REMOTE,
 	ADDR_TYPE_MCAST,
 	ADDR_TYPE_EXPECTED_LOCAL,
 	ADDR_TYPE_EXPECTED_REMOTE,
 	ADDR_TYPE_MD5_PREFIX,
-};
+पूर्ण;
 
-static int convert_addr(struct sock_args *args, const char *_str,
-			enum addr_type atype)
-{
-	int pfx_len_max = args->version == AF_INET6 ? 128 : 32;
-	int family = args->version;
-	char *str, *dev, *sep;
-	struct in6_addr *in6;
-	struct in_addr  *in;
-	const char *desc;
-	void *addr;
-	int rc = 0;
+अटल पूर्णांक convert_addr(काष्ठा sock_args *args, स्थिर अक्षर *_str,
+			क्रमागत addr_type atype)
+अणु
+	पूर्णांक pfx_len_max = args->version == AF_INET6 ? 128 : 32;
+	पूर्णांक family = args->version;
+	अक्षर *str, *dev, *sep;
+	काष्ठा in6_addr *in6;
+	काष्ठा in_addr  *in;
+	स्थिर अक्षर *desc;
+	व्योम *addr;
+	पूर्णांक rc = 0;
 
 	str = strdup(_str);
-	if (!str)
-		return -ENOMEM;
+	अगर (!str)
+		वापस -ENOMEM;
 
-	switch (atype) {
-	case ADDR_TYPE_LOCAL:
+	चयन (atype) अणु
+	हाल ADDR_TYPE_LOCAL:
 		desc = "local";
 		addr = &args->local_addr;
-		break;
-	case ADDR_TYPE_REMOTE:
+		अवरोध;
+	हाल ADDR_TYPE_REMOTE:
 		desc = "remote";
 		addr = &args->remote_addr;
-		break;
-	case ADDR_TYPE_MCAST:
+		अवरोध;
+	हाल ADDR_TYPE_MCAST:
 		desc = "mcast grp";
 		addr = &args->grp;
-		break;
-	case ADDR_TYPE_EXPECTED_LOCAL:
+		अवरोध;
+	हाल ADDR_TYPE_EXPECTED_LOCAL:
 		desc = "expected local";
 		addr = &args->expected_laddr;
-		break;
-	case ADDR_TYPE_EXPECTED_REMOTE:
+		अवरोध;
+	हाल ADDR_TYPE_EXPECTED_REMOTE:
 		desc = "expected remote";
 		addr = &args->expected_raddr;
-		break;
-	case ADDR_TYPE_MD5_PREFIX:
+		अवरोध;
+	हाल ADDR_TYPE_MD5_PREFIX:
 		desc = "md5 prefix";
-		if (family == AF_INET) {
+		अगर (family == AF_INET) अणु
 			args->md5_prefix.v4.sin_family = AF_INET;
 			addr = &args->md5_prefix.v4.sin_addr;
-		} else if (family == AF_INET6) {
+		पूर्ण अन्यथा अगर (family == AF_INET6) अणु
 			args->md5_prefix.v6.sin6_family = AF_INET6;
 			addr = &args->md5_prefix.v6.sin6_addr;
-		} else
-			return 1;
+		पूर्ण अन्यथा
+			वापस 1;
 
-		sep = strchr(str, '/');
-		if (sep) {
+		sep = म_अक्षर(str, '/');
+		अगर (sep) अणु
 			*sep = '\0';
 			sep++;
-			if (str_to_uint(sep, 1, pfx_len_max,
-					&args->prefix_len) != 0) {
-				fprintf(stderr, "Invalid port\n");
-				return 1;
-			}
-		} else {
+			अगर (str_to_uपूर्णांक(sep, 1, pfx_len_max,
+					&args->prefix_len) != 0) अणु
+				ख_लिखो(मानक_त्रुटि, "Invalid port\n");
+				वापस 1;
+			पूर्ण
+		पूर्ण अन्यथा अणु
 			args->prefix_len = 0;
-		}
-		break;
-	default:
+		पूर्ण
+		अवरोध;
+	शेष:
 		log_error("unknown address type\n");
-		exit(1);
-	}
+		निकास(1);
+	पूर्ण
 
-	switch (family) {
-	case AF_INET:
-		in  = (struct in_addr *) addr;
-		if (str) {
-			if (inet_pton(AF_INET, str, in) == 0) {
+	चयन (family) अणु
+	हाल AF_INET:
+		in  = (काष्ठा in_addr *) addr;
+		अगर (str) अणु
+			अगर (inet_pton(AF_INET, str, in) == 0) अणु
 				log_error("Invalid %s IP address\n", desc);
 				rc = -1;
-				goto out;
-			}
-		} else {
+				जाओ out;
+			पूर्ण
+		पूर्ण अन्यथा अणु
 			in->s_addr = htonl(INADDR_ANY);
-		}
-		break;
+		पूर्ण
+		अवरोध;
 
-	case AF_INET6:
-		dev = strchr(str, '%');
-		if (dev) {
+	हाल AF_INET6:
+		dev = म_अक्षर(str, '%');
+		अगर (dev) अणु
 			*dev = '\0';
 			dev++;
-		}
+		पूर्ण
 
-		in6 = (struct in6_addr *) addr;
-		if (str) {
-			if (inet_pton(AF_INET6, str, in6) == 0) {
+		in6 = (काष्ठा in6_addr *) addr;
+		अगर (str) अणु
+			अगर (inet_pton(AF_INET6, str, in6) == 0) अणु
 				log_error("Invalid %s IPv6 address\n", desc);
 				rc = -1;
-				goto out;
-			}
-		} else {
+				जाओ out;
+			पूर्ण
+		पूर्ण अन्यथा अणु
 			*in6 = in6addr_any;
-		}
-		if (dev) {
-			args->scope_id = get_ifidx(dev);
-			if (args->scope_id < 0) {
+		पूर्ण
+		अगर (dev) अणु
+			args->scope_id = get_अगरidx(dev);
+			अगर (args->scope_id < 0) अणु
 				log_error("Invalid scope on %s IPv6 address\n",
 					  desc);
 				rc = -1;
-				goto out;
-			}
-		}
-		break;
+				जाओ out;
+			पूर्ण
+		पूर्ण
+		अवरोध;
 
-	default:
+	शेष:
 		log_error("Invalid address family\n");
-	}
+	पूर्ण
 
 out:
-	free(str);
-	return rc;
-}
+	मुक्त(str);
+	वापस rc;
+पूर्ण
 
-static int validate_addresses(struct sock_args *args)
-{
-	if (args->local_addr_str &&
+अटल पूर्णांक validate_addresses(काष्ठा sock_args *args)
+अणु
+	अगर (args->local_addr_str &&
 	    convert_addr(args, args->local_addr_str, ADDR_TYPE_LOCAL) < 0)
-		return 1;
+		वापस 1;
 
-	if (args->remote_addr_str &&
+	अगर (args->remote_addr_str &&
 	    convert_addr(args, args->remote_addr_str, ADDR_TYPE_REMOTE) < 0)
-		return 1;
+		वापस 1;
 
-	if (args->md5_prefix_str &&
+	अगर (args->md5_prefix_str &&
 	    convert_addr(args, args->md5_prefix_str,
 			 ADDR_TYPE_MD5_PREFIX) < 0)
-		return 1;
+		वापस 1;
 
-	if (args->expected_laddr_str &&
+	अगर (args->expected_laddr_str &&
 	    convert_addr(args, args->expected_laddr_str,
 			 ADDR_TYPE_EXPECTED_LOCAL))
-		return 1;
+		वापस 1;
 
-	if (args->expected_raddr_str &&
+	अगर (args->expected_raddr_str &&
 	    convert_addr(args, args->expected_raddr_str,
 			 ADDR_TYPE_EXPECTED_REMOTE))
-		return 1;
+		वापस 1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int get_index_from_cmsg(struct msghdr *m)
-{
-	struct cmsghdr *cm;
-	int ifindex = 0;
-	char buf[64];
+अटल पूर्णांक get_index_from_cmsg(काष्ठा msghdr *m)
+अणु
+	काष्ठा cmsghdr *cm;
+	पूर्णांक अगरindex = 0;
+	अक्षर buf[64];
 
-	for (cm = (struct cmsghdr *)CMSG_FIRSTHDR(m);
+	क्रम (cm = (काष्ठा cmsghdr *)CMSG_FIRSTHDR(m);
 	     m->msg_controllen != 0 && cm;
-	     cm = (struct cmsghdr *)CMSG_NXTHDR(m, cm)) {
+	     cm = (काष्ठा cmsghdr *)CMSG_NXTHDR(m, cm)) अणु
 
-		if (cm->cmsg_level == SOL_IP &&
-		    cm->cmsg_type == IP_PKTINFO) {
-			struct in_pktinfo *pi;
+		अगर (cm->cmsg_level == SOL_IP &&
+		    cm->cmsg_type == IP_PKTINFO) अणु
+			काष्ठा in_pktinfo *pi;
 
-			pi = (struct in_pktinfo *)(CMSG_DATA(cm));
-			inet_ntop(AF_INET, &pi->ipi_addr, buf, sizeof(buf));
-			ifindex = pi->ipi_ifindex;
-		} else if (cm->cmsg_level == SOL_IPV6 &&
-			   cm->cmsg_type == IPV6_PKTINFO) {
-			struct in6_pktinfo *pi6;
+			pi = (काष्ठा in_pktinfo *)(CMSG_DATA(cm));
+			inet_ntop(AF_INET, &pi->ipi_addr, buf, माप(buf));
+			अगरindex = pi->ipi_अगरindex;
+		पूर्ण अन्यथा अगर (cm->cmsg_level == SOL_IPV6 &&
+			   cm->cmsg_type == IPV6_PKTINFO) अणु
+			काष्ठा in6_pktinfo *pi6;
 
-			pi6 = (struct in6_pktinfo *)(CMSG_DATA(cm));
-			inet_ntop(AF_INET6, &pi6->ipi6_addr, buf, sizeof(buf));
-			ifindex = pi6->ipi6_ifindex;
-		}
-	}
+			pi6 = (काष्ठा in6_pktinfo *)(CMSG_DATA(cm));
+			inet_ntop(AF_INET6, &pi6->ipi6_addr, buf, माप(buf));
+			अगरindex = pi6->ipi6_अगरindex;
+		पूर्ण
+	पूर्ण
 
-	if (ifindex) {
+	अगर (अगरindex) अणु
 		log_msg("    pktinfo: ifindex %d dest addr %s\n",
-			ifindex, buf);
-	}
-	return ifindex;
-}
+			अगरindex, buf);
+	पूर्ण
+	वापस अगरindex;
+पूर्ण
 
-static int send_msg_no_cmsg(int sd, void *addr, socklen_t alen)
-{
-	int err;
+अटल पूर्णांक send_msg_no_cmsg(पूर्णांक sd, व्योम *addr, socklen_t alen)
+अणु
+	पूर्णांक err;
 
 again:
 	err = sendto(sd, msg, msglen, 0, addr, alen);
-	if (err < 0) {
-		if (errno == EACCES && try_broadcast) {
+	अगर (err < 0) अणु
+		अगर (त्रुटि_सं == EACCES && try_broadcast) अणु
 			try_broadcast = 0;
-			if (!set_broadcast(sd))
-				goto again;
-			errno = EACCES;
-		}
+			अगर (!set_broadcast(sd))
+				जाओ again;
+			त्रुटि_सं = EACCES;
+		पूर्ण
 
-		log_err_errno("sendto failed");
-		return 1;
-	}
+		log_err_त्रुटि_सं("sendto failed");
+		वापस 1;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int send_msg_cmsg(int sd, void *addr, socklen_t alen,
-			 int ifindex, int version)
-{
-	unsigned char cmsgbuf[64];
-	struct iovec iov[2];
-	struct cmsghdr *cm;
-	struct msghdr m;
-	int err;
+अटल पूर्णांक send_msg_cmsg(पूर्णांक sd, व्योम *addr, socklen_t alen,
+			 पूर्णांक अगरindex, पूर्णांक version)
+अणु
+	अचिन्हित अक्षर cmsgbuf[64];
+	काष्ठा iovec iov[2];
+	काष्ठा cmsghdr *cm;
+	काष्ठा msghdr m;
+	पूर्णांक err;
 
 	iov[0].iov_base = msg;
 	iov[0].iov_len = msglen;
@@ -887,846 +888,846 @@ static int send_msg_cmsg(int sd, void *addr, socklen_t alen,
 	m.msg_name = (caddr_t)addr;
 	m.msg_namelen = alen;
 
-	memset(cmsgbuf, 0, sizeof(cmsgbuf));
-	cm = (struct cmsghdr *)cmsgbuf;
+	स_रखो(cmsgbuf, 0, माप(cmsgbuf));
+	cm = (काष्ठा cmsghdr *)cmsgbuf;
 	m.msg_control = (caddr_t)cm;
 
-	if (version == AF_INET) {
-		struct in_pktinfo *pi;
+	अगर (version == AF_INET) अणु
+		काष्ठा in_pktinfo *pi;
 
 		cm->cmsg_level = SOL_IP;
 		cm->cmsg_type = IP_PKTINFO;
-		cm->cmsg_len = CMSG_LEN(sizeof(struct in_pktinfo));
-		pi = (struct in_pktinfo *)(CMSG_DATA(cm));
-		pi->ipi_ifindex = ifindex;
+		cm->cmsg_len = CMSG_LEN(माप(काष्ठा in_pktinfo));
+		pi = (काष्ठा in_pktinfo *)(CMSG_DATA(cm));
+		pi->ipi_अगरindex = अगरindex;
 
 		m.msg_controllen = cm->cmsg_len;
 
-	} else if (version == AF_INET6) {
-		struct in6_pktinfo *pi6;
+	पूर्ण अन्यथा अगर (version == AF_INET6) अणु
+		काष्ठा in6_pktinfo *pi6;
 
 		cm->cmsg_level = SOL_IPV6;
 		cm->cmsg_type = IPV6_PKTINFO;
-		cm->cmsg_len = CMSG_LEN(sizeof(struct in6_pktinfo));
+		cm->cmsg_len = CMSG_LEN(माप(काष्ठा in6_pktinfo));
 
-		pi6 = (struct in6_pktinfo *)(CMSG_DATA(cm));
-		pi6->ipi6_ifindex = ifindex;
+		pi6 = (काष्ठा in6_pktinfo *)(CMSG_DATA(cm));
+		pi6->ipi6_अगरindex = अगरindex;
 
 		m.msg_controllen = cm->cmsg_len;
-	}
+	पूर्ण
 
 again:
 	err = sendmsg(sd, &m, 0);
-	if (err < 0) {
-		if (errno == EACCES && try_broadcast) {
+	अगर (err < 0) अणु
+		अगर (त्रुटि_सं == EACCES && try_broadcast) अणु
 			try_broadcast = 0;
-			if (!set_broadcast(sd))
-				goto again;
-			errno = EACCES;
-		}
+			अगर (!set_broadcast(sd))
+				जाओ again;
+			त्रुटि_सं = EACCES;
+		पूर्ण
 
-		log_err_errno("sendmsg failed");
-		return 1;
-	}
+		log_err_त्रुटि_सं("sendmsg failed");
+		वापस 1;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
-static int send_msg(int sd, void *addr, socklen_t alen, struct sock_args *args)
-{
-	if (args->type == SOCK_STREAM) {
-		if (write(sd, msg, msglen) < 0) {
-			log_err_errno("write failed sending msg to peer");
-			return 1;
-		}
-	} else if (args->ifindex && args->use_cmsg) {
-		if (send_msg_cmsg(sd, addr, alen, args->ifindex, args->version))
-			return 1;
-	} else {
-		if (send_msg_no_cmsg(sd, addr, alen))
-			return 1;
-	}
+अटल पूर्णांक send_msg(पूर्णांक sd, व्योम *addr, socklen_t alen, काष्ठा sock_args *args)
+अणु
+	अगर (args->type == SOCK_STREAM) अणु
+		अगर (ग_लिखो(sd, msg, msglen) < 0) अणु
+			log_err_त्रुटि_सं("write failed sending msg to peer");
+			वापस 1;
+		पूर्ण
+	पूर्ण अन्यथा अगर (args->अगरindex && args->use_cmsg) अणु
+		अगर (send_msg_cmsg(sd, addr, alen, args->अगरindex, args->version))
+			वापस 1;
+	पूर्ण अन्यथा अणु
+		अगर (send_msg_no_cmsg(sd, addr, alen))
+			वापस 1;
+	पूर्ण
 
 	log_msg("Sent message:\n");
 	log_msg("    %.24s%s\n", msg, msglen > 24 ? " ..." : "");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int socket_read_dgram(int sd, struct sock_args *args)
-{
-	unsigned char addr[sizeof(struct sockaddr_in6)];
-	struct sockaddr *sa = (struct sockaddr *) addr;
-	socklen_t alen = sizeof(addr);
-	struct iovec iov[2];
-	struct msghdr m = {
+अटल पूर्णांक socket_पढ़ो_dgram(पूर्णांक sd, काष्ठा sock_args *args)
+अणु
+	अचिन्हित अक्षर addr[माप(काष्ठा sockaddr_in6)];
+	काष्ठा sockaddr *sa = (काष्ठा sockaddr *) addr;
+	socklen_t alen = माप(addr);
+	काष्ठा iovec iov[2];
+	काष्ठा msghdr m = अणु
 		.msg_name = (caddr_t)addr,
 		.msg_namelen = alen,
 		.msg_iov = iov,
 		.msg_iovlen = 1,
-	};
-	unsigned char cmsgbuf[256];
-	struct cmsghdr *cm = (struct cmsghdr *)cmsgbuf;
-	char buf[16*1024];
-	int ifindex;
-	int len;
+	पूर्ण;
+	अचिन्हित अक्षर cmsgbuf[256];
+	काष्ठा cmsghdr *cm = (काष्ठा cmsghdr *)cmsgbuf;
+	अक्षर buf[16*1024];
+	पूर्णांक अगरindex;
+	पूर्णांक len;
 
 	iov[0].iov_base = (caddr_t)buf;
-	iov[0].iov_len = sizeof(buf);
+	iov[0].iov_len = माप(buf);
 
-	memset(cmsgbuf, 0, sizeof(cmsgbuf));
+	स_रखो(cmsgbuf, 0, माप(cmsgbuf));
 	m.msg_control = (caddr_t)cm;
-	m.msg_controllen = sizeof(cmsgbuf);
+	m.msg_controllen = माप(cmsgbuf);
 
 	len = recvmsg(sd, &m, 0);
-	if (len == 0) {
+	अगर (len == 0) अणु
 		log_msg("peer closed connection.\n");
-		return 0;
-	} else if (len < 0) {
+		वापस 0;
+	पूर्ण अन्यथा अगर (len < 0) अणु
 		log_msg("failed to read message: %d: %s\n",
-			errno, strerror(errno));
-		return -1;
-	}
+			त्रुटि_सं, म_त्रुटि(त्रुटि_सं));
+		वापस -1;
+	पूर्ण
 
 	buf[len] = '\0';
 
 	log_address("Message from:", sa);
 	log_msg("    %.24s%s\n", buf, len > 24 ? " ..." : "");
 
-	ifindex = get_index_from_cmsg(&m);
-	if (args->expected_ifindex) {
-		if (args->expected_ifindex != ifindex) {
+	अगरindex = get_index_from_cmsg(&m);
+	अगर (args->expected_अगरindex) अणु
+		अगर (args->expected_अगरindex != अगरindex) अणु
 			log_error("Device index mismatch: expected %d have %d\n",
-				  args->expected_ifindex, ifindex);
-			return -1;
-		}
+				  args->expected_अगरindex, अगरindex);
+			वापस -1;
+		पूर्ण
 		log_msg("Device index matches: expected %d have %d\n",
-			args->expected_ifindex, ifindex);
-	}
+			args->expected_अगरindex, अगरindex);
+	पूर्ण
 
-	if (!interactive && server_mode) {
-		if (sa->sa_family == AF_INET6) {
-			struct sockaddr_in6 *s6 = (struct sockaddr_in6 *) sa;
-			struct in6_addr *in6 = &s6->sin6_addr;
+	अगर (!पूर्णांकeractive && server_mode) अणु
+		अगर (sa->sa_family == AF_INET6) अणु
+			काष्ठा sockaddr_in6 *s6 = (काष्ठा sockaddr_in6 *) sa;
+			काष्ठा in6_addr *in6 = &s6->sin6_addr;
 
-			if (IN6_IS_ADDR_V4MAPPED(in6)) {
-				const uint32_t *pa = (uint32_t *) &in6->s6_addr;
-				struct in_addr in4;
-				struct sockaddr_in *sin;
+			अगर (IN6_IS_ADDR_V4MAPPED(in6)) अणु
+				स्थिर uपूर्णांक32_t *pa = (uपूर्णांक32_t *) &in6->s6_addr;
+				काष्ठा in_addr in4;
+				काष्ठा sockaddr_in *sin;
 
-				sin = (struct sockaddr_in *) addr;
+				sin = (काष्ठा sockaddr_in *) addr;
 				pa += 3;
 				in4.s_addr = *pa;
 				sin->sin_addr = in4;
 				sin->sin_family = AF_INET;
-				if (send_msg_cmsg(sd, addr, alen,
-						  ifindex, AF_INET) < 0)
-					goto out_err;
-			}
-		}
+				अगर (send_msg_cmsg(sd, addr, alen,
+						  अगरindex, AF_INET) < 0)
+					जाओ out_err;
+			पूर्ण
+		पूर्ण
 again:
 		iov[0].iov_len = len;
 
-		if (args->version == AF_INET6) {
-			struct sockaddr_in6 *s6 = (struct sockaddr_in6 *) sa;
+		अगर (args->version == AF_INET6) अणु
+			काष्ठा sockaddr_in6 *s6 = (काष्ठा sockaddr_in6 *) sa;
 
-			if (args->dev) {
-				/* avoid PKTINFO conflicts with bindtodev */
-				if (sendto(sd, buf, len, 0,
-					   (void *) addr, alen) < 0)
-					goto out_err;
-			} else {
+			अगर (args->dev) अणु
+				/* aव्योम PKTINFO conflicts with bindtodev */
+				अगर (sendto(sd, buf, len, 0,
+					   (व्योम *) addr, alen) < 0)
+					जाओ out_err;
+			पूर्ण अन्यथा अणु
 				/* kernel is allowing scope_id to be set to VRF
-				 * index for LLA. for sends to global address
+				 * index क्रम LLA. क्रम sends to global address
 				 * reset scope id
 				 */
-				s6->sin6_scope_id = ifindex;
-				if (sendmsg(sd, &m, 0) < 0)
-					goto out_err;
-			}
-		} else {
-			int err;
+				s6->sin6_scope_id = अगरindex;
+				अगर (sendmsg(sd, &m, 0) < 0)
+					जाओ out_err;
+			पूर्ण
+		पूर्ण अन्यथा अणु
+			पूर्णांक err;
 
 			err = sendmsg(sd, &m, 0);
-			if (err < 0) {
-				if (errno == EACCES && try_broadcast) {
+			अगर (err < 0) अणु
+				अगर (त्रुटि_सं == EACCES && try_broadcast) अणु
 					try_broadcast = 0;
-					if (!set_broadcast(sd))
-						goto again;
-					errno = EACCES;
-				}
-				goto out_err;
-			}
-		}
+					अगर (!set_broadcast(sd))
+						जाओ again;
+					त्रुटि_सं = EACCES;
+				पूर्ण
+				जाओ out_err;
+			पूर्ण
+		पूर्ण
 		log_msg("Sent message:\n");
 		log_msg("    %.24s%s\n", buf, len > 24 ? " ..." : "");
-	}
+	पूर्ण
 
-	return 1;
+	वापस 1;
 out_err:
-	log_err_errno("failed to send msg to peer");
-	return -1;
-}
+	log_err_त्रुटि_सं("failed to send msg to peer");
+	वापस -1;
+पूर्ण
 
-static int socket_read_stream(int sd)
-{
-	char buf[1024];
-	int len;
+अटल पूर्णांक socket_पढ़ो_stream(पूर्णांक sd)
+अणु
+	अक्षर buf[1024];
+	पूर्णांक len;
 
-	len = read(sd, buf, sizeof(buf)-1);
-	if (len == 0) {
+	len = पढ़ो(sd, buf, माप(buf)-1);
+	अगर (len == 0) अणु
 		log_msg("client closed connection.\n");
-		return 0;
-	} else if (len < 0) {
+		वापस 0;
+	पूर्ण अन्यथा अगर (len < 0) अणु
 		log_msg("failed to read message\n");
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
 	buf[len] = '\0';
 	log_msg("Incoming message:\n");
 	log_msg("    %.24s%s\n", buf, len > 24 ? " ..." : "");
 
-	if (!interactive && server_mode) {
-		if (write(sd, buf, len) < 0) {
-			log_err_errno("failed to send buf");
-			return -1;
-		}
+	अगर (!पूर्णांकeractive && server_mode) अणु
+		अगर (ग_लिखो(sd, buf, len) < 0) अणु
+			log_err_त्रुटि_सं("failed to send buf");
+			वापस -1;
+		पूर्ण
 		log_msg("Sent message:\n");
 		log_msg("     %.24s%s\n", buf, len > 24 ? " ..." : "");
-	}
+	पूर्ण
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-static int socket_read(int sd, struct sock_args *args)
-{
-	if (args->type == SOCK_STREAM)
-		return socket_read_stream(sd);
+अटल पूर्णांक socket_पढ़ो(पूर्णांक sd, काष्ठा sock_args *args)
+अणु
+	अगर (args->type == SOCK_STREAM)
+		वापस socket_पढ़ो_stream(sd);
 
-	return socket_read_dgram(sd, args);
-}
+	वापस socket_पढ़ो_dgram(sd, args);
+पूर्ण
 
-static int stdin_to_socket(int sd, int type, void *addr, socklen_t alen)
-{
-	char buf[1024];
-	int len;
+अटल पूर्णांक मानक_निवेश_to_socket(पूर्णांक sd, पूर्णांक type, व्योम *addr, socklen_t alen)
+अणु
+	अक्षर buf[1024];
+	पूर्णांक len;
 
-	if (fgets(buf, sizeof(buf), stdin) == NULL)
-		return 0;
+	अगर (ख_माला_लो(buf, माप(buf), मानक_निवेश) == शून्य)
+		वापस 0;
 
-	len = strlen(buf);
-	if (type == SOCK_STREAM) {
-		if (write(sd, buf, len) < 0) {
-			log_err_errno("failed to send buf");
-			return -1;
-		}
-	} else {
-		int err;
+	len = म_माप(buf);
+	अगर (type == SOCK_STREAM) अणु
+		अगर (ग_लिखो(sd, buf, len) < 0) अणु
+			log_err_त्रुटि_सं("failed to send buf");
+			वापस -1;
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		पूर्णांक err;
 
 again:
 		err = sendto(sd, buf, len, 0, addr, alen);
-		if (err < 0) {
-			if (errno == EACCES && try_broadcast) {
+		अगर (err < 0) अणु
+			अगर (त्रुटि_सं == EACCES && try_broadcast) अणु
 				try_broadcast = 0;
-				if (!set_broadcast(sd))
-					goto again;
-				errno = EACCES;
-			}
-			log_err_errno("failed to send msg to peer");
-			return -1;
-		}
-	}
+				अगर (!set_broadcast(sd))
+					जाओ again;
+				त्रुटि_सं = EACCES;
+			पूर्ण
+			log_err_त्रुटि_सं("failed to send msg to peer");
+			वापस -1;
+		पूर्ण
+	पूर्ण
 	log_msg("Sent message:\n");
 	log_msg("    %.24s%s\n", buf, len > 24 ? " ..." : "");
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-static void set_recv_attr(int sd, int version)
-{
-	if (version == AF_INET6) {
+अटल व्योम set_recv_attr(पूर्णांक sd, पूर्णांक version)
+अणु
+	अगर (version == AF_INET6) अणु
 		set_recvpktinfo_v6(sd);
 		set_recverr_v6(sd);
-	} else {
+	पूर्ण अन्यथा अणु
 		set_pktinfo_v4(sd);
 		set_recverr_v4(sd);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int msg_loop(int client, int sd, void *addr, socklen_t alen,
-		    struct sock_args *args)
-{
-	struct timeval timeout = { .tv_sec = prog_timeout }, *ptval = NULL;
+अटल पूर्णांक msg_loop(पूर्णांक client, पूर्णांक sd, व्योम *addr, socklen_t alen,
+		    काष्ठा sock_args *args)
+अणु
+	काष्ठा समयval समयout = अणु .tv_sec = prog_समयout पूर्ण, *ptval = शून्य;
 	fd_set rfds;
-	int nfds;
-	int rc;
+	पूर्णांक nfds;
+	पूर्णांक rc;
 
-	if (args->type != SOCK_STREAM)
+	अगर (args->type != SOCK_STREAM)
 		set_recv_attr(sd, args->version);
 
-	if (msg) {
-		msglen = strlen(msg);
+	अगर (msg) अणु
+		msglen = म_माप(msg);
 
 		/* client sends first message */
-		if (client) {
-			if (send_msg(sd, addr, alen, args))
-				return 1;
-		}
-		if (!interactive) {
-			ptval = &timeout;
-			if (!prog_timeout)
-				timeout.tv_sec = 5;
-		}
-	}
+		अगर (client) अणु
+			अगर (send_msg(sd, addr, alen, args))
+				वापस 1;
+		पूर्ण
+		अगर (!पूर्णांकeractive) अणु
+			ptval = &समयout;
+			अगर (!prog_समयout)
+				समयout.tv_sec = 5;
+		पूर्ण
+	पूर्ण
 
-	nfds = interactive ? MAX(fileno(stdin), sd)  + 1 : sd + 1;
-	while (1) {
+	nfds = पूर्णांकeractive ? MAX(fileno(मानक_निवेश), sd)  + 1 : sd + 1;
+	जबतक (1) अणु
 		FD_ZERO(&rfds);
 		FD_SET(sd, &rfds);
-		if (interactive)
-			FD_SET(fileno(stdin), &rfds);
+		अगर (पूर्णांकeractive)
+			FD_SET(fileno(मानक_निवेश), &rfds);
 
-		rc = select(nfds, &rfds, NULL, NULL, ptval);
-		if (rc < 0) {
-			if (errno == EINTR)
-				continue;
+		rc = select(nfds, &rfds, शून्य, शून्य, ptval);
+		अगर (rc < 0) अणु
+			अगर (त्रुटि_सं == EINTR)
+				जारी;
 
 			rc = 1;
-			log_err_errno("select failed");
-			break;
-		} else if (rc == 0) {
+			log_err_त्रुटि_सं("select failed");
+			अवरोध;
+		पूर्ण अन्यथा अगर (rc == 0) अणु
 			log_error("Timed out waiting for response\n");
 			rc = 2;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		if (FD_ISSET(sd, &rfds)) {
-			rc = socket_read(sd, args);
-			if (rc < 0) {
+		अगर (FD_ISSET(sd, &rfds)) अणु
+			rc = socket_पढ़ो(sd, args);
+			अगर (rc < 0) अणु
 				rc = 1;
-				break;
-			}
-			if (rc == 0)
-				break;
-		}
+				अवरोध;
+			पूर्ण
+			अगर (rc == 0)
+				अवरोध;
+		पूर्ण
 
 		rc = 0;
 
-		if (FD_ISSET(fileno(stdin), &rfds)) {
-			if (stdin_to_socket(sd, args->type, addr, alen) <= 0)
-				break;
-		}
+		अगर (FD_ISSET(fileno(मानक_निवेश), &rfds)) अणु
+			अगर (मानक_निवेश_to_socket(sd, args->type, addr, alen) <= 0)
+				अवरोध;
+		पूर्ण
 
-		if (interactive)
-			continue;
+		अगर (पूर्णांकeractive)
+			जारी;
 
-		if (iter != -1) {
+		अगर (iter != -1) अणु
 			--iter;
-			if (iter == 0)
-				break;
-		}
+			अगर (iter == 0)
+				अवरोध;
+		पूर्ण
 
 		log_msg("Going into quiet mode\n");
 		quiet = 1;
 
-		if (client) {
-			if (send_msg(sd, addr, alen, args)) {
+		अगर (client) अणु
+			अगर (send_msg(sd, addr, alen, args)) अणु
 				rc = 1;
-				break;
-			}
-		}
-	}
+				अवरोध;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int msock_init(struct sock_args *args, int server)
-{
-	uint32_t if_addr = htonl(INADDR_ANY);
-	struct sockaddr_in laddr = {
+अटल पूर्णांक msock_init(काष्ठा sock_args *args, पूर्णांक server)
+अणु
+	uपूर्णांक32_t अगर_addr = htonl(INADDR_ANY);
+	काष्ठा sockaddr_in laddr = अणु
 		.sin_family = AF_INET,
 		.sin_port = htons(args->port),
-	};
-	int one = 1;
-	int sd;
+	पूर्ण;
+	पूर्णांक one = 1;
+	पूर्णांक sd;
 
-	if (!server && args->has_local_ip)
-		if_addr = args->local_addr.in.s_addr;
+	अगर (!server && args->has_local_ip)
+		अगर_addr = args->local_addr.in.s_addr;
 
 	sd = socket(PF_INET, SOCK_DGRAM, 0);
-	if (sd < 0) {
-		log_err_errno("socket");
-		return -1;
-	}
+	अगर (sd < 0) अणु
+		log_err_त्रुटि_सं("socket");
+		वापस -1;
+	पूर्ण
 
-	if (setsockopt(sd, SOL_SOCKET, SO_REUSEADDR,
-		       (char *)&one, sizeof(one)) < 0) {
-		log_err_errno("Setting SO_REUSEADDR error");
-		goto out_err;
-	}
+	अगर (setsockopt(sd, SOL_SOCKET, SO_REUSEADDR,
+		       (अक्षर *)&one, माप(one)) < 0) अणु
+		log_err_त्रुटि_सं("Setting SO_REUSEADDR error");
+		जाओ out_err;
+	पूर्ण
 
-	if (setsockopt(sd, SOL_SOCKET, SO_BROADCAST,
-		       (char *)&one, sizeof(one)) < 0)
-		log_err_errno("Setting SO_BROADCAST error");
+	अगर (setsockopt(sd, SOL_SOCKET, SO_BROADCAST,
+		       (अक्षर *)&one, माप(one)) < 0)
+		log_err_त्रुटि_सं("Setting SO_BROADCAST error");
 
-	if (args->dev && bind_to_device(sd, args->dev) != 0)
-		goto out_err;
-	else if (args->use_setsockopt &&
-		 set_multicast_if(sd, args->ifindex))
-		goto out_err;
+	अगर (args->dev && bind_to_device(sd, args->dev) != 0)
+		जाओ out_err;
+	अन्यथा अगर (args->use_setsockopt &&
+		 set_multicast_अगर(sd, args->अगरindex))
+		जाओ out_err;
 
-	laddr.sin_addr.s_addr = if_addr;
+	laddr.sin_addr.s_addr = अगर_addr;
 
-	if (bind(sd, (struct sockaddr *) &laddr, sizeof(laddr)) < 0) {
-		log_err_errno("bind failed");
-		goto out_err;
-	}
+	अगर (bind(sd, (काष्ठा sockaddr *) &laddr, माप(laddr)) < 0) अणु
+		log_err_त्रुटि_सं("bind failed");
+		जाओ out_err;
+	पूर्ण
 
-	if (server &&
+	अगर (server &&
 	    set_membership(sd, args->grp.s_addr,
-			   args->local_addr.in.s_addr, args->ifindex))
-		goto out_err;
+			   args->local_addr.in.s_addr, args->अगरindex))
+		जाओ out_err;
 
-	return sd;
+	वापस sd;
 out_err:
-	close(sd);
-	return -1;
-}
+	बंद(sd);
+	वापस -1;
+पूर्ण
 
-static int msock_server(struct sock_args *args)
-{
-	return msock_init(args, 1);
-}
+अटल पूर्णांक msock_server(काष्ठा sock_args *args)
+अणु
+	वापस msock_init(args, 1);
+पूर्ण
 
-static int msock_client(struct sock_args *args)
-{
-	return msock_init(args, 0);
-}
+अटल पूर्णांक msock_client(काष्ठा sock_args *args)
+अणु
+	वापस msock_init(args, 0);
+पूर्ण
 
-static int bind_socket(int sd, struct sock_args *args)
-{
-	struct sockaddr_in serv_addr = {
+अटल पूर्णांक bind_socket(पूर्णांक sd, काष्ठा sock_args *args)
+अणु
+	काष्ठा sockaddr_in serv_addr = अणु
 		.sin_family = AF_INET,
-	};
-	struct sockaddr_in6 serv6_addr = {
+	पूर्ण;
+	काष्ठा sockaddr_in6 serv6_addr = अणु
 		.sin6_family = AF_INET6,
-	};
-	void *addr;
+	पूर्ण;
+	व्योम *addr;
 	socklen_t alen;
 
-	if (!args->has_local_ip && args->type == SOCK_RAW)
-		return 0;
+	अगर (!args->has_local_ip && args->type == SOCK_RAW)
+		वापस 0;
 
-	switch (args->version) {
-	case AF_INET:
+	चयन (args->version) अणु
+	हाल AF_INET:
 		serv_addr.sin_port = htons(args->port);
 		serv_addr.sin_addr = args->local_addr.in;
 		addr = &serv_addr;
-		alen = sizeof(serv_addr);
-		break;
+		alen = माप(serv_addr);
+		अवरोध;
 
-	case AF_INET6:
+	हाल AF_INET6:
 		serv6_addr.sin6_port = htons(args->port);
 		serv6_addr.sin6_addr = args->local_addr.in6;
 		addr = &serv6_addr;
-		alen = sizeof(serv6_addr);
-		break;
+		alen = माप(serv6_addr);
+		अवरोध;
 
-	default:
+	शेष:
 		log_error("Invalid address family\n");
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
-	if (bind(sd, addr, alen) < 0) {
-		log_err_errno("error binding socket");
-		return -1;
-	}
+	अगर (bind(sd, addr, alen) < 0) अणु
+		log_err_त्रुटि_सं("error binding socket");
+		वापस -1;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int lsock_init(struct sock_args *args)
-{
-	long flags;
-	int sd;
+अटल पूर्णांक lsock_init(काष्ठा sock_args *args)
+अणु
+	दीर्घ flags;
+	पूर्णांक sd;
 
 	sd = socket(args->version, args->type, args->protocol);
-	if (sd < 0) {
-		log_err_errno("Error opening socket");
-		return  -1;
-	}
+	अगर (sd < 0) अणु
+		log_err_त्रुटि_सं("Error opening socket");
+		वापस  -1;
+	पूर्ण
 
-	if (set_reuseaddr(sd) != 0)
-		goto err;
+	अगर (set_reuseaddr(sd) != 0)
+		जाओ err;
 
-	if (set_reuseport(sd) != 0)
-		goto err;
+	अगर (set_reuseport(sd) != 0)
+		जाओ err;
 
-	if (args->dev && bind_to_device(sd, args->dev) != 0)
-		goto err;
-	else if (args->use_setsockopt &&
-		 set_unicast_if(sd, args->ifindex, args->version))
-		goto err;
+	अगर (args->dev && bind_to_device(sd, args->dev) != 0)
+		जाओ err;
+	अन्यथा अगर (args->use_setsockopt &&
+		 set_unicast_अगर(sd, args->अगरindex, args->version))
+		जाओ err;
 
-	if (bind_socket(sd, args))
-		goto err;
+	अगर (bind_socket(sd, args))
+		जाओ err;
 
-	if (args->bind_test_only)
-		goto out;
+	अगर (args->bind_test_only)
+		जाओ out;
 
-	if (args->type == SOCK_STREAM && listen(sd, 1) < 0) {
-		log_err_errno("listen failed");
-		goto err;
-	}
+	अगर (args->type == SOCK_STREAM && listen(sd, 1) < 0) अणु
+		log_err_त्रुटि_सं("listen failed");
+		जाओ err;
+	पूर्ण
 
 	flags = fcntl(sd, F_GETFL);
-	if ((flags < 0) || (fcntl(sd, F_SETFL, flags|O_NONBLOCK) < 0)) {
-		log_err_errno("Failed to set non-blocking option");
-		goto err;
-	}
+	अगर ((flags < 0) || (fcntl(sd, F_SETFL, flags|O_NONBLOCK) < 0)) अणु
+		log_err_त्रुटि_सं("Failed to set non-blocking option");
+		जाओ err;
+	पूर्ण
 
-	if (fcntl(sd, F_SETFD, FD_CLOEXEC) < 0)
-		log_err_errno("Failed to set close-on-exec flag");
+	अगर (fcntl(sd, F_SETFD, FD_CLOEXEC) < 0)
+		log_err_त्रुटि_सं("Failed to set close-on-exec flag");
 
 out:
-	return sd;
+	वापस sd;
 
 err:
-	close(sd);
-	return -1;
-}
+	बंद(sd);
+	वापस -1;
+पूर्ण
 
-static void ipc_write(int fd, int message)
-{
-	/* Not in both_mode, so there's no process to signal */
-	if (fd < 0)
-		return;
+अटल व्योम ipc_ग_लिखो(पूर्णांक fd, पूर्णांक message)
+अणु
+	/* Not in both_mode, so there's no process to संकेत */
+	अगर (fd < 0)
+		वापस;
 
-	if (write(fd, &message, sizeof(message)) < 0)
-		log_err_errno("Failed to send client status");
-}
+	अगर (ग_लिखो(fd, &message, माप(message)) < 0)
+		log_err_त्रुटि_सं("Failed to send client status");
+पूर्ण
 
-static int do_server(struct sock_args *args, int ipc_fd)
-{
-	/* ipc_fd = -1 if no parent process to signal */
-	struct timeval timeout = { .tv_sec = prog_timeout }, *ptval = NULL;
-	unsigned char addr[sizeof(struct sockaddr_in6)] = {};
-	socklen_t alen = sizeof(addr);
-	int lsd, csd = -1;
+अटल पूर्णांक करो_server(काष्ठा sock_args *args, पूर्णांक ipc_fd)
+अणु
+	/* ipc_fd = -1 अगर no parent process to संकेत */
+	काष्ठा समयval समयout = अणु .tv_sec = prog_समयout पूर्ण, *ptval = शून्य;
+	अचिन्हित अक्षर addr[माप(काष्ठा sockaddr_in6)] = अणुपूर्ण;
+	socklen_t alen = माप(addr);
+	पूर्णांक lsd, csd = -1;
 
 	fd_set rfds;
-	int rc;
+	पूर्णांक rc;
 
-	if (args->serverns) {
-		if (switch_ns(args->serverns)) {
+	अगर (args->serverns) अणु
+		अगर (चयन_ns(args->serverns)) अणु
 			log_error("Could not set server netns to %s\n",
 				  args->serverns);
-			goto err_exit;
-		}
+			जाओ err_निकास;
+		पूर्ण
 		log_msg("Switched server netns\n");
-	}
+	पूर्ण
 
 	args->dev = args->server_dev;
 	args->expected_dev = args->expected_server_dev;
-	if (resolve_devices(args) || validate_addresses(args))
-		goto err_exit;
+	अगर (resolve_devices(args) || validate_addresses(args))
+		जाओ err_निकास;
 
-	if (prog_timeout)
-		ptval = &timeout;
+	अगर (prog_समयout)
+		ptval = &समयout;
 
-	if (args->has_grp)
+	अगर (args->has_grp)
 		lsd = msock_server(args);
-	else
+	अन्यथा
 		lsd = lsock_init(args);
 
-	if (lsd < 0)
-		goto err_exit;
+	अगर (lsd < 0)
+		जाओ err_निकास;
 
-	if (args->bind_test_only) {
-		close(lsd);
-		ipc_write(ipc_fd, 1);
-		return 0;
-	}
+	अगर (args->bind_test_only) अणु
+		बंद(lsd);
+		ipc_ग_लिखो(ipc_fd, 1);
+		वापस 0;
+	पूर्ण
 
-	if (args->type != SOCK_STREAM) {
-		ipc_write(ipc_fd, 1);
-		rc = msg_loop(0, lsd, (void *) addr, alen, args);
-		close(lsd);
-		return rc;
-	}
+	अगर (args->type != SOCK_STREAM) अणु
+		ipc_ग_लिखो(ipc_fd, 1);
+		rc = msg_loop(0, lsd, (व्योम *) addr, alen, args);
+		बंद(lsd);
+		वापस rc;
+	पूर्ण
 
-	if (args->password && tcp_md5_remote(lsd, args)) {
-		close(lsd);
-		goto err_exit;
-	}
+	अगर (args->password && tcp_md5_remote(lsd, args)) अणु
+		बंद(lsd);
+		जाओ err_निकास;
+	पूर्ण
 
-	ipc_write(ipc_fd, 1);
-	while (1) {
+	ipc_ग_लिखो(ipc_fd, 1);
+	जबतक (1) अणु
 		log_msg("waiting for client connection.\n");
 		FD_ZERO(&rfds);
 		FD_SET(lsd, &rfds);
 
-		rc = select(lsd+1, &rfds, NULL, NULL, ptval);
-		if (rc == 0) {
+		rc = select(lsd+1, &rfds, शून्य, शून्य, ptval);
+		अगर (rc == 0) अणु
 			rc = 2;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		if (rc < 0) {
-			if (errno == EINTR)
-				continue;
+		अगर (rc < 0) अणु
+			अगर (त्रुटि_सं == EINTR)
+				जारी;
 
-			log_err_errno("select failed");
-			break;
-		}
+			log_err_त्रुटि_सं("select failed");
+			अवरोध;
+		पूर्ण
 
-		if (FD_ISSET(lsd, &rfds)) {
+		अगर (FD_ISSET(lsd, &rfds)) अणु
 
-			csd = accept(lsd, (void *) addr, &alen);
-			if (csd < 0) {
-				log_err_errno("accept failed");
-				break;
-			}
+			csd = accept(lsd, (व्योम *) addr, &alen);
+			अगर (csd < 0) अणु
+				log_err_त्रुटि_सं("accept failed");
+				अवरोध;
+			पूर्ण
 
 			rc = show_sockstat(csd, args);
-			if (rc)
-				break;
+			अगर (rc)
+				अवरोध;
 
 			rc = check_device(csd, args);
-			if (rc)
-				break;
-		}
+			अगर (rc)
+				अवरोध;
+		पूर्ण
 
-		rc = msg_loop(0, csd, (void *) addr, alen, args);
-		close(csd);
+		rc = msg_loop(0, csd, (व्योम *) addr, alen, args);
+		बंद(csd);
 
-		if (!interactive)
-			break;
-	}
+		अगर (!पूर्णांकeractive)
+			अवरोध;
+	पूर्ण
 
-	close(lsd);
+	बंद(lsd);
 
-	return rc;
-err_exit:
-	ipc_write(ipc_fd, 0);
-	return 1;
-}
+	वापस rc;
+err_निकास:
+	ipc_ग_लिखो(ipc_fd, 0);
+	वापस 1;
+पूर्ण
 
-static int wait_for_connect(int sd)
-{
-	struct timeval _tv = { .tv_sec = prog_timeout }, *tv = NULL;
+अटल पूर्णांक रुको_क्रम_connect(पूर्णांक sd)
+अणु
+	काष्ठा समयval _tv = अणु .tv_sec = prog_समयout पूर्ण, *tv = शून्य;
 	fd_set wfd;
-	int val = 0, sz = sizeof(val);
-	int rc;
+	पूर्णांक val = 0, sz = माप(val);
+	पूर्णांक rc;
 
 	FD_ZERO(&wfd);
 	FD_SET(sd, &wfd);
 
-	if (prog_timeout)
+	अगर (prog_समयout)
 		tv = &_tv;
 
-	rc = select(FD_SETSIZE, NULL, &wfd, NULL, tv);
-	if (rc == 0) {
+	rc = select(FD_SETSIZE, शून्य, &wfd, शून्य, tv);
+	अगर (rc == 0) अणु
 		log_error("connect timed out\n");
-		return -2;
-	} else if (rc < 0) {
-		log_err_errno("select failed");
-		return -3;
-	}
+		वापस -2;
+	पूर्ण अन्यथा अगर (rc < 0) अणु
+		log_err_त्रुटि_सं("select failed");
+		वापस -3;
+	पूर्ण
 
-	if (getsockopt(sd, SOL_SOCKET, SO_ERROR, &val, (socklen_t *)&sz) < 0) {
-		log_err_errno("getsockopt(SO_ERROR) failed");
-		return -4;
-	}
+	अगर (माला_लोockopt(sd, SOL_SOCKET, SO_ERROR, &val, (socklen_t *)&sz) < 0) अणु
+		log_err_त्रुटि_सं("getsockopt(SO_ERROR) failed");
+		वापस -4;
+	पूर्ण
 
-	if (val != 0) {
-		log_error("connect failed: %d: %s\n", val, strerror(val));
-		return -1;
-	}
+	अगर (val != 0) अणु
+		log_error("connect failed: %d: %s\n", val, म_त्रुटि(val));
+		वापस -1;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int connectsock(void *addr, socklen_t alen, struct sock_args *args)
-{
-	int sd, rc = -1;
-	long flags;
+अटल पूर्णांक connectsock(व्योम *addr, socklen_t alen, काष्ठा sock_args *args)
+अणु
+	पूर्णांक sd, rc = -1;
+	दीर्घ flags;
 
 	sd = socket(args->version, args->type, args->protocol);
-	if (sd < 0) {
-		log_err_errno("Failed to create socket");
-		return -1;
-	}
+	अगर (sd < 0) अणु
+		log_err_त्रुटि_सं("Failed to create socket");
+		वापस -1;
+	पूर्ण
 
 	flags = fcntl(sd, F_GETFL);
-	if ((flags < 0) || (fcntl(sd, F_SETFL, flags|O_NONBLOCK) < 0)) {
-		log_err_errno("Failed to set non-blocking option");
-		goto err;
-	}
+	अगर ((flags < 0) || (fcntl(sd, F_SETFL, flags|O_NONBLOCK) < 0)) अणु
+		log_err_त्रुटि_सं("Failed to set non-blocking option");
+		जाओ err;
+	पूर्ण
 
-	if (set_reuseport(sd) != 0)
-		goto err;
+	अगर (set_reuseport(sd) != 0)
+		जाओ err;
 
-	if (args->dev && bind_to_device(sd, args->dev) != 0)
-		goto err;
-	else if (args->use_setsockopt &&
-		 set_unicast_if(sd, args->ifindex, args->version))
-		goto err;
+	अगर (args->dev && bind_to_device(sd, args->dev) != 0)
+		जाओ err;
+	अन्यथा अगर (args->use_setsockopt &&
+		 set_unicast_अगर(sd, args->अगरindex, args->version))
+		जाओ err;
 
-	if (args->has_local_ip && bind_socket(sd, args))
-		goto err;
+	अगर (args->has_local_ip && bind_socket(sd, args))
+		जाओ err;
 
-	if (args->type != SOCK_STREAM)
-		goto out;
+	अगर (args->type != SOCK_STREAM)
+		जाओ out;
 
-	if (args->password && tcp_md5sig(sd, addr, alen, args))
-		goto err;
+	अगर (args->password && tcp_md5sig(sd, addr, alen, args))
+		जाओ err;
 
-	if (args->bind_test_only)
-		goto out;
+	अगर (args->bind_test_only)
+		जाओ out;
 
-	if (connect(sd, addr, alen) < 0) {
-		if (errno != EINPROGRESS) {
-			log_err_errno("Failed to connect to remote host");
+	अगर (connect(sd, addr, alen) < 0) अणु
+		अगर (त्रुटि_सं != EINPROGRESS) अणु
+			log_err_त्रुटि_सं("Failed to connect to remote host");
 			rc = -1;
-			goto err;
-		}
-		rc = wait_for_connect(sd);
-		if (rc < 0)
-			goto err;
-	}
+			जाओ err;
+		पूर्ण
+		rc = रुको_क्रम_connect(sd);
+		अगर (rc < 0)
+			जाओ err;
+	पूर्ण
 out:
-	return sd;
+	वापस sd;
 
 err:
-	close(sd);
-	return rc;
-}
+	बंद(sd);
+	वापस rc;
+पूर्ण
 
-static int do_client(struct sock_args *args)
-{
-	struct sockaddr_in sin = {
+अटल पूर्णांक करो_client(काष्ठा sock_args *args)
+अणु
+	काष्ठा sockaddr_in sin = अणु
 		.sin_family = AF_INET,
-	};
-	struct sockaddr_in6 sin6 = {
+	पूर्ण;
+	काष्ठा sockaddr_in6 sin6 = अणु
 		.sin6_family = AF_INET6,
-	};
-	void *addr;
-	int alen;
-	int rc = 0;
-	int sd;
+	पूर्ण;
+	व्योम *addr;
+	पूर्णांक alen;
+	पूर्णांक rc = 0;
+	पूर्णांक sd;
 
-	if (!args->has_remote_ip && !args->has_grp) {
-		fprintf(stderr, "remote IP or multicast group not given\n");
-		return 1;
-	}
+	अगर (!args->has_remote_ip && !args->has_grp) अणु
+		ख_लिखो(मानक_त्रुटि, "remote IP or multicast group not given\n");
+		वापस 1;
+	पूर्ण
 
-	if (args->clientns) {
-		if (switch_ns(args->clientns)) {
+	अगर (args->clientns) अणु
+		अगर (चयन_ns(args->clientns)) अणु
 			log_error("Could not set client netns to %s\n",
 				  args->clientns);
-			return 1;
-		}
+			वापस 1;
+		पूर्ण
 		log_msg("Switched client netns\n");
-	}
+	पूर्ण
 
 	args->local_addr_str = args->client_local_addr_str;
-	if (resolve_devices(args) || validate_addresses(args))
-		return 1;
+	अगर (resolve_devices(args) || validate_addresses(args))
+		वापस 1;
 
-	if ((args->use_setsockopt || args->use_cmsg) && !args->ifindex) {
-		fprintf(stderr, "Device binding not specified\n");
-		return 1;
-	}
-	if (args->use_setsockopt || args->use_cmsg)
-		args->dev = NULL;
+	अगर ((args->use_setsockopt || args->use_cmsg) && !args->अगरindex) अणु
+		ख_लिखो(मानक_त्रुटि, "Device binding not specified\n");
+		वापस 1;
+	पूर्ण
+	अगर (args->use_setsockopt || args->use_cmsg)
+		args->dev = शून्य;
 
-	switch (args->version) {
-	case AF_INET:
+	चयन (args->version) अणु
+	हाल AF_INET:
 		sin.sin_port = htons(args->port);
-		if (args->has_grp)
+		अगर (args->has_grp)
 			sin.sin_addr = args->grp;
-		else
+		अन्यथा
 			sin.sin_addr = args->remote_addr.in;
 		addr = &sin;
-		alen = sizeof(sin);
-		break;
-	case AF_INET6:
+		alen = माप(sin);
+		अवरोध;
+	हाल AF_INET6:
 		sin6.sin6_port = htons(args->port);
 		sin6.sin6_addr = args->remote_addr.in6;
 		sin6.sin6_scope_id = args->scope_id;
 		addr = &sin6;
-		alen = sizeof(sin6);
-		break;
-	}
+		alen = माप(sin6);
+		अवरोध;
+	पूर्ण
 
 	args->password = args->client_pw;
 
-	if (args->has_grp)
+	अगर (args->has_grp)
 		sd = msock_client(args);
-	else
+	अन्यथा
 		sd = connectsock(addr, alen, args);
 
-	if (sd < 0)
-		return -sd;
+	अगर (sd < 0)
+		वापस -sd;
 
-	if (args->bind_test_only)
-		goto out;
+	अगर (args->bind_test_only)
+		जाओ out;
 
-	if (args->type == SOCK_STREAM) {
+	अगर (args->type == SOCK_STREAM) अणु
 		rc = show_sockstat(sd, args);
-		if (rc != 0)
-			goto out;
-	}
+		अगर (rc != 0)
+			जाओ out;
+	पूर्ण
 
 	rc = msg_loop(1, sd, addr, alen, args);
 
 out:
-	close(sd);
+	बंद(sd);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static char *random_msg(int len)
-{
-	int i, n = 0, olen = len + 1;
-	char *m;
+अटल अक्षर *अक्रमom_msg(पूर्णांक len)
+अणु
+	पूर्णांक i, n = 0, olen = len + 1;
+	अक्षर *m;
 
-	if (len <= 0)
-		return NULL;
+	अगर (len <= 0)
+		वापस शून्य;
 
-	m = malloc(olen);
-	if (!m)
-		return NULL;
+	m = दो_स्मृति(olen);
+	अगर (!m)
+		वापस शून्य;
 
-	while (len > 26) {
-		i = snprintf(m + n, olen - n, "%.26s",
+	जबतक (len > 26) अणु
+		i = snम_लिखो(m + n, olen - n, "%.26s",
 			     "abcdefghijklmnopqrstuvwxyz");
 		n += i;
 		len -= i;
-	}
-	i = snprintf(m + n, olen - n, "%.*s", len,
+	पूर्ण
+	i = snम_लिखो(m + n, olen - n, "%.*s", len,
 		     "abcdefghijklmnopqrstuvwxyz");
-	return m;
-}
+	वापस m;
+पूर्ण
 
-static int ipc_child(int fd, struct sock_args *args)
-{
-	char *outbuf, *errbuf;
-	int rc = 1;
+अटल पूर्णांक ipc_child(पूर्णांक fd, काष्ठा sock_args *args)
+अणु
+	अक्षर *outbuf, *errbuf;
+	पूर्णांक rc = 1;
 
-	outbuf = malloc(4096);
-	errbuf = malloc(4096);
-	if (!outbuf || !errbuf) {
-		fprintf(stderr, "server: Failed to allocate buffers for stdout and stderr\n");
-		goto out;
-	}
+	outbuf = दो_स्मृति(4096);
+	errbuf = दो_स्मृति(4096);
+	अगर (!outbuf || !errbuf) अणु
+		ख_लिखो(मानक_त्रुटि, "server: Failed to allocate buffers for stdout and stderr\n");
+		जाओ out;
+	पूर्ण
 
-	setbuffer(stdout, outbuf, 4096);
-	setbuffer(stderr, errbuf, 4096);
+	रखो_बफfer(मानक_निकास, outbuf, 4096);
+	रखो_बफfer(मानक_त्रुटि, errbuf, 4096);
 
-	server_mode = 1; /* to tell log_msg in case we are in both_mode */
+	server_mode = 1; /* to tell log_msg in हाल we are in both_mode */
 
 	/* when running in both mode, address validation applies
 	 * solely to client side
@@ -1734,49 +1735,49 @@ static int ipc_child(int fd, struct sock_args *args)
 	args->has_expected_laddr = 0;
 	args->has_expected_raddr = 0;
 
-	rc = do_server(args, fd);
+	rc = करो_server(args, fd);
 
 out:
-	free(outbuf);
-	free(errbuf);
+	मुक्त(outbuf);
+	मुक्त(errbuf);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int ipc_parent(int cpid, int fd, struct sock_args *args)
-{
-	int client_status;
-	int status;
-	int buf;
+अटल पूर्णांक ipc_parent(पूर्णांक cpid, पूर्णांक fd, काष्ठा sock_args *args)
+अणु
+	पूर्णांक client_status;
+	पूर्णांक status;
+	पूर्णांक buf;
 
-	/* do the client-side function here in the parent process,
-	 * waiting to be told when to continue
+	/* करो the client-side function here in the parent process,
+	 * रुकोing to be told when to जारी
 	 */
-	if (read(fd, &buf, sizeof(buf)) <= 0) {
-		log_err_errno("Failed to read IPC status from status");
-		return 1;
-	}
-	if (!buf) {
+	अगर (पढ़ो(fd, &buf, माप(buf)) <= 0) अणु
+		log_err_त्रुटि_सं("Failed to read IPC status from status");
+		वापस 1;
+	पूर्ण
+	अगर (!buf) अणु
 		log_error("Server failed; can not continue\n");
-		return 1;
-	}
+		वापस 1;
+	पूर्ण
 	log_msg("Server is ready\n");
 
-	client_status = do_client(args);
+	client_status = करो_client(args);
 	log_msg("parent is done!\n");
 
-	if (kill(cpid, 0) == 0)
-		kill(cpid, SIGKILL);
+	अगर (समाप्त(cpid, 0) == 0)
+		समाप्त(cpid, SIGKILL);
 
-	wait(&status);
-	return client_status;
-}
+	रुको(&status);
+	वापस client_status;
+पूर्ण
 
-#define GETOPT_STR  "sr:l:c:p:t:g:P:DRn:M:X:m:d:I:BN:O:SCi6L:0:1:2:3:Fbq"
+#घोषणा GETOPT_STR  "sr:l:c:p:t:g:P:DRn:M:X:m:d:I:BN:O:SCi6L:0:1:2:3:Fbq"
 
-static void print_usage(char *prog)
-{
-	printf(
+अटल व्योम prपूर्णांक_usage(अक्षर *prog)
+अणु
+	म_लिखो(
 	"usage: %s OPTS\n"
 	"Required:\n"
 	"    -r addr       remote address to connect to (client mode only)\n"
@@ -1819,222 +1820,222 @@ static void print_usage(char *prog)
 	"    -b            Bind test only.\n"
 	"    -q            Be quiet. Run test without printing anything.\n"
 	, prog, DEFAULT_PORT);
-}
+पूर्ण
 
-int main(int argc, char *argv[])
-{
-	struct sock_args args = {
+पूर्णांक मुख्य(पूर्णांक argc, अक्षर *argv[])
+अणु
+	काष्ठा sock_args args = अणु
 		.version = AF_INET,
 		.type    = SOCK_STREAM,
 		.port    = DEFAULT_PORT,
-	};
-	struct protoent *pe;
-	int both_mode = 0;
-	unsigned int tmp;
-	int forever = 0;
-	int fd[2];
-	int cpid;
+	पूर्ण;
+	काष्ठा protoent *pe;
+	पूर्णांक both_mode = 0;
+	अचिन्हित पूर्णांक पंचांगp;
+	पूर्णांक क्रमever = 0;
+	पूर्णांक fd[2];
+	पूर्णांक cpid;
 
-	/* process inputs */
-	extern char *optarg;
-	int rc = 0;
+	/* process inमाला_दो */
+	बाह्य अक्षर *optarg;
+	पूर्णांक rc = 0;
 
 	/*
 	 * process input args
 	 */
 
-	while ((rc = getopt(argc, argv, GETOPT_STR)) != -1) {
-		switch (rc) {
-		case 'B':
+	जबतक ((rc = getopt(argc, argv, GETOPT_STR)) != -1) अणु
+		चयन (rc) अणु
+		हाल 'B':
 			both_mode = 1;
-			break;
-		case 's':
+			अवरोध;
+		हाल 's':
 			server_mode = 1;
-			break;
-		case 'F':
-			forever = 1;
-			break;
-		case 'l':
+			अवरोध;
+		हाल 'F':
+			क्रमever = 1;
+			अवरोध;
+		हाल 'l':
 			args.has_local_ip = 1;
 			args.local_addr_str = optarg;
-			break;
-		case 'r':
+			अवरोध;
+		हाल 'r':
 			args.has_remote_ip = 1;
 			args.remote_addr_str = optarg;
-			break;
-		case 'c':
+			अवरोध;
+		हाल 'c':
 			args.has_local_ip = 1;
 			args.client_local_addr_str = optarg;
-			break;
-		case 'p':
-			if (str_to_uint(optarg, 1, 65535, &tmp) != 0) {
-				fprintf(stderr, "Invalid port\n");
-				return 1;
-			}
-			args.port = (unsigned short) tmp;
-			break;
-		case 't':
-			if (str_to_uint(optarg, 0, INT_MAX,
-					&prog_timeout) != 0) {
-				fprintf(stderr, "Invalid timeout\n");
-				return 1;
-			}
-			break;
-		case 'D':
+			अवरोध;
+		हाल 'p':
+			अगर (str_to_uपूर्णांक(optarg, 1, 65535, &पंचांगp) != 0) अणु
+				ख_लिखो(मानक_त्रुटि, "Invalid port\n");
+				वापस 1;
+			पूर्ण
+			args.port = (अचिन्हित लघु) पंचांगp;
+			अवरोध;
+		हाल 't':
+			अगर (str_to_uपूर्णांक(optarg, 0, पूर्णांक_उच्च,
+					&prog_समयout) != 0) अणु
+				ख_लिखो(मानक_त्रुटि, "Invalid timeout\n");
+				वापस 1;
+			पूर्ण
+			अवरोध;
+		हाल 'D':
 			args.type = SOCK_DGRAM;
-			break;
-		case 'R':
+			अवरोध;
+		हाल 'R':
 			args.type = SOCK_RAW;
 			args.port = 0;
-			if (!args.protocol)
+			अगर (!args.protocol)
 				args.protocol = IPPROTO_RAW;
-			break;
-		case 'P':
+			अवरोध;
+		हाल 'P':
 			pe = getprotobyname(optarg);
-			if (pe) {
+			अगर (pe) अणु
 				args.protocol = pe->p_proto;
-			} else {
-				if (str_to_uint(optarg, 0, 0xffff, &tmp) != 0) {
-					fprintf(stderr, "Invalid protocol\n");
-					return 1;
-				}
-				args.protocol = tmp;
-			}
-			break;
-		case 'n':
-			iter = atoi(optarg);
-			break;
-		case 'N':
+			पूर्ण अन्यथा अणु
+				अगर (str_to_uपूर्णांक(optarg, 0, 0xffff, &पंचांगp) != 0) अणु
+					ख_लिखो(मानक_त्रुटि, "Invalid protocol\n");
+					वापस 1;
+				पूर्ण
+				args.protocol = पंचांगp;
+			पूर्ण
+			अवरोध;
+		हाल 'n':
+			iter = म_से_प(optarg);
+			अवरोध;
+		हाल 'N':
 			args.clientns = optarg;
-			break;
-		case 'O':
+			अवरोध;
+		हाल 'O':
 			args.serverns = optarg;
-			break;
-		case 'L':
-			msg = random_msg(atoi(optarg));
-			break;
-		case 'M':
+			अवरोध;
+		हाल 'L':
+			msg = अक्रमom_msg(म_से_प(optarg));
+			अवरोध;
+		हाल 'M':
 			args.password = optarg;
-			break;
-		case 'X':
+			अवरोध;
+		हाल 'X':
 			args.client_pw = optarg;
-			break;
-		case 'm':
+			अवरोध;
+		हाल 'm':
 			args.md5_prefix_str = optarg;
-			break;
-		case 'S':
+			अवरोध;
+		हाल 'S':
 			args.use_setsockopt = 1;
-			break;
-		case 'C':
+			अवरोध;
+		हाल 'C':
 			args.use_cmsg = 1;
-			break;
-		case 'd':
+			अवरोध;
+		हाल 'd':
 			args.dev = optarg;
-			break;
-		case 'I':
+			अवरोध;
+		हाल 'I':
 			args.server_dev = optarg;
-			break;
-		case 'i':
-			interactive = 1;
-			break;
-		case 'g':
+			अवरोध;
+		हाल 'i':
+			पूर्णांकeractive = 1;
+			अवरोध;
+		हाल 'g':
 			args.has_grp = 1;
-			if (convert_addr(&args, optarg, ADDR_TYPE_MCAST) < 0)
-				return 1;
+			अगर (convert_addr(&args, optarg, ADDR_TYPE_MCAST) < 0)
+				वापस 1;
 			args.type = SOCK_DGRAM;
-			break;
-		case '6':
+			अवरोध;
+		हाल '6':
 			args.version = AF_INET6;
-			break;
-		case 'b':
+			अवरोध;
+		हाल 'b':
 			args.bind_test_only = 1;
-			break;
-		case '0':
+			अवरोध;
+		हाल '0':
 			args.has_expected_laddr = 1;
 			args.expected_laddr_str = optarg;
-			break;
-		case '1':
+			अवरोध;
+		हाल '1':
 			args.has_expected_raddr = 1;
 			args.expected_raddr_str = optarg;
-			break;
-		case '2':
+			अवरोध;
+		हाल '2':
 			args.expected_dev = optarg;
-			break;
-		case '3':
+			अवरोध;
+		हाल '3':
 			args.expected_server_dev = optarg;
-			break;
-		case 'q':
+			अवरोध;
+		हाल 'q':
 			quiet = 1;
-			break;
-		default:
-			print_usage(argv[0]);
-			return 1;
-		}
-	}
+			अवरोध;
+		शेष:
+			prपूर्णांक_usage(argv[0]);
+			वापस 1;
+		पूर्ण
+	पूर्ण
 
-	if (args.password &&
+	अगर (args.password &&
 	    ((!args.has_remote_ip && !args.md5_prefix_str) ||
-	      args.type != SOCK_STREAM)) {
+	      args.type != SOCK_STREAM)) अणु
 		log_error("MD5 passwords apply to TCP only and require a remote ip for the password\n");
-		return 1;
-	}
+		वापस 1;
+	पूर्ण
 
-	if (args.md5_prefix_str && !args.password) {
+	अगर (args.md5_prefix_str && !args.password) अणु
 		log_error("Prefix range for MD5 protection specified without a password\n");
-		return 1;
-	}
+		वापस 1;
+	पूर्ण
 
-	if (iter == 0) {
-		fprintf(stderr, "Invalid number of messages to send\n");
-		return 1;
-	}
+	अगर (iter == 0) अणु
+		ख_लिखो(मानक_त्रुटि, "Invalid number of messages to send\n");
+		वापस 1;
+	पूर्ण
 
-	if (args.type == SOCK_STREAM && !args.protocol)
+	अगर (args.type == SOCK_STREAM && !args.protocol)
 		args.protocol = IPPROTO_TCP;
-	if (args.type == SOCK_DGRAM && !args.protocol)
+	अगर (args.type == SOCK_DGRAM && !args.protocol)
 		args.protocol = IPPROTO_UDP;
 
-	if ((args.type == SOCK_STREAM || args.type == SOCK_DGRAM) &&
-	     args.port == 0) {
-		fprintf(stderr, "Invalid port number\n");
-		return 1;
-	}
+	अगर ((args.type == SOCK_STREAM || args.type == SOCK_DGRAM) &&
+	     args.port == 0) अणु
+		ख_लिखो(मानक_त्रुटि, "Invalid port number\n");
+		वापस 1;
+	पूर्ण
 
-	if ((both_mode || !server_mode) && !args.has_grp &&
-	    !args.has_remote_ip && !args.has_local_ip) {
-		fprintf(stderr,
+	अगर ((both_mode || !server_mode) && !args.has_grp &&
+	    !args.has_remote_ip && !args.has_local_ip) अणु
+		ख_लिखो(मानक_त्रुटि,
 			"Local (server mode) or remote IP (client IP) required\n");
-		return 1;
-	}
+		वापस 1;
+	पूर्ण
 
-	if (interactive) {
-		prog_timeout = 0;
-		msg = NULL;
-	}
+	अगर (पूर्णांकeractive) अणु
+		prog_समयout = 0;
+		msg = शून्य;
+	पूर्ण
 
-	if (both_mode) {
-		if (pipe(fd) < 0) {
-			perror("pipe");
-			exit(1);
-		}
+	अगर (both_mode) अणु
+		अगर (pipe(fd) < 0) अणु
+			लिखो_त्रुटि("pipe");
+			निकास(1);
+		पूर्ण
 
-		cpid = fork();
-		if (cpid < 0) {
-			perror("fork");
-			exit(1);
-		}
-		if (cpid)
-			return ipc_parent(cpid, fd[0], &args);
+		cpid = विभाजन();
+		अगर (cpid < 0) अणु
+			लिखो_त्रुटि("fork");
+			निकास(1);
+		पूर्ण
+		अगर (cpid)
+			वापस ipc_parent(cpid, fd[0], &args);
 
-		return ipc_child(fd[1], &args);
-	}
+		वापस ipc_child(fd[1], &args);
+	पूर्ण
 
-	if (server_mode) {
-		do {
-			rc = do_server(&args, -1);
-		} while (forever);
+	अगर (server_mode) अणु
+		करो अणु
+			rc = करो_server(&args, -1);
+		पूर्ण जबतक (क्रमever);
 
-		return rc;
-	}
-	return do_client(&args);
-}
+		वापस rc;
+	पूर्ण
+	वापस करो_client(&args);
+पूर्ण

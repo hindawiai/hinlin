@@ -1,17 +1,18 @@
-/* SPDX-License-Identifier: MIT */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: MIT */
 /*
- * Copyright © 2020 Intel Corporation
+ * Copyright तऊ 2020 Intel Corporation
  */
 
-#ifndef _INTEL_CURSOR_H_
-#define _INTEL_CURSOR_H_
+#अगर_अघोषित _INTEL_CURSOR_H_
+#घोषणा _INTEL_CURSOR_H_
 
-enum pipe;
-struct drm_i915_private;
-struct intel_plane;
+क्रमागत pipe;
+काष्ठा drm_i915_निजी;
+काष्ठा पूर्णांकel_plane;
 
-struct intel_plane *
-intel_cursor_plane_create(struct drm_i915_private *dev_priv,
-			  enum pipe pipe);
+काष्ठा पूर्णांकel_plane *
+पूर्णांकel_cursor_plane_create(काष्ठा drm_i915_निजी *dev_priv,
+			  क्रमागत pipe pipe);
 
-#endif
+#पूर्ण_अगर

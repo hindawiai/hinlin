@@ -1,80 +1,81 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * wm8523.c  --  WM8523 ALSA SoC Audio driver
  *
  * Copyright 2009 Wolfson Microelectronics plc
  *
- * Author: Mark Brown <broonie@opensource.wolfsonmicro.com>
+ * Author: Mark Brown <broonie@खोलोsource.wolfsonmicro.com>
  */
 
-#include <linux/module.h>
-#include <linux/moduleparam.h>
-#include <linux/init.h>
-#include <linux/delay.h>
-#include <linux/pm.h>
-#include <linux/i2c.h>
-#include <linux/regmap.h>
-#include <linux/regulator/consumer.h>
-#include <linux/slab.h>
-#include <linux/of_device.h>
-#include <sound/core.h>
-#include <sound/pcm.h>
-#include <sound/pcm_params.h>
-#include <sound/soc.h>
-#include <sound/initval.h>
-#include <sound/tlv.h>
+#समावेश <linux/module.h>
+#समावेश <linux/moduleparam.h>
+#समावेश <linux/init.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/pm.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/regmap.h>
+#समावेश <linux/regulator/consumer.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/of_device.h>
+#समावेश <sound/core.h>
+#समावेश <sound/pcm.h>
+#समावेश <sound/pcm_params.h>
+#समावेश <sound/soc.h>
+#समावेश <sound/initval.h>
+#समावेश <sound/tlv.h>
 
-#include "wm8523.h"
+#समावेश "wm8523.h"
 
-#define WM8523_NUM_SUPPLIES 2
-static const char *wm8523_supply_names[WM8523_NUM_SUPPLIES] = {
+#घोषणा WM8523_NUM_SUPPLIES 2
+अटल स्थिर अक्षर *wm8523_supply_names[WM8523_NUM_SUPPLIES] = अणु
 	"AVDD",
 	"LINEVDD",
-};
+पूर्ण;
 
-#define WM8523_NUM_RATES 7
+#घोषणा WM8523_NUM_RATES 7
 
-/* codec private data */
-struct wm8523_priv {
-	struct regmap *regmap;
-	struct regulator_bulk_data supplies[WM8523_NUM_SUPPLIES];
-	unsigned int sysclk;
-	unsigned int rate_constraint_list[WM8523_NUM_RATES];
-	struct snd_pcm_hw_constraint_list rate_constraint;
-};
+/* codec निजी data */
+काष्ठा wm8523_priv अणु
+	काष्ठा regmap *regmap;
+	काष्ठा regulator_bulk_data supplies[WM8523_NUM_SUPPLIES];
+	अचिन्हित पूर्णांक sysclk;
+	अचिन्हित पूर्णांक rate_स्थिरraपूर्णांक_list[WM8523_NUM_RATES];
+	काष्ठा snd_pcm_hw_स्थिरraपूर्णांक_list rate_स्थिरraपूर्णांक;
+पूर्ण;
 
-static const struct reg_default wm8523_reg_defaults[] = {
-	{ 2, 0x0000 },     /* R2 - PSCTRL1 */
-	{ 3, 0x1812 },     /* R3 - AIF_CTRL1 */
-	{ 4, 0x0000 },     /* R4 - AIF_CTRL2 */
-	{ 5, 0x0001 },     /* R5 - DAC_CTRL3 */
-	{ 6, 0x0190 },     /* R6 - DAC_GAINL */
-	{ 7, 0x0190 },     /* R7 - DAC_GAINR */
-	{ 8, 0x0000 },     /* R8 - ZERO_DETECT */
-};
+अटल स्थिर काष्ठा reg_शेष wm8523_reg_शेषs[] = अणु
+	अणु 2, 0x0000 पूर्ण,     /* R2 - PSCTRL1 */
+	अणु 3, 0x1812 पूर्ण,     /* R3 - AIF_CTRL1 */
+	अणु 4, 0x0000 पूर्ण,     /* R4 - AIF_CTRL2 */
+	अणु 5, 0x0001 पूर्ण,     /* R5 - DAC_CTRL3 */
+	अणु 6, 0x0190 पूर्ण,     /* R6 - DAC_GAINL */
+	अणु 7, 0x0190 पूर्ण,     /* R7 - DAC_GAINR */
+	अणु 8, 0x0000 पूर्ण,     /* R8 - ZERO_DETECT */
+पूर्ण;
 
-static bool wm8523_volatile_register(struct device *dev, unsigned int reg)
-{
-	switch (reg) {
-	case WM8523_DEVICE_ID:
-	case WM8523_REVISION:
-		return true;
-	default:
-		return false;
-	}
-}
+अटल bool wm8523_अस्थिर_रेजिस्टर(काष्ठा device *dev, अचिन्हित पूर्णांक reg)
+अणु
+	चयन (reg) अणु
+	हाल WM8523_DEVICE_ID:
+	हाल WM8523_REVISION:
+		वापस true;
+	शेष:
+		वापस false;
+	पूर्ण
+पूर्ण
 
-static const DECLARE_TLV_DB_SCALE(dac_tlv, -10000, 25, 0);
+अटल स्थिर DECLARE_TLV_DB_SCALE(dac_tlv, -10000, 25, 0);
 
-static const char *wm8523_zd_count_text[] = {
+अटल स्थिर अक्षर *wm8523_zd_count_text[] = अणु
 	"1024",
 	"2048",
-};
+पूर्ण;
 
-static SOC_ENUM_SINGLE_DECL(wm8523_zc_count, WM8523_ZERO_DETECT, 0,
+अटल SOC_ENUM_SINGLE_DECL(wm8523_zc_count, WM8523_ZERO_DETECT, 0,
 			    wm8523_zd_count_text);
 
-static const struct snd_kcontrol_new wm8523_controls[] = {
+अटल स्थिर काष्ठा snd_kcontrol_new wm8523_controls[] = अणु
 SOC_DOUBLE_R_TLV("Playback Volume", WM8523_DAC_GAINL, WM8523_DAC_GAINR,
 		 0, 448, 0, dac_tlv),
 SOC_SINGLE("ZC Switch", WM8523_DAC_CTRL3, 4, 1, 0),
@@ -83,455 +84,455 @@ SOC_DOUBLE("Playback Switch", WM8523_DAC_CTRL3, 2, 3, 1, 1),
 SOC_SINGLE("Volume Ramp Up Switch", WM8523_DAC_CTRL3, 1, 1, 0),
 SOC_SINGLE("Volume Ramp Down Switch", WM8523_DAC_CTRL3, 0, 1, 0),
 SOC_ENUM("Zero Detect Count", wm8523_zc_count),
-};
+पूर्ण;
 
-static const struct snd_soc_dapm_widget wm8523_dapm_widgets[] = {
+अटल स्थिर काष्ठा snd_soc_dapm_widget wm8523_dapm_widमाला_लो[] = अणु
 SND_SOC_DAPM_DAC("DAC", "Playback", SND_SOC_NOPM, 0, 0),
 SND_SOC_DAPM_OUTPUT("LINEVOUTL"),
 SND_SOC_DAPM_OUTPUT("LINEVOUTR"),
-};
+पूर्ण;
 
-static const struct snd_soc_dapm_route wm8523_dapm_routes[] = {
-	{ "LINEVOUTL", NULL, "DAC" },
-	{ "LINEVOUTR", NULL, "DAC" },
-};
+अटल स्थिर काष्ठा snd_soc_dapm_route wm8523_dapm_routes[] = अणु
+	अणु "LINEVOUTL", शून्य, "DAC" पूर्ण,
+	अणु "LINEVOUTR", शून्य, "DAC" पूर्ण,
+पूर्ण;
 
-static const struct {
-	int value;
-	int ratio;
-} lrclk_ratios[WM8523_NUM_RATES] = {
-	{ 1, 128 },
-	{ 2, 192 },
-	{ 3, 256 },
-	{ 4, 384 },
-	{ 5, 512 },
-	{ 6, 768 },
-	{ 7, 1152 },
-};
+अटल स्थिर काष्ठा अणु
+	पूर्णांक value;
+	पूर्णांक ratio;
+पूर्ण lrclk_ratios[WM8523_NUM_RATES] = अणु
+	अणु 1, 128 पूर्ण,
+	अणु 2, 192 पूर्ण,
+	अणु 3, 256 पूर्ण,
+	अणु 4, 384 पूर्ण,
+	अणु 5, 512 पूर्ण,
+	अणु 6, 768 पूर्ण,
+	अणु 7, 1152 पूर्ण,
+पूर्ण;
 
-static const struct {
-	int value;
-	int ratio;
-} bclk_ratios[] = {
-	{ 2, 32 },
-	{ 3, 64 },
-	{ 4, 128 },
-};
+अटल स्थिर काष्ठा अणु
+	पूर्णांक value;
+	पूर्णांक ratio;
+पूर्ण bclk_ratios[] = अणु
+	अणु 2, 32 पूर्ण,
+	अणु 3, 64 पूर्ण,
+	अणु 4, 128 पूर्ण,
+पूर्ण;
 
-static int wm8523_startup(struct snd_pcm_substream *substream,
-			  struct snd_soc_dai *dai)
-{
-	struct snd_soc_component *component = dai->component;
-	struct wm8523_priv *wm8523 = snd_soc_component_get_drvdata(component);
+अटल पूर्णांक wm8523_startup(काष्ठा snd_pcm_substream *substream,
+			  काष्ठा snd_soc_dai *dai)
+अणु
+	काष्ठा snd_soc_component *component = dai->component;
+	काष्ठा wm8523_priv *wm8523 = snd_soc_component_get_drvdata(component);
 
 	/* The set of sample rates that can be supported depends on the
-	 * MCLK supplied to the CODEC - enforce this.
+	 * MCLK supplied to the CODEC - enक्रमce this.
 	 */
-	if (!wm8523->sysclk) {
+	अगर (!wm8523->sysclk) अणु
 		dev_err(component->dev,
 			"No MCLK configured, call set_sysclk() on init\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	snd_pcm_hw_constraint_list(substream->runtime, 0,
+	snd_pcm_hw_स्थिरraपूर्णांक_list(substream->runसमय, 0,
 				   SNDRV_PCM_HW_PARAM_RATE,
-				   &wm8523->rate_constraint);
+				   &wm8523->rate_स्थिरraपूर्णांक);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int wm8523_hw_params(struct snd_pcm_substream *substream,
-			    struct snd_pcm_hw_params *params,
-			    struct snd_soc_dai *dai)
-{
-	struct snd_soc_component *component = dai->component;
-	struct wm8523_priv *wm8523 = snd_soc_component_get_drvdata(component);
-	int i;
-	u16 aifctrl1 = snd_soc_component_read(component, WM8523_AIF_CTRL1);
-	u16 aifctrl2 = snd_soc_component_read(component, WM8523_AIF_CTRL2);
+अटल पूर्णांक wm8523_hw_params(काष्ठा snd_pcm_substream *substream,
+			    काष्ठा snd_pcm_hw_params *params,
+			    काष्ठा snd_soc_dai *dai)
+अणु
+	काष्ठा snd_soc_component *component = dai->component;
+	काष्ठा wm8523_priv *wm8523 = snd_soc_component_get_drvdata(component);
+	पूर्णांक i;
+	u16 aअगरctrl1 = snd_soc_component_पढ़ो(component, WM8523_AIF_CTRL1);
+	u16 aअगरctrl2 = snd_soc_component_पढ़ो(component, WM8523_AIF_CTRL2);
 
 	/* Find a supported LRCLK ratio */
-	for (i = 0; i < ARRAY_SIZE(lrclk_ratios); i++) {
-		if (wm8523->sysclk / params_rate(params) ==
+	क्रम (i = 0; i < ARRAY_SIZE(lrclk_ratios); i++) अणु
+		अगर (wm8523->sysclk / params_rate(params) ==
 		    lrclk_ratios[i].ratio)
-			break;
-	}
+			अवरोध;
+	पूर्ण
 
-	/* Should never happen, should be handled by constraints */
-	if (i == ARRAY_SIZE(lrclk_ratios)) {
+	/* Should never happen, should be handled by स्थिरraपूर्णांकs */
+	अगर (i == ARRAY_SIZE(lrclk_ratios)) अणु
 		dev_err(component->dev, "MCLK/fs ratio %d unsupported\n",
 			wm8523->sysclk / params_rate(params));
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	aifctrl2 &= ~WM8523_SR_MASK;
-	aifctrl2 |= lrclk_ratios[i].value;
+	aअगरctrl2 &= ~WM8523_SR_MASK;
+	aअगरctrl2 |= lrclk_ratios[i].value;
 
-	if (aifctrl1 & WM8523_AIF_MSTR) {
+	अगर (aअगरctrl1 & WM8523_AIF_MSTR) अणु
 		/* Find a fs->bclk ratio */
-		for (i = 0; i < ARRAY_SIZE(bclk_ratios); i++)
-			if (params_width(params) * 2 <= bclk_ratios[i].ratio)
-				break;
+		क्रम (i = 0; i < ARRAY_SIZE(bclk_ratios); i++)
+			अगर (params_width(params) * 2 <= bclk_ratios[i].ratio)
+				अवरोध;
 
-		if (i == ARRAY_SIZE(bclk_ratios)) {
+		अगर (i == ARRAY_SIZE(bclk_ratios)) अणु
 			dev_err(component->dev,
 				"No matching BCLK/fs ratio for word length %d\n",
 				params_width(params));
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
-		aifctrl2 &= ~WM8523_BCLKDIV_MASK;
-		aifctrl2 |= bclk_ratios[i].value << WM8523_BCLKDIV_SHIFT;
-	}
+		aअगरctrl2 &= ~WM8523_BCLKDIV_MASK;
+		aअगरctrl2 |= bclk_ratios[i].value << WM8523_BCLKDIV_SHIFT;
+	पूर्ण
 
-	aifctrl1 &= ~WM8523_WL_MASK;
-	switch (params_width(params)) {
-	case 16:
-		break;
-	case 20:
-		aifctrl1 |= 0x8;
-		break;
-	case 24:
-		aifctrl1 |= 0x10;
-		break;
-	case 32:
-		aifctrl1 |= 0x18;
-		break;
-	}
+	aअगरctrl1 &= ~WM8523_WL_MASK;
+	चयन (params_width(params)) अणु
+	हाल 16:
+		अवरोध;
+	हाल 20:
+		aअगरctrl1 |= 0x8;
+		अवरोध;
+	हाल 24:
+		aअगरctrl1 |= 0x10;
+		अवरोध;
+	हाल 32:
+		aअगरctrl1 |= 0x18;
+		अवरोध;
+	पूर्ण
 
-	snd_soc_component_write(component, WM8523_AIF_CTRL1, aifctrl1);
-	snd_soc_component_write(component, WM8523_AIF_CTRL2, aifctrl2);
+	snd_soc_component_ग_लिखो(component, WM8523_AIF_CTRL1, aअगरctrl1);
+	snd_soc_component_ग_लिखो(component, WM8523_AIF_CTRL2, aअगरctrl2);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int wm8523_set_dai_sysclk(struct snd_soc_dai *codec_dai,
-		int clk_id, unsigned int freq, int dir)
-{
-	struct snd_soc_component *component = codec_dai->component;
-	struct wm8523_priv *wm8523 = snd_soc_component_get_drvdata(component);
-	unsigned int val;
-	int i;
+अटल पूर्णांक wm8523_set_dai_sysclk(काष्ठा snd_soc_dai *codec_dai,
+		पूर्णांक clk_id, अचिन्हित पूर्णांक freq, पूर्णांक dir)
+अणु
+	काष्ठा snd_soc_component *component = codec_dai->component;
+	काष्ठा wm8523_priv *wm8523 = snd_soc_component_get_drvdata(component);
+	अचिन्हित पूर्णांक val;
+	पूर्णांक i;
 
 	wm8523->sysclk = freq;
 
-	wm8523->rate_constraint.count = 0;
-	for (i = 0; i < ARRAY_SIZE(lrclk_ratios); i++) {
+	wm8523->rate_स्थिरraपूर्णांक.count = 0;
+	क्रम (i = 0; i < ARRAY_SIZE(lrclk_ratios); i++) अणु
 		val = freq / lrclk_ratios[i].ratio;
 		/* Check that it's a standard rate since core can't
 		 * cope with others and having the odd rates confuses
-		 * constraint matching.
+		 * स्थिरraपूर्णांक matching.
 		 */
-		switch (val) {
-		case 8000:
-		case 11025:
-		case 16000:
-		case 22050:
-		case 32000:
-		case 44100:
-		case 48000:
-		case 64000:
-		case 88200:
-		case 96000:
-		case 176400:
-		case 192000:
+		चयन (val) अणु
+		हाल 8000:
+		हाल 11025:
+		हाल 16000:
+		हाल 22050:
+		हाल 32000:
+		हाल 44100:
+		हाल 48000:
+		हाल 64000:
+		हाल 88200:
+		हाल 96000:
+		हाल 176400:
+		हाल 192000:
 			dev_dbg(component->dev, "Supported sample rate: %dHz\n",
 				val);
-			wm8523->rate_constraint_list[i] = val;
-			wm8523->rate_constraint.count++;
-			break;
-		default:
+			wm8523->rate_स्थिरraपूर्णांक_list[i] = val;
+			wm8523->rate_स्थिरraपूर्णांक.count++;
+			अवरोध;
+		शेष:
 			dev_dbg(component->dev, "Skipping sample rate: %dHz\n",
 				val);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	/* Need at least one supported rate... */
-	if (wm8523->rate_constraint.count == 0)
-		return -EINVAL;
+	अगर (wm8523->rate_स्थिरraपूर्णांक.count == 0)
+		वापस -EINVAL;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
-static int wm8523_set_dai_fmt(struct snd_soc_dai *codec_dai,
-		unsigned int fmt)
-{
-	struct snd_soc_component *component = codec_dai->component;
-	u16 aifctrl1 = snd_soc_component_read(component, WM8523_AIF_CTRL1);
+अटल पूर्णांक wm8523_set_dai_fmt(काष्ठा snd_soc_dai *codec_dai,
+		अचिन्हित पूर्णांक fmt)
+अणु
+	काष्ठा snd_soc_component *component = codec_dai->component;
+	u16 aअगरctrl1 = snd_soc_component_पढ़ो(component, WM8523_AIF_CTRL1);
 
-	aifctrl1 &= ~(WM8523_BCLK_INV_MASK | WM8523_LRCLK_INV_MASK |
+	aअगरctrl1 &= ~(WM8523_BCLK_INV_MASK | WM8523_LRCLK_INV_MASK |
 		      WM8523_FMT_MASK | WM8523_AIF_MSTR_MASK);
 
-	switch (fmt & SND_SOC_DAIFMT_MASTER_MASK) {
-	case SND_SOC_DAIFMT_CBM_CFM:
-		aifctrl1 |= WM8523_AIF_MSTR;
-		break;
-	case SND_SOC_DAIFMT_CBS_CFS:
-		break;
-	default:
-		return -EINVAL;
-	}
+	चयन (fmt & SND_SOC_DAIFMT_MASTER_MASK) अणु
+	हाल SND_SOC_DAIFMT_CBM_CFM:
+		aअगरctrl1 |= WM8523_AIF_MSTR;
+		अवरोध;
+	हाल SND_SOC_DAIFMT_CBS_CFS:
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	switch (fmt & SND_SOC_DAIFMT_FORMAT_MASK) {
-	case SND_SOC_DAIFMT_I2S:
-		aifctrl1 |= 0x0002;
-		break;
-	case SND_SOC_DAIFMT_RIGHT_J:
-		break;
-	case SND_SOC_DAIFMT_LEFT_J:
-		aifctrl1 |= 0x0001;
-		break;
-	case SND_SOC_DAIFMT_DSP_A:
-		aifctrl1 |= 0x0003;
-		break;
-	case SND_SOC_DAIFMT_DSP_B:
-		aifctrl1 |= 0x0023;
-		break;
-	default:
-		return -EINVAL;
-	}
+	चयन (fmt & SND_SOC_DAIFMT_FORMAT_MASK) अणु
+	हाल SND_SOC_DAIFMT_I2S:
+		aअगरctrl1 |= 0x0002;
+		अवरोध;
+	हाल SND_SOC_DAIFMT_RIGHT_J:
+		अवरोध;
+	हाल SND_SOC_DAIFMT_LEFT_J:
+		aअगरctrl1 |= 0x0001;
+		अवरोध;
+	हाल SND_SOC_DAIFMT_DSP_A:
+		aअगरctrl1 |= 0x0003;
+		अवरोध;
+	हाल SND_SOC_DAIFMT_DSP_B:
+		aअगरctrl1 |= 0x0023;
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	switch (fmt & SND_SOC_DAIFMT_INV_MASK) {
-	case SND_SOC_DAIFMT_NB_NF:
-		break;
-	case SND_SOC_DAIFMT_IB_IF:
-		aifctrl1 |= WM8523_BCLK_INV | WM8523_LRCLK_INV;
-		break;
-	case SND_SOC_DAIFMT_IB_NF:
-		aifctrl1 |= WM8523_BCLK_INV;
-		break;
-	case SND_SOC_DAIFMT_NB_IF:
-		aifctrl1 |= WM8523_LRCLK_INV;
-		break;
-	default:
-		return -EINVAL;
-	}
+	चयन (fmt & SND_SOC_DAIFMT_INV_MASK) अणु
+	हाल SND_SOC_DAIFMT_NB_NF:
+		अवरोध;
+	हाल SND_SOC_DAIFMT_IB_IF:
+		aअगरctrl1 |= WM8523_BCLK_INV | WM8523_LRCLK_INV;
+		अवरोध;
+	हाल SND_SOC_DAIFMT_IB_NF:
+		aअगरctrl1 |= WM8523_BCLK_INV;
+		अवरोध;
+	हाल SND_SOC_DAIFMT_NB_IF:
+		aअगरctrl1 |= WM8523_LRCLK_INV;
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	snd_soc_component_write(component, WM8523_AIF_CTRL1, aifctrl1);
+	snd_soc_component_ग_लिखो(component, WM8523_AIF_CTRL1, aअगरctrl1);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int wm8523_set_bias_level(struct snd_soc_component *component,
-				 enum snd_soc_bias_level level)
-{
-	struct wm8523_priv *wm8523 = snd_soc_component_get_drvdata(component);
-	int ret;
+अटल पूर्णांक wm8523_set_bias_level(काष्ठा snd_soc_component *component,
+				 क्रमागत snd_soc_bias_level level)
+अणु
+	काष्ठा wm8523_priv *wm8523 = snd_soc_component_get_drvdata(component);
+	पूर्णांक ret;
 
-	switch (level) {
-	case SND_SOC_BIAS_ON:
-		break;
+	चयन (level) अणु
+	हाल SND_SOC_BIAS_ON:
+		अवरोध;
 
-	case SND_SOC_BIAS_PREPARE:
-		/* Full power on */
+	हाल SND_SOC_BIAS_PREPARE:
+		/* Full घातer on */
 		snd_soc_component_update_bits(component, WM8523_PSCTRL1,
 				    WM8523_SYS_ENA_MASK, 3);
-		break;
+		अवरोध;
 
-	case SND_SOC_BIAS_STANDBY:
-		if (snd_soc_component_get_bias_level(component) == SND_SOC_BIAS_OFF) {
+	हाल SND_SOC_BIAS_STANDBY:
+		अगर (snd_soc_component_get_bias_level(component) == SND_SOC_BIAS_OFF) अणु
 			ret = regulator_bulk_enable(ARRAY_SIZE(wm8523->supplies),
 						    wm8523->supplies);
-			if (ret != 0) {
+			अगर (ret != 0) अणु
 				dev_err(component->dev,
 					"Failed to enable supplies: %d\n",
 					ret);
-				return ret;
-			}
+				वापस ret;
+			पूर्ण
 
-			/* Sync back default/cached values */
+			/* Sync back शेष/cached values */
 			regcache_sync(wm8523->regmap);
 
-			/* Initial power up */
+			/* Initial घातer up */
 			snd_soc_component_update_bits(component, WM8523_PSCTRL1,
 					    WM8523_SYS_ENA_MASK, 1);
 
 			msleep(100);
-		}
+		पूर्ण
 
 		/* Power up to mute */
 		snd_soc_component_update_bits(component, WM8523_PSCTRL1,
 				    WM8523_SYS_ENA_MASK, 2);
 
-		break;
+		अवरोध;
 
-	case SND_SOC_BIAS_OFF:
-		/* The chip runs through the power down sequence for us. */
+	हाल SND_SOC_BIAS_OFF:
+		/* The chip runs through the घातer करोwn sequence क्रम us. */
 		snd_soc_component_update_bits(component, WM8523_PSCTRL1,
 				    WM8523_SYS_ENA_MASK, 0);
 		msleep(100);
 
 		regulator_bulk_disable(ARRAY_SIZE(wm8523->supplies),
 				       wm8523->supplies);
-		break;
-	}
-	return 0;
-}
+		अवरोध;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-#define WM8523_RATES SNDRV_PCM_RATE_8000_192000
+#घोषणा WM8523_RATES SNDRV_PCM_RATE_8000_192000
 
-#define WM8523_FORMATS (SNDRV_PCM_FMTBIT_S16_LE | SNDRV_PCM_FMTBIT_S20_3LE |\
+#घोषणा WM8523_FORMATS (SNDRV_PCM_FMTBIT_S16_LE | SNDRV_PCM_FMTBIT_S20_3LE |\
 			SNDRV_PCM_FMTBIT_S24_LE | SNDRV_PCM_FMTBIT_S32_LE)
 
-static const struct snd_soc_dai_ops wm8523_dai_ops = {
+अटल स्थिर काष्ठा snd_soc_dai_ops wm8523_dai_ops = अणु
 	.startup	= wm8523_startup,
 	.hw_params	= wm8523_hw_params,
 	.set_sysclk	= wm8523_set_dai_sysclk,
 	.set_fmt	= wm8523_set_dai_fmt,
-};
+पूर्ण;
 
-static struct snd_soc_dai_driver wm8523_dai = {
+अटल काष्ठा snd_soc_dai_driver wm8523_dai = अणु
 	.name = "wm8523-hifi",
-	.playback = {
+	.playback = अणु
 		.stream_name = "Playback",
 		.channels_min = 2,  /* Mono modes not yet supported */
 		.channels_max = 2,
 		.rates = WM8523_RATES,
-		.formats = WM8523_FORMATS,
-	},
+		.क्रमmats = WM8523_FORMATS,
+	पूर्ण,
 	.ops = &wm8523_dai_ops,
-};
+पूर्ण;
 
-static int wm8523_probe(struct snd_soc_component *component)
-{
-	struct wm8523_priv *wm8523 = snd_soc_component_get_drvdata(component);
+अटल पूर्णांक wm8523_probe(काष्ठा snd_soc_component *component)
+अणु
+	काष्ठा wm8523_priv *wm8523 = snd_soc_component_get_drvdata(component);
 
-	wm8523->rate_constraint.list = &wm8523->rate_constraint_list[0];
-	wm8523->rate_constraint.count =
-		ARRAY_SIZE(wm8523->rate_constraint_list);
+	wm8523->rate_स्थिरraपूर्णांक.list = &wm8523->rate_स्थिरraपूर्णांक_list[0];
+	wm8523->rate_स्थिरraपूर्णांक.count =
+		ARRAY_SIZE(wm8523->rate_स्थिरraपूर्णांक_list);
 
-	/* Change some default settings - latch VU and enable ZC */
+	/* Change some शेष settings - latch VU and enable ZC */
 	snd_soc_component_update_bits(component, WM8523_DAC_GAINR,
 			    WM8523_DACR_VU, WM8523_DACR_VU);
 	snd_soc_component_update_bits(component, WM8523_DAC_CTRL3, WM8523_ZC, WM8523_ZC);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct snd_soc_component_driver soc_component_dev_wm8523 = {
+अटल स्थिर काष्ठा snd_soc_component_driver soc_component_dev_wm8523 = अणु
 	.probe			= wm8523_probe,
 	.set_bias_level		= wm8523_set_bias_level,
 	.controls		= wm8523_controls,
 	.num_controls		= ARRAY_SIZE(wm8523_controls),
-	.dapm_widgets		= wm8523_dapm_widgets,
-	.num_dapm_widgets	= ARRAY_SIZE(wm8523_dapm_widgets),
+	.dapm_widमाला_लो		= wm8523_dapm_widमाला_लो,
+	.num_dapm_widमाला_लो	= ARRAY_SIZE(wm8523_dapm_widमाला_लो),
 	.dapm_routes		= wm8523_dapm_routes,
 	.num_dapm_routes	= ARRAY_SIZE(wm8523_dapm_routes),
 	.suspend_bias_off	= 1,
 	.idle_bias_on		= 1,
-	.use_pmdown_time	= 1,
+	.use_pmकरोwn_समय	= 1,
 	.endianness		= 1,
 	.non_legacy_dai_naming	= 1,
-};
+पूर्ण;
 
-static const struct of_device_id wm8523_of_match[] = {
-	{ .compatible = "wlf,wm8523" },
-	{ },
-};
+अटल स्थिर काष्ठा of_device_id wm8523_of_match[] = अणु
+	अणु .compatible = "wlf,wm8523" पूर्ण,
+	अणु पूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, wm8523_of_match);
 
-static const struct regmap_config wm8523_regmap = {
+अटल स्थिर काष्ठा regmap_config wm8523_regmap = अणु
 	.reg_bits = 8,
 	.val_bits = 16,
-	.max_register = WM8523_ZERO_DETECT,
+	.max_रेजिस्टर = WM8523_ZERO_DETECT,
 
-	.reg_defaults = wm8523_reg_defaults,
-	.num_reg_defaults = ARRAY_SIZE(wm8523_reg_defaults),
+	.reg_शेषs = wm8523_reg_शेषs,
+	.num_reg_शेषs = ARRAY_SIZE(wm8523_reg_शेषs),
 	.cache_type = REGCACHE_RBTREE,
 
-	.volatile_reg = wm8523_volatile_register,
-};
+	.अस्थिर_reg = wm8523_अस्थिर_रेजिस्टर,
+पूर्ण;
 
-static int wm8523_i2c_probe(struct i2c_client *i2c,
-			    const struct i2c_device_id *id)
-{
-	struct wm8523_priv *wm8523;
-	unsigned int val;
-	int ret, i;
+अटल पूर्णांक wm8523_i2c_probe(काष्ठा i2c_client *i2c,
+			    स्थिर काष्ठा i2c_device_id *id)
+अणु
+	काष्ठा wm8523_priv *wm8523;
+	अचिन्हित पूर्णांक val;
+	पूर्णांक ret, i;
 
-	wm8523 = devm_kzalloc(&i2c->dev, sizeof(struct wm8523_priv),
+	wm8523 = devm_kzalloc(&i2c->dev, माप(काष्ठा wm8523_priv),
 			      GFP_KERNEL);
-	if (wm8523 == NULL)
-		return -ENOMEM;
+	अगर (wm8523 == शून्य)
+		वापस -ENOMEM;
 
 	wm8523->regmap = devm_regmap_init_i2c(i2c, &wm8523_regmap);
-	if (IS_ERR(wm8523->regmap)) {
+	अगर (IS_ERR(wm8523->regmap)) अणु
 		ret = PTR_ERR(wm8523->regmap);
 		dev_err(&i2c->dev, "Failed to create regmap: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	for (i = 0; i < ARRAY_SIZE(wm8523->supplies); i++)
+	क्रम (i = 0; i < ARRAY_SIZE(wm8523->supplies); i++)
 		wm8523->supplies[i].supply = wm8523_supply_names[i];
 
 	ret = devm_regulator_bulk_get(&i2c->dev, ARRAY_SIZE(wm8523->supplies),
 				      wm8523->supplies);
-	if (ret != 0) {
+	अगर (ret != 0) अणु
 		dev_err(&i2c->dev, "Failed to request supplies: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	ret = regulator_bulk_enable(ARRAY_SIZE(wm8523->supplies),
 				    wm8523->supplies);
-	if (ret != 0) {
+	अगर (ret != 0) अणु
 		dev_err(&i2c->dev, "Failed to enable supplies: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	ret = regmap_read(wm8523->regmap, WM8523_DEVICE_ID, &val);
-	if (ret < 0) {
+	ret = regmap_पढ़ो(wm8523->regmap, WM8523_DEVICE_ID, &val);
+	अगर (ret < 0) अणु
 		dev_err(&i2c->dev, "Failed to read ID register\n");
-		goto err_enable;
-	}
-	if (val != 0x8523) {
+		जाओ err_enable;
+	पूर्ण
+	अगर (val != 0x8523) अणु
 		dev_err(&i2c->dev, "Device is not a WM8523, ID is %x\n", ret);
 		ret = -EINVAL;
-		goto err_enable;
-	}
+		जाओ err_enable;
+	पूर्ण
 
-	ret = regmap_read(wm8523->regmap, WM8523_REVISION, &val);
-	if (ret < 0) {
+	ret = regmap_पढ़ो(wm8523->regmap, WM8523_REVISION, &val);
+	अगर (ret < 0) अणु
 		dev_err(&i2c->dev, "Failed to read revision register\n");
-		goto err_enable;
-	}
+		जाओ err_enable;
+	पूर्ण
 	dev_info(&i2c->dev, "revision %c\n",
 		 (val & WM8523_CHIP_REV_MASK) + 'A');
 
-	ret = regmap_write(wm8523->regmap, WM8523_DEVICE_ID, 0x8523);
-	if (ret != 0) {
+	ret = regmap_ग_लिखो(wm8523->regmap, WM8523_DEVICE_ID, 0x8523);
+	अगर (ret != 0) अणु
 		dev_err(&i2c->dev, "Failed to reset device: %d\n", ret);
-		goto err_enable;
-	}
+		जाओ err_enable;
+	पूर्ण
 
 	regulator_bulk_disable(ARRAY_SIZE(wm8523->supplies), wm8523->supplies);
 
 	i2c_set_clientdata(i2c, wm8523);
 
-	ret = devm_snd_soc_register_component(&i2c->dev,
+	ret = devm_snd_soc_रेजिस्टर_component(&i2c->dev,
 			&soc_component_dev_wm8523, &wm8523_dai, 1);
 
-	return ret;
+	वापस ret;
 
 err_enable:
 	regulator_bulk_disable(ARRAY_SIZE(wm8523->supplies), wm8523->supplies);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const struct i2c_device_id wm8523_i2c_id[] = {
-	{ "wm8523", 0 },
-	{ }
-};
+अटल स्थिर काष्ठा i2c_device_id wm8523_i2c_id[] = अणु
+	अणु "wm8523", 0 पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(i2c, wm8523_i2c_id);
 
-static struct i2c_driver wm8523_i2c_driver = {
-	.driver = {
+अटल काष्ठा i2c_driver wm8523_i2c_driver = अणु
+	.driver = अणु
 		.name = "wm8523",
 		.of_match_table = wm8523_of_match,
-	},
+	पूर्ण,
 	.probe =    wm8523_i2c_probe,
 	.id_table = wm8523_i2c_id,
-};
+पूर्ण;
 
 module_i2c_driver(wm8523_i2c_driver);
 

@@ -1,52 +1,53 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * linux/arch/arm/mach-omap2/mcbsp.c
  *
  * Copyright (C) 2008 Instituto Nokia de Tecnologia
- * Contact: Eduardo Valentin <eduardo.valentin@indt.org.br>
+ * Contact: Eduarकरो Valentin <eduarकरो.valentin@indt.org.br>
  *
  * Multichannel mode not supported.
  */
-#include <linux/module.h>
-#include <linux/init.h>
-#include <linux/clk.h>
-#include <linux/err.h>
-#include <linux/io.h>
-#include <linux/of.h>
-#include <linux/platform_device.h>
-#include <linux/slab.h>
-#include <linux/platform_data/asoc-ti-mcbsp.h>
-#include <linux/pm_runtime.h>
+#समावेश <linux/module.h>
+#समावेश <linux/init.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/err.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/of.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/platक्रमm_data/asoc-ti-mcbsp.h>
+#समावेश <linux/pm_runसमय.स>
 
-#include <linux/omap-dma.h>
+#समावेश <linux/omap-dma.h>
 
-#include "soc.h"
-#include "omap_device.h"
-#include "clock.h"
+#समावेश "soc.h"
+#समावेश "omap_device.h"
+#समावेश "clock.h"
 
 /*
- * FIXME: Find a mechanism to enable/disable runtime the McBSP ICLK autoidle.
- * Sidetone needs non-gated ICLK and sidetone autoidle is broken.
+ * FIXME: Find a mechanism to enable/disable runसमय the McBSP ICLK स्वतःidle.
+ * Sidetone needs non-gated ICLK and sidetone स्वतःidle is broken.
  */
-#include "cm3xxx.h"
-#include "cm-regbits-34xx.h"
+#समावेश "cm3xxx.h"
+#समावेश "cm-regbits-34xx.h"
 
-static int omap3_mcbsp_force_ick_on(struct clk *clk, bool force_on)
-{
-	if (!clk)
-		return 0;
+अटल पूर्णांक omap3_mcbsp_क्रमce_ick_on(काष्ठा clk *clk, bool क्रमce_on)
+अणु
+	अगर (!clk)
+		वापस 0;
 
-	if (force_on)
-		return omap2_clk_deny_idle(clk);
-	else
-		return omap2_clk_allow_idle(clk);
-}
+	अगर (क्रमce_on)
+		वापस omap2_clk_deny_idle(clk);
+	अन्यथा
+		वापस omap2_clk_allow_idle(clk);
+पूर्ण
 
-void __init omap3_mcbsp_init_pdata_callback(
-					struct omap_mcbsp_platform_data *pdata)
-{
-	if (!pdata)
-		return;
+व्योम __init omap3_mcbsp_init_pdata_callback(
+					काष्ठा omap_mcbsp_platक्रमm_data *pdata)
+अणु
+	अगर (!pdata)
+		वापस;
 
-	pdata->force_ick_on = omap3_mcbsp_force_ick_on;
-}
+	pdata->क्रमce_ick_on = omap3_mcbsp_क्रमce_ick_on;
+पूर्ण

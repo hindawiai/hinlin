@@ -1,25 +1,26 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
- * Based on arch/arm/include/asm/proc-fns.h
+ * Based on arch/arm/include/यंत्र/proc-fns.h
  *
  * Copyright (C) 1997-1999 Russell King
  * Copyright (C) 2000 Deep Blue Solutions Ltd
  * Copyright (C) 2012 ARM Ltd.
  */
-#ifndef __ASM_PROCFNS_H
-#define __ASM_PROCFNS_H
+#अगर_अघोषित __ASM_PROCFNS_H
+#घोषणा __ASM_PROCFNS_H
 
-#ifndef __ASSEMBLY__
+#अगर_अघोषित __ASSEMBLY__
 
-#include <asm/page.h>
+#समावेश <यंत्र/page.h>
 
-struct cpu_suspend_ctx;
+काष्ठा cpu_suspend_ctx;
 
-extern void cpu_do_idle(void);
-extern void cpu_do_suspend(struct cpu_suspend_ctx *ptr);
-extern u64 cpu_do_resume(phys_addr_t ptr, u64 idmap_ttbr);
+बाह्य व्योम cpu_करो_idle(व्योम);
+बाह्य व्योम cpu_करो_suspend(काष्ठा cpu_suspend_ctx *ptr);
+बाह्य u64 cpu_करो_resume(phys_addr_t ptr, u64 idmap_ttbr);
 
-#include <asm/memory.h>
+#समावेश <यंत्र/memory.h>
 
-#endif /* __ASSEMBLY__ */
-#endif /* __ASM_PROCFNS_H */
+#पूर्ण_अगर /* __ASSEMBLY__ */
+#पूर्ण_अगर /* __ASM_PROCFNS_H */

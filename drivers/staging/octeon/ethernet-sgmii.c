@@ -1,30 +1,31 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * This file is based on code from OCTEON SDK by Cavium Networks.
  *
  * Copyright (c) 2003-2007 Cavium Networks
  */
 
-#include <linux/phy.h>
-#include <linux/kernel.h>
-#include <linux/netdevice.h>
-#include <linux/ratelimit.h>
-#include <net/dst.h>
+#समावेश <linux/phy.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/ratelimit.h>
+#समावेश <net/dst.h>
 
-#include "octeon-ethernet.h"
-#include "ethernet-defines.h"
-#include "ethernet-util.h"
-#include "ethernet-mdio.h"
+#समावेश "octeon-ethernet.h"
+#समावेश "ethernet-defines.h"
+#समावेश "ethernet-util.h"
+#समावेश "ethernet-mdio.h"
 
-int cvm_oct_sgmii_open(struct net_device *dev)
-{
-	return cvm_oct_common_open(dev, cvm_oct_link_poll);
-}
+पूर्णांक cvm_oct_sgmii_खोलो(काष्ठा net_device *dev)
+अणु
+	वापस cvm_oct_common_खोलो(dev, cvm_oct_link_poll);
+पूर्ण
 
-int cvm_oct_sgmii_init(struct net_device *dev)
-{
+पूर्णांक cvm_oct_sgmii_init(काष्ठा net_device *dev)
+अणु
 	cvm_oct_common_init(dev);
 
-	/* FIXME: Need autoneg logic */
-	return 0;
-}
+	/* FIXME: Need स्वतःneg logic */
+	वापस 0;
+पूर्ण

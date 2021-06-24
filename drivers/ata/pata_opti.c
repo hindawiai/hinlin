@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * pata_opti.c 	- ATI PATA for new ATA layer
+ * pata_opti.c 	- ATI PATA क्रम new ATA layer
  *			  (C) 2005 Red Hat Inc
  *
  * Based on
@@ -15,8 +16,8 @@
  * Some parts of code are from ali14xx.c and from rz1000.c.
  *
  * Also consulted the FreeBSD prototype driver by Kevin Day to try
- * and resolve some confusions. Further documentation can be found in
- * Ralf Brown's interrupt list
+ * and resolve some confusions. Further करोcumentation can be found in
+ * Ralf Brown's पूर्णांकerrupt list
  *
  * If you have other variants of the Opti range (Viper/Vendetta) please
  * try this driver with those PCI idents and report back. For the later
@@ -24,172 +25,172 @@
  *
  */
 
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/pci.h>
-#include <linux/blkdev.h>
-#include <linux/delay.h>
-#include <scsi/scsi_host.h>
-#include <linux/libata.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/blkdev.h>
+#समावेश <linux/delay.h>
+#समावेश <scsi/scsi_host.h>
+#समावेश <linux/libata.h>
 
-#define DRV_NAME "pata_opti"
-#define DRV_VERSION "0.2.9"
+#घोषणा DRV_NAME "pata_opti"
+#घोषणा DRV_VERSION "0.2.9"
 
-enum {
-	READ_REG	= 0,	/* index of Read cycle timing register */
-	WRITE_REG 	= 1,	/* index of Write cycle timing register */
-	CNTRL_REG 	= 3,	/* index of Control register */
-	STRAP_REG 	= 5,	/* index of Strap register */
-	MISC_REG 	= 6	/* index of Miscellaneous register */
-};
+क्रमागत अणु
+	READ_REG	= 0,	/* index of Read cycle timing रेजिस्टर */
+	WRITE_REG 	= 1,	/* index of Write cycle timing रेजिस्टर */
+	CNTRL_REG 	= 3,	/* index of Control रेजिस्टर */
+	STRAP_REG 	= 5,	/* index of Strap रेजिस्टर */
+	MISC_REG 	= 6	/* index of Miscellaneous रेजिस्टर */
+पूर्ण;
 
 /**
  *	opti_pre_reset		-	probe begin
  *	@link: ATA link
- *	@deadline: deadline jiffies for the operation
+ *	@deadline: deadline jअगरfies क्रम the operation
  *
  *	Set up cable type and use generic probe init
  */
 
-static int opti_pre_reset(struct ata_link *link, unsigned long deadline)
-{
-	struct ata_port *ap = link->ap;
-	struct pci_dev *pdev = to_pci_dev(ap->host->dev);
-	static const struct pci_bits opti_enable_bits[] = {
-		{ 0x45, 1, 0x80, 0x00 },
-		{ 0x40, 1, 0x08, 0x00 }
-	};
+अटल पूर्णांक opti_pre_reset(काष्ठा ata_link *link, अचिन्हित दीर्घ deadline)
+अणु
+	काष्ठा ata_port *ap = link->ap;
+	काष्ठा pci_dev *pdev = to_pci_dev(ap->host->dev);
+	अटल स्थिर काष्ठा pci_bits opti_enable_bits[] = अणु
+		अणु 0x45, 1, 0x80, 0x00 पूर्ण,
+		अणु 0x40, 1, 0x08, 0x00 पूर्ण
+	पूर्ण;
 
-	if (!pci_test_config_bits(pdev, &opti_enable_bits[ap->port_no]))
-		return -ENOENT;
+	अगर (!pci_test_config_bits(pdev, &opti_enable_bits[ap->port_no]))
+		वापस -ENOENT;
 
-	return ata_sff_prereset(link, deadline);
-}
+	वापस ata_sff_prereset(link, deadline);
+पूर्ण
 
 /**
- *	opti_write_reg		-	control register setup
+ *	opti_ग_लिखो_reg		-	control रेजिस्टर setup
  *	@ap: ATA port
  *	@val: value
- *	@reg: control register number
+ *	@reg: control रेजिस्टर number
  *
- *	The Opti uses magic 'trapdoor' register accesses to do configuration
- *	rather than using PCI space as other controllers do. The double inw
- *	on the error register activates configuration mode. We can then write
- *	the control register
+ *	The Opti uses magic 'trapdoor' रेजिस्टर accesses to करो configuration
+ *	rather than using PCI space as other controllers करो. The द्विगुन inw
+ *	on the error रेजिस्टर activates configuration mode. We can then ग_लिखो
+ *	the control रेजिस्टर
  */
 
-static void opti_write_reg(struct ata_port *ap, u8 val, int reg)
-{
-	void __iomem *regio = ap->ioaddr.cmd_addr;
+अटल व्योम opti_ग_लिखो_reg(काष्ठा ata_port *ap, u8 val, पूर्णांक reg)
+अणु
+	व्योम __iomem *regio = ap->ioaddr.cmd_addr;
 
-	/* These 3 unlock the control register access */
-	ioread16(regio + 1);
-	ioread16(regio + 1);
-	iowrite8(3, regio + 2);
+	/* These 3 unlock the control रेजिस्टर access */
+	ioपढ़ो16(regio + 1);
+	ioपढ़ो16(regio + 1);
+	ioग_लिखो8(3, regio + 2);
 
 	/* Do the I/O */
-	iowrite8(val, regio + reg);
+	ioग_लिखो8(val, regio + reg);
 
 	/* Relock */
-	iowrite8(0x83, regio + 2);
-}
+	ioग_लिखो8(0x83, regio + 2);
+पूर्ण
 
 /**
  *	opti_set_piomode	-	set initial PIO mode data
- *	@ap: ATA interface
+ *	@ap: ATA पूर्णांकerface
  *	@adev: ATA device
  *
- *	Called to do the PIO mode setup. Timing numbers are taken from
+ *	Called to करो the PIO mode setup. Timing numbers are taken from
  *	the FreeBSD driver then pre computed to keep the code clean. There
- *	are two tables depending on the hardware clock speed.
+ *	are two tables depending on the hardware घड़ी speed.
  */
 
-static void opti_set_piomode(struct ata_port *ap, struct ata_device *adev)
-{
-	struct ata_device *pair = ata_dev_pair(adev);
-	int clock;
-	int pio = adev->pio_mode - XFER_PIO_0;
-	void __iomem *regio = ap->ioaddr.cmd_addr;
+अटल व्योम opti_set_piomode(काष्ठा ata_port *ap, काष्ठा ata_device *adev)
+अणु
+	काष्ठा ata_device *pair = ata_dev_pair(adev);
+	पूर्णांक घड़ी;
+	पूर्णांक pio = adev->pio_mode - XFER_PIO_0;
+	व्योम __iomem *regio = ap->ioaddr.cmd_addr;
 	u8 addr;
 
 	/* Address table precomputed with prefetch off and a DCLK of 2 */
-	static const u8 addr_timing[2][5] = {
-		{ 0x30, 0x20, 0x20, 0x10, 0x10 },
-		{ 0x20, 0x20, 0x10, 0x10, 0x10 }
-	};
-	static const u8 data_rec_timing[2][5] = {
-		{ 0x6B, 0x56, 0x42, 0x32, 0x31 },
-		{ 0x58, 0x44, 0x32, 0x22, 0x21 }
-	};
+	अटल स्थिर u8 addr_timing[2][5] = अणु
+		अणु 0x30, 0x20, 0x20, 0x10, 0x10 पूर्ण,
+		अणु 0x20, 0x20, 0x10, 0x10, 0x10 पूर्ण
+	पूर्ण;
+	अटल स्थिर u8 data_rec_timing[2][5] = अणु
+		अणु 0x6B, 0x56, 0x42, 0x32, 0x31 पूर्ण,
+		अणु 0x58, 0x44, 0x32, 0x22, 0x21 पूर्ण
+	पूर्ण;
 
-	iowrite8(0xff, regio + 5);
-	clock = ioread16(regio + 5) & 1;
+	ioग_लिखो8(0xff, regio + 5);
+	घड़ी = ioपढ़ो16(regio + 5) & 1;
 
 	/*
- 	 *	As with many controllers the address setup time is shared
- 	 *	and must suit both devices if present.
+ 	 *	As with many controllers the address setup समय is shared
+ 	 *	and must suit both devices अगर present.
 	 */
 
-	addr = addr_timing[clock][pio];
-	if (pair) {
-		/* Hardware constraint */
-		u8 pair_addr = addr_timing[clock][pair->pio_mode - XFER_PIO_0];
-		if (pair_addr > addr)
+	addr = addr_timing[घड़ी][pio];
+	अगर (pair) अणु
+		/* Hardware स्थिरraपूर्णांक */
+		u8 pair_addr = addr_timing[घड़ी][pair->pio_mode - XFER_PIO_0];
+		अगर (pair_addr > addr)
 			addr = pair_addr;
-	}
+	पूर्ण
 
 	/* Commence primary programming sequence */
-	opti_write_reg(ap, adev->devno, MISC_REG);
-	opti_write_reg(ap, data_rec_timing[clock][pio], READ_REG);
-	opti_write_reg(ap, data_rec_timing[clock][pio], WRITE_REG);
-	opti_write_reg(ap, addr, MISC_REG);
+	opti_ग_लिखो_reg(ap, adev->devno, MISC_REG);
+	opti_ग_लिखो_reg(ap, data_rec_timing[घड़ी][pio], READ_REG);
+	opti_ग_लिखो_reg(ap, data_rec_timing[घड़ी][pio], WRITE_REG);
+	opti_ग_लिखो_reg(ap, addr, MISC_REG);
 
 	/* Programming sequence complete, override strapping */
-	opti_write_reg(ap, 0x85, CNTRL_REG);
-}
+	opti_ग_लिखो_reg(ap, 0x85, CNTRL_REG);
+पूर्ण
 
-static struct scsi_host_template opti_sht = {
+अटल काष्ठा scsi_host_ढाँचा opti_sht = अणु
 	ATA_PIO_SHT(DRV_NAME),
-};
+पूर्ण;
 
-static struct ata_port_operations opti_port_ops = {
+अटल काष्ठा ata_port_operations opti_port_ops = अणु
 	.inherits	= &ata_sff_port_ops,
 	.cable_detect	= ata_cable_40wire,
 	.set_piomode	= opti_set_piomode,
 	.prereset	= opti_pre_reset,
-};
+पूर्ण;
 
-static int opti_init_one(struct pci_dev *dev, const struct pci_device_id *id)
-{
-	static const struct ata_port_info info = {
+अटल पूर्णांक opti_init_one(काष्ठा pci_dev *dev, स्थिर काष्ठा pci_device_id *id)
+अणु
+	अटल स्थिर काष्ठा ata_port_info info = अणु
 		.flags = ATA_FLAG_SLAVE_POSS,
 		.pio_mask = ATA_PIO4,
 		.port_ops = &opti_port_ops
-	};
-	const struct ata_port_info *ppi[] = { &info, NULL };
+	पूर्ण;
+	स्थिर काष्ठा ata_port_info *ppi[] = अणु &info, शून्य पूर्ण;
 
-	ata_print_version_once(&dev->dev, DRV_VERSION);
+	ata_prपूर्णांक_version_once(&dev->dev, DRV_VERSION);
 
-	return ata_pci_sff_init_one(dev, ppi, &opti_sht, NULL, 0);
-}
+	वापस ata_pci_sff_init_one(dev, ppi, &opti_sht, शून्य, 0);
+पूर्ण
 
-static const struct pci_device_id opti[] = {
-	{ PCI_VDEVICE(OPTI, PCI_DEVICE_ID_OPTI_82C621), 0 },
-	{ PCI_VDEVICE(OPTI, PCI_DEVICE_ID_OPTI_82C825), 1 },
+अटल स्थिर काष्ठा pci_device_id opti[] = अणु
+	अणु PCI_VDEVICE(OPTI, PCI_DEVICE_ID_OPTI_82C621), 0 पूर्ण,
+	अणु PCI_VDEVICE(OPTI, PCI_DEVICE_ID_OPTI_82C825), 1 पूर्ण,
 
-	{ },
-};
+	अणु पूर्ण,
+पूर्ण;
 
-static struct pci_driver opti_pci_driver = {
+अटल काष्ठा pci_driver opti_pci_driver = अणु
 	.name 		= DRV_NAME,
 	.id_table	= opti,
 	.probe 		= opti_init_one,
-	.remove		= ata_pci_remove_one,
-#ifdef CONFIG_PM_SLEEP
+	.हटाओ		= ata_pci_हटाओ_one,
+#अगर_घोषित CONFIG_PM_SLEEP
 	.suspend	= ata_pci_device_suspend,
 	.resume		= ata_pci_device_resume,
-#endif
-};
+#पूर्ण_अगर
+पूर्ण;
 
 module_pci_driver(opti_pci_driver);
 

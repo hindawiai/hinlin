@@ -1,50 +1,51 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 //
-// Special handling for implicit feedback mode
+// Special handling क्रम implicit feedback mode
 //
 
-#include <linux/init.h>
-#include <linux/usb.h>
-#include <linux/usb/audio.h>
-#include <linux/usb/audio-v2.h>
+#समावेश <linux/init.h>
+#समावेश <linux/usb.h>
+#समावेश <linux/usb/audपन.स>
+#समावेश <linux/usb/audio-v2.h>
 
-#include <sound/core.h>
-#include <sound/pcm.h>
-#include <sound/pcm_params.h>
+#समावेश <sound/core.h>
+#समावेश <sound/pcm.h>
+#समावेश <sound/pcm_params.h>
 
-#include "usbaudio.h"
-#include "card.h"
-#include "helper.h"
-#include "implicit.h"
+#समावेश "usbaudio.h"
+#समावेश "card.h"
+#समावेश "helper.h"
+#समावेश "implicit.h"
 
-enum {
+क्रमागत अणु
 	IMPLICIT_FB_NONE,
 	IMPLICIT_FB_GENERIC,
 	IMPLICIT_FB_FIXED,
-	IMPLICIT_FB_BOTH,	/* generic playback + capture (for BOSS) */
-};
+	IMPLICIT_FB_BOTH,	/* generic playback + capture (क्रम BOSS) */
+पूर्ण;
 
-struct snd_usb_implicit_fb_match {
-	unsigned int id;
-	unsigned int iface_class;
-	unsigned int ep_num;
-	unsigned int iface;
-	int type;
-};
+काष्ठा snd_usb_implicit_fb_match अणु
+	अचिन्हित पूर्णांक id;
+	अचिन्हित पूर्णांक अगरace_class;
+	अचिन्हित पूर्णांक ep_num;
+	अचिन्हित पूर्णांक अगरace;
+	पूर्णांक type;
+पूर्ण;
 
-#define IMPLICIT_FB_GENERIC_DEV(vend, prod) \
-	{ .id = USB_ID(vend, prod), .type = IMPLICIT_FB_GENERIC }
-#define IMPLICIT_FB_FIXED_DEV(vend, prod, ep, ifnum) \
-	{ .id = USB_ID(vend, prod), .type = IMPLICIT_FB_FIXED, .ep_num = (ep),\
-	    .iface = (ifnum) }
-#define IMPLICIT_FB_BOTH_DEV(vend, prod, ep, ifnum) \
-	{ .id = USB_ID(vend, prod), .type = IMPLICIT_FB_BOTH, .ep_num = (ep),\
-	    .iface = (ifnum) }
-#define IMPLICIT_FB_SKIP_DEV(vend, prod) \
-	{ .id = USB_ID(vend, prod), .type = IMPLICIT_FB_NONE }
+#घोषणा IMPLICIT_FB_GENERIC_DEV(vend, prod) \
+	अणु .id = USB_ID(vend, prod), .type = IMPLICIT_FB_GENERIC पूर्ण
+#घोषणा IMPLICIT_FB_FIXED_DEV(vend, prod, ep, अगरnum) \
+	अणु .id = USB_ID(vend, prod), .type = IMPLICIT_FB_FIXED, .ep_num = (ep),\
+	    .अगरace = (अगरnum) पूर्ण
+#घोषणा IMPLICIT_FB_BOTH_DEV(vend, prod, ep, अगरnum) \
+	अणु .id = USB_ID(vend, prod), .type = IMPLICIT_FB_BOTH, .ep_num = (ep),\
+	    .अगरace = (अगरnum) पूर्ण
+#घोषणा IMPLICIT_FB_SKIP_DEV(vend, prod) \
+	अणु .id = USB_ID(vend, prod), .type = IMPLICIT_FB_NONE पूर्ण
 
-/* Implicit feedback quirk table for playback */
-static const struct snd_usb_implicit_fb_match playback_implicit_fb_quirks[] = {
+/* Implicit feedback quirk table क्रम playback */
+अटल स्थिर काष्ठा snd_usb_implicit_fb_match playback_implicit_fb_quirks[] = अणु
 	/* Generic matching */
 	IMPLICIT_FB_GENERIC_DEV(0x0499, 0x1509), /* Steinberg UR22 */
 	IMPLICIT_FB_GENERIC_DEV(0x0763, 0x2080), /* M-Audio FastTrack Ultra */
@@ -67,424 +68,424 @@ static const struct snd_usb_implicit_fb_match playback_implicit_fb_quirks[] = {
 	IMPLICIT_FB_FIXED_DEV(0x0499, 0x172a, 0x86, 2), /* Yamaha MODX */
 
 	/* Special matching */
-	{ .id = USB_ID(0x07fd, 0x0004), .iface_class = USB_CLASS_AUDIO,
-	  .type = IMPLICIT_FB_NONE },		/* MicroBook IIc */
-	/* ep = 0x84, ifnum = 0 */
-	{ .id = USB_ID(0x07fd, 0x0004), .iface_class = USB_CLASS_VENDOR_SPEC,
+	अणु .id = USB_ID(0x07fd, 0x0004), .अगरace_class = USB_CLASS_AUDIO,
+	  .type = IMPLICIT_FB_NONE पूर्ण,		/* MicroBook IIc */
+	/* ep = 0x84, अगरnum = 0 */
+	अणु .id = USB_ID(0x07fd, 0x0004), .अगरace_class = USB_CLASS_VENDOR_SPEC,
 	  .type = IMPLICIT_FB_FIXED,
-	  .ep_num = 0x84, .iface = 0 },		/* MOTU MicroBook II */
+	  .ep_num = 0x84, .अगरace = 0 पूर्ण,		/* MOTU MicroBook II */
 
-	{} /* terminator */
-};
+	अणुपूर्ण /* terminator */
+पूर्ण;
 
-/* Implicit feedback quirk table for capture: only FIXED type */
-static const struct snd_usb_implicit_fb_match capture_implicit_fb_quirks[] = {
-	{} /* terminator */
-};
+/* Implicit feedback quirk table क्रम capture: only FIXED type */
+अटल स्थिर काष्ठा snd_usb_implicit_fb_match capture_implicit_fb_quirks[] = अणु
+	अणुपूर्ण /* terminator */
+पूर्ण;
 
-/* set up sync EP information on the audioformat */
-static int add_implicit_fb_sync_ep(struct snd_usb_audio *chip,
-				   struct audioformat *fmt,
-				   int ep, int ep_idx, int ifnum,
-				   const struct usb_host_interface *alts)
-{
-	struct usb_interface *iface;
+/* set up sync EP inक्रमmation on the audioक्रमmat */
+अटल पूर्णांक add_implicit_fb_sync_ep(काष्ठा snd_usb_audio *chip,
+				   काष्ठा audioक्रमmat *fmt,
+				   पूर्णांक ep, पूर्णांक ep_idx, पूर्णांक अगरnum,
+				   स्थिर काष्ठा usb_host_पूर्णांकerface *alts)
+अणु
+	काष्ठा usb_पूर्णांकerface *अगरace;
 
-	if (!alts) {
-		iface = usb_ifnum_to_if(chip->dev, ifnum);
-		if (!iface || iface->num_altsetting < 2)
-			return 0;
-		alts = &iface->altsetting[1];
-	}
+	अगर (!alts) अणु
+		अगरace = usb_अगरnum_to_अगर(chip->dev, अगरnum);
+		अगर (!अगरace || अगरace->num_altsetting < 2)
+			वापस 0;
+		alts = &अगरace->altsetting[1];
+	पूर्ण
 
 	fmt->sync_ep = ep;
-	fmt->sync_iface = ifnum;
+	fmt->sync_अगरace = अगरnum;
 	fmt->sync_altsetting = alts->desc.bAlternateSetting;
 	fmt->sync_ep_idx = ep_idx;
 	fmt->implicit_fb = 1;
 	usb_audio_dbg(chip,
 		      "%d:%d: added %s implicit_fb sync_ep %x, iface %d:%d\n",
-		      fmt->iface, fmt->altsetting,
-		      (ep & USB_DIR_IN) ? "playback" : "capture",
-		      fmt->sync_ep, fmt->sync_iface, fmt->sync_altsetting);
-	return 1;
-}
+		      fmt->अगरace, fmt->altsetting,
+		      (ep & USB_सूची_IN) ? "playback" : "capture",
+		      fmt->sync_ep, fmt->sync_अगरace, fmt->sync_altsetting);
+	वापस 1;
+पूर्ण
 
-/* Check whether the given UAC2 iface:altset points to an implicit fb source */
-static int add_generic_uac2_implicit_fb(struct snd_usb_audio *chip,
-					struct audioformat *fmt,
-					unsigned int ifnum,
-					unsigned int altsetting)
-{
-	struct usb_host_interface *alts;
-	struct usb_endpoint_descriptor *epd;
+/* Check whether the given UAC2 अगरace:altset poपूर्णांकs to an implicit fb source */
+अटल पूर्णांक add_generic_uac2_implicit_fb(काष्ठा snd_usb_audio *chip,
+					काष्ठा audioक्रमmat *fmt,
+					अचिन्हित पूर्णांक अगरnum,
+					अचिन्हित पूर्णांक altsetting)
+अणु
+	काष्ठा usb_host_पूर्णांकerface *alts;
+	काष्ठा usb_endpoपूर्णांक_descriptor *epd;
 
-	alts = snd_usb_get_host_interface(chip, ifnum, altsetting);
-	if (!alts)
-		return 0;
-	if (alts->desc.bInterfaceClass != USB_CLASS_AUDIO ||
+	alts = snd_usb_get_host_पूर्णांकerface(chip, अगरnum, altsetting);
+	अगर (!alts)
+		वापस 0;
+	अगर (alts->desc.bInterfaceClass != USB_CLASS_AUDIO ||
 	    alts->desc.bInterfaceSubClass != USB_SUBCLASS_AUDIOSTREAMING ||
 	    alts->desc.bInterfaceProtocol != UAC_VERSION_2 ||
-	    alts->desc.bNumEndpoints < 1)
-		return 0;
-	epd = get_endpoint(alts, 0);
-	if (!usb_endpoint_is_isoc_in(epd) ||
+	    alts->desc.bNumEndpoपूर्णांकs < 1)
+		वापस 0;
+	epd = get_endpoपूर्णांक(alts, 0);
+	अगर (!usb_endpoपूर्णांक_is_isoc_in(epd) ||
 	    (epd->bmAttributes & USB_ENDPOINT_USAGE_MASK) !=
 					USB_ENDPOINT_USAGE_IMPLICIT_FB)
-		return 0;
-	return add_implicit_fb_sync_ep(chip, fmt, epd->bEndpointAddress, 0,
-				       ifnum, alts);
-}
+		वापस 0;
+	वापस add_implicit_fb_sync_ep(chip, fmt, epd->bEndpoपूर्णांकAddress, 0,
+				       अगरnum, alts);
+पूर्ण
 
-static bool roland_sanity_check_iface(struct usb_host_interface *alts)
-{
-	if (alts->desc.bInterfaceClass != USB_CLASS_VENDOR_SPEC ||
+अटल bool roland_sanity_check_अगरace(काष्ठा usb_host_पूर्णांकerface *alts)
+अणु
+	अगर (alts->desc.bInterfaceClass != USB_CLASS_VENDOR_SPEC ||
 	    (alts->desc.bInterfaceSubClass != 2 &&
 	     alts->desc.bInterfaceProtocol != 2) ||
-	    alts->desc.bNumEndpoints < 1)
-		return false;
-	return true;
-}
+	    alts->desc.bNumEndpoपूर्णांकs < 1)
+		वापस false;
+	वापस true;
+पूर्ण
 
-/* Like the UAC2 case above, but specific to Roland with vendor class and hack */
-static int add_roland_implicit_fb(struct snd_usb_audio *chip,
-				  struct audioformat *fmt,
-				  struct usb_host_interface *alts)
-{
-	struct usb_endpoint_descriptor *epd;
+/* Like the UAC2 हाल above, but specअगरic to Roland with venकरोr class and hack */
+अटल पूर्णांक add_roland_implicit_fb(काष्ठा snd_usb_audio *chip,
+				  काष्ठा audioक्रमmat *fmt,
+				  काष्ठा usb_host_पूर्णांकerface *alts)
+अणु
+	काष्ठा usb_endpoपूर्णांक_descriptor *epd;
 
-	if (!roland_sanity_check_iface(alts))
-		return 0;
+	अगर (!roland_sanity_check_अगरace(alts))
+		वापस 0;
 	/* only when both streams are with ASYNC type */
-	epd = get_endpoint(alts, 0);
-	if (!usb_endpoint_is_isoc_out(epd) ||
+	epd = get_endpoपूर्णांक(alts, 0);
+	अगर (!usb_endpoपूर्णांक_is_isoc_out(epd) ||
 	    (epd->bmAttributes & USB_ENDPOINT_SYNCTYPE) != USB_ENDPOINT_SYNC_ASYNC)
-		return 0;
+		वापस 0;
 
 	/* check capture EP */
-	alts = snd_usb_get_host_interface(chip,
+	alts = snd_usb_get_host_पूर्णांकerface(chip,
 					  alts->desc.bInterfaceNumber + 1,
 					  alts->desc.bAlternateSetting);
-	if (!alts || !roland_sanity_check_iface(alts))
-		return 0;
-	epd = get_endpoint(alts, 0);
-	if (!usb_endpoint_is_isoc_in(epd) ||
+	अगर (!alts || !roland_sanity_check_अगरace(alts))
+		वापस 0;
+	epd = get_endpoपूर्णांक(alts, 0);
+	अगर (!usb_endpoपूर्णांक_is_isoc_in(epd) ||
 	    (epd->bmAttributes & USB_ENDPOINT_SYNCTYPE) != USB_ENDPOINT_SYNC_ASYNC)
-		return 0;
+		वापस 0;
 	chip->playback_first = 1;
-	return add_implicit_fb_sync_ep(chip, fmt, epd->bEndpointAddress, 0,
+	वापस add_implicit_fb_sync_ep(chip, fmt, epd->bEndpoपूर्णांकAddress, 0,
 				       alts->desc.bInterfaceNumber, alts);
-}
+पूर्ण
 
-/* capture quirk for Roland device; always full-duplex */
-static int add_roland_capture_quirk(struct snd_usb_audio *chip,
-				    struct audioformat *fmt,
-				    struct usb_host_interface *alts)
-{
-	struct usb_endpoint_descriptor *epd;
+/* capture quirk क्रम Roland device; always full-duplex */
+अटल पूर्णांक add_roland_capture_quirk(काष्ठा snd_usb_audio *chip,
+				    काष्ठा audioक्रमmat *fmt,
+				    काष्ठा usb_host_पूर्णांकerface *alts)
+अणु
+	काष्ठा usb_endpoपूर्णांक_descriptor *epd;
 
-	if (!roland_sanity_check_iface(alts))
-		return 0;
-	epd = get_endpoint(alts, 0);
-	if (!usb_endpoint_is_isoc_in(epd) ||
+	अगर (!roland_sanity_check_अगरace(alts))
+		वापस 0;
+	epd = get_endpoपूर्णांक(alts, 0);
+	अगर (!usb_endpoपूर्णांक_is_isoc_in(epd) ||
 	    (epd->bmAttributes & USB_ENDPOINT_SYNCTYPE) != USB_ENDPOINT_SYNC_ASYNC)
-		return 0;
+		वापस 0;
 
-	alts = snd_usb_get_host_interface(chip,
+	alts = snd_usb_get_host_पूर्णांकerface(chip,
 					  alts->desc.bInterfaceNumber - 1,
 					  alts->desc.bAlternateSetting);
-	if (!alts || !roland_sanity_check_iface(alts))
-		return 0;
-	epd = get_endpoint(alts, 0);
-	if (!usb_endpoint_is_isoc_out(epd))
-		return 0;
-	return add_implicit_fb_sync_ep(chip, fmt, epd->bEndpointAddress, 0,
+	अगर (!alts || !roland_sanity_check_अगरace(alts))
+		वापस 0;
+	epd = get_endpoपूर्णांक(alts, 0);
+	अगर (!usb_endpoपूर्णांक_is_isoc_out(epd))
+		वापस 0;
+	वापस add_implicit_fb_sync_ep(chip, fmt, epd->bEndpoपूर्णांकAddress, 0,
 				       alts->desc.bInterfaceNumber, alts);
-}
+पूर्ण
 
-/* Playback and capture EPs on Pioneer devices share the same iface/altset
- * for the implicit feedback operation
+/* Playback and capture EPs on Pioneer devices share the same अगरace/altset
+ * क्रम the implicit feedback operation
  */
-static bool is_pioneer_implicit_fb(struct snd_usb_audio *chip,
-				   struct usb_host_interface *alts)
+अटल bool is_pioneer_implicit_fb(काष्ठा snd_usb_audio *chip,
+				   काष्ठा usb_host_पूर्णांकerface *alts)
 
-{
-	struct usb_endpoint_descriptor *epd;
+अणु
+	काष्ठा usb_endpoपूर्णांक_descriptor *epd;
 
-	if (USB_ID_VENDOR(chip->usb_id) != 0x2b73 &&
+	अगर (USB_ID_VENDOR(chip->usb_id) != 0x2b73 &&
 	    USB_ID_VENDOR(chip->usb_id) != 0x08e4)
-		return false;
-	if (alts->desc.bInterfaceClass != USB_CLASS_VENDOR_SPEC)
-		return false;
-	if (alts->desc.bNumEndpoints != 2)
-		return false;
+		वापस false;
+	अगर (alts->desc.bInterfaceClass != USB_CLASS_VENDOR_SPEC)
+		वापस false;
+	अगर (alts->desc.bNumEndpoपूर्णांकs != 2)
+		वापस false;
 
-	epd = get_endpoint(alts, 0);
-	if (!usb_endpoint_is_isoc_out(epd) ||
+	epd = get_endpoपूर्णांक(alts, 0);
+	अगर (!usb_endpoपूर्णांक_is_isoc_out(epd) ||
 	    (epd->bmAttributes & USB_ENDPOINT_SYNCTYPE) != USB_ENDPOINT_SYNC_ASYNC)
-		return false;
+		वापस false;
 
-	epd = get_endpoint(alts, 1);
-	if (!usb_endpoint_is_isoc_in(epd) ||
+	epd = get_endpoपूर्णांक(alts, 1);
+	अगर (!usb_endpoपूर्णांक_is_isoc_in(epd) ||
 	    (epd->bmAttributes & USB_ENDPOINT_SYNCTYPE) != USB_ENDPOINT_SYNC_ASYNC ||
 	    ((epd->bmAttributes & USB_ENDPOINT_USAGE_MASK) !=
 	     USB_ENDPOINT_USAGE_DATA &&
 	     (epd->bmAttributes & USB_ENDPOINT_USAGE_MASK) !=
 	     USB_ENDPOINT_USAGE_IMPLICIT_FB))
-		return false;
+		वापस false;
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static int __add_generic_implicit_fb(struct snd_usb_audio *chip,
-				     struct audioformat *fmt,
-				     int iface, int altset)
-{
-	struct usb_host_interface *alts;
-	struct usb_endpoint_descriptor *epd;
+अटल पूर्णांक __add_generic_implicit_fb(काष्ठा snd_usb_audio *chip,
+				     काष्ठा audioक्रमmat *fmt,
+				     पूर्णांक अगरace, पूर्णांक altset)
+अणु
+	काष्ठा usb_host_पूर्णांकerface *alts;
+	काष्ठा usb_endpoपूर्णांक_descriptor *epd;
 
-	alts = snd_usb_get_host_interface(chip, iface, altset);
-	if (!alts)
-		return 0;
+	alts = snd_usb_get_host_पूर्णांकerface(chip, अगरace, altset);
+	अगर (!alts)
+		वापस 0;
 
-	if ((alts->desc.bInterfaceClass != USB_CLASS_VENDOR_SPEC &&
+	अगर ((alts->desc.bInterfaceClass != USB_CLASS_VENDOR_SPEC &&
 	     alts->desc.bInterfaceClass != USB_CLASS_AUDIO) ||
-	    alts->desc.bNumEndpoints < 1)
-		return 0;
-	epd = get_endpoint(alts, 0);
-	if (!usb_endpoint_is_isoc_in(epd) ||
+	    alts->desc.bNumEndpoपूर्णांकs < 1)
+		वापस 0;
+	epd = get_endpoपूर्णांक(alts, 0);
+	अगर (!usb_endpoपूर्णांक_is_isoc_in(epd) ||
 	    (epd->bmAttributes & USB_ENDPOINT_SYNCTYPE) != USB_ENDPOINT_SYNC_ASYNC)
-		return 0;
-	return add_implicit_fb_sync_ep(chip, fmt, epd->bEndpointAddress, 0,
-				       iface, alts);
-}
+		वापस 0;
+	वापस add_implicit_fb_sync_ep(chip, fmt, epd->bEndpoपूर्णांकAddress, 0,
+				       अगरace, alts);
+पूर्ण
 
-/* More generic quirk: look for the sync EP next to the data EP */
-static int add_generic_implicit_fb(struct snd_usb_audio *chip,
-				   struct audioformat *fmt,
-				   struct usb_host_interface *alts)
-{
-	if ((fmt->ep_attr & USB_ENDPOINT_SYNCTYPE) != USB_ENDPOINT_SYNC_ASYNC)
-		return 0;
+/* More generic quirk: look क्रम the sync EP next to the data EP */
+अटल पूर्णांक add_generic_implicit_fb(काष्ठा snd_usb_audio *chip,
+				   काष्ठा audioक्रमmat *fmt,
+				   काष्ठा usb_host_पूर्णांकerface *alts)
+अणु
+	अगर ((fmt->ep_attr & USB_ENDPOINT_SYNCTYPE) != USB_ENDPOINT_SYNC_ASYNC)
+		वापस 0;
 
-	if (__add_generic_implicit_fb(chip, fmt,
+	अगर (__add_generic_implicit_fb(chip, fmt,
 				      alts->desc.bInterfaceNumber + 1,
 				      alts->desc.bAlternateSetting))
-		return 1;
-	return __add_generic_implicit_fb(chip, fmt,
+		वापस 1;
+	वापस __add_generic_implicit_fb(chip, fmt,
 					 alts->desc.bInterfaceNumber - 1,
 					 alts->desc.bAlternateSetting);
-}
+पूर्ण
 
-static const struct snd_usb_implicit_fb_match *
-find_implicit_fb_entry(struct snd_usb_audio *chip,
-		       const struct snd_usb_implicit_fb_match *match,
-		       const struct usb_host_interface *alts)
-{
-	for (; match->id; match++)
-		if (match->id == chip->usb_id &&
-		    (!match->iface_class ||
-		     (alts->desc.bInterfaceClass == match->iface_class)))
-			return match;
+अटल स्थिर काष्ठा snd_usb_implicit_fb_match *
+find_implicit_fb_entry(काष्ठा snd_usb_audio *chip,
+		       स्थिर काष्ठा snd_usb_implicit_fb_match *match,
+		       स्थिर काष्ठा usb_host_पूर्णांकerface *alts)
+अणु
+	क्रम (; match->id; match++)
+		अगर (match->id == chip->usb_id &&
+		    (!match->अगरace_class ||
+		     (alts->desc.bInterfaceClass == match->अगरace_class)))
+			वापस match;
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-/* Setup an implicit feedback endpoint from a quirk. Returns 0 if no quirk
- * applies. Returns 1 if a quirk was found.
+/* Setup an implicit feedback endpoपूर्णांक from a quirk. Returns 0 अगर no quirk
+ * applies. Returns 1 अगर a quirk was found.
  */
-static int audioformat_implicit_fb_quirk(struct snd_usb_audio *chip,
-					 struct audioformat *fmt,
-					 struct usb_host_interface *alts)
-{
-	const struct snd_usb_implicit_fb_match *p;
-	unsigned int attr = fmt->ep_attr & USB_ENDPOINT_SYNCTYPE;
+अटल पूर्णांक audioक्रमmat_implicit_fb_quirk(काष्ठा snd_usb_audio *chip,
+					 काष्ठा audioक्रमmat *fmt,
+					 काष्ठा usb_host_पूर्णांकerface *alts)
+अणु
+	स्थिर काष्ठा snd_usb_implicit_fb_match *p;
+	अचिन्हित पूर्णांक attr = fmt->ep_attr & USB_ENDPOINT_SYNCTYPE;
 
 	p = find_implicit_fb_entry(chip, playback_implicit_fb_quirks, alts);
-	if (p) {
-		switch (p->type) {
-		case IMPLICIT_FB_GENERIC:
-			return add_generic_implicit_fb(chip, fmt, alts);
-		case IMPLICIT_FB_NONE:
-			return 0; /* No quirk */
-		case IMPLICIT_FB_FIXED:
-			return add_implicit_fb_sync_ep(chip, fmt, p->ep_num, 0,
-						       p->iface, NULL);
-		}
-	}
+	अगर (p) अणु
+		चयन (p->type) अणु
+		हाल IMPLICIT_FB_GENERIC:
+			वापस add_generic_implicit_fb(chip, fmt, alts);
+		हाल IMPLICIT_FB_NONE:
+			वापस 0; /* No quirk */
+		हाल IMPLICIT_FB_FIXED:
+			वापस add_implicit_fb_sync_ep(chip, fmt, p->ep_num, 0,
+						       p->अगरace, शून्य);
+		पूर्ण
+	पूर्ण
 
-	/* Special handling for devices with capture quirks */
+	/* Special handling क्रम devices with capture quirks */
 	p = find_implicit_fb_entry(chip, capture_implicit_fb_quirks, alts);
-	if (p) {
-		switch (p->type) {
-		case IMPLICIT_FB_FIXED:
-			return 0; /* no quirk */
-		case IMPLICIT_FB_BOTH:
+	अगर (p) अणु
+		चयन (p->type) अणु
+		हाल IMPLICIT_FB_FIXED:
+			वापस 0; /* no quirk */
+		हाल IMPLICIT_FB_BOTH:
 			chip->playback_first = 1;
-			return add_generic_implicit_fb(chip, fmt, alts);
-		}
-	}
+			वापस add_generic_implicit_fb(chip, fmt, alts);
+		पूर्ण
+	पूर्ण
 
 	/* Generic UAC2 implicit feedback */
-	if (attr == USB_ENDPOINT_SYNC_ASYNC &&
+	अगर (attr == USB_ENDPOINT_SYNC_ASYNC &&
 	    alts->desc.bInterfaceClass == USB_CLASS_AUDIO &&
 	    alts->desc.bInterfaceProtocol == UAC_VERSION_2 &&
-	    alts->desc.bNumEndpoints == 1) {
-		if (add_generic_uac2_implicit_fb(chip, fmt,
+	    alts->desc.bNumEndpoपूर्णांकs == 1) अणु
+		अगर (add_generic_uac2_implicit_fb(chip, fmt,
 						 alts->desc.bInterfaceNumber + 1,
 						 alts->desc.bAlternateSetting))
-			return 1;
-	}
+			वापस 1;
+	पूर्ण
 
-	/* Roland/BOSS implicit feedback with vendor spec class */
-	if (USB_ID_VENDOR(chip->usb_id) == 0x0582) {
-		if (add_roland_implicit_fb(chip, fmt, alts) > 0)
-			return 1;
-	}
+	/* Roland/BOSS implicit feedback with venकरोr spec class */
+	अगर (USB_ID_VENDOR(chip->usb_id) == 0x0582) अणु
+		अगर (add_roland_implicit_fb(chip, fmt, alts) > 0)
+			वापस 1;
+	पूर्ण
 
-	/* Pioneer devices with vendor spec class */
-	if (is_pioneer_implicit_fb(chip, alts)) {
+	/* Pioneer devices with venकरोr spec class */
+	अगर (is_pioneer_implicit_fb(chip, alts)) अणु
 		chip->playback_first = 1;
-		return add_implicit_fb_sync_ep(chip, fmt,
-					       get_endpoint(alts, 1)->bEndpointAddress,
+		वापस add_implicit_fb_sync_ep(chip, fmt,
+					       get_endpoपूर्णांक(alts, 1)->bEndpoपूर्णांकAddress,
 					       1, alts->desc.bInterfaceNumber,
 					       alts);
-	}
+	पूर्ण
 
-	/* Try the generic implicit fb if available */
-	if (chip->generic_implicit_fb)
-		return add_generic_implicit_fb(chip, fmt, alts);
+	/* Try the generic implicit fb अगर available */
+	अगर (chip->generic_implicit_fb)
+		वापस add_generic_implicit_fb(chip, fmt, alts);
 
 	/* No quirk */
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* same for capture, but only handling FIXED entry */
-static int audioformat_capture_quirk(struct snd_usb_audio *chip,
-				     struct audioformat *fmt,
-				     struct usb_host_interface *alts)
-{
-	const struct snd_usb_implicit_fb_match *p;
+/* same क्रम capture, but only handling FIXED entry */
+अटल पूर्णांक audioक्रमmat_capture_quirk(काष्ठा snd_usb_audio *chip,
+				     काष्ठा audioक्रमmat *fmt,
+				     काष्ठा usb_host_पूर्णांकerface *alts)
+अणु
+	स्थिर काष्ठा snd_usb_implicit_fb_match *p;
 
 	p = find_implicit_fb_entry(chip, capture_implicit_fb_quirks, alts);
-	if (p && (p->type == IMPLICIT_FB_FIXED || p->type == IMPLICIT_FB_BOTH))
-		return add_implicit_fb_sync_ep(chip, fmt, p->ep_num, 0,
-					       p->iface, NULL);
+	अगर (p && (p->type == IMPLICIT_FB_FIXED || p->type == IMPLICIT_FB_BOTH))
+		वापस add_implicit_fb_sync_ep(chip, fmt, p->ep_num, 0,
+					       p->अगरace, शून्य);
 
 	/* Roland/BOSS need full-duplex streams */
-	if (USB_ID_VENDOR(chip->usb_id) == 0x0582) {
-		if (add_roland_capture_quirk(chip, fmt, alts) > 0)
-			return 1;
-	}
+	अगर (USB_ID_VENDOR(chip->usb_id) == 0x0582) अणु
+		अगर (add_roland_capture_quirk(chip, fmt, alts) > 0)
+			वापस 1;
+	पूर्ण
 
-	if (is_pioneer_implicit_fb(chip, alts))
-		return 1; /* skip the quirk, also don't handle generic sync EP */
-	return 0;
-}
+	अगर (is_pioneer_implicit_fb(chip, alts))
+		वापस 1; /* skip the quirk, also करोn't handle generic sync EP */
+	वापस 0;
+पूर्ण
 
 /*
- * Parse altset and set up implicit feedback endpoint on the audioformat
+ * Parse altset and set up implicit feedback endpoपूर्णांक on the audioक्रमmat
  */
-int snd_usb_parse_implicit_fb_quirk(struct snd_usb_audio *chip,
-				    struct audioformat *fmt,
-				    struct usb_host_interface *alts)
-{
-	if (fmt->endpoint & USB_DIR_IN)
-		return audioformat_capture_quirk(chip, fmt, alts);
-	else
-		return audioformat_implicit_fb_quirk(chip, fmt, alts);
-}
+पूर्णांक snd_usb_parse_implicit_fb_quirk(काष्ठा snd_usb_audio *chip,
+				    काष्ठा audioक्रमmat *fmt,
+				    काष्ठा usb_host_पूर्णांकerface *alts)
+अणु
+	अगर (fmt->endpoपूर्णांक & USB_सूची_IN)
+		वापस audioक्रमmat_capture_quirk(chip, fmt, alts);
+	अन्यथा
+		वापस audioक्रमmat_implicit_fb_quirk(chip, fmt, alts);
+पूर्ण
 
 /*
- * Return the score of matching two audioformats.
- * Veto the audioformat if:
- * - It has no channels for some reason.
- * - Requested PCM format is not supported.
+ * Return the score of matching two audioक्रमmats.
+ * Veto the audioक्रमmat अगर:
+ * - It has no channels क्रम some reason.
+ * - Requested PCM क्रमmat is not supported.
  * - Requested sample rate is not supported.
  */
-static int match_endpoint_audioformats(struct snd_usb_substream *subs,
-				       const struct audioformat *fp,
-				       int rate, int channels,
-				       snd_pcm_format_t pcm_format)
-{
-	int i, score;
+अटल पूर्णांक match_endpoपूर्णांक_audioक्रमmats(काष्ठा snd_usb_substream *subs,
+				       स्थिर काष्ठा audioक्रमmat *fp,
+				       पूर्णांक rate, पूर्णांक channels,
+				       snd_pcm_क्रमmat_t pcm_क्रमmat)
+अणु
+	पूर्णांक i, score;
 
-	if (fp->channels < 1)
-		return 0;
+	अगर (fp->channels < 1)
+		वापस 0;
 
-	if (!(fp->formats & pcm_format_to_bits(pcm_format)))
-		return 0;
+	अगर (!(fp->क्रमmats & pcm_क्रमmat_to_bits(pcm_क्रमmat)))
+		वापस 0;
 
-	if (fp->rates & SNDRV_PCM_RATE_CONTINUOUS) {
-		if (rate < fp->rate_min || rate > fp->rate_max)
-			return 0;
-	} else {
-		for (i = 0; i < fp->nr_rates; i++) {
-			if (fp->rate_table[i] == rate)
-				break;
-		}
-		if (i >= fp->nr_rates)
-			return 0;
-	}
+	अगर (fp->rates & SNDRV_PCM_RATE_CONTINUOUS) अणु
+		अगर (rate < fp->rate_min || rate > fp->rate_max)
+			वापस 0;
+	पूर्ण अन्यथा अणु
+		क्रम (i = 0; i < fp->nr_rates; i++) अणु
+			अगर (fp->rate_table[i] == rate)
+				अवरोध;
+		पूर्ण
+		अगर (i >= fp->nr_rates)
+			वापस 0;
+	पूर्ण
 
 	score = 1;
-	if (fp->channels == channels)
+	अगर (fp->channels == channels)
 		score++;
 
-	return score;
-}
+	वापस score;
+पूर्ण
 
-static struct snd_usb_substream *
-find_matching_substream(struct snd_usb_audio *chip, int stream, int ep_num,
-			int fmt_type)
-{
-	struct snd_usb_stream *as;
-	struct snd_usb_substream *subs;
+अटल काष्ठा snd_usb_substream *
+find_matching_substream(काष्ठा snd_usb_audio *chip, पूर्णांक stream, पूर्णांक ep_num,
+			पूर्णांक fmt_type)
+अणु
+	काष्ठा snd_usb_stream *as;
+	काष्ठा snd_usb_substream *subs;
 
-	list_for_each_entry(as, &chip->pcm_list, list) {
+	list_क्रम_each_entry(as, &chip->pcm_list, list) अणु
 		subs = &as->substream[stream];
-		if (as->fmt_type == fmt_type && subs->ep_num == ep_num)
-			return subs;
-	}
+		अगर (as->fmt_type == fmt_type && subs->ep_num == ep_num)
+			वापस subs;
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
 /*
- * Return the audioformat that is suitable for the implicit fb
+ * Return the audioक्रमmat that is suitable क्रम the implicit fb
  */
-const struct audioformat *
-snd_usb_find_implicit_fb_sync_format(struct snd_usb_audio *chip,
-				     const struct audioformat *target,
-				     const struct snd_pcm_hw_params *params,
-				     int stream)
-{
-	struct snd_usb_substream *subs;
-	const struct audioformat *fp, *sync_fmt = NULL;
-	int score, high_score;
+स्थिर काष्ठा audioक्रमmat *
+snd_usb_find_implicit_fb_sync_क्रमmat(काष्ठा snd_usb_audio *chip,
+				     स्थिर काष्ठा audioक्रमmat *target,
+				     स्थिर काष्ठा snd_pcm_hw_params *params,
+				     पूर्णांक stream)
+अणु
+	काष्ठा snd_usb_substream *subs;
+	स्थिर काष्ठा audioक्रमmat *fp, *sync_fmt = शून्य;
+	पूर्णांक score, high_score;
 
-	/* Use the original audioformat as fallback for the shared altset */
-	if (target->iface == target->sync_iface &&
+	/* Use the original audioक्रमmat as fallback क्रम the shared altset */
+	अगर (target->अगरace == target->sync_अगरace &&
 	    target->altsetting == target->sync_altsetting)
 		sync_fmt = target;
 
 	subs = find_matching_substream(chip, stream, target->sync_ep,
 				       target->fmt_type);
-	if (!subs)
-		return sync_fmt;
+	अगर (!subs)
+		वापस sync_fmt;
 
 	high_score = 0;
-	list_for_each_entry(fp, &subs->fmt_list, list) {
-		score = match_endpoint_audioformats(subs, fp,
+	list_क्रम_each_entry(fp, &subs->fmt_list, list) अणु
+		score = match_endpoपूर्णांक_audioक्रमmats(subs, fp,
 						    params_rate(params),
 						    params_channels(params),
-						    params_format(params));
-		if (score > high_score) {
+						    params_क्रमmat(params));
+		अगर (score > high_score) अणु
 			sync_fmt = fp;
 			high_score = score;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return sync_fmt;
-}
+	वापस sync_fmt;
+पूर्ण
 

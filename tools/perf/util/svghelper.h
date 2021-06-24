@@ -1,39 +1,40 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __PERF_SVGHELPER_H
-#define __PERF_SVGHELPER_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __PERF_SVGHELPER_H
+#घोषणा __PERF_SVGHELPER_H
 
-#include <linux/types.h>
+#समावेश <linux/types.h>
 
-struct perf_env;
+काष्ठा perf_env;
 
-void open_svg(const char *filename, int cpus, int rows, u64 start, u64 end);
-void svg_ubox(int Yslot, u64 start, u64 end, double height, const char *type, int fd, int err, int merges);
-void svg_lbox(int Yslot, u64 start, u64 end, double height, const char *type, int fd, int err, int merges);
-void svg_fbox(int Yslot, u64 start, u64 end, double height, const char *type, int fd, int err, int merges);
-void svg_box(int Yslot, u64 start, u64 end, const char *type);
-void svg_blocked(int Yslot, int cpu, u64 start, u64 end, const char *backtrace);
-void svg_running(int Yslot, int cpu, u64 start, u64 end, const char *backtrace);
-void svg_waiting(int Yslot, int cpu, u64 start, u64 end, const char *backtrace);
-void svg_cpu_box(int cpu, u64 max_frequency, u64 turbo_frequency);
-
-
-void svg_process(int cpu, u64 start, u64 end, int pid, const char *name, const char *backtrace);
-void svg_cstate(int cpu, u64 start, u64 end, int type);
-void svg_pstate(int cpu, u64 start, u64 end, u64 freq);
+व्योम खोलो_svg(स्थिर अक्षर *filename, पूर्णांक cpus, पूर्णांक rows, u64 start, u64 end);
+व्योम svg_ubox(पूर्णांक Yslot, u64 start, u64 end, द्विगुन height, स्थिर अक्षर *type, पूर्णांक fd, पूर्णांक err, पूर्णांक merges);
+व्योम svg_lbox(पूर्णांक Yslot, u64 start, u64 end, द्विगुन height, स्थिर अक्षर *type, पूर्णांक fd, पूर्णांक err, पूर्णांक merges);
+व्योम svg_fbox(पूर्णांक Yslot, u64 start, u64 end, द्विगुन height, स्थिर अक्षर *type, पूर्णांक fd, पूर्णांक err, पूर्णांक merges);
+व्योम svg_box(पूर्णांक Yslot, u64 start, u64 end, स्थिर अक्षर *type);
+व्योम svg_blocked(पूर्णांक Yslot, पूर्णांक cpu, u64 start, u64 end, स्थिर अक्षर *backtrace);
+व्योम svg_running(पूर्णांक Yslot, पूर्णांक cpu, u64 start, u64 end, स्थिर अक्षर *backtrace);
+व्योम svg_रुकोing(पूर्णांक Yslot, पूर्णांक cpu, u64 start, u64 end, स्थिर अक्षर *backtrace);
+व्योम svg_cpu_box(पूर्णांक cpu, u64 max_frequency, u64 turbo_frequency);
 
 
-void svg_time_grid(double min_thickness);
-void svg_io_legenda(void);
-void svg_legenda(void);
-void svg_wakeline(u64 start, int row1, int row2, const char *backtrace);
-void svg_partial_wakeline(u64 start, int row1, char *desc1, int row2, char *desc2, const char *backtrace);
-void svg_interrupt(u64 start, int row, const char *backtrace);
-void svg_text(int Yslot, u64 start, const char *text);
-void svg_close(void);
-int svg_build_topology_map(struct perf_env *env);
+व्योम svg_process(पूर्णांक cpu, u64 start, u64 end, पूर्णांक pid, स्थिर अक्षर *name, स्थिर अक्षर *backtrace);
+व्योम svg_cstate(पूर्णांक cpu, u64 start, u64 end, पूर्णांक type);
+व्योम svg_pstate(पूर्णांक cpu, u64 start, u64 end, u64 freq);
 
-extern int svg_page_width;
-extern u64 svg_highlight;
-extern const char *svg_highlight_name;
 
-#endif /* __PERF_SVGHELPER_H */
+व्योम svg_समय_grid(द्विगुन min_thickness);
+व्योम svg_io_legenda(व्योम);
+व्योम svg_legenda(व्योम);
+व्योम svg_wakeline(u64 start, पूर्णांक row1, पूर्णांक row2, स्थिर अक्षर *backtrace);
+व्योम svg_partial_wakeline(u64 start, पूर्णांक row1, अक्षर *desc1, पूर्णांक row2, अक्षर *desc2, स्थिर अक्षर *backtrace);
+व्योम svg_पूर्णांकerrupt(u64 start, पूर्णांक row, स्थिर अक्षर *backtrace);
+व्योम svg_text(पूर्णांक Yslot, u64 start, स्थिर अक्षर *text);
+व्योम svg_बंद(व्योम);
+पूर्णांक svg_build_topology_map(काष्ठा perf_env *env);
+
+बाह्य पूर्णांक svg_page_width;
+बाह्य u64 svg_highlight;
+बाह्य स्थिर अक्षर *svg_highlight_name;
+
+#पूर्ण_अगर /* __PERF_SVGHELPER_H */

@@ -1,440 +1,441 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * USB Serial Converter stuff
  *
  *	Copyright (C) 1999 - 2012
- *	    Greg Kroah-Hartman (greg@kroah.com)
+ *	    Greg Kroah-Harपंचांगan (greg@kroah.com)
  *
- *	This program is free software; you can redistribute it and/or modify
+ *	This program is मुक्त software; you can redistribute it and/or modअगरy
  *	it under the terms of the GNU General Public License as published by
  *	the Free Software Foundation; version 2 of the License.
  *
  */
 
-#ifndef __LINUX_USB_SERIAL_H
-#define __LINUX_USB_SERIAL_H
+#अगर_अघोषित __LINUX_USB_SERIAL_H
+#घोषणा __LINUX_USB_SERIAL_H
 
-#include <linux/kref.h>
-#include <linux/mutex.h>
-#include <linux/serial.h>
-#include <linux/kfifo.h>
+#समावेश <linux/kref.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/serial.h>
+#समावेश <linux/kfअगरo.h>
 
 /* The maximum number of ports one device can grab at once */
-#define MAX_NUM_PORTS		16
+#घोषणा MAX_NUM_PORTS		16
 
 /* USB serial flags */
-#define USB_SERIAL_WRITE_BUSY	0
-#define USB_SERIAL_THROTTLED	1
+#घोषणा USB_SERIAL_WRITE_BUSY	0
+#घोषणा USB_SERIAL_THROTTLED	1
 
 /**
- * usb_serial_port: structure for the specific ports of a device.
- * @serial: pointer back to the struct usb_serial owner of this port.
- * @port: pointer to the corresponding tty_port for this port.
- * @lock: spinlock to grab when updating portions of this structure.
+ * usb_serial_port: काष्ठाure क्रम the specअगरic ports of a device.
+ * @serial: poपूर्णांकer back to the काष्ठा usb_serial owner of this port.
+ * @port: poपूर्णांकer to the corresponding tty_port क्रम this port.
+ * @lock: spinlock to grab when updating portions of this काष्ठाure.
  * @minor: the minor number of the port
- * @port_number: the struct usb_serial port number of this port (starts at 0)
- * @interrupt_in_buffer: pointer to the interrupt in buffer for this port.
- * @interrupt_in_urb: pointer to the interrupt in struct urb for this port.
- * @interrupt_in_endpointAddress: endpoint address for the interrupt in pipe
- *	for this port.
- * @interrupt_out_buffer: pointer to the interrupt out buffer for this port.
- * @interrupt_out_size: the size of the interrupt_out_buffer, in bytes.
- * @interrupt_out_urb: pointer to the interrupt out struct urb for this port.
- * @interrupt_out_endpointAddress: endpoint address for the interrupt out pipe
- *	for this port.
- * @bulk_in_buffer: pointer to the bulk in buffer for this port.
+ * @port_number: the काष्ठा usb_serial port number of this port (starts at 0)
+ * @पूर्णांकerrupt_in_buffer: poपूर्णांकer to the पूर्णांकerrupt in buffer क्रम this port.
+ * @पूर्णांकerrupt_in_urb: poपूर्णांकer to the पूर्णांकerrupt in काष्ठा urb क्रम this port.
+ * @पूर्णांकerrupt_in_endpoपूर्णांकAddress: endpoपूर्णांक address क्रम the पूर्णांकerrupt in pipe
+ *	क्रम this port.
+ * @पूर्णांकerrupt_out_buffer: poपूर्णांकer to the पूर्णांकerrupt out buffer क्रम this port.
+ * @पूर्णांकerrupt_out_size: the size of the पूर्णांकerrupt_out_buffer, in bytes.
+ * @पूर्णांकerrupt_out_urb: poपूर्णांकer to the पूर्णांकerrupt out काष्ठा urb क्रम this port.
+ * @पूर्णांकerrupt_out_endpoपूर्णांकAddress: endpoपूर्णांक address क्रम the पूर्णांकerrupt out pipe
+ *	क्रम this port.
+ * @bulk_in_buffer: poपूर्णांकer to the bulk in buffer क्रम this port.
  * @bulk_in_size: the size of the bulk_in_buffer, in bytes.
- * @read_urb: pointer to the bulk in struct urb for this port.
- * @bulk_in_endpointAddress: endpoint address for the bulk in pipe for this
+ * @पढ़ो_urb: poपूर्णांकer to the bulk in काष्ठा urb क्रम this port.
+ * @bulk_in_endpoपूर्णांकAddress: endpoपूर्णांक address क्रम the bulk in pipe क्रम this
  *	port.
- * @bulk_in_buffers: pointers to the bulk in buffers for this port
- * @read_urbs: pointers to the bulk in urbs for this port
- * @read_urbs_free: status bitmap the for bulk in urbs
- * @bulk_out_buffer: pointer to the bulk out buffer for this port.
+ * @bulk_in_buffers: poपूर्णांकers to the bulk in buffers क्रम this port
+ * @पढ़ो_urbs: poपूर्णांकers to the bulk in urbs क्रम this port
+ * @पढ़ो_urbs_मुक्त: status biपंचांगap the क्रम bulk in urbs
+ * @bulk_out_buffer: poपूर्णांकer to the bulk out buffer क्रम this port.
  * @bulk_out_size: the size of the bulk_out_buffer, in bytes.
- * @write_urb: pointer to the bulk out struct urb for this port.
- * @write_fifo: kfifo used to buffer outgoing data
- * @bulk_out_buffers: pointers to the bulk out buffers for this port
- * @write_urbs: pointers to the bulk out urbs for this port
- * @write_urbs_free: status bitmap the for bulk out urbs
- * @icount: interrupt counters
+ * @ग_लिखो_urb: poपूर्णांकer to the bulk out काष्ठा urb क्रम this port.
+ * @ग_लिखो_fअगरo: kfअगरo used to buffer outgoing data
+ * @bulk_out_buffers: poपूर्णांकers to the bulk out buffers क्रम this port
+ * @ग_लिखो_urbs: poपूर्णांकers to the bulk out urbs क्रम this port
+ * @ग_लिखो_urbs_मुक्त: status biपंचांगap the क्रम bulk out urbs
+ * @icount: पूर्णांकerrupt counters
  * @tx_bytes: number of bytes currently in host stack queues
- * @bulk_out_endpointAddress: endpoint address for the bulk out pipe for this
+ * @bulk_out_endpoपूर्णांकAddress: endpoपूर्णांक address क्रम the bulk out pipe क्रम this
  *	port.
  * @flags: usb serial port flags
- * @work: work queue entry for the line discipline waking up.
- * @dev: pointer to the serial device
+ * @work: work queue entry क्रम the line discipline waking up.
+ * @dev: poपूर्णांकer to the serial device
  *
- * This structure is used by the usb-serial core and drivers for the specific
+ * This काष्ठाure is used by the usb-serial core and drivers क्रम the specअगरic
  * ports of a device.
  */
-struct usb_serial_port {
-	struct usb_serial	*serial;
-	struct tty_port		port;
+काष्ठा usb_serial_port अणु
+	काष्ठा usb_serial	*serial;
+	काष्ठा tty_port		port;
 	spinlock_t		lock;
 	u32			minor;
 	u8			port_number;
 
-	unsigned char		*interrupt_in_buffer;
-	struct urb		*interrupt_in_urb;
-	__u8			interrupt_in_endpointAddress;
+	अचिन्हित अक्षर		*पूर्णांकerrupt_in_buffer;
+	काष्ठा urb		*पूर्णांकerrupt_in_urb;
+	__u8			पूर्णांकerrupt_in_endpoपूर्णांकAddress;
 
-	unsigned char		*interrupt_out_buffer;
-	int			interrupt_out_size;
-	struct urb		*interrupt_out_urb;
-	__u8			interrupt_out_endpointAddress;
+	अचिन्हित अक्षर		*पूर्णांकerrupt_out_buffer;
+	पूर्णांक			पूर्णांकerrupt_out_size;
+	काष्ठा urb		*पूर्णांकerrupt_out_urb;
+	__u8			पूर्णांकerrupt_out_endpoपूर्णांकAddress;
 
-	unsigned char		*bulk_in_buffer;
-	int			bulk_in_size;
-	struct urb		*read_urb;
-	__u8			bulk_in_endpointAddress;
+	अचिन्हित अक्षर		*bulk_in_buffer;
+	पूर्णांक			bulk_in_size;
+	काष्ठा urb		*पढ़ो_urb;
+	__u8			bulk_in_endpoपूर्णांकAddress;
 
-	unsigned char		*bulk_in_buffers[2];
-	struct urb		*read_urbs[2];
-	unsigned long		read_urbs_free;
+	अचिन्हित अक्षर		*bulk_in_buffers[2];
+	काष्ठा urb		*पढ़ो_urbs[2];
+	अचिन्हित दीर्घ		पढ़ो_urbs_मुक्त;
 
-	unsigned char		*bulk_out_buffer;
-	int			bulk_out_size;
-	struct urb		*write_urb;
-	struct kfifo		write_fifo;
+	अचिन्हित अक्षर		*bulk_out_buffer;
+	पूर्णांक			bulk_out_size;
+	काष्ठा urb		*ग_लिखो_urb;
+	काष्ठा kfअगरo		ग_लिखो_fअगरo;
 
-	unsigned char		*bulk_out_buffers[2];
-	struct urb		*write_urbs[2];
-	unsigned long		write_urbs_free;
-	__u8			bulk_out_endpointAddress;
+	अचिन्हित अक्षर		*bulk_out_buffers[2];
+	काष्ठा urb		*ग_लिखो_urbs[2];
+	अचिन्हित दीर्घ		ग_लिखो_urbs_मुक्त;
+	__u8			bulk_out_endpoपूर्णांकAddress;
 
-	struct async_icount	icount;
-	int			tx_bytes;
+	काष्ठा async_icount	icount;
+	पूर्णांक			tx_bytes;
 
-	unsigned long		flags;
-	struct work_struct	work;
-	unsigned long		sysrq; /* sysrq timeout */
-	struct device		dev;
-};
-#define to_usb_serial_port(d) container_of(d, struct usb_serial_port, dev)
+	अचिन्हित दीर्घ		flags;
+	काष्ठा work_काष्ठा	work;
+	अचिन्हित दीर्घ		sysrq; /* sysrq समयout */
+	काष्ठा device		dev;
+पूर्ण;
+#घोषणा to_usb_serial_port(d) container_of(d, काष्ठा usb_serial_port, dev)
 
-/* get and set the port private data pointer helper functions */
-static inline void *usb_get_serial_port_data(struct usb_serial_port *port)
-{
-	return dev_get_drvdata(&port->dev);
-}
+/* get and set the port निजी data poपूर्णांकer helper functions */
+अटल अंतरभूत व्योम *usb_get_serial_port_data(काष्ठा usb_serial_port *port)
+अणु
+	वापस dev_get_drvdata(&port->dev);
+पूर्ण
 
-static inline void usb_set_serial_port_data(struct usb_serial_port *port,
-					    void *data)
-{
+अटल अंतरभूत व्योम usb_set_serial_port_data(काष्ठा usb_serial_port *port,
+					    व्योम *data)
+अणु
 	dev_set_drvdata(&port->dev, data);
-}
+पूर्ण
 
 /**
- * usb_serial - structure used by the usb-serial core for a device
- * @dev: pointer to the struct usb_device for this device
- * @type: pointer to the struct usb_serial_driver for this device
- * @interface: pointer to the struct usb_interface for this device
- * @sibling: pointer to the struct usb_interface of any sibling interface
- * @suspend_count: number of suspended (sibling) interfaces
+ * usb_serial - काष्ठाure used by the usb-serial core क्रम a device
+ * @dev: poपूर्णांकer to the काष्ठा usb_device क्रम this device
+ * @type: poपूर्णांकer to the काष्ठा usb_serial_driver क्रम this device
+ * @पूर्णांकerface: poपूर्णांकer to the काष्ठा usb_पूर्णांकerface क्रम this device
+ * @sibling: poपूर्णांकer to the काष्ठा usb_पूर्णांकerface of any sibling पूर्णांकerface
+ * @suspend_count: number of suspended (sibling) पूर्णांकerfaces
  * @num_ports: the number of ports this device has
- * @num_interrupt_in: number of interrupt in endpoints we have
- * @num_interrupt_out: number of interrupt out endpoints we have
- * @num_bulk_in: number of bulk in endpoints we have
- * @num_bulk_out: number of bulk out endpoints we have
- * @port: array of struct usb_serial_port structures for the different ports.
- * @private: place to put any driver specific information that is needed.  The
+ * @num_पूर्णांकerrupt_in: number of पूर्णांकerrupt in endpoपूर्णांकs we have
+ * @num_पूर्णांकerrupt_out: number of पूर्णांकerrupt out endpoपूर्णांकs we have
+ * @num_bulk_in: number of bulk in endpoपूर्णांकs we have
+ * @num_bulk_out: number of bulk out endpoपूर्णांकs we have
+ * @port: array of काष्ठा usb_serial_port काष्ठाures क्रम the dअगरferent ports.
+ * @निजी: place to put any driver specअगरic inक्रमmation that is needed.  The
  *	usb-serial driver is required to manage this data, the usb-serial core
  *	will not touch this.  Use usb_get_serial_data() and
  *	usb_set_serial_data() to access this.
  */
-struct usb_serial {
-	struct usb_device		*dev;
-	struct usb_serial_driver	*type;
-	struct usb_interface		*interface;
-	struct usb_interface		*sibling;
-	unsigned int			suspend_count;
-	unsigned char			disconnected:1;
-	unsigned char			attached:1;
-	unsigned char			minors_reserved:1;
-	unsigned char			num_ports;
-	unsigned char			num_port_pointers;
-	unsigned char			num_interrupt_in;
-	unsigned char			num_interrupt_out;
-	unsigned char			num_bulk_in;
-	unsigned char			num_bulk_out;
-	struct usb_serial_port		*port[MAX_NUM_PORTS];
-	struct kref			kref;
-	struct mutex			disc_mutex;
-	void				*private;
-};
-#define to_usb_serial(d) container_of(d, struct usb_serial, kref)
+काष्ठा usb_serial अणु
+	काष्ठा usb_device		*dev;
+	काष्ठा usb_serial_driver	*type;
+	काष्ठा usb_पूर्णांकerface		*पूर्णांकerface;
+	काष्ठा usb_पूर्णांकerface		*sibling;
+	अचिन्हित पूर्णांक			suspend_count;
+	अचिन्हित अक्षर			disconnected:1;
+	अचिन्हित अक्षर			attached:1;
+	अचिन्हित अक्षर			minors_reserved:1;
+	अचिन्हित अक्षर			num_ports;
+	अचिन्हित अक्षर			num_port_poपूर्णांकers;
+	अचिन्हित अक्षर			num_पूर्णांकerrupt_in;
+	अचिन्हित अक्षर			num_पूर्णांकerrupt_out;
+	अचिन्हित अक्षर			num_bulk_in;
+	अचिन्हित अक्षर			num_bulk_out;
+	काष्ठा usb_serial_port		*port[MAX_NUM_PORTS];
+	काष्ठा kref			kref;
+	काष्ठा mutex			disc_mutex;
+	व्योम				*निजी;
+पूर्ण;
+#घोषणा to_usb_serial(d) container_of(d, काष्ठा usb_serial, kref)
 
-/* get and set the serial private data pointer helper functions */
-static inline void *usb_get_serial_data(struct usb_serial *serial)
-{
-	return serial->private;
-}
+/* get and set the serial निजी data poपूर्णांकer helper functions */
+अटल अंतरभूत व्योम *usb_get_serial_data(काष्ठा usb_serial *serial)
+अणु
+	वापस serial->निजी;
+पूर्ण
 
-static inline void usb_set_serial_data(struct usb_serial *serial, void *data)
-{
-	serial->private = data;
-}
+अटल अंतरभूत व्योम usb_set_serial_data(काष्ठा usb_serial *serial, व्योम *data)
+अणु
+	serial->निजी = data;
+पूर्ण
 
-struct usb_serial_endpoints {
-	unsigned char num_bulk_in;
-	unsigned char num_bulk_out;
-	unsigned char num_interrupt_in;
-	unsigned char num_interrupt_out;
-	struct usb_endpoint_descriptor *bulk_in[MAX_NUM_PORTS];
-	struct usb_endpoint_descriptor *bulk_out[MAX_NUM_PORTS];
-	struct usb_endpoint_descriptor *interrupt_in[MAX_NUM_PORTS];
-	struct usb_endpoint_descriptor *interrupt_out[MAX_NUM_PORTS];
-};
+काष्ठा usb_serial_endpoपूर्णांकs अणु
+	अचिन्हित अक्षर num_bulk_in;
+	अचिन्हित अक्षर num_bulk_out;
+	अचिन्हित अक्षर num_पूर्णांकerrupt_in;
+	अचिन्हित अक्षर num_पूर्णांकerrupt_out;
+	काष्ठा usb_endpoपूर्णांक_descriptor *bulk_in[MAX_NUM_PORTS];
+	काष्ठा usb_endpoपूर्णांक_descriptor *bulk_out[MAX_NUM_PORTS];
+	काष्ठा usb_endpoपूर्णांक_descriptor *पूर्णांकerrupt_in[MAX_NUM_PORTS];
+	काष्ठा usb_endpoपूर्णांक_descriptor *पूर्णांकerrupt_out[MAX_NUM_PORTS];
+पूर्ण;
 
 /**
  * usb_serial_driver - describes a usb serial driver
- * @description: pointer to a string that describes this driver.  This string
- *	used in the syslog messages when a device is inserted or removed.
- * @id_table: pointer to a list of usb_device_id structures that define all
- *	of the devices this structure can support.
- * @num_ports: the number of different ports this device will have.
- * @num_bulk_in: minimum number of bulk-in endpoints
- * @num_bulk_out: minimum number of bulk-out endpoints
- * @num_interrupt_in: minimum number of interrupt-in endpoints
- * @num_interrupt_out: minimum number of interrupt-out endpoints
- * @bulk_in_size: minimum number of bytes to allocate for bulk-in buffer
- *	(0 = end-point size)
- * @bulk_out_size: bytes to allocate for bulk-out buffer (0 = end-point size)
- * @calc_num_ports: pointer to a function to determine how many ports this
- *	device has dynamically. It can also be used to verify the number of
- *	endpoints or to modify the port-endpoint mapping. It will be called
- *	after the probe() callback is called, but before attach().
- * @probe: pointer to the driver's probe function.
- *	This will be called when the device is inserted into the system,
- *	but before the device has been fully initialized by the usb_serial
- *	subsystem.  Use this function to download any firmware to the device,
+ * @description: poपूर्णांकer to a string that describes this driver.  This string
+ *	used in the syslog messages when a device is inserted or हटाओd.
+ * @id_table: poपूर्णांकer to a list of usb_device_id काष्ठाures that define all
+ *	of the devices this काष्ठाure can support.
+ * @num_ports: the number of dअगरferent ports this device will have.
+ * @num_bulk_in: minimum number of bulk-in endpoपूर्णांकs
+ * @num_bulk_out: minimum number of bulk-out endpoपूर्णांकs
+ * @num_पूर्णांकerrupt_in: minimum number of पूर्णांकerrupt-in endpoपूर्णांकs
+ * @num_पूर्णांकerrupt_out: minimum number of पूर्णांकerrupt-out endpoपूर्णांकs
+ * @bulk_in_size: minimum number of bytes to allocate क्रम bulk-in buffer
+ *	(0 = end-poपूर्णांक size)
+ * @bulk_out_size: bytes to allocate क्रम bulk-out buffer (0 = end-poपूर्णांक size)
+ * @calc_num_ports: poपूर्णांकer to a function to determine how many ports this
+ *	device has dynamically. It can also be used to verअगरy the number of
+ *	endpoपूर्णांकs or to modअगरy the port-endpoपूर्णांक mapping. It will be called
+ *	after the probe() callback is called, but beक्रमe attach().
+ * @probe: poपूर्णांकer to the driver's probe function.
+ *	This will be called when the device is inserted पूर्णांकo the प्रणाली,
+ *	but beक्रमe the device has been fully initialized by the usb_serial
+ *	subप्रणाली.  Use this function to करोwnload any firmware to the device,
  *	or any other early initialization that might be needed.
- *	Return 0 to continue on with the initialization sequence.  Anything
- *	else will abort it.
- * @attach: pointer to the driver's attach function.
- *	This will be called when the struct usb_serial structure is fully
- *	set up.  Do any local initialization of the device, or any private
- *	memory structure allocation at this point in time.
- * @disconnect: pointer to the driver's disconnect function.  This will be
+ *	Return 0 to जारी on with the initialization sequence.  Anything
+ *	अन्यथा will पात it.
+ * @attach: poपूर्णांकer to the driver's attach function.
+ *	This will be called when the काष्ठा usb_serial काष्ठाure is fully
+ *	set up.  Do any local initialization of the device, or any निजी
+ *	memory काष्ठाure allocation at this poपूर्णांक in समय.
+ * @disconnect: poपूर्णांकer to the driver's disconnect function.  This will be
  *	called when the device is unplugged or unbound from the driver.
- * @release: pointer to the driver's release function.  This will be called
- *	when the usb_serial data structure is about to be destroyed.
- * @usb_driver: pointer to the struct usb_driver that controls this
+ * @release: poपूर्णांकer to the driver's release function.  This will be called
+ *	when the usb_serial data काष्ठाure is about to be destroyed.
+ * @usb_driver: poपूर्णांकer to the काष्ठा usb_driver that controls this
  *	device.  This is necessary to allow dynamic ids to be added to
  *	the driver from sysfs.
  *
- * This structure is defines a USB Serial driver.  It provides all of
- * the information that the USB serial core code needs.  If the function
- * pointers are defined, then the USB serial core code will call them when
+ * This काष्ठाure is defines a USB Serial driver.  It provides all of
+ * the inक्रमmation that the USB serial core code needs.  If the function
+ * poपूर्णांकers are defined, then the USB serial core code will call them when
  * the corresponding tty port functions are called.  If they are not
  * called, the generic serial function will be used instead.
  *
  * The driver.owner field should be set to the module owner of this driver.
  * The driver.name field should be set to the name of this driver (remember
- * it will show up in sysfs, so it needs to be short and to the point.
+ * it will show up in sysfs, so it needs to be लघु and to the poपूर्णांक.
  * Using the module name is a good idea.)
  */
-struct usb_serial_driver {
-	const char *description;
-	const struct usb_device_id *id_table;
+काष्ठा usb_serial_driver अणु
+	स्थिर अक्षर *description;
+	स्थिर काष्ठा usb_device_id *id_table;
 
-	struct list_head	driver_list;
-	struct device_driver	driver;
-	struct usb_driver	*usb_driver;
-	struct usb_dynids	dynids;
+	काष्ठा list_head	driver_list;
+	काष्ठा device_driver	driver;
+	काष्ठा usb_driver	*usb_driver;
+	काष्ठा usb_dynids	dynids;
 
-	unsigned char		num_ports;
+	अचिन्हित अक्षर		num_ports;
 
-	unsigned char		num_bulk_in;
-	unsigned char		num_bulk_out;
-	unsigned char		num_interrupt_in;
-	unsigned char		num_interrupt_out;
+	अचिन्हित अक्षर		num_bulk_in;
+	अचिन्हित अक्षर		num_bulk_out;
+	अचिन्हित अक्षर		num_पूर्णांकerrupt_in;
+	अचिन्हित अक्षर		num_पूर्णांकerrupt_out;
 
-	size_t			bulk_in_size;
-	size_t			bulk_out_size;
+	माप_प्रकार			bulk_in_size;
+	माप_प्रकार			bulk_out_size;
 
-	int (*probe)(struct usb_serial *serial, const struct usb_device_id *id);
-	int (*attach)(struct usb_serial *serial);
-	int (*calc_num_ports)(struct usb_serial *serial,
-			struct usb_serial_endpoints *epds);
+	पूर्णांक (*probe)(काष्ठा usb_serial *serial, स्थिर काष्ठा usb_device_id *id);
+	पूर्णांक (*attach)(काष्ठा usb_serial *serial);
+	पूर्णांक (*calc_num_ports)(काष्ठा usb_serial *serial,
+			काष्ठा usb_serial_endpoपूर्णांकs *epds);
 
-	void (*disconnect)(struct usb_serial *serial);
-	void (*release)(struct usb_serial *serial);
+	व्योम (*disconnect)(काष्ठा usb_serial *serial);
+	व्योम (*release)(काष्ठा usb_serial *serial);
 
-	int (*port_probe)(struct usb_serial_port *port);
-	void (*port_remove)(struct usb_serial_port *port);
+	पूर्णांक (*port_probe)(काष्ठा usb_serial_port *port);
+	व्योम (*port_हटाओ)(काष्ठा usb_serial_port *port);
 
-	int (*suspend)(struct usb_serial *serial, pm_message_t message);
-	int (*resume)(struct usb_serial *serial);
-	int (*reset_resume)(struct usb_serial *serial);
+	पूर्णांक (*suspend)(काष्ठा usb_serial *serial, pm_message_t message);
+	पूर्णांक (*resume)(काष्ठा usb_serial *serial);
+	पूर्णांक (*reset_resume)(काष्ठा usb_serial *serial);
 
 	/* serial function calls */
 	/* Called by console and by the tty layer */
-	int  (*open)(struct tty_struct *tty, struct usb_serial_port *port);
-	void (*close)(struct usb_serial_port *port);
-	int  (*write)(struct tty_struct *tty, struct usb_serial_port *port,
-			const unsigned char *buf, int count);
+	पूर्णांक  (*खोलो)(काष्ठा tty_काष्ठा *tty, काष्ठा usb_serial_port *port);
+	व्योम (*बंद)(काष्ठा usb_serial_port *port);
+	पूर्णांक  (*ग_लिखो)(काष्ठा tty_काष्ठा *tty, काष्ठा usb_serial_port *port,
+			स्थिर अचिन्हित अक्षर *buf, पूर्णांक count);
 	/* Called only by the tty layer */
-	int  (*write_room)(struct tty_struct *tty);
-	int  (*ioctl)(struct tty_struct *tty,
-		      unsigned int cmd, unsigned long arg);
-	void (*get_serial)(struct tty_struct *tty, struct serial_struct *ss);
-	int  (*set_serial)(struct tty_struct *tty, struct serial_struct *ss);
-	void (*set_termios)(struct tty_struct *tty,
-			struct usb_serial_port *port, struct ktermios *old);
-	void (*break_ctl)(struct tty_struct *tty, int break_state);
-	int  (*chars_in_buffer)(struct tty_struct *tty);
-	void (*wait_until_sent)(struct tty_struct *tty, long timeout);
-	bool (*tx_empty)(struct usb_serial_port *port);
-	void (*throttle)(struct tty_struct *tty);
-	void (*unthrottle)(struct tty_struct *tty);
-	int  (*tiocmget)(struct tty_struct *tty);
-	int  (*tiocmset)(struct tty_struct *tty,
-			 unsigned int set, unsigned int clear);
-	int  (*tiocmiwait)(struct tty_struct *tty, unsigned long arg);
-	int  (*get_icount)(struct tty_struct *tty,
-			struct serial_icounter_struct *icount);
-	/* Called by the tty layer for port level work. There may or may not
-	   be an attached tty at this point */
-	void (*dtr_rts)(struct usb_serial_port *port, int on);
-	int  (*carrier_raised)(struct usb_serial_port *port);
+	पूर्णांक  (*ग_लिखो_room)(काष्ठा tty_काष्ठा *tty);
+	पूर्णांक  (*ioctl)(काष्ठा tty_काष्ठा *tty,
+		      अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg);
+	व्योम (*get_serial)(काष्ठा tty_काष्ठा *tty, काष्ठा serial_काष्ठा *ss);
+	पूर्णांक  (*set_serial)(काष्ठा tty_काष्ठा *tty, काष्ठा serial_काष्ठा *ss);
+	व्योम (*set_termios)(काष्ठा tty_काष्ठा *tty,
+			काष्ठा usb_serial_port *port, काष्ठा ktermios *old);
+	व्योम (*अवरोध_ctl)(काष्ठा tty_काष्ठा *tty, पूर्णांक अवरोध_state);
+	पूर्णांक  (*अक्षरs_in_buffer)(काष्ठा tty_काष्ठा *tty);
+	व्योम (*रुको_until_sent)(काष्ठा tty_काष्ठा *tty, दीर्घ समयout);
+	bool (*tx_empty)(काष्ठा usb_serial_port *port);
+	व्योम (*throttle)(काष्ठा tty_काष्ठा *tty);
+	व्योम (*unthrottle)(काष्ठा tty_काष्ठा *tty);
+	पूर्णांक  (*tiocmget)(काष्ठा tty_काष्ठा *tty);
+	पूर्णांक  (*tiocmset)(काष्ठा tty_काष्ठा *tty,
+			 अचिन्हित पूर्णांक set, अचिन्हित पूर्णांक clear);
+	पूर्णांक  (*tiocmiरुको)(काष्ठा tty_काष्ठा *tty, अचिन्हित दीर्घ arg);
+	पूर्णांक  (*get_icount)(काष्ठा tty_काष्ठा *tty,
+			काष्ठा serial_icounter_काष्ठा *icount);
+	/* Called by the tty layer क्रम port level work. There may or may not
+	   be an attached tty at this poपूर्णांक */
+	व्योम (*dtr_rts)(काष्ठा usb_serial_port *port, पूर्णांक on);
+	पूर्णांक  (*carrier_उठाओd)(काष्ठा usb_serial_port *port);
 	/* Called by the usb serial hooks to allow the user to rework the
 	   termios state */
-	void (*init_termios)(struct tty_struct *tty);
+	व्योम (*init_termios)(काष्ठा tty_काष्ठा *tty);
 	/* USB events */
-	void (*read_int_callback)(struct urb *urb);
-	void (*write_int_callback)(struct urb *urb);
-	void (*read_bulk_callback)(struct urb *urb);
-	void (*write_bulk_callback)(struct urb *urb);
-	/* Called by the generic read bulk callback */
-	void (*process_read_urb)(struct urb *urb);
-	/* Called by the generic write implementation */
-	int (*prepare_write_buffer)(struct usb_serial_port *port,
-						void *dest, size_t size);
-};
-#define to_usb_serial_driver(d) \
-	container_of(d, struct usb_serial_driver, driver)
+	व्योम (*पढ़ो_पूर्णांक_callback)(काष्ठा urb *urb);
+	व्योम (*ग_लिखो_पूर्णांक_callback)(काष्ठा urb *urb);
+	व्योम (*पढ़ो_bulk_callback)(काष्ठा urb *urb);
+	व्योम (*ग_लिखो_bulk_callback)(काष्ठा urb *urb);
+	/* Called by the generic पढ़ो bulk callback */
+	व्योम (*process_पढ़ो_urb)(काष्ठा urb *urb);
+	/* Called by the generic ग_लिखो implementation */
+	पूर्णांक (*prepare_ग_लिखो_buffer)(काष्ठा usb_serial_port *port,
+						व्योम *dest, माप_प्रकार size);
+पूर्ण;
+#घोषणा to_usb_serial_driver(d) \
+	container_of(d, काष्ठा usb_serial_driver, driver)
 
-int usb_serial_register_drivers(struct usb_serial_driver *const serial_drivers[],
-		const char *name, const struct usb_device_id *id_table);
-void usb_serial_deregister_drivers(struct usb_serial_driver *const serial_drivers[]);
-void usb_serial_port_softint(struct usb_serial_port *port);
+पूर्णांक usb_serial_रेजिस्टर_drivers(काष्ठा usb_serial_driver *स्थिर serial_drivers[],
+		स्थिर अक्षर *name, स्थिर काष्ठा usb_device_id *id_table);
+व्योम usb_serial_deरेजिस्टर_drivers(काष्ठा usb_serial_driver *स्थिर serial_drivers[]);
+व्योम usb_serial_port_softपूर्णांक(काष्ठा usb_serial_port *port);
 
-int usb_serial_suspend(struct usb_interface *intf, pm_message_t message);
-int usb_serial_resume(struct usb_interface *intf);
+पूर्णांक usb_serial_suspend(काष्ठा usb_पूर्णांकerface *पूर्णांकf, pm_message_t message);
+पूर्णांक usb_serial_resume(काष्ठा usb_पूर्णांकerface *पूर्णांकf);
 
 /* USB Serial console functions */
-#ifdef CONFIG_USB_SERIAL_CONSOLE
-void usb_serial_console_init(int minor);
-void usb_serial_console_exit(void);
-void usb_serial_console_disconnect(struct usb_serial *serial);
-#else
-static inline void usb_serial_console_init(int minor) { }
-static inline void usb_serial_console_exit(void) { }
-static inline void usb_serial_console_disconnect(struct usb_serial *serial) {}
-#endif
+#अगर_घोषित CONFIG_USB_SERIAL_CONSOLE
+व्योम usb_serial_console_init(पूर्णांक minor);
+व्योम usb_serial_console_निकास(व्योम);
+व्योम usb_serial_console_disconnect(काष्ठा usb_serial *serial);
+#अन्यथा
+अटल अंतरभूत व्योम usb_serial_console_init(पूर्णांक minor) अणु पूर्ण
+अटल अंतरभूत व्योम usb_serial_console_निकास(व्योम) अणु पूर्ण
+अटल अंतरभूत व्योम usb_serial_console_disconnect(काष्ठा usb_serial *serial) अणुपूर्ण
+#पूर्ण_अगर
 
 /* Functions needed by other parts of the usbserial core */
-struct usb_serial_port *usb_serial_port_get_by_minor(unsigned int minor);
-void usb_serial_put(struct usb_serial *serial);
+काष्ठा usb_serial_port *usb_serial_port_get_by_minor(अचिन्हित पूर्णांक minor);
+व्योम usb_serial_put(काष्ठा usb_serial *serial);
 
-int usb_serial_claim_interface(struct usb_serial *serial, struct usb_interface *intf);
+पूर्णांक usb_serial_claim_पूर्णांकerface(काष्ठा usb_serial *serial, काष्ठा usb_पूर्णांकerface *पूर्णांकf);
 
-int usb_serial_generic_open(struct tty_struct *tty, struct usb_serial_port *port);
-int usb_serial_generic_write_start(struct usb_serial_port *port, gfp_t mem_flags);
-int usb_serial_generic_write(struct tty_struct *tty, struct usb_serial_port *port,
-		const unsigned char *buf, int count);
-void usb_serial_generic_close(struct usb_serial_port *port);
-int usb_serial_generic_resume(struct usb_serial *serial);
-int usb_serial_generic_write_room(struct tty_struct *tty);
-int usb_serial_generic_chars_in_buffer(struct tty_struct *tty);
-void usb_serial_generic_wait_until_sent(struct tty_struct *tty, long timeout);
-void usb_serial_generic_read_bulk_callback(struct urb *urb);
-void usb_serial_generic_write_bulk_callback(struct urb *urb);
-void usb_serial_generic_throttle(struct tty_struct *tty);
-void usb_serial_generic_unthrottle(struct tty_struct *tty);
-int usb_serial_generic_tiocmiwait(struct tty_struct *tty, unsigned long arg);
-int usb_serial_generic_get_icount(struct tty_struct *tty, struct serial_icounter_struct *icount);
-int usb_serial_generic_register(void);
-void usb_serial_generic_deregister(void);
-int usb_serial_generic_submit_read_urbs(struct usb_serial_port *port, gfp_t mem_flags);
-void usb_serial_generic_process_read_urb(struct urb *urb);
-int usb_serial_generic_prepare_write_buffer(struct usb_serial_port *port, void *dest, size_t size);
+पूर्णांक usb_serial_generic_खोलो(काष्ठा tty_काष्ठा *tty, काष्ठा usb_serial_port *port);
+पूर्णांक usb_serial_generic_ग_लिखो_start(काष्ठा usb_serial_port *port, gfp_t mem_flags);
+पूर्णांक usb_serial_generic_ग_लिखो(काष्ठा tty_काष्ठा *tty, काष्ठा usb_serial_port *port,
+		स्थिर अचिन्हित अक्षर *buf, पूर्णांक count);
+व्योम usb_serial_generic_बंद(काष्ठा usb_serial_port *port);
+पूर्णांक usb_serial_generic_resume(काष्ठा usb_serial *serial);
+पूर्णांक usb_serial_generic_ग_लिखो_room(काष्ठा tty_काष्ठा *tty);
+पूर्णांक usb_serial_generic_अक्षरs_in_buffer(काष्ठा tty_काष्ठा *tty);
+व्योम usb_serial_generic_रुको_until_sent(काष्ठा tty_काष्ठा *tty, दीर्घ समयout);
+व्योम usb_serial_generic_पढ़ो_bulk_callback(काष्ठा urb *urb);
+व्योम usb_serial_generic_ग_लिखो_bulk_callback(काष्ठा urb *urb);
+व्योम usb_serial_generic_throttle(काष्ठा tty_काष्ठा *tty);
+व्योम usb_serial_generic_unthrottle(काष्ठा tty_काष्ठा *tty);
+पूर्णांक usb_serial_generic_tiocmiरुको(काष्ठा tty_काष्ठा *tty, अचिन्हित दीर्घ arg);
+पूर्णांक usb_serial_generic_get_icount(काष्ठा tty_काष्ठा *tty, काष्ठा serial_icounter_काष्ठा *icount);
+पूर्णांक usb_serial_generic_रेजिस्टर(व्योम);
+व्योम usb_serial_generic_deरेजिस्टर(व्योम);
+पूर्णांक usb_serial_generic_submit_पढ़ो_urbs(काष्ठा usb_serial_port *port, gfp_t mem_flags);
+व्योम usb_serial_generic_process_पढ़ो_urb(काष्ठा urb *urb);
+पूर्णांक usb_serial_generic_prepare_ग_लिखो_buffer(काष्ठा usb_serial_port *port, व्योम *dest, माप_प्रकार size);
 
-#if defined(CONFIG_USB_SERIAL_CONSOLE) && defined(CONFIG_MAGIC_SYSRQ)
-int usb_serial_handle_sysrq_char(struct usb_serial_port *port, unsigned int ch);
-int usb_serial_handle_break(struct usb_serial_port *port);
-#else
-static inline int usb_serial_handle_sysrq_char(struct usb_serial_port *port, unsigned int ch)
-{
-	return 0;
-}
-static inline int usb_serial_handle_break(struct usb_serial_port *port)
-{
-	return 0;
-}
-#endif
+#अगर defined(CONFIG_USB_SERIAL_CONSOLE) && defined(CONFIG_MAGIC_SYSRQ)
+पूर्णांक usb_serial_handle_sysrq_अक्षर(काष्ठा usb_serial_port *port, अचिन्हित पूर्णांक ch);
+पूर्णांक usb_serial_handle_अवरोध(काष्ठा usb_serial_port *port);
+#अन्यथा
+अटल अंतरभूत पूर्णांक usb_serial_handle_sysrq_अक्षर(काष्ठा usb_serial_port *port, अचिन्हित पूर्णांक ch)
+अणु
+	वापस 0;
+पूर्ण
+अटल अंतरभूत पूर्णांक usb_serial_handle_अवरोध(काष्ठा usb_serial_port *port)
+अणु
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
-void usb_serial_handle_dcd_change(struct usb_serial_port *usb_port,
-		struct tty_struct *tty, unsigned int status);
+व्योम usb_serial_handle_dcd_change(काष्ठा usb_serial_port *usb_port,
+		काष्ठा tty_काष्ठा *tty, अचिन्हित पूर्णांक status);
 
 
-int usb_serial_bus_register(struct usb_serial_driver *device);
-void usb_serial_bus_deregister(struct usb_serial_driver *device);
+पूर्णांक usb_serial_bus_रेजिस्टर(काष्ठा usb_serial_driver *device);
+व्योम usb_serial_bus_deरेजिस्टर(काष्ठा usb_serial_driver *device);
 
-extern struct bus_type usb_serial_bus_type;
-extern struct tty_driver *usb_serial_tty_driver;
+बाह्य काष्ठा bus_type usb_serial_bus_type;
+बाह्य काष्ठा tty_driver *usb_serial_tty_driver;
 
-static inline void usb_serial_debug_data(struct device *dev,
-					 const char *function, int size,
-					 const unsigned char *data)
-{
+अटल अंतरभूत व्योम usb_serial_debug_data(काष्ठा device *dev,
+					 स्थिर अक्षर *function, पूर्णांक size,
+					 स्थिर अचिन्हित अक्षर *data)
+अणु
 	dev_dbg(dev, "%s - length = %d, data = %*ph\n",
 		function, size, size, data);
-}
+पूर्ण
 
 /*
- * Macro for reporting errors in write path to avoid inifinite loop
+ * Macro क्रम reporting errors in ग_लिखो path to aव्योम inअगरinite loop
  * when port is used as a console.
  */
-#define dev_err_console(usport, fmt, ...)				\
-do {									\
-	static bool __print_once;					\
-	struct usb_serial_port *__port = (usport);			\
+#घोषणा dev_err_console(usport, fmt, ...)				\
+करो अणु									\
+	अटल bool __prपूर्णांक_once;					\
+	काष्ठा usb_serial_port *__port = (usport);			\
 									\
-	if (!__port->port.console || !__print_once) {			\
-		__print_once = true;					\
+	अगर (!__port->port.console || !__prपूर्णांक_once) अणु			\
+		__prपूर्णांक_once = true;					\
 		dev_err(&__port->dev, fmt, ##__VA_ARGS__);		\
-	}								\
-} while (0)
+	पूर्ण								\
+पूर्ण जबतक (0)
 
 /*
- * module_usb_serial_driver() - Helper macro for registering a USB Serial driver
- * @__serial_drivers: list of usb_serial drivers to register
+ * module_usb_serial_driver() - Helper macro क्रम रेजिस्टरing a USB Serial driver
+ * @__serial_drivers: list of usb_serial drivers to रेजिस्टर
  * @__ids: all device ids that @__serial_drivers bind to
  *
- * Helper macro for USB serial drivers which do not do anything special
- * in module init/exit. This eliminates a lot of boilerplate. Each
+ * Helper macro क्रम USB serial drivers which करो not करो anything special
+ * in module init/निकास. This eliminates a lot of boilerplate. Each
  * module may only use this macro once, and calling it replaces
- * module_init() and module_exit()
+ * module_init() and module_निकास()
  *
  */
-#define usb_serial_module_driver(__name, __serial_drivers, __ids)	\
-static int __init usb_serial_module_init(void)				\
-{									\
-	return usb_serial_register_drivers(__serial_drivers,		\
+#घोषणा usb_serial_module_driver(__name, __serial_drivers, __ids)	\
+अटल पूर्णांक __init usb_serial_module_init(व्योम)				\
+अणु									\
+	वापस usb_serial_रेजिस्टर_drivers(__serial_drivers,		\
 					   __name, __ids);		\
-}									\
+पूर्ण									\
 module_init(usb_serial_module_init);					\
-static void __exit usb_serial_module_exit(void)				\
-{									\
-	usb_serial_deregister_drivers(__serial_drivers);		\
-}									\
-module_exit(usb_serial_module_exit);
+अटल व्योम __निकास usb_serial_module_निकास(व्योम)				\
+अणु									\
+	usb_serial_deरेजिस्टर_drivers(__serial_drivers);		\
+पूर्ण									\
+module_निकास(usb_serial_module_निकास);
 
-#define module_usb_serial_driver(__serial_drivers, __ids)		\
+#घोषणा module_usb_serial_driver(__serial_drivers, __ids)		\
 	usb_serial_module_driver(KBUILD_MODNAME, __serial_drivers, __ids)
 
-#endif /* __LINUX_USB_SERIAL_H */
+#पूर्ण_अगर /* __LINUX_USB_SERIAL_H */
 

@@ -1,50 +1,51 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __IPUV3_PLANE_H__
-#define __IPUV3_PLANE_H__
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __IPUV3_PLANE_H__
+#घोषणा __IPUV3_PLANE_H__
 
-#include <drm/drm_crtc.h> /* drm_plane */
+#समावेश <drm/drm_crtc.h> /* drm_plane */
 
-struct drm_plane;
-struct drm_device;
-struct ipu_soc;
-struct drm_crtc;
-struct drm_framebuffer;
+काष्ठा drm_plane;
+काष्ठा drm_device;
+काष्ठा ipu_soc;
+काष्ठा drm_crtc;
+काष्ठा drm_framebuffer;
 
-struct ipuv3_channel;
-struct dmfc_channel;
-struct ipu_dp;
+काष्ठा ipuv3_channel;
+काष्ठा dmfc_channel;
+काष्ठा ipu_dp;
 
-struct ipu_plane {
-	struct drm_plane	base;
+काष्ठा ipu_plane अणु
+	काष्ठा drm_plane	base;
 
-	struct ipu_soc		*ipu;
-	struct ipuv3_channel	*ipu_ch;
-	struct ipuv3_channel	*alpha_ch;
-	struct dmfc_channel	*dmfc;
-	struct ipu_dp		*dp;
+	काष्ठा ipu_soc		*ipu;
+	काष्ठा ipuv3_channel	*ipu_ch;
+	काष्ठा ipuv3_channel	*alpha_ch;
+	काष्ठा dmfc_channel	*dmfc;
+	काष्ठा ipu_dp		*dp;
 
-	int			dma;
-	int			dp_flow;
+	पूर्णांक			dma;
+	पूर्णांक			dp_flow;
 
 	bool			disabling;
-};
+पूर्ण;
 
-struct ipu_plane *ipu_plane_init(struct drm_device *dev, struct ipu_soc *ipu,
-				 int dma, int dp, unsigned int possible_crtcs,
-				 enum drm_plane_type type);
+काष्ठा ipu_plane *ipu_plane_init(काष्ठा drm_device *dev, काष्ठा ipu_soc *ipu,
+				 पूर्णांक dma, पूर्णांक dp, अचिन्हित पूर्णांक possible_crtcs,
+				 क्रमागत drm_plane_type type);
 
 /* Init IDMAC, DMFC, DP */
-int ipu_plane_mode_set(struct ipu_plane *plane, struct drm_crtc *crtc,
-		       struct drm_display_mode *mode,
-		       struct drm_framebuffer *fb, int crtc_x, int crtc_y,
-		       unsigned int crtc_w, unsigned int crtc_h,
-		       uint32_t src_x, uint32_t src_y, uint32_t src_w,
-		       uint32_t src_h, bool interlaced);
+पूर्णांक ipu_plane_mode_set(काष्ठा ipu_plane *plane, काष्ठा drm_crtc *crtc,
+		       काष्ठा drm_display_mode *mode,
+		       काष्ठा drm_framebuffer *fb, पूर्णांक crtc_x, पूर्णांक crtc_y,
+		       अचिन्हित पूर्णांक crtc_w, अचिन्हित पूर्णांक crtc_h,
+		       uपूर्णांक32_t src_x, uपूर्णांक32_t src_y, uपूर्णांक32_t src_w,
+		       uपूर्णांक32_t src_h, bool पूर्णांकerlaced);
 
-int ipu_plane_irq(struct ipu_plane *plane);
+पूर्णांक ipu_plane_irq(काष्ठा ipu_plane *plane);
 
-void ipu_plane_disable(struct ipu_plane *ipu_plane, bool disable_dp_channel);
-void ipu_plane_disable_deferred(struct drm_plane *plane);
-bool ipu_plane_atomic_update_pending(struct drm_plane *plane);
+व्योम ipu_plane_disable(काष्ठा ipu_plane *ipu_plane, bool disable_dp_channel);
+व्योम ipu_plane_disable_deferred(काष्ठा drm_plane *plane);
+bool ipu_plane_atomic_update_pending(काष्ठा drm_plane *plane);
 
-#endif
+#पूर्ण_अगर

@@ -1,9 +1,10 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * An access vector table (avtab) is a hash table
  * of access vectors and transition types indexed
  * by a type pair and a class.  An access vector
- * table is used to represent the type enforcement
+ * table is used to represent the type enक्रमcement
  * tables.
  *
  *  Author : Stephen Smalley, <sds@tycho.nsa.gov>
@@ -16,103 +17,103 @@
  * Copyright (C) 2003 Tresys Technology, LLC
  *
  * Updated: Yuichi Nakamura <ynakam@hitachisoft.jp>
- * 	Tuned number of hash slots for avtab to reduce memory usage
+ * 	Tuned number of hash slots क्रम avtab to reduce memory usage
  */
-#ifndef _SS_AVTAB_H_
-#define _SS_AVTAB_H_
+#अगर_अघोषित _SS_AVTAB_H_
+#घोषणा _SS_AVTAB_H_
 
-#include "security.h"
+#समावेश "security.h"
 
-struct avtab_key {
+काष्ठा avtab_key अणु
 	u16 source_type;	/* source type */
 	u16 target_type;	/* target type */
 	u16 target_class;	/* target object class */
-#define AVTAB_ALLOWED		0x0001
-#define AVTAB_AUDITALLOW	0x0002
-#define AVTAB_AUDITDENY		0x0004
-#define AVTAB_AV		(AVTAB_ALLOWED | AVTAB_AUDITALLOW | AVTAB_AUDITDENY)
-#define AVTAB_TRANSITION	0x0010
-#define AVTAB_MEMBER		0x0020
-#define AVTAB_CHANGE		0x0040
-#define AVTAB_TYPE		(AVTAB_TRANSITION | AVTAB_MEMBER | AVTAB_CHANGE)
+#घोषणा AVTAB_ALLOWED		0x0001
+#घोषणा AVTAB_AUDITALLOW	0x0002
+#घोषणा AVTAB_AUDITDENY		0x0004
+#घोषणा AVTAB_AV		(AVTAB_ALLOWED | AVTAB_AUDITALLOW | AVTAB_AUDITDENY)
+#घोषणा AVTAB_TRANSITION	0x0010
+#घोषणा AVTAB_MEMBER		0x0020
+#घोषणा AVTAB_CHANGE		0x0040
+#घोषणा AVTAB_TYPE		(AVTAB_TRANSITION | AVTAB_MEMBER | AVTAB_CHANGE)
 /* extended permissions */
-#define AVTAB_XPERMS_ALLOWED	0x0100
-#define AVTAB_XPERMS_AUDITALLOW	0x0200
-#define AVTAB_XPERMS_DONTAUDIT	0x0400
-#define AVTAB_XPERMS		(AVTAB_XPERMS_ALLOWED | \
+#घोषणा AVTAB_XPERMS_ALLOWED	0x0100
+#घोषणा AVTAB_XPERMS_AUDITALLOW	0x0200
+#घोषणा AVTAB_XPERMS_DONTAUDIT	0x0400
+#घोषणा AVTAB_XPERMS		(AVTAB_XPERMS_ALLOWED | \
 				AVTAB_XPERMS_AUDITALLOW | \
 				AVTAB_XPERMS_DONTAUDIT)
-#define AVTAB_ENABLED_OLD   0x80000000 /* reserved for used in cond_avtab */
-#define AVTAB_ENABLED		0x8000 /* reserved for used in cond_avtab */
-	u16 specified;	/* what field is specified */
-};
+#घोषणा AVTAB_ENABLED_OLD   0x80000000 /* reserved क्रम used in cond_avtab */
+#घोषणा AVTAB_ENABLED		0x8000 /* reserved क्रम used in cond_avtab */
+	u16 specअगरied;	/* what field is specअगरied */
+पूर्ण;
 
 /*
  * For operations that require more than the 32 permissions provided by the avc
  * extended permissions may be used to provide 256 bits of permissions.
  */
-struct avtab_extended_perms {
+काष्ठा avtab_extended_perms अणु
 /* These are not flags. All 256 values may be used */
-#define AVTAB_XPERMS_IOCTLFUNCTION	0x01
-#define AVTAB_XPERMS_IOCTLDRIVER	0x02
-	/* extension of the avtab_key specified */
-	u8 specified; /* ioctl, netfilter, ... */
+#घोषणा AVTAB_XPERMS_IOCTLFUNCTION	0x01
+#घोषणा AVTAB_XPERMS_IOCTLDRIVER	0x02
+	/* extension of the avtab_key specअगरied */
+	u8 specअगरied; /* ioctl, netfilter, ... */
 	/*
-	 * if 256 bits is not adequate as is often the case with ioctls, then
+	 * अगर 256 bits is not adequate as is often the हाल with ioctls, then
 	 * multiple extended perms may be used and the driver field
-	 * specifies which permissions are included.
+	 * specअगरies which permissions are included.
 	 */
 	u8 driver;
 	/* 256 bits of permissions */
-	struct extended_perms_data perms;
-};
+	काष्ठा extended_perms_data perms;
+पूर्ण;
 
-struct avtab_datum {
-	union {
+काष्ठा avtab_datum अणु
+	जोड़ अणु
 		u32 data; /* access vector or type value */
-		struct avtab_extended_perms *xperms;
-	} u;
-};
+		काष्ठा avtab_extended_perms *xperms;
+	पूर्ण u;
+पूर्ण;
 
-struct avtab_node {
-	struct avtab_key key;
-	struct avtab_datum datum;
-	struct avtab_node *next;
-};
+काष्ठा avtab_node अणु
+	काष्ठा avtab_key key;
+	काष्ठा avtab_datum datum;
+	काष्ठा avtab_node *next;
+पूर्ण;
 
-struct avtab {
-	struct avtab_node **htable;
+काष्ठा avtab अणु
+	काष्ठा avtab_node **htable;
 	u32 nel;	/* number of elements */
 	u32 nslot;      /* number of hash slots */
 	u32 mask;       /* mask to compute hash func */
-};
+पूर्ण;
 
-void avtab_init(struct avtab *h);
-int avtab_alloc(struct avtab *, u32);
-int avtab_alloc_dup(struct avtab *new, const struct avtab *orig);
-struct avtab_datum *avtab_search(struct avtab *h, struct avtab_key *k);
-void avtab_destroy(struct avtab *h);
-void avtab_hash_eval(struct avtab *h, char *tag);
+व्योम avtab_init(काष्ठा avtab *h);
+पूर्णांक avtab_alloc(काष्ठा avtab *, u32);
+पूर्णांक avtab_alloc_dup(काष्ठा avtab *new, स्थिर काष्ठा avtab *orig);
+काष्ठा avtab_datum *avtab_search(काष्ठा avtab *h, काष्ठा avtab_key *k);
+व्योम avtab_destroy(काष्ठा avtab *h);
+व्योम avtab_hash_eval(काष्ठा avtab *h, अक्षर *tag);
 
-struct policydb;
-int avtab_read_item(struct avtab *a, void *fp, struct policydb *pol,
-		    int (*insert)(struct avtab *a, struct avtab_key *k,
-				  struct avtab_datum *d, void *p),
-		    void *p);
+काष्ठा policydb;
+पूर्णांक avtab_पढ़ो_item(काष्ठा avtab *a, व्योम *fp, काष्ठा policydb *pol,
+		    पूर्णांक (*insert)(काष्ठा avtab *a, काष्ठा avtab_key *k,
+				  काष्ठा avtab_datum *d, व्योम *p),
+		    व्योम *p);
 
-int avtab_read(struct avtab *a, void *fp, struct policydb *pol);
-int avtab_write_item(struct policydb *p, struct avtab_node *cur, void *fp);
-int avtab_write(struct policydb *p, struct avtab *a, void *fp);
+पूर्णांक avtab_पढ़ो(काष्ठा avtab *a, व्योम *fp, काष्ठा policydb *pol);
+पूर्णांक avtab_ग_लिखो_item(काष्ठा policydb *p, काष्ठा avtab_node *cur, व्योम *fp);
+पूर्णांक avtab_ग_लिखो(काष्ठा policydb *p, काष्ठा avtab *a, व्योम *fp);
 
-struct avtab_node *avtab_insert_nonunique(struct avtab *h, struct avtab_key *key,
-					  struct avtab_datum *datum);
+काष्ठा avtab_node *avtab_insert_nonunique(काष्ठा avtab *h, काष्ठा avtab_key *key,
+					  काष्ठा avtab_datum *datum);
 
-struct avtab_node *avtab_search_node(struct avtab *h, struct avtab_key *key);
+काष्ठा avtab_node *avtab_search_node(काष्ठा avtab *h, काष्ठा avtab_key *key);
 
-struct avtab_node *avtab_search_node_next(struct avtab_node *node, int specified);
+काष्ठा avtab_node *avtab_search_node_next(काष्ठा avtab_node *node, पूर्णांक specअगरied);
 
-#define MAX_AVTAB_HASH_BITS 16
-#define MAX_AVTAB_HASH_BUCKETS (1 << MAX_AVTAB_HASH_BITS)
+#घोषणा MAX_AVTAB_HASH_BITS 16
+#घोषणा MAX_AVTAB_HASH_BUCKETS (1 << MAX_AVTAB_HASH_BITS)
 
-#endif	/* _SS_AVTAB_H_ */
+#पूर्ण_अगर	/* _SS_AVTAB_H_ */
 

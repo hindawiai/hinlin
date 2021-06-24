@@ -1,86 +1,87 @@
-// SPDX-License-Identifier: GPL-2.0-only
-#include <linux/types.h>
-#include <linux/init.h>
-#include <linux/interrupt.h>
-#include <linux/mm.h>
-#include <linux/slab.h>
-#include <linux/spinlock.h>
-#include <linux/zorro.h>
-#include <linux/module.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
+#समावेश <linux/types.h>
+#समावेश <linux/init.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/zorro.h>
+#समावेश <linux/module.h>
 
-#include <asm/page.h>
-#include <asm/amigaints.h>
-#include <asm/amigahw.h>
+#समावेश <यंत्र/page.h>
+#समावेश <यंत्र/amigaपूर्णांकs.h>
+#समावेश <यंत्र/amigahw.h>
 
-#include "scsi.h"
-#include "wd33c93.h"
-#include "a2091.h"
+#समावेश "scsi.h"
+#समावेश "wd33c93.h"
+#समावेश "a2091.h"
 
 
-struct a2091_hostdata {
-	struct WD33C93_hostdata wh;
-	struct a2091_scsiregs *regs;
-};
+काष्ठा a2091_hostdata अणु
+	काष्ठा WD33C93_hostdata wh;
+	काष्ठा a2091_scsiregs *regs;
+पूर्ण;
 
-static irqreturn_t a2091_intr(int irq, void *data)
-{
-	struct Scsi_Host *instance = data;
-	struct a2091_hostdata *hdata = shost_priv(instance);
-	unsigned int status = hdata->regs->ISTR;
-	unsigned long flags;
+अटल irqवापस_t a2091_पूर्णांकr(पूर्णांक irq, व्योम *data)
+अणु
+	काष्ठा Scsi_Host *instance = data;
+	काष्ठा a2091_hostdata *hdata = shost_priv(instance);
+	अचिन्हित पूर्णांक status = hdata->regs->ISTR;
+	अचिन्हित दीर्घ flags;
 
-	if (!(status & (ISTR_INT_F | ISTR_INT_P)) || !(status & ISTR_INTS))
-		return IRQ_NONE;
+	अगर (!(status & (ISTR_INT_F | ISTR_INT_P)) || !(status & ISTR_INTS))
+		वापस IRQ_NONE;
 
 	spin_lock_irqsave(instance->host_lock, flags);
-	wd33c93_intr(instance);
+	wd33c93_पूर्णांकr(instance);
 	spin_unlock_irqrestore(instance->host_lock, flags);
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static int dma_setup(struct scsi_cmnd *cmd, int dir_in)
-{
-	struct Scsi_Host *instance = cmd->device->host;
-	struct a2091_hostdata *hdata = shost_priv(instance);
-	struct WD33C93_hostdata *wh = &hdata->wh;
-	struct a2091_scsiregs *regs = hdata->regs;
-	unsigned short cntr = CNTR_PDMD | CNTR_INTEN;
-	unsigned long addr = virt_to_bus(cmd->SCp.ptr);
+अटल पूर्णांक dma_setup(काष्ठा scsi_cmnd *cmd, पूर्णांक dir_in)
+अणु
+	काष्ठा Scsi_Host *instance = cmd->device->host;
+	काष्ठा a2091_hostdata *hdata = shost_priv(instance);
+	काष्ठा WD33C93_hostdata *wh = &hdata->wh;
+	काष्ठा a2091_scsiregs *regs = hdata->regs;
+	अचिन्हित लघु cntr = CNTR_PDMD | CNTR_INTEN;
+	अचिन्हित दीर्घ addr = virt_to_bus(cmd->SCp.ptr);
 
-	/* don't allow DMA if the physical address is bad */
-	if (addr & A2091_XFER_MASK) {
+	/* करोn't allow DMA अगर the physical address is bad */
+	अगर (addr & A2091_XFER_MASK) अणु
 		wh->dma_bounce_len = (cmd->SCp.this_residual + 511) & ~0x1ff;
-		wh->dma_bounce_buffer = kmalloc(wh->dma_bounce_len,
+		wh->dma_bounce_buffer = kदो_स्मृति(wh->dma_bounce_len,
 						GFP_KERNEL);
 
 		/* can't allocate memory; use PIO */
-		if (!wh->dma_bounce_buffer) {
+		अगर (!wh->dma_bounce_buffer) अणु
 			wh->dma_bounce_len = 0;
-			return 1;
-		}
+			वापस 1;
+		पूर्ण
 
 		/* get the physical address of the bounce buffer */
 		addr = virt_to_bus(wh->dma_bounce_buffer);
 
 		/* the bounce buffer may not be in the first 16M of physmem */
-		if (addr & A2091_XFER_MASK) {
+		अगर (addr & A2091_XFER_MASK) अणु
 			/* we could use chipmem... maybe later */
-			kfree(wh->dma_bounce_buffer);
-			wh->dma_bounce_buffer = NULL;
+			kमुक्त(wh->dma_bounce_buffer);
+			wh->dma_bounce_buffer = शून्य;
 			wh->dma_bounce_len = 0;
-			return 1;
-		}
+			वापस 1;
+		पूर्ण
 
-		if (!dir_in) {
-			/* copy to bounce buffer for a write */
-			memcpy(wh->dma_bounce_buffer, cmd->SCp.ptr,
+		अगर (!dir_in) अणु
+			/* copy to bounce buffer क्रम a ग_लिखो */
+			स_नकल(wh->dma_bounce_buffer, cmd->SCp.ptr,
 			       cmd->SCp.this_residual);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	/* setup dma direction */
-	if (!dir_in)
-		cntr |= CNTR_DDIR;
+	अगर (!dir_in)
+		cntr |= CNTR_Dसूची;
 
 	/* remember direction */
 	wh->dma_dir = dir_in;
@@ -90,44 +91,44 @@ static int dma_setup(struct scsi_cmnd *cmd, int dir_in)
 	/* setup DMA *physical* address */
 	regs->ACR = addr;
 
-	if (dir_in) {
+	अगर (dir_in) अणु
 		/* invalidate any cache */
 		cache_clear(addr, cmd->SCp.this_residual);
-	} else {
+	पूर्ण अन्यथा अणु
 		/* push any dirty cache */
 		cache_push(addr, cmd->SCp.this_residual);
-	}
+	पूर्ण
 	/* start DMA */
 	regs->ST_DMA = 1;
 
-	/* return success */
-	return 0;
-}
+	/* वापस success */
+	वापस 0;
+पूर्ण
 
-static void dma_stop(struct Scsi_Host *instance, struct scsi_cmnd *SCpnt,
-		     int status)
-{
-	struct a2091_hostdata *hdata = shost_priv(instance);
-	struct WD33C93_hostdata *wh = &hdata->wh;
-	struct a2091_scsiregs *regs = hdata->regs;
+अटल व्योम dma_stop(काष्ठा Scsi_Host *instance, काष्ठा scsi_cmnd *SCpnt,
+		     पूर्णांक status)
+अणु
+	काष्ठा a2091_hostdata *hdata = shost_priv(instance);
+	काष्ठा WD33C93_hostdata *wh = &hdata->wh;
+	काष्ठा a2091_scsiregs *regs = hdata->regs;
 
-	/* disable SCSI interrupts */
-	unsigned short cntr = CNTR_PDMD;
+	/* disable SCSI पूर्णांकerrupts */
+	अचिन्हित लघु cntr = CNTR_PDMD;
 
-	if (!wh->dma_dir)
-		cntr |= CNTR_DDIR;
+	अगर (!wh->dma_dir)
+		cntr |= CNTR_Dसूची;
 
-	/* disable SCSI interrupts */
+	/* disable SCSI पूर्णांकerrupts */
 	regs->CNTR = cntr;
 
-	/* flush if we were reading */
-	if (wh->dma_dir) {
+	/* flush अगर we were पढ़ोing */
+	अगर (wh->dma_dir) अणु
 		regs->FLUSH = 1;
-		while (!(regs->ISTR & ISTR_FE_FLG))
+		जबतक (!(regs->ISTR & ISTR_FE_FLG))
 			;
-	}
+	पूर्ण
 
-	/* clear a possible interrupt */
+	/* clear a possible पूर्णांकerrupt */
 	regs->CINT = 1;
 
 	/* stop DMA */
@@ -136,50 +137,50 @@ static void dma_stop(struct Scsi_Host *instance, struct scsi_cmnd *SCpnt,
 	/* restore the CONTROL bits (minus the direction flag) */
 	regs->CNTR = CNTR_PDMD | CNTR_INTEN;
 
-	/* copy from a bounce buffer, if necessary */
-	if (status && wh->dma_bounce_buffer) {
-		if (wh->dma_dir)
-			memcpy(SCpnt->SCp.ptr, wh->dma_bounce_buffer,
+	/* copy from a bounce buffer, अगर necessary */
+	अगर (status && wh->dma_bounce_buffer) अणु
+		अगर (wh->dma_dir)
+			स_नकल(SCpnt->SCp.ptr, wh->dma_bounce_buffer,
 			       SCpnt->SCp.this_residual);
-		kfree(wh->dma_bounce_buffer);
-		wh->dma_bounce_buffer = NULL;
+		kमुक्त(wh->dma_bounce_buffer);
+		wh->dma_bounce_buffer = शून्य;
 		wh->dma_bounce_len = 0;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static struct scsi_host_template a2091_scsi_template = {
+अटल काष्ठा scsi_host_ढाँचा a2091_scsi_ढाँचा = अणु
 	.module			= THIS_MODULE,
 	.name			= "Commodore A2091/A590 SCSI",
 	.show_info		= wd33c93_show_info,
-	.write_info		= wd33c93_write_info,
+	.ग_लिखो_info		= wd33c93_ग_लिखो_info,
 	.proc_name		= "A2901",
 	.queuecommand		= wd33c93_queuecommand,
-	.eh_abort_handler	= wd33c93_abort,
+	.eh_पात_handler	= wd33c93_पात,
 	.eh_host_reset_handler	= wd33c93_host_reset,
 	.can_queue		= CAN_QUEUE,
 	.this_id		= 7,
 	.sg_tablesize		= SG_ALL,
 	.cmd_per_lun		= CMD_PER_LUN,
 	.dma_boundary		= PAGE_SIZE - 1,
-};
+पूर्ण;
 
-static int a2091_probe(struct zorro_dev *z, const struct zorro_device_id *ent)
-{
-	struct Scsi_Host *instance;
-	int error;
-	struct a2091_scsiregs *regs;
+अटल पूर्णांक a2091_probe(काष्ठा zorro_dev *z, स्थिर काष्ठा zorro_device_id *ent)
+अणु
+	काष्ठा Scsi_Host *instance;
+	पूर्णांक error;
+	काष्ठा a2091_scsiregs *regs;
 	wd33c93_regs wdregs;
-	struct a2091_hostdata *hdata;
+	काष्ठा a2091_hostdata *hdata;
 
-	if (!request_mem_region(z->resource.start, 256, "wd33c93"))
-		return -EBUSY;
+	अगर (!request_mem_region(z->resource.start, 256, "wd33c93"))
+		वापस -EBUSY;
 
-	instance = scsi_host_alloc(&a2091_scsi_template,
-				   sizeof(struct a2091_hostdata));
-	if (!instance) {
+	instance = scsi_host_alloc(&a2091_scsi_ढाँचा,
+				   माप(काष्ठा a2091_hostdata));
+	अगर (!instance) अणु
 		error = -ENOMEM;
-		goto fail_alloc;
-	}
+		जाओ fail_alloc;
+	पूर्ण
 
 	instance->irq = IRQ_AMIGA_PORTS;
 	instance->unique_id = z->slotaddr;
@@ -197,68 +198,68 @@ static int a2091_probe(struct zorro_dev *z, const struct zorro_device_id *ent)
 	hdata->regs = regs;
 
 	wd33c93_init(instance, wdregs, dma_setup, dma_stop, WD33C93_FS_8_10);
-	error = request_irq(IRQ_AMIGA_PORTS, a2091_intr, IRQF_SHARED,
+	error = request_irq(IRQ_AMIGA_PORTS, a2091_पूर्णांकr, IRQF_SHARED,
 			    "A2091 SCSI", instance);
-	if (error)
-		goto fail_irq;
+	अगर (error)
+		जाओ fail_irq;
 
 	regs->CNTR = CNTR_PDMD | CNTR_INTEN;
 
-	error = scsi_add_host(instance, NULL);
-	if (error)
-		goto fail_host;
+	error = scsi_add_host(instance, शून्य);
+	अगर (error)
+		जाओ fail_host;
 
 	zorro_set_drvdata(z, instance);
 
 	scsi_scan_host(instance);
-	return 0;
+	वापस 0;
 
 fail_host:
-	free_irq(IRQ_AMIGA_PORTS, instance);
+	मुक्त_irq(IRQ_AMIGA_PORTS, instance);
 fail_irq:
 	scsi_host_put(instance);
 fail_alloc:
 	release_mem_region(z->resource.start, 256);
-	return error;
-}
+	वापस error;
+पूर्ण
 
-static void a2091_remove(struct zorro_dev *z)
-{
-	struct Scsi_Host *instance = zorro_get_drvdata(z);
-	struct a2091_hostdata *hdata = shost_priv(instance);
+अटल व्योम a2091_हटाओ(काष्ठा zorro_dev *z)
+अणु
+	काष्ठा Scsi_Host *instance = zorro_get_drvdata(z);
+	काष्ठा a2091_hostdata *hdata = shost_priv(instance);
 
 	hdata->regs->CNTR = 0;
-	scsi_remove_host(instance);
-	free_irq(IRQ_AMIGA_PORTS, instance);
+	scsi_हटाओ_host(instance);
+	मुक्त_irq(IRQ_AMIGA_PORTS, instance);
 	scsi_host_put(instance);
 	release_mem_region(z->resource.start, 256);
-}
+पूर्ण
 
-static struct zorro_device_id a2091_zorro_tbl[] = {
-	{ ZORRO_PROD_CBM_A590_A2091_1 },
-	{ ZORRO_PROD_CBM_A590_A2091_2 },
-	{ 0 }
-};
+अटल काष्ठा zorro_device_id a2091_zorro_tbl[] = अणु
+	अणु ZORRO_PROD_CBM_A590_A2091_1 पूर्ण,
+	अणु ZORRO_PROD_CBM_A590_A2091_2 पूर्ण,
+	अणु 0 पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(zorro, a2091_zorro_tbl);
 
-static struct zorro_driver a2091_driver = {
+अटल काष्ठा zorro_driver a2091_driver = अणु
 	.name		= "a2091",
 	.id_table	= a2091_zorro_tbl,
 	.probe		= a2091_probe,
-	.remove		= a2091_remove,
-};
+	.हटाओ		= a2091_हटाओ,
+पूर्ण;
 
-static int __init a2091_init(void)
-{
-	return zorro_register_driver(&a2091_driver);
-}
+अटल पूर्णांक __init a2091_init(व्योम)
+अणु
+	वापस zorro_रेजिस्टर_driver(&a2091_driver);
+पूर्ण
 module_init(a2091_init);
 
-static void __exit a2091_exit(void)
-{
-	zorro_unregister_driver(&a2091_driver);
-}
-module_exit(a2091_exit);
+अटल व्योम __निकास a2091_निकास(व्योम)
+अणु
+	zorro_unरेजिस्टर_driver(&a2091_driver);
+पूर्ण
+module_निकास(a2091_निकास);
 
 MODULE_DESCRIPTION("Commodore A2091/A590 SCSI");
 MODULE_LICENSE("GPL");

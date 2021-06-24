@@ -1,10 +1,11 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  *  linux/drivers/mmc/host/mxcmmc.c - Freescale i.MX MMCI driver
  *
- *  This is a driver for the SDHC controller found in Freescale MX2/MX3
+ *  This is a driver क्रम the SDHC controller found in Freescale MX2/MX3
  *  SoCs. It is basically the same hardware as found on MX1 (imxmmc.c).
- *  Unlike the hardware found on MX1, this hardware just works and does
+ *  Unlike the hardware found on MX1, this hardware just works and करोes
  *  not need all the quirks found in imxmmc.c, hence the separate driver.
  *
  *  Copyright (C) 2008 Sascha Hauer, Pengutronix <s.hauer@pengutronix.de>
@@ -13,696 +14,696 @@
  *  derived from pxamci.c by Russell King
  */
 
-#include <linux/module.h>
-#include <linux/init.h>
-#include <linux/ioport.h>
-#include <linux/platform_device.h>
-#include <linux/highmem.h>
-#include <linux/interrupt.h>
-#include <linux/irq.h>
-#include <linux/blkdev.h>
-#include <linux/dma-mapping.h>
-#include <linux/mmc/host.h>
-#include <linux/mmc/card.h>
-#include <linux/delay.h>
-#include <linux/clk.h>
-#include <linux/io.h>
-#include <linux/regulator/consumer.h>
-#include <linux/dmaengine.h>
-#include <linux/types.h>
-#include <linux/of.h>
-#include <linux/of_device.h>
-#include <linux/of_dma.h>
-#include <linux/mmc/slot-gpio.h>
+#समावेश <linux/module.h>
+#समावेश <linux/init.h>
+#समावेश <linux/ioport.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/highस्मृति.स>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/irq.h>
+#समावेश <linux/blkdev.h>
+#समावेश <linux/dma-mapping.h>
+#समावेश <linux/mmc/host.h>
+#समावेश <linux/mmc/card.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/regulator/consumer.h>
+#समावेश <linux/dmaengine.h>
+#समावेश <linux/types.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/of_dma.h>
+#समावेश <linux/mmc/slot-gpपन.स>
 
-#include <asm/dma.h>
-#include <asm/irq.h>
-#include <linux/platform_data/mmc-mxcmmc.h>
+#समावेश <यंत्र/dma.h>
+#समावेश <यंत्र/irq.h>
+#समावेश <linux/platक्रमm_data/mmc-mxcmmc.h>
 
-#include <linux/platform_data/dma-imx.h>
+#समावेश <linux/platक्रमm_data/dma-imx.h>
 
-#define DRIVER_NAME "mxc-mmc"
-#define MXCMCI_TIMEOUT_MS 10000
+#घोषणा DRIVER_NAME "mxc-mmc"
+#घोषणा MXCMCI_TIMEOUT_MS 10000
 
-#define MMC_REG_STR_STP_CLK		0x00
-#define MMC_REG_STATUS			0x04
-#define MMC_REG_CLK_RATE		0x08
-#define MMC_REG_CMD_DAT_CONT		0x0C
-#define MMC_REG_RES_TO			0x10
-#define MMC_REG_READ_TO			0x14
-#define MMC_REG_BLK_LEN			0x18
-#define MMC_REG_NOB			0x1C
-#define MMC_REG_REV_NO			0x20
-#define MMC_REG_INT_CNTR		0x24
-#define MMC_REG_CMD			0x28
-#define MMC_REG_ARG			0x2C
-#define MMC_REG_RES_FIFO		0x34
-#define MMC_REG_BUFFER_ACCESS		0x38
+#घोषणा MMC_REG_STR_STP_CLK		0x00
+#घोषणा MMC_REG_STATUS			0x04
+#घोषणा MMC_REG_CLK_RATE		0x08
+#घोषणा MMC_REG_CMD_DAT_CONT		0x0C
+#घोषणा MMC_REG_RES_TO			0x10
+#घोषणा MMC_REG_READ_TO			0x14
+#घोषणा MMC_REG_BLK_LEN			0x18
+#घोषणा MMC_REG_NOB			0x1C
+#घोषणा MMC_REG_REV_NO			0x20
+#घोषणा MMC_REG_INT_CNTR		0x24
+#घोषणा MMC_REG_CMD			0x28
+#घोषणा MMC_REG_ARG			0x2C
+#घोषणा MMC_REG_RES_FIFO		0x34
+#घोषणा MMC_REG_BUFFER_ACCESS		0x38
 
-#define STR_STP_CLK_RESET               (1 << 3)
-#define STR_STP_CLK_START_CLK           (1 << 1)
-#define STR_STP_CLK_STOP_CLK            (1 << 0)
+#घोषणा STR_STP_CLK_RESET               (1 << 3)
+#घोषणा STR_STP_CLK_START_CLK           (1 << 1)
+#घोषणा STR_STP_CLK_STOP_CLK            (1 << 0)
 
-#define STATUS_CARD_INSERTION		(1 << 31)
-#define STATUS_CARD_REMOVAL		(1 << 30)
-#define STATUS_YBUF_EMPTY		(1 << 29)
-#define STATUS_XBUF_EMPTY		(1 << 28)
-#define STATUS_YBUF_FULL		(1 << 27)
-#define STATUS_XBUF_FULL		(1 << 26)
-#define STATUS_BUF_UND_RUN		(1 << 25)
-#define STATUS_BUF_OVFL			(1 << 24)
-#define STATUS_SDIO_INT_ACTIVE		(1 << 14)
-#define STATUS_END_CMD_RESP		(1 << 13)
-#define STATUS_WRITE_OP_DONE		(1 << 12)
-#define STATUS_DATA_TRANS_DONE		(1 << 11)
-#define STATUS_READ_OP_DONE		(1 << 11)
-#define STATUS_WR_CRC_ERROR_CODE_MASK	(3 << 10)
-#define STATUS_CARD_BUS_CLK_RUN		(1 << 8)
-#define STATUS_BUF_READ_RDY		(1 << 7)
-#define STATUS_BUF_WRITE_RDY		(1 << 6)
-#define STATUS_RESP_CRC_ERR		(1 << 5)
-#define STATUS_CRC_READ_ERR		(1 << 3)
-#define STATUS_CRC_WRITE_ERR		(1 << 2)
-#define STATUS_TIME_OUT_RESP		(1 << 1)
-#define STATUS_TIME_OUT_READ		(1 << 0)
-#define STATUS_ERR_MASK			0x2f
+#घोषणा STATUS_CARD_INSERTION		(1 << 31)
+#घोषणा STATUS_CARD_REMOVAL		(1 << 30)
+#घोषणा STATUS_YBUF_EMPTY		(1 << 29)
+#घोषणा STATUS_XBUF_EMPTY		(1 << 28)
+#घोषणा STATUS_YBUF_FULL		(1 << 27)
+#घोषणा STATUS_XBUF_FULL		(1 << 26)
+#घोषणा STATUS_BUF_UND_RUN		(1 << 25)
+#घोषणा STATUS_BUF_OVFL			(1 << 24)
+#घोषणा STATUS_SDIO_INT_ACTIVE		(1 << 14)
+#घोषणा STATUS_END_CMD_RESP		(1 << 13)
+#घोषणा STATUS_WRITE_OP_DONE		(1 << 12)
+#घोषणा STATUS_DATA_TRANS_DONE		(1 << 11)
+#घोषणा STATUS_READ_OP_DONE		(1 << 11)
+#घोषणा STATUS_WR_CRC_ERROR_CODE_MASK	(3 << 10)
+#घोषणा STATUS_CARD_BUS_CLK_RUN		(1 << 8)
+#घोषणा STATUS_BUF_READ_RDY		(1 << 7)
+#घोषणा STATUS_BUF_WRITE_RDY		(1 << 6)
+#घोषणा STATUS_RESP_CRC_ERR		(1 << 5)
+#घोषणा STATUS_CRC_READ_ERR		(1 << 3)
+#घोषणा STATUS_CRC_WRITE_ERR		(1 << 2)
+#घोषणा STATUS_TIME_OUT_RESP		(1 << 1)
+#घोषणा STATUS_TIME_OUT_READ		(1 << 0)
+#घोषणा STATUS_ERR_MASK			0x2f
 
-#define CMD_DAT_CONT_CMD_RESP_LONG_OFF	(1 << 12)
-#define CMD_DAT_CONT_STOP_READWAIT	(1 << 11)
-#define CMD_DAT_CONT_START_READWAIT	(1 << 10)
-#define CMD_DAT_CONT_BUS_WIDTH_4	(2 << 8)
-#define CMD_DAT_CONT_INIT		(1 << 7)
-#define CMD_DAT_CONT_WRITE		(1 << 4)
-#define CMD_DAT_CONT_DATA_ENABLE	(1 << 3)
-#define CMD_DAT_CONT_RESPONSE_48BIT_CRC	(1 << 0)
-#define CMD_DAT_CONT_RESPONSE_136BIT	(2 << 0)
-#define CMD_DAT_CONT_RESPONSE_48BIT	(3 << 0)
+#घोषणा CMD_DAT_CONT_CMD_RESP_LONG_OFF	(1 << 12)
+#घोषणा CMD_DAT_CONT_STOP_READWAIT	(1 << 11)
+#घोषणा CMD_DAT_CONT_START_READWAIT	(1 << 10)
+#घोषणा CMD_DAT_CONT_BUS_WIDTH_4	(2 << 8)
+#घोषणा CMD_DAT_CONT_INIT		(1 << 7)
+#घोषणा CMD_DAT_CONT_WRITE		(1 << 4)
+#घोषणा CMD_DAT_CONT_DATA_ENABLE	(1 << 3)
+#घोषणा CMD_DAT_CONT_RESPONSE_48BIT_CRC	(1 << 0)
+#घोषणा CMD_DAT_CONT_RESPONSE_136BIT	(2 << 0)
+#घोषणा CMD_DAT_CONT_RESPONSE_48BIT	(3 << 0)
 
-#define INT_SDIO_INT_WKP_EN		(1 << 18)
-#define INT_CARD_INSERTION_WKP_EN	(1 << 17)
-#define INT_CARD_REMOVAL_WKP_EN		(1 << 16)
-#define INT_CARD_INSERTION_EN		(1 << 15)
-#define INT_CARD_REMOVAL_EN		(1 << 14)
-#define INT_SDIO_IRQ_EN			(1 << 13)
-#define INT_DAT0_EN			(1 << 12)
-#define INT_BUF_READ_EN			(1 << 4)
-#define INT_BUF_WRITE_EN		(1 << 3)
-#define INT_END_CMD_RES_EN		(1 << 2)
-#define INT_WRITE_OP_DONE_EN		(1 << 1)
-#define INT_READ_OP_EN			(1 << 0)
+#घोषणा INT_SDIO_INT_WKP_EN		(1 << 18)
+#घोषणा INT_CARD_INSERTION_WKP_EN	(1 << 17)
+#घोषणा INT_CARD_REMOVAL_WKP_EN		(1 << 16)
+#घोषणा INT_CARD_INSERTION_EN		(1 << 15)
+#घोषणा INT_CARD_REMOVAL_EN		(1 << 14)
+#घोषणा INT_SDIO_IRQ_EN			(1 << 13)
+#घोषणा INT_DAT0_EN			(1 << 12)
+#घोषणा INT_BUF_READ_EN			(1 << 4)
+#घोषणा INT_BUF_WRITE_EN		(1 << 3)
+#घोषणा INT_END_CMD_RES_EN		(1 << 2)
+#घोषणा INT_WRITE_OP_DONE_EN		(1 << 1)
+#घोषणा INT_READ_OP_EN			(1 << 0)
 
-enum mxcmci_type {
+क्रमागत mxcmci_type अणु
 	IMX21_MMC,
 	IMX31_MMC,
 	MPC512X_MMC,
-};
+पूर्ण;
 
-struct mxcmci_host {
-	struct mmc_host		*mmc;
-	void __iomem		*base;
+काष्ठा mxcmci_host अणु
+	काष्ठा mmc_host		*mmc;
+	व्योम __iomem		*base;
 	dma_addr_t		phys_base;
-	int			detect_irq;
-	struct dma_chan		*dma;
-	struct dma_async_tx_descriptor *desc;
-	int			do_dma;
-	int			default_irq_mask;
-	int			use_sdio;
-	unsigned int		power_mode;
-	struct imxmmc_platform_data *pdata;
+	पूर्णांक			detect_irq;
+	काष्ठा dma_chan		*dma;
+	काष्ठा dma_async_tx_descriptor *desc;
+	पूर्णांक			करो_dma;
+	पूर्णांक			शेष_irq_mask;
+	पूर्णांक			use_sdio;
+	अचिन्हित पूर्णांक		घातer_mode;
+	काष्ठा imxmmc_platक्रमm_data *pdata;
 
-	struct mmc_request	*req;
-	struct mmc_command	*cmd;
-	struct mmc_data		*data;
+	काष्ठा mmc_request	*req;
+	काष्ठा mmc_command	*cmd;
+	काष्ठा mmc_data		*data;
 
-	unsigned int		datasize;
-	unsigned int		dma_dir;
+	अचिन्हित पूर्णांक		datasize;
+	अचिन्हित पूर्णांक		dma_dir;
 
 	u16			rev_no;
-	unsigned int		cmdat;
+	अचिन्हित पूर्णांक		cmdat;
 
-	struct clk		*clk_ipg;
-	struct clk		*clk_per;
+	काष्ठा clk		*clk_ipg;
+	काष्ठा clk		*clk_per;
 
-	int			clock;
+	पूर्णांक			घड़ी;
 
-	struct work_struct	datawork;
+	काष्ठा work_काष्ठा	datawork;
 	spinlock_t		lock;
 
-	int			burstlen;
-	int			dmareq;
-	struct dma_slave_config dma_slave_config;
-	struct imx_dma_data	dma_data;
+	पूर्णांक			burstlen;
+	पूर्णांक			dmareq;
+	काष्ठा dma_slave_config dma_slave_config;
+	काष्ठा imx_dma_data	dma_data;
 
-	struct timer_list	watchdog;
-	enum mxcmci_type	devtype;
-};
+	काष्ठा समयr_list	watchकरोg;
+	क्रमागत mxcmci_type	devtype;
+पूर्ण;
 
-static const struct of_device_id mxcmci_of_match[] = {
-	{
+अटल स्थिर काष्ठा of_device_id mxcmci_of_match[] = अणु
+	अणु
 		.compatible = "fsl,imx21-mmc",
-		.data = (void *) IMX21_MMC,
-	}, {
+		.data = (व्योम *) IMX21_MMC,
+	पूर्ण, अणु
 		.compatible = "fsl,imx31-mmc",
-		.data = (void *) IMX31_MMC,
-	}, {
+		.data = (व्योम *) IMX31_MMC,
+	पूर्ण, अणु
 		.compatible = "fsl,mpc5121-sdhc",
-		.data = (void *) MPC512X_MMC,
-	}, {
+		.data = (व्योम *) MPC512X_MMC,
+	पूर्ण, अणु
 		/* sentinel */
-	}
-};
+	पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, mxcmci_of_match);
 
-static inline int is_imx31_mmc(struct mxcmci_host *host)
-{
-	return host->devtype == IMX31_MMC;
-}
+अटल अंतरभूत पूर्णांक is_imx31_mmc(काष्ठा mxcmci_host *host)
+अणु
+	वापस host->devtype == IMX31_MMC;
+पूर्ण
 
-static inline int is_mpc512x_mmc(struct mxcmci_host *host)
-{
-	return host->devtype == MPC512X_MMC;
-}
+अटल अंतरभूत पूर्णांक is_mpc512x_mmc(काष्ठा mxcmci_host *host)
+अणु
+	वापस host->devtype == MPC512X_MMC;
+पूर्ण
 
-static inline u32 mxcmci_readl(struct mxcmci_host *host, int reg)
-{
-	if (IS_ENABLED(CONFIG_PPC_MPC512x))
-		return ioread32be(host->base + reg);
-	else
-		return readl(host->base + reg);
-}
+अटल अंतरभूत u32 mxcmci_पढ़ोl(काष्ठा mxcmci_host *host, पूर्णांक reg)
+अणु
+	अगर (IS_ENABLED(CONFIG_PPC_MPC512x))
+		वापस ioपढ़ो32be(host->base + reg);
+	अन्यथा
+		वापस पढ़ोl(host->base + reg);
+पूर्ण
 
-static inline void mxcmci_writel(struct mxcmci_host *host, u32 val, int reg)
-{
-	if (IS_ENABLED(CONFIG_PPC_MPC512x))
-		iowrite32be(val, host->base + reg);
-	else
-		writel(val, host->base + reg);
-}
+अटल अंतरभूत व्योम mxcmci_ग_लिखोl(काष्ठा mxcmci_host *host, u32 val, पूर्णांक reg)
+अणु
+	अगर (IS_ENABLED(CONFIG_PPC_MPC512x))
+		ioग_लिखो32be(val, host->base + reg);
+	अन्यथा
+		ग_लिखोl(val, host->base + reg);
+पूर्ण
 
-static inline u16 mxcmci_readw(struct mxcmci_host *host, int reg)
-{
-	if (IS_ENABLED(CONFIG_PPC_MPC512x))
-		return ioread32be(host->base + reg);
-	else
-		return readw(host->base + reg);
-}
+अटल अंतरभूत u16 mxcmci_पढ़ोw(काष्ठा mxcmci_host *host, पूर्णांक reg)
+अणु
+	अगर (IS_ENABLED(CONFIG_PPC_MPC512x))
+		वापस ioपढ़ो32be(host->base + reg);
+	अन्यथा
+		वापस पढ़ोw(host->base + reg);
+पूर्ण
 
-static inline void mxcmci_writew(struct mxcmci_host *host, u16 val, int reg)
-{
-	if (IS_ENABLED(CONFIG_PPC_MPC512x))
-		iowrite32be(val, host->base + reg);
-	else
-		writew(val, host->base + reg);
-}
+अटल अंतरभूत व्योम mxcmci_ग_लिखोw(काष्ठा mxcmci_host *host, u16 val, पूर्णांक reg)
+अणु
+	अगर (IS_ENABLED(CONFIG_PPC_MPC512x))
+		ioग_लिखो32be(val, host->base + reg);
+	अन्यथा
+		ग_लिखोw(val, host->base + reg);
+पूर्ण
 
-static void mxcmci_set_clk_rate(struct mxcmci_host *host, unsigned int clk_ios);
+अटल व्योम mxcmci_set_clk_rate(काष्ठा mxcmci_host *host, अचिन्हित पूर्णांक clk_ios);
 
-static void mxcmci_set_power(struct mxcmci_host *host, unsigned int vdd)
-{
-	if (!IS_ERR(host->mmc->supply.vmmc)) {
-		if (host->power_mode == MMC_POWER_UP)
+अटल व्योम mxcmci_set_घातer(काष्ठा mxcmci_host *host, अचिन्हित पूर्णांक vdd)
+अणु
+	अगर (!IS_ERR(host->mmc->supply.vmmc)) अणु
+		अगर (host->घातer_mode == MMC_POWER_UP)
 			mmc_regulator_set_ocr(host->mmc,
 					      host->mmc->supply.vmmc, vdd);
-		else if (host->power_mode == MMC_POWER_OFF)
+		अन्यथा अगर (host->घातer_mode == MMC_POWER_OFF)
 			mmc_regulator_set_ocr(host->mmc,
 					      host->mmc->supply.vmmc, 0);
-	}
+	पूर्ण
 
-	if (host->pdata && host->pdata->setpower)
-		host->pdata->setpower(mmc_dev(host->mmc), vdd);
-}
+	अगर (host->pdata && host->pdata->setघातer)
+		host->pdata->setघातer(mmc_dev(host->mmc), vdd);
+पूर्ण
 
-static inline int mxcmci_use_dma(struct mxcmci_host *host)
-{
-	return host->do_dma;
-}
+अटल अंतरभूत पूर्णांक mxcmci_use_dma(काष्ठा mxcmci_host *host)
+अणु
+	वापस host->करो_dma;
+पूर्ण
 
-static void mxcmci_softreset(struct mxcmci_host *host)
-{
-	int i;
+अटल व्योम mxcmci_softreset(काष्ठा mxcmci_host *host)
+अणु
+	पूर्णांक i;
 
 	dev_dbg(mmc_dev(host->mmc), "mxcmci_softreset\n");
 
 	/* reset sequence */
-	mxcmci_writew(host, STR_STP_CLK_RESET, MMC_REG_STR_STP_CLK);
-	mxcmci_writew(host, STR_STP_CLK_RESET | STR_STP_CLK_START_CLK,
+	mxcmci_ग_लिखोw(host, STR_STP_CLK_RESET, MMC_REG_STR_STP_CLK);
+	mxcmci_ग_लिखोw(host, STR_STP_CLK_RESET | STR_STP_CLK_START_CLK,
 			MMC_REG_STR_STP_CLK);
 
-	for (i = 0; i < 8; i++)
-		mxcmci_writew(host, STR_STP_CLK_START_CLK, MMC_REG_STR_STP_CLK);
+	क्रम (i = 0; i < 8; i++)
+		mxcmci_ग_लिखोw(host, STR_STP_CLK_START_CLK, MMC_REG_STR_STP_CLK);
 
-	mxcmci_writew(host, 0xff, MMC_REG_RES_TO);
-}
+	mxcmci_ग_लिखोw(host, 0xff, MMC_REG_RES_TO);
+पूर्ण
 
-#if IS_ENABLED(CONFIG_PPC_MPC512x)
-static inline void buffer_swap32(u32 *buf, int len)
-{
-	int i;
+#अगर IS_ENABLED(CONFIG_PPC_MPC512x)
+अटल अंतरभूत व्योम buffer_swap32(u32 *buf, पूर्णांक len)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < ((len + 3) / 4); i++) {
+	क्रम (i = 0; i < ((len + 3) / 4); i++) अणु
 		*buf = swab32(*buf);
 		buf++;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void mxcmci_swap_buffers(struct mmc_data *data)
-{
-	struct scatterlist *sg;
-	int i;
+अटल व्योम mxcmci_swap_buffers(काष्ठा mmc_data *data)
+अणु
+	काष्ठा scatterlist *sg;
+	पूर्णांक i;
 
-	for_each_sg(data->sg, sg, data->sg_len, i)
+	क्रम_each_sg(data->sg, sg, data->sg_len, i)
 		buffer_swap32(sg_virt(sg), sg->length);
-}
-#else
-static inline void mxcmci_swap_buffers(struct mmc_data *data) {}
-#endif
+पूर्ण
+#अन्यथा
+अटल अंतरभूत व्योम mxcmci_swap_buffers(काष्ठा mmc_data *data) अणुपूर्ण
+#पूर्ण_अगर
 
-static int mxcmci_setup_data(struct mxcmci_host *host, struct mmc_data *data)
-{
-	unsigned int nob = data->blocks;
-	unsigned int blksz = data->blksz;
-	unsigned int datasize = nob * blksz;
-	struct scatterlist *sg;
-	enum dma_transfer_direction slave_dirn;
-	int i, nents;
+अटल पूर्णांक mxcmci_setup_data(काष्ठा mxcmci_host *host, काष्ठा mmc_data *data)
+अणु
+	अचिन्हित पूर्णांक nob = data->blocks;
+	अचिन्हित पूर्णांक blksz = data->blksz;
+	अचिन्हित पूर्णांक datasize = nob * blksz;
+	काष्ठा scatterlist *sg;
+	क्रमागत dma_transfer_direction slave_dirn;
+	पूर्णांक i, nents;
 
 	host->data = data;
 	data->bytes_xfered = 0;
 
-	mxcmci_writew(host, nob, MMC_REG_NOB);
-	mxcmci_writew(host, blksz, MMC_REG_BLK_LEN);
+	mxcmci_ग_लिखोw(host, nob, MMC_REG_NOB);
+	mxcmci_ग_लिखोw(host, blksz, MMC_REG_BLK_LEN);
 	host->datasize = datasize;
 
-	if (!mxcmci_use_dma(host))
-		return 0;
+	अगर (!mxcmci_use_dma(host))
+		वापस 0;
 
-	for_each_sg(data->sg, sg, data->sg_len, i) {
-		if (sg->offset & 3 || sg->length & 3 || sg->length < 512) {
-			host->do_dma = 0;
-			return 0;
-		}
-	}
+	क्रम_each_sg(data->sg, sg, data->sg_len, i) अणु
+		अगर (sg->offset & 3 || sg->length & 3 || sg->length < 512) अणु
+			host->करो_dma = 0;
+			वापस 0;
+		पूर्ण
+	पूर्ण
 
-	if (data->flags & MMC_DATA_READ) {
+	अगर (data->flags & MMC_DATA_READ) अणु
 		host->dma_dir = DMA_FROM_DEVICE;
 		slave_dirn = DMA_DEV_TO_MEM;
-	} else {
+	पूर्ण अन्यथा अणु
 		host->dma_dir = DMA_TO_DEVICE;
 		slave_dirn = DMA_MEM_TO_DEV;
 
 		mxcmci_swap_buffers(data);
-	}
+	पूर्ण
 
 	nents = dma_map_sg(host->dma->device->dev, data->sg,
 				     data->sg_len,  host->dma_dir);
-	if (nents != data->sg_len)
-		return -EINVAL;
+	अगर (nents != data->sg_len)
+		वापस -EINVAL;
 
 	host->desc = dmaengine_prep_slave_sg(host->dma,
 		data->sg, data->sg_len, slave_dirn,
 		DMA_PREP_INTERRUPT | DMA_CTRL_ACK);
 
-	if (!host->desc) {
+	अगर (!host->desc) अणु
 		dma_unmap_sg(host->dma->device->dev, data->sg, data->sg_len,
 				host->dma_dir);
-		host->do_dma = 0;
-		return 0; /* Fall back to PIO */
-	}
+		host->करो_dma = 0;
+		वापस 0; /* Fall back to PIO */
+	पूर्ण
 	wmb();
 
 	dmaengine_submit(host->desc);
 	dma_async_issue_pending(host->dma);
 
-	mod_timer(&host->watchdog, jiffies + msecs_to_jiffies(MXCMCI_TIMEOUT_MS));
+	mod_समयr(&host->watchकरोg, jअगरfies + msecs_to_jअगरfies(MXCMCI_TIMEOUT_MS));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void mxcmci_cmd_done(struct mxcmci_host *host, unsigned int stat);
-static void mxcmci_data_done(struct mxcmci_host *host, unsigned int stat);
+अटल व्योम mxcmci_cmd_करोne(काष्ठा mxcmci_host *host, अचिन्हित पूर्णांक stat);
+अटल व्योम mxcmci_data_करोne(काष्ठा mxcmci_host *host, अचिन्हित पूर्णांक stat);
 
-static void mxcmci_dma_callback(void *data)
-{
-	struct mxcmci_host *host = data;
+अटल व्योम mxcmci_dma_callback(व्योम *data)
+अणु
+	काष्ठा mxcmci_host *host = data;
 	u32 stat;
 
-	del_timer(&host->watchdog);
+	del_समयr(&host->watchकरोg);
 
-	stat = mxcmci_readl(host, MMC_REG_STATUS);
+	stat = mxcmci_पढ़ोl(host, MMC_REG_STATUS);
 
 	dev_dbg(mmc_dev(host->mmc), "%s: 0x%08x\n", __func__, stat);
 
-	mxcmci_data_done(host, stat);
-}
+	mxcmci_data_करोne(host, stat);
+पूर्ण
 
-static int mxcmci_start_cmd(struct mxcmci_host *host, struct mmc_command *cmd,
-		unsigned int cmdat)
-{
-	u32 int_cntr = host->default_irq_mask;
-	unsigned long flags;
+अटल पूर्णांक mxcmci_start_cmd(काष्ठा mxcmci_host *host, काष्ठा mmc_command *cmd,
+		अचिन्हित पूर्णांक cmdat)
+अणु
+	u32 पूर्णांक_cntr = host->शेष_irq_mask;
+	अचिन्हित दीर्घ flags;
 
-	WARN_ON(host->cmd != NULL);
+	WARN_ON(host->cmd != शून्य);
 	host->cmd = cmd;
 
-	switch (mmc_resp_type(cmd)) {
-	case MMC_RSP_R1: /* short CRC, OPCODE */
-	case MMC_RSP_R1B:/* short CRC, OPCODE, BUSY */
+	चयन (mmc_resp_type(cmd)) अणु
+	हाल MMC_RSP_R1: /* लघु CRC, OPCODE */
+	हाल MMC_RSP_R1B:/* लघु CRC, OPCODE, BUSY */
 		cmdat |= CMD_DAT_CONT_RESPONSE_48BIT_CRC;
-		break;
-	case MMC_RSP_R2: /* long 136 bit + CRC */
+		अवरोध;
+	हाल MMC_RSP_R2: /* दीर्घ 136 bit + CRC */
 		cmdat |= CMD_DAT_CONT_RESPONSE_136BIT;
-		break;
-	case MMC_RSP_R3: /* short */
+		अवरोध;
+	हाल MMC_RSP_R3: /* लघु */
 		cmdat |= CMD_DAT_CONT_RESPONSE_48BIT;
-		break;
-	case MMC_RSP_NONE:
-		break;
-	default:
+		अवरोध;
+	हाल MMC_RSP_NONE:
+		अवरोध;
+	शेष:
 		dev_err(mmc_dev(host->mmc), "unhandled response type 0x%x\n",
 				mmc_resp_type(cmd));
 		cmd->error = -EINVAL;
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	int_cntr = INT_END_CMD_RES_EN;
+	पूर्णांक_cntr = INT_END_CMD_RES_EN;
 
-	if (mxcmci_use_dma(host)) {
-		if (host->dma_dir == DMA_FROM_DEVICE) {
+	अगर (mxcmci_use_dma(host)) अणु
+		अगर (host->dma_dir == DMA_FROM_DEVICE) अणु
 			host->desc->callback = mxcmci_dma_callback;
 			host->desc->callback_param = host;
-		} else {
-			int_cntr |= INT_WRITE_OP_DONE_EN;
-		}
-	}
+		पूर्ण अन्यथा अणु
+			पूर्णांक_cntr |= INT_WRITE_OP_DONE_EN;
+		पूर्ण
+	पूर्ण
 
 	spin_lock_irqsave(&host->lock, flags);
-	if (host->use_sdio)
-		int_cntr |= INT_SDIO_IRQ_EN;
-	mxcmci_writel(host, int_cntr, MMC_REG_INT_CNTR);
+	अगर (host->use_sdio)
+		पूर्णांक_cntr |= INT_SDIO_IRQ_EN;
+	mxcmci_ग_लिखोl(host, पूर्णांक_cntr, MMC_REG_INT_CNTR);
 	spin_unlock_irqrestore(&host->lock, flags);
 
-	mxcmci_writew(host, cmd->opcode, MMC_REG_CMD);
-	mxcmci_writel(host, cmd->arg, MMC_REG_ARG);
-	mxcmci_writew(host, cmdat, MMC_REG_CMD_DAT_CONT);
+	mxcmci_ग_लिखोw(host, cmd->opcode, MMC_REG_CMD);
+	mxcmci_ग_लिखोl(host, cmd->arg, MMC_REG_ARG);
+	mxcmci_ग_लिखोw(host, cmdat, MMC_REG_CMD_DAT_CONT);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void mxcmci_finish_request(struct mxcmci_host *host,
-		struct mmc_request *req)
-{
-	u32 int_cntr = host->default_irq_mask;
-	unsigned long flags;
+अटल व्योम mxcmci_finish_request(काष्ठा mxcmci_host *host,
+		काष्ठा mmc_request *req)
+अणु
+	u32 पूर्णांक_cntr = host->शेष_irq_mask;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&host->lock, flags);
-	if (host->use_sdio)
-		int_cntr |= INT_SDIO_IRQ_EN;
-	mxcmci_writel(host, int_cntr, MMC_REG_INT_CNTR);
+	अगर (host->use_sdio)
+		पूर्णांक_cntr |= INT_SDIO_IRQ_EN;
+	mxcmci_ग_लिखोl(host, पूर्णांक_cntr, MMC_REG_INT_CNTR);
 	spin_unlock_irqrestore(&host->lock, flags);
 
-	host->req = NULL;
-	host->cmd = NULL;
-	host->data = NULL;
+	host->req = शून्य;
+	host->cmd = शून्य;
+	host->data = शून्य;
 
-	mmc_request_done(host->mmc, req);
-}
+	mmc_request_करोne(host->mmc, req);
+पूर्ण
 
-static int mxcmci_finish_data(struct mxcmci_host *host, unsigned int stat)
-{
-	struct mmc_data *data = host->data;
-	int data_error;
+अटल पूर्णांक mxcmci_finish_data(काष्ठा mxcmci_host *host, अचिन्हित पूर्णांक stat)
+अणु
+	काष्ठा mmc_data *data = host->data;
+	पूर्णांक data_error;
 
-	if (mxcmci_use_dma(host)) {
+	अगर (mxcmci_use_dma(host)) अणु
 		dma_unmap_sg(host->dma->device->dev, data->sg, data->sg_len,
 				host->dma_dir);
 		mxcmci_swap_buffers(data);
-	}
+	पूर्ण
 
-	if (stat & STATUS_ERR_MASK) {
+	अगर (stat & STATUS_ERR_MASK) अणु
 		dev_dbg(mmc_dev(host->mmc), "request failed. status: 0x%08x\n",
 				stat);
-		if (stat & STATUS_CRC_READ_ERR) {
+		अगर (stat & STATUS_CRC_READ_ERR) अणु
 			dev_err(mmc_dev(host->mmc), "%s: -EILSEQ\n", __func__);
 			data->error = -EILSEQ;
-		} else if (stat & STATUS_CRC_WRITE_ERR) {
+		पूर्ण अन्यथा अगर (stat & STATUS_CRC_WRITE_ERR) अणु
 			u32 err_code = (stat >> 9) & 0x3;
-			if (err_code == 2) { /* No CRC response */
+			अगर (err_code == 2) अणु /* No CRC response */
 				dev_err(mmc_dev(host->mmc),
 					"%s: No CRC -ETIMEDOUT\n", __func__);
 				data->error = -ETIMEDOUT;
-			} else {
+			पूर्ण अन्यथा अणु
 				dev_err(mmc_dev(host->mmc),
 					"%s: -EILSEQ\n", __func__);
 				data->error = -EILSEQ;
-			}
-		} else if (stat & STATUS_TIME_OUT_READ) {
+			पूर्ण
+		पूर्ण अन्यथा अगर (stat & STATUS_TIME_OUT_READ) अणु
 			dev_err(mmc_dev(host->mmc),
 				"%s: read -ETIMEDOUT\n", __func__);
 			data->error = -ETIMEDOUT;
-		} else {
+		पूर्ण अन्यथा अणु
 			dev_err(mmc_dev(host->mmc), "%s: -EIO\n", __func__);
 			data->error = -EIO;
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		data->bytes_xfered = host->datasize;
-	}
+	पूर्ण
 
 	data_error = data->error;
 
-	host->data = NULL;
+	host->data = शून्य;
 
-	return data_error;
-}
+	वापस data_error;
+पूर्ण
 
-static void mxcmci_read_response(struct mxcmci_host *host, unsigned int stat)
-{
-	struct mmc_command *cmd = host->cmd;
-	int i;
+अटल व्योम mxcmci_पढ़ो_response(काष्ठा mxcmci_host *host, अचिन्हित पूर्णांक stat)
+अणु
+	काष्ठा mmc_command *cmd = host->cmd;
+	पूर्णांक i;
 	u32 a, b, c;
 
-	if (!cmd)
-		return;
+	अगर (!cmd)
+		वापस;
 
-	if (stat & STATUS_TIME_OUT_RESP) {
+	अगर (stat & STATUS_TIME_OUT_RESP) अणु
 		dev_dbg(mmc_dev(host->mmc), "CMD TIMEOUT\n");
 		cmd->error = -ETIMEDOUT;
-	} else if (stat & STATUS_RESP_CRC_ERR && cmd->flags & MMC_RSP_CRC) {
+	पूर्ण अन्यथा अगर (stat & STATUS_RESP_CRC_ERR && cmd->flags & MMC_RSP_CRC) अणु
 		dev_dbg(mmc_dev(host->mmc), "cmd crc error\n");
 		cmd->error = -EILSEQ;
-	}
+	पूर्ण
 
-	if (cmd->flags & MMC_RSP_PRESENT) {
-		if (cmd->flags & MMC_RSP_136) {
-			for (i = 0; i < 4; i++) {
-				a = mxcmci_readw(host, MMC_REG_RES_FIFO);
-				b = mxcmci_readw(host, MMC_REG_RES_FIFO);
+	अगर (cmd->flags & MMC_RSP_PRESENT) अणु
+		अगर (cmd->flags & MMC_RSP_136) अणु
+			क्रम (i = 0; i < 4; i++) अणु
+				a = mxcmci_पढ़ोw(host, MMC_REG_RES_FIFO);
+				b = mxcmci_पढ़ोw(host, MMC_REG_RES_FIFO);
 				cmd->resp[i] = a << 16 | b;
-			}
-		} else {
-			a = mxcmci_readw(host, MMC_REG_RES_FIFO);
-			b = mxcmci_readw(host, MMC_REG_RES_FIFO);
-			c = mxcmci_readw(host, MMC_REG_RES_FIFO);
+			पूर्ण
+		पूर्ण अन्यथा अणु
+			a = mxcmci_पढ़ोw(host, MMC_REG_RES_FIFO);
+			b = mxcmci_पढ़ोw(host, MMC_REG_RES_FIFO);
+			c = mxcmci_पढ़ोw(host, MMC_REG_RES_FIFO);
 			cmd->resp[0] = a << 24 | b << 8 | c >> 8;
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static int mxcmci_poll_status(struct mxcmci_host *host, u32 mask)
-{
+अटल पूर्णांक mxcmci_poll_status(काष्ठा mxcmci_host *host, u32 mask)
+अणु
 	u32 stat;
-	unsigned long timeout = jiffies + HZ;
+	अचिन्हित दीर्घ समयout = jअगरfies + HZ;
 
-	do {
-		stat = mxcmci_readl(host, MMC_REG_STATUS);
-		if (stat & STATUS_ERR_MASK)
-			return stat;
-		if (time_after(jiffies, timeout)) {
+	करो अणु
+		stat = mxcmci_पढ़ोl(host, MMC_REG_STATUS);
+		अगर (stat & STATUS_ERR_MASK)
+			वापस stat;
+		अगर (समय_after(jअगरfies, समयout)) अणु
 			mxcmci_softreset(host);
-			mxcmci_set_clk_rate(host, host->clock);
-			return STATUS_TIME_OUT_READ;
-		}
-		if (stat & mask)
-			return 0;
+			mxcmci_set_clk_rate(host, host->घड़ी);
+			वापस STATUS_TIME_OUT_READ;
+		पूर्ण
+		अगर (stat & mask)
+			वापस 0;
 		cpu_relax();
-	} while (1);
-}
+	पूर्ण जबतक (1);
+पूर्ण
 
-static int mxcmci_pull(struct mxcmci_host *host, void *_buf, int bytes)
-{
-	unsigned int stat;
+अटल पूर्णांक mxcmci_pull(काष्ठा mxcmci_host *host, व्योम *_buf, पूर्णांक bytes)
+अणु
+	अचिन्हित पूर्णांक stat;
 	u32 *buf = _buf;
 
-	while (bytes > 3) {
+	जबतक (bytes > 3) अणु
 		stat = mxcmci_poll_status(host,
 				STATUS_BUF_READ_RDY | STATUS_READ_OP_DONE);
-		if (stat)
-			return stat;
-		*buf++ = cpu_to_le32(mxcmci_readl(host, MMC_REG_BUFFER_ACCESS));
+		अगर (stat)
+			वापस stat;
+		*buf++ = cpu_to_le32(mxcmci_पढ़ोl(host, MMC_REG_BUFFER_ACCESS));
 		bytes -= 4;
-	}
+	पूर्ण
 
-	if (bytes) {
+	अगर (bytes) अणु
 		u8 *b = (u8 *)buf;
-		u32 tmp;
+		u32 पंचांगp;
 
 		stat = mxcmci_poll_status(host,
 				STATUS_BUF_READ_RDY | STATUS_READ_OP_DONE);
-		if (stat)
-			return stat;
-		tmp = cpu_to_le32(mxcmci_readl(host, MMC_REG_BUFFER_ACCESS));
-		memcpy(b, &tmp, bytes);
-	}
+		अगर (stat)
+			वापस stat;
+		पंचांगp = cpu_to_le32(mxcmci_पढ़ोl(host, MMC_REG_BUFFER_ACCESS));
+		स_नकल(b, &पंचांगp, bytes);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mxcmci_push(struct mxcmci_host *host, void *_buf, int bytes)
-{
-	unsigned int stat;
+अटल पूर्णांक mxcmci_push(काष्ठा mxcmci_host *host, व्योम *_buf, पूर्णांक bytes)
+अणु
+	अचिन्हित पूर्णांक stat;
 	u32 *buf = _buf;
 
-	while (bytes > 3) {
+	जबतक (bytes > 3) अणु
 		stat = mxcmci_poll_status(host, STATUS_BUF_WRITE_RDY);
-		if (stat)
-			return stat;
-		mxcmci_writel(host, cpu_to_le32(*buf++), MMC_REG_BUFFER_ACCESS);
+		अगर (stat)
+			वापस stat;
+		mxcmci_ग_लिखोl(host, cpu_to_le32(*buf++), MMC_REG_BUFFER_ACCESS);
 		bytes -= 4;
-	}
+	पूर्ण
 
-	if (bytes) {
+	अगर (bytes) अणु
 		u8 *b = (u8 *)buf;
-		u32 tmp;
+		u32 पंचांगp;
 
 		stat = mxcmci_poll_status(host, STATUS_BUF_WRITE_RDY);
-		if (stat)
-			return stat;
+		अगर (stat)
+			वापस stat;
 
-		memcpy(&tmp, b, bytes);
-		mxcmci_writel(host, cpu_to_le32(tmp), MMC_REG_BUFFER_ACCESS);
-	}
+		स_नकल(&पंचांगp, b, bytes);
+		mxcmci_ग_लिखोl(host, cpu_to_le32(पंचांगp), MMC_REG_BUFFER_ACCESS);
+	पूर्ण
 
-	return mxcmci_poll_status(host, STATUS_BUF_WRITE_RDY);
-}
+	वापस mxcmci_poll_status(host, STATUS_BUF_WRITE_RDY);
+पूर्ण
 
-static int mxcmci_transfer_data(struct mxcmci_host *host)
-{
-	struct mmc_data *data = host->req->data;
-	struct scatterlist *sg;
-	int stat, i;
+अटल पूर्णांक mxcmci_transfer_data(काष्ठा mxcmci_host *host)
+अणु
+	काष्ठा mmc_data *data = host->req->data;
+	काष्ठा scatterlist *sg;
+	पूर्णांक stat, i;
 
 	host->data = data;
 	host->datasize = 0;
 
-	if (data->flags & MMC_DATA_READ) {
-		for_each_sg(data->sg, sg, data->sg_len, i) {
+	अगर (data->flags & MMC_DATA_READ) अणु
+		क्रम_each_sg(data->sg, sg, data->sg_len, i) अणु
 			stat = mxcmci_pull(host, sg_virt(sg), sg->length);
-			if (stat)
-				return stat;
+			अगर (stat)
+				वापस stat;
 			host->datasize += sg->length;
-		}
-	} else {
-		for_each_sg(data->sg, sg, data->sg_len, i) {
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		क्रम_each_sg(data->sg, sg, data->sg_len, i) अणु
 			stat = mxcmci_push(host, sg_virt(sg), sg->length);
-			if (stat)
-				return stat;
+			अगर (stat)
+				वापस stat;
 			host->datasize += sg->length;
-		}
+		पूर्ण
 		stat = mxcmci_poll_status(host, STATUS_WRITE_OP_DONE);
-		if (stat)
-			return stat;
-	}
-	return 0;
-}
+		अगर (stat)
+			वापस stat;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static void mxcmci_datawork(struct work_struct *work)
-{
-	struct mxcmci_host *host = container_of(work, struct mxcmci_host,
+अटल व्योम mxcmci_datawork(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा mxcmci_host *host = container_of(work, काष्ठा mxcmci_host,
 						  datawork);
-	int datastat = mxcmci_transfer_data(host);
+	पूर्णांक datastat = mxcmci_transfer_data(host);
 
-	mxcmci_writel(host, STATUS_READ_OP_DONE | STATUS_WRITE_OP_DONE,
+	mxcmci_ग_लिखोl(host, STATUS_READ_OP_DONE | STATUS_WRITE_OP_DONE,
 		MMC_REG_STATUS);
 	mxcmci_finish_data(host, datastat);
 
-	if (host->req->stop) {
-		if (mxcmci_start_cmd(host, host->req->stop, 0)) {
+	अगर (host->req->stop) अणु
+		अगर (mxcmci_start_cmd(host, host->req->stop, 0)) अणु
 			mxcmci_finish_request(host, host->req);
-			return;
-		}
-	} else {
+			वापस;
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		mxcmci_finish_request(host, host->req);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void mxcmci_data_done(struct mxcmci_host *host, unsigned int stat)
-{
-	struct mmc_request *req;
-	int data_error;
-	unsigned long flags;
+अटल व्योम mxcmci_data_करोne(काष्ठा mxcmci_host *host, अचिन्हित पूर्णांक stat)
+अणु
+	काष्ठा mmc_request *req;
+	पूर्णांक data_error;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&host->lock, flags);
 
-	if (!host->data) {
+	अगर (!host->data) अणु
 		spin_unlock_irqrestore(&host->lock, flags);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (!host->req) {
+	अगर (!host->req) अणु
 		spin_unlock_irqrestore(&host->lock, flags);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	req = host->req;
-	if (!req->stop)
-		host->req = NULL; /* we will handle finish req below */
+	अगर (!req->stop)
+		host->req = शून्य; /* we will handle finish req below */
 
 	data_error = mxcmci_finish_data(host, stat);
 
 	spin_unlock_irqrestore(&host->lock, flags);
 
-	if (data_error)
-		return;
+	अगर (data_error)
+		वापस;
 
-	mxcmci_read_response(host, stat);
-	host->cmd = NULL;
+	mxcmci_पढ़ो_response(host, stat);
+	host->cmd = शून्य;
 
-	if (req->stop) {
-		if (mxcmci_start_cmd(host, req->stop, 0)) {
+	अगर (req->stop) अणु
+		अगर (mxcmci_start_cmd(host, req->stop, 0)) अणु
 			mxcmci_finish_request(host, req);
-			return;
-		}
-	} else {
+			वापस;
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		mxcmci_finish_request(host, req);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void mxcmci_cmd_done(struct mxcmci_host *host, unsigned int stat)
-{
-	mxcmci_read_response(host, stat);
-	host->cmd = NULL;
+अटल व्योम mxcmci_cmd_करोne(काष्ठा mxcmci_host *host, अचिन्हित पूर्णांक stat)
+अणु
+	mxcmci_पढ़ो_response(host, stat);
+	host->cmd = शून्य;
 
-	if (!host->data && host->req) {
+	अगर (!host->data && host->req) अणु
 		mxcmci_finish_request(host, host->req);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	/* For the DMA case the DMA engine handles the data transfer
-	 * automatically. For non DMA we have to do it ourselves.
-	 * Don't do it in interrupt context though.
+	/* For the DMA हाल the DMA engine handles the data transfer
+	 * स्वतःmatically. For non DMA we have to करो it ourselves.
+	 * Don't करो it in पूर्णांकerrupt context though.
 	 */
-	if (!mxcmci_use_dma(host) && host->data)
+	अगर (!mxcmci_use_dma(host) && host->data)
 		schedule_work(&host->datawork);
 
-}
+पूर्ण
 
-static irqreturn_t mxcmci_irq(int irq, void *devid)
-{
-	struct mxcmci_host *host = devid;
+अटल irqवापस_t mxcmci_irq(पूर्णांक irq, व्योम *devid)
+अणु
+	काष्ठा mxcmci_host *host = devid;
 	bool sdio_irq;
 	u32 stat;
 
-	stat = mxcmci_readl(host, MMC_REG_STATUS);
-	mxcmci_writel(host,
+	stat = mxcmci_पढ़ोl(host, MMC_REG_STATUS);
+	mxcmci_ग_लिखोl(host,
 		stat & ~(STATUS_SDIO_INT_ACTIVE | STATUS_DATA_TRANS_DONE |
 			 STATUS_WRITE_OP_DONE),
 		MMC_REG_STATUS);
@@ -713,101 +714,101 @@ static irqreturn_t mxcmci_irq(int irq, void *devid)
 	sdio_irq = (stat & STATUS_SDIO_INT_ACTIVE) && host->use_sdio;
 	spin_unlock(&host->lock);
 
-	if (mxcmci_use_dma(host) && (stat & (STATUS_WRITE_OP_DONE)))
-		mxcmci_writel(host, STATUS_WRITE_OP_DONE, MMC_REG_STATUS);
+	अगर (mxcmci_use_dma(host) && (stat & (STATUS_WRITE_OP_DONE)))
+		mxcmci_ग_लिखोl(host, STATUS_WRITE_OP_DONE, MMC_REG_STATUS);
 
-	if (sdio_irq) {
-		mxcmci_writel(host, STATUS_SDIO_INT_ACTIVE, MMC_REG_STATUS);
-		mmc_signal_sdio_irq(host->mmc);
-	}
+	अगर (sdio_irq) अणु
+		mxcmci_ग_लिखोl(host, STATUS_SDIO_INT_ACTIVE, MMC_REG_STATUS);
+		mmc_संकेत_sdio_irq(host->mmc);
+	पूर्ण
 
-	if (stat & STATUS_END_CMD_RESP)
-		mxcmci_cmd_done(host, stat);
+	अगर (stat & STATUS_END_CMD_RESP)
+		mxcmci_cmd_करोne(host, stat);
 
-	if (mxcmci_use_dma(host) && (stat & STATUS_WRITE_OP_DONE)) {
-		del_timer(&host->watchdog);
-		mxcmci_data_done(host, stat);
-	}
+	अगर (mxcmci_use_dma(host) && (stat & STATUS_WRITE_OP_DONE)) अणु
+		del_समयr(&host->watchकरोg);
+		mxcmci_data_करोne(host, stat);
+	पूर्ण
 
-	if (host->default_irq_mask &&
+	अगर (host->शेष_irq_mask &&
 		  (stat & (STATUS_CARD_INSERTION | STATUS_CARD_REMOVAL)))
-		mmc_detect_change(host->mmc, msecs_to_jiffies(200));
+		mmc_detect_change(host->mmc, msecs_to_jअगरfies(200));
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static void mxcmci_request(struct mmc_host *mmc, struct mmc_request *req)
-{
-	struct mxcmci_host *host = mmc_priv(mmc);
-	unsigned int cmdat = host->cmdat;
-	int error;
+अटल व्योम mxcmci_request(काष्ठा mmc_host *mmc, काष्ठा mmc_request *req)
+अणु
+	काष्ठा mxcmci_host *host = mmc_priv(mmc);
+	अचिन्हित पूर्णांक cmdat = host->cmdat;
+	पूर्णांक error;
 
-	WARN_ON(host->req != NULL);
+	WARN_ON(host->req != शून्य);
 
 	host->req = req;
 	host->cmdat &= ~CMD_DAT_CONT_INIT;
 
-	if (host->dma)
-		host->do_dma = 1;
+	अगर (host->dma)
+		host->करो_dma = 1;
 
-	if (req->data) {
+	अगर (req->data) अणु
 		error = mxcmci_setup_data(host, req->data);
-		if (error) {
+		अगर (error) अणु
 			req->cmd->error = error;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
 
 		cmdat |= CMD_DAT_CONT_DATA_ENABLE;
 
-		if (req->data->flags & MMC_DATA_WRITE)
+		अगर (req->data->flags & MMC_DATA_WRITE)
 			cmdat |= CMD_DAT_CONT_WRITE;
-	}
+	पूर्ण
 
 	error = mxcmci_start_cmd(host, req->cmd, cmdat);
 
 out:
-	if (error)
+	अगर (error)
 		mxcmci_finish_request(host, req);
-}
+पूर्ण
 
-static void mxcmci_set_clk_rate(struct mxcmci_host *host, unsigned int clk_ios)
-{
-	unsigned int divider;
-	int prescaler = 0;
-	unsigned int clk_in = clk_get_rate(host->clk_per);
+अटल व्योम mxcmci_set_clk_rate(काष्ठा mxcmci_host *host, अचिन्हित पूर्णांक clk_ios)
+अणु
+	अचिन्हित पूर्णांक भागider;
+	पूर्णांक prescaler = 0;
+	अचिन्हित पूर्णांक clk_in = clk_get_rate(host->clk_per);
 
-	while (prescaler <= 0x800) {
-		for (divider = 1; divider <= 0xF; divider++) {
-			int x;
+	जबतक (prescaler <= 0x800) अणु
+		क्रम (भागider = 1; भागider <= 0xF; भागider++) अणु
+			पूर्णांक x;
 
-			x = (clk_in / (divider + 1));
+			x = (clk_in / (भागider + 1));
 
-			if (prescaler)
+			अगर (prescaler)
 				x /= (prescaler * 2);
 
-			if (x <= clk_ios)
-				break;
-		}
-		if (divider < 0x10)
-			break;
+			अगर (x <= clk_ios)
+				अवरोध;
+		पूर्ण
+		अगर (भागider < 0x10)
+			अवरोध;
 
-		if (prescaler == 0)
+		अगर (prescaler == 0)
 			prescaler = 1;
-		else
+		अन्यथा
 			prescaler <<= 1;
-	}
+	पूर्ण
 
-	mxcmci_writew(host, (prescaler << 4) | divider, MMC_REG_CLK_RATE);
+	mxcmci_ग_लिखोw(host, (prescaler << 4) | भागider, MMC_REG_CLK_RATE);
 
 	dev_dbg(mmc_dev(host->mmc), "scaler: %d divider: %d in: %d out: %d\n",
-			prescaler, divider, clk_in, clk_ios);
-}
+			prescaler, भागider, clk_in, clk_ios);
+पूर्ण
 
-static int mxcmci_setup_dma(struct mmc_host *mmc)
-{
-	struct mxcmci_host *host = mmc_priv(mmc);
-	struct dma_slave_config *config = &host->dma_slave_config;
+अटल पूर्णांक mxcmci_setup_dma(काष्ठा mmc_host *mmc)
+अणु
+	काष्ठा mxcmci_host *host = mmc_priv(mmc);
+	काष्ठा dma_slave_config *config = &host->dma_slave_config;
 
 	config->dst_addr = host->phys_base + MMC_REG_BUFFER_ACCESS;
 	config->src_addr = host->phys_base + MMC_REG_BUFFER_ACCESS;
@@ -817,206 +818,206 @@ static int mxcmci_setup_dma(struct mmc_host *mmc)
 	config->src_maxburst = host->burstlen;
 	config->device_fc = false;
 
-	return dmaengine_slave_config(host->dma, config);
-}
+	वापस dmaengine_slave_config(host->dma, config);
+पूर्ण
 
-static void mxcmci_set_ios(struct mmc_host *mmc, struct mmc_ios *ios)
-{
-	struct mxcmci_host *host = mmc_priv(mmc);
-	int burstlen, ret;
+अटल व्योम mxcmci_set_ios(काष्ठा mmc_host *mmc, काष्ठा mmc_ios *ios)
+अणु
+	काष्ठा mxcmci_host *host = mmc_priv(mmc);
+	पूर्णांक burstlen, ret;
 
 	/*
 	 * use burstlen of 64 (16 words) in 4 bit mode (--> reg value  0)
 	 * use burstlen of 16 (4 words) in 1 bit mode (--> reg value 16)
 	 */
-	if (ios->bus_width == MMC_BUS_WIDTH_4)
+	अगर (ios->bus_width == MMC_BUS_WIDTH_4)
 		burstlen = 16;
-	else
+	अन्यथा
 		burstlen = 4;
 
-	if (mxcmci_use_dma(host) && burstlen != host->burstlen) {
+	अगर (mxcmci_use_dma(host) && burstlen != host->burstlen) अणु
 		host->burstlen = burstlen;
 		ret = mxcmci_setup_dma(mmc);
-		if (ret) {
+		अगर (ret) अणु
 			dev_err(mmc_dev(host->mmc),
 				"failed to config DMA channel. Falling back to PIO\n");
 			dma_release_channel(host->dma);
-			host->do_dma = 0;
-			host->dma = NULL;
-		}
-	}
+			host->करो_dma = 0;
+			host->dma = शून्य;
+		पूर्ण
+	पूर्ण
 
-	if (ios->bus_width == MMC_BUS_WIDTH_4)
+	अगर (ios->bus_width == MMC_BUS_WIDTH_4)
 		host->cmdat |= CMD_DAT_CONT_BUS_WIDTH_4;
-	else
+	अन्यथा
 		host->cmdat &= ~CMD_DAT_CONT_BUS_WIDTH_4;
 
-	if (host->power_mode != ios->power_mode) {
-		host->power_mode = ios->power_mode;
-		mxcmci_set_power(host, ios->vdd);
+	अगर (host->घातer_mode != ios->घातer_mode) अणु
+		host->घातer_mode = ios->घातer_mode;
+		mxcmci_set_घातer(host, ios->vdd);
 
-		if (ios->power_mode == MMC_POWER_ON)
+		अगर (ios->घातer_mode == MMC_POWER_ON)
 			host->cmdat |= CMD_DAT_CONT_INIT;
-	}
+	पूर्ण
 
-	if (ios->clock) {
-		mxcmci_set_clk_rate(host, ios->clock);
-		mxcmci_writew(host, STR_STP_CLK_START_CLK, MMC_REG_STR_STP_CLK);
-	} else {
-		mxcmci_writew(host, STR_STP_CLK_STOP_CLK, MMC_REG_STR_STP_CLK);
-	}
+	अगर (ios->घड़ी) अणु
+		mxcmci_set_clk_rate(host, ios->घड़ी);
+		mxcmci_ग_लिखोw(host, STR_STP_CLK_START_CLK, MMC_REG_STR_STP_CLK);
+	पूर्ण अन्यथा अणु
+		mxcmci_ग_लिखोw(host, STR_STP_CLK_STOP_CLK, MMC_REG_STR_STP_CLK);
+	पूर्ण
 
-	host->clock = ios->clock;
-}
+	host->घड़ी = ios->घड़ी;
+पूर्ण
 
-static irqreturn_t mxcmci_detect_irq(int irq, void *data)
-{
-	struct mmc_host *mmc = data;
+अटल irqवापस_t mxcmci_detect_irq(पूर्णांक irq, व्योम *data)
+अणु
+	काष्ठा mmc_host *mmc = data;
 
 	dev_dbg(mmc_dev(mmc), "%s\n", __func__);
 
-	mmc_detect_change(mmc, msecs_to_jiffies(250));
-	return IRQ_HANDLED;
-}
+	mmc_detect_change(mmc, msecs_to_jअगरfies(250));
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static int mxcmci_get_ro(struct mmc_host *mmc)
-{
-	struct mxcmci_host *host = mmc_priv(mmc);
+अटल पूर्णांक mxcmci_get_ro(काष्ठा mmc_host *mmc)
+अणु
+	काष्ठा mxcmci_host *host = mmc_priv(mmc);
 
-	if (host->pdata && host->pdata->get_ro)
-		return !!host->pdata->get_ro(mmc_dev(mmc));
+	अगर (host->pdata && host->pdata->get_ro)
+		वापस !!host->pdata->get_ro(mmc_dev(mmc));
 	/*
-	 * If board doesn't support read only detection (no mmc_gpio
+	 * If board करोesn't support पढ़ो only detection (no mmc_gpio
 	 * context or gpio is invalid), then let the mmc core decide
-	 * what to do.
+	 * what to करो.
 	 */
-	return mmc_gpio_get_ro(mmc);
-}
+	वापस mmc_gpio_get_ro(mmc);
+पूर्ण
 
-static void mxcmci_enable_sdio_irq(struct mmc_host *mmc, int enable)
-{
-	struct mxcmci_host *host = mmc_priv(mmc);
-	unsigned long flags;
-	u32 int_cntr;
+अटल व्योम mxcmci_enable_sdio_irq(काष्ठा mmc_host *mmc, पूर्णांक enable)
+अणु
+	काष्ठा mxcmci_host *host = mmc_priv(mmc);
+	अचिन्हित दीर्घ flags;
+	u32 पूर्णांक_cntr;
 
 	spin_lock_irqsave(&host->lock, flags);
 	host->use_sdio = enable;
-	int_cntr = mxcmci_readl(host, MMC_REG_INT_CNTR);
+	पूर्णांक_cntr = mxcmci_पढ़ोl(host, MMC_REG_INT_CNTR);
 
-	if (enable)
-		int_cntr |= INT_SDIO_IRQ_EN;
-	else
-		int_cntr &= ~INT_SDIO_IRQ_EN;
+	अगर (enable)
+		पूर्णांक_cntr |= INT_SDIO_IRQ_EN;
+	अन्यथा
+		पूर्णांक_cntr &= ~INT_SDIO_IRQ_EN;
 
-	mxcmci_writel(host, int_cntr, MMC_REG_INT_CNTR);
+	mxcmci_ग_लिखोl(host, पूर्णांक_cntr, MMC_REG_INT_CNTR);
 	spin_unlock_irqrestore(&host->lock, flags);
-}
+पूर्ण
 
-static void mxcmci_init_card(struct mmc_host *host, struct mmc_card *card)
-{
-	struct mxcmci_host *mxcmci = mmc_priv(host);
+अटल व्योम mxcmci_init_card(काष्ठा mmc_host *host, काष्ठा mmc_card *card)
+अणु
+	काष्ठा mxcmci_host *mxcmci = mmc_priv(host);
 
 	/*
 	 * MX3 SoCs have a silicon bug which corrupts CRC calculation of
-	 * multi-block transfers when connected SDIO peripheral doesn't
+	 * multi-block transfers when connected SDIO peripheral करोesn't
 	 * drive the BUSY line as required by the specs.
 	 * One way to prevent this is to only allow 1-bit transfers.
 	 */
 
-	if (is_imx31_mmc(mxcmci) && card->type == MMC_TYPE_SDIO)
+	अगर (is_imx31_mmc(mxcmci) && card->type == MMC_TYPE_SDIO)
 		host->caps &= ~MMC_CAP_4_BIT_DATA;
-	else
+	अन्यथा
 		host->caps |= MMC_CAP_4_BIT_DATA;
-}
+पूर्ण
 
-static bool filter(struct dma_chan *chan, void *param)
-{
-	struct mxcmci_host *host = param;
+अटल bool filter(काष्ठा dma_chan *chan, व्योम *param)
+अणु
+	काष्ठा mxcmci_host *host = param;
 
-	if (!imx_dma_is_general_purpose(chan))
-		return false;
+	अगर (!imx_dma_is_general_purpose(chan))
+		वापस false;
 
-	chan->private = &host->dma_data;
+	chan->निजी = &host->dma_data;
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static void mxcmci_watchdog(struct timer_list *t)
-{
-	struct mxcmci_host *host = from_timer(host, t, watchdog);
-	struct mmc_request *req = host->req;
-	unsigned int stat = mxcmci_readl(host, MMC_REG_STATUS);
+अटल व्योम mxcmci_watchकरोg(काष्ठा समयr_list *t)
+अणु
+	काष्ठा mxcmci_host *host = from_समयr(host, t, watchकरोg);
+	काष्ठा mmc_request *req = host->req;
+	अचिन्हित पूर्णांक stat = mxcmci_पढ़ोl(host, MMC_REG_STATUS);
 
-	if (host->dma_dir == DMA_FROM_DEVICE) {
+	अगर (host->dma_dir == DMA_FROM_DEVICE) अणु
 		dmaengine_terminate_all(host->dma);
 		dev_err(mmc_dev(host->mmc),
 			"%s: read time out (status = 0x%08x)\n",
 			__func__, stat);
-	} else {
+	पूर्ण अन्यथा अणु
 		dev_err(mmc_dev(host->mmc),
 			"%s: write time out (status = 0x%08x)\n",
 			__func__, stat);
 		mxcmci_softreset(host);
-	}
+	पूर्ण
 
-	/* Mark transfer as erroneus and inform the upper layers */
+	/* Mark transfer as erroneus and inक्रमm the upper layers */
 
-	if (host->data)
+	अगर (host->data)
 		host->data->error = -ETIMEDOUT;
-	host->req = NULL;
-	host->cmd = NULL;
-	host->data = NULL;
-	mmc_request_done(host->mmc, req);
-}
+	host->req = शून्य;
+	host->cmd = शून्य;
+	host->data = शून्य;
+	mmc_request_करोne(host->mmc, req);
+पूर्ण
 
-static const struct mmc_host_ops mxcmci_ops = {
+अटल स्थिर काष्ठा mmc_host_ops mxcmci_ops = अणु
 	.request		= mxcmci_request,
 	.set_ios		= mxcmci_set_ios,
 	.get_ro			= mxcmci_get_ro,
 	.enable_sdio_irq	= mxcmci_enable_sdio_irq,
 	.init_card		= mxcmci_init_card,
-};
+पूर्ण;
 
-static int mxcmci_probe(struct platform_device *pdev)
-{
-	struct mmc_host *mmc;
-	struct mxcmci_host *host;
-	struct resource *res;
-	int ret = 0, irq;
+अटल पूर्णांक mxcmci_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा mmc_host *mmc;
+	काष्ठा mxcmci_host *host;
+	काष्ठा resource *res;
+	पूर्णांक ret = 0, irq;
 	bool dat3_card_detect = false;
 	dma_cap_mask_t mask;
-	struct imxmmc_platform_data *pdata = pdev->dev.platform_data;
+	काष्ठा imxmmc_platक्रमm_data *pdata = pdev->dev.platक्रमm_data;
 
 	pr_info("i.MX/MPC512x SDHC driver\n");
 
-	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
-	irq = platform_get_irq(pdev, 0);
-	if (irq < 0)
-		return irq;
+	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
+	irq = platक्रमm_get_irq(pdev, 0);
+	अगर (irq < 0)
+		वापस irq;
 
-	mmc = mmc_alloc_host(sizeof(*host), &pdev->dev);
-	if (!mmc)
-		return -ENOMEM;
+	mmc = mmc_alloc_host(माप(*host), &pdev->dev);
+	अगर (!mmc)
+		वापस -ENOMEM;
 
 	host = mmc_priv(mmc);
 
 	host->base = devm_ioremap_resource(&pdev->dev, res);
-	if (IS_ERR(host->base)) {
+	अगर (IS_ERR(host->base)) अणु
 		ret = PTR_ERR(host->base);
-		goto out_free;
-	}
+		जाओ out_मुक्त;
+	पूर्ण
 
 	host->phys_base = res->start;
 
 	ret = mmc_of_parse(mmc);
-	if (ret)
-		goto out_free;
+	अगर (ret)
+		जाओ out_मुक्त;
 	mmc->ops = &mxcmci_ops;
 
-	/* For devicetree parsing, the bus width is read from devicetree */
-	if (pdata)
+	/* For devicetree parsing, the bus width is पढ़ो from devicetree */
+	अगर (pdata)
 		mmc->caps = MMC_CAP_4_BIT_DATA | MMC_CAP_SDIO_IRQ;
-	else
+	अन्यथा
 		mmc->caps |= MMC_CAP_SDIO_IRQ;
 
 	/* MMC core transfer sizes tunable parameters */
@@ -1025,91 +1026,91 @@ static int mxcmci_probe(struct platform_device *pdev)
 	mmc->max_req_size = mmc->max_blk_size * mmc->max_blk_count;
 	mmc->max_seg_size = mmc->max_req_size;
 
-	host->devtype = (enum mxcmci_type)of_device_get_match_data(&pdev->dev);
+	host->devtype = (क्रमागत mxcmci_type)of_device_get_match_data(&pdev->dev);
 
 	/* adjust max_segs after devtype detection */
-	if (!is_mpc512x_mmc(host))
+	अगर (!is_mpc512x_mmc(host))
 		mmc->max_segs = 64;
 
 	host->mmc = mmc;
 	host->pdata = pdata;
 	spin_lock_init(&host->lock);
 
-	if (pdata)
+	अगर (pdata)
 		dat3_card_detect = pdata->dat3_card_detect;
-	else if (mmc_card_is_removable(mmc)
-			&& !of_property_read_bool(pdev->dev.of_node, "cd-gpios"))
+	अन्यथा अगर (mmc_card_is_removable(mmc)
+			&& !of_property_पढ़ो_bool(pdev->dev.of_node, "cd-gpios"))
 		dat3_card_detect = true;
 
 	ret = mmc_regulator_get_supply(mmc);
-	if (ret)
-		goto out_free;
+	अगर (ret)
+		जाओ out_मुक्त;
 
-	if (!mmc->ocr_avail) {
-		if (pdata && pdata->ocr_avail)
+	अगर (!mmc->ocr_avail) अणु
+		अगर (pdata && pdata->ocr_avail)
 			mmc->ocr_avail = pdata->ocr_avail;
-		else
+		अन्यथा
 			mmc->ocr_avail = MMC_VDD_32_33 | MMC_VDD_33_34;
-	}
+	पूर्ण
 
-	if (dat3_card_detect)
-		host->default_irq_mask =
+	अगर (dat3_card_detect)
+		host->शेष_irq_mask =
 			INT_CARD_INSERTION_EN | INT_CARD_REMOVAL_EN;
-	else
-		host->default_irq_mask = 0;
+	अन्यथा
+		host->शेष_irq_mask = 0;
 
 	host->clk_ipg = devm_clk_get(&pdev->dev, "ipg");
-	if (IS_ERR(host->clk_ipg)) {
+	अगर (IS_ERR(host->clk_ipg)) अणु
 		ret = PTR_ERR(host->clk_ipg);
-		goto out_free;
-	}
+		जाओ out_मुक्त;
+	पूर्ण
 
 	host->clk_per = devm_clk_get(&pdev->dev, "per");
-	if (IS_ERR(host->clk_per)) {
+	अगर (IS_ERR(host->clk_per)) अणु
 		ret = PTR_ERR(host->clk_per);
-		goto out_free;
-	}
+		जाओ out_मुक्त;
+	पूर्ण
 
 	ret = clk_prepare_enable(host->clk_per);
-	if (ret)
-		goto out_free;
+	अगर (ret)
+		जाओ out_मुक्त;
 
 	ret = clk_prepare_enable(host->clk_ipg);
-	if (ret)
-		goto out_clk_per_put;
+	अगर (ret)
+		जाओ out_clk_per_put;
 
 	mxcmci_softreset(host);
 
-	host->rev_no = mxcmci_readw(host, MMC_REG_REV_NO);
-	if (host->rev_no != 0x400) {
+	host->rev_no = mxcmci_पढ़ोw(host, MMC_REG_REV_NO);
+	अगर (host->rev_no != 0x400) अणु
 		ret = -ENODEV;
 		dev_err(mmc_dev(host->mmc), "wrong rev.no. 0x%08x. aborting.\n",
 			host->rev_no);
-		goto out_clk_put;
-	}
+		जाओ out_clk_put;
+	पूर्ण
 
 	mmc->f_min = clk_get_rate(host->clk_per) >> 16;
 	mmc->f_max = clk_get_rate(host->clk_per) >> 1;
 
 	/* recommended in data sheet */
-	mxcmci_writew(host, 0x2db4, MMC_REG_READ_TO);
+	mxcmci_ग_लिखोw(host, 0x2db4, MMC_REG_READ_TO);
 
-	mxcmci_writel(host, host->default_irq_mask, MMC_REG_INT_CNTR);
+	mxcmci_ग_लिखोl(host, host->शेष_irq_mask, MMC_REG_INT_CNTR);
 
-	if (!host->pdata) {
+	अगर (!host->pdata) अणु
 		host->dma = dma_request_chan(&pdev->dev, "rx-tx");
-		if (IS_ERR(host->dma)) {
-			if (PTR_ERR(host->dma) == -EPROBE_DEFER) {
+		अगर (IS_ERR(host->dma)) अणु
+			अगर (PTR_ERR(host->dma) == -EPROBE_DEFER) अणु
 				ret = -EPROBE_DEFER;
-				goto out_clk_put;
-			}
+				जाओ out_clk_put;
+			पूर्ण
 
 			/* Ignore errors to fall back to PIO mode */
-			host->dma = NULL;
-		}
-	} else {
-		res = platform_get_resource(pdev, IORESOURCE_DMA, 0);
-		if (res) {
+			host->dma = शून्य;
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		res = platक्रमm_get_resource(pdev, IORESOURCE_DMA, 0);
+		अगर (res) अणु
 			host->dmareq = res->start;
 			host->dma_data.peripheral_type = IMX_DMATYPE_SDHC;
 			host->dma_data.priority = DMA_PRIO_LOW;
@@ -1117,38 +1118,38 @@ static int mxcmci_probe(struct platform_device *pdev)
 			dma_cap_zero(mask);
 			dma_cap_set(DMA_SLAVE, mask);
 			host->dma = dma_request_channel(mask, filter, host);
-		}
-	}
-	if (host->dma)
+		पूर्ण
+	पूर्ण
+	अगर (host->dma)
 		mmc->max_seg_size = dma_get_max_seg_size(
 				host->dma->device->dev);
-	else
+	अन्यथा
 		dev_info(mmc_dev(host->mmc), "dma not available. Using PIO\n");
 
 	INIT_WORK(&host->datawork, mxcmci_datawork);
 
 	ret = devm_request_irq(&pdev->dev, irq, mxcmci_irq, 0,
 			       dev_name(&pdev->dev), host);
-	if (ret)
-		goto out_free_dma;
+	अगर (ret)
+		जाओ out_मुक्त_dma;
 
-	platform_set_drvdata(pdev, mmc);
+	platक्रमm_set_drvdata(pdev, mmc);
 
-	if (host->pdata && host->pdata->init) {
+	अगर (host->pdata && host->pdata->init) अणु
 		ret = host->pdata->init(&pdev->dev, mxcmci_detect_irq,
 				host->mmc);
-		if (ret)
-			goto out_free_dma;
-	}
+		अगर (ret)
+			जाओ out_मुक्त_dma;
+	पूर्ण
 
-	timer_setup(&host->watchdog, mxcmci_watchdog, 0);
+	समयr_setup(&host->watchकरोg, mxcmci_watchकरोg, 0);
 
 	mmc_add_host(mmc);
 
-	return 0;
+	वापस 0;
 
-out_free_dma:
-	if (host->dma)
+out_मुक्त_dma:
+	अगर (host->dma)
 		dma_release_channel(host->dma);
 
 out_clk_put:
@@ -1156,76 +1157,76 @@ out_clk_put:
 out_clk_per_put:
 	clk_disable_unprepare(host->clk_per);
 
-out_free:
-	mmc_free_host(mmc);
+out_मुक्त:
+	mmc_मुक्त_host(mmc);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int mxcmci_remove(struct platform_device *pdev)
-{
-	struct mmc_host *mmc = platform_get_drvdata(pdev);
-	struct mxcmci_host *host = mmc_priv(mmc);
+अटल पूर्णांक mxcmci_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा mmc_host *mmc = platक्रमm_get_drvdata(pdev);
+	काष्ठा mxcmci_host *host = mmc_priv(mmc);
 
-	mmc_remove_host(mmc);
+	mmc_हटाओ_host(mmc);
 
-	if (host->pdata && host->pdata->exit)
-		host->pdata->exit(&pdev->dev, mmc);
+	अगर (host->pdata && host->pdata->निकास)
+		host->pdata->निकास(&pdev->dev, mmc);
 
-	if (host->dma)
+	अगर (host->dma)
 		dma_release_channel(host->dma);
 
 	clk_disable_unprepare(host->clk_per);
 	clk_disable_unprepare(host->clk_ipg);
 
-	mmc_free_host(mmc);
+	mmc_मुक्त_host(mmc);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_PM_SLEEP
-static int mxcmci_suspend(struct device *dev)
-{
-	struct mmc_host *mmc = dev_get_drvdata(dev);
-	struct mxcmci_host *host = mmc_priv(mmc);
+#अगर_घोषित CONFIG_PM_SLEEP
+अटल पूर्णांक mxcmci_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा mmc_host *mmc = dev_get_drvdata(dev);
+	काष्ठा mxcmci_host *host = mmc_priv(mmc);
 
 	clk_disable_unprepare(host->clk_per);
 	clk_disable_unprepare(host->clk_ipg);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mxcmci_resume(struct device *dev)
-{
-	struct mmc_host *mmc = dev_get_drvdata(dev);
-	struct mxcmci_host *host = mmc_priv(mmc);
-	int ret;
+अटल पूर्णांक mxcmci_resume(काष्ठा device *dev)
+अणु
+	काष्ठा mmc_host *mmc = dev_get_drvdata(dev);
+	काष्ठा mxcmci_host *host = mmc_priv(mmc);
+	पूर्णांक ret;
 
 	ret = clk_prepare_enable(host->clk_per);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ret = clk_prepare_enable(host->clk_ipg);
-	if (ret)
+	अगर (ret)
 		clk_disable_unprepare(host->clk_per);
 
-	return ret;
-}
-#endif
+	वापस ret;
+पूर्ण
+#पूर्ण_अगर
 
-static SIMPLE_DEV_PM_OPS(mxcmci_pm_ops, mxcmci_suspend, mxcmci_resume);
+अटल SIMPLE_DEV_PM_OPS(mxcmci_pm_ops, mxcmci_suspend, mxcmci_resume);
 
-static struct platform_driver mxcmci_driver = {
+अटल काष्ठा platक्रमm_driver mxcmci_driver = अणु
 	.probe		= mxcmci_probe,
-	.remove		= mxcmci_remove,
-	.driver		= {
+	.हटाओ		= mxcmci_हटाओ,
+	.driver		= अणु
 		.name		= DRIVER_NAME,
 		.probe_type	= PROBE_PREFER_ASYNCHRONOUS,
 		.pm	= &mxcmci_pm_ops,
 		.of_match_table	= mxcmci_of_match,
-	}
-};
+	पूर्ण
+पूर्ण;
 
-module_platform_driver(mxcmci_driver);
+module_platक्रमm_driver(mxcmci_driver);
 
 MODULE_DESCRIPTION("i.MX Multimedia Card Interface Driver");
 MODULE_AUTHOR("Sascha Hauer, Pengutronix");

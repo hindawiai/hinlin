@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Cadence PCI Glue driver.
  *
@@ -8,118 +9,118 @@
  *
  */
 
-#include <linux/platform_device.h>
-#include <linux/dma-mapping.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/slab.h>
-#include <linux/pci.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/dma-mapping.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/pci.h>
 
-#include "core.h"
-#include "gadget-export.h"
+#समावेश "core.h"
+#समावेश "gadget-export.h"
 
-#define PCI_BAR_HOST		0
-#define PCI_BAR_OTG		0
-#define PCI_BAR_DEV		2
+#घोषणा PCI_BAR_HOST		0
+#घोषणा PCI_BAR_OTG		0
+#घोषणा PCI_BAR_DEV		2
 
-#define PCI_DEV_FN_HOST_DEVICE	0
-#define PCI_DEV_FN_OTG		1
+#घोषणा PCI_DEV_FN_HOST_DEVICE	0
+#घोषणा PCI_DEV_FN_OTG		1
 
-#define PCI_DRIVER_NAME		"cdns-pci-usbssp"
-#define PLAT_DRIVER_NAME	"cdns-usbssp"
+#घोषणा PCI_DRIVER_NAME		"cdns-pci-usbssp"
+#घोषणा PLAT_DRIVER_NAME	"cdns-usbssp"
 
-#define CDNS_VENDOR_ID		0x17cd
-#define CDNS_DEVICE_ID		0x0100
-#define CDNS_DRD_IF		(PCI_CLASS_SERIAL_USB << 8 | 0x80)
+#घोषणा CDNS_VENDOR_ID		0x17cd
+#घोषणा CDNS_DEVICE_ID		0x0100
+#घोषणा CDNS_DRD_IF		(PCI_CLASS_SERIAL_USB << 8 | 0x80)
 
-static struct pci_dev *cdnsp_get_second_fun(struct pci_dev *pdev)
-{
-	struct pci_dev *func;
+अटल काष्ठा pci_dev *cdnsp_get_second_fun(काष्ठा pci_dev *pdev)
+अणु
+	काष्ठा pci_dev *func;
 
 	/*
 	 * Gets the second function.
-	 * It's little tricky, but this platform has two function.
-	 * The fist keeps resources for Host/Device while the second
-	 * keeps resources for DRD/OTG.
+	 * It's little tricky, but this platक्रमm has two function.
+	 * The fist keeps resources क्रम Host/Device जबतक the second
+	 * keeps resources क्रम DRD/OTG.
 	 */
-	func = pci_get_device(pdev->vendor, pdev->device, NULL);
-	if (!func)
-		return NULL;
+	func = pci_get_device(pdev->venकरोr, pdev->device, शून्य);
+	अगर (!func)
+		वापस शून्य;
 
-	if (func->devfn == pdev->devfn) {
-		func = pci_get_device(pdev->vendor, pdev->device, func);
-		if (!func)
-			return NULL;
-	}
+	अगर (func->devfn == pdev->devfn) अणु
+		func = pci_get_device(pdev->venकरोr, pdev->device, func);
+		अगर (!func)
+			वापस शून्य;
+	पूर्ण
 
-	return func;
-}
+	वापस func;
+पूर्ण
 
-static int cdnsp_pci_probe(struct pci_dev *pdev,
-			   const struct pci_device_id *id)
-{
-	struct device *dev = &pdev->dev;
-	struct pci_dev *func;
-	struct resource *res;
-	struct cdns *cdnsp;
-	int ret;
+अटल पूर्णांक cdnsp_pci_probe(काष्ठा pci_dev *pdev,
+			   स्थिर काष्ठा pci_device_id *id)
+अणु
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा pci_dev *func;
+	काष्ठा resource *res;
+	काष्ठा cdns *cdnsp;
+	पूर्णांक ret;
 
 	/*
 	 * For GADGET/HOST PCI (devfn) function number is 0,
-	 * for OTG PCI (devfn) function number is 1.
+	 * क्रम OTG PCI (devfn) function number is 1.
 	 */
-	if (!id || (pdev->devfn != PCI_DEV_FN_HOST_DEVICE &&
+	अगर (!id || (pdev->devfn != PCI_DEV_FN_HOST_DEVICE &&
 		    pdev->devfn != PCI_DEV_FN_OTG))
-		return -EINVAL;
+		वापस -EINVAL;
 
 	func = cdnsp_get_second_fun(pdev);
-	if (!func)
-		return -EINVAL;
+	अगर (!func)
+		वापस -EINVAL;
 
-	if (func->class == PCI_CLASS_SERIAL_USB_XHCI ||
-	    pdev->class == PCI_CLASS_SERIAL_USB_XHCI) {
+	अगर (func->class == PCI_CLASS_SERIAL_USB_XHCI ||
+	    pdev->class == PCI_CLASS_SERIAL_USB_XHCI) अणु
 		ret = -EINVAL;
-		goto put_pci;
-	}
+		जाओ put_pci;
+	पूर्ण
 
 	ret = pcim_enable_device(pdev);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&pdev->dev, "Enabling PCI device has failed %d\n", ret);
-		goto put_pci;
-	}
+		जाओ put_pci;
+	पूर्ण
 
 	pci_set_master(pdev);
-	if (pci_is_enabled(func)) {
+	अगर (pci_is_enabled(func)) अणु
 		cdnsp = pci_get_drvdata(func);
-	} else {
-		cdnsp = kzalloc(sizeof(*cdnsp), GFP_KERNEL);
-		if (!cdnsp) {
+	पूर्ण अन्यथा अणु
+		cdnsp = kzalloc(माप(*cdnsp), GFP_KERNEL);
+		अगर (!cdnsp) अणु
 			ret = -ENOMEM;
-			goto disable_pci;
-		}
-	}
+			जाओ disable_pci;
+		पूर्ण
+	पूर्ण
 
 	/* For GADGET device function number is 0. */
-	if (pdev->devfn == 0) {
-		resource_size_t rsrc_start, rsrc_len;
+	अगर (pdev->devfn == 0) अणु
+		resource_माप_प्रकार rsrc_start, rsrc_len;
 
 		/* Function 0: host(BAR_0) + device(BAR_1).*/
 		dev_dbg(dev, "Initialize resources\n");
 		rsrc_start = pci_resource_start(pdev, PCI_BAR_DEV);
 		rsrc_len = pci_resource_len(pdev, PCI_BAR_DEV);
 		res = devm_request_mem_region(dev, rsrc_start, rsrc_len, "dev");
-		if (!res) {
+		अगर (!res) अणु
 			dev_dbg(dev, "controller already in use\n");
 			ret = -EBUSY;
-			goto free_cdnsp;
-		}
+			जाओ मुक्त_cdnsp;
+		पूर्ण
 
 		cdnsp->dev_regs = devm_ioremap(dev, rsrc_start, rsrc_len);
-		if (!cdnsp->dev_regs) {
+		अगर (!cdnsp->dev_regs) अणु
 			dev_dbg(dev, "error mapping memory\n");
 			ret = -EFAULT;
-			goto free_cdnsp;
-		}
+			जाओ मुक्त_cdnsp;
+		पूर्ण
 
 		cdnsp->dev_irq = pdev->irq;
 		dev_dbg(dev, "USBSS-DEV physical base addr: %pa\n",
@@ -133,12 +134,12 @@ static int cdnsp_pci_probe(struct pci_dev *pdev,
 		dev_dbg(dev, "USBSS-XHCI physical base addr: %pa\n",
 			&res->start);
 
-		/* Interrupt for XHCI, */
+		/* Interrupt क्रम XHCI, */
 		res = &cdnsp->xhci_res[1];
 		res->start = pdev->irq;
 		res->name = "host";
 		res->flags = IORESOURCE_IRQ;
-	} else {
+	पूर्ण अन्यथा अणु
 		res = &cdnsp->otg_res;
 		res->start = pci_resource_start(pdev, PCI_BAR_OTG);
 		res->end =   pci_resource_end(pdev, PCI_BAR_OTG);
@@ -147,30 +148,30 @@ static int cdnsp_pci_probe(struct pci_dev *pdev,
 		dev_dbg(dev, "CDNSP-DRD physical base addr: %pa\n",
 			&res->start);
 
-		/* Interrupt for OTG/DRD. */
+		/* Interrupt क्रम OTG/DRD. */
 		cdnsp->otg_irq = pdev->irq;
-	}
+	पूर्ण
 
-	if (pci_is_enabled(func)) {
+	अगर (pci_is_enabled(func)) अणु
 		cdnsp->dev = dev;
 		cdnsp->gadget_init = cdnsp_gadget_init;
 
 		ret = cdns_init(cdnsp);
-		if (ret)
-			goto free_cdnsp;
-	}
+		अगर (ret)
+			जाओ मुक्त_cdnsp;
+	पूर्ण
 
 	pci_set_drvdata(pdev, cdnsp);
 
 	device_wakeup_enable(&pdev->dev);
-	if (pci_dev_run_wake(pdev))
-		pm_runtime_put_noidle(&pdev->dev);
+	अगर (pci_dev_run_wake(pdev))
+		pm_runसमय_put_noidle(&pdev->dev);
 
-	return 0;
+	वापस 0;
 
-free_cdnsp:
-	if (!pci_is_enabled(func))
-		kfree(cdnsp);
+मुक्त_cdnsp:
+	अगर (!pci_is_enabled(func))
+		kमुक्त(cdnsp);
 
 disable_pci:
 	pci_disable_device(pdev);
@@ -178,72 +179,72 @@ disable_pci:
 put_pci:
 	pci_dev_put(func);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void cdnsp_pci_remove(struct pci_dev *pdev)
-{
-	struct cdns *cdnsp;
-	struct pci_dev *func;
+अटल व्योम cdnsp_pci_हटाओ(काष्ठा pci_dev *pdev)
+अणु
+	काष्ठा cdns *cdnsp;
+	काष्ठा pci_dev *func;
 
 	func = cdnsp_get_second_fun(pdev);
-	cdnsp = (struct cdns *)pci_get_drvdata(pdev);
+	cdnsp = (काष्ठा cdns *)pci_get_drvdata(pdev);
 
-	if (pci_dev_run_wake(pdev))
-		pm_runtime_get_noresume(&pdev->dev);
+	अगर (pci_dev_run_wake(pdev))
+		pm_runसमय_get_noresume(&pdev->dev);
 
-	if (!pci_is_enabled(func)) {
-		kfree(cdnsp);
-		goto pci_put;
-	}
+	अगर (!pci_is_enabled(func)) अणु
+		kमुक्त(cdnsp);
+		जाओ pci_put;
+	पूर्ण
 
-	cdns_remove(cdnsp);
+	cdns_हटाओ(cdnsp);
 
 pci_put:
 	pci_dev_put(func);
-}
+पूर्ण
 
-static int __maybe_unused cdnsp_pci_suspend(struct device *dev)
-{
-	struct cdns *cdns = dev_get_drvdata(dev);
+अटल पूर्णांक __maybe_unused cdnsp_pci_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा cdns *cdns = dev_get_drvdata(dev);
 
-	return cdns_suspend(cdns);
-}
+	वापस cdns_suspend(cdns);
+पूर्ण
 
-static int __maybe_unused cdnsp_pci_resume(struct device *dev)
-{
-	struct cdns *cdns = dev_get_drvdata(dev);
-	unsigned long flags;
-	int ret;
+अटल पूर्णांक __maybe_unused cdnsp_pci_resume(काष्ठा device *dev)
+अणु
+	काष्ठा cdns *cdns = dev_get_drvdata(dev);
+	अचिन्हित दीर्घ flags;
+	पूर्णांक ret;
 
 	spin_lock_irqsave(&cdns->lock, flags);
 	ret = cdns_resume(cdns, 1);
 	spin_unlock_irqrestore(&cdns->lock, flags);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const struct dev_pm_ops cdnsp_pci_pm_ops = {
+अटल स्थिर काष्ठा dev_pm_ops cdnsp_pci_pm_ops = अणु
 	SET_SYSTEM_SLEEP_PM_OPS(cdnsp_pci_suspend, cdnsp_pci_resume)
-};
+पूर्ण;
 
-static const struct pci_device_id cdnsp_pci_ids[] = {
-	{ PCI_VENDOR_ID_CDNS, CDNS_DEVICE_ID, PCI_ANY_ID, PCI_ANY_ID,
-	  PCI_CLASS_SERIAL_USB_DEVICE, PCI_ANY_ID },
-	{ PCI_VENDOR_ID_CDNS, CDNS_DEVICE_ID, PCI_ANY_ID, PCI_ANY_ID,
-	  CDNS_DRD_IF, PCI_ANY_ID },
-	{ 0, }
-};
+अटल स्थिर काष्ठा pci_device_id cdnsp_pci_ids[] = अणु
+	अणु PCI_VENDOR_ID_CDNS, CDNS_DEVICE_ID, PCI_ANY_ID, PCI_ANY_ID,
+	  PCI_CLASS_SERIAL_USB_DEVICE, PCI_ANY_ID पूर्ण,
+	अणु PCI_VENDOR_ID_CDNS, CDNS_DEVICE_ID, PCI_ANY_ID, PCI_ANY_ID,
+	  CDNS_DRD_IF, PCI_ANY_ID पूर्ण,
+	अणु 0, पूर्ण
+पूर्ण;
 
-static struct pci_driver cdnsp_pci_driver = {
+अटल काष्ठा pci_driver cdnsp_pci_driver = अणु
 	.name = "cdnsp-pci",
 	.id_table = &cdnsp_pci_ids[0],
 	.probe = cdnsp_pci_probe,
-	.remove = cdnsp_pci_remove,
-	.driver = {
+	.हटाओ = cdnsp_pci_हटाओ,
+	.driver = अणु
 		.pm = &cdnsp_pci_pm_ops,
-	}
-};
+	पूर्ण
+पूर्ण;
 
 module_pci_driver(cdnsp_pci_driver);
 MODULE_DEVICE_TABLE(pci, cdnsp_pci_ids);

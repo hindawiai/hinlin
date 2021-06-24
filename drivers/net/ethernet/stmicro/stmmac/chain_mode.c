@@ -1,34 +1,35 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*******************************************************************************
-  Specialised functions for managing Chained mode
+  Specialised functions क्रम managing Chained mode
 
   Copyright(C) 2011  STMicroelectronics Ltd
 
   It defines all the functions used to handle the normal/enhanced
-  descriptors in case of the DMA is configured to work in chained or
+  descriptors in हाल of the DMA is configured to work in chained or
   in ring mode.
 
 
   Author: Giuseppe Cavallaro <peppe.cavallaro@st.com>
 *******************************************************************************/
 
-#include "stmmac.h"
+#समावेश "stmmac.h"
 
-static int jumbo_frm(void *p, struct sk_buff *skb, int csum)
-{
-	struct stmmac_tx_queue *tx_q = (struct stmmac_tx_queue *)p;
-	unsigned int nopaged_len = skb_headlen(skb);
-	struct stmmac_priv *priv = tx_q->priv_data;
-	unsigned int entry = tx_q->cur_tx;
-	unsigned int bmax, des2;
-	unsigned int i = 1, len;
-	struct dma_desc *desc;
+अटल पूर्णांक jumbo_frm(व्योम *p, काष्ठा sk_buff *skb, पूर्णांक csum)
+अणु
+	काष्ठा sपंचांगmac_tx_queue *tx_q = (काष्ठा sपंचांगmac_tx_queue *)p;
+	अचिन्हित पूर्णांक nopaged_len = skb_headlen(skb);
+	काष्ठा sपंचांगmac_priv *priv = tx_q->priv_data;
+	अचिन्हित पूर्णांक entry = tx_q->cur_tx;
+	अचिन्हित पूर्णांक bmax, des2;
+	अचिन्हित पूर्णांक i = 1, len;
+	काष्ठा dma_desc *desc;
 
 	desc = tx_q->dma_tx + entry;
 
-	if (priv->plat->enh_desc)
+	अगर (priv->plat->enh_desc)
 		bmax = BUF_SIZE_8KiB;
-	else
+	अन्यथा
 		bmax = BUF_SIZE_2KiB;
 
 	len = nopaged_len - bmax;
@@ -36,133 +37,133 @@ static int jumbo_frm(void *p, struct sk_buff *skb, int csum)
 	des2 = dma_map_single(priv->device, skb->data,
 			      bmax, DMA_TO_DEVICE);
 	desc->des2 = cpu_to_le32(des2);
-	if (dma_mapping_error(priv->device, des2))
-		return -1;
+	अगर (dma_mapping_error(priv->device, des2))
+		वापस -1;
 	tx_q->tx_skbuff_dma[entry].buf = des2;
 	tx_q->tx_skbuff_dma[entry].len = bmax;
-	/* do not close the descriptor and do not set own bit */
-	stmmac_prepare_tx_desc(priv, desc, 1, bmax, csum, STMMAC_CHAIN_MODE,
+	/* करो not बंद the descriptor and करो not set own bit */
+	sपंचांगmac_prepare_tx_desc(priv, desc, 1, bmax, csum, STMMAC_CHAIN_MODE,
 			0, false, skb->len);
 
-	while (len != 0) {
-		tx_q->tx_skbuff[entry] = NULL;
+	जबतक (len != 0) अणु
+		tx_q->tx_skbuff[entry] = शून्य;
 		entry = STMMAC_GET_ENTRY(entry, priv->dma_tx_size);
 		desc = tx_q->dma_tx + entry;
 
-		if (len > bmax) {
+		अगर (len > bmax) अणु
 			des2 = dma_map_single(priv->device,
 					      (skb->data + bmax * i),
 					      bmax, DMA_TO_DEVICE);
 			desc->des2 = cpu_to_le32(des2);
-			if (dma_mapping_error(priv->device, des2))
-				return -1;
+			अगर (dma_mapping_error(priv->device, des2))
+				वापस -1;
 			tx_q->tx_skbuff_dma[entry].buf = des2;
 			tx_q->tx_skbuff_dma[entry].len = bmax;
-			stmmac_prepare_tx_desc(priv, desc, 0, bmax, csum,
+			sपंचांगmac_prepare_tx_desc(priv, desc, 0, bmax, csum,
 					STMMAC_CHAIN_MODE, 1, false, skb->len);
 			len -= bmax;
 			i++;
-		} else {
+		पूर्ण अन्यथा अणु
 			des2 = dma_map_single(priv->device,
 					      (skb->data + bmax * i), len,
 					      DMA_TO_DEVICE);
 			desc->des2 = cpu_to_le32(des2);
-			if (dma_mapping_error(priv->device, des2))
-				return -1;
+			अगर (dma_mapping_error(priv->device, des2))
+				वापस -1;
 			tx_q->tx_skbuff_dma[entry].buf = des2;
 			tx_q->tx_skbuff_dma[entry].len = len;
 			/* last descriptor can be set now */
-			stmmac_prepare_tx_desc(priv, desc, 0, len, csum,
+			sपंचांगmac_prepare_tx_desc(priv, desc, 0, len, csum,
 					STMMAC_CHAIN_MODE, 1, true, skb->len);
 			len = 0;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	tx_q->cur_tx = entry;
 
-	return entry;
-}
+	वापस entry;
+पूर्ण
 
-static unsigned int is_jumbo_frm(int len, int enh_desc)
-{
-	unsigned int ret = 0;
+अटल अचिन्हित पूर्णांक is_jumbo_frm(पूर्णांक len, पूर्णांक enh_desc)
+अणु
+	अचिन्हित पूर्णांक ret = 0;
 
-	if ((enh_desc && (len > BUF_SIZE_8KiB)) ||
-	    (!enh_desc && (len > BUF_SIZE_2KiB))) {
+	अगर ((enh_desc && (len > BUF_SIZE_8KiB)) ||
+	    (!enh_desc && (len > BUF_SIZE_2KiB))) अणु
 		ret = 1;
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void init_dma_chain(void *des, dma_addr_t phy_addr,
-				  unsigned int size, unsigned int extend_desc)
-{
+अटल व्योम init_dma_chain(व्योम *des, dma_addr_t phy_addr,
+				  अचिन्हित पूर्णांक size, अचिन्हित पूर्णांक extend_desc)
+अणु
 	/*
-	 * In chained mode the des3 points to the next element in the ring.
-	 * The latest element has to point to the head.
+	 * In chained mode the des3 poपूर्णांकs to the next element in the ring.
+	 * The latest element has to poपूर्णांक to the head.
 	 */
-	int i;
+	पूर्णांक i;
 	dma_addr_t dma_phy = phy_addr;
 
-	if (extend_desc) {
-		struct dma_extended_desc *p = (struct dma_extended_desc *)des;
-		for (i = 0; i < (size - 1); i++) {
-			dma_phy += sizeof(struct dma_extended_desc);
-			p->basic.des3 = cpu_to_le32((unsigned int)dma_phy);
+	अगर (extend_desc) अणु
+		काष्ठा dma_extended_desc *p = (काष्ठा dma_extended_desc *)des;
+		क्रम (i = 0; i < (size - 1); i++) अणु
+			dma_phy += माप(काष्ठा dma_extended_desc);
+			p->basic.des3 = cpu_to_le32((अचिन्हित पूर्णांक)dma_phy);
 			p++;
-		}
-		p->basic.des3 = cpu_to_le32((unsigned int)phy_addr);
+		पूर्ण
+		p->basic.des3 = cpu_to_le32((अचिन्हित पूर्णांक)phy_addr);
 
-	} else {
-		struct dma_desc *p = (struct dma_desc *)des;
-		for (i = 0; i < (size - 1); i++) {
-			dma_phy += sizeof(struct dma_desc);
-			p->des3 = cpu_to_le32((unsigned int)dma_phy);
+	पूर्ण अन्यथा अणु
+		काष्ठा dma_desc *p = (काष्ठा dma_desc *)des;
+		क्रम (i = 0; i < (size - 1); i++) अणु
+			dma_phy += माप(काष्ठा dma_desc);
+			p->des3 = cpu_to_le32((अचिन्हित पूर्णांक)dma_phy);
 			p++;
-		}
-		p->des3 = cpu_to_le32((unsigned int)phy_addr);
-	}
-}
+		पूर्ण
+		p->des3 = cpu_to_le32((अचिन्हित पूर्णांक)phy_addr);
+	पूर्ण
+पूर्ण
 
-static void refill_desc3(void *priv_ptr, struct dma_desc *p)
-{
-	struct stmmac_rx_queue *rx_q = (struct stmmac_rx_queue *)priv_ptr;
-	struct stmmac_priv *priv = rx_q->priv_data;
+अटल व्योम refill_desc3(व्योम *priv_ptr, काष्ठा dma_desc *p)
+अणु
+	काष्ठा sपंचांगmac_rx_queue *rx_q = (काष्ठा sपंचांगmac_rx_queue *)priv_ptr;
+	काष्ठा sपंचांगmac_priv *priv = rx_q->priv_data;
 
-	if (priv->hwts_rx_en && !priv->extend_desc)
-		/* NOTE: Device will overwrite des3 with timestamp value if
-		 * 1588-2002 time stamping is enabled, hence reinitialize it
+	अगर (priv->hwts_rx_en && !priv->extend_desc)
+		/* NOTE: Device will overग_लिखो des3 with बारtamp value अगर
+		 * 1588-2002 समय stamping is enabled, hence reinitialize it
 		 * to keep explicit chaining in the descriptor.
 		 */
-		p->des3 = cpu_to_le32((unsigned int)(rx_q->dma_rx_phy +
+		p->des3 = cpu_to_le32((अचिन्हित पूर्णांक)(rx_q->dma_rx_phy +
 				      (((rx_q->dirty_rx) + 1) %
 				       priv->dma_rx_size) *
-				      sizeof(struct dma_desc)));
-}
+				      माप(काष्ठा dma_desc)));
+पूर्ण
 
-static void clean_desc3(void *priv_ptr, struct dma_desc *p)
-{
-	struct stmmac_tx_queue *tx_q = (struct stmmac_tx_queue *)priv_ptr;
-	struct stmmac_priv *priv = tx_q->priv_data;
-	unsigned int entry = tx_q->dirty_tx;
+अटल व्योम clean_desc3(व्योम *priv_ptr, काष्ठा dma_desc *p)
+अणु
+	काष्ठा sपंचांगmac_tx_queue *tx_q = (काष्ठा sपंचांगmac_tx_queue *)priv_ptr;
+	काष्ठा sपंचांगmac_priv *priv = tx_q->priv_data;
+	अचिन्हित पूर्णांक entry = tx_q->dirty_tx;
 
-	if (tx_q->tx_skbuff_dma[entry].last_segment && !priv->extend_desc &&
+	अगर (tx_q->tx_skbuff_dma[entry].last_segment && !priv->extend_desc &&
 	    priv->hwts_tx_en)
-		/* NOTE: Device will overwrite des3 with timestamp value if
-		 * 1588-2002 time stamping is enabled, hence reinitialize it
+		/* NOTE: Device will overग_लिखो des3 with बारtamp value अगर
+		 * 1588-2002 समय stamping is enabled, hence reinitialize it
 		 * to keep explicit chaining in the descriptor.
 		 */
-		p->des3 = cpu_to_le32((unsigned int)((tx_q->dma_tx_phy +
+		p->des3 = cpu_to_le32((अचिन्हित पूर्णांक)((tx_q->dma_tx_phy +
 				      ((tx_q->dirty_tx + 1) %
 				       priv->dma_tx_size))
-				      * sizeof(struct dma_desc)));
-}
+				      * माप(काष्ठा dma_desc)));
+पूर्ण
 
-const struct stmmac_mode_ops chain_mode_ops = {
+स्थिर काष्ठा sपंचांगmac_mode_ops chain_mode_ops = अणु
 	.init = init_dma_chain,
 	.is_jumbo_frm = is_jumbo_frm,
 	.jumbo_frm = jumbo_frm,
 	.refill_desc3 = refill_desc3,
 	.clean_desc3 = clean_desc3,
-};
+पूर्ण;

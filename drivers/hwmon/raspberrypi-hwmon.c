@@ -1,145 +1,146 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
  * Raspberry Pi voltage sensor driver
  *
- * Based on firmware/raspberrypi.c by Noralf Trønnes
+ * Based on firmware/raspberrypi.c by Noralf Trथचnnes
  *
  * Copyright (C) 2018 Stefan Wahren <stefan.wahren@i2se.com>
  */
-#include <linux/device.h>
-#include <linux/devm-helpers.h>
-#include <linux/err.h>
-#include <linux/hwmon.h>
-#include <linux/module.h>
-#include <linux/platform_device.h>
-#include <linux/slab.h>
-#include <linux/workqueue.h>
-#include <soc/bcm2835/raspberrypi-firmware.h>
+#समावेश <linux/device.h>
+#समावेश <linux/devm-helpers.h>
+#समावेश <linux/err.h>
+#समावेश <linux/hwmon.h>
+#समावेश <linux/module.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/workqueue.h>
+#समावेश <soc/bcm2835/raspberrypi-firmware.h>
 
-#define UNDERVOLTAGE_STICKY_BIT	BIT(16)
+#घोषणा UNDERVOLTAGE_STICKY_BIT	BIT(16)
 
-struct rpi_hwmon_data {
-	struct device *hwmon_dev;
-	struct rpi_firmware *fw;
+काष्ठा rpi_hwmon_data अणु
+	काष्ठा device *hwmon_dev;
+	काष्ठा rpi_firmware *fw;
 	u32 last_throttled;
-	struct delayed_work get_values_poll_work;
-};
+	काष्ठा delayed_work get_values_poll_work;
+पूर्ण;
 
-static void rpi_firmware_get_throttled(struct rpi_hwmon_data *data)
-{
+अटल व्योम rpi_firmware_get_throttled(काष्ठा rpi_hwmon_data *data)
+अणु
 	u32 new_uv, old_uv, value;
-	int ret;
+	पूर्णांक ret;
 
 	/* Request firmware to clear sticky bits */
 	value = 0xffff;
 
 	ret = rpi_firmware_property(data->fw, RPI_FIRMWARE_GET_THROTTLED,
-				    &value, sizeof(value));
-	if (ret) {
+				    &value, माप(value));
+	अगर (ret) अणु
 		dev_err_once(data->hwmon_dev, "Failed to get throttled (%d)\n",
 			     ret);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	new_uv = value & UNDERVOLTAGE_STICKY_BIT;
 	old_uv = data->last_throttled & UNDERVOLTAGE_STICKY_BIT;
 	data->last_throttled = value;
 
-	if (new_uv == old_uv)
-		return;
+	अगर (new_uv == old_uv)
+		वापस;
 
-	if (new_uv)
+	अगर (new_uv)
 		dev_crit(data->hwmon_dev, "Undervoltage detected!\n");
-	else
+	अन्यथा
 		dev_info(data->hwmon_dev, "Voltage normalised\n");
 
-	sysfs_notify(&data->hwmon_dev->kobj, NULL, "in0_lcrit_alarm");
-}
+	sysfs_notअगरy(&data->hwmon_dev->kobj, शून्य, "in0_lcrit_alarm");
+पूर्ण
 
-static void get_values_poll(struct work_struct *work)
-{
-	struct rpi_hwmon_data *data;
+अटल व्योम get_values_poll(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा rpi_hwmon_data *data;
 
-	data = container_of(work, struct rpi_hwmon_data,
+	data = container_of(work, काष्ठा rpi_hwmon_data,
 			    get_values_poll_work.work);
 
 	rpi_firmware_get_throttled(data);
 
 	/*
-	 * We can't run faster than the sticky shift (100ms) since we get
+	 * We can't run faster than the sticky shअगरt (100ms) since we get
 	 * flipping in the sticky bits that are cleared.
 	 */
 	schedule_delayed_work(&data->get_values_poll_work, 2 * HZ);
-}
+पूर्ण
 
-static int rpi_read(struct device *dev, enum hwmon_sensor_types type,
-		    u32 attr, int channel, long *val)
-{
-	struct rpi_hwmon_data *data = dev_get_drvdata(dev);
+अटल पूर्णांक rpi_पढ़ो(काष्ठा device *dev, क्रमागत hwmon_sensor_types type,
+		    u32 attr, पूर्णांक channel, दीर्घ *val)
+अणु
+	काष्ठा rpi_hwmon_data *data = dev_get_drvdata(dev);
 
 	*val = !!(data->last_throttled & UNDERVOLTAGE_STICKY_BIT);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static umode_t rpi_is_visible(const void *_data, enum hwmon_sensor_types type,
-			      u32 attr, int channel)
-{
-	return 0444;
-}
+अटल umode_t rpi_is_visible(स्थिर व्योम *_data, क्रमागत hwmon_sensor_types type,
+			      u32 attr, पूर्णांक channel)
+अणु
+	वापस 0444;
+पूर्ण
 
-static const struct hwmon_channel_info *rpi_info[] = {
+अटल स्थिर काष्ठा hwmon_channel_info *rpi_info[] = अणु
 	HWMON_CHANNEL_INFO(in,
 			   HWMON_I_LCRIT_ALARM),
-	NULL
-};
+	शून्य
+पूर्ण;
 
-static const struct hwmon_ops rpi_hwmon_ops = {
+अटल स्थिर काष्ठा hwmon_ops rpi_hwmon_ops = अणु
 	.is_visible = rpi_is_visible,
-	.read = rpi_read,
-};
+	.पढ़ो = rpi_पढ़ो,
+पूर्ण;
 
-static const struct hwmon_chip_info rpi_chip_info = {
+अटल स्थिर काष्ठा hwmon_chip_info rpi_chip_info = अणु
 	.ops = &rpi_hwmon_ops,
 	.info = rpi_info,
-};
+पूर्ण;
 
-static int rpi_hwmon_probe(struct platform_device *pdev)
-{
-	struct device *dev = &pdev->dev;
-	struct rpi_hwmon_data *data;
-	int ret;
+अटल पूर्णांक rpi_hwmon_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा rpi_hwmon_data *data;
+	पूर्णांक ret;
 
-	data = devm_kzalloc(dev, sizeof(*data), GFP_KERNEL);
-	if (!data)
-		return -ENOMEM;
+	data = devm_kzalloc(dev, माप(*data), GFP_KERNEL);
+	अगर (!data)
+		वापस -ENOMEM;
 
 	/* Parent driver assure that firmware is correct */
 	data->fw = dev_get_drvdata(dev->parent);
 
-	data->hwmon_dev = devm_hwmon_device_register_with_info(dev, "rpi_volt",
+	data->hwmon_dev = devm_hwmon_device_रेजिस्टर_with_info(dev, "rpi_volt",
 							       data,
 							       &rpi_chip_info,
-							       NULL);
+							       शून्य);
 
-	ret = devm_delayed_work_autocancel(dev, &data->get_values_poll_work,
+	ret = devm_delayed_work_स्वतःcancel(dev, &data->get_values_poll_work,
 					   get_values_poll);
-	if (ret)
-		return ret;
-	platform_set_drvdata(pdev, data);
+	अगर (ret)
+		वापस ret;
+	platक्रमm_set_drvdata(pdev, data);
 
-	if (!PTR_ERR_OR_ZERO(data->hwmon_dev))
+	अगर (!PTR_ERR_OR_ZERO(data->hwmon_dev))
 		schedule_delayed_work(&data->get_values_poll_work, 2 * HZ);
 
-	return PTR_ERR_OR_ZERO(data->hwmon_dev);
-}
+	वापस PTR_ERR_OR_ZERO(data->hwmon_dev);
+पूर्ण
 
-static struct platform_driver rpi_hwmon_driver = {
+अटल काष्ठा platक्रमm_driver rpi_hwmon_driver = अणु
 	.probe = rpi_hwmon_probe,
-	.driver = {
+	.driver = अणु
 		.name = "raspberrypi-hwmon",
-	},
-};
-module_platform_driver(rpi_hwmon_driver);
+	पूर्ण,
+पूर्ण;
+module_platक्रमm_driver(rpi_hwmon_driver);
 
 MODULE_AUTHOR("Stefan Wahren <wahrenst@gmx.net>");
 MODULE_DESCRIPTION("Raspberry Pi voltage sensor driver");

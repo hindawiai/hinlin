@@ -1,41 +1,42 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <asm/unistd.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <यंत्र/unistd.h>
 
-unsigned int parisc32_dir_class[] = {
-#include <asm-generic/audit_dir_write.h>
+अचिन्हित पूर्णांक parisc32_dir_class[] = अणु
+#समावेश <यंत्र-generic/audit_dir_ग_लिखो.h>
 ~0U
-};
+पूर्ण;
 
-unsigned int parisc32_chattr_class[] = {
-#include <asm-generic/audit_change_attr.h>
+अचिन्हित पूर्णांक parisc32_chattr_class[] = अणु
+#समावेश <यंत्र-generic/audit_change_attr.h>
 ~0U
-};
+पूर्ण;
 
-unsigned int parisc32_write_class[] = {
-#include <asm-generic/audit_write.h>
+अचिन्हित पूर्णांक parisc32_ग_लिखो_class[] = अणु
+#समावेश <यंत्र-generic/audit_ग_लिखो.h>
 ~0U
-};
+पूर्ण;
 
-unsigned int parisc32_read_class[] = {
-#include <asm-generic/audit_read.h>
+अचिन्हित पूर्णांक parisc32_पढ़ो_class[] = अणु
+#समावेश <यंत्र-generic/audit_पढ़ो.h>
 ~0U
-};
+पूर्ण;
 
-unsigned int parisc32_signal_class[] = {
-#include <asm-generic/audit_signal.h>
+अचिन्हित पूर्णांक parisc32_संकेत_class[] = अणु
+#समावेश <यंत्र-generic/audit_संकेत.स>
 ~0U
-};
+पूर्ण;
 
-int parisc32_classify_syscall(unsigned syscall)
-{
-	switch (syscall) {
-	case __NR_open:
-		return 2;
-	case __NR_openat:
-		return 3;
-	case __NR_execve:
-		return 5;
-	default:
-		return 1;
-	}
-}
+पूर्णांक parisc32_classअगरy_syscall(अचिन्हित syscall)
+अणु
+	चयन (syscall) अणु
+	हाल __NR_खोलो:
+		वापस 2;
+	हाल __NR_खोलोat:
+		वापस 3;
+	हाल __NR_execve:
+		वापस 5;
+	शेष:
+		वापस 1;
+	पूर्ण
+पूर्ण

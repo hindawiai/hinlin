@@ -1,23 +1,24 @@
+<शैली गुरु>
 /*
  * Copyright (c) 2009-2014 Chelsio, Inc. All rights reserved.
  *
  * This software is available to you under a choice of one of two
  * licenses.  You may choose to be licensed under the terms of the GNU
  * General Public License (GPL) Version 2, available from the file
- * COPYING in the main directory of this source tree, or the
+ * COPYING in the मुख्य directory of this source tree, or the
  * OpenIB.org BSD license below:
  *
- *     Redistribution and use in source and binary forms, with or
- *     without modification, are permitted provided that the following
+ *     Redistribution and use in source and binary क्रमms, with or
+ *     without modअगरication, are permitted provided that the following
  *     conditions are met:
  *
  *      - Redistributions of source code must retain the above
  *	  copyright notice, this list of conditions and the following
  *	  disclaimer.
  *
- *      - Redistributions in binary form must reproduce the above
+ *      - Redistributions in binary क्रमm must reproduce the above
  *	  copyright notice, this list of conditions and the following
- *	  disclaimer in the documentation and/or other materials
+ *	  disclaimer in the करोcumentation and/or other materials
  *	  provided with the distribution.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
@@ -29,31 +30,31 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-#include <linux/module.h>
-#include <linux/list.h>
-#include <linux/workqueue.h>
-#include <linux/skbuff.h>
-#include <linux/timer.h>
-#include <linux/notifier.h>
-#include <linux/inetdevice.h>
-#include <linux/ip.h>
-#include <linux/tcp.h>
-#include <linux/if_vlan.h>
+#समावेश <linux/module.h>
+#समावेश <linux/list.h>
+#समावेश <linux/workqueue.h>
+#समावेश <linux/skbuff.h>
+#समावेश <linux/समयr.h>
+#समावेश <linux/notअगरier.h>
+#समावेश <linux/inetdevice.h>
+#समावेश <linux/ip.h>
+#समावेश <linux/tcp.h>
+#समावेश <linux/अगर_vlan.h>
 
-#include <net/neighbour.h>
-#include <net/netevent.h>
-#include <net/route.h>
-#include <net/tcp.h>
-#include <net/ip6_route.h>
-#include <net/addrconf.h>
+#समावेश <net/neighbour.h>
+#समावेश <net/netevent.h>
+#समावेश <net/route.h>
+#समावेश <net/tcp.h>
+#समावेश <net/ip6_route.h>
+#समावेश <net/addrconf.h>
 
-#include <rdma/ib_addr.h>
+#समावेश <rdma/ib_addr.h>
 
-#include <libcxgb_cm.h>
-#include "iw_cxgb4.h"
-#include "clip_tbl.h"
+#समावेश <libcxgb_cm.h>
+#समावेश "iw_cxgb4.h"
+#समावेश "clip_tbl.h"
 
-static char *states[] = {
+अटल अक्षर *states[] = अणु
 	"idle",
 	"listen",
 	"connecting",
@@ -66,458 +67,458 @@ static char *states[] = {
 	"closing",
 	"moribund",
 	"dead",
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-static int nocong;
-module_param(nocong, int, 0644);
+अटल पूर्णांक nocong;
+module_param(nocong, पूर्णांक, 0644);
 MODULE_PARM_DESC(nocong, "Turn of congestion control (default=0)");
 
-static int enable_ecn;
-module_param(enable_ecn, int, 0644);
+अटल पूर्णांक enable_ecn;
+module_param(enable_ecn, पूर्णांक, 0644);
 MODULE_PARM_DESC(enable_ecn, "Enable ECN (default=0/disabled)");
 
-static int dack_mode;
-module_param(dack_mode, int, 0644);
+अटल पूर्णांक dack_mode;
+module_param(dack_mode, पूर्णांक, 0644);
 MODULE_PARM_DESC(dack_mode, "Delayed ack mode (default=0)");
 
-uint c4iw_max_read_depth = 32;
-module_param(c4iw_max_read_depth, int, 0644);
-MODULE_PARM_DESC(c4iw_max_read_depth,
+uपूर्णांक c4iw_max_पढ़ो_depth = 32;
+module_param(c4iw_max_पढ़ो_depth, पूर्णांक, 0644);
+MODULE_PARM_DESC(c4iw_max_पढ़ो_depth,
 		 "Per-connection max ORD/IRD (default=32)");
 
-static int enable_tcp_timestamps;
-module_param(enable_tcp_timestamps, int, 0644);
-MODULE_PARM_DESC(enable_tcp_timestamps, "Enable tcp timestamps (default=0)");
+अटल पूर्णांक enable_tcp_बारtamps;
+module_param(enable_tcp_बारtamps, पूर्णांक, 0644);
+MODULE_PARM_DESC(enable_tcp_बारtamps, "Enable tcp timestamps (default=0)");
 
-static int enable_tcp_sack;
-module_param(enable_tcp_sack, int, 0644);
+अटल पूर्णांक enable_tcp_sack;
+module_param(enable_tcp_sack, पूर्णांक, 0644);
 MODULE_PARM_DESC(enable_tcp_sack, "Enable tcp SACK (default=0)");
 
-static int enable_tcp_window_scaling = 1;
-module_param(enable_tcp_window_scaling, int, 0644);
-MODULE_PARM_DESC(enable_tcp_window_scaling,
+अटल पूर्णांक enable_tcp_winकरोw_scaling = 1;
+module_param(enable_tcp_winकरोw_scaling, पूर्णांक, 0644);
+MODULE_PARM_DESC(enable_tcp_winकरोw_scaling,
 		 "Enable tcp window scaling (default=1)");
 
-static int peer2peer = 1;
-module_param(peer2peer, int, 0644);
+अटल पूर्णांक peer2peer = 1;
+module_param(peer2peer, पूर्णांक, 0644);
 MODULE_PARM_DESC(peer2peer, "Support peer2peer ULPs (default=1)");
 
-static int p2p_type = FW_RI_INIT_P2PTYPE_READ_REQ;
-module_param(p2p_type, int, 0644);
+अटल पूर्णांक p2p_type = FW_RI_INIT_P2PTYPE_READ_REQ;
+module_param(p2p_type, पूर्णांक, 0644);
 MODULE_PARM_DESC(p2p_type, "RDMAP opcode to use for the RTR message: "
 			   "1=RDMA_READ 0=RDMA_WRITE (default 1)");
 
-static int ep_timeout_secs = 60;
-module_param(ep_timeout_secs, int, 0644);
-MODULE_PARM_DESC(ep_timeout_secs, "CM Endpoint operation timeout "
+अटल पूर्णांक ep_समयout_secs = 60;
+module_param(ep_समयout_secs, पूर्णांक, 0644);
+MODULE_PARM_DESC(ep_समयout_secs, "CM Endpoint operation timeout "
 				   "in seconds (default=60)");
 
-static int mpa_rev = 2;
-module_param(mpa_rev, int, 0644);
+अटल पूर्णांक mpa_rev = 2;
+module_param(mpa_rev, पूर्णांक, 0644);
 MODULE_PARM_DESC(mpa_rev, "MPA Revision, 0 supports amso1100, "
 		"1 is RFC5044 spec compliant, 2 is IETF MPA Peer Connect Draft"
 		" compliant (default=2)");
 
-static int markers_enabled;
-module_param(markers_enabled, int, 0644);
+अटल पूर्णांक markers_enabled;
+module_param(markers_enabled, पूर्णांक, 0644);
 MODULE_PARM_DESC(markers_enabled, "Enable MPA MARKERS (default(0)=disabled)");
 
-static int crc_enabled = 1;
-module_param(crc_enabled, int, 0644);
+अटल पूर्णांक crc_enabled = 1;
+module_param(crc_enabled, पूर्णांक, 0644);
 MODULE_PARM_DESC(crc_enabled, "Enable MPA CRC (default(1)=enabled)");
 
-static int rcv_win = 256 * 1024;
-module_param(rcv_win, int, 0644);
+अटल पूर्णांक rcv_win = 256 * 1024;
+module_param(rcv_win, पूर्णांक, 0644);
 MODULE_PARM_DESC(rcv_win, "TCP receive window in bytes (default=256KB)");
 
-static int snd_win = 128 * 1024;
-module_param(snd_win, int, 0644);
+अटल पूर्णांक snd_win = 128 * 1024;
+module_param(snd_win, पूर्णांक, 0644);
 MODULE_PARM_DESC(snd_win, "TCP send window in bytes (default=128KB)");
 
-static struct workqueue_struct *workq;
+अटल काष्ठा workqueue_काष्ठा *workq;
 
-static struct sk_buff_head rxq;
+अटल काष्ठा sk_buff_head rxq;
 
-static struct sk_buff *get_skb(struct sk_buff *skb, int len, gfp_t gfp);
-static void ep_timeout(struct timer_list *t);
-static void connect_reply_upcall(struct c4iw_ep *ep, int status);
-static int sched(struct c4iw_dev *dev, struct sk_buff *skb);
+अटल काष्ठा sk_buff *get_skb(काष्ठा sk_buff *skb, पूर्णांक len, gfp_t gfp);
+अटल व्योम ep_समयout(काष्ठा समयr_list *t);
+अटल व्योम connect_reply_upcall(काष्ठा c4iw_ep *ep, पूर्णांक status);
+अटल पूर्णांक sched(काष्ठा c4iw_dev *dev, काष्ठा sk_buff *skb);
 
-static LIST_HEAD(timeout_list);
-static DEFINE_SPINLOCK(timeout_lock);
+अटल LIST_HEAD(समयout_list);
+अटल DEFINE_SPINLOCK(समयout_lock);
 
-static void deref_cm_id(struct c4iw_ep_common *epc)
-{
+अटल व्योम deref_cm_id(काष्ठा c4iw_ep_common *epc)
+अणु
 	epc->cm_id->rem_ref(epc->cm_id);
-	epc->cm_id = NULL;
+	epc->cm_id = शून्य;
 	set_bit(CM_ID_DEREFED, &epc->history);
-}
+पूर्ण
 
-static void ref_cm_id(struct c4iw_ep_common *epc)
-{
+अटल व्योम ref_cm_id(काष्ठा c4iw_ep_common *epc)
+अणु
 	set_bit(CM_ID_REFED, &epc->history);
 	epc->cm_id->add_ref(epc->cm_id);
-}
+पूर्ण
 
-static void deref_qp(struct c4iw_ep *ep)
-{
+अटल व्योम deref_qp(काष्ठा c4iw_ep *ep)
+अणु
 	c4iw_qp_rem_ref(&ep->com.qp->ibqp);
 	clear_bit(QP_REFERENCED, &ep->com.flags);
 	set_bit(QP_DEREFED, &ep->com.history);
-}
+पूर्ण
 
-static void ref_qp(struct c4iw_ep *ep)
-{
+अटल व्योम ref_qp(काष्ठा c4iw_ep *ep)
+अणु
 	set_bit(QP_REFERENCED, &ep->com.flags);
 	set_bit(QP_REFED, &ep->com.history);
 	c4iw_qp_add_ref(&ep->com.qp->ibqp);
-}
+पूर्ण
 
-static void start_ep_timer(struct c4iw_ep *ep)
-{
+अटल व्योम start_ep_समयr(काष्ठा c4iw_ep *ep)
+अणु
 	pr_debug("ep %p\n", ep);
-	if (timer_pending(&ep->timer)) {
+	अगर (समयr_pending(&ep->समयr)) अणु
 		pr_err("%s timer already started! ep %p\n",
 		       __func__, ep);
-		return;
-	}
+		वापस;
+	पूर्ण
 	clear_bit(TIMEOUT, &ep->com.flags);
 	c4iw_get_ep(&ep->com);
-	ep->timer.expires = jiffies + ep_timeout_secs * HZ;
-	add_timer(&ep->timer);
-}
+	ep->समयr.expires = jअगरfies + ep_समयout_secs * HZ;
+	add_समयr(&ep->समयr);
+पूर्ण
 
-static int stop_ep_timer(struct c4iw_ep *ep)
-{
+अटल पूर्णांक stop_ep_समयr(काष्ठा c4iw_ep *ep)
+अणु
 	pr_debug("ep %p stopping\n", ep);
-	del_timer_sync(&ep->timer);
-	if (!test_and_set_bit(TIMEOUT, &ep->com.flags)) {
+	del_समयr_sync(&ep->समयr);
+	अगर (!test_and_set_bit(TIMEOUT, &ep->com.flags)) अणु
 		c4iw_put_ep(&ep->com);
-		return 0;
-	}
-	return 1;
-}
+		वापस 0;
+	पूर्ण
+	वापस 1;
+पूर्ण
 
-static int c4iw_l2t_send(struct c4iw_rdev *rdev, struct sk_buff *skb,
-		  struct l2t_entry *l2e)
-{
-	int	error = 0;
+अटल पूर्णांक c4iw_l2t_send(काष्ठा c4iw_rdev *rdev, काष्ठा sk_buff *skb,
+		  काष्ठा l2t_entry *l2e)
+अणु
+	पूर्णांक	error = 0;
 
-	if (c4iw_fatal_error(rdev)) {
-		kfree_skb(skb);
+	अगर (c4iw_fatal_error(rdev)) अणु
+		kमुक्त_skb(skb);
 		pr_err("%s - device in error state - dropping\n", __func__);
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 	error = cxgb4_l2t_send(rdev->lldi.ports[0], skb, l2e);
-	if (error < 0)
-		kfree_skb(skb);
-	else if (error == NET_XMIT_DROP)
-		return -ENOMEM;
-	return error < 0 ? error : 0;
-}
+	अगर (error < 0)
+		kमुक्त_skb(skb);
+	अन्यथा अगर (error == NET_XMIT_DROP)
+		वापस -ENOMEM;
+	वापस error < 0 ? error : 0;
+पूर्ण
 
-int c4iw_ofld_send(struct c4iw_rdev *rdev, struct sk_buff *skb)
-{
-	int	error = 0;
+पूर्णांक c4iw_ofld_send(काष्ठा c4iw_rdev *rdev, काष्ठा sk_buff *skb)
+अणु
+	पूर्णांक	error = 0;
 
-	if (c4iw_fatal_error(rdev)) {
-		kfree_skb(skb);
+	अगर (c4iw_fatal_error(rdev)) अणु
+		kमुक्त_skb(skb);
 		pr_err("%s - device in error state - dropping\n", __func__);
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 	error = cxgb4_ofld_send(rdev->lldi.ports[0], skb);
-	if (error < 0)
-		kfree_skb(skb);
-	return error < 0 ? error : 0;
-}
+	अगर (error < 0)
+		kमुक्त_skb(skb);
+	वापस error < 0 ? error : 0;
+पूर्ण
 
-static void release_tid(struct c4iw_rdev *rdev, u32 hwtid, struct sk_buff *skb)
-{
-	u32 len = roundup(sizeof(struct cpl_tid_release), 16);
+अटल व्योम release_tid(काष्ठा c4iw_rdev *rdev, u32 hwtid, काष्ठा sk_buff *skb)
+अणु
+	u32 len = roundup(माप(काष्ठा cpl_tid_release), 16);
 
 	skb = get_skb(skb, len, GFP_KERNEL);
-	if (!skb)
-		return;
+	अगर (!skb)
+		वापस;
 
 	cxgb_mk_tid_release(skb, len, hwtid, 0);
 	c4iw_ofld_send(rdev, skb);
-	return;
-}
+	वापस;
+पूर्ण
 
-static void set_emss(struct c4iw_ep *ep, u16 opt)
-{
+अटल व्योम set_emss(काष्ठा c4iw_ep *ep, u16 opt)
+अणु
 	ep->emss = ep->com.dev->rdev.lldi.mtus[TCPOPT_MSS_G(opt)] -
 		   ((AF_INET == ep->com.remote_addr.ss_family) ?
-		    sizeof(struct iphdr) : sizeof(struct ipv6hdr)) -
-		   sizeof(struct tcphdr);
+		    माप(काष्ठा iphdr) : माप(काष्ठा ipv6hdr)) -
+		   माप(काष्ठा tcphdr);
 	ep->mss = ep->emss;
-	if (TCPOPT_TSTAMP_G(opt))
+	अगर (TCPOPT_TSTAMP_G(opt))
 		ep->emss -= round_up(TCPOLEN_TIMESTAMP, 4);
-	if (ep->emss < 128)
+	अगर (ep->emss < 128)
 		ep->emss = 128;
-	if (ep->emss & 7)
+	अगर (ep->emss & 7)
 		pr_debug("Warning: misaligned mtu idx %u mss %u emss=%u\n",
 			 TCPOPT_MSS_G(opt), ep->mss, ep->emss);
 	pr_debug("mss_idx %u mss %u emss=%u\n", TCPOPT_MSS_G(opt), ep->mss,
 		 ep->emss);
-}
+पूर्ण
 
-static enum c4iw_ep_state state_read(struct c4iw_ep_common *epc)
-{
-	enum c4iw_ep_state state;
+अटल क्रमागत c4iw_ep_state state_पढ़ो(काष्ठा c4iw_ep_common *epc)
+अणु
+	क्रमागत c4iw_ep_state state;
 
 	mutex_lock(&epc->mutex);
 	state = epc->state;
 	mutex_unlock(&epc->mutex);
-	return state;
-}
+	वापस state;
+पूर्ण
 
-static void __state_set(struct c4iw_ep_common *epc, enum c4iw_ep_state new)
-{
+अटल व्योम __state_set(काष्ठा c4iw_ep_common *epc, क्रमागत c4iw_ep_state new)
+अणु
 	epc->state = new;
-}
+पूर्ण
 
-static void state_set(struct c4iw_ep_common *epc, enum c4iw_ep_state new)
-{
+अटल व्योम state_set(काष्ठा c4iw_ep_common *epc, क्रमागत c4iw_ep_state new)
+अणु
 	mutex_lock(&epc->mutex);
 	pr_debug("%s -> %s\n", states[epc->state], states[new]);
 	__state_set(epc, new);
 	mutex_unlock(&epc->mutex);
-	return;
-}
+	वापस;
+पूर्ण
 
-static int alloc_ep_skb_list(struct sk_buff_head *ep_skb_list, int size)
-{
-	struct sk_buff *skb;
-	unsigned int i;
-	size_t len;
+अटल पूर्णांक alloc_ep_skb_list(काष्ठा sk_buff_head *ep_skb_list, पूर्णांक size)
+अणु
+	काष्ठा sk_buff *skb;
+	अचिन्हित पूर्णांक i;
+	माप_प्रकार len;
 
-	len = roundup(sizeof(union cpl_wr_size), 16);
-	for (i = 0; i < size; i++) {
+	len = roundup(माप(जोड़ cpl_wr_size), 16);
+	क्रम (i = 0; i < size; i++) अणु
 		skb = alloc_skb(len, GFP_KERNEL);
-		if (!skb)
-			goto fail;
+		अगर (!skb)
+			जाओ fail;
 		skb_queue_tail(ep_skb_list, skb);
-	}
-	return 0;
+	पूर्ण
+	वापस 0;
 fail:
 	skb_queue_purge(ep_skb_list);
-	return -ENOMEM;
-}
+	वापस -ENOMEM;
+पूर्ण
 
-static void *alloc_ep(int size, gfp_t gfp)
-{
-	struct c4iw_ep_common *epc;
+अटल व्योम *alloc_ep(पूर्णांक size, gfp_t gfp)
+अणु
+	काष्ठा c4iw_ep_common *epc;
 
 	epc = kzalloc(size, gfp);
-	if (epc) {
-		epc->wr_waitp = c4iw_alloc_wr_wait(gfp);
-		if (!epc->wr_waitp) {
-			kfree(epc);
-			epc = NULL;
-			goto out;
-		}
+	अगर (epc) अणु
+		epc->wr_रुकोp = c4iw_alloc_wr_रुको(gfp);
+		अगर (!epc->wr_रुकोp) अणु
+			kमुक्त(epc);
+			epc = शून्य;
+			जाओ out;
+		पूर्ण
 		kref_init(&epc->kref);
 		mutex_init(&epc->mutex);
-		c4iw_init_wr_wait(epc->wr_waitp);
-	}
+		c4iw_init_wr_रुको(epc->wr_रुकोp);
+	पूर्ण
 	pr_debug("alloc ep %p\n", epc);
 out:
-	return epc;
-}
+	वापस epc;
+पूर्ण
 
-static void remove_ep_tid(struct c4iw_ep *ep)
-{
-	unsigned long flags;
+अटल व्योम हटाओ_ep_tid(काष्ठा c4iw_ep *ep)
+अणु
+	अचिन्हित दीर्घ flags;
 
 	xa_lock_irqsave(&ep->com.dev->hwtids, flags);
 	__xa_erase(&ep->com.dev->hwtids, ep->hwtid);
-	if (xa_empty(&ep->com.dev->hwtids))
-		wake_up(&ep->com.dev->wait);
+	अगर (xa_empty(&ep->com.dev->hwtids))
+		wake_up(&ep->com.dev->रुको);
 	xa_unlock_irqrestore(&ep->com.dev->hwtids, flags);
-}
+पूर्ण
 
-static int insert_ep_tid(struct c4iw_ep *ep)
-{
-	unsigned long flags;
-	int err;
+अटल पूर्णांक insert_ep_tid(काष्ठा c4iw_ep *ep)
+अणु
+	अचिन्हित दीर्घ flags;
+	पूर्णांक err;
 
 	xa_lock_irqsave(&ep->com.dev->hwtids, flags);
 	err = __xa_insert(&ep->com.dev->hwtids, ep->hwtid, ep, GFP_KERNEL);
 	xa_unlock_irqrestore(&ep->com.dev->hwtids, flags);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /*
  * Atomically lookup the ep ptr given the tid and grab a reference on the ep.
  */
-static struct c4iw_ep *get_ep_from_tid(struct c4iw_dev *dev, unsigned int tid)
-{
-	struct c4iw_ep *ep;
-	unsigned long flags;
+अटल काष्ठा c4iw_ep *get_ep_from_tid(काष्ठा c4iw_dev *dev, अचिन्हित पूर्णांक tid)
+अणु
+	काष्ठा c4iw_ep *ep;
+	अचिन्हित दीर्घ flags;
 
 	xa_lock_irqsave(&dev->hwtids, flags);
 	ep = xa_load(&dev->hwtids, tid);
-	if (ep)
+	अगर (ep)
 		c4iw_get_ep(&ep->com);
 	xa_unlock_irqrestore(&dev->hwtids, flags);
-	return ep;
-}
+	वापस ep;
+पूर्ण
 
 /*
  * Atomically lookup the ep ptr given the stid and grab a reference on the ep.
  */
-static struct c4iw_listen_ep *get_ep_from_stid(struct c4iw_dev *dev,
-					       unsigned int stid)
-{
-	struct c4iw_listen_ep *ep;
-	unsigned long flags;
+अटल काष्ठा c4iw_listen_ep *get_ep_from_stid(काष्ठा c4iw_dev *dev,
+					       अचिन्हित पूर्णांक stid)
+अणु
+	काष्ठा c4iw_listen_ep *ep;
+	अचिन्हित दीर्घ flags;
 
 	xa_lock_irqsave(&dev->stids, flags);
 	ep = xa_load(&dev->stids, stid);
-	if (ep)
+	अगर (ep)
 		c4iw_get_ep(&ep->com);
 	xa_unlock_irqrestore(&dev->stids, flags);
-	return ep;
-}
+	वापस ep;
+पूर्ण
 
-void _c4iw_free_ep(struct kref *kref)
-{
-	struct c4iw_ep *ep;
+व्योम _c4iw_मुक्त_ep(काष्ठा kref *kref)
+अणु
+	काष्ठा c4iw_ep *ep;
 
-	ep = container_of(kref, struct c4iw_ep, com.kref);
+	ep = container_of(kref, काष्ठा c4iw_ep, com.kref);
 	pr_debug("ep %p state %s\n", ep, states[ep->com.state]);
-	if (test_bit(QP_REFERENCED, &ep->com.flags))
+	अगर (test_bit(QP_REFERENCED, &ep->com.flags))
 		deref_qp(ep);
-	if (test_bit(RELEASE_RESOURCES, &ep->com.flags)) {
-		if (ep->com.remote_addr.ss_family == AF_INET6) {
-			struct sockaddr_in6 *sin6 =
-					(struct sockaddr_in6 *)
+	अगर (test_bit(RELEASE_RESOURCES, &ep->com.flags)) अणु
+		अगर (ep->com.remote_addr.ss_family == AF_INET6) अणु
+			काष्ठा sockaddr_in6 *sin6 =
+					(काष्ठा sockaddr_in6 *)
 					&ep->com.local_addr;
 
 			cxgb4_clip_release(
 					ep->com.dev->rdev.lldi.ports[0],
-					(const u32 *)&sin6->sin6_addr.s6_addr,
+					(स्थिर u32 *)&sin6->sin6_addr.s6_addr,
 					1);
-		}
-		cxgb4_remove_tid(ep->com.dev->rdev.lldi.tids, 0, ep->hwtid,
+		पूर्ण
+		cxgb4_हटाओ_tid(ep->com.dev->rdev.lldi.tids, 0, ep->hwtid,
 				 ep->com.local_addr.ss_family);
 		dst_release(ep->dst);
 		cxgb4_l2t_release(ep->l2t);
-		kfree_skb(ep->mpa_skb);
-	}
-	if (!skb_queue_empty(&ep->com.ep_skb_list))
+		kमुक्त_skb(ep->mpa_skb);
+	पूर्ण
+	अगर (!skb_queue_empty(&ep->com.ep_skb_list))
 		skb_queue_purge(&ep->com.ep_skb_list);
-	c4iw_put_wr_wait(ep->com.wr_waitp);
-	kfree(ep);
-}
+	c4iw_put_wr_रुको(ep->com.wr_रुकोp);
+	kमुक्त(ep);
+पूर्ण
 
-static void release_ep_resources(struct c4iw_ep *ep)
-{
+अटल व्योम release_ep_resources(काष्ठा c4iw_ep *ep)
+अणु
 	set_bit(RELEASE_RESOURCES, &ep->com.flags);
 
 	/*
-	 * If we have a hwtid, then remove it from the idr table
-	 * so lookups will no longer find this endpoint.  Otherwise
-	 * we have a race where one thread finds the ep ptr just
-	 * before the other thread is freeing the ep memory.
+	 * If we have a hwtid, then हटाओ it from the idr table
+	 * so lookups will no दीर्घer find this endpoपूर्णांक.  Otherwise
+	 * we have a race where one thपढ़ो finds the ep ptr just
+	 * beक्रमe the other thपढ़ो is मुक्तing the ep memory.
 	 */
-	if (ep->hwtid != -1)
-		remove_ep_tid(ep);
+	अगर (ep->hwtid != -1)
+		हटाओ_ep_tid(ep);
 	c4iw_put_ep(&ep->com);
-}
+पूर्ण
 
-static int status2errno(int status)
-{
-	switch (status) {
-	case CPL_ERR_NONE:
-		return 0;
-	case CPL_ERR_CONN_RESET:
-		return -ECONNRESET;
-	case CPL_ERR_ARP_MISS:
-		return -EHOSTUNREACH;
-	case CPL_ERR_CONN_TIMEDOUT:
-		return -ETIMEDOUT;
-	case CPL_ERR_TCAM_FULL:
-		return -ENOMEM;
-	case CPL_ERR_CONN_EXIST:
-		return -EADDRINUSE;
-	default:
-		return -EIO;
-	}
-}
+अटल पूर्णांक status2त्रुटि_सं(पूर्णांक status)
+अणु
+	चयन (status) अणु
+	हाल CPL_ERR_NONE:
+		वापस 0;
+	हाल CPL_ERR_CONN_RESET:
+		वापस -ECONNRESET;
+	हाल CPL_ERR_ARP_MISS:
+		वापस -EHOSTUNREACH;
+	हाल CPL_ERR_CONN_TIMEDOUT:
+		वापस -ETIMEDOUT;
+	हाल CPL_ERR_TCAM_FULL:
+		वापस -ENOMEM;
+	हाल CPL_ERR_CONN_EXIST:
+		वापस -EADDRINUSE;
+	शेष:
+		वापस -EIO;
+	पूर्ण
+पूर्ण
 
 /*
- * Try and reuse skbs already allocated...
+ * Try and reuse skbs alपढ़ोy allocated...
  */
-static struct sk_buff *get_skb(struct sk_buff *skb, int len, gfp_t gfp)
-{
-	if (skb && !skb_is_nonlinear(skb) && !skb_cloned(skb)) {
+अटल काष्ठा sk_buff *get_skb(काष्ठा sk_buff *skb, पूर्णांक len, gfp_t gfp)
+अणु
+	अगर (skb && !skb_is_nonlinear(skb) && !skb_cloned(skb)) अणु
 		skb_trim(skb, 0);
 		skb_get(skb);
 		skb_reset_transport_header(skb);
-	} else {
+	पूर्ण अन्यथा अणु
 		skb = alloc_skb(len, gfp);
-		if (!skb)
-			return NULL;
-	}
-	t4_set_arp_err_handler(skb, NULL, NULL);
-	return skb;
-}
+		अगर (!skb)
+			वापस शून्य;
+	पूर्ण
+	t4_set_arp_err_handler(skb, शून्य, शून्य);
+	वापस skb;
+पूर्ण
 
-static struct net_device *get_real_dev(struct net_device *egress_dev)
-{
-	return rdma_vlan_dev_real_dev(egress_dev) ? : egress_dev;
-}
+अटल काष्ठा net_device *get_real_dev(काष्ठा net_device *egress_dev)
+अणु
+	वापस rdma_vlan_dev_real_dev(egress_dev) ? : egress_dev;
+पूर्ण
 
-static void arp_failure_discard(void *handle, struct sk_buff *skb)
-{
+अटल व्योम arp_failure_discard(व्योम *handle, काष्ठा sk_buff *skb)
+अणु
 	pr_err("ARP failure\n");
-	kfree_skb(skb);
-}
+	kमुक्त_skb(skb);
+पूर्ण
 
-static void mpa_start_arp_failure(void *handle, struct sk_buff *skb)
-{
+अटल व्योम mpa_start_arp_failure(व्योम *handle, काष्ठा sk_buff *skb)
+अणु
 	pr_err("ARP failure during MPA Negotiation - Closing Connection\n");
-}
+पूर्ण
 
-enum {
+क्रमागत अणु
 	NUM_FAKE_CPLS = 2,
 	FAKE_CPL_PUT_EP_SAFE = NUM_CPL_CMDS + 0,
 	FAKE_CPL_PASS_PUT_EP_SAFE = NUM_CPL_CMDS + 1,
-};
+पूर्ण;
 
-static int _put_ep_safe(struct c4iw_dev *dev, struct sk_buff *skb)
-{
-	struct c4iw_ep *ep;
+अटल पूर्णांक _put_ep_safe(काष्ठा c4iw_dev *dev, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा c4iw_ep *ep;
 
-	ep = *((struct c4iw_ep **)(skb->cb + 2 * sizeof(void *)));
+	ep = *((काष्ठा c4iw_ep **)(skb->cb + 2 * माप(व्योम *)));
 	release_ep_resources(ep);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int _put_pass_ep_safe(struct c4iw_dev *dev, struct sk_buff *skb)
-{
-	struct c4iw_ep *ep;
+अटल पूर्णांक _put_pass_ep_safe(काष्ठा c4iw_dev *dev, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा c4iw_ep *ep;
 
-	ep = *((struct c4iw_ep **)(skb->cb + 2 * sizeof(void *)));
+	ep = *((काष्ठा c4iw_ep **)(skb->cb + 2 * माप(व्योम *)));
 	c4iw_put_ep(&ep->parent_ep->com);
 	release_ep_resources(ep);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * Fake up a special CPL opcode and call sched() so process_work() will call
- * _put_ep_safe() in a safe context to free the ep resources.  This is needed
+ * _put_ep_safe() in a safe context to मुक्त the ep resources.  This is needed
  * because ARP error handlers are called in an ATOMIC context, and
- * _c4iw_free_ep() needs to block.
+ * _c4iw_मुक्त_ep() needs to block.
  */
-static void queue_arp_failure_cpl(struct c4iw_ep *ep, struct sk_buff *skb,
-				  int cpl)
-{
-	struct cpl_act_establish *rpl = cplhdr(skb);
+अटल व्योम queue_arp_failure_cpl(काष्ठा c4iw_ep *ep, काष्ठा sk_buff *skb,
+				  पूर्णांक cpl)
+अणु
+	काष्ठा cpl_act_establish *rpl = cplhdr(skb);
 
 	/* Set our special ARP_FAILURE opcode */
 	rpl->ot.opcode = cpl;
@@ -526,87 +527,87 @@ static void queue_arp_failure_cpl(struct c4iw_ep *ep, struct sk_buff *skb,
 	 * Save ep in the skb->cb area, after where sched() will save the dev
 	 * ptr.
 	 */
-	*((struct c4iw_ep **)(skb->cb + 2 * sizeof(void *))) = ep;
+	*((काष्ठा c4iw_ep **)(skb->cb + 2 * माप(व्योम *))) = ep;
 	sched(ep->com.dev, skb);
-}
+पूर्ण
 
-/* Handle an ARP failure for an accept */
-static void pass_accept_rpl_arp_failure(void *handle, struct sk_buff *skb)
-{
-	struct c4iw_ep *ep = handle;
+/* Handle an ARP failure क्रम an accept */
+अटल व्योम pass_accept_rpl_arp_failure(व्योम *handle, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा c4iw_ep *ep = handle;
 
 	pr_err("ARP failure during accept - tid %u - dropping connection\n",
 	       ep->hwtid);
 
 	__state_set(&ep->com, DEAD);
 	queue_arp_failure_cpl(ep, skb, FAKE_CPL_PASS_PUT_EP_SAFE);
-}
+पूर्ण
 
 /*
- * Handle an ARP failure for an active open.
+ * Handle an ARP failure क्रम an active खोलो.
  */
-static void act_open_req_arp_failure(void *handle, struct sk_buff *skb)
-{
-	struct c4iw_ep *ep = handle;
+अटल व्योम act_खोलो_req_arp_failure(व्योम *handle, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा c4iw_ep *ep = handle;
 
 	pr_err("ARP failure during connect\n");
 	connect_reply_upcall(ep, -EHOSTUNREACH);
 	__state_set(&ep->com, DEAD);
-	if (ep->com.remote_addr.ss_family == AF_INET6) {
-		struct sockaddr_in6 *sin6 =
-			(struct sockaddr_in6 *)&ep->com.local_addr;
+	अगर (ep->com.remote_addr.ss_family == AF_INET6) अणु
+		काष्ठा sockaddr_in6 *sin6 =
+			(काष्ठा sockaddr_in6 *)&ep->com.local_addr;
 		cxgb4_clip_release(ep->com.dev->rdev.lldi.ports[0],
-				   (const u32 *)&sin6->sin6_addr.s6_addr, 1);
-	}
+				   (स्थिर u32 *)&sin6->sin6_addr.s6_addr, 1);
+	पूर्ण
 	xa_erase_irq(&ep->com.dev->atids, ep->atid);
-	cxgb4_free_atid(ep->com.dev->rdev.lldi.tids, ep->atid);
+	cxgb4_मुक्त_atid(ep->com.dev->rdev.lldi.tids, ep->atid);
 	queue_arp_failure_cpl(ep, skb, FAKE_CPL_PUT_EP_SAFE);
-}
+पूर्ण
 
 /*
- * Handle an ARP failure for a CPL_ABORT_REQ.  Change it into a no RST variant
- * and send it along.
+ * Handle an ARP failure क्रम a CPL_ABORT_REQ.  Change it पूर्णांकo a no RST variant
+ * and send it aदीर्घ.
  */
-static void abort_arp_failure(void *handle, struct sk_buff *skb)
-{
-	int ret;
-	struct c4iw_ep *ep = handle;
-	struct c4iw_rdev *rdev = &ep->com.dev->rdev;
-	struct cpl_abort_req *req = cplhdr(skb);
+अटल व्योम पात_arp_failure(व्योम *handle, काष्ठा sk_buff *skb)
+अणु
+	पूर्णांक ret;
+	काष्ठा c4iw_ep *ep = handle;
+	काष्ठा c4iw_rdev *rdev = &ep->com.dev->rdev;
+	काष्ठा cpl_पात_req *req = cplhdr(skb);
 
 	pr_debug("rdev %p\n", rdev);
 	req->cmd = CPL_ABORT_NO_RST;
 	skb_get(skb);
 	ret = c4iw_ofld_send(rdev, skb);
-	if (ret) {
+	अगर (ret) अणु
 		__state_set(&ep->com, DEAD);
 		queue_arp_failure_cpl(ep, skb, FAKE_CPL_PUT_EP_SAFE);
-	} else
-		kfree_skb(skb);
-}
+	पूर्ण अन्यथा
+		kमुक्त_skb(skb);
+पूर्ण
 
-static int send_flowc(struct c4iw_ep *ep)
-{
-	struct fw_flowc_wr *flowc;
-	struct sk_buff *skb = skb_dequeue(&ep->com.ep_skb_list);
+अटल पूर्णांक send_flowc(काष्ठा c4iw_ep *ep)
+अणु
+	काष्ठा fw_flowc_wr *flowc;
+	काष्ठा sk_buff *skb = skb_dequeue(&ep->com.ep_skb_list);
 	u16 vlan = ep->l2t->vlan;
-	int nparams;
-	int flowclen, flowclen16;
+	पूर्णांक nparams;
+	पूर्णांक flowclen, flowclen16;
 
-	if (WARN_ON(!skb))
-		return -ENOMEM;
+	अगर (WARN_ON(!skb))
+		वापस -ENOMEM;
 
-	if (vlan == CPL_L2T_VLAN_NONE)
+	अगर (vlan == CPL_L2T_VLAN_NONE)
 		nparams = 9;
-	else
+	अन्यथा
 		nparams = 10;
 
-	flowclen = offsetof(struct fw_flowc_wr, mnemval[nparams]);
+	flowclen = दुरत्व(काष्ठा fw_flowc_wr, mnemval[nparams]);
 	flowclen16 = DIV_ROUND_UP(flowclen, 16);
 	flowclen = flowclen16 * 16;
 
 	flowc = __skb_put(skb, flowclen);
-	memset(flowc, 0, flowclen);
+	स_रखो(flowc, 0, flowclen);
 
 	flowc->op_to_nparams = cpu_to_be32(FW_WR_OP_V(FW_FLOWC_WR) |
 					   FW_FLOWC_WR_NPARAMS_V(nparams));
@@ -632,132 +633,132 @@ static int send_flowc(struct c4iw_ep *ep)
 	flowc->mnemval[7].val = cpu_to_be32(ep->emss);
 	flowc->mnemval[8].mnemonic = FW_FLOWC_MNEM_RCV_SCALE;
 	flowc->mnemval[8].val = cpu_to_be32(ep->snd_wscale);
-	if (nparams == 10) {
+	अगर (nparams == 10) अणु
 		u16 pri;
 		pri = (vlan & VLAN_PRIO_MASK) >> VLAN_PRIO_SHIFT;
 		flowc->mnemval[9].mnemonic = FW_FLOWC_MNEM_SCHEDCLASS;
 		flowc->mnemval[9].val = cpu_to_be32(pri);
-	}
+	पूर्ण
 
 	set_wr_txq(skb, CPL_PRIORITY_DATA, ep->txq_idx);
-	return c4iw_ofld_send(&ep->com.dev->rdev, skb);
-}
+	वापस c4iw_ofld_send(&ep->com.dev->rdev, skb);
+पूर्ण
 
-static int send_halfclose(struct c4iw_ep *ep)
-{
-	struct sk_buff *skb = skb_dequeue(&ep->com.ep_skb_list);
-	u32 wrlen = roundup(sizeof(struct cpl_close_con_req), 16);
+अटल पूर्णांक send_halख_बंद(काष्ठा c4iw_ep *ep)
+अणु
+	काष्ठा sk_buff *skb = skb_dequeue(&ep->com.ep_skb_list);
+	u32 wrlen = roundup(माप(काष्ठा cpl_बंद_con_req), 16);
 
 	pr_debug("ep %p tid %u\n", ep, ep->hwtid);
-	if (WARN_ON(!skb))
-		return -ENOMEM;
+	अगर (WARN_ON(!skb))
+		वापस -ENOMEM;
 
-	cxgb_mk_close_con_req(skb, wrlen, ep->hwtid, ep->txq_idx,
-			      NULL, arp_failure_discard);
+	cxgb_mk_बंद_con_req(skb, wrlen, ep->hwtid, ep->txq_idx,
+			      शून्य, arp_failure_discard);
 
-	return c4iw_l2t_send(&ep->com.dev->rdev, skb, ep->l2t);
-}
+	वापस c4iw_l2t_send(&ep->com.dev->rdev, skb, ep->l2t);
+पूर्ण
 
-static void read_tcb(struct c4iw_ep *ep)
-{
-	struct sk_buff *skb;
-	struct cpl_get_tcb *req;
-	int wrlen = roundup(sizeof(*req), 16);
+अटल व्योम पढ़ो_tcb(काष्ठा c4iw_ep *ep)
+अणु
+	काष्ठा sk_buff *skb;
+	काष्ठा cpl_get_tcb *req;
+	पूर्णांक wrlen = roundup(माप(*req), 16);
 
-	skb = get_skb(NULL, sizeof(*req), GFP_KERNEL);
-	if (WARN_ON(!skb))
-		return;
+	skb = get_skb(शून्य, माप(*req), GFP_KERNEL);
+	अगर (WARN_ON(!skb))
+		वापस;
 
 	set_wr_txq(skb, CPL_PRIORITY_CONTROL, ep->ctrlq_idx);
-	req = (struct cpl_get_tcb *) skb_put(skb, wrlen);
-	memset(req, 0, wrlen);
+	req = (काष्ठा cpl_get_tcb *) skb_put(skb, wrlen);
+	स_रखो(req, 0, wrlen);
 	INIT_TP_WR(req, ep->hwtid);
 	OPCODE_TID(req) = cpu_to_be32(MK_OPCODE_TID(CPL_GET_TCB, ep->hwtid));
 	req->reply_ctrl = htons(REPLY_CHAN_V(0) | QUEUENO_V(ep->rss_qid));
 
 	/*
-	 * keep a ref on the ep so the tcb is not unlocked before this
-	 * cpl completes. The ref is released in read_tcb_rpl().
+	 * keep a ref on the ep so the tcb is not unlocked beक्रमe this
+	 * cpl completes. The ref is released in पढ़ो_tcb_rpl().
 	 */
 	c4iw_get_ep(&ep->com);
-	if (WARN_ON(c4iw_ofld_send(&ep->com.dev->rdev, skb)))
+	अगर (WARN_ON(c4iw_ofld_send(&ep->com.dev->rdev, skb)))
 		c4iw_put_ep(&ep->com);
-}
+पूर्ण
 
-static int send_abort_req(struct c4iw_ep *ep)
-{
-	u32 wrlen = roundup(sizeof(struct cpl_abort_req), 16);
-	struct sk_buff *req_skb = skb_dequeue(&ep->com.ep_skb_list);
+अटल पूर्णांक send_पात_req(काष्ठा c4iw_ep *ep)
+अणु
+	u32 wrlen = roundup(माप(काष्ठा cpl_पात_req), 16);
+	काष्ठा sk_buff *req_skb = skb_dequeue(&ep->com.ep_skb_list);
 
 	pr_debug("ep %p tid %u\n", ep, ep->hwtid);
-	if (WARN_ON(!req_skb))
-		return -ENOMEM;
+	अगर (WARN_ON(!req_skb))
+		वापस -ENOMEM;
 
-	cxgb_mk_abort_req(req_skb, wrlen, ep->hwtid, ep->txq_idx,
-			  ep, abort_arp_failure);
+	cxgb_mk_पात_req(req_skb, wrlen, ep->hwtid, ep->txq_idx,
+			  ep, पात_arp_failure);
 
-	return c4iw_l2t_send(&ep->com.dev->rdev, req_skb, ep->l2t);
-}
+	वापस c4iw_l2t_send(&ep->com.dev->rdev, req_skb, ep->l2t);
+पूर्ण
 
-static int send_abort(struct c4iw_ep *ep)
-{
-	if (!ep->com.qp || !ep->com.qp->srq) {
-		send_abort_req(ep);
-		return 0;
-	}
+अटल पूर्णांक send_पात(काष्ठा c4iw_ep *ep)
+अणु
+	अगर (!ep->com.qp || !ep->com.qp->srq) अणु
+		send_पात_req(ep);
+		वापस 0;
+	पूर्ण
 	set_bit(ABORT_REQ_IN_PROGRESS, &ep->com.flags);
-	read_tcb(ep);
-	return 0;
-}
+	पढ़ो_tcb(ep);
+	वापस 0;
+पूर्ण
 
-static int send_connect(struct c4iw_ep *ep)
-{
-	struct cpl_act_open_req *req = NULL;
-	struct cpl_t5_act_open_req *t5req = NULL;
-	struct cpl_t6_act_open_req *t6req = NULL;
-	struct cpl_act_open_req6 *req6 = NULL;
-	struct cpl_t5_act_open_req6 *t5req6 = NULL;
-	struct cpl_t6_act_open_req6 *t6req6 = NULL;
-	struct sk_buff *skb;
+अटल पूर्णांक send_connect(काष्ठा c4iw_ep *ep)
+अणु
+	काष्ठा cpl_act_खोलो_req *req = शून्य;
+	काष्ठा cpl_t5_act_खोलो_req *t5req = शून्य;
+	काष्ठा cpl_t6_act_खोलो_req *t6req = शून्य;
+	काष्ठा cpl_act_खोलो_req6 *req6 = शून्य;
+	काष्ठा cpl_t5_act_खोलो_req6 *t5req6 = शून्य;
+	काष्ठा cpl_t6_act_खोलो_req6 *t6req6 = शून्य;
+	काष्ठा sk_buff *skb;
 	u64 opt0;
 	u32 opt2;
-	unsigned int mtu_idx;
+	अचिन्हित पूर्णांक mtu_idx;
 	u32 wscale;
-	int win, sizev4, sizev6, wrlen;
-	struct sockaddr_in *la = (struct sockaddr_in *)
+	पूर्णांक win, sizev4, sizev6, wrlen;
+	काष्ठा sockaddr_in *la = (काष्ठा sockaddr_in *)
 				 &ep->com.local_addr;
-	struct sockaddr_in *ra = (struct sockaddr_in *)
+	काष्ठा sockaddr_in *ra = (काष्ठा sockaddr_in *)
 				 &ep->com.remote_addr;
-	struct sockaddr_in6 *la6 = (struct sockaddr_in6 *)
+	काष्ठा sockaddr_in6 *la6 = (काष्ठा sockaddr_in6 *)
 				   &ep->com.local_addr;
-	struct sockaddr_in6 *ra6 = (struct sockaddr_in6 *)
+	काष्ठा sockaddr_in6 *ra6 = (काष्ठा sockaddr_in6 *)
 				   &ep->com.remote_addr;
-	int ret;
-	enum chip_type adapter_type = ep->com.dev->rdev.lldi.adapter_type;
-	u32 isn = (prandom_u32() & ~7UL) - 1;
-	struct net_device *netdev;
+	पूर्णांक ret;
+	क्रमागत chip_type adapter_type = ep->com.dev->rdev.lldi.adapter_type;
+	u32 isn = (pअक्रमom_u32() & ~7UL) - 1;
+	काष्ठा net_device *netdev;
 	u64 params;
 
 	netdev = ep->com.dev->rdev.lldi.ports[0];
 
-	switch (CHELSIO_CHIP_VERSION(adapter_type)) {
-	case CHELSIO_T4:
-		sizev4 = sizeof(struct cpl_act_open_req);
-		sizev6 = sizeof(struct cpl_act_open_req6);
-		break;
-	case CHELSIO_T5:
-		sizev4 = sizeof(struct cpl_t5_act_open_req);
-		sizev6 = sizeof(struct cpl_t5_act_open_req6);
-		break;
-	case CHELSIO_T6:
-		sizev4 = sizeof(struct cpl_t6_act_open_req);
-		sizev6 = sizeof(struct cpl_t6_act_open_req6);
-		break;
-	default:
+	चयन (CHELSIO_CHIP_VERSION(adapter_type)) अणु
+	हाल CHELSIO_T4:
+		sizev4 = माप(काष्ठा cpl_act_खोलो_req);
+		sizev6 = माप(काष्ठा cpl_act_खोलो_req6);
+		अवरोध;
+	हाल CHELSIO_T5:
+		sizev4 = माप(काष्ठा cpl_t5_act_खोलो_req);
+		sizev6 = माप(काष्ठा cpl_t5_act_खोलो_req6);
+		अवरोध;
+	हाल CHELSIO_T6:
+		sizev4 = माप(काष्ठा cpl_t6_act_खोलो_req);
+		sizev6 = माप(काष्ठा cpl_t6_act_खोलो_req6);
+		अवरोध;
+	शेष:
 		pr_err("T%d Chip is not supported\n",
 		       CHELSIO_CHIP_VERSION(adapter_type));
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	wrlen = (ep->com.remote_addr.ss_family == AF_INET) ?
 			roundup(sizev4, 16) :
@@ -765,25 +766,25 @@ static int send_connect(struct c4iw_ep *ep)
 
 	pr_debug("ep %p atid %u\n", ep, ep->atid);
 
-	skb = get_skb(NULL, wrlen, GFP_KERNEL);
-	if (!skb) {
+	skb = get_skb(शून्य, wrlen, GFP_KERNEL);
+	अगर (!skb) अणु
 		pr_err("%s - failed to alloc skb\n", __func__);
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 	set_wr_txq(skb, CPL_PRIORITY_SETUP, ep->ctrlq_idx);
 
 	cxgb_best_mtu(ep->com.dev->rdev.lldi.mtus, ep->mtu, &mtu_idx,
-		      enable_tcp_timestamps,
+		      enable_tcp_बारtamps,
 		      (ep->com.remote_addr.ss_family == AF_INET) ? 0 : 1);
 	wscale = cxgb_compute_wscale(rcv_win);
 
 	/*
-	 * Specify the largest window that will fit in opt0. The
-	 * remainder will be specified in the rx_data_ack.
+	 * Specअगरy the largest winकरोw that will fit in opt0. The
+	 * reमुख्यder will be specअगरied in the rx_data_ack.
 	 */
 	win = ep->rcv_win >> 10;
-	if (win > RCV_BUFSIZ_M)
-		win = RCV_BUFSIZ_M;
+	अगर (win > RCV_बफ_मान_M)
+		win = RCV_बफ_मान_M;
 
 	opt0 = (nocong ? NO_CONG_F : 0) |
 	       KEEP_ALIVE_F |
@@ -795,56 +796,56 @@ static int send_connect(struct c4iw_ep *ep)
 	       SMAC_SEL_V(ep->smac_idx) |
 	       DSCP_V(ep->tos >> 2) |
 	       ULP_MODE_V(ULP_MODE_TCPDDP) |
-	       RCV_BUFSIZ_V(win);
+	       RCV_बफ_मान_V(win);
 	opt2 = RX_CHANNEL_V(0) |
 	       CCTRL_ECN_V(enable_ecn) |
 	       RSS_QUEUE_VALID_F | RSS_QUEUE_V(ep->rss_qid);
-	if (enable_tcp_timestamps)
+	अगर (enable_tcp_बारtamps)
 		opt2 |= TSTAMPS_EN_F;
-	if (enable_tcp_sack)
+	अगर (enable_tcp_sack)
 		opt2 |= SACK_EN_F;
-	if (wscale && enable_tcp_window_scaling)
+	अगर (wscale && enable_tcp_winकरोw_scaling)
 		opt2 |= WND_SCALE_EN_F;
-	if (CHELSIO_CHIP_VERSION(adapter_type) > CHELSIO_T4) {
-		if (peer2peer)
+	अगर (CHELSIO_CHIP_VERSION(adapter_type) > CHELSIO_T4) अणु
+		अगर (peer2peer)
 			isn += 4;
 
 		opt2 |= T5_OPT_2_VALID_F;
 		opt2 |= CONG_CNTRL_V(CONG_ALG_TAHOE);
 		opt2 |= T5_ISS_F;
-	}
+	पूर्ण
 
 	params = cxgb4_select_ntuple(netdev, ep->l2t);
 
-	if (ep->com.remote_addr.ss_family == AF_INET6)
+	अगर (ep->com.remote_addr.ss_family == AF_INET6)
 		cxgb4_clip_get(ep->com.dev->rdev.lldi.ports[0],
-			       (const u32 *)&la6->sin6_addr.s6_addr, 1);
+			       (स्थिर u32 *)&la6->sin6_addr.s6_addr, 1);
 
-	t4_set_arp_err_handler(skb, ep, act_open_req_arp_failure);
+	t4_set_arp_err_handler(skb, ep, act_खोलो_req_arp_failure);
 
-	if (ep->com.remote_addr.ss_family == AF_INET) {
-		switch (CHELSIO_CHIP_VERSION(adapter_type)) {
-		case CHELSIO_T4:
+	अगर (ep->com.remote_addr.ss_family == AF_INET) अणु
+		चयन (CHELSIO_CHIP_VERSION(adapter_type)) अणु
+		हाल CHELSIO_T4:
 			req = skb_put(skb, wrlen);
 			INIT_TP_WR(req, 0);
-			break;
-		case CHELSIO_T5:
+			अवरोध;
+		हाल CHELSIO_T5:
 			t5req = skb_put(skb, wrlen);
 			INIT_TP_WR(t5req, 0);
-			req = (struct cpl_act_open_req *)t5req;
-			break;
-		case CHELSIO_T6:
+			req = (काष्ठा cpl_act_खोलो_req *)t5req;
+			अवरोध;
+		हाल CHELSIO_T6:
 			t6req = skb_put(skb, wrlen);
 			INIT_TP_WR(t6req, 0);
-			req = (struct cpl_act_open_req *)t6req;
-			t5req = (struct cpl_t5_act_open_req *)t6req;
-			break;
-		default:
+			req = (काष्ठा cpl_act_खोलो_req *)t6req;
+			t5req = (काष्ठा cpl_t5_act_खोलो_req *)t6req;
+			अवरोध;
+		शेष:
 			pr_err("T%d Chip is not supported\n",
 			       CHELSIO_CHIP_VERSION(adapter_type));
 			ret = -EINVAL;
-			goto clip_release;
-		}
+			जाओ clip_release;
+		पूर्ण
 
 		OPCODE_TID(req) = cpu_to_be32(MK_OPCODE_TID(CPL_ACT_OPEN_REQ,
 					((ep->rss_qid<<14) | ep->atid)));
@@ -854,47 +855,47 @@ static int send_connect(struct c4iw_ep *ep)
 		req->peer_ip = ra->sin_addr.s_addr;
 		req->opt0 = cpu_to_be64(opt0);
 
-		if (is_t4(ep->com.dev->rdev.lldi.adapter_type)) {
+		अगर (is_t4(ep->com.dev->rdev.lldi.adapter_type)) अणु
 			req->params = cpu_to_be32(params);
 			req->opt2 = cpu_to_be32(opt2);
-		} else {
-			if (is_t5(ep->com.dev->rdev.lldi.adapter_type)) {
+		पूर्ण अन्यथा अणु
+			अगर (is_t5(ep->com.dev->rdev.lldi.adapter_type)) अणु
 				t5req->params =
 					  cpu_to_be64(FILTER_TUPLE_V(params));
 				t5req->rsvd = cpu_to_be32(isn);
 				pr_debug("snd_isn %u\n", t5req->rsvd);
 				t5req->opt2 = cpu_to_be32(opt2);
-			} else {
+			पूर्ण अन्यथा अणु
 				t6req->params =
 					  cpu_to_be64(FILTER_TUPLE_V(params));
 				t6req->rsvd = cpu_to_be32(isn);
 				pr_debug("snd_isn %u\n", t6req->rsvd);
 				t6req->opt2 = cpu_to_be32(opt2);
-			}
-		}
-	} else {
-		switch (CHELSIO_CHIP_VERSION(adapter_type)) {
-		case CHELSIO_T4:
+			पूर्ण
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		चयन (CHELSIO_CHIP_VERSION(adapter_type)) अणु
+		हाल CHELSIO_T4:
 			req6 = skb_put(skb, wrlen);
 			INIT_TP_WR(req6, 0);
-			break;
-		case CHELSIO_T5:
+			अवरोध;
+		हाल CHELSIO_T5:
 			t5req6 = skb_put(skb, wrlen);
 			INIT_TP_WR(t5req6, 0);
-			req6 = (struct cpl_act_open_req6 *)t5req6;
-			break;
-		case CHELSIO_T6:
+			req6 = (काष्ठा cpl_act_खोलो_req6 *)t5req6;
+			अवरोध;
+		हाल CHELSIO_T6:
 			t6req6 = skb_put(skb, wrlen);
 			INIT_TP_WR(t6req6, 0);
-			req6 = (struct cpl_act_open_req6 *)t6req6;
-			t5req6 = (struct cpl_t5_act_open_req6 *)t6req6;
-			break;
-		default:
+			req6 = (काष्ठा cpl_act_खोलो_req6 *)t6req6;
+			t5req6 = (काष्ठा cpl_t5_act_खोलो_req6 *)t6req6;
+			अवरोध;
+		शेष:
 			pr_err("T%d Chip is not supported\n",
 			       CHELSIO_CHIP_VERSION(adapter_type));
 			ret = -EINVAL;
-			goto clip_release;
-		}
+			जाओ clip_release;
+		पूर्ण
 
 		OPCODE_TID(req6) = cpu_to_be32(MK_OPCODE_TID(CPL_ACT_OPEN_REQ6,
 					((ep->rss_qid<<14)|ep->atid)));
@@ -906,57 +907,57 @@ static int send_connect(struct c4iw_ep *ep)
 		req6->peer_ip_lo = *((__be64 *)(ra6->sin6_addr.s6_addr + 8));
 		req6->opt0 = cpu_to_be64(opt0);
 
-		if (is_t4(ep->com.dev->rdev.lldi.adapter_type)) {
+		अगर (is_t4(ep->com.dev->rdev.lldi.adapter_type)) अणु
 			req6->params = cpu_to_be32(cxgb4_select_ntuple(netdev,
 								      ep->l2t));
 			req6->opt2 = cpu_to_be32(opt2);
-		} else {
-			if (is_t5(ep->com.dev->rdev.lldi.adapter_type)) {
+		पूर्ण अन्यथा अणु
+			अगर (is_t5(ep->com.dev->rdev.lldi.adapter_type)) अणु
 				t5req6->params =
 					    cpu_to_be64(FILTER_TUPLE_V(params));
 				t5req6->rsvd = cpu_to_be32(isn);
 				pr_debug("snd_isn %u\n", t5req6->rsvd);
 				t5req6->opt2 = cpu_to_be32(opt2);
-			} else {
+			पूर्ण अन्यथा अणु
 				t6req6->params =
 					    cpu_to_be64(FILTER_TUPLE_V(params));
 				t6req6->rsvd = cpu_to_be32(isn);
 				pr_debug("snd_isn %u\n", t6req6->rsvd);
 				t6req6->opt2 = cpu_to_be32(opt2);
-			}
+			पूर्ण
 
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	set_bit(ACT_OPEN_REQ, &ep->com.history);
 	ret = c4iw_l2t_send(&ep->com.dev->rdev, skb, ep->l2t);
 clip_release:
-	if (ret && ep->com.remote_addr.ss_family == AF_INET6)
+	अगर (ret && ep->com.remote_addr.ss_family == AF_INET6)
 		cxgb4_clip_release(ep->com.dev->rdev.lldi.ports[0],
-				   (const u32 *)&la6->sin6_addr.s6_addr, 1);
-	return ret;
-}
+				   (स्थिर u32 *)&la6->sin6_addr.s6_addr, 1);
+	वापस ret;
+पूर्ण
 
-static int send_mpa_req(struct c4iw_ep *ep, struct sk_buff *skb,
+अटल पूर्णांक send_mpa_req(काष्ठा c4iw_ep *ep, काष्ठा sk_buff *skb,
 			u8 mpa_rev_to_use)
-{
-	int mpalen, wrlen, ret;
-	struct fw_ofld_tx_data_wr *req;
-	struct mpa_message *mpa;
-	struct mpa_v2_conn_params mpa_v2_params;
+अणु
+	पूर्णांक mpalen, wrlen, ret;
+	काष्ठा fw_ofld_tx_data_wr *req;
+	काष्ठा mpa_message *mpa;
+	काष्ठा mpa_v2_conn_params mpa_v2_params;
 
 	pr_debug("ep %p tid %u pd_len %d\n",
 		 ep, ep->hwtid, ep->plen);
 
-	mpalen = sizeof(*mpa) + ep->plen;
-	if (mpa_rev_to_use == 2)
-		mpalen += sizeof(struct mpa_v2_conn_params);
-	wrlen = roundup(mpalen + sizeof(*req), 16);
+	mpalen = माप(*mpa) + ep->plen;
+	अगर (mpa_rev_to_use == 2)
+		mpalen += माप(काष्ठा mpa_v2_conn_params);
+	wrlen = roundup(mpalen + माप(*req), 16);
 	skb = get_skb(skb, wrlen, GFP_KERNEL);
-	if (!skb) {
+	अगर (!skb) अणु
 		connect_reply_upcall(ep, -ENOMEM);
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 	set_wr_txq(skb, CPL_PRIORITY_DATA, ep->txq_idx);
 
 	req = skb_put_zero(skb, wrlen);
@@ -972,97 +973,97 @@ static int send_mpa_req(struct c4iw_ep *ep, struct sk_buff *skb,
 		FW_OFLD_TX_DATA_WR_FLUSH_F |
 		FW_OFLD_TX_DATA_WR_SHOVE_F);
 
-	mpa = (struct mpa_message *)(req + 1);
-	memcpy(mpa->key, MPA_KEY_REQ, sizeof(mpa->key));
+	mpa = (काष्ठा mpa_message *)(req + 1);
+	स_नकल(mpa->key, MPA_KEY_REQ, माप(mpa->key));
 
 	mpa->flags = 0;
-	if (crc_enabled)
+	अगर (crc_enabled)
 		mpa->flags |= MPA_CRC;
-	if (markers_enabled) {
+	अगर (markers_enabled) अणु
 		mpa->flags |= MPA_MARKERS;
 		ep->mpa_attr.recv_marker_enabled = 1;
-	} else {
+	पूर्ण अन्यथा अणु
 		ep->mpa_attr.recv_marker_enabled = 0;
-	}
-	if (mpa_rev_to_use == 2)
+	पूर्ण
+	अगर (mpa_rev_to_use == 2)
 		mpa->flags |= MPA_ENHANCED_RDMA_CONN;
 
-	mpa->private_data_size = htons(ep->plen);
+	mpa->निजी_data_size = htons(ep->plen);
 	mpa->revision = mpa_rev_to_use;
-	if (mpa_rev_to_use == 1) {
+	अगर (mpa_rev_to_use == 1) अणु
 		ep->tried_with_mpa_v1 = 1;
 		ep->retry_with_mpa_v1 = 0;
-	}
+	पूर्ण
 
-	if (mpa_rev_to_use == 2) {
-		mpa->private_data_size =
-			htons(ntohs(mpa->private_data_size) +
-			      sizeof(struct mpa_v2_conn_params));
+	अगर (mpa_rev_to_use == 2) अणु
+		mpa->निजी_data_size =
+			htons(ntohs(mpa->निजी_data_size) +
+			      माप(काष्ठा mpa_v2_conn_params));
 		pr_debug("initiator ird %u ord %u\n", ep->ird,
 			 ep->ord);
 		mpa_v2_params.ird = htons((u16)ep->ird);
 		mpa_v2_params.ord = htons((u16)ep->ord);
 
-		if (peer2peer) {
+		अगर (peer2peer) अणु
 			mpa_v2_params.ird |= htons(MPA_V2_PEER2PEER_MODEL);
-			if (p2p_type == FW_RI_INIT_P2PTYPE_RDMA_WRITE)
+			अगर (p2p_type == FW_RI_INIT_P2PTYPE_RDMA_WRITE)
 				mpa_v2_params.ord |=
 					htons(MPA_V2_RDMA_WRITE_RTR);
-			else if (p2p_type == FW_RI_INIT_P2PTYPE_READ_REQ)
+			अन्यथा अगर (p2p_type == FW_RI_INIT_P2PTYPE_READ_REQ)
 				mpa_v2_params.ord |=
 					htons(MPA_V2_RDMA_READ_RTR);
-		}
-		memcpy(mpa->private_data, &mpa_v2_params,
-		       sizeof(struct mpa_v2_conn_params));
+		पूर्ण
+		स_नकल(mpa->निजी_data, &mpa_v2_params,
+		       माप(काष्ठा mpa_v2_conn_params));
 
-		if (ep->plen)
-			memcpy(mpa->private_data +
-			       sizeof(struct mpa_v2_conn_params),
-			       ep->mpa_pkt + sizeof(*mpa), ep->plen);
-	} else
-		if (ep->plen)
-			memcpy(mpa->private_data,
-					ep->mpa_pkt + sizeof(*mpa), ep->plen);
+		अगर (ep->plen)
+			स_नकल(mpa->निजी_data +
+			       माप(काष्ठा mpa_v2_conn_params),
+			       ep->mpa_pkt + माप(*mpa), ep->plen);
+	पूर्ण अन्यथा
+		अगर (ep->plen)
+			स_नकल(mpa->निजी_data,
+					ep->mpa_pkt + माप(*mpa), ep->plen);
 
 	/*
 	 * Reference the mpa skb.  This ensures the data area
-	 * will remain in memory until the hw acks the tx.
+	 * will reमुख्य in memory until the hw acks the tx.
 	 * Function fw4_ack() will deref it.
 	 */
 	skb_get(skb);
-	t4_set_arp_err_handler(skb, NULL, arp_failure_discard);
+	t4_set_arp_err_handler(skb, शून्य, arp_failure_discard);
 	ep->mpa_skb = skb;
 	ret = c4iw_l2t_send(&ep->com.dev->rdev, skb, ep->l2t);
-	if (ret)
-		return ret;
-	start_ep_timer(ep);
+	अगर (ret)
+		वापस ret;
+	start_ep_समयr(ep);
 	__state_set(&ep->com, MPA_REQ_SENT);
 	ep->mpa_attr.initiator = 1;
 	ep->snd_seq += mpalen;
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int send_mpa_reject(struct c4iw_ep *ep, const void *pdata, u8 plen)
-{
-	int mpalen, wrlen;
-	struct fw_ofld_tx_data_wr *req;
-	struct mpa_message *mpa;
-	struct sk_buff *skb;
-	struct mpa_v2_conn_params mpa_v2_params;
+अटल पूर्णांक send_mpa_reject(काष्ठा c4iw_ep *ep, स्थिर व्योम *pdata, u8 plen)
+अणु
+	पूर्णांक mpalen, wrlen;
+	काष्ठा fw_ofld_tx_data_wr *req;
+	काष्ठा mpa_message *mpa;
+	काष्ठा sk_buff *skb;
+	काष्ठा mpa_v2_conn_params mpa_v2_params;
 
 	pr_debug("ep %p tid %u pd_len %d\n",
 		 ep, ep->hwtid, ep->plen);
 
-	mpalen = sizeof(*mpa) + plen;
-	if (ep->mpa_attr.version == 2 && ep->mpa_attr.enhanced_rdma_conn)
-		mpalen += sizeof(struct mpa_v2_conn_params);
-	wrlen = roundup(mpalen + sizeof(*req), 16);
+	mpalen = माप(*mpa) + plen;
+	अगर (ep->mpa_attr.version == 2 && ep->mpa_attr.enhanced_rdma_conn)
+		mpalen += माप(काष्ठा mpa_v2_conn_params);
+	wrlen = roundup(mpalen + माप(*req), 16);
 
-	skb = get_skb(NULL, wrlen, GFP_KERNEL);
-	if (!skb) {
+	skb = get_skb(शून्य, wrlen, GFP_KERNEL);
+	अगर (!skb) अणु
 		pr_err("%s - cannot alloc skb!\n", __func__);
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 	set_wr_txq(skb, CPL_PRIORITY_DATA, ep->txq_idx);
 
 	req = skb_put_zero(skb, wrlen);
@@ -1078,18 +1079,18 @@ static int send_mpa_reject(struct c4iw_ep *ep, const void *pdata, u8 plen)
 		FW_OFLD_TX_DATA_WR_FLUSH_F |
 		FW_OFLD_TX_DATA_WR_SHOVE_F);
 
-	mpa = (struct mpa_message *)(req + 1);
-	memset(mpa, 0, sizeof(*mpa));
-	memcpy(mpa->key, MPA_KEY_REP, sizeof(mpa->key));
+	mpa = (काष्ठा mpa_message *)(req + 1);
+	स_रखो(mpa, 0, माप(*mpa));
+	स_नकल(mpa->key, MPA_KEY_REP, माप(mpa->key));
 	mpa->flags = MPA_REJECT;
 	mpa->revision = ep->mpa_attr.version;
-	mpa->private_data_size = htons(plen);
+	mpa->निजी_data_size = htons(plen);
 
-	if (ep->mpa_attr.version == 2 && ep->mpa_attr.enhanced_rdma_conn) {
+	अगर (ep->mpa_attr.version == 2 && ep->mpa_attr.enhanced_rdma_conn) अणु
 		mpa->flags |= MPA_ENHANCED_RDMA_CONN;
-		mpa->private_data_size =
-			htons(ntohs(mpa->private_data_size) +
-			      sizeof(struct mpa_v2_conn_params));
+		mpa->निजी_data_size =
+			htons(ntohs(mpa->निजी_data_size) +
+			      माप(काष्ठा mpa_v2_conn_params));
 		mpa_v2_params.ird = htons(((u16)ep->ird) |
 					  (peer2peer ? MPA_V2_PEER2PEER_MODEL :
 					   0));
@@ -1099,50 +1100,50 @@ static int send_mpa_reject(struct c4iw_ep *ep, const void *pdata, u8 plen)
 					   MPA_V2_RDMA_WRITE_RTR : p2p_type ==
 					   FW_RI_INIT_P2PTYPE_READ_REQ ?
 					   MPA_V2_RDMA_READ_RTR : 0) : 0));
-		memcpy(mpa->private_data, &mpa_v2_params,
-		       sizeof(struct mpa_v2_conn_params));
+		स_नकल(mpa->निजी_data, &mpa_v2_params,
+		       माप(काष्ठा mpa_v2_conn_params));
 
-		if (ep->plen)
-			memcpy(mpa->private_data +
-			       sizeof(struct mpa_v2_conn_params), pdata, plen);
-	} else
-		if (plen)
-			memcpy(mpa->private_data, pdata, plen);
+		अगर (ep->plen)
+			स_नकल(mpa->निजी_data +
+			       माप(काष्ठा mpa_v2_conn_params), pdata, plen);
+	पूर्ण अन्यथा
+		अगर (plen)
+			स_नकल(mpa->निजी_data, pdata, plen);
 
 	/*
 	 * Reference the mpa skb again.  This ensures the data area
-	 * will remain in memory until the hw acks the tx.
+	 * will reमुख्य in memory until the hw acks the tx.
 	 * Function fw4_ack() will deref it.
 	 */
 	skb_get(skb);
 	set_wr_txq(skb, CPL_PRIORITY_DATA, ep->txq_idx);
-	t4_set_arp_err_handler(skb, NULL, mpa_start_arp_failure);
+	t4_set_arp_err_handler(skb, शून्य, mpa_start_arp_failure);
 	ep->mpa_skb = skb;
 	ep->snd_seq += mpalen;
-	return c4iw_l2t_send(&ep->com.dev->rdev, skb, ep->l2t);
-}
+	वापस c4iw_l2t_send(&ep->com.dev->rdev, skb, ep->l2t);
+पूर्ण
 
-static int send_mpa_reply(struct c4iw_ep *ep, const void *pdata, u8 plen)
-{
-	int mpalen, wrlen;
-	struct fw_ofld_tx_data_wr *req;
-	struct mpa_message *mpa;
-	struct sk_buff *skb;
-	struct mpa_v2_conn_params mpa_v2_params;
+अटल पूर्णांक send_mpa_reply(काष्ठा c4iw_ep *ep, स्थिर व्योम *pdata, u8 plen)
+अणु
+	पूर्णांक mpalen, wrlen;
+	काष्ठा fw_ofld_tx_data_wr *req;
+	काष्ठा mpa_message *mpa;
+	काष्ठा sk_buff *skb;
+	काष्ठा mpa_v2_conn_params mpa_v2_params;
 
 	pr_debug("ep %p tid %u pd_len %d\n",
 		 ep, ep->hwtid, ep->plen);
 
-	mpalen = sizeof(*mpa) + plen;
-	if (ep->mpa_attr.version == 2 && ep->mpa_attr.enhanced_rdma_conn)
-		mpalen += sizeof(struct mpa_v2_conn_params);
-	wrlen = roundup(mpalen + sizeof(*req), 16);
+	mpalen = माप(*mpa) + plen;
+	अगर (ep->mpa_attr.version == 2 && ep->mpa_attr.enhanced_rdma_conn)
+		mpalen += माप(काष्ठा mpa_v2_conn_params);
+	wrlen = roundup(mpalen + माप(*req), 16);
 
-	skb = get_skb(NULL, wrlen, GFP_KERNEL);
-	if (!skb) {
+	skb = get_skb(शून्य, wrlen, GFP_KERNEL);
+	अगर (!skb) अणु
 		pr_err("%s - cannot alloc skb!\n", __func__);
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 	set_wr_txq(skb, CPL_PRIORITY_DATA, ep->txq_idx);
 
 	req = skb_put_zero(skb, wrlen);
@@ -1158,68 +1159,68 @@ static int send_mpa_reply(struct c4iw_ep *ep, const void *pdata, u8 plen)
 		FW_OFLD_TX_DATA_WR_FLUSH_F |
 		FW_OFLD_TX_DATA_WR_SHOVE_F);
 
-	mpa = (struct mpa_message *)(req + 1);
-	memset(mpa, 0, sizeof(*mpa));
-	memcpy(mpa->key, MPA_KEY_REP, sizeof(mpa->key));
+	mpa = (काष्ठा mpa_message *)(req + 1);
+	स_रखो(mpa, 0, माप(*mpa));
+	स_नकल(mpa->key, MPA_KEY_REP, माप(mpa->key));
 	mpa->flags = 0;
-	if (ep->mpa_attr.crc_enabled)
+	अगर (ep->mpa_attr.crc_enabled)
 		mpa->flags |= MPA_CRC;
-	if (ep->mpa_attr.recv_marker_enabled)
+	अगर (ep->mpa_attr.recv_marker_enabled)
 		mpa->flags |= MPA_MARKERS;
 	mpa->revision = ep->mpa_attr.version;
-	mpa->private_data_size = htons(plen);
+	mpa->निजी_data_size = htons(plen);
 
-	if (ep->mpa_attr.version == 2 && ep->mpa_attr.enhanced_rdma_conn) {
+	अगर (ep->mpa_attr.version == 2 && ep->mpa_attr.enhanced_rdma_conn) अणु
 		mpa->flags |= MPA_ENHANCED_RDMA_CONN;
-		mpa->private_data_size =
-			htons(ntohs(mpa->private_data_size) +
-			      sizeof(struct mpa_v2_conn_params));
+		mpa->निजी_data_size =
+			htons(ntohs(mpa->निजी_data_size) +
+			      माप(काष्ठा mpa_v2_conn_params));
 		mpa_v2_params.ird = htons((u16)ep->ird);
 		mpa_v2_params.ord = htons((u16)ep->ord);
-		if (peer2peer && (ep->mpa_attr.p2p_type !=
-					FW_RI_INIT_P2PTYPE_DISABLED)) {
+		अगर (peer2peer && (ep->mpa_attr.p2p_type !=
+					FW_RI_INIT_P2PTYPE_DISABLED)) अणु
 			mpa_v2_params.ird |= htons(MPA_V2_PEER2PEER_MODEL);
 
-			if (p2p_type == FW_RI_INIT_P2PTYPE_RDMA_WRITE)
+			अगर (p2p_type == FW_RI_INIT_P2PTYPE_RDMA_WRITE)
 				mpa_v2_params.ord |=
 					htons(MPA_V2_RDMA_WRITE_RTR);
-			else if (p2p_type == FW_RI_INIT_P2PTYPE_READ_REQ)
+			अन्यथा अगर (p2p_type == FW_RI_INIT_P2PTYPE_READ_REQ)
 				mpa_v2_params.ord |=
 					htons(MPA_V2_RDMA_READ_RTR);
-		}
+		पूर्ण
 
-		memcpy(mpa->private_data, &mpa_v2_params,
-		       sizeof(struct mpa_v2_conn_params));
+		स_नकल(mpa->निजी_data, &mpa_v2_params,
+		       माप(काष्ठा mpa_v2_conn_params));
 
-		if (ep->plen)
-			memcpy(mpa->private_data +
-			       sizeof(struct mpa_v2_conn_params), pdata, plen);
-	} else
-		if (plen)
-			memcpy(mpa->private_data, pdata, plen);
+		अगर (ep->plen)
+			स_नकल(mpa->निजी_data +
+			       माप(काष्ठा mpa_v2_conn_params), pdata, plen);
+	पूर्ण अन्यथा
+		अगर (plen)
+			स_नकल(mpa->निजी_data, pdata, plen);
 
 	/*
 	 * Reference the mpa skb.  This ensures the data area
-	 * will remain in memory until the hw acks the tx.
+	 * will reमुख्य in memory until the hw acks the tx.
 	 * Function fw4_ack() will deref it.
 	 */
 	skb_get(skb);
-	t4_set_arp_err_handler(skb, NULL, mpa_start_arp_failure);
+	t4_set_arp_err_handler(skb, शून्य, mpa_start_arp_failure);
 	ep->mpa_skb = skb;
 	__state_set(&ep->com, MPA_REP_SENT);
 	ep->snd_seq += mpalen;
-	return c4iw_l2t_send(&ep->com.dev->rdev, skb, ep->l2t);
-}
+	वापस c4iw_l2t_send(&ep->com.dev->rdev, skb, ep->l2t);
+पूर्ण
 
-static int act_establish(struct c4iw_dev *dev, struct sk_buff *skb)
-{
-	struct c4iw_ep *ep;
-	struct cpl_act_establish *req = cplhdr(skb);
-	unsigned short tcp_opt = ntohs(req->tcp_opt);
-	unsigned int tid = GET_TID(req);
-	unsigned int atid = TID_TID_G(ntohl(req->tos_atid));
-	struct tid_info *t = dev->rdev.lldi.tids;
-	int ret;
+अटल पूर्णांक act_establish(काष्ठा c4iw_dev *dev, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा c4iw_ep *ep;
+	काष्ठा cpl_act_establish *req = cplhdr(skb);
+	अचिन्हित लघु tcp_opt = ntohs(req->tcp_opt);
+	अचिन्हित पूर्णांक tid = GET_TID(req);
+	अचिन्हित पूर्णांक atid = TID_TID_G(ntohl(req->tos_atid));
+	काष्ठा tid_info *t = dev->rdev.lldi.tids;
+	पूर्णांक ret;
 
 	ep = lookup_atid(t, atid);
 
@@ -1229,7 +1230,7 @@ static int act_establish(struct c4iw_dev *dev, struct sk_buff *skb)
 	mutex_lock(&ep->com.mutex);
 	dst_confirm(ep->dst);
 
-	/* setup the hwtid for this connection */
+	/* setup the hwtid क्रम this connection */
 	ep->hwtid = tid;
 	cxgb4_insert_tid(t, ep, tid, ep->com.local_addr.ss_family);
 	insert_ep_tid(ep);
@@ -1242,195 +1243,195 @@ static int act_establish(struct c4iw_dev *dev, struct sk_buff *skb)
 
 	/* dealloc the atid */
 	xa_erase_irq(&ep->com.dev->atids, atid);
-	cxgb4_free_atid(t, atid);
+	cxgb4_मुक्त_atid(t, atid);
 	set_bit(ACT_ESTAB, &ep->com.history);
 
 	/* start MPA negotiation */
 	ret = send_flowc(ep);
-	if (ret)
-		goto err;
-	if (ep->retry_with_mpa_v1)
+	अगर (ret)
+		जाओ err;
+	अगर (ep->retry_with_mpa_v1)
 		ret = send_mpa_req(ep, skb, 1);
-	else
+	अन्यथा
 		ret = send_mpa_req(ep, skb, mpa_rev);
-	if (ret)
-		goto err;
+	अगर (ret)
+		जाओ err;
 	mutex_unlock(&ep->com.mutex);
-	return 0;
+	वापस 0;
 err:
 	mutex_unlock(&ep->com.mutex);
 	connect_reply_upcall(ep, -ENOMEM);
 	c4iw_ep_disconnect(ep, 0, GFP_KERNEL);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void close_complete_upcall(struct c4iw_ep *ep, int status)
-{
-	struct iw_cm_event event;
+अटल व्योम बंद_complete_upcall(काष्ठा c4iw_ep *ep, पूर्णांक status)
+अणु
+	काष्ठा iw_cm_event event;
 
 	pr_debug("ep %p tid %u\n", ep, ep->hwtid);
-	memset(&event, 0, sizeof(event));
+	स_रखो(&event, 0, माप(event));
 	event.event = IW_CM_EVENT_CLOSE;
 	event.status = status;
-	if (ep->com.cm_id) {
+	अगर (ep->com.cm_id) अणु
 		pr_debug("close complete delivered ep %p cm_id %p tid %u\n",
 			 ep, ep->com.cm_id, ep->hwtid);
 		ep->com.cm_id->event_handler(ep->com.cm_id, &event);
 		deref_cm_id(&ep->com);
 		set_bit(CLOSE_UPCALL, &ep->com.history);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void peer_close_upcall(struct c4iw_ep *ep)
-{
-	struct iw_cm_event event;
+अटल व्योम peer_बंद_upcall(काष्ठा c4iw_ep *ep)
+अणु
+	काष्ठा iw_cm_event event;
 
 	pr_debug("ep %p tid %u\n", ep, ep->hwtid);
-	memset(&event, 0, sizeof(event));
+	स_रखो(&event, 0, माप(event));
 	event.event = IW_CM_EVENT_DISCONNECT;
-	if (ep->com.cm_id) {
+	अगर (ep->com.cm_id) अणु
 		pr_debug("peer close delivered ep %p cm_id %p tid %u\n",
 			 ep, ep->com.cm_id, ep->hwtid);
 		ep->com.cm_id->event_handler(ep->com.cm_id, &event);
 		set_bit(DISCONN_UPCALL, &ep->com.history);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void peer_abort_upcall(struct c4iw_ep *ep)
-{
-	struct iw_cm_event event;
+अटल व्योम peer_पात_upcall(काष्ठा c4iw_ep *ep)
+अणु
+	काष्ठा iw_cm_event event;
 
 	pr_debug("ep %p tid %u\n", ep, ep->hwtid);
-	memset(&event, 0, sizeof(event));
+	स_रखो(&event, 0, माप(event));
 	event.event = IW_CM_EVENT_CLOSE;
 	event.status = -ECONNRESET;
-	if (ep->com.cm_id) {
+	अगर (ep->com.cm_id) अणु
 		pr_debug("abort delivered ep %p cm_id %p tid %u\n", ep,
 			 ep->com.cm_id, ep->hwtid);
 		ep->com.cm_id->event_handler(ep->com.cm_id, &event);
 		deref_cm_id(&ep->com);
 		set_bit(ABORT_UPCALL, &ep->com.history);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void connect_reply_upcall(struct c4iw_ep *ep, int status)
-{
-	struct iw_cm_event event;
+अटल व्योम connect_reply_upcall(काष्ठा c4iw_ep *ep, पूर्णांक status)
+अणु
+	काष्ठा iw_cm_event event;
 
 	pr_debug("ep %p tid %u status %d\n",
 		 ep, ep->hwtid, status);
-	memset(&event, 0, sizeof(event));
+	स_रखो(&event, 0, माप(event));
 	event.event = IW_CM_EVENT_CONNECT_REPLY;
 	event.status = status;
-	memcpy(&event.local_addr, &ep->com.local_addr,
-	       sizeof(ep->com.local_addr));
-	memcpy(&event.remote_addr, &ep->com.remote_addr,
-	       sizeof(ep->com.remote_addr));
+	स_नकल(&event.local_addr, &ep->com.local_addr,
+	       माप(ep->com.local_addr));
+	स_नकल(&event.remote_addr, &ep->com.remote_addr,
+	       माप(ep->com.remote_addr));
 
-	if ((status == 0) || (status == -ECONNREFUSED)) {
-		if (!ep->tried_with_mpa_v1) {
+	अगर ((status == 0) || (status == -ECONNREFUSED)) अणु
+		अगर (!ep->tried_with_mpa_v1) अणु
 			/* this means MPA_v2 is used */
 			event.ord = ep->ird;
 			event.ird = ep->ord;
-			event.private_data_len = ep->plen -
-				sizeof(struct mpa_v2_conn_params);
-			event.private_data = ep->mpa_pkt +
-				sizeof(struct mpa_message) +
-				sizeof(struct mpa_v2_conn_params);
-		} else {
+			event.निजी_data_len = ep->plen -
+				माप(काष्ठा mpa_v2_conn_params);
+			event.निजी_data = ep->mpa_pkt +
+				माप(काष्ठा mpa_message) +
+				माप(काष्ठा mpa_v2_conn_params);
+		पूर्ण अन्यथा अणु
 			/* this means MPA_v1 is used */
-			event.ord = cur_max_read_depth(ep->com.dev);
-			event.ird = cur_max_read_depth(ep->com.dev);
-			event.private_data_len = ep->plen;
-			event.private_data = ep->mpa_pkt +
-				sizeof(struct mpa_message);
-		}
-	}
+			event.ord = cur_max_पढ़ो_depth(ep->com.dev);
+			event.ird = cur_max_पढ़ो_depth(ep->com.dev);
+			event.निजी_data_len = ep->plen;
+			event.निजी_data = ep->mpa_pkt +
+				माप(काष्ठा mpa_message);
+		पूर्ण
+	पूर्ण
 
 	pr_debug("ep %p tid %u status %d\n", ep,
 		 ep->hwtid, status);
 	set_bit(CONN_RPL_UPCALL, &ep->com.history);
 	ep->com.cm_id->event_handler(ep->com.cm_id, &event);
 
-	if (status < 0)
+	अगर (status < 0)
 		deref_cm_id(&ep->com);
-}
+पूर्ण
 
-static int connect_request_upcall(struct c4iw_ep *ep)
-{
-	struct iw_cm_event event;
-	int ret;
+अटल पूर्णांक connect_request_upcall(काष्ठा c4iw_ep *ep)
+अणु
+	काष्ठा iw_cm_event event;
+	पूर्णांक ret;
 
 	pr_debug("ep %p tid %u\n", ep, ep->hwtid);
-	memset(&event, 0, sizeof(event));
+	स_रखो(&event, 0, माप(event));
 	event.event = IW_CM_EVENT_CONNECT_REQUEST;
-	memcpy(&event.local_addr, &ep->com.local_addr,
-	       sizeof(ep->com.local_addr));
-	memcpy(&event.remote_addr, &ep->com.remote_addr,
-	       sizeof(ep->com.remote_addr));
+	स_नकल(&event.local_addr, &ep->com.local_addr,
+	       माप(ep->com.local_addr));
+	स_नकल(&event.remote_addr, &ep->com.remote_addr,
+	       माप(ep->com.remote_addr));
 	event.provider_data = ep;
-	if (!ep->tried_with_mpa_v1) {
+	अगर (!ep->tried_with_mpa_v1) अणु
 		/* this means MPA_v2 is used */
 		event.ord = ep->ord;
 		event.ird = ep->ird;
-		event.private_data_len = ep->plen -
-			sizeof(struct mpa_v2_conn_params);
-		event.private_data = ep->mpa_pkt + sizeof(struct mpa_message) +
-			sizeof(struct mpa_v2_conn_params);
-	} else {
+		event.निजी_data_len = ep->plen -
+			माप(काष्ठा mpa_v2_conn_params);
+		event.निजी_data = ep->mpa_pkt + माप(काष्ठा mpa_message) +
+			माप(काष्ठा mpa_v2_conn_params);
+	पूर्ण अन्यथा अणु
 		/* this means MPA_v1 is used. Send max supported */
-		event.ord = cur_max_read_depth(ep->com.dev);
-		event.ird = cur_max_read_depth(ep->com.dev);
-		event.private_data_len = ep->plen;
-		event.private_data = ep->mpa_pkt + sizeof(struct mpa_message);
-	}
+		event.ord = cur_max_पढ़ो_depth(ep->com.dev);
+		event.ird = cur_max_पढ़ो_depth(ep->com.dev);
+		event.निजी_data_len = ep->plen;
+		event.निजी_data = ep->mpa_pkt + माप(काष्ठा mpa_message);
+	पूर्ण
 	c4iw_get_ep(&ep->com);
 	ret = ep->parent_ep->com.cm_id->event_handler(ep->parent_ep->com.cm_id,
 						      &event);
-	if (ret)
+	अगर (ret)
 		c4iw_put_ep(&ep->com);
 	set_bit(CONNREQ_UPCALL, &ep->com.history);
 	c4iw_put_ep(&ep->parent_ep->com);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void established_upcall(struct c4iw_ep *ep)
-{
-	struct iw_cm_event event;
+अटल व्योम established_upcall(काष्ठा c4iw_ep *ep)
+अणु
+	काष्ठा iw_cm_event event;
 
 	pr_debug("ep %p tid %u\n", ep, ep->hwtid);
-	memset(&event, 0, sizeof(event));
+	स_रखो(&event, 0, माप(event));
 	event.event = IW_CM_EVENT_ESTABLISHED;
 	event.ird = ep->ord;
 	event.ord = ep->ird;
-	if (ep->com.cm_id) {
+	अगर (ep->com.cm_id) अणु
 		pr_debug("ep %p tid %u\n", ep, ep->hwtid);
 		ep->com.cm_id->event_handler(ep->com.cm_id, &event);
 		set_bit(ESTAB_UPCALL, &ep->com.history);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int update_rx_credits(struct c4iw_ep *ep, u32 credits)
-{
-	struct sk_buff *skb;
-	u32 wrlen = roundup(sizeof(struct cpl_rx_data_ack), 16);
+अटल पूर्णांक update_rx_credits(काष्ठा c4iw_ep *ep, u32 credits)
+अणु
+	काष्ठा sk_buff *skb;
+	u32 wrlen = roundup(माप(काष्ठा cpl_rx_data_ack), 16);
 	u32 credit_dack;
 
 	pr_debug("ep %p tid %u credits %u\n",
 		 ep, ep->hwtid, credits);
-	skb = get_skb(NULL, wrlen, GFP_KERNEL);
-	if (!skb) {
+	skb = get_skb(शून्य, wrlen, GFP_KERNEL);
+	अगर (!skb) अणु
 		pr_err("update_rx_credits - cannot alloc skb!\n");
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	/*
-	 * If we couldn't specify the entire rcv window at connection setup
-	 * due to the limit in the number of bits in the RCV_BUFSIZ field,
-	 * then add the overage in to the credits returned.
+	 * If we couldn't specअगरy the entire rcv winकरोw at connection setup
+	 * due to the limit in the number of bits in the RCV_बफ_मान field,
+	 * then add the overage in to the credits वापसed.
 	 */
-	if (ep->rcv_win > RCV_BUFSIZ_M * 1024)
-		credits += ep->rcv_win - RCV_BUFSIZ_M * 1024;
+	अगर (ep->rcv_win > RCV_बफ_मान_M * 1024)
+		credits += ep->rcv_win - RCV_बफ_मान_M * 1024;
 
 	credit_dack = credits | RX_FORCE_ACK_F | RX_DACK_CHANGE_F |
 		      RX_DACK_MODE_V(dack_mode);
@@ -1439,10 +1440,10 @@ static int update_rx_credits(struct c4iw_ep *ep, u32 credits)
 			    credit_dack);
 
 	c4iw_ofld_send(&ep->com.dev->rdev, skb);
-	return credits;
-}
+	वापस credits;
+पूर्ण
 
-#define RELAXED_IRD_NEGOTIATION 1
+#घोषणा RELAXED_IRD_NEGOTIATION 1
 
 /*
  * process_mpa_reply - process streaming mode MPA reply
@@ -1452,102 +1453,102 @@ static int update_rx_credits(struct c4iw_ep *ep, u32 credits)
  * 0 upon success indicating a connect request was delivered to the ULP
  * or the mpa request is incomplete but valid so far.
  *
- * 1 if a failure requires the caller to close the connection.
+ * 1 अगर a failure requires the caller to बंद the connection.
  *
- * 2 if a failure requires the caller to abort the connection.
+ * 2 अगर a failure requires the caller to पात the connection.
  */
-static int process_mpa_reply(struct c4iw_ep *ep, struct sk_buff *skb)
-{
-	struct mpa_message *mpa;
-	struct mpa_v2_conn_params *mpa_v2_params;
+अटल पूर्णांक process_mpa_reply(काष्ठा c4iw_ep *ep, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा mpa_message *mpa;
+	काष्ठा mpa_v2_conn_params *mpa_v2_params;
 	u16 plen;
 	u16 resp_ird, resp_ord;
 	u8 rtr_mismatch = 0, insuff_ird = 0;
-	struct c4iw_qp_attributes attrs;
-	enum c4iw_qp_attr_mask mask;
-	int err;
-	int disconnect = 0;
+	काष्ठा c4iw_qp_attributes attrs;
+	क्रमागत c4iw_qp_attr_mask mask;
+	पूर्णांक err;
+	पूर्णांक disconnect = 0;
 
 	pr_debug("ep %p tid %u\n", ep, ep->hwtid);
 
 	/*
-	 * If we get more than the supported amount of private data
+	 * If we get more than the supported amount of निजी data
 	 * then we must fail this connection.
 	 */
-	if (ep->mpa_pkt_len + skb->len > sizeof(ep->mpa_pkt)) {
+	अगर (ep->mpa_pkt_len + skb->len > माप(ep->mpa_pkt)) अणु
 		err = -EINVAL;
-		goto err_stop_timer;
-	}
+		जाओ err_stop_समयr;
+	पूर्ण
 
 	/*
-	 * copy the new data into our accumulation buffer.
+	 * copy the new data पूर्णांकo our accumulation buffer.
 	 */
 	skb_copy_from_linear_data(skb, &(ep->mpa_pkt[ep->mpa_pkt_len]),
 				  skb->len);
 	ep->mpa_pkt_len += skb->len;
 
 	/*
-	 * if we don't even have the mpa message, then bail.
+	 * अगर we करोn't even have the mpa message, then bail.
 	 */
-	if (ep->mpa_pkt_len < sizeof(*mpa))
-		return 0;
-	mpa = (struct mpa_message *) ep->mpa_pkt;
+	अगर (ep->mpa_pkt_len < माप(*mpa))
+		वापस 0;
+	mpa = (काष्ठा mpa_message *) ep->mpa_pkt;
 
 	/* Validate MPA header. */
-	if (mpa->revision > mpa_rev) {
+	अगर (mpa->revision > mpa_rev) अणु
 		pr_err("%s MPA version mismatch. Local = %d, Received = %d\n",
 		       __func__, mpa_rev, mpa->revision);
 		err = -EPROTO;
-		goto err_stop_timer;
-	}
-	if (memcmp(mpa->key, MPA_KEY_REP, sizeof(mpa->key))) {
+		जाओ err_stop_समयr;
+	पूर्ण
+	अगर (स_भेद(mpa->key, MPA_KEY_REP, माप(mpa->key))) अणु
 		err = -EPROTO;
-		goto err_stop_timer;
-	}
+		जाओ err_stop_समयr;
+	पूर्ण
 
-	plen = ntohs(mpa->private_data_size);
-
-	/*
-	 * Fail if there's too much private data.
-	 */
-	if (plen > MPA_MAX_PRIVATE_DATA) {
-		err = -EPROTO;
-		goto err_stop_timer;
-	}
+	plen = ntohs(mpa->निजी_data_size);
 
 	/*
-	 * If plen does not account for pkt size
+	 * Fail अगर there's too much निजी data.
 	 */
-	if (ep->mpa_pkt_len > (sizeof(*mpa) + plen)) {
+	अगर (plen > MPA_MAX_PRIVATE_DATA) अणु
 		err = -EPROTO;
-		goto err_stop_timer;
-	}
+		जाओ err_stop_समयr;
+	पूर्ण
+
+	/*
+	 * If plen करोes not account क्रम pkt size
+	 */
+	अगर (ep->mpa_pkt_len > (माप(*mpa) + plen)) अणु
+		err = -EPROTO;
+		जाओ err_stop_समयr;
+	पूर्ण
 
 	ep->plen = (u8) plen;
 
 	/*
-	 * If we don't have all the pdata yet, then bail.
-	 * We'll continue process when more data arrives.
+	 * If we करोn't have all the pdata yet, then bail.
+	 * We'll जारी process when more data arrives.
 	 */
-	if (ep->mpa_pkt_len < (sizeof(*mpa) + plen))
-		return 0;
+	अगर (ep->mpa_pkt_len < (माप(*mpa) + plen))
+		वापस 0;
 
-	if (mpa->flags & MPA_REJECT) {
+	अगर (mpa->flags & MPA_REJECT) अणु
 		err = -ECONNREFUSED;
-		goto err_stop_timer;
-	}
+		जाओ err_stop_समयr;
+	पूर्ण
 
 	/*
-	 * Stop mpa timer.  If it expired, then
-	 * we ignore the MPA reply.  process_timeout()
-	 * will abort the connection.
+	 * Stop mpa समयr.  If it expired, then
+	 * we ignore the MPA reply.  process_समयout()
+	 * will पात the connection.
 	 */
-	if (stop_ep_timer(ep))
-		return 0;
+	अगर (stop_ep_समयr(ep))
+		वापस 0;
 
 	/*
 	 * If we get here we have accumulated the entire mpa
-	 * start reply message including private data. And
+	 * start reply message including निजी data. And
 	 * the MPA header is valid.
 	 */
 	__state_set(&ep->com, FPDU_MODE);
@@ -1556,12 +1557,12 @@ static int process_mpa_reply(struct c4iw_ep *ep, struct sk_buff *skb)
 	ep->mpa_attr.version = mpa->revision;
 	ep->mpa_attr.p2p_type = FW_RI_INIT_P2PTYPE_DISABLED;
 
-	if (mpa->revision == 2) {
+	अगर (mpa->revision == 2) अणु
 		ep->mpa_attr.enhanced_rdma_conn =
 			mpa->flags & MPA_ENHANCED_RDMA_CONN ? 1 : 0;
-		if (ep->mpa_attr.enhanced_rdma_conn) {
-			mpa_v2_params = (struct mpa_v2_conn_params *)
-				(ep->mpa_pkt + sizeof(*mpa));
+		अगर (ep->mpa_attr.enhanced_rdma_conn) अणु
+			mpa_v2_params = (काष्ठा mpa_v2_conn_params *)
+				(ep->mpa_pkt + माप(*mpa));
 			resp_ird = ntohs(mpa_v2_params->ird) &
 				MPA_V2_IRD_ORD_MASK;
 			resp_ord = ntohs(mpa_v2_params->ord) &
@@ -1570,45 +1571,45 @@ static int process_mpa_reply(struct c4iw_ep *ep, struct sk_buff *skb)
 				 resp_ird, resp_ord, ep->ird, ep->ord);
 
 			/*
-			 * This is a double-check. Ideally, below checks are
+			 * This is a द्विगुन-check. Ideally, below checks are
 			 * not required since ird/ord stuff has been taken
 			 * care of in c4iw_accept_cr
 			 */
-			if (ep->ird < resp_ord) {
-				if (RELAXED_IRD_NEGOTIATION && resp_ord <=
+			अगर (ep->ird < resp_ord) अणु
+				अगर (RELAXED_IRD_NEGOTIATION && resp_ord <=
 				    ep->com.dev->rdev.lldi.max_ordird_qp)
 					ep->ird = resp_ord;
-				else
+				अन्यथा
 					insuff_ird = 1;
-			} else if (ep->ird > resp_ord) {
+			पूर्ण अन्यथा अगर (ep->ird > resp_ord) अणु
 				ep->ird = resp_ord;
-			}
-			if (ep->ord > resp_ird) {
-				if (RELAXED_IRD_NEGOTIATION)
+			पूर्ण
+			अगर (ep->ord > resp_ird) अणु
+				अगर (RELAXED_IRD_NEGOTIATION)
 					ep->ord = resp_ird;
-				else
+				अन्यथा
 					insuff_ird = 1;
-			}
-			if (insuff_ird) {
+			पूर्ण
+			अगर (insuff_ird) अणु
 				err = -ENOMEM;
 				ep->ird = resp_ord;
 				ep->ord = resp_ird;
-			}
+			पूर्ण
 
-			if (ntohs(mpa_v2_params->ird) &
-					MPA_V2_PEER2PEER_MODEL) {
-				if (ntohs(mpa_v2_params->ord) &
+			अगर (ntohs(mpa_v2_params->ird) &
+					MPA_V2_PEER2PEER_MODEL) अणु
+				अगर (ntohs(mpa_v2_params->ord) &
 						MPA_V2_RDMA_WRITE_RTR)
 					ep->mpa_attr.p2p_type =
 						FW_RI_INIT_P2PTYPE_RDMA_WRITE;
-				else if (ntohs(mpa_v2_params->ord) &
+				अन्यथा अगर (ntohs(mpa_v2_params->ord) &
 						MPA_V2_RDMA_READ_RTR)
 					ep->mpa_attr.p2p_type =
 						FW_RI_INIT_P2PTYPE_READ_REQ;
-			}
-		}
-	} else if (mpa->revision == 1)
-		if (peer2peer)
+			पूर्ण
+		पूर्ण
+	पूर्ण अन्यथा अगर (mpa->revision == 1)
+		अगर (peer2peer)
 			ep->mpa_attr.p2p_type = p2p_type;
 
 	pr_debug("crc_enabled=%d, recv_marker_enabled=%d, xmit_marker_enabled=%d, version=%d p2p_type=%d local-p2p_type = %d\n",
@@ -1618,16 +1619,16 @@ static int process_mpa_reply(struct c4iw_ep *ep, struct sk_buff *skb)
 		 ep->mpa_attr.p2p_type, p2p_type);
 
 	/*
-	 * If responder's RTR does not match with that of initiator, assign
+	 * If responder's RTR करोes not match with that of initiator, assign
 	 * FW_RI_INIT_P2PTYPE_DISABLED in mpa attributes so that RTR is not
 	 * generated when moving QP to RTS state.
 	 * A TERM message will be sent after QP has moved to RTS state
 	 */
-	if ((ep->mpa_attr.version == 2) && peer2peer &&
-			(ep->mpa_attr.p2p_type != p2p_type)) {
+	अगर ((ep->mpa_attr.version == 2) && peer2peer &&
+			(ep->mpa_attr.p2p_type != p2p_type)) अणु
 		ep->mpa_attr.p2p_type = FW_RI_INIT_P2PTYPE_DISABLED;
 		rtr_mismatch = 1;
-	}
+	पूर्ण
 
 	attrs.mpa_attr = ep->mpa_attr;
 	attrs.max_ird = ep->ird;
@@ -1640,55 +1641,55 @@ static int process_mpa_reply(struct c4iw_ep *ep, struct sk_buff *skb)
 	    C4IW_QP_ATTR_MAX_IRD | C4IW_QP_ATTR_MAX_ORD;
 
 	/* bind QP and TID with INIT_WR */
-	err = c4iw_modify_qp(ep->com.qp->rhp,
+	err = c4iw_modअगरy_qp(ep->com.qp->rhp,
 			     ep->com.qp, mask, &attrs, 1);
-	if (err)
-		goto err;
+	अगर (err)
+		जाओ err;
 
 	/*
 	 * If responder's RTR requirement did not match with what initiator
 	 * supports, generate TERM message
 	 */
-	if (rtr_mismatch) {
+	अगर (rtr_mismatch) अणु
 		pr_err("%s: RTR mismatch, sending TERM\n", __func__);
 		attrs.layer_etype = LAYER_MPA | DDP_LLP;
 		attrs.ecode = MPA_NOMATCH_RTR;
 		attrs.next_state = C4IW_QP_STATE_TERMINATE;
 		attrs.send_term = 1;
-		err = c4iw_modify_qp(ep->com.qp->rhp, ep->com.qp,
+		err = c4iw_modअगरy_qp(ep->com.qp->rhp, ep->com.qp,
 				C4IW_QP_ATTR_NEXT_STATE, &attrs, 1);
 		err = -ENOMEM;
 		disconnect = 1;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	/*
-	 * Generate TERM if initiator IRD is not sufficient for responder
-	 * provided ORD. Currently, we do the same behaviour even when
+	 * Generate TERM अगर initiator IRD is not sufficient क्रम responder
+	 * provided ORD. Currently, we करो the same behaviour even when
 	 * responder provided IRD is also not sufficient as regards to
 	 * initiator ORD.
 	 */
-	if (insuff_ird) {
+	अगर (insuff_ird) अणु
 		pr_err("%s: Insufficient IRD, sending TERM\n", __func__);
 		attrs.layer_etype = LAYER_MPA | DDP_LLP;
 		attrs.ecode = MPA_INSUFF_IRD;
 		attrs.next_state = C4IW_QP_STATE_TERMINATE;
 		attrs.send_term = 1;
-		err = c4iw_modify_qp(ep->com.qp->rhp, ep->com.qp,
+		err = c4iw_modअगरy_qp(ep->com.qp->rhp, ep->com.qp,
 				C4IW_QP_ATTR_NEXT_STATE, &attrs, 1);
 		err = -ENOMEM;
 		disconnect = 1;
-		goto out;
-	}
-	goto out;
-err_stop_timer:
-	stop_ep_timer(ep);
+		जाओ out;
+	पूर्ण
+	जाओ out;
+err_stop_समयr:
+	stop_ep_समयr(ep);
 err:
 	disconnect = 2;
 out:
 	connect_reply_upcall(ep, err);
-	return disconnect;
-}
+	वापस disconnect;
+पूर्ण
 
 /*
  * process_mpa_request - process streaming mode MPA request
@@ -1698,120 +1699,120 @@ out:
  * 0 upon success indicating a connect request was delivered to the ULP
  * or the mpa request is incomplete but valid so far.
  *
- * 1 if a failure requires the caller to close the connection.
+ * 1 अगर a failure requires the caller to बंद the connection.
  *
- * 2 if a failure requires the caller to abort the connection.
+ * 2 अगर a failure requires the caller to पात the connection.
  */
-static int process_mpa_request(struct c4iw_ep *ep, struct sk_buff *skb)
-{
-	struct mpa_message *mpa;
-	struct mpa_v2_conn_params *mpa_v2_params;
+अटल पूर्णांक process_mpa_request(काष्ठा c4iw_ep *ep, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा mpa_message *mpa;
+	काष्ठा mpa_v2_conn_params *mpa_v2_params;
 	u16 plen;
 
 	pr_debug("ep %p tid %u\n", ep, ep->hwtid);
 
 	/*
-	 * If we get more than the supported amount of private data
+	 * If we get more than the supported amount of निजी data
 	 * then we must fail this connection.
 	 */
-	if (ep->mpa_pkt_len + skb->len > sizeof(ep->mpa_pkt))
-		goto err_stop_timer;
+	अगर (ep->mpa_pkt_len + skb->len > माप(ep->mpa_pkt))
+		जाओ err_stop_समयr;
 
-	pr_debug("enter (%s line %u)\n", __FILE__, __LINE__);
+	pr_debug("enter (%s line %u)\n", __खाता__, __LINE__);
 
 	/*
-	 * Copy the new data into our accumulation buffer.
+	 * Copy the new data पूर्णांकo our accumulation buffer.
 	 */
 	skb_copy_from_linear_data(skb, &(ep->mpa_pkt[ep->mpa_pkt_len]),
 				  skb->len);
 	ep->mpa_pkt_len += skb->len;
 
 	/*
-	 * If we don't even have the mpa message, then bail.
-	 * We'll continue process when more data arrives.
+	 * If we करोn't even have the mpa message, then bail.
+	 * We'll जारी process when more data arrives.
 	 */
-	if (ep->mpa_pkt_len < sizeof(*mpa))
-		return 0;
+	अगर (ep->mpa_pkt_len < माप(*mpa))
+		वापस 0;
 
-	pr_debug("enter (%s line %u)\n", __FILE__, __LINE__);
-	mpa = (struct mpa_message *) ep->mpa_pkt;
+	pr_debug("enter (%s line %u)\n", __खाता__, __LINE__);
+	mpa = (काष्ठा mpa_message *) ep->mpa_pkt;
 
 	/*
 	 * Validate MPA Header.
 	 */
-	if (mpa->revision > mpa_rev) {
+	अगर (mpa->revision > mpa_rev) अणु
 		pr_err("%s MPA version mismatch. Local = %d, Received = %d\n",
 		       __func__, mpa_rev, mpa->revision);
-		goto err_stop_timer;
-	}
+		जाओ err_stop_समयr;
+	पूर्ण
 
-	if (memcmp(mpa->key, MPA_KEY_REQ, sizeof(mpa->key)))
-		goto err_stop_timer;
+	अगर (स_भेद(mpa->key, MPA_KEY_REQ, माप(mpa->key)))
+		जाओ err_stop_समयr;
 
-	plen = ntohs(mpa->private_data_size);
-
-	/*
-	 * Fail if there's too much private data.
-	 */
-	if (plen > MPA_MAX_PRIVATE_DATA)
-		goto err_stop_timer;
+	plen = ntohs(mpa->निजी_data_size);
 
 	/*
-	 * If plen does not account for pkt size
+	 * Fail अगर there's too much निजी data.
 	 */
-	if (ep->mpa_pkt_len > (sizeof(*mpa) + plen))
-		goto err_stop_timer;
+	अगर (plen > MPA_MAX_PRIVATE_DATA)
+		जाओ err_stop_समयr;
+
+	/*
+	 * If plen करोes not account क्रम pkt size
+	 */
+	अगर (ep->mpa_pkt_len > (माप(*mpa) + plen))
+		जाओ err_stop_समयr;
 	ep->plen = (u8) plen;
 
 	/*
-	 * If we don't have all the pdata yet, then bail.
+	 * If we करोn't have all the pdata yet, then bail.
 	 */
-	if (ep->mpa_pkt_len < (sizeof(*mpa) + plen))
-		return 0;
+	अगर (ep->mpa_pkt_len < (माप(*mpa) + plen))
+		वापस 0;
 
 	/*
 	 * If we get here we have accumulated the entire mpa
-	 * start reply message including private data.
+	 * start reply message including निजी data.
 	 */
 	ep->mpa_attr.initiator = 0;
 	ep->mpa_attr.crc_enabled = (mpa->flags & MPA_CRC) | crc_enabled ? 1 : 0;
 	ep->mpa_attr.recv_marker_enabled = markers_enabled;
 	ep->mpa_attr.xmit_marker_enabled = mpa->flags & MPA_MARKERS ? 1 : 0;
 	ep->mpa_attr.version = mpa->revision;
-	if (mpa->revision == 1)
+	अगर (mpa->revision == 1)
 		ep->tried_with_mpa_v1 = 1;
 	ep->mpa_attr.p2p_type = FW_RI_INIT_P2PTYPE_DISABLED;
 
-	if (mpa->revision == 2) {
+	अगर (mpa->revision == 2) अणु
 		ep->mpa_attr.enhanced_rdma_conn =
 			mpa->flags & MPA_ENHANCED_RDMA_CONN ? 1 : 0;
-		if (ep->mpa_attr.enhanced_rdma_conn) {
-			mpa_v2_params = (struct mpa_v2_conn_params *)
-				(ep->mpa_pkt + sizeof(*mpa));
+		अगर (ep->mpa_attr.enhanced_rdma_conn) अणु
+			mpa_v2_params = (काष्ठा mpa_v2_conn_params *)
+				(ep->mpa_pkt + माप(*mpa));
 			ep->ird = ntohs(mpa_v2_params->ird) &
 				MPA_V2_IRD_ORD_MASK;
 			ep->ird = min_t(u32, ep->ird,
-					cur_max_read_depth(ep->com.dev));
+					cur_max_पढ़ो_depth(ep->com.dev));
 			ep->ord = ntohs(mpa_v2_params->ord) &
 				MPA_V2_IRD_ORD_MASK;
 			ep->ord = min_t(u32, ep->ord,
-					cur_max_read_depth(ep->com.dev));
+					cur_max_पढ़ो_depth(ep->com.dev));
 			pr_debug("initiator ird %u ord %u\n",
 				 ep->ird, ep->ord);
-			if (ntohs(mpa_v2_params->ird) & MPA_V2_PEER2PEER_MODEL)
-				if (peer2peer) {
-					if (ntohs(mpa_v2_params->ord) &
+			अगर (ntohs(mpa_v2_params->ird) & MPA_V2_PEER2PEER_MODEL)
+				अगर (peer2peer) अणु
+					अगर (ntohs(mpa_v2_params->ord) &
 							MPA_V2_RDMA_WRITE_RTR)
 						ep->mpa_attr.p2p_type =
 						FW_RI_INIT_P2PTYPE_RDMA_WRITE;
-					else if (ntohs(mpa_v2_params->ord) &
+					अन्यथा अगर (ntohs(mpa_v2_params->ord) &
 							MPA_V2_RDMA_READ_RTR)
 						ep->mpa_attr.p2p_type =
 						FW_RI_INIT_P2PTYPE_READ_REQ;
-				}
-		}
-	} else if (mpa->revision == 1)
-		if (peer2peer)
+				पूर्ण
+		पूर्ण
+	पूर्ण अन्यथा अगर (mpa->revision == 1)
+		अगर (peer2peer)
 			ep->mpa_attr.p2p_type = p2p_type;
 
 	pr_debug("crc_enabled=%d, recv_marker_enabled=%d, xmit_marker_enabled=%d, version=%d p2p_type=%d\n",
@@ -1823,158 +1824,158 @@ static int process_mpa_request(struct c4iw_ep *ep, struct sk_buff *skb)
 
 	/* drive upcall */
 	mutex_lock_nested(&ep->parent_ep->com.mutex, SINGLE_DEPTH_NESTING);
-	if (ep->parent_ep->com.state != DEAD) {
-		if (connect_request_upcall(ep))
-			goto err_unlock_parent;
-	} else {
-		goto err_unlock_parent;
-	}
+	अगर (ep->parent_ep->com.state != DEAD) अणु
+		अगर (connect_request_upcall(ep))
+			जाओ err_unlock_parent;
+	पूर्ण अन्यथा अणु
+		जाओ err_unlock_parent;
+	पूर्ण
 	mutex_unlock(&ep->parent_ep->com.mutex);
-	return 0;
+	वापस 0;
 
 err_unlock_parent:
 	mutex_unlock(&ep->parent_ep->com.mutex);
-	goto err_out;
-err_stop_timer:
-	(void)stop_ep_timer(ep);
+	जाओ err_out;
+err_stop_समयr:
+	(व्योम)stop_ep_समयr(ep);
 err_out:
-	return 2;
-}
+	वापस 2;
+पूर्ण
 
-static int rx_data(struct c4iw_dev *dev, struct sk_buff *skb)
-{
-	struct c4iw_ep *ep;
-	struct cpl_rx_data *hdr = cplhdr(skb);
-	unsigned int dlen = ntohs(hdr->len);
-	unsigned int tid = GET_TID(hdr);
+अटल पूर्णांक rx_data(काष्ठा c4iw_dev *dev, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा c4iw_ep *ep;
+	काष्ठा cpl_rx_data *hdr = cplhdr(skb);
+	अचिन्हित पूर्णांक dlen = ntohs(hdr->len);
+	अचिन्हित पूर्णांक tid = GET_TID(hdr);
 	__u8 status = hdr->status;
-	int disconnect = 0;
+	पूर्णांक disconnect = 0;
 
 	ep = get_ep_from_tid(dev, tid);
-	if (!ep)
-		return 0;
+	अगर (!ep)
+		वापस 0;
 	pr_debug("ep %p tid %u dlen %u\n", ep, ep->hwtid, dlen);
-	skb_pull(skb, sizeof(*hdr));
+	skb_pull(skb, माप(*hdr));
 	skb_trim(skb, dlen);
 	mutex_lock(&ep->com.mutex);
 
-	switch (ep->com.state) {
-	case MPA_REQ_SENT:
+	चयन (ep->com.state) अणु
+	हाल MPA_REQ_SENT:
 		update_rx_credits(ep, dlen);
 		ep->rcv_seq += dlen;
 		disconnect = process_mpa_reply(ep, skb);
-		break;
-	case MPA_REQ_WAIT:
+		अवरोध;
+	हाल MPA_REQ_WAIT:
 		update_rx_credits(ep, dlen);
 		ep->rcv_seq += dlen;
 		disconnect = process_mpa_request(ep, skb);
-		break;
-	case FPDU_MODE: {
-		struct c4iw_qp_attributes attrs;
+		अवरोध;
+	हाल FPDU_MODE: अणु
+		काष्ठा c4iw_qp_attributes attrs;
 
 		update_rx_credits(ep, dlen);
-		if (status)
+		अगर (status)
 			pr_err("%s Unexpected streaming data." \
 			       " qpid %u ep %p state %d tid %u status %d\n",
 			       __func__, ep->com.qp->wq.sq.qid, ep,
 			       ep->com.state, ep->hwtid, status);
 		attrs.next_state = C4IW_QP_STATE_TERMINATE;
-		c4iw_modify_qp(ep->com.qp->rhp, ep->com.qp,
+		c4iw_modअगरy_qp(ep->com.qp->rhp, ep->com.qp,
 			       C4IW_QP_ATTR_NEXT_STATE, &attrs, 1);
 		disconnect = 1;
-		break;
-	}
-	default:
-		break;
-	}
+		अवरोध;
+	पूर्ण
+	शेष:
+		अवरोध;
+	पूर्ण
 	mutex_unlock(&ep->com.mutex);
-	if (disconnect)
+	अगर (disconnect)
 		c4iw_ep_disconnect(ep, disconnect == 2, GFP_KERNEL);
 	c4iw_put_ep(&ep->com);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void complete_cached_srq_buffers(struct c4iw_ep *ep, u32 srqidx)
-{
-	enum chip_type adapter_type;
+अटल व्योम complete_cached_srq_buffers(काष्ठा c4iw_ep *ep, u32 srqidx)
+अणु
+	क्रमागत chip_type adapter_type;
 
 	adapter_type = ep->com.dev->rdev.lldi.adapter_type;
 
 	/*
 	 * If this TCB had a srq buffer cached, then we must complete
 	 * it. For user mode, that means saving the srqidx in the
-	 * user/kernel status page for this qp.  For kernel mode, just
+	 * user/kernel status page क्रम this qp.  For kernel mode, just
 	 * synthesize the CQE now.
 	 */
-	if (CHELSIO_CHIP_VERSION(adapter_type) > CHELSIO_T5 && srqidx) {
-		if (ep->com.qp->ibqp.uobject)
+	अगर (CHELSIO_CHIP_VERSION(adapter_type) > CHELSIO_T5 && srqidx) अणु
+		अगर (ep->com.qp->ibqp.uobject)
 			t4_set_wq_in_error(&ep->com.qp->wq, srqidx);
-		else
+		अन्यथा
 			c4iw_flush_srqidx(ep->com.qp, srqidx);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int abort_rpl(struct c4iw_dev *dev, struct sk_buff *skb)
-{
+अटल पूर्णांक पात_rpl(काष्ठा c4iw_dev *dev, काष्ठा sk_buff *skb)
+अणु
 	u32 srqidx;
-	struct c4iw_ep *ep;
-	struct cpl_abort_rpl_rss6 *rpl = cplhdr(skb);
-	int release = 0;
-	unsigned int tid = GET_TID(rpl);
+	काष्ठा c4iw_ep *ep;
+	काष्ठा cpl_पात_rpl_rss6 *rpl = cplhdr(skb);
+	पूर्णांक release = 0;
+	अचिन्हित पूर्णांक tid = GET_TID(rpl);
 
 	ep = get_ep_from_tid(dev, tid);
-	if (!ep) {
+	अगर (!ep) अणु
 		pr_warn("Abort rpl to freed endpoint\n");
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	if (ep->com.qp && ep->com.qp->srq) {
+	अगर (ep->com.qp && ep->com.qp->srq) अणु
 		srqidx = ABORT_RSS_SRQIDX_G(be32_to_cpu(rpl->srqidx_status));
 		complete_cached_srq_buffers(ep, srqidx ? srqidx : ep->srqe_idx);
-	}
+	पूर्ण
 
 	pr_debug("ep %p tid %u\n", ep, ep->hwtid);
 	mutex_lock(&ep->com.mutex);
-	switch (ep->com.state) {
-	case ABORTING:
-		c4iw_wake_up_noref(ep->com.wr_waitp, -ECONNRESET);
+	चयन (ep->com.state) अणु
+	हाल ABORTING:
+		c4iw_wake_up_noref(ep->com.wr_रुकोp, -ECONNRESET);
 		__state_set(&ep->com, DEAD);
 		release = 1;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		pr_err("%s ep %p state %d\n", __func__, ep, ep->com.state);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 	mutex_unlock(&ep->com.mutex);
 
-	if (release) {
-		close_complete_upcall(ep, -ECONNRESET);
+	अगर (release) अणु
+		बंद_complete_upcall(ep, -ECONNRESET);
 		release_ep_resources(ep);
-	}
+	पूर्ण
 	c4iw_put_ep(&ep->com);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int send_fw_act_open_req(struct c4iw_ep *ep, unsigned int atid)
-{
-	struct sk_buff *skb;
-	struct fw_ofld_connection_wr *req;
-	unsigned int mtu_idx;
+अटल पूर्णांक send_fw_act_खोलो_req(काष्ठा c4iw_ep *ep, अचिन्हित पूर्णांक atid)
+अणु
+	काष्ठा sk_buff *skb;
+	काष्ठा fw_ofld_connection_wr *req;
+	अचिन्हित पूर्णांक mtu_idx;
 	u32 wscale;
-	struct sockaddr_in *sin;
-	int win;
+	काष्ठा sockaddr_in *sin;
+	पूर्णांक win;
 
-	skb = get_skb(NULL, sizeof(*req), GFP_KERNEL);
-	req = __skb_put_zero(skb, sizeof(*req));
+	skb = get_skb(शून्य, माप(*req), GFP_KERNEL);
+	req = __skb_put_zero(skb, माप(*req));
 	req->op_compl = htonl(WR_OP_V(FW_OFLD_CONNECTION_WR));
-	req->len16_pkd = htonl(FW_WR_LEN16_V(DIV_ROUND_UP(sizeof(*req), 16)));
+	req->len16_pkd = htonl(FW_WR_LEN16_V(DIV_ROUND_UP(माप(*req), 16)));
 	req->le.filter = cpu_to_be32(cxgb4_select_ntuple(
 				     ep->com.dev->rdev.lldi.ports[0],
 				     ep->l2t));
-	sin = (struct sockaddr_in *)&ep->com.local_addr;
+	sin = (काष्ठा sockaddr_in *)&ep->com.local_addr;
 	req->le.lport = sin->sin_port;
 	req->le.u.ipv4.lip = sin->sin_addr.s_addr;
-	sin = (struct sockaddr_in *)&ep->com.remote_addr;
+	sin = (काष्ठा sockaddr_in *)&ep->com.remote_addr;
 	req->le.pport = sin->sin_port;
 	req->le.u.ipv4.pip = sin->sin_addr.s_addr;
 	req->tcb.t_state_to_astid =
@@ -1982,22 +1983,22 @@ static int send_fw_act_open_req(struct c4iw_ep *ep, unsigned int atid)
 			FW_OFLD_CONNECTION_WR_ASTID_V(atid));
 	req->tcb.cplrxdataack_cplpassacceptrpl =
 			htons(FW_OFLD_CONNECTION_WR_CPLRXDATAACK_F);
-	req->tcb.tx_max = (__force __be32) jiffies;
+	req->tcb.tx_max = (__क्रमce __be32) jअगरfies;
 	req->tcb.rcv_adv = htons(1);
 	cxgb_best_mtu(ep->com.dev->rdev.lldi.mtus, ep->mtu, &mtu_idx,
-		      enable_tcp_timestamps,
+		      enable_tcp_बारtamps,
 		      (ep->com.remote_addr.ss_family == AF_INET) ? 0 : 1);
 	wscale = cxgb_compute_wscale(rcv_win);
 
 	/*
-	 * Specify the largest window that will fit in opt0. The
-	 * remainder will be specified in the rx_data_ack.
+	 * Specअगरy the largest winकरोw that will fit in opt0. The
+	 * reमुख्यder will be specअगरied in the rx_data_ack.
 	 */
 	win = ep->rcv_win >> 10;
-	if (win > RCV_BUFSIZ_M)
-		win = RCV_BUFSIZ_M;
+	अगर (win > RCV_बफ_मान_M)
+		win = RCV_बफ_मान_M;
 
-	req->tcb.opt0 = (__force __be64) (TCAM_BYPASS_F |
+	req->tcb.opt0 = (__क्रमce __be64) (TCAM_BYPASS_F |
 		(nocong ? NO_CONG_F : 0) |
 		KEEP_ALIVE_F |
 		DELACK_F |
@@ -2008,103 +2009,103 @@ static int send_fw_act_open_req(struct c4iw_ep *ep, unsigned int atid)
 		SMAC_SEL_V(ep->smac_idx) |
 		DSCP_V(ep->tos >> 2) |
 		ULP_MODE_V(ULP_MODE_TCPDDP) |
-		RCV_BUFSIZ_V(win));
-	req->tcb.opt2 = (__force __be32) (PACE_V(1) |
+		RCV_बफ_मान_V(win));
+	req->tcb.opt2 = (__क्रमce __be32) (PACE_V(1) |
 		TX_QUEUE_V(ep->com.dev->rdev.lldi.tx_modq[ep->tx_chan]) |
 		RX_CHANNEL_V(0) |
 		CCTRL_ECN_V(enable_ecn) |
 		RSS_QUEUE_VALID_F | RSS_QUEUE_V(ep->rss_qid));
-	if (enable_tcp_timestamps)
-		req->tcb.opt2 |= (__force __be32)TSTAMPS_EN_F;
-	if (enable_tcp_sack)
-		req->tcb.opt2 |= (__force __be32)SACK_EN_F;
-	if (wscale && enable_tcp_window_scaling)
-		req->tcb.opt2 |= (__force __be32)WND_SCALE_EN_F;
-	req->tcb.opt0 = cpu_to_be64((__force u64)req->tcb.opt0);
-	req->tcb.opt2 = cpu_to_be32((__force u32)req->tcb.opt2);
+	अगर (enable_tcp_बारtamps)
+		req->tcb.opt2 |= (__क्रमce __be32)TSTAMPS_EN_F;
+	अगर (enable_tcp_sack)
+		req->tcb.opt2 |= (__क्रमce __be32)SACK_EN_F;
+	अगर (wscale && enable_tcp_winकरोw_scaling)
+		req->tcb.opt2 |= (__क्रमce __be32)WND_SCALE_EN_F;
+	req->tcb.opt0 = cpu_to_be64((__क्रमce u64)req->tcb.opt0);
+	req->tcb.opt2 = cpu_to_be32((__क्रमce u32)req->tcb.opt2);
 	set_wr_txq(skb, CPL_PRIORITY_CONTROL, ep->ctrlq_idx);
 	set_bit(ACT_OFLD_CONN, &ep->com.history);
-	return c4iw_l2t_send(&ep->com.dev->rdev, skb, ep->l2t);
-}
+	वापस c4iw_l2t_send(&ep->com.dev->rdev, skb, ep->l2t);
+पूर्ण
 
 /*
  * Some of the error codes above implicitly indicate that there is no TID
  * allocated with the result of an ACT_OPEN.  We use this predicate to make
  * that explicit.
  */
-static inline int act_open_has_tid(int status)
-{
-	return (status != CPL_ERR_TCAM_PARITY &&
+अटल अंतरभूत पूर्णांक act_खोलो_has_tid(पूर्णांक status)
+अणु
+	वापस (status != CPL_ERR_TCAM_PARITY &&
 		status != CPL_ERR_TCAM_MISS &&
 		status != CPL_ERR_TCAM_FULL &&
 		status != CPL_ERR_CONN_EXIST_SYNRECV &&
 		status != CPL_ERR_CONN_EXIST);
-}
+पूर्ण
 
-static char *neg_adv_str(unsigned int status)
-{
-	switch (status) {
-	case CPL_ERR_RTX_NEG_ADVICE:
-		return "Retransmit timeout";
-	case CPL_ERR_PERSIST_NEG_ADVICE:
-		return "Persist timeout";
-	case CPL_ERR_KEEPALV_NEG_ADVICE:
-		return "Keepalive timeout";
-	default:
-		return "Unknown";
-	}
-}
+अटल अक्षर *neg_adv_str(अचिन्हित पूर्णांक status)
+अणु
+	चयन (status) अणु
+	हाल CPL_ERR_RTX_NEG_ADVICE:
+		वापस "Retransmit timeout";
+	हाल CPL_ERR_PERSIST_NEG_ADVICE:
+		वापस "Persist timeout";
+	हाल CPL_ERR_KEEPALV_NEG_ADVICE:
+		वापस "Keepalive timeout";
+	शेष:
+		वापस "Unknown";
+	पूर्ण
+पूर्ण
 
-static void set_tcp_window(struct c4iw_ep *ep, struct port_info *pi)
-{
+अटल व्योम set_tcp_winकरोw(काष्ठा c4iw_ep *ep, काष्ठा port_info *pi)
+अणु
 	ep->snd_win = snd_win;
 	ep->rcv_win = rcv_win;
 	pr_debug("snd_win %d rcv_win %d\n",
 		 ep->snd_win, ep->rcv_win);
-}
+पूर्ण
 
-#define ACT_OPEN_RETRY_COUNT 2
+#घोषणा ACT_OPEN_RETRY_COUNT 2
 
-static int import_ep(struct c4iw_ep *ep, int iptype, __u8 *peer_ip,
-		     struct dst_entry *dst, struct c4iw_dev *cdev,
-		     bool clear_mpa_v1, enum chip_type adapter_type, u8 tos)
-{
-	struct neighbour *n;
-	int err, step;
-	struct net_device *pdev;
+अटल पूर्णांक import_ep(काष्ठा c4iw_ep *ep, पूर्णांक iptype, __u8 *peer_ip,
+		     काष्ठा dst_entry *dst, काष्ठा c4iw_dev *cdev,
+		     bool clear_mpa_v1, क्रमागत chip_type adapter_type, u8 tos)
+अणु
+	काष्ठा neighbour *n;
+	पूर्णांक err, step;
+	काष्ठा net_device *pdev;
 
 	n = dst_neigh_lookup(dst, peer_ip);
-	if (!n)
-		return -ENODEV;
+	अगर (!n)
+		वापस -ENODEV;
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	err = -ENOMEM;
-	if (n->dev->flags & IFF_LOOPBACK) {
-		if (iptype == 4)
+	अगर (n->dev->flags & IFF_LOOPBACK) अणु
+		अगर (iptype == 4)
 			pdev = ip_dev_find(&init_net, *(__be32 *)peer_ip);
-		else if (IS_ENABLED(CONFIG_IPV6))
-			for_each_netdev(&init_net, pdev) {
-				if (ipv6_chk_addr(&init_net,
-						  (struct in6_addr *)peer_ip,
+		अन्यथा अगर (IS_ENABLED(CONFIG_IPV6))
+			क्रम_each_netdev(&init_net, pdev) अणु
+				अगर (ipv6_chk_addr(&init_net,
+						  (काष्ठा in6_addr *)peer_ip,
 						  pdev, 1))
-					break;
-			}
-		else
-			pdev = NULL;
+					अवरोध;
+			पूर्ण
+		अन्यथा
+			pdev = शून्य;
 
-		if (!pdev) {
+		अगर (!pdev) अणु
 			err = -ENODEV;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 		ep->l2t = cxgb4_l2t_get(cdev->rdev.lldi.l2t,
 					n, pdev, rt_tos2priority(tos));
-		if (!ep->l2t) {
+		अगर (!ep->l2t) अणु
 			dev_put(pdev);
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 		ep->mtu = pdev->mtu;
 		ep->tx_chan = cxgb4_port_chan(pdev);
-		ep->smac_idx = ((struct port_info *)netdev_priv(pdev))->smt_idx;
+		ep->smac_idx = ((काष्ठा port_info *)netdev_priv(pdev))->smt_idx;
 		step = cdev->rdev.lldi.ntxq /
 			cdev->rdev.lldi.nchan;
 		ep->txq_idx = cxgb4_port_idx(pdev) * step;
@@ -2113,17 +2114,17 @@ static int import_ep(struct c4iw_ep *ep, int iptype, __u8 *peer_ip,
 		ep->ctrlq_idx = cxgb4_port_idx(pdev);
 		ep->rss_qid = cdev->rdev.lldi.rxq_ids[
 			cxgb4_port_idx(pdev) * step];
-		set_tcp_window(ep, (struct port_info *)netdev_priv(pdev));
+		set_tcp_winकरोw(ep, (काष्ठा port_info *)netdev_priv(pdev));
 		dev_put(pdev);
-	} else {
+	पूर्ण अन्यथा अणु
 		pdev = get_real_dev(n->dev);
 		ep->l2t = cxgb4_l2t_get(cdev->rdev.lldi.l2t,
 					n, pdev, rt_tos2priority(tos));
-		if (!ep->l2t)
-			goto out;
+		अगर (!ep->l2t)
+			जाओ out;
 		ep->mtu = dst_mtu(dst);
 		ep->tx_chan = cxgb4_port_chan(pdev);
-		ep->smac_idx = ((struct port_info *)netdev_priv(pdev))->smt_idx;
+		ep->smac_idx = ((काष्ठा port_info *)netdev_priv(pdev))->smt_idx;
 		step = cdev->rdev.lldi.ntxq /
 			cdev->rdev.lldi.nchan;
 		ep->txq_idx = cxgb4_port_idx(pdev) * step;
@@ -2132,70 +2133,70 @@ static int import_ep(struct c4iw_ep *ep, int iptype, __u8 *peer_ip,
 			cdev->rdev.lldi.nchan;
 		ep->rss_qid = cdev->rdev.lldi.rxq_ids[
 			cxgb4_port_idx(pdev) * step];
-		set_tcp_window(ep, (struct port_info *)netdev_priv(pdev));
+		set_tcp_winकरोw(ep, (काष्ठा port_info *)netdev_priv(pdev));
 
-		if (clear_mpa_v1) {
+		अगर (clear_mpa_v1) अणु
 			ep->retry_with_mpa_v1 = 0;
 			ep->tried_with_mpa_v1 = 0;
-		}
-	}
+		पूर्ण
+	पूर्ण
 	err = 0;
 out:
-	rcu_read_unlock();
+	rcu_पढ़ो_unlock();
 
 	neigh_release(n);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int c4iw_reconnect(struct c4iw_ep *ep)
-{
-	int err = 0;
-	int size = 0;
-	struct sockaddr_in *laddr = (struct sockaddr_in *)
+अटल पूर्णांक c4iw_reconnect(काष्ठा c4iw_ep *ep)
+अणु
+	पूर्णांक err = 0;
+	पूर्णांक size = 0;
+	काष्ठा sockaddr_in *laddr = (काष्ठा sockaddr_in *)
 				    &ep->com.cm_id->m_local_addr;
-	struct sockaddr_in *raddr = (struct sockaddr_in *)
+	काष्ठा sockaddr_in *raddr = (काष्ठा sockaddr_in *)
 				    &ep->com.cm_id->m_remote_addr;
-	struct sockaddr_in6 *laddr6 = (struct sockaddr_in6 *)
+	काष्ठा sockaddr_in6 *laddr6 = (काष्ठा sockaddr_in6 *)
 				      &ep->com.cm_id->m_local_addr;
-	struct sockaddr_in6 *raddr6 = (struct sockaddr_in6 *)
+	काष्ठा sockaddr_in6 *raddr6 = (काष्ठा sockaddr_in6 *)
 				      &ep->com.cm_id->m_remote_addr;
-	int iptype;
+	पूर्णांक iptype;
 	__u8 *ra;
 
 	pr_debug("qp %p cm_id %p\n", ep->com.qp, ep->com.cm_id);
-	c4iw_init_wr_wait(ep->com.wr_waitp);
+	c4iw_init_wr_रुको(ep->com.wr_रुकोp);
 
-	/* When MPA revision is different on nodes, the node with MPA_rev=2
-	 * tries to reconnect with MPA_rev 1 for the same EP through
-	 * c4iw_reconnect(), where the same EP is assigned with new tid for
-	 * further connection establishment. As we are using the same EP pointer
-	 * for reconnect, few skbs are used during the previous c4iw_connect(),
-	 * which leaves the EP with inadequate skbs for further
+	/* When MPA revision is dअगरferent on nodes, the node with MPA_rev=2
+	 * tries to reconnect with MPA_rev 1 क्रम the same EP through
+	 * c4iw_reconnect(), where the same EP is asचिन्हित with new tid क्रम
+	 * further connection establishment. As we are using the same EP poपूर्णांकer
+	 * क्रम reconnect, few skbs are used during the previous c4iw_connect(),
+	 * which leaves the EP with inadequate skbs क्रम further
 	 * c4iw_reconnect(), Further causing a crash due to an empty
-	 * skb_list() during peer_abort(). Allocate skbs which is already used.
+	 * skb_list() during peer_पात(). Allocate skbs which is alपढ़ोy used.
 	 */
 	size = (CN_MAX_CON_BUF - skb_queue_len(&ep->com.ep_skb_list));
-	if (alloc_ep_skb_list(&ep->com.ep_skb_list, size)) {
+	अगर (alloc_ep_skb_list(&ep->com.ep_skb_list, size)) अणु
 		err = -ENOMEM;
-		goto fail1;
-	}
+		जाओ fail1;
+	पूर्ण
 
 	/*
 	 * Allocate an active TID to initiate a TCP connection.
 	 */
 	ep->atid = cxgb4_alloc_atid(ep->com.dev->rdev.lldi.tids, ep);
-	if (ep->atid == -1) {
+	अगर (ep->atid == -1) अणु
 		pr_err("%s - cannot alloc atid\n", __func__);
 		err = -ENOMEM;
-		goto fail2;
-	}
+		जाओ fail2;
+	पूर्ण
 	err = xa_insert_irq(&ep->com.dev->atids, ep->atid, ep, GFP_KERNEL);
-	if (err)
-		goto fail2a;
+	अगर (err)
+		जाओ fail2a;
 
 	/* find a route */
-	if (ep->com.cm_id->m_local_addr.ss_family == AF_INET) {
+	अगर (ep->com.cm_id->m_local_addr.ss_family == AF_INET) अणु
 		ep->dst = cxgb_find_route(&ep->com.dev->rdev.lldi, get_real_dev,
 					  laddr->sin_addr.s_addr,
 					  raddr->sin_addr.s_addr,
@@ -2203,7 +2204,7 @@ static int c4iw_reconnect(struct c4iw_ep *ep)
 					  raddr->sin_port, ep->com.cm_id->tos);
 		iptype = 4;
 		ra = (__u8 *)&raddr->sin_addr;
-	} else {
+	पूर्ण अन्यथा अणु
 		ep->dst = cxgb_find_route6(&ep->com.dev->rdev.lldi,
 					   get_real_dev,
 					   laddr6->sin6_addr.s6_addr,
@@ -2214,19 +2215,19 @@ static int c4iw_reconnect(struct c4iw_ep *ep)
 					   raddr6->sin6_scope_id);
 		iptype = 6;
 		ra = (__u8 *)&raddr6->sin6_addr;
-	}
-	if (!ep->dst) {
+	पूर्ण
+	अगर (!ep->dst) अणु
 		pr_err("%s - cannot find route\n", __func__);
 		err = -EHOSTUNREACH;
-		goto fail3;
-	}
+		जाओ fail3;
+	पूर्ण
 	err = import_ep(ep, iptype, ra, ep->dst, ep->com.dev, false,
 			ep->com.dev->rdev.lldi.adapter_type,
 			ep->com.cm_id->tos);
-	if (err) {
+	अगर (err) अणु
 		pr_err("%s - cannot alloc l2e\n", __func__);
-		goto fail4;
-	}
+		जाओ fail4;
+	पूर्ण
 
 	pr_debug("txq_idx %u tx_chan %u smac_idx %u rss_qid %u l2t_idx %u\n",
 		 ep->txq_idx, ep->tx_chan, ep->smac_idx, ep->rss_qid,
@@ -2237,8 +2238,8 @@ static int c4iw_reconnect(struct c4iw_ep *ep)
 
 	/* send connect request to rnic */
 	err = send_connect(ep);
-	if (!err)
-		goto out;
+	अगर (!err)
+		जाओ out;
 
 	cxgb4_l2t_release(ep->l2t);
 fail4:
@@ -2246,194 +2247,194 @@ fail4:
 fail3:
 	xa_erase_irq(&ep->com.dev->atids, ep->atid);
 fail2a:
-	cxgb4_free_atid(ep->com.dev->rdev.lldi.tids, ep->atid);
+	cxgb4_मुक्त_atid(ep->com.dev->rdev.lldi.tids, ep->atid);
 fail2:
 	/*
-	 * remember to send notification to upper layer.
+	 * remember to send notअगरication to upper layer.
 	 * We are in here so the upper layer is not aware that this is
-	 * re-connect attempt and so, upper layer is still waiting for
+	 * re-connect attempt and so, upper layer is still रुकोing क्रम
 	 * response of 1st connect request.
 	 */
 	connect_reply_upcall(ep, -ECONNRESET);
 fail1:
 	c4iw_put_ep(&ep->com);
 out:
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int act_open_rpl(struct c4iw_dev *dev, struct sk_buff *skb)
-{
-	struct c4iw_ep *ep;
-	struct cpl_act_open_rpl *rpl = cplhdr(skb);
-	unsigned int atid = TID_TID_G(AOPEN_ATID_G(
+अटल पूर्णांक act_खोलो_rpl(काष्ठा c4iw_dev *dev, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा c4iw_ep *ep;
+	काष्ठा cpl_act_खोलो_rpl *rpl = cplhdr(skb);
+	अचिन्हित पूर्णांक atid = TID_TID_G(AOPEN_ATID_G(
 				      ntohl(rpl->atid_status)));
-	struct tid_info *t = dev->rdev.lldi.tids;
-	int status = AOPEN_STATUS_G(ntohl(rpl->atid_status));
-	struct sockaddr_in *la;
-	struct sockaddr_in *ra;
-	struct sockaddr_in6 *la6;
-	struct sockaddr_in6 *ra6;
-	int ret = 0;
+	काष्ठा tid_info *t = dev->rdev.lldi.tids;
+	पूर्णांक status = AOPEN_STATUS_G(ntohl(rpl->atid_status));
+	काष्ठा sockaddr_in *la;
+	काष्ठा sockaddr_in *ra;
+	काष्ठा sockaddr_in6 *la6;
+	काष्ठा sockaddr_in6 *ra6;
+	पूर्णांक ret = 0;
 
 	ep = lookup_atid(t, atid);
-	la = (struct sockaddr_in *)&ep->com.local_addr;
-	ra = (struct sockaddr_in *)&ep->com.remote_addr;
-	la6 = (struct sockaddr_in6 *)&ep->com.local_addr;
-	ra6 = (struct sockaddr_in6 *)&ep->com.remote_addr;
+	la = (काष्ठा sockaddr_in *)&ep->com.local_addr;
+	ra = (काष्ठा sockaddr_in *)&ep->com.remote_addr;
+	la6 = (काष्ठा sockaddr_in6 *)&ep->com.local_addr;
+	ra6 = (काष्ठा sockaddr_in6 *)&ep->com.remote_addr;
 
 	pr_debug("ep %p atid %u status %u errno %d\n", ep, atid,
-		 status, status2errno(status));
+		 status, status2त्रुटि_सं(status));
 
-	if (cxgb_is_neg_adv(status)) {
+	अगर (cxgb_is_neg_adv(status)) अणु
 		pr_debug("Connection problems for atid %u status %u (%s)\n",
 			 atid, status, neg_adv_str(status));
 		ep->stats.connect_neg_adv++;
 		mutex_lock(&dev->rdev.stats.lock);
 		dev->rdev.stats.neg_adv++;
 		mutex_unlock(&dev->rdev.stats.lock);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	set_bit(ACT_OPEN_RPL, &ep->com.history);
 
 	/*
-	 * Log interesting failures.
+	 * Log पूर्णांकeresting failures.
 	 */
-	switch (status) {
-	case CPL_ERR_CONN_RESET:
-	case CPL_ERR_CONN_TIMEDOUT:
-		break;
-	case CPL_ERR_TCAM_FULL:
+	चयन (status) अणु
+	हाल CPL_ERR_CONN_RESET:
+	हाल CPL_ERR_CONN_TIMEDOUT:
+		अवरोध;
+	हाल CPL_ERR_TCAM_FULL:
 		mutex_lock(&dev->rdev.stats.lock);
 		dev->rdev.stats.tcam_full++;
 		mutex_unlock(&dev->rdev.stats.lock);
-		if (ep->com.local_addr.ss_family == AF_INET &&
-		    dev->rdev.lldi.enable_fw_ofld_conn) {
-			ret = send_fw_act_open_req(ep, TID_TID_G(AOPEN_ATID_G(
+		अगर (ep->com.local_addr.ss_family == AF_INET &&
+		    dev->rdev.lldi.enable_fw_ofld_conn) अणु
+			ret = send_fw_act_खोलो_req(ep, TID_TID_G(AOPEN_ATID_G(
 						   ntohl(rpl->atid_status))));
-			if (ret)
-				goto fail;
-			return 0;
-		}
-		break;
-	case CPL_ERR_CONN_EXIST:
-		if (ep->retry_count++ < ACT_OPEN_RETRY_COUNT) {
+			अगर (ret)
+				जाओ fail;
+			वापस 0;
+		पूर्ण
+		अवरोध;
+	हाल CPL_ERR_CONN_EXIST:
+		अगर (ep->retry_count++ < ACT_OPEN_RETRY_COUNT) अणु
 			set_bit(ACT_RETRY_INUSE, &ep->com.history);
-			if (ep->com.remote_addr.ss_family == AF_INET6) {
-				struct sockaddr_in6 *sin6 =
-						(struct sockaddr_in6 *)
+			अगर (ep->com.remote_addr.ss_family == AF_INET6) अणु
+				काष्ठा sockaddr_in6 *sin6 =
+						(काष्ठा sockaddr_in6 *)
 						&ep->com.local_addr;
 				cxgb4_clip_release(
 						ep->com.dev->rdev.lldi.ports[0],
-						(const u32 *)
+						(स्थिर u32 *)
 						&sin6->sin6_addr.s6_addr, 1);
-			}
+			पूर्ण
 			xa_erase_irq(&ep->com.dev->atids, atid);
-			cxgb4_free_atid(t, atid);
+			cxgb4_मुक्त_atid(t, atid);
 			dst_release(ep->dst);
 			cxgb4_l2t_release(ep->l2t);
 			c4iw_reconnect(ep);
-			return 0;
-		}
-		break;
-	default:
-		if (ep->com.local_addr.ss_family == AF_INET) {
+			वापस 0;
+		पूर्ण
+		अवरोध;
+	शेष:
+		अगर (ep->com.local_addr.ss_family == AF_INET) अणु
 			pr_info("Active open failure - atid %u status %u errno %d %pI4:%u->%pI4:%u\n",
-				atid, status, status2errno(status),
+				atid, status, status2त्रुटि_सं(status),
 				&la->sin_addr.s_addr, ntohs(la->sin_port),
 				&ra->sin_addr.s_addr, ntohs(ra->sin_port));
-		} else {
+		पूर्ण अन्यथा अणु
 			pr_info("Active open failure - atid %u status %u errno %d %pI6:%u->%pI6:%u\n",
-				atid, status, status2errno(status),
+				atid, status, status2त्रुटि_सं(status),
 				la6->sin6_addr.s6_addr, ntohs(la6->sin6_port),
 				ra6->sin6_addr.s6_addr, ntohs(ra6->sin6_port));
-		}
-		break;
-	}
+		पूर्ण
+		अवरोध;
+	पूर्ण
 
 fail:
-	connect_reply_upcall(ep, status2errno(status));
+	connect_reply_upcall(ep, status2त्रुटि_सं(status));
 	state_set(&ep->com, DEAD);
 
-	if (ep->com.remote_addr.ss_family == AF_INET6) {
-		struct sockaddr_in6 *sin6 =
-			(struct sockaddr_in6 *)&ep->com.local_addr;
+	अगर (ep->com.remote_addr.ss_family == AF_INET6) अणु
+		काष्ठा sockaddr_in6 *sin6 =
+			(काष्ठा sockaddr_in6 *)&ep->com.local_addr;
 		cxgb4_clip_release(ep->com.dev->rdev.lldi.ports[0],
-				   (const u32 *)&sin6->sin6_addr.s6_addr, 1);
-	}
-	if (status && act_open_has_tid(status))
-		cxgb4_remove_tid(ep->com.dev->rdev.lldi.tids, 0, GET_TID(rpl),
+				   (स्थिर u32 *)&sin6->sin6_addr.s6_addr, 1);
+	पूर्ण
+	अगर (status && act_खोलो_has_tid(status))
+		cxgb4_हटाओ_tid(ep->com.dev->rdev.lldi.tids, 0, GET_TID(rpl),
 				 ep->com.local_addr.ss_family);
 
 	xa_erase_irq(&ep->com.dev->atids, atid);
-	cxgb4_free_atid(t, atid);
+	cxgb4_मुक्त_atid(t, atid);
 	dst_release(ep->dst);
 	cxgb4_l2t_release(ep->l2t);
 	c4iw_put_ep(&ep->com);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int pass_open_rpl(struct c4iw_dev *dev, struct sk_buff *skb)
-{
-	struct cpl_pass_open_rpl *rpl = cplhdr(skb);
-	unsigned int stid = GET_TID(rpl);
-	struct c4iw_listen_ep *ep = get_ep_from_stid(dev, stid);
+अटल पूर्णांक pass_खोलो_rpl(काष्ठा c4iw_dev *dev, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा cpl_pass_खोलो_rpl *rpl = cplhdr(skb);
+	अचिन्हित पूर्णांक stid = GET_TID(rpl);
+	काष्ठा c4iw_listen_ep *ep = get_ep_from_stid(dev, stid);
 
-	if (!ep) {
+	अगर (!ep) अणु
 		pr_warn("%s stid %d lookup failure!\n", __func__, stid);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 	pr_debug("ep %p status %d error %d\n", ep,
-		 rpl->status, status2errno(rpl->status));
-	c4iw_wake_up_noref(ep->com.wr_waitp, status2errno(rpl->status));
+		 rpl->status, status2त्रुटि_सं(rpl->status));
+	c4iw_wake_up_noref(ep->com.wr_रुकोp, status2त्रुटि_सं(rpl->status));
 	c4iw_put_ep(&ep->com);
 out:
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int close_listsrv_rpl(struct c4iw_dev *dev, struct sk_buff *skb)
-{
-	struct cpl_close_listsvr_rpl *rpl = cplhdr(skb);
-	unsigned int stid = GET_TID(rpl);
-	struct c4iw_listen_ep *ep = get_ep_from_stid(dev, stid);
+अटल पूर्णांक बंद_listsrv_rpl(काष्ठा c4iw_dev *dev, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा cpl_बंद_listsvr_rpl *rpl = cplhdr(skb);
+	अचिन्हित पूर्णांक stid = GET_TID(rpl);
+	काष्ठा c4iw_listen_ep *ep = get_ep_from_stid(dev, stid);
 
-	if (!ep) {
+	अगर (!ep) अणु
 		pr_warn("%s stid %d lookup failure!\n", __func__, stid);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 	pr_debug("ep %p\n", ep);
-	c4iw_wake_up_noref(ep->com.wr_waitp, status2errno(rpl->status));
+	c4iw_wake_up_noref(ep->com.wr_रुकोp, status2त्रुटि_सं(rpl->status));
 	c4iw_put_ep(&ep->com);
 out:
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int accept_cr(struct c4iw_ep *ep, struct sk_buff *skb,
-		     struct cpl_pass_accept_req *req)
-{
-	struct cpl_pass_accept_rpl *rpl;
-	unsigned int mtu_idx;
+अटल पूर्णांक accept_cr(काष्ठा c4iw_ep *ep, काष्ठा sk_buff *skb,
+		     काष्ठा cpl_pass_accept_req *req)
+अणु
+	काष्ठा cpl_pass_accept_rpl *rpl;
+	अचिन्हित पूर्णांक mtu_idx;
 	u64 opt0;
 	u32 opt2;
 	u32 wscale;
-	struct cpl_t5_pass_accept_rpl *rpl5 = NULL;
-	int win;
-	enum chip_type adapter_type = ep->com.dev->rdev.lldi.adapter_type;
+	काष्ठा cpl_t5_pass_accept_rpl *rpl5 = शून्य;
+	पूर्णांक win;
+	क्रमागत chip_type adapter_type = ep->com.dev->rdev.lldi.adapter_type;
 
 	pr_debug("ep %p tid %u\n", ep, ep->hwtid);
 	cxgb_best_mtu(ep->com.dev->rdev.lldi.mtus, ep->mtu, &mtu_idx,
-		      enable_tcp_timestamps && req->tcpopt.tstamp,
+		      enable_tcp_बारtamps && req->tcpopt.tstamp,
 		      (ep->com.remote_addr.ss_family == AF_INET) ? 0 : 1);
 	wscale = cxgb_compute_wscale(rcv_win);
 
 	/*
-	 * Specify the largest window that will fit in opt0. The
-	 * remainder will be specified in the rx_data_ack.
+	 * Specअगरy the largest winकरोw that will fit in opt0. The
+	 * reमुख्यder will be specअगरied in the rx_data_ack.
 	 */
 	win = ep->rcv_win >> 10;
-	if (win > RCV_BUFSIZ_M)
-		win = RCV_BUFSIZ_M;
+	अगर (win > RCV_बफ_मान_M)
+		win = RCV_बफ_मान_M;
 	opt0 = (nocong ? NO_CONG_F : 0) |
 	       KEEP_ALIVE_F |
 	       DELACK_F |
@@ -2444,111 +2445,111 @@ static int accept_cr(struct c4iw_ep *ep, struct sk_buff *skb,
 	       SMAC_SEL_V(ep->smac_idx) |
 	       DSCP_V(ep->tos >> 2) |
 	       ULP_MODE_V(ULP_MODE_TCPDDP) |
-	       RCV_BUFSIZ_V(win);
+	       RCV_बफ_मान_V(win);
 	opt2 = RX_CHANNEL_V(0) |
 	       RSS_QUEUE_VALID_F | RSS_QUEUE_V(ep->rss_qid);
 
-	if (enable_tcp_timestamps && req->tcpopt.tstamp)
+	अगर (enable_tcp_बारtamps && req->tcpopt.tstamp)
 		opt2 |= TSTAMPS_EN_F;
-	if (enable_tcp_sack && req->tcpopt.sack)
+	अगर (enable_tcp_sack && req->tcpopt.sack)
 		opt2 |= SACK_EN_F;
-	if (wscale && enable_tcp_window_scaling)
+	अगर (wscale && enable_tcp_winकरोw_scaling)
 		opt2 |= WND_SCALE_EN_F;
-	if (enable_ecn) {
-		const struct tcphdr *tcph;
+	अगर (enable_ecn) अणु
+		स्थिर काष्ठा tcphdr *tcph;
 		u32 hlen = ntohl(req->hdr_len);
 
-		if (CHELSIO_CHIP_VERSION(adapter_type) <= CHELSIO_T5)
-			tcph = (const void *)(req + 1) + ETH_HDR_LEN_G(hlen) +
+		अगर (CHELSIO_CHIP_VERSION(adapter_type) <= CHELSIO_T5)
+			tcph = (स्थिर व्योम *)(req + 1) + ETH_HDR_LEN_G(hlen) +
 				IP_HDR_LEN_G(hlen);
-		else
-			tcph = (const void *)(req + 1) +
+		अन्यथा
+			tcph = (स्थिर व्योम *)(req + 1) +
 				T6_ETH_HDR_LEN_G(hlen) + T6_IP_HDR_LEN_G(hlen);
-		if (tcph->ece && tcph->cwr)
+		अगर (tcph->ece && tcph->cwr)
 			opt2 |= CCTRL_ECN_V(1);
-	}
+	पूर्ण
 
 	skb_get(skb);
 	rpl = cplhdr(skb);
-	if (!is_t4(adapter_type)) {
-		skb_trim(skb, roundup(sizeof(*rpl5), 16));
-		rpl5 = (void *)rpl;
+	अगर (!is_t4(adapter_type)) अणु
+		skb_trim(skb, roundup(माप(*rpl5), 16));
+		rpl5 = (व्योम *)rpl;
 		INIT_TP_WR(rpl5, ep->hwtid);
-	} else {
-		skb_trim(skb, sizeof(*rpl));
+	पूर्ण अन्यथा अणु
+		skb_trim(skb, माप(*rpl));
 		INIT_TP_WR(rpl, ep->hwtid);
-	}
+	पूर्ण
 	OPCODE_TID(rpl) = cpu_to_be32(MK_OPCODE_TID(CPL_PASS_ACCEPT_RPL,
 						    ep->hwtid));
 
-	if (CHELSIO_CHIP_VERSION(adapter_type) > CHELSIO_T4) {
-		u32 isn = (prandom_u32() & ~7UL) - 1;
+	अगर (CHELSIO_CHIP_VERSION(adapter_type) > CHELSIO_T4) अणु
+		u32 isn = (pअक्रमom_u32() & ~7UL) - 1;
 		opt2 |= T5_OPT_2_VALID_F;
 		opt2 |= CONG_CNTRL_V(CONG_ALG_TAHOE);
 		opt2 |= T5_ISS_F;
-		rpl5 = (void *)rpl;
-		memset(&rpl5->iss, 0, roundup(sizeof(*rpl5)-sizeof(*rpl), 16));
-		if (peer2peer)
+		rpl5 = (व्योम *)rpl;
+		स_रखो(&rpl5->iss, 0, roundup(माप(*rpl5)-माप(*rpl), 16));
+		अगर (peer2peer)
 			isn += 4;
 		rpl5->iss = cpu_to_be32(isn);
 		pr_debug("iss %u\n", be32_to_cpu(rpl5->iss));
-	}
+	पूर्ण
 
 	rpl->opt0 = cpu_to_be64(opt0);
 	rpl->opt2 = cpu_to_be32(opt2);
 	set_wr_txq(skb, CPL_PRIORITY_SETUP, ep->ctrlq_idx);
 	t4_set_arp_err_handler(skb, ep, pass_accept_rpl_arp_failure);
 
-	return c4iw_l2t_send(&ep->com.dev->rdev, skb, ep->l2t);
-}
+	वापस c4iw_l2t_send(&ep->com.dev->rdev, skb, ep->l2t);
+पूर्ण
 
-static void reject_cr(struct c4iw_dev *dev, u32 hwtid, struct sk_buff *skb)
-{
+अटल व्योम reject_cr(काष्ठा c4iw_dev *dev, u32 hwtid, काष्ठा sk_buff *skb)
+अणु
 	pr_debug("c4iw_dev %p tid %u\n", dev, hwtid);
-	skb_trim(skb, sizeof(struct cpl_tid_release));
+	skb_trim(skb, माप(काष्ठा cpl_tid_release));
 	release_tid(&dev->rdev, hwtid, skb);
-	return;
-}
+	वापस;
+पूर्ण
 
-static int pass_accept_req(struct c4iw_dev *dev, struct sk_buff *skb)
-{
-	struct c4iw_ep *child_ep = NULL, *parent_ep;
-	struct cpl_pass_accept_req *req = cplhdr(skb);
-	unsigned int stid = PASS_OPEN_TID_G(ntohl(req->tos_stid));
-	struct tid_info *t = dev->rdev.lldi.tids;
-	unsigned int hwtid = GET_TID(req);
-	struct dst_entry *dst;
+अटल पूर्णांक pass_accept_req(काष्ठा c4iw_dev *dev, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा c4iw_ep *child_ep = शून्य, *parent_ep;
+	काष्ठा cpl_pass_accept_req *req = cplhdr(skb);
+	अचिन्हित पूर्णांक stid = PASS_OPEN_TID_G(ntohl(req->tos_stid));
+	काष्ठा tid_info *t = dev->rdev.lldi.tids;
+	अचिन्हित पूर्णांक hwtid = GET_TID(req);
+	काष्ठा dst_entry *dst;
 	__u8 local_ip[16], peer_ip[16];
 	__be16 local_port, peer_port;
-	struct sockaddr_in6 *sin6;
-	int err;
+	काष्ठा sockaddr_in6 *sin6;
+	पूर्णांक err;
 	u16 peer_mss = ntohs(req->tcpopt.mss);
-	int iptype;
-	unsigned short hdrs;
+	पूर्णांक iptype;
+	अचिन्हित लघु hdrs;
 	u8 tos;
 
-	parent_ep = (struct c4iw_ep *)get_ep_from_stid(dev, stid);
-	if (!parent_ep) {
+	parent_ep = (काष्ठा c4iw_ep *)get_ep_from_stid(dev, stid);
+	अगर (!parent_ep) अणु
 		pr_err("%s connect request on invalid stid %d\n",
 		       __func__, stid);
-		goto reject;
-	}
+		जाओ reject;
+	पूर्ण
 
-	if (state_read(&parent_ep->com) != LISTEN) {
+	अगर (state_पढ़ो(&parent_ep->com) != LISTEN) अणु
 		pr_err("%s - listening ep not in LISTEN\n", __func__);
-		goto reject;
-	}
+		जाओ reject;
+	पूर्ण
 
-	if (parent_ep->com.cm_id->tos_set)
+	अगर (parent_ep->com.cm_id->tos_set)
 		tos = parent_ep->com.cm_id->tos;
-	else
+	अन्यथा
 		tos = PASS_OPEN_TOS_G(ntohl(req->tos_stid));
 
 	cxgb_get_4tuple(req, parent_ep->com.dev->rdev.lldi.adapter_type,
 			&iptype, local_ip, peer_ip, &local_port, &peer_port);
 
 	/* Find output route */
-	if (iptype == 4)  {
+	अगर (iptype == 4)  अणु
 		pr_debug("parent ep %p hwtid %u laddr %pI4 raddr %pI4 lport %d rport %d peer_mss %d\n"
 			 , parent_ep, hwtid,
 			 local_ip, peer_ip, ntohs(local_port),
@@ -2556,7 +2557,7 @@ static int pass_accept_req(struct c4iw_dev *dev, struct sk_buff *skb)
 		dst = cxgb_find_route(&dev->rdev.lldi, get_real_dev,
 				      *(__be32 *)local_ip, *(__be32 *)peer_ip,
 				      local_port, peer_port, tos);
-	} else {
+	पूर्ण अन्यथा अणु
 		pr_debug("parent ep %p hwtid %u laddr %pI6 raddr %pI6 lport %d rport %d peer_mss %d\n"
 			 , parent_ep, hwtid,
 			 local_ip, peer_ip, ntohs(local_port),
@@ -2564,79 +2565,79 @@ static int pass_accept_req(struct c4iw_dev *dev, struct sk_buff *skb)
 		dst = cxgb_find_route6(&dev->rdev.lldi, get_real_dev,
 				local_ip, peer_ip, local_port, peer_port,
 				tos,
-				((struct sockaddr_in6 *)
+				((काष्ठा sockaddr_in6 *)
 				 &parent_ep->com.local_addr)->sin6_scope_id);
-	}
-	if (!dst) {
+	पूर्ण
+	अगर (!dst) अणु
 		pr_err("%s - failed to find dst entry!\n", __func__);
-		goto reject;
-	}
+		जाओ reject;
+	पूर्ण
 
-	child_ep = alloc_ep(sizeof(*child_ep), GFP_KERNEL);
-	if (!child_ep) {
+	child_ep = alloc_ep(माप(*child_ep), GFP_KERNEL);
+	अगर (!child_ep) अणु
 		pr_err("%s - failed to allocate ep entry!\n", __func__);
 		dst_release(dst);
-		goto reject;
-	}
+		जाओ reject;
+	पूर्ण
 
 	err = import_ep(child_ep, iptype, peer_ip, dst, dev, false,
 			parent_ep->com.dev->rdev.lldi.adapter_type, tos);
-	if (err) {
+	अगर (err) अणु
 		pr_err("%s - failed to allocate l2t entry!\n", __func__);
 		dst_release(dst);
-		kfree(child_ep);
-		goto reject;
-	}
+		kमुक्त(child_ep);
+		जाओ reject;
+	पूर्ण
 
-	hdrs = ((iptype == 4) ? sizeof(struct iphdr) : sizeof(struct ipv6hdr)) +
-	       sizeof(struct tcphdr) +
-	       ((enable_tcp_timestamps && req->tcpopt.tstamp) ? 12 : 0);
-	if (peer_mss && child_ep->mtu > (peer_mss + hdrs))
+	hdrs = ((iptype == 4) ? माप(काष्ठा iphdr) : माप(काष्ठा ipv6hdr)) +
+	       माप(काष्ठा tcphdr) +
+	       ((enable_tcp_बारtamps && req->tcpopt.tstamp) ? 12 : 0);
+	अगर (peer_mss && child_ep->mtu > (peer_mss + hdrs))
 		child_ep->mtu = peer_mss + hdrs;
 
 	skb_queue_head_init(&child_ep->com.ep_skb_list);
-	if (alloc_ep_skb_list(&child_ep->com.ep_skb_list, CN_MAX_CON_BUF))
-		goto fail;
+	अगर (alloc_ep_skb_list(&child_ep->com.ep_skb_list, CN_MAX_CON_BUF))
+		जाओ fail;
 
 	state_set(&child_ep->com, CONNECTING);
 	child_ep->com.dev = dev;
-	child_ep->com.cm_id = NULL;
+	child_ep->com.cm_id = शून्य;
 
-	if (iptype == 4) {
-		struct sockaddr_in *sin = (struct sockaddr_in *)
+	अगर (iptype == 4) अणु
+		काष्ठा sockaddr_in *sin = (काष्ठा sockaddr_in *)
 			&child_ep->com.local_addr;
 
 		sin->sin_family = AF_INET;
 		sin->sin_port = local_port;
 		sin->sin_addr.s_addr = *(__be32 *)local_ip;
 
-		sin = (struct sockaddr_in *)&child_ep->com.local_addr;
+		sin = (काष्ठा sockaddr_in *)&child_ep->com.local_addr;
 		sin->sin_family = AF_INET;
-		sin->sin_port = ((struct sockaddr_in *)
+		sin->sin_port = ((काष्ठा sockaddr_in *)
 				 &parent_ep->com.local_addr)->sin_port;
 		sin->sin_addr.s_addr = *(__be32 *)local_ip;
 
-		sin = (struct sockaddr_in *)&child_ep->com.remote_addr;
+		sin = (काष्ठा sockaddr_in *)&child_ep->com.remote_addr;
 		sin->sin_family = AF_INET;
 		sin->sin_port = peer_port;
 		sin->sin_addr.s_addr = *(__be32 *)peer_ip;
-	} else {
-		sin6 = (struct sockaddr_in6 *)&child_ep->com.local_addr;
+	पूर्ण अन्यथा अणु
+		sin6 = (काष्ठा sockaddr_in6 *)&child_ep->com.local_addr;
 		sin6->sin6_family = PF_INET6;
 		sin6->sin6_port = local_port;
-		memcpy(sin6->sin6_addr.s6_addr, local_ip, 16);
+		स_नकल(sin6->sin6_addr.s6_addr, local_ip, 16);
 
-		sin6 = (struct sockaddr_in6 *)&child_ep->com.local_addr;
+		sin6 = (काष्ठा sockaddr_in6 *)&child_ep->com.local_addr;
 		sin6->sin6_family = PF_INET6;
-		sin6->sin6_port = ((struct sockaddr_in6 *)
+		sin6->sin6_port = ((काष्ठा sockaddr_in6 *)
 				   &parent_ep->com.local_addr)->sin6_port;
-		memcpy(sin6->sin6_addr.s6_addr, local_ip, 16);
+		स_नकल(sin6->sin6_addr.s6_addr, local_ip, 16);
 
-		sin6 = (struct sockaddr_in6 *)&child_ep->com.remote_addr;
+		sin6 = (काष्ठा sockaddr_in6 *)&child_ep->com.remote_addr;
 		sin6->sin6_family = PF_INET6;
 		sin6->sin6_port = peer_port;
-		memcpy(sin6->sin6_addr.s6_addr, peer_ip, 16);
-	}
+		स_नकल(sin6->sin6_addr.s6_addr, peer_ip, 16);
+	पूर्ण
 
 	c4iw_get_ep(&parent_ep->com);
 	child_ep->parent_ep = parent_ep;
@@ -2647,38 +2648,38 @@ static int pass_accept_req(struct c4iw_dev *dev, struct sk_buff *skb)
 	pr_debug("tx_chan %u smac_idx %u rss_qid %u\n",
 		 child_ep->tx_chan, child_ep->smac_idx, child_ep->rss_qid);
 
-	timer_setup(&child_ep->timer, ep_timeout, 0);
+	समयr_setup(&child_ep->समयr, ep_समयout, 0);
 	cxgb4_insert_tid(t, child_ep, hwtid,
 			 child_ep->com.local_addr.ss_family);
 	insert_ep_tid(child_ep);
-	if (accept_cr(child_ep, skb, req)) {
+	अगर (accept_cr(child_ep, skb, req)) अणु
 		c4iw_put_ep(&parent_ep->com);
 		release_ep_resources(child_ep);
-	} else {
+	पूर्ण अन्यथा अणु
 		set_bit(PASS_ACCEPT_REQ, &child_ep->com.history);
-	}
-	if (iptype == 6) {
-		sin6 = (struct sockaddr_in6 *)&child_ep->com.local_addr;
+	पूर्ण
+	अगर (iptype == 6) अणु
+		sin6 = (काष्ठा sockaddr_in6 *)&child_ep->com.local_addr;
 		cxgb4_clip_get(child_ep->com.dev->rdev.lldi.ports[0],
-			       (const u32 *)&sin6->sin6_addr.s6_addr, 1);
-	}
-	goto out;
+			       (स्थिर u32 *)&sin6->sin6_addr.s6_addr, 1);
+	पूर्ण
+	जाओ out;
 fail:
 	c4iw_put_ep(&child_ep->com);
 reject:
 	reject_cr(dev, hwtid, skb);
 out:
-	if (parent_ep)
+	अगर (parent_ep)
 		c4iw_put_ep(&parent_ep->com);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int pass_establish(struct c4iw_dev *dev, struct sk_buff *skb)
-{
-	struct c4iw_ep *ep;
-	struct cpl_pass_establish *req = cplhdr(skb);
-	unsigned int tid = GET_TID(req);
-	int ret;
+अटल पूर्णांक pass_establish(काष्ठा c4iw_dev *dev, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा c4iw_ep *ep;
+	काष्ठा cpl_pass_establish *req = cplhdr(skb);
+	अचिन्हित पूर्णांक tid = GET_TID(req);
+	पूर्णांक ret;
 	u16 tcp_opt = ntohs(req->tcp_opt);
 
 	ep = get_ep_from_tid(dev, tid);
@@ -2694,490 +2695,490 @@ static int pass_establish(struct c4iw_dev *dev, struct sk_buff *skb)
 	dst_confirm(ep->dst);
 	mutex_lock(&ep->com.mutex);
 	ep->com.state = MPA_REQ_WAIT;
-	start_ep_timer(ep);
+	start_ep_समयr(ep);
 	set_bit(PASS_ESTAB, &ep->com.history);
 	ret = send_flowc(ep);
 	mutex_unlock(&ep->com.mutex);
-	if (ret)
+	अगर (ret)
 		c4iw_ep_disconnect(ep, 1, GFP_KERNEL);
 	c4iw_put_ep(&ep->com);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int peer_close(struct c4iw_dev *dev, struct sk_buff *skb)
-{
-	struct cpl_peer_close *hdr = cplhdr(skb);
-	struct c4iw_ep *ep;
-	struct c4iw_qp_attributes attrs;
-	int disconnect = 1;
-	int release = 0;
-	unsigned int tid = GET_TID(hdr);
-	int ret;
+अटल पूर्णांक peer_बंद(काष्ठा c4iw_dev *dev, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा cpl_peer_बंद *hdr = cplhdr(skb);
+	काष्ठा c4iw_ep *ep;
+	काष्ठा c4iw_qp_attributes attrs;
+	पूर्णांक disconnect = 1;
+	पूर्णांक release = 0;
+	अचिन्हित पूर्णांक tid = GET_TID(hdr);
+	पूर्णांक ret;
 
 	ep = get_ep_from_tid(dev, tid);
-	if (!ep)
-		return 0;
+	अगर (!ep)
+		वापस 0;
 
 	pr_debug("ep %p tid %u\n", ep, ep->hwtid);
 	dst_confirm(ep->dst);
 
 	set_bit(PEER_CLOSE, &ep->com.history);
 	mutex_lock(&ep->com.mutex);
-	switch (ep->com.state) {
-	case MPA_REQ_WAIT:
+	चयन (ep->com.state) अणु
+	हाल MPA_REQ_WAIT:
 		__state_set(&ep->com, CLOSING);
-		break;
-	case MPA_REQ_SENT:
+		अवरोध;
+	हाल MPA_REQ_SENT:
 		__state_set(&ep->com, CLOSING);
 		connect_reply_upcall(ep, -ECONNRESET);
-		break;
-	case MPA_REQ_RCVD:
+		अवरोध;
+	हाल MPA_REQ_RCVD:
 
 		/*
 		 * We're gonna mark this puppy DEAD, but keep
 		 * the reference on it until the ULP accepts or
-		 * rejects the CR. Also wake up anyone waiting
+		 * rejects the CR. Also wake up anyone रुकोing
 		 * in rdma connection migration (see c4iw_accept_cr()).
 		 */
 		__state_set(&ep->com, CLOSING);
 		pr_debug("waking up ep %p tid %u\n", ep, ep->hwtid);
-		c4iw_wake_up_noref(ep->com.wr_waitp, -ECONNRESET);
-		break;
-	case MPA_REP_SENT:
+		c4iw_wake_up_noref(ep->com.wr_रुकोp, -ECONNRESET);
+		अवरोध;
+	हाल MPA_REP_SENT:
 		__state_set(&ep->com, CLOSING);
 		pr_debug("waking up ep %p tid %u\n", ep, ep->hwtid);
-		c4iw_wake_up_noref(ep->com.wr_waitp, -ECONNRESET);
-		break;
-	case FPDU_MODE:
-		start_ep_timer(ep);
+		c4iw_wake_up_noref(ep->com.wr_रुकोp, -ECONNRESET);
+		अवरोध;
+	हाल FPDU_MODE:
+		start_ep_समयr(ep);
 		__state_set(&ep->com, CLOSING);
 		attrs.next_state = C4IW_QP_STATE_CLOSING;
-		ret = c4iw_modify_qp(ep->com.qp->rhp, ep->com.qp,
+		ret = c4iw_modअगरy_qp(ep->com.qp->rhp, ep->com.qp,
 				       C4IW_QP_ATTR_NEXT_STATE, &attrs, 1);
-		if (ret != -ECONNRESET) {
-			peer_close_upcall(ep);
+		अगर (ret != -ECONNRESET) अणु
+			peer_बंद_upcall(ep);
 			disconnect = 1;
-		}
-		break;
-	case ABORTING:
+		पूर्ण
+		अवरोध;
+	हाल ABORTING:
 		disconnect = 0;
-		break;
-	case CLOSING:
+		अवरोध;
+	हाल CLOSING:
 		__state_set(&ep->com, MORIBUND);
 		disconnect = 0;
-		break;
-	case MORIBUND:
-		(void)stop_ep_timer(ep);
-		if (ep->com.cm_id && ep->com.qp) {
+		अवरोध;
+	हाल MORIBUND:
+		(व्योम)stop_ep_समयr(ep);
+		अगर (ep->com.cm_id && ep->com.qp) अणु
 			attrs.next_state = C4IW_QP_STATE_IDLE;
-			c4iw_modify_qp(ep->com.qp->rhp, ep->com.qp,
+			c4iw_modअगरy_qp(ep->com.qp->rhp, ep->com.qp,
 				       C4IW_QP_ATTR_NEXT_STATE, &attrs, 1);
-		}
-		close_complete_upcall(ep, 0);
+		पूर्ण
+		बंद_complete_upcall(ep, 0);
 		__state_set(&ep->com, DEAD);
 		release = 1;
 		disconnect = 0;
-		break;
-	case DEAD:
+		अवरोध;
+	हाल DEAD:
 		disconnect = 0;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		WARN_ONCE(1, "Bad endpoint state %u\n", ep->com.state);
-	}
+	पूर्ण
 	mutex_unlock(&ep->com.mutex);
-	if (disconnect)
+	अगर (disconnect)
 		c4iw_ep_disconnect(ep, 0, GFP_KERNEL);
-	if (release)
+	अगर (release)
 		release_ep_resources(ep);
 	c4iw_put_ep(&ep->com);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void finish_peer_abort(struct c4iw_dev *dev, struct c4iw_ep *ep)
-{
+अटल व्योम finish_peer_पात(काष्ठा c4iw_dev *dev, काष्ठा c4iw_ep *ep)
+अणु
 	complete_cached_srq_buffers(ep, ep->srqe_idx);
-	if (ep->com.cm_id && ep->com.qp) {
-		struct c4iw_qp_attributes attrs;
+	अगर (ep->com.cm_id && ep->com.qp) अणु
+		काष्ठा c4iw_qp_attributes attrs;
 
 		attrs.next_state = C4IW_QP_STATE_ERROR;
-		c4iw_modify_qp(ep->com.qp->rhp, ep->com.qp,
+		c4iw_modअगरy_qp(ep->com.qp->rhp, ep->com.qp,
 			       C4IW_QP_ATTR_NEXT_STATE,	&attrs, 1);
-	}
-	peer_abort_upcall(ep);
+	पूर्ण
+	peer_पात_upcall(ep);
 	release_ep_resources(ep);
 	c4iw_put_ep(&ep->com);
-}
+पूर्ण
 
-static int peer_abort(struct c4iw_dev *dev, struct sk_buff *skb)
-{
-	struct cpl_abort_req_rss6 *req = cplhdr(skb);
-	struct c4iw_ep *ep;
-	struct sk_buff *rpl_skb;
-	struct c4iw_qp_attributes attrs;
-	int ret;
-	int release = 0;
-	unsigned int tid = GET_TID(req);
+अटल पूर्णांक peer_पात(काष्ठा c4iw_dev *dev, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा cpl_पात_req_rss6 *req = cplhdr(skb);
+	काष्ठा c4iw_ep *ep;
+	काष्ठा sk_buff *rpl_skb;
+	काष्ठा c4iw_qp_attributes attrs;
+	पूर्णांक ret;
+	पूर्णांक release = 0;
+	अचिन्हित पूर्णांक tid = GET_TID(req);
 	u8 status;
 	u32 srqidx;
 
-	u32 len = roundup(sizeof(struct cpl_abort_rpl), 16);
+	u32 len = roundup(माप(काष्ठा cpl_पात_rpl), 16);
 
 	ep = get_ep_from_tid(dev, tid);
-	if (!ep)
-		return 0;
+	अगर (!ep)
+		वापस 0;
 
 	status = ABORT_RSS_STATUS_G(be32_to_cpu(req->srqidx_status));
 
-	if (cxgb_is_neg_adv(status)) {
+	अगर (cxgb_is_neg_adv(status)) अणु
 		pr_debug("Negative advice on abort- tid %u status %d (%s)\n",
 			 ep->hwtid, status, neg_adv_str(status));
-		ep->stats.abort_neg_adv++;
+		ep->stats.पात_neg_adv++;
 		mutex_lock(&dev->rdev.stats.lock);
 		dev->rdev.stats.neg_adv++;
 		mutex_unlock(&dev->rdev.stats.lock);
-		goto deref_ep;
-	}
+		जाओ deref_ep;
+	पूर्ण
 
 	pr_debug("ep %p tid %u state %u\n", ep, ep->hwtid,
 		 ep->com.state);
 	set_bit(PEER_ABORT, &ep->com.history);
 
 	/*
-	 * Wake up any threads in rdma_init() or rdma_fini().
-	 * However, this is not needed if com state is just
+	 * Wake up any thपढ़ोs in rdma_init() or rdma_fini().
+	 * However, this is not needed अगर com state is just
 	 * MPA_REQ_SENT
 	 */
-	if (ep->com.state != MPA_REQ_SENT)
-		c4iw_wake_up_noref(ep->com.wr_waitp, -ECONNRESET);
+	अगर (ep->com.state != MPA_REQ_SENT)
+		c4iw_wake_up_noref(ep->com.wr_रुकोp, -ECONNRESET);
 
 	mutex_lock(&ep->com.mutex);
-	switch (ep->com.state) {
-	case CONNECTING:
+	चयन (ep->com.state) अणु
+	हाल CONNECTING:
 		c4iw_put_ep(&ep->parent_ep->com);
-		break;
-	case MPA_REQ_WAIT:
-		(void)stop_ep_timer(ep);
-		break;
-	case MPA_REQ_SENT:
-		(void)stop_ep_timer(ep);
-		if (status != CPL_ERR_CONN_RESET || mpa_rev == 1 ||
+		अवरोध;
+	हाल MPA_REQ_WAIT:
+		(व्योम)stop_ep_समयr(ep);
+		अवरोध;
+	हाल MPA_REQ_SENT:
+		(व्योम)stop_ep_समयr(ep);
+		अगर (status != CPL_ERR_CONN_RESET || mpa_rev == 1 ||
 		    (mpa_rev == 2 && ep->tried_with_mpa_v1))
 			connect_reply_upcall(ep, -ECONNRESET);
-		else {
+		अन्यथा अणु
 			/*
-			 * we just don't send notification upwards because we
+			 * we just करोn't send notअगरication upwards because we
 			 * want to retry with mpa_v1 without upper layers even
 			 * knowing it.
 			 *
-			 * do some housekeeping so as to re-initiate the
+			 * करो some housekeeping so as to re-initiate the
 			 * connection
 			 */
 			pr_info("%s: mpa_rev=%d. Retrying with mpav1\n",
 				__func__, mpa_rev);
 			ep->retry_with_mpa_v1 = 1;
-		}
-		break;
-	case MPA_REP_SENT:
-		break;
-	case MPA_REQ_RCVD:
-		break;
-	case MORIBUND:
-	case CLOSING:
-		stop_ep_timer(ep);
+		पूर्ण
+		अवरोध;
+	हाल MPA_REP_SENT:
+		अवरोध;
+	हाल MPA_REQ_RCVD:
+		अवरोध;
+	हाल MORIBUND:
+	हाल CLOSING:
+		stop_ep_समयr(ep);
 		fallthrough;
-	case FPDU_MODE:
-		if (ep->com.qp && ep->com.qp->srq) {
+	हाल FPDU_MODE:
+		अगर (ep->com.qp && ep->com.qp->srq) अणु
 			srqidx = ABORT_RSS_SRQIDX_G(
 					be32_to_cpu(req->srqidx_status));
-			if (srqidx) {
+			अगर (srqidx) अणु
 				complete_cached_srq_buffers(ep, srqidx);
-			} else {
-				/* Hold ep ref until finish_peer_abort() */
+			पूर्ण अन्यथा अणु
+				/* Hold ep ref until finish_peer_पात() */
 				c4iw_get_ep(&ep->com);
 				__state_set(&ep->com, ABORTING);
 				set_bit(PEER_ABORT_IN_PROGRESS, &ep->com.flags);
-				read_tcb(ep);
-				break;
+				पढ़ो_tcb(ep);
+				अवरोध;
 
-			}
-		}
+			पूर्ण
+		पूर्ण
 
-		if (ep->com.cm_id && ep->com.qp) {
+		अगर (ep->com.cm_id && ep->com.qp) अणु
 			attrs.next_state = C4IW_QP_STATE_ERROR;
-			ret = c4iw_modify_qp(ep->com.qp->rhp,
+			ret = c4iw_modअगरy_qp(ep->com.qp->rhp,
 				     ep->com.qp, C4IW_QP_ATTR_NEXT_STATE,
 				     &attrs, 1);
-			if (ret)
+			अगर (ret)
 				pr_err("%s - qp <- error failed!\n", __func__);
-		}
-		peer_abort_upcall(ep);
-		break;
-	case ABORTING:
-		break;
-	case DEAD:
+		पूर्ण
+		peer_पात_upcall(ep);
+		अवरोध;
+	हाल ABORTING:
+		अवरोध;
+	हाल DEAD:
 		pr_warn("%s PEER_ABORT IN DEAD STATE!!!!\n", __func__);
 		mutex_unlock(&ep->com.mutex);
-		goto deref_ep;
-	default:
+		जाओ deref_ep;
+	शेष:
 		WARN_ONCE(1, "Bad endpoint state %u\n", ep->com.state);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 	dst_confirm(ep->dst);
-	if (ep->com.state != ABORTING) {
+	अगर (ep->com.state != ABORTING) अणु
 		__state_set(&ep->com, DEAD);
-		/* we don't release if we want to retry with mpa_v1 */
-		if (!ep->retry_with_mpa_v1)
+		/* we करोn't release अगर we want to retry with mpa_v1 */
+		अगर (!ep->retry_with_mpa_v1)
 			release = 1;
-	}
+	पूर्ण
 	mutex_unlock(&ep->com.mutex);
 
 	rpl_skb = skb_dequeue(&ep->com.ep_skb_list);
-	if (WARN_ON(!rpl_skb)) {
+	अगर (WARN_ON(!rpl_skb)) अणु
 		release = 1;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	cxgb_mk_abort_rpl(rpl_skb, len, ep->hwtid, ep->txq_idx);
+	cxgb_mk_पात_rpl(rpl_skb, len, ep->hwtid, ep->txq_idx);
 
 	c4iw_ofld_send(&ep->com.dev->rdev, rpl_skb);
 out:
-	if (release)
+	अगर (release)
 		release_ep_resources(ep);
-	else if (ep->retry_with_mpa_v1) {
-		if (ep->com.remote_addr.ss_family == AF_INET6) {
-			struct sockaddr_in6 *sin6 =
-					(struct sockaddr_in6 *)
+	अन्यथा अगर (ep->retry_with_mpa_v1) अणु
+		अगर (ep->com.remote_addr.ss_family == AF_INET6) अणु
+			काष्ठा sockaddr_in6 *sin6 =
+					(काष्ठा sockaddr_in6 *)
 					&ep->com.local_addr;
 			cxgb4_clip_release(
 					ep->com.dev->rdev.lldi.ports[0],
-					(const u32 *)&sin6->sin6_addr.s6_addr,
+					(स्थिर u32 *)&sin6->sin6_addr.s6_addr,
 					1);
-		}
+		पूर्ण
 		xa_erase_irq(&ep->com.dev->hwtids, ep->hwtid);
-		cxgb4_remove_tid(ep->com.dev->rdev.lldi.tids, 0, ep->hwtid,
+		cxgb4_हटाओ_tid(ep->com.dev->rdev.lldi.tids, 0, ep->hwtid,
 				 ep->com.local_addr.ss_family);
 		dst_release(ep->dst);
 		cxgb4_l2t_release(ep->l2t);
 		c4iw_reconnect(ep);
-	}
+	पूर्ण
 
 deref_ep:
 	c4iw_put_ep(&ep->com);
-	/* Dereferencing ep, referenced in peer_abort_intr() */
+	/* Dereferencing ep, referenced in peer_पात_पूर्णांकr() */
 	c4iw_put_ep(&ep->com);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int close_con_rpl(struct c4iw_dev *dev, struct sk_buff *skb)
-{
-	struct c4iw_ep *ep;
-	struct c4iw_qp_attributes attrs;
-	struct cpl_close_con_rpl *rpl = cplhdr(skb);
-	int release = 0;
-	unsigned int tid = GET_TID(rpl);
+अटल पूर्णांक बंद_con_rpl(काष्ठा c4iw_dev *dev, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा c4iw_ep *ep;
+	काष्ठा c4iw_qp_attributes attrs;
+	काष्ठा cpl_बंद_con_rpl *rpl = cplhdr(skb);
+	पूर्णांक release = 0;
+	अचिन्हित पूर्णांक tid = GET_TID(rpl);
 
 	ep = get_ep_from_tid(dev, tid);
-	if (!ep)
-		return 0;
+	अगर (!ep)
+		वापस 0;
 
 	pr_debug("ep %p tid %u\n", ep, ep->hwtid);
 
-	/* The cm_id may be null if we failed to connect */
+	/* The cm_id may be null अगर we failed to connect */
 	mutex_lock(&ep->com.mutex);
 	set_bit(CLOSE_CON_RPL, &ep->com.history);
-	switch (ep->com.state) {
-	case CLOSING:
+	चयन (ep->com.state) अणु
+	हाल CLOSING:
 		__state_set(&ep->com, MORIBUND);
-		break;
-	case MORIBUND:
-		(void)stop_ep_timer(ep);
-		if ((ep->com.cm_id) && (ep->com.qp)) {
+		अवरोध;
+	हाल MORIBUND:
+		(व्योम)stop_ep_समयr(ep);
+		अगर ((ep->com.cm_id) && (ep->com.qp)) अणु
 			attrs.next_state = C4IW_QP_STATE_IDLE;
-			c4iw_modify_qp(ep->com.qp->rhp,
+			c4iw_modअगरy_qp(ep->com.qp->rhp,
 					     ep->com.qp,
 					     C4IW_QP_ATTR_NEXT_STATE,
 					     &attrs, 1);
-		}
-		close_complete_upcall(ep, 0);
+		पूर्ण
+		बंद_complete_upcall(ep, 0);
 		__state_set(&ep->com, DEAD);
 		release = 1;
-		break;
-	case ABORTING:
-	case DEAD:
-		break;
-	default:
+		अवरोध;
+	हाल ABORTING:
+	हाल DEAD:
+		अवरोध;
+	शेष:
 		WARN_ONCE(1, "Bad endpoint state %u\n", ep->com.state);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 	mutex_unlock(&ep->com.mutex);
-	if (release)
+	अगर (release)
 		release_ep_resources(ep);
 	c4iw_put_ep(&ep->com);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int terminate(struct c4iw_dev *dev, struct sk_buff *skb)
-{
-	struct cpl_rdma_terminate *rpl = cplhdr(skb);
-	unsigned int tid = GET_TID(rpl);
-	struct c4iw_ep *ep;
-	struct c4iw_qp_attributes attrs;
+अटल पूर्णांक terminate(काष्ठा c4iw_dev *dev, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा cpl_rdma_terminate *rpl = cplhdr(skb);
+	अचिन्हित पूर्णांक tid = GET_TID(rpl);
+	काष्ठा c4iw_ep *ep;
+	काष्ठा c4iw_qp_attributes attrs;
 
 	ep = get_ep_from_tid(dev, tid);
 
-	if (ep) {
-		if (ep->com.qp) {
+	अगर (ep) अणु
+		अगर (ep->com.qp) अणु
 			pr_warn("TERM received tid %u qpid %u\n", tid,
 				ep->com.qp->wq.sq.qid);
 			attrs.next_state = C4IW_QP_STATE_TERMINATE;
-			c4iw_modify_qp(ep->com.qp->rhp, ep->com.qp,
+			c4iw_modअगरy_qp(ep->com.qp->rhp, ep->com.qp,
 				       C4IW_QP_ATTR_NEXT_STATE, &attrs, 1);
-		}
+		पूर्ण
 
 		/* As per draft-hilland-iwarp-verbs-v1.0, sec 6.2.3,
 		 * when entering the TERM state the RNIC MUST initiate a CLOSE.
 		 */
 		c4iw_ep_disconnect(ep, 1, GFP_KERNEL);
 		c4iw_put_ep(&ep->com);
-	} else
+	पूर्ण अन्यथा
 		pr_warn("TERM received tid %u no ep/qp\n", tid);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * Upcall from the adapter indicating data has been transmitted.
- * For us its just the single MPA request or reply.  We can now free
+ * For us its just the single MPA request or reply.  We can now मुक्त
  * the skb holding the mpa message.
  */
-static int fw4_ack(struct c4iw_dev *dev, struct sk_buff *skb)
-{
-	struct c4iw_ep *ep;
-	struct cpl_fw4_ack *hdr = cplhdr(skb);
+अटल पूर्णांक fw4_ack(काष्ठा c4iw_dev *dev, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा c4iw_ep *ep;
+	काष्ठा cpl_fw4_ack *hdr = cplhdr(skb);
 	u8 credits = hdr->credits;
-	unsigned int tid = GET_TID(hdr);
+	अचिन्हित पूर्णांक tid = GET_TID(hdr);
 
 
 	ep = get_ep_from_tid(dev, tid);
-	if (!ep)
-		return 0;
+	अगर (!ep)
+		वापस 0;
 	pr_debug("ep %p tid %u credits %u\n",
 		 ep, ep->hwtid, credits);
-	if (credits == 0) {
+	अगर (credits == 0) अणु
 		pr_debug("0 credit ack ep %p tid %u state %u\n",
-			 ep, ep->hwtid, state_read(&ep->com));
-		goto out;
-	}
+			 ep, ep->hwtid, state_पढ़ो(&ep->com));
+		जाओ out;
+	पूर्ण
 
 	dst_confirm(ep->dst);
-	if (ep->mpa_skb) {
+	अगर (ep->mpa_skb) अणु
 		pr_debug("last streaming msg ack ep %p tid %u state %u initiator %u freeing skb\n",
-			 ep, ep->hwtid, state_read(&ep->com),
+			 ep, ep->hwtid, state_पढ़ो(&ep->com),
 			 ep->mpa_attr.initiator ? 1 : 0);
 		mutex_lock(&ep->com.mutex);
-		kfree_skb(ep->mpa_skb);
-		ep->mpa_skb = NULL;
-		if (test_bit(STOP_MPA_TIMER, &ep->com.flags))
-			stop_ep_timer(ep);
+		kमुक्त_skb(ep->mpa_skb);
+		ep->mpa_skb = शून्य;
+		अगर (test_bit(STOP_MPA_TIMER, &ep->com.flags))
+			stop_ep_समयr(ep);
 		mutex_unlock(&ep->com.mutex);
-	}
+	पूर्ण
 out:
 	c4iw_put_ep(&ep->com);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int c4iw_reject_cr(struct iw_cm_id *cm_id, const void *pdata, u8 pdata_len)
-{
-	int abort;
-	struct c4iw_ep *ep = to_ep(cm_id);
+पूर्णांक c4iw_reject_cr(काष्ठा iw_cm_id *cm_id, स्थिर व्योम *pdata, u8 pdata_len)
+अणु
+	पूर्णांक पात;
+	काष्ठा c4iw_ep *ep = to_ep(cm_id);
 
 	pr_debug("ep %p tid %u\n", ep, ep->hwtid);
 
 	mutex_lock(&ep->com.mutex);
-	if (ep->com.state != MPA_REQ_RCVD) {
+	अगर (ep->com.state != MPA_REQ_RCVD) अणु
 		mutex_unlock(&ep->com.mutex);
 		c4iw_put_ep(&ep->com);
-		return -ECONNRESET;
-	}
+		वापस -ECONNRESET;
+	पूर्ण
 	set_bit(ULP_REJECT, &ep->com.history);
-	if (mpa_rev == 0)
-		abort = 1;
-	else
-		abort = send_mpa_reject(ep, pdata, pdata_len);
+	अगर (mpa_rev == 0)
+		पात = 1;
+	अन्यथा
+		पात = send_mpa_reject(ep, pdata, pdata_len);
 	mutex_unlock(&ep->com.mutex);
 
-	stop_ep_timer(ep);
-	c4iw_ep_disconnect(ep, abort != 0, GFP_KERNEL);
+	stop_ep_समयr(ep);
+	c4iw_ep_disconnect(ep, पात != 0, GFP_KERNEL);
 	c4iw_put_ep(&ep->com);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int c4iw_accept_cr(struct iw_cm_id *cm_id, struct iw_cm_conn_param *conn_param)
-{
-	int err;
-	struct c4iw_qp_attributes attrs;
-	enum c4iw_qp_attr_mask mask;
-	struct c4iw_ep *ep = to_ep(cm_id);
-	struct c4iw_dev *h = to_c4iw_dev(cm_id->device);
-	struct c4iw_qp *qp = get_qhp(h, conn_param->qpn);
-	int abort = 0;
+पूर्णांक c4iw_accept_cr(काष्ठा iw_cm_id *cm_id, काष्ठा iw_cm_conn_param *conn_param)
+अणु
+	पूर्णांक err;
+	काष्ठा c4iw_qp_attributes attrs;
+	क्रमागत c4iw_qp_attr_mask mask;
+	काष्ठा c4iw_ep *ep = to_ep(cm_id);
+	काष्ठा c4iw_dev *h = to_c4iw_dev(cm_id->device);
+	काष्ठा c4iw_qp *qp = get_qhp(h, conn_param->qpn);
+	पूर्णांक पात = 0;
 
 	pr_debug("ep %p tid %u\n", ep, ep->hwtid);
 
 	mutex_lock(&ep->com.mutex);
-	if (ep->com.state != MPA_REQ_RCVD) {
+	अगर (ep->com.state != MPA_REQ_RCVD) अणु
 		err = -ECONNRESET;
-		goto err_out;
-	}
+		जाओ err_out;
+	पूर्ण
 
-	if (!qp) {
+	अगर (!qp) अणु
 		err = -EINVAL;
-		goto err_out;
-	}
+		जाओ err_out;
+	पूर्ण
 
 	set_bit(ULP_ACCEPT, &ep->com.history);
-	if ((conn_param->ord > cur_max_read_depth(ep->com.dev)) ||
-	    (conn_param->ird > cur_max_read_depth(ep->com.dev))) {
+	अगर ((conn_param->ord > cur_max_पढ़ो_depth(ep->com.dev)) ||
+	    (conn_param->ird > cur_max_पढ़ो_depth(ep->com.dev))) अणु
 		err = -EINVAL;
-		goto err_abort;
-	}
+		जाओ err_पात;
+	पूर्ण
 
-	if (ep->mpa_attr.version == 2 && ep->mpa_attr.enhanced_rdma_conn) {
-		if (conn_param->ord > ep->ird) {
-			if (RELAXED_IRD_NEGOTIATION) {
+	अगर (ep->mpa_attr.version == 2 && ep->mpa_attr.enhanced_rdma_conn) अणु
+		अगर (conn_param->ord > ep->ird) अणु
+			अगर (RELAXED_IRD_NEGOTIATION) अणु
 				conn_param->ord = ep->ird;
-			} else {
+			पूर्ण अन्यथा अणु
 				ep->ird = conn_param->ird;
 				ep->ord = conn_param->ord;
-				send_mpa_reject(ep, conn_param->private_data,
-						conn_param->private_data_len);
+				send_mpa_reject(ep, conn_param->निजी_data,
+						conn_param->निजी_data_len);
 				err = -ENOMEM;
-				goto err_abort;
-			}
-		}
-		if (conn_param->ird < ep->ord) {
-			if (RELAXED_IRD_NEGOTIATION &&
-			    ep->ord <= h->rdev.lldi.max_ordird_qp) {
+				जाओ err_पात;
+			पूर्ण
+		पूर्ण
+		अगर (conn_param->ird < ep->ord) अणु
+			अगर (RELAXED_IRD_NEGOTIATION &&
+			    ep->ord <= h->rdev.lldi.max_ordird_qp) अणु
 				conn_param->ird = ep->ord;
-			} else {
+			पूर्ण अन्यथा अणु
 				err = -ENOMEM;
-				goto err_abort;
-			}
-		}
-	}
+				जाओ err_पात;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 	ep->ird = conn_param->ird;
 	ep->ord = conn_param->ord;
 
-	if (ep->mpa_attr.version == 1) {
-		if (peer2peer && ep->ird == 0)
+	अगर (ep->mpa_attr.version == 1) अणु
+		अगर (peer2peer && ep->ird == 0)
 			ep->ird = 1;
-	} else {
-		if (peer2peer &&
+	पूर्ण अन्यथा अणु
+		अगर (peer2peer &&
 		    (ep->mpa_attr.p2p_type != FW_RI_INIT_P2PTYPE_DISABLED) &&
 		    (p2p_type == FW_RI_INIT_P2PTYPE_READ_REQ) && ep->ird == 0)
 			ep->ird = 1;
-	}
+	पूर्ण
 
 	pr_debug("ird %d ord %d\n", ep->ird, ep->ord);
 
@@ -3200,139 +3201,139 @@ int c4iw_accept_cr(struct iw_cm_id *cm_id, struct iw_cm_conn_param *conn_param)
 			     C4IW_QP_ATTR_MAX_IRD |
 			     C4IW_QP_ATTR_MAX_ORD;
 
-	err = c4iw_modify_qp(ep->com.qp->rhp,
+	err = c4iw_modअगरy_qp(ep->com.qp->rhp,
 			     ep->com.qp, mask, &attrs, 1);
-	if (err)
-		goto err_deref_cm_id;
+	अगर (err)
+		जाओ err_deref_cm_id;
 
 	set_bit(STOP_MPA_TIMER, &ep->com.flags);
-	err = send_mpa_reply(ep, conn_param->private_data,
-			     conn_param->private_data_len);
-	if (err)
-		goto err_deref_cm_id;
+	err = send_mpa_reply(ep, conn_param->निजी_data,
+			     conn_param->निजी_data_len);
+	अगर (err)
+		जाओ err_deref_cm_id;
 
 	__state_set(&ep->com, FPDU_MODE);
 	established_upcall(ep);
 	mutex_unlock(&ep->com.mutex);
 	c4iw_put_ep(&ep->com);
-	return 0;
+	वापस 0;
 err_deref_cm_id:
 	deref_cm_id(&ep->com);
-err_abort:
-	abort = 1;
+err_पात:
+	पात = 1;
 err_out:
 	mutex_unlock(&ep->com.mutex);
-	if (abort)
+	अगर (पात)
 		c4iw_ep_disconnect(ep, 1, GFP_KERNEL);
 	c4iw_put_ep(&ep->com);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int pick_local_ipaddrs(struct c4iw_dev *dev, struct iw_cm_id *cm_id)
-{
-	struct in_device *ind;
-	int found = 0;
-	struct sockaddr_in *laddr = (struct sockaddr_in *)&cm_id->m_local_addr;
-	struct sockaddr_in *raddr = (struct sockaddr_in *)&cm_id->m_remote_addr;
-	const struct in_ifaddr *ifa;
+अटल पूर्णांक pick_local_ipaddrs(काष्ठा c4iw_dev *dev, काष्ठा iw_cm_id *cm_id)
+अणु
+	काष्ठा in_device *ind;
+	पूर्णांक found = 0;
+	काष्ठा sockaddr_in *laddr = (काष्ठा sockaddr_in *)&cm_id->m_local_addr;
+	काष्ठा sockaddr_in *raddr = (काष्ठा sockaddr_in *)&cm_id->m_remote_addr;
+	स्थिर काष्ठा in_अगरaddr *अगरa;
 
 	ind = in_dev_get(dev->rdev.lldi.ports[0]);
-	if (!ind)
-		return -EADDRNOTAVAIL;
-	rcu_read_lock();
-	in_dev_for_each_ifa_rcu(ifa, ind) {
-		if (ifa->ifa_flags & IFA_F_SECONDARY)
-			continue;
-		laddr->sin_addr.s_addr = ifa->ifa_address;
-		raddr->sin_addr.s_addr = ifa->ifa_address;
+	अगर (!ind)
+		वापस -EADDRNOTAVAIL;
+	rcu_पढ़ो_lock();
+	in_dev_क्रम_each_अगरa_rcu(अगरa, ind) अणु
+		अगर (अगरa->अगरa_flags & IFA_F_SECONDARY)
+			जारी;
+		laddr->sin_addr.s_addr = अगरa->अगरa_address;
+		raddr->sin_addr.s_addr = अगरa->अगरa_address;
 		found = 1;
-		break;
-	}
-	rcu_read_unlock();
+		अवरोध;
+	पूर्ण
+	rcu_पढ़ो_unlock();
 
 	in_dev_put(ind);
-	return found ? 0 : -EADDRNOTAVAIL;
-}
+	वापस found ? 0 : -EADDRNOTAVAIL;
+पूर्ण
 
-static int get_lladdr(struct net_device *dev, struct in6_addr *addr,
-		      unsigned char banned_flags)
-{
-	struct inet6_dev *idev;
-	int err = -EADDRNOTAVAIL;
+अटल पूर्णांक get_lladdr(काष्ठा net_device *dev, काष्ठा in6_addr *addr,
+		      अचिन्हित अक्षर banned_flags)
+अणु
+	काष्ठा inet6_dev *idev;
+	पूर्णांक err = -EADDRNOTAVAIL;
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	idev = __in6_dev_get(dev);
-	if (idev != NULL) {
-		struct inet6_ifaddr *ifp;
+	अगर (idev != शून्य) अणु
+		काष्ठा inet6_अगरaddr *अगरp;
 
-		read_lock_bh(&idev->lock);
-		list_for_each_entry(ifp, &idev->addr_list, if_list) {
-			if (ifp->scope == IFA_LINK &&
-			    !(ifp->flags & banned_flags)) {
-				memcpy(addr, &ifp->addr, 16);
+		पढ़ो_lock_bh(&idev->lock);
+		list_क्रम_each_entry(अगरp, &idev->addr_list, अगर_list) अणु
+			अगर (अगरp->scope == IFA_LINK &&
+			    !(अगरp->flags & banned_flags)) अणु
+				स_नकल(addr, &अगरp->addr, 16);
 				err = 0;
-				break;
-			}
-		}
-		read_unlock_bh(&idev->lock);
-	}
-	rcu_read_unlock();
-	return err;
-}
+				अवरोध;
+			पूर्ण
+		पूर्ण
+		पढ़ो_unlock_bh(&idev->lock);
+	पूर्ण
+	rcu_पढ़ो_unlock();
+	वापस err;
+पूर्ण
 
-static int pick_local_ip6addrs(struct c4iw_dev *dev, struct iw_cm_id *cm_id)
-{
-	struct in6_addr addr;
-	struct sockaddr_in6 *la6 = (struct sockaddr_in6 *)&cm_id->m_local_addr;
-	struct sockaddr_in6 *ra6 = (struct sockaddr_in6 *)&cm_id->m_remote_addr;
+अटल पूर्णांक pick_local_ip6addrs(काष्ठा c4iw_dev *dev, काष्ठा iw_cm_id *cm_id)
+अणु
+	काष्ठा in6_addr addr;
+	काष्ठा sockaddr_in6 *la6 = (काष्ठा sockaddr_in6 *)&cm_id->m_local_addr;
+	काष्ठा sockaddr_in6 *ra6 = (काष्ठा sockaddr_in6 *)&cm_id->m_remote_addr;
 
-	if (!get_lladdr(dev->rdev.lldi.ports[0], &addr, IFA_F_TENTATIVE)) {
-		memcpy(la6->sin6_addr.s6_addr, &addr, 16);
-		memcpy(ra6->sin6_addr.s6_addr, &addr, 16);
-		return 0;
-	}
-	return -EADDRNOTAVAIL;
-}
+	अगर (!get_lladdr(dev->rdev.lldi.ports[0], &addr, IFA_F_TENTATIVE)) अणु
+		स_नकल(la6->sin6_addr.s6_addr, &addr, 16);
+		स_नकल(ra6->sin6_addr.s6_addr, &addr, 16);
+		वापस 0;
+	पूर्ण
+	वापस -EADDRNOTAVAIL;
+पूर्ण
 
-int c4iw_connect(struct iw_cm_id *cm_id, struct iw_cm_conn_param *conn_param)
-{
-	struct c4iw_dev *dev = to_c4iw_dev(cm_id->device);
-	struct c4iw_ep *ep;
-	int err = 0;
-	struct sockaddr_in *laddr;
-	struct sockaddr_in *raddr;
-	struct sockaddr_in6 *laddr6;
-	struct sockaddr_in6 *raddr6;
+पूर्णांक c4iw_connect(काष्ठा iw_cm_id *cm_id, काष्ठा iw_cm_conn_param *conn_param)
+अणु
+	काष्ठा c4iw_dev *dev = to_c4iw_dev(cm_id->device);
+	काष्ठा c4iw_ep *ep;
+	पूर्णांक err = 0;
+	काष्ठा sockaddr_in *laddr;
+	काष्ठा sockaddr_in *raddr;
+	काष्ठा sockaddr_in6 *laddr6;
+	काष्ठा sockaddr_in6 *raddr6;
 	__u8 *ra;
-	int iptype;
+	पूर्णांक iptype;
 
-	if ((conn_param->ord > cur_max_read_depth(dev)) ||
-	    (conn_param->ird > cur_max_read_depth(dev))) {
+	अगर ((conn_param->ord > cur_max_पढ़ो_depth(dev)) ||
+	    (conn_param->ird > cur_max_पढ़ो_depth(dev))) अणु
 		err = -EINVAL;
-		goto out;
-	}
-	ep = alloc_ep(sizeof(*ep), GFP_KERNEL);
-	if (!ep) {
+		जाओ out;
+	पूर्ण
+	ep = alloc_ep(माप(*ep), GFP_KERNEL);
+	अगर (!ep) अणु
 		pr_err("%s - cannot alloc ep\n", __func__);
 		err = -ENOMEM;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	skb_queue_head_init(&ep->com.ep_skb_list);
-	if (alloc_ep_skb_list(&ep->com.ep_skb_list, CN_MAX_CON_BUF)) {
+	अगर (alloc_ep_skb_list(&ep->com.ep_skb_list, CN_MAX_CON_BUF)) अणु
 		err = -ENOMEM;
-		goto fail1;
-	}
+		जाओ fail1;
+	पूर्ण
 
-	timer_setup(&ep->timer, ep_timeout, 0);
-	ep->plen = conn_param->private_data_len;
-	if (ep->plen)
-		memcpy(ep->mpa_pkt + sizeof(struct mpa_message),
-		       conn_param->private_data, ep->plen);
+	समयr_setup(&ep->समयr, ep_समयout, 0);
+	ep->plen = conn_param->निजी_data_len;
+	अगर (ep->plen)
+		स_नकल(ep->mpa_pkt + माप(काष्ठा mpa_message),
+		       conn_param->निजी_data, ep->plen);
 	ep->ird = conn_param->ird;
 	ep->ord = conn_param->ord;
 
-	if (peer2peer && ep->ord == 0)
+	अगर (peer2peer && ep->ord == 0)
 		ep->ord = 1;
 
 	ep->com.cm_id = cm_id;
@@ -3340,11 +3341,11 @@ int c4iw_connect(struct iw_cm_id *cm_id, struct iw_cm_conn_param *conn_param)
 	cm_id->provider_data = ep;
 	ep->com.dev = dev;
 	ep->com.qp = get_qhp(dev, conn_param->qpn);
-	if (!ep->com.qp) {
+	अगर (!ep->com.qp) अणु
 		pr_warn("%s qpn 0x%x not found!\n", __func__, conn_param->qpn);
 		err = -EINVAL;
-		goto fail2;
-	}
+		जाओ fail2;
+	पूर्ण
 	ref_qp(ep);
 	pr_debug("qpn 0x%x qp %p cm_id %p\n", conn_param->qpn,
 		 ep->com.qp, cm_id);
@@ -3353,37 +3354,37 @@ int c4iw_connect(struct iw_cm_id *cm_id, struct iw_cm_conn_param *conn_param)
 	 * Allocate an active TID to initiate a TCP connection.
 	 */
 	ep->atid = cxgb4_alloc_atid(dev->rdev.lldi.tids, ep);
-	if (ep->atid == -1) {
+	अगर (ep->atid == -1) अणु
 		pr_err("%s - cannot alloc atid\n", __func__);
 		err = -ENOMEM;
-		goto fail2;
-	}
+		जाओ fail2;
+	पूर्ण
 	err = xa_insert_irq(&dev->atids, ep->atid, ep, GFP_KERNEL);
-	if (err)
-		goto fail5;
+	अगर (err)
+		जाओ fail5;
 
-	memcpy(&ep->com.local_addr, &cm_id->m_local_addr,
-	       sizeof(ep->com.local_addr));
-	memcpy(&ep->com.remote_addr, &cm_id->m_remote_addr,
-	       sizeof(ep->com.remote_addr));
+	स_नकल(&ep->com.local_addr, &cm_id->m_local_addr,
+	       माप(ep->com.local_addr));
+	स_नकल(&ep->com.remote_addr, &cm_id->m_remote_addr,
+	       माप(ep->com.remote_addr));
 
-	laddr = (struct sockaddr_in *)&ep->com.local_addr;
-	raddr = (struct sockaddr_in *)&ep->com.remote_addr;
-	laddr6 = (struct sockaddr_in6 *)&ep->com.local_addr;
-	raddr6 = (struct sockaddr_in6 *) &ep->com.remote_addr;
+	laddr = (काष्ठा sockaddr_in *)&ep->com.local_addr;
+	raddr = (काष्ठा sockaddr_in *)&ep->com.remote_addr;
+	laddr6 = (काष्ठा sockaddr_in6 *)&ep->com.local_addr;
+	raddr6 = (काष्ठा sockaddr_in6 *) &ep->com.remote_addr;
 
-	if (cm_id->m_remote_addr.ss_family == AF_INET) {
+	अगर (cm_id->m_remote_addr.ss_family == AF_INET) अणु
 		iptype = 4;
 		ra = (__u8 *)&raddr->sin_addr;
 
 		/*
 		 * Handle loopback requests to INADDR_ANY.
 		 */
-		if (raddr->sin_addr.s_addr == htonl(INADDR_ANY)) {
+		अगर (raddr->sin_addr.s_addr == htonl(INADDR_ANY)) अणु
 			err = pick_local_ipaddrs(dev, cm_id);
-			if (err)
-				goto fail3;
-		}
+			अगर (err)
+				जाओ fail3;
+		पूर्ण
 
 		/* find a route */
 		pr_debug("saddr %pI4 sport 0x%x raddr %pI4 rport 0x%x\n",
@@ -3394,18 +3395,18 @@ int c4iw_connect(struct iw_cm_id *cm_id, struct iw_cm_conn_param *conn_param)
 					  raddr->sin_addr.s_addr,
 					  laddr->sin_port,
 					  raddr->sin_port, cm_id->tos);
-	} else {
+	पूर्ण अन्यथा अणु
 		iptype = 6;
 		ra = (__u8 *)&raddr6->sin6_addr;
 
 		/*
 		 * Handle loopback requests to INADDR_ANY.
 		 */
-		if (ipv6_addr_type(&raddr6->sin6_addr) == IPV6_ADDR_ANY) {
+		अगर (ipv6_addr_type(&raddr6->sin6_addr) == IPV6_ADDR_ANY) अणु
 			err = pick_local_ip6addrs(dev, cm_id);
-			if (err)
-				goto fail3;
-		}
+			अगर (err)
+				जाओ fail3;
+		पूर्ण
 
 		/* find a route */
 		pr_debug("saddr %pI6 sport 0x%x raddr %pI6 rport 0x%x\n",
@@ -3418,19 +3419,19 @@ int c4iw_connect(struct iw_cm_id *cm_id, struct iw_cm_conn_param *conn_param)
 					   laddr6->sin6_port,
 					   raddr6->sin6_port, cm_id->tos,
 					   raddr6->sin6_scope_id);
-	}
-	if (!ep->dst) {
+	पूर्ण
+	अगर (!ep->dst) अणु
 		pr_err("%s - cannot find route\n", __func__);
 		err = -EHOSTUNREACH;
-		goto fail3;
-	}
+		जाओ fail3;
+	पूर्ण
 
 	err = import_ep(ep, iptype, ra, ep->dst, ep->com.dev, true,
 			ep->com.dev->rdev.lldi.adapter_type, cm_id->tos);
-	if (err) {
+	अगर (err) अणु
 		pr_err("%s - cannot alloc l2e\n", __func__);
-		goto fail4;
-	}
+		जाओ fail4;
+	पूर्ण
 
 	pr_debug("txq_idx %u tx_chan %u smac_idx %u rss_qid %u l2t_idx %u\n",
 		 ep->txq_idx, ep->tx_chan, ep->smac_idx, ep->rss_qid,
@@ -3441,8 +3442,8 @@ int c4iw_connect(struct iw_cm_id *cm_id, struct iw_cm_conn_param *conn_param)
 
 	/* send connect request to rnic */
 	err = send_connect(ep);
-	if (!err)
-		goto out;
+	अगर (!err)
+		जाओ out;
 
 	cxgb4_l2t_release(ep->l2t);
 fail4:
@@ -3450,197 +3451,197 @@ fail4:
 fail3:
 	xa_erase_irq(&ep->com.dev->atids, ep->atid);
 fail5:
-	cxgb4_free_atid(ep->com.dev->rdev.lldi.tids, ep->atid);
+	cxgb4_मुक्त_atid(ep->com.dev->rdev.lldi.tids, ep->atid);
 fail2:
 	skb_queue_purge(&ep->com.ep_skb_list);
 	deref_cm_id(&ep->com);
 fail1:
 	c4iw_put_ep(&ep->com);
 out:
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int create_server6(struct c4iw_dev *dev, struct c4iw_listen_ep *ep)
-{
-	int err;
-	struct sockaddr_in6 *sin6 = (struct sockaddr_in6 *)
+अटल पूर्णांक create_server6(काष्ठा c4iw_dev *dev, काष्ठा c4iw_listen_ep *ep)
+अणु
+	पूर्णांक err;
+	काष्ठा sockaddr_in6 *sin6 = (काष्ठा sockaddr_in6 *)
 				    &ep->com.local_addr;
 
-	if (ipv6_addr_type(&sin6->sin6_addr) != IPV6_ADDR_ANY) {
+	अगर (ipv6_addr_type(&sin6->sin6_addr) != IPV6_ADDR_ANY) अणु
 		err = cxgb4_clip_get(ep->com.dev->rdev.lldi.ports[0],
-				     (const u32 *)&sin6->sin6_addr.s6_addr, 1);
-		if (err)
-			return err;
-	}
-	c4iw_init_wr_wait(ep->com.wr_waitp);
+				     (स्थिर u32 *)&sin6->sin6_addr.s6_addr, 1);
+		अगर (err)
+			वापस err;
+	पूर्ण
+	c4iw_init_wr_रुको(ep->com.wr_रुकोp);
 	err = cxgb4_create_server6(ep->com.dev->rdev.lldi.ports[0],
 				   ep->stid, &sin6->sin6_addr,
 				   sin6->sin6_port,
 				   ep->com.dev->rdev.lldi.rxq_ids[0]);
-	if (!err)
-		err = c4iw_wait_for_reply(&ep->com.dev->rdev,
-					  ep->com.wr_waitp,
+	अगर (!err)
+		err = c4iw_रुको_क्रम_reply(&ep->com.dev->rdev,
+					  ep->com.wr_रुकोp,
 					  0, 0, __func__);
-	else if (err > 0)
-		err = net_xmit_errno(err);
-	if (err) {
+	अन्यथा अगर (err > 0)
+		err = net_xmit_त्रुटि_सं(err);
+	अगर (err) अणु
 		cxgb4_clip_release(ep->com.dev->rdev.lldi.ports[0],
-				   (const u32 *)&sin6->sin6_addr.s6_addr, 1);
+				   (स्थिर u32 *)&sin6->sin6_addr.s6_addr, 1);
 		pr_err("cxgb4_create_server6/filter failed err %d stid %d laddr %pI6 lport %d\n",
 		       err, ep->stid,
 		       sin6->sin6_addr.s6_addr, ntohs(sin6->sin6_port));
-	}
-	return err;
-}
+	पूर्ण
+	वापस err;
+पूर्ण
 
-static int create_server4(struct c4iw_dev *dev, struct c4iw_listen_ep *ep)
-{
-	int err;
-	struct sockaddr_in *sin = (struct sockaddr_in *)
+अटल पूर्णांक create_server4(काष्ठा c4iw_dev *dev, काष्ठा c4iw_listen_ep *ep)
+अणु
+	पूर्णांक err;
+	काष्ठा sockaddr_in *sin = (काष्ठा sockaddr_in *)
 				  &ep->com.local_addr;
 
-	if (dev->rdev.lldi.enable_fw_ofld_conn) {
-		do {
+	अगर (dev->rdev.lldi.enable_fw_ofld_conn) अणु
+		करो अणु
 			err = cxgb4_create_server_filter(
 				ep->com.dev->rdev.lldi.ports[0], ep->stid,
 				sin->sin_addr.s_addr, sin->sin_port, 0,
 				ep->com.dev->rdev.lldi.rxq_ids[0], 0, 0);
-			if (err == -EBUSY) {
-				if (c4iw_fatal_error(&ep->com.dev->rdev)) {
+			अगर (err == -EBUSY) अणु
+				अगर (c4iw_fatal_error(&ep->com.dev->rdev)) अणु
 					err = -EIO;
-					break;
-				}
+					अवरोध;
+				पूर्ण
 				set_current_state(TASK_UNINTERRUPTIBLE);
-				schedule_timeout(usecs_to_jiffies(100));
-			}
-		} while (err == -EBUSY);
-	} else {
-		c4iw_init_wr_wait(ep->com.wr_waitp);
+				schedule_समयout(usecs_to_jअगरfies(100));
+			पूर्ण
+		पूर्ण जबतक (err == -EBUSY);
+	पूर्ण अन्यथा अणु
+		c4iw_init_wr_रुको(ep->com.wr_रुकोp);
 		err = cxgb4_create_server(ep->com.dev->rdev.lldi.ports[0],
 				ep->stid, sin->sin_addr.s_addr, sin->sin_port,
 				0, ep->com.dev->rdev.lldi.rxq_ids[0]);
-		if (!err)
-			err = c4iw_wait_for_reply(&ep->com.dev->rdev,
-						  ep->com.wr_waitp,
+		अगर (!err)
+			err = c4iw_रुको_क्रम_reply(&ep->com.dev->rdev,
+						  ep->com.wr_रुकोp,
 						  0, 0, __func__);
-		else if (err > 0)
-			err = net_xmit_errno(err);
-	}
-	if (err)
+		अन्यथा अगर (err > 0)
+			err = net_xmit_त्रुटि_सं(err);
+	पूर्ण
+	अगर (err)
 		pr_err("cxgb4_create_server/filter failed err %d stid %d laddr %pI4 lport %d\n"
 		       , err, ep->stid,
 		       &sin->sin_addr, ntohs(sin->sin_port));
-	return err;
-}
+	वापस err;
+पूर्ण
 
-int c4iw_create_listen(struct iw_cm_id *cm_id, int backlog)
-{
-	int err = 0;
-	struct c4iw_dev *dev = to_c4iw_dev(cm_id->device);
-	struct c4iw_listen_ep *ep;
+पूर्णांक c4iw_create_listen(काष्ठा iw_cm_id *cm_id, पूर्णांक backlog)
+अणु
+	पूर्णांक err = 0;
+	काष्ठा c4iw_dev *dev = to_c4iw_dev(cm_id->device);
+	काष्ठा c4iw_listen_ep *ep;
 
 	might_sleep();
 
-	ep = alloc_ep(sizeof(*ep), GFP_KERNEL);
-	if (!ep) {
+	ep = alloc_ep(माप(*ep), GFP_KERNEL);
+	अगर (!ep) अणु
 		pr_err("%s - cannot alloc ep\n", __func__);
 		err = -ENOMEM;
-		goto fail1;
-	}
+		जाओ fail1;
+	पूर्ण
 	skb_queue_head_init(&ep->com.ep_skb_list);
 	pr_debug("ep %p\n", ep);
 	ep->com.cm_id = cm_id;
 	ref_cm_id(&ep->com);
 	ep->com.dev = dev;
 	ep->backlog = backlog;
-	memcpy(&ep->com.local_addr, &cm_id->m_local_addr,
-	       sizeof(ep->com.local_addr));
+	स_नकल(&ep->com.local_addr, &cm_id->m_local_addr,
+	       माप(ep->com.local_addr));
 
 	/*
 	 * Allocate a server TID.
 	 */
-	if (dev->rdev.lldi.enable_fw_ofld_conn &&
+	अगर (dev->rdev.lldi.enable_fw_ofld_conn &&
 	    ep->com.local_addr.ss_family == AF_INET)
 		ep->stid = cxgb4_alloc_sftid(dev->rdev.lldi.tids,
 					     cm_id->m_local_addr.ss_family, ep);
-	else
+	अन्यथा
 		ep->stid = cxgb4_alloc_stid(dev->rdev.lldi.tids,
 					    cm_id->m_local_addr.ss_family, ep);
 
-	if (ep->stid == -1) {
+	अगर (ep->stid == -1) अणु
 		pr_err("%s - cannot alloc stid\n", __func__);
 		err = -ENOMEM;
-		goto fail2;
-	}
+		जाओ fail2;
+	पूर्ण
 	err = xa_insert_irq(&dev->stids, ep->stid, ep, GFP_KERNEL);
-	if (err)
-		goto fail3;
+	अगर (err)
+		जाओ fail3;
 
 	state_set(&ep->com, LISTEN);
-	if (ep->com.local_addr.ss_family == AF_INET)
+	अगर (ep->com.local_addr.ss_family == AF_INET)
 		err = create_server4(dev, ep);
-	else
+	अन्यथा
 		err = create_server6(dev, ep);
-	if (!err) {
+	अगर (!err) अणु
 		cm_id->provider_data = ep;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 	xa_erase_irq(&ep->com.dev->stids, ep->stid);
 fail3:
-	cxgb4_free_stid(ep->com.dev->rdev.lldi.tids, ep->stid,
+	cxgb4_मुक्त_stid(ep->com.dev->rdev.lldi.tids, ep->stid,
 			ep->com.local_addr.ss_family);
 fail2:
 	deref_cm_id(&ep->com);
 	c4iw_put_ep(&ep->com);
 fail1:
 out:
-	return err;
-}
+	वापस err;
+पूर्ण
 
-int c4iw_destroy_listen(struct iw_cm_id *cm_id)
-{
-	int err;
-	struct c4iw_listen_ep *ep = to_listen_ep(cm_id);
+पूर्णांक c4iw_destroy_listen(काष्ठा iw_cm_id *cm_id)
+अणु
+	पूर्णांक err;
+	काष्ठा c4iw_listen_ep *ep = to_listen_ep(cm_id);
 
 	pr_debug("ep %p\n", ep);
 
 	might_sleep();
 	state_set(&ep->com, DEAD);
-	if (ep->com.dev->rdev.lldi.enable_fw_ofld_conn &&
-	    ep->com.local_addr.ss_family == AF_INET) {
-		err = cxgb4_remove_server_filter(
+	अगर (ep->com.dev->rdev.lldi.enable_fw_ofld_conn &&
+	    ep->com.local_addr.ss_family == AF_INET) अणु
+		err = cxgb4_हटाओ_server_filter(
 			ep->com.dev->rdev.lldi.ports[0], ep->stid,
 			ep->com.dev->rdev.lldi.rxq_ids[0], false);
-	} else {
-		struct sockaddr_in6 *sin6;
-		c4iw_init_wr_wait(ep->com.wr_waitp);
-		err = cxgb4_remove_server(
+	पूर्ण अन्यथा अणु
+		काष्ठा sockaddr_in6 *sin6;
+		c4iw_init_wr_रुको(ep->com.wr_रुकोp);
+		err = cxgb4_हटाओ_server(
 				ep->com.dev->rdev.lldi.ports[0], ep->stid,
 				ep->com.dev->rdev.lldi.rxq_ids[0],
 				ep->com.local_addr.ss_family == AF_INET6);
-		if (err)
-			goto done;
-		err = c4iw_wait_for_reply(&ep->com.dev->rdev, ep->com.wr_waitp,
+		अगर (err)
+			जाओ करोne;
+		err = c4iw_रुको_क्रम_reply(&ep->com.dev->rdev, ep->com.wr_रुकोp,
 					  0, 0, __func__);
-		sin6 = (struct sockaddr_in6 *)&ep->com.local_addr;
+		sin6 = (काष्ठा sockaddr_in6 *)&ep->com.local_addr;
 		cxgb4_clip_release(ep->com.dev->rdev.lldi.ports[0],
-				   (const u32 *)&sin6->sin6_addr.s6_addr, 1);
-	}
+				   (स्थिर u32 *)&sin6->sin6_addr.s6_addr, 1);
+	पूर्ण
 	xa_erase_irq(&ep->com.dev->stids, ep->stid);
-	cxgb4_free_stid(ep->com.dev->rdev.lldi.tids, ep->stid,
+	cxgb4_मुक्त_stid(ep->com.dev->rdev.lldi.tids, ep->stid,
 			ep->com.local_addr.ss_family);
-done:
+करोne:
 	deref_cm_id(&ep->com);
 	c4iw_put_ep(&ep->com);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-int c4iw_ep_disconnect(struct c4iw_ep *ep, int abrupt, gfp_t gfp)
-{
-	int ret = 0;
-	int close = 0;
-	int fatal = 0;
-	struct c4iw_rdev *rdev;
+पूर्णांक c4iw_ep_disconnect(काष्ठा c4iw_ep *ep, पूर्णांक abrupt, gfp_t gfp)
+अणु
+	पूर्णांक ret = 0;
+	पूर्णांक बंद = 0;
+	पूर्णांक fatal = 0;
+	काष्ठा c4iw_rdev *rdev;
 
 	mutex_lock(&ep->com.mutex);
 
@@ -3648,214 +3649,214 @@ int c4iw_ep_disconnect(struct c4iw_ep *ep, int abrupt, gfp_t gfp)
 		 states[ep->com.state], abrupt);
 
 	/*
-	 * Ref the ep here in case we have fatal errors causing the
-	 * ep to be released and freed.
+	 * Ref the ep here in हाल we have fatal errors causing the
+	 * ep to be released and मुक्तd.
 	 */
 	c4iw_get_ep(&ep->com);
 
 	rdev = &ep->com.dev->rdev;
-	if (c4iw_fatal_error(rdev)) {
+	अगर (c4iw_fatal_error(rdev)) अणु
 		fatal = 1;
-		close_complete_upcall(ep, -EIO);
+		बंद_complete_upcall(ep, -EIO);
 		ep->com.state = DEAD;
-	}
-	switch (ep->com.state) {
-	case MPA_REQ_WAIT:
-	case MPA_REQ_SENT:
-	case MPA_REQ_RCVD:
-	case MPA_REP_SENT:
-	case FPDU_MODE:
-	case CONNECTING:
-		close = 1;
-		if (abrupt)
+	पूर्ण
+	चयन (ep->com.state) अणु
+	हाल MPA_REQ_WAIT:
+	हाल MPA_REQ_SENT:
+	हाल MPA_REQ_RCVD:
+	हाल MPA_REP_SENT:
+	हाल FPDU_MODE:
+	हाल CONNECTING:
+		बंद = 1;
+		अगर (abrupt)
 			ep->com.state = ABORTING;
-		else {
+		अन्यथा अणु
 			ep->com.state = CLOSING;
 
 			/*
-			 * if we close before we see the fw4_ack() then we fix
-			 * up the timer state since we're reusing it.
+			 * अगर we बंद beक्रमe we see the fw4_ack() then we fix
+			 * up the समयr state since we're reusing it.
 			 */
-			if (ep->mpa_skb &&
-			    test_bit(STOP_MPA_TIMER, &ep->com.flags)) {
+			अगर (ep->mpa_skb &&
+			    test_bit(STOP_MPA_TIMER, &ep->com.flags)) अणु
 				clear_bit(STOP_MPA_TIMER, &ep->com.flags);
-				stop_ep_timer(ep);
-			}
-			start_ep_timer(ep);
-		}
+				stop_ep_समयr(ep);
+			पूर्ण
+			start_ep_समयr(ep);
+		पूर्ण
 		set_bit(CLOSE_SENT, &ep->com.flags);
-		break;
-	case CLOSING:
-		if (!test_and_set_bit(CLOSE_SENT, &ep->com.flags)) {
-			close = 1;
-			if (abrupt) {
-				(void)stop_ep_timer(ep);
+		अवरोध;
+	हाल CLOSING:
+		अगर (!test_and_set_bit(CLOSE_SENT, &ep->com.flags)) अणु
+			बंद = 1;
+			अगर (abrupt) अणु
+				(व्योम)stop_ep_समयr(ep);
 				ep->com.state = ABORTING;
-			} else
+			पूर्ण अन्यथा
 				ep->com.state = MORIBUND;
-		}
-		break;
-	case MORIBUND:
-	case ABORTING:
-	case DEAD:
+		पूर्ण
+		अवरोध;
+	हाल MORIBUND:
+	हाल ABORTING:
+	हाल DEAD:
 		pr_debug("ignoring disconnect ep %p state %u\n",
 			 ep, ep->com.state);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		WARN_ONCE(1, "Bad endpoint state %u\n", ep->com.state);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	if (close) {
-		if (abrupt) {
+	अगर (बंद) अणु
+		अगर (abrupt) अणु
 			set_bit(EP_DISC_ABORT, &ep->com.history);
-			ret = send_abort(ep);
-		} else {
+			ret = send_पात(ep);
+		पूर्ण अन्यथा अणु
 			set_bit(EP_DISC_CLOSE, &ep->com.history);
-			ret = send_halfclose(ep);
-		}
-		if (ret) {
+			ret = send_halख_बंद(ep);
+		पूर्ण
+		अगर (ret) अणु
 			set_bit(EP_DISC_FAIL, &ep->com.history);
-			if (!abrupt) {
-				stop_ep_timer(ep);
-				close_complete_upcall(ep, -EIO);
-			}
-			if (ep->com.qp) {
-				struct c4iw_qp_attributes attrs;
+			अगर (!abrupt) अणु
+				stop_ep_समयr(ep);
+				बंद_complete_upcall(ep, -EIO);
+			पूर्ण
+			अगर (ep->com.qp) अणु
+				काष्ठा c4iw_qp_attributes attrs;
 
 				attrs.next_state = C4IW_QP_STATE_ERROR;
-				ret = c4iw_modify_qp(ep->com.qp->rhp,
+				ret = c4iw_modअगरy_qp(ep->com.qp->rhp,
 						     ep->com.qp,
 						     C4IW_QP_ATTR_NEXT_STATE,
 						     &attrs, 1);
-				if (ret)
+				अगर (ret)
 					pr_err("%s - qp <- error failed!\n",
 					       __func__);
-			}
+			पूर्ण
 			fatal = 1;
-		}
-	}
+		पूर्ण
+	पूर्ण
 	mutex_unlock(&ep->com.mutex);
 	c4iw_put_ep(&ep->com);
-	if (fatal)
+	अगर (fatal)
 		release_ep_resources(ep);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void active_ofld_conn_reply(struct c4iw_dev *dev, struct sk_buff *skb,
-			struct cpl_fw6_msg_ofld_connection_wr_rpl *req)
-{
-	struct c4iw_ep *ep;
-	int atid = be32_to_cpu(req->tid);
+अटल व्योम active_ofld_conn_reply(काष्ठा c4iw_dev *dev, काष्ठा sk_buff *skb,
+			काष्ठा cpl_fw6_msg_ofld_connection_wr_rpl *req)
+अणु
+	काष्ठा c4iw_ep *ep;
+	पूर्णांक atid = be32_to_cpu(req->tid);
 
-	ep = (struct c4iw_ep *)lookup_atid(dev->rdev.lldi.tids,
-					   (__force u32) req->tid);
-	if (!ep)
-		return;
+	ep = (काष्ठा c4iw_ep *)lookup_atid(dev->rdev.lldi.tids,
+					   (__क्रमce u32) req->tid);
+	अगर (!ep)
+		वापस;
 
-	switch (req->retval) {
-	case FW_ENOMEM:
+	चयन (req->retval) अणु
+	हाल FW_ENOMEM:
 		set_bit(ACT_RETRY_NOMEM, &ep->com.history);
-		if (ep->retry_count++ < ACT_OPEN_RETRY_COUNT) {
-			send_fw_act_open_req(ep, atid);
-			return;
-		}
+		अगर (ep->retry_count++ < ACT_OPEN_RETRY_COUNT) अणु
+			send_fw_act_खोलो_req(ep, atid);
+			वापस;
+		पूर्ण
 		fallthrough;
-	case FW_EADDRINUSE:
+	हाल FW_EADDRINUSE:
 		set_bit(ACT_RETRY_INUSE, &ep->com.history);
-		if (ep->retry_count++ < ACT_OPEN_RETRY_COUNT) {
-			send_fw_act_open_req(ep, atid);
-			return;
-		}
-		break;
-	default:
+		अगर (ep->retry_count++ < ACT_OPEN_RETRY_COUNT) अणु
+			send_fw_act_खोलो_req(ep, atid);
+			वापस;
+		पूर्ण
+		अवरोध;
+	शेष:
 		pr_info("%s unexpected ofld conn wr retval %d\n",
 		       __func__, req->retval);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 	pr_err("active ofld_connect_wr failure %d atid %d\n",
 	       req->retval, atid);
 	mutex_lock(&dev->rdev.stats.lock);
 	dev->rdev.stats.act_ofld_conn_fails++;
 	mutex_unlock(&dev->rdev.stats.lock);
-	connect_reply_upcall(ep, status2errno(req->retval));
+	connect_reply_upcall(ep, status2त्रुटि_सं(req->retval));
 	state_set(&ep->com, DEAD);
-	if (ep->com.remote_addr.ss_family == AF_INET6) {
-		struct sockaddr_in6 *sin6 =
-			(struct sockaddr_in6 *)&ep->com.local_addr;
+	अगर (ep->com.remote_addr.ss_family == AF_INET6) अणु
+		काष्ठा sockaddr_in6 *sin6 =
+			(काष्ठा sockaddr_in6 *)&ep->com.local_addr;
 		cxgb4_clip_release(ep->com.dev->rdev.lldi.ports[0],
-				   (const u32 *)&sin6->sin6_addr.s6_addr, 1);
-	}
+				   (स्थिर u32 *)&sin6->sin6_addr.s6_addr, 1);
+	पूर्ण
 	xa_erase_irq(&dev->atids, atid);
-	cxgb4_free_atid(dev->rdev.lldi.tids, atid);
+	cxgb4_मुक्त_atid(dev->rdev.lldi.tids, atid);
 	dst_release(ep->dst);
 	cxgb4_l2t_release(ep->l2t);
 	c4iw_put_ep(&ep->com);
-}
+पूर्ण
 
-static void passive_ofld_conn_reply(struct c4iw_dev *dev, struct sk_buff *skb,
-			struct cpl_fw6_msg_ofld_connection_wr_rpl *req)
-{
-	struct sk_buff *rpl_skb;
-	struct cpl_pass_accept_req *cpl;
-	int ret;
+अटल व्योम passive_ofld_conn_reply(काष्ठा c4iw_dev *dev, काष्ठा sk_buff *skb,
+			काष्ठा cpl_fw6_msg_ofld_connection_wr_rpl *req)
+अणु
+	काष्ठा sk_buff *rpl_skb;
+	काष्ठा cpl_pass_accept_req *cpl;
+	पूर्णांक ret;
 
-	rpl_skb = (struct sk_buff *)(unsigned long)req->cookie;
-	if (req->retval) {
+	rpl_skb = (काष्ठा sk_buff *)(अचिन्हित दीर्घ)req->cookie;
+	अगर (req->retval) अणु
 		pr_err("%s passive open failure %d\n", __func__, req->retval);
 		mutex_lock(&dev->rdev.stats.lock);
 		dev->rdev.stats.pas_ofld_conn_fails++;
 		mutex_unlock(&dev->rdev.stats.lock);
-		kfree_skb(rpl_skb);
-	} else {
-		cpl = (struct cpl_pass_accept_req *)cplhdr(rpl_skb);
+		kमुक्त_skb(rpl_skb);
+	पूर्ण अन्यथा अणु
+		cpl = (काष्ठा cpl_pass_accept_req *)cplhdr(rpl_skb);
 		OPCODE_TID(cpl) = htonl(MK_OPCODE_TID(CPL_PASS_ACCEPT_REQ,
-					(__force u32) htonl(
-					(__force u32) req->tid)));
+					(__क्रमce u32) htonl(
+					(__क्रमce u32) req->tid)));
 		ret = pass_accept_req(dev, rpl_skb);
-		if (!ret)
-			kfree_skb(rpl_skb);
-	}
-	return;
-}
+		अगर (!ret)
+			kमुक्त_skb(rpl_skb);
+	पूर्ण
+	वापस;
+पूर्ण
 
-static inline u64 t4_tcb_get_field64(__be64 *tcb, u16 word)
-{
+अटल अंतरभूत u64 t4_tcb_get_field64(__be64 *tcb, u16 word)
+अणु
 	u64 tlo = be64_to_cpu(tcb[((31 - word) / 2)]);
 	u64 thi = be64_to_cpu(tcb[((31 - word) / 2) - 1]);
 	u64 t;
-	u32 shift = 32;
+	u32 shअगरt = 32;
 
-	t = (thi << shift) | (tlo >> shift);
+	t = (thi << shअगरt) | (tlo >> shअगरt);
 
-	return t;
-}
+	वापस t;
+पूर्ण
 
-static inline u32 t4_tcb_get_field32(__be64 *tcb, u16 word, u32 mask, u32 shift)
-{
+अटल अंतरभूत u32 t4_tcb_get_field32(__be64 *tcb, u16 word, u32 mask, u32 shअगरt)
+अणु
 	u32 v;
 	u64 t = be64_to_cpu(tcb[(31 - word) / 2]);
 
-	if (word & 0x1)
-		shift += 32;
-	v = (t >> shift) & mask;
-	return v;
-}
+	अगर (word & 0x1)
+		shअगरt += 32;
+	v = (t >> shअगरt) & mask;
+	वापस v;
+पूर्ण
 
-static int read_tcb_rpl(struct c4iw_dev *dev, struct sk_buff *skb)
-{
-	struct cpl_get_tcb_rpl *rpl = cplhdr(skb);
+अटल पूर्णांक पढ़ो_tcb_rpl(काष्ठा c4iw_dev *dev, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा cpl_get_tcb_rpl *rpl = cplhdr(skb);
 	__be64 *tcb = (__be64 *)(rpl + 1);
-	unsigned int tid = GET_TID(rpl);
-	struct c4iw_ep *ep;
+	अचिन्हित पूर्णांक tid = GET_TID(rpl);
+	काष्ठा c4iw_ep *ep;
 	u64 t_flags_64;
 	u32 rx_pdu_out;
 
 	ep = get_ep_from_tid(dev, tid);
-	if (!ep)
-		return 0;
+	अगर (!ep)
+		वापस 0;
 	/* Examine the TF_RX_PDU_OUT (bit 49 of the t_flags) in order to
-	 * determine if there's a rx PDU feedback event pending.
+	 * determine अगर there's a rx PDU feedback event pending.
 	 *
 	 * If that bit is set, it means we'll need to re-read the TCB's
 	 * rq_start value. The final value is the one present in a TCB
@@ -3866,95 +3867,95 @@ static int read_tcb_rpl(struct c4iw_dev *dev, struct sk_buff *skb)
 	rx_pdu_out = (t_flags_64 & TF_RX_PDU_OUT_V(1)) >> TF_RX_PDU_OUT_S;
 
 	c4iw_put_ep(&ep->com); /* from get_ep_from_tid() */
-	c4iw_put_ep(&ep->com); /* from read_tcb() */
+	c4iw_put_ep(&ep->com); /* from पढ़ो_tcb() */
 
-	/* If TF_RX_PDU_OUT bit is set, re-read the TCB */
-	if (rx_pdu_out) {
-		if (++ep->rx_pdu_out_cnt >= 2) {
+	/* If TF_RX_PDU_OUT bit is set, re-पढ़ो the TCB */
+	अगर (rx_pdu_out) अणु
+		अगर (++ep->rx_pdu_out_cnt >= 2) अणु
 			WARN_ONCE(1, "tcb re-read() reached the guard limit, finishing the cleanup\n");
-			goto cleanup;
-		}
-		read_tcb(ep);
-		return 0;
-	}
+			जाओ cleanup;
+		पूर्ण
+		पढ़ो_tcb(ep);
+		वापस 0;
+	पूर्ण
 
 	ep->srqe_idx = t4_tcb_get_field32(tcb, TCB_RQ_START_W, TCB_RQ_START_M,
 					  TCB_RQ_START_S);
 cleanup:
 	pr_debug("ep %p tid %u %016x\n", ep, ep->hwtid, ep->srqe_idx);
 
-	if (test_bit(PEER_ABORT_IN_PROGRESS, &ep->com.flags))
-		finish_peer_abort(dev, ep);
-	else if (test_bit(ABORT_REQ_IN_PROGRESS, &ep->com.flags))
-		send_abort_req(ep);
-	else
+	अगर (test_bit(PEER_ABORT_IN_PROGRESS, &ep->com.flags))
+		finish_peer_पात(dev, ep);
+	अन्यथा अगर (test_bit(ABORT_REQ_IN_PROGRESS, &ep->com.flags))
+		send_पात_req(ep);
+	अन्यथा
 		WARN_ONCE(1, "unexpected state!");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int deferred_fw6_msg(struct c4iw_dev *dev, struct sk_buff *skb)
-{
-	struct cpl_fw6_msg *rpl = cplhdr(skb);
-	struct cpl_fw6_msg_ofld_connection_wr_rpl *req;
+अटल पूर्णांक deferred_fw6_msg(काष्ठा c4iw_dev *dev, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा cpl_fw6_msg *rpl = cplhdr(skb);
+	काष्ठा cpl_fw6_msg_ofld_connection_wr_rpl *req;
 
-	switch (rpl->type) {
-	case FW6_TYPE_CQE:
-		c4iw_ev_dispatch(dev, (struct t4_cqe *)&rpl->data[0]);
-		break;
-	case FW6_TYPE_OFLD_CONNECTION_WR_RPL:
-		req = (struct cpl_fw6_msg_ofld_connection_wr_rpl *)rpl->data;
-		switch (req->t_state) {
-		case TCP_SYN_SENT:
+	चयन (rpl->type) अणु
+	हाल FW6_TYPE_CQE:
+		c4iw_ev_dispatch(dev, (काष्ठा t4_cqe *)&rpl->data[0]);
+		अवरोध;
+	हाल FW6_TYPE_OFLD_CONNECTION_WR_RPL:
+		req = (काष्ठा cpl_fw6_msg_ofld_connection_wr_rpl *)rpl->data;
+		चयन (req->t_state) अणु
+		हाल TCP_SYN_SENT:
 			active_ofld_conn_reply(dev, skb, req);
-			break;
-		case TCP_SYN_RECV:
+			अवरोध;
+		हाल TCP_SYN_RECV:
 			passive_ofld_conn_reply(dev, skb, req);
-			break;
-		default:
+			अवरोध;
+		शेष:
 			pr_err("%s unexpected ofld conn wr state %d\n",
 			       __func__, req->t_state);
-			break;
-		}
-		break;
-	}
-	return 0;
-}
+			अवरोध;
+		पूर्ण
+		अवरोध;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static void build_cpl_pass_accept_req(struct sk_buff *skb, int stid , u8 tos)
-{
+अटल व्योम build_cpl_pass_accept_req(काष्ठा sk_buff *skb, पूर्णांक stid , u8 tos)
+अणु
 	__be32 l2info;
 	__be16 hdr_len, vlantag, len;
 	u16 eth_hdr_len;
-	int tcp_hdr_len, ip_hdr_len;
-	u8 intf;
-	struct cpl_rx_pkt *cpl = cplhdr(skb);
-	struct cpl_pass_accept_req *req;
-	struct tcp_options_received tmp_opt;
-	struct c4iw_dev *dev;
-	enum chip_type type;
+	पूर्णांक tcp_hdr_len, ip_hdr_len;
+	u8 पूर्णांकf;
+	काष्ठा cpl_rx_pkt *cpl = cplhdr(skb);
+	काष्ठा cpl_pass_accept_req *req;
+	काष्ठा tcp_options_received पंचांगp_opt;
+	काष्ठा c4iw_dev *dev;
+	क्रमागत chip_type type;
 
-	dev = *((struct c4iw_dev **) (skb->cb + sizeof(void *)));
+	dev = *((काष्ठा c4iw_dev **) (skb->cb + माप(व्योम *)));
 	/* Store values from cpl_rx_pkt in temporary location. */
 	vlantag = cpl->vlan;
 	len = cpl->len;
 	l2info  = cpl->l2info;
 	hdr_len = cpl->hdr_len;
-	intf = cpl->iff;
+	पूर्णांकf = cpl->अगरf;
 
-	__skb_pull(skb, sizeof(*req) + sizeof(struct rss_header));
+	__skb_pull(skb, माप(*req) + माप(काष्ठा rss_header));
 
 	/*
 	 * We need to parse the TCP options from SYN packet.
 	 * to generate cpl_pass_accept_req.
 	 */
-	memset(&tmp_opt, 0, sizeof(tmp_opt));
-	tcp_clear_options(&tmp_opt);
-	tcp_parse_options(&init_net, skb, &tmp_opt, 0, NULL);
+	स_रखो(&पंचांगp_opt, 0, माप(पंचांगp_opt));
+	tcp_clear_options(&पंचांगp_opt);
+	tcp_parse_options(&init_net, skb, &पंचांगp_opt, 0, शून्य);
 
-	req = __skb_push(skb, sizeof(*req));
-	memset(req, 0, sizeof(*req));
-	req->l2info = cpu_to_be16(SYN_INTF_V(intf) |
+	req = __skb_push(skb, माप(*req));
+	स_रखो(req, 0, माप(*req));
+	req->l2info = cpu_to_be16(SYN_INTF_V(पूर्णांकf) |
 			 SYN_MAC_IDX_V(RX_MACIDX_G(
 			 be32_to_cpu(l2info))) |
 			 SYN_XACT_MATCH_F);
@@ -3963,58 +3964,58 @@ static void build_cpl_pass_accept_req(struct sk_buff *skb, int stid , u8 tos)
 	ip_hdr_len = RX_IPHDR_LEN_G(be16_to_cpu(hdr_len));
 	req->hdr_len =
 		cpu_to_be32(SYN_RX_CHAN_V(RX_CHAN_G(be32_to_cpu(l2info))));
-	if (CHELSIO_CHIP_VERSION(type) <= CHELSIO_T5) {
+	अगर (CHELSIO_CHIP_VERSION(type) <= CHELSIO_T5) अणु
 		eth_hdr_len = is_t4(type) ?
 				RX_ETHHDR_LEN_G(be32_to_cpu(l2info)) :
 				RX_T5_ETHHDR_LEN_G(be32_to_cpu(l2info));
 		req->hdr_len |= cpu_to_be32(TCP_HDR_LEN_V(tcp_hdr_len) |
 					    IP_HDR_LEN_V(ip_hdr_len) |
 					    ETH_HDR_LEN_V(eth_hdr_len));
-	} else { /* T6 and later */
+	पूर्ण अन्यथा अणु /* T6 and later */
 		eth_hdr_len = RX_T6_ETHHDR_LEN_G(be32_to_cpu(l2info));
 		req->hdr_len |= cpu_to_be32(T6_TCP_HDR_LEN_V(tcp_hdr_len) |
 					    T6_IP_HDR_LEN_V(ip_hdr_len) |
 					    T6_ETH_HDR_LEN_V(eth_hdr_len));
-	}
+	पूर्ण
 	req->vlan = vlantag;
 	req->len = len;
 	req->tos_stid = cpu_to_be32(PASS_OPEN_TID_V(stid) |
 				    PASS_OPEN_TOS_V(tos));
-	req->tcpopt.mss = htons(tmp_opt.mss_clamp);
-	if (tmp_opt.wscale_ok)
-		req->tcpopt.wsf = tmp_opt.snd_wscale;
-	req->tcpopt.tstamp = tmp_opt.saw_tstamp;
-	if (tmp_opt.sack_ok)
+	req->tcpopt.mss = htons(पंचांगp_opt.mss_clamp);
+	अगर (पंचांगp_opt.wscale_ok)
+		req->tcpopt.wsf = पंचांगp_opt.snd_wscale;
+	req->tcpopt.tstamp = पंचांगp_opt.saw_tstamp;
+	अगर (पंचांगp_opt.sack_ok)
 		req->tcpopt.sack = 1;
 	OPCODE_TID(req) = htonl(MK_OPCODE_TID(CPL_PASS_ACCEPT_REQ, 0));
-	return;
-}
+	वापस;
+पूर्ण
 
-static void send_fw_pass_open_req(struct c4iw_dev *dev, struct sk_buff *skb,
+अटल व्योम send_fw_pass_खोलो_req(काष्ठा c4iw_dev *dev, काष्ठा sk_buff *skb,
 				  __be32 laddr, __be16 lport,
 				  __be32 raddr, __be16 rport,
-				  u32 rcv_isn, u32 filter, u16 window,
+				  u32 rcv_isn, u32 filter, u16 winकरोw,
 				  u32 rss_qid, u8 port_id)
-{
-	struct sk_buff *req_skb;
-	struct fw_ofld_connection_wr *req;
-	struct cpl_pass_accept_req *cpl = cplhdr(skb);
-	int ret;
+अणु
+	काष्ठा sk_buff *req_skb;
+	काष्ठा fw_ofld_connection_wr *req;
+	काष्ठा cpl_pass_accept_req *cpl = cplhdr(skb);
+	पूर्णांक ret;
 
-	req_skb = alloc_skb(sizeof(struct fw_ofld_connection_wr), GFP_KERNEL);
-	if (!req_skb)
-		return;
-	req = __skb_put_zero(req_skb, sizeof(*req));
+	req_skb = alloc_skb(माप(काष्ठा fw_ofld_connection_wr), GFP_KERNEL);
+	अगर (!req_skb)
+		वापस;
+	req = __skb_put_zero(req_skb, माप(*req));
 	req->op_compl = htonl(WR_OP_V(FW_OFLD_CONNECTION_WR) | FW_WR_COMPL_F);
-	req->len16_pkd = htonl(FW_WR_LEN16_V(DIV_ROUND_UP(sizeof(*req), 16)));
+	req->len16_pkd = htonl(FW_WR_LEN16_V(DIV_ROUND_UP(माप(*req), 16)));
 	req->le.version_cpl = htonl(FW_OFLD_CONNECTION_WR_CPL_F);
-	req->le.filter = (__force __be32) filter;
+	req->le.filter = (__क्रमce __be32) filter;
 	req->le.lport = lport;
 	req->le.pport = rport;
 	req->le.u.ipv4.lip = laddr;
 	req->le.u.ipv4.pip = raddr;
 	req->tcb.rcv_nxt = htonl(rcv_isn + 1);
-	req->tcb.rcv_adv = htons(window);
+	req->tcb.rcv_adv = htons(winकरोw);
 	req->tcb.t_state_to_astid =
 		 htonl(FW_OFLD_CONNECTION_WR_T_STATE_V(TCP_SYN_RECV) |
 			FW_OFLD_CONNECTION_WR_RCV_SCALE_V(cpl->tcpopt.wsf) |
@@ -4031,103 +4032,103 @@ static void send_fw_pass_open_req(struct c4iw_dev *dev, struct sk_buff *skb,
 	 * We initialize the MSS index in TCB to 0xF.
 	 * So that when driver sends cpl_pass_accept_rpl
 	 * TCB picks up the correct value. If this was 0
-	 * TP will ignore any value > 0 for MSS index.
+	 * TP will ignore any value > 0 क्रम MSS index.
 	 */
 	req->tcb.opt0 = cpu_to_be64(MSS_IDX_V(0xF));
-	req->cookie = (uintptr_t)skb;
+	req->cookie = (uपूर्णांकptr_t)skb;
 
 	set_wr_txq(req_skb, CPL_PRIORITY_CONTROL, port_id);
 	ret = cxgb4_ofld_send(dev->rdev.lldi.ports[0], req_skb);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		pr_err("%s - cxgb4_ofld_send error %d - dropping\n", __func__,
 		       ret);
-		kfree_skb(skb);
-		kfree_skb(req_skb);
-	}
-}
+		kमुक्त_skb(skb);
+		kमुक्त_skb(req_skb);
+	पूर्ण
+पूर्ण
 
 /*
- * Handler for CPL_RX_PKT message. Need to handle cpl_rx_pkt
+ * Handler क्रम CPL_RX_PKT message. Need to handle cpl_rx_pkt
  * messages when a filter is being used instead of server to
  * redirect a syn packet. When packets hit filter they are redirected
  * to the offload queue and driver tries to establish the connection
  * using firmware work request.
  */
-static int rx_pkt(struct c4iw_dev *dev, struct sk_buff *skb)
-{
-	int stid;
-	unsigned int filter;
-	struct ethhdr *eh = NULL;
-	struct vlan_ethhdr *vlan_eh = NULL;
-	struct iphdr *iph;
-	struct tcphdr *tcph;
-	struct rss_header *rss = (void *)skb->data;
-	struct cpl_rx_pkt *cpl = (void *)skb->data;
-	struct cpl_pass_accept_req *req = (void *)(rss + 1);
-	struct l2t_entry *e;
-	struct dst_entry *dst;
-	struct c4iw_ep *lep = NULL;
-	u16 window;
-	struct port_info *pi;
-	struct net_device *pdev;
+अटल पूर्णांक rx_pkt(काष्ठा c4iw_dev *dev, काष्ठा sk_buff *skb)
+अणु
+	पूर्णांक stid;
+	अचिन्हित पूर्णांक filter;
+	काष्ठा ethhdr *eh = शून्य;
+	काष्ठा vlan_ethhdr *vlan_eh = शून्य;
+	काष्ठा iphdr *iph;
+	काष्ठा tcphdr *tcph;
+	काष्ठा rss_header *rss = (व्योम *)skb->data;
+	काष्ठा cpl_rx_pkt *cpl = (व्योम *)skb->data;
+	काष्ठा cpl_pass_accept_req *req = (व्योम *)(rss + 1);
+	काष्ठा l2t_entry *e;
+	काष्ठा dst_entry *dst;
+	काष्ठा c4iw_ep *lep = शून्य;
+	u16 winकरोw;
+	काष्ठा port_info *pi;
+	काष्ठा net_device *pdev;
 	u16 rss_qid, eth_hdr_len;
-	int step;
-	struct neighbour *neigh;
+	पूर्णांक step;
+	काष्ठा neighbour *neigh;
 
 	/* Drop all non-SYN packets */
-	if (!(cpl->l2info & cpu_to_be32(RXF_SYN_F)))
-		goto reject;
+	अगर (!(cpl->l2info & cpu_to_be32(RXF_SYN_F)))
+		जाओ reject;
 
 	/*
 	 * Drop all packets which did not hit the filter.
 	 * Unlikely to happen.
 	 */
-	if (!(rss->filter_hit && rss->filter_tid))
-		goto reject;
+	अगर (!(rss->filter_hit && rss->filter_tid))
+		जाओ reject;
 
 	/*
 	 * Calculate the server tid from filter hit index from cpl_rx_pkt.
 	 */
-	stid = (__force int) cpu_to_be32((__force u32) rss->hash_val);
+	stid = (__क्रमce पूर्णांक) cpu_to_be32((__क्रमce u32) rss->hash_val);
 
-	lep = (struct c4iw_ep *)get_ep_from_stid(dev, stid);
-	if (!lep) {
+	lep = (काष्ठा c4iw_ep *)get_ep_from_stid(dev, stid);
+	अगर (!lep) अणु
 		pr_warn("%s connect request on invalid stid %d\n",
 			__func__, stid);
-		goto reject;
-	}
+		जाओ reject;
+	पूर्ण
 
-	switch (CHELSIO_CHIP_VERSION(dev->rdev.lldi.adapter_type)) {
-	case CHELSIO_T4:
+	चयन (CHELSIO_CHIP_VERSION(dev->rdev.lldi.adapter_type)) अणु
+	हाल CHELSIO_T4:
 		eth_hdr_len = RX_ETHHDR_LEN_G(be32_to_cpu(cpl->l2info));
-		break;
-	case CHELSIO_T5:
+		अवरोध;
+	हाल CHELSIO_T5:
 		eth_hdr_len = RX_T5_ETHHDR_LEN_G(be32_to_cpu(cpl->l2info));
-		break;
-	case CHELSIO_T6:
+		अवरोध;
+	हाल CHELSIO_T6:
 		eth_hdr_len = RX_T6_ETHHDR_LEN_G(be32_to_cpu(cpl->l2info));
-		break;
-	default:
+		अवरोध;
+	शेष:
 		pr_err("T%d Chip is not supported\n",
 		       CHELSIO_CHIP_VERSION(dev->rdev.lldi.adapter_type));
-		goto reject;
-	}
+		जाओ reject;
+	पूर्ण
 
-	if (eth_hdr_len == ETH_HLEN) {
-		eh = (struct ethhdr *)(req + 1);
-		iph = (struct iphdr *)(eh + 1);
-	} else {
-		vlan_eh = (struct vlan_ethhdr *)(req + 1);
-		iph = (struct iphdr *)(vlan_eh + 1);
+	अगर (eth_hdr_len == ETH_HLEN) अणु
+		eh = (काष्ठा ethhdr *)(req + 1);
+		iph = (काष्ठा iphdr *)(eh + 1);
+	पूर्ण अन्यथा अणु
+		vlan_eh = (काष्ठा vlan_ethhdr *)(req + 1);
+		iph = (काष्ठा iphdr *)(vlan_eh + 1);
 		__vlan_hwaccel_put_tag(skb, htons(ETH_P_8021Q), ntohs(cpl->vlan));
-	}
+	पूर्ण
 
-	if (iph->version != 0x4)
-		goto reject;
+	अगर (iph->version != 0x4)
+		जाओ reject;
 
-	tcph = (struct tcphdr *)(iph + 1);
-	skb_set_network_header(skb, (void *)iph - (void *)rss);
-	skb_set_transport_header(skb, (void *)tcph - (void *)rss);
+	tcph = (काष्ठा tcphdr *)(iph + 1);
+	skb_set_network_header(skb, (व्योम *)iph - (व्योम *)rss);
+	skb_set_transport_header(skb, (व्योम *)tcph - (व्योम *)rss);
 	skb_get(skb);
 
 	pr_debug("lip 0x%x lport %u pip 0x%x pport %u tos %d\n",
@@ -4137,42 +4138,42 @@ static int rx_pkt(struct c4iw_dev *dev, struct sk_buff *skb)
 	dst = cxgb_find_route(&dev->rdev.lldi, get_real_dev,
 			      iph->daddr, iph->saddr, tcph->dest,
 			      tcph->source, iph->tos);
-	if (!dst) {
+	अगर (!dst) अणु
 		pr_err("%s - failed to find dst entry!\n", __func__);
-		goto reject;
-	}
+		जाओ reject;
+	पूर्ण
 	neigh = dst_neigh_lookup_skb(dst, skb);
 
-	if (!neigh) {
+	अगर (!neigh) अणु
 		pr_err("%s - failed to allocate neigh!\n", __func__);
-		goto free_dst;
-	}
+		जाओ मुक्त_dst;
+	पूर्ण
 
-	if (neigh->dev->flags & IFF_LOOPBACK) {
+	अगर (neigh->dev->flags & IFF_LOOPBACK) अणु
 		pdev = ip_dev_find(&init_net, iph->daddr);
 		e = cxgb4_l2t_get(dev->rdev.lldi.l2t, neigh,
 				    pdev, 0);
-		pi = (struct port_info *)netdev_priv(pdev);
+		pi = (काष्ठा port_info *)netdev_priv(pdev);
 		dev_put(pdev);
-	} else {
+	पूर्ण अन्यथा अणु
 		pdev = get_real_dev(neigh->dev);
 		e = cxgb4_l2t_get(dev->rdev.lldi.l2t, neigh,
 					pdev, 0);
-		pi = (struct port_info *)netdev_priv(pdev);
-	}
+		pi = (काष्ठा port_info *)netdev_priv(pdev);
+	पूर्ण
 	neigh_release(neigh);
-	if (!e) {
+	अगर (!e) अणु
 		pr_err("%s - failed to allocate l2t entry!\n",
 		       __func__);
-		goto free_dst;
-	}
+		जाओ मुक्त_dst;
+	पूर्ण
 
 	step = dev->rdev.lldi.nrxq / dev->rdev.lldi.nchan;
 	rss_qid = dev->rdev.lldi.rxq_ids[pi->port_id * step];
-	window = (__force u16) htons((__force u16)tcph->window);
+	winकरोw = (__क्रमce u16) htons((__क्रमce u16)tcph->winकरोw);
 
-	/* Calcuate filter portion for LE region. */
-	filter = (__force unsigned int) cpu_to_be32(cxgb4_select_ntuple(
+	/* Calcuate filter portion क्रम LE region. */
+	filter = (__क्रमce अचिन्हित पूर्णांक) cpu_to_be32(cxgb4_select_ntuple(
 						    dev->rdev.lldi.ports[0],
 						    e));
 
@@ -4182,254 +4183,254 @@ static int rx_pkt(struct c4iw_dev *dev, struct sk_buff *skb)
 	 * in cpl and pass it through the regular cpl_pass_accept_req path.
 	 */
 	build_cpl_pass_accept_req(skb, stid, iph->tos);
-	send_fw_pass_open_req(dev, skb, iph->daddr, tcph->dest, iph->saddr,
-			      tcph->source, ntohl(tcph->seq), filter, window,
+	send_fw_pass_खोलो_req(dev, skb, iph->daddr, tcph->dest, iph->saddr,
+			      tcph->source, ntohl(tcph->seq), filter, winकरोw,
 			      rss_qid, pi->port_id);
 	cxgb4_l2t_release(e);
-free_dst:
+मुक्त_dst:
 	dst_release(dst);
 reject:
-	if (lep)
+	अगर (lep)
 		c4iw_put_ep(&lep->com);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * These are the real handlers that are called from a
  * work queue.
  */
-static c4iw_handler_func work_handlers[NUM_CPL_CMDS + NUM_FAKE_CPLS] = {
+अटल c4iw_handler_func work_handlers[NUM_CPL_CMDS + NUM_FAKE_CPLS] = अणु
 	[CPL_ACT_ESTABLISH] = act_establish,
-	[CPL_ACT_OPEN_RPL] = act_open_rpl,
+	[CPL_ACT_OPEN_RPL] = act_खोलो_rpl,
 	[CPL_RX_DATA] = rx_data,
-	[CPL_ABORT_RPL_RSS] = abort_rpl,
-	[CPL_ABORT_RPL] = abort_rpl,
-	[CPL_PASS_OPEN_RPL] = pass_open_rpl,
-	[CPL_CLOSE_LISTSRV_RPL] = close_listsrv_rpl,
+	[CPL_ABORT_RPL_RSS] = पात_rpl,
+	[CPL_ABORT_RPL] = पात_rpl,
+	[CPL_PASS_OPEN_RPL] = pass_खोलो_rpl,
+	[CPL_CLOSE_LISTSRV_RPL] = बंद_listsrv_rpl,
 	[CPL_PASS_ACCEPT_REQ] = pass_accept_req,
 	[CPL_PASS_ESTABLISH] = pass_establish,
-	[CPL_PEER_CLOSE] = peer_close,
-	[CPL_ABORT_REQ_RSS] = peer_abort,
-	[CPL_CLOSE_CON_RPL] = close_con_rpl,
+	[CPL_PEER_CLOSE] = peer_बंद,
+	[CPL_ABORT_REQ_RSS] = peer_पात,
+	[CPL_CLOSE_CON_RPL] = बंद_con_rpl,
 	[CPL_RDMA_TERMINATE] = terminate,
 	[CPL_FW4_ACK] = fw4_ack,
-	[CPL_GET_TCB_RPL] = read_tcb_rpl,
+	[CPL_GET_TCB_RPL] = पढ़ो_tcb_rpl,
 	[CPL_FW6_MSG] = deferred_fw6_msg,
 	[CPL_RX_PKT] = rx_pkt,
 	[FAKE_CPL_PUT_EP_SAFE] = _put_ep_safe,
 	[FAKE_CPL_PASS_PUT_EP_SAFE] = _put_pass_ep_safe
-};
+पूर्ण;
 
-static void process_timeout(struct c4iw_ep *ep)
-{
-	struct c4iw_qp_attributes attrs;
-	int abort = 1;
+अटल व्योम process_समयout(काष्ठा c4iw_ep *ep)
+अणु
+	काष्ठा c4iw_qp_attributes attrs;
+	पूर्णांक पात = 1;
 
 	mutex_lock(&ep->com.mutex);
 	pr_debug("ep %p tid %u state %d\n", ep, ep->hwtid, ep->com.state);
 	set_bit(TIMEDOUT, &ep->com.history);
-	switch (ep->com.state) {
-	case MPA_REQ_SENT:
+	चयन (ep->com.state) अणु
+	हाल MPA_REQ_SENT:
 		connect_reply_upcall(ep, -ETIMEDOUT);
-		break;
-	case MPA_REQ_WAIT:
-	case MPA_REQ_RCVD:
-	case MPA_REP_SENT:
-	case FPDU_MODE:
-		break;
-	case CLOSING:
-	case MORIBUND:
-		if (ep->com.cm_id && ep->com.qp) {
+		अवरोध;
+	हाल MPA_REQ_WAIT:
+	हाल MPA_REQ_RCVD:
+	हाल MPA_REP_SENT:
+	हाल FPDU_MODE:
+		अवरोध;
+	हाल CLOSING:
+	हाल MORIBUND:
+		अगर (ep->com.cm_id && ep->com.qp) अणु
 			attrs.next_state = C4IW_QP_STATE_ERROR;
-			c4iw_modify_qp(ep->com.qp->rhp,
+			c4iw_modअगरy_qp(ep->com.qp->rhp,
 				     ep->com.qp, C4IW_QP_ATTR_NEXT_STATE,
 				     &attrs, 1);
-		}
-		close_complete_upcall(ep, -ETIMEDOUT);
-		break;
-	case ABORTING:
-	case DEAD:
+		पूर्ण
+		बंद_complete_upcall(ep, -ETIMEDOUT);
+		अवरोध;
+	हाल ABORTING:
+	हाल DEAD:
 
 		/*
-		 * These states are expected if the ep timed out at the same
-		 * time as another thread was calling stop_ep_timer().
-		 * So we silently do nothing for these states.
+		 * These states are expected अगर the ep समयd out at the same
+		 * समय as another thपढ़ो was calling stop_ep_समयr().
+		 * So we silently करो nothing क्रम these states.
 		 */
-		abort = 0;
-		break;
-	default:
+		पात = 0;
+		अवरोध;
+	शेष:
 		WARN(1, "%s unexpected state ep %p tid %u state %u\n",
 			__func__, ep, ep->hwtid, ep->com.state);
-		abort = 0;
-	}
+		पात = 0;
+	पूर्ण
 	mutex_unlock(&ep->com.mutex);
-	if (abort)
+	अगर (पात)
 		c4iw_ep_disconnect(ep, 1, GFP_KERNEL);
 	c4iw_put_ep(&ep->com);
-}
+पूर्ण
 
-static void process_timedout_eps(void)
-{
-	struct c4iw_ep *ep;
+अटल व्योम process_समयकरोut_eps(व्योम)
+अणु
+	काष्ठा c4iw_ep *ep;
 
-	spin_lock_irq(&timeout_lock);
-	while (!list_empty(&timeout_list)) {
-		struct list_head *tmp;
+	spin_lock_irq(&समयout_lock);
+	जबतक (!list_empty(&समयout_list)) अणु
+		काष्ठा list_head *पंचांगp;
 
-		tmp = timeout_list.next;
-		list_del(tmp);
-		tmp->next = NULL;
-		tmp->prev = NULL;
-		spin_unlock_irq(&timeout_lock);
-		ep = list_entry(tmp, struct c4iw_ep, entry);
-		process_timeout(ep);
-		spin_lock_irq(&timeout_lock);
-	}
-	spin_unlock_irq(&timeout_lock);
-}
+		पंचांगp = समयout_list.next;
+		list_del(पंचांगp);
+		पंचांगp->next = शून्य;
+		पंचांगp->prev = शून्य;
+		spin_unlock_irq(&समयout_lock);
+		ep = list_entry(पंचांगp, काष्ठा c4iw_ep, entry);
+		process_समयout(ep);
+		spin_lock_irq(&समयout_lock);
+	पूर्ण
+	spin_unlock_irq(&समयout_lock);
+पूर्ण
 
-static void process_work(struct work_struct *work)
-{
-	struct sk_buff *skb = NULL;
-	struct c4iw_dev *dev;
-	struct cpl_act_establish *rpl;
-	unsigned int opcode;
-	int ret;
+अटल व्योम process_work(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा sk_buff *skb = शून्य;
+	काष्ठा c4iw_dev *dev;
+	काष्ठा cpl_act_establish *rpl;
+	अचिन्हित पूर्णांक opcode;
+	पूर्णांक ret;
 
-	process_timedout_eps();
-	while ((skb = skb_dequeue(&rxq))) {
+	process_समयकरोut_eps();
+	जबतक ((skb = skb_dequeue(&rxq))) अणु
 		rpl = cplhdr(skb);
-		dev = *((struct c4iw_dev **) (skb->cb + sizeof(void *)));
+		dev = *((काष्ठा c4iw_dev **) (skb->cb + माप(व्योम *)));
 		opcode = rpl->ot.opcode;
 
-		if (opcode >= ARRAY_SIZE(work_handlers) ||
-		    !work_handlers[opcode]) {
+		अगर (opcode >= ARRAY_SIZE(work_handlers) ||
+		    !work_handlers[opcode]) अणु
 			pr_err("No handler for opcode 0x%x.\n", opcode);
-			kfree_skb(skb);
-		} else {
+			kमुक्त_skb(skb);
+		पूर्ण अन्यथा अणु
 			ret = work_handlers[opcode](dev, skb);
-			if (!ret)
-				kfree_skb(skb);
-		}
-		process_timedout_eps();
-	}
-}
+			अगर (!ret)
+				kमुक्त_skb(skb);
+		पूर्ण
+		process_समयकरोut_eps();
+	पूर्ण
+पूर्ण
 
-static DECLARE_WORK(skb_work, process_work);
+अटल DECLARE_WORK(skb_work, process_work);
 
-static void ep_timeout(struct timer_list *t)
-{
-	struct c4iw_ep *ep = from_timer(ep, t, timer);
-	int kickit = 0;
+अटल व्योम ep_समयout(काष्ठा समयr_list *t)
+अणु
+	काष्ठा c4iw_ep *ep = from_समयr(ep, t, समयr);
+	पूर्णांक kickit = 0;
 
-	spin_lock(&timeout_lock);
-	if (!test_and_set_bit(TIMEOUT, &ep->com.flags)) {
+	spin_lock(&समयout_lock);
+	अगर (!test_and_set_bit(TIMEOUT, &ep->com.flags)) अणु
 		/*
-		 * Only insert if it is not already on the list.
+		 * Only insert अगर it is not alपढ़ोy on the list.
 		 */
-		if (!ep->entry.next) {
-			list_add_tail(&ep->entry, &timeout_list);
+		अगर (!ep->entry.next) अणु
+			list_add_tail(&ep->entry, &समयout_list);
 			kickit = 1;
-		}
-	}
-	spin_unlock(&timeout_lock);
-	if (kickit)
+		पूर्ण
+	पूर्ण
+	spin_unlock(&समयout_lock);
+	अगर (kickit)
 		queue_work(workq, &skb_work);
-}
+पूर्ण
 
 /*
  * All the CM events are handled on a work queue to have a safe context.
  */
-static int sched(struct c4iw_dev *dev, struct sk_buff *skb)
-{
+अटल पूर्णांक sched(काष्ठा c4iw_dev *dev, काष्ठा sk_buff *skb)
+अणु
 
 	/*
 	 * Save dev in the skb->cb area.
 	 */
-	*((struct c4iw_dev **) (skb->cb + sizeof(void *))) = dev;
+	*((काष्ठा c4iw_dev **) (skb->cb + माप(व्योम *))) = dev;
 
 	/*
-	 * Queue the skb and schedule the worker thread.
+	 * Queue the skb and schedule the worker thपढ़ो.
 	 */
 	skb_queue_tail(&rxq, skb);
 	queue_work(workq, &skb_work);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int set_tcb_rpl(struct c4iw_dev *dev, struct sk_buff *skb)
-{
-	struct cpl_set_tcb_rpl *rpl = cplhdr(skb);
+अटल पूर्णांक set_tcb_rpl(काष्ठा c4iw_dev *dev, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा cpl_set_tcb_rpl *rpl = cplhdr(skb);
 
-	if (rpl->status != CPL_ERR_NONE) {
+	अगर (rpl->status != CPL_ERR_NONE) अणु
 		pr_err("Unexpected SET_TCB_RPL status %u for tid %u\n",
 		       rpl->status, GET_TID(rpl));
-	}
-	kfree_skb(skb);
-	return 0;
-}
+	पूर्ण
+	kमुक्त_skb(skb);
+	वापस 0;
+पूर्ण
 
-static int fw6_msg(struct c4iw_dev *dev, struct sk_buff *skb)
-{
-	struct cpl_fw6_msg *rpl = cplhdr(skb);
-	struct c4iw_wr_wait *wr_waitp;
-	int ret;
+अटल पूर्णांक fw6_msg(काष्ठा c4iw_dev *dev, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा cpl_fw6_msg *rpl = cplhdr(skb);
+	काष्ठा c4iw_wr_रुको *wr_रुकोp;
+	पूर्णांक ret;
 
 	pr_debug("type %u\n", rpl->type);
 
-	switch (rpl->type) {
-	case FW6_TYPE_WR_RPL:
-		ret = (int)((be64_to_cpu(rpl->data[0]) >> 8) & 0xff);
-		wr_waitp = (struct c4iw_wr_wait *)(__force unsigned long) rpl->data[1];
-		pr_debug("wr_waitp %p ret %u\n", wr_waitp, ret);
-		if (wr_waitp)
-			c4iw_wake_up_deref(wr_waitp, ret ? -ret : 0);
-		kfree_skb(skb);
-		break;
-	case FW6_TYPE_CQE:
-	case FW6_TYPE_OFLD_CONNECTION_WR_RPL:
+	चयन (rpl->type) अणु
+	हाल FW6_TYPE_WR_RPL:
+		ret = (पूर्णांक)((be64_to_cpu(rpl->data[0]) >> 8) & 0xff);
+		wr_रुकोp = (काष्ठा c4iw_wr_रुको *)(__क्रमce अचिन्हित दीर्घ) rpl->data[1];
+		pr_debug("wr_waitp %p ret %u\n", wr_रुकोp, ret);
+		अगर (wr_रुकोp)
+			c4iw_wake_up_deref(wr_रुकोp, ret ? -ret : 0);
+		kमुक्त_skb(skb);
+		अवरोध;
+	हाल FW6_TYPE_CQE:
+	हाल FW6_TYPE_OFLD_CONNECTION_WR_RPL:
 		sched(dev, skb);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		pr_err("%s unexpected fw6 msg type %u\n",
 		       __func__, rpl->type);
-		kfree_skb(skb);
-		break;
-	}
-	return 0;
-}
+		kमुक्त_skb(skb);
+		अवरोध;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int peer_abort_intr(struct c4iw_dev *dev, struct sk_buff *skb)
-{
-	struct cpl_abort_req_rss *req = cplhdr(skb);
-	struct c4iw_ep *ep;
-	unsigned int tid = GET_TID(req);
+अटल पूर्णांक peer_पात_पूर्णांकr(काष्ठा c4iw_dev *dev, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा cpl_पात_req_rss *req = cplhdr(skb);
+	काष्ठा c4iw_ep *ep;
+	अचिन्हित पूर्णांक tid = GET_TID(req);
 
 	ep = get_ep_from_tid(dev, tid);
-	/* This EP will be dereferenced in peer_abort() */
-	if (!ep) {
+	/* This EP will be dereferenced in peer_पात() */
+	अगर (!ep) अणु
 		pr_warn("Abort on non-existent endpoint, tid %d\n", tid);
-		kfree_skb(skb);
-		return 0;
-	}
-	if (cxgb_is_neg_adv(req->status)) {
+		kमुक्त_skb(skb);
+		वापस 0;
+	पूर्ण
+	अगर (cxgb_is_neg_adv(req->status)) अणु
 		pr_debug("Negative advice on abort- tid %u status %d (%s)\n",
 			 ep->hwtid, req->status,
 			 neg_adv_str(req->status));
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 	pr_debug("ep %p tid %u state %u\n", ep, ep->hwtid, ep->com.state);
 
-	c4iw_wake_up_noref(ep->com.wr_waitp, -ECONNRESET);
+	c4iw_wake_up_noref(ep->com.wr_रुकोp, -ECONNRESET);
 out:
 	sched(dev, skb);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * Most upcalls from the T4 Core go to sched() to
  * schedule the processing on a work queue.
  */
-c4iw_handler_func c4iw_handlers[NUM_CPL_CMDS] = {
+c4iw_handler_func c4iw_handlers[NUM_CPL_CMDS] = अणु
 	[CPL_ACT_ESTABLISH] = sched,
 	[CPL_ACT_OPEN_RPL] = sched,
 	[CPL_RX_DATA] = sched,
@@ -4441,29 +4442,29 @@ c4iw_handler_func c4iw_handlers[NUM_CPL_CMDS] = {
 	[CPL_PASS_ESTABLISH] = sched,
 	[CPL_PEER_CLOSE] = sched,
 	[CPL_CLOSE_CON_RPL] = sched,
-	[CPL_ABORT_REQ_RSS] = peer_abort_intr,
+	[CPL_ABORT_REQ_RSS] = peer_पात_पूर्णांकr,
 	[CPL_RDMA_TERMINATE] = sched,
 	[CPL_FW4_ACK] = sched,
 	[CPL_SET_TCB_RPL] = set_tcb_rpl,
 	[CPL_GET_TCB_RPL] = sched,
 	[CPL_FW6_MSG] = fw6_msg,
 	[CPL_RX_PKT] = sched
-};
+पूर्ण;
 
-int __init c4iw_cm_init(void)
-{
+पूर्णांक __init c4iw_cm_init(व्योम)
+अणु
 	skb_queue_head_init(&rxq);
 
 	workq = alloc_ordered_workqueue("iw_cxgb4", WQ_MEM_RECLAIM);
-	if (!workq)
-		return -ENOMEM;
+	अगर (!workq)
+		वापस -ENOMEM;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void c4iw_cm_term(void)
-{
-	WARN_ON(!list_empty(&timeout_list));
+व्योम c4iw_cm_term(व्योम)
+अणु
+	WARN_ON(!list_empty(&समयout_list));
 	flush_workqueue(workq);
 	destroy_workqueue(workq);
-}
+पूर्ण

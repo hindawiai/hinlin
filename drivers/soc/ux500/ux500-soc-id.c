@@ -1,73 +1,74 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (C) ST-Ericsson SA 2010
  *
- * Author: Rabin Vincent <rabin.vincent@stericsson.com> for ST-Ericsson
+ * Author: Rabin Vincent <rabin.vincent@stericsson.com> क्रम ST-Ericsson
  */
 
-#include <linux/kernel.h>
-#include <linux/init.h>
-#include <linux/io.h>
-#include <linux/module.h>
-#include <linux/random.h>
-#include <linux/slab.h>
-#include <linux/of.h>
-#include <linux/of_address.h>
-#include <linux/sys_soc.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/init.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/module.h>
+#समावेश <linux/अक्रमom.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_address.h>
+#समावेश <linux/sys_soc.h>
 
-#include <asm/cputype.h>
-#include <asm/tlbflush.h>
-#include <asm/cacheflush.h>
-#include <asm/mach/map.h>
+#समावेश <यंत्र/cputype.h>
+#समावेश <यंत्र/tlbflush.h>
+#समावेश <यंत्र/cacheflush.h>
+#समावेश <यंत्र/mach/map.h>
 
 /**
- * struct dbx500_asic_id - fields of the ASIC ID
+ * काष्ठा dbx500_asic_id - fields of the ASIC ID
  * @process: the manufacturing process, 0x40 is 40 nm 0x00 is "standard"
- * @partnumber: hithereto 0x8500 for DB8500
+ * @partnumber: hithereto 0x8500 क्रम DB8500
  * @revision: version code in the series
  */
-struct dbx500_asic_id {
+काष्ठा dbx500_asic_id अणु
 	u16	partnumber;
 	u8	revision;
 	u8	process;
-};
+पूर्ण;
 
-static struct dbx500_asic_id dbx500_id;
+अटल काष्ठा dbx500_asic_id dbx500_id;
 
-static unsigned int __init ux500_read_asicid(phys_addr_t addr)
-{
-	void __iomem *virt = ioremap(addr, 4);
-	unsigned int asicid;
+अटल अचिन्हित पूर्णांक __init ux500_पढ़ो_asicid(phys_addr_t addr)
+अणु
+	व्योम __iomem *virt = ioremap(addr, 4);
+	अचिन्हित पूर्णांक asicid;
 
-	if (!virt)
-		return 0;
+	अगर (!virt)
+		वापस 0;
 
-	asicid = readl(virt);
+	asicid = पढ़ोl(virt);
 	iounmap(virt);
 
-	return asicid;
-}
+	वापस asicid;
+पूर्ण
 
-static void ux500_print_soc_info(unsigned int asicid)
-{
-	unsigned int rev = dbx500_id.revision;
+अटल व्योम ux500_prपूर्णांक_soc_info(अचिन्हित पूर्णांक asicid)
+अणु
+	अचिन्हित पूर्णांक rev = dbx500_id.revision;
 
 	pr_info("DB%4x ", dbx500_id.partnumber);
 
-	if (rev == 0x01)
+	अगर (rev == 0x01)
 		pr_cont("Early Drop");
-	else if (rev >= 0xA0)
+	अन्यथा अगर (rev >= 0xA0)
 		pr_cont("v%d.%d" , (rev >> 4) - 0xA + 1, rev & 0xf);
-	else
+	अन्यथा
 		pr_cont("Unknown");
 
 	pr_cont(" [%#010x]\n", asicid);
-}
+पूर्ण
 
-static unsigned int partnumber(unsigned int asicid)
-{
-	return (asicid >> 8) & 0xffff;
-}
+अटल अचिन्हित पूर्णांक partnumber(अचिन्हित पूर्णांक asicid)
+अणु
+	वापस (asicid >> 8) & 0xffff;
+पूर्ण
 
 /*
  * SOC		MIDR		ASICID ADDRESS		ASICID VALUE
@@ -80,148 +81,148 @@ static unsigned int partnumber(unsigned int asicid)
  * DB9540	0x413fc090	0xFFFFDBF4		0x009540xx
  */
 
-static void __init ux500_setup_id(void)
-{
-	unsigned int cpuid = read_cpuid_id();
-	unsigned int asicid = 0;
+अटल व्योम __init ux500_setup_id(व्योम)
+अणु
+	अचिन्हित पूर्णांक cpuid = पढ़ो_cpuid_id();
+	अचिन्हित पूर्णांक asicid = 0;
 	phys_addr_t addr = 0;
 
-	switch (cpuid) {
-	case 0x410fc090: /* DB8500ed */
-	case 0x411fc091: /* DB8500v1 */
+	चयन (cpuid) अणु
+	हाल 0x410fc090: /* DB8500ed */
+	हाल 0x411fc091: /* DB8500v1 */
 		addr = 0x9001FFF4;
-		break;
+		अवरोध;
 
-	case 0x412fc091: /* DB8520 / DB8500v2 / DB5500v1 */
-		asicid = ux500_read_asicid(0x9001DBF4);
-		if (partnumber(asicid) == 0x8500 ||
+	हाल 0x412fc091: /* DB8520 / DB8500v2 / DB5500v1 */
+		asicid = ux500_पढ़ो_asicid(0x9001DBF4);
+		अगर (partnumber(asicid) == 0x8500 ||
 		    partnumber(asicid) == 0x8520)
 			/* DB8500v2 */
-			break;
+			अवरोध;
 
 		/* DB5500v1 */
 		addr = 0x9001FFF4;
-		break;
+		अवरोध;
 
-	case 0x413fc090: /* DB9540 */
+	हाल 0x413fc090: /* DB9540 */
 		addr = 0xFFFFDBF4;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	if (addr)
-		asicid = ux500_read_asicid(addr);
+	अगर (addr)
+		asicid = ux500_पढ़ो_asicid(addr);
 
-	if (!asicid) {
+	अगर (!asicid) अणु
 		pr_err("Unable to identify SoC\n");
 		BUG();
-	}
+	पूर्ण
 
 	dbx500_id.process = asicid >> 24;
 	dbx500_id.partnumber = partnumber(asicid);
 	dbx500_id.revision = asicid & 0xff;
 
-	ux500_print_soc_info(asicid);
-}
+	ux500_prपूर्णांक_soc_info(asicid);
+पूर्ण
 
-static const char * __init ux500_get_machine(void)
-{
-	return kasprintf(GFP_KERNEL, "DB%4x", dbx500_id.partnumber);
-}
+अटल स्थिर अक्षर * __init ux500_get_machine(व्योम)
+अणु
+	वापस kaप्र_लिखो(GFP_KERNEL, "DB%4x", dbx500_id.partnumber);
+पूर्ण
 
-static const char * __init ux500_get_family(void)
-{
-	return kasprintf(GFP_KERNEL, "ux500");
-}
+अटल स्थिर अक्षर * __init ux500_get_family(व्योम)
+अणु
+	वापस kaप्र_लिखो(GFP_KERNEL, "ux500");
+पूर्ण
 
-static const char * __init ux500_get_revision(void)
-{
-	unsigned int rev = dbx500_id.revision;
+अटल स्थिर अक्षर * __init ux500_get_revision(व्योम)
+अणु
+	अचिन्हित पूर्णांक rev = dbx500_id.revision;
 
-	if (rev == 0x01)
-		return kasprintf(GFP_KERNEL, "%s", "ED");
-	else if (rev >= 0xA0)
-		return kasprintf(GFP_KERNEL, "%d.%d",
+	अगर (rev == 0x01)
+		वापस kaप्र_लिखो(GFP_KERNEL, "%s", "ED");
+	अन्यथा अगर (rev >= 0xA0)
+		वापस kaप्र_लिखो(GFP_KERNEL, "%d.%d",
 				 (rev >> 4) - 0xA + 1, rev & 0xf);
 
-	return kasprintf(GFP_KERNEL, "%s", "Unknown");
-}
+	वापस kaप्र_लिखो(GFP_KERNEL, "%s", "Unknown");
+पूर्ण
 
-static ssize_t
-process_show(struct device *dev, struct device_attribute *attr, char *buf)
-{
-	if (dbx500_id.process == 0x00)
-		return sprintf(buf, "Standard\n");
+अटल sमाप_प्रकार
+process_show(काष्ठा device *dev, काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	अगर (dbx500_id.process == 0x00)
+		वापस प्र_लिखो(buf, "Standard\n");
 
-	return sprintf(buf, "%02xnm\n", dbx500_id.process);
-}
+	वापस प्र_लिखो(buf, "%02xnm\n", dbx500_id.process);
+पूर्ण
 
-static DEVICE_ATTR_RO(process);
+अटल DEVICE_ATTR_RO(process);
 
-static struct attribute *ux500_soc_attrs[] = {
+अटल काष्ठा attribute *ux500_soc_attrs[] = अणु
 	&dev_attr_process.attr,
-	NULL
-};
+	शून्य
+पूर्ण;
 
 ATTRIBUTE_GROUPS(ux500_soc);
 
-static const char *db8500_read_soc_id(struct device_node *backupram)
-{
-	void __iomem *base;
-	void __iomem *uid;
-	const char *retstr;
+अटल स्थिर अक्षर *db8500_पढ़ो_soc_id(काष्ठा device_node *backupram)
+अणु
+	व्योम __iomem *base;
+	व्योम __iomem *uid;
+	स्थिर अक्षर *retstr;
 
 	base = of_iomap(backupram, 0);
-	if (!base)
-		return NULL;
+	अगर (!base)
+		वापस शून्य;
 	uid = base + 0x1fc0;
 
-	/* Throw these device-specific numbers into the entropy pool */
-	add_device_randomness(uid, 0x14);
-	retstr = kasprintf(GFP_KERNEL, "%08x%08x%08x%08x%08x",
-			 readl((u32 *)uid+0),
-			 readl((u32 *)uid+1), readl((u32 *)uid+2),
-			 readl((u32 *)uid+3), readl((u32 *)uid+4));
+	/* Throw these device-specअगरic numbers पूर्णांकo the entropy pool */
+	add_device_अक्रमomness(uid, 0x14);
+	retstr = kaप्र_लिखो(GFP_KERNEL, "%08x%08x%08x%08x%08x",
+			 पढ़ोl((u32 *)uid+0),
+			 पढ़ोl((u32 *)uid+1), पढ़ोl((u32 *)uid+2),
+			 पढ़ोl((u32 *)uid+3), पढ़ोl((u32 *)uid+4));
 	iounmap(base);
-	return retstr;
-}
+	वापस retstr;
+पूर्ण
 
-static void __init soc_info_populate(struct soc_device_attribute *soc_dev_attr,
-				     struct device_node *backupram)
-{
-	soc_dev_attr->soc_id   = db8500_read_soc_id(backupram);
+अटल व्योम __init soc_info_populate(काष्ठा soc_device_attribute *soc_dev_attr,
+				     काष्ठा device_node *backupram)
+अणु
+	soc_dev_attr->soc_id   = db8500_पढ़ो_soc_id(backupram);
 	soc_dev_attr->machine  = ux500_get_machine();
 	soc_dev_attr->family   = ux500_get_family();
 	soc_dev_attr->revision = ux500_get_revision();
 	soc_dev_attr->custom_attr_group = ux500_soc_groups[0];
-}
+पूर्ण
 
-static int __init ux500_soc_device_init(void)
-{
-	struct soc_device *soc_dev;
-	struct soc_device_attribute *soc_dev_attr;
-	struct device_node *backupram;
+अटल पूर्णांक __init ux500_soc_device_init(व्योम)
+अणु
+	काष्ठा soc_device *soc_dev;
+	काष्ठा soc_device_attribute *soc_dev_attr;
+	काष्ठा device_node *backupram;
 
-	backupram = of_find_compatible_node(NULL, NULL, "ste,dbx500-backupram");
-	if (!backupram)
-		return 0;
+	backupram = of_find_compatible_node(शून्य, शून्य, "ste,dbx500-backupram");
+	अगर (!backupram)
+		वापस 0;
 
 	ux500_setup_id();
 
-	soc_dev_attr = kzalloc(sizeof(*soc_dev_attr), GFP_KERNEL);
-	if (!soc_dev_attr) {
+	soc_dev_attr = kzalloc(माप(*soc_dev_attr), GFP_KERNEL);
+	अगर (!soc_dev_attr) अणु
 		of_node_put(backupram);
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	soc_info_populate(soc_dev_attr, backupram);
 	of_node_put(backupram);
 
-	soc_dev = soc_device_register(soc_dev_attr);
-	if (IS_ERR(soc_dev)) {
-	        kfree(soc_dev_attr);
-		return PTR_ERR(soc_dev);
-	}
+	soc_dev = soc_device_रेजिस्टर(soc_dev_attr);
+	अगर (IS_ERR(soc_dev)) अणु
+	        kमुक्त(soc_dev_attr);
+		वापस PTR_ERR(soc_dev);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 subsys_initcall(ux500_soc_device_init);

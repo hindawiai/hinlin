@@ -1,15 +1,16 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /********************************
  * adapted from font_sun12x22.c *
  * by Jurriaan Kalkman 06-2005  *
  ********************************/
 
-#include <linux/font.h>
+#समावेश <linux/font.h>
 
-#define FONTDATAMAX 9216
+#घोषणा FONTDATAMAX 9216
 
-static const struct font_data fontdata_10x18 = {
-	{ 0, 0, FONTDATAMAX, 0 }, {
+अटल स्थिर काष्ठा font_data fontdata_10x18 = अणु
+	अणु 0, 0, FONTDATAMAX, 0 पूर्ण, अणु
 	/* 0 0x00 '^@' */
 	0x00, 0x00, /* 0000000000 */
 	0x00, 0x00, /* 0000000000 */
@@ -5129,19 +5130,19 @@ static const struct font_data fontdata_10x18 = {
 	0x00, 0x00, /* 0000000000 */
 	0x00, 0x00, /* 0000000000 */
 	0x00, 0x00, /* 0000000000 */
-} };
+पूर्ण पूर्ण;
 
 
-const struct font_desc font_10x18 = {
+स्थिर काष्ठा font_desc font_10x18 = अणु
 	.idx	= FONT10x18_IDX,
 	.name	= "10x18",
 	.width	= 10,
 	.height	= 18,
-	.charcount = 256,
+	.अक्षरcount = 256,
 	.data	= fontdata_10x18.data,
-#ifdef __sparc__
+#अगर_घोषित __sparc__
 	.pref	= 5,
-#else
+#अन्यथा
 	.pref	= -1,
-#endif
-};
+#पूर्ण_अगर
+पूर्ण;

@@ -1,34 +1,35 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * This module emits "Hello, world" on printk when loaded.
+ * This module emits "Hello, world" on prपूर्णांकk when loaded.
  *
- * It is designed to be used for basic evaluation of the module loading
- * subsystem (for example when validating module signing/verification). It
+ * It is deचिन्हित to be used क्रम basic evaluation of the module loading
+ * subप्रणाली (क्रम example when validating module signing/verअगरication). It
  * lacks any extra dependencies, and will not normally be loaded by the
- * system unless explicitly requested by name.
+ * प्रणाली unless explicitly requested by name.
  */
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include <linux/init.h>
-#include <linux/module.h>
-#include <linux/printk.h>
+#समावेश <linux/init.h>
+#समावेश <linux/module.h>
+#समावेश <linux/prपूर्णांकk.h>
 
-static int __init test_module_init(void)
-{
+अटल पूर्णांक __init test_module_init(व्योम)
+अणु
 	pr_warn("Hello, world\n");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 module_init(test_module_init);
 
-static void __exit test_module_exit(void)
-{
+अटल व्योम __निकास test_module_निकास(व्योम)
+अणु
 	pr_warn("Goodbye\n");
-}
+पूर्ण
 
-module_exit(test_module_exit);
+module_निकास(test_module_निकास);
 
 MODULE_AUTHOR("Kees Cook <keescook@chromium.org>");
 MODULE_LICENSE("GPL");

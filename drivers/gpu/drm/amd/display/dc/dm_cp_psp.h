@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2018 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -23,30 +24,30 @@
  *
  */
 
-#ifndef DM_CP_PSP_IF__H
-#define DM_CP_PSP_IF__H
+#अगर_अघोषित DM_CP_PSP_IF__H
+#घोषणा DM_CP_PSP_IF__H
 
-struct dc_link;
+काष्ठा dc_link;
 
-struct cp_psp_stream_config {
-	uint8_t otg_inst;
-	uint8_t dig_be;
-	uint8_t dig_fe;
-	uint8_t assr_enabled;
-	uint8_t mst_enabled;
-	void *dm_stream_ctx;
+काष्ठा cp_psp_stream_config अणु
+	uपूर्णांक8_t otg_inst;
+	uपूर्णांक8_t dig_be;
+	uपूर्णांक8_t dig_fe;
+	uपूर्णांक8_t assr_enabled;
+	uपूर्णांक8_t mst_enabled;
+	व्योम *dm_stream_ctx;
 	bool dpms_off;
-};
+पूर्ण;
 
-struct cp_psp_funcs {
-	bool (*enable_assr)(void *handle, struct dc_link *link);
-	void (*update_stream_config)(void *handle, struct cp_psp_stream_config *config);
-};
+काष्ठा cp_psp_funcs अणु
+	bool (*enable_assr)(व्योम *handle, काष्ठा dc_link *link);
+	व्योम (*update_stream_config)(व्योम *handle, काष्ठा cp_psp_stream_config *config);
+पूर्ण;
 
-struct cp_psp {
-	void *handle;
-	struct cp_psp_funcs funcs;
-};
+काष्ठा cp_psp अणु
+	व्योम *handle;
+	काष्ठा cp_psp_funcs funcs;
+पूर्ण;
 
 
-#endif /* DM_CP_PSP_IF__H */
+#पूर्ण_अगर /* DM_CP_PSP_IF__H */

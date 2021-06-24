@@ -1,9 +1,10 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <linux/compiler.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <linux/compiler.h>
 
-static int arc__annotate_init(struct arch *arch, char *cpuid __maybe_unused)
-{
+अटल पूर्णांक arc__annotate_init(काष्ठा arch *arch, अक्षर *cpuid __maybe_unused)
+अणु
 	arch->initialized = true;
-	arch->objdump.comment_char = ';';
-	return 0;
-}
+	arch->objdump.comment_अक्षर = ';';
+	वापस 0;
+पूर्ण

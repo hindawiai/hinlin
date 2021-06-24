@@ -1,241 +1,242 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
- * Copyright (C) 2015 Karol Kosik <karo9@interia.eu>
+ * Copyright (C) 2015 Karol Kosik <karo9@पूर्णांकeria.eu>
  * Copyright (C) 2015-2016 Samsung Electronics
  *               Igor Kotrasinski <i.kotrasinsk@samsung.com>
  */
 
-#include <net/sock.h>
-#include <linux/list.h>
-#include <linux/kthread.h>
+#समावेश <net/sock.h>
+#समावेश <linux/list.h>
+#समावेश <linux/kthपढ़ो.h>
 
-#include "usbip_common.h"
-#include "vudc.h"
+#समावेश "usbip_common.h"
+#समावेश "vudc.h"
 
-static int alloc_urb_from_cmd(struct urb **urbp,
-			      struct usbip_header *pdu, u8 type)
-{
-	struct urb *urb;
+अटल पूर्णांक alloc_urb_from_cmd(काष्ठा urb **urbp,
+			      काष्ठा usbip_header *pdu, u8 type)
+अणु
+	काष्ठा urb *urb;
 
-	if (type == USB_ENDPOINT_XFER_ISOC)
+	अगर (type == USB_ENDPOINT_XFER_ISOC)
 		urb = usb_alloc_urb(pdu->u.cmd_submit.number_of_packets,
 					  GFP_KERNEL);
-	else
+	अन्यथा
 		urb = usb_alloc_urb(0, GFP_KERNEL);
 
-	if (!urb)
-		goto err;
+	अगर (!urb)
+		जाओ err;
 
 	usbip_pack_pdu(pdu, urb, USBIP_CMD_SUBMIT, 0);
 
-	if (urb->transfer_buffer_length > 0) {
+	अगर (urb->transfer_buffer_length > 0) अणु
 		urb->transfer_buffer = kzalloc(urb->transfer_buffer_length,
 			GFP_KERNEL);
-		if (!urb->transfer_buffer)
-			goto free_urb;
-	}
+		अगर (!urb->transfer_buffer)
+			जाओ मुक्त_urb;
+	पूर्ण
 
 	urb->setup_packet = kmemdup(&pdu->u.cmd_submit.setup, 8,
 			    GFP_KERNEL);
-	if (!urb->setup_packet)
-		goto free_buffer;
+	अगर (!urb->setup_packet)
+		जाओ मुक्त_buffer;
 
 	/*
-	 * FIXME - we only setup pipe enough for usbip functions
+	 * FIXME - we only setup pipe enough क्रम usbip functions
 	 * to behave nicely
 	 */
-	urb->pipe |= pdu->base.direction == USBIP_DIR_IN ?
-			USB_DIR_IN : USB_DIR_OUT;
+	urb->pipe |= pdu->base.direction == USBIP_सूची_IN ?
+			USB_सूची_IN : USB_सूची_OUT;
 
 	*urbp = urb;
-	return 0;
+	वापस 0;
 
-free_buffer:
-	kfree(urb->transfer_buffer);
-	urb->transfer_buffer = NULL;
-free_urb:
-	usb_free_urb(urb);
+मुक्त_buffer:
+	kमुक्त(urb->transfer_buffer);
+	urb->transfer_buffer = शून्य;
+मुक्त_urb:
+	usb_मुक्त_urb(urb);
 err:
-	return -ENOMEM;
-}
+	वापस -ENOMEM;
+पूर्ण
 
-static int v_recv_cmd_unlink(struct vudc *udc,
-				struct usbip_header *pdu)
-{
-	unsigned long flags;
-	struct urbp *urb_p;
+अटल पूर्णांक v_recv_cmd_unlink(काष्ठा vudc *udc,
+				काष्ठा usbip_header *pdu)
+अणु
+	अचिन्हित दीर्घ flags;
+	काष्ठा urbp *urb_p;
 
 	spin_lock_irqsave(&udc->lock, flags);
-	list_for_each_entry(urb_p, &udc->urb_queue, urb_entry) {
-		if (urb_p->seqnum != pdu->u.cmd_unlink.seqnum)
-			continue;
+	list_क्रम_each_entry(urb_p, &udc->urb_queue, urb_entry) अणु
+		अगर (urb_p->seqnum != pdu->u.cmd_unlink.seqnum)
+			जारी;
 		urb_p->urb->unlinked = -ECONNRESET;
 		urb_p->seqnum = pdu->base.seqnum;
-		v_kick_timer(udc, jiffies);
+		v_kick_समयr(udc, jअगरfies);
 		spin_unlock_irqrestore(&udc->lock, flags);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 	/* Not found, completed / not queued */
 	spin_lock(&udc->lock_tx);
 	v_enqueue_ret_unlink(udc, pdu->base.seqnum, 0);
-	wake_up(&udc->tx_waitq);
+	wake_up(&udc->tx_रुकोq);
 	spin_unlock(&udc->lock_tx);
 	spin_unlock_irqrestore(&udc->lock, flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int v_recv_cmd_submit(struct vudc *udc,
-				 struct usbip_header *pdu)
-{
-	int ret = 0;
-	struct urbp *urb_p;
+अटल पूर्णांक v_recv_cmd_submit(काष्ठा vudc *udc,
+				 काष्ठा usbip_header *pdu)
+अणु
+	पूर्णांक ret = 0;
+	काष्ठा urbp *urb_p;
 	u8 address;
-	unsigned long flags;
+	अचिन्हित दीर्घ flags;
 
 	urb_p = alloc_urbp();
-	if (!urb_p) {
+	अगर (!urb_p) अणु
 		usbip_event_add(&udc->ud, VUDC_EVENT_ERROR_MALLOC);
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
-	/* base.ep is pipeendpoint(pipe) */
+	/* base.ep is pipeendpoपूर्णांक(pipe) */
 	address = pdu->base.ep;
-	if (pdu->base.direction == USBIP_DIR_IN)
-		address |= USB_DIR_IN;
+	अगर (pdu->base.direction == USBIP_सूची_IN)
+		address |= USB_सूची_IN;
 
 	spin_lock_irq(&udc->lock);
-	urb_p->ep = vudc_find_endpoint(udc, address);
-	if (!urb_p->ep) {
-		/* we don't know the type, there may be isoc data! */
+	urb_p->ep = vudc_find_endpoपूर्णांक(udc, address);
+	अगर (!urb_p->ep) अणु
+		/* we करोn't know the type, there may be isoc data! */
 		dev_err(&udc->pdev->dev, "request to nonexistent endpoint");
 		spin_unlock_irq(&udc->lock);
 		usbip_event_add(&udc->ud, VUDC_EVENT_ERROR_TCP);
 		ret = -EPIPE;
-		goto free_urbp;
-	}
+		जाओ मुक्त_urbp;
+	पूर्ण
 	urb_p->type = urb_p->ep->type;
 	spin_unlock_irq(&udc->lock);
 
 	urb_p->new = 1;
 	urb_p->seqnum = pdu->base.seqnum;
 
-	if (urb_p->ep->type == USB_ENDPOINT_XFER_ISOC) {
+	अगर (urb_p->ep->type == USB_ENDPOINT_XFER_ISOC) अणु
 		/* validate packet size and number of packets */
-		unsigned int maxp, packets, bytes;
+		अचिन्हित पूर्णांक maxp, packets, bytes;
 
-		maxp = usb_endpoint_maxp(urb_p->ep->desc);
-		maxp *= usb_endpoint_maxp_mult(urb_p->ep->desc);
+		maxp = usb_endpoपूर्णांक_maxp(urb_p->ep->desc);
+		maxp *= usb_endpoपूर्णांक_maxp_mult(urb_p->ep->desc);
 		bytes = pdu->u.cmd_submit.transfer_buffer_length;
 		packets = DIV_ROUND_UP(bytes, maxp);
 
-		if (pdu->u.cmd_submit.number_of_packets < 0 ||
-		    pdu->u.cmd_submit.number_of_packets > packets) {
+		अगर (pdu->u.cmd_submit.number_of_packets < 0 ||
+		    pdu->u.cmd_submit.number_of_packets > packets) अणु
 			dev_err(&udc->gadget.dev,
 				"CMD_SUBMIT: isoc invalid num packets %d\n",
 				pdu->u.cmd_submit.number_of_packets);
 			ret = -EMSGSIZE;
-			goto free_urbp;
-		}
-	}
+			जाओ मुक्त_urbp;
+		पूर्ण
+	पूर्ण
 
 	ret = alloc_urb_from_cmd(&urb_p->urb, pdu, urb_p->ep->type);
-	if (ret) {
+	अगर (ret) अणु
 		usbip_event_add(&udc->ud, VUDC_EVENT_ERROR_MALLOC);
 		ret = -ENOMEM;
-		goto free_urbp;
-	}
+		जाओ मुक्त_urbp;
+	पूर्ण
 
 	urb_p->urb->status = -EINPROGRESS;
 
 	/* FIXME: more pipe setup to please usbip_common */
 	urb_p->urb->pipe &= ~(3 << 30);
-	switch (urb_p->ep->type) {
-	case USB_ENDPOINT_XFER_BULK:
+	चयन (urb_p->ep->type) अणु
+	हाल USB_ENDPOINT_XFER_BULK:
 		urb_p->urb->pipe |= (PIPE_BULK << 30);
-		break;
-	case USB_ENDPOINT_XFER_INT:
+		अवरोध;
+	हाल USB_ENDPOINT_XFER_INT:
 		urb_p->urb->pipe |= (PIPE_INTERRUPT << 30);
-		break;
-	case USB_ENDPOINT_XFER_CONTROL:
+		अवरोध;
+	हाल USB_ENDPOINT_XFER_CONTROL:
 		urb_p->urb->pipe |= (PIPE_CONTROL << 30);
-		break;
-	case USB_ENDPOINT_XFER_ISOC:
+		अवरोध;
+	हाल USB_ENDPOINT_XFER_ISOC:
 		urb_p->urb->pipe |= (PIPE_ISOCHRONOUS << 30);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 	ret = usbip_recv_xbuff(&udc->ud, urb_p->urb);
-	if (ret < 0)
-		goto free_urbp;
+	अगर (ret < 0)
+		जाओ मुक्त_urbp;
 
 	ret = usbip_recv_iso(&udc->ud, urb_p->urb);
-	if (ret < 0)
-		goto free_urbp;
+	अगर (ret < 0)
+		जाओ मुक्त_urbp;
 
 	spin_lock_irqsave(&udc->lock, flags);
-	v_kick_timer(udc, jiffies);
+	v_kick_समयr(udc, jअगरfies);
 	list_add_tail(&urb_p->urb_entry, &udc->urb_queue);
 	spin_unlock_irqrestore(&udc->lock, flags);
 
-	return 0;
+	वापस 0;
 
-free_urbp:
-	free_urbp_and_urb(urb_p);
-	return ret;
-}
+मुक्त_urbp:
+	मुक्त_urbp_and_urb(urb_p);
+	वापस ret;
+पूर्ण
 
-static int v_rx_pdu(struct usbip_device *ud)
-{
-	int ret;
-	struct usbip_header pdu;
-	struct vudc *udc = container_of(ud, struct vudc, ud);
+अटल पूर्णांक v_rx_pdu(काष्ठा usbip_device *ud)
+अणु
+	पूर्णांक ret;
+	काष्ठा usbip_header pdu;
+	काष्ठा vudc *udc = container_of(ud, काष्ठा vudc, ud);
 
-	memset(&pdu, 0, sizeof(pdu));
-	ret = usbip_recv(ud->tcp_socket, &pdu, sizeof(pdu));
-	if (ret != sizeof(pdu)) {
+	स_रखो(&pdu, 0, माप(pdu));
+	ret = usbip_recv(ud->tcp_socket, &pdu, माप(pdu));
+	अगर (ret != माप(pdu)) अणु
 		usbip_event_add(ud, VUDC_EVENT_ERROR_TCP);
-		if (ret >= 0)
-			return -EPIPE;
-		return ret;
-	}
+		अगर (ret >= 0)
+			वापस -EPIPE;
+		वापस ret;
+	पूर्ण
 	usbip_header_correct_endian(&pdu, 0);
 
 	spin_lock_irq(&ud->lock);
 	ret = (ud->status == SDEV_ST_USED);
 	spin_unlock_irq(&ud->lock);
-	if (!ret) {
+	अगर (!ret) अणु
 		usbip_event_add(ud, VUDC_EVENT_ERROR_TCP);
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 
-	switch (pdu.base.command) {
-	case USBIP_CMD_UNLINK:
+	चयन (pdu.base.command) अणु
+	हाल USBIP_CMD_UNLINK:
 		ret = v_recv_cmd_unlink(udc, &pdu);
-		break;
-	case USBIP_CMD_SUBMIT:
+		अवरोध;
+	हाल USBIP_CMD_SUBMIT:
 		ret = v_recv_cmd_submit(udc, &pdu);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		ret = -EPIPE;
 		pr_err("rx: unknown command");
-		break;
-	}
-	return ret;
-}
+		अवरोध;
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-int v_rx_loop(void *data)
-{
-	struct usbip_device *ud = data;
-	int ret = 0;
+पूर्णांक v_rx_loop(व्योम *data)
+अणु
+	काष्ठा usbip_device *ud = data;
+	पूर्णांक ret = 0;
 
-	while (!kthread_should_stop()) {
-		if (usbip_event_happened(ud))
-			break;
+	जबतक (!kthपढ़ो_should_stop()) अणु
+		अगर (usbip_event_happened(ud))
+			अवरोध;
 		ret = v_rx_pdu(ud);
-		if (ret < 0) {
+		अगर (ret < 0) अणु
 			pr_warn("v_rx exit with error %d", ret);
-			break;
-		}
-	}
-	return ret;
-}
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	वापस ret;
+पूर्ण

@@ -1,41 +1,42 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * Tegra host1x Channel
  *
  * Copyright (c) 2010-2013, NVIDIA Corporation.
  */
 
-#ifndef __HOST1X_CHANNEL_H
-#define __HOST1X_CHANNEL_H
+#अगर_अघोषित __HOST1X_CHANNEL_H
+#घोषणा __HOST1X_CHANNEL_H
 
-#include <linux/io.h>
-#include <linux/kref.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/kref.h>
 
-#include "cdma.h"
+#समावेश "cdma.h"
 
-struct host1x;
-struct host1x_channel;
+काष्ठा host1x;
+काष्ठा host1x_channel;
 
-struct host1x_channel_list {
-	struct host1x_channel *channels;
-	unsigned long *allocated_channels;
-};
+काष्ठा host1x_channel_list अणु
+	काष्ठा host1x_channel *channels;
+	अचिन्हित दीर्घ *allocated_channels;
+पूर्ण;
 
-struct host1x_channel {
-	struct kref refcount;
-	unsigned int id;
-	struct mutex submitlock;
-	void __iomem *regs;
-	struct host1x_client *client;
-	struct device *dev;
-	struct host1x_cdma cdma;
-};
+काष्ठा host1x_channel अणु
+	काष्ठा kref refcount;
+	अचिन्हित पूर्णांक id;
+	काष्ठा mutex submitlock;
+	व्योम __iomem *regs;
+	काष्ठा host1x_client *client;
+	काष्ठा device *dev;
+	काष्ठा host1x_cdma cdma;
+पूर्ण;
 
 /* channel list operations */
-int host1x_channel_list_init(struct host1x_channel_list *chlist,
-			     unsigned int num_channels);
-void host1x_channel_list_free(struct host1x_channel_list *chlist);
-struct host1x_channel *host1x_channel_get_index(struct host1x *host,
-						unsigned int index);
+पूर्णांक host1x_channel_list_init(काष्ठा host1x_channel_list *chlist,
+			     अचिन्हित पूर्णांक num_channels);
+व्योम host1x_channel_list_मुक्त(काष्ठा host1x_channel_list *chlist);
+काष्ठा host1x_channel *host1x_channel_get_index(काष्ठा host1x *host,
+						अचिन्हित पूर्णांक index);
 
-#endif
+#पूर्ण_अगर

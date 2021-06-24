@@ -1,71 +1,72 @@
-// SPDX-License-Identifier: GPL-2.0
-// Copyright (C) 2018 Hangzhou C-SKY Microsystems co.,ltd.
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+// Copyright (C) 2018 Hangzhou C-SKY Microप्रणालीs co.,ltd.
 
-#include <linux/fs.h>
-#include <linux/mm.h>
-#include <linux/mman.h>
-#include <linux/shm.h>
-#include <linux/sched.h>
-#include <linux/random.h>
-#include <linux/io.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/mman.h>
+#समावेश <linux/shm.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/अक्रमom.h>
+#समावेश <linux/पन.स>
 
-#define COLOUR_ALIGN(addr,pgoff)		\
+#घोषणा COLOUR_ALIGN(addr,pgoff)		\
 	((((addr)+SHMLBA-1)&~(SHMLBA-1)) +	\
 	 (((pgoff)<<PAGE_SHIFT) & (SHMLBA-1)))
 
 /*
  * We need to ensure that shared mappings are correctly aligned to
- * avoid aliasing issues with VIPT caches.  We need to ensure that
- * a specific page of an object is always mapped at a multiple of
+ * aव्योम aliasing issues with VIPT caches.  We need to ensure that
+ * a specअगरic page of an object is always mapped at a multiple of
  * SHMLBA bytes.
  *
- * We unconditionally provide this function for all cases.
+ * We unconditionally provide this function क्रम all हालs.
  */
-unsigned long
-arch_get_unmapped_area(struct file *filp, unsigned long addr,
-		unsigned long len, unsigned long pgoff, unsigned long flags)
-{
-	struct mm_struct *mm = current->mm;
-	struct vm_area_struct *vma;
-	int do_align = 0;
-	struct vm_unmapped_area_info info;
+अचिन्हित दीर्घ
+arch_get_unmapped_area(काष्ठा file *filp, अचिन्हित दीर्घ addr,
+		अचिन्हित दीर्घ len, अचिन्हित दीर्घ pgoff, अचिन्हित दीर्घ flags)
+अणु
+	काष्ठा mm_काष्ठा *mm = current->mm;
+	काष्ठा vm_area_काष्ठा *vma;
+	पूर्णांक करो_align = 0;
+	काष्ठा vm_unmapped_area_info info;
 
 	/*
-	 * We only need to do colour alignment if either the I or D
+	 * We only need to करो colour alignment अगर either the I or D
 	 * caches alias.
 	 */
-	do_align = filp || (flags & MAP_SHARED);
+	करो_align = filp || (flags & MAP_SHARED);
 
 	/*
-	 * We enforce the MAP_FIXED case.
+	 * We enक्रमce the MAP_FIXED हाल.
 	 */
-	if (flags & MAP_FIXED) {
-		if (flags & MAP_SHARED &&
+	अगर (flags & MAP_FIXED) अणु
+		अगर (flags & MAP_SHARED &&
 		    (addr - (pgoff << PAGE_SHIFT)) & (SHMLBA - 1))
-			return -EINVAL;
-		return addr;
-	}
+			वापस -EINVAL;
+		वापस addr;
+	पूर्ण
 
-	if (len > TASK_SIZE)
-		return -ENOMEM;
+	अगर (len > TASK_SIZE)
+		वापस -ENOMEM;
 
-	if (addr) {
-		if (do_align)
+	अगर (addr) अणु
+		अगर (करो_align)
 			addr = COLOUR_ALIGN(addr, pgoff);
-		else
+		अन्यथा
 			addr = PAGE_ALIGN(addr);
 
 		vma = find_vma(mm, addr);
-		if (TASK_SIZE - len >= addr &&
+		अगर (TASK_SIZE - len >= addr &&
 		    (!vma || addr + len <= vm_start_gap(vma)))
-			return addr;
-	}
+			वापस addr;
+	पूर्ण
 
 	info.flags = 0;
 	info.length = len;
 	info.low_limit = mm->mmap_base;
 	info.high_limit = TASK_SIZE;
-	info.align_mask = do_align ? (PAGE_MASK & (SHMLBA - 1)) : 0;
+	info.align_mask = करो_align ? (PAGE_MASK & (SHMLBA - 1)) : 0;
 	info.align_offset = pgoff << PAGE_SHIFT;
-	return vm_unmapped_area(&info);
-}
+	वापस vm_unmapped_area(&info);
+पूर्ण

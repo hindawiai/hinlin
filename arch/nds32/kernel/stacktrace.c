@@ -1,53 +1,54 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 // Copyright (C) 2005-2017 Andes Technology Corporation
 
-#include <linux/sched/debug.h>
-#include <linux/sched/task_stack.h>
-#include <linux/stacktrace.h>
-#include <linux/ftrace.h>
+#समावेश <linux/sched/debug.h>
+#समावेश <linux/sched/task_stack.h>
+#समावेश <linux/stacktrace.h>
+#समावेश <linux/ftrace.h>
 
-void save_stack_trace(struct stack_trace *trace)
-{
+व्योम save_stack_trace(काष्ठा stack_trace *trace)
+अणु
 	save_stack_trace_tsk(current, trace);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(save_stack_trace);
 
-void save_stack_trace_tsk(struct task_struct *tsk, struct stack_trace *trace)
-{
-	unsigned long *fpn;
-	int skip = trace->skip;
-	int savesched;
-	int graph_idx = 0;
+व्योम save_stack_trace_tsk(काष्ठा task_काष्ठा *tsk, काष्ठा stack_trace *trace)
+अणु
+	अचिन्हित दीर्घ *fpn;
+	पूर्णांक skip = trace->skip;
+	पूर्णांक savesched;
+	पूर्णांक graph_idx = 0;
 
-	if (tsk == current) {
-		__asm__ __volatile__("\tori\t%0, $fp, #0\n":"=r"(fpn));
+	अगर (tsk == current) अणु
+		__यंत्र__ __अस्थिर__("\tori\t%0, $fp, #0\n":"=r"(fpn));
 		savesched = 1;
-	} else {
-		fpn = (unsigned long *)thread_saved_fp(tsk);
+	पूर्ण अन्यथा अणु
+		fpn = (अचिन्हित दीर्घ *)thपढ़ो_saved_fp(tsk);
 		savesched = 0;
-	}
+	पूर्ण
 
-	while (!kstack_end(fpn) && !((unsigned long)fpn & 0x3)
-	       && (fpn >= (unsigned long *)TASK_SIZE)) {
-		unsigned long lpp, fpp;
+	जबतक (!kstack_end(fpn) && !((अचिन्हित दीर्घ)fpn & 0x3)
+	       && (fpn >= (अचिन्हित दीर्घ *)TASK_SIZE)) अणु
+		अचिन्हित दीर्घ lpp, fpp;
 
 		lpp = fpn[LP_OFFSET];
 		fpp = fpn[FP_OFFSET];
-		if (!__kernel_text_address(lpp))
-			break;
-		else
-			lpp = ftrace_graph_ret_addr(tsk, &graph_idx, lpp, NULL);
+		अगर (!__kernel_text_address(lpp))
+			अवरोध;
+		अन्यथा
+			lpp = ftrace_graph_ret_addr(tsk, &graph_idx, lpp, शून्य);
 
-		if (savesched || !in_sched_functions(lpp)) {
-			if (skip) {
+		अगर (savesched || !in_sched_functions(lpp)) अणु
+			अगर (skip) अणु
 				skip--;
-			} else {
+			पूर्ण अन्यथा अणु
 				trace->entries[trace->nr_entries++] = lpp;
-				if (trace->nr_entries >= trace->max_entries)
-					break;
-			}
-		}
-		fpn = (unsigned long *)fpp;
-	}
-}
+				अगर (trace->nr_entries >= trace->max_entries)
+					अवरोध;
+			पूर्ण
+		पूर्ण
+		fpn = (अचिन्हित दीर्घ *)fpp;
+	पूर्ण
+पूर्ण
 EXPORT_SYMBOL_GPL(save_stack_trace_tsk);

@@ -1,74 +1,75 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * Generic NAND driver
+ * Generic न_अंकD driver
  *
  * Author: Vitaly Wool <vitalywool@gmail.com>
  */
 
-#include <linux/err.h>
-#include <linux/io.h>
-#include <linux/module.h>
-#include <linux/platform_device.h>
-#include <linux/slab.h>
-#include <linux/mtd/mtd.h>
-#include <linux/mtd/platnand.h>
+#समावेश <linux/err.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/module.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/mtd/mtd.h>
+#समावेश <linux/mtd/platnand.h>
 
-struct plat_nand_data {
-	struct nand_controller	controller;
-	struct nand_chip	chip;
-	void __iomem		*io_base;
-};
+काष्ठा plat_nand_data अणु
+	काष्ठा nand_controller	controller;
+	काष्ठा nand_chip	chip;
+	व्योम __iomem		*io_base;
+पूर्ण;
 
-static int plat_nand_attach_chip(struct nand_chip *chip)
-{
-	chip->ecc.engine_type = NAND_ECC_ENGINE_TYPE_SOFT;
+अटल पूर्णांक plat_nand_attach_chip(काष्ठा nand_chip *chip)
+अणु
+	chip->ecc.engine_type = न_अंकD_ECC_ENGINE_TYPE_SOFT;
 
-	if (chip->ecc.algo == NAND_ECC_ALGO_UNKNOWN)
-		chip->ecc.algo = NAND_ECC_ALGO_HAMMING;
+	अगर (chip->ecc.algo == न_अंकD_ECC_ALGO_UNKNOWN)
+		chip->ecc.algo = न_अंकD_ECC_ALGO_HAMMING;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct nand_controller_ops plat_nand_ops = {
+अटल स्थिर काष्ठा nand_controller_ops plat_nand_ops = अणु
 	.attach_chip = plat_nand_attach_chip,
-};
+पूर्ण;
 
 /*
- * Probe for the NAND device.
+ * Probe क्रम the न_अंकD device.
  */
-static int plat_nand_probe(struct platform_device *pdev)
-{
-	struct platform_nand_data *pdata = dev_get_platdata(&pdev->dev);
-	struct plat_nand_data *data;
-	struct mtd_info *mtd;
-	struct resource *res;
-	const char **part_types;
-	int err = 0;
+अटल पूर्णांक plat_nand_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा platक्रमm_nand_data *pdata = dev_get_platdata(&pdev->dev);
+	काष्ठा plat_nand_data *data;
+	काष्ठा mtd_info *mtd;
+	काष्ठा resource *res;
+	स्थिर अक्षर **part_types;
+	पूर्णांक err = 0;
 
-	if (!pdata) {
+	अगर (!pdata) अणु
 		dev_err(&pdev->dev, "platform_nand_data is missing\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (pdata->chip.nr_chips < 1) {
+	अगर (pdata->chip.nr_chips < 1) अणु
 		dev_err(&pdev->dev, "invalid number of chips specified\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	/* Allocate memory for the device structure (and zero it) */
-	data = devm_kzalloc(&pdev->dev, sizeof(struct plat_nand_data),
+	/* Allocate memory क्रम the device काष्ठाure (and zero it) */
+	data = devm_kzalloc(&pdev->dev, माप(काष्ठा plat_nand_data),
 			    GFP_KERNEL);
-	if (!data)
-		return -ENOMEM;
+	अगर (!data)
+		वापस -ENOMEM;
 
 	data->controller.ops = &plat_nand_ops;
 	nand_controller_init(&data->controller);
 	data->chip.controller = &data->controller;
 
-	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
 	data->io_base = devm_ioremap_resource(&pdev->dev, res);
-	if (IS_ERR(data->io_base))
-		return PTR_ERR(data->io_base);
+	अगर (IS_ERR(data->io_base))
+		वापस PTR_ERR(data->io_base);
 
 	nand_set_flash_node(&data->chip, pdev->dev.of_node);
 	mtd = nand_to_mtd(&data->chip);
@@ -77,79 +78,79 @@ static int plat_nand_probe(struct platform_device *pdev)
 	data->chip.legacy.IO_ADDR_R = data->io_base;
 	data->chip.legacy.IO_ADDR_W = data->io_base;
 	data->chip.legacy.cmd_ctrl = pdata->ctrl.cmd_ctrl;
-	data->chip.legacy.dev_ready = pdata->ctrl.dev_ready;
+	data->chip.legacy.dev_पढ़ोy = pdata->ctrl.dev_पढ़ोy;
 	data->chip.legacy.select_chip = pdata->ctrl.select_chip;
-	data->chip.legacy.write_buf = pdata->ctrl.write_buf;
-	data->chip.legacy.read_buf = pdata->ctrl.read_buf;
+	data->chip.legacy.ग_लिखो_buf = pdata->ctrl.ग_लिखो_buf;
+	data->chip.legacy.पढ़ो_buf = pdata->ctrl.पढ़ो_buf;
 	data->chip.legacy.chip_delay = pdata->chip.chip_delay;
 	data->chip.options |= pdata->chip.options;
 	data->chip.bbt_options |= pdata->chip.bbt_options;
 
-	platform_set_drvdata(pdev, data);
+	platक्रमm_set_drvdata(pdev, data);
 
-	/* Handle any platform specific setup */
-	if (pdata->ctrl.probe) {
+	/* Handle any platक्रमm specअगरic setup */
+	अगर (pdata->ctrl.probe) अणु
 		err = pdata->ctrl.probe(pdev);
-		if (err)
-			goto out;
-	}
+		अगर (err)
+			जाओ out;
+	पूर्ण
 
 	/* Scan to find existence of the device */
 	err = nand_scan(&data->chip, pdata->chip.nr_chips);
-	if (err)
-		goto out;
+	अगर (err)
+		जाओ out;
 
 	part_types = pdata->chip.part_probe_types;
 
-	err = mtd_device_parse_register(mtd, part_types, NULL,
+	err = mtd_device_parse_रेजिस्टर(mtd, part_types, शून्य,
 					pdata->chip.partitions,
 					pdata->chip.nr_partitions);
 
-	if (!err)
-		return err;
+	अगर (!err)
+		वापस err;
 
 	nand_cleanup(&data->chip);
 out:
-	if (pdata->ctrl.remove)
-		pdata->ctrl.remove(pdev);
-	return err;
-}
+	अगर (pdata->ctrl.हटाओ)
+		pdata->ctrl.हटाओ(pdev);
+	वापस err;
+पूर्ण
 
 /*
- * Remove a NAND device.
+ * Remove a न_अंकD device.
  */
-static int plat_nand_remove(struct platform_device *pdev)
-{
-	struct plat_nand_data *data = platform_get_drvdata(pdev);
-	struct platform_nand_data *pdata = dev_get_platdata(&pdev->dev);
-	struct nand_chip *chip = &data->chip;
-	int ret;
+अटल पूर्णांक plat_nand_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा plat_nand_data *data = platक्रमm_get_drvdata(pdev);
+	काष्ठा platक्रमm_nand_data *pdata = dev_get_platdata(&pdev->dev);
+	काष्ठा nand_chip *chip = &data->chip;
+	पूर्णांक ret;
 
-	ret = mtd_device_unregister(nand_to_mtd(chip));
+	ret = mtd_device_unरेजिस्टर(nand_to_mtd(chip));
 	WARN_ON(ret);
 	nand_cleanup(chip);
-	if (pdata->ctrl.remove)
-		pdata->ctrl.remove(pdev);
+	अगर (pdata->ctrl.हटाओ)
+		pdata->ctrl.हटाओ(pdev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct of_device_id plat_nand_match[] = {
-	{ .compatible = "gen_nand" },
-	{},
-};
+अटल स्थिर काष्ठा of_device_id plat_nand_match[] = अणु
+	अणु .compatible = "gen_nand" पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, plat_nand_match);
 
-static struct platform_driver plat_nand_driver = {
+अटल काष्ठा platक्रमm_driver plat_nand_driver = अणु
 	.probe	= plat_nand_probe,
-	.remove	= plat_nand_remove,
-	.driver	= {
+	.हटाओ	= plat_nand_हटाओ,
+	.driver	= अणु
 		.name		= "gen_nand",
 		.of_match_table = plat_nand_match,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-module_platform_driver(plat_nand_driver);
+module_platक्रमm_driver(plat_nand_driver);
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Vitaly Wool");

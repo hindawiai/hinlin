@@ -1,11 +1,12 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef LINUX_SPI_MC33880_H
-#define LINUX_SPI_MC33880_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित LINUX_SPI_MC33880_H
+#घोषणा LINUX_SPI_MC33880_H
 
-struct mc33880_platform_data {
-	/* number assigned to the first GPIO */
-	unsigned	base;
-};
+काष्ठा mc33880_platक्रमm_data अणु
+	/* number asचिन्हित to the first GPIO */
+	अचिन्हित	base;
+पूर्ण;
 
-#endif
+#पूर्ण_अगर
 

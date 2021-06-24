@@ -1,21 +1,22 @@
-// SPDX-License-Identifier: (LGPL-2.1 OR BSD-2-Clause)
-#undef _GNU_SOURCE
-#include <string.h>
-#include <stdio.h>
-#include "str_error.h"
+<शैली गुरु>
+// SPDX-License-Identअगरier: (LGPL-2.1 OR BSD-2-Clause)
+#अघोषित _GNU_SOURCE
+#समावेश <माला.स>
+#समावेश <मानकपन.स>
+#समावेश "str_error.h"
 
-/* make sure libbpf doesn't use kernel-only integer typedefs */
-#pragma GCC poison u8 u16 u32 u64 s8 s16 s32 s64
+/* make sure libbpf करोesn't use kernel-only पूर्णांकeger प्रकारs */
+#आशय GCC poison u8 u16 u32 u64 s8 s16 s32 s64
 
 /*
- * Wrapper to allow for building in non-GNU systems such as Alpine Linux's musl
- * libc, while checking strerror_r() return to avoid having to check this in
+ * Wrapper to allow क्रम building in non-GNU प्रणालीs such as Alpine Linux's musl
+ * libc, जबतक checking म_त्रुटि_r() वापस to aव्योम having to check this in
  * all places calling it.
  */
-char *libbpf_strerror_r(int err, char *dst, int len)
-{
-	int ret = strerror_r(err < 0 ? -err : err, dst, len);
-	if (ret)
-		snprintf(dst, len, "ERROR: strerror_r(%d)=%d", err, ret);
-	return dst;
-}
+अक्षर *libbpf_म_त्रुटि_r(पूर्णांक err, अक्षर *dst, पूर्णांक len)
+अणु
+	पूर्णांक ret = म_त्रुटि_r(err < 0 ? -err : err, dst, len);
+	अगर (ret)
+		snम_लिखो(dst, len, "ERROR: strerror_r(%d)=%d", err, ret);
+	वापस dst;
+पूर्ण

@@ -1,230 +1,231 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * Packet matching code for ARP packets.
+ * Packet matching code क्रम ARP packets.
  *
- * Based heavily, if not almost entirely, upon ip_tables.c framework.
+ * Based heavily, अगर not almost entirely, upon ip_tables.c framework.
  *
- * Some ARP specific bits are:
+ * Some ARP specअगरic bits are:
  *
  * Copyright (C) 2002 David S. Miller (davem@redhat.com)
  * Copyright (C) 2006-2009 Patrick McHardy <kaber@trash.net>
  *
  */
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
-#include <linux/kernel.h>
-#include <linux/skbuff.h>
-#include <linux/netdevice.h>
-#include <linux/capability.h>
-#include <linux/if_arp.h>
-#include <linux/kmod.h>
-#include <linux/vmalloc.h>
-#include <linux/proc_fs.h>
-#include <linux/module.h>
-#include <linux/init.h>
-#include <linux/mutex.h>
-#include <linux/err.h>
-#include <net/compat.h>
-#include <net/sock.h>
-#include <linux/uaccess.h>
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#समावेश <linux/kernel.h>
+#समावेश <linux/skbuff.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/capability.h>
+#समावेश <linux/अगर_arp.h>
+#समावेश <linux/kmod.h>
+#समावेश <linux/vदो_स्मृति.h>
+#समावेश <linux/proc_fs.h>
+#समावेश <linux/module.h>
+#समावेश <linux/init.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/err.h>
+#समावेश <net/compat.h>
+#समावेश <net/sock.h>
+#समावेश <linux/uaccess.h>
 
-#include <linux/netfilter/x_tables.h>
-#include <linux/netfilter_arp/arp_tables.h>
-#include "../../netfilter/xt_repldata.h"
+#समावेश <linux/netfilter/x_tables.h>
+#समावेश <linux/netfilter_arp/arp_tables.h>
+#समावेश "../../netfilter/xt_repldata.h"
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("David S. Miller <davem@redhat.com>");
 MODULE_DESCRIPTION("arptables core");
 
-void *arpt_alloc_initial_table(const struct xt_table *info)
-{
-	return xt_alloc_initial_table(arpt, ARPT);
-}
+व्योम *arpt_alloc_initial_table(स्थिर काष्ठा xt_table *info)
+अणु
+	वापस xt_alloc_initial_table(arpt, ARPT);
+पूर्ण
 EXPORT_SYMBOL_GPL(arpt_alloc_initial_table);
 
-static inline int arp_devaddr_compare(const struct arpt_devaddr_info *ap,
-				      const char *hdr_addr, int len)
-{
-	int i, ret;
+अटल अंतरभूत पूर्णांक arp_devaddr_compare(स्थिर काष्ठा arpt_devaddr_info *ap,
+				      स्थिर अक्षर *hdr_addr, पूर्णांक len)
+अणु
+	पूर्णांक i, ret;
 
-	if (len > ARPT_DEV_ADDR_LEN_MAX)
+	अगर (len > ARPT_DEV_ADDR_LEN_MAX)
 		len = ARPT_DEV_ADDR_LEN_MAX;
 
 	ret = 0;
-	for (i = 0; i < len; i++)
+	क्रम (i = 0; i < len; i++)
 		ret |= (hdr_addr[i] ^ ap->addr[i]) & ap->mask[i];
 
-	return ret != 0;
-}
+	वापस ret != 0;
+पूर्ण
 
 /*
- * Unfortunately, _b and _mask are not aligned to an int (or long int)
- * Some arches dont care, unrolling the loop is a win on them.
+ * Unक्रमtunately, _b and _mask are not aligned to an पूर्णांक (or दीर्घ पूर्णांक)
+ * Some arches करोnt care, unrolling the loop is a win on them.
  * For other arches, we only have a 16bit alignement.
  */
-static unsigned long ifname_compare(const char *_a, const char *_b, const char *_mask)
-{
-#ifdef CONFIG_HAVE_EFFICIENT_UNALIGNED_ACCESS
-	unsigned long ret = ifname_compare_aligned(_a, _b, _mask);
-#else
-	unsigned long ret = 0;
-	const u16 *a = (const u16 *)_a;
-	const u16 *b = (const u16 *)_b;
-	const u16 *mask = (const u16 *)_mask;
-	int i;
+अटल अचिन्हित दीर्घ अगरname_compare(स्थिर अक्षर *_a, स्थिर अक्षर *_b, स्थिर अक्षर *_mask)
+अणु
+#अगर_घोषित CONFIG_HAVE_EFFICIENT_UNALIGNED_ACCESS
+	अचिन्हित दीर्घ ret = अगरname_compare_aligned(_a, _b, _mask);
+#अन्यथा
+	अचिन्हित दीर्घ ret = 0;
+	स्थिर u16 *a = (स्थिर u16 *)_a;
+	स्थिर u16 *b = (स्थिर u16 *)_b;
+	स्थिर u16 *mask = (स्थिर u16 *)_mask;
+	पूर्णांक i;
 
-	for (i = 0; i < IFNAMSIZ/sizeof(u16); i++)
+	क्रम (i = 0; i < IFNAMSIZ/माप(u16); i++)
 		ret |= (a[i] ^ b[i]) & mask[i];
-#endif
-	return ret;
-}
+#पूर्ण_अगर
+	वापस ret;
+पूर्ण
 
 /* Returns whether packet matches rule or not. */
-static inline int arp_packet_match(const struct arphdr *arphdr,
-				   struct net_device *dev,
-				   const char *indev,
-				   const char *outdev,
-				   const struct arpt_arp *arpinfo)
-{
-	const char *arpptr = (char *)(arphdr + 1);
-	const char *src_devaddr, *tgt_devaddr;
+अटल अंतरभूत पूर्णांक arp_packet_match(स्थिर काष्ठा arphdr *arphdr,
+				   काष्ठा net_device *dev,
+				   स्थिर अक्षर *indev,
+				   स्थिर अक्षर *outdev,
+				   स्थिर काष्ठा arpt_arp *arpinfo)
+अणु
+	स्थिर अक्षर *arpptr = (अक्षर *)(arphdr + 1);
+	स्थिर अक्षर *src_devaddr, *tgt_devaddr;
 	__be32 src_ipaddr, tgt_ipaddr;
-	long ret;
+	दीर्घ ret;
 
-	if (NF_INVF(arpinfo, ARPT_INV_ARPOP,
+	अगर (NF_INVF(arpinfo, ARPT_INV_ARPOP,
 		    (arphdr->ar_op & arpinfo->arpop_mask) != arpinfo->arpop))
-		return 0;
+		वापस 0;
 
-	if (NF_INVF(arpinfo, ARPT_INV_ARPHRD,
+	अगर (NF_INVF(arpinfo, ARPT_INV_ARPHRD,
 		    (arphdr->ar_hrd & arpinfo->arhrd_mask) != arpinfo->arhrd))
-		return 0;
+		वापस 0;
 
-	if (NF_INVF(arpinfo, ARPT_INV_ARPPRO,
+	अगर (NF_INVF(arpinfo, ARPT_INV_ARPPRO,
 		    (arphdr->ar_pro & arpinfo->arpro_mask) != arpinfo->arpro))
-		return 0;
+		वापस 0;
 
-	if (NF_INVF(arpinfo, ARPT_INV_ARPHLN,
+	अगर (NF_INVF(arpinfo, ARPT_INV_ARPHLN,
 		    (arphdr->ar_hln & arpinfo->arhln_mask) != arpinfo->arhln))
-		return 0;
+		वापस 0;
 
 	src_devaddr = arpptr;
 	arpptr += dev->addr_len;
-	memcpy(&src_ipaddr, arpptr, sizeof(u32));
-	arpptr += sizeof(u32);
+	स_नकल(&src_ipaddr, arpptr, माप(u32));
+	arpptr += माप(u32);
 	tgt_devaddr = arpptr;
 	arpptr += dev->addr_len;
-	memcpy(&tgt_ipaddr, arpptr, sizeof(u32));
+	स_नकल(&tgt_ipaddr, arpptr, माप(u32));
 
-	if (NF_INVF(arpinfo, ARPT_INV_SRCDEVADDR,
+	अगर (NF_INVF(arpinfo, ARPT_INV_SRCDEVADDR,
 		    arp_devaddr_compare(&arpinfo->src_devaddr, src_devaddr,
 					dev->addr_len)) ||
 	    NF_INVF(arpinfo, ARPT_INV_TGTDEVADDR,
 		    arp_devaddr_compare(&arpinfo->tgt_devaddr, tgt_devaddr,
 					dev->addr_len)))
-		return 0;
+		वापस 0;
 
-	if (NF_INVF(arpinfo, ARPT_INV_SRCIP,
+	अगर (NF_INVF(arpinfo, ARPT_INV_SRCIP,
 		    (src_ipaddr & arpinfo->smsk.s_addr) != arpinfo->src.s_addr) ||
 	    NF_INVF(arpinfo, ARPT_INV_TGTIP,
-		    (tgt_ipaddr & arpinfo->tmsk.s_addr) != arpinfo->tgt.s_addr))
-		return 0;
+		    (tgt_ipaddr & arpinfo->पंचांगsk.s_addr) != arpinfo->tgt.s_addr))
+		वापस 0;
 
-	/* Look for ifname matches.  */
-	ret = ifname_compare(indev, arpinfo->iniface, arpinfo->iniface_mask);
+	/* Look क्रम अगरname matches.  */
+	ret = अगरname_compare(indev, arpinfo->inअगरace, arpinfo->inअगरace_mask);
 
-	if (NF_INVF(arpinfo, ARPT_INV_VIA_IN, ret != 0))
-		return 0;
+	अगर (NF_INVF(arpinfo, ARPT_INV_VIA_IN, ret != 0))
+		वापस 0;
 
-	ret = ifname_compare(outdev, arpinfo->outiface, arpinfo->outiface_mask);
+	ret = अगरname_compare(outdev, arpinfo->outअगरace, arpinfo->outअगरace_mask);
 
-	if (NF_INVF(arpinfo, ARPT_INV_VIA_OUT, ret != 0))
-		return 0;
+	अगर (NF_INVF(arpinfo, ARPT_INV_VIA_OUT, ret != 0))
+		वापस 0;
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-static inline int arp_checkentry(const struct arpt_arp *arp)
-{
-	if (arp->flags & ~ARPT_F_MASK)
-		return 0;
-	if (arp->invflags & ~ARPT_INV_MASK)
-		return 0;
+अटल अंतरभूत पूर्णांक arp_checkentry(स्थिर काष्ठा arpt_arp *arp)
+अणु
+	अगर (arp->flags & ~ARPT_F_MASK)
+		वापस 0;
+	अगर (arp->invflags & ~ARPT_INV_MASK)
+		वापस 0;
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-static unsigned int
-arpt_error(struct sk_buff *skb, const struct xt_action_param *par)
-{
+अटल अचिन्हित पूर्णांक
+arpt_error(काष्ठा sk_buff *skb, स्थिर काष्ठा xt_action_param *par)
+अणु
 	net_err_ratelimited("arp_tables: error: '%s'\n",
-			    (const char *)par->targinfo);
+			    (स्थिर अक्षर *)par->targinfo);
 
-	return NF_DROP;
-}
+	वापस NF_DROP;
+पूर्ण
 
-static inline const struct xt_entry_target *
-arpt_get_target_c(const struct arpt_entry *e)
-{
-	return arpt_get_target((struct arpt_entry *)e);
-}
+अटल अंतरभूत स्थिर काष्ठा xt_entry_target *
+arpt_get_target_c(स्थिर काष्ठा arpt_entry *e)
+अणु
+	वापस arpt_get_target((काष्ठा arpt_entry *)e);
+पूर्ण
 
-static inline struct arpt_entry *
-get_entry(const void *base, unsigned int offset)
-{
-	return (struct arpt_entry *)(base + offset);
-}
+अटल अंतरभूत काष्ठा arpt_entry *
+get_entry(स्थिर व्योम *base, अचिन्हित पूर्णांक offset)
+अणु
+	वापस (काष्ठा arpt_entry *)(base + offset);
+पूर्ण
 
-static inline
-struct arpt_entry *arpt_next_entry(const struct arpt_entry *entry)
-{
-	return (void *)entry + entry->next_offset;
-}
+अटल अंतरभूत
+काष्ठा arpt_entry *arpt_next_entry(स्थिर काष्ठा arpt_entry *entry)
+अणु
+	वापस (व्योम *)entry + entry->next_offset;
+पूर्ण
 
-unsigned int arpt_do_table(struct sk_buff *skb,
-			   const struct nf_hook_state *state,
-			   struct xt_table *table)
-{
-	unsigned int hook = state->hook;
-	static const char nulldevname[IFNAMSIZ] __attribute__((aligned(sizeof(long))));
-	unsigned int verdict = NF_DROP;
-	const struct arphdr *arp;
-	struct arpt_entry *e, **jumpstack;
-	const char *indev, *outdev;
-	const void *table_base;
-	unsigned int cpu, stackidx = 0;
-	const struct xt_table_info *private;
-	struct xt_action_param acpar;
-	unsigned int addend;
+अचिन्हित पूर्णांक arpt_करो_table(काष्ठा sk_buff *skb,
+			   स्थिर काष्ठा nf_hook_state *state,
+			   काष्ठा xt_table *table)
+अणु
+	अचिन्हित पूर्णांक hook = state->hook;
+	अटल स्थिर अक्षर nulldevname[IFNAMSIZ] __attribute__((aligned(माप(दीर्घ))));
+	अचिन्हित पूर्णांक verdict = NF_DROP;
+	स्थिर काष्ठा arphdr *arp;
+	काष्ठा arpt_entry *e, **jumpstack;
+	स्थिर अक्षर *indev, *outdev;
+	स्थिर व्योम *table_base;
+	अचिन्हित पूर्णांक cpu, stackidx = 0;
+	स्थिर काष्ठा xt_table_info *निजी;
+	काष्ठा xt_action_param acpar;
+	अचिन्हित पूर्णांक addend;
 
-	if (!pskb_may_pull(skb, arp_hdr_len(skb->dev)))
-		return NF_DROP;
+	अगर (!pskb_may_pull(skb, arp_hdr_len(skb->dev)))
+		वापस NF_DROP;
 
 	indev = state->in ? state->in->name : nulldevname;
 	outdev = state->out ? state->out->name : nulldevname;
 
 	local_bh_disable();
-	addend = xt_write_recseq_begin();
-	private = READ_ONCE(table->private); /* Address dependency. */
+	addend = xt_ग_लिखो_recseq_begin();
+	निजी = READ_ONCE(table->निजी); /* Address dependency. */
 	cpu     = smp_processor_id();
-	table_base = private->entries;
-	jumpstack  = (struct arpt_entry **)private->jumpstack[cpu];
+	table_base = निजी->entries;
+	jumpstack  = (काष्ठा arpt_entry **)निजी->jumpstack[cpu];
 
-	/* No TEE support for arptables, so no need to switch to alternate
-	 * stack.  All targets that reenter must return absolute verdicts.
+	/* No TEE support क्रम arptables, so no need to चयन to alternate
+	 * stack.  All tarमाला_लो that reenter must वापस असलolute verdicts.
 	 */
-	e = get_entry(table_base, private->hook_entry[hook]);
+	e = get_entry(table_base, निजी->hook_entry[hook]);
 
 	acpar.state   = state;
 	acpar.hotdrop = false;
 
 	arp = arp_hdr(skb);
-	do {
-		const struct xt_entry_target *t;
-		struct xt_counters *counter;
+	करो अणु
+		स्थिर काष्ठा xt_entry_target *t;
+		काष्ठा xt_counters *counter;
 
-		if (!arp_packet_match(arp, skb->dev, indev, outdev, &e->arp)) {
+		अगर (!arp_packet_match(arp, skb->dev, indev, outdev, &e->arp)) अणु
 			e = arpt_next_entry(e);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
 		counter = xt_get_this_cpu_counter(&e->counters);
 		ADD_COUNTER(*counter, arp_hdr_len(skb->dev), 1);
@@ -232,162 +233,162 @@ unsigned int arpt_do_table(struct sk_buff *skb,
 		t = arpt_get_target_c(e);
 
 		/* Standard target? */
-		if (!t->u.kernel.target->target) {
-			int v;
+		अगर (!t->u.kernel.target->target) अणु
+			पूर्णांक v;
 
-			v = ((struct xt_standard_target *)t)->verdict;
-			if (v < 0) {
+			v = ((काष्ठा xt_standard_target *)t)->verdict;
+			अगर (v < 0) अणु
 				/* Pop from stack? */
-				if (v != XT_RETURN) {
-					verdict = (unsigned int)(-v) - 1;
-					break;
-				}
-				if (stackidx == 0) {
+				अगर (v != XT_RETURN) अणु
+					verdict = (अचिन्हित पूर्णांक)(-v) - 1;
+					अवरोध;
+				पूर्ण
+				अगर (stackidx == 0) अणु
 					e = get_entry(table_base,
-						      private->underflow[hook]);
-				} else {
+						      निजी->underflow[hook]);
+				पूर्ण अन्यथा अणु
 					e = jumpstack[--stackidx];
 					e = arpt_next_entry(e);
-				}
-				continue;
-			}
-			if (table_base + v
-			    != arpt_next_entry(e)) {
-				if (unlikely(stackidx >= private->stacksize)) {
+				पूर्ण
+				जारी;
+			पूर्ण
+			अगर (table_base + v
+			    != arpt_next_entry(e)) अणु
+				अगर (unlikely(stackidx >= निजी->stacksize)) अणु
 					verdict = NF_DROP;
-					break;
-				}
+					अवरोध;
+				पूर्ण
 				jumpstack[stackidx++] = e;
-			}
+			पूर्ण
 
 			e = get_entry(table_base, v);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
 		acpar.target   = t->u.kernel.target;
 		acpar.targinfo = t->data;
 		verdict = t->u.kernel.target->target(skb, &acpar);
 
-		if (verdict == XT_CONTINUE) {
+		अगर (verdict == XT_CONTINUE) अणु
 			/* Target might have changed stuff. */
 			arp = arp_hdr(skb);
 			e = arpt_next_entry(e);
-		} else {
+		पूर्ण अन्यथा अणु
 			/* Verdict */
-			break;
-		}
-	} while (!acpar.hotdrop);
-	xt_write_recseq_end(addend);
+			अवरोध;
+		पूर्ण
+	पूर्ण जबतक (!acpar.hotdrop);
+	xt_ग_लिखो_recseq_end(addend);
 	local_bh_enable();
 
-	if (acpar.hotdrop)
-		return NF_DROP;
-	else
-		return verdict;
-}
+	अगर (acpar.hotdrop)
+		वापस NF_DROP;
+	अन्यथा
+		वापस verdict;
+पूर्ण
 
 /* All zeroes == unconditional rule. */
-static inline bool unconditional(const struct arpt_entry *e)
-{
-	static const struct arpt_arp uncond;
+अटल अंतरभूत bool unconditional(स्थिर काष्ठा arpt_entry *e)
+अणु
+	अटल स्थिर काष्ठा arpt_arp uncond;
 
-	return e->target_offset == sizeof(struct arpt_entry) &&
-	       memcmp(&e->arp, &uncond, sizeof(uncond)) == 0;
-}
+	वापस e->target_offset == माप(काष्ठा arpt_entry) &&
+	       स_भेद(&e->arp, &uncond, माप(uncond)) == 0;
+पूर्ण
 
-/* Figures out from what hook each rule can be called: returns 0 if
- * there are loops.  Puts hook bitmask in comefrom.
+/* Figures out from what hook each rule can be called: वापसs 0 अगर
+ * there are loops.  Puts hook biपंचांगask in comefrom.
  */
-static int mark_source_chains(const struct xt_table_info *newinfo,
-			      unsigned int valid_hooks, void *entry0,
-			      unsigned int *offsets)
-{
-	unsigned int hook;
+अटल पूर्णांक mark_source_chains(स्थिर काष्ठा xt_table_info *newinfo,
+			      अचिन्हित पूर्णांक valid_hooks, व्योम *entry0,
+			      अचिन्हित पूर्णांक *offsets)
+अणु
+	अचिन्हित पूर्णांक hook;
 
 	/* No recursion; use packet counter to save back ptrs (reset
-	 * to 0 as we leave), and comefrom to save source hook bitmask.
+	 * to 0 as we leave), and comefrom to save source hook biपंचांगask.
 	 */
-	for (hook = 0; hook < NF_ARP_NUMHOOKS; hook++) {
-		unsigned int pos = newinfo->hook_entry[hook];
-		struct arpt_entry *e = entry0 + pos;
+	क्रम (hook = 0; hook < NF_ARP_NUMHOOKS; hook++) अणु
+		अचिन्हित पूर्णांक pos = newinfo->hook_entry[hook];
+		काष्ठा arpt_entry *e = entry0 + pos;
 
-		if (!(valid_hooks & (1 << hook)))
-			continue;
+		अगर (!(valid_hooks & (1 << hook)))
+			जारी;
 
-		/* Set initial back pointer. */
+		/* Set initial back poपूर्णांकer. */
 		e->counters.pcnt = pos;
 
-		for (;;) {
-			const struct xt_standard_target *t
-				= (void *)arpt_get_target_c(e);
-			int visited = e->comefrom & (1 << hook);
+		क्रम (;;) अणु
+			स्थिर काष्ठा xt_standard_target *t
+				= (व्योम *)arpt_get_target_c(e);
+			पूर्णांक visited = e->comefrom & (1 << hook);
 
-			if (e->comefrom & (1 << NF_ARP_NUMHOOKS))
-				return 0;
+			अगर (e->comefrom & (1 << NF_ARP_NUMHOOKS))
+				वापस 0;
 
 			e->comefrom
 				|= ((1 << hook) | (1 << NF_ARP_NUMHOOKS));
 
-			/* Unconditional return/END. */
-			if ((unconditional(e) &&
-			     (strcmp(t->target.u.user.name,
+			/* Unconditional वापस/END. */
+			अगर ((unconditional(e) &&
+			     (म_भेद(t->target.u.user.name,
 				     XT_STANDARD_TARGET) == 0) &&
-			     t->verdict < 0) || visited) {
-				unsigned int oldpos, size;
+			     t->verdict < 0) || visited) अणु
+				अचिन्हित पूर्णांक oldpos, size;
 
 				/* Return: backtrack through the last
 				 * big jump.
 				 */
-				do {
+				करो अणु
 					e->comefrom ^= (1<<NF_ARP_NUMHOOKS);
 					oldpos = pos;
 					pos = e->counters.pcnt;
 					e->counters.pcnt = 0;
 
 					/* We're at the start. */
-					if (pos == oldpos)
-						goto next;
+					अगर (pos == oldpos)
+						जाओ next;
 
 					e = entry0 + pos;
-				} while (oldpos == pos + e->next_offset);
+				पूर्ण जबतक (oldpos == pos + e->next_offset);
 
-				/* Move along one */
+				/* Move aदीर्घ one */
 				size = e->next_offset;
 				e = entry0 + pos + size;
-				if (pos + size >= newinfo->size)
-					return 0;
+				अगर (pos + size >= newinfo->size)
+					वापस 0;
 				e->counters.pcnt = pos;
 				pos += size;
-			} else {
-				int newpos = t->verdict;
+			पूर्ण अन्यथा अणु
+				पूर्णांक newpos = t->verdict;
 
-				if (strcmp(t->target.u.user.name,
+				अगर (म_भेद(t->target.u.user.name,
 					   XT_STANDARD_TARGET) == 0 &&
-				    newpos >= 0) {
+				    newpos >= 0) अणु
 					/* This a jump; chase it. */
-					if (!xt_find_jump_offset(offsets, newpos,
+					अगर (!xt_find_jump_offset(offsets, newpos,
 								 newinfo->number))
-						return 0;
-				} else {
+						वापस 0;
+				पूर्ण अन्यथा अणु
 					/* ... this is a fallthru */
 					newpos = pos + e->next_offset;
-					if (newpos >= newinfo->size)
-						return 0;
-				}
+					अगर (newpos >= newinfo->size)
+						वापस 0;
+				पूर्ण
 				e = entry0 + newpos;
 				e->counters.pcnt = pos;
 				pos = newpos;
-			}
-		}
+			पूर्ण
+		पूर्ण
 next:		;
-	}
-	return 1;
-}
+	पूर्ण
+	वापस 1;
+पूर्ण
 
-static int check_target(struct arpt_entry *e, struct net *net, const char *name)
-{
-	struct xt_entry_target *t = arpt_get_target(e);
-	struct xt_tgchk_param par = {
+अटल पूर्णांक check_target(काष्ठा arpt_entry *e, काष्ठा net *net, स्थिर अक्षर *name)
+अणु
+	काष्ठा xt_entry_target *t = arpt_get_target(e);
+	काष्ठा xt_tgchk_param par = अणु
 		.net       = net,
 		.table     = name,
 		.entryinfo = e,
@@ -395,528 +396,528 @@ static int check_target(struct arpt_entry *e, struct net *net, const char *name)
 		.targinfo  = t->data,
 		.hook_mask = e->comefrom,
 		.family    = NFPROTO_ARP,
-	};
+	पूर्ण;
 
-	return xt_check_target(&par, t->u.target_size - sizeof(*t), 0, false);
-}
+	वापस xt_check_target(&par, t->u.target_size - माप(*t), 0, false);
+पूर्ण
 
-static int
-find_check_entry(struct arpt_entry *e, struct net *net, const char *name,
-		 unsigned int size,
-		 struct xt_percpu_counter_alloc_state *alloc_state)
-{
-	struct xt_entry_target *t;
-	struct xt_target *target;
-	int ret;
+अटल पूर्णांक
+find_check_entry(काष्ठा arpt_entry *e, काष्ठा net *net, स्थिर अक्षर *name,
+		 अचिन्हित पूर्णांक size,
+		 काष्ठा xt_percpu_counter_alloc_state *alloc_state)
+अणु
+	काष्ठा xt_entry_target *t;
+	काष्ठा xt_target *target;
+	पूर्णांक ret;
 
-	if (!xt_percpu_counter_alloc(alloc_state, &e->counters))
-		return -ENOMEM;
+	अगर (!xt_percpu_counter_alloc(alloc_state, &e->counters))
+		वापस -ENOMEM;
 
 	t = arpt_get_target(e);
 	target = xt_request_find_target(NFPROTO_ARP, t->u.user.name,
 					t->u.user.revision);
-	if (IS_ERR(target)) {
+	अगर (IS_ERR(target)) अणु
 		ret = PTR_ERR(target);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 	t->u.kernel.target = target;
 
 	ret = check_target(e, net, name);
-	if (ret)
-		goto err;
-	return 0;
+	अगर (ret)
+		जाओ err;
+	वापस 0;
 err:
 	module_put(t->u.kernel.target->me);
 out:
-	xt_percpu_counter_free(&e->counters);
+	xt_percpu_counter_मुक्त(&e->counters);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static bool check_underflow(const struct arpt_entry *e)
-{
-	const struct xt_entry_target *t;
-	unsigned int verdict;
+अटल bool check_underflow(स्थिर काष्ठा arpt_entry *e)
+अणु
+	स्थिर काष्ठा xt_entry_target *t;
+	अचिन्हित पूर्णांक verdict;
 
-	if (!unconditional(e))
-		return false;
+	अगर (!unconditional(e))
+		वापस false;
 	t = arpt_get_target_c(e);
-	if (strcmp(t->u.user.name, XT_STANDARD_TARGET) != 0)
-		return false;
-	verdict = ((struct xt_standard_target *)t)->verdict;
+	अगर (म_भेद(t->u.user.name, XT_STANDARD_TARGET) != 0)
+		वापस false;
+	verdict = ((काष्ठा xt_standard_target *)t)->verdict;
 	verdict = -verdict - 1;
-	return verdict == NF_DROP || verdict == NF_ACCEPT;
-}
+	वापस verdict == NF_DROP || verdict == NF_ACCEPT;
+पूर्ण
 
-static inline int check_entry_size_and_hooks(struct arpt_entry *e,
-					     struct xt_table_info *newinfo,
-					     const unsigned char *base,
-					     const unsigned char *limit,
-					     const unsigned int *hook_entries,
-					     const unsigned int *underflows,
-					     unsigned int valid_hooks)
-{
-	unsigned int h;
-	int err;
+अटल अंतरभूत पूर्णांक check_entry_size_and_hooks(काष्ठा arpt_entry *e,
+					     काष्ठा xt_table_info *newinfo,
+					     स्थिर अचिन्हित अक्षर *base,
+					     स्थिर अचिन्हित अक्षर *limit,
+					     स्थिर अचिन्हित पूर्णांक *hook_entries,
+					     स्थिर अचिन्हित पूर्णांक *underflows,
+					     अचिन्हित पूर्णांक valid_hooks)
+अणु
+	अचिन्हित पूर्णांक h;
+	पूर्णांक err;
 
-	if ((unsigned long)e % __alignof__(struct arpt_entry) != 0 ||
-	    (unsigned char *)e + sizeof(struct arpt_entry) >= limit ||
-	    (unsigned char *)e + e->next_offset > limit)
-		return -EINVAL;
+	अगर ((अचिन्हित दीर्घ)e % __alignof__(काष्ठा arpt_entry) != 0 ||
+	    (अचिन्हित अक्षर *)e + माप(काष्ठा arpt_entry) >= limit ||
+	    (अचिन्हित अक्षर *)e + e->next_offset > limit)
+		वापस -EINVAL;
 
-	if (e->next_offset
-	    < sizeof(struct arpt_entry) + sizeof(struct xt_entry_target))
-		return -EINVAL;
+	अगर (e->next_offset
+	    < माप(काष्ठा arpt_entry) + माप(काष्ठा xt_entry_target))
+		वापस -EINVAL;
 
-	if (!arp_checkentry(&e->arp))
-		return -EINVAL;
+	अगर (!arp_checkentry(&e->arp))
+		वापस -EINVAL;
 
 	err = xt_check_entry_offsets(e, e->elems, e->target_offset,
 				     e->next_offset);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	/* Check hooks & underflows */
-	for (h = 0; h < NF_ARP_NUMHOOKS; h++) {
-		if (!(valid_hooks & (1 << h)))
-			continue;
-		if ((unsigned char *)e - base == hook_entries[h])
+	क्रम (h = 0; h < NF_ARP_NUMHOOKS; h++) अणु
+		अगर (!(valid_hooks & (1 << h)))
+			जारी;
+		अगर ((अचिन्हित अक्षर *)e - base == hook_entries[h])
 			newinfo->hook_entry[h] = hook_entries[h];
-		if ((unsigned char *)e - base == underflows[h]) {
-			if (!check_underflow(e))
-				return -EINVAL;
+		अगर ((अचिन्हित अक्षर *)e - base == underflows[h]) अणु
+			अगर (!check_underflow(e))
+				वापस -EINVAL;
 
 			newinfo->underflow[h] = underflows[h];
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	/* Clear counters and comefrom */
-	e->counters = ((struct xt_counters) { 0, 0 });
+	e->counters = ((काष्ठा xt_counters) अणु 0, 0 पूर्ण);
 	e->comefrom = 0;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void cleanup_entry(struct arpt_entry *e, struct net *net)
-{
-	struct xt_tgdtor_param par;
-	struct xt_entry_target *t;
+अटल व्योम cleanup_entry(काष्ठा arpt_entry *e, काष्ठा net *net)
+अणु
+	काष्ठा xt_tgdtor_param par;
+	काष्ठा xt_entry_target *t;
 
 	t = arpt_get_target(e);
 	par.net      = net;
 	par.target   = t->u.kernel.target;
 	par.targinfo = t->data;
 	par.family   = NFPROTO_ARP;
-	if (par.target->destroy != NULL)
+	अगर (par.target->destroy != शून्य)
 		par.target->destroy(&par);
 	module_put(par.target->me);
-	xt_percpu_counter_free(&e->counters);
-}
+	xt_percpu_counter_मुक्त(&e->counters);
+पूर्ण
 
 /* Checks and translates the user-supplied table segment (held in
  * newinfo).
  */
-static int translate_table(struct net *net,
-			   struct xt_table_info *newinfo,
-			   void *entry0,
-			   const struct arpt_replace *repl)
-{
-	struct xt_percpu_counter_alloc_state alloc_state = { 0 };
-	struct arpt_entry *iter;
-	unsigned int *offsets;
-	unsigned int i;
-	int ret = 0;
+अटल पूर्णांक translate_table(काष्ठा net *net,
+			   काष्ठा xt_table_info *newinfo,
+			   व्योम *entry0,
+			   स्थिर काष्ठा arpt_replace *repl)
+अणु
+	काष्ठा xt_percpu_counter_alloc_state alloc_state = अणु 0 पूर्ण;
+	काष्ठा arpt_entry *iter;
+	अचिन्हित पूर्णांक *offsets;
+	अचिन्हित पूर्णांक i;
+	पूर्णांक ret = 0;
 
 	newinfo->size = repl->size;
 	newinfo->number = repl->num_entries;
 
 	/* Init all hooks to impossible value. */
-	for (i = 0; i < NF_ARP_NUMHOOKS; i++) {
+	क्रम (i = 0; i < NF_ARP_NUMHOOKS; i++) अणु
 		newinfo->hook_entry[i] = 0xFFFFFFFF;
 		newinfo->underflow[i] = 0xFFFFFFFF;
-	}
+	पूर्ण
 
 	offsets = xt_alloc_entry_offsets(newinfo->number);
-	if (!offsets)
-		return -ENOMEM;
+	अगर (!offsets)
+		वापस -ENOMEM;
 	i = 0;
 
 	/* Walk through entries, checking offsets. */
-	xt_entry_foreach(iter, entry0, newinfo->size) {
+	xt_entry_क्रमeach(iter, entry0, newinfo->size) अणु
 		ret = check_entry_size_and_hooks(iter, newinfo, entry0,
 						 entry0 + repl->size,
 						 repl->hook_entry,
 						 repl->underflow,
 						 repl->valid_hooks);
-		if (ret != 0)
-			goto out_free;
-		if (i < repl->num_entries)
-			offsets[i] = (void *)iter - entry0;
+		अगर (ret != 0)
+			जाओ out_मुक्त;
+		अगर (i < repl->num_entries)
+			offsets[i] = (व्योम *)iter - entry0;
 		++i;
-		if (strcmp(arpt_get_target(iter)->u.user.name,
+		अगर (म_भेद(arpt_get_target(iter)->u.user.name,
 		    XT_ERROR_TARGET) == 0)
 			++newinfo->stacksize;
-	}
+	पूर्ण
 
 	ret = -EINVAL;
-	if (i != repl->num_entries)
-		goto out_free;
+	अगर (i != repl->num_entries)
+		जाओ out_मुक्त;
 
 	ret = xt_check_table_hooks(newinfo, repl->valid_hooks);
-	if (ret)
-		goto out_free;
+	अगर (ret)
+		जाओ out_मुक्त;
 
-	if (!mark_source_chains(newinfo, repl->valid_hooks, entry0, offsets)) {
+	अगर (!mark_source_chains(newinfo, repl->valid_hooks, entry0, offsets)) अणु
 		ret = -ELOOP;
-		goto out_free;
-	}
-	kvfree(offsets);
+		जाओ out_मुक्त;
+	पूर्ण
+	kvमुक्त(offsets);
 
 	/* Finally, each sanity check must pass */
 	i = 0;
-	xt_entry_foreach(iter, entry0, newinfo->size) {
+	xt_entry_क्रमeach(iter, entry0, newinfo->size) अणु
 		ret = find_check_entry(iter, net, repl->name, repl->size,
 				       &alloc_state);
-		if (ret != 0)
-			break;
+		अगर (ret != 0)
+			अवरोध;
 		++i;
-	}
+	पूर्ण
 
-	if (ret != 0) {
-		xt_entry_foreach(iter, entry0, newinfo->size) {
-			if (i-- == 0)
-				break;
+	अगर (ret != 0) अणु
+		xt_entry_क्रमeach(iter, entry0, newinfo->size) अणु
+			अगर (i-- == 0)
+				अवरोध;
 			cleanup_entry(iter, net);
-		}
-		return ret;
-	}
+		पूर्ण
+		वापस ret;
+	पूर्ण
 
-	return ret;
- out_free:
-	kvfree(offsets);
-	return ret;
-}
+	वापस ret;
+ out_मुक्त:
+	kvमुक्त(offsets);
+	वापस ret;
+पूर्ण
 
-static void get_counters(const struct xt_table_info *t,
-			 struct xt_counters counters[])
-{
-	struct arpt_entry *iter;
-	unsigned int cpu;
-	unsigned int i;
+अटल व्योम get_counters(स्थिर काष्ठा xt_table_info *t,
+			 काष्ठा xt_counters counters[])
+अणु
+	काष्ठा arpt_entry *iter;
+	अचिन्हित पूर्णांक cpu;
+	अचिन्हित पूर्णांक i;
 
-	for_each_possible_cpu(cpu) {
+	क्रम_each_possible_cpu(cpu) अणु
 		seqcount_t *s = &per_cpu(xt_recseq, cpu);
 
 		i = 0;
-		xt_entry_foreach(iter, t->entries, t->size) {
-			struct xt_counters *tmp;
+		xt_entry_क्रमeach(iter, t->entries, t->size) अणु
+			काष्ठा xt_counters *पंचांगp;
 			u64 bcnt, pcnt;
-			unsigned int start;
+			अचिन्हित पूर्णांक start;
 
-			tmp = xt_get_per_cpu_counter(&iter->counters, cpu);
-			do {
-				start = read_seqcount_begin(s);
-				bcnt = tmp->bcnt;
-				pcnt = tmp->pcnt;
-			} while (read_seqcount_retry(s, start));
+			पंचांगp = xt_get_per_cpu_counter(&iter->counters, cpu);
+			करो अणु
+				start = पढ़ो_seqcount_begin(s);
+				bcnt = पंचांगp->bcnt;
+				pcnt = पंचांगp->pcnt;
+			पूर्ण जबतक (पढ़ो_seqcount_retry(s, start));
 
 			ADD_COUNTER(counters[i], bcnt, pcnt);
 			++i;
 			cond_resched();
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static void get_old_counters(const struct xt_table_info *t,
-			     struct xt_counters counters[])
-{
-	struct arpt_entry *iter;
-	unsigned int cpu, i;
+अटल व्योम get_old_counters(स्थिर काष्ठा xt_table_info *t,
+			     काष्ठा xt_counters counters[])
+अणु
+	काष्ठा arpt_entry *iter;
+	अचिन्हित पूर्णांक cpu, i;
 
-	for_each_possible_cpu(cpu) {
+	क्रम_each_possible_cpu(cpu) अणु
 		i = 0;
-		xt_entry_foreach(iter, t->entries, t->size) {
-			struct xt_counters *tmp;
+		xt_entry_क्रमeach(iter, t->entries, t->size) अणु
+			काष्ठा xt_counters *पंचांगp;
 
-			tmp = xt_get_per_cpu_counter(&iter->counters, cpu);
-			ADD_COUNTER(counters[i], tmp->bcnt, tmp->pcnt);
+			पंचांगp = xt_get_per_cpu_counter(&iter->counters, cpu);
+			ADD_COUNTER(counters[i], पंचांगp->bcnt, पंचांगp->pcnt);
 			++i;
-		}
+		पूर्ण
 		cond_resched();
-	}
-}
+	पूर्ण
+पूर्ण
 
-static struct xt_counters *alloc_counters(const struct xt_table *table)
-{
-	unsigned int countersize;
-	struct xt_counters *counters;
-	const struct xt_table_info *private = table->private;
+अटल काष्ठा xt_counters *alloc_counters(स्थिर काष्ठा xt_table *table)
+अणु
+	अचिन्हित पूर्णांक countersize;
+	काष्ठा xt_counters *counters;
+	स्थिर काष्ठा xt_table_info *निजी = table->निजी;
 
-	/* We need atomic snapshot of counters: rest doesn't change
-	 * (other than comefrom, which userspace doesn't care
+	/* We need atomic snapshot of counters: rest करोesn't change
+	 * (other than comefrom, which userspace करोesn't care
 	 * about).
 	 */
-	countersize = sizeof(struct xt_counters) * private->number;
+	countersize = माप(काष्ठा xt_counters) * निजी->number;
 	counters = vzalloc(countersize);
 
-	if (counters == NULL)
-		return ERR_PTR(-ENOMEM);
+	अगर (counters == शून्य)
+		वापस ERR_PTR(-ENOMEM);
 
-	get_counters(private, counters);
+	get_counters(निजी, counters);
 
-	return counters;
-}
+	वापस counters;
+पूर्ण
 
-static int copy_entries_to_user(unsigned int total_size,
-				const struct xt_table *table,
-				void __user *userptr)
-{
-	unsigned int off, num;
-	const struct arpt_entry *e;
-	struct xt_counters *counters;
-	struct xt_table_info *private = table->private;
-	int ret = 0;
-	void *loc_cpu_entry;
+अटल पूर्णांक copy_entries_to_user(अचिन्हित पूर्णांक total_size,
+				स्थिर काष्ठा xt_table *table,
+				व्योम __user *userptr)
+अणु
+	अचिन्हित पूर्णांक off, num;
+	स्थिर काष्ठा arpt_entry *e;
+	काष्ठा xt_counters *counters;
+	काष्ठा xt_table_info *निजी = table->निजी;
+	पूर्णांक ret = 0;
+	व्योम *loc_cpu_entry;
 
 	counters = alloc_counters(table);
-	if (IS_ERR(counters))
-		return PTR_ERR(counters);
+	अगर (IS_ERR(counters))
+		वापस PTR_ERR(counters);
 
-	loc_cpu_entry = private->entries;
+	loc_cpu_entry = निजी->entries;
 
 	/* FIXME: use iterator macros --RR */
 	/* ... then go back and fix counters and names */
-	for (off = 0, num = 0; off < total_size; off += e->next_offset, num++){
-		const struct xt_entry_target *t;
+	क्रम (off = 0, num = 0; off < total_size; off += e->next_offset, num++)अणु
+		स्थिर काष्ठा xt_entry_target *t;
 
 		e = loc_cpu_entry + off;
-		if (copy_to_user(userptr + off, e, sizeof(*e))) {
+		अगर (copy_to_user(userptr + off, e, माप(*e))) अणु
 			ret = -EFAULT;
-			goto free_counters;
-		}
-		if (copy_to_user(userptr + off
-				 + offsetof(struct arpt_entry, counters),
+			जाओ मुक्त_counters;
+		पूर्ण
+		अगर (copy_to_user(userptr + off
+				 + दुरत्व(काष्ठा arpt_entry, counters),
 				 &counters[num],
-				 sizeof(counters[num])) != 0) {
+				 माप(counters[num])) != 0) अणु
 			ret = -EFAULT;
-			goto free_counters;
-		}
+			जाओ मुक्त_counters;
+		पूर्ण
 
 		t = arpt_get_target_c(e);
-		if (xt_target_to_user(t, userptr + off + e->target_offset)) {
+		अगर (xt_target_to_user(t, userptr + off + e->target_offset)) अणु
 			ret = -EFAULT;
-			goto free_counters;
-		}
-	}
+			जाओ मुक्त_counters;
+		पूर्ण
+	पूर्ण
 
- free_counters:
-	vfree(counters);
-	return ret;
-}
+ मुक्त_counters:
+	vमुक्त(counters);
+	वापस ret;
+पूर्ण
 
-#ifdef CONFIG_NETFILTER_XTABLES_COMPAT
-static void compat_standard_from_user(void *dst, const void *src)
-{
-	int v = *(compat_int_t *)src;
+#अगर_घोषित CONFIG_NETFILTER_XTABLES_COMPAT
+अटल व्योम compat_standard_from_user(व्योम *dst, स्थिर व्योम *src)
+अणु
+	पूर्णांक v = *(compat_पूर्णांक_t *)src;
 
-	if (v > 0)
+	अगर (v > 0)
 		v += xt_compat_calc_jump(NFPROTO_ARP, v);
-	memcpy(dst, &v, sizeof(v));
-}
+	स_नकल(dst, &v, माप(v));
+पूर्ण
 
-static int compat_standard_to_user(void __user *dst, const void *src)
-{
-	compat_int_t cv = *(int *)src;
+अटल पूर्णांक compat_standard_to_user(व्योम __user *dst, स्थिर व्योम *src)
+अणु
+	compat_पूर्णांक_t cv = *(पूर्णांक *)src;
 
-	if (cv > 0)
+	अगर (cv > 0)
 		cv -= xt_compat_calc_jump(NFPROTO_ARP, cv);
-	return copy_to_user(dst, &cv, sizeof(cv)) ? -EFAULT : 0;
-}
+	वापस copy_to_user(dst, &cv, माप(cv)) ? -EFAULT : 0;
+पूर्ण
 
-static int compat_calc_entry(const struct arpt_entry *e,
-			     const struct xt_table_info *info,
-			     const void *base, struct xt_table_info *newinfo)
-{
-	const struct xt_entry_target *t;
-	unsigned int entry_offset;
-	int off, i, ret;
+अटल पूर्णांक compat_calc_entry(स्थिर काष्ठा arpt_entry *e,
+			     स्थिर काष्ठा xt_table_info *info,
+			     स्थिर व्योम *base, काष्ठा xt_table_info *newinfo)
+अणु
+	स्थिर काष्ठा xt_entry_target *t;
+	अचिन्हित पूर्णांक entry_offset;
+	पूर्णांक off, i, ret;
 
-	off = sizeof(struct arpt_entry) - sizeof(struct compat_arpt_entry);
-	entry_offset = (void *)e - base;
+	off = माप(काष्ठा arpt_entry) - माप(काष्ठा compat_arpt_entry);
+	entry_offset = (व्योम *)e - base;
 
 	t = arpt_get_target_c(e);
 	off += xt_compat_target_offset(t->u.kernel.target);
 	newinfo->size -= off;
 	ret = xt_compat_add_offset(NFPROTO_ARP, entry_offset, off);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	for (i = 0; i < NF_ARP_NUMHOOKS; i++) {
-		if (info->hook_entry[i] &&
-		    (e < (struct arpt_entry *)(base + info->hook_entry[i])))
+	क्रम (i = 0; i < NF_ARP_NUMHOOKS; i++) अणु
+		अगर (info->hook_entry[i] &&
+		    (e < (काष्ठा arpt_entry *)(base + info->hook_entry[i])))
 			newinfo->hook_entry[i] -= off;
-		if (info->underflow[i] &&
-		    (e < (struct arpt_entry *)(base + info->underflow[i])))
+		अगर (info->underflow[i] &&
+		    (e < (काष्ठा arpt_entry *)(base + info->underflow[i])))
 			newinfo->underflow[i] -= off;
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int compat_table_info(const struct xt_table_info *info,
-			     struct xt_table_info *newinfo)
-{
-	struct arpt_entry *iter;
-	const void *loc_cpu_entry;
-	int ret;
+अटल पूर्णांक compat_table_info(स्थिर काष्ठा xt_table_info *info,
+			     काष्ठा xt_table_info *newinfo)
+अणु
+	काष्ठा arpt_entry *iter;
+	स्थिर व्योम *loc_cpu_entry;
+	पूर्णांक ret;
 
-	if (!newinfo || !info)
-		return -EINVAL;
+	अगर (!newinfo || !info)
+		वापस -EINVAL;
 
-	/* we dont care about newinfo->entries */
-	memcpy(newinfo, info, offsetof(struct xt_table_info, entries));
+	/* we करोnt care about newinfo->entries */
+	स_नकल(newinfo, info, दुरत्व(काष्ठा xt_table_info, entries));
 	newinfo->initial_entries = 0;
 	loc_cpu_entry = info->entries;
 	ret = xt_compat_init_offsets(NFPROTO_ARP, info->number);
-	if (ret)
-		return ret;
-	xt_entry_foreach(iter, loc_cpu_entry, info->size) {
+	अगर (ret)
+		वापस ret;
+	xt_entry_क्रमeach(iter, loc_cpu_entry, info->size) अणु
 		ret = compat_calc_entry(iter, info, loc_cpu_entry, newinfo);
-		if (ret != 0)
-			return ret;
-	}
-	return 0;
-}
-#endif
+		अगर (ret != 0)
+			वापस ret;
+	पूर्ण
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
-static int get_info(struct net *net, void __user *user, const int *len)
-{
-	char name[XT_TABLE_MAXNAMELEN];
-	struct xt_table *t;
-	int ret;
+अटल पूर्णांक get_info(काष्ठा net *net, व्योम __user *user, स्थिर पूर्णांक *len)
+अणु
+	अक्षर name[XT_TABLE_MAXNAMELEN];
+	काष्ठा xt_table *t;
+	पूर्णांक ret;
 
-	if (*len != sizeof(struct arpt_getinfo))
-		return -EINVAL;
+	अगर (*len != माप(काष्ठा arpt_getinfo))
+		वापस -EINVAL;
 
-	if (copy_from_user(name, user, sizeof(name)) != 0)
-		return -EFAULT;
+	अगर (copy_from_user(name, user, माप(name)) != 0)
+		वापस -EFAULT;
 
 	name[XT_TABLE_MAXNAMELEN-1] = '\0';
-#ifdef CONFIG_NETFILTER_XTABLES_COMPAT
-	if (in_compat_syscall())
+#अगर_घोषित CONFIG_NETFILTER_XTABLES_COMPAT
+	अगर (in_compat_syscall())
 		xt_compat_lock(NFPROTO_ARP);
-#endif
+#पूर्ण_अगर
 	t = xt_request_find_table_lock(net, NFPROTO_ARP, name);
-	if (!IS_ERR(t)) {
-		struct arpt_getinfo info;
-		const struct xt_table_info *private = t->private;
-#ifdef CONFIG_NETFILTER_XTABLES_COMPAT
-		struct xt_table_info tmp;
+	अगर (!IS_ERR(t)) अणु
+		काष्ठा arpt_getinfo info;
+		स्थिर काष्ठा xt_table_info *निजी = t->निजी;
+#अगर_घोषित CONFIG_NETFILTER_XTABLES_COMPAT
+		काष्ठा xt_table_info पंचांगp;
 
-		if (in_compat_syscall()) {
-			ret = compat_table_info(private, &tmp);
+		अगर (in_compat_syscall()) अणु
+			ret = compat_table_info(निजी, &पंचांगp);
 			xt_compat_flush_offsets(NFPROTO_ARP);
-			private = &tmp;
-		}
-#endif
-		memset(&info, 0, sizeof(info));
+			निजी = &पंचांगp;
+		पूर्ण
+#पूर्ण_अगर
+		स_रखो(&info, 0, माप(info));
 		info.valid_hooks = t->valid_hooks;
-		memcpy(info.hook_entry, private->hook_entry,
-		       sizeof(info.hook_entry));
-		memcpy(info.underflow, private->underflow,
-		       sizeof(info.underflow));
-		info.num_entries = private->number;
-		info.size = private->size;
-		strcpy(info.name, name);
+		स_नकल(info.hook_entry, निजी->hook_entry,
+		       माप(info.hook_entry));
+		स_नकल(info.underflow, निजी->underflow,
+		       माप(info.underflow));
+		info.num_entries = निजी->number;
+		info.size = निजी->size;
+		म_नकल(info.name, name);
 
-		if (copy_to_user(user, &info, *len) != 0)
+		अगर (copy_to_user(user, &info, *len) != 0)
 			ret = -EFAULT;
-		else
+		अन्यथा
 			ret = 0;
 		xt_table_unlock(t);
 		module_put(t->me);
-	} else
+	पूर्ण अन्यथा
 		ret = PTR_ERR(t);
-#ifdef CONFIG_NETFILTER_XTABLES_COMPAT
-	if (in_compat_syscall())
+#अगर_घोषित CONFIG_NETFILTER_XTABLES_COMPAT
+	अगर (in_compat_syscall())
 		xt_compat_unlock(NFPROTO_ARP);
-#endif
-	return ret;
-}
+#पूर्ण_अगर
+	वापस ret;
+पूर्ण
 
-static int get_entries(struct net *net, struct arpt_get_entries __user *uptr,
-		       const int *len)
-{
-	int ret;
-	struct arpt_get_entries get;
-	struct xt_table *t;
+अटल पूर्णांक get_entries(काष्ठा net *net, काष्ठा arpt_get_entries __user *uptr,
+		       स्थिर पूर्णांक *len)
+अणु
+	पूर्णांक ret;
+	काष्ठा arpt_get_entries get;
+	काष्ठा xt_table *t;
 
-	if (*len < sizeof(get))
-		return -EINVAL;
-	if (copy_from_user(&get, uptr, sizeof(get)) != 0)
-		return -EFAULT;
-	if (*len != sizeof(struct arpt_get_entries) + get.size)
-		return -EINVAL;
+	अगर (*len < माप(get))
+		वापस -EINVAL;
+	अगर (copy_from_user(&get, uptr, माप(get)) != 0)
+		वापस -EFAULT;
+	अगर (*len != माप(काष्ठा arpt_get_entries) + get.size)
+		वापस -EINVAL;
 
-	get.name[sizeof(get.name) - 1] = '\0';
+	get.name[माप(get.name) - 1] = '\0';
 
 	t = xt_find_table_lock(net, NFPROTO_ARP, get.name);
-	if (!IS_ERR(t)) {
-		const struct xt_table_info *private = t->private;
+	अगर (!IS_ERR(t)) अणु
+		स्थिर काष्ठा xt_table_info *निजी = t->निजी;
 
-		if (get.size == private->size)
-			ret = copy_entries_to_user(private->size,
+		अगर (get.size == निजी->size)
+			ret = copy_entries_to_user(निजी->size,
 						   t, uptr->entrytable);
-		else
+		अन्यथा
 			ret = -EAGAIN;
 
 		module_put(t->me);
 		xt_table_unlock(t);
-	} else
+	पूर्ण अन्यथा
 		ret = PTR_ERR(t);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int __do_replace(struct net *net, const char *name,
-			unsigned int valid_hooks,
-			struct xt_table_info *newinfo,
-			unsigned int num_counters,
-			void __user *counters_ptr)
-{
-	int ret;
-	struct xt_table *t;
-	struct xt_table_info *oldinfo;
-	struct xt_counters *counters;
-	void *loc_cpu_old_entry;
-	struct arpt_entry *iter;
+अटल पूर्णांक __करो_replace(काष्ठा net *net, स्थिर अक्षर *name,
+			अचिन्हित पूर्णांक valid_hooks,
+			काष्ठा xt_table_info *newinfo,
+			अचिन्हित पूर्णांक num_counters,
+			व्योम __user *counters_ptr)
+अणु
+	पूर्णांक ret;
+	काष्ठा xt_table *t;
+	काष्ठा xt_table_info *oldinfo;
+	काष्ठा xt_counters *counters;
+	व्योम *loc_cpu_old_entry;
+	काष्ठा arpt_entry *iter;
 
 	ret = 0;
 	counters = xt_counters_alloc(num_counters);
-	if (!counters) {
+	अगर (!counters) अणु
 		ret = -ENOMEM;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	t = xt_request_find_table_lock(net, NFPROTO_ARP, name);
-	if (IS_ERR(t)) {
+	अगर (IS_ERR(t)) अणु
 		ret = PTR_ERR(t);
-		goto free_newinfo_counters_untrans;
-	}
+		जाओ मुक्त_newinfo_counters_untrans;
+	पूर्ण
 
 	/* You lied! */
-	if (valid_hooks != t->valid_hooks) {
+	अगर (valid_hooks != t->valid_hooks) अणु
 		ret = -EINVAL;
-		goto put_module;
-	}
+		जाओ put_module;
+	पूर्ण
 
 	oldinfo = xt_replace_table(t, num_counters, newinfo, &ret);
-	if (!oldinfo)
-		goto put_module;
+	अगर (!oldinfo)
+		जाओ put_module;
 
 	/* Update module usage count based on number of rules */
-	if ((oldinfo->number > oldinfo->initial_entries) ||
+	अगर ((oldinfo->number > oldinfo->initial_entries) ||
 	    (newinfo->number <= oldinfo->initial_entries))
 		module_put(t->me);
-	if ((oldinfo->number > oldinfo->initial_entries) &&
+	अगर ((oldinfo->number > oldinfo->initial_entries) &&
 	    (newinfo->number <= oldinfo->initial_entries))
 		module_put(t->me);
 
@@ -924,129 +925,129 @@ static int __do_replace(struct net *net, const char *name,
 
 	get_old_counters(oldinfo, counters);
 
-	/* Decrease module usage counts and free resource */
+	/* Decrease module usage counts and मुक्त resource */
 	loc_cpu_old_entry = oldinfo->entries;
-	xt_entry_foreach(iter, loc_cpu_old_entry, oldinfo->size)
+	xt_entry_क्रमeach(iter, loc_cpu_old_entry, oldinfo->size)
 		cleanup_entry(iter, net);
 
-	xt_free_table_info(oldinfo);
-	if (copy_to_user(counters_ptr, counters,
-			 sizeof(struct xt_counters) * num_counters) != 0) {
-		/* Silent error, can't fail, new table is already in place */
+	xt_मुक्त_table_info(oldinfo);
+	अगर (copy_to_user(counters_ptr, counters,
+			 माप(काष्ठा xt_counters) * num_counters) != 0) अणु
+		/* Silent error, can't fail, new table is alपढ़ोy in place */
 		net_warn_ratelimited("arptables: counters copy to user failed while replacing table\n");
-	}
-	vfree(counters);
-	return ret;
+	पूर्ण
+	vमुक्त(counters);
+	वापस ret;
 
  put_module:
 	module_put(t->me);
 	xt_table_unlock(t);
- free_newinfo_counters_untrans:
-	vfree(counters);
+ मुक्त_newinfo_counters_untrans:
+	vमुक्त(counters);
  out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int do_replace(struct net *net, sockptr_t arg, unsigned int len)
-{
-	int ret;
-	struct arpt_replace tmp;
-	struct xt_table_info *newinfo;
-	void *loc_cpu_entry;
-	struct arpt_entry *iter;
+अटल पूर्णांक करो_replace(काष्ठा net *net, sockptr_t arg, अचिन्हित पूर्णांक len)
+अणु
+	पूर्णांक ret;
+	काष्ठा arpt_replace पंचांगp;
+	काष्ठा xt_table_info *newinfo;
+	व्योम *loc_cpu_entry;
+	काष्ठा arpt_entry *iter;
 
-	if (copy_from_sockptr(&tmp, arg, sizeof(tmp)) != 0)
-		return -EFAULT;
+	अगर (copy_from_sockptr(&पंचांगp, arg, माप(पंचांगp)) != 0)
+		वापस -EFAULT;
 
 	/* overflow check */
-	if (tmp.num_counters >= INT_MAX / sizeof(struct xt_counters))
-		return -ENOMEM;
-	if (tmp.num_counters == 0)
-		return -EINVAL;
+	अगर (पंचांगp.num_counters >= पूर्णांक_उच्च / माप(काष्ठा xt_counters))
+		वापस -ENOMEM;
+	अगर (पंचांगp.num_counters == 0)
+		वापस -EINVAL;
 
-	tmp.name[sizeof(tmp.name)-1] = 0;
+	पंचांगp.name[माप(पंचांगp.name)-1] = 0;
 
-	newinfo = xt_alloc_table_info(tmp.size);
-	if (!newinfo)
-		return -ENOMEM;
+	newinfo = xt_alloc_table_info(पंचांगp.size);
+	अगर (!newinfo)
+		वापस -ENOMEM;
 
 	loc_cpu_entry = newinfo->entries;
-	if (copy_from_sockptr_offset(loc_cpu_entry, arg, sizeof(tmp),
-			tmp.size) != 0) {
+	अगर (copy_from_sockptr_offset(loc_cpu_entry, arg, माप(पंचांगp),
+			पंचांगp.size) != 0) अणु
 		ret = -EFAULT;
-		goto free_newinfo;
-	}
+		जाओ मुक्त_newinfo;
+	पूर्ण
 
-	ret = translate_table(net, newinfo, loc_cpu_entry, &tmp);
-	if (ret != 0)
-		goto free_newinfo;
+	ret = translate_table(net, newinfo, loc_cpu_entry, &पंचांगp);
+	अगर (ret != 0)
+		जाओ मुक्त_newinfo;
 
-	ret = __do_replace(net, tmp.name, tmp.valid_hooks, newinfo,
-			   tmp.num_counters, tmp.counters);
-	if (ret)
-		goto free_newinfo_untrans;
-	return 0;
+	ret = __करो_replace(net, पंचांगp.name, पंचांगp.valid_hooks, newinfo,
+			   पंचांगp.num_counters, पंचांगp.counters);
+	अगर (ret)
+		जाओ मुक्त_newinfo_untrans;
+	वापस 0;
 
- free_newinfo_untrans:
-	xt_entry_foreach(iter, loc_cpu_entry, newinfo->size)
+ मुक्त_newinfo_untrans:
+	xt_entry_क्रमeach(iter, loc_cpu_entry, newinfo->size)
 		cleanup_entry(iter, net);
- free_newinfo:
-	xt_free_table_info(newinfo);
-	return ret;
-}
+ मुक्त_newinfo:
+	xt_मुक्त_table_info(newinfo);
+	वापस ret;
+पूर्ण
 
-static int do_add_counters(struct net *net, sockptr_t arg, unsigned int len)
-{
-	unsigned int i;
-	struct xt_counters_info tmp;
-	struct xt_counters *paddc;
-	struct xt_table *t;
-	const struct xt_table_info *private;
-	int ret = 0;
-	struct arpt_entry *iter;
-	unsigned int addend;
+अटल पूर्णांक करो_add_counters(काष्ठा net *net, sockptr_t arg, अचिन्हित पूर्णांक len)
+अणु
+	अचिन्हित पूर्णांक i;
+	काष्ठा xt_counters_info पंचांगp;
+	काष्ठा xt_counters *paddc;
+	काष्ठा xt_table *t;
+	स्थिर काष्ठा xt_table_info *निजी;
+	पूर्णांक ret = 0;
+	काष्ठा arpt_entry *iter;
+	अचिन्हित पूर्णांक addend;
 
-	paddc = xt_copy_counters(arg, len, &tmp);
-	if (IS_ERR(paddc))
-		return PTR_ERR(paddc);
+	paddc = xt_copy_counters(arg, len, &पंचांगp);
+	अगर (IS_ERR(paddc))
+		वापस PTR_ERR(paddc);
 
-	t = xt_find_table_lock(net, NFPROTO_ARP, tmp.name);
-	if (IS_ERR(t)) {
+	t = xt_find_table_lock(net, NFPROTO_ARP, पंचांगp.name);
+	अगर (IS_ERR(t)) अणु
 		ret = PTR_ERR(t);
-		goto free;
-	}
+		जाओ मुक्त;
+	पूर्ण
 
 	local_bh_disable();
-	private = t->private;
-	if (private->number != tmp.num_counters) {
+	निजी = t->निजी;
+	अगर (निजी->number != पंचांगp.num_counters) अणु
 		ret = -EINVAL;
-		goto unlock_up_free;
-	}
+		जाओ unlock_up_मुक्त;
+	पूर्ण
 
 	i = 0;
 
-	addend = xt_write_recseq_begin();
-	xt_entry_foreach(iter,  private->entries, private->size) {
-		struct xt_counters *tmp;
+	addend = xt_ग_लिखो_recseq_begin();
+	xt_entry_क्रमeach(iter,  निजी->entries, निजी->size) अणु
+		काष्ठा xt_counters *पंचांगp;
 
-		tmp = xt_get_this_cpu_counter(&iter->counters);
-		ADD_COUNTER(*tmp, paddc[i].bcnt, paddc[i].pcnt);
+		पंचांगp = xt_get_this_cpu_counter(&iter->counters);
+		ADD_COUNTER(*पंचांगp, paddc[i].bcnt, paddc[i].pcnt);
 		++i;
-	}
-	xt_write_recseq_end(addend);
- unlock_up_free:
+	पूर्ण
+	xt_ग_लिखो_recseq_end(addend);
+ unlock_up_मुक्त:
 	local_bh_enable();
 	xt_table_unlock(t);
 	module_put(t->me);
- free:
-	vfree(paddc);
+ मुक्त:
+	vमुक्त(paddc);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-#ifdef CONFIG_NETFILTER_XTABLES_COMPAT
-struct compat_arpt_replace {
-	char				name[XT_TABLE_MAXNAMELEN];
+#अगर_घोषित CONFIG_NETFILTER_XTABLES_COMPAT
+काष्ठा compat_arpt_replace अणु
+	अक्षर				name[XT_TABLE_MAXNAMELEN];
 	u32				valid_hooks;
 	u32				num_entries;
 	u32				size;
@@ -1054,115 +1055,115 @@ struct compat_arpt_replace {
 	u32				underflow[NF_ARP_NUMHOOKS];
 	u32				num_counters;
 	compat_uptr_t			counters;
-	struct compat_arpt_entry	entries[];
-};
+	काष्ठा compat_arpt_entry	entries[];
+पूर्ण;
 
-static inline void compat_release_entry(struct compat_arpt_entry *e)
-{
-	struct xt_entry_target *t;
+अटल अंतरभूत व्योम compat_release_entry(काष्ठा compat_arpt_entry *e)
+अणु
+	काष्ठा xt_entry_target *t;
 
 	t = compat_arpt_get_target(e);
 	module_put(t->u.kernel.target->me);
-}
+पूर्ण
 
-static int
-check_compat_entry_size_and_hooks(struct compat_arpt_entry *e,
-				  struct xt_table_info *newinfo,
-				  unsigned int *size,
-				  const unsigned char *base,
-				  const unsigned char *limit)
-{
-	struct xt_entry_target *t;
-	struct xt_target *target;
-	unsigned int entry_offset;
-	int ret, off;
+अटल पूर्णांक
+check_compat_entry_size_and_hooks(काष्ठा compat_arpt_entry *e,
+				  काष्ठा xt_table_info *newinfo,
+				  अचिन्हित पूर्णांक *size,
+				  स्थिर अचिन्हित अक्षर *base,
+				  स्थिर अचिन्हित अक्षर *limit)
+अणु
+	काष्ठा xt_entry_target *t;
+	काष्ठा xt_target *target;
+	अचिन्हित पूर्णांक entry_offset;
+	पूर्णांक ret, off;
 
-	if ((unsigned long)e % __alignof__(struct compat_arpt_entry) != 0 ||
-	    (unsigned char *)e + sizeof(struct compat_arpt_entry) >= limit ||
-	    (unsigned char *)e + e->next_offset > limit)
-		return -EINVAL;
+	अगर ((अचिन्हित दीर्घ)e % __alignof__(काष्ठा compat_arpt_entry) != 0 ||
+	    (अचिन्हित अक्षर *)e + माप(काष्ठा compat_arpt_entry) >= limit ||
+	    (अचिन्हित अक्षर *)e + e->next_offset > limit)
+		वापस -EINVAL;
 
-	if (e->next_offset < sizeof(struct compat_arpt_entry) +
-			     sizeof(struct compat_xt_entry_target))
-		return -EINVAL;
+	अगर (e->next_offset < माप(काष्ठा compat_arpt_entry) +
+			     माप(काष्ठा compat_xt_entry_target))
+		वापस -EINVAL;
 
-	if (!arp_checkentry(&e->arp))
-		return -EINVAL;
+	अगर (!arp_checkentry(&e->arp))
+		वापस -EINVAL;
 
 	ret = xt_compat_check_entry_offsets(e, e->elems, e->target_offset,
 					    e->next_offset);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	off = sizeof(struct arpt_entry) - sizeof(struct compat_arpt_entry);
-	entry_offset = (void *)e - (void *)base;
+	off = माप(काष्ठा arpt_entry) - माप(काष्ठा compat_arpt_entry);
+	entry_offset = (व्योम *)e - (व्योम *)base;
 
 	t = compat_arpt_get_target(e);
 	target = xt_request_find_target(NFPROTO_ARP, t->u.user.name,
 					t->u.user.revision);
-	if (IS_ERR(target)) {
+	अगर (IS_ERR(target)) अणु
 		ret = PTR_ERR(target);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 	t->u.kernel.target = target;
 
 	off += xt_compat_target_offset(target);
 	*size += off;
 	ret = xt_compat_add_offset(NFPROTO_ARP, entry_offset, off);
-	if (ret)
-		goto release_target;
+	अगर (ret)
+		जाओ release_target;
 
-	return 0;
+	वापस 0;
 
 release_target:
 	module_put(t->u.kernel.target->me);
 out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void
-compat_copy_entry_from_user(struct compat_arpt_entry *e, void **dstptr,
-			    unsigned int *size,
-			    struct xt_table_info *newinfo, unsigned char *base)
-{
-	struct xt_entry_target *t;
-	struct arpt_entry *de;
-	unsigned int origsize;
-	int h;
+अटल व्योम
+compat_copy_entry_from_user(काष्ठा compat_arpt_entry *e, व्योम **dstptr,
+			    अचिन्हित पूर्णांक *size,
+			    काष्ठा xt_table_info *newinfo, अचिन्हित अक्षर *base)
+अणु
+	काष्ठा xt_entry_target *t;
+	काष्ठा arpt_entry *de;
+	अचिन्हित पूर्णांक origsize;
+	पूर्णांक h;
 
 	origsize = *size;
 	de = *dstptr;
-	memcpy(de, e, sizeof(struct arpt_entry));
-	memcpy(&de->counters, &e->counters, sizeof(e->counters));
+	स_नकल(de, e, माप(काष्ठा arpt_entry));
+	स_नकल(&de->counters, &e->counters, माप(e->counters));
 
-	*dstptr += sizeof(struct arpt_entry);
-	*size += sizeof(struct arpt_entry) - sizeof(struct compat_arpt_entry);
+	*dstptr += माप(काष्ठा arpt_entry);
+	*size += माप(काष्ठा arpt_entry) - माप(काष्ठा compat_arpt_entry);
 
 	de->target_offset = e->target_offset - (origsize - *size);
 	t = compat_arpt_get_target(e);
 	xt_compat_target_from_user(t, dstptr, size);
 
 	de->next_offset = e->next_offset - (origsize - *size);
-	for (h = 0; h < NF_ARP_NUMHOOKS; h++) {
-		if ((unsigned char *)de - base < newinfo->hook_entry[h])
+	क्रम (h = 0; h < NF_ARP_NUMHOOKS; h++) अणु
+		अगर ((अचिन्हित अक्षर *)de - base < newinfo->hook_entry[h])
 			newinfo->hook_entry[h] -= origsize - *size;
-		if ((unsigned char *)de - base < newinfo->underflow[h])
+		अगर ((अचिन्हित अक्षर *)de - base < newinfo->underflow[h])
 			newinfo->underflow[h] -= origsize - *size;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int translate_compat_table(struct net *net,
-				  struct xt_table_info **pinfo,
-				  void **pentry0,
-				  const struct compat_arpt_replace *compatr)
-{
-	unsigned int i, j;
-	struct xt_table_info *newinfo, *info;
-	void *pos, *entry0, *entry1;
-	struct compat_arpt_entry *iter0;
-	struct arpt_replace repl;
-	unsigned int size;
-	int ret;
+अटल पूर्णांक translate_compat_table(काष्ठा net *net,
+				  काष्ठा xt_table_info **pinfo,
+				  व्योम **pentry0,
+				  स्थिर काष्ठा compat_arpt_replace *compatr)
+अणु
+	अचिन्हित पूर्णांक i, j;
+	काष्ठा xt_table_info *newinfo, *info;
+	व्योम *pos, *entry0, *entry1;
+	काष्ठा compat_arpt_entry *iter0;
+	काष्ठा arpt_replace repl;
+	अचिन्हित पूर्णांक size;
+	पूर्णांक ret;
 
 	info = *pinfo;
 	entry0 = *pentry0;
@@ -1172,38 +1173,38 @@ static int translate_compat_table(struct net *net,
 	j = 0;
 	xt_compat_lock(NFPROTO_ARP);
 	ret = xt_compat_init_offsets(NFPROTO_ARP, compatr->num_entries);
-	if (ret)
-		goto out_unlock;
+	अगर (ret)
+		जाओ out_unlock;
 	/* Walk through entries, checking offsets. */
-	xt_entry_foreach(iter0, entry0, compatr->size) {
+	xt_entry_क्रमeach(iter0, entry0, compatr->size) अणु
 		ret = check_compat_entry_size_and_hooks(iter0, info, &size,
 							entry0,
 							entry0 + compatr->size);
-		if (ret != 0)
-			goto out_unlock;
+		अगर (ret != 0)
+			जाओ out_unlock;
 		++j;
-	}
+	पूर्ण
 
 	ret = -EINVAL;
-	if (j != compatr->num_entries)
-		goto out_unlock;
+	अगर (j != compatr->num_entries)
+		जाओ out_unlock;
 
 	ret = -ENOMEM;
 	newinfo = xt_alloc_table_info(size);
-	if (!newinfo)
-		goto out_unlock;
+	अगर (!newinfo)
+		जाओ out_unlock;
 
-	memset(newinfo->entries, 0, size);
+	स_रखो(newinfo->entries, 0, size);
 
 	newinfo->number = compatr->num_entries;
-	for (i = 0; i < NF_ARP_NUMHOOKS; i++) {
+	क्रम (i = 0; i < NF_ARP_NUMHOOKS; i++) अणु
 		newinfo->hook_entry[i] = compatr->hook_entry[i];
 		newinfo->underflow[i] = compatr->underflow[i];
-	}
+	पूर्ण
 	entry1 = newinfo->entries;
 	pos = entry1;
 	size = compatr->size;
-	xt_entry_foreach(iter0, entry0, compatr->size)
+	xt_entry_क्रमeach(iter0, entry0, compatr->size)
 		compat_copy_entry_from_user(iter0, &pos, &size,
 					    newinfo, entry1);
 
@@ -1212,451 +1213,451 @@ static int translate_compat_table(struct net *net,
 	xt_compat_flush_offsets(NFPROTO_ARP);
 	xt_compat_unlock(NFPROTO_ARP);
 
-	memcpy(&repl, compatr, sizeof(*compatr));
+	स_नकल(&repl, compatr, माप(*compatr));
 
-	for (i = 0; i < NF_ARP_NUMHOOKS; i++) {
+	क्रम (i = 0; i < NF_ARP_NUMHOOKS; i++) अणु
 		repl.hook_entry[i] = newinfo->hook_entry[i];
 		repl.underflow[i] = newinfo->underflow[i];
-	}
+	पूर्ण
 
 	repl.num_counters = 0;
-	repl.counters = NULL;
+	repl.counters = शून्य;
 	repl.size = newinfo->size;
 	ret = translate_table(net, newinfo, entry1, &repl);
-	if (ret)
-		goto free_newinfo;
+	अगर (ret)
+		जाओ मुक्त_newinfo;
 
 	*pinfo = newinfo;
 	*pentry0 = entry1;
-	xt_free_table_info(info);
-	return 0;
+	xt_मुक्त_table_info(info);
+	वापस 0;
 
-free_newinfo:
-	xt_free_table_info(newinfo);
-	return ret;
+मुक्त_newinfo:
+	xt_मुक्त_table_info(newinfo);
+	वापस ret;
 out_unlock:
 	xt_compat_flush_offsets(NFPROTO_ARP);
 	xt_compat_unlock(NFPROTO_ARP);
-	xt_entry_foreach(iter0, entry0, compatr->size) {
-		if (j-- == 0)
-			break;
+	xt_entry_क्रमeach(iter0, entry0, compatr->size) अणु
+		अगर (j-- == 0)
+			अवरोध;
 		compat_release_entry(iter0);
-	}
-	return ret;
-}
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static int compat_do_replace(struct net *net, sockptr_t arg, unsigned int len)
-{
-	int ret;
-	struct compat_arpt_replace tmp;
-	struct xt_table_info *newinfo;
-	void *loc_cpu_entry;
-	struct arpt_entry *iter;
+अटल पूर्णांक compat_करो_replace(काष्ठा net *net, sockptr_t arg, अचिन्हित पूर्णांक len)
+अणु
+	पूर्णांक ret;
+	काष्ठा compat_arpt_replace पंचांगp;
+	काष्ठा xt_table_info *newinfo;
+	व्योम *loc_cpu_entry;
+	काष्ठा arpt_entry *iter;
 
-	if (copy_from_sockptr(&tmp, arg, sizeof(tmp)) != 0)
-		return -EFAULT;
+	अगर (copy_from_sockptr(&पंचांगp, arg, माप(पंचांगp)) != 0)
+		वापस -EFAULT;
 
 	/* overflow check */
-	if (tmp.num_counters >= INT_MAX / sizeof(struct xt_counters))
-		return -ENOMEM;
-	if (tmp.num_counters == 0)
-		return -EINVAL;
+	अगर (पंचांगp.num_counters >= पूर्णांक_उच्च / माप(काष्ठा xt_counters))
+		वापस -ENOMEM;
+	अगर (पंचांगp.num_counters == 0)
+		वापस -EINVAL;
 
-	tmp.name[sizeof(tmp.name)-1] = 0;
+	पंचांगp.name[माप(पंचांगp.name)-1] = 0;
 
-	newinfo = xt_alloc_table_info(tmp.size);
-	if (!newinfo)
-		return -ENOMEM;
+	newinfo = xt_alloc_table_info(पंचांगp.size);
+	अगर (!newinfo)
+		वापस -ENOMEM;
 
 	loc_cpu_entry = newinfo->entries;
-	if (copy_from_sockptr_offset(loc_cpu_entry, arg, sizeof(tmp),
-			tmp.size) != 0) {
+	अगर (copy_from_sockptr_offset(loc_cpu_entry, arg, माप(पंचांगp),
+			पंचांगp.size) != 0) अणु
 		ret = -EFAULT;
-		goto free_newinfo;
-	}
+		जाओ मुक्त_newinfo;
+	पूर्ण
 
-	ret = translate_compat_table(net, &newinfo, &loc_cpu_entry, &tmp);
-	if (ret != 0)
-		goto free_newinfo;
+	ret = translate_compat_table(net, &newinfo, &loc_cpu_entry, &पंचांगp);
+	अगर (ret != 0)
+		जाओ मुक्त_newinfo;
 
-	ret = __do_replace(net, tmp.name, tmp.valid_hooks, newinfo,
-			   tmp.num_counters, compat_ptr(tmp.counters));
-	if (ret)
-		goto free_newinfo_untrans;
-	return 0;
+	ret = __करो_replace(net, पंचांगp.name, पंचांगp.valid_hooks, newinfo,
+			   पंचांगp.num_counters, compat_ptr(पंचांगp.counters));
+	अगर (ret)
+		जाओ मुक्त_newinfo_untrans;
+	वापस 0;
 
- free_newinfo_untrans:
-	xt_entry_foreach(iter, loc_cpu_entry, newinfo->size)
+ मुक्त_newinfo_untrans:
+	xt_entry_क्रमeach(iter, loc_cpu_entry, newinfo->size)
 		cleanup_entry(iter, net);
- free_newinfo:
-	xt_free_table_info(newinfo);
-	return ret;
-}
+ मुक्त_newinfo:
+	xt_मुक्त_table_info(newinfo);
+	वापस ret;
+पूर्ण
 
-static int compat_copy_entry_to_user(struct arpt_entry *e, void __user **dstptr,
-				     compat_uint_t *size,
-				     struct xt_counters *counters,
-				     unsigned int i)
-{
-	struct xt_entry_target *t;
-	struct compat_arpt_entry __user *ce;
-	u_int16_t target_offset, next_offset;
-	compat_uint_t origsize;
-	int ret;
+अटल पूर्णांक compat_copy_entry_to_user(काष्ठा arpt_entry *e, व्योम __user **dstptr,
+				     compat_uपूर्णांक_t *size,
+				     काष्ठा xt_counters *counters,
+				     अचिन्हित पूर्णांक i)
+अणु
+	काष्ठा xt_entry_target *t;
+	काष्ठा compat_arpt_entry __user *ce;
+	u_पूर्णांक16_t target_offset, next_offset;
+	compat_uपूर्णांक_t origsize;
+	पूर्णांक ret;
 
 	origsize = *size;
 	ce = *dstptr;
-	if (copy_to_user(ce, e, sizeof(struct arpt_entry)) != 0 ||
+	अगर (copy_to_user(ce, e, माप(काष्ठा arpt_entry)) != 0 ||
 	    copy_to_user(&ce->counters, &counters[i],
-	    sizeof(counters[i])) != 0)
-		return -EFAULT;
+	    माप(counters[i])) != 0)
+		वापस -EFAULT;
 
-	*dstptr += sizeof(struct compat_arpt_entry);
-	*size -= sizeof(struct arpt_entry) - sizeof(struct compat_arpt_entry);
+	*dstptr += माप(काष्ठा compat_arpt_entry);
+	*size -= माप(काष्ठा arpt_entry) - माप(काष्ठा compat_arpt_entry);
 
 	target_offset = e->target_offset - (origsize - *size);
 
 	t = arpt_get_target(e);
 	ret = xt_compat_target_to_user(t, dstptr, size);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 	next_offset = e->next_offset - (origsize - *size);
-	if (put_user(target_offset, &ce->target_offset) != 0 ||
+	अगर (put_user(target_offset, &ce->target_offset) != 0 ||
 	    put_user(next_offset, &ce->next_offset) != 0)
-		return -EFAULT;
-	return 0;
-}
+		वापस -EFAULT;
+	वापस 0;
+पूर्ण
 
-static int compat_copy_entries_to_user(unsigned int total_size,
-				       struct xt_table *table,
-				       void __user *userptr)
-{
-	struct xt_counters *counters;
-	const struct xt_table_info *private = table->private;
-	void __user *pos;
-	unsigned int size;
-	int ret = 0;
-	unsigned int i = 0;
-	struct arpt_entry *iter;
+अटल पूर्णांक compat_copy_entries_to_user(अचिन्हित पूर्णांक total_size,
+				       काष्ठा xt_table *table,
+				       व्योम __user *userptr)
+अणु
+	काष्ठा xt_counters *counters;
+	स्थिर काष्ठा xt_table_info *निजी = table->निजी;
+	व्योम __user *pos;
+	अचिन्हित पूर्णांक size;
+	पूर्णांक ret = 0;
+	अचिन्हित पूर्णांक i = 0;
+	काष्ठा arpt_entry *iter;
 
 	counters = alloc_counters(table);
-	if (IS_ERR(counters))
-		return PTR_ERR(counters);
+	अगर (IS_ERR(counters))
+		वापस PTR_ERR(counters);
 
 	pos = userptr;
 	size = total_size;
-	xt_entry_foreach(iter, private->entries, total_size) {
+	xt_entry_क्रमeach(iter, निजी->entries, total_size) अणु
 		ret = compat_copy_entry_to_user(iter, &pos,
 						&size, counters, i++);
-		if (ret != 0)
-			break;
-	}
-	vfree(counters);
-	return ret;
-}
+		अगर (ret != 0)
+			अवरोध;
+	पूर्ण
+	vमुक्त(counters);
+	वापस ret;
+पूर्ण
 
-struct compat_arpt_get_entries {
-	char name[XT_TABLE_MAXNAMELEN];
-	compat_uint_t size;
-	struct compat_arpt_entry entrytable[];
-};
+काष्ठा compat_arpt_get_entries अणु
+	अक्षर name[XT_TABLE_MAXNAMELEN];
+	compat_uपूर्णांक_t size;
+	काष्ठा compat_arpt_entry entrytable[];
+पूर्ण;
 
-static int compat_get_entries(struct net *net,
-			      struct compat_arpt_get_entries __user *uptr,
-			      int *len)
-{
-	int ret;
-	struct compat_arpt_get_entries get;
-	struct xt_table *t;
+अटल पूर्णांक compat_get_entries(काष्ठा net *net,
+			      काष्ठा compat_arpt_get_entries __user *uptr,
+			      पूर्णांक *len)
+अणु
+	पूर्णांक ret;
+	काष्ठा compat_arpt_get_entries get;
+	काष्ठा xt_table *t;
 
-	if (*len < sizeof(get))
-		return -EINVAL;
-	if (copy_from_user(&get, uptr, sizeof(get)) != 0)
-		return -EFAULT;
-	if (*len != sizeof(struct compat_arpt_get_entries) + get.size)
-		return -EINVAL;
+	अगर (*len < माप(get))
+		वापस -EINVAL;
+	अगर (copy_from_user(&get, uptr, माप(get)) != 0)
+		वापस -EFAULT;
+	अगर (*len != माप(काष्ठा compat_arpt_get_entries) + get.size)
+		वापस -EINVAL;
 
-	get.name[sizeof(get.name) - 1] = '\0';
+	get.name[माप(get.name) - 1] = '\0';
 
 	xt_compat_lock(NFPROTO_ARP);
 	t = xt_find_table_lock(net, NFPROTO_ARP, get.name);
-	if (!IS_ERR(t)) {
-		const struct xt_table_info *private = t->private;
-		struct xt_table_info info;
+	अगर (!IS_ERR(t)) अणु
+		स्थिर काष्ठा xt_table_info *निजी = t->निजी;
+		काष्ठा xt_table_info info;
 
-		ret = compat_table_info(private, &info);
-		if (!ret && get.size == info.size) {
-			ret = compat_copy_entries_to_user(private->size,
+		ret = compat_table_info(निजी, &info);
+		अगर (!ret && get.size == info.size) अणु
+			ret = compat_copy_entries_to_user(निजी->size,
 							  t, uptr->entrytable);
-		} else if (!ret)
+		पूर्ण अन्यथा अगर (!ret)
 			ret = -EAGAIN;
 
 		xt_compat_flush_offsets(NFPROTO_ARP);
 		module_put(t->me);
 		xt_table_unlock(t);
-	} else
+	पूर्ण अन्यथा
 		ret = PTR_ERR(t);
 
 	xt_compat_unlock(NFPROTO_ARP);
-	return ret;
-}
-#endif
+	वापस ret;
+पूर्ण
+#पूर्ण_अगर
 
-static int do_arpt_set_ctl(struct sock *sk, int cmd, sockptr_t arg,
-		unsigned int len)
-{
-	int ret;
+अटल पूर्णांक करो_arpt_set_ctl(काष्ठा sock *sk, पूर्णांक cmd, sockptr_t arg,
+		अचिन्हित पूर्णांक len)
+अणु
+	पूर्णांक ret;
 
-	if (!ns_capable(sock_net(sk)->user_ns, CAP_NET_ADMIN))
-		return -EPERM;
+	अगर (!ns_capable(sock_net(sk)->user_ns, CAP_NET_ADMIN))
+		वापस -EPERM;
 
-	switch (cmd) {
-	case ARPT_SO_SET_REPLACE:
-#ifdef CONFIG_NETFILTER_XTABLES_COMPAT
-		if (in_compat_syscall())
-			ret = compat_do_replace(sock_net(sk), arg, len);
-		else
-#endif
-			ret = do_replace(sock_net(sk), arg, len);
-		break;
+	चयन (cmd) अणु
+	हाल ARPT_SO_SET_REPLACE:
+#अगर_घोषित CONFIG_NETFILTER_XTABLES_COMPAT
+		अगर (in_compat_syscall())
+			ret = compat_करो_replace(sock_net(sk), arg, len);
+		अन्यथा
+#पूर्ण_अगर
+			ret = करो_replace(sock_net(sk), arg, len);
+		अवरोध;
 
-	case ARPT_SO_SET_ADD_COUNTERS:
-		ret = do_add_counters(sock_net(sk), arg, len);
-		break;
+	हाल ARPT_SO_SET_ADD_COUNTERS:
+		ret = करो_add_counters(sock_net(sk), arg, len);
+		अवरोध;
 
-	default:
+	शेष:
 		ret = -EINVAL;
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int do_arpt_get_ctl(struct sock *sk, int cmd, void __user *user, int *len)
-{
-	int ret;
+अटल पूर्णांक करो_arpt_get_ctl(काष्ठा sock *sk, पूर्णांक cmd, व्योम __user *user, पूर्णांक *len)
+अणु
+	पूर्णांक ret;
 
-	if (!ns_capable(sock_net(sk)->user_ns, CAP_NET_ADMIN))
-		return -EPERM;
+	अगर (!ns_capable(sock_net(sk)->user_ns, CAP_NET_ADMIN))
+		वापस -EPERM;
 
-	switch (cmd) {
-	case ARPT_SO_GET_INFO:
+	चयन (cmd) अणु
+	हाल ARPT_SO_GET_INFO:
 		ret = get_info(sock_net(sk), user, len);
-		break;
+		अवरोध;
 
-	case ARPT_SO_GET_ENTRIES:
-#ifdef CONFIG_NETFILTER_XTABLES_COMPAT
-		if (in_compat_syscall())
+	हाल ARPT_SO_GET_ENTRIES:
+#अगर_घोषित CONFIG_NETFILTER_XTABLES_COMPAT
+		अगर (in_compat_syscall())
 			ret = compat_get_entries(sock_net(sk), user, len);
-		else
-#endif
+		अन्यथा
+#पूर्ण_अगर
 			ret = get_entries(sock_net(sk), user, len);
-		break;
+		अवरोध;
 
-	case ARPT_SO_GET_REVISION_TARGET: {
-		struct xt_get_revision rev;
+	हाल ARPT_SO_GET_REVISION_TARGET: अणु
+		काष्ठा xt_get_revision rev;
 
-		if (*len != sizeof(rev)) {
+		अगर (*len != माप(rev)) अणु
 			ret = -EINVAL;
-			break;
-		}
-		if (copy_from_user(&rev, user, sizeof(rev)) != 0) {
+			अवरोध;
+		पूर्ण
+		अगर (copy_from_user(&rev, user, माप(rev)) != 0) अणु
 			ret = -EFAULT;
-			break;
-		}
-		rev.name[sizeof(rev.name)-1] = 0;
+			अवरोध;
+		पूर्ण
+		rev.name[माप(rev.name)-1] = 0;
 
 		try_then_request_module(xt_find_revision(NFPROTO_ARP, rev.name,
 							 rev.revision, 1, &ret),
 					"arpt_%s", rev.name);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	default:
+	शेष:
 		ret = -EINVAL;
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void __arpt_unregister_table(struct net *net, struct xt_table *table)
-{
-	struct xt_table_info *private;
-	void *loc_cpu_entry;
-	struct module *table_owner = table->me;
-	struct arpt_entry *iter;
+अटल व्योम __arpt_unरेजिस्टर_table(काष्ठा net *net, काष्ठा xt_table *table)
+अणु
+	काष्ठा xt_table_info *निजी;
+	व्योम *loc_cpu_entry;
+	काष्ठा module *table_owner = table->me;
+	काष्ठा arpt_entry *iter;
 
-	private = xt_unregister_table(table);
+	निजी = xt_unरेजिस्टर_table(table);
 
-	/* Decrease module usage counts and free resources */
-	loc_cpu_entry = private->entries;
-	xt_entry_foreach(iter, loc_cpu_entry, private->size)
+	/* Decrease module usage counts and मुक्त resources */
+	loc_cpu_entry = निजी->entries;
+	xt_entry_क्रमeach(iter, loc_cpu_entry, निजी->size)
 		cleanup_entry(iter, net);
-	if (private->number > private->initial_entries)
+	अगर (निजी->number > निजी->initial_entries)
 		module_put(table_owner);
-	xt_free_table_info(private);
-}
+	xt_मुक्त_table_info(निजी);
+पूर्ण
 
-int arpt_register_table(struct net *net,
-			const struct xt_table *table,
-			const struct arpt_replace *repl,
-			const struct nf_hook_ops *template_ops)
-{
-	struct nf_hook_ops *ops;
-	unsigned int num_ops;
-	int ret, i;
-	struct xt_table_info *newinfo;
-	struct xt_table_info bootstrap = {0};
-	void *loc_cpu_entry;
-	struct xt_table *new_table;
+पूर्णांक arpt_रेजिस्टर_table(काष्ठा net *net,
+			स्थिर काष्ठा xt_table *table,
+			स्थिर काष्ठा arpt_replace *repl,
+			स्थिर काष्ठा nf_hook_ops *ढाँचा_ops)
+अणु
+	काष्ठा nf_hook_ops *ops;
+	अचिन्हित पूर्णांक num_ops;
+	पूर्णांक ret, i;
+	काष्ठा xt_table_info *newinfo;
+	काष्ठा xt_table_info bootstrap = अणु0पूर्ण;
+	व्योम *loc_cpu_entry;
+	काष्ठा xt_table *new_table;
 
 	newinfo = xt_alloc_table_info(repl->size);
-	if (!newinfo)
-		return -ENOMEM;
+	अगर (!newinfo)
+		वापस -ENOMEM;
 
 	loc_cpu_entry = newinfo->entries;
-	memcpy(loc_cpu_entry, repl->entries, repl->size);
+	स_नकल(loc_cpu_entry, repl->entries, repl->size);
 
 	ret = translate_table(net, newinfo, loc_cpu_entry, repl);
-	if (ret != 0) {
-		xt_free_table_info(newinfo);
-		return ret;
-	}
+	अगर (ret != 0) अणु
+		xt_मुक्त_table_info(newinfo);
+		वापस ret;
+	पूर्ण
 
-	new_table = xt_register_table(net, table, &bootstrap, newinfo);
-	if (IS_ERR(new_table)) {
-		xt_free_table_info(newinfo);
-		return PTR_ERR(new_table);
-	}
+	new_table = xt_रेजिस्टर_table(net, table, &bootstrap, newinfo);
+	अगर (IS_ERR(new_table)) अणु
+		xt_मुक्त_table_info(newinfo);
+		वापस PTR_ERR(new_table);
+	पूर्ण
 
 	num_ops = hweight32(table->valid_hooks);
-	if (num_ops == 0) {
+	अगर (num_ops == 0) अणु
 		ret = -EINVAL;
-		goto out_free;
-	}
+		जाओ out_मुक्त;
+	पूर्ण
 
-	ops = kmemdup(template_ops, sizeof(*ops) * num_ops, GFP_KERNEL);
-	if (!ops) {
+	ops = kmemdup(ढाँचा_ops, माप(*ops) * num_ops, GFP_KERNEL);
+	अगर (!ops) अणु
 		ret = -ENOMEM;
-		goto out_free;
-	}
+		जाओ out_मुक्त;
+	पूर्ण
 
-	for (i = 0; i < num_ops; i++)
+	क्रम (i = 0; i < num_ops; i++)
 		ops[i].priv = new_table;
 
 	new_table->ops = ops;
 
-	ret = nf_register_net_hooks(net, ops, num_ops);
-	if (ret != 0)
-		goto out_free;
+	ret = nf_रेजिस्टर_net_hooks(net, ops, num_ops);
+	अगर (ret != 0)
+		जाओ out_मुक्त;
 
-	return ret;
+	वापस ret;
 
-out_free:
-	__arpt_unregister_table(net, new_table);
-	return ret;
-}
+out_मुक्त:
+	__arpt_unरेजिस्टर_table(net, new_table);
+	वापस ret;
+पूर्ण
 
-void arpt_unregister_table_pre_exit(struct net *net, const char *name)
-{
-	struct xt_table *table = xt_find_table(net, NFPROTO_ARP, name);
+व्योम arpt_unरेजिस्टर_table_pre_निकास(काष्ठा net *net, स्थिर अक्षर *name)
+अणु
+	काष्ठा xt_table *table = xt_find_table(net, NFPROTO_ARP, name);
 
-	if (table)
-		nf_unregister_net_hooks(net, table->ops, hweight32(table->valid_hooks));
-}
-EXPORT_SYMBOL(arpt_unregister_table_pre_exit);
+	अगर (table)
+		nf_unरेजिस्टर_net_hooks(net, table->ops, hweight32(table->valid_hooks));
+पूर्ण
+EXPORT_SYMBOL(arpt_unरेजिस्टर_table_pre_निकास);
 
-void arpt_unregister_table(struct net *net, const char *name)
-{
-	struct xt_table *table = xt_find_table(net, NFPROTO_ARP, name);
+व्योम arpt_unरेजिस्टर_table(काष्ठा net *net, स्थिर अक्षर *name)
+अणु
+	काष्ठा xt_table *table = xt_find_table(net, NFPROTO_ARP, name);
 
-	if (table)
-		__arpt_unregister_table(net, table);
-}
+	अगर (table)
+		__arpt_unरेजिस्टर_table(net, table);
+पूर्ण
 
-/* The built-in targets: standard (NULL) and error. */
-static struct xt_target arpt_builtin_tg[] __read_mostly = {
-	{
+/* The built-in tarमाला_लो: standard (शून्य) and error. */
+अटल काष्ठा xt_target arpt_builtin_tg[] __पढ़ो_mostly = अणु
+	अणु
 		.name             = XT_STANDARD_TARGET,
-		.targetsize       = sizeof(int),
+		.tarमाला_लोize       = माप(पूर्णांक),
 		.family           = NFPROTO_ARP,
-#ifdef CONFIG_NETFILTER_XTABLES_COMPAT
-		.compatsize       = sizeof(compat_int_t),
+#अगर_घोषित CONFIG_NETFILTER_XTABLES_COMPAT
+		.compatsize       = माप(compat_पूर्णांक_t),
 		.compat_from_user = compat_standard_from_user,
 		.compat_to_user   = compat_standard_to_user,
-#endif
-	},
-	{
+#पूर्ण_अगर
+	पूर्ण,
+	अणु
 		.name             = XT_ERROR_TARGET,
 		.target           = arpt_error,
-		.targetsize       = XT_FUNCTION_MAXNAMELEN,
+		.tarमाला_लोize       = XT_FUNCTION_MAXNAMELEN,
 		.family           = NFPROTO_ARP,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static struct nf_sockopt_ops arpt_sockopts = {
+अटल काष्ठा nf_sockopt_ops arpt_sockopts = अणु
 	.pf		= PF_INET,
-	.set_optmin	= ARPT_BASE_CTL,
-	.set_optmax	= ARPT_SO_SET_MAX+1,
-	.set		= do_arpt_set_ctl,
-	.get_optmin	= ARPT_BASE_CTL,
-	.get_optmax	= ARPT_SO_GET_MAX+1,
-	.get		= do_arpt_get_ctl,
+	.set_opपंचांगin	= ARPT_BASE_CTL,
+	.set_opपंचांगax	= ARPT_SO_SET_MAX+1,
+	.set		= करो_arpt_set_ctl,
+	.get_opपंचांगin	= ARPT_BASE_CTL,
+	.get_opपंचांगax	= ARPT_SO_GET_MAX+1,
+	.get		= करो_arpt_get_ctl,
 	.owner		= THIS_MODULE,
-};
+पूर्ण;
 
-static int __net_init arp_tables_net_init(struct net *net)
-{
-	return xt_proto_init(net, NFPROTO_ARP);
-}
+अटल पूर्णांक __net_init arp_tables_net_init(काष्ठा net *net)
+अणु
+	वापस xt_proto_init(net, NFPROTO_ARP);
+पूर्ण
 
-static void __net_exit arp_tables_net_exit(struct net *net)
-{
+अटल व्योम __net_निकास arp_tables_net_निकास(काष्ठा net *net)
+अणु
 	xt_proto_fini(net, NFPROTO_ARP);
-}
+पूर्ण
 
-static struct pernet_operations arp_tables_net_ops = {
+अटल काष्ठा pernet_operations arp_tables_net_ops = अणु
 	.init = arp_tables_net_init,
-	.exit = arp_tables_net_exit,
-};
+	.निकास = arp_tables_net_निकास,
+पूर्ण;
 
-static int __init arp_tables_init(void)
-{
-	int ret;
+अटल पूर्णांक __init arp_tables_init(व्योम)
+अणु
+	पूर्णांक ret;
 
-	ret = register_pernet_subsys(&arp_tables_net_ops);
-	if (ret < 0)
-		goto err1;
+	ret = रेजिस्टर_pernet_subsys(&arp_tables_net_ops);
+	अगर (ret < 0)
+		जाओ err1;
 
-	/* No one else will be downing sem now, so we won't sleep */
-	ret = xt_register_targets(arpt_builtin_tg, ARRAY_SIZE(arpt_builtin_tg));
-	if (ret < 0)
-		goto err2;
+	/* No one अन्यथा will be करोwning sem now, so we won't sleep */
+	ret = xt_रेजिस्टर_tarमाला_लो(arpt_builtin_tg, ARRAY_SIZE(arpt_builtin_tg));
+	अगर (ret < 0)
+		जाओ err2;
 
 	/* Register setsockopt */
-	ret = nf_register_sockopt(&arpt_sockopts);
-	if (ret < 0)
-		goto err4;
+	ret = nf_रेजिस्टर_sockopt(&arpt_sockopts);
+	अगर (ret < 0)
+		जाओ err4;
 
-	return 0;
+	वापस 0;
 
 err4:
-	xt_unregister_targets(arpt_builtin_tg, ARRAY_SIZE(arpt_builtin_tg));
+	xt_unरेजिस्टर_tarमाला_लो(arpt_builtin_tg, ARRAY_SIZE(arpt_builtin_tg));
 err2:
-	unregister_pernet_subsys(&arp_tables_net_ops);
+	unरेजिस्टर_pernet_subsys(&arp_tables_net_ops);
 err1:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void __exit arp_tables_fini(void)
-{
-	nf_unregister_sockopt(&arpt_sockopts);
-	xt_unregister_targets(arpt_builtin_tg, ARRAY_SIZE(arpt_builtin_tg));
-	unregister_pernet_subsys(&arp_tables_net_ops);
-}
+अटल व्योम __निकास arp_tables_fini(व्योम)
+अणु
+	nf_unरेजिस्टर_sockopt(&arpt_sockopts);
+	xt_unरेजिस्टर_tarमाला_लो(arpt_builtin_tg, ARRAY_SIZE(arpt_builtin_tg));
+	unरेजिस्टर_pernet_subsys(&arp_tables_net_ops);
+पूर्ण
 
-EXPORT_SYMBOL(arpt_register_table);
-EXPORT_SYMBOL(arpt_unregister_table);
-EXPORT_SYMBOL(arpt_do_table);
+EXPORT_SYMBOL(arpt_रेजिस्टर_table);
+EXPORT_SYMBOL(arpt_unरेजिस्टर_table);
+EXPORT_SYMBOL(arpt_करो_table);
 
 module_init(arp_tables_init);
-module_exit(arp_tables_fini);
+module_निकास(arp_tables_fini);

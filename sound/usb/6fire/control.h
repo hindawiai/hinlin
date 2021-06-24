@@ -1,22 +1,23 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
- * Linux driver for TerraTec DMX 6Fire USB
+ * Linux driver क्रम TerraTec DMX 6Fire USB
  *
  * Author:	Torsten Schenk <torsten.schenk@zoho.com>
  * Created:	Jan 01, 2011
  * Copyright:	(C) Torsten Schenk
  */
 
-#ifndef USB6FIRE_CONTROL_H
-#define USB6FIRE_CONTROL_H
+#अगर_अघोषित USB6FIRE_CONTROL_H
+#घोषणा USB6FIRE_CONTROL_H
 
-#include "common.h"
+#समावेश "common.h"
 
-enum {
+क्रमागत अणु
 	CONTROL_MAX_ELEMENTS = 32
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	CONTROL_RATE_44KHZ,
 	CONTROL_RATE_48KHZ,
 	CONTROL_RATE_88KHZ,
@@ -24,30 +25,30 @@ enum {
 	CONTROL_RATE_176KHZ,
 	CONTROL_RATE_192KHZ,
 	CONTROL_N_RATES
-};
+पूर्ण;
 
-struct control_runtime {
-	int (*update_streaming)(struct control_runtime *rt);
-	int (*set_rate)(struct control_runtime *rt, int rate);
-	int (*set_channels)(struct control_runtime *rt, int n_analog_out,
-		int n_analog_in, bool spdif_out, bool spdif_in);
+काष्ठा control_runसमय अणु
+	पूर्णांक (*update_streaming)(काष्ठा control_runसमय *rt);
+	पूर्णांक (*set_rate)(काष्ठा control_runसमय *rt, पूर्णांक rate);
+	पूर्णांक (*set_channels)(काष्ठा control_runसमय *rt, पूर्णांक n_analog_out,
+		पूर्णांक n_analog_in, bool spdअगर_out, bool spdअगर_in);
 
-	struct sfire_chip *chip;
+	काष्ठा sfire_chip *chip;
 
-	struct snd_kcontrol *element[CONTROL_MAX_ELEMENTS];
-	bool opt_coax_switch;
-	bool line_phono_switch;
-	bool digital_thru_switch;
+	काष्ठा snd_kcontrol *element[CONTROL_MAX_ELEMENTS];
+	bool opt_coax_चयन;
+	bool line_phono_चयन;
+	bool digital_thru_चयन;
 	bool usb_streaming;
 	u8 output_vol[6];
 	u8 ovol_updated;
 	u8 output_mute;
 	s8 input_vol[2];
 	u8 ivol_updated;
-};
+पूर्ण;
 
-int usb6fire_control_init(struct sfire_chip *chip);
-void usb6fire_control_abort(struct sfire_chip *chip);
-void usb6fire_control_destroy(struct sfire_chip *chip);
-#endif /* USB6FIRE_CONTROL_H */
+पूर्णांक usb6fire_control_init(काष्ठा sfire_chip *chip);
+व्योम usb6fire_control_पात(काष्ठा sfire_chip *chip);
+व्योम usb6fire_control_destroy(काष्ठा sfire_chip *chip);
+#पूर्ण_अगर /* USB6FIRE_CONTROL_H */
 

@@ -1,17 +1,18 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- * Greybus manifest parsing
+ * Greybus manअगरest parsing
  *
  * Copyright 2014 Google Inc.
  * Copyright 2014 Linaro Ltd.
  */
 
-#ifndef __MANIFEST_H
-#define __MANIFEST_H
+#अगर_अघोषित __MANIFEST_H
+#घोषणा __MANIFEST_H
 
-#include <linux/types.h>
+#समावेश <linux/types.h>
 
-struct gb_interface;
-bool gb_manifest_parse(struct gb_interface *intf, void *data, size_t size);
+काष्ठा gb_पूर्णांकerface;
+bool gb_manअगरest_parse(काष्ठा gb_पूर्णांकerface *पूर्णांकf, व्योम *data, माप_प्रकार size);
 
-#endif /* __MANIFEST_H */
+#पूर्ण_अगर /* __MANIFEST_H */

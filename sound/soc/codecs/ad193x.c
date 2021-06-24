@@ -1,49 +1,50 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * AD193X Audio Codec driver supporting AD1936/7/8/9
  *
  * Copyright 2010 Analog Devices Inc.
  */
 
-#include <linux/module.h>
-#include <linux/kernel.h>
-#include <linux/device.h>
-#include <linux/regmap.h>
-#include <linux/slab.h>
-#include <sound/core.h>
-#include <sound/pcm.h>
-#include <sound/pcm_params.h>
-#include <sound/initval.h>
-#include <sound/soc.h>
-#include <sound/tlv.h>
+#समावेश <linux/module.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/device.h>
+#समावेश <linux/regmap.h>
+#समावेश <linux/slab.h>
+#समावेश <sound/core.h>
+#समावेश <sound/pcm.h>
+#समावेश <sound/pcm_params.h>
+#समावेश <sound/initval.h>
+#समावेश <sound/soc.h>
+#समावेश <sound/tlv.h>
 
-#include "ad193x.h"
+#समावेश "ad193x.h"
 
-/* codec private data */
-struct ad193x_priv {
-	struct regmap *regmap;
-	enum ad193x_type type;
-	int sysclk;
-};
+/* codec निजी data */
+काष्ठा ad193x_priv अणु
+	काष्ठा regmap *regmap;
+	क्रमागत ad193x_type type;
+	पूर्णांक sysclk;
+पूर्ण;
 
 /*
  * AD193X volume/mute/de-emphasis etc. controls
  */
-static const char * const ad193x_deemp[] = {"None", "48kHz", "44.1kHz", "32kHz"};
+अटल स्थिर अक्षर * स्थिर ad193x_deemp[] = अणु"None", "48kHz", "44.1kHz", "32kHz"पूर्ण;
 
-static SOC_ENUM_SINGLE_DECL(ad193x_deemp_enum, AD193X_DAC_CTRL2, 1,
+अटल SOC_ENUM_SINGLE_DECL(ad193x_deemp_क्रमागत, AD193X_DAC_CTRL2, 1,
 			    ad193x_deemp);
 
-static const DECLARE_TLV_DB_MINMAX(adau193x_tlv, -9563, 0);
+अटल स्थिर DECLARE_TLV_DB_MINMAX(adau193x_tlv, -9563, 0);
 
-static const unsigned int ad193x_sb[] = {32};
+अटल स्थिर अचिन्हित पूर्णांक ad193x_sb[] = अणु32पूर्ण;
 
-static struct snd_pcm_hw_constraint_list constr = {
+अटल काष्ठा snd_pcm_hw_स्थिरraपूर्णांक_list स्थिरr = अणु
 	.list = ad193x_sb,
 	.count = ARRAY_SIZE(ad193x_sb),
-};
+पूर्ण;
 
-static const struct snd_kcontrol_new ad193x_snd_controls[] = {
+अटल स्थिर काष्ठा snd_kcontrol_new ad193x_snd_controls[] = अणु
 	/* DAC volume control */
 	SOC_DOUBLE_R_TLV("DAC1 Volume", AD193X_DAC_L1_VOL,
 			AD193X_DAC_R1_VOL, 0, 0xFF, 1, adau193x_tlv),
@@ -54,7 +55,7 @@ static const struct snd_kcontrol_new ad193x_snd_controls[] = {
 	SOC_DOUBLE_R_TLV("DAC4 Volume", AD193X_DAC_L4_VOL,
 			AD193X_DAC_R4_VOL, 0, 0xFF, 1, adau193x_tlv),
 
-	/* DAC switch control */
+	/* DAC चयन control */
 	SOC_DOUBLE("DAC1 Switch", AD193X_DAC_CHNL_MUTE, AD193X_DACL1_MUTE,
 		AD193X_DACR1_MUTE, 1, 1),
 	SOC_DOUBLE("DAC2 Switch", AD193X_DAC_CHNL_MUTE, AD193X_DACL2_MUTE,
@@ -65,11 +66,11 @@ static const struct snd_kcontrol_new ad193x_snd_controls[] = {
 		AD193X_DACR4_MUTE, 1, 1),
 
 	/* DAC de-emphasis */
-	SOC_ENUM("Playback Deemphasis", ad193x_deemp_enum),
-};
+	SOC_ENUM("Playback Deemphasis", ad193x_deemp_क्रमागत),
+पूर्ण;
 
-static const struct snd_kcontrol_new ad193x_adc_snd_controls[] = {
-	/* ADC switch control */
+अटल स्थिर काष्ठा snd_kcontrol_new ad193x_adc_snd_controls[] = अणु
+	/* ADC चयन control */
 	SOC_DOUBLE("ADC1 Switch", AD193X_ADC_CTRL0, AD193X_ADCL1_MUTE,
 		AD193X_ADCR1_MUTE, 1, 1),
 	SOC_DOUBLE("ADC2 Switch", AD193X_ADC_CTRL0, AD193X_ADCL2_MUTE,
@@ -78,217 +79,217 @@ static const struct snd_kcontrol_new ad193x_adc_snd_controls[] = {
 	/* ADC high-pass filter */
 	SOC_SINGLE("ADC High Pass Filter Switch", AD193X_ADC_CTRL0,
 			AD193X_ADC_HIGHPASS_FILTER, 1, 0),
-};
+पूर्ण;
 
-static const struct snd_soc_dapm_widget ad193x_dapm_widgets[] = {
+अटल स्थिर काष्ठा snd_soc_dapm_widget ad193x_dapm_widमाला_लो[] = अणु
 	SND_SOC_DAPM_DAC("DAC", "Playback", SND_SOC_NOPM, 0, 0),
-	SND_SOC_DAPM_PGA("DAC Output", AD193X_DAC_CTRL0, 0, 1, NULL, 0),
-	SND_SOC_DAPM_SUPPLY("PLL_PWR", AD193X_PLL_CLK_CTRL0, 0, 1, NULL, 0),
-	SND_SOC_DAPM_SUPPLY("SYSCLK", AD193X_PLL_CLK_CTRL0, 7, 0, NULL, 0),
+	SND_SOC_DAPM_PGA("DAC Output", AD193X_DAC_CTRL0, 0, 1, शून्य, 0),
+	SND_SOC_DAPM_SUPPLY("PLL_PWR", AD193X_PLL_CLK_CTRL0, 0, 1, शून्य, 0),
+	SND_SOC_DAPM_SUPPLY("SYSCLK", AD193X_PLL_CLK_CTRL0, 7, 0, शून्य, 0),
 	SND_SOC_DAPM_VMID("VMID"),
 	SND_SOC_DAPM_OUTPUT("DAC1OUT"),
 	SND_SOC_DAPM_OUTPUT("DAC2OUT"),
 	SND_SOC_DAPM_OUTPUT("DAC3OUT"),
 	SND_SOC_DAPM_OUTPUT("DAC4OUT"),
-};
+पूर्ण;
 
-static const struct snd_soc_dapm_widget ad193x_adc_widgets[] = {
+अटल स्थिर काष्ठा snd_soc_dapm_widget ad193x_adc_widमाला_लो[] = अणु
 	SND_SOC_DAPM_ADC("ADC", "Capture", SND_SOC_NOPM, 0, 0),
-	SND_SOC_DAPM_SUPPLY("ADC_PWR", AD193X_ADC_CTRL0, 0, 1, NULL, 0),
+	SND_SOC_DAPM_SUPPLY("ADC_PWR", AD193X_ADC_CTRL0, 0, 1, शून्य, 0),
 	SND_SOC_DAPM_INPUT("ADC1IN"),
 	SND_SOC_DAPM_INPUT("ADC2IN"),
-};
+पूर्ण;
 
-static int ad193x_check_pll(struct snd_soc_dapm_widget *source,
-			    struct snd_soc_dapm_widget *sink)
-{
-	struct snd_soc_component *component = snd_soc_dapm_to_component(source->dapm);
-	struct ad193x_priv *ad193x = snd_soc_component_get_drvdata(component);
+अटल पूर्णांक ad193x_check_pll(काष्ठा snd_soc_dapm_widget *source,
+			    काष्ठा snd_soc_dapm_widget *sink)
+अणु
+	काष्ठा snd_soc_component *component = snd_soc_dapm_to_component(source->dapm);
+	काष्ठा ad193x_priv *ad193x = snd_soc_component_get_drvdata(component);
 
-	return !!ad193x->sysclk;
-}
+	वापस !!ad193x->sysclk;
+पूर्ण
 
-static const struct snd_soc_dapm_route audio_paths[] = {
-	{ "DAC", NULL, "SYSCLK" },
-	{ "DAC Output", NULL, "DAC" },
-	{ "DAC Output", NULL, "VMID" },
-	{ "DAC1OUT", NULL, "DAC Output" },
-	{ "DAC2OUT", NULL, "DAC Output" },
-	{ "DAC3OUT", NULL, "DAC Output" },
-	{ "DAC4OUT", NULL, "DAC Output" },
-	{ "SYSCLK", NULL, "PLL_PWR", &ad193x_check_pll },
-};
+अटल स्थिर काष्ठा snd_soc_dapm_route audio_paths[] = अणु
+	अणु "DAC", शून्य, "SYSCLK" पूर्ण,
+	अणु "DAC Output", शून्य, "DAC" पूर्ण,
+	अणु "DAC Output", शून्य, "VMID" पूर्ण,
+	अणु "DAC1OUT", शून्य, "DAC Output" पूर्ण,
+	अणु "DAC2OUT", शून्य, "DAC Output" पूर्ण,
+	अणु "DAC3OUT", शून्य, "DAC Output" पूर्ण,
+	अणु "DAC4OUT", शून्य, "DAC Output" पूर्ण,
+	अणु "SYSCLK", शून्य, "PLL_PWR", &ad193x_check_pll पूर्ण,
+पूर्ण;
 
-static const struct snd_soc_dapm_route ad193x_adc_audio_paths[] = {
-	{ "ADC", NULL, "SYSCLK" },
-	{ "ADC", NULL, "ADC_PWR" },
-	{ "ADC", NULL, "ADC1IN" },
-	{ "ADC", NULL, "ADC2IN" },
-};
+अटल स्थिर काष्ठा snd_soc_dapm_route ad193x_adc_audio_paths[] = अणु
+	अणु "ADC", शून्य, "SYSCLK" पूर्ण,
+	अणु "ADC", शून्य, "ADC_PWR" पूर्ण,
+	अणु "ADC", शून्य, "ADC1IN" पूर्ण,
+	अणु "ADC", शून्य, "ADC2IN" पूर्ण,
+पूर्ण;
 
-static inline bool ad193x_has_adc(const struct ad193x_priv *ad193x)
-{
-	switch (ad193x->type) {
-	case AD1933:
-	case AD1934:
-		return false;
-	default:
-		break;
-	}
+अटल अंतरभूत bool ad193x_has_adc(स्थिर काष्ठा ad193x_priv *ad193x)
+अणु
+	चयन (ad193x->type) अणु
+	हाल AD1933:
+	हाल AD1934:
+		वापस false;
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
 /*
  * DAI ops entries
  */
 
-static int ad193x_mute(struct snd_soc_dai *dai, int mute, int direction)
-{
-	struct ad193x_priv *ad193x = snd_soc_component_get_drvdata(dai->component);
+अटल पूर्णांक ad193x_mute(काष्ठा snd_soc_dai *dai, पूर्णांक mute, पूर्णांक direction)
+अणु
+	काष्ठा ad193x_priv *ad193x = snd_soc_component_get_drvdata(dai->component);
 
-	if (mute)
+	अगर (mute)
 		regmap_update_bits(ad193x->regmap, AD193X_DAC_CTRL2,
 				    AD193X_DAC_MASTER_MUTE,
 				    AD193X_DAC_MASTER_MUTE);
-	else
+	अन्यथा
 		regmap_update_bits(ad193x->regmap, AD193X_DAC_CTRL2,
 				    AD193X_DAC_MASTER_MUTE, 0);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ad193x_set_tdm_slot(struct snd_soc_dai *dai, unsigned int tx_mask,
-			       unsigned int rx_mask, int slots, int width)
-{
-	struct ad193x_priv *ad193x = snd_soc_component_get_drvdata(dai->component);
-	unsigned int channels;
+अटल पूर्णांक ad193x_set_tdm_slot(काष्ठा snd_soc_dai *dai, अचिन्हित पूर्णांक tx_mask,
+			       अचिन्हित पूर्णांक rx_mask, पूर्णांक slots, पूर्णांक width)
+अणु
+	काष्ठा ad193x_priv *ad193x = snd_soc_component_get_drvdata(dai->component);
+	अचिन्हित पूर्णांक channels;
 
-	switch (slots) {
-	case 2:
+	चयन (slots) अणु
+	हाल 2:
 		channels = AD193X_2_CHANNELS;
-		break;
-	case 4:
+		अवरोध;
+	हाल 4:
 		channels = AD193X_4_CHANNELS;
-		break;
-	case 8:
+		अवरोध;
+	हाल 8:
 		channels = AD193X_8_CHANNELS;
-		break;
-	case 16:
+		अवरोध;
+	हाल 16:
 		channels = AD193X_16_CHANNELS;
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
 	regmap_update_bits(ad193x->regmap, AD193X_DAC_CTRL1,
 		AD193X_DAC_CHAN_MASK, channels << AD193X_DAC_CHAN_SHFT);
-	if (ad193x_has_adc(ad193x))
+	अगर (ad193x_has_adc(ad193x))
 		regmap_update_bits(ad193x->regmap, AD193X_ADC_CTRL2,
 				   AD193X_ADC_CHAN_MASK,
 				   channels << AD193X_ADC_CHAN_SHFT);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ad193x_set_dai_fmt(struct snd_soc_dai *codec_dai,
-		unsigned int fmt)
-{
-	struct ad193x_priv *ad193x = snd_soc_component_get_drvdata(codec_dai->component);
-	unsigned int adc_serfmt = 0;
-	unsigned int dac_serfmt = 0;
-	unsigned int adc_fmt = 0;
-	unsigned int dac_fmt = 0;
+अटल पूर्णांक ad193x_set_dai_fmt(काष्ठा snd_soc_dai *codec_dai,
+		अचिन्हित पूर्णांक fmt)
+अणु
+	काष्ठा ad193x_priv *ad193x = snd_soc_component_get_drvdata(codec_dai->component);
+	अचिन्हित पूर्णांक adc_serfmt = 0;
+	अचिन्हित पूर्णांक dac_serfmt = 0;
+	अचिन्हित पूर्णांक adc_fmt = 0;
+	अचिन्हित पूर्णांक dac_fmt = 0;
 
 	/* At present, the driver only support AUX ADC mode(SND_SOC_DAIFMT_I2S
 	 * with TDM), ADC&DAC TDM mode(SND_SOC_DAIFMT_DSP_A) and DAC I2S mode
 	 * (SND_SOC_DAIFMT_I2S)
 	 */
-	switch (fmt & SND_SOC_DAIFMT_FORMAT_MASK) {
-	case SND_SOC_DAIFMT_I2S:
+	चयन (fmt & SND_SOC_DAIFMT_FORMAT_MASK) अणु
+	हाल SND_SOC_DAIFMT_I2S:
 		adc_serfmt |= AD193X_ADC_SERFMT_TDM;
 		dac_serfmt |= AD193X_DAC_SERFMT_STEREO;
-		break;
-	case SND_SOC_DAIFMT_DSP_A:
+		अवरोध;
+	हाल SND_SOC_DAIFMT_DSP_A:
 		adc_serfmt |= AD193X_ADC_SERFMT_AUX;
 		dac_serfmt |= AD193X_DAC_SERFMT_TDM;
-		break;
-	default:
-		if (ad193x_has_adc(ad193x))
-			return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		अगर (ad193x_has_adc(ad193x))
+			वापस -EINVAL;
+	पूर्ण
 
-	switch (fmt & SND_SOC_DAIFMT_INV_MASK) {
-	case SND_SOC_DAIFMT_NB_NF: /* normal bit clock + frame */
-		break;
-	case SND_SOC_DAIFMT_NB_IF: /* normal bclk + invert frm */
+	चयन (fmt & SND_SOC_DAIFMT_INV_MASK) अणु
+	हाल SND_SOC_DAIFMT_NB_NF: /* normal bit घड़ी + frame */
+		अवरोध;
+	हाल SND_SOC_DAIFMT_NB_IF: /* normal bclk + invert frm */
 		adc_fmt |= AD193X_ADC_LEFT_HIGH;
 		dac_fmt |= AD193X_DAC_LEFT_HIGH;
-		break;
-	case SND_SOC_DAIFMT_IB_NF: /* invert bclk + normal frm */
+		अवरोध;
+	हाल SND_SOC_DAIFMT_IB_NF: /* invert bclk + normal frm */
 		adc_fmt |= AD193X_ADC_BCLK_INV;
 		dac_fmt |= AD193X_DAC_BCLK_INV;
-		break;
-	case SND_SOC_DAIFMT_IB_IF: /* invert bclk + frm */
+		अवरोध;
+	हाल SND_SOC_DAIFMT_IB_IF: /* invert bclk + frm */
 		adc_fmt |= AD193X_ADC_LEFT_HIGH;
 		adc_fmt |= AD193X_ADC_BCLK_INV;
 		dac_fmt |= AD193X_DAC_LEFT_HIGH;
 		dac_fmt |= AD193X_DAC_BCLK_INV;
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
 	/* For DSP_*, LRCLK's polarity must be inverted */
-	if (fmt & SND_SOC_DAIFMT_DSP_A)
+	अगर (fmt & SND_SOC_DAIFMT_DSP_A)
 		dac_fmt ^= AD193X_DAC_LEFT_HIGH;
 
-	switch (fmt & SND_SOC_DAIFMT_MASTER_MASK) {
-	case SND_SOC_DAIFMT_CBM_CFM: /* codec clk & frm master */
+	चयन (fmt & SND_SOC_DAIFMT_MASTER_MASK) अणु
+	हाल SND_SOC_DAIFMT_CBM_CFM: /* codec clk & frm master */
 		adc_fmt |= AD193X_ADC_LCR_MASTER;
 		adc_fmt |= AD193X_ADC_BCLK_MASTER;
 		dac_fmt |= AD193X_DAC_LCR_MASTER;
 		dac_fmt |= AD193X_DAC_BCLK_MASTER;
-		break;
-	case SND_SOC_DAIFMT_CBS_CFM: /* codec clk slave & frm master */
+		अवरोध;
+	हाल SND_SOC_DAIFMT_CBS_CFM: /* codec clk slave & frm master */
 		adc_fmt |= AD193X_ADC_LCR_MASTER;
 		dac_fmt |= AD193X_DAC_LCR_MASTER;
-		break;
-	case SND_SOC_DAIFMT_CBM_CFS: /* codec clk master & frame slave */
+		अवरोध;
+	हाल SND_SOC_DAIFMT_CBM_CFS: /* codec clk master & frame slave */
 		adc_fmt |= AD193X_ADC_BCLK_MASTER;
 		dac_fmt |= AD193X_DAC_BCLK_MASTER;
-		break;
-	case SND_SOC_DAIFMT_CBS_CFS: /* codec clk & frm slave */
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	हाल SND_SOC_DAIFMT_CBS_CFS: /* codec clk & frm slave */
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	if (ad193x_has_adc(ad193x)) {
+	अगर (ad193x_has_adc(ad193x)) अणु
 		regmap_update_bits(ad193x->regmap, AD193X_ADC_CTRL1,
 				   AD193X_ADC_SERFMT_MASK, adc_serfmt);
 		regmap_update_bits(ad193x->regmap, AD193X_ADC_CTRL2,
 				   AD193X_ADC_FMT_MASK, adc_fmt);
-	}
+	पूर्ण
 	regmap_update_bits(ad193x->regmap, AD193X_DAC_CTRL0,
 			   AD193X_DAC_SERFMT_MASK, dac_serfmt);
 	regmap_update_bits(ad193x->regmap, AD193X_DAC_CTRL1,
 		AD193X_DAC_FMT_MASK, dac_fmt);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ad193x_set_dai_sysclk(struct snd_soc_dai *codec_dai,
-		int clk_id, unsigned int freq, int dir)
-{
-	struct snd_soc_component *component = codec_dai->component;
-	struct snd_soc_dapm_context *dapm = snd_soc_component_get_dapm(component);
-	struct ad193x_priv *ad193x = snd_soc_component_get_drvdata(component);
+अटल पूर्णांक ad193x_set_dai_sysclk(काष्ठा snd_soc_dai *codec_dai,
+		पूर्णांक clk_id, अचिन्हित पूर्णांक freq, पूर्णांक dir)
+अणु
+	काष्ठा snd_soc_component *component = codec_dai->component;
+	काष्ठा snd_soc_dapm_context *dapm = snd_soc_component_get_dapm(component);
+	काष्ठा ad193x_priv *ad193x = snd_soc_component_get_drvdata(component);
 
-	if (clk_id == AD193X_SYSCLK_MCLK) {
+	अगर (clk_id == AD193X_SYSCLK_MCLK) अणु
 		/* MCLK must be 512 x fs */
-		if (dir == SND_SOC_CLOCK_OUT || freq != 24576000)
-			return -EINVAL;
+		अगर (dir == SND_SOC_CLOCK_OUT || freq != 24576000)
+			वापस -EINVAL;
 
 		regmap_update_bits(ad193x->regmap, AD193X_PLL_CLK_CTRL1,
 				   AD193X_PLL_SRC_MASK,
@@ -296,55 +297,55 @@ static int ad193x_set_dai_sysclk(struct snd_soc_dai *codec_dai,
 				   AD193X_PLL_CLK_SRC_MCLK);
 
 		snd_soc_dapm_sync(dapm);
-		return 0;
-	}
-	switch (freq) {
-	case 12288000:
-	case 18432000:
-	case 24576000:
-	case 36864000:
+		वापस 0;
+	पूर्ण
+	चयन (freq) अणु
+	हाल 12288000:
+	हाल 18432000:
+	हाल 24576000:
+	हाल 36864000:
 		ad193x->sysclk = freq;
-		return 0;
-	}
-	return -EINVAL;
-}
+		वापस 0;
+	पूर्ण
+	वापस -EINVAL;
+पूर्ण
 
-static int ad193x_hw_params(struct snd_pcm_substream *substream,
-		struct snd_pcm_hw_params *params,
-		struct snd_soc_dai *dai)
-{
-	int word_len = 0, master_rate = 0;
-	struct snd_soc_component *component = dai->component;
-	struct ad193x_priv *ad193x = snd_soc_component_get_drvdata(component);
+अटल पूर्णांक ad193x_hw_params(काष्ठा snd_pcm_substream *substream,
+		काष्ठा snd_pcm_hw_params *params,
+		काष्ठा snd_soc_dai *dai)
+अणु
+	पूर्णांक word_len = 0, master_rate = 0;
+	काष्ठा snd_soc_component *component = dai->component;
+	काष्ठा ad193x_priv *ad193x = snd_soc_component_get_drvdata(component);
 
 	/* bit size */
-	switch (params_width(params)) {
-	case 16:
+	चयन (params_width(params)) अणु
+	हाल 16:
 		word_len = 3;
-		break;
-	case 20:
+		अवरोध;
+	हाल 20:
 		word_len = 1;
-		break;
-	case 24:
-	case 32:
+		अवरोध;
+	हाल 24:
+	हाल 32:
 		word_len = 0;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	switch (ad193x->sysclk) {
-	case 12288000:
+	चयन (ad193x->sysclk) अणु
+	हाल 12288000:
 		master_rate = AD193X_PLL_INPUT_256;
-		break;
-	case 18432000:
+		अवरोध;
+	हाल 18432000:
 		master_rate = AD193X_PLL_INPUT_384;
-		break;
-	case 24576000:
+		अवरोध;
+	हाल 24576000:
 		master_rate = AD193X_PLL_INPUT_512;
-		break;
-	case 36864000:
+		अवरोध;
+	हाल 36864000:
 		master_rate = AD193X_PLL_INPUT_768;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	regmap_update_bits(ad193x->regmap, AD193X_PLL_CLK_CTRL0,
 			    AD193X_PLL_INPUT_MASK, master_rate);
@@ -353,22 +354,22 @@ static int ad193x_hw_params(struct snd_pcm_substream *substream,
 			    AD193X_DAC_WORD_LEN_MASK,
 			    word_len << AD193X_DAC_WORD_LEN_SHFT);
 
-	if (ad193x_has_adc(ad193x))
+	अगर (ad193x_has_adc(ad193x))
 		regmap_update_bits(ad193x->regmap, AD193X_ADC_CTRL1,
 				   AD193X_ADC_WORD_LEN_MASK, word_len);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ad193x_startup(struct snd_pcm_substream *substream,
-			  struct snd_soc_dai *dai)
-{
-	return snd_pcm_hw_constraint_list(substream->runtime, 0,
+अटल पूर्णांक ad193x_startup(काष्ठा snd_pcm_substream *substream,
+			  काष्ठा snd_soc_dai *dai)
+अणु
+	वापस snd_pcm_hw_स्थिरraपूर्णांक_list(substream->runसमय, 0,
 				   SNDRV_PCM_HW_PARAM_SAMPLE_BITS,
-				   &constr);
-}
+				   &स्थिरr);
+पूर्ण
 
-static const struct snd_soc_dai_ops ad193x_dai_ops = {
+अटल स्थिर काष्ठा snd_soc_dai_ops ad193x_dai_ops = अणु
 	.startup = ad193x_startup,
 	.hw_params = ad193x_hw_params,
 	.mute_stream = ad193x_mute,
@@ -376,158 +377,158 @@ static const struct snd_soc_dai_ops ad193x_dai_ops = {
 	.set_sysclk	= ad193x_set_dai_sysclk,
 	.set_fmt = ad193x_set_dai_fmt,
 	.no_capture_mute = 1,
-};
+पूर्ण;
 
 /* codec DAI instance */
-static struct snd_soc_dai_driver ad193x_dai = {
+अटल काष्ठा snd_soc_dai_driver ad193x_dai = अणु
 	.name = "ad193x-hifi",
-	.playback = {
+	.playback = अणु
 		.stream_name = "Playback",
 		.channels_min = 2,
 		.channels_max = 8,
 		.rates = SNDRV_PCM_RATE_48000,
-		.formats = SNDRV_PCM_FMTBIT_S32_LE | SNDRV_PCM_FMTBIT_S16_LE |
+		.क्रमmats = SNDRV_PCM_FMTBIT_S32_LE | SNDRV_PCM_FMTBIT_S16_LE |
 			SNDRV_PCM_FMTBIT_S20_3LE | SNDRV_PCM_FMTBIT_S24_LE,
-	},
-	.capture = {
+	पूर्ण,
+	.capture = अणु
 		.stream_name = "Capture",
 		.channels_min = 2,
 		.channels_max = 4,
 		.rates = SNDRV_PCM_RATE_48000,
-		.formats = SNDRV_PCM_FMTBIT_S32_LE | SNDRV_PCM_FMTBIT_S16_LE |
+		.क्रमmats = SNDRV_PCM_FMTBIT_S32_LE | SNDRV_PCM_FMTBIT_S16_LE |
 			SNDRV_PCM_FMTBIT_S20_3LE | SNDRV_PCM_FMTBIT_S24_LE,
-	},
+	पूर्ण,
 	.ops = &ad193x_dai_ops,
-};
+पूर्ण;
 
-/* codec DAI instance for DAC only */
-static struct snd_soc_dai_driver ad193x_no_adc_dai = {
+/* codec DAI instance क्रम DAC only */
+अटल काष्ठा snd_soc_dai_driver ad193x_no_adc_dai = अणु
 	.name = "ad193x-hifi",
-	.playback = {
+	.playback = अणु
 		.stream_name = "Playback",
 		.channels_min = 2,
 		.channels_max = 8,
 		.rates = SNDRV_PCM_RATE_48000,
-		.formats = SNDRV_PCM_FMTBIT_S32_LE | SNDRV_PCM_FMTBIT_S16_LE |
+		.क्रमmats = SNDRV_PCM_FMTBIT_S32_LE | SNDRV_PCM_FMTBIT_S16_LE |
 			SNDRV_PCM_FMTBIT_S20_3LE | SNDRV_PCM_FMTBIT_S24_LE,
-	},
+	पूर्ण,
 	.ops = &ad193x_dai_ops,
-};
+पूर्ण;
 
-/* codec register values to set after reset */
-static void ad193x_reg_default_init(struct ad193x_priv *ad193x)
-{
-	static const struct reg_sequence reg_init[] = {
-		{  0, 0x99 },	/* PLL_CLK_CTRL0: pll input: mclki/xi 12.288Mhz */
-		{  1, 0x04 },	/* PLL_CLK_CTRL1: no on-chip Vref */
-		{  2, 0x40 },	/* DAC_CTRL0: TDM mode */
-		{  3, 0x00 },	/* DAC_CTRL1: reset */
-		{  4, 0x1A },	/* DAC_CTRL2: 48kHz de-emphasis, unmute dac */
-		{  5, 0x00 },	/* DAC_CHNL_MUTE: unmute DAC channels */
-		{  6, 0x00 },	/* DAC_L1_VOL: no attenuation */
-		{  7, 0x00 },	/* DAC_R1_VOL: no attenuation */
-		{  8, 0x00 },	/* DAC_L2_VOL: no attenuation */
-		{  9, 0x00 },	/* DAC_R2_VOL: no attenuation */
-		{ 10, 0x00 },	/* DAC_L3_VOL: no attenuation */
-		{ 11, 0x00 },	/* DAC_R3_VOL: no attenuation */
-		{ 12, 0x00 },	/* DAC_L4_VOL: no attenuation */
-		{ 13, 0x00 },	/* DAC_R4_VOL: no attenuation */
-	};
-	static const struct reg_sequence reg_adc_init[] = {
-		{ 14, 0x03 },	/* ADC_CTRL0: high-pass filter enable */
-		{ 15, 0x43 },	/* ADC_CTRL1: sata delay=1, adc aux mode */
-		{ 16, 0x00 },	/* ADC_CTRL2: reset */
-	};
+/* codec रेजिस्टर values to set after reset */
+अटल व्योम ad193x_reg_शेष_init(काष्ठा ad193x_priv *ad193x)
+अणु
+	अटल स्थिर काष्ठा reg_sequence reg_init[] = अणु
+		अणु  0, 0x99 पूर्ण,	/* PLL_CLK_CTRL0: pll input: mclki/xi 12.288Mhz */
+		अणु  1, 0x04 पूर्ण,	/* PLL_CLK_CTRL1: no on-chip Vref */
+		अणु  2, 0x40 पूर्ण,	/* DAC_CTRL0: TDM mode */
+		अणु  3, 0x00 पूर्ण,	/* DAC_CTRL1: reset */
+		अणु  4, 0x1A पूर्ण,	/* DAC_CTRL2: 48kHz de-emphasis, unmute dac */
+		अणु  5, 0x00 पूर्ण,	/* DAC_CHNL_MUTE: unmute DAC channels */
+		अणु  6, 0x00 पूर्ण,	/* DAC_L1_VOL: no attenuation */
+		अणु  7, 0x00 पूर्ण,	/* DAC_R1_VOL: no attenuation */
+		अणु  8, 0x00 पूर्ण,	/* DAC_L2_VOL: no attenuation */
+		अणु  9, 0x00 पूर्ण,	/* DAC_R2_VOL: no attenuation */
+		अणु 10, 0x00 पूर्ण,	/* DAC_L3_VOL: no attenuation */
+		अणु 11, 0x00 पूर्ण,	/* DAC_R3_VOL: no attenuation */
+		अणु 12, 0x00 पूर्ण,	/* DAC_L4_VOL: no attenuation */
+		अणु 13, 0x00 पूर्ण,	/* DAC_R4_VOL: no attenuation */
+	पूर्ण;
+	अटल स्थिर काष्ठा reg_sequence reg_adc_init[] = अणु
+		अणु 14, 0x03 पूर्ण,	/* ADC_CTRL0: high-pass filter enable */
+		अणु 15, 0x43 पूर्ण,	/* ADC_CTRL1: sata delay=1, adc aux mode */
+		अणु 16, 0x00 पूर्ण,	/* ADC_CTRL2: reset */
+	पूर्ण;
 
-	regmap_multi_reg_write(ad193x->regmap, reg_init, ARRAY_SIZE(reg_init));
+	regmap_multi_reg_ग_लिखो(ad193x->regmap, reg_init, ARRAY_SIZE(reg_init));
 
-	if (ad193x_has_adc(ad193x)) {
-		regmap_multi_reg_write(ad193x->regmap, reg_adc_init,
+	अगर (ad193x_has_adc(ad193x)) अणु
+		regmap_multi_reg_ग_लिखो(ad193x->regmap, reg_adc_init,
 				       ARRAY_SIZE(reg_adc_init));
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int ad193x_component_probe(struct snd_soc_component *component)
-{
-	struct ad193x_priv *ad193x = snd_soc_component_get_drvdata(component);
-	struct snd_soc_dapm_context *dapm = snd_soc_component_get_dapm(component);
-	int num, ret;
+अटल पूर्णांक ad193x_component_probe(काष्ठा snd_soc_component *component)
+अणु
+	काष्ठा ad193x_priv *ad193x = snd_soc_component_get_drvdata(component);
+	काष्ठा snd_soc_dapm_context *dapm = snd_soc_component_get_dapm(component);
+	पूर्णांक num, ret;
 
-	/* default setting for ad193x */
-	ad193x_reg_default_init(ad193x);
+	/* शेष setting क्रम ad193x */
+	ad193x_reg_शेष_init(ad193x);
 
 	/* adc only */
-	if (ad193x_has_adc(ad193x)) {
+	अगर (ad193x_has_adc(ad193x)) अणु
 		/* add adc controls */
 		num = ARRAY_SIZE(ad193x_adc_snd_controls);
 		ret = snd_soc_add_component_controls(component,
 						 ad193x_adc_snd_controls,
 						 num);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 
-		/* add adc widgets */
-		num = ARRAY_SIZE(ad193x_adc_widgets);
+		/* add adc widमाला_लो */
+		num = ARRAY_SIZE(ad193x_adc_widमाला_लो);
 		ret = snd_soc_dapm_new_controls(dapm,
-						ad193x_adc_widgets,
+						ad193x_adc_widमाला_लो,
 						num);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 
 		/* add adc routes */
 		num = ARRAY_SIZE(ad193x_adc_audio_paths);
 		ret = snd_soc_dapm_add_routes(dapm,
 					      ad193x_adc_audio_paths,
 					      num);
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct snd_soc_component_driver soc_component_dev_ad193x = {
+अटल स्थिर काष्ठा snd_soc_component_driver soc_component_dev_ad193x = अणु
 	.probe			= ad193x_component_probe,
 	.controls		= ad193x_snd_controls,
 	.num_controls		= ARRAY_SIZE(ad193x_snd_controls),
-	.dapm_widgets		= ad193x_dapm_widgets,
-	.num_dapm_widgets	= ARRAY_SIZE(ad193x_dapm_widgets),
+	.dapm_widमाला_लो		= ad193x_dapm_widमाला_लो,
+	.num_dapm_widमाला_लो	= ARRAY_SIZE(ad193x_dapm_widमाला_लो),
 	.dapm_routes		= audio_paths,
 	.num_dapm_routes	= ARRAY_SIZE(audio_paths),
 	.idle_bias_on		= 1,
-	.use_pmdown_time	= 1,
+	.use_pmकरोwn_समय	= 1,
 	.endianness		= 1,
 	.non_legacy_dai_naming	= 1,
-};
+पूर्ण;
 
-const struct regmap_config ad193x_regmap_config = {
-	.max_register = AD193X_NUM_REGS - 1,
-};
+स्थिर काष्ठा regmap_config ad193x_regmap_config = अणु
+	.max_रेजिस्टर = AD193X_NUM_REGS - 1,
+पूर्ण;
 EXPORT_SYMBOL_GPL(ad193x_regmap_config);
 
-int ad193x_probe(struct device *dev, struct regmap *regmap,
-		 enum ad193x_type type)
-{
-	struct ad193x_priv *ad193x;
+पूर्णांक ad193x_probe(काष्ठा device *dev, काष्ठा regmap *regmap,
+		 क्रमागत ad193x_type type)
+अणु
+	काष्ठा ad193x_priv *ad193x;
 
-	if (IS_ERR(regmap))
-		return PTR_ERR(regmap);
+	अगर (IS_ERR(regmap))
+		वापस PTR_ERR(regmap);
 
-	ad193x = devm_kzalloc(dev, sizeof(*ad193x), GFP_KERNEL);
-	if (ad193x == NULL)
-		return -ENOMEM;
+	ad193x = devm_kzalloc(dev, माप(*ad193x), GFP_KERNEL);
+	अगर (ad193x == शून्य)
+		वापस -ENOMEM;
 
 	ad193x->regmap = regmap;
 	ad193x->type = type;
 
 	dev_set_drvdata(dev, ad193x);
 
-	if (ad193x_has_adc(ad193x))
-		return devm_snd_soc_register_component(dev, &soc_component_dev_ad193x,
+	अगर (ad193x_has_adc(ad193x))
+		वापस devm_snd_soc_रेजिस्टर_component(dev, &soc_component_dev_ad193x,
 						       &ad193x_dai, 1);
-	return devm_snd_soc_register_component(dev, &soc_component_dev_ad193x,
+	वापस devm_snd_soc_रेजिस्टर_component(dev, &soc_component_dev_ad193x,
 		&ad193x_no_adc_dai, 1);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(ad193x_probe);
 
 MODULE_DESCRIPTION("ASoC ad193x driver");

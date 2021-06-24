@@ -1,32 +1,33 @@
+<शैली गुरु>
 /*
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the main directory of this archive
- * for more details.
+ * License.  See the file "COPYING" in the मुख्य directory of this archive
+ * क्रम more details.
  *
  * Copyright (C) 2005, 06 by Ralf Baechle (ralf@linux-mips.org)
  * Copyright (C) 2005 MIPS Technologies, Inc.
  */
-#ifndef _ASM_ABI_H
-#define _ASM_ABI_H
+#अगर_अघोषित _ASM_ABI_H
+#घोषणा _ASM_ABI_H
 
-#include <linux/signal_types.h>
+#समावेश <linux/संकेत_types.h>
 
-#include <asm/signal.h>
-#include <asm/siginfo.h>
-#include <asm/vdso.h>
+#समावेश <यंत्र/संकेत.स>
+#समावेश <यंत्र/siginfo.h>
+#समावेश <यंत्र/vdso.h>
 
-struct mips_abi {
-	int (* const setup_frame)(void *sig_return, struct ksignal *ksig,
-				  struct pt_regs *regs, sigset_t *set);
-	int (* const setup_rt_frame)(void *sig_return, struct ksignal *ksig,
-				     struct pt_regs *regs, sigset_t *set);
-	const unsigned long	restart;
+काष्ठा mips_abi अणु
+	पूर्णांक (* स्थिर setup_frame)(व्योम *sig_वापस, काष्ठा kसंकेत *ksig,
+				  काष्ठा pt_regs *regs, sigset_t *set);
+	पूर्णांक (* स्थिर setup_rt_frame)(व्योम *sig_वापस, काष्ठा kसंकेत *ksig,
+				     काष्ठा pt_regs *regs, sigset_t *set);
+	स्थिर अचिन्हित दीर्घ	restart;
 
-	unsigned	off_sc_fpregs;
-	unsigned	off_sc_fpc_csr;
-	unsigned	off_sc_used_math;
+	अचिन्हित	off_sc_fpregs;
+	अचिन्हित	off_sc_fpc_csr;
+	अचिन्हित	off_sc_used_math;
 
-	struct mips_vdso_image *vdso;
-};
+	काष्ठा mips_vdso_image *vdso;
+पूर्ण;
 
-#endif /* _ASM_ABI_H */
+#पूर्ण_अगर /* _ASM_ABI_H */

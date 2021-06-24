@@ -1,456 +1,457 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Copyright 2012 Freescale Semiconductor, Inc.
  * Copyright 2012 Linaro Ltd.
  */
 
-#include <linux/clk.h>
-#include <linux/clk/mxs.h>
-#include <linux/clkdev.h>
-#include <linux/delay.h>
-#include <linux/err.h>
-#include <linux/gpio.h>
-#include <linux/init.h>
-#include <linux/irqchip/mxs.h>
-#include <linux/reboot.h>
-#include <linux/micrel_phy.h>
-#include <linux/of_address.h>
-#include <linux/of_platform.h>
-#include <linux/phy.h>
-#include <linux/pinctrl/consumer.h>
-#include <linux/sys_soc.h>
-#include <asm/mach/arch.h>
-#include <asm/mach/map.h>
-#include <asm/mach/time.h>
-#include <asm/system_info.h>
-#include <asm/system_misc.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/clk/mxs.h>
+#समावेश <linux/clkdev.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/err.h>
+#समावेश <linux/gpपन.स>
+#समावेश <linux/init.h>
+#समावेश <linux/irqchip/mxs.h>
+#समावेश <linux/reboot.h>
+#समावेश <linux/micrel_phy.h>
+#समावेश <linux/of_address.h>
+#समावेश <linux/of_platक्रमm.h>
+#समावेश <linux/phy.h>
+#समावेश <linux/pinctrl/consumer.h>
+#समावेश <linux/sys_soc.h>
+#समावेश <यंत्र/mach/arch.h>
+#समावेश <यंत्र/mach/map.h>
+#समावेश <यंत्र/mach/समय.स>
+#समावेश <यंत्र/प्रणाली_info.h>
+#समावेश <यंत्र/प्रणाली_misc.h>
 
-#include "pm.h"
+#समावेश "pm.h"
 
 /* MXS DIGCTL SAIF CLKMUX */
-#define MXS_DIGCTL_SAIF_CLKMUX_DIRECT		0x0
-#define MXS_DIGCTL_SAIF_CLKMUX_CROSSINPUT	0x1
-#define MXS_DIGCTL_SAIF_CLKMUX_EXTMSTR0		0x2
-#define MXS_DIGCTL_SAIF_CLKMUX_EXTMSTR1		0x3
+#घोषणा MXS_DIGCTL_SAIF_CLKMUX_सूचीECT		0x0
+#घोषणा MXS_DIGCTL_SAIF_CLKMUX_CROSSINPUT	0x1
+#घोषणा MXS_DIGCTL_SAIF_CLKMUX_EXTMSTR0		0x2
+#घोषणा MXS_DIGCTL_SAIF_CLKMUX_EXTMSTR1		0x3
 
-#define HW_DIGCTL_CHIPID	0x310
-#define HW_DIGCTL_CHIPID_MASK	(0xffff << 16)
-#define HW_DIGCTL_REV_MASK	0xff
-#define HW_DIGCTL_CHIPID_MX23	(0x3780 << 16)
-#define HW_DIGCTL_CHIPID_MX28	(0x2800 << 16)
+#घोषणा HW_DIGCTL_CHIPID	0x310
+#घोषणा HW_DIGCTL_CHIPID_MASK	(0xffff << 16)
+#घोषणा HW_DIGCTL_REV_MASK	0xff
+#घोषणा HW_DIGCTL_CHIPID_MX23	(0x3780 << 16)
+#घोषणा HW_DIGCTL_CHIPID_MX28	(0x2800 << 16)
 
-#define MXS_CHIP_REVISION_1_0	0x10
-#define MXS_CHIP_REVISION_1_1	0x11
-#define MXS_CHIP_REVISION_1_2	0x12
-#define MXS_CHIP_REVISION_1_3	0x13
-#define MXS_CHIP_REVISION_1_4	0x14
-#define MXS_CHIP_REV_UNKNOWN	0xff
+#घोषणा MXS_CHIP_REVISION_1_0	0x10
+#घोषणा MXS_CHIP_REVISION_1_1	0x11
+#घोषणा MXS_CHIP_REVISION_1_2	0x12
+#घोषणा MXS_CHIP_REVISION_1_3	0x13
+#घोषणा MXS_CHIP_REVISION_1_4	0x14
+#घोषणा MXS_CHIP_REV_UNKNOWN	0xff
 
-#define MXS_GPIO_NR(bank, nr)	((bank) * 32 + (nr))
+#घोषणा MXS_GPIO_NR(bank, nr)	((bank) * 32 + (nr))
 
-#define MXS_SET_ADDR		0x4
-#define MXS_CLR_ADDR		0x8
-#define MXS_TOG_ADDR		0xc
+#घोषणा MXS_SET_ADDR		0x4
+#घोषणा MXS_CLR_ADDR		0x8
+#घोषणा MXS_TOG_ADDR		0xc
 
-#define HW_OCOTP_OPS2		19	/* offset 0x150 */
-#define HW_OCOTP_OPS3		20	/* offset 0x160 */
+#घोषणा HW_OCOTP_OPS2		19	/* offset 0x150 */
+#घोषणा HW_OCOTP_OPS3		20	/* offset 0x160 */
 
-static u32 chipid;
-static u32 socid;
+अटल u32 chipid;
+अटल u32 socid;
 
-static void __iomem *reset_addr;
+अटल व्योम __iomem *reset_addr;
 
-static inline void __mxs_setl(u32 mask, void __iomem *reg)
-{
-	__raw_writel(mask, reg + MXS_SET_ADDR);
-}
+अटल अंतरभूत व्योम __mxs_setl(u32 mask, व्योम __iomem *reg)
+अणु
+	__raw_ग_लिखोl(mask, reg + MXS_SET_ADDR);
+पूर्ण
 
-static inline void __mxs_clrl(u32 mask, void __iomem *reg)
-{
-	__raw_writel(mask, reg + MXS_CLR_ADDR);
-}
+अटल अंतरभूत व्योम __mxs_clrl(u32 mask, व्योम __iomem *reg)
+अणु
+	__raw_ग_लिखोl(mask, reg + MXS_CLR_ADDR);
+पूर्ण
 
-static inline void __mxs_togl(u32 mask, void __iomem *reg)
-{
-	__raw_writel(mask, reg + MXS_TOG_ADDR);
-}
+अटल अंतरभूत व्योम __mxs_togl(u32 mask, व्योम __iomem *reg)
+अणु
+	__raw_ग_लिखोl(mask, reg + MXS_TOG_ADDR);
+पूर्ण
 
-#define OCOTP_WORD_OFFSET		0x20
-#define OCOTP_WORD_COUNT		0x20
+#घोषणा OCOTP_WORD_OFFSET		0x20
+#घोषणा OCOTP_WORD_COUNT		0x20
 
-#define BM_OCOTP_CTRL_BUSY		(1 << 8)
-#define BM_OCOTP_CTRL_ERROR		(1 << 9)
-#define BM_OCOTP_CTRL_RD_BANK_OPEN	(1 << 12)
+#घोषणा BM_OCOTP_CTRL_BUSY		(1 << 8)
+#घोषणा BM_OCOTP_CTRL_ERROR		(1 << 9)
+#घोषणा BM_OCOTP_CTRL_RD_BANK_OPEN	(1 << 12)
 
-static DEFINE_MUTEX(ocotp_mutex);
-static u32 ocotp_words[OCOTP_WORD_COUNT];
+अटल DEFINE_MUTEX(ocotp_mutex);
+अटल u32 ocotp_words[OCOTP_WORD_COUNT];
 
-static const u32 *mxs_get_ocotp(void)
-{
-	struct device_node *np;
-	void __iomem *ocotp_base;
-	int timeout = 0x400;
-	size_t i;
-	static int once;
+अटल स्थिर u32 *mxs_get_ocotp(व्योम)
+अणु
+	काष्ठा device_node *np;
+	व्योम __iomem *ocotp_base;
+	पूर्णांक समयout = 0x400;
+	माप_प्रकार i;
+	अटल पूर्णांक once;
 
-	if (once)
-		return ocotp_words;
+	अगर (once)
+		वापस ocotp_words;
 
-	np = of_find_compatible_node(NULL, NULL, "fsl,ocotp");
+	np = of_find_compatible_node(शून्य, शून्य, "fsl,ocotp");
 	ocotp_base = of_iomap(np, 0);
 	WARN_ON(!ocotp_base);
 
 	mutex_lock(&ocotp_mutex);
 
 	/*
-	 * clk_enable(hbus_clk) for ocotp can be skipped
-	 * as it must be on when system is running.
+	 * clk_enable(hbus_clk) क्रम ocotp can be skipped
+	 * as it must be on when प्रणाली is running.
 	 */
 
 	/* try to clear ERROR bit */
 	__mxs_clrl(BM_OCOTP_CTRL_ERROR, ocotp_base);
 
 	/* check both BUSY and ERROR cleared */
-	while ((__raw_readl(ocotp_base) &
-		(BM_OCOTP_CTRL_BUSY | BM_OCOTP_CTRL_ERROR)) && --timeout)
+	जबतक ((__raw_पढ़ोl(ocotp_base) &
+		(BM_OCOTP_CTRL_BUSY | BM_OCOTP_CTRL_ERROR)) && --समयout)
 		cpu_relax();
 
-	if (unlikely(!timeout))
-		goto error_unlock;
+	अगर (unlikely(!समयout))
+		जाओ error_unlock;
 
-	/* open OCOTP banks for read */
+	/* खोलो OCOTP banks क्रम पढ़ो */
 	__mxs_setl(BM_OCOTP_CTRL_RD_BANK_OPEN, ocotp_base);
 
-	/* approximately wait 32 hclk cycles */
+	/* approximately रुको 32 hclk cycles */
 	udelay(1);
 
 	/* poll BUSY bit becoming cleared */
-	timeout = 0x400;
-	while ((__raw_readl(ocotp_base) & BM_OCOTP_CTRL_BUSY) && --timeout)
+	समयout = 0x400;
+	जबतक ((__raw_पढ़ोl(ocotp_base) & BM_OCOTP_CTRL_BUSY) && --समयout)
 		cpu_relax();
 
-	if (unlikely(!timeout))
-		goto error_unlock;
+	अगर (unlikely(!समयout))
+		जाओ error_unlock;
 
-	for (i = 0; i < OCOTP_WORD_COUNT; i++)
-		ocotp_words[i] = __raw_readl(ocotp_base + OCOTP_WORD_OFFSET +
+	क्रम (i = 0; i < OCOTP_WORD_COUNT; i++)
+		ocotp_words[i] = __raw_पढ़ोl(ocotp_base + OCOTP_WORD_OFFSET +
 						i * 0x10);
 
-	/* close banks for power saving */
+	/* बंद banks क्रम घातer saving */
 	__mxs_clrl(BM_OCOTP_CTRL_RD_BANK_OPEN, ocotp_base);
 
 	once = 1;
 
 	mutex_unlock(&ocotp_mutex);
 
-	return ocotp_words;
+	वापस ocotp_words;
 
 error_unlock:
 	mutex_unlock(&ocotp_mutex);
 	pr_err("%s: timeout in reading OCOTP\n", __func__);
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-enum mac_oui {
+क्रमागत mac_oui अणु
 	OUI_FSL,
 	OUI_DENX,
 	OUI_CRYSTALFONTZ,
 	OUI_I2SE,
 	OUI_ARMADEUS,
-};
+पूर्ण;
 
-static void __init update_fec_mac_prop(enum mac_oui oui)
-{
-	struct device_node *np, *from = NULL;
-	struct property *newmac;
-	const u32 *ocotp = mxs_get_ocotp();
+अटल व्योम __init update_fec_mac_prop(क्रमागत mac_oui oui)
+अणु
+	काष्ठा device_node *np, *from = शून्य;
+	काष्ठा property *newmac;
+	स्थिर u32 *ocotp = mxs_get_ocotp();
 	u8 *macaddr;
 	u32 val;
-	int i;
+	पूर्णांक i;
 
-	for (i = 0; i < 2; i++) {
-		np = of_find_compatible_node(from, NULL, "fsl,imx28-fec");
-		if (!np)
-			return;
+	क्रम (i = 0; i < 2; i++) अणु
+		np = of_find_compatible_node(from, शून्य, "fsl,imx28-fec");
+		अगर (!np)
+			वापस;
 
 		from = np;
 
-		if (of_get_property(np, "local-mac-address", NULL))
-			continue;
+		अगर (of_get_property(np, "local-mac-address", शून्य))
+			जारी;
 
-		newmac = kzalloc(sizeof(*newmac) + 6, GFP_KERNEL);
-		if (!newmac)
-			return;
+		newmac = kzalloc(माप(*newmac) + 6, GFP_KERNEL);
+		अगर (!newmac)
+			वापस;
 		newmac->value = newmac + 1;
 		newmac->length = 6;
 
 		newmac->name = kstrdup("local-mac-address", GFP_KERNEL);
-		if (!newmac->name) {
-			kfree(newmac);
-			return;
-		}
+		अगर (!newmac->name) अणु
+			kमुक्त(newmac);
+			वापस;
+		पूर्ण
 
 		/*
-		 * OCOTP only stores the last 4 octets for each mac address,
+		 * OCOTP only stores the last 4 octets क्रम each mac address,
 		 * so hard-code OUI here.
 		 */
 		macaddr = newmac->value;
-		switch (oui) {
-		case OUI_FSL:
+		चयन (oui) अणु
+		हाल OUI_FSL:
 			macaddr[0] = 0x00;
 			macaddr[1] = 0x04;
 			macaddr[2] = 0x9f;
-			break;
-		case OUI_DENX:
+			अवरोध;
+		हाल OUI_DENX:
 			macaddr[0] = 0xc0;
 			macaddr[1] = 0xe5;
 			macaddr[2] = 0x4e;
-			break;
-		case OUI_CRYSTALFONTZ:
+			अवरोध;
+		हाल OUI_CRYSTALFONTZ:
 			macaddr[0] = 0x58;
 			macaddr[1] = 0xb9;
 			macaddr[2] = 0xe1;
-			break;
-		case OUI_I2SE:
+			अवरोध;
+		हाल OUI_I2SE:
 			macaddr[0] = 0x00;
 			macaddr[1] = 0x01;
 			macaddr[2] = 0x87;
-			break;
-		case OUI_ARMADEUS:
+			अवरोध;
+		हाल OUI_ARMADEUS:
 			macaddr[0] = 0x00;
 			macaddr[1] = 0x1e;
 			macaddr[2] = 0xac;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		val = ocotp[i];
 		macaddr[3] = (val >> 16) & 0xff;
 		macaddr[4] = (val >> 8) & 0xff;
 		macaddr[5] = (val >> 0) & 0xff;
 
 		of_update_property(np, newmac);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static inline void enable_clk_enet_out(void)
-{
-	struct clk *clk = clk_get_sys("enet_out", NULL);
+अटल अंतरभूत व्योम enable_clk_enet_out(व्योम)
+अणु
+	काष्ठा clk *clk = clk_get_sys("enet_out", शून्य);
 
-	if (!IS_ERR(clk))
+	अगर (!IS_ERR(clk))
 		clk_prepare_enable(clk);
-}
+पूर्ण
 
-static void __init imx28_evk_init(void)
-{
+अटल व्योम __init imx28_evk_init(व्योम)
+अणु
 	update_fec_mac_prop(OUI_FSL);
 
-	mxs_saif_clkmux_select(MXS_DIGCTL_SAIF_CLKMUX_EXTMSTR0);
-}
+	mxs_saअगर_clkmux_select(MXS_DIGCTL_SAIF_CLKMUX_EXTMSTR0);
+पूर्ण
 
-static void __init imx28_apf28_init(void)
-{
+अटल व्योम __init imx28_apf28_init(व्योम)
+अणु
 	update_fec_mac_prop(OUI_ARMADEUS);
-}
+पूर्ण
 
-static int apx4devkit_phy_fixup(struct phy_device *phy)
-{
+अटल पूर्णांक apx4devkit_phy_fixup(काष्ठा phy_device *phy)
+अणु
 	phy->dev_flags |= MICREL_PHY_50MHZ_CLK;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void __init apx4devkit_init(void)
-{
+अटल व्योम __init apx4devkit_init(व्योम)
+अणु
 	enable_clk_enet_out();
 
-	if (IS_BUILTIN(CONFIG_PHYLIB))
-		phy_register_fixup_for_uid(PHY_ID_KSZ8051, MICREL_PHY_ID_MASK,
+	अगर (IS_BUILTIN(CONFIG_PHYLIB))
+		phy_रेजिस्टर_fixup_क्रम_uid(PHY_ID_KSZ8051, MICREL_PHY_ID_MASK,
 					   apx4devkit_phy_fixup);
-}
+पूर्ण
 
-static void __init crystalfontz_init(void)
-{
+अटल व्योम __init crystalfontz_init(व्योम)
+अणु
 	update_fec_mac_prop(OUI_CRYSTALFONTZ);
-}
+पूर्ण
 
-static void __init duckbill_init(void)
-{
+अटल व्योम __init duckbill_init(व्योम)
+अणु
 	update_fec_mac_prop(OUI_I2SE);
-}
+पूर्ण
 
-static void __init m28cu3_init(void)
-{
+अटल व्योम __init m28cu3_init(व्योम)
+अणु
 	update_fec_mac_prop(OUI_DENX);
-}
+पूर्ण
 
-static const char __init *mxs_get_soc_id(void)
-{
-	struct device_node *np;
-	void __iomem *digctl_base;
+अटल स्थिर अक्षर __init *mxs_get_soc_id(व्योम)
+अणु
+	काष्ठा device_node *np;
+	व्योम __iomem *digctl_base;
 
-	np = of_find_compatible_node(NULL, NULL, "fsl,imx23-digctl");
+	np = of_find_compatible_node(शून्य, शून्य, "fsl,imx23-digctl");
 	digctl_base = of_iomap(np, 0);
 	WARN_ON(!digctl_base);
 
-	chipid = readl(digctl_base + HW_DIGCTL_CHIPID);
+	chipid = पढ़ोl(digctl_base + HW_DIGCTL_CHIPID);
 	socid = chipid & HW_DIGCTL_CHIPID_MASK;
 
 	iounmap(digctl_base);
 	of_node_put(np);
 
-	switch (socid) {
-	case HW_DIGCTL_CHIPID_MX23:
-		return "i.MX23";
-	case HW_DIGCTL_CHIPID_MX28:
-		return "i.MX28";
-	default:
-		return "Unknown";
-	}
-}
+	चयन (socid) अणु
+	हाल HW_DIGCTL_CHIPID_MX23:
+		वापस "i.MX23";
+	हाल HW_DIGCTL_CHIPID_MX28:
+		वापस "i.MX28";
+	शेष:
+		वापस "Unknown";
+	पूर्ण
+पूर्ण
 
-static u32 __init mxs_get_cpu_rev(void)
-{
+अटल u32 __init mxs_get_cpu_rev(व्योम)
+अणु
 	u32 rev = chipid & HW_DIGCTL_REV_MASK;
 
-	switch (socid) {
-	case HW_DIGCTL_CHIPID_MX23:
-		switch (rev) {
-		case 0x0:
-			return MXS_CHIP_REVISION_1_0;
-		case 0x1:
-			return MXS_CHIP_REVISION_1_1;
-		case 0x2:
-			return MXS_CHIP_REVISION_1_2;
-		case 0x3:
-			return MXS_CHIP_REVISION_1_3;
-		case 0x4:
-			return MXS_CHIP_REVISION_1_4;
-		default:
-			return MXS_CHIP_REV_UNKNOWN;
-		}
-	case HW_DIGCTL_CHIPID_MX28:
-		switch (rev) {
-		case 0x0:
-			return MXS_CHIP_REVISION_1_1;
-		case 0x1:
-			return MXS_CHIP_REVISION_1_2;
-		default:
-			return MXS_CHIP_REV_UNKNOWN;
-		}
-	default:
-		return MXS_CHIP_REV_UNKNOWN;
-	}
-}
+	चयन (socid) अणु
+	हाल HW_DIGCTL_CHIPID_MX23:
+		चयन (rev) अणु
+		हाल 0x0:
+			वापस MXS_CHIP_REVISION_1_0;
+		हाल 0x1:
+			वापस MXS_CHIP_REVISION_1_1;
+		हाल 0x2:
+			वापस MXS_CHIP_REVISION_1_2;
+		हाल 0x3:
+			वापस MXS_CHIP_REVISION_1_3;
+		हाल 0x4:
+			वापस MXS_CHIP_REVISION_1_4;
+		शेष:
+			वापस MXS_CHIP_REV_UNKNOWN;
+		पूर्ण
+	हाल HW_DIGCTL_CHIPID_MX28:
+		चयन (rev) अणु
+		हाल 0x0:
+			वापस MXS_CHIP_REVISION_1_1;
+		हाल 0x1:
+			वापस MXS_CHIP_REVISION_1_2;
+		शेष:
+			वापस MXS_CHIP_REV_UNKNOWN;
+		पूर्ण
+	शेष:
+		वापस MXS_CHIP_REV_UNKNOWN;
+	पूर्ण
+पूर्ण
 
-static const char __init *mxs_get_revision(void)
-{
+अटल स्थिर अक्षर __init *mxs_get_revision(व्योम)
+अणु
 	u32 rev = mxs_get_cpu_rev();
 
-	if (rev != MXS_CHIP_REV_UNKNOWN)
-		return kasprintf(GFP_KERNEL, "%d.%d", (rev >> 4) & 0xf,
+	अगर (rev != MXS_CHIP_REV_UNKNOWN)
+		वापस kaप्र_लिखो(GFP_KERNEL, "%d.%d", (rev >> 4) & 0xf,
 				rev & 0xf);
-	else
-		return kasprintf(GFP_KERNEL, "%s", "Unknown");
-}
+	अन्यथा
+		वापस kaप्र_लिखो(GFP_KERNEL, "%s", "Unknown");
+पूर्ण
 
-#define MX23_CLKCTRL_RESET_OFFSET	0x120
-#define MX28_CLKCTRL_RESET_OFFSET	0x1e0
+#घोषणा MX23_CLKCTRL_RESET_OFFSET	0x120
+#घोषणा MX28_CLKCTRL_RESET_OFFSET	0x1e0
 
-static int __init mxs_restart_init(void)
-{
-	struct device_node *np;
+अटल पूर्णांक __init mxs_restart_init(व्योम)
+अणु
+	काष्ठा device_node *np;
 
-	np = of_find_compatible_node(NULL, NULL, "fsl,clkctrl");
+	np = of_find_compatible_node(शून्य, शून्य, "fsl,clkctrl");
 	reset_addr = of_iomap(np, 0);
-	if (!reset_addr)
-		return -ENODEV;
+	अगर (!reset_addr)
+		वापस -ENODEV;
 
-	if (of_device_is_compatible(np, "fsl,imx23-clkctrl"))
+	अगर (of_device_is_compatible(np, "fsl,imx23-clkctrl"))
 		reset_addr += MX23_CLKCTRL_RESET_OFFSET;
-	else
+	अन्यथा
 		reset_addr += MX28_CLKCTRL_RESET_OFFSET;
 	of_node_put(np);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void __init eukrea_mbmx283lc_init(void)
-{
-	mxs_saif_clkmux_select(MXS_DIGCTL_SAIF_CLKMUX_EXTMSTR0);
-}
+अटल व्योम __init eukrea_mbmx283lc_init(व्योम)
+अणु
+	mxs_saअगर_clkmux_select(MXS_DIGCTL_SAIF_CLKMUX_EXTMSTR0);
+पूर्ण
 
-static void __init mxs_machine_init(void)
-{
-	struct device_node *root;
-	struct device *parent;
-	struct soc_device *soc_dev;
-	struct soc_device_attribute *soc_dev_attr;
+अटल व्योम __init mxs_machine_init(व्योम)
+अणु
+	काष्ठा device_node *root;
+	काष्ठा device *parent;
+	काष्ठा soc_device *soc_dev;
+	काष्ठा soc_device_attribute *soc_dev_attr;
 	u64 soc_uid = 0;
-	const u32 *ocotp = mxs_get_ocotp();
-	int ret;
+	स्थिर u32 *ocotp = mxs_get_ocotp();
+	पूर्णांक ret;
 
-	soc_dev_attr = kzalloc(sizeof(*soc_dev_attr), GFP_KERNEL);
-	if (!soc_dev_attr)
-		return;
+	soc_dev_attr = kzalloc(माप(*soc_dev_attr), GFP_KERNEL);
+	अगर (!soc_dev_attr)
+		वापस;
 
 	root = of_find_node_by_path("/");
-	ret = of_property_read_string(root, "model", &soc_dev_attr->machine);
-	if (ret)
-		return;
+	ret = of_property_पढ़ो_string(root, "model", &soc_dev_attr->machine);
+	अगर (ret)
+		वापस;
 
 	soc_dev_attr->family = "Freescale MXS Family";
 	soc_dev_attr->soc_id = mxs_get_soc_id();
 	soc_dev_attr->revision = mxs_get_revision();
 
-	if (socid == HW_DIGCTL_CHIPID_MX23) {
-		soc_uid = system_serial_low = ocotp[HW_OCOTP_OPS3];
-	} else if (socid == HW_DIGCTL_CHIPID_MX28) {
-		soc_uid = system_serial_high = ocotp[HW_OCOTP_OPS2];
+	अगर (socid == HW_DIGCTL_CHIPID_MX23) अणु
+		soc_uid = प्रणाली_serial_low = ocotp[HW_OCOTP_OPS3];
+	पूर्ण अन्यथा अगर (socid == HW_DIGCTL_CHIPID_MX28) अणु
+		soc_uid = प्रणाली_serial_high = ocotp[HW_OCOTP_OPS2];
 		soc_uid <<= 32;
-		system_serial_low = ocotp[HW_OCOTP_OPS3];
-		soc_uid |= system_serial_low;
-	}
+		प्रणाली_serial_low = ocotp[HW_OCOTP_OPS3];
+		soc_uid |= प्रणाली_serial_low;
+	पूर्ण
 
-	if (soc_uid)
-		soc_dev_attr->serial_number = kasprintf(GFP_KERNEL, "%016llX", soc_uid);
+	अगर (soc_uid)
+		soc_dev_attr->serial_number = kaप्र_लिखो(GFP_KERNEL, "%016llX", soc_uid);
 
-	soc_dev = soc_device_register(soc_dev_attr);
-	if (IS_ERR(soc_dev)) {
-		kfree(soc_dev_attr->serial_number);
-		kfree(soc_dev_attr->revision);
-		kfree(soc_dev_attr);
-		return;
-	}
+	soc_dev = soc_device_रेजिस्टर(soc_dev_attr);
+	अगर (IS_ERR(soc_dev)) अणु
+		kमुक्त(soc_dev_attr->serial_number);
+		kमुक्त(soc_dev_attr->revision);
+		kमुक्त(soc_dev_attr);
+		वापस;
+	पूर्ण
 
 	parent = soc_device_to_device(soc_dev);
 
-	if (of_machine_is_compatible("fsl,imx28-evk"))
+	अगर (of_machine_is_compatible("fsl,imx28-evk"))
 		imx28_evk_init();
-	if (of_machine_is_compatible("armadeus,imx28-apf28"))
+	अगर (of_machine_is_compatible("armadeus,imx28-apf28"))
 		imx28_apf28_init();
-	else if (of_machine_is_compatible("bluegiga,apx4devkit"))
+	अन्यथा अगर (of_machine_is_compatible("bluegiga,apx4devkit"))
 		apx4devkit_init();
-	else if (of_machine_is_compatible("crystalfontz,cfa10036"))
+	अन्यथा अगर (of_machine_is_compatible("crystalfontz,cfa10036"))
 		crystalfontz_init();
-	else if (of_machine_is_compatible("eukrea,mbmx283lc"))
+	अन्यथा अगर (of_machine_is_compatible("eukrea,mbmx283lc"))
 		eukrea_mbmx283lc_init();
-	else if (of_machine_is_compatible("i2se,duckbill") ||
+	अन्यथा अगर (of_machine_is_compatible("i2se,duckbill") ||
 		 of_machine_is_compatible("i2se,duckbill-2"))
 		duckbill_init();
-	else if (of_machine_is_compatible("msr,m28cu3"))
+	अन्यथा अगर (of_machine_is_compatible("msr,m28cu3"))
 		m28cu3_init();
 
-	of_platform_default_populate(NULL, NULL, parent);
+	of_platक्रमm_शेष_populate(शून्य, शून्य, parent);
 
 	mxs_restart_init();
-}
+पूर्ण
 
-#define MXS_CLKCTRL_RESET_CHIP		(1 << 1)
+#घोषणा MXS_CLKCTRL_RESET_CHIP		(1 << 1)
 
 /*
- * Reset the system. It is called by machine_restart().
+ * Reset the प्रणाली. It is called by machine_restart().
  */
-static void mxs_restart(enum reboot_mode mode, const char *cmd)
-{
-	if (reset_addr) {
+अटल व्योम mxs_restart(क्रमागत reboot_mode mode, स्थिर अक्षर *cmd)
+अणु
+	अगर (reset_addr) अणु
 		/* reset the chip */
 		__mxs_setl(MXS_CLKCTRL_RESET_CHIP, reset_addr);
 
@@ -458,17 +459,17 @@ static void mxs_restart(enum reboot_mode mode, const char *cmd)
 
 		/* Delay to allow the serial port to show the message */
 		mdelay(50);
-	}
+	पूर्ण
 
 	/* We'll take a jump through zero as a poor second */
 	soft_restart(0);
-}
+पूर्ण
 
-static const char *const mxs_dt_compat[] __initconst = {
+अटल स्थिर अक्षर *स्थिर mxs_dt_compat[] __initस्थिर = अणु
 	"fsl,imx28",
 	"fsl,imx23",
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
 DT_MACHINE_START(MXS, "Freescale MXS (Device Tree)")
 	.handle_irq	= icoll_handle_irq,

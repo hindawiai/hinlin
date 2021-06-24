@@ -1,521 +1,522 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 
-#include <net/genetlink.h>
+#समावेश <net/genetlink.h>
 
-#include <uapi/linux/mrp_bridge.h>
-#include "br_private.h"
-#include "br_private_mrp.h"
+#समावेश <uapi/linux/mrp_bridge.h>
+#समावेश "br_private.h"
+#समावेश "br_private_mrp.h"
 
-static const struct nla_policy br_mrp_policy[IFLA_BRIDGE_MRP_MAX + 1] = {
-	[IFLA_BRIDGE_MRP_UNSPEC]	= { .type = NLA_REJECT },
-	[IFLA_BRIDGE_MRP_INSTANCE]	= { .type = NLA_NESTED },
-	[IFLA_BRIDGE_MRP_PORT_STATE]	= { .type = NLA_NESTED },
-	[IFLA_BRIDGE_MRP_PORT_ROLE]	= { .type = NLA_NESTED },
-	[IFLA_BRIDGE_MRP_RING_STATE]	= { .type = NLA_NESTED },
-	[IFLA_BRIDGE_MRP_RING_ROLE]	= { .type = NLA_NESTED },
-	[IFLA_BRIDGE_MRP_START_TEST]	= { .type = NLA_NESTED },
-	[IFLA_BRIDGE_MRP_IN_ROLE]	= { .type = NLA_NESTED },
-	[IFLA_BRIDGE_MRP_IN_STATE]	= { .type = NLA_NESTED },
-	[IFLA_BRIDGE_MRP_START_IN_TEST]	= { .type = NLA_NESTED },
-};
+अटल स्थिर काष्ठा nla_policy br_mrp_policy[IFLA_BRIDGE_MRP_MAX + 1] = अणु
+	[IFLA_BRIDGE_MRP_UNSPEC]	= अणु .type = NLA_REJECT पूर्ण,
+	[IFLA_BRIDGE_MRP_INSTANCE]	= अणु .type = NLA_NESTED पूर्ण,
+	[IFLA_BRIDGE_MRP_PORT_STATE]	= अणु .type = NLA_NESTED पूर्ण,
+	[IFLA_BRIDGE_MRP_PORT_ROLE]	= अणु .type = NLA_NESTED पूर्ण,
+	[IFLA_BRIDGE_MRP_RING_STATE]	= अणु .type = NLA_NESTED पूर्ण,
+	[IFLA_BRIDGE_MRP_RING_ROLE]	= अणु .type = NLA_NESTED पूर्ण,
+	[IFLA_BRIDGE_MRP_START_TEST]	= अणु .type = NLA_NESTED पूर्ण,
+	[IFLA_BRIDGE_MRP_IN_ROLE]	= अणु .type = NLA_NESTED पूर्ण,
+	[IFLA_BRIDGE_MRP_IN_STATE]	= अणु .type = NLA_NESTED पूर्ण,
+	[IFLA_BRIDGE_MRP_START_IN_TEST]	= अणु .type = NLA_NESTED पूर्ण,
+पूर्ण;
 
-static const struct nla_policy
-br_mrp_instance_policy[IFLA_BRIDGE_MRP_INSTANCE_MAX + 1] = {
-	[IFLA_BRIDGE_MRP_INSTANCE_UNSPEC]	= { .type = NLA_REJECT },
-	[IFLA_BRIDGE_MRP_INSTANCE_RING_ID]	= { .type = NLA_U32 },
-	[IFLA_BRIDGE_MRP_INSTANCE_P_IFINDEX]	= { .type = NLA_U32 },
-	[IFLA_BRIDGE_MRP_INSTANCE_S_IFINDEX]	= { .type = NLA_U32 },
-	[IFLA_BRIDGE_MRP_INSTANCE_PRIO]		= { .type = NLA_U16 },
-};
+अटल स्थिर काष्ठा nla_policy
+br_mrp_instance_policy[IFLA_BRIDGE_MRP_INSTANCE_MAX + 1] = अणु
+	[IFLA_BRIDGE_MRP_INSTANCE_UNSPEC]	= अणु .type = NLA_REJECT पूर्ण,
+	[IFLA_BRIDGE_MRP_INSTANCE_RING_ID]	= अणु .type = NLA_U32 पूर्ण,
+	[IFLA_BRIDGE_MRP_INSTANCE_P_IFINDEX]	= अणु .type = NLA_U32 पूर्ण,
+	[IFLA_BRIDGE_MRP_INSTANCE_S_IFINDEX]	= अणु .type = NLA_U32 पूर्ण,
+	[IFLA_BRIDGE_MRP_INSTANCE_PRIO]		= अणु .type = NLA_U16 पूर्ण,
+पूर्ण;
 
-static int br_mrp_instance_parse(struct net_bridge *br, struct nlattr *attr,
-				 int cmd, struct netlink_ext_ack *extack)
-{
-	struct nlattr *tb[IFLA_BRIDGE_MRP_INSTANCE_MAX + 1];
-	struct br_mrp_instance inst;
-	int err;
+अटल पूर्णांक br_mrp_instance_parse(काष्ठा net_bridge *br, काष्ठा nlattr *attr,
+				 पूर्णांक cmd, काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा nlattr *tb[IFLA_BRIDGE_MRP_INSTANCE_MAX + 1];
+	काष्ठा br_mrp_instance inst;
+	पूर्णांक err;
 
 	err = nla_parse_nested(tb, IFLA_BRIDGE_MRP_INSTANCE_MAX, attr,
 			       br_mrp_instance_policy, extack);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	if (!tb[IFLA_BRIDGE_MRP_INSTANCE_RING_ID] ||
+	अगर (!tb[IFLA_BRIDGE_MRP_INSTANCE_RING_ID] ||
 	    !tb[IFLA_BRIDGE_MRP_INSTANCE_P_IFINDEX] ||
-	    !tb[IFLA_BRIDGE_MRP_INSTANCE_S_IFINDEX]) {
+	    !tb[IFLA_BRIDGE_MRP_INSTANCE_S_IFINDEX]) अणु
 		NL_SET_ERR_MSG_MOD(extack,
 				   "Missing attribute: RING_ID or P_IFINDEX or S_IFINDEX");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	memset(&inst, 0, sizeof(inst));
+	स_रखो(&inst, 0, माप(inst));
 
 	inst.ring_id = nla_get_u32(tb[IFLA_BRIDGE_MRP_INSTANCE_RING_ID]);
-	inst.p_ifindex = nla_get_u32(tb[IFLA_BRIDGE_MRP_INSTANCE_P_IFINDEX]);
-	inst.s_ifindex = nla_get_u32(tb[IFLA_BRIDGE_MRP_INSTANCE_S_IFINDEX]);
+	inst.p_अगरindex = nla_get_u32(tb[IFLA_BRIDGE_MRP_INSTANCE_P_IFINDEX]);
+	inst.s_अगरindex = nla_get_u32(tb[IFLA_BRIDGE_MRP_INSTANCE_S_IFINDEX]);
 	inst.prio = MRP_DEFAULT_PRIO;
 
-	if (tb[IFLA_BRIDGE_MRP_INSTANCE_PRIO])
+	अगर (tb[IFLA_BRIDGE_MRP_INSTANCE_PRIO])
 		inst.prio = nla_get_u16(tb[IFLA_BRIDGE_MRP_INSTANCE_PRIO]);
 
-	if (cmd == RTM_SETLINK)
-		return br_mrp_add(br, &inst);
-	else
-		return br_mrp_del(br, &inst);
+	अगर (cmd == RTM_SETLINK)
+		वापस br_mrp_add(br, &inst);
+	अन्यथा
+		वापस br_mrp_del(br, &inst);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct nla_policy
-br_mrp_port_state_policy[IFLA_BRIDGE_MRP_PORT_STATE_MAX + 1] = {
-	[IFLA_BRIDGE_MRP_PORT_STATE_UNSPEC]	= { .type = NLA_REJECT },
-	[IFLA_BRIDGE_MRP_PORT_STATE_STATE]	= { .type = NLA_U32 },
-};
+अटल स्थिर काष्ठा nla_policy
+br_mrp_port_state_policy[IFLA_BRIDGE_MRP_PORT_STATE_MAX + 1] = अणु
+	[IFLA_BRIDGE_MRP_PORT_STATE_UNSPEC]	= अणु .type = NLA_REJECT पूर्ण,
+	[IFLA_BRIDGE_MRP_PORT_STATE_STATE]	= अणु .type = NLA_U32 पूर्ण,
+पूर्ण;
 
-static int br_mrp_port_state_parse(struct net_bridge_port *p,
-				   struct nlattr *attr,
-				   struct netlink_ext_ack *extack)
-{
-	struct nlattr *tb[IFLA_BRIDGE_MRP_PORT_STATE_MAX + 1];
-	enum br_mrp_port_state_type state;
-	int err;
+अटल पूर्णांक br_mrp_port_state_parse(काष्ठा net_bridge_port *p,
+				   काष्ठा nlattr *attr,
+				   काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा nlattr *tb[IFLA_BRIDGE_MRP_PORT_STATE_MAX + 1];
+	क्रमागत br_mrp_port_state_type state;
+	पूर्णांक err;
 
 	err = nla_parse_nested(tb, IFLA_BRIDGE_MRP_PORT_STATE_MAX, attr,
 			       br_mrp_port_state_policy, extack);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	if (!tb[IFLA_BRIDGE_MRP_PORT_STATE_STATE]) {
+	अगर (!tb[IFLA_BRIDGE_MRP_PORT_STATE_STATE]) अणु
 		NL_SET_ERR_MSG_MOD(extack, "Missing attribute: STATE");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	state = nla_get_u32(tb[IFLA_BRIDGE_MRP_PORT_STATE_STATE]);
 
-	return br_mrp_set_port_state(p, state);
-}
+	वापस br_mrp_set_port_state(p, state);
+पूर्ण
 
-static const struct nla_policy
-br_mrp_port_role_policy[IFLA_BRIDGE_MRP_PORT_ROLE_MAX + 1] = {
-	[IFLA_BRIDGE_MRP_PORT_ROLE_UNSPEC]	= { .type = NLA_REJECT },
-	[IFLA_BRIDGE_MRP_PORT_ROLE_ROLE]	= { .type = NLA_U32 },
-};
+अटल स्थिर काष्ठा nla_policy
+br_mrp_port_role_policy[IFLA_BRIDGE_MRP_PORT_ROLE_MAX + 1] = अणु
+	[IFLA_BRIDGE_MRP_PORT_ROLE_UNSPEC]	= अणु .type = NLA_REJECT पूर्ण,
+	[IFLA_BRIDGE_MRP_PORT_ROLE_ROLE]	= अणु .type = NLA_U32 पूर्ण,
+पूर्ण;
 
-static int br_mrp_port_role_parse(struct net_bridge_port *p,
-				  struct nlattr *attr,
-				  struct netlink_ext_ack *extack)
-{
-	struct nlattr *tb[IFLA_BRIDGE_MRP_PORT_ROLE_MAX + 1];
-	enum br_mrp_port_role_type role;
-	int err;
+अटल पूर्णांक br_mrp_port_role_parse(काष्ठा net_bridge_port *p,
+				  काष्ठा nlattr *attr,
+				  काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा nlattr *tb[IFLA_BRIDGE_MRP_PORT_ROLE_MAX + 1];
+	क्रमागत br_mrp_port_role_type role;
+	पूर्णांक err;
 
 	err = nla_parse_nested(tb, IFLA_BRIDGE_MRP_PORT_ROLE_MAX, attr,
 			       br_mrp_port_role_policy, extack);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	if (!tb[IFLA_BRIDGE_MRP_PORT_ROLE_ROLE]) {
+	अगर (!tb[IFLA_BRIDGE_MRP_PORT_ROLE_ROLE]) अणु
 		NL_SET_ERR_MSG_MOD(extack, "Missing attribute: ROLE");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	role = nla_get_u32(tb[IFLA_BRIDGE_MRP_PORT_ROLE_ROLE]);
 
-	return br_mrp_set_port_role(p, role);
-}
+	वापस br_mrp_set_port_role(p, role);
+पूर्ण
 
-static const struct nla_policy
-br_mrp_ring_state_policy[IFLA_BRIDGE_MRP_RING_STATE_MAX + 1] = {
-	[IFLA_BRIDGE_MRP_RING_STATE_UNSPEC]	= { .type = NLA_REJECT },
-	[IFLA_BRIDGE_MRP_RING_STATE_RING_ID]	= { .type = NLA_U32 },
-	[IFLA_BRIDGE_MRP_RING_STATE_STATE]	= { .type = NLA_U32 },
-};
+अटल स्थिर काष्ठा nla_policy
+br_mrp_ring_state_policy[IFLA_BRIDGE_MRP_RING_STATE_MAX + 1] = अणु
+	[IFLA_BRIDGE_MRP_RING_STATE_UNSPEC]	= अणु .type = NLA_REJECT पूर्ण,
+	[IFLA_BRIDGE_MRP_RING_STATE_RING_ID]	= अणु .type = NLA_U32 पूर्ण,
+	[IFLA_BRIDGE_MRP_RING_STATE_STATE]	= अणु .type = NLA_U32 पूर्ण,
+पूर्ण;
 
-static int br_mrp_ring_state_parse(struct net_bridge *br, struct nlattr *attr,
-				   struct netlink_ext_ack *extack)
-{
-	struct nlattr *tb[IFLA_BRIDGE_MRP_RING_STATE_MAX + 1];
-	struct br_mrp_ring_state state;
-	int err;
+अटल पूर्णांक br_mrp_ring_state_parse(काष्ठा net_bridge *br, काष्ठा nlattr *attr,
+				   काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा nlattr *tb[IFLA_BRIDGE_MRP_RING_STATE_MAX + 1];
+	काष्ठा br_mrp_ring_state state;
+	पूर्णांक err;
 
 	err = nla_parse_nested(tb, IFLA_BRIDGE_MRP_RING_STATE_MAX, attr,
 			       br_mrp_ring_state_policy, extack);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	if (!tb[IFLA_BRIDGE_MRP_RING_STATE_RING_ID] ||
-	    !tb[IFLA_BRIDGE_MRP_RING_STATE_STATE]) {
+	अगर (!tb[IFLA_BRIDGE_MRP_RING_STATE_RING_ID] ||
+	    !tb[IFLA_BRIDGE_MRP_RING_STATE_STATE]) अणु
 		NL_SET_ERR_MSG_MOD(extack,
 				   "Missing attribute: RING_ID or STATE");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	memset(&state, 0x0, sizeof(state));
+	स_रखो(&state, 0x0, माप(state));
 
 	state.ring_id = nla_get_u32(tb[IFLA_BRIDGE_MRP_RING_STATE_RING_ID]);
 	state.ring_state = nla_get_u32(tb[IFLA_BRIDGE_MRP_RING_STATE_STATE]);
 
-	return br_mrp_set_ring_state(br, &state);
-}
+	वापस br_mrp_set_ring_state(br, &state);
+पूर्ण
 
-static const struct nla_policy
-br_mrp_ring_role_policy[IFLA_BRIDGE_MRP_RING_ROLE_MAX + 1] = {
-	[IFLA_BRIDGE_MRP_RING_ROLE_UNSPEC]	= { .type = NLA_REJECT },
-	[IFLA_BRIDGE_MRP_RING_ROLE_RING_ID]	= { .type = NLA_U32 },
-	[IFLA_BRIDGE_MRP_RING_ROLE_ROLE]	= { .type = NLA_U32 },
-};
+अटल स्थिर काष्ठा nla_policy
+br_mrp_ring_role_policy[IFLA_BRIDGE_MRP_RING_ROLE_MAX + 1] = अणु
+	[IFLA_BRIDGE_MRP_RING_ROLE_UNSPEC]	= अणु .type = NLA_REJECT पूर्ण,
+	[IFLA_BRIDGE_MRP_RING_ROLE_RING_ID]	= अणु .type = NLA_U32 पूर्ण,
+	[IFLA_BRIDGE_MRP_RING_ROLE_ROLE]	= अणु .type = NLA_U32 पूर्ण,
+पूर्ण;
 
-static int br_mrp_ring_role_parse(struct net_bridge *br, struct nlattr *attr,
-				  struct netlink_ext_ack *extack)
-{
-	struct nlattr *tb[IFLA_BRIDGE_MRP_RING_ROLE_MAX + 1];
-	struct br_mrp_ring_role role;
-	int err;
+अटल पूर्णांक br_mrp_ring_role_parse(काष्ठा net_bridge *br, काष्ठा nlattr *attr,
+				  काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा nlattr *tb[IFLA_BRIDGE_MRP_RING_ROLE_MAX + 1];
+	काष्ठा br_mrp_ring_role role;
+	पूर्णांक err;
 
 	err = nla_parse_nested(tb, IFLA_BRIDGE_MRP_RING_ROLE_MAX, attr,
 			       br_mrp_ring_role_policy, extack);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	if (!tb[IFLA_BRIDGE_MRP_RING_ROLE_RING_ID] ||
-	    !tb[IFLA_BRIDGE_MRP_RING_ROLE_ROLE]) {
+	अगर (!tb[IFLA_BRIDGE_MRP_RING_ROLE_RING_ID] ||
+	    !tb[IFLA_BRIDGE_MRP_RING_ROLE_ROLE]) अणु
 		NL_SET_ERR_MSG_MOD(extack,
 				   "Missing attribute: RING_ID or ROLE");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	memset(&role, 0x0, sizeof(role));
+	स_रखो(&role, 0x0, माप(role));
 
 	role.ring_id = nla_get_u32(tb[IFLA_BRIDGE_MRP_RING_ROLE_RING_ID]);
 	role.ring_role = nla_get_u32(tb[IFLA_BRIDGE_MRP_RING_ROLE_ROLE]);
 
-	return br_mrp_set_ring_role(br, &role);
-}
+	वापस br_mrp_set_ring_role(br, &role);
+पूर्ण
 
-static const struct nla_policy
-br_mrp_start_test_policy[IFLA_BRIDGE_MRP_START_TEST_MAX + 1] = {
-	[IFLA_BRIDGE_MRP_START_TEST_UNSPEC]	= { .type = NLA_REJECT },
-	[IFLA_BRIDGE_MRP_START_TEST_RING_ID]	= { .type = NLA_U32 },
-	[IFLA_BRIDGE_MRP_START_TEST_INTERVAL]	= { .type = NLA_U32 },
-	[IFLA_BRIDGE_MRP_START_TEST_MAX_MISS]	= { .type = NLA_U32 },
-	[IFLA_BRIDGE_MRP_START_TEST_PERIOD]	= { .type = NLA_U32 },
-	[IFLA_BRIDGE_MRP_START_TEST_MONITOR]	= { .type = NLA_U32 },
-};
+अटल स्थिर काष्ठा nla_policy
+br_mrp_start_test_policy[IFLA_BRIDGE_MRP_START_TEST_MAX + 1] = अणु
+	[IFLA_BRIDGE_MRP_START_TEST_UNSPEC]	= अणु .type = NLA_REJECT पूर्ण,
+	[IFLA_BRIDGE_MRP_START_TEST_RING_ID]	= अणु .type = NLA_U32 पूर्ण,
+	[IFLA_BRIDGE_MRP_START_TEST_INTERVAL]	= अणु .type = NLA_U32 पूर्ण,
+	[IFLA_BRIDGE_MRP_START_TEST_MAX_MISS]	= अणु .type = NLA_U32 पूर्ण,
+	[IFLA_BRIDGE_MRP_START_TEST_PERIOD]	= अणु .type = NLA_U32 पूर्ण,
+	[IFLA_BRIDGE_MRP_START_TEST_MONITOR]	= अणु .type = NLA_U32 पूर्ण,
+पूर्ण;
 
-static int br_mrp_start_test_parse(struct net_bridge *br, struct nlattr *attr,
-				   struct netlink_ext_ack *extack)
-{
-	struct nlattr *tb[IFLA_BRIDGE_MRP_START_TEST_MAX + 1];
-	struct br_mrp_start_test test;
-	int err;
+अटल पूर्णांक br_mrp_start_test_parse(काष्ठा net_bridge *br, काष्ठा nlattr *attr,
+				   काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा nlattr *tb[IFLA_BRIDGE_MRP_START_TEST_MAX + 1];
+	काष्ठा br_mrp_start_test test;
+	पूर्णांक err;
 
 	err = nla_parse_nested(tb, IFLA_BRIDGE_MRP_START_TEST_MAX, attr,
 			       br_mrp_start_test_policy, extack);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	if (!tb[IFLA_BRIDGE_MRP_START_TEST_RING_ID] ||
+	अगर (!tb[IFLA_BRIDGE_MRP_START_TEST_RING_ID] ||
 	    !tb[IFLA_BRIDGE_MRP_START_TEST_INTERVAL] ||
 	    !tb[IFLA_BRIDGE_MRP_START_TEST_MAX_MISS] ||
-	    !tb[IFLA_BRIDGE_MRP_START_TEST_PERIOD]) {
+	    !tb[IFLA_BRIDGE_MRP_START_TEST_PERIOD]) अणु
 		NL_SET_ERR_MSG_MOD(extack,
 				   "Missing attribute: RING_ID or INTERVAL or MAX_MISS or PERIOD");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	memset(&test, 0x0, sizeof(test));
+	स_रखो(&test, 0x0, माप(test));
 
 	test.ring_id = nla_get_u32(tb[IFLA_BRIDGE_MRP_START_TEST_RING_ID]);
-	test.interval = nla_get_u32(tb[IFLA_BRIDGE_MRP_START_TEST_INTERVAL]);
+	test.पूर्णांकerval = nla_get_u32(tb[IFLA_BRIDGE_MRP_START_TEST_INTERVAL]);
 	test.max_miss = nla_get_u32(tb[IFLA_BRIDGE_MRP_START_TEST_MAX_MISS]);
 	test.period = nla_get_u32(tb[IFLA_BRIDGE_MRP_START_TEST_PERIOD]);
 	test.monitor = false;
 
-	if (tb[IFLA_BRIDGE_MRP_START_TEST_MONITOR])
+	अगर (tb[IFLA_BRIDGE_MRP_START_TEST_MONITOR])
 		test.monitor =
 			nla_get_u32(tb[IFLA_BRIDGE_MRP_START_TEST_MONITOR]);
 
-	return br_mrp_start_test(br, &test);
-}
+	वापस br_mrp_start_test(br, &test);
+पूर्ण
 
-static const struct nla_policy
-br_mrp_in_state_policy[IFLA_BRIDGE_MRP_IN_STATE_MAX + 1] = {
-	[IFLA_BRIDGE_MRP_IN_STATE_UNSPEC]	= { .type = NLA_REJECT },
-	[IFLA_BRIDGE_MRP_IN_STATE_IN_ID]	= { .type = NLA_U32 },
-	[IFLA_BRIDGE_MRP_IN_STATE_STATE]	= { .type = NLA_U32 },
-};
+अटल स्थिर काष्ठा nla_policy
+br_mrp_in_state_policy[IFLA_BRIDGE_MRP_IN_STATE_MAX + 1] = अणु
+	[IFLA_BRIDGE_MRP_IN_STATE_UNSPEC]	= अणु .type = NLA_REJECT पूर्ण,
+	[IFLA_BRIDGE_MRP_IN_STATE_IN_ID]	= अणु .type = NLA_U32 पूर्ण,
+	[IFLA_BRIDGE_MRP_IN_STATE_STATE]	= अणु .type = NLA_U32 पूर्ण,
+पूर्ण;
 
-static int br_mrp_in_state_parse(struct net_bridge *br, struct nlattr *attr,
-				 struct netlink_ext_ack *extack)
-{
-	struct nlattr *tb[IFLA_BRIDGE_MRP_IN_STATE_MAX + 1];
-	struct br_mrp_in_state state;
-	int err;
+अटल पूर्णांक br_mrp_in_state_parse(काष्ठा net_bridge *br, काष्ठा nlattr *attr,
+				 काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा nlattr *tb[IFLA_BRIDGE_MRP_IN_STATE_MAX + 1];
+	काष्ठा br_mrp_in_state state;
+	पूर्णांक err;
 
 	err = nla_parse_nested(tb, IFLA_BRIDGE_MRP_IN_STATE_MAX, attr,
 			       br_mrp_in_state_policy, extack);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	if (!tb[IFLA_BRIDGE_MRP_IN_STATE_IN_ID] ||
-	    !tb[IFLA_BRIDGE_MRP_IN_STATE_STATE]) {
+	अगर (!tb[IFLA_BRIDGE_MRP_IN_STATE_IN_ID] ||
+	    !tb[IFLA_BRIDGE_MRP_IN_STATE_STATE]) अणु
 		NL_SET_ERR_MSG_MOD(extack,
 				   "Missing attribute: IN_ID or STATE");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	memset(&state, 0x0, sizeof(state));
+	स_रखो(&state, 0x0, माप(state));
 
 	state.in_id = nla_get_u32(tb[IFLA_BRIDGE_MRP_IN_STATE_IN_ID]);
 	state.in_state = nla_get_u32(tb[IFLA_BRIDGE_MRP_IN_STATE_STATE]);
 
-	return br_mrp_set_in_state(br, &state);
-}
+	वापस br_mrp_set_in_state(br, &state);
+पूर्ण
 
-static const struct nla_policy
-br_mrp_in_role_policy[IFLA_BRIDGE_MRP_IN_ROLE_MAX + 1] = {
-	[IFLA_BRIDGE_MRP_IN_ROLE_UNSPEC]	= { .type = NLA_REJECT },
-	[IFLA_BRIDGE_MRP_IN_ROLE_RING_ID]	= { .type = NLA_U32 },
-	[IFLA_BRIDGE_MRP_IN_ROLE_IN_ID]		= { .type = NLA_U16 },
-	[IFLA_BRIDGE_MRP_IN_ROLE_ROLE]		= { .type = NLA_U32 },
-	[IFLA_BRIDGE_MRP_IN_ROLE_I_IFINDEX]	= { .type = NLA_U32 },
-};
+अटल स्थिर काष्ठा nla_policy
+br_mrp_in_role_policy[IFLA_BRIDGE_MRP_IN_ROLE_MAX + 1] = अणु
+	[IFLA_BRIDGE_MRP_IN_ROLE_UNSPEC]	= अणु .type = NLA_REJECT पूर्ण,
+	[IFLA_BRIDGE_MRP_IN_ROLE_RING_ID]	= अणु .type = NLA_U32 पूर्ण,
+	[IFLA_BRIDGE_MRP_IN_ROLE_IN_ID]		= अणु .type = NLA_U16 पूर्ण,
+	[IFLA_BRIDGE_MRP_IN_ROLE_ROLE]		= अणु .type = NLA_U32 पूर्ण,
+	[IFLA_BRIDGE_MRP_IN_ROLE_I_IFINDEX]	= अणु .type = NLA_U32 पूर्ण,
+पूर्ण;
 
-static int br_mrp_in_role_parse(struct net_bridge *br, struct nlattr *attr,
-				struct netlink_ext_ack *extack)
-{
-	struct nlattr *tb[IFLA_BRIDGE_MRP_IN_ROLE_MAX + 1];
-	struct br_mrp_in_role role;
-	int err;
+अटल पूर्णांक br_mrp_in_role_parse(काष्ठा net_bridge *br, काष्ठा nlattr *attr,
+				काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा nlattr *tb[IFLA_BRIDGE_MRP_IN_ROLE_MAX + 1];
+	काष्ठा br_mrp_in_role role;
+	पूर्णांक err;
 
 	err = nla_parse_nested(tb, IFLA_BRIDGE_MRP_IN_ROLE_MAX, attr,
 			       br_mrp_in_role_policy, extack);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	if (!tb[IFLA_BRIDGE_MRP_IN_ROLE_RING_ID] ||
+	अगर (!tb[IFLA_BRIDGE_MRP_IN_ROLE_RING_ID] ||
 	    !tb[IFLA_BRIDGE_MRP_IN_ROLE_IN_ID] ||
 	    !tb[IFLA_BRIDGE_MRP_IN_ROLE_I_IFINDEX] ||
-	    !tb[IFLA_BRIDGE_MRP_IN_ROLE_ROLE]) {
+	    !tb[IFLA_BRIDGE_MRP_IN_ROLE_ROLE]) अणु
 		NL_SET_ERR_MSG_MOD(extack,
 				   "Missing attribute: RING_ID or ROLE or IN_ID or I_IFINDEX");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	memset(&role, 0x0, sizeof(role));
+	स_रखो(&role, 0x0, माप(role));
 
 	role.ring_id = nla_get_u32(tb[IFLA_BRIDGE_MRP_IN_ROLE_RING_ID]);
 	role.in_id = nla_get_u16(tb[IFLA_BRIDGE_MRP_IN_ROLE_IN_ID]);
-	role.i_ifindex = nla_get_u32(tb[IFLA_BRIDGE_MRP_IN_ROLE_I_IFINDEX]);
+	role.i_अगरindex = nla_get_u32(tb[IFLA_BRIDGE_MRP_IN_ROLE_I_IFINDEX]);
 	role.in_role = nla_get_u32(tb[IFLA_BRIDGE_MRP_IN_ROLE_ROLE]);
 
-	return br_mrp_set_in_role(br, &role);
-}
+	वापस br_mrp_set_in_role(br, &role);
+पूर्ण
 
-static const struct nla_policy
-br_mrp_start_in_test_policy[IFLA_BRIDGE_MRP_START_IN_TEST_MAX + 1] = {
-	[IFLA_BRIDGE_MRP_START_IN_TEST_UNSPEC]	= { .type = NLA_REJECT },
-	[IFLA_BRIDGE_MRP_START_IN_TEST_IN_ID]	= { .type = NLA_U32 },
-	[IFLA_BRIDGE_MRP_START_IN_TEST_INTERVAL]	= { .type = NLA_U32 },
-	[IFLA_BRIDGE_MRP_START_IN_TEST_MAX_MISS]	= { .type = NLA_U32 },
-	[IFLA_BRIDGE_MRP_START_IN_TEST_PERIOD]	= { .type = NLA_U32 },
-};
+अटल स्थिर काष्ठा nla_policy
+br_mrp_start_in_test_policy[IFLA_BRIDGE_MRP_START_IN_TEST_MAX + 1] = अणु
+	[IFLA_BRIDGE_MRP_START_IN_TEST_UNSPEC]	= अणु .type = NLA_REJECT पूर्ण,
+	[IFLA_BRIDGE_MRP_START_IN_TEST_IN_ID]	= अणु .type = NLA_U32 पूर्ण,
+	[IFLA_BRIDGE_MRP_START_IN_TEST_INTERVAL]	= अणु .type = NLA_U32 पूर्ण,
+	[IFLA_BRIDGE_MRP_START_IN_TEST_MAX_MISS]	= अणु .type = NLA_U32 पूर्ण,
+	[IFLA_BRIDGE_MRP_START_IN_TEST_PERIOD]	= अणु .type = NLA_U32 पूर्ण,
+पूर्ण;
 
-static int br_mrp_start_in_test_parse(struct net_bridge *br,
-				      struct nlattr *attr,
-				      struct netlink_ext_ack *extack)
-{
-	struct nlattr *tb[IFLA_BRIDGE_MRP_START_IN_TEST_MAX + 1];
-	struct br_mrp_start_in_test test;
-	int err;
+अटल पूर्णांक br_mrp_start_in_test_parse(काष्ठा net_bridge *br,
+				      काष्ठा nlattr *attr,
+				      काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा nlattr *tb[IFLA_BRIDGE_MRP_START_IN_TEST_MAX + 1];
+	काष्ठा br_mrp_start_in_test test;
+	पूर्णांक err;
 
 	err = nla_parse_nested(tb, IFLA_BRIDGE_MRP_START_IN_TEST_MAX, attr,
 			       br_mrp_start_in_test_policy, extack);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	if (!tb[IFLA_BRIDGE_MRP_START_IN_TEST_IN_ID] ||
+	अगर (!tb[IFLA_BRIDGE_MRP_START_IN_TEST_IN_ID] ||
 	    !tb[IFLA_BRIDGE_MRP_START_IN_TEST_INTERVAL] ||
 	    !tb[IFLA_BRIDGE_MRP_START_IN_TEST_MAX_MISS] ||
-	    !tb[IFLA_BRIDGE_MRP_START_IN_TEST_PERIOD]) {
+	    !tb[IFLA_BRIDGE_MRP_START_IN_TEST_PERIOD]) अणु
 		NL_SET_ERR_MSG_MOD(extack,
 				   "Missing attribute: RING_ID or INTERVAL or MAX_MISS or PERIOD");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	memset(&test, 0x0, sizeof(test));
+	स_रखो(&test, 0x0, माप(test));
 
 	test.in_id = nla_get_u32(tb[IFLA_BRIDGE_MRP_START_IN_TEST_IN_ID]);
-	test.interval = nla_get_u32(tb[IFLA_BRIDGE_MRP_START_IN_TEST_INTERVAL]);
+	test.पूर्णांकerval = nla_get_u32(tb[IFLA_BRIDGE_MRP_START_IN_TEST_INTERVAL]);
 	test.max_miss = nla_get_u32(tb[IFLA_BRIDGE_MRP_START_IN_TEST_MAX_MISS]);
 	test.period = nla_get_u32(tb[IFLA_BRIDGE_MRP_START_IN_TEST_PERIOD]);
 
-	return br_mrp_start_in_test(br, &test);
-}
+	वापस br_mrp_start_in_test(br, &test);
+पूर्ण
 
-int br_mrp_parse(struct net_bridge *br, struct net_bridge_port *p,
-		 struct nlattr *attr, int cmd, struct netlink_ext_ack *extack)
-{
-	struct nlattr *tb[IFLA_BRIDGE_MRP_MAX + 1];
-	int err;
+पूर्णांक br_mrp_parse(काष्ठा net_bridge *br, काष्ठा net_bridge_port *p,
+		 काष्ठा nlattr *attr, पूर्णांक cmd, काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा nlattr *tb[IFLA_BRIDGE_MRP_MAX + 1];
+	पूर्णांक err;
 
-	/* When this function is called for a port then the br pointer is
-	 * invalid, therefor set the br to point correctly
+	/* When this function is called क्रम a port then the br poपूर्णांकer is
+	 * invalid, thereक्रम set the br to poपूर्णांक correctly
 	 */
-	if (p)
+	अगर (p)
 		br = p->br;
 
-	if (br->stp_enabled != BR_NO_STP) {
+	अगर (br->stp_enabled != BR_NO_STP) अणु
 		NL_SET_ERR_MSG_MOD(extack, "MRP can't be enabled if STP is already enabled");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	err = nla_parse_nested(tb, IFLA_BRIDGE_MRP_MAX, attr,
 			       br_mrp_policy, extack);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	if (tb[IFLA_BRIDGE_MRP_INSTANCE]) {
+	अगर (tb[IFLA_BRIDGE_MRP_INSTANCE]) अणु
 		err = br_mrp_instance_parse(br, tb[IFLA_BRIDGE_MRP_INSTANCE],
 					    cmd, extack);
-		if (err)
-			return err;
-	}
+		अगर (err)
+			वापस err;
+	पूर्ण
 
-	if (tb[IFLA_BRIDGE_MRP_PORT_STATE]) {
+	अगर (tb[IFLA_BRIDGE_MRP_PORT_STATE]) अणु
 		err = br_mrp_port_state_parse(p, tb[IFLA_BRIDGE_MRP_PORT_STATE],
 					      extack);
-		if (err)
-			return err;
-	}
+		अगर (err)
+			वापस err;
+	पूर्ण
 
-	if (tb[IFLA_BRIDGE_MRP_PORT_ROLE]) {
+	अगर (tb[IFLA_BRIDGE_MRP_PORT_ROLE]) अणु
 		err = br_mrp_port_role_parse(p, tb[IFLA_BRIDGE_MRP_PORT_ROLE],
 					     extack);
-		if (err)
-			return err;
-	}
+		अगर (err)
+			वापस err;
+	पूर्ण
 
-	if (tb[IFLA_BRIDGE_MRP_RING_STATE]) {
+	अगर (tb[IFLA_BRIDGE_MRP_RING_STATE]) अणु
 		err = br_mrp_ring_state_parse(br,
 					      tb[IFLA_BRIDGE_MRP_RING_STATE],
 					      extack);
-		if (err)
-			return err;
-	}
+		अगर (err)
+			वापस err;
+	पूर्ण
 
-	if (tb[IFLA_BRIDGE_MRP_RING_ROLE]) {
+	अगर (tb[IFLA_BRIDGE_MRP_RING_ROLE]) अणु
 		err = br_mrp_ring_role_parse(br, tb[IFLA_BRIDGE_MRP_RING_ROLE],
 					     extack);
-		if (err)
-			return err;
-	}
+		अगर (err)
+			वापस err;
+	पूर्ण
 
-	if (tb[IFLA_BRIDGE_MRP_START_TEST]) {
+	अगर (tb[IFLA_BRIDGE_MRP_START_TEST]) अणु
 		err = br_mrp_start_test_parse(br,
 					      tb[IFLA_BRIDGE_MRP_START_TEST],
 					      extack);
-		if (err)
-			return err;
-	}
+		अगर (err)
+			वापस err;
+	पूर्ण
 
-	if (tb[IFLA_BRIDGE_MRP_IN_STATE]) {
+	अगर (tb[IFLA_BRIDGE_MRP_IN_STATE]) अणु
 		err = br_mrp_in_state_parse(br, tb[IFLA_BRIDGE_MRP_IN_STATE],
 					    extack);
-		if (err)
-			return err;
-	}
+		अगर (err)
+			वापस err;
+	पूर्ण
 
-	if (tb[IFLA_BRIDGE_MRP_IN_ROLE]) {
+	अगर (tb[IFLA_BRIDGE_MRP_IN_ROLE]) अणु
 		err = br_mrp_in_role_parse(br, tb[IFLA_BRIDGE_MRP_IN_ROLE],
 					   extack);
-		if (err)
-			return err;
-	}
+		अगर (err)
+			वापस err;
+	पूर्ण
 
-	if (tb[IFLA_BRIDGE_MRP_START_IN_TEST]) {
+	अगर (tb[IFLA_BRIDGE_MRP_START_IN_TEST]) अणु
 		err = br_mrp_start_in_test_parse(br,
 						 tb[IFLA_BRIDGE_MRP_START_IN_TEST],
 						 extack);
-		if (err)
-			return err;
-	}
+		अगर (err)
+			वापस err;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int br_mrp_fill_info(struct sk_buff *skb, struct net_bridge *br)
-{
-	struct nlattr *tb, *mrp_tb;
-	struct br_mrp *mrp;
+पूर्णांक br_mrp_fill_info(काष्ठा sk_buff *skb, काष्ठा net_bridge *br)
+अणु
+	काष्ठा nlattr *tb, *mrp_tb;
+	काष्ठा br_mrp *mrp;
 
 	mrp_tb = nla_nest_start_noflag(skb, IFLA_BRIDGE_MRP);
-	if (!mrp_tb)
-		return -EMSGSIZE;
+	अगर (!mrp_tb)
+		वापस -EMSGSIZE;
 
-	hlist_for_each_entry_rcu(mrp, &br->mrp_list, list) {
-		struct net_bridge_port *p;
+	hlist_क्रम_each_entry_rcu(mrp, &br->mrp_list, list) अणु
+		काष्ठा net_bridge_port *p;
 
 		tb = nla_nest_start_noflag(skb, IFLA_BRIDGE_MRP_INFO);
-		if (!tb)
-			goto nla_info_failure;
+		अगर (!tb)
+			जाओ nla_info_failure;
 
-		if (nla_put_u32(skb, IFLA_BRIDGE_MRP_INFO_RING_ID,
+		अगर (nla_put_u32(skb, IFLA_BRIDGE_MRP_INFO_RING_ID,
 				mrp->ring_id))
-			goto nla_put_failure;
+			जाओ nla_put_failure;
 
 		p = rcu_dereference(mrp->p_port);
-		if (p && nla_put_u32(skb, IFLA_BRIDGE_MRP_INFO_P_IFINDEX,
-				     p->dev->ifindex))
-			goto nla_put_failure;
+		अगर (p && nla_put_u32(skb, IFLA_BRIDGE_MRP_INFO_P_IFINDEX,
+				     p->dev->अगरindex))
+			जाओ nla_put_failure;
 
 		p = rcu_dereference(mrp->s_port);
-		if (p && nla_put_u32(skb, IFLA_BRIDGE_MRP_INFO_S_IFINDEX,
-				     p->dev->ifindex))
-			goto nla_put_failure;
+		अगर (p && nla_put_u32(skb, IFLA_BRIDGE_MRP_INFO_S_IFINDEX,
+				     p->dev->अगरindex))
+			जाओ nla_put_failure;
 
 		p = rcu_dereference(mrp->i_port);
-		if (p && nla_put_u32(skb, IFLA_BRIDGE_MRP_INFO_I_IFINDEX,
-				     p->dev->ifindex))
-			goto nla_put_failure;
+		अगर (p && nla_put_u32(skb, IFLA_BRIDGE_MRP_INFO_I_IFINDEX,
+				     p->dev->अगरindex))
+			जाओ nla_put_failure;
 
-		if (nla_put_u16(skb, IFLA_BRIDGE_MRP_INFO_PRIO,
+		अगर (nla_put_u16(skb, IFLA_BRIDGE_MRP_INFO_PRIO,
 				mrp->prio))
-			goto nla_put_failure;
-		if (nla_put_u32(skb, IFLA_BRIDGE_MRP_INFO_RING_STATE,
+			जाओ nla_put_failure;
+		अगर (nla_put_u32(skb, IFLA_BRIDGE_MRP_INFO_RING_STATE,
 				mrp->ring_state))
-			goto nla_put_failure;
-		if (nla_put_u32(skb, IFLA_BRIDGE_MRP_INFO_RING_ROLE,
+			जाओ nla_put_failure;
+		अगर (nla_put_u32(skb, IFLA_BRIDGE_MRP_INFO_RING_ROLE,
 				mrp->ring_role))
-			goto nla_put_failure;
-		if (nla_put_u32(skb, IFLA_BRIDGE_MRP_INFO_TEST_INTERVAL,
-				mrp->test_interval))
-			goto nla_put_failure;
-		if (nla_put_u32(skb, IFLA_BRIDGE_MRP_INFO_TEST_MAX_MISS,
+			जाओ nla_put_failure;
+		अगर (nla_put_u32(skb, IFLA_BRIDGE_MRP_INFO_TEST_INTERVAL,
+				mrp->test_पूर्णांकerval))
+			जाओ nla_put_failure;
+		अगर (nla_put_u32(skb, IFLA_BRIDGE_MRP_INFO_TEST_MAX_MISS,
 				mrp->test_max_miss))
-			goto nla_put_failure;
-		if (nla_put_u32(skb, IFLA_BRIDGE_MRP_INFO_TEST_MONITOR,
+			जाओ nla_put_failure;
+		अगर (nla_put_u32(skb, IFLA_BRIDGE_MRP_INFO_TEST_MONITOR,
 				mrp->test_monitor))
-			goto nla_put_failure;
+			जाओ nla_put_failure;
 
-		if (nla_put_u32(skb, IFLA_BRIDGE_MRP_INFO_IN_STATE,
+		अगर (nla_put_u32(skb, IFLA_BRIDGE_MRP_INFO_IN_STATE,
 				mrp->in_state))
-			goto nla_put_failure;
-		if (nla_put_u32(skb, IFLA_BRIDGE_MRP_INFO_IN_ROLE,
+			जाओ nla_put_failure;
+		अगर (nla_put_u32(skb, IFLA_BRIDGE_MRP_INFO_IN_ROLE,
 				mrp->in_role))
-			goto nla_put_failure;
-		if (nla_put_u32(skb, IFLA_BRIDGE_MRP_INFO_IN_TEST_INTERVAL,
-				mrp->in_test_interval))
-			goto nla_put_failure;
-		if (nla_put_u32(skb, IFLA_BRIDGE_MRP_INFO_IN_TEST_MAX_MISS,
+			जाओ nla_put_failure;
+		अगर (nla_put_u32(skb, IFLA_BRIDGE_MRP_INFO_IN_TEST_INTERVAL,
+				mrp->in_test_पूर्णांकerval))
+			जाओ nla_put_failure;
+		अगर (nla_put_u32(skb, IFLA_BRIDGE_MRP_INFO_IN_TEST_MAX_MISS,
 				mrp->in_test_max_miss))
-			goto nla_put_failure;
+			जाओ nla_put_failure;
 
 		nla_nest_end(skb, tb);
-	}
+	पूर्ण
 	nla_nest_end(skb, mrp_tb);
 
-	return 0;
+	वापस 0;
 
 nla_put_failure:
 	nla_nest_cancel(skb, tb);
@@ -523,49 +524,49 @@ nla_put_failure:
 nla_info_failure:
 	nla_nest_cancel(skb, mrp_tb);
 
-	return -EMSGSIZE;
-}
+	वापस -EMSGSIZE;
+पूर्ण
 
-int br_mrp_ring_port_open(struct net_device *dev, u8 loc)
-{
-	struct net_bridge_port *p;
-	int err = 0;
+पूर्णांक br_mrp_ring_port_खोलो(काष्ठा net_device *dev, u8 loc)
+अणु
+	काष्ठा net_bridge_port *p;
+	पूर्णांक err = 0;
 
 	p = br_port_get_rcu(dev);
-	if (!p) {
+	अगर (!p) अणु
 		err = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (loc)
+	अगर (loc)
 		p->flags |= BR_MRP_LOST_CONT;
-	else
+	अन्यथा
 		p->flags &= ~BR_MRP_LOST_CONT;
 
-	br_ifinfo_notify(RTM_NEWLINK, NULL, p);
+	br_अगरinfo_notअगरy(RTM_NEWLINK, शून्य, p);
 
 out:
-	return err;
-}
+	वापस err;
+पूर्ण
 
-int br_mrp_in_port_open(struct net_device *dev, u8 loc)
-{
-	struct net_bridge_port *p;
-	int err = 0;
+पूर्णांक br_mrp_in_port_खोलो(काष्ठा net_device *dev, u8 loc)
+अणु
+	काष्ठा net_bridge_port *p;
+	पूर्णांक err = 0;
 
 	p = br_port_get_rcu(dev);
-	if (!p) {
+	अगर (!p) अणु
 		err = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (loc)
+	अगर (loc)
 		p->flags |= BR_MRP_LOST_IN_CONT;
-	else
+	अन्यथा
 		p->flags &= ~BR_MRP_LOST_IN_CONT;
 
-	br_ifinfo_notify(RTM_NEWLINK, NULL, p);
+	br_अगरinfo_notअगरy(RTM_NEWLINK, शून्य, p);
 
 out:
-	return err;
-}
+	वापस err;
+पूर्ण

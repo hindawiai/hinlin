@@ -1,146 +1,147 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * VMware VMCI Driver
  *
  * Copyright (C) 2012 VMware, Inc. All rights reserved.
  */
 
-#include <linux/slab.h>
-#include "vmci_handle_array.h"
+#समावेश <linux/slab.h>
+#समावेश "vmci_handle_array.h"
 
-static size_t handle_arr_calc_size(u32 capacity)
-{
-	return VMCI_HANDLE_ARRAY_HEADER_SIZE +
-	    capacity * sizeof(struct vmci_handle);
-}
+अटल माप_प्रकार handle_arr_calc_size(u32 capacity)
+अणु
+	वापस VMCI_HANDLE_ARRAY_HEADER_SIZE +
+	    capacity * माप(काष्ठा vmci_handle);
+पूर्ण
 
-struct vmci_handle_arr *vmci_handle_arr_create(u32 capacity, u32 max_capacity)
-{
-	struct vmci_handle_arr *array;
+काष्ठा vmci_handle_arr *vmci_handle_arr_create(u32 capacity, u32 max_capacity)
+अणु
+	काष्ठा vmci_handle_arr *array;
 
-	if (max_capacity == 0 || capacity > max_capacity)
-		return NULL;
+	अगर (max_capacity == 0 || capacity > max_capacity)
+		वापस शून्य;
 
-	if (capacity == 0)
+	अगर (capacity == 0)
 		capacity = min((u32)VMCI_HANDLE_ARRAY_DEFAULT_CAPACITY,
 			       max_capacity);
 
-	array = kmalloc(handle_arr_calc_size(capacity), GFP_ATOMIC);
-	if (!array)
-		return NULL;
+	array = kदो_स्मृति(handle_arr_calc_size(capacity), GFP_ATOMIC);
+	अगर (!array)
+		वापस शून्य;
 
 	array->capacity = capacity;
 	array->max_capacity = max_capacity;
 	array->size = 0;
 
-	return array;
-}
+	वापस array;
+पूर्ण
 
-void vmci_handle_arr_destroy(struct vmci_handle_arr *array)
-{
-	kfree(array);
-}
+व्योम vmci_handle_arr_destroy(काष्ठा vmci_handle_arr *array)
+अणु
+	kमुक्त(array);
+पूर्ण
 
-int vmci_handle_arr_append_entry(struct vmci_handle_arr **array_ptr,
-				 struct vmci_handle handle)
-{
-	struct vmci_handle_arr *array = *array_ptr;
+पूर्णांक vmci_handle_arr_append_entry(काष्ठा vmci_handle_arr **array_ptr,
+				 काष्ठा vmci_handle handle)
+अणु
+	काष्ठा vmci_handle_arr *array = *array_ptr;
 
-	if (unlikely(array->size >= array->capacity)) {
-		/* reallocate. */
-		struct vmci_handle_arr *new_array;
+	अगर (unlikely(array->size >= array->capacity)) अणु
+		/* पुनः_स्मृतिate. */
+		काष्ठा vmci_handle_arr *new_array;
 		u32 capacity_bump = min(array->max_capacity - array->capacity,
 					array->capacity);
-		size_t new_size = handle_arr_calc_size(array->capacity +
+		माप_प्रकार new_size = handle_arr_calc_size(array->capacity +
 						       capacity_bump);
 
-		if (array->size >= array->max_capacity)
-			return VMCI_ERROR_NO_MEM;
+		अगर (array->size >= array->max_capacity)
+			वापस VMCI_ERROR_NO_MEM;
 
-		new_array = krealloc(array, new_size, GFP_ATOMIC);
-		if (!new_array)
-			return VMCI_ERROR_NO_MEM;
+		new_array = kपुनः_स्मृति(array, new_size, GFP_ATOMIC);
+		अगर (!new_array)
+			वापस VMCI_ERROR_NO_MEM;
 
 		new_array->capacity += capacity_bump;
 		*array_ptr = array = new_array;
-	}
+	पूर्ण
 
 	array->entries[array->size] = handle;
 	array->size++;
 
-	return VMCI_SUCCESS;
-}
+	वापस VMCI_SUCCESS;
+पूर्ण
 
 /*
- * Handle that was removed, VMCI_INVALID_HANDLE if entry not found.
+ * Handle that was हटाओd, VMCI_INVALID_HANDLE अगर entry not found.
  */
-struct vmci_handle vmci_handle_arr_remove_entry(struct vmci_handle_arr *array,
-						struct vmci_handle entry_handle)
-{
-	struct vmci_handle handle = VMCI_INVALID_HANDLE;
+काष्ठा vmci_handle vmci_handle_arr_हटाओ_entry(काष्ठा vmci_handle_arr *array,
+						काष्ठा vmci_handle entry_handle)
+अणु
+	काष्ठा vmci_handle handle = VMCI_INVALID_HANDLE;
 	u32 i;
 
-	for (i = 0; i < array->size; i++) {
-		if (vmci_handle_is_equal(array->entries[i], entry_handle)) {
+	क्रम (i = 0; i < array->size; i++) अणु
+		अगर (vmci_handle_is_equal(array->entries[i], entry_handle)) अणु
 			handle = array->entries[i];
 			array->size--;
 			array->entries[i] = array->entries[array->size];
 			array->entries[array->size] = VMCI_INVALID_HANDLE;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	return handle;
-}
+	वापस handle;
+पूर्ण
 
 /*
- * Handle that was removed, VMCI_INVALID_HANDLE if array was empty.
+ * Handle that was हटाओd, VMCI_INVALID_HANDLE अगर array was empty.
  */
-struct vmci_handle vmci_handle_arr_remove_tail(struct vmci_handle_arr *array)
-{
-	struct vmci_handle handle = VMCI_INVALID_HANDLE;
+काष्ठा vmci_handle vmci_handle_arr_हटाओ_tail(काष्ठा vmci_handle_arr *array)
+अणु
+	काष्ठा vmci_handle handle = VMCI_INVALID_HANDLE;
 
-	if (array->size) {
+	अगर (array->size) अणु
 		array->size--;
 		handle = array->entries[array->size];
 		array->entries[array->size] = VMCI_INVALID_HANDLE;
-	}
+	पूर्ण
 
-	return handle;
-}
+	वापस handle;
+पूर्ण
 
 /*
- * Handle at given index, VMCI_INVALID_HANDLE if invalid index.
+ * Handle at given index, VMCI_INVALID_HANDLE अगर invalid index.
  */
-struct vmci_handle
-vmci_handle_arr_get_entry(const struct vmci_handle_arr *array, u32 index)
-{
-	if (unlikely(index >= array->size))
-		return VMCI_INVALID_HANDLE;
+काष्ठा vmci_handle
+vmci_handle_arr_get_entry(स्थिर काष्ठा vmci_handle_arr *array, u32 index)
+अणु
+	अगर (unlikely(index >= array->size))
+		वापस VMCI_INVALID_HANDLE;
 
-	return array->entries[index];
-}
+	वापस array->entries[index];
+पूर्ण
 
-bool vmci_handle_arr_has_entry(const struct vmci_handle_arr *array,
-			       struct vmci_handle entry_handle)
-{
+bool vmci_handle_arr_has_entry(स्थिर काष्ठा vmci_handle_arr *array,
+			       काष्ठा vmci_handle entry_handle)
+अणु
 	u32 i;
 
-	for (i = 0; i < array->size; i++)
-		if (vmci_handle_is_equal(array->entries[i], entry_handle))
-			return true;
+	क्रम (i = 0; i < array->size; i++)
+		अगर (vmci_handle_is_equal(array->entries[i], entry_handle))
+			वापस true;
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
 /*
- * NULL if the array is empty. Otherwise, a pointer to the array
+ * शून्य अगर the array is empty. Otherwise, a poपूर्णांकer to the array
  * of VMCI handles in the handle array.
  */
-struct vmci_handle *vmci_handle_arr_get_handles(struct vmci_handle_arr *array)
-{
-	if (array->size)
-		return array->entries;
+काष्ठा vmci_handle *vmci_handle_arr_get_handles(काष्ठा vmci_handle_arr *array)
+अणु
+	अगर (array->size)
+		वापस array->entries;
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण

@@ -1,272 +1,273 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (c) 2015-2016, Linaro Limited
  */
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include <linux/delay.h>
-#include <linux/device.h>
-#include <linux/i2c.h>
-#include <linux/slab.h>
-#include <linux/tee_drv.h>
-#include "optee_private.h"
-#include "optee_smc.h"
-#include "optee_rpc_cmd.h"
+#समावेश <linux/delay.h>
+#समावेश <linux/device.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/tee_drv.h>
+#समावेश "optee_private.h"
+#समावेश "optee_smc.h"
+#समावेश "optee_rpc_cmd.h"
 
-struct wq_entry {
-	struct list_head link;
-	struct completion c;
+काष्ठा wq_entry अणु
+	काष्ठा list_head link;
+	काष्ठा completion c;
 	u32 key;
-};
+पूर्ण;
 
-void optee_wait_queue_init(struct optee_wait_queue *priv)
-{
+व्योम optee_रुको_queue_init(काष्ठा optee_रुको_queue *priv)
+अणु
 	mutex_init(&priv->mu);
 	INIT_LIST_HEAD(&priv->db);
-}
+पूर्ण
 
-void optee_wait_queue_exit(struct optee_wait_queue *priv)
-{
+व्योम optee_रुको_queue_निकास(काष्ठा optee_रुको_queue *priv)
+अणु
 	mutex_destroy(&priv->mu);
-}
+पूर्ण
 
-static void handle_rpc_func_cmd_get_time(struct optee_msg_arg *arg)
-{
-	struct timespec64 ts;
+अटल व्योम handle_rpc_func_cmd_get_समय(काष्ठा optee_msg_arg *arg)
+अणु
+	काष्ठा बारpec64 ts;
 
-	if (arg->num_params != 1)
-		goto bad;
-	if ((arg->params[0].attr & OPTEE_MSG_ATTR_TYPE_MASK) !=
+	अगर (arg->num_params != 1)
+		जाओ bad;
+	अगर ((arg->params[0].attr & OPTEE_MSG_ATTR_TYPE_MASK) !=
 			OPTEE_MSG_ATTR_TYPE_VALUE_OUTPUT)
-		goto bad;
+		जाओ bad;
 
-	ktime_get_real_ts64(&ts);
+	kसमय_get_real_ts64(&ts);
 	arg->params[0].u.value.a = ts.tv_sec;
 	arg->params[0].u.value.b = ts.tv_nsec;
 
 	arg->ret = TEEC_SUCCESS;
-	return;
+	वापस;
 bad:
 	arg->ret = TEEC_ERROR_BAD_PARAMETERS;
-}
+पूर्ण
 
-#if IS_REACHABLE(CONFIG_I2C)
-static void handle_rpc_func_cmd_i2c_transfer(struct tee_context *ctx,
-					     struct optee_msg_arg *arg)
-{
-	struct tee_param *params;
-	struct i2c_adapter *adapter;
-	struct i2c_msg msg = { };
-	size_t i;
-	int ret = -EOPNOTSUPP;
-	u8 attr[] = {
+#अगर IS_REACHABLE(CONFIG_I2C)
+अटल व्योम handle_rpc_func_cmd_i2c_transfer(काष्ठा tee_context *ctx,
+					     काष्ठा optee_msg_arg *arg)
+अणु
+	काष्ठा tee_param *params;
+	काष्ठा i2c_adapter *adapter;
+	काष्ठा i2c_msg msg = अणु पूर्ण;
+	माप_प्रकार i;
+	पूर्णांक ret = -EOPNOTSUPP;
+	u8 attr[] = अणु
 		TEE_IOCTL_PARAM_ATTR_TYPE_VALUE_INPUT,
 		TEE_IOCTL_PARAM_ATTR_TYPE_VALUE_INPUT,
 		TEE_IOCTL_PARAM_ATTR_TYPE_MEMREF_INOUT,
 		TEE_IOCTL_PARAM_ATTR_TYPE_VALUE_OUTPUT,
-	};
+	पूर्ण;
 
-	if (arg->num_params != ARRAY_SIZE(attr)) {
+	अगर (arg->num_params != ARRAY_SIZE(attr)) अणु
 		arg->ret = TEEC_ERROR_BAD_PARAMETERS;
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	params = kmalloc_array(arg->num_params, sizeof(struct tee_param),
+	params = kदो_स्मृति_array(arg->num_params, माप(काष्ठा tee_param),
 			       GFP_KERNEL);
-	if (!params) {
+	अगर (!params) अणु
 		arg->ret = TEEC_ERROR_OUT_OF_MEMORY;
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (optee_from_msg_param(params, arg->num_params, arg->params))
-		goto bad;
+	अगर (optee_from_msg_param(params, arg->num_params, arg->params))
+		जाओ bad;
 
-	for (i = 0; i < arg->num_params; i++) {
-		if (params[i].attr != attr[i])
-			goto bad;
-	}
+	क्रम (i = 0; i < arg->num_params; i++) अणु
+		अगर (params[i].attr != attr[i])
+			जाओ bad;
+	पूर्ण
 
 	adapter = i2c_get_adapter(params[0].u.value.b);
-	if (!adapter)
-		goto bad;
+	अगर (!adapter)
+		जाओ bad;
 
-	if (params[1].u.value.a & OPTEE_RPC_I2C_FLAGS_TEN_BIT) {
-		if (!i2c_check_functionality(adapter,
-					     I2C_FUNC_10BIT_ADDR)) {
+	अगर (params[1].u.value.a & OPTEE_RPC_I2C_FLAGS_TEN_BIT) अणु
+		अगर (!i2c_check_functionality(adapter,
+					     I2C_FUNC_10BIT_ADDR)) अणु
 			i2c_put_adapter(adapter);
-			goto bad;
-		}
+			जाओ bad;
+		पूर्ण
 
 		msg.flags = I2C_M_TEN;
-	}
+	पूर्ण
 
 	msg.addr = params[0].u.value.c;
 	msg.buf  = params[2].u.memref.shm->kaddr;
 	msg.len  = params[2].u.memref.size;
 
-	switch (params[0].u.value.a) {
-	case OPTEE_RPC_I2C_TRANSFER_RD:
+	चयन (params[0].u.value.a) अणु
+	हाल OPTEE_RPC_I2C_TRANSFER_RD:
 		msg.flags |= I2C_M_RD;
-		break;
-	case OPTEE_RPC_I2C_TRANSFER_WR:
-		break;
-	default:
+		अवरोध;
+	हाल OPTEE_RPC_I2C_TRANSFER_WR:
+		अवरोध;
+	शेष:
 		i2c_put_adapter(adapter);
-		goto bad;
-	}
+		जाओ bad;
+	पूर्ण
 
 	ret = i2c_transfer(adapter, &msg, 1);
 
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		arg->ret = TEEC_ERROR_COMMUNICATION;
-	} else {
+	पूर्ण अन्यथा अणु
 		params[3].u.value.a = msg.len;
-		if (optee_to_msg_param(arg->params, arg->num_params, params))
+		अगर (optee_to_msg_param(arg->params, arg->num_params, params))
 			arg->ret = TEEC_ERROR_BAD_PARAMETERS;
-		else
+		अन्यथा
 			arg->ret = TEEC_SUCCESS;
-	}
+	पूर्ण
 
 	i2c_put_adapter(adapter);
-	kfree(params);
-	return;
+	kमुक्त(params);
+	वापस;
 bad:
-	kfree(params);
+	kमुक्त(params);
 	arg->ret = TEEC_ERROR_BAD_PARAMETERS;
-}
-#else
-static void handle_rpc_func_cmd_i2c_transfer(struct tee_context *ctx,
-					     struct optee_msg_arg *arg)
-{
+पूर्ण
+#अन्यथा
+अटल व्योम handle_rpc_func_cmd_i2c_transfer(काष्ठा tee_context *ctx,
+					     काष्ठा optee_msg_arg *arg)
+अणु
 	arg->ret = TEEC_ERROR_NOT_SUPPORTED;
-}
-#endif
+पूर्ण
+#पूर्ण_अगर
 
-static struct wq_entry *wq_entry_get(struct optee_wait_queue *wq, u32 key)
-{
-	struct wq_entry *w;
+अटल काष्ठा wq_entry *wq_entry_get(काष्ठा optee_रुको_queue *wq, u32 key)
+अणु
+	काष्ठा wq_entry *w;
 
 	mutex_lock(&wq->mu);
 
-	list_for_each_entry(w, &wq->db, link)
-		if (w->key == key)
-			goto out;
+	list_क्रम_each_entry(w, &wq->db, link)
+		अगर (w->key == key)
+			जाओ out;
 
-	w = kmalloc(sizeof(*w), GFP_KERNEL);
-	if (w) {
+	w = kदो_स्मृति(माप(*w), GFP_KERNEL);
+	अगर (w) अणु
 		init_completion(&w->c);
 		w->key = key;
 		list_add_tail(&w->link, &wq->db);
-	}
+	पूर्ण
 out:
 	mutex_unlock(&wq->mu);
-	return w;
-}
+	वापस w;
+पूर्ण
 
-static void wq_sleep(struct optee_wait_queue *wq, u32 key)
-{
-	struct wq_entry *w = wq_entry_get(wq, key);
+अटल व्योम wq_sleep(काष्ठा optee_रुको_queue *wq, u32 key)
+अणु
+	काष्ठा wq_entry *w = wq_entry_get(wq, key);
 
-	if (w) {
-		wait_for_completion(&w->c);
+	अगर (w) अणु
+		रुको_क्रम_completion(&w->c);
 		mutex_lock(&wq->mu);
 		list_del(&w->link);
 		mutex_unlock(&wq->mu);
-		kfree(w);
-	}
-}
+		kमुक्त(w);
+	पूर्ण
+पूर्ण
 
-static void wq_wakeup(struct optee_wait_queue *wq, u32 key)
-{
-	struct wq_entry *w = wq_entry_get(wq, key);
+अटल व्योम wq_wakeup(काष्ठा optee_रुको_queue *wq, u32 key)
+अणु
+	काष्ठा wq_entry *w = wq_entry_get(wq, key);
 
-	if (w)
+	अगर (w)
 		complete(&w->c);
-}
+पूर्ण
 
-static void handle_rpc_func_cmd_wq(struct optee *optee,
-				   struct optee_msg_arg *arg)
-{
-	if (arg->num_params != 1)
-		goto bad;
+अटल व्योम handle_rpc_func_cmd_wq(काष्ठा optee *optee,
+				   काष्ठा optee_msg_arg *arg)
+अणु
+	अगर (arg->num_params != 1)
+		जाओ bad;
 
-	if ((arg->params[0].attr & OPTEE_MSG_ATTR_TYPE_MASK) !=
+	अगर ((arg->params[0].attr & OPTEE_MSG_ATTR_TYPE_MASK) !=
 			OPTEE_MSG_ATTR_TYPE_VALUE_INPUT)
-		goto bad;
+		जाओ bad;
 
-	switch (arg->params[0].u.value.a) {
-	case OPTEE_RPC_WAIT_QUEUE_SLEEP:
-		wq_sleep(&optee->wait_queue, arg->params[0].u.value.b);
-		break;
-	case OPTEE_RPC_WAIT_QUEUE_WAKEUP:
-		wq_wakeup(&optee->wait_queue, arg->params[0].u.value.b);
-		break;
-	default:
-		goto bad;
-	}
+	चयन (arg->params[0].u.value.a) अणु
+	हाल OPTEE_RPC_WAIT_QUEUE_SLEEP:
+		wq_sleep(&optee->रुको_queue, arg->params[0].u.value.b);
+		अवरोध;
+	हाल OPTEE_RPC_WAIT_QUEUE_WAKEUP:
+		wq_wakeup(&optee->रुको_queue, arg->params[0].u.value.b);
+		अवरोध;
+	शेष:
+		जाओ bad;
+	पूर्ण
 
 	arg->ret = TEEC_SUCCESS;
-	return;
+	वापस;
 bad:
 	arg->ret = TEEC_ERROR_BAD_PARAMETERS;
-}
+पूर्ण
 
-static void handle_rpc_func_cmd_wait(struct optee_msg_arg *arg)
-{
-	u32 msec_to_wait;
+अटल व्योम handle_rpc_func_cmd_रुको(काष्ठा optee_msg_arg *arg)
+अणु
+	u32 msec_to_रुको;
 
-	if (arg->num_params != 1)
-		goto bad;
+	अगर (arg->num_params != 1)
+		जाओ bad;
 
-	if ((arg->params[0].attr & OPTEE_MSG_ATTR_TYPE_MASK) !=
+	अगर ((arg->params[0].attr & OPTEE_MSG_ATTR_TYPE_MASK) !=
 			OPTEE_MSG_ATTR_TYPE_VALUE_INPUT)
-		goto bad;
+		जाओ bad;
 
-	msec_to_wait = arg->params[0].u.value.a;
+	msec_to_रुको = arg->params[0].u.value.a;
 
-	/* Go to interruptible sleep */
-	msleep_interruptible(msec_to_wait);
+	/* Go to पूर्णांकerruptible sleep */
+	msleep_पूर्णांकerruptible(msec_to_रुको);
 
 	arg->ret = TEEC_SUCCESS;
-	return;
+	वापस;
 bad:
 	arg->ret = TEEC_ERROR_BAD_PARAMETERS;
-}
+पूर्ण
 
-static void handle_rpc_supp_cmd(struct tee_context *ctx,
-				struct optee_msg_arg *arg)
-{
-	struct tee_param *params;
+अटल व्योम handle_rpc_supp_cmd(काष्ठा tee_context *ctx,
+				काष्ठा optee_msg_arg *arg)
+अणु
+	काष्ठा tee_param *params;
 
 	arg->ret_origin = TEEC_ORIGIN_COMMS;
 
-	params = kmalloc_array(arg->num_params, sizeof(struct tee_param),
+	params = kदो_स्मृति_array(arg->num_params, माप(काष्ठा tee_param),
 			       GFP_KERNEL);
-	if (!params) {
+	अगर (!params) अणु
 		arg->ret = TEEC_ERROR_OUT_OF_MEMORY;
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (optee_from_msg_param(params, arg->num_params, arg->params)) {
+	अगर (optee_from_msg_param(params, arg->num_params, arg->params)) अणु
 		arg->ret = TEEC_ERROR_BAD_PARAMETERS;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	arg->ret = optee_supp_thrd_req(ctx, arg->cmd, arg->num_params, params);
 
-	if (optee_to_msg_param(arg->params, arg->num_params, params))
+	अगर (optee_to_msg_param(arg->params, arg->num_params, params))
 		arg->ret = TEEC_ERROR_BAD_PARAMETERS;
 out:
-	kfree(params);
-}
+	kमुक्त(params);
+पूर्ण
 
-static struct tee_shm *cmd_alloc_suppl(struct tee_context *ctx, size_t sz)
-{
+अटल काष्ठा tee_shm *cmd_alloc_suppl(काष्ठा tee_context *ctx, माप_प्रकार sz)
+अणु
 	u32 ret;
-	struct tee_param param;
-	struct optee *optee = tee_get_drvdata(ctx->teedev);
-	struct tee_shm *shm;
+	काष्ठा tee_param param;
+	काष्ठा optee *optee = tee_get_drvdata(ctx->teedev);
+	काष्ठा tee_shm *shm;
 
 	param.attr = TEE_IOCTL_PARAM_ATTR_TYPE_VALUE_INOUT;
 	param.u.value.a = OPTEE_RPC_SHM_TYPE_APPL;
@@ -274,81 +275,81 @@ static struct tee_shm *cmd_alloc_suppl(struct tee_context *ctx, size_t sz)
 	param.u.value.c = 0;
 
 	ret = optee_supp_thrd_req(ctx, OPTEE_RPC_CMD_SHM_ALLOC, 1, &param);
-	if (ret)
-		return ERR_PTR(-ENOMEM);
+	अगर (ret)
+		वापस ERR_PTR(-ENOMEM);
 
 	mutex_lock(&optee->supp.mutex);
-	/* Increases count as secure world doesn't have a reference */
+	/* Increases count as secure world करोesn't have a reference */
 	shm = tee_shm_get_from_id(optee->supp.ctx, param.u.value.c);
 	mutex_unlock(&optee->supp.mutex);
-	return shm;
-}
+	वापस shm;
+पूर्ण
 
-static void handle_rpc_func_cmd_shm_alloc(struct tee_context *ctx,
-					  struct optee_msg_arg *arg,
-					  struct optee_call_ctx *call_ctx)
-{
+अटल व्योम handle_rpc_func_cmd_shm_alloc(काष्ठा tee_context *ctx,
+					  काष्ठा optee_msg_arg *arg,
+					  काष्ठा optee_call_ctx *call_ctx)
+अणु
 	phys_addr_t pa;
-	struct tee_shm *shm;
-	size_t sz;
-	size_t n;
+	काष्ठा tee_shm *shm;
+	माप_प्रकार sz;
+	माप_प्रकार n;
 
 	arg->ret_origin = TEEC_ORIGIN_COMMS;
 
-	if (!arg->num_params ||
-	    arg->params[0].attr != OPTEE_MSG_ATTR_TYPE_VALUE_INPUT) {
+	अगर (!arg->num_params ||
+	    arg->params[0].attr != OPTEE_MSG_ATTR_TYPE_VALUE_INPUT) अणु
 		arg->ret = TEEC_ERROR_BAD_PARAMETERS;
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	for (n = 1; n < arg->num_params; n++) {
-		if (arg->params[n].attr != OPTEE_MSG_ATTR_TYPE_NONE) {
+	क्रम (n = 1; n < arg->num_params; n++) अणु
+		अगर (arg->params[n].attr != OPTEE_MSG_ATTR_TYPE_NONE) अणु
 			arg->ret = TEEC_ERROR_BAD_PARAMETERS;
-			return;
-		}
-	}
+			वापस;
+		पूर्ण
+	पूर्ण
 
 	sz = arg->params[0].u.value.b;
-	switch (arg->params[0].u.value.a) {
-	case OPTEE_RPC_SHM_TYPE_APPL:
+	चयन (arg->params[0].u.value.a) अणु
+	हाल OPTEE_RPC_SHM_TYPE_APPL:
 		shm = cmd_alloc_suppl(ctx, sz);
-		break;
-	case OPTEE_RPC_SHM_TYPE_KERNEL:
+		अवरोध;
+	हाल OPTEE_RPC_SHM_TYPE_KERNEL:
 		shm = tee_shm_alloc(ctx, sz, TEE_SHM_MAPPED);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		arg->ret = TEEC_ERROR_BAD_PARAMETERS;
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (IS_ERR(shm)) {
+	अगर (IS_ERR(shm)) अणु
 		arg->ret = TEEC_ERROR_OUT_OF_MEMORY;
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (tee_shm_get_pa(shm, 0, &pa)) {
+	अगर (tee_shm_get_pa(shm, 0, &pa)) अणु
 		arg->ret = TEEC_ERROR_BAD_PARAMETERS;
-		goto bad;
-	}
+		जाओ bad;
+	पूर्ण
 
 	sz = tee_shm_get_size(shm);
 
-	if (tee_shm_is_registered(shm)) {
-		struct page **pages;
+	अगर (tee_shm_is_रेजिस्टरed(shm)) अणु
+		काष्ठा page **pages;
 		u64 *pages_list;
-		size_t page_num;
+		माप_प्रकार page_num;
 
 		pages = tee_shm_get_pages(shm, &page_num);
-		if (!pages || !page_num) {
+		अगर (!pages || !page_num) अणु
 			arg->ret = TEEC_ERROR_OUT_OF_MEMORY;
-			goto bad;
-		}
+			जाओ bad;
+		पूर्ण
 
 		pages_list = optee_allocate_pages_list(page_num);
-		if (!pages_list) {
+		अगर (!pages_list) अणु
 			arg->ret = TEEC_ERROR_OUT_OF_MEMORY;
-			goto bad;
-		}
+			जाओ bad;
+		पूर्ण
 
 		call_ctx->pages_list = pages_list;
 		call_ctx->num_entries = page_num;
@@ -356,33 +357,33 @@ static void handle_rpc_func_cmd_shm_alloc(struct tee_context *ctx,
 		arg->params[0].attr = OPTEE_MSG_ATTR_TYPE_TMEM_OUTPUT |
 				      OPTEE_MSG_ATTR_NONCONTIG;
 		/*
-		 * In the least bits of u.tmem.buf_ptr we store buffer offset
+		 * In the least bits of u.पंचांगem.buf_ptr we store buffer offset
 		 * from 4k page, as described in OP-TEE ABI.
 		 */
-		arg->params[0].u.tmem.buf_ptr = virt_to_phys(pages_list) |
+		arg->params[0].u.पंचांगem.buf_ptr = virt_to_phys(pages_list) |
 			(tee_shm_get_page_offset(shm) &
 			 (OPTEE_MSG_NONCONTIG_PAGE_SIZE - 1));
-		arg->params[0].u.tmem.size = tee_shm_get_size(shm);
-		arg->params[0].u.tmem.shm_ref = (unsigned long)shm;
+		arg->params[0].u.पंचांगem.size = tee_shm_get_size(shm);
+		arg->params[0].u.पंचांगem.shm_ref = (अचिन्हित दीर्घ)shm;
 
 		optee_fill_pages_list(pages_list, pages, page_num,
 				      tee_shm_get_page_offset(shm));
-	} else {
+	पूर्ण अन्यथा अणु
 		arg->params[0].attr = OPTEE_MSG_ATTR_TYPE_TMEM_OUTPUT;
-		arg->params[0].u.tmem.buf_ptr = pa;
-		arg->params[0].u.tmem.size = sz;
-		arg->params[0].u.tmem.shm_ref = (unsigned long)shm;
-	}
+		arg->params[0].u.पंचांगem.buf_ptr = pa;
+		arg->params[0].u.पंचांगem.size = sz;
+		arg->params[0].u.पंचांगem.shm_ref = (अचिन्हित दीर्घ)shm;
+	पूर्ण
 
 	arg->ret = TEEC_SUCCESS;
-	return;
+	वापस;
 bad:
-	tee_shm_free(shm);
-}
+	tee_shm_मुक्त(shm);
+पूर्ण
 
-static void cmd_free_suppl(struct tee_context *ctx, struct tee_shm *shm)
-{
-	struct tee_param param;
+अटल व्योम cmd_मुक्त_suppl(काष्ठा tee_context *ctx, काष्ठा tee_shm *shm)
+अणु
+	काष्ठा tee_param param;
 
 	param.attr = TEE_IOCTL_PARAM_ATTR_TYPE_VALUE_INOUT;
 	param.u.value.a = OPTEE_RPC_SHM_TYPE_APPL;
@@ -393,148 +394,148 @@ static void cmd_free_suppl(struct tee_context *ctx, struct tee_shm *shm)
 	 * Match the tee_shm_get_from_id() in cmd_alloc_suppl() as secure
 	 * world has released its reference.
 	 *
-	 * It's better to do this before sending the request to supplicant
-	 * as we'd like to let the process doing the initial allocation to
-	 * do release the last reference too in order to avoid stacking
+	 * It's better to करो this beक्रमe sending the request to supplicant
+	 * as we'd like to let the process करोing the initial allocation to
+	 * करो release the last reference too in order to aव्योम stacking
 	 * many pending fput() on the client process. This could otherwise
-	 * happen if secure world does many allocate and free in a single
+	 * happen अगर secure world करोes many allocate and मुक्त in a single
 	 * invoke.
 	 */
 	tee_shm_put(shm);
 
 	optee_supp_thrd_req(ctx, OPTEE_RPC_CMD_SHM_FREE, 1, &param);
-}
+पूर्ण
 
-static void handle_rpc_func_cmd_shm_free(struct tee_context *ctx,
-					 struct optee_msg_arg *arg)
-{
-	struct tee_shm *shm;
+अटल व्योम handle_rpc_func_cmd_shm_मुक्त(काष्ठा tee_context *ctx,
+					 काष्ठा optee_msg_arg *arg)
+अणु
+	काष्ठा tee_shm *shm;
 
 	arg->ret_origin = TEEC_ORIGIN_COMMS;
 
-	if (arg->num_params != 1 ||
-	    arg->params[0].attr != OPTEE_MSG_ATTR_TYPE_VALUE_INPUT) {
+	अगर (arg->num_params != 1 ||
+	    arg->params[0].attr != OPTEE_MSG_ATTR_TYPE_VALUE_INPUT) अणु
 		arg->ret = TEEC_ERROR_BAD_PARAMETERS;
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	shm = (struct tee_shm *)(unsigned long)arg->params[0].u.value.b;
-	switch (arg->params[0].u.value.a) {
-	case OPTEE_RPC_SHM_TYPE_APPL:
-		cmd_free_suppl(ctx, shm);
-		break;
-	case OPTEE_RPC_SHM_TYPE_KERNEL:
-		tee_shm_free(shm);
-		break;
-	default:
+	shm = (काष्ठा tee_shm *)(अचिन्हित दीर्घ)arg->params[0].u.value.b;
+	चयन (arg->params[0].u.value.a) अणु
+	हाल OPTEE_RPC_SHM_TYPE_APPL:
+		cmd_मुक्त_suppl(ctx, shm);
+		अवरोध;
+	हाल OPTEE_RPC_SHM_TYPE_KERNEL:
+		tee_shm_मुक्त(shm);
+		अवरोध;
+	शेष:
 		arg->ret = TEEC_ERROR_BAD_PARAMETERS;
-	}
+	पूर्ण
 	arg->ret = TEEC_SUCCESS;
-}
+पूर्ण
 
-static void free_pages_list(struct optee_call_ctx *call_ctx)
-{
-	if (call_ctx->pages_list) {
-		optee_free_pages_list(call_ctx->pages_list,
+अटल व्योम मुक्त_pages_list(काष्ठा optee_call_ctx *call_ctx)
+अणु
+	अगर (call_ctx->pages_list) अणु
+		optee_मुक्त_pages_list(call_ctx->pages_list,
 				      call_ctx->num_entries);
-		call_ctx->pages_list = NULL;
+		call_ctx->pages_list = शून्य;
 		call_ctx->num_entries = 0;
-	}
-}
+	पूर्ण
+पूर्ण
 
-void optee_rpc_finalize_call(struct optee_call_ctx *call_ctx)
-{
-	free_pages_list(call_ctx);
-}
+व्योम optee_rpc_finalize_call(काष्ठा optee_call_ctx *call_ctx)
+अणु
+	मुक्त_pages_list(call_ctx);
+पूर्ण
 
-static void handle_rpc_func_cmd(struct tee_context *ctx, struct optee *optee,
-				struct tee_shm *shm,
-				struct optee_call_ctx *call_ctx)
-{
-	struct optee_msg_arg *arg;
+अटल व्योम handle_rpc_func_cmd(काष्ठा tee_context *ctx, काष्ठा optee *optee,
+				काष्ठा tee_shm *shm,
+				काष्ठा optee_call_ctx *call_ctx)
+अणु
+	काष्ठा optee_msg_arg *arg;
 
 	arg = tee_shm_get_va(shm, 0);
-	if (IS_ERR(arg)) {
+	अगर (IS_ERR(arg)) अणु
 		pr_err("%s: tee_shm_get_va %p failed\n", __func__, shm);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	switch (arg->cmd) {
-	case OPTEE_RPC_CMD_GET_TIME:
-		handle_rpc_func_cmd_get_time(arg);
-		break;
-	case OPTEE_RPC_CMD_WAIT_QUEUE:
+	चयन (arg->cmd) अणु
+	हाल OPTEE_RPC_CMD_GET_TIME:
+		handle_rpc_func_cmd_get_समय(arg);
+		अवरोध;
+	हाल OPTEE_RPC_CMD_WAIT_QUEUE:
 		handle_rpc_func_cmd_wq(optee, arg);
-		break;
-	case OPTEE_RPC_CMD_SUSPEND:
-		handle_rpc_func_cmd_wait(arg);
-		break;
-	case OPTEE_RPC_CMD_SHM_ALLOC:
-		free_pages_list(call_ctx);
+		अवरोध;
+	हाल OPTEE_RPC_CMD_SUSPEND:
+		handle_rpc_func_cmd_रुको(arg);
+		अवरोध;
+	हाल OPTEE_RPC_CMD_SHM_ALLOC:
+		मुक्त_pages_list(call_ctx);
 		handle_rpc_func_cmd_shm_alloc(ctx, arg, call_ctx);
-		break;
-	case OPTEE_RPC_CMD_SHM_FREE:
-		handle_rpc_func_cmd_shm_free(ctx, arg);
-		break;
-	case OPTEE_RPC_CMD_I2C_TRANSFER:
+		अवरोध;
+	हाल OPTEE_RPC_CMD_SHM_FREE:
+		handle_rpc_func_cmd_shm_मुक्त(ctx, arg);
+		अवरोध;
+	हाल OPTEE_RPC_CMD_I2C_TRANSFER:
 		handle_rpc_func_cmd_i2c_transfer(ctx, arg);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		handle_rpc_supp_cmd(ctx, arg);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
  * optee_handle_rpc() - handle RPC from secure world
- * @ctx:	context doing the RPC
- * @param:	value of registers for the RPC
+ * @ctx:	context करोing the RPC
+ * @param:	value of रेजिस्टरs क्रम the RPC
  * @call_ctx:	call context. Preserved during one OP-TEE invocation
  *
- * Result of RPC is written back into @param.
+ * Result of RPC is written back पूर्णांकo @param.
  */
-void optee_handle_rpc(struct tee_context *ctx, struct optee_rpc_param *param,
-		      struct optee_call_ctx *call_ctx)
-{
-	struct tee_device *teedev = ctx->teedev;
-	struct optee *optee = tee_get_drvdata(teedev);
-	struct tee_shm *shm;
+व्योम optee_handle_rpc(काष्ठा tee_context *ctx, काष्ठा optee_rpc_param *param,
+		      काष्ठा optee_call_ctx *call_ctx)
+अणु
+	काष्ठा tee_device *teedev = ctx->teedev;
+	काष्ठा optee *optee = tee_get_drvdata(teedev);
+	काष्ठा tee_shm *shm;
 	phys_addr_t pa;
 
-	switch (OPTEE_SMC_RETURN_GET_RPC_FUNC(param->a0)) {
-	case OPTEE_SMC_RPC_FUNC_ALLOC:
+	चयन (OPTEE_SMC_RETURN_GET_RPC_FUNC(param->a0)) अणु
+	हाल OPTEE_SMC_RPC_FUNC_ALLOC:
 		shm = tee_shm_alloc(ctx, param->a1, TEE_SHM_MAPPED);
-		if (!IS_ERR(shm) && !tee_shm_get_pa(shm, 0, &pa)) {
+		अगर (!IS_ERR(shm) && !tee_shm_get_pa(shm, 0, &pa)) अणु
 			reg_pair_from_64(&param->a1, &param->a2, pa);
 			reg_pair_from_64(&param->a4, &param->a5,
-					 (unsigned long)shm);
-		} else {
+					 (अचिन्हित दीर्घ)shm);
+		पूर्ण अन्यथा अणु
 			param->a1 = 0;
 			param->a2 = 0;
 			param->a4 = 0;
 			param->a5 = 0;
-		}
-		break;
-	case OPTEE_SMC_RPC_FUNC_FREE:
+		पूर्ण
+		अवरोध;
+	हाल OPTEE_SMC_RPC_FUNC_FREE:
 		shm = reg_pair_to_ptr(param->a1, param->a2);
-		tee_shm_free(shm);
-		break;
-	case OPTEE_SMC_RPC_FUNC_FOREIGN_INTR:
+		tee_shm_मुक्त(shm);
+		अवरोध;
+	हाल OPTEE_SMC_RPC_FUNC_FOREIGN_INTR:
 		/*
-		 * A foreign interrupt was raised while secure world was
+		 * A क्रमeign पूर्णांकerrupt was उठाओd जबतक secure world was
 		 * executing, since they are handled in Linux a dummy RPC is
-		 * performed to let Linux take the interrupt through the normal
+		 * perक्रमmed to let Linux take the पूर्णांकerrupt through the normal
 		 * vector.
 		 */
-		break;
-	case OPTEE_SMC_RPC_FUNC_CMD:
+		अवरोध;
+	हाल OPTEE_SMC_RPC_FUNC_CMD:
 		shm = reg_pair_to_ptr(param->a1, param->a2);
 		handle_rpc_func_cmd(ctx, optee, shm, call_ctx);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		pr_warn("Unknown RPC func 0x%x\n",
 			(u32)OPTEE_SMC_RETURN_GET_RPC_FUNC(param->a0));
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	param->a0 = OPTEE_SMC_CALL_RETURN_FROM_RPC;
-}
+पूर्ण

@@ -1,59 +1,60 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#include <linux/gfp.h>
-#include <linux/types.h>
-#include <linux/radix-tree.h>
-#include <linux/rcupdate.h>
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#समावेश <linux/gfp.h>
+#समावेश <linux/types.h>
+#समावेश <linux/radix-tree.h>
+#समावेश <linux/rcupdate.h>
 
-struct item {
-	struct rcu_head	rcu_head;
-	unsigned long index;
-	unsigned int order;
-};
+काष्ठा item अणु
+	काष्ठा rcu_head	rcu_head;
+	अचिन्हित दीर्घ index;
+	अचिन्हित पूर्णांक order;
+पूर्ण;
 
-struct item *item_create(unsigned long index, unsigned int order);
-int item_insert(struct radix_tree_root *root, unsigned long index);
-void item_sanity(struct item *item, unsigned long index);
-void item_free(struct item *item, unsigned long index);
-int item_delete(struct radix_tree_root *root, unsigned long index);
-int item_delete_rcu(struct xarray *xa, unsigned long index);
-struct item *item_lookup(struct radix_tree_root *root, unsigned long index);
+काष्ठा item *item_create(अचिन्हित दीर्घ index, अचिन्हित पूर्णांक order);
+पूर्णांक item_insert(काष्ठा radix_tree_root *root, अचिन्हित दीर्घ index);
+व्योम item_sanity(काष्ठा item *item, अचिन्हित दीर्घ index);
+व्योम item_मुक्त(काष्ठा item *item, अचिन्हित दीर्घ index);
+पूर्णांक item_delete(काष्ठा radix_tree_root *root, अचिन्हित दीर्घ index);
+पूर्णांक item_delete_rcu(काष्ठा xarray *xa, अचिन्हित दीर्घ index);
+काष्ठा item *item_lookup(काष्ठा radix_tree_root *root, अचिन्हित दीर्घ index);
 
-void item_check_present(struct radix_tree_root *root, unsigned long index);
-void item_check_absent(struct radix_tree_root *root, unsigned long index);
-void item_gang_check_present(struct radix_tree_root *root,
-			unsigned long start, unsigned long nr,
-			int chunk, int hop);
-void item_full_scan(struct radix_tree_root *root, unsigned long start,
-			unsigned long nr, int chunk);
-void item_kill_tree(struct radix_tree_root *root);
+व्योम item_check_present(काष्ठा radix_tree_root *root, अचिन्हित दीर्घ index);
+व्योम item_check_असलent(काष्ठा radix_tree_root *root, अचिन्हित दीर्घ index);
+व्योम item_gang_check_present(काष्ठा radix_tree_root *root,
+			अचिन्हित दीर्घ start, अचिन्हित दीर्घ nr,
+			पूर्णांक chunk, पूर्णांक hop);
+व्योम item_full_scan(काष्ठा radix_tree_root *root, अचिन्हित दीर्घ start,
+			अचिन्हित दीर्घ nr, पूर्णांक chunk);
+व्योम item_समाप्त_tree(काष्ठा radix_tree_root *root);
 
-int tag_tagged_items(struct xarray *, unsigned long start, unsigned long end,
-		unsigned batch, xa_mark_t iftag, xa_mark_t thentag);
+पूर्णांक tag_tagged_items(काष्ठा xarray *, अचिन्हित दीर्घ start, अचिन्हित दीर्घ end,
+		अचिन्हित batch, xa_mark_t अगरtag, xa_mark_t thentag);
 
-void xarray_tests(void);
-void tag_check(void);
-void multiorder_checks(void);
-void iteration_test(unsigned order, unsigned duration);
-void iteration_test2(unsigned duration);
-void benchmark(void);
-void idr_checks(void);
-void ida_tests(void);
+व्योम xarray_tests(व्योम);
+व्योम tag_check(व्योम);
+व्योम multiorder_checks(व्योम);
+व्योम iteration_test(अचिन्हित order, अचिन्हित duration);
+व्योम iteration_test2(अचिन्हित duration);
+व्योम benchmark(व्योम);
+व्योम idr_checks(व्योम);
+व्योम ida_tests(व्योम);
 
-struct item *
-item_tag_set(struct radix_tree_root *root, unsigned long index, int tag);
-struct item *
-item_tag_clear(struct radix_tree_root *root, unsigned long index, int tag);
-int item_tag_get(struct radix_tree_root *root, unsigned long index, int tag);
-void tree_verify_min_height(struct radix_tree_root *root, int maxindex);
-void verify_tag_consistency(struct radix_tree_root *root, unsigned int tag);
+काष्ठा item *
+item_tag_set(काष्ठा radix_tree_root *root, अचिन्हित दीर्घ index, पूर्णांक tag);
+काष्ठा item *
+item_tag_clear(काष्ठा radix_tree_root *root, अचिन्हित दीर्घ index, पूर्णांक tag);
+पूर्णांक item_tag_get(काष्ठा radix_tree_root *root, अचिन्हित दीर्घ index, पूर्णांक tag);
+व्योम tree_verअगरy_min_height(काष्ठा radix_tree_root *root, पूर्णांक maxindex);
+व्योम verअगरy_tag_consistency(काष्ठा radix_tree_root *root, अचिन्हित पूर्णांक tag);
 
-extern int nr_allocated;
+बाह्य पूर्णांक nr_allocated;
 
-/* Normally private parts of lib/radix-tree.c */
-struct radix_tree_node *entry_to_node(void *ptr);
-void radix_tree_dump(struct radix_tree_root *root);
-int root_tag_get(struct radix_tree_root *root, unsigned int tag);
-unsigned long node_maxindex(struct radix_tree_node *);
-unsigned long shift_maxindex(unsigned int shift);
-int radix_tree_cpu_dead(unsigned int cpu);
-extern struct radix_tree_preload radix_tree_preloads;
+/* Normally निजी parts of lib/radix-tree.c */
+काष्ठा radix_tree_node *entry_to_node(व्योम *ptr);
+व्योम radix_tree_dump(काष्ठा radix_tree_root *root);
+पूर्णांक root_tag_get(काष्ठा radix_tree_root *root, अचिन्हित पूर्णांक tag);
+अचिन्हित दीर्घ node_maxindex(काष्ठा radix_tree_node *);
+अचिन्हित दीर्घ shअगरt_maxindex(अचिन्हित पूर्णांक shअगरt);
+पूर्णांक radix_tree_cpu_dead(अचिन्हित पूर्णांक cpu);
+बाह्य काष्ठा radix_tree_preload radix_tree_preloads;

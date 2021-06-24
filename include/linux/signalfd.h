@@ -1,35 +1,36 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- *  include/linux/signalfd.h
+ *  include/linux/संकेतfd.h
  *
  *  Copyright (C) 2007  Davide Libenzi <davidel@xmailserver.org>
  *
  */
-#ifndef _LINUX_SIGNALFD_H
-#define _LINUX_SIGNALFD_H
+#अगर_अघोषित _LINUX_SIGNALFD_H
+#घोषणा _LINUX_SIGNALFD_H
 
-#include <uapi/linux/signalfd.h>
-#include <linux/sched/signal.h>
+#समावेश <uapi/linux/संकेतfd.h>
+#समावेश <linux/sched/संकेत.स>
 
-#ifdef CONFIG_SIGNALFD
+#अगर_घोषित CONFIG_SIGNALFD
 
 /*
- * Deliver the signal to listening signalfd.
+ * Deliver the संकेत to listening संकेतfd.
  */
-static inline void signalfd_notify(struct task_struct *tsk, int sig)
-{
-	if (unlikely(waitqueue_active(&tsk->sighand->signalfd_wqh)))
-		wake_up(&tsk->sighand->signalfd_wqh);
-}
+अटल अंतरभूत व्योम संकेतfd_notअगरy(काष्ठा task_काष्ठा *tsk, पूर्णांक sig)
+अणु
+	अगर (unlikely(रुकोqueue_active(&tsk->sighand->संकेतfd_wqh)))
+		wake_up(&tsk->sighand->संकेतfd_wqh);
+पूर्ण
 
-extern void signalfd_cleanup(struct sighand_struct *sighand);
+बाह्य व्योम संकेतfd_cleanup(काष्ठा sighand_काष्ठा *sighand);
 
-#else /* CONFIG_SIGNALFD */
+#अन्यथा /* CONFIG_SIGNALFD */
 
-static inline void signalfd_notify(struct task_struct *tsk, int sig) { }
+अटल अंतरभूत व्योम संकेतfd_notअगरy(काष्ठा task_काष्ठा *tsk, पूर्णांक sig) अणु पूर्ण
 
-static inline void signalfd_cleanup(struct sighand_struct *sighand) { }
+अटल अंतरभूत व्योम संकेतfd_cleanup(काष्ठा sighand_काष्ठा *sighand) अणु पूर्ण
 
-#endif /* CONFIG_SIGNALFD */
+#पूर्ण_अगर /* CONFIG_SIGNALFD */
 
-#endif /* _LINUX_SIGNALFD_H */
+#पूर्ण_अगर /* _LINUX_SIGNALFD_H */

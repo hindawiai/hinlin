@@ -1,653 +1,654 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Copyright (c) 2009-2013, 2016-2018, The Linux Foundation. All rights reserved.
  * Copyright (c) 2014, Sony Mobile Communications AB.
  *
  */
 
-#include <linux/acpi.h>
-#include <linux/atomic.h>
-#include <linux/clk.h>
-#include <linux/delay.h>
-#include <linux/dmaengine.h>
-#include <linux/dmapool.h>
-#include <linux/dma-mapping.h>
-#include <linux/err.h>
-#include <linux/i2c.h>
-#include <linux/interrupt.h>
-#include <linux/io.h>
-#include <linux/module.h>
-#include <linux/of.h>
-#include <linux/platform_device.h>
-#include <linux/pm_runtime.h>
-#include <linux/scatterlist.h>
+#समावेश <linux/acpi.h>
+#समावेश <linux/atomic.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/dmaengine.h>
+#समावेश <linux/dmapool.h>
+#समावेश <linux/dma-mapping.h>
+#समावेश <linux/err.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/module.h>
+#समावेश <linux/of.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/pm_runसमय.स>
+#समावेश <linux/scatterlist.h>
 
 /* QUP Registers */
-#define QUP_CONFIG		0x000
-#define QUP_STATE		0x004
-#define QUP_IO_MODE		0x008
-#define QUP_SW_RESET		0x00c
-#define QUP_OPERATIONAL		0x018
-#define QUP_ERROR_FLAGS		0x01c
-#define QUP_ERROR_FLAGS_EN	0x020
-#define QUP_OPERATIONAL_MASK	0x028
-#define QUP_HW_VERSION		0x030
-#define QUP_MX_OUTPUT_CNT	0x100
-#define QUP_OUT_FIFO_BASE	0x110
-#define QUP_MX_WRITE_CNT	0x150
-#define QUP_MX_INPUT_CNT	0x200
-#define QUP_MX_READ_CNT		0x208
-#define QUP_IN_FIFO_BASE	0x218
-#define QUP_I2C_CLK_CTL		0x400
-#define QUP_I2C_STATUS		0x404
-#define QUP_I2C_MASTER_GEN	0x408
+#घोषणा QUP_CONFIG		0x000
+#घोषणा QUP_STATE		0x004
+#घोषणा QUP_IO_MODE		0x008
+#घोषणा QUP_SW_RESET		0x00c
+#घोषणा QUP_OPERATIONAL		0x018
+#घोषणा QUP_ERROR_FLAGS		0x01c
+#घोषणा QUP_ERROR_FLAGS_EN	0x020
+#घोषणा QUP_OPERATIONAL_MASK	0x028
+#घोषणा QUP_HW_VERSION		0x030
+#घोषणा QUP_MX_OUTPUT_CNT	0x100
+#घोषणा QUP_OUT_FIFO_BASE	0x110
+#घोषणा QUP_MX_WRITE_CNT	0x150
+#घोषणा QUP_MX_INPUT_CNT	0x200
+#घोषणा QUP_MX_READ_CNT		0x208
+#घोषणा QUP_IN_FIFO_BASE	0x218
+#घोषणा QUP_I2C_CLK_CTL		0x400
+#घोषणा QUP_I2C_STATUS		0x404
+#घोषणा QUP_I2C_MASTER_GEN	0x408
 
 /* QUP States and reset values */
-#define QUP_RESET_STATE		0
-#define QUP_RUN_STATE		1
-#define QUP_PAUSE_STATE		3
-#define QUP_STATE_MASK		3
+#घोषणा QUP_RESET_STATE		0
+#घोषणा QUP_RUN_STATE		1
+#घोषणा QUP_PAUSE_STATE		3
+#घोषणा QUP_STATE_MASK		3
 
-#define QUP_STATE_VALID		BIT(2)
-#define QUP_I2C_MAST_GEN	BIT(4)
-#define QUP_I2C_FLUSH		BIT(6)
+#घोषणा QUP_STATE_VALID		BIT(2)
+#घोषणा QUP_I2C_MAST_GEN	BIT(4)
+#घोषणा QUP_I2C_FLUSH		BIT(6)
 
-#define QUP_OPERATIONAL_RESET	0x000ff0
-#define QUP_I2C_STATUS_RESET	0xfffffc
+#घोषणा QUP_OPERATIONAL_RESET	0x000ff0
+#घोषणा QUP_I2C_STATUS_RESET	0xfffffc
 
 /* QUP OPERATIONAL FLAGS */
-#define QUP_I2C_NACK_FLAG	BIT(3)
-#define QUP_OUT_NOT_EMPTY	BIT(4)
-#define QUP_IN_NOT_EMPTY	BIT(5)
-#define QUP_OUT_FULL		BIT(6)
-#define QUP_OUT_SVC_FLAG	BIT(8)
-#define QUP_IN_SVC_FLAG		BIT(9)
-#define QUP_MX_OUTPUT_DONE	BIT(10)
-#define QUP_MX_INPUT_DONE	BIT(11)
-#define OUT_BLOCK_WRITE_REQ	BIT(12)
-#define IN_BLOCK_READ_REQ	BIT(13)
+#घोषणा QUP_I2C_NACK_FLAG	BIT(3)
+#घोषणा QUP_OUT_NOT_EMPTY	BIT(4)
+#घोषणा QUP_IN_NOT_EMPTY	BIT(5)
+#घोषणा QUP_OUT_FULL		BIT(6)
+#घोषणा QUP_OUT_SVC_FLAG	BIT(8)
+#घोषणा QUP_IN_SVC_FLAG		BIT(9)
+#घोषणा QUP_MX_OUTPUT_DONE	BIT(10)
+#घोषणा QUP_MX_INPUT_DONE	BIT(11)
+#घोषणा OUT_BLOCK_WRITE_REQ	BIT(12)
+#घोषणा IN_BLOCK_READ_REQ	BIT(13)
 
 /* I2C mini core related values */
-#define QUP_NO_INPUT		BIT(7)
-#define QUP_CLOCK_AUTO_GATE	BIT(13)
-#define I2C_MINI_CORE		(2 << 8)
-#define I2C_N_VAL		15
-#define I2C_N_VAL_V2		7
+#घोषणा QUP_NO_INPUT		BIT(7)
+#घोषणा QUP_CLOCK_AUTO_GATE	BIT(13)
+#घोषणा I2C_MINI_CORE		(2 << 8)
+#घोषणा I2C_N_VAL		15
+#घोषणा I2C_N_VAL_V2		7
 
-/* Most significant word offset in FIFO port */
-#define QUP_MSW_SHIFT		(I2C_N_VAL + 1)
+/* Most signअगरicant word offset in FIFO port */
+#घोषणा QUP_MSW_SHIFT		(I2C_N_VAL + 1)
 
 /* Packing/Unpacking words in FIFOs, and IO modes */
-#define QUP_OUTPUT_BLK_MODE	(1 << 10)
-#define QUP_OUTPUT_BAM_MODE	(3 << 10)
-#define QUP_INPUT_BLK_MODE	(1 << 12)
-#define QUP_INPUT_BAM_MODE	(3 << 12)
-#define QUP_BAM_MODE		(QUP_OUTPUT_BAM_MODE | QUP_INPUT_BAM_MODE)
-#define QUP_UNPACK_EN		BIT(14)
-#define QUP_PACK_EN		BIT(15)
+#घोषणा QUP_OUTPUT_BLK_MODE	(1 << 10)
+#घोषणा QUP_OUTPUT_BAM_MODE	(3 << 10)
+#घोषणा QUP_INPUT_BLK_MODE	(1 << 12)
+#घोषणा QUP_INPUT_BAM_MODE	(3 << 12)
+#घोषणा QUP_BAM_MODE		(QUP_OUTPUT_BAM_MODE | QUP_INPUT_BAM_MODE)
+#घोषणा QUP_UNPACK_EN		BIT(14)
+#घोषणा QUP_PACK_EN		BIT(15)
 
-#define QUP_REPACK_EN		(QUP_UNPACK_EN | QUP_PACK_EN)
-#define QUP_V2_TAGS_EN		1
+#घोषणा QUP_REPACK_EN		(QUP_UNPACK_EN | QUP_PACK_EN)
+#घोषणा QUP_V2_TAGS_EN		1
 
-#define QUP_OUTPUT_BLOCK_SIZE(x)(((x) >> 0) & 0x03)
-#define QUP_OUTPUT_FIFO_SIZE(x)	(((x) >> 2) & 0x07)
-#define QUP_INPUT_BLOCK_SIZE(x)	(((x) >> 5) & 0x03)
-#define QUP_INPUT_FIFO_SIZE(x)	(((x) >> 7) & 0x07)
+#घोषणा QUP_OUTPUT_BLOCK_SIZE(x)(((x) >> 0) & 0x03)
+#घोषणा QUP_OUTPUT_FIFO_SIZE(x)	(((x) >> 2) & 0x07)
+#घोषणा QUP_INPUT_BLOCK_SIZE(x)	(((x) >> 5) & 0x03)
+#घोषणा QUP_INPUT_FIFO_SIZE(x)	(((x) >> 7) & 0x07)
 
 /* QUP tags */
-#define QUP_TAG_START		(1 << 8)
-#define QUP_TAG_DATA		(2 << 8)
-#define QUP_TAG_STOP		(3 << 8)
-#define QUP_TAG_REC		(4 << 8)
-#define QUP_BAM_INPUT_EOT		0x93
-#define QUP_BAM_FLUSH_STOP		0x96
+#घोषणा QUP_TAG_START		(1 << 8)
+#घोषणा QUP_TAG_DATA		(2 << 8)
+#घोषणा QUP_TAG_STOP		(3 << 8)
+#घोषणा QUP_TAG_REC		(4 << 8)
+#घोषणा QUP_BAM_INPUT_EOT		0x93
+#घोषणा QUP_BAM_FLUSH_STOP		0x96
 
 /* QUP v2 tags */
-#define QUP_TAG_V2_START               0x81
-#define QUP_TAG_V2_DATAWR              0x82
-#define QUP_TAG_V2_DATAWR_STOP         0x83
-#define QUP_TAG_V2_DATARD              0x85
-#define QUP_TAG_V2_DATARD_NACK         0x86
-#define QUP_TAG_V2_DATARD_STOP         0x87
+#घोषणा QUP_TAG_V2_START               0x81
+#घोषणा QUP_TAG_V2_DATAWR              0x82
+#घोषणा QUP_TAG_V2_DATAWR_STOP         0x83
+#घोषणा QUP_TAG_V2_DATARD              0x85
+#घोषणा QUP_TAG_V2_DATARD_NACK         0x86
+#घोषणा QUP_TAG_V2_DATARD_STOP         0x87
 
 /* Status, Error flags */
-#define I2C_STATUS_WR_BUFFER_FULL	BIT(0)
-#define I2C_STATUS_BUS_ACTIVE		BIT(8)
-#define I2C_STATUS_ERROR_MASK		0x38000fc
-#define QUP_STATUS_ERROR_FLAGS		0x7c
+#घोषणा I2C_STATUS_WR_BUFFER_FULL	BIT(0)
+#घोषणा I2C_STATUS_BUS_ACTIVE		BIT(8)
+#घोषणा I2C_STATUS_ERROR_MASK		0x38000fc
+#घोषणा QUP_STATUS_ERROR_FLAGS		0x7c
 
-#define QUP_READ_LIMIT			256
-#define SET_BIT				0x1
-#define RESET_BIT			0x0
-#define ONE_BYTE			0x1
-#define QUP_I2C_MX_CONFIG_DURING_RUN   BIT(31)
+#घोषणा QUP_READ_LIMIT			256
+#घोषणा SET_BIT				0x1
+#घोषणा RESET_BIT			0x0
+#घोषणा ONE_BYTE			0x1
+#घोषणा QUP_I2C_MX_CONFIG_DURING_RUN   BIT(31)
 
-/* Maximum transfer length for single DMA descriptor */
-#define MX_TX_RX_LEN			SZ_64K
-#define MX_BLOCKS			(MX_TX_RX_LEN / QUP_READ_LIMIT)
-/* Maximum transfer length for all DMA descriptors */
-#define MX_DMA_TX_RX_LEN		(2 * MX_TX_RX_LEN)
-#define MX_DMA_BLOCKS			(MX_DMA_TX_RX_LEN / QUP_READ_LIMIT)
+/* Maximum transfer length क्रम single DMA descriptor */
+#घोषणा MX_TX_RX_LEN			SZ_64K
+#घोषणा MX_BLOCKS			(MX_TX_RX_LEN / QUP_READ_LIMIT)
+/* Maximum transfer length क्रम all DMA descriptors */
+#घोषणा MX_DMA_TX_RX_LEN		(2 * MX_TX_RX_LEN)
+#घोषणा MX_DMA_BLOCKS			(MX_DMA_TX_RX_LEN / QUP_READ_LIMIT)
 
 /*
- * Minimum transfer timeout for i2c transfers in seconds. It will be added on
- * the top of maximum transfer time calculated from i2c bus speed to compensate
+ * Minimum transfer समयout क्रम i2c transfers in seconds. It will be added on
+ * the top of maximum transfer समय calculated from i2c bus speed to compensate
  * the overheads.
  */
-#define TOUT_MIN			2
+#घोषणा TOUT_MIN			2
 
-/* Default values. Use these if FW query fails */
-#define DEFAULT_CLK_FREQ I2C_MAX_STANDARD_MODE_FREQ
-#define DEFAULT_SRC_CLK 20000000
+/* Default values. Use these अगर FW query fails */
+#घोषणा DEFAULT_CLK_FREQ I2C_MAX_STANDARD_MODE_FREQ
+#घोषणा DEFAULT_SRC_CLK 20000000
 
 /*
- * Max tags length (start, stop and maximum 2 bytes address) for each QUP
+ * Max tags length (start, stop and maximum 2 bytes address) क्रम each QUP
  * data transfer
  */
-#define QUP_MAX_TAGS_LEN		4
-/* Max data length for each DATARD tags */
-#define RECV_MAX_DATA_LEN		254
-/* TAG length for DATA READ in RX FIFO  */
-#define READ_RX_TAGS_LEN		2
+#घोषणा QUP_MAX_TAGS_LEN		4
+/* Max data length क्रम each DATARD tags */
+#घोषणा RECV_MAX_DATA_LEN		254
+/* TAG length क्रम DATA READ in RX FIFO  */
+#घोषणा READ_RX_TAGS_LEN		2
 
-static unsigned int scl_freq;
-module_param_named(scl_freq, scl_freq, uint, 0444);
+अटल अचिन्हित पूर्णांक scl_freq;
+module_param_named(scl_freq, scl_freq, uपूर्णांक, 0444);
 MODULE_PARM_DESC(scl_freq, "SCL frequency override");
 
 /*
  * count: no of blocks
  * pos: current block number
- * tx_tag_len: tx tag length for current block
- * rx_tag_len: rx tag length for current block
- * data_len: remaining data length for current message
- * cur_blk_len: data length for current block
- * total_tx_len: total tx length including tag bytes for current QUP transfer
- * total_rx_len: total rx length including tag bytes for current QUP transfer
- * tx_fifo_data_pos: current byte number in TX FIFO word
- * tx_fifo_free: number of free bytes in current QUP block write.
- * rx_fifo_data_pos: current byte number in RX FIFO word
- * fifo_available: number of available bytes in RX FIFO for current
- *		   QUP block read
- * tx_fifo_data: QUP TX FIFO write works on word basis (4 bytes). New byte write
+ * tx_tag_len: tx tag length क्रम current block
+ * rx_tag_len: rx tag length क्रम current block
+ * data_len: reमुख्यing data length क्रम current message
+ * cur_blk_len: data length क्रम current block
+ * total_tx_len: total tx length including tag bytes क्रम current QUP transfer
+ * total_rx_len: total rx length including tag bytes क्रम current QUP transfer
+ * tx_fअगरo_data_pos: current byte number in TX FIFO word
+ * tx_fअगरo_मुक्त: number of मुक्त bytes in current QUP block ग_लिखो.
+ * rx_fअगरo_data_pos: current byte number in RX FIFO word
+ * fअगरo_available: number of available bytes in RX FIFO क्रम current
+ *		   QUP block पढ़ो
+ * tx_fअगरo_data: QUP TX FIFO ग_लिखो works on word basis (4 bytes). New byte ग_लिखो
  *		 to TX FIFO will be appended in this data and will be written to
  *		 TX FIFO when all the 4 bytes are available.
- * rx_fifo_data: QUP RX FIFO read works on word basis (4 bytes). This will
+ * rx_fअगरo_data: QUP RX FIFO पढ़ो works on word basis (4 bytes). This will
  *		 contains the 4 bytes of RX data.
- * cur_data: pointer to tell cur data position for current message
- * cur_tx_tags: pointer to tell cur position in tags
+ * cur_data: poपूर्णांकer to tell cur data position क्रम current message
+ * cur_tx_tags: poपूर्णांकer to tell cur position in tags
  * tx_tags_sent: all tx tag bytes have been written in FIFO word
- * send_last_word: for tx FIFO, last word send is pending in current block
- * rx_bytes_read: if all the bytes have been read from rx FIFO.
- * rx_tags_fetched: all the rx tag bytes have been fetched from rx fifo word
- * is_tx_blk_mode: whether tx uses block or FIFO mode in case of non BAM xfer.
- * is_rx_blk_mode: whether rx uses block or FIFO mode in case of non BAM xfer.
- * tags: contains tx tag bytes for current QUP transfer
+ * send_last_word: क्रम tx FIFO, last word send is pending in current block
+ * rx_bytes_पढ़ो: अगर all the bytes have been पढ़ो from rx FIFO.
+ * rx_tags_fetched: all the rx tag bytes have been fetched from rx fअगरo word
+ * is_tx_blk_mode: whether tx uses block or FIFO mode in हाल of non BAM xfer.
+ * is_rx_blk_mode: whether rx uses block or FIFO mode in हाल of non BAM xfer.
+ * tags: contains tx tag bytes क्रम current QUP transfer
  */
-struct qup_i2c_block {
-	int		count;
-	int		pos;
-	int		tx_tag_len;
-	int		rx_tag_len;
-	int		data_len;
-	int		cur_blk_len;
-	int		total_tx_len;
-	int		total_rx_len;
-	int		tx_fifo_data_pos;
-	int		tx_fifo_free;
-	int		rx_fifo_data_pos;
-	int		fifo_available;
-	u32		tx_fifo_data;
-	u32		rx_fifo_data;
+काष्ठा qup_i2c_block अणु
+	पूर्णांक		count;
+	पूर्णांक		pos;
+	पूर्णांक		tx_tag_len;
+	पूर्णांक		rx_tag_len;
+	पूर्णांक		data_len;
+	पूर्णांक		cur_blk_len;
+	पूर्णांक		total_tx_len;
+	पूर्णांक		total_rx_len;
+	पूर्णांक		tx_fअगरo_data_pos;
+	पूर्णांक		tx_fअगरo_मुक्त;
+	पूर्णांक		rx_fअगरo_data_pos;
+	पूर्णांक		fअगरo_available;
+	u32		tx_fअगरo_data;
+	u32		rx_fअगरo_data;
 	u8		*cur_data;
 	u8		*cur_tx_tags;
 	bool		tx_tags_sent;
 	bool		send_last_word;
 	bool		rx_tags_fetched;
-	bool		rx_bytes_read;
+	bool		rx_bytes_पढ़ो;
 	bool		is_tx_blk_mode;
 	bool		is_rx_blk_mode;
 	u8		tags[6];
-};
+पूर्ण;
 
-struct qup_i2c_tag {
+काष्ठा qup_i2c_tag अणु
 	u8 *start;
 	dma_addr_t addr;
-};
+पूर्ण;
 
-struct qup_i2c_bam {
-	struct	qup_i2c_tag tag;
-	struct	dma_chan *dma;
-	struct	scatterlist *sg;
-	unsigned int sg_cnt;
-};
+काष्ठा qup_i2c_bam अणु
+	काष्ठा	qup_i2c_tag tag;
+	काष्ठा	dma_chan *dma;
+	काष्ठा	scatterlist *sg;
+	अचिन्हित पूर्णांक sg_cnt;
+पूर्ण;
 
-struct qup_i2c_dev {
-	struct device		*dev;
-	void __iomem		*base;
-	int			irq;
-	struct clk		*clk;
-	struct clk		*pclk;
-	struct i2c_adapter	adap;
+काष्ठा qup_i2c_dev अणु
+	काष्ठा device		*dev;
+	व्योम __iomem		*base;
+	पूर्णांक			irq;
+	काष्ठा clk		*clk;
+	काष्ठा clk		*pclk;
+	काष्ठा i2c_adapter	adap;
 
-	int			clk_ctl;
-	int			out_fifo_sz;
-	int			in_fifo_sz;
-	int			out_blk_sz;
-	int			in_blk_sz;
+	पूर्णांक			clk_ctl;
+	पूर्णांक			out_fअगरo_sz;
+	पूर्णांक			in_fअगरo_sz;
+	पूर्णांक			out_blk_sz;
+	पूर्णांक			in_blk_sz;
 
-	int			blk_xfer_limit;
-	unsigned long		one_byte_t;
-	unsigned long		xfer_timeout;
-	struct qup_i2c_block	blk;
+	पूर्णांक			blk_xfer_limit;
+	अचिन्हित दीर्घ		one_byte_t;
+	अचिन्हित दीर्घ		xfer_समयout;
+	काष्ठा qup_i2c_block	blk;
 
-	struct i2c_msg		*msg;
+	काष्ठा i2c_msg		*msg;
 	/* Current posion in user message buffer */
-	int			pos;
+	पूर्णांक			pos;
 	/* I2C protocol errors */
 	u32			bus_err;
 	/* QUP core errors */
 	u32			qup_err;
 
-	/* To check if this is the last msg */
+	/* To check अगर this is the last msg */
 	bool			is_last;
-	bool			is_smbus_read;
+	bool			is_smbus_पढ़ो;
 
 	/* To configure when bus is in run state */
 	u32			config_run;
 
 	/* dma parameters */
 	bool			is_dma;
-	/* To check if the current transfer is using DMA */
+	/* To check अगर the current transfer is using DMA */
 	bool			use_dma;
-	unsigned int		max_xfer_sg_len;
-	unsigned int		tag_buf_pos;
+	अचिन्हित पूर्णांक		max_xfer_sg_len;
+	अचिन्हित पूर्णांक		tag_buf_pos;
 	/* The threshold length above which block mode will be used */
-	unsigned int		blk_mode_threshold;
-	struct			dma_pool *dpool;
-	struct			qup_i2c_tag start_tag;
-	struct			qup_i2c_bam brx;
-	struct			qup_i2c_bam btx;
+	अचिन्हित पूर्णांक		blk_mode_threshold;
+	काष्ठा			dma_pool *dpool;
+	काष्ठा			qup_i2c_tag start_tag;
+	काष्ठा			qup_i2c_bam brx;
+	काष्ठा			qup_i2c_bam btx;
 
-	struct completion	xfer;
-	/* function to write data in tx fifo */
-	void (*write_tx_fifo)(struct qup_i2c_dev *qup);
-	/* function to read data from rx fifo */
-	void (*read_rx_fifo)(struct qup_i2c_dev *qup);
-	/* function to write tags in tx fifo for i2c read transfer */
-	void (*write_rx_tags)(struct qup_i2c_dev *qup);
-};
+	काष्ठा completion	xfer;
+	/* function to ग_लिखो data in tx fअगरo */
+	व्योम (*ग_लिखो_tx_fअगरo)(काष्ठा qup_i2c_dev *qup);
+	/* function to पढ़ो data from rx fअगरo */
+	व्योम (*पढ़ो_rx_fअगरo)(काष्ठा qup_i2c_dev *qup);
+	/* function to ग_लिखो tags in tx fअगरo क्रम i2c पढ़ो transfer */
+	व्योम (*ग_लिखो_rx_tags)(काष्ठा qup_i2c_dev *qup);
+पूर्ण;
 
-static irqreturn_t qup_i2c_interrupt(int irq, void *dev)
-{
-	struct qup_i2c_dev *qup = dev;
-	struct qup_i2c_block *blk = &qup->blk;
+अटल irqवापस_t qup_i2c_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev)
+अणु
+	काष्ठा qup_i2c_dev *qup = dev;
+	काष्ठा qup_i2c_block *blk = &qup->blk;
 	u32 bus_err;
 	u32 qup_err;
 	u32 opflags;
 
-	bus_err = readl(qup->base + QUP_I2C_STATUS);
-	qup_err = readl(qup->base + QUP_ERROR_FLAGS);
-	opflags = readl(qup->base + QUP_OPERATIONAL);
+	bus_err = पढ़ोl(qup->base + QUP_I2C_STATUS);
+	qup_err = पढ़ोl(qup->base + QUP_ERROR_FLAGS);
+	opflags = पढ़ोl(qup->base + QUP_OPERATIONAL);
 
-	if (!qup->msg) {
-		/* Clear Error interrupt */
-		writel(QUP_RESET_STATE, qup->base + QUP_STATE);
-		return IRQ_HANDLED;
-	}
+	अगर (!qup->msg) अणु
+		/* Clear Error पूर्णांकerrupt */
+		ग_लिखोl(QUP_RESET_STATE, qup->base + QUP_STATE);
+		वापस IRQ_HANDLED;
+	पूर्ण
 
 	bus_err &= I2C_STATUS_ERROR_MASK;
 	qup_err &= QUP_STATUS_ERROR_FLAGS;
 
 	/* Clear the error bits in QUP_ERROR_FLAGS */
-	if (qup_err)
-		writel(qup_err, qup->base + QUP_ERROR_FLAGS);
+	अगर (qup_err)
+		ग_लिखोl(qup_err, qup->base + QUP_ERROR_FLAGS);
 
 	/* Clear the error bits in QUP_I2C_STATUS */
-	if (bus_err)
-		writel(bus_err, qup->base + QUP_I2C_STATUS);
+	अगर (bus_err)
+		ग_लिखोl(bus_err, qup->base + QUP_I2C_STATUS);
 
 	/*
-	 * Check for BAM mode and returns if already error has come for current
-	 * transfer. In Error case, sometimes, QUP generates more than one
-	 * interrupt.
+	 * Check क्रम BAM mode and वापसs अगर alपढ़ोy error has come क्रम current
+	 * transfer. In Error हाल, someबार, QUP generates more than one
+	 * पूर्णांकerrupt.
 	 */
-	if (qup->use_dma && (qup->qup_err || qup->bus_err))
-		return IRQ_HANDLED;
+	अगर (qup->use_dma && (qup->qup_err || qup->bus_err))
+		वापस IRQ_HANDLED;
 
-	/* Reset the QUP State in case of error */
-	if (qup_err || bus_err) {
+	/* Reset the QUP State in हाल of error */
+	अगर (qup_err || bus_err) अणु
 		/*
-		 * Don’t reset the QUP state in case of BAM mode. The BAM
+		 * Donै t reset the QUP state in हाल of BAM mode. The BAM
 		 * flush operation needs to be scheduled in transfer function
-		 * which will clear the remaining schedule descriptors in BAM
-		 * HW FIFO and generates the BAM interrupt.
+		 * which will clear the reमुख्यing schedule descriptors in BAM
+		 * HW FIFO and generates the BAM पूर्णांकerrupt.
 		 */
-		if (!qup->use_dma)
-			writel(QUP_RESET_STATE, qup->base + QUP_STATE);
-		goto done;
-	}
+		अगर (!qup->use_dma)
+			ग_लिखोl(QUP_RESET_STATE, qup->base + QUP_STATE);
+		जाओ करोne;
+	पूर्ण
 
-	if (opflags & QUP_OUT_SVC_FLAG) {
-		writel(QUP_OUT_SVC_FLAG, qup->base + QUP_OPERATIONAL);
+	अगर (opflags & QUP_OUT_SVC_FLAG) अणु
+		ग_लिखोl(QUP_OUT_SVC_FLAG, qup->base + QUP_OPERATIONAL);
 
-		if (opflags & OUT_BLOCK_WRITE_REQ) {
-			blk->tx_fifo_free += qup->out_blk_sz;
-			if (qup->msg->flags & I2C_M_RD)
-				qup->write_rx_tags(qup);
-			else
-				qup->write_tx_fifo(qup);
-		}
-	}
+		अगर (opflags & OUT_BLOCK_WRITE_REQ) अणु
+			blk->tx_fअगरo_मुक्त += qup->out_blk_sz;
+			अगर (qup->msg->flags & I2C_M_RD)
+				qup->ग_लिखो_rx_tags(qup);
+			अन्यथा
+				qup->ग_लिखो_tx_fअगरo(qup);
+		पूर्ण
+	पूर्ण
 
-	if (opflags & QUP_IN_SVC_FLAG) {
-		writel(QUP_IN_SVC_FLAG, qup->base + QUP_OPERATIONAL);
+	अगर (opflags & QUP_IN_SVC_FLAG) अणु
+		ग_लिखोl(QUP_IN_SVC_FLAG, qup->base + QUP_OPERATIONAL);
 
-		if (!blk->is_rx_blk_mode) {
-			blk->fifo_available += qup->in_fifo_sz;
-			qup->read_rx_fifo(qup);
-		} else if (opflags & IN_BLOCK_READ_REQ) {
-			blk->fifo_available += qup->in_blk_sz;
-			qup->read_rx_fifo(qup);
-		}
-	}
+		अगर (!blk->is_rx_blk_mode) अणु
+			blk->fअगरo_available += qup->in_fअगरo_sz;
+			qup->पढ़ो_rx_fअगरo(qup);
+		पूर्ण अन्यथा अगर (opflags & IN_BLOCK_READ_REQ) अणु
+			blk->fअगरo_available += qup->in_blk_sz;
+			qup->पढ़ो_rx_fअगरo(qup);
+		पूर्ण
+	पूर्ण
 
-	if (qup->msg->flags & I2C_M_RD) {
-		if (!blk->rx_bytes_read)
-			return IRQ_HANDLED;
-	} else {
+	अगर (qup->msg->flags & I2C_M_RD) अणु
+		अगर (!blk->rx_bytes_पढ़ो)
+			वापस IRQ_HANDLED;
+	पूर्ण अन्यथा अणु
 		/*
 		 * Ideally, QUP_MAX_OUTPUT_DONE_FLAG should be checked
-		 * for FIFO mode also. But, QUP_MAX_OUTPUT_DONE_FLAG lags
-		 * behind QUP_OUTPUT_SERVICE_FLAG sometimes. The only reason
-		 * of interrupt for write message in FIFO mode is
+		 * क्रम FIFO mode also. But, QUP_MAX_OUTPUT_DONE_FLAG lags
+		 * behind QUP_OUTPUT_SERVICE_FLAG someबार. The only reason
+		 * of पूर्णांकerrupt क्रम ग_लिखो message in FIFO mode is
 		 * QUP_MAX_OUTPUT_DONE_FLAG condition.
 		 */
-		if (blk->is_tx_blk_mode && !(opflags & QUP_MX_OUTPUT_DONE))
-			return IRQ_HANDLED;
-	}
+		अगर (blk->is_tx_blk_mode && !(opflags & QUP_MX_OUTPUT_DONE))
+			वापस IRQ_HANDLED;
+	पूर्ण
 
-done:
+करोne:
 	qup->qup_err = qup_err;
 	qup->bus_err = bus_err;
 	complete(&qup->xfer);
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static int qup_i2c_poll_state_mask(struct qup_i2c_dev *qup,
+अटल पूर्णांक qup_i2c_poll_state_mask(काष्ठा qup_i2c_dev *qup,
 				   u32 req_state, u32 req_mask)
-{
-	int retries = 1;
+अणु
+	पूर्णांक retries = 1;
 	u32 state;
 
 	/*
-	 * State transition takes 3 AHB clocks cycles + 3 I2C master clock
+	 * State transition takes 3 AHB घड़ीs cycles + 3 I2C master घड़ी
 	 * cycles. So retry once after a 1uS delay.
 	 */
-	do {
-		state = readl(qup->base + QUP_STATE);
+	करो अणु
+		state = पढ़ोl(qup->base + QUP_STATE);
 
-		if (state & QUP_STATE_VALID &&
+		अगर (state & QUP_STATE_VALID &&
 		    (state & req_mask) == req_state)
-			return 0;
+			वापस 0;
 
 		udelay(1);
-	} while (retries--);
+	पूर्ण जबतक (retries--);
 
-	return -ETIMEDOUT;
-}
+	वापस -ETIMEDOUT;
+पूर्ण
 
-static int qup_i2c_poll_state(struct qup_i2c_dev *qup, u32 req_state)
-{
-	return qup_i2c_poll_state_mask(qup, req_state, QUP_STATE_MASK);
-}
+अटल पूर्णांक qup_i2c_poll_state(काष्ठा qup_i2c_dev *qup, u32 req_state)
+अणु
+	वापस qup_i2c_poll_state_mask(qup, req_state, QUP_STATE_MASK);
+पूर्ण
 
-static void qup_i2c_flush(struct qup_i2c_dev *qup)
-{
-	u32 val = readl(qup->base + QUP_STATE);
+अटल व्योम qup_i2c_flush(काष्ठा qup_i2c_dev *qup)
+अणु
+	u32 val = पढ़ोl(qup->base + QUP_STATE);
 
 	val |= QUP_I2C_FLUSH;
-	writel(val, qup->base + QUP_STATE);
-}
+	ग_लिखोl(val, qup->base + QUP_STATE);
+पूर्ण
 
-static int qup_i2c_poll_state_valid(struct qup_i2c_dev *qup)
-{
-	return qup_i2c_poll_state_mask(qup, 0, 0);
-}
+अटल पूर्णांक qup_i2c_poll_state_valid(काष्ठा qup_i2c_dev *qup)
+अणु
+	वापस qup_i2c_poll_state_mask(qup, 0, 0);
+पूर्ण
 
-static int qup_i2c_poll_state_i2c_master(struct qup_i2c_dev *qup)
-{
-	return qup_i2c_poll_state_mask(qup, QUP_I2C_MAST_GEN, QUP_I2C_MAST_GEN);
-}
+अटल पूर्णांक qup_i2c_poll_state_i2c_master(काष्ठा qup_i2c_dev *qup)
+अणु
+	वापस qup_i2c_poll_state_mask(qup, QUP_I2C_MAST_GEN, QUP_I2C_MAST_GEN);
+पूर्ण
 
-static int qup_i2c_change_state(struct qup_i2c_dev *qup, u32 state)
-{
-	if (qup_i2c_poll_state_valid(qup) != 0)
-		return -EIO;
+अटल पूर्णांक qup_i2c_change_state(काष्ठा qup_i2c_dev *qup, u32 state)
+अणु
+	अगर (qup_i2c_poll_state_valid(qup) != 0)
+		वापस -EIO;
 
-	writel(state, qup->base + QUP_STATE);
+	ग_लिखोl(state, qup->base + QUP_STATE);
 
-	if (qup_i2c_poll_state(qup, state) != 0)
-		return -EIO;
-	return 0;
-}
+	अगर (qup_i2c_poll_state(qup, state) != 0)
+		वापस -EIO;
+	वापस 0;
+पूर्ण
 
-/* Check if I2C bus returns to IDLE state */
-static int qup_i2c_bus_active(struct qup_i2c_dev *qup, int len)
-{
-	unsigned long timeout;
+/* Check अगर I2C bus वापसs to IDLE state */
+अटल पूर्णांक qup_i2c_bus_active(काष्ठा qup_i2c_dev *qup, पूर्णांक len)
+अणु
+	अचिन्हित दीर्घ समयout;
 	u32 status;
-	int ret = 0;
+	पूर्णांक ret = 0;
 
-	timeout = jiffies + len * 4;
-	for (;;) {
-		status = readl(qup->base + QUP_I2C_STATUS);
-		if (!(status & I2C_STATUS_BUS_ACTIVE))
-			break;
+	समयout = jअगरfies + len * 4;
+	क्रम (;;) अणु
+		status = पढ़ोl(qup->base + QUP_I2C_STATUS);
+		अगर (!(status & I2C_STATUS_BUS_ACTIVE))
+			अवरोध;
 
-		if (time_after(jiffies, timeout))
+		अगर (समय_after(jअगरfies, समयout))
 			ret = -ETIMEDOUT;
 
 		usleep_range(len, len * 2);
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void qup_i2c_write_tx_fifo_v1(struct qup_i2c_dev *qup)
-{
-	struct qup_i2c_block *blk = &qup->blk;
-	struct i2c_msg *msg = qup->msg;
+अटल व्योम qup_i2c_ग_लिखो_tx_fअगरo_v1(काष्ठा qup_i2c_dev *qup)
+अणु
+	काष्ठा qup_i2c_block *blk = &qup->blk;
+	काष्ठा i2c_msg *msg = qup->msg;
 	u32 addr = i2c_8bit_addr_from_msg(msg);
 	u32 qup_tag;
-	int idx;
+	पूर्णांक idx;
 	u32 val;
 
-	if (qup->pos == 0) {
+	अगर (qup->pos == 0) अणु
 		val = QUP_TAG_START | addr;
 		idx = 1;
-		blk->tx_fifo_free--;
-	} else {
+		blk->tx_fअगरo_मुक्त--;
+	पूर्ण अन्यथा अणु
 		val = 0;
 		idx = 0;
-	}
+	पूर्ण
 
-	while (blk->tx_fifo_free && qup->pos < msg->len) {
-		if (qup->pos == msg->len - 1)
+	जबतक (blk->tx_fअगरo_मुक्त && qup->pos < msg->len) अणु
+		अगर (qup->pos == msg->len - 1)
 			qup_tag = QUP_TAG_STOP;
-		else
+		अन्यथा
 			qup_tag = QUP_TAG_DATA;
 
-		if (idx & 1)
+		अगर (idx & 1)
 			val |= (qup_tag | msg->buf[qup->pos]) << QUP_MSW_SHIFT;
-		else
+		अन्यथा
 			val = qup_tag | msg->buf[qup->pos];
 
 		/* Write out the pair and the last odd value */
-		if (idx & 1 || qup->pos == msg->len - 1)
-			writel(val, qup->base + QUP_OUT_FIFO_BASE);
+		अगर (idx & 1 || qup->pos == msg->len - 1)
+			ग_लिखोl(val, qup->base + QUP_OUT_FIFO_BASE);
 
 		qup->pos++;
 		idx++;
-		blk->tx_fifo_free--;
-	}
-}
+		blk->tx_fअगरo_मुक्त--;
+	पूर्ण
+पूर्ण
 
-static void qup_i2c_set_blk_data(struct qup_i2c_dev *qup,
-				 struct i2c_msg *msg)
-{
+अटल व्योम qup_i2c_set_blk_data(काष्ठा qup_i2c_dev *qup,
+				 काष्ठा i2c_msg *msg)
+अणु
 	qup->blk.pos = 0;
 	qup->blk.data_len = msg->len;
 	qup->blk.count = DIV_ROUND_UP(msg->len, qup->blk_xfer_limit);
-}
+पूर्ण
 
-static int qup_i2c_get_data_len(struct qup_i2c_dev *qup)
-{
-	int data_len;
+अटल पूर्णांक qup_i2c_get_data_len(काष्ठा qup_i2c_dev *qup)
+अणु
+	पूर्णांक data_len;
 
-	if (qup->blk.data_len > qup->blk_xfer_limit)
+	अगर (qup->blk.data_len > qup->blk_xfer_limit)
 		data_len = qup->blk_xfer_limit;
-	else
+	अन्यथा
 		data_len = qup->blk.data_len;
 
-	return data_len;
-}
+	वापस data_len;
+पूर्ण
 
-static bool qup_i2c_check_msg_len(struct i2c_msg *msg)
-{
-	return ((msg->flags & I2C_M_RD) && (msg->flags & I2C_M_RECV_LEN));
-}
+अटल bool qup_i2c_check_msg_len(काष्ठा i2c_msg *msg)
+अणु
+	वापस ((msg->flags & I2C_M_RD) && (msg->flags & I2C_M_RECV_LEN));
+पूर्ण
 
-static int qup_i2c_set_tags_smb(u16 addr, u8 *tags, struct qup_i2c_dev *qup,
-			struct i2c_msg *msg)
-{
-	int len = 0;
+अटल पूर्णांक qup_i2c_set_tags_smb(u16 addr, u8 *tags, काष्ठा qup_i2c_dev *qup,
+			काष्ठा i2c_msg *msg)
+अणु
+	पूर्णांक len = 0;
 
-	if (qup->is_smbus_read) {
+	अगर (qup->is_smbus_पढ़ो) अणु
 		tags[len++] = QUP_TAG_V2_DATARD_STOP;
 		tags[len++] = qup_i2c_get_data_len(qup);
-	} else {
+	पूर्ण अन्यथा अणु
 		tags[len++] = QUP_TAG_V2_START;
 		tags[len++] = addr & 0xff;
 
-		if (msg->flags & I2C_M_TEN)
+		अगर (msg->flags & I2C_M_TEN)
 			tags[len++] = addr >> 8;
 
 		tags[len++] = QUP_TAG_V2_DATARD;
 		/* Read 1 byte indicating the length of the SMBus message */
 		tags[len++] = 1;
-	}
-	return len;
-}
+	पूर्ण
+	वापस len;
+पूर्ण
 
-static int qup_i2c_set_tags(u8 *tags, struct qup_i2c_dev *qup,
-			    struct i2c_msg *msg)
-{
+अटल पूर्णांक qup_i2c_set_tags(u8 *tags, काष्ठा qup_i2c_dev *qup,
+			    काष्ठा i2c_msg *msg)
+अणु
 	u16 addr = i2c_8bit_addr_from_msg(msg);
-	int len = 0;
-	int data_len;
+	पूर्णांक len = 0;
+	पूर्णांक data_len;
 
-	int last = (qup->blk.pos == (qup->blk.count - 1)) && (qup->is_last);
+	पूर्णांक last = (qup->blk.pos == (qup->blk.count - 1)) && (qup->is_last);
 
-	/* Handle tags for SMBus block read */
-	if (qup_i2c_check_msg_len(msg))
-		return qup_i2c_set_tags_smb(addr, tags, qup, msg);
+	/* Handle tags क्रम SMBus block पढ़ो */
+	अगर (qup_i2c_check_msg_len(msg))
+		वापस qup_i2c_set_tags_smb(addr, tags, qup, msg);
 
-	if (qup->blk.pos == 0) {
+	अगर (qup->blk.pos == 0) अणु
 		tags[len++] = QUP_TAG_V2_START;
 		tags[len++] = addr & 0xff;
 
-		if (msg->flags & I2C_M_TEN)
+		अगर (msg->flags & I2C_M_TEN)
 			tags[len++] = addr >> 8;
-	}
+	पूर्ण
 
-	/* Send _STOP commands for the last block */
-	if (last) {
-		if (msg->flags & I2C_M_RD)
+	/* Send _STOP commands क्रम the last block */
+	अगर (last) अणु
+		अगर (msg->flags & I2C_M_RD)
 			tags[len++] = QUP_TAG_V2_DATARD_STOP;
-		else
+		अन्यथा
 			tags[len++] = QUP_TAG_V2_DATAWR_STOP;
-	} else {
-		if (msg->flags & I2C_M_RD)
+	पूर्ण अन्यथा अणु
+		अगर (msg->flags & I2C_M_RD)
 			tags[len++] = qup->blk.pos == (qup->blk.count - 1) ?
 				      QUP_TAG_V2_DATARD_NACK :
 				      QUP_TAG_V2_DATARD;
-		else
+		अन्यथा
 			tags[len++] = QUP_TAG_V2_DATAWR;
-	}
+	पूर्ण
 
 	data_len = qup_i2c_get_data_len(qup);
 
 	/* 0 implies 256 bytes */
-	if (data_len == QUP_READ_LIMIT)
+	अगर (data_len == QUP_READ_LIMIT)
 		tags[len++] = 0;
-	else
+	अन्यथा
 		tags[len++] = data_len;
 
-	return len;
-}
+	वापस len;
+पूर्ण
 
 
-static void qup_i2c_bam_cb(void *data)
-{
-	struct qup_i2c_dev *qup = data;
+अटल व्योम qup_i2c_bam_cb(व्योम *data)
+अणु
+	काष्ठा qup_i2c_dev *qup = data;
 
 	complete(&qup->xfer);
-}
+पूर्ण
 
-static int qup_sg_set_buf(struct scatterlist *sg, void *buf,
-			  unsigned int buflen, struct qup_i2c_dev *qup,
-			  int dir)
-{
-	int ret;
+अटल पूर्णांक qup_sg_set_buf(काष्ठा scatterlist *sg, व्योम *buf,
+			  अचिन्हित पूर्णांक buflen, काष्ठा qup_i2c_dev *qup,
+			  पूर्णांक dir)
+अणु
+	पूर्णांक ret;
 
 	sg_set_buf(sg, buf, buflen);
 	ret = dma_map_sg(qup->dev, sg, 1, dir);
-	if (!ret)
-		return -EINVAL;
+	अगर (!ret)
+		वापस -EINVAL;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void qup_i2c_rel_dma(struct qup_i2c_dev *qup)
-{
-	if (qup->btx.dma)
+अटल व्योम qup_i2c_rel_dma(काष्ठा qup_i2c_dev *qup)
+अणु
+	अगर (qup->btx.dma)
 		dma_release_channel(qup->btx.dma);
-	if (qup->brx.dma)
+	अगर (qup->brx.dma)
 		dma_release_channel(qup->brx.dma);
-	qup->btx.dma = NULL;
-	qup->brx.dma = NULL;
-}
+	qup->btx.dma = शून्य;
+	qup->brx.dma = शून्य;
+पूर्ण
 
-static int qup_i2c_req_dma(struct qup_i2c_dev *qup)
-{
-	int err;
+अटल पूर्णांक qup_i2c_req_dma(काष्ठा qup_i2c_dev *qup)
+अणु
+	पूर्णांक err;
 
-	if (!qup->btx.dma) {
+	अगर (!qup->btx.dma) अणु
 		qup->btx.dma = dma_request_chan(qup->dev, "tx");
-		if (IS_ERR(qup->btx.dma)) {
+		अगर (IS_ERR(qup->btx.dma)) अणु
 			err = PTR_ERR(qup->btx.dma);
-			qup->btx.dma = NULL;
+			qup->btx.dma = शून्य;
 			dev_err(qup->dev, "\n tx channel not available");
-			return err;
-		}
-	}
+			वापस err;
+		पूर्ण
+	पूर्ण
 
-	if (!qup->brx.dma) {
+	अगर (!qup->brx.dma) अणु
 		qup->brx.dma = dma_request_chan(qup->dev, "rx");
-		if (IS_ERR(qup->brx.dma)) {
+		अगर (IS_ERR(qup->brx.dma)) अणु
 			dev_err(qup->dev, "\n rx channel not available");
 			err = PTR_ERR(qup->brx.dma);
-			qup->brx.dma = NULL;
+			qup->brx.dma = शून्य;
 			qup_i2c_rel_dma(qup);
-			return err;
-		}
-	}
-	return 0;
-}
+			वापस err;
+		पूर्ण
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int qup_i2c_bam_make_desc(struct qup_i2c_dev *qup, struct i2c_msg *msg)
-{
-	int ret = 0, limit = QUP_READ_LIMIT;
+अटल पूर्णांक qup_i2c_bam_make_desc(काष्ठा qup_i2c_dev *qup, काष्ठा i2c_msg *msg)
+अणु
+	पूर्णांक ret = 0, limit = QUP_READ_LIMIT;
 	u32 len = 0, blocks, rem;
 	u32 i = 0, tlen, tx_len = 0;
 	u8 *tags;
@@ -658,40 +659,40 @@ static int qup_i2c_bam_make_desc(struct qup_i2c_dev *qup, struct i2c_msg *msg)
 	blocks = qup->blk.count;
 	rem = msg->len - (blocks - 1) * limit;
 
-	if (msg->flags & I2C_M_RD) {
-		while (qup->blk.pos < blocks) {
+	अगर (msg->flags & I2C_M_RD) अणु
+		जबतक (qup->blk.pos < blocks) अणु
 			tlen = (i == (blocks - 1)) ? rem : limit;
 			tags = &qup->start_tag.start[qup->tag_buf_pos + len];
 			len += qup_i2c_set_tags(tags, qup, msg);
 			qup->blk.data_len -= tlen;
 
-			/* scratch buf to read the start and len tags */
+			/* scratch buf to पढ़ो the start and len tags */
 			ret = qup_sg_set_buf(&qup->brx.sg[qup->brx.sg_cnt++],
 					     &qup->brx.tag.start[0],
 					     2, qup, DMA_FROM_DEVICE);
 
-			if (ret)
-				return ret;
+			अगर (ret)
+				वापस ret;
 
 			ret = qup_sg_set_buf(&qup->brx.sg[qup->brx.sg_cnt++],
 					     &msg->buf[limit * i],
 					     tlen, qup,
 					     DMA_FROM_DEVICE);
-			if (ret)
-				return ret;
+			अगर (ret)
+				वापस ret;
 
 			i++;
 			qup->blk.pos = i;
-		}
+		पूर्ण
 		ret = qup_sg_set_buf(&qup->btx.sg[qup->btx.sg_cnt++],
 				     &qup->start_tag.start[qup->tag_buf_pos],
 				     len, qup, DMA_TO_DEVICE);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 
 		qup->tag_buf_pos += len;
-	} else {
-		while (qup->blk.pos < blocks) {
+	पूर्ण अन्यथा अणु
+		जबतक (qup->blk.pos < blocks) अणु
 			tlen = (i == (blocks - 1)) ? rem : limit;
 			tags = &qup->start_tag.start[qup->tag_buf_pos + tx_len];
 			len = qup_i2c_set_tags(tags, qup, msg);
@@ -700,743 +701,743 @@ static int qup_i2c_bam_make_desc(struct qup_i2c_dev *qup, struct i2c_msg *msg)
 			ret = qup_sg_set_buf(&qup->btx.sg[qup->btx.sg_cnt++],
 					     tags, len,
 					     qup, DMA_TO_DEVICE);
-			if (ret)
-				return ret;
+			अगर (ret)
+				वापस ret;
 
 			tx_len += len;
 			ret = qup_sg_set_buf(&qup->btx.sg[qup->btx.sg_cnt++],
 					     &msg->buf[limit * i],
 					     tlen, qup, DMA_TO_DEVICE);
-			if (ret)
-				return ret;
+			अगर (ret)
+				वापस ret;
 			i++;
 			qup->blk.pos = i;
-		}
+		पूर्ण
 
 		qup->tag_buf_pos += tx_len;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int qup_i2c_bam_schedule_desc(struct qup_i2c_dev *qup)
-{
-	struct dma_async_tx_descriptor *txd, *rxd = NULL;
-	int ret = 0;
+अटल पूर्णांक qup_i2c_bam_schedule_desc(काष्ठा qup_i2c_dev *qup)
+अणु
+	काष्ठा dma_async_tx_descriptor *txd, *rxd = शून्य;
+	पूर्णांक ret = 0;
 	dma_cookie_t cookie_rx, cookie_tx;
 	u32 len = 0;
 	u32 tx_cnt = qup->btx.sg_cnt, rx_cnt = qup->brx.sg_cnt;
 
 	/* schedule the EOT and FLUSH I2C tags */
 	len = 1;
-	if (rx_cnt) {
+	अगर (rx_cnt) अणु
 		qup->btx.tag.start[0] = QUP_BAM_INPUT_EOT;
 		len++;
 
-		/* scratch buf to read the BAM EOT FLUSH tags */
+		/* scratch buf to पढ़ो the BAM EOT FLUSH tags */
 		ret = qup_sg_set_buf(&qup->brx.sg[rx_cnt++],
 				     &qup->brx.tag.start[0],
 				     1, qup, DMA_FROM_DEVICE);
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
 	qup->btx.tag.start[len - 1] = QUP_BAM_FLUSH_STOP;
 	ret = qup_sg_set_buf(&qup->btx.sg[tx_cnt++], &qup->btx.tag.start[0],
 			     len, qup, DMA_TO_DEVICE);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	txd = dmaengine_prep_slave_sg(qup->btx.dma, qup->btx.sg, tx_cnt,
 				      DMA_MEM_TO_DEV,
 				      DMA_PREP_INTERRUPT | DMA_PREP_FENCE);
-	if (!txd) {
+	अगर (!txd) अणु
 		dev_err(qup->dev, "failed to get tx desc\n");
 		ret = -EINVAL;
-		goto desc_err;
-	}
+		जाओ desc_err;
+	पूर्ण
 
-	if (!rx_cnt) {
+	अगर (!rx_cnt) अणु
 		txd->callback = qup_i2c_bam_cb;
 		txd->callback_param = qup;
-	}
+	पूर्ण
 
 	cookie_tx = dmaengine_submit(txd);
-	if (dma_submit_error(cookie_tx)) {
+	अगर (dma_submit_error(cookie_tx)) अणु
 		ret = -EINVAL;
-		goto desc_err;
-	}
+		जाओ desc_err;
+	पूर्ण
 
 	dma_async_issue_pending(qup->btx.dma);
 
-	if (rx_cnt) {
+	अगर (rx_cnt) अणु
 		rxd = dmaengine_prep_slave_sg(qup->brx.dma, qup->brx.sg,
 					      rx_cnt, DMA_DEV_TO_MEM,
 					      DMA_PREP_INTERRUPT);
-		if (!rxd) {
+		अगर (!rxd) अणु
 			dev_err(qup->dev, "failed to get rx desc\n");
 			ret = -EINVAL;
 
-			/* abort TX descriptors */
+			/* पात TX descriptors */
 			dmaengine_terminate_all(qup->btx.dma);
-			goto desc_err;
-		}
+			जाओ desc_err;
+		पूर्ण
 
 		rxd->callback = qup_i2c_bam_cb;
 		rxd->callback_param = qup;
 		cookie_rx = dmaengine_submit(rxd);
-		if (dma_submit_error(cookie_rx)) {
+		अगर (dma_submit_error(cookie_rx)) अणु
 			ret = -EINVAL;
-			goto desc_err;
-		}
+			जाओ desc_err;
+		पूर्ण
 
 		dma_async_issue_pending(qup->brx.dma);
-	}
+	पूर्ण
 
-	if (!wait_for_completion_timeout(&qup->xfer, qup->xfer_timeout)) {
+	अगर (!रुको_क्रम_completion_समयout(&qup->xfer, qup->xfer_समयout)) अणु
 		dev_err(qup->dev, "normal trans timed out\n");
 		ret = -ETIMEDOUT;
-	}
+	पूर्ण
 
-	if (ret || qup->bus_err || qup->qup_err) {
+	अगर (ret || qup->bus_err || qup->qup_err) अणु
 		reinit_completion(&qup->xfer);
 
 		ret = qup_i2c_change_state(qup, QUP_RUN_STATE);
-		if (ret) {
+		अगर (ret) अणु
 			dev_err(qup->dev, "change to run state timed out");
-			goto desc_err;
-		}
+			जाओ desc_err;
+		पूर्ण
 
 		qup_i2c_flush(qup);
 
-		/* wait for remaining interrupts to occur */
-		if (!wait_for_completion_timeout(&qup->xfer, HZ))
+		/* रुको क्रम reमुख्यing पूर्णांकerrupts to occur */
+		अगर (!रुको_क्रम_completion_समयout(&qup->xfer, HZ))
 			dev_err(qup->dev, "flush timed out\n");
 
 		ret =  (qup->bus_err & QUP_I2C_NACK_FLAG) ? -ENXIO : -EIO;
-	}
+	पूर्ण
 
 desc_err:
 	dma_unmap_sg(qup->dev, qup->btx.sg, tx_cnt, DMA_TO_DEVICE);
 
-	if (rx_cnt)
+	अगर (rx_cnt)
 		dma_unmap_sg(qup->dev, qup->brx.sg, rx_cnt,
 			     DMA_FROM_DEVICE);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void qup_i2c_bam_clear_tag_buffers(struct qup_i2c_dev *qup)
-{
+अटल व्योम qup_i2c_bam_clear_tag_buffers(काष्ठा qup_i2c_dev *qup)
+अणु
 	qup->btx.sg_cnt = 0;
 	qup->brx.sg_cnt = 0;
 	qup->tag_buf_pos = 0;
-}
+पूर्ण
 
-static int qup_i2c_bam_xfer(struct i2c_adapter *adap, struct i2c_msg *msg,
-			    int num)
-{
-	struct qup_i2c_dev *qup = i2c_get_adapdata(adap);
-	int ret = 0;
-	int idx = 0;
+अटल पूर्णांक qup_i2c_bam_xfer(काष्ठा i2c_adapter *adap, काष्ठा i2c_msg *msg,
+			    पूर्णांक num)
+अणु
+	काष्ठा qup_i2c_dev *qup = i2c_get_adapdata(adap);
+	पूर्णांक ret = 0;
+	पूर्णांक idx = 0;
 
 	enable_irq(qup->irq);
 	ret = qup_i2c_req_dma(qup);
 
-	if (ret)
-		goto out;
+	अगर (ret)
+		जाओ out;
 
-	writel(0, qup->base + QUP_MX_INPUT_CNT);
-	writel(0, qup->base + QUP_MX_OUTPUT_CNT);
+	ग_लिखोl(0, qup->base + QUP_MX_INPUT_CNT);
+	ग_लिखोl(0, qup->base + QUP_MX_OUTPUT_CNT);
 
 	/* set BAM mode */
-	writel(QUP_REPACK_EN | QUP_BAM_MODE, qup->base + QUP_IO_MODE);
+	ग_लिखोl(QUP_REPACK_EN | QUP_BAM_MODE, qup->base + QUP_IO_MODE);
 
-	/* mask fifo irqs */
-	writel((0x3 << 8), qup->base + QUP_OPERATIONAL_MASK);
+	/* mask fअगरo irqs */
+	ग_लिखोl((0x3 << 8), qup->base + QUP_OPERATIONAL_MASK);
 
 	/* set RUN STATE */
 	ret = qup_i2c_change_state(qup, QUP_RUN_STATE);
-	if (ret)
-		goto out;
+	अगर (ret)
+		जाओ out;
 
-	writel(qup->clk_ctl, qup->base + QUP_I2C_CLK_CTL);
+	ग_लिखोl(qup->clk_ctl, qup->base + QUP_I2C_CLK_CTL);
 	qup_i2c_bam_clear_tag_buffers(qup);
 
-	for (idx = 0; idx < num; idx++) {
+	क्रम (idx = 0; idx < num; idx++) अणु
 		qup->msg = msg + idx;
 		qup->is_last = idx == (num - 1);
 
 		ret = qup_i2c_bam_make_desc(qup, qup->msg);
-		if (ret)
-			break;
+		अगर (ret)
+			अवरोध;
 
 		/*
-		 * Make DMA descriptor and schedule the BAM transfer if its
-		 * already crossed the maximum length. Since the memory for all
-		 * tags buffers have been taken for 2 maximum possible
+		 * Make DMA descriptor and schedule the BAM transfer अगर its
+		 * alपढ़ोy crossed the maximum length. Since the memory क्रम all
+		 * tags buffers have been taken क्रम 2 maximum possible
 		 * transfers length so it will never cross the buffer actual
 		 * length.
 		 */
-		if (qup->btx.sg_cnt > qup->max_xfer_sg_len ||
+		अगर (qup->btx.sg_cnt > qup->max_xfer_sg_len ||
 		    qup->brx.sg_cnt > qup->max_xfer_sg_len ||
-		    qup->is_last) {
+		    qup->is_last) अणु
 			ret = qup_i2c_bam_schedule_desc(qup);
-			if (ret)
-				break;
+			अगर (ret)
+				अवरोध;
 
 			qup_i2c_bam_clear_tag_buffers(qup);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 out:
 	disable_irq(qup->irq);
 
-	qup->msg = NULL;
-	return ret;
-}
+	qup->msg = शून्य;
+	वापस ret;
+पूर्ण
 
-static int qup_i2c_wait_for_complete(struct qup_i2c_dev *qup,
-				     struct i2c_msg *msg)
-{
-	unsigned long left;
-	int ret = 0;
+अटल पूर्णांक qup_i2c_रुको_क्रम_complete(काष्ठा qup_i2c_dev *qup,
+				     काष्ठा i2c_msg *msg)
+अणु
+	अचिन्हित दीर्घ left;
+	पूर्णांक ret = 0;
 
-	left = wait_for_completion_timeout(&qup->xfer, qup->xfer_timeout);
-	if (!left) {
-		writel(1, qup->base + QUP_SW_RESET);
+	left = रुको_क्रम_completion_समयout(&qup->xfer, qup->xfer_समयout);
+	अगर (!left) अणु
+		ग_लिखोl(1, qup->base + QUP_SW_RESET);
 		ret = -ETIMEDOUT;
-	}
+	पूर्ण
 
-	if (qup->bus_err || qup->qup_err)
+	अगर (qup->bus_err || qup->qup_err)
 		ret =  (qup->bus_err & QUP_I2C_NACK_FLAG) ? -ENXIO : -EIO;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void qup_i2c_read_rx_fifo_v1(struct qup_i2c_dev *qup)
-{
-	struct qup_i2c_block *blk = &qup->blk;
-	struct i2c_msg *msg = qup->msg;
+अटल व्योम qup_i2c_पढ़ो_rx_fअगरo_v1(काष्ठा qup_i2c_dev *qup)
+अणु
+	काष्ठा qup_i2c_block *blk = &qup->blk;
+	काष्ठा i2c_msg *msg = qup->msg;
 	u32 val = 0;
-	int idx = 0;
+	पूर्णांक idx = 0;
 
-	while (blk->fifo_available && qup->pos < msg->len) {
-		if ((idx & 1) == 0) {
-			/* Reading 2 words at time */
-			val = readl(qup->base + QUP_IN_FIFO_BASE);
+	जबतक (blk->fअगरo_available && qup->pos < msg->len) अणु
+		अगर ((idx & 1) == 0) अणु
+			/* Reading 2 words at समय */
+			val = पढ़ोl(qup->base + QUP_IN_FIFO_BASE);
 			msg->buf[qup->pos++] = val & 0xFF;
-		} else {
+		पूर्ण अन्यथा अणु
 			msg->buf[qup->pos++] = val >> QUP_MSW_SHIFT;
-		}
+		पूर्ण
 		idx++;
-		blk->fifo_available--;
-	}
+		blk->fअगरo_available--;
+	पूर्ण
 
-	if (qup->pos == msg->len)
-		blk->rx_bytes_read = true;
-}
+	अगर (qup->pos == msg->len)
+		blk->rx_bytes_पढ़ो = true;
+पूर्ण
 
-static void qup_i2c_write_rx_tags_v1(struct qup_i2c_dev *qup)
-{
-	struct i2c_msg *msg = qup->msg;
+अटल व्योम qup_i2c_ग_लिखो_rx_tags_v1(काष्ठा qup_i2c_dev *qup)
+अणु
+	काष्ठा i2c_msg *msg = qup->msg;
 	u32 addr, len, val;
 
 	addr = i2c_8bit_addr_from_msg(msg);
 
-	/* 0 is used to specify a length 256 (QUP_READ_LIMIT) */
+	/* 0 is used to specअगरy a length 256 (QUP_READ_LIMIT) */
 	len = (msg->len == QUP_READ_LIMIT) ? 0 : msg->len;
 
 	val = ((QUP_TAG_REC | len) << QUP_MSW_SHIFT) | QUP_TAG_START | addr;
-	writel(val, qup->base + QUP_OUT_FIFO_BASE);
-}
+	ग_लिखोl(val, qup->base + QUP_OUT_FIFO_BASE);
+पूर्ण
 
-static void qup_i2c_conf_v1(struct qup_i2c_dev *qup)
-{
-	struct qup_i2c_block *blk = &qup->blk;
+अटल व्योम qup_i2c_conf_v1(काष्ठा qup_i2c_dev *qup)
+अणु
+	काष्ठा qup_i2c_block *blk = &qup->blk;
 	u32 qup_config = I2C_MINI_CORE | I2C_N_VAL;
 	u32 io_mode = QUP_REPACK_EN;
 
-	blk->is_tx_blk_mode = blk->total_tx_len > qup->out_fifo_sz;
-	blk->is_rx_blk_mode = blk->total_rx_len > qup->in_fifo_sz;
+	blk->is_tx_blk_mode = blk->total_tx_len > qup->out_fअगरo_sz;
+	blk->is_rx_blk_mode = blk->total_rx_len > qup->in_fअगरo_sz;
 
-	if (blk->is_tx_blk_mode) {
+	अगर (blk->is_tx_blk_mode) अणु
 		io_mode |= QUP_OUTPUT_BLK_MODE;
-		writel(0, qup->base + QUP_MX_WRITE_CNT);
-		writel(blk->total_tx_len, qup->base + QUP_MX_OUTPUT_CNT);
-	} else {
-		writel(0, qup->base + QUP_MX_OUTPUT_CNT);
-		writel(blk->total_tx_len, qup->base + QUP_MX_WRITE_CNT);
-	}
+		ग_लिखोl(0, qup->base + QUP_MX_WRITE_CNT);
+		ग_लिखोl(blk->total_tx_len, qup->base + QUP_MX_OUTPUT_CNT);
+	पूर्ण अन्यथा अणु
+		ग_लिखोl(0, qup->base + QUP_MX_OUTPUT_CNT);
+		ग_लिखोl(blk->total_tx_len, qup->base + QUP_MX_WRITE_CNT);
+	पूर्ण
 
-	if (blk->total_rx_len) {
-		if (blk->is_rx_blk_mode) {
+	अगर (blk->total_rx_len) अणु
+		अगर (blk->is_rx_blk_mode) अणु
 			io_mode |= QUP_INPUT_BLK_MODE;
-			writel(0, qup->base + QUP_MX_READ_CNT);
-			writel(blk->total_rx_len, qup->base + QUP_MX_INPUT_CNT);
-		} else {
-			writel(0, qup->base + QUP_MX_INPUT_CNT);
-			writel(blk->total_rx_len, qup->base + QUP_MX_READ_CNT);
-		}
-	} else {
+			ग_लिखोl(0, qup->base + QUP_MX_READ_CNT);
+			ग_लिखोl(blk->total_rx_len, qup->base + QUP_MX_INPUT_CNT);
+		पूर्ण अन्यथा अणु
+			ग_लिखोl(0, qup->base + QUP_MX_INPUT_CNT);
+			ग_लिखोl(blk->total_rx_len, qup->base + QUP_MX_READ_CNT);
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		qup_config |= QUP_NO_INPUT;
-	}
+	पूर्ण
 
-	writel(qup_config, qup->base + QUP_CONFIG);
-	writel(io_mode, qup->base + QUP_IO_MODE);
-}
+	ग_लिखोl(qup_config, qup->base + QUP_CONFIG);
+	ग_लिखोl(io_mode, qup->base + QUP_IO_MODE);
+पूर्ण
 
-static void qup_i2c_clear_blk_v1(struct qup_i2c_block *blk)
-{
-	blk->tx_fifo_free = 0;
-	blk->fifo_available = 0;
-	blk->rx_bytes_read = false;
-}
+अटल व्योम qup_i2c_clear_blk_v1(काष्ठा qup_i2c_block *blk)
+अणु
+	blk->tx_fअगरo_मुक्त = 0;
+	blk->fअगरo_available = 0;
+	blk->rx_bytes_पढ़ो = false;
+पूर्ण
 
-static int qup_i2c_conf_xfer_v1(struct qup_i2c_dev *qup, bool is_rx)
-{
-	struct qup_i2c_block *blk = &qup->blk;
-	int ret;
+अटल पूर्णांक qup_i2c_conf_xfer_v1(काष्ठा qup_i2c_dev *qup, bool is_rx)
+अणु
+	काष्ठा qup_i2c_block *blk = &qup->blk;
+	पूर्णांक ret;
 
 	qup_i2c_clear_blk_v1(blk);
 	qup_i2c_conf_v1(qup);
 	ret = qup_i2c_change_state(qup, QUP_RUN_STATE);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	writel(qup->clk_ctl, qup->base + QUP_I2C_CLK_CTL);
+	ग_लिखोl(qup->clk_ctl, qup->base + QUP_I2C_CLK_CTL);
 
 	ret = qup_i2c_change_state(qup, QUP_PAUSE_STATE);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	reinit_completion(&qup->xfer);
 	enable_irq(qup->irq);
-	if (!blk->is_tx_blk_mode) {
-		blk->tx_fifo_free = qup->out_fifo_sz;
+	अगर (!blk->is_tx_blk_mode) अणु
+		blk->tx_fअगरo_मुक्त = qup->out_fअगरo_sz;
 
-		if (is_rx)
-			qup_i2c_write_rx_tags_v1(qup);
-		else
-			qup_i2c_write_tx_fifo_v1(qup);
-	}
+		अगर (is_rx)
+			qup_i2c_ग_लिखो_rx_tags_v1(qup);
+		अन्यथा
+			qup_i2c_ग_लिखो_tx_fअगरo_v1(qup);
+	पूर्ण
 
 	ret = qup_i2c_change_state(qup, QUP_RUN_STATE);
-	if (ret)
-		goto err;
+	अगर (ret)
+		जाओ err;
 
-	ret = qup_i2c_wait_for_complete(qup, qup->msg);
-	if (ret)
-		goto err;
+	ret = qup_i2c_रुको_क्रम_complete(qup, qup->msg);
+	अगर (ret)
+		जाओ err;
 
 	ret = qup_i2c_bus_active(qup, ONE_BYTE);
 
 err:
 	disable_irq(qup->irq);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int qup_i2c_write_one(struct qup_i2c_dev *qup)
-{
-	struct i2c_msg *msg = qup->msg;
-	struct qup_i2c_block *blk = &qup->blk;
+अटल पूर्णांक qup_i2c_ग_लिखो_one(काष्ठा qup_i2c_dev *qup)
+अणु
+	काष्ठा i2c_msg *msg = qup->msg;
+	काष्ठा qup_i2c_block *blk = &qup->blk;
 
 	qup->pos = 0;
 	blk->total_tx_len = msg->len + 1;
 	blk->total_rx_len = 0;
 
-	return qup_i2c_conf_xfer_v1(qup, false);
-}
+	वापस qup_i2c_conf_xfer_v1(qup, false);
+पूर्ण
 
-static int qup_i2c_read_one(struct qup_i2c_dev *qup)
-{
-	struct qup_i2c_block *blk = &qup->blk;
+अटल पूर्णांक qup_i2c_पढ़ो_one(काष्ठा qup_i2c_dev *qup)
+अणु
+	काष्ठा qup_i2c_block *blk = &qup->blk;
 
 	qup->pos = 0;
 	blk->total_tx_len = 2;
 	blk->total_rx_len = qup->msg->len;
 
-	return qup_i2c_conf_xfer_v1(qup, true);
-}
+	वापस qup_i2c_conf_xfer_v1(qup, true);
+पूर्ण
 
-static int qup_i2c_xfer(struct i2c_adapter *adap,
-			struct i2c_msg msgs[],
-			int num)
-{
-	struct qup_i2c_dev *qup = i2c_get_adapdata(adap);
-	int ret, idx;
+अटल पूर्णांक qup_i2c_xfer(काष्ठा i2c_adapter *adap,
+			काष्ठा i2c_msg msgs[],
+			पूर्णांक num)
+अणु
+	काष्ठा qup_i2c_dev *qup = i2c_get_adapdata(adap);
+	पूर्णांक ret, idx;
 
-	ret = pm_runtime_get_sync(qup->dev);
-	if (ret < 0)
-		goto out;
+	ret = pm_runसमय_get_sync(qup->dev);
+	अगर (ret < 0)
+		जाओ out;
 
 	qup->bus_err = 0;
 	qup->qup_err = 0;
 
-	writel(1, qup->base + QUP_SW_RESET);
+	ग_लिखोl(1, qup->base + QUP_SW_RESET);
 	ret = qup_i2c_poll_state(qup, QUP_RESET_STATE);
-	if (ret)
-		goto out;
+	अगर (ret)
+		जाओ out;
 
 	/* Configure QUP as I2C mini core */
-	writel(I2C_MINI_CORE | I2C_N_VAL, qup->base + QUP_CONFIG);
+	ग_लिखोl(I2C_MINI_CORE | I2C_N_VAL, qup->base + QUP_CONFIG);
 
-	for (idx = 0; idx < num; idx++) {
-		if (qup_i2c_poll_state_i2c_master(qup)) {
+	क्रम (idx = 0; idx < num; idx++) अणु
+		अगर (qup_i2c_poll_state_i2c_master(qup)) अणु
 			ret = -EIO;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
-		if (qup_i2c_check_msg_len(&msgs[idx])) {
+		अगर (qup_i2c_check_msg_len(&msgs[idx])) अणु
 			ret = -EINVAL;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
 		qup->msg = &msgs[idx];
-		if (msgs[idx].flags & I2C_M_RD)
-			ret = qup_i2c_read_one(qup);
-		else
-			ret = qup_i2c_write_one(qup);
+		अगर (msgs[idx].flags & I2C_M_RD)
+			ret = qup_i2c_पढ़ो_one(qup);
+		अन्यथा
+			ret = qup_i2c_ग_लिखो_one(qup);
 
-		if (ret)
-			break;
+		अगर (ret)
+			अवरोध;
 
 		ret = qup_i2c_change_state(qup, QUP_RESET_STATE);
-		if (ret)
-			break;
-	}
+		अगर (ret)
+			अवरोध;
+	पूर्ण
 
-	if (ret == 0)
+	अगर (ret == 0)
 		ret = num;
 out:
 
-	pm_runtime_mark_last_busy(qup->dev);
-	pm_runtime_put_autosuspend(qup->dev);
+	pm_runसमय_mark_last_busy(qup->dev);
+	pm_runसमय_put_स्वतःsuspend(qup->dev);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
- * Configure registers related with reconfiguration during run and call it
- * before each i2c sub transfer.
+ * Configure रेजिस्टरs related with reconfiguration during run and call it
+ * beक्रमe each i2c sub transfer.
  */
-static void qup_i2c_conf_count_v2(struct qup_i2c_dev *qup)
-{
-	struct qup_i2c_block *blk = &qup->blk;
+अटल व्योम qup_i2c_conf_count_v2(काष्ठा qup_i2c_dev *qup)
+अणु
+	काष्ठा qup_i2c_block *blk = &qup->blk;
 	u32 qup_config = I2C_MINI_CORE | I2C_N_VAL_V2;
 
-	if (blk->is_tx_blk_mode)
-		writel(qup->config_run | blk->total_tx_len,
+	अगर (blk->is_tx_blk_mode)
+		ग_लिखोl(qup->config_run | blk->total_tx_len,
 		       qup->base + QUP_MX_OUTPUT_CNT);
-	else
-		writel(qup->config_run | blk->total_tx_len,
+	अन्यथा
+		ग_लिखोl(qup->config_run | blk->total_tx_len,
 		       qup->base + QUP_MX_WRITE_CNT);
 
-	if (blk->total_rx_len) {
-		if (blk->is_rx_blk_mode)
-			writel(qup->config_run | blk->total_rx_len,
+	अगर (blk->total_rx_len) अणु
+		अगर (blk->is_rx_blk_mode)
+			ग_लिखोl(qup->config_run | blk->total_rx_len,
 			       qup->base + QUP_MX_INPUT_CNT);
-		else
-			writel(qup->config_run | blk->total_rx_len,
+		अन्यथा
+			ग_लिखोl(qup->config_run | blk->total_rx_len,
 			       qup->base + QUP_MX_READ_CNT);
-	} else {
+	पूर्ण अन्यथा अणु
 		qup_config |= QUP_NO_INPUT;
-	}
+	पूर्ण
 
-	writel(qup_config, qup->base + QUP_CONFIG);
-}
+	ग_लिखोl(qup_config, qup->base + QUP_CONFIG);
+पूर्ण
 
 /*
- * Configure registers related with transfer mode (FIFO/Block)
- * before starting of i2c transfer. It will be called only once in
+ * Configure रेजिस्टरs related with transfer mode (FIFO/Block)
+ * beक्रमe starting of i2c transfer. It will be called only once in
  * QUP RESET state.
  */
-static void qup_i2c_conf_mode_v2(struct qup_i2c_dev *qup)
-{
-	struct qup_i2c_block *blk = &qup->blk;
+अटल व्योम qup_i2c_conf_mode_v2(काष्ठा qup_i2c_dev *qup)
+अणु
+	काष्ठा qup_i2c_block *blk = &qup->blk;
 	u32 io_mode = QUP_REPACK_EN;
 
-	if (blk->is_tx_blk_mode) {
+	अगर (blk->is_tx_blk_mode) अणु
 		io_mode |= QUP_OUTPUT_BLK_MODE;
-		writel(0, qup->base + QUP_MX_WRITE_CNT);
-	} else {
-		writel(0, qup->base + QUP_MX_OUTPUT_CNT);
-	}
+		ग_लिखोl(0, qup->base + QUP_MX_WRITE_CNT);
+	पूर्ण अन्यथा अणु
+		ग_लिखोl(0, qup->base + QUP_MX_OUTPUT_CNT);
+	पूर्ण
 
-	if (blk->is_rx_blk_mode) {
+	अगर (blk->is_rx_blk_mode) अणु
 		io_mode |= QUP_INPUT_BLK_MODE;
-		writel(0, qup->base + QUP_MX_READ_CNT);
-	} else {
-		writel(0, qup->base + QUP_MX_INPUT_CNT);
-	}
+		ग_लिखोl(0, qup->base + QUP_MX_READ_CNT);
+	पूर्ण अन्यथा अणु
+		ग_लिखोl(0, qup->base + QUP_MX_INPUT_CNT);
+	पूर्ण
 
-	writel(io_mode, qup->base + QUP_IO_MODE);
-}
+	ग_लिखोl(io_mode, qup->base + QUP_IO_MODE);
+पूर्ण
 
-/* Clear required variables before starting of any QUP v2 sub transfer. */
-static void qup_i2c_clear_blk_v2(struct qup_i2c_block *blk)
-{
+/* Clear required variables beक्रमe starting of any QUP v2 sub transfer. */
+अटल व्योम qup_i2c_clear_blk_v2(काष्ठा qup_i2c_block *blk)
+अणु
 	blk->send_last_word = false;
 	blk->tx_tags_sent = false;
-	blk->tx_fifo_data = 0;
-	blk->tx_fifo_data_pos = 0;
-	blk->tx_fifo_free = 0;
+	blk->tx_fअगरo_data = 0;
+	blk->tx_fअगरo_data_pos = 0;
+	blk->tx_fअगरo_मुक्त = 0;
 
 	blk->rx_tags_fetched = false;
-	blk->rx_bytes_read = false;
-	blk->rx_fifo_data = 0;
-	blk->rx_fifo_data_pos = 0;
-	blk->fifo_available = 0;
-}
+	blk->rx_bytes_पढ़ो = false;
+	blk->rx_fअगरo_data = 0;
+	blk->rx_fअगरo_data_pos = 0;
+	blk->fअगरo_available = 0;
+पूर्ण
 
-/* Receive data from RX FIFO for read message in QUP v2 i2c transfer. */
-static void qup_i2c_recv_data(struct qup_i2c_dev *qup)
-{
-	struct qup_i2c_block *blk = &qup->blk;
-	int j;
+/* Receive data from RX FIFO क्रम पढ़ो message in QUP v2 i2c transfer. */
+अटल व्योम qup_i2c_recv_data(काष्ठा qup_i2c_dev *qup)
+अणु
+	काष्ठा qup_i2c_block *blk = &qup->blk;
+	पूर्णांक j;
 
-	for (j = blk->rx_fifo_data_pos;
-	     blk->cur_blk_len && blk->fifo_available;
-	     blk->cur_blk_len--, blk->fifo_available--) {
-		if (j == 0)
-			blk->rx_fifo_data = readl(qup->base + QUP_IN_FIFO_BASE);
+	क्रम (j = blk->rx_fअगरo_data_pos;
+	     blk->cur_blk_len && blk->fअगरo_available;
+	     blk->cur_blk_len--, blk->fअगरo_available--) अणु
+		अगर (j == 0)
+			blk->rx_fअगरo_data = पढ़ोl(qup->base + QUP_IN_FIFO_BASE);
 
-		*(blk->cur_data++) = blk->rx_fifo_data;
-		blk->rx_fifo_data >>= 8;
+		*(blk->cur_data++) = blk->rx_fअगरo_data;
+		blk->rx_fअगरo_data >>= 8;
 
-		if (j == 3)
+		अगर (j == 3)
 			j = 0;
-		else
+		अन्यथा
 			j++;
-	}
+	पूर्ण
 
-	blk->rx_fifo_data_pos = j;
-}
+	blk->rx_fअगरo_data_pos = j;
+पूर्ण
 
-/* Receive tags for read message in QUP v2 i2c transfer. */
-static void qup_i2c_recv_tags(struct qup_i2c_dev *qup)
-{
-	struct qup_i2c_block *blk = &qup->blk;
+/* Receive tags क्रम पढ़ो message in QUP v2 i2c transfer. */
+अटल व्योम qup_i2c_recv_tags(काष्ठा qup_i2c_dev *qup)
+अणु
+	काष्ठा qup_i2c_block *blk = &qup->blk;
 
-	blk->rx_fifo_data = readl(qup->base + QUP_IN_FIFO_BASE);
-	blk->rx_fifo_data >>= blk->rx_tag_len  * 8;
-	blk->rx_fifo_data_pos = blk->rx_tag_len;
-	blk->fifo_available -= blk->rx_tag_len;
-}
+	blk->rx_fअगरo_data = पढ़ोl(qup->base + QUP_IN_FIFO_BASE);
+	blk->rx_fअगरo_data >>= blk->rx_tag_len  * 8;
+	blk->rx_fअगरo_data_pos = blk->rx_tag_len;
+	blk->fअगरo_available -= blk->rx_tag_len;
+पूर्ण
 
 /*
- * Read the data and tags from RX FIFO. Since in read case, the tags will be
+ * Read the data and tags from RX FIFO. Since in पढ़ो हाल, the tags will be
  * preceded by received data bytes so
- * 1. Check if rx_tags_fetched is false i.e. the start of QUP block so receive
+ * 1. Check अगर rx_tags_fetched is false i.e. the start of QUP block so receive
  *    all tag bytes and discard that.
- * 2. Read the data from RX FIFO. When all the data bytes have been read then
- *    set rx_bytes_read to true.
+ * 2. Read the data from RX FIFO. When all the data bytes have been पढ़ो then
+ *    set rx_bytes_पढ़ो to true.
  */
-static void qup_i2c_read_rx_fifo_v2(struct qup_i2c_dev *qup)
-{
-	struct qup_i2c_block *blk = &qup->blk;
+अटल व्योम qup_i2c_पढ़ो_rx_fअगरo_v2(काष्ठा qup_i2c_dev *qup)
+अणु
+	काष्ठा qup_i2c_block *blk = &qup->blk;
 
-	if (!blk->rx_tags_fetched) {
+	अगर (!blk->rx_tags_fetched) अणु
 		qup_i2c_recv_tags(qup);
 		blk->rx_tags_fetched = true;
-	}
+	पूर्ण
 
 	qup_i2c_recv_data(qup);
-	if (!blk->cur_blk_len)
-		blk->rx_bytes_read = true;
-}
+	अगर (!blk->cur_blk_len)
+		blk->rx_bytes_पढ़ो = true;
+पूर्ण
 
 /*
- * Write bytes in TX FIFO for write message in QUP v2 i2c transfer. QUP TX FIFO
- * write works on word basis (4 bytes). Append new data byte write for TX FIFO
- * in tx_fifo_data and write to TX FIFO when all the 4 bytes are present.
+ * Write bytes in TX FIFO क्रम ग_लिखो message in QUP v2 i2c transfer. QUP TX FIFO
+ * ग_लिखो works on word basis (4 bytes). Append new data byte ग_लिखो क्रम TX FIFO
+ * in tx_fअगरo_data and ग_लिखो to TX FIFO when all the 4 bytes are present.
  */
-static void
-qup_i2c_write_blk_data(struct qup_i2c_dev *qup, u8 **data, unsigned int *len)
-{
-	struct qup_i2c_block *blk = &qup->blk;
-	unsigned int j;
+अटल व्योम
+qup_i2c_ग_लिखो_blk_data(काष्ठा qup_i2c_dev *qup, u8 **data, अचिन्हित पूर्णांक *len)
+अणु
+	काष्ठा qup_i2c_block *blk = &qup->blk;
+	अचिन्हित पूर्णांक j;
 
-	for (j = blk->tx_fifo_data_pos; *len && blk->tx_fifo_free;
-	     (*len)--, blk->tx_fifo_free--) {
-		blk->tx_fifo_data |= *(*data)++ << (j * 8);
-		if (j == 3) {
-			writel(blk->tx_fifo_data,
+	क्रम (j = blk->tx_fअगरo_data_pos; *len && blk->tx_fअगरo_मुक्त;
+	     (*len)--, blk->tx_fअगरo_मुक्त--) अणु
+		blk->tx_fअगरo_data |= *(*data)++ << (j * 8);
+		अगर (j == 3) अणु
+			ग_लिखोl(blk->tx_fअगरo_data,
 			       qup->base + QUP_OUT_FIFO_BASE);
-			blk->tx_fifo_data = 0x0;
+			blk->tx_fअगरo_data = 0x0;
 			j = 0;
-		} else {
+		पूर्ण अन्यथा अणु
 			j++;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	blk->tx_fifo_data_pos = j;
-}
+	blk->tx_fअगरo_data_pos = j;
+पूर्ण
 
-/* Transfer tags for read message in QUP v2 i2c transfer. */
-static void qup_i2c_write_rx_tags_v2(struct qup_i2c_dev *qup)
-{
-	struct qup_i2c_block *blk = &qup->blk;
+/* Transfer tags क्रम पढ़ो message in QUP v2 i2c transfer. */
+अटल व्योम qup_i2c_ग_लिखो_rx_tags_v2(काष्ठा qup_i2c_dev *qup)
+अणु
+	काष्ठा qup_i2c_block *blk = &qup->blk;
 
-	qup_i2c_write_blk_data(qup, &blk->cur_tx_tags, &blk->tx_tag_len);
-	if (blk->tx_fifo_data_pos)
-		writel(blk->tx_fifo_data, qup->base + QUP_OUT_FIFO_BASE);
-}
+	qup_i2c_ग_लिखो_blk_data(qup, &blk->cur_tx_tags, &blk->tx_tag_len);
+	अगर (blk->tx_fअगरo_data_pos)
+		ग_लिखोl(blk->tx_fअगरo_data, qup->base + QUP_OUT_FIFO_BASE);
+पूर्ण
 
 /*
- * Write the data and tags in TX FIFO. Since in write case, both tags and data
- * need to be written and QUP write tags can have maximum 256 data length, so
+ * Write the data and tags in TX FIFO. Since in ग_लिखो हाल, both tags and data
+ * need to be written and QUP ग_लिखो tags can have maximum 256 data length, so
  *
- * 1. Check if tx_tags_sent is false i.e. the start of QUP block so write the
+ * 1. Check अगर tx_tags_sent is false i.e. the start of QUP block so ग_लिखो the
  *    tags to TX FIFO and set tx_tags_sent to true.
- * 2. Check if send_last_word is true. It will be set when last few data bytes
+ * 2. Check अगर send_last_word is true. It will be set when last few data bytes
  *    (less than 4 bytes) are reamining to be written in FIFO because of no FIFO
- *    space. All this data bytes are available in tx_fifo_data so write this
+ *    space. All this data bytes are available in tx_fअगरo_data so ग_लिखो this
  *    in FIFO.
- * 3. Write the data to TX FIFO and check for cur_blk_len. If it is non zero
- *    then more data is pending otherwise following 3 cases can be possible
- *    a. if tx_fifo_data_pos is zero i.e. all the data bytes in this block
- *       have been written in TX FIFO so nothing else is required.
- *    b. tx_fifo_free is non zero i.e tx FIFO is free so copy the remaining data
- *       from tx_fifo_data to tx FIFO. Since, qup_i2c_write_blk_data do write
- *	 in 4 bytes and FIFO space is in multiple of 4 bytes so tx_fifo_free
+ * 3. Write the data to TX FIFO and check क्रम cur_blk_len. If it is non zero
+ *    then more data is pending otherwise following 3 हालs can be possible
+ *    a. अगर tx_fअगरo_data_pos is zero i.e. all the data bytes in this block
+ *       have been written in TX FIFO so nothing अन्यथा is required.
+ *    b. tx_fअगरo_मुक्त is non zero i.e tx FIFO is मुक्त so copy the reमुख्यing data
+ *       from tx_fअगरo_data to tx FIFO. Since, qup_i2c_ग_लिखो_blk_data करो ग_लिखो
+ *	 in 4 bytes and FIFO space is in multiple of 4 bytes so tx_fअगरo_मुक्त
  *       will be always greater than or equal to 4 bytes.
- *    c. tx_fifo_free is zero. In this case, last few bytes (less than 4
- *       bytes) are copied to tx_fifo_data but couldn't be sent because of
+ *    c. tx_fअगरo_मुक्त is zero. In this हाल, last few bytes (less than 4
+ *       bytes) are copied to tx_fअगरo_data but couldn't be sent because of
  *       FIFO full so make send_last_word true.
  */
-static void qup_i2c_write_tx_fifo_v2(struct qup_i2c_dev *qup)
-{
-	struct qup_i2c_block *blk = &qup->blk;
+अटल व्योम qup_i2c_ग_लिखो_tx_fअगरo_v2(काष्ठा qup_i2c_dev *qup)
+अणु
+	काष्ठा qup_i2c_block *blk = &qup->blk;
 
-	if (!blk->tx_tags_sent) {
-		qup_i2c_write_blk_data(qup, &blk->cur_tx_tags,
+	अगर (!blk->tx_tags_sent) अणु
+		qup_i2c_ग_लिखो_blk_data(qup, &blk->cur_tx_tags,
 				       &blk->tx_tag_len);
 		blk->tx_tags_sent = true;
-	}
+	पूर्ण
 
-	if (blk->send_last_word)
-		goto send_last_word;
+	अगर (blk->send_last_word)
+		जाओ send_last_word;
 
-	qup_i2c_write_blk_data(qup, &blk->cur_data, &blk->cur_blk_len);
-	if (!blk->cur_blk_len) {
-		if (!blk->tx_fifo_data_pos)
-			return;
+	qup_i2c_ग_लिखो_blk_data(qup, &blk->cur_data, &blk->cur_blk_len);
+	अगर (!blk->cur_blk_len) अणु
+		अगर (!blk->tx_fअगरo_data_pos)
+			वापस;
 
-		if (blk->tx_fifo_free)
-			goto send_last_word;
+		अगर (blk->tx_fअगरo_मुक्त)
+			जाओ send_last_word;
 
 		blk->send_last_word = true;
-	}
+	पूर्ण
 
-	return;
+	वापस;
 
 send_last_word:
-	writel(blk->tx_fifo_data, qup->base + QUP_OUT_FIFO_BASE);
-}
+	ग_लिखोl(blk->tx_fअगरo_data, qup->base + QUP_OUT_FIFO_BASE);
+पूर्ण
 
 /*
- * Main transfer function which read or write i2c data.
+ * Main transfer function which पढ़ो or ग_लिखो i2c data.
  * The QUP v2 supports reconfiguration during run in which multiple i2c sub
  * transfers can be scheduled.
  */
-static int
-qup_i2c_conf_xfer_v2(struct qup_i2c_dev *qup, bool is_rx, bool is_first,
-		     bool change_pause_state)
-{
-	struct qup_i2c_block *blk = &qup->blk;
-	struct i2c_msg *msg = qup->msg;
-	int ret;
+अटल पूर्णांक
+qup_i2c_conf_xfer_v2(काष्ठा qup_i2c_dev *qup, bool is_rx, bool is_first,
+		     bool change_छोड़ो_state)
+अणु
+	काष्ठा qup_i2c_block *blk = &qup->blk;
+	काष्ठा i2c_msg *msg = qup->msg;
+	पूर्णांक ret;
 
 	/*
-	 * Check if its SMBus Block read for which the top level read will be
-	 * done into 2 QUP reads. One with message length 1 while other one is
+	 * Check अगर its SMBus Block पढ़ो क्रम which the top level पढ़ो will be
+	 * करोne पूर्णांकo 2 QUP पढ़ोs. One with message length 1 जबतक other one is
 	 * with actual length.
 	 */
-	if (qup_i2c_check_msg_len(msg)) {
-		if (qup->is_smbus_read) {
+	अगर (qup_i2c_check_msg_len(msg)) अणु
+		अगर (qup->is_smbus_पढ़ो) अणु
 			/*
-			 * If the message length is already read in
-			 * the first byte of the buffer, account for
+			 * If the message length is alपढ़ोy पढ़ो in
+			 * the first byte of the buffer, account क्रम
 			 * that by setting the offset
 			 */
 			blk->cur_data += 1;
 			is_first = false;
-		} else {
-			change_pause_state = false;
-		}
-	}
+		पूर्ण अन्यथा अणु
+			change_छोड़ो_state = false;
+		पूर्ण
+	पूर्ण
 
 	qup->config_run = is_first ? 0 : QUP_I2C_MX_CONFIG_DURING_RUN;
 
 	qup_i2c_clear_blk_v2(blk);
 	qup_i2c_conf_count_v2(qup);
 
-	/* If it is first sub transfer, then configure i2c bus clocks */
-	if (is_first) {
+	/* If it is first sub transfer, then configure i2c bus घड़ीs */
+	अगर (is_first) अणु
 		ret = qup_i2c_change_state(qup, QUP_RUN_STATE);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 
-		writel(qup->clk_ctl, qup->base + QUP_I2C_CLK_CTL);
+		ग_लिखोl(qup->clk_ctl, qup->base + QUP_I2C_CLK_CTL);
 
 		ret = qup_i2c_change_state(qup, QUP_PAUSE_STATE);
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
 	reinit_completion(&qup->xfer);
 	enable_irq(qup->irq);
 	/*
-	 * In FIFO mode, tx FIFO can be written directly while in block mode the
-	 * it will be written after getting OUT_BLOCK_WRITE_REQ interrupt
+	 * In FIFO mode, tx FIFO can be written directly जबतक in block mode the
+	 * it will be written after getting OUT_BLOCK_WRITE_REQ पूर्णांकerrupt
 	 */
-	if (!blk->is_tx_blk_mode) {
-		blk->tx_fifo_free = qup->out_fifo_sz;
+	अगर (!blk->is_tx_blk_mode) अणु
+		blk->tx_fअगरo_मुक्त = qup->out_fअगरo_sz;
 
-		if (is_rx)
-			qup_i2c_write_rx_tags_v2(qup);
-		else
-			qup_i2c_write_tx_fifo_v2(qup);
-	}
+		अगर (is_rx)
+			qup_i2c_ग_लिखो_rx_tags_v2(qup);
+		अन्यथा
+			qup_i2c_ग_लिखो_tx_fअगरo_v2(qup);
+	पूर्ण
 
 	ret = qup_i2c_change_state(qup, QUP_RUN_STATE);
-	if (ret)
-		goto err;
+	अगर (ret)
+		जाओ err;
 
-	ret = qup_i2c_wait_for_complete(qup, msg);
-	if (ret)
-		goto err;
+	ret = qup_i2c_रुको_क्रम_complete(qup, msg);
+	अगर (ret)
+		जाओ err;
 
-	/* Move to pause state for all the transfers, except last one */
-	if (change_pause_state) {
+	/* Move to छोड़ो state क्रम all the transfers, except last one */
+	अगर (change_छोड़ो_state) अणु
 		ret = qup_i2c_change_state(qup, QUP_PAUSE_STATE);
-		if (ret)
-			goto err;
-	}
+		अगर (ret)
+			जाओ err;
+	पूर्ण
 
 err:
 	disable_irq(qup->irq);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
- * Transfer one read/write message in i2c transfer. It splits the message into
+ * Transfer one पढ़ो/ग_लिखो message in i2c transfer. It splits the message पूर्णांकo
  * multiple of blk_xfer_limit data length blocks and schedule each
- * QUP block individually.
+ * QUP block inभागidually.
  */
-static int qup_i2c_xfer_v2_msg(struct qup_i2c_dev *qup, int msg_id, bool is_rx)
-{
-	int ret = 0;
-	unsigned int data_len, i;
-	struct i2c_msg *msg = qup->msg;
-	struct qup_i2c_block *blk = &qup->blk;
+अटल पूर्णांक qup_i2c_xfer_v2_msg(काष्ठा qup_i2c_dev *qup, पूर्णांक msg_id, bool is_rx)
+अणु
+	पूर्णांक ret = 0;
+	अचिन्हित पूर्णांक data_len, i;
+	काष्ठा i2c_msg *msg = qup->msg;
+	काष्ठा qup_i2c_block *blk = &qup->blk;
 	u8 *msg_buf = msg->buf;
 
 	qup->blk_xfer_limit = is_rx ? RECV_MAX_DATA_LEN : QUP_READ_LIMIT;
 	qup_i2c_set_blk_data(qup, msg);
 
-	for (i = 0; i < blk->count; i++) {
+	क्रम (i = 0; i < blk->count; i++) अणु
 		data_len =  qup_i2c_get_data_len(qup);
 		blk->pos = i;
 		blk->cur_tx_tags = blk->tags;
@@ -1446,548 +1447,548 @@ static int qup_i2c_xfer_v2_msg(struct qup_i2c_dev *qup, int msg_id, bool is_rx)
 
 		blk->cur_data = msg_buf;
 
-		if (is_rx) {
+		अगर (is_rx) अणु
 			blk->total_tx_len = blk->tx_tag_len;
 			blk->rx_tag_len = 2;
 			blk->total_rx_len = blk->rx_tag_len + data_len;
-		} else {
+		पूर्ण अन्यथा अणु
 			blk->total_tx_len = blk->tx_tag_len + data_len;
 			blk->total_rx_len = 0;
-		}
+		पूर्ण
 
 		ret = qup_i2c_conf_xfer_v2(qup, is_rx, !msg_id && !i,
 					   !qup->is_last || i < blk->count - 1);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 
-		/* Handle SMBus block read length */
-		if (qup_i2c_check_msg_len(msg) && msg->len == 1 &&
-		    !qup->is_smbus_read) {
-			if (msg->buf[0] > I2C_SMBUS_BLOCK_MAX)
-				return -EPROTO;
+		/* Handle SMBus block पढ़ो length */
+		अगर (qup_i2c_check_msg_len(msg) && msg->len == 1 &&
+		    !qup->is_smbus_पढ़ो) अणु
+			अगर (msg->buf[0] > I2C_SMBUS_BLOCK_MAX)
+				वापस -EPROTO;
 
 			msg->len = msg->buf[0];
-			qup->is_smbus_read = true;
+			qup->is_smbus_पढ़ो = true;
 			ret = qup_i2c_xfer_v2_msg(qup, msg_id, true);
-			qup->is_smbus_read = false;
-			if (ret)
-				return ret;
+			qup->is_smbus_पढ़ो = false;
+			अगर (ret)
+				वापस ret;
 
 			msg->len += 1;
-		}
+		पूर्ण
 
 		msg_buf += data_len;
 		blk->data_len -= qup->blk_xfer_limit;
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
  * QUP v2 supports 3 modes
  * Programmed IO using FIFO mode : Less than FIFO size
  * Programmed IO using Block mode : Greater than FIFO size
- * DMA using BAM : Appropriate for any transaction size but the address should
+ * DMA using BAM : Appropriate क्रम any transaction size but the address should
  *		   be DMA applicable
  *
- * This function determines the mode which will be used for this transfer. An
+ * This function determines the mode which will be used क्रम this transfer. An
  * i2c transfer contains multiple message. Following are the rules to determine
  * the mode used.
- * 1. Determine complete length, maximum tx and rx length for complete transfer.
- * 2. If complete transfer length is greater than fifo size then use the DMA
+ * 1. Determine complete length, maximum tx and rx length क्रम complete transfer.
+ * 2. If complete transfer length is greater than fअगरo size then use the DMA
  *    mode.
- * 3. In FIFO or block mode, tx and rx can operate in different mode so check
- *    for maximum tx and rx length to determine mode.
+ * 3. In FIFO or block mode, tx and rx can operate in dअगरferent mode so check
+ *    क्रम maximum tx and rx length to determine mode.
  */
-static int
-qup_i2c_determine_mode_v2(struct qup_i2c_dev *qup,
-			  struct i2c_msg msgs[], int num)
-{
-	int idx;
+अटल पूर्णांक
+qup_i2c_determine_mode_v2(काष्ठा qup_i2c_dev *qup,
+			  काष्ठा i2c_msg msgs[], पूर्णांक num)
+अणु
+	पूर्णांक idx;
 	bool no_dma = false;
-	unsigned int max_tx_len = 0, max_rx_len = 0, total_len = 0;
+	अचिन्हित पूर्णांक max_tx_len = 0, max_rx_len = 0, total_len = 0;
 
 	/* All i2c_msgs should be transferred using either dma or cpu */
-	for (idx = 0; idx < num; idx++) {
-		if (msgs[idx].flags & I2C_M_RD)
-			max_rx_len = max_t(unsigned int, max_rx_len,
+	क्रम (idx = 0; idx < num; idx++) अणु
+		अगर (msgs[idx].flags & I2C_M_RD)
+			max_rx_len = max_t(अचिन्हित पूर्णांक, max_rx_len,
 					   msgs[idx].len);
-		else
-			max_tx_len = max_t(unsigned int, max_tx_len,
+		अन्यथा
+			max_tx_len = max_t(अचिन्हित पूर्णांक, max_tx_len,
 					   msgs[idx].len);
 
-		if (is_vmalloc_addr(msgs[idx].buf))
+		अगर (is_vदो_स्मृति_addr(msgs[idx].buf))
 			no_dma = true;
 
 		total_len += msgs[idx].len;
-	}
+	पूर्ण
 
-	if (!no_dma && qup->is_dma &&
-	    (total_len > qup->out_fifo_sz || total_len > qup->in_fifo_sz)) {
+	अगर (!no_dma && qup->is_dma &&
+	    (total_len > qup->out_fअगरo_sz || total_len > qup->in_fअगरo_sz)) अणु
 		qup->use_dma = true;
-	} else {
-		qup->blk.is_tx_blk_mode = max_tx_len > qup->out_fifo_sz -
+	पूर्ण अन्यथा अणु
+		qup->blk.is_tx_blk_mode = max_tx_len > qup->out_fअगरo_sz -
 			QUP_MAX_TAGS_LEN;
-		qup->blk.is_rx_blk_mode = max_rx_len > qup->in_fifo_sz -
+		qup->blk.is_rx_blk_mode = max_rx_len > qup->in_fअगरo_sz -
 			READ_RX_TAGS_LEN;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int qup_i2c_xfer_v2(struct i2c_adapter *adap,
-			   struct i2c_msg msgs[],
-			   int num)
-{
-	struct qup_i2c_dev *qup = i2c_get_adapdata(adap);
-	int ret, idx = 0;
+अटल पूर्णांक qup_i2c_xfer_v2(काष्ठा i2c_adapter *adap,
+			   काष्ठा i2c_msg msgs[],
+			   पूर्णांक num)
+अणु
+	काष्ठा qup_i2c_dev *qup = i2c_get_adapdata(adap);
+	पूर्णांक ret, idx = 0;
 
 	qup->bus_err = 0;
 	qup->qup_err = 0;
 
-	ret = pm_runtime_get_sync(qup->dev);
-	if (ret < 0)
-		goto out;
+	ret = pm_runसमय_get_sync(qup->dev);
+	अगर (ret < 0)
+		जाओ out;
 
 	ret = qup_i2c_determine_mode_v2(qup, msgs, num);
-	if (ret)
-		goto out;
+	अगर (ret)
+		जाओ out;
 
-	writel(1, qup->base + QUP_SW_RESET);
+	ग_लिखोl(1, qup->base + QUP_SW_RESET);
 	ret = qup_i2c_poll_state(qup, QUP_RESET_STATE);
-	if (ret)
-		goto out;
+	अगर (ret)
+		जाओ out;
 
 	/* Configure QUP as I2C mini core */
-	writel(I2C_MINI_CORE | I2C_N_VAL_V2, qup->base + QUP_CONFIG);
-	writel(QUP_V2_TAGS_EN, qup->base + QUP_I2C_MASTER_GEN);
+	ग_लिखोl(I2C_MINI_CORE | I2C_N_VAL_V2, qup->base + QUP_CONFIG);
+	ग_लिखोl(QUP_V2_TAGS_EN, qup->base + QUP_I2C_MASTER_GEN);
 
-	if (qup_i2c_poll_state_i2c_master(qup)) {
+	अगर (qup_i2c_poll_state_i2c_master(qup)) अणु
 		ret = -EIO;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (qup->use_dma) {
+	अगर (qup->use_dma) अणु
 		reinit_completion(&qup->xfer);
 		ret = qup_i2c_bam_xfer(adap, &msgs[0], num);
 		qup->use_dma = false;
-	} else {
+	पूर्ण अन्यथा अणु
 		qup_i2c_conf_mode_v2(qup);
 
-		for (idx = 0; idx < num; idx++) {
+		क्रम (idx = 0; idx < num; idx++) अणु
 			qup->msg = &msgs[idx];
 			qup->is_last = idx == (num - 1);
 
 			ret = qup_i2c_xfer_v2_msg(qup, idx,
 					!!(msgs[idx].flags & I2C_M_RD));
-			if (ret)
-				break;
-		}
-		qup->msg = NULL;
-	}
+			अगर (ret)
+				अवरोध;
+		पूर्ण
+		qup->msg = शून्य;
+	पूर्ण
 
-	if (!ret)
+	अगर (!ret)
 		ret = qup_i2c_bus_active(qup, ONE_BYTE);
 
-	if (!ret)
+	अगर (!ret)
 		qup_i2c_change_state(qup, QUP_RESET_STATE);
 
-	if (ret == 0)
+	अगर (ret == 0)
 		ret = num;
 out:
-	pm_runtime_mark_last_busy(qup->dev);
-	pm_runtime_put_autosuspend(qup->dev);
+	pm_runसमय_mark_last_busy(qup->dev);
+	pm_runसमय_put_स्वतःsuspend(qup->dev);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static u32 qup_i2c_func(struct i2c_adapter *adap)
-{
-	return I2C_FUNC_I2C | (I2C_FUNC_SMBUS_EMUL_ALL & ~I2C_FUNC_SMBUS_QUICK);
-}
+अटल u32 qup_i2c_func(काष्ठा i2c_adapter *adap)
+अणु
+	वापस I2C_FUNC_I2C | (I2C_FUNC_SMBUS_EMUL_ALL & ~I2C_FUNC_SMBUS_QUICK);
+पूर्ण
 
-static const struct i2c_algorithm qup_i2c_algo = {
+अटल स्थिर काष्ठा i2c_algorithm qup_i2c_algo = अणु
 	.master_xfer	= qup_i2c_xfer,
 	.functionality	= qup_i2c_func,
-};
+पूर्ण;
 
-static const struct i2c_algorithm qup_i2c_algo_v2 = {
+अटल स्थिर काष्ठा i2c_algorithm qup_i2c_algo_v2 = अणु
 	.master_xfer	= qup_i2c_xfer_v2,
 	.functionality	= qup_i2c_func,
-};
+पूर्ण;
 
 /*
  * The QUP block will issue a NACK and STOP on the bus when reaching
- * the end of the read, the length of the read is specified as one byte
- * which limits the possible read to 256 (QUP_READ_LIMIT) bytes.
+ * the end of the पढ़ो, the length of the पढ़ो is specअगरied as one byte
+ * which limits the possible पढ़ो to 256 (QUP_READ_LIMIT) bytes.
  */
-static const struct i2c_adapter_quirks qup_i2c_quirks = {
+अटल स्थिर काष्ठा i2c_adapter_quirks qup_i2c_quirks = अणु
 	.flags = I2C_AQ_NO_ZERO_LEN,
-	.max_read_len = QUP_READ_LIMIT,
-};
+	.max_पढ़ो_len = QUP_READ_LIMIT,
+पूर्ण;
 
-static const struct i2c_adapter_quirks qup_i2c_quirks_v2 = {
+अटल स्थिर काष्ठा i2c_adapter_quirks qup_i2c_quirks_v2 = अणु
 	.flags = I2C_AQ_NO_ZERO_LEN,
-};
+पूर्ण;
 
-static void qup_i2c_enable_clocks(struct qup_i2c_dev *qup)
-{
+अटल व्योम qup_i2c_enable_घड़ीs(काष्ठा qup_i2c_dev *qup)
+अणु
 	clk_prepare_enable(qup->clk);
 	clk_prepare_enable(qup->pclk);
-}
+पूर्ण
 
-static void qup_i2c_disable_clocks(struct qup_i2c_dev *qup)
-{
+अटल व्योम qup_i2c_disable_घड़ीs(काष्ठा qup_i2c_dev *qup)
+अणु
 	u32 config;
 
 	qup_i2c_change_state(qup, QUP_RESET_STATE);
 	clk_disable_unprepare(qup->clk);
-	config = readl(qup->base + QUP_CONFIG);
+	config = पढ़ोl(qup->base + QUP_CONFIG);
 	config |= QUP_CLOCK_AUTO_GATE;
-	writel(config, qup->base + QUP_CONFIG);
+	ग_लिखोl(config, qup->base + QUP_CONFIG);
 	clk_disable_unprepare(qup->pclk);
-}
+पूर्ण
 
-static const struct acpi_device_id qup_i2c_acpi_match[] = {
-	{ "QCOM8010"},
-	{ },
-};
+अटल स्थिर काष्ठा acpi_device_id qup_i2c_acpi_match[] = अणु
+	अणु "QCOM8010"पूर्ण,
+	अणु पूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(acpi, qup_i2c_acpi_match);
 
-static int qup_i2c_probe(struct platform_device *pdev)
-{
-	static const int blk_sizes[] = {4, 16, 32};
-	struct qup_i2c_dev *qup;
-	unsigned long one_bit_t;
+अटल पूर्णांक qup_i2c_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	अटल स्थिर पूर्णांक blk_sizes[] = अणु4, 16, 32पूर्ण;
+	काष्ठा qup_i2c_dev *qup;
+	अचिन्हित दीर्घ one_bit_t;
 	u32 io_mode, hw_ver, size;
-	int ret, fs_div, hs_div;
+	पूर्णांक ret, fs_भाग, hs_भाग;
 	u32 src_clk_freq = DEFAULT_SRC_CLK;
 	u32 clk_freq = DEFAULT_CLK_FREQ;
-	int blocks;
+	पूर्णांक blocks;
 	bool is_qup_v1;
 
-	qup = devm_kzalloc(&pdev->dev, sizeof(*qup), GFP_KERNEL);
-	if (!qup)
-		return -ENOMEM;
+	qup = devm_kzalloc(&pdev->dev, माप(*qup), GFP_KERNEL);
+	अगर (!qup)
+		वापस -ENOMEM;
 
 	qup->dev = &pdev->dev;
 	init_completion(&qup->xfer);
-	platform_set_drvdata(pdev, qup);
+	platक्रमm_set_drvdata(pdev, qup);
 
-	if (scl_freq) {
+	अगर (scl_freq) अणु
 		dev_notice(qup->dev, "Using override frequency of %u\n", scl_freq);
 		clk_freq = scl_freq;
-	} else {
-		ret = device_property_read_u32(qup->dev, "clock-frequency", &clk_freq);
-		if (ret) {
+	पूर्ण अन्यथा अणु
+		ret = device_property_पढ़ो_u32(qup->dev, "clock-frequency", &clk_freq);
+		अगर (ret) अणु
 			dev_notice(qup->dev, "using default clock-frequency %d",
 				DEFAULT_CLK_FREQ);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (of_device_is_compatible(pdev->dev.of_node, "qcom,i2c-qup-v1.1.1")) {
+	अगर (of_device_is_compatible(pdev->dev.of_node, "qcom,i2c-qup-v1.1.1")) अणु
 		qup->adap.algo = &qup_i2c_algo;
 		qup->adap.quirks = &qup_i2c_quirks;
 		is_qup_v1 = true;
-	} else {
+	पूर्ण अन्यथा अणु
 		qup->adap.algo = &qup_i2c_algo_v2;
 		qup->adap.quirks = &qup_i2c_quirks_v2;
 		is_qup_v1 = false;
-		if (acpi_match_device(qup_i2c_acpi_match, qup->dev))
-			goto nodma;
-		else
+		अगर (acpi_match_device(qup_i2c_acpi_match, qup->dev))
+			जाओ nodma;
+		अन्यथा
 			ret = qup_i2c_req_dma(qup);
 
-		if (ret == -EPROBE_DEFER)
-			goto fail_dma;
-		else if (ret != 0)
-			goto nodma;
+		अगर (ret == -EPROBE_DEFER)
+			जाओ fail_dma;
+		अन्यथा अगर (ret != 0)
+			जाओ nodma;
 
 		qup->max_xfer_sg_len = (MX_BLOCKS << 1);
 		blocks = (MX_DMA_BLOCKS << 1) + 1;
-		qup->btx.sg = devm_kcalloc(&pdev->dev,
-					   blocks, sizeof(*qup->btx.sg),
+		qup->btx.sg = devm_kसुस्मृति(&pdev->dev,
+					   blocks, माप(*qup->btx.sg),
 					   GFP_KERNEL);
-		if (!qup->btx.sg) {
+		अगर (!qup->btx.sg) अणु
 			ret = -ENOMEM;
-			goto fail_dma;
-		}
+			जाओ fail_dma;
+		पूर्ण
 		sg_init_table(qup->btx.sg, blocks);
 
-		qup->brx.sg = devm_kcalloc(&pdev->dev,
-					   blocks, sizeof(*qup->brx.sg),
+		qup->brx.sg = devm_kसुस्मृति(&pdev->dev,
+					   blocks, माप(*qup->brx.sg),
 					   GFP_KERNEL);
-		if (!qup->brx.sg) {
+		अगर (!qup->brx.sg) अणु
 			ret = -ENOMEM;
-			goto fail_dma;
-		}
+			जाओ fail_dma;
+		पूर्ण
 		sg_init_table(qup->brx.sg, blocks);
 
-		/* 2 tag bytes for each block + 5 for start, stop tags */
+		/* 2 tag bytes क्रम each block + 5 क्रम start, stop tags */
 		size = blocks * 2 + 5;
 
 		qup->start_tag.start = devm_kzalloc(&pdev->dev,
 						    size, GFP_KERNEL);
-		if (!qup->start_tag.start) {
+		अगर (!qup->start_tag.start) अणु
 			ret = -ENOMEM;
-			goto fail_dma;
-		}
+			जाओ fail_dma;
+		पूर्ण
 
 		qup->brx.tag.start = devm_kzalloc(&pdev->dev, 2, GFP_KERNEL);
-		if (!qup->brx.tag.start) {
+		अगर (!qup->brx.tag.start) अणु
 			ret = -ENOMEM;
-			goto fail_dma;
-		}
+			जाओ fail_dma;
+		पूर्ण
 
 		qup->btx.tag.start = devm_kzalloc(&pdev->dev, 2, GFP_KERNEL);
-		if (!qup->btx.tag.start) {
+		अगर (!qup->btx.tag.start) अणु
 			ret = -ENOMEM;
-			goto fail_dma;
-		}
+			जाओ fail_dma;
+		पूर्ण
 		qup->is_dma = true;
-	}
+	पूर्ण
 
 nodma:
 	/* We support frequencies up to FAST Mode Plus (1MHz) */
-	if (!clk_freq || clk_freq > I2C_MAX_FAST_MODE_PLUS_FREQ) {
+	अगर (!clk_freq || clk_freq > I2C_MAX_FAST_MODE_PLUS_FREQ) अणु
 		dev_err(qup->dev, "clock frequency not supported %d\n",
 			clk_freq);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	qup->base = devm_platform_ioremap_resource(pdev, 0);
-	if (IS_ERR(qup->base))
-		return PTR_ERR(qup->base);
+	qup->base = devm_platक्रमm_ioremap_resource(pdev, 0);
+	अगर (IS_ERR(qup->base))
+		वापस PTR_ERR(qup->base);
 
-	qup->irq = platform_get_irq(pdev, 0);
-	if (qup->irq < 0)
-		return qup->irq;
+	qup->irq = platक्रमm_get_irq(pdev, 0);
+	अगर (qup->irq < 0)
+		वापस qup->irq;
 
-	if (has_acpi_companion(qup->dev)) {
-		ret = device_property_read_u32(qup->dev,
+	अगर (has_acpi_companion(qup->dev)) अणु
+		ret = device_property_पढ़ो_u32(qup->dev,
 				"src-clock-hz", &src_clk_freq);
-		if (ret) {
+		अगर (ret) अणु
 			dev_notice(qup->dev, "using default src-clock-hz %d",
 				DEFAULT_SRC_CLK);
-		}
+		पूर्ण
 		ACPI_COMPANION_SET(&qup->adap.dev, ACPI_COMPANION(qup->dev));
-	} else {
+	पूर्ण अन्यथा अणु
 		qup->clk = devm_clk_get(qup->dev, "core");
-		if (IS_ERR(qup->clk)) {
+		अगर (IS_ERR(qup->clk)) अणु
 			dev_err(qup->dev, "Could not get core clock\n");
-			return PTR_ERR(qup->clk);
-		}
+			वापस PTR_ERR(qup->clk);
+		पूर्ण
 
 		qup->pclk = devm_clk_get(qup->dev, "iface");
-		if (IS_ERR(qup->pclk)) {
+		अगर (IS_ERR(qup->pclk)) अणु
 			dev_err(qup->dev, "Could not get iface clock\n");
-			return PTR_ERR(qup->pclk);
-		}
-		qup_i2c_enable_clocks(qup);
+			वापस PTR_ERR(qup->pclk);
+		पूर्ण
+		qup_i2c_enable_घड़ीs(qup);
 		src_clk_freq = clk_get_rate(qup->clk);
-	}
+	पूर्ण
 
 	/*
-	 * Bootloaders might leave a pending interrupt on certain QUP's,
-	 * so we reset the core before registering for interrupts.
+	 * Bootloaders might leave a pending पूर्णांकerrupt on certain QUP's,
+	 * so we reset the core beक्रमe रेजिस्टरing क्रम पूर्णांकerrupts.
 	 */
-	writel(1, qup->base + QUP_SW_RESET);
+	ग_लिखोl(1, qup->base + QUP_SW_RESET);
 	ret = qup_i2c_poll_state_valid(qup);
-	if (ret)
-		goto fail;
+	अगर (ret)
+		जाओ fail;
 
-	ret = devm_request_irq(qup->dev, qup->irq, qup_i2c_interrupt,
+	ret = devm_request_irq(qup->dev, qup->irq, qup_i2c_पूर्णांकerrupt,
 			       IRQF_TRIGGER_HIGH, "i2c_qup", qup);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(qup->dev, "Request %d IRQ failed\n", qup->irq);
-		goto fail;
-	}
+		जाओ fail;
+	पूर्ण
 	disable_irq(qup->irq);
 
-	hw_ver = readl(qup->base + QUP_HW_VERSION);
+	hw_ver = पढ़ोl(qup->base + QUP_HW_VERSION);
 	dev_dbg(qup->dev, "Revision %x\n", hw_ver);
 
-	io_mode = readl(qup->base + QUP_IO_MODE);
+	io_mode = पढ़ोl(qup->base + QUP_IO_MODE);
 
 	/*
-	 * The block/fifo size w.r.t. 'actual data' is 1/2 due to 'tag'
+	 * The block/fअगरo size w.r.t. 'actual data' is 1/2 due to 'tag'
 	 * associated with each byte written/received
 	 */
 	size = QUP_OUTPUT_BLOCK_SIZE(io_mode);
-	if (size >= ARRAY_SIZE(blk_sizes)) {
+	अगर (size >= ARRAY_SIZE(blk_sizes)) अणु
 		ret = -EIO;
-		goto fail;
-	}
+		जाओ fail;
+	पूर्ण
 	qup->out_blk_sz = blk_sizes[size];
 
 	size = QUP_INPUT_BLOCK_SIZE(io_mode);
-	if (size >= ARRAY_SIZE(blk_sizes)) {
+	अगर (size >= ARRAY_SIZE(blk_sizes)) अणु
 		ret = -EIO;
-		goto fail;
-	}
+		जाओ fail;
+	पूर्ण
 	qup->in_blk_sz = blk_sizes[size];
 
-	if (is_qup_v1) {
+	अगर (is_qup_v1) अणु
 		/*
-		 * in QUP v1, QUP_CONFIG uses N as 15 i.e 16 bits constitutes a
-		 * single transfer but the block size is in bytes so divide the
+		 * in QUP v1, QUP_CONFIG uses N as 15 i.e 16 bits स्थिरitutes a
+		 * single transfer but the block size is in bytes so भागide the
 		 * in_blk_sz and out_blk_sz by 2
 		 */
 		qup->in_blk_sz /= 2;
 		qup->out_blk_sz /= 2;
-		qup->write_tx_fifo = qup_i2c_write_tx_fifo_v1;
-		qup->read_rx_fifo = qup_i2c_read_rx_fifo_v1;
-		qup->write_rx_tags = qup_i2c_write_rx_tags_v1;
-	} else {
-		qup->write_tx_fifo = qup_i2c_write_tx_fifo_v2;
-		qup->read_rx_fifo = qup_i2c_read_rx_fifo_v2;
-		qup->write_rx_tags = qup_i2c_write_rx_tags_v2;
-	}
+		qup->ग_लिखो_tx_fअगरo = qup_i2c_ग_लिखो_tx_fअगरo_v1;
+		qup->पढ़ो_rx_fअगरo = qup_i2c_पढ़ो_rx_fअगरo_v1;
+		qup->ग_लिखो_rx_tags = qup_i2c_ग_लिखो_rx_tags_v1;
+	पूर्ण अन्यथा अणु
+		qup->ग_लिखो_tx_fअगरo = qup_i2c_ग_लिखो_tx_fअगरo_v2;
+		qup->पढ़ो_rx_fअगरo = qup_i2c_पढ़ो_rx_fअगरo_v2;
+		qup->ग_लिखो_rx_tags = qup_i2c_ग_लिखो_rx_tags_v2;
+	पूर्ण
 
 	size = QUP_OUTPUT_FIFO_SIZE(io_mode);
-	qup->out_fifo_sz = qup->out_blk_sz * (2 << size);
+	qup->out_fअगरo_sz = qup->out_blk_sz * (2 << size);
 
 	size = QUP_INPUT_FIFO_SIZE(io_mode);
-	qup->in_fifo_sz = qup->in_blk_sz * (2 << size);
+	qup->in_fअगरo_sz = qup->in_blk_sz * (2 << size);
 
-	hs_div = 3;
-	if (clk_freq <= I2C_MAX_STANDARD_MODE_FREQ) {
-		fs_div = ((src_clk_freq / clk_freq) / 2) - 3;
-		qup->clk_ctl = (hs_div << 8) | (fs_div & 0xff);
-	} else {
+	hs_भाग = 3;
+	अगर (clk_freq <= I2C_MAX_STANDARD_MODE_FREQ) अणु
+		fs_भाग = ((src_clk_freq / clk_freq) / 2) - 3;
+		qup->clk_ctl = (hs_भाग << 8) | (fs_भाग & 0xff);
+	पूर्ण अन्यथा अणु
 		/* 33%/66% duty cycle */
-		fs_div = ((src_clk_freq / clk_freq) - 6) * 2 / 3;
-		qup->clk_ctl = ((fs_div / 2) << 16) | (hs_div << 8) | (fs_div & 0xff);
-	}
+		fs_भाग = ((src_clk_freq / clk_freq) - 6) * 2 / 3;
+		qup->clk_ctl = ((fs_भाग / 2) << 16) | (hs_भाग << 8) | (fs_भाग & 0xff);
+	पूर्ण
 
 	/*
-	 * Time it takes for a byte to be clocked out on the bus.
-	 * Each byte takes 9 clock cycles (8 bits + 1 ack).
+	 * Time it takes क्रम a byte to be घड़ीed out on the bus.
+	 * Each byte takes 9 घड़ी cycles (8 bits + 1 ack).
 	 */
 	one_bit_t = (USEC_PER_SEC / clk_freq) + 1;
 	qup->one_byte_t = one_bit_t * 9;
-	qup->xfer_timeout = TOUT_MIN * HZ +
-		usecs_to_jiffies(MX_DMA_TX_RX_LEN * qup->one_byte_t);
+	qup->xfer_समयout = TOUT_MIN * HZ +
+		usecs_to_jअगरfies(MX_DMA_TX_RX_LEN * qup->one_byte_t);
 
 	dev_dbg(qup->dev, "IN:block:%d, fifo:%d, OUT:block:%d, fifo:%d\n",
-		qup->in_blk_sz, qup->in_fifo_sz,
-		qup->out_blk_sz, qup->out_fifo_sz);
+		qup->in_blk_sz, qup->in_fअगरo_sz,
+		qup->out_blk_sz, qup->out_fअगरo_sz);
 
 	i2c_set_adapdata(&qup->adap, qup);
 	qup->adap.dev.parent = qup->dev;
 	qup->adap.dev.of_node = pdev->dev.of_node;
 	qup->is_last = true;
 
-	strlcpy(qup->adap.name, "QUP I2C adapter", sizeof(qup->adap.name));
+	strlcpy(qup->adap.name, "QUP I2C adapter", माप(qup->adap.name));
 
-	pm_runtime_set_autosuspend_delay(qup->dev, MSEC_PER_SEC);
-	pm_runtime_use_autosuspend(qup->dev);
-	pm_runtime_set_active(qup->dev);
-	pm_runtime_enable(qup->dev);
+	pm_runसमय_set_स्वतःsuspend_delay(qup->dev, MSEC_PER_SEC);
+	pm_runसमय_use_स्वतःsuspend(qup->dev);
+	pm_runसमय_set_active(qup->dev);
+	pm_runसमय_enable(qup->dev);
 
 	ret = i2c_add_adapter(&qup->adap);
-	if (ret)
-		goto fail_runtime;
+	अगर (ret)
+		जाओ fail_runसमय;
 
-	return 0;
+	वापस 0;
 
-fail_runtime:
-	pm_runtime_disable(qup->dev);
-	pm_runtime_set_suspended(qup->dev);
+fail_runसमय:
+	pm_runसमय_disable(qup->dev);
+	pm_runसमय_set_suspended(qup->dev);
 fail:
-	qup_i2c_disable_clocks(qup);
+	qup_i2c_disable_घड़ीs(qup);
 fail_dma:
-	if (qup->btx.dma)
+	अगर (qup->btx.dma)
 		dma_release_channel(qup->btx.dma);
-	if (qup->brx.dma)
+	अगर (qup->brx.dma)
 		dma_release_channel(qup->brx.dma);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int qup_i2c_remove(struct platform_device *pdev)
-{
-	struct qup_i2c_dev *qup = platform_get_drvdata(pdev);
+अटल पूर्णांक qup_i2c_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा qup_i2c_dev *qup = platक्रमm_get_drvdata(pdev);
 
-	if (qup->is_dma) {
+	अगर (qup->is_dma) अणु
 		dma_release_channel(qup->btx.dma);
 		dma_release_channel(qup->brx.dma);
-	}
+	पूर्ण
 
 	disable_irq(qup->irq);
-	qup_i2c_disable_clocks(qup);
+	qup_i2c_disable_घड़ीs(qup);
 	i2c_del_adapter(&qup->adap);
-	pm_runtime_disable(qup->dev);
-	pm_runtime_set_suspended(qup->dev);
-	return 0;
-}
+	pm_runसमय_disable(qup->dev);
+	pm_runसमय_set_suspended(qup->dev);
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_PM
-static int qup_i2c_pm_suspend_runtime(struct device *device)
-{
-	struct qup_i2c_dev *qup = dev_get_drvdata(device);
+#अगर_घोषित CONFIG_PM
+अटल पूर्णांक qup_i2c_pm_suspend_runसमय(काष्ठा device *device)
+अणु
+	काष्ठा qup_i2c_dev *qup = dev_get_drvdata(device);
 
 	dev_dbg(device, "pm_runtime: suspending...\n");
-	qup_i2c_disable_clocks(qup);
-	return 0;
-}
+	qup_i2c_disable_घड़ीs(qup);
+	वापस 0;
+पूर्ण
 
-static int qup_i2c_pm_resume_runtime(struct device *device)
-{
-	struct qup_i2c_dev *qup = dev_get_drvdata(device);
+अटल पूर्णांक qup_i2c_pm_resume_runसमय(काष्ठा device *device)
+अणु
+	काष्ठा qup_i2c_dev *qup = dev_get_drvdata(device);
 
 	dev_dbg(device, "pm_runtime: resuming...\n");
-	qup_i2c_enable_clocks(qup);
-	return 0;
-}
-#endif
+	qup_i2c_enable_घड़ीs(qup);
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
-#ifdef CONFIG_PM_SLEEP
-static int qup_i2c_suspend(struct device *device)
-{
-	if (!pm_runtime_suspended(device))
-		return qup_i2c_pm_suspend_runtime(device);
-	return 0;
-}
+#अगर_घोषित CONFIG_PM_SLEEP
+अटल पूर्णांक qup_i2c_suspend(काष्ठा device *device)
+अणु
+	अगर (!pm_runसमय_suspended(device))
+		वापस qup_i2c_pm_suspend_runसमय(device);
+	वापस 0;
+पूर्ण
 
-static int qup_i2c_resume(struct device *device)
-{
-	qup_i2c_pm_resume_runtime(device);
-	pm_runtime_mark_last_busy(device);
-	pm_request_autosuspend(device);
-	return 0;
-}
-#endif
+अटल पूर्णांक qup_i2c_resume(काष्ठा device *device)
+अणु
+	qup_i2c_pm_resume_runसमय(device);
+	pm_runसमय_mark_last_busy(device);
+	pm_request_स्वतःsuspend(device);
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
-static const struct dev_pm_ops qup_i2c_qup_pm_ops = {
+अटल स्थिर काष्ठा dev_pm_ops qup_i2c_qup_pm_ops = अणु
 	SET_SYSTEM_SLEEP_PM_OPS(
 		qup_i2c_suspend,
 		qup_i2c_resume)
 	SET_RUNTIME_PM_OPS(
-		qup_i2c_pm_suspend_runtime,
-		qup_i2c_pm_resume_runtime,
-		NULL)
-};
+		qup_i2c_pm_suspend_runसमय,
+		qup_i2c_pm_resume_runसमय,
+		शून्य)
+पूर्ण;
 
-static const struct of_device_id qup_i2c_dt_match[] = {
-	{ .compatible = "qcom,i2c-qup-v1.1.1" },
-	{ .compatible = "qcom,i2c-qup-v2.1.1" },
-	{ .compatible = "qcom,i2c-qup-v2.2.1" },
-	{}
-};
+अटल स्थिर काष्ठा of_device_id qup_i2c_dt_match[] = अणु
+	अणु .compatible = "qcom,i2c-qup-v1.1.1" पूर्ण,
+	अणु .compatible = "qcom,i2c-qup-v2.1.1" पूर्ण,
+	अणु .compatible = "qcom,i2c-qup-v2.2.1" पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, qup_i2c_dt_match);
 
-static struct platform_driver qup_i2c_driver = {
+अटल काष्ठा platक्रमm_driver qup_i2c_driver = अणु
 	.probe  = qup_i2c_probe,
-	.remove = qup_i2c_remove,
-	.driver = {
+	.हटाओ = qup_i2c_हटाओ,
+	.driver = अणु
 		.name = "i2c_qup",
 		.pm = &qup_i2c_qup_pm_ops,
 		.of_match_table = qup_i2c_dt_match,
 		.acpi_match_table = ACPI_PTR(qup_i2c_acpi_match),
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-module_platform_driver(qup_i2c_driver);
+module_platक्रमm_driver(qup_i2c_driver);
 
 MODULE_LICENSE("GPL v2");
 MODULE_ALIAS("platform:i2c_qup");

@@ -1,13 +1,14 @@
+<शैली गुरु>
 /*
- * Copyright 2011 Christian König.
+ * Copyright 2011 Christian Kथघnig.
  * All Rights Reserved.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the
  * "Software"), to deal in the Software without restriction, including
- * without limitation the rights to use, copy, modify, merge, publish,
+ * without limitation the rights to use, copy, modअगरy, merge, publish,
  * distribute, sub license, and/or sell copies of the Software, and to
- * permit persons to whom the Software is furnished to do so, subject to
+ * permit persons to whom the Software is furnished to करो so, subject to
  * the following conditions:
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
@@ -25,82 +26,82 @@
  */
 /*
  * Authors:
- *    Christian König <deathsimple@vodafone.de>
+ *    Christian Kथघnig <deathsimple@vodafone.de>
  */
 
-#include "radeon.h"
-#include "radeon_trace.h"
+#समावेश "radeon.h"
+#समावेश "radeon_trace.h"
 
-int radeon_semaphore_create(struct radeon_device *rdev,
-			    struct radeon_semaphore **semaphore)
-{
-	int r;
+पूर्णांक radeon_semaphore_create(काष्ठा radeon_device *rdev,
+			    काष्ठा radeon_semaphore **semaphore)
+अणु
+	पूर्णांक r;
 
-	*semaphore = kmalloc(sizeof(struct radeon_semaphore), GFP_KERNEL);
-	if (*semaphore == NULL) {
-		return -ENOMEM;
-	}
-	r = radeon_sa_bo_new(rdev, &rdev->ring_tmp_bo,
+	*semaphore = kदो_स्मृति(माप(काष्ठा radeon_semaphore), GFP_KERNEL);
+	अगर (*semaphore == शून्य) अणु
+		वापस -ENOMEM;
+	पूर्ण
+	r = radeon_sa_bo_new(rdev, &rdev->ring_पंचांगp_bo,
 			     &(*semaphore)->sa_bo, 8, 8);
-	if (r) {
-		kfree(*semaphore);
-		*semaphore = NULL;
-		return r;
-	}
-	(*semaphore)->waiters = 0;
+	अगर (r) अणु
+		kमुक्त(*semaphore);
+		*semaphore = शून्य;
+		वापस r;
+	पूर्ण
+	(*semaphore)->रुकोers = 0;
 	(*semaphore)->gpu_addr = radeon_sa_bo_gpu_addr((*semaphore)->sa_bo);
 
-	*((uint64_t *)radeon_sa_bo_cpu_addr((*semaphore)->sa_bo)) = 0;
+	*((uपूर्णांक64_t *)radeon_sa_bo_cpu_addr((*semaphore)->sa_bo)) = 0;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-bool radeon_semaphore_emit_signal(struct radeon_device *rdev, int ridx,
-				  struct radeon_semaphore *semaphore)
-{
-	struct radeon_ring *ring = &rdev->ring[ridx];
+bool radeon_semaphore_emit_संकेत(काष्ठा radeon_device *rdev, पूर्णांक ridx,
+				  काष्ठा radeon_semaphore *semaphore)
+अणु
+	काष्ठा radeon_ring *ring = &rdev->ring[ridx];
 
-	trace_radeon_semaphore_signale(ridx, semaphore);
+	trace_radeon_semaphore_संकेतe(ridx, semaphore);
 
-	if (radeon_semaphore_ring_emit(rdev, ridx, ring, semaphore, false)) {
-		--semaphore->waiters;
+	अगर (radeon_semaphore_ring_emit(rdev, ridx, ring, semaphore, false)) अणु
+		--semaphore->रुकोers;
 
-		/* for debugging lockup only, used by sysfs debug files */
-		ring->last_semaphore_signal_addr = semaphore->gpu_addr;
-		return true;
-	}
-	return false;
-}
+		/* क्रम debugging lockup only, used by sysfs debug files */
+		ring->last_semaphore_संकेत_addr = semaphore->gpu_addr;
+		वापस true;
+	पूर्ण
+	वापस false;
+पूर्ण
 
-bool radeon_semaphore_emit_wait(struct radeon_device *rdev, int ridx,
-				struct radeon_semaphore *semaphore)
-{
-	struct radeon_ring *ring = &rdev->ring[ridx];
+bool radeon_semaphore_emit_रुको(काष्ठा radeon_device *rdev, पूर्णांक ridx,
+				काष्ठा radeon_semaphore *semaphore)
+अणु
+	काष्ठा radeon_ring *ring = &rdev->ring[ridx];
 
-	trace_radeon_semaphore_wait(ridx, semaphore);
+	trace_radeon_semaphore_रुको(ridx, semaphore);
 
-	if (radeon_semaphore_ring_emit(rdev, ridx, ring, semaphore, true)) {
-		++semaphore->waiters;
+	अगर (radeon_semaphore_ring_emit(rdev, ridx, ring, semaphore, true)) अणु
+		++semaphore->रुकोers;
 
-		/* for debugging lockup only, used by sysfs debug files */
-		ring->last_semaphore_wait_addr = semaphore->gpu_addr;
-		return true;
-	}
-	return false;
-}
+		/* क्रम debugging lockup only, used by sysfs debug files */
+		ring->last_semaphore_रुको_addr = semaphore->gpu_addr;
+		वापस true;
+	पूर्ण
+	वापस false;
+पूर्ण
 
-void radeon_semaphore_free(struct radeon_device *rdev,
-			   struct radeon_semaphore **semaphore,
-			   struct radeon_fence *fence)
-{
-	if (semaphore == NULL || *semaphore == NULL) {
-		return;
-	}
-	if ((*semaphore)->waiters > 0) {
+व्योम radeon_semaphore_मुक्त(काष्ठा radeon_device *rdev,
+			   काष्ठा radeon_semaphore **semaphore,
+			   काष्ठा radeon_fence *fence)
+अणु
+	अगर (semaphore == शून्य || *semaphore == शून्य) अणु
+		वापस;
+	पूर्ण
+	अगर ((*semaphore)->रुकोers > 0) अणु
 		dev_err(rdev->dev, "semaphore %p has more waiters than signalers,"
 			" hardware lockup imminent!\n", *semaphore);
-	}
-	radeon_sa_bo_free(rdev, &(*semaphore)->sa_bo, fence);
-	kfree(*semaphore);
-	*semaphore = NULL;
-}
+	पूर्ण
+	radeon_sa_bo_मुक्त(rdev, &(*semaphore)->sa_bo, fence);
+	kमुक्त(*semaphore);
+	*semaphore = शून्य;
+पूर्ण

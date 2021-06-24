@@ -1,61 +1,62 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Greybus audio driver
  * Copyright 2015 Google Inc.
  * Copyright 2015 Linaro Ltd.
  */
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <sound/soc.h>
-#include <sound/pcm_params.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <sound/soc.h>
+#समावेश <sound/pcm_params.h>
 
-#include "audio_codec.h"
-#include "audio_apbridgea.h"
-#include "audio_manager.h"
+#समावेश "audio_codec.h"
+#समावेश "audio_apbridgea.h"
+#समावेश "audio_manager.h"
 
 /*
  * gb_snd management functions
  */
 
-static int gbaudio_request_jack(struct gbaudio_module_info *module,
-				struct gb_audio_jack_event_request *req)
-{
-	int report;
-	struct snd_jack *jack = module->headset.jack.jack;
-	struct snd_jack *btn_jack = module->button.jack.jack;
+अटल पूर्णांक gbaudio_request_jack(काष्ठा gbaudio_module_info *module,
+				काष्ठा gb_audio_jack_event_request *req)
+अणु
+	पूर्णांक report;
+	काष्ठा snd_jack *jack = module->headset.jack.jack;
+	काष्ठा snd_jack *btn_jack = module->button.jack.jack;
 
-	if (!jack) {
+	अगर (!jack) अणु
 		dev_err_ratelimited(module->dev,
 				    "Invalid jack event received:type: %u, event: %u\n",
 				    req->jack_attribute, req->event);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	dev_warn_ratelimited(module->dev,
 			     "Jack Event received: type: %u, event: %u\n",
 			     req->jack_attribute, req->event);
 
-	if (req->event == GB_AUDIO_JACK_EVENT_REMOVAL) {
+	अगर (req->event == GB_AUDIO_JACK_EVENT_REMOVAL) अणु
 		module->jack_type = 0;
-		if (btn_jack && module->button_status) {
+		अगर (btn_jack && module->button_status) अणु
 			snd_soc_jack_report(&module->button.jack, 0,
 					    module->button_mask);
 			module->button_status = 0;
-		}
+		पूर्ण
 		snd_soc_jack_report(&module->headset.jack, 0,
 				    module->jack_mask);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	report = req->jack_attribute & module->jack_mask;
-	if (!report) {
+	अगर (!report) अणु
 		dev_err_ratelimited(module->dev,
 				    "Invalid jack event received:type: %u, event: %u\n",
 				    req->jack_attribute, req->event);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (module->jack_type)
+	अगर (module->jack_type)
 		dev_warn_ratelimited(module->dev,
 				     "Modifying jack from %d to %d\n",
 				     module->jack_type, report);
@@ -63,195 +64,195 @@ static int gbaudio_request_jack(struct gbaudio_module_info *module,
 	module->jack_type = report;
 	snd_soc_jack_report(&module->headset.jack, report, module->jack_mask);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int gbaudio_request_button(struct gbaudio_module_info *module,
-				  struct gb_audio_button_event_request *req)
-{
-	int soc_button_id, report;
-	struct snd_jack *btn_jack = module->button.jack.jack;
+अटल पूर्णांक gbaudio_request_button(काष्ठा gbaudio_module_info *module,
+				  काष्ठा gb_audio_button_event_request *req)
+अणु
+	पूर्णांक soc_button_id, report;
+	काष्ठा snd_jack *btn_jack = module->button.jack.jack;
 
-	if (!btn_jack) {
+	अगर (!btn_jack) अणु
 		dev_err_ratelimited(module->dev,
 				    "Invalid button event received:type: %u, event: %u\n",
 				    req->button_id, req->event);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	dev_warn_ratelimited(module->dev,
 			     "Button Event received: id: %u, event: %u\n",
 			     req->button_id, req->event);
 
 	/* currently supports 4 buttons only */
-	if (!module->jack_type) {
+	अगर (!module->jack_type) अणु
 		dev_err_ratelimited(module->dev,
 				    "Jack not present. Bogus event!!\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	report = module->button_status & module->button_mask;
 	soc_button_id = 0;
 
-	switch (req->button_id) {
-	case 1:
+	चयन (req->button_id) अणु
+	हाल 1:
 		soc_button_id = SND_JACK_BTN_0 & module->button_mask;
-		break;
+		अवरोध;
 
-	case 2:
+	हाल 2:
 		soc_button_id = SND_JACK_BTN_1 & module->button_mask;
-		break;
+		अवरोध;
 
-	case 3:
+	हाल 3:
 		soc_button_id = SND_JACK_BTN_2 & module->button_mask;
-		break;
+		अवरोध;
 
-	case 4:
+	हाल 4:
 		soc_button_id = SND_JACK_BTN_3 & module->button_mask;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	if (!soc_button_id) {
+	अगर (!soc_button_id) अणु
 		dev_err_ratelimited(module->dev,
 				    "Invalid button request received\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (req->event == GB_AUDIO_BUTTON_EVENT_PRESS)
+	अगर (req->event == GB_AUDIO_BUTTON_EVENT_PRESS)
 		report = report | soc_button_id;
-	else
+	अन्यथा
 		report = report & ~soc_button_id;
 
 	module->button_status = report;
 
 	snd_soc_jack_report(&module->button.jack, report, module->button_mask);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int gbaudio_request_stream(struct gbaudio_module_info *module,
-				  struct gb_audio_streaming_event_request *req)
-{
+अटल पूर्णांक gbaudio_request_stream(काष्ठा gbaudio_module_info *module,
+				  काष्ठा gb_audio_streaming_event_request *req)
+अणु
 	dev_warn(module->dev, "Audio Event received: cport: %u, event: %u\n",
 		 le16_to_cpu(req->data_cport), req->event);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int gbaudio_codec_request_handler(struct gb_operation *op)
-{
-	struct gb_connection *connection = op->connection;
-	struct gbaudio_module_info *module =
+अटल पूर्णांक gbaudio_codec_request_handler(काष्ठा gb_operation *op)
+अणु
+	काष्ठा gb_connection *connection = op->connection;
+	काष्ठा gbaudio_module_info *module =
 		greybus_get_drvdata(connection->bundle);
-	struct gb_operation_msg_hdr *header = op->request->header;
-	struct gb_audio_streaming_event_request *stream_req;
-	struct gb_audio_jack_event_request *jack_req;
-	struct gb_audio_button_event_request *button_req;
-	int ret;
+	काष्ठा gb_operation_msg_hdr *header = op->request->header;
+	काष्ठा gb_audio_streaming_event_request *stream_req;
+	काष्ठा gb_audio_jack_event_request *jack_req;
+	काष्ठा gb_audio_button_event_request *button_req;
+	पूर्णांक ret;
 
-	switch (header->type) {
-	case GB_AUDIO_TYPE_STREAMING_EVENT:
+	चयन (header->type) अणु
+	हाल GB_AUDIO_TYPE_STREAMING_EVENT:
 		stream_req = op->request->payload;
 		ret = gbaudio_request_stream(module, stream_req);
-		break;
+		अवरोध;
 
-	case GB_AUDIO_TYPE_JACK_EVENT:
+	हाल GB_AUDIO_TYPE_JACK_EVENT:
 		jack_req = op->request->payload;
 		ret = gbaudio_request_jack(module, jack_req);
-		break;
+		अवरोध;
 
-	case GB_AUDIO_TYPE_BUTTON_EVENT:
+	हाल GB_AUDIO_TYPE_BUTTON_EVENT:
 		button_req = op->request->payload;
 		ret = gbaudio_request_button(module, button_req);
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		dev_err_ratelimited(&connection->bundle->dev,
 				    "Invalid Audio Event received\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int gb_audio_add_mgmt_connection(struct gbaudio_module_info *gbmodule,
-					struct greybus_descriptor_cport *cport_desc,
-					struct gb_bundle *bundle)
-{
-	struct gb_connection *connection;
+अटल पूर्णांक gb_audio_add_mgmt_connection(काष्ठा gbaudio_module_info *gbmodule,
+					काष्ठा greybus_descriptor_cport *cport_desc,
+					काष्ठा gb_bundle *bundle)
+अणु
+	काष्ठा gb_connection *connection;
 
 	/* Management Cport */
-	if (gbmodule->mgmt_connection) {
+	अगर (gbmodule->mgmt_connection) अणु
 		dev_err(&bundle->dev,
 			"Can't have multiple Management connections\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
 	connection = gb_connection_create(bundle, le16_to_cpu(cport_desc->id),
 					  gbaudio_codec_request_handler);
-	if (IS_ERR(connection))
-		return PTR_ERR(connection);
+	अगर (IS_ERR(connection))
+		वापस PTR_ERR(connection);
 
 	greybus_set_drvdata(bundle, gbmodule);
 	gbmodule->mgmt_connection = connection;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int gb_audio_add_data_connection(struct gbaudio_module_info *gbmodule,
-					struct greybus_descriptor_cport *cport_desc,
-					struct gb_bundle *bundle)
-{
-	struct gb_connection *connection;
-	struct gbaudio_data_connection *dai;
+अटल पूर्णांक gb_audio_add_data_connection(काष्ठा gbaudio_module_info *gbmodule,
+					काष्ठा greybus_descriptor_cport *cport_desc,
+					काष्ठा gb_bundle *bundle)
+अणु
+	काष्ठा gb_connection *connection;
+	काष्ठा gbaudio_data_connection *dai;
 
-	dai = devm_kzalloc(gbmodule->dev, sizeof(*dai), GFP_KERNEL);
-	if (!dai)
-		return -ENOMEM;
+	dai = devm_kzalloc(gbmodule->dev, माप(*dai), GFP_KERNEL);
+	अगर (!dai)
+		वापस -ENOMEM;
 
 	connection = gb_connection_create_offloaded(bundle,
 						    le16_to_cpu(cport_desc->id),
 						    GB_CONNECTION_FLAG_CSD);
-	if (IS_ERR(connection)) {
-		devm_kfree(gbmodule->dev, dai);
-		return PTR_ERR(connection);
-	}
+	अगर (IS_ERR(connection)) अणु
+		devm_kमुक्त(gbmodule->dev, dai);
+		वापस PTR_ERR(connection);
+	पूर्ण
 
 	greybus_set_drvdata(bundle, gbmodule);
 	dai->id = 0;
-	dai->data_cport = cpu_to_le16(connection->intf_cport_id);
+	dai->data_cport = cpu_to_le16(connection->पूर्णांकf_cport_id);
 	dai->connection = connection;
 	list_add(&dai->list, &gbmodule->data_list);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * This is the basic hook get things initialized and registered w/ gb
+ * This is the basic hook get things initialized and रेजिस्टरed w/ gb
  */
 
-static int gb_audio_probe(struct gb_bundle *bundle,
-			  const struct greybus_bundle_id *id)
-{
-	struct device *dev = &bundle->dev;
-	struct gbaudio_module_info *gbmodule;
-	struct greybus_descriptor_cport *cport_desc;
-	struct gb_audio_manager_module_descriptor desc;
-	struct gbaudio_data_connection *dai, *_dai;
-	int ret, i;
-	struct gb_audio_topology *topology;
+अटल पूर्णांक gb_audio_probe(काष्ठा gb_bundle *bundle,
+			  स्थिर काष्ठा greybus_bundle_id *id)
+अणु
+	काष्ठा device *dev = &bundle->dev;
+	काष्ठा gbaudio_module_info *gbmodule;
+	काष्ठा greybus_descriptor_cport *cport_desc;
+	काष्ठा gb_audio_manager_module_descriptor desc;
+	काष्ठा gbaudio_data_connection *dai, *_dai;
+	पूर्णांक ret, i;
+	काष्ठा gb_audio_topology *topology;
 
 	/* There should be at least one Management and one Data cport */
-	if (bundle->num_cports < 2)
-		return -ENODEV;
+	अगर (bundle->num_cports < 2)
+		वापस -ENODEV;
 
 	/*
 	 * There can be only one Management connection and any number of data
 	 * connections.
 	 */
-	gbmodule = devm_kzalloc(dev, sizeof(*gbmodule), GFP_KERNEL);
-	if (!gbmodule)
-		return -ENOMEM;
+	gbmodule = devm_kzalloc(dev, माप(*gbmodule), GFP_KERNEL);
+	अगर (!gbmodule)
+		वापस -ENOMEM;
 
 	gbmodule->num_data_connections = bundle->num_cports - 1;
 	INIT_LIST_HEAD(&gbmodule->data_list);
@@ -260,217 +261,217 @@ static int gb_audio_probe(struct gb_bundle *bundle,
 	INIT_LIST_HEAD(&gbmodule->widget_ctl_list);
 	INIT_LIST_HEAD(&gbmodule->jack_list);
 	gbmodule->dev = dev;
-	snprintf(gbmodule->name, sizeof(gbmodule->name), "%s.%s", dev->driver->name,
+	snम_लिखो(gbmodule->name, माप(gbmodule->name), "%s.%s", dev->driver->name,
 		 dev_name(dev));
 	greybus_set_drvdata(bundle, gbmodule);
 
 	/* Create all connections */
-	for (i = 0; i < bundle->num_cports; i++) {
+	क्रम (i = 0; i < bundle->num_cports; i++) अणु
 		cport_desc = &bundle->cport_desc[i];
 
-		switch (cport_desc->protocol_id) {
-		case GREYBUS_PROTOCOL_AUDIO_MGMT:
+		चयन (cport_desc->protocol_id) अणु
+		हाल GREYBUS_PROTOCOL_AUDIO_MGMT:
 			ret = gb_audio_add_mgmt_connection(gbmodule, cport_desc,
 							   bundle);
-			if (ret)
-				goto destroy_connections;
-			break;
-		case GREYBUS_PROTOCOL_AUDIO_DATA:
+			अगर (ret)
+				जाओ destroy_connections;
+			अवरोध;
+		हाल GREYBUS_PROTOCOL_AUDIO_DATA:
 			ret = gb_audio_add_data_connection(gbmodule, cport_desc,
 							   bundle);
-			if (ret)
-				goto destroy_connections;
-			break;
-		default:
+			अगर (ret)
+				जाओ destroy_connections;
+			अवरोध;
+		शेष:
 			dev_err(dev, "Unsupported protocol: 0x%02x\n",
 				cport_desc->protocol_id);
 			ret = -ENODEV;
-			goto destroy_connections;
-		}
-	}
+			जाओ destroy_connections;
+		पूर्ण
+	पूर्ण
 
 	/* There must be a management cport */
-	if (!gbmodule->mgmt_connection) {
+	अगर (!gbmodule->mgmt_connection) अणु
 		ret = -EINVAL;
 		dev_err(dev, "Missing management connection\n");
-		goto destroy_connections;
-	}
+		जाओ destroy_connections;
+	पूर्ण
 
 	/* Initialize management connection */
 	ret = gb_connection_enable(gbmodule->mgmt_connection);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev, "%d: Error while enabling mgmt connection\n", ret);
-		goto destroy_connections;
-	}
-	gbmodule->dev_id = gbmodule->mgmt_connection->intf->interface_id;
+		जाओ destroy_connections;
+	पूर्ण
+	gbmodule->dev_id = gbmodule->mgmt_connection->पूर्णांकf->पूर्णांकerface_id;
 
 	/*
-	 * FIXME: malloc for topology happens via audio_gb driver
-	 * should be done within codec driver itself
+	 * FIXME: दो_स्मृति क्रम topology happens via audio_gb driver
+	 * should be करोne within codec driver itself
 	 */
 	ret = gb_audio_gb_get_topology(gbmodule->mgmt_connection, &topology);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev, "%d:Error while fetching topology\n", ret);
-		goto disable_connection;
-	}
+		जाओ disable_connection;
+	पूर्ण
 
 	/* process topology data */
 	ret = gbaudio_tplg_parse_data(gbmodule, topology);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev, "%d:Error while parsing topology data\n",
 			ret);
-		goto free_topology;
-	}
+		जाओ मुक्त_topology;
+	पूर्ण
 	gbmodule->topology = topology;
 
 	/* Initialize data connections */
-	list_for_each_entry(dai, &gbmodule->data_list, list) {
+	list_क्रम_each_entry(dai, &gbmodule->data_list, list) अणु
 		ret = gb_connection_enable(dai->connection);
-		if (ret) {
+		अगर (ret) अणु
 			dev_err(dev,
 				"%d:Error while enabling %d:data connection\n",
 				ret, le16_to_cpu(dai->data_cport));
-			goto disable_data_connection;
-		}
-	}
+			जाओ disable_data_connection;
+		पूर्ण
+	पूर्ण
 
-	/* register module with gbcodec */
-	ret = gbaudio_register_module(gbmodule);
-	if (ret)
-		goto disable_data_connection;
+	/* रेजिस्टर module with gbcodec */
+	ret = gbaudio_रेजिस्टर_module(gbmodule);
+	अगर (ret)
+		जाओ disable_data_connection;
 
-	/* inform above layer for uevent */
+	/* inक्रमm above layer क्रम uevent */
 	dev_dbg(dev, "Inform set_event:%d to above layer\n", 1);
-	/* prepare for the audio manager */
-	strscpy(desc.name, gbmodule->name, sizeof(desc.name));
-	desc.vid = 2; /* todo */
-	desc.pid = 3; /* todo */
-	desc.intf_id = gbmodule->dev_id;
+	/* prepare क्रम the audio manager */
+	strscpy(desc.name, gbmodule->name, माप(desc.name));
+	desc.vid = 2; /* toकरो */
+	desc.pid = 3; /* toकरो */
+	desc.पूर्णांकf_id = gbmodule->dev_id;
 	desc.op_devices = gbmodule->op_devices;
 	desc.ip_devices = gbmodule->ip_devices;
 	gbmodule->manager_id = gb_audio_manager_add(&desc);
 
 	dev_dbg(dev, "Add GB Audio device:%s\n", gbmodule->name);
 
-	gb_pm_runtime_put_autosuspend(bundle);
+	gb_pm_runसमय_put_स्वतःsuspend(bundle);
 
-	return 0;
+	वापस 0;
 
 disable_data_connection:
-	list_for_each_entry_safe(dai, _dai, &gbmodule->data_list, list)
+	list_क्रम_each_entry_safe(dai, _dai, &gbmodule->data_list, list)
 		gb_connection_disable(dai->connection);
 	gbaudio_tplg_release(gbmodule);
-	gbmodule->topology = NULL;
+	gbmodule->topology = शून्य;
 
-free_topology:
-	kfree(topology);
+मुक्त_topology:
+	kमुक्त(topology);
 
 disable_connection:
 	gb_connection_disable(gbmodule->mgmt_connection);
 
 destroy_connections:
-	list_for_each_entry_safe(dai, _dai, &gbmodule->data_list, list) {
+	list_क्रम_each_entry_safe(dai, _dai, &gbmodule->data_list, list) अणु
 		gb_connection_destroy(dai->connection);
 		list_del(&dai->list);
-		devm_kfree(dev, dai);
-	}
+		devm_kमुक्त(dev, dai);
+	पूर्ण
 
-	if (gbmodule->mgmt_connection)
+	अगर (gbmodule->mgmt_connection)
 		gb_connection_destroy(gbmodule->mgmt_connection);
 
-	devm_kfree(dev, gbmodule);
+	devm_kमुक्त(dev, gbmodule);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void gb_audio_disconnect(struct gb_bundle *bundle)
-{
-	struct gbaudio_module_info *gbmodule = greybus_get_drvdata(bundle);
-	struct gbaudio_data_connection *dai, *_dai;
+अटल व्योम gb_audio_disconnect(काष्ठा gb_bundle *bundle)
+अणु
+	काष्ठा gbaudio_module_info *gbmodule = greybus_get_drvdata(bundle);
+	काष्ठा gbaudio_data_connection *dai, *_dai;
 
-	gb_pm_runtime_get_sync(bundle);
+	gb_pm_runसमय_get_sync(bundle);
 
 	/* cleanup module related resources first */
-	gbaudio_unregister_module(gbmodule);
+	gbaudio_unरेजिस्टर_module(gbmodule);
 
-	/* inform uevent to above layers */
-	gb_audio_manager_remove(gbmodule->manager_id);
+	/* inक्रमm uevent to above layers */
+	gb_audio_manager_हटाओ(gbmodule->manager_id);
 
 	gbaudio_tplg_release(gbmodule);
-	kfree(gbmodule->topology);
-	gbmodule->topology = NULL;
+	kमुक्त(gbmodule->topology);
+	gbmodule->topology = शून्य;
 	gb_connection_disable(gbmodule->mgmt_connection);
-	list_for_each_entry_safe(dai, _dai, &gbmodule->data_list, list) {
+	list_क्रम_each_entry_safe(dai, _dai, &gbmodule->data_list, list) अणु
 		gb_connection_disable(dai->connection);
 		gb_connection_destroy(dai->connection);
 		list_del(&dai->list);
-		devm_kfree(gbmodule->dev, dai);
-	}
+		devm_kमुक्त(gbmodule->dev, dai);
+	पूर्ण
 	gb_connection_destroy(gbmodule->mgmt_connection);
-	gbmodule->mgmt_connection = NULL;
+	gbmodule->mgmt_connection = शून्य;
 
-	devm_kfree(&bundle->dev, gbmodule);
-}
+	devm_kमुक्त(&bundle->dev, gbmodule);
+पूर्ण
 
-static const struct greybus_bundle_id gb_audio_id_table[] = {
-	{ GREYBUS_DEVICE_CLASS(GREYBUS_CLASS_AUDIO) },
-	{ }
-};
+अटल स्थिर काष्ठा greybus_bundle_id gb_audio_id_table[] = अणु
+	अणु GREYBUS_DEVICE_CLASS(GREYBUS_CLASS_AUDIO) पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(greybus, gb_audio_id_table);
 
-#ifdef CONFIG_PM
-static int gb_audio_suspend(struct device *dev)
-{
-	struct gb_bundle *bundle = to_gb_bundle(dev);
-	struct gbaudio_module_info *gbmodule = greybus_get_drvdata(bundle);
-	struct gbaudio_data_connection *dai;
+#अगर_घोषित CONFIG_PM
+अटल पूर्णांक gb_audio_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा gb_bundle *bundle = to_gb_bundle(dev);
+	काष्ठा gbaudio_module_info *gbmodule = greybus_get_drvdata(bundle);
+	काष्ठा gbaudio_data_connection *dai;
 
-	list_for_each_entry(dai, &gbmodule->data_list, list)
+	list_क्रम_each_entry(dai, &gbmodule->data_list, list)
 		gb_connection_disable(dai->connection);
 
 	gb_connection_disable(gbmodule->mgmt_connection);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int gb_audio_resume(struct device *dev)
-{
-	struct gb_bundle *bundle = to_gb_bundle(dev);
-	struct gbaudio_module_info *gbmodule = greybus_get_drvdata(bundle);
-	struct gbaudio_data_connection *dai;
-	int ret;
+अटल पूर्णांक gb_audio_resume(काष्ठा device *dev)
+अणु
+	काष्ठा gb_bundle *bundle = to_gb_bundle(dev);
+	काष्ठा gbaudio_module_info *gbmodule = greybus_get_drvdata(bundle);
+	काष्ठा gbaudio_data_connection *dai;
+	पूर्णांक ret;
 
 	ret = gb_connection_enable(gbmodule->mgmt_connection);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev, "%d:Error while enabling mgmt connection\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	list_for_each_entry(dai, &gbmodule->data_list, list) {
+	list_क्रम_each_entry(dai, &gbmodule->data_list, list) अणु
 		ret = gb_connection_enable(dai->connection);
-		if (ret) {
+		अगर (ret) अणु
 			dev_err(dev,
 				"%d:Error while enabling %d:data connection\n",
 				ret, le16_to_cpu(dai->data_cport));
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
-#endif
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
-static const struct dev_pm_ops gb_audio_pm_ops = {
-	SET_RUNTIME_PM_OPS(gb_audio_suspend, gb_audio_resume, NULL)
-};
+अटल स्थिर काष्ठा dev_pm_ops gb_audio_pm_ops = अणु
+	SET_RUNTIME_PM_OPS(gb_audio_suspend, gb_audio_resume, शून्य)
+पूर्ण;
 
-static struct greybus_driver gb_audio_driver = {
+अटल काष्ठा greybus_driver gb_audio_driver = अणु
 	.name		= "gb-audio",
 	.probe		= gb_audio_probe,
 	.disconnect	= gb_audio_disconnect,
 	.id_table	= gb_audio_id_table,
 	.driver.pm	= &gb_audio_pm_ops,
-};
+पूर्ण;
 module_greybus_driver(gb_audio_driver);
 
 MODULE_DESCRIPTION("Greybus Audio module driver");

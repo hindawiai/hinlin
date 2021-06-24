@@ -1,79 +1,80 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (C) 2018 HUAWEI, Inc.
  *             https://www.huawei.com/
  * Created by Gao Xiang <gaoxiang25@huawei.com>
  */
-#include "internal.h"
-#include <linux/pagevec.h>
+#समावेश "internal.h"
+#समावेश <linux/pagevec.h>
 
-struct page *erofs_allocpage(struct list_head *pool, gfp_t gfp)
-{
-	struct page *page;
+काष्ठा page *erofs_allocpage(काष्ठा list_head *pool, gfp_t gfp)
+अणु
+	काष्ठा page *page;
 
-	if (!list_empty(pool)) {
+	अगर (!list_empty(pool)) अणु
 		page = lru_to_page(pool);
 		DBG_BUGON(page_ref_count(page) != 1);
 		list_del(&page->lru);
-	} else {
+	पूर्ण अन्यथा अणु
 		page = alloc_page(gfp);
-	}
-	return page;
-}
+	पूर्ण
+	वापस page;
+पूर्ण
 
-#ifdef CONFIG_EROFS_FS_ZIP
-/* global shrink count (for all mounted EROFS instances) */
-static atomic_long_t erofs_global_shrink_cnt;
+#अगर_घोषित CONFIG_EROFS_FS_ZIP
+/* global shrink count (क्रम all mounted EROFS instances) */
+अटल atomic_दीर्घ_t erofs_global_shrink_cnt;
 
-static int erofs_workgroup_get(struct erofs_workgroup *grp)
-{
-	int o;
+अटल पूर्णांक erofs_workgroup_get(काष्ठा erofs_workgroup *grp)
+अणु
+	पूर्णांक o;
 
 repeat:
-	o = erofs_wait_on_workgroup_freezed(grp);
-	if (o <= 0)
-		return -1;
+	o = erofs_रुको_on_workgroup_मुक्तzed(grp);
+	अगर (o <= 0)
+		वापस -1;
 
-	if (atomic_cmpxchg(&grp->refcount, o, o + 1) != o)
-		goto repeat;
+	अगर (atomic_cmpxchg(&grp->refcount, o, o + 1) != o)
+		जाओ repeat;
 
 	/* decrease refcount paired by erofs_workgroup_put */
-	if (o == 1)
-		atomic_long_dec(&erofs_global_shrink_cnt);
-	return 0;
-}
+	अगर (o == 1)
+		atomic_दीर्घ_dec(&erofs_global_shrink_cnt);
+	वापस 0;
+पूर्ण
 
-struct erofs_workgroup *erofs_find_workgroup(struct super_block *sb,
+काष्ठा erofs_workgroup *erofs_find_workgroup(काष्ठा super_block *sb,
 					     pgoff_t index)
-{
-	struct erofs_sb_info *sbi = EROFS_SB(sb);
-	struct erofs_workgroup *grp;
+अणु
+	काष्ठा erofs_sb_info *sbi = EROFS_SB(sb);
+	काष्ठा erofs_workgroup *grp;
 
 repeat:
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	grp = xa_load(&sbi->managed_pslots, index);
-	if (grp) {
-		if (erofs_workgroup_get(grp)) {
-			/* prefer to relax rcu read side */
-			rcu_read_unlock();
-			goto repeat;
-		}
+	अगर (grp) अणु
+		अगर (erofs_workgroup_get(grp)) अणु
+			/* prefer to relax rcu पढ़ो side */
+			rcu_पढ़ो_unlock();
+			जाओ repeat;
+		पूर्ण
 
 		DBG_BUGON(index != grp->index);
-	}
-	rcu_read_unlock();
-	return grp;
-}
+	पूर्ण
+	rcu_पढ़ो_unlock();
+	वापस grp;
+पूर्ण
 
-struct erofs_workgroup *erofs_insert_workgroup(struct super_block *sb,
-					       struct erofs_workgroup *grp)
-{
-	struct erofs_sb_info *const sbi = EROFS_SB(sb);
-	struct erofs_workgroup *pre;
+काष्ठा erofs_workgroup *erofs_insert_workgroup(काष्ठा super_block *sb,
+					       काष्ठा erofs_workgroup *grp)
+अणु
+	काष्ठा erofs_sb_info *स्थिर sbi = EROFS_SB(sb);
+	काष्ठा erofs_workgroup *pre;
 
 	/*
-	 * Bump up a reference count before making this visible
-	 * to others for the XArray in order to avoid potential
+	 * Bump up a reference count beक्रमe making this visible
+	 * to others क्रम the XArray in order to aव्योम potential
 	 * UAF without serialized by xa_lock.
 	 */
 	atomic_inc(&grp->refcount);
@@ -81,171 +82,171 @@ struct erofs_workgroup *erofs_insert_workgroup(struct super_block *sb,
 repeat:
 	xa_lock(&sbi->managed_pslots);
 	pre = __xa_cmpxchg(&sbi->managed_pslots, grp->index,
-			   NULL, grp, GFP_NOFS);
-	if (pre) {
-		if (xa_is_err(pre)) {
+			   शून्य, grp, GFP_NOFS);
+	अगर (pre) अणु
+		अगर (xa_is_err(pre)) अणु
 			pre = ERR_PTR(xa_err(pre));
-		} else if (erofs_workgroup_get(pre)) {
+		पूर्ण अन्यथा अगर (erofs_workgroup_get(pre)) अणु
 			/* try to legitimize the current in-tree one */
 			xa_unlock(&sbi->managed_pslots);
 			cond_resched();
-			goto repeat;
-		}
+			जाओ repeat;
+		पूर्ण
 		atomic_dec(&grp->refcount);
 		grp = pre;
-	}
+	पूर्ण
 	xa_unlock(&sbi->managed_pslots);
-	return grp;
-}
+	वापस grp;
+पूर्ण
 
-static void  __erofs_workgroup_free(struct erofs_workgroup *grp)
-{
-	atomic_long_dec(&erofs_global_shrink_cnt);
-	erofs_workgroup_free_rcu(grp);
-}
+अटल व्योम  __erofs_workgroup_मुक्त(काष्ठा erofs_workgroup *grp)
+अणु
+	atomic_दीर्घ_dec(&erofs_global_shrink_cnt);
+	erofs_workgroup_मुक्त_rcu(grp);
+पूर्ण
 
-int erofs_workgroup_put(struct erofs_workgroup *grp)
-{
-	int count = atomic_dec_return(&grp->refcount);
+पूर्णांक erofs_workgroup_put(काष्ठा erofs_workgroup *grp)
+अणु
+	पूर्णांक count = atomic_dec_वापस(&grp->refcount);
 
-	if (count == 1)
-		atomic_long_inc(&erofs_global_shrink_cnt);
-	else if (!count)
-		__erofs_workgroup_free(grp);
-	return count;
-}
+	अगर (count == 1)
+		atomic_दीर्घ_inc(&erofs_global_shrink_cnt);
+	अन्यथा अगर (!count)
+		__erofs_workgroup_मुक्त(grp);
+	वापस count;
+पूर्ण
 
-static bool erofs_try_to_release_workgroup(struct erofs_sb_info *sbi,
-					   struct erofs_workgroup *grp)
-{
+अटल bool erofs_try_to_release_workgroup(काष्ठा erofs_sb_info *sbi,
+					   काष्ठा erofs_workgroup *grp)
+अणु
 	/*
 	 * If managed cache is on, refcount of workgroups
-	 * themselves could be < 0 (freezed). In other words,
+	 * themselves could be < 0 (मुक्तzed). In other words,
 	 * there is no guarantee that all refcounts > 0.
 	 */
-	if (!erofs_workgroup_try_to_freeze(grp, 1))
-		return false;
+	अगर (!erofs_workgroup_try_to_मुक्तze(grp, 1))
+		वापस false;
 
 	/*
 	 * Note that all cached pages should be unattached
-	 * before deleted from the XArray. Otherwise some
+	 * beक्रमe deleted from the XArray. Otherwise some
 	 * cached pages could be still attached to the orphan
 	 * old workgroup when the new one is available in the tree.
 	 */
-	if (erofs_try_to_free_all_cached_pages(sbi, grp)) {
-		erofs_workgroup_unfreeze(grp, 1);
-		return false;
-	}
+	अगर (erofs_try_to_मुक्त_all_cached_pages(sbi, grp)) अणु
+		erofs_workgroup_unमुक्तze(grp, 1);
+		वापस false;
+	पूर्ण
 
 	/*
-	 * It's impossible to fail after the workgroup is freezed,
-	 * however in order to avoid some race conditions, add a
+	 * It's impossible to fail after the workgroup is मुक्तzed,
+	 * however in order to aव्योम some race conditions, add a
 	 * DBG_BUGON to observe this in advance.
 	 */
 	DBG_BUGON(xa_erase(&sbi->managed_pslots, grp->index) != grp);
 
 	/* last refcount should be connected with its managed pslot.  */
-	erofs_workgroup_unfreeze(grp, 0);
-	__erofs_workgroup_free(grp);
-	return true;
-}
+	erofs_workgroup_unमुक्तze(grp, 0);
+	__erofs_workgroup_मुक्त(grp);
+	वापस true;
+पूर्ण
 
-static unsigned long erofs_shrink_workstation(struct erofs_sb_info *sbi,
-					      unsigned long nr_shrink)
-{
-	struct erofs_workgroup *grp;
-	unsigned int freed = 0;
-	unsigned long index;
+अटल अचिन्हित दीर्घ erofs_shrink_workstation(काष्ठा erofs_sb_info *sbi,
+					      अचिन्हित दीर्घ nr_shrink)
+अणु
+	काष्ठा erofs_workgroup *grp;
+	अचिन्हित पूर्णांक मुक्तd = 0;
+	अचिन्हित दीर्घ index;
 
-	xa_for_each(&sbi->managed_pslots, index, grp) {
+	xa_क्रम_each(&sbi->managed_pslots, index, grp) अणु
 		/* try to shrink each valid workgroup */
-		if (!erofs_try_to_release_workgroup(sbi, grp))
-			continue;
+		अगर (!erofs_try_to_release_workgroup(sbi, grp))
+			जारी;
 
-		++freed;
-		if (!--nr_shrink)
-			break;
-	}
-	return freed;
-}
+		++मुक्तd;
+		अगर (!--nr_shrink)
+			अवरोध;
+	पूर्ण
+	वापस मुक्तd;
+पूर्ण
 
-/* protected by 'erofs_sb_list_lock' */
-static unsigned int shrinker_run_no;
+/* रक्षित by 'erofs_sb_list_lock' */
+अटल अचिन्हित पूर्णांक shrinker_run_no;
 
 /* protects the mounted 'erofs_sb_list' */
-static DEFINE_SPINLOCK(erofs_sb_list_lock);
-static LIST_HEAD(erofs_sb_list);
+अटल DEFINE_SPINLOCK(erofs_sb_list_lock);
+अटल LIST_HEAD(erofs_sb_list);
 
-void erofs_shrinker_register(struct super_block *sb)
-{
-	struct erofs_sb_info *sbi = EROFS_SB(sb);
+व्योम erofs_shrinker_रेजिस्टर(काष्ठा super_block *sb)
+अणु
+	काष्ठा erofs_sb_info *sbi = EROFS_SB(sb);
 
 	mutex_init(&sbi->umount_mutex);
 
 	spin_lock(&erofs_sb_list_lock);
 	list_add(&sbi->list, &erofs_sb_list);
 	spin_unlock(&erofs_sb_list_lock);
-}
+पूर्ण
 
-void erofs_shrinker_unregister(struct super_block *sb)
-{
-	struct erofs_sb_info *const sbi = EROFS_SB(sb);
+व्योम erofs_shrinker_unरेजिस्टर(काष्ठा super_block *sb)
+अणु
+	काष्ठा erofs_sb_info *स्थिर sbi = EROFS_SB(sb);
 
 	mutex_lock(&sbi->umount_mutex);
-	/* clean up all remaining workgroups in memory */
+	/* clean up all reमुख्यing workgroups in memory */
 	erofs_shrink_workstation(sbi, ~0UL);
 
 	spin_lock(&erofs_sb_list_lock);
 	list_del(&sbi->list);
 	spin_unlock(&erofs_sb_list_lock);
 	mutex_unlock(&sbi->umount_mutex);
-}
+पूर्ण
 
-static unsigned long erofs_shrink_count(struct shrinker *shrink,
-					struct shrink_control *sc)
-{
-	return atomic_long_read(&erofs_global_shrink_cnt);
-}
+अटल अचिन्हित दीर्घ erofs_shrink_count(काष्ठा shrinker *shrink,
+					काष्ठा shrink_control *sc)
+अणु
+	वापस atomic_दीर्घ_पढ़ो(&erofs_global_shrink_cnt);
+पूर्ण
 
-static unsigned long erofs_shrink_scan(struct shrinker *shrink,
-				       struct shrink_control *sc)
-{
-	struct erofs_sb_info *sbi;
-	struct list_head *p;
+अटल अचिन्हित दीर्घ erofs_shrink_scan(काष्ठा shrinker *shrink,
+				       काष्ठा shrink_control *sc)
+अणु
+	काष्ठा erofs_sb_info *sbi;
+	काष्ठा list_head *p;
 
-	unsigned long nr = sc->nr_to_scan;
-	unsigned int run_no;
-	unsigned long freed = 0;
+	अचिन्हित दीर्घ nr = sc->nr_to_scan;
+	अचिन्हित पूर्णांक run_no;
+	अचिन्हित दीर्घ मुक्तd = 0;
 
 	spin_lock(&erofs_sb_list_lock);
-	do {
+	करो अणु
 		run_no = ++shrinker_run_no;
-	} while (run_no == 0);
+	पूर्ण जबतक (run_no == 0);
 
 	/* Iterate over all mounted superblocks and try to shrink them */
 	p = erofs_sb_list.next;
-	while (p != &erofs_sb_list) {
-		sbi = list_entry(p, struct erofs_sb_info, list);
+	जबतक (p != &erofs_sb_list) अणु
+		sbi = list_entry(p, काष्ठा erofs_sb_info, list);
 
 		/*
-		 * We move the ones we do to the end of the list, so we stop
-		 * when we see one we have already done.
+		 * We move the ones we करो to the end of the list, so we stop
+		 * when we see one we have alपढ़ोy करोne.
 		 */
-		if (sbi->shrinker_run_no == run_no)
-			break;
+		अगर (sbi->shrinker_run_no == run_no)
+			अवरोध;
 
-		if (!mutex_trylock(&sbi->umount_mutex)) {
+		अगर (!mutex_trylock(&sbi->umount_mutex)) अणु
 			p = p->next;
-			continue;
-		}
+			जारी;
+		पूर्ण
 
 		spin_unlock(&erofs_sb_list_lock);
 		sbi->shrinker_run_no = run_no;
 
-		freed += erofs_shrink_workstation(sbi, nr - freed);
+		मुक्तd += erofs_shrink_workstation(sbi, nr - मुक्तd);
 
 		spin_lock(&erofs_sb_list_lock);
-		/* Get the next list element before we move this one */
+		/* Get the next list element beक्रमe we move this one */
 		p = p->next;
 
 		/*
@@ -255,27 +256,27 @@ static unsigned long erofs_shrink_scan(struct shrinker *shrink,
 		list_move_tail(&sbi->list, &erofs_sb_list);
 		mutex_unlock(&sbi->umount_mutex);
 
-		if (freed >= nr)
-			break;
-	}
+		अगर (मुक्तd >= nr)
+			अवरोध;
+	पूर्ण
 	spin_unlock(&erofs_sb_list_lock);
-	return freed;
-}
+	वापस मुक्तd;
+पूर्ण
 
-static struct shrinker erofs_shrinker_info = {
+अटल काष्ठा shrinker erofs_shrinker_info = अणु
 	.scan_objects = erofs_shrink_scan,
 	.count_objects = erofs_shrink_count,
 	.seeks = DEFAULT_SEEKS,
-};
+पूर्ण;
 
-int __init erofs_init_shrinker(void)
-{
-	return register_shrinker(&erofs_shrinker_info);
-}
+पूर्णांक __init erofs_init_shrinker(व्योम)
+अणु
+	वापस रेजिस्टर_shrinker(&erofs_shrinker_info);
+पूर्ण
 
-void erofs_exit_shrinker(void)
-{
-	unregister_shrinker(&erofs_shrinker_info);
-}
-#endif	/* !CONFIG_EROFS_FS_ZIP */
+व्योम erofs_निकास_shrinker(व्योम)
+अणु
+	unरेजिस्टर_shrinker(&erofs_shrinker_info);
+पूर्ण
+#पूर्ण_अगर	/* !CONFIG_EROFS_FS_ZIP */
 

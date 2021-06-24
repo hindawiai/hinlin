@@ -1,7 +1,8 @@
+<शैली गुरु>
 /* Agere Systems Inc.
- * 10/100/1000 Base-T Ethernet Driver for the ET1301 and ET131x series MACs
+ * 10/100/1000 Base-T Ethernet Driver क्रम the ET1301 and ET131x series MACs
  *
- * Copyright © 2005 Agere Systems Inc.
+ * Copyright तऊ 2005 Agere Systems Inc.
  * All rights reserved.
  *   http://www.agere.com
  *
@@ -12,28 +13,28 @@
  * SOFTWARE LICENSE
  *
  * This software is provided subject to the following terms and conditions,
- * which you should read carefully before using the software.  Using this
- * software indicates your acceptance of these terms and conditions.  If you do
- * not agree with these terms and conditions, do not use the software.
+ * which you should पढ़ो carefully beक्रमe using the software.  Using this
+ * software indicates your acceptance of these terms and conditions.  If you करो
+ * not agree with these terms and conditions, करो not use the software.
  *
- * Copyright © 2005 Agere Systems Inc.
+ * Copyright तऊ 2005 Agere Systems Inc.
  * All rights reserved.
  *
- * Redistribution and use in source or binary forms, with or without
- * modifications, are permitted provided that the following conditions are met:
+ * Redistribution and use in source or binary क्रमms, with or without
+ * modअगरications, are permitted provided that the following conditions are met:
  *
  * . Redistributions of source code must retain the above copyright notice, this
  *    list of conditions and the following Disclaimer as comments in the code as
- *    well as in the documentation and/or other materials provided with the
+ *    well as in the करोcumentation and/or other materials provided with the
  *    distribution.
  *
- * . Redistributions in binary form must reproduce the above copyright notice,
- *    this list of conditions and the following Disclaimer in the documentation
+ * . Redistributions in binary क्रमm must reproduce the above copyright notice,
+ *    this list of conditions and the following Disclaimer in the करोcumentation
  *    and/or other materials provided with the distribution.
  *
  * . Neither the name of Agere Systems Inc. nor the names of the contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
+ *    may be used to enकरोrse or promote products derived from this software
+ *    without specअगरic prior written permission.
  *
  * Disclaimer
  *
@@ -42,7 +43,7 @@
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.  ANY
  * USE, MODIFICATION OR DISTRIBUTION OF THIS SOFTWARE IS SOLELY AT THE USERS OWN
  * RISK. IN NO EVENT SHALL AGERE SYSTEMS INC. OR CONTRIBUTORS BE LIABLE FOR ANY
- * DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * सूचीECT, INसूचीECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
  * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
  * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
  * ON ANY THEORY OF LIABILITY, INCLUDING, BUT NOT LIMITED TO, CONTRACT, STRICT
@@ -51,35 +52,35 @@
  * DAMAGE.
  */
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include <linux/pci.h>
-#include <linux/module.h>
-#include <linux/types.h>
-#include <linux/kernel.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/module.h>
+#समावेश <linux/types.h>
+#समावेश <linux/kernel.h>
 
-#include <linux/sched.h>
-#include <linux/ptrace.h>
-#include <linux/slab.h>
-#include <linux/ctype.h>
-#include <linux/string.h>
-#include <linux/timer.h>
-#include <linux/interrupt.h>
-#include <linux/in.h>
-#include <linux/delay.h>
-#include <linux/bitops.h>
-#include <linux/io.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/ptrace.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/प्रकार.स>
+#समावेश <linux/माला.स>
+#समावेश <linux/समयr.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/in.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/bitops.h>
+#समावेश <linux/पन.स>
 
-#include <linux/netdevice.h>
-#include <linux/etherdevice.h>
-#include <linux/skbuff.h>
-#include <linux/if_arp.h>
-#include <linux/ioport.h>
-#include <linux/crc32.h>
-#include <linux/random.h>
-#include <linux/phy.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/etherdevice.h>
+#समावेश <linux/skbuff.h>
+#समावेश <linux/अगर_arp.h>
+#समावेश <linux/ioport.h>
+#समावेश <linux/crc32.h>
+#समावेश <linux/अक्रमom.h>
+#समावेश <linux/phy.h>
 
-#include "et131x.h"
+#समावेश "et131x.h"
 
 MODULE_AUTHOR("Victor Soriano <vjsoriano@agere.com>");
 MODULE_AUTHOR("Mark Einon <mark.einon@gmail.com>");
@@ -87,113 +88,113 @@ MODULE_LICENSE("Dual BSD/GPL");
 MODULE_DESCRIPTION("10/100/1000 Base-T Ethernet Driver for the ET1310 by Agere Systems");
 
 /* EEPROM defines */
-#define MAX_NUM_REGISTER_POLLS          1000
-#define MAX_NUM_WRITE_RETRIES           2
+#घोषणा MAX_NUM_REGISTER_POLLS          1000
+#घोषणा MAX_NUM_WRITE_RETRIES           2
 
 /* MAC defines */
-#define COUNTER_WRAP_16_BIT 0x10000
-#define COUNTER_WRAP_12_BIT 0x1000
+#घोषणा COUNTER_WRAP_16_BIT 0x10000
+#घोषणा COUNTER_WRAP_12_BIT 0x1000
 
 /* PCI defines */
-#define INTERNAL_MEM_SIZE       0x400	/* 1024 of internal memory */
-#define INTERNAL_MEM_RX_OFFSET  0x1FF	/* 50%   Tx, 50%   Rx */
+#घोषणा INTERNAL_MEM_SIZE       0x400	/* 1024 of पूर्णांकernal memory */
+#घोषणा INTERNAL_MEM_RX_OFFSET  0x1FF	/* 50%   Tx, 50%   Rx */
 
 /* ISR defines */
-/* For interrupts, normal running is:
- *       rxdma_xfr_done, phy_interrupt, mac_stat_interrupt,
- *       watchdog_interrupt & txdma_xfer_done
+/* For पूर्णांकerrupts, normal running is:
+ *       rxdma_xfr_करोne, phy_पूर्णांकerrupt, mac_stat_पूर्णांकerrupt,
+ *       watchकरोg_पूर्णांकerrupt & txdma_xfer_करोne
  *
- * In both cases, when flow control is enabled for either Tx or bi-direction,
+ * In both हालs, when flow control is enabled क्रम either Tx or bi-direction,
  * we additional enable rx_fbr0_low and rx_fbr1_low, so we know when the
  * buffer rings are running low.
  */
-#define INT_MASK_DISABLE            0xffffffff
+#घोषणा INT_MASK_DISABLE            0xffffffff
 
-/* NOTE: Masking out MAC_STAT Interrupt for now...
- * #define INT_MASK_ENABLE             0xfff6bf17
- * #define INT_MASK_ENABLE_NO_FLOW     0xfff6bfd7
+/* NOTE: Masking out MAC_STAT Interrupt क्रम now...
+ * #घोषणा INT_MASK_ENABLE             0xfff6bf17
+ * #घोषणा INT_MASK_ENABLE_NO_FLOW     0xfff6bfd7
  */
-#define INT_MASK_ENABLE             0xfffebf17
-#define INT_MASK_ENABLE_NO_FLOW     0xfffebfd7
+#घोषणा INT_MASK_ENABLE             0xfffebf17
+#घोषणा INT_MASK_ENABLE_NO_FLOW     0xfffebfd7
 
 /* General defines */
 /* Packet and header sizes */
-#define NIC_MIN_PACKET_SIZE	60
+#घोषणा NIC_MIN_PACKET_SIZE	60
 
 /* Multicast list size */
-#define NIC_MAX_MCAST_LIST	128
+#घोषणा NIC_MAX_MCAST_LIST	128
 
 /* Supported Filters */
-#define ET131X_PACKET_TYPE_DIRECTED		0x0001
-#define ET131X_PACKET_TYPE_MULTICAST		0x0002
-#define ET131X_PACKET_TYPE_BROADCAST		0x0004
-#define ET131X_PACKET_TYPE_PROMISCUOUS		0x0008
-#define ET131X_PACKET_TYPE_ALL_MULTICAST	0x0010
+#घोषणा ET131X_PACKET_TYPE_सूचीECTED		0x0001
+#घोषणा ET131X_PACKET_TYPE_MULTICAST		0x0002
+#घोषणा ET131X_PACKET_TYPE_BROADCAST		0x0004
+#घोषणा ET131X_PACKET_TYPE_PROMISCUOUS		0x0008
+#घोषणा ET131X_PACKET_TYPE_ALL_MULTICAST	0x0010
 
 /* Tx Timeout */
-#define ET131X_TX_TIMEOUT	(1 * HZ)
-#define NIC_SEND_HANG_THRESHOLD	0
+#घोषणा ET131X_TX_TIMEOUT	(1 * HZ)
+#घोषणा NIC_SEND_HANG_THRESHOLD	0
 
 /* MP_ADAPTER flags */
-#define FMP_ADAPTER_INTERRUPT_IN_USE	0x00000008
+#घोषणा FMP_ADAPTER_INTERRUPT_IN_USE	0x00000008
 
 /* MP_SHARED flags */
-#define FMP_ADAPTER_LOWER_POWER		0x00200000
+#घोषणा FMP_ADAPTER_LOWER_POWER		0x00200000
 
-#define FMP_ADAPTER_NON_RECOVER_ERROR	0x00800000
-#define FMP_ADAPTER_HARDWARE_ERROR	0x04000000
+#घोषणा FMP_ADAPTER_NON_RECOVER_ERROR	0x00800000
+#घोषणा FMP_ADAPTER_HARDWARE_ERROR	0x04000000
 
-#define FMP_ADAPTER_FAIL_SEND_MASK	0x3ff00000
+#घोषणा FMP_ADAPTER_FAIL_SEND_MASK	0x3ff00000
 
 /* Some offsets in PCI config space that are actually used. */
-#define ET1310_PCI_MAC_ADDRESS		0xA4
-#define ET1310_PCI_EEPROM_STATUS	0xB2
-#define ET1310_PCI_ACK_NACK		0xC0
-#define ET1310_PCI_REPLAY		0xC2
-#define ET1310_PCI_L0L1LATENCY		0xCF
+#घोषणा ET1310_PCI_MAC_ADDRESS		0xA4
+#घोषणा ET1310_PCI_EEPROM_STATUS	0xB2
+#घोषणा ET1310_PCI_ACK_NACK		0xC0
+#घोषणा ET1310_PCI_REPLAY		0xC2
+#घोषणा ET1310_PCI_L0L1LATENCY		0xCF
 
 /* PCI Product IDs */
-#define ET131X_PCI_DEVICE_ID_GIG	0xED00	/* ET1310 1000 Base-T 8 */
-#define ET131X_PCI_DEVICE_ID_FAST	0xED01	/* ET1310 100  Base-T */
+#घोषणा ET131X_PCI_DEVICE_ID_GIG	0xED00	/* ET1310 1000 Base-T 8 */
+#घोषणा ET131X_PCI_DEVICE_ID_FAST	0xED01	/* ET1310 100  Base-T */
 
 /* Define order of magnitude converter */
-#define NANO_IN_A_MICRO	1000
+#घोषणा न_अंकO_IN_A_MICRO	1000
 
-#define PARM_RX_NUM_BUFS_DEF    4
-#define PARM_RX_TIME_INT_DEF    10
-#define PARM_RX_MEM_END_DEF     0x2bc
-#define PARM_TX_TIME_INT_DEF    40
-#define PARM_TX_NUM_BUFS_DEF    4
-#define PARM_DMA_CACHE_DEF      0
+#घोषणा PARM_RX_NUM_BUFS_DEF    4
+#घोषणा PARM_RX_TIME_INT_DEF    10
+#घोषणा PARM_RX_MEM_END_DEF     0x2bc
+#घोषणा PARM_TX_TIME_INT_DEF    40
+#घोषणा PARM_TX_NUM_BUFS_DEF    4
+#घोषणा PARM_DMA_CACHE_DEF      0
 
 /* RX defines */
-#define FBR_CHUNKS		32
-#define MAX_DESC_PER_RING_RX	1024
+#घोषणा FBR_CHUNKS		32
+#घोषणा MAX_DESC_PER_RING_RX	1024
 
-/* number of RFDs - default and min */
-#define RFD_LOW_WATER_MARK	40
-#define NIC_DEFAULT_NUM_RFD	1024
-#define NUM_FBRS		2
+/* number of RFDs - शेष and min */
+#घोषणा RFD_LOW_WATER_MARK	40
+#घोषणा NIC_DEFAULT_NUM_RFD	1024
+#घोषणा NUM_FBRS		2
 
-#define MAX_PACKETS_HANDLED	256
-#define ET131X_MIN_MTU		64
-#define ET131X_MAX_MTU		9216
+#घोषणा MAX_PACKETS_HANDLED	256
+#घोषणा ET131X_MIN_MTU		64
+#घोषणा ET131X_MAX_MTU		9216
 
-#define ALCATEL_MULTICAST_PKT	0x01000000
-#define ALCATEL_BROADCAST_PKT	0x02000000
+#घोषणा ALCATEL_MULTICAST_PKT	0x01000000
+#घोषणा ALCATEL_BROADCAST_PKT	0x02000000
 
-/* typedefs for Free Buffer Descriptors */
-struct fbr_desc {
+/* प्रकारs क्रम Free Buffer Descriptors */
+काष्ठा fbr_desc अणु
 	u32 addr_lo;
 	u32 addr_hi;
 	u32 word2;		/* Bits 10-31 reserved, 0-9 descriptor */
-};
+पूर्ण;
 
 /* Packet Status Ring Descriptors
  *
  * Word 0:
  *
- * top 16 bits are from the Alcatel Status Word as enumerated in
+ * top 16 bits are from the Alcatel Status Word as क्रमागतerated in
  * PE-MCXMAC Data Sheet IPD DS54 0210-1 (also IPD-DS80 0205-2)
  *
  * 0: hp			hash pass
@@ -209,21 +210,21 @@ struct fbr_desc {
  * 10: vp			VLAN Packet
  * 11-15: unused
  * 16: asw_prev_pkt_dropped	e.g. IFG too small on previous
- * 17: asw_RX_DV_event		short receive event detected
+ * 17: asw_RX_DV_event		लघु receive event detected
  * 18: asw_false_carrier_event	bad carrier since last good packet
- * 19: asw_code_err		one or more nibbles signalled as errors
+ * 19: asw_code_err		one or more nibbles संकेतled as errors
  * 20: asw_CRC_err		CRC error
  * 21: asw_len_chk_err		frame length field incorrect
- * 22: asw_too_long		frame length > 1518 bytes
+ * 22: asw_too_दीर्घ		frame length > 1518 bytes
  * 23: asw_OK			valid CRC + no code error
  * 24: asw_multicast		has a multicast address
  * 25: asw_broadcast		has a broadcast address
  * 26: asw_dribble_nibble	spurious bits after EOP
  * 27: asw_control_frame	is a control frame
- * 28: asw_pause_frame		is a pause frame
+ * 28: asw_छोड़ो_frame		is a छोड़ो frame
  * 29: asw_unsupported_op	unsupported OP code
  * 30: asw_VLAN_tag		VLAN tag detected
- * 31: asw_long_evt		Rx long event
+ * 31: asw_दीर्घ_evt		Rx दीर्घ event
  *
  * Word 1:
  * 0-15: length			length in bytes
@@ -231,24 +232,24 @@ struct fbr_desc {
  * 26-27: ri			Ring Index
  * 28-31: reserved
  */
-struct pkt_stat_desc {
+काष्ठा pkt_stat_desc अणु
 	u32 word0;
 	u32 word1;
-};
+पूर्ण;
 
-/* Typedefs for the RX DMA status word */
+/* Typedefs क्रम the RX DMA status word */
 
 /* rx status word 0 holds part of the status bits of the Rx DMA engine
  * that get copied out to memory by the ET-1310.  Word 0 is a 32 bit word
  * which contains the Free Buffer ring 0 and 1 available offset.
  *
  * bit 0-9 FBR1 offset
- * bit 10 Wrap flag for FBR1
+ * bit 10 Wrap flag क्रम FBR1
  * bit 16-25 FBR0 offset
- * bit 26 Wrap flag for FBR0
+ * bit 26 Wrap flag क्रम FBR0
  */
 
-/* RXSTAT_WORD1_t structure holds part of the status bits of the Rx DMA engine
+/* RXSTAT_WORD1_t काष्ठाure holds part of the status bits of the Rx DMA engine
  * that get copied out to memory by the ET-1310.  Word 3 is a 32 bit word
  * which contains the Packet Status Ring available offset.
  *
@@ -258,67 +259,67 @@ struct pkt_stat_desc {
  * bit 29-31 unused
  */
 
-/* struct rx_status_block is a structure representing the status of the Rx
- * DMA engine it sits in free memory, and is pointed to by 0x101c / 0x1020
+/* काष्ठा rx_status_block is a काष्ठाure representing the status of the Rx
+ * DMA engine it sits in मुक्त memory, and is poपूर्णांकed to by 0x101c / 0x1020
  */
-struct rx_status_block {
+काष्ठा rx_status_block अणु
 	u32 word0;
 	u32 word1;
-};
+पूर्ण;
 
-/* Structure for look-up table holding free buffer ring pointers, addresses
+/* Structure क्रम look-up table holding मुक्त buffer ring poपूर्णांकers, addresses
  * and state.
  */
-struct fbr_lookup {
-	void		*virt[MAX_DESC_PER_RING_RX];
+काष्ठा fbr_lookup अणु
+	व्योम		*virt[MAX_DESC_PER_RING_RX];
 	u32		 bus_high[MAX_DESC_PER_RING_RX];
 	u32		 bus_low[MAX_DESC_PER_RING_RX];
-	void		*ring_virtaddr;
+	व्योम		*ring_virtaddr;
 	dma_addr_t	 ring_physaddr;
-	void		*mem_virtaddrs[MAX_DESC_PER_RING_RX / FBR_CHUNKS];
+	व्योम		*mem_virtaddrs[MAX_DESC_PER_RING_RX / FBR_CHUNKS];
 	dma_addr_t	 mem_physaddrs[MAX_DESC_PER_RING_RX / FBR_CHUNKS];
 	u32		 local_full;
 	u32		 num_entries;
 	dma_addr_t	 buffsize;
-};
+पूर्ण;
 
-/* struct rx_ring is the structure representing the adaptor's local
+/* काष्ठा rx_ring is the काष्ठाure representing the adaptor's local
  * reference(s) to the rings
  */
-struct rx_ring {
-	struct fbr_lookup *fbr[NUM_FBRS];
-	void *ps_ring_virtaddr;
+काष्ठा rx_ring अणु
+	काष्ठा fbr_lookup *fbr[NUM_FBRS];
+	व्योम *ps_ring_virtaddr;
 	dma_addr_t ps_ring_physaddr;
 	u32 local_psr_full;
 	u32 psr_entries;
 
-	struct rx_status_block *rx_status_block;
+	काष्ठा rx_status_block *rx_status_block;
 	dma_addr_t rx_status_bus;
 
-	struct list_head recv_list;
-	u32 num_ready_recv;
+	काष्ठा list_head recv_list;
+	u32 num_पढ़ोy_recv;
 
 	u32 num_rfd;
 
 	bool unfinished_receives;
-};
+पूर्ण;
 
 /* TX defines */
-/* word 2 of the control bits in the Tx Descriptor ring for the ET-1310
+/* word 2 of the control bits in the Tx Descriptor ring क्रम the ET-1310
  *
  * 0-15: length of packet
  * 16-27: VLAN tag
  * 28: VLAN CFI
  * 29-31: VLAN priority
  *
- * word 3 of the control bits in the Tx Descriptor ring for the ET-1310
+ * word 3 of the control bits in the Tx Descriptor ring क्रम the ET-1310
  *
  * 0: last packet in the sequence
  * 1: first packet in the sequence
- * 2: interrupt the processor when this pkt sent
+ * 2: पूर्णांकerrupt the processor when this pkt sent
  * 3: Control word - no packet data
  * 4: Issue half-duplex backpressure : XON/XOFF
- * 5: send pause frame
+ * 5: send छोड़ो frame
  * 6: Tx frame has error
  * 7: append CRC
  * 8: MAC override
@@ -329,93 +330,93 @@ struct rx_ring {
  * 13: TCP checksum assist
  * 14: UDP checksum assist
  */
-#define TXDESC_FLAG_LASTPKT		0x0001
-#define TXDESC_FLAG_FIRSTPKT		0x0002
-#define TXDESC_FLAG_INTPROC		0x0004
+#घोषणा TXDESC_FLAG_LASTPKT		0x0001
+#घोषणा TXDESC_FLAG_FIRSTPKT		0x0002
+#घोषणा TXDESC_FLAG_INTPROC		0x0004
 
-/* struct tx_desc represents each descriptor on the ring */
-struct tx_desc {
+/* काष्ठा tx_desc represents each descriptor on the ring */
+काष्ठा tx_desc अणु
 	u32 addr_hi;
 	u32 addr_lo;
 	u32 len_vlan;	/* control words how to xmit the */
 	u32 flags;	/* data (detailed above) */
-};
+पूर्ण;
 
-/* The status of the Tx DMA engine it sits in free memory, and is pointed to
+/* The status of the Tx DMA engine it sits in मुक्त memory, and is poपूर्णांकed to
  * by 0x101c / 0x1020. This is a DMA10 type
  */
 
 /* TCB (Transmit Control Block: Host Side) */
-struct tcb {
-	struct tcb *next;	/* Next entry in ring */
+काष्ठा tcb अणु
+	काष्ठा tcb *next;	/* Next entry in ring */
 	u32 count;		/* Used to spot stuck/lost packets */
 	u32 stale;		/* Used to spot stuck/lost packets */
-	struct sk_buff *skb;	/* Network skb we are tied to */
+	काष्ठा sk_buff *skb;	/* Network skb we are tied to */
 	u32 index;		/* Ring indexes */
 	u32 index_start;
-};
+पूर्ण;
 
 /* Structure representing our local reference(s) to the ring */
-struct tx_ring {
+काष्ठा tx_ring अणु
 	/* TCB (Transmit Control Block) memory and lists */
-	struct tcb *tcb_ring;
+	काष्ठा tcb *tcb_ring;
 
-	/* List of TCBs that are ready to be used */
-	struct tcb *tcb_qhead;
-	struct tcb *tcb_qtail;
+	/* List of TCBs that are पढ़ोy to be used */
+	काष्ठा tcb *tcb_qhead;
+	काष्ठा tcb *tcb_qtail;
 
 	/* list of TCBs that are currently being sent. */
-	struct tcb *send_head;
-	struct tcb *send_tail;
-	int used;
+	काष्ठा tcb *send_head;
+	काष्ठा tcb *send_tail;
+	पूर्णांक used;
 
 	/* The actual descriptor ring */
-	struct tx_desc *tx_desc_ring;
+	काष्ठा tx_desc *tx_desc_ring;
 	dma_addr_t tx_desc_ring_pa;
 
 	/* send_idx indicates where we last wrote to in the descriptor ring. */
 	u32 send_idx;
 
-	/* The location of the write-back status block */
+	/* The location of the ग_लिखो-back status block */
 	u32 *tx_status;
 	dma_addr_t tx_status_pa;
 
-	/* Packets since the last IRQ: used for interrupt coalescing */
-	int since_irq;
-};
+	/* Packets since the last IRQ: used क्रम पूर्णांकerrupt coalescing */
+	पूर्णांक since_irq;
+पूर्ण;
 
-/* Do not change these values: if changed, then change also in respective
+/* Do not change these values: अगर changed, then change also in respective
  * TXdma and Rxdma engines
  */
-#define NUM_DESC_PER_RING_TX         512    /* TX Do not change these values */
-#define NUM_TCB                      64
+#घोषणा NUM_DESC_PER_RING_TX         512    /* TX Do not change these values */
+#घोषणा NUM_TCB                      64
 
 /* These values are all superseded by registry entries to facilitate tuning.
- * Once the desired performance has been achieved, the optimal registry values
- * should be re-populated to these #defines:
+ * Once the desired perक्रमmance has been achieved, the optimal registry values
+ * should be re-populated to these #घोषणाs:
  */
-#define TX_ERROR_PERIOD             1000
+#घोषणा TX_ERROR_PERIOD             1000
 
-#define LO_MARK_PERCENT_FOR_PSR     15
-#define LO_MARK_PERCENT_FOR_RX      15
+#घोषणा LO_MARK_PERCENT_FOR_PSR     15
+#घोषणा LO_MARK_PERCENT_FOR_RX      15
 
 /* RFD (Receive Frame Descriptor) */
-struct rfd {
-	struct list_head list_node;
-	struct sk_buff *skb;
+काष्ठा rfd अणु
+	काष्ठा list_head list_node;
+	काष्ठा sk_buff *skb;
 	u32 len;	/* total size of receive frame */
 	u16 bufferindex;
 	u8 ringindex;
-};
+पूर्ण;
 
 /* Flow Control */
-#define FLOW_BOTH	0
-#define FLOW_TXONLY	1
-#define FLOW_RXONLY	2
-#define FLOW_NONE	3
+#घोषणा FLOW_BOTH	0
+#घोषणा FLOW_TXONLY	1
+#घोषणा FLOW_RXONLY	2
+#घोषणा FLOW_NONE	3
 
 /* Struct to define some device statistics */
-struct ce_stats {
+काष्ठा ce_stats अणु
 	u32		multicast_pkts_rcvd;
 	u32		rcvd_pkts_dropped;
 
@@ -434,21 +435,21 @@ struct ce_stats {
 	u32		rx_code_violations;
 	u32		rx_other_errs;
 
-	u32		interrupt_status;
-};
+	u32		पूर्णांकerrupt_status;
+पूर्ण;
 
-/* The private adapter structure */
-struct et131x_adapter {
-	struct net_device *netdev;
-	struct pci_dev *pdev;
-	struct mii_bus *mii_bus;
-	struct napi_struct napi;
+/* The निजी adapter काष्ठाure */
+काष्ठा et131x_adapter अणु
+	काष्ठा net_device *netdev;
+	काष्ठा pci_dev *pdev;
+	काष्ठा mii_bus *mii_bus;
+	काष्ठा napi_काष्ठा napi;
 
 	/* Flags that indicate current state of the adapter */
 	u32 flags;
 
-	/* local link state, to determine if a state change has occurred */
-	int link;
+	/* local link state, to determine अगर a state change has occurred */
+	पूर्णांक link;
 
 	/* Configuration  */
 	u8 rom_addr[ETH_ALEN];
@@ -457,7 +458,7 @@ struct et131x_adapter {
 	u8 eeprom_data[2];
 
 	spinlock_t tcb_send_qlock; /* protects the tx_ring send tcb list */
-	spinlock_t tcb_ready_qlock; /* protects the tx_ring ready tcb list */
+	spinlock_t tcb_पढ़ोy_qlock; /* protects the tx_ring पढ़ोy tcb list */
 	spinlock_t rcv_lock; /* protects the rx_ring receive list */
 
 	/* Packet Filter and look ahead size */
@@ -467,376 +468,376 @@ struct et131x_adapter {
 	u32 multicast_addr_count;
 	u8 multicast_list[NIC_MAX_MCAST_LIST][ETH_ALEN];
 
-	/* Pointer to the device's PCI register space */
-	struct address_map __iomem *regs;
+	/* Poपूर्णांकer to the device's PCI रेजिस्टर space */
+	काष्ठा address_map __iomem *regs;
 
 	/* Registry parameters */
-	u8 wanted_flow;		/* Flow we want for 802.3x flow control */
+	u8 wanted_flow;		/* Flow we want क्रम 802.3x flow control */
 	u32 registry_jumbo_packet;	/* Max supported ethernet packet size */
 
 	/* Derived from the registry: */
 	u8 flow;		/* flow control validated by the far-end */
 
-	/* Minimize init-time */
-	struct timer_list error_timer;
+	/* Minimize init-समय */
+	काष्ठा समयr_list error_समयr;
 
-	/* variable putting the phy into coma mode when boot up with no cable
+	/* variable putting the phy पूर्णांकo coma mode when boot up with no cable
 	 * plugged in after 5 seconds
 	 */
 	u8 boot_coma;
 
 	/* Tx Memory Variables */
-	struct tx_ring tx_ring;
+	काष्ठा tx_ring tx_ring;
 
 	/* Rx Memory Variables */
-	struct rx_ring rx_ring;
+	काष्ठा rx_ring rx_ring;
 
-	struct ce_stats stats;
-};
+	काष्ठा ce_stats stats;
+पूर्ण;
 
-static int eeprom_wait_ready(struct pci_dev *pdev, u32 *status)
-{
+अटल पूर्णांक eeprom_रुको_पढ़ोy(काष्ठा pci_dev *pdev, u32 *status)
+अणु
 	u32 reg;
-	int i;
+	पूर्णांक i;
 
-	/* 1. Check LBCIF Status Register for bits 6 & 3:2 all equal to 0 and
+	/* 1. Check LBCIF Status Register क्रम bits 6 & 3:2 all equal to 0 and
 	 *    bits 7,1:0 both equal to 1, at least once after reset.
 	 *    Subsequent operations need only to check that bits 1:0 are equal
-	 *    to 1 prior to starting a single byte read/write
+	 *    to 1 prior to starting a single byte पढ़ो/ग_लिखो
 	 */
-	for (i = 0; i < MAX_NUM_REGISTER_POLLS; i++) {
-		if (pci_read_config_dword(pdev, LBCIF_DWORD1_GROUP, &reg))
-			return -EIO;
+	क्रम (i = 0; i < MAX_NUM_REGISTER_POLLS; i++) अणु
+		अगर (pci_पढ़ो_config_dword(pdev, LBCIF_DWORD1_GROUP, &reg))
+			वापस -EIO;
 
 		/* I2C idle and Phy Queue Avail both true */
-		if ((reg & 0x3000) == 0x3000) {
-			if (status)
+		अगर ((reg & 0x3000) == 0x3000) अणु
+			अगर (status)
 				*status = reg;
-			return reg & 0xFF;
-		}
-	}
-	return -ETIMEDOUT;
-}
+			वापस reg & 0xFF;
+		पूर्ण
+	पूर्ण
+	वापस -ETIMEDOUT;
+पूर्ण
 
-static int eeprom_write(struct et131x_adapter *adapter, u32 addr, u8 data)
-{
-	struct pci_dev *pdev = adapter->pdev;
-	int index = 0;
-	int retries;
-	int err = 0;
-	int writeok = 0;
+अटल पूर्णांक eeprom_ग_लिखो(काष्ठा et131x_adapter *adapter, u32 addr, u8 data)
+अणु
+	काष्ठा pci_dev *pdev = adapter->pdev;
+	पूर्णांक index = 0;
+	पूर्णांक retries;
+	पूर्णांक err = 0;
+	पूर्णांक ग_लिखोok = 0;
 	u32 status;
 	u32 val = 0;
 
-	/* For an EEPROM, an I2C single byte write is defined as a START
+	/* For an EEPROM, an I2C single byte ग_लिखो is defined as a START
 	 * condition followed by the device address, EEPROM address, one byte
 	 * of data and a STOP condition.  The STOP condition will trigger the
-	 * EEPROM's internally timed write cycle to the nonvolatile memory.
-	 * All inputs are disabled during this write cycle and the EEPROM will
-	 * not respond to any access until the internal write is complete.
+	 * EEPROM's पूर्णांकernally समयd ग_लिखो cycle to the nonअस्थिर memory.
+	 * All inमाला_दो are disabled during this ग_लिखो cycle and the EEPROM will
+	 * not respond to any access until the पूर्णांकernal ग_लिखो is complete.
 	 */
-	err = eeprom_wait_ready(pdev, NULL);
-	if (err < 0)
-		return err;
+	err = eeprom_रुको_पढ़ोy(pdev, शून्य);
+	अगर (err < 0)
+		वापस err;
 
 	 /* 2. Write to the LBCIF Control Register:  bit 7=1, bit 6=1, bit 3=0,
 	  *    and bits 1:0 both =0.  Bit 5 should be set according to the
 	  *    type of EEPROM being accessed (1=two byte addressing, 0=one
 	  *    byte addressing).
 	  */
-	if (pci_write_config_byte(pdev, LBCIF_CONTROL_REGISTER,
+	अगर (pci_ग_लिखो_config_byte(pdev, LBCIF_CONTROL_REGISTER,
 				  LBCIF_CONTROL_LBCIF_ENABLE |
 					LBCIF_CONTROL_I2C_WRITE))
-		return -EIO;
+		वापस -EIO;
 
-	/* Prepare EEPROM address for Step 3 */
-	for (retries = 0; retries < MAX_NUM_WRITE_RETRIES; retries++) {
-		if (pci_write_config_dword(pdev, LBCIF_ADDRESS_REGISTER, addr))
-			break;
-		/* Write the data to the LBCIF Data Register (the I2C write
+	/* Prepare EEPROM address क्रम Step 3 */
+	क्रम (retries = 0; retries < MAX_NUM_WRITE_RETRIES; retries++) अणु
+		अगर (pci_ग_लिखो_config_dword(pdev, LBCIF_ADDRESS_REGISTER, addr))
+			अवरोध;
+		/* Write the data to the LBCIF Data Register (the I2C ग_लिखो
 		 * will begin).
 		 */
-		if (pci_write_config_byte(pdev, LBCIF_DATA_REGISTER, data))
-			break;
+		अगर (pci_ग_लिखो_config_byte(pdev, LBCIF_DATA_REGISTER, data))
+			अवरोध;
 		/* Monitor bit 1:0 of the LBCIF Status Register.  When bits
-		 * 1:0 are both equal to 1, the I2C write has completed and the
-		 * internal write cycle of the EEPROM is about to start.
-		 * (bits 1:0 = 01 is a legal state while waiting from both
+		 * 1:0 are both equal to 1, the I2C ग_लिखो has completed and the
+		 * पूर्णांकernal ग_लिखो cycle of the EEPROM is about to start.
+		 * (bits 1:0 = 01 is a legal state जबतक रुकोing from both
 		 * equal to 1, but bits 1:0 = 10 is invalid and implies that
 		 * something is broken).
 		 */
-		err = eeprom_wait_ready(pdev, &status);
-		if (err < 0)
-			return 0;
+		err = eeprom_रुको_पढ़ोy(pdev, &status);
+		अगर (err < 0)
+			वापस 0;
 
 		/* Check bit 3 of the LBCIF Status Register.  If  equal to 1,
-		 * an error has occurred.Don't break here if we are revision
-		 * 1, this is so we do a blind write for load bug.
+		 * an error has occurred.Don't अवरोध here अगर we are revision
+		 * 1, this is so we करो a blind ग_लिखो क्रम load bug.
 		 */
-		if ((status & LBCIF_STATUS_GENERAL_ERROR) &&
+		अगर ((status & LBCIF_STATUS_GENERAL_ERROR) &&
 		    adapter->pdev->revision == 0)
-			break;
+			अवरोध;
 
 		/* Check bit 2 of the LBCIF Status Register.  If equal to 1 an
-		 * ACK error has occurred on the address phase of the write.
+		 * ACK error has occurred on the address phase of the ग_लिखो.
 		 * This could be due to an actual hardware failure or the
-		 * EEPROM may still be in its internal write cycle from a
-		 * previous write. This write operation was ignored and must be
+		 * EEPROM may still be in its पूर्णांकernal ग_लिखो cycle from a
+		 * previous ग_लिखो. This ग_लिखो operation was ignored and must be
 		  *repeated later.
 		 */
-		if (status & LBCIF_STATUS_ACK_ERROR) {
+		अगर (status & LBCIF_STATUS_ACK_ERROR) अणु
 			/* This could be due to an actual hardware failure
-			 * or the EEPROM may still be in its internal write
-			 * cycle from a previous write. This write operation
+			 * or the EEPROM may still be in its पूर्णांकernal ग_लिखो
+			 * cycle from a previous ग_लिखो. This ग_लिखो operation
 			 * was ignored and must be repeated later.
 			 */
 			udelay(10);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		writeok = 1;
-		break;
-	}
+		ग_लिखोok = 1;
+		अवरोध;
+	पूर्ण
 
 	udelay(10);
 
-	while (1) {
-		if (pci_write_config_byte(pdev, LBCIF_CONTROL_REGISTER,
+	जबतक (1) अणु
+		अगर (pci_ग_लिखो_config_byte(pdev, LBCIF_CONTROL_REGISTER,
 					  LBCIF_CONTROL_LBCIF_ENABLE))
-			writeok = 0;
+			ग_लिखोok = 0;
 
-		/* Do read until internal ACK_ERROR goes away meaning write
+		/* Do पढ़ो until पूर्णांकernal ACK_ERROR goes away meaning ग_लिखो
 		 * completed
 		 */
-		do {
-			pci_write_config_dword(pdev,
+		करो अणु
+			pci_ग_लिखो_config_dword(pdev,
 					       LBCIF_ADDRESS_REGISTER,
 					       addr);
-			do {
-				pci_read_config_dword(pdev,
+			करो अणु
+				pci_पढ़ो_config_dword(pdev,
 						      LBCIF_DATA_REGISTER,
 						      &val);
-			} while ((val & 0x00010000) == 0);
-		} while (val & 0x00040000);
+			पूर्ण जबतक ((val & 0x00010000) == 0);
+		पूर्ण जबतक (val & 0x00040000);
 
-		if ((val & 0xFF00) != 0xC000 || index == 10000)
-			break;
+		अगर ((val & 0xFF00) != 0xC000 || index == 10000)
+			अवरोध;
 		index++;
-	}
-	return writeok ? 0 : -EIO;
-}
+	पूर्ण
+	वापस ग_लिखोok ? 0 : -EIO;
+पूर्ण
 
-static int eeprom_read(struct et131x_adapter *adapter, u32 addr, u8 *pdata)
-{
-	struct pci_dev *pdev = adapter->pdev;
-	int err;
+अटल पूर्णांक eeprom_पढ़ो(काष्ठा et131x_adapter *adapter, u32 addr, u8 *pdata)
+अणु
+	काष्ठा pci_dev *pdev = adapter->pdev;
+	पूर्णांक err;
 	u32 status;
 
-	/* A single byte read is similar to the single byte write, with the
+	/* A single byte पढ़ो is similar to the single byte ग_लिखो, with the
 	 * exception of the data flow:
 	 */
-	err = eeprom_wait_ready(pdev, NULL);
-	if (err < 0)
-		return err;
+	err = eeprom_रुको_पढ़ोy(pdev, शून्य);
+	अगर (err < 0)
+		वापस err;
 	/* Write to the LBCIF Control Register:  bit 7=1, bit 6=0, bit 3=0,
 	 * and bits 1:0 both =0.  Bit 5 should be set according to the type
 	 * of EEPROM being accessed (1=two byte addressing, 0=one byte
 	 * addressing).
 	 */
-	if (pci_write_config_byte(pdev, LBCIF_CONTROL_REGISTER,
+	अगर (pci_ग_लिखो_config_byte(pdev, LBCIF_CONTROL_REGISTER,
 				  LBCIF_CONTROL_LBCIF_ENABLE))
-		return -EIO;
-	/* Write the address to the LBCIF Address Register (I2C read will
+		वापस -EIO;
+	/* Write the address to the LBCIF Address Register (I2C पढ़ो will
 	 * begin).
 	 */
-	if (pci_write_config_dword(pdev, LBCIF_ADDRESS_REGISTER, addr))
-		return -EIO;
-	/* Monitor bit 0 of the LBCIF Status Register.  When = 1, I2C read
-	 * is complete. (if bit 1 =1 and bit 0 stays = 0, a hardware failure
+	अगर (pci_ग_लिखो_config_dword(pdev, LBCIF_ADDRESS_REGISTER, addr))
+		वापस -EIO;
+	/* Monitor bit 0 of the LBCIF Status Register.  When = 1, I2C पढ़ो
+	 * is complete. (अगर bit 1 =1 and bit 0 stays = 0, a hardware failure
 	 * has occurred).
 	 */
-	err = eeprom_wait_ready(pdev, &status);
-	if (err < 0)
-		return err;
-	/* Regardless of error status, read data byte from LBCIF Data
+	err = eeprom_रुको_पढ़ोy(pdev, &status);
+	अगर (err < 0)
+		वापस err;
+	/* Regardless of error status, पढ़ो data byte from LBCIF Data
 	 * Register.
 	 */
 	*pdata = err;
 
-	return (status & LBCIF_STATUS_ACK_ERROR) ? -EIO : 0;
-}
+	वापस (status & LBCIF_STATUS_ACK_ERROR) ? -EIO : 0;
+पूर्ण
 
-static int et131x_init_eeprom(struct et131x_adapter *adapter)
-{
-	struct pci_dev *pdev = adapter->pdev;
+अटल पूर्णांक et131x_init_eeprom(काष्ठा et131x_adapter *adapter)
+अणु
+	काष्ठा pci_dev *pdev = adapter->pdev;
 	u8 eestatus;
 
-	pci_read_config_byte(pdev, ET1310_PCI_EEPROM_STATUS, &eestatus);
+	pci_पढ़ो_config_byte(pdev, ET1310_PCI_EEPROM_STATUS, &eestatus);
 
 	/* THIS IS A WORKAROUND:
 	 * I need to call this function twice to get my card in a
-	 * LG M1 Express Dual running. I tried also a msleep before this
-	 * function, because I thought there could be some time conditions
+	 * LG M1 Express Dual running. I tried also a msleep beक्रमe this
+	 * function, because I thought there could be some समय conditions
 	 * but it didn't work. Call the whole function twice also work.
 	 */
-	if (pci_read_config_byte(pdev, ET1310_PCI_EEPROM_STATUS, &eestatus)) {
+	अगर (pci_पढ़ो_config_byte(pdev, ET1310_PCI_EEPROM_STATUS, &eestatus)) अणु
 		dev_err(&pdev->dev,
 			"Could not read PCI config space for EEPROM Status\n");
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
-	/* Determine if the error(s) we care about are present. If they are
+	/* Determine अगर the error(s) we care about are present. If they are
 	 * present we need to fail.
 	 */
-	if (eestatus & 0x4C) {
-		int write_failed = 0;
+	अगर (eestatus & 0x4C) अणु
+		पूर्णांक ग_लिखो_failed = 0;
 
-		if (pdev->revision == 0x01) {
-			int	i;
-			static const u8 eedata[4] = { 0xFE, 0x13, 0x10, 0xFF };
+		अगर (pdev->revision == 0x01) अणु
+			पूर्णांक	i;
+			अटल स्थिर u8 eedata[4] = अणु 0xFE, 0x13, 0x10, 0xFF पूर्ण;
 
-			/* Re-write the first 4 bytes if we have an eeprom
+			/* Re-ग_लिखो the first 4 bytes अगर we have an eeprom
 			 * present and the revision id is 1, this fixes the
 			 * corruption seen with 1310 B Silicon
 			 */
-			for (i = 0; i < 3; i++)
-				if (eeprom_write(adapter, i, eedata[i]) < 0)
-					write_failed = 1;
-		}
-		if (pdev->revision  != 0x01 || write_failed) {
+			क्रम (i = 0; i < 3; i++)
+				अगर (eeprom_ग_लिखो(adapter, i, eedata[i]) < 0)
+					ग_लिखो_failed = 1;
+		पूर्ण
+		अगर (pdev->revision  != 0x01 || ग_लिखो_failed) अणु
 			dev_err(&pdev->dev,
 				"Fatal EEPROM Status Error - 0x%04x\n",
 				eestatus);
 
 			/* This error could mean that there was an error
-			 * reading the eeprom or that the eeprom doesn't exist.
-			 * We will treat each case the same and not try to
-			 * gather additional information that normally would
+			 * पढ़ोing the eeprom or that the eeprom करोesn't exist.
+			 * We will treat each हाल the same and not try to
+			 * gather additional inक्रमmation that normally would
 			 * come from the eeprom, like MAC Address
 			 */
 			adapter->has_eeprom = false;
-			return -EIO;
-		}
-	}
+			वापस -EIO;
+		पूर्ण
+	पूर्ण
 	adapter->has_eeprom = true;
 
-	/* Read the EEPROM for information regarding LED behavior. Refer to
-	 * et131x_xcvr_init() for its use.
+	/* Read the EEPROM क्रम inक्रमmation regarding LED behavior. Refer to
+	 * et131x_xcvr_init() क्रम its use.
 	 */
-	eeprom_read(adapter, 0x70, &adapter->eeprom_data[0]);
-	eeprom_read(adapter, 0x71, &adapter->eeprom_data[1]);
+	eeprom_पढ़ो(adapter, 0x70, &adapter->eeprom_data[0]);
+	eeprom_पढ़ो(adapter, 0x71, &adapter->eeprom_data[1]);
 
-	if (adapter->eeprom_data[0] != 0xcd)
+	अगर (adapter->eeprom_data[0] != 0xcd)
 		/* Disable all optional features */
 		adapter->eeprom_data[1] = 0x00;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void et131x_rx_dma_enable(struct et131x_adapter *adapter)
-{
-	/* Setup the receive dma configuration register for normal operation */
+अटल व्योम et131x_rx_dma_enable(काष्ठा et131x_adapter *adapter)
+अणु
+	/* Setup the receive dma configuration रेजिस्टर क्रम normal operation */
 	u32 csr =  ET_RXDMA_CSR_FBR1_ENABLE;
-	struct rx_ring *rx_ring = &adapter->rx_ring;
+	काष्ठा rx_ring *rx_ring = &adapter->rx_ring;
 
-	if (rx_ring->fbr[1]->buffsize == 4096)
+	अगर (rx_ring->fbr[1]->buffsize == 4096)
 		csr |= ET_RXDMA_CSR_FBR1_SIZE_LO;
-	else if (rx_ring->fbr[1]->buffsize == 8192)
+	अन्यथा अगर (rx_ring->fbr[1]->buffsize == 8192)
 		csr |= ET_RXDMA_CSR_FBR1_SIZE_HI;
-	else if (rx_ring->fbr[1]->buffsize == 16384)
+	अन्यथा अगर (rx_ring->fbr[1]->buffsize == 16384)
 		csr |= ET_RXDMA_CSR_FBR1_SIZE_LO | ET_RXDMA_CSR_FBR1_SIZE_HI;
 
 	csr |= ET_RXDMA_CSR_FBR0_ENABLE;
-	if (rx_ring->fbr[0]->buffsize == 256)
+	अगर (rx_ring->fbr[0]->buffsize == 256)
 		csr |= ET_RXDMA_CSR_FBR0_SIZE_LO;
-	else if (rx_ring->fbr[0]->buffsize == 512)
+	अन्यथा अगर (rx_ring->fbr[0]->buffsize == 512)
 		csr |= ET_RXDMA_CSR_FBR0_SIZE_HI;
-	else if (rx_ring->fbr[0]->buffsize == 1024)
+	अन्यथा अगर (rx_ring->fbr[0]->buffsize == 1024)
 		csr |= ET_RXDMA_CSR_FBR0_SIZE_LO | ET_RXDMA_CSR_FBR0_SIZE_HI;
-	writel(csr, &adapter->regs->rxdma.csr);
+	ग_लिखोl(csr, &adapter->regs->rxdma.csr);
 
-	csr = readl(&adapter->regs->rxdma.csr);
-	if (csr & ET_RXDMA_CSR_HALT_STATUS) {
+	csr = पढ़ोl(&adapter->regs->rxdma.csr);
+	अगर (csr & ET_RXDMA_CSR_HALT_STATUS) अणु
 		udelay(5);
-		csr = readl(&adapter->regs->rxdma.csr);
-		if (csr & ET_RXDMA_CSR_HALT_STATUS) {
+		csr = पढ़ोl(&adapter->regs->rxdma.csr);
+		अगर (csr & ET_RXDMA_CSR_HALT_STATUS) अणु
 			dev_err(&adapter->pdev->dev,
 				"RX Dma failed to exit halt state. CSR 0x%08x\n",
 				csr);
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static void et131x_rx_dma_disable(struct et131x_adapter *adapter)
-{
+अटल व्योम et131x_rx_dma_disable(काष्ठा et131x_adapter *adapter)
+अणु
 	u32 csr;
-	/* Setup the receive dma configuration register */
-	writel(ET_RXDMA_CSR_HALT | ET_RXDMA_CSR_FBR1_ENABLE,
+	/* Setup the receive dma configuration रेजिस्टर */
+	ग_लिखोl(ET_RXDMA_CSR_HALT | ET_RXDMA_CSR_FBR1_ENABLE,
 	       &adapter->regs->rxdma.csr);
-	csr = readl(&adapter->regs->rxdma.csr);
-	if (!(csr & ET_RXDMA_CSR_HALT_STATUS)) {
+	csr = पढ़ोl(&adapter->regs->rxdma.csr);
+	अगर (!(csr & ET_RXDMA_CSR_HALT_STATUS)) अणु
 		udelay(5);
-		csr = readl(&adapter->regs->rxdma.csr);
-		if (!(csr & ET_RXDMA_CSR_HALT_STATUS))
+		csr = पढ़ोl(&adapter->regs->rxdma.csr);
+		अगर (!(csr & ET_RXDMA_CSR_HALT_STATUS))
 			dev_err(&adapter->pdev->dev,
 				"RX Dma failed to enter halt state. CSR 0x%08x\n",
 				csr);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void et131x_tx_dma_enable(struct et131x_adapter *adapter)
-{
-	/* Setup the transmit dma configuration register for normal
+अटल व्योम et131x_tx_dma_enable(काष्ठा et131x_adapter *adapter)
+अणु
+	/* Setup the transmit dma configuration रेजिस्टर क्रम normal
 	 * operation
 	 */
-	writel(ET_TXDMA_SNGL_EPKT | (PARM_DMA_CACHE_DEF << ET_TXDMA_CACHE_SHIFT),
+	ग_लिखोl(ET_TXDMA_SNGL_EPKT | (PARM_DMA_CACHE_DEF << ET_TXDMA_CACHE_SHIFT),
 	       &adapter->regs->txdma.csr);
-}
+पूर्ण
 
-static inline void add_10bit(u32 *v, int n)
-{
+अटल अंतरभूत व्योम add_10bit(u32 *v, पूर्णांक n)
+अणु
 	*v = INDEX10(*v + n) | (*v & ET_DMA10_WRAP);
-}
+पूर्ण
 
-static inline void add_12bit(u32 *v, int n)
-{
+अटल अंतरभूत व्योम add_12bit(u32 *v, पूर्णांक n)
+अणु
 	*v = INDEX12(*v + n) | (*v & ET_DMA12_WRAP);
-}
+पूर्ण
 
-static void et1310_config_mac_regs1(struct et131x_adapter *adapter)
-{
-	struct mac_regs __iomem *macregs = &adapter->regs->mac;
+अटल व्योम et1310_config_mac_regs1(काष्ठा et131x_adapter *adapter)
+अणु
+	काष्ठा mac_regs __iomem *macregs = &adapter->regs->mac;
 	u32 station1;
 	u32 station2;
 	u32 ipg;
 
 	/* First we need to reset everything.  Write to MAC configuration
-	 * register 1 to perform reset.
+	 * रेजिस्टर 1 to perक्रमm reset.
 	 */
-	writel(ET_MAC_CFG1_SOFT_RESET | ET_MAC_CFG1_SIM_RESET  |
+	ग_लिखोl(ET_MAC_CFG1_SOFT_RESET | ET_MAC_CFG1_SIM_RESET  |
 	       ET_MAC_CFG1_RESET_RXMC | ET_MAC_CFG1_RESET_TXMC |
 	       ET_MAC_CFG1_RESET_RXFUNC | ET_MAC_CFG1_RESET_TXFUNC,
 	       &macregs->cfg1);
 
-	/* Next lets configure the MAC Inter-packet gap register */
+	/* Next lets configure the MAC Inter-packet gap रेजिस्टर */
 	ipg = 0x38005860;		/* IPG1 0x38 IPG2 0x58 B2B 0x60 */
-	ipg |= 0x50 << 8;		/* ifg enforce 0x50 */
-	writel(ipg, &macregs->ipg);
+	ipg |= 0x50 << 8;		/* अगरg enक्रमce 0x50 */
+	ग_लिखोl(ipg, &macregs->ipg);
 
-	/* Next lets configure the MAC Half Duplex register */
+	/* Next lets configure the MAC Half Duplex रेजिस्टर */
 	/* BEB trunc 0xA, Ex Defer, Rexmit 0xF Coll 0x37 */
-	writel(0x00A1F037, &macregs->hfdp);
+	ग_लिखोl(0x00A1F037, &macregs->hfdp);
 
-	/* Next lets configure the MAC Interface Control register */
-	writel(0, &macregs->if_ctrl);
+	/* Next lets configure the MAC Interface Control रेजिस्टर */
+	ग_लिखोl(0, &macregs->अगर_ctrl);
 
-	writel(ET_MAC_MIIMGMT_CLK_RST, &macregs->mii_mgmt_cfg);
+	ग_लिखोl(ET_MAC_MIIMGMT_CLK_RST, &macregs->mii_mgmt_cfg);
 
-	/* Next lets configure the MAC Station Address register.  These
-	 * values are read from the EEPROM during initialization and stored
-	 * in the adapter structure.  We write what is stored in the adapter
-	 * structure to the MAC Station Address registers high and low.  This
-	 * station address is used for generating and checking pause control
+	/* Next lets configure the MAC Station Address रेजिस्टर.  These
+	 * values are पढ़ो from the EEPROM during initialization and stored
+	 * in the adapter काष्ठाure.  We ग_लिखो what is stored in the adapter
+	 * काष्ठाure to the MAC Station Address रेजिस्टरs high and low.  This
+	 * station address is used क्रम generating and checking छोड़ो control
 	 * packets.
 	 */
 	station2 = (adapter->addr[1] << ET_MAC_STATION_ADDR2_OC2_SHIFT) |
@@ -845,56 +846,56 @@ static void et1310_config_mac_regs1(struct et131x_adapter *adapter)
 		   (adapter->addr[4] << ET_MAC_STATION_ADDR1_OC5_SHIFT) |
 		   (adapter->addr[3] << ET_MAC_STATION_ADDR1_OC4_SHIFT) |
 		    adapter->addr[2];
-	writel(station1, &macregs->station_addr_1);
-	writel(station2, &macregs->station_addr_2);
+	ग_लिखोl(station1, &macregs->station_addr_1);
+	ग_लिखोl(station2, &macregs->station_addr_2);
 
 	/* Max ethernet packet in bytes that will be passed by the mac without
 	 * being truncated.  Allow the MAC to pass 4 more than our max packet
-	 * size.  This is 4 for the Ethernet CRC.
+	 * size.  This is 4 क्रम the Ethernet CRC.
 	 *
-	 * Packets larger than (registry_jumbo_packet) that do not contain a
+	 * Packets larger than (registry_jumbo_packet) that करो not contain a
 	 * VLAN ID will be dropped by the Rx function.
 	 */
-	writel(adapter->registry_jumbo_packet + 4, &macregs->max_fm_len);
+	ग_लिखोl(adapter->registry_jumbo_packet + 4, &macregs->max_fm_len);
 
 	/* clear out MAC config reset */
-	writel(0, &macregs->cfg1);
-}
+	ग_लिखोl(0, &macregs->cfg1);
+पूर्ण
 
-static void et1310_config_mac_regs2(struct et131x_adapter *adapter)
-{
-	int32_t delay = 0;
-	struct mac_regs __iomem *mac = &adapter->regs->mac;
-	struct phy_device *phydev = adapter->netdev->phydev;
+अटल व्योम et1310_config_mac_regs2(काष्ठा et131x_adapter *adapter)
+अणु
+	पूर्णांक32_t delay = 0;
+	काष्ठा mac_regs __iomem *mac = &adapter->regs->mac;
+	काष्ठा phy_device *phydev = adapter->netdev->phydev;
 	u32 cfg1;
 	u32 cfg2;
-	u32 ifctrl;
+	u32 अगरctrl;
 	u32 ctl;
 
-	ctl = readl(&adapter->regs->txmac.ctl);
-	cfg1 = readl(&mac->cfg1);
-	cfg2 = readl(&mac->cfg2);
-	ifctrl = readl(&mac->if_ctrl);
+	ctl = पढ़ोl(&adapter->regs->txmac.ctl);
+	cfg1 = पढ़ोl(&mac->cfg1);
+	cfg2 = पढ़ोl(&mac->cfg2);
+	अगरctrl = पढ़ोl(&mac->अगर_ctrl);
 
-	/* Set up the if mode bits */
+	/* Set up the अगर mode bits */
 	cfg2 &= ~ET_MAC_CFG2_IFMODE_MASK;
-	if (phydev->speed == SPEED_1000) {
+	अगर (phydev->speed == SPEED_1000) अणु
 		cfg2 |= ET_MAC_CFG2_IFMODE_1000;
-		ifctrl &= ~ET_MAC_IFCTRL_PHYMODE;
-	} else {
+		अगरctrl &= ~ET_MAC_IFCTRL_PHYMODE;
+	पूर्ण अन्यथा अणु
 		cfg2 |= ET_MAC_CFG2_IFMODE_100;
-		ifctrl |= ET_MAC_IFCTRL_PHYMODE;
-	}
+		अगरctrl |= ET_MAC_IFCTRL_PHYMODE;
+	पूर्ण
 
 	cfg1 |= ET_MAC_CFG1_RX_ENABLE | ET_MAC_CFG1_TX_ENABLE |
 							ET_MAC_CFG1_TX_FLOW;
 
 	cfg1 &= ~(ET_MAC_CFG1_LOOPBACK | ET_MAC_CFG1_RX_FLOW);
-	if (adapter->flow == FLOW_RXONLY || adapter->flow == FLOW_BOTH)
+	अगर (adapter->flow == FLOW_RXONLY || adapter->flow == FLOW_BOTH)
 		cfg1 |= ET_MAC_CFG1_RX_FLOW;
-	writel(cfg1, &mac->cfg1);
+	ग_लिखोl(cfg1, &mac->cfg1);
 
-	/* Now we need to initialize the MAC Configuration 2 register */
+	/* Now we need to initialize the MAC Configuration 2 रेजिस्टर */
 	/* preamble 7, check length, huge frame off, pad crc, crc enable
 	 * full duplex off
 	 */
@@ -905,107 +906,107 @@ static void et1310_config_mac_regs2(struct et131x_adapter *adapter)
 	cfg2 &= ~ET_MAC_CFG2_IFMODE_HUGE_FRAME;
 	cfg2 &= ~ET_MAC_CFG2_IFMODE_FULL_DPLX;
 
-	if (phydev->duplex == DUPLEX_FULL)
+	अगर (phydev->duplex == DUPLEX_FULL)
 		cfg2 |= ET_MAC_CFG2_IFMODE_FULL_DPLX;
 
-	ifctrl &= ~ET_MAC_IFCTRL_GHDMODE;
-	if (phydev->duplex == DUPLEX_HALF)
-		ifctrl |= ET_MAC_IFCTRL_GHDMODE;
+	अगरctrl &= ~ET_MAC_IFCTRL_GHDMODE;
+	अगर (phydev->duplex == DUPLEX_HALF)
+		अगरctrl |= ET_MAC_IFCTRL_GHDMODE;
 
-	writel(ifctrl, &mac->if_ctrl);
-	writel(cfg2, &mac->cfg2);
+	ग_लिखोl(अगरctrl, &mac->अगर_ctrl);
+	ग_लिखोl(cfg2, &mac->cfg2);
 
-	do {
+	करो अणु
 		udelay(10);
 		delay++;
-		cfg1 = readl(&mac->cfg1);
-	} while ((cfg1 & ET_MAC_CFG1_WAIT) != ET_MAC_CFG1_WAIT && delay < 100);
+		cfg1 = पढ़ोl(&mac->cfg1);
+	पूर्ण जबतक ((cfg1 & ET_MAC_CFG1_WAIT) != ET_MAC_CFG1_WAIT && delay < 100);
 
-	if (delay == 100) {
+	अगर (delay == 100) अणु
 		dev_warn(&adapter->pdev->dev,
 			 "Syncd bits did not respond correctly cfg1 word 0x%08x\n",
 			 cfg1);
-	}
+	पूर्ण
 
 	ctl |= ET_TX_CTRL_TXMAC_ENABLE | ET_TX_CTRL_FC_DISABLE;
-	writel(ctl, &adapter->regs->txmac.ctl);
+	ग_लिखोl(ctl, &adapter->regs->txmac.ctl);
 
-	if (adapter->flags & FMP_ADAPTER_LOWER_POWER) {
+	अगर (adapter->flags & FMP_ADAPTER_LOWER_POWER) अणु
 		et131x_rx_dma_enable(adapter);
 		et131x_tx_dma_enable(adapter);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int et1310_in_phy_coma(struct et131x_adapter *adapter)
-{
-	u32 pmcsr = readl(&adapter->regs->global.pm_csr);
+अटल पूर्णांक et1310_in_phy_coma(काष्ठा et131x_adapter *adapter)
+अणु
+	u32 pmcsr = पढ़ोl(&adapter->regs->global.pm_csr);
 
-	return ET_PM_PHY_SW_COMA & pmcsr ? 1 : 0;
-}
+	वापस ET_PM_PHY_SW_COMA & pmcsr ? 1 : 0;
+पूर्ण
 
-static void et1310_setup_device_for_multicast(struct et131x_adapter *adapter)
-{
-	struct rxmac_regs __iomem *rxmac = &adapter->regs->rxmac;
+अटल व्योम et1310_setup_device_क्रम_multicast(काष्ठा et131x_adapter *adapter)
+अणु
+	काष्ठा rxmac_regs __iomem *rxmac = &adapter->regs->rxmac;
 	u32 hash1 = 0;
 	u32 hash2 = 0;
 	u32 hash3 = 0;
 	u32 hash4 = 0;
 
-	/* If ET131X_PACKET_TYPE_MULTICAST is specified, then we provision
-	 * the multi-cast LIST.  If it is NOT specified, (and "ALL" is not
-	 * specified) then we should pass NO multi-cast addresses to the
+	/* If ET131X_PACKET_TYPE_MULTICAST is specअगरied, then we provision
+	 * the multi-cast LIST.  If it is NOT specअगरied, (and "ALL" is not
+	 * specअगरied) then we should pass NO multi-cast addresses to the
 	 * driver.
 	 */
-	if (adapter->packet_filter & ET131X_PACKET_TYPE_MULTICAST) {
-		int i;
+	अगर (adapter->packet_filter & ET131X_PACKET_TYPE_MULTICAST) अणु
+		पूर्णांक i;
 
 		/* Loop through our multicast array and set up the device */
-		for (i = 0; i < adapter->multicast_addr_count; i++) {
+		क्रम (i = 0; i < adapter->multicast_addr_count; i++) अणु
 			u32 result;
 
 			result = ether_crc(6, adapter->multicast_list[i]);
 
 			result = (result & 0x3F800000) >> 23;
 
-			if (result < 32) {
+			अगर (result < 32) अणु
 				hash1 |= (1 << result);
-			} else if ((31 < result) && (result < 64)) {
+			पूर्ण अन्यथा अगर ((31 < result) && (result < 64)) अणु
 				result -= 32;
 				hash2 |= (1 << result);
-			} else if ((63 < result) && (result < 96)) {
+			पूर्ण अन्यथा अगर ((63 < result) && (result < 96)) अणु
 				result -= 64;
 				hash3 |= (1 << result);
-			} else {
+			पूर्ण अन्यथा अणु
 				result -= 96;
 				hash4 |= (1 << result);
-			}
-		}
-	}
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
 	/* Write out the new hash to the device */
-	if (!et1310_in_phy_coma(adapter)) {
-		writel(hash1, &rxmac->multi_hash1);
-		writel(hash2, &rxmac->multi_hash2);
-		writel(hash3, &rxmac->multi_hash3);
-		writel(hash4, &rxmac->multi_hash4);
-	}
-}
+	अगर (!et1310_in_phy_coma(adapter)) अणु
+		ग_लिखोl(hash1, &rxmac->multi_hash1);
+		ग_लिखोl(hash2, &rxmac->multi_hash2);
+		ग_लिखोl(hash3, &rxmac->multi_hash3);
+		ग_लिखोl(hash4, &rxmac->multi_hash4);
+	पूर्ण
+पूर्ण
 
-static void et1310_setup_device_for_unicast(struct et131x_adapter *adapter)
-{
-	struct rxmac_regs __iomem *rxmac = &adapter->regs->rxmac;
+अटल व्योम et1310_setup_device_क्रम_unicast(काष्ठा et131x_adapter *adapter)
+अणु
+	काष्ठा rxmac_regs __iomem *rxmac = &adapter->regs->rxmac;
 	u32 uni_pf1;
 	u32 uni_pf2;
 	u32 uni_pf3;
 
 	/* Set up unicast packet filter reg 3 to be the first two octets of
-	 * the MAC address for both address
+	 * the MAC address क्रम both address
 	 *
 	 * Set up unicast packet filter reg 2 to be the octets 2 - 5 of the
-	 * MAC address for second address
+	 * MAC address क्रम second address
 	 *
 	 * Set up unicast packet filter reg 3 to be the octets 2 - 5 of the
-	 * MAC address for first address
+	 * MAC address क्रम first address
 	 */
 	uni_pf3 = (adapter->addr[0] << ET_RX_UNI_PF_ADDR2_1_SHIFT) |
 		  (adapter->addr[1] << ET_RX_UNI_PF_ADDR2_2_SHIFT) |
@@ -1022,648 +1023,648 @@ static void et1310_setup_device_for_unicast(struct et131x_adapter *adapter)
 		  (adapter->addr[4] << ET_RX_UNI_PF_ADDR1_5_SHIFT) |
 		   adapter->addr[5];
 
-	if (!et1310_in_phy_coma(adapter)) {
-		writel(uni_pf1, &rxmac->uni_pf_addr1);
-		writel(uni_pf2, &rxmac->uni_pf_addr2);
-		writel(uni_pf3, &rxmac->uni_pf_addr3);
-	}
-}
+	अगर (!et1310_in_phy_coma(adapter)) अणु
+		ग_लिखोl(uni_pf1, &rxmac->uni_pf_addr1);
+		ग_लिखोl(uni_pf2, &rxmac->uni_pf_addr2);
+		ग_लिखोl(uni_pf3, &rxmac->uni_pf_addr3);
+	पूर्ण
+पूर्ण
 
-static void et1310_config_rxmac_regs(struct et131x_adapter *adapter)
-{
-	struct rxmac_regs __iomem *rxmac = &adapter->regs->rxmac;
-	struct phy_device *phydev = adapter->netdev->phydev;
+अटल व्योम et1310_config_rxmac_regs(काष्ठा et131x_adapter *adapter)
+अणु
+	काष्ठा rxmac_regs __iomem *rxmac = &adapter->regs->rxmac;
+	काष्ठा phy_device *phydev = adapter->netdev->phydev;
 	u32 sa_lo;
 	u32 sa_hi = 0;
 	u32 pf_ctrl = 0;
 	u32 __iomem *wolw;
 
-	/* Disable the MAC while it is being configured (also disable WOL) */
-	writel(0x8, &rxmac->ctrl);
+	/* Disable the MAC जबतक it is being configured (also disable WOL) */
+	ग_लिखोl(0x8, &rxmac->ctrl);
 
 	/* Initialize WOL to disabled. */
-	writel(0, &rxmac->crc0);
-	writel(0, &rxmac->crc12);
-	writel(0, &rxmac->crc34);
+	ग_लिखोl(0, &rxmac->crc0);
+	ग_लिखोl(0, &rxmac->crc12);
+	ग_लिखोl(0, &rxmac->crc34);
 
 	/* We need to set the WOL mask0 - mask4 next.  We initialize it to
-	 * its default Values of 0x00000000 because there are not WOL masks
-	 * as of this time.
+	 * its शेष Values of 0x00000000 because there are not WOL masks
+	 * as of this समय.
 	 */
-	for (wolw = &rxmac->mask0_word0; wolw <= &rxmac->mask4_word3; wolw++)
-		writel(0, wolw);
+	क्रम (wolw = &rxmac->mask0_word0; wolw <= &rxmac->mask4_word3; wolw++)
+		ग_लिखोl(0, wolw);
 
 	/* Lets setup the WOL Source Address */
 	sa_lo = (adapter->addr[2] << ET_RX_WOL_LO_SA3_SHIFT) |
 		(adapter->addr[3] << ET_RX_WOL_LO_SA4_SHIFT) |
 		(adapter->addr[4] << ET_RX_WOL_LO_SA5_SHIFT) |
 		 adapter->addr[5];
-	writel(sa_lo, &rxmac->sa_lo);
+	ग_लिखोl(sa_lo, &rxmac->sa_lo);
 
 	sa_hi = (u32)(adapter->addr[0] << ET_RX_WOL_HI_SA1_SHIFT) |
 		       adapter->addr[1];
-	writel(sa_hi, &rxmac->sa_hi);
+	ग_लिखोl(sa_hi, &rxmac->sa_hi);
 
 	/* Disable all Packet Filtering */
-	writel(0, &rxmac->pf_ctrl);
+	ग_लिखोl(0, &rxmac->pf_ctrl);
 
 	/* Let's initialize the Unicast Packet filtering address */
-	if (adapter->packet_filter & ET131X_PACKET_TYPE_DIRECTED) {
-		et1310_setup_device_for_unicast(adapter);
+	अगर (adapter->packet_filter & ET131X_PACKET_TYPE_सूचीECTED) अणु
+		et1310_setup_device_क्रम_unicast(adapter);
 		pf_ctrl |= ET_RX_PFCTRL_UNICST_FILTER_ENABLE;
-	} else {
-		writel(0, &rxmac->uni_pf_addr1);
-		writel(0, &rxmac->uni_pf_addr2);
-		writel(0, &rxmac->uni_pf_addr3);
-	}
+	पूर्ण अन्यथा अणु
+		ग_लिखोl(0, &rxmac->uni_pf_addr1);
+		ग_लिखोl(0, &rxmac->uni_pf_addr2);
+		ग_लिखोl(0, &rxmac->uni_pf_addr3);
+	पूर्ण
 
 	/* Let's initialize the Multicast hash */
-	if (!(adapter->packet_filter & ET131X_PACKET_TYPE_ALL_MULTICAST)) {
+	अगर (!(adapter->packet_filter & ET131X_PACKET_TYPE_ALL_MULTICAST)) अणु
 		pf_ctrl |= ET_RX_PFCTRL_MLTCST_FILTER_ENABLE;
-		et1310_setup_device_for_multicast(adapter);
-	}
+		et1310_setup_device_क्रम_multicast(adapter);
+	पूर्ण
 
 	/* Runt packet filtering.  Didn't work in version A silicon. */
 	pf_ctrl |= (NIC_MIN_PACKET_SIZE + 4) << ET_RX_PFCTRL_MIN_PKT_SZ_SHIFT;
 	pf_ctrl |= ET_RX_PFCTRL_FRAG_FILTER_ENABLE;
 
-	if (adapter->registry_jumbo_packet > 8192)
+	अगर (adapter->registry_jumbo_packet > 8192)
 		/* In order to transmit jumbo packets greater than 8k, the
 		 * FIFO between RxMAC and RxDMA needs to be reduced in size
 		 * to (16k - Jumbo packet size).  In order to implement this,
 		 * we must use "cut through" mode in the RxMAC, which chops
-		 * packets down into segments which are (max_size * 16).  In
-		 * this case we selected 256 bytes, since this is the size of
+		 * packets करोwn पूर्णांकo segments which are (max_size * 16).  In
+		 * this हाल we selected 256 bytes, since this is the size of
 		 * the PCI-Express TLP's that the 1310 uses.
 		 *
 		 * seg_en on, fc_en off, size 0x10
 		 */
-		writel(0x41, &rxmac->mcif_ctrl_max_seg);
-	else
-		writel(0, &rxmac->mcif_ctrl_max_seg);
+		ग_लिखोl(0x41, &rxmac->mcअगर_ctrl_max_seg);
+	अन्यथा
+		ग_लिखोl(0, &rxmac->mcअगर_ctrl_max_seg);
 
-	writel(0, &rxmac->mcif_water_mark);
-	writel(0, &rxmac->mif_ctrl);
-	writel(0, &rxmac->space_avail);
+	ग_लिखोl(0, &rxmac->mcअगर_water_mark);
+	ग_लिखोl(0, &rxmac->mअगर_ctrl);
+	ग_लिखोl(0, &rxmac->space_avail);
 
-	/* Initialize the the mif_ctrl register
-	 * bit 3:  Receive code error. One or more nibbles were signaled as
+	/* Initialize the the mअगर_ctrl रेजिस्टर
+	 * bit 3:  Receive code error. One or more nibbles were संकेतed as
 	 *	   errors  during the reception of the packet.  Clear this
 	 *	   bit in Gigabit, set it in 100Mbit.  This was derived
 	 *	   experimentally at UNH.
 	 * bit 4:  Receive CRC error. The packet's CRC did not match the
-	 *	   internally generated CRC.
+	 *	   पूर्णांकernally generated CRC.
 	 * bit 5:  Receive length check error. Indicates that frame length
-	 *	   field value in the packet does not match the actual data
+	 *	   field value in the packet करोes not match the actual data
 	 *	   byte length and is not a type field.
 	 * bit 16: Receive frame truncated.
 	 * bit 17: Drop packet enable
 	 */
-	if (phydev && phydev->speed == SPEED_100)
-		writel(0x30038, &rxmac->mif_ctrl);
-	else
-		writel(0x30030, &rxmac->mif_ctrl);
+	अगर (phydev && phydev->speed == SPEED_100)
+		ग_लिखोl(0x30038, &rxmac->mअगर_ctrl);
+	अन्यथा
+		ग_लिखोl(0x30030, &rxmac->mअगर_ctrl);
 
 	/* Finally we initialize RxMac to be enabled & WOL disabled.  Packet
 	 * filter is always enabled since it is where the runt packets are
 	 * supposed to be dropped.  For version A silicon, runt packet
-	 * dropping doesn't work, so it is disabled in the pf_ctrl register,
+	 * dropping करोesn't work, so it is disabled in the pf_ctrl रेजिस्टर,
 	 * but we still leave the packet filter on.
 	 */
-	writel(pf_ctrl, &rxmac->pf_ctrl);
-	writel(ET_RX_CTRL_RXMAC_ENABLE | ET_RX_CTRL_WOL_DISABLE, &rxmac->ctrl);
-}
+	ग_लिखोl(pf_ctrl, &rxmac->pf_ctrl);
+	ग_लिखोl(ET_RX_CTRL_RXMAC_ENABLE | ET_RX_CTRL_WOL_DISABLE, &rxmac->ctrl);
+पूर्ण
 
-static void et1310_config_txmac_regs(struct et131x_adapter *adapter)
-{
-	struct txmac_regs __iomem *txmac = &adapter->regs->txmac;
+अटल व्योम et1310_config_txmac_regs(काष्ठा et131x_adapter *adapter)
+अणु
+	काष्ठा txmac_regs __iomem *txmac = &adapter->regs->txmac;
 
 	/* We need to update the Control Frame Parameters
-	 * cfpt - control frame pause timer set to 64 (0x40)
-	 * cfep - control frame extended pause timer set to 0x0
+	 * cfpt - control frame छोड़ो समयr set to 64 (0x40)
+	 * cfep - control frame extended छोड़ो समयr set to 0x0
 	 */
-	if (adapter->flow == FLOW_NONE)
-		writel(0, &txmac->cf_param);
-	else
-		writel(0x40, &txmac->cf_param);
-}
+	अगर (adapter->flow == FLOW_NONE)
+		ग_लिखोl(0, &txmac->cf_param);
+	अन्यथा
+		ग_लिखोl(0x40, &txmac->cf_param);
+पूर्ण
 
-static void et1310_config_macstat_regs(struct et131x_adapter *adapter)
-{
-	struct macstat_regs __iomem *macstat = &adapter->regs->macstat;
+अटल व्योम et1310_config_macstat_regs(काष्ठा et131x_adapter *adapter)
+अणु
+	काष्ठा macstat_regs __iomem *macstat = &adapter->regs->macstat;
 	u32 __iomem *reg;
 
-	/* initialize all the macstat registers to zero on the device  */
-	for (reg = &macstat->txrx_0_64_byte_frames;
+	/* initialize all the macstat रेजिस्टरs to zero on the device  */
+	क्रम (reg = &macstat->txrx_0_64_byte_frames;
 	     reg <= &macstat->carry_reg2; reg++)
-		writel(0, reg);
+		ग_लिखोl(0, reg);
 
 	/* Unmask any counters that we want to track the overflow of.
 	 * Initially this will be all counters.  It may become clear later
-	 * that we do not need to track all counters.
+	 * that we करो not need to track all counters.
 	 */
-	writel(0xFFFFBE32, &macstat->carry_reg1_mask);
-	writel(0xFFFE7E8B, &macstat->carry_reg2_mask);
-}
+	ग_लिखोl(0xFFFFBE32, &macstat->carry_reg1_mask);
+	ग_लिखोl(0xFFFE7E8B, &macstat->carry_reg2_mask);
+पूर्ण
 
-static int et131x_phy_mii_read(struct et131x_adapter *adapter, u8 addr,
+अटल पूर्णांक et131x_phy_mii_पढ़ो(काष्ठा et131x_adapter *adapter, u8 addr,
 			       u8 reg, u16 *value)
-{
-	struct mac_regs __iomem *mac = &adapter->regs->mac;
-	int status = 0;
+अणु
+	काष्ठा mac_regs __iomem *mac = &adapter->regs->mac;
+	पूर्णांक status = 0;
 	u32 delay = 0;
 	u32 mii_addr;
 	u32 mii_cmd;
 	u32 mii_indicator;
 
-	/* Save a local copy of the registers we are dealing with so we can
+	/* Save a local copy of the रेजिस्टरs we are dealing with so we can
 	 * set them back
 	 */
-	mii_addr = readl(&mac->mii_mgmt_addr);
-	mii_cmd = readl(&mac->mii_mgmt_cmd);
+	mii_addr = पढ़ोl(&mac->mii_mgmt_addr);
+	mii_cmd = पढ़ोl(&mac->mii_mgmt_cmd);
 
 	/* Stop the current operation */
-	writel(0, &mac->mii_mgmt_cmd);
+	ग_लिखोl(0, &mac->mii_mgmt_cmd);
 
-	/* Set up the register we need to read from on the correct PHY */
-	writel(ET_MAC_MII_ADDR(addr, reg), &mac->mii_mgmt_addr);
+	/* Set up the रेजिस्टर we need to पढ़ो from on the correct PHY */
+	ग_लिखोl(ET_MAC_MII_ADDR(addr, reg), &mac->mii_mgmt_addr);
 
-	writel(0x1, &mac->mii_mgmt_cmd);
+	ग_लिखोl(0x1, &mac->mii_mgmt_cmd);
 
-	do {
+	करो अणु
 		udelay(50);
 		delay++;
-		mii_indicator = readl(&mac->mii_mgmt_indicator);
-	} while ((mii_indicator & ET_MAC_MGMT_WAIT) && delay < 50);
+		mii_indicator = पढ़ोl(&mac->mii_mgmt_indicator);
+	पूर्ण जबतक ((mii_indicator & ET_MAC_MGMT_WAIT) && delay < 50);
 
-	/* If we hit the max delay, we could not read the register */
-	if (delay == 50) {
+	/* If we hit the max delay, we could not पढ़ो the रेजिस्टर */
+	अगर (delay == 50) अणु
 		dev_warn(&adapter->pdev->dev,
 			 "reg 0x%08x could not be read\n", reg);
 		dev_warn(&adapter->pdev->dev, "status is  0x%08x\n",
 			 mii_indicator);
 
 		status = -EIO;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	/* If we hit here we were able to read the register and we need to
-	 * return the value to the caller
+	/* If we hit here we were able to पढ़ो the रेजिस्टर and we need to
+	 * वापस the value to the caller
 	 */
-	*value = readl(&mac->mii_mgmt_stat) & ET_MAC_MIIMGMT_STAT_PHYCRTL_MASK;
+	*value = पढ़ोl(&mac->mii_mgmt_stat) & ET_MAC_MIIMGMT_STAT_PHYCRTL_MASK;
 
 out:
-	/* Stop the read operation */
-	writel(0, &mac->mii_mgmt_cmd);
+	/* Stop the पढ़ो operation */
+	ग_लिखोl(0, &mac->mii_mgmt_cmd);
 
-	/* set the registers we touched back to the state at which we entered
+	/* set the रेजिस्टरs we touched back to the state at which we entered
 	 * this function
 	 */
-	writel(mii_addr, &mac->mii_mgmt_addr);
-	writel(mii_cmd, &mac->mii_mgmt_cmd);
+	ग_लिखोl(mii_addr, &mac->mii_mgmt_addr);
+	ग_लिखोl(mii_cmd, &mac->mii_mgmt_cmd);
 
-	return status;
-}
+	वापस status;
+पूर्ण
 
-static int et131x_mii_read(struct et131x_adapter *adapter, u8 reg, u16 *value)
-{
-	struct phy_device *phydev = adapter->netdev->phydev;
+अटल पूर्णांक et131x_mii_पढ़ो(काष्ठा et131x_adapter *adapter, u8 reg, u16 *value)
+अणु
+	काष्ठा phy_device *phydev = adapter->netdev->phydev;
 
-	if (!phydev)
-		return -EIO;
+	अगर (!phydev)
+		वापस -EIO;
 
-	return et131x_phy_mii_read(adapter, phydev->mdio.addr, reg, value);
-}
+	वापस et131x_phy_mii_पढ़ो(adapter, phydev->mdio.addr, reg, value);
+पूर्ण
 
-static int et131x_mii_write(struct et131x_adapter *adapter, u8 addr, u8 reg,
+अटल पूर्णांक et131x_mii_ग_लिखो(काष्ठा et131x_adapter *adapter, u8 addr, u8 reg,
 			    u16 value)
-{
-	struct mac_regs __iomem *mac = &adapter->regs->mac;
-	int status = 0;
+अणु
+	काष्ठा mac_regs __iomem *mac = &adapter->regs->mac;
+	पूर्णांक status = 0;
 	u32 delay = 0;
 	u32 mii_addr;
 	u32 mii_cmd;
 	u32 mii_indicator;
 
-	/* Save a local copy of the registers we are dealing with so we can
+	/* Save a local copy of the रेजिस्टरs we are dealing with so we can
 	 * set them back
 	 */
-	mii_addr = readl(&mac->mii_mgmt_addr);
-	mii_cmd = readl(&mac->mii_mgmt_cmd);
+	mii_addr = पढ़ोl(&mac->mii_mgmt_addr);
+	mii_cmd = पढ़ोl(&mac->mii_mgmt_cmd);
 
 	/* Stop the current operation */
-	writel(0, &mac->mii_mgmt_cmd);
+	ग_लिखोl(0, &mac->mii_mgmt_cmd);
 
-	/* Set up the register we need to write to on the correct PHY */
-	writel(ET_MAC_MII_ADDR(addr, reg), &mac->mii_mgmt_addr);
+	/* Set up the रेजिस्टर we need to ग_लिखो to on the correct PHY */
+	ग_लिखोl(ET_MAC_MII_ADDR(addr, reg), &mac->mii_mgmt_addr);
 
-	/* Add the value to write to the registers to the mac */
-	writel(value, &mac->mii_mgmt_ctrl);
+	/* Add the value to ग_लिखो to the रेजिस्टरs to the mac */
+	ग_लिखोl(value, &mac->mii_mgmt_ctrl);
 
-	do {
+	करो अणु
 		udelay(50);
 		delay++;
-		mii_indicator = readl(&mac->mii_mgmt_indicator);
-	} while ((mii_indicator & ET_MAC_MGMT_BUSY) && delay < 100);
+		mii_indicator = पढ़ोl(&mac->mii_mgmt_indicator);
+	पूर्ण जबतक ((mii_indicator & ET_MAC_MGMT_BUSY) && delay < 100);
 
-	/* If we hit the max delay, we could not write the register */
-	if (delay == 100) {
-		u16 tmp;
+	/* If we hit the max delay, we could not ग_लिखो the रेजिस्टर */
+	अगर (delay == 100) अणु
+		u16 पंचांगp;
 
 		dev_warn(&adapter->pdev->dev,
 			 "reg 0x%08x could not be written", reg);
 		dev_warn(&adapter->pdev->dev, "status is  0x%08x\n",
 			 mii_indicator);
 		dev_warn(&adapter->pdev->dev, "command is  0x%08x\n",
-			 readl(&mac->mii_mgmt_cmd));
+			 पढ़ोl(&mac->mii_mgmt_cmd));
 
-		et131x_mii_read(adapter, reg, &tmp);
+		et131x_mii_पढ़ो(adapter, reg, &पंचांगp);
 
 		status = -EIO;
-	}
-	/* Stop the write operation */
-	writel(0, &mac->mii_mgmt_cmd);
+	पूर्ण
+	/* Stop the ग_लिखो operation */
+	ग_लिखोl(0, &mac->mii_mgmt_cmd);
 
-	/* set the registers we touched back to the state at which we entered
+	/* set the रेजिस्टरs we touched back to the state at which we entered
 	 * this function
 	 */
-	writel(mii_addr, &mac->mii_mgmt_addr);
-	writel(mii_cmd, &mac->mii_mgmt_cmd);
+	ग_लिखोl(mii_addr, &mac->mii_mgmt_addr);
+	ग_लिखोl(mii_cmd, &mac->mii_mgmt_cmd);
 
-	return status;
-}
+	वापस status;
+पूर्ण
 
-static void et1310_phy_read_mii_bit(struct et131x_adapter *adapter,
+अटल व्योम et1310_phy_पढ़ो_mii_bit(काष्ठा et131x_adapter *adapter,
 				    u16 regnum,
 				    u16 bitnum,
 				    u8 *value)
-{
+अणु
 	u16 reg;
 	u16 mask = 1 << bitnum;
 
-	et131x_mii_read(adapter, regnum, &reg);
+	et131x_mii_पढ़ो(adapter, regnum, &reg);
 
 	*value = (reg & mask) >> bitnum;
-}
+पूर्ण
 
-static void et1310_config_flow_control(struct et131x_adapter *adapter)
-{
-	struct phy_device *phydev = adapter->netdev->phydev;
+अटल व्योम et1310_config_flow_control(काष्ठा et131x_adapter *adapter)
+अणु
+	काष्ठा phy_device *phydev = adapter->netdev->phydev;
 
-	if (phydev->duplex == DUPLEX_HALF) {
+	अगर (phydev->duplex == DUPLEX_HALF) अणु
 		adapter->flow = FLOW_NONE;
-	} else {
-		char remote_pause, remote_async_pause;
+	पूर्ण अन्यथा अणु
+		अक्षर remote_छोड़ो, remote_async_छोड़ो;
 
-		et1310_phy_read_mii_bit(adapter, 5, 10, &remote_pause);
-		et1310_phy_read_mii_bit(adapter, 5, 11, &remote_async_pause);
+		et1310_phy_पढ़ो_mii_bit(adapter, 5, 10, &remote_छोड़ो);
+		et1310_phy_पढ़ो_mii_bit(adapter, 5, 11, &remote_async_छोड़ो);
 
-		if (remote_pause && remote_async_pause) {
+		अगर (remote_छोड़ो && remote_async_छोड़ो) अणु
 			adapter->flow = adapter->wanted_flow;
-		} else if (remote_pause && !remote_async_pause) {
-			if (adapter->wanted_flow == FLOW_BOTH)
+		पूर्ण अन्यथा अगर (remote_छोड़ो && !remote_async_छोड़ो) अणु
+			अगर (adapter->wanted_flow == FLOW_BOTH)
 				adapter->flow = FLOW_BOTH;
-			else
+			अन्यथा
 				adapter->flow = FLOW_NONE;
-		} else if (!remote_pause && !remote_async_pause) {
+		पूर्ण अन्यथा अगर (!remote_छोड़ो && !remote_async_छोड़ो) अणु
 			adapter->flow = FLOW_NONE;
-		} else {
-			if (adapter->wanted_flow == FLOW_BOTH)
+		पूर्ण अन्यथा अणु
+			अगर (adapter->wanted_flow == FLOW_BOTH)
 				adapter->flow = FLOW_RXONLY;
-			else
+			अन्यथा
 				adapter->flow = FLOW_NONE;
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
 /* et1310_update_macstat_host_counters - Update local copy of the statistics */
-static void et1310_update_macstat_host_counters(struct et131x_adapter *adapter)
-{
-	struct ce_stats *stats = &adapter->stats;
-	struct macstat_regs __iomem *macstat =
+अटल व्योम et1310_update_macstat_host_counters(काष्ठा et131x_adapter *adapter)
+अणु
+	काष्ठा ce_stats *stats = &adapter->stats;
+	काष्ठा macstat_regs __iomem *macstat =
 		&adapter->regs->macstat;
 
-	stats->tx_collisions	       += readl(&macstat->tx_total_collisions);
-	stats->tx_first_collisions     += readl(&macstat->tx_single_collisions);
-	stats->tx_deferred	       += readl(&macstat->tx_deferred);
+	stats->tx_collisions	       += पढ़ोl(&macstat->tx_total_collisions);
+	stats->tx_first_collisions     += पढ़ोl(&macstat->tx_single_collisions);
+	stats->tx_deferred	       += पढ़ोl(&macstat->tx_deferred);
 	stats->tx_excessive_collisions +=
-				readl(&macstat->tx_multiple_collisions);
-	stats->tx_late_collisions      += readl(&macstat->tx_late_collisions);
-	stats->tx_underflows	       += readl(&macstat->tx_undersize_frames);
-	stats->tx_max_pkt_errs	       += readl(&macstat->tx_oversize_frames);
+				पढ़ोl(&macstat->tx_multiple_collisions);
+	stats->tx_late_collisions      += पढ़ोl(&macstat->tx_late_collisions);
+	stats->tx_underflows	       += पढ़ोl(&macstat->tx_undersize_frames);
+	stats->tx_max_pkt_errs	       += पढ़ोl(&macstat->tx_oversize_frames);
 
-	stats->rx_align_errs        += readl(&macstat->rx_align_errs);
-	stats->rx_crc_errs          += readl(&macstat->rx_code_errs);
-	stats->rcvd_pkts_dropped    += readl(&macstat->rx_drops);
-	stats->rx_overflows         += readl(&macstat->rx_oversize_packets);
-	stats->rx_code_violations   += readl(&macstat->rx_fcs_errs);
-	stats->rx_length_errs       += readl(&macstat->rx_frame_len_errs);
-	stats->rx_other_errs        += readl(&macstat->rx_fragment_packets);
-}
+	stats->rx_align_errs        += पढ़ोl(&macstat->rx_align_errs);
+	stats->rx_crc_errs          += पढ़ोl(&macstat->rx_code_errs);
+	stats->rcvd_pkts_dropped    += पढ़ोl(&macstat->rx_drops);
+	stats->rx_overflows         += पढ़ोl(&macstat->rx_oversize_packets);
+	stats->rx_code_violations   += पढ़ोl(&macstat->rx_fcs_errs);
+	stats->rx_length_errs       += पढ़ोl(&macstat->rx_frame_len_errs);
+	stats->rx_other_errs        += पढ़ोl(&macstat->rx_fragment_packets);
+पूर्ण
 
-/* et1310_handle_macstat_interrupt
+/* et1310_handle_macstat_पूर्णांकerrupt
  *
  * One of the MACSTAT counters has wrapped.  Update the local copy of
- * the statistics held in the adapter structure, checking the "wrap"
- * bit for each counter.
+ * the statistics held in the adapter काष्ठाure, checking the "wrap"
+ * bit क्रम each counter.
  */
-static void et1310_handle_macstat_interrupt(struct et131x_adapter *adapter)
-{
+अटल व्योम et1310_handle_macstat_पूर्णांकerrupt(काष्ठा et131x_adapter *adapter)
+अणु
 	u32 carry_reg1;
 	u32 carry_reg2;
 
-	/* Read the interrupt bits from the register(s).  These are Clear On
+	/* Read the पूर्णांकerrupt bits from the रेजिस्टर(s).  These are Clear On
 	 * Write.
 	 */
-	carry_reg1 = readl(&adapter->regs->macstat.carry_reg1);
-	carry_reg2 = readl(&adapter->regs->macstat.carry_reg2);
+	carry_reg1 = पढ़ोl(&adapter->regs->macstat.carry_reg1);
+	carry_reg2 = पढ़ोl(&adapter->regs->macstat.carry_reg2);
 
-	writel(carry_reg1, &adapter->regs->macstat.carry_reg1);
-	writel(carry_reg2, &adapter->regs->macstat.carry_reg2);
+	ग_लिखोl(carry_reg1, &adapter->regs->macstat.carry_reg1);
+	ग_लिखोl(carry_reg2, &adapter->regs->macstat.carry_reg2);
 
-	/* We need to do update the host copy of all the MAC_STAT counters.
+	/* We need to करो update the host copy of all the MAC_STAT counters.
 	 * For each counter, check it's overflow bit.  If the overflow bit is
 	 * set, then increment the host version of the count by one complete
 	 * revolution of the counter.  This routine is called when the counter
 	 * block indicates that one of the counters has wrapped.
 	 */
-	if (carry_reg1 & (1 << 14))
+	अगर (carry_reg1 & (1 << 14))
 		adapter->stats.rx_code_violations	+= COUNTER_WRAP_16_BIT;
-	if (carry_reg1 & (1 << 8))
+	अगर (carry_reg1 & (1 << 8))
 		adapter->stats.rx_align_errs	+= COUNTER_WRAP_12_BIT;
-	if (carry_reg1 & (1 << 7))
+	अगर (carry_reg1 & (1 << 7))
 		adapter->stats.rx_length_errs	+= COUNTER_WRAP_16_BIT;
-	if (carry_reg1 & (1 << 2))
+	अगर (carry_reg1 & (1 << 2))
 		adapter->stats.rx_other_errs	+= COUNTER_WRAP_16_BIT;
-	if (carry_reg1 & (1 << 6))
+	अगर (carry_reg1 & (1 << 6))
 		adapter->stats.rx_crc_errs	+= COUNTER_WRAP_16_BIT;
-	if (carry_reg1 & (1 << 3))
+	अगर (carry_reg1 & (1 << 3))
 		adapter->stats.rx_overflows	+= COUNTER_WRAP_16_BIT;
-	if (carry_reg1 & (1 << 0))
+	अगर (carry_reg1 & (1 << 0))
 		adapter->stats.rcvd_pkts_dropped	+= COUNTER_WRAP_16_BIT;
-	if (carry_reg2 & (1 << 16))
+	अगर (carry_reg2 & (1 << 16))
 		adapter->stats.tx_max_pkt_errs	+= COUNTER_WRAP_12_BIT;
-	if (carry_reg2 & (1 << 15))
+	अगर (carry_reg2 & (1 << 15))
 		adapter->stats.tx_underflows	+= COUNTER_WRAP_12_BIT;
-	if (carry_reg2 & (1 << 6))
+	अगर (carry_reg2 & (1 << 6))
 		adapter->stats.tx_first_collisions += COUNTER_WRAP_12_BIT;
-	if (carry_reg2 & (1 << 8))
+	अगर (carry_reg2 & (1 << 8))
 		adapter->stats.tx_deferred	+= COUNTER_WRAP_12_BIT;
-	if (carry_reg2 & (1 << 5))
+	अगर (carry_reg2 & (1 << 5))
 		adapter->stats.tx_excessive_collisions += COUNTER_WRAP_12_BIT;
-	if (carry_reg2 & (1 << 4))
+	अगर (carry_reg2 & (1 << 4))
 		adapter->stats.tx_late_collisions	+= COUNTER_WRAP_12_BIT;
-	if (carry_reg2 & (1 << 2))
+	अगर (carry_reg2 & (1 << 2))
 		adapter->stats.tx_collisions	+= COUNTER_WRAP_12_BIT;
-}
+पूर्ण
 
-static int et131x_mdio_read(struct mii_bus *bus, int phy_addr, int reg)
-{
-	struct net_device *netdev = bus->priv;
-	struct et131x_adapter *adapter = netdev_priv(netdev);
+अटल पूर्णांक et131x_mdio_पढ़ो(काष्ठा mii_bus *bus, पूर्णांक phy_addr, पूर्णांक reg)
+अणु
+	काष्ठा net_device *netdev = bus->priv;
+	काष्ठा et131x_adapter *adapter = netdev_priv(netdev);
 	u16 value;
-	int ret;
+	पूर्णांक ret;
 
-	ret = et131x_phy_mii_read(adapter, phy_addr, reg, &value);
+	ret = et131x_phy_mii_पढ़ो(adapter, phy_addr, reg, &value);
 
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	return value;
-}
+	वापस value;
+पूर्ण
 
-static int et131x_mdio_write(struct mii_bus *bus, int phy_addr,
-			     int reg, u16 value)
-{
-	struct net_device *netdev = bus->priv;
-	struct et131x_adapter *adapter = netdev_priv(netdev);
+अटल पूर्णांक et131x_mdio_ग_लिखो(काष्ठा mii_bus *bus, पूर्णांक phy_addr,
+			     पूर्णांक reg, u16 value)
+अणु
+	काष्ठा net_device *netdev = bus->priv;
+	काष्ठा et131x_adapter *adapter = netdev_priv(netdev);
 
-	return et131x_mii_write(adapter, phy_addr, reg, value);
-}
+	वापस et131x_mii_ग_लिखो(adapter, phy_addr, reg, value);
+पूर्ण
 
-/*	et1310_phy_power_switch	-	PHY power control
+/*	et1310_phy_घातer_चयन	-	PHY घातer control
  *	@adapter: device to control
- *	@down: true for off/false for back on
+ *	@करोwn: true क्रम off/false क्रम back on
  *
  *	one hundred, ten, one thousand megs
  *	How would you like to have your LAN accessed
  *	Can't you see that this code processed
- *	Phy power, phy power..
+ *	Phy घातer, phy घातer..
  */
-static void et1310_phy_power_switch(struct et131x_adapter *adapter, bool down)
-{
+अटल व्योम et1310_phy_घातer_चयन(काष्ठा et131x_adapter *adapter, bool करोwn)
+अणु
 	u16 data;
-	struct  phy_device *phydev = adapter->netdev->phydev;
+	काष्ठा  phy_device *phydev = adapter->netdev->phydev;
 
-	et131x_mii_read(adapter, MII_BMCR, &data);
+	et131x_mii_पढ़ो(adapter, MII_BMCR, &data);
 	data &= ~BMCR_PDOWN;
-	if (down)
+	अगर (करोwn)
 		data |= BMCR_PDOWN;
-	et131x_mii_write(adapter, phydev->mdio.addr, MII_BMCR, data);
-}
+	et131x_mii_ग_लिखो(adapter, phydev->mdio.addr, MII_BMCR, data);
+पूर्ण
 
-/* et131x_xcvr_init - Init the phy if we are setting it into force mode */
-static void et131x_xcvr_init(struct et131x_adapter *adapter)
-{
+/* et131x_xcvr_init - Init the phy अगर we are setting it पूर्णांकo क्रमce mode */
+अटल व्योम et131x_xcvr_init(काष्ठा et131x_adapter *adapter)
+अणु
 	u16 lcr2;
-	struct  phy_device *phydev = adapter->netdev->phydev;
+	काष्ठा  phy_device *phydev = adapter->netdev->phydev;
 
 	/* Set the LED behavior such that LED 1 indicates speed (off =
 	 * 10Mbits, blink = 100Mbits, on = 1000Mbits) and LED 2 indicates
-	 * link and activity (on for link, blink off for activity).
+	 * link and activity (on क्रम link, blink off क्रम activity).
 	 *
-	 * NOTE: Some customizations have been added here for specific
-	 * vendors; The LED behavior is now determined by vendor data in the
-	 * EEPROM. However, the above description is the default.
+	 * NOTE: Some customizations have been added here क्रम specअगरic
+	 * venकरोrs; The LED behavior is now determined by venकरोr data in the
+	 * EEPROM. However, the above description is the शेष.
 	 */
-	if ((adapter->eeprom_data[1] & 0x4) == 0) {
-		et131x_mii_read(adapter, PHY_LED_2, &lcr2);
+	अगर ((adapter->eeprom_data[1] & 0x4) == 0) अणु
+		et131x_mii_पढ़ो(adapter, PHY_LED_2, &lcr2);
 
 		lcr2 &= (ET_LED2_LED_100TX | ET_LED2_LED_1000T);
 		lcr2 |= (LED_VAL_LINKON_ACTIVE << LED_LINK_SHIFT);
 
-		if ((adapter->eeprom_data[1] & 0x8) == 0)
+		अगर ((adapter->eeprom_data[1] & 0x8) == 0)
 			lcr2 |= (LED_VAL_1000BT_100BTX << LED_TXRX_SHIFT);
-		else
+		अन्यथा
 			lcr2 |= (LED_VAL_LINKON << LED_TXRX_SHIFT);
 
-		et131x_mii_write(adapter, phydev->mdio.addr, PHY_LED_2, lcr2);
-	}
-}
+		et131x_mii_ग_लिखो(adapter, phydev->mdio.addr, PHY_LED_2, lcr2);
+	पूर्ण
+पूर्ण
 
 /* et131x_configure_global_regs	- configure JAGCore global regs */
-static void et131x_configure_global_regs(struct et131x_adapter *adapter)
-{
-	struct global_regs __iomem *regs = &adapter->regs->global;
+अटल व्योम et131x_configure_global_regs(काष्ठा et131x_adapter *adapter)
+अणु
+	काष्ठा global_regs __iomem *regs = &adapter->regs->global;
 
-	writel(0, &regs->rxq_start_addr);
-	writel(INTERNAL_MEM_SIZE - 1, &regs->txq_end_addr);
+	ग_लिखोl(0, &regs->rxq_start_addr);
+	ग_लिखोl(INTERNAL_MEM_SIZE - 1, &regs->txq_end_addr);
 
-	if (adapter->registry_jumbo_packet < 2048) {
-		/* Tx / RxDMA and Tx/Rx MAC interfaces have a 1k word
+	अगर (adapter->registry_jumbo_packet < 2048) अणु
+		/* Tx / RxDMA and Tx/Rx MAC पूर्णांकerfaces have a 1k word
 		 * block of RAM that the driver can split between Tx
-		 * and Rx as it desires.  Our default is to split it
+		 * and Rx as it desires.  Our शेष is to split it
 		 * 50/50:
 		 */
-		writel(PARM_RX_MEM_END_DEF, &regs->rxq_end_addr);
-		writel(PARM_RX_MEM_END_DEF + 1, &regs->txq_start_addr);
-	} else if (adapter->registry_jumbo_packet < 8192) {
+		ग_लिखोl(PARM_RX_MEM_END_DEF, &regs->rxq_end_addr);
+		ग_लिखोl(PARM_RX_MEM_END_DEF + 1, &regs->txq_start_addr);
+	पूर्ण अन्यथा अगर (adapter->registry_jumbo_packet < 8192) अणु
 		/* For jumbo packets > 2k but < 8k, split 50-50. */
-		writel(INTERNAL_MEM_RX_OFFSET, &regs->rxq_end_addr);
-		writel(INTERNAL_MEM_RX_OFFSET + 1, &regs->txq_start_addr);
-	} else {
+		ग_लिखोl(INTERNAL_MEM_RX_OFFSET, &regs->rxq_end_addr);
+		ग_लिखोl(INTERNAL_MEM_RX_OFFSET + 1, &regs->txq_start_addr);
+	पूर्ण अन्यथा अणु
 		/* 9216 is the only packet size greater than 8k that
 		 * is available. The Tx buffer has to be big enough
-		 * for one whole packet on the Tx side. We'll make
+		 * क्रम one whole packet on the Tx side. We'll make
 		 * the Tx 9408, and give the rest to Rx
 		 */
-		writel(0x01b3, &regs->rxq_end_addr);
-		writel(0x01b4, &regs->txq_start_addr);
-	}
+		ग_लिखोl(0x01b3, &regs->rxq_end_addr);
+		ग_लिखोl(0x01b4, &regs->txq_start_addr);
+	पूर्ण
 
-	/* Initialize the loopback register. Disable all loopbacks. */
-	writel(0, &regs->loopback);
+	/* Initialize the loopback रेजिस्टर. Disable all loopbacks. */
+	ग_लिखोl(0, &regs->loopback);
 
-	writel(0, &regs->msi_config);
+	ग_लिखोl(0, &regs->msi_config);
 
-	/* By default, disable the watchdog timer.  It will be enabled when
+	/* By शेष, disable the watchकरोg समयr.  It will be enabled when
 	 * a packet is queued.
 	 */
-	writel(0, &regs->watchdog_timer);
-}
+	ग_लिखोl(0, &regs->watchकरोg_समयr);
+पूर्ण
 
 /* et131x_config_rx_dma_regs - Start of Rx_DMA init sequence */
-static void et131x_config_rx_dma_regs(struct et131x_adapter *adapter)
-{
-	struct rxdma_regs __iomem *rx_dma = &adapter->regs->rxdma;
-	struct rx_ring *rx_local = &adapter->rx_ring;
-	struct fbr_desc *fbr_entry;
+अटल व्योम et131x_config_rx_dma_regs(काष्ठा et131x_adapter *adapter)
+अणु
+	काष्ठा rxdma_regs __iomem *rx_dma = &adapter->regs->rxdma;
+	काष्ठा rx_ring *rx_local = &adapter->rx_ring;
+	काष्ठा fbr_desc *fbr_entry;
 	u32 entry;
 	u32 psr_num_des;
-	unsigned long flags;
+	अचिन्हित दीर्घ flags;
 	u8 id;
 
 	et131x_rx_dma_disable(adapter);
 
-	/* Load the completion writeback physical address */
-	writel(upper_32_bits(rx_local->rx_status_bus), &rx_dma->dma_wb_base_hi);
-	writel(lower_32_bits(rx_local->rx_status_bus), &rx_dma->dma_wb_base_lo);
+	/* Load the completion ग_लिखोback physical address */
+	ग_लिखोl(upper_32_bits(rx_local->rx_status_bus), &rx_dma->dma_wb_base_hi);
+	ग_लिखोl(lower_32_bits(rx_local->rx_status_bus), &rx_dma->dma_wb_base_lo);
 
-	memset(rx_local->rx_status_block, 0, sizeof(struct rx_status_block));
+	स_रखो(rx_local->rx_status_block, 0, माप(काष्ठा rx_status_block));
 
 	/* Set the address and parameters of the packet status ring */
-	writel(upper_32_bits(rx_local->ps_ring_physaddr), &rx_dma->psr_base_hi);
-	writel(lower_32_bits(rx_local->ps_ring_physaddr), &rx_dma->psr_base_lo);
-	writel(rx_local->psr_entries - 1, &rx_dma->psr_num_des);
-	writel(0, &rx_dma->psr_full_offset);
+	ग_लिखोl(upper_32_bits(rx_local->ps_ring_physaddr), &rx_dma->psr_base_hi);
+	ग_लिखोl(lower_32_bits(rx_local->ps_ring_physaddr), &rx_dma->psr_base_lo);
+	ग_लिखोl(rx_local->psr_entries - 1, &rx_dma->psr_num_des);
+	ग_लिखोl(0, &rx_dma->psr_full_offset);
 
-	psr_num_des = readl(&rx_dma->psr_num_des) & ET_RXDMA_PSR_NUM_DES_MASK;
-	writel((psr_num_des * LO_MARK_PERCENT_FOR_PSR) / 100,
+	psr_num_des = पढ़ोl(&rx_dma->psr_num_des) & ET_RXDMA_PSR_NUM_DES_MASK;
+	ग_लिखोl((psr_num_des * LO_MARK_PERCENT_FOR_PSR) / 100,
 	       &rx_dma->psr_min_des);
 
 	spin_lock_irqsave(&adapter->rcv_lock, flags);
 
-	/* These local variables track the PSR in the adapter structure */
+	/* These local variables track the PSR in the adapter काष्ठाure */
 	rx_local->local_psr_full = 0;
 
-	for (id = 0; id < NUM_FBRS; id++) {
+	क्रम (id = 0; id < NUM_FBRS; id++) अणु
 		u32 __iomem *num_des;
 		u32 __iomem *full_offset;
 		u32 __iomem *min_des;
 		u32 __iomem *base_hi;
 		u32 __iomem *base_lo;
-		struct fbr_lookup *fbr = rx_local->fbr[id];
+		काष्ठा fbr_lookup *fbr = rx_local->fbr[id];
 
-		if (id == 0) {
+		अगर (id == 0) अणु
 			num_des = &rx_dma->fbr0_num_des;
 			full_offset = &rx_dma->fbr0_full_offset;
 			min_des = &rx_dma->fbr0_min_des;
 			base_hi = &rx_dma->fbr0_base_hi;
 			base_lo = &rx_dma->fbr0_base_lo;
-		} else {
+		पूर्ण अन्यथा अणु
 			num_des = &rx_dma->fbr1_num_des;
 			full_offset = &rx_dma->fbr1_full_offset;
 			min_des = &rx_dma->fbr1_min_des;
 			base_hi = &rx_dma->fbr1_base_hi;
 			base_lo = &rx_dma->fbr1_base_lo;
-		}
+		पूर्ण
 
-		/* Now's the best time to initialize FBR contents */
+		/* Now's the best समय to initialize FBR contents */
 		fbr_entry = fbr->ring_virtaddr;
-		for (entry = 0; entry < fbr->num_entries; entry++) {
+		क्रम (entry = 0; entry < fbr->num_entries; entry++) अणु
 			fbr_entry->addr_hi = fbr->bus_high[entry];
 			fbr_entry->addr_lo = fbr->bus_low[entry];
 			fbr_entry->word2 = entry;
 			fbr_entry++;
-		}
+		पूर्ण
 
 		/* Set the address and parameters of Free buffer ring 1 and 0 */
-		writel(upper_32_bits(fbr->ring_physaddr), base_hi);
-		writel(lower_32_bits(fbr->ring_physaddr), base_lo);
-		writel(fbr->num_entries - 1, num_des);
-		writel(ET_DMA10_WRAP, full_offset);
+		ग_लिखोl(upper_32_bits(fbr->ring_physaddr), base_hi);
+		ग_लिखोl(lower_32_bits(fbr->ring_physaddr), base_lo);
+		ग_लिखोl(fbr->num_entries - 1, num_des);
+		ग_लिखोl(ET_DMA10_WRAP, full_offset);
 
-		/* This variable tracks the free buffer ring 1 full position,
+		/* This variable tracks the मुक्त buffer ring 1 full position,
 		 * so it has to match the above.
 		 */
 		fbr->local_full = ET_DMA10_WRAP;
-		writel(((fbr->num_entries * LO_MARK_PERCENT_FOR_RX) / 100) - 1,
+		ग_लिखोl(((fbr->num_entries * LO_MARK_PERCENT_FOR_RX) / 100) - 1,
 		       min_des);
-	}
+	पूर्ण
 
-	/* Program the number of packets we will receive before generating an
-	 * interrupt.
-	 * For version B silicon, this value gets updated once autoneg is
+	/* Program the number of packets we will receive beक्रमe generating an
+	 * पूर्णांकerrupt.
+	 * For version B silicon, this value माला_लो updated once स्वतःneg is
 	 *complete.
 	 */
-	writel(PARM_RX_NUM_BUFS_DEF, &rx_dma->num_pkt_done);
+	ग_लिखोl(PARM_RX_NUM_BUFS_DEF, &rx_dma->num_pkt_करोne);
 
-	/* The "time_done" is not working correctly to coalesce interrupts
-	 * after a given time period, but rather is giving us an interrupt
+	/* The "time_done" is not working correctly to coalesce पूर्णांकerrupts
+	 * after a given समय period, but rather is giving us an पूर्णांकerrupt
 	 * regardless of whether we have received packets.
-	 * This value gets updated once autoneg is complete.
+	 * This value माला_लो updated once स्वतःneg is complete.
 	 */
-	writel(PARM_RX_TIME_INT_DEF, &rx_dma->max_pkt_time);
+	ग_लिखोl(PARM_RX_TIME_INT_DEF, &rx_dma->max_pkt_समय);
 
 	spin_unlock_irqrestore(&adapter->rcv_lock, flags);
-}
+पूर्ण
 
 /* et131x_config_tx_dma_regs - Set up the tx dma section of the JAGCore.
  *
  * Configure the transmit engine with the ring buffers we have created
- * and prepare it for use.
+ * and prepare it क्रम use.
  */
-static void et131x_config_tx_dma_regs(struct et131x_adapter *adapter)
-{
-	struct txdma_regs __iomem *txdma = &adapter->regs->txdma;
-	struct tx_ring *tx_ring = &adapter->tx_ring;
+अटल व्योम et131x_config_tx_dma_regs(काष्ठा et131x_adapter *adapter)
+अणु
+	काष्ठा txdma_regs __iomem *txdma = &adapter->regs->txdma;
+	काष्ठा tx_ring *tx_ring = &adapter->tx_ring;
 
 	/* Load the hardware with the start of the transmit descriptor ring. */
-	writel(upper_32_bits(tx_ring->tx_desc_ring_pa), &txdma->pr_base_hi);
-	writel(lower_32_bits(tx_ring->tx_desc_ring_pa), &txdma->pr_base_lo);
+	ग_लिखोl(upper_32_bits(tx_ring->tx_desc_ring_pa), &txdma->pr_base_hi);
+	ग_लिखोl(lower_32_bits(tx_ring->tx_desc_ring_pa), &txdma->pr_base_lo);
 
 	/* Initialise the transmit DMA engine */
-	writel(NUM_DESC_PER_RING_TX - 1, &txdma->pr_num_des);
+	ग_लिखोl(NUM_DESC_PER_RING_TX - 1, &txdma->pr_num_des);
 
-	/* Load the completion writeback physical address */
-	writel(upper_32_bits(tx_ring->tx_status_pa), &txdma->dma_wb_base_hi);
-	writel(lower_32_bits(tx_ring->tx_status_pa), &txdma->dma_wb_base_lo);
+	/* Load the completion ग_लिखोback physical address */
+	ग_लिखोl(upper_32_bits(tx_ring->tx_status_pa), &txdma->dma_wb_base_hi);
+	ग_लिखोl(lower_32_bits(tx_ring->tx_status_pa), &txdma->dma_wb_base_lo);
 
 	*tx_ring->tx_status = 0;
 
-	writel(0, &txdma->service_request);
+	ग_लिखोl(0, &txdma->service_request);
 	tx_ring->send_idx = 0;
-}
+पूर्ण
 
-/* et131x_adapter_setup - Set the adapter up as per cassini+ documentation */
-static void et131x_adapter_setup(struct et131x_adapter *adapter)
-{
+/* et131x_adapter_setup - Set the adapter up as per cassini+ करोcumentation */
+अटल व्योम et131x_adapter_setup(काष्ठा et131x_adapter *adapter)
+अणु
 	et131x_configure_global_regs(adapter);
 	et1310_config_mac_regs1(adapter);
 
-	/* Configure the MMC registers */
-	/* All we need to do is initialize the Memory Control Register */
-	writel(ET_MMC_ENABLE, &adapter->regs->mmc.mmc_ctrl);
+	/* Configure the MMC रेजिस्टरs */
+	/* All we need to करो is initialize the Memory Control Register */
+	ग_लिखोl(ET_MMC_ENABLE, &adapter->regs->mmc.mmc_ctrl);
 
 	et1310_config_rxmac_regs(adapter);
 	et1310_config_txmac_regs(adapter);
@@ -1673,152 +1674,152 @@ static void et131x_adapter_setup(struct et131x_adapter *adapter)
 
 	et1310_config_macstat_regs(adapter);
 
-	et1310_phy_power_switch(adapter, 0);
+	et1310_phy_घातer_चयन(adapter, 0);
 	et131x_xcvr_init(adapter);
-}
+पूर्ण
 
-/* et131x_soft_reset - Issue soft reset to the hardware, complete for ET1310 */
-static void et131x_soft_reset(struct et131x_adapter *adapter)
-{
+/* et131x_soft_reset - Issue soft reset to the hardware, complete क्रम ET1310 */
+अटल व्योम et131x_soft_reset(काष्ठा et131x_adapter *adapter)
+अणु
 	u32 reg;
 
 	/* Disable MAC Core */
 	reg = ET_MAC_CFG1_SOFT_RESET | ET_MAC_CFG1_SIM_RESET |
 	      ET_MAC_CFG1_RESET_RXMC | ET_MAC_CFG1_RESET_TXMC |
 	      ET_MAC_CFG1_RESET_RXFUNC | ET_MAC_CFG1_RESET_TXFUNC;
-	writel(reg, &adapter->regs->mac.cfg1);
+	ग_लिखोl(reg, &adapter->regs->mac.cfg1);
 
 	reg = ET_RESET_ALL;
-	writel(reg, &adapter->regs->global.sw_reset);
+	ग_लिखोl(reg, &adapter->regs->global.sw_reset);
 
 	reg = ET_MAC_CFG1_RESET_RXMC | ET_MAC_CFG1_RESET_TXMC |
 	      ET_MAC_CFG1_RESET_RXFUNC | ET_MAC_CFG1_RESET_TXFUNC;
-	writel(reg, &adapter->regs->mac.cfg1);
-	writel(0, &adapter->regs->mac.cfg1);
-}
+	ग_लिखोl(reg, &adapter->regs->mac.cfg1);
+	ग_लिखोl(0, &adapter->regs->mac.cfg1);
+पूर्ण
 
-static void et131x_enable_interrupts(struct et131x_adapter *adapter)
-{
+अटल व्योम et131x_enable_पूर्णांकerrupts(काष्ठा et131x_adapter *adapter)
+अणु
 	u32 mask;
 
-	if (adapter->flow == FLOW_TXONLY || adapter->flow == FLOW_BOTH)
+	अगर (adapter->flow == FLOW_TXONLY || adapter->flow == FLOW_BOTH)
 		mask = INT_MASK_ENABLE;
-	else
+	अन्यथा
 		mask = INT_MASK_ENABLE_NO_FLOW;
 
-	writel(mask, &adapter->regs->global.int_mask);
-}
+	ग_लिखोl(mask, &adapter->regs->global.पूर्णांक_mask);
+पूर्ण
 
-static void et131x_disable_interrupts(struct et131x_adapter *adapter)
-{
-	writel(INT_MASK_DISABLE, &adapter->regs->global.int_mask);
-}
+अटल व्योम et131x_disable_पूर्णांकerrupts(काष्ठा et131x_adapter *adapter)
+अणु
+	ग_लिखोl(INT_MASK_DISABLE, &adapter->regs->global.पूर्णांक_mask);
+पूर्ण
 
-static void et131x_tx_dma_disable(struct et131x_adapter *adapter)
-{
-	/* Setup the transmit dma configuration register */
-	writel(ET_TXDMA_CSR_HALT | ET_TXDMA_SNGL_EPKT,
+अटल व्योम et131x_tx_dma_disable(काष्ठा et131x_adapter *adapter)
+अणु
+	/* Setup the transmit dma configuration रेजिस्टर */
+	ग_लिखोl(ET_TXDMA_CSR_HALT | ET_TXDMA_SNGL_EPKT,
 	       &adapter->regs->txdma.csr);
-}
+पूर्ण
 
-static void et131x_enable_txrx(struct net_device *netdev)
-{
-	struct et131x_adapter *adapter = netdev_priv(netdev);
+अटल व्योम et131x_enable_txrx(काष्ठा net_device *netdev)
+अणु
+	काष्ठा et131x_adapter *adapter = netdev_priv(netdev);
 
 	et131x_rx_dma_enable(adapter);
 	et131x_tx_dma_enable(adapter);
 
-	if (adapter->flags & FMP_ADAPTER_INTERRUPT_IN_USE)
-		et131x_enable_interrupts(adapter);
+	अगर (adapter->flags & FMP_ADAPTER_INTERRUPT_IN_USE)
+		et131x_enable_पूर्णांकerrupts(adapter);
 
-	netif_start_queue(netdev);
-}
+	netअगर_start_queue(netdev);
+पूर्ण
 
-static void et131x_disable_txrx(struct net_device *netdev)
-{
-	struct et131x_adapter *adapter = netdev_priv(netdev);
+अटल व्योम et131x_disable_txrx(काष्ठा net_device *netdev)
+अणु
+	काष्ठा et131x_adapter *adapter = netdev_priv(netdev);
 
-	netif_stop_queue(netdev);
+	netअगर_stop_queue(netdev);
 
 	et131x_rx_dma_disable(adapter);
 	et131x_tx_dma_disable(adapter);
 
-	et131x_disable_interrupts(adapter);
-}
+	et131x_disable_पूर्णांकerrupts(adapter);
+पूर्ण
 
-static void et131x_init_send(struct et131x_adapter *adapter)
-{
-	int i;
-	struct tx_ring *tx_ring = &adapter->tx_ring;
-	struct tcb *tcb = tx_ring->tcb_ring;
+अटल व्योम et131x_init_send(काष्ठा et131x_adapter *adapter)
+अणु
+	पूर्णांक i;
+	काष्ठा tx_ring *tx_ring = &adapter->tx_ring;
+	काष्ठा tcb *tcb = tx_ring->tcb_ring;
 
 	tx_ring->tcb_qhead = tcb;
 
-	memset(tcb, 0, sizeof(struct tcb) * NUM_TCB);
+	स_रखो(tcb, 0, माप(काष्ठा tcb) * NUM_TCB);
 
-	for (i = 0; i < NUM_TCB; i++) {
+	क्रम (i = 0; i < NUM_TCB; i++) अणु
 		tcb->next = tcb + 1;
 		tcb++;
-	}
+	पूर्ण
 
 	tcb--;
 	tx_ring->tcb_qtail = tcb;
-	tcb->next = NULL;
+	tcb->next = शून्य;
 	/* Curr send queue should now be empty */
-	tx_ring->send_head = NULL;
-	tx_ring->send_tail = NULL;
-}
+	tx_ring->send_head = शून्य;
+	tx_ring->send_tail = शून्य;
+पूर्ण
 
 /* et1310_enable_phy_coma
  *
- * driver receive an phy status change interrupt while in D0 and check that
- * phy_status is down.
+ * driver receive an phy status change पूर्णांकerrupt जबतक in D0 and check that
+ * phy_status is करोwn.
  *
  *          -- gate off JAGCore;
  *          -- set gigE PHY in Coma mode
- *          -- wake on phy_interrupt; Perform software reset JAGCore,
+ *          -- wake on phy_पूर्णांकerrupt; Perक्रमm software reset JAGCore,
  *             re-initialize jagcore and gigE PHY
  */
-static void et1310_enable_phy_coma(struct et131x_adapter *adapter)
-{
-	u32 pmcsr = readl(&adapter->regs->global.pm_csr);
+अटल व्योम et1310_enable_phy_coma(काष्ठा et131x_adapter *adapter)
+अणु
+	u32 pmcsr = पढ़ोl(&adapter->regs->global.pm_csr);
 
 	/* Stop sending packets. */
 	adapter->flags |= FMP_ADAPTER_LOWER_POWER;
 
-	/* Wait for outstanding Receive packets */
+	/* Wait क्रम outstanding Receive packets */
 	et131x_disable_txrx(adapter->netdev);
 
-	/* Gate off JAGCore 3 clock domains */
+	/* Gate off JAGCore 3 घड़ी करोमुख्यs */
 	pmcsr &= ~ET_PMCSR_INIT;
-	writel(pmcsr, &adapter->regs->global.pm_csr);
+	ग_लिखोl(pmcsr, &adapter->regs->global.pm_csr);
 
 	/* Program gigE PHY in to Coma mode */
 	pmcsr |= ET_PM_PHY_SW_COMA;
-	writel(pmcsr, &adapter->regs->global.pm_csr);
-}
+	ग_लिखोl(pmcsr, &adapter->regs->global.pm_csr);
+पूर्ण
 
-static void et1310_disable_phy_coma(struct et131x_adapter *adapter)
-{
+अटल व्योम et1310_disable_phy_coma(काष्ठा et131x_adapter *adapter)
+अणु
 	u32 pmcsr;
 
-	pmcsr = readl(&adapter->regs->global.pm_csr);
+	pmcsr = पढ़ोl(&adapter->regs->global.pm_csr);
 
-	/* Disable phy_sw_coma register and re-enable JAGCore clocks */
+	/* Disable phy_sw_coma रेजिस्टर and re-enable JAGCore घड़ीs */
 	pmcsr |= ET_PMCSR_INIT;
 	pmcsr &= ~ET_PM_PHY_SW_COMA;
-	writel(pmcsr, &adapter->regs->global.pm_csr);
+	ग_लिखोl(pmcsr, &adapter->regs->global.pm_csr);
 
 	/* Restore the GbE PHY speed and duplex modes;
 	 * Reset JAGCore; re-configure and initialize JAGCore and gigE PHY
 	 */
 
-	/* Re-initialize the send structures */
+	/* Re-initialize the send काष्ठाures */
 	et131x_init_send(adapter);
 
 	/* Bring the device back to the state it was during init prior to
-	 * autonegotiation being complete.  This way, when we get the auto-neg
-	 * complete interrupt, we can complete init by calling ConfigMacREGS2.
+	 * स्वतःnegotiation being complete.  This way, when we get the स्वतः-neg
+	 * complete पूर्णांकerrupt, we can complete init by calling ConfigMacREGS2.
 	 */
 	et131x_soft_reset(adapter);
 
@@ -1828,55 +1829,55 @@ static void et1310_disable_phy_coma(struct et131x_adapter *adapter)
 	adapter->flags &= ~FMP_ADAPTER_LOWER_POWER;
 
 	et131x_enable_txrx(adapter->netdev);
-}
+पूर्ण
 
-static inline u32 bump_free_buff_ring(u32 *free_buff_ring, u32 limit)
-{
-	u32 tmp_free_buff_ring = *free_buff_ring;
+अटल अंतरभूत u32 bump_मुक्त_buff_ring(u32 *मुक्त_buff_ring, u32 limit)
+अणु
+	u32 पंचांगp_मुक्त_buff_ring = *मुक्त_buff_ring;
 
-	tmp_free_buff_ring++;
-	/* This works for all cases where limit < 1024. The 1023 case
-	 * works because 1023++ is 1024 which means the if condition is not
-	 * taken but the carry of the bit into the wrap bit toggles the wrap
+	पंचांगp_मुक्त_buff_ring++;
+	/* This works क्रम all हालs where limit < 1024. The 1023 हाल
+	 * works because 1023++ is 1024 which means the अगर condition is not
+	 * taken but the carry of the bit पूर्णांकo the wrap bit toggles the wrap
 	 * value correctly
 	 */
-	if ((tmp_free_buff_ring & ET_DMA10_MASK) > limit) {
-		tmp_free_buff_ring &= ~ET_DMA10_MASK;
-		tmp_free_buff_ring ^= ET_DMA10_WRAP;
-	}
-	/* For the 1023 case */
-	tmp_free_buff_ring &= (ET_DMA10_MASK | ET_DMA10_WRAP);
-	*free_buff_ring = tmp_free_buff_ring;
-	return tmp_free_buff_ring;
-}
+	अगर ((पंचांगp_मुक्त_buff_ring & ET_DMA10_MASK) > limit) अणु
+		पंचांगp_मुक्त_buff_ring &= ~ET_DMA10_MASK;
+		पंचांगp_मुक्त_buff_ring ^= ET_DMA10_WRAP;
+	पूर्ण
+	/* For the 1023 हाल */
+	पंचांगp_मुक्त_buff_ring &= (ET_DMA10_MASK | ET_DMA10_WRAP);
+	*मुक्त_buff_ring = पंचांगp_मुक्त_buff_ring;
+	वापस पंचांगp_मुक्त_buff_ring;
+पूर्ण
 
 /* et131x_rx_dma_memory_alloc
  *
- * Allocates Free buffer ring 1 for sure, free buffer ring 0 if required,
+ * Allocates Free buffer ring 1 क्रम sure, मुक्त buffer ring 0 अगर required,
  * and the Packet Status Ring.
  */
-static int et131x_rx_dma_memory_alloc(struct et131x_adapter *adapter)
-{
+अटल पूर्णांक et131x_rx_dma_memory_alloc(काष्ठा et131x_adapter *adapter)
+अणु
 	u8 id;
 	u32 i, j;
 	u32 bufsize;
 	u32 psr_size;
 	u32 fbr_chunksize;
-	struct rx_ring *rx_ring = &adapter->rx_ring;
-	struct fbr_lookup *fbr;
+	काष्ठा rx_ring *rx_ring = &adapter->rx_ring;
+	काष्ठा fbr_lookup *fbr;
 
-	/* Alloc memory for the lookup table */
-	rx_ring->fbr[0] = kzalloc(sizeof(*fbr), GFP_KERNEL);
-	if (rx_ring->fbr[0] == NULL)
-		return -ENOMEM;
-	rx_ring->fbr[1] = kzalloc(sizeof(*fbr), GFP_KERNEL);
-	if (rx_ring->fbr[1] == NULL)
-		return -ENOMEM;
+	/* Alloc memory क्रम the lookup table */
+	rx_ring->fbr[0] = kzalloc(माप(*fbr), GFP_KERNEL);
+	अगर (rx_ring->fbr[0] == शून्य)
+		वापस -ENOMEM;
+	rx_ring->fbr[1] = kzalloc(माप(*fbr), GFP_KERNEL);
+	अगर (rx_ring->fbr[1] == शून्य)
+		वापस -ENOMEM;
 
-	/* The first thing we will do is configure the sizes of the buffer
+	/* The first thing we will करो is configure the sizes of the buffer
 	 * rings. These will change based on jumbo packet support.  Larger
 	 * jumbo packets increases the size of each entry in FBR0, and the
-	 * number of entries in FBR0, while at the same time decreasing the
+	 * number of entries in FBR0, जबतक at the same समय decreasing the
 	 * number of entries in FBR1.
 	 *
 	 * FBR1 holds "large" frames, FBR0 holds "small" frames.  If FBR1
@@ -1886,51 +1887,51 @@ static int et131x_rx_dma_memory_alloc(struct et131x_adapter *adapter)
 	 * and the number of entries goes up too (since it now carries
 	 * "small" + "regular" packets.
 	 *
-	 * In this scheme, we try to maintain 512 entries between the two
-	 * rings. Also, FBR1 remains a constant size - when it's size doubles
+	 * In this scheme, we try to मुख्यtain 512 entries between the two
+	 * rings. Also, FBR1 reमुख्यs a स्थिरant size - when it's size द्विगुनs
 	 * the number of entries halves.  FBR0 increases in size, however.
 	 */
-	if (adapter->registry_jumbo_packet < 2048) {
+	अगर (adapter->registry_jumbo_packet < 2048) अणु
 		rx_ring->fbr[0]->buffsize = 256;
 		rx_ring->fbr[0]->num_entries = 512;
 		rx_ring->fbr[1]->buffsize = 2048;
 		rx_ring->fbr[1]->num_entries = 512;
-	} else if (adapter->registry_jumbo_packet < 4096) {
+	पूर्ण अन्यथा अगर (adapter->registry_jumbo_packet < 4096) अणु
 		rx_ring->fbr[0]->buffsize = 512;
 		rx_ring->fbr[0]->num_entries = 1024;
 		rx_ring->fbr[1]->buffsize = 4096;
 		rx_ring->fbr[1]->num_entries = 512;
-	} else {
+	पूर्ण अन्यथा अणु
 		rx_ring->fbr[0]->buffsize = 1024;
 		rx_ring->fbr[0]->num_entries = 768;
 		rx_ring->fbr[1]->buffsize = 16384;
 		rx_ring->fbr[1]->num_entries = 128;
-	}
+	पूर्ण
 
 	rx_ring->psr_entries = rx_ring->fbr[0]->num_entries +
 			       rx_ring->fbr[1]->num_entries;
 
-	for (id = 0; id < NUM_FBRS; id++) {
+	क्रम (id = 0; id < NUM_FBRS; id++) अणु
 		fbr = rx_ring->fbr[id];
-		/* Allocate an area of memory for Free Buffer Ring */
-		bufsize = sizeof(struct fbr_desc) * fbr->num_entries;
+		/* Allocate an area of memory क्रम Free Buffer Ring */
+		bufsize = माप(काष्ठा fbr_desc) * fbr->num_entries;
 		fbr->ring_virtaddr = dma_alloc_coherent(&adapter->pdev->dev,
 							bufsize,
 							&fbr->ring_physaddr,
 							GFP_KERNEL);
-		if (!fbr->ring_virtaddr) {
+		अगर (!fbr->ring_virtaddr) अणु
 			dev_err(&adapter->pdev->dev,
 				"Cannot alloc memory for Free Buffer Ring %d\n",
 				id);
-			return -ENOMEM;
-		}
-	}
+			वापस -ENOMEM;
+		पूर्ण
+	पूर्ण
 
-	for (id = 0; id < NUM_FBRS; id++) {
+	क्रम (id = 0; id < NUM_FBRS; id++) अणु
 		fbr = rx_ring->fbr[id];
 		fbr_chunksize = (FBR_CHUNKS * fbr->buffsize);
 
-		for (i = 0; i < fbr->num_entries / FBR_CHUNKS; i++) {
+		क्रम (i = 0; i < fbr->num_entries / FBR_CHUNKS; i++) अणु
 			dma_addr_t fbr_physaddr;
 
 			fbr->mem_virtaddrs[i] = dma_alloc_coherent(
@@ -1938,19 +1939,19 @@ static int et131x_rx_dma_memory_alloc(struct et131x_adapter *adapter)
 					&fbr->mem_physaddrs[i],
 					GFP_KERNEL);
 
-			if (!fbr->mem_virtaddrs[i]) {
+			अगर (!fbr->mem_virtaddrs[i]) अणु
 				dev_err(&adapter->pdev->dev,
 					"Could not alloc memory\n");
-				return -ENOMEM;
-			}
+				वापस -ENOMEM;
+			पूर्ण
 
 			/* See NOTE in "Save Physical Address" comment above */
 			fbr_physaddr = fbr->mem_physaddrs[i];
 
-			for (j = 0; j < FBR_CHUNKS; j++) {
+			क्रम (j = 0; j < FBR_CHUNKS; j++) अणु
 				u32 k = (i * FBR_CHUNKS) + j;
 
-				/* Save the Virtual address of this index for
+				/* Save the Virtual address of this index क्रम
 				 * quick access later
 				 */
 				fbr->virt[k] = (u8 *)fbr->mem_virtaddrs[i] +
@@ -1962,256 +1963,256 @@ static int et131x_rx_dma_memory_alloc(struct et131x_adapter *adapter)
 				fbr->bus_high[k] = upper_32_bits(fbr_physaddr);
 				fbr->bus_low[k] = lower_32_bits(fbr_physaddr);
 				fbr_physaddr += fbr->buffsize;
-			}
-		}
-	}
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	/* Allocate an area of memory for FIFO of Packet Status ring entries */
-	psr_size = sizeof(struct pkt_stat_desc) * rx_ring->psr_entries;
+	/* Allocate an area of memory क्रम FIFO of Packet Status ring entries */
+	psr_size = माप(काष्ठा pkt_stat_desc) * rx_ring->psr_entries;
 
 	rx_ring->ps_ring_virtaddr = dma_alloc_coherent(&adapter->pdev->dev,
 						  psr_size,
 						  &rx_ring->ps_ring_physaddr,
 						  GFP_KERNEL);
 
-	if (!rx_ring->ps_ring_virtaddr) {
+	अगर (!rx_ring->ps_ring_virtaddr) अणु
 		dev_err(&adapter->pdev->dev,
 			"Cannot alloc memory for Packet Status Ring\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
-	/* Allocate an area of memory for writeback of status information */
+	/* Allocate an area of memory क्रम ग_लिखोback of status inक्रमmation */
 	rx_ring->rx_status_block = dma_alloc_coherent(&adapter->pdev->dev,
-					    sizeof(struct rx_status_block),
+					    माप(काष्ठा rx_status_block),
 					    &rx_ring->rx_status_bus,
 					    GFP_KERNEL);
-	if (!rx_ring->rx_status_block) {
+	अगर (!rx_ring->rx_status_block) अणु
 		dev_err(&adapter->pdev->dev,
 			"Cannot alloc memory for Status Block\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 	rx_ring->num_rfd = NIC_DEFAULT_NUM_RFD;
 
 	/* The RFDs are going to be put on lists later on, so initialize the
 	 * lists now.
 	 */
 	INIT_LIST_HEAD(&rx_ring->recv_list);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void et131x_rx_dma_memory_free(struct et131x_adapter *adapter)
-{
+अटल व्योम et131x_rx_dma_memory_मुक्त(काष्ठा et131x_adapter *adapter)
+अणु
 	u8 id;
 	u32 ii;
 	u32 bufsize;
 	u32 psr_size;
-	struct rfd *rfd;
-	struct rx_ring *rx_ring = &adapter->rx_ring;
-	struct fbr_lookup *fbr;
+	काष्ठा rfd *rfd;
+	काष्ठा rx_ring *rx_ring = &adapter->rx_ring;
+	काष्ठा fbr_lookup *fbr;
 
 	/* Free RFDs and associated packet descriptors */
-	WARN_ON(rx_ring->num_ready_recv != rx_ring->num_rfd);
+	WARN_ON(rx_ring->num_पढ़ोy_recv != rx_ring->num_rfd);
 
-	while (!list_empty(&rx_ring->recv_list)) {
+	जबतक (!list_empty(&rx_ring->recv_list)) अणु
 		rfd = list_entry(rx_ring->recv_list.next,
-				 struct rfd, list_node);
+				 काष्ठा rfd, list_node);
 
 		list_del(&rfd->list_node);
-		rfd->skb = NULL;
-		kfree(rfd);
-	}
+		rfd->skb = शून्य;
+		kमुक्त(rfd);
+	पूर्ण
 
 	/* Free Free Buffer Rings */
-	for (id = 0; id < NUM_FBRS; id++) {
+	क्रम (id = 0; id < NUM_FBRS; id++) अणु
 		fbr = rx_ring->fbr[id];
 
-		if (!fbr || !fbr->ring_virtaddr)
-			continue;
+		अगर (!fbr || !fbr->ring_virtaddr)
+			जारी;
 
 		/* First the packet memory */
-		for (ii = 0; ii < fbr->num_entries / FBR_CHUNKS; ii++) {
-			if (fbr->mem_virtaddrs[ii]) {
+		क्रम (ii = 0; ii < fbr->num_entries / FBR_CHUNKS; ii++) अणु
+			अगर (fbr->mem_virtaddrs[ii]) अणु
 				bufsize = fbr->buffsize * FBR_CHUNKS;
 
-				dma_free_coherent(&adapter->pdev->dev,
+				dma_मुक्त_coherent(&adapter->pdev->dev,
 						  bufsize,
 						  fbr->mem_virtaddrs[ii],
 						  fbr->mem_physaddrs[ii]);
 
-				fbr->mem_virtaddrs[ii] = NULL;
-			}
-		}
+				fbr->mem_virtaddrs[ii] = शून्य;
+			पूर्ण
+		पूर्ण
 
-		bufsize = sizeof(struct fbr_desc) * fbr->num_entries;
+		bufsize = माप(काष्ठा fbr_desc) * fbr->num_entries;
 
-		dma_free_coherent(&adapter->pdev->dev,
+		dma_मुक्त_coherent(&adapter->pdev->dev,
 				  bufsize,
 				  fbr->ring_virtaddr,
 				  fbr->ring_physaddr);
 
-		fbr->ring_virtaddr = NULL;
-	}
+		fbr->ring_virtaddr = शून्य;
+	पूर्ण
 
 	/* Free Packet Status Ring */
-	if (rx_ring->ps_ring_virtaddr) {
-		psr_size = sizeof(struct pkt_stat_desc) * rx_ring->psr_entries;
+	अगर (rx_ring->ps_ring_virtaddr) अणु
+		psr_size = माप(काष्ठा pkt_stat_desc) * rx_ring->psr_entries;
 
-		dma_free_coherent(&adapter->pdev->dev, psr_size,
+		dma_मुक्त_coherent(&adapter->pdev->dev, psr_size,
 				  rx_ring->ps_ring_virtaddr,
 				  rx_ring->ps_ring_physaddr);
 
-		rx_ring->ps_ring_virtaddr = NULL;
-	}
+		rx_ring->ps_ring_virtaddr = शून्य;
+	पूर्ण
 
-	/* Free area of memory for the writeback of status information */
-	if (rx_ring->rx_status_block) {
-		dma_free_coherent(&adapter->pdev->dev,
-				  sizeof(struct rx_status_block),
+	/* Free area of memory क्रम the ग_लिखोback of status inक्रमmation */
+	अगर (rx_ring->rx_status_block) अणु
+		dma_मुक्त_coherent(&adapter->pdev->dev,
+				  माप(काष्ठा rx_status_block),
 				  rx_ring->rx_status_block,
 				  rx_ring->rx_status_bus);
-		rx_ring->rx_status_block = NULL;
-	}
+		rx_ring->rx_status_block = शून्य;
+	पूर्ण
 
 	/* Free the FBR Lookup Table */
-	kfree(rx_ring->fbr[0]);
-	kfree(rx_ring->fbr[1]);
+	kमुक्त(rx_ring->fbr[0]);
+	kमुक्त(rx_ring->fbr[1]);
 
 	/* Reset Counters */
-	rx_ring->num_ready_recv = 0;
-}
+	rx_ring->num_पढ़ोy_recv = 0;
+पूर्ण
 
-/* et131x_init_recv - Initialize receive data structures */
-static int et131x_init_recv(struct et131x_adapter *adapter)
-{
-	struct rfd *rfd;
+/* et131x_init_recv - Initialize receive data काष्ठाures */
+अटल पूर्णांक et131x_init_recv(काष्ठा et131x_adapter *adapter)
+अणु
+	काष्ठा rfd *rfd;
 	u32 rfdct;
-	struct rx_ring *rx_ring = &adapter->rx_ring;
+	काष्ठा rx_ring *rx_ring = &adapter->rx_ring;
 
 	/* Setup each RFD */
-	for (rfdct = 0; rfdct < rx_ring->num_rfd; rfdct++) {
-		rfd = kzalloc(sizeof(*rfd), GFP_ATOMIC | GFP_DMA);
-		if (!rfd)
-			return -ENOMEM;
+	क्रम (rfdct = 0; rfdct < rx_ring->num_rfd; rfdct++) अणु
+		rfd = kzalloc(माप(*rfd), GFP_ATOMIC | GFP_DMA);
+		अगर (!rfd)
+			वापस -ENOMEM;
 
-		rfd->skb = NULL;
+		rfd->skb = शून्य;
 
 		/* Add this RFD to the recv_list */
 		list_add_tail(&rfd->list_node, &rx_ring->recv_list);
 
 		/* Increment the available RFD's */
-		rx_ring->num_ready_recv++;
-	}
+		rx_ring->num_पढ़ोy_recv++;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* et131x_set_rx_dma_timer - Set the heartbeat timer according to line rate */
-static void et131x_set_rx_dma_timer(struct et131x_adapter *adapter)
-{
-	struct phy_device *phydev = adapter->netdev->phydev;
+/* et131x_set_rx_dma_समयr - Set the heartbeat समयr according to line rate */
+अटल व्योम et131x_set_rx_dma_समयr(काष्ठा et131x_adapter *adapter)
+अणु
+	काष्ठा phy_device *phydev = adapter->netdev->phydev;
 
-	/* For version B silicon, we do not use the RxDMA timer for 10 and 100
-	 * Mbits/s line rates. We do not enable and RxDMA interrupt coalescing.
+	/* For version B silicon, we करो not use the RxDMA समयr क्रम 10 and 100
+	 * Mbits/s line rates. We करो not enable and RxDMA पूर्णांकerrupt coalescing.
 	 */
-	if ((phydev->speed == SPEED_100) || (phydev->speed == SPEED_10)) {
-		writel(0, &adapter->regs->rxdma.max_pkt_time);
-		writel(1, &adapter->regs->rxdma.num_pkt_done);
-	}
-}
+	अगर ((phydev->speed == SPEED_100) || (phydev->speed == SPEED_10)) अणु
+		ग_लिखोl(0, &adapter->regs->rxdma.max_pkt_समय);
+		ग_लिखोl(1, &adapter->regs->rxdma.num_pkt_करोne);
+	पूर्ण
+पूर्ण
 
-/* nic_return_rfd - Recycle a RFD and put it back onto the receive list */
-static void nic_return_rfd(struct et131x_adapter *adapter, struct rfd *rfd)
-{
-	struct rx_ring *rx_local = &adapter->rx_ring;
-	struct rxdma_regs __iomem *rx_dma = &adapter->regs->rxdma;
+/* nic_वापस_rfd - Recycle a RFD and put it back onto the receive list */
+अटल व्योम nic_वापस_rfd(काष्ठा et131x_adapter *adapter, काष्ठा rfd *rfd)
+अणु
+	काष्ठा rx_ring *rx_local = &adapter->rx_ring;
+	काष्ठा rxdma_regs __iomem *rx_dma = &adapter->regs->rxdma;
 	u16 buff_index = rfd->bufferindex;
 	u8 ring_index = rfd->ringindex;
-	unsigned long flags;
-	struct fbr_lookup *fbr = rx_local->fbr[ring_index];
+	अचिन्हित दीर्घ flags;
+	काष्ठा fbr_lookup *fbr = rx_local->fbr[ring_index];
 
-	/* We don't use any of the OOB data besides status. Otherwise, we
+	/* We करोn't use any of the OOB data besides status. Otherwise, we
 	 * need to clean up OOB data
 	 */
-	if (buff_index < fbr->num_entries) {
-		u32 free_buff_ring;
+	अगर (buff_index < fbr->num_entries) अणु
+		u32 मुक्त_buff_ring;
 		u32 __iomem *offset;
-		struct fbr_desc *next;
+		काष्ठा fbr_desc *next;
 
-		if (ring_index == 0)
+		अगर (ring_index == 0)
 			offset = &rx_dma->fbr0_full_offset;
-		else
+		अन्यथा
 			offset = &rx_dma->fbr1_full_offset;
 
-		next = (struct fbr_desc *)(fbr->ring_virtaddr) +
+		next = (काष्ठा fbr_desc *)(fbr->ring_virtaddr) +
 		       INDEX10(fbr->local_full);
 
 		/* Handle the Free Buffer Ring advancement here. Write
-		 * the PA / Buffer Index for the returned buffer into
-		 * the oldest (next to be freed)FBR entry
+		 * the PA / Buffer Index क्रम the वापसed buffer पूर्णांकo
+		 * the oldest (next to be मुक्तd)FBR entry
 		 */
 		next->addr_hi = fbr->bus_high[buff_index];
 		next->addr_lo = fbr->bus_low[buff_index];
 		next->word2 = buff_index;
 
-		free_buff_ring = bump_free_buff_ring(&fbr->local_full,
+		मुक्त_buff_ring = bump_मुक्त_buff_ring(&fbr->local_full,
 						     fbr->num_entries - 1);
-		writel(free_buff_ring, offset);
-	} else {
+		ग_लिखोl(मुक्त_buff_ring, offset);
+	पूर्ण अन्यथा अणु
 		dev_err(&adapter->pdev->dev,
 			"%s illegal Buffer Index returned\n", __func__);
-	}
+	पूर्ण
 
-	/* The processing on this RFD is done, so put it back on the tail of
+	/* The processing on this RFD is करोne, so put it back on the tail of
 	 * our list
 	 */
 	spin_lock_irqsave(&adapter->rcv_lock, flags);
 	list_add_tail(&rfd->list_node, &rx_local->recv_list);
-	rx_local->num_ready_recv++;
+	rx_local->num_पढ़ोy_recv++;
 	spin_unlock_irqrestore(&adapter->rcv_lock, flags);
 
-	WARN_ON(rx_local->num_ready_recv > rx_local->num_rfd);
-}
+	WARN_ON(rx_local->num_पढ़ोy_recv > rx_local->num_rfd);
+पूर्ण
 
-/* nic_rx_pkts - Checks the hardware for available packets
+/* nic_rx_pkts - Checks the hardware क्रम available packets
  *
- * Checks the hardware for available packets, using completion ring
- * If packets are available, it gets an RFD from the recv_list, attaches
- * the packet to it, puts the RFD in the RecvPendList, and also returns
- * the pointer to the RFD.
+ * Checks the hardware क्रम available packets, using completion ring
+ * If packets are available, it माला_लो an RFD from the recv_list, attaches
+ * the packet to it, माला_दो the RFD in the RecvPendList, and also वापसs
+ * the poपूर्णांकer to the RFD.
  */
-static struct rfd *nic_rx_pkts(struct et131x_adapter *adapter)
-{
-	struct rx_ring *rx_local = &adapter->rx_ring;
-	struct rx_status_block *status;
-	struct pkt_stat_desc *psr;
-	struct rfd *rfd;
-	unsigned long flags;
-	struct list_head *element;
+अटल काष्ठा rfd *nic_rx_pkts(काष्ठा et131x_adapter *adapter)
+अणु
+	काष्ठा rx_ring *rx_local = &adapter->rx_ring;
+	काष्ठा rx_status_block *status;
+	काष्ठा pkt_stat_desc *psr;
+	काष्ठा rfd *rfd;
+	अचिन्हित दीर्घ flags;
+	काष्ठा list_head *element;
 	u8 ring_index;
 	u16 buff_index;
 	u32 len;
 	u32 word0;
 	u32 word1;
-	struct sk_buff *skb;
-	struct fbr_lookup *fbr;
+	काष्ठा sk_buff *skb;
+	काष्ठा fbr_lookup *fbr;
 
 	/* RX Status block is written by the DMA engine prior to every
-	 * interrupt. It contains the next to be used entry in the Packet
+	 * पूर्णांकerrupt. It contains the next to be used entry in the Packet
 	 * Status Ring, and also the two Free Buffer rings.
 	 */
 	status = rx_local->rx_status_block;
 	word1 = status->word1 >> 16;
 
-	/* Check the PSR and wrap bits do not match */
-	if ((word1 & 0x1FFF) == (rx_local->local_psr_full & 0x1FFF))
-		return NULL; /* Looks like this ring is not updated yet */
+	/* Check the PSR and wrap bits करो not match */
+	अगर ((word1 & 0x1FFF) == (rx_local->local_psr_full & 0x1FFF))
+		वापस शून्य; /* Looks like this ring is not updated yet */
 
 	/* The packet status ring indicates that data is available. */
-	psr = (struct pkt_stat_desc *)(rx_local->ps_ring_virtaddr) +
+	psr = (काष्ठा pkt_stat_desc *)(rx_local->ps_ring_virtaddr) +
 			(rx_local->local_psr_full & 0xFFF);
 
-	/* Grab any information that is required once the PSR is advanced,
-	 * since we can no longer rely on the memory being accurate
+	/* Grab any inक्रमmation that is required once the PSR is advanced,
+	 * since we can no दीर्घer rely on the memory being accurate
 	 */
 	len = psr->word1 & 0xFFFF;
 	ring_index = (psr->word1 >> 26) & 0x03;
@@ -2222,35 +2223,35 @@ static struct rfd *nic_rx_pkts(struct et131x_adapter *adapter)
 	/* Indicate that we have used this PSR entry. */
 	/* FIXME wrap 12 */
 	add_12bit(&rx_local->local_psr_full, 1);
-	if ((rx_local->local_psr_full & 0xFFF) > rx_local->psr_entries - 1) {
+	अगर ((rx_local->local_psr_full & 0xFFF) > rx_local->psr_entries - 1) अणु
 		/* Clear psr full and toggle the wrap bit */
 		rx_local->local_psr_full &=  ~0xFFF;
 		rx_local->local_psr_full ^= 0x1000;
-	}
+	पूर्ण
 
-	writel(rx_local->local_psr_full, &adapter->regs->rxdma.psr_full_offset);
+	ग_लिखोl(rx_local->local_psr_full, &adapter->regs->rxdma.psr_full_offset);
 
-	if (ring_index > 1 || buff_index > fbr->num_entries - 1) {
+	अगर (ring_index > 1 || buff_index > fbr->num_entries - 1) अणु
 		/* Illegal buffer or ring index cannot be used by S/W*/
 		dev_err(&adapter->pdev->dev,
 			"NICRxPkts PSR Entry %d indicates length of %d and/or bad bi(%d)\n",
 			rx_local->local_psr_full & 0xFFF, len, buff_index);
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
 	/* Get and fill the RFD. */
 	spin_lock_irqsave(&adapter->rcv_lock, flags);
 
 	element = rx_local->recv_list.next;
-	rfd = list_entry(element, struct rfd, list_node);
+	rfd = list_entry(element, काष्ठा rfd, list_node);
 
-	if (!rfd) {
+	अगर (!rfd) अणु
 		spin_unlock_irqrestore(&adapter->rcv_lock, flags);
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
 	list_del(&rfd->list_node);
-	rx_local->num_ready_recv--;
+	rx_local->num_पढ़ोy_recv--;
 
 	spin_unlock_irqrestore(&adapter->rcv_lock, flags);
 
@@ -2258,23 +2259,23 @@ static struct rfd *nic_rx_pkts(struct et131x_adapter *adapter)
 	rfd->ringindex = ring_index;
 
 	/* In V1 silicon, there is a bug which screws up filtering of runt
-	 * packets. Therefore runt packet filtering is disabled in the MAC and
+	 * packets. Thereक्रमe runt packet filtering is disabled in the MAC and
 	 * the packets are dropped here. They are also counted here.
 	 */
-	if (len < (NIC_MIN_PACKET_SIZE + 4)) {
+	अगर (len < (NIC_MIN_PACKET_SIZE + 4)) अणु
 		adapter->stats.rx_other_errs++;
 		rfd->len = 0;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if ((word0 & ALCATEL_MULTICAST_PKT) && !(word0 & ALCATEL_BROADCAST_PKT))
+	अगर ((word0 & ALCATEL_MULTICAST_PKT) && !(word0 & ALCATEL_BROADCAST_PKT))
 		adapter->stats.multicast_pkts_rcvd++;
 
 	rfd->len = len;
 
 	skb = dev_alloc_skb(rfd->len + 2);
-	if (!skb)
-		return NULL;
+	अगर (!skb)
+		वापस शून्य;
 
 	adapter->netdev->stats.rx_bytes += rfd->len;
 
@@ -2282,150 +2283,150 @@ static struct rfd *nic_rx_pkts(struct et131x_adapter *adapter)
 
 	skb->protocol = eth_type_trans(skb, adapter->netdev);
 	skb->ip_summed = CHECKSUM_NONE;
-	netif_receive_skb(skb);
+	netअगर_receive_skb(skb);
 
 out:
-	nic_return_rfd(adapter, rfd);
-	return rfd;
-}
+	nic_वापस_rfd(adapter, rfd);
+	वापस rfd;
+पूर्ण
 
-static int et131x_handle_recv_pkts(struct et131x_adapter *adapter, int budget)
-{
-	struct rfd *rfd = NULL;
-	int count = 0;
-	int limit = budget;
-	bool done = true;
-	struct rx_ring *rx_ring = &adapter->rx_ring;
+अटल पूर्णांक et131x_handle_recv_pkts(काष्ठा et131x_adapter *adapter, पूर्णांक budget)
+अणु
+	काष्ठा rfd *rfd = शून्य;
+	पूर्णांक count = 0;
+	पूर्णांक limit = budget;
+	bool करोne = true;
+	काष्ठा rx_ring *rx_ring = &adapter->rx_ring;
 
-	if (budget > MAX_PACKETS_HANDLED)
+	अगर (budget > MAX_PACKETS_HANDLED)
 		limit = MAX_PACKETS_HANDLED;
 
 	/* Process up to available RFD's */
-	while (count < limit) {
-		if (list_empty(&rx_ring->recv_list)) {
-			WARN_ON(rx_ring->num_ready_recv != 0);
-			done = false;
-			break;
-		}
+	जबतक (count < limit) अणु
+		अगर (list_empty(&rx_ring->recv_list)) अणु
+			WARN_ON(rx_ring->num_पढ़ोy_recv != 0);
+			करोne = false;
+			अवरोध;
+		पूर्ण
 
 		rfd = nic_rx_pkts(adapter);
 
-		if (rfd == NULL)
-			break;
+		अगर (rfd == शून्य)
+			अवरोध;
 
 		/* Do not receive any packets until a filter has been set.
 		 * Do not receive any packets until we have link.
-		 * If length is zero, return the RFD in order to advance the
+		 * If length is zero, वापस the RFD in order to advance the
 		 * Free buffer ring.
 		 */
-		if (!adapter->packet_filter ||
-		    !netif_carrier_ok(adapter->netdev) ||
+		अगर (!adapter->packet_filter ||
+		    !netअगर_carrier_ok(adapter->netdev) ||
 		    rfd->len == 0)
-			continue;
+			जारी;
 
 		adapter->netdev->stats.rx_packets++;
 
-		if (rx_ring->num_ready_recv < RFD_LOW_WATER_MARK)
+		अगर (rx_ring->num_पढ़ोy_recv < RFD_LOW_WATER_MARK)
 			dev_warn(&adapter->pdev->dev, "RFD's are running out\n");
 
 		count++;
-	}
+	पूर्ण
 
-	if (count == limit || !done) {
+	अगर (count == limit || !करोne) अणु
 		rx_ring->unfinished_receives = true;
-		writel(PARM_TX_TIME_INT_DEF * NANO_IN_A_MICRO,
-		       &adapter->regs->global.watchdog_timer);
-	} else {
-		/* Watchdog timer will disable itself if appropriate. */
+		ग_लिखोl(PARM_TX_TIME_INT_DEF * न_अंकO_IN_A_MICRO,
+		       &adapter->regs->global.watchकरोg_समयr);
+	पूर्ण अन्यथा अणु
+		/* Watchकरोg समयr will disable itself अगर appropriate. */
 		rx_ring->unfinished_receives = false;
-	}
+	पूर्ण
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
 /* et131x_tx_dma_memory_alloc
  *
  * Allocates memory that will be visible both to the device and to the CPU.
- * The OS will pass us packets, pointers to which we will insert in the Tx
- * Descriptor queue. The device will read this queue to find the packets in
- * memory. The device will update the "status" in memory each time it xmits a
+ * The OS will pass us packets, poपूर्णांकers to which we will insert in the Tx
+ * Descriptor queue. The device will पढ़ो this queue to find the packets in
+ * memory. The device will update the "status" in memory each समय it xmits a
  * packet.
  */
-static int et131x_tx_dma_memory_alloc(struct et131x_adapter *adapter)
-{
-	int desc_size = 0;
-	struct tx_ring *tx_ring = &adapter->tx_ring;
+अटल पूर्णांक et131x_tx_dma_memory_alloc(काष्ठा et131x_adapter *adapter)
+अणु
+	पूर्णांक desc_size = 0;
+	काष्ठा tx_ring *tx_ring = &adapter->tx_ring;
 
-	/* Allocate memory for the TCB's (Transmit Control Block) */
-	tx_ring->tcb_ring = kcalloc(NUM_TCB, sizeof(struct tcb),
+	/* Allocate memory क्रम the TCB's (Transmit Control Block) */
+	tx_ring->tcb_ring = kसुस्मृति(NUM_TCB, माप(काष्ठा tcb),
 				    GFP_KERNEL | GFP_DMA);
-	if (!tx_ring->tcb_ring)
-		return -ENOMEM;
+	अगर (!tx_ring->tcb_ring)
+		वापस -ENOMEM;
 
-	desc_size = (sizeof(struct tx_desc) * NUM_DESC_PER_RING_TX);
+	desc_size = (माप(काष्ठा tx_desc) * NUM_DESC_PER_RING_TX);
 	tx_ring->tx_desc_ring = dma_alloc_coherent(&adapter->pdev->dev,
 						   desc_size,
 						   &tx_ring->tx_desc_ring_pa,
 						   GFP_KERNEL);
-	if (!tx_ring->tx_desc_ring) {
+	अगर (!tx_ring->tx_desc_ring) अणु
 		dev_err(&adapter->pdev->dev,
 			"Cannot alloc memory for Tx Ring\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	tx_ring->tx_status = dma_alloc_coherent(&adapter->pdev->dev,
-						    sizeof(u32),
+						    माप(u32),
 						    &tx_ring->tx_status_pa,
 						    GFP_KERNEL);
-	if (!tx_ring->tx_status) {
+	अगर (!tx_ring->tx_status) अणु
 		dev_err(&adapter->pdev->dev,
 			"Cannot alloc memory for Tx status block\n");
-		return -ENOMEM;
-	}
-	return 0;
-}
+		वापस -ENOMEM;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static void et131x_tx_dma_memory_free(struct et131x_adapter *adapter)
-{
-	int desc_size = 0;
-	struct tx_ring *tx_ring = &adapter->tx_ring;
+अटल व्योम et131x_tx_dma_memory_मुक्त(काष्ठा et131x_adapter *adapter)
+अणु
+	पूर्णांक desc_size = 0;
+	काष्ठा tx_ring *tx_ring = &adapter->tx_ring;
 
-	if (tx_ring->tx_desc_ring) {
+	अगर (tx_ring->tx_desc_ring) अणु
 		/* Free memory relating to Tx rings here */
-		desc_size = (sizeof(struct tx_desc) * NUM_DESC_PER_RING_TX);
-		dma_free_coherent(&adapter->pdev->dev,
+		desc_size = (माप(काष्ठा tx_desc) * NUM_DESC_PER_RING_TX);
+		dma_मुक्त_coherent(&adapter->pdev->dev,
 				  desc_size,
 				  tx_ring->tx_desc_ring,
 				  tx_ring->tx_desc_ring_pa);
-		tx_ring->tx_desc_ring = NULL;
-	}
+		tx_ring->tx_desc_ring = शून्य;
+	पूर्ण
 
-	/* Free memory for the Tx status block */
-	if (tx_ring->tx_status) {
-		dma_free_coherent(&adapter->pdev->dev,
-				  sizeof(u32),
+	/* Free memory क्रम the Tx status block */
+	अगर (tx_ring->tx_status) अणु
+		dma_मुक्त_coherent(&adapter->pdev->dev,
+				  माप(u32),
 				  tx_ring->tx_status,
 				  tx_ring->tx_status_pa);
 
-		tx_ring->tx_status = NULL;
-	}
-	/* Free the memory for the tcb structures */
-	kfree(tx_ring->tcb_ring);
-}
+		tx_ring->tx_status = शून्य;
+	पूर्ण
+	/* Free the memory क्रम the tcb काष्ठाures */
+	kमुक्त(tx_ring->tcb_ring);
+पूर्ण
 
-/* nic_send_packet - NIC specific send handler for version B silicon. */
-static int nic_send_packet(struct et131x_adapter *adapter, struct tcb *tcb)
-{
+/* nic_send_packet - NIC specअगरic send handler क्रम version B silicon. */
+अटल पूर्णांक nic_send_packet(काष्ठा et131x_adapter *adapter, काष्ठा tcb *tcb)
+अणु
 	u32 i;
-	struct tx_desc desc[24];
+	काष्ठा tx_desc desc[24];
 	u32 frag = 0;
-	u32 thiscopy, remainder;
-	struct sk_buff *skb = tcb->skb;
+	u32 thiscopy, reमुख्यder;
+	काष्ठा sk_buff *skb = tcb->skb;
 	u32 nr_frags = skb_shinfo(skb)->nr_frags + 1;
 	skb_frag_t *frags = &skb_shinfo(skb)->frags[0];
-	struct phy_device *phydev = adapter->netdev->phydev;
+	काष्ठा phy_device *phydev = adapter->netdev->phydev;
 	dma_addr_t dma_addr;
-	struct tx_ring *tx_ring = &adapter->tx_ring;
+	काष्ठा tx_ring *tx_ring = &adapter->tx_ring;
 
 	/* Part of the optimizations of this send routine restrict us to
 	 * sending 24 fragments at a pass.  In practice we should never see
@@ -2435,23 +2436,23 @@ static int nic_send_packet(struct et131x_adapter *adapter, struct tcb *tcb)
 	/* nr_frags should be no more than 18. */
 	BUILD_BUG_ON(MAX_SKB_FRAGS + 1 > 23);
 
-	memset(desc, 0, sizeof(struct tx_desc) * (nr_frags + 1));
+	स_रखो(desc, 0, माप(काष्ठा tx_desc) * (nr_frags + 1));
 
-	for (i = 0; i < nr_frags; i++) {
+	क्रम (i = 0; i < nr_frags; i++) अणु
 		/* If there is something in this element, lets get a
 		 * descriptor from the ring and get the necessary data
 		 */
-		if (i == 0) {
+		अगर (i == 0) अणु
 			/* If the fragments are smaller than a standard MTU,
 			 * then map them to a single descriptor in the Tx
-			 * Desc ring. However, if they're larger, as is
-			 * possible with support for jumbo packets, then
+			 * Desc ring. However, अगर they're larger, as is
+			 * possible with support क्रम jumbo packets, then
 			 * split them each across 2 descriptors.
 			 *
 			 * This will work until we determine why the hardware
-			 * doesn't seem to like large fragments.
+			 * करोesn't seem to like large fragments.
 			 */
-			if (skb_headlen(skb) <= 1514) {
+			अगर (skb_headlen(skb) <= 1514) अणु
 				/* Low 16bits are length, high is vlan and
 				 * unused currently so zero
 				 */
@@ -2463,7 +2464,7 @@ static int nic_send_packet(struct et131x_adapter *adapter, struct tcb *tcb)
 				desc[frag].addr_lo = lower_32_bits(dma_addr);
 				desc[frag].addr_hi = upper_32_bits(dma_addr);
 				frag++;
-			} else {
+			पूर्ण अन्यथा अणु
 				desc[frag].len_vlan = skb_headlen(skb) / 2;
 				dma_addr = dma_map_single(&adapter->pdev->dev,
 							  skb->data,
@@ -2482,8 +2483,8 @@ static int nic_send_packet(struct et131x_adapter *adapter, struct tcb *tcb)
 				desc[frag].addr_lo = lower_32_bits(dma_addr);
 				desc[frag].addr_hi = upper_32_bits(dma_addr);
 				frag++;
-			}
-		} else {
+			पूर्ण
+		पूर्ण अन्यथा अणु
 			desc[frag].len_vlan = skb_frag_size(&frags[i - 1]);
 			dma_addr = skb_frag_dma_map(&adapter->pdev->dev,
 						    &frags[i - 1],
@@ -2493,22 +2494,22 @@ static int nic_send_packet(struct et131x_adapter *adapter, struct tcb *tcb)
 			desc[frag].addr_lo = lower_32_bits(dma_addr);
 			desc[frag].addr_hi = upper_32_bits(dma_addr);
 			frag++;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (phydev && phydev->speed == SPEED_1000) {
-		if (++tx_ring->since_irq == PARM_TX_NUM_BUFS_DEF) {
+	अगर (phydev && phydev->speed == SPEED_1000) अणु
+		अगर (++tx_ring->since_irq == PARM_TX_NUM_BUFS_DEF) अणु
 			/* Last element & Interrupt flag */
 			desc[frag - 1].flags =
 				    TXDESC_FLAG_INTPROC | TXDESC_FLAG_LASTPKT;
 			tx_ring->since_irq = 0;
-		} else { /* Last element */
+		पूर्ण अन्यथा अणु /* Last element */
 			desc[frag - 1].flags = TXDESC_FLAG_LASTPKT;
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		desc[frag - 1].flags =
 				    TXDESC_FLAG_INTPROC | TXDESC_FLAG_LASTPKT;
-	}
+	पूर्ण
 
 	desc[0].flags |= TXDESC_FLAG_FIRSTPKT;
 
@@ -2517,137 +2518,137 @@ static int nic_send_packet(struct et131x_adapter *adapter, struct tcb *tcb)
 
 	thiscopy = NUM_DESC_PER_RING_TX - INDEX10(tx_ring->send_idx);
 
-	if (thiscopy >= frag) {
-		remainder = 0;
+	अगर (thiscopy >= frag) अणु
+		reमुख्यder = 0;
 		thiscopy = frag;
-	} else {
-		remainder = frag - thiscopy;
-	}
+	पूर्ण अन्यथा अणु
+		reमुख्यder = frag - thiscopy;
+	पूर्ण
 
-	memcpy(tx_ring->tx_desc_ring + INDEX10(tx_ring->send_idx),
+	स_नकल(tx_ring->tx_desc_ring + INDEX10(tx_ring->send_idx),
 	       desc,
-	       sizeof(struct tx_desc) * thiscopy);
+	       माप(काष्ठा tx_desc) * thiscopy);
 
 	add_10bit(&tx_ring->send_idx, thiscopy);
 
-	if (INDEX10(tx_ring->send_idx) == 0 ||
-	    INDEX10(tx_ring->send_idx) == NUM_DESC_PER_RING_TX) {
+	अगर (INDEX10(tx_ring->send_idx) == 0 ||
+	    INDEX10(tx_ring->send_idx) == NUM_DESC_PER_RING_TX) अणु
 		tx_ring->send_idx &= ~ET_DMA10_MASK;
 		tx_ring->send_idx ^= ET_DMA10_WRAP;
-	}
+	पूर्ण
 
-	if (remainder) {
-		memcpy(tx_ring->tx_desc_ring,
+	अगर (reमुख्यder) अणु
+		स_नकल(tx_ring->tx_desc_ring,
 		       desc + thiscopy,
-		       sizeof(struct tx_desc) * remainder);
+		       माप(काष्ठा tx_desc) * reमुख्यder);
 
-		add_10bit(&tx_ring->send_idx, remainder);
-	}
+		add_10bit(&tx_ring->send_idx, reमुख्यder);
+	पूर्ण
 
-	if (INDEX10(tx_ring->send_idx) == 0) {
-		if (tx_ring->send_idx)
+	अगर (INDEX10(tx_ring->send_idx) == 0) अणु
+		अगर (tx_ring->send_idx)
 			tcb->index = NUM_DESC_PER_RING_TX - 1;
-		else
+		अन्यथा
 			tcb->index = ET_DMA10_WRAP|(NUM_DESC_PER_RING_TX - 1);
-	} else {
+	पूर्ण अन्यथा अणु
 		tcb->index = tx_ring->send_idx - 1;
-	}
+	पूर्ण
 
 	spin_lock(&adapter->tcb_send_qlock);
 
-	if (tx_ring->send_tail)
+	अगर (tx_ring->send_tail)
 		tx_ring->send_tail->next = tcb;
-	else
+	अन्यथा
 		tx_ring->send_head = tcb;
 
 	tx_ring->send_tail = tcb;
 
-	WARN_ON(tcb->next != NULL);
+	WARN_ON(tcb->next != शून्य);
 
 	tx_ring->used++;
 
 	spin_unlock(&adapter->tcb_send_qlock);
 
-	/* Write the new write pointer back to the device. */
-	writel(tx_ring->send_idx, &adapter->regs->txdma.service_request);
+	/* Write the new ग_लिखो poपूर्णांकer back to the device. */
+	ग_लिखोl(tx_ring->send_idx, &adapter->regs->txdma.service_request);
 
 	/* For Gig only, we use Tx Interrupt coalescing.  Enable the software
-	 * timer to wake us up if this packet isn't followed by N more.
+	 * समयr to wake us up अगर this packet isn't followed by N more.
 	 */
-	if (phydev && phydev->speed == SPEED_1000) {
-		writel(PARM_TX_TIME_INT_DEF * NANO_IN_A_MICRO,
-		       &adapter->regs->global.watchdog_timer);
-	}
-	return 0;
-}
+	अगर (phydev && phydev->speed == SPEED_1000) अणु
+		ग_लिखोl(PARM_TX_TIME_INT_DEF * न_अंकO_IN_A_MICRO,
+		       &adapter->regs->global.watchकरोg_समयr);
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int send_packet(struct sk_buff *skb, struct et131x_adapter *adapter)
-{
-	int status;
-	struct tcb *tcb;
-	unsigned long flags;
-	struct tx_ring *tx_ring = &adapter->tx_ring;
+अटल पूर्णांक send_packet(काष्ठा sk_buff *skb, काष्ठा et131x_adapter *adapter)
+अणु
+	पूर्णांक status;
+	काष्ठा tcb *tcb;
+	अचिन्हित दीर्घ flags;
+	काष्ठा tx_ring *tx_ring = &adapter->tx_ring;
 
 	/* All packets must have at least a MAC address and a protocol type */
-	if (skb->len < ETH_HLEN)
-		return -EIO;
+	अगर (skb->len < ETH_HLEN)
+		वापस -EIO;
 
-	spin_lock_irqsave(&adapter->tcb_ready_qlock, flags);
+	spin_lock_irqsave(&adapter->tcb_पढ़ोy_qlock, flags);
 
 	tcb = tx_ring->tcb_qhead;
 
-	if (tcb == NULL) {
-		spin_unlock_irqrestore(&adapter->tcb_ready_qlock, flags);
-		return -ENOMEM;
-	}
+	अगर (tcb == शून्य) अणु
+		spin_unlock_irqrestore(&adapter->tcb_पढ़ोy_qlock, flags);
+		वापस -ENOMEM;
+	पूर्ण
 
 	tx_ring->tcb_qhead = tcb->next;
 
-	if (tx_ring->tcb_qhead == NULL)
-		tx_ring->tcb_qtail = NULL;
+	अगर (tx_ring->tcb_qhead == शून्य)
+		tx_ring->tcb_qtail = शून्य;
 
-	spin_unlock_irqrestore(&adapter->tcb_ready_qlock, flags);
+	spin_unlock_irqrestore(&adapter->tcb_पढ़ोy_qlock, flags);
 
 	tcb->skb = skb;
-	tcb->next = NULL;
+	tcb->next = शून्य;
 
 	status = nic_send_packet(adapter, tcb);
 
-	if (status != 0) {
-		spin_lock_irqsave(&adapter->tcb_ready_qlock, flags);
+	अगर (status != 0) अणु
+		spin_lock_irqsave(&adapter->tcb_पढ़ोy_qlock, flags);
 
-		if (tx_ring->tcb_qtail)
+		अगर (tx_ring->tcb_qtail)
 			tx_ring->tcb_qtail->next = tcb;
-		else
-			/* Apparently ready Q is empty. */
+		अन्यथा
+			/* Apparently पढ़ोy Q is empty. */
 			tx_ring->tcb_qhead = tcb;
 
 		tx_ring->tcb_qtail = tcb;
-		spin_unlock_irqrestore(&adapter->tcb_ready_qlock, flags);
-		return status;
-	}
+		spin_unlock_irqrestore(&adapter->tcb_पढ़ोy_qlock, flags);
+		वापस status;
+	पूर्ण
 	WARN_ON(tx_ring->used > NUM_TCB);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* free_send_packet - Recycle a struct tcb */
-static inline void free_send_packet(struct et131x_adapter *adapter,
-				    struct tcb *tcb)
-{
-	unsigned long flags;
-	struct tx_desc *desc = NULL;
-	struct net_device_stats *stats = &adapter->netdev->stats;
-	struct tx_ring *tx_ring = &adapter->tx_ring;
+/* मुक्त_send_packet - Recycle a काष्ठा tcb */
+अटल अंतरभूत व्योम मुक्त_send_packet(काष्ठा et131x_adapter *adapter,
+				    काष्ठा tcb *tcb)
+अणु
+	अचिन्हित दीर्घ flags;
+	काष्ठा tx_desc *desc = शून्य;
+	काष्ठा net_device_stats *stats = &adapter->netdev->stats;
+	काष्ठा tx_ring *tx_ring = &adapter->tx_ring;
 	u64  dma_addr;
 
-	if (tcb->skb) {
+	अगर (tcb->skb) अणु
 		stats->tx_bytes += tcb->skb->len;
 
 		/* Iterate through the TX descriptors on the ring
 		 * corresponding to this packet and umap the fragments
-		 * they point to
+		 * they poपूर्णांक to
 		 */
-		do {
+		करो अणु
 			desc = tx_ring->tx_desc_ring +
 			       INDEX10(tcb->index_start);
 
@@ -2659,570 +2660,570 @@ static inline void free_send_packet(struct et131x_adapter *adapter,
 					 desc->len_vlan, DMA_TO_DEVICE);
 
 			add_10bit(&tcb->index_start, 1);
-			if (INDEX10(tcb->index_start) >=
-							NUM_DESC_PER_RING_TX) {
+			अगर (INDEX10(tcb->index_start) >=
+							NUM_DESC_PER_RING_TX) अणु
 				tcb->index_start &= ~ET_DMA10_MASK;
 				tcb->index_start ^= ET_DMA10_WRAP;
-			}
-		} while (desc != tx_ring->tx_desc_ring + INDEX10(tcb->index));
+			पूर्ण
+		पूर्ण जबतक (desc != tx_ring->tx_desc_ring + INDEX10(tcb->index));
 
-		dev_kfree_skb_any(tcb->skb);
-	}
+		dev_kमुक्त_skb_any(tcb->skb);
+	पूर्ण
 
-	memset(tcb, 0, sizeof(struct tcb));
+	स_रखो(tcb, 0, माप(काष्ठा tcb));
 
 	/* Add the TCB to the Ready Q */
-	spin_lock_irqsave(&adapter->tcb_ready_qlock, flags);
+	spin_lock_irqsave(&adapter->tcb_पढ़ोy_qlock, flags);
 
 	stats->tx_packets++;
 
-	if (tx_ring->tcb_qtail)
+	अगर (tx_ring->tcb_qtail)
 		tx_ring->tcb_qtail->next = tcb;
-	else /* Apparently ready Q is empty. */
+	अन्यथा /* Apparently पढ़ोy Q is empty. */
 		tx_ring->tcb_qhead = tcb;
 
 	tx_ring->tcb_qtail = tcb;
 
-	spin_unlock_irqrestore(&adapter->tcb_ready_qlock, flags);
+	spin_unlock_irqrestore(&adapter->tcb_पढ़ोy_qlock, flags);
 	WARN_ON(tx_ring->used < 0);
-}
+पूर्ण
 
-/* et131x_free_busy_send_packets - Free and complete the stopped active sends */
-static void et131x_free_busy_send_packets(struct et131x_adapter *adapter)
-{
-	struct tcb *tcb;
-	unsigned long flags;
-	u32 freed = 0;
-	struct tx_ring *tx_ring = &adapter->tx_ring;
+/* et131x_मुक्त_busy_send_packets - Free and complete the stopped active sends */
+अटल व्योम et131x_मुक्त_busy_send_packets(काष्ठा et131x_adapter *adapter)
+अणु
+	काष्ठा tcb *tcb;
+	अचिन्हित दीर्घ flags;
+	u32 मुक्तd = 0;
+	काष्ठा tx_ring *tx_ring = &adapter->tx_ring;
 
 	/* Any packets being sent? Check the first TCB on the send list */
 	spin_lock_irqsave(&adapter->tcb_send_qlock, flags);
 
 	tcb = tx_ring->send_head;
 
-	while (tcb != NULL && freed < NUM_TCB) {
-		struct tcb *next = tcb->next;
+	जबतक (tcb != शून्य && मुक्तd < NUM_TCB) अणु
+		काष्ठा tcb *next = tcb->next;
 
 		tx_ring->send_head = next;
 
-		if (next == NULL)
-			tx_ring->send_tail = NULL;
+		अगर (next == शून्य)
+			tx_ring->send_tail = शून्य;
 
 		tx_ring->used--;
 
 		spin_unlock_irqrestore(&adapter->tcb_send_qlock, flags);
 
-		freed++;
-		free_send_packet(adapter, tcb);
+		मुक्तd++;
+		मुक्त_send_packet(adapter, tcb);
 
 		spin_lock_irqsave(&adapter->tcb_send_qlock, flags);
 
 		tcb = tx_ring->send_head;
-	}
+	पूर्ण
 
-	WARN_ON(freed == NUM_TCB);
+	WARN_ON(मुक्तd == NUM_TCB);
 
 	spin_unlock_irqrestore(&adapter->tcb_send_qlock, flags);
 
 	tx_ring->used = 0;
-}
+पूर्ण
 
 /* et131x_handle_send_pkts
  *
  * Re-claim the send resources, complete sends and get more to send from
- * the send wait queue.
+ * the send रुको queue.
  */
-static void et131x_handle_send_pkts(struct et131x_adapter *adapter)
-{
-	unsigned long flags;
+अटल व्योम et131x_handle_send_pkts(काष्ठा et131x_adapter *adapter)
+अणु
+	अचिन्हित दीर्घ flags;
 	u32 serviced;
-	struct tcb *tcb;
+	काष्ठा tcb *tcb;
 	u32 index;
-	struct tx_ring *tx_ring = &adapter->tx_ring;
+	काष्ठा tx_ring *tx_ring = &adapter->tx_ring;
 
-	serviced = readl(&adapter->regs->txdma.new_service_complete);
+	serviced = पढ़ोl(&adapter->regs->txdma.new_service_complete);
 	index = INDEX10(serviced);
 
-	/* Has the ring wrapped?  Process any descriptors that do not have
+	/* Has the ring wrapped?  Process any descriptors that करो not have
 	 * the same "wrap" indicator as the current completion indicator
 	 */
 	spin_lock_irqsave(&adapter->tcb_send_qlock, flags);
 
 	tcb = tx_ring->send_head;
 
-	while (tcb &&
+	जबतक (tcb &&
 	       ((serviced ^ tcb->index) & ET_DMA10_WRAP) &&
-	       index < INDEX10(tcb->index)) {
+	       index < INDEX10(tcb->index)) अणु
 		tx_ring->used--;
 		tx_ring->send_head = tcb->next;
-		if (tcb->next == NULL)
-			tx_ring->send_tail = NULL;
+		अगर (tcb->next == शून्य)
+			tx_ring->send_tail = शून्य;
 
 		spin_unlock_irqrestore(&adapter->tcb_send_qlock, flags);
-		free_send_packet(adapter, tcb);
+		मुक्त_send_packet(adapter, tcb);
 		spin_lock_irqsave(&adapter->tcb_send_qlock, flags);
 
 		/* Goto the next packet */
 		tcb = tx_ring->send_head;
-	}
-	while (tcb &&
+	पूर्ण
+	जबतक (tcb &&
 	       !((serviced ^ tcb->index) & ET_DMA10_WRAP) &&
-	       index > (tcb->index & ET_DMA10_MASK)) {
+	       index > (tcb->index & ET_DMA10_MASK)) अणु
 		tx_ring->used--;
 		tx_ring->send_head = tcb->next;
-		if (tcb->next == NULL)
-			tx_ring->send_tail = NULL;
+		अगर (tcb->next == शून्य)
+			tx_ring->send_tail = शून्य;
 
 		spin_unlock_irqrestore(&adapter->tcb_send_qlock, flags);
-		free_send_packet(adapter, tcb);
+		मुक्त_send_packet(adapter, tcb);
 		spin_lock_irqsave(&adapter->tcb_send_qlock, flags);
 
 		/* Goto the next packet */
 		tcb = tx_ring->send_head;
-	}
+	पूर्ण
 
 	/* Wake up the queue when we hit a low-water mark */
-	if (tx_ring->used <= NUM_TCB / 3)
-		netif_wake_queue(adapter->netdev);
+	अगर (tx_ring->used <= NUM_TCB / 3)
+		netअगर_wake_queue(adapter->netdev);
 
 	spin_unlock_irqrestore(&adapter->tcb_send_qlock, flags);
-}
+पूर्ण
 
-static int et131x_get_regs_len(struct net_device *netdev)
-{
-#define ET131X_REGS_LEN 256
-	return ET131X_REGS_LEN * sizeof(u32);
-}
+अटल पूर्णांक et131x_get_regs_len(काष्ठा net_device *netdev)
+अणु
+#घोषणा ET131X_REGS_LEN 256
+	वापस ET131X_REGS_LEN * माप(u32);
+पूर्ण
 
-static void et131x_get_regs(struct net_device *netdev,
-			    struct ethtool_regs *regs, void *regs_data)
-{
-	struct et131x_adapter *adapter = netdev_priv(netdev);
-	struct address_map __iomem *aregs = adapter->regs;
+अटल व्योम et131x_get_regs(काष्ठा net_device *netdev,
+			    काष्ठा ethtool_regs *regs, व्योम *regs_data)
+अणु
+	काष्ठा et131x_adapter *adapter = netdev_priv(netdev);
+	काष्ठा address_map __iomem *aregs = adapter->regs;
 	u32 *regs_buff = regs_data;
 	u32 num = 0;
-	u16 tmp;
+	u16 पंचांगp;
 
-	memset(regs_data, 0, et131x_get_regs_len(netdev));
+	स_रखो(regs_data, 0, et131x_get_regs_len(netdev));
 
 	regs->version = (1 << 24) | (adapter->pdev->revision << 16) |
 			adapter->pdev->device;
 
 	/* PHY regs */
-	et131x_mii_read(adapter, MII_BMCR, &tmp);
-	regs_buff[num++] = tmp;
-	et131x_mii_read(adapter, MII_BMSR, &tmp);
-	regs_buff[num++] = tmp;
-	et131x_mii_read(adapter, MII_PHYSID1, &tmp);
-	regs_buff[num++] = tmp;
-	et131x_mii_read(adapter, MII_PHYSID2, &tmp);
-	regs_buff[num++] = tmp;
-	et131x_mii_read(adapter, MII_ADVERTISE, &tmp);
-	regs_buff[num++] = tmp;
-	et131x_mii_read(adapter, MII_LPA, &tmp);
-	regs_buff[num++] = tmp;
-	et131x_mii_read(adapter, MII_EXPANSION, &tmp);
-	regs_buff[num++] = tmp;
+	et131x_mii_पढ़ो(adapter, MII_BMCR, &पंचांगp);
+	regs_buff[num++] = पंचांगp;
+	et131x_mii_पढ़ो(adapter, MII_BMSR, &पंचांगp);
+	regs_buff[num++] = पंचांगp;
+	et131x_mii_पढ़ो(adapter, MII_PHYSID1, &पंचांगp);
+	regs_buff[num++] = पंचांगp;
+	et131x_mii_पढ़ो(adapter, MII_PHYSID2, &पंचांगp);
+	regs_buff[num++] = पंचांगp;
+	et131x_mii_पढ़ो(adapter, MII_ADVERTISE, &पंचांगp);
+	regs_buff[num++] = पंचांगp;
+	et131x_mii_पढ़ो(adapter, MII_LPA, &पंचांगp);
+	regs_buff[num++] = पंचांगp;
+	et131x_mii_पढ़ो(adapter, MII_EXPANSION, &पंचांगp);
+	regs_buff[num++] = पंचांगp;
 	/* Autoneg next page transmit reg */
-	et131x_mii_read(adapter, 0x07, &tmp);
-	regs_buff[num++] = tmp;
+	et131x_mii_पढ़ो(adapter, 0x07, &पंचांगp);
+	regs_buff[num++] = पंचांगp;
 	/* Link partner next page reg */
-	et131x_mii_read(adapter, 0x08, &tmp);
-	regs_buff[num++] = tmp;
-	et131x_mii_read(adapter, MII_CTRL1000, &tmp);
-	regs_buff[num++] = tmp;
-	et131x_mii_read(adapter, MII_STAT1000, &tmp);
-	regs_buff[num++] = tmp;
-	et131x_mii_read(adapter, 0x0b, &tmp);
-	regs_buff[num++] = tmp;
-	et131x_mii_read(adapter, 0x0c, &tmp);
-	regs_buff[num++] = tmp;
-	et131x_mii_read(adapter, MII_MMD_CTRL, &tmp);
-	regs_buff[num++] = tmp;
-	et131x_mii_read(adapter, MII_MMD_DATA, &tmp);
-	regs_buff[num++] = tmp;
-	et131x_mii_read(adapter, MII_ESTATUS, &tmp);
-	regs_buff[num++] = tmp;
+	et131x_mii_पढ़ो(adapter, 0x08, &पंचांगp);
+	regs_buff[num++] = पंचांगp;
+	et131x_mii_पढ़ो(adapter, MII_CTRL1000, &पंचांगp);
+	regs_buff[num++] = पंचांगp;
+	et131x_mii_पढ़ो(adapter, MII_STAT1000, &पंचांगp);
+	regs_buff[num++] = पंचांगp;
+	et131x_mii_पढ़ो(adapter, 0x0b, &पंचांगp);
+	regs_buff[num++] = पंचांगp;
+	et131x_mii_पढ़ो(adapter, 0x0c, &पंचांगp);
+	regs_buff[num++] = पंचांगp;
+	et131x_mii_पढ़ो(adapter, MII_MMD_CTRL, &पंचांगp);
+	regs_buff[num++] = पंचांगp;
+	et131x_mii_पढ़ो(adapter, MII_MMD_DATA, &पंचांगp);
+	regs_buff[num++] = पंचांगp;
+	et131x_mii_पढ़ो(adapter, MII_ESTATUS, &पंचांगp);
+	regs_buff[num++] = पंचांगp;
 
-	et131x_mii_read(adapter, PHY_INDEX_REG, &tmp);
-	regs_buff[num++] = tmp;
-	et131x_mii_read(adapter, PHY_DATA_REG, &tmp);
-	regs_buff[num++] = tmp;
-	et131x_mii_read(adapter, PHY_MPHY_CONTROL_REG, &tmp);
-	regs_buff[num++] = tmp;
-	et131x_mii_read(adapter, PHY_LOOPBACK_CONTROL, &tmp);
-	regs_buff[num++] = tmp;
-	et131x_mii_read(adapter, PHY_LOOPBACK_CONTROL + 1, &tmp);
-	regs_buff[num++] = tmp;
+	et131x_mii_पढ़ो(adapter, PHY_INDEX_REG, &पंचांगp);
+	regs_buff[num++] = पंचांगp;
+	et131x_mii_पढ़ो(adapter, PHY_DATA_REG, &पंचांगp);
+	regs_buff[num++] = पंचांगp;
+	et131x_mii_पढ़ो(adapter, PHY_MPHY_CONTROL_REG, &पंचांगp);
+	regs_buff[num++] = पंचांगp;
+	et131x_mii_पढ़ो(adapter, PHY_LOOPBACK_CONTROL, &पंचांगp);
+	regs_buff[num++] = पंचांगp;
+	et131x_mii_पढ़ो(adapter, PHY_LOOPBACK_CONTROL + 1, &पंचांगp);
+	regs_buff[num++] = पंचांगp;
 
-	et131x_mii_read(adapter, PHY_REGISTER_MGMT_CONTROL, &tmp);
-	regs_buff[num++] = tmp;
-	et131x_mii_read(adapter, PHY_CONFIG, &tmp);
-	regs_buff[num++] = tmp;
-	et131x_mii_read(adapter, PHY_PHY_CONTROL, &tmp);
-	regs_buff[num++] = tmp;
-	et131x_mii_read(adapter, PHY_INTERRUPT_MASK, &tmp);
-	regs_buff[num++] = tmp;
-	et131x_mii_read(adapter, PHY_INTERRUPT_STATUS, &tmp);
-	regs_buff[num++] = tmp;
-	et131x_mii_read(adapter, PHY_PHY_STATUS, &tmp);
-	regs_buff[num++] = tmp;
-	et131x_mii_read(adapter, PHY_LED_1, &tmp);
-	regs_buff[num++] = tmp;
-	et131x_mii_read(adapter, PHY_LED_2, &tmp);
-	regs_buff[num++] = tmp;
+	et131x_mii_पढ़ो(adapter, PHY_REGISTER_MGMT_CONTROL, &पंचांगp);
+	regs_buff[num++] = पंचांगp;
+	et131x_mii_पढ़ो(adapter, PHY_CONFIG, &पंचांगp);
+	regs_buff[num++] = पंचांगp;
+	et131x_mii_पढ़ो(adapter, PHY_PHY_CONTROL, &पंचांगp);
+	regs_buff[num++] = पंचांगp;
+	et131x_mii_पढ़ो(adapter, PHY_INTERRUPT_MASK, &पंचांगp);
+	regs_buff[num++] = पंचांगp;
+	et131x_mii_पढ़ो(adapter, PHY_INTERRUPT_STATUS, &पंचांगp);
+	regs_buff[num++] = पंचांगp;
+	et131x_mii_पढ़ो(adapter, PHY_PHY_STATUS, &पंचांगp);
+	regs_buff[num++] = पंचांगp;
+	et131x_mii_पढ़ो(adapter, PHY_LED_1, &पंचांगp);
+	regs_buff[num++] = पंचांगp;
+	et131x_mii_पढ़ो(adapter, PHY_LED_2, &पंचांगp);
+	regs_buff[num++] = पंचांगp;
 
 	/* Global regs */
-	regs_buff[num++] = readl(&aregs->global.txq_start_addr);
-	regs_buff[num++] = readl(&aregs->global.txq_end_addr);
-	regs_buff[num++] = readl(&aregs->global.rxq_start_addr);
-	regs_buff[num++] = readl(&aregs->global.rxq_end_addr);
-	regs_buff[num++] = readl(&aregs->global.pm_csr);
-	regs_buff[num++] = adapter->stats.interrupt_status;
-	regs_buff[num++] = readl(&aregs->global.int_mask);
-	regs_buff[num++] = readl(&aregs->global.int_alias_clr_en);
-	regs_buff[num++] = readl(&aregs->global.int_status_alias);
-	regs_buff[num++] = readl(&aregs->global.sw_reset);
-	regs_buff[num++] = readl(&aregs->global.slv_timer);
-	regs_buff[num++] = readl(&aregs->global.msi_config);
-	regs_buff[num++] = readl(&aregs->global.loopback);
-	regs_buff[num++] = readl(&aregs->global.watchdog_timer);
+	regs_buff[num++] = पढ़ोl(&aregs->global.txq_start_addr);
+	regs_buff[num++] = पढ़ोl(&aregs->global.txq_end_addr);
+	regs_buff[num++] = पढ़ोl(&aregs->global.rxq_start_addr);
+	regs_buff[num++] = पढ़ोl(&aregs->global.rxq_end_addr);
+	regs_buff[num++] = पढ़ोl(&aregs->global.pm_csr);
+	regs_buff[num++] = adapter->stats.पूर्णांकerrupt_status;
+	regs_buff[num++] = पढ़ोl(&aregs->global.पूर्णांक_mask);
+	regs_buff[num++] = पढ़ोl(&aregs->global.पूर्णांक_alias_clr_en);
+	regs_buff[num++] = पढ़ोl(&aregs->global.पूर्णांक_status_alias);
+	regs_buff[num++] = पढ़ोl(&aregs->global.sw_reset);
+	regs_buff[num++] = पढ़ोl(&aregs->global.slv_समयr);
+	regs_buff[num++] = पढ़ोl(&aregs->global.msi_config);
+	regs_buff[num++] = पढ़ोl(&aregs->global.loopback);
+	regs_buff[num++] = पढ़ोl(&aregs->global.watchकरोg_समयr);
 
 	/* TXDMA regs */
-	regs_buff[num++] = readl(&aregs->txdma.csr);
-	regs_buff[num++] = readl(&aregs->txdma.pr_base_hi);
-	regs_buff[num++] = readl(&aregs->txdma.pr_base_lo);
-	regs_buff[num++] = readl(&aregs->txdma.pr_num_des);
-	regs_buff[num++] = readl(&aregs->txdma.txq_wr_addr);
-	regs_buff[num++] = readl(&aregs->txdma.txq_wr_addr_ext);
-	regs_buff[num++] = readl(&aregs->txdma.txq_rd_addr);
-	regs_buff[num++] = readl(&aregs->txdma.dma_wb_base_hi);
-	regs_buff[num++] = readl(&aregs->txdma.dma_wb_base_lo);
-	regs_buff[num++] = readl(&aregs->txdma.service_request);
-	regs_buff[num++] = readl(&aregs->txdma.service_complete);
-	regs_buff[num++] = readl(&aregs->txdma.cache_rd_index);
-	regs_buff[num++] = readl(&aregs->txdma.cache_wr_index);
-	regs_buff[num++] = readl(&aregs->txdma.tx_dma_error);
-	regs_buff[num++] = readl(&aregs->txdma.desc_abort_cnt);
-	regs_buff[num++] = readl(&aregs->txdma.payload_abort_cnt);
-	regs_buff[num++] = readl(&aregs->txdma.writeback_abort_cnt);
-	regs_buff[num++] = readl(&aregs->txdma.desc_timeout_cnt);
-	regs_buff[num++] = readl(&aregs->txdma.payload_timeout_cnt);
-	regs_buff[num++] = readl(&aregs->txdma.writeback_timeout_cnt);
-	regs_buff[num++] = readl(&aregs->txdma.desc_error_cnt);
-	regs_buff[num++] = readl(&aregs->txdma.payload_error_cnt);
-	regs_buff[num++] = readl(&aregs->txdma.writeback_error_cnt);
-	regs_buff[num++] = readl(&aregs->txdma.dropped_tlp_cnt);
-	regs_buff[num++] = readl(&aregs->txdma.new_service_complete);
-	regs_buff[num++] = readl(&aregs->txdma.ethernet_packet_cnt);
+	regs_buff[num++] = पढ़ोl(&aregs->txdma.csr);
+	regs_buff[num++] = पढ़ोl(&aregs->txdma.pr_base_hi);
+	regs_buff[num++] = पढ़ोl(&aregs->txdma.pr_base_lo);
+	regs_buff[num++] = पढ़ोl(&aregs->txdma.pr_num_des);
+	regs_buff[num++] = पढ़ोl(&aregs->txdma.txq_wr_addr);
+	regs_buff[num++] = पढ़ोl(&aregs->txdma.txq_wr_addr_ext);
+	regs_buff[num++] = पढ़ोl(&aregs->txdma.txq_rd_addr);
+	regs_buff[num++] = पढ़ोl(&aregs->txdma.dma_wb_base_hi);
+	regs_buff[num++] = पढ़ोl(&aregs->txdma.dma_wb_base_lo);
+	regs_buff[num++] = पढ़ोl(&aregs->txdma.service_request);
+	regs_buff[num++] = पढ़ोl(&aregs->txdma.service_complete);
+	regs_buff[num++] = पढ़ोl(&aregs->txdma.cache_rd_index);
+	regs_buff[num++] = पढ़ोl(&aregs->txdma.cache_wr_index);
+	regs_buff[num++] = पढ़ोl(&aregs->txdma.tx_dma_error);
+	regs_buff[num++] = पढ़ोl(&aregs->txdma.desc_पात_cnt);
+	regs_buff[num++] = पढ़ोl(&aregs->txdma.payload_पात_cnt);
+	regs_buff[num++] = पढ़ोl(&aregs->txdma.ग_लिखोback_पात_cnt);
+	regs_buff[num++] = पढ़ोl(&aregs->txdma.desc_समयout_cnt);
+	regs_buff[num++] = पढ़ोl(&aregs->txdma.payload_समयout_cnt);
+	regs_buff[num++] = पढ़ोl(&aregs->txdma.ग_लिखोback_समयout_cnt);
+	regs_buff[num++] = पढ़ोl(&aregs->txdma.desc_error_cnt);
+	regs_buff[num++] = पढ़ोl(&aregs->txdma.payload_error_cnt);
+	regs_buff[num++] = पढ़ोl(&aregs->txdma.ग_लिखोback_error_cnt);
+	regs_buff[num++] = पढ़ोl(&aregs->txdma.dropped_tlp_cnt);
+	regs_buff[num++] = पढ़ोl(&aregs->txdma.new_service_complete);
+	regs_buff[num++] = पढ़ोl(&aregs->txdma.ethernet_packet_cnt);
 
 	/* RXDMA regs */
-	regs_buff[num++] = readl(&aregs->rxdma.csr);
-	regs_buff[num++] = readl(&aregs->rxdma.dma_wb_base_hi);
-	regs_buff[num++] = readl(&aregs->rxdma.dma_wb_base_lo);
-	regs_buff[num++] = readl(&aregs->rxdma.num_pkt_done);
-	regs_buff[num++] = readl(&aregs->rxdma.max_pkt_time);
-	regs_buff[num++] = readl(&aregs->rxdma.rxq_rd_addr);
-	regs_buff[num++] = readl(&aregs->rxdma.rxq_rd_addr_ext);
-	regs_buff[num++] = readl(&aregs->rxdma.rxq_wr_addr);
-	regs_buff[num++] = readl(&aregs->rxdma.psr_base_hi);
-	regs_buff[num++] = readl(&aregs->rxdma.psr_base_lo);
-	regs_buff[num++] = readl(&aregs->rxdma.psr_num_des);
-	regs_buff[num++] = readl(&aregs->rxdma.psr_avail_offset);
-	regs_buff[num++] = readl(&aregs->rxdma.psr_full_offset);
-	regs_buff[num++] = readl(&aregs->rxdma.psr_access_index);
-	regs_buff[num++] = readl(&aregs->rxdma.psr_min_des);
-	regs_buff[num++] = readl(&aregs->rxdma.fbr0_base_lo);
-	regs_buff[num++] = readl(&aregs->rxdma.fbr0_base_hi);
-	regs_buff[num++] = readl(&aregs->rxdma.fbr0_num_des);
-	regs_buff[num++] = readl(&aregs->rxdma.fbr0_avail_offset);
-	regs_buff[num++] = readl(&aregs->rxdma.fbr0_full_offset);
-	regs_buff[num++] = readl(&aregs->rxdma.fbr0_rd_index);
-	regs_buff[num++] = readl(&aregs->rxdma.fbr0_min_des);
-	regs_buff[num++] = readl(&aregs->rxdma.fbr1_base_lo);
-	regs_buff[num++] = readl(&aregs->rxdma.fbr1_base_hi);
-	regs_buff[num++] = readl(&aregs->rxdma.fbr1_num_des);
-	regs_buff[num++] = readl(&aregs->rxdma.fbr1_avail_offset);
-	regs_buff[num++] = readl(&aregs->rxdma.fbr1_full_offset);
-	regs_buff[num++] = readl(&aregs->rxdma.fbr1_rd_index);
-	regs_buff[num++] = readl(&aregs->rxdma.fbr1_min_des);
-}
+	regs_buff[num++] = पढ़ोl(&aregs->rxdma.csr);
+	regs_buff[num++] = पढ़ोl(&aregs->rxdma.dma_wb_base_hi);
+	regs_buff[num++] = पढ़ोl(&aregs->rxdma.dma_wb_base_lo);
+	regs_buff[num++] = पढ़ोl(&aregs->rxdma.num_pkt_करोne);
+	regs_buff[num++] = पढ़ोl(&aregs->rxdma.max_pkt_समय);
+	regs_buff[num++] = पढ़ोl(&aregs->rxdma.rxq_rd_addr);
+	regs_buff[num++] = पढ़ोl(&aregs->rxdma.rxq_rd_addr_ext);
+	regs_buff[num++] = पढ़ोl(&aregs->rxdma.rxq_wr_addr);
+	regs_buff[num++] = पढ़ोl(&aregs->rxdma.psr_base_hi);
+	regs_buff[num++] = पढ़ोl(&aregs->rxdma.psr_base_lo);
+	regs_buff[num++] = पढ़ोl(&aregs->rxdma.psr_num_des);
+	regs_buff[num++] = पढ़ोl(&aregs->rxdma.psr_avail_offset);
+	regs_buff[num++] = पढ़ोl(&aregs->rxdma.psr_full_offset);
+	regs_buff[num++] = पढ़ोl(&aregs->rxdma.psr_access_index);
+	regs_buff[num++] = पढ़ोl(&aregs->rxdma.psr_min_des);
+	regs_buff[num++] = पढ़ोl(&aregs->rxdma.fbr0_base_lo);
+	regs_buff[num++] = पढ़ोl(&aregs->rxdma.fbr0_base_hi);
+	regs_buff[num++] = पढ़ोl(&aregs->rxdma.fbr0_num_des);
+	regs_buff[num++] = पढ़ोl(&aregs->rxdma.fbr0_avail_offset);
+	regs_buff[num++] = पढ़ोl(&aregs->rxdma.fbr0_full_offset);
+	regs_buff[num++] = पढ़ोl(&aregs->rxdma.fbr0_rd_index);
+	regs_buff[num++] = पढ़ोl(&aregs->rxdma.fbr0_min_des);
+	regs_buff[num++] = पढ़ोl(&aregs->rxdma.fbr1_base_lo);
+	regs_buff[num++] = पढ़ोl(&aregs->rxdma.fbr1_base_hi);
+	regs_buff[num++] = पढ़ोl(&aregs->rxdma.fbr1_num_des);
+	regs_buff[num++] = पढ़ोl(&aregs->rxdma.fbr1_avail_offset);
+	regs_buff[num++] = पढ़ोl(&aregs->rxdma.fbr1_full_offset);
+	regs_buff[num++] = पढ़ोl(&aregs->rxdma.fbr1_rd_index);
+	regs_buff[num++] = पढ़ोl(&aregs->rxdma.fbr1_min_des);
+पूर्ण
 
-static void et131x_get_drvinfo(struct net_device *netdev,
-			       struct ethtool_drvinfo *info)
-{
-	struct et131x_adapter *adapter = netdev_priv(netdev);
+अटल व्योम et131x_get_drvinfo(काष्ठा net_device *netdev,
+			       काष्ठा ethtool_drvinfo *info)
+अणु
+	काष्ठा et131x_adapter *adapter = netdev_priv(netdev);
 
-	strlcpy(info->driver, DRIVER_NAME, sizeof(info->driver));
+	strlcpy(info->driver, DRIVER_NAME, माप(info->driver));
 	strlcpy(info->bus_info, pci_name(adapter->pdev),
-		sizeof(info->bus_info));
-}
+		माप(info->bus_info));
+पूर्ण
 
-static const struct ethtool_ops et131x_ethtool_ops = {
+अटल स्थिर काष्ठा ethtool_ops et131x_ethtool_ops = अणु
 	.get_drvinfo	= et131x_get_drvinfo,
 	.get_regs_len	= et131x_get_regs_len,
 	.get_regs	= et131x_get_regs,
 	.get_link	= ethtool_op_get_link,
 	.get_link_ksettings = phy_ethtool_get_link_ksettings,
 	.set_link_ksettings = phy_ethtool_set_link_ksettings,
-};
+पूर्ण;
 
 /* et131x_hwaddr_init - set up the MAC Address */
-static void et131x_hwaddr_init(struct et131x_adapter *adapter)
-{
-	/* If have our default mac from init and no mac address from
+अटल व्योम et131x_hwaddr_init(काष्ठा et131x_adapter *adapter)
+अणु
+	/* If have our शेष mac from init and no mac address from
 	 * EEPROM then we need to generate the last octet and set it on the
 	 * device
 	 */
-	if (is_zero_ether_addr(adapter->rom_addr)) {
-		/* We need to randomly generate the last octet so we
+	अगर (is_zero_ether_addr(adapter->rom_addr)) अणु
+		/* We need to अक्रमomly generate the last octet so we
 		 * decrease our chances of setting the mac address to
-		 * same as another one of our cards in the system
+		 * same as another one of our cards in the प्रणाली
 		 */
-		get_random_bytes(&adapter->addr[5], 1);
-		/* We have the default value in the register we are
+		get_अक्रमom_bytes(&adapter->addr[5], 1);
+		/* We have the शेष value in the रेजिस्टर we are
 		 * working with so we need to copy the current
-		 * address into the permanent address
+		 * address पूर्णांकo the permanent address
 		 */
 		ether_addr_copy(adapter->rom_addr, adapter->addr);
-	} else {
-		/* We do not have an override address, so set the
+	पूर्ण अन्यथा अणु
+		/* We करो not have an override address, so set the
 		 * current address to the permanent address and add
 		 * it to the device
 		 */
 		ether_addr_copy(adapter->addr, adapter->rom_addr);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int et131x_pci_init(struct et131x_adapter *adapter,
-			   struct pci_dev *pdev)
-{
+अटल पूर्णांक et131x_pci_init(काष्ठा et131x_adapter *adapter,
+			   काष्ठा pci_dev *pdev)
+अणु
 	u16 max_payload;
-	int i, rc;
+	पूर्णांक i, rc;
 
 	rc = et131x_init_eeprom(adapter);
-	if (rc < 0)
-		goto out;
+	अगर (rc < 0)
+		जाओ out;
 
-	if (!pci_is_pcie(pdev)) {
+	अगर (!pci_is_pcie(pdev)) अणु
 		dev_err(&pdev->dev, "Missing PCIe capabilities\n");
-		goto err_out;
-	}
+		जाओ err_out;
+	पूर्ण
 
-	/* Program the Ack/Nak latency and replay timers */
+	/* Program the Ack/Nak latency and replay समयrs */
 	max_payload = pdev->pcie_mpss;
 
-	if (max_payload < 2) {
-		static const u16 acknak[2] = { 0x76, 0xD0 };
-		static const u16 replay[2] = { 0x1E0, 0x2ED };
+	अगर (max_payload < 2) अणु
+		अटल स्थिर u16 acknak[2] = अणु 0x76, 0xD0 पूर्ण;
+		अटल स्थिर u16 replay[2] = अणु 0x1E0, 0x2ED पूर्ण;
 
-		if (pci_write_config_word(pdev, ET1310_PCI_ACK_NACK,
-					  acknak[max_payload])) {
+		अगर (pci_ग_लिखो_config_word(pdev, ET1310_PCI_ACK_NACK,
+					  acknak[max_payload])) अणु
 			dev_err(&pdev->dev,
 				"Could not write PCI config space for ACK/NAK\n");
-			goto err_out;
-		}
-		if (pci_write_config_word(pdev, ET1310_PCI_REPLAY,
-					  replay[max_payload])) {
+			जाओ err_out;
+		पूर्ण
+		अगर (pci_ग_लिखो_config_word(pdev, ET1310_PCI_REPLAY,
+					  replay[max_payload])) अणु
 			dev_err(&pdev->dev,
 				"Could not write PCI config space for Replay Timer\n");
-			goto err_out;
-		}
-	}
+			जाओ err_out;
+		पूर्ण
+	पूर्ण
 
-	/* l0s and l1 latency timers.  We are using default values.
-	 * Representing 001 for L0s and 010 for L1
+	/* l0s and l1 latency समयrs.  We are using शेष values.
+	 * Representing 001 क्रम L0s and 010 क्रम L1
 	 */
-	if (pci_write_config_byte(pdev, ET1310_PCI_L0L1LATENCY, 0x11)) {
+	अगर (pci_ग_लिखो_config_byte(pdev, ET1310_PCI_L0L1LATENCY, 0x11)) अणु
 		dev_err(&pdev->dev,
 			"Could not write PCI config space for Latency Timers\n");
-		goto err_out;
-	}
+		जाओ err_out;
+	पूर्ण
 
-	/* Change the max read size to 2k */
-	if (pcie_set_readrq(pdev, 2048)) {
+	/* Change the max पढ़ो size to 2k */
+	अगर (pcie_set_पढ़ोrq(pdev, 2048)) अणु
 		dev_err(&pdev->dev,
 			"Couldn't change PCI config space for Max read size\n");
-		goto err_out;
-	}
+		जाओ err_out;
+	पूर्ण
 
-	/* Get MAC address from config space if an eeprom exists, otherwise
+	/* Get MAC address from config space अगर an eeprom exists, otherwise
 	 * the MAC address there will not be valid
 	 */
-	if (!adapter->has_eeprom) {
+	अगर (!adapter->has_eeprom) अणु
 		et131x_hwaddr_init(adapter);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	for (i = 0; i < ETH_ALEN; i++) {
-		if (pci_read_config_byte(pdev, ET1310_PCI_MAC_ADDRESS + i,
-					 adapter->rom_addr + i)) {
+	क्रम (i = 0; i < ETH_ALEN; i++) अणु
+		अगर (pci_पढ़ो_config_byte(pdev, ET1310_PCI_MAC_ADDRESS + i,
+					 adapter->rom_addr + i)) अणु
 			dev_err(&pdev->dev, "Could not read PCI config space for MAC address\n");
-			goto err_out;
-		}
-	}
+			जाओ err_out;
+		पूर्ण
+	पूर्ण
 	ether_addr_copy(adapter->addr, adapter->rom_addr);
 out:
-	return rc;
+	वापस rc;
 err_out:
 	rc = -EIO;
-	goto out;
-}
+	जाओ out;
+पूर्ण
 
-/* et131x_error_timer_handler
- * @data: timer-specific variable; here a pointer to our adapter structure
+/* et131x_error_समयr_handler
+ * @data: समयr-specअगरic variable; here a poपूर्णांकer to our adapter काष्ठाure
  *
- * The routine called when the error timer expires, to track the number of
+ * The routine called when the error समयr expires, to track the number of
  * recurring errors.
  */
-static void et131x_error_timer_handler(struct timer_list *t)
-{
-	struct et131x_adapter *adapter = from_timer(adapter, t, error_timer);
-	struct phy_device *phydev = adapter->netdev->phydev;
+अटल व्योम et131x_error_समयr_handler(काष्ठा समयr_list *t)
+अणु
+	काष्ठा et131x_adapter *adapter = from_समयr(adapter, t, error_समयr);
+	काष्ठा phy_device *phydev = adapter->netdev->phydev;
 
-	if (et1310_in_phy_coma(adapter)) {
+	अगर (et1310_in_phy_coma(adapter)) अणु
 		/* Bring the device immediately out of coma, to
 		 * prevent it from sleeping indefinitely, this
 		 * mechanism could be improved!
 		 */
 		et1310_disable_phy_coma(adapter);
 		adapter->boot_coma = 20;
-	} else {
+	पूर्ण अन्यथा अणु
 		et1310_update_macstat_host_counters(adapter);
-	}
+	पूर्ण
 
-	if (!phydev->link && adapter->boot_coma < 11)
+	अगर (!phydev->link && adapter->boot_coma < 11)
 		adapter->boot_coma++;
 
-	if (adapter->boot_coma == 10) {
-		if (!phydev->link) {
-			if (!et1310_in_phy_coma(adapter)) {
+	अगर (adapter->boot_coma == 10) अणु
+		अगर (!phydev->link) अणु
+			अगर (!et1310_in_phy_coma(adapter)) अणु
 				/* NOTE - This was originally a 'sync with
-				 *  interrupt'. How to do that under Linux?
+				 *  पूर्णांकerrupt'. How to करो that under Linux?
 				 */
-				et131x_enable_interrupts(adapter);
+				et131x_enable_पूर्णांकerrupts(adapter);
 				et1310_enable_phy_coma(adapter);
-			}
-		}
-	}
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	/* This is a periodic timer, so reschedule */
-	mod_timer(&adapter->error_timer, jiffies +
-		  msecs_to_jiffies(TX_ERROR_PERIOD));
-}
+	/* This is a periodic समयr, so reschedule */
+	mod_समयr(&adapter->error_समयr, jअगरfies +
+		  msecs_to_jअगरfies(TX_ERROR_PERIOD));
+पूर्ण
 
-static void et131x_adapter_memory_free(struct et131x_adapter *adapter)
-{
-	et131x_tx_dma_memory_free(adapter);
-	et131x_rx_dma_memory_free(adapter);
-}
+अटल व्योम et131x_adapter_memory_मुक्त(काष्ठा et131x_adapter *adapter)
+अणु
+	et131x_tx_dma_memory_मुक्त(adapter);
+	et131x_rx_dma_memory_मुक्त(adapter);
+पूर्ण
 
-static int et131x_adapter_memory_alloc(struct et131x_adapter *adapter)
-{
-	int status;
+अटल पूर्णांक et131x_adapter_memory_alloc(काष्ठा et131x_adapter *adapter)
+अणु
+	पूर्णांक status;
 
 	status = et131x_tx_dma_memory_alloc(adapter);
-	if (status) {
+	अगर (status) अणु
 		dev_err(&adapter->pdev->dev,
 			"et131x_tx_dma_memory_alloc FAILED\n");
-		et131x_tx_dma_memory_free(adapter);
-		return status;
-	}
+		et131x_tx_dma_memory_मुक्त(adapter);
+		वापस status;
+	पूर्ण
 
 	status = et131x_rx_dma_memory_alloc(adapter);
-	if (status) {
+	अगर (status) अणु
 		dev_err(&adapter->pdev->dev,
 			"et131x_rx_dma_memory_alloc FAILED\n");
-		et131x_adapter_memory_free(adapter);
-		return status;
-	}
+		et131x_adapter_memory_मुक्त(adapter);
+		वापस status;
+	पूर्ण
 
 	status = et131x_init_recv(adapter);
-	if (status) {
+	अगर (status) अणु
 		dev_err(&adapter->pdev->dev, "et131x_init_recv FAILED\n");
-		et131x_adapter_memory_free(adapter);
-	}
-	return status;
-}
+		et131x_adapter_memory_मुक्त(adapter);
+	पूर्ण
+	वापस status;
+पूर्ण
 
-static void et131x_adjust_link(struct net_device *netdev)
-{
-	struct et131x_adapter *adapter = netdev_priv(netdev);
-	struct  phy_device *phydev = netdev->phydev;
+अटल व्योम et131x_adjust_link(काष्ठा net_device *netdev)
+अणु
+	काष्ठा et131x_adapter *adapter = netdev_priv(netdev);
+	काष्ठा  phy_device *phydev = netdev->phydev;
 
-	if (!phydev)
-		return;
-	if (phydev->link == adapter->link)
-		return;
+	अगर (!phydev)
+		वापस;
+	अगर (phydev->link == adapter->link)
+		वापस;
 
-	/* Check to see if we are in coma mode and if
+	/* Check to see अगर we are in coma mode and अगर
 	 * so, disable it because we will not be able
-	 * to read PHY values until we are out.
+	 * to पढ़ो PHY values until we are out.
 	 */
-	if (et1310_in_phy_coma(adapter))
+	अगर (et1310_in_phy_coma(adapter))
 		et1310_disable_phy_coma(adapter);
 
 	adapter->link = phydev->link;
-	phy_print_status(phydev);
+	phy_prपूर्णांक_status(phydev);
 
-	if (phydev->link) {
+	अगर (phydev->link) अणु
 		adapter->boot_coma = 20;
-		if (phydev->speed == SPEED_10) {
-			u16 register18;
+		अगर (phydev->speed == SPEED_10) अणु
+			u16 रेजिस्टर18;
 
-			et131x_mii_read(adapter, PHY_MPHY_CONTROL_REG,
-					&register18);
-			et131x_mii_write(adapter, phydev->mdio.addr,
+			et131x_mii_पढ़ो(adapter, PHY_MPHY_CONTROL_REG,
+					&रेजिस्टर18);
+			et131x_mii_ग_लिखो(adapter, phydev->mdio.addr,
 					 PHY_MPHY_CONTROL_REG,
-					 register18 | 0x4);
-			et131x_mii_write(adapter, phydev->mdio.addr,
-					 PHY_INDEX_REG, register18 | 0x8402);
-			et131x_mii_write(adapter, phydev->mdio.addr,
-					 PHY_DATA_REG, register18 | 511);
-			et131x_mii_write(adapter, phydev->mdio.addr,
-					 PHY_MPHY_CONTROL_REG, register18);
-		}
+					 रेजिस्टर18 | 0x4);
+			et131x_mii_ग_लिखो(adapter, phydev->mdio.addr,
+					 PHY_INDEX_REG, रेजिस्टर18 | 0x8402);
+			et131x_mii_ग_लिखो(adapter, phydev->mdio.addr,
+					 PHY_DATA_REG, रेजिस्टर18 | 511);
+			et131x_mii_ग_लिखो(adapter, phydev->mdio.addr,
+					 PHY_MPHY_CONTROL_REG, रेजिस्टर18);
+		पूर्ण
 
 		et1310_config_flow_control(adapter);
 
-		if (phydev->speed == SPEED_1000 &&
-		    adapter->registry_jumbo_packet > 2048) {
+		अगर (phydev->speed == SPEED_1000 &&
+		    adapter->registry_jumbo_packet > 2048) अणु
 			u16 reg;
 
-			et131x_mii_read(adapter, PHY_CONFIG, &reg);
+			et131x_mii_पढ़ो(adapter, PHY_CONFIG, &reg);
 			reg &= ~ET_PHY_CONFIG_TX_FIFO_DEPTH;
 			reg |= ET_PHY_CONFIG_FIFO_DEPTH_32;
-			et131x_mii_write(adapter, phydev->mdio.addr,
+			et131x_mii_ग_लिखो(adapter, phydev->mdio.addr,
 					 PHY_CONFIG, reg);
-		}
+		पूर्ण
 
-		et131x_set_rx_dma_timer(adapter);
+		et131x_set_rx_dma_समयr(adapter);
 		et1310_config_mac_regs2(adapter);
-	} else {
+	पूर्ण अन्यथा अणु
 		adapter->boot_coma = 0;
 
-		if (phydev->speed == SPEED_10) {
-			u16 register18;
+		अगर (phydev->speed == SPEED_10) अणु
+			u16 रेजिस्टर18;
 
-			et131x_mii_read(adapter, PHY_MPHY_CONTROL_REG,
-					&register18);
-			et131x_mii_write(adapter, phydev->mdio.addr,
+			et131x_mii_पढ़ो(adapter, PHY_MPHY_CONTROL_REG,
+					&रेजिस्टर18);
+			et131x_mii_ग_लिखो(adapter, phydev->mdio.addr,
 					 PHY_MPHY_CONTROL_REG,
-					 register18 | 0x4);
-			et131x_mii_write(adapter, phydev->mdio.addr,
-					 PHY_INDEX_REG, register18 | 0x8402);
-			et131x_mii_write(adapter, phydev->mdio.addr,
-					 PHY_DATA_REG, register18 | 511);
-			et131x_mii_write(adapter, phydev->mdio.addr,
-					 PHY_MPHY_CONTROL_REG, register18);
-		}
+					 रेजिस्टर18 | 0x4);
+			et131x_mii_ग_लिखो(adapter, phydev->mdio.addr,
+					 PHY_INDEX_REG, रेजिस्टर18 | 0x8402);
+			et131x_mii_ग_लिखो(adapter, phydev->mdio.addr,
+					 PHY_DATA_REG, रेजिस्टर18 | 511);
+			et131x_mii_ग_लिखो(adapter, phydev->mdio.addr,
+					 PHY_MPHY_CONTROL_REG, रेजिस्टर18);
+		पूर्ण
 
-		et131x_free_busy_send_packets(adapter);
+		et131x_मुक्त_busy_send_packets(adapter);
 		et131x_init_send(adapter);
 
 		/* Bring the device back to the state it was during
-		 * init prior to autonegotiation being complete. This
-		 * way, when we get the auto-neg complete interrupt,
+		 * init prior to स्वतःnegotiation being complete. This
+		 * way, when we get the स्वतः-neg complete पूर्णांकerrupt,
 		 * we can complete init by calling config_mac_regs2.
 		 */
 		et131x_soft_reset(adapter);
@@ -3231,268 +3232,268 @@ static void et131x_adjust_link(struct net_device *netdev)
 
 		et131x_disable_txrx(netdev);
 		et131x_enable_txrx(netdev);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int et131x_mii_probe(struct net_device *netdev)
-{
-	struct et131x_adapter *adapter = netdev_priv(netdev);
-	struct  phy_device *phydev = NULL;
+अटल पूर्णांक et131x_mii_probe(काष्ठा net_device *netdev)
+अणु
+	काष्ठा et131x_adapter *adapter = netdev_priv(netdev);
+	काष्ठा  phy_device *phydev = शून्य;
 
 	phydev = phy_find_first(adapter->mii_bus);
-	if (!phydev) {
+	अगर (!phydev) अणु
 		dev_err(&adapter->pdev->dev, "no PHY found\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
 	phydev = phy_connect(netdev, phydev_name(phydev),
 			     &et131x_adjust_link, PHY_INTERFACE_MODE_MII);
 
-	if (IS_ERR(phydev)) {
+	अगर (IS_ERR(phydev)) अणु
 		dev_err(&adapter->pdev->dev, "Could not attach to PHY\n");
-		return PTR_ERR(phydev);
-	}
+		वापस PTR_ERR(phydev);
+	पूर्ण
 
 	phy_set_max_speed(phydev, SPEED_100);
 
-	if (adapter->pdev->device != ET131X_PCI_DEVICE_ID_FAST)
+	अगर (adapter->pdev->device != ET131X_PCI_DEVICE_ID_FAST)
 		phy_set_max_speed(phydev, SPEED_1000);
 
-	phydev->autoneg = AUTONEG_ENABLE;
+	phydev->स्वतःneg = AUTONEG_ENABLE;
 
 	phy_attached_info(phydev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct et131x_adapter *et131x_adapter_init(struct net_device *netdev,
-						  struct pci_dev *pdev)
-{
-	static const u8 default_mac[] = { 0x00, 0x05, 0x3d, 0x00, 0x02, 0x00 };
+अटल काष्ठा et131x_adapter *et131x_adapter_init(काष्ठा net_device *netdev,
+						  काष्ठा pci_dev *pdev)
+अणु
+	अटल स्थिर u8 शेष_mac[] = अणु 0x00, 0x05, 0x3d, 0x00, 0x02, 0x00 पूर्ण;
 
-	struct et131x_adapter *adapter;
+	काष्ठा et131x_adapter *adapter;
 
 	adapter = netdev_priv(netdev);
 	adapter->pdev = pci_dev_get(pdev);
 	adapter->netdev = netdev;
 
 	spin_lock_init(&adapter->tcb_send_qlock);
-	spin_lock_init(&adapter->tcb_ready_qlock);
+	spin_lock_init(&adapter->tcb_पढ़ोy_qlock);
 	spin_lock_init(&adapter->rcv_lock);
 
 	adapter->registry_jumbo_packet = 1514;	/* 1514-9216 */
 
-	ether_addr_copy(adapter->addr, default_mac);
+	ether_addr_copy(adapter->addr, शेष_mac);
 
-	return adapter;
-}
+	वापस adapter;
+पूर्ण
 
-static void et131x_pci_remove(struct pci_dev *pdev)
-{
-	struct net_device *netdev = pci_get_drvdata(pdev);
-	struct et131x_adapter *adapter = netdev_priv(netdev);
+अटल व्योम et131x_pci_हटाओ(काष्ठा pci_dev *pdev)
+अणु
+	काष्ठा net_device *netdev = pci_get_drvdata(pdev);
+	काष्ठा et131x_adapter *adapter = netdev_priv(netdev);
 
-	unregister_netdev(netdev);
-	netif_napi_del(&adapter->napi);
+	unरेजिस्टर_netdev(netdev);
+	netअगर_napi_del(&adapter->napi);
 	phy_disconnect(netdev->phydev);
-	mdiobus_unregister(adapter->mii_bus);
-	mdiobus_free(adapter->mii_bus);
+	mdiobus_unरेजिस्टर(adapter->mii_bus);
+	mdiobus_मुक्त(adapter->mii_bus);
 
-	et131x_adapter_memory_free(adapter);
+	et131x_adapter_memory_मुक्त(adapter);
 	iounmap(adapter->regs);
 	pci_dev_put(pdev);
 
-	free_netdev(netdev);
+	मुक्त_netdev(netdev);
 	pci_release_regions(pdev);
 	pci_disable_device(pdev);
-}
+पूर्ण
 
-static void et131x_up(struct net_device *netdev)
-{
+अटल व्योम et131x_up(काष्ठा net_device *netdev)
+अणु
 	et131x_enable_txrx(netdev);
 	phy_start(netdev->phydev);
-}
+पूर्ण
 
-static void et131x_down(struct net_device *netdev)
-{
-	/* Save the timestamp for the TX watchdog, prevent a timeout */
-	netif_trans_update(netdev);
+अटल व्योम et131x_करोwn(काष्ठा net_device *netdev)
+अणु
+	/* Save the बारtamp क्रम the TX watchकरोg, prevent a समयout */
+	netअगर_trans_update(netdev);
 
 	phy_stop(netdev->phydev);
 	et131x_disable_txrx(netdev);
-}
+पूर्ण
 
-#ifdef CONFIG_PM_SLEEP
-static int et131x_suspend(struct device *dev)
-{
-	struct pci_dev *pdev = to_pci_dev(dev);
-	struct net_device *netdev = pci_get_drvdata(pdev);
+#अगर_घोषित CONFIG_PM_SLEEP
+अटल पूर्णांक et131x_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा pci_dev *pdev = to_pci_dev(dev);
+	काष्ठा net_device *netdev = pci_get_drvdata(pdev);
 
-	if (netif_running(netdev)) {
-		netif_device_detach(netdev);
-		et131x_down(netdev);
+	अगर (netअगर_running(netdev)) अणु
+		netअगर_device_detach(netdev);
+		et131x_करोwn(netdev);
 		pci_save_state(pdev);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int et131x_resume(struct device *dev)
-{
-	struct pci_dev *pdev = to_pci_dev(dev);
-	struct net_device *netdev = pci_get_drvdata(pdev);
+अटल पूर्णांक et131x_resume(काष्ठा device *dev)
+अणु
+	काष्ठा pci_dev *pdev = to_pci_dev(dev);
+	काष्ठा net_device *netdev = pci_get_drvdata(pdev);
 
-	if (netif_running(netdev)) {
+	अगर (netअगर_running(netdev)) अणु
 		pci_restore_state(pdev);
 		et131x_up(netdev);
-		netif_device_attach(netdev);
-	}
+		netअगर_device_attach(netdev);
+	पूर्ण
 
-	return 0;
-}
-#endif
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
-static SIMPLE_DEV_PM_OPS(et131x_pm_ops, et131x_suspend, et131x_resume);
+अटल SIMPLE_DEV_PM_OPS(et131x_pm_ops, et131x_suspend, et131x_resume);
 
-static irqreturn_t et131x_isr(int irq, void *dev_id)
-{
+अटल irqवापस_t et131x_isr(पूर्णांक irq, व्योम *dev_id)
+अणु
 	bool handled = true;
-	bool enable_interrupts = true;
-	struct net_device *netdev = dev_id;
-	struct et131x_adapter *adapter = netdev_priv(netdev);
-	struct address_map __iomem *iomem = adapter->regs;
-	struct rx_ring *rx_ring = &adapter->rx_ring;
-	struct tx_ring *tx_ring = &adapter->tx_ring;
+	bool enable_पूर्णांकerrupts = true;
+	काष्ठा net_device *netdev = dev_id;
+	काष्ठा et131x_adapter *adapter = netdev_priv(netdev);
+	काष्ठा address_map __iomem *iomem = adapter->regs;
+	काष्ठा rx_ring *rx_ring = &adapter->rx_ring;
+	काष्ठा tx_ring *tx_ring = &adapter->tx_ring;
 	u32 status;
 
-	if (!netif_device_present(netdev)) {
+	अगर (!netअगर_device_present(netdev)) अणु
 		handled = false;
-		enable_interrupts = false;
-		goto out;
-	}
+		enable_पूर्णांकerrupts = false;
+		जाओ out;
+	पूर्ण
 
-	et131x_disable_interrupts(adapter);
+	et131x_disable_पूर्णांकerrupts(adapter);
 
-	status = readl(&adapter->regs->global.int_status);
+	status = पढ़ोl(&adapter->regs->global.पूर्णांक_status);
 
-	if (adapter->flow == FLOW_TXONLY || adapter->flow == FLOW_BOTH)
+	अगर (adapter->flow == FLOW_TXONLY || adapter->flow == FLOW_BOTH)
 		status &= ~INT_MASK_ENABLE;
-	else
+	अन्यथा
 		status &= ~INT_MASK_ENABLE_NO_FLOW;
 
-	/* Make sure this is our interrupt */
-	if (!status) {
+	/* Make sure this is our पूर्णांकerrupt */
+	अगर (!status) अणु
 		handled = false;
-		et131x_enable_interrupts(adapter);
-		goto out;
-	}
+		et131x_enable_पूर्णांकerrupts(adapter);
+		जाओ out;
+	पूर्ण
 
-	/* This is our interrupt, so process accordingly */
-	if (status & ET_INTR_WATCHDOG) {
-		struct tcb *tcb = tx_ring->send_head;
+	/* This is our पूर्णांकerrupt, so process accordingly */
+	अगर (status & ET_INTR_WATCHDOG) अणु
+		काष्ठा tcb *tcb = tx_ring->send_head;
 
-		if (tcb)
-			if (++tcb->stale > 1)
+		अगर (tcb)
+			अगर (++tcb->stale > 1)
 				status |= ET_INTR_TXDMA_ISR;
 
-		if (rx_ring->unfinished_receives)
+		अगर (rx_ring->unfinished_receives)
 			status |= ET_INTR_RXDMA_XFR_DONE;
-		else if (tcb == NULL)
-			writel(0, &adapter->regs->global.watchdog_timer);
+		अन्यथा अगर (tcb == शून्य)
+			ग_लिखोl(0, &adapter->regs->global.watchकरोg_समयr);
 
 		status &= ~ET_INTR_WATCHDOG;
-	}
+	पूर्ण
 
-	if (status & (ET_INTR_RXDMA_XFR_DONE | ET_INTR_TXDMA_ISR)) {
-		enable_interrupts = false;
+	अगर (status & (ET_INTR_RXDMA_XFR_DONE | ET_INTR_TXDMA_ISR)) अणु
+		enable_पूर्णांकerrupts = false;
 		napi_schedule(&adapter->napi);
-	}
+	पूर्ण
 
 	status &= ~(ET_INTR_TXDMA_ISR | ET_INTR_RXDMA_XFR_DONE);
 
-	if (!status)
-		goto out;
+	अगर (!status)
+		जाओ out;
 
-	if (status & ET_INTR_TXDMA_ERR) {
-		/* Following read also clears the register (COR) */
-		u32 txdma_err = readl(&iomem->txdma.tx_dma_error);
+	अगर (status & ET_INTR_TXDMA_ERR) अणु
+		/* Following पढ़ो also clears the रेजिस्टर (COR) */
+		u32 txdma_err = पढ़ोl(&iomem->txdma.tx_dma_error);
 
 		dev_warn(&adapter->pdev->dev,
 			 "TXDMA_ERR interrupt, error = %d\n",
 			 txdma_err);
-	}
+	पूर्ण
 
-	if (status & (ET_INTR_RXDMA_FB_R0_LOW | ET_INTR_RXDMA_FB_R1_LOW)) {
-		/* This indicates the number of unused buffers in RXDMA free
+	अगर (status & (ET_INTR_RXDMA_FB_R0_LOW | ET_INTR_RXDMA_FB_R1_LOW)) अणु
+		/* This indicates the number of unused buffers in RXDMA मुक्त
 		 * buffer ring 0 is <= the limit you programmed. Free buffer
-		 * resources need to be returned.  Free buffers are consumed as
+		 * resources need to be वापसed.  Free buffers are consumed as
 		 * packets are passed from the network to the host. The host
 		 * becomes aware of the packets from the contents of the packet
-		 * status ring. This ring is queried when the packet done
-		 * interrupt occurs. Packets are then passed to the OS. When
-		 * the OS is done with the packets the resources can be
-		 * returned to the ET1310 for re-use. This interrupt is one
-		 * method of returning resources.
+		 * status ring. This ring is queried when the packet करोne
+		 * पूर्णांकerrupt occurs. Packets are then passed to the OS. When
+		 * the OS is करोne with the packets the resources can be
+		 * वापसed to the ET1310 क्रम re-use. This पूर्णांकerrupt is one
+		 * method of वापसing resources.
 		 */
 
 		/*  If the user has flow control on, then we will
-		 * send a pause packet, otherwise just exit
+		 * send a छोड़ो packet, otherwise just निकास
 		 */
-		if (adapter->flow == FLOW_TXONLY || adapter->flow == FLOW_BOTH) {
-			/* Tell the device to send a pause packet via the back
-			 * pressure register (bp req and bp xon/xoff)
+		अगर (adapter->flow == FLOW_TXONLY || adapter->flow == FLOW_BOTH) अणु
+			/* Tell the device to send a छोड़ो packet via the back
+			 * pressure रेजिस्टर (bp req and bp xon/xoff)
 			 */
-			if (!et1310_in_phy_coma(adapter))
-				writel(3, &iomem->txmac.bp_ctrl);
-		}
-	}
+			अगर (!et1310_in_phy_coma(adapter))
+				ग_लिखोl(3, &iomem->txmac.bp_ctrl);
+		पूर्ण
+	पूर्ण
 
 	/* Handle Packet Status Ring Low Interrupt */
-	if (status & ET_INTR_RXDMA_STAT_LOW) {
+	अगर (status & ET_INTR_RXDMA_STAT_LOW) अणु
 		/* Same idea as with the two Free Buffer Rings. Packets going
-		 * from the network to the host each consume a free buffer
+		 * from the network to the host each consume a मुक्त buffer
 		 * resource and a packet status resource. These resources are
-		 * passed to the OS. When the OS is done with the resources,
-		 * they need to be returned to the ET1310. This is one method
-		 * of returning the resources.
+		 * passed to the OS. When the OS is करोne with the resources,
+		 * they need to be वापसed to the ET1310. This is one method
+		 * of वापसing the resources.
 		 */
-	}
+	पूर्ण
 
-	if (status & ET_INTR_RXDMA_ERR) {
-		/* The rxdma_error interrupt is sent when a time-out on a
+	अगर (status & ET_INTR_RXDMA_ERR) अणु
+		/* The rxdma_error पूर्णांकerrupt is sent when a समय-out on a
 		 * request issued by the JAGCore has occurred or a completion is
-		 * returned with an un-successful status. In both cases the
+		 * वापसed with an un-successful status. In both हालs the
 		 * request is considered complete. The JAGCore will
-		 * automatically re-try the request in question. Normally
-		 * information on events like these are sent to the host using
-		 * the "Advanced Error Reporting" capability. This interrupt is
-		 * another way of getting similar information. The only thing
-		 * required is to clear the interrupt by reading the ISR in the
-		 * global resources. The JAGCore will do a re-try on the
-		 * request. Normally you should never see this interrupt. If
-		 * you start to see this interrupt occurring frequently then
-		 * something bad has occurred. A reset might be the thing to do.
+		 * स्वतःmatically re-try the request in question. Normally
+		 * inक्रमmation on events like these are sent to the host using
+		 * the "Advanced Error Reporting" capability. This पूर्णांकerrupt is
+		 * another way of getting similar inक्रमmation. The only thing
+		 * required is to clear the पूर्णांकerrupt by पढ़ोing the ISR in the
+		 * global resources. The JAGCore will करो a re-try on the
+		 * request. Normally you should never see this पूर्णांकerrupt. If
+		 * you start to see this पूर्णांकerrupt occurring frequently then
+		 * something bad has occurred. A reset might be the thing to करो.
 		 */
 		/* TRAP();*/
 
 		dev_warn(&adapter->pdev->dev, "RxDMA_ERR interrupt, error %x\n",
-			 readl(&iomem->txmac.tx_test));
-	}
+			 पढ़ोl(&iomem->txmac.tx_test));
+	पूर्ण
 
 	/* Handle the Wake on LAN Event */
-	if (status & ET_INTR_WOL) {
-		/* This is a secondary interrupt for wake on LAN. The driver
-		 * should never see this, if it does, something serious is
+	अगर (status & ET_INTR_WOL) अणु
+		/* This is a secondary पूर्णांकerrupt क्रम wake on LAN. The driver
+		 * should never see this, अगर it करोes, something serious is
 		 * wrong.
 		 */
 		dev_err(&adapter->pdev->dev, "WAKE_ON_LAN interrupt\n");
-	}
+	पूर्ण
 
-	if (status & ET_INTR_TXMAC) {
-		u32 err = readl(&iomem->txmac.err);
+	अगर (status & ET_INTR_TXMAC) अणु
+		u32 err = पढ़ोl(&iomem->txmac.err);
 
 		/* When any of the errors occur and TXMAC generates an
-		 * interrupt to report these errors, it usually means that
+		 * पूर्णांकerrupt to report these errors, it usually means that
 		 * TXMAC has detected an error in the data stream retrieved
 		 * from the on-chip Tx Q. All of these errors are catastrophic
 		 * and TXMAC won't be able to recover data when these errors
@@ -3503,75 +3504,75 @@ static irqreturn_t et131x_isr(int irq, void *dev_id)
 			 err);
 
 		/* If we are debugging, we want to see this error, otherwise we
-		 * just want the device to be reset and continue
+		 * just want the device to be reset and जारी
 		 */
-	}
+	पूर्ण
 
-	if (status & ET_INTR_RXMAC) {
-		/* These interrupts are catastrophic to the device, what we need
-		 * to do is disable the interrupts and set the flag to cause us
+	अगर (status & ET_INTR_RXMAC) अणु
+		/* These पूर्णांकerrupts are catastrophic to the device, what we need
+		 * to करो is disable the पूर्णांकerrupts and set the flag to cause us
 		 * to reset so we can solve this issue.
 		 */
 		dev_warn(&adapter->pdev->dev,
 			 "RXMAC interrupt, error 0x%08x.  Requesting reset\n",
-			 readl(&iomem->rxmac.err_reg));
+			 पढ़ोl(&iomem->rxmac.err_reg));
 
 		dev_warn(&adapter->pdev->dev,
 			 "Enable 0x%08x, Diag 0x%08x\n",
-			 readl(&iomem->rxmac.ctrl),
-			 readl(&iomem->rxmac.rxq_diag));
+			 पढ़ोl(&iomem->rxmac.ctrl),
+			 पढ़ोl(&iomem->rxmac.rxq_diag));
 
 		/* If we are debugging, we want to see this error, otherwise we
-		 * just want the device to be reset and continue
+		 * just want the device to be reset and जारी
 		 */
-	}
+	पूर्ण
 
-	if (status & ET_INTR_MAC_STAT) {
+	अगर (status & ET_INTR_MAC_STAT) अणु
 		/* This means at least one of the un-masked counters in the
-		 * MAC_STAT block has rolled over. Use this to maintain the top,
+		 * MAC_STAT block has rolled over. Use this to मुख्यtain the top,
 		 * software managed bits of the counter(s).
 		 */
-		et1310_handle_macstat_interrupt(adapter);
-	}
+		et1310_handle_macstat_पूर्णांकerrupt(adapter);
+	पूर्ण
 
-	if (status & ET_INTR_SLV_TIMEOUT) {
-		/* This means a timeout has occurred on a read or write request
-		 * to one of the JAGCore registers. The Global Resources block
-		 * has terminated the request and on a read request, returned a
+	अगर (status & ET_INTR_SLV_TIMEOUT) अणु
+		/* This means a समयout has occurred on a पढ़ो or ग_लिखो request
+		 * to one of the JAGCore रेजिस्टरs. The Global Resources block
+		 * has terminated the request and on a पढ़ो request, वापसed a
 		 * "fake" value. The most likely reasons are: Bad Address or the
-		 * addressed module is in a power-down state and can't respond.
+		 * addressed module is in a घातer-करोwn state and can't respond.
 		 */
-	}
+	पूर्ण
 
 out:
-	if (enable_interrupts)
-		et131x_enable_interrupts(adapter);
+	अगर (enable_पूर्णांकerrupts)
+		et131x_enable_पूर्णांकerrupts(adapter);
 
-	return IRQ_RETVAL(handled);
-}
+	वापस IRQ_RETVAL(handled);
+पूर्ण
 
-static int et131x_poll(struct napi_struct *napi, int budget)
-{
-	struct et131x_adapter *adapter =
-		container_of(napi, struct et131x_adapter, napi);
-	int work_done = et131x_handle_recv_pkts(adapter, budget);
+अटल पूर्णांक et131x_poll(काष्ठा napi_काष्ठा *napi, पूर्णांक budget)
+अणु
+	काष्ठा et131x_adapter *adapter =
+		container_of(napi, काष्ठा et131x_adapter, napi);
+	पूर्णांक work_करोne = et131x_handle_recv_pkts(adapter, budget);
 
 	et131x_handle_send_pkts(adapter);
 
-	if (work_done < budget) {
-		napi_complete_done(&adapter->napi, work_done);
-		et131x_enable_interrupts(adapter);
-	}
+	अगर (work_करोne < budget) अणु
+		napi_complete_करोne(&adapter->napi, work_करोne);
+		et131x_enable_पूर्णांकerrupts(adapter);
+	पूर्ण
 
-	return work_done;
-}
+	वापस work_करोne;
+पूर्ण
 
 /* et131x_stats - Return the current device statistics  */
-static struct net_device_stats *et131x_stats(struct net_device *netdev)
-{
-	struct et131x_adapter *adapter = netdev_priv(netdev);
-	struct net_device_stats *stats = &adapter->netdev->stats;
-	struct ce_stats *devstat = &adapter->stats;
+अटल काष्ठा net_device_stats *et131x_stats(काष्ठा net_device *netdev)
+अणु
+	काष्ठा et131x_adapter *adapter = netdev_priv(netdev);
+	काष्ठा net_device_stats *stats = &adapter->netdev->stats;
+	काष्ठा ce_stats *devstat = &adapter->stats;
 
 	stats->rx_errors = devstat->rx_length_errs +
 			   devstat->rx_align_errs +
@@ -3589,36 +3590,36 @@ static struct net_device_stats *et131x_stats(struct net_device *netdev)
 
 	/* NOTE: Not used, can't find analogous statistics */
 	/* stats->rx_frame_errors     = devstat->; */
-	/* stats->rx_fifo_errors      = devstat->; */
+	/* stats->rx_fअगरo_errors      = devstat->; */
 	/* stats->rx_missed_errors    = devstat->; */
 
-	/* stats->tx_aborted_errors   = devstat->; */
+	/* stats->tx_पातed_errors   = devstat->; */
 	/* stats->tx_carrier_errors   = devstat->; */
-	/* stats->tx_fifo_errors      = devstat->; */
+	/* stats->tx_fअगरo_errors      = devstat->; */
 	/* stats->tx_heartbeat_errors = devstat->; */
-	/* stats->tx_window_errors    = devstat->; */
-	return stats;
-}
+	/* stats->tx_winकरोw_errors    = devstat->; */
+	वापस stats;
+पूर्ण
 
-static int et131x_open(struct net_device *netdev)
-{
-	struct et131x_adapter *adapter = netdev_priv(netdev);
-	struct pci_dev *pdev = adapter->pdev;
-	unsigned int irq = pdev->irq;
-	int result;
+अटल पूर्णांक et131x_खोलो(काष्ठा net_device *netdev)
+अणु
+	काष्ठा et131x_adapter *adapter = netdev_priv(netdev);
+	काष्ठा pci_dev *pdev = adapter->pdev;
+	अचिन्हित पूर्णांक irq = pdev->irq;
+	पूर्णांक result;
 
-	/* Start the timer to track NIC errors */
-	timer_setup(&adapter->error_timer, et131x_error_timer_handler, 0);
-	adapter->error_timer.expires = jiffies +
-		msecs_to_jiffies(TX_ERROR_PERIOD);
-	add_timer(&adapter->error_timer);
+	/* Start the समयr to track NIC errors */
+	समयr_setup(&adapter->error_समयr, et131x_error_समयr_handler, 0);
+	adapter->error_समयr.expires = jअगरfies +
+		msecs_to_jअगरfies(TX_ERROR_PERIOD);
+	add_समयr(&adapter->error_समयr);
 
 	result = request_irq(irq, et131x_isr,
 			     IRQF_SHARED, netdev->name, netdev);
-	if (result) {
+	अगर (result) अणु
 		dev_err(&pdev->dev, "could not register IRQ %d\n", irq);
-		return result;
-	}
+		वापस result;
+	पूर्ण
 
 	adapter->flags |= FMP_ADAPTER_INTERRUPT_IN_USE;
 
@@ -3626,32 +3627,32 @@ static int et131x_open(struct net_device *netdev)
 
 	et131x_up(netdev);
 
-	return result;
-}
+	वापस result;
+पूर्ण
 
-static int et131x_close(struct net_device *netdev)
-{
-	struct et131x_adapter *adapter = netdev_priv(netdev);
+अटल पूर्णांक et131x_बंद(काष्ठा net_device *netdev)
+अणु
+	काष्ठा et131x_adapter *adapter = netdev_priv(netdev);
 
-	et131x_down(netdev);
+	et131x_करोwn(netdev);
 	napi_disable(&adapter->napi);
 
 	adapter->flags &= ~FMP_ADAPTER_INTERRUPT_IN_USE;
-	free_irq(adapter->pdev->irq, netdev);
+	मुक्त_irq(adapter->pdev->irq, netdev);
 
-	/* Stop the error timer */
-	return del_timer_sync(&adapter->error_timer);
-}
+	/* Stop the error समयr */
+	वापस del_समयr_sync(&adapter->error_समयr);
+पूर्ण
 
 /* et131x_set_packet_filter - Configures the Rx Packet filtering */
-static int et131x_set_packet_filter(struct et131x_adapter *adapter)
-{
-	int filter = adapter->packet_filter;
+अटल पूर्णांक et131x_set_packet_filter(काष्ठा et131x_adapter *adapter)
+अणु
+	पूर्णांक filter = adapter->packet_filter;
 	u32 ctrl;
 	u32 pf_ctrl;
 
-	ctrl = readl(&adapter->regs->rxmac.ctrl);
-	pf_ctrl = readl(&adapter->regs->rxmac.pf_ctrl);
+	ctrl = पढ़ोl(&adapter->regs->rxmac.ctrl);
+	pf_ctrl = पढ़ोl(&adapter->regs->rxmac.pf_ctrl);
 
 	/* Default to disabled packet filtering */
 	ctrl |= 0x04;
@@ -3659,62 +3660,62 @@ static int et131x_set_packet_filter(struct et131x_adapter *adapter)
 	/* Set us to be in promiscuous mode so we receive everything, this
 	 * is also true when we get a packet filter of 0
 	 */
-	if ((filter & ET131X_PACKET_TYPE_PROMISCUOUS) || filter == 0)
+	अगर ((filter & ET131X_PACKET_TYPE_PROMISCUOUS) || filter == 0)
 		pf_ctrl &= ~7;	/* Clear filter bits */
-	else {
-		/* Set us up with Multicast packet filtering.  Three cases are
+	अन्यथा अणु
+		/* Set us up with Multicast packet filtering.  Three हालs are
 		 * possible - (1) we have a multi-cast list, (2) we receive ALL
 		 * multicast entries or (3) we receive none.
 		 */
-		if (filter & ET131X_PACKET_TYPE_ALL_MULTICAST)
+		अगर (filter & ET131X_PACKET_TYPE_ALL_MULTICAST)
 			pf_ctrl &= ~2;	/* Multicast filter bit */
-		else {
-			et1310_setup_device_for_multicast(adapter);
+		अन्यथा अणु
+			et1310_setup_device_क्रम_multicast(adapter);
 			pf_ctrl |= 2;
 			ctrl &= ~0x04;
-		}
+		पूर्ण
 
 		/* Set us up with Unicast packet filtering */
-		if (filter & ET131X_PACKET_TYPE_DIRECTED) {
-			et1310_setup_device_for_unicast(adapter);
+		अगर (filter & ET131X_PACKET_TYPE_सूचीECTED) अणु
+			et1310_setup_device_क्रम_unicast(adapter);
 			pf_ctrl |= 4;
 			ctrl &= ~0x04;
-		}
+		पूर्ण
 
 		/* Set us up with Broadcast packet filtering */
-		if (filter & ET131X_PACKET_TYPE_BROADCAST) {
+		अगर (filter & ET131X_PACKET_TYPE_BROADCAST) अणु
 			pf_ctrl |= 1;	/* Broadcast filter bit */
 			ctrl &= ~0x04;
-		} else {
+		पूर्ण अन्यथा अणु
 			pf_ctrl &= ~1;
-		}
+		पूर्ण
 
-		/* Setup the receive mac configuration registers - Packet
-		 * Filter control + the enable / disable for packet filter
+		/* Setup the receive mac configuration रेजिस्टरs - Packet
+		 * Filter control + the enable / disable क्रम packet filter
 		 * in the control reg.
 		 */
-		writel(pf_ctrl, &adapter->regs->rxmac.pf_ctrl);
-		writel(ctrl, &adapter->regs->rxmac.ctrl);
-	}
-	return 0;
-}
+		ग_लिखोl(pf_ctrl, &adapter->regs->rxmac.pf_ctrl);
+		ग_लिखोl(ctrl, &adapter->regs->rxmac.ctrl);
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static void et131x_multicast(struct net_device *netdev)
-{
-	struct et131x_adapter *adapter = netdev_priv(netdev);
-	int packet_filter;
-	struct netdev_hw_addr *ha;
-	int i;
+अटल व्योम et131x_multicast(काष्ठा net_device *netdev)
+अणु
+	काष्ठा et131x_adapter *adapter = netdev_priv(netdev);
+	पूर्णांक packet_filter;
+	काष्ठा netdev_hw_addr *ha;
+	पूर्णांक i;
 
-	/* Before we modify the platform-independent filter flags, store them
-	 * locally. This allows us to determine if anything's changed and if
+	/* Beक्रमe we modअगरy the platक्रमm-independent filter flags, store them
+	 * locally. This allows us to determine अगर anything's changed and अगर
 	 * we even need to bother the hardware
 	 */
 	packet_filter = adapter->packet_filter;
 
 	/* Clear the 'multicast' flag locally; because we only have a single
 	 * flag to check multicast, and multiple multicast addresses can be
-	 * set, this is the easiest way to determine if more than one
+	 * set, this is the easiest way to determine अगर more than one
 	 * multicast address is being set.
 	 */
 	packet_filter &= ~ET131X_PACKET_TYPE_MULTICAST;
@@ -3722,144 +3723,144 @@ static void et131x_multicast(struct net_device *netdev)
 	/* Check the net_device flags and set the device independent flags
 	 * accordingly
 	 */
-	if (netdev->flags & IFF_PROMISC)
+	अगर (netdev->flags & IFF_PROMISC)
 		adapter->packet_filter |= ET131X_PACKET_TYPE_PROMISCUOUS;
-	else
+	अन्यथा
 		adapter->packet_filter &= ~ET131X_PACKET_TYPE_PROMISCUOUS;
 
-	if ((netdev->flags & IFF_ALLMULTI) ||
+	अगर ((netdev->flags & IFF_ALLMULTI) ||
 	    (netdev_mc_count(netdev) > NIC_MAX_MCAST_LIST))
 		adapter->packet_filter |= ET131X_PACKET_TYPE_ALL_MULTICAST;
 
-	if (netdev_mc_count(netdev) < 1) {
+	अगर (netdev_mc_count(netdev) < 1) अणु
 		adapter->packet_filter &= ~ET131X_PACKET_TYPE_ALL_MULTICAST;
 		adapter->packet_filter &= ~ET131X_PACKET_TYPE_MULTICAST;
-	} else {
+	पूर्ण अन्यथा अणु
 		adapter->packet_filter |= ET131X_PACKET_TYPE_MULTICAST;
-	}
+	पूर्ण
 
-	/* Set values in the private adapter struct */
+	/* Set values in the निजी adapter काष्ठा */
 	i = 0;
-	netdev_for_each_mc_addr(ha, netdev) {
-		if (i == NIC_MAX_MCAST_LIST)
-			break;
+	netdev_क्रम_each_mc_addr(ha, netdev) अणु
+		अगर (i == NIC_MAX_MCAST_LIST)
+			अवरोध;
 		ether_addr_copy(adapter->multicast_list[i++], ha->addr);
-	}
+	पूर्ण
 	adapter->multicast_addr_count = i;
 
-	/* Are the new flags different from the previous ones? If not, then no
+	/* Are the new flags dअगरferent from the previous ones? If not, then no
 	 * action is required
 	 *
 	 * NOTE - This block will always update the multicast_list with the
-	 *        hardware, even if the addresses aren't the same.
+	 *        hardware, even अगर the addresses aren't the same.
 	 */
-	if (packet_filter != adapter->packet_filter)
+	अगर (packet_filter != adapter->packet_filter)
 		et131x_set_packet_filter(adapter);
-}
+पूर्ण
 
-static netdev_tx_t et131x_tx(struct sk_buff *skb, struct net_device *netdev)
-{
-	struct et131x_adapter *adapter = netdev_priv(netdev);
-	struct tx_ring *tx_ring = &adapter->tx_ring;
+अटल netdev_tx_t et131x_tx(काष्ठा sk_buff *skb, काष्ठा net_device *netdev)
+अणु
+	काष्ठा et131x_adapter *adapter = netdev_priv(netdev);
+	काष्ठा tx_ring *tx_ring = &adapter->tx_ring;
 
-	/* stop the queue if it's getting full */
-	if (tx_ring->used >= NUM_TCB - 1 && !netif_queue_stopped(netdev))
-		netif_stop_queue(netdev);
+	/* stop the queue अगर it's getting full */
+	अगर (tx_ring->used >= NUM_TCB - 1 && !netअगर_queue_stopped(netdev))
+		netअगर_stop_queue(netdev);
 
-	/* Save the timestamp for the TX timeout watchdog */
-	netif_trans_update(netdev);
+	/* Save the बारtamp क्रम the TX समयout watchकरोg */
+	netअगर_trans_update(netdev);
 
 	/* TCB is not available */
-	if (tx_ring->used >= NUM_TCB)
-		goto drop_err;
+	अगर (tx_ring->used >= NUM_TCB)
+		जाओ drop_err;
 
-	if ((adapter->flags & FMP_ADAPTER_FAIL_SEND_MASK) ||
-	    !netif_carrier_ok(netdev))
-		goto drop_err;
+	अगर ((adapter->flags & FMP_ADAPTER_FAIL_SEND_MASK) ||
+	    !netअगर_carrier_ok(netdev))
+		जाओ drop_err;
 
-	if (send_packet(skb, adapter))
-		goto drop_err;
+	अगर (send_packet(skb, adapter))
+		जाओ drop_err;
 
-	return NETDEV_TX_OK;
+	वापस NETDEV_TX_OK;
 
 drop_err:
-	dev_kfree_skb_any(skb);
+	dev_kमुक्त_skb_any(skb);
 	adapter->netdev->stats.tx_dropped++;
-	return NETDEV_TX_OK;
-}
+	वापस NETDEV_TX_OK;
+पूर्ण
 
-/* et131x_tx_timeout - Timeout handler
+/* et131x_tx_समयout - Timeout handler
  *
- * The handler called when a Tx request times out. The timeout period is
- * specified by the 'tx_timeo" element in the net_device structure (see
+ * The handler called when a Tx request बार out. The समयout period is
+ * specअगरied by the 'tx_समयo" element in the net_device काष्ठाure (see
  * et131x_alloc_device() to see how this value is set).
  */
-static void et131x_tx_timeout(struct net_device *netdev, unsigned int txqueue)
-{
-	struct et131x_adapter *adapter = netdev_priv(netdev);
-	struct tx_ring *tx_ring = &adapter->tx_ring;
-	struct tcb *tcb;
-	unsigned long flags;
+अटल व्योम et131x_tx_समयout(काष्ठा net_device *netdev, अचिन्हित पूर्णांक txqueue)
+अणु
+	काष्ठा et131x_adapter *adapter = netdev_priv(netdev);
+	काष्ठा tx_ring *tx_ring = &adapter->tx_ring;
+	काष्ठा tcb *tcb;
+	अचिन्हित दीर्घ flags;
 
-	/* If the device is closed, ignore the timeout */
-	if (!(adapter->flags & FMP_ADAPTER_INTERRUPT_IN_USE))
-		return;
+	/* If the device is बंदd, ignore the समयout */
+	अगर (!(adapter->flags & FMP_ADAPTER_INTERRUPT_IN_USE))
+		वापस;
 
 	/* Any nonrecoverable hardware error?
-	 * Checks adapter->flags for any failure in phy reading
+	 * Checks adapter->flags क्रम any failure in phy पढ़ोing
 	 */
-	if (adapter->flags & FMP_ADAPTER_NON_RECOVER_ERROR)
-		return;
+	अगर (adapter->flags & FMP_ADAPTER_NON_RECOVER_ERROR)
+		वापस;
 
 	/* Hardware failure? */
-	if (adapter->flags & FMP_ADAPTER_HARDWARE_ERROR) {
+	अगर (adapter->flags & FMP_ADAPTER_HARDWARE_ERROR) अणु
 		dev_err(&adapter->pdev->dev, "hardware error - reset\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/* Is send stuck? */
 	spin_lock_irqsave(&adapter->tcb_send_qlock, flags);
 	tcb = tx_ring->send_head;
 	spin_unlock_irqrestore(&adapter->tcb_send_qlock, flags);
 
-	if (tcb) {
+	अगर (tcb) अणु
 		tcb->count++;
 
-		if (tcb->count > NIC_SEND_HANG_THRESHOLD) {
+		अगर (tcb->count > NIC_SEND_HANG_THRESHOLD) अणु
 			dev_warn(&adapter->pdev->dev,
 				 "Send stuck - reset. tcb->WrIndex %x\n",
 				 tcb->index);
 
 			adapter->netdev->stats.tx_errors++;
 
-			/* perform reset of tx/rx */
+			/* perक्रमm reset of tx/rx */
 			et131x_disable_txrx(netdev);
 			et131x_enable_txrx(netdev);
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static int et131x_change_mtu(struct net_device *netdev, int new_mtu)
-{
-	int result = 0;
-	struct et131x_adapter *adapter = netdev_priv(netdev);
+अटल पूर्णांक et131x_change_mtu(काष्ठा net_device *netdev, पूर्णांक new_mtu)
+अणु
+	पूर्णांक result = 0;
+	काष्ठा et131x_adapter *adapter = netdev_priv(netdev);
 
 	et131x_disable_txrx(netdev);
 
 	netdev->mtu = new_mtu;
 
-	et131x_adapter_memory_free(adapter);
+	et131x_adapter_memory_मुक्त(adapter);
 
-	/* Set the config parameter for Jumbo Packet support */
+	/* Set the config parameter क्रम Jumbo Packet support */
 	adapter->registry_jumbo_packet = new_mtu + 14;
 	et131x_soft_reset(adapter);
 
 	result = et131x_adapter_memory_alloc(adapter);
-	if (result != 0) {
+	अगर (result != 0) अणु
 		dev_warn(&adapter->pdev->dev,
 			 "Change MTU failed; couldn't re-alloc DMA memory\n");
-		return result;
-	}
+		वापस result;
+	पूर्ण
 
 	et131x_init_send(adapter);
 	et131x_hwaddr_init(adapter);
@@ -3869,66 +3870,66 @@ static int et131x_change_mtu(struct net_device *netdev, int new_mtu)
 	et131x_adapter_setup(adapter);
 	et131x_enable_txrx(netdev);
 
-	return result;
-}
+	वापस result;
+पूर्ण
 
-static const struct net_device_ops et131x_netdev_ops = {
-	.ndo_open		= et131x_open,
-	.ndo_stop		= et131x_close,
-	.ndo_start_xmit		= et131x_tx,
-	.ndo_set_rx_mode	= et131x_multicast,
-	.ndo_tx_timeout		= et131x_tx_timeout,
-	.ndo_change_mtu		= et131x_change_mtu,
-	.ndo_set_mac_address	= eth_mac_addr,
-	.ndo_validate_addr	= eth_validate_addr,
-	.ndo_get_stats		= et131x_stats,
-	.ndo_do_ioctl		= phy_do_ioctl,
-};
+अटल स्थिर काष्ठा net_device_ops et131x_netdev_ops = अणु
+	.nकरो_खोलो		= et131x_खोलो,
+	.nकरो_stop		= et131x_बंद,
+	.nकरो_start_xmit		= et131x_tx,
+	.nकरो_set_rx_mode	= et131x_multicast,
+	.nकरो_tx_समयout		= et131x_tx_समयout,
+	.nकरो_change_mtu		= et131x_change_mtu,
+	.nकरो_set_mac_address	= eth_mac_addr,
+	.nकरो_validate_addr	= eth_validate_addr,
+	.nकरो_get_stats		= et131x_stats,
+	.nकरो_करो_ioctl		= phy_करो_ioctl,
+पूर्ण;
 
-static int et131x_pci_setup(struct pci_dev *pdev,
-			    const struct pci_device_id *ent)
-{
-	struct net_device *netdev;
-	struct et131x_adapter *adapter;
-	int rc;
+अटल पूर्णांक et131x_pci_setup(काष्ठा pci_dev *pdev,
+			    स्थिर काष्ठा pci_device_id *ent)
+अणु
+	काष्ठा net_device *netdev;
+	काष्ठा et131x_adapter *adapter;
+	पूर्णांक rc;
 
 	rc = pci_enable_device(pdev);
-	if (rc < 0) {
+	अगर (rc < 0) अणु
 		dev_err(&pdev->dev, "pci_enable_device() failed\n");
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	/* Perform some basic PCI checks */
-	if (!(pci_resource_flags(pdev, 0) & IORESOURCE_MEM)) {
+	/* Perक्रमm some basic PCI checks */
+	अगर (!(pci_resource_flags(pdev, 0) & IORESOURCE_MEM)) अणु
 		dev_err(&pdev->dev, "Can't find PCI device's base address\n");
 		rc = -ENODEV;
-		goto err_disable;
-	}
+		जाओ err_disable;
+	पूर्ण
 
 	rc = pci_request_regions(pdev, DRIVER_NAME);
-	if (rc < 0) {
+	अगर (rc < 0) अणु
 		dev_err(&pdev->dev, "Can't get PCI resources\n");
-		goto err_disable;
-	}
+		जाओ err_disable;
+	पूर्ण
 
 	pci_set_master(pdev);
 
 	/* Check the DMA addressing support of this device */
-	if (dma_set_mask_and_coherent(&pdev->dev, DMA_BIT_MASK(64)) &&
-	    dma_set_mask_and_coherent(&pdev->dev, DMA_BIT_MASK(32))) {
+	अगर (dma_set_mask_and_coherent(&pdev->dev, DMA_BIT_MASK(64)) &&
+	    dma_set_mask_and_coherent(&pdev->dev, DMA_BIT_MASK(32))) अणु
 		dev_err(&pdev->dev, "No usable DMA addressing method\n");
 		rc = -EIO;
-		goto err_release_res;
-	}
+		जाओ err_release_res;
+	पूर्ण
 
-	netdev = alloc_etherdev(sizeof(struct et131x_adapter));
-	if (!netdev) {
+	netdev = alloc_etherdev(माप(काष्ठा et131x_adapter));
+	अगर (!netdev) अणु
 		dev_err(&pdev->dev, "Couldn't alloc netdev struct\n");
 		rc = -ENOMEM;
-		goto err_release_res;
-	}
+		जाओ err_release_res;
+	पूर्ण
 
-	netdev->watchdog_timeo = ET131X_TX_TIMEOUT;
+	netdev->watchकरोg_समयo = ET131X_TX_TIMEOUT;
 	netdev->netdev_ops     = &et131x_netdev_ops;
 	netdev->min_mtu        = ET131X_MIN_MTU;
 	netdev->max_mtu        = ET131X_MAX_MTU;
@@ -3939,122 +3940,122 @@ static int et131x_pci_setup(struct pci_dev *pdev,
 	adapter = et131x_adapter_init(netdev, pdev);
 
 	rc = et131x_pci_init(adapter, pdev);
-	if (rc < 0)
-		goto err_free_dev;
+	अगर (rc < 0)
+		जाओ err_मुक्त_dev;
 
-	/* Map the bus-relative registers to system virtual memory */
+	/* Map the bus-relative रेजिस्टरs to प्रणाली भव memory */
 	adapter->regs = pci_ioremap_bar(pdev, 0);
-	if (!adapter->regs) {
+	अगर (!adapter->regs) अणु
 		dev_err(&pdev->dev, "Cannot map device registers\n");
 		rc = -ENOMEM;
-		goto err_free_dev;
-	}
+		जाओ err_मुक्त_dev;
+	पूर्ण
 
-	/* If Phy COMA mode was enabled when we went down, disable it here. */
-	writel(ET_PMCSR_INIT,  &adapter->regs->global.pm_csr);
+	/* If Phy COMA mode was enabled when we went करोwn, disable it here. */
+	ग_लिखोl(ET_PMCSR_INIT,  &adapter->regs->global.pm_csr);
 
 	et131x_soft_reset(adapter);
-	et131x_disable_interrupts(adapter);
+	et131x_disable_पूर्णांकerrupts(adapter);
 
 	rc = et131x_adapter_memory_alloc(adapter);
-	if (rc < 0) {
+	अगर (rc < 0) अणु
 		dev_err(&pdev->dev, "Could not alloc adapter memory (DMA)\n");
-		goto err_iounmap;
-	}
+		जाओ err_iounmap;
+	पूर्ण
 
 	et131x_init_send(adapter);
 
-	netif_napi_add(netdev, &adapter->napi, et131x_poll, 64);
+	netअगर_napi_add(netdev, &adapter->napi, et131x_poll, 64);
 
 	ether_addr_copy(netdev->dev_addr, adapter->addr);
 
 	rc = -ENOMEM;
 
 	adapter->mii_bus = mdiobus_alloc();
-	if (!adapter->mii_bus) {
+	अगर (!adapter->mii_bus) अणु
 		dev_err(&pdev->dev, "Alloc of mii_bus struct failed\n");
-		goto err_mem_free;
-	}
+		जाओ err_mem_मुक्त;
+	पूर्ण
 
 	adapter->mii_bus->name = "et131x_eth_mii";
-	snprintf(adapter->mii_bus->id, MII_BUS_ID_SIZE, "%x",
+	snम_लिखो(adapter->mii_bus->id, MII_BUS_ID_SIZE, "%x",
 		 (adapter->pdev->bus->number << 8) | adapter->pdev->devfn);
 	adapter->mii_bus->priv = netdev;
-	adapter->mii_bus->read = et131x_mdio_read;
-	adapter->mii_bus->write = et131x_mdio_write;
+	adapter->mii_bus->पढ़ो = et131x_mdio_पढ़ो;
+	adapter->mii_bus->ग_लिखो = et131x_mdio_ग_लिखो;
 
-	rc = mdiobus_register(adapter->mii_bus);
-	if (rc < 0) {
+	rc = mdiobus_रेजिस्टर(adapter->mii_bus);
+	अगर (rc < 0) अणु
 		dev_err(&pdev->dev, "failed to register MII bus\n");
-		goto err_mdio_free;
-	}
+		जाओ err_mdio_मुक्त;
+	पूर्ण
 
 	rc = et131x_mii_probe(netdev);
-	if (rc < 0) {
+	अगर (rc < 0) अणु
 		dev_err(&pdev->dev, "failed to probe MII bus\n");
-		goto err_mdio_unregister;
-	}
+		जाओ err_mdio_unरेजिस्टर;
+	पूर्ण
 
 	et131x_adapter_setup(adapter);
 
-	/* Init variable for counting how long we do not have link status */
+	/* Init variable क्रम counting how दीर्घ we करो not have link status */
 	adapter->boot_coma = 0;
 	et1310_disable_phy_coma(adapter);
 
-	/* We can enable interrupts now
+	/* We can enable पूर्णांकerrupts now
 	 *
-	 *  NOTE - Because registration of interrupt handler is done in the
-	 *         device's open(), defer enabling device interrupts to that
-	 *         point
+	 *  NOTE - Because registration of पूर्णांकerrupt handler is करोne in the
+	 *         device's खोलो(), defer enabling device पूर्णांकerrupts to that
+	 *         poपूर्णांक
 	 */
 
-	rc = register_netdev(netdev);
-	if (rc < 0) {
+	rc = रेजिस्टर_netdev(netdev);
+	अगर (rc < 0) अणु
 		dev_err(&pdev->dev, "register_netdev() failed\n");
-		goto err_phy_disconnect;
-	}
+		जाओ err_phy_disconnect;
+	पूर्ण
 
-	/* Register the net_device struct with the PCI subsystem. Save a copy
-	 * of the PCI config space for this device now that the device has
-	 * been initialized, just in case it needs to be quickly restored.
+	/* Register the net_device काष्ठा with the PCI subप्रणाली. Save a copy
+	 * of the PCI config space क्रम this device now that the device has
+	 * been initialized, just in हाल it needs to be quickly restored.
 	 */
 	pci_set_drvdata(pdev, netdev);
 out:
-	return rc;
+	वापस rc;
 
 err_phy_disconnect:
 	phy_disconnect(netdev->phydev);
-err_mdio_unregister:
-	mdiobus_unregister(adapter->mii_bus);
-err_mdio_free:
-	mdiobus_free(adapter->mii_bus);
-err_mem_free:
-	et131x_adapter_memory_free(adapter);
+err_mdio_unरेजिस्टर:
+	mdiobus_unरेजिस्टर(adapter->mii_bus);
+err_mdio_मुक्त:
+	mdiobus_मुक्त(adapter->mii_bus);
+err_mem_मुक्त:
+	et131x_adapter_memory_मुक्त(adapter);
 err_iounmap:
 	iounmap(adapter->regs);
-err_free_dev:
+err_मुक्त_dev:
 	pci_dev_put(pdev);
-	free_netdev(netdev);
+	मुक्त_netdev(netdev);
 err_release_res:
 	pci_release_regions(pdev);
 err_disable:
 	pci_disable_device(pdev);
-	goto out;
-}
+	जाओ out;
+पूर्ण
 
-static const struct pci_device_id et131x_pci_table[] = {
-	{ PCI_VDEVICE(ATT, ET131X_PCI_DEVICE_ID_GIG), 0UL},
-	{ PCI_VDEVICE(ATT, ET131X_PCI_DEVICE_ID_FAST), 0UL},
-	{ 0,}
-};
+अटल स्थिर काष्ठा pci_device_id et131x_pci_table[] = अणु
+	अणु PCI_VDEVICE(ATT, ET131X_PCI_DEVICE_ID_GIG), 0ULपूर्ण,
+	अणु PCI_VDEVICE(ATT, ET131X_PCI_DEVICE_ID_FAST), 0ULपूर्ण,
+	अणु 0,पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(pci, et131x_pci_table);
 
-static struct pci_driver et131x_driver = {
+अटल काष्ठा pci_driver et131x_driver = अणु
 	.name		= DRIVER_NAME,
 	.id_table	= et131x_pci_table,
 	.probe		= et131x_pci_setup,
-	.remove		= et131x_pci_remove,
+	.हटाओ		= et131x_pci_हटाओ,
 	.driver.pm	= &et131x_pm_ops,
-};
+पूर्ण;
 
 module_pci_driver(et131x_driver);

@@ -1,315 +1,316 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * security/tomoyo/realpath.c
  *
  * Copyright (C) 2005-2011  NTT DATA CORPORATION
  */
 
-#include "common.h"
-#include <linux/magic.h>
-#include <linux/proc_fs.h>
+#समावेश "common.h"
+#समावेश <linux/magic.h>
+#समावेश <linux/proc_fs.h>
 
 /**
  * tomoyo_encode2 - Encode binary string to ascii string.
  *
- * @str:     String in binary format.
+ * @str:     String in binary क्रमmat.
  * @str_len: Size of @str in byte.
  *
- * Returns pointer to @str in ascii format on success, NULL otherwise.
+ * Returns poपूर्णांकer to @str in ascii क्रमmat on success, शून्य otherwise.
  *
- * This function uses kzalloc(), so caller must kfree() if this function
- * didn't return NULL.
+ * This function uses kzalloc(), so caller must kमुक्त() अगर this function
+ * didn't वापस शून्य.
  */
-char *tomoyo_encode2(const char *str, int str_len)
-{
-	int i;
-	int len = 0;
-	const char *p = str;
-	char *cp;
-	char *cp0;
+अक्षर *tomoyo_encode2(स्थिर अक्षर *str, पूर्णांक str_len)
+अणु
+	पूर्णांक i;
+	पूर्णांक len = 0;
+	स्थिर अक्षर *p = str;
+	अक्षर *cp;
+	अक्षर *cp0;
 
-	if (!p)
-		return NULL;
-	for (i = 0; i < str_len; i++) {
-		const unsigned char c = p[i];
+	अगर (!p)
+		वापस शून्य;
+	क्रम (i = 0; i < str_len; i++) अणु
+		स्थिर अचिन्हित अक्षर c = p[i];
 
-		if (c == '\\')
+		अगर (c == '\\')
 			len += 2;
-		else if (c > ' ' && c < 127)
+		अन्यथा अगर (c > ' ' && c < 127)
 			len++;
-		else
+		अन्यथा
 			len += 4;
-	}
+	पूर्ण
 	len++;
-	/* Reserve space for appending "/". */
+	/* Reserve space क्रम appending "/". */
 	cp = kzalloc(len + 10, GFP_NOFS);
-	if (!cp)
-		return NULL;
+	अगर (!cp)
+		वापस शून्य;
 	cp0 = cp;
 	p = str;
-	for (i = 0; i < str_len; i++) {
-		const unsigned char c = p[i];
+	क्रम (i = 0; i < str_len; i++) अणु
+		स्थिर अचिन्हित अक्षर c = p[i];
 
-		if (c == '\\') {
+		अगर (c == '\\') अणु
 			*cp++ = '\\';
 			*cp++ = '\\';
-		} else if (c > ' ' && c < 127) {
+		पूर्ण अन्यथा अगर (c > ' ' && c < 127) अणु
 			*cp++ = c;
-		} else {
+		पूर्ण अन्यथा अणु
 			*cp++ = '\\';
 			*cp++ = (c >> 6) + '0';
 			*cp++ = ((c >> 3) & 7) + '0';
 			*cp++ = (c & 7) + '0';
-		}
-	}
-	return cp0;
-}
+		पूर्ण
+	पूर्ण
+	वापस cp0;
+पूर्ण
 
 /**
  * tomoyo_encode - Encode binary string to ascii string.
  *
- * @str: String in binary format.
+ * @str: String in binary क्रमmat.
  *
- * Returns pointer to @str in ascii format on success, NULL otherwise.
+ * Returns poपूर्णांकer to @str in ascii क्रमmat on success, शून्य otherwise.
  *
- * This function uses kzalloc(), so caller must kfree() if this function
- * didn't return NULL.
+ * This function uses kzalloc(), so caller must kमुक्त() अगर this function
+ * didn't वापस शून्य.
  */
-char *tomoyo_encode(const char *str)
-{
-	return str ? tomoyo_encode2(str, strlen(str)) : NULL;
-}
+अक्षर *tomoyo_encode(स्थिर अक्षर *str)
+अणु
+	वापस str ? tomoyo_encode2(str, म_माप(str)) : शून्य;
+पूर्ण
 
 /**
- * tomoyo_get_absolute_path - Get the path of a dentry but ignores chroot'ed root.
+ * tomoyo_get_असलolute_path - Get the path of a dentry but ignores chroot'ed root.
  *
- * @path:   Pointer to "struct path".
- * @buffer: Pointer to buffer to return value in.
+ * @path:   Poपूर्णांकer to "struct path".
+ * @buffer: Poपूर्णांकer to buffer to वापस value in.
  * @buflen: Sizeof @buffer.
  *
  * Returns the buffer on success, an error code otherwise.
  *
  * If dentry is a directory, trailing '/' is appended.
  */
-static char *tomoyo_get_absolute_path(const struct path *path, char * const buffer,
-				      const int buflen)
-{
-	char *pos = ERR_PTR(-ENOMEM);
+अटल अक्षर *tomoyo_get_असलolute_path(स्थिर काष्ठा path *path, अक्षर * स्थिर buffer,
+				      स्थिर पूर्णांक buflen)
+अणु
+	अक्षर *pos = ERR_PTR(-ENOMEM);
 
-	if (buflen >= 256) {
+	अगर (buflen >= 256) अणु
 		/* go to whatever namespace root we are under */
-		pos = d_absolute_path(path, buffer, buflen - 1);
-		if (!IS_ERR(pos) && *pos == '/' && pos[1]) {
-			struct inode *inode = d_backing_inode(path->dentry);
+		pos = d_असलolute_path(path, buffer, buflen - 1);
+		अगर (!IS_ERR(pos) && *pos == '/' && pos[1]) अणु
+			काष्ठा inode *inode = d_backing_inode(path->dentry);
 
-			if (inode && S_ISDIR(inode->i_mode)) {
+			अगर (inode && S_ISसूची(inode->i_mode)) अणु
 				buffer[buflen - 2] = '/';
 				buffer[buflen - 1] = '\0';
-			}
-		}
-	}
-	return pos;
-}
+			पूर्ण
+		पूर्ण
+	पूर्ण
+	वापस pos;
+पूर्ण
 
 /**
  * tomoyo_get_dentry_path - Get the path of a dentry.
  *
- * @dentry: Pointer to "struct dentry".
- * @buffer: Pointer to buffer to return value in.
+ * @dentry: Poपूर्णांकer to "struct dentry".
+ * @buffer: Poपूर्णांकer to buffer to वापस value in.
  * @buflen: Sizeof @buffer.
  *
  * Returns the buffer on success, an error code otherwise.
  *
  * If dentry is a directory, trailing '/' is appended.
  */
-static char *tomoyo_get_dentry_path(struct dentry *dentry, char * const buffer,
-				    const int buflen)
-{
-	char *pos = ERR_PTR(-ENOMEM);
+अटल अक्षर *tomoyo_get_dentry_path(काष्ठा dentry *dentry, अक्षर * स्थिर buffer,
+				    स्थिर पूर्णांक buflen)
+अणु
+	अक्षर *pos = ERR_PTR(-ENOMEM);
 
-	if (buflen >= 256) {
+	अगर (buflen >= 256) अणु
 		pos = dentry_path_raw(dentry, buffer, buflen - 1);
-		if (!IS_ERR(pos) && *pos == '/' && pos[1]) {
-			struct inode *inode = d_backing_inode(dentry);
+		अगर (!IS_ERR(pos) && *pos == '/' && pos[1]) अणु
+			काष्ठा inode *inode = d_backing_inode(dentry);
 
-			if (inode && S_ISDIR(inode->i_mode)) {
+			अगर (inode && S_ISसूची(inode->i_mode)) अणु
 				buffer[buflen - 2] = '/';
 				buffer[buflen - 1] = '\0';
-			}
-		}
-	}
-	return pos;
-}
+			पूर्ण
+		पूर्ण
+	पूर्ण
+	वापस pos;
+पूर्ण
 
 /**
  * tomoyo_get_local_path - Get the path of a dentry.
  *
- * @dentry: Pointer to "struct dentry".
- * @buffer: Pointer to buffer to return value in.
+ * @dentry: Poपूर्णांकer to "struct dentry".
+ * @buffer: Poपूर्णांकer to buffer to वापस value in.
  * @buflen: Sizeof @buffer.
  *
  * Returns the buffer on success, an error code otherwise.
  */
-static char *tomoyo_get_local_path(struct dentry *dentry, char * const buffer,
-				   const int buflen)
-{
-	struct super_block *sb = dentry->d_sb;
-	char *pos = tomoyo_get_dentry_path(dentry, buffer, buflen);
+अटल अक्षर *tomoyo_get_local_path(काष्ठा dentry *dentry, अक्षर * स्थिर buffer,
+				   स्थिर पूर्णांक buflen)
+अणु
+	काष्ठा super_block *sb = dentry->d_sb;
+	अक्षर *pos = tomoyo_get_dentry_path(dentry, buffer, buflen);
 
-	if (IS_ERR(pos))
-		return pos;
-	/* Convert from $PID to self if $PID is current thread. */
-	if (sb->s_magic == PROC_SUPER_MAGIC && *pos == '/') {
-		char *ep;
-		const pid_t pid = (pid_t) simple_strtoul(pos + 1, &ep, 10);
-		struct pid_namespace *proc_pidns = proc_pid_ns(sb);
+	अगर (IS_ERR(pos))
+		वापस pos;
+	/* Convert from $PID to self अगर $PID is current thपढ़ो. */
+	अगर (sb->s_magic == PROC_SUPER_MAGIC && *pos == '/') अणु
+		अक्षर *ep;
+		स्थिर pid_t pid = (pid_t) simple_म_से_अदीर्घ(pos + 1, &ep, 10);
+		काष्ठा pid_namespace *proc_pidns = proc_pid_ns(sb);
 
-		if (*ep == '/' && pid && pid ==
-		    task_tgid_nr_ns(current, proc_pidns)) {
+		अगर (*ep == '/' && pid && pid ==
+		    task_tgid_nr_ns(current, proc_pidns)) अणु
 			pos = ep - 5;
-			if (pos < buffer)
-				goto out;
-			memmove(pos, "/self", 5);
-		}
-		goto prepend_filesystem_name;
-	}
-	/* Use filesystem name for unnamed devices. */
-	if (!MAJOR(sb->s_dev))
-		goto prepend_filesystem_name;
-	{
-		struct inode *inode = d_backing_inode(sb->s_root);
+			अगर (pos < buffer)
+				जाओ out;
+			स_हटाओ(pos, "/self", 5);
+		पूर्ण
+		जाओ prepend_fileप्रणाली_name;
+	पूर्ण
+	/* Use fileप्रणाली name क्रम unnamed devices. */
+	अगर (!MAJOR(sb->s_dev))
+		जाओ prepend_fileप्रणाली_name;
+	अणु
+		काष्ठा inode *inode = d_backing_inode(sb->s_root);
 
 		/*
-		 * Use filesystem name if filesystem does not support rename()
+		 * Use fileप्रणाली name अगर fileप्रणाली करोes not support नाम()
 		 * operation.
 		 */
-		if (!inode->i_op->rename)
-			goto prepend_filesystem_name;
-	}
+		अगर (!inode->i_op->नाम)
+			जाओ prepend_fileप्रणाली_name;
+	पूर्ण
 	/* Prepend device name. */
-	{
-		char name[64];
-		int name_len;
-		const dev_t dev = sb->s_dev;
+	अणु
+		अक्षर name[64];
+		पूर्णांक name_len;
+		स्थिर dev_t dev = sb->s_dev;
 
-		name[sizeof(name) - 1] = '\0';
-		snprintf(name, sizeof(name) - 1, "dev(%u,%u):", MAJOR(dev),
+		name[माप(name) - 1] = '\0';
+		snम_लिखो(name, माप(name) - 1, "dev(%u,%u):", MAJOR(dev),
 			 MINOR(dev));
-		name_len = strlen(name);
+		name_len = म_माप(name);
 		pos -= name_len;
-		if (pos < buffer)
-			goto out;
-		memmove(pos, name, name_len);
-		return pos;
-	}
-	/* Prepend filesystem name. */
-prepend_filesystem_name:
-	{
-		const char *name = sb->s_type->name;
-		const int name_len = strlen(name);
+		अगर (pos < buffer)
+			जाओ out;
+		स_हटाओ(pos, name, name_len);
+		वापस pos;
+	पूर्ण
+	/* Prepend fileप्रणाली name. */
+prepend_fileप्रणाली_name:
+	अणु
+		स्थिर अक्षर *name = sb->s_type->name;
+		स्थिर पूर्णांक name_len = म_माप(name);
 
 		pos -= name_len + 1;
-		if (pos < buffer)
-			goto out;
-		memmove(pos, name, name_len);
+		अगर (pos < buffer)
+			जाओ out;
+		स_हटाओ(pos, name, name_len);
 		pos[name_len] = ':';
-	}
-	return pos;
+	पूर्ण
+	वापस pos;
 out:
-	return ERR_PTR(-ENOMEM);
-}
+	वापस ERR_PTR(-ENOMEM);
+पूर्ण
 
 /**
  * tomoyo_realpath_from_path - Returns realpath(3) of the given pathname but ignores chroot'ed root.
  *
- * @path: Pointer to "struct path".
+ * @path: Poपूर्णांकer to "struct path".
  *
- * Returns the realpath of the given @path on success, NULL otherwise.
+ * Returns the realpath of the given @path on success, शून्य otherwise.
  *
  * If dentry is a directory, trailing '/' is appended.
  * Characters out of 0x20 < c < 0x7F range are converted to
  * \ooo style octal string.
  * Character \ is converted to \\ string.
  *
- * These functions use kzalloc(), so the caller must call kfree()
- * if these functions didn't return NULL.
+ * These functions use kzalloc(), so the caller must call kमुक्त()
+ * अगर these functions didn't वापस शून्य.
  */
-char *tomoyo_realpath_from_path(const struct path *path)
-{
-	char *buf = NULL;
-	char *name = NULL;
-	unsigned int buf_len = PAGE_SIZE / 2;
-	struct dentry *dentry = path->dentry;
-	struct super_block *sb;
+अक्षर *tomoyo_realpath_from_path(स्थिर काष्ठा path *path)
+अणु
+	अक्षर *buf = शून्य;
+	अक्षर *name = शून्य;
+	अचिन्हित पूर्णांक buf_len = PAGE_SIZE / 2;
+	काष्ठा dentry *dentry = path->dentry;
+	काष्ठा super_block *sb;
 
-	if (!dentry)
-		return NULL;
+	अगर (!dentry)
+		वापस शून्य;
 	sb = dentry->d_sb;
-	while (1) {
-		char *pos;
-		struct inode *inode;
+	जबतक (1) अणु
+		अक्षर *pos;
+		काष्ठा inode *inode;
 
 		buf_len <<= 1;
-		kfree(buf);
-		buf = kmalloc(buf_len, GFP_NOFS);
-		if (!buf)
-			break;
+		kमुक्त(buf);
+		buf = kदो_स्मृति(buf_len, GFP_NOFS);
+		अगर (!buf)
+			अवरोध;
 		/* To make sure that pos is '\0' terminated. */
 		buf[buf_len - 1] = '\0';
 		/* For "pipe:[\$]" and "socket:[\$]". */
-		if (dentry->d_op && dentry->d_op->d_dname) {
+		अगर (dentry->d_op && dentry->d_op->d_dname) अणु
 			pos = dentry->d_op->d_dname(dentry, buf, buf_len - 1);
-			goto encode;
-		}
+			जाओ encode;
+		पूर्ण
 		inode = d_backing_inode(sb->s_root);
 		/*
-		 * Get local name for filesystems without rename() operation
+		 * Get local name क्रम fileप्रणालीs without नाम() operation
 		 * or dentry without vfsmount.
 		 */
-		if (!path->mnt ||
-		    (!inode->i_op->rename &&
+		अगर (!path->mnt ||
+		    (!inode->i_op->नाम &&
 		     !(sb->s_type->fs_flags & FS_REQUIRES_DEV)))
 			pos = tomoyo_get_local_path(path->dentry, buf,
 						    buf_len - 1);
-		/* Get absolute name for the rest. */
-		else {
-			pos = tomoyo_get_absolute_path(path, buf, buf_len - 1);
+		/* Get असलolute name क्रम the rest. */
+		अन्यथा अणु
+			pos = tomoyo_get_असलolute_path(path, buf, buf_len - 1);
 			/*
-			 * Fall back to local name if absolute name is not
+			 * Fall back to local name अगर असलolute name is not
 			 * available.
 			 */
-			if (pos == ERR_PTR(-EINVAL))
+			अगर (pos == ERR_PTR(-EINVAL))
 				pos = tomoyo_get_local_path(path->dentry, buf,
 							    buf_len - 1);
-		}
+		पूर्ण
 encode:
-		if (IS_ERR(pos))
-			continue;
+		अगर (IS_ERR(pos))
+			जारी;
 		name = tomoyo_encode(pos);
-		break;
-	}
-	kfree(buf);
-	if (!name)
+		अवरोध;
+	पूर्ण
+	kमुक्त(buf);
+	अगर (!name)
 		tomoyo_warn_oom(__func__);
-	return name;
-}
+	वापस name;
+पूर्ण
 
 /**
  * tomoyo_realpath_nofollow - Get realpath of a pathname.
  *
  * @pathname: The pathname to solve.
  *
- * Returns the realpath of @pathname on success, NULL otherwise.
+ * Returns the realpath of @pathname on success, शून्य otherwise.
  */
-char *tomoyo_realpath_nofollow(const char *pathname)
-{
-	struct path path;
+अक्षर *tomoyo_realpath_nofollow(स्थिर अक्षर *pathname)
+अणु
+	काष्ठा path path;
 
-	if (pathname && kern_path(pathname, 0, &path) == 0) {
-		char *buf = tomoyo_realpath_from_path(&path);
+	अगर (pathname && kern_path(pathname, 0, &path) == 0) अणु
+		अक्षर *buf = tomoyo_realpath_from_path(&path);
 
 		path_put(&path);
-		return buf;
-	}
-	return NULL;
-}
+		वापस buf;
+	पूर्ण
+	वापस शून्य;
+पूर्ण

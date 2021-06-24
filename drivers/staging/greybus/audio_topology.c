@@ -1,1337 +1,1338 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Greybus audio driver
  * Copyright 2015-2016 Google Inc.
  * Copyright 2015-2016 Linaro Ltd.
  */
 
-#include <linux/greybus.h>
-#include "audio_codec.h"
+#समावेश <linux/greybus.h>
+#समावेश "audio_codec.h"
 
-#define GBAUDIO_INVALID_ID	0xFF
+#घोषणा GBAUDIO_INVALID_ID	0xFF
 
 /* mixer control */
-struct gb_mixer_control {
-	int min, max;
-	unsigned int reg, rreg, shift, rshift, invert;
-};
+काष्ठा gb_mixer_control अणु
+	पूर्णांक min, max;
+	अचिन्हित पूर्णांक reg, rreg, shअगरt, rshअगरt, invert;
+पूर्ण;
 
-struct gbaudio_ctl_pvt {
-	unsigned int ctl_id;
-	unsigned int data_cport;
-	unsigned int access;
-	unsigned int vcount;
-	struct gb_audio_ctl_elem_info *info;
-};
+काष्ठा gbaudio_ctl_pvt अणु
+	अचिन्हित पूर्णांक ctl_id;
+	अचिन्हित पूर्णांक data_cport;
+	अचिन्हित पूर्णांक access;
+	अचिन्हित पूर्णांक vcount;
+	काष्ठा gb_audio_ctl_elem_info *info;
+पूर्ण;
 
-static struct gbaudio_module_info *find_gb_module(
-					struct gbaudio_codec_info *codec,
-					char const *name)
-{
-	int dev_id;
-	char begin[NAME_SIZE];
-	struct gbaudio_module_info *module;
+अटल काष्ठा gbaudio_module_info *find_gb_module(
+					काष्ठा gbaudio_codec_info *codec,
+					अक्षर स्थिर *name)
+अणु
+	पूर्णांक dev_id;
+	अक्षर begin[NAME_SIZE];
+	काष्ठा gbaudio_module_info *module;
 
-	if (!name)
-		return NULL;
+	अगर (!name)
+		वापस शून्य;
 
-	if (sscanf(name, "%s %d", begin, &dev_id) != 2)
-		return NULL;
+	अगर (माला_पूछो(name, "%s %d", begin, &dev_id) != 2)
+		वापस शून्य;
 
 	dev_dbg(codec->dev, "%s:Find module#%d\n", __func__, dev_id);
 
 	mutex_lock(&codec->lock);
-	list_for_each_entry(module, &codec->module_list, list) {
-		if (module->dev_id == dev_id) {
+	list_क्रम_each_entry(module, &codec->module_list, list) अणु
+		अगर (module->dev_id == dev_id) अणु
 			mutex_unlock(&codec->lock);
-			return module;
-		}
-	}
+			वापस module;
+		पूर्ण
+	पूर्ण
 	mutex_unlock(&codec->lock);
 	dev_warn(codec->dev, "%s: module#%d missing in codec list\n", name,
 		 dev_id);
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static const char *gbaudio_map_controlid(struct gbaudio_module_info *module,
+अटल स्थिर अक्षर *gbaudio_map_controlid(काष्ठा gbaudio_module_info *module,
 					 __u8 control_id, __u8 index)
-{
-	struct gbaudio_control *control;
+अणु
+	काष्ठा gbaudio_control *control;
 
-	if (control_id == GBAUDIO_INVALID_ID)
-		return NULL;
+	अगर (control_id == GBAUDIO_INVALID_ID)
+		वापस शून्य;
 
-	list_for_each_entry(control, &module->ctl_list, list) {
-		if (control->id == control_id) {
-			if (index == GBAUDIO_INVALID_ID)
-				return control->name;
-			if (index >= control->items)
-				return NULL;
-			return control->texts[index];
-		}
-	}
-	list_for_each_entry(control, &module->widget_ctl_list, list) {
-		if (control->id == control_id) {
-			if (index == GBAUDIO_INVALID_ID)
-				return control->name;
-			if (index >= control->items)
-				return NULL;
-			return control->texts[index];
-		}
-	}
-	return NULL;
-}
+	list_क्रम_each_entry(control, &module->ctl_list, list) अणु
+		अगर (control->id == control_id) अणु
+			अगर (index == GBAUDIO_INVALID_ID)
+				वापस control->name;
+			अगर (index >= control->items)
+				वापस शून्य;
+			वापस control->texts[index];
+		पूर्ण
+	पूर्ण
+	list_क्रम_each_entry(control, &module->widget_ctl_list, list) अणु
+		अगर (control->id == control_id) अणु
+			अगर (index == GBAUDIO_INVALID_ID)
+				वापस control->name;
+			अगर (index >= control->items)
+				वापस शून्य;
+			वापस control->texts[index];
+		पूर्ण
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
-static int gbaudio_map_controlname(struct gbaudio_module_info *module,
-				   const char *name)
-{
-	struct gbaudio_control *control;
+अटल पूर्णांक gbaudio_map_controlname(काष्ठा gbaudio_module_info *module,
+				   स्थिर अक्षर *name)
+अणु
+	काष्ठा gbaudio_control *control;
 
-	list_for_each_entry(control, &module->ctl_list, list) {
-		if (!strncmp(control->name, name, NAME_SIZE))
-			return control->id;
-	}
+	list_क्रम_each_entry(control, &module->ctl_list, list) अणु
+		अगर (!म_भेदन(control->name, name, NAME_SIZE))
+			वापस control->id;
+	पूर्ण
 
 	dev_warn(module->dev, "%s: missing in modules controls list\n", name);
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static int gbaudio_map_wcontrolname(struct gbaudio_module_info *module,
-				    const char *name)
-{
-	struct gbaudio_control *control;
+अटल पूर्णांक gbaudio_map_wcontrolname(काष्ठा gbaudio_module_info *module,
+				    स्थिर अक्षर *name)
+अणु
+	काष्ठा gbaudio_control *control;
 
-	list_for_each_entry(control, &module->widget_ctl_list, list) {
-		if (!strncmp(control->wname, name, NAME_SIZE))
-			return control->id;
-	}
+	list_क्रम_each_entry(control, &module->widget_ctl_list, list) अणु
+		अगर (!म_भेदन(control->wname, name, NAME_SIZE))
+			वापस control->id;
+	पूर्ण
 	dev_warn(module->dev, "%s: missing in modules controls list\n", name);
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static int gbaudio_map_widgetname(struct gbaudio_module_info *module,
-				  const char *name)
-{
-	struct gbaudio_widget *widget;
+अटल पूर्णांक gbaudio_map_widgetname(काष्ठा gbaudio_module_info *module,
+				  स्थिर अक्षर *name)
+अणु
+	काष्ठा gbaudio_widget *widget;
 
-	list_for_each_entry(widget, &module->widget_list, list) {
-		if (!strncmp(widget->name, name, NAME_SIZE))
-			return widget->id;
-	}
+	list_क्रम_each_entry(widget, &module->widget_list, list) अणु
+		अगर (!म_भेदन(widget->name, name, NAME_SIZE))
+			वापस widget->id;
+	पूर्ण
 	dev_warn(module->dev, "%s: missing in modules widgets list\n", name);
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static const char *gbaudio_map_widgetid(struct gbaudio_module_info *module,
+अटल स्थिर अक्षर *gbaudio_map_widgetid(काष्ठा gbaudio_module_info *module,
 					__u8 widget_id)
-{
-	struct gbaudio_widget *widget;
+अणु
+	काष्ठा gbaudio_widget *widget;
 
-	list_for_each_entry(widget, &module->widget_list, list) {
-		if (widget->id == widget_id)
-			return widget->name;
-	}
-	return NULL;
-}
+	list_क्रम_each_entry(widget, &module->widget_list, list) अणु
+		अगर (widget->id == widget_id)
+			वापस widget->name;
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
-static const char **gb_generate_enum_strings(struct gbaudio_module_info *gb,
-					     struct gb_audio_enumerated *gbenum)
-{
-	const char **strings;
-	int i;
-	unsigned int items;
+अटल स्थिर अक्षर **gb_generate_क्रमागत_strings(काष्ठा gbaudio_module_info *gb,
+					     काष्ठा gb_audio_क्रमागतerated *gbक्रमागत)
+अणु
+	स्थिर अक्षर **strings;
+	पूर्णांक i;
+	अचिन्हित पूर्णांक items;
 	__u8 *data;
 
-	items = le32_to_cpu(gbenum->items);
-	strings = devm_kcalloc(gb->dev, items, sizeof(char *), GFP_KERNEL);
-	data = gbenum->names;
+	items = le32_to_cpu(gbक्रमागत->items);
+	strings = devm_kसुस्मृति(gb->dev, items, माप(अक्षर *), GFP_KERNEL);
+	data = gbक्रमागत->names;
 
-	for (i = 0; i < items; i++) {
-		strings[i] = (const char *)data;
-		while (*data != '\0')
+	क्रम (i = 0; i < items; i++) अणु
+		strings[i] = (स्थिर अक्षर *)data;
+		जबतक (*data != '\0')
 			data++;
 		data++;
-	}
+	पूर्ण
 
-	return strings;
-}
+	वापस strings;
+पूर्ण
 
-static int gbcodec_mixer_ctl_info(struct snd_kcontrol *kcontrol,
-				  struct snd_ctl_elem_info *uinfo)
-{
-	unsigned int max;
-	const char *name;
-	struct gbaudio_ctl_pvt *data;
-	struct gb_audio_ctl_elem_info *info;
-	struct gbaudio_module_info *module;
-	struct snd_soc_component *comp = snd_soc_kcontrol_component(kcontrol);
-	struct gbaudio_codec_info *gbcodec = snd_soc_component_get_drvdata(comp);
+अटल पूर्णांक gbcodec_mixer_ctl_info(काष्ठा snd_kcontrol *kcontrol,
+				  काष्ठा snd_ctl_elem_info *uinfo)
+अणु
+	अचिन्हित पूर्णांक max;
+	स्थिर अक्षर *name;
+	काष्ठा gbaudio_ctl_pvt *data;
+	काष्ठा gb_audio_ctl_elem_info *info;
+	काष्ठा gbaudio_module_info *module;
+	काष्ठा snd_soc_component *comp = snd_soc_kcontrol_component(kcontrol);
+	काष्ठा gbaudio_codec_info *gbcodec = snd_soc_component_get_drvdata(comp);
 
 	dev_dbg(comp->dev, "Entered %s:%s\n", __func__, kcontrol->id.name);
-	data = (struct gbaudio_ctl_pvt *)kcontrol->private_value;
-	info = (struct gb_audio_ctl_elem_info *)data->info;
+	data = (काष्ठा gbaudio_ctl_pvt *)kcontrol->निजी_value;
+	info = (काष्ठा gb_audio_ctl_elem_info *)data->info;
 
-	if (!info) {
+	अगर (!info) अणु
 		dev_err(comp->dev, "NULL info for %s\n", uinfo->id.name);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	/* update uinfo */
 	uinfo->access = data->access;
 	uinfo->count = data->vcount;
-	uinfo->type = (__force snd_ctl_elem_type_t)info->type;
+	uinfo->type = (__क्रमce snd_ctl_elem_type_t)info->type;
 
-	switch (info->type) {
-	case GB_AUDIO_CTL_ELEM_TYPE_BOOLEAN:
-	case GB_AUDIO_CTL_ELEM_TYPE_INTEGER:
-		uinfo->value.integer.min = le32_to_cpu(info->value.integer.min);
-		uinfo->value.integer.max = le32_to_cpu(info->value.integer.max);
-		break;
-	case GB_AUDIO_CTL_ELEM_TYPE_ENUMERATED:
-		max = le32_to_cpu(info->value.enumerated.items);
-		uinfo->value.enumerated.items = max;
-		if (uinfo->value.enumerated.item > max - 1)
-			uinfo->value.enumerated.item = max - 1;
+	चयन (info->type) अणु
+	हाल GB_AUDIO_CTL_ELEM_TYPE_BOOLEAN:
+	हाल GB_AUDIO_CTL_ELEM_TYPE_INTEGER:
+		uinfo->value.पूर्णांकeger.min = le32_to_cpu(info->value.पूर्णांकeger.min);
+		uinfo->value.पूर्णांकeger.max = le32_to_cpu(info->value.पूर्णांकeger.max);
+		अवरोध;
+	हाल GB_AUDIO_CTL_ELEM_TYPE_ENUMERATED:
+		max = le32_to_cpu(info->value.क्रमागतerated.items);
+		uinfo->value.क्रमागतerated.items = max;
+		अगर (uinfo->value.क्रमागतerated.item > max - 1)
+			uinfo->value.क्रमागतerated.item = max - 1;
 		module = find_gb_module(gbcodec, kcontrol->id.name);
-		if (!module)
-			return -EINVAL;
+		अगर (!module)
+			वापस -EINVAL;
 		name = gbaudio_map_controlid(module, data->ctl_id,
-					     uinfo->value.enumerated.item);
-		strscpy(uinfo->value.enumerated.name, name, sizeof(uinfo->value.enumerated.name));
-		break;
-	default:
+					     uinfo->value.क्रमागतerated.item);
+		strscpy(uinfo->value.क्रमागतerated.name, name, माप(uinfo->value.क्रमागतerated.name));
+		अवरोध;
+	शेष:
 		dev_err(comp->dev, "Invalid type: %d for %s:kcontrol\n",
 			info->type, kcontrol->id.name);
-		break;
-	}
-	return 0;
-}
+		अवरोध;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int gbcodec_mixer_ctl_get(struct snd_kcontrol *kcontrol,
-				 struct snd_ctl_elem_value *ucontrol)
-{
-	int ret;
-	struct gb_audio_ctl_elem_info *info;
-	struct gbaudio_ctl_pvt *data;
-	struct gb_audio_ctl_elem_value gbvalue;
-	struct gbaudio_module_info *module;
-	struct snd_soc_component *comp = snd_soc_kcontrol_component(kcontrol);
-	struct gbaudio_codec_info *gb = snd_soc_component_get_drvdata(comp);
-	struct gb_bundle *bundle;
+अटल पूर्णांक gbcodec_mixer_ctl_get(काष्ठा snd_kcontrol *kcontrol,
+				 काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	पूर्णांक ret;
+	काष्ठा gb_audio_ctl_elem_info *info;
+	काष्ठा gbaudio_ctl_pvt *data;
+	काष्ठा gb_audio_ctl_elem_value gbvalue;
+	काष्ठा gbaudio_module_info *module;
+	काष्ठा snd_soc_component *comp = snd_soc_kcontrol_component(kcontrol);
+	काष्ठा gbaudio_codec_info *gb = snd_soc_component_get_drvdata(comp);
+	काष्ठा gb_bundle *bundle;
 
 	dev_dbg(comp->dev, "Entered %s:%s\n", __func__, kcontrol->id.name);
 	module = find_gb_module(gb, kcontrol->id.name);
-	if (!module)
-		return -EINVAL;
+	अगर (!module)
+		वापस -EINVAL;
 
-	data = (struct gbaudio_ctl_pvt *)kcontrol->private_value;
-	info = (struct gb_audio_ctl_elem_info *)data->info;
+	data = (काष्ठा gbaudio_ctl_pvt *)kcontrol->निजी_value;
+	info = (काष्ठा gb_audio_ctl_elem_info *)data->info;
 	bundle = to_gb_bundle(module->dev);
 
-	ret = gb_pm_runtime_get_sync(bundle);
-	if (ret)
-		return ret;
+	ret = gb_pm_runसमय_get_sync(bundle);
+	अगर (ret)
+		वापस ret;
 
 	ret = gb_audio_gb_get_control(module->mgmt_connection, data->ctl_id,
 				      GB_AUDIO_INVALID_INDEX, &gbvalue);
 
-	gb_pm_runtime_put_autosuspend(bundle);
+	gb_pm_runसमय_put_स्वतःsuspend(bundle);
 
-	if (ret) {
+	अगर (ret) अणु
 		dev_err_ratelimited(comp->dev, "%d:Error in %s for %s\n", ret,
 				    __func__, kcontrol->id.name);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	/* update ucontrol */
-	switch (info->type) {
-	case GB_AUDIO_CTL_ELEM_TYPE_BOOLEAN:
-	case GB_AUDIO_CTL_ELEM_TYPE_INTEGER:
-		ucontrol->value.integer.value[0] =
-			le32_to_cpu(gbvalue.value.integer_value[0]);
-		if (data->vcount == 2)
-			ucontrol->value.integer.value[1] =
-				le32_to_cpu(gbvalue.value.integer_value[1]);
-		break;
-	case GB_AUDIO_CTL_ELEM_TYPE_ENUMERATED:
-		ucontrol->value.enumerated.item[0] =
-			le32_to_cpu(gbvalue.value.enumerated_item[0]);
-		if (data->vcount == 2)
-			ucontrol->value.enumerated.item[1] =
-				le32_to_cpu(gbvalue.value.enumerated_item[1]);
-		break;
-	default:
+	चयन (info->type) अणु
+	हाल GB_AUDIO_CTL_ELEM_TYPE_BOOLEAN:
+	हाल GB_AUDIO_CTL_ELEM_TYPE_INTEGER:
+		ucontrol->value.पूर्णांकeger.value[0] =
+			le32_to_cpu(gbvalue.value.पूर्णांकeger_value[0]);
+		अगर (data->vcount == 2)
+			ucontrol->value.पूर्णांकeger.value[1] =
+				le32_to_cpu(gbvalue.value.पूर्णांकeger_value[1]);
+		अवरोध;
+	हाल GB_AUDIO_CTL_ELEM_TYPE_ENUMERATED:
+		ucontrol->value.क्रमागतerated.item[0] =
+			le32_to_cpu(gbvalue.value.क्रमागतerated_item[0]);
+		अगर (data->vcount == 2)
+			ucontrol->value.क्रमागतerated.item[1] =
+				le32_to_cpu(gbvalue.value.क्रमागतerated_item[1]);
+		अवरोध;
+	शेष:
 		dev_err(comp->dev, "Invalid type: %d for %s:kcontrol\n",
 			info->type, kcontrol->id.name);
 		ret = -EINVAL;
-		break;
-	}
-	return ret;
-}
+		अवरोध;
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static int gbcodec_mixer_ctl_put(struct snd_kcontrol *kcontrol,
-				 struct snd_ctl_elem_value *ucontrol)
-{
-	int ret = 0;
-	struct gb_audio_ctl_elem_info *info;
-	struct gbaudio_ctl_pvt *data;
-	struct gb_audio_ctl_elem_value gbvalue;
-	struct gbaudio_module_info *module;
-	struct snd_soc_component *comp = snd_soc_kcontrol_component(kcontrol);
-	struct gbaudio_codec_info *gb = snd_soc_component_get_drvdata(comp);
-	struct gb_bundle *bundle;
+अटल पूर्णांक gbcodec_mixer_ctl_put(काष्ठा snd_kcontrol *kcontrol,
+				 काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	पूर्णांक ret = 0;
+	काष्ठा gb_audio_ctl_elem_info *info;
+	काष्ठा gbaudio_ctl_pvt *data;
+	काष्ठा gb_audio_ctl_elem_value gbvalue;
+	काष्ठा gbaudio_module_info *module;
+	काष्ठा snd_soc_component *comp = snd_soc_kcontrol_component(kcontrol);
+	काष्ठा gbaudio_codec_info *gb = snd_soc_component_get_drvdata(comp);
+	काष्ठा gb_bundle *bundle;
 
 	dev_dbg(comp->dev, "Entered %s:%s\n", __func__, kcontrol->id.name);
 	module = find_gb_module(gb, kcontrol->id.name);
-	if (!module)
-		return -EINVAL;
+	अगर (!module)
+		वापस -EINVAL;
 
-	data = (struct gbaudio_ctl_pvt *)kcontrol->private_value;
-	info = (struct gb_audio_ctl_elem_info *)data->info;
+	data = (काष्ठा gbaudio_ctl_pvt *)kcontrol->निजी_value;
+	info = (काष्ठा gb_audio_ctl_elem_info *)data->info;
 	bundle = to_gb_bundle(module->dev);
 
 	/* update ucontrol */
-	switch (info->type) {
-	case GB_AUDIO_CTL_ELEM_TYPE_BOOLEAN:
-	case GB_AUDIO_CTL_ELEM_TYPE_INTEGER:
-		gbvalue.value.integer_value[0] =
-			cpu_to_le32(ucontrol->value.integer.value[0]);
-		if (data->vcount == 2)
-			gbvalue.value.integer_value[1] =
-				cpu_to_le32(ucontrol->value.integer.value[1]);
-		break;
-	case GB_AUDIO_CTL_ELEM_TYPE_ENUMERATED:
-		gbvalue.value.enumerated_item[0] =
-			cpu_to_le32(ucontrol->value.enumerated.item[0]);
-		if (data->vcount == 2)
-			gbvalue.value.enumerated_item[1] =
-				cpu_to_le32(ucontrol->value.enumerated.item[1]);
-		break;
-	default:
+	चयन (info->type) अणु
+	हाल GB_AUDIO_CTL_ELEM_TYPE_BOOLEAN:
+	हाल GB_AUDIO_CTL_ELEM_TYPE_INTEGER:
+		gbvalue.value.पूर्णांकeger_value[0] =
+			cpu_to_le32(ucontrol->value.पूर्णांकeger.value[0]);
+		अगर (data->vcount == 2)
+			gbvalue.value.पूर्णांकeger_value[1] =
+				cpu_to_le32(ucontrol->value.पूर्णांकeger.value[1]);
+		अवरोध;
+	हाल GB_AUDIO_CTL_ELEM_TYPE_ENUMERATED:
+		gbvalue.value.क्रमागतerated_item[0] =
+			cpu_to_le32(ucontrol->value.क्रमागतerated.item[0]);
+		अगर (data->vcount == 2)
+			gbvalue.value.क्रमागतerated_item[1] =
+				cpu_to_le32(ucontrol->value.क्रमागतerated.item[1]);
+		अवरोध;
+	शेष:
 		dev_err(comp->dev, "Invalid type: %d for %s:kcontrol\n",
 			info->type, kcontrol->id.name);
 		ret = -EINVAL;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	ret = gb_pm_runtime_get_sync(bundle);
-	if (ret)
-		return ret;
+	ret = gb_pm_runसमय_get_sync(bundle);
+	अगर (ret)
+		वापस ret;
 
 	ret = gb_audio_gb_set_control(module->mgmt_connection, data->ctl_id,
 				      GB_AUDIO_INVALID_INDEX, &gbvalue);
 
-	gb_pm_runtime_put_autosuspend(bundle);
+	gb_pm_runसमय_put_स्वतःsuspend(bundle);
 
-	if (ret) {
+	अगर (ret) अणु
 		dev_err_ratelimited(comp->dev, "%d:Error in %s for %s\n", ret,
 				    __func__, kcontrol->id.name);
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-#define SOC_MIXER_GB(xname, kcount, data) \
-{	.iface = SNDRV_CTL_ELEM_IFACE_MIXER, .name = xname, \
+#घोषणा SOC_MIXER_GB(xname, kcount, data) \
+अणु	.अगरace = SNDRV_CTL_ELEM_IFACE_MIXER, .name = xname, \
 	.count = kcount, .info = gbcodec_mixer_ctl_info, \
 	.get = gbcodec_mixer_ctl_get, .put = gbcodec_mixer_ctl_put, \
-	.private_value = (unsigned long)data }
+	.निजी_value = (अचिन्हित दीर्घ)data पूर्ण
 
 /*
  * although below callback functions seems redundant to above functions.
- * same are kept to allow provision for different handling in case
+ * same are kept to allow provision क्रम dअगरferent handling in हाल
  * of DAPM related sequencing, etc.
  */
-static int gbcodec_mixer_dapm_ctl_info(struct snd_kcontrol *kcontrol,
-				       struct snd_ctl_elem_info *uinfo)
-{
-	int platform_max, platform_min;
-	struct gbaudio_ctl_pvt *data;
-	struct gb_audio_ctl_elem_info *info;
+अटल पूर्णांक gbcodec_mixer_dapm_ctl_info(काष्ठा snd_kcontrol *kcontrol,
+				       काष्ठा snd_ctl_elem_info *uinfo)
+अणु
+	पूर्णांक platक्रमm_max, platक्रमm_min;
+	काष्ठा gbaudio_ctl_pvt *data;
+	काष्ठा gb_audio_ctl_elem_info *info;
 
-	data = (struct gbaudio_ctl_pvt *)kcontrol->private_value;
-	info = (struct gb_audio_ctl_elem_info *)data->info;
+	data = (काष्ठा gbaudio_ctl_pvt *)kcontrol->निजी_value;
+	info = (काष्ठा gb_audio_ctl_elem_info *)data->info;
 
 	/* update uinfo */
-	platform_max = le32_to_cpu(info->value.integer.max);
-	platform_min = le32_to_cpu(info->value.integer.min);
+	platक्रमm_max = le32_to_cpu(info->value.पूर्णांकeger.max);
+	platक्रमm_min = le32_to_cpu(info->value.पूर्णांकeger.min);
 
-	if (platform_max == 1 &&
-	    !strnstr(kcontrol->id.name, " Volume", sizeof(kcontrol->id.name)))
+	अगर (platक्रमm_max == 1 &&
+	    !strnstr(kcontrol->id.name, " Volume", माप(kcontrol->id.name)))
 		uinfo->type = SNDRV_CTL_ELEM_TYPE_BOOLEAN;
-	else
+	अन्यथा
 		uinfo->type = SNDRV_CTL_ELEM_TYPE_INTEGER;
 
 	uinfo->count = data->vcount;
-	uinfo->value.integer.min = platform_min;
-	uinfo->value.integer.max = platform_max;
+	uinfo->value.पूर्णांकeger.min = platक्रमm_min;
+	uinfo->value.पूर्णांकeger.max = platक्रमm_max;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int gbcodec_mixer_dapm_ctl_get(struct snd_kcontrol *kcontrol,
-				      struct snd_ctl_elem_value *ucontrol)
-{
-	int ret;
-	struct gbaudio_ctl_pvt *data;
-	struct gb_audio_ctl_elem_value gbvalue;
-	struct gbaudio_module_info *module;
-	struct snd_soc_dapm_widget_list *wlist = snd_kcontrol_chip(kcontrol);
-	struct snd_soc_dapm_widget *widget = wlist->widgets[0];
-	struct device *codec_dev = widget->dapm->dev;
-	struct gbaudio_codec_info *gb = dev_get_drvdata(codec_dev);
-	struct gb_bundle *bundle;
+अटल पूर्णांक gbcodec_mixer_dapm_ctl_get(काष्ठा snd_kcontrol *kcontrol,
+				      काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	पूर्णांक ret;
+	काष्ठा gbaudio_ctl_pvt *data;
+	काष्ठा gb_audio_ctl_elem_value gbvalue;
+	काष्ठा gbaudio_module_info *module;
+	काष्ठा snd_soc_dapm_widget_list *wlist = snd_kcontrol_chip(kcontrol);
+	काष्ठा snd_soc_dapm_widget *widget = wlist->widमाला_लो[0];
+	काष्ठा device *codec_dev = widget->dapm->dev;
+	काष्ठा gbaudio_codec_info *gb = dev_get_drvdata(codec_dev);
+	काष्ठा gb_bundle *bundle;
 
 	dev_dbg(codec_dev, "Entered %s:%s\n", __func__, kcontrol->id.name);
 	module = find_gb_module(gb, kcontrol->id.name);
-	if (!module)
-		return -EINVAL;
+	अगर (!module)
+		वापस -EINVAL;
 
-	data = (struct gbaudio_ctl_pvt *)kcontrol->private_value;
+	data = (काष्ठा gbaudio_ctl_pvt *)kcontrol->निजी_value;
 	bundle = to_gb_bundle(module->dev);
 
-	if (data->vcount == 2)
+	अगर (data->vcount == 2)
 		dev_warn(widget->dapm->dev,
 			 "GB: Control '%s' is stereo, which is not supported\n",
 			 kcontrol->id.name);
 
-	ret = gb_pm_runtime_get_sync(bundle);
-	if (ret)
-		return ret;
+	ret = gb_pm_runसमय_get_sync(bundle);
+	अगर (ret)
+		वापस ret;
 
 	ret = gb_audio_gb_get_control(module->mgmt_connection, data->ctl_id,
 				      GB_AUDIO_INVALID_INDEX, &gbvalue);
 
-	gb_pm_runtime_put_autosuspend(bundle);
+	gb_pm_runसमय_put_स्वतःsuspend(bundle);
 
-	if (ret) {
+	अगर (ret) अणु
 		dev_err_ratelimited(codec_dev, "%d:Error in %s for %s\n", ret,
 				    __func__, kcontrol->id.name);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 	/* update ucontrol */
-	ucontrol->value.integer.value[0] =
-		le32_to_cpu(gbvalue.value.integer_value[0]);
+	ucontrol->value.पूर्णांकeger.value[0] =
+		le32_to_cpu(gbvalue.value.पूर्णांकeger_value[0]);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int gbcodec_mixer_dapm_ctl_put(struct snd_kcontrol *kcontrol,
-				      struct snd_ctl_elem_value *ucontrol)
-{
-	int ret, wi, max, connect;
-	unsigned int mask, val;
-	struct gb_audio_ctl_elem_info *info;
-	struct gbaudio_ctl_pvt *data;
-	struct gb_audio_ctl_elem_value gbvalue;
-	struct gbaudio_module_info *module;
-	struct snd_soc_dapm_widget_list *wlist = snd_kcontrol_chip(kcontrol);
-	struct snd_soc_dapm_widget *widget = wlist->widgets[0];
-	struct device *codec_dev = widget->dapm->dev;
-	struct gbaudio_codec_info *gb = dev_get_drvdata(codec_dev);
-	struct gb_bundle *bundle;
+अटल पूर्णांक gbcodec_mixer_dapm_ctl_put(काष्ठा snd_kcontrol *kcontrol,
+				      काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	पूर्णांक ret, wi, max, connect;
+	अचिन्हित पूर्णांक mask, val;
+	काष्ठा gb_audio_ctl_elem_info *info;
+	काष्ठा gbaudio_ctl_pvt *data;
+	काष्ठा gb_audio_ctl_elem_value gbvalue;
+	काष्ठा gbaudio_module_info *module;
+	काष्ठा snd_soc_dapm_widget_list *wlist = snd_kcontrol_chip(kcontrol);
+	काष्ठा snd_soc_dapm_widget *widget = wlist->widमाला_लो[0];
+	काष्ठा device *codec_dev = widget->dapm->dev;
+	काष्ठा gbaudio_codec_info *gb = dev_get_drvdata(codec_dev);
+	काष्ठा gb_bundle *bundle;
 
 	dev_dbg(codec_dev, "Entered %s:%s\n", __func__, kcontrol->id.name);
 	module = find_gb_module(gb, kcontrol->id.name);
-	if (!module)
-		return -EINVAL;
+	अगर (!module)
+		वापस -EINVAL;
 
-	data = (struct gbaudio_ctl_pvt *)kcontrol->private_value;
-	info = (struct gb_audio_ctl_elem_info *)data->info;
+	data = (काष्ठा gbaudio_ctl_pvt *)kcontrol->निजी_value;
+	info = (काष्ठा gb_audio_ctl_elem_info *)data->info;
 	bundle = to_gb_bundle(module->dev);
 
-	if (data->vcount == 2)
+	अगर (data->vcount == 2)
 		dev_warn(widget->dapm->dev,
 			 "GB: Control '%s' is stereo, which is not supported\n",
 			 kcontrol->id.name);
 
-	max = le32_to_cpu(info->value.integer.max);
+	max = le32_to_cpu(info->value.पूर्णांकeger.max);
 	mask = (1 << fls(max)) - 1;
-	val = ucontrol->value.integer.value[0] & mask;
+	val = ucontrol->value.पूर्णांकeger.value[0] & mask;
 	connect = !!val;
 
-	ret = gb_pm_runtime_get_sync(bundle);
-	if (ret)
-		return ret;
+	ret = gb_pm_runसमय_get_sync(bundle);
+	अगर (ret)
+		वापस ret;
 
 	ret = gb_audio_gb_get_control(module->mgmt_connection, data->ctl_id,
 				      GB_AUDIO_INVALID_INDEX, &gbvalue);
-	if (ret)
-		goto exit;
+	अगर (ret)
+		जाओ निकास;
 
 	/* update ucontrol */
-	if (le32_to_cpu(gbvalue.value.integer_value[0]) != val) {
-		for (wi = 0; wi < wlist->num_widgets; wi++) {
-			widget = wlist->widgets[wi];
-			snd_soc_dapm_mixer_update_power(widget->dapm, kcontrol,
-							connect, NULL);
-		}
-		gbvalue.value.integer_value[0] =
-			cpu_to_le32(ucontrol->value.integer.value[0]);
+	अगर (le32_to_cpu(gbvalue.value.पूर्णांकeger_value[0]) != val) अणु
+		क्रम (wi = 0; wi < wlist->num_widमाला_लो; wi++) अणु
+			widget = wlist->widमाला_लो[wi];
+			snd_soc_dapm_mixer_update_घातer(widget->dapm, kcontrol,
+							connect, शून्य);
+		पूर्ण
+		gbvalue.value.पूर्णांकeger_value[0] =
+			cpu_to_le32(ucontrol->value.पूर्णांकeger.value[0]);
 
 		ret = gb_audio_gb_set_control(module->mgmt_connection,
 					      data->ctl_id,
 					      GB_AUDIO_INVALID_INDEX, &gbvalue);
-	}
+	पूर्ण
 
-exit:
-	gb_pm_runtime_put_autosuspend(bundle);
-	if (ret)
+निकास:
+	gb_pm_runसमय_put_स्वतःsuspend(bundle);
+	अगर (ret)
 		dev_err_ratelimited(codec_dev, "%d:Error in %s for %s\n", ret,
 				    __func__, kcontrol->id.name);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-#define SOC_DAPM_MIXER_GB(xname, kcount, data) \
-{	.iface = SNDRV_CTL_ELEM_IFACE_MIXER, .name = xname, \
+#घोषणा SOC_DAPM_MIXER_GB(xname, kcount, data) \
+अणु	.अगरace = SNDRV_CTL_ELEM_IFACE_MIXER, .name = xname, \
 	.count = kcount, .info = gbcodec_mixer_dapm_ctl_info, \
 	.get = gbcodec_mixer_dapm_ctl_get, .put = gbcodec_mixer_dapm_ctl_put, \
-	.private_value = (unsigned long)data}
+	.निजी_value = (अचिन्हित दीर्घ)dataपूर्ण
 
-static int gbcodec_event_spk(struct snd_soc_dapm_widget *w,
-			     struct snd_kcontrol *k, int event)
-{
+अटल पूर्णांक gbcodec_event_spk(काष्ठा snd_soc_dapm_widget *w,
+			     काष्ठा snd_kcontrol *k, पूर्णांक event)
+अणु
 	/* Ensure GB speaker is connected */
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int gbcodec_event_hp(struct snd_soc_dapm_widget *w,
-			    struct snd_kcontrol *k, int event)
-{
+अटल पूर्णांक gbcodec_event_hp(काष्ठा snd_soc_dapm_widget *w,
+			    काष्ठा snd_kcontrol *k, पूर्णांक event)
+अणु
 	/* Ensure GB module supports jack slot */
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int gbcodec_event_int_mic(struct snd_soc_dapm_widget *w,
-				 struct snd_kcontrol *k, int event)
-{
+अटल पूर्णांक gbcodec_event_पूर्णांक_mic(काष्ठा snd_soc_dapm_widget *w,
+				 काष्ठा snd_kcontrol *k, पूर्णांक event)
+अणु
 	/* Ensure GB module supports jack slot */
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int gbaudio_validate_kcontrol_count(struct gb_audio_widget *w)
-{
-	int ret = 0;
+अटल पूर्णांक gbaudio_validate_kcontrol_count(काष्ठा gb_audio_widget *w)
+अणु
+	पूर्णांक ret = 0;
 
-	switch (w->type) {
-	case snd_soc_dapm_spk:
-	case snd_soc_dapm_hp:
-	case snd_soc_dapm_mic:
-	case snd_soc_dapm_output:
-	case snd_soc_dapm_input:
-		if (w->ncontrols)
+	चयन (w->type) अणु
+	हाल snd_soc_dapm_spk:
+	हाल snd_soc_dapm_hp:
+	हाल snd_soc_dapm_mic:
+	हाल snd_soc_dapm_output:
+	हाल snd_soc_dapm_input:
+		अगर (w->ncontrols)
 			ret = -EINVAL;
-		break;
-	case snd_soc_dapm_switch:
-	case snd_soc_dapm_mux:
-		if (w->ncontrols != 1)
+		अवरोध;
+	हाल snd_soc_dapm_चयन:
+	हाल snd_soc_dapm_mux:
+		अगर (w->ncontrols != 1)
 			ret = -EINVAL;
-		break;
-	default:
-		break;
-	}
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int gbcodec_enum_ctl_get(struct snd_kcontrol *kcontrol,
-				struct snd_ctl_elem_value *ucontrol)
-{
-	int ret, ctl_id;
-	struct snd_soc_component *comp = snd_soc_kcontrol_component(kcontrol);
-	struct gbaudio_codec_info *gb = snd_soc_component_get_drvdata(comp);
-	struct soc_enum *e = (struct soc_enum *)kcontrol->private_value;
-	struct gb_audio_ctl_elem_value gbvalue;
-	struct gbaudio_module_info *module;
-	struct gb_bundle *bundle;
+अटल पूर्णांक gbcodec_क्रमागत_ctl_get(काष्ठा snd_kcontrol *kcontrol,
+				काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	पूर्णांक ret, ctl_id;
+	काष्ठा snd_soc_component *comp = snd_soc_kcontrol_component(kcontrol);
+	काष्ठा gbaudio_codec_info *gb = snd_soc_component_get_drvdata(comp);
+	काष्ठा soc_क्रमागत *e = (काष्ठा soc_क्रमागत *)kcontrol->निजी_value;
+	काष्ठा gb_audio_ctl_elem_value gbvalue;
+	काष्ठा gbaudio_module_info *module;
+	काष्ठा gb_bundle *bundle;
 
 	module = find_gb_module(gb, kcontrol->id.name);
-	if (!module)
-		return -EINVAL;
+	अगर (!module)
+		वापस -EINVAL;
 
 	ctl_id = gbaudio_map_controlname(module, kcontrol->id.name);
-	if (ctl_id < 0)
-		return -EINVAL;
+	अगर (ctl_id < 0)
+		वापस -EINVAL;
 
 	bundle = to_gb_bundle(module->dev);
 
-	ret = gb_pm_runtime_get_sync(bundle);
-	if (ret)
-		return ret;
+	ret = gb_pm_runसमय_get_sync(bundle);
+	अगर (ret)
+		वापस ret;
 
 	ret = gb_audio_gb_get_control(module->mgmt_connection, ctl_id,
 				      GB_AUDIO_INVALID_INDEX, &gbvalue);
 
-	gb_pm_runtime_put_autosuspend(bundle);
+	gb_pm_runसमय_put_स्वतःsuspend(bundle);
 
-	if (ret) {
+	अगर (ret) अणु
 		dev_err_ratelimited(comp->dev, "%d:Error in %s for %s\n", ret,
 				    __func__, kcontrol->id.name);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	ucontrol->value.enumerated.item[0] =
-		le32_to_cpu(gbvalue.value.enumerated_item[0]);
-	if (e->shift_l != e->shift_r)
-		ucontrol->value.enumerated.item[1] =
-			le32_to_cpu(gbvalue.value.enumerated_item[1]);
+	ucontrol->value.क्रमागतerated.item[0] =
+		le32_to_cpu(gbvalue.value.क्रमागतerated_item[0]);
+	अगर (e->shअगरt_l != e->shअगरt_r)
+		ucontrol->value.क्रमागतerated.item[1] =
+			le32_to_cpu(gbvalue.value.क्रमागतerated_item[1]);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int gbcodec_enum_ctl_put(struct snd_kcontrol *kcontrol,
-				struct snd_ctl_elem_value *ucontrol)
-{
-	int ret, ctl_id;
-	struct snd_soc_component *comp = snd_soc_kcontrol_component(kcontrol);
-	struct gbaudio_codec_info *gb = snd_soc_component_get_drvdata(comp);
-	struct soc_enum *e = (struct soc_enum *)kcontrol->private_value;
-	struct gb_audio_ctl_elem_value gbvalue;
-	struct gbaudio_module_info *module;
-	struct gb_bundle *bundle;
+अटल पूर्णांक gbcodec_क्रमागत_ctl_put(काष्ठा snd_kcontrol *kcontrol,
+				काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	पूर्णांक ret, ctl_id;
+	काष्ठा snd_soc_component *comp = snd_soc_kcontrol_component(kcontrol);
+	काष्ठा gbaudio_codec_info *gb = snd_soc_component_get_drvdata(comp);
+	काष्ठा soc_क्रमागत *e = (काष्ठा soc_क्रमागत *)kcontrol->निजी_value;
+	काष्ठा gb_audio_ctl_elem_value gbvalue;
+	काष्ठा gbaudio_module_info *module;
+	काष्ठा gb_bundle *bundle;
 
 	module = find_gb_module(gb, kcontrol->id.name);
-	if (!module)
-		return -EINVAL;
+	अगर (!module)
+		वापस -EINVAL;
 
 	ctl_id = gbaudio_map_controlname(module, kcontrol->id.name);
-	if (ctl_id < 0)
-		return -EINVAL;
+	अगर (ctl_id < 0)
+		वापस -EINVAL;
 
-	if (ucontrol->value.enumerated.item[0] > e->items - 1)
-		return -EINVAL;
-	gbvalue.value.enumerated_item[0] =
-		cpu_to_le32(ucontrol->value.enumerated.item[0]);
+	अगर (ucontrol->value.क्रमागतerated.item[0] > e->items - 1)
+		वापस -EINVAL;
+	gbvalue.value.क्रमागतerated_item[0] =
+		cpu_to_le32(ucontrol->value.क्रमागतerated.item[0]);
 
-	if (e->shift_l != e->shift_r) {
-		if (ucontrol->value.enumerated.item[1] > e->items - 1)
-			return -EINVAL;
-		gbvalue.value.enumerated_item[1] =
-			cpu_to_le32(ucontrol->value.enumerated.item[1]);
-	}
+	अगर (e->shअगरt_l != e->shअगरt_r) अणु
+		अगर (ucontrol->value.क्रमागतerated.item[1] > e->items - 1)
+			वापस -EINVAL;
+		gbvalue.value.क्रमागतerated_item[1] =
+			cpu_to_le32(ucontrol->value.क्रमागतerated.item[1]);
+	पूर्ण
 
 	bundle = to_gb_bundle(module->dev);
 
-	ret = gb_pm_runtime_get_sync(bundle);
-	if (ret)
-		return ret;
+	ret = gb_pm_runसमय_get_sync(bundle);
+	अगर (ret)
+		वापस ret;
 
 	ret = gb_audio_gb_set_control(module->mgmt_connection, ctl_id,
 				      GB_AUDIO_INVALID_INDEX, &gbvalue);
 
-	gb_pm_runtime_put_autosuspend(bundle);
+	gb_pm_runसमय_put_स्वतःsuspend(bundle);
 
-	if (ret) {
+	अगर (ret) अणु
 		dev_err_ratelimited(comp->dev, "%d:Error in %s for %s\n",
 				    ret, __func__, kcontrol->id.name);
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int gbaudio_tplg_create_enum_kctl(struct gbaudio_module_info *gb,
-					 struct snd_kcontrol_new *kctl,
-					 struct gb_audio_control *ctl)
-{
-	struct soc_enum *gbe;
-	struct gb_audio_enumerated *gb_enum;
-	int i;
+अटल पूर्णांक gbaudio_tplg_create_क्रमागत_kctl(काष्ठा gbaudio_module_info *gb,
+					 काष्ठा snd_kcontrol_new *kctl,
+					 काष्ठा gb_audio_control *ctl)
+अणु
+	काष्ठा soc_क्रमागत *gbe;
+	काष्ठा gb_audio_क्रमागतerated *gb_क्रमागत;
+	पूर्णांक i;
 
-	gbe = devm_kzalloc(gb->dev, sizeof(*gbe), GFP_KERNEL);
-	if (!gbe)
-		return -ENOMEM;
+	gbe = devm_kzalloc(gb->dev, माप(*gbe), GFP_KERNEL);
+	अगर (!gbe)
+		वापस -ENOMEM;
 
-	gb_enum = &ctl->info.value.enumerated;
+	gb_क्रमागत = &ctl->info.value.क्रमागतerated;
 
 	/* since count=1, and reg is dummy */
-	gbe->items = le32_to_cpu(gb_enum->items);
-	gbe->texts = gb_generate_enum_strings(gb, gb_enum);
+	gbe->items = le32_to_cpu(gb_क्रमागत->items);
+	gbe->texts = gb_generate_क्रमागत_strings(gb, gb_क्रमागत);
 
-	/* debug enum info */
+	/* debug क्रमागत info */
 	dev_dbg(gb->dev, "Max:%d, name_length:%d\n", gbe->items,
-		le16_to_cpu(gb_enum->names_length));
-	for (i = 0; i < gbe->items; i++)
+		le16_to_cpu(gb_क्रमागत->names_length));
+	क्रम (i = 0; i < gbe->items; i++)
 		dev_dbg(gb->dev, "src[%d]: %s\n", i, gbe->texts[i]);
 
-	*kctl = (struct snd_kcontrol_new)
-		SOC_ENUM_EXT(ctl->name, *gbe, gbcodec_enum_ctl_get,
-			     gbcodec_enum_ctl_put);
-	return 0;
-}
+	*kctl = (काष्ठा snd_kcontrol_new)
+		SOC_ENUM_EXT(ctl->name, *gbe, gbcodec_क्रमागत_ctl_get,
+			     gbcodec_क्रमागत_ctl_put);
+	वापस 0;
+पूर्ण
 
-static int gbaudio_tplg_create_kcontrol(struct gbaudio_module_info *gb,
-					struct snd_kcontrol_new *kctl,
-					struct gb_audio_control *ctl)
-{
-	int ret = 0;
-	struct gbaudio_ctl_pvt *ctldata;
+अटल पूर्णांक gbaudio_tplg_create_kcontrol(काष्ठा gbaudio_module_info *gb,
+					काष्ठा snd_kcontrol_new *kctl,
+					काष्ठा gb_audio_control *ctl)
+अणु
+	पूर्णांक ret = 0;
+	काष्ठा gbaudio_ctl_pvt *ctldata;
 
-	switch (ctl->iface) {
-	case SNDRV_CTL_ELEM_IFACE_MIXER:
-		switch (ctl->info.type) {
-		case GB_AUDIO_CTL_ELEM_TYPE_ENUMERATED:
-			ret = gbaudio_tplg_create_enum_kctl(gb, kctl, ctl);
-			break;
-		default:
+	चयन (ctl->अगरace) अणु
+	हाल SNDRV_CTL_ELEM_IFACE_MIXER:
+		चयन (ctl->info.type) अणु
+		हाल GB_AUDIO_CTL_ELEM_TYPE_ENUMERATED:
+			ret = gbaudio_tplg_create_क्रमागत_kctl(gb, kctl, ctl);
+			अवरोध;
+		शेष:
 			ctldata = devm_kzalloc(gb->dev,
-					       sizeof(struct gbaudio_ctl_pvt),
+					       माप(काष्ठा gbaudio_ctl_pvt),
 					       GFP_KERNEL);
-			if (!ctldata)
-				return -ENOMEM;
+			अगर (!ctldata)
+				वापस -ENOMEM;
 			ctldata->ctl_id = ctl->id;
 			ctldata->data_cport = le16_to_cpu(ctl->data_cport);
 			ctldata->access = le32_to_cpu(ctl->access);
 			ctldata->vcount = ctl->count_values;
 			ctldata->info = &ctl->info;
-			*kctl = (struct snd_kcontrol_new)
+			*kctl = (काष्ठा snd_kcontrol_new)
 				SOC_MIXER_GB(ctl->name, ctl->count, ctldata);
-			ctldata = NULL;
-			break;
-		}
-		break;
-	default:
-		return -EINVAL;
-	}
+			ctldata = शून्य;
+			अवरोध;
+		पूर्ण
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
 	dev_dbg(gb->dev, "%s:%d control created\n", ctl->name, ctl->id);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int gbcodec_enum_dapm_ctl_get(struct snd_kcontrol *kcontrol,
-				     struct snd_ctl_elem_value *ucontrol)
-{
-	int ret, ctl_id;
-	struct snd_soc_dapm_widget_list *wlist = snd_kcontrol_chip(kcontrol);
-	struct snd_soc_dapm_widget *widget = wlist->widgets[0];
-	struct gbaudio_module_info *module;
-	struct gb_audio_ctl_elem_value gbvalue;
-	struct device *codec_dev = widget->dapm->dev;
-	struct gbaudio_codec_info *gb = dev_get_drvdata(codec_dev);
-	struct soc_enum *e = (struct soc_enum *)kcontrol->private_value;
-	struct gb_bundle *bundle;
+अटल पूर्णांक gbcodec_क्रमागत_dapm_ctl_get(काष्ठा snd_kcontrol *kcontrol,
+				     काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	पूर्णांक ret, ctl_id;
+	काष्ठा snd_soc_dapm_widget_list *wlist = snd_kcontrol_chip(kcontrol);
+	काष्ठा snd_soc_dapm_widget *widget = wlist->widमाला_लो[0];
+	काष्ठा gbaudio_module_info *module;
+	काष्ठा gb_audio_ctl_elem_value gbvalue;
+	काष्ठा device *codec_dev = widget->dapm->dev;
+	काष्ठा gbaudio_codec_info *gb = dev_get_drvdata(codec_dev);
+	काष्ठा soc_क्रमागत *e = (काष्ठा soc_क्रमागत *)kcontrol->निजी_value;
+	काष्ठा gb_bundle *bundle;
 
 	module = find_gb_module(gb, kcontrol->id.name);
-	if (!module)
-		return -EINVAL;
+	अगर (!module)
+		वापस -EINVAL;
 
 	ctl_id = gbaudio_map_wcontrolname(module, kcontrol->id.name);
-	if (ctl_id < 0)
-		return -EINVAL;
+	अगर (ctl_id < 0)
+		वापस -EINVAL;
 
 	bundle = to_gb_bundle(module->dev);
 
-	ret = gb_pm_runtime_get_sync(bundle);
-	if (ret)
-		return ret;
+	ret = gb_pm_runसमय_get_sync(bundle);
+	अगर (ret)
+		वापस ret;
 
 	ret = gb_audio_gb_get_control(module->mgmt_connection, ctl_id,
 				      GB_AUDIO_INVALID_INDEX, &gbvalue);
 
-	gb_pm_runtime_put_autosuspend(bundle);
+	gb_pm_runसमय_put_स्वतःsuspend(bundle);
 
-	if (ret) {
+	अगर (ret) अणु
 		dev_err_ratelimited(codec_dev, "%d:Error in %s for %s\n", ret,
 				    __func__, kcontrol->id.name);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	ucontrol->value.enumerated.item[0] = le32_to_cpu(gbvalue.value.enumerated_item[0]);
-	if (e->shift_l != e->shift_r)
-		ucontrol->value.enumerated.item[1] =
-			le32_to_cpu(gbvalue.value.enumerated_item[1]);
+	ucontrol->value.क्रमागतerated.item[0] = le32_to_cpu(gbvalue.value.क्रमागतerated_item[0]);
+	अगर (e->shअगरt_l != e->shअगरt_r)
+		ucontrol->value.क्रमागतerated.item[1] =
+			le32_to_cpu(gbvalue.value.क्रमागतerated_item[1]);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int gbcodec_enum_dapm_ctl_put(struct snd_kcontrol *kcontrol,
-				     struct snd_ctl_elem_value *ucontrol)
-{
-	int ret, wi, ctl_id;
-	unsigned int val, mux, change;
-	unsigned int mask;
-	struct snd_soc_dapm_widget_list *wlist = snd_kcontrol_chip(kcontrol);
-	struct snd_soc_dapm_widget *widget = wlist->widgets[0];
-	struct gb_audio_ctl_elem_value gbvalue;
-	struct gbaudio_module_info *module;
-	struct device *codec_dev = widget->dapm->dev;
-	struct gbaudio_codec_info *gb = dev_get_drvdata(codec_dev);
-	struct soc_enum *e = (struct soc_enum *)kcontrol->private_value;
-	struct gb_bundle *bundle;
+अटल पूर्णांक gbcodec_क्रमागत_dapm_ctl_put(काष्ठा snd_kcontrol *kcontrol,
+				     काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	पूर्णांक ret, wi, ctl_id;
+	अचिन्हित पूर्णांक val, mux, change;
+	अचिन्हित पूर्णांक mask;
+	काष्ठा snd_soc_dapm_widget_list *wlist = snd_kcontrol_chip(kcontrol);
+	काष्ठा snd_soc_dapm_widget *widget = wlist->widमाला_लो[0];
+	काष्ठा gb_audio_ctl_elem_value gbvalue;
+	काष्ठा gbaudio_module_info *module;
+	काष्ठा device *codec_dev = widget->dapm->dev;
+	काष्ठा gbaudio_codec_info *gb = dev_get_drvdata(codec_dev);
+	काष्ठा soc_क्रमागत *e = (काष्ठा soc_क्रमागत *)kcontrol->निजी_value;
+	काष्ठा gb_bundle *bundle;
 
-	if (ucontrol->value.enumerated.item[0] > e->items - 1)
-		return -EINVAL;
+	अगर (ucontrol->value.क्रमागतerated.item[0] > e->items - 1)
+		वापस -EINVAL;
 
 	module = find_gb_module(gb, kcontrol->id.name);
-	if (!module)
-		return -EINVAL;
+	अगर (!module)
+		वापस -EINVAL;
 
 	ctl_id = gbaudio_map_wcontrolname(module, kcontrol->id.name);
-	if (ctl_id < 0)
-		return -EINVAL;
+	अगर (ctl_id < 0)
+		वापस -EINVAL;
 
 	change = 0;
 	bundle = to_gb_bundle(module->dev);
 
-	ret = gb_pm_runtime_get_sync(bundle);
-	if (ret)
-		return ret;
+	ret = gb_pm_runसमय_get_sync(bundle);
+	अगर (ret)
+		वापस ret;
 
 	ret = gb_audio_gb_get_control(module->mgmt_connection, ctl_id,
 				      GB_AUDIO_INVALID_INDEX, &gbvalue);
 
-	gb_pm_runtime_put_autosuspend(bundle);
+	gb_pm_runसमय_put_स्वतःsuspend(bundle);
 
-	if (ret) {
+	अगर (ret) अणु
 		dev_err_ratelimited(codec_dev, "%d:Error in %s for %s\n", ret,
 				    __func__, kcontrol->id.name);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	mux = ucontrol->value.enumerated.item[0];
-	val = mux << e->shift_l;
-	mask = e->mask << e->shift_l;
+	mux = ucontrol->value.क्रमागतerated.item[0];
+	val = mux << e->shअगरt_l;
+	mask = e->mask << e->shअगरt_l;
 
-	if (le32_to_cpu(gbvalue.value.enumerated_item[0]) !=
-	    ucontrol->value.enumerated.item[0]) {
+	अगर (le32_to_cpu(gbvalue.value.क्रमागतerated_item[0]) !=
+	    ucontrol->value.क्रमागतerated.item[0]) अणु
 		change = 1;
-		gbvalue.value.enumerated_item[0] =
-			cpu_to_le32(ucontrol->value.enumerated.item[0]);
-	}
+		gbvalue.value.क्रमागतerated_item[0] =
+			cpu_to_le32(ucontrol->value.क्रमागतerated.item[0]);
+	पूर्ण
 
-	if (e->shift_l != e->shift_r) {
-		if (ucontrol->value.enumerated.item[1] > e->items - 1)
-			return -EINVAL;
-		val |= ucontrol->value.enumerated.item[1] << e->shift_r;
-		mask |= e->mask << e->shift_r;
-		if (le32_to_cpu(gbvalue.value.enumerated_item[1]) !=
-		    ucontrol->value.enumerated.item[1]) {
+	अगर (e->shअगरt_l != e->shअगरt_r) अणु
+		अगर (ucontrol->value.क्रमागतerated.item[1] > e->items - 1)
+			वापस -EINVAL;
+		val |= ucontrol->value.क्रमागतerated.item[1] << e->shअगरt_r;
+		mask |= e->mask << e->shअगरt_r;
+		अगर (le32_to_cpu(gbvalue.value.क्रमागतerated_item[1]) !=
+		    ucontrol->value.क्रमागतerated.item[1]) अणु
 			change = 1;
-			gbvalue.value.enumerated_item[1] =
-				cpu_to_le32(ucontrol->value.enumerated.item[1]);
-		}
-	}
+			gbvalue.value.क्रमागतerated_item[1] =
+				cpu_to_le32(ucontrol->value.क्रमागतerated.item[1]);
+		पूर्ण
+	पूर्ण
 
-	if (change) {
-		ret = gb_pm_runtime_get_sync(bundle);
-		if (ret)
-			return ret;
+	अगर (change) अणु
+		ret = gb_pm_runसमय_get_sync(bundle);
+		अगर (ret)
+			वापस ret;
 
 		ret = gb_audio_gb_set_control(module->mgmt_connection, ctl_id,
 					      GB_AUDIO_INVALID_INDEX, &gbvalue);
 
-		gb_pm_runtime_put_autosuspend(bundle);
+		gb_pm_runसमय_put_स्वतःsuspend(bundle);
 
-		if (ret) {
+		अगर (ret) अणु
 			dev_err_ratelimited(codec_dev,
 					    "%d:Error in %s for %s\n", ret,
 					    __func__, kcontrol->id.name);
-		}
-		for (wi = 0; wi < wlist->num_widgets; wi++) {
-			widget = wlist->widgets[wi];
-			snd_soc_dapm_mux_update_power(widget->dapm, kcontrol,
-						      val, e, NULL);
-		}
-	}
+		पूर्ण
+		क्रम (wi = 0; wi < wlist->num_widमाला_लो; wi++) अणु
+			widget = wlist->widमाला_लो[wi];
+			snd_soc_dapm_mux_update_घातer(widget->dapm, kcontrol,
+						      val, e, शून्य);
+		पूर्ण
+	पूर्ण
 
-	return change;
-}
+	वापस change;
+पूर्ण
 
-static int gbaudio_tplg_create_enum_ctl(struct gbaudio_module_info *gb,
-					struct snd_kcontrol_new *kctl,
-					struct gb_audio_control *ctl)
-{
-	struct soc_enum *gbe;
-	struct gb_audio_enumerated *gb_enum;
-	int i;
+अटल पूर्णांक gbaudio_tplg_create_क्रमागत_ctl(काष्ठा gbaudio_module_info *gb,
+					काष्ठा snd_kcontrol_new *kctl,
+					काष्ठा gb_audio_control *ctl)
+अणु
+	काष्ठा soc_क्रमागत *gbe;
+	काष्ठा gb_audio_क्रमागतerated *gb_क्रमागत;
+	पूर्णांक i;
 
-	gbe = devm_kzalloc(gb->dev, sizeof(*gbe), GFP_KERNEL);
-	if (!gbe)
-		return -ENOMEM;
+	gbe = devm_kzalloc(gb->dev, माप(*gbe), GFP_KERNEL);
+	अगर (!gbe)
+		वापस -ENOMEM;
 
-	gb_enum = &ctl->info.value.enumerated;
+	gb_क्रमागत = &ctl->info.value.क्रमागतerated;
 
 	/* since count=1, and reg is dummy */
-	gbe->items = le32_to_cpu(gb_enum->items);
-	gbe->texts = gb_generate_enum_strings(gb, gb_enum);
+	gbe->items = le32_to_cpu(gb_क्रमागत->items);
+	gbe->texts = gb_generate_क्रमागत_strings(gb, gb_क्रमागत);
 
-	/* debug enum info */
+	/* debug क्रमागत info */
 	dev_dbg(gb->dev, "Max:%d, name_length:%d\n", gbe->items,
-		le16_to_cpu(gb_enum->names_length));
-	for (i = 0; i < gbe->items; i++)
+		le16_to_cpu(gb_क्रमागत->names_length));
+	क्रम (i = 0; i < gbe->items; i++)
 		dev_dbg(gb->dev, "src[%d]: %s\n", i, gbe->texts[i]);
 
-	*kctl = (struct snd_kcontrol_new)
-		SOC_DAPM_ENUM_EXT(ctl->name, *gbe, gbcodec_enum_dapm_ctl_get,
-				  gbcodec_enum_dapm_ctl_put);
-	return 0;
-}
+	*kctl = (काष्ठा snd_kcontrol_new)
+		SOC_DAPM_ENUM_EXT(ctl->name, *gbe, gbcodec_क्रमागत_dapm_ctl_get,
+				  gbcodec_क्रमागत_dapm_ctl_put);
+	वापस 0;
+पूर्ण
 
-static int gbaudio_tplg_create_mixer_ctl(struct gbaudio_module_info *gb,
-					 struct snd_kcontrol_new *kctl,
-					 struct gb_audio_control *ctl)
-{
-	struct gbaudio_ctl_pvt *ctldata;
+अटल पूर्णांक gbaudio_tplg_create_mixer_ctl(काष्ठा gbaudio_module_info *gb,
+					 काष्ठा snd_kcontrol_new *kctl,
+					 काष्ठा gb_audio_control *ctl)
+अणु
+	काष्ठा gbaudio_ctl_pvt *ctldata;
 
-	ctldata = devm_kzalloc(gb->dev, sizeof(struct gbaudio_ctl_pvt),
+	ctldata = devm_kzalloc(gb->dev, माप(काष्ठा gbaudio_ctl_pvt),
 			       GFP_KERNEL);
-	if (!ctldata)
-		return -ENOMEM;
+	अगर (!ctldata)
+		वापस -ENOMEM;
 	ctldata->ctl_id = ctl->id;
 	ctldata->data_cport = le16_to_cpu(ctl->data_cport);
 	ctldata->access = le32_to_cpu(ctl->access);
 	ctldata->vcount = ctl->count_values;
 	ctldata->info = &ctl->info;
-	*kctl = (struct snd_kcontrol_new)
+	*kctl = (काष्ठा snd_kcontrol_new)
 		SOC_DAPM_MIXER_GB(ctl->name, ctl->count, ctldata);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int gbaudio_tplg_create_wcontrol(struct gbaudio_module_info *gb,
-					struct snd_kcontrol_new *kctl,
-					struct gb_audio_control *ctl)
-{
-	int ret;
+अटल पूर्णांक gbaudio_tplg_create_wcontrol(काष्ठा gbaudio_module_info *gb,
+					काष्ठा snd_kcontrol_new *kctl,
+					काष्ठा gb_audio_control *ctl)
+अणु
+	पूर्णांक ret;
 
-	switch (ctl->iface) {
-	case SNDRV_CTL_ELEM_IFACE_MIXER:
-		switch (ctl->info.type) {
-		case GB_AUDIO_CTL_ELEM_TYPE_ENUMERATED:
-			ret = gbaudio_tplg_create_enum_ctl(gb, kctl, ctl);
-			break;
-		default:
+	चयन (ctl->अगरace) अणु
+	हाल SNDRV_CTL_ELEM_IFACE_MIXER:
+		चयन (ctl->info.type) अणु
+		हाल GB_AUDIO_CTL_ELEM_TYPE_ENUMERATED:
+			ret = gbaudio_tplg_create_क्रमागत_ctl(gb, kctl, ctl);
+			अवरोध;
+		शेष:
 			ret = gbaudio_tplg_create_mixer_ctl(gb, kctl, ctl);
-			break;
-		}
-		break;
-	default:
-		return -EINVAL;
-	}
+			अवरोध;
+		पूर्ण
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
 	dev_dbg(gb->dev, "%s:%d DAPM control created, ret:%d\n", ctl->name,
 		ctl->id, ret);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int gbaudio_widget_event(struct snd_soc_dapm_widget *w,
-				struct snd_kcontrol *kcontrol, int event)
-{
-	int wid;
-	int ret;
-	struct device *codec_dev = w->dapm->dev;
-	struct gbaudio_codec_info *gbcodec = dev_get_drvdata(codec_dev);
-	struct gbaudio_module_info *module;
-	struct gb_bundle *bundle;
+अटल पूर्णांक gbaudio_widget_event(काष्ठा snd_soc_dapm_widget *w,
+				काष्ठा snd_kcontrol *kcontrol, पूर्णांक event)
+अणु
+	पूर्णांक wid;
+	पूर्णांक ret;
+	काष्ठा device *codec_dev = w->dapm->dev;
+	काष्ठा gbaudio_codec_info *gbcodec = dev_get_drvdata(codec_dev);
+	काष्ठा gbaudio_module_info *module;
+	काष्ठा gb_bundle *bundle;
 
 	dev_dbg(codec_dev, "%s %s %d\n", __func__, w->name, event);
 
 	/* Find relevant module */
 	module = find_gb_module(gbcodec, w->name);
-	if (!module)
-		return -EINVAL;
+	अगर (!module)
+		वापस -EINVAL;
 
 	/* map name to widget id */
 	wid = gbaudio_map_widgetname(module, w->name);
-	if (wid < 0) {
+	अगर (wid < 0) अणु
 		dev_err(codec_dev, "Invalid widget name:%s\n", w->name);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	bundle = to_gb_bundle(module->dev);
 
-	ret = gb_pm_runtime_get_sync(bundle);
-	if (ret)
-		return ret;
+	ret = gb_pm_runसमय_get_sync(bundle);
+	अगर (ret)
+		वापस ret;
 
-	switch (event) {
-	case SND_SOC_DAPM_PRE_PMU:
+	चयन (event) अणु
+	हाल SND_SOC_DAPM_PRE_PMU:
 		ret = gb_audio_gb_enable_widget(module->mgmt_connection, wid);
-		if (!ret)
+		अगर (!ret)
 			ret = gbaudio_module_update(gbcodec, w, module, 1);
-		break;
-	case SND_SOC_DAPM_POST_PMD:
+		अवरोध;
+	हाल SND_SOC_DAPM_POST_PMD:
 		ret = gb_audio_gb_disable_widget(module->mgmt_connection, wid);
-		if (!ret)
+		अगर (!ret)
 			ret = gbaudio_module_update(gbcodec, w, module, 0);
-		break;
-	}
-	if (ret)
+		अवरोध;
+	पूर्ण
+	अगर (ret)
 		dev_err_ratelimited(codec_dev,
 				    "%d: widget, event:%d failed:%d\n", wid,
 				    event, ret);
 
-	gb_pm_runtime_put_autosuspend(bundle);
+	gb_pm_runसमय_put_स्वतःsuspend(bundle);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int gbaudio_tplg_create_widget(struct gbaudio_module_info *module,
-				      struct snd_soc_dapm_widget *dw,
-				      struct gb_audio_widget *w, int *w_size)
-{
-	int i, ret, csize;
-	struct snd_kcontrol_new *widget_kctls;
-	struct gb_audio_control *curr;
-	struct gbaudio_control *control, *_control;
-	size_t size;
-	char temp_name[NAME_SIZE];
+अटल पूर्णांक gbaudio_tplg_create_widget(काष्ठा gbaudio_module_info *module,
+				      काष्ठा snd_soc_dapm_widget *dw,
+				      काष्ठा gb_audio_widget *w, पूर्णांक *w_size)
+अणु
+	पूर्णांक i, ret, csize;
+	काष्ठा snd_kcontrol_new *widget_kctls;
+	काष्ठा gb_audio_control *curr;
+	काष्ठा gbaudio_control *control, *_control;
+	माप_प्रकार size;
+	अक्षर temp_name[NAME_SIZE];
 
 	ret = gbaudio_validate_kcontrol_count(w);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(module->dev, "Invalid kcontrol count=%d for %s\n",
 			w->ncontrols, w->name);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	/* allocate memory for kcontrol */
-	if (w->ncontrols) {
-		size = sizeof(struct snd_kcontrol_new) * w->ncontrols;
+	/* allocate memory क्रम kcontrol */
+	अगर (w->ncontrols) अणु
+		size = माप(काष्ठा snd_kcontrol_new) * w->ncontrols;
 		widget_kctls = devm_kzalloc(module->dev, size, GFP_KERNEL);
-		if (!widget_kctls)
-			return -ENOMEM;
-	}
+		अगर (!widget_kctls)
+			वापस -ENOMEM;
+	पूर्ण
 
-	*w_size = sizeof(struct gb_audio_widget);
+	*w_size = माप(काष्ठा gb_audio_widget);
 
 	/* create relevant kcontrols */
 	curr = w->ctl;
-	for (i = 0; i < w->ncontrols; i++) {
+	क्रम (i = 0; i < w->ncontrols; i++) अणु
 		ret = gbaudio_tplg_create_wcontrol(module, &widget_kctls[i],
 						   curr);
-		if (ret) {
+		अगर (ret) अणु
 			dev_err(module->dev,
 				"%s:%d type widget_ctl not supported\n",
-				curr->name, curr->iface);
-			goto error;
-		}
+				curr->name, curr->अगरace);
+			जाओ error;
+		पूर्ण
 		control = devm_kzalloc(module->dev,
-				       sizeof(struct gbaudio_control),
+				       माप(काष्ठा gbaudio_control),
 				       GFP_KERNEL);
-		if (!control) {
+		अगर (!control) अणु
 			ret = -ENOMEM;
-			goto error;
-		}
+			जाओ error;
+		पूर्ण
 		control->id = curr->id;
 		control->name = curr->name;
 		control->wname = w->name;
 
-		if (curr->info.type == GB_AUDIO_CTL_ELEM_TYPE_ENUMERATED) {
-			struct gb_audio_enumerated *gbenum =
-				&curr->info.value.enumerated;
+		अगर (curr->info.type == GB_AUDIO_CTL_ELEM_TYPE_ENUMERATED) अणु
+			काष्ठा gb_audio_क्रमागतerated *gbक्रमागत =
+				&curr->info.value.क्रमागतerated;
 
-			csize = offsetof(struct gb_audio_control, info);
-			csize += offsetof(struct gb_audio_ctl_elem_info, value);
-			csize += offsetof(struct gb_audio_enumerated, names);
-			csize += le16_to_cpu(gbenum->names_length);
-			control->texts = (const char * const *)
-				gb_generate_enum_strings(module, gbenum);
-			control->items = le32_to_cpu(gbenum->items);
-		} else {
-			csize = sizeof(struct gb_audio_control);
-		}
+			csize = दुरत्व(काष्ठा gb_audio_control, info);
+			csize += दुरत्व(काष्ठा gb_audio_ctl_elem_info, value);
+			csize += दुरत्व(काष्ठा gb_audio_क्रमागतerated, names);
+			csize += le16_to_cpu(gbक्रमागत->names_length);
+			control->texts = (स्थिर अक्षर * स्थिर *)
+				gb_generate_क्रमागत_strings(module, gbक्रमागत);
+			control->items = le32_to_cpu(gbक्रमागत->items);
+		पूर्ण अन्यथा अणु
+			csize = माप(काष्ठा gb_audio_control);
+		पूर्ण
 
 		*w_size += csize;
-		curr = (void *)curr + csize;
+		curr = (व्योम *)curr + csize;
 		list_add(&control->list, &module->widget_ctl_list);
 		dev_dbg(module->dev, "%s: control of type %d created\n",
-			widget_kctls[i].name, widget_kctls[i].iface);
-	}
+			widget_kctls[i].name, widget_kctls[i].अगरace);
+	पूर्ण
 
 	/* Prefix dev_id to widget control_name */
-	strscpy(temp_name, w->name, sizeof(temp_name));
-	snprintf(w->name, sizeof(w->name), "GB %d %s", module->dev_id, temp_name);
+	strscpy(temp_name, w->name, माप(temp_name));
+	snम_लिखो(w->name, माप(w->name), "GB %d %s", module->dev_id, temp_name);
 
-	switch (w->type) {
-	case snd_soc_dapm_spk:
-		*dw = (struct snd_soc_dapm_widget)
+	चयन (w->type) अणु
+	हाल snd_soc_dapm_spk:
+		*dw = (काष्ठा snd_soc_dapm_widget)
 			SND_SOC_DAPM_SPK(w->name, gbcodec_event_spk);
 		module->op_devices |= GBAUDIO_DEVICE_OUT_SPEAKER;
-		break;
-	case snd_soc_dapm_hp:
-		*dw = (struct snd_soc_dapm_widget)
+		अवरोध;
+	हाल snd_soc_dapm_hp:
+		*dw = (काष्ठा snd_soc_dapm_widget)
 			SND_SOC_DAPM_HP(w->name, gbcodec_event_hp);
 		module->op_devices |= (GBAUDIO_DEVICE_OUT_WIRED_HEADSET
 					| GBAUDIO_DEVICE_OUT_WIRED_HEADPHONE);
 		module->ip_devices |= GBAUDIO_DEVICE_IN_WIRED_HEADSET;
-		break;
-	case snd_soc_dapm_mic:
-		*dw = (struct snd_soc_dapm_widget)
-			SND_SOC_DAPM_MIC(w->name, gbcodec_event_int_mic);
+		अवरोध;
+	हाल snd_soc_dapm_mic:
+		*dw = (काष्ठा snd_soc_dapm_widget)
+			SND_SOC_DAPM_MIC(w->name, gbcodec_event_पूर्णांक_mic);
 		module->ip_devices |= GBAUDIO_DEVICE_IN_BUILTIN_MIC;
-		break;
-	case snd_soc_dapm_output:
-		*dw = (struct snd_soc_dapm_widget)SND_SOC_DAPM_OUTPUT(w->name);
-		break;
-	case snd_soc_dapm_input:
-		*dw = (struct snd_soc_dapm_widget)SND_SOC_DAPM_INPUT(w->name);
-		break;
-	case snd_soc_dapm_switch:
-		*dw = (struct snd_soc_dapm_widget)
+		अवरोध;
+	हाल snd_soc_dapm_output:
+		*dw = (काष्ठा snd_soc_dapm_widget)SND_SOC_DAPM_OUTPUT(w->name);
+		अवरोध;
+	हाल snd_soc_dapm_input:
+		*dw = (काष्ठा snd_soc_dapm_widget)SND_SOC_DAPM_INPUT(w->name);
+		अवरोध;
+	हाल snd_soc_dapm_चयन:
+		*dw = (काष्ठा snd_soc_dapm_widget)
 			SND_SOC_DAPM_SWITCH_E(w->name, SND_SOC_NOPM, 0, 0,
 					      widget_kctls,
 					      gbaudio_widget_event,
 					      SND_SOC_DAPM_PRE_PMU |
 					      SND_SOC_DAPM_POST_PMD);
-		break;
-	case snd_soc_dapm_pga:
-		*dw = (struct snd_soc_dapm_widget)
-			SND_SOC_DAPM_PGA_E(w->name, SND_SOC_NOPM, 0, 0, NULL, 0,
+		अवरोध;
+	हाल snd_soc_dapm_pga:
+		*dw = (काष्ठा snd_soc_dapm_widget)
+			SND_SOC_DAPM_PGA_E(w->name, SND_SOC_NOPM, 0, 0, शून्य, 0,
 					   gbaudio_widget_event,
 					   SND_SOC_DAPM_PRE_PMU |
 					   SND_SOC_DAPM_POST_PMD);
-		break;
-	case snd_soc_dapm_mixer:
-		*dw = (struct snd_soc_dapm_widget)
-			SND_SOC_DAPM_MIXER_E(w->name, SND_SOC_NOPM, 0, 0, NULL,
+		अवरोध;
+	हाल snd_soc_dapm_mixer:
+		*dw = (काष्ठा snd_soc_dapm_widget)
+			SND_SOC_DAPM_MIXER_E(w->name, SND_SOC_NOPM, 0, 0, शून्य,
 					     0, gbaudio_widget_event,
 					     SND_SOC_DAPM_PRE_PMU |
 					     SND_SOC_DAPM_POST_PMD);
-		break;
-	case snd_soc_dapm_mux:
-		*dw = (struct snd_soc_dapm_widget)
+		अवरोध;
+	हाल snd_soc_dapm_mux:
+		*dw = (काष्ठा snd_soc_dapm_widget)
 			SND_SOC_DAPM_MUX_E(w->name, SND_SOC_NOPM, 0, 0,
 					   widget_kctls, gbaudio_widget_event,
 					   SND_SOC_DAPM_PRE_PMU |
 					   SND_SOC_DAPM_POST_PMD);
-		break;
-	case snd_soc_dapm_aif_in:
-		*dw = (struct snd_soc_dapm_widget)
+		अवरोध;
+	हाल snd_soc_dapm_aअगर_in:
+		*dw = (काष्ठा snd_soc_dapm_widget)
 			SND_SOC_DAPM_AIF_IN_E(w->name, w->sname, 0,
 					      SND_SOC_NOPM,
 					      0, 0, gbaudio_widget_event,
 					      SND_SOC_DAPM_PRE_PMU |
 					      SND_SOC_DAPM_POST_PMD);
-		break;
-	case snd_soc_dapm_aif_out:
-		*dw = (struct snd_soc_dapm_widget)
+		अवरोध;
+	हाल snd_soc_dapm_aअगर_out:
+		*dw = (काष्ठा snd_soc_dapm_widget)
 			SND_SOC_DAPM_AIF_OUT_E(w->name, w->sname, 0,
 					       SND_SOC_NOPM,
 					       0, 0, gbaudio_widget_event,
 					       SND_SOC_DAPM_PRE_PMU |
 					       SND_SOC_DAPM_POST_PMD);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		ret = -EINVAL;
-		goto error;
-	}
+		जाओ error;
+	पूर्ण
 
 	dev_dbg(module->dev, "%s: widget of type %d created\n", dw->name,
 		dw->id);
-	return 0;
+	वापस 0;
 error:
-	list_for_each_entry_safe(control, _control, &module->widget_ctl_list,
-				 list) {
+	list_क्रम_each_entry_safe(control, _control, &module->widget_ctl_list,
+				 list) अणु
 		list_del(&control->list);
-		devm_kfree(module->dev, control);
-	}
-	return ret;
-}
+		devm_kमुक्त(module->dev, control);
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static int gbaudio_tplg_process_kcontrols(struct gbaudio_module_info *module,
-					  struct gb_audio_control *controls)
-{
-	int i, csize, ret;
-	struct snd_kcontrol_new *dapm_kctls;
-	struct gb_audio_control *curr;
-	struct gbaudio_control *control, *_control;
-	size_t size;
-	char temp_name[NAME_SIZE];
+अटल पूर्णांक gbaudio_tplg_process_kcontrols(काष्ठा gbaudio_module_info *module,
+					  काष्ठा gb_audio_control *controls)
+अणु
+	पूर्णांक i, csize, ret;
+	काष्ठा snd_kcontrol_new *dapm_kctls;
+	काष्ठा gb_audio_control *curr;
+	काष्ठा gbaudio_control *control, *_control;
+	माप_प्रकार size;
+	अक्षर temp_name[NAME_SIZE];
 
-	size = sizeof(struct snd_kcontrol_new) * module->num_controls;
+	size = माप(काष्ठा snd_kcontrol_new) * module->num_controls;
 	dapm_kctls = devm_kzalloc(module->dev, size, GFP_KERNEL);
-	if (!dapm_kctls)
-		return -ENOMEM;
+	अगर (!dapm_kctls)
+		वापस -ENOMEM;
 
 	curr = controls;
-	for (i = 0; i < module->num_controls; i++) {
+	क्रम (i = 0; i < module->num_controls; i++) अणु
 		ret = gbaudio_tplg_create_kcontrol(module, &dapm_kctls[i],
 						   curr);
-		if (ret) {
+		अगर (ret) अणु
 			dev_err(module->dev, "%s:%d type not supported\n",
-				curr->name, curr->iface);
-			goto error;
-		}
-		control = devm_kzalloc(module->dev, sizeof(struct
+				curr->name, curr->अगरace);
+			जाओ error;
+		पूर्ण
+		control = devm_kzalloc(module->dev, माप(काष्ठा
 							   gbaudio_control),
 				      GFP_KERNEL);
-		if (!control) {
+		अगर (!control) अणु
 			ret = -ENOMEM;
-			goto error;
-		}
+			जाओ error;
+		पूर्ण
 		control->id = curr->id;
 		/* Prefix dev_id to widget_name */
-		strscpy(temp_name, curr->name, sizeof(temp_name));
-		snprintf(curr->name, sizeof(curr->name), "GB %d %s", module->dev_id,
+		strscpy(temp_name, curr->name, माप(temp_name));
+		snम_लिखो(curr->name, माप(curr->name), "GB %d %s", module->dev_id,
 			 temp_name);
 		control->name = curr->name;
-		if (curr->info.type == GB_AUDIO_CTL_ELEM_TYPE_ENUMERATED) {
-			struct gb_audio_enumerated *gbenum =
-				&curr->info.value.enumerated;
+		अगर (curr->info.type == GB_AUDIO_CTL_ELEM_TYPE_ENUMERATED) अणु
+			काष्ठा gb_audio_क्रमागतerated *gbक्रमागत =
+				&curr->info.value.क्रमागतerated;
 
-			csize = offsetof(struct gb_audio_control, info);
-			csize += offsetof(struct gb_audio_ctl_elem_info, value);
-			csize += offsetof(struct gb_audio_enumerated, names);
-			csize += le16_to_cpu(gbenum->names_length);
-			control->texts = (const char * const *)
-				gb_generate_enum_strings(module, gbenum);
-			control->items = le32_to_cpu(gbenum->items);
-		} else {
-			csize = sizeof(struct gb_audio_control);
-		}
+			csize = दुरत्व(काष्ठा gb_audio_control, info);
+			csize += दुरत्व(काष्ठा gb_audio_ctl_elem_info, value);
+			csize += दुरत्व(काष्ठा gb_audio_क्रमागतerated, names);
+			csize += le16_to_cpu(gbक्रमागत->names_length);
+			control->texts = (स्थिर अक्षर * स्थिर *)
+				gb_generate_क्रमागत_strings(module, gbक्रमागत);
+			control->items = le32_to_cpu(gbक्रमागत->items);
+		पूर्ण अन्यथा अणु
+			csize = माप(काष्ठा gb_audio_control);
+		पूर्ण
 
 		list_add(&control->list, &module->ctl_list);
 		dev_dbg(module->dev, "%d:%s created of type %d\n", curr->id,
 			curr->name, curr->info.type);
-		curr = (void *)curr + csize;
-	}
+		curr = (व्योम *)curr + csize;
+	पूर्ण
 	module->controls = dapm_kctls;
 
-	return 0;
+	वापस 0;
 error:
-	list_for_each_entry_safe(control, _control, &module->ctl_list,
-				 list) {
+	list_क्रम_each_entry_safe(control, _control, &module->ctl_list,
+				 list) अणु
 		list_del(&control->list);
-		devm_kfree(module->dev, control);
-	}
-	devm_kfree(module->dev, dapm_kctls);
-	return ret;
-}
+		devm_kमुक्त(module->dev, control);
+	पूर्ण
+	devm_kमुक्त(module->dev, dapm_kctls);
+	वापस ret;
+पूर्ण
 
-static int gbaudio_tplg_process_widgets(struct gbaudio_module_info *module,
-					struct gb_audio_widget *widgets)
-{
-	int i, ret, w_size;
-	struct snd_soc_dapm_widget *dapm_widgets;
-	struct gb_audio_widget *curr;
-	struct gbaudio_widget *widget, *_widget;
-	size_t size;
+अटल पूर्णांक gbaudio_tplg_process_widमाला_लो(काष्ठा gbaudio_module_info *module,
+					काष्ठा gb_audio_widget *widमाला_लो)
+अणु
+	पूर्णांक i, ret, w_size;
+	काष्ठा snd_soc_dapm_widget *dapm_widमाला_लो;
+	काष्ठा gb_audio_widget *curr;
+	काष्ठा gbaudio_widget *widget, *_widget;
+	माप_प्रकार size;
 
-	size = sizeof(struct snd_soc_dapm_widget) * module->num_dapm_widgets;
-	dapm_widgets = devm_kzalloc(module->dev, size, GFP_KERNEL);
-	if (!dapm_widgets)
-		return -ENOMEM;
+	size = माप(काष्ठा snd_soc_dapm_widget) * module->num_dapm_widमाला_लो;
+	dapm_widमाला_लो = devm_kzalloc(module->dev, size, GFP_KERNEL);
+	अगर (!dapm_widमाला_लो)
+		वापस -ENOMEM;
 
-	curr = widgets;
-	for (i = 0; i < module->num_dapm_widgets; i++) {
-		ret = gbaudio_tplg_create_widget(module, &dapm_widgets[i],
+	curr = widमाला_लो;
+	क्रम (i = 0; i < module->num_dapm_widमाला_लो; i++) अणु
+		ret = gbaudio_tplg_create_widget(module, &dapm_widमाला_लो[i],
 						 curr, &w_size);
-		if (ret) {
+		अगर (ret) अणु
 			dev_err(module->dev, "%s:%d type not supported\n",
 				curr->name, curr->type);
-			goto error;
-		}
-		widget = devm_kzalloc(module->dev, sizeof(struct
+			जाओ error;
+		पूर्ण
+		widget = devm_kzalloc(module->dev, माप(काष्ठा
 							   gbaudio_widget),
 				      GFP_KERNEL);
-		if (!widget) {
+		अगर (!widget) अणु
 			ret = -ENOMEM;
-			goto error;
-		}
+			जाओ error;
+		पूर्ण
 		widget->id = curr->id;
 		widget->name = curr->name;
 		list_add(&widget->list, &module->widget_list);
-		curr = (void *)curr + w_size;
-	}
-	module->dapm_widgets = dapm_widgets;
+		curr = (व्योम *)curr + w_size;
+	पूर्ण
+	module->dapm_widमाला_लो = dapm_widमाला_लो;
 
-	return 0;
+	वापस 0;
 
 error:
-	list_for_each_entry_safe(widget, _widget, &module->widget_list,
-				 list) {
+	list_क्रम_each_entry_safe(widget, _widget, &module->widget_list,
+				 list) अणु
 		list_del(&widget->list);
-		devm_kfree(module->dev, widget);
-	}
-	devm_kfree(module->dev, dapm_widgets);
-	return ret;
-}
+		devm_kमुक्त(module->dev, widget);
+	पूर्ण
+	devm_kमुक्त(module->dev, dapm_widमाला_लो);
+	वापस ret;
+पूर्ण
 
-static int gbaudio_tplg_process_routes(struct gbaudio_module_info *module,
-				       struct gb_audio_route *routes)
-{
-	int i, ret;
-	struct snd_soc_dapm_route *dapm_routes;
-	struct gb_audio_route *curr;
-	size_t size;
+अटल पूर्णांक gbaudio_tplg_process_routes(काष्ठा gbaudio_module_info *module,
+				       काष्ठा gb_audio_route *routes)
+अणु
+	पूर्णांक i, ret;
+	काष्ठा snd_soc_dapm_route *dapm_routes;
+	काष्ठा gb_audio_route *curr;
+	माप_प्रकार size;
 
-	size = sizeof(struct snd_soc_dapm_route) * module->num_dapm_routes;
+	size = माप(काष्ठा snd_soc_dapm_route) * module->num_dapm_routes;
 	dapm_routes = devm_kzalloc(module->dev, size, GFP_KERNEL);
-	if (!dapm_routes)
-		return -ENOMEM;
+	अगर (!dapm_routes)
+		वापस -ENOMEM;
 
 	module->dapm_routes = dapm_routes;
 	curr = routes;
 
-	for (i = 0; i < module->num_dapm_routes; i++) {
+	क्रम (i = 0; i < module->num_dapm_routes; i++) अणु
 		dapm_routes->sink =
 			gbaudio_map_widgetid(module, curr->destination_id);
-		if (!dapm_routes->sink) {
+		अगर (!dapm_routes->sink) अणु
 			dev_err(module->dev, "%d:%d:%d:%d - Invalid sink\n",
 				curr->source_id, curr->destination_id,
 				curr->control_id, curr->index);
 			ret = -EINVAL;
-			goto error;
-		}
+			जाओ error;
+		पूर्ण
 		dapm_routes->source =
 			gbaudio_map_widgetid(module, curr->source_id);
-		if (!dapm_routes->source) {
+		अगर (!dapm_routes->source) अणु
 			dev_err(module->dev, "%d:%d:%d:%d - Invalid source\n",
 				curr->source_id, curr->destination_id,
 				curr->control_id, curr->index);
 			ret = -EINVAL;
-			goto error;
-		}
+			जाओ error;
+		पूर्ण
 		dapm_routes->control =
 			gbaudio_map_controlid(module,
 					      curr->control_id,
 					      curr->index);
-		if ((curr->control_id !=  GBAUDIO_INVALID_ID) &&
-		    !dapm_routes->control) {
+		अगर ((curr->control_id !=  GBAUDIO_INVALID_ID) &&
+		    !dapm_routes->control) अणु
 			dev_err(module->dev, "%d:%d:%d:%d - Invalid control\n",
 				curr->source_id, curr->destination_id,
 				curr->control_id, curr->index);
 			ret = -EINVAL;
-			goto error;
-		}
+			जाओ error;
+		पूर्ण
 		dev_dbg(module->dev, "Route {%s, %s, %s}\n", dapm_routes->sink,
 			(dapm_routes->control) ? dapm_routes->control : "NULL",
 			dapm_routes->source);
 		dapm_routes++;
 		curr++;
-	}
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 error:
-	devm_kfree(module->dev, module->dapm_routes);
-	return ret;
-}
+	devm_kमुक्त(module->dev, module->dapm_routes);
+	वापस ret;
+पूर्ण
 
-static int gbaudio_tplg_process_header(struct gbaudio_module_info *module,
-				       struct gb_audio_topology *tplg_data)
-{
-	/* fetch no. of kcontrols, widgets & routes */
+अटल पूर्णांक gbaudio_tplg_process_header(काष्ठा gbaudio_module_info *module,
+				       काष्ठा gb_audio_topology *tplg_data)
+अणु
+	/* fetch no. of kcontrols, widमाला_लो & routes */
 	module->num_controls = tplg_data->num_controls;
-	module->num_dapm_widgets = tplg_data->num_widgets;
+	module->num_dapm_widमाला_लो = tplg_data->num_widमाला_लो;
 	module->num_dapm_routes = tplg_data->num_routes;
 
 	/* update block offset */
-	module->dai_offset = (unsigned long)&tplg_data->data;
+	module->dai_offset = (अचिन्हित दीर्घ)&tplg_data->data;
 	module->control_offset = module->dai_offset +
 					le32_to_cpu(tplg_data->size_dais);
 	module->widget_offset = module->control_offset +
 					le32_to_cpu(tplg_data->size_controls);
 	module->route_offset = module->widget_offset +
-					le32_to_cpu(tplg_data->size_widgets);
+					le32_to_cpu(tplg_data->size_widमाला_लो);
 
 	dev_dbg(module->dev, "DAI offset is 0x%lx\n", module->dai_offset);
 	dev_dbg(module->dev, "control offset is %lx\n",
@@ -1339,102 +1340,102 @@ static int gbaudio_tplg_process_header(struct gbaudio_module_info *module,
 	dev_dbg(module->dev, "widget offset is %lx\n", module->widget_offset);
 	dev_dbg(module->dev, "route offset is %lx\n", module->route_offset);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int gbaudio_tplg_parse_data(struct gbaudio_module_info *module,
-			    struct gb_audio_topology *tplg_data)
-{
-	int ret;
-	struct gb_audio_control *controls;
-	struct gb_audio_widget *widgets;
-	struct gb_audio_route *routes;
-	unsigned int jack_type;
+पूर्णांक gbaudio_tplg_parse_data(काष्ठा gbaudio_module_info *module,
+			    काष्ठा gb_audio_topology *tplg_data)
+अणु
+	पूर्णांक ret;
+	काष्ठा gb_audio_control *controls;
+	काष्ठा gb_audio_widget *widमाला_लो;
+	काष्ठा gb_audio_route *routes;
+	अचिन्हित पूर्णांक jack_type;
 
-	if (!tplg_data)
-		return -EINVAL;
+	अगर (!tplg_data)
+		वापस -EINVAL;
 
 	ret = gbaudio_tplg_process_header(module, tplg_data);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(module->dev, "%d: Error in parsing topology header\n",
 			ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	/* process control */
-	controls = (struct gb_audio_control *)module->control_offset;
+	controls = (काष्ठा gb_audio_control *)module->control_offset;
 	ret = gbaudio_tplg_process_kcontrols(module, controls);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(module->dev,
 			"%d: Error in parsing controls data\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 	dev_dbg(module->dev, "Control parsing finished\n");
 
-	/* process widgets */
-	widgets = (struct gb_audio_widget *)module->widget_offset;
-	ret = gbaudio_tplg_process_widgets(module, widgets);
-	if (ret) {
+	/* process widमाला_लो */
+	widमाला_लो = (काष्ठा gb_audio_widget *)module->widget_offset;
+	ret = gbaudio_tplg_process_widमाला_लो(module, widमाला_लो);
+	अगर (ret) अणु
 		dev_err(module->dev,
 			"%d: Error in parsing widgets data\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 	dev_dbg(module->dev, "Widget parsing finished\n");
 
 	/* process route */
-	routes = (struct gb_audio_route *)module->route_offset;
+	routes = (काष्ठा gb_audio_route *)module->route_offset;
 	ret = gbaudio_tplg_process_routes(module, routes);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(module->dev,
 			"%d: Error in parsing routes data\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 	dev_dbg(module->dev, "Route parsing finished\n");
 
 	/* parse jack capabilities */
 	jack_type = le32_to_cpu(tplg_data->jack_type);
-	if (jack_type) {
+	अगर (jack_type) अणु
 		module->jack_mask = jack_type & GBCODEC_JACK_MASK;
 		module->button_mask = jack_type & GBCODEC_JACK_BUTTON_MASK;
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-void gbaudio_tplg_release(struct gbaudio_module_info *module)
-{
-	struct gbaudio_control *control, *_control;
-	struct gbaudio_widget *widget, *_widget;
+व्योम gbaudio_tplg_release(काष्ठा gbaudio_module_info *module)
+अणु
+	काष्ठा gbaudio_control *control, *_control;
+	काष्ठा gbaudio_widget *widget, *_widget;
 
-	if (!module->topology)
-		return;
+	अगर (!module->topology)
+		वापस;
 
 	/* release kcontrols */
-	list_for_each_entry_safe(control, _control, &module->ctl_list,
-				 list) {
+	list_क्रम_each_entry_safe(control, _control, &module->ctl_list,
+				 list) अणु
 		list_del(&control->list);
-		devm_kfree(module->dev, control);
-	}
-	if (module->controls)
-		devm_kfree(module->dev, module->controls);
+		devm_kमुक्त(module->dev, control);
+	पूर्ण
+	अगर (module->controls)
+		devm_kमुक्त(module->dev, module->controls);
 
 	/* release widget controls */
-	list_for_each_entry_safe(control, _control, &module->widget_ctl_list,
-				 list) {
+	list_क्रम_each_entry_safe(control, _control, &module->widget_ctl_list,
+				 list) अणु
 		list_del(&control->list);
-		devm_kfree(module->dev, control);
-	}
+		devm_kमुक्त(module->dev, control);
+	पूर्ण
 
-	/* release widgets */
-	list_for_each_entry_safe(widget, _widget, &module->widget_list,
-				 list) {
+	/* release widमाला_लो */
+	list_क्रम_each_entry_safe(widget, _widget, &module->widget_list,
+				 list) अणु
 		list_del(&widget->list);
-		devm_kfree(module->dev, widget);
-	}
-	if (module->dapm_widgets)
-		devm_kfree(module->dev, module->dapm_widgets);
+		devm_kमुक्त(module->dev, widget);
+	पूर्ण
+	अगर (module->dapm_widमाला_लो)
+		devm_kमुक्त(module->dev, module->dapm_widमाला_लो);
 
 	/* release routes */
-	if (module->dapm_routes)
-		devm_kfree(module->dev, module->dapm_routes);
-}
+	अगर (module->dapm_routes)
+		devm_kमुक्त(module->dev, module->dapm_routes);
+पूर्ण

@@ -1,19 +1,20 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <linux/types.h>
-#include <linux/errno.h>
-#include <linux/uaccess.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <linux/types.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/uaccess.h>
 
-#include <asm/sfp-machine.h>
-#include <math-emu/soft-fp.h>
+#समावेश <यंत्र/sfp-machine.h>
+#समावेश <math-emu/soft-fp.h>
 
-int
+पूर्णांक
 mffs(u32 *frD)
-{
+अणु
 	frD[1] = __FPU_FPSCR;
 
-#ifdef DEBUG
-	printk("%s: frD %p: %08x.%08x\n", __func__, frD, frD[0], frD[1]);
-#endif
+#अगर_घोषित DEBUG
+	prपूर्णांकk("%s: frD %p: %08x.%08x\n", __func__, frD, frD[0], frD[1]);
+#पूर्ण_अगर
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

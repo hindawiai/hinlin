@@ -1,277 +1,278 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /* Copyright (C) 2018-2019, Intel Corporation. */
 
-#include <asm/unaligned.h>
-#include <linux/crc32.h>
-#include <linux/device.h>
-#include <linux/firmware.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/pci.h>
-#include <linux/pldmfw.h>
-#include <linux/slab.h>
-#include <linux/uuid.h>
+#समावेश <यंत्र/unaligned.h>
+#समावेश <linux/crc32.h>
+#समावेश <linux/device.h>
+#समावेश <linux/firmware.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/pldmfw.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/uuid.h>
 
-#include "pldmfw_private.h"
+#समावेश "pldmfw_private.h"
 
-/* Internal structure used to store details about the PLDM image file as it is
+/* Internal काष्ठाure used to store details about the PLDM image file as it is
  * being validated and processed.
  */
-struct pldmfw_priv {
-	struct pldmfw *context;
-	const struct firmware *fw;
+काष्ठा pldmfw_priv अणु
+	काष्ठा pldmfw *context;
+	स्थिर काष्ठा firmware *fw;
 
 	/* current offset of firmware image */
-	size_t offset;
+	माप_प्रकार offset;
 
-	struct list_head records;
-	struct list_head components;
+	काष्ठा list_head records;
+	काष्ठा list_head components;
 
 	/* PLDM Firmware Package Header */
-	const struct __pldm_header *header;
+	स्थिर काष्ठा __pldm_header *header;
 	u16 total_header_size;
 
-	/* length of the component bitmap */
-	u16 component_bitmap_len;
-	u16 bitmap_size;
+	/* length of the component biपंचांगap */
+	u16 component_biपंचांगap_len;
+	u16 biपंचांगap_size;
 
-	/* Start of the component image information */
+	/* Start of the component image inक्रमmation */
 	u16 component_count;
-	const u8 *component_start;
+	स्थिर u8 *component_start;
 
 	/* Start pf the firmware device id records */
-	const u8 *record_start;
+	स्थिर u8 *record_start;
 	u8 record_count;
 
 	/* The CRC at the end of the package header */
 	u32 header_crc;
 
-	struct pldmfw_record *matching_record;
-};
+	काष्ठा pldmfw_record *matching_record;
+पूर्ण;
 
 /**
- * pldm_check_fw_space - Verify that the firmware image has space left
- * @data: pointer to private data
+ * pldm_check_fw_space - Verअगरy that the firmware image has space left
+ * @data: poपूर्णांकer to निजी data
  * @offset: offset to start from
- * @length: length to check for
+ * @length: length to check क्रम
  *
- * Verify that the firmware data can hold a chunk of bytes with the specified
+ * Verअगरy that the firmware data can hold a chunk of bytes with the specअगरied
  * offset and length.
  *
- * Returns: zero on success, or -EFAULT if the image does not have enough
+ * Returns: zero on success, or -EFAULT अगर the image करोes not have enough
  * space left to fit the expected length.
  */
-static int
-pldm_check_fw_space(struct pldmfw_priv *data, size_t offset, size_t length)
-{
-	size_t expected_size = offset + length;
-	struct device *dev = data->context->dev;
+अटल पूर्णांक
+pldm_check_fw_space(काष्ठा pldmfw_priv *data, माप_प्रकार offset, माप_प्रकार length)
+अणु
+	माप_प्रकार expected_size = offset + length;
+	काष्ठा device *dev = data->context->dev;
 
-	if (data->fw->size < expected_size) {
+	अगर (data->fw->size < expected_size) अणु
 		dev_dbg(dev, "Firmware file size smaller than expected. Got %zu bytes, needed %zu bytes\n",
 			data->fw->size, expected_size);
-		return -EFAULT;
-	}
+		वापस -EFAULT;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * pldm_move_fw_offset - Move the current firmware offset forward
- * @data: pointer to private data
- * @bytes_to_move: number of bytes to move the offset forward by
+ * pldm_move_fw_offset - Move the current firmware offset क्रमward
+ * @data: poपूर्णांकer to निजी data
+ * @bytes_to_move: number of bytes to move the offset क्रमward by
  *
  * Check that there is enough space past the current offset, and then move the
- * offset forward by this ammount.
+ * offset क्रमward by this ammount.
  *
- * Returns: zero on success, or -EFAULT if the image is too small to fit the
+ * Returns: zero on success, or -EFAULT अगर the image is too small to fit the
  * expected length.
  */
-static int
-pldm_move_fw_offset(struct pldmfw_priv *data, size_t bytes_to_move)
-{
-	int err;
+अटल पूर्णांक
+pldm_move_fw_offset(काष्ठा pldmfw_priv *data, माप_प्रकार bytes_to_move)
+अणु
+	पूर्णांक err;
 
 	err = pldm_check_fw_space(data, data->offset, bytes_to_move);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	data->offset += bytes_to_move;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * pldm_parse_header - Validate and extract details about the PLDM header
- * @data: pointer to private data
+ * @data: poपूर्णांकer to निजी data
  *
- * Performs initial basic verification of the PLDM image, up to the first
+ * Perक्रमms initial basic verअगरication of the PLDM image, up to the first
  * firmware record.
  *
  * This includes the following checks and extractions
  *
- *   * Verify that the UUID at the start of the header matches the expected
- *     value as defined in the DSP0267 PLDM specification
+ *   * Verअगरy that the UUID at the start of the header matches the expected
+ *     value as defined in the DSP0267 PLDM specअगरication
  *   * Check that the revision is 0x01
- *   * Extract the total header_size and verify that the image is large enough
+ *   * Extract the total header_size and verअगरy that the image is large enough
  *     to contain at least the length of this header
- *   * Extract the size of the component bitmap length
- *   * Extract a pointer to the start of the record area
+ *   * Extract the size of the component biपंचांगap length
+ *   * Extract a poपूर्णांकer to the start of the record area
  *
  * Returns: zero on success, or a negative error code on failure.
  */
-static int pldm_parse_header(struct pldmfw_priv *data)
-{
-	const struct __pldmfw_record_area *record_area;
-	struct device *dev = data->context->dev;
-	const struct __pldm_header *header;
-	size_t header_size;
-	int err;
+अटल पूर्णांक pldm_parse_header(काष्ठा pldmfw_priv *data)
+अणु
+	स्थिर काष्ठा __pldmfw_record_area *record_area;
+	काष्ठा device *dev = data->context->dev;
+	स्थिर काष्ठा __pldm_header *header;
+	माप_प्रकार header_size;
+	पूर्णांक err;
 
-	err = pldm_move_fw_offset(data, sizeof(*header));
-	if (err)
-		return err;
+	err = pldm_move_fw_offset(data, माप(*header));
+	अगर (err)
+		वापस err;
 
-	header = (const struct __pldm_header *)data->fw->data;
+	header = (स्थिर काष्ठा __pldm_header *)data->fw->data;
 	data->header = header;
 
-	if (!uuid_equal(&header->id, &pldm_firmware_header_id)) {
+	अगर (!uuid_equal(&header->id, &pldm_firmware_header_id)) अणु
 		dev_dbg(dev, "Invalid package header identifier. Expected UUID %pUB, but got %pUB\n",
 			&pldm_firmware_header_id, &header->id);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (header->revision != PACKAGE_HEADER_FORMAT_REVISION) {
+	अगर (header->revision != PACKAGE_HEADER_FORMAT_REVISION) अणु
 		dev_dbg(dev, "Invalid package header revision. Expected revision %u but got %u\n",
 			PACKAGE_HEADER_FORMAT_REVISION, header->revision);
-		return -EOPNOTSUPP;
-	}
+		वापस -EOPNOTSUPP;
+	पूर्ण
 
 	data->total_header_size = get_unaligned_le16(&header->size);
-	header_size = data->total_header_size - sizeof(*header);
+	header_size = data->total_header_size - माप(*header);
 
 	err = pldm_check_fw_space(data, data->offset, header_size);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	data->component_bitmap_len =
-		get_unaligned_le16(&header->component_bitmap_len);
+	data->component_biपंचांगap_len =
+		get_unaligned_le16(&header->component_biपंचांगap_len);
 
-	if (data->component_bitmap_len % 8 != 0) {
+	अगर (data->component_biपंचांगap_len % 8 != 0) अणु
 		dev_dbg(dev, "Invalid component bitmap length. The length is %u, which is not a multiple of 8\n",
-			data->component_bitmap_len);
-		return -EINVAL;
-	}
+			data->component_biपंचांगap_len);
+		वापस -EINVAL;
+	पूर्ण
 
-	data->bitmap_size = data->component_bitmap_len / 8;
+	data->biपंचांगap_size = data->component_biपंचांगap_len / 8;
 
 	err = pldm_move_fw_offset(data, header->version_len);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	/* extract a pointer to the record area, which just follows the main
+	/* extract a poपूर्णांकer to the record area, which just follows the मुख्य
 	 * PLDM header data.
 	 */
-	record_area = (const struct __pldmfw_record_area *)(data->fw->data +
+	record_area = (स्थिर काष्ठा __pldmfw_record_area *)(data->fw->data +
 							 data->offset);
 
-	err = pldm_move_fw_offset(data, sizeof(*record_area));
-	if (err)
-		return err;
+	err = pldm_move_fw_offset(data, माप(*record_area));
+	अगर (err)
+		वापस err;
 
 	data->record_count = record_area->record_count;
 	data->record_start = record_area->records;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * pldm_check_desc_tlv_len - Check that the length matches expectation
- * @data: pointer to image details
+ * @data: poपूर्णांकer to image details
  * @type: the descriptor type
  * @size: the length from the descriptor header
  *
- * If the descriptor type is one of the documented descriptor types according
- * to the standard, verify that the provided length matches.
+ * If the descriptor type is one of the करोcumented descriptor types according
+ * to the standard, verअगरy that the provided length matches.
  *
- * If the type is not recognized or is VENDOR_DEFINED, return zero.
+ * If the type is not recognized or is VENDOR_DEFINED, वापस zero.
  *
- * Returns: zero on success, or -EINVAL if the specified size of a standard
- * TLV does not match the expected value defined for that TLV.
+ * Returns: zero on success, or -EINVAL अगर the specअगरied size of a standard
+ * TLV करोes not match the expected value defined क्रम that TLV.
  */
-static int
-pldm_check_desc_tlv_len(struct pldmfw_priv *data, u16 type, u16 size)
-{
-	struct device *dev = data->context->dev;
+अटल पूर्णांक
+pldm_check_desc_tlv_len(काष्ठा pldmfw_priv *data, u16 type, u16 size)
+अणु
+	काष्ठा device *dev = data->context->dev;
 	u16 expected_size;
 
-	switch (type) {
-	case PLDM_DESC_ID_PCI_VENDOR_ID:
-	case PLDM_DESC_ID_PCI_DEVICE_ID:
-	case PLDM_DESC_ID_PCI_SUBVENDOR_ID:
-	case PLDM_DESC_ID_PCI_SUBDEV_ID:
+	चयन (type) अणु
+	हाल PLDM_DESC_ID_PCI_VENDOR_ID:
+	हाल PLDM_DESC_ID_PCI_DEVICE_ID:
+	हाल PLDM_DESC_ID_PCI_SUBVENDOR_ID:
+	हाल PLDM_DESC_ID_PCI_SUBDEV_ID:
 		expected_size = 2;
-		break;
-	case PLDM_DESC_ID_PCI_REVISION_ID:
+		अवरोध;
+	हाल PLDM_DESC_ID_PCI_REVISION_ID:
 		expected_size = 1;
-		break;
-	case PLDM_DESC_ID_PNP_VENDOR_ID:
+		अवरोध;
+	हाल PLDM_DESC_ID_PNP_VENDOR_ID:
 		expected_size = 3;
-		break;
-	case PLDM_DESC_ID_IANA_ENTERPRISE_ID:
-	case PLDM_DESC_ID_ACPI_VENDOR_ID:
-	case PLDM_DESC_ID_PNP_PRODUCT_ID:
-	case PLDM_DESC_ID_ACPI_PRODUCT_ID:
+		अवरोध;
+	हाल PLDM_DESC_ID_IANA_ENTERPRISE_ID:
+	हाल PLDM_DESC_ID_ACPI_VENDOR_ID:
+	हाल PLDM_DESC_ID_PNP_PRODUCT_ID:
+	हाल PLDM_DESC_ID_ACPI_PRODUCT_ID:
 		expected_size = 4;
-		break;
-	case PLDM_DESC_ID_UUID:
+		अवरोध;
+	हाल PLDM_DESC_ID_UUID:
 		expected_size = 16;
-		break;
-	case PLDM_DESC_ID_VENDOR_DEFINED:
-		return 0;
-	default:
+		अवरोध;
+	हाल PLDM_DESC_ID_VENDOR_DEFINED:
+		वापस 0;
+	शेष:
 		/* Do not report an error on an unexpected TLV */
 		dev_dbg(dev, "Found unrecognized TLV type 0x%04x\n", type);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	if (size != expected_size) {
+	अगर (size != expected_size) अणु
 		dev_dbg(dev, "Found TLV type 0x%04x with unexpected length. Got %u bytes, but expected %u bytes\n",
 			type, size, expected_size);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * pldm_parse_desc_tlvs - Check and skip past a number of TLVs
- * @data: pointer to private data
- * @record: pointer to the record this TLV belongs too
+ * @data: poपूर्णांकer to निजी data
+ * @record: poपूर्णांकer to the record this TLV beदीर्घs too
  * @desc_count: descriptor count
  *
- * From the current offset, read and extract the descriptor TLVs, updating the
- * current offset each time.
+ * From the current offset, पढ़ो and extract the descriptor TLVs, updating the
+ * current offset each समय.
  *
  * Returns: zero on success, or a negative error code on failure.
  */
-static int
-pldm_parse_desc_tlvs(struct pldmfw_priv *data, struct pldmfw_record *record, u8 desc_count)
-{
-	const struct __pldmfw_desc_tlv *__desc;
-	const u8 *desc_start;
+अटल पूर्णांक
+pldm_parse_desc_tlvs(काष्ठा pldmfw_priv *data, काष्ठा pldmfw_record *record, u8 desc_count)
+अणु
+	स्थिर काष्ठा __pldmfw_desc_tlv *__desc;
+	स्थिर u8 *desc_start;
 	u8 i;
 
 	desc_start = data->fw->data + data->offset;
 
-	pldm_for_each_desc_tlv(i, __desc, desc_start, desc_count) {
-		struct pldmfw_desc_tlv *desc;
-		int err;
+	pldm_क्रम_each_desc_tlv(i, __desc, desc_start, desc_count) अणु
+		काष्ठा pldmfw_desc_tlv *desc;
+		पूर्णांक err;
 		u16 type, size;
 
-		err = pldm_move_fw_offset(data, sizeof(*__desc));
-		if (err)
-			return err;
+		err = pldm_move_fw_offset(data, माप(*__desc));
+		अगर (err)
+			वापस err;
 
 		type = get_unaligned_le16(&__desc->type);
 
@@ -279,199 +280,199 @@ pldm_parse_desc_tlvs(struct pldmfw_priv *data, struct pldmfw_record *record, u8 
 		size = get_unaligned_le16(&__desc->size);
 
 		err = pldm_check_desc_tlv_len(data, type, size);
-		if (err)
-			return err;
+		अगर (err)
+			वापस err;
 
-		/* check that we have space and move the offset forward */
+		/* check that we have space and move the offset क्रमward */
 		err = pldm_move_fw_offset(data, size);
-		if (err)
-			return err;
+		अगर (err)
+			वापस err;
 
-		desc = kzalloc(sizeof(*desc), GFP_KERNEL);
-		if (!desc)
-			return -ENOMEM;
+		desc = kzalloc(माप(*desc), GFP_KERNEL);
+		अगर (!desc)
+			वापस -ENOMEM;
 
 		desc->type = type;
 		desc->size = size;
 		desc->data = __desc->data;
 
 		list_add_tail(&desc->entry, &record->descs);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * pldm_parse_one_record - Verify size of one PLDM record
- * @data: pointer to image details
- * @__record: pointer to the record to check
+ * pldm_parse_one_record - Verअगरy size of one PLDM record
+ * @data: poपूर्णांकer to image details
+ * @__record: poपूर्णांकer to the record to check
  *
- * This function checks that the record size does not exceed either the size
- * of the firmware file or the total length specified in the header section.
+ * This function checks that the record size करोes not exceed either the size
+ * of the firmware file or the total length specअगरied in the header section.
  *
- * It also verifies that the recorded length of the start of the record
- * matches the size calculated by adding the static structure length, the
- * component bitmap length, the version string length, the length of all
+ * It also verअगरies that the recorded length of the start of the record
+ * matches the size calculated by adding the अटल काष्ठाure length, the
+ * component biपंचांगap length, the version string length, the length of all
  * descriptor TLVs, and the length of the package data.
  *
  * Returns: zero on success, or a negative error code on failure.
  */
-static int
-pldm_parse_one_record(struct pldmfw_priv *data,
-		      const struct __pldmfw_record_info *__record)
-{
-	struct pldmfw_record *record;
-	size_t measured_length;
-	int err;
-	const u8 *bitmap_ptr;
+अटल पूर्णांक
+pldm_parse_one_record(काष्ठा pldmfw_priv *data,
+		      स्थिर काष्ठा __pldmfw_record_info *__record)
+अणु
+	काष्ठा pldmfw_record *record;
+	माप_प्रकार measured_length;
+	पूर्णांक err;
+	स्थिर u8 *biपंचांगap_ptr;
 	u16 record_len;
-	int i;
+	पूर्णांक i;
 
-	/* Make a copy and insert it into the record list */
-	record = kzalloc(sizeof(*record), GFP_KERNEL);
-	if (!record)
-		return -ENOMEM;
+	/* Make a copy and insert it पूर्णांकo the record list */
+	record = kzalloc(माप(*record), GFP_KERNEL);
+	अगर (!record)
+		वापस -ENOMEM;
 
 	INIT_LIST_HEAD(&record->descs);
 	list_add_tail(&record->entry, &data->records);
 
 	/* Then check that we have space and move the offset */
-	err = pldm_move_fw_offset(data, sizeof(*__record));
-	if (err)
-		return err;
+	err = pldm_move_fw_offset(data, माप(*__record));
+	अगर (err)
+		वापस err;
 
 	record_len = get_unaligned_le16(&__record->record_len);
 	record->package_data_len = get_unaligned_le16(&__record->package_data_len);
 	record->version_len = __record->version_len;
 	record->version_type = __record->version_type;
 
-	bitmap_ptr = data->fw->data + data->offset;
+	biपंचांगap_ptr = data->fw->data + data->offset;
 
-	/* check that we have space for the component bitmap length */
-	err = pldm_move_fw_offset(data, data->bitmap_size);
-	if (err)
-		return err;
+	/* check that we have space क्रम the component biपंचांगap length */
+	err = pldm_move_fw_offset(data, data->biपंचांगap_size);
+	अगर (err)
+		वापस err;
 
-	record->component_bitmap_len = data->component_bitmap_len;
-	record->component_bitmap = bitmap_zalloc(record->component_bitmap_len,
+	record->component_biपंचांगap_len = data->component_biपंचांगap_len;
+	record->component_biपंचांगap = biपंचांगap_zalloc(record->component_biपंचांगap_len,
 						 GFP_KERNEL);
-	if (!record->component_bitmap)
-		return -ENOMEM;
+	अगर (!record->component_biपंचांगap)
+		वापस -ENOMEM;
 
-	for (i = 0; i < data->bitmap_size; i++)
-		bitmap_set_value8(record->component_bitmap, bitmap_ptr[i], i * 8);
+	क्रम (i = 0; i < data->biपंचांगap_size; i++)
+		biपंचांगap_set_value8(record->component_biपंचांगap, biपंचांगap_ptr[i], i * 8);
 
 	record->version_string = data->fw->data + data->offset;
 
 	err = pldm_move_fw_offset(data, record->version_len);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	/* Scan through the descriptor TLVs and find the end */
 	err = pldm_parse_desc_tlvs(data, record, __record->descriptor_count);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	record->package_data = data->fw->data + data->offset;
 
 	err = pldm_move_fw_offset(data, record->package_data_len);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	measured_length = data->offset - ((const u8 *)__record - data->fw->data);
-	if (measured_length != record_len) {
+	measured_length = data->offset - ((स्थिर u8 *)__record - data->fw->data);
+	अगर (measured_length != record_len) अणु
 		dev_dbg(data->context->dev, "Unexpected record length. Measured record length is %zu bytes, expected length is %u bytes\n",
 			measured_length, record_len);
-		return -EFAULT;
-	}
+		वापस -EFAULT;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * pldm_parse_records - Locate the start of the component area
- * @data: pointer to private data
+ * @data: poपूर्णांकer to निजी data
  *
- * Extract the record count, and loop through each record, searching for the
+ * Extract the record count, and loop through each record, searching क्रम the
  * component area.
  *
  * Returns: zero on success, or a negative error code on failure.
  */
-static int pldm_parse_records(struct pldmfw_priv *data)
-{
-	const struct __pldmfw_component_area *component_area;
-	const struct __pldmfw_record_info *record;
-	int err;
+अटल पूर्णांक pldm_parse_records(काष्ठा pldmfw_priv *data)
+अणु
+	स्थिर काष्ठा __pldmfw_component_area *component_area;
+	स्थिर काष्ठा __pldmfw_record_info *record;
+	पूर्णांक err;
 	u8 i;
 
-	pldm_for_each_record(i, record, data->record_start, data->record_count) {
+	pldm_क्रम_each_record(i, record, data->record_start, data->record_count) अणु
 		err = pldm_parse_one_record(data, record);
-		if (err)
-			return err;
-	}
+		अगर (err)
+			वापस err;
+	पूर्ण
 
-	/* Extract a pointer to the component area, which just follows the
+	/* Extract a poपूर्णांकer to the component area, which just follows the
 	 * PLDM device record data.
 	 */
-	component_area = (const struct __pldmfw_component_area *)(data->fw->data + data->offset);
+	component_area = (स्थिर काष्ठा __pldmfw_component_area *)(data->fw->data + data->offset);
 
-	err = pldm_move_fw_offset(data, sizeof(*component_area));
-	if (err)
-		return err;
+	err = pldm_move_fw_offset(data, माप(*component_area));
+	अगर (err)
+		वापस err;
 
 	data->component_count =
 		get_unaligned_le16(&component_area->component_image_count);
 	data->component_start = component_area->components;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * pldm_parse_components - Locate the CRC header checksum
- * @data: pointer to private data
+ * @data: poपूर्णांकer to निजी data
  *
- * Extract the component count, and find the pointer to the component area.
- * Scan through each component searching for the end, which should point to
+ * Extract the component count, and find the poपूर्णांकer to the component area.
+ * Scan through each component searching क्रम the end, which should poपूर्णांक to
  * the package header checksum.
  *
- * Extract the package header CRC and save it for verification.
+ * Extract the package header CRC and save it क्रम verअगरication.
  *
  * Returns: zero on success, or a negative error code on failure.
  */
-static int pldm_parse_components(struct pldmfw_priv *data)
-{
-	const struct __pldmfw_component_info *__component;
-	struct device *dev = data->context->dev;
-	const u8 *header_crc_ptr;
-	int err;
+अटल पूर्णांक pldm_parse_components(काष्ठा pldmfw_priv *data)
+अणु
+	स्थिर काष्ठा __pldmfw_component_info *__component;
+	काष्ठा device *dev = data->context->dev;
+	स्थिर u8 *header_crc_ptr;
+	पूर्णांक err;
 	u8 i;
 
-	pldm_for_each_component(i, __component, data->component_start, data->component_count) {
-		struct pldmfw_component *component;
+	pldm_क्रम_each_component(i, __component, data->component_start, data->component_count) अणु
+		काष्ठा pldmfw_component *component;
 		u32 offset, size;
 
-		err = pldm_move_fw_offset(data, sizeof(*__component));
-		if (err)
-			return err;
+		err = pldm_move_fw_offset(data, माप(*__component));
+		अगर (err)
+			वापस err;
 
 		err = pldm_move_fw_offset(data, __component->version_len);
-		if (err)
-			return err;
+		अगर (err)
+			वापस err;
 
 		offset = get_unaligned_le32(&__component->location_offset);
 		size = get_unaligned_le32(&__component->size);
 
 		err = pldm_check_fw_space(data, offset, size);
-		if (err)
-			return err;
+		अगर (err)
+			वापस err;
 
-		component = kzalloc(sizeof(*component), GFP_KERNEL);
-		if (!component)
-			return -ENOMEM;
+		component = kzalloc(माप(*component), GFP_KERNEL);
+		अगर (!component)
+			वापस -ENOMEM;
 
 		component->index = i;
-		component->classification = get_unaligned_le16(&__component->classification);
-		component->identifier = get_unaligned_le16(&__component->identifier);
+		component->classअगरication = get_unaligned_le16(&__component->classअगरication);
+		component->identअगरier = get_unaligned_le16(&__component->identअगरier);
 		component->comparison_stamp = get_unaligned_le32(&__component->comparison_stamp);
 		component->options = get_unaligned_le16(&__component->options);
 		component->activation_method = get_unaligned_le16(&__component->activation_method);
@@ -482,361 +483,361 @@ static int pldm_parse_components(struct pldmfw_priv *data)
 		component->component_size = size;
 
 		list_add_tail(&component->entry, &data->components);
-	}
+	पूर्ण
 
 	header_crc_ptr = data->fw->data + data->offset;
 
-	err = pldm_move_fw_offset(data, sizeof(data->header_crc));
-	if (err)
-		return err;
+	err = pldm_move_fw_offset(data, माप(data->header_crc));
+	अगर (err)
+		वापस err;
 
 	/* Make sure that we reached the expected offset */
-	if (data->offset != data->total_header_size) {
+	अगर (data->offset != data->total_header_size) अणु
 		dev_dbg(dev, "Invalid firmware header size. Expected %u but got %zu\n",
 			data->total_header_size, data->offset);
-		return -EFAULT;
-	}
+		वापस -EFAULT;
+	पूर्ण
 
 	data->header_crc = get_unaligned_le32(header_crc_ptr);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * pldm_verify_header_crc - Verify that the CRC in the header matches
- * @data: pointer to private data
+ * pldm_verअगरy_header_crc - Verअगरy that the CRC in the header matches
+ * @data: poपूर्णांकer to निजी data
  *
  * Calculates the 32-bit CRC using the standard IEEE 802.3 CRC polynomial and
  * compares it to the value stored in the header.
  *
- * Returns: zero on success if the CRC matches, or -EBADMSG on an invalid CRC.
+ * Returns: zero on success अगर the CRC matches, or -EBADMSG on an invalid CRC.
  */
-static int pldm_verify_header_crc(struct pldmfw_priv *data)
-{
-	struct device *dev = data->context->dev;
+अटल पूर्णांक pldm_verअगरy_header_crc(काष्ठा pldmfw_priv *data)
+अणु
+	काष्ठा device *dev = data->context->dev;
 	u32 calculated_crc;
-	size_t length;
+	माप_प्रकार length;
 
 	/* Calculate the 32-bit CRC of the header header contents up to but
 	 * not including the checksum. Note that the Linux crc32_le function
-	 * does not perform an expected final XOR.
+	 * करोes not perक्रमm an expected final XOR.
 	 */
-	length = data->offset - sizeof(data->header_crc);
+	length = data->offset - माप(data->header_crc);
 	calculated_crc = crc32_le(~0, data->fw->data, length) ^ ~0;
 
-	if (calculated_crc != data->header_crc) {
+	अगर (calculated_crc != data->header_crc) अणु
 		dev_dbg(dev, "Invalid CRC in firmware header. Got 0x%08x but expected 0x%08x\n",
 			calculated_crc, data->header_crc);
-		return -EBADMSG;
-	}
+		वापस -EBADMSG;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * pldmfw_free_priv - Free memory allocated while parsing the PLDM image
- * @data: pointer to the PLDM data structure
+ * pldmfw_मुक्त_priv - Free memory allocated जबतक parsing the PLDM image
+ * @data: poपूर्णांकer to the PLDM data काष्ठाure
  *
  * Loops through and clears all allocated memory associated with each
  * allocated descriptor, record, and component.
  */
-static void pldmfw_free_priv(struct pldmfw_priv *data)
-{
-	struct pldmfw_component *component, *c_safe;
-	struct pldmfw_record *record, *r_safe;
-	struct pldmfw_desc_tlv *desc, *d_safe;
+अटल व्योम pldmfw_मुक्त_priv(काष्ठा pldmfw_priv *data)
+अणु
+	काष्ठा pldmfw_component *component, *c_safe;
+	काष्ठा pldmfw_record *record, *r_safe;
+	काष्ठा pldmfw_desc_tlv *desc, *d_safe;
 
-	list_for_each_entry_safe(component, c_safe, &data->components, entry) {
+	list_क्रम_each_entry_safe(component, c_safe, &data->components, entry) अणु
 		list_del(&component->entry);
-		kfree(component);
-	}
+		kमुक्त(component);
+	पूर्ण
 
-	list_for_each_entry_safe(record, r_safe, &data->records, entry) {
-		list_for_each_entry_safe(desc, d_safe, &record->descs, entry) {
+	list_क्रम_each_entry_safe(record, r_safe, &data->records, entry) अणु
+		list_क्रम_each_entry_safe(desc, d_safe, &record->descs, entry) अणु
 			list_del(&desc->entry);
-			kfree(desc);
-		}
+			kमुक्त(desc);
+		पूर्ण
 
-		if (record->component_bitmap) {
-			bitmap_free(record->component_bitmap);
-			record->component_bitmap = NULL;
-		}
+		अगर (record->component_biपंचांगap) अणु
+			biपंचांगap_मुक्त(record->component_biपंचांगap);
+			record->component_biपंचांगap = शून्य;
+		पूर्ण
 
 		list_del(&record->entry);
-		kfree(record);
-	}
-}
+		kमुक्त(record);
+	पूर्ण
+पूर्ण
 
 /**
  * pldm_parse_image - parse and extract details from PLDM image
- * @data: pointer to private data
+ * @data: poपूर्णांकer to निजी data
  *
- * Verify that the firmware file contains valid data for a PLDM firmware
- * file. Extract useful pointers and data from the firmware file and store
- * them in the data structure.
+ * Verअगरy that the firmware file contains valid data क्रम a PLDM firmware
+ * file. Extract useful poपूर्णांकers and data from the firmware file and store
+ * them in the data काष्ठाure.
  *
- * The PLDM firmware file format is defined in DMTF DSP0267 1.0.0. Care
+ * The PLDM firmware file क्रमmat is defined in DMTF DSP0267 1.0.0. Care
  * should be taken to use get_unaligned_le* when accessing data from the
- * pointers in data.
+ * poपूर्णांकers in data.
  *
  * Returns: zero on success, or a negative error code on failure.
  */
-static int pldm_parse_image(struct pldmfw_priv *data)
-{
-	int err;
+अटल पूर्णांक pldm_parse_image(काष्ठा pldmfw_priv *data)
+अणु
+	पूर्णांक err;
 
-	if (WARN_ON(!(data->context->dev && data->fw->data && data->fw->size)))
-		return -EINVAL;
+	अगर (WARN_ON(!(data->context->dev && data->fw->data && data->fw->size)))
+		वापस -EINVAL;
 
 	err = pldm_parse_header(data);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	err = pldm_parse_records(data);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	err = pldm_parse_components(data);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	return pldm_verify_header_crc(data);
-}
+	वापस pldm_verअगरy_header_crc(data);
+पूर्ण
 
 /* these are u32 so that we can store PCI_ANY_ID */
-struct pldm_pci_record_id {
-	int vendor;
-	int device;
-	int subsystem_vendor;
-	int subsystem_device;
-};
+काष्ठा pldm_pci_record_id अणु
+	पूर्णांक venकरोr;
+	पूर्णांक device;
+	पूर्णांक subप्रणाली_venकरोr;
+	पूर्णांक subप्रणाली_device;
+पूर्ण;
 
 /**
- * pldmfw_op_pci_match_record - Check if a PCI device matches the record
- * @context: PLDM fw update structure
+ * pldmfw_op_pci_match_record - Check अगर a PCI device matches the record
+ * @context: PLDM fw update काष्ठाure
  * @record: list of records extracted from the PLDM image
  *
  * Determine of the PCI device associated with this device matches the record
  * data provided.
  *
- * Searches the descriptor TLVs and extracts the relevant descriptor data into
+ * Searches the descriptor TLVs and extracts the relevant descriptor data पूर्णांकo
  * a pldm_pci_record_id. This is then compared against the PCI device ID
- * information.
+ * inक्रमmation.
  *
- * Returns: true if the device matches the record, false otherwise.
+ * Returns: true अगर the device matches the record, false otherwise.
  */
-bool pldmfw_op_pci_match_record(struct pldmfw *context, struct pldmfw_record *record)
-{
-	struct pci_dev *pdev = to_pci_dev(context->dev);
-	struct pldm_pci_record_id id = {
-		.vendor = PCI_ANY_ID,
+bool pldmfw_op_pci_match_record(काष्ठा pldmfw *context, काष्ठा pldmfw_record *record)
+अणु
+	काष्ठा pci_dev *pdev = to_pci_dev(context->dev);
+	काष्ठा pldm_pci_record_id id = अणु
+		.venकरोr = PCI_ANY_ID,
 		.device = PCI_ANY_ID,
-		.subsystem_vendor = PCI_ANY_ID,
-		.subsystem_device = PCI_ANY_ID,
-	};
-	struct pldmfw_desc_tlv *desc;
+		.subप्रणाली_venकरोr = PCI_ANY_ID,
+		.subप्रणाली_device = PCI_ANY_ID,
+	पूर्ण;
+	काष्ठा pldmfw_desc_tlv *desc;
 
-	list_for_each_entry(desc, &record->descs, entry) {
+	list_क्रम_each_entry(desc, &record->descs, entry) अणु
 		u16 value;
-		int *ptr;
+		पूर्णांक *ptr;
 
-		switch (desc->type) {
-		case PLDM_DESC_ID_PCI_VENDOR_ID:
-			ptr = &id.vendor;
-			break;
-		case PLDM_DESC_ID_PCI_DEVICE_ID:
+		चयन (desc->type) अणु
+		हाल PLDM_DESC_ID_PCI_VENDOR_ID:
+			ptr = &id.venकरोr;
+			अवरोध;
+		हाल PLDM_DESC_ID_PCI_DEVICE_ID:
 			ptr = &id.device;
-			break;
-		case PLDM_DESC_ID_PCI_SUBVENDOR_ID:
-			ptr = &id.subsystem_vendor;
-			break;
-		case PLDM_DESC_ID_PCI_SUBDEV_ID:
-			ptr = &id.subsystem_device;
-			break;
-		default:
+			अवरोध;
+		हाल PLDM_DESC_ID_PCI_SUBVENDOR_ID:
+			ptr = &id.subप्रणाली_venकरोr;
+			अवरोध;
+		हाल PLDM_DESC_ID_PCI_SUBDEV_ID:
+			ptr = &id.subप्रणाली_device;
+			अवरोध;
+		शेष:
 			/* Skip unrelated TLVs */
-			continue;
-		}
+			जारी;
+		पूर्ण
 
 		value = get_unaligned_le16(desc->data);
-		/* A value of zero for one of the descriptors is sometimes
+		/* A value of zero क्रम one of the descriptors is someबार
 		 * used when the record should ignore this field when matching
-		 * device. For example if the record applies to any subsystem
-		 * device or vendor.
+		 * device. For example अगर the record applies to any subप्रणाली
+		 * device or venकरोr.
 		 */
-		if (value)
-			*ptr = (int)value;
-		else
+		अगर (value)
+			*ptr = (पूर्णांक)value;
+		अन्यथा
 			*ptr = PCI_ANY_ID;
-	}
+	पूर्ण
 
-	if ((id.vendor == PCI_ANY_ID || id.vendor == pdev->vendor) &&
+	अगर ((id.venकरोr == PCI_ANY_ID || id.venकरोr == pdev->venकरोr) &&
 	    (id.device == PCI_ANY_ID || id.device == pdev->device) &&
-	    (id.subsystem_vendor == PCI_ANY_ID || id.subsystem_vendor == pdev->subsystem_vendor) &&
-	    (id.subsystem_device == PCI_ANY_ID || id.subsystem_device == pdev->subsystem_device))
-		return true;
-	else
-		return false;
-}
+	    (id.subप्रणाली_venकरोr == PCI_ANY_ID || id.subप्रणाली_venकरोr == pdev->subप्रणाली_venकरोr) &&
+	    (id.subप्रणाली_device == PCI_ANY_ID || id.subप्रणाली_device == pdev->subप्रणाली_device))
+		वापस true;
+	अन्यथा
+		वापस false;
+पूर्ण
 EXPORT_SYMBOL(pldmfw_op_pci_match_record);
 
 /**
  * pldm_find_matching_record - Find the first matching PLDM record
- * @data: pointer to private data
+ * @data: poपूर्णांकer to निजी data
  *
  * Search through PLDM records and find the first matching entry. It is
  * expected that only one entry matches.
  *
- * Store a pointer to the matching record, if found.
+ * Store a poपूर्णांकer to the matching record, अगर found.
  *
- * Returns: zero on success, or -ENOENT if no matching record is found.
+ * Returns: zero on success, or -ENOENT अगर no matching record is found.
  */
-static int pldm_find_matching_record(struct pldmfw_priv *data)
-{
-	struct pldmfw_record *record;
+अटल पूर्णांक pldm_find_matching_record(काष्ठा pldmfw_priv *data)
+अणु
+	काष्ठा pldmfw_record *record;
 
-	list_for_each_entry(record, &data->records, entry) {
-		if (data->context->ops->match_record(data->context, record)) {
+	list_क्रम_each_entry(record, &data->records, entry) अणु
+		अगर (data->context->ops->match_record(data->context, record)) अणु
 			data->matching_record = record;
-			return 0;
-		}
-	}
+			वापस 0;
+		पूर्ण
+	पूर्ण
 
-	return -ENOENT;
-}
+	वापस -ENOENT;
+पूर्ण
 
 /**
- * pldm_send_package_data - Send firmware the package data for the record
- * @data: pointer to private data
+ * pldm_send_package_data - Send firmware the package data क्रम the record
+ * @data: poपूर्णांकer to निजी data
  *
  * Send the package data associated with the matching record to the firmware,
  * using the send_pkg_data operation.
  *
  * Returns: zero on success, or a negative error code on failure.
  */
-static int
-pldm_send_package_data(struct pldmfw_priv *data)
-{
-	struct pldmfw_record *record = data->matching_record;
-	const struct pldmfw_ops *ops = data->context->ops;
+अटल पूर्णांक
+pldm_send_package_data(काष्ठा pldmfw_priv *data)
+अणु
+	काष्ठा pldmfw_record *record = data->matching_record;
+	स्थिर काष्ठा pldmfw_ops *ops = data->context->ops;
 
-	return ops->send_package_data(data->context, record->package_data,
+	वापस ops->send_package_data(data->context, record->package_data,
 				      record->package_data_len);
-}
+पूर्ण
 
 /**
- * pldm_send_component_tables - Send component table information to firmware
- * @data: pointer to private data
+ * pldm_send_component_tables - Send component table inक्रमmation to firmware
+ * @data: poपूर्णांकer to निजी data
  *
  * Loop over each component, sending the applicable components to the firmware
  * via the send_component_table operation.
  *
  * Returns: zero on success, or a negative error code on failure.
  */
-static int
-pldm_send_component_tables(struct pldmfw_priv *data)
-{
-	unsigned long *bitmap = data->matching_record->component_bitmap;
-	struct pldmfw_component *component;
-	int err;
+अटल पूर्णांक
+pldm_send_component_tables(काष्ठा pldmfw_priv *data)
+अणु
+	अचिन्हित दीर्घ *biपंचांगap = data->matching_record->component_biपंचांगap;
+	काष्ठा pldmfw_component *component;
+	पूर्णांक err;
 
-	list_for_each_entry(component, &data->components, entry) {
+	list_क्रम_each_entry(component, &data->components, entry) अणु
 		u8 index = component->index, transfer_flag = 0;
 
-		/* Skip components which are not intended for this device */
-		if (!test_bit(index, bitmap))
-			continue;
+		/* Skip components which are not पूर्णांकended क्रम this device */
+		अगर (!test_bit(index, biपंचांगap))
+			जारी;
 
 		/* determine whether this is the start, middle, end, or both
 		 * the start and end of the component tables
 		 */
-		if (index == find_first_bit(bitmap, data->component_bitmap_len))
+		अगर (index == find_first_bit(biपंचांगap, data->component_biपंचांगap_len))
 			transfer_flag |= PLDM_TRANSFER_FLAG_START;
-		if (index == find_last_bit(bitmap, data->component_bitmap_len))
+		अगर (index == find_last_bit(biपंचांगap, data->component_biपंचांगap_len))
 			transfer_flag |= PLDM_TRANSFER_FLAG_END;
-		if (!transfer_flag)
+		अगर (!transfer_flag)
 			transfer_flag = PLDM_TRANSFER_FLAG_MIDDLE;
 
 		err = data->context->ops->send_component_table(data->context,
 							       component,
 							       transfer_flag);
-		if (err)
-			return err;
-	}
+		अगर (err)
+			वापस err;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * pldm_flash_components - Program each component to device flash
- * @data: pointer to private data
+ * @data: poपूर्णांकer to निजी data
  *
- * Loop through each component that is active for the matching device record,
- * and send it to the device driver for flashing.
+ * Loop through each component that is active क्रम the matching device record,
+ * and send it to the device driver क्रम flashing.
  *
  * Returns: zero on success, or a negative error code on failure.
  */
-static int pldm_flash_components(struct pldmfw_priv *data)
-{
-	unsigned long *bitmap = data->matching_record->component_bitmap;
-	struct pldmfw_component *component;
-	int err;
+अटल पूर्णांक pldm_flash_components(काष्ठा pldmfw_priv *data)
+अणु
+	अचिन्हित दीर्घ *biपंचांगap = data->matching_record->component_biपंचांगap;
+	काष्ठा pldmfw_component *component;
+	पूर्णांक err;
 
-	list_for_each_entry(component, &data->components, entry) {
+	list_क्रम_each_entry(component, &data->components, entry) अणु
 		u8 index = component->index;
 
-		/* Skip components which are not intended for this device */
-		if (!test_bit(index, bitmap))
-			continue;
+		/* Skip components which are not पूर्णांकended क्रम this device */
+		अगर (!test_bit(index, biपंचांगap))
+			जारी;
 
 		err = data->context->ops->flash_component(data->context, component);
-		if (err)
-			return err;
-	}
+		अगर (err)
+			वापस err;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * pldm_finalize_update - Finalize the device flash update
- * @data: pointer to private data
+ * @data: poपूर्णांकer to निजी data
  *
- * Tell the device driver to perform any remaining logic to complete the
+ * Tell the device driver to perक्रमm any reमुख्यing logic to complete the
  * device update.
  *
- * Returns: zero on success, or a PLFM_FWU error indicating the reason for
+ * Returns: zero on success, or a PLFM_FWU error indicating the reason क्रम
  * failure.
  */
-static int pldm_finalize_update(struct pldmfw_priv *data)
-{
-	if (data->context->ops->finalize_update)
-		return data->context->ops->finalize_update(data->context);
+अटल पूर्णांक pldm_finalize_update(काष्ठा pldmfw_priv *data)
+अणु
+	अगर (data->context->ops->finalize_update)
+		वापस data->context->ops->finalize_update(data->context);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * pldmfw_flash_image - Write a PLDM-formatted firmware image to the device
- * @context: ops and data for firmware update
- * @fw: firmware object pointing to the relevant firmware file to program
+ * pldmfw_flash_image - Write a PLDM-क्रमmatted firmware image to the device
+ * @context: ops and data क्रम firmware update
+ * @fw: firmware object poपूर्णांकing to the relevant firmware file to program
  *
- * Parse the data for a given firmware file, verifying that it is a valid PLDM
- * formatted image that matches this device.
+ * Parse the data क्रम a given firmware file, verअगरying that it is a valid PLDM
+ * क्रमmatted image that matches this device.
  *
  * Extract the device record Package Data and Component Tables and send them
- * to the device firmware. Extract and write the flash data for each of the
+ * to the device firmware. Extract and ग_लिखो the flash data क्रम each of the
  * components indicated in the firmware file.
  *
  * Returns: zero on success, or a negative error code on failure.
  */
-int pldmfw_flash_image(struct pldmfw *context, const struct firmware *fw)
-{
-	struct pldmfw_priv *data;
-	int err;
+पूर्णांक pldmfw_flash_image(काष्ठा pldmfw *context, स्थिर काष्ठा firmware *fw)
+अणु
+	काष्ठा pldmfw_priv *data;
+	पूर्णांक err;
 
-	data = kzalloc(sizeof(*data), GFP_KERNEL);
-	if (!data)
-		return -ENOMEM;
+	data = kzalloc(माप(*data), GFP_KERNEL);
+	अगर (!data)
+		वापस -ENOMEM;
 
 	INIT_LIST_HEAD(&data->records);
 	INIT_LIST_HEAD(&data->components);
@@ -845,33 +846,33 @@ int pldmfw_flash_image(struct pldmfw *context, const struct firmware *fw)
 	data->context = context;
 
 	err = pldm_parse_image(data);
-	if (err)
-		goto out_release_data;
+	अगर (err)
+		जाओ out_release_data;
 
 	err = pldm_find_matching_record(data);
-	if (err)
-		goto out_release_data;
+	अगर (err)
+		जाओ out_release_data;
 
 	err = pldm_send_package_data(data);
-	if (err)
-		goto out_release_data;
+	अगर (err)
+		जाओ out_release_data;
 
 	err = pldm_send_component_tables(data);
-	if (err)
-		goto out_release_data;
+	अगर (err)
+		जाओ out_release_data;
 
 	err = pldm_flash_components(data);
-	if (err)
-		goto out_release_data;
+	अगर (err)
+		जाओ out_release_data;
 
 	err = pldm_finalize_update(data);
 
 out_release_data:
-	pldmfw_free_priv(data);
-	kfree(data);
+	pldmfw_मुक्त_priv(data);
+	kमुक्त(data);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 EXPORT_SYMBOL(pldmfw_flash_image);
 
 MODULE_AUTHOR("Jacob Keller <jacob.e.keller@intel.com>");

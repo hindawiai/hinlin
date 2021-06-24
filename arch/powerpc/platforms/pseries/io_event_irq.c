@@ -1,161 +1,162 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Copyright 2010 2011 Mark Nelson and Tseng-Hui (Frank) Lin, IBM Corporation
  */
 
-#include <linux/errno.h>
-#include <linux/slab.h>
-#include <linux/export.h>
-#include <linux/irq.h>
-#include <linux/interrupt.h>
-#include <linux/of.h>
-#include <linux/list.h>
-#include <linux/notifier.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/slab.h>
+#समावेश <linux/export.h>
+#समावेश <linux/irq.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/of.h>
+#समावेश <linux/list.h>
+#समावेश <linux/notअगरier.h>
 
-#include <asm/machdep.h>
-#include <asm/rtas.h>
-#include <asm/irq.h>
-#include <asm/io_event_irq.h>
+#समावेश <यंत्र/machdep.h>
+#समावेश <यंत्र/rtas.h>
+#समावेश <यंत्र/irq.h>
+#समावेश <यंत्र/io_event_irq.h>
 
-#include "pseries.h"
+#समावेश "pseries.h"
 
 /*
- * IO event interrupt is a mechanism provided by RTAS to return
- * information about hardware error and non-error events. Device
- * drivers can register their event handlers to receive events.
- * Device drivers are expected to use atomic_notifier_chain_register()
- * and atomic_notifier_chain_unregister() to register and unregister
+ * IO event पूर्णांकerrupt is a mechanism provided by RTAS to वापस
+ * inक्रमmation about hardware error and non-error events. Device
+ * drivers can रेजिस्टर their event handlers to receive events.
+ * Device drivers are expected to use atomic_notअगरier_chain_रेजिस्टर()
+ * and atomic_notअगरier_chain_unरेजिस्टर() to रेजिस्टर and unरेजिस्टर
  * their event handlers. Since multiple IO event types and scopes
- * share an IO event interrupt, the event handlers are called one
+ * share an IO event पूर्णांकerrupt, the event handlers are called one
  * by one until the IO event is claimed by one of the handlers.
- * The event handlers are expected to return NOTIFY_OK if the
- * event is handled by the event handler or NOTIFY_DONE if the
- * event does not belong to the handler.
+ * The event handlers are expected to वापस NOTIFY_OK अगर the
+ * event is handled by the event handler or NOTIFY_DONE अगर the
+ * event करोes not beदीर्घ to the handler.
  *
  * Usage:
  *
- * Notifier function:
- * #include <asm/io_event_irq.h>
- * int event_handler(struct notifier_block *nb, unsigned long val, void *data) {
- * 	p = (struct pseries_io_event_sect_data *) data;
- * 	if (! is_my_event(p->scope, p->event_type)) return NOTIFY_DONE;
+ * Notअगरier function:
+ * #समावेश <यंत्र/io_event_irq.h>
+ * पूर्णांक event_handler(काष्ठा notअगरier_block *nb, अचिन्हित दीर्घ val, व्योम *data) अणु
+ * 	p = (काष्ठा pseries_io_event_sect_data *) data;
+ * 	अगर (! is_my_event(p->scope, p->event_type)) वापस NOTIFY_DONE;
  * 		:
  * 		:
- * 	return NOTIFY_OK;
- * }
- * struct notifier_block event_nb = {
- * 	.notifier_call = event_handler,
- * }
+ * 	वापस NOTIFY_OK;
+ * पूर्ण
+ * काष्ठा notअगरier_block event_nb = अणु
+ * 	.notअगरier_call = event_handler,
+ * पूर्ण
  *
  * Registration:
- * atomic_notifier_chain_register(&pseries_ioei_notifier_list, &event_nb);
+ * atomic_notअगरier_chain_रेजिस्टर(&pseries_ioei_notअगरier_list, &event_nb);
  *
  * Unregistration:
- * atomic_notifier_chain_unregister(&pseries_ioei_notifier_list, &event_nb);
+ * atomic_notअगरier_chain_unरेजिस्टर(&pseries_ioei_notअगरier_list, &event_nb);
  */
 
-ATOMIC_NOTIFIER_HEAD(pseries_ioei_notifier_list);
-EXPORT_SYMBOL_GPL(pseries_ioei_notifier_list);
+ATOMIC_NOTIFIER_HEAD(pseries_ioei_notअगरier_list);
+EXPORT_SYMBOL_GPL(pseries_ioei_notअगरier_list);
 
-static int ioei_check_exception_token;
+अटल पूर्णांक ioei_check_exception_token;
 
-static char ioei_rtas_buf[RTAS_DATA_BUF_SIZE] __cacheline_aligned;
+अटल अक्षर ioei_rtas_buf[RTAS_DATA_BUF_SIZE] __cacheline_aligned;
 
 /**
  * Find the data portion of an IO Event section from event log.
  * @elog: RTAS error/event log.
  *
  * Return:
- * 	pointer to a valid IO event section data. NULL if not found.
+ * 	poपूर्णांकer to a valid IO event section data. शून्य अगर not found.
  */
-static struct pseries_io_event * ioei_find_event(struct rtas_error_log *elog)
-{
-	struct pseries_errorlog *sect;
+अटल काष्ठा pseries_io_event * ioei_find_event(काष्ठा rtas_error_log *elog)
+अणु
+	काष्ठा pseries_errorlog *sect;
 
-	/* We should only ever get called for io-event interrupts, but if
-	 * we do get called for another type then something went wrong so
+	/* We should only ever get called क्रम io-event पूर्णांकerrupts, but अगर
+	 * we करो get called क्रम another type then something went wrong so
 	 * make some noise about it.
 	 * RTAS_TYPE_IO only exists in extended event log version 6 or later.
 	 * No need to check event log version.
 	 */
-	if (unlikely(rtas_error_type(elog) != RTAS_TYPE_IO)) {
-		printk_once(KERN_WARNING"io_event_irq: Unexpected event type %d",
+	अगर (unlikely(rtas_error_type(elog) != RTAS_TYPE_IO)) अणु
+		prपूर्णांकk_once(KERN_WARNING"io_event_irq: Unexpected event type %d",
 			    rtas_error_type(elog));
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
 	sect = get_pseries_errorlog(elog, PSERIES_ELOG_SECT_ID_IO_EVENT);
-	if (unlikely(!sect)) {
-		printk_once(KERN_WARNING "io_event_irq: RTAS extended event "
+	अगर (unlikely(!sect)) अणु
+		prपूर्णांकk_once(KERN_WARNING "io_event_irq: RTAS extended event "
 			    "log does not contain an IO Event section. "
 			    "Could be a bug in system firmware!\n");
-		return NULL;
-	}
-	return (struct pseries_io_event *) &sect->data;
-}
+		वापस शून्य;
+	पूर्ण
+	वापस (काष्ठा pseries_io_event *) &sect->data;
+पूर्ण
 
 /*
  * PAPR:
- * - check-exception returns the first found error or event and clear that
+ * - check-exception वापसs the first found error or event and clear that
  *   error or event so it is reported once.
- * - Each interrupt returns one event. If a plateform chooses to report
- *   multiple events through a single interrupt, it must ensure that the
- *   interrupt remains asserted until check-exception has been used to
- *   process all out-standing events for that interrupt.
+ * - Each पूर्णांकerrupt वापसs one event. If a plateक्रमm chooses to report
+ *   multiple events through a single पूर्णांकerrupt, it must ensure that the
+ *   पूर्णांकerrupt reमुख्यs निश्चितed until check-exception has been used to
+ *   process all out-standing events क्रम that पूर्णांकerrupt.
  *
  * Implementation notes:
- * - Events must be processed in the order they are returned. Hence,
+ * - Events must be processed in the order they are वापसed. Hence,
  *   sequential in nature.
  * - The owner of an event is determined by combinations of scope,
  *   event type, and sub-type. There is no easy way to pre-sort clients
  *   by scope or event type alone. For example, Torrent ISR route change
  *   event is reported with scope 0x00 (Not Applicable) rather than
- *   0x3B (Torrent-hub). It is better to let the clients to identify
+ *   0x3B (Torrent-hub). It is better to let the clients to identअगरy
  *   who owns the event.
  */
 
-static irqreturn_t ioei_interrupt(int irq, void *dev_id)
-{
-	struct pseries_io_event *event;
-	int rtas_rc;
+अटल irqवापस_t ioei_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा pseries_io_event *event;
+	पूर्णांक rtas_rc;
 
-	for (;;) {
-		rtas_rc = rtas_call(ioei_check_exception_token, 6, 1, NULL,
+	क्रम (;;) अणु
+		rtas_rc = rtas_call(ioei_check_exception_token, 6, 1, शून्य,
 				    RTAS_VECTOR_EXTERNAL_INTERRUPT,
 				    virq_to_hw(irq),
 				    RTAS_IO_EVENTS, 1 /* Time Critical */,
 				    __pa(ioei_rtas_buf),
 				    RTAS_DATA_BUF_SIZE);
-		if (rtas_rc != 0)
-			break;
+		अगर (rtas_rc != 0)
+			अवरोध;
 
-		event = ioei_find_event((struct rtas_error_log *)ioei_rtas_buf);
-		if (!event)
-			continue;
+		event = ioei_find_event((काष्ठा rtas_error_log *)ioei_rtas_buf);
+		अगर (!event)
+			जारी;
 
-		atomic_notifier_call_chain(&pseries_ioei_notifier_list,
+		atomic_notअगरier_call_chain(&pseries_ioei_notअगरier_list,
 					   0, event);
-	}
-	return IRQ_HANDLED;
-}
+	पूर्ण
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static int __init ioei_init(void)
-{
-	struct device_node *np;
+अटल पूर्णांक __init ioei_init(व्योम)
+अणु
+	काष्ठा device_node *np;
 
 	ioei_check_exception_token = rtas_token("check-exception");
-	if (ioei_check_exception_token == RTAS_UNKNOWN_SERVICE)
-		return -ENODEV;
+	अगर (ioei_check_exception_token == RTAS_UNKNOWN_SERVICE)
+		वापस -ENODEV;
 
 	np = of_find_node_by_path("/event-sources/ibm,io-events");
-	if (np) {
-		request_event_sources_irqs(np, ioei_interrupt, "IO_EVENT");
+	अगर (np) अणु
+		request_event_sources_irqs(np, ioei_पूर्णांकerrupt, "IO_EVENT");
 		pr_info("IBM I/O event interrupts enabled\n");
 		of_node_put(np);
-	} else {
-		return -ENODEV;
-	}
-	return 0;
-}
+	पूर्ण अन्यथा अणु
+		वापस -ENODEV;
+	पूर्ण
+	वापस 0;
+पूर्ण
 machine_subsys_initcall(pseries, ioei_init);
 

@@ -1,333 +1,334 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (c) 2008, Intel Corporation.
  *
- * Author: Alexander Duyck <alexander.h.duyck@intel.com>
+ * Author: Alexander Duyck <alexander.h.duyck@पूर्णांकel.com>
  */
 
-#include <linux/module.h>
-#include <linux/init.h>
-#include <linux/kernel.h>
-#include <linux/skbuff.h>
-#include <linux/rtnetlink.h>
-#include <net/netlink.h>
-#include <net/pkt_sched.h>
-#include <net/ip.h>
-#include <net/ipv6.h>
-#include <net/dsfield.h>
-#include <net/pkt_cls.h>
+#समावेश <linux/module.h>
+#समावेश <linux/init.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/skbuff.h>
+#समावेश <linux/rtnetlink.h>
+#समावेश <net/netlink.h>
+#समावेश <net/pkt_sched.h>
+#समावेश <net/ip.h>
+#समावेश <net/ipv6.h>
+#समावेश <net/dsfield.h>
+#समावेश <net/pkt_cls.h>
 
-#include <linux/tc_act/tc_skbedit.h>
-#include <net/tc_act/tc_skbedit.h>
+#समावेश <linux/tc_act/tc_skbedit.h>
+#समावेश <net/tc_act/tc_skbedit.h>
 
-static unsigned int skbedit_net_id;
-static struct tc_action_ops act_skbedit_ops;
+अटल अचिन्हित पूर्णांक skbedit_net_id;
+अटल काष्ठा tc_action_ops act_skbedit_ops;
 
-static int tcf_skbedit_act(struct sk_buff *skb, const struct tc_action *a,
-			   struct tcf_result *res)
-{
-	struct tcf_skbedit *d = to_skbedit(a);
-	struct tcf_skbedit_params *params;
-	int action;
+अटल पूर्णांक tcf_skbedit_act(काष्ठा sk_buff *skb, स्थिर काष्ठा tc_action *a,
+			   काष्ठा tcf_result *res)
+अणु
+	काष्ठा tcf_skbedit *d = to_skbedit(a);
+	काष्ठा tcf_skbedit_params *params;
+	पूर्णांक action;
 
-	tcf_lastuse_update(&d->tcf_tm);
+	tcf_lastuse_update(&d->tcf_पंचांग);
 	bstats_cpu_update(this_cpu_ptr(d->common.cpu_bstats), skb);
 
 	params = rcu_dereference_bh(d->params);
 	action = READ_ONCE(d->tcf_action);
 
-	if (params->flags & SKBEDIT_F_PRIORITY)
+	अगर (params->flags & SKBEDIT_F_PRIORITY)
 		skb->priority = params->priority;
-	if (params->flags & SKBEDIT_F_INHERITDSFIELD) {
-		int wlen = skb_network_offset(skb);
+	अगर (params->flags & SKBEDIT_F_INHERITDSFIELD) अणु
+		पूर्णांक wlen = skb_network_offset(skb);
 
-		switch (skb_protocol(skb, true)) {
-		case htons(ETH_P_IP):
-			wlen += sizeof(struct iphdr);
-			if (!pskb_may_pull(skb, wlen))
-				goto err;
+		चयन (skb_protocol(skb, true)) अणु
+		हाल htons(ETH_P_IP):
+			wlen += माप(काष्ठा iphdr);
+			अगर (!pskb_may_pull(skb, wlen))
+				जाओ err;
 			skb->priority = ipv4_get_dsfield(ip_hdr(skb)) >> 2;
-			break;
+			अवरोध;
 
-		case htons(ETH_P_IPV6):
-			wlen += sizeof(struct ipv6hdr);
-			if (!pskb_may_pull(skb, wlen))
-				goto err;
+		हाल htons(ETH_P_IPV6):
+			wlen += माप(काष्ठा ipv6hdr);
+			अगर (!pskb_may_pull(skb, wlen))
+				जाओ err;
 			skb->priority = ipv6_get_dsfield(ipv6_hdr(skb)) >> 2;
-			break;
-		}
-	}
-	if (params->flags & SKBEDIT_F_QUEUE_MAPPING &&
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	अगर (params->flags & SKBEDIT_F_QUEUE_MAPPING &&
 	    skb->dev->real_num_tx_queues > params->queue_mapping)
 		skb_set_queue_mapping(skb, params->queue_mapping);
-	if (params->flags & SKBEDIT_F_MARK) {
+	अगर (params->flags & SKBEDIT_F_MARK) अणु
 		skb->mark &= ~params->mask;
 		skb->mark |= params->mark & params->mask;
-	}
-	if (params->flags & SKBEDIT_F_PTYPE)
+	पूर्ण
+	अगर (params->flags & SKBEDIT_F_PTYPE)
 		skb->pkt_type = params->ptype;
-	return action;
+	वापस action;
 
 err:
 	qstats_drop_inc(this_cpu_ptr(d->common.cpu_qstats));
-	return TC_ACT_SHOT;
-}
+	वापस TC_ACT_SHOT;
+पूर्ण
 
-static void tcf_skbedit_stats_update(struct tc_action *a, u64 bytes,
+अटल व्योम tcf_skbedit_stats_update(काष्ठा tc_action *a, u64 bytes,
 				     u64 packets, u64 drops,
 				     u64 lastuse, bool hw)
-{
-	struct tcf_skbedit *d = to_skbedit(a);
-	struct tcf_t *tm = &d->tcf_tm;
+अणु
+	काष्ठा tcf_skbedit *d = to_skbedit(a);
+	काष्ठा tcf_t *पंचांग = &d->tcf_पंचांग;
 
 	tcf_action_update_stats(a, bytes, packets, drops, hw);
-	tm->lastuse = max_t(u64, tm->lastuse, lastuse);
-}
+	पंचांग->lastuse = max_t(u64, पंचांग->lastuse, lastuse);
+पूर्ण
 
-static const struct nla_policy skbedit_policy[TCA_SKBEDIT_MAX + 1] = {
-	[TCA_SKBEDIT_PARMS]		= { .len = sizeof(struct tc_skbedit) },
-	[TCA_SKBEDIT_PRIORITY]		= { .len = sizeof(u32) },
-	[TCA_SKBEDIT_QUEUE_MAPPING]	= { .len = sizeof(u16) },
-	[TCA_SKBEDIT_MARK]		= { .len = sizeof(u32) },
-	[TCA_SKBEDIT_PTYPE]		= { .len = sizeof(u16) },
-	[TCA_SKBEDIT_MASK]		= { .len = sizeof(u32) },
-	[TCA_SKBEDIT_FLAGS]		= { .len = sizeof(u64) },
-};
+अटल स्थिर काष्ठा nla_policy skbedit_policy[TCA_SKBEDIT_MAX + 1] = अणु
+	[TCA_SKBEDIT_PARMS]		= अणु .len = माप(काष्ठा tc_skbedit) पूर्ण,
+	[TCA_SKBEDIT_PRIORITY]		= अणु .len = माप(u32) पूर्ण,
+	[TCA_SKBEDIT_QUEUE_MAPPING]	= अणु .len = माप(u16) पूर्ण,
+	[TCA_SKBEDIT_MARK]		= अणु .len = माप(u32) पूर्ण,
+	[TCA_SKBEDIT_PTYPE]		= अणु .len = माप(u16) पूर्ण,
+	[TCA_SKBEDIT_MASK]		= अणु .len = माप(u32) पूर्ण,
+	[TCA_SKBEDIT_FLAGS]		= अणु .len = माप(u64) पूर्ण,
+पूर्ण;
 
-static int tcf_skbedit_init(struct net *net, struct nlattr *nla,
-			    struct nlattr *est, struct tc_action **a,
-			    int ovr, int bind, bool rtnl_held,
-			    struct tcf_proto *tp, u32 act_flags,
-			    struct netlink_ext_ack *extack)
-{
-	struct tc_action_net *tn = net_generic(net, skbedit_net_id);
-	struct tcf_skbedit_params *params_new;
-	struct nlattr *tb[TCA_SKBEDIT_MAX + 1];
-	struct tcf_chain *goto_ch = NULL;
-	struct tc_skbedit *parm;
-	struct tcf_skbedit *d;
-	u32 flags = 0, *priority = NULL, *mark = NULL, *mask = NULL;
-	u16 *queue_mapping = NULL, *ptype = NULL;
+अटल पूर्णांक tcf_skbedit_init(काष्ठा net *net, काष्ठा nlattr *nla,
+			    काष्ठा nlattr *est, काष्ठा tc_action **a,
+			    पूर्णांक ovr, पूर्णांक bind, bool rtnl_held,
+			    काष्ठा tcf_proto *tp, u32 act_flags,
+			    काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा tc_action_net *tn = net_generic(net, skbedit_net_id);
+	काष्ठा tcf_skbedit_params *params_new;
+	काष्ठा nlattr *tb[TCA_SKBEDIT_MAX + 1];
+	काष्ठा tcf_chain *जाओ_ch = शून्य;
+	काष्ठा tc_skbedit *parm;
+	काष्ठा tcf_skbedit *d;
+	u32 flags = 0, *priority = शून्य, *mark = शून्य, *mask = शून्य;
+	u16 *queue_mapping = शून्य, *ptype = शून्य;
 	bool exists = false;
-	int ret = 0, err;
+	पूर्णांक ret = 0, err;
 	u32 index;
 
-	if (nla == NULL)
-		return -EINVAL;
+	अगर (nla == शून्य)
+		वापस -EINVAL;
 
 	err = nla_parse_nested_deprecated(tb, TCA_SKBEDIT_MAX, nla,
-					  skbedit_policy, NULL);
-	if (err < 0)
-		return err;
+					  skbedit_policy, शून्य);
+	अगर (err < 0)
+		वापस err;
 
-	if (tb[TCA_SKBEDIT_PARMS] == NULL)
-		return -EINVAL;
+	अगर (tb[TCA_SKBEDIT_PARMS] == शून्य)
+		वापस -EINVAL;
 
-	if (tb[TCA_SKBEDIT_PRIORITY] != NULL) {
+	अगर (tb[TCA_SKBEDIT_PRIORITY] != शून्य) अणु
 		flags |= SKBEDIT_F_PRIORITY;
 		priority = nla_data(tb[TCA_SKBEDIT_PRIORITY]);
-	}
+	पूर्ण
 
-	if (tb[TCA_SKBEDIT_QUEUE_MAPPING] != NULL) {
+	अगर (tb[TCA_SKBEDIT_QUEUE_MAPPING] != शून्य) अणु
 		flags |= SKBEDIT_F_QUEUE_MAPPING;
 		queue_mapping = nla_data(tb[TCA_SKBEDIT_QUEUE_MAPPING]);
-	}
+	पूर्ण
 
-	if (tb[TCA_SKBEDIT_PTYPE] != NULL) {
+	अगर (tb[TCA_SKBEDIT_PTYPE] != शून्य) अणु
 		ptype = nla_data(tb[TCA_SKBEDIT_PTYPE]);
-		if (!skb_pkt_type_ok(*ptype))
-			return -EINVAL;
+		अगर (!skb_pkt_type_ok(*ptype))
+			वापस -EINVAL;
 		flags |= SKBEDIT_F_PTYPE;
-	}
+	पूर्ण
 
-	if (tb[TCA_SKBEDIT_MARK] != NULL) {
+	अगर (tb[TCA_SKBEDIT_MARK] != शून्य) अणु
 		flags |= SKBEDIT_F_MARK;
 		mark = nla_data(tb[TCA_SKBEDIT_MARK]);
-	}
+	पूर्ण
 
-	if (tb[TCA_SKBEDIT_MASK] != NULL) {
+	अगर (tb[TCA_SKBEDIT_MASK] != शून्य) अणु
 		flags |= SKBEDIT_F_MASK;
 		mask = nla_data(tb[TCA_SKBEDIT_MASK]);
-	}
+	पूर्ण
 
-	if (tb[TCA_SKBEDIT_FLAGS] != NULL) {
+	अगर (tb[TCA_SKBEDIT_FLAGS] != शून्य) अणु
 		u64 *pure_flags = nla_data(tb[TCA_SKBEDIT_FLAGS]);
 
-		if (*pure_flags & SKBEDIT_F_INHERITDSFIELD)
+		अगर (*pure_flags & SKBEDIT_F_INHERITDSFIELD)
 			flags |= SKBEDIT_F_INHERITDSFIELD;
-	}
+	पूर्ण
 
 	parm = nla_data(tb[TCA_SKBEDIT_PARMS]);
 	index = parm->index;
 	err = tcf_idr_check_alloc(tn, &index, a, bind);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 	exists = err;
-	if (exists && bind)
-		return 0;
+	अगर (exists && bind)
+		वापस 0;
 
-	if (!flags) {
-		if (exists)
+	अगर (!flags) अणु
+		अगर (exists)
 			tcf_idr_release(*a, bind);
-		else
+		अन्यथा
 			tcf_idr_cleanup(tn, index);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (!exists) {
+	अगर (!exists) अणु
 		ret = tcf_idr_create(tn, index, est, a,
 				     &act_skbedit_ops, bind, true, 0);
-		if (ret) {
+		अगर (ret) अणु
 			tcf_idr_cleanup(tn, index);
-			return ret;
-		}
+			वापस ret;
+		पूर्ण
 
 		d = to_skbedit(*a);
 		ret = ACT_P_CREATED;
-	} else {
+	पूर्ण अन्यथा अणु
 		d = to_skbedit(*a);
-		if (!ovr) {
+		अगर (!ovr) अणु
 			tcf_idr_release(*a, bind);
-			return -EEXIST;
-		}
-	}
-	err = tcf_action_check_ctrlact(parm->action, tp, &goto_ch, extack);
-	if (err < 0)
-		goto release_idr;
+			वापस -EEXIST;
+		पूर्ण
+	पूर्ण
+	err = tcf_action_check_ctrlact(parm->action, tp, &जाओ_ch, extack);
+	अगर (err < 0)
+		जाओ release_idr;
 
-	params_new = kzalloc(sizeof(*params_new), GFP_KERNEL);
-	if (unlikely(!params_new)) {
+	params_new = kzalloc(माप(*params_new), GFP_KERNEL);
+	अगर (unlikely(!params_new)) अणु
 		err = -ENOMEM;
-		goto put_chain;
-	}
+		जाओ put_chain;
+	पूर्ण
 
 	params_new->flags = flags;
-	if (flags & SKBEDIT_F_PRIORITY)
+	अगर (flags & SKBEDIT_F_PRIORITY)
 		params_new->priority = *priority;
-	if (flags & SKBEDIT_F_QUEUE_MAPPING)
+	अगर (flags & SKBEDIT_F_QUEUE_MAPPING)
 		params_new->queue_mapping = *queue_mapping;
-	if (flags & SKBEDIT_F_MARK)
+	अगर (flags & SKBEDIT_F_MARK)
 		params_new->mark = *mark;
-	if (flags & SKBEDIT_F_PTYPE)
+	अगर (flags & SKBEDIT_F_PTYPE)
 		params_new->ptype = *ptype;
-	/* default behaviour is to use all the bits */
+	/* शेष behaviour is to use all the bits */
 	params_new->mask = 0xffffffff;
-	if (flags & SKBEDIT_F_MASK)
+	अगर (flags & SKBEDIT_F_MASK)
 		params_new->mask = *mask;
 
 	spin_lock_bh(&d->tcf_lock);
-	goto_ch = tcf_action_set_ctrlact(*a, parm->action, goto_ch);
-	params_new = rcu_replace_pointer(d->params, params_new,
+	जाओ_ch = tcf_action_set_ctrlact(*a, parm->action, जाओ_ch);
+	params_new = rcu_replace_poपूर्णांकer(d->params, params_new,
 					 lockdep_is_held(&d->tcf_lock));
 	spin_unlock_bh(&d->tcf_lock);
-	if (params_new)
-		kfree_rcu(params_new, rcu);
-	if (goto_ch)
-		tcf_chain_put_by_act(goto_ch);
+	अगर (params_new)
+		kमुक्त_rcu(params_new, rcu);
+	अगर (जाओ_ch)
+		tcf_chain_put_by_act(जाओ_ch);
 
-	return ret;
+	वापस ret;
 put_chain:
-	if (goto_ch)
-		tcf_chain_put_by_act(goto_ch);
+	अगर (जाओ_ch)
+		tcf_chain_put_by_act(जाओ_ch);
 release_idr:
 	tcf_idr_release(*a, bind);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int tcf_skbedit_dump(struct sk_buff *skb, struct tc_action *a,
-			    int bind, int ref)
-{
-	unsigned char *b = skb_tail_pointer(skb);
-	struct tcf_skbedit *d = to_skbedit(a);
-	struct tcf_skbedit_params *params;
-	struct tc_skbedit opt = {
+अटल पूर्णांक tcf_skbedit_dump(काष्ठा sk_buff *skb, काष्ठा tc_action *a,
+			    पूर्णांक bind, पूर्णांक ref)
+अणु
+	अचिन्हित अक्षर *b = skb_tail_poपूर्णांकer(skb);
+	काष्ठा tcf_skbedit *d = to_skbedit(a);
+	काष्ठा tcf_skbedit_params *params;
+	काष्ठा tc_skbedit opt = अणु
 		.index   = d->tcf_index,
-		.refcnt  = refcount_read(&d->tcf_refcnt) - ref,
-		.bindcnt = atomic_read(&d->tcf_bindcnt) - bind,
-	};
+		.refcnt  = refcount_पढ़ो(&d->tcf_refcnt) - ref,
+		.bindcnt = atomic_पढ़ो(&d->tcf_bindcnt) - bind,
+	पूर्ण;
 	u64 pure_flags = 0;
-	struct tcf_t t;
+	काष्ठा tcf_t t;
 
 	spin_lock_bh(&d->tcf_lock);
-	params = rcu_dereference_protected(d->params,
+	params = rcu_dereference_रक्षित(d->params,
 					   lockdep_is_held(&d->tcf_lock));
 	opt.action = d->tcf_action;
 
-	if (nla_put(skb, TCA_SKBEDIT_PARMS, sizeof(opt), &opt))
-		goto nla_put_failure;
-	if ((params->flags & SKBEDIT_F_PRIORITY) &&
+	अगर (nla_put(skb, TCA_SKBEDIT_PARMS, माप(opt), &opt))
+		जाओ nla_put_failure;
+	अगर ((params->flags & SKBEDIT_F_PRIORITY) &&
 	    nla_put_u32(skb, TCA_SKBEDIT_PRIORITY, params->priority))
-		goto nla_put_failure;
-	if ((params->flags & SKBEDIT_F_QUEUE_MAPPING) &&
+		जाओ nla_put_failure;
+	अगर ((params->flags & SKBEDIT_F_QUEUE_MAPPING) &&
 	    nla_put_u16(skb, TCA_SKBEDIT_QUEUE_MAPPING, params->queue_mapping))
-		goto nla_put_failure;
-	if ((params->flags & SKBEDIT_F_MARK) &&
+		जाओ nla_put_failure;
+	अगर ((params->flags & SKBEDIT_F_MARK) &&
 	    nla_put_u32(skb, TCA_SKBEDIT_MARK, params->mark))
-		goto nla_put_failure;
-	if ((params->flags & SKBEDIT_F_PTYPE) &&
+		जाओ nla_put_failure;
+	अगर ((params->flags & SKBEDIT_F_PTYPE) &&
 	    nla_put_u16(skb, TCA_SKBEDIT_PTYPE, params->ptype))
-		goto nla_put_failure;
-	if ((params->flags & SKBEDIT_F_MASK) &&
+		जाओ nla_put_failure;
+	अगर ((params->flags & SKBEDIT_F_MASK) &&
 	    nla_put_u32(skb, TCA_SKBEDIT_MASK, params->mask))
-		goto nla_put_failure;
-	if (params->flags & SKBEDIT_F_INHERITDSFIELD)
+		जाओ nla_put_failure;
+	अगर (params->flags & SKBEDIT_F_INHERITDSFIELD)
 		pure_flags |= SKBEDIT_F_INHERITDSFIELD;
-	if (pure_flags != 0 &&
-	    nla_put(skb, TCA_SKBEDIT_FLAGS, sizeof(pure_flags), &pure_flags))
-		goto nla_put_failure;
+	अगर (pure_flags != 0 &&
+	    nla_put(skb, TCA_SKBEDIT_FLAGS, माप(pure_flags), &pure_flags))
+		जाओ nla_put_failure;
 
-	tcf_tm_dump(&t, &d->tcf_tm);
-	if (nla_put_64bit(skb, TCA_SKBEDIT_TM, sizeof(t), &t, TCA_SKBEDIT_PAD))
-		goto nla_put_failure;
+	tcf_पंचांग_dump(&t, &d->tcf_पंचांग);
+	अगर (nla_put_64bit(skb, TCA_SKBEDIT_TM, माप(t), &t, TCA_SKBEDIT_PAD))
+		जाओ nla_put_failure;
 	spin_unlock_bh(&d->tcf_lock);
 
-	return skb->len;
+	वापस skb->len;
 
 nla_put_failure:
 	spin_unlock_bh(&d->tcf_lock);
 	nlmsg_trim(skb, b);
-	return -1;
-}
+	वापस -1;
+पूर्ण
 
-static void tcf_skbedit_cleanup(struct tc_action *a)
-{
-	struct tcf_skbedit *d = to_skbedit(a);
-	struct tcf_skbedit_params *params;
+अटल व्योम tcf_skbedit_cleanup(काष्ठा tc_action *a)
+अणु
+	काष्ठा tcf_skbedit *d = to_skbedit(a);
+	काष्ठा tcf_skbedit_params *params;
 
-	params = rcu_dereference_protected(d->params, 1);
-	if (params)
-		kfree_rcu(params, rcu);
-}
+	params = rcu_dereference_रक्षित(d->params, 1);
+	अगर (params)
+		kमुक्त_rcu(params, rcu);
+पूर्ण
 
-static int tcf_skbedit_walker(struct net *net, struct sk_buff *skb,
-			      struct netlink_callback *cb, int type,
-			      const struct tc_action_ops *ops,
-			      struct netlink_ext_ack *extack)
-{
-	struct tc_action_net *tn = net_generic(net, skbedit_net_id);
+अटल पूर्णांक tcf_skbedit_walker(काष्ठा net *net, काष्ठा sk_buff *skb,
+			      काष्ठा netlink_callback *cb, पूर्णांक type,
+			      स्थिर काष्ठा tc_action_ops *ops,
+			      काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा tc_action_net *tn = net_generic(net, skbedit_net_id);
 
-	return tcf_generic_walker(tn, skb, cb, type, ops, extack);
-}
+	वापस tcf_generic_walker(tn, skb, cb, type, ops, extack);
+पूर्ण
 
-static int tcf_skbedit_search(struct net *net, struct tc_action **a, u32 index)
-{
-	struct tc_action_net *tn = net_generic(net, skbedit_net_id);
+अटल पूर्णांक tcf_skbedit_search(काष्ठा net *net, काष्ठा tc_action **a, u32 index)
+अणु
+	काष्ठा tc_action_net *tn = net_generic(net, skbedit_net_id);
 
-	return tcf_idr_search(tn, a, index);
-}
+	वापस tcf_idr_search(tn, a, index);
+पूर्ण
 
-static size_t tcf_skbedit_get_fill_size(const struct tc_action *act)
-{
-	return nla_total_size(sizeof(struct tc_skbedit))
-		+ nla_total_size(sizeof(u32)) /* TCA_SKBEDIT_PRIORITY */
-		+ nla_total_size(sizeof(u16)) /* TCA_SKBEDIT_QUEUE_MAPPING */
-		+ nla_total_size(sizeof(u32)) /* TCA_SKBEDIT_MARK */
-		+ nla_total_size(sizeof(u16)) /* TCA_SKBEDIT_PTYPE */
-		+ nla_total_size(sizeof(u32)) /* TCA_SKBEDIT_MASK */
-		+ nla_total_size_64bit(sizeof(u64)); /* TCA_SKBEDIT_FLAGS */
-}
+अटल माप_प्रकार tcf_skbedit_get_fill_size(स्थिर काष्ठा tc_action *act)
+अणु
+	वापस nla_total_size(माप(काष्ठा tc_skbedit))
+		+ nla_total_size(माप(u32)) /* TCA_SKBEDIT_PRIORITY */
+		+ nla_total_size(माप(u16)) /* TCA_SKBEDIT_QUEUE_MAPPING */
+		+ nla_total_size(माप(u32)) /* TCA_SKBEDIT_MARK */
+		+ nla_total_size(माप(u16)) /* TCA_SKBEDIT_PTYPE */
+		+ nla_total_size(माप(u32)) /* TCA_SKBEDIT_MASK */
+		+ nla_total_size_64bit(माप(u64)); /* TCA_SKBEDIT_FLAGS */
+पूर्ण
 
-static struct tc_action_ops act_skbedit_ops = {
+अटल काष्ठा tc_action_ops act_skbedit_ops = अणु
 	.kind		=	"skbedit",
 	.id		=	TCA_ID_SKBEDIT,
 	.owner		=	THIS_MODULE,
@@ -339,41 +340,41 @@ static struct tc_action_ops act_skbedit_ops = {
 	.walk		=	tcf_skbedit_walker,
 	.get_fill_size	=	tcf_skbedit_get_fill_size,
 	.lookup		=	tcf_skbedit_search,
-	.size		=	sizeof(struct tcf_skbedit),
-};
+	.size		=	माप(काष्ठा tcf_skbedit),
+पूर्ण;
 
-static __net_init int skbedit_init_net(struct net *net)
-{
-	struct tc_action_net *tn = net_generic(net, skbedit_net_id);
+अटल __net_init पूर्णांक skbedit_init_net(काष्ठा net *net)
+अणु
+	काष्ठा tc_action_net *tn = net_generic(net, skbedit_net_id);
 
-	return tc_action_net_init(net, tn, &act_skbedit_ops);
-}
+	वापस tc_action_net_init(net, tn, &act_skbedit_ops);
+पूर्ण
 
-static void __net_exit skbedit_exit_net(struct list_head *net_list)
-{
-	tc_action_net_exit(net_list, skbedit_net_id);
-}
+अटल व्योम __net_निकास skbedit_निकास_net(काष्ठा list_head *net_list)
+अणु
+	tc_action_net_निकास(net_list, skbedit_net_id);
+पूर्ण
 
-static struct pernet_operations skbedit_net_ops = {
+अटल काष्ठा pernet_operations skbedit_net_ops = अणु
 	.init = skbedit_init_net,
-	.exit_batch = skbedit_exit_net,
+	.निकास_batch = skbedit_निकास_net,
 	.id   = &skbedit_net_id,
-	.size = sizeof(struct tc_action_net),
-};
+	.size = माप(काष्ठा tc_action_net),
+पूर्ण;
 
 MODULE_AUTHOR("Alexander Duyck, <alexander.h.duyck@intel.com>");
 MODULE_DESCRIPTION("SKB Editing");
 MODULE_LICENSE("GPL");
 
-static int __init skbedit_init_module(void)
-{
-	return tcf_register_action(&act_skbedit_ops, &skbedit_net_ops);
-}
+अटल पूर्णांक __init skbedit_init_module(व्योम)
+अणु
+	वापस tcf_रेजिस्टर_action(&act_skbedit_ops, &skbedit_net_ops);
+पूर्ण
 
-static void __exit skbedit_cleanup_module(void)
-{
-	tcf_unregister_action(&act_skbedit_ops, &skbedit_net_ops);
-}
+अटल व्योम __निकास skbedit_cleanup_module(व्योम)
+अणु
+	tcf_unरेजिस्टर_action(&act_skbedit_ops, &skbedit_net_ops);
+पूर्ण
 
 module_init(skbedit_init_module);
-module_exit(skbedit_cleanup_module);
+module_निकास(skbedit_cleanup_module);

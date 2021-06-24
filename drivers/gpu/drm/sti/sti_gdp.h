@@ -1,24 +1,25 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * Copyright (C) STMicroelectronics SA 2014
  * Authors: Benjamin Gaignard <benjamin.gaignard@st.com>
  *          Fabien Dessenne <fabien.dessenne@st.com>
- *          for STMicroelectronics.
+ *          क्रम STMicroelectronics.
  */
 
-#ifndef _STI_GDP_H_
-#define _STI_GDP_H_
+#अगर_अघोषित _STI_GDP_H_
+#घोषणा _STI_GDP_H_
 
-#include <linux/types.h>
+#समावेश <linux/types.h>
 
-#include <drm/drm_plane.h>
+#समावेश <drm/drm_plane.h>
 
-struct drm_device;
-struct device;
+काष्ठा drm_device;
+काष्ठा device;
 
-struct drm_plane *sti_gdp_create(struct drm_device *drm_dev,
-				 struct device *dev, int desc,
-				 void __iomem *baseaddr,
-				 unsigned int possible_crtcs,
-				 enum drm_plane_type type);
-#endif
+काष्ठा drm_plane *sti_gdp_create(काष्ठा drm_device *drm_dev,
+				 काष्ठा device *dev, पूर्णांक desc,
+				 व्योम __iomem *baseaddr,
+				 अचिन्हित पूर्णांक possible_crtcs,
+				 क्रमागत drm_plane_type type);
+#पूर्ण_अगर

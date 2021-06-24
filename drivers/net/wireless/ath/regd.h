@@ -1,64 +1,65 @@
+<शैली गुरु>
 /*
  * Copyright (c) 2008-2009 Atheros Communications Inc.
  *
- * Permission to use, copy, modify, and/or distribute this software for any
+ * Permission to use, copy, modअगरy, and/or distribute this software क्रम any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
  * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
  * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
- * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * ANY SPECIAL, सूचीECT, INसूचीECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
  * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifndef REGD_H
-#define REGD_H
+#अगर_अघोषित REGD_H
+#घोषणा REGD_H
 
-#include <linux/nl80211.h>
-#include <net/cfg80211.h>
+#समावेश <linux/nl80211.h>
+#समावेश <net/cfg80211.h>
 
-#include "ath.h"
+#समावेश "ath.h"
 
-enum ctl_group {
+क्रमागत ctl_group अणु
 	CTL_FCC = 0x10,
 	CTL_MKK = 0x40,
 	CTL_ETSI = 0x30,
-};
+पूर्ण;
 
-#define SD_NO_CTL               0xE0
-#define NO_CTL                  0xff
-#define CTL_11A                 0
-#define CTL_11B                 1
-#define CTL_11G                 2
-#define CTL_2GHT20              5
-#define CTL_5GHT20              6
-#define CTL_2GHT40              7
-#define CTL_5GHT40              8
+#घोषणा SD_NO_CTL               0xE0
+#घोषणा NO_CTL                  0xff
+#घोषणा CTL_11A                 0
+#घोषणा CTL_11B                 1
+#घोषणा CTL_11G                 2
+#घोषणा CTL_2GHT20              5
+#घोषणा CTL_5GHT20              6
+#घोषणा CTL_2GHT40              7
+#घोषणा CTL_5GHT40              8
 
-#define CTRY_DEBUG 0x1ff
-#define CTRY_DEFAULT 0
+#घोषणा CTRY_DEBUG 0x1ff
+#घोषणा CTRY_DEFAULT 0
 
-#define COUNTRY_ERD_FLAG        0x8000
-#define WORLDWIDE_ROAMING_FLAG  0x4000
+#घोषणा COUNTRY_ERD_FLAG        0x8000
+#घोषणा WORLDWIDE_ROAMING_FLAG  0x4000
 
-#define MULTI_DOMAIN_MASK 0xFF00
+#घोषणा MULTI_DOMAIN_MASK 0xFF00
 
-#define WORLD_SKU_MASK          0x00F0
-#define WORLD_SKU_PREFIX        0x0060
+#घोषणा WORLD_SKU_MASK          0x00F0
+#घोषणा WORLD_SKU_PREFIX        0x0060
 
-#define CHANNEL_HALF_BW         10
-#define CHANNEL_QUARTER_BW      5
+#घोषणा CHANNEL_HALF_BW         10
+#घोषणा CHANNEL_QUARTER_BW      5
 
-struct country_code_to_enum_rd {
+काष्ठा country_code_to_क्रमागत_rd अणु
 	u16 countryCode;
 	u16 regDmnEnum;
-	const char *isoName;
-};
+	स्थिर अक्षर *isoName;
+पूर्ण;
 
-enum CountryCode {
+क्रमागत CountryCode अणु
 	CTRY_ALBANIA = 8,
 	CTRY_ALGERIA = 12,
 	CTRY_ARGENTINA = 32,
@@ -255,18 +256,18 @@ enum CountryCode {
 	CTRY_AUSTRALIA2 = 5000,
 	CTRY_CANADA2 = 5001,
 	CTRY_BELGIUM2 = 5002
-};
+पूर्ण;
 
-bool ath_is_world_regd(struct ath_regulatory *reg);
-bool ath_is_49ghz_allowed(u16 redomain);
-u16 ath_regd_find_country_by_name(char *alpha2);
-int ath_regd_init(struct ath_regulatory *reg, struct wiphy *wiphy,
-		  void (*reg_notifier)(struct wiphy *wiphy,
-				       struct regulatory_request *request));
-u32 ath_regd_get_band_ctl(struct ath_regulatory *reg,
-			  enum nl80211_band band);
-void ath_reg_notifier_apply(struct wiphy *wiphy,
-			    struct regulatory_request *request,
-			    struct ath_regulatory *reg);
+bool ath_is_world_regd(काष्ठा ath_regulatory *reg);
+bool ath_is_49ghz_allowed(u16 reकरोमुख्य);
+u16 ath_regd_find_country_by_name(अक्षर *alpha2);
+पूर्णांक ath_regd_init(काष्ठा ath_regulatory *reg, काष्ठा wiphy *wiphy,
+		  व्योम (*reg_notअगरier)(काष्ठा wiphy *wiphy,
+				       काष्ठा regulatory_request *request));
+u32 ath_regd_get_band_ctl(काष्ठा ath_regulatory *reg,
+			  क्रमागत nl80211_band band);
+व्योम ath_reg_notअगरier_apply(काष्ठा wiphy *wiphy,
+			    काष्ठा regulatory_request *request,
+			    काष्ठा ath_regulatory *reg);
 
-#endif
+#पूर्ण_अगर

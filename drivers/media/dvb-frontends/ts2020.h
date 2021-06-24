@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
     Montage Technology TS2020 - Silicon Tuner driver
     Copyright (C) 2009-2012 Konstantin Dimitrov <kosio.dimitrov@gmail.com>
@@ -7,14 +8,14 @@
 
  */
 
-#ifndef TS2020_H
-#define TS2020_H
+#अगर_अघोषित TS2020_H
+#घोषणा TS2020_H
 
-#include <linux/dvb/frontend.h>
+#समावेश <linux/dvb/frontend.h>
 
-struct ts2020_config {
+काष्ठा ts2020_config अणु
 	u8 tuner_address;
-	u32 frequency_div;
+	u32 frequency_भाग;
 
 	/*
 	 * RF loop-through
@@ -22,53 +23,53 @@ struct ts2020_config {
 	bool loop_through:1;
 
 	/*
-	 * clock output
+	 * घड़ी output
 	 */
-#define TS2020_CLK_OUT_DISABLED        0
-#define TS2020_CLK_OUT_ENABLED         1
-#define TS2020_CLK_OUT_ENABLED_XTALOUT 2
+#घोषणा TS2020_CLK_OUT_DISABLED        0
+#घोषणा TS2020_CLK_OUT_ENABLED         1
+#घोषणा TS2020_CLK_OUT_ENABLED_XTALOUT 2
 	u8 clk_out:2;
 
 	/*
-	 * clock output divider
+	 * घड़ी output भागider
 	 * 1 - 31
 	 */
-	u8 clk_out_div:5;
+	u8 clk_out_भाग:5;
 
 	/* Set to true to suppress stat polling */
-	bool dont_poll:1;
+	bool करोnt_poll:1;
 
 	/*
-	 * pointer to DVB frontend
+	 * poपूर्णांकer to DVB frontend
 	 */
-	struct dvb_frontend *fe;
+	काष्ठा dvb_frontend *fe;
 
 	/*
-	 * driver private, do not set value
+	 * driver निजी, करो not set value
 	 */
 	u8 attach_in_use:1;
 
 	/* Operation to be called by the ts2020 driver to get the value of the
 	 * AGC PWM tuner input as theoretically output by the demodulator.
 	 */
-	int (*get_agc_pwm)(struct dvb_frontend *fe, u8 *_agc_pwm);
-};
+	पूर्णांक (*get_agc_pwm)(काष्ठा dvb_frontend *fe, u8 *_agc_pwm);
+पूर्ण;
 
 /* Do not add new ts2020_attach() users! Use I2C bindings instead. */
-#if IS_REACHABLE(CONFIG_DVB_TS2020)
-extern struct dvb_frontend *ts2020_attach(
-	struct dvb_frontend *fe,
-	const struct ts2020_config *config,
-	struct i2c_adapter *i2c);
-#else
-static inline struct dvb_frontend *ts2020_attach(
-	struct dvb_frontend *fe,
-	const struct ts2020_config *config,
-	struct i2c_adapter *i2c)
-{
-	printk(KERN_WARNING "%s: driver disabled by Kconfig\n", __func__);
-	return NULL;
-}
-#endif
+#अगर IS_REACHABLE(CONFIG_DVB_TS2020)
+बाह्य काष्ठा dvb_frontend *ts2020_attach(
+	काष्ठा dvb_frontend *fe,
+	स्थिर काष्ठा ts2020_config *config,
+	काष्ठा i2c_adapter *i2c);
+#अन्यथा
+अटल अंतरभूत काष्ठा dvb_frontend *ts2020_attach(
+	काष्ठा dvb_frontend *fe,
+	स्थिर काष्ठा ts2020_config *config,
+	काष्ठा i2c_adapter *i2c)
+अणु
+	prपूर्णांकk(KERN_WARNING "%s: driver disabled by Kconfig\n", __func__);
+	वापस शून्य;
+पूर्ण
+#पूर्ण_अगर
 
-#endif /* TS2020_H */
+#पूर्ण_अगर /* TS2020_H */

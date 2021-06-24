@@ -1,81 +1,82 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * setup.c - boot time setup code
+ * setup.c - boot समय setup code
  */
 
-#include <linux/init.h>
-#include <linux/export.h>
+#समावेश <linux/init.h>
+#समावेश <linux/export.h>
 
-#include <asm/bootinfo.h>
-#include <asm/reboot.h>
-#include <asm/time.h>
-#include <linux/ioport.h>
+#समावेश <यंत्र/bootinfo.h>
+#समावेश <यंत्र/reboot.h>
+#समावेश <यंत्र/समय.स>
+#समावेश <linux/ioport.h>
 
-#include <asm/mach-rc32434/rb.h>
-#include <asm/mach-rc32434/pci.h>
+#समावेश <यंत्र/mach-rc32434/rb.h>
+#समावेश <यंत्र/mach-rc32434/pci.h>
 
-struct pci_reg __iomem *pci_reg;
+काष्ठा pci_reg __iomem *pci_reg;
 EXPORT_SYMBOL(pci_reg);
 
-static struct resource pci0_res[] = {
-	{
+अटल काष्ठा resource pci0_res[] = अणु
+	अणु
 		.name = "pci_reg0",
 		.start = PCI0_BASE_ADDR,
-		.end = PCI0_BASE_ADDR + sizeof(struct pci_reg),
+		.end = PCI0_BASE_ADDR + माप(काष्ठा pci_reg),
 		.flags = IORESOURCE_MEM,
-	}
-};
+	पूर्ण
+पूर्ण;
 
-static void rb_machine_restart(char *command)
-{
+अटल व्योम rb_machine_restart(अक्षर *command)
+अणु
 	/* just jump to the reset vector */
-	writel(0x80000001, IDT434_REG_BASE + RST);
-	((void (*)(void)) KSEG1ADDR(0x1FC00000u))();
-}
+	ग_लिखोl(0x80000001, IDT434_REG_BASE + RST);
+	((व्योम (*)(व्योम)) KSEG1ADDR(0x1FC00000u))();
+पूर्ण
 
-static void rb_machine_halt(void)
-{
-	for (;;)
-		continue;
-}
+अटल व्योम rb_machine_halt(व्योम)
+अणु
+	क्रम (;;)
+		जारी;
+पूर्ण
 
-void __init plat_mem_setup(void)
-{
+व्योम __init plat_mem_setup(व्योम)
+अणु
 	u32 val;
 
 	_machine_restart = rb_machine_restart;
 	_machine_halt = rb_machine_halt;
-	pm_power_off = rb_machine_halt;
+	pm_घातer_off = rb_machine_halt;
 
 	set_io_port_base(KSEG1);
 
 	pci_reg = ioremap(pci0_res[0].start,
 				pci0_res[0].end - pci0_res[0].start);
-	if (!pci_reg) {
-		printk(KERN_ERR "Could not remap PCI registers\n");
-		return;
-	}
+	अगर (!pci_reg) अणु
+		prपूर्णांकk(KERN_ERR "Could not remap PCI registers\n");
+		वापस;
+	पूर्ण
 
-	val = __raw_readl(&pci_reg->pcic);
+	val = __raw_पढ़ोl(&pci_reg->pcic);
 	val &= 0xFFFFFF7;
-	__raw_writel(val, (void *)&pci_reg->pcic);
+	__raw_ग_लिखोl(val, (व्योम *)&pci_reg->pcic);
 
-#ifdef CONFIG_PCI
-	/* Enable PCI interrupts in EPLD Mask register */
+#अगर_घोषित CONFIG_PCI
+	/* Enable PCI पूर्णांकerrupts in EPLD Mask रेजिस्टर */
 	*epld_mask = 0x0;
 	*(epld_mask + 1) = 0x0;
-#endif
-	write_c0_wired(0);
-}
+#पूर्ण_अगर
+	ग_लिखो_c0_wired(0);
+पूर्ण
 
-const char *get_system_type(void)
-{
-	switch (mips_machtype) {
-	case MACH_MIKROTIK_RB532A:
-		return "Mikrotik RB532A";
-		break;
-	default:
-		return "Mikrotik RB532";
-		break;
-	}
-}
+स्थिर अक्षर *get_प्रणाली_type(व्योम)
+अणु
+	चयन (mips_machtype) अणु
+	हाल MACH_MIKROTIK_RB532A:
+		वापस "Mikrotik RB532A";
+		अवरोध;
+	शेष:
+		वापस "Mikrotik RB532";
+		अवरोध;
+	पूर्ण
+पूर्ण

@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 
 /*
  * SCHED_DEADLINE tasks has negative priorities, reflecting
@@ -6,29 +7,29 @@
  * NORMAL/BATCH tasks.
  */
 
-#define MAX_DL_PRIO		0
+#घोषणा MAX_DL_PRIO		0
 
-static inline int dl_prio(int prio)
-{
-	if (unlikely(prio < MAX_DL_PRIO))
-		return 1;
-	return 0;
-}
+अटल अंतरभूत पूर्णांक dl_prio(पूर्णांक prio)
+अणु
+	अगर (unlikely(prio < MAX_DL_PRIO))
+		वापस 1;
+	वापस 0;
+पूर्ण
 
-static inline int dl_task(struct task_struct *p)
-{
-	return dl_prio(p->prio);
-}
+अटल अंतरभूत पूर्णांक dl_task(काष्ठा task_काष्ठा *p)
+अणु
+	वापस dl_prio(p->prio);
+पूर्ण
 
-static inline bool dl_time_before(u64 a, u64 b)
-{
-	return (s64)(a - b) < 0;
-}
+अटल अंतरभूत bool dl_समय_beक्रमe(u64 a, u64 b)
+अणु
+	वापस (s64)(a - b) < 0;
+पूर्ण
 
-#ifdef CONFIG_SMP
+#अगर_घोषित CONFIG_SMP
 
-struct root_domain;
-extern void dl_add_task_root_domain(struct task_struct *p);
-extern void dl_clear_root_domain(struct root_domain *rd);
+काष्ठा root_करोमुख्य;
+बाह्य व्योम dl_add_task_root_करोमुख्य(काष्ठा task_काष्ठा *p);
+बाह्य व्योम dl_clear_root_करोमुख्य(काष्ठा root_करोमुख्य *rd);
 
-#endif /* CONFIG_SMP */
+#पूर्ण_अगर /* CONFIG_SMP */

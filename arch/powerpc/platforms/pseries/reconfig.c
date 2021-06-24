@@ -1,410 +1,411 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * pSeries_reconfig.c - support for dynamic reconfiguration (including PCI
- * Hotplug and Dynamic Logical Partitioning on RPA platforms).
+ * pSeries_reconfig.c - support क्रम dynamic reconfiguration (including PCI
+ * Hotplug and Dynamic Logical Partitioning on RPA platक्रमms).
  *
  * Copyright (C) 2005 Nathan Lynch
  * Copyright (C) 2005 IBM Corporation
  */
 
-#include <linux/kernel.h>
-#include <linux/notifier.h>
-#include <linux/proc_fs.h>
-#include <linux/slab.h>
-#include <linux/of.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/notअगरier.h>
+#समावेश <linux/proc_fs.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/of.h>
 
-#include <asm/prom.h>
-#include <asm/machdep.h>
-#include <linux/uaccess.h>
-#include <asm/mmu.h>
+#समावेश <यंत्र/prom.h>
+#समावेश <यंत्र/machdep.h>
+#समावेश <linux/uaccess.h>
+#समावेश <यंत्र/mmu.h>
 
-#include "of_helpers.h"
+#समावेश "of_helpers.h"
 
-static int pSeries_reconfig_add_node(const char *path, struct property *proplist)
-{
-	struct device_node *np;
-	int err = -ENOMEM;
+अटल पूर्णांक pSeries_reconfig_add_node(स्थिर अक्षर *path, काष्ठा property *proplist)
+अणु
+	काष्ठा device_node *np;
+	पूर्णांक err = -ENOMEM;
 
-	np = kzalloc(sizeof(*np), GFP_KERNEL);
-	if (!np)
-		goto out_err;
+	np = kzalloc(माप(*np), GFP_KERNEL);
+	अगर (!np)
+		जाओ out_err;
 
 	np->full_name = kstrdup(kbasename(path), GFP_KERNEL);
-	if (!np->full_name)
-		goto out_err;
+	अगर (!np->full_name)
+		जाओ out_err;
 
 	np->properties = proplist;
 	of_node_set_flag(np, OF_DYNAMIC);
 	of_node_init(np);
 
 	np->parent = pseries_of_derive_parent(path);
-	if (IS_ERR(np->parent)) {
+	अगर (IS_ERR(np->parent)) अणु
 		err = PTR_ERR(np->parent);
-		goto out_err;
-	}
+		जाओ out_err;
+	पूर्ण
 
 	err = of_attach_node(np);
-	if (err) {
-		printk(KERN_ERR "Failed to add device node %s\n", path);
-		goto out_err;
-	}
+	अगर (err) अणु
+		prपूर्णांकk(KERN_ERR "Failed to add device node %s\n", path);
+		जाओ out_err;
+	पूर्ण
 
 	of_node_put(np->parent);
 
-	return 0;
+	वापस 0;
 
 out_err:
-	if (np) {
+	अगर (np) अणु
 		of_node_put(np->parent);
-		kfree(np->full_name);
-		kfree(np);
-	}
-	return err;
-}
+		kमुक्त(np->full_name);
+		kमुक्त(np);
+	पूर्ण
+	वापस err;
+पूर्ण
 
-static int pSeries_reconfig_remove_node(struct device_node *np)
-{
-	struct device_node *parent, *child;
+अटल पूर्णांक pSeries_reconfig_हटाओ_node(काष्ठा device_node *np)
+अणु
+	काष्ठा device_node *parent, *child;
 
 	parent = of_get_parent(np);
-	if (!parent)
-		return -EINVAL;
+	अगर (!parent)
+		वापस -EINVAL;
 
-	if ((child = of_get_next_child(np, NULL))) {
+	अगर ((child = of_get_next_child(np, शून्य))) अणु
 		of_node_put(child);
 		of_node_put(parent);
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 
 	of_detach_node(np);
 	of_node_put(parent);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * /proc/powerpc/ofdt - yucky binary interface for adding and removing
+ * /proc/घातerpc/ofdt - yucky binary पूर्णांकerface क्रम adding and removing
  * OF device nodes.  Should be deprecated as soon as we get an
- * in-kernel wrapper for the RTAS ibm,configure-connector call.
+ * in-kernel wrapper क्रम the RTAS ibm,configure-connector call.
  */
 
-static void release_prop_list(const struct property *prop)
-{
-	struct property *next;
-	for (; prop; prop = next) {
+अटल व्योम release_prop_list(स्थिर काष्ठा property *prop)
+अणु
+	काष्ठा property *next;
+	क्रम (; prop; prop = next) अणु
 		next = prop->next;
-		kfree(prop->name);
-		kfree(prop->value);
-		kfree(prop);
-	}
+		kमुक्त(prop->name);
+		kमुक्त(prop->value);
+		kमुक्त(prop);
+	पूर्ण
 
-}
+पूर्ण
 
 /**
  * parse_next_property - process the next property from raw input buffer
  * @buf: input buffer, must be nul-terminated
- * @end: end of the input buffer + 1, for validation
- * @name: return value; set to property name in buf
- * @length: return value; set to length of value
- * @value: return value; set to the property value in buf
+ * @end: end of the input buffer + 1, क्रम validation
+ * @name: वापस value; set to property name in buf
+ * @length: वापस value; set to length of value
+ * @value: वापस value; set to the property value in buf
  *
- * Note that the caller must make copies of the name and value returned,
- * this function does no allocation or copying of the data.  Return value
- * is set to the next name in buf, or NULL on error.
+ * Note that the caller must make copies of the name and value वापसed,
+ * this function करोes no allocation or copying of the data.  Return value
+ * is set to the next name in buf, or शून्य on error.
  */
-static char * parse_next_property(char *buf, char *end, char **name, int *length,
-				  unsigned char **value)
-{
-	char *tmp;
+अटल अक्षर * parse_next_property(अक्षर *buf, अक्षर *end, अक्षर **name, पूर्णांक *length,
+				  अचिन्हित अक्षर **value)
+अणु
+	अक्षर *पंचांगp;
 
 	*name = buf;
 
-	tmp = strchr(buf, ' ');
-	if (!tmp) {
-		printk(KERN_ERR "property parse failed in %s at line %d\n",
+	पंचांगp = म_अक्षर(buf, ' ');
+	अगर (!पंचांगp) अणु
+		prपूर्णांकk(KERN_ERR "property parse failed in %s at line %d\n",
 		       __func__, __LINE__);
-		return NULL;
-	}
-	*tmp = '\0';
+		वापस शून्य;
+	पूर्ण
+	*पंचांगp = '\0';
 
-	if (++tmp >= end) {
-		printk(KERN_ERR "property parse failed in %s at line %d\n",
+	अगर (++पंचांगp >= end) अणु
+		prपूर्णांकk(KERN_ERR "property parse failed in %s at line %d\n",
 		       __func__, __LINE__);
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
 	/* now we're on the length */
 	*length = -1;
-	*length = simple_strtoul(tmp, &tmp, 10);
-	if (*length == -1) {
-		printk(KERN_ERR "property parse failed in %s at line %d\n",
+	*length = simple_म_से_अदीर्घ(पंचांगp, &पंचांगp, 10);
+	अगर (*length == -1) अणु
+		prपूर्णांकk(KERN_ERR "property parse failed in %s at line %d\n",
 		       __func__, __LINE__);
-		return NULL;
-	}
-	if (*tmp != ' ' || ++tmp >= end) {
-		printk(KERN_ERR "property parse failed in %s at line %d\n",
+		वापस शून्य;
+	पूर्ण
+	अगर (*पंचांगp != ' ' || ++पंचांगp >= end) अणु
+		prपूर्णांकk(KERN_ERR "property parse failed in %s at line %d\n",
 		       __func__, __LINE__);
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
 	/* now we're on the value */
-	*value = tmp;
-	tmp += *length;
-	if (tmp > end) {
-		printk(KERN_ERR "property parse failed in %s at line %d\n",
+	*value = पंचांगp;
+	पंचांगp += *length;
+	अगर (पंचांगp > end) अणु
+		prपूर्णांकk(KERN_ERR "property parse failed in %s at line %d\n",
 		       __func__, __LINE__);
-		return NULL;
-	}
-	else if (tmp < end && *tmp != ' ' && *tmp != '\0') {
-		printk(KERN_ERR "property parse failed in %s at line %d\n",
+		वापस शून्य;
+	पूर्ण
+	अन्यथा अगर (पंचांगp < end && *पंचांगp != ' ' && *tmp != '\0') अणु
+		prपूर्णांकk(KERN_ERR "property parse failed in %s at line %d\n",
 		       __func__, __LINE__);
-		return NULL;
-	}
-	tmp++;
+		वापस शून्य;
+	पूर्ण
+	पंचांगp++;
 
 	/* and now we should be on the next name, or the end */
-	return tmp;
-}
+	वापस पंचांगp;
+पूर्ण
 
-static struct property *new_property(const char *name, const int length,
-				     const unsigned char *value, struct property *last)
-{
-	struct property *new = kzalloc(sizeof(*new), GFP_KERNEL);
+अटल काष्ठा property *new_property(स्थिर अक्षर *name, स्थिर पूर्णांक length,
+				     स्थिर अचिन्हित अक्षर *value, काष्ठा property *last)
+अणु
+	काष्ठा property *new = kzalloc(माप(*new), GFP_KERNEL);
 
-	if (!new)
-		return NULL;
+	अगर (!new)
+		वापस शून्य;
 
-	if (!(new->name = kstrdup(name, GFP_KERNEL)))
-		goto cleanup;
-	if (!(new->value = kmalloc(length + 1, GFP_KERNEL)))
-		goto cleanup;
+	अगर (!(new->name = kstrdup(name, GFP_KERNEL)))
+		जाओ cleanup;
+	अगर (!(new->value = kदो_स्मृति(length + 1, GFP_KERNEL)))
+		जाओ cleanup;
 
-	memcpy(new->value, value, length);
-	*(((char *)new->value) + length) = 0;
+	स_नकल(new->value, value, length);
+	*(((अक्षर *)new->value) + length) = 0;
 	new->length = length;
 	new->next = last;
-	return new;
+	वापस new;
 
 cleanup:
-	kfree(new->name);
-	kfree(new->value);
-	kfree(new);
-	return NULL;
-}
+	kमुक्त(new->name);
+	kमुक्त(new->value);
+	kमुक्त(new);
+	वापस शून्य;
+पूर्ण
 
-static int do_add_node(char *buf, size_t bufsize)
-{
-	char *path, *end, *name;
-	struct device_node *np;
-	struct property *prop = NULL;
-	unsigned char* value;
-	int length, rv = 0;
+अटल पूर्णांक करो_add_node(अक्षर *buf, माप_प्रकार bufsize)
+अणु
+	अक्षर *path, *end, *name;
+	काष्ठा device_node *np;
+	काष्ठा property *prop = शून्य;
+	अचिन्हित अक्षर* value;
+	पूर्णांक length, rv = 0;
 
 	end = buf + bufsize;
 	path = buf;
-	buf = strchr(buf, ' ');
-	if (!buf)
-		return -EINVAL;
+	buf = म_अक्षर(buf, ' ');
+	अगर (!buf)
+		वापस -EINVAL;
 	*buf = '\0';
 	buf++;
 
-	if ((np = of_find_node_by_path(path))) {
+	अगर ((np = of_find_node_by_path(path))) अणु
 		of_node_put(np);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	/* rv = build_prop_list(tmp, bufsize - (tmp - buf), &proplist); */
-	while (buf < end &&
-	       (buf = parse_next_property(buf, end, &name, &length, &value))) {
-		struct property *last = prop;
+	/* rv = build_prop_list(पंचांगp, bufsize - (पंचांगp - buf), &proplist); */
+	जबतक (buf < end &&
+	       (buf = parse_next_property(buf, end, &name, &length, &value))) अणु
+		काष्ठा property *last = prop;
 
 		prop = new_property(name, length, value, last);
-		if (!prop) {
+		अगर (!prop) अणु
 			rv = -ENOMEM;
 			prop = last;
-			goto out;
-		}
-	}
-	if (!buf) {
+			जाओ out;
+		पूर्ण
+	पूर्ण
+	अगर (!buf) अणु
 		rv = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	rv = pSeries_reconfig_add_node(path, prop);
 
 out:
-	if (rv)
+	अगर (rv)
 		release_prop_list(prop);
-	return rv;
-}
+	वापस rv;
+पूर्ण
 
-static int do_remove_node(char *buf)
-{
-	struct device_node *node;
-	int rv = -ENODEV;
+अटल पूर्णांक करो_हटाओ_node(अक्षर *buf)
+अणु
+	काष्ठा device_node *node;
+	पूर्णांक rv = -ENODEV;
 
-	if ((node = of_find_node_by_path(buf)))
-		rv = pSeries_reconfig_remove_node(node);
+	अगर ((node = of_find_node_by_path(buf)))
+		rv = pSeries_reconfig_हटाओ_node(node);
 
 	of_node_put(node);
-	return rv;
-}
+	वापस rv;
+पूर्ण
 
-static char *parse_node(char *buf, size_t bufsize, struct device_node **npp)
-{
-	char *handle_str;
+अटल अक्षर *parse_node(अक्षर *buf, माप_प्रकार bufsize, काष्ठा device_node **npp)
+अणु
+	अक्षर *handle_str;
 	phandle handle;
-	*npp = NULL;
+	*npp = शून्य;
 
 	handle_str = buf;
 
-	buf = strchr(buf, ' ');
-	if (!buf)
-		return NULL;
+	buf = म_अक्षर(buf, ' ');
+	अगर (!buf)
+		वापस शून्य;
 	*buf = '\0';
 	buf++;
 
-	handle = simple_strtoul(handle_str, NULL, 0);
+	handle = simple_म_से_अदीर्घ(handle_str, शून्य, 0);
 
 	*npp = of_find_node_by_phandle(handle);
-	return buf;
-}
+	वापस buf;
+पूर्ण
 
-static int do_add_property(char *buf, size_t bufsize)
-{
-	struct property *prop = NULL;
-	struct device_node *np;
-	unsigned char *value;
-	char *name, *end;
-	int length;
+अटल पूर्णांक करो_add_property(अक्षर *buf, माप_प्रकार bufsize)
+अणु
+	काष्ठा property *prop = शून्य;
+	काष्ठा device_node *np;
+	अचिन्हित अक्षर *value;
+	अक्षर *name, *end;
+	पूर्णांक length;
 	end = buf + bufsize;
 	buf = parse_node(buf, bufsize, &np);
 
-	if (!np)
-		return -ENODEV;
+	अगर (!np)
+		वापस -ENODEV;
 
-	if (parse_next_property(buf, end, &name, &length, &value) == NULL)
-		return -EINVAL;
+	अगर (parse_next_property(buf, end, &name, &length, &value) == शून्य)
+		वापस -EINVAL;
 
-	prop = new_property(name, length, value, NULL);
-	if (!prop)
-		return -ENOMEM;
+	prop = new_property(name, length, value, शून्य);
+	अगर (!prop)
+		वापस -ENOMEM;
 
 	of_add_property(np, prop);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int do_remove_property(char *buf, size_t bufsize)
-{
-	struct device_node *np;
-	char *tmp;
+अटल पूर्णांक करो_हटाओ_property(अक्षर *buf, माप_प्रकार bufsize)
+अणु
+	काष्ठा device_node *np;
+	अक्षर *पंचांगp;
 	buf = parse_node(buf, bufsize, &np);
 
-	if (!np)
-		return -ENODEV;
+	अगर (!np)
+		वापस -ENODEV;
 
-	tmp = strchr(buf,' ');
-	if (tmp)
-		*tmp = '\0';
+	पंचांगp = म_अक्षर(buf,' ');
+	अगर (पंचांगp)
+		*पंचांगp = '\0';
 
-	if (strlen(buf) == 0)
-		return -EINVAL;
+	अगर (म_माप(buf) == 0)
+		वापस -EINVAL;
 
-	return of_remove_property(np, of_find_property(np, buf, NULL));
-}
+	वापस of_हटाओ_property(np, of_find_property(np, buf, शून्य));
+पूर्ण
 
-static int do_update_property(char *buf, size_t bufsize)
-{
-	struct device_node *np;
-	unsigned char *value;
-	char *name, *end, *next_prop;
-	int length;
-	struct property *newprop;
+अटल पूर्णांक करो_update_property(अक्षर *buf, माप_प्रकार bufsize)
+अणु
+	काष्ठा device_node *np;
+	अचिन्हित अक्षर *value;
+	अक्षर *name, *end, *next_prop;
+	पूर्णांक length;
+	काष्ठा property *newprop;
 	buf = parse_node(buf, bufsize, &np);
 	end = buf + bufsize;
 
-	if (!np)
-		return -ENODEV;
+	अगर (!np)
+		वापस -ENODEV;
 
 	next_prop = parse_next_property(buf, end, &name, &length, &value);
-	if (!next_prop)
-		return -EINVAL;
+	अगर (!next_prop)
+		वापस -EINVAL;
 
-	if (!strlen(name))
-		return -ENODEV;
+	अगर (!म_माप(name))
+		वापस -ENODEV;
 
-	newprop = new_property(name, length, value, NULL);
-	if (!newprop)
-		return -ENOMEM;
+	newprop = new_property(name, length, value, शून्य);
+	अगर (!newprop)
+		वापस -ENOMEM;
 
-	if (!strcmp(name, "slb-size") || !strcmp(name, "ibm,slb-size"))
-		slb_set_size(*(int *)value);
+	अगर (!म_भेद(name, "slb-size") || !म_भेद(name, "ibm,slb-size"))
+		slb_set_size(*(पूर्णांक *)value);
 
-	return of_update_property(np, newprop);
-}
+	वापस of_update_property(np, newprop);
+पूर्ण
 
 /**
- * ofdt_write - perform operations on the Open Firmware device tree
+ * ofdt_ग_लिखो - perक्रमm operations on the Open Firmware device tree
  *
  * @file: not used
  * @buf: command and arguments
  * @count: size of the command buffer
  * @off: not used
  *
- * Operations supported at this time are addition and removal of
- * whole nodes along with their properties.  Operations on individual
+ * Operations supported at this समय are addition and removal of
+ * whole nodes aदीर्घ with their properties.  Operations on inभागidual
  * properties are not implemented (yet).
  */
-static ssize_t ofdt_write(struct file *file, const char __user *buf, size_t count,
+अटल sमाप_प्रकार ofdt_ग_लिखो(काष्ठा file *file, स्थिर अक्षर __user *buf, माप_प्रकार count,
 			  loff_t *off)
-{
-	int rv;
-	char *kbuf;
-	char *tmp;
+अणु
+	पूर्णांक rv;
+	अक्षर *kbuf;
+	अक्षर *पंचांगp;
 
 	kbuf = memdup_user_nul(buf, count);
-	if (IS_ERR(kbuf))
-		return PTR_ERR(kbuf);
+	अगर (IS_ERR(kbuf))
+		वापस PTR_ERR(kbuf);
 
-	tmp = strchr(kbuf, ' ');
-	if (!tmp) {
+	पंचांगp = म_अक्षर(kbuf, ' ');
+	अगर (!पंचांगp) अणु
 		rv = -EINVAL;
-		goto out;
-	}
-	*tmp = '\0';
-	tmp++;
+		जाओ out;
+	पूर्ण
+	*पंचांगp = '\0';
+	पंचांगp++;
 
-	if (!strcmp(kbuf, "add_node"))
-		rv = do_add_node(tmp, count - (tmp - kbuf));
-	else if (!strcmp(kbuf, "remove_node"))
-		rv = do_remove_node(tmp);
-	else if (!strcmp(kbuf, "add_property"))
-		rv = do_add_property(tmp, count - (tmp - kbuf));
-	else if (!strcmp(kbuf, "remove_property"))
-		rv = do_remove_property(tmp, count - (tmp - kbuf));
-	else if (!strcmp(kbuf, "update_property"))
-		rv = do_update_property(tmp, count - (tmp - kbuf));
-	else
+	अगर (!म_भेद(kbuf, "add_node"))
+		rv = करो_add_node(पंचांगp, count - (पंचांगp - kbuf));
+	अन्यथा अगर (!म_भेद(kbuf, "remove_node"))
+		rv = करो_हटाओ_node(पंचांगp);
+	अन्यथा अगर (!म_भेद(kbuf, "add_property"))
+		rv = करो_add_property(पंचांगp, count - (पंचांगp - kbuf));
+	अन्यथा अगर (!म_भेद(kbuf, "remove_property"))
+		rv = करो_हटाओ_property(पंचांगp, count - (पंचांगp - kbuf));
+	अन्यथा अगर (!म_भेद(kbuf, "update_property"))
+		rv = करो_update_property(पंचांगp, count - (पंचांगp - kbuf));
+	अन्यथा
 		rv = -EINVAL;
 out:
-	kfree(kbuf);
-	return rv ? rv : count;
-}
+	kमुक्त(kbuf);
+	वापस rv ? rv : count;
+पूर्ण
 
-static const struct proc_ops ofdt_proc_ops = {
-	.proc_write	= ofdt_write,
+अटल स्थिर काष्ठा proc_ops ofdt_proc_ops = अणु
+	.proc_ग_लिखो	= ofdt_ग_लिखो,
 	.proc_lseek	= noop_llseek,
-};
+पूर्ण;
 
-/* create /proc/powerpc/ofdt write-only by root */
-static int proc_ppc64_create_ofdt(void)
-{
-	struct proc_dir_entry *ent;
+/* create /proc/घातerpc/ofdt ग_लिखो-only by root */
+अटल पूर्णांक proc_ppc64_create_ofdt(व्योम)
+अणु
+	काष्ठा proc_dir_entry *ent;
 
-	ent = proc_create("powerpc/ofdt", 0200, NULL, &ofdt_proc_ops);
-	if (ent)
+	ent = proc_create("powerpc/ofdt", 0200, शून्य, &ofdt_proc_ops);
+	अगर (ent)
 		proc_set_size(ent, 0);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 machine_device_initcall(pseries, proc_ppc64_create_ofdt);

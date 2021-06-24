@@ -1,105 +1,106 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  *  Copyright (C) 2013 Boris BREZILLON <b.brezillon@overkiz.com>
  */
 
-#include <linux/clk-provider.h>
-#include <linux/clkdev.h>
-#include <linux/clk/at91_pmc.h>
-#include <linux/of.h>
-#include <linux/mfd/syscon.h>
-#include <linux/platform_device.h>
-#include <linux/regmap.h>
-#include <linux/syscore_ops.h>
+#समावेश <linux/clk-provider.h>
+#समावेश <linux/clkdev.h>
+#समावेश <linux/clk/at91_pmc.h>
+#समावेश <linux/of.h>
+#समावेश <linux/mfd/syscon.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/regmap.h>
+#समावेश <linux/syscore_ops.h>
 
-#include <asm/proc-fns.h>
+#समावेश <यंत्र/proc-fns.h>
 
-#include <dt-bindings/clock/at91.h>
+#समावेश <dt-bindings/घड़ी/at91.h>
 
-#include "pmc.h"
+#समावेश "pmc.h"
 
-#define PMC_MAX_IDS 128
-#define PMC_MAX_PCKS 8
+#घोषणा PMC_MAX_IDS 128
+#घोषणा PMC_MAX_PCKS 8
 
-int of_at91_get_clk_range(struct device_node *np, const char *propname,
-			  struct clk_range *range)
-{
+पूर्णांक of_at91_get_clk_range(काष्ठा device_node *np, स्थिर अक्षर *propname,
+			  काष्ठा clk_range *range)
+अणु
 	u32 min, max;
-	int ret;
+	पूर्णांक ret;
 
-	ret = of_property_read_u32_index(np, propname, 0, &min);
-	if (ret)
-		return ret;
+	ret = of_property_पढ़ो_u32_index(np, propname, 0, &min);
+	अगर (ret)
+		वापस ret;
 
-	ret = of_property_read_u32_index(np, propname, 1, &max);
-	if (ret)
-		return ret;
+	ret = of_property_पढ़ो_u32_index(np, propname, 1, &max);
+	अगर (ret)
+		वापस ret;
 
-	if (range) {
+	अगर (range) अणु
 		range->min = min;
 		range->max = max;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(of_at91_get_clk_range);
 
-struct clk_hw *of_clk_hw_pmc_get(struct of_phandle_args *clkspec, void *data)
-{
-	unsigned int type = clkspec->args[0];
-	unsigned int idx = clkspec->args[1];
-	struct pmc_data *pmc_data = data;
+काष्ठा clk_hw *of_clk_hw_pmc_get(काष्ठा of_phandle_args *clkspec, व्योम *data)
+अणु
+	अचिन्हित पूर्णांक type = clkspec->args[0];
+	अचिन्हित पूर्णांक idx = clkspec->args[1];
+	काष्ठा pmc_data *pmc_data = data;
 
-	switch (type) {
-	case PMC_TYPE_CORE:
-		if (idx < pmc_data->ncore)
-			return pmc_data->chws[idx];
-		break;
-	case PMC_TYPE_SYSTEM:
-		if (idx < pmc_data->nsystem)
-			return pmc_data->shws[idx];
-		break;
-	case PMC_TYPE_PERIPHERAL:
-		if (idx < pmc_data->nperiph)
-			return pmc_data->phws[idx];
-		break;
-	case PMC_TYPE_GCK:
-		if (idx < pmc_data->ngck)
-			return pmc_data->ghws[idx];
-		break;
-	case PMC_TYPE_PROGRAMMABLE:
-		if (idx < pmc_data->npck)
-			return pmc_data->pchws[idx];
-		break;
-	default:
-		break;
-	}
+	चयन (type) अणु
+	हाल PMC_TYPE_CORE:
+		अगर (idx < pmc_data->ncore)
+			वापस pmc_data->chws[idx];
+		अवरोध;
+	हाल PMC_TYPE_SYSTEM:
+		अगर (idx < pmc_data->nप्रणाली)
+			वापस pmc_data->shws[idx];
+		अवरोध;
+	हाल PMC_TYPE_PERIPHERAL:
+		अगर (idx < pmc_data->nperiph)
+			वापस pmc_data->phws[idx];
+		अवरोध;
+	हाल PMC_TYPE_GCK:
+		अगर (idx < pmc_data->ngck)
+			वापस pmc_data->ghws[idx];
+		अवरोध;
+	हाल PMC_TYPE_PROGRAMMABLE:
+		अगर (idx < pmc_data->npck)
+			वापस pmc_data->pchws[idx];
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
 
 	pr_err("%s: invalid type (%u) or index (%u)\n", __func__, type, idx);
 
-	return ERR_PTR(-EINVAL);
-}
+	वापस ERR_PTR(-EINVAL);
+पूर्ण
 
-struct pmc_data *pmc_data_allocate(unsigned int ncore, unsigned int nsystem,
-				   unsigned int nperiph, unsigned int ngck,
-				   unsigned int npck)
-{
-	unsigned int num_clks = ncore + nsystem + nperiph + ngck + npck;
-	struct pmc_data *pmc_data;
+काष्ठा pmc_data *pmc_data_allocate(अचिन्हित पूर्णांक ncore, अचिन्हित पूर्णांक nप्रणाली,
+				   अचिन्हित पूर्णांक nperiph, अचिन्हित पूर्णांक ngck,
+				   अचिन्हित पूर्णांक npck)
+अणु
+	अचिन्हित पूर्णांक num_clks = ncore + nप्रणाली + nperiph + ngck + npck;
+	काष्ठा pmc_data *pmc_data;
 
-	pmc_data = kzalloc(struct_size(pmc_data, hwtable, num_clks),
+	pmc_data = kzalloc(काष्ठा_size(pmc_data, hwtable, num_clks),
 			   GFP_KERNEL);
-	if (!pmc_data)
-		return NULL;
+	अगर (!pmc_data)
+		वापस शून्य;
 
 	pmc_data->ncore = ncore;
 	pmc_data->chws = pmc_data->hwtable;
 
-	pmc_data->nsystem = nsystem;
+	pmc_data->nप्रणाली = nप्रणाली;
 	pmc_data->shws = pmc_data->chws + ncore;
 
 	pmc_data->nperiph = nperiph;
-	pmc_data->phws = pmc_data->shws + nsystem;
+	pmc_data->phws = pmc_data->shws + nप्रणाली;
 
 	pmc_data->ngck = ngck;
 	pmc_data->ghws = pmc_data->phws + nperiph;
@@ -107,17 +108,17 @@ struct pmc_data *pmc_data_allocate(unsigned int ncore, unsigned int nsystem,
 	pmc_data->npck = npck;
 	pmc_data->pchws = pmc_data->ghws + ngck;
 
-	return pmc_data;
-}
+	वापस pmc_data;
+पूर्ण
 
-#ifdef CONFIG_PM
-static struct regmap *pmcreg;
+#अगर_घोषित CONFIG_PM
+अटल काष्ठा regmap *pmcreg;
 
-static u8 registered_ids[PMC_MAX_IDS];
-static u8 registered_pcks[PMC_MAX_PCKS];
+अटल u8 रेजिस्टरed_ids[PMC_MAX_IDS];
+अटल u8 रेजिस्टरed_pcks[PMC_MAX_PCKS];
 
-static struct
-{
+अटल काष्ठा
+अणु
 	u32 scsr;
 	u32 pcsr0;
 	u32 uckr;
@@ -132,150 +133,150 @@ static struct
 	u32 audio_pll0;
 	u32 audio_pll1;
 	u32 pckr[PMC_MAX_PCKS];
-} pmc_cache;
+पूर्ण pmc_cache;
 
 /*
- * As Peripheral ID 0 is invalid on AT91 chips, the identifier is stored
- * without alteration in the table, and 0 is for unused clocks.
+ * As Peripheral ID 0 is invalid on AT91 chips, the identअगरier is stored
+ * without alteration in the table, and 0 is क्रम unused घड़ीs.
  */
-void pmc_register_id(u8 id)
-{
-	int i;
+व्योम pmc_रेजिस्टर_id(u8 id)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < PMC_MAX_IDS; i++) {
-		if (registered_ids[i] == 0) {
-			registered_ids[i] = id;
-			break;
-		}
-		if (registered_ids[i] == id)
-			break;
-	}
-}
+	क्रम (i = 0; i < PMC_MAX_IDS; i++) अणु
+		अगर (रेजिस्टरed_ids[i] == 0) अणु
+			रेजिस्टरed_ids[i] = id;
+			अवरोध;
+		पूर्ण
+		अगर (रेजिस्टरed_ids[i] == id)
+			अवरोध;
+	पूर्ण
+पूर्ण
 
 /*
  * As Programmable Clock 0 is valid on AT91 chips, there is an offset
- * of 1 between the stored value and the real clock ID.
+ * of 1 between the stored value and the real घड़ी ID.
  */
-void pmc_register_pck(u8 pck)
-{
-	int i;
+व्योम pmc_रेजिस्टर_pck(u8 pck)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < PMC_MAX_PCKS; i++) {
-		if (registered_pcks[i] == 0) {
-			registered_pcks[i] = pck + 1;
-			break;
-		}
-		if (registered_pcks[i] == (pck + 1))
-			break;
-	}
-}
+	क्रम (i = 0; i < PMC_MAX_PCKS; i++) अणु
+		अगर (रेजिस्टरed_pcks[i] == 0) अणु
+			रेजिस्टरed_pcks[i] = pck + 1;
+			अवरोध;
+		पूर्ण
+		अगर (रेजिस्टरed_pcks[i] == (pck + 1))
+			अवरोध;
+	पूर्ण
+पूर्ण
 
-static int pmc_suspend(void)
-{
-	int i;
+अटल पूर्णांक pmc_suspend(व्योम)
+अणु
+	पूर्णांक i;
 	u8 num;
 
-	regmap_read(pmcreg, AT91_PMC_SCSR, &pmc_cache.scsr);
-	regmap_read(pmcreg, AT91_PMC_PCSR, &pmc_cache.pcsr0);
-	regmap_read(pmcreg, AT91_CKGR_UCKR, &pmc_cache.uckr);
-	regmap_read(pmcreg, AT91_CKGR_MOR, &pmc_cache.mor);
-	regmap_read(pmcreg, AT91_CKGR_MCFR, &pmc_cache.mcfr);
-	regmap_read(pmcreg, AT91_CKGR_PLLAR, &pmc_cache.pllar);
-	regmap_read(pmcreg, AT91_PMC_MCKR, &pmc_cache.mckr);
-	regmap_read(pmcreg, AT91_PMC_USB, &pmc_cache.usb);
-	regmap_read(pmcreg, AT91_PMC_IMR, &pmc_cache.imr);
-	regmap_read(pmcreg, AT91_PMC_PCSR1, &pmc_cache.pcsr1);
+	regmap_पढ़ो(pmcreg, AT91_PMC_SCSR, &pmc_cache.scsr);
+	regmap_पढ़ो(pmcreg, AT91_PMC_PCSR, &pmc_cache.pcsr0);
+	regmap_पढ़ो(pmcreg, AT91_CKGR_UCKR, &pmc_cache.uckr);
+	regmap_पढ़ो(pmcreg, AT91_CKGR_MOR, &pmc_cache.mor);
+	regmap_पढ़ो(pmcreg, AT91_CKGR_MCFR, &pmc_cache.mcfr);
+	regmap_पढ़ो(pmcreg, AT91_CKGR_PLLAR, &pmc_cache.pllar);
+	regmap_पढ़ो(pmcreg, AT91_PMC_MCKR, &pmc_cache.mckr);
+	regmap_पढ़ो(pmcreg, AT91_PMC_USB, &pmc_cache.usb);
+	regmap_पढ़ो(pmcreg, AT91_PMC_IMR, &pmc_cache.imr);
+	regmap_पढ़ो(pmcreg, AT91_PMC_PCSR1, &pmc_cache.pcsr1);
 
-	for (i = 0; registered_ids[i]; i++) {
-		regmap_write(pmcreg, AT91_PMC_PCR,
-			     (registered_ids[i] & AT91_PMC_PCR_PID_MASK));
-		regmap_read(pmcreg, AT91_PMC_PCR,
-			    &pmc_cache.pcr[registered_ids[i]]);
-	}
-	for (i = 0; registered_pcks[i]; i++) {
-		num = registered_pcks[i] - 1;
-		regmap_read(pmcreg, AT91_PMC_PCKR(num), &pmc_cache.pckr[num]);
-	}
+	क्रम (i = 0; रेजिस्टरed_ids[i]; i++) अणु
+		regmap_ग_लिखो(pmcreg, AT91_PMC_PCR,
+			     (रेजिस्टरed_ids[i] & AT91_PMC_PCR_PID_MASK));
+		regmap_पढ़ो(pmcreg, AT91_PMC_PCR,
+			    &pmc_cache.pcr[रेजिस्टरed_ids[i]]);
+	पूर्ण
+	क्रम (i = 0; रेजिस्टरed_pcks[i]; i++) अणु
+		num = रेजिस्टरed_pcks[i] - 1;
+		regmap_पढ़ो(pmcreg, AT91_PMC_PCKR(num), &pmc_cache.pckr[num]);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static bool pmc_ready(unsigned int mask)
-{
-	unsigned int status;
+अटल bool pmc_पढ़ोy(अचिन्हित पूर्णांक mask)
+अणु
+	अचिन्हित पूर्णांक status;
 
-	regmap_read(pmcreg, AT91_PMC_SR, &status);
+	regmap_पढ़ो(pmcreg, AT91_PMC_SR, &status);
 
-	return ((status & mask) == mask) ? 1 : 0;
-}
+	वापस ((status & mask) == mask) ? 1 : 0;
+पूर्ण
 
-static void pmc_resume(void)
-{
-	int i;
+अटल व्योम pmc_resume(व्योम)
+अणु
+	पूर्णांक i;
 	u8 num;
-	u32 tmp;
+	u32 पंचांगp;
 	u32 mask = AT91_PMC_MCKRDY | AT91_PMC_LOCKA;
 
-	regmap_read(pmcreg, AT91_PMC_MCKR, &tmp);
-	if (pmc_cache.mckr != tmp)
+	regmap_पढ़ो(pmcreg, AT91_PMC_MCKR, &पंचांगp);
+	अगर (pmc_cache.mckr != पंचांगp)
 		pr_warn("MCKR was not configured properly by the firmware\n");
-	regmap_read(pmcreg, AT91_CKGR_PLLAR, &tmp);
-	if (pmc_cache.pllar != tmp)
+	regmap_पढ़ो(pmcreg, AT91_CKGR_PLLAR, &पंचांगp);
+	अगर (pmc_cache.pllar != पंचांगp)
 		pr_warn("PLLAR was not configured properly by the firmware\n");
 
-	regmap_write(pmcreg, AT91_PMC_SCER, pmc_cache.scsr);
-	regmap_write(pmcreg, AT91_PMC_PCER, pmc_cache.pcsr0);
-	regmap_write(pmcreg, AT91_CKGR_UCKR, pmc_cache.uckr);
-	regmap_write(pmcreg, AT91_CKGR_MOR, pmc_cache.mor);
-	regmap_write(pmcreg, AT91_CKGR_MCFR, pmc_cache.mcfr);
-	regmap_write(pmcreg, AT91_PMC_USB, pmc_cache.usb);
-	regmap_write(pmcreg, AT91_PMC_IMR, pmc_cache.imr);
-	regmap_write(pmcreg, AT91_PMC_PCER1, pmc_cache.pcsr1);
+	regmap_ग_लिखो(pmcreg, AT91_PMC_SCER, pmc_cache.scsr);
+	regmap_ग_लिखो(pmcreg, AT91_PMC_PCER, pmc_cache.pcsr0);
+	regmap_ग_लिखो(pmcreg, AT91_CKGR_UCKR, pmc_cache.uckr);
+	regmap_ग_लिखो(pmcreg, AT91_CKGR_MOR, pmc_cache.mor);
+	regmap_ग_लिखो(pmcreg, AT91_CKGR_MCFR, pmc_cache.mcfr);
+	regmap_ग_लिखो(pmcreg, AT91_PMC_USB, pmc_cache.usb);
+	regmap_ग_लिखो(pmcreg, AT91_PMC_IMR, pmc_cache.imr);
+	regmap_ग_लिखो(pmcreg, AT91_PMC_PCER1, pmc_cache.pcsr1);
 
-	for (i = 0; registered_ids[i]; i++) {
-		regmap_write(pmcreg, AT91_PMC_PCR,
-			     pmc_cache.pcr[registered_ids[i]] |
+	क्रम (i = 0; रेजिस्टरed_ids[i]; i++) अणु
+		regmap_ग_लिखो(pmcreg, AT91_PMC_PCR,
+			     pmc_cache.pcr[रेजिस्टरed_ids[i]] |
 			     AT91_PMC_PCR_CMD);
-	}
-	for (i = 0; registered_pcks[i]; i++) {
-		num = registered_pcks[i] - 1;
-		regmap_write(pmcreg, AT91_PMC_PCKR(num), pmc_cache.pckr[num]);
-	}
+	पूर्ण
+	क्रम (i = 0; रेजिस्टरed_pcks[i]; i++) अणु
+		num = रेजिस्टरed_pcks[i] - 1;
+		regmap_ग_लिखो(pmcreg, AT91_PMC_PCKR(num), pmc_cache.pckr[num]);
+	पूर्ण
 
-	if (pmc_cache.uckr & AT91_PMC_UPLLEN)
+	अगर (pmc_cache.uckr & AT91_PMC_UPLLEN)
 		mask |= AT91_PMC_LOCKU;
 
-	while (!pmc_ready(mask))
+	जबतक (!pmc_पढ़ोy(mask))
 		cpu_relax();
-}
+पूर्ण
 
-static struct syscore_ops pmc_syscore_ops = {
+अटल काष्ठा syscore_ops pmc_syscore_ops = अणु
 	.suspend = pmc_suspend,
 	.resume = pmc_resume,
-};
+पूर्ण;
 
-static const struct of_device_id sama5d2_pmc_dt_ids[] = {
-	{ .compatible = "atmel,sama5d2-pmc" },
-	{ /* sentinel */ }
-};
+अटल स्थिर काष्ठा of_device_id sama5d2_pmc_dt_ids[] = अणु
+	अणु .compatible = "atmel,sama5d2-pmc" पूर्ण,
+	अणु /* sentinel */ पूर्ण
+पूर्ण;
 
-static int __init pmc_register_ops(void)
-{
-	struct device_node *np;
+अटल पूर्णांक __init pmc_रेजिस्टर_ops(व्योम)
+अणु
+	काष्ठा device_node *np;
 
-	np = of_find_matching_node(NULL, sama5d2_pmc_dt_ids);
-	if (!np)
-		return -ENODEV;
+	np = of_find_matching_node(शून्य, sama5d2_pmc_dt_ids);
+	अगर (!np)
+		वापस -ENODEV;
 
 	pmcreg = device_node_to_regmap(np);
 	of_node_put(np);
-	if (IS_ERR(pmcreg))
-		return PTR_ERR(pmcreg);
+	अगर (IS_ERR(pmcreg))
+		वापस PTR_ERR(pmcreg);
 
-	register_syscore_ops(&pmc_syscore_ops);
+	रेजिस्टर_syscore_ops(&pmc_syscore_ops);
 
-	return 0;
-}
-/* This has to happen before arch_initcall because of the tcb_clksrc driver */
-postcore_initcall(pmc_register_ops);
-#endif
+	वापस 0;
+पूर्ण
+/* This has to happen beक्रमe arch_initcall because of the tcb_clksrc driver */
+postcore_initcall(pmc_रेजिस्टर_ops);
+#पूर्ण_अगर

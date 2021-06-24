@@ -1,3 +1,4 @@
+<शैली गुरु>
 /*
  * Allwinner V3/V3s SoCs pinctrl driver.
  *
@@ -8,22 +9,22 @@
  *
  * Based on pinctrl-sun8i-a23.c, which is:
  * Copyright (C) 2014 Chen-Yu Tsai <wens@csie.org>
- * Copyright (C) 2014 Maxime Ripard <maxime.ripard@free-electrons.com>
+ * Copyright (C) 2014 Maxime Ripard <maxime.ripard@मुक्त-electrons.com>
  *
  * This file is licensed under the terms of the GNU General Public
  * License version 2.  This program is licensed "as is" without any
  * warranty of any kind, whether express or implied.
  */
 
-#include <linux/module.h>
-#include <linux/platform_device.h>
-#include <linux/of.h>
-#include <linux/of_device.h>
-#include <linux/pinctrl/pinctrl.h>
+#समावेश <linux/module.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/pinctrl/pinctrl.h>
 
-#include "pinctrl-sunxi.h"
+#समावेश "pinctrl-sunxi.h"
 
-static const struct sunxi_desc_pin sun8i_v3s_pins[] = {
+अटल स्थिर काष्ठा sunxi_desc_pin sun8i_v3s_pins[] = अणु
 	/* Hole */
 	SUNXI_PIN(SUNXI_PINCTRL_PIN(B, 0),
 		  SUNXI_FUNCTION(0x0, "gpio_in"),
@@ -537,43 +538,43 @@ static const struct sunxi_desc_pin sun8i_v3s_pins[] = {
 			  SUNXI_FUNCTION(0x1, "gpio_out"),
 			  SUNXI_FUNCTION(0x2, "i2s"),		/* DIN */
 			  SUNXI_FUNCTION_IRQ_BANK(0x6, 1, 13)),	/* PG_EINT13 */
-};
+पूर्ण;
 
-static const unsigned int sun8i_v3s_pinctrl_irq_bank_map[] = { 1, 2 };
+अटल स्थिर अचिन्हित पूर्णांक sun8i_v3s_pinctrl_irq_bank_map[] = अणु 1, 2 पूर्ण;
 
-static const struct sunxi_pinctrl_desc sun8i_v3s_pinctrl_data = {
+अटल स्थिर काष्ठा sunxi_pinctrl_desc sun8i_v3s_pinctrl_data = अणु
 	.pins = sun8i_v3s_pins,
 	.npins = ARRAY_SIZE(sun8i_v3s_pins),
 	.irq_banks = 2,
 	.irq_bank_map = sun8i_v3s_pinctrl_irq_bank_map,
-	.irq_read_needs_mux = true
-};
+	.irq_पढ़ो_needs_mux = true
+पूर्ण;
 
-static int sun8i_v3s_pinctrl_probe(struct platform_device *pdev)
-{
-	unsigned long variant = (unsigned long)of_device_get_match_data(&pdev->dev);
+अटल पूर्णांक sun8i_v3s_pinctrl_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	अचिन्हित दीर्घ variant = (अचिन्हित दीर्घ)of_device_get_match_data(&pdev->dev);
 
-	return sunxi_pinctrl_init_with_variant(pdev, &sun8i_v3s_pinctrl_data,
+	वापस sunxi_pinctrl_init_with_variant(pdev, &sun8i_v3s_pinctrl_data,
 					       variant);
-}
+पूर्ण
 
-static const struct of_device_id sun8i_v3s_pinctrl_match[] = {
-	{
+अटल स्थिर काष्ठा of_device_id sun8i_v3s_pinctrl_match[] = अणु
+	अणु
 		.compatible = "allwinner,sun8i-v3-pinctrl",
-		.data = (void *)PINCTRL_SUN8I_V3
-	},
-	{
+		.data = (व्योम *)PINCTRL_SUN8I_V3
+	पूर्ण,
+	अणु
 		.compatible = "allwinner,sun8i-v3s-pinctrl",
-		.data = (void *)PINCTRL_SUN8I_V3S
-	},
-	{ },
-};
+		.data = (व्योम *)PINCTRL_SUN8I_V3S
+	पूर्ण,
+	अणु पूर्ण,
+पूर्ण;
 
-static struct platform_driver sun8i_v3s_pinctrl_driver = {
+अटल काष्ठा platक्रमm_driver sun8i_v3s_pinctrl_driver = अणु
 	.probe	= sun8i_v3s_pinctrl_probe,
-	.driver	= {
+	.driver	= अणु
 		.name		= "sun8i-v3s-pinctrl",
 		.of_match_table	= sun8i_v3s_pinctrl_match,
-	},
-};
-builtin_platform_driver(sun8i_v3s_pinctrl_driver);
+	पूर्ण,
+पूर्ण;
+builtin_platक्रमm_driver(sun8i_v3s_pinctrl_driver);

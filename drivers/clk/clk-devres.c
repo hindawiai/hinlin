@@ -1,158 +1,159 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <linux/clk.h>
-#include <linux/device.h>
-#include <linux/export.h>
-#include <linux/gfp.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <linux/clk.h>
+#समावेश <linux/device.h>
+#समावेश <linux/export.h>
+#समावेश <linux/gfp.h>
 
-static void devm_clk_release(struct device *dev, void *res)
-{
-	clk_put(*(struct clk **)res);
-}
+अटल व्योम devm_clk_release(काष्ठा device *dev, व्योम *res)
+अणु
+	clk_put(*(काष्ठा clk **)res);
+पूर्ण
 
-struct clk *devm_clk_get(struct device *dev, const char *id)
-{
-	struct clk **ptr, *clk;
+काष्ठा clk *devm_clk_get(काष्ठा device *dev, स्थिर अक्षर *id)
+अणु
+	काष्ठा clk **ptr, *clk;
 
-	ptr = devres_alloc(devm_clk_release, sizeof(*ptr), GFP_KERNEL);
-	if (!ptr)
-		return ERR_PTR(-ENOMEM);
+	ptr = devres_alloc(devm_clk_release, माप(*ptr), GFP_KERNEL);
+	अगर (!ptr)
+		वापस ERR_PTR(-ENOMEM);
 
 	clk = clk_get(dev, id);
-	if (!IS_ERR(clk)) {
+	अगर (!IS_ERR(clk)) अणु
 		*ptr = clk;
 		devres_add(dev, ptr);
-	} else {
-		devres_free(ptr);
-	}
+	पूर्ण अन्यथा अणु
+		devres_मुक्त(ptr);
+	पूर्ण
 
-	return clk;
-}
+	वापस clk;
+पूर्ण
 EXPORT_SYMBOL(devm_clk_get);
 
-struct clk *devm_clk_get_optional(struct device *dev, const char *id)
-{
-	struct clk *clk = devm_clk_get(dev, id);
+काष्ठा clk *devm_clk_get_optional(काष्ठा device *dev, स्थिर अक्षर *id)
+अणु
+	काष्ठा clk *clk = devm_clk_get(dev, id);
 
-	if (clk == ERR_PTR(-ENOENT))
-		return NULL;
+	अगर (clk == ERR_PTR(-ENOENT))
+		वापस शून्य;
 
-	return clk;
-}
+	वापस clk;
+पूर्ण
 EXPORT_SYMBOL(devm_clk_get_optional);
 
-struct clk_bulk_devres {
-	struct clk_bulk_data *clks;
-	int num_clks;
-};
+काष्ठा clk_bulk_devres अणु
+	काष्ठा clk_bulk_data *clks;
+	पूर्णांक num_clks;
+पूर्ण;
 
-static void devm_clk_bulk_release(struct device *dev, void *res)
-{
-	struct clk_bulk_devres *devres = res;
+अटल व्योम devm_clk_bulk_release(काष्ठा device *dev, व्योम *res)
+अणु
+	काष्ठा clk_bulk_devres *devres = res;
 
 	clk_bulk_put(devres->num_clks, devres->clks);
-}
+पूर्ण
 
-static int __devm_clk_bulk_get(struct device *dev, int num_clks,
-			       struct clk_bulk_data *clks, bool optional)
-{
-	struct clk_bulk_devres *devres;
-	int ret;
+अटल पूर्णांक __devm_clk_bulk_get(काष्ठा device *dev, पूर्णांक num_clks,
+			       काष्ठा clk_bulk_data *clks, bool optional)
+अणु
+	काष्ठा clk_bulk_devres *devres;
+	पूर्णांक ret;
 
 	devres = devres_alloc(devm_clk_bulk_release,
-			      sizeof(*devres), GFP_KERNEL);
-	if (!devres)
-		return -ENOMEM;
+			      माप(*devres), GFP_KERNEL);
+	अगर (!devres)
+		वापस -ENOMEM;
 
-	if (optional)
+	अगर (optional)
 		ret = clk_bulk_get_optional(dev, num_clks, clks);
-	else
+	अन्यथा
 		ret = clk_bulk_get(dev, num_clks, clks);
-	if (!ret) {
+	अगर (!ret) अणु
 		devres->clks = clks;
 		devres->num_clks = num_clks;
 		devres_add(dev, devres);
-	} else {
-		devres_free(devres);
-	}
+	पूर्ण अन्यथा अणु
+		devres_मुक्त(devres);
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int __must_check devm_clk_bulk_get(struct device *dev, int num_clks,
-		      struct clk_bulk_data *clks)
-{
-	return __devm_clk_bulk_get(dev, num_clks, clks, false);
-}
+पूर्णांक __must_check devm_clk_bulk_get(काष्ठा device *dev, पूर्णांक num_clks,
+		      काष्ठा clk_bulk_data *clks)
+अणु
+	वापस __devm_clk_bulk_get(dev, num_clks, clks, false);
+पूर्ण
 EXPORT_SYMBOL_GPL(devm_clk_bulk_get);
 
-int __must_check devm_clk_bulk_get_optional(struct device *dev, int num_clks,
-		      struct clk_bulk_data *clks)
-{
-	return __devm_clk_bulk_get(dev, num_clks, clks, true);
-}
+पूर्णांक __must_check devm_clk_bulk_get_optional(काष्ठा device *dev, पूर्णांक num_clks,
+		      काष्ठा clk_bulk_data *clks)
+अणु
+	वापस __devm_clk_bulk_get(dev, num_clks, clks, true);
+पूर्ण
 EXPORT_SYMBOL_GPL(devm_clk_bulk_get_optional);
 
-int __must_check devm_clk_bulk_get_all(struct device *dev,
-				       struct clk_bulk_data **clks)
-{
-	struct clk_bulk_devres *devres;
-	int ret;
+पूर्णांक __must_check devm_clk_bulk_get_all(काष्ठा device *dev,
+				       काष्ठा clk_bulk_data **clks)
+अणु
+	काष्ठा clk_bulk_devres *devres;
+	पूर्णांक ret;
 
 	devres = devres_alloc(devm_clk_bulk_release,
-			      sizeof(*devres), GFP_KERNEL);
-	if (!devres)
-		return -ENOMEM;
+			      माप(*devres), GFP_KERNEL);
+	अगर (!devres)
+		वापस -ENOMEM;
 
 	ret = clk_bulk_get_all(dev, &devres->clks);
-	if (ret > 0) {
+	अगर (ret > 0) अणु
 		*clks = devres->clks;
 		devres->num_clks = ret;
 		devres_add(dev, devres);
-	} else {
-		devres_free(devres);
-	}
+	पूर्ण अन्यथा अणु
+		devres_मुक्त(devres);
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(devm_clk_bulk_get_all);
 
-static int devm_clk_match(struct device *dev, void *res, void *data)
-{
-	struct clk **c = res;
-	if (!c || !*c) {
+अटल पूर्णांक devm_clk_match(काष्ठा device *dev, व्योम *res, व्योम *data)
+अणु
+	काष्ठा clk **c = res;
+	अगर (!c || !*c) अणु
 		WARN_ON(!c || !*c);
-		return 0;
-	}
-	return *c == data;
-}
+		वापस 0;
+	पूर्ण
+	वापस *c == data;
+पूर्ण
 
-void devm_clk_put(struct device *dev, struct clk *clk)
-{
-	int ret;
+व्योम devm_clk_put(काष्ठा device *dev, काष्ठा clk *clk)
+अणु
+	पूर्णांक ret;
 
 	ret = devres_release(dev, devm_clk_release, devm_clk_match, clk);
 
 	WARN_ON(ret);
-}
+पूर्ण
 EXPORT_SYMBOL(devm_clk_put);
 
-struct clk *devm_get_clk_from_child(struct device *dev,
-				    struct device_node *np, const char *con_id)
-{
-	struct clk **ptr, *clk;
+काष्ठा clk *devm_get_clk_from_child(काष्ठा device *dev,
+				    काष्ठा device_node *np, स्थिर अक्षर *con_id)
+अणु
+	काष्ठा clk **ptr, *clk;
 
-	ptr = devres_alloc(devm_clk_release, sizeof(*ptr), GFP_KERNEL);
-	if (!ptr)
-		return ERR_PTR(-ENOMEM);
+	ptr = devres_alloc(devm_clk_release, माप(*ptr), GFP_KERNEL);
+	अगर (!ptr)
+		वापस ERR_PTR(-ENOMEM);
 
 	clk = of_clk_get_by_name(np, con_id);
-	if (!IS_ERR(clk)) {
+	अगर (!IS_ERR(clk)) अणु
 		*ptr = clk;
 		devres_add(dev, ptr);
-	} else {
-		devres_free(ptr);
-	}
+	पूर्ण अन्यथा अणु
+		devres_मुक्त(ptr);
+	पूर्ण
 
-	return clk;
-}
+	वापस clk;
+पूर्ण
 EXPORT_SYMBOL(devm_get_clk_from_child);

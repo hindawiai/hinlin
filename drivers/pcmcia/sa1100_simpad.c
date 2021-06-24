@@ -1,115 +1,116 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * drivers/pcmcia/sa1100_simpad.c
  *
- * PCMCIA implementation routines for simpad
+ * PCMCIA implementation routines क्रम simpad
  *
  */
-#include <linux/module.h>
-#include <linux/kernel.h>
-#include <linux/device.h>
-#include <linux/init.h>
+#समावेश <linux/module.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/device.h>
+#समावेश <linux/init.h>
 
-#include <mach/hardware.h>
-#include <asm/mach-types.h>
-#include <mach/simpad.h>
-#include "sa1100_generic.h"
+#समावेश <mach/hardware.h>
+#समावेश <यंत्र/mach-types.h>
+#समावेश <mach/simpad.h>
+#समावेश "sa1100_generic.h"
 
-static int simpad_pcmcia_hw_init(struct soc_pcmcia_socket *skt)
-{
+अटल पूर्णांक simpad_pcmcia_hw_init(काष्ठा soc_pcmcia_socket *skt)
+अणु
 
 	simpad_clear_cs3_bit(VCC_3V_EN|VCC_5V_EN|EN0|EN1);
 
 	skt->stat[SOC_STAT_CD].name = "cf-detect";
 	skt->stat[SOC_STAT_RDY].name = "cf-ready";
 
-	return soc_pcmcia_request_gpiods(skt);
-}
+	वापस soc_pcmcia_request_gpiods(skt);
+पूर्ण
 
-static void simpad_pcmcia_hw_shutdown(struct soc_pcmcia_socket *skt)
-{
+अटल व्योम simpad_pcmcia_hw_shutकरोwn(काष्ठा soc_pcmcia_socket *skt)
+अणु
 	/* Disable CF bus: */
 	/*simpad_set_cs3_bit(PCMCIA_BUFF_DIS);*/
 	simpad_clear_cs3_bit(PCMCIA_RESET);
-}
+पूर्ण
 
-static void
-simpad_pcmcia_socket_state(struct soc_pcmcia_socket *skt,
-			   struct pcmcia_state *state)
-{
-	long cs3reg = simpad_get_cs3_ro();
+अटल व्योम
+simpad_pcmcia_socket_state(काष्ठा soc_pcmcia_socket *skt,
+			   काष्ठा pcmcia_state *state)
+अणु
+	दीर्घ cs3reg = simpad_get_cs3_ro();
 
 	/* bvd1 might be cs3reg & PCMCIA_BVD1 */
 	/* bvd2 might be cs3reg & PCMCIA_BVD2 */
 
-	if ((cs3reg & (PCMCIA_VS1|PCMCIA_VS2)) ==
-			(PCMCIA_VS1|PCMCIA_VS2)) {
+	अगर ((cs3reg & (PCMCIA_VS1|PCMCIA_VS2)) ==
+			(PCMCIA_VS1|PCMCIA_VS2)) अणु
 		state->vs_3v=0;
 		state->vs_Xv=0;
-	} else {
+	पूर्ण अन्यथा अणु
 		state->vs_3v=1;
 		state->vs_Xv=0;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int
-simpad_pcmcia_configure_socket(struct soc_pcmcia_socket *skt,
-			       const socket_state_t *state)
-{
-	unsigned long flags;
+अटल पूर्णांक
+simpad_pcmcia_configure_socket(काष्ठा soc_pcmcia_socket *skt,
+			       स्थिर socket_state_t *state)
+अणु
+	अचिन्हित दीर्घ flags;
 
 	local_irq_save(flags);
 
 	/* Murphy: see table of MIC2562a-1 */
-	switch (state->Vcc) {
-	case 0:
+	चयन (state->Vcc) अणु
+	हाल 0:
 		simpad_clear_cs3_bit(VCC_3V_EN|VCC_5V_EN|EN0|EN1);
-		break;
+		अवरोध;
 
-	case 33:
+	हाल 33:
 		simpad_clear_cs3_bit(VCC_3V_EN|EN1);
 		simpad_set_cs3_bit(VCC_5V_EN|EN0);
-		break;
+		अवरोध;
 
-	case 50:
+	हाल 50:
 		simpad_clear_cs3_bit(VCC_5V_EN|EN1);
 		simpad_set_cs3_bit(VCC_3V_EN|EN0);
-		break;
+		अवरोध;
 
-	default:
-		printk(KERN_ERR "%s(): unrecognized Vcc %u\n",
+	शेष:
+		prपूर्णांकk(KERN_ERR "%s(): unrecognized Vcc %u\n",
 			__func__, state->Vcc);
 		simpad_clear_cs3_bit(VCC_3V_EN|VCC_5V_EN|EN0|EN1);
 		local_irq_restore(flags);
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
 
 	local_irq_restore(flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void simpad_pcmcia_socket_suspend(struct soc_pcmcia_socket *skt)
-{
+अटल व्योम simpad_pcmcia_socket_suspend(काष्ठा soc_pcmcia_socket *skt)
+अणु
 	simpad_set_cs3_bit(PCMCIA_RESET);
-}
+पूर्ण
 
-static struct pcmcia_low_level simpad_pcmcia_ops = {
+अटल काष्ठा pcmcia_low_level simpad_pcmcia_ops = अणु
 	.owner			= THIS_MODULE,
 	.hw_init		= simpad_pcmcia_hw_init,
-	.hw_shutdown		= simpad_pcmcia_hw_shutdown,
+	.hw_shutकरोwn		= simpad_pcmcia_hw_shutकरोwn,
 	.socket_state		= simpad_pcmcia_socket_state,
 	.configure_socket	= simpad_pcmcia_configure_socket,
 	.socket_suspend		= simpad_pcmcia_socket_suspend,
-};
+पूर्ण;
 
-int pcmcia_simpad_init(struct device *dev)
-{
-	int ret = -ENODEV;
+पूर्णांक pcmcia_simpad_init(काष्ठा device *dev)
+अणु
+	पूर्णांक ret = -ENODEV;
 
-	if (machine_is_simpad())
+	अगर (machine_is_simpad())
 		ret = sa11xx_drv_pcmcia_probe(dev, &simpad_pcmcia_ops, 1, 1);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण

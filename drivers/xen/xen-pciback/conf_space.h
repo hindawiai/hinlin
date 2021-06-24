@@ -1,136 +1,137 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- * PCI Backend - Common data structures for overriding the configuration space
+ * PCI Backend - Common data काष्ठाures क्रम overriding the configuration space
  *
  * Author: Ryan Wilson <hap9@epoch.ncsc.mil>
  */
 
-#ifndef __XEN_PCIBACK_CONF_SPACE_H__
-#define __XEN_PCIBACK_CONF_SPACE_H__
+#अगर_अघोषित __XEN_PCIBACK_CONF_SPACE_H__
+#घोषणा __XEN_PCIBACK_CONF_SPACE_H__
 
-#include <linux/list.h>
-#include <linux/err.h>
+#समावेश <linux/list.h>
+#समावेश <linux/err.h>
 
-/* conf_field_init can return an errno in a ptr with ERR_PTR() */
-typedef void *(*conf_field_init) (struct pci_dev *dev, int offset);
-typedef void (*conf_field_reset) (struct pci_dev *dev, int offset, void *data);
-typedef void (*conf_field_free) (struct pci_dev *dev, int offset, void *data);
+/* conf_field_init can वापस an त्रुटि_सं in a ptr with ERR_PTR() */
+प्रकार व्योम *(*conf_field_init) (काष्ठा pci_dev *dev, पूर्णांक offset);
+प्रकार व्योम (*conf_field_reset) (काष्ठा pci_dev *dev, पूर्णांक offset, व्योम *data);
+प्रकार व्योम (*conf_field_मुक्त) (काष्ठा pci_dev *dev, पूर्णांक offset, व्योम *data);
 
-typedef int (*conf_dword_write) (struct pci_dev *dev, int offset, u32 value,
-				 void *data);
-typedef int (*conf_word_write) (struct pci_dev *dev, int offset, u16 value,
-				void *data);
-typedef int (*conf_byte_write) (struct pci_dev *dev, int offset, u8 value,
-				void *data);
-typedef int (*conf_dword_read) (struct pci_dev *dev, int offset, u32 *value,
-				void *data);
-typedef int (*conf_word_read) (struct pci_dev *dev, int offset, u16 *value,
-			       void *data);
-typedef int (*conf_byte_read) (struct pci_dev *dev, int offset, u8 *value,
-			       void *data);
+प्रकार पूर्णांक (*conf_dword_ग_लिखो) (काष्ठा pci_dev *dev, पूर्णांक offset, u32 value,
+				 व्योम *data);
+प्रकार पूर्णांक (*conf_word_ग_लिखो) (काष्ठा pci_dev *dev, पूर्णांक offset, u16 value,
+				व्योम *data);
+प्रकार पूर्णांक (*conf_byte_ग_लिखो) (काष्ठा pci_dev *dev, पूर्णांक offset, u8 value,
+				व्योम *data);
+प्रकार पूर्णांक (*conf_dword_पढ़ो) (काष्ठा pci_dev *dev, पूर्णांक offset, u32 *value,
+				व्योम *data);
+प्रकार पूर्णांक (*conf_word_पढ़ो) (काष्ठा pci_dev *dev, पूर्णांक offset, u16 *value,
+			       व्योम *data);
+प्रकार पूर्णांक (*conf_byte_पढ़ो) (काष्ठा pci_dev *dev, पूर्णांक offset, u8 *value,
+			       व्योम *data);
 
 /* These are the fields within the configuration space which we
- * are interested in intercepting reads/writes to and changing their
+ * are पूर्णांकerested in पूर्णांकercepting पढ़ोs/ग_लिखोs to and changing their
  * values.
  */
-struct config_field {
-	unsigned int offset;
-	unsigned int size;
-	unsigned int mask;
+काष्ठा config_field अणु
+	अचिन्हित पूर्णांक offset;
+	अचिन्हित पूर्णांक size;
+	अचिन्हित पूर्णांक mask;
 	conf_field_init init;
 	conf_field_reset reset;
-	conf_field_free release;
-	void (*clean) (struct config_field *field);
-	union {
-		struct {
-			conf_dword_write write;
-			conf_dword_read read;
-		} dw;
-		struct {
-			conf_word_write write;
-			conf_word_read read;
-		} w;
-		struct {
-			conf_byte_write write;
-			conf_byte_read read;
-		} b;
-	} u;
-	struct list_head list;
-};
+	conf_field_मुक्त release;
+	व्योम (*clean) (काष्ठा config_field *field);
+	जोड़ अणु
+		काष्ठा अणु
+			conf_dword_ग_लिखो ग_लिखो;
+			conf_dword_पढ़ो पढ़ो;
+		पूर्ण dw;
+		काष्ठा अणु
+			conf_word_ग_लिखो ग_लिखो;
+			conf_word_पढ़ो पढ़ो;
+		पूर्ण w;
+		काष्ठा अणु
+			conf_byte_ग_लिखो ग_लिखो;
+			conf_byte_पढ़ो पढ़ो;
+		पूर्ण b;
+	पूर्ण u;
+	काष्ठा list_head list;
+पूर्ण;
 
-struct config_field_entry {
-	struct list_head list;
-	const struct config_field *field;
-	unsigned int base_offset;
-	void *data;
-};
+काष्ठा config_field_entry अणु
+	काष्ठा list_head list;
+	स्थिर काष्ठा config_field *field;
+	अचिन्हित पूर्णांक base_offset;
+	व्योम *data;
+पूर्ण;
 
-#define INTERRUPT_TYPE_NONE (0)
-#define INTERRUPT_TYPE_INTX (1<<0)
-#define INTERRUPT_TYPE_MSI  (1<<1)
-#define INTERRUPT_TYPE_MSIX (1<<2)
+#घोषणा INTERRUPT_TYPE_NONE (0)
+#घोषणा INTERRUPT_TYPE_INTX (1<<0)
+#घोषणा INTERRUPT_TYPE_MSI  (1<<1)
+#घोषणा INTERRUPT_TYPE_MSIX (1<<2)
 
-extern bool xen_pcibk_permissive;
+बाह्य bool xen_pcibk_permissive;
 
-#define OFFSET(cfg_entry) ((cfg_entry)->base_offset+(cfg_entry)->field->offset)
+#घोषणा OFFSET(cfg_entry) ((cfg_entry)->base_offset+(cfg_entry)->field->offset)
 
-/* Add fields to a device - the add_fields macro expects to get a pointer to
+/* Add fields to a device - the add_fields macro expects to get a poपूर्णांकer to
  * the first entry in an array (of which the ending is marked by size==0)
  */
-int xen_pcibk_config_add_field_offset(struct pci_dev *dev,
-				    const struct config_field *field,
-				    unsigned int offset);
+पूर्णांक xen_pcibk_config_add_field_offset(काष्ठा pci_dev *dev,
+				    स्थिर काष्ठा config_field *field,
+				    अचिन्हित पूर्णांक offset);
 
-static inline int xen_pcibk_config_add_field(struct pci_dev *dev,
-					   const struct config_field *field)
-{
-	return xen_pcibk_config_add_field_offset(dev, field, 0);
-}
+अटल अंतरभूत पूर्णांक xen_pcibk_config_add_field(काष्ठा pci_dev *dev,
+					   स्थिर काष्ठा config_field *field)
+अणु
+	वापस xen_pcibk_config_add_field_offset(dev, field, 0);
+पूर्ण
 
-static inline int xen_pcibk_config_add_fields(struct pci_dev *dev,
-					    const struct config_field *field)
-{
-	int i, err = 0;
-	for (i = 0; field[i].size != 0; i++) {
+अटल अंतरभूत पूर्णांक xen_pcibk_config_add_fields(काष्ठा pci_dev *dev,
+					    स्थिर काष्ठा config_field *field)
+अणु
+	पूर्णांक i, err = 0;
+	क्रम (i = 0; field[i].size != 0; i++) अणु
 		err = xen_pcibk_config_add_field(dev, &field[i]);
-		if (err)
-			break;
-	}
-	return err;
-}
+		अगर (err)
+			अवरोध;
+	पूर्ण
+	वापस err;
+पूर्ण
 
-static inline int xen_pcibk_config_add_fields_offset(struct pci_dev *dev,
-					const struct config_field *field,
-					unsigned int offset)
-{
-	int i, err = 0;
-	for (i = 0; field[i].size != 0; i++) {
+अटल अंतरभूत पूर्णांक xen_pcibk_config_add_fields_offset(काष्ठा pci_dev *dev,
+					स्थिर काष्ठा config_field *field,
+					अचिन्हित पूर्णांक offset)
+अणु
+	पूर्णांक i, err = 0;
+	क्रम (i = 0; field[i].size != 0; i++) अणु
 		err = xen_pcibk_config_add_field_offset(dev, &field[i], offset);
-		if (err)
-			break;
-	}
-	return err;
-}
+		अगर (err)
+			अवरोध;
+	पूर्ण
+	वापस err;
+पूर्ण
 
 /* Read/Write the real configuration space */
-int xen_pcibk_read_config_byte(struct pci_dev *dev, int offset, u8 *value,
-			       void *data);
-int xen_pcibk_read_config_word(struct pci_dev *dev, int offset, u16 *value,
-			       void *data);
-int xen_pcibk_read_config_dword(struct pci_dev *dev, int offset, u32 *value,
-				void *data);
-int xen_pcibk_write_config_byte(struct pci_dev *dev, int offset, u8 value,
-				 void *data);
-int xen_pcibk_write_config_word(struct pci_dev *dev, int offset, u16 value,
-				void *data);
-int xen_pcibk_write_config_dword(struct pci_dev *dev, int offset, u32 value,
-				 void *data);
+पूर्णांक xen_pcibk_पढ़ो_config_byte(काष्ठा pci_dev *dev, पूर्णांक offset, u8 *value,
+			       व्योम *data);
+पूर्णांक xen_pcibk_पढ़ो_config_word(काष्ठा pci_dev *dev, पूर्णांक offset, u16 *value,
+			       व्योम *data);
+पूर्णांक xen_pcibk_पढ़ो_config_dword(काष्ठा pci_dev *dev, पूर्णांक offset, u32 *value,
+				व्योम *data);
+पूर्णांक xen_pcibk_ग_लिखो_config_byte(काष्ठा pci_dev *dev, पूर्णांक offset, u8 value,
+				 व्योम *data);
+पूर्णांक xen_pcibk_ग_लिखो_config_word(काष्ठा pci_dev *dev, पूर्णांक offset, u16 value,
+				व्योम *data);
+पूर्णांक xen_pcibk_ग_लिखो_config_dword(काष्ठा pci_dev *dev, पूर्णांक offset, u32 value,
+				 व्योम *data);
 
-int xen_pcibk_config_capability_init(void);
+पूर्णांक xen_pcibk_config_capability_init(व्योम);
 
-int xen_pcibk_config_header_add_fields(struct pci_dev *dev);
-int xen_pcibk_config_capability_add_fields(struct pci_dev *dev);
+पूर्णांक xen_pcibk_config_header_add_fields(काष्ठा pci_dev *dev);
+पूर्णांक xen_pcibk_config_capability_add_fields(काष्ठा pci_dev *dev);
 
-int xen_pcibk_get_interrupt_type(struct pci_dev *dev);
+पूर्णांक xen_pcibk_get_पूर्णांकerrupt_type(काष्ठा pci_dev *dev);
 
-#endif				/* __XEN_PCIBACK_CONF_SPACE_H__ */
+#पूर्ण_अगर				/* __XEN_PCIBACK_CONF_SPACE_H__ */

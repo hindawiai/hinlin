@@ -1,51 +1,52 @@
+<शैली गुरु>
 /*
  * pm_wakeirq.h - Device wakeirq helper functions
  *
- * This program is free software; you can redistribute it and/or modify
+ * This program is मुक्त software; you can redistribute it and/or modअगरy
  * it under the terms of the GNU General Public License version 2 as
  * published by the Free Software Foundation.
  *
  * This program is distributed "as is" WITHOUT ANY WARRANTY of any
  * kind, whether express or implied; without even the implied warranty
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU General Public License क्रम more details.
  */
 
-#ifndef _LINUX_PM_WAKEIRQ_H
-#define _LINUX_PM_WAKEIRQ_H
+#अगर_अघोषित _LINUX_PM_WAKEIRQ_H
+#घोषणा _LINUX_PM_WAKEIRQ_H
 
-#ifdef CONFIG_PM
+#अगर_घोषित CONFIG_PM
 
-extern int dev_pm_set_wake_irq(struct device *dev, int irq);
-extern int dev_pm_set_dedicated_wake_irq(struct device *dev,
-					 int irq);
-extern void dev_pm_clear_wake_irq(struct device *dev);
-extern void dev_pm_enable_wake_irq(struct device *dev);
-extern void dev_pm_disable_wake_irq(struct device *dev);
+बाह्य पूर्णांक dev_pm_set_wake_irq(काष्ठा device *dev, पूर्णांक irq);
+बाह्य पूर्णांक dev_pm_set_dedicated_wake_irq(काष्ठा device *dev,
+					 पूर्णांक irq);
+बाह्य व्योम dev_pm_clear_wake_irq(काष्ठा device *dev);
+बाह्य व्योम dev_pm_enable_wake_irq(काष्ठा device *dev);
+बाह्य व्योम dev_pm_disable_wake_irq(काष्ठा device *dev);
 
-#else	/* !CONFIG_PM */
+#अन्यथा	/* !CONFIG_PM */
 
-static inline int dev_pm_set_wake_irq(struct device *dev, int irq)
-{
-	return 0;
-}
+अटल अंतरभूत पूर्णांक dev_pm_set_wake_irq(काष्ठा device *dev, पूर्णांक irq)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline int dev_pm_set_dedicated_wake_irq(struct device *dev, int irq)
-{
-	return 0;
-}
+अटल अंतरभूत पूर्णांक dev_pm_set_dedicated_wake_irq(काष्ठा device *dev, पूर्णांक irq)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline void dev_pm_clear_wake_irq(struct device *dev)
-{
-}
+अटल अंतरभूत व्योम dev_pm_clear_wake_irq(काष्ठा device *dev)
+अणु
+पूर्ण
 
-static inline void dev_pm_enable_wake_irq(struct device *dev)
-{
-}
+अटल अंतरभूत व्योम dev_pm_enable_wake_irq(काष्ठा device *dev)
+अणु
+पूर्ण
 
-static inline void dev_pm_disable_wake_irq(struct device *dev)
-{
-}
+अटल अंतरभूत व्योम dev_pm_disable_wake_irq(काष्ठा device *dev)
+अणु
+पूर्ण
 
-#endif	/* CONFIG_PM */
-#endif	/* _LINUX_PM_WAKEIRQ_H */
+#पूर्ण_अगर	/* CONFIG_PM */
+#पूर्ण_अगर	/* _LINUX_PM_WAKEIRQ_H */

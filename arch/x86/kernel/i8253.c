@@ -1,67 +1,68 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * 8253/PIT functions
  *
  */
-#include <linux/clockchips.h>
-#include <linux/init.h>
-#include <linux/timex.h>
-#include <linux/i8253.h>
+#समावेश <linux/घड़ीchips.h>
+#समावेश <linux/init.h>
+#समावेश <linux/समयx.h>
+#समावेश <linux/i8253.h>
 
-#include <asm/apic.h>
-#include <asm/hpet.h>
-#include <asm/time.h>
-#include <asm/smp.h>
+#समावेश <यंत्र/apic.h>
+#समावेश <यंत्र/hpet.h>
+#समावेश <यंत्र/समय.स>
+#समावेश <यंत्र/smp.h>
 
 /*
  * HPET replaces the PIT, when enabled. So we need to know, which of
- * the two timers is used
+ * the two समयrs is used
  */
-struct clock_event_device *global_clock_event;
+काष्ठा घड़ी_event_device *global_घड़ी_event;
 
 /*
- * Modern chipsets can disable the PIT clock which makes it unusable. It
- * would be possible to enable the clock but the registers are chipset
- * specific and not discoverable. Avoid the whack a mole game.
+ * Modern chipsets can disable the PIT घड़ी which makes it unusable. It
+ * would be possible to enable the घड़ी but the रेजिस्टरs are chipset
+ * specअगरic and not discoverable. Aव्योम the whack a mole game.
  *
- * These platforms have discoverable TSC/CPU frequencies but this also
- * requires to know the local APIC timer frequency as it normally is
- * calibrated against the PIT interrupt.
+ * These platक्रमms have discoverable TSC/CPU frequencies but this also
+ * requires to know the local APIC समयr frequency as it normally is
+ * calibrated against the PIT पूर्णांकerrupt.
  */
-static bool __init use_pit(void)
-{
-	if (!IS_ENABLED(CONFIG_X86_TSC) || !boot_cpu_has(X86_FEATURE_TSC))
-		return true;
+अटल bool __init use_pit(व्योम)
+अणु
+	अगर (!IS_ENABLED(CONFIG_X86_TSC) || !boot_cpu_has(X86_FEATURE_TSC))
+		वापस true;
 
-	/* This also returns true when APIC is disabled */
-	return apic_needs_pit();
-}
+	/* This also वापसs true when APIC is disabled */
+	वापस apic_needs_pit();
+पूर्ण
 
-bool __init pit_timer_init(void)
-{
-	if (!use_pit())
-		return false;
+bool __init pit_समयr_init(व्योम)
+अणु
+	अगर (!use_pit())
+		वापस false;
 
-	clockevent_i8253_init(true);
-	global_clock_event = &i8253_clockevent;
-	return true;
-}
+	घड़ीevent_i8253_init(true);
+	global_घड़ी_event = &i8253_घड़ीevent;
+	वापस true;
+पूर्ण
 
-#ifndef CONFIG_X86_64
-static int __init init_pit_clocksource(void)
-{
+#अगर_अघोषित CONFIG_X86_64
+अटल पूर्णांक __init init_pit_घड़ीsource(व्योम)
+अणु
 	 /*
-	  * Several reasons not to register PIT as a clocksource:
+	  * Several reasons not to रेजिस्टर PIT as a घड़ीsource:
 	  *
-	  * - On SMP PIT does not scale due to i8253_lock
+	  * - On SMP PIT करोes not scale due to i8253_lock
 	  * - when HPET is enabled
-	  * - when local APIC timer is active (PIT is switched off)
+	  * - when local APIC समयr is active (PIT is चयनed off)
 	  */
-	if (num_possible_cpus() > 1 || is_hpet_enabled() ||
-	    !clockevent_state_periodic(&i8253_clockevent))
-		return 0;
+	अगर (num_possible_cpus() > 1 || is_hpet_enabled() ||
+	    !घड़ीevent_state_periodic(&i8253_घड़ीevent))
+		वापस 0;
 
-	return clocksource_i8253_init();
-}
-arch_initcall(init_pit_clocksource);
-#endif /* !CONFIG_X86_64 */
+	वापस घड़ीsource_i8253_init();
+पूर्ण
+arch_initcall(init_pit_घड़ीsource);
+#पूर्ण_अगर /* !CONFIG_X86_64 */

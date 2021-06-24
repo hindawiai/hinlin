@@ -1,61 +1,62 @@
+<शैली गुरु>
 /*
- * SPDX-License-Identifier: MIT
+ * SPDX-License-Identअगरier: MIT
  *
- * Copyright © 2018 Intel Corporation
+ * Copyright तऊ 2018 Intel Corporation
  */
 
-#include <linux/nospec.h>
-#include <linux/sched/signal.h>
-#include <linux/uaccess.h>
+#समावेश <linux/nospec.h>
+#समावेश <linux/sched/संकेत.स>
+#समावेश <linux/uaccess.h>
 
-#include <uapi/drm/i915_drm.h>
+#समावेश <uapi/drm/i915_drm.h>
 
-#include "i915_user_extensions.h"
-#include "i915_utils.h"
+#समावेश "i915_user_extensions.h"
+#समावेश "i915_utils.h"
 
-int i915_user_extensions(struct i915_user_extension __user *ext,
-			 const i915_user_extension_fn *tbl,
-			 unsigned int count,
-			 void *data)
-{
-	unsigned int stackdepth = 512;
+पूर्णांक i915_user_extensions(काष्ठा i915_user_extension __user *ext,
+			 स्थिर i915_user_extension_fn *tbl,
+			 अचिन्हित पूर्णांक count,
+			 व्योम *data)
+अणु
+	अचिन्हित पूर्णांक stackdepth = 512;
 
-	while (ext) {
-		int i, err;
+	जबतक (ext) अणु
+		पूर्णांक i, err;
 		u32 name;
 		u64 next;
 
-		if (!stackdepth--) /* recursion vs useful flexibility */
-			return -E2BIG;
+		अगर (!stackdepth--) /* recursion vs useful flexibility */
+			वापस -E2BIG;
 
 		err = check_user_mbz(&ext->flags);
-		if (err)
-			return err;
+		अगर (err)
+			वापस err;
 
-		for (i = 0; i < ARRAY_SIZE(ext->rsvd); i++) {
+		क्रम (i = 0; i < ARRAY_SIZE(ext->rsvd); i++) अणु
 			err = check_user_mbz(&ext->rsvd[i]);
-			if (err)
-				return err;
-		}
+			अगर (err)
+				वापस err;
+		पूर्ण
 
-		if (get_user(name, &ext->name))
-			return -EFAULT;
+		अगर (get_user(name, &ext->name))
+			वापस -EFAULT;
 
 		err = -EINVAL;
-		if (name < count) {
+		अगर (name < count) अणु
 			name = array_index_nospec(name, count);
-			if (tbl[name])
+			अगर (tbl[name])
 				err = tbl[name](ext, data);
-		}
-		if (err)
-			return err;
+		पूर्ण
+		अगर (err)
+			वापस err;
 
-		if (get_user(next, &ext->next_extension) ||
+		अगर (get_user(next, &ext->next_extension) ||
 		    overflows_type(next, ext))
-			return -EFAULT;
+			वापस -EFAULT;
 
 		ext = u64_to_user_ptr(next);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

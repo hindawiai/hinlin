@@ -1,92 +1,93 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * IIO DAC driver for Analog Devices AD8801 DAC
+ * IIO DAC driver क्रम Analog Devices AD8801 DAC
  *
  * Copyright (C) 2016 Gwenhael Goavec-Merou
  */
 
-#include <linux/iio/iio.h>
-#include <linux/module.h>
-#include <linux/regulator/consumer.h>
-#include <linux/spi/spi.h>
-#include <linux/sysfs.h>
+#समावेश <linux/iio/iपन.स>
+#समावेश <linux/module.h>
+#समावेश <linux/regulator/consumer.h>
+#समावेश <linux/spi/spi.h>
+#समावेश <linux/sysfs.h>
 
-#define AD8801_CFG_ADDR_OFFSET 8
+#घोषणा AD8801_CFG_ADDR_OFFSET 8
 
-enum ad8801_device_ids {
+क्रमागत ad8801_device_ids अणु
 	ID_AD8801,
 	ID_AD8803,
-};
+पूर्ण;
 
-struct ad8801_state {
-	struct spi_device *spi;
-	unsigned char dac_cache[8]; /* Value write on each channel */
-	unsigned int vrefh_mv;
-	unsigned int vrefl_mv;
-	struct regulator *vrefh_reg;
-	struct regulator *vrefl_reg;
+काष्ठा ad8801_state अणु
+	काष्ठा spi_device *spi;
+	अचिन्हित अक्षर dac_cache[8]; /* Value ग_लिखो on each channel */
+	अचिन्हित पूर्णांक vrefh_mv;
+	अचिन्हित पूर्णांक vrefl_mv;
+	काष्ठा regulator *vrefh_reg;
+	काष्ठा regulator *vrefl_reg;
 
 	__be16 data ____cacheline_aligned;
-};
+पूर्ण;
 
-static int ad8801_spi_write(struct ad8801_state *state,
-	u8 channel, unsigned char value)
-{
+अटल पूर्णांक ad8801_spi_ग_लिखो(काष्ठा ad8801_state *state,
+	u8 channel, अचिन्हित अक्षर value)
+अणु
 	state->data = cpu_to_be16((channel << AD8801_CFG_ADDR_OFFSET) | value);
-	return spi_write(state->spi, &state->data, sizeof(state->data));
-}
+	वापस spi_ग_लिखो(state->spi, &state->data, माप(state->data));
+पूर्ण
 
-static int ad8801_write_raw(struct iio_dev *indio_dev,
-	struct iio_chan_spec const *chan, int val, int val2, long mask)
-{
-	struct ad8801_state *state = iio_priv(indio_dev);
-	int ret;
+अटल पूर्णांक ad8801_ग_लिखो_raw(काष्ठा iio_dev *indio_dev,
+	काष्ठा iio_chan_spec स्थिर *chan, पूर्णांक val, पूर्णांक val2, दीर्घ mask)
+अणु
+	काष्ठा ad8801_state *state = iio_priv(indio_dev);
+	पूर्णांक ret;
 
-	switch (mask) {
-	case IIO_CHAN_INFO_RAW:
-		if (val >= 256 || val < 0)
-			return -EINVAL;
+	चयन (mask) अणु
+	हाल IIO_CHAN_INFO_RAW:
+		अगर (val >= 256 || val < 0)
+			वापस -EINVAL;
 
-		ret = ad8801_spi_write(state, chan->channel, val);
-		if (ret == 0)
+		ret = ad8801_spi_ग_लिखो(state, chan->channel, val);
+		अगर (ret == 0)
 			state->dac_cache[chan->channel] = val;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		ret = -EINVAL;
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int ad8801_read_raw(struct iio_dev *indio_dev,
-	struct iio_chan_spec const *chan, int *val, int *val2, long info)
-{
-	struct ad8801_state *state = iio_priv(indio_dev);
+अटल पूर्णांक ad8801_पढ़ो_raw(काष्ठा iio_dev *indio_dev,
+	काष्ठा iio_chan_spec स्थिर *chan, पूर्णांक *val, पूर्णांक *val2, दीर्घ info)
+अणु
+	काष्ठा ad8801_state *state = iio_priv(indio_dev);
 
-	switch (info) {
-	case IIO_CHAN_INFO_RAW:
+	चयन (info) अणु
+	हाल IIO_CHAN_INFO_RAW:
 		*val = state->dac_cache[chan->channel];
-		return IIO_VAL_INT;
-	case IIO_CHAN_INFO_SCALE:
+		वापस IIO_VAL_INT;
+	हाल IIO_CHAN_INFO_SCALE:
 		*val = state->vrefh_mv - state->vrefl_mv;
 		*val2 = 8;
-		return IIO_VAL_FRACTIONAL_LOG2;
-	case IIO_CHAN_INFO_OFFSET:
+		वापस IIO_VAL_FRACTIONAL_LOG2;
+	हाल IIO_CHAN_INFO_OFFSET:
 		*val = state->vrefl_mv;
-		return IIO_VAL_INT;
-	default:
-		return -EINVAL;
-	}
+		वापस IIO_VAL_INT;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static const struct iio_info ad8801_info = {
-	.read_raw = ad8801_read_raw,
-	.write_raw = ad8801_write_raw,
-};
+अटल स्थिर काष्ठा iio_info ad8801_info = अणु
+	.पढ़ो_raw = ad8801_पढ़ो_raw,
+	.ग_लिखो_raw = ad8801_ग_लिखो_raw,
+पूर्ण;
 
-#define AD8801_CHANNEL(chan) {		\
+#घोषणा AD8801_CHANNEL(chan) अणु		\
 	.type = IIO_VOLTAGE,			\
 	.indexed = 1,				\
 	.output = 1,				\
@@ -94,9 +95,9 @@ static const struct iio_info ad8801_info = {
 	.info_mask_separate = BIT(IIO_CHAN_INFO_RAW), \
 	.info_mask_shared_by_type = BIT(IIO_CHAN_INFO_SCALE) |	\
 		BIT(IIO_CHAN_INFO_OFFSET), \
-}
+पूर्ण
 
-static const struct iio_chan_spec ad8801_channels[] = {
+अटल स्थिर काष्ठा iio_chan_spec ad8801_channels[] = अणु
 	AD8801_CHANNEL(0),
 	AD8801_CHANNEL(1),
 	AD8801_CHANNEL(2),
@@ -105,123 +106,123 @@ static const struct iio_chan_spec ad8801_channels[] = {
 	AD8801_CHANNEL(5),
 	AD8801_CHANNEL(6),
 	AD8801_CHANNEL(7),
-};
+पूर्ण;
 
-static int ad8801_probe(struct spi_device *spi)
-{
-	struct iio_dev *indio_dev;
-	struct ad8801_state *state;
-	const struct spi_device_id *id;
-	int ret;
+अटल पूर्णांक ad8801_probe(काष्ठा spi_device *spi)
+अणु
+	काष्ठा iio_dev *indio_dev;
+	काष्ठा ad8801_state *state;
+	स्थिर काष्ठा spi_device_id *id;
+	पूर्णांक ret;
 
-	indio_dev = devm_iio_device_alloc(&spi->dev, sizeof(*state));
-	if (indio_dev == NULL)
-		return -ENOMEM;
+	indio_dev = devm_iio_device_alloc(&spi->dev, माप(*state));
+	अगर (indio_dev == शून्य)
+		वापस -ENOMEM;
 
 	state = iio_priv(indio_dev);
 	state->spi = spi;
 	id = spi_get_device_id(spi);
 
 	state->vrefh_reg = devm_regulator_get(&spi->dev, "vrefh");
-	if (IS_ERR(state->vrefh_reg)) {
+	अगर (IS_ERR(state->vrefh_reg)) अणु
 		dev_err(&spi->dev, "Vrefh regulator not specified\n");
-		return PTR_ERR(state->vrefh_reg);
-	}
+		वापस PTR_ERR(state->vrefh_reg);
+	पूर्ण
 
 	ret = regulator_enable(state->vrefh_reg);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&spi->dev, "Failed to enable vrefh regulator: %d\n",
 				ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	ret = regulator_get_voltage(state->vrefh_reg);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(&spi->dev, "Failed to read vrefh regulator: %d\n",
 				ret);
-		goto error_disable_vrefh_reg;
-	}
+		जाओ error_disable_vrefh_reg;
+	पूर्ण
 	state->vrefh_mv = ret / 1000;
 
-	if (id->driver_data == ID_AD8803) {
+	अगर (id->driver_data == ID_AD8803) अणु
 		state->vrefl_reg = devm_regulator_get(&spi->dev, "vrefl");
-		if (IS_ERR(state->vrefl_reg)) {
+		अगर (IS_ERR(state->vrefl_reg)) अणु
 			dev_err(&spi->dev, "Vrefl regulator not specified\n");
 			ret = PTR_ERR(state->vrefl_reg);
-			goto error_disable_vrefh_reg;
-		}
+			जाओ error_disable_vrefh_reg;
+		पूर्ण
 
 		ret = regulator_enable(state->vrefl_reg);
-		if (ret) {
+		अगर (ret) अणु
 			dev_err(&spi->dev, "Failed to enable vrefl regulator: %d\n",
 					ret);
-			goto error_disable_vrefh_reg;
-		}
+			जाओ error_disable_vrefh_reg;
+		पूर्ण
 
 		ret = regulator_get_voltage(state->vrefl_reg);
-		if (ret < 0) {
+		अगर (ret < 0) अणु
 			dev_err(&spi->dev, "Failed to read vrefl regulator: %d\n",
 					ret);
-			goto error_disable_vrefl_reg;
-		}
+			जाओ error_disable_vrefl_reg;
+		पूर्ण
 		state->vrefl_mv = ret / 1000;
-	} else {
+	पूर्ण अन्यथा अणु
 		state->vrefl_mv = 0;
-		state->vrefl_reg = NULL;
-	}
+		state->vrefl_reg = शून्य;
+	पूर्ण
 
 	spi_set_drvdata(spi, indio_dev);
 	indio_dev->info = &ad8801_info;
-	indio_dev->modes = INDIO_DIRECT_MODE;
+	indio_dev->modes = INDIO_सूचीECT_MODE;
 	indio_dev->channels = ad8801_channels;
 	indio_dev->num_channels = ARRAY_SIZE(ad8801_channels);
 	indio_dev->name = id->name;
 
-	ret = iio_device_register(indio_dev);
-	if (ret) {
+	ret = iio_device_रेजिस्टर(indio_dev);
+	अगर (ret) अणु
 		dev_err(&spi->dev, "Failed to register iio device: %d\n",
 				ret);
-		goto error_disable_vrefl_reg;
-	}
+		जाओ error_disable_vrefl_reg;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 error_disable_vrefl_reg:
-	if (state->vrefl_reg)
+	अगर (state->vrefl_reg)
 		regulator_disable(state->vrefl_reg);
 error_disable_vrefh_reg:
 	regulator_disable(state->vrefh_reg);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int ad8801_remove(struct spi_device *spi)
-{
-	struct iio_dev *indio_dev = spi_get_drvdata(spi);
-	struct ad8801_state *state = iio_priv(indio_dev);
+अटल पूर्णांक ad8801_हटाओ(काष्ठा spi_device *spi)
+अणु
+	काष्ठा iio_dev *indio_dev = spi_get_drvdata(spi);
+	काष्ठा ad8801_state *state = iio_priv(indio_dev);
 
-	iio_device_unregister(indio_dev);
-	if (state->vrefl_reg)
+	iio_device_unरेजिस्टर(indio_dev);
+	अगर (state->vrefl_reg)
 		regulator_disable(state->vrefl_reg);
 	regulator_disable(state->vrefh_reg);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct spi_device_id ad8801_ids[] = {
-	{"ad8801", ID_AD8801},
-	{"ad8803", ID_AD8803},
-	{}
-};
+अटल स्थिर काष्ठा spi_device_id ad8801_ids[] = अणु
+	अणु"ad8801", ID_AD8801पूर्ण,
+	अणु"ad8803", ID_AD8803पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(spi, ad8801_ids);
 
-static struct spi_driver ad8801_driver = {
-	.driver = {
+अटल काष्ठा spi_driver ad8801_driver = अणु
+	.driver = अणु
 		.name	= "ad8801",
-	},
+	पूर्ण,
 	.probe		= ad8801_probe,
-	.remove		= ad8801_remove,
+	.हटाओ		= ad8801_हटाओ,
 	.id_table	= ad8801_ids,
-};
+पूर्ण;
 module_spi_driver(ad8801_driver);
 
 MODULE_AUTHOR("Gwenhael Goavec-Merou <gwenhael.goavec-merou@trabucayre.com>");

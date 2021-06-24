@@ -1,59 +1,60 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Copyright (C) Paul Mackerras 1997.
  *
- * Updates for PPC64 by Todd Inglett, Dave Engebretsen & Peter Bergner.
+ * Updates क्रम PPC64 by Todd Inglett, Dave Engebretsen & Peter Bergner.
  */
-#include <stdarg.h>
-#include <stddef.h>
-#include "elf.h"
-#include "page.h"
-#include "string.h"
-#include "stdio.h"
+#समावेश <मानकतर्क.स>
+#समावेश <मानकघोष.स>
+#समावेश "elf.h"
+#समावेश "page.h"
+#समावेश "string.h"
+#समावेश "stdio.h"
 
-int parse_elf64(void *hdr, struct elf_info *info)
-{
+पूर्णांक parse_elf64(व्योम *hdr, काष्ठा elf_info *info)
+अणु
 	Elf64_Ehdr *elf64 = hdr;
 	Elf64_Phdr *elf64ph;
-	unsigned int i;
+	अचिन्हित पूर्णांक i;
 
-	if (!(elf64->e_ident[EI_MAG0]  == ELFMAG0	&&
+	अगर (!(elf64->e_ident[EI_MAG0]  == ELFMAG0	&&
 	      elf64->e_ident[EI_MAG1]  == ELFMAG1	&&
 	      elf64->e_ident[EI_MAG2]  == ELFMAG2	&&
 	      elf64->e_ident[EI_MAG3]  == ELFMAG3	&&
 	      elf64->e_ident[EI_CLASS] == ELFCLASS64	&&
-#ifdef __LITTLE_ENDIAN__
+#अगर_घोषित __LITTLE_ENDIAN__
 	      elf64->e_ident[EI_DATA]  == ELFDATA2LSB	&&
-#else
+#अन्यथा
 	      elf64->e_ident[EI_DATA]  == ELFDATA2MSB	&&
-#endif
+#पूर्ण_अगर
 	      (elf64->e_type            == ET_EXEC ||
 	       elf64->e_type            == ET_DYN)	&&
 	      elf64->e_machine         == EM_PPC64))
-		return 0;
+		वापस 0;
 
-	elf64ph = (Elf64_Phdr *)((unsigned long)elf64 +
-				 (unsigned long)elf64->e_phoff);
-	for (i = 0; i < (unsigned int)elf64->e_phnum; i++, elf64ph++)
-		if (elf64ph->p_type == PT_LOAD)
-			break;
-	if (i >= (unsigned int)elf64->e_phnum)
-		return 0;
+	elf64ph = (Elf64_Phdr *)((अचिन्हित दीर्घ)elf64 +
+				 (अचिन्हित दीर्घ)elf64->e_phoff);
+	क्रम (i = 0; i < (अचिन्हित पूर्णांक)elf64->e_phnum; i++, elf64ph++)
+		अगर (elf64ph->p_type == PT_LOAD)
+			अवरोध;
+	अगर (i >= (अचिन्हित पूर्णांक)elf64->e_phnum)
+		वापस 0;
 
-	info->loadsize = (unsigned long)elf64ph->p_filesz;
-	info->memsize = (unsigned long)elf64ph->p_memsz;
-	info->elfoffset = (unsigned long)elf64ph->p_offset;
+	info->loadsize = (अचिन्हित दीर्घ)elf64ph->p_filesz;
+	info->memsize = (अचिन्हित दीर्घ)elf64ph->p_memsz;
+	info->elfoffset = (अचिन्हित दीर्घ)elf64ph->p_offset;
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-int parse_elf32(void *hdr, struct elf_info *info)
-{
+पूर्णांक parse_elf32(व्योम *hdr, काष्ठा elf_info *info)
+अणु
 	Elf32_Ehdr *elf32 = hdr;
 	Elf32_Phdr *elf32ph;
-	unsigned int i;
+	अचिन्हित पूर्णांक i;
 
-	if (!(elf32->e_ident[EI_MAG0]  == ELFMAG0	&&
+	अगर (!(elf32->e_ident[EI_MAG0]  == ELFMAG0	&&
 	      elf32->e_ident[EI_MAG1]  == ELFMAG1	&&
 	      elf32->e_ident[EI_MAG2]  == ELFMAG2	&&
 	      elf32->e_ident[EI_MAG3]  == ELFMAG3	&&
@@ -62,17 +63,17 @@ int parse_elf32(void *hdr, struct elf_info *info)
 	      (elf32->e_type            == ET_EXEC ||
 	       elf32->e_type            == ET_DYN)      &&
 	      elf32->e_machine         == EM_PPC))
-		return 0;
+		वापस 0;
 
-	elf32ph = (Elf32_Phdr *) ((unsigned long)elf32 + elf32->e_phoff);
-	for (i = 0; i < elf32->e_phnum; i++, elf32ph++)
-		if (elf32ph->p_type == PT_LOAD)
-			break;
-	if (i >= elf32->e_phnum)
-		return 0;
+	elf32ph = (Elf32_Phdr *) ((अचिन्हित दीर्घ)elf32 + elf32->e_phoff);
+	क्रम (i = 0; i < elf32->e_phnum; i++, elf32ph++)
+		अगर (elf32ph->p_type == PT_LOAD)
+			अवरोध;
+	अगर (i >= elf32->e_phnum)
+		वापस 0;
 
 	info->loadsize = elf32ph->p_filesz;
 	info->memsize = elf32ph->p_memsz;
 	info->elfoffset = elf32ph->p_offset;
-	return 1;
-}
+	वापस 1;
+पूर्ण

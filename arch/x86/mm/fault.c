@@ -1,177 +1,178 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  *  Copyright (C) 1995  Linus Torvalds
- *  Copyright (C) 2001, 2002 Andi Kleen, SuSE Labs.
+ *  Copyright (C) 2001, 2002 Andi Kleen, SuSE Lअसल.
  *  Copyright (C) 2008-2009, Red Hat Inc., Ingo Molnar
  */
-#include <linux/sched.h>		/* test_thread_flag(), ...	*/
-#include <linux/sched/task_stack.h>	/* task_stack_*(), ...		*/
-#include <linux/kdebug.h>		/* oops_begin/end, ...		*/
-#include <linux/extable.h>		/* search_exception_tables	*/
-#include <linux/memblock.h>		/* max_low_pfn			*/
-#include <linux/kfence.h>		/* kfence_handle_page_fault	*/
-#include <linux/kprobes.h>		/* NOKPROBE_SYMBOL, ...		*/
-#include <linux/mmiotrace.h>		/* kmmio_handler, ...		*/
-#include <linux/perf_event.h>		/* perf_sw_event		*/
-#include <linux/hugetlb.h>		/* hstate_index_to_shift	*/
-#include <linux/prefetch.h>		/* prefetchw			*/
-#include <linux/context_tracking.h>	/* exception_enter(), ...	*/
-#include <linux/uaccess.h>		/* faulthandler_disabled()	*/
-#include <linux/efi.h>			/* efi_crash_gracefully_on_page_fault()*/
-#include <linux/mm_types.h>
+#समावेश <linux/sched.h>		/* test_thपढ़ो_flag(), ...	*/
+#समावेश <linux/sched/task_stack.h>	/* task_stack_*(), ...		*/
+#समावेश <linux/kdebug.h>		/* oops_begin/end, ...		*/
+#समावेश <linux/extable.h>		/* search_exception_tables	*/
+#समावेश <linux/memblock.h>		/* max_low_pfn			*/
+#समावेश <linux/kfence.h>		/* kfence_handle_page_fault	*/
+#समावेश <linux/kprobes.h>		/* NOKPROBE_SYMBOL, ...		*/
+#समावेश <linux/mmiotrace.h>		/* kmmio_handler, ...		*/
+#समावेश <linux/perf_event.h>		/* perf_sw_event		*/
+#समावेश <linux/hugetlb.h>		/* hstate_index_to_shअगरt	*/
+#समावेश <linux/prefetch.h>		/* prefetchw			*/
+#समावेश <linux/context_tracking.h>	/* exception_enter(), ...	*/
+#समावेश <linux/uaccess.h>		/* faulthandler_disabled()	*/
+#समावेश <linux/efi.h>			/* efi_crash_gracefully_on_page_fault()*/
+#समावेश <linux/mm_types.h>
 
-#include <asm/cpufeature.h>		/* boot_cpu_has, ...		*/
-#include <asm/traps.h>			/* dotraplinkage, ...		*/
-#include <asm/fixmap.h>			/* VSYSCALL_ADDR		*/
-#include <asm/vsyscall.h>		/* emulate_vsyscall		*/
-#include <asm/vm86.h>			/* struct vm86			*/
-#include <asm/mmu_context.h>		/* vma_pkey()			*/
-#include <asm/efi.h>			/* efi_crash_gracefully_on_page_fault()*/
-#include <asm/desc.h>			/* store_idt(), ...		*/
-#include <asm/cpu_entry_area.h>		/* exception stack		*/
-#include <asm/pgtable_areas.h>		/* VMALLOC_START, ...		*/
-#include <asm/kvm_para.h>		/* kvm_handle_async_pf		*/
-#include <asm/vdso.h>			/* fixup_vdso_exception()	*/
+#समावेश <यंत्र/cpufeature.h>		/* boot_cpu_has, ...		*/
+#समावेश <यंत्र/traps.h>			/* करोtraplinkage, ...		*/
+#समावेश <यंत्र/fixmap.h>			/* VSYSCALL_ADDR		*/
+#समावेश <यंत्र/vsyscall.h>		/* emulate_vsyscall		*/
+#समावेश <यंत्र/vm86.h>			/* काष्ठा vm86			*/
+#समावेश <यंत्र/mmu_context.h>		/* vma_pkey()			*/
+#समावेश <यंत्र/efi.h>			/* efi_crash_gracefully_on_page_fault()*/
+#समावेश <यंत्र/desc.h>			/* store_idt(), ...		*/
+#समावेश <यंत्र/cpu_entry_area.h>		/* exception stack		*/
+#समावेश <यंत्र/pgtable_areas.h>		/* VMALLOC_START, ...		*/
+#समावेश <यंत्र/kvm_para.h>		/* kvm_handle_async_pf		*/
+#समावेश <यंत्र/vdso.h>			/* fixup_vdso_exception()	*/
 
-#define CREATE_TRACE_POINTS
-#include <asm/trace/exceptions.h>
+#घोषणा CREATE_TRACE_POINTS
+#समावेश <यंत्र/trace/exceptions.h>
 
 /*
- * Returns 0 if mmiotrace is disabled, or if the fault is not
+ * Returns 0 अगर mmiotrace is disabled, or अगर the fault is not
  * handled by mmiotrace:
  */
-static nokprobe_inline int
-kmmio_fault(struct pt_regs *regs, unsigned long addr)
-{
-	if (unlikely(is_kmmio_active()))
-		if (kmmio_handler(regs, addr) == 1)
-			return -1;
-	return 0;
-}
+अटल nokprobe_अंतरभूत पूर्णांक
+kmmio_fault(काष्ठा pt_regs *regs, अचिन्हित दीर्घ addr)
+अणु
+	अगर (unlikely(is_kmmio_active()))
+		अगर (kmmio_handler(regs, addr) == 1)
+			वापस -1;
+	वापस 0;
+पूर्ण
 
 /*
  * Prefetch quirks:
  *
  * 32-bit mode:
  *
- *   Sometimes AMD Athlon/Opteron CPUs report invalid exceptions on prefetch.
+ *   Someबार AMD Athlon/Opteron CPUs report invalid exceptions on prefetch.
  *   Check that here and ignore it.  This is AMD erratum #91.
  *
  * 64-bit mode:
  *
- *   Sometimes the CPU reports invalid exceptions on prefetch.
+ *   Someबार the CPU reports invalid exceptions on prefetch.
  *   Check that here and ignore it.
  *
- * Opcode checker based on code by Richard Brunner.
+ * Opcode checker based on code by Riअक्षरd Brunner.
  */
-static inline int
-check_prefetch_opcode(struct pt_regs *regs, unsigned char *instr,
-		      unsigned char opcode, int *prefetch)
-{
-	unsigned char instr_hi = opcode & 0xf0;
-	unsigned char instr_lo = opcode & 0x0f;
+अटल अंतरभूत पूर्णांक
+check_prefetch_opcode(काष्ठा pt_regs *regs, अचिन्हित अक्षर *instr,
+		      अचिन्हित अक्षर opcode, पूर्णांक *prefetch)
+अणु
+	अचिन्हित अक्षर instr_hi = opcode & 0xf0;
+	अचिन्हित अक्षर instr_lo = opcode & 0x0f;
 
-	switch (instr_hi) {
-	case 0x20:
-	case 0x30:
+	चयन (instr_hi) अणु
+	हाल 0x20:
+	हाल 0x30:
 		/*
 		 * Values 0x26,0x2E,0x36,0x3E are valid x86 prefixes.
-		 * In X86_64 long mode, the CPU will signal invalid
-		 * opcode if some of these prefixes are present so
+		 * In X86_64 दीर्घ mode, the CPU will संकेत invalid
+		 * opcode अगर some of these prefixes are present so
 		 * X86_64 will never get here anyway
 		 */
-		return ((instr_lo & 7) == 0x6);
-#ifdef CONFIG_X86_64
-	case 0x40:
+		वापस ((instr_lo & 7) == 0x6);
+#अगर_घोषित CONFIG_X86_64
+	हाल 0x40:
 		/*
 		 * In 64-bit mode 0x40..0x4F are valid REX prefixes
 		 */
-		return (!user_mode(regs) || user_64bit_mode(regs));
-#endif
-	case 0x60:
+		वापस (!user_mode(regs) || user_64bit_mode(regs));
+#पूर्ण_अगर
+	हाल 0x60:
 		/* 0x64 thru 0x67 are valid prefixes in all modes. */
-		return (instr_lo & 0xC) == 0x4;
-	case 0xF0:
+		वापस (instr_lo & 0xC) == 0x4;
+	हाल 0xF0:
 		/* 0xF0, 0xF2, 0xF3 are valid prefixes in all modes. */
-		return !instr_lo || (instr_lo>>1) == 1;
-	case 0x00:
-		/* Prefetch instruction is 0x0F0D or 0x0F18 */
-		if (get_kernel_nofault(opcode, instr))
-			return 0;
+		वापस !instr_lo || (instr_lo>>1) == 1;
+	हाल 0x00:
+		/* Prefetch inकाष्ठाion is 0x0F0D or 0x0F18 */
+		अगर (get_kernel_nofault(opcode, instr))
+			वापस 0;
 
 		*prefetch = (instr_lo == 0xF) &&
 			(opcode == 0x0D || opcode == 0x18);
-		return 0;
-	default:
-		return 0;
-	}
-}
+		वापस 0;
+	शेष:
+		वापस 0;
+	पूर्ण
+पूर्ण
 
-static bool is_amd_k8_pre_npt(void)
-{
-	struct cpuinfo_x86 *c = &boot_cpu_data;
+अटल bool is_amd_k8_pre_npt(व्योम)
+अणु
+	काष्ठा cpuinfo_x86 *c = &boot_cpu_data;
 
-	return unlikely(IS_ENABLED(CONFIG_CPU_SUP_AMD) &&
-			c->x86_vendor == X86_VENDOR_AMD &&
+	वापस unlikely(IS_ENABLED(CONFIG_CPU_SUP_AMD) &&
+			c->x86_venकरोr == X86_VENDOR_AMD &&
 			c->x86 == 0xf && c->x86_model < 0x40);
-}
+पूर्ण
 
-static int
-is_prefetch(struct pt_regs *regs, unsigned long error_code, unsigned long addr)
-{
-	unsigned char *max_instr;
-	unsigned char *instr;
-	int prefetch = 0;
+अटल पूर्णांक
+is_prefetch(काष्ठा pt_regs *regs, अचिन्हित दीर्घ error_code, अचिन्हित दीर्घ addr)
+अणु
+	अचिन्हित अक्षर *max_instr;
+	अचिन्हित अक्षर *instr;
+	पूर्णांक prefetch = 0;
 
 	/* Erratum #91 affects AMD K8, pre-NPT CPUs */
-	if (!is_amd_k8_pre_npt())
-		return 0;
+	अगर (!is_amd_k8_pre_npt())
+		वापस 0;
 
 	/*
-	 * If it was a exec (instruction fetch) fault on NX page, then
-	 * do not ignore the fault:
+	 * If it was a exec (inकाष्ठाion fetch) fault on NX page, then
+	 * करो not ignore the fault:
 	 */
-	if (error_code & X86_PF_INSTR)
-		return 0;
+	अगर (error_code & X86_PF_INSTR)
+		वापस 0;
 
-	instr = (void *)convert_ip_to_linear(current, regs);
+	instr = (व्योम *)convert_ip_to_linear(current, regs);
 	max_instr = instr + 15;
 
 	/*
-	 * This code has historically always bailed out if IP points to a
+	 * This code has historically always bailed out अगर IP poपूर्णांकs to a
 	 * not-present page (e.g. due to a race).  No one has ever
 	 * complained about this.
 	 */
 	pagefault_disable();
 
-	while (instr < max_instr) {
-		unsigned char opcode;
+	जबतक (instr < max_instr) अणु
+		अचिन्हित अक्षर opcode;
 
-		if (user_mode(regs)) {
-			if (get_user(opcode, instr))
-				break;
-		} else {
-			if (get_kernel_nofault(opcode, instr))
-				break;
-		}
+		अगर (user_mode(regs)) अणु
+			अगर (get_user(opcode, instr))
+				अवरोध;
+		पूर्ण अन्यथा अणु
+			अगर (get_kernel_nofault(opcode, instr))
+				अवरोध;
+		पूर्ण
 
 		instr++;
 
-		if (!check_prefetch_opcode(regs, instr, opcode, &prefetch))
-			break;
-	}
+		अगर (!check_prefetch_opcode(regs, instr, opcode, &prefetch))
+			अवरोध;
+	पूर्ण
 
 	pagefault_enable();
-	return prefetch;
-}
+	वापस prefetch;
+पूर्ण
 
 DEFINE_SPINLOCK(pgd_lock);
 LIST_HEAD(pgd_list);
 
-#ifdef CONFIG_X86_32
-static inline pmd_t *vmalloc_sync_one(pgd_t *pgd, unsigned long address)
-{
-	unsigned index = pgd_index(address);
+#अगर_घोषित CONFIG_X86_32
+अटल अंतरभूत pmd_t *vदो_स्मृति_sync_one(pgd_t *pgd, अचिन्हित दीर्घ address)
+अणु
+	अचिन्हित index = pgd_index(address);
 	pgd_t *pgd_k;
 	p4d_t *p4d, *p4d_k;
 	pud_t *pud, *pud_k;
@@ -180,8 +181,8 @@ static inline pmd_t *vmalloc_sync_one(pgd_t *pgd, unsigned long address)
 	pgd += index;
 	pgd_k = init_mm.pgd + index;
 
-	if (!pgd_present(*pgd_k))
-		return NULL;
+	अगर (!pgd_present(*pgd_k))
+		वापस शून्य;
 
 	/*
 	 * set_pgd(pgd, *pgd_k); here would be useless on PAE
@@ -190,220 +191,220 @@ static inline pmd_t *vmalloc_sync_one(pgd_t *pgd, unsigned long address)
 	 */
 	p4d = p4d_offset(pgd, address);
 	p4d_k = p4d_offset(pgd_k, address);
-	if (!p4d_present(*p4d_k))
-		return NULL;
+	अगर (!p4d_present(*p4d_k))
+		वापस शून्य;
 
 	pud = pud_offset(p4d, address);
 	pud_k = pud_offset(p4d_k, address);
-	if (!pud_present(*pud_k))
-		return NULL;
+	अगर (!pud_present(*pud_k))
+		वापस शून्य;
 
 	pmd = pmd_offset(pud, address);
 	pmd_k = pmd_offset(pud_k, address);
 
-	if (pmd_present(*pmd) != pmd_present(*pmd_k))
+	अगर (pmd_present(*pmd) != pmd_present(*pmd_k))
 		set_pmd(pmd, *pmd_k);
 
-	if (!pmd_present(*pmd_k))
-		return NULL;
-	else
+	अगर (!pmd_present(*pmd_k))
+		वापस शून्य;
+	अन्यथा
 		BUG_ON(pmd_pfn(*pmd) != pmd_pfn(*pmd_k));
 
-	return pmd_k;
-}
+	वापस pmd_k;
+पूर्ण
 
 /*
- *   Handle a fault on the vmalloc or module mapping area
+ *   Handle a fault on the vदो_स्मृति or module mapping area
  *
- *   This is needed because there is a race condition between the time
- *   when the vmalloc mapping code updates the PMD to the point in time
+ *   This is needed because there is a race condition between the समय
+ *   when the vदो_स्मृति mapping code updates the PMD to the poपूर्णांक in समय
  *   where it synchronizes this update with the other page-tables in the
- *   system.
+ *   प्रणाली.
  *
- *   In this race window another thread/CPU can map an area on the same
- *   PMD, finds it already present and does not synchronize it with the
- *   rest of the system yet. As a result v[mz]alloc might return areas
- *   which are not mapped in every page-table in the system, causing an
+ *   In this race winकरोw another thपढ़ो/CPU can map an area on the same
+ *   PMD, finds it alपढ़ोy present and करोes not synchronize it with the
+ *   rest of the प्रणाली yet. As a result v[mz]alloc might वापस areas
+ *   which are not mapped in every page-table in the प्रणाली, causing an
  *   unhandled page-fault when they are accessed.
  */
-static noinline int vmalloc_fault(unsigned long address)
-{
-	unsigned long pgd_paddr;
+अटल noअंतरभूत पूर्णांक vदो_स्मृति_fault(अचिन्हित दीर्घ address)
+अणु
+	अचिन्हित दीर्घ pgd_paddr;
 	pmd_t *pmd_k;
 	pte_t *pte_k;
 
-	/* Make sure we are in vmalloc area: */
-	if (!(address >= VMALLOC_START && address < VMALLOC_END))
-		return -1;
+	/* Make sure we are in vदो_स्मृति area: */
+	अगर (!(address >= VMALLOC_START && address < VMALLOC_END))
+		वापस -1;
 
 	/*
 	 * Synchronize this task's top level page-table
 	 * with the 'reference' page table.
 	 *
 	 * Do _not_ use "current" here. We might be inside
-	 * an interrupt in the middle of a task switch..
+	 * an पूर्णांकerrupt in the middle of a task चयन..
 	 */
-	pgd_paddr = read_cr3_pa();
-	pmd_k = vmalloc_sync_one(__va(pgd_paddr), address);
-	if (!pmd_k)
-		return -1;
+	pgd_paddr = पढ़ो_cr3_pa();
+	pmd_k = vदो_स्मृति_sync_one(__va(pgd_paddr), address);
+	अगर (!pmd_k)
+		वापस -1;
 
-	if (pmd_large(*pmd_k))
-		return 0;
+	अगर (pmd_large(*pmd_k))
+		वापस 0;
 
 	pte_k = pte_offset_kernel(pmd_k, address);
-	if (!pte_present(*pte_k))
-		return -1;
+	अगर (!pte_present(*pte_k))
+		वापस -1;
 
-	return 0;
-}
-NOKPROBE_SYMBOL(vmalloc_fault);
+	वापस 0;
+पूर्ण
+NOKPROBE_SYMBOL(vदो_स्मृति_fault);
 
-void arch_sync_kernel_mappings(unsigned long start, unsigned long end)
-{
-	unsigned long addr;
+व्योम arch_sync_kernel_mappings(अचिन्हित दीर्घ start, अचिन्हित दीर्घ end)
+अणु
+	अचिन्हित दीर्घ addr;
 
-	for (addr = start & PMD_MASK;
+	क्रम (addr = start & PMD_MASK;
 	     addr >= TASK_SIZE_MAX && addr < VMALLOC_END;
-	     addr += PMD_SIZE) {
-		struct page *page;
+	     addr += PMD_SIZE) अणु
+		काष्ठा page *page;
 
 		spin_lock(&pgd_lock);
-		list_for_each_entry(page, &pgd_list, lru) {
+		list_क्रम_each_entry(page, &pgd_list, lru) अणु
 			spinlock_t *pgt_lock;
 
-			/* the pgt_lock only for Xen */
+			/* the pgt_lock only क्रम Xen */
 			pgt_lock = &pgd_page_get_mm(page)->page_table_lock;
 
 			spin_lock(pgt_lock);
-			vmalloc_sync_one(page_address(page), addr);
+			vदो_स्मृति_sync_one(page_address(page), addr);
 			spin_unlock(pgt_lock);
-		}
+		पूर्ण
 		spin_unlock(&pgd_lock);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static bool low_pfn(unsigned long pfn)
-{
-	return pfn < max_low_pfn;
-}
+अटल bool low_pfn(अचिन्हित दीर्घ pfn)
+अणु
+	वापस pfn < max_low_pfn;
+पूर्ण
 
-static void dump_pagetable(unsigned long address)
-{
-	pgd_t *base = __va(read_cr3_pa());
+अटल व्योम dump_pagetable(अचिन्हित दीर्घ address)
+अणु
+	pgd_t *base = __va(पढ़ो_cr3_pa());
 	pgd_t *pgd = &base[pgd_index(address)];
 	p4d_t *p4d;
 	pud_t *pud;
 	pmd_t *pmd;
 	pte_t *pte;
 
-#ifdef CONFIG_X86_PAE
+#अगर_घोषित CONFIG_X86_PAE
 	pr_info("*pdpt = %016Lx ", pgd_val(*pgd));
-	if (!low_pfn(pgd_val(*pgd) >> PAGE_SHIFT) || !pgd_present(*pgd))
-		goto out;
-#define pr_pde pr_cont
-#else
-#define pr_pde pr_info
-#endif
+	अगर (!low_pfn(pgd_val(*pgd) >> PAGE_SHIFT) || !pgd_present(*pgd))
+		जाओ out;
+#घोषणा pr_pde pr_cont
+#अन्यथा
+#घोषणा pr_pde pr_info
+#पूर्ण_अगर
 	p4d = p4d_offset(pgd, address);
 	pud = pud_offset(p4d, address);
 	pmd = pmd_offset(pud, address);
-	pr_pde("*pde = %0*Lx ", sizeof(*pmd) * 2, (u64)pmd_val(*pmd));
-#undef pr_pde
+	pr_pde("*pde = %0*Lx ", माप(*pmd) * 2, (u64)pmd_val(*pmd));
+#अघोषित pr_pde
 
 	/*
 	 * We must not directly access the pte in the highpte
-	 * case if the page table is located in highmem.
-	 * And let's rather not kmap-atomic the pte, just in case
-	 * it's allocated already:
+	 * हाल अगर the page table is located in highmem.
+	 * And let's rather not kmap-atomic the pte, just in हाल
+	 * it's allocated alपढ़ोy:
 	 */
-	if (!low_pfn(pmd_pfn(*pmd)) || !pmd_present(*pmd) || pmd_large(*pmd))
-		goto out;
+	अगर (!low_pfn(pmd_pfn(*pmd)) || !pmd_present(*pmd) || pmd_large(*pmd))
+		जाओ out;
 
 	pte = pte_offset_kernel(pmd, address);
-	pr_cont("*pte = %0*Lx ", sizeof(*pte) * 2, (u64)pte_val(*pte));
+	pr_cont("*pte = %0*Lx ", माप(*pte) * 2, (u64)pte_val(*pte));
 out:
 	pr_cont("\n");
-}
+पूर्ण
 
-#else /* CONFIG_X86_64: */
+#अन्यथा /* CONFIG_X86_64: */
 
-#ifdef CONFIG_CPU_SUP_AMD
-static const char errata93_warning[] =
+#अगर_घोषित CONFIG_CPU_SUP_AMD
+अटल स्थिर अक्षर errata93_warning[] =
 KERN_ERR 
 "******* Your BIOS seems to not contain a fix for K8 errata #93\n"
 "******* Working around it, but it may cause SEGVs or burn power.\n"
 "******* Please consider a BIOS update.\n"
 "******* Disabling USB legacy in the BIOS may also help.\n";
-#endif
+#पूर्ण_अगर
 
-static int bad_address(void *p)
-{
-	unsigned long dummy;
+अटल पूर्णांक bad_address(व्योम *p)
+अणु
+	अचिन्हित दीर्घ dummy;
 
-	return get_kernel_nofault(dummy, (unsigned long *)p);
-}
+	वापस get_kernel_nofault(dummy, (अचिन्हित दीर्घ *)p);
+पूर्ण
 
-static void dump_pagetable(unsigned long address)
-{
-	pgd_t *base = __va(read_cr3_pa());
+अटल व्योम dump_pagetable(अचिन्हित दीर्घ address)
+अणु
+	pgd_t *base = __va(पढ़ो_cr3_pa());
 	pgd_t *pgd = base + pgd_index(address);
 	p4d_t *p4d;
 	pud_t *pud;
 	pmd_t *pmd;
 	pte_t *pte;
 
-	if (bad_address(pgd))
-		goto bad;
+	अगर (bad_address(pgd))
+		जाओ bad;
 
 	pr_info("PGD %lx ", pgd_val(*pgd));
 
-	if (!pgd_present(*pgd))
-		goto out;
+	अगर (!pgd_present(*pgd))
+		जाओ out;
 
 	p4d = p4d_offset(pgd, address);
-	if (bad_address(p4d))
-		goto bad;
+	अगर (bad_address(p4d))
+		जाओ bad;
 
 	pr_cont("P4D %lx ", p4d_val(*p4d));
-	if (!p4d_present(*p4d) || p4d_large(*p4d))
-		goto out;
+	अगर (!p4d_present(*p4d) || p4d_large(*p4d))
+		जाओ out;
 
 	pud = pud_offset(p4d, address);
-	if (bad_address(pud))
-		goto bad;
+	अगर (bad_address(pud))
+		जाओ bad;
 
 	pr_cont("PUD %lx ", pud_val(*pud));
-	if (!pud_present(*pud) || pud_large(*pud))
-		goto out;
+	अगर (!pud_present(*pud) || pud_large(*pud))
+		जाओ out;
 
 	pmd = pmd_offset(pud, address);
-	if (bad_address(pmd))
-		goto bad;
+	अगर (bad_address(pmd))
+		जाओ bad;
 
 	pr_cont("PMD %lx ", pmd_val(*pmd));
-	if (!pmd_present(*pmd) || pmd_large(*pmd))
-		goto out;
+	अगर (!pmd_present(*pmd) || pmd_large(*pmd))
+		जाओ out;
 
 	pte = pte_offset_kernel(pmd, address);
-	if (bad_address(pte))
-		goto bad;
+	अगर (bad_address(pte))
+		जाओ bad;
 
 	pr_cont("PTE %lx", pte_val(*pte));
 out:
 	pr_cont("\n");
-	return;
+	वापस;
 bad:
 	pr_info("BAD\n");
-}
+पूर्ण
 
-#endif /* CONFIG_X86_64 */
+#पूर्ण_अगर /* CONFIG_X86_64 */
 
 /*
- * Workaround for K8 erratum #93 & buggy BIOS.
+ * Workaround क्रम K8 erratum #93 & buggy BIOS.
  *
- * BIOS SMM functions are required to use a specific workaround
- * to avoid corruption of the 64bit RIP register on C stepping K8.
+ * BIOS SMM functions are required to use a specअगरic workaround
+ * to aव्योम corruption of the 64bit RIP रेजिस्टर on C stepping K8.
  *
  * A lot of BIOS that didn't get tested properly miss this.
  *
@@ -413,127 +414,127 @@ bad:
  * Note we only handle faults in kernel here.
  * Does nothing on 32-bit.
  */
-static int is_errata93(struct pt_regs *regs, unsigned long address)
-{
-#if defined(CONFIG_X86_64) && defined(CONFIG_CPU_SUP_AMD)
-	if (boot_cpu_data.x86_vendor != X86_VENDOR_AMD
+अटल पूर्णांक is_errata93(काष्ठा pt_regs *regs, अचिन्हित दीर्घ address)
+अणु
+#अगर defined(CONFIG_X86_64) && defined(CONFIG_CPU_SUP_AMD)
+	अगर (boot_cpu_data.x86_venकरोr != X86_VENDOR_AMD
 	    || boot_cpu_data.x86 != 0xf)
-		return 0;
+		वापस 0;
 
-	if (user_mode(regs))
-		return 0;
+	अगर (user_mode(regs))
+		वापस 0;
 
-	if (address != regs->ip)
-		return 0;
+	अगर (address != regs->ip)
+		वापस 0;
 
-	if ((address >> 32) != 0)
-		return 0;
+	अगर ((address >> 32) != 0)
+		वापस 0;
 
 	address |= 0xffffffffUL << 32;
-	if ((address >= (u64)_stext && address <= (u64)_etext) ||
-	    (address >= MODULES_VADDR && address <= MODULES_END)) {
-		printk_once(errata93_warning);
+	अगर ((address >= (u64)_stext && address <= (u64)_etext) ||
+	    (address >= MODULES_VADDR && address <= MODULES_END)) अणु
+		prपूर्णांकk_once(errata93_warning);
 		regs->ip = address;
-		return 1;
-	}
-#endif
-	return 0;
-}
+		वापस 1;
+	पूर्ण
+#पूर्ण_अगर
+	वापस 0;
+पूर्ण
 
 /*
  * Work around K8 erratum #100 K8 in compat mode occasionally jumps
  * to illegal addresses >4GB.
  *
  * We catch this in the page fault handler because these addresses
- * are not reachable. Just detect this case and return.  Any code
+ * are not reachable. Just detect this हाल and वापस.  Any code
  * segment in LDT is compatibility mode.
  */
-static int is_errata100(struct pt_regs *regs, unsigned long address)
-{
-#ifdef CONFIG_X86_64
-	if ((regs->cs == __USER32_CS || (regs->cs & (1<<2))) && (address >> 32))
-		return 1;
-#endif
-	return 0;
-}
+अटल पूर्णांक is_errata100(काष्ठा pt_regs *regs, अचिन्हित दीर्घ address)
+अणु
+#अगर_घोषित CONFIG_X86_64
+	अगर ((regs->cs == __USER32_CS || (regs->cs & (1<<2))) && (address >> 32))
+		वापस 1;
+#पूर्ण_अगर
+	वापस 0;
+पूर्ण
 
 /* Pentium F0 0F C7 C8 bug workaround: */
-static int is_f00f_bug(struct pt_regs *regs, unsigned long error_code,
-		       unsigned long address)
-{
-#ifdef CONFIG_X86_F00F_BUG
-	if (boot_cpu_has_bug(X86_BUG_F00F) && !(error_code & X86_PF_USER) &&
-	    idt_is_f00f_address(address)) {
+अटल पूर्णांक is_f00f_bug(काष्ठा pt_regs *regs, अचिन्हित दीर्घ error_code,
+		       अचिन्हित दीर्घ address)
+अणु
+#अगर_घोषित CONFIG_X86_F00F_BUG
+	अगर (boot_cpu_has_bug(X86_BUG_F00F) && !(error_code & X86_PF_USER) &&
+	    idt_is_f00f_address(address)) अणु
 		handle_invalid_op(regs);
-		return 1;
-	}
-#endif
-	return 0;
-}
+		वापस 1;
+	पूर्ण
+#पूर्ण_अगर
+	वापस 0;
+पूर्ण
 
-static void show_ldttss(const struct desc_ptr *gdt, const char *name, u16 index)
-{
-	u32 offset = (index >> 3) * sizeof(struct desc_struct);
-	unsigned long addr;
-	struct ldttss_desc desc;
+अटल व्योम show_ldttss(स्थिर काष्ठा desc_ptr *gdt, स्थिर अक्षर *name, u16 index)
+अणु
+	u32 offset = (index >> 3) * माप(काष्ठा desc_काष्ठा);
+	अचिन्हित दीर्घ addr;
+	काष्ठा ldttss_desc desc;
 
-	if (index == 0) {
+	अगर (index == 0) अणु
 		pr_alert("%s: NULL\n", name);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (offset + sizeof(struct ldttss_desc) >= gdt->size) {
+	अगर (offset + माप(काष्ठा ldttss_desc) >= gdt->size) अणु
 		pr_alert("%s: 0x%hx -- out of bounds\n", name, index);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (copy_from_kernel_nofault(&desc, (void *)(gdt->address + offset),
-			      sizeof(struct ldttss_desc))) {
+	अगर (copy_from_kernel_nofault(&desc, (व्योम *)(gdt->address + offset),
+			      माप(काष्ठा ldttss_desc))) अणु
 		pr_alert("%s: 0x%hx -- GDT entry is not readable\n",
 			 name, index);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	addr = desc.base0 | (desc.base1 << 16) | ((unsigned long)desc.base2 << 24);
-#ifdef CONFIG_X86_64
+	addr = desc.base0 | (desc.base1 << 16) | ((अचिन्हित दीर्घ)desc.base2 << 24);
+#अगर_घोषित CONFIG_X86_64
 	addr |= ((u64)desc.base3 << 32);
-#endif
+#पूर्ण_अगर
 	pr_alert("%s: 0x%hx -- base=0x%lx limit=0x%x\n",
 		 name, index, addr, (desc.limit0 | (desc.limit1 << 16)));
-}
+पूर्ण
 
-static void
-show_fault_oops(struct pt_regs *regs, unsigned long error_code, unsigned long address)
-{
-	if (!oops_may_print())
-		return;
+अटल व्योम
+show_fault_oops(काष्ठा pt_regs *regs, अचिन्हित दीर्घ error_code, अचिन्हित दीर्घ address)
+अणु
+	अगर (!oops_may_prपूर्णांक())
+		वापस;
 
-	if (error_code & X86_PF_INSTR) {
-		unsigned int level;
+	अगर (error_code & X86_PF_INSTR) अणु
+		अचिन्हित पूर्णांक level;
 		pgd_t *pgd;
 		pte_t *pte;
 
-		pgd = __va(read_cr3_pa());
+		pgd = __va(पढ़ो_cr3_pa());
 		pgd += pgd_index(address);
 
 		pte = lookup_address_in_pgd(pgd, address, &level);
 
-		if (pte && pte_present(*pte) && !pte_exec(*pte))
+		अगर (pte && pte_present(*pte) && !pte_exec(*pte))
 			pr_crit("kernel tried to execute NX-protected page - exploit attempt? (uid: %d)\n",
 				from_kuid(&init_user_ns, current_uid()));
-		if (pte && pte_present(*pte) && pte_exec(*pte) &&
+		अगर (pte && pte_present(*pte) && pte_exec(*pte) &&
 				(pgd_flags(*pgd) & _PAGE_USER) &&
-				(__read_cr4() & X86_CR4_SMEP))
+				(__पढ़ो_cr4() & X86_CR4_SMEP))
 			pr_crit("unable to execute userspace code (SMEP?) (uid: %d)\n",
 				from_kuid(&init_user_ns, current_uid()));
-	}
+	पूर्ण
 
-	if (address < PAGE_SIZE && !user_mode(regs))
+	अगर (address < PAGE_SIZE && !user_mode(regs))
 		pr_alert("BUG: kernel NULL pointer dereference, address: %px\n",
-			(void *)address);
-	else
+			(व्योम *)address);
+	अन्यथा
 		pr_alert("BUG: unable to handle page fault for address: %px\n",
-			(void *)address);
+			(व्योम *)address);
 
 	pr_alert("#PF: %s %s in %s mode\n",
 		 (error_code & X86_PF_USER)  ? "user" : "supervisor",
@@ -547,15 +548,15 @@ show_fault_oops(struct pt_regs *regs, unsigned long error_code, unsigned long ad
 		 (error_code & X86_PF_PK)    ? "protection keys violation" :
 					       "permissions violation");
 
-	if (!(error_code & X86_PF_USER) && user_mode(regs)) {
-		struct desc_ptr idt, gdt;
+	अगर (!(error_code & X86_PF_USER) && user_mode(regs)) अणु
+		काष्ठा desc_ptr idt, gdt;
 		u16 ldtr, tr;
 
 		/*
-		 * This can happen for quite a few reasons.  The more obvious
+		 * This can happen क्रम quite a few reasons.  The more obvious
 		 * ones are faults accessing the GDT, or LDT.  Perhaps
-		 * surprisingly, if the CPU tries to deliver a benign or
-		 * contributory exception from user code and gets a page fault
+		 * surprisingly, अगर the CPU tries to deliver a benign or
+		 * contributory exception from user code and माला_लो a page fault
 		 * during delivery, the page fault can be delivered as though
 		 * it originated directly from user code.  This could happen
 		 * due to wrong permissions on the IDT, GDT, LDT, TSS, or
@@ -574,95 +575,95 @@ show_fault_oops(struct pt_regs *regs, unsigned long error_code, unsigned long ad
 
 		store_tr(tr);
 		show_ldttss(&gdt, "TR", tr);
-	}
+	पूर्ण
 
 	dump_pagetable(address);
-}
+पूर्ण
 
-static noinline void
-pgtable_bad(struct pt_regs *regs, unsigned long error_code,
-	    unsigned long address)
-{
-	struct task_struct *tsk;
-	unsigned long flags;
-	int sig;
+अटल noअंतरभूत व्योम
+pgtable_bad(काष्ठा pt_regs *regs, अचिन्हित दीर्घ error_code,
+	    अचिन्हित दीर्घ address)
+अणु
+	काष्ठा task_काष्ठा *tsk;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक sig;
 
 	flags = oops_begin();
 	tsk = current;
 	sig = SIGKILL;
 
-	printk(KERN_ALERT "%s: Corrupted page table at address %lx\n",
+	prपूर्णांकk(KERN_ALERT "%s: Corrupted page table at address %lx\n",
 	       tsk->comm, address);
 	dump_pagetable(address);
 
-	if (__die("Bad pagetable", regs, error_code))
+	अगर (__die("Bad pagetable", regs, error_code))
 		sig = 0;
 
 	oops_end(flags, regs, sig);
-}
+पूर्ण
 
-static void sanitize_error_code(unsigned long address,
-				unsigned long *error_code)
-{
+अटल व्योम sanitize_error_code(अचिन्हित दीर्घ address,
+				अचिन्हित दीर्घ *error_code)
+अणु
 	/*
-	 * To avoid leaking information about the kernel page
+	 * To aव्योम leaking inक्रमmation about the kernel page
 	 * table layout, pretend that user-mode accesses to
 	 * kernel addresses are always protection faults.
 	 *
 	 * NB: This means that failed vsyscalls with vsyscall=none
-	 * will have the PROT bit.  This doesn't leak any
-	 * information and does not appear to cause any problems.
+	 * will have the PROT bit.  This करोesn't leak any
+	 * inक्रमmation and करोes not appear to cause any problems.
 	 */
-	if (address >= TASK_SIZE_MAX)
+	अगर (address >= TASK_SIZE_MAX)
 		*error_code |= X86_PF_PROT;
-}
+पूर्ण
 
-static void set_signal_archinfo(unsigned long address,
-				unsigned long error_code)
-{
-	struct task_struct *tsk = current;
+अटल व्योम set_संकेत_archinfo(अचिन्हित दीर्घ address,
+				अचिन्हित दीर्घ error_code)
+अणु
+	काष्ठा task_काष्ठा *tsk = current;
 
-	tsk->thread.trap_nr = X86_TRAP_PF;
-	tsk->thread.error_code = error_code | X86_PF_USER;
-	tsk->thread.cr2 = address;
-}
+	tsk->thपढ़ो.trap_nr = X86_TRAP_PF;
+	tsk->thपढ़ो.error_code = error_code | X86_PF_USER;
+	tsk->thपढ़ो.cr2 = address;
+पूर्ण
 
-static noinline void
-page_fault_oops(struct pt_regs *regs, unsigned long error_code,
-		unsigned long address)
-{
-	unsigned long flags;
-	int sig;
+अटल noअंतरभूत व्योम
+page_fault_oops(काष्ठा pt_regs *regs, अचिन्हित दीर्घ error_code,
+		अचिन्हित दीर्घ address)
+अणु
+	अचिन्हित दीर्घ flags;
+	पूर्णांक sig;
 
-	if (user_mode(regs)) {
+	अगर (user_mode(regs)) अणु
 		/*
 		 * Implicit kernel access from user mode?  Skip the stack
-		 * overflow and EFI special cases.
+		 * overflow and EFI special हालs.
 		 */
-		goto oops;
-	}
+		जाओ oops;
+	पूर्ण
 
-#ifdef CONFIG_VMAP_STACK
+#अगर_घोषित CONFIG_VMAP_STACK
 	/*
 	 * Stack overflow?  During boot, we can fault near the initial
 	 * stack in the direct map, but that's not an overflow -- check
-	 * that we're in vmalloc space to avoid this.
+	 * that we're in vदो_स्मृति space to aव्योम this.
 	 */
-	if (is_vmalloc_addr((void *)address) &&
-	    (((unsigned long)current->stack - 1 - address < PAGE_SIZE) ||
-	     address - ((unsigned long)current->stack + THREAD_SIZE) < PAGE_SIZE)) {
-		unsigned long stack = __this_cpu_ist_top_va(DF) - sizeof(void *);
+	अगर (is_vदो_स्मृति_addr((व्योम *)address) &&
+	    (((अचिन्हित दीर्घ)current->stack - 1 - address < PAGE_SIZE) ||
+	     address - ((अचिन्हित दीर्घ)current->stack + THREAD_SIZE) < PAGE_SIZE)) अणु
+		अचिन्हित दीर्घ stack = __this_cpu_ist_top_va(DF) - माप(व्योम *);
 		/*
 		 * We're likely to be running with very little stack space
 		 * left.  It's plausible that we'd hit this condition but
-		 * double-fault even before we get this far, in which case
-		 * we're fine: the double-fault handler will deal with it.
+		 * द्विगुन-fault even beक्रमe we get this far, in which हाल
+		 * we're fine: the द्विगुन-fault handler will deal with it.
 		 *
-		 * We don't want to make it all the way into the oops code
-		 * and then double-fault, though, because we're likely to
-		 * break the console driver and lose most of the stack dump.
+		 * We करोn't want to make it all the way पूर्णांकo the oops code
+		 * and then द्विगुन-fault, though, because we're likely to
+		 * अवरोध the console driver and lose most of the stack dump.
 		 */
-		asm volatile ("movq %[stack], %%rsp\n\t"
+		यंत्र अस्थिर ("movq %[stack], %%rsp\n\t"
 			      "call handle_stack_overflow\n\t"
 			      "1: jmp 1b"
 			      : ASM_CALL_CONSTRAINT
@@ -670,21 +671,21 @@ page_fault_oops(struct pt_regs *regs, unsigned long error_code,
 				"S" (regs), "d" (address),
 				[stack] "rm" (stack));
 		unreachable();
-	}
-#endif
+	पूर्ण
+#पूर्ण_अगर
 
 	/*
 	 * Buggy firmware could access regions which might page fault.  If
 	 * this happens, EFI has a special OOPS path that will try to
-	 * avoid hanging the system.
+	 * aव्योम hanging the प्रणाली.
 	 */
-	if (IS_ENABLED(CONFIG_EFI))
+	अगर (IS_ENABLED(CONFIG_EFI))
 		efi_crash_gracefully_on_page_fault(address);
 
 	/* Only not-present faults should be handled by KFENCE. */
-	if (!(error_code & X86_PF_PROT) &&
+	अगर (!(error_code & X86_PF_PROT) &&
 	    kfence_handle_page_fault(address, error_code & X86_PF_WRITE, regs))
-		return;
+		वापस;
 
 oops:
 	/*
@@ -695,207 +696,207 @@ oops:
 
 	show_fault_oops(regs, error_code, address);
 
-	if (task_stack_end_corrupted(current))
-		printk(KERN_EMERG "Thread overran stack, or stack corrupted\n");
+	अगर (task_stack_end_corrupted(current))
+		prपूर्णांकk(KERN_EMERG "Thread overran stack, or stack corrupted\n");
 
 	sig = SIGKILL;
-	if (__die("Oops", regs, error_code))
+	अगर (__die("Oops", regs, error_code))
 		sig = 0;
 
-	/* Executive summary in case the body of the oops scrolled away */
-	printk(KERN_DEFAULT "CR2: %016lx\n", address);
+	/* Executive summary in हाल the body of the oops scrolled away */
+	prपूर्णांकk(KERN_DEFAULT "CR2: %016lx\n", address);
 
 	oops_end(flags, regs, sig);
-}
+पूर्ण
 
-static noinline void
-kernelmode_fixup_or_oops(struct pt_regs *regs, unsigned long error_code,
-			 unsigned long address, int signal, int si_code)
-{
+अटल noअंतरभूत व्योम
+kernelmode_fixup_or_oops(काष्ठा pt_regs *regs, अचिन्हित दीर्घ error_code,
+			 अचिन्हित दीर्घ address, पूर्णांक संकेत, पूर्णांक si_code)
+अणु
 	WARN_ON_ONCE(user_mode(regs));
 
 	/* Are we prepared to handle this kernel fault? */
-	if (fixup_exception(regs, X86_TRAP_PF, error_code, address)) {
+	अगर (fixup_exception(regs, X86_TRAP_PF, error_code, address)) अणु
 		/*
-		 * Any interrupt that takes a fault gets the fixup. This makes
+		 * Any पूर्णांकerrupt that takes a fault माला_लो the fixup. This makes
 		 * the below recursive fault logic only apply to a faults from
 		 * task context.
 		 */
-		if (in_interrupt())
-			return;
+		अगर (in_पूर्णांकerrupt())
+			वापस;
 
 		/*
-		 * Per the above we're !in_interrupt(), aka. task context.
+		 * Per the above we're !in_पूर्णांकerrupt(), aka. task context.
 		 *
-		 * In this case we need to make sure we're not recursively
+		 * In this हाल we need to make sure we're not recursively
 		 * faulting through the emulate_vsyscall() logic.
 		 */
-		if (current->thread.sig_on_uaccess_err && signal) {
+		अगर (current->thपढ़ो.sig_on_uaccess_err && संकेत) अणु
 			sanitize_error_code(address, &error_code);
 
-			set_signal_archinfo(address, error_code);
+			set_संकेत_archinfo(address, error_code);
 
 			/* XXX: hwpoison faults will set the wrong code. */
-			force_sig_fault(signal, si_code, (void __user *)address);
-		}
+			क्रमce_sig_fault(संकेत, si_code, (व्योम __user *)address);
+		पूर्ण
 
 		/*
-		 * Barring that, we can do the fixup and be happy.
+		 * Barring that, we can करो the fixup and be happy.
 		 */
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/*
-	 * AMD erratum #91 manifests as a spurious page fault on a PREFETCH
-	 * instruction.
+	 * AMD erratum #91 manअगरests as a spurious page fault on a PREFETCH
+	 * inकाष्ठाion.
 	 */
-	if (is_prefetch(regs, error_code, address))
-		return;
+	अगर (is_prefetch(regs, error_code, address))
+		वापस;
 
 	page_fault_oops(regs, error_code, address);
-}
+पूर्ण
 
 /*
- * Print out info about fatal segfaults, if the show_unhandled_signals
+ * Prपूर्णांक out info about fatal segfaults, अगर the show_unhandled_संकेतs
  * sysctl is set:
  */
-static inline void
-show_signal_msg(struct pt_regs *regs, unsigned long error_code,
-		unsigned long address, struct task_struct *tsk)
-{
-	const char *loglvl = task_pid_nr(tsk) > 1 ? KERN_INFO : KERN_EMERG;
+अटल अंतरभूत व्योम
+show_संकेत_msg(काष्ठा pt_regs *regs, अचिन्हित दीर्घ error_code,
+		अचिन्हित दीर्घ address, काष्ठा task_काष्ठा *tsk)
+अणु
+	स्थिर अक्षर *loglvl = task_pid_nr(tsk) > 1 ? KERN_INFO : KERN_EMERG;
 
-	if (!unhandled_signal(tsk, SIGSEGV))
-		return;
+	अगर (!unhandled_संकेत(tsk, संक_अंश))
+		वापस;
 
-	if (!printk_ratelimit())
-		return;
+	अगर (!prपूर्णांकk_ratelimit())
+		वापस;
 
-	printk("%s%s[%d]: segfault at %lx ip %px sp %px error %lx",
+	prपूर्णांकk("%s%s[%d]: segfault at %lx ip %px sp %px error %lx",
 		loglvl, tsk->comm, task_pid_nr(tsk), address,
-		(void *)regs->ip, (void *)regs->sp, error_code);
+		(व्योम *)regs->ip, (व्योम *)regs->sp, error_code);
 
-	print_vma_addr(KERN_CONT " in ", regs->ip);
+	prपूर्णांक_vma_addr(KERN_CONT " in ", regs->ip);
 
-	printk(KERN_CONT "\n");
+	prपूर्णांकk(KERN_CONT "\n");
 
 	show_opcodes(regs, loglvl);
-}
+पूर्ण
 
 /*
- * The (legacy) vsyscall page is the long page in the kernel portion
+ * The (legacy) vsyscall page is the दीर्घ page in the kernel portion
  * of the address space that has user-accessible permissions.
  */
-static bool is_vsyscall_vaddr(unsigned long vaddr)
-{
-	return unlikely((vaddr & PAGE_MASK) == VSYSCALL_ADDR);
-}
+अटल bool is_vsyscall_vaddr(अचिन्हित दीर्घ vaddr)
+अणु
+	वापस unlikely((vaddr & PAGE_MASK) == VSYSCALL_ADDR);
+पूर्ण
 
-static void
-__bad_area_nosemaphore(struct pt_regs *regs, unsigned long error_code,
-		       unsigned long address, u32 pkey, int si_code)
-{
-	struct task_struct *tsk = current;
+अटल व्योम
+__bad_area_nosemaphore(काष्ठा pt_regs *regs, अचिन्हित दीर्घ error_code,
+		       अचिन्हित दीर्घ address, u32 pkey, पूर्णांक si_code)
+अणु
+	काष्ठा task_काष्ठा *tsk = current;
 
-	if (!user_mode(regs)) {
+	अगर (!user_mode(regs)) अणु
 		kernelmode_fixup_or_oops(regs, error_code, address, pkey, si_code);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (!(error_code & X86_PF_USER)) {
+	अगर (!(error_code & X86_PF_USER)) अणु
 		/* Implicit user access to kernel memory -- just oops */
 		page_fault_oops(regs, error_code, address);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/*
-	 * User mode accesses just cause a SIGSEGV.
-	 * It's possible to have interrupts off here:
+	 * User mode accesses just cause a संक_अंश.
+	 * It's possible to have पूर्णांकerrupts off here:
 	 */
 	local_irq_enable();
 
 	/*
-	 * Valid to do another page fault here because this one came
+	 * Valid to करो another page fault here because this one came
 	 * from user space:
 	 */
-	if (is_prefetch(regs, error_code, address))
-		return;
+	अगर (is_prefetch(regs, error_code, address))
+		वापस;
 
-	if (is_errata100(regs, address))
-		return;
+	अगर (is_errata100(regs, address))
+		वापस;
 
 	sanitize_error_code(address, &error_code);
 
-	if (fixup_vdso_exception(regs, X86_TRAP_PF, error_code, address))
-		return;
+	अगर (fixup_vdso_exception(regs, X86_TRAP_PF, error_code, address))
+		वापस;
 
-	if (likely(show_unhandled_signals))
-		show_signal_msg(regs, error_code, address, tsk);
+	अगर (likely(show_unhandled_संकेतs))
+		show_संकेत_msg(regs, error_code, address, tsk);
 
-	set_signal_archinfo(address, error_code);
+	set_संकेत_archinfo(address, error_code);
 
-	if (si_code == SEGV_PKUERR)
-		force_sig_pkuerr((void __user *)address, pkey);
-	else
-		force_sig_fault(SIGSEGV, si_code, (void __user *)address);
+	अगर (si_code == SEGV_PKUERR)
+		क्रमce_sig_pkuerr((व्योम __user *)address, pkey);
+	अन्यथा
+		क्रमce_sig_fault(संक_अंश, si_code, (व्योम __user *)address);
 
 	local_irq_disable();
-}
+पूर्ण
 
-static noinline void
-bad_area_nosemaphore(struct pt_regs *regs, unsigned long error_code,
-		     unsigned long address)
-{
+अटल noअंतरभूत व्योम
+bad_area_nosemaphore(काष्ठा pt_regs *regs, अचिन्हित दीर्घ error_code,
+		     अचिन्हित दीर्घ address)
+अणु
 	__bad_area_nosemaphore(regs, error_code, address, 0, SEGV_MAPERR);
-}
+पूर्ण
 
-static void
-__bad_area(struct pt_regs *regs, unsigned long error_code,
-	   unsigned long address, u32 pkey, int si_code)
-{
-	struct mm_struct *mm = current->mm;
+अटल व्योम
+__bad_area(काष्ठा pt_regs *regs, अचिन्हित दीर्घ error_code,
+	   अचिन्हित दीर्घ address, u32 pkey, पूर्णांक si_code)
+अणु
+	काष्ठा mm_काष्ठा *mm = current->mm;
 	/*
 	 * Something tried to access memory that isn't in our memory map..
-	 * Fix it, but check if it's kernel or user first..
+	 * Fix it, but check अगर it's kernel or user first..
 	 */
-	mmap_read_unlock(mm);
+	mmap_पढ़ो_unlock(mm);
 
 	__bad_area_nosemaphore(regs, error_code, address, pkey, si_code);
-}
+पूर्ण
 
-static noinline void
-bad_area(struct pt_regs *regs, unsigned long error_code, unsigned long address)
-{
+अटल noअंतरभूत व्योम
+bad_area(काष्ठा pt_regs *regs, अचिन्हित दीर्घ error_code, अचिन्हित दीर्घ address)
+अणु
 	__bad_area(regs, error_code, address, 0, SEGV_MAPERR);
-}
+पूर्ण
 
-static inline bool bad_area_access_from_pkeys(unsigned long error_code,
-		struct vm_area_struct *vma)
-{
+अटल अंतरभूत bool bad_area_access_from_pkeys(अचिन्हित दीर्घ error_code,
+		काष्ठा vm_area_काष्ठा *vma)
+अणु
 	/* This code is always called on the current mm */
-	bool foreign = false;
+	bool क्रमeign = false;
 
-	if (!boot_cpu_has(X86_FEATURE_OSPKE))
-		return false;
-	if (error_code & X86_PF_PK)
-		return true;
+	अगर (!boot_cpu_has(X86_FEATURE_OSPKE))
+		वापस false;
+	अगर (error_code & X86_PF_PK)
+		वापस true;
 	/* this checks permission keys on the VMA: */
-	if (!arch_vma_access_permitted(vma, (error_code & X86_PF_WRITE),
-				       (error_code & X86_PF_INSTR), foreign))
-		return true;
-	return false;
-}
+	अगर (!arch_vma_access_permitted(vma, (error_code & X86_PF_WRITE),
+				       (error_code & X86_PF_INSTR), क्रमeign))
+		वापस true;
+	वापस false;
+पूर्ण
 
-static noinline void
-bad_area_access_error(struct pt_regs *regs, unsigned long error_code,
-		      unsigned long address, struct vm_area_struct *vma)
-{
+अटल noअंतरभूत व्योम
+bad_area_access_error(काष्ठा pt_regs *regs, अचिन्हित दीर्घ error_code,
+		      अचिन्हित दीर्घ address, काष्ठा vm_area_काष्ठा *vma)
+अणु
 	/*
-	 * This OSPKE check is not strictly necessary at runtime.
-	 * But, doing it this way allows compiler optimizations
-	 * if pkeys are compiled out.
+	 * This OSPKE check is not strictly necessary at runसमय.
+	 * But, करोing it this way allows compiler optimizations
+	 * अगर pkeys are compiled out.
 	 */
-	if (bad_area_access_from_pkeys(error_code, vma)) {
+	अगर (bad_area_access_from_pkeys(error_code, vma)) अणु
 		/*
 		 * A protection key fault means that the PKRU value did not allow
 		 * access to some PTE.  Userspace can figure out what PKRU was
@@ -903,9 +904,9 @@ bad_area_access_error(struct pt_regs *regs, unsigned long error_code,
 		 * the vma and passes it to userspace so userspace can discover
 		 * which protection key was set on the PTE.
 		 *
-		 * If we get here, we know that the hardware signaled a X86_PF_PK
+		 * If we get here, we know that the hardware संकेतed a X86_PF_PK
 		 * fault and that there was a VMA once we got in the fault
-		 * handler.  It does *not* guarantee that the VMA we find here
+		 * handler.  It करोes *not* guarantee that the VMA we find here
 		 * was the one that we faulted on.
 		 *
 		 * 1. T1   : mprotect_key(foo, PAGE_SIZE, pkey=4);
@@ -919,95 +920,95 @@ bad_area_access_error(struct pt_regs *regs, unsigned long error_code,
 		u32 pkey = vma_pkey(vma);
 
 		__bad_area(regs, error_code, address, pkey, SEGV_PKUERR);
-	} else {
+	पूर्ण अन्यथा अणु
 		__bad_area(regs, error_code, address, 0, SEGV_ACCERR);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void
-do_sigbus(struct pt_regs *regs, unsigned long error_code, unsigned long address,
+अटल व्योम
+करो_sigbus(काष्ठा pt_regs *regs, अचिन्हित दीर्घ error_code, अचिन्हित दीर्घ address,
 	  vm_fault_t fault)
-{
+अणु
 	/* Kernel mode? Handle exceptions or die: */
-	if (!user_mode(regs)) {
+	अगर (!user_mode(regs)) अणु
 		kernelmode_fixup_or_oops(regs, error_code, address, SIGBUS, BUS_ADRERR);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	/* User-space => ok to do another page fault: */
-	if (is_prefetch(regs, error_code, address))
-		return;
+	/* User-space => ok to करो another page fault: */
+	अगर (is_prefetch(regs, error_code, address))
+		वापस;
 
 	sanitize_error_code(address, &error_code);
 
-	if (fixup_vdso_exception(regs, X86_TRAP_PF, error_code, address))
-		return;
+	अगर (fixup_vdso_exception(regs, X86_TRAP_PF, error_code, address))
+		वापस;
 
-	set_signal_archinfo(address, error_code);
+	set_संकेत_archinfo(address, error_code);
 
-#ifdef CONFIG_MEMORY_FAILURE
-	if (fault & (VM_FAULT_HWPOISON|VM_FAULT_HWPOISON_LARGE)) {
-		struct task_struct *tsk = current;
-		unsigned lsb = 0;
+#अगर_घोषित CONFIG_MEMORY_FAILURE
+	अगर (fault & (VM_FAULT_HWPOISON|VM_FAULT_HWPOISON_LARGE)) अणु
+		काष्ठा task_काष्ठा *tsk = current;
+		अचिन्हित lsb = 0;
 
 		pr_err(
 	"MCE: Killing %s:%d due to hardware memory corruption fault at %lx\n",
 			tsk->comm, tsk->pid, address);
-		if (fault & VM_FAULT_HWPOISON_LARGE)
-			lsb = hstate_index_to_shift(VM_FAULT_GET_HINDEX(fault));
-		if (fault & VM_FAULT_HWPOISON)
+		अगर (fault & VM_FAULT_HWPOISON_LARGE)
+			lsb = hstate_index_to_shअगरt(VM_FAULT_GET_HINDEX(fault));
+		अगर (fault & VM_FAULT_HWPOISON)
 			lsb = PAGE_SHIFT;
-		force_sig_mceerr(BUS_MCEERR_AR, (void __user *)address, lsb);
-		return;
-	}
-#endif
-	force_sig_fault(SIGBUS, BUS_ADRERR, (void __user *)address);
-}
+		क्रमce_sig_mceerr(BUS_MCEERR_AR, (व्योम __user *)address, lsb);
+		वापस;
+	पूर्ण
+#पूर्ण_अगर
+	क्रमce_sig_fault(SIGBUS, BUS_ADRERR, (व्योम __user *)address);
+पूर्ण
 
-static int spurious_kernel_fault_check(unsigned long error_code, pte_t *pte)
-{
-	if ((error_code & X86_PF_WRITE) && !pte_write(*pte))
-		return 0;
+अटल पूर्णांक spurious_kernel_fault_check(अचिन्हित दीर्घ error_code, pte_t *pte)
+अणु
+	अगर ((error_code & X86_PF_WRITE) && !pte_ग_लिखो(*pte))
+		वापस 0;
 
-	if ((error_code & X86_PF_INSTR) && !pte_exec(*pte))
-		return 0;
+	अगर ((error_code & X86_PF_INSTR) && !pte_exec(*pte))
+		वापस 0;
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
 /*
  * Handle a spurious fault caused by a stale TLB entry.
  *
  * This allows us to lazily refresh the TLB when increasing the
  * permissions of a kernel page (RO -> RW or NX -> X).  Doing it
- * eagerly is very expensive since that implies doing a full
- * cross-processor TLB flush, even if no stale TLB entries exist
+ * eagerly is very expensive since that implies करोing a full
+ * cross-processor TLB flush, even अगर no stale TLB entries exist
  * on other processors.
  *
- * Spurious faults may only occur if the TLB contains an entry with
+ * Spurious faults may only occur अगर the TLB contains an entry with
  * fewer permission than the page table entry.  Non-present (P = 0)
  * and reserved bit (R = 1) faults are never spurious.
  *
  * There are no security implications to leaving a stale TLB when
  * increasing the permissions on a page.
  *
- * Returns non-zero if a spurious fault was handled, zero otherwise.
+ * Returns non-zero अगर a spurious fault was handled, zero otherwise.
  *
  * See Intel Developer's Manual Vol 3 Section 4.10.4.3, bullet 3
  * (Optional Invalidation).
  */
-static noinline int
-spurious_kernel_fault(unsigned long error_code, unsigned long address)
-{
+अटल noअंतरभूत पूर्णांक
+spurious_kernel_fault(अचिन्हित दीर्घ error_code, अचिन्हित दीर्घ address)
+अणु
 	pgd_t *pgd;
 	p4d_t *p4d;
 	pud_t *pud;
 	pmd_t *pmd;
 	pte_t *pte;
-	int ret;
+	पूर्णांक ret;
 
 	/*
-	 * Only writes to RO or instruction fetches from NX may cause
+	 * Only ग_लिखोs to RO or inकाष्ठाion fetches from NX may cause
 	 * spurious faults.
 	 *
 	 * These could be from user or supervisor accesses but the TLB
@@ -1015,42 +1016,42 @@ spurious_kernel_fault(unsigned long error_code, unsigned long address)
 	 * change, so user accesses are not expected to cause spurious
 	 * faults.
 	 */
-	if (error_code != (X86_PF_WRITE | X86_PF_PROT) &&
+	अगर (error_code != (X86_PF_WRITE | X86_PF_PROT) &&
 	    error_code != (X86_PF_INSTR | X86_PF_PROT))
-		return 0;
+		वापस 0;
 
 	pgd = init_mm.pgd + pgd_index(address);
-	if (!pgd_present(*pgd))
-		return 0;
+	अगर (!pgd_present(*pgd))
+		वापस 0;
 
 	p4d = p4d_offset(pgd, address);
-	if (!p4d_present(*p4d))
-		return 0;
+	अगर (!p4d_present(*p4d))
+		वापस 0;
 
-	if (p4d_large(*p4d))
-		return spurious_kernel_fault_check(error_code, (pte_t *) p4d);
+	अगर (p4d_large(*p4d))
+		वापस spurious_kernel_fault_check(error_code, (pte_t *) p4d);
 
 	pud = pud_offset(p4d, address);
-	if (!pud_present(*pud))
-		return 0;
+	अगर (!pud_present(*pud))
+		वापस 0;
 
-	if (pud_large(*pud))
-		return spurious_kernel_fault_check(error_code, (pte_t *) pud);
+	अगर (pud_large(*pud))
+		वापस spurious_kernel_fault_check(error_code, (pte_t *) pud);
 
 	pmd = pmd_offset(pud, address);
-	if (!pmd_present(*pmd))
-		return 0;
+	अगर (!pmd_present(*pmd))
+		वापस 0;
 
-	if (pmd_large(*pmd))
-		return spurious_kernel_fault_check(error_code, (pte_t *) pmd);
+	अगर (pmd_large(*pmd))
+		वापस spurious_kernel_fault_check(error_code, (pte_t *) pmd);
 
 	pte = pte_offset_kernel(pmd, address);
-	if (!pte_present(*pte))
-		return 0;
+	अगर (!pte_present(*pte))
+		वापस 0;
 
 	ret = spurious_kernel_fault_check(error_code, pte);
-	if (!ret)
-		return 0;
+	अगर (!ret)
+		वापस 0;
 
 	/*
 	 * Make sure we have permissions in PMD.
@@ -1059,105 +1060,105 @@ spurious_kernel_fault(unsigned long error_code, unsigned long address)
 	ret = spurious_kernel_fault_check(error_code, (pte_t *) pmd);
 	WARN_ONCE(!ret, "PMD has incorrect permission bits\n");
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 NOKPROBE_SYMBOL(spurious_kernel_fault);
 
-int show_unhandled_signals = 1;
+पूर्णांक show_unhandled_संकेतs = 1;
 
-static inline int
-access_error(unsigned long error_code, struct vm_area_struct *vma)
-{
-	/* This is only called for the current mm, so: */
-	bool foreign = false;
+अटल अंतरभूत पूर्णांक
+access_error(अचिन्हित दीर्घ error_code, काष्ठा vm_area_काष्ठा *vma)
+अणु
+	/* This is only called क्रम the current mm, so: */
+	bool क्रमeign = false;
 
 	/*
-	 * Read or write was blocked by protection keys.  This is
+	 * Read or ग_लिखो was blocked by protection keys.  This is
 	 * always an unconditional error and can never result in
 	 * a follow-up action to resolve the fault, like a COW.
 	 */
-	if (error_code & X86_PF_PK)
-		return 1;
+	अगर (error_code & X86_PF_PK)
+		वापस 1;
 
 	/*
 	 * SGX hardware blocked the access.  This usually happens
 	 * when the enclave memory contents have been destroyed, like
-	 * after a suspend/resume cycle. In any case, the kernel can't
+	 * after a suspend/resume cycle. In any हाल, the kernel can't
 	 * fix the cause of the fault.  Handle the fault as an access
-	 * error even in cases where no actual access violation
+	 * error even in हालs where no actual access violation
 	 * occurred.  This allows userspace to rebuild the enclave in
-	 * response to the signal.
+	 * response to the संकेत.
 	 */
-	if (unlikely(error_code & X86_PF_SGX))
-		return 1;
+	अगर (unlikely(error_code & X86_PF_SGX))
+		वापस 1;
 
 	/*
-	 * Make sure to check the VMA so that we do not perform
+	 * Make sure to check the VMA so that we करो not perक्रमm
 	 * faults just to hit a X86_PF_PK as soon as we fill in a
 	 * page.
 	 */
-	if (!arch_vma_access_permitted(vma, (error_code & X86_PF_WRITE),
-				       (error_code & X86_PF_INSTR), foreign))
-		return 1;
+	अगर (!arch_vma_access_permitted(vma, (error_code & X86_PF_WRITE),
+				       (error_code & X86_PF_INSTR), क्रमeign))
+		वापस 1;
 
-	if (error_code & X86_PF_WRITE) {
-		/* write, present and write, not present: */
-		if (unlikely(!(vma->vm_flags & VM_WRITE)))
-			return 1;
-		return 0;
-	}
+	अगर (error_code & X86_PF_WRITE) अणु
+		/* ग_लिखो, present and ग_लिखो, not present: */
+		अगर (unlikely(!(vma->vm_flags & VM_WRITE)))
+			वापस 1;
+		वापस 0;
+	पूर्ण
 
-	/* read, present: */
-	if (unlikely(error_code & X86_PF_PROT))
-		return 1;
+	/* पढ़ो, present: */
+	अगर (unlikely(error_code & X86_PF_PROT))
+		वापस 1;
 
-	/* read, not present: */
-	if (unlikely(!vma_is_accessible(vma)))
-		return 1;
+	/* पढ़ो, not present: */
+	अगर (unlikely(!vma_is_accessible(vma)))
+		वापस 1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-bool fault_in_kernel_space(unsigned long address)
-{
+bool fault_in_kernel_space(अचिन्हित दीर्घ address)
+अणु
 	/*
-	 * On 64-bit systems, the vsyscall page is at an address above
+	 * On 64-bit प्रणालीs, the vsyscall page is at an address above
 	 * TASK_SIZE_MAX, but is not considered part of the kernel
 	 * address space.
 	 */
-	if (IS_ENABLED(CONFIG_X86_64) && is_vsyscall_vaddr(address))
-		return false;
+	अगर (IS_ENABLED(CONFIG_X86_64) && is_vsyscall_vaddr(address))
+		वापस false;
 
-	return address >= TASK_SIZE_MAX;
-}
+	वापस address >= TASK_SIZE_MAX;
+पूर्ण
 
 /*
- * Called for all faults where 'address' is part of the kernel address
- * space.  Might get called for faults that originate from *code* that
+ * Called क्रम all faults where 'address' is part of the kernel address
+ * space.  Might get called क्रम faults that originate from *code* that
  * ran in userspace or the kernel.
  */
-static void
-do_kern_addr_fault(struct pt_regs *regs, unsigned long hw_error_code,
-		   unsigned long address)
-{
+अटल व्योम
+करो_kern_addr_fault(काष्ठा pt_regs *regs, अचिन्हित दीर्घ hw_error_code,
+		   अचिन्हित दीर्घ address)
+अणु
 	/*
 	 * Protection keys exceptions only happen on user pages.  We
 	 * have no user pages in the kernel portion of the address
-	 * space, so do not expect them here.
+	 * space, so करो not expect them here.
 	 */
 	WARN_ON_ONCE(hw_error_code & X86_PF_PK);
 
-#ifdef CONFIG_X86_32
+#अगर_घोषित CONFIG_X86_32
 	/*
-	 * We can fault-in kernel-space virtual memory on-demand. The
+	 * We can fault-in kernel-space भव memory on-demand. The
 	 * 'reference' page table is init_mm.pgd.
 	 *
-	 * NOTE! We MUST NOT take any locks for this case. We may
-	 * be in an interrupt or a critical region, and should
-	 * only copy the information from the master page table,
+	 * NOTE! We MUST NOT take any locks क्रम this हाल. We may
+	 * be in an पूर्णांकerrupt or a critical region, and should
+	 * only copy the inक्रमmation from the master page table,
 	 * nothing more.
 	 *
-	 * Before doing this on-demand faulting, ensure that the
+	 * Beक्रमe करोing this on-demand faulting, ensure that the
 	 * fault is not any of the following:
 	 * 1. A fault on a PTE with a reserved bit set.
 	 * 2. A fault caused by a user-mode access.  (Do not demand-
@@ -1166,28 +1167,28 @@ do_kern_addr_fault(struct pt_regs *regs, unsigned long hw_error_code,
 	 *    (A demand fault would be on a non-present page which
 	 *     would have X86_PF_PROT==0).
 	 *
-	 * This is only needed to close a race condition on x86-32 in
-	 * the vmalloc mapping/unmapping code. See the comment above
-	 * vmalloc_fault() for details. On x86-64 the race does not
-	 * exist as the vmalloc mappings don't need to be synchronized
+	 * This is only needed to बंद a race condition on x86-32 in
+	 * the vदो_स्मृति mapping/unmapping code. See the comment above
+	 * vदो_स्मृति_fault() क्रम details. On x86-64 the race करोes not
+	 * exist as the vदो_स्मृति mappings करोn't need to be synchronized
 	 * there.
 	 */
-	if (!(hw_error_code & (X86_PF_RSVD | X86_PF_USER | X86_PF_PROT))) {
-		if (vmalloc_fault(address) >= 0)
-			return;
-	}
-#endif
+	अगर (!(hw_error_code & (X86_PF_RSVD | X86_PF_USER | X86_PF_PROT))) अणु
+		अगर (vदो_स्मृति_fault(address) >= 0)
+			वापस;
+	पूर्ण
+#पूर्ण_अगर
 
-	if (is_f00f_bug(regs, hw_error_code, address))
-		return;
+	अगर (is_f00f_bug(regs, hw_error_code, address))
+		वापस;
 
 	/* Was the fault spurious, caused by lazy TLB invalidation? */
-	if (spurious_kernel_fault(hw_error_code, address))
-		return;
+	अगर (spurious_kernel_fault(hw_error_code, address))
+		वापस;
 
-	/* kprobes don't want to hook the spurious faults: */
-	if (kprobe_page_fault(regs, X86_TRAP_PF))
-		return;
+	/* kprobes करोn't want to hook the spurious faults: */
+	अगर (kprobe_page_fault(regs, X86_TRAP_PF))
+		वापस;
 
 	/*
 	 * Note, despite being a "bad area", there are quite a few
@@ -1198,295 +1199,295 @@ do_kern_addr_fault(struct pt_regs *regs, unsigned long hw_error_code,
 	 * fault we could otherwise deadlock:
 	 */
 	bad_area_nosemaphore(regs, hw_error_code, address);
-}
-NOKPROBE_SYMBOL(do_kern_addr_fault);
+पूर्ण
+NOKPROBE_SYMBOL(करो_kern_addr_fault);
 
 /*
  * Handle faults in the user portion of the address space.  Nothing in here
- * should check X86_PF_USER without a specific justification: for almost
+ * should check X86_PF_USER without a specअगरic justअगरication: क्रम almost
  * all purposes, we should treat a normal kernel access to user memory
- * (e.g. get_user(), put_user(), etc.) the same as the WRUSS instruction.
+ * (e.g. get_user(), put_user(), etc.) the same as the WRUSS inकाष्ठाion.
  * The one exception is AC flag handling, which is, per the x86
- * architecture, special for WRUSS.
+ * architecture, special क्रम WRUSS.
  */
-static inline
-void do_user_addr_fault(struct pt_regs *regs,
-			unsigned long error_code,
-			unsigned long address)
-{
-	struct vm_area_struct *vma;
-	struct task_struct *tsk;
-	struct mm_struct *mm;
+अटल अंतरभूत
+व्योम करो_user_addr_fault(काष्ठा pt_regs *regs,
+			अचिन्हित दीर्घ error_code,
+			अचिन्हित दीर्घ address)
+अणु
+	काष्ठा vm_area_काष्ठा *vma;
+	काष्ठा task_काष्ठा *tsk;
+	काष्ठा mm_काष्ठा *mm;
 	vm_fault_t fault;
-	unsigned int flags = FAULT_FLAG_DEFAULT;
+	अचिन्हित पूर्णांक flags = FAULT_FLAG_DEFAULT;
 
 	tsk = current;
 	mm = tsk->mm;
 
-	if (unlikely((error_code & (X86_PF_USER | X86_PF_INSTR)) == X86_PF_INSTR)) {
+	अगर (unlikely((error_code & (X86_PF_USER | X86_PF_INSTR)) == X86_PF_INSTR)) अणु
 		/*
 		 * Whoops, this is kernel mode code trying to execute from
 		 * user memory.  Unless this is AMD erratum #93, which
 		 * corrupts RIP such that it looks like a user address,
 		 * this is unrecoverable.  Don't even try to look up the
-		 * VMA or look for extable entries.
+		 * VMA or look क्रम extable entries.
 		 */
-		if (is_errata93(regs, address))
-			return;
+		अगर (is_errata93(regs, address))
+			वापस;
 
 		page_fault_oops(regs, error_code, address);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	/* kprobes don't want to hook the spurious faults: */
-	if (unlikely(kprobe_page_fault(regs, X86_TRAP_PF)))
-		return;
+	/* kprobes करोn't want to hook the spurious faults: */
+	अगर (unlikely(kprobe_page_fault(regs, X86_TRAP_PF)))
+		वापस;
 
 	/*
 	 * Reserved bits are never expected to be set on
 	 * entries in the user portion of the page tables.
 	 */
-	if (unlikely(error_code & X86_PF_RSVD))
+	अगर (unlikely(error_code & X86_PF_RSVD))
 		pgtable_bad(regs, error_code, address);
 
 	/*
-	 * If SMAP is on, check for invalid kernel (supervisor) access to user
-	 * pages in the user address space.  The odd case here is WRUSS,
-	 * which, according to the preliminary documentation, does not respect
-	 * SMAP and will have the USER bit set so, in all cases, SMAP
-	 * enforcement appears to be consistent with the USER bit.
+	 * If SMAP is on, check क्रम invalid kernel (supervisor) access to user
+	 * pages in the user address space.  The odd हाल here is WRUSS,
+	 * which, according to the preliminary करोcumentation, करोes not respect
+	 * SMAP and will have the USER bit set so, in all हालs, SMAP
+	 * enक्रमcement appears to be consistent with the USER bit.
 	 */
-	if (unlikely(cpu_feature_enabled(X86_FEATURE_SMAP) &&
+	अगर (unlikely(cpu_feature_enabled(X86_FEATURE_SMAP) &&
 		     !(error_code & X86_PF_USER) &&
-		     !(regs->flags & X86_EFLAGS_AC))) {
+		     !(regs->flags & X86_EFLAGS_AC))) अणु
 		/*
 		 * No extable entry here.  This was a kernel access to an
-		 * invalid pointer.  get_kernel_nofault() will not get here.
+		 * invalid poपूर्णांकer.  get_kernel_nofault() will not get here.
 		 */
 		page_fault_oops(regs, error_code, address);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/*
-	 * If we're in an interrupt, have no user context or are running
+	 * If we're in an पूर्णांकerrupt, have no user context or are running
 	 * in a region with pagefaults disabled then we must not take the fault
 	 */
-	if (unlikely(faulthandler_disabled() || !mm)) {
+	अगर (unlikely(faulthandler_disabled() || !mm)) अणु
 		bad_area_nosemaphore(regs, error_code, address);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/*
 	 * It's safe to allow irq's after cr2 has been saved and the
-	 * vmalloc fault has been handled.
+	 * vदो_स्मृति fault has been handled.
 	 *
-	 * User-mode registers count as a user access even for any
-	 * potential system fault or CPU buglet:
+	 * User-mode रेजिस्टरs count as a user access even क्रम any
+	 * potential प्रणाली fault or CPU buglet:
 	 */
-	if (user_mode(regs)) {
+	अगर (user_mode(regs)) अणु
 		local_irq_enable();
 		flags |= FAULT_FLAG_USER;
-	} else {
-		if (regs->flags & X86_EFLAGS_IF)
+	पूर्ण अन्यथा अणु
+		अगर (regs->flags & X86_EFLAGS_IF)
 			local_irq_enable();
-	}
+	पूर्ण
 
 	perf_sw_event(PERF_COUNT_SW_PAGE_FAULTS, 1, regs, address);
 
-	if (error_code & X86_PF_WRITE)
+	अगर (error_code & X86_PF_WRITE)
 		flags |= FAULT_FLAG_WRITE;
-	if (error_code & X86_PF_INSTR)
+	अगर (error_code & X86_PF_INSTR)
 		flags |= FAULT_FLAG_INSTRUCTION;
 
-#ifdef CONFIG_X86_64
+#अगर_घोषित CONFIG_X86_64
 	/*
 	 * Faults in the vsyscall page might need emulation.  The
 	 * vsyscall page is at a high address (>PAGE_OFFSET), but is
 	 * considered to be part of the user address space.
 	 *
-	 * The vsyscall page does not have a "real" VMA, so do this
-	 * emulation before we go searching for VMAs.
+	 * The vsyscall page करोes not have a "real" VMA, so करो this
+	 * emulation beक्रमe we go searching क्रम VMAs.
 	 *
-	 * PKRU never rejects instruction fetches, so we don't need
+	 * PKRU never rejects inकाष्ठाion fetches, so we करोn't need
 	 * to consider the PF_PK bit.
 	 */
-	if (is_vsyscall_vaddr(address)) {
-		if (emulate_vsyscall(error_code, regs, address))
-			return;
-	}
-#endif
+	अगर (is_vsyscall_vaddr(address)) अणु
+		अगर (emulate_vsyscall(error_code, regs, address))
+			वापस;
+	पूर्ण
+#पूर्ण_अगर
 
 	/*
 	 * Kernel-mode access to the user address space should only occur
-	 * on well-defined single instructions listed in the exception
+	 * on well-defined single inकाष्ठाions listed in the exception
 	 * tables.  But, an erroneous kernel fault occurring outside one of
 	 * those areas which also holds mmap_lock might deadlock attempting
 	 * to validate the fault against the address space.
 	 *
-	 * Only do the expensive exception table search when we might be at
-	 * risk of a deadlock.  This happens if we
+	 * Only करो the expensive exception table search when we might be at
+	 * risk of a deadlock.  This happens अगर we
 	 * 1. Failed to acquire mmap_lock, and
 	 * 2. The access did not originate in userspace.
 	 */
-	if (unlikely(!mmap_read_trylock(mm))) {
-		if (!user_mode(regs) && !search_exception_tables(regs->ip)) {
+	अगर (unlikely(!mmap_पढ़ो_trylock(mm))) अणु
+		अगर (!user_mode(regs) && !search_exception_tables(regs->ip)) अणु
 			/*
 			 * Fault from code in kernel from
-			 * which we do not expect faults.
+			 * which we करो not expect faults.
 			 */
 			bad_area_nosemaphore(regs, error_code, address);
-			return;
-		}
+			वापस;
+		पूर्ण
 retry:
-		mmap_read_lock(mm);
-	} else {
+		mmap_पढ़ो_lock(mm);
+	पूर्ण अन्यथा अणु
 		/*
-		 * The above down_read_trylock() might have succeeded in
-		 * which case we'll have missed the might_sleep() from
-		 * down_read():
+		 * The above करोwn_पढ़ो_trylock() might have succeeded in
+		 * which हाल we'll have missed the might_sleep() from
+		 * करोwn_पढ़ो():
 		 */
 		might_sleep();
-	}
+	पूर्ण
 
 	vma = find_vma(mm, address);
-	if (unlikely(!vma)) {
+	अगर (unlikely(!vma)) अणु
 		bad_area(regs, error_code, address);
-		return;
-	}
-	if (likely(vma->vm_start <= address))
-		goto good_area;
-	if (unlikely(!(vma->vm_flags & VM_GROWSDOWN))) {
+		वापस;
+	पूर्ण
+	अगर (likely(vma->vm_start <= address))
+		जाओ good_area;
+	अगर (unlikely(!(vma->vm_flags & VM_GROWSDOWN))) अणु
 		bad_area(regs, error_code, address);
-		return;
-	}
-	if (unlikely(expand_stack(vma, address))) {
+		वापस;
+	पूर्ण
+	अगर (unlikely(expand_stack(vma, address))) अणु
 		bad_area(regs, error_code, address);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/*
-	 * Ok, we have a good vm_area for this memory access, so
+	 * Ok, we have a good vm_area क्रम this memory access, so
 	 * we can handle it..
 	 */
 good_area:
-	if (unlikely(access_error(error_code, vma))) {
+	अगर (unlikely(access_error(error_code, vma))) अणु
 		bad_area_access_error(regs, error_code, address, vma);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/*
-	 * If for any reason at all we couldn't handle the fault,
-	 * make sure we exit gracefully rather than endlessly redo
-	 * the fault.  Since we never set FAULT_FLAG_RETRY_NOWAIT, if
+	 * If क्रम any reason at all we couldn't handle the fault,
+	 * make sure we निकास gracefully rather than endlessly reकरो
+	 * the fault.  Since we never set FAULT_FLAG_RETRY_NOWAIT, अगर
 	 * we get VM_FAULT_RETRY back, the mmap_lock has been unlocked.
 	 *
 	 * Note that handle_userfault() may also release and reacquire mmap_lock
-	 * (and not return with VM_FAULT_RETRY), when returning to userland to
+	 * (and not वापस with VM_FAULT_RETRY), when वापसing to userland to
 	 * repeat the page fault later with a VM_FAULT_NOPAGE retval
-	 * (potentially after handling any pending signal during the return to
-	 * userland). The return to userland is identified whenever
+	 * (potentially after handling any pending संकेत during the वापस to
+	 * userland). The वापस to userland is identअगरied whenever
 	 * FAULT_FLAG_USER|FAULT_FLAG_KILLABLE are both set in flags.
 	 */
 	fault = handle_mm_fault(vma, address, flags, regs);
 
-	if (fault_signal_pending(fault, regs)) {
+	अगर (fault_संकेत_pending(fault, regs)) अणु
 		/*
-		 * Quick path to respond to signals.  The core mm code
-		 * has unlocked the mm for us if we get here.
+		 * Quick path to respond to संकेतs.  The core mm code
+		 * has unlocked the mm क्रम us अगर we get here.
 		 */
-		if (!user_mode(regs))
+		अगर (!user_mode(regs))
 			kernelmode_fixup_or_oops(regs, error_code, address,
 						 SIGBUS, BUS_ADRERR);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/*
-	 * If we need to retry the mmap_lock has already been released,
-	 * and if there is a fatal signal pending there is no guarantee
-	 * that we made any progress. Handle this case first.
+	 * If we need to retry the mmap_lock has alपढ़ोy been released,
+	 * and अगर there is a fatal संकेत pending there is no guarantee
+	 * that we made any progress. Handle this हाल first.
 	 */
-	if (unlikely((fault & VM_FAULT_RETRY) &&
-		     (flags & FAULT_FLAG_ALLOW_RETRY))) {
+	अगर (unlikely((fault & VM_FAULT_RETRY) &&
+		     (flags & FAULT_FLAG_ALLOW_RETRY))) अणु
 		flags |= FAULT_FLAG_TRIED;
-		goto retry;
-	}
+		जाओ retry;
+	पूर्ण
 
-	mmap_read_unlock(mm);
-	if (likely(!(fault & VM_FAULT_ERROR)))
-		return;
+	mmap_पढ़ो_unlock(mm);
+	अगर (likely(!(fault & VM_FAULT_ERROR)))
+		वापस;
 
-	if (fatal_signal_pending(current) && !user_mode(regs)) {
+	अगर (fatal_संकेत_pending(current) && !user_mode(regs)) अणु
 		kernelmode_fixup_or_oops(regs, error_code, address, 0, 0);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (fault & VM_FAULT_OOM) {
+	अगर (fault & VM_FAULT_OOM) अणु
 		/* Kernel mode? Handle exceptions or die: */
-		if (!user_mode(regs)) {
+		अगर (!user_mode(regs)) अणु
 			kernelmode_fixup_or_oops(regs, error_code, address,
-						 SIGSEGV, SEGV_MAPERR);
-			return;
-		}
+						 संक_अंश, SEGV_MAPERR);
+			वापस;
+		पूर्ण
 
 		/*
-		 * We ran out of memory, call the OOM killer, and return the
-		 * userspace (which will retry the fault, or kill us if we got
-		 * oom-killed):
+		 * We ran out of memory, call the OOM समाप्तer, and वापस the
+		 * userspace (which will retry the fault, or समाप्त us अगर we got
+		 * oom-समाप्तed):
 		 */
 		pagefault_out_of_memory();
-	} else {
-		if (fault & (VM_FAULT_SIGBUS|VM_FAULT_HWPOISON|
+	पूर्ण अन्यथा अणु
+		अगर (fault & (VM_FAULT_SIGBUS|VM_FAULT_HWPOISON|
 			     VM_FAULT_HWPOISON_LARGE))
-			do_sigbus(regs, error_code, address, fault);
-		else if (fault & VM_FAULT_SIGSEGV)
+			करो_sigbus(regs, error_code, address, fault);
+		अन्यथा अगर (fault & VM_FAULT_संक_अंश)
 			bad_area_nosemaphore(regs, error_code, address);
-		else
+		अन्यथा
 			BUG();
-	}
-}
-NOKPROBE_SYMBOL(do_user_addr_fault);
+	पूर्ण
+पूर्ण
+NOKPROBE_SYMBOL(करो_user_addr_fault);
 
-static __always_inline void
-trace_page_fault_entries(struct pt_regs *regs, unsigned long error_code,
-			 unsigned long address)
-{
-	if (!trace_pagefault_enabled())
-		return;
+अटल __always_अंतरभूत व्योम
+trace_page_fault_entries(काष्ठा pt_regs *regs, अचिन्हित दीर्घ error_code,
+			 अचिन्हित दीर्घ address)
+अणु
+	अगर (!trace_pagefault_enabled())
+		वापस;
 
-	if (user_mode(regs))
+	अगर (user_mode(regs))
 		trace_page_fault_user(address, regs, error_code);
-	else
+	अन्यथा
 		trace_page_fault_kernel(address, regs, error_code);
-}
+पूर्ण
 
-static __always_inline void
-handle_page_fault(struct pt_regs *regs, unsigned long error_code,
-			      unsigned long address)
-{
+अटल __always_अंतरभूत व्योम
+handle_page_fault(काष्ठा pt_regs *regs, अचिन्हित दीर्घ error_code,
+			      अचिन्हित दीर्घ address)
+अणु
 	trace_page_fault_entries(regs, error_code, address);
 
-	if (unlikely(kmmio_fault(regs, address)))
-		return;
+	अगर (unlikely(kmmio_fault(regs, address)))
+		वापस;
 
 	/* Was the fault on kernel-controlled part of the address space? */
-	if (unlikely(fault_in_kernel_space(address))) {
-		do_kern_addr_fault(regs, error_code, address);
-	} else {
-		do_user_addr_fault(regs, error_code, address);
+	अगर (unlikely(fault_in_kernel_space(address))) अणु
+		करो_kern_addr_fault(regs, error_code, address);
+	पूर्ण अन्यथा अणु
+		करो_user_addr_fault(regs, error_code, address);
 		/*
 		 * User address page fault handling might have reenabled
-		 * interrupts. Fixing up all potential exit points of
-		 * do_user_addr_fault() and its leaf functions is just not
-		 * doable w/o creating an unholy mess or turning the code
-		 * upside down.
+		 * पूर्णांकerrupts. Fixing up all potential निकास poपूर्णांकs of
+		 * करो_user_addr_fault() and its leaf functions is just not
+		 * करोable w/o creating an unholy mess or turning the code
+		 * upside करोwn.
 		 */
 		local_irq_disable();
-	}
-}
+	पूर्ण
+पूर्ण
 
 DEFINE_IDTENTRY_RAW_ERRORCODE(exc_page_fault)
-{
-	unsigned long address = read_cr2();
+अणु
+	अचिन्हित दीर्घ address = पढ़ो_cr2();
 	irqentry_state_t state;
 
 	prefetchw(&current->mm->mmap_lock);
@@ -1494,17 +1495,17 @@ DEFINE_IDTENTRY_RAW_ERRORCODE(exc_page_fault)
 	/*
 	 * KVM uses #PF vector to deliver 'page not present' events to guests
 	 * (asynchronous page fault mechanism). The event happens when a
-	 * userspace task is trying to access some valid (from guest's point of
+	 * userspace task is trying to access some valid (from guest's poपूर्णांक of
 	 * view) memory which is not currently mapped by the host (e.g. the
 	 * memory is swapped out). Note, the corresponding "page ready" event
 	 * which is injected when the memory becomes available, is delivered via
-	 * an interrupt mechanism and not a #PF exception
-	 * (see arch/x86/kernel/kvm.c: sysvec_kvm_asyncpf_interrupt()).
+	 * an पूर्णांकerrupt mechanism and not a #PF exception
+	 * (see arch/x86/kernel/kvm.c: sysvec_kvm_asyncpf_पूर्णांकerrupt()).
 	 *
-	 * We are relying on the interrupted context being sane (valid RSP,
-	 * relevant locks not held, etc.), which is fine as long as the
-	 * interrupted context had IF=1.  We are also relying on the KVM
-	 * async pf type field and CR2 being read consistently instead of
+	 * We are relying on the पूर्णांकerrupted context being sane (valid RSP,
+	 * relevant locks not held, etc.), which is fine as दीर्घ as the
+	 * पूर्णांकerrupted context had IF=1.  We are also relying on the KVM
+	 * async pf type field and CR2 being पढ़ो consistently instead of
 	 * getting values from real and async page faults mixed up.
 	 *
 	 * Fingers crossed.
@@ -1512,17 +1513,17 @@ DEFINE_IDTENTRY_RAW_ERRORCODE(exc_page_fault)
 	 * The async #PF handling code takes care of idtentry handling
 	 * itself.
 	 */
-	if (kvm_handle_async_pf(regs, (u32)address))
-		return;
+	अगर (kvm_handle_async_pf(regs, (u32)address))
+		वापस;
 
 	/*
-	 * Entry handling for valid #PF from kernel mode is slightly
-	 * different: RCU is already watching and rcu_irq_enter() must not
+	 * Entry handling क्रम valid #PF from kernel mode is slightly
+	 * dअगरferent: RCU is alपढ़ोy watching and rcu_irq_enter() must not
 	 * be invoked because a kernel fault on a user space address might
 	 * sleep.
 	 *
-	 * In case the fault hit a RCU idle region the conditional entry
-	 * code reenabled RCU to avoid subsequent wreckage which helps
+	 * In हाल the fault hit a RCU idle region the conditional entry
+	 * code reenabled RCU to aव्योम subsequent wreckage which helps
 	 * debuggability.
 	 */
 	state = irqentry_enter(regs);
@@ -1531,5 +1532,5 @@ DEFINE_IDTENTRY_RAW_ERRORCODE(exc_page_fault)
 	handle_page_fault(regs, error_code, address);
 	instrumentation_end();
 
-	irqentry_exit(regs, state);
-}
+	irqentry_निकास(regs, state);
+पूर्ण

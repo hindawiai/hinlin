@@ -1,95 +1,96 @@
-// SPDX-License-Identifier: BSD-3-Clause OR GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: BSD-3-Clause OR GPL-2.0
 /* Copyright (c) 2018 Mellanox Technologies. All rights reserved */
 
-#include <linux/if_bridge.h>
-#include <linux/list.h>
-#include <linux/mutex.h>
-#include <linux/refcount.h>
-#include <linux/rtnetlink.h>
-#include <linux/workqueue.h>
-#include <net/arp.h>
-#include <net/gre.h>
-#include <net/lag.h>
-#include <net/ndisc.h>
-#include <net/ip6_tunnel.h>
+#समावेश <linux/अगर_bridge.h>
+#समावेश <linux/list.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/refcount.h>
+#समावेश <linux/rtnetlink.h>
+#समावेश <linux/workqueue.h>
+#समावेश <net/arp.h>
+#समावेश <net/gre.h>
+#समावेश <net/lag.h>
+#समावेश <net/ndisc.h>
+#समावेश <net/ip6_tunnel.h>
 
-#include "spectrum.h"
-#include "spectrum_ipip.h"
-#include "spectrum_span.h"
-#include "spectrum_switchdev.h"
+#समावेश "spectrum.h"
+#समावेश "spectrum_ipip.h"
+#समावेश "spectrum_span.h"
+#समावेश "spectrum_switchdev.h"
 
-struct mlxsw_sp_span {
-	struct work_struct work;
-	struct mlxsw_sp *mlxsw_sp;
-	const struct mlxsw_sp_span_trigger_ops **span_trigger_ops_arr;
-	const struct mlxsw_sp_span_entry_ops **span_entry_ops_arr;
-	size_t span_entry_ops_arr_size;
-	struct list_head analyzed_ports_list;
-	struct mutex analyzed_ports_lock; /* Protects analyzed_ports_list */
-	struct list_head trigger_entries_list;
+काष्ठा mlxsw_sp_span अणु
+	काष्ठा work_काष्ठा work;
+	काष्ठा mlxsw_sp *mlxsw_sp;
+	स्थिर काष्ठा mlxsw_sp_span_trigger_ops **span_trigger_ops_arr;
+	स्थिर काष्ठा mlxsw_sp_span_entry_ops **span_entry_ops_arr;
+	माप_प्रकार span_entry_ops_arr_size;
+	काष्ठा list_head analyzed_ports_list;
+	काष्ठा mutex analyzed_ports_lock; /* Protects analyzed_ports_list */
+	काष्ठा list_head trigger_entries_list;
 	u16 policer_id_base;
 	refcount_t policer_id_base_ref_count;
 	atomic_t active_entries_count;
-	int entries_count;
-	struct mlxsw_sp_span_entry entries[];
-};
+	पूर्णांक entries_count;
+	काष्ठा mlxsw_sp_span_entry entries[];
+पूर्ण;
 
-struct mlxsw_sp_span_analyzed_port {
-	struct list_head list; /* Member of analyzed_ports_list */
+काष्ठा mlxsw_sp_span_analyzed_port अणु
+	काष्ठा list_head list; /* Member of analyzed_ports_list */
 	refcount_t ref_count;
 	u8 local_port;
 	bool ingress;
-};
+पूर्ण;
 
-struct mlxsw_sp_span_trigger_entry {
-	struct list_head list; /* Member of trigger_entries_list */
-	struct mlxsw_sp_span *span;
-	const struct mlxsw_sp_span_trigger_ops *ops;
+काष्ठा mlxsw_sp_span_trigger_entry अणु
+	काष्ठा list_head list; /* Member of trigger_entries_list */
+	काष्ठा mlxsw_sp_span *span;
+	स्थिर काष्ठा mlxsw_sp_span_trigger_ops *ops;
 	refcount_t ref_count;
 	u8 local_port;
-	enum mlxsw_sp_span_trigger trigger;
-	struct mlxsw_sp_span_trigger_parms parms;
-};
+	क्रमागत mlxsw_sp_span_trigger trigger;
+	काष्ठा mlxsw_sp_span_trigger_parms parms;
+पूर्ण;
 
-enum mlxsw_sp_span_trigger_type {
+क्रमागत mlxsw_sp_span_trigger_type अणु
 	MLXSW_SP_SPAN_TRIGGER_TYPE_PORT,
 	MLXSW_SP_SPAN_TRIGGER_TYPE_GLOBAL,
-};
+पूर्ण;
 
-struct mlxsw_sp_span_trigger_ops {
-	int (*bind)(struct mlxsw_sp_span_trigger_entry *trigger_entry);
-	void (*unbind)(struct mlxsw_sp_span_trigger_entry *trigger_entry);
-	bool (*matches)(struct mlxsw_sp_span_trigger_entry *trigger_entry,
-			enum mlxsw_sp_span_trigger trigger,
-			struct mlxsw_sp_port *mlxsw_sp_port);
-	int (*enable)(struct mlxsw_sp_span_trigger_entry *trigger_entry,
-		      struct mlxsw_sp_port *mlxsw_sp_port, u8 tc);
-	void (*disable)(struct mlxsw_sp_span_trigger_entry *trigger_entry,
-			struct mlxsw_sp_port *mlxsw_sp_port, u8 tc);
-};
+काष्ठा mlxsw_sp_span_trigger_ops अणु
+	पूर्णांक (*bind)(काष्ठा mlxsw_sp_span_trigger_entry *trigger_entry);
+	व्योम (*unbind)(काष्ठा mlxsw_sp_span_trigger_entry *trigger_entry);
+	bool (*matches)(काष्ठा mlxsw_sp_span_trigger_entry *trigger_entry,
+			क्रमागत mlxsw_sp_span_trigger trigger,
+			काष्ठा mlxsw_sp_port *mlxsw_sp_port);
+	पूर्णांक (*enable)(काष्ठा mlxsw_sp_span_trigger_entry *trigger_entry,
+		      काष्ठा mlxsw_sp_port *mlxsw_sp_port, u8 tc);
+	व्योम (*disable)(काष्ठा mlxsw_sp_span_trigger_entry *trigger_entry,
+			काष्ठा mlxsw_sp_port *mlxsw_sp_port, u8 tc);
+पूर्ण;
 
-static void mlxsw_sp_span_respin_work(struct work_struct *work);
+अटल व्योम mlxsw_sp_span_respin_work(काष्ठा work_काष्ठा *work);
 
-static u64 mlxsw_sp_span_occ_get(void *priv)
-{
-	const struct mlxsw_sp *mlxsw_sp = priv;
+अटल u64 mlxsw_sp_span_occ_get(व्योम *priv)
+अणु
+	स्थिर काष्ठा mlxsw_sp *mlxsw_sp = priv;
 
-	return atomic_read(&mlxsw_sp->span->active_entries_count);
-}
+	वापस atomic_पढ़ो(&mlxsw_sp->span->active_entries_count);
+पूर्ण
 
-int mlxsw_sp_span_init(struct mlxsw_sp *mlxsw_sp)
-{
-	struct devlink *devlink = priv_to_devlink(mlxsw_sp->core);
-	struct mlxsw_sp_span *span;
-	int i, entries_count, err;
+पूर्णांक mlxsw_sp_span_init(काष्ठा mlxsw_sp *mlxsw_sp)
+अणु
+	काष्ठा devlink *devlink = priv_to_devlink(mlxsw_sp->core);
+	काष्ठा mlxsw_sp_span *span;
+	पूर्णांक i, entries_count, err;
 
-	if (!MLXSW_CORE_RES_VALID(mlxsw_sp->core, MAX_SPAN))
-		return -EIO;
+	अगर (!MLXSW_CORE_RES_VALID(mlxsw_sp->core, MAX_SPAN))
+		वापस -EIO;
 
 	entries_count = MLXSW_CORE_RES_GET(mlxsw_sp->core, MAX_SPAN);
-	span = kzalloc(struct_size(span, entries, entries_count), GFP_KERNEL);
-	if (!span)
-		return -ENOMEM;
+	span = kzalloc(काष्ठा_size(span, entries, entries_count), GFP_KERNEL);
+	अगर (!span)
+		वापस -ENOMEM;
 	refcount_set(&span->policer_id_base_ref_count, 0);
 	span->entries_count = entries_count;
 	atomic_set(&span->active_entries_count, 0);
@@ -99,325 +100,325 @@ int mlxsw_sp_span_init(struct mlxsw_sp *mlxsw_sp)
 	span->mlxsw_sp = mlxsw_sp;
 	mlxsw_sp->span = span;
 
-	for (i = 0; i < mlxsw_sp->span->entries_count; i++)
+	क्रम (i = 0; i < mlxsw_sp->span->entries_count; i++)
 		mlxsw_sp->span->entries[i].id = i;
 
 	err = mlxsw_sp->span_ops->init(mlxsw_sp);
-	if (err)
-		goto err_init;
+	अगर (err)
+		जाओ err_init;
 
-	devlink_resource_occ_get_register(devlink, MLXSW_SP_RESOURCE_SPAN,
+	devlink_resource_occ_get_रेजिस्टर(devlink, MLXSW_SP_RESOURCE_SPAN,
 					  mlxsw_sp_span_occ_get, mlxsw_sp);
 	INIT_WORK(&span->work, mlxsw_sp_span_respin_work);
 
-	return 0;
+	वापस 0;
 
 err_init:
 	mutex_destroy(&mlxsw_sp->span->analyzed_ports_lock);
-	kfree(mlxsw_sp->span);
-	return err;
-}
+	kमुक्त(mlxsw_sp->span);
+	वापस err;
+पूर्ण
 
-void mlxsw_sp_span_fini(struct mlxsw_sp *mlxsw_sp)
-{
-	struct devlink *devlink = priv_to_devlink(mlxsw_sp->core);
+व्योम mlxsw_sp_span_fini(काष्ठा mlxsw_sp *mlxsw_sp)
+अणु
+	काष्ठा devlink *devlink = priv_to_devlink(mlxsw_sp->core);
 
 	cancel_work_sync(&mlxsw_sp->span->work);
-	devlink_resource_occ_get_unregister(devlink, MLXSW_SP_RESOURCE_SPAN);
+	devlink_resource_occ_get_unरेजिस्टर(devlink, MLXSW_SP_RESOURCE_SPAN);
 
 	WARN_ON_ONCE(!list_empty(&mlxsw_sp->span->trigger_entries_list));
 	WARN_ON_ONCE(!list_empty(&mlxsw_sp->span->analyzed_ports_list));
 	mutex_destroy(&mlxsw_sp->span->analyzed_ports_lock);
-	kfree(mlxsw_sp->span);
-}
+	kमुक्त(mlxsw_sp->span);
+पूर्ण
 
-static bool mlxsw_sp1_span_cpu_can_handle(const struct net_device *dev)
-{
-	return !dev;
-}
+अटल bool mlxsw_sp1_span_cpu_can_handle(स्थिर काष्ठा net_device *dev)
+अणु
+	वापस !dev;
+पूर्ण
 
-static int mlxsw_sp1_span_entry_cpu_parms(struct mlxsw_sp *mlxsw_sp,
-					  const struct net_device *to_dev,
-					  struct mlxsw_sp_span_parms *sparmsp)
-{
-	return -EOPNOTSUPP;
-}
+अटल पूर्णांक mlxsw_sp1_span_entry_cpu_parms(काष्ठा mlxsw_sp *mlxsw_sp,
+					  स्थिर काष्ठा net_device *to_dev,
+					  काष्ठा mlxsw_sp_span_parms *sparmsp)
+अणु
+	वापस -EOPNOTSUPP;
+पूर्ण
 
-static int
-mlxsw_sp1_span_entry_cpu_configure(struct mlxsw_sp_span_entry *span_entry,
-				   struct mlxsw_sp_span_parms sparms)
-{
-	return -EOPNOTSUPP;
-}
+अटल पूर्णांक
+mlxsw_sp1_span_entry_cpu_configure(काष्ठा mlxsw_sp_span_entry *span_entry,
+				   काष्ठा mlxsw_sp_span_parms sparms)
+अणु
+	वापस -EOPNOTSUPP;
+पूर्ण
 
-static void
-mlxsw_sp1_span_entry_cpu_deconfigure(struct mlxsw_sp_span_entry *span_entry)
-{
-}
+अटल व्योम
+mlxsw_sp1_span_entry_cpu_deconfigure(काष्ठा mlxsw_sp_span_entry *span_entry)
+अणु
+पूर्ण
 
-static const
-struct mlxsw_sp_span_entry_ops mlxsw_sp1_span_entry_ops_cpu = {
-	.is_static = true,
+अटल स्थिर
+काष्ठा mlxsw_sp_span_entry_ops mlxsw_sp1_span_entry_ops_cpu = अणु
+	.is_अटल = true,
 	.can_handle = mlxsw_sp1_span_cpu_can_handle,
 	.parms_set = mlxsw_sp1_span_entry_cpu_parms,
 	.configure = mlxsw_sp1_span_entry_cpu_configure,
 	.deconfigure = mlxsw_sp1_span_entry_cpu_deconfigure,
-};
+पूर्ण;
 
-static int
-mlxsw_sp_span_entry_phys_parms(struct mlxsw_sp *mlxsw_sp,
-			       const struct net_device *to_dev,
-			       struct mlxsw_sp_span_parms *sparmsp)
-{
+अटल पूर्णांक
+mlxsw_sp_span_entry_phys_parms(काष्ठा mlxsw_sp *mlxsw_sp,
+			       स्थिर काष्ठा net_device *to_dev,
+			       काष्ठा mlxsw_sp_span_parms *sparmsp)
+अणु
 	sparmsp->dest_port = netdev_priv(to_dev);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-mlxsw_sp_span_entry_phys_configure(struct mlxsw_sp_span_entry *span_entry,
-				   struct mlxsw_sp_span_parms sparms)
-{
-	struct mlxsw_sp_port *dest_port = sparms.dest_port;
-	struct mlxsw_sp *mlxsw_sp = dest_port->mlxsw_sp;
+अटल पूर्णांक
+mlxsw_sp_span_entry_phys_configure(काष्ठा mlxsw_sp_span_entry *span_entry,
+				   काष्ठा mlxsw_sp_span_parms sparms)
+अणु
+	काष्ठा mlxsw_sp_port *dest_port = sparms.dest_port;
+	काष्ठा mlxsw_sp *mlxsw_sp = dest_port->mlxsw_sp;
 	u8 local_port = dest_port->local_port;
-	char mpat_pl[MLXSW_REG_MPAT_LEN];
-	int pa_id = span_entry->id;
+	अक्षर mpat_pl[MLXSW_REG_MPAT_LEN];
+	पूर्णांक pa_id = span_entry->id;
 
-	/* Create a new port analayzer entry for local_port. */
+	/* Create a new port analayzer entry क्रम local_port. */
 	mlxsw_reg_mpat_pack(mpat_pl, pa_id, local_port, true,
 			    MLXSW_REG_MPAT_SPAN_TYPE_LOCAL_ETH);
 	mlxsw_reg_mpat_session_id_set(mpat_pl, sparms.session_id);
 	mlxsw_reg_mpat_pide_set(mpat_pl, sparms.policer_enable);
 	mlxsw_reg_mpat_pid_set(mpat_pl, sparms.policer_id);
 
-	return mlxsw_reg_write(mlxsw_sp->core, MLXSW_REG(mpat), mpat_pl);
-}
+	वापस mlxsw_reg_ग_लिखो(mlxsw_sp->core, MLXSW_REG(mpat), mpat_pl);
+पूर्ण
 
-static void
-mlxsw_sp_span_entry_deconfigure_common(struct mlxsw_sp_span_entry *span_entry,
-				       enum mlxsw_reg_mpat_span_type span_type)
-{
-	struct mlxsw_sp_port *dest_port = span_entry->parms.dest_port;
-	struct mlxsw_sp *mlxsw_sp = dest_port->mlxsw_sp;
+अटल व्योम
+mlxsw_sp_span_entry_deconfigure_common(काष्ठा mlxsw_sp_span_entry *span_entry,
+				       क्रमागत mlxsw_reg_mpat_span_type span_type)
+अणु
+	काष्ठा mlxsw_sp_port *dest_port = span_entry->parms.dest_port;
+	काष्ठा mlxsw_sp *mlxsw_sp = dest_port->mlxsw_sp;
 	u8 local_port = dest_port->local_port;
-	char mpat_pl[MLXSW_REG_MPAT_LEN];
-	int pa_id = span_entry->id;
+	अक्षर mpat_pl[MLXSW_REG_MPAT_LEN];
+	पूर्णांक pa_id = span_entry->id;
 
 	mlxsw_reg_mpat_pack(mpat_pl, pa_id, local_port, false, span_type);
 	mlxsw_reg_mpat_session_id_set(mpat_pl, span_entry->parms.session_id);
-	mlxsw_reg_write(mlxsw_sp->core, MLXSW_REG(mpat), mpat_pl);
-}
+	mlxsw_reg_ग_लिखो(mlxsw_sp->core, MLXSW_REG(mpat), mpat_pl);
+पूर्ण
 
-static void
-mlxsw_sp_span_entry_phys_deconfigure(struct mlxsw_sp_span_entry *span_entry)
-{
+अटल व्योम
+mlxsw_sp_span_entry_phys_deconfigure(काष्ठा mlxsw_sp_span_entry *span_entry)
+अणु
 	mlxsw_sp_span_entry_deconfigure_common(span_entry,
 					    MLXSW_REG_MPAT_SPAN_TYPE_LOCAL_ETH);
-}
+पूर्ण
 
-static const
-struct mlxsw_sp_span_entry_ops mlxsw_sp_span_entry_ops_phys = {
-	.is_static = true,
+अटल स्थिर
+काष्ठा mlxsw_sp_span_entry_ops mlxsw_sp_span_entry_ops_phys = अणु
+	.is_अटल = true,
 	.can_handle = mlxsw_sp_port_dev_check,
 	.parms_set = mlxsw_sp_span_entry_phys_parms,
 	.configure = mlxsw_sp_span_entry_phys_configure,
 	.deconfigure = mlxsw_sp_span_entry_phys_deconfigure,
-};
+पूर्ण;
 
-static int mlxsw_sp_span_dmac(struct neigh_table *tbl,
-			      const void *pkey,
-			      struct net_device *dev,
-			      unsigned char dmac[ETH_ALEN])
-{
-	struct neighbour *neigh = neigh_lookup(tbl, pkey, dev);
-	int err = 0;
+अटल पूर्णांक mlxsw_sp_span_dmac(काष्ठा neigh_table *tbl,
+			      स्थिर व्योम *pkey,
+			      काष्ठा net_device *dev,
+			      अचिन्हित अक्षर dmac[ETH_ALEN])
+अणु
+	काष्ठा neighbour *neigh = neigh_lookup(tbl, pkey, dev);
+	पूर्णांक err = 0;
 
-	if (!neigh) {
+	अगर (!neigh) अणु
 		neigh = neigh_create(tbl, pkey, dev);
-		if (IS_ERR(neigh))
-			return PTR_ERR(neigh);
-	}
+		अगर (IS_ERR(neigh))
+			वापस PTR_ERR(neigh);
+	पूर्ण
 
-	neigh_event_send(neigh, NULL);
+	neigh_event_send(neigh, शून्य);
 
-	read_lock_bh(&neigh->lock);
-	if ((neigh->nud_state & NUD_VALID) && !neigh->dead)
-		memcpy(dmac, neigh->ha, ETH_ALEN);
-	else
+	पढ़ो_lock_bh(&neigh->lock);
+	अगर ((neigh->nud_state & NUD_VALID) && !neigh->dead)
+		स_नकल(dmac, neigh->ha, ETH_ALEN);
+	अन्यथा
 		err = -ENOENT;
-	read_unlock_bh(&neigh->lock);
+	पढ़ो_unlock_bh(&neigh->lock);
 
 	neigh_release(neigh);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int
-mlxsw_sp_span_entry_unoffloadable(struct mlxsw_sp_span_parms *sparmsp)
-{
-	sparmsp->dest_port = NULL;
-	return 0;
-}
+अटल पूर्णांक
+mlxsw_sp_span_entry_unoffloadable(काष्ठा mlxsw_sp_span_parms *sparmsp)
+अणु
+	sparmsp->dest_port = शून्य;
+	वापस 0;
+पूर्ण
 
-static struct net_device *
-mlxsw_sp_span_entry_bridge_8021q(const struct net_device *br_dev,
-				 unsigned char *dmac,
+अटल काष्ठा net_device *
+mlxsw_sp_span_entry_bridge_8021q(स्थिर काष्ठा net_device *br_dev,
+				 अचिन्हित अक्षर *dmac,
 				 u16 *p_vid)
-{
-	struct bridge_vlan_info vinfo;
-	struct net_device *edev;
+अणु
+	काष्ठा bridge_vlan_info vinfo;
+	काष्ठा net_device *edev;
 	u16 vid = *p_vid;
 
-	if (!vid && WARN_ON(br_vlan_get_pvid(br_dev, &vid)))
-		return NULL;
-	if (!vid ||
+	अगर (!vid && WARN_ON(br_vlan_get_pvid(br_dev, &vid)))
+		वापस शून्य;
+	अगर (!vid ||
 	    br_vlan_get_info(br_dev, vid, &vinfo) ||
 	    !(vinfo.flags & BRIDGE_VLAN_INFO_BRENTRY))
-		return NULL;
+		वापस शून्य;
 
 	edev = br_fdb_find_port(br_dev, dmac, vid);
-	if (!edev)
-		return NULL;
+	अगर (!edev)
+		वापस शून्य;
 
-	if (br_vlan_get_info(edev, vid, &vinfo))
-		return NULL;
-	if (vinfo.flags & BRIDGE_VLAN_INFO_UNTAGGED)
+	अगर (br_vlan_get_info(edev, vid, &vinfo))
+		वापस शून्य;
+	अगर (vinfo.flags & BRIDGE_VLAN_INFO_UNTAGGED)
 		*p_vid = 0;
-	else
+	अन्यथा
 		*p_vid = vid;
-	return edev;
-}
+	वापस edev;
+पूर्ण
 
-static struct net_device *
-mlxsw_sp_span_entry_bridge_8021d(const struct net_device *br_dev,
-				 unsigned char *dmac)
-{
-	return br_fdb_find_port(br_dev, dmac, 0);
-}
+अटल काष्ठा net_device *
+mlxsw_sp_span_entry_bridge_8021d(स्थिर काष्ठा net_device *br_dev,
+				 अचिन्हित अक्षर *dmac)
+अणु
+	वापस br_fdb_find_port(br_dev, dmac, 0);
+पूर्ण
 
-static struct net_device *
-mlxsw_sp_span_entry_bridge(const struct net_device *br_dev,
-			   unsigned char dmac[ETH_ALEN],
+अटल काष्ठा net_device *
+mlxsw_sp_span_entry_bridge(स्थिर काष्ठा net_device *br_dev,
+			   अचिन्हित अक्षर dmac[ETH_ALEN],
 			   u16 *p_vid)
-{
-	struct mlxsw_sp_bridge_port *bridge_port;
-	enum mlxsw_reg_spms_state spms_state;
-	struct net_device *dev = NULL;
-	struct mlxsw_sp_port *port;
+अणु
+	काष्ठा mlxsw_sp_bridge_port *bridge_port;
+	क्रमागत mlxsw_reg_spms_state spms_state;
+	काष्ठा net_device *dev = शून्य;
+	काष्ठा mlxsw_sp_port *port;
 	u8 stp_state;
 
-	if (br_vlan_enabled(br_dev))
+	अगर (br_vlan_enabled(br_dev))
 		dev = mlxsw_sp_span_entry_bridge_8021q(br_dev, dmac, p_vid);
-	else if (!*p_vid)
+	अन्यथा अगर (!*p_vid)
 		dev = mlxsw_sp_span_entry_bridge_8021d(br_dev, dmac);
-	if (!dev)
-		return NULL;
+	अगर (!dev)
+		वापस शून्य;
 
 	port = mlxsw_sp_port_dev_lower_find(dev);
-	if (!port)
-		return NULL;
+	अगर (!port)
+		वापस शून्य;
 
 	bridge_port = mlxsw_sp_bridge_port_find(port->mlxsw_sp->bridge, dev);
-	if (!bridge_port)
-		return NULL;
+	अगर (!bridge_port)
+		वापस शून्य;
 
 	stp_state = mlxsw_sp_bridge_port_stp_state(bridge_port);
 	spms_state = mlxsw_sp_stp_spms_state(stp_state);
-	if (spms_state != MLXSW_REG_SPMS_STATE_FORWARDING)
-		return NULL;
+	अगर (spms_state != MLXSW_REG_SPMS_STATE_FORWARDING)
+		वापस शून्य;
 
-	return dev;
-}
+	वापस dev;
+पूर्ण
 
-static struct net_device *
-mlxsw_sp_span_entry_vlan(const struct net_device *vlan_dev,
+अटल काष्ठा net_device *
+mlxsw_sp_span_entry_vlan(स्थिर काष्ठा net_device *vlan_dev,
 			 u16 *p_vid)
-{
+अणु
 	*p_vid = vlan_dev_vlan_id(vlan_dev);
-	return vlan_dev_real_dev(vlan_dev);
-}
+	वापस vlan_dev_real_dev(vlan_dev);
+पूर्ण
 
-static struct net_device *
-mlxsw_sp_span_entry_lag(struct net_device *lag_dev)
-{
-	struct net_device *dev;
-	struct list_head *iter;
+अटल काष्ठा net_device *
+mlxsw_sp_span_entry_lag(काष्ठा net_device *lag_dev)
+अणु
+	काष्ठा net_device *dev;
+	काष्ठा list_head *iter;
 
-	netdev_for_each_lower_dev(lag_dev, dev, iter)
-		if (netif_carrier_ok(dev) &&
+	netdev_क्रम_each_lower_dev(lag_dev, dev, iter)
+		अगर (netअगर_carrier_ok(dev) &&
 		    net_lag_port_dev_txable(dev) &&
 		    mlxsw_sp_port_dev_check(dev))
-			return dev;
+			वापस dev;
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static __maybe_unused int
-mlxsw_sp_span_entry_tunnel_parms_common(struct net_device *edev,
-					union mlxsw_sp_l3addr saddr,
-					union mlxsw_sp_l3addr daddr,
-					union mlxsw_sp_l3addr gw,
+अटल __maybe_unused पूर्णांक
+mlxsw_sp_span_entry_tunnel_parms_common(काष्ठा net_device *edev,
+					जोड़ mlxsw_sp_l3addr saddr,
+					जोड़ mlxsw_sp_l3addr daddr,
+					जोड़ mlxsw_sp_l3addr gw,
 					__u8 ttl,
-					struct neigh_table *tbl,
-					struct mlxsw_sp_span_parms *sparmsp)
-{
-	unsigned char dmac[ETH_ALEN];
+					काष्ठा neigh_table *tbl,
+					काष्ठा mlxsw_sp_span_parms *sparmsp)
+अणु
+	अचिन्हित अक्षर dmac[ETH_ALEN];
 	u16 vid = 0;
 
-	if (mlxsw_sp_l3addr_is_zero(gw))
+	अगर (mlxsw_sp_l3addr_is_zero(gw))
 		gw = daddr;
 
-	if (!edev || mlxsw_sp_span_dmac(tbl, &gw, edev, dmac))
-		goto unoffloadable;
+	अगर (!edev || mlxsw_sp_span_dmac(tbl, &gw, edev, dmac))
+		जाओ unoffloadable;
 
-	if (is_vlan_dev(edev))
+	अगर (is_vlan_dev(edev))
 		edev = mlxsw_sp_span_entry_vlan(edev, &vid);
 
-	if (netif_is_bridge_master(edev)) {
+	अगर (netअगर_is_bridge_master(edev)) अणु
 		edev = mlxsw_sp_span_entry_bridge(edev, dmac, &vid);
-		if (!edev)
-			goto unoffloadable;
-	}
+		अगर (!edev)
+			जाओ unoffloadable;
+	पूर्ण
 
-	if (is_vlan_dev(edev)) {
-		if (vid || !(edev->flags & IFF_UP))
-			goto unoffloadable;
+	अगर (is_vlan_dev(edev)) अणु
+		अगर (vid || !(edev->flags & IFF_UP))
+			जाओ unoffloadable;
 		edev = mlxsw_sp_span_entry_vlan(edev, &vid);
-	}
+	पूर्ण
 
-	if (netif_is_lag_master(edev)) {
-		if (!(edev->flags & IFF_UP))
-			goto unoffloadable;
+	अगर (netअगर_is_lag_master(edev)) अणु
+		अगर (!(edev->flags & IFF_UP))
+			जाओ unoffloadable;
 		edev = mlxsw_sp_span_entry_lag(edev);
-		if (!edev)
-			goto unoffloadable;
-	}
+		अगर (!edev)
+			जाओ unoffloadable;
+	पूर्ण
 
-	if (!mlxsw_sp_port_dev_check(edev))
-		goto unoffloadable;
+	अगर (!mlxsw_sp_port_dev_check(edev))
+		जाओ unoffloadable;
 
 	sparmsp->dest_port = netdev_priv(edev);
 	sparmsp->ttl = ttl;
-	memcpy(sparmsp->dmac, dmac, ETH_ALEN);
-	memcpy(sparmsp->smac, edev->dev_addr, ETH_ALEN);
+	स_नकल(sparmsp->dmac, dmac, ETH_ALEN);
+	स_नकल(sparmsp->smac, edev->dev_addr, ETH_ALEN);
 	sparmsp->saddr = saddr;
 	sparmsp->daddr = daddr;
 	sparmsp->vid = vid;
-	return 0;
+	वापस 0;
 
 unoffloadable:
-	return mlxsw_sp_span_entry_unoffloadable(sparmsp);
-}
+	वापस mlxsw_sp_span_entry_unoffloadable(sparmsp);
+पूर्ण
 
-#if IS_ENABLED(CONFIG_NET_IPGRE)
-static struct net_device *
-mlxsw_sp_span_gretap4_route(const struct net_device *to_dev,
+#अगर IS_ENABLED(CONFIG_NET_IPGRE)
+अटल काष्ठा net_device *
+mlxsw_sp_span_gretap4_route(स्थिर काष्ठा net_device *to_dev,
 			    __be32 *saddrp, __be32 *daddrp)
-{
-	struct ip_tunnel *tun = netdev_priv(to_dev);
-	struct net_device *dev = NULL;
-	struct ip_tunnel_parm parms;
-	struct rtable *rt = NULL;
-	struct flowi4 fl4;
+अणु
+	काष्ठा ip_tunnel *tun = netdev_priv(to_dev);
+	काष्ठा net_device *dev = शून्य;
+	काष्ठा ip_tunnel_parm parms;
+	काष्ठा rtable *rt = शून्य;
+	काष्ठा flowi4 fl4;
 
 	/* We assume "dev" stays valid after rt is put. */
 	ASSERT_RTNL();
@@ -427,64 +428,64 @@ mlxsw_sp_span_gretap4_route(const struct net_device *to_dev,
 			    0, 0, parms.link, tun->fwmark, 0);
 
 	rt = ip_route_output_key(tun->net, &fl4);
-	if (IS_ERR(rt))
-		return NULL;
+	अगर (IS_ERR(rt))
+		वापस शून्य;
 
-	if (rt->rt_type != RTN_UNICAST)
-		goto out;
+	अगर (rt->rt_type != RTN_UNICAST)
+		जाओ out;
 
 	dev = rt->dst.dev;
 	*saddrp = fl4.saddr;
-	if (rt->rt_gw_family == AF_INET)
+	अगर (rt->rt_gw_family == AF_INET)
 		*daddrp = rt->rt_gw4;
-	/* can not offload if route has an IPv6 gateway */
-	else if (rt->rt_gw_family == AF_INET6)
-		dev = NULL;
+	/* can not offload अगर route has an IPv6 gateway */
+	अन्यथा अगर (rt->rt_gw_family == AF_INET6)
+		dev = शून्य;
 
 out:
 	ip_rt_put(rt);
-	return dev;
-}
+	वापस dev;
+पूर्ण
 
-static int
-mlxsw_sp_span_entry_gretap4_parms(struct mlxsw_sp *mlxsw_sp,
-				  const struct net_device *to_dev,
-				  struct mlxsw_sp_span_parms *sparmsp)
-{
-	struct ip_tunnel_parm tparm = mlxsw_sp_ipip_netdev_parms4(to_dev);
-	union mlxsw_sp_l3addr saddr = { .addr4 = tparm.iph.saddr };
-	union mlxsw_sp_l3addr daddr = { .addr4 = tparm.iph.daddr };
+अटल पूर्णांक
+mlxsw_sp_span_entry_gretap4_parms(काष्ठा mlxsw_sp *mlxsw_sp,
+				  स्थिर काष्ठा net_device *to_dev,
+				  काष्ठा mlxsw_sp_span_parms *sparmsp)
+अणु
+	काष्ठा ip_tunnel_parm tparm = mlxsw_sp_ipip_netdev_parms4(to_dev);
+	जोड़ mlxsw_sp_l3addr saddr = अणु .addr4 = tparm.iph.saddr पूर्ण;
+	जोड़ mlxsw_sp_l3addr daddr = अणु .addr4 = tparm.iph.daddr पूर्ण;
 	bool inherit_tos = tparm.iph.tos & 0x1;
 	bool inherit_ttl = !tparm.iph.ttl;
-	union mlxsw_sp_l3addr gw = daddr;
-	struct net_device *l3edev;
+	जोड़ mlxsw_sp_l3addr gw = daddr;
+	काष्ठा net_device *l3edev;
 
-	if (!(to_dev->flags & IFF_UP) ||
+	अगर (!(to_dev->flags & IFF_UP) ||
 	    /* Reject tunnels with GRE keys, checksums, etc. */
 	    tparm.i_flags || tparm.o_flags ||
 	    /* Require a fixed TTL and a TOS copied from the mirrored packet. */
 	    inherit_ttl || !inherit_tos ||
 	    /* A destination address may not be "any". */
 	    mlxsw_sp_l3addr_is_zero(daddr))
-		return mlxsw_sp_span_entry_unoffloadable(sparmsp);
+		वापस mlxsw_sp_span_entry_unoffloadable(sparmsp);
 
 	l3edev = mlxsw_sp_span_gretap4_route(to_dev, &saddr.addr4, &gw.addr4);
-	return mlxsw_sp_span_entry_tunnel_parms_common(l3edev, saddr, daddr, gw,
+	वापस mlxsw_sp_span_entry_tunnel_parms_common(l3edev, saddr, daddr, gw,
 						       tparm.iph.ttl,
 						       &arp_tbl, sparmsp);
-}
+पूर्ण
 
-static int
-mlxsw_sp_span_entry_gretap4_configure(struct mlxsw_sp_span_entry *span_entry,
-				      struct mlxsw_sp_span_parms sparms)
-{
-	struct mlxsw_sp_port *dest_port = sparms.dest_port;
-	struct mlxsw_sp *mlxsw_sp = dest_port->mlxsw_sp;
+अटल पूर्णांक
+mlxsw_sp_span_entry_gretap4_configure(काष्ठा mlxsw_sp_span_entry *span_entry,
+				      काष्ठा mlxsw_sp_span_parms sparms)
+अणु
+	काष्ठा mlxsw_sp_port *dest_port = sparms.dest_port;
+	काष्ठा mlxsw_sp *mlxsw_sp = dest_port->mlxsw_sp;
 	u8 local_port = dest_port->local_port;
-	char mpat_pl[MLXSW_REG_MPAT_LEN];
-	int pa_id = span_entry->id;
+	अक्षर mpat_pl[MLXSW_REG_MPAT_LEN];
+	पूर्णांक pa_id = span_entry->id;
 
-	/* Create a new port analayzer entry for local_port. */
+	/* Create a new port analayzer entry क्रम local_port. */
 	mlxsw_reg_mpat_pack(mpat_pl, pa_id, local_port, true,
 			    MLXSW_REG_MPAT_SPAN_TYPE_REMOTE_ETH_L3);
 	mlxsw_reg_mpat_pide_set(mpat_pl, sparms.policer_enable);
@@ -498,48 +499,48 @@ mlxsw_sp_span_entry_gretap4_configure(struct mlxsw_sp_span_entry *span_entry,
 					      be32_to_cpu(sparms.saddr.addr4),
 					      be32_to_cpu(sparms.daddr.addr4));
 
-	return mlxsw_reg_write(mlxsw_sp->core, MLXSW_REG(mpat), mpat_pl);
-}
+	वापस mlxsw_reg_ग_लिखो(mlxsw_sp->core, MLXSW_REG(mpat), mpat_pl);
+पूर्ण
 
-static void
-mlxsw_sp_span_entry_gretap4_deconfigure(struct mlxsw_sp_span_entry *span_entry)
-{
+अटल व्योम
+mlxsw_sp_span_entry_gretap4_deconfigure(काष्ठा mlxsw_sp_span_entry *span_entry)
+अणु
 	mlxsw_sp_span_entry_deconfigure_common(span_entry,
 					MLXSW_REG_MPAT_SPAN_TYPE_REMOTE_ETH_L3);
-}
+पूर्ण
 
-static const struct mlxsw_sp_span_entry_ops mlxsw_sp_span_entry_ops_gretap4 = {
-	.can_handle = netif_is_gretap,
+अटल स्थिर काष्ठा mlxsw_sp_span_entry_ops mlxsw_sp_span_entry_ops_gretap4 = अणु
+	.can_handle = netअगर_is_gretap,
 	.parms_set = mlxsw_sp_span_entry_gretap4_parms,
 	.configure = mlxsw_sp_span_entry_gretap4_configure,
 	.deconfigure = mlxsw_sp_span_entry_gretap4_deconfigure,
-};
-#endif
+पूर्ण;
+#पूर्ण_अगर
 
-#if IS_ENABLED(CONFIG_IPV6_GRE)
-static struct net_device *
-mlxsw_sp_span_gretap6_route(const struct net_device *to_dev,
-			    struct in6_addr *saddrp,
-			    struct in6_addr *daddrp)
-{
-	struct ip6_tnl *t = netdev_priv(to_dev);
-	struct flowi6 fl6 = t->fl.u.ip6;
-	struct net_device *dev = NULL;
-	struct dst_entry *dst;
-	struct rt6_info *rt6;
+#अगर IS_ENABLED(CONFIG_IPV6_GRE)
+अटल काष्ठा net_device *
+mlxsw_sp_span_gretap6_route(स्थिर काष्ठा net_device *to_dev,
+			    काष्ठा in6_addr *saddrp,
+			    काष्ठा in6_addr *daddrp)
+अणु
+	काष्ठा ip6_tnl *t = netdev_priv(to_dev);
+	काष्ठा flowi6 fl6 = t->fl.u.ip6;
+	काष्ठा net_device *dev = शून्य;
+	काष्ठा dst_entry *dst;
+	काष्ठा rt6_info *rt6;
 
 	/* We assume "dev" stays valid after dst is released. */
 	ASSERT_RTNL();
 
 	fl6.flowi6_mark = t->parms.fwmark;
-	if (!ip6_tnl_xmit_ctl(t, &fl6.saddr, &fl6.daddr))
-		return NULL;
+	अगर (!ip6_tnl_xmit_ctl(t, &fl6.saddr, &fl6.daddr))
+		वापस शून्य;
 
-	dst = ip6_route_output(t->net, NULL, &fl6);
-	if (!dst || dst->error)
-		goto out;
+	dst = ip6_route_output(t->net, शून्य, &fl6);
+	अगर (!dst || dst->error)
+		जाओ out;
 
-	rt6 = container_of(dst, struct rt6_info, dst);
+	rt6 = container_of(dst, काष्ठा rt6_info, dst);
 
 	dev = dst->dev;
 	*saddrp = fl6.saddr;
@@ -547,48 +548,48 @@ mlxsw_sp_span_gretap6_route(const struct net_device *to_dev,
 
 out:
 	dst_release(dst);
-	return dev;
-}
+	वापस dev;
+पूर्ण
 
-static int
-mlxsw_sp_span_entry_gretap6_parms(struct mlxsw_sp *mlxsw_sp,
-				  const struct net_device *to_dev,
-				  struct mlxsw_sp_span_parms *sparmsp)
-{
-	struct __ip6_tnl_parm tparm = mlxsw_sp_ipip_netdev_parms6(to_dev);
+अटल पूर्णांक
+mlxsw_sp_span_entry_gretap6_parms(काष्ठा mlxsw_sp *mlxsw_sp,
+				  स्थिर काष्ठा net_device *to_dev,
+				  काष्ठा mlxsw_sp_span_parms *sparmsp)
+अणु
+	काष्ठा __ip6_tnl_parm tparm = mlxsw_sp_ipip_netdev_parms6(to_dev);
 	bool inherit_tos = tparm.flags & IP6_TNL_F_USE_ORIG_TCLASS;
-	union mlxsw_sp_l3addr saddr = { .addr6 = tparm.laddr };
-	union mlxsw_sp_l3addr daddr = { .addr6 = tparm.raddr };
+	जोड़ mlxsw_sp_l3addr saddr = अणु .addr6 = tparm.laddr पूर्ण;
+	जोड़ mlxsw_sp_l3addr daddr = अणु .addr6 = tparm.raddr पूर्ण;
 	bool inherit_ttl = !tparm.hop_limit;
-	union mlxsw_sp_l3addr gw = daddr;
-	struct net_device *l3edev;
+	जोड़ mlxsw_sp_l3addr gw = daddr;
+	काष्ठा net_device *l3edev;
 
-	if (!(to_dev->flags & IFF_UP) ||
+	अगर (!(to_dev->flags & IFF_UP) ||
 	    /* Reject tunnels with GRE keys, checksums, etc. */
 	    tparm.i_flags || tparm.o_flags ||
 	    /* Require a fixed TTL and a TOS copied from the mirrored packet. */
 	    inherit_ttl || !inherit_tos ||
 	    /* A destination address may not be "any". */
 	    mlxsw_sp_l3addr_is_zero(daddr))
-		return mlxsw_sp_span_entry_unoffloadable(sparmsp);
+		वापस mlxsw_sp_span_entry_unoffloadable(sparmsp);
 
 	l3edev = mlxsw_sp_span_gretap6_route(to_dev, &saddr.addr6, &gw.addr6);
-	return mlxsw_sp_span_entry_tunnel_parms_common(l3edev, saddr, daddr, gw,
+	वापस mlxsw_sp_span_entry_tunnel_parms_common(l3edev, saddr, daddr, gw,
 						       tparm.hop_limit,
 						       &nd_tbl, sparmsp);
-}
+पूर्ण
 
-static int
-mlxsw_sp_span_entry_gretap6_configure(struct mlxsw_sp_span_entry *span_entry,
-				      struct mlxsw_sp_span_parms sparms)
-{
-	struct mlxsw_sp_port *dest_port = sparms.dest_port;
-	struct mlxsw_sp *mlxsw_sp = dest_port->mlxsw_sp;
+अटल पूर्णांक
+mlxsw_sp_span_entry_gretap6_configure(काष्ठा mlxsw_sp_span_entry *span_entry,
+				      काष्ठा mlxsw_sp_span_parms sparms)
+अणु
+	काष्ठा mlxsw_sp_port *dest_port = sparms.dest_port;
+	काष्ठा mlxsw_sp *mlxsw_sp = dest_port->mlxsw_sp;
 	u8 local_port = dest_port->local_port;
-	char mpat_pl[MLXSW_REG_MPAT_LEN];
-	int pa_id = span_entry->id;
+	अक्षर mpat_pl[MLXSW_REG_MPAT_LEN];
+	पूर्णांक pa_id = span_entry->id;
 
-	/* Create a new port analayzer entry for local_port. */
+	/* Create a new port analayzer entry क्रम local_port. */
 	mlxsw_reg_mpat_pack(mpat_pl, pa_id, local_port, true,
 			    MLXSW_REG_MPAT_SPAN_TYPE_REMOTE_ETH_L3);
 	mlxsw_reg_mpat_pide_set(mpat_pl, sparms.policer_enable);
@@ -601,58 +602,58 @@ mlxsw_sp_span_entry_gretap6_configure(struct mlxsw_sp_span_entry *span_entry,
 					      sparms.saddr.addr6,
 					      sparms.daddr.addr6);
 
-	return mlxsw_reg_write(mlxsw_sp->core, MLXSW_REG(mpat), mpat_pl);
-}
+	वापस mlxsw_reg_ग_लिखो(mlxsw_sp->core, MLXSW_REG(mpat), mpat_pl);
+पूर्ण
 
-static void
-mlxsw_sp_span_entry_gretap6_deconfigure(struct mlxsw_sp_span_entry *span_entry)
-{
+अटल व्योम
+mlxsw_sp_span_entry_gretap6_deconfigure(काष्ठा mlxsw_sp_span_entry *span_entry)
+अणु
 	mlxsw_sp_span_entry_deconfigure_common(span_entry,
 					MLXSW_REG_MPAT_SPAN_TYPE_REMOTE_ETH_L3);
-}
+पूर्ण
 
-static const
-struct mlxsw_sp_span_entry_ops mlxsw_sp_span_entry_ops_gretap6 = {
-	.can_handle = netif_is_ip6gretap,
+अटल स्थिर
+काष्ठा mlxsw_sp_span_entry_ops mlxsw_sp_span_entry_ops_gretap6 = अणु
+	.can_handle = netअगर_is_ip6gretap,
 	.parms_set = mlxsw_sp_span_entry_gretap6_parms,
 	.configure = mlxsw_sp_span_entry_gretap6_configure,
 	.deconfigure = mlxsw_sp_span_entry_gretap6_deconfigure,
-};
-#endif
+पूर्ण;
+#पूर्ण_अगर
 
-static bool
-mlxsw_sp_span_vlan_can_handle(const struct net_device *dev)
-{
-	return is_vlan_dev(dev) &&
+अटल bool
+mlxsw_sp_span_vlan_can_handle(स्थिर काष्ठा net_device *dev)
+अणु
+	वापस is_vlan_dev(dev) &&
 	       mlxsw_sp_port_dev_check(vlan_dev_real_dev(dev));
-}
+पूर्ण
 
-static int
-mlxsw_sp_span_entry_vlan_parms(struct mlxsw_sp *mlxsw_sp,
-			       const struct net_device *to_dev,
-			       struct mlxsw_sp_span_parms *sparmsp)
-{
-	struct net_device *real_dev;
+अटल पूर्णांक
+mlxsw_sp_span_entry_vlan_parms(काष्ठा mlxsw_sp *mlxsw_sp,
+			       स्थिर काष्ठा net_device *to_dev,
+			       काष्ठा mlxsw_sp_span_parms *sparmsp)
+अणु
+	काष्ठा net_device *real_dev;
 	u16 vid;
 
-	if (!(to_dev->flags & IFF_UP))
-		return mlxsw_sp_span_entry_unoffloadable(sparmsp);
+	अगर (!(to_dev->flags & IFF_UP))
+		वापस mlxsw_sp_span_entry_unoffloadable(sparmsp);
 
 	real_dev = mlxsw_sp_span_entry_vlan(to_dev, &vid);
 	sparmsp->dest_port = netdev_priv(real_dev);
 	sparmsp->vid = vid;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-mlxsw_sp_span_entry_vlan_configure(struct mlxsw_sp_span_entry *span_entry,
-				   struct mlxsw_sp_span_parms sparms)
-{
-	struct mlxsw_sp_port *dest_port = sparms.dest_port;
-	struct mlxsw_sp *mlxsw_sp = dest_port->mlxsw_sp;
+अटल पूर्णांक
+mlxsw_sp_span_entry_vlan_configure(काष्ठा mlxsw_sp_span_entry *span_entry,
+				   काष्ठा mlxsw_sp_span_parms sparms)
+अणु
+	काष्ठा mlxsw_sp_port *dest_port = sparms.dest_port;
+	काष्ठा mlxsw_sp *mlxsw_sp = dest_port->mlxsw_sp;
 	u8 local_port = dest_port->local_port;
-	char mpat_pl[MLXSW_REG_MPAT_LEN];
-	int pa_id = span_entry->id;
+	अक्षर mpat_pl[MLXSW_REG_MPAT_LEN];
+	पूर्णांक pa_id = span_entry->id;
 
 	mlxsw_reg_mpat_pack(mpat_pl, pa_id, local_port, true,
 			    MLXSW_REG_MPAT_SPAN_TYPE_REMOTE_ETH);
@@ -660,219 +661,219 @@ mlxsw_sp_span_entry_vlan_configure(struct mlxsw_sp_span_entry *span_entry,
 	mlxsw_reg_mpat_pid_set(mpat_pl, sparms.policer_id);
 	mlxsw_reg_mpat_eth_rspan_pack(mpat_pl, sparms.vid);
 
-	return mlxsw_reg_write(mlxsw_sp->core, MLXSW_REG(mpat), mpat_pl);
-}
+	वापस mlxsw_reg_ग_लिखो(mlxsw_sp->core, MLXSW_REG(mpat), mpat_pl);
+पूर्ण
 
-static void
-mlxsw_sp_span_entry_vlan_deconfigure(struct mlxsw_sp_span_entry *span_entry)
-{
+अटल व्योम
+mlxsw_sp_span_entry_vlan_deconfigure(काष्ठा mlxsw_sp_span_entry *span_entry)
+अणु
 	mlxsw_sp_span_entry_deconfigure_common(span_entry,
 					MLXSW_REG_MPAT_SPAN_TYPE_REMOTE_ETH);
-}
+पूर्ण
 
-static const
-struct mlxsw_sp_span_entry_ops mlxsw_sp_span_entry_ops_vlan = {
+अटल स्थिर
+काष्ठा mlxsw_sp_span_entry_ops mlxsw_sp_span_entry_ops_vlan = अणु
 	.can_handle = mlxsw_sp_span_vlan_can_handle,
 	.parms_set = mlxsw_sp_span_entry_vlan_parms,
 	.configure = mlxsw_sp_span_entry_vlan_configure,
 	.deconfigure = mlxsw_sp_span_entry_vlan_deconfigure,
-};
+पूर्ण;
 
-static const
-struct mlxsw_sp_span_entry_ops *mlxsw_sp1_span_entry_ops_arr[] = {
+अटल स्थिर
+काष्ठा mlxsw_sp_span_entry_ops *mlxsw_sp1_span_entry_ops_arr[] = अणु
 	&mlxsw_sp1_span_entry_ops_cpu,
 	&mlxsw_sp_span_entry_ops_phys,
-#if IS_ENABLED(CONFIG_NET_IPGRE)
+#अगर IS_ENABLED(CONFIG_NET_IPGRE)
 	&mlxsw_sp_span_entry_ops_gretap4,
-#endif
-#if IS_ENABLED(CONFIG_IPV6_GRE)
+#पूर्ण_अगर
+#अगर IS_ENABLED(CONFIG_IPV6_GRE)
 	&mlxsw_sp_span_entry_ops_gretap6,
-#endif
+#पूर्ण_अगर
 	&mlxsw_sp_span_entry_ops_vlan,
-};
+पूर्ण;
 
-static bool mlxsw_sp2_span_cpu_can_handle(const struct net_device *dev)
-{
-	return !dev;
-}
+अटल bool mlxsw_sp2_span_cpu_can_handle(स्थिर काष्ठा net_device *dev)
+अणु
+	वापस !dev;
+पूर्ण
 
-static int mlxsw_sp2_span_entry_cpu_parms(struct mlxsw_sp *mlxsw_sp,
-					  const struct net_device *to_dev,
-					  struct mlxsw_sp_span_parms *sparmsp)
-{
+अटल पूर्णांक mlxsw_sp2_span_entry_cpu_parms(काष्ठा mlxsw_sp *mlxsw_sp,
+					  स्थिर काष्ठा net_device *to_dev,
+					  काष्ठा mlxsw_sp_span_parms *sparmsp)
+अणु
 	sparmsp->dest_port = mlxsw_sp->ports[MLXSW_PORT_CPU_PORT];
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-mlxsw_sp2_span_entry_cpu_configure(struct mlxsw_sp_span_entry *span_entry,
-				   struct mlxsw_sp_span_parms sparms)
-{
+अटल पूर्णांक
+mlxsw_sp2_span_entry_cpu_configure(काष्ठा mlxsw_sp_span_entry *span_entry,
+				   काष्ठा mlxsw_sp_span_parms sparms)
+अणु
 	/* Mirroring to the CPU port is like mirroring to any other physical
 	 * port. Its local port is used instead of that of the physical port.
 	 */
-	return mlxsw_sp_span_entry_phys_configure(span_entry, sparms);
-}
+	वापस mlxsw_sp_span_entry_phys_configure(span_entry, sparms);
+पूर्ण
 
-static void
-mlxsw_sp2_span_entry_cpu_deconfigure(struct mlxsw_sp_span_entry *span_entry)
-{
-	enum mlxsw_reg_mpat_span_type span_type;
+अटल व्योम
+mlxsw_sp2_span_entry_cpu_deconfigure(काष्ठा mlxsw_sp_span_entry *span_entry)
+अणु
+	क्रमागत mlxsw_reg_mpat_span_type span_type;
 
 	span_type = MLXSW_REG_MPAT_SPAN_TYPE_LOCAL_ETH;
 	mlxsw_sp_span_entry_deconfigure_common(span_entry, span_type);
-}
+पूर्ण
 
-static const
-struct mlxsw_sp_span_entry_ops mlxsw_sp2_span_entry_ops_cpu = {
-	.is_static = true,
+अटल स्थिर
+काष्ठा mlxsw_sp_span_entry_ops mlxsw_sp2_span_entry_ops_cpu = अणु
+	.is_अटल = true,
 	.can_handle = mlxsw_sp2_span_cpu_can_handle,
 	.parms_set = mlxsw_sp2_span_entry_cpu_parms,
 	.configure = mlxsw_sp2_span_entry_cpu_configure,
 	.deconfigure = mlxsw_sp2_span_entry_cpu_deconfigure,
-};
+पूर्ण;
 
-static const
-struct mlxsw_sp_span_entry_ops *mlxsw_sp2_span_entry_ops_arr[] = {
+अटल स्थिर
+काष्ठा mlxsw_sp_span_entry_ops *mlxsw_sp2_span_entry_ops_arr[] = अणु
 	&mlxsw_sp2_span_entry_ops_cpu,
 	&mlxsw_sp_span_entry_ops_phys,
-#if IS_ENABLED(CONFIG_NET_IPGRE)
+#अगर IS_ENABLED(CONFIG_NET_IPGRE)
 	&mlxsw_sp_span_entry_ops_gretap4,
-#endif
-#if IS_ENABLED(CONFIG_IPV6_GRE)
+#पूर्ण_अगर
+#अगर IS_ENABLED(CONFIG_IPV6_GRE)
 	&mlxsw_sp_span_entry_ops_gretap6,
-#endif
+#पूर्ण_अगर
 	&mlxsw_sp_span_entry_ops_vlan,
-};
+पूर्ण;
 
-static int
-mlxsw_sp_span_entry_nop_parms(struct mlxsw_sp *mlxsw_sp,
-			      const struct net_device *to_dev,
-			      struct mlxsw_sp_span_parms *sparmsp)
-{
-	return mlxsw_sp_span_entry_unoffloadable(sparmsp);
-}
+अटल पूर्णांक
+mlxsw_sp_span_entry_nop_parms(काष्ठा mlxsw_sp *mlxsw_sp,
+			      स्थिर काष्ठा net_device *to_dev,
+			      काष्ठा mlxsw_sp_span_parms *sparmsp)
+अणु
+	वापस mlxsw_sp_span_entry_unoffloadable(sparmsp);
+पूर्ण
 
-static int
-mlxsw_sp_span_entry_nop_configure(struct mlxsw_sp_span_entry *span_entry,
-				  struct mlxsw_sp_span_parms sparms)
-{
-	return 0;
-}
+अटल पूर्णांक
+mlxsw_sp_span_entry_nop_configure(काष्ठा mlxsw_sp_span_entry *span_entry,
+				  काष्ठा mlxsw_sp_span_parms sparms)
+अणु
+	वापस 0;
+पूर्ण
 
-static void
-mlxsw_sp_span_entry_nop_deconfigure(struct mlxsw_sp_span_entry *span_entry)
-{
-}
+अटल व्योम
+mlxsw_sp_span_entry_nop_deconfigure(काष्ठा mlxsw_sp_span_entry *span_entry)
+अणु
+पूर्ण
 
-static const struct mlxsw_sp_span_entry_ops mlxsw_sp_span_entry_ops_nop = {
+अटल स्थिर काष्ठा mlxsw_sp_span_entry_ops mlxsw_sp_span_entry_ops_nop = अणु
 	.parms_set = mlxsw_sp_span_entry_nop_parms,
 	.configure = mlxsw_sp_span_entry_nop_configure,
 	.deconfigure = mlxsw_sp_span_entry_nop_deconfigure,
-};
+पूर्ण;
 
-static void
-mlxsw_sp_span_entry_configure(struct mlxsw_sp *mlxsw_sp,
-			      struct mlxsw_sp_span_entry *span_entry,
-			      struct mlxsw_sp_span_parms sparms)
-{
-	int err;
+अटल व्योम
+mlxsw_sp_span_entry_configure(काष्ठा mlxsw_sp *mlxsw_sp,
+			      काष्ठा mlxsw_sp_span_entry *span_entry,
+			      काष्ठा mlxsw_sp_span_parms sparms)
+अणु
+	पूर्णांक err;
 
-	if (!sparms.dest_port)
-		goto set_parms;
+	अगर (!sparms.dest_port)
+		जाओ set_parms;
 
-	if (sparms.dest_port->mlxsw_sp != mlxsw_sp) {
+	अगर (sparms.dest_port->mlxsw_sp != mlxsw_sp) अणु
 		dev_err(mlxsw_sp->bus_info->dev,
 			"Cannot mirror to a port which belongs to a different mlxsw instance\n");
-		sparms.dest_port = NULL;
-		goto set_parms;
-	}
+		sparms.dest_port = शून्य;
+		जाओ set_parms;
+	पूर्ण
 
 	err = span_entry->ops->configure(span_entry, sparms);
-	if (err) {
+	अगर (err) अणु
 		dev_err(mlxsw_sp->bus_info->dev, "Failed to offload mirror\n");
-		sparms.dest_port = NULL;
-		goto set_parms;
-	}
+		sparms.dest_port = शून्य;
+		जाओ set_parms;
+	पूर्ण
 
 set_parms:
 	span_entry->parms = sparms;
-}
+पूर्ण
 
-static void
-mlxsw_sp_span_entry_deconfigure(struct mlxsw_sp_span_entry *span_entry)
-{
-	if (span_entry->parms.dest_port)
+अटल व्योम
+mlxsw_sp_span_entry_deconfigure(काष्ठा mlxsw_sp_span_entry *span_entry)
+अणु
+	अगर (span_entry->parms.dest_port)
 		span_entry->ops->deconfigure(span_entry);
-}
+पूर्ण
 
-static int mlxsw_sp_span_policer_id_base_set(struct mlxsw_sp_span *span,
+अटल पूर्णांक mlxsw_sp_span_policer_id_base_set(काष्ठा mlxsw_sp_span *span,
 					     u16 policer_id)
-{
-	struct mlxsw_sp *mlxsw_sp = span->mlxsw_sp;
+अणु
+	काष्ठा mlxsw_sp *mlxsw_sp = span->mlxsw_sp;
 	u16 policer_id_base;
-	int err;
+	पूर्णांक err;
 
 	/* Policers set on SPAN agents must be in the range of
 	 * `policer_id_base .. policer_id_base + max_span_agents - 1`. If the
 	 * base is set and the new policer is not within the range, then we
 	 * must error out.
 	 */
-	if (refcount_read(&span->policer_id_base_ref_count)) {
-		if (policer_id < span->policer_id_base ||
+	अगर (refcount_पढ़ो(&span->policer_id_base_ref_count)) अणु
+		अगर (policer_id < span->policer_id_base ||
 		    policer_id >= span->policer_id_base + span->entries_count)
-			return -EINVAL;
+			वापस -EINVAL;
 
 		refcount_inc(&span->policer_id_base_ref_count);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	/* Base must be even. */
 	policer_id_base = policer_id % 2 == 0 ? policer_id : policer_id - 1;
 	err = mlxsw_sp->span_ops->policer_id_base_set(mlxsw_sp,
 						      policer_id_base);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	span->policer_id_base = policer_id_base;
 	refcount_set(&span->policer_id_base_ref_count, 1);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void mlxsw_sp_span_policer_id_base_unset(struct mlxsw_sp_span *span)
-{
-	if (refcount_dec_and_test(&span->policer_id_base_ref_count))
+अटल व्योम mlxsw_sp_span_policer_id_base_unset(काष्ठा mlxsw_sp_span *span)
+अणु
+	अगर (refcount_dec_and_test(&span->policer_id_base_ref_count))
 		span->policer_id_base = 0;
-}
+पूर्ण
 
-static struct mlxsw_sp_span_entry *
-mlxsw_sp_span_entry_create(struct mlxsw_sp *mlxsw_sp,
-			   const struct net_device *to_dev,
-			   const struct mlxsw_sp_span_entry_ops *ops,
-			   struct mlxsw_sp_span_parms sparms)
-{
-	struct mlxsw_sp_span_entry *span_entry = NULL;
-	int i;
+अटल काष्ठा mlxsw_sp_span_entry *
+mlxsw_sp_span_entry_create(काष्ठा mlxsw_sp *mlxsw_sp,
+			   स्थिर काष्ठा net_device *to_dev,
+			   स्थिर काष्ठा mlxsw_sp_span_entry_ops *ops,
+			   काष्ठा mlxsw_sp_span_parms sparms)
+अणु
+	काष्ठा mlxsw_sp_span_entry *span_entry = शून्य;
+	पूर्णांक i;
 
-	/* find a free entry to use */
-	for (i = 0; i < mlxsw_sp->span->entries_count; i++) {
-		if (!refcount_read(&mlxsw_sp->span->entries[i].ref_count)) {
+	/* find a मुक्त entry to use */
+	क्रम (i = 0; i < mlxsw_sp->span->entries_count; i++) अणु
+		अगर (!refcount_पढ़ो(&mlxsw_sp->span->entries[i].ref_count)) अणु
 			span_entry = &mlxsw_sp->span->entries[i];
-			break;
-		}
-	}
-	if (!span_entry)
-		return NULL;
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	अगर (!span_entry)
+		वापस शून्य;
 
-	if (sparms.policer_enable) {
-		int err;
+	अगर (sparms.policer_enable) अणु
+		पूर्णांक err;
 
 		err = mlxsw_sp_span_policer_id_base_set(mlxsw_sp->span,
 							sparms.policer_id);
-		if (err)
-			return NULL;
-	}
+		अगर (err)
+			वापस शून्य;
+	पूर्ण
 
 	atomic_inc(&mlxsw_sp->span->active_entries_count);
 	span_entry->ops = ops;
@@ -880,248 +881,248 @@ mlxsw_sp_span_entry_create(struct mlxsw_sp *mlxsw_sp,
 	span_entry->to_dev = to_dev;
 	mlxsw_sp_span_entry_configure(mlxsw_sp, span_entry, sparms);
 
-	return span_entry;
-}
+	वापस span_entry;
+पूर्ण
 
-static void mlxsw_sp_span_entry_destroy(struct mlxsw_sp *mlxsw_sp,
-					struct mlxsw_sp_span_entry *span_entry)
-{
+अटल व्योम mlxsw_sp_span_entry_destroy(काष्ठा mlxsw_sp *mlxsw_sp,
+					काष्ठा mlxsw_sp_span_entry *span_entry)
+अणु
 	mlxsw_sp_span_entry_deconfigure(span_entry);
 	atomic_dec(&mlxsw_sp->span->active_entries_count);
-	if (span_entry->parms.policer_enable)
+	अगर (span_entry->parms.policer_enable)
 		mlxsw_sp_span_policer_id_base_unset(mlxsw_sp->span);
-}
+पूर्ण
 
-struct mlxsw_sp_span_entry *
-mlxsw_sp_span_entry_find_by_port(struct mlxsw_sp *mlxsw_sp,
-				 const struct net_device *to_dev)
-{
-	int i;
+काष्ठा mlxsw_sp_span_entry *
+mlxsw_sp_span_entry_find_by_port(काष्ठा mlxsw_sp *mlxsw_sp,
+				 स्थिर काष्ठा net_device *to_dev)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < mlxsw_sp->span->entries_count; i++) {
-		struct mlxsw_sp_span_entry *curr = &mlxsw_sp->span->entries[i];
+	क्रम (i = 0; i < mlxsw_sp->span->entries_count; i++) अणु
+		काष्ठा mlxsw_sp_span_entry *curr = &mlxsw_sp->span->entries[i];
 
-		if (refcount_read(&curr->ref_count) && curr->to_dev == to_dev)
-			return curr;
-	}
-	return NULL;
-}
+		अगर (refcount_पढ़ो(&curr->ref_count) && curr->to_dev == to_dev)
+			वापस curr;
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
-void mlxsw_sp_span_entry_invalidate(struct mlxsw_sp *mlxsw_sp,
-				    struct mlxsw_sp_span_entry *span_entry)
-{
+व्योम mlxsw_sp_span_entry_invalidate(काष्ठा mlxsw_sp *mlxsw_sp,
+				    काष्ठा mlxsw_sp_span_entry *span_entry)
+अणु
 	mlxsw_sp_span_entry_deconfigure(span_entry);
 	span_entry->ops = &mlxsw_sp_span_entry_ops_nop;
-}
+पूर्ण
 
-static struct mlxsw_sp_span_entry *
-mlxsw_sp_span_entry_find_by_id(struct mlxsw_sp *mlxsw_sp, int span_id)
-{
-	int i;
+अटल काष्ठा mlxsw_sp_span_entry *
+mlxsw_sp_span_entry_find_by_id(काष्ठा mlxsw_sp *mlxsw_sp, पूर्णांक span_id)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < mlxsw_sp->span->entries_count; i++) {
-		struct mlxsw_sp_span_entry *curr = &mlxsw_sp->span->entries[i];
+	क्रम (i = 0; i < mlxsw_sp->span->entries_count; i++) अणु
+		काष्ठा mlxsw_sp_span_entry *curr = &mlxsw_sp->span->entries[i];
 
-		if (refcount_read(&curr->ref_count) && curr->id == span_id)
-			return curr;
-	}
-	return NULL;
-}
+		अगर (refcount_पढ़ो(&curr->ref_count) && curr->id == span_id)
+			वापस curr;
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
-static struct mlxsw_sp_span_entry *
-mlxsw_sp_span_entry_find_by_parms(struct mlxsw_sp *mlxsw_sp,
-				  const struct net_device *to_dev,
-				  const struct mlxsw_sp_span_parms *sparms)
-{
-	int i;
+अटल काष्ठा mlxsw_sp_span_entry *
+mlxsw_sp_span_entry_find_by_parms(काष्ठा mlxsw_sp *mlxsw_sp,
+				  स्थिर काष्ठा net_device *to_dev,
+				  स्थिर काष्ठा mlxsw_sp_span_parms *sparms)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < mlxsw_sp->span->entries_count; i++) {
-		struct mlxsw_sp_span_entry *curr = &mlxsw_sp->span->entries[i];
+	क्रम (i = 0; i < mlxsw_sp->span->entries_count; i++) अणु
+		काष्ठा mlxsw_sp_span_entry *curr = &mlxsw_sp->span->entries[i];
 
-		if (refcount_read(&curr->ref_count) && curr->to_dev == to_dev &&
+		अगर (refcount_पढ़ो(&curr->ref_count) && curr->to_dev == to_dev &&
 		    curr->parms.policer_enable == sparms->policer_enable &&
 		    curr->parms.policer_id == sparms->policer_id &&
 		    curr->parms.session_id == sparms->session_id)
-			return curr;
-	}
-	return NULL;
-}
+			वापस curr;
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
-static struct mlxsw_sp_span_entry *
-mlxsw_sp_span_entry_get(struct mlxsw_sp *mlxsw_sp,
-			const struct net_device *to_dev,
-			const struct mlxsw_sp_span_entry_ops *ops,
-			struct mlxsw_sp_span_parms sparms)
-{
-	struct mlxsw_sp_span_entry *span_entry;
+अटल काष्ठा mlxsw_sp_span_entry *
+mlxsw_sp_span_entry_get(काष्ठा mlxsw_sp *mlxsw_sp,
+			स्थिर काष्ठा net_device *to_dev,
+			स्थिर काष्ठा mlxsw_sp_span_entry_ops *ops,
+			काष्ठा mlxsw_sp_span_parms sparms)
+अणु
+	काष्ठा mlxsw_sp_span_entry *span_entry;
 
 	span_entry = mlxsw_sp_span_entry_find_by_parms(mlxsw_sp, to_dev,
 						       &sparms);
-	if (span_entry) {
-		/* Already exists, just take a reference */
+	अगर (span_entry) अणु
+		/* Alपढ़ोy exists, just take a reference */
 		refcount_inc(&span_entry->ref_count);
-		return span_entry;
-	}
+		वापस span_entry;
+	पूर्ण
 
-	return mlxsw_sp_span_entry_create(mlxsw_sp, to_dev, ops, sparms);
-}
+	वापस mlxsw_sp_span_entry_create(mlxsw_sp, to_dev, ops, sparms);
+पूर्ण
 
-static int mlxsw_sp_span_entry_put(struct mlxsw_sp *mlxsw_sp,
-				   struct mlxsw_sp_span_entry *span_entry)
-{
-	if (refcount_dec_and_test(&span_entry->ref_count))
+अटल पूर्णांक mlxsw_sp_span_entry_put(काष्ठा mlxsw_sp *mlxsw_sp,
+				   काष्ठा mlxsw_sp_span_entry *span_entry)
+अणु
+	अगर (refcount_dec_and_test(&span_entry->ref_count))
 		mlxsw_sp_span_entry_destroy(mlxsw_sp, span_entry);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mlxsw_sp_span_port_buffer_update(struct mlxsw_sp_port *mlxsw_sp_port, bool enable)
-{
-	struct mlxsw_sp_hdroom hdroom;
+अटल पूर्णांक mlxsw_sp_span_port_buffer_update(काष्ठा mlxsw_sp_port *mlxsw_sp_port, bool enable)
+अणु
+	काष्ठा mlxsw_sp_hdroom hdroom;
 
 	hdroom = *mlxsw_sp_port->hdroom;
-	hdroom.int_buf.enable = enable;
+	hdroom.पूर्णांक_buf.enable = enable;
 	mlxsw_sp_hdroom_bufs_reset_sizes(mlxsw_sp_port, &hdroom);
 
-	return mlxsw_sp_hdroom_configure(mlxsw_sp_port, &hdroom);
-}
+	वापस mlxsw_sp_hdroom_configure(mlxsw_sp_port, &hdroom);
+पूर्ण
 
-static int
-mlxsw_sp_span_port_buffer_enable(struct mlxsw_sp_port *mlxsw_sp_port)
-{
-	return mlxsw_sp_span_port_buffer_update(mlxsw_sp_port, true);
-}
+अटल पूर्णांक
+mlxsw_sp_span_port_buffer_enable(काष्ठा mlxsw_sp_port *mlxsw_sp_port)
+अणु
+	वापस mlxsw_sp_span_port_buffer_update(mlxsw_sp_port, true);
+पूर्ण
 
-static void mlxsw_sp_span_port_buffer_disable(struct mlxsw_sp_port *mlxsw_sp_port)
-{
+अटल व्योम mlxsw_sp_span_port_buffer_disable(काष्ठा mlxsw_sp_port *mlxsw_sp_port)
+अणु
 	mlxsw_sp_span_port_buffer_update(mlxsw_sp_port, false);
-}
+पूर्ण
 
-static struct mlxsw_sp_span_analyzed_port *
-mlxsw_sp_span_analyzed_port_find(struct mlxsw_sp_span *span, u8 local_port,
+अटल काष्ठा mlxsw_sp_span_analyzed_port *
+mlxsw_sp_span_analyzed_port_find(काष्ठा mlxsw_sp_span *span, u8 local_port,
 				 bool ingress)
-{
-	struct mlxsw_sp_span_analyzed_port *analyzed_port;
+अणु
+	काष्ठा mlxsw_sp_span_analyzed_port *analyzed_port;
 
-	list_for_each_entry(analyzed_port, &span->analyzed_ports_list, list) {
-		if (analyzed_port->local_port == local_port &&
+	list_क्रम_each_entry(analyzed_port, &span->analyzed_ports_list, list) अणु
+		अगर (analyzed_port->local_port == local_port &&
 		    analyzed_port->ingress == ingress)
-			return analyzed_port;
-	}
+			वापस analyzed_port;
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static const struct mlxsw_sp_span_entry_ops *
-mlxsw_sp_span_entry_ops(struct mlxsw_sp *mlxsw_sp,
-			const struct net_device *to_dev)
-{
-	struct mlxsw_sp_span *span = mlxsw_sp->span;
-	size_t i;
+अटल स्थिर काष्ठा mlxsw_sp_span_entry_ops *
+mlxsw_sp_span_entry_ops(काष्ठा mlxsw_sp *mlxsw_sp,
+			स्थिर काष्ठा net_device *to_dev)
+अणु
+	काष्ठा mlxsw_sp_span *span = mlxsw_sp->span;
+	माप_प्रकार i;
 
-	for (i = 0; i < span->span_entry_ops_arr_size; ++i)
-		if (span->span_entry_ops_arr[i]->can_handle(to_dev))
-			return span->span_entry_ops_arr[i];
+	क्रम (i = 0; i < span->span_entry_ops_arr_size; ++i)
+		अगर (span->span_entry_ops_arr[i]->can_handle(to_dev))
+			वापस span->span_entry_ops_arr[i];
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static void mlxsw_sp_span_respin_work(struct work_struct *work)
-{
-	struct mlxsw_sp_span *span;
-	struct mlxsw_sp *mlxsw_sp;
-	int i, err;
+अटल व्योम mlxsw_sp_span_respin_work(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा mlxsw_sp_span *span;
+	काष्ठा mlxsw_sp *mlxsw_sp;
+	पूर्णांक i, err;
 
-	span = container_of(work, struct mlxsw_sp_span, work);
+	span = container_of(work, काष्ठा mlxsw_sp_span, work);
 	mlxsw_sp = span->mlxsw_sp;
 
 	rtnl_lock();
-	for (i = 0; i < mlxsw_sp->span->entries_count; i++) {
-		struct mlxsw_sp_span_entry *curr = &mlxsw_sp->span->entries[i];
-		struct mlxsw_sp_span_parms sparms = {NULL};
+	क्रम (i = 0; i < mlxsw_sp->span->entries_count; i++) अणु
+		काष्ठा mlxsw_sp_span_entry *curr = &mlxsw_sp->span->entries[i];
+		काष्ठा mlxsw_sp_span_parms sparms = अणुशून्यपूर्ण;
 
-		if (!refcount_read(&curr->ref_count))
-			continue;
+		अगर (!refcount_पढ़ो(&curr->ref_count))
+			जारी;
 
-		if (curr->ops->is_static)
-			continue;
+		अगर (curr->ops->is_अटल)
+			जारी;
 
 		err = curr->ops->parms_set(mlxsw_sp, curr->to_dev, &sparms);
-		if (err)
-			continue;
+		अगर (err)
+			जारी;
 
-		if (memcmp(&sparms, &curr->parms, sizeof(sparms))) {
+		अगर (स_भेद(&sparms, &curr->parms, माप(sparms))) अणु
 			mlxsw_sp_span_entry_deconfigure(curr);
 			mlxsw_sp_span_entry_configure(mlxsw_sp, curr, sparms);
-		}
-	}
+		पूर्ण
+	पूर्ण
 	rtnl_unlock();
-}
+पूर्ण
 
-void mlxsw_sp_span_respin(struct mlxsw_sp *mlxsw_sp)
-{
-	if (atomic_read(&mlxsw_sp->span->active_entries_count) == 0)
-		return;
+व्योम mlxsw_sp_span_respin(काष्ठा mlxsw_sp *mlxsw_sp)
+अणु
+	अगर (atomic_पढ़ो(&mlxsw_sp->span->active_entries_count) == 0)
+		वापस;
 	mlxsw_core_schedule_work(&mlxsw_sp->span->work);
-}
+पूर्ण
 
-int mlxsw_sp_span_agent_get(struct mlxsw_sp *mlxsw_sp, int *p_span_id,
-			    const struct mlxsw_sp_span_agent_parms *parms)
-{
-	const struct net_device *to_dev = parms->to_dev;
-	const struct mlxsw_sp_span_entry_ops *ops;
-	struct mlxsw_sp_span_entry *span_entry;
-	struct mlxsw_sp_span_parms sparms;
-	int err;
+पूर्णांक mlxsw_sp_span_agent_get(काष्ठा mlxsw_sp *mlxsw_sp, पूर्णांक *p_span_id,
+			    स्थिर काष्ठा mlxsw_sp_span_agent_parms *parms)
+अणु
+	स्थिर काष्ठा net_device *to_dev = parms->to_dev;
+	स्थिर काष्ठा mlxsw_sp_span_entry_ops *ops;
+	काष्ठा mlxsw_sp_span_entry *span_entry;
+	काष्ठा mlxsw_sp_span_parms sparms;
+	पूर्णांक err;
 
 	ASSERT_RTNL();
 
 	ops = mlxsw_sp_span_entry_ops(mlxsw_sp, to_dev);
-	if (!ops) {
+	अगर (!ops) अणु
 		dev_err(mlxsw_sp->bus_info->dev, "Cannot mirror to requested destination\n");
-		return -EOPNOTSUPP;
-	}
+		वापस -EOPNOTSUPP;
+	पूर्ण
 
-	memset(&sparms, 0, sizeof(sparms));
+	स_रखो(&sparms, 0, माप(sparms));
 	err = ops->parms_set(mlxsw_sp, to_dev, &sparms);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	sparms.policer_id = parms->policer_id;
 	sparms.policer_enable = parms->policer_enable;
 	sparms.session_id = parms->session_id;
 	span_entry = mlxsw_sp_span_entry_get(mlxsw_sp, to_dev, ops, sparms);
-	if (!span_entry)
-		return -ENOBUFS;
+	अगर (!span_entry)
+		वापस -ENOBUFS;
 
 	*p_span_id = span_entry->id;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void mlxsw_sp_span_agent_put(struct mlxsw_sp *mlxsw_sp, int span_id)
-{
-	struct mlxsw_sp_span_entry *span_entry;
+व्योम mlxsw_sp_span_agent_put(काष्ठा mlxsw_sp *mlxsw_sp, पूर्णांक span_id)
+अणु
+	काष्ठा mlxsw_sp_span_entry *span_entry;
 
 	ASSERT_RTNL();
 
 	span_entry = mlxsw_sp_span_entry_find_by_id(mlxsw_sp, span_id);
-	if (WARN_ON_ONCE(!span_entry))
-		return;
+	अगर (WARN_ON_ONCE(!span_entry))
+		वापस;
 
 	mlxsw_sp_span_entry_put(mlxsw_sp, span_entry);
-}
+पूर्ण
 
-static struct mlxsw_sp_span_analyzed_port *
-mlxsw_sp_span_analyzed_port_create(struct mlxsw_sp_span *span,
-				   struct mlxsw_sp_port *mlxsw_sp_port,
+अटल काष्ठा mlxsw_sp_span_analyzed_port *
+mlxsw_sp_span_analyzed_port_create(काष्ठा mlxsw_sp_span *span,
+				   काष्ठा mlxsw_sp_port *mlxsw_sp_port,
 				   bool ingress)
-{
-	struct mlxsw_sp_span_analyzed_port *analyzed_port;
-	int err;
+अणु
+	काष्ठा mlxsw_sp_span_analyzed_port *analyzed_port;
+	पूर्णांक err;
 
-	analyzed_port = kzalloc(sizeof(*analyzed_port), GFP_KERNEL);
-	if (!analyzed_port)
-		return ERR_PTR(-ENOMEM);
+	analyzed_port = kzalloc(माप(*analyzed_port), GFP_KERNEL);
+	अगर (!analyzed_port)
+		वापस ERR_PTR(-ENOMEM);
 
 	refcount_set(&analyzed_port->ref_count, 1);
 	analyzed_port->local_port = mlxsw_sp_port->local_port;
@@ -1129,597 +1130,597 @@ mlxsw_sp_span_analyzed_port_create(struct mlxsw_sp_span *span,
 	list_add_tail(&analyzed_port->list, &span->analyzed_ports_list);
 
 	/* An egress mirror buffer should be allocated on the egress port which
-	 * does the mirroring.
+	 * करोes the mirroring.
 	 */
-	if (!ingress) {
+	अगर (!ingress) अणु
 		err = mlxsw_sp_span_port_buffer_enable(mlxsw_sp_port);
-		if (err)
-			goto err_buffer_update;
-	}
+		अगर (err)
+			जाओ err_buffer_update;
+	पूर्ण
 
-	return analyzed_port;
+	वापस analyzed_port;
 
 err_buffer_update:
 	list_del(&analyzed_port->list);
-	kfree(analyzed_port);
-	return ERR_PTR(err);
-}
+	kमुक्त(analyzed_port);
+	वापस ERR_PTR(err);
+पूर्ण
 
-static void
-mlxsw_sp_span_analyzed_port_destroy(struct mlxsw_sp_port *mlxsw_sp_port,
-				    struct mlxsw_sp_span_analyzed_port *
+अटल व्योम
+mlxsw_sp_span_analyzed_port_destroy(काष्ठा mlxsw_sp_port *mlxsw_sp_port,
+				    काष्ठा mlxsw_sp_span_analyzed_port *
 				    analyzed_port)
-{
-	/* Remove egress mirror buffer now that port is no longer analyzed
+अणु
+	/* Remove egress mirror buffer now that port is no दीर्घer analyzed
 	 * at egress.
 	 */
-	if (!analyzed_port->ingress)
+	अगर (!analyzed_port->ingress)
 		mlxsw_sp_span_port_buffer_disable(mlxsw_sp_port);
 
 	list_del(&analyzed_port->list);
-	kfree(analyzed_port);
-}
+	kमुक्त(analyzed_port);
+पूर्ण
 
-int mlxsw_sp_span_analyzed_port_get(struct mlxsw_sp_port *mlxsw_sp_port,
+पूर्णांक mlxsw_sp_span_analyzed_port_get(काष्ठा mlxsw_sp_port *mlxsw_sp_port,
 				    bool ingress)
-{
-	struct mlxsw_sp *mlxsw_sp = mlxsw_sp_port->mlxsw_sp;
-	struct mlxsw_sp_span_analyzed_port *analyzed_port;
+अणु
+	काष्ठा mlxsw_sp *mlxsw_sp = mlxsw_sp_port->mlxsw_sp;
+	काष्ठा mlxsw_sp_span_analyzed_port *analyzed_port;
 	u8 local_port = mlxsw_sp_port->local_port;
-	int err = 0;
+	पूर्णांक err = 0;
 
 	mutex_lock(&mlxsw_sp->span->analyzed_ports_lock);
 
 	analyzed_port = mlxsw_sp_span_analyzed_port_find(mlxsw_sp->span,
 							 local_port, ingress);
-	if (analyzed_port) {
+	अगर (analyzed_port) अणु
 		refcount_inc(&analyzed_port->ref_count);
-		goto out_unlock;
-	}
+		जाओ out_unlock;
+	पूर्ण
 
 	analyzed_port = mlxsw_sp_span_analyzed_port_create(mlxsw_sp->span,
 							   mlxsw_sp_port,
 							   ingress);
-	if (IS_ERR(analyzed_port))
+	अगर (IS_ERR(analyzed_port))
 		err = PTR_ERR(analyzed_port);
 
 out_unlock:
 	mutex_unlock(&mlxsw_sp->span->analyzed_ports_lock);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-void mlxsw_sp_span_analyzed_port_put(struct mlxsw_sp_port *mlxsw_sp_port,
+व्योम mlxsw_sp_span_analyzed_port_put(काष्ठा mlxsw_sp_port *mlxsw_sp_port,
 				     bool ingress)
-{
-	struct mlxsw_sp *mlxsw_sp = mlxsw_sp_port->mlxsw_sp;
-	struct mlxsw_sp_span_analyzed_port *analyzed_port;
+अणु
+	काष्ठा mlxsw_sp *mlxsw_sp = mlxsw_sp_port->mlxsw_sp;
+	काष्ठा mlxsw_sp_span_analyzed_port *analyzed_port;
 	u8 local_port = mlxsw_sp_port->local_port;
 
 	mutex_lock(&mlxsw_sp->span->analyzed_ports_lock);
 
 	analyzed_port = mlxsw_sp_span_analyzed_port_find(mlxsw_sp->span,
 							 local_port, ingress);
-	if (WARN_ON_ONCE(!analyzed_port))
-		goto out_unlock;
+	अगर (WARN_ON_ONCE(!analyzed_port))
+		जाओ out_unlock;
 
-	if (!refcount_dec_and_test(&analyzed_port->ref_count))
-		goto out_unlock;
+	अगर (!refcount_dec_and_test(&analyzed_port->ref_count))
+		जाओ out_unlock;
 
 	mlxsw_sp_span_analyzed_port_destroy(mlxsw_sp_port, analyzed_port);
 
 out_unlock:
 	mutex_unlock(&mlxsw_sp->span->analyzed_ports_lock);
-}
+पूर्ण
 
-static int
-__mlxsw_sp_span_trigger_port_bind(struct mlxsw_sp_span *span,
-				  struct mlxsw_sp_span_trigger_entry *
+अटल पूर्णांक
+__mlxsw_sp_span_trigger_port_bind(काष्ठा mlxsw_sp_span *span,
+				  काष्ठा mlxsw_sp_span_trigger_entry *
 				  trigger_entry, bool enable)
-{
-	char mpar_pl[MLXSW_REG_MPAR_LEN];
-	enum mlxsw_reg_mpar_i_e i_e;
+अणु
+	अक्षर mpar_pl[MLXSW_REG_MPAR_LEN];
+	क्रमागत mlxsw_reg_mpar_i_e i_e;
 
-	switch (trigger_entry->trigger) {
-	case MLXSW_SP_SPAN_TRIGGER_INGRESS:
+	चयन (trigger_entry->trigger) अणु
+	हाल MLXSW_SP_SPAN_TRIGGER_INGRESS:
 		i_e = MLXSW_REG_MPAR_TYPE_INGRESS;
-		break;
-	case MLXSW_SP_SPAN_TRIGGER_EGRESS:
+		अवरोध;
+	हाल MLXSW_SP_SPAN_TRIGGER_EGRESS:
 		i_e = MLXSW_REG_MPAR_TYPE_EGRESS;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		WARN_ON_ONCE(1);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (trigger_entry->parms.probability_rate > MLXSW_REG_MPAR_RATE_MAX)
-		return -EINVAL;
+	अगर (trigger_entry->parms.probability_rate > MLXSW_REG_MPAR_RATE_MAX)
+		वापस -EINVAL;
 
 	mlxsw_reg_mpar_pack(mpar_pl, trigger_entry->local_port, i_e, enable,
 			    trigger_entry->parms.span_id,
 			    trigger_entry->parms.probability_rate);
-	return mlxsw_reg_write(span->mlxsw_sp->core, MLXSW_REG(mpar), mpar_pl);
-}
+	वापस mlxsw_reg_ग_लिखो(span->mlxsw_sp->core, MLXSW_REG(mpar), mpar_pl);
+पूर्ण
 
-static int
-mlxsw_sp_span_trigger_port_bind(struct mlxsw_sp_span_trigger_entry *
+अटल पूर्णांक
+mlxsw_sp_span_trigger_port_bind(काष्ठा mlxsw_sp_span_trigger_entry *
 				trigger_entry)
-{
-	return __mlxsw_sp_span_trigger_port_bind(trigger_entry->span,
+अणु
+	वापस __mlxsw_sp_span_trigger_port_bind(trigger_entry->span,
 						 trigger_entry, true);
-}
+पूर्ण
 
-static void
-mlxsw_sp_span_trigger_port_unbind(struct mlxsw_sp_span_trigger_entry *
+अटल व्योम
+mlxsw_sp_span_trigger_port_unbind(काष्ठा mlxsw_sp_span_trigger_entry *
 				  trigger_entry)
-{
+अणु
 	__mlxsw_sp_span_trigger_port_bind(trigger_entry->span, trigger_entry,
 					  false);
-}
+पूर्ण
 
-static bool
-mlxsw_sp_span_trigger_port_matches(struct mlxsw_sp_span_trigger_entry *
+अटल bool
+mlxsw_sp_span_trigger_port_matches(काष्ठा mlxsw_sp_span_trigger_entry *
 				   trigger_entry,
-				   enum mlxsw_sp_span_trigger trigger,
-				   struct mlxsw_sp_port *mlxsw_sp_port)
-{
-	return trigger_entry->trigger == trigger &&
+				   क्रमागत mlxsw_sp_span_trigger trigger,
+				   काष्ठा mlxsw_sp_port *mlxsw_sp_port)
+अणु
+	वापस trigger_entry->trigger == trigger &&
 	       trigger_entry->local_port == mlxsw_sp_port->local_port;
-}
+पूर्ण
 
-static int
-mlxsw_sp_span_trigger_port_enable(struct mlxsw_sp_span_trigger_entry *
+अटल पूर्णांक
+mlxsw_sp_span_trigger_port_enable(काष्ठा mlxsw_sp_span_trigger_entry *
 				  trigger_entry,
-				  struct mlxsw_sp_port *mlxsw_sp_port, u8 tc)
-{
+				  काष्ठा mlxsw_sp_port *mlxsw_sp_port, u8 tc)
+अणु
 	/* Port trigger are enabled during binding. */
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void
-mlxsw_sp_span_trigger_port_disable(struct mlxsw_sp_span_trigger_entry *
+अटल व्योम
+mlxsw_sp_span_trigger_port_disable(काष्ठा mlxsw_sp_span_trigger_entry *
 				   trigger_entry,
-				   struct mlxsw_sp_port *mlxsw_sp_port, u8 tc)
-{
-}
+				   काष्ठा mlxsw_sp_port *mlxsw_sp_port, u8 tc)
+अणु
+पूर्ण
 
-static const struct mlxsw_sp_span_trigger_ops
-mlxsw_sp_span_trigger_port_ops = {
+अटल स्थिर काष्ठा mlxsw_sp_span_trigger_ops
+mlxsw_sp_span_trigger_port_ops = अणु
 	.bind = mlxsw_sp_span_trigger_port_bind,
 	.unbind = mlxsw_sp_span_trigger_port_unbind,
 	.matches = mlxsw_sp_span_trigger_port_matches,
 	.enable = mlxsw_sp_span_trigger_port_enable,
 	.disable = mlxsw_sp_span_trigger_port_disable,
-};
+पूर्ण;
 
-static int
-mlxsw_sp1_span_trigger_global_bind(struct mlxsw_sp_span_trigger_entry *
+अटल पूर्णांक
+mlxsw_sp1_span_trigger_global_bind(काष्ठा mlxsw_sp_span_trigger_entry *
 				   trigger_entry)
-{
-	return -EOPNOTSUPP;
-}
+अणु
+	वापस -EOPNOTSUPP;
+पूर्ण
 
-static void
-mlxsw_sp1_span_trigger_global_unbind(struct mlxsw_sp_span_trigger_entry *
+अटल व्योम
+mlxsw_sp1_span_trigger_global_unbind(काष्ठा mlxsw_sp_span_trigger_entry *
 				     trigger_entry)
-{
-}
+अणु
+पूर्ण
 
-static bool
-mlxsw_sp1_span_trigger_global_matches(struct mlxsw_sp_span_trigger_entry *
+अटल bool
+mlxsw_sp1_span_trigger_global_matches(काष्ठा mlxsw_sp_span_trigger_entry *
 				      trigger_entry,
-				      enum mlxsw_sp_span_trigger trigger,
-				      struct mlxsw_sp_port *mlxsw_sp_port)
-{
+				      क्रमागत mlxsw_sp_span_trigger trigger,
+				      काष्ठा mlxsw_sp_port *mlxsw_sp_port)
+अणु
 	WARN_ON_ONCE(1);
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static int
-mlxsw_sp1_span_trigger_global_enable(struct mlxsw_sp_span_trigger_entry *
+अटल पूर्णांक
+mlxsw_sp1_span_trigger_global_enable(काष्ठा mlxsw_sp_span_trigger_entry *
 				     trigger_entry,
-				     struct mlxsw_sp_port *mlxsw_sp_port,
+				     काष्ठा mlxsw_sp_port *mlxsw_sp_port,
 				     u8 tc)
-{
-	return -EOPNOTSUPP;
-}
+अणु
+	वापस -EOPNOTSUPP;
+पूर्ण
 
-static void
-mlxsw_sp1_span_trigger_global_disable(struct mlxsw_sp_span_trigger_entry *
+अटल व्योम
+mlxsw_sp1_span_trigger_global_disable(काष्ठा mlxsw_sp_span_trigger_entry *
 				      trigger_entry,
-				      struct mlxsw_sp_port *mlxsw_sp_port,
+				      काष्ठा mlxsw_sp_port *mlxsw_sp_port,
 				      u8 tc)
-{
-}
+अणु
+पूर्ण
 
-static const struct mlxsw_sp_span_trigger_ops
-mlxsw_sp1_span_trigger_global_ops = {
+अटल स्थिर काष्ठा mlxsw_sp_span_trigger_ops
+mlxsw_sp1_span_trigger_global_ops = अणु
 	.bind = mlxsw_sp1_span_trigger_global_bind,
 	.unbind = mlxsw_sp1_span_trigger_global_unbind,
 	.matches = mlxsw_sp1_span_trigger_global_matches,
 	.enable = mlxsw_sp1_span_trigger_global_enable,
 	.disable = mlxsw_sp1_span_trigger_global_disable,
-};
+पूर्ण;
 
-static const struct mlxsw_sp_span_trigger_ops *
-mlxsw_sp1_span_trigger_ops_arr[] = {
+अटल स्थिर काष्ठा mlxsw_sp_span_trigger_ops *
+mlxsw_sp1_span_trigger_ops_arr[] = अणु
 	[MLXSW_SP_SPAN_TRIGGER_TYPE_PORT] = &mlxsw_sp_span_trigger_port_ops,
 	[MLXSW_SP_SPAN_TRIGGER_TYPE_GLOBAL] =
 		&mlxsw_sp1_span_trigger_global_ops,
-};
+पूर्ण;
 
-static int
-mlxsw_sp2_span_trigger_global_bind(struct mlxsw_sp_span_trigger_entry *
+अटल पूर्णांक
+mlxsw_sp2_span_trigger_global_bind(काष्ठा mlxsw_sp_span_trigger_entry *
 				   trigger_entry)
-{
-	struct mlxsw_sp *mlxsw_sp = trigger_entry->span->mlxsw_sp;
-	enum mlxsw_reg_mpagr_trigger trigger;
-	char mpagr_pl[MLXSW_REG_MPAGR_LEN];
+अणु
+	काष्ठा mlxsw_sp *mlxsw_sp = trigger_entry->span->mlxsw_sp;
+	क्रमागत mlxsw_reg_mpagr_trigger trigger;
+	अक्षर mpagr_pl[MLXSW_REG_MPAGR_LEN];
 
-	switch (trigger_entry->trigger) {
-	case MLXSW_SP_SPAN_TRIGGER_TAIL_DROP:
+	चयन (trigger_entry->trigger) अणु
+	हाल MLXSW_SP_SPAN_TRIGGER_TAIL_DROP:
 		trigger = MLXSW_REG_MPAGR_TRIGGER_INGRESS_SHARED_BUFFER;
-		break;
-	case MLXSW_SP_SPAN_TRIGGER_EARLY_DROP:
+		अवरोध;
+	हाल MLXSW_SP_SPAN_TRIGGER_EARLY_DROP:
 		trigger = MLXSW_REG_MPAGR_TRIGGER_INGRESS_WRED;
-		break;
-	case MLXSW_SP_SPAN_TRIGGER_ECN:
+		अवरोध;
+	हाल MLXSW_SP_SPAN_TRIGGER_ECN:
 		trigger = MLXSW_REG_MPAGR_TRIGGER_EGRESS_ECN;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		WARN_ON_ONCE(1);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (trigger_entry->parms.probability_rate > MLXSW_REG_MPAGR_RATE_MAX)
-		return -EINVAL;
+	अगर (trigger_entry->parms.probability_rate > MLXSW_REG_MPAGR_RATE_MAX)
+		वापस -EINVAL;
 
 	mlxsw_reg_mpagr_pack(mpagr_pl, trigger, trigger_entry->parms.span_id,
 			     trigger_entry->parms.probability_rate);
-	return mlxsw_reg_write(mlxsw_sp->core, MLXSW_REG(mpagr), mpagr_pl);
-}
+	वापस mlxsw_reg_ग_लिखो(mlxsw_sp->core, MLXSW_REG(mpagr), mpagr_pl);
+पूर्ण
 
-static void
-mlxsw_sp2_span_trigger_global_unbind(struct mlxsw_sp_span_trigger_entry *
+अटल व्योम
+mlxsw_sp2_span_trigger_global_unbind(काष्ठा mlxsw_sp_span_trigger_entry *
 				     trigger_entry)
-{
-	/* There is no unbinding for global triggers. The trigger should be
+अणु
+	/* There is no unbinding क्रम global triggers. The trigger should be
 	 * disabled on all ports by now.
 	 */
-}
+पूर्ण
 
-static bool
-mlxsw_sp2_span_trigger_global_matches(struct mlxsw_sp_span_trigger_entry *
+अटल bool
+mlxsw_sp2_span_trigger_global_matches(काष्ठा mlxsw_sp_span_trigger_entry *
 				      trigger_entry,
-				      enum mlxsw_sp_span_trigger trigger,
-				      struct mlxsw_sp_port *mlxsw_sp_port)
-{
-	return trigger_entry->trigger == trigger;
-}
+				      क्रमागत mlxsw_sp_span_trigger trigger,
+				      काष्ठा mlxsw_sp_port *mlxsw_sp_port)
+अणु
+	वापस trigger_entry->trigger == trigger;
+पूर्ण
 
-static int
-__mlxsw_sp2_span_trigger_global_enable(struct mlxsw_sp_span_trigger_entry *
+अटल पूर्णांक
+__mlxsw_sp2_span_trigger_global_enable(काष्ठा mlxsw_sp_span_trigger_entry *
 				       trigger_entry,
-				       struct mlxsw_sp_port *mlxsw_sp_port,
+				       काष्ठा mlxsw_sp_port *mlxsw_sp_port,
 				       u8 tc, bool enable)
-{
-	struct mlxsw_sp *mlxsw_sp = trigger_entry->span->mlxsw_sp;
-	char momte_pl[MLXSW_REG_MOMTE_LEN];
-	enum mlxsw_reg_momte_type type;
-	int err;
+अणु
+	काष्ठा mlxsw_sp *mlxsw_sp = trigger_entry->span->mlxsw_sp;
+	अक्षर momte_pl[MLXSW_REG_MOMTE_LEN];
+	क्रमागत mlxsw_reg_momte_type type;
+	पूर्णांक err;
 
-	switch (trigger_entry->trigger) {
-	case MLXSW_SP_SPAN_TRIGGER_TAIL_DROP:
+	चयन (trigger_entry->trigger) अणु
+	हाल MLXSW_SP_SPAN_TRIGGER_TAIL_DROP:
 		type = MLXSW_REG_MOMTE_TYPE_SHARED_BUFFER_TCLASS;
-		break;
-	case MLXSW_SP_SPAN_TRIGGER_EARLY_DROP:
+		अवरोध;
+	हाल MLXSW_SP_SPAN_TRIGGER_EARLY_DROP:
 		type = MLXSW_REG_MOMTE_TYPE_WRED;
-		break;
-	case MLXSW_SP_SPAN_TRIGGER_ECN:
+		अवरोध;
+	हाल MLXSW_SP_SPAN_TRIGGER_ECN:
 		type = MLXSW_REG_MOMTE_TYPE_ECN;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		WARN_ON_ONCE(1);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	/* Query existing configuration in order to only change the state of
-	 * the specified traffic class.
+	 * the specअगरied traffic class.
 	 */
 	mlxsw_reg_momte_pack(momte_pl, mlxsw_sp_port->local_port, type);
 	err = mlxsw_reg_query(mlxsw_sp->core, MLXSW_REG(momte), momte_pl);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	mlxsw_reg_momte_tclass_en_set(momte_pl, tc, enable);
-	return mlxsw_reg_write(mlxsw_sp->core, MLXSW_REG(momte), momte_pl);
-}
+	वापस mlxsw_reg_ग_लिखो(mlxsw_sp->core, MLXSW_REG(momte), momte_pl);
+पूर्ण
 
-static int
-mlxsw_sp2_span_trigger_global_enable(struct mlxsw_sp_span_trigger_entry *
+अटल पूर्णांक
+mlxsw_sp2_span_trigger_global_enable(काष्ठा mlxsw_sp_span_trigger_entry *
 				     trigger_entry,
-				     struct mlxsw_sp_port *mlxsw_sp_port,
+				     काष्ठा mlxsw_sp_port *mlxsw_sp_port,
 				     u8 tc)
-{
-	return __mlxsw_sp2_span_trigger_global_enable(trigger_entry,
+अणु
+	वापस __mlxsw_sp2_span_trigger_global_enable(trigger_entry,
 						      mlxsw_sp_port, tc, true);
-}
+पूर्ण
 
-static void
-mlxsw_sp2_span_trigger_global_disable(struct mlxsw_sp_span_trigger_entry *
+अटल व्योम
+mlxsw_sp2_span_trigger_global_disable(काष्ठा mlxsw_sp_span_trigger_entry *
 				      trigger_entry,
-				      struct mlxsw_sp_port *mlxsw_sp_port,
+				      काष्ठा mlxsw_sp_port *mlxsw_sp_port,
 				      u8 tc)
-{
+अणु
 	__mlxsw_sp2_span_trigger_global_enable(trigger_entry, mlxsw_sp_port, tc,
 					       false);
-}
+पूर्ण
 
-static const struct mlxsw_sp_span_trigger_ops
-mlxsw_sp2_span_trigger_global_ops = {
+अटल स्थिर काष्ठा mlxsw_sp_span_trigger_ops
+mlxsw_sp2_span_trigger_global_ops = अणु
 	.bind = mlxsw_sp2_span_trigger_global_bind,
 	.unbind = mlxsw_sp2_span_trigger_global_unbind,
 	.matches = mlxsw_sp2_span_trigger_global_matches,
 	.enable = mlxsw_sp2_span_trigger_global_enable,
 	.disable = mlxsw_sp2_span_trigger_global_disable,
-};
+पूर्ण;
 
-static const struct mlxsw_sp_span_trigger_ops *
-mlxsw_sp2_span_trigger_ops_arr[] = {
+अटल स्थिर काष्ठा mlxsw_sp_span_trigger_ops *
+mlxsw_sp2_span_trigger_ops_arr[] = अणु
 	[MLXSW_SP_SPAN_TRIGGER_TYPE_PORT] = &mlxsw_sp_span_trigger_port_ops,
 	[MLXSW_SP_SPAN_TRIGGER_TYPE_GLOBAL] =
 		&mlxsw_sp2_span_trigger_global_ops,
-};
+पूर्ण;
 
-static void
-mlxsw_sp_span_trigger_ops_set(struct mlxsw_sp_span_trigger_entry *trigger_entry)
-{
-	struct mlxsw_sp_span *span = trigger_entry->span;
-	enum mlxsw_sp_span_trigger_type type;
+अटल व्योम
+mlxsw_sp_span_trigger_ops_set(काष्ठा mlxsw_sp_span_trigger_entry *trigger_entry)
+अणु
+	काष्ठा mlxsw_sp_span *span = trigger_entry->span;
+	क्रमागत mlxsw_sp_span_trigger_type type;
 
-	switch (trigger_entry->trigger) {
-	case MLXSW_SP_SPAN_TRIGGER_INGRESS:
-	case MLXSW_SP_SPAN_TRIGGER_EGRESS:
+	चयन (trigger_entry->trigger) अणु
+	हाल MLXSW_SP_SPAN_TRIGGER_INGRESS:
+	हाल MLXSW_SP_SPAN_TRIGGER_EGRESS:
 		type = MLXSW_SP_SPAN_TRIGGER_TYPE_PORT;
-		break;
-	case MLXSW_SP_SPAN_TRIGGER_TAIL_DROP:
-	case MLXSW_SP_SPAN_TRIGGER_EARLY_DROP:
-	case MLXSW_SP_SPAN_TRIGGER_ECN:
+		अवरोध;
+	हाल MLXSW_SP_SPAN_TRIGGER_TAIL_DROP:
+	हाल MLXSW_SP_SPAN_TRIGGER_EARLY_DROP:
+	हाल MLXSW_SP_SPAN_TRIGGER_ECN:
 		type = MLXSW_SP_SPAN_TRIGGER_TYPE_GLOBAL;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		WARN_ON_ONCE(1);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	trigger_entry->ops = span->span_trigger_ops_arr[type];
-}
+पूर्ण
 
-static struct mlxsw_sp_span_trigger_entry *
-mlxsw_sp_span_trigger_entry_create(struct mlxsw_sp_span *span,
-				   enum mlxsw_sp_span_trigger trigger,
-				   struct mlxsw_sp_port *mlxsw_sp_port,
-				   const struct mlxsw_sp_span_trigger_parms
+अटल काष्ठा mlxsw_sp_span_trigger_entry *
+mlxsw_sp_span_trigger_entry_create(काष्ठा mlxsw_sp_span *span,
+				   क्रमागत mlxsw_sp_span_trigger trigger,
+				   काष्ठा mlxsw_sp_port *mlxsw_sp_port,
+				   स्थिर काष्ठा mlxsw_sp_span_trigger_parms
 				   *parms)
-{
-	struct mlxsw_sp_span_trigger_entry *trigger_entry;
-	int err;
+अणु
+	काष्ठा mlxsw_sp_span_trigger_entry *trigger_entry;
+	पूर्णांक err;
 
-	trigger_entry = kzalloc(sizeof(*trigger_entry), GFP_KERNEL);
-	if (!trigger_entry)
-		return ERR_PTR(-ENOMEM);
+	trigger_entry = kzalloc(माप(*trigger_entry), GFP_KERNEL);
+	अगर (!trigger_entry)
+		वापस ERR_PTR(-ENOMEM);
 
 	refcount_set(&trigger_entry->ref_count, 1);
 	trigger_entry->local_port = mlxsw_sp_port ? mlxsw_sp_port->local_port :
 						    0;
 	trigger_entry->trigger = trigger;
-	memcpy(&trigger_entry->parms, parms, sizeof(trigger_entry->parms));
+	स_नकल(&trigger_entry->parms, parms, माप(trigger_entry->parms));
 	trigger_entry->span = span;
 	mlxsw_sp_span_trigger_ops_set(trigger_entry);
 	list_add_tail(&trigger_entry->list, &span->trigger_entries_list);
 
 	err = trigger_entry->ops->bind(trigger_entry);
-	if (err)
-		goto err_trigger_entry_bind;
+	अगर (err)
+		जाओ err_trigger_entry_bind;
 
-	return trigger_entry;
+	वापस trigger_entry;
 
 err_trigger_entry_bind:
 	list_del(&trigger_entry->list);
-	kfree(trigger_entry);
-	return ERR_PTR(err);
-}
+	kमुक्त(trigger_entry);
+	वापस ERR_PTR(err);
+पूर्ण
 
-static void
-mlxsw_sp_span_trigger_entry_destroy(struct mlxsw_sp_span *span,
-				    struct mlxsw_sp_span_trigger_entry *
+अटल व्योम
+mlxsw_sp_span_trigger_entry_destroy(काष्ठा mlxsw_sp_span *span,
+				    काष्ठा mlxsw_sp_span_trigger_entry *
 				    trigger_entry)
-{
+अणु
 	trigger_entry->ops->unbind(trigger_entry);
 	list_del(&trigger_entry->list);
-	kfree(trigger_entry);
-}
+	kमुक्त(trigger_entry);
+पूर्ण
 
-static struct mlxsw_sp_span_trigger_entry *
-mlxsw_sp_span_trigger_entry_find(struct mlxsw_sp_span *span,
-				 enum mlxsw_sp_span_trigger trigger,
-				 struct mlxsw_sp_port *mlxsw_sp_port)
-{
-	struct mlxsw_sp_span_trigger_entry *trigger_entry;
+अटल काष्ठा mlxsw_sp_span_trigger_entry *
+mlxsw_sp_span_trigger_entry_find(काष्ठा mlxsw_sp_span *span,
+				 क्रमागत mlxsw_sp_span_trigger trigger,
+				 काष्ठा mlxsw_sp_port *mlxsw_sp_port)
+अणु
+	काष्ठा mlxsw_sp_span_trigger_entry *trigger_entry;
 
-	list_for_each_entry(trigger_entry, &span->trigger_entries_list, list) {
-		if (trigger_entry->ops->matches(trigger_entry, trigger,
+	list_क्रम_each_entry(trigger_entry, &span->trigger_entries_list, list) अणु
+		अगर (trigger_entry->ops->matches(trigger_entry, trigger,
 						mlxsw_sp_port))
-			return trigger_entry;
-	}
+			वापस trigger_entry;
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-int mlxsw_sp_span_agent_bind(struct mlxsw_sp *mlxsw_sp,
-			     enum mlxsw_sp_span_trigger trigger,
-			     struct mlxsw_sp_port *mlxsw_sp_port,
-			     const struct mlxsw_sp_span_trigger_parms *parms)
-{
-	struct mlxsw_sp_span_trigger_entry *trigger_entry;
-	int err = 0;
+पूर्णांक mlxsw_sp_span_agent_bind(काष्ठा mlxsw_sp *mlxsw_sp,
+			     क्रमागत mlxsw_sp_span_trigger trigger,
+			     काष्ठा mlxsw_sp_port *mlxsw_sp_port,
+			     स्थिर काष्ठा mlxsw_sp_span_trigger_parms *parms)
+अणु
+	काष्ठा mlxsw_sp_span_trigger_entry *trigger_entry;
+	पूर्णांक err = 0;
 
 	ASSERT_RTNL();
 
-	if (!mlxsw_sp_span_entry_find_by_id(mlxsw_sp, parms->span_id))
-		return -EINVAL;
+	अगर (!mlxsw_sp_span_entry_find_by_id(mlxsw_sp, parms->span_id))
+		वापस -EINVAL;
 
 	trigger_entry = mlxsw_sp_span_trigger_entry_find(mlxsw_sp->span,
 							 trigger,
 							 mlxsw_sp_port);
-	if (trigger_entry) {
-		if (trigger_entry->parms.span_id != parms->span_id ||
+	अगर (trigger_entry) अणु
+		अगर (trigger_entry->parms.span_id != parms->span_id ||
 		    trigger_entry->parms.probability_rate !=
 		    parms->probability_rate)
-			return -EINVAL;
+			वापस -EINVAL;
 		refcount_inc(&trigger_entry->ref_count);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	trigger_entry = mlxsw_sp_span_trigger_entry_create(mlxsw_sp->span,
 							   trigger,
 							   mlxsw_sp_port,
 							   parms);
-	if (IS_ERR(trigger_entry))
+	अगर (IS_ERR(trigger_entry))
 		err = PTR_ERR(trigger_entry);
 
 out:
-	return err;
-}
+	वापस err;
+पूर्ण
 
-void mlxsw_sp_span_agent_unbind(struct mlxsw_sp *mlxsw_sp,
-				enum mlxsw_sp_span_trigger trigger,
-				struct mlxsw_sp_port *mlxsw_sp_port,
-				const struct mlxsw_sp_span_trigger_parms *parms)
-{
-	struct mlxsw_sp_span_trigger_entry *trigger_entry;
+व्योम mlxsw_sp_span_agent_unbind(काष्ठा mlxsw_sp *mlxsw_sp,
+				क्रमागत mlxsw_sp_span_trigger trigger,
+				काष्ठा mlxsw_sp_port *mlxsw_sp_port,
+				स्थिर काष्ठा mlxsw_sp_span_trigger_parms *parms)
+अणु
+	काष्ठा mlxsw_sp_span_trigger_entry *trigger_entry;
 
 	ASSERT_RTNL();
 
-	if (WARN_ON_ONCE(!mlxsw_sp_span_entry_find_by_id(mlxsw_sp,
+	अगर (WARN_ON_ONCE(!mlxsw_sp_span_entry_find_by_id(mlxsw_sp,
 							 parms->span_id)))
-		return;
+		वापस;
 
 	trigger_entry = mlxsw_sp_span_trigger_entry_find(mlxsw_sp->span,
 							 trigger,
 							 mlxsw_sp_port);
-	if (WARN_ON_ONCE(!trigger_entry))
-		return;
+	अगर (WARN_ON_ONCE(!trigger_entry))
+		वापस;
 
-	if (!refcount_dec_and_test(&trigger_entry->ref_count))
-		return;
+	अगर (!refcount_dec_and_test(&trigger_entry->ref_count))
+		वापस;
 
 	mlxsw_sp_span_trigger_entry_destroy(mlxsw_sp->span, trigger_entry);
-}
+पूर्ण
 
-int mlxsw_sp_span_trigger_enable(struct mlxsw_sp_port *mlxsw_sp_port,
-				 enum mlxsw_sp_span_trigger trigger, u8 tc)
-{
-	struct mlxsw_sp *mlxsw_sp = mlxsw_sp_port->mlxsw_sp;
-	struct mlxsw_sp_span_trigger_entry *trigger_entry;
-
-	ASSERT_RTNL();
-
-	trigger_entry = mlxsw_sp_span_trigger_entry_find(mlxsw_sp->span,
-							 trigger,
-							 mlxsw_sp_port);
-	if (WARN_ON_ONCE(!trigger_entry))
-		return -EINVAL;
-
-	return trigger_entry->ops->enable(trigger_entry, mlxsw_sp_port, tc);
-}
-
-void mlxsw_sp_span_trigger_disable(struct mlxsw_sp_port *mlxsw_sp_port,
-				   enum mlxsw_sp_span_trigger trigger, u8 tc)
-{
-	struct mlxsw_sp *mlxsw_sp = mlxsw_sp_port->mlxsw_sp;
-	struct mlxsw_sp_span_trigger_entry *trigger_entry;
+पूर्णांक mlxsw_sp_span_trigger_enable(काष्ठा mlxsw_sp_port *mlxsw_sp_port,
+				 क्रमागत mlxsw_sp_span_trigger trigger, u8 tc)
+अणु
+	काष्ठा mlxsw_sp *mlxsw_sp = mlxsw_sp_port->mlxsw_sp;
+	काष्ठा mlxsw_sp_span_trigger_entry *trigger_entry;
 
 	ASSERT_RTNL();
 
 	trigger_entry = mlxsw_sp_span_trigger_entry_find(mlxsw_sp->span,
 							 trigger,
 							 mlxsw_sp_port);
-	if (WARN_ON_ONCE(!trigger_entry))
-		return;
+	अगर (WARN_ON_ONCE(!trigger_entry))
+		वापस -EINVAL;
 
-	return trigger_entry->ops->disable(trigger_entry, mlxsw_sp_port, tc);
-}
+	वापस trigger_entry->ops->enable(trigger_entry, mlxsw_sp_port, tc);
+पूर्ण
 
-static int mlxsw_sp1_span_init(struct mlxsw_sp *mlxsw_sp)
-{
-	size_t arr_size = ARRAY_SIZE(mlxsw_sp1_span_entry_ops_arr);
+व्योम mlxsw_sp_span_trigger_disable(काष्ठा mlxsw_sp_port *mlxsw_sp_port,
+				   क्रमागत mlxsw_sp_span_trigger trigger, u8 tc)
+अणु
+	काष्ठा mlxsw_sp *mlxsw_sp = mlxsw_sp_port->mlxsw_sp;
+	काष्ठा mlxsw_sp_span_trigger_entry *trigger_entry;
 
-	/* Must be first to avoid NULL pointer dereference by subsequent
+	ASSERT_RTNL();
+
+	trigger_entry = mlxsw_sp_span_trigger_entry_find(mlxsw_sp->span,
+							 trigger,
+							 mlxsw_sp_port);
+	अगर (WARN_ON_ONCE(!trigger_entry))
+		वापस;
+
+	वापस trigger_entry->ops->disable(trigger_entry, mlxsw_sp_port, tc);
+पूर्ण
+
+अटल पूर्णांक mlxsw_sp1_span_init(काष्ठा mlxsw_sp *mlxsw_sp)
+अणु
+	माप_प्रकार arr_size = ARRAY_SIZE(mlxsw_sp1_span_entry_ops_arr);
+
+	/* Must be first to aव्योम शून्य poपूर्णांकer dereference by subsequent
 	 * can_handle() callbacks.
 	 */
-	if (WARN_ON(mlxsw_sp1_span_entry_ops_arr[0] !=
+	अगर (WARN_ON(mlxsw_sp1_span_entry_ops_arr[0] !=
 		    &mlxsw_sp1_span_entry_ops_cpu))
-		return -EINVAL;
+		वापस -EINVAL;
 
 	mlxsw_sp->span->span_trigger_ops_arr = mlxsw_sp1_span_trigger_ops_arr;
 	mlxsw_sp->span->span_entry_ops_arr = mlxsw_sp1_span_entry_ops_arr;
 	mlxsw_sp->span->span_entry_ops_arr_size = arr_size;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mlxsw_sp1_span_policer_id_base_set(struct mlxsw_sp *mlxsw_sp,
+अटल पूर्णांक mlxsw_sp1_span_policer_id_base_set(काष्ठा mlxsw_sp *mlxsw_sp,
 					      u16 policer_id_base)
-{
-	return -EOPNOTSUPP;
-}
+अणु
+	वापस -EOPNOTSUPP;
+पूर्ण
 
-const struct mlxsw_sp_span_ops mlxsw_sp1_span_ops = {
+स्थिर काष्ठा mlxsw_sp_span_ops mlxsw_sp1_span_ops = अणु
 	.init = mlxsw_sp1_span_init,
 	.policer_id_base_set = mlxsw_sp1_span_policer_id_base_set,
-};
+पूर्ण;
 
-static int mlxsw_sp2_span_init(struct mlxsw_sp *mlxsw_sp)
-{
-	size_t arr_size = ARRAY_SIZE(mlxsw_sp2_span_entry_ops_arr);
+अटल पूर्णांक mlxsw_sp2_span_init(काष्ठा mlxsw_sp *mlxsw_sp)
+अणु
+	माप_प्रकार arr_size = ARRAY_SIZE(mlxsw_sp2_span_entry_ops_arr);
 
-	/* Must be first to avoid NULL pointer dereference by subsequent
+	/* Must be first to aव्योम शून्य poपूर्णांकer dereference by subsequent
 	 * can_handle() callbacks.
 	 */
-	if (WARN_ON(mlxsw_sp2_span_entry_ops_arr[0] !=
+	अगर (WARN_ON(mlxsw_sp2_span_entry_ops_arr[0] !=
 		    &mlxsw_sp2_span_entry_ops_cpu))
-		return -EINVAL;
+		वापस -EINVAL;
 
 	mlxsw_sp->span->span_trigger_ops_arr = mlxsw_sp2_span_trigger_ops_arr;
 	mlxsw_sp->span->span_entry_ops_arr = mlxsw_sp2_span_entry_ops_arr;
 	mlxsw_sp->span->span_entry_ops_arr_size = arr_size;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#define MLXSW_SP2_SPAN_EG_MIRROR_BUFFER_FACTOR 38
-#define MLXSW_SP3_SPAN_EG_MIRROR_BUFFER_FACTOR 50
+#घोषणा MLXSW_SP2_SPAN_EG_MIRROR_BUFFER_FACTOR 38
+#घोषणा MLXSW_SP3_SPAN_EG_MIRROR_BUFFER_FACTOR 50
 
-static int mlxsw_sp2_span_policer_id_base_set(struct mlxsw_sp *mlxsw_sp,
+अटल पूर्णांक mlxsw_sp2_span_policer_id_base_set(काष्ठा mlxsw_sp *mlxsw_sp,
 					      u16 policer_id_base)
-{
-	char mogcr_pl[MLXSW_REG_MOGCR_LEN];
-	int err;
+अणु
+	अक्षर mogcr_pl[MLXSW_REG_MOGCR_LEN];
+	पूर्णांक err;
 
 	err = mlxsw_reg_query(mlxsw_sp->core, MLXSW_REG(mogcr), mogcr_pl);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	mlxsw_reg_mogcr_mirroring_pid_base_set(mogcr_pl, policer_id_base);
-	return mlxsw_reg_write(mlxsw_sp->core, MLXSW_REG(mogcr), mogcr_pl);
-}
+	वापस mlxsw_reg_ग_लिखो(mlxsw_sp->core, MLXSW_REG(mogcr), mogcr_pl);
+पूर्ण
 
-const struct mlxsw_sp_span_ops mlxsw_sp2_span_ops = {
+स्थिर काष्ठा mlxsw_sp_span_ops mlxsw_sp2_span_ops = अणु
 	.init = mlxsw_sp2_span_init,
 	.policer_id_base_set = mlxsw_sp2_span_policer_id_base_set,
-};
+पूर्ण;
 
-const struct mlxsw_sp_span_ops mlxsw_sp3_span_ops = {
+स्थिर काष्ठा mlxsw_sp_span_ops mlxsw_sp3_span_ops = अणु
 	.init = mlxsw_sp2_span_init,
 	.policer_id_base_set = mlxsw_sp2_span_policer_id_base_set,
-};
+पूर्ण;

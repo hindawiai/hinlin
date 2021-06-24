@@ -1,791 +1,792 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * builtin-record.c
  *
  * Builtin record command: Record the profile of a workload
- * (or a CPU, or a PID) into the perf.data output file - for
+ * (or a CPU, or a PID) पूर्णांकo the perf.data output file - क्रम
  * later analysis via perf report.
  */
-#include "builtin.h"
+#समावेश "builtin.h"
 
-#include "util/build-id.h"
-#include <subcmd/parse-options.h>
-#include "util/parse-events.h"
-#include "util/config.h"
+#समावेश "util/build-id.h"
+#समावेश <subcmd/parse-options.h>
+#समावेश "util/parse-events.h"
+#समावेश "util/config.h"
 
-#include "util/callchain.h"
-#include "util/cgroup.h"
-#include "util/header.h"
-#include "util/event.h"
-#include "util/evlist.h"
-#include "util/evsel.h"
-#include "util/debug.h"
-#include "util/mmap.h"
-#include "util/target.h"
-#include "util/session.h"
-#include "util/tool.h"
-#include "util/symbol.h"
-#include "util/record.h"
-#include "util/cpumap.h"
-#include "util/thread_map.h"
-#include "util/data.h"
-#include "util/perf_regs.h"
-#include "util/auxtrace.h"
-#include "util/tsc.h"
-#include "util/parse-branch-options.h"
-#include "util/parse-regs-options.h"
-#include "util/perf_api_probe.h"
-#include "util/llvm-utils.h"
-#include "util/bpf-loader.h"
-#include "util/trigger.h"
-#include "util/perf-hooks.h"
-#include "util/cpu-set-sched.h"
-#include "util/synthetic-events.h"
-#include "util/time-utils.h"
-#include "util/units.h"
-#include "util/bpf-event.h"
-#include "util/util.h"
-#include "util/pfm.h"
-#include "util/clockid.h"
-#include "util/pmu-hybrid.h"
-#include "util/evlist-hybrid.h"
-#include "asm/bug.h"
-#include "perf.h"
+#समावेश "util/callchain.h"
+#समावेश "util/cgroup.h"
+#समावेश "util/header.h"
+#समावेश "util/event.h"
+#समावेश "util/evlist.h"
+#समावेश "util/evsel.h"
+#समावेश "util/debug.h"
+#समावेश "util/mmap.h"
+#समावेश "util/target.h"
+#समावेश "util/session.h"
+#समावेश "util/tool.h"
+#समावेश "util/symbol.h"
+#समावेश "util/record.h"
+#समावेश "util/cpumap.h"
+#समावेश "util/thread_map.h"
+#समावेश "util/data.h"
+#समावेश "util/perf_regs.h"
+#समावेश "util/auxtrace.h"
+#समावेश "util/tsc.h"
+#समावेश "util/parse-branch-options.h"
+#समावेश "util/parse-regs-options.h"
+#समावेश "util/perf_api_probe.h"
+#समावेश "util/llvm-utils.h"
+#समावेश "util/bpf-loader.h"
+#समावेश "util/trigger.h"
+#समावेश "util/perf-hooks.h"
+#समावेश "util/cpu-set-sched.h"
+#समावेश "util/synthetic-events.h"
+#समावेश "util/time-utils.h"
+#समावेश "util/units.h"
+#समावेश "util/bpf-event.h"
+#समावेश "util/util.h"
+#समावेश "util/pfm.h"
+#समावेश "util/clockid.h"
+#समावेश "util/pmu-hybrid.h"
+#समावेश "util/evlist-hybrid.h"
+#समावेश "asm/bug.h"
+#समावेश "perf.h"
 
-#include <errno.h>
-#include <inttypes.h>
-#include <locale.h>
-#include <poll.h>
-#include <pthread.h>
-#include <unistd.h>
-#include <sched.h>
-#include <signal.h>
-#ifdef HAVE_EVENTFD_SUPPORT
-#include <sys/eventfd.h>
-#endif
-#include <sys/mman.h>
-#include <sys/wait.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <linux/err.h>
-#include <linux/string.h>
-#include <linux/time64.h>
-#include <linux/zalloc.h>
-#include <linux/bitmap.h>
-#include <sys/time.h>
+#समावेश <त्रुटिसं.स>
+#समावेश <पूर्णांकtypes.h>
+#समावेश <क्षेत्र.स>
+#समावेश <poll.h>
+#समावेश <pthपढ़ो.h>
+#समावेश <unistd.h>
+#समावेश <sched.h>
+#समावेश <संकेत.स>
+#अगर_घोषित HAVE_EVENTFD_SUPPORT
+#समावेश <sys/eventfd.h>
+#पूर्ण_अगर
+#समावेश <sys/mman.h>
+#समावेश <sys/रुको.h>
+#समावेश <sys/types.h>
+#समावेश <sys/स्थिति.स>
+#समावेश <fcntl.h>
+#समावेश <linux/err.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/समय64.h>
+#समावेश <linux/zभाग.स>
+#समावेश <linux/biपंचांगap.h>
+#समावेश <sys/समय.स>
 
-struct switch_output {
+काष्ठा चयन_output अणु
 	bool		 enabled;
-	bool		 signal;
-	unsigned long	 size;
-	unsigned long	 time;
-	const char	*str;
+	bool		 संकेत;
+	अचिन्हित दीर्घ	 size;
+	अचिन्हित दीर्घ	 समय;
+	स्थिर अक्षर	*str;
 	bool		 set;
-	char		 **filenames;
-	int		 num_files;
-	int		 cur_file;
-};
+	अक्षर		 **filenames;
+	पूर्णांक		 num_files;
+	पूर्णांक		 cur_file;
+पूर्ण;
 
-struct record {
-	struct perf_tool	tool;
-	struct record_opts	opts;
+काष्ठा record अणु
+	काष्ठा perf_tool	tool;
+	काष्ठा record_opts	opts;
 	u64			bytes_written;
-	struct perf_data	data;
-	struct auxtrace_record	*itr;
-	struct evlist	*evlist;
-	struct perf_session	*session;
-	struct evlist		*sb_evlist;
-	pthread_t		thread_id;
-	int			realtime_prio;
-	bool			switch_output_event_set;
+	काष्ठा perf_data	data;
+	काष्ठा auxtrace_record	*itr;
+	काष्ठा evlist	*evlist;
+	काष्ठा perf_session	*session;
+	काष्ठा evlist		*sb_evlist;
+	pthपढ़ो_t		thपढ़ो_id;
+	पूर्णांक			realसमय_prio;
+	bool			चयन_output_event_set;
 	bool			no_buildid;
 	bool			no_buildid_set;
 	bool			no_buildid_cache;
 	bool			no_buildid_cache_set;
 	bool			buildid_all;
 	bool			buildid_mmap;
-	bool			timestamp_filename;
-	bool			timestamp_boundary;
-	struct switch_output	switch_output;
-	unsigned long long	samples;
-	struct mmap_cpu_mask	affinity_mask;
-	unsigned long		output_max_size;	/* = 0: unlimited */
-};
+	bool			बारtamp_filename;
+	bool			बारtamp_boundary;
+	काष्ठा चयन_output	चयन_output;
+	अचिन्हित दीर्घ दीर्घ	samples;
+	काष्ठा mmap_cpu_mask	affinity_mask;
+	अचिन्हित दीर्घ		output_max_size;	/* = 0: unlimited */
+पूर्ण;
 
-static volatile int done;
+अटल अस्थिर पूर्णांक करोne;
 
-static volatile int auxtrace_record__snapshot_started;
-static DEFINE_TRIGGER(auxtrace_snapshot_trigger);
-static DEFINE_TRIGGER(switch_output_trigger);
+अटल अस्थिर पूर्णांक auxtrace_record__snapshot_started;
+अटल DEFINE_TRIGGER(auxtrace_snapshot_trigger);
+अटल DEFINE_TRIGGER(चयन_output_trigger);
 
-static const char *affinity_tags[PERF_AFFINITY_MAX] = {
+अटल स्थिर अक्षर *affinity_tags[PERF_AFFINITY_MAX] = अणु
 	"SYS", "NODE", "CPU"
-};
+पूर्ण;
 
-static bool switch_output_signal(struct record *rec)
-{
-	return rec->switch_output.signal &&
-	       trigger_is_ready(&switch_output_trigger);
-}
+अटल bool चयन_output_संकेत(काष्ठा record *rec)
+अणु
+	वापस rec->चयन_output.संकेत &&
+	       trigger_is_पढ़ोy(&चयन_output_trigger);
+पूर्ण
 
-static bool switch_output_size(struct record *rec)
-{
-	return rec->switch_output.size &&
-	       trigger_is_ready(&switch_output_trigger) &&
-	       (rec->bytes_written >= rec->switch_output.size);
-}
+अटल bool चयन_output_size(काष्ठा record *rec)
+अणु
+	वापस rec->चयन_output.size &&
+	       trigger_is_पढ़ोy(&चयन_output_trigger) &&
+	       (rec->bytes_written >= rec->चयन_output.size);
+पूर्ण
 
-static bool switch_output_time(struct record *rec)
-{
-	return rec->switch_output.time &&
-	       trigger_is_ready(&switch_output_trigger);
-}
+अटल bool चयन_output_समय(काष्ठा record *rec)
+अणु
+	वापस rec->चयन_output.समय &&
+	       trigger_is_पढ़ोy(&चयन_output_trigger);
+पूर्ण
 
-static bool record__output_max_size_exceeded(struct record *rec)
-{
-	return rec->output_max_size &&
+अटल bool record__output_max_size_exceeded(काष्ठा record *rec)
+अणु
+	वापस rec->output_max_size &&
 	       (rec->bytes_written >= rec->output_max_size);
-}
+पूर्ण
 
-static int record__write(struct record *rec, struct mmap *map __maybe_unused,
-			 void *bf, size_t size)
-{
-	struct perf_data_file *file = &rec->session->data->file;
+अटल पूर्णांक record__ग_लिखो(काष्ठा record *rec, काष्ठा mmap *map __maybe_unused,
+			 व्योम *bf, माप_प्रकार size)
+अणु
+	काष्ठा perf_data_file *file = &rec->session->data->file;
 
-	if (perf_data_file__write(file, bf, size) < 0) {
+	अगर (perf_data_file__ग_लिखो(file, bf, size) < 0) अणु
 		pr_err("failed to write perf data, error: %m\n");
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
 	rec->bytes_written += size;
 
-	if (record__output_max_size_exceeded(rec) && !done) {
-		fprintf(stderr, "[ perf record: perf size limit reached (%" PRIu64 " KB),"
+	अगर (record__output_max_size_exceeded(rec) && !करोne) अणु
+		ख_लिखो(मानक_त्रुटि, "[ perf record: perf size limit reached (%" PRIu64 " KB),"
 				" stopping session ]\n",
 				rec->bytes_written >> 10);
-		done = 1;
-	}
+		करोne = 1;
+	पूर्ण
 
-	if (switch_output_size(rec))
-		trigger_hit(&switch_output_trigger);
+	अगर (चयन_output_size(rec))
+		trigger_hit(&चयन_output_trigger);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int record__aio_enabled(struct record *rec);
-static int record__comp_enabled(struct record *rec);
-static size_t zstd_compress(struct perf_session *session, void *dst, size_t dst_size,
-			    void *src, size_t src_size);
+अटल पूर्णांक record__aio_enabled(काष्ठा record *rec);
+अटल पूर्णांक record__comp_enabled(काष्ठा record *rec);
+अटल माप_प्रकार zstd_compress(काष्ठा perf_session *session, व्योम *dst, माप_प्रकार dst_size,
+			    व्योम *src, माप_प्रकार src_size);
 
-#ifdef HAVE_AIO_SUPPORT
-static int record__aio_write(struct aiocb *cblock, int trace_fd,
-		void *buf, size_t size, off_t off)
-{
-	int rc;
+#अगर_घोषित HAVE_AIO_SUPPORT
+अटल पूर्णांक record__aio_ग_लिखो(काष्ठा aiocb *cblock, पूर्णांक trace_fd,
+		व्योम *buf, माप_प्रकार size, off_t off)
+अणु
+	पूर्णांक rc;
 
 	cblock->aio_fildes = trace_fd;
 	cblock->aio_buf    = buf;
 	cblock->aio_nbytes = size;
 	cblock->aio_offset = off;
-	cblock->aio_sigevent.sigev_notify = SIGEV_NONE;
+	cblock->aio_sigevent.sigev_notअगरy = SIGEV_NONE;
 
-	do {
-		rc = aio_write(cblock);
-		if (rc == 0) {
-			break;
-		} else if (errno != EAGAIN) {
+	करो अणु
+		rc = aio_ग_लिखो(cblock);
+		अगर (rc == 0) अणु
+			अवरोध;
+		पूर्ण अन्यथा अगर (त्रुटि_सं != EAGAIN) अणु
 			cblock->aio_fildes = -1;
 			pr_err("failed to queue perf data, error: %m\n");
-			break;
-		}
-	} while (1);
+			अवरोध;
+		पूर्ण
+	पूर्ण जबतक (1);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int record__aio_complete(struct mmap *md, struct aiocb *cblock)
-{
-	void *rem_buf;
+अटल पूर्णांक record__aio_complete(काष्ठा mmap *md, काष्ठा aiocb *cblock)
+अणु
+	व्योम *rem_buf;
 	off_t rem_off;
-	size_t rem_size;
-	int rc, aio_errno;
-	ssize_t aio_ret, written;
+	माप_प्रकार rem_size;
+	पूर्णांक rc, aio_त्रुटि_सं;
+	sमाप_प्रकार aio_ret, written;
 
-	aio_errno = aio_error(cblock);
-	if (aio_errno == EINPROGRESS)
-		return 0;
+	aio_त्रुटि_सं = aio_error(cblock);
+	अगर (aio_त्रुटि_सं == EINPROGRESS)
+		वापस 0;
 
-	written = aio_ret = aio_return(cblock);
-	if (aio_ret < 0) {
-		if (aio_errno != EINTR)
+	written = aio_ret = aio_वापस(cblock);
+	अगर (aio_ret < 0) अणु
+		अगर (aio_त्रुटि_सं != EINTR)
 			pr_err("failed to write perf data, error: %m\n");
 		written = 0;
-	}
+	पूर्ण
 
 	rem_size = cblock->aio_nbytes - written;
 
-	if (rem_size == 0) {
+	अगर (rem_size == 0) अणु
 		cblock->aio_fildes = -1;
 		/*
-		 * md->refcount is incremented in record__aio_pushfn() for
-		 * every aio write request started in record__aio_push() so
+		 * md->refcount is incremented in record__aio_pushfn() क्रम
+		 * every aio ग_लिखो request started in record__aio_push() so
 		 * decrement it because the request is now complete.
 		 */
 		perf_mmap__put(&md->core);
 		rc = 1;
-	} else {
+	पूर्ण अन्यथा अणु
 		/*
-		 * aio write request may require restart with the
-		 * reminder if the kernel didn't write whole
+		 * aio ग_लिखो request may require restart with the
+		 * reminder अगर the kernel didn't ग_लिखो whole
 		 * chunk at once.
 		 */
 		rem_off = cblock->aio_offset + written;
-		rem_buf = (void *)(cblock->aio_buf + written);
-		record__aio_write(cblock, cblock->aio_fildes,
+		rem_buf = (व्योम *)(cblock->aio_buf + written);
+		record__aio_ग_लिखो(cblock, cblock->aio_fildes,
 				rem_buf, rem_size, rem_off);
 		rc = 0;
-	}
+	पूर्ण
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int record__aio_sync(struct mmap *md, bool sync_all)
-{
-	struct aiocb **aiocb = md->aio.aiocb;
-	struct aiocb *cblocks = md->aio.cblocks;
-	struct timespec timeout = { 0, 1000 * 1000  * 1 }; /* 1ms */
-	int i, do_suspend;
+अटल पूर्णांक record__aio_sync(काष्ठा mmap *md, bool sync_all)
+अणु
+	काष्ठा aiocb **aiocb = md->aio.aiocb;
+	काष्ठा aiocb *cblocks = md->aio.cblocks;
+	काष्ठा बारpec समयout = अणु 0, 1000 * 1000  * 1 पूर्ण; /* 1ms */
+	पूर्णांक i, करो_suspend;
 
-	do {
-		do_suspend = 0;
-		for (i = 0; i < md->aio.nr_cblocks; ++i) {
-			if (cblocks[i].aio_fildes == -1 || record__aio_complete(md, &cblocks[i])) {
-				if (sync_all)
-					aiocb[i] = NULL;
-				else
-					return i;
-			} else {
+	करो अणु
+		करो_suspend = 0;
+		क्रम (i = 0; i < md->aio.nr_cblocks; ++i) अणु
+			अगर (cblocks[i].aio_fildes == -1 || record__aio_complete(md, &cblocks[i])) अणु
+				अगर (sync_all)
+					aiocb[i] = शून्य;
+				अन्यथा
+					वापस i;
+			पूर्ण अन्यथा अणु
 				/*
-				 * Started aio write is not complete yet
-				 * so it has to be waited before the
+				 * Started aio ग_लिखो is not complete yet
+				 * so it has to be रुकोed beक्रमe the
 				 * next allocation.
 				 */
 				aiocb[i] = &cblocks[i];
-				do_suspend = 1;
-			}
-		}
-		if (!do_suspend)
-			return -1;
+				करो_suspend = 1;
+			पूर्ण
+		पूर्ण
+		अगर (!करो_suspend)
+			वापस -1;
 
-		while (aio_suspend((const struct aiocb **)aiocb, md->aio.nr_cblocks, &timeout)) {
-			if (!(errno == EAGAIN || errno == EINTR))
+		जबतक (aio_suspend((स्थिर काष्ठा aiocb **)aiocb, md->aio.nr_cblocks, &समयout)) अणु
+			अगर (!(त्रुटि_सं == EAGAIN || त्रुटि_सं == EINTR))
 				pr_err("failed to sync perf data, error: %m\n");
-		}
-	} while (1);
-}
+		पूर्ण
+	पूर्ण जबतक (1);
+पूर्ण
 
-struct record_aio {
-	struct record	*rec;
-	void		*data;
-	size_t		size;
-};
+काष्ठा record_aio अणु
+	काष्ठा record	*rec;
+	व्योम		*data;
+	माप_प्रकार		size;
+पूर्ण;
 
-static int record__aio_pushfn(struct mmap *map, void *to, void *buf, size_t size)
-{
-	struct record_aio *aio = to;
+अटल पूर्णांक record__aio_pushfn(काष्ठा mmap *map, व्योम *to, व्योम *buf, माप_प्रकार size)
+अणु
+	काष्ठा record_aio *aio = to;
 
 	/*
-	 * map->core.base data pointed by buf is copied into free map->aio.data[] buffer
+	 * map->core.base data poपूर्णांकed by buf is copied पूर्णांकo मुक्त map->aio.data[] buffer
 	 * to release space in the kernel buffer as fast as possible, calling
 	 * perf_mmap__consume() from perf_mmap__push() function.
 	 *
-	 * That lets the kernel to proceed with storing more profiling data into
+	 * That lets the kernel to proceed with storing more profiling data पूर्णांकo
 	 * the kernel buffer earlier than other per-cpu kernel buffers are handled.
 	 *
-	 * Coping can be done in two steps in case the chunk of profiling data
-	 * crosses the upper bound of the kernel buffer. In this case we first move
+	 * Coping can be करोne in two steps in हाल the chunk of profiling data
+	 * crosses the upper bound of the kernel buffer. In this हाल we first move
 	 * part of data from map->start till the upper bound and then the reminder
 	 * from the beginning of the kernel buffer till the end of the data chunk.
 	 */
 
-	if (record__comp_enabled(aio->rec)) {
+	अगर (record__comp_enabled(aio->rec)) अणु
 		size = zstd_compress(aio->rec->session, aio->data + aio->size,
 				     mmap__mmap_len(map) - aio->size,
 				     buf, size);
-	} else {
-		memcpy(aio->data + aio->size, buf, size);
-	}
+	पूर्ण अन्यथा अणु
+		स_नकल(aio->data + aio->size, buf, size);
+	पूर्ण
 
-	if (!aio->size) {
+	अगर (!aio->size) अणु
 		/*
 		 * Increment map->refcount to guard map->aio.data[] buffer
 		 * from premature deallocation because map object can be
-		 * released earlier than aio write request started on
+		 * released earlier than aio ग_लिखो request started on
 		 * map->aio.data[] buffer is complete.
 		 *
-		 * perf_mmap__put() is done at record__aio_complete()
+		 * perf_mmap__put() is करोne at record__aio_complete()
 		 * after started aio request completion or at record__aio_push()
-		 * if the request failed to start.
+		 * अगर the request failed to start.
 		 */
 		perf_mmap__get(&map->core);
-	}
+	पूर्ण
 
 	aio->size += size;
 
-	return size;
-}
+	वापस size;
+पूर्ण
 
-static int record__aio_push(struct record *rec, struct mmap *map, off_t *off)
-{
-	int ret, idx;
-	int trace_fd = rec->session->data->file.fd;
-	struct record_aio aio = { .rec = rec, .size = 0 };
+अटल पूर्णांक record__aio_push(काष्ठा record *rec, काष्ठा mmap *map, off_t *off)
+अणु
+	पूर्णांक ret, idx;
+	पूर्णांक trace_fd = rec->session->data->file.fd;
+	काष्ठा record_aio aio = अणु .rec = rec, .size = 0 पूर्ण;
 
 	/*
-	 * Call record__aio_sync() to wait till map->aio.data[] buffer
-	 * becomes available after previous aio write operation.
+	 * Call record__aio_sync() to रुको till map->aio.data[] buffer
+	 * becomes available after previous aio ग_लिखो operation.
 	 */
 
 	idx = record__aio_sync(map, false);
 	aio.data = map->aio.data[idx];
 	ret = perf_mmap__push(map, &aio, record__aio_pushfn);
-	if (ret != 0) /* ret > 0 - no data, ret < 0 - error */
-		return ret;
+	अगर (ret != 0) /* ret > 0 - no data, ret < 0 - error */
+		वापस ret;
 
 	rec->samples++;
-	ret = record__aio_write(&(map->aio.cblocks[idx]), trace_fd, aio.data, aio.size, *off);
-	if (!ret) {
+	ret = record__aio_ग_लिखो(&(map->aio.cblocks[idx]), trace_fd, aio.data, aio.size, *off);
+	अगर (!ret) अणु
 		*off += aio.size;
 		rec->bytes_written += aio.size;
-		if (switch_output_size(rec))
-			trigger_hit(&switch_output_trigger);
-	} else {
+		अगर (चयन_output_size(rec))
+			trigger_hit(&चयन_output_trigger);
+	पूर्ण अन्यथा अणु
 		/*
 		 * Decrement map->refcount incremented in record__aio_pushfn()
-		 * back if record__aio_write() operation failed to start, otherwise
+		 * back अगर record__aio_ग_लिखो() operation failed to start, otherwise
 		 * map->refcount is decremented in record__aio_complete() after
-		 * aio write operation finishes successfully.
+		 * aio ग_लिखो operation finishes successfully.
 		 */
 		perf_mmap__put(&map->core);
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static off_t record__aio_get_pos(int trace_fd)
-{
-	return lseek(trace_fd, 0, SEEK_CUR);
-}
+अटल off_t record__aio_get_pos(पूर्णांक trace_fd)
+अणु
+	वापस lseek(trace_fd, 0, प्रस्तुत_से);
+पूर्ण
 
-static void record__aio_set_pos(int trace_fd, off_t pos)
-{
-	lseek(trace_fd, pos, SEEK_SET);
-}
+अटल व्योम record__aio_set_pos(पूर्णांक trace_fd, off_t pos)
+अणु
+	lseek(trace_fd, pos, शुरू_से);
+पूर्ण
 
-static void record__aio_mmap_read_sync(struct record *rec)
-{
-	int i;
-	struct evlist *evlist = rec->evlist;
-	struct mmap *maps = evlist->mmap;
+अटल व्योम record__aio_mmap_पढ़ो_sync(काष्ठा record *rec)
+अणु
+	पूर्णांक i;
+	काष्ठा evlist *evlist = rec->evlist;
+	काष्ठा mmap *maps = evlist->mmap;
 
-	if (!record__aio_enabled(rec))
-		return;
+	अगर (!record__aio_enabled(rec))
+		वापस;
 
-	for (i = 0; i < evlist->core.nr_mmaps; i++) {
-		struct mmap *map = &maps[i];
+	क्रम (i = 0; i < evlist->core.nr_mmaps; i++) अणु
+		काष्ठा mmap *map = &maps[i];
 
-		if (map->core.base)
+		अगर (map->core.base)
 			record__aio_sync(map, true);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int nr_cblocks_default = 1;
-static int nr_cblocks_max = 4;
+अटल पूर्णांक nr_cblocks_शेष = 1;
+अटल पूर्णांक nr_cblocks_max = 4;
 
-static int record__aio_parse(const struct option *opt,
-			     const char *str,
-			     int unset)
-{
-	struct record_opts *opts = (struct record_opts *)opt->value;
+अटल पूर्णांक record__aio_parse(स्थिर काष्ठा option *opt,
+			     स्थिर अक्षर *str,
+			     पूर्णांक unset)
+अणु
+	काष्ठा record_opts *opts = (काष्ठा record_opts *)opt->value;
 
-	if (unset) {
+	अगर (unset) अणु
 		opts->nr_cblocks = 0;
-	} else {
-		if (str)
-			opts->nr_cblocks = strtol(str, NULL, 0);
-		if (!opts->nr_cblocks)
-			opts->nr_cblocks = nr_cblocks_default;
-	}
+	पूर्ण अन्यथा अणु
+		अगर (str)
+			opts->nr_cblocks = म_से_दीर्घ(str, शून्य, 0);
+		अगर (!opts->nr_cblocks)
+			opts->nr_cblocks = nr_cblocks_शेष;
+	पूर्ण
 
-	return 0;
-}
-#else /* HAVE_AIO_SUPPORT */
-static int nr_cblocks_max = 0;
+	वापस 0;
+पूर्ण
+#अन्यथा /* HAVE_AIO_SUPPORT */
+अटल पूर्णांक nr_cblocks_max = 0;
 
-static int record__aio_push(struct record *rec __maybe_unused, struct mmap *map __maybe_unused,
+अटल पूर्णांक record__aio_push(काष्ठा record *rec __maybe_unused, काष्ठा mmap *map __maybe_unused,
 			    off_t *off __maybe_unused)
-{
-	return -1;
-}
+अणु
+	वापस -1;
+पूर्ण
 
-static off_t record__aio_get_pos(int trace_fd __maybe_unused)
-{
-	return -1;
-}
+अटल off_t record__aio_get_pos(पूर्णांक trace_fd __maybe_unused)
+अणु
+	वापस -1;
+पूर्ण
 
-static void record__aio_set_pos(int trace_fd __maybe_unused, off_t pos __maybe_unused)
-{
-}
+अटल व्योम record__aio_set_pos(पूर्णांक trace_fd __maybe_unused, off_t pos __maybe_unused)
+अणु
+पूर्ण
 
-static void record__aio_mmap_read_sync(struct record *rec __maybe_unused)
-{
-}
-#endif
+अटल व्योम record__aio_mmap_पढ़ो_sync(काष्ठा record *rec __maybe_unused)
+अणु
+पूर्ण
+#पूर्ण_अगर
 
-static int record__aio_enabled(struct record *rec)
-{
-	return rec->opts.nr_cblocks > 0;
-}
+अटल पूर्णांक record__aio_enabled(काष्ठा record *rec)
+अणु
+	वापस rec->opts.nr_cblocks > 0;
+पूर्ण
 
-#define MMAP_FLUSH_DEFAULT 1
-static int record__mmap_flush_parse(const struct option *opt,
-				    const char *str,
-				    int unset)
-{
-	int flush_max;
-	struct record_opts *opts = (struct record_opts *)opt->value;
-	static struct parse_tag tags[] = {
-			{ .tag  = 'B', .mult = 1       },
-			{ .tag  = 'K', .mult = 1 << 10 },
-			{ .tag  = 'M', .mult = 1 << 20 },
-			{ .tag  = 'G', .mult = 1 << 30 },
-			{ .tag  = 0 },
-	};
+#घोषणा MMAP_FLUSH_DEFAULT 1
+अटल पूर्णांक record__mmap_flush_parse(स्थिर काष्ठा option *opt,
+				    स्थिर अक्षर *str,
+				    पूर्णांक unset)
+अणु
+	पूर्णांक flush_max;
+	काष्ठा record_opts *opts = (काष्ठा record_opts *)opt->value;
+	अटल काष्ठा parse_tag tags[] = अणु
+			अणु .tag  = 'B', .mult = 1       पूर्ण,
+			अणु .tag  = 'K', .mult = 1 << 10 पूर्ण,
+			अणु .tag  = 'M', .mult = 1 << 20 पूर्ण,
+			अणु .tag  = 'G', .mult = 1 << 30 पूर्ण,
+			अणु .tag  = 0 पूर्ण,
+	पूर्ण;
 
-	if (unset)
-		return 0;
+	अगर (unset)
+		वापस 0;
 
-	if (str) {
+	अगर (str) अणु
 		opts->mmap_flush = parse_tag_value(str, tags);
-		if (opts->mmap_flush == (int)-1)
-			opts->mmap_flush = strtol(str, NULL, 0);
-	}
+		अगर (opts->mmap_flush == (पूर्णांक)-1)
+			opts->mmap_flush = म_से_दीर्घ(str, शून्य, 0);
+	पूर्ण
 
-	if (!opts->mmap_flush)
+	अगर (!opts->mmap_flush)
 		opts->mmap_flush = MMAP_FLUSH_DEFAULT;
 
 	flush_max = evlist__mmap_size(opts->mmap_pages);
 	flush_max /= 4;
-	if (opts->mmap_flush > flush_max)
+	अगर (opts->mmap_flush > flush_max)
 		opts->mmap_flush = flush_max;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#ifdef HAVE_ZSTD_SUPPORT
-static unsigned int comp_level_default = 1;
+#अगर_घोषित HAVE_ZSTD_SUPPORT
+अटल अचिन्हित पूर्णांक comp_level_शेष = 1;
 
-static int record__parse_comp_level(const struct option *opt, const char *str, int unset)
-{
-	struct record_opts *opts = opt->value;
+अटल पूर्णांक record__parse_comp_level(स्थिर काष्ठा option *opt, स्थिर अक्षर *str, पूर्णांक unset)
+अणु
+	काष्ठा record_opts *opts = opt->value;
 
-	if (unset) {
+	अगर (unset) अणु
 		opts->comp_level = 0;
-	} else {
-		if (str)
-			opts->comp_level = strtol(str, NULL, 0);
-		if (!opts->comp_level)
-			opts->comp_level = comp_level_default;
-	}
+	पूर्ण अन्यथा अणु
+		अगर (str)
+			opts->comp_level = म_से_दीर्घ(str, शून्य, 0);
+		अगर (!opts->comp_level)
+			opts->comp_level = comp_level_शेष;
+	पूर्ण
 
-	return 0;
-}
-#endif
-static unsigned int comp_level_max = 22;
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
+अटल अचिन्हित पूर्णांक comp_level_max = 22;
 
-static int record__comp_enabled(struct record *rec)
-{
-	return rec->opts.comp_level > 0;
-}
+अटल पूर्णांक record__comp_enabled(काष्ठा record *rec)
+अणु
+	वापस rec->opts.comp_level > 0;
+पूर्ण
 
-static int process_synthesized_event(struct perf_tool *tool,
-				     union perf_event *event,
-				     struct perf_sample *sample __maybe_unused,
-				     struct machine *machine __maybe_unused)
-{
-	struct record *rec = container_of(tool, struct record, tool);
-	return record__write(rec, NULL, event, event->header.size);
-}
+अटल पूर्णांक process_synthesized_event(काष्ठा perf_tool *tool,
+				     जोड़ perf_event *event,
+				     काष्ठा perf_sample *sample __maybe_unused,
+				     काष्ठा machine *machine __maybe_unused)
+अणु
+	काष्ठा record *rec = container_of(tool, काष्ठा record, tool);
+	वापस record__ग_लिखो(rec, शून्य, event, event->header.size);
+पूर्ण
 
-static int process_locked_synthesized_event(struct perf_tool *tool,
-				     union perf_event *event,
-				     struct perf_sample *sample __maybe_unused,
-				     struct machine *machine __maybe_unused)
-{
-	static pthread_mutex_t synth_lock = PTHREAD_MUTEX_INITIALIZER;
-	int ret;
+अटल पूर्णांक process_locked_synthesized_event(काष्ठा perf_tool *tool,
+				     जोड़ perf_event *event,
+				     काष्ठा perf_sample *sample __maybe_unused,
+				     काष्ठा machine *machine __maybe_unused)
+अणु
+	अटल pthपढ़ो_mutex_t synth_lock = PTHREAD_MUTEX_INITIALIZER;
+	पूर्णांक ret;
 
-	pthread_mutex_lock(&synth_lock);
+	pthपढ़ो_mutex_lock(&synth_lock);
 	ret = process_synthesized_event(tool, event, sample, machine);
-	pthread_mutex_unlock(&synth_lock);
-	return ret;
-}
+	pthपढ़ो_mutex_unlock(&synth_lock);
+	वापस ret;
+पूर्ण
 
-static int record__pushfn(struct mmap *map, void *to, void *bf, size_t size)
-{
-	struct record *rec = to;
+अटल पूर्णांक record__pushfn(काष्ठा mmap *map, व्योम *to, व्योम *bf, माप_प्रकार size)
+अणु
+	काष्ठा record *rec = to;
 
-	if (record__comp_enabled(rec)) {
+	अगर (record__comp_enabled(rec)) अणु
 		size = zstd_compress(rec->session, map->data, mmap__mmap_len(map), bf, size);
 		bf   = map->data;
-	}
+	पूर्ण
 
 	rec->samples++;
-	return record__write(rec, map, bf, size);
-}
+	वापस record__ग_लिखो(rec, map, bf, size);
+पूर्ण
 
-static volatile int signr = -1;
-static volatile int child_finished;
-#ifdef HAVE_EVENTFD_SUPPORT
-static int done_fd = -1;
-#endif
+अटल अस्थिर पूर्णांक signr = -1;
+अटल अस्थिर पूर्णांक child_finished;
+#अगर_घोषित HAVE_EVENTFD_SUPPORT
+अटल पूर्णांक करोne_fd = -1;
+#पूर्ण_अगर
 
-static void sig_handler(int sig)
-{
-	if (sig == SIGCHLD)
+अटल व्योम sig_handler(पूर्णांक sig)
+अणु
+	अगर (sig == SIGCHLD)
 		child_finished = 1;
-	else
+	अन्यथा
 		signr = sig;
 
-	done = 1;
-#ifdef HAVE_EVENTFD_SUPPORT
-{
-	u64 tmp = 1;
+	करोne = 1;
+#अगर_घोषित HAVE_EVENTFD_SUPPORT
+अणु
+	u64 पंचांगp = 1;
 	/*
-	 * It is possible for this signal handler to run after done is checked
-	 * in the main loop, but before the perf counter fds are polled. If this
-	 * happens, the poll() will continue to wait even though done is set,
-	 * and will only break out if either another signal is received, or the
-	 * counters are ready for read. To ensure the poll() doesn't sleep when
-	 * done is set, use an eventfd (done_fd) to wake up the poll().
+	 * It is possible क्रम this संकेत handler to run after करोne is checked
+	 * in the मुख्य loop, but beक्रमe the perf counter fds are polled. If this
+	 * happens, the poll() will जारी to रुको even though करोne is set,
+	 * and will only अवरोध out अगर either another संकेत is received, or the
+	 * counters are पढ़ोy क्रम पढ़ो. To ensure the poll() करोesn't sleep when
+	 * करोne is set, use an eventfd (करोne_fd) to wake up the poll().
 	 */
-	if (write(done_fd, &tmp, sizeof(tmp)) < 0)
+	अगर (ग_लिखो(करोne_fd, &पंचांगp, माप(पंचांगp)) < 0)
 		pr_err("failed to signal wakeup fd, error: %m\n");
-}
-#endif // HAVE_EVENTFD_SUPPORT
-}
+पूर्ण
+#पूर्ण_अगर // HAVE_EVENTFD_SUPPORT
+पूर्ण
 
-static void sigsegv_handler(int sig)
-{
+अटल व्योम sigsegv_handler(पूर्णांक sig)
+अणु
 	perf_hooks__recover();
 	sighandler_dump_stack(sig);
-}
+पूर्ण
 
-static void record__sig_exit(void)
-{
-	if (signr == -1)
-		return;
+अटल व्योम record__sig_निकास(व्योम)
+अणु
+	अगर (signr == -1)
+		वापस;
 
-	signal(signr, SIG_DFL);
-	raise(signr);
-}
+	संकेत(signr, संक_पूर्व);
+	उठाओ(signr);
+पूर्ण
 
-#ifdef HAVE_AUXTRACE_SUPPORT
+#अगर_घोषित HAVE_AUXTRACE_SUPPORT
 
-static int record__process_auxtrace(struct perf_tool *tool,
-				    struct mmap *map,
-				    union perf_event *event, void *data1,
-				    size_t len1, void *data2, size_t len2)
-{
-	struct record *rec = container_of(tool, struct record, tool);
-	struct perf_data *data = &rec->data;
-	size_t padding;
-	u8 pad[8] = {0};
+अटल पूर्णांक record__process_auxtrace(काष्ठा perf_tool *tool,
+				    काष्ठा mmap *map,
+				    जोड़ perf_event *event, व्योम *data1,
+				    माप_प्रकार len1, व्योम *data2, माप_प्रकार len2)
+अणु
+	काष्ठा record *rec = container_of(tool, काष्ठा record, tool);
+	काष्ठा perf_data *data = &rec->data;
+	माप_प्रकार padding;
+	u8 pad[8] = अणु0पूर्ण;
 
-	if (!perf_data__is_pipe(data) && perf_data__is_single_file(data)) {
+	अगर (!perf_data__is_pipe(data) && perf_data__is_single_file(data)) अणु
 		off_t file_offset;
-		int fd = perf_data__fd(data);
-		int err;
+		पूर्णांक fd = perf_data__fd(data);
+		पूर्णांक err;
 
-		file_offset = lseek(fd, 0, SEEK_CUR);
-		if (file_offset == -1)
-			return -1;
+		file_offset = lseek(fd, 0, प्रस्तुत_से);
+		अगर (file_offset == -1)
+			वापस -1;
 		err = auxtrace_index__auxtrace_event(&rec->session->auxtrace_index,
 						     event, file_offset);
-		if (err)
-			return err;
-	}
+		अगर (err)
+			वापस err;
+	पूर्ण
 
-	/* event.auxtrace.size includes padding, see __auxtrace_mmap__read() */
+	/* event.auxtrace.size includes padding, see __auxtrace_mmap__पढ़ो() */
 	padding = (len1 + len2) & 7;
-	if (padding)
+	अगर (padding)
 		padding = 8 - padding;
 
-	record__write(rec, map, event, event->header.size);
-	record__write(rec, map, data1, len1);
-	if (len2)
-		record__write(rec, map, data2, len2);
-	record__write(rec, map, &pad, padding);
+	record__ग_लिखो(rec, map, event, event->header.size);
+	record__ग_लिखो(rec, map, data1, len1);
+	अगर (len2)
+		record__ग_लिखो(rec, map, data2, len2);
+	record__ग_लिखो(rec, map, &pad, padding);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int record__auxtrace_mmap_read(struct record *rec,
-				      struct mmap *map)
-{
-	int ret;
+अटल पूर्णांक record__auxtrace_mmap_पढ़ो(काष्ठा record *rec,
+				      काष्ठा mmap *map)
+अणु
+	पूर्णांक ret;
 
-	ret = auxtrace_mmap__read(map, rec->itr, &rec->tool,
+	ret = auxtrace_mmap__पढ़ो(map, rec->itr, &rec->tool,
 				  record__process_auxtrace);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	if (ret)
+	अगर (ret)
 		rec->samples++;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int record__auxtrace_mmap_read_snapshot(struct record *rec,
-					       struct mmap *map)
-{
-	int ret;
+अटल पूर्णांक record__auxtrace_mmap_पढ़ो_snapshot(काष्ठा record *rec,
+					       काष्ठा mmap *map)
+अणु
+	पूर्णांक ret;
 
-	ret = auxtrace_mmap__read_snapshot(map, rec->itr, &rec->tool,
+	ret = auxtrace_mmap__पढ़ो_snapshot(map, rec->itr, &rec->tool,
 					   record__process_auxtrace,
 					   rec->opts.auxtrace_snapshot_size);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	if (ret)
+	अगर (ret)
 		rec->samples++;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int record__auxtrace_read_snapshot_all(struct record *rec)
-{
-	int i;
-	int rc = 0;
+अटल पूर्णांक record__auxtrace_पढ़ो_snapshot_all(काष्ठा record *rec)
+अणु
+	पूर्णांक i;
+	पूर्णांक rc = 0;
 
-	for (i = 0; i < rec->evlist->core.nr_mmaps; i++) {
-		struct mmap *map = &rec->evlist->mmap[i];
+	क्रम (i = 0; i < rec->evlist->core.nr_mmaps; i++) अणु
+		काष्ठा mmap *map = &rec->evlist->mmap[i];
 
-		if (!map->auxtrace_mmap.base)
-			continue;
+		अगर (!map->auxtrace_mmap.base)
+			जारी;
 
-		if (record__auxtrace_mmap_read_snapshot(rec, map) != 0) {
+		अगर (record__auxtrace_mmap_पढ़ो_snapshot(rec, map) != 0) अणु
 			rc = -1;
-			goto out;
-		}
-	}
+			जाओ out;
+		पूर्ण
+	पूर्ण
 out:
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static void record__read_auxtrace_snapshot(struct record *rec, bool on_exit)
-{
+अटल व्योम record__पढ़ो_auxtrace_snapshot(काष्ठा record *rec, bool on_निकास)
+अणु
 	pr_debug("Recording AUX area tracing snapshot\n");
-	if (record__auxtrace_read_snapshot_all(rec) < 0) {
+	अगर (record__auxtrace_पढ़ो_snapshot_all(rec) < 0) अणु
 		trigger_error(&auxtrace_snapshot_trigger);
-	} else {
-		if (auxtrace_record__snapshot_finish(rec->itr, on_exit))
+	पूर्ण अन्यथा अणु
+		अगर (auxtrace_record__snapshot_finish(rec->itr, on_निकास))
 			trigger_error(&auxtrace_snapshot_trigger);
-		else
-			trigger_ready(&auxtrace_snapshot_trigger);
-	}
-}
+		अन्यथा
+			trigger_पढ़ोy(&auxtrace_snapshot_trigger);
+	पूर्ण
+पूर्ण
 
-static int record__auxtrace_snapshot_exit(struct record *rec)
-{
-	if (trigger_is_error(&auxtrace_snapshot_trigger))
-		return 0;
+अटल पूर्णांक record__auxtrace_snapshot_निकास(काष्ठा record *rec)
+अणु
+	अगर (trigger_is_error(&auxtrace_snapshot_trigger))
+		वापस 0;
 
-	if (!auxtrace_record__snapshot_started &&
+	अगर (!auxtrace_record__snapshot_started &&
 	    auxtrace_record__snapshot_start(rec->itr))
-		return -1;
+		वापस -1;
 
-	record__read_auxtrace_snapshot(rec, true);
-	if (trigger_is_error(&auxtrace_snapshot_trigger))
-		return -1;
+	record__पढ़ो_auxtrace_snapshot(rec, true);
+	अगर (trigger_is_error(&auxtrace_snapshot_trigger))
+		वापस -1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int record__auxtrace_init(struct record *rec)
-{
-	int err;
+अटल पूर्णांक record__auxtrace_init(काष्ठा record *rec)
+अणु
+	पूर्णांक err;
 
-	if (!rec->itr) {
+	अगर (!rec->itr) अणु
 		rec->itr = auxtrace_record__init(rec->evlist, &err);
-		if (err)
-			return err;
-	}
+		अगर (err)
+			वापस err;
+	पूर्ण
 
 	err = auxtrace_parse_snapshot_options(rec->itr, &rec->opts,
 					      rec->opts.auxtrace_snapshot_opts);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	err = auxtrace_parse_sample_options(rec->itr, rec->evlist, &rec->opts,
 					    rec->opts.auxtrace_sample_opts);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	auxtrace_regroup_aux_output(rec->evlist);
 
-	return auxtrace_parse_filters(rec->evlist);
-}
+	वापस auxtrace_parse_filters(rec->evlist);
+पूर्ण
 
-#else
+#अन्यथा
 
-static inline
-int record__auxtrace_mmap_read(struct record *rec __maybe_unused,
-			       struct mmap *map __maybe_unused)
-{
-	return 0;
-}
+अटल अंतरभूत
+पूर्णांक record__auxtrace_mmap_पढ़ो(काष्ठा record *rec __maybe_unused,
+			       काष्ठा mmap *map __maybe_unused)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline
-void record__read_auxtrace_snapshot(struct record *rec __maybe_unused,
-				    bool on_exit __maybe_unused)
-{
-}
+अटल अंतरभूत
+व्योम record__पढ़ो_auxtrace_snapshot(काष्ठा record *rec __maybe_unused,
+				    bool on_निकास __maybe_unused)
+अणु
+पूर्ण
 
-static inline
-int auxtrace_record__snapshot_start(struct auxtrace_record *itr __maybe_unused)
-{
-	return 0;
-}
+अटल अंतरभूत
+पूर्णांक auxtrace_record__snapshot_start(काष्ठा auxtrace_record *itr __maybe_unused)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline
-int record__auxtrace_snapshot_exit(struct record *rec __maybe_unused)
-{
-	return 0;
-}
+अटल अंतरभूत
+पूर्णांक record__auxtrace_snapshot_निकास(काष्ठा record *rec __maybe_unused)
+अणु
+	वापस 0;
+पूर्ण
 
-static int record__auxtrace_init(struct record *rec __maybe_unused)
-{
-	return 0;
-}
+अटल पूर्णांक record__auxtrace_init(काष्ठा record *rec __maybe_unused)
+अणु
+	वापस 0;
+पूर्ण
 
-#endif
+#पूर्ण_अगर
 
-static int record__config_text_poke(struct evlist *evlist)
-{
-	struct evsel *evsel;
-	int err;
+अटल पूर्णांक record__config_text_poke(काष्ठा evlist *evlist)
+अणु
+	काष्ठा evsel *evsel;
+	पूर्णांक err;
 
-	/* Nothing to do if text poke is already configured */
-	evlist__for_each_entry(evlist, evsel) {
-		if (evsel->core.attr.text_poke)
-			return 0;
-	}
+	/* Nothing to करो अगर text poke is alपढ़ोy configured */
+	evlist__क्रम_each_entry(evlist, evsel) अणु
+		अगर (evsel->core.attr.text_poke)
+			वापस 0;
+	पूर्ण
 
-	err = parse_events(evlist, "dummy:u", NULL);
-	if (err)
-		return err;
+	err = parse_events(evlist, "dummy:u", शून्य);
+	अगर (err)
+		वापस err;
 
 	evsel = evlist__last(evlist);
 
@@ -794,153 +795,153 @@ static int record__config_text_poke(struct evlist *evlist)
 	evsel->core.attr.text_poke = 1;
 	evsel->core.attr.ksymbol = 1;
 
-	evsel->core.system_wide = true;
+	evsel->core.प्रणाली_wide = true;
 	evsel->no_aux_samples = true;
 	evsel->immediate = true;
 
 	/* Text poke must be collected on all CPUs */
 	perf_cpu_map__put(evsel->core.own_cpus);
-	evsel->core.own_cpus = perf_cpu_map__new(NULL);
+	evsel->core.own_cpus = perf_cpu_map__new(शून्य);
 	perf_cpu_map__put(evsel->core.cpus);
 	evsel->core.cpus = perf_cpu_map__get(evsel->core.own_cpus);
 
 	evsel__set_sample_bit(evsel, TIME);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static bool record__kcore_readable(struct machine *machine)
-{
-	char kcore[PATH_MAX];
-	int fd;
+अटल bool record__kcore_पढ़ोable(काष्ठा machine *machine)
+अणु
+	अक्षर kcore[PATH_MAX];
+	पूर्णांक fd;
 
-	scnprintf(kcore, sizeof(kcore), "%s/proc/kcore", machine->root_dir);
+	scnम_लिखो(kcore, माप(kcore), "%s/proc/kcore", machine->root_dir);
 
-	fd = open(kcore, O_RDONLY);
-	if (fd < 0)
-		return false;
+	fd = खोलो(kcore, O_RDONLY);
+	अगर (fd < 0)
+		वापस false;
 
-	close(fd);
+	बंद(fd);
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static int record__kcore_copy(struct machine *machine, struct perf_data *data)
-{
-	char from_dir[PATH_MAX];
-	char kcore_dir[PATH_MAX];
-	int ret;
+अटल पूर्णांक record__kcore_copy(काष्ठा machine *machine, काष्ठा perf_data *data)
+अणु
+	अक्षर from_dir[PATH_MAX];
+	अक्षर kcore_dir[PATH_MAX];
+	पूर्णांक ret;
 
-	snprintf(from_dir, sizeof(from_dir), "%s/proc", machine->root_dir);
+	snम_लिखो(from_dir, माप(from_dir), "%s/proc", machine->root_dir);
 
-	ret = perf_data__make_kcore_dir(data, kcore_dir, sizeof(kcore_dir));
-	if (ret)
-		return ret;
+	ret = perf_data__make_kcore_dir(data, kcore_dir, माप(kcore_dir));
+	अगर (ret)
+		वापस ret;
 
-	return kcore_copy(from_dir, kcore_dir);
-}
+	वापस kcore_copy(from_dir, kcore_dir);
+पूर्ण
 
-static int record__mmap_evlist(struct record *rec,
-			       struct evlist *evlist)
-{
-	struct record_opts *opts = &rec->opts;
-	bool auxtrace_overwrite = opts->auxtrace_snapshot_mode ||
+अटल पूर्णांक record__mmap_evlist(काष्ठा record *rec,
+			       काष्ठा evlist *evlist)
+अणु
+	काष्ठा record_opts *opts = &rec->opts;
+	bool auxtrace_overग_लिखो = opts->auxtrace_snapshot_mode ||
 				  opts->auxtrace_sample_mode;
-	char msg[512];
+	अक्षर msg[512];
 
-	if (opts->affinity != PERF_AFFINITY_SYS)
+	अगर (opts->affinity != PERF_AFFINITY_SYS)
 		cpu__setup_cpunode_map();
 
-	if (evlist__mmap_ex(evlist, opts->mmap_pages,
+	अगर (evlist__mmap_ex(evlist, opts->mmap_pages,
 				 opts->auxtrace_mmap_pages,
-				 auxtrace_overwrite,
+				 auxtrace_overग_लिखो,
 				 opts->nr_cblocks, opts->affinity,
-				 opts->mmap_flush, opts->comp_level) < 0) {
-		if (errno == EPERM) {
+				 opts->mmap_flush, opts->comp_level) < 0) अणु
+		अगर (त्रुटि_सं == EPERM) अणु
 			pr_err("Permission error mapping pages.\n"
 			       "Consider increasing "
 			       "/proc/sys/kernel/perf_event_mlock_kb,\n"
 			       "or try again with a smaller value of -m/--mmap_pages.\n"
 			       "(current value: %u,%u)\n",
 			       opts->mmap_pages, opts->auxtrace_mmap_pages);
-			return -errno;
-		} else {
-			pr_err("failed to mmap with %d (%s)\n", errno,
-				str_error_r(errno, msg, sizeof(msg)));
-			if (errno)
-				return -errno;
-			else
-				return -EINVAL;
-		}
-	}
-	return 0;
-}
+			वापस -त्रुटि_सं;
+		पूर्ण अन्यथा अणु
+			pr_err("failed to mmap with %d (%s)\n", त्रुटि_सं,
+				str_error_r(त्रुटि_सं, msg, माप(msg)));
+			अगर (त्रुटि_सं)
+				वापस -त्रुटि_सं;
+			अन्यथा
+				वापस -EINVAL;
+		पूर्ण
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int record__mmap(struct record *rec)
-{
-	return record__mmap_evlist(rec, rec->evlist);
-}
+अटल पूर्णांक record__mmap(काष्ठा record *rec)
+अणु
+	वापस record__mmap_evlist(rec, rec->evlist);
+पूर्ण
 
-static int record__open(struct record *rec)
-{
-	char msg[BUFSIZ];
-	struct evsel *pos;
-	struct evlist *evlist = rec->evlist;
-	struct perf_session *session = rec->session;
-	struct record_opts *opts = &rec->opts;
-	int rc = 0;
+अटल पूर्णांक record__खोलो(काष्ठा record *rec)
+अणु
+	अक्षर msg[बफ_मान];
+	काष्ठा evsel *pos;
+	काष्ठा evlist *evlist = rec->evlist;
+	काष्ठा perf_session *session = rec->session;
+	काष्ठा record_opts *opts = &rec->opts;
+	पूर्णांक rc = 0;
 
 	/*
-	 * For initial_delay or system wide, we need to add a dummy event so
-	 * that we can track PERF_RECORD_MMAP to cover the delay of waiting or
+	 * For initial_delay or प्रणाली wide, we need to add a dummy event so
+	 * that we can track PERF_RECORD_MMAP to cover the delay of रुकोing or
 	 * event synthesis.
 	 */
-	if (opts->initial_delay || target__has_cpu(&opts->target)) {
+	अगर (opts->initial_delay || target__has_cpu(&opts->target)) अणु
 		pos = evlist__get_tracking_event(evlist);
-		if (!evsel__is_dummy_event(pos)) {
+		अगर (!evsel__is_dummy_event(pos)) अणु
 			/* Set up dummy event. */
-			if (evlist__add_dummy(evlist))
-				return -ENOMEM;
+			अगर (evlist__add_dummy(evlist))
+				वापस -ENOMEM;
 			pos = evlist__last(evlist);
 			evlist__set_tracking_event(evlist, pos);
-		}
+		पूर्ण
 
 		/*
-		 * Enable the dummy event when the process is forked for
-		 * initial_delay, immediately for system wide.
+		 * Enable the dummy event when the process is विभाजनed क्रम
+		 * initial_delay, immediately क्रम प्रणाली wide.
 		 */
-		if (opts->initial_delay && !pos->immediate)
+		अगर (opts->initial_delay && !pos->immediate)
 			pos->core.attr.enable_on_exec = 1;
-		else
+		अन्यथा
 			pos->immediate = 1;
-	}
+	पूर्ण
 
 	evlist__config(evlist, opts, &callchain_param);
 
-	evlist__for_each_entry(evlist, pos) {
+	evlist__क्रम_each_entry(evlist, pos) अणु
 try_again:
-		if (evsel__open(pos, pos->core.cpus, pos->core.threads) < 0) {
-			if (evsel__fallback(pos, errno, msg, sizeof(msg))) {
-				if (verbose > 0)
+		अगर (evsel__खोलो(pos, pos->core.cpus, pos->core.thपढ़ोs) < 0) अणु
+			अगर (evsel__fallback(pos, त्रुटि_सं, msg, माप(msg))) अणु
+				अगर (verbose > 0)
 					ui__warning("%s\n", msg);
-				goto try_again;
-			}
-			if ((errno == EINVAL || errno == EBADF) &&
+				जाओ try_again;
+			पूर्ण
+			अगर ((त्रुटि_सं == EINVAL || त्रुटि_सं == EBADF) &&
 			    pos->leader != pos &&
-			    pos->weak_group) {
+			    pos->weak_group) अणु
 			        pos = evlist__reset_weak_group(evlist, pos, true);
-				goto try_again;
-			}
-			rc = -errno;
-			evsel__open_strerror(pos, &opts->target, errno, msg, sizeof(msg));
+				जाओ try_again;
+			पूर्ण
+			rc = -त्रुटि_सं;
+			evsel__खोलो_म_त्रुटि(pos, &opts->target, त्रुटि_सं, msg, माप(msg));
 			ui__error("%s\n", msg);
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
 		pos->supported = true;
-	}
+	पूर्ण
 
-	if (symbol_conf.kptr_restrict && !evlist__exclude_kernel(evlist)) {
+	अगर (symbol_conf.kptr_restrict && !evlist__exclude_kernel(evlist)) अणु
 		pr_warning(
 "WARNING: Kernel address maps (/proc/{kallsyms,modules}) are restricted,\n"
 "check /proc/sys/kernel/kptr_restrict and /proc/sys/kernel/perf_event_paranoid.\n\n"
@@ -949,56 +950,56 @@ try_again:
 "Samples in kernel modules won't be resolved at all.\n\n"
 "If some relocation was applied (e.g. kexec) symbols may be misresolved\n"
 "even with a suitable vmlinux or kallsyms file.\n\n");
-	}
+	पूर्ण
 
-	if (evlist__apply_filters(evlist, &pos)) {
+	अगर (evlist__apply_filters(evlist, &pos)) अणु
 		pr_err("failed to set filter \"%s\" on event %s with %d (%s)\n",
-			pos->filter, evsel__name(pos), errno,
-			str_error_r(errno, msg, sizeof(msg)));
+			pos->filter, evsel__name(pos), त्रुटि_सं,
+			str_error_r(त्रुटि_सं, msg, माप(msg)));
 		rc = -1;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	rc = record__mmap(rec);
-	if (rc)
-		goto out;
+	अगर (rc)
+		जाओ out;
 
 	session->evlist = evlist;
 	perf_session__set_id_hdr_size(session);
 out:
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int process_sample_event(struct perf_tool *tool,
-				union perf_event *event,
-				struct perf_sample *sample,
-				struct evsel *evsel,
-				struct machine *machine)
-{
-	struct record *rec = container_of(tool, struct record, tool);
+अटल पूर्णांक process_sample_event(काष्ठा perf_tool *tool,
+				जोड़ perf_event *event,
+				काष्ठा perf_sample *sample,
+				काष्ठा evsel *evsel,
+				काष्ठा machine *machine)
+अणु
+	काष्ठा record *rec = container_of(tool, काष्ठा record, tool);
 
-	if (rec->evlist->first_sample_time == 0)
-		rec->evlist->first_sample_time = sample->time;
+	अगर (rec->evlist->first_sample_समय == 0)
+		rec->evlist->first_sample_समय = sample->समय;
 
-	rec->evlist->last_sample_time = sample->time;
+	rec->evlist->last_sample_समय = sample->समय;
 
-	if (rec->buildid_all)
-		return 0;
+	अगर (rec->buildid_all)
+		वापस 0;
 
 	rec->samples++;
-	return build_id__mark_dso_hit(tool, event, sample, evsel, machine);
-}
+	वापस build_id__mark_dso_hit(tool, event, sample, evsel, machine);
+पूर्ण
 
-static int process_buildids(struct record *rec)
-{
-	struct perf_session *session = rec->session;
+अटल पूर्णांक process_buildids(काष्ठा record *rec)
+अणु
+	काष्ठा perf_session *session = rec->session;
 
-	if (perf_data__size(&rec->data) == 0)
-		return 0;
+	अगर (perf_data__size(&rec->data) == 0)
+		वापस 0;
 
 	/*
 	 * During this process, it'll load kernel map and replace the
-	 * dso->long_name to a real pathname it found.  In this case
+	 * dso->दीर्घ_name to a real pathname it found.  In this हाल
 	 * we prefer the vmlinux path like
 	 *   /lib/modules/3.16.4/build/vmlinux
 	 *
@@ -1009,86 +1010,86 @@ static int process_buildids(struct record *rec)
 
 	/*
 	 * If --buildid-all is given, it marks all DSO regardless of hits,
-	 * so no need to process samples. But if timestamp_boundary is enabled,
-	 * it still needs to walk on all samples to get the timestamps of
+	 * so no need to process samples. But अगर बारtamp_boundary is enabled,
+	 * it still needs to walk on all samples to get the बारtamps of
 	 * first/last samples.
 	 */
-	if (rec->buildid_all && !rec->timestamp_boundary)
-		rec->tool.sample = NULL;
+	अगर (rec->buildid_all && !rec->बारtamp_boundary)
+		rec->tool.sample = शून्य;
 
-	return perf_session__process_events(session);
-}
+	वापस perf_session__process_events(session);
+पूर्ण
 
-static void perf_event__synthesize_guest_os(struct machine *machine, void *data)
-{
-	int err;
-	struct perf_tool *tool = data;
+अटल व्योम perf_event__synthesize_guest_os(काष्ठा machine *machine, व्योम *data)
+अणु
+	पूर्णांक err;
+	काष्ठा perf_tool *tool = data;
 	/*
-	 *As for guest kernel when processing subcommand record&report,
+	 *As क्रम guest kernel when processing subcommand record&report,
 	 *we arrange module mmap prior to guest kernel mmap and trigger
-	 *a preload dso because default guest module symbols are loaded
+	 *a preload dso because शेष guest module symbols are loaded
 	 *from guest kallsyms instead of /lib/modules/XXX/XXX. This
-	 *method is used to avoid symbol missing when the first addr is
+	 *method is used to aव्योम symbol missing when the first addr is
 	 *in module instead of in guest kernel.
 	 */
 	err = perf_event__synthesize_modules(tool, process_synthesized_event,
 					     machine);
-	if (err < 0)
+	अगर (err < 0)
 		pr_err("Couldn't record guest kernel [%d]'s reference"
 		       " relocation symbol.\n", machine->pid);
 
 	/*
-	 * We use _stext for guest kernel because guest kernel's /proc/kallsyms
-	 * have no _text sometimes.
+	 * We use _stext क्रम guest kernel because guest kernel's /proc/kallsyms
+	 * have no _text someबार.
 	 */
 	err = perf_event__synthesize_kernel_mmap(tool, process_synthesized_event,
 						 machine);
-	if (err < 0)
+	अगर (err < 0)
 		pr_err("Couldn't record guest kernel [%d]'s reference"
 		       " relocation symbol.\n", machine->pid);
-}
+पूर्ण
 
-static struct perf_event_header finished_round_event = {
-	.size = sizeof(struct perf_event_header),
+अटल काष्ठा perf_event_header finished_round_event = अणु
+	.size = माप(काष्ठा perf_event_header),
 	.type = PERF_RECORD_FINISHED_ROUND,
-};
+पूर्ण;
 
-static void record__adjust_affinity(struct record *rec, struct mmap *map)
-{
-	if (rec->opts.affinity != PERF_AFFINITY_SYS &&
-	    !bitmap_equal(rec->affinity_mask.bits, map->affinity_mask.bits,
-			  rec->affinity_mask.nbits)) {
-		bitmap_zero(rec->affinity_mask.bits, rec->affinity_mask.nbits);
-		bitmap_or(rec->affinity_mask.bits, rec->affinity_mask.bits,
+अटल व्योम record__adjust_affinity(काष्ठा record *rec, काष्ठा mmap *map)
+अणु
+	अगर (rec->opts.affinity != PERF_AFFINITY_SYS &&
+	    !biपंचांगap_equal(rec->affinity_mask.bits, map->affinity_mask.bits,
+			  rec->affinity_mask.nbits)) अणु
+		biपंचांगap_zero(rec->affinity_mask.bits, rec->affinity_mask.nbits);
+		biपंचांगap_or(rec->affinity_mask.bits, rec->affinity_mask.bits,
 			  map->affinity_mask.bits, rec->affinity_mask.nbits);
 		sched_setaffinity(0, MMAP_CPU_MASK_BYTES(&rec->affinity_mask),
 				  (cpu_set_t *)rec->affinity_mask.bits);
-		if (verbose == 2)
-			mmap_cpu_mask__scnprintf(&rec->affinity_mask, "thread");
-	}
-}
+		अगर (verbose == 2)
+			mmap_cpu_mask__scnम_लिखो(&rec->affinity_mask, "thread");
+	पूर्ण
+पूर्ण
 
-static size_t process_comp_header(void *record, size_t increment)
-{
-	struct perf_record_compressed *event = record;
-	size_t size = sizeof(*event);
+अटल माप_प्रकार process_comp_header(व्योम *record, माप_प्रकार increment)
+अणु
+	काष्ठा perf_record_compressed *event = record;
+	माप_प्रकार size = माप(*event);
 
-	if (increment) {
+	अगर (increment) अणु
 		event->header.size += increment;
-		return increment;
-	}
+		वापस increment;
+	पूर्ण
 
 	event->header.type = PERF_RECORD_COMPRESSED;
 	event->header.size = size;
 
-	return size;
-}
+	वापस size;
+पूर्ण
 
-static size_t zstd_compress(struct perf_session *session, void *dst, size_t dst_size,
-			    void *src, size_t src_size)
-{
-	size_t compressed;
-	size_t max_record_size = PERF_SAMPLE_MAX_SIZE - sizeof(struct perf_record_compressed) - 1;
+अटल माप_प्रकार zstd_compress(काष्ठा perf_session *session, व्योम *dst, माप_प्रकार dst_size,
+			    व्योम *src, माप_प्रकार src_size)
+अणु
+	माप_प्रकार compressed;
+	माप_प्रकार max_record_size = PERF_SAMPLE_MAX_SIZE - माप(काष्ठा perf_record_compressed) - 1;
 
 	compressed = zstd_compress_stream_to_records(&session->zstd_data, dst, dst_size, src, src_size,
 						     max_record_size, process_comp_header);
@@ -1096,357 +1097,357 @@ static size_t zstd_compress(struct perf_session *session, void *dst, size_t dst_
 	session->bytes_transferred += src_size;
 	session->bytes_compressed  += compressed;
 
-	return compressed;
-}
+	वापस compressed;
+पूर्ण
 
-static int record__mmap_read_evlist(struct record *rec, struct evlist *evlist,
-				    bool overwrite, bool synch)
-{
+अटल पूर्णांक record__mmap_पढ़ो_evlist(काष्ठा record *rec, काष्ठा evlist *evlist,
+				    bool overग_लिखो, bool synch)
+अणु
 	u64 bytes_written = rec->bytes_written;
-	int i;
-	int rc = 0;
-	struct mmap *maps;
-	int trace_fd = rec->data.file.fd;
+	पूर्णांक i;
+	पूर्णांक rc = 0;
+	काष्ठा mmap *maps;
+	पूर्णांक trace_fd = rec->data.file.fd;
 	off_t off = 0;
 
-	if (!evlist)
-		return 0;
+	अगर (!evlist)
+		वापस 0;
 
-	maps = overwrite ? evlist->overwrite_mmap : evlist->mmap;
-	if (!maps)
-		return 0;
+	maps = overग_लिखो ? evlist->overग_लिखो_mmap : evlist->mmap;
+	अगर (!maps)
+		वापस 0;
 
-	if (overwrite && evlist->bkw_mmap_state != BKW_MMAP_DATA_PENDING)
-		return 0;
+	अगर (overग_लिखो && evlist->bkw_mmap_state != BKW_MMAP_DATA_PENDING)
+		वापस 0;
 
-	if (record__aio_enabled(rec))
+	अगर (record__aio_enabled(rec))
 		off = record__aio_get_pos(trace_fd);
 
-	for (i = 0; i < evlist->core.nr_mmaps; i++) {
+	क्रम (i = 0; i < evlist->core.nr_mmaps; i++) अणु
 		u64 flush = 0;
-		struct mmap *map = &maps[i];
+		काष्ठा mmap *map = &maps[i];
 
-		if (map->core.base) {
+		अगर (map->core.base) अणु
 			record__adjust_affinity(rec, map);
-			if (synch) {
+			अगर (synch) अणु
 				flush = map->core.flush;
 				map->core.flush = 1;
-			}
-			if (!record__aio_enabled(rec)) {
-				if (perf_mmap__push(map, rec, record__pushfn) < 0) {
-					if (synch)
+			पूर्ण
+			अगर (!record__aio_enabled(rec)) अणु
+				अगर (perf_mmap__push(map, rec, record__pushfn) < 0) अणु
+					अगर (synch)
 						map->core.flush = flush;
 					rc = -1;
-					goto out;
-				}
-			} else {
-				if (record__aio_push(rec, map, &off) < 0) {
+					जाओ out;
+				पूर्ण
+			पूर्ण अन्यथा अणु
+				अगर (record__aio_push(rec, map, &off) < 0) अणु
 					record__aio_set_pos(trace_fd, off);
-					if (synch)
+					अगर (synch)
 						map->core.flush = flush;
 					rc = -1;
-					goto out;
-				}
-			}
-			if (synch)
+					जाओ out;
+				पूर्ण
+			पूर्ण
+			अगर (synch)
 				map->core.flush = flush;
-		}
+		पूर्ण
 
-		if (map->auxtrace_mmap.base && !rec->opts.auxtrace_snapshot_mode &&
+		अगर (map->auxtrace_mmap.base && !rec->opts.auxtrace_snapshot_mode &&
 		    !rec->opts.auxtrace_sample_mode &&
-		    record__auxtrace_mmap_read(rec, map) != 0) {
+		    record__auxtrace_mmap_पढ़ो(rec, map) != 0) अणु
 			rc = -1;
-			goto out;
-		}
-	}
+			जाओ out;
+		पूर्ण
+	पूर्ण
 
-	if (record__aio_enabled(rec))
+	अगर (record__aio_enabled(rec))
 		record__aio_set_pos(trace_fd, off);
 
 	/*
-	 * Mark the round finished in case we wrote
+	 * Mark the round finished in हाल we wrote
 	 * at least one event.
 	 */
-	if (bytes_written != rec->bytes_written)
-		rc = record__write(rec, NULL, &finished_round_event, sizeof(finished_round_event));
+	अगर (bytes_written != rec->bytes_written)
+		rc = record__ग_लिखो(rec, शून्य, &finished_round_event, माप(finished_round_event));
 
-	if (overwrite)
+	अगर (overग_लिखो)
 		evlist__toggle_bkw_mmap(evlist, BKW_MMAP_EMPTY);
 out:
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int record__mmap_read_all(struct record *rec, bool synch)
-{
-	int err;
+अटल पूर्णांक record__mmap_पढ़ो_all(काष्ठा record *rec, bool synch)
+अणु
+	पूर्णांक err;
 
-	err = record__mmap_read_evlist(rec, rec->evlist, false, synch);
-	if (err)
-		return err;
+	err = record__mmap_पढ़ो_evlist(rec, rec->evlist, false, synch);
+	अगर (err)
+		वापस err;
 
-	return record__mmap_read_evlist(rec, rec->evlist, true, synch);
-}
+	वापस record__mmap_पढ़ो_evlist(rec, rec->evlist, true, synch);
+पूर्ण
 
-static void record__init_features(struct record *rec)
-{
-	struct perf_session *session = rec->session;
-	int feat;
+अटल व्योम record__init_features(काष्ठा record *rec)
+अणु
+	काष्ठा perf_session *session = rec->session;
+	पूर्णांक feat;
 
-	for (feat = HEADER_FIRST_FEATURE; feat < HEADER_LAST_FEATURE; feat++)
+	क्रम (feat = HEADER_FIRST_FEATURE; feat < HEADER_LAST_FEATURE; feat++)
 		perf_header__set_feat(&session->header, feat);
 
-	if (rec->no_buildid)
+	अगर (rec->no_buildid)
 		perf_header__clear_feat(&session->header, HEADER_BUILD_ID);
 
-	if (!have_tracepoints(&rec->evlist->core.entries))
+	अगर (!have_tracepoपूर्णांकs(&rec->evlist->core.entries))
 		perf_header__clear_feat(&session->header, HEADER_TRACING_DATA);
 
-	if (!rec->opts.branch_stack)
+	अगर (!rec->opts.branch_stack)
 		perf_header__clear_feat(&session->header, HEADER_BRANCH_STACK);
 
-	if (!rec->opts.full_auxtrace)
+	अगर (!rec->opts.full_auxtrace)
 		perf_header__clear_feat(&session->header, HEADER_AUXTRACE);
 
-	if (!(rec->opts.use_clockid && rec->opts.clockid_res_ns))
+	अगर (!(rec->opts.use_घड़ीid && rec->opts.घड़ीid_res_ns))
 		perf_header__clear_feat(&session->header, HEADER_CLOCKID);
 
-	if (!rec->opts.use_clockid)
+	अगर (!rec->opts.use_घड़ीid)
 		perf_header__clear_feat(&session->header, HEADER_CLOCK_DATA);
 
-	perf_header__clear_feat(&session->header, HEADER_DIR_FORMAT);
-	if (!record__comp_enabled(rec))
+	perf_header__clear_feat(&session->header, HEADER_सूची_FORMAT);
+	अगर (!record__comp_enabled(rec))
 		perf_header__clear_feat(&session->header, HEADER_COMPRESSED);
 
 	perf_header__clear_feat(&session->header, HEADER_STAT);
-}
+पूर्ण
 
-static void
-record__finish_output(struct record *rec)
-{
-	struct perf_data *data = &rec->data;
-	int fd = perf_data__fd(data);
+अटल व्योम
+record__finish_output(काष्ठा record *rec)
+अणु
+	काष्ठा perf_data *data = &rec->data;
+	पूर्णांक fd = perf_data__fd(data);
 
-	if (data->is_pipe)
-		return;
+	अगर (data->is_pipe)
+		वापस;
 
 	rec->session->header.data_size += rec->bytes_written;
-	data->file.size = lseek(perf_data__fd(data), 0, SEEK_CUR);
+	data->file.size = lseek(perf_data__fd(data), 0, प्रस्तुत_से);
 
-	if (!rec->no_buildid) {
+	अगर (!rec->no_buildid) अणु
 		process_buildids(rec);
 
-		if (rec->buildid_all)
+		अगर (rec->buildid_all)
 			dsos__hit_all(rec->session);
-	}
-	perf_session__write_header(rec->session, rec->evlist, fd, true);
+	पूर्ण
+	perf_session__ग_लिखो_header(rec->session, rec->evlist, fd, true);
 
-	return;
-}
+	वापस;
+पूर्ण
 
-static int record__synthesize_workload(struct record *rec, bool tail)
-{
-	int err;
-	struct perf_thread_map *thread_map;
+अटल पूर्णांक record__synthesize_workload(काष्ठा record *rec, bool tail)
+अणु
+	पूर्णांक err;
+	काष्ठा perf_thपढ़ो_map *thपढ़ो_map;
 
-	if (rec->opts.tail_synthesize != tail)
-		return 0;
+	अगर (rec->opts.tail_synthesize != tail)
+		वापस 0;
 
-	thread_map = thread_map__new_by_tid(rec->evlist->workload.pid);
-	if (thread_map == NULL)
-		return -1;
+	thपढ़ो_map = thपढ़ो_map__new_by_tid(rec->evlist->workload.pid);
+	अगर (thपढ़ो_map == शून्य)
+		वापस -1;
 
-	err = perf_event__synthesize_thread_map(&rec->tool, thread_map,
+	err = perf_event__syntheमाप_प्रकारhपढ़ो_map(&rec->tool, thपढ़ो_map,
 						 process_synthesized_event,
 						 &rec->session->machines.host,
 						 rec->opts.sample_address);
-	perf_thread_map__put(thread_map);
-	return err;
-}
+	perf_thपढ़ो_map__put(thपढ़ो_map);
+	वापस err;
+पूर्ण
 
-static int record__synthesize(struct record *rec, bool tail);
+अटल पूर्णांक record__synthesize(काष्ठा record *rec, bool tail);
 
-static int
-record__switch_output(struct record *rec, bool at_exit)
-{
-	struct perf_data *data = &rec->data;
-	int fd, err;
-	char *new_filename;
+अटल पूर्णांक
+record__चयन_output(काष्ठा record *rec, bool at_निकास)
+अणु
+	काष्ठा perf_data *data = &rec->data;
+	पूर्णांक fd, err;
+	अक्षर *new_filename;
 
 	/* Same Size:      "2015122520103046"*/
-	char timestamp[] = "InvalidTimestamp";
+	अक्षर बारtamp[] = "InvalidTimestamp";
 
-	record__aio_mmap_read_sync(rec);
+	record__aio_mmap_पढ़ो_sync(rec);
 
 	record__synthesize(rec, true);
-	if (target__none(&rec->opts.target))
+	अगर (target__none(&rec->opts.target))
 		record__synthesize_workload(rec, true);
 
 	rec->samples = 0;
 	record__finish_output(rec);
-	err = fetch_current_timestamp(timestamp, sizeof(timestamp));
-	if (err) {
+	err = fetch_current_बारtamp(बारtamp, माप(बारtamp));
+	अगर (err) अणु
 		pr_err("Failed to get current timestamp\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	fd = perf_data__switch(data, timestamp,
+	fd = perf_data__चयन(data, बारtamp,
 				    rec->session->header.data_offset,
-				    at_exit, &new_filename);
-	if (fd >= 0 && !at_exit) {
+				    at_निकास, &new_filename);
+	अगर (fd >= 0 && !at_निकास) अणु
 		rec->bytes_written = 0;
 		rec->session->header.data_size = 0;
-	}
+	पूर्ण
 
-	if (!quiet)
-		fprintf(stderr, "[ perf record: Dump %s.%s ]\n",
-			data->path, timestamp);
+	अगर (!quiet)
+		ख_लिखो(मानक_त्रुटि, "[ perf record: Dump %s.%s ]\n",
+			data->path, बारtamp);
 
-	if (rec->switch_output.num_files) {
-		int n = rec->switch_output.cur_file + 1;
+	अगर (rec->चयन_output.num_files) अणु
+		पूर्णांक n = rec->चयन_output.cur_file + 1;
 
-		if (n >= rec->switch_output.num_files)
+		अगर (n >= rec->चयन_output.num_files)
 			n = 0;
-		rec->switch_output.cur_file = n;
-		if (rec->switch_output.filenames[n]) {
-			remove(rec->switch_output.filenames[n]);
-			zfree(&rec->switch_output.filenames[n]);
-		}
-		rec->switch_output.filenames[n] = new_filename;
-	} else {
-		free(new_filename);
-	}
+		rec->चयन_output.cur_file = n;
+		अगर (rec->चयन_output.filenames[n]) अणु
+			हटाओ(rec->चयन_output.filenames[n]);
+			zमुक्त(&rec->चयन_output.filenames[n]);
+		पूर्ण
+		rec->चयन_output.filenames[n] = new_filename;
+	पूर्ण अन्यथा अणु
+		मुक्त(new_filename);
+	पूर्ण
 
 	/* Output tracking events */
-	if (!at_exit) {
+	अगर (!at_निकास) अणु
 		record__synthesize(rec, false);
 
 		/*
 		 * In 'perf record --switch-output' without -a,
-		 * record__synthesize() in record__switch_output() won't
-		 * generate tracking events because there's no thread_map
-		 * in evlist. Which causes newly created perf.data doesn't
-		 * contain map and comm information.
-		 * Create a fake thread_map and directly call
-		 * perf_event__synthesize_thread_map() for those events.
+		 * record__synthesize() in record__चयन_output() won't
+		 * generate tracking events because there's no thपढ़ो_map
+		 * in evlist. Which causes newly created perf.data करोesn't
+		 * contain map and comm inक्रमmation.
+		 * Create a fake thपढ़ो_map and directly call
+		 * perf_event__syntheमाप_प्रकारhपढ़ो_map() क्रम those events.
 		 */
-		if (target__none(&rec->opts.target))
+		अगर (target__none(&rec->opts.target))
 			record__synthesize_workload(rec, false);
-	}
-	return fd;
-}
+	पूर्ण
+	वापस fd;
+पूर्ण
 
-static volatile int workload_exec_errno;
+अटल अस्थिर पूर्णांक workload_exec_त्रुटि_सं;
 
 /*
  * evlist__prepare_workload will send a SIGUSR1
- * if the fork fails, since we asked by setting its
- * want_signal to true.
+ * अगर the विभाजन fails, since we asked by setting its
+ * want_संकेत to true.
  */
-static void workload_exec_failed_signal(int signo __maybe_unused,
+अटल व्योम workload_exec_failed_संकेत(पूर्णांक signo __maybe_unused,
 					siginfo_t *info,
-					void *ucontext __maybe_unused)
-{
-	workload_exec_errno = info->si_value.sival_int;
-	done = 1;
+					व्योम *ucontext __maybe_unused)
+अणु
+	workload_exec_त्रुटि_सं = info->si_value.sival_पूर्णांक;
+	करोne = 1;
 	child_finished = 1;
-}
+पूर्ण
 
-static void snapshot_sig_handler(int sig);
-static void alarm_sig_handler(int sig);
+अटल व्योम snapshot_sig_handler(पूर्णांक sig);
+अटल व्योम alarm_sig_handler(पूर्णांक sig);
 
-static const struct perf_event_mmap_page *evlist__pick_pc(struct evlist *evlist)
-{
-	if (evlist) {
-		if (evlist->mmap && evlist->mmap[0].core.base)
-			return evlist->mmap[0].core.base;
-		if (evlist->overwrite_mmap && evlist->overwrite_mmap[0].core.base)
-			return evlist->overwrite_mmap[0].core.base;
-	}
-	return NULL;
-}
+अटल स्थिर काष्ठा perf_event_mmap_page *evlist__pick_pc(काष्ठा evlist *evlist)
+अणु
+	अगर (evlist) अणु
+		अगर (evlist->mmap && evlist->mmap[0].core.base)
+			वापस evlist->mmap[0].core.base;
+		अगर (evlist->overग_लिखो_mmap && evlist->overग_लिखो_mmap[0].core.base)
+			वापस evlist->overग_लिखो_mmap[0].core.base;
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
-static const struct perf_event_mmap_page *record__pick_pc(struct record *rec)
-{
-	const struct perf_event_mmap_page *pc = evlist__pick_pc(rec->evlist);
-	if (pc)
-		return pc;
-	return NULL;
-}
+अटल स्थिर काष्ठा perf_event_mmap_page *record__pick_pc(काष्ठा record *rec)
+अणु
+	स्थिर काष्ठा perf_event_mmap_page *pc = evlist__pick_pc(rec->evlist);
+	अगर (pc)
+		वापस pc;
+	वापस शून्य;
+पूर्ण
 
-static int record__synthesize(struct record *rec, bool tail)
-{
-	struct perf_session *session = rec->session;
-	struct machine *machine = &session->machines.host;
-	struct perf_data *data = &rec->data;
-	struct record_opts *opts = &rec->opts;
-	struct perf_tool *tool = &rec->tool;
-	int fd = perf_data__fd(data);
-	int err = 0;
+अटल पूर्णांक record__synthesize(काष्ठा record *rec, bool tail)
+अणु
+	काष्ठा perf_session *session = rec->session;
+	काष्ठा machine *machine = &session->machines.host;
+	काष्ठा perf_data *data = &rec->data;
+	काष्ठा record_opts *opts = &rec->opts;
+	काष्ठा perf_tool *tool = &rec->tool;
+	पूर्णांक fd = perf_data__fd(data);
+	पूर्णांक err = 0;
 	event_op f = process_synthesized_event;
 
-	if (rec->opts.tail_synthesize != tail)
-		return 0;
+	अगर (rec->opts.tail_synthesize != tail)
+		वापस 0;
 
-	if (data->is_pipe) {
+	अगर (data->is_pipe) अणु
 		/*
 		 * We need to synthesize events first, because some
 		 * features works on top of them (on report side).
 		 */
 		err = perf_event__synthesize_attrs(tool, rec->evlist,
 						   process_synthesized_event);
-		if (err < 0) {
+		अगर (err < 0) अणु
 			pr_err("Couldn't synthesize attrs.\n");
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
 		err = perf_event__synthesize_features(tool, session, rec->evlist,
 						      process_synthesized_event);
-		if (err < 0) {
+		अगर (err < 0) अणु
 			pr_err("Couldn't synthesize features.\n");
-			return err;
-		}
+			वापस err;
+		पूर्ण
 
-		if (have_tracepoints(&rec->evlist->core.entries)) {
+		अगर (have_tracepoपूर्णांकs(&rec->evlist->core.entries)) अणु
 			/*
 			 * FIXME err <= 0 here actually means that
-			 * there were no tracepoints so its not really
-			 * an error, just that we don't need to
+			 * there were no tracepoपूर्णांकs so its not really
+			 * an error, just that we करोn't need to
 			 * synthesize anything.  We really have to
-			 * return this more properly and also
+			 * वापस this more properly and also
 			 * propagate errors that now are calling die()
 			 */
-			err = perf_event__synthesize_tracing_data(tool,	fd, rec->evlist,
+			err = perf_event__syntheमाप_प्रकारracing_data(tool,	fd, rec->evlist,
 								  process_synthesized_event);
-			if (err <= 0) {
+			अगर (err <= 0) अणु
 				pr_err("Couldn't record tracing data.\n");
-				goto out;
-			}
+				जाओ out;
+			पूर्ण
 			rec->bytes_written += err;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	err = perf_event__synth_time_conv(record__pick_pc(rec), tool,
+	err = perf_event__synth_समय_conv(record__pick_pc(rec), tool,
 					  process_synthesized_event, machine);
-	if (err)
-		goto out;
+	अगर (err)
+		जाओ out;
 
-	/* Synthesize id_index before auxtrace_info */
-	if (rec->opts.auxtrace_sample_mode) {
+	/* Synthesize id_index beक्रमe auxtrace_info */
+	अगर (rec->opts.auxtrace_sample_mode) अणु
 		err = perf_event__synthesize_id_index(tool,
 						      process_synthesized_event,
 						      session->evlist, machine);
-		if (err)
-			goto out;
-	}
+		अगर (err)
+			जाओ out;
+	पूर्ण
 
-	if (rec->opts.full_auxtrace) {
+	अगर (rec->opts.full_auxtrace) अणु
 		err = perf_event__synthesize_auxtrace_info(rec->itr, tool,
 					session, process_synthesized_event);
-		if (err)
-			goto out;
-	}
+		अगर (err)
+			जाओ out;
+	पूर्ण
 
-	if (!evlist__exclude_kernel(rec->evlist)) {
+	अगर (!evlist__exclude_kernel(rec->evlist)) अणु
 		err = perf_event__synthesize_kernel_mmap(tool, process_synthesized_event,
 							 machine);
 		WARN_ONCE(err < 0, "Couldn't record kernel reference relocation symbol\n"
@@ -1458,1024 +1459,1024 @@ static int record__synthesize(struct record *rec, bool tail)
 		WARN_ONCE(err < 0, "Couldn't record kernel module information.\n"
 				   "Symbol resolution may be skewed if relocation was used (e.g. kexec).\n"
 				   "Check /proc/modules permission or run as root.\n");
-	}
+	पूर्ण
 
-	if (perf_guest) {
+	अगर (perf_guest) अणु
 		machines__process_guests(&session->machines,
 					 perf_event__synthesize_guest_os, tool);
-	}
+	पूर्ण
 
 	err = perf_event__synthesize_extra_attr(&rec->tool,
 						rec->evlist,
 						process_synthesized_event,
 						data->is_pipe);
-	if (err)
-		goto out;
+	अगर (err)
+		जाओ out;
 
-	err = perf_event__synthesize_thread_map2(&rec->tool, rec->evlist->core.threads,
+	err = perf_event__syntheमाप_प्रकारhपढ़ो_map2(&rec->tool, rec->evlist->core.thपढ़ोs,
 						 process_synthesized_event,
-						NULL);
-	if (err < 0) {
+						शून्य);
+	अगर (err < 0) अणु
 		pr_err("Couldn't synthesize thread map.\n");
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
 	err = perf_event__synthesize_cpu_map(&rec->tool, rec->evlist->core.cpus,
-					     process_synthesized_event, NULL);
-	if (err < 0) {
+					     process_synthesized_event, शून्य);
+	अगर (err < 0) अणु
 		pr_err("Couldn't synthesize cpu map.\n");
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
 	err = perf_event__synthesize_bpf_events(session, process_synthesized_event,
 						machine, opts);
-	if (err < 0)
+	अगर (err < 0)
 		pr_warning("Couldn't synthesize bpf events.\n");
 
 	err = perf_event__synthesize_cgroups(tool, process_synthesized_event,
 					     machine);
-	if (err < 0)
+	अगर (err < 0)
 		pr_warning("Couldn't synthesize cgroup events.\n");
 
-	if (rec->opts.nr_threads_synthesize > 1) {
-		perf_set_multithreaded();
+	अगर (rec->opts.nr_thपढ़ोs_synthesize > 1) अणु
+		perf_set_multithपढ़ोed();
 		f = process_locked_synthesized_event;
-	}
+	पूर्ण
 
-	err = __machine__synthesize_threads(machine, tool, &opts->target, rec->evlist->core.threads,
+	err = __machine__syntheमाप_प्रकारhपढ़ोs(machine, tool, &opts->target, rec->evlist->core.thपढ़ोs,
 					    f, opts->sample_address,
-					    rec->opts.nr_threads_synthesize);
+					    rec->opts.nr_thपढ़ोs_synthesize);
 
-	if (rec->opts.nr_threads_synthesize > 1)
-		perf_set_singlethreaded();
+	अगर (rec->opts.nr_thपढ़ोs_synthesize > 1)
+		perf_set_singlethपढ़ोed();
 
 out:
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int record__process_signal_event(union perf_event *event __maybe_unused, void *data)
-{
-	struct record *rec = data;
-	pthread_kill(rec->thread_id, SIGUSR2);
-	return 0;
-}
+अटल पूर्णांक record__process_संकेत_event(जोड़ perf_event *event __maybe_unused, व्योम *data)
+अणु
+	काष्ठा record *rec = data;
+	pthपढ़ो_समाप्त(rec->thपढ़ो_id, SIGUSR2);
+	वापस 0;
+पूर्ण
 
-static int record__setup_sb_evlist(struct record *rec)
-{
-	struct record_opts *opts = &rec->opts;
+अटल पूर्णांक record__setup_sb_evlist(काष्ठा record *rec)
+अणु
+	काष्ठा record_opts *opts = &rec->opts;
 
-	if (rec->sb_evlist != NULL) {
+	अगर (rec->sb_evlist != शून्य) अणु
 		/*
-		 * We get here if --switch-output-event populated the
+		 * We get here अगर --चयन-output-event populated the
 		 * sb_evlist, so associate a callback that will send a SIGUSR2
-		 * to the main thread.
+		 * to the मुख्य thपढ़ो.
 		 */
-		evlist__set_cb(rec->sb_evlist, record__process_signal_event, rec);
-		rec->thread_id = pthread_self();
-	}
-#ifdef HAVE_LIBBPF_SUPPORT
-	if (!opts->no_bpf_event) {
-		if (rec->sb_evlist == NULL) {
+		evlist__set_cb(rec->sb_evlist, record__process_संकेत_event, rec);
+		rec->thपढ़ो_id = pthपढ़ो_self();
+	पूर्ण
+#अगर_घोषित HAVE_LIBBPF_SUPPORT
+	अगर (!opts->no_bpf_event) अणु
+		अगर (rec->sb_evlist == शून्य) अणु
 			rec->sb_evlist = evlist__new();
 
-			if (rec->sb_evlist == NULL) {
+			अगर (rec->sb_evlist == शून्य) अणु
 				pr_err("Couldn't create side band evlist.\n.");
-				return -1;
-			}
-		}
+				वापस -1;
+			पूर्ण
+		पूर्ण
 
-		if (evlist__add_bpf_sb_event(rec->sb_evlist, &rec->session->header.env)) {
+		अगर (evlist__add_bpf_sb_event(rec->sb_evlist, &rec->session->header.env)) अणु
 			pr_err("Couldn't ask for PERF_RECORD_BPF_EVENT side band events.\n.");
-			return -1;
-		}
-	}
-#endif
-	if (evlist__start_sb_thread(rec->sb_evlist, &rec->opts.target)) {
+			वापस -1;
+		पूर्ण
+	पूर्ण
+#पूर्ण_अगर
+	अगर (evlist__start_sb_thपढ़ो(rec->sb_evlist, &rec->opts.target)) अणु
 		pr_debug("Couldn't start the BPF side band thread:\nBPF programs starting from now on won't be annotatable\n");
 		opts->no_bpf_event = true;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int record__init_clock(struct record *rec)
-{
-	struct perf_session *session = rec->session;
-	struct timespec ref_clockid;
-	struct timeval ref_tod;
+अटल पूर्णांक record__init_घड़ी(काष्ठा record *rec)
+अणु
+	काष्ठा perf_session *session = rec->session;
+	काष्ठा बारpec ref_घड़ीid;
+	काष्ठा समयval ref_tod;
 	u64 ref;
 
-	if (!rec->opts.use_clockid)
-		return 0;
+	अगर (!rec->opts.use_घड़ीid)
+		वापस 0;
 
-	if (rec->opts.use_clockid && rec->opts.clockid_res_ns)
-		session->header.env.clock.clockid_res_ns = rec->opts.clockid_res_ns;
+	अगर (rec->opts.use_घड़ीid && rec->opts.घड़ीid_res_ns)
+		session->header.env.घड़ी.घड़ीid_res_ns = rec->opts.घड़ीid_res_ns;
 
-	session->header.env.clock.clockid = rec->opts.clockid;
+	session->header.env.घड़ी.घड़ीid = rec->opts.घड़ीid;
 
-	if (gettimeofday(&ref_tod, NULL) != 0) {
+	अगर (समय_लोofday(&ref_tod, शून्य) != 0) अणु
 		pr_err("gettimeofday failed, cannot set reference time.\n");
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
-	if (clock_gettime(rec->opts.clockid, &ref_clockid)) {
+	अगर (घड़ी_समय_लो(rec->opts.घड़ीid, &ref_घड़ीid)) अणु
 		pr_err("clock_gettime failed, cannot set reference time.\n");
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
 	ref = (u64) ref_tod.tv_sec * NSEC_PER_SEC +
 	      (u64) ref_tod.tv_usec * NSEC_PER_USEC;
 
-	session->header.env.clock.tod_ns = ref;
+	session->header.env.घड़ी.tod_ns = ref;
 
-	ref = (u64) ref_clockid.tv_sec * NSEC_PER_SEC +
-	      (u64) ref_clockid.tv_nsec;
+	ref = (u64) ref_घड़ीid.tv_sec * NSEC_PER_SEC +
+	      (u64) ref_घड़ीid.tv_nsec;
 
-	session->header.env.clock.clockid_ns = ref;
-	return 0;
-}
+	session->header.env.घड़ी.घड़ीid_ns = ref;
+	वापस 0;
+पूर्ण
 
-static void hit_auxtrace_snapshot_trigger(struct record *rec)
-{
-	if (trigger_is_ready(&auxtrace_snapshot_trigger)) {
+अटल व्योम hit_auxtrace_snapshot_trigger(काष्ठा record *rec)
+अणु
+	अगर (trigger_is_पढ़ोy(&auxtrace_snapshot_trigger)) अणु
 		trigger_hit(&auxtrace_snapshot_trigger);
 		auxtrace_record__snapshot_started = 1;
-		if (auxtrace_record__snapshot_start(rec->itr))
+		अगर (auxtrace_record__snapshot_start(rec->itr))
 			trigger_error(&auxtrace_snapshot_trigger);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void record__uniquify_name(struct record *rec)
-{
-	struct evsel *pos;
-	struct evlist *evlist = rec->evlist;
-	char *new_name;
-	int ret;
+अटल व्योम record__uniquअगरy_name(काष्ठा record *rec)
+अणु
+	काष्ठा evsel *pos;
+	काष्ठा evlist *evlist = rec->evlist;
+	अक्षर *new_name;
+	पूर्णांक ret;
 
-	if (!perf_pmu__has_hybrid())
-		return;
+	अगर (!perf_pmu__has_hybrid())
+		वापस;
 
-	evlist__for_each_entry(evlist, pos) {
-		if (!evsel__is_hybrid(pos))
-			continue;
+	evlist__क्रम_each_entry(evlist, pos) अणु
+		अगर (!evsel__is_hybrid(pos))
+			जारी;
 
-		if (strchr(pos->name, '/'))
-			continue;
+		अगर (म_अक्षर(pos->name, '/'))
+			जारी;
 
-		ret = asprintf(&new_name, "%s/%s/",
+		ret = aप्र_लिखो(&new_name, "%s/%s/",
 			       pos->pmu_name, pos->name);
-		if (ret) {
-			free(pos->name);
+		अगर (ret) अणु
+			मुक्त(pos->name);
 			pos->name = new_name;
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static int __cmd_record(struct record *rec, int argc, const char **argv)
-{
-	int err;
-	int status = 0;
-	unsigned long waking = 0;
-	const bool forks = argc > 0;
-	struct perf_tool *tool = &rec->tool;
-	struct record_opts *opts = &rec->opts;
-	struct perf_data *data = &rec->data;
-	struct perf_session *session;
+अटल पूर्णांक __cmd_record(काष्ठा record *rec, पूर्णांक argc, स्थिर अक्षर **argv)
+अणु
+	पूर्णांक err;
+	पूर्णांक status = 0;
+	अचिन्हित दीर्घ waking = 0;
+	स्थिर bool विभाजनs = argc > 0;
+	काष्ठा perf_tool *tool = &rec->tool;
+	काष्ठा record_opts *opts = &rec->opts;
+	काष्ठा perf_data *data = &rec->data;
+	काष्ठा perf_session *session;
 	bool disabled = false, draining = false;
-	int fd;
-	float ratio = 0;
-	enum evlist_ctl_cmd cmd = EVLIST_CTL_CMD_UNSUPPORTED;
+	पूर्णांक fd;
+	भग्न ratio = 0;
+	क्रमागत evlist_ctl_cmd cmd = EVLIST_CTL_CMD_UNSUPPORTED;
 
-	atexit(record__sig_exit);
-	signal(SIGCHLD, sig_handler);
-	signal(SIGINT, sig_handler);
-	signal(SIGTERM, sig_handler);
-	signal(SIGSEGV, sigsegv_handler);
+	निकास_पर(record__sig_निकास);
+	संकेत(SIGCHLD, sig_handler);
+	संकेत(संक_विघ्न, sig_handler);
+	संकेत(संक_इति, sig_handler);
+	संकेत(संक_अंश, sigsegv_handler);
 
-	if (rec->opts.record_namespaces)
+	अगर (rec->opts.record_namespaces)
 		tool->namespace_events = true;
 
-	if (rec->opts.record_cgroup) {
-#ifdef HAVE_FILE_HANDLE
+	अगर (rec->opts.record_cgroup) अणु
+#अगर_घोषित HAVE_खाता_HANDLE
 		tool->cgroup_events = true;
-#else
+#अन्यथा
 		pr_err("cgroup tracking is not supported\n");
-		return -1;
-#endif
-	}
+		वापस -1;
+#पूर्ण_अगर
+	पूर्ण
 
-	if (rec->opts.auxtrace_snapshot_mode || rec->switch_output.enabled) {
-		signal(SIGUSR2, snapshot_sig_handler);
-		if (rec->opts.auxtrace_snapshot_mode)
+	अगर (rec->opts.auxtrace_snapshot_mode || rec->चयन_output.enabled) अणु
+		संकेत(SIGUSR2, snapshot_sig_handler);
+		अगर (rec->opts.auxtrace_snapshot_mode)
 			trigger_on(&auxtrace_snapshot_trigger);
-		if (rec->switch_output.enabled)
-			trigger_on(&switch_output_trigger);
-	} else {
-		signal(SIGUSR2, SIG_IGN);
-	}
+		अगर (rec->चयन_output.enabled)
+			trigger_on(&चयन_output_trigger);
+	पूर्ण अन्यथा अणु
+		संकेत(SIGUSR2, संक_छोड़ो);
+	पूर्ण
 
 	session = perf_session__new(data, false, tool);
-	if (IS_ERR(session)) {
+	अगर (IS_ERR(session)) अणु
 		pr_err("Perf session creation failed.\n");
-		return PTR_ERR(session);
-	}
+		वापस PTR_ERR(session);
+	पूर्ण
 
 	fd = perf_data__fd(data);
 	rec->session = session;
 
-	if (zstd_init(&session->zstd_data, rec->opts.comp_level) < 0) {
+	अगर (zstd_init(&session->zstd_data, rec->opts.comp_level) < 0) अणु
 		pr_err("Compression initialization failed.\n");
-		return -1;
-	}
-#ifdef HAVE_EVENTFD_SUPPORT
-	done_fd = eventfd(0, EFD_NONBLOCK);
-	if (done_fd < 0) {
+		वापस -1;
+	पूर्ण
+#अगर_घोषित HAVE_EVENTFD_SUPPORT
+	करोne_fd = eventfd(0, EFD_NONBLOCK);
+	अगर (करोne_fd < 0) अणु
 		pr_err("Failed to create wakeup eventfd, error: %m\n");
 		status = -1;
-		goto out_delete_session;
-	}
-	err = evlist__add_wakeup_eventfd(rec->evlist, done_fd);
-	if (err < 0) {
+		जाओ out_delete_session;
+	पूर्ण
+	err = evlist__add_wakeup_eventfd(rec->evlist, करोne_fd);
+	अगर (err < 0) अणु
 		pr_err("Failed to add wakeup eventfd to poll list\n");
 		status = err;
-		goto out_delete_session;
-	}
-#endif // HAVE_EVENTFD_SUPPORT
+		जाओ out_delete_session;
+	पूर्ण
+#पूर्ण_अगर // HAVE_EVENTFD_SUPPORT
 
 	session->header.env.comp_type  = PERF_COMP_ZSTD;
 	session->header.env.comp_level = rec->opts.comp_level;
 
-	if (rec->opts.kcore &&
-	    !record__kcore_readable(&session->machines.host)) {
+	अगर (rec->opts.kcore &&
+	    !record__kcore_पढ़ोable(&session->machines.host)) अणु
 		pr_err("ERROR: kcore is not readable.\n");
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
-	if (record__init_clock(rec))
-		return -1;
+	अगर (record__init_घड़ी(rec))
+		वापस -1;
 
 	record__init_features(rec);
 
-	if (forks) {
+	अगर (विभाजनs) अणु
 		err = evlist__prepare_workload(rec->evlist, &opts->target, argv, data->is_pipe,
-					       workload_exec_failed_signal);
-		if (err < 0) {
+					       workload_exec_failed_संकेत);
+		अगर (err < 0) अणु
 			pr_err("Couldn't run the workload!\n");
 			status = err;
-			goto out_delete_session;
-		}
-	}
+			जाओ out_delete_session;
+		पूर्ण
+	पूर्ण
 
 	/*
 	 * If we have just single event and are sending data
-	 * through pipe, we need to force the ids allocation,
+	 * through pipe, we need to क्रमce the ids allocation,
 	 * because we synthesize event name through the pipe
-	 * and need the id for that.
+	 * and need the id क्रम that.
 	 */
-	if (data->is_pipe && rec->evlist->core.nr_entries == 1)
+	अगर (data->is_pipe && rec->evlist->core.nr_entries == 1)
 		rec->opts.sample_id = true;
 
-	record__uniquify_name(rec);
+	record__uniquअगरy_name(rec);
 
-	if (record__open(rec) != 0) {
+	अगर (record__खोलो(rec) != 0) अणु
 		err = -1;
-		goto out_child;
-	}
+		जाओ out_child;
+	पूर्ण
 	session->header.env.comp_mmap_len = session->evlist->core.mmap_len;
 
-	if (rec->opts.kcore) {
+	अगर (rec->opts.kcore) अणु
 		err = record__kcore_copy(&session->machines.host, data);
-		if (err) {
+		अगर (err) अणु
 			pr_err("ERROR: Failed to copy kcore\n");
-			goto out_child;
-		}
-	}
+			जाओ out_child;
+		पूर्ण
+	पूर्ण
 
 	err = bpf__apply_obj_config();
-	if (err) {
-		char errbuf[BUFSIZ];
+	अगर (err) अणु
+		अक्षर errbuf[बफ_मान];
 
-		bpf__strerror_apply_obj_config(err, errbuf, sizeof(errbuf));
+		bpf__म_त्रुटि_apply_obj_config(err, errbuf, माप(errbuf));
 		pr_err("ERROR: Apply config to BPF failed: %s\n",
 			 errbuf);
-		goto out_child;
-	}
+		जाओ out_child;
+	पूर्ण
 
 	/*
-	 * Normally perf_session__new would do this, but it doesn't have the
+	 * Normally perf_session__new would करो this, but it करोesn't have the
 	 * evlist.
 	 */
-	if (rec->tool.ordered_events && !evlist__sample_id_all(rec->evlist)) {
+	अगर (rec->tool.ordered_events && !evlist__sample_id_all(rec->evlist)) अणु
 		pr_warning("WARNING: No sample_id_all support, falling back to unordered processing\n");
 		rec->tool.ordered_events = false;
-	}
+	पूर्ण
 
-	if (!rec->evlist->nr_groups)
+	अगर (!rec->evlist->nr_groups)
 		perf_header__clear_feat(&session->header, HEADER_GROUP_DESC);
 
-	if (data->is_pipe) {
-		err = perf_header__write_pipe(fd);
-		if (err < 0)
-			goto out_child;
-	} else {
-		err = perf_session__write_header(session, rec->evlist, fd, false);
-		if (err < 0)
-			goto out_child;
-	}
+	अगर (data->is_pipe) अणु
+		err = perf_header__ग_लिखो_pipe(fd);
+		अगर (err < 0)
+			जाओ out_child;
+	पूर्ण अन्यथा अणु
+		err = perf_session__ग_लिखो_header(session, rec->evlist, fd, false);
+		अगर (err < 0)
+			जाओ out_child;
+	पूर्ण
 
 	err = -1;
-	if (!rec->no_buildid
-	    && !perf_header__has_feat(&session->header, HEADER_BUILD_ID)) {
+	अगर (!rec->no_buildid
+	    && !perf_header__has_feat(&session->header, HEADER_BUILD_ID)) अणु
 		pr_err("Couldn't generate buildids. "
 		       "Use --no-buildid to profile anyway.\n");
-		goto out_child;
-	}
+		जाओ out_child;
+	पूर्ण
 
 	err = record__setup_sb_evlist(rec);
-	if (err)
-		goto out_child;
+	अगर (err)
+		जाओ out_child;
 
 	err = record__synthesize(rec, false);
-	if (err < 0)
-		goto out_child;
+	अगर (err < 0)
+		जाओ out_child;
 
-	if (rec->realtime_prio) {
-		struct sched_param param;
+	अगर (rec->realसमय_prio) अणु
+		काष्ठा sched_param param;
 
-		param.sched_priority = rec->realtime_prio;
-		if (sched_setscheduler(0, SCHED_FIFO, &param)) {
+		param.sched_priority = rec->realसमय_prio;
+		अगर (sched_setscheduler(0, SCHED_FIFO, &param)) अणु
 			pr_err("Could not set realtime priority.\n");
 			err = -1;
-			goto out_child;
-		}
-	}
+			जाओ out_child;
+		पूर्ण
+	पूर्ण
 
 	/*
 	 * When perf is starting the traced process, all the events
 	 * (apart from group members) have enable_on_exec=1 set,
-	 * so don't spoil it by prematurely enabling them.
+	 * so करोn't spoil it by prematurely enabling them.
 	 */
-	if (!target__none(&opts->target) && !opts->initial_delay)
+	अगर (!target__none(&opts->target) && !opts->initial_delay)
 		evlist__enable(rec->evlist);
 
 	/*
 	 * Let the child rip
 	 */
-	if (forks) {
-		struct machine *machine = &session->machines.host;
-		union perf_event *event;
+	अगर (विभाजनs) अणु
+		काष्ठा machine *machine = &session->machines.host;
+		जोड़ perf_event *event;
 		pid_t tgid;
 
-		event = malloc(sizeof(event->comm) + machine->id_hdr_size);
-		if (event == NULL) {
+		event = दो_स्मृति(माप(event->comm) + machine->id_hdr_size);
+		अगर (event == शून्य) अणु
 			err = -ENOMEM;
-			goto out_child;
-		}
+			जाओ out_child;
+		पूर्ण
 
 		/*
-		 * Some H/W events are generated before COMM event
+		 * Some H/W events are generated beक्रमe COMM event
 		 * which is emitted during exec(), so perf script
-		 * cannot see a correct process name for those events.
+		 * cannot see a correct process name क्रम those events.
 		 * Synthesize COMM event to prevent it.
 		 */
 		tgid = perf_event__synthesize_comm(tool, event,
 						   rec->evlist->workload.pid,
 						   process_synthesized_event,
 						   machine);
-		free(event);
+		मुक्त(event);
 
-		if (tgid == -1)
-			goto out_child;
+		अगर (tgid == -1)
+			जाओ out_child;
 
-		event = malloc(sizeof(event->namespaces) +
-			       (NR_NAMESPACES * sizeof(struct perf_ns_link_info)) +
+		event = दो_स्मृति(माप(event->namespaces) +
+			       (NR_NAMESPACES * माप(काष्ठा perf_ns_link_info)) +
 			       machine->id_hdr_size);
-		if (event == NULL) {
+		अगर (event == शून्य) अणु
 			err = -ENOMEM;
-			goto out_child;
-		}
+			जाओ out_child;
+		पूर्ण
 
 		/*
-		 * Synthesize NAMESPACES event for the command specified.
+		 * Synthesize NAMESPACES event क्रम the command specअगरied.
 		 */
 		perf_event__synthesize_namespaces(tool, event,
 						  rec->evlist->workload.pid,
 						  tgid, process_synthesized_event,
 						  machine);
-		free(event);
+		मुक्त(event);
 
 		evlist__start_workload(rec->evlist);
-	}
+	पूर्ण
 
-	if (evlist__initialize_ctlfd(rec->evlist, opts->ctl_fd, opts->ctl_fd_ack))
-		goto out_child;
+	अगर (evlist__initialize_ctlfd(rec->evlist, opts->ctl_fd, opts->ctl_fd_ack))
+		जाओ out_child;
 
-	if (opts->initial_delay) {
+	अगर (opts->initial_delay) अणु
 		pr_info(EVLIST_DISABLED_MSG);
-		if (opts->initial_delay > 0) {
+		अगर (opts->initial_delay > 0) अणु
 			usleep(opts->initial_delay * USEC_PER_MSEC);
 			evlist__enable(rec->evlist);
 			pr_info(EVLIST_ENABLED_MSG);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	trigger_ready(&auxtrace_snapshot_trigger);
-	trigger_ready(&switch_output_trigger);
+	trigger_पढ़ोy(&auxtrace_snapshot_trigger);
+	trigger_पढ़ोy(&चयन_output_trigger);
 	perf_hooks__invoke_record_start();
-	for (;;) {
-		unsigned long long hits = rec->samples;
+	क्रम (;;) अणु
+		अचिन्हित दीर्घ दीर्घ hits = rec->samples;
 
 		/*
 		 * rec->evlist->bkw_mmap_state is possible to be
-		 * BKW_MMAP_EMPTY here: when done == true and
+		 * BKW_MMAP_EMPTY here: when करोne == true and
 		 * hits != rec->samples in previous round.
 		 *
 		 * evlist__toggle_bkw_mmap ensure we never
 		 * convert BKW_MMAP_EMPTY to BKW_MMAP_DATA_PENDING.
 		 */
-		if (trigger_is_hit(&switch_output_trigger) || done || draining)
+		अगर (trigger_is_hit(&चयन_output_trigger) || करोne || draining)
 			evlist__toggle_bkw_mmap(rec->evlist, BKW_MMAP_DATA_PENDING);
 
-		if (record__mmap_read_all(rec, false) < 0) {
+		अगर (record__mmap_पढ़ो_all(rec, false) < 0) अणु
 			trigger_error(&auxtrace_snapshot_trigger);
-			trigger_error(&switch_output_trigger);
+			trigger_error(&चयन_output_trigger);
 			err = -1;
-			goto out_child;
-		}
+			जाओ out_child;
+		पूर्ण
 
-		if (auxtrace_record__snapshot_started) {
+		अगर (auxtrace_record__snapshot_started) अणु
 			auxtrace_record__snapshot_started = 0;
-			if (!trigger_is_error(&auxtrace_snapshot_trigger))
-				record__read_auxtrace_snapshot(rec, false);
-			if (trigger_is_error(&auxtrace_snapshot_trigger)) {
+			अगर (!trigger_is_error(&auxtrace_snapshot_trigger))
+				record__पढ़ो_auxtrace_snapshot(rec, false);
+			अगर (trigger_is_error(&auxtrace_snapshot_trigger)) अणु
 				pr_err("AUX area tracing snapshot failed\n");
 				err = -1;
-				goto out_child;
-			}
-		}
+				जाओ out_child;
+			पूर्ण
+		पूर्ण
 
-		if (trigger_is_hit(&switch_output_trigger)) {
+		अगर (trigger_is_hit(&चयन_output_trigger)) अणु
 			/*
-			 * If switch_output_trigger is hit, the data in
+			 * If चयन_output_trigger is hit, the data in
 			 * overwritable ring buffer should have been collected,
 			 * so bkw_mmap_state should be set to BKW_MMAP_EMPTY.
 			 *
-			 * If SIGUSR2 raise after or during record__mmap_read_all(),
-			 * record__mmap_read_all() didn't collect data from
+			 * If SIGUSR2 उठाओ after or during record__mmap_पढ़ो_all(),
+			 * record__mmap_पढ़ो_all() didn't collect data from
 			 * overwritable ring buffer. Read again.
 			 */
-			if (rec->evlist->bkw_mmap_state == BKW_MMAP_RUNNING)
-				continue;
-			trigger_ready(&switch_output_trigger);
+			अगर (rec->evlist->bkw_mmap_state == BKW_MMAP_RUNNING)
+				जारी;
+			trigger_पढ़ोy(&चयन_output_trigger);
 
 			/*
-			 * Reenable events in overwrite ring buffer after
-			 * record__mmap_read_all(): we should have collected
+			 * Reenable events in overग_लिखो ring buffer after
+			 * record__mmap_पढ़ो_all(): we should have collected
 			 * data from it.
 			 */
 			evlist__toggle_bkw_mmap(rec->evlist, BKW_MMAP_RUNNING);
 
-			if (!quiet)
-				fprintf(stderr, "[ perf record: dump data: Woken up %ld times ]\n",
+			अगर (!quiet)
+				ख_लिखो(मानक_त्रुटि, "[ perf record: dump data: Woken up %ld times ]\n",
 					waking);
 			waking = 0;
-			fd = record__switch_output(rec, false);
-			if (fd < 0) {
+			fd = record__चयन_output(rec, false);
+			अगर (fd < 0) अणु
 				pr_err("Failed to switch to new file\n");
-				trigger_error(&switch_output_trigger);
+				trigger_error(&चयन_output_trigger);
 				err = fd;
-				goto out_child;
-			}
+				जाओ out_child;
+			पूर्ण
 
 			/* re-arm the alarm */
-			if (rec->switch_output.time)
-				alarm(rec->switch_output.time);
-		}
+			अगर (rec->चयन_output.समय)
+				alarm(rec->चयन_output.समय);
+		पूर्ण
 
-		if (hits == rec->samples) {
-			if (done || draining)
-				break;
+		अगर (hits == rec->samples) अणु
+			अगर (करोne || draining)
+				अवरोध;
 			err = evlist__poll(rec->evlist, -1);
 			/*
-			 * Propagate error, only if there's any. Ignore positive
-			 * number of returned events and interrupt error.
+			 * Propagate error, only अगर there's any. Ignore positive
+			 * number of वापसed events and पूर्णांकerrupt error.
 			 */
-			if (err > 0 || (err < 0 && errno == EINTR))
+			अगर (err > 0 || (err < 0 && त्रुटि_सं == EINTR))
 				err = 0;
 			waking++;
 
-			if (evlist__filter_pollfd(rec->evlist, POLLERR | POLLHUP) == 0)
+			अगर (evlist__filter_pollfd(rec->evlist, POLLERR | POLLHUP) == 0)
 				draining = true;
-		}
+		पूर्ण
 
-		if (evlist__ctlfd_process(rec->evlist, &cmd) > 0) {
-			switch (cmd) {
-			case EVLIST_CTL_CMD_SNAPSHOT:
+		अगर (evlist__ctlfd_process(rec->evlist, &cmd) > 0) अणु
+			चयन (cmd) अणु
+			हाल EVLIST_CTL_CMD_SNAPSHOT:
 				hit_auxtrace_snapshot_trigger(rec);
 				evlist__ctlfd_ack(rec->evlist);
-				break;
-			case EVLIST_CTL_CMD_STOP:
-				done = 1;
-				break;
-			case EVLIST_CTL_CMD_ACK:
-			case EVLIST_CTL_CMD_UNSUPPORTED:
-			case EVLIST_CTL_CMD_ENABLE:
-			case EVLIST_CTL_CMD_DISABLE:
-			case EVLIST_CTL_CMD_EVLIST:
-			case EVLIST_CTL_CMD_PING:
-			default:
-				break;
-			}
-		}
+				अवरोध;
+			हाल EVLIST_CTL_CMD_STOP:
+				करोne = 1;
+				अवरोध;
+			हाल EVLIST_CTL_CMD_ACK:
+			हाल EVLIST_CTL_CMD_UNSUPPORTED:
+			हाल EVLIST_CTL_CMD_ENABLE:
+			हाल EVLIST_CTL_CMD_DISABLE:
+			हाल EVLIST_CTL_CMD_EVLIST:
+			हाल EVLIST_CTL_CMD_PING:
+			शेष:
+				अवरोध;
+			पूर्ण
+		पूर्ण
 
 		/*
 		 * When perf is starting the traced process, at the end events
-		 * die with the process and we wait for that. Thus no need to
-		 * disable events in this case.
+		 * die with the process and we रुको क्रम that. Thus no need to
+		 * disable events in this हाल.
 		 */
-		if (done && !disabled && !target__none(&opts->target)) {
+		अगर (करोne && !disabled && !target__none(&opts->target)) अणु
 			trigger_off(&auxtrace_snapshot_trigger);
 			evlist__disable(rec->evlist);
 			disabled = true;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	trigger_off(&auxtrace_snapshot_trigger);
-	trigger_off(&switch_output_trigger);
+	trigger_off(&चयन_output_trigger);
 
-	if (opts->auxtrace_snapshot_on_exit)
-		record__auxtrace_snapshot_exit(rec);
+	अगर (opts->auxtrace_snapshot_on_निकास)
+		record__auxtrace_snapshot_निकास(rec);
 
-	if (forks && workload_exec_errno) {
-		char msg[STRERR_BUFSIZE], strevsels[2048];
-		const char *emsg = str_error_r(workload_exec_errno, msg, sizeof(msg));
+	अगर (विभाजनs && workload_exec_त्रुटि_सं) अणु
+		अक्षर msg[STRERR_बफ_मानE], strevsels[2048];
+		स्थिर अक्षर *emsg = str_error_r(workload_exec_त्रुटि_सं, msg, माप(msg));
 
-		evlist__scnprintf_evsels(rec->evlist, sizeof(strevsels), strevsels);
+		evlist__scnम_लिखो_evsels(rec->evlist, माप(strevsels), strevsels);
 
 		pr_err("Failed to collect '%s' for the '%s' workload: %s\n",
 			strevsels, argv[0], emsg);
 		err = -1;
-		goto out_child;
-	}
+		जाओ out_child;
+	पूर्ण
 
-	if (!quiet)
-		fprintf(stderr, "[ perf record: Woken up %ld times to write data ]\n", waking);
+	अगर (!quiet)
+		ख_लिखो(मानक_त्रुटि, "[ perf record: Woken up %ld times to write data ]\n", waking);
 
-	if (target__none(&rec->opts.target))
+	अगर (target__none(&rec->opts.target))
 		record__synthesize_workload(rec, true);
 
 out_child:
 	evlist__finalize_ctlfd(rec->evlist);
-	record__mmap_read_all(rec, true);
-	record__aio_mmap_read_sync(rec);
+	record__mmap_पढ़ो_all(rec, true);
+	record__aio_mmap_पढ़ो_sync(rec);
 
-	if (rec->session->bytes_transferred && rec->session->bytes_compressed) {
-		ratio = (float)rec->session->bytes_transferred/(float)rec->session->bytes_compressed;
+	अगर (rec->session->bytes_transferred && rec->session->bytes_compressed) अणु
+		ratio = (भग्न)rec->session->bytes_transferred/(भग्न)rec->session->bytes_compressed;
 		session->header.env.comp_ratio = ratio + 0.5;
-	}
+	पूर्ण
 
-	if (forks) {
-		int exit_status;
+	अगर (विभाजनs) अणु
+		पूर्णांक निकास_status;
 
-		if (!child_finished)
-			kill(rec->evlist->workload.pid, SIGTERM);
+		अगर (!child_finished)
+			समाप्त(rec->evlist->workload.pid, संक_इति);
 
-		wait(&exit_status);
+		रुको(&निकास_status);
 
-		if (err < 0)
+		अगर (err < 0)
 			status = err;
-		else if (WIFEXITED(exit_status))
-			status = WEXITSTATUS(exit_status);
-		else if (WIFSIGNALED(exit_status))
-			signr = WTERMSIG(exit_status);
-	} else
+		अन्यथा अगर (WIFEXITED(निकास_status))
+			status = WEXITSTATUS(निकास_status);
+		अन्यथा अगर (WIFSIGNALED(निकास_status))
+			signr = WTERMSIG(निकास_status);
+	पूर्ण अन्यथा
 		status = err;
 
 	record__synthesize(rec, true);
 	/* this will be recalculated during process_buildids() */
 	rec->samples = 0;
 
-	if (!err) {
-		if (!rec->timestamp_filename) {
+	अगर (!err) अणु
+		अगर (!rec->बारtamp_filename) अणु
 			record__finish_output(rec);
-		} else {
-			fd = record__switch_output(rec, true);
-			if (fd < 0) {
+		पूर्ण अन्यथा अणु
+			fd = record__चयन_output(rec, true);
+			अगर (fd < 0) अणु
 				status = fd;
-				goto out_delete_session;
-			}
-		}
-	}
+				जाओ out_delete_session;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
 	perf_hooks__invoke_record_end();
 
-	if (!err && !quiet) {
-		char samples[128];
-		const char *postfix = rec->timestamp_filename ?
+	अगर (!err && !quiet) अणु
+		अक्षर samples[128];
+		स्थिर अक्षर *postfix = rec->बारtamp_filename ?
 					".<timestamp>" : "";
 
-		if (rec->samples && !rec->opts.full_auxtrace)
-			scnprintf(samples, sizeof(samples),
+		अगर (rec->samples && !rec->opts.full_auxtrace)
+			scnम_लिखो(samples, माप(samples),
 				  " (%" PRIu64 " samples)", rec->samples);
-		else
+		अन्यथा
 			samples[0] = '\0';
 
-		fprintf(stderr,	"[ perf record: Captured and wrote %.3f MB %s%s%s",
+		ख_लिखो(मानक_त्रुटि,	"[ perf record: Captured and wrote %.3f MB %s%s%s",
 			perf_data__size(data) / 1024.0 / 1024.0,
 			data->path, postfix, samples);
-		if (ratio) {
-			fprintf(stderr,	", compressed (original %.3f MB, ratio is %.3f)",
+		अगर (ratio) अणु
+			ख_लिखो(मानक_त्रुटि,	", compressed (original %.3f MB, ratio is %.3f)",
 					rec->session->bytes_transferred / 1024.0 / 1024.0,
 					ratio);
-		}
-		fprintf(stderr, " ]\n");
-	}
+		पूर्ण
+		ख_लिखो(मानक_त्रुटि, " ]\n");
+	पूर्ण
 
 out_delete_session:
-#ifdef HAVE_EVENTFD_SUPPORT
-	if (done_fd >= 0)
-		close(done_fd);
-#endif
+#अगर_घोषित HAVE_EVENTFD_SUPPORT
+	अगर (करोne_fd >= 0)
+		बंद(करोne_fd);
+#पूर्ण_अगर
 	zstd_fini(&session->zstd_data);
 	perf_session__delete(session);
 
-	if (!opts->no_bpf_event)
-		evlist__stop_sb_thread(rec->sb_evlist);
-	return status;
-}
+	अगर (!opts->no_bpf_event)
+		evlist__stop_sb_thपढ़ो(rec->sb_evlist);
+	वापस status;
+पूर्ण
 
-static void callchain_debug(struct callchain_param *callchain)
-{
-	static const char *str[CALLCHAIN_MAX] = { "NONE", "FP", "DWARF", "LBR" };
+अटल व्योम callchain_debug(काष्ठा callchain_param *callchain)
+अणु
+	अटल स्थिर अक्षर *str[CALLCHAIN_MAX] = अणु "NONE", "FP", "DWARF", "LBR" पूर्ण;
 
 	pr_debug("callchain: type %s\n", str[callchain->record_mode]);
 
-	if (callchain->record_mode == CALLCHAIN_DWARF)
+	अगर (callchain->record_mode == CALLCHAIN_DWARF)
 		pr_debug("callchain: stack dump size %d\n",
 			 callchain->dump_size);
-}
+पूर्ण
 
-int record_opts__parse_callchain(struct record_opts *record,
-				 struct callchain_param *callchain,
-				 const char *arg, bool unset)
-{
-	int ret;
+पूर्णांक record_opts__parse_callchain(काष्ठा record_opts *record,
+				 काष्ठा callchain_param *callchain,
+				 स्थिर अक्षर *arg, bool unset)
+अणु
+	पूर्णांक ret;
 	callchain->enabled = !unset;
 
 	/* --no-call-graph */
-	if (unset) {
+	अगर (unset) अणु
 		callchain->record_mode = CALLCHAIN_NONE;
 		pr_debug("callchain: disabled\n");
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	ret = parse_callchain_record_opt(arg, callchain);
-	if (!ret) {
-		/* Enable data address sampling for DWARF unwind. */
-		if (callchain->record_mode == CALLCHAIN_DWARF)
+	अगर (!ret) अणु
+		/* Enable data address sampling क्रम DWARF unwind. */
+		अगर (callchain->record_mode == CALLCHAIN_DWARF)
 			record->sample_address = true;
 		callchain_debug(callchain);
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int record_parse_callchain_opt(const struct option *opt,
-			       const char *arg,
-			       int unset)
-{
-	return record_opts__parse_callchain(opt->value, &callchain_param, arg, unset);
-}
+पूर्णांक record_parse_callchain_opt(स्थिर काष्ठा option *opt,
+			       स्थिर अक्षर *arg,
+			       पूर्णांक unset)
+अणु
+	वापस record_opts__parse_callchain(opt->value, &callchain_param, arg, unset);
+पूर्ण
 
-int record_callchain_opt(const struct option *opt,
-			 const char *arg __maybe_unused,
-			 int unset __maybe_unused)
-{
-	struct callchain_param *callchain = opt->value;
+पूर्णांक record_callchain_opt(स्थिर काष्ठा option *opt,
+			 स्थिर अक्षर *arg __maybe_unused,
+			 पूर्णांक unset __maybe_unused)
+अणु
+	काष्ठा callchain_param *callchain = opt->value;
 
 	callchain->enabled = true;
 
-	if (callchain->record_mode == CALLCHAIN_NONE)
+	अगर (callchain->record_mode == CALLCHAIN_NONE)
 		callchain->record_mode = CALLCHAIN_FP;
 
 	callchain_debug(callchain);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int perf_record_config(const char *var, const char *value, void *cb)
-{
-	struct record *rec = cb;
+अटल पूर्णांक perf_record_config(स्थिर अक्षर *var, स्थिर अक्षर *value, व्योम *cb)
+अणु
+	काष्ठा record *rec = cb;
 
-	if (!strcmp(var, "record.build-id")) {
-		if (!strcmp(value, "cache"))
+	अगर (!म_भेद(var, "record.build-id")) अणु
+		अगर (!म_भेद(value, "cache"))
 			rec->no_buildid_cache = false;
-		else if (!strcmp(value, "no-cache"))
+		अन्यथा अगर (!म_भेद(value, "no-cache"))
 			rec->no_buildid_cache = true;
-		else if (!strcmp(value, "skip"))
+		अन्यथा अगर (!म_भेद(value, "skip"))
 			rec->no_buildid = true;
-		else if (!strcmp(value, "mmap"))
+		अन्यथा अगर (!म_भेद(value, "mmap"))
 			rec->buildid_mmap = true;
-		else
-			return -1;
-		return 0;
-	}
-	if (!strcmp(var, "record.call-graph")) {
+		अन्यथा
+			वापस -1;
+		वापस 0;
+	पूर्ण
+	अगर (!म_भेद(var, "record.call-graph")) अणु
 		var = "call-graph.record-mode";
-		return perf_default_config(var, value, cb);
-	}
-#ifdef HAVE_AIO_SUPPORT
-	if (!strcmp(var, "record.aio")) {
-		rec->opts.nr_cblocks = strtol(value, NULL, 0);
-		if (!rec->opts.nr_cblocks)
-			rec->opts.nr_cblocks = nr_cblocks_default;
-	}
-#endif
+		वापस perf_शेष_config(var, value, cb);
+	पूर्ण
+#अगर_घोषित HAVE_AIO_SUPPORT
+	अगर (!म_भेद(var, "record.aio")) अणु
+		rec->opts.nr_cblocks = म_से_दीर्घ(value, शून्य, 0);
+		अगर (!rec->opts.nr_cblocks)
+			rec->opts.nr_cblocks = nr_cblocks_शेष;
+	पूर्ण
+#पूर्ण_अगर
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
-static int record__parse_affinity(const struct option *opt, const char *str, int unset)
-{
-	struct record_opts *opts = (struct record_opts *)opt->value;
+अटल पूर्णांक record__parse_affinity(स्थिर काष्ठा option *opt, स्थिर अक्षर *str, पूर्णांक unset)
+अणु
+	काष्ठा record_opts *opts = (काष्ठा record_opts *)opt->value;
 
-	if (unset || !str)
-		return 0;
+	अगर (unset || !str)
+		वापस 0;
 
-	if (!strcasecmp(str, "node"))
+	अगर (!strहालcmp(str, "node"))
 		opts->affinity = PERF_AFFINITY_NODE;
-	else if (!strcasecmp(str, "cpu"))
+	अन्यथा अगर (!strहालcmp(str, "cpu"))
 		opts->affinity = PERF_AFFINITY_CPU;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int parse_output_max_size(const struct option *opt,
-				 const char *str, int unset)
-{
-	unsigned long *s = (unsigned long *)opt->value;
-	static struct parse_tag tags_size[] = {
-		{ .tag  = 'B', .mult = 1       },
-		{ .tag  = 'K', .mult = 1 << 10 },
-		{ .tag  = 'M', .mult = 1 << 20 },
-		{ .tag  = 'G', .mult = 1 << 30 },
-		{ .tag  = 0 },
-	};
-	unsigned long val;
+अटल पूर्णांक parse_output_max_size(स्थिर काष्ठा option *opt,
+				 स्थिर अक्षर *str, पूर्णांक unset)
+अणु
+	अचिन्हित दीर्घ *s = (अचिन्हित दीर्घ *)opt->value;
+	अटल काष्ठा parse_tag tags_size[] = अणु
+		अणु .tag  = 'B', .mult = 1       पूर्ण,
+		अणु .tag  = 'K', .mult = 1 << 10 पूर्ण,
+		अणु .tag  = 'M', .mult = 1 << 20 पूर्ण,
+		अणु .tag  = 'G', .mult = 1 << 30 पूर्ण,
+		अणु .tag  = 0 पूर्ण,
+	पूर्ण;
+	अचिन्हित दीर्घ val;
 
-	if (unset) {
+	अगर (unset) अणु
 		*s = 0;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	val = parse_tag_value(str, tags_size);
-	if (val != (unsigned long) -1) {
+	अगर (val != (अचिन्हित दीर्घ) -1) अणु
 		*s = val;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	return -1;
-}
+	वापस -1;
+पूर्ण
 
-static int record__parse_mmap_pages(const struct option *opt,
-				    const char *str,
-				    int unset __maybe_unused)
-{
-	struct record_opts *opts = opt->value;
-	char *s, *p;
-	unsigned int mmap_pages;
-	int ret;
+अटल पूर्णांक record__parse_mmap_pages(स्थिर काष्ठा option *opt,
+				    स्थिर अक्षर *str,
+				    पूर्णांक unset __maybe_unused)
+अणु
+	काष्ठा record_opts *opts = opt->value;
+	अक्षर *s, *p;
+	अचिन्हित पूर्णांक mmap_pages;
+	पूर्णांक ret;
 
-	if (!str)
-		return -EINVAL;
+	अगर (!str)
+		वापस -EINVAL;
 
 	s = strdup(str);
-	if (!s)
-		return -ENOMEM;
+	अगर (!s)
+		वापस -ENOMEM;
 
-	p = strchr(s, ',');
-	if (p)
+	p = म_अक्षर(s, ',');
+	अगर (p)
 		*p = '\0';
 
-	if (*s) {
+	अगर (*s) अणु
 		ret = __evlist__parse_mmap_pages(&mmap_pages, s);
-		if (ret)
-			goto out_free;
+		अगर (ret)
+			जाओ out_मुक्त;
 		opts->mmap_pages = mmap_pages;
-	}
+	पूर्ण
 
-	if (!p) {
+	अगर (!p) अणु
 		ret = 0;
-		goto out_free;
-	}
+		जाओ out_मुक्त;
+	पूर्ण
 
 	ret = __evlist__parse_mmap_pages(&mmap_pages, p + 1);
-	if (ret)
-		goto out_free;
+	अगर (ret)
+		जाओ out_मुक्त;
 
 	opts->auxtrace_mmap_pages = mmap_pages;
 
-out_free:
-	free(s);
-	return ret;
-}
+out_मुक्त:
+	मुक्त(s);
+	वापस ret;
+पूर्ण
 
-static int parse_control_option(const struct option *opt,
-				const char *str,
-				int unset __maybe_unused)
-{
-	struct record_opts *opts = opt->value;
+अटल पूर्णांक parse_control_option(स्थिर काष्ठा option *opt,
+				स्थिर अक्षर *str,
+				पूर्णांक unset __maybe_unused)
+अणु
+	काष्ठा record_opts *opts = opt->value;
 
-	return evlist__parse_control(str, &opts->ctl_fd, &opts->ctl_fd_ack, &opts->ctl_fd_close);
-}
+	वापस evlist__parse_control(str, &opts->ctl_fd, &opts->ctl_fd_ack, &opts->ctl_fd_बंद);
+पूर्ण
 
-static void switch_output_size_warn(struct record *rec)
-{
+अटल व्योम चयन_output_size_warn(काष्ठा record *rec)
+अणु
 	u64 wakeup_size = evlist__mmap_size(rec->opts.mmap_pages);
-	struct switch_output *s = &rec->switch_output;
+	काष्ठा चयन_output *s = &rec->चयन_output;
 
 	wakeup_size /= 2;
 
-	if (s->size < wakeup_size) {
-		char buf[100];
+	अगर (s->size < wakeup_size) अणु
+		अक्षर buf[100];
 
-		unit_number__scnprintf(buf, sizeof(buf), wakeup_size);
+		unit_number__scnम_लिखो(buf, माप(buf), wakeup_size);
 		pr_warning("WARNING: switch-output data size lower than "
 			   "wakeup kernel buffer size (%s) "
 			   "expect bigger perf.data sizes\n", buf);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int switch_output_setup(struct record *rec)
-{
-	struct switch_output *s = &rec->switch_output;
-	static struct parse_tag tags_size[] = {
-		{ .tag  = 'B', .mult = 1       },
-		{ .tag  = 'K', .mult = 1 << 10 },
-		{ .tag  = 'M', .mult = 1 << 20 },
-		{ .tag  = 'G', .mult = 1 << 30 },
-		{ .tag  = 0 },
-	};
-	static struct parse_tag tags_time[] = {
-		{ .tag  = 's', .mult = 1        },
-		{ .tag  = 'm', .mult = 60       },
-		{ .tag  = 'h', .mult = 60*60    },
-		{ .tag  = 'd', .mult = 60*60*24 },
-		{ .tag  = 0 },
-	};
-	unsigned long val;
+अटल पूर्णांक चयन_output_setup(काष्ठा record *rec)
+अणु
+	काष्ठा चयन_output *s = &rec->चयन_output;
+	अटल काष्ठा parse_tag tags_size[] = अणु
+		अणु .tag  = 'B', .mult = 1       पूर्ण,
+		अणु .tag  = 'K', .mult = 1 << 10 पूर्ण,
+		अणु .tag  = 'M', .mult = 1 << 20 पूर्ण,
+		अणु .tag  = 'G', .mult = 1 << 30 पूर्ण,
+		अणु .tag  = 0 पूर्ण,
+	पूर्ण;
+	अटल काष्ठा parse_tag tags_समय[] = अणु
+		अणु .tag  = 's', .mult = 1        पूर्ण,
+		अणु .tag  = 'm', .mult = 60       पूर्ण,
+		अणु .tag  = 'h', .mult = 60*60    पूर्ण,
+		अणु .tag  = 'd', .mult = 60*60*24 पूर्ण,
+		अणु .tag  = 0 पूर्ण,
+	पूर्ण;
+	अचिन्हित दीर्घ val;
 
 	/*
-	 * If we're using --switch-output-events, then we imply its 
-	 * --switch-output=signal, as we'll send a SIGUSR2 from the side band
-	 *  thread to its parent.
+	 * If we're using --चयन-output-events, then we imply its 
+	 * --चयन-output=संकेत, as we'll send a SIGUSR2 from the side band
+	 *  thपढ़ो to its parent.
 	 */
-	if (rec->switch_output_event_set)
-		goto do_signal;
+	अगर (rec->चयन_output_event_set)
+		जाओ करो_संकेत;
 
-	if (!s->set)
-		return 0;
+	अगर (!s->set)
+		वापस 0;
 
-	if (!strcmp(s->str, "signal")) {
-do_signal:
-		s->signal = true;
+	अगर (!म_भेद(s->str, "signal")) अणु
+करो_संकेत:
+		s->संकेत = true;
 		pr_debug("switch-output with SIGUSR2 signal\n");
-		goto enabled;
-	}
+		जाओ enabled;
+	पूर्ण
 
 	val = parse_tag_value(s->str, tags_size);
-	if (val != (unsigned long) -1) {
+	अगर (val != (अचिन्हित दीर्घ) -1) अणु
 		s->size = val;
 		pr_debug("switch-output with %s size threshold\n", s->str);
-		goto enabled;
-	}
+		जाओ enabled;
+	पूर्ण
 
-	val = parse_tag_value(s->str, tags_time);
-	if (val != (unsigned long) -1) {
-		s->time = val;
+	val = parse_tag_value(s->str, tags_समय);
+	अगर (val != (अचिन्हित दीर्घ) -1) अणु
+		s->समय = val;
 		pr_debug("switch-output with %s time threshold (%lu seconds)\n",
-			 s->str, s->time);
-		goto enabled;
-	}
+			 s->str, s->समय);
+		जाओ enabled;
+	पूर्ण
 
-	return -1;
+	वापस -1;
 
 enabled:
-	rec->timestamp_filename = true;
+	rec->बारtamp_filename = true;
 	s->enabled              = true;
 
-	if (s->size && !rec->opts.no_buffering)
-		switch_output_size_warn(rec);
+	अगर (s->size && !rec->opts.no_buffering)
+		चयन_output_size_warn(rec);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const char * const __record_usage[] = {
+अटल स्थिर अक्षर * स्थिर __record_usage[] = अणु
 	"perf record [<options>] [<command>]",
 	"perf record [<options>] -- <command> [<options>]",
-	NULL
-};
-const char * const *record_usage = __record_usage;
+	शून्य
+पूर्ण;
+स्थिर अक्षर * स्थिर *record_usage = __record_usage;
 
-static int build_id__process_mmap(struct perf_tool *tool, union perf_event *event,
-				  struct perf_sample *sample, struct machine *machine)
-{
+अटल पूर्णांक build_id__process_mmap(काष्ठा perf_tool *tool, जोड़ perf_event *event,
+				  काष्ठा perf_sample *sample, काष्ठा machine *machine)
+अणु
 	/*
-	 * We already have the kernel maps, put in place via perf_session__create_kernel_maps()
+	 * We alपढ़ोy have the kernel maps, put in place via perf_session__create_kernel_maps()
 	 * no need to add them twice.
 	 */
-	if (!(event->header.misc & PERF_RECORD_MISC_USER))
-		return 0;
-	return perf_event__process_mmap(tool, event, sample, machine);
-}
+	अगर (!(event->header.misc & PERF_RECORD_MISC_USER))
+		वापस 0;
+	वापस perf_event__process_mmap(tool, event, sample, machine);
+पूर्ण
 
-static int build_id__process_mmap2(struct perf_tool *tool, union perf_event *event,
-				   struct perf_sample *sample, struct machine *machine)
-{
+अटल पूर्णांक build_id__process_mmap2(काष्ठा perf_tool *tool, जोड़ perf_event *event,
+				   काष्ठा perf_sample *sample, काष्ठा machine *machine)
+अणु
 	/*
-	 * We already have the kernel maps, put in place via perf_session__create_kernel_maps()
+	 * We alपढ़ोy have the kernel maps, put in place via perf_session__create_kernel_maps()
 	 * no need to add them twice.
 	 */
-	if (!(event->header.misc & PERF_RECORD_MISC_USER))
-		return 0;
+	अगर (!(event->header.misc & PERF_RECORD_MISC_USER))
+		वापस 0;
 
-	return perf_event__process_mmap2(tool, event, sample, machine);
-}
+	वापस perf_event__process_mmap2(tool, event, sample, machine);
+पूर्ण
 
 /*
  * XXX Ideally would be local to cmd_record() and passed to a record__new
- * because we need to have access to it in record__exit, that is called
- * after cmd_record() exits, but since record_options need to be accessible to
+ * because we need to have access to it in record__निकास, that is called
+ * after cmd_record() निकासs, but since record_options need to be accessible to
  * builtin-script, leave it here.
  *
- * At least we don't ouch it in all the other functions here directly.
+ * At least we करोn't ouch it in all the other functions here directly.
  *
  * Just say no to tons of global variables, sigh.
  */
-static struct record record = {
-	.opts = {
-		.sample_time	     = true,
-		.mmap_pages	     = UINT_MAX,
-		.user_freq	     = UINT_MAX,
-		.user_interval	     = ULLONG_MAX,
+अटल काष्ठा record record = अणु
+	.opts = अणु
+		.sample_समय	     = true,
+		.mmap_pages	     = अच_पूर्णांक_उच्च,
+		.user_freq	     = अच_पूर्णांक_उच्च,
+		.user_पूर्णांकerval	     = ULदीर्घ_उच्च,
 		.freq		     = 4000,
-		.target		     = {
+		.target		     = अणु
 			.uses_mmap   = true,
-			.default_per_cpu = true,
-		},
+			.शेष_per_cpu = true,
+		पूर्ण,
 		.mmap_flush          = MMAP_FLUSH_DEFAULT,
-		.nr_threads_synthesize = 1,
+		.nr_thपढ़ोs_synthesize = 1,
 		.ctl_fd              = -1,
 		.ctl_fd_ack          = -1,
-	},
-	.tool = {
+	पूर्ण,
+	.tool = अणु
 		.sample		= process_sample_event,
-		.fork		= perf_event__process_fork,
-		.exit		= perf_event__process_exit,
+		.विभाजन		= perf_event__process_विभाजन,
+		.निकास		= perf_event__process_निकास,
 		.comm		= perf_event__process_comm,
 		.namespaces	= perf_event__process_namespaces,
 		.mmap		= build_id__process_mmap,
 		.mmap2		= build_id__process_mmap2,
 		.ordered_events	= true,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-const char record_callchain_help[] = CALLCHAIN_RECORD_HELP
+स्थिर अक्षर record_callchain_help[] = CALLCHAIN_RECORD_HELP
 	"\n\t\t\t\tDefault: fp";
 
-static bool dry_run;
+अटल bool dry_run;
 
 /*
  * XXX Will stay a global variable till we fix builtin-script.c to stop messing
- * with it and switch to use the library functions in perf_evlist that came
+ * with it and चयन to use the library functions in perf_evlist that came
  * from builtin-record.c, i.e. use record_opts,
- * evlist__prepare_workload, etc instead of fork+exec'in 'perf record',
+ * evlist__prepare_workload, etc instead of विभाजन+exec'in 'perf record',
  * using pipes, etc.
  */
-static struct option __record_options[] = {
+अटल काष्ठा option __record_options[] = अणु
 	OPT_CALLBACK('e', "event", &record.evlist, "event",
 		     "event selector. use 'perf list' to list available events",
 		     parse_events_option),
 	OPT_CALLBACK(0, "filter", &record.evlist, "filter",
 		     "event filter", parse_filter),
 	OPT_CALLBACK_NOOPT(0, "exclude-perf", &record.evlist,
-			   NULL, "don't record events from perf itself",
+			   शून्य, "don't record events from perf itself",
 			   exclude_perf),
 	OPT_STRING('p', "pid", &record.opts.target.pid, "pid",
 		    "record events on existing process id"),
 	OPT_STRING('t', "tid", &record.opts.target.tid, "tid",
 		    "record events on existing thread id"),
-	OPT_INTEGER('r', "realtime", &record.realtime_prio,
+	OPT_INTEGER('r', "realtime", &record.realसमय_prio,
 		    "collect data with this RT SCHED_FIFO priority"),
 	OPT_BOOLEAN(0, "no-buffering", &record.opts.no_buffering,
 		    "collect data without buffering"),
 	OPT_BOOLEAN('R', "raw-samples", &record.opts.raw_samples,
 		    "collect raw sample records from all opened counters"),
-	OPT_BOOLEAN('a', "all-cpus", &record.opts.target.system_wide,
+	OPT_BOOLEAN('a', "all-cpus", &record.opts.target.प्रणाली_wide,
 			    "system-wide collection from all CPUs"),
 	OPT_STRING('C', "cpu", &record.opts.target.cpu_list, "cpu",
 		    "list of cpus to monitor"),
-	OPT_U64('c', "count", &record.opts.user_interval, "event period to sample"),
+	OPT_U64('c', "count", &record.opts.user_पूर्णांकerval, "event period to sample"),
 	OPT_STRING('o', "output", &record.data.path, "file",
 		    "output file name"),
 	OPT_BOOLEAN_SET('i', "no-inherit", &record.opts.no_inherit,
@@ -2483,7 +2484,7 @@ static struct option __record_options[] = {
 			"child tasks do not inherit counters"),
 	OPT_BOOLEAN(0, "tail-synthesize", &record.opts.tail_synthesize,
 		    "synthesize non-sample events at the end of output"),
-	OPT_BOOLEAN(0, "overwrite", &record.opts.overwrite, "use overwrite mode"),
+	OPT_BOOLEAN(0, "overwrite", &record.opts.overग_लिखो, "use overwrite mode"),
 	OPT_BOOLEAN(0, "no-bpf-event", &record.opts.no_bpf_event, "do not record bpf events"),
 	OPT_BOOLEAN(0, "strict-freq", &record.opts.strict_freq,
 		    "Fail if the specified frequency can't be used"),
@@ -2498,15 +2499,15 @@ static struct option __record_options[] = {
 		     record__mmap_flush_parse),
 	OPT_BOOLEAN(0, "group", &record.opts.group,
 		    "put the counters into a counter group"),
-	OPT_CALLBACK_NOOPT('g', NULL, &callchain_param,
-			   NULL, "enables call-graph recording" ,
+	OPT_CALLBACK_NOOPT('g', शून्य, &callchain_param,
+			   शून्य, "enables call-graph recording" ,
 			   &record_callchain_opt),
 	OPT_CALLBACK(0, "call-graph", &record.opts,
 		     "record_mode[,record_size]", record_callchain_help,
 		     &record_parse_callchain_opt),
 	OPT_INCR('v', "verbose", &verbose,
 		    "be more verbose (show counter open errors, etc)"),
-	OPT_BOOLEAN('q', "quiet", &quiet, "don't print any message"),
+	OPT_BOOLEAN('q', "quiet", &quiet, "don't prपूर्णांक any message"),
 	OPT_BOOLEAN('s', "stat", &record.opts.inherit_stat,
 		    "per thread counts"),
 	OPT_BOOLEAN('d', "data", &record.opts.sample_address, "Record the sample addresses"),
@@ -2517,8 +2518,8 @@ static struct option __record_options[] = {
 	OPT_BOOLEAN(0, "code-page-size", &record.opts.sample_code_page_size,
 		    "Record the sampled code address (ip) page size"),
 	OPT_BOOLEAN(0, "sample-cpu", &record.opts.sample_cpu, "Record the sample cpu"),
-	OPT_BOOLEAN_SET('T', "timestamp", &record.opts.sample_time,
-			&record.opts.sample_time_set,
+	OPT_BOOLEAN_SET('T', "timestamp", &record.opts.sample_समय,
+			&record.opts.sample_समय_set,
 			"Record the sample timestamps"),
 	OPT_BOOLEAN_SET('P', "period", &record.opts.period, &record.opts.period_set,
 			"Record the sample period"),
@@ -2550,31 +2551,31 @@ static struct option __record_options[] = {
 		    "sample by weight (on special events only)"),
 	OPT_BOOLEAN(0, "transaction", &record.opts.sample_transaction,
 		    "sample transaction flags (special events only)"),
-	OPT_BOOLEAN(0, "per-thread", &record.opts.target.per_thread,
+	OPT_BOOLEAN(0, "per-thread", &record.opts.target.per_thपढ़ो,
 		    "use per-thread mmaps"),
-	OPT_CALLBACK_OPTARG('I', "intr-regs", &record.opts.sample_intr_regs, NULL, "any register",
+	OPT_CALLBACK_OPTARG('I', "intr-regs", &record.opts.sample_पूर्णांकr_regs, शून्य, "any register",
 		    "sample selected machine registers on interrupt,"
-		    " use '-I?' to list register names", parse_intr_regs),
-	OPT_CALLBACK_OPTARG(0, "user-regs", &record.opts.sample_user_regs, NULL, "any register",
+		    " use '-I?' to list register names", parse_पूर्णांकr_regs),
+	OPT_CALLBACK_OPTARG(0, "user-regs", &record.opts.sample_user_regs, शून्य, "any register",
 		    "sample selected machine registers on interrupt,"
 		    " use '--user-regs=?' to list register names", parse_user_regs),
-	OPT_BOOLEAN(0, "running-time", &record.opts.running_time,
+	OPT_BOOLEAN(0, "running-time", &record.opts.running_समय,
 		    "Record running/enabled time of read (:S) events"),
 	OPT_CALLBACK('k', "clockid", &record.opts,
 	"clockid", "clockid to use for events, see clock_gettime()",
-	parse_clockid),
+	parse_घड़ीid),
 	OPT_STRING_OPTARG('S', "snapshot", &record.opts.auxtrace_snapshot_opts,
 			  "opts", "AUX area tracing Snapshot Mode", ""),
 	OPT_STRING_OPTARG(0, "aux-sample", &record.opts.auxtrace_sample_opts,
 			  "opts", "sample AUX area", ""),
-	OPT_UINTEGER(0, "proc-map-timeout", &proc_map_timeout,
+	OPT_UINTEGER(0, "proc-map-timeout", &proc_map_समयout,
 			"per thread proc mmap processing timeout in ms"),
 	OPT_BOOLEAN(0, "namespaces", &record.opts.record_namespaces,
 		    "Record namespaces events"),
 	OPT_BOOLEAN(0, "all-cgroups", &record.opts.record_cgroup,
 		    "Record cgroup events"),
-	OPT_BOOLEAN_SET(0, "switch-events", &record.opts.record_switch_events,
-			&record.opts.record_switch_events_set,
+	OPT_BOOLEAN_SET(0, "switch-events", &record.opts.record_चयन_events,
+			&record.opts.record_चयन_events_set,
 			"Record context switch events"),
 	OPT_BOOLEAN_FLAG(0, "all-kernel", &record.opts.all_kernel,
 			 "Configure all used events to run in kernel space.",
@@ -2596,44 +2597,44 @@ static struct option __record_options[] = {
 		    "Record build-id of all DSOs regardless of hits"),
 	OPT_BOOLEAN(0, "buildid-mmap", &record.buildid_mmap,
 		    "Record build-id in map events"),
-	OPT_BOOLEAN(0, "timestamp-filename", &record.timestamp_filename,
+	OPT_BOOLEAN(0, "timestamp-filename", &record.बारtamp_filename,
 		    "append timestamp to output filename"),
-	OPT_BOOLEAN(0, "timestamp-boundary", &record.timestamp_boundary,
+	OPT_BOOLEAN(0, "timestamp-boundary", &record.बारtamp_boundary,
 		    "Record timestamp boundary (time of first/last samples)"),
-	OPT_STRING_OPTARG_SET(0, "switch-output", &record.switch_output.str,
-			  &record.switch_output.set, "signal or size[BKMG] or time[smhd]",
+	OPT_STRING_OPTARG_SET(0, "switch-output", &record.चयन_output.str,
+			  &record.चयन_output.set, "signal or size[BKMG] or time[smhd]",
 			  "Switch output when receiving SIGUSR2 (signal) or cross a size or time threshold",
 			  "signal"),
-	OPT_CALLBACK_SET(0, "switch-output-event", &record.sb_evlist, &record.switch_output_event_set, "switch output event",
+	OPT_CALLBACK_SET(0, "switch-output-event", &record.sb_evlist, &record.चयन_output_event_set, "switch output event",
 			 "switch output event selector. use 'perf list' to list available events",
 			 parse_events_option_new_evlist),
-	OPT_INTEGER(0, "switch-max-files", &record.switch_output.num_files,
+	OPT_INTEGER(0, "switch-max-files", &record.चयन_output.num_files,
 		   "Limit number of switch output generated files"),
 	OPT_BOOLEAN(0, "dry-run", &dry_run,
 		    "Parse options then exit"),
-#ifdef HAVE_AIO_SUPPORT
+#अगर_घोषित HAVE_AIO_SUPPORT
 	OPT_CALLBACK_OPTARG(0, "aio", &record.opts,
-		     &nr_cblocks_default, "n", "Use <n> control blocks in asynchronous trace writing mode (default: 1, max: 4)",
+		     &nr_cblocks_शेष, "n", "Use <n> control blocks in asynchronous trace writing mode (default: 1, max: 4)",
 		     record__aio_parse),
-#endif
+#पूर्ण_अगर
 	OPT_CALLBACK(0, "affinity", &record.opts, "node|cpu",
 		     "Set affinity mask of trace reading thread to NUMA node cpu mask or cpu of processed mmap buffer",
 		     record__parse_affinity),
-#ifdef HAVE_ZSTD_SUPPORT
-	OPT_CALLBACK_OPTARG('z', "compression-level", &record.opts, &comp_level_default,
+#अगर_घोषित HAVE_ZSTD_SUPPORT
+	OPT_CALLBACK_OPTARG('z', "compression-level", &record.opts, &comp_level_शेष,
 			    "n", "Compressed records using specified level (default: 1 - fastest compression, 22 - greatest compression)",
 			    record__parse_comp_level),
-#endif
+#पूर्ण_अगर
 	OPT_CALLBACK(0, "max-size", &record.output_max_size,
 		     "size", "Limit the maximum size of the output file", parse_output_max_size),
 	OPT_UINTEGER(0, "num-thread-synthesize",
-		     &record.opts.nr_threads_synthesize,
+		     &record.opts.nr_thपढ़ोs_synthesize,
 		     "number of threads to run for event synthesis"),
-#ifdef HAVE_LIBPFM
+#अगर_घोषित HAVE_LIBPFM
 	OPT_CALLBACK(0, "pfm-events", &record.evlist, "event",
 		"libpfm4 event selector. use 'perf list' to list available events",
 		parse_libpfm_events_option),
-#endif
+#पूर्ण_अगर
 	OPT_CALLBACK(0, "control", &record.opts, "fd:ctl-fd[,ack-fd] or fifo:ctl-fifo[,ack-fifo]",
 		     "Listen on ctl-fd descriptor for command to control measurement ('enable': enable events, 'disable': disable events,\n"
 		     "\t\t\t  'snapshot': AUX area tracing snapshot).\n"
@@ -2641,70 +2642,70 @@ static struct option __record_options[] = {
 		     "\t\t\t  Alternatively, ctl-fifo / ack-fifo will be opened and used as ctl-fd / ack-fd.",
 		      parse_control_option),
 	OPT_END()
-};
+पूर्ण;
 
-struct option *record_options = __record_options;
+काष्ठा option *record_options = __record_options;
 
-int cmd_record(int argc, const char **argv)
-{
-	int err;
-	struct record *rec = &record;
-	char errbuf[BUFSIZ];
+पूर्णांक cmd_record(पूर्णांक argc, स्थिर अक्षर **argv)
+अणु
+	पूर्णांक err;
+	काष्ठा record *rec = &record;
+	अक्षर errbuf[बफ_मान];
 
-	setlocale(LC_ALL, "");
+	रखो_क्षेत्र(LC_ALL, "");
 
-#ifndef HAVE_LIBBPF_SUPPORT
+#अगर_अघोषित HAVE_LIBBPF_SUPPORT
 # define set_nobuild(s, l, c) set_option_nobuild(record_options, s, l, "NO_LIBBPF=1", c)
 	set_nobuild('\0', "clang-path", true);
 	set_nobuild('\0', "clang-opt", true);
 # undef set_nobuild
-#endif
+#पूर्ण_अगर
 
-#ifndef HAVE_BPF_PROLOGUE
-# if !defined (HAVE_DWARF_SUPPORT)
+#अगर_अघोषित HAVE_BPF_PROLOGUE
+# अगर !defined (HAVE_DWARF_SUPPORT)
 #  define REASON  "NO_DWARF=1"
-# elif !defined (HAVE_LIBBPF_SUPPORT)
+# elअगर !defined (HAVE_LIBBPF_SUPPORT)
 #  define REASON  "NO_LIBBPF=1"
-# else
+# अन्यथा
 #  define REASON  "this architecture doesn't support BPF prologue"
-# endif
+# endअगर
 # define set_nobuild(s, l, c) set_option_nobuild(record_options, s, l, REASON, c)
 	set_nobuild('\0', "vmlinux", true);
 # undef set_nobuild
 # undef REASON
-#endif
+#पूर्ण_अगर
 
 	rec->opts.affinity = PERF_AFFINITY_SYS;
 
 	rec->evlist = evlist__new();
-	if (rec->evlist == NULL)
-		return -ENOMEM;
+	अगर (rec->evlist == शून्य)
+		वापस -ENOMEM;
 
 	err = perf_config(perf_record_config, rec);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	argc = parse_options(argc, argv, record_options, record_usage,
 			    PARSE_OPT_STOP_AT_NON_OPTION);
-	if (quiet)
+	अगर (quiet)
 		perf_quiet_option();
 
-	/* Make system wide (-a) the default target. */
-	if (!argc && target__none(&rec->opts.target))
-		rec->opts.target.system_wide = true;
+	/* Make प्रणाली wide (-a) the शेष target. */
+	अगर (!argc && target__none(&rec->opts.target))
+		rec->opts.target.प्रणाली_wide = true;
 
-	if (nr_cgroups && !rec->opts.target.system_wide) {
+	अगर (nr_cgroups && !rec->opts.target.प्रणाली_wide) अणु
 		usage_with_options_msg(record_usage, record_options,
 			"cgroup monitoring only available in system-wide mode");
 
-	}
+	पूर्ण
 
-	if (rec->buildid_mmap) {
-		if (!perf_can_record_build_id()) {
+	अगर (rec->buildid_mmap) अणु
+		अगर (!perf_can_record_build_id()) अणु
 			pr_err("Failed: no support to record build id in mmap events, update your kernel.\n");
 			err = -EINVAL;
-			goto out_opts;
-		}
+			जाओ out_opts;
+		पूर्ण
 		pr_debug("Enabling build id in mmap2 events.\n");
 		/* Enable mmap build id synthesizing. */
 		symbol_conf.buildid_mmap2 = true;
@@ -2712,223 +2713,223 @@ int cmd_record(int argc, const char **argv)
 		rec->opts.build_id = true;
 		/* Disable build id cache. */
 		rec->no_buildid = true;
-	}
+	पूर्ण
 
-	if (rec->opts.record_cgroup && !perf_can_record_cgroup()) {
+	अगर (rec->opts.record_cgroup && !perf_can_record_cgroup()) अणु
 		pr_err("Kernel has no cgroup sampling support.\n");
 		err = -EINVAL;
-		goto out_opts;
-	}
+		जाओ out_opts;
+	पूर्ण
 
-	if (rec->opts.kcore)
+	अगर (rec->opts.kcore)
 		rec->data.is_dir = true;
 
-	if (rec->opts.comp_level != 0) {
+	अगर (rec->opts.comp_level != 0) अणु
 		pr_debug("Compression enabled, disabling build id collection at the end of the session.\n");
 		rec->no_buildid = true;
-	}
+	पूर्ण
 
-	if (rec->opts.record_switch_events &&
-	    !perf_can_record_switch_events()) {
+	अगर (rec->opts.record_चयन_events &&
+	    !perf_can_record_चयन_events()) अणु
 		ui__error("kernel does not support recording context switch events\n");
 		parse_options_usage(record_usage, record_options, "switch-events", 0);
 		err = -EINVAL;
-		goto out_opts;
-	}
+		जाओ out_opts;
+	पूर्ण
 
-	if (switch_output_setup(rec)) {
+	अगर (चयन_output_setup(rec)) अणु
 		parse_options_usage(record_usage, record_options, "switch-output", 0);
 		err = -EINVAL;
-		goto out_opts;
-	}
+		जाओ out_opts;
+	पूर्ण
 
-	if (rec->switch_output.time) {
-		signal(SIGALRM, alarm_sig_handler);
-		alarm(rec->switch_output.time);
-	}
+	अगर (rec->चयन_output.समय) अणु
+		संकेत(SIGALRM, alarm_sig_handler);
+		alarm(rec->चयन_output.समय);
+	पूर्ण
 
-	if (rec->switch_output.num_files) {
-		rec->switch_output.filenames = calloc(sizeof(char *),
-						      rec->switch_output.num_files);
-		if (!rec->switch_output.filenames) {
+	अगर (rec->चयन_output.num_files) अणु
+		rec->चयन_output.filenames = सुस्मृति(माप(अक्षर *),
+						      rec->चयन_output.num_files);
+		अगर (!rec->चयन_output.filenames) अणु
 			err = -EINVAL;
-			goto out_opts;
-		}
-	}
+			जाओ out_opts;
+		पूर्ण
+	पूर्ण
 
 	/*
-	 * Allow aliases to facilitate the lookup of symbols for address
+	 * Allow aliases to facilitate the lookup of symbols क्रम address
 	 * filters. Refer to auxtrace_parse_filters().
 	 */
 	symbol_conf.allow_aliases = true;
 
-	symbol__init(NULL);
+	symbol__init(शून्य);
 
-	if (rec->opts.affinity != PERF_AFFINITY_SYS) {
+	अगर (rec->opts.affinity != PERF_AFFINITY_SYS) अणु
 		rec->affinity_mask.nbits = cpu__max_cpu();
-		rec->affinity_mask.bits = bitmap_alloc(rec->affinity_mask.nbits);
-		if (!rec->affinity_mask.bits) {
+		rec->affinity_mask.bits = biपंचांगap_alloc(rec->affinity_mask.nbits);
+		अगर (!rec->affinity_mask.bits) अणु
 			pr_err("Failed to allocate thread mask for %zd cpus\n", rec->affinity_mask.nbits);
 			err = -ENOMEM;
-			goto out_opts;
-		}
+			जाओ out_opts;
+		पूर्ण
 		pr_debug2("thread mask[%zd]: empty\n", rec->affinity_mask.nbits);
-	}
+	पूर्ण
 
 	err = record__auxtrace_init(rec);
-	if (err)
-		goto out;
+	अगर (err)
+		जाओ out;
 
-	if (dry_run)
-		goto out;
+	अगर (dry_run)
+		जाओ out;
 
-	err = bpf__setup_stdout(rec->evlist);
-	if (err) {
-		bpf__strerror_setup_stdout(rec->evlist, err, errbuf, sizeof(errbuf));
+	err = bpf__setup_मानक_निकास(rec->evlist);
+	अगर (err) अणु
+		bpf__म_त्रुटि_setup_मानक_निकास(rec->evlist, err, errbuf, माप(errbuf));
 		pr_err("ERROR: Setup BPF stdout failed: %s\n",
 			 errbuf);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	err = -ENOMEM;
 
-	if (rec->no_buildid_cache || rec->no_buildid) {
+	अगर (rec->no_buildid_cache || rec->no_buildid) अणु
 		disable_buildid_cache();
-	} else if (rec->switch_output.enabled) {
+	पूर्ण अन्यथा अगर (rec->चयन_output.enabled) अणु
 		/*
 		 * In 'perf record --switch-output', disable buildid
-		 * generation by default to reduce data file switching
-		 * overhead. Still generate buildid if they are required
+		 * generation by शेष to reduce data file चयनing
+		 * overhead. Still generate buildid अगर they are required
 		 * explicitly using
 		 *
-		 *  perf record --switch-output --no-no-buildid \
+		 *  perf record --चयन-output --no-no-buildid \
 		 *              --no-no-buildid-cache
 		 *
 		 * Following code equals to:
 		 *
-		 * if ((rec->no_buildid || !rec->no_buildid_set) &&
+		 * अगर ((rec->no_buildid || !rec->no_buildid_set) &&
 		 *     (rec->no_buildid_cache || !rec->no_buildid_cache_set))
 		 *         disable_buildid_cache();
 		 */
 		bool disable = true;
 
-		if (rec->no_buildid_set && !rec->no_buildid)
+		अगर (rec->no_buildid_set && !rec->no_buildid)
 			disable = false;
-		if (rec->no_buildid_cache_set && !rec->no_buildid_cache)
+		अगर (rec->no_buildid_cache_set && !rec->no_buildid_cache)
 			disable = false;
-		if (disable) {
+		अगर (disable) अणु
 			rec->no_buildid = true;
 			rec->no_buildid_cache = true;
 			disable_buildid_cache();
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (record.opts.overwrite)
+	अगर (record.opts.overग_लिखो)
 		record.opts.tail_synthesize = true;
 
-	if (rec->evlist->core.nr_entries == 0) {
-		if (perf_pmu__has_hybrid()) {
-			err = evlist__add_default_hybrid(rec->evlist,
+	अगर (rec->evlist->core.nr_entries == 0) अणु
+		अगर (perf_pmu__has_hybrid()) अणु
+			err = evlist__add_शेष_hybrid(rec->evlist,
 							 !record.opts.no_samples);
-		} else {
-			err = __evlist__add_default(rec->evlist,
+		पूर्ण अन्यथा अणु
+			err = __evlist__add_शेष(rec->evlist,
 						    !record.opts.no_samples);
-		}
+		पूर्ण
 
-		if (err < 0) {
+		अगर (err < 0) अणु
 			pr_err("Not enough memory for event selector list\n");
-			goto out;
-		}
-	}
+			जाओ out;
+		पूर्ण
+	पूर्ण
 
-	if (rec->opts.target.tid && !rec->opts.no_inherit_set)
+	अगर (rec->opts.target.tid && !rec->opts.no_inherit_set)
 		rec->opts.no_inherit = true;
 
 	err = target__validate(&rec->opts.target);
-	if (err) {
-		target__strerror(&rec->opts.target, err, errbuf, BUFSIZ);
+	अगर (err) अणु
+		target__म_त्रुटि(&rec->opts.target, err, errbuf, बफ_मान);
 		ui__warning("%s\n", errbuf);
-	}
+	पूर्ण
 
 	err = target__parse_uid(&rec->opts.target);
-	if (err) {
-		int saved_errno = errno;
+	अगर (err) अणु
+		पूर्णांक saved_त्रुटि_सं = त्रुटि_सं;
 
-		target__strerror(&rec->opts.target, err, errbuf, BUFSIZ);
+		target__म_त्रुटि(&rec->opts.target, err, errbuf, बफ_मान);
 		ui__error("%s", errbuf);
 
-		err = -saved_errno;
-		goto out;
-	}
+		err = -saved_त्रुटि_सं;
+		जाओ out;
+	पूर्ण
 
-	/* Enable ignoring missing threads when -u/-p option is defined. */
-	rec->opts.ignore_missing_thread = rec->opts.target.uid != UINT_MAX || rec->opts.target.pid;
+	/* Enable ignoring missing thपढ़ोs when -u/-p option is defined. */
+	rec->opts.ignore_missing_thपढ़ो = rec->opts.target.uid != अच_पूर्णांक_उच्च || rec->opts.target.pid;
 
 	err = -ENOMEM;
-	if (evlist__create_maps(rec->evlist, &rec->opts.target) < 0)
+	अगर (evlist__create_maps(rec->evlist, &rec->opts.target) < 0)
 		usage_with_options(record_usage, record_options);
 
 	err = auxtrace_record__options(rec->itr, rec->evlist, &rec->opts);
-	if (err)
-		goto out;
+	अगर (err)
+		जाओ out;
 
 	/*
 	 * We take all buildids when the file contains
-	 * AUX area tracing data because we do not decode the
-	 * trace because it would take too long.
+	 * AUX area tracing data because we करो not decode the
+	 * trace because it would take too दीर्घ.
 	 */
-	if (rec->opts.full_auxtrace)
+	अगर (rec->opts.full_auxtrace)
 		rec->buildid_all = true;
 
-	if (rec->opts.text_poke) {
+	अगर (rec->opts.text_poke) अणु
 		err = record__config_text_poke(rec->evlist);
-		if (err) {
+		अगर (err) अणु
 			pr_err("record__config_text_poke failed, error %d\n", err);
-			goto out;
-		}
-	}
+			जाओ out;
+		पूर्ण
+	पूर्ण
 
-	if (record_opts__config(&rec->opts)) {
+	अगर (record_opts__config(&rec->opts)) अणु
 		err = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (rec->opts.nr_cblocks > nr_cblocks_max)
+	अगर (rec->opts.nr_cblocks > nr_cblocks_max)
 		rec->opts.nr_cblocks = nr_cblocks_max;
 	pr_debug("nr_cblocks: %d\n", rec->opts.nr_cblocks);
 
 	pr_debug("affinity: %s\n", affinity_tags[rec->opts.affinity]);
 	pr_debug("mmap flush: %d\n", rec->opts.mmap_flush);
 
-	if (rec->opts.comp_level > comp_level_max)
+	अगर (rec->opts.comp_level > comp_level_max)
 		rec->opts.comp_level = comp_level_max;
 	pr_debug("comp level: %d\n", rec->opts.comp_level);
 
 	err = __cmd_record(&record, argc, argv);
 out:
-	bitmap_free(rec->affinity_mask.bits);
+	biपंचांगap_मुक्त(rec->affinity_mask.bits);
 	evlist__delete(rec->evlist);
-	symbol__exit();
-	auxtrace_record__free(rec->itr);
+	symbol__निकास();
+	auxtrace_record__मुक्त(rec->itr);
 out_opts:
-	evlist__close_control(rec->opts.ctl_fd, rec->opts.ctl_fd_ack, &rec->opts.ctl_fd_close);
-	return err;
-}
+	evlist__बंद_control(rec->opts.ctl_fd, rec->opts.ctl_fd_ack, &rec->opts.ctl_fd_बंद);
+	वापस err;
+पूर्ण
 
-static void snapshot_sig_handler(int sig __maybe_unused)
-{
-	struct record *rec = &record;
+अटल व्योम snapshot_sig_handler(पूर्णांक sig __maybe_unused)
+अणु
+	काष्ठा record *rec = &record;
 
 	hit_auxtrace_snapshot_trigger(rec);
 
-	if (switch_output_signal(rec))
-		trigger_hit(&switch_output_trigger);
-}
+	अगर (चयन_output_संकेत(rec))
+		trigger_hit(&चयन_output_trigger);
+पूर्ण
 
-static void alarm_sig_handler(int sig __maybe_unused)
-{
-	struct record *rec = &record;
+अटल व्योम alarm_sig_handler(पूर्णांक sig __maybe_unused)
+अणु
+	काष्ठा record *rec = &record;
 
-	if (switch_output_time(rec))
-		trigger_hit(&switch_output_trigger);
-}
+	अगर (चयन_output_समय(rec))
+		trigger_hit(&चयन_output_trigger);
+पूर्ण

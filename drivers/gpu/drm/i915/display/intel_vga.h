@@ -1,18 +1,19 @@
-/* SPDX-License-Identifier: MIT */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: MIT */
 /*
- * Copyright © 2019 Intel Corporation
+ * Copyright तऊ 2019 Intel Corporation
  */
 
-#ifndef __INTEL_VGA_H__
-#define __INTEL_VGA_H__
+#अगर_अघोषित __INTEL_VGA_H__
+#घोषणा __INTEL_VGA_H__
 
-struct drm_i915_private;
+काष्ठा drm_i915_निजी;
 
-void intel_vga_reset_io_mem(struct drm_i915_private *i915);
-void intel_vga_disable(struct drm_i915_private *i915);
-void intel_vga_redisable(struct drm_i915_private *i915);
-void intel_vga_redisable_power_on(struct drm_i915_private *i915);
-int intel_vga_register(struct drm_i915_private *i915);
-void intel_vga_unregister(struct drm_i915_private *i915);
+व्योम पूर्णांकel_vga_reset_io_mem(काष्ठा drm_i915_निजी *i915);
+व्योम पूर्णांकel_vga_disable(काष्ठा drm_i915_निजी *i915);
+व्योम पूर्णांकel_vga_redisable(काष्ठा drm_i915_निजी *i915);
+व्योम पूर्णांकel_vga_redisable_घातer_on(काष्ठा drm_i915_निजी *i915);
+पूर्णांक पूर्णांकel_vga_रेजिस्टर(काष्ठा drm_i915_निजी *i915);
+व्योम पूर्णांकel_vga_unरेजिस्टर(काष्ठा drm_i915_निजी *i915);
 
-#endif /* __INTEL_VGA_H__ */
+#पूर्ण_अगर /* __INTEL_VGA_H__ */

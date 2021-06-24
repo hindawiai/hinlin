@@ -1,57 +1,58 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- *   Driver for Midiman Portman2x4 parallel port midi interface
+ *   Driver क्रम Midiman Porपंचांगan2x4 parallel port midi पूर्णांकerface
  *
- *   Copyright (c) by Levent Guendogdu <levon@feature-it.com>
+ *   Copyright (c) by Levent Guenकरोgdu <levon@feature-it.com>
  *
  * ChangeLog
  * Jan 24 2007 Matthias Koenig <mkoenig@suse.de>
- *      - cleanup and rewrite
+ *      - cleanup and reग_लिखो
  * Sep 30 2004 Tobias Gehrig <tobias@gehrig.tk>
  *      - source code cleanup
  * Sep 03 2004 Tobias Gehrig <tobias@gehrig.tk>
- *      - fixed compilation problem with alsa 1.0.6a (removed MODULE_CLASSES,
+ *      - fixed compilation problem with alsa 1.0.6a (हटाओd MODULE_CLASSES,
  *        MODULE_PARM_SYNTAX and changed MODULE_DEVICES to
  *        MODULE_SUPPORTED_DEVICE)
  * Mar 24 2004 Tobias Gehrig <tobias@gehrig.tk>
  *      - added 2.6 kernel support
  * Mar 18 2004 Tobias Gehrig <tobias@gehrig.tk>
- *      - added parport_unregister_driver to the startup routine if the driver fails to detect a portman
- *      - added support for all 4 output ports in portman_putmidi
+ *      - added parport_unरेजिस्टर_driver to the startup routine अगर the driver fails to detect a porपंचांगan
+ *      - added support क्रम all 4 output ports in porपंचांगan_puपंचांगidi
  * Mar 17 2004 Tobias Gehrig <tobias@gehrig.tk>
- *      - added checks for opened input device in interrupt handler
+ *      - added checks क्रम खोलोed input device in पूर्णांकerrupt handler
  * Feb 20 2004 Tobias Gehrig <tobias@gehrig.tk>
  *      - ported from alsa 0.5 to 1.0
  */
 
-#include <linux/init.h>
-#include <linux/platform_device.h>
-#include <linux/parport.h>
-#include <linux/spinlock.h>
-#include <linux/delay.h>
-#include <linux/slab.h>
-#include <linux/module.h>
-#include <sound/core.h>
-#include <sound/initval.h>
-#include <sound/rawmidi.h>
-#include <sound/control.h>
+#समावेश <linux/init.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/parport.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/module.h>
+#समावेश <sound/core.h>
+#समावेश <sound/initval.h>
+#समावेश <sound/rawmidi.h>
+#समावेश <sound/control.h>
 
-#define CARD_NAME "Portman 2x4"
-#define DRIVER_NAME "portman"
-#define PLATFORM_DRIVER "snd_portman2x4"
+#घोषणा CARD_NAME "Portman 2x4"
+#घोषणा DRIVER_NAME "portman"
+#घोषणा PLATFORM_DRIVER "snd_portman2x4"
 
-static int index[SNDRV_CARDS]  = SNDRV_DEFAULT_IDX;
-static char *id[SNDRV_CARDS]   = SNDRV_DEFAULT_STR;
-static bool enable[SNDRV_CARDS] = SNDRV_DEFAULT_ENABLE_PNP;
+अटल पूर्णांक index[SNDRV_CARDS]  = SNDRV_DEFAULT_IDX;
+अटल अक्षर *id[SNDRV_CARDS]   = SNDRV_DEFAULT_STR;
+अटल bool enable[SNDRV_CARDS] = SNDRV_DEFAULT_ENABLE_PNP;
 
-static struct platform_device *platform_devices[SNDRV_CARDS]; 
-static int device_count;
+अटल काष्ठा platक्रमm_device *platक्रमm_devices[SNDRV_CARDS]; 
+अटल पूर्णांक device_count;
 
-module_param_array(index, int, NULL, 0444);
+module_param_array(index, पूर्णांक, शून्य, 0444);
 MODULE_PARM_DESC(index, "Index value for " CARD_NAME " soundcard.");
-module_param_array(id, charp, NULL, 0444);
+module_param_array(id, अक्षरp, शून्य, 0444);
 MODULE_PARM_DESC(id, "ID string for " CARD_NAME " soundcard.");
-module_param_array(enable, bool, NULL, 0444);
+module_param_array(enable, bool, शून्य, 0444);
 MODULE_PARM_DESC(enable, "Enable " CARD_NAME " soundcard.");
 
 MODULE_AUTHOR("Levent Guendogdu, Tobias Gehrig, Matthias Koenig");
@@ -59,103 +60,103 @@ MODULE_DESCRIPTION("Midiman Portman2x4");
 MODULE_LICENSE("GPL");
 
 /*********************************************************************
- * Chip specific
+ * Chip specअगरic
  *********************************************************************/
-#define PORTMAN_NUM_INPUT_PORTS 2
-#define PORTMAN_NUM_OUTPUT_PORTS 4
+#घोषणा PORTMAN_NUM_INPUT_PORTS 2
+#घोषणा PORTMAN_NUM_OUTPUT_PORTS 4
 
-struct portman {
+काष्ठा porपंचांगan अणु
 	spinlock_t reg_lock;
-	struct snd_card *card;
-	struct snd_rawmidi *rmidi;
-	struct pardevice *pardev;
-	int open_count;
-	int mode[PORTMAN_NUM_INPUT_PORTS];
-	struct snd_rawmidi_substream *midi_input[PORTMAN_NUM_INPUT_PORTS];
-};
+	काष्ठा snd_card *card;
+	काष्ठा snd_rawmidi *rmidi;
+	काष्ठा pardevice *pardev;
+	पूर्णांक खोलो_count;
+	पूर्णांक mode[PORTMAN_NUM_INPUT_PORTS];
+	काष्ठा snd_rawmidi_substream *midi_input[PORTMAN_NUM_INPUT_PORTS];
+पूर्ण;
 
-static int portman_free(struct portman *pm)
-{
-	kfree(pm);
-	return 0;
-}
+अटल पूर्णांक porपंचांगan_मुक्त(काष्ठा porपंचांगan *pm)
+अणु
+	kमुक्त(pm);
+	वापस 0;
+पूर्ण
 
-static int portman_create(struct snd_card *card,
-			  struct pardevice *pardev,
-			  struct portman **rchip)
-{
-	struct portman *pm;
+अटल पूर्णांक porपंचांगan_create(काष्ठा snd_card *card,
+			  काष्ठा pardevice *pardev,
+			  काष्ठा porपंचांगan **rchip)
+अणु
+	काष्ठा porपंचांगan *pm;
 
-	*rchip = NULL;
+	*rchip = शून्य;
 
-	pm = kzalloc(sizeof(struct portman), GFP_KERNEL);
-	if (pm == NULL) 
-		return -ENOMEM;
+	pm = kzalloc(माप(काष्ठा porपंचांगan), GFP_KERNEL);
+	अगर (pm == शून्य) 
+		वापस -ENOMEM;
 
-	/* Init chip specific data */
+	/* Init chip specअगरic data */
 	spin_lock_init(&pm->reg_lock);
 	pm->card = card;
 	pm->pardev = pardev;
 
 	*rchip = pm;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*********************************************************************
- * HW related constants
+ * HW related स्थिरants
  *********************************************************************/
 
-/* Standard PC parallel port status register equates. */
-#define	PP_STAT_BSY   	0x80	/* Busy status.  Inverted. */
-#define	PP_STAT_ACK   	0x40	/* Acknowledge.  Non-Inverted. */
-#define	PP_STAT_POUT  	0x20	/* Paper Out.    Non-Inverted. */
-#define	PP_STAT_SEL   	0x10	/* Select.       Non-Inverted. */
-#define	PP_STAT_ERR   	0x08	/* Error.        Non-Inverted. */
+/* Standard PC parallel port status रेजिस्टर equates. */
+#घोषणा	PP_STAT_BSY   	0x80	/* Busy status.  Inverted. */
+#घोषणा	PP_STAT_ACK   	0x40	/* Acknowledge.  Non-Inverted. */
+#घोषणा	PP_STAT_POUT  	0x20	/* Paper Out.    Non-Inverted. */
+#घोषणा	PP_STAT_SEL   	0x10	/* Select.       Non-Inverted. */
+#घोषणा	PP_STAT_ERR   	0x08	/* Error.        Non-Inverted. */
 
-/* Standard PC parallel port command register equates. */
-#define	PP_CMD_IEN  	0x10	/* IRQ Enable.   Non-Inverted. */
-#define	PP_CMD_SELI 	0x08	/* Select Input. Inverted. */
-#define	PP_CMD_INIT 	0x04	/* Init Printer. Non-Inverted. */
-#define	PP_CMD_FEED 	0x02	/* Auto Feed.    Inverted. */
-#define	PP_CMD_STB      0x01	/* Strobe.       Inverted. */
+/* Standard PC parallel port command रेजिस्टर equates. */
+#घोषणा	PP_CMD_IEN  	0x10	/* IRQ Enable.   Non-Inverted. */
+#घोषणा	PP_CMD_SELI 	0x08	/* Select Input. Inverted. */
+#घोषणा	PP_CMD_INIT 	0x04	/* Init Prपूर्णांकer. Non-Inverted. */
+#घोषणा	PP_CMD_FEED 	0x02	/* Auto Feed.    Inverted. */
+#घोषणा	PP_CMD_STB      0x01	/* Strobe.       Inverted. */
 
 /* Parallel Port Command Register as implemented by PCP2x4. */
-#define	INT_EN	 	PP_CMD_IEN	/* Interrupt enable. */
-#define	STROBE	        PP_CMD_STB	/* Command strobe. */
+#घोषणा	INT_EN	 	PP_CMD_IEN	/* Interrupt enable. */
+#घोषणा	STROBE	        PP_CMD_STB	/* Command strobe. */
 
-/* The parallel port command register field (b1..b3) selects the 
- * various "registers" within the PC/P 2x4.  These are the internal
+/* The parallel port command रेजिस्टर field (b1..b3) selects the 
+ * various "registers" within the PC/P 2x4.  These are the पूर्णांकernal
  * address of these "registers" that must be written to the parallel
- * port command register.
+ * port command रेजिस्टर.
  */
-#define	RXDATA0		(0 << 1)	/* PCP RxData channel 0. */
-#define	RXDATA1		(1 << 1)	/* PCP RxData channel 1. */
-#define	GEN_CTL		(2 << 1)	/* PCP General Control Register. */
-#define	SYNC_CTL 	(3 << 1)	/* PCP Sync Control Register. */
-#define	TXDATA0		(4 << 1)	/* PCP TxData channel 0. */
-#define	TXDATA1		(5 << 1)	/* PCP TxData channel 1. */
-#define	TXDATA2		(6 << 1)	/* PCP TxData channel 2. */
-#define	TXDATA3		(7 << 1)	/* PCP TxData channel 3. */
+#घोषणा	RXDATA0		(0 << 1)	/* PCP RxData channel 0. */
+#घोषणा	RXDATA1		(1 << 1)	/* PCP RxData channel 1. */
+#घोषणा	GEN_CTL		(2 << 1)	/* PCP General Control Register. */
+#घोषणा	SYNC_CTL 	(3 << 1)	/* PCP Sync Control Register. */
+#घोषणा	TXDATA0		(4 << 1)	/* PCP TxData channel 0. */
+#घोषणा	TXDATA1		(5 << 1)	/* PCP TxData channel 1. */
+#घोषणा	TXDATA2		(6 << 1)	/* PCP TxData channel 2. */
+#घोषणा	TXDATA3		(7 << 1)	/* PCP TxData channel 3. */
 
 /* Parallel Port Status Register as implemented by PCP2x4. */
-#define	ESTB		PP_STAT_POUT	/* Echoed strobe. */
-#define	INT_REQ         PP_STAT_ACK	/* Input data int request. */
-#define	BUSY            PP_STAT_ERR	/* Interface Busy. */
+#घोषणा	ESTB		PP_STAT_POUT	/* Echoed strobe. */
+#घोषणा	INT_REQ         PP_STAT_ACK	/* Input data पूर्णांक request. */
+#घोषणा	BUSY            PP_STAT_ERR	/* Interface Busy. */
 
 /* Parallel Port Status Register BUSY and SELECT lines are multiplexed
  * between several functions.  Depending on which 2x4 "register" is
  * currently selected (b1..b3), the BUSY and SELECT lines are
- * assigned as follows:
+ * asचिन्हित as follows:
  *
  *   SELECT LINE:                                                    A3 A2 A1
  *                                                                   --------
  */
-#define	RXAVAIL		PP_STAT_SEL	/* Rx Available, channel 0.   0 0 0 */
+#घोषणा	RXAVAIL		PP_STAT_SEL	/* Rx Available, channel 0.   0 0 0 */
 //  RXAVAIL1    PP_STAT_SEL             /* Rx Available, channel 1.   0 0 1 */
-#define	SYNC_STAT	PP_STAT_SEL	/* Reserved - Sync Status.    0 1 0 */
+#घोषणा	SYNC_STAT	PP_STAT_SEL	/* Reserved - Sync Status.    0 1 0 */
 //                                      /* Reserved.                  0 1 1 */
-#define	TXEMPTY		PP_STAT_SEL	/* Tx Empty, channel 0.       1 0 0 */
+#घोषणा	TXEMPTY		PP_STAT_SEL	/* Tx Empty, channel 0.       1 0 0 */
 //      TXEMPTY1        PP_STAT_SEL     /* Tx Empty, channel 1.       1 0 1 */
 //  TXEMPTY2    PP_STAT_SEL             /* Tx Empty, channel 2.       1 1 0 */
 //  TXEMPTY3    PP_STAT_SEL             /* Tx Empty, channel 3.       1 1 1 */
@@ -163,694 +164,694 @@ static int portman_create(struct snd_card *card,
 /*   BUSY LINE:                                                      A3 A2 A1
  *                                                                   --------
  */
-#define	RXDATA		PP_STAT_BSY	/* Rx Input Data, channel 0.  0 0 0 */
+#घोषणा	RXDATA		PP_STAT_BSY	/* Rx Input Data, channel 0.  0 0 0 */
 //      RXDATA1         PP_STAT_BSY     /* Rx Input Data, channel 1.  0 0 1 */
-#define	SYNC_DATA       PP_STAT_BSY	/* Reserved - Sync Data.      0 1 0 */
+#घोषणा	SYNC_DATA       PP_STAT_BSY	/* Reserved - Sync Data.      0 1 0 */
 					/* Reserved.                  0 1 1 */
-#define	DATA_ECHO       PP_STAT_BSY	/* Parallel Port Data Echo.   1 0 0 */
-#define	A0_ECHO         PP_STAT_BSY	/* Address 0 Echo.            1 0 1 */
-#define	A1_ECHO         PP_STAT_BSY	/* Address 1 Echo.            1 1 0 */
-#define	A2_ECHO         PP_STAT_BSY	/* Address 2 Echo.            1 1 1 */
+#घोषणा	DATA_ECHO       PP_STAT_BSY	/* Parallel Port Data Echo.   1 0 0 */
+#घोषणा	A0_ECHO         PP_STAT_BSY	/* Address 0 Echo.            1 0 1 */
+#घोषणा	A1_ECHO         PP_STAT_BSY	/* Address 1 Echo.            1 1 0 */
+#घोषणा	A2_ECHO         PP_STAT_BSY	/* Address 2 Echo.            1 1 1 */
 
-#define PORTMAN2X4_MODE_INPUT_TRIGGERED	 0x01
+#घोषणा PORTMAN2X4_MODE_INPUT_TRIGGERED	 0x01
 
 /*********************************************************************
- * Hardware specific functions
+ * Hardware specअगरic functions
  *********************************************************************/
-static inline void portman_write_command(struct portman *pm, u8 value)
-{
-	parport_write_control(pm->pardev->port, value);
-}
+अटल अंतरभूत व्योम porपंचांगan_ग_लिखो_command(काष्ठा porपंचांगan *pm, u8 value)
+अणु
+	parport_ग_लिखो_control(pm->pardev->port, value);
+पूर्ण
 
-static inline u8 portman_read_command(struct portman *pm)
-{
-	return parport_read_control(pm->pardev->port);
-}
+अटल अंतरभूत u8 porपंचांगan_पढ़ो_command(काष्ठा porपंचांगan *pm)
+अणु
+	वापस parport_पढ़ो_control(pm->pardev->port);
+पूर्ण
 
-static inline u8 portman_read_status(struct portman *pm)
-{
-	return parport_read_status(pm->pardev->port);
-}
+अटल अंतरभूत u8 porपंचांगan_पढ़ो_status(काष्ठा porपंचांगan *pm)
+अणु
+	वापस parport_पढ़ो_status(pm->pardev->port);
+पूर्ण
 
-static inline u8 portman_read_data(struct portman *pm)
-{
-	return parport_read_data(pm->pardev->port);
-}
+अटल अंतरभूत u8 porपंचांगan_पढ़ो_data(काष्ठा porपंचांगan *pm)
+अणु
+	वापस parport_पढ़ो_data(pm->pardev->port);
+पूर्ण
 
-static inline void portman_write_data(struct portman *pm, u8 value)
-{
-	parport_write_data(pm->pardev->port, value);
-}
+अटल अंतरभूत व्योम porपंचांगan_ग_लिखो_data(काष्ठा porपंचांगan *pm, u8 value)
+अणु
+	parport_ग_लिखो_data(pm->pardev->port, value);
+पूर्ण
 
-static void portman_write_midi(struct portman *pm, 
-			       int port, u8 mididata)
-{
-	int command = ((port + 4) << 1);
+अटल व्योम porपंचांगan_ग_लिखो_midi(काष्ठा porपंचांगan *pm, 
+			       पूर्णांक port, u8 mididata)
+अणु
+	पूर्णांक command = ((port + 4) << 1);
 
 	/* Get entering data byte and port number in BL and BH respectively.
-	 * Set up Tx Channel address field for use with PP Cmd Register.
-	 * Store address field in BH register.
-	 * Inputs:      AH = Output port number (0..3).
+	 * Set up Tx Channel address field क्रम use with PP Cmd Register.
+	 * Store address field in BH रेजिस्टर.
+	 * Inमाला_दो:      AH = Output port number (0..3).
 	 *              AL = Data byte.
 	 *    command = TXDATA0 | INT_EN;
 	 * Align port num with address field (b1...b3),
-	 * set address for TXDatax, Strobe=0
+	 * set address क्रम TXDatax, Strobe=0
 	 */
 	command |= INT_EN;
 
-	/* Disable interrupts so that the process is not interrupted, then 
-	 * write the address associated with the current Tx channel to the 
-	 * PP Command Reg.  Do not set the Strobe signal yet.
+	/* Disable पूर्णांकerrupts so that the process is not पूर्णांकerrupted, then 
+	 * ग_लिखो the address associated with the current Tx channel to the 
+	 * PP Command Reg.  Do not set the Strobe संकेत yet.
 	 */
 
-	do {
-		portman_write_command(pm, command);
+	करो अणु
+		porपंचांगan_ग_लिखो_command(pm, command);
 
-		/* While the address lines settle, write parallel output data to 
-		 * PP Data Reg.  This has no effect until Strobe signal is asserted.
+		/* While the address lines settle, ग_लिखो parallel output data to 
+		 * PP Data Reg.  This has no effect until Strobe संकेत is निश्चितed.
 		 */
 
-		portman_write_data(pm, mididata);
+		porपंचांगan_ग_लिखो_data(pm, mididata);
 		
-		/* If PCP channel's TxEmpty is set (TxEmpty is read through the PP
-		 * Status Register), then go write data.  Else go back and wait.
+		/* If PCP channel's TxEmpty is set (TxEmpty is पढ़ो through the PP
+		 * Status Register), then go ग_लिखो data.  Else go back and रुको.
 		 */
-	} while ((portman_read_status(pm) & TXEMPTY) != TXEMPTY);
+	पूर्ण जबतक ((porपंचांगan_पढ़ो_status(pm) & TXEMPTY) != TXEMPTY);
 
-	/* TxEmpty is set.  Maintain PC/P destination address and assert
-	 * Strobe through the PP Command Reg.  This will Strobe data into
-	 * the PC/P transmitter and set the PC/P BUSY signal.
+	/* TxEmpty is set.  Maपूर्णांकain PC/P destination address and निश्चित
+	 * Strobe through the PP Command Reg.  This will Strobe data पूर्णांकo
+	 * the PC/P transmitter and set the PC/P BUSY संकेत.
 	 */
 
-	portman_write_command(pm, command | STROBE);
+	porपंचांगan_ग_लिखो_command(pm, command | STROBE);
 
-	/* Wait for strobe line to settle and echo back through hardware.
+	/* Wait क्रम strobe line to settle and echo back through hardware.
 	 * Once it has echoed back, assume that the address and data lines
 	 * have settled!
 	 */
 
-	while ((portman_read_status(pm) & ESTB) == 0)
+	जबतक ((porपंचांगan_पढ़ो_status(pm) & ESTB) == 0)
 		cpu_relax();
 
-	/* Release strobe and immediately re-allow interrupts. */
-	portman_write_command(pm, command);
+	/* Release strobe and immediately re-allow पूर्णांकerrupts. */
+	porपंचांगan_ग_लिखो_command(pm, command);
 
-	while ((portman_read_status(pm) & ESTB) == ESTB)
+	जबतक ((porपंचांगan_पढ़ो_status(pm) & ESTB) == ESTB)
 		cpu_relax();
 
-	/* PC/P BUSY is now set.  We must wait until BUSY resets itself.
-	 * We'll reenable ints while we're waiting.
+	/* PC/P BUSY is now set.  We must रुको until BUSY resets itself.
+	 * We'll reenable ints while we're रुकोing.
 	 */
 
-	while ((portman_read_status(pm) & BUSY) == BUSY)
+	जबतक ((porपंचांगan_पढ़ो_status(pm) & BUSY) == BUSY)
 		cpu_relax();
 
 	/* Data sent. */
-}
+पूर्ण
 
 
 /*
  *  Read MIDI byte from port
- *  Attempt to read input byte from specified hardware input port (0..).
- *  Return -1 if no data
+ *  Attempt to पढ़ो input byte from specअगरied hardware input port (0..).
+ *  Return -1 अगर no data
  */
-static int portman_read_midi(struct portman *pm, int port)
-{
-	unsigned char midi_data = 0;
-	unsigned char cmdout;	/* Saved address+IE bit. */
+अटल पूर्णांक porपंचांगan_पढ़ो_midi(काष्ठा porपंचांगan *pm, पूर्णांक port)
+अणु
+	अचिन्हित अक्षर midi_data = 0;
+	अचिन्हित अक्षर cmकरोut;	/* Saved address+IE bit. */
 
-	/* Make sure clocking edge is down before starting... */
-	portman_write_data(pm, 0);	/* Make sure edge is down. */
+	/* Make sure घड़ीing edge is करोwn beक्रमe starting... */
+	porपंचांगan_ग_लिखो_data(pm, 0);	/* Make sure edge is करोwn. */
 
 	/* Set destination address to PCP. */
-	cmdout = (port << 1) | INT_EN;	/* Address + IE + No Strobe. */
-	portman_write_command(pm, cmdout);
+	cmकरोut = (port << 1) | INT_EN;	/* Address + IE + No Strobe. */
+	porपंचांगan_ग_लिखो_command(pm, cmकरोut);
 
-	while ((portman_read_status(pm) & ESTB) == ESTB)
-		cpu_relax();	/* Wait for strobe echo. */
+	जबतक ((porपंचांगan_पढ़ो_status(pm) & ESTB) == ESTB)
+		cpu_relax();	/* Wait क्रम strobe echo. */
 
-	/* After the address lines settle, check multiplexed RxAvail signal.
-	 * If data is available, read it.
+	/* After the address lines settle, check multiplexed RxAvail संकेत.
+	 * If data is available, पढ़ो it.
 	 */
-	if ((portman_read_status(pm) & RXAVAIL) == 0)
-		return -1;	/* No data. */
+	अगर ((porपंचांगan_पढ़ो_status(pm) & RXAVAIL) == 0)
+		वापस -1;	/* No data. */
 
-	/* Set the Strobe signal to enable the Rx clocking circuitry. */
-	portman_write_command(pm, cmdout | STROBE);	/* Write address+IE+Strobe. */
+	/* Set the Strobe संकेत to enable the Rx घड़ीing circuitry. */
+	porपंचांगan_ग_लिखो_command(pm, cmकरोut | STROBE);	/* Write address+IE+Strobe. */
 
-	while ((portman_read_status(pm) & ESTB) == 0)
-		cpu_relax(); /* Wait for strobe echo. */
+	जबतक ((porपंचांगan_पढ़ो_status(pm) & ESTB) == 0)
+		cpu_relax(); /* Wait क्रम strobe echo. */
 
-	/* The first data bit (msb) is already sitting on the input line. */
-	midi_data = (portman_read_status(pm) & 128);
-	portman_write_data(pm, 1);	/* Cause rising edge, which shifts data. */
+	/* The first data bit (msb) is alपढ़ोy sitting on the input line. */
+	midi_data = (porपंचांगan_पढ़ो_status(pm) & 128);
+	porपंचांगan_ग_लिखो_data(pm, 1);	/* Cause rising edge, which shअगरts data. */
 
 	/* Data bit 6. */
-	portman_write_data(pm, 0);	/* Cause falling edge while data settles. */
-	midi_data |= (portman_read_status(pm) >> 1) & 64;
-	portman_write_data(pm, 1);	/* Cause rising edge, which shifts data. */
+	porपंचांगan_ग_लिखो_data(pm, 0);	/* Cause falling edge जबतक data settles. */
+	midi_data |= (porपंचांगan_पढ़ो_status(pm) >> 1) & 64;
+	porपंचांगan_ग_लिखो_data(pm, 1);	/* Cause rising edge, which shअगरts data. */
 
 	/* Data bit 5. */
-	portman_write_data(pm, 0);	/* Cause falling edge while data settles. */
-	midi_data |= (portman_read_status(pm) >> 2) & 32;
-	portman_write_data(pm, 1);	/* Cause rising edge, which shifts data. */
+	porपंचांगan_ग_लिखो_data(pm, 0);	/* Cause falling edge जबतक data settles. */
+	midi_data |= (porपंचांगan_पढ़ो_status(pm) >> 2) & 32;
+	porपंचांगan_ग_लिखो_data(pm, 1);	/* Cause rising edge, which shअगरts data. */
 
 	/* Data bit 4. */
-	portman_write_data(pm, 0);	/* Cause falling edge while data settles. */
-	midi_data |= (portman_read_status(pm) >> 3) & 16;
-	portman_write_data(pm, 1);	/* Cause rising edge, which shifts data. */
+	porपंचांगan_ग_लिखो_data(pm, 0);	/* Cause falling edge जबतक data settles. */
+	midi_data |= (porपंचांगan_पढ़ो_status(pm) >> 3) & 16;
+	porपंचांगan_ग_लिखो_data(pm, 1);	/* Cause rising edge, which shअगरts data. */
 
 	/* Data bit 3. */
-	portman_write_data(pm, 0);	/* Cause falling edge while data settles. */
-	midi_data |= (portman_read_status(pm) >> 4) & 8;
-	portman_write_data(pm, 1);	/* Cause rising edge, which shifts data. */
+	porपंचांगan_ग_लिखो_data(pm, 0);	/* Cause falling edge जबतक data settles. */
+	midi_data |= (porपंचांगan_पढ़ो_status(pm) >> 4) & 8;
+	porपंचांगan_ग_लिखो_data(pm, 1);	/* Cause rising edge, which shअगरts data. */
 
 	/* Data bit 2. */
-	portman_write_data(pm, 0);	/* Cause falling edge while data settles. */
-	midi_data |= (portman_read_status(pm) >> 5) & 4;
-	portman_write_data(pm, 1);	/* Cause rising edge, which shifts data. */
+	porपंचांगan_ग_लिखो_data(pm, 0);	/* Cause falling edge जबतक data settles. */
+	midi_data |= (porपंचांगan_पढ़ो_status(pm) >> 5) & 4;
+	porपंचांगan_ग_लिखो_data(pm, 1);	/* Cause rising edge, which shअगरts data. */
 
 	/* Data bit 1. */
-	portman_write_data(pm, 0);	/* Cause falling edge while data settles. */
-	midi_data |= (portman_read_status(pm) >> 6) & 2;
-	portman_write_data(pm, 1);	/* Cause rising edge, which shifts data. */
+	porपंचांगan_ग_लिखो_data(pm, 0);	/* Cause falling edge जबतक data settles. */
+	midi_data |= (porपंचांगan_पढ़ो_status(pm) >> 6) & 2;
+	porपंचांगan_ग_लिखो_data(pm, 1);	/* Cause rising edge, which shअगरts data. */
 
 	/* Data bit 0. */
-	portman_write_data(pm, 0);	/* Cause falling edge while data settles. */
-	midi_data |= (portman_read_status(pm) >> 7) & 1;
-	portman_write_data(pm, 1);	/* Cause rising edge, which shifts data. */
-	portman_write_data(pm, 0);	/* Return data clock low. */
+	porपंचांगan_ग_लिखो_data(pm, 0);	/* Cause falling edge जबतक data settles. */
+	midi_data |= (porपंचांगan_पढ़ो_status(pm) >> 7) & 1;
+	porपंचांगan_ग_लिखो_data(pm, 1);	/* Cause rising edge, which shअगरts data. */
+	porपंचांगan_ग_लिखो_data(pm, 0);	/* Return data घड़ी low. */
 
 
-	/* De-assert Strobe and return data. */
-	portman_write_command(pm, cmdout);	/* Output saved address+IE. */
+	/* De-निश्चित Strobe and वापस data. */
+	porपंचांगan_ग_लिखो_command(pm, cmकरोut);	/* Output saved address+IE. */
 
-	/* Wait for strobe echo. */
-	while ((portman_read_status(pm) & ESTB) == ESTB)
+	/* Wait क्रम strobe echo. */
+	जबतक ((porपंचांगan_पढ़ो_status(pm) & ESTB) == ESTB)
 		cpu_relax();
 
-	return (midi_data & 255);	/* Shift back and return value. */
-}
+	वापस (midi_data & 255);	/* Shअगरt back and वापस value. */
+पूर्ण
 
 /*
- *  Checks if any input data on the given channel is available
+ *  Checks अगर any input data on the given channel is available
  *  Checks RxAvail 
  */
-static int portman_data_avail(struct portman *pm, int channel)
-{
-	int command = INT_EN;
-	switch (channel) {
-	case 0:
+अटल पूर्णांक porपंचांगan_data_avail(काष्ठा porपंचांगan *pm, पूर्णांक channel)
+अणु
+	पूर्णांक command = INT_EN;
+	चयन (channel) अणु
+	हाल 0:
 		command |= RXDATA0;
-		break;
-	case 1:
+		अवरोध;
+	हाल 1:
 		command |= RXDATA1;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 	/* Write hardware (assumme STROBE=0) */
-	portman_write_command(pm, command);
-	/* Check multiplexed RxAvail signal */
-	if ((portman_read_status(pm) & RXAVAIL) == RXAVAIL)
-		return 1;	/* Data available */
+	porपंचांगan_ग_लिखो_command(pm, command);
+	/* Check multiplexed RxAvail संकेत */
+	अगर ((porपंचांगan_पढ़ो_status(pm) & RXAVAIL) == RXAVAIL)
+		वापस 1;	/* Data available */
 
 	/* No Data available */
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
 /*
  *  Flushes any input
  */
-static void portman_flush_input(struct portman *pm, unsigned char port)
-{
-	/* Local variable for counting things */
-	unsigned int i = 0;
-	unsigned char command = 0;
+अटल व्योम porपंचांगan_flush_input(काष्ठा porपंचांगan *pm, अचिन्हित अक्षर port)
+अणु
+	/* Local variable क्रम counting things */
+	अचिन्हित पूर्णांक i = 0;
+	अचिन्हित अक्षर command = 0;
 
-	switch (port) {
-	case 0:
+	चयन (port) अणु
+	हाल 0:
 		command = RXDATA0;
-		break;
-	case 1:
+		अवरोध;
+	हाल 1:
 		command = RXDATA1;
-		break;
-	default:
-		snd_printk(KERN_WARNING
+		अवरोध;
+	शेष:
+		snd_prपूर्णांकk(KERN_WARNING
 			   "portman_flush_input() Won't flush port %i\n",
 			   port);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	/* Set address for specified channel in port and allow to settle. */
-	portman_write_command(pm, command);
+	/* Set address क्रम specअगरied channel in port and allow to settle. */
+	porपंचांगan_ग_लिखो_command(pm, command);
 
-	/* Assert the Strobe and wait for echo back. */
-	portman_write_command(pm, command | STROBE);
+	/* Assert the Strobe and रुको क्रम echo back. */
+	porपंचांगan_ग_लिखो_command(pm, command | STROBE);
 
-	/* Wait for ESTB */
-	while ((portman_read_status(pm) & ESTB) == 0)
+	/* Wait क्रम ESTB */
+	जबतक ((porपंचांगan_पढ़ो_status(pm) & ESTB) == 0)
 		cpu_relax();
 
-	/* Output clock cycles to the Rx circuitry. */
-	portman_write_data(pm, 0);
+	/* Output घड़ी cycles to the Rx circuitry. */
+	porपंचांगan_ग_लिखो_data(pm, 0);
 
 	/* Flush 250 bits... */
-	for (i = 0; i < 250; i++) {
-		portman_write_data(pm, 1);
-		portman_write_data(pm, 0);
-	}
+	क्रम (i = 0; i < 250; i++) अणु
+		porपंचांगan_ग_लिखो_data(pm, 1);
+		porपंचांगan_ग_लिखो_data(pm, 0);
+	पूर्ण
 
-	/* Deassert the Strobe signal of the port and wait for it to settle. */
-	portman_write_command(pm, command | INT_EN);
+	/* Deनिश्चित the Strobe संकेत of the port and रुको क्रम it to settle. */
+	porपंचांगan_ग_लिखो_command(pm, command | INT_EN);
 
-	/* Wait for settling */
-	while ((portman_read_status(pm) & ESTB) == ESTB)
+	/* Wait क्रम settling */
+	जबतक ((porपंचांगan_पढ़ो_status(pm) & ESTB) == ESTB)
 		cpu_relax();
-}
+पूर्ण
 
-static int portman_probe(struct parport *p)
-{
-	/* Initialize the parallel port data register.  Will set Rx clocks
-	 * low in case we happen to be addressing the Rx ports at this time.
+अटल पूर्णांक porपंचांगan_probe(काष्ठा parport *p)
+अणु
+	/* Initialize the parallel port data रेजिस्टर.  Will set Rx घड़ीs
+	 * low in हाल we happen to be addressing the Rx ports at this समय.
 	 */
 	/* 1 */
-	parport_write_data(p, 0);
+	parport_ग_लिखो_data(p, 0);
 
-	/* Initialize the parallel port command register, thus initializing
+	/* Initialize the parallel port command रेजिस्टर, thus initializing
 	 * hardware handshake lines to midi box:
 	 *
 	 *                                  Strobe = 0
 	 *                                  Interrupt Enable = 0            
 	 */
 	/* 2 */
-	parport_write_control(p, 0);
+	parport_ग_लिखो_control(p, 0);
 
-	/* Check if Portman PC/P 2x4 is out there. */
+	/* Check अगर Porपंचांगan PC/P 2x4 is out there. */
 	/* 3 */
-	parport_write_control(p, RXDATA0);	/* Write Strobe=0 to command reg. */
+	parport_ग_लिखो_control(p, RXDATA0);	/* Write Strobe=0 to command reg. */
 
-	/* Check for ESTB to be clear */
+	/* Check क्रम ESTB to be clear */
 	/* 4 */
-	if ((parport_read_status(p) & ESTB) == ESTB)
-		return 1;	/* CODE 1 - Strobe Failure. */
+	अगर ((parport_पढ़ो_status(p) & ESTB) == ESTB)
+		वापस 1;	/* CODE 1 - Strobe Failure. */
 
-	/* Set for RXDATA0 where no damage will be done. */
+	/* Set क्रम RXDATA0 where no damage will be करोne. */
 	/* 5 */
-	parport_write_control(p, RXDATA0 | STROBE);	/* Write Strobe=1 to command reg. */
+	parport_ग_लिखो_control(p, RXDATA0 | STROBE);	/* Write Strobe=1 to command reg. */
 
 	/* 6 */
-	if ((parport_read_status(p) & ESTB) != ESTB)
-		return 1;	/* CODE 1 - Strobe Failure. */
+	अगर ((parport_पढ़ो_status(p) & ESTB) != ESTB)
+		वापस 1;	/* CODE 1 - Strobe Failure. */
 
 	/* 7 */
-	parport_write_control(p, 0);	/* Reset Strobe=0. */
+	parport_ग_लिखो_control(p, 0);	/* Reset Strobe=0. */
 
-	/* Check if Tx circuitry is functioning properly.  If initialized 
-	 * unit TxEmpty is false, send out char and see if it goes true.
+	/* Check अगर Tx circuitry is functioning properly.  If initialized 
+	 * unit TxEmpty is false, send out अक्षर and see अगर it goes true.
 	 */
 	/* 8 */
-	parport_write_control(p, TXDATA0);	/* Tx channel 0, strobe off. */
+	parport_ग_लिखो_control(p, TXDATA0);	/* Tx channel 0, strobe off. */
 
-	/* If PCP channel's TxEmpty is set (TxEmpty is read through the PP
-	 * Status Register), then go write data.  Else go back and wait.
+	/* If PCP channel's TxEmpty is set (TxEmpty is पढ़ो through the PP
+	 * Status Register), then go ग_लिखो data.  Else go back and रुको.
 	 */
 	/* 9 */
-	if ((parport_read_status(p) & TXEMPTY) == 0)
-		return 2;
+	अगर ((parport_पढ़ो_status(p) & TXEMPTY) == 0)
+		वापस 2;
 
 	/* Return OK status. */
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int portman_device_init(struct portman *pm)
-{
-	portman_flush_input(pm, 0);
-	portman_flush_input(pm, 1);
+अटल पूर्णांक porपंचांगan_device_init(काष्ठा porपंचांगan *pm)
+अणु
+	porपंचांगan_flush_input(pm, 0);
+	porपंचांगan_flush_input(pm, 1);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*********************************************************************
  * Rawmidi
  *********************************************************************/
-static int snd_portman_midi_open(struct snd_rawmidi_substream *substream)
-{
-	return 0;
-}
+अटल पूर्णांक snd_porपंचांगan_midi_खोलो(काष्ठा snd_rawmidi_substream *substream)
+अणु
+	वापस 0;
+पूर्ण
 
-static int snd_portman_midi_close(struct snd_rawmidi_substream *substream)
-{
-	return 0;
-}
+अटल पूर्णांक snd_porपंचांगan_midi_बंद(काष्ठा snd_rawmidi_substream *substream)
+अणु
+	वापस 0;
+पूर्ण
 
-static void snd_portman_midi_input_trigger(struct snd_rawmidi_substream *substream,
-					   int up)
-{
-	struct portman *pm = substream->rmidi->private_data;
-	unsigned long flags;
+अटल व्योम snd_porपंचांगan_midi_input_trigger(काष्ठा snd_rawmidi_substream *substream,
+					   पूर्णांक up)
+अणु
+	काष्ठा porपंचांगan *pm = substream->rmidi->निजी_data;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&pm->reg_lock, flags);
-	if (up)
+	अगर (up)
 		pm->mode[substream->number] |= PORTMAN2X4_MODE_INPUT_TRIGGERED;
-	else
+	अन्यथा
 		pm->mode[substream->number] &= ~PORTMAN2X4_MODE_INPUT_TRIGGERED;
 	spin_unlock_irqrestore(&pm->reg_lock, flags);
-}
+पूर्ण
 
-static void snd_portman_midi_output_trigger(struct snd_rawmidi_substream *substream,
-					    int up)
-{
-	struct portman *pm = substream->rmidi->private_data;
-	unsigned long flags;
-	unsigned char byte;
+अटल व्योम snd_porपंचांगan_midi_output_trigger(काष्ठा snd_rawmidi_substream *substream,
+					    पूर्णांक up)
+अणु
+	काष्ठा porपंचांगan *pm = substream->rmidi->निजी_data;
+	अचिन्हित दीर्घ flags;
+	अचिन्हित अक्षर byte;
 
 	spin_lock_irqsave(&pm->reg_lock, flags);
-	if (up) {
-		while ((snd_rawmidi_transmit(substream, &byte, 1) == 1))
-			portman_write_midi(pm, substream->number, byte);
-	}
+	अगर (up) अणु
+		जबतक ((snd_rawmidi_transmit(substream, &byte, 1) == 1))
+			porपंचांगan_ग_लिखो_midi(pm, substream->number, byte);
+	पूर्ण
 	spin_unlock_irqrestore(&pm->reg_lock, flags);
-}
+पूर्ण
 
-static const struct snd_rawmidi_ops snd_portman_midi_output = {
-	.open =		snd_portman_midi_open,
-	.close =	snd_portman_midi_close,
-	.trigger =	snd_portman_midi_output_trigger,
-};
+अटल स्थिर काष्ठा snd_rawmidi_ops snd_porपंचांगan_midi_output = अणु
+	.खोलो =		snd_porपंचांगan_midi_खोलो,
+	.बंद =	snd_porपंचांगan_midi_बंद,
+	.trigger =	snd_porपंचांगan_midi_output_trigger,
+पूर्ण;
 
-static const struct snd_rawmidi_ops snd_portman_midi_input = {
-	.open =		snd_portman_midi_open,
-	.close =	snd_portman_midi_close,
-	.trigger =	snd_portman_midi_input_trigger,
-};
+अटल स्थिर काष्ठा snd_rawmidi_ops snd_porपंचांगan_midi_input = अणु
+	.खोलो =		snd_porपंचांगan_midi_खोलो,
+	.बंद =	snd_porपंचांगan_midi_बंद,
+	.trigger =	snd_porपंचांगan_midi_input_trigger,
+पूर्ण;
 
 /* Create and initialize the rawmidi component */
-static int snd_portman_rawmidi_create(struct snd_card *card)
-{
-	struct portman *pm = card->private_data;
-	struct snd_rawmidi *rmidi;
-	struct snd_rawmidi_substream *substream;
-	int err;
+अटल पूर्णांक snd_porपंचांगan_rawmidi_create(काष्ठा snd_card *card)
+अणु
+	काष्ठा porपंचांगan *pm = card->निजी_data;
+	काष्ठा snd_rawmidi *rmidi;
+	काष्ठा snd_rawmidi_substream *substream;
+	पूर्णांक err;
 	
 	err = snd_rawmidi_new(card, CARD_NAME, 0, 
 			      PORTMAN_NUM_OUTPUT_PORTS, 
 			      PORTMAN_NUM_INPUT_PORTS, 
 			      &rmidi);
-	if (err < 0) 
-		return err;
+	अगर (err < 0) 
+		वापस err;
 
-	rmidi->private_data = pm;
-	strcpy(rmidi->name, CARD_NAME);
+	rmidi->निजी_data = pm;
+	म_नकल(rmidi->name, CARD_NAME);
 	rmidi->info_flags = SNDRV_RAWMIDI_INFO_OUTPUT |
 		            SNDRV_RAWMIDI_INFO_INPUT |
                             SNDRV_RAWMIDI_INFO_DUPLEX;
 
 	pm->rmidi = rmidi;
 
-	/* register rawmidi ops */
+	/* रेजिस्टर rawmidi ops */
 	snd_rawmidi_set_ops(rmidi, SNDRV_RAWMIDI_STREAM_OUTPUT, 
-			    &snd_portman_midi_output);
+			    &snd_porपंचांगan_midi_output);
 	snd_rawmidi_set_ops(rmidi, SNDRV_RAWMIDI_STREAM_INPUT, 
-			    &snd_portman_midi_input);
+			    &snd_porपंचांगan_midi_input);
 
 	/* name substreams */
 	/* output */
-	list_for_each_entry(substream,
+	list_क्रम_each_entry(substream,
 			    &rmidi->streams[SNDRV_RAWMIDI_STREAM_OUTPUT].substreams,
-			    list) {
-		sprintf(substream->name,
+			    list) अणु
+		प्र_लिखो(substream->name,
 			"Portman2x4 %d", substream->number+1);
-	}
+	पूर्ण
 	/* input */
-	list_for_each_entry(substream,
+	list_क्रम_each_entry(substream,
 			    &rmidi->streams[SNDRV_RAWMIDI_STREAM_INPUT].substreams,
-			    list) {
+			    list) अणु
 		pm->midi_input[substream->number] = substream;
-		sprintf(substream->name,
+		प्र_लिखो(substream->name,
 			"Portman2x4 %d", substream->number+1);
-	}
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /*********************************************************************
  * parport stuff
  *********************************************************************/
-static void snd_portman_interrupt(void *userdata)
-{
-	unsigned char midivalue = 0;
-	struct portman *pm = ((struct snd_card*)userdata)->private_data;
+अटल व्योम snd_porपंचांगan_पूर्णांकerrupt(व्योम *userdata)
+अणु
+	अचिन्हित अक्षर miभागalue = 0;
+	काष्ठा porपंचांगan *pm = ((काष्ठा snd_card*)userdata)->निजी_data;
 
 	spin_lock(&pm->reg_lock);
 
-	/* While any input data is waiting */
-	while ((portman_read_status(pm) & INT_REQ) == INT_REQ) {
+	/* While any input data is रुकोing */
+	जबतक ((porपंचांगan_पढ़ो_status(pm) & INT_REQ) == INT_REQ) अणु
 		/* If data available on channel 0, 
-		   read it and stuff it into the queue. */
-		if (portman_data_avail(pm, 0)) {
+		   पढ़ो it and stuff it पूर्णांकo the queue. */
+		अगर (porपंचांगan_data_avail(pm, 0)) अणु
 			/* Read Midi */
-			midivalue = portman_read_midi(pm, 0);
-			/* put midi into queue... */
-			if (pm->mode[0] & PORTMAN2X4_MODE_INPUT_TRIGGERED)
+			miभागalue = porपंचांगan_पढ़ो_midi(pm, 0);
+			/* put midi पूर्णांकo queue... */
+			अगर (pm->mode[0] & PORTMAN2X4_MODE_INPUT_TRIGGERED)
 				snd_rawmidi_receive(pm->midi_input[0],
-						    &midivalue, 1);
+						    &miभागalue, 1);
 
-		}
+		पूर्ण
 		/* If data available on channel 1, 
-		   read it and stuff it into the queue. */
-		if (portman_data_avail(pm, 1)) {
+		   पढ़ो it and stuff it पूर्णांकo the queue. */
+		अगर (porपंचांगan_data_avail(pm, 1)) अणु
 			/* Read Midi */
-			midivalue = portman_read_midi(pm, 1);
-			/* put midi into queue... */
-			if (pm->mode[1] & PORTMAN2X4_MODE_INPUT_TRIGGERED)
+			miभागalue = porपंचांगan_पढ़ो_midi(pm, 1);
+			/* put midi पूर्णांकo queue... */
+			अगर (pm->mode[1] & PORTMAN2X4_MODE_INPUT_TRIGGERED)
 				snd_rawmidi_receive(pm->midi_input[1],
-						    &midivalue, 1);
-		}
+						    &miभागalue, 1);
+		पूर्ण
 
-	}
+	पूर्ण
 
 	spin_unlock(&pm->reg_lock);
-}
+पूर्ण
 
-static void snd_portman_attach(struct parport *p)
-{
-	struct platform_device *device;
+अटल व्योम snd_porपंचांगan_attach(काष्ठा parport *p)
+अणु
+	काष्ठा platक्रमm_device *device;
 
-	device = platform_device_alloc(PLATFORM_DRIVER, device_count);
-	if (!device)
-		return;
+	device = platक्रमm_device_alloc(PLATFORM_DRIVER, device_count);
+	अगर (!device)
+		वापस;
 
-	/* Temporary assignment to forward the parport */
-	platform_set_drvdata(device, p);
+	/* Temporary assignment to क्रमward the parport */
+	platक्रमm_set_drvdata(device, p);
 
-	if (platform_device_add(device) < 0) {
-		platform_device_put(device);
-		return;
-	}
+	अगर (platक्रमm_device_add(device) < 0) अणु
+		platक्रमm_device_put(device);
+		वापस;
+	पूर्ण
 
-	/* Since we dont get the return value of probe
-	 * We need to check if device probing succeeded or not */
-	if (!platform_get_drvdata(device)) {
-		platform_device_unregister(device);
-		return;
-	}
+	/* Since we करोnt get the वापस value of probe
+	 * We need to check अगर device probing succeeded or not */
+	अगर (!platक्रमm_get_drvdata(device)) अणु
+		platक्रमm_device_unरेजिस्टर(device);
+		वापस;
+	पूर्ण
 
-	/* register device in global table */
-	platform_devices[device_count] = device;
+	/* रेजिस्टर device in global table */
+	platक्रमm_devices[device_count] = device;
 	device_count++;
-}
+पूर्ण
 
-static void snd_portman_detach(struct parport *p)
-{
-	/* nothing to do here */
-}
+अटल व्योम snd_porपंचांगan_detach(काष्ठा parport *p)
+अणु
+	/* nothing to करो here */
+पूर्ण
 
-static int snd_portman_dev_probe(struct pardevice *pardev)
-{
-	if (strcmp(pardev->name, DRIVER_NAME))
-		return -ENODEV;
+अटल पूर्णांक snd_porपंचांगan_dev_probe(काष्ठा pardevice *pardev)
+अणु
+	अगर (म_भेद(pardev->name, DRIVER_NAME))
+		वापस -ENODEV;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct parport_driver portman_parport_driver = {
+अटल काष्ठा parport_driver porपंचांगan_parport_driver = अणु
 	.name		= "portman2x4",
-	.probe		= snd_portman_dev_probe,
-	.match_port	= snd_portman_attach,
-	.detach		= snd_portman_detach,
+	.probe		= snd_porपंचांगan_dev_probe,
+	.match_port	= snd_porपंचांगan_attach,
+	.detach		= snd_porपंचांगan_detach,
 	.devmodel	= true,
-};
+पूर्ण;
 
 /*********************************************************************
- * platform stuff
+ * platक्रमm stuff
  *********************************************************************/
-static void snd_portman_card_private_free(struct snd_card *card)
-{
-	struct portman *pm = card->private_data;
-	struct pardevice *pardev = pm->pardev;
+अटल व्योम snd_porपंचांगan_card_निजी_मुक्त(काष्ठा snd_card *card)
+अणु
+	काष्ठा porपंचांगan *pm = card->निजी_data;
+	काष्ठा pardevice *pardev = pm->pardev;
 
-	if (pardev) {
+	अगर (pardev) अणु
 		parport_release(pardev);
-		parport_unregister_device(pardev);
-	}
+		parport_unरेजिस्टर_device(pardev);
+	पूर्ण
 
-	portman_free(pm);
-}
+	porपंचांगan_मुक्त(pm);
+पूर्ण
 
-static int snd_portman_probe(struct platform_device *pdev)
-{
-	struct pardevice *pardev;
-	struct parport *p;
-	int dev = pdev->id;
-	struct snd_card *card = NULL;
-	struct portman *pm = NULL;
-	int err;
-	struct pardev_cb portman_cb = {
-		.preempt = NULL,
-		.wakeup = NULL,
-		.irq_func = snd_portman_interrupt,	/* ISR */
+अटल पूर्णांक snd_porपंचांगan_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा pardevice *pardev;
+	काष्ठा parport *p;
+	पूर्णांक dev = pdev->id;
+	काष्ठा snd_card *card = शून्य;
+	काष्ठा porपंचांगan *pm = शून्य;
+	पूर्णांक err;
+	काष्ठा pardev_cb porपंचांगan_cb = अणु
+		.preempt = शून्य,
+		.wakeup = शून्य,
+		.irq_func = snd_porपंचांगan_पूर्णांकerrupt,	/* ISR */
 		.flags = PARPORT_DEV_EXCL,		/* flags */
-	};
+	पूर्ण;
 
-	p = platform_get_drvdata(pdev);
-	platform_set_drvdata(pdev, NULL);
+	p = platक्रमm_get_drvdata(pdev);
+	platक्रमm_set_drvdata(pdev, शून्य);
 
-	if (dev >= SNDRV_CARDS)
-		return -ENODEV;
-	if (!enable[dev]) 
-		return -ENOENT;
+	अगर (dev >= SNDRV_CARDS)
+		वापस -ENODEV;
+	अगर (!enable[dev]) 
+		वापस -ENOENT;
 
 	err = snd_card_new(&pdev->dev, index[dev], id[dev], THIS_MODULE,
 			   0, &card);
-	if (err < 0) {
-		snd_printd("Cannot create card\n");
-		return err;
-	}
-	strcpy(card->driver, DRIVER_NAME);
-	strcpy(card->shortname, CARD_NAME);
-	sprintf(card->longname,  "%s at 0x%lx, irq %i", 
-		card->shortname, p->base, p->irq);
+	अगर (err < 0) अणु
+		snd_prपूर्णांकd("Cannot create card\n");
+		वापस err;
+	पूर्ण
+	म_नकल(card->driver, DRIVER_NAME);
+	म_नकल(card->लघुname, CARD_NAME);
+	प्र_लिखो(card->दीर्घname,  "%s at 0x%lx, irq %i", 
+		card->लघुname, p->base, p->irq);
 
-	portman_cb.private = card;			   /* private */
-	pardev = parport_register_dev_model(p,		   /* port */
+	porपंचांगan_cb.निजी = card;			   /* निजी */
+	pardev = parport_रेजिस्टर_dev_model(p,		   /* port */
 					    DRIVER_NAME,   /* name */
-					    &portman_cb,   /* callbacks */
+					    &porपंचांगan_cb,   /* callbacks */
 					    pdev->id);	   /* device number */
-	if (pardev == NULL) {
-		snd_printd("Cannot register pardevice\n");
+	अगर (pardev == शून्य) अणु
+		snd_prपूर्णांकd("Cannot register pardevice\n");
 		err = -EIO;
-		goto __err;
-	}
+		जाओ __err;
+	पूर्ण
 
 	/* claim parport */
-	if (parport_claim(pardev)) {
-		snd_printd("Cannot claim parport 0x%lx\n", pardev->port->base);
+	अगर (parport_claim(pardev)) अणु
+		snd_prपूर्णांकd("Cannot claim parport 0x%lx\n", pardev->port->base);
 		err = -EIO;
-		goto free_pardev;
-	}
+		जाओ मुक्त_pardev;
+	पूर्ण
 
-	if ((err = portman_create(card, pardev, &pm)) < 0) {
-		snd_printd("Cannot create main component\n");
-		goto release_pardev;
-	}
-	card->private_data = pm;
-	card->private_free = snd_portman_card_private_free;
+	अगर ((err = porपंचांगan_create(card, pardev, &pm)) < 0) अणु
+		snd_prपूर्णांकd("Cannot create main component\n");
+		जाओ release_pardev;
+	पूर्ण
+	card->निजी_data = pm;
+	card->निजी_मुक्त = snd_porपंचांगan_card_निजी_मुक्त;
 
-	err = portman_probe(p);
-	if (err) {
+	err = porपंचांगan_probe(p);
+	अगर (err) अणु
 		err = -EIO;
-		goto __err;
-	}
+		जाओ __err;
+	पूर्ण
 	
-	if ((err = snd_portman_rawmidi_create(card)) < 0) {
-		snd_printd("Creating Rawmidi component failed\n");
-		goto __err;
-	}
+	अगर ((err = snd_porपंचांगan_rawmidi_create(card)) < 0) अणु
+		snd_prपूर्णांकd("Creating Rawmidi component failed\n");
+		जाओ __err;
+	पूर्ण
 
 	/* init device */
-	if ((err = portman_device_init(pm)) < 0)
-		goto __err;
+	अगर ((err = porपंचांगan_device_init(pm)) < 0)
+		जाओ __err;
 
-	platform_set_drvdata(pdev, card);
+	platक्रमm_set_drvdata(pdev, card);
 
-	/* At this point card will be usable */
-	if ((err = snd_card_register(card)) < 0) {
-		snd_printd("Cannot register card\n");
-		goto __err;
-	}
+	/* At this poपूर्णांक card will be usable */
+	अगर ((err = snd_card_रेजिस्टर(card)) < 0) अणु
+		snd_prपूर्णांकd("Cannot register card\n");
+		जाओ __err;
+	पूर्ण
 
-	snd_printk(KERN_INFO "Portman 2x4 on 0x%lx\n", p->base);
-	return 0;
+	snd_prपूर्णांकk(KERN_INFO "Portman 2x4 on 0x%lx\n", p->base);
+	वापस 0;
 
 release_pardev:
 	parport_release(pardev);
-free_pardev:
-	parport_unregister_device(pardev);
+मुक्त_pardev:
+	parport_unरेजिस्टर_device(pardev);
 __err:
-	snd_card_free(card);
-	return err;
-}
+	snd_card_मुक्त(card);
+	वापस err;
+पूर्ण
 
-static int snd_portman_remove(struct platform_device *pdev)
-{
-	struct snd_card *card = platform_get_drvdata(pdev);
+अटल पूर्णांक snd_porपंचांगan_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा snd_card *card = platक्रमm_get_drvdata(pdev);
 
-	if (card)
-		snd_card_free(card);
+	अगर (card)
+		snd_card_मुक्त(card);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
-static struct platform_driver snd_portman_driver = {
-	.probe  = snd_portman_probe,
-	.remove = snd_portman_remove,
-	.driver = {
+अटल काष्ठा platक्रमm_driver snd_porपंचांगan_driver = अणु
+	.probe  = snd_porपंचांगan_probe,
+	.हटाओ = snd_porपंचांगan_हटाओ,
+	.driver = अणु
 		.name = PLATFORM_DRIVER,
-	}
-};
+	पूर्ण
+पूर्ण;
 
 /*********************************************************************
  * module init stuff
  *********************************************************************/
-static void snd_portman_unregister_all(void)
-{
-	int i;
+अटल व्योम snd_porपंचांगan_unरेजिस्टर_all(व्योम)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < SNDRV_CARDS; ++i) {
-		if (platform_devices[i]) {
-			platform_device_unregister(platform_devices[i]);
-			platform_devices[i] = NULL;
-		}
-	}		
-	platform_driver_unregister(&snd_portman_driver);
-	parport_unregister_driver(&portman_parport_driver);
-}
+	क्रम (i = 0; i < SNDRV_CARDS; ++i) अणु
+		अगर (platक्रमm_devices[i]) अणु
+			platक्रमm_device_unरेजिस्टर(platक्रमm_devices[i]);
+			platक्रमm_devices[i] = शून्य;
+		पूर्ण
+	पूर्ण		
+	platक्रमm_driver_unरेजिस्टर(&snd_porपंचांगan_driver);
+	parport_unरेजिस्टर_driver(&porपंचांगan_parport_driver);
+पूर्ण
 
-static int __init snd_portman_module_init(void)
-{
-	int err;
+अटल पूर्णांक __init snd_porपंचांगan_module_init(व्योम)
+अणु
+	पूर्णांक err;
 
-	if ((err = platform_driver_register(&snd_portman_driver)) < 0)
-		return err;
+	अगर ((err = platक्रमm_driver_रेजिस्टर(&snd_porपंचांगan_driver)) < 0)
+		वापस err;
 
-	if (parport_register_driver(&portman_parport_driver) != 0) {
-		platform_driver_unregister(&snd_portman_driver);
-		return -EIO;
-	}
+	अगर (parport_रेजिस्टर_driver(&porपंचांगan_parport_driver) != 0) अणु
+		platक्रमm_driver_unरेजिस्टर(&snd_porपंचांगan_driver);
+		वापस -EIO;
+	पूर्ण
 
-	if (device_count == 0) {
-		snd_portman_unregister_all();
-		return -ENODEV;
-	}
+	अगर (device_count == 0) अणु
+		snd_porपंचांगan_unरेजिस्टर_all();
+		वापस -ENODEV;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void __exit snd_portman_module_exit(void)
-{
-	snd_portman_unregister_all();
-}
+अटल व्योम __निकास snd_porपंचांगan_module_निकास(व्योम)
+अणु
+	snd_porपंचांगan_unरेजिस्टर_all();
+पूर्ण
 
-module_init(snd_portman_module_init);
-module_exit(snd_portman_module_exit);
+module_init(snd_porपंचांगan_module_init);
+module_निकास(snd_porपंचांगan_module_निकास);

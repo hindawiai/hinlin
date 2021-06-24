@@ -1,146 +1,147 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * syscall_arg_fault.c - tests faults 32-bit fast syscall stack args
  * Copyright (c) 2015 Andrew Lutomirski
  */
 
-#define _GNU_SOURCE
+#घोषणा _GNU_SOURCE
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
-#include <sys/signal.h>
-#include <sys/ucontext.h>
-#include <err.h>
-#include <setjmp.h>
-#include <errno.h>
+#समावेश <मानककोष.स>
+#समावेश <मानकपन.स>
+#समावेश <माला.स>
+#समावेश <sys/संकेत.स>
+#समावेश <sys/ucontext.h>
+#समावेश <err.h>
+#समावेश <समलाँघ.स>
+#समावेश <त्रुटिसं.स>
 
-#include "helpers.h"
+#समावेश "helpers.h"
 
 /* Our sigaltstack scratch space. */
-static unsigned char altstack_data[SIGSTKSZ];
+अटल अचिन्हित अक्षर altstack_data[SIGSTKSZ];
 
-static void sethandler(int sig, void (*handler)(int, siginfo_t *, void *),
-		       int flags)
-{
-	struct sigaction sa;
-	memset(&sa, 0, sizeof(sa));
+अटल व्योम sethandler(पूर्णांक sig, व्योम (*handler)(पूर्णांक, siginfo_t *, व्योम *),
+		       पूर्णांक flags)
+अणु
+	काष्ठा sigaction sa;
+	स_रखो(&sa, 0, माप(sa));
 	sa.sa_sigaction = handler;
 	sa.sa_flags = SA_SIGINFO | flags;
 	sigemptyset(&sa.sa_mask);
-	if (sigaction(sig, &sa, 0))
+	अगर (sigaction(sig, &sa, 0))
 		err(1, "sigaction");
-}
+पूर्ण
 
-static volatile sig_atomic_t sig_traps;
-static sigjmp_buf jmpbuf;
+अटल अस्थिर संक_पूर्ण_प्रकार sig_traps;
+अटल sigलाँघ_बफ jmpbuf;
 
-static volatile sig_atomic_t n_errs;
+अटल अस्थिर संक_पूर्ण_प्रकार n_errs;
 
-#ifdef __x86_64__
-#define REG_AX REG_RAX
-#define REG_IP REG_RIP
-#else
-#define REG_AX REG_EAX
-#define REG_IP REG_EIP
-#endif
+#अगर_घोषित __x86_64__
+#घोषणा REG_AX REG_RAX
+#घोषणा REG_IP REG_RIP
+#अन्यथा
+#घोषणा REG_AX REG_EAX
+#घोषणा REG_IP REG_EIP
+#पूर्ण_अगर
 
-static void sigsegv_or_sigbus(int sig, siginfo_t *info, void *ctx_void)
-{
-	ucontext_t *ctx = (ucontext_t*)ctx_void;
-	long ax = (long)ctx->uc_mcontext.gregs[REG_AX];
+अटल व्योम sigsegv_or_sigbus(पूर्णांक sig, siginfo_t *info, व्योम *ctx_व्योम)
+अणु
+	ucontext_t *ctx = (ucontext_t*)ctx_व्योम;
+	दीर्घ ax = (दीर्घ)ctx->uc_mcontext.gregs[REG_AX];
 
-	if (ax != -EFAULT && ax != -ENOSYS) {
-		printf("[FAIL]\tAX had the wrong value: 0x%lx\n",
-		       (unsigned long)ax);
-		printf("\tIP = 0x%lx\n", (unsigned long)ctx->uc_mcontext.gregs[REG_IP]);
+	अगर (ax != -EFAULT && ax != -ENOSYS) अणु
+		म_लिखो("[FAIL]\tAX had the wrong value: 0x%lx\n",
+		       (अचिन्हित दीर्घ)ax);
+		म_लिखो("\tIP = 0x%lx\n", (अचिन्हित दीर्घ)ctx->uc_mcontext.gregs[REG_IP]);
 		n_errs++;
-	} else {
-		printf("[OK]\tSeems okay\n");
-	}
+	पूर्ण अन्यथा अणु
+		म_लिखो("[OK]\tSeems okay\n");
+	पूर्ण
 
-	siglongjmp(jmpbuf, 1);
-}
+	sigदीर्घ_लाँघ(jmpbuf, 1);
+पूर्ण
 
-static volatile sig_atomic_t sigtrap_consecutive_syscalls;
+अटल अस्थिर संक_पूर्ण_प्रकार sigtrap_consecutive_syscalls;
 
-static void sigtrap(int sig, siginfo_t *info, void *ctx_void)
-{
+अटल व्योम sigtrap(पूर्णांक sig, siginfo_t *info, व्योम *ctx_व्योम)
+अणु
 	/*
 	 * KVM has some bugs that can cause us to stop making progress.
-	 * detect them and complain, but don't infinite loop or fail the
+	 * detect them and complain, but करोn't infinite loop or fail the
 	 * test.
 	 */
 
-	ucontext_t *ctx = (ucontext_t*)ctx_void;
-	unsigned short *ip = (unsigned short *)ctx->uc_mcontext.gregs[REG_IP];
+	ucontext_t *ctx = (ucontext_t*)ctx_व्योम;
+	अचिन्हित लघु *ip = (अचिन्हित लघु *)ctx->uc_mcontext.gregs[REG_IP];
 
-	if (*ip == 0x340f || *ip == 0x050f) {
+	अगर (*ip == 0x340f || *ip == 0x050f) अणु
 		/* The trap was on SYSCALL or SYSENTER */
 		sigtrap_consecutive_syscalls++;
-		if (sigtrap_consecutive_syscalls > 3) {
-			printf("[WARN]\tGot stuck single-stepping -- you probably have a KVM bug\n");
-			siglongjmp(jmpbuf, 1);
-		}
-	} else {
+		अगर (sigtrap_consecutive_syscalls > 3) अणु
+			म_लिखो("[WARN]\tGot stuck single-stepping -- you probably have a KVM bug\n");
+			sigदीर्घ_लाँघ(jmpbuf, 1);
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		sigtrap_consecutive_syscalls = 0;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void sigill(int sig, siginfo_t *info, void *ctx_void)
-{
-	ucontext_t *ctx = (ucontext_t*)ctx_void;
-	unsigned short *ip = (unsigned short *)ctx->uc_mcontext.gregs[REG_IP];
+अटल व्योम sigill(पूर्णांक sig, siginfo_t *info, व्योम *ctx_व्योम)
+अणु
+	ucontext_t *ctx = (ucontext_t*)ctx_व्योम;
+	अचिन्हित लघु *ip = (अचिन्हित लघु *)ctx->uc_mcontext.gregs[REG_IP];
 
-	if (*ip == 0x0b0f) {
-		/* one of the ud2 instructions faulted */
-		printf("[OK]\tSYSCALL returned normally\n");
-	} else {
-		printf("[SKIP]\tIllegal instruction\n");
-	}
-	siglongjmp(jmpbuf, 1);
-}
+	अगर (*ip == 0x0b0f) अणु
+		/* one of the ud2 inकाष्ठाions faulted */
+		म_लिखो("[OK]\tSYSCALL returned normally\n");
+	पूर्ण अन्यथा अणु
+		म_लिखो("[SKIP]\tIllegal instruction\n");
+	पूर्ण
+	sigदीर्घ_लाँघ(jmpbuf, 1);
+पूर्ण
 
-int main()
-{
-	stack_t stack = {
+पूर्णांक मुख्य()
+अणु
+	stack_t stack = अणु
 		.ss_sp = altstack_data,
 		.ss_size = SIGSTKSZ,
-	};
-	if (sigaltstack(&stack, NULL) != 0)
+	पूर्ण;
+	अगर (sigaltstack(&stack, शून्य) != 0)
 		err(1, "sigaltstack");
 
-	sethandler(SIGSEGV, sigsegv_or_sigbus, SA_ONSTACK);
+	sethandler(संक_अंश, sigsegv_or_sigbus, SA_ONSTACK);
 	/*
 	 * The actual exception can vary.  On Atom CPUs, we get #SS
 	 * instead of #PF when the vDSO fails to access the stack when
-	 * ESP is too close to 2^32, and #SS causes SIGBUS.
+	 * ESP is too बंद to 2^32, and #SS causes SIGBUS.
 	 */
 	sethandler(SIGBUS, sigsegv_or_sigbus, SA_ONSTACK);
-	sethandler(SIGILL, sigill, SA_ONSTACK);
+	sethandler(संक_अवैध, sigill, SA_ONSTACK);
 
 	/*
-	 * Exercise another nasty special case.  The 32-bit SYSCALL
-	 * and SYSENTER instructions (even in compat mode) each
-	 * clobber one register.  A Linux system call has a syscall
-	 * number and six arguments, and the user stack pointer
-	 * needs to live in some register on return.  That means
-	 * that we need eight registers, but SYSCALL and SYSENTER
-	 * only preserve seven registers.  As a result, one argument
+	 * Exercise another nasty special हाल.  The 32-bit SYSCALL
+	 * and SYSENTER inकाष्ठाions (even in compat mode) each
+	 * clobber one रेजिस्टर.  A Linux प्रणाली call has a syscall
+	 * number and six arguments, and the user stack poपूर्णांकer
+	 * needs to live in some रेजिस्टर on वापस.  That means
+	 * that we need eight रेजिस्टरs, but SYSCALL and SYSENTER
+	 * only preserve seven रेजिस्टरs.  As a result, one argument
 	 * ends up on the stack.  The stack is user memory, which
-	 * means that the kernel can fail to read it.
+	 * means that the kernel can fail to पढ़ो it.
 	 *
-	 * The 32-bit fast system calls don't have a defined ABI:
+	 * The 32-bit fast प्रणाली calls करोn't have a defined ABI:
 	 * we're supposed to invoke them through the vDSO.  So we'll
-	 * fudge it: we set all regs to invalid pointer values and
-	 * invoke the entry instruction.  The return will fail no
+	 * fudge it: we set all regs to invalid poपूर्णांकer values and
+	 * invoke the entry inकाष्ठाion.  The वापस will fail no
 	 * matter what, and we completely lose our program state,
-	 * but we can fix it up with a signal handler.
+	 * but we can fix it up with a संकेत handler.
 	 */
 
-	printf("[RUN]\tSYSENTER with invalid state\n");
-	if (sigsetjmp(jmpbuf, 1) == 0) {
-		asm volatile (
+	म_लिखो("[RUN]\tSYSENTER with invalid state\n");
+	अगर (sigबनाओ_लाँघ(jmpbuf, 1) == 0) अणु
+		यंत्र अस्थिर (
 			"movl $-1, %%eax\n\t"
 			"movl $-1, %%ebx\n\t"
 			"movl $-1, %%ecx\n\t"
@@ -151,11 +152,11 @@ int main()
 			"movl $-1, %%esp\n\t"
 			"sysenter"
 			: : : "memory", "flags");
-	}
+	पूर्ण
 
-	printf("[RUN]\tSYSCALL with invalid state\n");
-	if (sigsetjmp(jmpbuf, 1) == 0) {
-		asm volatile (
+	म_लिखो("[RUN]\tSYSCALL with invalid state\n");
+	अगर (sigबनाओ_लाँघ(jmpbuf, 1) == 0) अणु
+		यंत्र अस्थिर (
 			"movl $-1, %%eax\n\t"
 			"movl $-1, %%ebx\n\t"
 			"movl $-1, %%ecx\n\t"
@@ -167,15 +168,15 @@ int main()
 			"syscall\n\t"
 			"ud2"		/* make sure we recover cleanly */
 			: : : "memory", "flags");
-	}
+	पूर्ण
 
-	printf("[RUN]\tSYSENTER with TF and invalid state\n");
+	म_लिखो("[RUN]\tSYSENTER with TF and invalid state\n");
 	sethandler(SIGTRAP, sigtrap, SA_ONSTACK);
 
-	if (sigsetjmp(jmpbuf, 1) == 0) {
+	अगर (sigबनाओ_लाँघ(jmpbuf, 1) == 0) अणु
 		sigtrap_consecutive_syscalls = 0;
 		set_eflags(get_eflags() | X86_EFLAGS_TF);
-		asm volatile (
+		यंत्र अस्थिर (
 			"movl $-1, %%eax\n\t"
 			"movl $-1, %%ebx\n\t"
 			"movl $-1, %%ecx\n\t"
@@ -186,14 +187,14 @@ int main()
 			"movl $-1, %%esp\n\t"
 			"sysenter"
 			: : : "memory", "flags");
-	}
+	पूर्ण
 	set_eflags(get_eflags() & ~X86_EFLAGS_TF);
 
-	printf("[RUN]\tSYSCALL with TF and invalid state\n");
-	if (sigsetjmp(jmpbuf, 1) == 0) {
+	म_लिखो("[RUN]\tSYSCALL with TF and invalid state\n");
+	अगर (sigबनाओ_लाँघ(jmpbuf, 1) == 0) अणु
 		sigtrap_consecutive_syscalls = 0;
 		set_eflags(get_eflags() | X86_EFLAGS_TF);
-		asm volatile (
+		यंत्र अस्थिर (
 			"movl $-1, %%eax\n\t"
 			"movl $-1, %%ebx\n\t"
 			"movl $-1, %%ecx\n\t"
@@ -205,20 +206,20 @@ int main()
 			"syscall\n\t"
 			"ud2"		/* make sure we recover cleanly */
 			: : : "memory", "flags");
-	}
+	पूर्ण
 	set_eflags(get_eflags() & ~X86_EFLAGS_TF);
 
-#ifdef __x86_64__
-	printf("[RUN]\tSYSENTER with TF, invalid state, and GSBASE < 0\n");
+#अगर_घोषित __x86_64__
+	म_लिखो("[RUN]\tSYSENTER with TF, invalid state, and GSBASE < 0\n");
 
-	if (sigsetjmp(jmpbuf, 1) == 0) {
+	अगर (sigबनाओ_लाँघ(jmpbuf, 1) == 0) अणु
 		sigtrap_consecutive_syscalls = 0;
 
-		asm volatile ("wrgsbase %%rax\n\t"
+		यंत्र अस्थिर ("wrgsbase %%rax\n\t"
 			      :: "a" (0xffffffffffff0000UL));
 
 		set_eflags(get_eflags() | X86_EFLAGS_TF);
-		asm volatile (
+		यंत्र अस्थिर (
 			"movl $-1, %%eax\n\t"
 			"movl $-1, %%ebx\n\t"
 			"movl $-1, %%ecx\n\t"
@@ -229,9 +230,9 @@ int main()
 			"movl $-1, %%esp\n\t"
 			"sysenter"
 			: : : "memory", "flags");
-	}
+	पूर्ण
 	set_eflags(get_eflags() & ~X86_EFLAGS_TF);
-#endif
+#पूर्ण_अगर
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

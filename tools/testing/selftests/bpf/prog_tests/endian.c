@@ -1,28 +1,29 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /* Copyright (c) 2020 Facebook */
 
-#include <test_progs.h>
-#include "test_endian.skel.h"
+#समावेश <test_progs.h>
+#समावेश "test_endian.skel.h"
 
-static int duration;
+अटल पूर्णांक duration;
 
-#define IN16 0x1234
-#define IN32 0x12345678U
-#define IN64 0x123456789abcdef0ULL
+#घोषणा IN16 0x1234
+#घोषणा IN32 0x12345678U
+#घोषणा IN64 0x123456789abcdef0ULL
 
-#define OUT16 0x3412
-#define OUT32 0x78563412U
-#define OUT64 0xf0debc9a78563412ULL
+#घोषणा OUT16 0x3412
+#घोषणा OUT32 0x78563412U
+#घोषणा OUT64 0xf0debc9a78563412ULL
 
-void test_endian(void)
-{
-	struct test_endian* skel;
-	struct test_endian__bss *bss;
-	int err;
+व्योम test_endian(व्योम)
+अणु
+	काष्ठा test_endian* skel;
+	काष्ठा test_endian__bss *bss;
+	पूर्णांक err;
 
-	skel = test_endian__open_and_load();
-	if (CHECK(!skel, "skel_open", "failed to open skeleton\n"))
-		return;
+	skel = test_endian__खोलो_and_load();
+	अगर (CHECK(!skel, "skel_open", "failed to open skeleton\n"))
+		वापस;
 	bss = skel->bss;
 
 	bss->in16 = IN16;
@@ -30,8 +31,8 @@ void test_endian(void)
 	bss->in64 = IN64;
 
 	err = test_endian__attach(skel);
-	if (CHECK(err, "skel_attach", "skeleton attach failed: %d\n", err))
-		goto cleanup;
+	अगर (CHECK(err, "skel_attach", "skeleton attach failed: %d\n", err))
+		जाओ cleanup;
 
 	usleep(1);
 
@@ -42,12 +43,12 @@ void test_endian(void)
 	CHECK(bss->out64 != OUT64, "out16", "got 0x%llx != exp 0x%llx\n",
 	      (__u64)bss->out64, (__u64)OUT64);
 
-	CHECK(bss->const16 != OUT16, "const16", "got 0x%llx != exp 0x%llx\n",
-	      (__u64)bss->const16, (__u64)OUT16);
-	CHECK(bss->const32 != OUT32, "const32", "got 0x%llx != exp 0x%llx\n",
-	      (__u64)bss->const32, (__u64)OUT32);
-	CHECK(bss->const64 != OUT64, "const64", "got 0x%llx != exp 0x%llx\n",
-	      (__u64)bss->const64, (__u64)OUT64);
+	CHECK(bss->स्थिर16 != OUT16, "const16", "got 0x%llx != exp 0x%llx\n",
+	      (__u64)bss->स्थिर16, (__u64)OUT16);
+	CHECK(bss->स्थिर32 != OUT32, "const32", "got 0x%llx != exp 0x%llx\n",
+	      (__u64)bss->स्थिर32, (__u64)OUT32);
+	CHECK(bss->स्थिर64 != OUT64, "const64", "got 0x%llx != exp 0x%llx\n",
+	      (__u64)bss->स्थिर64, (__u64)OUT64);
 cleanup:
 	test_endian__destroy(skel);
-}
+पूर्ण

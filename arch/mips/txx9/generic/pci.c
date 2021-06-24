@@ -1,3 +1,4 @@
+<शैली गुरु>
 /*
  * linux/arch/mips/txx9/pci.c
  *
@@ -10,200 +11,200 @@
  * (C) Copyright TOSHIBA CORPORATION 2000-2001, 2004-2007
  *
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the main directory of this archive
- * for more details.
+ * License.  See the file "COPYING" in the मुख्य directory of this archive
+ * क्रम more details.
  */
-#include <linux/delay.h>
-#include <linux/jiffies.h>
-#include <linux/io.h>
-#include <asm/txx9/generic.h>
-#include <asm/txx9/pci.h>
-#ifdef CONFIG_TOSHIBA_FPCIB0
-#include <linux/interrupt.h>
-#include <linux/slab.h>
-#include <asm/i8259.h>
-#include <asm/txx9/smsc_fdc37m81x.h>
-#endif
+#समावेश <linux/delay.h>
+#समावेश <linux/jअगरfies.h>
+#समावेश <linux/पन.स>
+#समावेश <यंत्र/txx9/generic.h>
+#समावेश <यंत्र/txx9/pci.h>
+#अगर_घोषित CONFIG_TOSHIBA_FPCIB0
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/slab.h>
+#समावेश <यंत्र/i8259.h>
+#समावेश <यंत्र/txx9/smsc_fdc37m81x.h>
+#पूर्ण_अगर
 
-static int __init
-early_read_config_word(struct pci_controller *hose,
-		       int top_bus, int bus, int devfn, int offset, u16 *value)
-{
-	struct pci_bus fake_bus;
+अटल पूर्णांक __init
+early_पढ़ो_config_word(काष्ठा pci_controller *hose,
+		       पूर्णांक top_bus, पूर्णांक bus, पूर्णांक devfn, पूर्णांक offset, u16 *value)
+अणु
+	काष्ठा pci_bus fake_bus;
 
 	fake_bus.number = bus;
 	fake_bus.sysdata = hose;
 	fake_bus.ops = hose->pci_ops;
 
-	if (bus != top_bus)
-		/* Fake a parent bus structure. */
+	अगर (bus != top_bus)
+		/* Fake a parent bus काष्ठाure. */
 		fake_bus.parent = &fake_bus;
-	else
-		fake_bus.parent = NULL;
+	अन्यथा
+		fake_bus.parent = शून्य;
 
-	return pci_bus_read_config_word(&fake_bus, devfn, offset, value);
-}
+	वापस pci_bus_पढ़ो_config_word(&fake_bus, devfn, offset, value);
+पूर्ण
 
-int __init txx9_pci66_check(struct pci_controller *hose, int top_bus,
-			    int current_bus)
-{
+पूर्णांक __init txx9_pci66_check(काष्ठा pci_controller *hose, पूर्णांक top_bus,
+			    पूर्णांक current_bus)
+अणु
 	u32 pci_devfn;
-	unsigned short vid;
-	int cap66 = -1;
+	अचिन्हित लघु vid;
+	पूर्णांक cap66 = -1;
 	u16 stat;
 
-	/* It seems SLC90E66 needs some time after PCI reset... */
+	/* It seems SLC90E66 needs some समय after PCI reset... */
 	mdelay(80);
 
 	pr_info("PCI: Checking 66MHz capabilities...\n");
 
-	for (pci_devfn = 0; pci_devfn < 0xff; pci_devfn++) {
-		if (PCI_FUNC(pci_devfn))
-			continue;
-		if (early_read_config_word(hose, top_bus, current_bus,
+	क्रम (pci_devfn = 0; pci_devfn < 0xff; pci_devfn++) अणु
+		अगर (PCI_FUNC(pci_devfn))
+			जारी;
+		अगर (early_पढ़ो_config_word(hose, top_bus, current_bus,
 					   pci_devfn, PCI_VENDOR_ID, &vid) !=
 		    PCIBIOS_SUCCESSFUL)
-			continue;
-		if (vid == 0xffff)
-			continue;
+			जारी;
+		अगर (vid == 0xffff)
+			जारी;
 
 		/* check 66MHz capability */
-		if (cap66 < 0)
+		अगर (cap66 < 0)
 			cap66 = 1;
-		if (cap66) {
-			early_read_config_word(hose, top_bus, current_bus,
+		अगर (cap66) अणु
+			early_पढ़ो_config_word(hose, top_bus, current_bus,
 					       pci_devfn, PCI_STATUS, &stat);
-			if (!(stat & PCI_STATUS_66MHZ)) {
+			अगर (!(stat & PCI_STATUS_66MHZ)) अणु
 				pr_debug("PCI: %02x:%02x not 66MHz capable.\n",
 					 current_bus, pci_devfn);
 				cap66 = 0;
-				break;
-			}
-		}
-	}
-	return cap66 > 0;
-}
+				अवरोध;
+			पूर्ण
+		पूर्ण
+	पूर्ण
+	वापस cap66 > 0;
+पूर्ण
 
-static struct resource primary_pci_mem_res[2] = {
-	{ .name = "PCI MEM" },
-	{ .name = "PCI MMIO" },
-};
-static struct resource primary_pci_io_res = { .name = "PCI IO" };
-struct pci_controller txx9_primary_pcic = {
+अटल काष्ठा resource primary_pci_mem_res[2] = अणु
+	अणु .name = "PCI MEM" पूर्ण,
+	अणु .name = "PCI MMIO" पूर्ण,
+पूर्ण;
+अटल काष्ठा resource primary_pci_io_res = अणु .name = "PCI IO" पूर्ण;
+काष्ठा pci_controller txx9_primary_pcic = अणु
 	.mem_resource = &primary_pci_mem_res[0],
 	.io_resource = &primary_pci_io_res,
-};
+पूर्ण;
 
-#ifdef CONFIG_64BIT
-int txx9_pci_mem_high __initdata = 1;
-#else
-int txx9_pci_mem_high __initdata;
-#endif
+#अगर_घोषित CONFIG_64BIT
+पूर्णांक txx9_pci_mem_high __initdata = 1;
+#अन्यथा
+पूर्णांक txx9_pci_mem_high __initdata;
+#पूर्ण_अगर
 
 /*
  * allocate pci_controller and resources.
- * mem_base, io_base: physical address.	 0 for auto assignment.
- * mem_size and io_size means max size on auto assignment.
- * pcic must be &txx9_primary_pcic or NULL.
+ * mem_base, io_base: physical address.	 0 क्रम स्वतः assignment.
+ * mem_size and io_size means max size on स्वतः assignment.
+ * pcic must be &txx9_primary_pcic or शून्य.
  */
-struct pci_controller *__init
-txx9_alloc_pci_controller(struct pci_controller *pcic,
-			  unsigned long mem_base, unsigned long mem_size,
-			  unsigned long io_base, unsigned long io_size)
-{
-	struct pcic {
-		struct pci_controller c;
-		struct resource r_mem[2];
-		struct resource r_io;
-	} *new = NULL;
-	int min_size = 0x10000;
+काष्ठा pci_controller *__init
+txx9_alloc_pci_controller(काष्ठा pci_controller *pcic,
+			  अचिन्हित दीर्घ mem_base, अचिन्हित दीर्घ mem_size,
+			  अचिन्हित दीर्घ io_base, अचिन्हित दीर्घ io_size)
+अणु
+	काष्ठा pcic अणु
+		काष्ठा pci_controller c;
+		काष्ठा resource r_mem[2];
+		काष्ठा resource r_io;
+	पूर्ण *new = शून्य;
+	पूर्णांक min_size = 0x10000;
 
-	if (!pcic) {
-		new = kzalloc(sizeof(*new), GFP_KERNEL);
-		if (!new)
-			return NULL;
+	अगर (!pcic) अणु
+		new = kzalloc(माप(*new), GFP_KERNEL);
+		अगर (!new)
+			वापस शून्य;
 		new->r_mem[0].name = "PCI mem";
 		new->r_mem[1].name = "PCI mmio";
 		new->r_io.name = "PCI io";
 		new->c.mem_resource = new->r_mem;
 		new->c.io_resource = &new->r_io;
 		pcic = &new->c;
-	} else
+	पूर्ण अन्यथा
 		BUG_ON(pcic != &txx9_primary_pcic);
 	pcic->io_resource->flags = IORESOURCE_IO;
 
 	/*
-	 * for auto assignment, first search a (big) region for PCI
-	 * MEM, then search a region for PCI IO.
+	 * क्रम स्वतः assignment, first search a (big) region क्रम PCI
+	 * MEM, then search a region क्रम PCI IO.
 	 */
-	if (mem_base) {
+	अगर (mem_base) अणु
 		pcic->mem_resource[0].start = mem_base;
 		pcic->mem_resource[0].end = mem_base + mem_size - 1;
-		if (request_resource(&iomem_resource, &pcic->mem_resource[0]))
-			goto free_and_exit;
-	} else {
-		unsigned long min = 0, max = 0x20000000; /* low 512MB */
-		if (!mem_size) {
-			/* default size for auto assignment */
-			if (txx9_pci_mem_high)
+		अगर (request_resource(&iomem_resource, &pcic->mem_resource[0]))
+			जाओ मुक्त_and_निकास;
+	पूर्ण अन्यथा अणु
+		अचिन्हित दीर्घ min = 0, max = 0x20000000; /* low 512MB */
+		अगर (!mem_size) अणु
+			/* शेष size क्रम स्वतः assignment */
+			अगर (txx9_pci_mem_high)
 				mem_size = 0x20000000;	/* mem:512M(max) */
-			else
+			अन्यथा
 				mem_size = 0x08000000;	/* mem:128M(max) */
-		}
-		if (txx9_pci_mem_high) {
+		पूर्ण
+		अगर (txx9_pci_mem_high) अणु
 			min = 0x20000000;
 			max = 0xe0000000;
-		}
-		/* search free region for PCI MEM */
-		for (; mem_size >= min_size; mem_size /= 2) {
-			if (allocate_resource(&iomem_resource,
+		पूर्ण
+		/* search मुक्त region क्रम PCI MEM */
+		क्रम (; mem_size >= min_size; mem_size /= 2) अणु
+			अगर (allocate_resource(&iomem_resource,
 					      &pcic->mem_resource[0],
 					      mem_size, min, max,
-					      mem_size, NULL, NULL) == 0)
-				break;
-		}
-		if (mem_size < min_size)
-			goto free_and_exit;
-	}
+					      mem_size, शून्य, शून्य) == 0)
+				अवरोध;
+		पूर्ण
+		अगर (mem_size < min_size)
+			जाओ मुक्त_and_निकास;
+	पूर्ण
 
 	pcic->mem_resource[1].flags = IORESOURCE_MEM | IORESOURCE_BUSY;
-	if (io_base) {
+	अगर (io_base) अणु
 		pcic->mem_resource[1].start = io_base;
 		pcic->mem_resource[1].end = io_base + io_size - 1;
-		if (request_resource(&iomem_resource, &pcic->mem_resource[1]))
-			goto release_and_exit;
-	} else {
-		if (!io_size)
-			/* default size for auto assignment */
+		अगर (request_resource(&iomem_resource, &pcic->mem_resource[1]))
+			जाओ release_and_निकास;
+	पूर्ण अन्यथा अणु
+		अगर (!io_size)
+			/* शेष size क्रम स्वतः assignment */
 			io_size = 0x01000000;	/* io:16M(max) */
-		/* search free region for PCI IO in low 512MB */
-		for (; io_size >= min_size; io_size /= 2) {
-			if (allocate_resource(&iomem_resource,
+		/* search मुक्त region क्रम PCI IO in low 512MB */
+		क्रम (; io_size >= min_size; io_size /= 2) अणु
+			अगर (allocate_resource(&iomem_resource,
 					      &pcic->mem_resource[1],
 					      io_size, 0, 0x20000000,
-					      io_size, NULL, NULL) == 0)
-				break;
-		}
-		if (io_size < min_size)
-			goto release_and_exit;
+					      io_size, शून्य, शून्य) == 0)
+				अवरोध;
+		पूर्ण
+		अगर (io_size < min_size)
+			जाओ release_and_निकास;
 		io_base = pcic->mem_resource[1].start;
-	}
+	पूर्ण
 
 	pcic->mem_resource[0].flags = IORESOURCE_MEM;
-	if (pcic == &txx9_primary_pcic &&
-	    mips_io_port_base == (unsigned long)-1) {
+	अगर (pcic == &txx9_primary_pcic &&
+	    mips_io_port_base == (अचिन्हित दीर्घ)-1) अणु
 		/* map ioport 0 to PCI I/O space address 0 */
 		set_io_port_base(IO_BASE + pcic->mem_resource[1].start);
 		pcic->io_resource->start = 0;
 		pcic->io_offset = 0;	/* busaddr == ioaddr */
 		pcic->io_map_base = IO_BASE + pcic->mem_resource[1].start;
-	} else {
+	पूर्ण अन्यथा अणु
 		/* physaddr to ioaddr */
 		pcic->io_resource->start =
 			io_base - (mips_io_port_base - IO_BASE);
 		pcic->io_offset = io_base - (mips_io_port_base - IO_BASE);
 		pcic->io_map_base = mips_io_port_base;
-	}
+	पूर्ण
 	pcic->io_resource->end = pcic->io_resource->start + io_size - 1;
 
 	pcic->mem_offset = 0;	/* busaddr == physaddr */
@@ -211,71 +212,71 @@ txx9_alloc_pci_controller(struct pci_controller *pcic,
 	pr_info("PCI: IO %pR MEM %pR\n", &pcic->mem_resource[1],
 		&pcic->mem_resource[0]);
 
-	/* register_pci_controller() will request MEM resource */
+	/* रेजिस्टर_pci_controller() will request MEM resource */
 	release_resource(&pcic->mem_resource[0]);
-	return pcic;
- release_and_exit:
+	वापस pcic;
+ release_and_निकास:
 	release_resource(&pcic->mem_resource[0]);
- free_and_exit:
-	kfree(new);
+ मुक्त_and_निकास:
+	kमुक्त(new);
 	pr_err("PCI: Failed to allocate resources.\n");
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static int __init
-txx9_arch_pci_init(void)
-{
+अटल पूर्णांक __init
+txx9_arch_pci_init(व्योम)
+अणु
 	PCIBIOS_MIN_IO = 0x8000;	/* reseve legacy I/O space */
-	return 0;
-}
+	वापस 0;
+पूर्ण
 arch_initcall(txx9_arch_pci_init);
 
 /* IRQ/IDSEL mapping */
-int txx9_pci_option =
-#ifdef CONFIG_PICMG_PCI_BACKPLANE_DEFAULT
+पूर्णांक txx9_pci_option =
+#अगर_घोषित CONFIG_PICMG_PCI_BACKPLANE_DEFAULT
 	TXX9_PCI_OPT_PICMG |
-#endif
+#पूर्ण_अगर
 	TXX9_PCI_OPT_CLK_AUTO;
 
-enum txx9_pci_err_action txx9_pci_err_action = TXX9_PCI_ERR_REPORT;
+क्रमागत txx9_pci_err_action txx9_pci_err_action = TXX9_PCI_ERR_REPORT;
 
-#ifdef CONFIG_TOSHIBA_FPCIB0
-static irqreturn_t i8259_interrupt(int irq, void *dev_id)
-{
-	int isairq;
+#अगर_घोषित CONFIG_TOSHIBA_FPCIB0
+अटल irqवापस_t i8259_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id)
+अणु
+	पूर्णांक isairq;
 
 	isairq = i8259_irq();
-	if (unlikely(isairq <= I8259A_IRQ_BASE))
-		return IRQ_NONE;
+	अगर (unlikely(isairq <= I8259A_IRQ_BASE))
+		वापस IRQ_NONE;
 	generic_handle_irq(isairq);
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static int txx9_i8259_irq_setup(int irq)
-{
-	int err;
+अटल पूर्णांक txx9_i8259_irq_setup(पूर्णांक irq)
+अणु
+	पूर्णांक err;
 
 	init_i8259_irqs();
-	err = request_irq(irq, &i8259_interrupt, IRQF_SHARED,
-			  "cascade(i8259)", (void *)(long)irq);
-	if (!err)
+	err = request_irq(irq, &i8259_पूर्णांकerrupt, IRQF_SHARED,
+			  "cascade(i8259)", (व्योम *)(दीर्घ)irq);
+	अगर (!err)
 		pr_info("PCI-ISA bridge PIC (irq %d)\n", irq);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void __ref quirk_slc90e66_bridge(struct pci_dev *dev)
-{
-	int irq;	/* PCI/ISA Bridge interrupt */
+अटल व्योम __ref quirk_slc90e66_bridge(काष्ठा pci_dev *dev)
+अणु
+	पूर्णांक irq;	/* PCI/ISA Bridge पूर्णांकerrupt */
 	u8 reg_64;
 	u32 reg_b0;
 	u8 reg_e1;
 	irq = pcibios_map_irq(dev, PCI_SLOT(dev->devfn), 1); /* INTA */
-	if (!irq)
-		return;
+	अगर (!irq)
+		वापस;
 	txx9_i8259_irq_setup(irq);
-	pci_read_config_byte(dev, 0x64, &reg_64);
-	pci_read_config_dword(dev, 0xb0, &reg_b0);
-	pci_read_config_byte(dev, 0xe1, &reg_e1);
+	pci_पढ़ो_config_byte(dev, 0x64, &reg_64);
+	pci_पढ़ो_config_dword(dev, 0xb0, &reg_b0);
+	pci_पढ़ो_config_byte(dev, 0xe1, &reg_e1);
 	/* serial irq control */
 	reg_64 = 0xd0;
 	/* serial irq pin */
@@ -283,9 +284,9 @@ static void __ref quirk_slc90e66_bridge(struct pci_dev *dev)
 	/* ide irq on isa14 */
 	reg_e1 &= 0xf0;
 	reg_e1 |= 0x0d;
-	pci_write_config_byte(dev, 0x64, reg_64);
-	pci_write_config_dword(dev, 0xb0, reg_b0);
-	pci_write_config_byte(dev, 0xe1, reg_e1);
+	pci_ग_लिखो_config_byte(dev, 0x64, reg_64);
+	pci_ग_लिखो_config_dword(dev, 0xb0, reg_b0);
+	pci_ग_लिखो_config_byte(dev, 0xe1, reg_e1);
 
 	smsc_fdc37m81x_init(0x3f0);
 	smsc_fdc37m81x_config_beg();
@@ -296,84 +297,84 @@ static void __ref quirk_slc90e66_bridge(struct pci_dev *dev)
 	smsc_fdc37m81x_config_set(SMSC_FDC37M81X_ACTIVE,
 				  1);
 	smsc_fdc37m81x_config_end();
-}
+पूर्ण
 
-static void quirk_slc90e66_ide(struct pci_dev *dev)
-{
-	unsigned char dat;
-	int regs[2] = {0x41, 0x43};
-	int i;
+अटल व्योम quirk_slc90e66_ide(काष्ठा pci_dev *dev)
+अणु
+	अचिन्हित अक्षर dat;
+	पूर्णांक regs[2] = अणु0x41, 0x43पूर्ण;
+	पूर्णांक i;
 
-	/* SMSC SLC90E66 IDE uses irq 14, 15 (default) */
-	pci_write_config_byte(dev, PCI_INTERRUPT_LINE, 14);
-	pci_read_config_byte(dev, PCI_INTERRUPT_LINE, &dat);
+	/* SMSC SLC90E66 IDE uses irq 14, 15 (शेष) */
+	pci_ग_लिखो_config_byte(dev, PCI_INTERRUPT_LINE, 14);
+	pci_पढ़ो_config_byte(dev, PCI_INTERRUPT_LINE, &dat);
 	pr_info("PCI: %s: IRQ %02x", pci_name(dev), dat);
 	/* enable SMSC SLC90E66 IDE */
-	for (i = 0; i < ARRAY_SIZE(regs); i++) {
-		pci_read_config_byte(dev, regs[i], &dat);
-		pci_write_config_byte(dev, regs[i], dat | 0x80);
-		pci_read_config_byte(dev, regs[i], &dat);
+	क्रम (i = 0; i < ARRAY_SIZE(regs); i++) अणु
+		pci_पढ़ो_config_byte(dev, regs[i], &dat);
+		pci_ग_लिखो_config_byte(dev, regs[i], dat | 0x80);
+		pci_पढ़ो_config_byte(dev, regs[i], &dat);
 		pr_cont(" IDETIM%d %02x", i, dat);
-	}
-	pci_read_config_byte(dev, 0x5c, &dat);
+	पूर्ण
+	pci_पढ़ो_config_byte(dev, 0x5c, &dat);
 	/*
 	 * !!! DO NOT REMOVE THIS COMMENT IT IS REQUIRED BY SMSC !!!
 	 *
-	 * This line of code is intended to provide the user with a work
+	 * This line of code is पूर्णांकended to provide the user with a work
 	 * around solution to the anomalies cited in SMSC's anomaly sheet
 	 * entitled, "SLC90E66 Functional Rev.J_0.1 Anomalies"".
 	 *
 	 * !!! DO NOT REMOVE THIS COMMENT IT IS REQUIRED BY SMSC !!!
 	 */
 	dat |= 0x01;
-	pci_write_config_byte(dev, 0x5c, dat);
-	pci_read_config_byte(dev, 0x5c, &dat);
+	pci_ग_लिखो_config_byte(dev, 0x5c, dat);
+	pci_पढ़ो_config_byte(dev, 0x5c, &dat);
 	pr_cont(" REG5C %02x\n", dat);
-}
-#endif /* CONFIG_TOSHIBA_FPCIB0 */
+पूर्ण
+#पूर्ण_अगर /* CONFIG_TOSHIBA_FPCIB0 */
 
-static void tc35815_fixup(struct pci_dev *dev)
-{
-	/* This device may have PM registers but not they are not supported. */
-	if (dev->pm_cap) {
+अटल व्योम tc35815_fixup(काष्ठा pci_dev *dev)
+अणु
+	/* This device may have PM रेजिस्टरs but not they are not supported. */
+	अगर (dev->pm_cap) अणु
 		dev_info(&dev->dev, "PM disabled\n");
 		dev->pm_cap = 0;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void final_fixup(struct pci_dev *dev)
-{
-	unsigned char bist;
+अटल व्योम final_fixup(काष्ठा pci_dev *dev)
+अणु
+	अचिन्हित अक्षर bist;
 
 	/* Do build-in self test */
-	if (pci_read_config_byte(dev, PCI_BIST, &bist) == PCIBIOS_SUCCESSFUL &&
-	    (bist & PCI_BIST_CAPABLE)) {
-		unsigned long timeout;
-		pci_set_power_state(dev, PCI_D0);
+	अगर (pci_पढ़ो_config_byte(dev, PCI_BIST, &bist) == PCIBIOS_SUCCESSFUL &&
+	    (bist & PCI_BIST_CAPABLE)) अणु
+		अचिन्हित दीर्घ समयout;
+		pci_set_घातer_state(dev, PCI_D0);
 		pr_info("PCI: %s BIST...", pci_name(dev));
-		pci_write_config_byte(dev, PCI_BIST, PCI_BIST_START);
-		timeout = jiffies + HZ * 2;	/* timeout after 2 sec */
-		do {
-			pci_read_config_byte(dev, PCI_BIST, &bist);
-			if (time_after(jiffies, timeout))
-				break;
-		} while (bist & PCI_BIST_START);
-		if (bist & (PCI_BIST_CODE_MASK | PCI_BIST_START))
+		pci_ग_लिखो_config_byte(dev, PCI_BIST, PCI_BIST_START);
+		समयout = jअगरfies + HZ * 2;	/* समयout after 2 sec */
+		करो अणु
+			pci_पढ़ो_config_byte(dev, PCI_BIST, &bist);
+			अगर (समय_after(jअगरfies, समयout))
+				अवरोध;
+		पूर्ण जबतक (bist & PCI_BIST_START);
+		अगर (bist & (PCI_BIST_CODE_MASK | PCI_BIST_START))
 			pr_cont("failed. (0x%x)\n", bist);
-		else
+		अन्यथा
 			pr_cont("OK.\n");
-	}
-}
+	पूर्ण
+पूर्ण
 
-#ifdef CONFIG_TOSHIBA_FPCIB0
-#define PCI_DEVICE_ID_EFAR_SLC90E66_0 0x9460
+#अगर_घोषित CONFIG_TOSHIBA_FPCIB0
+#घोषणा PCI_DEVICE_ID_EFAR_SLC90E66_0 0x9460
 DECLARE_PCI_FIXUP_FINAL(PCI_VENDOR_ID_EFAR, PCI_DEVICE_ID_EFAR_SLC90E66_0,
 	quirk_slc90e66_bridge);
 DECLARE_PCI_FIXUP_FINAL(PCI_VENDOR_ID_EFAR, PCI_DEVICE_ID_EFAR_SLC90E66_1,
 	quirk_slc90e66_ide);
 DECLARE_PCI_FIXUP_RESUME(PCI_VENDOR_ID_EFAR, PCI_DEVICE_ID_EFAR_SLC90E66_1,
 	quirk_slc90e66_ide);
-#endif
+#पूर्ण_अगर
 DECLARE_PCI_FIXUP_FINAL(PCI_VENDOR_ID_TOSHIBA_2,
 			PCI_DEVICE_ID_TOSHIBA_TC35815_NWU, tc35815_fixup);
 DECLARE_PCI_FIXUP_FINAL(PCI_VENDOR_ID_TOSHIBA_2,
@@ -381,52 +382,52 @@ DECLARE_PCI_FIXUP_FINAL(PCI_VENDOR_ID_TOSHIBA_2,
 DECLARE_PCI_FIXUP_FINAL(PCI_ANY_ID, PCI_ANY_ID, final_fixup);
 DECLARE_PCI_FIXUP_RESUME(PCI_ANY_ID, PCI_ANY_ID, final_fixup);
 
-int pcibios_plat_dev_init(struct pci_dev *dev)
-{
-	return 0;
-}
+पूर्णांक pcibios_plat_dev_init(काष्ठा pci_dev *dev)
+अणु
+	वापस 0;
+पूर्ण
 
-static int (*txx9_pci_map_irq)(const struct pci_dev *dev, u8 slot, u8 pin);
-int pcibios_map_irq(const struct pci_dev *dev, u8 slot, u8 pin)
-{
-	return txx9_pci_map_irq(dev, slot, pin);
-}
+अटल पूर्णांक (*txx9_pci_map_irq)(स्थिर काष्ठा pci_dev *dev, u8 slot, u8 pin);
+पूर्णांक pcibios_map_irq(स्थिर काष्ठा pci_dev *dev, u8 slot, u8 pin)
+अणु
+	वापस txx9_pci_map_irq(dev, slot, pin);
+पूर्ण
 
-char * (*txx9_board_pcibios_setup)(char *str) __initdata;
+अक्षर * (*txx9_board_pcibios_setup)(अक्षर *str) __initdata;
 
-char *__init txx9_pcibios_setup(char *str)
-{
-	if (txx9_board_pcibios_setup && !txx9_board_pcibios_setup(str))
-		return NULL;
-	if (!strcmp(str, "picmg")) {
+अक्षर *__init txx9_pcibios_setup(अक्षर *str)
+अणु
+	अगर (txx9_board_pcibios_setup && !txx9_board_pcibios_setup(str))
+		वापस शून्य;
+	अगर (!म_भेद(str, "picmg")) अणु
 		/* PICMG compliant backplane (TOSHIBA JMB-PICMG-ATX
 		   (5V or 3.3V), JMB-PICMG-L2 (5V only), etc.) */
 		txx9_pci_option |= TXX9_PCI_OPT_PICMG;
-		return NULL;
-	} else if (!strcmp(str, "nopicmg")) {
+		वापस शून्य;
+	पूर्ण अन्यथा अगर (!म_भेद(str, "nopicmg")) अणु
 		/* non-PICMG compliant backplane (TOSHIBA
 		   RBHBK4100,RBHBK4200, Interface PCM-PCM05, etc.) */
 		txx9_pci_option &= ~TXX9_PCI_OPT_PICMG;
-		return NULL;
-	} else if (!strncmp(str, "clk=", 4)) {
-		char *val = str + 4;
+		वापस शून्य;
+	पूर्ण अन्यथा अगर (!म_भेदन(str, "clk=", 4)) अणु
+		अक्षर *val = str + 4;
 		txx9_pci_option &= ~TXX9_PCI_OPT_CLK_MASK;
-		if (strcmp(val, "33") == 0)
+		अगर (म_भेद(val, "33") == 0)
 			txx9_pci_option |= TXX9_PCI_OPT_CLK_33;
-		else if (strcmp(val, "66") == 0)
+		अन्यथा अगर (म_भेद(val, "66") == 0)
 			txx9_pci_option |= TXX9_PCI_OPT_CLK_66;
-		else /* "auto" */
+		अन्यथा /* "auto" */
 			txx9_pci_option |= TXX9_PCI_OPT_CLK_AUTO;
-		return NULL;
-	} else if (!strncmp(str, "err=", 4)) {
-		if (!strcmp(str + 4, "panic"))
+		वापस शून्य;
+	पूर्ण अन्यथा अगर (!म_भेदन(str, "err=", 4)) अणु
+		अगर (!म_भेद(str + 4, "panic"))
 			txx9_pci_err_action = TXX9_PCI_ERR_PANIC;
-		else if (!strcmp(str + 4, "ignore"))
+		अन्यथा अगर (!म_भेद(str + 4, "ignore"))
 			txx9_pci_err_action = TXX9_PCI_ERR_IGNORE;
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
 	txx9_pci_map_irq = txx9_board_vec->pci_map_irq;
 
-	return str;
-}
+	वापस str;
+पूर्ण

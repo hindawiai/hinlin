@@ -1,12 +1,13 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _UVESAFB_H
-#define _UVESAFB_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _UVESAFB_H
+#घोषणा _UVESAFB_H
 
-#include <uapi/video/uvesafb.h>
+#समावेश <uapi/video/uvesafb.h>
 
 
 /* VBE CRTC Info Block */
-struct vbe_crtc_ib {
+काष्ठा vbe_crtc_ib अणु
 	u16 horiz_total;
 	u16 horiz_start;
 	u16 horiz_end;
@@ -14,23 +15,23 @@ struct vbe_crtc_ib {
 	u16 vert_start;
 	u16 vert_end;
 	u8  flags;
-	u32 pixel_clock;
+	u32 pixel_घड़ी;
 	u16 refresh_rate;
 	u8  reserved[40];
-} __attribute__ ((packed));
+पूर्ण __attribute__ ((packed));
 
-#define VBE_MODE_VGACOMPAT	0x20
-#define VBE_MODE_COLOR		0x08
-#define VBE_MODE_SUPPORTEDHW	0x01
-#define VBE_MODE_GRAPHICS	0x10
-#define VBE_MODE_LFB		0x80
+#घोषणा VBE_MODE_VGACOMPAT	0x20
+#घोषणा VBE_MODE_COLOR		0x08
+#घोषणा VBE_MODE_SUPPORTEDHW	0x01
+#घोषणा VBE_MODE_GRAPHICS	0x10
+#घोषणा VBE_MODE_LFB		0x80
 
-#define VBE_MODE_MASK		(VBE_MODE_COLOR | VBE_MODE_SUPPORTEDHW | \
+#घोषणा VBE_MODE_MASK		(VBE_MODE_COLOR | VBE_MODE_SUPPORTEDHW | \
 				VBE_MODE_GRAPHICS | VBE_MODE_LFB)
 
 /* VBE Mode Info Block */
-struct vbe_mode_ib {
-	/* for all VBE revisions */
+काष्ठा vbe_mode_ib अणु
+	/* क्रम all VBE revisions */
 	u16 mode_attr;
 	u8  winA_attr;
 	u8  winB_attr;
@@ -41,11 +42,11 @@ struct vbe_mode_ib {
 	u32 win_func_ptr;
 	u16 bytes_per_scan_line;
 
-	/* for VBE 1.2+ */
+	/* क्रम VBE 1.2+ */
 	u16 x_res;
 	u16 y_res;
-	u8  x_char_size;
-	u8  y_char_size;
+	u8  x_अक्षर_size;
+	u8  y_अक्षर_size;
 	u8  planes;
 	u8  bits_per_pixel;
 	u8  banks;
@@ -54,7 +55,7 @@ struct vbe_mode_ib {
 	u8  image_pages;
 	u8  reserved1;
 
-	/* Direct color fields for direct/6 and YUV/7 memory models. */
+	/* Direct color fields क्रम direct/6 and YUV/7 memory models. */
 	/* Offsets are bit positions of lsb in the mask. */
 	u8  red_len;
 	u8  red_off;
@@ -66,11 +67,11 @@ struct vbe_mode_ib {
 	u8  rsvd_off;
 	u8  direct_color_info;	/* direct color mode attributes */
 
-	/* for VBE 2.0+ */
+	/* क्रम VBE 2.0+ */
 	u32 phys_base_ptr;
 	u8  reserved2[6];
 
-	/* for VBE 3.0+ */
+	/* क्रम VBE 3.0+ */
 	u16 lin_bytes_per_scan_line;
 	u8  bnk_image_pages;
 	u8  lin_image_pages;
@@ -82,60 +83,60 @@ struct vbe_mode_ib {
 	u8  lin_blue_off;
 	u8  lin_rsvd_len;
 	u8  lin_rsvd_off;
-	u32 max_pixel_clock;
+	u32 max_pixel_घड़ी;
 	u16 mode_id;
 	u8  depth;
-} __attribute__ ((packed));
+पूर्ण __attribute__ ((packed));
 
-#define UVESAFB_DEFAULT_MODE "640x480-16"
+#घोषणा UVESAFB_DEFAULT_MODE "640x480-16"
 
-/* How long to wait for a reply from userspace [ms] */
-#define UVESAFB_TIMEOUT 5000
+/* How दीर्घ to रुको क्रम a reply from userspace [ms] */
+#घोषणा UVESAFB_TIMEOUT 5000
 
 /* Max number of concurrent tasks */
-#define UVESAFB_TASKS_MAX 16
+#घोषणा UVESAFB_TASKS_MAX 16
 
-#define dac_reg	(0x3c8)
-#define dac_val	(0x3c9)
+#घोषणा dac_reg	(0x3c8)
+#घोषणा dac_val	(0x3c9)
 
-struct uvesafb_pal_entry {
-	u_char blue, green, red, pad;
-} __attribute__ ((packed));
+काष्ठा uvesafb_pal_entry अणु
+	u_अक्षर blue, green, red, pad;
+पूर्ण __attribute__ ((packed));
 
-struct uvesafb_ktask {
-	struct uvesafb_task t;
-	void *buf;
-	struct completion *done;
+काष्ठा uvesafb_ktask अणु
+	काष्ठा uvesafb_task t;
+	व्योम *buf;
+	काष्ठा completion *करोne;
 	u32 ack;
-};
+पूर्ण;
 
-static int uvesafb_exec(struct uvesafb_ktask *tsk);
+अटल पूर्णांक uvesafb_exec(काष्ठा uvesafb_ktask *tsk);
 
-#define UVESAFB_EXACT_RES	1
-#define UVESAFB_EXACT_DEPTH	2
+#घोषणा UVESAFB_EXACT_RES	1
+#घोषणा UVESAFB_EXACT_DEPTH	2
 
-struct uvesafb_par {
-	struct vbe_ib vbe_ib;		/* VBE Info Block */
-	struct vbe_mode_ib *vbe_modes;	/* list of supported VBE modes */
-	int vbe_modes_cnt;
+काष्ठा uvesafb_par अणु
+	काष्ठा vbe_ib vbe_ib;		/* VBE Info Block */
+	काष्ठा vbe_mode_ib *vbe_modes;	/* list of supported VBE modes */
+	पूर्णांक vbe_modes_cnt;
 
 	u8 nocrtc;
 	u8 ypan;			/* 0 - nothing, 1 - ypan, 2 - ywrap */
-	u8 pmi_setpal;			/* PMI for palette changes */
-	u16 *pmi_base;			/* protected mode interface location */
-	void *pmi_start;
-	void *pmi_pal;
+	u8 pmi_setpal;			/* PMI क्रम palette changes */
+	u16 *pmi_base;			/* रक्षित mode पूर्णांकerface location */
+	व्योम *pmi_start;
+	व्योम *pmi_pal;
 	u8 *vbe_state_orig;		/*
-					 * original hardware state, before the
+					 * original hardware state, beक्रमe the
 					 * driver was loaded
 					 */
 	u8 *vbe_state_saved;		/* state saved by fb_save_state */
-	int vbe_state_size;
+	पूर्णांक vbe_state_size;
 	atomic_t ref_count;
 
-	int mode_idx;
-	struct vbe_crtc_ib crtc;
-	int mtrr_handle;
-};
+	पूर्णांक mode_idx;
+	काष्ठा vbe_crtc_ib crtc;
+	पूर्णांक mtrr_handle;
+पूर्ण;
 
-#endif /* _UVESAFB_H */
+#पूर्ण_अगर /* _UVESAFB_H */

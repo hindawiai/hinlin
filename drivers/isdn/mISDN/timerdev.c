@@ -1,293 +1,294 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  *
- * general timer device for using in ISDN stacks
+ * general समयr device क्रम using in ISDN stacks
  *
  * Author	Karsten Keil <kkeil@novell.com>
  *
  * Copyright 2008  by Karsten Keil <kkeil@novell.com>
  */
 
-#include <linux/poll.h>
-#include <linux/vmalloc.h>
-#include <linux/slab.h>
-#include <linux/timer.h>
-#include <linux/miscdevice.h>
-#include <linux/module.h>
-#include <linux/mISDNif.h>
-#include <linux/mutex.h>
-#include <linux/sched/signal.h>
+#समावेश <linux/poll.h>
+#समावेश <linux/vदो_स्मृति.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/समयr.h>
+#समावेश <linux/miscdevice.h>
+#समावेश <linux/module.h>
+#समावेश <linux/mISDNअगर.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/sched/संकेत.स>
 
-#include "core.h"
+#समावेश "core.h"
 
-static DEFINE_MUTEX(mISDN_mutex);
-static u_int	*debug;
+अटल DEFINE_MUTEX(mISDN_mutex);
+अटल u_पूर्णांक	*debug;
 
 
-struct mISDNtimerdev {
-	int			next_id;
-	struct list_head	pending;
-	struct list_head	expired;
-	wait_queue_head_t	wait;
-	u_int			work;
+काष्ठा mISDNसमयrdev अणु
+	पूर्णांक			next_id;
+	काष्ठा list_head	pending;
+	काष्ठा list_head	expired;
+	रुको_queue_head_t	रुको;
+	u_पूर्णांक			work;
 	spinlock_t		lock; /* protect lists */
-};
+पूर्ण;
 
-struct mISDNtimer {
-	struct list_head	list;
-	struct  mISDNtimerdev	*dev;
-	struct timer_list	tl;
-	int			id;
-};
+काष्ठा mISDNसमयr अणु
+	काष्ठा list_head	list;
+	काष्ठा  mISDNसमयrdev	*dev;
+	काष्ठा समयr_list	tl;
+	पूर्णांक			id;
+पूर्ण;
 
-static int
-mISDN_open(struct inode *ino, struct file *filep)
-{
-	struct mISDNtimerdev	*dev;
+अटल पूर्णांक
+mISDN_खोलो(काष्ठा inode *ino, काष्ठा file *filep)
+अणु
+	काष्ठा mISDNसमयrdev	*dev;
 
-	if (*debug & DEBUG_TIMER)
-		printk(KERN_DEBUG "%s(%p,%p)\n", __func__, ino, filep);
-	dev = kmalloc(sizeof(struct mISDNtimerdev) , GFP_KERNEL);
-	if (!dev)
-		return -ENOMEM;
+	अगर (*debug & DEBUG_TIMER)
+		prपूर्णांकk(KERN_DEBUG "%s(%p,%p)\n", __func__, ino, filep);
+	dev = kदो_स्मृति(माप(काष्ठा mISDNसमयrdev) , GFP_KERNEL);
+	अगर (!dev)
+		वापस -ENOMEM;
 	dev->next_id = 1;
 	INIT_LIST_HEAD(&dev->pending);
 	INIT_LIST_HEAD(&dev->expired);
 	spin_lock_init(&dev->lock);
 	dev->work = 0;
-	init_waitqueue_head(&dev->wait);
-	filep->private_data = dev;
-	return nonseekable_open(ino, filep);
-}
+	init_रुकोqueue_head(&dev->रुको);
+	filep->निजी_data = dev;
+	वापस nonseekable_खोलो(ino, filep);
+पूर्ण
 
-static int
-mISDN_close(struct inode *ino, struct file *filep)
-{
-	struct mISDNtimerdev	*dev = filep->private_data;
-	struct list_head	*list = &dev->pending;
-	struct mISDNtimer	*timer, *next;
+अटल पूर्णांक
+mISDN_बंद(काष्ठा inode *ino, काष्ठा file *filep)
+अणु
+	काष्ठा mISDNसमयrdev	*dev = filep->निजी_data;
+	काष्ठा list_head	*list = &dev->pending;
+	काष्ठा mISDNसमयr	*समयr, *next;
 
-	if (*debug & DEBUG_TIMER)
-		printk(KERN_DEBUG "%s(%p,%p)\n", __func__, ino, filep);
+	अगर (*debug & DEBUG_TIMER)
+		prपूर्णांकk(KERN_DEBUG "%s(%p,%p)\n", __func__, ino, filep);
 
 	spin_lock_irq(&dev->lock);
-	while (!list_empty(list)) {
-		timer = list_first_entry(list, struct mISDNtimer, list);
+	जबतक (!list_empty(list)) अणु
+		समयr = list_first_entry(list, काष्ठा mISDNसमयr, list);
 		spin_unlock_irq(&dev->lock);
-		del_timer_sync(&timer->tl);
+		del_समयr_sync(&समयr->tl);
 		spin_lock_irq(&dev->lock);
 		/* it might have been moved to ->expired */
-		list_del(&timer->list);
-		kfree(timer);
-	}
+		list_del(&समयr->list);
+		kमुक्त(समयr);
+	पूर्ण
 	spin_unlock_irq(&dev->lock);
 
-	list_for_each_entry_safe(timer, next, &dev->expired, list) {
-		kfree(timer);
-	}
-	kfree(dev);
-	return 0;
-}
+	list_क्रम_each_entry_safe(समयr, next, &dev->expired, list) अणु
+		kमुक्त(समयr);
+	पूर्ण
+	kमुक्त(dev);
+	वापस 0;
+पूर्ण
 
-static ssize_t
-mISDN_read(struct file *filep, char __user *buf, size_t count, loff_t *off)
-{
-	struct mISDNtimerdev	*dev = filep->private_data;
-	struct list_head *list = &dev->expired;
-	struct mISDNtimer	*timer;
-	int	ret = 0;
+अटल sमाप_प्रकार
+mISDN_पढ़ो(काष्ठा file *filep, अक्षर __user *buf, माप_प्रकार count, loff_t *off)
+अणु
+	काष्ठा mISDNसमयrdev	*dev = filep->निजी_data;
+	काष्ठा list_head *list = &dev->expired;
+	काष्ठा mISDNसमयr	*समयr;
+	पूर्णांक	ret = 0;
 
-	if (*debug & DEBUG_TIMER)
-		printk(KERN_DEBUG "%s(%p, %p, %d, %p)\n", __func__,
-		       filep, buf, (int)count, off);
+	अगर (*debug & DEBUG_TIMER)
+		prपूर्णांकk(KERN_DEBUG "%s(%p, %p, %d, %p)\n", __func__,
+		       filep, buf, (पूर्णांक)count, off);
 
-	if (count < sizeof(int))
-		return -ENOSPC;
+	अगर (count < माप(पूर्णांक))
+		वापस -ENOSPC;
 
 	spin_lock_irq(&dev->lock);
-	while (list_empty(list) && (dev->work == 0)) {
+	जबतक (list_empty(list) && (dev->work == 0)) अणु
 		spin_unlock_irq(&dev->lock);
-		if (filep->f_flags & O_NONBLOCK)
-			return -EAGAIN;
-		wait_event_interruptible(dev->wait, (dev->work ||
+		अगर (filep->f_flags & O_NONBLOCK)
+			वापस -EAGAIN;
+		रुको_event_पूर्णांकerruptible(dev->रुको, (dev->work ||
 						     !list_empty(list)));
-		if (signal_pending(current))
-			return -ERESTARTSYS;
+		अगर (संकेत_pending(current))
+			वापस -ERESTARTSYS;
 		spin_lock_irq(&dev->lock);
-	}
-	if (dev->work)
+	पूर्ण
+	अगर (dev->work)
 		dev->work = 0;
-	if (!list_empty(list)) {
-		timer = list_first_entry(list, struct mISDNtimer, list);
-		list_del(&timer->list);
+	अगर (!list_empty(list)) अणु
+		समयr = list_first_entry(list, काष्ठा mISDNसमयr, list);
+		list_del(&समयr->list);
 		spin_unlock_irq(&dev->lock);
-		if (put_user(timer->id, (int __user *)buf))
+		अगर (put_user(समयr->id, (पूर्णांक __user *)buf))
 			ret = -EFAULT;
-		else
-			ret = sizeof(int);
-		kfree(timer);
-	} else {
+		अन्यथा
+			ret = माप(पूर्णांक);
+		kमुक्त(समयr);
+	पूर्ण अन्यथा अणु
 		spin_unlock_irq(&dev->lock);
-	}
-	return ret;
-}
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static __poll_t
-mISDN_poll(struct file *filep, poll_table *wait)
-{
-	struct mISDNtimerdev	*dev = filep->private_data;
+अटल __poll_t
+mISDN_poll(काष्ठा file *filep, poll_table *रुको)
+अणु
+	काष्ठा mISDNसमयrdev	*dev = filep->निजी_data;
 	__poll_t		mask = EPOLLERR;
 
-	if (*debug & DEBUG_TIMER)
-		printk(KERN_DEBUG "%s(%p, %p)\n", __func__, filep, wait);
-	if (dev) {
-		poll_wait(filep, &dev->wait, wait);
+	अगर (*debug & DEBUG_TIMER)
+		prपूर्णांकk(KERN_DEBUG "%s(%p, %p)\n", __func__, filep, रुको);
+	अगर (dev) अणु
+		poll_रुको(filep, &dev->रुको, रुको);
 		mask = 0;
-		if (dev->work || !list_empty(&dev->expired))
+		अगर (dev->work || !list_empty(&dev->expired))
 			mask |= (EPOLLIN | EPOLLRDNORM);
-		if (*debug & DEBUG_TIMER)
-			printk(KERN_DEBUG "%s work(%d) empty(%d)\n", __func__,
+		अगर (*debug & DEBUG_TIMER)
+			prपूर्णांकk(KERN_DEBUG "%s work(%d) empty(%d)\n", __func__,
 			       dev->work, list_empty(&dev->expired));
-	}
-	return mask;
-}
+	पूर्ण
+	वापस mask;
+पूर्ण
 
-static void
-dev_expire_timer(struct timer_list *t)
-{
-	struct mISDNtimer *timer = from_timer(timer, t, tl);
-	u_long			flags;
+अटल व्योम
+dev_expire_समयr(काष्ठा समयr_list *t)
+अणु
+	काष्ठा mISDNसमयr *समयr = from_समयr(समयr, t, tl);
+	u_दीर्घ			flags;
 
-	spin_lock_irqsave(&timer->dev->lock, flags);
-	if (timer->id >= 0)
-		list_move_tail(&timer->list, &timer->dev->expired);
-	wake_up_interruptible(&timer->dev->wait);
-	spin_unlock_irqrestore(&timer->dev->lock, flags);
-}
+	spin_lock_irqsave(&समयr->dev->lock, flags);
+	अगर (समयr->id >= 0)
+		list_move_tail(&समयr->list, &समयr->dev->expired);
+	wake_up_पूर्णांकerruptible(&समयr->dev->रुको);
+	spin_unlock_irqrestore(&समयr->dev->lock, flags);
+पूर्ण
 
-static int
-misdn_add_timer(struct mISDNtimerdev *dev, int timeout)
-{
-	int			id;
-	struct mISDNtimer	*timer;
+अटल पूर्णांक
+misdn_add_समयr(काष्ठा mISDNसमयrdev *dev, पूर्णांक समयout)
+अणु
+	पूर्णांक			id;
+	काष्ठा mISDNसमयr	*समयr;
 
-	if (!timeout) {
+	अगर (!समयout) अणु
 		dev->work = 1;
-		wake_up_interruptible(&dev->wait);
+		wake_up_पूर्णांकerruptible(&dev->रुको);
 		id = 0;
-	} else {
-		timer = kzalloc(sizeof(struct mISDNtimer), GFP_KERNEL);
-		if (!timer)
-			return -ENOMEM;
-		timer->dev = dev;
-		timer_setup(&timer->tl, dev_expire_timer, 0);
+	पूर्ण अन्यथा अणु
+		समयr = kzalloc(माप(काष्ठा mISDNसमयr), GFP_KERNEL);
+		अगर (!समयr)
+			वापस -ENOMEM;
+		समयr->dev = dev;
+		समयr_setup(&समयr->tl, dev_expire_समयr, 0);
 		spin_lock_irq(&dev->lock);
-		id = timer->id = dev->next_id++;
-		if (dev->next_id < 0)
+		id = समयr->id = dev->next_id++;
+		अगर (dev->next_id < 0)
 			dev->next_id = 1;
-		list_add_tail(&timer->list, &dev->pending);
-		timer->tl.expires = jiffies + ((HZ * (u_long)timeout) / 1000);
-		add_timer(&timer->tl);
+		list_add_tail(&समयr->list, &dev->pending);
+		समयr->tl.expires = jअगरfies + ((HZ * (u_दीर्घ)समयout) / 1000);
+		add_समयr(&समयr->tl);
 		spin_unlock_irq(&dev->lock);
-	}
-	return id;
-}
+	पूर्ण
+	वापस id;
+पूर्ण
 
-static int
-misdn_del_timer(struct mISDNtimerdev *dev, int id)
-{
-	struct mISDNtimer	*timer;
+अटल पूर्णांक
+misdn_del_समयr(काष्ठा mISDNसमयrdev *dev, पूर्णांक id)
+अणु
+	काष्ठा mISDNसमयr	*समयr;
 
 	spin_lock_irq(&dev->lock);
-	list_for_each_entry(timer, &dev->pending, list) {
-		if (timer->id == id) {
-			list_del_init(&timer->list);
-			timer->id = -1;
+	list_क्रम_each_entry(समयr, &dev->pending, list) अणु
+		अगर (समयr->id == id) अणु
+			list_del_init(&समयr->list);
+			समयr->id = -1;
 			spin_unlock_irq(&dev->lock);
-			del_timer_sync(&timer->tl);
-			kfree(timer);
-			return id;
-		}
-	}
+			del_समयr_sync(&समयr->tl);
+			kमुक्त(समयr);
+			वापस id;
+		पूर्ण
+	पूर्ण
 	spin_unlock_irq(&dev->lock);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static long
-mISDN_ioctl(struct file *filep, unsigned int cmd, unsigned long arg)
-{
-	struct mISDNtimerdev	*dev = filep->private_data;
-	int			id, tout, ret = 0;
+अटल दीर्घ
+mISDN_ioctl(काष्ठा file *filep, अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
+अणु
+	काष्ठा mISDNसमयrdev	*dev = filep->निजी_data;
+	पूर्णांक			id, tout, ret = 0;
 
 
-	if (*debug & DEBUG_TIMER)
-		printk(KERN_DEBUG "%s(%p, %x, %lx)\n", __func__,
+	अगर (*debug & DEBUG_TIMER)
+		prपूर्णांकk(KERN_DEBUG "%s(%p, %x, %lx)\n", __func__,
 		       filep, cmd, arg);
 	mutex_lock(&mISDN_mutex);
-	switch (cmd) {
-	case IMADDTIMER:
-		if (get_user(tout, (int __user *)arg)) {
+	चयन (cmd) अणु
+	हाल IMADDTIMER:
+		अगर (get_user(tout, (पूर्णांक __user *)arg)) अणु
 			ret = -EFAULT;
-			break;
-		}
-		id = misdn_add_timer(dev, tout);
-		if (*debug & DEBUG_TIMER)
-			printk(KERN_DEBUG "%s add %d id %d\n", __func__,
+			अवरोध;
+		पूर्ण
+		id = misdn_add_समयr(dev, tout);
+		अगर (*debug & DEBUG_TIMER)
+			prपूर्णांकk(KERN_DEBUG "%s add %d id %d\n", __func__,
 			       tout, id);
-		if (id < 0) {
+		अगर (id < 0) अणु
 			ret = id;
-			break;
-		}
-		if (put_user(id, (int __user *)arg))
+			अवरोध;
+		पूर्ण
+		अगर (put_user(id, (पूर्णांक __user *)arg))
 			ret = -EFAULT;
-		break;
-	case IMDELTIMER:
-		if (get_user(id, (int __user *)arg)) {
+		अवरोध;
+	हाल IMDELTIMER:
+		अगर (get_user(id, (पूर्णांक __user *)arg)) अणु
 			ret = -EFAULT;
-			break;
-		}
-		if (*debug & DEBUG_TIMER)
-			printk(KERN_DEBUG "%s del id %d\n", __func__, id);
-		id = misdn_del_timer(dev, id);
-		if (put_user(id, (int __user *)arg))
+			अवरोध;
+		पूर्ण
+		अगर (*debug & DEBUG_TIMER)
+			prपूर्णांकk(KERN_DEBUG "%s del id %d\n", __func__, id);
+		id = misdn_del_समयr(dev, id);
+		अगर (put_user(id, (पूर्णांक __user *)arg))
 			ret = -EFAULT;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		ret = -EINVAL;
-	}
+	पूर्ण
 	mutex_unlock(&mISDN_mutex);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const struct file_operations mISDN_fops = {
+अटल स्थिर काष्ठा file_operations mISDN_fops = अणु
 	.owner		= THIS_MODULE,
-	.read		= mISDN_read,
+	.पढ़ो		= mISDN_पढ़ो,
 	.poll		= mISDN_poll,
 	.unlocked_ioctl	= mISDN_ioctl,
-	.open		= mISDN_open,
-	.release	= mISDN_close,
+	.खोलो		= mISDN_खोलो,
+	.release	= mISDN_बंद,
 	.llseek		= no_llseek,
-};
+पूर्ण;
 
-static struct miscdevice mISDNtimer = {
+अटल काष्ठा miscdevice mISDNसमयr = अणु
 	.minor	= MISC_DYNAMIC_MINOR,
 	.name	= "mISDNtimer",
 	.fops	= &mISDN_fops,
-};
+पूर्ण;
 
-int
-mISDN_inittimer(u_int *deb)
-{
-	int	err;
+पूर्णांक
+mISDN_initसमयr(u_पूर्णांक *deb)
+अणु
+	पूर्णांक	err;
 
 	debug = deb;
-	err = misc_register(&mISDNtimer);
-	if (err)
-		printk(KERN_WARNING "mISDN: Could not register timer device\n");
-	return err;
-}
+	err = misc_रेजिस्टर(&mISDNसमयr);
+	अगर (err)
+		prपूर्णांकk(KERN_WARNING "mISDN: Could not register timer device\n");
+	वापस err;
+पूर्ण
 
-void mISDN_timer_cleanup(void)
-{
-	misc_deregister(&mISDNtimer);
-}
+व्योम mISDN_समयr_cleanup(व्योम)
+अणु
+	misc_deरेजिस्टर(&mISDNसमयr);
+पूर्ण

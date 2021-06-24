@@ -1,9 +1,10 @@
+<शैली गुरु>
 /*
- * Board setup routines for the Emerson KSI8560
+ * Board setup routines क्रम the Emerson KSI8560
  *
- * Author: Alexandr Smirnov <asmirnov@ru.mvista.com>
+ * Author: Alexandr Smirnov <यंत्रirnov@ru.mvista.com>
  *
- * Based on mpc85xx_ads.c maintained by Kumar Gala
+ * Based on mpc85xx_ads.c मुख्यtained by Kumar Gala
  *
  * 2008 (c) MontaVista, Software, Inc.  This file is licensed under
  * the terms of the GNU General Public License version 2.  This program
@@ -12,105 +13,105 @@
  *
  */
 
-#include <linux/stddef.h>
-#include <linux/kernel.h>
-#include <linux/pci.h>
-#include <linux/kdev_t.h>
-#include <linux/delay.h>
-#include <linux/seq_file.h>
-#include <linux/of_platform.h>
+#समावेश <linux/मानकघोष.स>
+#समावेश <linux/kernel.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/kdev_t.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/seq_file.h>
+#समावेश <linux/of_platक्रमm.h>
 
-#include <asm/time.h>
-#include <asm/machdep.h>
-#include <asm/pci-bridge.h>
-#include <asm/mpic.h>
-#include <mm/mmu_decl.h>
-#include <asm/udbg.h>
-#include <asm/prom.h>
+#समावेश <यंत्र/समय.स>
+#समावेश <यंत्र/machdep.h>
+#समावेश <यंत्र/pci-bridge.h>
+#समावेश <यंत्र/mpic.h>
+#समावेश <mm/mmu_decl.h>
+#समावेश <यंत्र/udbg.h>
+#समावेश <यंत्र/prom.h>
 
-#include <sysdev/fsl_soc.h>
-#include <sysdev/fsl_pci.h>
+#समावेश <sysdev/fsl_soc.h>
+#समावेश <sysdev/fsl_pci.h>
 
-#include <asm/cpm2.h>
-#include <sysdev/cpm2_pic.h>
+#समावेश <यंत्र/cpm2.h>
+#समावेश <sysdev/cpm2_pic.h>
 
-#include "mpc85xx.h"
+#समावेश "mpc85xx.h"
 
-#define KSI8560_CPLD_HVR		0x04 /* Hardware Version Register */
-#define KSI8560_CPLD_PVR		0x08 /* PLD Version Register */
-#define KSI8560_CPLD_RCR1		0x30 /* Reset Command Register 1 */
+#घोषणा KSI8560_CPLD_HVR		0x04 /* Hardware Version Register */
+#घोषणा KSI8560_CPLD_PVR		0x08 /* PLD Version Register */
+#घोषणा KSI8560_CPLD_RCR1		0x30 /* Reset Command Register 1 */
 
-#define KSI8560_CPLD_RCR1_CPUHR		0x80 /* CPU Hard Reset */
+#घोषणा KSI8560_CPLD_RCR1_CPUHR		0x80 /* CPU Hard Reset */
 
-static void __iomem *cpld_base = NULL;
+अटल व्योम __iomem *cpld_base = शून्य;
 
-static void __noreturn machine_restart(char *cmd)
-{
-	if (cpld_base)
+अटल व्योम __noवापस machine_restart(अक्षर *cmd)
+अणु
+	अगर (cpld_base)
 		out_8(cpld_base + KSI8560_CPLD_RCR1, KSI8560_CPLD_RCR1_CPUHR);
-	else
-		printk(KERN_ERR "Can't find CPLD base, hang forever\n");
+	अन्यथा
+		prपूर्णांकk(KERN_ERR "Can't find CPLD base, hang forever\n");
 
-	for (;;);
-}
+	क्रम (;;);
+पूर्ण
 
-static void __init ksi8560_pic_init(void)
-{
-	struct mpic *mpic = mpic_alloc(NULL, 0, MPIC_BIG_ENDIAN,
+अटल व्योम __init ksi8560_pic_init(व्योम)
+अणु
+	काष्ठा mpic *mpic = mpic_alloc(शून्य, 0, MPIC_BIG_ENDIAN,
 			0, 256, " OpenPIC  ");
-	BUG_ON(mpic == NULL);
+	BUG_ON(mpic == शून्य);
 	mpic_init(mpic);
 
 	mpc85xx_cpm2_pic_init();
-}
+पूर्ण
 
-#ifdef CONFIG_CPM2
+#अगर_घोषित CONFIG_CPM2
 /*
  * Setup I/O ports
  */
-struct cpm_pin {
-	int port, pin, flags;
-};
+काष्ठा cpm_pin अणु
+	पूर्णांक port, pin, flags;
+पूर्ण;
 
-static struct cpm_pin __initdata ksi8560_pins[] = {
+अटल काष्ठा cpm_pin __initdata ksi8560_pins[] = अणु
 	/* SCC1 */
-	{3, 29, CPM_PIN_OUTPUT | CPM_PIN_PRIMARY},
-	{3, 30, CPM_PIN_OUTPUT | CPM_PIN_SECONDARY},
-	{3, 31, CPM_PIN_INPUT | CPM_PIN_PRIMARY},
+	अणु3, 29, CPM_PIN_OUTPUT | CPM_PIN_PRIMARYपूर्ण,
+	अणु3, 30, CPM_PIN_OUTPUT | CPM_PIN_SECONDARYपूर्ण,
+	अणु3, 31, CPM_PIN_INPUT | CPM_PIN_PRIMARYपूर्ण,
 
 	/* SCC2 */
-	{3, 26, CPM_PIN_OUTPUT | CPM_PIN_PRIMARY},
-	{3, 27, CPM_PIN_OUTPUT | CPM_PIN_PRIMARY},
-	{3, 28, CPM_PIN_INPUT | CPM_PIN_PRIMARY},
+	अणु3, 26, CPM_PIN_OUTPUT | CPM_PIN_PRIMARYपूर्ण,
+	अणु3, 27, CPM_PIN_OUTPUT | CPM_PIN_PRIMARYपूर्ण,
+	अणु3, 28, CPM_PIN_INPUT | CPM_PIN_PRIMARYपूर्ण,
 
 	/* FCC1 */
-	{0, 14, CPM_PIN_INPUT | CPM_PIN_PRIMARY},
-	{0, 15, CPM_PIN_INPUT | CPM_PIN_PRIMARY},
-	{0, 16, CPM_PIN_INPUT | CPM_PIN_PRIMARY},
-	{0, 17, CPM_PIN_INPUT | CPM_PIN_PRIMARY},
-	{0, 18, CPM_PIN_OUTPUT | CPM_PIN_PRIMARY},
-	{0, 19, CPM_PIN_OUTPUT | CPM_PIN_PRIMARY},
-	{0, 20, CPM_PIN_OUTPUT | CPM_PIN_PRIMARY},
-	{0, 21, CPM_PIN_OUTPUT | CPM_PIN_PRIMARY},
-	{0, 26, CPM_PIN_INPUT | CPM_PIN_SECONDARY},
-	{0, 27, CPM_PIN_INPUT | CPM_PIN_SECONDARY},
-	{0, 28, CPM_PIN_OUTPUT | CPM_PIN_SECONDARY},
-	{0, 29, CPM_PIN_OUTPUT | CPM_PIN_SECONDARY},
-	{0, 30, CPM_PIN_INPUT | CPM_PIN_SECONDARY},
-	{0, 31, CPM_PIN_INPUT | CPM_PIN_SECONDARY},
-	{2, 23, CPM_PIN_INPUT | CPM_PIN_PRIMARY}, /* CLK9 */
-	{2, 22, CPM_PIN_INPUT | CPM_PIN_PRIMARY}, /* CLK10 */
+	अणु0, 14, CPM_PIN_INPUT | CPM_PIN_PRIMARYपूर्ण,
+	अणु0, 15, CPM_PIN_INPUT | CPM_PIN_PRIMARYपूर्ण,
+	अणु0, 16, CPM_PIN_INPUT | CPM_PIN_PRIMARYपूर्ण,
+	अणु0, 17, CPM_PIN_INPUT | CPM_PIN_PRIMARYपूर्ण,
+	अणु0, 18, CPM_PIN_OUTPUT | CPM_PIN_PRIMARYपूर्ण,
+	अणु0, 19, CPM_PIN_OUTPUT | CPM_PIN_PRIMARYपूर्ण,
+	अणु0, 20, CPM_PIN_OUTPUT | CPM_PIN_PRIMARYपूर्ण,
+	अणु0, 21, CPM_PIN_OUTPUT | CPM_PIN_PRIMARYपूर्ण,
+	अणु0, 26, CPM_PIN_INPUT | CPM_PIN_SECONDARYपूर्ण,
+	अणु0, 27, CPM_PIN_INPUT | CPM_PIN_SECONDARYपूर्ण,
+	अणु0, 28, CPM_PIN_OUTPUT | CPM_PIN_SECONDARYपूर्ण,
+	अणु0, 29, CPM_PIN_OUTPUT | CPM_PIN_SECONDARYपूर्ण,
+	अणु0, 30, CPM_PIN_INPUT | CPM_PIN_SECONDARYपूर्ण,
+	अणु0, 31, CPM_PIN_INPUT | CPM_PIN_SECONDARYपूर्ण,
+	अणु2, 23, CPM_PIN_INPUT | CPM_PIN_PRIMARYपूर्ण, /* CLK9 */
+	अणु2, 22, CPM_PIN_INPUT | CPM_PIN_PRIMARYपूर्ण, /* CLK10 */
 
-};
+पूर्ण;
 
-static void __init init_ioports(void)
-{
-	int i;
+अटल व्योम __init init_ioports(व्योम)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < ARRAY_SIZE(ksi8560_pins); i++) {
-		struct cpm_pin *pin = &ksi8560_pins[i];
+	क्रम (i = 0; i < ARRAY_SIZE(ksi8560_pins); i++) अणु
+		काष्ठा cpm_pin *pin = &ksi8560_pins[i];
 		cpm2_set_pin(pin->port, pin->pin, pin->flags);
-	}
+	पूर्ण
 
 	cpm2_clk_setup(CPM_CLK_SCC1, CPM_BRG1, CPM_CLK_RX);
 	cpm2_clk_setup(CPM_CLK_SCC1, CPM_BRG1, CPM_CLK_TX);
@@ -118,68 +119,68 @@ static void __init init_ioports(void)
 	cpm2_clk_setup(CPM_CLK_SCC2, CPM_BRG2, CPM_CLK_TX);
 	cpm2_clk_setup(CPM_CLK_FCC1, CPM_CLK9, CPM_CLK_RX);
 	cpm2_clk_setup(CPM_CLK_FCC1, CPM_CLK10, CPM_CLK_TX);
-}
-#endif
+पूर्ण
+#पूर्ण_अगर
 
 /*
  * Setup the architecture
  */
-static void __init ksi8560_setup_arch(void)
-{
-	struct device_node *cpld;
+अटल व्योम __init ksi8560_setup_arch(व्योम)
+अणु
+	काष्ठा device_node *cpld;
 
-	cpld = of_find_compatible_node(NULL, NULL, "emerson,KSI8560-cpld");
-	if (cpld)
+	cpld = of_find_compatible_node(शून्य, शून्य, "emerson,KSI8560-cpld");
+	अगर (cpld)
 		cpld_base = of_iomap(cpld, 0);
-	else
-		printk(KERN_ERR "Can't find CPLD in device tree\n");
+	अन्यथा
+		prपूर्णांकk(KERN_ERR "Can't find CPLD in device tree\n");
 
-	if (ppc_md.progress)
+	अगर (ppc_md.progress)
 		ppc_md.progress("ksi8560_setup_arch()", 0);
 
-#ifdef CONFIG_CPM2
+#अगर_घोषित CONFIG_CPM2
 	cpm2_reset();
 	init_ioports();
-#endif
-}
+#पूर्ण_अगर
+पूर्ण
 
-static void ksi8560_show_cpuinfo(struct seq_file *m)
-{
-	uint pvid, svid, phid1;
+अटल व्योम ksi8560_show_cpuinfo(काष्ठा seq_file *m)
+अणु
+	uपूर्णांक pvid, svid, phid1;
 
 	pvid = mfspr(SPRN_PVR);
 	svid = mfspr(SPRN_SVR);
 
-	seq_printf(m, "Vendor\t\t: Emerson Network Power\n");
-	seq_printf(m, "Board\t\t: KSI8560\n");
+	seq_म_लिखो(m, "Vendor\t\t: Emerson Network Power\n");
+	seq_म_लिखो(m, "Board\t\t: KSI8560\n");
 
-	if (cpld_base) {
-		seq_printf(m, "Hardware rev\t: %d\n",
+	अगर (cpld_base) अणु
+		seq_म_लिखो(m, "Hardware rev\t: %d\n",
 					in_8(cpld_base + KSI8560_CPLD_HVR));
-		seq_printf(m, "CPLD rev\t: %d\n",
+		seq_म_लिखो(m, "CPLD rev\t: %d\n",
 					in_8(cpld_base + KSI8560_CPLD_PVR));
-	} else
-		seq_printf(m, "Unknown Hardware and CPLD revs\n");
+	पूर्ण अन्यथा
+		seq_म_लिखो(m, "Unknown Hardware and CPLD revs\n");
 
-	seq_printf(m, "PVR\t\t: 0x%x\n", pvid);
-	seq_printf(m, "SVR\t\t: 0x%x\n", svid);
+	seq_म_लिखो(m, "PVR\t\t: 0x%x\n", pvid);
+	seq_म_लिखो(m, "SVR\t\t: 0x%x\n", svid);
 
 	/* Display cpu Pll setting */
 	phid1 = mfspr(SPRN_HID1);
-	seq_printf(m, "PLL setting\t: 0x%x\n", ((phid1 >> 24) & 0x3f));
-}
+	seq_म_लिखो(m, "PLL setting\t: 0x%x\n", ((phid1 >> 24) & 0x3f));
+पूर्ण
 
 machine_device_initcall(ksi8560, mpc85xx_common_publish_devices);
 
 /*
  * Called very early, device-tree isn't unflattened
  */
-static int __init ksi8560_probe(void)
-{
-	return of_machine_is_compatible("emerson,KSI8560");
-}
+अटल पूर्णांक __init ksi8560_probe(व्योम)
+अणु
+	वापस of_machine_is_compatible("emerson,KSI8560");
+पूर्ण
 
-define_machine(ksi8560) {
+define_machine(ksi8560) अणु
 	.name			= "KSI8560",
 	.probe			= ksi8560_probe,
 	.setup_arch		= ksi8560_setup_arch,
@@ -188,4 +189,4 @@ define_machine(ksi8560) {
 	.get_irq		= mpic_get_irq,
 	.restart		= machine_restart,
 	.calibrate_decr		= generic_calibrate_decr,
-};
+पूर्ण;

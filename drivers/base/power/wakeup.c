@@ -1,278 +1,279 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * drivers/base/power/wakeup.c - System wakeup events framework
+ * drivers/base/घातer/wakeup.c - System wakeup events framework
  *
  * Copyright (c) 2010 Rafael J. Wysocki <rjw@sisk.pl>, Novell Inc.
  */
-#define pr_fmt(fmt) "PM: " fmt
+#घोषणा pr_fmt(fmt) "PM: " fmt
 
-#include <linux/device.h>
-#include <linux/slab.h>
-#include <linux/sched/signal.h>
-#include <linux/capability.h>
-#include <linux/export.h>
-#include <linux/suspend.h>
-#include <linux/seq_file.h>
-#include <linux/debugfs.h>
-#include <linux/pm_wakeirq.h>
-#include <trace/events/power.h>
+#समावेश <linux/device.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/sched/संकेत.स>
+#समावेश <linux/capability.h>
+#समावेश <linux/export.h>
+#समावेश <linux/suspend.h>
+#समावेश <linux/seq_file.h>
+#समावेश <linux/debugfs.h>
+#समावेश <linux/pm_wakeirq.h>
+#समावेश <trace/events/घातer.h>
 
-#include "power.h"
+#समावेश "power.h"
 
-#ifndef CONFIG_SUSPEND
+#अगर_अघोषित CONFIG_SUSPEND
 suspend_state_t pm_suspend_target_state;
-#define pm_suspend_target_state	(PM_SUSPEND_ON)
-#endif
+#घोषणा pm_suspend_target_state	(PM_SUSPEND_ON)
+#पूर्ण_अगर
 
-#define list_for_each_entry_rcu_locked(pos, head, member) \
-	list_for_each_entry_rcu(pos, head, member, \
-		srcu_read_lock_held(&wakeup_srcu))
+#घोषणा list_क्रम_each_entry_rcu_locked(pos, head, member) \
+	list_क्रम_each_entry_rcu(pos, head, member, \
+		srcu_पढ़ो_lock_held(&wakeup_srcu))
 /*
- * If set, the suspend/hibernate code will abort transitions to a sleep state
- * if wakeup events are registered during or immediately before the transition.
+ * If set, the suspend/hibernate code will पात transitions to a sleep state
+ * अगर wakeup events are रेजिस्टरed during or immediately beक्रमe the transition.
  */
-bool events_check_enabled __read_mostly;
+bool events_check_enabled __पढ़ो_mostly;
 
 /* First wakeup IRQ seen by the kernel in the last cycle. */
-unsigned int pm_wakeup_irq __read_mostly;
+अचिन्हित पूर्णांक pm_wakeup_irq __पढ़ो_mostly;
 
-/* If greater than 0 and the system is suspending, terminate the suspend. */
-static atomic_t pm_abort_suspend __read_mostly;
+/* If greater than 0 and the प्रणाली is suspending, terminate the suspend. */
+अटल atomic_t pm_पात_suspend __पढ़ो_mostly;
 
 /*
- * Combined counters of registered wakeup events and wakeup events in progress.
- * They need to be modified together atomically, so it's better to use one
+ * Combined counters of रेजिस्टरed wakeup events and wakeup events in progress.
+ * They need to be modअगरied together atomically, so it's better to use one
  * atomic variable to hold them both.
  */
-static atomic_t combined_event_count = ATOMIC_INIT(0);
+अटल atomic_t combined_event_count = ATOMIC_INIT(0);
 
-#define IN_PROGRESS_BITS	(sizeof(int) * 4)
-#define MAX_IN_PROGRESS		((1 << IN_PROGRESS_BITS) - 1)
+#घोषणा IN_PROGRESS_BITS	(माप(पूर्णांक) * 4)
+#घोषणा MAX_IN_PROGRESS		((1 << IN_PROGRESS_BITS) - 1)
 
-static void split_counters(unsigned int *cnt, unsigned int *inpr)
-{
-	unsigned int comb = atomic_read(&combined_event_count);
+अटल व्योम split_counters(अचिन्हित पूर्णांक *cnt, अचिन्हित पूर्णांक *inpr)
+अणु
+	अचिन्हित पूर्णांक comb = atomic_पढ़ो(&combined_event_count);
 
 	*cnt = (comb >> IN_PROGRESS_BITS);
 	*inpr = comb & MAX_IN_PROGRESS;
-}
+पूर्ण
 
 /* A preserved old value of the events counter. */
-static unsigned int saved_count;
+अटल अचिन्हित पूर्णांक saved_count;
 
-static DEFINE_RAW_SPINLOCK(events_lock);
+अटल DEFINE_RAW_SPINLOCK(events_lock);
 
-static void pm_wakeup_timer_fn(struct timer_list *t);
+अटल व्योम pm_wakeup_समयr_fn(काष्ठा समयr_list *t);
 
-static LIST_HEAD(wakeup_sources);
+अटल LIST_HEAD(wakeup_sources);
 
-static DECLARE_WAIT_QUEUE_HEAD(wakeup_count_wait_queue);
+अटल DECLARE_WAIT_QUEUE_HEAD(wakeup_count_रुको_queue);
 
 DEFINE_STATIC_SRCU(wakeup_srcu);
 
-static struct wakeup_source deleted_ws = {
+अटल काष्ठा wakeup_source deleted_ws = अणु
 	.name = "deleted",
 	.lock =  __SPIN_LOCK_UNLOCKED(deleted_ws.lock),
-};
+पूर्ण;
 
-static DEFINE_IDA(wakeup_ida);
+अटल DEFINE_IDA(wakeup_ida);
 
 /**
- * wakeup_source_create - Create a struct wakeup_source object.
+ * wakeup_source_create - Create a काष्ठा wakeup_source object.
  * @name: Name of the new wakeup source.
  */
-struct wakeup_source *wakeup_source_create(const char *name)
-{
-	struct wakeup_source *ws;
-	const char *ws_name;
-	int id;
+काष्ठा wakeup_source *wakeup_source_create(स्थिर अक्षर *name)
+अणु
+	काष्ठा wakeup_source *ws;
+	स्थिर अक्षर *ws_name;
+	पूर्णांक id;
 
-	ws = kzalloc(sizeof(*ws), GFP_KERNEL);
-	if (!ws)
-		goto err_ws;
+	ws = kzalloc(माप(*ws), GFP_KERNEL);
+	अगर (!ws)
+		जाओ err_ws;
 
-	ws_name = kstrdup_const(name, GFP_KERNEL);
-	if (!ws_name)
-		goto err_name;
+	ws_name = kstrdup_स्थिर(name, GFP_KERNEL);
+	अगर (!ws_name)
+		जाओ err_name;
 	ws->name = ws_name;
 
 	id = ida_alloc(&wakeup_ida, GFP_KERNEL);
-	if (id < 0)
-		goto err_id;
+	अगर (id < 0)
+		जाओ err_id;
 	ws->id = id;
 
-	return ws;
+	वापस ws;
 
 err_id:
-	kfree_const(ws->name);
+	kमुक्त_स्थिर(ws->name);
 err_name:
-	kfree(ws);
+	kमुक्त(ws);
 err_ws:
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 EXPORT_SYMBOL_GPL(wakeup_source_create);
 
 /*
- * Record wakeup_source statistics being deleted into a dummy wakeup_source.
+ * Record wakeup_source statistics being deleted पूर्णांकo a dummy wakeup_source.
  */
-static void wakeup_source_record(struct wakeup_source *ws)
-{
-	unsigned long flags;
+अटल व्योम wakeup_source_record(काष्ठा wakeup_source *ws)
+अणु
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&deleted_ws.lock, flags);
 
-	if (ws->event_count) {
-		deleted_ws.total_time =
-			ktime_add(deleted_ws.total_time, ws->total_time);
-		deleted_ws.prevent_sleep_time =
-			ktime_add(deleted_ws.prevent_sleep_time,
-				  ws->prevent_sleep_time);
-		deleted_ws.max_time =
-			ktime_compare(deleted_ws.max_time, ws->max_time) > 0 ?
-				deleted_ws.max_time : ws->max_time;
+	अगर (ws->event_count) अणु
+		deleted_ws.total_समय =
+			kसमय_add(deleted_ws.total_समय, ws->total_समय);
+		deleted_ws.prevent_sleep_समय =
+			kसमय_add(deleted_ws.prevent_sleep_समय,
+				  ws->prevent_sleep_समय);
+		deleted_ws.max_समय =
+			kसमय_compare(deleted_ws.max_समय, ws->max_समय) > 0 ?
+				deleted_ws.max_समय : ws->max_समय;
 		deleted_ws.event_count += ws->event_count;
 		deleted_ws.active_count += ws->active_count;
 		deleted_ws.relax_count += ws->relax_count;
 		deleted_ws.expire_count += ws->expire_count;
 		deleted_ws.wakeup_count += ws->wakeup_count;
-	}
+	पूर्ण
 
 	spin_unlock_irqrestore(&deleted_ws.lock, flags);
-}
+पूर्ण
 
-static void wakeup_source_free(struct wakeup_source *ws)
-{
-	ida_free(&wakeup_ida, ws->id);
-	kfree_const(ws->name);
-	kfree(ws);
-}
+अटल व्योम wakeup_source_मुक्त(काष्ठा wakeup_source *ws)
+अणु
+	ida_मुक्त(&wakeup_ida, ws->id);
+	kमुक्त_स्थिर(ws->name);
+	kमुक्त(ws);
+पूर्ण
 
 /**
- * wakeup_source_destroy - Destroy a struct wakeup_source object.
+ * wakeup_source_destroy - Destroy a काष्ठा wakeup_source object.
  * @ws: Wakeup source to destroy.
  *
- * Use only for wakeup source objects created with wakeup_source_create().
+ * Use only क्रम wakeup source objects created with wakeup_source_create().
  */
-void wakeup_source_destroy(struct wakeup_source *ws)
-{
-	if (!ws)
-		return;
+व्योम wakeup_source_destroy(काष्ठा wakeup_source *ws)
+अणु
+	अगर (!ws)
+		वापस;
 
 	__pm_relax(ws);
 	wakeup_source_record(ws);
-	wakeup_source_free(ws);
-}
+	wakeup_source_मुक्त(ws);
+पूर्ण
 EXPORT_SYMBOL_GPL(wakeup_source_destroy);
 
 /**
  * wakeup_source_add - Add given object to the list of wakeup sources.
  * @ws: Wakeup source object to add to the list.
  */
-void wakeup_source_add(struct wakeup_source *ws)
-{
-	unsigned long flags;
+व्योम wakeup_source_add(काष्ठा wakeup_source *ws)
+अणु
+	अचिन्हित दीर्घ flags;
 
-	if (WARN_ON(!ws))
-		return;
+	अगर (WARN_ON(!ws))
+		वापस;
 
 	spin_lock_init(&ws->lock);
-	timer_setup(&ws->timer, pm_wakeup_timer_fn, 0);
+	समयr_setup(&ws->समयr, pm_wakeup_समयr_fn, 0);
 	ws->active = false;
 
 	raw_spin_lock_irqsave(&events_lock, flags);
 	list_add_rcu(&ws->entry, &wakeup_sources);
 	raw_spin_unlock_irqrestore(&events_lock, flags);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(wakeup_source_add);
 
 /**
- * wakeup_source_remove - Remove given object from the wakeup sources list.
- * @ws: Wakeup source object to remove from the list.
+ * wakeup_source_हटाओ - Remove given object from the wakeup sources list.
+ * @ws: Wakeup source object to हटाओ from the list.
  */
-void wakeup_source_remove(struct wakeup_source *ws)
-{
-	unsigned long flags;
+व्योम wakeup_source_हटाओ(काष्ठा wakeup_source *ws)
+अणु
+	अचिन्हित दीर्घ flags;
 
-	if (WARN_ON(!ws))
-		return;
+	अगर (WARN_ON(!ws))
+		वापस;
 
 	raw_spin_lock_irqsave(&events_lock, flags);
 	list_del_rcu(&ws->entry);
 	raw_spin_unlock_irqrestore(&events_lock, flags);
 	synchronize_srcu(&wakeup_srcu);
 
-	del_timer_sync(&ws->timer);
+	del_समयr_sync(&ws->समयr);
 	/*
-	 * Clear timer.function to make wakeup_source_not_registered() treat
-	 * this wakeup source as not registered.
+	 * Clear समयr.function to make wakeup_source_not_रेजिस्टरed() treat
+	 * this wakeup source as not रेजिस्टरed.
 	 */
-	ws->timer.function = NULL;
-}
-EXPORT_SYMBOL_GPL(wakeup_source_remove);
+	ws->समयr.function = शून्य;
+पूर्ण
+EXPORT_SYMBOL_GPL(wakeup_source_हटाओ);
 
 /**
- * wakeup_source_register - Create wakeup source and add it to the list.
- * @dev: Device this wakeup source is associated with (or NULL if virtual).
- * @name: Name of the wakeup source to register.
+ * wakeup_source_रेजिस्टर - Create wakeup source and add it to the list.
+ * @dev: Device this wakeup source is associated with (or शून्य अगर भव).
+ * @name: Name of the wakeup source to रेजिस्टर.
  */
-struct wakeup_source *wakeup_source_register(struct device *dev,
-					     const char *name)
-{
-	struct wakeup_source *ws;
-	int ret;
+काष्ठा wakeup_source *wakeup_source_रेजिस्टर(काष्ठा device *dev,
+					     स्थिर अक्षर *name)
+अणु
+	काष्ठा wakeup_source *ws;
+	पूर्णांक ret;
 
 	ws = wakeup_source_create(name);
-	if (ws) {
-		if (!dev || device_is_registered(dev)) {
+	अगर (ws) अणु
+		अगर (!dev || device_is_रेजिस्टरed(dev)) अणु
 			ret = wakeup_source_sysfs_add(dev, ws);
-			if (ret) {
-				wakeup_source_free(ws);
-				return NULL;
-			}
-		}
+			अगर (ret) अणु
+				wakeup_source_मुक्त(ws);
+				वापस शून्य;
+			पूर्ण
+		पूर्ण
 		wakeup_source_add(ws);
-	}
-	return ws;
-}
-EXPORT_SYMBOL_GPL(wakeup_source_register);
+	पूर्ण
+	वापस ws;
+पूर्ण
+EXPORT_SYMBOL_GPL(wakeup_source_रेजिस्टर);
 
 /**
- * wakeup_source_unregister - Remove wakeup source from the list and remove it.
- * @ws: Wakeup source object to unregister.
+ * wakeup_source_unरेजिस्टर - Remove wakeup source from the list and हटाओ it.
+ * @ws: Wakeup source object to unरेजिस्टर.
  */
-void wakeup_source_unregister(struct wakeup_source *ws)
-{
-	if (ws) {
-		wakeup_source_remove(ws);
-		if (ws->dev)
-			wakeup_source_sysfs_remove(ws);
+व्योम wakeup_source_unरेजिस्टर(काष्ठा wakeup_source *ws)
+अणु
+	अगर (ws) अणु
+		wakeup_source_हटाओ(ws);
+		अगर (ws->dev)
+			wakeup_source_sysfs_हटाओ(ws);
 
 		wakeup_source_destroy(ws);
-	}
-}
-EXPORT_SYMBOL_GPL(wakeup_source_unregister);
+	पूर्ण
+पूर्ण
+EXPORT_SYMBOL_GPL(wakeup_source_unरेजिस्टर);
 
 /**
- * wakeup_sources_read_lock - Lock wakeup source list for read.
+ * wakeup_sources_पढ़ो_lock - Lock wakeup source list क्रम पढ़ो.
  *
- * Returns an index of srcu lock for struct wakeup_srcu.
- * This index must be passed to the matching wakeup_sources_read_unlock().
+ * Returns an index of srcu lock क्रम काष्ठा wakeup_srcu.
+ * This index must be passed to the matching wakeup_sources_पढ़ो_unlock().
  */
-int wakeup_sources_read_lock(void)
-{
-	return srcu_read_lock(&wakeup_srcu);
-}
-EXPORT_SYMBOL_GPL(wakeup_sources_read_lock);
+पूर्णांक wakeup_sources_पढ़ो_lock(व्योम)
+अणु
+	वापस srcu_पढ़ो_lock(&wakeup_srcu);
+पूर्ण
+EXPORT_SYMBOL_GPL(wakeup_sources_पढ़ो_lock);
 
 /**
- * wakeup_sources_read_unlock - Unlock wakeup source list.
- * @idx: return value from corresponding wakeup_sources_read_lock()
+ * wakeup_sources_पढ़ो_unlock - Unlock wakeup source list.
+ * @idx: वापस value from corresponding wakeup_sources_पढ़ो_lock()
  */
-void wakeup_sources_read_unlock(int idx)
-{
-	srcu_read_unlock(&wakeup_srcu, idx);
-}
-EXPORT_SYMBOL_GPL(wakeup_sources_read_unlock);
+व्योम wakeup_sources_पढ़ो_unlock(पूर्णांक idx)
+अणु
+	srcu_पढ़ो_unlock(&wakeup_srcu, idx);
+पूर्ण
+EXPORT_SYMBOL_GPL(wakeup_sources_पढ़ो_unlock);
 
 /**
  * wakeup_sources_walk_start - Begin a walk on wakeup source list
@@ -280,14 +281,14 @@ EXPORT_SYMBOL_GPL(wakeup_sources_read_unlock);
  * Returns first object of the list of wakeup sources.
  *
  * Note that to be safe, wakeup sources list needs to be locked by calling
- * wakeup_source_read_lock() for this.
+ * wakeup_source_पढ़ो_lock() क्रम this.
  */
-struct wakeup_source *wakeup_sources_walk_start(void)
-{
-	struct list_head *ws_head = &wakeup_sources;
+काष्ठा wakeup_source *wakeup_sources_walk_start(व्योम)
+अणु
+	काष्ठा list_head *ws_head = &wakeup_sources;
 
-	return list_entry_rcu(ws_head->next, struct wakeup_source, entry);
-}
+	वापस list_entry_rcu(ws_head->next, काष्ठा wakeup_source, entry);
+पूर्ण
 EXPORT_SYMBOL_GPL(wakeup_sources_walk_start);
 
 /**
@@ -295,15 +296,15 @@ EXPORT_SYMBOL_GPL(wakeup_sources_walk_start);
  * @ws: Previous wakeup source object
  *
  * Note that to be safe, wakeup sources list needs to be locked by calling
- * wakeup_source_read_lock() for this.
+ * wakeup_source_पढ़ो_lock() क्रम this.
  */
-struct wakeup_source *wakeup_sources_walk_next(struct wakeup_source *ws)
-{
-	struct list_head *ws_head = &wakeup_sources;
+काष्ठा wakeup_source *wakeup_sources_walk_next(काष्ठा wakeup_source *ws)
+अणु
+	काष्ठा list_head *ws_head = &wakeup_sources;
 
-	return list_next_or_null_rcu(ws_head, &ws->entry,
-				struct wakeup_source, entry);
-}
+	वापस list_next_or_null_rcu(ws_head, &ws->entry,
+				काष्ठा wakeup_source, entry);
+पूर्ण
 EXPORT_SYMBOL_GPL(wakeup_sources_walk_next);
 
 /**
@@ -313,74 +314,74 @@ EXPORT_SYMBOL_GPL(wakeup_sources_walk_next);
  *
  * This causes @dev to be treated as a wakeup device.
  */
-static int device_wakeup_attach(struct device *dev, struct wakeup_source *ws)
-{
-	spin_lock_irq(&dev->power.lock);
-	if (dev->power.wakeup) {
-		spin_unlock_irq(&dev->power.lock);
-		return -EEXIST;
-	}
-	dev->power.wakeup = ws;
-	if (dev->power.wakeirq)
-		device_wakeup_attach_irq(dev, dev->power.wakeirq);
-	spin_unlock_irq(&dev->power.lock);
-	return 0;
-}
+अटल पूर्णांक device_wakeup_attach(काष्ठा device *dev, काष्ठा wakeup_source *ws)
+अणु
+	spin_lock_irq(&dev->घातer.lock);
+	अगर (dev->घातer.wakeup) अणु
+		spin_unlock_irq(&dev->घातer.lock);
+		वापस -EEXIST;
+	पूर्ण
+	dev->घातer.wakeup = ws;
+	अगर (dev->घातer.wakeirq)
+		device_wakeup_attach_irq(dev, dev->घातer.wakeirq);
+	spin_unlock_irq(&dev->घातer.lock);
+	वापस 0;
+पूर्ण
 
 /**
  * device_wakeup_enable - Enable given device to be a wakeup source.
  * @dev: Device to handle.
  *
- * Create a wakeup source object, register it and attach it to @dev.
+ * Create a wakeup source object, रेजिस्टर it and attach it to @dev.
  */
-int device_wakeup_enable(struct device *dev)
-{
-	struct wakeup_source *ws;
-	int ret;
+पूर्णांक device_wakeup_enable(काष्ठा device *dev)
+अणु
+	काष्ठा wakeup_source *ws;
+	पूर्णांक ret;
 
-	if (!dev || !dev->power.can_wakeup)
-		return -EINVAL;
+	अगर (!dev || !dev->घातer.can_wakeup)
+		वापस -EINVAL;
 
-	if (pm_suspend_target_state != PM_SUSPEND_ON)
+	अगर (pm_suspend_target_state != PM_SUSPEND_ON)
 		dev_dbg(dev, "Suspicious %s() during system transition!\n", __func__);
 
-	ws = wakeup_source_register(dev, dev_name(dev));
-	if (!ws)
-		return -ENOMEM;
+	ws = wakeup_source_रेजिस्टर(dev, dev_name(dev));
+	अगर (!ws)
+		वापस -ENOMEM;
 
 	ret = device_wakeup_attach(dev, ws);
-	if (ret)
-		wakeup_source_unregister(ws);
+	अगर (ret)
+		wakeup_source_unरेजिस्टर(ws);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(device_wakeup_enable);
 
 /**
  * device_wakeup_attach_irq - Attach a wakeirq to a wakeup source
  * @dev: Device to handle
- * @wakeirq: Device specific wakeirq entry
+ * @wakeirq: Device specअगरic wakeirq entry
  *
  * Attach a device wakeirq to the wakeup source so the device
- * wake IRQ can be configured automatically for suspend and
+ * wake IRQ can be configured स्वतःmatically क्रम suspend and
  * resume.
  *
- * Call under the device's power.lock lock.
+ * Call under the device's घातer.lock lock.
  */
-void device_wakeup_attach_irq(struct device *dev,
-			     struct wake_irq *wakeirq)
-{
-	struct wakeup_source *ws;
+व्योम device_wakeup_attach_irq(काष्ठा device *dev,
+			     काष्ठा wake_irq *wakeirq)
+अणु
+	काष्ठा wakeup_source *ws;
 
-	ws = dev->power.wakeup;
-	if (!ws)
-		return;
+	ws = dev->घातer.wakeup;
+	अगर (!ws)
+		वापस;
 
-	if (ws->wakeirq)
+	अगर (ws->wakeirq)
 		dev_err(dev, "Leftover wakeup IRQ found, overriding\n");
 
 	ws->wakeirq = wakeirq;
-}
+पूर्ण
 
 /**
  * device_wakeup_detach_irq - Detach a wakeirq from a wakeup source
@@ -388,115 +389,115 @@ void device_wakeup_attach_irq(struct device *dev,
  *
  * Removes a device wakeirq from the wakeup source.
  *
- * Call under the device's power.lock lock.
+ * Call under the device's घातer.lock lock.
  */
-void device_wakeup_detach_irq(struct device *dev)
-{
-	struct wakeup_source *ws;
+व्योम device_wakeup_detach_irq(काष्ठा device *dev)
+अणु
+	काष्ठा wakeup_source *ws;
 
-	ws = dev->power.wakeup;
-	if (ws)
-		ws->wakeirq = NULL;
-}
+	ws = dev->घातer.wakeup;
+	अगर (ws)
+		ws->wakeirq = शून्य;
+पूर्ण
 
 /**
  * device_wakeup_arm_wake_irqs -
  *
  * Iterates over the list of device wakeirqs to arm them.
  */
-void device_wakeup_arm_wake_irqs(void)
-{
-	struct wakeup_source *ws;
-	int srcuidx;
+व्योम device_wakeup_arm_wake_irqs(व्योम)
+अणु
+	काष्ठा wakeup_source *ws;
+	पूर्णांक srcuidx;
 
-	srcuidx = srcu_read_lock(&wakeup_srcu);
-	list_for_each_entry_rcu_locked(ws, &wakeup_sources, entry)
+	srcuidx = srcu_पढ़ो_lock(&wakeup_srcu);
+	list_क्रम_each_entry_rcu_locked(ws, &wakeup_sources, entry)
 		dev_pm_arm_wake_irq(ws->wakeirq);
-	srcu_read_unlock(&wakeup_srcu, srcuidx);
-}
+	srcu_पढ़ो_unlock(&wakeup_srcu, srcuidx);
+पूर्ण
 
 /**
  * device_wakeup_disarm_wake_irqs -
  *
  * Iterates over the list of device wakeirqs to disarm them.
  */
-void device_wakeup_disarm_wake_irqs(void)
-{
-	struct wakeup_source *ws;
-	int srcuidx;
+व्योम device_wakeup_disarm_wake_irqs(व्योम)
+अणु
+	काष्ठा wakeup_source *ws;
+	पूर्णांक srcuidx;
 
-	srcuidx = srcu_read_lock(&wakeup_srcu);
-	list_for_each_entry_rcu_locked(ws, &wakeup_sources, entry)
+	srcuidx = srcu_पढ़ो_lock(&wakeup_srcu);
+	list_क्रम_each_entry_rcu_locked(ws, &wakeup_sources, entry)
 		dev_pm_disarm_wake_irq(ws->wakeirq);
-	srcu_read_unlock(&wakeup_srcu, srcuidx);
-}
+	srcu_पढ़ो_unlock(&wakeup_srcu, srcuidx);
+पूर्ण
 
 /**
  * device_wakeup_detach - Detach a device's wakeup source object from it.
  * @dev: Device to detach the wakeup source object from.
  *
- * After it returns, @dev will not be treated as a wakeup device any more.
+ * After it वापसs, @dev will not be treated as a wakeup device any more.
  */
-static struct wakeup_source *device_wakeup_detach(struct device *dev)
-{
-	struct wakeup_source *ws;
+अटल काष्ठा wakeup_source *device_wakeup_detach(काष्ठा device *dev)
+अणु
+	काष्ठा wakeup_source *ws;
 
-	spin_lock_irq(&dev->power.lock);
-	ws = dev->power.wakeup;
-	dev->power.wakeup = NULL;
-	spin_unlock_irq(&dev->power.lock);
-	return ws;
-}
+	spin_lock_irq(&dev->घातer.lock);
+	ws = dev->घातer.wakeup;
+	dev->घातer.wakeup = शून्य;
+	spin_unlock_irq(&dev->घातer.lock);
+	वापस ws;
+पूर्ण
 
 /**
  * device_wakeup_disable - Do not regard a device as a wakeup source any more.
  * @dev: Device to handle.
  *
- * Detach the @dev's wakeup source object from it, unregister this wakeup source
+ * Detach the @dev's wakeup source object from it, unरेजिस्टर this wakeup source
  * object and destroy it.
  */
-int device_wakeup_disable(struct device *dev)
-{
-	struct wakeup_source *ws;
+पूर्णांक device_wakeup_disable(काष्ठा device *dev)
+अणु
+	काष्ठा wakeup_source *ws;
 
-	if (!dev || !dev->power.can_wakeup)
-		return -EINVAL;
+	अगर (!dev || !dev->घातer.can_wakeup)
+		वापस -EINVAL;
 
 	ws = device_wakeup_detach(dev);
-	wakeup_source_unregister(ws);
-	return 0;
-}
+	wakeup_source_unरेजिस्टर(ws);
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(device_wakeup_disable);
 
 /**
  * device_set_wakeup_capable - Set/reset device wakeup capability flag.
  * @dev: Device to handle.
- * @capable: Whether or not @dev is capable of waking up the system from sleep.
+ * @capable: Whether or not @dev is capable of waking up the प्रणाली from sleep.
  *
- * If @capable is set, set the @dev's power.can_wakeup flag and add its
+ * If @capable is set, set the @dev's घातer.can_wakeup flag and add its
  * wakeup-related attributes to sysfs.  Otherwise, unset the @dev's
- * power.can_wakeup flag and remove its wakeup-related attributes from sysfs.
+ * घातer.can_wakeup flag and हटाओ its wakeup-related attributes from sysfs.
  *
  * This function may sleep and it can't be called from any context where
  * sleeping is not allowed.
  */
-void device_set_wakeup_capable(struct device *dev, bool capable)
-{
-	if (!!dev->power.can_wakeup == !!capable)
-		return;
+व्योम device_set_wakeup_capable(काष्ठा device *dev, bool capable)
+अणु
+	अगर (!!dev->घातer.can_wakeup == !!capable)
+		वापस;
 
-	dev->power.can_wakeup = capable;
-	if (device_is_registered(dev) && !list_empty(&dev->power.entry)) {
-		if (capable) {
-			int ret = wakeup_sysfs_add(dev);
+	dev->घातer.can_wakeup = capable;
+	अगर (device_is_रेजिस्टरed(dev) && !list_empty(&dev->घातer.entry)) अणु
+		अगर (capable) अणु
+			पूर्णांक ret = wakeup_sysfs_add(dev);
 
-			if (ret)
+			अगर (ret)
 				dev_info(dev, "Wakeup sysfs attributes not added\n");
-		} else {
-			wakeup_sysfs_remove(dev);
-		}
-	}
-}
+		पूर्ण अन्यथा अणु
+			wakeup_sysfs_हटाओ(dev);
+		पूर्ण
+	पूर्ण
+पूर्ण
 EXPORT_SYMBOL_GPL(device_set_wakeup_capable);
 
 /**
@@ -504,685 +505,685 @@ EXPORT_SYMBOL_GPL(device_set_wakeup_capable);
  * @dev: Device to handle.
  * @enable: Whether or not to enable @dev as a wakeup device.
  *
- * By default, most devices should leave wakeup disabled.  The exceptions are
- * devices that everyone expects to be wakeup sources: keyboards, power buttons,
- * possibly network interfaces, etc.  Also, devices that don't generate their
- * own wakeup requests but merely forward requests from one bus to another
- * (like PCI bridges) should have wakeup enabled by default.
+ * By शेष, most devices should leave wakeup disabled.  The exceptions are
+ * devices that everyone expects to be wakeup sources: keyboards, घातer buttons,
+ * possibly network पूर्णांकerfaces, etc.  Also, devices that करोn't generate their
+ * own wakeup requests but merely क्रमward requests from one bus to another
+ * (like PCI bridges) should have wakeup enabled by शेष.
  */
-int device_init_wakeup(struct device *dev, bool enable)
-{
-	int ret = 0;
+पूर्णांक device_init_wakeup(काष्ठा device *dev, bool enable)
+अणु
+	पूर्णांक ret = 0;
 
-	if (!dev)
-		return -EINVAL;
+	अगर (!dev)
+		वापस -EINVAL;
 
-	if (enable) {
+	अगर (enable) अणु
 		device_set_wakeup_capable(dev, true);
 		ret = device_wakeup_enable(dev);
-	} else {
+	पूर्ण अन्यथा अणु
 		device_wakeup_disable(dev);
 		device_set_wakeup_capable(dev, false);
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(device_init_wakeup);
 
 /**
- * device_set_wakeup_enable - Enable or disable a device to wake up the system.
+ * device_set_wakeup_enable - Enable or disable a device to wake up the प्रणाली.
  * @dev: Device to handle.
  * @enable: enable/disable flag
  */
-int device_set_wakeup_enable(struct device *dev, bool enable)
-{
-	return enable ? device_wakeup_enable(dev) : device_wakeup_disable(dev);
-}
+पूर्णांक device_set_wakeup_enable(काष्ठा device *dev, bool enable)
+अणु
+	वापस enable ? device_wakeup_enable(dev) : device_wakeup_disable(dev);
+पूर्ण
 EXPORT_SYMBOL_GPL(device_set_wakeup_enable);
 
 /**
- * wakeup_source_not_registered - validate the given wakeup source.
+ * wakeup_source_not_रेजिस्टरed - validate the given wakeup source.
  * @ws: Wakeup source to be validated.
  */
-static bool wakeup_source_not_registered(struct wakeup_source *ws)
-{
+अटल bool wakeup_source_not_रेजिस्टरed(काष्ठा wakeup_source *ws)
+अणु
 	/*
-	 * Use timer struct to check if the given source is initialized
+	 * Use समयr काष्ठा to check अगर the given source is initialized
 	 * by wakeup_source_add.
 	 */
-	return ws->timer.function != pm_wakeup_timer_fn;
-}
+	वापस ws->समयr.function != pm_wakeup_समयr_fn;
+पूर्ण
 
 /*
  * The functions below use the observation that each wakeup event starts a
- * period in which the system should not be suspended.  The moment this period
+ * period in which the प्रणाली should not be suspended.  The moment this period
  * will end depends on how the wakeup event is going to be processed after being
- * detected and all of the possible cases can be divided into two distinct
+ * detected and all of the possible हालs can be भागided पूर्णांकo two distinct
  * groups.
  *
  * First, a wakeup event may be detected by the same functional unit that will
  * carry out the entire processing of it and possibly will pass it to user space
- * for further processing.  In that case the functional unit that has detected
+ * क्रम further processing.  In that हाल the functional unit that has detected
  * the event may later "close" the "no suspend" period associated with it
  * directly as soon as it has been dealt with.  The pair of pm_stay_awake() and
  * pm_relax(), balanced with each other, is supposed to be used in such
  * situations.
  *
  * Second, a wakeup event may be detected by one functional unit and processed
- * by another one.  In that case the unit that has detected it cannot really
+ * by another one.  In that हाल the unit that has detected it cannot really
  * "close" the "no suspend" period associated with it, unless it knows in
  * advance what's going to happen to the event during processing.  This
- * knowledge, however, may not be available to it, so it can simply specify time
- * to wait before the system can be suspended and pass it as the second
+ * knowledge, however, may not be available to it, so it can simply specअगरy समय
+ * to रुको beक्रमe the प्रणाली can be suspended and pass it as the second
  * argument of pm_wakeup_event().
  *
- * It is valid to call pm_relax() after pm_wakeup_event(), in which case the
- * "no suspend" period will be ended either by the pm_relax(), or by the timer
- * function executed when the timer expires, whichever comes first.
+ * It is valid to call pm_relax() after pm_wakeup_event(), in which हाल the
+ * "no suspend" period will be ended either by the pm_relax(), or by the समयr
+ * function executed when the समयr expires, whichever comes first.
  */
 
 /**
  * wakeup_source_activate - Mark given wakeup source as active.
  * @ws: Wakeup source to handle.
  *
- * Update the @ws' statistics and, if @ws has just been activated, notify the PM
+ * Update the @ws' statistics and, अगर @ws has just been activated, notअगरy the PM
  * core of the event by incrementing the counter of of wakeup events being
  * processed.
  */
-static void wakeup_source_activate(struct wakeup_source *ws)
-{
-	unsigned int cec;
+अटल व्योम wakeup_source_activate(काष्ठा wakeup_source *ws)
+अणु
+	अचिन्हित पूर्णांक cec;
 
-	if (WARN_ONCE(wakeup_source_not_registered(ws),
+	अगर (WARN_ONCE(wakeup_source_not_रेजिस्टरed(ws),
 			"unregistered wakeup source\n"))
-		return;
+		वापस;
 
 	ws->active = true;
 	ws->active_count++;
-	ws->last_time = ktime_get();
-	if (ws->autosleep_enabled)
-		ws->start_prevent_time = ws->last_time;
+	ws->last_समय = kसमय_get();
+	अगर (ws->स्वतःsleep_enabled)
+		ws->start_prevent_समय = ws->last_समय;
 
 	/* Increment the counter of events in progress. */
-	cec = atomic_inc_return(&combined_event_count);
+	cec = atomic_inc_वापस(&combined_event_count);
 
 	trace_wakeup_source_activate(ws->name, cec);
-}
+पूर्ण
 
 /**
  * wakeup_source_report_event - Report wakeup event using the given source.
- * @ws: Wakeup source to report the event for.
- * @hard: If set, abort suspends in progress and wake up from suspend-to-idle.
+ * @ws: Wakeup source to report the event क्रम.
+ * @hard: If set, पात suspends in progress and wake up from suspend-to-idle.
  */
-static void wakeup_source_report_event(struct wakeup_source *ws, bool hard)
-{
+अटल व्योम wakeup_source_report_event(काष्ठा wakeup_source *ws, bool hard)
+अणु
 	ws->event_count++;
 	/* This is racy, but the counter is approximate anyway. */
-	if (events_check_enabled)
+	अगर (events_check_enabled)
 		ws->wakeup_count++;
 
-	if (!ws->active)
+	अगर (!ws->active)
 		wakeup_source_activate(ws);
 
-	if (hard)
-		pm_system_wakeup();
-}
+	अगर (hard)
+		pm_प्रणाली_wakeup();
+पूर्ण
 
 /**
- * __pm_stay_awake - Notify the PM core of a wakeup event.
+ * __pm_stay_awake - Notअगरy the PM core of a wakeup event.
  * @ws: Wakeup source object associated with the source of the event.
  *
- * It is safe to call this function from interrupt context.
+ * It is safe to call this function from पूर्णांकerrupt context.
  */
-void __pm_stay_awake(struct wakeup_source *ws)
-{
-	unsigned long flags;
+व्योम __pm_stay_awake(काष्ठा wakeup_source *ws)
+अणु
+	अचिन्हित दीर्घ flags;
 
-	if (!ws)
-		return;
+	अगर (!ws)
+		वापस;
 
 	spin_lock_irqsave(&ws->lock, flags);
 
 	wakeup_source_report_event(ws, false);
-	del_timer(&ws->timer);
-	ws->timer_expires = 0;
+	del_समयr(&ws->समयr);
+	ws->समयr_expires = 0;
 
 	spin_unlock_irqrestore(&ws->lock, flags);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(__pm_stay_awake);
 
 /**
- * pm_stay_awake - Notify the PM core that a wakeup event is being processed.
+ * pm_stay_awake - Notअगरy the PM core that a wakeup event is being processed.
  * @dev: Device the wakeup event is related to.
  *
- * Notify the PM core of a wakeup event (signaled by @dev) by calling
- * __pm_stay_awake for the @dev's wakeup source object.
+ * Notअगरy the PM core of a wakeup event (संकेतed by @dev) by calling
+ * __pm_stay_awake क्रम the @dev's wakeup source object.
  *
- * Call this function after detecting of a wakeup event if pm_relax() is going
+ * Call this function after detecting of a wakeup event अगर pm_relax() is going
  * to be called directly after processing the event (and possibly passing it to
- * user space for further processing).
+ * user space क्रम further processing).
  */
-void pm_stay_awake(struct device *dev)
-{
-	unsigned long flags;
+व्योम pm_stay_awake(काष्ठा device *dev)
+अणु
+	अचिन्हित दीर्घ flags;
 
-	if (!dev)
-		return;
+	अगर (!dev)
+		वापस;
 
-	spin_lock_irqsave(&dev->power.lock, flags);
-	__pm_stay_awake(dev->power.wakeup);
-	spin_unlock_irqrestore(&dev->power.lock, flags);
-}
+	spin_lock_irqsave(&dev->घातer.lock, flags);
+	__pm_stay_awake(dev->घातer.wakeup);
+	spin_unlock_irqrestore(&dev->घातer.lock, flags);
+पूर्ण
 EXPORT_SYMBOL_GPL(pm_stay_awake);
 
-#ifdef CONFIG_PM_AUTOSLEEP
-static void update_prevent_sleep_time(struct wakeup_source *ws, ktime_t now)
-{
-	ktime_t delta = ktime_sub(now, ws->start_prevent_time);
-	ws->prevent_sleep_time = ktime_add(ws->prevent_sleep_time, delta);
-}
-#else
-static inline void update_prevent_sleep_time(struct wakeup_source *ws,
-					     ktime_t now) {}
-#endif
+#अगर_घोषित CONFIG_PM_AUTOSLEEP
+अटल व्योम update_prevent_sleep_समय(काष्ठा wakeup_source *ws, kसमय_प्रकार now)
+अणु
+	kसमय_प्रकार delta = kसमय_sub(now, ws->start_prevent_समय);
+	ws->prevent_sleep_समय = kसमय_add(ws->prevent_sleep_समय, delta);
+पूर्ण
+#अन्यथा
+अटल अंतरभूत व्योम update_prevent_sleep_समय(काष्ठा wakeup_source *ws,
+					     kसमय_प्रकार now) अणुपूर्ण
+#पूर्ण_अगर
 
 /**
  * wakeup_source_deactivate - Mark given wakeup source as inactive.
  * @ws: Wakeup source to handle.
  *
- * Update the @ws' statistics and notify the PM core that the wakeup source has
+ * Update the @ws' statistics and notअगरy the PM core that the wakeup source has
  * become inactive by decrementing the counter of wakeup events being processed
- * and incrementing the counter of registered wakeup events.
+ * and incrementing the counter of रेजिस्टरed wakeup events.
  */
-static void wakeup_source_deactivate(struct wakeup_source *ws)
-{
-	unsigned int cnt, inpr, cec;
-	ktime_t duration;
-	ktime_t now;
+अटल व्योम wakeup_source_deactivate(काष्ठा wakeup_source *ws)
+अणु
+	अचिन्हित पूर्णांक cnt, inpr, cec;
+	kसमय_प्रकार duration;
+	kसमय_प्रकार now;
 
 	ws->relax_count++;
 	/*
-	 * __pm_relax() may be called directly or from a timer function.
-	 * If it is called directly right after the timer function has been
-	 * started, but before the timer function calls __pm_relax(), it is
-	 * possible that __pm_stay_awake() will be called in the meantime and
+	 * __pm_relax() may be called directly or from a समयr function.
+	 * If it is called directly right after the समयr function has been
+	 * started, but beक्रमe the समयr function calls __pm_relax(), it is
+	 * possible that __pm_stay_awake() will be called in the meanसमय and
 	 * will set ws->active.  Then, ws->active may be cleared immediately
-	 * by the __pm_relax() called from the timer function, but in such a
-	 * case ws->relax_count will be different from ws->active_count.
+	 * by the __pm_relax() called from the समयr function, but in such a
+	 * हाल ws->relax_count will be dअगरferent from ws->active_count.
 	 */
-	if (ws->relax_count != ws->active_count) {
+	अगर (ws->relax_count != ws->active_count) अणु
 		ws->relax_count--;
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	ws->active = false;
 
-	now = ktime_get();
-	duration = ktime_sub(now, ws->last_time);
-	ws->total_time = ktime_add(ws->total_time, duration);
-	if (ktime_to_ns(duration) > ktime_to_ns(ws->max_time))
-		ws->max_time = duration;
+	now = kसमय_get();
+	duration = kसमय_sub(now, ws->last_समय);
+	ws->total_समय = kसमय_add(ws->total_समय, duration);
+	अगर (kसमय_प्रकारo_ns(duration) > kसमय_प्रकारo_ns(ws->max_समय))
+		ws->max_समय = duration;
 
-	ws->last_time = now;
-	del_timer(&ws->timer);
-	ws->timer_expires = 0;
+	ws->last_समय = now;
+	del_समयr(&ws->समयr);
+	ws->समयr_expires = 0;
 
-	if (ws->autosleep_enabled)
-		update_prevent_sleep_time(ws, now);
+	अगर (ws->स्वतःsleep_enabled)
+		update_prevent_sleep_समय(ws, now);
 
 	/*
-	 * Increment the counter of registered wakeup events and decrement the
+	 * Increment the counter of रेजिस्टरed wakeup events and decrement the
 	 * couter of wakeup events in progress simultaneously.
 	 */
-	cec = atomic_add_return(MAX_IN_PROGRESS, &combined_event_count);
+	cec = atomic_add_वापस(MAX_IN_PROGRESS, &combined_event_count);
 	trace_wakeup_source_deactivate(ws->name, cec);
 
 	split_counters(&cnt, &inpr);
-	if (!inpr && waitqueue_active(&wakeup_count_wait_queue))
-		wake_up(&wakeup_count_wait_queue);
-}
+	अगर (!inpr && रुकोqueue_active(&wakeup_count_रुको_queue))
+		wake_up(&wakeup_count_रुको_queue);
+पूर्ण
 
 /**
- * __pm_relax - Notify the PM core that processing of a wakeup event has ended.
+ * __pm_relax - Notअगरy the PM core that processing of a wakeup event has ended.
  * @ws: Wakeup source object associated with the source of the event.
  *
- * Call this function for wakeup events whose processing started with calling
+ * Call this function क्रम wakeup events whose processing started with calling
  * __pm_stay_awake().
  *
- * It is safe to call it from interrupt context.
+ * It is safe to call it from पूर्णांकerrupt context.
  */
-void __pm_relax(struct wakeup_source *ws)
-{
-	unsigned long flags;
+व्योम __pm_relax(काष्ठा wakeup_source *ws)
+अणु
+	अचिन्हित दीर्घ flags;
 
-	if (!ws)
-		return;
+	अगर (!ws)
+		वापस;
 
 	spin_lock_irqsave(&ws->lock, flags);
-	if (ws->active)
+	अगर (ws->active)
 		wakeup_source_deactivate(ws);
 	spin_unlock_irqrestore(&ws->lock, flags);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(__pm_relax);
 
 /**
- * pm_relax - Notify the PM core that processing of a wakeup event has ended.
- * @dev: Device that signaled the event.
+ * pm_relax - Notअगरy the PM core that processing of a wakeup event has ended.
+ * @dev: Device that संकेतed the event.
  *
- * Execute __pm_relax() for the @dev's wakeup source object.
+ * Execute __pm_relax() क्रम the @dev's wakeup source object.
  */
-void pm_relax(struct device *dev)
-{
-	unsigned long flags;
+व्योम pm_relax(काष्ठा device *dev)
+अणु
+	अचिन्हित दीर्घ flags;
 
-	if (!dev)
-		return;
+	अगर (!dev)
+		वापस;
 
-	spin_lock_irqsave(&dev->power.lock, flags);
-	__pm_relax(dev->power.wakeup);
-	spin_unlock_irqrestore(&dev->power.lock, flags);
-}
+	spin_lock_irqsave(&dev->घातer.lock, flags);
+	__pm_relax(dev->घातer.wakeup);
+	spin_unlock_irqrestore(&dev->घातer.lock, flags);
+पूर्ण
 EXPORT_SYMBOL_GPL(pm_relax);
 
 /**
- * pm_wakeup_timer_fn - Delayed finalization of a wakeup event.
- * @t: timer list
+ * pm_wakeup_समयr_fn - Delayed finalization of a wakeup event.
+ * @t: समयr list
  *
- * Call wakeup_source_deactivate() for the wakeup source whose address is stored
- * in @data if it is currently active and its timer has not been canceled and
- * the expiration time of the timer is not in future.
+ * Call wakeup_source_deactivate() क्रम the wakeup source whose address is stored
+ * in @data अगर it is currently active and its समयr has not been canceled and
+ * the expiration समय of the समयr is not in future.
  */
-static void pm_wakeup_timer_fn(struct timer_list *t)
-{
-	struct wakeup_source *ws = from_timer(ws, t, timer);
-	unsigned long flags;
+अटल व्योम pm_wakeup_समयr_fn(काष्ठा समयr_list *t)
+अणु
+	काष्ठा wakeup_source *ws = from_समयr(ws, t, समयr);
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&ws->lock, flags);
 
-	if (ws->active && ws->timer_expires
-	    && time_after_eq(jiffies, ws->timer_expires)) {
+	अगर (ws->active && ws->समयr_expires
+	    && समय_after_eq(jअगरfies, ws->समयr_expires)) अणु
 		wakeup_source_deactivate(ws);
 		ws->expire_count++;
-	}
+	पूर्ण
 
 	spin_unlock_irqrestore(&ws->lock, flags);
-}
+पूर्ण
 
 /**
- * pm_wakeup_ws_event - Notify the PM core of a wakeup event.
+ * pm_wakeup_ws_event - Notअगरy the PM core of a wakeup event.
  * @ws: Wakeup source object associated with the event source.
- * @msec: Anticipated event processing time (in milliseconds).
- * @hard: If set, abort suspends in progress and wake up from suspend-to-idle.
+ * @msec: Anticipated event processing समय (in milliseconds).
+ * @hard: If set, पात suspends in progress and wake up from suspend-to-idle.
  *
- * Notify the PM core of a wakeup event whose source is @ws that will take
+ * Notअगरy the PM core of a wakeup event whose source is @ws that will take
  * approximately @msec milliseconds to be processed by the kernel.  If @ws is
- * not active, activate it.  If @msec is nonzero, set up the @ws' timer to
- * execute pm_wakeup_timer_fn() in future.
+ * not active, activate it.  If @msec is nonzero, set up the @ws' समयr to
+ * execute pm_wakeup_समयr_fn() in future.
  *
- * It is safe to call this function from interrupt context.
+ * It is safe to call this function from पूर्णांकerrupt context.
  */
-void pm_wakeup_ws_event(struct wakeup_source *ws, unsigned int msec, bool hard)
-{
-	unsigned long flags;
-	unsigned long expires;
+व्योम pm_wakeup_ws_event(काष्ठा wakeup_source *ws, अचिन्हित पूर्णांक msec, bool hard)
+अणु
+	अचिन्हित दीर्घ flags;
+	अचिन्हित दीर्घ expires;
 
-	if (!ws)
-		return;
+	अगर (!ws)
+		वापस;
 
 	spin_lock_irqsave(&ws->lock, flags);
 
 	wakeup_source_report_event(ws, hard);
 
-	if (!msec) {
+	अगर (!msec) अणु
 		wakeup_source_deactivate(ws);
-		goto unlock;
-	}
+		जाओ unlock;
+	पूर्ण
 
-	expires = jiffies + msecs_to_jiffies(msec);
-	if (!expires)
+	expires = jअगरfies + msecs_to_jअगरfies(msec);
+	अगर (!expires)
 		expires = 1;
 
-	if (!ws->timer_expires || time_after(expires, ws->timer_expires)) {
-		mod_timer(&ws->timer, expires);
-		ws->timer_expires = expires;
-	}
+	अगर (!ws->समयr_expires || समय_after(expires, ws->समयr_expires)) अणु
+		mod_समयr(&ws->समयr, expires);
+		ws->समयr_expires = expires;
+	पूर्ण
 
  unlock:
 	spin_unlock_irqrestore(&ws->lock, flags);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(pm_wakeup_ws_event);
 
 /**
- * pm_wakeup_dev_event - Notify the PM core of a wakeup event.
+ * pm_wakeup_dev_event - Notअगरy the PM core of a wakeup event.
  * @dev: Device the wakeup event is related to.
- * @msec: Anticipated event processing time (in milliseconds).
- * @hard: If set, abort suspends in progress and wake up from suspend-to-idle.
+ * @msec: Anticipated event processing समय (in milliseconds).
+ * @hard: If set, पात suspends in progress and wake up from suspend-to-idle.
  *
- * Call pm_wakeup_ws_event() for the @dev's wakeup source object.
+ * Call pm_wakeup_ws_event() क्रम the @dev's wakeup source object.
  */
-void pm_wakeup_dev_event(struct device *dev, unsigned int msec, bool hard)
-{
-	unsigned long flags;
+व्योम pm_wakeup_dev_event(काष्ठा device *dev, अचिन्हित पूर्णांक msec, bool hard)
+अणु
+	अचिन्हित दीर्घ flags;
 
-	if (!dev)
-		return;
+	अगर (!dev)
+		वापस;
 
-	spin_lock_irqsave(&dev->power.lock, flags);
-	pm_wakeup_ws_event(dev->power.wakeup, msec, hard);
-	spin_unlock_irqrestore(&dev->power.lock, flags);
-}
+	spin_lock_irqsave(&dev->घातer.lock, flags);
+	pm_wakeup_ws_event(dev->घातer.wakeup, msec, hard);
+	spin_unlock_irqrestore(&dev->घातer.lock, flags);
+पूर्ण
 EXPORT_SYMBOL_GPL(pm_wakeup_dev_event);
 
-void pm_print_active_wakeup_sources(void)
-{
-	struct wakeup_source *ws;
-	int srcuidx, active = 0;
-	struct wakeup_source *last_activity_ws = NULL;
+व्योम pm_prपूर्णांक_active_wakeup_sources(व्योम)
+अणु
+	काष्ठा wakeup_source *ws;
+	पूर्णांक srcuidx, active = 0;
+	काष्ठा wakeup_source *last_activity_ws = शून्य;
 
-	srcuidx = srcu_read_lock(&wakeup_srcu);
-	list_for_each_entry_rcu_locked(ws, &wakeup_sources, entry) {
-		if (ws->active) {
+	srcuidx = srcu_पढ़ो_lock(&wakeup_srcu);
+	list_क्रम_each_entry_rcu_locked(ws, &wakeup_sources, entry) अणु
+		अगर (ws->active) अणु
 			pm_pr_dbg("active wakeup source: %s\n", ws->name);
 			active = 1;
-		} else if (!active &&
+		पूर्ण अन्यथा अगर (!active &&
 			   (!last_activity_ws ||
-			    ktime_to_ns(ws->last_time) >
-			    ktime_to_ns(last_activity_ws->last_time))) {
+			    kसमय_प्रकारo_ns(ws->last_समय) >
+			    kसमय_प्रकारo_ns(last_activity_ws->last_समय))) अणु
 			last_activity_ws = ws;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (!active && last_activity_ws)
+	अगर (!active && last_activity_ws)
 		pm_pr_dbg("last active wakeup source: %s\n",
 			last_activity_ws->name);
-	srcu_read_unlock(&wakeup_srcu, srcuidx);
-}
-EXPORT_SYMBOL_GPL(pm_print_active_wakeup_sources);
+	srcu_पढ़ो_unlock(&wakeup_srcu, srcuidx);
+पूर्ण
+EXPORT_SYMBOL_GPL(pm_prपूर्णांक_active_wakeup_sources);
 
 /**
- * pm_wakeup_pending - Check if power transition in progress should be aborted.
+ * pm_wakeup_pending - Check अगर घातer transition in progress should be पातed.
  *
- * Compare the current number of registered wakeup events with its preserved
- * value from the past and return true if new wakeup events have been registered
- * since the old value was stored.  Also return true if the current number of
- * wakeup events being processed is different from zero.
+ * Compare the current number of रेजिस्टरed wakeup events with its preserved
+ * value from the past and वापस true अगर new wakeup events have been रेजिस्टरed
+ * since the old value was stored.  Also वापस true अगर the current number of
+ * wakeup events being processed is dअगरferent from zero.
  */
-bool pm_wakeup_pending(void)
-{
-	unsigned long flags;
+bool pm_wakeup_pending(व्योम)
+अणु
+	अचिन्हित दीर्घ flags;
 	bool ret = false;
 
 	raw_spin_lock_irqsave(&events_lock, flags);
-	if (events_check_enabled) {
-		unsigned int cnt, inpr;
+	अगर (events_check_enabled) अणु
+		अचिन्हित पूर्णांक cnt, inpr;
 
 		split_counters(&cnt, &inpr);
 		ret = (cnt != saved_count || inpr > 0);
 		events_check_enabled = !ret;
-	}
+	पूर्ण
 	raw_spin_unlock_irqrestore(&events_lock, flags);
 
-	if (ret) {
+	अगर (ret) अणु
 		pm_pr_dbg("Wakeup pending, aborting suspend\n");
-		pm_print_active_wakeup_sources();
-	}
+		pm_prपूर्णांक_active_wakeup_sources();
+	पूर्ण
 
-	return ret || atomic_read(&pm_abort_suspend) > 0;
-}
+	वापस ret || atomic_पढ़ो(&pm_पात_suspend) > 0;
+पूर्ण
 
-void pm_system_wakeup(void)
-{
-	atomic_inc(&pm_abort_suspend);
+व्योम pm_प्रणाली_wakeup(व्योम)
+अणु
+	atomic_inc(&pm_पात_suspend);
 	s2idle_wake();
-}
-EXPORT_SYMBOL_GPL(pm_system_wakeup);
+पूर्ण
+EXPORT_SYMBOL_GPL(pm_प्रणाली_wakeup);
 
-void pm_system_cancel_wakeup(void)
-{
-	atomic_dec_if_positive(&pm_abort_suspend);
-}
+व्योम pm_प्रणाली_cancel_wakeup(व्योम)
+अणु
+	atomic_dec_अगर_positive(&pm_पात_suspend);
+पूर्ण
 
-void pm_wakeup_clear(bool reset)
-{
+व्योम pm_wakeup_clear(bool reset)
+अणु
 	pm_wakeup_irq = 0;
-	if (reset)
-		atomic_set(&pm_abort_suspend, 0);
-}
+	अगर (reset)
+		atomic_set(&pm_पात_suspend, 0);
+पूर्ण
 
-void pm_system_irq_wakeup(unsigned int irq_number)
-{
-	if (pm_wakeup_irq == 0) {
+व्योम pm_प्रणाली_irq_wakeup(अचिन्हित पूर्णांक irq_number)
+अणु
+	अगर (pm_wakeup_irq == 0) अणु
 		pm_wakeup_irq = irq_number;
-		pm_system_wakeup();
-	}
-}
+		pm_प्रणाली_wakeup();
+	पूर्ण
+पूर्ण
 
 /**
- * pm_get_wakeup_count - Read the number of registered wakeup events.
+ * pm_get_wakeup_count - Read the number of रेजिस्टरed wakeup events.
  * @count: Address to store the value at.
  * @block: Whether or not to block.
  *
- * Store the number of registered wakeup events at the address in @count.  If
+ * Store the number of रेजिस्टरed wakeup events at the address in @count.  If
  * @block is set, block until the current number of wakeup events being
  * processed is zero.
  *
- * Return 'false' if the current number of wakeup events being processed is
- * nonzero.  Otherwise return 'true'.
+ * Return 'false' अगर the current number of wakeup events being processed is
+ * nonzero.  Otherwise वापस 'true'.
  */
-bool pm_get_wakeup_count(unsigned int *count, bool block)
-{
-	unsigned int cnt, inpr;
+bool pm_get_wakeup_count(अचिन्हित पूर्णांक *count, bool block)
+अणु
+	अचिन्हित पूर्णांक cnt, inpr;
 
-	if (block) {
-		DEFINE_WAIT(wait);
+	अगर (block) अणु
+		DEFINE_WAIT(रुको);
 
-		for (;;) {
-			prepare_to_wait(&wakeup_count_wait_queue, &wait,
+		क्रम (;;) अणु
+			prepare_to_रुको(&wakeup_count_रुको_queue, &रुको,
 					TASK_INTERRUPTIBLE);
 			split_counters(&cnt, &inpr);
-			if (inpr == 0 || signal_pending(current))
-				break;
-			pm_print_active_wakeup_sources();
+			अगर (inpr == 0 || संकेत_pending(current))
+				अवरोध;
+			pm_prपूर्णांक_active_wakeup_sources();
 			schedule();
-		}
-		finish_wait(&wakeup_count_wait_queue, &wait);
-	}
+		पूर्ण
+		finish_रुको(&wakeup_count_रुको_queue, &रुको);
+	पूर्ण
 
 	split_counters(&cnt, &inpr);
 	*count = cnt;
-	return !inpr;
-}
+	वापस !inpr;
+पूर्ण
 
 /**
- * pm_save_wakeup_count - Save the current number of registered wakeup events.
- * @count: Value to compare with the current number of registered wakeup events.
+ * pm_save_wakeup_count - Save the current number of रेजिस्टरed wakeup events.
+ * @count: Value to compare with the current number of रेजिस्टरed wakeup events.
  *
- * If @count is equal to the current number of registered wakeup events and the
+ * If @count is equal to the current number of रेजिस्टरed wakeup events and the
  * current number of wakeup events being processed is zero, store @count as the
- * old number of registered wakeup events for pm_check_wakeup_events(), enable
- * wakeup events detection and return 'true'.  Otherwise disable wakeup events
- * detection and return 'false'.
+ * old number of रेजिस्टरed wakeup events क्रम pm_check_wakeup_events(), enable
+ * wakeup events detection and वापस 'true'.  Otherwise disable wakeup events
+ * detection and वापस 'false'.
  */
-bool pm_save_wakeup_count(unsigned int count)
-{
-	unsigned int cnt, inpr;
-	unsigned long flags;
+bool pm_save_wakeup_count(अचिन्हित पूर्णांक count)
+अणु
+	अचिन्हित पूर्णांक cnt, inpr;
+	अचिन्हित दीर्घ flags;
 
 	events_check_enabled = false;
 	raw_spin_lock_irqsave(&events_lock, flags);
 	split_counters(&cnt, &inpr);
-	if (cnt == count && inpr == 0) {
+	अगर (cnt == count && inpr == 0) अणु
 		saved_count = count;
 		events_check_enabled = true;
-	}
+	पूर्ण
 	raw_spin_unlock_irqrestore(&events_lock, flags);
-	return events_check_enabled;
-}
+	वापस events_check_enabled;
+पूर्ण
 
-#ifdef CONFIG_PM_AUTOSLEEP
+#अगर_घोषित CONFIG_PM_AUTOSLEEP
 /**
- * pm_wakep_autosleep_enabled - Modify autosleep_enabled for all wakeup sources.
- * @set: Whether to set or to clear the autosleep_enabled flags.
+ * pm_wakep_स्वतःsleep_enabled - Modअगरy स्वतःsleep_enabled क्रम all wakeup sources.
+ * @set: Whether to set or to clear the स्वतःsleep_enabled flags.
  */
-void pm_wakep_autosleep_enabled(bool set)
-{
-	struct wakeup_source *ws;
-	ktime_t now = ktime_get();
-	int srcuidx;
+व्योम pm_wakep_स्वतःsleep_enabled(bool set)
+अणु
+	काष्ठा wakeup_source *ws;
+	kसमय_प्रकार now = kसमय_get();
+	पूर्णांक srcuidx;
 
-	srcuidx = srcu_read_lock(&wakeup_srcu);
-	list_for_each_entry_rcu_locked(ws, &wakeup_sources, entry) {
+	srcuidx = srcu_पढ़ो_lock(&wakeup_srcu);
+	list_क्रम_each_entry_rcu_locked(ws, &wakeup_sources, entry) अणु
 		spin_lock_irq(&ws->lock);
-		if (ws->autosleep_enabled != set) {
-			ws->autosleep_enabled = set;
-			if (ws->active) {
-				if (set)
-					ws->start_prevent_time = now;
-				else
-					update_prevent_sleep_time(ws, now);
-			}
-		}
+		अगर (ws->स्वतःsleep_enabled != set) अणु
+			ws->स्वतःsleep_enabled = set;
+			अगर (ws->active) अणु
+				अगर (set)
+					ws->start_prevent_समय = now;
+				अन्यथा
+					update_prevent_sleep_समय(ws, now);
+			पूर्ण
+		पूर्ण
 		spin_unlock_irq(&ws->lock);
-	}
-	srcu_read_unlock(&wakeup_srcu, srcuidx);
-}
-#endif /* CONFIG_PM_AUTOSLEEP */
+	पूर्ण
+	srcu_पढ़ो_unlock(&wakeup_srcu, srcuidx);
+पूर्ण
+#पूर्ण_अगर /* CONFIG_PM_AUTOSLEEP */
 
 /**
- * print_wakeup_source_stats - Print wakeup source statistics information.
- * @m: seq_file to print the statistics into.
- * @ws: Wakeup source object to print the statistics for.
+ * prपूर्णांक_wakeup_source_stats - Prपूर्णांक wakeup source statistics inक्रमmation.
+ * @m: seq_file to prपूर्णांक the statistics पूर्णांकo.
+ * @ws: Wakeup source object to prपूर्णांक the statistics क्रम.
  */
-static int print_wakeup_source_stats(struct seq_file *m,
-				     struct wakeup_source *ws)
-{
-	unsigned long flags;
-	ktime_t total_time;
-	ktime_t max_time;
-	unsigned long active_count;
-	ktime_t active_time;
-	ktime_t prevent_sleep_time;
+अटल पूर्णांक prपूर्णांक_wakeup_source_stats(काष्ठा seq_file *m,
+				     काष्ठा wakeup_source *ws)
+अणु
+	अचिन्हित दीर्घ flags;
+	kसमय_प्रकार total_समय;
+	kसमय_प्रकार max_समय;
+	अचिन्हित दीर्घ active_count;
+	kसमय_प्रकार active_समय;
+	kसमय_प्रकार prevent_sleep_समय;
 
 	spin_lock_irqsave(&ws->lock, flags);
 
-	total_time = ws->total_time;
-	max_time = ws->max_time;
-	prevent_sleep_time = ws->prevent_sleep_time;
+	total_समय = ws->total_समय;
+	max_समय = ws->max_समय;
+	prevent_sleep_समय = ws->prevent_sleep_समय;
 	active_count = ws->active_count;
-	if (ws->active) {
-		ktime_t now = ktime_get();
+	अगर (ws->active) अणु
+		kसमय_प्रकार now = kसमय_get();
 
-		active_time = ktime_sub(now, ws->last_time);
-		total_time = ktime_add(total_time, active_time);
-		if (active_time > max_time)
-			max_time = active_time;
+		active_समय = kसमय_sub(now, ws->last_समय);
+		total_समय = kसमय_add(total_समय, active_समय);
+		अगर (active_समय > max_समय)
+			max_समय = active_समय;
 
-		if (ws->autosleep_enabled)
-			prevent_sleep_time = ktime_add(prevent_sleep_time,
-				ktime_sub(now, ws->start_prevent_time));
-	} else {
-		active_time = 0;
-	}
+		अगर (ws->स्वतःsleep_enabled)
+			prevent_sleep_समय = kसमय_add(prevent_sleep_समय,
+				kसमय_sub(now, ws->start_prevent_समय));
+	पूर्ण अन्यथा अणु
+		active_समय = 0;
+	पूर्ण
 
-	seq_printf(m, "%-12s\t%lu\t\t%lu\t\t%lu\t\t%lu\t\t%lld\t\t%lld\t\t%lld\t\t%lld\t\t%lld\n",
+	seq_म_लिखो(m, "%-12s\t%lu\t\t%lu\t\t%lu\t\t%lu\t\t%lld\t\t%lld\t\t%lld\t\t%lld\t\t%lld\n",
 		   ws->name, active_count, ws->event_count,
 		   ws->wakeup_count, ws->expire_count,
-		   ktime_to_ms(active_time), ktime_to_ms(total_time),
-		   ktime_to_ms(max_time), ktime_to_ms(ws->last_time),
-		   ktime_to_ms(prevent_sleep_time));
+		   kसमय_प्रकारo_ms(active_समय), kसमय_प्रकारo_ms(total_समय),
+		   kसमय_प्रकारo_ms(max_समय), kसमय_प्रकारo_ms(ws->last_समय),
+		   kसमय_प्रकारo_ms(prevent_sleep_समय));
 
 	spin_unlock_irqrestore(&ws->lock, flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void *wakeup_sources_stats_seq_start(struct seq_file *m,
+अटल व्योम *wakeup_sources_stats_seq_start(काष्ठा seq_file *m,
 					loff_t *pos)
-{
-	struct wakeup_source *ws;
+अणु
+	काष्ठा wakeup_source *ws;
 	loff_t n = *pos;
-	int *srcuidx = m->private;
+	पूर्णांक *srcuidx = m->निजी;
 
-	if (n == 0) {
-		seq_puts(m, "name\t\tactive_count\tevent_count\twakeup_count\t"
+	अगर (n == 0) अणु
+		seq_माला_दो(m, "name\t\tactive_count\tevent_count\twakeup_count\t"
 			"expire_count\tactive_since\ttotal_time\tmax_time\t"
 			"last_change\tprevent_suspend_time\n");
-	}
+	पूर्ण
 
-	*srcuidx = srcu_read_lock(&wakeup_srcu);
-	list_for_each_entry_rcu_locked(ws, &wakeup_sources, entry) {
-		if (n-- <= 0)
-			return ws;
-	}
+	*srcuidx = srcu_पढ़ो_lock(&wakeup_srcu);
+	list_क्रम_each_entry_rcu_locked(ws, &wakeup_sources, entry) अणु
+		अगर (n-- <= 0)
+			वापस ws;
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static void *wakeup_sources_stats_seq_next(struct seq_file *m,
-					void *v, loff_t *pos)
-{
-	struct wakeup_source *ws = v;
-	struct wakeup_source *next_ws = NULL;
+अटल व्योम *wakeup_sources_stats_seq_next(काष्ठा seq_file *m,
+					व्योम *v, loff_t *pos)
+अणु
+	काष्ठा wakeup_source *ws = v;
+	काष्ठा wakeup_source *next_ws = शून्य;
 
 	++(*pos);
 
-	list_for_each_entry_continue_rcu(ws, &wakeup_sources, entry) {
+	list_क्रम_each_entry_जारी_rcu(ws, &wakeup_sources, entry) अणु
 		next_ws = ws;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	if (!next_ws)
-		print_wakeup_source_stats(m, &deleted_ws);
+	अगर (!next_ws)
+		prपूर्णांक_wakeup_source_stats(m, &deleted_ws);
 
-	return next_ws;
-}
+	वापस next_ws;
+पूर्ण
 
-static void wakeup_sources_stats_seq_stop(struct seq_file *m, void *v)
-{
-	int *srcuidx = m->private;
+अटल व्योम wakeup_sources_stats_seq_stop(काष्ठा seq_file *m, व्योम *v)
+अणु
+	पूर्णांक *srcuidx = m->निजी;
 
-	srcu_read_unlock(&wakeup_srcu, *srcuidx);
-}
+	srcu_पढ़ो_unlock(&wakeup_srcu, *srcuidx);
+पूर्ण
 
 /**
- * wakeup_sources_stats_seq_show - Print wakeup sources statistics information.
- * @m: seq_file to print the statistics into.
+ * wakeup_sources_stats_seq_show - Prपूर्णांक wakeup sources statistics inक्रमmation.
+ * @m: seq_file to prपूर्णांक the statistics पूर्णांकo.
  * @v: wakeup_source of each iteration
  */
-static int wakeup_sources_stats_seq_show(struct seq_file *m, void *v)
-{
-	struct wakeup_source *ws = v;
+अटल पूर्णांक wakeup_sources_stats_seq_show(काष्ठा seq_file *m, व्योम *v)
+अणु
+	काष्ठा wakeup_source *ws = v;
 
-	print_wakeup_source_stats(m, ws);
+	prपूर्णांक_wakeup_source_stats(m, ws);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct seq_operations wakeup_sources_stats_seq_ops = {
+अटल स्थिर काष्ठा seq_operations wakeup_sources_stats_seq_ops = अणु
 	.start = wakeup_sources_stats_seq_start,
 	.next  = wakeup_sources_stats_seq_next,
 	.stop  = wakeup_sources_stats_seq_stop,
 	.show  = wakeup_sources_stats_seq_show,
-};
+पूर्ण;
 
-static int wakeup_sources_stats_open(struct inode *inode, struct file *file)
-{
-	return seq_open_private(file, &wakeup_sources_stats_seq_ops, sizeof(int));
-}
+अटल पूर्णांक wakeup_sources_stats_खोलो(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	वापस seq_खोलो_निजी(file, &wakeup_sources_stats_seq_ops, माप(पूर्णांक));
+पूर्ण
 
-static const struct file_operations wakeup_sources_stats_fops = {
+अटल स्थिर काष्ठा file_operations wakeup_sources_stats_fops = अणु
 	.owner = THIS_MODULE,
-	.open = wakeup_sources_stats_open,
-	.read = seq_read,
+	.खोलो = wakeup_sources_stats_खोलो,
+	.पढ़ो = seq_पढ़ो,
 	.llseek = seq_lseek,
-	.release = seq_release_private,
-};
+	.release = seq_release_निजी,
+पूर्ण;
 
-static int __init wakeup_sources_debugfs_init(void)
-{
-	debugfs_create_file("wakeup_sources", S_IRUGO, NULL, NULL,
+अटल पूर्णांक __init wakeup_sources_debugfs_init(व्योम)
+अणु
+	debugfs_create_file("wakeup_sources", S_IRUGO, शून्य, शून्य,
 			    &wakeup_sources_stats_fops);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 postcore_initcall(wakeup_sources_debugfs_init);

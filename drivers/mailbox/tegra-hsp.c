@@ -1,285 +1,286 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (c) 2016-2018, NVIDIA CORPORATION.  All rights reserved.
  */
 
-#include <linux/delay.h>
-#include <linux/interrupt.h>
-#include <linux/io.h>
-#include <linux/mailbox_controller.h>
-#include <linux/of.h>
-#include <linux/of_device.h>
-#include <linux/platform_device.h>
-#include <linux/pm.h>
-#include <linux/slab.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/mailbox_controller.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/pm.h>
+#समावेश <linux/slab.h>
 
-#include <soc/tegra/fuse.h>
+#समावेश <soc/tegra/fuse.h>
 
-#include <dt-bindings/mailbox/tegra186-hsp.h>
+#समावेश <dt-bindings/mailbox/tegra186-hsp.h>
 
-#include "mailbox.h"
+#समावेश "mailbox.h"
 
-#define HSP_INT_IE(x)		(0x100 + ((x) * 4))
-#define HSP_INT_IV		0x300
-#define HSP_INT_IR		0x304
+#घोषणा HSP_INT_IE(x)		(0x100 + ((x) * 4))
+#घोषणा HSP_INT_IV		0x300
+#घोषणा HSP_INT_IR		0x304
 
-#define HSP_INT_EMPTY_SHIFT	0
-#define HSP_INT_EMPTY_MASK	0xff
-#define HSP_INT_FULL_SHIFT	8
-#define HSP_INT_FULL_MASK	0xff
+#घोषणा HSP_INT_EMPTY_SHIFT	0
+#घोषणा HSP_INT_EMPTY_MASK	0xff
+#घोषणा HSP_INT_FULL_SHIFT	8
+#घोषणा HSP_INT_FULL_MASK	0xff
 
-#define HSP_INT_DIMENSIONING	0x380
-#define HSP_nSM_SHIFT		0
-#define HSP_nSS_SHIFT		4
-#define HSP_nAS_SHIFT		8
-#define HSP_nDB_SHIFT		12
-#define HSP_nSI_SHIFT		16
-#define HSP_nINT_MASK		0xf
+#घोषणा HSP_INT_DIMENSIONING	0x380
+#घोषणा HSP_nSM_SHIFT		0
+#घोषणा HSP_nSS_SHIFT		4
+#घोषणा HSP_nAS_SHIFT		8
+#घोषणा HSP_nDB_SHIFT		12
+#घोषणा HSP_nSI_SHIFT		16
+#घोषणा HSP_nINT_MASK		0xf
 
-#define HSP_DB_TRIGGER	0x0
-#define HSP_DB_ENABLE	0x4
-#define HSP_DB_RAW	0x8
-#define HSP_DB_PENDING	0xc
+#घोषणा HSP_DB_TRIGGER	0x0
+#घोषणा HSP_DB_ENABLE	0x4
+#घोषणा HSP_DB_RAW	0x8
+#घोषणा HSP_DB_PENDING	0xc
 
-#define HSP_SM_SHRD_MBOX	0x0
-#define HSP_SM_SHRD_MBOX_FULL	BIT(31)
-#define HSP_SM_SHRD_MBOX_FULL_INT_IE	0x04
-#define HSP_SM_SHRD_MBOX_EMPTY_INT_IE	0x08
+#घोषणा HSP_SM_SHRD_MBOX	0x0
+#घोषणा HSP_SM_SHRD_MBOX_FULL	BIT(31)
+#घोषणा HSP_SM_SHRD_MBOX_FULL_INT_IE	0x04
+#घोषणा HSP_SM_SHRD_MBOX_EMPTY_INT_IE	0x08
 
-#define HSP_DB_CCPLEX		1
-#define HSP_DB_BPMP		3
-#define HSP_DB_MAX		7
+#घोषणा HSP_DB_CCPLEX		1
+#घोषणा HSP_DB_BPMP		3
+#घोषणा HSP_DB_MAX		7
 
-struct tegra_hsp_channel;
-struct tegra_hsp;
+काष्ठा tegra_hsp_channel;
+काष्ठा tegra_hsp;
 
-struct tegra_hsp_channel {
-	struct tegra_hsp *hsp;
-	struct mbox_chan *chan;
-	void __iomem *regs;
-};
+काष्ठा tegra_hsp_channel अणु
+	काष्ठा tegra_hsp *hsp;
+	काष्ठा mbox_chan *chan;
+	व्योम __iomem *regs;
+पूर्ण;
 
-struct tegra_hsp_doorbell {
-	struct tegra_hsp_channel channel;
-	struct list_head list;
-	const char *name;
-	unsigned int master;
-	unsigned int index;
-};
+काष्ठा tegra_hsp_करोorbell अणु
+	काष्ठा tegra_hsp_channel channel;
+	काष्ठा list_head list;
+	स्थिर अक्षर *name;
+	अचिन्हित पूर्णांक master;
+	अचिन्हित पूर्णांक index;
+पूर्ण;
 
-struct tegra_hsp_mailbox {
-	struct tegra_hsp_channel channel;
-	unsigned int index;
+काष्ठा tegra_hsp_mailbox अणु
+	काष्ठा tegra_hsp_channel channel;
+	अचिन्हित पूर्णांक index;
 	bool producer;
-};
+पूर्ण;
 
-struct tegra_hsp_db_map {
-	const char *name;
-	unsigned int master;
-	unsigned int index;
-};
+काष्ठा tegra_hsp_db_map अणु
+	स्थिर अक्षर *name;
+	अचिन्हित पूर्णांक master;
+	अचिन्हित पूर्णांक index;
+पूर्ण;
 
-struct tegra_hsp_soc {
-	const struct tegra_hsp_db_map *map;
+काष्ठा tegra_hsp_soc अणु
+	स्थिर काष्ठा tegra_hsp_db_map *map;
 	bool has_per_mb_ie;
-};
+पूर्ण;
 
-struct tegra_hsp {
-	struct device *dev;
-	const struct tegra_hsp_soc *soc;
-	struct mbox_controller mbox_db;
-	struct mbox_controller mbox_sm;
-	void __iomem *regs;
-	unsigned int doorbell_irq;
-	unsigned int *shared_irqs;
-	unsigned int shared_irq;
-	unsigned int num_sm;
-	unsigned int num_as;
-	unsigned int num_ss;
-	unsigned int num_db;
-	unsigned int num_si;
+काष्ठा tegra_hsp अणु
+	काष्ठा device *dev;
+	स्थिर काष्ठा tegra_hsp_soc *soc;
+	काष्ठा mbox_controller mbox_db;
+	काष्ठा mbox_controller mbox_sm;
+	व्योम __iomem *regs;
+	अचिन्हित पूर्णांक करोorbell_irq;
+	अचिन्हित पूर्णांक *shared_irqs;
+	अचिन्हित पूर्णांक shared_irq;
+	अचिन्हित पूर्णांक num_sm;
+	अचिन्हित पूर्णांक num_as;
+	अचिन्हित पूर्णांक num_ss;
+	अचिन्हित पूर्णांक num_db;
+	अचिन्हित पूर्णांक num_si;
 
 	spinlock_t lock;
-	struct lock_class_key lock_key;
+	काष्ठा lock_class_key lock_key;
 
-	struct list_head doorbells;
-	struct tegra_hsp_mailbox *mailboxes;
+	काष्ठा list_head करोorbells;
+	काष्ठा tegra_hsp_mailbox *mailboxes;
 
-	unsigned long mask;
-};
+	अचिन्हित दीर्घ mask;
+पूर्ण;
 
-static inline u32 tegra_hsp_readl(struct tegra_hsp *hsp, unsigned int offset)
-{
-	return readl(hsp->regs + offset);
-}
+अटल अंतरभूत u32 tegra_hsp_पढ़ोl(काष्ठा tegra_hsp *hsp, अचिन्हित पूर्णांक offset)
+अणु
+	वापस पढ़ोl(hsp->regs + offset);
+पूर्ण
 
-static inline void tegra_hsp_writel(struct tegra_hsp *hsp, u32 value,
-				    unsigned int offset)
-{
-	writel(value, hsp->regs + offset);
-}
+अटल अंतरभूत व्योम tegra_hsp_ग_लिखोl(काष्ठा tegra_hsp *hsp, u32 value,
+				    अचिन्हित पूर्णांक offset)
+अणु
+	ग_लिखोl(value, hsp->regs + offset);
+पूर्ण
 
-static inline u32 tegra_hsp_channel_readl(struct tegra_hsp_channel *channel,
-					  unsigned int offset)
-{
-	return readl(channel->regs + offset);
-}
+अटल अंतरभूत u32 tegra_hsp_channel_पढ़ोl(काष्ठा tegra_hsp_channel *channel,
+					  अचिन्हित पूर्णांक offset)
+अणु
+	वापस पढ़ोl(channel->regs + offset);
+पूर्ण
 
-static inline void tegra_hsp_channel_writel(struct tegra_hsp_channel *channel,
-					    u32 value, unsigned int offset)
-{
-	writel(value, channel->regs + offset);
-}
+अटल अंतरभूत व्योम tegra_hsp_channel_ग_लिखोl(काष्ठा tegra_hsp_channel *channel,
+					    u32 value, अचिन्हित पूर्णांक offset)
+अणु
+	ग_लिखोl(value, channel->regs + offset);
+पूर्ण
 
-static bool tegra_hsp_doorbell_can_ring(struct tegra_hsp_doorbell *db)
-{
+अटल bool tegra_hsp_करोorbell_can_ring(काष्ठा tegra_hsp_करोorbell *db)
+अणु
 	u32 value;
 
-	value = tegra_hsp_channel_readl(&db->channel, HSP_DB_ENABLE);
+	value = tegra_hsp_channel_पढ़ोl(&db->channel, HSP_DB_ENABLE);
 
-	return (value & BIT(TEGRA_HSP_DB_MASTER_CCPLEX)) != 0;
-}
+	वापस (value & BIT(TEGRA_HSP_DB_MASTER_CCPLEX)) != 0;
+पूर्ण
 
-static struct tegra_hsp_doorbell *
-__tegra_hsp_doorbell_get(struct tegra_hsp *hsp, unsigned int master)
-{
-	struct tegra_hsp_doorbell *entry;
+अटल काष्ठा tegra_hsp_करोorbell *
+__tegra_hsp_करोorbell_get(काष्ठा tegra_hsp *hsp, अचिन्हित पूर्णांक master)
+अणु
+	काष्ठा tegra_hsp_करोorbell *entry;
 
-	list_for_each_entry(entry, &hsp->doorbells, list)
-		if (entry->master == master)
-			return entry;
+	list_क्रम_each_entry(entry, &hsp->करोorbells, list)
+		अगर (entry->master == master)
+			वापस entry;
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static struct tegra_hsp_doorbell *
-tegra_hsp_doorbell_get(struct tegra_hsp *hsp, unsigned int master)
-{
-	struct tegra_hsp_doorbell *db;
-	unsigned long flags;
+अटल काष्ठा tegra_hsp_करोorbell *
+tegra_hsp_करोorbell_get(काष्ठा tegra_hsp *hsp, अचिन्हित पूर्णांक master)
+अणु
+	काष्ठा tegra_hsp_करोorbell *db;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&hsp->lock, flags);
-	db = __tegra_hsp_doorbell_get(hsp, master);
+	db = __tegra_hsp_करोorbell_get(hsp, master);
 	spin_unlock_irqrestore(&hsp->lock, flags);
 
-	return db;
-}
+	वापस db;
+पूर्ण
 
-static irqreturn_t tegra_hsp_doorbell_irq(int irq, void *data)
-{
-	struct tegra_hsp *hsp = data;
-	struct tegra_hsp_doorbell *db;
-	unsigned long master, value;
+अटल irqवापस_t tegra_hsp_करोorbell_irq(पूर्णांक irq, व्योम *data)
+अणु
+	काष्ठा tegra_hsp *hsp = data;
+	काष्ठा tegra_hsp_करोorbell *db;
+	अचिन्हित दीर्घ master, value;
 
-	db = tegra_hsp_doorbell_get(hsp, TEGRA_HSP_DB_MASTER_CCPLEX);
-	if (!db)
-		return IRQ_NONE;
+	db = tegra_hsp_करोorbell_get(hsp, TEGRA_HSP_DB_MASTER_CCPLEX);
+	अगर (!db)
+		वापस IRQ_NONE;
 
-	value = tegra_hsp_channel_readl(&db->channel, HSP_DB_PENDING);
-	tegra_hsp_channel_writel(&db->channel, value, HSP_DB_PENDING);
+	value = tegra_hsp_channel_पढ़ोl(&db->channel, HSP_DB_PENDING);
+	tegra_hsp_channel_ग_लिखोl(&db->channel, value, HSP_DB_PENDING);
 
 	spin_lock(&hsp->lock);
 
-	for_each_set_bit(master, &value, hsp->mbox_db.num_chans) {
-		struct tegra_hsp_doorbell *db;
+	क्रम_each_set_bit(master, &value, hsp->mbox_db.num_chans) अणु
+		काष्ठा tegra_hsp_करोorbell *db;
 
-		db = __tegra_hsp_doorbell_get(hsp, master);
+		db = __tegra_hsp_करोorbell_get(hsp, master);
 		/*
-		 * Depending on the bootloader chain, the CCPLEX doorbell will
-		 * have some doorbells enabled, which means that requesting an
-		 * interrupt will immediately fire.
+		 * Depending on the bootloader chain, the CCPLEX करोorbell will
+		 * have some करोorbells enabled, which means that requesting an
+		 * पूर्णांकerrupt will immediately fire.
 		 *
-		 * In that case, db->channel.chan will still be NULL here and
-		 * cause a crash if not properly guarded.
+		 * In that हाल, db->channel.chan will still be शून्य here and
+		 * cause a crash अगर not properly guarded.
 		 *
-		 * It remains to be seen if ignoring the doorbell in that case
+		 * It reमुख्यs to be seen अगर ignoring the करोorbell in that हाल
 		 * is the correct solution.
 		 */
-		if (db && db->channel.chan)
-			mbox_chan_received_data(db->channel.chan, NULL);
-	}
+		अगर (db && db->channel.chan)
+			mbox_chan_received_data(db->channel.chan, शून्य);
+	पूर्ण
 
 	spin_unlock(&hsp->lock);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static irqreturn_t tegra_hsp_shared_irq(int irq, void *data)
-{
-	struct tegra_hsp *hsp = data;
-	unsigned long bit, mask;
+अटल irqवापस_t tegra_hsp_shared_irq(पूर्णांक irq, व्योम *data)
+अणु
+	काष्ठा tegra_hsp *hsp = data;
+	अचिन्हित दीर्घ bit, mask;
 	u32 status, value;
-	void *msg;
+	व्योम *msg;
 
-	status = tegra_hsp_readl(hsp, HSP_INT_IR) & hsp->mask;
+	status = tegra_hsp_पढ़ोl(hsp, HSP_INT_IR) & hsp->mask;
 
-	/* process EMPTY interrupts first */
+	/* process EMPTY पूर्णांकerrupts first */
 	mask = (status >> HSP_INT_EMPTY_SHIFT) & HSP_INT_EMPTY_MASK;
 
-	for_each_set_bit(bit, &mask, hsp->num_sm) {
-		struct tegra_hsp_mailbox *mb = &hsp->mailboxes[bit];
+	क्रम_each_set_bit(bit, &mask, hsp->num_sm) अणु
+		काष्ठा tegra_hsp_mailbox *mb = &hsp->mailboxes[bit];
 
-		if (mb->producer) {
+		अगर (mb->producer) अणु
 			/*
-			 * Disable EMPTY interrupts until data is sent with
-			 * the next message. These interrupts are level-
-			 * triggered, so if we kept them enabled they would
-			 * constantly trigger until we next write data into
+			 * Disable EMPTY पूर्णांकerrupts until data is sent with
+			 * the next message. These पूर्णांकerrupts are level-
+			 * triggered, so अगर we kept them enabled they would
+			 * स्थिरantly trigger until we next ग_लिखो data पूर्णांकo
 			 * the message.
 			 */
 			spin_lock(&hsp->lock);
 
 			hsp->mask &= ~BIT(HSP_INT_EMPTY_SHIFT + mb->index);
-			tegra_hsp_writel(hsp, hsp->mask,
+			tegra_hsp_ग_लिखोl(hsp, hsp->mask,
 					 HSP_INT_IE(hsp->shared_irq));
 
 			spin_unlock(&hsp->lock);
 
-			mbox_chan_txdone(mb->channel.chan, 0);
-		}
-	}
+			mbox_chan_txकरोne(mb->channel.chan, 0);
+		पूर्ण
+	पूर्ण
 
-	/* process FULL interrupts */
+	/* process FULL पूर्णांकerrupts */
 	mask = (status >> HSP_INT_FULL_SHIFT) & HSP_INT_FULL_MASK;
 
-	for_each_set_bit(bit, &mask, hsp->num_sm) {
-		struct tegra_hsp_mailbox *mb = &hsp->mailboxes[bit];
+	क्रम_each_set_bit(bit, &mask, hsp->num_sm) अणु
+		काष्ठा tegra_hsp_mailbox *mb = &hsp->mailboxes[bit];
 
-		if (!mb->producer) {
-			value = tegra_hsp_channel_readl(&mb->channel,
+		अगर (!mb->producer) अणु
+			value = tegra_hsp_channel_पढ़ोl(&mb->channel,
 							HSP_SM_SHRD_MBOX);
 			value &= ~HSP_SM_SHRD_MBOX_FULL;
-			msg = (void *)(unsigned long)value;
+			msg = (व्योम *)(अचिन्हित दीर्घ)value;
 			mbox_chan_received_data(mb->channel.chan, msg);
 
 			/*
 			 * Need to clear all bits here since some producers,
-			 * such as TCU, depend on fields in the register
+			 * such as TCU, depend on fields in the रेजिस्टर
 			 * getting cleared by the consumer.
 			 *
-			 * The mailbox API doesn't give the consumers a way
-			 * of doing that explicitly, so we have to make sure
-			 * we cover all possible cases.
+			 * The mailbox API करोesn't give the consumers a way
+			 * of करोing that explicitly, so we have to make sure
+			 * we cover all possible हालs.
 			 */
-			tegra_hsp_channel_writel(&mb->channel, 0x0,
+			tegra_hsp_channel_ग_लिखोl(&mb->channel, 0x0,
 						 HSP_SM_SHRD_MBOX);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static struct tegra_hsp_channel *
-tegra_hsp_doorbell_create(struct tegra_hsp *hsp, const char *name,
-			  unsigned int master, unsigned int index)
-{
-	struct tegra_hsp_doorbell *db;
-	unsigned int offset;
-	unsigned long flags;
+अटल काष्ठा tegra_hsp_channel *
+tegra_hsp_करोorbell_create(काष्ठा tegra_hsp *hsp, स्थिर अक्षर *name,
+			  अचिन्हित पूर्णांक master, अचिन्हित पूर्णांक index)
+अणु
+	काष्ठा tegra_hsp_करोorbell *db;
+	अचिन्हित पूर्णांक offset;
+	अचिन्हित दीर्घ flags;
 
-	db = devm_kzalloc(hsp->dev, sizeof(*db), GFP_KERNEL);
-	if (!db)
-		return ERR_PTR(-ENOMEM);
+	db = devm_kzalloc(hsp->dev, माप(*db), GFP_KERNEL);
+	अगर (!db)
+		वापस ERR_PTR(-ENOMEM);
 
 	offset = (1 + (hsp->num_sm / 2) + hsp->num_ss + hsp->num_as) * SZ_64K;
 	offset += index * 0x100;
@@ -287,308 +288,308 @@ tegra_hsp_doorbell_create(struct tegra_hsp *hsp, const char *name,
 	db->channel.regs = hsp->regs + offset;
 	db->channel.hsp = hsp;
 
-	db->name = devm_kstrdup_const(hsp->dev, name, GFP_KERNEL);
+	db->name = devm_kstrdup_स्थिर(hsp->dev, name, GFP_KERNEL);
 	db->master = master;
 	db->index = index;
 
 	spin_lock_irqsave(&hsp->lock, flags);
-	list_add_tail(&db->list, &hsp->doorbells);
+	list_add_tail(&db->list, &hsp->करोorbells);
 	spin_unlock_irqrestore(&hsp->lock, flags);
 
-	return &db->channel;
-}
+	वापस &db->channel;
+पूर्ण
 
-static int tegra_hsp_doorbell_send_data(struct mbox_chan *chan, void *data)
-{
-	struct tegra_hsp_doorbell *db = chan->con_priv;
+अटल पूर्णांक tegra_hsp_करोorbell_send_data(काष्ठा mbox_chan *chan, व्योम *data)
+अणु
+	काष्ठा tegra_hsp_करोorbell *db = chan->con_priv;
 
-	tegra_hsp_channel_writel(&db->channel, 1, HSP_DB_TRIGGER);
+	tegra_hsp_channel_ग_लिखोl(&db->channel, 1, HSP_DB_TRIGGER);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int tegra_hsp_doorbell_startup(struct mbox_chan *chan)
-{
-	struct tegra_hsp_doorbell *db = chan->con_priv;
-	struct tegra_hsp *hsp = db->channel.hsp;
-	struct tegra_hsp_doorbell *ccplex;
-	unsigned long flags;
+अटल पूर्णांक tegra_hsp_करोorbell_startup(काष्ठा mbox_chan *chan)
+अणु
+	काष्ठा tegra_hsp_करोorbell *db = chan->con_priv;
+	काष्ठा tegra_hsp *hsp = db->channel.hsp;
+	काष्ठा tegra_hsp_करोorbell *ccplex;
+	अचिन्हित दीर्घ flags;
 	u32 value;
 
-	if (db->master >= chan->mbox->num_chans) {
+	अगर (db->master >= chan->mbox->num_chans) अणु
 		dev_err(chan->mbox->dev,
 			"invalid master ID %u for HSP channel\n",
 			db->master);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	ccplex = tegra_hsp_doorbell_get(hsp, TEGRA_HSP_DB_MASTER_CCPLEX);
-	if (!ccplex)
-		return -ENODEV;
+	ccplex = tegra_hsp_करोorbell_get(hsp, TEGRA_HSP_DB_MASTER_CCPLEX);
+	अगर (!ccplex)
+		वापस -ENODEV;
 
 	/*
-	 * On simulation platforms the BPMP hasn't had a chance yet to mark
-	 * the doorbell as ringable by the CCPLEX, so we want to skip extra
+	 * On simulation platक्रमms the BPMP hasn't had a chance yet to mark
+	 * the करोorbell as ringable by the CCPLEX, so we want to skip extra
 	 * checks here.
 	 */
-	if (tegra_is_silicon() && !tegra_hsp_doorbell_can_ring(db))
-		return -ENODEV;
+	अगर (tegra_is_silicon() && !tegra_hsp_करोorbell_can_ring(db))
+		वापस -ENODEV;
 
 	spin_lock_irqsave(&hsp->lock, flags);
 
-	value = tegra_hsp_channel_readl(&ccplex->channel, HSP_DB_ENABLE);
+	value = tegra_hsp_channel_पढ़ोl(&ccplex->channel, HSP_DB_ENABLE);
 	value |= BIT(db->master);
-	tegra_hsp_channel_writel(&ccplex->channel, value, HSP_DB_ENABLE);
+	tegra_hsp_channel_ग_लिखोl(&ccplex->channel, value, HSP_DB_ENABLE);
 
 	spin_unlock_irqrestore(&hsp->lock, flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void tegra_hsp_doorbell_shutdown(struct mbox_chan *chan)
-{
-	struct tegra_hsp_doorbell *db = chan->con_priv;
-	struct tegra_hsp *hsp = db->channel.hsp;
-	struct tegra_hsp_doorbell *ccplex;
-	unsigned long flags;
+अटल व्योम tegra_hsp_करोorbell_shutकरोwn(काष्ठा mbox_chan *chan)
+अणु
+	काष्ठा tegra_hsp_करोorbell *db = chan->con_priv;
+	काष्ठा tegra_hsp *hsp = db->channel.hsp;
+	काष्ठा tegra_hsp_करोorbell *ccplex;
+	अचिन्हित दीर्घ flags;
 	u32 value;
 
-	ccplex = tegra_hsp_doorbell_get(hsp, TEGRA_HSP_DB_MASTER_CCPLEX);
-	if (!ccplex)
-		return;
+	ccplex = tegra_hsp_करोorbell_get(hsp, TEGRA_HSP_DB_MASTER_CCPLEX);
+	अगर (!ccplex)
+		वापस;
 
 	spin_lock_irqsave(&hsp->lock, flags);
 
-	value = tegra_hsp_channel_readl(&ccplex->channel, HSP_DB_ENABLE);
+	value = tegra_hsp_channel_पढ़ोl(&ccplex->channel, HSP_DB_ENABLE);
 	value &= ~BIT(db->master);
-	tegra_hsp_channel_writel(&ccplex->channel, value, HSP_DB_ENABLE);
+	tegra_hsp_channel_ग_लिखोl(&ccplex->channel, value, HSP_DB_ENABLE);
 
 	spin_unlock_irqrestore(&hsp->lock, flags);
-}
+पूर्ण
 
-static const struct mbox_chan_ops tegra_hsp_db_ops = {
-	.send_data = tegra_hsp_doorbell_send_data,
-	.startup = tegra_hsp_doorbell_startup,
-	.shutdown = tegra_hsp_doorbell_shutdown,
-};
+अटल स्थिर काष्ठा mbox_chan_ops tegra_hsp_db_ops = अणु
+	.send_data = tegra_hsp_करोorbell_send_data,
+	.startup = tegra_hsp_करोorbell_startup,
+	.shutकरोwn = tegra_hsp_करोorbell_shutकरोwn,
+पूर्ण;
 
-static int tegra_hsp_mailbox_send_data(struct mbox_chan *chan, void *data)
-{
-	struct tegra_hsp_mailbox *mb = chan->con_priv;
-	struct tegra_hsp *hsp = mb->channel.hsp;
-	unsigned long flags;
+अटल पूर्णांक tegra_hsp_mailbox_send_data(काष्ठा mbox_chan *chan, व्योम *data)
+अणु
+	काष्ठा tegra_hsp_mailbox *mb = chan->con_priv;
+	काष्ठा tegra_hsp *hsp = mb->channel.hsp;
+	अचिन्हित दीर्घ flags;
 	u32 value;
 
-	if (WARN_ON(!mb->producer))
-		return -EPERM;
+	अगर (WARN_ON(!mb->producer))
+		वापस -EPERM;
 
 	/* copy data and mark mailbox full */
-	value = (u32)(unsigned long)data;
+	value = (u32)(अचिन्हित दीर्घ)data;
 	value |= HSP_SM_SHRD_MBOX_FULL;
 
-	tegra_hsp_channel_writel(&mb->channel, value, HSP_SM_SHRD_MBOX);
+	tegra_hsp_channel_ग_लिखोl(&mb->channel, value, HSP_SM_SHRD_MBOX);
 
-	/* enable EMPTY interrupt for the shared mailbox */
+	/* enable EMPTY पूर्णांकerrupt क्रम the shared mailbox */
 	spin_lock_irqsave(&hsp->lock, flags);
 
 	hsp->mask |= BIT(HSP_INT_EMPTY_SHIFT + mb->index);
-	tegra_hsp_writel(hsp, hsp->mask, HSP_INT_IE(hsp->shared_irq));
+	tegra_hsp_ग_लिखोl(hsp, hsp->mask, HSP_INT_IE(hsp->shared_irq));
 
 	spin_unlock_irqrestore(&hsp->lock, flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int tegra_hsp_mailbox_flush(struct mbox_chan *chan,
-				   unsigned long timeout)
-{
-	struct tegra_hsp_mailbox *mb = chan->con_priv;
-	struct tegra_hsp_channel *ch = &mb->channel;
+अटल पूर्णांक tegra_hsp_mailbox_flush(काष्ठा mbox_chan *chan,
+				   अचिन्हित दीर्घ समयout)
+अणु
+	काष्ठा tegra_hsp_mailbox *mb = chan->con_priv;
+	काष्ठा tegra_hsp_channel *ch = &mb->channel;
 	u32 value;
 
-	timeout = jiffies + msecs_to_jiffies(timeout);
+	समयout = jअगरfies + msecs_to_jअगरfies(समयout);
 
-	while (time_before(jiffies, timeout)) {
-		value = tegra_hsp_channel_readl(ch, HSP_SM_SHRD_MBOX);
-		if ((value & HSP_SM_SHRD_MBOX_FULL) == 0) {
-			mbox_chan_txdone(chan, 0);
-			return 0;
-		}
+	जबतक (समय_beक्रमe(jअगरfies, समयout)) अणु
+		value = tegra_hsp_channel_पढ़ोl(ch, HSP_SM_SHRD_MBOX);
+		अगर ((value & HSP_SM_SHRD_MBOX_FULL) == 0) अणु
+			mbox_chan_txकरोne(chan, 0);
+			वापस 0;
+		पूर्ण
 
 		udelay(1);
-	}
+	पूर्ण
 
-	return -ETIME;
-}
+	वापस -ETIME;
+पूर्ण
 
-static int tegra_hsp_mailbox_startup(struct mbox_chan *chan)
-{
-	struct tegra_hsp_mailbox *mb = chan->con_priv;
-	struct tegra_hsp_channel *ch = &mb->channel;
-	struct tegra_hsp *hsp = mb->channel.hsp;
-	unsigned long flags;
+अटल पूर्णांक tegra_hsp_mailbox_startup(काष्ठा mbox_chan *chan)
+अणु
+	काष्ठा tegra_hsp_mailbox *mb = chan->con_priv;
+	काष्ठा tegra_hsp_channel *ch = &mb->channel;
+	काष्ठा tegra_hsp *hsp = mb->channel.hsp;
+	अचिन्हित दीर्घ flags;
 
-	chan->txdone_method = TXDONE_BY_IRQ;
+	chan->txकरोne_method = TXDONE_BY_IRQ;
 
 	/*
-	 * Shared mailboxes start out as consumers by default. FULL and EMPTY
-	 * interrupts are coalesced at the same shared interrupt.
+	 * Shared mailboxes start out as consumers by शेष. FULL and EMPTY
+	 * पूर्णांकerrupts are coalesced at the same shared पूर्णांकerrupt.
 	 *
-	 * Keep EMPTY interrupts disabled at startup and only enable them when
+	 * Keep EMPTY पूर्णांकerrupts disabled at startup and only enable them when
 	 * the mailbox is actually full. This is required because the FULL and
-	 * EMPTY interrupts are level-triggered, so keeping EMPTY interrupts
-	 * enabled all the time would cause an interrupt storm while mailboxes
+	 * EMPTY पूर्णांकerrupts are level-triggered, so keeping EMPTY पूर्णांकerrupts
+	 * enabled all the समय would cause an पूर्णांकerrupt storm जबतक mailboxes
 	 * are idle.
 	 */
 
 	spin_lock_irqsave(&hsp->lock, flags);
 
-	if (mb->producer)
+	अगर (mb->producer)
 		hsp->mask &= ~BIT(HSP_INT_EMPTY_SHIFT + mb->index);
-	else
+	अन्यथा
 		hsp->mask |= BIT(HSP_INT_FULL_SHIFT + mb->index);
 
-	tegra_hsp_writel(hsp, hsp->mask, HSP_INT_IE(hsp->shared_irq));
+	tegra_hsp_ग_लिखोl(hsp, hsp->mask, HSP_INT_IE(hsp->shared_irq));
 
 	spin_unlock_irqrestore(&hsp->lock, flags);
 
-	if (hsp->soc->has_per_mb_ie) {
-		if (mb->producer)
-			tegra_hsp_channel_writel(ch, 0x0,
+	अगर (hsp->soc->has_per_mb_ie) अणु
+		अगर (mb->producer)
+			tegra_hsp_channel_ग_लिखोl(ch, 0x0,
 						 HSP_SM_SHRD_MBOX_EMPTY_INT_IE);
-		else
-			tegra_hsp_channel_writel(ch, 0x1,
+		अन्यथा
+			tegra_hsp_channel_ग_लिखोl(ch, 0x1,
 						 HSP_SM_SHRD_MBOX_FULL_INT_IE);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void tegra_hsp_mailbox_shutdown(struct mbox_chan *chan)
-{
-	struct tegra_hsp_mailbox *mb = chan->con_priv;
-	struct tegra_hsp_channel *ch = &mb->channel;
-	struct tegra_hsp *hsp = mb->channel.hsp;
-	unsigned long flags;
+अटल व्योम tegra_hsp_mailbox_shutकरोwn(काष्ठा mbox_chan *chan)
+अणु
+	काष्ठा tegra_hsp_mailbox *mb = chan->con_priv;
+	काष्ठा tegra_hsp_channel *ch = &mb->channel;
+	काष्ठा tegra_hsp *hsp = mb->channel.hsp;
+	अचिन्हित दीर्घ flags;
 
-	if (hsp->soc->has_per_mb_ie) {
-		if (mb->producer)
-			tegra_hsp_channel_writel(ch, 0x0,
+	अगर (hsp->soc->has_per_mb_ie) अणु
+		अगर (mb->producer)
+			tegra_hsp_channel_ग_लिखोl(ch, 0x0,
 						 HSP_SM_SHRD_MBOX_EMPTY_INT_IE);
-		else
-			tegra_hsp_channel_writel(ch, 0x0,
+		अन्यथा
+			tegra_hsp_channel_ग_लिखोl(ch, 0x0,
 						 HSP_SM_SHRD_MBOX_FULL_INT_IE);
-	}
+	पूर्ण
 
 	spin_lock_irqsave(&hsp->lock, flags);
 
-	if (mb->producer)
+	अगर (mb->producer)
 		hsp->mask &= ~BIT(HSP_INT_EMPTY_SHIFT + mb->index);
-	else
+	अन्यथा
 		hsp->mask &= ~BIT(HSP_INT_FULL_SHIFT + mb->index);
 
-	tegra_hsp_writel(hsp, hsp->mask, HSP_INT_IE(hsp->shared_irq));
+	tegra_hsp_ग_लिखोl(hsp, hsp->mask, HSP_INT_IE(hsp->shared_irq));
 
 	spin_unlock_irqrestore(&hsp->lock, flags);
-}
+पूर्ण
 
-static const struct mbox_chan_ops tegra_hsp_sm_ops = {
+अटल स्थिर काष्ठा mbox_chan_ops tegra_hsp_sm_ops = अणु
 	.send_data = tegra_hsp_mailbox_send_data,
 	.flush = tegra_hsp_mailbox_flush,
 	.startup = tegra_hsp_mailbox_startup,
-	.shutdown = tegra_hsp_mailbox_shutdown,
-};
+	.shutकरोwn = tegra_hsp_mailbox_shutकरोwn,
+पूर्ण;
 
-static struct mbox_chan *tegra_hsp_db_xlate(struct mbox_controller *mbox,
-					    const struct of_phandle_args *args)
-{
-	struct tegra_hsp *hsp = container_of(mbox, struct tegra_hsp, mbox_db);
-	unsigned int type = args->args[0], master = args->args[1];
-	struct tegra_hsp_channel *channel = ERR_PTR(-ENODEV);
-	struct tegra_hsp_doorbell *db;
-	struct mbox_chan *chan;
-	unsigned long flags;
-	unsigned int i;
+अटल काष्ठा mbox_chan *tegra_hsp_db_xlate(काष्ठा mbox_controller *mbox,
+					    स्थिर काष्ठा of_phandle_args *args)
+अणु
+	काष्ठा tegra_hsp *hsp = container_of(mbox, काष्ठा tegra_hsp, mbox_db);
+	अचिन्हित पूर्णांक type = args->args[0], master = args->args[1];
+	काष्ठा tegra_hsp_channel *channel = ERR_PTR(-ENODEV);
+	काष्ठा tegra_hsp_करोorbell *db;
+	काष्ठा mbox_chan *chan;
+	अचिन्हित दीर्घ flags;
+	अचिन्हित पूर्णांक i;
 
-	if (type != TEGRA_HSP_MBOX_TYPE_DB || !hsp->doorbell_irq)
-		return ERR_PTR(-ENODEV);
+	अगर (type != TEGRA_HSP_MBOX_TYPE_DB || !hsp->करोorbell_irq)
+		वापस ERR_PTR(-ENODEV);
 
-	db = tegra_hsp_doorbell_get(hsp, master);
-	if (db)
+	db = tegra_hsp_करोorbell_get(hsp, master);
+	अगर (db)
 		channel = &db->channel;
 
-	if (IS_ERR(channel))
-		return ERR_CAST(channel);
+	अगर (IS_ERR(channel))
+		वापस ERR_CAST(channel);
 
 	spin_lock_irqsave(&hsp->lock, flags);
 
-	for (i = 0; i < mbox->num_chans; i++) {
+	क्रम (i = 0; i < mbox->num_chans; i++) अणु
 		chan = &mbox->chans[i];
-		if (!chan->con_priv) {
+		अगर (!chan->con_priv) अणु
 			channel->chan = chan;
 			chan->con_priv = db;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		chan = NULL;
-	}
+		chan = शून्य;
+	पूर्ण
 
 	spin_unlock_irqrestore(&hsp->lock, flags);
 
-	return chan ?: ERR_PTR(-EBUSY);
-}
+	वापस chan ?: ERR_PTR(-EBUSY);
+पूर्ण
 
-static struct mbox_chan *tegra_hsp_sm_xlate(struct mbox_controller *mbox,
-					    const struct of_phandle_args *args)
-{
-	struct tegra_hsp *hsp = container_of(mbox, struct tegra_hsp, mbox_sm);
-	unsigned int type = args->args[0], index;
-	struct tegra_hsp_mailbox *mb;
+अटल काष्ठा mbox_chan *tegra_hsp_sm_xlate(काष्ठा mbox_controller *mbox,
+					    स्थिर काष्ठा of_phandle_args *args)
+अणु
+	काष्ठा tegra_hsp *hsp = container_of(mbox, काष्ठा tegra_hsp, mbox_sm);
+	अचिन्हित पूर्णांक type = args->args[0], index;
+	काष्ठा tegra_hsp_mailbox *mb;
 
 	index = args->args[1] & TEGRA_HSP_SM_MASK;
 
-	if (type != TEGRA_HSP_MBOX_TYPE_SM || !hsp->shared_irqs ||
+	अगर (type != TEGRA_HSP_MBOX_TYPE_SM || !hsp->shared_irqs ||
 	    index >= hsp->num_sm)
-		return ERR_PTR(-ENODEV);
+		वापस ERR_PTR(-ENODEV);
 
 	mb = &hsp->mailboxes[index];
 
-	if ((args->args[1] & TEGRA_HSP_SM_FLAG_TX) == 0)
+	अगर ((args->args[1] & TEGRA_HSP_SM_FLAG_TX) == 0)
 		mb->producer = false;
-	else
+	अन्यथा
 		mb->producer = true;
 
-	return mb->channel.chan;
-}
+	वापस mb->channel.chan;
+पूर्ण
 
-static int tegra_hsp_add_doorbells(struct tegra_hsp *hsp)
-{
-	const struct tegra_hsp_db_map *map = hsp->soc->map;
-	struct tegra_hsp_channel *channel;
+अटल पूर्णांक tegra_hsp_add_करोorbells(काष्ठा tegra_hsp *hsp)
+अणु
+	स्थिर काष्ठा tegra_hsp_db_map *map = hsp->soc->map;
+	काष्ठा tegra_hsp_channel *channel;
 
-	while (map->name) {
-		channel = tegra_hsp_doorbell_create(hsp, map->name,
+	जबतक (map->name) अणु
+		channel = tegra_hsp_करोorbell_create(hsp, map->name,
 						    map->master, map->index);
-		if (IS_ERR(channel))
-			return PTR_ERR(channel);
+		अगर (IS_ERR(channel))
+			वापस PTR_ERR(channel);
 
 		map++;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int tegra_hsp_add_mailboxes(struct tegra_hsp *hsp, struct device *dev)
-{
-	int i;
+अटल पूर्णांक tegra_hsp_add_mailboxes(काष्ठा tegra_hsp *hsp, काष्ठा device *dev)
+अणु
+	पूर्णांक i;
 
-	hsp->mailboxes = devm_kcalloc(dev, hsp->num_sm, sizeof(*hsp->mailboxes),
+	hsp->mailboxes = devm_kसुस्मृति(dev, hsp->num_sm, माप(*hsp->mailboxes),
 				      GFP_KERNEL);
-	if (!hsp->mailboxes)
-		return -ENOMEM;
+	अगर (!hsp->mailboxes)
+		वापस -ENOMEM;
 
-	for (i = 0; i < hsp->num_sm; i++) {
-		struct tegra_hsp_mailbox *mb = &hsp->mailboxes[i];
+	क्रम (i = 0; i < hsp->num_sm; i++) अणु
+		काष्ठा tegra_hsp_mailbox *mb = &hsp->mailboxes[i];
 
 		mb->index = i;
 
@@ -596,138 +597,138 @@ static int tegra_hsp_add_mailboxes(struct tegra_hsp *hsp, struct device *dev)
 		mb->channel.regs = hsp->regs + SZ_64K + i * SZ_32K;
 		mb->channel.chan = &hsp->mbox_sm.chans[i];
 		mb->channel.chan->con_priv = mb;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int tegra_hsp_request_shared_irq(struct tegra_hsp *hsp)
-{
-	unsigned int i, irq = 0;
-	int err;
+अटल पूर्णांक tegra_hsp_request_shared_irq(काष्ठा tegra_hsp *hsp)
+अणु
+	अचिन्हित पूर्णांक i, irq = 0;
+	पूर्णांक err;
 
-	for (i = 0; i < hsp->num_si; i++) {
+	क्रम (i = 0; i < hsp->num_si; i++) अणु
 		irq = hsp->shared_irqs[i];
-		if (irq <= 0)
-			continue;
+		अगर (irq <= 0)
+			जारी;
 
 		err = devm_request_irq(hsp->dev, irq, tegra_hsp_shared_irq, 0,
 				       dev_name(hsp->dev), hsp);
-		if (err < 0) {
+		अगर (err < 0) अणु
 			dev_err(hsp->dev, "failed to request interrupt: %d\n",
 				err);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
 		hsp->shared_irq = i;
 
-		/* disable all interrupts */
-		tegra_hsp_writel(hsp, 0, HSP_INT_IE(hsp->shared_irq));
+		/* disable all पूर्णांकerrupts */
+		tegra_hsp_ग_लिखोl(hsp, 0, HSP_INT_IE(hsp->shared_irq));
 
 		dev_dbg(hsp->dev, "interrupt requested: %u\n", irq);
 
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	if (i == hsp->num_si) {
+	अगर (i == hsp->num_si) अणु
 		dev_err(hsp->dev, "failed to find available interrupt\n");
-		return -ENOENT;
-	}
+		वापस -ENOENT;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int tegra_hsp_probe(struct platform_device *pdev)
-{
-	struct tegra_hsp *hsp;
-	struct resource *res;
-	unsigned int i;
+अटल पूर्णांक tegra_hsp_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा tegra_hsp *hsp;
+	काष्ठा resource *res;
+	अचिन्हित पूर्णांक i;
 	u32 value;
-	int err;
+	पूर्णांक err;
 
-	hsp = devm_kzalloc(&pdev->dev, sizeof(*hsp), GFP_KERNEL);
-	if (!hsp)
-		return -ENOMEM;
+	hsp = devm_kzalloc(&pdev->dev, माप(*hsp), GFP_KERNEL);
+	अगर (!hsp)
+		वापस -ENOMEM;
 
 	hsp->dev = &pdev->dev;
 	hsp->soc = of_device_get_match_data(&pdev->dev);
-	INIT_LIST_HEAD(&hsp->doorbells);
+	INIT_LIST_HEAD(&hsp->करोorbells);
 	spin_lock_init(&hsp->lock);
 
-	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
 	hsp->regs = devm_ioremap_resource(&pdev->dev, res);
-	if (IS_ERR(hsp->regs))
-		return PTR_ERR(hsp->regs);
+	अगर (IS_ERR(hsp->regs))
+		वापस PTR_ERR(hsp->regs);
 
-	value = tegra_hsp_readl(hsp, HSP_INT_DIMENSIONING);
+	value = tegra_hsp_पढ़ोl(hsp, HSP_INT_DIMENSIONING);
 	hsp->num_sm = (value >> HSP_nSM_SHIFT) & HSP_nINT_MASK;
 	hsp->num_ss = (value >> HSP_nSS_SHIFT) & HSP_nINT_MASK;
 	hsp->num_as = (value >> HSP_nAS_SHIFT) & HSP_nINT_MASK;
 	hsp->num_db = (value >> HSP_nDB_SHIFT) & HSP_nINT_MASK;
 	hsp->num_si = (value >> HSP_nSI_SHIFT) & HSP_nINT_MASK;
 
-	err = platform_get_irq_byname_optional(pdev, "doorbell");
-	if (err >= 0)
-		hsp->doorbell_irq = err;
+	err = platक्रमm_get_irq_byname_optional(pdev, "doorbell");
+	अगर (err >= 0)
+		hsp->करोorbell_irq = err;
 
-	if (hsp->num_si > 0) {
-		unsigned int count = 0;
+	अगर (hsp->num_si > 0) अणु
+		अचिन्हित पूर्णांक count = 0;
 
-		hsp->shared_irqs = devm_kcalloc(&pdev->dev, hsp->num_si,
-						sizeof(*hsp->shared_irqs),
+		hsp->shared_irqs = devm_kसुस्मृति(&pdev->dev, hsp->num_si,
+						माप(*hsp->shared_irqs),
 						GFP_KERNEL);
-		if (!hsp->shared_irqs)
-			return -ENOMEM;
+		अगर (!hsp->shared_irqs)
+			वापस -ENOMEM;
 
-		for (i = 0; i < hsp->num_si; i++) {
-			char *name;
+		क्रम (i = 0; i < hsp->num_si; i++) अणु
+			अक्षर *name;
 
-			name = kasprintf(GFP_KERNEL, "shared%u", i);
-			if (!name)
-				return -ENOMEM;
+			name = kaप्र_लिखो(GFP_KERNEL, "shared%u", i);
+			अगर (!name)
+				वापस -ENOMEM;
 
-			err = platform_get_irq_byname_optional(pdev, name);
-			if (err >= 0) {
+			err = platक्रमm_get_irq_byname_optional(pdev, name);
+			अगर (err >= 0) अणु
 				hsp->shared_irqs[i] = err;
 				count++;
-			}
+			पूर्ण
 
-			kfree(name);
-		}
+			kमुक्त(name);
+		पूर्ण
 
-		if (count == 0) {
-			devm_kfree(&pdev->dev, hsp->shared_irqs);
-			hsp->shared_irqs = NULL;
-		}
-	}
+		अगर (count == 0) अणु
+			devm_kमुक्त(&pdev->dev, hsp->shared_irqs);
+			hsp->shared_irqs = शून्य;
+		पूर्ण
+	पूर्ण
 
-	/* setup the doorbell controller */
+	/* setup the करोorbell controller */
 	hsp->mbox_db.of_xlate = tegra_hsp_db_xlate;
 	hsp->mbox_db.num_chans = 32;
 	hsp->mbox_db.dev = &pdev->dev;
 	hsp->mbox_db.ops = &tegra_hsp_db_ops;
 
-	hsp->mbox_db.chans = devm_kcalloc(&pdev->dev, hsp->mbox_db.num_chans,
-					  sizeof(*hsp->mbox_db.chans),
+	hsp->mbox_db.chans = devm_kसुस्मृति(&pdev->dev, hsp->mbox_db.num_chans,
+					  माप(*hsp->mbox_db.chans),
 					  GFP_KERNEL);
-	if (!hsp->mbox_db.chans)
-		return -ENOMEM;
+	अगर (!hsp->mbox_db.chans)
+		वापस -ENOMEM;
 
-	if (hsp->doorbell_irq) {
-		err = tegra_hsp_add_doorbells(hsp);
-		if (err < 0) {
+	अगर (hsp->करोorbell_irq) अणु
+		err = tegra_hsp_add_करोorbells(hsp);
+		अगर (err < 0) अणु
 			dev_err(&pdev->dev, "failed to add doorbells: %d\n",
 			        err);
-			return err;
-		}
-	}
+			वापस err;
+		पूर्ण
+	पूर्ण
 
-	err = devm_mbox_controller_register(&pdev->dev, &hsp->mbox_db);
-	if (err < 0) {
+	err = devm_mbox_controller_रेजिस्टर(&pdev->dev, &hsp->mbox_db);
+	अगर (err < 0) अणु
 		dev_err(&pdev->dev, "failed to register doorbell mailbox: %d\n",
 			err);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
 	/* setup the shared mailbox controller */
 	hsp->mbox_sm.of_xlate = tegra_hsp_sm_xlate;
@@ -735,124 +736,124 @@ static int tegra_hsp_probe(struct platform_device *pdev)
 	hsp->mbox_sm.dev = &pdev->dev;
 	hsp->mbox_sm.ops = &tegra_hsp_sm_ops;
 
-	hsp->mbox_sm.chans = devm_kcalloc(&pdev->dev, hsp->mbox_sm.num_chans,
-					  sizeof(*hsp->mbox_sm.chans),
+	hsp->mbox_sm.chans = devm_kसुस्मृति(&pdev->dev, hsp->mbox_sm.num_chans,
+					  माप(*hsp->mbox_sm.chans),
 					  GFP_KERNEL);
-	if (!hsp->mbox_sm.chans)
-		return -ENOMEM;
+	अगर (!hsp->mbox_sm.chans)
+		वापस -ENOMEM;
 
-	if (hsp->shared_irqs) {
+	अगर (hsp->shared_irqs) अणु
 		err = tegra_hsp_add_mailboxes(hsp, &pdev->dev);
-		if (err < 0) {
+		अगर (err < 0) अणु
 			dev_err(&pdev->dev, "failed to add mailboxes: %d\n",
 			        err);
-			return err;
-		}
-	}
+			वापस err;
+		पूर्ण
+	पूर्ण
 
-	err = devm_mbox_controller_register(&pdev->dev, &hsp->mbox_sm);
-	if (err < 0) {
+	err = devm_mbox_controller_रेजिस्टर(&pdev->dev, &hsp->mbox_sm);
+	अगर (err < 0) अणु
 		dev_err(&pdev->dev, "failed to register shared mailbox: %d\n",
 			err);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	platform_set_drvdata(pdev, hsp);
+	platक्रमm_set_drvdata(pdev, hsp);
 
-	if (hsp->doorbell_irq) {
-		err = devm_request_irq(&pdev->dev, hsp->doorbell_irq,
-				       tegra_hsp_doorbell_irq, IRQF_NO_SUSPEND,
+	अगर (hsp->करोorbell_irq) अणु
+		err = devm_request_irq(&pdev->dev, hsp->करोorbell_irq,
+				       tegra_hsp_करोorbell_irq, IRQF_NO_SUSPEND,
 				       dev_name(&pdev->dev), hsp);
-		if (err < 0) {
+		अगर (err < 0) अणु
 			dev_err(&pdev->dev,
 			        "failed to request doorbell IRQ#%u: %d\n",
-				hsp->doorbell_irq, err);
-			return err;
-		}
-	}
+				hsp->करोorbell_irq, err);
+			वापस err;
+		पूर्ण
+	पूर्ण
 
-	if (hsp->shared_irqs) {
+	अगर (hsp->shared_irqs) अणु
 		err = tegra_hsp_request_shared_irq(hsp);
-		if (err < 0)
-			return err;
-	}
+		अगर (err < 0)
+			वापस err;
+	पूर्ण
 
-	lockdep_register_key(&hsp->lock_key);
+	lockdep_रेजिस्टर_key(&hsp->lock_key);
 	lockdep_set_class(&hsp->lock, &hsp->lock_key);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int tegra_hsp_remove(struct platform_device *pdev)
-{
-	struct tegra_hsp *hsp = platform_get_drvdata(pdev);
+अटल पूर्णांक tegra_hsp_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा tegra_hsp *hsp = platक्रमm_get_drvdata(pdev);
 
-	lockdep_unregister_key(&hsp->lock_key);
+	lockdep_unरेजिस्टर_key(&hsp->lock_key);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __maybe_unused tegra_hsp_resume(struct device *dev)
-{
-	struct tegra_hsp *hsp = dev_get_drvdata(dev);
-	unsigned int i;
-	struct tegra_hsp_doorbell *db;
+अटल पूर्णांक __maybe_unused tegra_hsp_resume(काष्ठा device *dev)
+अणु
+	काष्ठा tegra_hsp *hsp = dev_get_drvdata(dev);
+	अचिन्हित पूर्णांक i;
+	काष्ठा tegra_hsp_करोorbell *db;
 
-	list_for_each_entry(db, &hsp->doorbells, list) {
-		if (db && db->channel.chan)
-			tegra_hsp_doorbell_startup(db->channel.chan);
-	}
+	list_क्रम_each_entry(db, &hsp->करोorbells, list) अणु
+		अगर (db && db->channel.chan)
+			tegra_hsp_करोorbell_startup(db->channel.chan);
+	पूर्ण
 
-	if (hsp->mailboxes) {
-		for (i = 0; i < hsp->num_sm; i++) {
-			struct tegra_hsp_mailbox *mb = &hsp->mailboxes[i];
+	अगर (hsp->mailboxes) अणु
+		क्रम (i = 0; i < hsp->num_sm; i++) अणु
+			काष्ठा tegra_hsp_mailbox *mb = &hsp->mailboxes[i];
 
-			if (mb->channel.chan->cl)
+			अगर (mb->channel.chan->cl)
 				tegra_hsp_mailbox_startup(mb->channel.chan);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct dev_pm_ops tegra_hsp_pm_ops = {
+अटल स्थिर काष्ठा dev_pm_ops tegra_hsp_pm_ops = अणु
 	.resume_noirq = tegra_hsp_resume,
-};
+पूर्ण;
 
-static const struct tegra_hsp_db_map tegra186_hsp_db_map[] = {
-	{ "ccplex", TEGRA_HSP_DB_MASTER_CCPLEX, HSP_DB_CCPLEX, },
-	{ "bpmp",   TEGRA_HSP_DB_MASTER_BPMP,   HSP_DB_BPMP,   },
-	{ /* sentinel */ }
-};
+अटल स्थिर काष्ठा tegra_hsp_db_map tegra186_hsp_db_map[] = अणु
+	अणु "ccplex", TEGRA_HSP_DB_MASTER_CCPLEX, HSP_DB_CCPLEX, पूर्ण,
+	अणु "bpmp",   TEGRA_HSP_DB_MASTER_BPMP,   HSP_DB_BPMP,   पूर्ण,
+	अणु /* sentinel */ पूर्ण
+पूर्ण;
 
-static const struct tegra_hsp_soc tegra186_hsp_soc = {
+अटल स्थिर काष्ठा tegra_hsp_soc tegra186_hsp_soc = अणु
 	.map = tegra186_hsp_db_map,
 	.has_per_mb_ie = false,
-};
+पूर्ण;
 
-static const struct tegra_hsp_soc tegra194_hsp_soc = {
+अटल स्थिर काष्ठा tegra_hsp_soc tegra194_hsp_soc = अणु
 	.map = tegra186_hsp_db_map,
 	.has_per_mb_ie = true,
-};
+पूर्ण;
 
-static const struct of_device_id tegra_hsp_match[] = {
-	{ .compatible = "nvidia,tegra186-hsp", .data = &tegra186_hsp_soc },
-	{ .compatible = "nvidia,tegra194-hsp", .data = &tegra194_hsp_soc },
-	{ }
-};
+अटल स्थिर काष्ठा of_device_id tegra_hsp_match[] = अणु
+	अणु .compatible = "nvidia,tegra186-hsp", .data = &tegra186_hsp_soc पूर्ण,
+	अणु .compatible = "nvidia,tegra194-hsp", .data = &tegra194_hsp_soc पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 
-static struct platform_driver tegra_hsp_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver tegra_hsp_driver = अणु
+	.driver = अणु
 		.name = "tegra-hsp",
 		.of_match_table = tegra_hsp_match,
 		.pm = &tegra_hsp_pm_ops,
-	},
+	पूर्ण,
 	.probe = tegra_hsp_probe,
-	.remove = tegra_hsp_remove,
-};
+	.हटाओ = tegra_hsp_हटाओ,
+पूर्ण;
 
-static int __init tegra_hsp_init(void)
-{
-	return platform_driver_register(&tegra_hsp_driver);
-}
+अटल पूर्णांक __init tegra_hsp_init(व्योम)
+अणु
+	वापस platक्रमm_driver_रेजिस्टर(&tegra_hsp_driver);
+पूर्ण
 core_initcall(tegra_hsp_init);

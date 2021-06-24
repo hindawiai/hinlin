@@ -1,39 +1,40 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
  * Copyright (C) 2005 Oracle.  All rights reserved.
  */
 
-#ifndef O2CLUSTER_MASKLOG_H
-#define O2CLUSTER_MASKLOG_H
+#अगर_अघोषित O2CLUSTER_MASKLOG_H
+#घोषणा O2CLUSTER_MASKLOG_H
 
 /*
- * For now this is a trivial wrapper around printk() that gives the critical
- * ability to enable sets of debugging output at run-time.  In the future this
+ * For now this is a trivial wrapper around prपूर्णांकk() that gives the critical
+ * ability to enable sets of debugging output at run-समय.  In the future this
  * will almost certainly be redirected to relayfs so that it can pay a
  * substantially lower heisenberg tax.
  *
- * Callers associate the message with a bitmask and a global bitmask is
- * maintained with help from /proc.  If any of the bits match the message is
+ * Callers associate the message with a biपंचांगask and a global biपंचांगask is
+ * मुख्यtained with help from /proc.  If any of the bits match the message is
  * output.
  *
  * We must have efficient bit tests on i386 and it seems gcc still emits crazy
- * code for the 64bit compare.  It emits very good code for the dual unsigned
- * long tests, though, completely avoiding tests that can never pass if the
- * caller gives a constant bitmask that fills one of the longs with all 0s.  So
+ * code क्रम the 64bit compare.  It emits very good code क्रम the dual अचिन्हित
+ * दीर्घ tests, though, completely aव्योमing tests that can never pass अगर the
+ * caller gives a स्थिरant biपंचांगask that fills one of the दीर्घs with all 0s.  So
  * the desire is to have almost all of the calls decided on by comparing just
- * one of the longs.  This leads to having infrequently given bits that are
+ * one of the दीर्घs.  This leads to having infrequently given bits that are
  * frequently matched in the high bits.
  *
- * _ERROR and _NOTICE are used for messages that always go to the console and
+ * _ERROR and _NOTICE are used क्रम messages that always go to the console and
  * have appropriate KERN_ prefixes.  We wrap these in our function instead of
- * just calling printk() so that this can eventually make its way through
- * relayfs along with the debugging messages.  Everything else gets KERN_DEBUG.
- * The inline tests and macro dance give GCC the opportunity to quite cleverly
- * only emit the appropriage printk() when the caller passes in a constant
- * mask, as is almost always the case.
+ * just calling prपूर्णांकk() so that this can eventually make its way through
+ * relayfs aदीर्घ with the debugging messages.  Everything अन्यथा माला_लो KERN_DEBUG.
+ * The अंतरभूत tests and macro dance give GCC the opportunity to quite cleverly
+ * only emit the appropriage prपूर्णांकk() when the caller passes in a स्थिरant
+ * mask, as is almost always the हाल.
  *
- * All this bitmask nonsense is managed from the files under
- * /sys/fs/o2cb/logmask/.  Reading the files gives a straightforward
+ * All this biपंचांगask nonsense is managed from the files under
+ * /sys/fs/o2cb/logmask/.  Reading the files gives a straightक्रमward
  * indication of which bits are allowed (allow) or denied (off/deny).
  * 	ENTRY deny
  * 	EXIT deny
@@ -43,154 +44,154 @@
  * 	ERROR allow
  * 	NOTICE allow
  *
- * Writing changes the state of a given bit and requires a strictly formatted
- * single write() call:
+ * Writing changes the state of a given bit and requires a strictly क्रमmatted
+ * single ग_लिखो() call:
  *
- * 	write(fd, "allow", 5);
+ * 	ग_लिखो(fd, "allow", 5);
  *
- * Echoing allow/deny/off string into the logmask files can flip the bits
- * on or off as expected; here is the bash script for example:
+ * Echoing allow/deny/off string पूर्णांकo the logmask files can flip the bits
+ * on or off as expected; here is the bash script क्रम example:
  *
  * log_mask="/sys/fs/o2cb/log_mask"
- * for node in ENTRY EXIT TCP MSG SOCKET ERROR NOTICE; do
+ * क्रम node in ENTRY EXIT TCP MSG SOCKET ERROR NOTICE; करो
  *	echo allow >"$log_mask"/"$node"
- * done
+ * करोne
  *
  * The debugfs.ocfs2 tool can also flip the bits with the -l option:
  *
  * debugfs.ocfs2 -l TCP allow
  */
 
-/* for task_struct */
-#include <linux/sched.h>
+/* क्रम task_काष्ठा */
+#समावेश <linux/sched.h>
 
 /* bits that are frequently given and infrequently matched in the low word */
 /* NOTE: If you add a flag, you need to also update masklog.c! */
-#define ML_TCP		0x0000000000000001ULL /* net cluster/tcp.c */
-#define ML_MSG		0x0000000000000002ULL /* net network messages */
-#define ML_SOCKET	0x0000000000000004ULL /* net socket lifetime */
-#define ML_HEARTBEAT	0x0000000000000008ULL /* hb all heartbeat tracking */
-#define ML_HB_BIO	0x0000000000000010ULL /* hb io tracing */
-#define ML_DLMFS	0x0000000000000020ULL /* dlm user dlmfs */
-#define ML_DLM		0x0000000000000040ULL /* dlm general debugging */
-#define ML_DLM_DOMAIN	0x0000000000000080ULL /* dlm domain debugging */
-#define ML_DLM_THREAD	0x0000000000000100ULL /* dlm domain thread */
-#define ML_DLM_MASTER	0x0000000000000200ULL /* dlm master functions */
-#define ML_DLM_RECOVERY	0x0000000000000400ULL /* dlm master functions */
-#define ML_DLM_GLUE	0x0000000000000800ULL /* ocfs2 dlm glue layer */
-#define ML_VOTE		0x0000000000001000ULL /* ocfs2 node messaging  */
-#define ML_CONN		0x0000000000002000ULL /* net connection management */
-#define ML_QUORUM	0x0000000000004000ULL /* net connection quorum */
-#define ML_BASTS	0x0000000000008000ULL /* dlmglue asts and basts */
-#define ML_CLUSTER	0x0000000000010000ULL /* cluster stack */
+#घोषणा ML_TCP		0x0000000000000001ULL /* net cluster/tcp.c */
+#घोषणा ML_MSG		0x0000000000000002ULL /* net network messages */
+#घोषणा ML_SOCKET	0x0000000000000004ULL /* net socket lअगरeसमय */
+#घोषणा ML_HEARTBEAT	0x0000000000000008ULL /* hb all heartbeat tracking */
+#घोषणा ML_HB_BIO	0x0000000000000010ULL /* hb io tracing */
+#घोषणा ML_DLMFS	0x0000000000000020ULL /* dlm user dlmfs */
+#घोषणा ML_DLM		0x0000000000000040ULL /* dlm general debugging */
+#घोषणा ML_DLM_DOMAIN	0x0000000000000080ULL /* dlm करोमुख्य debugging */
+#घोषणा ML_DLM_THREAD	0x0000000000000100ULL /* dlm करोमुख्य thपढ़ो */
+#घोषणा ML_DLM_MASTER	0x0000000000000200ULL /* dlm master functions */
+#घोषणा ML_DLM_RECOVERY	0x0000000000000400ULL /* dlm master functions */
+#घोषणा ML_DLM_GLUE	0x0000000000000800ULL /* ocfs2 dlm glue layer */
+#घोषणा ML_VOTE		0x0000000000001000ULL /* ocfs2 node messaging  */
+#घोषणा ML_CONN		0x0000000000002000ULL /* net connection management */
+#घोषणा ML_QUORUM	0x0000000000004000ULL /* net connection quorum */
+#घोषणा ML_BASTS	0x0000000000008000ULL /* dlmglue asts and basts */
+#घोषणा ML_CLUSTER	0x0000000000010000ULL /* cluster stack */
 
 /* bits that are infrequently given and frequently matched in the high word */
-#define ML_ERROR	0x1000000000000000ULL /* sent to KERN_ERR */
-#define ML_NOTICE	0x2000000000000000ULL /* setn to KERN_NOTICE */
-#define ML_KTHREAD	0x4000000000000000ULL /* kernel thread activity */
+#घोषणा ML_ERROR	0x1000000000000000ULL /* sent to KERN_ERR */
+#घोषणा ML_NOTICE	0x2000000000000000ULL /* setn to KERN_NOTICE */
+#घोषणा ML_KTHREAD	0x4000000000000000ULL /* kernel thपढ़ो activity */
 
-#define MLOG_INITIAL_AND_MASK (ML_ERROR|ML_NOTICE)
-#ifndef MLOG_MASK_PREFIX
-#define MLOG_MASK_PREFIX 0
-#endif
+#घोषणा MLOG_INITIAL_AND_MASK (ML_ERROR|ML_NOTICE)
+#अगर_अघोषित MLOG_MASK_PREFIX
+#घोषणा MLOG_MASK_PREFIX 0
+#पूर्ण_अगर
 
 /*
- * When logging is disabled, force the bit test to 0 for anything other
- * than errors and notices, allowing gcc to remove the code completely.
+ * When logging is disabled, क्रमce the bit test to 0 क्रम anything other
+ * than errors and notices, allowing gcc to हटाओ the code completely.
  * When enabled, allow all masks.
  */
-#if defined(CONFIG_OCFS2_DEBUG_MASKLOG)
-#define ML_ALLOWED_BITS ~0
-#else
-#define ML_ALLOWED_BITS (ML_ERROR|ML_NOTICE)
-#endif
+#अगर defined(CONFIG_OCFS2_DEBUG_MASKLOG)
+#घोषणा ML_ALLOWED_BITS ~0
+#अन्यथा
+#घोषणा ML_ALLOWED_BITS (ML_ERROR|ML_NOTICE)
+#पूर्ण_अगर
 
-#define MLOG_MAX_BITS 64
+#घोषणा MLOG_MAX_BITS 64
 
-struct mlog_bits {
-	unsigned long words[MLOG_MAX_BITS / BITS_PER_LONG];
-};
+काष्ठा mlog_bits अणु
+	अचिन्हित दीर्घ words[MLOG_MAX_BITS / BITS_PER_LONG];
+पूर्ण;
 
-extern struct mlog_bits mlog_and_bits, mlog_not_bits;
+बाह्य काष्ठा mlog_bits mlog_and_bits, mlog_not_bits;
 
-#if BITS_PER_LONG == 32
+#अगर BITS_PER_LONG == 32
 
-#define __mlog_test_u64(mask, bits)			\
+#घोषणा __mlog_test_u64(mask, bits)			\
 	( (u32)(mask & 0xffffffff) & bits.words[0] || 	\
 	  ((u64)(mask) >> 32) & bits.words[1] )
-#define __mlog_set_u64(mask, bits) do {			\
+#घोषणा __mlog_set_u64(mask, bits) करो अणु			\
 	bits.words[0] |= (u32)(mask & 0xffffffff);	\
        	bits.words[1] |= (u64)(mask) >> 32;		\
-} while (0)
-#define __mlog_clear_u64(mask, bits) do {		\
+पूर्ण जबतक (0)
+#घोषणा __mlog_clear_u64(mask, bits) करो अणु		\
 	bits.words[0] &= ~((u32)(mask & 0xffffffff));	\
        	bits.words[1] &= ~((u64)(mask) >> 32);		\
-} while (0)
-#define MLOG_BITS_RHS(mask) {				\
-	{						\
+पूर्ण जबतक (0)
+#घोषणा MLOG_BITS_RHS(mask) अणु				\
+	अणु						\
 		[0] = (u32)(mask & 0xffffffff),		\
 		[1] = (u64)(mask) >> 32,		\
-	}						\
-}
+	पूर्ण						\
+पूर्ण
 
-#else /* 32bit long above, 64bit long below */
+#अन्यथा /* 32bit दीर्घ above, 64bit दीर्घ below */
 
-#define __mlog_test_u64(mask, bits)	((mask) & bits.words[0])
-#define __mlog_set_u64(mask, bits) do {		\
+#घोषणा __mlog_test_u64(mask, bits)	((mask) & bits.words[0])
+#घोषणा __mlog_set_u64(mask, bits) करो अणु		\
 	bits.words[0] |= (mask);		\
-} while (0)
-#define __mlog_clear_u64(mask, bits) do {	\
+पूर्ण जबतक (0)
+#घोषणा __mlog_clear_u64(mask, bits) करो अणु	\
 	bits.words[0] &= ~(mask);		\
-} while (0)
-#define MLOG_BITS_RHS(mask) { { (mask) } }
+पूर्ण जबतक (0)
+#घोषणा MLOG_BITS_RHS(mask) अणु अणु (mask) पूर्ण पूर्ण
 
-#endif
+#पूर्ण_अगर
 
-__printf(4, 5)
-void __mlog_printk(const u64 *m, const char *func, int line,
-		   const char *fmt, ...);
+__म_लिखो(4, 5)
+व्योम __mlog_prपूर्णांकk(स्थिर u64 *m, स्थिर अक्षर *func, पूर्णांक line,
+		   स्थिर अक्षर *fmt, ...);
 
 /*
- * Testing before the __mlog_printk call lets the compiler eliminate the
+ * Testing beक्रमe the __mlog_prपूर्णांकk call lets the compiler eliminate the
  * call completely when (m & ML_ALLOWED_BITS) is 0.
  */
-#define mlog(mask, fmt, ...)						\
-do {									\
+#घोषणा mlog(mask, fmt, ...)						\
+करो अणु									\
 	u64 _m = MLOG_MASK_PREFIX | (mask);				\
-	if (_m & ML_ALLOWED_BITS)					\
-		__mlog_printk(&_m, __func__, __LINE__, fmt,		\
+	अगर (_m & ML_ALLOWED_BITS)					\
+		__mlog_prपूर्णांकk(&_m, __func__, __LINE__, fmt,		\
 			      ##__VA_ARGS__);				\
-} while (0)
+पूर्ण जबतक (0)
 
-#define mlog_ratelimited(mask, fmt, ...)				\
-do {									\
-	static DEFINE_RATELIMIT_STATE(_rs,				\
+#घोषणा mlog_ratelimited(mask, fmt, ...)				\
+करो अणु									\
+	अटल DEFINE_RATELIMIT_STATE(_rs,				\
 				      DEFAULT_RATELIMIT_INTERVAL,	\
 				      DEFAULT_RATELIMIT_BURST);		\
-	if (__ratelimit(&_rs))						\
+	अगर (__ratelimit(&_rs))						\
 		mlog(mask, fmt, ##__VA_ARGS__);				\
-} while (0)
+पूर्ण जबतक (0)
 
-#define mlog_errno(st) ({						\
-	int _st = (st);							\
-	if (_st != -ERESTARTSYS && _st != -EINTR &&			\
+#घोषणा mlog_त्रुटि_सं(st) (अणु						\
+	पूर्णांक _st = (st);							\
+	अगर (_st != -ERESTARTSYS && _st != -EINTR &&			\
 	    _st != AOP_TRUNCATED_PAGE && _st != -ENOSPC &&		\
 	    _st != -EDQUOT)						\
-		mlog(ML_ERROR, "status = %lld\n", (long long)_st);	\
+		mlog(ML_ERROR, "status = %lld\n", (दीर्घ दीर्घ)_st);	\
 	_st;								\
-})
+पूर्ण)
 
-#define mlog_bug_on_msg(cond, fmt, args...) do {			\
-	if (cond) {							\
+#घोषणा mlog_bug_on_msg(cond, fmt, args...) करो अणु			\
+	अगर (cond) अणु							\
 		mlog(ML_ERROR, "bug expression: " #cond "\n");		\
 		mlog(ML_ERROR, fmt, ##args);				\
 		BUG();							\
-	}								\
-} while (0)
+	पूर्ण								\
+पूर्ण जबतक (0)
 
-#include <linux/kobject.h>
-#include <linux/sysfs.h>
-int mlog_sys_init(struct kset *o2cb_subsys);
-void mlog_sys_shutdown(void);
+#समावेश <linux/kobject.h>
+#समावेश <linux/sysfs.h>
+पूर्णांक mlog_sys_init(काष्ठा kset *o2cb_subsys);
+व्योम mlog_sys_shutकरोwn(व्योम);
 
-#endif /* O2CLUSTER_MASKLOG_H */
+#पूर्ण_अगर /* O2CLUSTER_MASKLOG_H */

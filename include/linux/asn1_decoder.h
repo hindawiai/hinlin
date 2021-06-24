@@ -1,20 +1,21 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /* ASN.1 decoder
  *
  * Copyright (C) 2012 Red Hat, Inc. All Rights Reserved.
  * Written by David Howells (dhowells@redhat.com)
  */
 
-#ifndef _LINUX_ASN1_DECODER_H
-#define _LINUX_ASN1_DECODER_H
+#अगर_अघोषित _LINUX_ASN1_DECODER_H
+#घोषणा _LINUX_ASN1_DECODER_H
 
-#include <linux/asn1.h>
+#समावेश <linux/asn1.h>
 
-struct asn1_decoder;
+काष्ठा asn1_decoder;
 
-extern int asn1_ber_decoder(const struct asn1_decoder *decoder,
-			    void *context,
-			    const unsigned char *data,
-			    size_t datalen);
+बाह्य पूर्णांक asn1_ber_decoder(स्थिर काष्ठा asn1_decoder *decoder,
+			    व्योम *context,
+			    स्थिर अचिन्हित अक्षर *data,
+			    माप_प्रकार datalen);
 
-#endif /* _LINUX_ASN1_DECODER_H */
+#पूर्ण_अगर /* _LINUX_ASN1_DECODER_H */

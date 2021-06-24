@@ -1,175 +1,176 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * GPIO driver for Exar XR17V35X chip
+ * GPIO driver क्रम Exar XR17V35X chip
  *
  * Copyright (C) 2015 Sudip Mukherjee <sudip.mukherjee@codethink.co.uk>
  */
 
-#include <linux/bitops.h>
-#include <linux/device.h>
-#include <linux/gpio/driver.h>
-#include <linux/idr.h>
-#include <linux/init.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/pci.h>
-#include <linux/platform_device.h>
-#include <linux/regmap.h>
+#समावेश <linux/bitops.h>
+#समावेश <linux/device.h>
+#समावेश <linux/gpio/driver.h>
+#समावेश <linux/idr.h>
+#समावेश <linux/init.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/regmap.h>
 
-#define EXAR_OFFSET_MPIOLVL_LO 0x90
-#define EXAR_OFFSET_MPIOSEL_LO 0x93
-#define EXAR_OFFSET_MPIOLVL_HI 0x96
-#define EXAR_OFFSET_MPIOSEL_HI 0x99
+#घोषणा EXAR_OFFSET_MPIOLVL_LO 0x90
+#घोषणा EXAR_OFFSET_MPIOSEL_LO 0x93
+#घोषणा EXAR_OFFSET_MPIOLVL_HI 0x96
+#घोषणा EXAR_OFFSET_MPIOSEL_HI 0x99
 
-#define DRIVER_NAME "gpio_exar"
+#घोषणा DRIVER_NAME "gpio_exar"
 
-static DEFINE_IDA(ida_index);
+अटल DEFINE_IDA(ida_index);
 
-struct exar_gpio_chip {
-	struct gpio_chip gpio_chip;
-	struct regmap *regmap;
-	int index;
-	char name[20];
-	unsigned int first_pin;
-};
+काष्ठा exar_gpio_chip अणु
+	काष्ठा gpio_chip gpio_chip;
+	काष्ठा regmap *regmap;
+	पूर्णांक index;
+	अक्षर name[20];
+	अचिन्हित पूर्णांक first_pin;
+पूर्ण;
 
-static unsigned int
-exar_offset_to_sel_addr(struct exar_gpio_chip *exar_gpio, unsigned int offset)
-{
-	return (offset + exar_gpio->first_pin) / 8 ? EXAR_OFFSET_MPIOSEL_HI
+अटल अचिन्हित पूर्णांक
+exar_offset_to_sel_addr(काष्ठा exar_gpio_chip *exar_gpio, अचिन्हित पूर्णांक offset)
+अणु
+	वापस (offset + exar_gpio->first_pin) / 8 ? EXAR_OFFSET_MPIOSEL_HI
 						   : EXAR_OFFSET_MPIOSEL_LO;
-}
+पूर्ण
 
-static unsigned int
-exar_offset_to_lvl_addr(struct exar_gpio_chip *exar_gpio, unsigned int offset)
-{
-	return (offset + exar_gpio->first_pin) / 8 ? EXAR_OFFSET_MPIOLVL_HI
+अटल अचिन्हित पूर्णांक
+exar_offset_to_lvl_addr(काष्ठा exar_gpio_chip *exar_gpio, अचिन्हित पूर्णांक offset)
+अणु
+	वापस (offset + exar_gpio->first_pin) / 8 ? EXAR_OFFSET_MPIOLVL_HI
 						   : EXAR_OFFSET_MPIOLVL_LO;
-}
+पूर्ण
 
-static unsigned int
-exar_offset_to_bit(struct exar_gpio_chip *exar_gpio, unsigned int offset)
-{
-	return (offset + exar_gpio->first_pin) % 8;
-}
+अटल अचिन्हित पूर्णांक
+exar_offset_to_bit(काष्ठा exar_gpio_chip *exar_gpio, अचिन्हित पूर्णांक offset)
+अणु
+	वापस (offset + exar_gpio->first_pin) % 8;
+पूर्ण
 
-static int exar_get_direction(struct gpio_chip *chip, unsigned int offset)
-{
-	struct exar_gpio_chip *exar_gpio = gpiochip_get_data(chip);
-	unsigned int addr = exar_offset_to_sel_addr(exar_gpio, offset);
-	unsigned int bit = exar_offset_to_bit(exar_gpio, offset);
+अटल पूर्णांक exar_get_direction(काष्ठा gpio_chip *chip, अचिन्हित पूर्णांक offset)
+अणु
+	काष्ठा exar_gpio_chip *exar_gpio = gpiochip_get_data(chip);
+	अचिन्हित पूर्णांक addr = exar_offset_to_sel_addr(exar_gpio, offset);
+	अचिन्हित पूर्णांक bit = exar_offset_to_bit(exar_gpio, offset);
 
-	if (regmap_test_bits(exar_gpio->regmap, addr, BIT(bit)))
-		return GPIO_LINE_DIRECTION_IN;
+	अगर (regmap_test_bits(exar_gpio->regmap, addr, BIT(bit)))
+		वापस GPIO_LINE_सूचीECTION_IN;
 
-	return GPIO_LINE_DIRECTION_OUT;
-}
+	वापस GPIO_LINE_सूचीECTION_OUT;
+पूर्ण
 
-static int exar_get_value(struct gpio_chip *chip, unsigned int offset)
-{
-	struct exar_gpio_chip *exar_gpio = gpiochip_get_data(chip);
-	unsigned int addr = exar_offset_to_lvl_addr(exar_gpio, offset);
-	unsigned int bit = exar_offset_to_bit(exar_gpio, offset);
+अटल पूर्णांक exar_get_value(काष्ठा gpio_chip *chip, अचिन्हित पूर्णांक offset)
+अणु
+	काष्ठा exar_gpio_chip *exar_gpio = gpiochip_get_data(chip);
+	अचिन्हित पूर्णांक addr = exar_offset_to_lvl_addr(exar_gpio, offset);
+	अचिन्हित पूर्णांक bit = exar_offset_to_bit(exar_gpio, offset);
 
-	return !!(regmap_test_bits(exar_gpio->regmap, addr, BIT(bit)));
-}
+	वापस !!(regmap_test_bits(exar_gpio->regmap, addr, BIT(bit)));
+पूर्ण
 
-static void exar_set_value(struct gpio_chip *chip, unsigned int offset,
-			   int value)
-{
-	struct exar_gpio_chip *exar_gpio = gpiochip_get_data(chip);
-	unsigned int addr = exar_offset_to_lvl_addr(exar_gpio, offset);
-	unsigned int bit = exar_offset_to_bit(exar_gpio, offset);
+अटल व्योम exar_set_value(काष्ठा gpio_chip *chip, अचिन्हित पूर्णांक offset,
+			   पूर्णांक value)
+अणु
+	काष्ठा exar_gpio_chip *exar_gpio = gpiochip_get_data(chip);
+	अचिन्हित पूर्णांक addr = exar_offset_to_lvl_addr(exar_gpio, offset);
+	अचिन्हित पूर्णांक bit = exar_offset_to_bit(exar_gpio, offset);
 
-	if (value)
+	अगर (value)
 		regmap_set_bits(exar_gpio->regmap, addr, BIT(bit));
-	else
+	अन्यथा
 		regmap_clear_bits(exar_gpio->regmap, addr, BIT(bit));
-}
+पूर्ण
 
-static int exar_direction_output(struct gpio_chip *chip, unsigned int offset,
-				 int value)
-{
-	struct exar_gpio_chip *exar_gpio = gpiochip_get_data(chip);
-	unsigned int addr = exar_offset_to_sel_addr(exar_gpio, offset);
-	unsigned int bit = exar_offset_to_bit(exar_gpio, offset);
+अटल पूर्णांक exar_direction_output(काष्ठा gpio_chip *chip, अचिन्हित पूर्णांक offset,
+				 पूर्णांक value)
+अणु
+	काष्ठा exar_gpio_chip *exar_gpio = gpiochip_get_data(chip);
+	अचिन्हित पूर्णांक addr = exar_offset_to_sel_addr(exar_gpio, offset);
+	अचिन्हित पूर्णांक bit = exar_offset_to_bit(exar_gpio, offset);
 
 	exar_set_value(chip, offset, value);
 	regmap_clear_bits(exar_gpio->regmap, addr, BIT(bit));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int exar_direction_input(struct gpio_chip *chip, unsigned int offset)
-{
-	struct exar_gpio_chip *exar_gpio = gpiochip_get_data(chip);
-	unsigned int addr = exar_offset_to_sel_addr(exar_gpio, offset);
-	unsigned int bit = exar_offset_to_bit(exar_gpio, offset);
+अटल पूर्णांक exar_direction_input(काष्ठा gpio_chip *chip, अचिन्हित पूर्णांक offset)
+अणु
+	काष्ठा exar_gpio_chip *exar_gpio = gpiochip_get_data(chip);
+	अचिन्हित पूर्णांक addr = exar_offset_to_sel_addr(exar_gpio, offset);
+	अचिन्हित पूर्णांक bit = exar_offset_to_bit(exar_gpio, offset);
 
 	regmap_set_bits(exar_gpio->regmap, addr, BIT(bit));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void exar_devm_ida_free(void *data)
-{
-	struct exar_gpio_chip *exar_gpio = data;
+अटल व्योम exar_devm_ida_मुक्त(व्योम *data)
+अणु
+	काष्ठा exar_gpio_chip *exar_gpio = data;
 
-	ida_free(&ida_index, exar_gpio->index);
-}
+	ida_मुक्त(&ida_index, exar_gpio->index);
+पूर्ण
 
-static const struct regmap_config exar_regmap_config = {
+अटल स्थिर काष्ठा regmap_config exar_regmap_config = अणु
 	.name		= "exar-gpio",
 	.reg_bits	= 16,
 	.val_bits	= 8,
-};
+पूर्ण;
 
-static int gpio_exar_probe(struct platform_device *pdev)
-{
-	struct device *dev = &pdev->dev;
-	struct pci_dev *pcidev = to_pci_dev(dev->parent);
-	struct exar_gpio_chip *exar_gpio;
+अटल पूर्णांक gpio_exar_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा pci_dev *pcidev = to_pci_dev(dev->parent);
+	काष्ठा exar_gpio_chip *exar_gpio;
 	u32 first_pin, ngpios;
-	void __iomem *p;
-	int index, ret;
+	व्योम __iomem *p;
+	पूर्णांक index, ret;
 
 	/*
-	 * The UART driver must have mapped region 0 prior to registering this
+	 * The UART driver must have mapped region 0 prior to रेजिस्टरing this
 	 * device - use it.
 	 */
 	p = pcim_iomap_table(pcidev)[0];
-	if (!p)
-		return -ENOMEM;
+	अगर (!p)
+		वापस -ENOMEM;
 
-	ret = device_property_read_u32(dev, "exar,first-pin", &first_pin);
-	if (ret)
-		return ret;
+	ret = device_property_पढ़ो_u32(dev, "exar,first-pin", &first_pin);
+	अगर (ret)
+		वापस ret;
 
-	ret = device_property_read_u32(dev, "ngpios", &ngpios);
-	if (ret)
-		return ret;
+	ret = device_property_पढ़ो_u32(dev, "ngpios", &ngpios);
+	अगर (ret)
+		वापस ret;
 
-	exar_gpio = devm_kzalloc(dev, sizeof(*exar_gpio), GFP_KERNEL);
-	if (!exar_gpio)
-		return -ENOMEM;
+	exar_gpio = devm_kzalloc(dev, माप(*exar_gpio), GFP_KERNEL);
+	अगर (!exar_gpio)
+		वापस -ENOMEM;
 
 	/*
-	 * We don't need to check the return values of mmio regmap operations (unless
-	 * the regmap has a clock attached which is not the case here).
+	 * We करोn't need to check the वापस values of mmio regmap operations (unless
+	 * the regmap has a घड़ी attached which is not the हाल here).
 	 */
 	exar_gpio->regmap = devm_regmap_init_mmio(dev, p, &exar_regmap_config);
-	if (IS_ERR(exar_gpio->regmap))
-		return PTR_ERR(exar_gpio->regmap);
+	अगर (IS_ERR(exar_gpio->regmap))
+		वापस PTR_ERR(exar_gpio->regmap);
 
 	index = ida_alloc(&ida_index, GFP_KERNEL);
-	if (index < 0)
-		return index;
+	अगर (index < 0)
+		वापस index;
 
-	ret = devm_add_action_or_reset(dev, exar_devm_ida_free, exar_gpio);
-	if (ret)
-		return ret;
+	ret = devm_add_action_or_reset(dev, exar_devm_ida_मुक्त, exar_gpio);
+	अगर (ret)
+		वापस ret;
 
-	sprintf(exar_gpio->name, "exar_gpio%d", index);
+	प्र_लिखो(exar_gpio->name, "exar_gpio%d", index);
 	exar_gpio->gpio_chip.label = exar_gpio->name;
 	exar_gpio->gpio_chip.parent = dev;
 	exar_gpio->gpio_chip.direction_output = exar_direction_output;
@@ -183,22 +184,22 @@ static int gpio_exar_probe(struct platform_device *pdev)
 	exar_gpio->first_pin = first_pin;
 
 	ret = devm_gpiochip_add_data(dev, &exar_gpio->gpio_chip, exar_gpio);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	platform_set_drvdata(pdev, exar_gpio);
+	platक्रमm_set_drvdata(pdev, exar_gpio);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct platform_driver gpio_exar_driver = {
+अटल काष्ठा platक्रमm_driver gpio_exar_driver = अणु
 	.probe	= gpio_exar_probe,
-	.driver	= {
+	.driver	= अणु
 		.name = DRIVER_NAME,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-module_platform_driver(gpio_exar_driver);
+module_platक्रमm_driver(gpio_exar_driver);
 
 MODULE_ALIAS("platform:" DRIVER_NAME);
 MODULE_DESCRIPTION("Exar GPIO driver");

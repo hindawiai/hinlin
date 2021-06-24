@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * drd.c - DesignWare USB3 DRD Controller Dual-role support
  *
@@ -7,39 +8,39 @@
  * Authors: Roger Quadros <rogerq@ti.com>
  */
 
-#include <linux/extcon.h>
-#include <linux/of_graph.h>
-#include <linux/platform_device.h>
-#include <linux/property.h>
+#समावेश <linux/extcon.h>
+#समावेश <linux/of_graph.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/property.h>
 
-#include "debug.h"
-#include "core.h"
-#include "gadget.h"
+#समावेश "debug.h"
+#समावेश "core.h"
+#समावेश "gadget.h"
 
-static void dwc3_otg_disable_events(struct dwc3 *dwc, u32 disable_mask)
-{
-	u32 reg = dwc3_readl(dwc->regs, DWC3_OEVTEN);
+अटल व्योम dwc3_otg_disable_events(काष्ठा dwc3 *dwc, u32 disable_mask)
+अणु
+	u32 reg = dwc3_पढ़ोl(dwc->regs, DWC3_OEVTEN);
 
 	reg &= ~(disable_mask);
-	dwc3_writel(dwc->regs, DWC3_OEVTEN, reg);
-}
+	dwc3_ग_लिखोl(dwc->regs, DWC3_OEVTEN, reg);
+पूर्ण
 
-static void dwc3_otg_enable_events(struct dwc3 *dwc, u32 enable_mask)
-{
-	u32 reg = dwc3_readl(dwc->regs, DWC3_OEVTEN);
+अटल व्योम dwc3_otg_enable_events(काष्ठा dwc3 *dwc, u32 enable_mask)
+अणु
+	u32 reg = dwc3_पढ़ोl(dwc->regs, DWC3_OEVTEN);
 
 	reg |= (enable_mask);
-	dwc3_writel(dwc->regs, DWC3_OEVTEN, reg);
-}
+	dwc3_ग_लिखोl(dwc->regs, DWC3_OEVTEN, reg);
+पूर्ण
 
-static void dwc3_otg_clear_events(struct dwc3 *dwc)
-{
-	u32 reg = dwc3_readl(dwc->regs, DWC3_OEVT);
+अटल व्योम dwc3_otg_clear_events(काष्ठा dwc3 *dwc)
+अणु
+	u32 reg = dwc3_पढ़ोl(dwc->regs, DWC3_OEVT);
 
-	dwc3_writel(dwc->regs, DWC3_OEVTEN, reg);
-}
+	dwc3_ग_लिखोl(dwc->regs, DWC3_OEVTEN, reg);
+पूर्ण
 
-#define DWC3_OTG_ALL_EVENTS	(DWC3_OEVTEN_XHCIRUNSTPSETEN | \
+#घोषणा DWC3_OTG_ALL_EVENTS	(DWC3_OEVTEN_XHCIRUNSTPSETEN | \
 		DWC3_OEVTEN_DEVRUNSTPSETEN | DWC3_OEVTEN_HIBENTRYEN | \
 		DWC3_OEVTEN_CONIDSTSCHNGEN | DWC3_OEVTEN_HRRCONFNOTIFEN | \
 		DWC3_OEVTEN_HRRINITNOTIFEN | DWC3_OEVTEN_ADEVIDLEEN | \
@@ -49,74 +50,74 @@ static void dwc3_otg_clear_events(struct dwc3 *dwc)
 		DWC3_OEVTEN_BDEVHNPCHNGEN | DWC3_OEVTEN_BDEVSESSVLDDETEN | \
 		DWC3_OEVTEN_BDEVVBUSCHNGEN)
 
-static irqreturn_t dwc3_otg_thread_irq(int irq, void *_dwc)
-{
-	struct dwc3 *dwc = _dwc;
+अटल irqवापस_t dwc3_otg_thपढ़ो_irq(पूर्णांक irq, व्योम *_dwc)
+अणु
+	काष्ठा dwc3 *dwc = _dwc;
 
 	spin_lock(&dwc->lock);
-	if (dwc->otg_restart_host) {
+	अगर (dwc->otg_restart_host) अणु
 		dwc3_otg_host_init(dwc);
 		dwc->otg_restart_host = false;
-	}
+	पूर्ण
 
 	spin_unlock(&dwc->lock);
 
 	dwc3_set_mode(dwc, DWC3_GCTL_PRTCAP_OTG);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static irqreturn_t dwc3_otg_irq(int irq, void *_dwc)
-{
+अटल irqवापस_t dwc3_otg_irq(पूर्णांक irq, व्योम *_dwc)
+अणु
 	u32 reg;
-	struct dwc3 *dwc = _dwc;
-	irqreturn_t ret = IRQ_NONE;
+	काष्ठा dwc3 *dwc = _dwc;
+	irqवापस_t ret = IRQ_NONE;
 
-	reg = dwc3_readl(dwc->regs, DWC3_OEVT);
-	if (reg) {
+	reg = dwc3_पढ़ोl(dwc->regs, DWC3_OEVT);
+	अगर (reg) अणु
 		/* ignore non OTG events, we can't disable them in OEVTEN */
-		if (!(reg & DWC3_OTG_ALL_EVENTS)) {
-			dwc3_writel(dwc->regs, DWC3_OEVT, reg);
-			return IRQ_NONE;
-		}
+		अगर (!(reg & DWC3_OTG_ALL_EVENTS)) अणु
+			dwc3_ग_लिखोl(dwc->regs, DWC3_OEVT, reg);
+			वापस IRQ_NONE;
+		पूर्ण
 
-		if (dwc->current_otg_role == DWC3_OTG_ROLE_HOST &&
+		अगर (dwc->current_otg_role == DWC3_OTG_ROLE_HOST &&
 		    !(reg & DWC3_OEVT_DEVICEMODE))
 			dwc->otg_restart_host = true;
-		dwc3_writel(dwc->regs, DWC3_OEVT, reg);
+		dwc3_ग_लिखोl(dwc->regs, DWC3_OEVT, reg);
 		ret = IRQ_WAKE_THREAD;
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void dwc3_otgregs_init(struct dwc3 *dwc)
-{
+अटल व्योम dwc3_otgregs_init(काष्ठा dwc3 *dwc)
+अणु
 	u32 reg;
 
 	/*
 	 * Prevent host/device reset from resetting OTG core.
-	 * If we don't do this then xhci_reset (USBCMD.HCRST) will reset
-	 * the signal outputs sent to the PHY, the OTG FSM logic of the
+	 * If we करोn't करो this then xhci_reset (USBCMD.HCRST) will reset
+	 * the संकेत outमाला_दो sent to the PHY, the OTG FSM logic of the
 	 * core and also the resets to the VBUS filters inside the core.
 	 */
-	reg = dwc3_readl(dwc->regs, DWC3_OCFG);
+	reg = dwc3_पढ़ोl(dwc->regs, DWC3_OCFG);
 	reg |= DWC3_OCFG_SFTRSTMASK;
-	dwc3_writel(dwc->regs, DWC3_OCFG, reg);
+	dwc3_ग_लिखोl(dwc->regs, DWC3_OCFG, reg);
 
-	/* Disable hibernation for simplicity */
-	reg = dwc3_readl(dwc->regs, DWC3_GCTL);
+	/* Disable hibernation क्रम simplicity */
+	reg = dwc3_पढ़ोl(dwc->regs, DWC3_GCTL);
 	reg &= ~DWC3_GCTL_GBLHIBERNATIONEN;
-	dwc3_writel(dwc->regs, DWC3_GCTL, reg);
+	dwc3_ग_लिखोl(dwc->regs, DWC3_GCTL, reg);
 
 	/*
-	 * Initialize OTG registers as per
+	 * Initialize OTG रेजिस्टरs as per
 	 * Figure 11-4 OTG Driver Overall Programming Flow
 	 */
 	/* OCFG.SRPCap = 0, OCFG.HNPCap = 0 */
-	reg = dwc3_readl(dwc->regs, DWC3_OCFG);
+	reg = dwc3_पढ़ोl(dwc->regs, DWC3_OCFG);
 	reg &= ~(DWC3_OCFG_SRPCAP | DWC3_OCFG_HNPCAP);
-	dwc3_writel(dwc->regs, DWC3_OCFG, reg);
+	dwc3_ग_लिखोl(dwc->regs, DWC3_OCFG, reg);
 	/* OEVT = FFFF */
 	dwc3_otg_clear_events(dwc);
 	/* OEVTEN = 0 */
@@ -127,45 +128,45 @@ static void dwc3_otgregs_init(struct dwc3 *dwc)
 	 * OCTL.PeriMode = 1, OCTL.DevSetHNPEn = 0, OCTL.HstSetHNPEn = 0,
 	 * OCTL.HNPReq = 0
 	 */
-	reg = dwc3_readl(dwc->regs, DWC3_OCTL);
+	reg = dwc3_पढ़ोl(dwc->regs, DWC3_OCTL);
 	reg |= DWC3_OCTL_PERIMODE;
 	reg &= ~(DWC3_OCTL_DEVSETHNPEN | DWC3_OCTL_HSTSETHNPEN |
 		 DWC3_OCTL_HNPREQ);
-	dwc3_writel(dwc->regs, DWC3_OCTL, reg);
-}
+	dwc3_ग_लिखोl(dwc->regs, DWC3_OCTL, reg);
+पूर्ण
 
-static int dwc3_otg_get_irq(struct dwc3 *dwc)
-{
-	struct platform_device *dwc3_pdev = to_platform_device(dwc->dev);
-	int irq;
+अटल पूर्णांक dwc3_otg_get_irq(काष्ठा dwc3 *dwc)
+अणु
+	काष्ठा platक्रमm_device *dwc3_pdev = to_platक्रमm_device(dwc->dev);
+	पूर्णांक irq;
 
-	irq = platform_get_irq_byname_optional(dwc3_pdev, "otg");
-	if (irq > 0)
-		goto out;
+	irq = platक्रमm_get_irq_byname_optional(dwc3_pdev, "otg");
+	अगर (irq > 0)
+		जाओ out;
 
-	if (irq == -EPROBE_DEFER)
-		goto out;
+	अगर (irq == -EPROBE_DEFER)
+		जाओ out;
 
-	irq = platform_get_irq_byname_optional(dwc3_pdev, "dwc_usb3");
-	if (irq > 0)
-		goto out;
+	irq = platक्रमm_get_irq_byname_optional(dwc3_pdev, "dwc_usb3");
+	अगर (irq > 0)
+		जाओ out;
 
-	if (irq == -EPROBE_DEFER)
-		goto out;
+	अगर (irq == -EPROBE_DEFER)
+		जाओ out;
 
-	irq = platform_get_irq(dwc3_pdev, 0);
-	if (irq > 0)
-		goto out;
+	irq = platक्रमm_get_irq(dwc3_pdev, 0);
+	अगर (irq > 0)
+		जाओ out;
 
-	if (!irq)
+	अगर (!irq)
 		irq = -EINVAL;
 
 out:
-	return irq;
-}
+	वापस irq;
+पूर्ण
 
-void dwc3_otg_init(struct dwc3 *dwc)
-{
+व्योम dwc3_otg_init(काष्ठा dwc3 *dwc)
+अणु
 	u32 reg;
 
 	/*
@@ -175,74 +176,74 @@ void dwc3_otg_init(struct dwc3 *dwc)
 	/* GCTL.PrtCapDir=2'b11 */
 	dwc3_set_prtcap(dwc, DWC3_GCTL_PRTCAP_OTG);
 	/* GUSB2PHYCFG0.SusPHY=0 */
-	reg = dwc3_readl(dwc->regs, DWC3_GUSB2PHYCFG(0));
+	reg = dwc3_पढ़ोl(dwc->regs, DWC3_GUSB2PHYCFG(0));
 	reg &= ~DWC3_GUSB2PHYCFG_SUSPHY;
-	dwc3_writel(dwc->regs, DWC3_GUSB2PHYCFG(0), reg);
+	dwc3_ग_लिखोl(dwc->regs, DWC3_GUSB2PHYCFG(0), reg);
 
-	/* Initialize OTG registers */
+	/* Initialize OTG रेजिस्टरs */
 	dwc3_otgregs_init(dwc);
-}
+पूर्ण
 
-void dwc3_otg_exit(struct dwc3 *dwc)
-{
+व्योम dwc3_otg_निकास(काष्ठा dwc3 *dwc)
+अणु
 	/* disable all OTG IRQs */
 	dwc3_otg_disable_events(dwc, DWC3_OTG_ALL_EVENTS);
 	/* clear all events */
 	dwc3_otg_clear_events(dwc);
-}
+पूर्ण
 
-/* should be called before Host controller driver is started */
-void dwc3_otg_host_init(struct dwc3 *dwc)
-{
+/* should be called beक्रमe Host controller driver is started */
+व्योम dwc3_otg_host_init(काष्ठा dwc3 *dwc)
+अणु
 	u32 reg;
 
 	/* As per Figure 11-10 A-Device Flow Diagram */
-	/* OCFG.HNPCap = 0, OCFG.SRPCap = 0. Already 0 */
+	/* OCFG.HNPCap = 0, OCFG.SRPCap = 0. Alपढ़ोy 0 */
 
 	/*
 	 * OCTL.PeriMode=0, OCTL.TermSelDLPulse = 0,
 	 * OCTL.DevSetHNPEn = 0, OCTL.HstSetHNPEn = 0
 	 */
-	reg = dwc3_readl(dwc->regs, DWC3_OCTL);
+	reg = dwc3_पढ़ोl(dwc->regs, DWC3_OCTL);
 	reg &= ~(DWC3_OCTL_PERIMODE | DWC3_OCTL_TERMSELIDPULSE |
 			DWC3_OCTL_DEVSETHNPEN | DWC3_OCTL_HSTSETHNPEN);
-	dwc3_writel(dwc->regs, DWC3_OCTL, reg);
+	dwc3_ग_लिखोl(dwc->regs, DWC3_OCTL, reg);
 
 	/*
 	 * OCFG.DisPrtPwrCutoff = 0/1
 	 */
-	reg = dwc3_readl(dwc->regs, DWC3_OCFG);
+	reg = dwc3_पढ़ोl(dwc->regs, DWC3_OCFG);
 	reg &= ~DWC3_OCFG_DISPWRCUTTOFF;
-	dwc3_writel(dwc->regs, DWC3_OCFG, reg);
+	dwc3_ग_लिखोl(dwc->regs, DWC3_OCFG, reg);
 
 	/*
 	 * OCFG.SRPCap = 1, OCFG.HNPCap = GHWPARAMS6.HNP_CAP
-	 * We don't want SRP/HNP for simple dual-role so leave
+	 * We करोn't want SRP/HNP क्रम simple dual-role so leave
 	 * these disabled.
 	 */
 
 	/*
 	 * OEVTEN.OTGADevHostEvntEn = 1
 	 * OEVTEN.OTGADevSessEndDetEvntEn = 1
-	 * We don't want HNP/role-swap so leave these disabled.
+	 * We करोn't want HNP/role-swap so leave these disabled.
 	 */
 
 	/* GUSB2PHYCFG.ULPIAutoRes = 1/0, GUSB2PHYCFG.SusPHY = 1 */
-	if (!dwc->dis_u2_susphy_quirk) {
-		reg = dwc3_readl(dwc->regs, DWC3_GUSB2PHYCFG(0));
+	अगर (!dwc->dis_u2_susphy_quirk) अणु
+		reg = dwc3_पढ़ोl(dwc->regs, DWC3_GUSB2PHYCFG(0));
 		reg |= DWC3_GUSB2PHYCFG_SUSPHY;
-		dwc3_writel(dwc->regs, DWC3_GUSB2PHYCFG(0), reg);
-	}
+		dwc3_ग_लिखोl(dwc->regs, DWC3_GUSB2PHYCFG(0), reg);
+	पूर्ण
 
 	/* Set Port Power to enable VBUS: OCTL.PrtPwrCtl = 1 */
-	reg = dwc3_readl(dwc->regs, DWC3_OCTL);
+	reg = dwc3_पढ़ोl(dwc->regs, DWC3_OCTL);
 	reg |= DWC3_OCTL_PRTPWRCTL;
-	dwc3_writel(dwc->regs, DWC3_OCTL, reg);
-}
+	dwc3_ग_लिखोl(dwc->regs, DWC3_OCTL, reg);
+पूर्ण
 
 /* should be called after Host controller driver is stopped */
-static void dwc3_otg_host_exit(struct dwc3 *dwc)
-{
+अटल व्योम dwc3_otg_host_निकास(काष्ठा dwc3 *dwc)
+अणु
 	u32 reg;
 
 	/*
@@ -254,54 +255,54 @@ static void dwc3_otg_host_exit(struct dwc3 *dwc)
 	 * OEVTEN.OTGADevBHostEndEvntEn=0, OEVTEN.OTGADevHNPChngEvntEn=0
 	 * OEVTEN.OTGADevSessEndDetEvntEn=0,
 	 * OEVTEN.OTGADevHostEvntEn = 0
-	 * But we don't disable any OTG events
+	 * But we करोn't disable any OTG events
 	 */
 
 	/* OCTL.HstSetHNPEn = 0, OCTL.PrtPwrCtl=0 */
-	reg = dwc3_readl(dwc->regs, DWC3_OCTL);
+	reg = dwc3_पढ़ोl(dwc->regs, DWC3_OCTL);
 	reg &= ~(DWC3_OCTL_HSTSETHNPEN | DWC3_OCTL_PRTPWRCTL);
-	dwc3_writel(dwc->regs, DWC3_OCTL, reg);
-}
+	dwc3_ग_लिखोl(dwc->regs, DWC3_OCTL, reg);
+पूर्ण
 
-/* should be called before the gadget controller driver is started */
-static void dwc3_otg_device_init(struct dwc3 *dwc)
-{
+/* should be called beक्रमe the gadget controller driver is started */
+अटल व्योम dwc3_otg_device_init(काष्ठा dwc3 *dwc)
+अणु
 	u32 reg;
 
 	/* As per Figure 11-20 B-Device Flow Diagram */
 
 	/*
 	 * OCFG.HNPCap = GHWPARAMS6.HNP_CAP, OCFG.SRPCap = 1
-	 * but we keep them 0 for simple dual-role operation.
+	 * but we keep them 0 क्रम simple dual-role operation.
 	 */
-	reg = dwc3_readl(dwc->regs, DWC3_OCFG);
+	reg = dwc3_पढ़ोl(dwc->regs, DWC3_OCFG);
 	/* OCFG.OTGSftRstMsk = 0/1 */
 	reg |= DWC3_OCFG_SFTRSTMASK;
-	dwc3_writel(dwc->regs, DWC3_OCFG, reg);
+	dwc3_ग_लिखोl(dwc->regs, DWC3_OCFG, reg);
 	/*
 	 * OCTL.PeriMode = 1
 	 * OCTL.TermSelDLPulse = 0/1, OCTL.HNPReq = 0
 	 * OCTL.DevSetHNPEn = 0, OCTL.HstSetHNPEn = 0
 	 */
-	reg = dwc3_readl(dwc->regs, DWC3_OCTL);
+	reg = dwc3_पढ़ोl(dwc->regs, DWC3_OCTL);
 	reg |= DWC3_OCTL_PERIMODE;
 	reg &= ~(DWC3_OCTL_TERMSELIDPULSE | DWC3_OCTL_HNPREQ |
 			DWC3_OCTL_DEVSETHNPEN | DWC3_OCTL_HSTSETHNPEN);
-	dwc3_writel(dwc->regs, DWC3_OCTL, reg);
+	dwc3_ग_लिखोl(dwc->regs, DWC3_OCTL, reg);
 	/* OEVTEN.OTGBDevSesVldDetEvntEn = 1 */
 	dwc3_otg_enable_events(dwc, DWC3_OEVTEN_BDEVSESSVLDDETEN);
 	/* GUSB2PHYCFG.ULPIAutoRes = 0, GUSB2PHYCFG0.SusPHY = 1 */
-	if (!dwc->dis_u2_susphy_quirk) {
-		reg = dwc3_readl(dwc->regs, DWC3_GUSB2PHYCFG(0));
+	अगर (!dwc->dis_u2_susphy_quirk) अणु
+		reg = dwc3_पढ़ोl(dwc->regs, DWC3_GUSB2PHYCFG(0));
 		reg |= DWC3_GUSB2PHYCFG_SUSPHY;
-		dwc3_writel(dwc->regs, DWC3_GUSB2PHYCFG(0), reg);
-	}
-	/* GCTL.GblHibernationEn = 0. Already 0. */
-}
+		dwc3_ग_लिखोl(dwc->regs, DWC3_GUSB2PHYCFG(0), reg);
+	पूर्ण
+	/* GCTL.GblHibernationEn = 0. Alपढ़ोy 0. */
+पूर्ण
 
 /* should be called after the gadget controller driver is stopped */
-static void dwc3_otg_device_exit(struct dwc3 *dwc)
-{
+अटल व्योम dwc3_otg_device_निकास(काष्ठा dwc3 *dwc)
+अणु
 	u32 reg;
 
 	/*
@@ -319,54 +320,54 @@ static void dwc3_otg_device_exit(struct dwc3 *dwc)
 				DWC3_OEVTEN_BDEVBHOSTENDEN);
 
 	/* OCTL.DevSetHNPEn = 0, OCTL.HNPReq = 0, OCTL.PeriMode=1 */
-	reg = dwc3_readl(dwc->regs, DWC3_OCTL);
+	reg = dwc3_पढ़ोl(dwc->regs, DWC3_OCTL);
 	reg &= ~(DWC3_OCTL_DEVSETHNPEN | DWC3_OCTL_HNPREQ);
 	reg |= DWC3_OCTL_PERIMODE;
-	dwc3_writel(dwc->regs, DWC3_OCTL, reg);
-}
+	dwc3_ग_लिखोl(dwc->regs, DWC3_OCTL, reg);
+पूर्ण
 
-void dwc3_otg_update(struct dwc3 *dwc, bool ignore_idstatus)
-{
-	int ret;
+व्योम dwc3_otg_update(काष्ठा dwc3 *dwc, bool ignore_idstatus)
+अणु
+	पूर्णांक ret;
 	u32 reg;
-	int id;
-	unsigned long flags;
+	पूर्णांक id;
+	अचिन्हित दीर्घ flags;
 
-	if (dwc->dr_mode != USB_DR_MODE_OTG)
-		return;
+	अगर (dwc->dr_mode != USB_DR_MODE_OTG)
+		वापस;
 
-	/* don't do anything if debug user changed role to not OTG */
-	if (dwc->current_dr_role != DWC3_GCTL_PRTCAP_OTG)
-		return;
+	/* करोn't करो anything अगर debug user changed role to not OTG */
+	अगर (dwc->current_dr_role != DWC3_GCTL_PRTCAP_OTG)
+		वापस;
 
-	if (!ignore_idstatus) {
-		reg = dwc3_readl(dwc->regs, DWC3_OSTS);
+	अगर (!ignore_idstatus) अणु
+		reg = dwc3_पढ़ोl(dwc->regs, DWC3_OSTS);
 		id = !!(reg & DWC3_OSTS_CONIDSTS);
 
 		dwc->desired_otg_role = id ? DWC3_OTG_ROLE_DEVICE :
 					DWC3_OTG_ROLE_HOST;
-	}
+	पूर्ण
 
-	if (dwc->desired_otg_role == dwc->current_otg_role)
-		return;
+	अगर (dwc->desired_otg_role == dwc->current_otg_role)
+		वापस;
 
-	switch (dwc->current_otg_role) {
-	case DWC3_OTG_ROLE_HOST:
-		dwc3_host_exit(dwc);
+	चयन (dwc->current_otg_role) अणु
+	हाल DWC3_OTG_ROLE_HOST:
+		dwc3_host_निकास(dwc);
 		spin_lock_irqsave(&dwc->lock, flags);
-		dwc3_otg_host_exit(dwc);
+		dwc3_otg_host_निकास(dwc);
 		spin_unlock_irqrestore(&dwc->lock, flags);
-		break;
-	case DWC3_OTG_ROLE_DEVICE:
-		dwc3_gadget_exit(dwc);
+		अवरोध;
+	हाल DWC3_OTG_ROLE_DEVICE:
+		dwc3_gadget_निकास(dwc);
 		spin_lock_irqsave(&dwc->lock, flags);
 		dwc3_event_buffers_cleanup(dwc);
-		dwc3_otg_device_exit(dwc);
+		dwc3_otg_device_निकास(dwc);
 		spin_unlock_irqrestore(&dwc->lock, flags);
-		break;
-	default:
-		break;
-	}
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
 
 	spin_lock_irqsave(&dwc->lock, flags);
 
@@ -374,234 +375,234 @@ void dwc3_otg_update(struct dwc3 *dwc, bool ignore_idstatus)
 
 	spin_unlock_irqrestore(&dwc->lock, flags);
 
-	switch (dwc->desired_otg_role) {
-	case DWC3_OTG_ROLE_HOST:
+	चयन (dwc->desired_otg_role) अणु
+	हाल DWC3_OTG_ROLE_HOST:
 		spin_lock_irqsave(&dwc->lock, flags);
 		dwc3_otgregs_init(dwc);
 		dwc3_otg_host_init(dwc);
 		spin_unlock_irqrestore(&dwc->lock, flags);
 		ret = dwc3_host_init(dwc);
-		if (ret) {
+		अगर (ret) अणु
 			dev_err(dwc->dev, "failed to initialize host\n");
-		} else {
-			if (dwc->usb2_phy)
+		पूर्ण अन्यथा अणु
+			अगर (dwc->usb2_phy)
 				otg_set_vbus(dwc->usb2_phy->otg, true);
-			if (dwc->usb2_generic_phy)
+			अगर (dwc->usb2_generic_phy)
 				phy_set_mode(dwc->usb2_generic_phy,
 					     PHY_MODE_USB_HOST);
-		}
-		break;
-	case DWC3_OTG_ROLE_DEVICE:
+		पूर्ण
+		अवरोध;
+	हाल DWC3_OTG_ROLE_DEVICE:
 		spin_lock_irqsave(&dwc->lock, flags);
 		dwc3_otgregs_init(dwc);
 		dwc3_otg_device_init(dwc);
 		dwc3_event_buffers_setup(dwc);
 		spin_unlock_irqrestore(&dwc->lock, flags);
 
-		if (dwc->usb2_phy)
+		अगर (dwc->usb2_phy)
 			otg_set_vbus(dwc->usb2_phy->otg, false);
-		if (dwc->usb2_generic_phy)
+		अगर (dwc->usb2_generic_phy)
 			phy_set_mode(dwc->usb2_generic_phy,
 				     PHY_MODE_USB_DEVICE);
 		ret = dwc3_gadget_init(dwc);
-		if (ret)
+		अगर (ret)
 			dev_err(dwc->dev, "failed to initialize peripheral\n");
-		break;
-	default:
-		break;
-	}
-}
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static void dwc3_drd_update(struct dwc3 *dwc)
-{
-	int id;
+अटल व्योम dwc3_drd_update(काष्ठा dwc3 *dwc)
+अणु
+	पूर्णांक id;
 
-	if (dwc->edev) {
+	अगर (dwc->edev) अणु
 		id = extcon_get_state(dwc->edev, EXTCON_USB_HOST);
-		if (id < 0)
+		अगर (id < 0)
 			id = 0;
 		dwc3_set_mode(dwc, id ?
 			      DWC3_GCTL_PRTCAP_HOST :
 			      DWC3_GCTL_PRTCAP_DEVICE);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int dwc3_drd_notifier(struct notifier_block *nb,
-			     unsigned long event, void *ptr)
-{
-	struct dwc3 *dwc = container_of(nb, struct dwc3, edev_nb);
+अटल पूर्णांक dwc3_drd_notअगरier(काष्ठा notअगरier_block *nb,
+			     अचिन्हित दीर्घ event, व्योम *ptr)
+अणु
+	काष्ठा dwc3 *dwc = container_of(nb, काष्ठा dwc3, edev_nb);
 
 	dwc3_set_mode(dwc, event ?
 		      DWC3_GCTL_PRTCAP_HOST :
 		      DWC3_GCTL_PRTCAP_DEVICE);
 
-	return NOTIFY_DONE;
-}
+	वापस NOTIFY_DONE;
+पूर्ण
 
-static struct extcon_dev *dwc3_get_extcon(struct dwc3 *dwc)
-{
-	struct device *dev = dwc->dev;
-	struct device_node *np_phy;
-	struct extcon_dev *edev = NULL;
-	const char *name;
+अटल काष्ठा extcon_dev *dwc3_get_extcon(काष्ठा dwc3 *dwc)
+अणु
+	काष्ठा device *dev = dwc->dev;
+	काष्ठा device_node *np_phy;
+	काष्ठा extcon_dev *edev = शून्य;
+	स्थिर अक्षर *name;
 
-	if (device_property_read_bool(dev, "extcon"))
-		return extcon_get_edev_by_phandle(dev, 0);
+	अगर (device_property_पढ़ो_bool(dev, "extcon"))
+		वापस extcon_get_edev_by_phandle(dev, 0);
 
 	/*
-	 * Device tree platforms should get extcon via phandle.
-	 * On ACPI platforms, we get the name from a device property.
-	 * This device property is for kernel internal use only and
+	 * Device tree platक्रमms should get extcon via phandle.
+	 * On ACPI platक्रमms, we get the name from a device property.
+	 * This device property is क्रम kernel पूर्णांकernal use only and
 	 * is expected to be set by the glue code.
 	 */
-	if (device_property_read_string(dev, "linux,extcon-name", &name) == 0) {
+	अगर (device_property_पढ़ो_string(dev, "linux,extcon-name", &name) == 0) अणु
 		edev = extcon_get_extcon_dev(name);
-		if (!edev)
-			return ERR_PTR(-EPROBE_DEFER);
+		अगर (!edev)
+			वापस ERR_PTR(-EPROBE_DEFER);
 
-		return edev;
-	}
+		वापस edev;
+	पूर्ण
 
 	/*
 	 * Try to get an extcon device from the USB PHY controller's "port"
-	 * node. Check if it has the "port" node first, to avoid printing the
-	 * error message from underlying code, as it's a valid case: extcon
-	 * device (and "port" node) may be missing in case of "usb-role-switch"
+	 * node. Check अगर it has the "port" node first, to aव्योम prपूर्णांकing the
+	 * error message from underlying code, as it's a valid हाल: extcon
+	 * device (and "port" node) may be missing in हाल of "usb-role-switch"
 	 * or OTG mode.
 	 */
 	np_phy = of_parse_phandle(dev->of_node, "phys", 0);
-	if (of_graph_is_present(np_phy)) {
-		struct device_node *np_conn;
+	अगर (of_graph_is_present(np_phy)) अणु
+		काष्ठा device_node *np_conn;
 
 		np_conn = of_graph_get_remote_node(np_phy, -1, -1);
-		if (np_conn)
+		अगर (np_conn)
 			edev = extcon_find_edev_by_node(np_conn);
 		of_node_put(np_conn);
-	}
+	पूर्ण
 	of_node_put(np_phy);
 
-	return edev;
-}
+	वापस edev;
+पूर्ण
 
-#if IS_ENABLED(CONFIG_USB_ROLE_SWITCH)
-#define ROLE_SWITCH 1
-static int dwc3_usb_role_switch_set(struct usb_role_switch *sw,
-				    enum usb_role role)
-{
-	struct dwc3 *dwc = usb_role_switch_get_drvdata(sw);
+#अगर IS_ENABLED(CONFIG_USB_ROLE_SWITCH)
+#घोषणा ROLE_SWITCH 1
+अटल पूर्णांक dwc3_usb_role_चयन_set(काष्ठा usb_role_चयन *sw,
+				    क्रमागत usb_role role)
+अणु
+	काष्ठा dwc3 *dwc = usb_role_चयन_get_drvdata(sw);
 	u32 mode;
 
-	switch (role) {
-	case USB_ROLE_HOST:
+	चयन (role) अणु
+	हाल USB_ROLE_HOST:
 		mode = DWC3_GCTL_PRTCAP_HOST;
-		break;
-	case USB_ROLE_DEVICE:
+		अवरोध;
+	हाल USB_ROLE_DEVICE:
 		mode = DWC3_GCTL_PRTCAP_DEVICE;
-		break;
-	default:
-		if (dwc->role_switch_default_mode == USB_DR_MODE_HOST)
+		अवरोध;
+	शेष:
+		अगर (dwc->role_चयन_शेष_mode == USB_DR_MODE_HOST)
 			mode = DWC3_GCTL_PRTCAP_HOST;
-		else
+		अन्यथा
 			mode = DWC3_GCTL_PRTCAP_DEVICE;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	dwc3_set_mode(dwc, mode);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static enum usb_role dwc3_usb_role_switch_get(struct usb_role_switch *sw)
-{
-	struct dwc3 *dwc = usb_role_switch_get_drvdata(sw);
-	unsigned long flags;
-	enum usb_role role;
+अटल क्रमागत usb_role dwc3_usb_role_चयन_get(काष्ठा usb_role_चयन *sw)
+अणु
+	काष्ठा dwc3 *dwc = usb_role_चयन_get_drvdata(sw);
+	अचिन्हित दीर्घ flags;
+	क्रमागत usb_role role;
 
 	spin_lock_irqsave(&dwc->lock, flags);
-	switch (dwc->current_dr_role) {
-	case DWC3_GCTL_PRTCAP_HOST:
+	चयन (dwc->current_dr_role) अणु
+	हाल DWC3_GCTL_PRTCAP_HOST:
 		role = USB_ROLE_HOST;
-		break;
-	case DWC3_GCTL_PRTCAP_DEVICE:
+		अवरोध;
+	हाल DWC3_GCTL_PRTCAP_DEVICE:
 		role = USB_ROLE_DEVICE;
-		break;
-	case DWC3_GCTL_PRTCAP_OTG:
+		अवरोध;
+	हाल DWC3_GCTL_PRTCAP_OTG:
 		role = dwc->current_otg_role;
-		break;
-	default:
-		if (dwc->role_switch_default_mode == USB_DR_MODE_HOST)
+		अवरोध;
+	शेष:
+		अगर (dwc->role_चयन_शेष_mode == USB_DR_MODE_HOST)
 			role = USB_ROLE_HOST;
-		else
+		अन्यथा
 			role = USB_ROLE_DEVICE;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 	spin_unlock_irqrestore(&dwc->lock, flags);
-	return role;
-}
+	वापस role;
+पूर्ण
 
-static int dwc3_setup_role_switch(struct dwc3 *dwc)
-{
-	struct usb_role_switch_desc dwc3_role_switch = {NULL};
-	const char *str;
+अटल पूर्णांक dwc3_setup_role_चयन(काष्ठा dwc3 *dwc)
+अणु
+	काष्ठा usb_role_चयन_desc dwc3_role_चयन = अणुशून्यपूर्ण;
+	स्थिर अक्षर *str;
 	u32 mode;
-	int ret;
+	पूर्णांक ret;
 
-	ret = device_property_read_string(dwc->dev, "role-switch-default-mode",
+	ret = device_property_पढ़ो_string(dwc->dev, "role-switch-default-mode",
 					  &str);
-	if (ret >= 0  && !strncmp(str, "host", strlen("host"))) {
-		dwc->role_switch_default_mode = USB_DR_MODE_HOST;
+	अगर (ret >= 0  && !म_भेदन(str, "host", म_माप("host"))) अणु
+		dwc->role_चयन_शेष_mode = USB_DR_MODE_HOST;
 		mode = DWC3_GCTL_PRTCAP_HOST;
-	} else {
-		dwc->role_switch_default_mode = USB_DR_MODE_PERIPHERAL;
+	पूर्ण अन्यथा अणु
+		dwc->role_चयन_शेष_mode = USB_DR_MODE_PERIPHERAL;
 		mode = DWC3_GCTL_PRTCAP_DEVICE;
-	}
+	पूर्ण
 
-	dwc3_role_switch.fwnode = dev_fwnode(dwc->dev);
-	dwc3_role_switch.set = dwc3_usb_role_switch_set;
-	dwc3_role_switch.get = dwc3_usb_role_switch_get;
-	dwc3_role_switch.driver_data = dwc;
-	dwc->role_sw = usb_role_switch_register(dwc->dev, &dwc3_role_switch);
-	if (IS_ERR(dwc->role_sw))
-		return PTR_ERR(dwc->role_sw);
+	dwc3_role_चयन.fwnode = dev_fwnode(dwc->dev);
+	dwc3_role_चयन.set = dwc3_usb_role_चयन_set;
+	dwc3_role_चयन.get = dwc3_usb_role_चयन_get;
+	dwc3_role_चयन.driver_data = dwc;
+	dwc->role_sw = usb_role_चयन_रेजिस्टर(dwc->dev, &dwc3_role_चयन);
+	अगर (IS_ERR(dwc->role_sw))
+		वापस PTR_ERR(dwc->role_sw);
 
 	dwc3_set_mode(dwc, mode);
-	return 0;
-}
-#else
-#define ROLE_SWITCH 0
-#define dwc3_setup_role_switch(x) 0
-#endif
+	वापस 0;
+पूर्ण
+#अन्यथा
+#घोषणा ROLE_SWITCH 0
+#घोषणा dwc3_setup_role_चयन(x) 0
+#पूर्ण_अगर
 
-int dwc3_drd_init(struct dwc3 *dwc)
-{
-	int ret, irq;
+पूर्णांक dwc3_drd_init(काष्ठा dwc3 *dwc)
+अणु
+	पूर्णांक ret, irq;
 
 	dwc->edev = dwc3_get_extcon(dwc);
-	if (IS_ERR(dwc->edev))
-		return PTR_ERR(dwc->edev);
+	अगर (IS_ERR(dwc->edev))
+		वापस PTR_ERR(dwc->edev);
 
-	if (ROLE_SWITCH &&
-	    device_property_read_bool(dwc->dev, "usb-role-switch")) {
-		ret = dwc3_setup_role_switch(dwc);
-		if (ret < 0)
-			return ret;
-	} else if (dwc->edev) {
-		dwc->edev_nb.notifier_call = dwc3_drd_notifier;
-		ret = extcon_register_notifier(dwc->edev, EXTCON_USB_HOST,
+	अगर (ROLE_SWITCH &&
+	    device_property_पढ़ो_bool(dwc->dev, "usb-role-switch")) अणु
+		ret = dwc3_setup_role_चयन(dwc);
+		अगर (ret < 0)
+			वापस ret;
+	पूर्ण अन्यथा अगर (dwc->edev) अणु
+		dwc->edev_nb.notअगरier_call = dwc3_drd_notअगरier;
+		ret = extcon_रेजिस्टर_notअगरier(dwc->edev, EXTCON_USB_HOST,
 					       &dwc->edev_nb);
-		if (ret < 0) {
+		अगर (ret < 0) अणु
 			dev_err(dwc->dev, "couldn't register cable notifier\n");
-			return ret;
-		}
+			वापस ret;
+		पूर्ण
 
 		dwc3_drd_update(dwc);
-	} else {
+	पूर्ण अन्यथा अणु
 		dwc3_set_prtcap(dwc, DWC3_GCTL_PRTCAP_OTG);
 		dwc->current_dr_role = DWC3_GCTL_PRTCAP_OTG;
 
 		/* use OTG block to get ID event */
 		irq = dwc3_otg_get_irq(dwc);
-		if (irq < 0)
-			return irq;
+		अगर (irq < 0)
+			वापस irq;
 
 		dwc->otg_irq = irq;
 
@@ -610,56 +611,56 @@ int dwc3_drd_init(struct dwc3 *dwc)
 		/* clear all events */
 		dwc3_otg_clear_events(dwc);
 
-		ret = request_threaded_irq(dwc->otg_irq, dwc3_otg_irq,
-					   dwc3_otg_thread_irq,
+		ret = request_thपढ़ोed_irq(dwc->otg_irq, dwc3_otg_irq,
+					   dwc3_otg_thपढ़ो_irq,
 					   IRQF_SHARED, "dwc3-otg", dwc);
-		if (ret) {
+		अगर (ret) अणु
 			dev_err(dwc->dev, "failed to request irq #%d --> %d\n",
 				dwc->otg_irq, ret);
 			ret = -ENODEV;
-			return ret;
-		}
+			वापस ret;
+		पूर्ण
 
 		dwc3_otg_init(dwc);
 		dwc3_set_mode(dwc, DWC3_GCTL_PRTCAP_OTG);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void dwc3_drd_exit(struct dwc3 *dwc)
-{
-	unsigned long flags;
+व्योम dwc3_drd_निकास(काष्ठा dwc3 *dwc)
+अणु
+	अचिन्हित दीर्घ flags;
 
-	if (dwc->role_sw)
-		usb_role_switch_unregister(dwc->role_sw);
+	अगर (dwc->role_sw)
+		usb_role_चयन_unरेजिस्टर(dwc->role_sw);
 
-	if (dwc->edev)
-		extcon_unregister_notifier(dwc->edev, EXTCON_USB_HOST,
+	अगर (dwc->edev)
+		extcon_unरेजिस्टर_notअगरier(dwc->edev, EXTCON_USB_HOST,
 					   &dwc->edev_nb);
 
 	cancel_work_sync(&dwc->drd_work);
 
 	/* debug user might have changed role, clean based on current role */
-	switch (dwc->current_dr_role) {
-	case DWC3_GCTL_PRTCAP_HOST:
-		dwc3_host_exit(dwc);
-		break;
-	case DWC3_GCTL_PRTCAP_DEVICE:
-		dwc3_gadget_exit(dwc);
+	चयन (dwc->current_dr_role) अणु
+	हाल DWC3_GCTL_PRTCAP_HOST:
+		dwc3_host_निकास(dwc);
+		अवरोध;
+	हाल DWC3_GCTL_PRTCAP_DEVICE:
+		dwc3_gadget_निकास(dwc);
 		dwc3_event_buffers_cleanup(dwc);
-		break;
-	case DWC3_GCTL_PRTCAP_OTG:
-		dwc3_otg_exit(dwc);
+		अवरोध;
+	हाल DWC3_GCTL_PRTCAP_OTG:
+		dwc3_otg_निकास(dwc);
 		spin_lock_irqsave(&dwc->lock, flags);
 		dwc->desired_otg_role = DWC3_OTG_ROLE_IDLE;
 		spin_unlock_irqrestore(&dwc->lock, flags);
 		dwc3_otg_update(dwc, 1);
-		break;
-	default:
-		break;
-	}
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	if (dwc->otg_irq)
-		free_irq(dwc->otg_irq, dwc);
-}
+	अगर (dwc->otg_irq)
+		मुक्त_irq(dwc->otg_irq, dwc);
+पूर्ण

@@ -1,167 +1,168 @@
-// SPDX-License-Identifier: GPL-2.0
-#define _GNU_SOURCE
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#घोषणा _GNU_SOURCE
 
-#include <stdio.h>
-#include <stdbool.h>
-#include <stdlib.h>
-#include <string.h>
-#include <getopt.h>
+#समावेश <मानकपन.स>
+#समावेश <stdbool.h>
+#समावेश <मानककोष.स>
+#समावेश <माला.स>
+#समावेश <getopt.h>
 
-#define ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
+#घोषणा ARRAY_SIZE(x) (माप(x) / माप((x)[0]))
 
-typedef unsigned int u32;
-typedef unsigned long long u64;
+प्रकार अचिन्हित पूर्णांक u32;
+प्रकार अचिन्हित दीर्घ दीर्घ u64;
 
-char *def_csv = "/usr/share/misc/cpuid.csv";
-char *user_csv;
+अक्षर *def_csv = "/usr/share/misc/cpuid.csv";
+अक्षर *user_csv;
 
 
 /* Cover both single-bit flag and multiple-bits fields */
-struct bits_desc {
+काष्ठा bits_desc अणु
 	/* start and end bits */
-	int start, end;
-	/* 0 or 1 for 1-bit flag */
-	int value;
-	char simp[32];
-	char detail[256];
-};
+	पूर्णांक start, end;
+	/* 0 or 1 क्रम 1-bit flag */
+	पूर्णांक value;
+	अक्षर simp[32];
+	अक्षर detail[256];
+पूर्ण;
 
-/* descriptor info for eax/ebx/ecx/edx */
-struct reg_desc {
+/* descriptor info क्रम eax/ebx/ecx/edx */
+काष्ठा reg_desc अणु
 	/* number of valid entries */
-	int nr;
-	struct bits_desc descs[32];
-};
+	पूर्णांक nr;
+	काष्ठा bits_desc descs[32];
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	R_EAX = 0,
 	R_EBX,
 	R_ECX,
 	R_EDX,
 	NR_REGS
-};
+पूर्ण;
 
-struct subleaf {
+काष्ठा subleaf अणु
 	u32 index;
 	u32 sub;
 	u32 eax, ebx, ecx, edx;
-	struct reg_desc info[NR_REGS];
-};
+	काष्ठा reg_desc info[NR_REGS];
+पूर्ण;
 
 /* Represent one leaf (basic or extended) */
-struct cpuid_func {
+काष्ठा cpuid_func अणु
 	/*
-	 * Array of subleafs for this func, if there is no subleafs
-	 * then the leafs[0] is the main leaf
+	 * Array of subleafs क्रम this func, अगर there is no subleafs
+	 * then the leafs[0] is the मुख्य leaf
 	 */
-	struct subleaf *leafs;
-	int nr;
-};
+	काष्ठा subleaf *leafs;
+	पूर्णांक nr;
+पूर्ण;
 
-struct cpuid_range {
-	/* array of main leafs */
-	struct cpuid_func *funcs;
+काष्ठा cpuid_range अणु
+	/* array of मुख्य leafs */
+	काष्ठा cpuid_func *funcs;
 	/* number of valid leafs */
-	int nr;
+	पूर्णांक nr;
 	bool is_ext;
-};
+पूर्ण;
 
 /*
  * basic:  basic functions range: [0... ]
  * ext:    extended functions range: [0x80000000... ]
  */
-struct cpuid_range *leafs_basic, *leafs_ext;
+काष्ठा cpuid_range *leafs_basic, *leafs_ext;
 
-static int num_leafs;
-static bool is_amd;
-static bool show_details;
-static bool show_raw;
-static bool show_flags_only = true;
-static u32 user_index = 0xFFFFFFFF;
-static u32 user_sub = 0xFFFFFFFF;
-static int flines;
+अटल पूर्णांक num_leafs;
+अटल bool is_amd;
+अटल bool show_details;
+अटल bool show_raw;
+अटल bool show_flags_only = true;
+अटल u32 user_index = 0xFFFFFFFF;
+अटल u32 user_sub = 0xFFFFFFFF;
+अटल पूर्णांक flines;
 
-static inline void cpuid(u32 *eax, u32 *ebx, u32 *ecx, u32 *edx)
-{
+अटल अंतरभूत व्योम cpuid(u32 *eax, u32 *ebx, u32 *ecx, u32 *edx)
+अणु
 	/* ecx is often an input as well as an output. */
-	asm volatile("cpuid"
+	यंत्र अस्थिर("cpuid"
 	    : "=a" (*eax),
 	      "=b" (*ebx),
 	      "=c" (*ecx),
 	      "=d" (*edx)
 	    : "0" (*eax), "2" (*ecx));
-}
+पूर्ण
 
-static inline bool has_subleafs(u32 f)
-{
-	if (f == 0x7 || f == 0xd)
-		return true;
+अटल अंतरभूत bool has_subleafs(u32 f)
+अणु
+	अगर (f == 0x7 || f == 0xd)
+		वापस true;
 
-	if (is_amd) {
-		if (f == 0x8000001d)
-			return true;
-		return false;
-	}
+	अगर (is_amd) अणु
+		अगर (f == 0x8000001d)
+			वापस true;
+		वापस false;
+	पूर्ण
 
-	switch (f) {
-	case 0x4:
-	case 0xb:
-	case 0xf:
-	case 0x10:
-	case 0x14:
-	case 0x18:
-	case 0x1f:
-		return true;
-	default:
-		return false;
-	}
-}
+	चयन (f) अणु
+	हाल 0x4:
+	हाल 0xb:
+	हाल 0xf:
+	हाल 0x10:
+	हाल 0x14:
+	हाल 0x18:
+	हाल 0x1f:
+		वापस true;
+	शेष:
+		वापस false;
+	पूर्ण
+पूर्ण
 
-static void leaf_print_raw(struct subleaf *leaf)
-{
-	if (has_subleafs(leaf->index)) {
-		if (leaf->sub == 0)
-			printf("0x%08x: subleafs:\n", leaf->index);
+अटल व्योम leaf_prपूर्णांक_raw(काष्ठा subleaf *leaf)
+अणु
+	अगर (has_subleafs(leaf->index)) अणु
+		अगर (leaf->sub == 0)
+			म_लिखो("0x%08x: subleafs:\n", leaf->index);
 
-		printf(" %2d: EAX=0x%08x, EBX=0x%08x, ECX=0x%08x, EDX=0x%08x\n",
+		म_लिखो(" %2d: EAX=0x%08x, EBX=0x%08x, ECX=0x%08x, EDX=0x%08x\n",
 			leaf->sub, leaf->eax, leaf->ebx, leaf->ecx, leaf->edx);
-	} else {
-		printf("0x%08x: EAX=0x%08x, EBX=0x%08x, ECX=0x%08x, EDX=0x%08x\n",
+	पूर्ण अन्यथा अणु
+		म_लिखो("0x%08x: EAX=0x%08x, EBX=0x%08x, ECX=0x%08x, EDX=0x%08x\n",
 			leaf->index, leaf->eax, leaf->ebx, leaf->ecx, leaf->edx);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /* Return true is the input eax/ebx/ecx/edx are all zero */
-static bool cpuid_store(struct cpuid_range *range, u32 f, int subleaf,
+अटल bool cpuid_store(काष्ठा cpuid_range *range, u32 f, पूर्णांक subleaf,
 			u32 a, u32 b, u32 c, u32 d)
-{
-	struct cpuid_func *func;
-	struct subleaf *leaf;
-	int s = 0;
+अणु
+	काष्ठा cpuid_func *func;
+	काष्ठा subleaf *leaf;
+	पूर्णांक s = 0;
 
-	if (a == 0 && b == 0 && c == 0 && d == 0)
-		return true;
+	अगर (a == 0 && b == 0 && c == 0 && d == 0)
+		वापस true;
 
 	/*
-	 * Cut off vendor-prefix from CPUID function as we're using it as an
-	 * index into ->funcs.
+	 * Cut off venकरोr-prefix from CPUID function as we're using it as an
+	 * index पूर्णांकo ->funcs.
 	 */
 	func = &range->funcs[f & 0xffff];
 
-	if (!func->leafs) {
-		func->leafs = malloc(sizeof(struct subleaf));
-		if (!func->leafs)
-			perror("malloc func leaf");
+	अगर (!func->leafs) अणु
+		func->leafs = दो_स्मृति(माप(काष्ठा subleaf));
+		अगर (!func->leafs)
+			लिखो_त्रुटि("malloc func leaf");
 
 		func->nr = 1;
-	} else {
+	पूर्ण अन्यथा अणु
 		s = func->nr;
-		func->leafs = realloc(func->leafs, (s + 1) * sizeof(*leaf));
-		if (!func->leafs)
-			perror("realloc f->leafs");
+		func->leafs = पुनः_स्मृति(func->leafs, (s + 1) * माप(*leaf));
+		अगर (!func->leafs)
+			लिखो_त्रुटि("realloc f->leafs");
 
 		func->nr++;
-	}
+	पूर्ण
 
 	leaf = &func->leafs[s];
 
@@ -172,43 +173,43 @@ static bool cpuid_store(struct cpuid_range *range, u32 f, int subleaf,
 	leaf->ecx = c;
 	leaf->edx = d;
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static void raw_dump_range(struct cpuid_range *range)
-{
+अटल व्योम raw_dump_range(काष्ठा cpuid_range *range)
+अणु
 	u32 f;
-	int i;
+	पूर्णांक i;
 
-	printf("%s Leafs :\n", range->is_ext ? "Extended" : "Basic");
-	printf("================\n");
+	म_लिखो("%s Leafs :\n", range->is_ext ? "Extended" : "Basic");
+	म_लिखो("================\n");
 
-	for (f = 0; (int)f < range->nr; f++) {
-		struct cpuid_func *func = &range->funcs[f];
+	क्रम (f = 0; (पूर्णांक)f < range->nr; f++) अणु
+		काष्ठा cpuid_func *func = &range->funcs[f];
 		u32 index = f;
 
-		if (range->is_ext)
+		अगर (range->is_ext)
 			index += 0x80000000;
 
 		/* Skip leaf without valid items */
-		if (!func->nr)
-			continue;
+		अगर (!func->nr)
+			जारी;
 
-		/* First item is the main leaf, followed by all subleafs */
-		for (i = 0; i < func->nr; i++)
-			leaf_print_raw(&func->leafs[i]);
-	}
-}
+		/* First item is the मुख्य leaf, followed by all subleafs */
+		क्रम (i = 0; i < func->nr; i++)
+			leaf_prपूर्णांक_raw(&func->leafs[i]);
+	पूर्ण
+पूर्ण
 
-#define MAX_SUBLEAF_NUM		32
-struct cpuid_range *setup_cpuid_range(u32 input_eax)
-{
+#घोषणा MAX_SUBLEAF_NUM		32
+काष्ठा cpuid_range *setup_cpuid_range(u32 input_eax)
+अणु
 	u32 max_func, idx_func;
-	int subleaf;
-	struct cpuid_range *range;
+	पूर्णांक subleaf;
+	काष्ठा cpuid_range *range;
 	u32 eax, ebx, ecx, edx;
 	u32 f = input_eax;
-	int max_subleaf;
+	पूर्णांक max_subleaf;
 	bool allzero;
 
 	eax = input_eax;
@@ -218,34 +219,34 @@ struct cpuid_range *setup_cpuid_range(u32 input_eax)
 	max_func = eax;
 	idx_func = (max_func & 0xffff) + 1;
 
-	range = malloc(sizeof(struct cpuid_range));
-	if (!range)
-		perror("malloc range");
+	range = दो_स्मृति(माप(काष्ठा cpuid_range));
+	अगर (!range)
+		लिखो_त्रुटि("malloc range");
 
-	if (input_eax & 0x80000000)
+	अगर (input_eax & 0x80000000)
 		range->is_ext = true;
-	else
+	अन्यथा
 		range->is_ext = false;
 
-	range->funcs = malloc(sizeof(struct cpuid_func) * idx_func);
-	if (!range->funcs)
-		perror("malloc range->funcs");
+	range->funcs = दो_स्मृति(माप(काष्ठा cpuid_func) * idx_func);
+	अगर (!range->funcs)
+		लिखो_त्रुटि("malloc range->funcs");
 
 	range->nr = idx_func;
-	memset(range->funcs, 0, sizeof(struct cpuid_func) * idx_func);
+	स_रखो(range->funcs, 0, माप(काष्ठा cpuid_func) * idx_func);
 
-	for (; f <= max_func; f++) {
+	क्रम (; f <= max_func; f++) अणु
 		eax = f;
 		subleaf = ecx = 0;
 
 		cpuid(&eax, &ebx, &ecx, &edx);
 		allzero = cpuid_store(range, f, subleaf, eax, ebx, ecx, edx);
-		if (allzero)
-			continue;
+		अगर (allzero)
+			जारी;
 		num_leafs++;
 
-		if (!has_subleafs(f))
-			continue;
+		अगर (!has_subleafs(f))
+			जारी;
 
 		max_subleaf = MAX_SUBLEAF_NUM;
 
@@ -253,117 +254,117 @@ struct cpuid_range *setup_cpuid_range(u32 input_eax)
 		 * Some can provide the exact number of subleafs,
 		 * others have to be tried (0xf)
 		 */
-		if (f == 0x7 || f == 0x14 || f == 0x17 || f == 0x18)
+		अगर (f == 0x7 || f == 0x14 || f == 0x17 || f == 0x18)
 			max_subleaf = (eax & 0xff) + 1;
 
-		if (f == 0xb)
+		अगर (f == 0xb)
 			max_subleaf = 2;
 
-		for (subleaf = 1; subleaf < max_subleaf; subleaf++) {
+		क्रम (subleaf = 1; subleaf < max_subleaf; subleaf++) अणु
 			eax = f;
 			ecx = subleaf;
 
 			cpuid(&eax, &ebx, &ecx, &edx);
 			allzero = cpuid_store(range, f, subleaf,
 						eax, ebx, ecx, edx);
-			if (allzero)
-				continue;
+			अगर (allzero)
+				जारी;
 			num_leafs++;
-		}
+		पूर्ण
 
-	}
+	पूर्ण
 
-	return range;
-}
+	वापस range;
+पूर्ण
 
 /*
- * The basic row format for cpuid.csv  is
- *	LEAF,SUBLEAF,register_name,bits,short name,long description
+ * The basic row क्रमmat क्रम cpuid.csv  is
+ *	LEAF,SUBLEAF,रेजिस्टर_name,bits,लघु name,दीर्घ description
  *
  * like:
- *	0,    0,  EAX,   31:0, max_basic_leafs,  Max input value for supported subleafs
+ *	0,    0,  EAX,   31:0, max_basic_leafs,  Max input value क्रम supported subleafs
  *	1,    0,  ECX,      0, sse3,  Streaming SIMD Extensions 3(SSE3)
  */
-static int parse_line(char *line)
-{
-	char *str;
-	int i;
-	struct cpuid_range *range;
-	struct cpuid_func *func;
-	struct subleaf *leaf;
+अटल पूर्णांक parse_line(अक्षर *line)
+अणु
+	अक्षर *str;
+	पूर्णांक i;
+	काष्ठा cpuid_range *range;
+	काष्ठा cpuid_func *func;
+	काष्ठा subleaf *leaf;
 	u32 index;
 	u32 sub;
-	char buffer[512];
-	char *buf;
+	अक्षर buffer[512];
+	अक्षर *buf;
 	/*
 	 * Tokens:
 	 *  1. leaf
 	 *  2. subleaf
-	 *  3. register
+	 *  3. रेजिस्टर
 	 *  4. bits
-	 *  5. short name
-	 *  6. long detail
+	 *  5. लघु name
+	 *  6. दीर्घ detail
 	 */
-	char *tokens[6];
-	struct reg_desc *reg;
-	struct bits_desc *bdesc;
-	int reg_index;
-	char *start, *end;
+	अक्षर *tokens[6];
+	काष्ठा reg_desc *reg;
+	काष्ठा bits_desc *bdesc;
+	पूर्णांक reg_index;
+	अक्षर *start, *end;
 
-	/* Skip comments and NULL line */
-	if (line[0] == '#' || line[0] == '\n')
-		return 0;
+	/* Skip comments and शून्य line */
+	अगर (line[0] == '#' || line[0] == '\n')
+		वापस 0;
 
-	strncpy(buffer, line, 511);
+	म_नकलन(buffer, line, 511);
 	buffer[511] = 0;
 	str = buffer;
-	for (i = 0; i < 5; i++) {
-		tokens[i] = strtok(str, ",");
-		if (!tokens[i])
-			goto err_exit;
-		str = NULL;
-	}
-	tokens[5] = strtok(str, "\n");
-	if (!tokens[5])
-		goto err_exit;
+	क्रम (i = 0; i < 5; i++) अणु
+		tokens[i] = म_मोहर(str, ",");
+		अगर (!tokens[i])
+			जाओ err_निकास;
+		str = शून्य;
+	पूर्ण
+	tokens[5] = म_मोहर(str, "\n");
+	अगर (!tokens[5])
+		जाओ err_निकास;
 
-	/* index/main-leaf */
-	index = strtoull(tokens[0], NULL, 0);
+	/* index/मुख्य-leaf */
+	index = म_से_अदीर्घl(tokens[0], शून्य, 0);
 
-	if (index & 0x80000000)
+	अगर (index & 0x80000000)
 		range = leafs_ext;
-	else
+	अन्यथा
 		range = leafs_basic;
 
 	index &= 0x7FFFFFFF;
-	/* Skip line parsing for non-existing indexes */
-	if ((int)index >= range->nr)
-		return -1;
+	/* Skip line parsing क्रम non-existing indexes */
+	अगर ((पूर्णांक)index >= range->nr)
+		वापस -1;
 
 	func = &range->funcs[index];
 
-	/* Return if the index has no valid item on this platform */
-	if (!func->nr)
-		return 0;
+	/* Return अगर the index has no valid item on this platक्रमm */
+	अगर (!func->nr)
+		वापस 0;
 
 	/* subleaf */
-	sub = strtoul(tokens[1], NULL, 0);
-	if ((int)sub > func->nr)
-		return -1;
+	sub = म_से_अदीर्घ(tokens[1], शून्य, 0);
+	अगर ((पूर्णांक)sub > func->nr)
+		वापस -1;
 
 	leaf = &func->leafs[sub];
 	buf = tokens[2];
 
-	if (strcasestr(buf, "EAX"))
+	अगर (strहालstr(buf, "EAX"))
 		reg_index = R_EAX;
-	else if (strcasestr(buf, "EBX"))
+	अन्यथा अगर (strहालstr(buf, "EBX"))
 		reg_index = R_EBX;
-	else if (strcasestr(buf, "ECX"))
+	अन्यथा अगर (strहालstr(buf, "ECX"))
 		reg_index = R_ECX;
-	else if (strcasestr(buf, "EDX"))
+	अन्यथा अगर (strहालstr(buf, "EDX"))
 		reg_index = R_EDX;
-	else
-		goto err_exit;
+	अन्यथा
+		जाओ err_निकास;
 
 	reg = &leaf->info[reg_index];
 	bdesc = &reg->descs[reg->nr++];
@@ -371,203 +372,203 @@ static int parse_line(char *line)
 	/* bit flag or bits field */
 	buf = tokens[3];
 
-	end = strtok(buf, ":");
-	bdesc->end = strtoul(end, NULL, 0);
+	end = म_मोहर(buf, ":");
+	bdesc->end = म_से_अदीर्घ(end, शून्य, 0);
 	bdesc->start = bdesc->end;
 
-	/* start != NULL means it is bit fields */
-	start = strtok(NULL, ":");
-	if (start)
-		bdesc->start = strtoul(start, NULL, 0);
+	/* start != शून्य means it is bit fields */
+	start = म_मोहर(शून्य, ":");
+	अगर (start)
+		bdesc->start = म_से_अदीर्घ(start, शून्य, 0);
 
-	strcpy(bdesc->simp, tokens[4]);
-	strcpy(bdesc->detail, tokens[5]);
-	return 0;
+	म_नकल(bdesc->simp, tokens[4]);
+	म_नकल(bdesc->detail, tokens[5]);
+	वापस 0;
 
-err_exit:
-	printf("Warning: wrong line format:\n");
-	printf("\tline[%d]: %s\n", flines, line);
-	return -1;
-}
+err_निकास:
+	म_लिखो("Warning: wrong line format:\n");
+	म_लिखो("\tline[%d]: %s\n", flines, line);
+	वापस -1;
+पूर्ण
 
-/* Parse csv file, and construct the array of all leafs and subleafs */
-static void parse_text(void)
-{
-	FILE *file;
-	char *filename, *line = NULL;
-	size_t len = 0;
-	int ret;
+/* Parse csv file, and स्थिरruct the array of all leafs and subleafs */
+अटल व्योम parse_text(व्योम)
+अणु
+	खाता *file;
+	अक्षर *filename, *line = शून्य;
+	माप_प्रकार len = 0;
+	पूर्णांक ret;
 
-	if (show_raw)
-		return;
+	अगर (show_raw)
+		वापस;
 
 	filename = user_csv ? user_csv : def_csv;
-	file = fopen(filename, "r");
-	if (!file) {
+	file = ख_खोलो(filename, "r");
+	अगर (!file) अणु
 		/* Fallback to a csv in the same dir */
-		file = fopen("./cpuid.csv", "r");
-	}
+		file = ख_खोलो("./cpuid.csv", "r");
+	पूर्ण
 
-	if (!file) {
-		printf("Fail to open '%s'\n", filename);
-		return;
-	}
+	अगर (!file) अणु
+		म_लिखो("Fail to open '%s'\n", filename);
+		वापस;
+	पूर्ण
 
-	while (1) {
+	जबतक (1) अणु
 		ret = getline(&line, &len, file);
 		flines++;
-		if (ret > 0)
+		अगर (ret > 0)
 			parse_line(line);
 
-		if (feof(file))
-			break;
-	}
+		अगर (ख_पूर्ण(file))
+			अवरोध;
+	पूर्ण
 
-	fclose(file);
-}
+	ख_बंद(file);
+पूर्ण
 
 
 /* Decode every eax/ebx/ecx/edx */
-static void decode_bits(u32 value, struct reg_desc *rdesc)
-{
-	struct bits_desc *bdesc;
-	int start, end, i;
+अटल व्योम decode_bits(u32 value, काष्ठा reg_desc *rdesc)
+अणु
+	काष्ठा bits_desc *bdesc;
+	पूर्णांक start, end, i;
 	u32 mask;
 
-	for (i = 0; i < rdesc->nr; i++) {
+	क्रम (i = 0; i < rdesc->nr; i++) अणु
 		bdesc = &rdesc->descs[i];
 
 		start = bdesc->start;
 		end = bdesc->end;
-		if (start == end) {
+		अगर (start == end) अणु
 			/* single bit flag */
-			if (value & (1 << start))
-				printf("\t%-20s %s%s\n",
+			अगर (value & (1 << start))
+				म_लिखो("\t%-20s %s%s\n",
 					bdesc->simp,
 					show_details ? "-" : "",
 					show_details ? bdesc->detail : ""
 					);
-		} else {
+		पूर्ण अन्यथा अणु
 			/* bit fields */
-			if (show_flags_only)
-				continue;
+			अगर (show_flags_only)
+				जारी;
 
 			mask = ((u64)1 << (end - start + 1)) - 1;
-			printf("\t%-20s\t: 0x%-8x\t%s%s\n",
+			म_लिखो("\t%-20s\t: 0x%-8x\t%s%s\n",
 					bdesc->simp,
 					(value >> start) & mask,
 					show_details ? "-" : "",
 					show_details ? bdesc->detail : ""
 					);
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static void show_leaf(struct subleaf *leaf)
-{
-	if (!leaf)
-		return;
+अटल व्योम show_leaf(काष्ठा subleaf *leaf)
+अणु
+	अगर (!leaf)
+		वापस;
 
-	if (show_raw)
-		leaf_print_raw(leaf);
+	अगर (show_raw)
+		leaf_prपूर्णांक_raw(leaf);
 
 	decode_bits(leaf->eax, &leaf->info[R_EAX]);
 	decode_bits(leaf->ebx, &leaf->info[R_EBX]);
 	decode_bits(leaf->ecx, &leaf->info[R_ECX]);
 	decode_bits(leaf->edx, &leaf->info[R_EDX]);
-}
+पूर्ण
 
-static void show_func(struct cpuid_func *func)
-{
-	int i;
+अटल व्योम show_func(काष्ठा cpuid_func *func)
+अणु
+	पूर्णांक i;
 
-	if (!func)
-		return;
+	अगर (!func)
+		वापस;
 
-	for (i = 0; i < func->nr; i++)
+	क्रम (i = 0; i < func->nr; i++)
 		show_leaf(&func->leafs[i]);
-}
+पूर्ण
 
-static void show_range(struct cpuid_range *range)
-{
-	int i;
+अटल व्योम show_range(काष्ठा cpuid_range *range)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < range->nr; i++)
+	क्रम (i = 0; i < range->nr; i++)
 		show_func(&range->funcs[i]);
-}
+पूर्ण
 
-static inline struct cpuid_func *index_to_func(u32 index)
-{
-	struct cpuid_range *range;
+अटल अंतरभूत काष्ठा cpuid_func *index_to_func(u32 index)
+अणु
+	काष्ठा cpuid_range *range;
 
 	range = (index & 0x80000000) ? leafs_ext : leafs_basic;
 	index &= 0x7FFFFFFF;
 
-	if (((index & 0xFFFF) + 1) > (u32)range->nr) {
-		printf("ERR: invalid input index (0x%x)\n", index);
-		return NULL;
-	}
-	return &range->funcs[index];
-}
+	अगर (((index & 0xFFFF) + 1) > (u32)range->nr) अणु
+		म_लिखो("ERR: invalid input index (0x%x)\n", index);
+		वापस शून्य;
+	पूर्ण
+	वापस &range->funcs[index];
+पूर्ण
 
-static void show_info(void)
-{
-	struct cpuid_func *func;
+अटल व्योम show_info(व्योम)
+अणु
+	काष्ठा cpuid_func *func;
 
-	if (show_raw) {
+	अगर (show_raw) अणु
 		/* Show all of the raw output of 'cpuid' instr */
 		raw_dump_range(leafs_basic);
 		raw_dump_range(leafs_ext);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (user_index != 0xFFFFFFFF) {
-		/* Only show specific leaf/subleaf info */
+	अगर (user_index != 0xFFFFFFFF) अणु
+		/* Only show specअगरic leaf/subleaf info */
 		func = index_to_func(user_index);
-		if (!func)
-			return;
+		अगर (!func)
+			वापस;
 
 		/* Dump the raw data also */
 		show_raw = true;
 
-		if (user_sub != 0xFFFFFFFF) {
-			if (user_sub + 1 <= (u32)func->nr) {
+		अगर (user_sub != 0xFFFFFFFF) अणु
+			अगर (user_sub + 1 <= (u32)func->nr) अणु
 				show_leaf(&func->leafs[user_sub]);
-				return;
-			}
+				वापस;
+			पूर्ण
 
-			printf("ERR: invalid input subleaf (0x%x)\n", user_sub);
-		}
+			म_लिखो("ERR: invalid input subleaf (0x%x)\n", user_sub);
+		पूर्ण
 
 		show_func(func);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	printf("CPU features:\n=============\n\n");
+	म_लिखो("CPU features:\n=============\n\n");
 	show_range(leafs_basic);
 	show_range(leafs_ext);
-}
+पूर्ण
 
-static void setup_platform_cpuid(void)
-{
+अटल व्योम setup_platक्रमm_cpuid(व्योम)
+अणु
 	 u32 eax, ebx, ecx, edx;
 
-	/* Check vendor */
+	/* Check venकरोr */
 	eax = ebx = ecx = edx = 0;
 	cpuid(&eax, &ebx, &ecx, &edx);
 
 	/* "htuA" */
-	if (ebx == 0x68747541)
+	अगर (ebx == 0x68747541)
 		is_amd = true;
 
-	/* Setup leafs for the basic and extended range */
+	/* Setup leafs क्रम the basic and extended range */
 	leafs_basic = setup_cpuid_range(0x0);
 	leafs_ext = setup_cpuid_range(0x80000000);
-}
+पूर्ण
 
-static void usage(void)
-{
-	printf("kcpuid [-abdfhr] [-l leaf] [-s subleaf]\n"
+अटल व्योम usage(व्योम)
+अणु
+	म_लिखो("kcpuid [-abdfhr] [-l leaf] [-s subleaf]\n"
 		"\t-a|--all             Show both bit flags and complex bit fields info\n"
 		"\t-b|--bitflags        Show boolean flags only\n"
 		"\t-d|--detail          Show details of the flag/fields (default)\n"
@@ -577,81 +578,81 @@ static void usage(void)
 		"\t-r|--raw             Show raw cpuid data\n"
 		"\t-s|--subleaf=sub     Specify the subleaf you want to check\n"
 	);
-}
+पूर्ण
 
-static struct option opts[] = {
-	{ "all", no_argument, NULL, 'a' },		/* show both bit flags and fields */
-	{ "bitflags", no_argument, NULL, 'b' },		/* only show bit flags, default on */
-	{ "detail", no_argument, NULL, 'd' },		/* show detail descriptions */
-	{ "file", required_argument, NULL, 'f' },	/* use user's cpuid file */
-	{ "help", no_argument, NULL, 'h'},		/* show usage */
-	{ "leaf", required_argument, NULL, 'l'},	/* only check a specific leaf */
-	{ "raw", no_argument, NULL, 'r'},		/* show raw CPUID leaf data */
-	{ "subleaf", required_argument, NULL, 's'},	/* check a specific subleaf */
-	{ NULL, 0, NULL, 0 }
-};
+अटल काष्ठा option opts[] = अणु
+	अणु "all", no_argument, शून्य, 'a' पूर्ण,		/* show both bit flags and fields */
+	अणु "bitflags", no_argument, शून्य, 'b' पूर्ण,		/* only show bit flags, शेष on */
+	अणु "detail", no_argument, शून्य, 'd' पूर्ण,		/* show detail descriptions */
+	अणु "file", required_argument, शून्य, 'f' },	/* use user's cpuid file */
+	अणु "help", no_argument, शून्य, 'h'पूर्ण,		/* show usage */
+	अणु "leaf", required_argument, शून्य, 'l'पूर्ण,	/* only check a specअगरic leaf */
+	अणु "raw", no_argument, शून्य, 'r'पूर्ण,		/* show raw CPUID leaf data */
+	अणु "subleaf", required_argument, शून्य, 's'पूर्ण,	/* check a specअगरic subleaf */
+	अणु शून्य, 0, शून्य, 0 पूर्ण
+पूर्ण;
 
-static int parse_options(int argc, char *argv[])
-{
-	int c;
+अटल पूर्णांक parse_options(पूर्णांक argc, अक्षर *argv[])
+अणु
+	पूर्णांक c;
 
-	while ((c = getopt_long(argc, argv, "abdf:hl:rs:",
-					opts, NULL)) != -1)
-		switch (c) {
-		case 'a':
+	जबतक ((c = getopt_दीर्घ(argc, argv, "abdf:hl:rs:",
+					opts, शून्य)) != -1)
+		चयन (c) अणु
+		हाल 'a':
 			show_flags_only = false;
-			break;
-		case 'b':
+			अवरोध;
+		हाल 'b':
 			show_flags_only = true;
-			break;
-		case 'd':
+			अवरोध;
+		हाल 'd':
 			show_details = true;
-			break;
-		case 'f':
+			अवरोध;
+		हाल 'f':
 			user_csv = optarg;
-			break;
-		case 'h':
+			अवरोध;
+		हाल 'h':
 			usage();
-			exit(1);
-			break;
-		case 'l':
-			/* main leaf */
-			user_index = strtoul(optarg, NULL, 0);
-			break;
-		case 'r':
+			निकास(1);
+			अवरोध;
+		हाल 'l':
+			/* मुख्य leaf */
+			user_index = म_से_अदीर्घ(optarg, शून्य, 0);
+			अवरोध;
+		हाल 'r':
 			show_raw = true;
-			break;
-		case 's':
+			अवरोध;
+		हाल 's':
 			/* subleaf */
-			user_sub = strtoul(optarg, NULL, 0);
-			break;
-		default:
-			printf("%s: Invalid option '%c'\n", argv[0], optopt);
-			return -1;
-	}
+			user_sub = म_से_अदीर्घ(optarg, शून्य, 0);
+			अवरोध;
+		शेष:
+			म_लिखो("%s: Invalid option '%c'\n", argv[0], optopt);
+			वापस -1;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * Do 4 things in turn:
  * 1. Parse user options
- * 2. Parse and store all the CPUID leaf data supported on this platform
- * 2. Parse the csv file, while skipping leafs which are not available
- *    on this platform
- * 3. Print leafs info based on user options
+ * 2. Parse and store all the CPUID leaf data supported on this platक्रमm
+ * 2. Parse the csv file, जबतक skipping leafs which are not available
+ *    on this platक्रमm
+ * 3. Prपूर्णांक leafs info based on user options
  */
-int main(int argc, char *argv[])
-{
-	if (parse_options(argc, argv))
-		return -1;
+पूर्णांक मुख्य(पूर्णांक argc, अक्षर *argv[])
+अणु
+	अगर (parse_options(argc, argv))
+		वापस -1;
 
-	/* Setup the cpuid leafs of current platform */
-	setup_platform_cpuid();
+	/* Setup the cpuid leafs of current platक्रमm */
+	setup_platक्रमm_cpuid();
 
 	/* Read and parse the 'cpuid.csv' */
 	parse_text();
 
 	show_info();
-	return 0;
-}
+	वापस 0;
+पूर्ण

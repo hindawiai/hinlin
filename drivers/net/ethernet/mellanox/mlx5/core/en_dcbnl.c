@@ -1,23 +1,24 @@
+<शैली गुरु>
 /*
  * Copyright (c) 2016, Mellanox Technologies. All rights reserved.
  *
  * This software is available to you under a choice of one of two
  * licenses.  You may choose to be licensed under the terms of the GNU
  * General Public License (GPL) Version 2, available from the file
- * COPYING in the main directory of this source tree, or the
+ * COPYING in the मुख्य directory of this source tree, or the
  * OpenIB.org BSD license below:
  *
- *     Redistribution and use in source and binary forms, with or
- *     without modification, are permitted provided that the following
+ *     Redistribution and use in source and binary क्रमms, with or
+ *     without modअगरication, are permitted provided that the following
  *     conditions are met:
  *
  *      - Redistributions of source code must retain the above
  *        copyright notice, this list of conditions and the following
  *        disclaimer.
  *
- *      - Redistributions in binary form must reproduce the above
+ *      - Redistributions in binary क्रमm must reproduce the above
  *        copyright notice, this list of conditions and the following
- *        disclaimer in the documentation and/or other materials
+ *        disclaimer in the करोcumentation and/or other materials
  *        provided with the distribution.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
@@ -29,611 +30,611 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-#include <linux/device.h>
-#include <linux/netdevice.h>
-#include "en.h"
-#include "en/port.h"
-#include "en/port_buffer.h"
+#समावेश <linux/device.h>
+#समावेश <linux/netdevice.h>
+#समावेश "en.h"
+#समावेश "en/port.h"
+#समावेश "en/port_buffer.h"
 
-#define MLX5E_MAX_BW_ALLOC 100 /* Max percentage of BW allocation */
+#घोषणा MLX5E_MAX_BW_ALLOC 100 /* Max percentage of BW allocation */
 
-#define MLX5E_100MB (100000)
-#define MLX5E_1GB   (1000000)
+#घोषणा MLX5E_100MB (100000)
+#घोषणा MLX5E_1GB   (1000000)
 
-#define MLX5E_CEE_STATE_UP    1
-#define MLX5E_CEE_STATE_DOWN  0
+#घोषणा MLX5E_CEE_STATE_UP    1
+#घोषणा MLX5E_CEE_STATE_DOWN  0
 
 /* Max supported cable length is 1000 meters */
-#define MLX5E_MAX_CABLE_LENGTH 1000
+#घोषणा MLX5E_MAX_CABLE_LENGTH 1000
 
-enum {
+क्रमागत अणु
 	MLX5E_VENDOR_TC_GROUP_NUM = 7,
 	MLX5E_LOWEST_PRIO_GROUP   = 0,
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	MLX5_DCB_CHG_RESET,
 	MLX5_DCB_NO_CHG,
 	MLX5_DCB_CHG_NO_RESET,
-};
+पूर्ण;
 
-#define MLX5_DSCP_SUPPORTED(mdev) (MLX5_CAP_GEN(mdev, qcam_reg)  && \
+#घोषणा MLX5_DSCP_SUPPORTED(mdev) (MLX5_CAP_GEN(mdev, qcam_reg)  && \
 				   MLX5_CAP_QCAM_REG(mdev, qpts) && \
 				   MLX5_CAP_QCAM_REG(mdev, qpdpm))
 
-static int mlx5e_set_trust_state(struct mlx5e_priv *priv, u8 trust_state);
-static int mlx5e_set_dscp2prio(struct mlx5e_priv *priv, u8 dscp, u8 prio);
+अटल पूर्णांक mlx5e_set_trust_state(काष्ठा mlx5e_priv *priv, u8 trust_state);
+अटल पूर्णांक mlx5e_set_dscp2prio(काष्ठा mlx5e_priv *priv, u8 dscp, u8 prio);
 
 /* If dcbx mode is non-host set the dcbx mode to host.
  */
-static int mlx5e_dcbnl_set_dcbx_mode(struct mlx5e_priv *priv,
-				     enum mlx5_dcbx_oper_mode mode)
-{
-	struct mlx5_core_dev *mdev = priv->mdev;
+अटल पूर्णांक mlx5e_dcbnl_set_dcbx_mode(काष्ठा mlx5e_priv *priv,
+				     क्रमागत mlx5_dcbx_oper_mode mode)
+अणु
+	काष्ठा mlx5_core_dev *mdev = priv->mdev;
 	u32 param[MLX5_ST_SZ_DW(dcbx_param)];
-	int err;
+	पूर्णांक err;
 
 	err = mlx5_query_port_dcbx_param(mdev, param);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	MLX5_SET(dcbx_param, param, version_admin, mode);
-	if (mode != MLX5E_DCBX_PARAM_VER_OPER_HOST)
+	अगर (mode != MLX5E_DCBX_PARAM_VER_OPER_HOST)
 		MLX5_SET(dcbx_param, param, willing_admin, 1);
 
-	return mlx5_set_port_dcbx_param(mdev, param);
-}
+	वापस mlx5_set_port_dcbx_param(mdev, param);
+पूर्ण
 
-static int mlx5e_dcbnl_switch_to_host_mode(struct mlx5e_priv *priv)
-{
-	struct mlx5e_dcbx *dcbx = &priv->dcbx;
-	int err;
+अटल पूर्णांक mlx5e_dcbnl_चयन_to_host_mode(काष्ठा mlx5e_priv *priv)
+अणु
+	काष्ठा mlx5e_dcbx *dcbx = &priv->dcbx;
+	पूर्णांक err;
 
-	if (!MLX5_CAP_GEN(priv->mdev, dcbx))
-		return 0;
+	अगर (!MLX5_CAP_GEN(priv->mdev, dcbx))
+		वापस 0;
 
-	if (dcbx->mode == MLX5E_DCBX_PARAM_VER_OPER_HOST)
-		return 0;
+	अगर (dcbx->mode == MLX5E_DCBX_PARAM_VER_OPER_HOST)
+		वापस 0;
 
 	err = mlx5e_dcbnl_set_dcbx_mode(priv, MLX5E_DCBX_PARAM_VER_OPER_HOST);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	dcbx->mode = MLX5E_DCBX_PARAM_VER_OPER_HOST;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mlx5e_dcbnl_ieee_getets(struct net_device *netdev,
-				   struct ieee_ets *ets)
-{
-	struct mlx5e_priv *priv = netdev_priv(netdev);
-	struct mlx5_core_dev *mdev = priv->mdev;
+अटल पूर्णांक mlx5e_dcbnl_ieee_getets(काष्ठा net_device *netdev,
+				   काष्ठा ieee_ets *ets)
+अणु
+	काष्ठा mlx5e_priv *priv = netdev_priv(netdev);
+	काष्ठा mlx5_core_dev *mdev = priv->mdev;
 	u8 tc_group[IEEE_8021QAZ_MAX_TCS];
 	bool is_tc_group_6_exist = false;
 	bool is_zero_bw_ets_tc = false;
-	int err = 0;
-	int i;
+	पूर्णांक err = 0;
+	पूर्णांक i;
 
-	if (!MLX5_CAP_GEN(priv->mdev, ets))
-		return -EOPNOTSUPP;
+	अगर (!MLX5_CAP_GEN(priv->mdev, ets))
+		वापस -EOPNOTSUPP;
 
 	ets->ets_cap = mlx5_max_tc(priv->mdev) + 1;
-	for (i = 0; i < ets->ets_cap; i++) {
+	क्रम (i = 0; i < ets->ets_cap; i++) अणु
 		err = mlx5_query_port_prio_tc(mdev, i, &ets->prio_tc[i]);
-		if (err)
-			return err;
+		अगर (err)
+			वापस err;
 
 		err = mlx5_query_port_tc_group(mdev, i, &tc_group[i]);
-		if (err)
-			return err;
+		अगर (err)
+			वापस err;
 
 		err = mlx5_query_port_tc_bw_alloc(mdev, i, &ets->tc_tx_bw[i]);
-		if (err)
-			return err;
+		अगर (err)
+			वापस err;
 
-		if (ets->tc_tx_bw[i] < MLX5E_MAX_BW_ALLOC &&
+		अगर (ets->tc_tx_bw[i] < MLX5E_MAX_BW_ALLOC &&
 		    tc_group[i] == (MLX5E_LOWEST_PRIO_GROUP + 1))
 			is_zero_bw_ets_tc = true;
 
-		if (tc_group[i] == (MLX5E_VENDOR_TC_GROUP_NUM - 1))
+		अगर (tc_group[i] == (MLX5E_VENDOR_TC_GROUP_NUM - 1))
 			is_tc_group_6_exist = true;
-	}
+	पूर्ण
 
-	/* Report 0% ets tc if exits*/
-	if (is_zero_bw_ets_tc) {
-		for (i = 0; i < ets->ets_cap; i++)
-			if (tc_group[i] == MLX5E_LOWEST_PRIO_GROUP)
+	/* Report 0% ets tc अगर निकासs*/
+	अगर (is_zero_bw_ets_tc) अणु
+		क्रम (i = 0; i < ets->ets_cap; i++)
+			अगर (tc_group[i] == MLX5E_LOWEST_PRIO_GROUP)
 				ets->tc_tx_bw[i] = 0;
-	}
+	पूर्ण
 
 	/* Update tc_tsa based on fw setting*/
-	for (i = 0; i < ets->ets_cap; i++) {
-		if (ets->tc_tx_bw[i] < MLX5E_MAX_BW_ALLOC)
+	क्रम (i = 0; i < ets->ets_cap; i++) अणु
+		अगर (ets->tc_tx_bw[i] < MLX5E_MAX_BW_ALLOC)
 			priv->dcbx.tc_tsa[i] = IEEE_8021QAZ_TSA_ETS;
-		else if (tc_group[i] == MLX5E_VENDOR_TC_GROUP_NUM &&
+		अन्यथा अगर (tc_group[i] == MLX5E_VENDOR_TC_GROUP_NUM &&
 			 !is_tc_group_6_exist)
 			priv->dcbx.tc_tsa[i] = IEEE_8021QAZ_TSA_VENDOR;
-	}
-	memcpy(ets->tc_tsa, priv->dcbx.tc_tsa, sizeof(ets->tc_tsa));
+	पूर्ण
+	स_नकल(ets->tc_tsa, priv->dcbx.tc_tsa, माप(ets->tc_tsa));
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void mlx5e_build_tc_group(struct ieee_ets *ets, u8 *tc_group, int max_tc)
-{
+अटल व्योम mlx5e_build_tc_group(काष्ठा ieee_ets *ets, u8 *tc_group, पूर्णांक max_tc)
+अणु
 	bool any_tc_mapped_to_ets = false;
 	bool ets_zero_bw = false;
-	int strict_group;
-	int i;
+	पूर्णांक strict_group;
+	पूर्णांक i;
 
-	for (i = 0; i <= max_tc; i++) {
-		if (ets->tc_tsa[i] == IEEE_8021QAZ_TSA_ETS) {
+	क्रम (i = 0; i <= max_tc; i++) अणु
+		अगर (ets->tc_tsa[i] == IEEE_8021QAZ_TSA_ETS) अणु
 			any_tc_mapped_to_ets = true;
-			if (!ets->tc_tx_bw[i])
+			अगर (!ets->tc_tx_bw[i])
 				ets_zero_bw = true;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	/* strict group has higher priority than ets group */
 	strict_group = MLX5E_LOWEST_PRIO_GROUP;
-	if (any_tc_mapped_to_ets)
+	अगर (any_tc_mapped_to_ets)
 		strict_group++;
-	if (ets_zero_bw)
+	अगर (ets_zero_bw)
 		strict_group++;
 
-	for (i = 0; i <= max_tc; i++) {
-		switch (ets->tc_tsa[i]) {
-		case IEEE_8021QAZ_TSA_VENDOR:
+	क्रम (i = 0; i <= max_tc; i++) अणु
+		चयन (ets->tc_tsa[i]) अणु
+		हाल IEEE_8021QAZ_TSA_VENDOR:
 			tc_group[i] = MLX5E_VENDOR_TC_GROUP_NUM;
-			break;
-		case IEEE_8021QAZ_TSA_STRICT:
+			अवरोध;
+		हाल IEEE_8021QAZ_TSA_STRICT:
 			tc_group[i] = strict_group++;
-			break;
-		case IEEE_8021QAZ_TSA_ETS:
+			अवरोध;
+		हाल IEEE_8021QAZ_TSA_ETS:
 			tc_group[i] = MLX5E_LOWEST_PRIO_GROUP;
-			if (ets->tc_tx_bw[i] && ets_zero_bw)
+			अगर (ets->tc_tx_bw[i] && ets_zero_bw)
 				tc_group[i] = MLX5E_LOWEST_PRIO_GROUP + 1;
-			break;
-		}
-	}
-}
+			अवरोध;
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static void mlx5e_build_tc_tx_bw(struct ieee_ets *ets, u8 *tc_tx_bw,
-				 u8 *tc_group, int max_tc)
-{
-	int bw_for_ets_zero_bw_tc = 0;
-	int last_ets_zero_bw_tc = -1;
-	int num_ets_zero_bw = 0;
-	int i;
+अटल व्योम mlx5e_build_tc_tx_bw(काष्ठा ieee_ets *ets, u8 *tc_tx_bw,
+				 u8 *tc_group, पूर्णांक max_tc)
+अणु
+	पूर्णांक bw_क्रम_ets_zero_bw_tc = 0;
+	पूर्णांक last_ets_zero_bw_tc = -1;
+	पूर्णांक num_ets_zero_bw = 0;
+	पूर्णांक i;
 
-	for (i = 0; i <= max_tc; i++) {
-		if (ets->tc_tsa[i] == IEEE_8021QAZ_TSA_ETS &&
-		    !ets->tc_tx_bw[i]) {
+	क्रम (i = 0; i <= max_tc; i++) अणु
+		अगर (ets->tc_tsa[i] == IEEE_8021QAZ_TSA_ETS &&
+		    !ets->tc_tx_bw[i]) अणु
 			num_ets_zero_bw++;
 			last_ets_zero_bw_tc = i;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (num_ets_zero_bw)
-		bw_for_ets_zero_bw_tc = MLX5E_MAX_BW_ALLOC / num_ets_zero_bw;
+	अगर (num_ets_zero_bw)
+		bw_क्रम_ets_zero_bw_tc = MLX5E_MAX_BW_ALLOC / num_ets_zero_bw;
 
-	for (i = 0; i <= max_tc; i++) {
-		switch (ets->tc_tsa[i]) {
-		case IEEE_8021QAZ_TSA_VENDOR:
+	क्रम (i = 0; i <= max_tc; i++) अणु
+		चयन (ets->tc_tsa[i]) अणु
+		हाल IEEE_8021QAZ_TSA_VENDOR:
 			tc_tx_bw[i] = MLX5E_MAX_BW_ALLOC;
-			break;
-		case IEEE_8021QAZ_TSA_STRICT:
+			अवरोध;
+		हाल IEEE_8021QAZ_TSA_STRICT:
 			tc_tx_bw[i] = MLX5E_MAX_BW_ALLOC;
-			break;
-		case IEEE_8021QAZ_TSA_ETS:
+			अवरोध;
+		हाल IEEE_8021QAZ_TSA_ETS:
 			tc_tx_bw[i] = ets->tc_tx_bw[i] ?
 				      ets->tc_tx_bw[i] :
-				      bw_for_ets_zero_bw_tc;
-			break;
-		}
-	}
+				      bw_क्रम_ets_zero_bw_tc;
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	/* Make sure the total bw for ets zero bw group is 100% */
-	if (last_ets_zero_bw_tc != -1)
+	/* Make sure the total bw क्रम ets zero bw group is 100% */
+	अगर (last_ets_zero_bw_tc != -1)
 		tc_tx_bw[last_ets_zero_bw_tc] +=
 			MLX5E_MAX_BW_ALLOC % num_ets_zero_bw;
-}
+पूर्ण
 
 /* If there are ETS BW 0,
- *   Set ETS group # to 1 for all ETS non zero BW tcs. Their sum must be 100%.
+ *   Set ETS group # to 1 क्रम all ETS non zero BW tcs. Their sum must be 100%.
  *   Set group #0 to all the ETS BW 0 tcs and
  *     equally splits the 100% BW between them
  *   Report both group #0 and #1 as ETS type.
  *     All the tcs in group #0 will be reported with 0% BW.
  */
-static int mlx5e_dcbnl_ieee_setets_core(struct mlx5e_priv *priv, struct ieee_ets *ets)
-{
-	struct mlx5_core_dev *mdev = priv->mdev;
+अटल पूर्णांक mlx5e_dcbnl_ieee_setets_core(काष्ठा mlx5e_priv *priv, काष्ठा ieee_ets *ets)
+अणु
+	काष्ठा mlx5_core_dev *mdev = priv->mdev;
 	u8 tc_tx_bw[IEEE_8021QAZ_MAX_TCS];
 	u8 tc_group[IEEE_8021QAZ_MAX_TCS];
-	int max_tc = mlx5_max_tc(mdev);
-	int err, i;
+	पूर्णांक max_tc = mlx5_max_tc(mdev);
+	पूर्णांक err, i;
 
 	mlx5e_build_tc_group(ets, tc_group, max_tc);
 	mlx5e_build_tc_tx_bw(ets, tc_tx_bw, tc_group, max_tc);
 
 	err = mlx5_set_port_prio_tc(mdev, ets->prio_tc);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	err = mlx5_set_port_tc_group(mdev, tc_group);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	err = mlx5_set_port_tc_bw_alloc(mdev, tc_tx_bw);
 
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	memcpy(priv->dcbx.tc_tsa, ets->tc_tsa, sizeof(ets->tc_tsa));
+	स_नकल(priv->dcbx.tc_tsa, ets->tc_tsa, माप(ets->tc_tsa));
 
-	for (i = 0; i < IEEE_8021QAZ_MAX_TCS; i++) {
+	क्रम (i = 0; i < IEEE_8021QAZ_MAX_TCS; i++) अणु
 		mlx5e_dbg(HW, priv, "%s: prio_%d <=> tc_%d\n",
 			  __func__, i, ets->prio_tc[i]);
 		mlx5e_dbg(HW, priv, "%s: tc_%d <=> tx_bw_%d%%, group_%d\n",
 			  __func__, i, tc_tx_bw[i], tc_group[i]);
-	}
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int mlx5e_dbcnl_validate_ets(struct net_device *netdev,
-				    struct ieee_ets *ets,
+अटल पूर्णांक mlx5e_dbcnl_validate_ets(काष्ठा net_device *netdev,
+				    काष्ठा ieee_ets *ets,
 				    bool zero_sum_allowed)
-{
+अणु
 	bool have_ets_tc = false;
-	int bw_sum = 0;
-	int i;
+	पूर्णांक bw_sum = 0;
+	पूर्णांक i;
 
 	/* Validate Priority */
-	for (i = 0; i < IEEE_8021QAZ_MAX_TCS; i++) {
-		if (ets->prio_tc[i] >= MLX5E_MAX_PRIORITY) {
+	क्रम (i = 0; i < IEEE_8021QAZ_MAX_TCS; i++) अणु
+		अगर (ets->prio_tc[i] >= MLX5E_MAX_PRIORITY) अणु
 			netdev_err(netdev,
 				   "Failed to validate ETS: priority value greater than max(%d)\n",
 				    MLX5E_MAX_PRIORITY);
-			return -EINVAL;
-		}
-	}
+			वापस -EINVAL;
+		पूर्ण
+	पूर्ण
 
 	/* Validate Bandwidth Sum */
-	for (i = 0; i < IEEE_8021QAZ_MAX_TCS; i++) {
-		if (ets->tc_tsa[i] == IEEE_8021QAZ_TSA_ETS) {
+	क्रम (i = 0; i < IEEE_8021QAZ_MAX_TCS; i++) अणु
+		अगर (ets->tc_tsa[i] == IEEE_8021QAZ_TSA_ETS) अणु
 			have_ets_tc = true;
 			bw_sum += ets->tc_tx_bw[i];
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (have_ets_tc && bw_sum != 100) {
-		if (bw_sum || (!bw_sum && !zero_sum_allowed))
+	अगर (have_ets_tc && bw_sum != 100) अणु
+		अगर (bw_sum || (!bw_sum && !zero_sum_allowed))
 			netdev_err(netdev,
 				   "Failed to validate ETS: BW sum is illegal\n");
-		return -EINVAL;
-	}
-	return 0;
-}
+		वापस -EINVAL;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int mlx5e_dcbnl_ieee_setets(struct net_device *netdev,
-				   struct ieee_ets *ets)
-{
-	struct mlx5e_priv *priv = netdev_priv(netdev);
-	int err;
+अटल पूर्णांक mlx5e_dcbnl_ieee_setets(काष्ठा net_device *netdev,
+				   काष्ठा ieee_ets *ets)
+अणु
+	काष्ठा mlx5e_priv *priv = netdev_priv(netdev);
+	पूर्णांक err;
 
-	if (!MLX5_CAP_GEN(priv->mdev, ets))
-		return -EOPNOTSUPP;
+	अगर (!MLX5_CAP_GEN(priv->mdev, ets))
+		वापस -EOPNOTSUPP;
 
 	err = mlx5e_dbcnl_validate_ets(netdev, ets, false);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	err = mlx5e_dcbnl_ieee_setets_core(priv, ets);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mlx5e_dcbnl_ieee_getpfc(struct net_device *dev,
-				   struct ieee_pfc *pfc)
-{
-	struct mlx5e_priv *priv = netdev_priv(dev);
-	struct mlx5_core_dev *mdev = priv->mdev;
-	struct mlx5e_pport_stats *pstats = &priv->stats.pport;
-	int i;
+अटल पूर्णांक mlx5e_dcbnl_ieee_getpfc(काष्ठा net_device *dev,
+				   काष्ठा ieee_pfc *pfc)
+अणु
+	काष्ठा mlx5e_priv *priv = netdev_priv(dev);
+	काष्ठा mlx5_core_dev *mdev = priv->mdev;
+	काष्ठा mlx5e_pport_stats *pstats = &priv->stats.pport;
+	पूर्णांक i;
 
 	pfc->pfc_cap = mlx5_max_tc(mdev) + 1;
-	for (i = 0; i < IEEE_8021QAZ_MAX_TCS; i++) {
-		pfc->requests[i]    = PPORT_PER_PRIO_GET(pstats, i, tx_pause);
-		pfc->indications[i] = PPORT_PER_PRIO_GET(pstats, i, rx_pause);
-	}
+	क्रम (i = 0; i < IEEE_8021QAZ_MAX_TCS; i++) अणु
+		pfc->requests[i]    = PPORT_PER_PRIO_GET(pstats, i, tx_छोड़ो);
+		pfc->indications[i] = PPORT_PER_PRIO_GET(pstats, i, rx_छोड़ो);
+	पूर्ण
 
-	if (MLX5_BUFFER_SUPPORTED(mdev))
+	अगर (MLX5_BUFFER_SUPPORTED(mdev))
 		pfc->delay = priv->dcbx.cable_len;
 
-	return mlx5_query_port_pfc(mdev, &pfc->pfc_en, NULL);
-}
+	वापस mlx5_query_port_pfc(mdev, &pfc->pfc_en, शून्य);
+पूर्ण
 
-static int mlx5e_dcbnl_ieee_setpfc(struct net_device *dev,
-				   struct ieee_pfc *pfc)
-{
-	struct mlx5e_priv *priv = netdev_priv(dev);
-	struct mlx5_core_dev *mdev = priv->mdev;
+अटल पूर्णांक mlx5e_dcbnl_ieee_setpfc(काष्ठा net_device *dev,
+				   काष्ठा ieee_pfc *pfc)
+अणु
+	काष्ठा mlx5e_priv *priv = netdev_priv(dev);
+	काष्ठा mlx5_core_dev *mdev = priv->mdev;
 	u32 old_cable_len = priv->dcbx.cable_len;
-	struct ieee_pfc pfc_new;
+	काष्ठा ieee_pfc pfc_new;
 	u32 changed = 0;
 	u8 curr_pfc_en;
-	int ret = 0;
+	पूर्णांक ret = 0;
 
 	/* pfc_en */
-	mlx5_query_port_pfc(mdev, &curr_pfc_en, NULL);
-	if (pfc->pfc_en != curr_pfc_en) {
+	mlx5_query_port_pfc(mdev, &curr_pfc_en, शून्य);
+	अगर (pfc->pfc_en != curr_pfc_en) अणु
 		ret = mlx5_set_port_pfc(mdev, pfc->pfc_en, pfc->pfc_en);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 		mlx5_toggle_port_link(mdev);
 		changed |= MLX5E_PORT_BUFFER_PFC;
-	}
+	पूर्ण
 
-	if (pfc->delay &&
+	अगर (pfc->delay &&
 	    pfc->delay < MLX5E_MAX_CABLE_LENGTH &&
-	    pfc->delay != priv->dcbx.cable_len) {
+	    pfc->delay != priv->dcbx.cable_len) अणु
 		priv->dcbx.cable_len = pfc->delay;
 		changed |= MLX5E_PORT_BUFFER_CABLE_LEN;
-	}
+	पूर्ण
 
-	if (MLX5_BUFFER_SUPPORTED(mdev)) {
+	अगर (MLX5_BUFFER_SUPPORTED(mdev)) अणु
 		pfc_new.pfc_en = (changed & MLX5E_PORT_BUFFER_PFC) ? pfc->pfc_en : curr_pfc_en;
-		if (priv->dcbx.manual_buffer)
+		अगर (priv->dcbx.manual_buffer)
 			ret = mlx5e_port_manual_buffer_config(priv, changed,
 							      dev->mtu, &pfc_new,
-							      NULL, NULL);
+							      शून्य, शून्य);
 
-		if (ret && (changed & MLX5E_PORT_BUFFER_CABLE_LEN))
+		अगर (ret && (changed & MLX5E_PORT_BUFFER_CABLE_LEN))
 			priv->dcbx.cable_len = old_cable_len;
-	}
+	पूर्ण
 
-	if (!ret) {
+	अगर (!ret) अणु
 		mlx5e_dbg(HW, priv,
 			  "%s: PFC per priority bit mask: 0x%x\n",
 			  __func__, pfc->pfc_en);
-	}
-	return ret;
-}
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static u8 mlx5e_dcbnl_getdcbx(struct net_device *dev)
-{
-	struct mlx5e_priv *priv = netdev_priv(dev);
+अटल u8 mlx5e_dcbnl_getdcbx(काष्ठा net_device *dev)
+अणु
+	काष्ठा mlx5e_priv *priv = netdev_priv(dev);
 
-	return priv->dcbx.cap;
-}
+	वापस priv->dcbx.cap;
+पूर्ण
 
-static u8 mlx5e_dcbnl_setdcbx(struct net_device *dev, u8 mode)
-{
-	struct mlx5e_priv *priv = netdev_priv(dev);
-	struct mlx5e_dcbx *dcbx = &priv->dcbx;
+अटल u8 mlx5e_dcbnl_setdcbx(काष्ठा net_device *dev, u8 mode)
+अणु
+	काष्ठा mlx5e_priv *priv = netdev_priv(dev);
+	काष्ठा mlx5e_dcbx *dcbx = &priv->dcbx;
 
-	if (mode & DCB_CAP_DCBX_LLD_MANAGED)
-		return 1;
+	अगर (mode & DCB_CAP_DCBX_LLD_MANAGED)
+		वापस 1;
 
-	if ((!mode) && MLX5_CAP_GEN(priv->mdev, dcbx)) {
-		if (dcbx->mode == MLX5E_DCBX_PARAM_VER_OPER_AUTO)
-			return 0;
+	अगर ((!mode) && MLX5_CAP_GEN(priv->mdev, dcbx)) अणु
+		अगर (dcbx->mode == MLX5E_DCBX_PARAM_VER_OPER_AUTO)
+			वापस 0;
 
 		/* set dcbx to fw controlled */
-		if (!mlx5e_dcbnl_set_dcbx_mode(priv, MLX5E_DCBX_PARAM_VER_OPER_AUTO)) {
+		अगर (!mlx5e_dcbnl_set_dcbx_mode(priv, MLX5E_DCBX_PARAM_VER_OPER_AUTO)) अणु
 			dcbx->mode = MLX5E_DCBX_PARAM_VER_OPER_AUTO;
 			dcbx->cap &= ~DCB_CAP_DCBX_HOST;
-			return 0;
-		}
+			वापस 0;
+		पूर्ण
 
-		return 1;
-	}
+		वापस 1;
+	पूर्ण
 
-	if (!(mode & DCB_CAP_DCBX_HOST))
-		return 1;
+	अगर (!(mode & DCB_CAP_DCBX_HOST))
+		वापस 1;
 
-	if (mlx5e_dcbnl_switch_to_host_mode(netdev_priv(dev)))
-		return 1;
+	अगर (mlx5e_dcbnl_चयन_to_host_mode(netdev_priv(dev)))
+		वापस 1;
 
 	dcbx->cap = mode;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mlx5e_dcbnl_ieee_setapp(struct net_device *dev, struct dcb_app *app)
-{
-	struct mlx5e_priv *priv = netdev_priv(dev);
-	struct dcb_app temp;
+अटल पूर्णांक mlx5e_dcbnl_ieee_setapp(काष्ठा net_device *dev, काष्ठा dcb_app *app)
+अणु
+	काष्ठा mlx5e_priv *priv = netdev_priv(dev);
+	काष्ठा dcb_app temp;
 	bool is_new;
-	int err;
+	पूर्णांक err;
 
-	if (!MLX5_CAP_GEN(priv->mdev, vport_group_manager) ||
+	अगर (!MLX5_CAP_GEN(priv->mdev, vport_group_manager) ||
 	    !MLX5_DSCP_SUPPORTED(priv->mdev))
-		return -EOPNOTSUPP;
+		वापस -EOPNOTSUPP;
 
-	if ((app->selector != IEEE_8021QAZ_APP_SEL_DSCP) ||
+	अगर ((app->selector != IEEE_8021QAZ_APP_SEL_DSCP) ||
 	    (app->protocol >= MLX5E_MAX_DSCP))
-		return -EINVAL;
+		वापस -EINVAL;
 
 	/* Save the old entry info */
 	temp.selector = IEEE_8021QAZ_APP_SEL_DSCP;
 	temp.protocol = app->protocol;
 	temp.priority = priv->dcbx_dp.dscp2prio[app->protocol];
 
-	/* Check if need to switch to dscp trust state */
-	if (!priv->dcbx.dscp_app_cnt) {
+	/* Check अगर need to चयन to dscp trust state */
+	अगर (!priv->dcbx.dscp_app_cnt) अणु
 		err =  mlx5e_set_trust_state(priv, MLX5_QPTS_TRUST_DSCP);
-		if (err)
-			return err;
-	}
+		अगर (err)
+			वापस err;
+	पूर्ण
 
-	/* Skip the fw command if new and old mapping are the same */
-	if (app->priority != priv->dcbx_dp.dscp2prio[app->protocol]) {
+	/* Skip the fw command अगर new and old mapping are the same */
+	अगर (app->priority != priv->dcbx_dp.dscp2prio[app->protocol]) अणु
 		err = mlx5e_set_dscp2prio(priv, app->protocol, app->priority);
-		if (err)
-			goto fw_err;
-	}
+		अगर (err)
+			जाओ fw_err;
+	पूर्ण
 
-	/* Delete the old entry if exists */
+	/* Delete the old entry अगर exists */
 	is_new = false;
 	err = dcb_ieee_delapp(dev, &temp);
-	if (err)
+	अगर (err)
 		is_new = true;
 
 	/* Add new entry and update counter */
 	err = dcb_ieee_setapp(dev, app);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	if (is_new)
+	अगर (is_new)
 		priv->dcbx.dscp_app_cnt++;
 
-	return err;
+	वापस err;
 
 fw_err:
 	mlx5e_set_trust_state(priv, MLX5_QPTS_TRUST_PCP);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int mlx5e_dcbnl_ieee_delapp(struct net_device *dev, struct dcb_app *app)
-{
-	struct mlx5e_priv *priv = netdev_priv(dev);
-	int err;
+अटल पूर्णांक mlx5e_dcbnl_ieee_delapp(काष्ठा net_device *dev, काष्ठा dcb_app *app)
+अणु
+	काष्ठा mlx5e_priv *priv = netdev_priv(dev);
+	पूर्णांक err;
 
-	if  (!MLX5_CAP_GEN(priv->mdev, vport_group_manager) ||
+	अगर  (!MLX5_CAP_GEN(priv->mdev, vport_group_manager) ||
 	     !MLX5_DSCP_SUPPORTED(priv->mdev))
-		return -EOPNOTSUPP;
+		वापस -EOPNOTSUPP;
 
-	if ((app->selector != IEEE_8021QAZ_APP_SEL_DSCP) ||
+	अगर ((app->selector != IEEE_8021QAZ_APP_SEL_DSCP) ||
 	    (app->protocol >= MLX5E_MAX_DSCP))
-		return -EINVAL;
+		वापस -EINVAL;
 
-	/* Skip if no dscp app entry */
-	if (!priv->dcbx.dscp_app_cnt)
-		return -ENOENT;
+	/* Skip अगर no dscp app entry */
+	अगर (!priv->dcbx.dscp_app_cnt)
+		वापस -ENOENT;
 
-	/* Check if the entry matches fw setting */
-	if (app->priority != priv->dcbx_dp.dscp2prio[app->protocol])
-		return -ENOENT;
+	/* Check अगर the entry matches fw setting */
+	अगर (app->priority != priv->dcbx_dp.dscp2prio[app->protocol])
+		वापस -ENOENT;
 
 	/* Delete the app entry */
 	err = dcb_ieee_delapp(dev, app);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	/* Reset the priority mapping back to zero */
 	err = mlx5e_set_dscp2prio(priv, app->protocol, 0);
-	if (err)
-		goto fw_err;
+	अगर (err)
+		जाओ fw_err;
 
 	priv->dcbx.dscp_app_cnt--;
 
-	/* Check if need to switch to pcp trust state */
-	if (!priv->dcbx.dscp_app_cnt)
+	/* Check अगर need to चयन to pcp trust state */
+	अगर (!priv->dcbx.dscp_app_cnt)
 		err = mlx5e_set_trust_state(priv, MLX5_QPTS_TRUST_PCP);
 
-	return err;
+	वापस err;
 
 fw_err:
 	mlx5e_set_trust_state(priv, MLX5_QPTS_TRUST_PCP);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int mlx5e_dcbnl_ieee_getmaxrate(struct net_device *netdev,
-				       struct ieee_maxrate *maxrate)
-{
-	struct mlx5e_priv *priv    = netdev_priv(netdev);
-	struct mlx5_core_dev *mdev = priv->mdev;
+अटल पूर्णांक mlx5e_dcbnl_ieee_geपंचांगaxrate(काष्ठा net_device *netdev,
+				       काष्ठा ieee_maxrate *maxrate)
+अणु
+	काष्ठा mlx5e_priv *priv    = netdev_priv(netdev);
+	काष्ठा mlx5_core_dev *mdev = priv->mdev;
 	u8 max_bw_value[IEEE_8021QAZ_MAX_TCS];
 	u8 max_bw_unit[IEEE_8021QAZ_MAX_TCS];
-	int err;
-	int i;
+	पूर्णांक err;
+	पूर्णांक i;
 
 	err = mlx5_query_port_ets_rate_limit(mdev, max_bw_value, max_bw_unit);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	memset(maxrate->tc_maxrate, 0, sizeof(maxrate->tc_maxrate));
+	स_रखो(maxrate->tc_maxrate, 0, माप(maxrate->tc_maxrate));
 
-	for (i = 0; i <= mlx5_max_tc(mdev); i++) {
-		switch (max_bw_unit[i]) {
-		case MLX5_100_MBPS_UNIT:
+	क्रम (i = 0; i <= mlx5_max_tc(mdev); i++) अणु
+		चयन (max_bw_unit[i]) अणु
+		हाल MLX5_100_MBPS_UNIT:
 			maxrate->tc_maxrate[i] = max_bw_value[i] * MLX5E_100MB;
-			break;
-		case MLX5_GBPS_UNIT:
+			अवरोध;
+		हाल MLX5_GBPS_UNIT:
 			maxrate->tc_maxrate[i] = max_bw_value[i] * MLX5E_1GB;
-			break;
-		case MLX5_BW_NO_LIMIT:
-			break;
-		default:
+			अवरोध;
+		हाल MLX5_BW_NO_LIMIT:
+			अवरोध;
+		शेष:
 			WARN(true, "non-supported BW unit");
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mlx5e_dcbnl_ieee_setmaxrate(struct net_device *netdev,
-				       struct ieee_maxrate *maxrate)
-{
-	struct mlx5e_priv *priv    = netdev_priv(netdev);
-	struct mlx5_core_dev *mdev = priv->mdev;
+अटल पूर्णांक mlx5e_dcbnl_ieee_seपंचांगaxrate(काष्ठा net_device *netdev,
+				       काष्ठा ieee_maxrate *maxrate)
+अणु
+	काष्ठा mlx5e_priv *priv    = netdev_priv(netdev);
+	काष्ठा mlx5_core_dev *mdev = priv->mdev;
 	u8 max_bw_value[IEEE_8021QAZ_MAX_TCS];
 	u8 max_bw_unit[IEEE_8021QAZ_MAX_TCS];
 	__u64 upper_limit_mbps = roundup(255 * MLX5E_100MB, MLX5E_1GB);
-	int i;
+	पूर्णांक i;
 
-	memset(max_bw_value, 0, sizeof(max_bw_value));
-	memset(max_bw_unit, 0, sizeof(max_bw_unit));
+	स_रखो(max_bw_value, 0, माप(max_bw_value));
+	स_रखो(max_bw_unit, 0, माप(max_bw_unit));
 
-	for (i = 0; i <= mlx5_max_tc(mdev); i++) {
-		if (!maxrate->tc_maxrate[i]) {
+	क्रम (i = 0; i <= mlx5_max_tc(mdev); i++) अणु
+		अगर (!maxrate->tc_maxrate[i]) अणु
 			max_bw_unit[i]  = MLX5_BW_NO_LIMIT;
-			continue;
-		}
-		if (maxrate->tc_maxrate[i] < upper_limit_mbps) {
-			max_bw_value[i] = div_u64(maxrate->tc_maxrate[i],
+			जारी;
+		पूर्ण
+		अगर (maxrate->tc_maxrate[i] < upper_limit_mbps) अणु
+			max_bw_value[i] = भाग_u64(maxrate->tc_maxrate[i],
 						  MLX5E_100MB);
 			max_bw_value[i] = max_bw_value[i] ? max_bw_value[i] : 1;
 			max_bw_unit[i]  = MLX5_100_MBPS_UNIT;
-		} else {
-			max_bw_value[i] = div_u64(maxrate->tc_maxrate[i],
+		पूर्ण अन्यथा अणु
+			max_bw_value[i] = भाग_u64(maxrate->tc_maxrate[i],
 						  MLX5E_1GB);
 			max_bw_unit[i]  = MLX5_GBPS_UNIT;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	for (i = 0; i < IEEE_8021QAZ_MAX_TCS; i++) {
+	क्रम (i = 0; i < IEEE_8021QAZ_MAX_TCS; i++) अणु
 		mlx5e_dbg(HW, priv, "%s: tc_%d <=> max_bw %d Gbps\n",
 			  __func__, i, max_bw_value[i]);
-	}
+	पूर्ण
 
-	return mlx5_modify_port_ets_rate_limit(mdev, max_bw_value, max_bw_unit);
-}
+	वापस mlx5_modअगरy_port_ets_rate_limit(mdev, max_bw_value, max_bw_unit);
+पूर्ण
 
-static u8 mlx5e_dcbnl_setall(struct net_device *netdev)
-{
-	struct mlx5e_priv *priv = netdev_priv(netdev);
-	struct mlx5e_cee_config *cee_cfg = &priv->dcbx.cee_cfg;
-	struct mlx5_core_dev *mdev = priv->mdev;
-	struct ieee_ets ets;
-	struct ieee_pfc pfc;
-	int err = -EOPNOTSUPP;
-	int i;
+अटल u8 mlx5e_dcbnl_setall(काष्ठा net_device *netdev)
+अणु
+	काष्ठा mlx5e_priv *priv = netdev_priv(netdev);
+	काष्ठा mlx5e_cee_config *cee_cfg = &priv->dcbx.cee_cfg;
+	काष्ठा mlx5_core_dev *mdev = priv->mdev;
+	काष्ठा ieee_ets ets;
+	काष्ठा ieee_pfc pfc;
+	पूर्णांक err = -EOPNOTSUPP;
+	पूर्णांक i;
 
-	if (!MLX5_CAP_GEN(mdev, ets))
-		goto out;
+	अगर (!MLX5_CAP_GEN(mdev, ets))
+		जाओ out;
 
-	memset(&ets, 0, sizeof(ets));
-	memset(&pfc, 0, sizeof(pfc));
+	स_रखो(&ets, 0, माप(ets));
+	स_रखो(&pfc, 0, माप(pfc));
 
 	ets.ets_cap = IEEE_8021QAZ_MAX_TCS;
-	for (i = 0; i < CEE_DCBX_MAX_PGS; i++) {
+	क्रम (i = 0; i < CEE_DCBX_MAX_PGS; i++) अणु
 		ets.tc_tx_bw[i] = cee_cfg->pg_bw_pct[i];
 		ets.tc_rx_bw[i] = cee_cfg->pg_bw_pct[i];
 		ets.tc_tsa[i]   = IEEE_8021QAZ_TSA_ETS;
@@ -642,354 +643,354 @@ static u8 mlx5e_dcbnl_setall(struct net_device *netdev)
 			  "%s: Priority group %d: tx_bw %d, rx_bw %d, prio_tc %d\n",
 			  __func__, i, ets.tc_tx_bw[i], ets.tc_rx_bw[i],
 			  ets.prio_tc[i]);
-	}
+	पूर्ण
 
 	err = mlx5e_dbcnl_validate_ets(netdev, &ets, true);
-	if (err)
-		goto out;
+	अगर (err)
+		जाओ out;
 
 	err = mlx5e_dcbnl_ieee_setets_core(priv, &ets);
-	if (err) {
+	अगर (err) अणु
 		netdev_err(netdev,
 			   "%s, Failed to set ETS: %d\n", __func__, err);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	/* Set PFC */
 	pfc.pfc_cap = mlx5_max_tc(mdev) + 1;
-	if (!cee_cfg->pfc_enable)
+	अगर (!cee_cfg->pfc_enable)
 		pfc.pfc_en = 0;
-	else
-		for (i = 0; i < CEE_DCBX_MAX_PRIO; i++)
+	अन्यथा
+		क्रम (i = 0; i < CEE_DCBX_MAX_PRIO; i++)
 			pfc.pfc_en |= cee_cfg->pfc_setting[i] << i;
 
 	err = mlx5e_dcbnl_ieee_setpfc(netdev, &pfc);
-	if (err) {
+	अगर (err) अणु
 		netdev_err(netdev,
 			   "%s, Failed to set PFC: %d\n", __func__, err);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 out:
-	return err ? MLX5_DCB_NO_CHG : MLX5_DCB_CHG_RESET;
-}
+	वापस err ? MLX5_DCB_NO_CHG : MLX5_DCB_CHG_RESET;
+पूर्ण
 
-static u8 mlx5e_dcbnl_getstate(struct net_device *netdev)
-{
-	return MLX5E_CEE_STATE_UP;
-}
+अटल u8 mlx5e_dcbnl_माला_लोtate(काष्ठा net_device *netdev)
+अणु
+	वापस MLX5E_CEE_STATE_UP;
+पूर्ण
 
-static void mlx5e_dcbnl_getpermhwaddr(struct net_device *netdev,
+अटल व्योम mlx5e_dcbnl_getpermhwaddr(काष्ठा net_device *netdev,
 				      u8 *perm_addr)
-{
-	struct mlx5e_priv *priv = netdev_priv(netdev);
+अणु
+	काष्ठा mlx5e_priv *priv = netdev_priv(netdev);
 
-	if (!perm_addr)
-		return;
+	अगर (!perm_addr)
+		वापस;
 
-	memset(perm_addr, 0xff, MAX_ADDR_LEN);
+	स_रखो(perm_addr, 0xff, MAX_ADDR_LEN);
 
 	mlx5_query_mac_address(priv->mdev, perm_addr);
-}
+पूर्ण
 
-static void mlx5e_dcbnl_setpgtccfgtx(struct net_device *netdev,
-				     int priority, u8 prio_type,
+अटल व्योम mlx5e_dcbnl_setpgtccfgtx(काष्ठा net_device *netdev,
+				     पूर्णांक priority, u8 prio_type,
 				     u8 pgid, u8 bw_pct, u8 up_map)
-{
-	struct mlx5e_priv *priv = netdev_priv(netdev);
-	struct mlx5e_cee_config *cee_cfg = &priv->dcbx.cee_cfg;
+अणु
+	काष्ठा mlx5e_priv *priv = netdev_priv(netdev);
+	काष्ठा mlx5e_cee_config *cee_cfg = &priv->dcbx.cee_cfg;
 
-	if (priority >= CEE_DCBX_MAX_PRIO) {
+	अगर (priority >= CEE_DCBX_MAX_PRIO) अणु
 		netdev_err(netdev,
 			   "%s, priority is out of range\n", __func__);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (pgid >= CEE_DCBX_MAX_PGS) {
+	अगर (pgid >= CEE_DCBX_MAX_PGS) अणु
 		netdev_err(netdev,
 			   "%s, priority group is out of range\n", __func__);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	cee_cfg->prio_to_pg_map[priority] = pgid;
-}
+पूर्ण
 
-static void mlx5e_dcbnl_setpgbwgcfgtx(struct net_device *netdev,
-				      int pgid, u8 bw_pct)
-{
-	struct mlx5e_priv *priv = netdev_priv(netdev);
-	struct mlx5e_cee_config *cee_cfg = &priv->dcbx.cee_cfg;
+अटल व्योम mlx5e_dcbnl_setpgbwgcfgtx(काष्ठा net_device *netdev,
+				      पूर्णांक pgid, u8 bw_pct)
+अणु
+	काष्ठा mlx5e_priv *priv = netdev_priv(netdev);
+	काष्ठा mlx5e_cee_config *cee_cfg = &priv->dcbx.cee_cfg;
 
-	if (pgid >= CEE_DCBX_MAX_PGS) {
+	अगर (pgid >= CEE_DCBX_MAX_PGS) अणु
 		netdev_err(netdev,
 			   "%s, priority group is out of range\n", __func__);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	cee_cfg->pg_bw_pct[pgid] = bw_pct;
-}
+पूर्ण
 
-static void mlx5e_dcbnl_getpgtccfgtx(struct net_device *netdev,
-				     int priority, u8 *prio_type,
+अटल व्योम mlx5e_dcbnl_getpgtccfgtx(काष्ठा net_device *netdev,
+				     पूर्णांक priority, u8 *prio_type,
 				     u8 *pgid, u8 *bw_pct, u8 *up_map)
-{
-	struct mlx5e_priv *priv = netdev_priv(netdev);
-	struct mlx5_core_dev *mdev = priv->mdev;
+अणु
+	काष्ठा mlx5e_priv *priv = netdev_priv(netdev);
+	काष्ठा mlx5_core_dev *mdev = priv->mdev;
 
-	if (!MLX5_CAP_GEN(priv->mdev, ets)) {
+	अगर (!MLX5_CAP_GEN(priv->mdev, ets)) अणु
 		netdev_err(netdev, "%s, ets is not supported\n", __func__);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (priority >= CEE_DCBX_MAX_PRIO) {
+	अगर (priority >= CEE_DCBX_MAX_PRIO) अणु
 		netdev_err(netdev,
 			   "%s, priority is out of range\n", __func__);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	*prio_type = 0;
 	*bw_pct = 0;
 	*up_map = 0;
 
-	if (mlx5_query_port_prio_tc(mdev, priority, pgid))
+	अगर (mlx5_query_port_prio_tc(mdev, priority, pgid))
 		*pgid = 0;
-}
+पूर्ण
 
-static void mlx5e_dcbnl_getpgbwgcfgtx(struct net_device *netdev,
-				      int pgid, u8 *bw_pct)
-{
-	struct ieee_ets ets;
+अटल व्योम mlx5e_dcbnl_getpgbwgcfgtx(काष्ठा net_device *netdev,
+				      पूर्णांक pgid, u8 *bw_pct)
+अणु
+	काष्ठा ieee_ets ets;
 
-	if (pgid >= CEE_DCBX_MAX_PGS) {
+	अगर (pgid >= CEE_DCBX_MAX_PGS) अणु
 		netdev_err(netdev,
 			   "%s, priority group is out of range\n", __func__);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	mlx5e_dcbnl_ieee_getets(netdev, &ets);
 	*bw_pct = ets.tc_tx_bw[pgid];
-}
+पूर्ण
 
-static void mlx5e_dcbnl_setpfccfg(struct net_device *netdev,
-				  int priority, u8 setting)
-{
-	struct mlx5e_priv *priv = netdev_priv(netdev);
-	struct mlx5e_cee_config *cee_cfg = &priv->dcbx.cee_cfg;
+अटल व्योम mlx5e_dcbnl_setpfccfg(काष्ठा net_device *netdev,
+				  पूर्णांक priority, u8 setting)
+अणु
+	काष्ठा mlx5e_priv *priv = netdev_priv(netdev);
+	काष्ठा mlx5e_cee_config *cee_cfg = &priv->dcbx.cee_cfg;
 
-	if (priority >= CEE_DCBX_MAX_PRIO) {
+	अगर (priority >= CEE_DCBX_MAX_PRIO) अणु
 		netdev_err(netdev,
 			   "%s, priority is out of range\n", __func__);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (setting > 1)
-		return;
+	अगर (setting > 1)
+		वापस;
 
 	cee_cfg->pfc_setting[priority] = setting;
-}
+पूर्ण
 
-static int
-mlx5e_dcbnl_get_priority_pfc(struct net_device *netdev,
-			     int priority, u8 *setting)
-{
-	struct ieee_pfc pfc;
-	int err;
+अटल पूर्णांक
+mlx5e_dcbnl_get_priority_pfc(काष्ठा net_device *netdev,
+			     पूर्णांक priority, u8 *setting)
+अणु
+	काष्ठा ieee_pfc pfc;
+	पूर्णांक err;
 
 	err = mlx5e_dcbnl_ieee_getpfc(netdev, &pfc);
 
-	if (err)
+	अगर (err)
 		*setting = 0;
-	else
+	अन्यथा
 		*setting = (pfc.pfc_en >> priority) & 0x01;
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void mlx5e_dcbnl_getpfccfg(struct net_device *netdev,
-				  int priority, u8 *setting)
-{
-	if (priority >= CEE_DCBX_MAX_PRIO) {
+अटल व्योम mlx5e_dcbnl_getpfccfg(काष्ठा net_device *netdev,
+				  पूर्णांक priority, u8 *setting)
+अणु
+	अगर (priority >= CEE_DCBX_MAX_PRIO) अणु
 		netdev_err(netdev,
 			   "%s, priority is out of range\n", __func__);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (!setting)
-		return;
+	अगर (!setting)
+		वापस;
 
 	mlx5e_dcbnl_get_priority_pfc(netdev, priority, setting);
-}
+पूर्ण
 
-static u8 mlx5e_dcbnl_getcap(struct net_device *netdev,
-			     int capid, u8 *cap)
-{
-	struct mlx5e_priv *priv = netdev_priv(netdev);
-	struct mlx5_core_dev *mdev = priv->mdev;
+अटल u8 mlx5e_dcbnl_अ_लोap(काष्ठा net_device *netdev,
+			     पूर्णांक capid, u8 *cap)
+अणु
+	काष्ठा mlx5e_priv *priv = netdev_priv(netdev);
+	काष्ठा mlx5_core_dev *mdev = priv->mdev;
 	u8 rval = 0;
 
-	switch (capid) {
-	case DCB_CAP_ATTR_PG:
+	चयन (capid) अणु
+	हाल DCB_CAP_ATTR_PG:
 		*cap = true;
-		break;
-	case DCB_CAP_ATTR_PFC:
+		अवरोध;
+	हाल DCB_CAP_ATTR_PFC:
 		*cap = true;
-		break;
-	case DCB_CAP_ATTR_UP2TC:
+		अवरोध;
+	हाल DCB_CAP_ATTR_UP2TC:
 		*cap = false;
-		break;
-	case DCB_CAP_ATTR_PG_TCS:
+		अवरोध;
+	हाल DCB_CAP_ATTR_PG_TCS:
 		*cap = 1 << mlx5_max_tc(mdev);
-		break;
-	case DCB_CAP_ATTR_PFC_TCS:
+		अवरोध;
+	हाल DCB_CAP_ATTR_PFC_TCS:
 		*cap = 1 << mlx5_max_tc(mdev);
-		break;
-	case DCB_CAP_ATTR_GSP:
+		अवरोध;
+	हाल DCB_CAP_ATTR_GSP:
 		*cap = false;
-		break;
-	case DCB_CAP_ATTR_BCN:
+		अवरोध;
+	हाल DCB_CAP_ATTR_BCN:
 		*cap = false;
-		break;
-	case DCB_CAP_ATTR_DCBX:
+		अवरोध;
+	हाल DCB_CAP_ATTR_DCBX:
 		*cap = priv->dcbx.cap |
 		       DCB_CAP_DCBX_VER_CEE |
 		       DCB_CAP_DCBX_VER_IEEE;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		*cap = 0;
 		rval = 1;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return rval;
-}
+	वापस rval;
+पूर्ण
 
-static int mlx5e_dcbnl_getnumtcs(struct net_device *netdev,
-				 int tcs_id, u8 *num)
-{
-	struct mlx5e_priv *priv = netdev_priv(netdev);
-	struct mlx5_core_dev *mdev = priv->mdev;
+अटल पूर्णांक mlx5e_dcbnl_getnumtcs(काष्ठा net_device *netdev,
+				 पूर्णांक tcs_id, u8 *num)
+अणु
+	काष्ठा mlx5e_priv *priv = netdev_priv(netdev);
+	काष्ठा mlx5_core_dev *mdev = priv->mdev;
 
-	switch (tcs_id) {
-	case DCB_NUMTCS_ATTR_PG:
-	case DCB_NUMTCS_ATTR_PFC:
+	चयन (tcs_id) अणु
+	हाल DCB_NUMTCS_ATTR_PG:
+	हाल DCB_NUMTCS_ATTR_PFC:
 		*num = mlx5_max_tc(mdev) + 1;
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static u8 mlx5e_dcbnl_getpfcstate(struct net_device *netdev)
-{
-	struct ieee_pfc pfc;
+अटल u8 mlx5e_dcbnl_getpfcstate(काष्ठा net_device *netdev)
+अणु
+	काष्ठा ieee_pfc pfc;
 
-	if (mlx5e_dcbnl_ieee_getpfc(netdev, &pfc))
-		return MLX5E_CEE_STATE_DOWN;
+	अगर (mlx5e_dcbnl_ieee_getpfc(netdev, &pfc))
+		वापस MLX5E_CEE_STATE_DOWN;
 
-	return pfc.pfc_en ? MLX5E_CEE_STATE_UP : MLX5E_CEE_STATE_DOWN;
-}
+	वापस pfc.pfc_en ? MLX5E_CEE_STATE_UP : MLX5E_CEE_STATE_DOWN;
+पूर्ण
 
-static void mlx5e_dcbnl_setpfcstate(struct net_device *netdev, u8 state)
-{
-	struct mlx5e_priv *priv = netdev_priv(netdev);
-	struct mlx5e_cee_config *cee_cfg = &priv->dcbx.cee_cfg;
+अटल व्योम mlx5e_dcbnl_setpfcstate(काष्ठा net_device *netdev, u8 state)
+अणु
+	काष्ठा mlx5e_priv *priv = netdev_priv(netdev);
+	काष्ठा mlx5e_cee_config *cee_cfg = &priv->dcbx.cee_cfg;
 
-	if ((state != MLX5E_CEE_STATE_UP) && (state != MLX5E_CEE_STATE_DOWN))
-		return;
+	अगर ((state != MLX5E_CEE_STATE_UP) && (state != MLX5E_CEE_STATE_DOWN))
+		वापस;
 
 	cee_cfg->pfc_enable = state;
-}
+पूर्ण
 
-static int mlx5e_dcbnl_getbuffer(struct net_device *dev,
-				 struct dcbnl_buffer *dcb_buffer)
-{
-	struct mlx5e_priv *priv = netdev_priv(dev);
-	struct mlx5_core_dev *mdev = priv->mdev;
-	struct mlx5e_port_buffer port_buffer;
+अटल पूर्णांक mlx5e_dcbnl_getbuffer(काष्ठा net_device *dev,
+				 काष्ठा dcbnl_buffer *dcb_buffer)
+अणु
+	काष्ठा mlx5e_priv *priv = netdev_priv(dev);
+	काष्ठा mlx5_core_dev *mdev = priv->mdev;
+	काष्ठा mlx5e_port_buffer port_buffer;
 	u8 buffer[MLX5E_MAX_PRIORITY];
-	int i, err;
+	पूर्णांक i, err;
 
-	if (!MLX5_BUFFER_SUPPORTED(mdev))
-		return -EOPNOTSUPP;
+	अगर (!MLX5_BUFFER_SUPPORTED(mdev))
+		वापस -EOPNOTSUPP;
 
 	err = mlx5e_port_query_priority2buffer(mdev, buffer);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	for (i = 0; i < MLX5E_MAX_PRIORITY; i++)
+	क्रम (i = 0; i < MLX5E_MAX_PRIORITY; i++)
 		dcb_buffer->prio2buffer[i] = buffer[i];
 
 	err = mlx5e_port_query_buffer(priv, &port_buffer);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	for (i = 0; i < MLX5E_MAX_BUFFER; i++)
+	क्रम (i = 0; i < MLX5E_MAX_BUFFER; i++)
 		dcb_buffer->buffer_size[i] = port_buffer.buffer[i].size;
 	dcb_buffer->total_size = port_buffer.port_buffer_size;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mlx5e_dcbnl_setbuffer(struct net_device *dev,
-				 struct dcbnl_buffer *dcb_buffer)
-{
-	struct mlx5e_priv *priv = netdev_priv(dev);
-	struct mlx5_core_dev *mdev = priv->mdev;
-	struct mlx5e_port_buffer port_buffer;
+अटल पूर्णांक mlx5e_dcbnl_रखो_बफfer(काष्ठा net_device *dev,
+				 काष्ठा dcbnl_buffer *dcb_buffer)
+अणु
+	काष्ठा mlx5e_priv *priv = netdev_priv(dev);
+	काष्ठा mlx5_core_dev *mdev = priv->mdev;
+	काष्ठा mlx5e_port_buffer port_buffer;
 	u8 old_prio2buffer[MLX5E_MAX_PRIORITY];
-	u32 *buffer_size = NULL;
-	u8 *prio2buffer = NULL;
+	u32 *buffer_size = शून्य;
+	u8 *prio2buffer = शून्य;
 	u32 changed = 0;
-	int i, err;
+	पूर्णांक i, err;
 
-	if (!MLX5_BUFFER_SUPPORTED(mdev))
-		return -EOPNOTSUPP;
+	अगर (!MLX5_BUFFER_SUPPORTED(mdev))
+		वापस -EOPNOTSUPP;
 
-	for (i = 0; i < DCBX_MAX_BUFFERS; i++)
+	क्रम (i = 0; i < DCBX_MAX_BUFFERS; i++)
 		mlx5_core_dbg(mdev, "buffer[%d]=%d\n", i, dcb_buffer->buffer_size[i]);
 
-	for (i = 0; i < MLX5E_MAX_PRIORITY; i++)
+	क्रम (i = 0; i < MLX5E_MAX_PRIORITY; i++)
 		mlx5_core_dbg(mdev, "priority %d buffer%d\n", i, dcb_buffer->prio2buffer[i]);
 
 	err = mlx5e_port_query_priority2buffer(mdev, old_prio2buffer);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	for (i = 0; i < MLX5E_MAX_PRIORITY; i++) {
-		if (dcb_buffer->prio2buffer[i] != old_prio2buffer[i]) {
+	क्रम (i = 0; i < MLX5E_MAX_PRIORITY; i++) अणु
+		अगर (dcb_buffer->prio2buffer[i] != old_prio2buffer[i]) अणु
 			changed |= MLX5E_PORT_BUFFER_PRIO2BUFFER;
 			prio2buffer = dcb_buffer->prio2buffer;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
 	err = mlx5e_port_query_buffer(priv, &port_buffer);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	for (i = 0; i < MLX5E_MAX_BUFFER; i++) {
-		if (port_buffer.buffer[i].size != dcb_buffer->buffer_size[i]) {
+	क्रम (i = 0; i < MLX5E_MAX_BUFFER; i++) अणु
+		अगर (port_buffer.buffer[i].size != dcb_buffer->buffer_size[i]) अणु
 			changed |= MLX5E_PORT_BUFFER_SIZE;
 			buffer_size = dcb_buffer->buffer_size;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	if (!changed)
-		return 0;
+	अगर (!changed)
+		वापस 0;
 
 	priv->dcbx.manual_buffer = true;
-	err = mlx5e_port_manual_buffer_config(priv, changed, dev->mtu, NULL,
+	err = mlx5e_port_manual_buffer_config(priv, changed, dev->mtu, शून्य,
 					      buffer_size, prio2buffer);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static const struct dcbnl_rtnl_ops mlx5e_dcbnl_ops = {
+अटल स्थिर काष्ठा dcbnl_rtnl_ops mlx5e_dcbnl_ops = अणु
 	.ieee_getets	= mlx5e_dcbnl_ieee_getets,
 	.ieee_setets	= mlx5e_dcbnl_ieee_setets,
-	.ieee_getmaxrate = mlx5e_dcbnl_ieee_getmaxrate,
-	.ieee_setmaxrate = mlx5e_dcbnl_ieee_setmaxrate,
+	.ieee_geपंचांगaxrate = mlx5e_dcbnl_ieee_geपंचांगaxrate,
+	.ieee_seपंचांगaxrate = mlx5e_dcbnl_ieee_seपंचांगaxrate,
 	.ieee_getpfc	= mlx5e_dcbnl_ieee_getpfc,
 	.ieee_setpfc	= mlx5e_dcbnl_ieee_setpfc,
 	.ieee_setapp    = mlx5e_dcbnl_ieee_setapp,
@@ -997,11 +998,11 @@ static const struct dcbnl_rtnl_ops mlx5e_dcbnl_ops = {
 	.getdcbx	= mlx5e_dcbnl_getdcbx,
 	.setdcbx	= mlx5e_dcbnl_setdcbx,
 	.dcbnl_getbuffer = mlx5e_dcbnl_getbuffer,
-	.dcbnl_setbuffer = mlx5e_dcbnl_setbuffer,
+	.dcbnl_रखो_बफfer = mlx5e_dcbnl_रखो_बफfer,
 
-/* CEE interfaces */
+/* CEE पूर्णांकerfaces */
 	.setall         = mlx5e_dcbnl_setall,
-	.getstate       = mlx5e_dcbnl_getstate,
+	.माला_लोtate       = mlx5e_dcbnl_माला_लोtate,
 	.getpermhwaddr  = mlx5e_dcbnl_getpermhwaddr,
 
 	.setpgtccfgtx   = mlx5e_dcbnl_setpgtccfgtx,
@@ -1011,236 +1012,236 @@ static const struct dcbnl_rtnl_ops mlx5e_dcbnl_ops = {
 
 	.setpfccfg      = mlx5e_dcbnl_setpfccfg,
 	.getpfccfg      = mlx5e_dcbnl_getpfccfg,
-	.getcap         = mlx5e_dcbnl_getcap,
+	.अ_लोap         = mlx5e_dcbnl_अ_लोap,
 	.getnumtcs      = mlx5e_dcbnl_getnumtcs,
 	.getpfcstate    = mlx5e_dcbnl_getpfcstate,
 	.setpfcstate    = mlx5e_dcbnl_setpfcstate,
-};
+पूर्ण;
 
-void mlx5e_dcbnl_build_netdev(struct net_device *netdev)
-{
-	struct mlx5e_priv *priv = netdev_priv(netdev);
-	struct mlx5_core_dev *mdev = priv->mdev;
+व्योम mlx5e_dcbnl_build_netdev(काष्ठा net_device *netdev)
+अणु
+	काष्ठा mlx5e_priv *priv = netdev_priv(netdev);
+	काष्ठा mlx5_core_dev *mdev = priv->mdev;
 
-	if (MLX5_CAP_GEN(mdev, vport_group_manager) && MLX5_CAP_GEN(mdev, qos))
+	अगर (MLX5_CAP_GEN(mdev, vport_group_manager) && MLX5_CAP_GEN(mdev, qos))
 		netdev->dcbnl_ops = &mlx5e_dcbnl_ops;
-}
+पूर्ण
 
-void mlx5e_dcbnl_build_rep_netdev(struct net_device *netdev)
-{
-	struct mlx5e_priv *priv = netdev_priv(netdev);
-	struct mlx5_core_dev *mdev = priv->mdev;
+व्योम mlx5e_dcbnl_build_rep_netdev(काष्ठा net_device *netdev)
+अणु
+	काष्ठा mlx5e_priv *priv = netdev_priv(netdev);
+	काष्ठा mlx5_core_dev *mdev = priv->mdev;
 
-	if (MLX5_CAP_GEN(mdev, qos))
+	अगर (MLX5_CAP_GEN(mdev, qos))
 		netdev->dcbnl_ops = &mlx5e_dcbnl_ops;
-}
+पूर्ण
 
-static void mlx5e_dcbnl_query_dcbx_mode(struct mlx5e_priv *priv,
-					enum mlx5_dcbx_oper_mode *mode)
-{
+अटल व्योम mlx5e_dcbnl_query_dcbx_mode(काष्ठा mlx5e_priv *priv,
+					क्रमागत mlx5_dcbx_oper_mode *mode)
+अणु
 	u32 out[MLX5_ST_SZ_DW(dcbx_param)];
 
 	*mode = MLX5E_DCBX_PARAM_VER_OPER_HOST;
 
-	if (!mlx5_query_port_dcbx_param(priv->mdev, out))
+	अगर (!mlx5_query_port_dcbx_param(priv->mdev, out))
 		*mode = MLX5_GET(dcbx_param, out, version_oper);
 
-	/* From driver's point of view, we only care if the mode
+	/* From driver's poपूर्णांक of view, we only care अगर the mode
 	 * is host (HOST) or non-host (AUTO)
 	 */
-	if (*mode != MLX5E_DCBX_PARAM_VER_OPER_HOST)
+	अगर (*mode != MLX5E_DCBX_PARAM_VER_OPER_HOST)
 		*mode = MLX5E_DCBX_PARAM_VER_OPER_AUTO;
-}
+पूर्ण
 
-static void mlx5e_ets_init(struct mlx5e_priv *priv)
-{
-	struct ieee_ets ets;
-	int err;
-	int i;
+अटल व्योम mlx5e_ets_init(काष्ठा mlx5e_priv *priv)
+अणु
+	काष्ठा ieee_ets ets;
+	पूर्णांक err;
+	पूर्णांक i;
 
-	if (!MLX5_CAP_GEN(priv->mdev, ets))
-		return;
+	अगर (!MLX5_CAP_GEN(priv->mdev, ets))
+		वापस;
 
-	memset(&ets, 0, sizeof(ets));
+	स_रखो(&ets, 0, माप(ets));
 	ets.ets_cap = mlx5_max_tc(priv->mdev) + 1;
-	for (i = 0; i < ets.ets_cap; i++) {
+	क्रम (i = 0; i < ets.ets_cap; i++) अणु
 		ets.tc_tx_bw[i] = MLX5E_MAX_BW_ALLOC;
 		ets.tc_tsa[i] = IEEE_8021QAZ_TSA_VENDOR;
 		ets.prio_tc[i] = i;
-	}
+	पूर्ण
 
-	if (ets.ets_cap > 1) {
-		/* tclass[prio=0]=1, tclass[prio=1]=0, tclass[prio=i]=i (for i>1) */
+	अगर (ets.ets_cap > 1) अणु
+		/* tclass[prio=0]=1, tclass[prio=1]=0, tclass[prio=i]=i (क्रम i>1) */
 		ets.prio_tc[0] = 1;
 		ets.prio_tc[1] = 0;
-	}
+	पूर्ण
 
 	err = mlx5e_dcbnl_ieee_setets_core(priv, &ets);
-	if (err)
+	अगर (err)
 		netdev_err(priv->netdev,
 			   "%s, Failed to init ETS: %d\n", __func__, err);
-}
+पूर्ण
 
-enum {
+क्रमागत अणु
 	INIT,
 	DELETE,
-};
+पूर्ण;
 
-static void mlx5e_dcbnl_dscp_app(struct mlx5e_priv *priv, int action)
-{
-	struct dcb_app temp;
-	int i;
+अटल व्योम mlx5e_dcbnl_dscp_app(काष्ठा mlx5e_priv *priv, पूर्णांक action)
+अणु
+	काष्ठा dcb_app temp;
+	पूर्णांक i;
 
-	if (!MLX5_CAP_GEN(priv->mdev, vport_group_manager))
-		return;
+	अगर (!MLX5_CAP_GEN(priv->mdev, vport_group_manager))
+		वापस;
 
-	if (!MLX5_DSCP_SUPPORTED(priv->mdev))
-		return;
+	अगर (!MLX5_DSCP_SUPPORTED(priv->mdev))
+		वापस;
 
 	/* No SEL_DSCP entry in non DSCP state */
-	if (priv->dcbx_dp.trust_state != MLX5_QPTS_TRUST_DSCP)
-		return;
+	अगर (priv->dcbx_dp.trust_state != MLX5_QPTS_TRUST_DSCP)
+		वापस;
 
 	temp.selector = IEEE_8021QAZ_APP_SEL_DSCP;
-	for (i = 0; i < MLX5E_MAX_DSCP; i++) {
+	क्रम (i = 0; i < MLX5E_MAX_DSCP; i++) अणु
 		temp.protocol = i;
 		temp.priority = priv->dcbx_dp.dscp2prio[i];
-		if (action == INIT)
+		अगर (action == INIT)
 			dcb_ieee_setapp(priv->netdev, &temp);
-		else
+		अन्यथा
 			dcb_ieee_delapp(priv->netdev, &temp);
-	}
+	पूर्ण
 
 	priv->dcbx.dscp_app_cnt = (action == INIT) ? MLX5E_MAX_DSCP : 0;
-}
+पूर्ण
 
-void mlx5e_dcbnl_init_app(struct mlx5e_priv *priv)
-{
+व्योम mlx5e_dcbnl_init_app(काष्ठा mlx5e_priv *priv)
+अणु
 	mlx5e_dcbnl_dscp_app(priv, INIT);
-}
+पूर्ण
 
-void mlx5e_dcbnl_delete_app(struct mlx5e_priv *priv)
-{
+व्योम mlx5e_dcbnl_delete_app(काष्ठा mlx5e_priv *priv)
+अणु
 	mlx5e_dcbnl_dscp_app(priv, DELETE);
-}
+पूर्ण
 
-static void mlx5e_params_calc_trust_tx_min_inline_mode(struct mlx5_core_dev *mdev,
-						       struct mlx5e_params *params,
+अटल व्योम mlx5e_params_calc_trust_tx_min_अंतरभूत_mode(काष्ठा mlx5_core_dev *mdev,
+						       काष्ठा mlx5e_params *params,
 						       u8 trust_state)
-{
-	mlx5_query_min_inline(mdev, &params->tx_min_inline_mode);
-	if (trust_state == MLX5_QPTS_TRUST_DSCP &&
-	    params->tx_min_inline_mode == MLX5_INLINE_MODE_L2)
-		params->tx_min_inline_mode = MLX5_INLINE_MODE_IP;
-}
+अणु
+	mlx5_query_min_अंतरभूत(mdev, &params->tx_min_अंतरभूत_mode);
+	अगर (trust_state == MLX5_QPTS_TRUST_DSCP &&
+	    params->tx_min_अंतरभूत_mode == MLX5_INLINE_MODE_L2)
+		params->tx_min_अंतरभूत_mode = MLX5_INLINE_MODE_IP;
+पूर्ण
 
-static int mlx5e_update_trust_state_hw(struct mlx5e_priv *priv, void *context)
-{
+अटल पूर्णांक mlx5e_update_trust_state_hw(काष्ठा mlx5e_priv *priv, व्योम *context)
+अणु
 	u8 *trust_state = context;
-	int err;
+	पूर्णांक err;
 
 	err = mlx5_set_trust_state(priv->mdev, *trust_state);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 	priv->dcbx_dp.trust_state = *trust_state;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mlx5e_set_trust_state(struct mlx5e_priv *priv, u8 trust_state)
-{
-	struct mlx5e_params new_params;
+अटल पूर्णांक mlx5e_set_trust_state(काष्ठा mlx5e_priv *priv, u8 trust_state)
+अणु
+	काष्ठा mlx5e_params new_params;
 	bool reset = true;
-	int err;
+	पूर्णांक err;
 
 	mutex_lock(&priv->state_lock);
 
 	new_params = priv->channels.params;
-	mlx5e_params_calc_trust_tx_min_inline_mode(priv->mdev, &new_params,
+	mlx5e_params_calc_trust_tx_min_अंतरभूत_mode(priv->mdev, &new_params,
 						   trust_state);
 
-	/* Skip if tx_min_inline is the same */
-	if (new_params.tx_min_inline_mode == priv->channels.params.tx_min_inline_mode)
+	/* Skip अगर tx_min_अंतरभूत is the same */
+	अगर (new_params.tx_min_अंतरभूत_mode == priv->channels.params.tx_min_अंतरभूत_mode)
 		reset = false;
 
-	err = mlx5e_safe_switch_params(priv, &new_params,
+	err = mlx5e_safe_चयन_params(priv, &new_params,
 				       mlx5e_update_trust_state_hw,
 				       &trust_state, reset);
 
 	mutex_unlock(&priv->state_lock);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int mlx5e_set_dscp2prio(struct mlx5e_priv *priv, u8 dscp, u8 prio)
-{
-	int err;
+अटल पूर्णांक mlx5e_set_dscp2prio(काष्ठा mlx5e_priv *priv, u8 dscp, u8 prio)
+अणु
+	पूर्णांक err;
 
 	err = mlx5_set_dscp2prio(priv->mdev, dscp, prio);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	priv->dcbx_dp.dscp2prio[dscp] = prio;
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int mlx5e_trust_initialize(struct mlx5e_priv *priv)
-{
-	struct mlx5_core_dev *mdev = priv->mdev;
-	int err;
+अटल पूर्णांक mlx5e_trust_initialize(काष्ठा mlx5e_priv *priv)
+अणु
+	काष्ठा mlx5_core_dev *mdev = priv->mdev;
+	पूर्णांक err;
 
 	priv->dcbx_dp.trust_state = MLX5_QPTS_TRUST_PCP;
 
-	if (!MLX5_DSCP_SUPPORTED(mdev))
-		return 0;
+	अगर (!MLX5_DSCP_SUPPORTED(mdev))
+		वापस 0;
 
 	err = mlx5_query_trust_state(priv->mdev, &priv->dcbx_dp.trust_state);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	mlx5e_params_calc_trust_tx_min_inline_mode(priv->mdev, &priv->channels.params,
+	mlx5e_params_calc_trust_tx_min_अंतरभूत_mode(priv->mdev, &priv->channels.params,
 						   priv->dcbx_dp.trust_state);
 
 	err = mlx5_query_dscp2prio(priv->mdev, priv->dcbx_dp.dscp2prio);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#define MLX5E_BUFFER_CELL_SHIFT 7
+#घोषणा MLX5E_BUFFER_CELL_SHIFT 7
 
-static u16 mlx5e_query_port_buffers_cell_size(struct mlx5e_priv *priv)
-{
-	struct mlx5_core_dev *mdev = priv->mdev;
-	u32 out[MLX5_ST_SZ_DW(sbcam_reg)] = {};
-	u32 in[MLX5_ST_SZ_DW(sbcam_reg)] = {};
+अटल u16 mlx5e_query_port_buffers_cell_size(काष्ठा mlx5e_priv *priv)
+अणु
+	काष्ठा mlx5_core_dev *mdev = priv->mdev;
+	u32 out[MLX5_ST_SZ_DW(sbcam_reg)] = अणुपूर्ण;
+	u32 in[MLX5_ST_SZ_DW(sbcam_reg)] = अणुपूर्ण;
 
-	if (!MLX5_CAP_GEN(mdev, sbcam_reg))
-		return (1 << MLX5E_BUFFER_CELL_SHIFT);
+	अगर (!MLX5_CAP_GEN(mdev, sbcam_reg))
+		वापस (1 << MLX5E_BUFFER_CELL_SHIFT);
 
-	if (mlx5_core_access_reg(mdev, in, sizeof(in), out, sizeof(out),
+	अगर (mlx5_core_access_reg(mdev, in, माप(in), out, माप(out),
 				 MLX5_REG_SBCAM, 0, 0))
-		return (1 << MLX5E_BUFFER_CELL_SHIFT);
+		वापस (1 << MLX5E_BUFFER_CELL_SHIFT);
 
-	return MLX5_GET(sbcam_reg, out, cap_cell_size);
-}
+	वापस MLX5_GET(sbcam_reg, out, cap_cell_size);
+पूर्ण
 
-void mlx5e_dcbnl_initialize(struct mlx5e_priv *priv)
-{
-	struct mlx5e_dcbx *dcbx = &priv->dcbx;
+व्योम mlx5e_dcbnl_initialize(काष्ठा mlx5e_priv *priv)
+अणु
+	काष्ठा mlx5e_dcbx *dcbx = &priv->dcbx;
 
 	mlx5e_trust_initialize(priv);
 
-	if (!MLX5_CAP_GEN(priv->mdev, qos))
-		return;
+	अगर (!MLX5_CAP_GEN(priv->mdev, qos))
+		वापस;
 
-	if (MLX5_CAP_GEN(priv->mdev, dcbx))
+	अगर (MLX5_CAP_GEN(priv->mdev, dcbx))
 		mlx5e_dcbnl_query_dcbx_mode(priv, &dcbx->mode);
 
 	priv->dcbx.cap = DCB_CAP_DCBX_VER_CEE |
 			 DCB_CAP_DCBX_VER_IEEE;
-	if (priv->dcbx.mode == MLX5E_DCBX_PARAM_VER_OPER_HOST)
+	अगर (priv->dcbx.mode == MLX5E_DCBX_PARAM_VER_OPER_HOST)
 		priv->dcbx.cap |= DCB_CAP_DCBX_HOST;
 
 	priv->dcbx.port_buff_cell_sz = mlx5e_query_port_buffers_cell_size(priv);
@@ -1248,4 +1249,4 @@ void mlx5e_dcbnl_initialize(struct mlx5e_priv *priv)
 	priv->dcbx.cable_len = MLX5E_DEFAULT_CABLE_LEN;
 
 	mlx5e_ets_init(priv);
-}
+पूर्ण

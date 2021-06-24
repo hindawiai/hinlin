@@ -1,663 +1,664 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /* -*- linux-c -*-
- * sysctl_net_core.c: sysctl interface to net core subsystem.
+ * sysctl_net_core.c: sysctl पूर्णांकerface to net core subप्रणाली.
  *
  * Begun April 1, 1996, Mike Shaver.
  * Added /proc/sys/net/core directory entry (empty =) ). [MS]
  */
 
-#include <linux/mm.h>
-#include <linux/sysctl.h>
-#include <linux/module.h>
-#include <linux/socket.h>
-#include <linux/netdevice.h>
-#include <linux/ratelimit.h>
-#include <linux/vmalloc.h>
-#include <linux/init.h>
-#include <linux/slab.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/sysctl.h>
+#समावेश <linux/module.h>
+#समावेश <linux/socket.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/ratelimit.h>
+#समावेश <linux/vदो_स्मृति.h>
+#समावेश <linux/init.h>
+#समावेश <linux/slab.h>
 
-#include <net/ip.h>
-#include <net/sock.h>
-#include <net/net_ratelimit.h>
-#include <net/busy_poll.h>
-#include <net/pkt_sched.h>
+#समावेश <net/ip.h>
+#समावेश <net/sock.h>
+#समावेश <net/net_ratelimit.h>
+#समावेश <net/busy_poll.h>
+#समावेश <net/pkt_sched.h>
 
-static int two = 2;
-static int three = 3;
-static int int_3600 = 3600;
-static int min_sndbuf = SOCK_MIN_SNDBUF;
-static int min_rcvbuf = SOCK_MIN_RCVBUF;
-static int max_skb_frags = MAX_SKB_FRAGS;
-static long long_one __maybe_unused = 1;
-static long long_max __maybe_unused = LONG_MAX;
+अटल पूर्णांक two = 2;
+अटल पूर्णांक three = 3;
+अटल पूर्णांक पूर्णांक_3600 = 3600;
+अटल पूर्णांक min_sndbuf = SOCK_MIN_SNDBUF;
+अटल पूर्णांक min_rcvbuf = SOCK_MIN_RCVBUF;
+अटल पूर्णांक max_skb_frags = MAX_SKB_FRAGS;
+अटल दीर्घ दीर्घ_one __maybe_unused = 1;
+अटल दीर्घ दीर्घ_max __maybe_unused = दीर्घ_उच्च;
 
-static int net_msg_warn;	/* Unused, but still a sysctl */
+अटल पूर्णांक net_msg_warn;	/* Unused, but still a sysctl */
 
-int sysctl_fb_tunnels_only_for_init_net __read_mostly = 0;
-EXPORT_SYMBOL(sysctl_fb_tunnels_only_for_init_net);
+पूर्णांक sysctl_fb_tunnels_only_क्रम_init_net __पढ़ो_mostly = 0;
+EXPORT_SYMBOL(sysctl_fb_tunnels_only_क्रम_init_net);
 
 /* 0 - Keep current behavior:
  *     IPv4: inherit all current settings from init_net
- *     IPv6: reset all settings to default
+ *     IPv6: reset all settings to शेष
  * 1 - Both inherit all current settings from init_net
- * 2 - Both reset all settings to default
+ * 2 - Both reset all settings to शेष
  * 3 - Both inherit all settings from current netns
  */
-int sysctl_devconf_inherit_init_net __read_mostly;
+पूर्णांक sysctl_devconf_inherit_init_net __पढ़ो_mostly;
 EXPORT_SYMBOL(sysctl_devconf_inherit_init_net);
 
-#ifdef CONFIG_RPS
-static int rps_sock_flow_sysctl(struct ctl_table *table, int write,
-				void *buffer, size_t *lenp, loff_t *ppos)
-{
-	unsigned int orig_size, size;
-	int ret, i;
-	struct ctl_table tmp = {
+#अगर_घोषित CONFIG_RPS
+अटल पूर्णांक rps_sock_flow_sysctl(काष्ठा ctl_table *table, पूर्णांक ग_लिखो,
+				व्योम *buffer, माप_प्रकार *lenp, loff_t *ppos)
+अणु
+	अचिन्हित पूर्णांक orig_size, size;
+	पूर्णांक ret, i;
+	काष्ठा ctl_table पंचांगp = अणु
 		.data = &size,
-		.maxlen = sizeof(size),
+		.maxlen = माप(size),
 		.mode = table->mode
-	};
-	struct rps_sock_flow_table *orig_sock_table, *sock_table;
-	static DEFINE_MUTEX(sock_flow_mutex);
+	पूर्ण;
+	काष्ठा rps_sock_flow_table *orig_sock_table, *sock_table;
+	अटल DEFINE_MUTEX(sock_flow_mutex);
 
 	mutex_lock(&sock_flow_mutex);
 
-	orig_sock_table = rcu_dereference_protected(rps_sock_flow_table,
+	orig_sock_table = rcu_dereference_रक्षित(rps_sock_flow_table,
 					lockdep_is_held(&sock_flow_mutex));
 	size = orig_size = orig_sock_table ? orig_sock_table->mask + 1 : 0;
 
-	ret = proc_dointvec(&tmp, write, buffer, lenp, ppos);
+	ret = proc_करोपूर्णांकvec(&पंचांगp, ग_लिखो, buffer, lenp, ppos);
 
-	if (write) {
-		if (size) {
-			if (size > 1<<29) {
-				/* Enforce limit to prevent overflow */
+	अगर (ग_लिखो) अणु
+		अगर (size) अणु
+			अगर (size > 1<<29) अणु
+				/* Enक्रमce limit to prevent overflow */
 				mutex_unlock(&sock_flow_mutex);
-				return -EINVAL;
-			}
-			size = roundup_pow_of_two(size);
-			if (size != orig_size) {
+				वापस -EINVAL;
+			पूर्ण
+			size = roundup_घात_of_two(size);
+			अगर (size != orig_size) अणु
 				sock_table =
-				    vmalloc(RPS_SOCK_FLOW_TABLE_SIZE(size));
-				if (!sock_table) {
+				    vदो_स्मृति(RPS_SOCK_FLOW_TABLE_SIZE(size));
+				अगर (!sock_table) अणु
 					mutex_unlock(&sock_flow_mutex);
-					return -ENOMEM;
-				}
-				rps_cpu_mask = roundup_pow_of_two(nr_cpu_ids) - 1;
+					वापस -ENOMEM;
+				पूर्ण
+				rps_cpu_mask = roundup_घात_of_two(nr_cpu_ids) - 1;
 				sock_table->mask = size - 1;
-			} else
+			पूर्ण अन्यथा
 				sock_table = orig_sock_table;
 
-			for (i = 0; i < size; i++)
+			क्रम (i = 0; i < size; i++)
 				sock_table->ents[i] = RPS_NO_CPU;
-		} else
-			sock_table = NULL;
+		पूर्ण अन्यथा
+			sock_table = शून्य;
 
-		if (sock_table != orig_sock_table) {
-			rcu_assign_pointer(rps_sock_flow_table, sock_table);
-			if (sock_table) {
-				static_branch_inc(&rps_needed);
-				static_branch_inc(&rfs_needed);
-			}
-			if (orig_sock_table) {
-				static_branch_dec(&rps_needed);
-				static_branch_dec(&rfs_needed);
+		अगर (sock_table != orig_sock_table) अणु
+			rcu_assign_poपूर्णांकer(rps_sock_flow_table, sock_table);
+			अगर (sock_table) अणु
+				अटल_branch_inc(&rps_needed);
+				अटल_branch_inc(&rfs_needed);
+			पूर्ण
+			अगर (orig_sock_table) अणु
+				अटल_branch_dec(&rps_needed);
+				अटल_branch_dec(&rfs_needed);
 				synchronize_rcu();
-				vfree(orig_sock_table);
-			}
-		}
-	}
+				vमुक्त(orig_sock_table);
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
 	mutex_unlock(&sock_flow_mutex);
 
-	return ret;
-}
-#endif /* CONFIG_RPS */
+	वापस ret;
+पूर्ण
+#पूर्ण_अगर /* CONFIG_RPS */
 
-#ifdef CONFIG_NET_FLOW_LIMIT
-static DEFINE_MUTEX(flow_limit_update_mutex);
+#अगर_घोषित CONFIG_NET_FLOW_LIMIT
+अटल DEFINE_MUTEX(flow_limit_update_mutex);
 
-static int flow_limit_cpu_sysctl(struct ctl_table *table, int write,
-				 void *buffer, size_t *lenp, loff_t *ppos)
-{
-	struct sd_flow_limit *cur;
-	struct softnet_data *sd;
+अटल पूर्णांक flow_limit_cpu_sysctl(काष्ठा ctl_table *table, पूर्णांक ग_लिखो,
+				 व्योम *buffer, माप_प्रकार *lenp, loff_t *ppos)
+अणु
+	काष्ठा sd_flow_limit *cur;
+	काष्ठा softnet_data *sd;
 	cpumask_var_t mask;
-	int i, len, ret = 0;
+	पूर्णांक i, len, ret = 0;
 
-	if (!alloc_cpumask_var(&mask, GFP_KERNEL))
-		return -ENOMEM;
+	अगर (!alloc_cpumask_var(&mask, GFP_KERNEL))
+		वापस -ENOMEM;
 
-	if (write) {
+	अगर (ग_लिखो) अणु
 		ret = cpumask_parse(buffer, mask);
-		if (ret)
-			goto done;
+		अगर (ret)
+			जाओ करोne;
 
 		mutex_lock(&flow_limit_update_mutex);
-		len = sizeof(*cur) + netdev_flow_limit_table_len;
-		for_each_possible_cpu(i) {
+		len = माप(*cur) + netdev_flow_limit_table_len;
+		क्रम_each_possible_cpu(i) अणु
 			sd = &per_cpu(softnet_data, i);
-			cur = rcu_dereference_protected(sd->flow_limit,
+			cur = rcu_dereference_रक्षित(sd->flow_limit,
 				     lockdep_is_held(&flow_limit_update_mutex));
-			if (cur && !cpumask_test_cpu(i, mask)) {
-				RCU_INIT_POINTER(sd->flow_limit, NULL);
+			अगर (cur && !cpumask_test_cpu(i, mask)) अणु
+				RCU_INIT_POINTER(sd->flow_limit, शून्य);
 				synchronize_rcu();
-				kfree(cur);
-			} else if (!cur && cpumask_test_cpu(i, mask)) {
+				kमुक्त(cur);
+			पूर्ण अन्यथा अगर (!cur && cpumask_test_cpu(i, mask)) अणु
 				cur = kzalloc_node(len, GFP_KERNEL,
 						   cpu_to_node(i));
-				if (!cur) {
+				अगर (!cur) अणु
 					/* not unwinding previous changes */
 					ret = -ENOMEM;
-					goto write_unlock;
-				}
+					जाओ ग_लिखो_unlock;
+				पूर्ण
 				cur->num_buckets = netdev_flow_limit_table_len;
-				rcu_assign_pointer(sd->flow_limit, cur);
-			}
-		}
-write_unlock:
+				rcu_assign_poपूर्णांकer(sd->flow_limit, cur);
+			पूर्ण
+		पूर्ण
+ग_लिखो_unlock:
 		mutex_unlock(&flow_limit_update_mutex);
-	} else {
-		char kbuf[128];
+	पूर्ण अन्यथा अणु
+		अक्षर kbuf[128];
 
-		if (*ppos || !*lenp) {
+		अगर (*ppos || !*lenp) अणु
 			*lenp = 0;
-			goto done;
-		}
+			जाओ करोne;
+		पूर्ण
 
 		cpumask_clear(mask);
-		rcu_read_lock();
-		for_each_possible_cpu(i) {
+		rcu_पढ़ो_lock();
+		क्रम_each_possible_cpu(i) अणु
 			sd = &per_cpu(softnet_data, i);
-			if (rcu_dereference(sd->flow_limit))
+			अगर (rcu_dereference(sd->flow_limit))
 				cpumask_set_cpu(i, mask);
-		}
-		rcu_read_unlock();
+		पूर्ण
+		rcu_पढ़ो_unlock();
 
-		len = min(sizeof(kbuf) - 1, *lenp);
-		len = scnprintf(kbuf, len, "%*pb", cpumask_pr_args(mask));
-		if (!len) {
+		len = min(माप(kbuf) - 1, *lenp);
+		len = scnम_लिखो(kbuf, len, "%*pb", cpumask_pr_args(mask));
+		अगर (!len) अणु
 			*lenp = 0;
-			goto done;
-		}
-		if (len < *lenp)
+			जाओ करोne;
+		पूर्ण
+		अगर (len < *lenp)
 			kbuf[len++] = '\n';
-		memcpy(buffer, kbuf, len);
+		स_नकल(buffer, kbuf, len);
 		*lenp = len;
 		*ppos += len;
-	}
+	पूर्ण
 
-done:
-	free_cpumask_var(mask);
-	return ret;
-}
+करोne:
+	मुक्त_cpumask_var(mask);
+	वापस ret;
+पूर्ण
 
-static int flow_limit_table_len_sysctl(struct ctl_table *table, int write,
-				       void *buffer, size_t *lenp, loff_t *ppos)
-{
-	unsigned int old, *ptr;
-	int ret;
+अटल पूर्णांक flow_limit_table_len_sysctl(काष्ठा ctl_table *table, पूर्णांक ग_लिखो,
+				       व्योम *buffer, माप_प्रकार *lenp, loff_t *ppos)
+अणु
+	अचिन्हित पूर्णांक old, *ptr;
+	पूर्णांक ret;
 
 	mutex_lock(&flow_limit_update_mutex);
 
 	ptr = table->data;
 	old = *ptr;
-	ret = proc_dointvec(table, write, buffer, lenp, ppos);
-	if (!ret && write && !is_power_of_2(*ptr)) {
+	ret = proc_करोपूर्णांकvec(table, ग_लिखो, buffer, lenp, ppos);
+	अगर (!ret && ग_लिखो && !is_घातer_of_2(*ptr)) अणु
 		*ptr = old;
 		ret = -EINVAL;
-	}
+	पूर्ण
 
 	mutex_unlock(&flow_limit_update_mutex);
-	return ret;
-}
-#endif /* CONFIG_NET_FLOW_LIMIT */
+	वापस ret;
+पूर्ण
+#पूर्ण_अगर /* CONFIG_NET_FLOW_LIMIT */
 
-#ifdef CONFIG_NET_SCHED
-static int set_default_qdisc(struct ctl_table *table, int write,
-			     void *buffer, size_t *lenp, loff_t *ppos)
-{
-	char id[IFNAMSIZ];
-	struct ctl_table tbl = {
+#अगर_घोषित CONFIG_NET_SCHED
+अटल पूर्णांक set_शेष_qdisc(काष्ठा ctl_table *table, पूर्णांक ग_लिखो,
+			     व्योम *buffer, माप_प्रकार *lenp, loff_t *ppos)
+अणु
+	अक्षर id[IFNAMSIZ];
+	काष्ठा ctl_table tbl = अणु
 		.data = id,
 		.maxlen = IFNAMSIZ,
-	};
-	int ret;
+	पूर्ण;
+	पूर्णांक ret;
 
-	qdisc_get_default(id, IFNAMSIZ);
+	qdisc_get_शेष(id, IFNAMSIZ);
 
-	ret = proc_dostring(&tbl, write, buffer, lenp, ppos);
-	if (write && ret == 0)
-		ret = qdisc_set_default(id);
-	return ret;
-}
-#endif
+	ret = proc_करोstring(&tbl, ग_लिखो, buffer, lenp, ppos);
+	अगर (ग_लिखो && ret == 0)
+		ret = qdisc_set_शेष(id);
+	वापस ret;
+पूर्ण
+#पूर्ण_अगर
 
-static int proc_do_dev_weight(struct ctl_table *table, int write,
-			   void *buffer, size_t *lenp, loff_t *ppos)
-{
-	int ret;
+अटल पूर्णांक proc_करो_dev_weight(काष्ठा ctl_table *table, पूर्णांक ग_लिखो,
+			   व्योम *buffer, माप_प्रकार *lenp, loff_t *ppos)
+अणु
+	पूर्णांक ret;
 
-	ret = proc_dointvec(table, write, buffer, lenp, ppos);
-	if (ret != 0)
-		return ret;
+	ret = proc_करोपूर्णांकvec(table, ग_लिखो, buffer, lenp, ppos);
+	अगर (ret != 0)
+		वापस ret;
 
 	dev_rx_weight = weight_p * dev_weight_rx_bias;
 	dev_tx_weight = weight_p * dev_weight_tx_bias;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int proc_do_rss_key(struct ctl_table *table, int write,
-			   void *buffer, size_t *lenp, loff_t *ppos)
-{
-	struct ctl_table fake_table;
-	char buf[NETDEV_RSS_KEY_LEN * 3];
+अटल पूर्णांक proc_करो_rss_key(काष्ठा ctl_table *table, पूर्णांक ग_लिखो,
+			   व्योम *buffer, माप_प्रकार *lenp, loff_t *ppos)
+अणु
+	काष्ठा ctl_table fake_table;
+	अक्षर buf[NETDEV_RSS_KEY_LEN * 3];
 
-	snprintf(buf, sizeof(buf), "%*phC", NETDEV_RSS_KEY_LEN, netdev_rss_key);
+	snम_लिखो(buf, माप(buf), "%*phC", NETDEV_RSS_KEY_LEN, netdev_rss_key);
 	fake_table.data = buf;
-	fake_table.maxlen = sizeof(buf);
-	return proc_dostring(&fake_table, write, buffer, lenp, ppos);
-}
+	fake_table.maxlen = माप(buf);
+	वापस proc_करोstring(&fake_table, ग_लिखो, buffer, lenp, ppos);
+पूर्ण
 
-#ifdef CONFIG_BPF_JIT
-static int proc_dointvec_minmax_bpf_enable(struct ctl_table *table, int write,
-					   void *buffer, size_t *lenp,
+#अगर_घोषित CONFIG_BPF_JIT
+अटल पूर्णांक proc_करोपूर्णांकvec_minmax_bpf_enable(काष्ठा ctl_table *table, पूर्णांक ग_लिखो,
+					   व्योम *buffer, माप_प्रकार *lenp,
 					   loff_t *ppos)
-{
-	int ret, jit_enable = *(int *)table->data;
-	struct ctl_table tmp = *table;
+अणु
+	पूर्णांक ret, jit_enable = *(पूर्णांक *)table->data;
+	काष्ठा ctl_table पंचांगp = *table;
 
-	if (write && !capable(CAP_SYS_ADMIN))
-		return -EPERM;
+	अगर (ग_लिखो && !capable(CAP_SYS_ADMIN))
+		वापस -EPERM;
 
-	tmp.data = &jit_enable;
-	ret = proc_dointvec_minmax(&tmp, write, buffer, lenp, ppos);
-	if (write && !ret) {
-		if (jit_enable < 2 ||
-		    (jit_enable == 2 && bpf_dump_raw_ok(current_cred()))) {
-			*(int *)table->data = jit_enable;
-			if (jit_enable == 2)
+	पंचांगp.data = &jit_enable;
+	ret = proc_करोपूर्णांकvec_minmax(&पंचांगp, ग_लिखो, buffer, lenp, ppos);
+	अगर (ग_लिखो && !ret) अणु
+		अगर (jit_enable < 2 ||
+		    (jit_enable == 2 && bpf_dump_raw_ok(current_cred()))) अणु
+			*(पूर्णांक *)table->data = jit_enable;
+			अगर (jit_enable == 2)
 				pr_warn("bpf_jit_enable = 2 was set! NEVER use this in production, only for JIT debugging!\n");
-		} else {
+		पूर्ण अन्यथा अणु
 			ret = -EPERM;
-		}
-	}
-	return ret;
-}
+		पूर्ण
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-# ifdef CONFIG_HAVE_EBPF_JIT
-static int
-proc_dointvec_minmax_bpf_restricted(struct ctl_table *table, int write,
-				    void *buffer, size_t *lenp, loff_t *ppos)
-{
-	if (!capable(CAP_SYS_ADMIN))
-		return -EPERM;
+# अगरdef CONFIG_HAVE_EBPF_JIT
+अटल पूर्णांक
+proc_करोपूर्णांकvec_minmax_bpf_restricted(काष्ठा ctl_table *table, पूर्णांक ग_लिखो,
+				    व्योम *buffer, माप_प्रकार *lenp, loff_t *ppos)
+अणु
+	अगर (!capable(CAP_SYS_ADMIN))
+		वापस -EPERM;
 
-	return proc_dointvec_minmax(table, write, buffer, lenp, ppos);
-}
-# endif /* CONFIG_HAVE_EBPF_JIT */
+	वापस proc_करोपूर्णांकvec_minmax(table, ग_लिखो, buffer, lenp, ppos);
+पूर्ण
+# endअगर /* CONFIG_HAVE_EBPF_JIT */
 
-static int
-proc_dolongvec_minmax_bpf_restricted(struct ctl_table *table, int write,
-				     void *buffer, size_t *lenp, loff_t *ppos)
-{
-	if (!capable(CAP_SYS_ADMIN))
-		return -EPERM;
+अटल पूर्णांक
+proc_करोदीर्घvec_minmax_bpf_restricted(काष्ठा ctl_table *table, पूर्णांक ग_लिखो,
+				     व्योम *buffer, माप_प्रकार *lenp, loff_t *ppos)
+अणु
+	अगर (!capable(CAP_SYS_ADMIN))
+		वापस -EPERM;
 
-	return proc_doulongvec_minmax(table, write, buffer, lenp, ppos);
-}
-#endif
+	वापस proc_करोuदीर्घvec_minmax(table, ग_लिखो, buffer, lenp, ppos);
+पूर्ण
+#पूर्ण_अगर
 
-static struct ctl_table net_core_table[] = {
-	{
+अटल काष्ठा ctl_table net_core_table[] = अणु
+	अणु
 		.procname	= "wmem_max",
 		.data		= &sysctl_wmem_max,
-		.maxlen		= sizeof(int),
+		.maxlen		= माप(पूर्णांक),
 		.mode		= 0644,
-		.proc_handler	= proc_dointvec_minmax,
+		.proc_handler	= proc_करोपूर्णांकvec_minmax,
 		.extra1		= &min_sndbuf,
-	},
-	{
+	पूर्ण,
+	अणु
 		.procname	= "rmem_max",
 		.data		= &sysctl_rmem_max,
-		.maxlen		= sizeof(int),
+		.maxlen		= माप(पूर्णांक),
 		.mode		= 0644,
-		.proc_handler	= proc_dointvec_minmax,
+		.proc_handler	= proc_करोपूर्णांकvec_minmax,
 		.extra1		= &min_rcvbuf,
-	},
-	{
+	पूर्ण,
+	अणु
 		.procname	= "wmem_default",
-		.data		= &sysctl_wmem_default,
-		.maxlen		= sizeof(int),
+		.data		= &sysctl_wmem_शेष,
+		.maxlen		= माप(पूर्णांक),
 		.mode		= 0644,
-		.proc_handler	= proc_dointvec_minmax,
+		.proc_handler	= proc_करोपूर्णांकvec_minmax,
 		.extra1		= &min_sndbuf,
-	},
-	{
+	पूर्ण,
+	अणु
 		.procname	= "rmem_default",
-		.data		= &sysctl_rmem_default,
-		.maxlen		= sizeof(int),
+		.data		= &sysctl_rmem_शेष,
+		.maxlen		= माप(पूर्णांक),
 		.mode		= 0644,
-		.proc_handler	= proc_dointvec_minmax,
+		.proc_handler	= proc_करोपूर्णांकvec_minmax,
 		.extra1		= &min_rcvbuf,
-	},
-	{
+	पूर्ण,
+	अणु
 		.procname	= "dev_weight",
 		.data		= &weight_p,
-		.maxlen		= sizeof(int),
+		.maxlen		= माप(पूर्णांक),
 		.mode		= 0644,
-		.proc_handler	= proc_do_dev_weight,
-	},
-	{
+		.proc_handler	= proc_करो_dev_weight,
+	पूर्ण,
+	अणु
 		.procname	= "dev_weight_rx_bias",
 		.data		= &dev_weight_rx_bias,
-		.maxlen		= sizeof(int),
+		.maxlen		= माप(पूर्णांक),
 		.mode		= 0644,
-		.proc_handler	= proc_do_dev_weight,
-	},
-	{
+		.proc_handler	= proc_करो_dev_weight,
+	पूर्ण,
+	अणु
 		.procname	= "dev_weight_tx_bias",
 		.data		= &dev_weight_tx_bias,
-		.maxlen		= sizeof(int),
+		.maxlen		= माप(पूर्णांक),
 		.mode		= 0644,
-		.proc_handler	= proc_do_dev_weight,
-	},
-	{
+		.proc_handler	= proc_करो_dev_weight,
+	पूर्ण,
+	अणु
 		.procname	= "netdev_max_backlog",
 		.data		= &netdev_max_backlog,
-		.maxlen		= sizeof(int),
+		.maxlen		= माप(पूर्णांक),
 		.mode		= 0644,
-		.proc_handler	= proc_dointvec
-	},
-	{
+		.proc_handler	= proc_करोपूर्णांकvec
+	पूर्ण,
+	अणु
 		.procname	= "netdev_rss_key",
 		.data		= &netdev_rss_key,
-		.maxlen		= sizeof(int),
+		.maxlen		= माप(पूर्णांक),
 		.mode		= 0444,
-		.proc_handler	= proc_do_rss_key,
-	},
-#ifdef CONFIG_BPF_JIT
-	{
+		.proc_handler	= proc_करो_rss_key,
+	पूर्ण,
+#अगर_घोषित CONFIG_BPF_JIT
+	अणु
 		.procname	= "bpf_jit_enable",
 		.data		= &bpf_jit_enable,
-		.maxlen		= sizeof(int),
+		.maxlen		= माप(पूर्णांक),
 		.mode		= 0644,
-		.proc_handler	= proc_dointvec_minmax_bpf_enable,
-# ifdef CONFIG_BPF_JIT_ALWAYS_ON
+		.proc_handler	= proc_करोपूर्णांकvec_minmax_bpf_enable,
+# अगरdef CONFIG_BPF_JIT_ALWAYS_ON
 		.extra1		= SYSCTL_ONE,
 		.extra2		= SYSCTL_ONE,
-# else
+# अन्यथा
 		.extra1		= SYSCTL_ZERO,
 		.extra2		= &two,
-# endif
-	},
-# ifdef CONFIG_HAVE_EBPF_JIT
-	{
+# endअगर
+	पूर्ण,
+# अगरdef CONFIG_HAVE_EBPF_JIT
+	अणु
 		.procname	= "bpf_jit_harden",
 		.data		= &bpf_jit_harden,
-		.maxlen		= sizeof(int),
+		.maxlen		= माप(पूर्णांक),
 		.mode		= 0600,
-		.proc_handler	= proc_dointvec_minmax_bpf_restricted,
+		.proc_handler	= proc_करोपूर्णांकvec_minmax_bpf_restricted,
 		.extra1		= SYSCTL_ZERO,
 		.extra2		= &two,
-	},
-	{
+	पूर्ण,
+	अणु
 		.procname	= "bpf_jit_kallsyms",
 		.data		= &bpf_jit_kallsyms,
-		.maxlen		= sizeof(int),
+		.maxlen		= माप(पूर्णांक),
 		.mode		= 0600,
-		.proc_handler	= proc_dointvec_minmax_bpf_restricted,
+		.proc_handler	= proc_करोपूर्णांकvec_minmax_bpf_restricted,
 		.extra1		= SYSCTL_ZERO,
 		.extra2		= SYSCTL_ONE,
-	},
-# endif
-	{
+	पूर्ण,
+# endअगर
+	अणु
 		.procname	= "bpf_jit_limit",
 		.data		= &bpf_jit_limit,
-		.maxlen		= sizeof(long),
+		.maxlen		= माप(दीर्घ),
 		.mode		= 0600,
-		.proc_handler	= proc_dolongvec_minmax_bpf_restricted,
-		.extra1		= &long_one,
-		.extra2		= &long_max,
-	},
-#endif
-	{
+		.proc_handler	= proc_करोदीर्घvec_minmax_bpf_restricted,
+		.extra1		= &दीर्घ_one,
+		.extra2		= &दीर्घ_max,
+	पूर्ण,
+#पूर्ण_अगर
+	अणु
 		.procname	= "netdev_tstamp_prequeue",
 		.data		= &netdev_tstamp_prequeue,
-		.maxlen		= sizeof(int),
+		.maxlen		= माप(पूर्णांक),
 		.mode		= 0644,
-		.proc_handler	= proc_dointvec
-	},
-	{
+		.proc_handler	= proc_करोपूर्णांकvec
+	पूर्ण,
+	अणु
 		.procname	= "message_cost",
-		.data		= &net_ratelimit_state.interval,
-		.maxlen		= sizeof(int),
+		.data		= &net_ratelimit_state.पूर्णांकerval,
+		.maxlen		= माप(पूर्णांक),
 		.mode		= 0644,
-		.proc_handler	= proc_dointvec_jiffies,
-	},
-	{
+		.proc_handler	= proc_करोपूर्णांकvec_jअगरfies,
+	पूर्ण,
+	अणु
 		.procname	= "message_burst",
 		.data		= &net_ratelimit_state.burst,
-		.maxlen		= sizeof(int),
+		.maxlen		= माप(पूर्णांक),
 		.mode		= 0644,
-		.proc_handler	= proc_dointvec,
-	},
-	{
+		.proc_handler	= proc_करोपूर्णांकvec,
+	पूर्ण,
+	अणु
 		.procname	= "optmem_max",
-		.data		= &sysctl_optmem_max,
-		.maxlen		= sizeof(int),
+		.data		= &sysctl_opपंचांगem_max,
+		.maxlen		= माप(पूर्णांक),
 		.mode		= 0644,
-		.proc_handler	= proc_dointvec
-	},
-	{
+		.proc_handler	= proc_करोपूर्णांकvec
+	पूर्ण,
+	अणु
 		.procname	= "tstamp_allow_data",
 		.data		= &sysctl_tstamp_allow_data,
-		.maxlen		= sizeof(int),
+		.maxlen		= माप(पूर्णांक),
 		.mode		= 0644,
-		.proc_handler	= proc_dointvec_minmax,
+		.proc_handler	= proc_करोपूर्णांकvec_minmax,
 		.extra1		= SYSCTL_ZERO,
 		.extra2		= SYSCTL_ONE
-	},
-#ifdef CONFIG_RPS
-	{
+	पूर्ण,
+#अगर_घोषित CONFIG_RPS
+	अणु
 		.procname	= "rps_sock_flow_entries",
-		.maxlen		= sizeof(int),
+		.maxlen		= माप(पूर्णांक),
 		.mode		= 0644,
 		.proc_handler	= rps_sock_flow_sysctl
-	},
-#endif
-#ifdef CONFIG_NET_FLOW_LIMIT
-	{
+	पूर्ण,
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_NET_FLOW_LIMIT
+	अणु
 		.procname	= "flow_limit_cpu_bitmap",
 		.mode		= 0644,
 		.proc_handler	= flow_limit_cpu_sysctl
-	},
-	{
+	पूर्ण,
+	अणु
 		.procname	= "flow_limit_table_len",
 		.data		= &netdev_flow_limit_table_len,
-		.maxlen		= sizeof(int),
+		.maxlen		= माप(पूर्णांक),
 		.mode		= 0644,
 		.proc_handler	= flow_limit_table_len_sysctl
-	},
-#endif /* CONFIG_NET_FLOW_LIMIT */
-#ifdef CONFIG_NET_RX_BUSY_POLL
-	{
+	पूर्ण,
+#पूर्ण_अगर /* CONFIG_NET_FLOW_LIMIT */
+#अगर_घोषित CONFIG_NET_RX_BUSY_POLL
+	अणु
 		.procname	= "busy_poll",
 		.data		= &sysctl_net_busy_poll,
-		.maxlen		= sizeof(unsigned int),
+		.maxlen		= माप(अचिन्हित पूर्णांक),
 		.mode		= 0644,
-		.proc_handler	= proc_dointvec_minmax,
+		.proc_handler	= proc_करोपूर्णांकvec_minmax,
 		.extra1		= SYSCTL_ZERO,
-	},
-	{
+	पूर्ण,
+	अणु
 		.procname	= "busy_read",
-		.data		= &sysctl_net_busy_read,
-		.maxlen		= sizeof(unsigned int),
+		.data		= &sysctl_net_busy_पढ़ो,
+		.maxlen		= माप(अचिन्हित पूर्णांक),
 		.mode		= 0644,
-		.proc_handler	= proc_dointvec_minmax,
+		.proc_handler	= proc_करोपूर्णांकvec_minmax,
 		.extra1		= SYSCTL_ZERO,
-	},
-#endif
-#ifdef CONFIG_NET_SCHED
-	{
+	पूर्ण,
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_NET_SCHED
+	अणु
 		.procname	= "default_qdisc",
 		.mode		= 0644,
 		.maxlen		= IFNAMSIZ,
-		.proc_handler	= set_default_qdisc
-	},
-#endif
-	{
+		.proc_handler	= set_शेष_qdisc
+	पूर्ण,
+#पूर्ण_अगर
+	अणु
 		.procname	= "netdev_budget",
 		.data		= &netdev_budget,
-		.maxlen		= sizeof(int),
+		.maxlen		= माप(पूर्णांक),
 		.mode		= 0644,
-		.proc_handler	= proc_dointvec
-	},
-	{
+		.proc_handler	= proc_करोपूर्णांकvec
+	पूर्ण,
+	अणु
 		.procname	= "warnings",
 		.data		= &net_msg_warn,
-		.maxlen		= sizeof(int),
+		.maxlen		= माप(पूर्णांक),
 		.mode		= 0644,
-		.proc_handler	= proc_dointvec
-	},
-	{
+		.proc_handler	= proc_करोपूर्णांकvec
+	पूर्ण,
+	अणु
 		.procname	= "max_skb_frags",
 		.data		= &sysctl_max_skb_frags,
-		.maxlen		= sizeof(int),
+		.maxlen		= माप(पूर्णांक),
 		.mode		= 0644,
-		.proc_handler	= proc_dointvec_minmax,
+		.proc_handler	= proc_करोपूर्णांकvec_minmax,
 		.extra1		= SYSCTL_ONE,
 		.extra2		= &max_skb_frags,
-	},
-	{
+	पूर्ण,
+	अणु
 		.procname	= "netdev_budget_usecs",
 		.data		= &netdev_budget_usecs,
-		.maxlen		= sizeof(unsigned int),
+		.maxlen		= माप(अचिन्हित पूर्णांक),
 		.mode		= 0644,
-		.proc_handler	= proc_dointvec_minmax,
+		.proc_handler	= proc_करोपूर्णांकvec_minmax,
 		.extra1		= SYSCTL_ZERO,
-	},
-	{
+	पूर्ण,
+	अणु
 		.procname	= "fb_tunnels_only_for_init_net",
-		.data		= &sysctl_fb_tunnels_only_for_init_net,
-		.maxlen		= sizeof(int),
+		.data		= &sysctl_fb_tunnels_only_क्रम_init_net,
+		.maxlen		= माप(पूर्णांक),
 		.mode		= 0644,
-		.proc_handler	= proc_dointvec_minmax,
+		.proc_handler	= proc_करोपूर्णांकvec_minmax,
 		.extra1		= SYSCTL_ZERO,
 		.extra2		= &two,
-	},
-	{
+	पूर्ण,
+	अणु
 		.procname	= "devconf_inherit_init_net",
 		.data		= &sysctl_devconf_inherit_init_net,
-		.maxlen		= sizeof(int),
+		.maxlen		= माप(पूर्णांक),
 		.mode		= 0644,
-		.proc_handler	= proc_dointvec_minmax,
+		.proc_handler	= proc_करोपूर्णांकvec_minmax,
 		.extra1		= SYSCTL_ZERO,
 		.extra2		= &three,
-	},
-	{
+	पूर्ण,
+	अणु
 		.procname	= "high_order_alloc_disable",
 		.data		= &net_high_order_alloc_disable_key.key,
-		.maxlen         = sizeof(net_high_order_alloc_disable_key),
+		.maxlen         = माप(net_high_order_alloc_disable_key),
 		.mode		= 0644,
-		.proc_handler	= proc_do_static_key,
-	},
-	{
+		.proc_handler	= proc_करो_अटल_key,
+	पूर्ण,
+	अणु
 		.procname	= "gro_normal_batch",
 		.data		= &gro_normal_batch,
-		.maxlen		= sizeof(unsigned int),
+		.maxlen		= माप(अचिन्हित पूर्णांक),
 		.mode		= 0644,
-		.proc_handler	= proc_dointvec_minmax,
+		.proc_handler	= proc_करोपूर्णांकvec_minmax,
 		.extra1		= SYSCTL_ONE,
-	},
-	{
+	पूर्ण,
+	अणु
 		.procname	= "netdev_unregister_timeout_secs",
-		.data		= &netdev_unregister_timeout_secs,
-		.maxlen		= sizeof(unsigned int),
+		.data		= &netdev_unरेजिस्टर_समयout_secs,
+		.maxlen		= माप(अचिन्हित पूर्णांक),
 		.mode		= 0644,
-		.proc_handler	= proc_dointvec_minmax,
+		.proc_handler	= proc_करोपूर्णांकvec_minmax,
 		.extra1		= SYSCTL_ONE,
-		.extra2		= &int_3600,
-	},
-	{ }
-};
+		.extra2		= &पूर्णांक_3600,
+	पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 
-static struct ctl_table netns_core_table[] = {
-	{
+अटल काष्ठा ctl_table netns_core_table[] = अणु
+	अणु
 		.procname	= "somaxconn",
 		.data		= &init_net.core.sysctl_somaxconn,
-		.maxlen		= sizeof(int),
+		.maxlen		= माप(पूर्णांक),
 		.mode		= 0644,
 		.extra1		= SYSCTL_ZERO,
-		.proc_handler	= proc_dointvec_minmax
-	},
-	{ }
-};
+		.proc_handler	= proc_करोपूर्णांकvec_minmax
+	पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 
-static int __init fb_tunnels_only_for_init_net_sysctl_setup(char *str)
-{
-	/* fallback tunnels for initns only */
-	if (!strncmp(str, "initns", 6))
-		sysctl_fb_tunnels_only_for_init_net = 1;
+अटल पूर्णांक __init fb_tunnels_only_क्रम_init_net_sysctl_setup(अक्षर *str)
+अणु
+	/* fallback tunnels क्रम initns only */
+	अगर (!म_भेदन(str, "initns", 6))
+		sysctl_fb_tunnels_only_क्रम_init_net = 1;
 	/* no fallback tunnels anywhere */
-	else if (!strncmp(str, "none", 4))
-		sysctl_fb_tunnels_only_for_init_net = 2;
+	अन्यथा अगर (!म_भेदन(str, "none", 4))
+		sysctl_fb_tunnels_only_क्रम_init_net = 2;
 
-	return 1;
-}
-__setup("fb_tunnels=", fb_tunnels_only_for_init_net_sysctl_setup);
+	वापस 1;
+पूर्ण
+__setup("fb_tunnels=", fb_tunnels_only_क्रम_init_net_sysctl_setup);
 
-static __net_init int sysctl_core_net_init(struct net *net)
-{
-	struct ctl_table *tbl;
+अटल __net_init पूर्णांक sysctl_core_net_init(काष्ठा net *net)
+अणु
+	काष्ठा ctl_table *tbl;
 
 	tbl = netns_core_table;
-	if (!net_eq(net, &init_net)) {
-		tbl = kmemdup(tbl, sizeof(netns_core_table), GFP_KERNEL);
-		if (tbl == NULL)
-			goto err_dup;
+	अगर (!net_eq(net, &init_net)) अणु
+		tbl = kmemdup(tbl, माप(netns_core_table), GFP_KERNEL);
+		अगर (tbl == शून्य)
+			जाओ err_dup;
 
 		tbl[0].data = &net->core.sysctl_somaxconn;
 
 		/* Don't export any sysctls to unprivileged users */
-		if (net->user_ns != &init_user_ns) {
-			tbl[0].procname = NULL;
-		}
-	}
+		अगर (net->user_ns != &init_user_ns) अणु
+			tbl[0].procname = शून्य;
+		पूर्ण
+	पूर्ण
 
-	net->core.sysctl_hdr = register_net_sysctl(net, "net/core", tbl);
-	if (net->core.sysctl_hdr == NULL)
-		goto err_reg;
+	net->core.sysctl_hdr = रेजिस्टर_net_sysctl(net, "net/core", tbl);
+	अगर (net->core.sysctl_hdr == शून्य)
+		जाओ err_reg;
 
-	return 0;
+	वापस 0;
 
 err_reg:
-	if (tbl != netns_core_table)
-		kfree(tbl);
+	अगर (tbl != netns_core_table)
+		kमुक्त(tbl);
 err_dup:
-	return -ENOMEM;
-}
+	वापस -ENOMEM;
+पूर्ण
 
-static __net_exit void sysctl_core_net_exit(struct net *net)
-{
-	struct ctl_table *tbl;
+अटल __net_निकास व्योम sysctl_core_net_निकास(काष्ठा net *net)
+अणु
+	काष्ठा ctl_table *tbl;
 
 	tbl = net->core.sysctl_hdr->ctl_table_arg;
-	unregister_net_sysctl_table(net->core.sysctl_hdr);
+	unरेजिस्टर_net_sysctl_table(net->core.sysctl_hdr);
 	BUG_ON(tbl == netns_core_table);
-	kfree(tbl);
-}
+	kमुक्त(tbl);
+पूर्ण
 
-static __net_initdata struct pernet_operations sysctl_core_ops = {
+अटल __net_initdata काष्ठा pernet_operations sysctl_core_ops = अणु
 	.init = sysctl_core_net_init,
-	.exit = sysctl_core_net_exit,
-};
+	.निकास = sysctl_core_net_निकास,
+पूर्ण;
 
-static __init int sysctl_core_init(void)
-{
-	register_net_sysctl(&init_net, "net/core", net_core_table);
-	return register_pernet_subsys(&sysctl_core_ops);
-}
+अटल __init पूर्णांक sysctl_core_init(व्योम)
+अणु
+	रेजिस्टर_net_sysctl(&init_net, "net/core", net_core_table);
+	वापस रेजिस्टर_pernet_subsys(&sysctl_core_ops);
+पूर्ण
 
 fs_initcall(sysctl_core_init);

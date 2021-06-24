@@ -1,15 +1,16 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * Copyright (c) 2013 Samsung Electronics Co., Ltd.
  * Copyright (c) 2013 Linaro Ltd.
  *
- * Common Clock Framework support for all PLL's in Samsung platforms
+ * Common Clock Framework support क्रम all PLL's in Samsung platक्रमms
 */
 
-#ifndef __SAMSUNG_CLK_PLL_H
-#define __SAMSUNG_CLK_PLL_H
+#अगर_अघोषित __SAMSUNG_CLK_PLL_H
+#घोषणा __SAMSUNG_CLK_PLL_H
 
-enum samsung_pll_type {
+क्रमागत samsung_pll_type अणु
 	pll_2126,
 	pll_3000,
 	pll_35xx,
@@ -36,96 +37,96 @@ enum samsung_pll_type {
 	pll_1451x,
 	pll_1452x,
 	pll_1460x,
-};
+पूर्ण;
 
-#define PLL_RATE(_fin, _m, _p, _s, _k, _ks) \
+#घोषणा PLL_RATE(_fin, _m, _p, _s, _k, _ks) \
 	((u64)(_fin) * (BIT(_ks) * (_m) + (_k)) / BIT(_ks) / ((_p) << (_s)))
-#define PLL_VALID_RATE(_fin, _fout, _m, _p, _s, _k, _ks) ((_fout) + \
+#घोषणा PLL_VALID_RATE(_fin, _fout, _m, _p, _s, _k, _ks) ((_fout) + \
 	BUILD_BUG_ON_ZERO(PLL_RATE(_fin, _m, _p, _s, _k, _ks) != (_fout)))
 
-#define PLL_35XX_RATE(_fin, _rate, _m, _p, _s)			\
-	{							\
+#घोषणा PLL_35XX_RATE(_fin, _rate, _m, _p, _s)			\
+	अणु							\
 		.rate	=	PLL_VALID_RATE(_fin, _rate,	\
 				_m, _p, _s, 0, 16),		\
-		.mdiv	=	(_m),				\
-		.pdiv	=	(_p),				\
-		.sdiv	=	(_s),				\
-	}
+		.mभाग	=	(_m),				\
+		.pभाग	=	(_p),				\
+		.sभाग	=	(_s),				\
+	पूर्ण
 
-#define PLL_S3C2410_MPLL_RATE(_fin, _rate, _m, _p, _s)		\
-	{							\
+#घोषणा PLL_S3C2410_MPLL_RATE(_fin, _rate, _m, _p, _s)		\
+	अणु							\
 		.rate	=	PLL_VALID_RATE(_fin, _rate,	\
 				_m + 8, _p + 2, _s, 0, 16),	\
-		.mdiv	=	(_m),				\
-		.pdiv	=	(_p),				\
-		.sdiv	=	(_s),				\
-	}
+		.mभाग	=	(_m),				\
+		.pभाग	=	(_p),				\
+		.sभाग	=	(_s),				\
+	पूर्ण
 
-#define PLL_S3C2440_MPLL_RATE(_fin, _rate, _m, _p, _s)		\
-	{							\
+#घोषणा PLL_S3C2440_MPLL_RATE(_fin, _rate, _m, _p, _s)		\
+	अणु							\
 		.rate	=	PLL_VALID_RATE(_fin, _rate,	\
 				2 * (_m + 8), _p + 2, _s, 0, 16), \
-		.mdiv	=	(_m),				\
-		.pdiv	=	(_p),				\
-		.sdiv	=	(_s),				\
-	}
+		.mभाग	=	(_m),				\
+		.pभाग	=	(_p),				\
+		.sभाग	=	(_s),				\
+	पूर्ण
 
-#define PLL_36XX_RATE(_fin, _rate, _m, _p, _s, _k)		\
-	{							\
+#घोषणा PLL_36XX_RATE(_fin, _rate, _m, _p, _s, _k)		\
+	अणु							\
 		.rate	=	PLL_VALID_RATE(_fin, _rate,	\
 				_m, _p, _s, _k, 16),		\
-		.mdiv	=	(_m),				\
-		.pdiv	=	(_p),				\
-		.sdiv	=	(_s),				\
-		.kdiv	=	(_k),				\
-	}
+		.mभाग	=	(_m),				\
+		.pभाग	=	(_p),				\
+		.sभाग	=	(_s),				\
+		.kभाग	=	(_k),				\
+	पूर्ण
 
-#define PLL_4508_RATE(_fin, _rate, _m, _p, _s, _afc)		\
-	{							\
+#घोषणा PLL_4508_RATE(_fin, _rate, _m, _p, _s, _afc)		\
+	अणु							\
 		.rate	=	PLL_VALID_RATE(_fin, _rate,	\
 				_m, _p, _s - 1, 0, 16),		\
-		.mdiv	=	(_m),				\
-		.pdiv	=	(_p),				\
-		.sdiv	=	(_s),				\
+		.mभाग	=	(_m),				\
+		.pभाग	=	(_p),				\
+		.sभाग	=	(_s),				\
 		.afc	=	(_afc),				\
-	}
+	पूर्ण
 
-#define PLL_4600_RATE(_fin, _rate, _m, _p, _s, _k, _vsel)	\
-	{							\
+#घोषणा PLL_4600_RATE(_fin, _rate, _m, _p, _s, _k, _vsel)	\
+	अणु							\
 		.rate	=	PLL_VALID_RATE(_fin, _rate,	\
 				_m, _p, _s, _k, 16),		\
-		.mdiv	=	(_m),				\
-		.pdiv	=	(_p),				\
-		.sdiv	=	(_s),				\
-		.kdiv	=	(_k),				\
+		.mभाग	=	(_m),				\
+		.pभाग	=	(_p),				\
+		.sभाग	=	(_s),				\
+		.kभाग	=	(_k),				\
 		.vsel	=	(_vsel),			\
-	}
+	पूर्ण
 
-#define PLL_4650_RATE(_fin, _rate, _m, _p, _s, _k, _mfr, _mrr, _vsel) \
-	{							\
+#घोषणा PLL_4650_RATE(_fin, _rate, _m, _p, _s, _k, _mfr, _mrr, _vsel) \
+	अणु							\
 		.rate	=	PLL_VALID_RATE(_fin, _rate,	\
 				_m, _p, _s, _k, 10),		\
-		.mdiv	=	(_m),				\
-		.pdiv	=	(_p),				\
-		.sdiv	=	(_s),				\
-		.kdiv	=	(_k),				\
+		.mभाग	=	(_m),				\
+		.pभाग	=	(_p),				\
+		.sभाग	=	(_s),				\
+		.kभाग	=	(_k),				\
 		.mfr	=	(_mfr),				\
 		.mrr	=	(_mrr),				\
 		.vsel	=	(_vsel),			\
-	}
+	पूर्ण
 
 /* NOTE: Rate table should be kept sorted in descending order. */
 
-struct samsung_pll_rate_table {
-	unsigned int rate;
-	unsigned int pdiv;
-	unsigned int mdiv;
-	unsigned int sdiv;
-	unsigned int kdiv;
-	unsigned int afc;
-	unsigned int mfr;
-	unsigned int mrr;
-	unsigned int vsel;
-};
+काष्ठा samsung_pll_rate_table अणु
+	अचिन्हित पूर्णांक rate;
+	अचिन्हित पूर्णांक pभाग;
+	अचिन्हित पूर्णांक mभाग;
+	अचिन्हित पूर्णांक sभाग;
+	अचिन्हित पूर्णांक kभाग;
+	अचिन्हित पूर्णांक afc;
+	अचिन्हित पूर्णांक mfr;
+	अचिन्हित पूर्णांक mrr;
+	अचिन्हित पूर्णांक vsel;
+पूर्ण;
 
-#endif /* __SAMSUNG_CLK_PLL_H */
+#पूर्ण_अगर /* __SAMSUNG_CLK_PLL_H */

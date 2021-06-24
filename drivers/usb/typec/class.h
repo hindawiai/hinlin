@@ -1,85 +1,86 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 
-#ifndef __USB_TYPEC_CLASS__
-#define __USB_TYPEC_CLASS__
+#अगर_अघोषित __USB_TYPEC_CLASS__
+#घोषणा __USB_TYPEC_CLASS__
 
-#include <linux/device.h>
-#include <linux/usb/typec.h>
+#समावेश <linux/device.h>
+#समावेश <linux/usb/typec.h>
 
-struct typec_mux;
-struct typec_switch;
+काष्ठा typec_mux;
+काष्ठा typec_चयन;
 
-struct typec_plug {
-	struct device			dev;
-	enum typec_plug_index		index;
-	struct ida			mode_ids;
-	int				num_altmodes;
-};
+काष्ठा typec_plug अणु
+	काष्ठा device			dev;
+	क्रमागत typec_plug_index		index;
+	काष्ठा ida			mode_ids;
+	पूर्णांक				num_alपंचांगodes;
+पूर्ण;
 
-struct typec_cable {
-	struct device			dev;
-	enum typec_plug_type		type;
-	struct usb_pd_identity		*identity;
-	unsigned int			active:1;
+काष्ठा typec_cable अणु
+	काष्ठा device			dev;
+	क्रमागत typec_plug_type		type;
+	काष्ठा usb_pd_identity		*identity;
+	अचिन्हित पूर्णांक			active:1;
 	u16				pd_revision; /* 0300H = "3.0" */
-};
+पूर्ण;
 
-struct typec_partner {
-	struct device			dev;
-	unsigned int			usb_pd:1;
-	struct usb_pd_identity		*identity;
-	enum typec_accessory		accessory;
-	struct ida			mode_ids;
-	int				num_altmodes;
+काष्ठा typec_partner अणु
+	काष्ठा device			dev;
+	अचिन्हित पूर्णांक			usb_pd:1;
+	काष्ठा usb_pd_identity		*identity;
+	क्रमागत typec_accessory		accessory;
+	काष्ठा ida			mode_ids;
+	पूर्णांक				num_alपंचांगodes;
 	u16				pd_revision; /* 0300H = "3.0" */
-	enum usb_pd_svdm_ver		svdm_version;
-};
+	क्रमागत usb_pd_svdm_ver		svdm_version;
+पूर्ण;
 
-struct typec_port {
-	unsigned int			id;
-	struct device			dev;
-	struct ida			mode_ids;
+काष्ठा typec_port अणु
+	अचिन्हित पूर्णांक			id;
+	काष्ठा device			dev;
+	काष्ठा ida			mode_ids;
 
-	int				prefer_role;
-	enum typec_data_role		data_role;
-	enum typec_role			pwr_role;
-	enum typec_role			vconn_role;
-	enum typec_pwr_opmode		pwr_opmode;
-	enum typec_port_type		port_type;
-	struct mutex			port_type_lock;
+	पूर्णांक				prefer_role;
+	क्रमागत typec_data_role		data_role;
+	क्रमागत typec_role			pwr_role;
+	क्रमागत typec_role			vconn_role;
+	क्रमागत typec_pwr_opmode		pwr_opmode;
+	क्रमागत typec_port_type		port_type;
+	काष्ठा mutex			port_type_lock;
 
-	enum typec_orientation		orientation;
-	struct typec_switch		*sw;
-	struct typec_mux		*mux;
+	क्रमागत typec_orientation		orientation;
+	काष्ठा typec_चयन		*sw;
+	काष्ठा typec_mux		*mux;
 
-	const struct typec_capability	*cap;
-	const struct typec_operations   *ops;
+	स्थिर काष्ठा typec_capability	*cap;
+	स्थिर काष्ठा typec_operations   *ops;
 
-	struct list_head		port_list;
-	struct mutex			port_list_lock; /* Port list lock */
+	काष्ठा list_head		port_list;
+	काष्ठा mutex			port_list_lock; /* Port list lock */
 
-	void				*pld;
-};
+	व्योम				*pld;
+पूर्ण;
 
-#define to_typec_port(_dev_) container_of(_dev_, struct typec_port, dev)
-#define to_typec_plug(_dev_) container_of(_dev_, struct typec_plug, dev)
-#define to_typec_cable(_dev_) container_of(_dev_, struct typec_cable, dev)
-#define to_typec_partner(_dev_) container_of(_dev_, struct typec_partner, dev)
+#घोषणा to_typec_port(_dev_) container_of(_dev_, काष्ठा typec_port, dev)
+#घोषणा to_typec_plug(_dev_) container_of(_dev_, काष्ठा typec_plug, dev)
+#घोषणा to_typec_cable(_dev_) container_of(_dev_, काष्ठा typec_cable, dev)
+#घोषणा to_typec_partner(_dev_) container_of(_dev_, काष्ठा typec_partner, dev)
 
-extern const struct device_type typec_partner_dev_type;
-extern const struct device_type typec_cable_dev_type;
-extern const struct device_type typec_plug_dev_type;
-extern const struct device_type typec_port_dev_type;
+बाह्य स्थिर काष्ठा device_type typec_partner_dev_type;
+बाह्य स्थिर काष्ठा device_type typec_cable_dev_type;
+बाह्य स्थिर काष्ठा device_type typec_plug_dev_type;
+बाह्य स्थिर काष्ठा device_type typec_port_dev_type;
 
-#define is_typec_partner(dev) ((dev)->type == &typec_partner_dev_type)
-#define is_typec_cable(dev) ((dev)->type == &typec_cable_dev_type)
-#define is_typec_plug(dev) ((dev)->type == &typec_plug_dev_type)
-#define is_typec_port(dev) ((dev)->type == &typec_port_dev_type)
+#घोषणा is_typec_partner(dev) ((dev)->type == &typec_partner_dev_type)
+#घोषणा is_typec_cable(dev) ((dev)->type == &typec_cable_dev_type)
+#घोषणा is_typec_plug(dev) ((dev)->type == &typec_plug_dev_type)
+#घोषणा is_typec_port(dev) ((dev)->type == &typec_port_dev_type)
 
-extern struct class typec_mux_class;
-extern struct class typec_class;
+बाह्य काष्ठा class typec_mux_class;
+बाह्य काष्ठा class typec_class;
 
-int typec_link_ports(struct typec_port *connector);
-void typec_unlink_ports(struct typec_port *connector);
+पूर्णांक typec_link_ports(काष्ठा typec_port *connector);
+व्योम typec_unlink_ports(काष्ठा typec_port *connector);
 
-#endif /* __USB_TYPEC_CLASS__ */
+#पूर्ण_अगर /* __USB_TYPEC_CLASS__ */

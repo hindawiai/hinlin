@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2019 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -21,25 +22,25 @@
  *
  */
 
-#ifndef _TA_RAS_IF_H
-#define _TA_RAS_IF_H
+#अगर_अघोषित _TA_RAS_IF_H
+#घोषणा _TA_RAS_IF_H
 
-#define RAS_TA_HOST_IF_VER	0
+#घोषणा RAS_TA_HOST_IF_VER	0
 
 /* Responses have bit 31 set */
-#define RSP_ID_MASK (1U << 31)
-#define RSP_ID(cmdId) (((uint32_t)(cmdId)) | RSP_ID_MASK)
+#घोषणा RSP_ID_MASK (1U << 31)
+#घोषणा RSP_ID(cmdId) (((uपूर्णांक32_t)(cmdId)) | RSP_ID_MASK)
 
-/* RAS related enumerations */
+/* RAS related क्रमागतerations */
 /**********************************************************/
-enum ras_command {
+क्रमागत ras_command अणु
 	TA_RAS_COMMAND__ENABLE_FEATURES = 0,
 	TA_RAS_COMMAND__DISABLE_FEATURES,
 	TA_RAS_COMMAND__TRIGGER_ERROR,
-};
+पूर्ण;
 
-enum ta_ras_status
-{
+क्रमागत ta_ras_status
+अणु
 	TA_RAS_STATUS__SUCCESS                          = 0x00,
 	TA_RAS_STATUS__RESET_NEEDED                     = 0xA001,
 	TA_RAS_STATUS__ERROR_INVALID_PARAMETER          = 0xA002,
@@ -56,9 +57,9 @@ enum ta_ras_status
 	TA_RAS_STATUS__ERROR_UNSUPPORTED_DEV            = 0xA00D,
 	TA_RAS_STATUS__ERROR_NOT_INITIALIZED            = 0xA00E,
 	TA_RAS_STATUS__ERROR_TEE_INTERNAL               = 0xA00F
-};
+पूर्ण;
 
-enum ta_ras_block {
+क्रमागत ta_ras_block अणु
 	TA_RAS_BLOCK__UMC = 0,
 	TA_RAS_BLOCK__SDMA,
 	TA_RAS_BLOCK__GFX,
@@ -74,70 +75,70 @@ enum ta_ras_block {
 	TA_RAS_BLOCK__MP1,
 	TA_RAS_BLOCK__FUSE,
 	TA_NUM_BLOCK_MAX
-};
+पूर्ण;
 
-enum ta_ras_error_type {
+क्रमागत ta_ras_error_type अणु
 	TA_RAS_ERROR__NONE			= 0,
 	TA_RAS_ERROR__PARITY			= 1,
 	TA_RAS_ERROR__SINGLE_CORRECTABLE	= 2,
 	TA_RAS_ERROR__MULTI_UNCORRECTABLE	= 4,
 	TA_RAS_ERROR__POISON			= 8,
-};
+पूर्ण;
 
-/* Input/output structures for RAS commands */
+/* Input/output काष्ठाures क्रम RAS commands */
 /**********************************************************/
 
-struct ta_ras_enable_features_input {
-	enum ta_ras_block	block_id;
-	enum ta_ras_error_type	error_type;
-};
+काष्ठा ta_ras_enable_features_input अणु
+	क्रमागत ta_ras_block	block_id;
+	क्रमागत ta_ras_error_type	error_type;
+पूर्ण;
 
-struct ta_ras_disable_features_input {
-	enum ta_ras_block	block_id;
-	enum ta_ras_error_type	error_type;
-};
+काष्ठा ta_ras_disable_features_input अणु
+	क्रमागत ta_ras_block	block_id;
+	क्रमागत ta_ras_error_type	error_type;
+पूर्ण;
 
-struct ta_ras_trigger_error_input {
-	enum ta_ras_block	block_id;		// ras-block. i.e. umc, gfx
-	enum ta_ras_error_type	inject_error_type;	// type of error. i.e. single_correctable
-	uint32_t		sub_block_index;	// mem block. i.e. hbm, sram etc.
-	uint64_t		address;		// explicit address of error
-	uint64_t		value;			// method if error injection. i.e persistent, coherent etc.
-};
+काष्ठा ta_ras_trigger_error_input अणु
+	क्रमागत ta_ras_block	block_id;		// ras-block. i.e. umc, gfx
+	क्रमागत ta_ras_error_type	inject_error_type;	// type of error. i.e. single_correctable
+	uपूर्णांक32_t		sub_block_index;	// mem block. i.e. hbm, sram etc.
+	uपूर्णांक64_t		address;		// explicit address of error
+	uपूर्णांक64_t		value;			// method अगर error injection. i.e persistent, coherent etc.
+पूर्ण;
 
-struct ta_ras_output_flags
-{
-	uint8_t    ras_init_success_flag;
-	uint8_t    err_inject_switch_disable_flag;
-	uint8_t    reg_access_failure_flag;
-};
+काष्ठा ta_ras_output_flags
+अणु
+	uपूर्णांक8_t    ras_init_success_flag;
+	uपूर्णांक8_t    err_inject_चयन_disable_flag;
+	uपूर्णांक8_t    reg_access_failure_flag;
+पूर्ण;
 
-/* Common input structure for RAS callbacks */
+/* Common input काष्ठाure क्रम RAS callbacks */
 /**********************************************************/
-union ta_ras_cmd_input {
-	struct ta_ras_enable_features_input	enable_features;
-	struct ta_ras_disable_features_input	disable_features;
-	struct ta_ras_trigger_error_input	trigger_error;
+जोड़ ta_ras_cmd_input अणु
+	काष्ठा ta_ras_enable_features_input	enable_features;
+	काष्ठा ta_ras_disable_features_input	disable_features;
+	काष्ठा ta_ras_trigger_error_input	trigger_error;
 
-	uint32_t	reserve_pad[256];
-};
+	uपूर्णांक32_t	reserve_pad[256];
+पूर्ण;
 
-union ta_ras_cmd_output
-{
-	struct ta_ras_output_flags  flags;
+जोड़ ta_ras_cmd_output
+अणु
+	काष्ठा ta_ras_output_flags  flags;
 
-	uint32_t	reserve_pad[256];
-};
+	uपूर्णांक32_t	reserve_pad[256];
+पूर्ण;
 
-/* Shared Memory structures */
+/* Shared Memory काष्ठाures */
 /**********************************************************/
-struct ta_ras_shared_memory {
-	uint32_t		    cmd_id;
-	uint32_t		    resp_id;
-	uint32_t	    	    ras_status;
-	uint32_t		    if_version;
-	union ta_ras_cmd_input	    ras_in_message;
-	union ta_ras_cmd_output     ras_out_message;
-};
+काष्ठा ta_ras_shared_memory अणु
+	uपूर्णांक32_t		    cmd_id;
+	uपूर्णांक32_t		    resp_id;
+	uपूर्णांक32_t	    	    ras_status;
+	uपूर्णांक32_t		    अगर_version;
+	जोड़ ta_ras_cmd_input	    ras_in_message;
+	जोड़ ta_ras_cmd_output     ras_out_message;
+पूर्ण;
 
-#endif // TL_RAS_IF_H_
+#पूर्ण_अगर // TL_RAS_IF_H_

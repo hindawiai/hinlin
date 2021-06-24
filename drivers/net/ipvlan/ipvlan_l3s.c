@@ -1,223 +1,224 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /* Copyright (c) 2014 Mahesh Bandewar <maheshb@google.com>
  */
 
-#include "ipvlan.h"
+#समावेश "ipvlan.h"
 
-static unsigned int ipvlan_netid __read_mostly;
+अटल अचिन्हित पूर्णांक ipvlan_netid __पढ़ो_mostly;
 
-struct ipvlan_netns {
-	unsigned int ipvl_nf_hook_refcnt;
-};
+काष्ठा ipvlan_netns अणु
+	अचिन्हित पूर्णांक ipvl_nf_hook_refcnt;
+पूर्ण;
 
-static struct ipvl_addr *ipvlan_skb_to_addr(struct sk_buff *skb,
-					    struct net_device *dev)
-{
-	struct ipvl_addr *addr = NULL;
-	struct ipvl_port *port;
-	int addr_type;
-	void *lyr3h;
+अटल काष्ठा ipvl_addr *ipvlan_skb_to_addr(काष्ठा sk_buff *skb,
+					    काष्ठा net_device *dev)
+अणु
+	काष्ठा ipvl_addr *addr = शून्य;
+	काष्ठा ipvl_port *port;
+	पूर्णांक addr_type;
+	व्योम *lyr3h;
 
-	if (!dev || !netif_is_ipvlan_port(dev))
-		goto out;
+	अगर (!dev || !netअगर_is_ipvlan_port(dev))
+		जाओ out;
 
 	port = ipvlan_port_get_rcu(dev);
-	if (!port || port->mode != IPVLAN_MODE_L3S)
-		goto out;
+	अगर (!port || port->mode != IPVLAN_MODE_L3S)
+		जाओ out;
 
 	lyr3h = ipvlan_get_L3_hdr(port, skb, &addr_type);
-	if (!lyr3h)
-		goto out;
+	अगर (!lyr3h)
+		जाओ out;
 
 	addr = ipvlan_addr_lookup(port, lyr3h, addr_type, true);
 out:
-	return addr;
-}
+	वापस addr;
+पूर्ण
 
-static struct sk_buff *ipvlan_l3_rcv(struct net_device *dev,
-				     struct sk_buff *skb, u16 proto)
-{
-	struct ipvl_addr *addr;
-	struct net_device *sdev;
+अटल काष्ठा sk_buff *ipvlan_l3_rcv(काष्ठा net_device *dev,
+				     काष्ठा sk_buff *skb, u16 proto)
+अणु
+	काष्ठा ipvl_addr *addr;
+	काष्ठा net_device *sdev;
 
 	addr = ipvlan_skb_to_addr(skb, dev);
-	if (!addr)
-		goto out;
+	अगर (!addr)
+		जाओ out;
 
 	sdev = addr->master->dev;
-	switch (proto) {
-	case AF_INET:
-	{
-		struct iphdr *ip4h = ip_hdr(skb);
-		int err;
+	चयन (proto) अणु
+	हाल AF_INET:
+	अणु
+		काष्ठा iphdr *ip4h = ip_hdr(skb);
+		पूर्णांक err;
 
 		err = ip_route_input_noref(skb, ip4h->daddr, ip4h->saddr,
 					   ip4h->tos, sdev);
-		if (unlikely(err))
-			goto out;
-		break;
-	}
-#if IS_ENABLED(CONFIG_IPV6)
-	case AF_INET6:
-	{
-		struct dst_entry *dst;
-		struct ipv6hdr *ip6h = ipv6_hdr(skb);
-		int flags = RT6_LOOKUP_F_HAS_SADDR;
-		struct flowi6 fl6 = {
-			.flowi6_iif   = sdev->ifindex,
+		अगर (unlikely(err))
+			जाओ out;
+		अवरोध;
+	पूर्ण
+#अगर IS_ENABLED(CONFIG_IPV6)
+	हाल AF_INET6:
+	अणु
+		काष्ठा dst_entry *dst;
+		काष्ठा ipv6hdr *ip6h = ipv6_hdr(skb);
+		पूर्णांक flags = RT6_LOOKUP_F_HAS_SADDR;
+		काष्ठा flowi6 fl6 = अणु
+			.flowi6_iअगर   = sdev->अगरindex,
 			.daddr        = ip6h->daddr,
 			.saddr        = ip6h->saddr,
 			.flowlabel    = ip6_flowinfo(ip6h),
 			.flowi6_mark  = skb->mark,
 			.flowi6_proto = ip6h->nexthdr,
-		};
+		पूर्ण;
 
 		skb_dst_drop(skb);
 		dst = ip6_route_input_lookup(dev_net(sdev), sdev, &fl6,
 					     skb, flags);
 		skb_dst_set(skb, dst);
-		break;
-	}
-#endif
-	default:
-		break;
-	}
+		अवरोध;
+	पूर्ण
+#पूर्ण_अगर
+	शेष:
+		अवरोध;
+	पूर्ण
 out:
-	return skb;
-}
+	वापस skb;
+पूर्ण
 
-static const struct l3mdev_ops ipvl_l3mdev_ops = {
+अटल स्थिर काष्ठा l3mdev_ops ipvl_l3mdev_ops = अणु
 	.l3mdev_l3_rcv = ipvlan_l3_rcv,
-};
+पूर्ण;
 
-static unsigned int ipvlan_nf_input(void *priv, struct sk_buff *skb,
-				    const struct nf_hook_state *state)
-{
-	struct ipvl_addr *addr;
-	unsigned int len;
+अटल अचिन्हित पूर्णांक ipvlan_nf_input(व्योम *priv, काष्ठा sk_buff *skb,
+				    स्थिर काष्ठा nf_hook_state *state)
+अणु
+	काष्ठा ipvl_addr *addr;
+	अचिन्हित पूर्णांक len;
 
 	addr = ipvlan_skb_to_addr(skb, skb->dev);
-	if (!addr)
-		goto out;
+	अगर (!addr)
+		जाओ out;
 
 	skb->dev = addr->master->dev;
 	len = skb->len + ETH_HLEN;
 	ipvlan_count_rx(addr->master, len, true, false);
 out:
-	return NF_ACCEPT;
-}
+	वापस NF_ACCEPT;
+पूर्ण
 
-static const struct nf_hook_ops ipvl_nfops[] = {
-	{
+अटल स्थिर काष्ठा nf_hook_ops ipvl_nfops[] = अणु
+	अणु
 		.hook     = ipvlan_nf_input,
 		.pf       = NFPROTO_IPV4,
 		.hooknum  = NF_INET_LOCAL_IN,
-		.priority = INT_MAX,
-	},
-#if IS_ENABLED(CONFIG_IPV6)
-	{
+		.priority = पूर्णांक_उच्च,
+	पूर्ण,
+#अगर IS_ENABLED(CONFIG_IPV6)
+	अणु
 		.hook     = ipvlan_nf_input,
 		.pf       = NFPROTO_IPV6,
 		.hooknum  = NF_INET_LOCAL_IN,
-		.priority = INT_MAX,
-	},
-#endif
-};
+		.priority = पूर्णांक_उच्च,
+	पूर्ण,
+#पूर्ण_अगर
+पूर्ण;
 
-static int ipvlan_register_nf_hook(struct net *net)
-{
-	struct ipvlan_netns *vnet = net_generic(net, ipvlan_netid);
-	int err = 0;
+अटल पूर्णांक ipvlan_रेजिस्टर_nf_hook(काष्ठा net *net)
+अणु
+	काष्ठा ipvlan_netns *vnet = net_generic(net, ipvlan_netid);
+	पूर्णांक err = 0;
 
-	if (!vnet->ipvl_nf_hook_refcnt) {
-		err = nf_register_net_hooks(net, ipvl_nfops,
+	अगर (!vnet->ipvl_nf_hook_refcnt) अणु
+		err = nf_रेजिस्टर_net_hooks(net, ipvl_nfops,
 					    ARRAY_SIZE(ipvl_nfops));
-		if (!err)
+		अगर (!err)
 			vnet->ipvl_nf_hook_refcnt = 1;
-	} else {
+	पूर्ण अन्यथा अणु
 		vnet->ipvl_nf_hook_refcnt++;
-	}
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void ipvlan_unregister_nf_hook(struct net *net)
-{
-	struct ipvlan_netns *vnet = net_generic(net, ipvlan_netid);
+अटल व्योम ipvlan_unरेजिस्टर_nf_hook(काष्ठा net *net)
+अणु
+	काष्ठा ipvlan_netns *vnet = net_generic(net, ipvlan_netid);
 
-	if (WARN_ON(!vnet->ipvl_nf_hook_refcnt))
-		return;
+	अगर (WARN_ON(!vnet->ipvl_nf_hook_refcnt))
+		वापस;
 
 	vnet->ipvl_nf_hook_refcnt--;
-	if (!vnet->ipvl_nf_hook_refcnt)
-		nf_unregister_net_hooks(net, ipvl_nfops,
+	अगर (!vnet->ipvl_nf_hook_refcnt)
+		nf_unरेजिस्टर_net_hooks(net, ipvl_nfops,
 					ARRAY_SIZE(ipvl_nfops));
-}
+पूर्ण
 
-void ipvlan_migrate_l3s_hook(struct net *oldnet, struct net *newnet)
-{
-	struct ipvlan_netns *old_vnet;
+व्योम ipvlan_migrate_l3s_hook(काष्ठा net *oldnet, काष्ठा net *newnet)
+अणु
+	काष्ठा ipvlan_netns *old_vnet;
 
 	ASSERT_RTNL();
 
 	old_vnet = net_generic(oldnet, ipvlan_netid);
-	if (!old_vnet->ipvl_nf_hook_refcnt)
-		return;
+	अगर (!old_vnet->ipvl_nf_hook_refcnt)
+		वापस;
 
-	ipvlan_register_nf_hook(newnet);
-	ipvlan_unregister_nf_hook(oldnet);
-}
+	ipvlan_रेजिस्टर_nf_hook(newnet);
+	ipvlan_unरेजिस्टर_nf_hook(oldnet);
+पूर्ण
 
-static void ipvlan_ns_exit(struct net *net)
-{
-	struct ipvlan_netns *vnet = net_generic(net, ipvlan_netid);
+अटल व्योम ipvlan_ns_निकास(काष्ठा net *net)
+अणु
+	काष्ठा ipvlan_netns *vnet = net_generic(net, ipvlan_netid);
 
-	if (WARN_ON_ONCE(vnet->ipvl_nf_hook_refcnt)) {
+	अगर (WARN_ON_ONCE(vnet->ipvl_nf_hook_refcnt)) अणु
 		vnet->ipvl_nf_hook_refcnt = 0;
-		nf_unregister_net_hooks(net, ipvl_nfops,
+		nf_unरेजिस्टर_net_hooks(net, ipvl_nfops,
 					ARRAY_SIZE(ipvl_nfops));
-	}
-}
+	पूर्ण
+पूर्ण
 
-static struct pernet_operations ipvlan_net_ops = {
+अटल काष्ठा pernet_operations ipvlan_net_ops = अणु
 	.id   = &ipvlan_netid,
-	.size = sizeof(struct ipvlan_netns),
-	.exit = ipvlan_ns_exit,
-};
+	.size = माप(काष्ठा ipvlan_netns),
+	.निकास = ipvlan_ns_निकास,
+पूर्ण;
 
-int ipvlan_l3s_init(void)
-{
-	return register_pernet_subsys(&ipvlan_net_ops);
-}
+पूर्णांक ipvlan_l3s_init(व्योम)
+अणु
+	वापस रेजिस्टर_pernet_subsys(&ipvlan_net_ops);
+पूर्ण
 
-void ipvlan_l3s_cleanup(void)
-{
-	unregister_pernet_subsys(&ipvlan_net_ops);
-}
+व्योम ipvlan_l3s_cleanup(व्योम)
+अणु
+	unरेजिस्टर_pernet_subsys(&ipvlan_net_ops);
+पूर्ण
 
-int ipvlan_l3s_register(struct ipvl_port *port)
-{
-	struct net_device *dev = port->dev;
-	int ret;
+पूर्णांक ipvlan_l3s_रेजिस्टर(काष्ठा ipvl_port *port)
+अणु
+	काष्ठा net_device *dev = port->dev;
+	पूर्णांक ret;
 
 	ASSERT_RTNL();
 
-	ret = ipvlan_register_nf_hook(read_pnet(&port->pnet));
-	if (!ret) {
+	ret = ipvlan_रेजिस्टर_nf_hook(पढ़ो_pnet(&port->pnet));
+	अगर (!ret) अणु
 		dev->l3mdev_ops = &ipvl_l3mdev_ops;
 		dev->priv_flags |= IFF_L3MDEV_RX_HANDLER;
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-void ipvlan_l3s_unregister(struct ipvl_port *port)
-{
-	struct net_device *dev = port->dev;
+व्योम ipvlan_l3s_unरेजिस्टर(काष्ठा ipvl_port *port)
+अणु
+	काष्ठा net_device *dev = port->dev;
 
 	ASSERT_RTNL();
 
 	dev->priv_flags &= ~IFF_L3MDEV_RX_HANDLER;
-	ipvlan_unregister_nf_hook(read_pnet(&port->pnet));
-	dev->l3mdev_ops = NULL;
-}
+	ipvlan_unरेजिस्टर_nf_hook(पढ़ो_pnet(&port->pnet));
+	dev->l3mdev_ops = शून्य;
+पूर्ण

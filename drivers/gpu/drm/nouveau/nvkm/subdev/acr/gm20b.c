@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2019 Red Hat Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -19,85 +20,85 @@
  * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  * OTHER DEALINGS IN THE SOFTWARE.
  */
-#include "priv.h"
+#समावेश "priv.h"
 
-#include <core/firmware.h>
-#include <core/memory.h>
-#include <subdev/mmu.h>
-#include <subdev/pmu.h>
+#समावेश <core/firmware.h>
+#समावेश <core/memory.h>
+#समावेश <subdev/mmu.h>
+#समावेश <subdev/pmu.h>
 
-#include <nvfw/acr.h>
-#include <nvfw/flcn.h>
+#समावेश <nvfw/acr.h>
+#समावेश <nvfw/flcn.h>
 
-int
-gm20b_acr_wpr_alloc(struct nvkm_acr *acr, u32 wpr_size)
-{
-	struct nvkm_subdev *subdev = &acr->subdev;
+पूर्णांक
+gm20b_acr_wpr_alloc(काष्ठा nvkm_acr *acr, u32 wpr_size)
+अणु
+	काष्ठा nvkm_subdev *subdev = &acr->subdev;
 
 	acr->func->wpr_check(acr, &acr->wpr_start, &acr->wpr_end);
 
-	if ((acr->wpr_end - acr->wpr_start) < wpr_size) {
+	अगर ((acr->wpr_end - acr->wpr_start) < wpr_size) अणु
 		nvkm_error(subdev, "WPR image too big for WPR!\n");
-		return -ENOSPC;
-	}
+		वापस -ENOSPC;
+	पूर्ण
 
-	return nvkm_memory_new(subdev->device, NVKM_MEM_TARGET_INST,
+	वापस nvkm_memory_new(subdev->device, NVKM_MEM_TARGET_INST,
 			       wpr_size, 0, true, &acr->wpr);
-}
+पूर्ण
 
-static void
-gm20b_acr_load_bld(struct nvkm_acr *acr, struct nvkm_acr_hsf *hsf)
-{
-	struct flcn_bl_dmem_desc hsdesc = {
+अटल व्योम
+gm20b_acr_load_bld(काष्ठा nvkm_acr *acr, काष्ठा nvkm_acr_hsf *hsf)
+अणु
+	काष्ठा flcn_bl_dmem_desc hsdesc = अणु
 		.ctx_dma = FALCON_DMAIDX_VIRT,
 		.code_dma_base = hsf->vma->addr >> 8,
 		.non_sec_code_off = hsf->non_sec_addr,
 		.non_sec_code_size = hsf->non_sec_size,
 		.sec_code_off = hsf->sec_addr,
 		.sec_code_size = hsf->sec_size,
-		.code_entry_point = 0,
+		.code_entry_poपूर्णांक = 0,
 		.data_dma_base = (hsf->vma->addr + hsf->data_addr) >> 8,
 		.data_size = hsf->data_size,
-	};
+	पूर्ण;
 
 	flcn_bl_dmem_desc_dump(&acr->subdev, &hsdesc);
 
-	nvkm_falcon_load_dmem(hsf->falcon, &hsdesc, 0, sizeof(hsdesc), 0);
-}
+	nvkm_falcon_load_dmem(hsf->falcon, &hsdesc, 0, माप(hsdesc), 0);
+पूर्ण
 
-static int
-gm20b_acr_load_load(struct nvkm_acr *acr, struct nvkm_acr_hsfw *hsfw)
-{
-	struct flcn_acr_desc *desc = (void *)&hsfw->image[hsfw->data_addr];
+अटल पूर्णांक
+gm20b_acr_load_load(काष्ठा nvkm_acr *acr, काष्ठा nvkm_acr_hsfw *hsfw)
+अणु
+	काष्ठा flcn_acr_desc *desc = (व्योम *)&hsfw->image[hsfw->data_addr];
 
 	desc->ucode_blob_base = nvkm_memory_addr(acr->wpr);
 	desc->ucode_blob_size = nvkm_memory_size(acr->wpr);
 	flcn_acr_desc_dump(&acr->subdev, desc);
 
-	return gm200_acr_hsfw_load(acr, hsfw, &acr->subdev.device->pmu->falcon);
-}
+	वापस gm200_acr_hsfw_load(acr, hsfw, &acr->subdev.device->pmu->falcon);
+पूर्ण
 
-const struct nvkm_acr_hsf_func
-gm20b_acr_load_0 = {
+स्थिर काष्ठा nvkm_acr_hsf_func
+gm20b_acr_load_0 = अणु
 	.load = gm20b_acr_load_load,
 	.boot = gm200_acr_load_boot,
 	.bld = gm20b_acr_load_bld,
-};
+पूर्ण;
 
-#if IS_ENABLED(CONFIG_ARCH_TEGRA_210_SOC)
+#अगर IS_ENABLED(CONFIG_ARCH_TEGRA_210_SOC)
 MODULE_FIRMWARE("nvidia/gm20b/acr/bl.bin");
 MODULE_FIRMWARE("nvidia/gm20b/acr/ucode_load.bin");
-#endif
+#पूर्ण_अगर
 
-static const struct nvkm_acr_hsf_fwif
-gm20b_acr_load_fwif[] = {
-	{ 0, nvkm_acr_hsfw_load, &gm20b_acr_load_0 },
-	{}
-};
+अटल स्थिर काष्ठा nvkm_acr_hsf_fwअगर
+gm20b_acr_load_fwअगर[] = अणु
+	अणु 0, nvkm_acr_hsfw_load, &gm20b_acr_load_0 पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
-static const struct nvkm_acr_func
-gm20b_acr = {
-	.load = gm20b_acr_load_fwif,
+अटल स्थिर काष्ठा nvkm_acr_func
+gm20b_acr = अणु
+	.load = gm20b_acr_load_fwअगर,
 	.wpr_parse = gm200_acr_wpr_parse,
 	.wpr_layout = gm200_acr_wpr_layout,
 	.wpr_alloc = gm20b_acr_wpr_alloc,
@@ -105,32 +106,32 @@ gm20b_acr = {
 	.wpr_patch = gm200_acr_wpr_patch,
 	.wpr_check = gm200_acr_wpr_check,
 	.init = gm200_acr_init,
-};
+पूर्ण;
 
-int
-gm20b_acr_load(struct nvkm_acr *acr, int ver, const struct nvkm_acr_fwif *fwif)
-{
-	struct nvkm_subdev *subdev = &acr->subdev;
-	const struct nvkm_acr_hsf_fwif *hsfwif;
+पूर्णांक
+gm20b_acr_load(काष्ठा nvkm_acr *acr, पूर्णांक ver, स्थिर काष्ठा nvkm_acr_fwअगर *fwअगर)
+अणु
+	काष्ठा nvkm_subdev *subdev = &acr->subdev;
+	स्थिर काष्ठा nvkm_acr_hsf_fwअगर *hsfwअगर;
 
-	hsfwif = nvkm_firmware_load(subdev, fwif->func->load, "AcrLoad",
+	hsfwअगर = nvkm_firmware_load(subdev, fwअगर->func->load, "AcrLoad",
 				    acr, "acr/bl", "acr/ucode_load", "load");
-	if (IS_ERR(hsfwif))
-		return PTR_ERR(hsfwif);
+	अगर (IS_ERR(hsfwअगर))
+		वापस PTR_ERR(hsfwअगर);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct nvkm_acr_fwif
-gm20b_acr_fwif[] = {
-	{  0, gm20b_acr_load, &gm20b_acr },
-	{ -1, gm200_acr_nofw, &gm200_acr },
-	{}
-};
+अटल स्थिर काष्ठा nvkm_acr_fwअगर
+gm20b_acr_fwअगर[] = अणु
+	अणु  0, gm20b_acr_load, &gm20b_acr पूर्ण,
+	अणु -1, gm200_acr_nofw, &gm200_acr पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
-int
-gm20b_acr_new(struct nvkm_device *device, enum nvkm_subdev_type type, int inst,
-	      struct nvkm_acr **pacr)
-{
-	return nvkm_acr_new_(gm20b_acr_fwif, device, type, inst, pacr);
-}
+पूर्णांक
+gm20b_acr_new(काष्ठा nvkm_device *device, क्रमागत nvkm_subdev_type type, पूर्णांक inst,
+	      काष्ठा nvkm_acr **pacr)
+अणु
+	वापस nvkm_acr_new_(gm20b_acr_fwअगर, device, type, inst, pacr);
+पूर्ण

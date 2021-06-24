@@ -1,9 +1,10 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _LINUX_NET_RATELIMIT_H
-#define _LINUX_NET_RATELIMIT_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _LINUX_NET_RATELIMIT_H
+#घोषणा _LINUX_NET_RATELIMIT_H
 
-#include <linux/ratelimit.h>
+#समावेश <linux/ratelimit.h>
 
-extern struct ratelimit_state net_ratelimit_state;
+बाह्य काष्ठा ratelimit_state net_ratelimit_state;
 
-#endif	/* _LINUX_NET_RATELIMIT_H */
+#पूर्ण_अगर	/* _LINUX_NET_RATELIMIT_H */

@@ -1,175 +1,176 @@
-/* SPDX-License-Identifier: GPL-2.0+ */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0+ */
 /*
  * vsp1_pipe.h  --  R-Car VSP1 Pipeline
  *
  * Copyright (C) 2013-2015 Renesas Electronics Corporation
  *
- * Contact: Laurent Pinchart (laurent.pinchart@ideasonboard.com)
+ * Contact: Laurent Pinअक्षरt (laurent.pinअक्षरt@ideasonboard.com)
  */
-#ifndef __VSP1_PIPE_H__
-#define __VSP1_PIPE_H__
+#अगर_अघोषित __VSP1_PIPE_H__
+#घोषणा __VSP1_PIPE_H__
 
-#include <linux/kref.h>
-#include <linux/list.h>
-#include <linux/spinlock.h>
-#include <linux/wait.h>
+#समावेश <linux/kref.h>
+#समावेश <linux/list.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/रुको.h>
 
-#include <media/media-entity.h>
+#समावेश <media/media-entity.h>
 
-struct vsp1_dl_list;
-struct vsp1_rwpf;
+काष्ठा vsp1_dl_list;
+काष्ठा vsp1_rwpf;
 
 /*
- * struct vsp1_format_info - VSP1 video format description
- * @fourcc: V4L2 pixel format FCC identifier
- * @mbus: media bus format code
- * @hwfmt: VSP1 hardware format
- * @swap: swap register control
+ * काष्ठा vsp1_क्रमmat_info - VSP1 video क्रमmat description
+ * @fourcc: V4L2 pixel क्रमmat FCC identअगरier
+ * @mbus: media bus क्रमmat code
+ * @hwfmt: VSP1 hardware क्रमmat
+ * @swap: swap रेजिस्टर control
  * @planes: number of planes
  * @bpp: bits per pixel
- * @swap_yc: the Y and C components are swapped (Y comes before C)
- * @swap_uv: the U and V components are swapped (V comes before U)
+ * @swap_yc: the Y and C components are swapped (Y comes beक्रमe C)
+ * @swap_uv: the U and V components are swapped (V comes beक्रमe U)
  * @hsub: horizontal subsampling factor
  * @vsub: vertical subsampling factor
  * @alpha: has an alpha channel
  */
-struct vsp1_format_info {
+काष्ठा vsp1_क्रमmat_info अणु
 	u32 fourcc;
-	unsigned int mbus;
-	unsigned int hwfmt;
-	unsigned int swap;
-	unsigned int planes;
-	unsigned int bpp[3];
+	अचिन्हित पूर्णांक mbus;
+	अचिन्हित पूर्णांक hwfmt;
+	अचिन्हित पूर्णांक swap;
+	अचिन्हित पूर्णांक planes;
+	अचिन्हित पूर्णांक bpp[3];
 	bool swap_yc;
 	bool swap_uv;
-	unsigned int hsub;
-	unsigned int vsub;
+	अचिन्हित पूर्णांक hsub;
+	अचिन्हित पूर्णांक vsub;
 	bool alpha;
-};
+पूर्ण;
 
-enum vsp1_pipeline_state {
+क्रमागत vsp1_pipeline_state अणु
 	VSP1_PIPELINE_STOPPED,
 	VSP1_PIPELINE_RUNNING,
 	VSP1_PIPELINE_STOPPING,
-};
+पूर्ण;
 
 /*
- * struct vsp1_partition_window - Partition window coordinates
+ * काष्ठा vsp1_partition_winकरोw - Partition winकरोw coordinates
  * @left: horizontal coordinate of the partition start in pixels relative to the
  *	  left edge of the image
  * @width: partition width in pixels
  */
-struct vsp1_partition_window {
-	unsigned int left;
-	unsigned int width;
-};
+काष्ठा vsp1_partition_winकरोw अणु
+	अचिन्हित पूर्णांक left;
+	अचिन्हित पूर्णांक width;
+पूर्ण;
 
 /*
- * struct vsp1_partition - A description of a slice for the partition algorithm
- * @rpf: The RPF partition window configuration
- * @uds_sink: The UDS input partition window configuration
- * @uds_source: The UDS output partition window configuration
- * @sru: The SRU partition window configuration
- * @wpf: The WPF partition window configuration
+ * काष्ठा vsp1_partition - A description of a slice क्रम the partition algorithm
+ * @rpf: The RPF partition winकरोw configuration
+ * @uds_sink: The UDS input partition winकरोw configuration
+ * @uds_source: The UDS output partition winकरोw configuration
+ * @sru: The SRU partition winकरोw configuration
+ * @wpf: The WPF partition winकरोw configuration
  */
-struct vsp1_partition {
-	struct vsp1_partition_window rpf;
-	struct vsp1_partition_window uds_sink;
-	struct vsp1_partition_window uds_source;
-	struct vsp1_partition_window sru;
-	struct vsp1_partition_window wpf;
-};
+काष्ठा vsp1_partition अणु
+	काष्ठा vsp1_partition_winकरोw rpf;
+	काष्ठा vsp1_partition_winकरोw uds_sink;
+	काष्ठा vsp1_partition_winकरोw uds_source;
+	काष्ठा vsp1_partition_winकरोw sru;
+	काष्ठा vsp1_partition_winकरोw wpf;
+पूर्ण;
 
 /*
- * struct vsp1_pipeline - A VSP1 hardware pipeline
+ * काष्ठा vsp1_pipeline - A VSP1 hardware pipeline
  * @pipe: the media pipeline
  * @irqlock: protects the pipeline state
  * @state: current state
- * @wq: wait queue to wait for state change completion
- * @frame_end: frame end interrupt handler
+ * @wq: रुको queue to रुको क्रम state change completion
+ * @frame_end: frame end पूर्णांकerrupt handler
  * @lock: protects the pipeline use count and stream count
  * @kref: pipeline reference count
  * @stream_count: number of streaming video nodes
- * @buffers_ready: bitmask of RPFs and WPFs with at least one buffer available
+ * @buffers_पढ़ोy: biपंचांगask of RPFs and WPFs with at least one buffer available
  * @sequence: frame sequence number
- * @num_inputs: number of RPFs
- * @inputs: array of RPFs in the pipeline (indexed by RPF index)
+ * @num_inमाला_दो: number of RPFs
+ * @inमाला_दो: array of RPFs in the pipeline (indexed by RPF index)
  * @output: WPF at the output of the pipeline
- * @brx: BRx entity, if present
- * @hgo: HGO entity, if present
- * @hgt: HGT entity, if present
- * @lif: LIF entity, if present
- * @uds: UDS entity, if present
- * @uds_input: entity at the input of the UDS, if the UDS is present
+ * @brx: BRx entity, अगर present
+ * @hgo: HGO entity, अगर present
+ * @hgt: HGT entity, अगर present
+ * @lअगर: LIF entity, अगर present
+ * @uds: UDS entity, अगर present
+ * @uds_input: entity at the input of the UDS, अगर the UDS is present
  * @entities: list of entities in the pipeline
- * @stream_config: cached stream configuration for video pipelines
+ * @stream_config: cached stream configuration क्रम video pipelines
  * @configured: when false the @stream_config shall be written to the hardware
- * @interlaced: True when the pipeline is configured in interlaced mode
+ * @पूर्णांकerlaced: True when the pipeline is configured in पूर्णांकerlaced mode
  * @partitions: The number of partitions used to process one frame
- * @partition: The current partition for configuration to process
+ * @partition: The current partition क्रम configuration to process
  * @part_table: The pre-calculated partitions used by the pipeline
  */
-struct vsp1_pipeline {
-	struct media_pipeline pipe;
+काष्ठा vsp1_pipeline अणु
+	काष्ठा media_pipeline pipe;
 
 	spinlock_t irqlock;
-	enum vsp1_pipeline_state state;
-	wait_queue_head_t wq;
+	क्रमागत vsp1_pipeline_state state;
+	रुको_queue_head_t wq;
 
-	void (*frame_end)(struct vsp1_pipeline *pipe, unsigned int completion);
+	व्योम (*frame_end)(काष्ठा vsp1_pipeline *pipe, अचिन्हित पूर्णांक completion);
 
-	struct mutex lock;
-	struct kref kref;
-	unsigned int stream_count;
-	unsigned int buffers_ready;
-	unsigned int sequence;
+	काष्ठा mutex lock;
+	काष्ठा kref kref;
+	अचिन्हित पूर्णांक stream_count;
+	अचिन्हित पूर्णांक buffers_पढ़ोy;
+	अचिन्हित पूर्णांक sequence;
 
-	unsigned int num_inputs;
-	struct vsp1_rwpf *inputs[VSP1_MAX_RPF];
-	struct vsp1_rwpf *output;
-	struct vsp1_entity *brx;
-	struct vsp1_entity *hgo;
-	struct vsp1_entity *hgt;
-	struct vsp1_entity *lif;
-	struct vsp1_entity *uds;
-	struct vsp1_entity *uds_input;
+	अचिन्हित पूर्णांक num_inमाला_दो;
+	काष्ठा vsp1_rwpf *inमाला_दो[VSP1_MAX_RPF];
+	काष्ठा vsp1_rwpf *output;
+	काष्ठा vsp1_entity *brx;
+	काष्ठा vsp1_entity *hgo;
+	काष्ठा vsp1_entity *hgt;
+	काष्ठा vsp1_entity *lअगर;
+	काष्ठा vsp1_entity *uds;
+	काष्ठा vsp1_entity *uds_input;
 
 	/*
 	 * The order of this list must be identical to the order of the entities
 	 * in the pipeline, as it is assumed by the partition algorithm that we
 	 * can walk this list in sequence.
 	 */
-	struct list_head entities;
+	काष्ठा list_head entities;
 
-	struct vsp1_dl_body *stream_config;
+	काष्ठा vsp1_dl_body *stream_config;
 	bool configured;
-	bool interlaced;
+	bool पूर्णांकerlaced;
 
-	unsigned int partitions;
-	struct vsp1_partition *partition;
-	struct vsp1_partition *part_table;
-};
+	अचिन्हित पूर्णांक partitions;
+	काष्ठा vsp1_partition *partition;
+	काष्ठा vsp1_partition *part_table;
+पूर्ण;
 
-void vsp1_pipeline_reset(struct vsp1_pipeline *pipe);
-void vsp1_pipeline_init(struct vsp1_pipeline *pipe);
+व्योम vsp1_pipeline_reset(काष्ठा vsp1_pipeline *pipe);
+व्योम vsp1_pipeline_init(काष्ठा vsp1_pipeline *pipe);
 
-void vsp1_pipeline_run(struct vsp1_pipeline *pipe);
-bool vsp1_pipeline_stopped(struct vsp1_pipeline *pipe);
-int vsp1_pipeline_stop(struct vsp1_pipeline *pipe);
-bool vsp1_pipeline_ready(struct vsp1_pipeline *pipe);
+व्योम vsp1_pipeline_run(काष्ठा vsp1_pipeline *pipe);
+bool vsp1_pipeline_stopped(काष्ठा vsp1_pipeline *pipe);
+पूर्णांक vsp1_pipeline_stop(काष्ठा vsp1_pipeline *pipe);
+bool vsp1_pipeline_पढ़ोy(काष्ठा vsp1_pipeline *pipe);
 
-void vsp1_pipeline_frame_end(struct vsp1_pipeline *pipe);
+व्योम vsp1_pipeline_frame_end(काष्ठा vsp1_pipeline *pipe);
 
-void vsp1_pipeline_propagate_alpha(struct vsp1_pipeline *pipe,
-				   struct vsp1_dl_body *dlb,
-				   unsigned int alpha);
+व्योम vsp1_pipeline_propagate_alpha(काष्ठा vsp1_pipeline *pipe,
+				   काष्ठा vsp1_dl_body *dlb,
+				   अचिन्हित पूर्णांक alpha);
 
-void vsp1_pipeline_propagate_partition(struct vsp1_pipeline *pipe,
-				       struct vsp1_partition *partition,
-				       unsigned int index,
-				       struct vsp1_partition_window *window);
+व्योम vsp1_pipeline_propagate_partition(काष्ठा vsp1_pipeline *pipe,
+				       काष्ठा vsp1_partition *partition,
+				       अचिन्हित पूर्णांक index,
+				       काष्ठा vsp1_partition_winकरोw *winकरोw);
 
-const struct vsp1_format_info *vsp1_get_format_info(struct vsp1_device *vsp1,
+स्थिर काष्ठा vsp1_क्रमmat_info *vsp1_get_क्रमmat_info(काष्ठा vsp1_device *vsp1,
 						    u32 fourcc);
 
-#endif /* __VSP1_PIPE_H__ */
+#पूर्ण_अगर /* __VSP1_PIPE_H__ */

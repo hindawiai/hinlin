@@ -1,56 +1,57 @@
-// SPDX-License-Identifier: ISC
+<शैली गुरु>
+// SPDX-License-Identअगरier: ISC
 /*
  * Copyright (c) 2012 Broadcom Corporation
  */
-#include <linux/debugfs.h>
-#include <linux/netdevice.h>
-#include <linux/module.h>
-#include <linux/devcoredump.h>
+#समावेश <linux/debugfs.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/module.h>
+#समावेश <linux/devcoredump.h>
 
-#include <brcmu_wifi.h>
-#include <brcmu_utils.h>
-#include "core.h"
-#include "bus.h"
-#include "fweh.h"
-#include "debug.h"
+#समावेश <brcmu_wअगरi.h>
+#समावेश <brcmu_utils.h>
+#समावेश "core.h"
+#समावेश "bus.h"
+#समावेश "fweh.h"
+#समावेश "debug.h"
 
-int brcmf_debug_create_memdump(struct brcmf_bus *bus, const void *data,
-			       size_t len)
-{
-	void *dump;
-	size_t ramsize;
-	int err;
+पूर्णांक brcmf_debug_create_memdump(काष्ठा brcmf_bus *bus, स्थिर व्योम *data,
+			       माप_प्रकार len)
+अणु
+	व्योम *dump;
+	माप_प्रकार ramsize;
+	पूर्णांक err;
 
 	ramsize = brcmf_bus_get_ramsize(bus);
-	if (!ramsize)
-		return -ENOTSUPP;
+	अगर (!ramsize)
+		वापस -ENOTSUPP;
 
 	dump = vzalloc(len + ramsize);
-	if (!dump)
-		return -ENOMEM;
+	अगर (!dump)
+		वापस -ENOMEM;
 
-	if (data && len > 0)
-		memcpy(dump, data, len);
+	अगर (data && len > 0)
+		स_नकल(dump, data, len);
 	err = brcmf_bus_get_memdump(bus, dump + len, ramsize);
-	if (err) {
-		vfree(dump);
-		return err;
-	}
+	अगर (err) अणु
+		vमुक्त(dump);
+		वापस err;
+	पूर्ण
 
 	dev_coredumpv(bus->dev, dump, len + ramsize, GFP_KERNEL);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-struct dentry *brcmf_debugfs_get_devdir(struct brcmf_pub *drvr)
-{
-	return drvr->wiphy->debugfsdir;
-}
+काष्ठा dentry *brcmf_debugfs_get_devdir(काष्ठा brcmf_pub *drvr)
+अणु
+	वापस drvr->wiphy->debugfsdir;
+पूर्ण
 
-void brcmf_debugfs_add_entry(struct brcmf_pub *drvr, const char *fn,
-			    int (*read_fn)(struct seq_file *seq, void *data))
-{
+व्योम brcmf_debugfs_add_entry(काष्ठा brcmf_pub *drvr, स्थिर अक्षर *fn,
+			    पूर्णांक (*पढ़ो_fn)(काष्ठा seq_file *seq, व्योम *data))
+अणु
 	WARN(!drvr->wiphy->debugfsdir, "wiphy not (yet) registered\n");
-	debugfs_create_devm_seqfile(drvr->bus_if->dev, fn,
-				    drvr->wiphy->debugfsdir, read_fn);
-}
+	debugfs_create_devm_seqfile(drvr->bus_अगर->dev, fn,
+				    drvr->wiphy->debugfsdir, पढ़ो_fn);
+पूर्ण

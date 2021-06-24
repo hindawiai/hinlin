@@ -1,22 +1,23 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- * the read/write interfaces for Virtual Support Module(VSM)
+ * the पढ़ो/ग_लिखो पूर्णांकerfaces क्रम Virtual Support Module(VSM)
  *
  * Copyright (C) 2009 Lemote, Inc.
  * Author: Wu Zhangjin <wuzhangjin@gmail.com>
  */
 
-#ifndef _CS5536_VSM_H
-#define _CS5536_VSM_H
+#अगर_अघोषित _CS5536_VSM_H
+#घोषणा _CS5536_VSM_H
 
-#include <linux/types.h>
+#समावेश <linux/types.h>
 
-typedef void (*cs5536_pci_vsm_write)(int reg, u32 value);
-typedef u32 (*cs5536_pci_vsm_read)(int reg);
+प्रकार व्योम (*cs5536_pci_vsm_ग_लिखो)(पूर्णांक reg, u32 value);
+प्रकार u32 (*cs5536_pci_vsm_पढ़ो)(पूर्णांक reg);
 
-#define DECLARE_CS5536_MODULE(name) \
-extern void pci_##name##_write_reg(int reg, u32 value); \
-extern u32 pci_##name##_read_reg(int reg);
+#घोषणा DECLARE_CS5536_MODULE(name) \
+बाह्य व्योम pci_##name##_ग_लिखो_reg(पूर्णांक reg, u32 value); \
+बाह्य u32 pci_##name##_पढ़ो_reg(पूर्णांक reg);
 
 /* ide module */
 DECLARE_CS5536_MODULE(ide)
@@ -29,4 +30,4 @@ DECLARE_CS5536_MODULE(isa)
 /* ehci module */
 DECLARE_CS5536_MODULE(ehci)
 
-#endif				/* _CS5536_VSM_H */
+#पूर्ण_अगर				/* _CS5536_VSM_H */

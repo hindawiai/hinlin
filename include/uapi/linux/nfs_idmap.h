@@ -1,31 +1,32 @@
+<शैली गुरु>
 /*
  * include/uapi/linux/nfs_idmap.h
  *
- *  UID and GID to name mapping for clients.
+ *  UID and GID to name mapping क्रम clients.
  *
  *  Copyright (c) 2002 The Regents of the University of Michigan.
  *  All rights reserved.
  *
  *  Marius Aamodt Eriksen <marius@umich.edu>
  *
- *  Redistribution and use in source and binary forms, with or without
- *  modification, are permitted provided that the following conditions
+ *  Redistribution and use in source and binary क्रमms, with or without
+ *  modअगरication, are permitted provided that the following conditions
  *  are met:
  *
  *  1. Redistributions of source code must retain the above copyright
  *     notice, this list of conditions and the following disclaimer.
- *  2. Redistributions in binary form must reproduce the above copyright
+ *  2. Redistributions in binary क्रमm must reproduce the above copyright
  *     notice, this list of conditions and the following disclaimer in the
- *     documentation and/or other materials provided with the distribution.
+ *     करोcumentation and/or other materials provided with the distribution.
  *  3. Neither the name of the University nor the names of its
- *     contributors may be used to endorse or promote products derived
- *     from this software without specific prior written permission.
+ *     contributors may be used to enकरोrse or promote products derived
+ *     from this software without specअगरic prior written permission.
  *
  *  THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESS OR IMPLIED
  *  WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
  *  MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
  *  DISCLAIMED. IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
- *  FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ *  FOR ANY सूचीECT, INसूचीECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
  *  CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
  *  SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR
  *  BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
@@ -34,32 +35,32 @@
  *  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _UAPINFS_IDMAP_H
-#define _UAPINFS_IDMAP_H
+#अगर_अघोषित _UAPINFS_IDMAP_H
+#घोषणा _UAPINFS_IDMAP_H
 
-#include <linux/types.h>
+#समावेश <linux/types.h>
 
-/* XXX from bits/utmp.h  */
-#define IDMAP_NAMESZ  128
+/* XXX from bits/uपंचांगp.h  */
+#घोषणा IDMAP_NAMESZ  128
 
-#define IDMAP_TYPE_USER  0
-#define IDMAP_TYPE_GROUP 1
+#घोषणा IDMAP_TYPE_USER  0
+#घोषणा IDMAP_TYPE_GROUP 1
 
-#define IDMAP_CONV_IDTONAME 0
-#define IDMAP_CONV_NAMETOID 1
+#घोषणा IDMAP_CONV_IDTONAME 0
+#घोषणा IDMAP_CONV_NAMETOID 1
 
-#define IDMAP_STATUS_INVALIDMSG 0x01
-#define IDMAP_STATUS_AGAIN      0x02
-#define IDMAP_STATUS_LOOKUPFAIL 0x04
-#define IDMAP_STATUS_SUCCESS    0x08
+#घोषणा IDMAP_STATUS_INVALIDMSG 0x01
+#घोषणा IDMAP_STATUS_AGAIN      0x02
+#घोषणा IDMAP_STATUS_LOOKUPFAIL 0x04
+#घोषणा IDMAP_STATUS_SUCCESS    0x08
 
-struct idmap_msg {
+काष्ठा idmap_msg अणु
 	__u8  im_type;
 	__u8  im_conv;
-	char  im_name[IDMAP_NAMESZ];
+	अक्षर  im_name[IDMAP_NAMESZ];
 	__u32 im_id;
 	__u8  im_status;
-};
+पूर्ण;
 
 
-#endif /* _UAPINFS_IDMAP_H */
+#पूर्ण_अगर /* _UAPINFS_IDMAP_H */

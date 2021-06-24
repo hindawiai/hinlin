@@ -1,210 +1,211 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <linux/compiler.h>
-#include <linux/string.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <unistd.h>
-#include <string.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include "subcmd-util.h"
-#include "exec-cmd.h"
-#include "subcmd-config.h"
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <linux/compiler.h>
+#समावेश <linux/माला.स>
+#समावेश <sys/types.h>
+#समावेश <sys/स्थिति.स>
+#समावेश <unistd.h>
+#समावेश <माला.स>
+#समावेश <मानककोष.स>
+#समावेश <मानकपन.स>
+#समावेश "subcmd-util.h"
+#समावेश "exec-cmd.h"
+#समावेश "subcmd-config.h"
 
-#define MAX_ARGS	32
-#define PATH_MAX	4096
+#घोषणा MAX_ARGS	32
+#घोषणा PATH_MAX	4096
 
-static const char *argv_exec_path;
-static const char *argv0_path;
+अटल स्थिर अक्षर *argv_exec_path;
+अटल स्थिर अक्षर *argv0_path;
 
-void exec_cmd_init(const char *exec_name, const char *prefix,
-		   const char *exec_path, const char *exec_path_env)
-{
+व्योम exec_cmd_init(स्थिर अक्षर *exec_name, स्थिर अक्षर *prefix,
+		   स्थिर अक्षर *exec_path, स्थिर अक्षर *exec_path_env)
+अणु
 	subcmd_config.exec_name		= exec_name;
 	subcmd_config.prefix		= prefix;
 	subcmd_config.exec_path		= exec_path;
 	subcmd_config.exec_path_env	= exec_path_env;
-}
+पूर्ण
 
-#define is_dir_sep(c) ((c) == '/')
+#घोषणा is_dir_sep(c) ((c) == '/')
 
-static int is_absolute_path(const char *path)
-{
-	return path[0] == '/';
-}
+अटल पूर्णांक is_असलolute_path(स्थिर अक्षर *path)
+अणु
+	वापस path[0] == '/';
+पूर्ण
 
-static const char *get_pwd_cwd(void)
-{
-	static char cwd[PATH_MAX + 1];
-	char *pwd;
-	struct stat cwd_stat, pwd_stat;
-	if (getcwd(cwd, PATH_MAX) == NULL)
-		return NULL;
-	pwd = getenv("PWD");
-	if (pwd && strcmp(pwd, cwd)) {
+अटल स्थिर अक्षर *get_pwd_cwd(व्योम)
+अणु
+	अटल अक्षर cwd[PATH_MAX + 1];
+	अक्षर *pwd;
+	काष्ठा stat cwd_stat, pwd_stat;
+	अगर (अ_लोwd(cwd, PATH_MAX) == शून्य)
+		वापस शून्य;
+	pwd = दो_पर्या("PWD");
+	अगर (pwd && म_भेद(pwd, cwd)) अणु
 		stat(cwd, &cwd_stat);
-		if (!stat(pwd, &pwd_stat) &&
+		अगर (!stat(pwd, &pwd_stat) &&
 		    pwd_stat.st_dev == cwd_stat.st_dev &&
-		    pwd_stat.st_ino == cwd_stat.st_ino) {
+		    pwd_stat.st_ino == cwd_stat.st_ino) अणु
 			strlcpy(cwd, pwd, PATH_MAX);
-		}
-	}
-	return cwd;
-}
+		पूर्ण
+	पूर्ण
+	वापस cwd;
+पूर्ण
 
-static const char *make_nonrelative_path(const char *path)
-{
-	static char buf[PATH_MAX + 1];
+अटल स्थिर अक्षर *make_nonrelative_path(स्थिर अक्षर *path)
+अणु
+	अटल अक्षर buf[PATH_MAX + 1];
 
-	if (is_absolute_path(path)) {
-		if (strlcpy(buf, path, PATH_MAX) >= PATH_MAX)
+	अगर (is_असलolute_path(path)) अणु
+		अगर (strlcpy(buf, path, PATH_MAX) >= PATH_MAX)
 			die("Too long path: %.*s", 60, path);
-	} else {
-		const char *cwd = get_pwd_cwd();
-		if (!cwd)
+	पूर्ण अन्यथा अणु
+		स्थिर अक्षर *cwd = get_pwd_cwd();
+		अगर (!cwd)
 			die("Cannot determine the current working directory");
-		if (snprintf(buf, PATH_MAX, "%s/%s", cwd, path) >= PATH_MAX)
+		अगर (snम_लिखो(buf, PATH_MAX, "%s/%s", cwd, path) >= PATH_MAX)
 			die("Too long path: %.*s", 60, path);
-	}
-	return buf;
-}
+	पूर्ण
+	वापस buf;
+पूर्ण
 
-char *system_path(const char *path)
-{
-	char *buf = NULL;
+अक्षर *प्रणाली_path(स्थिर अक्षर *path)
+अणु
+	अक्षर *buf = शून्य;
 
-	if (is_absolute_path(path))
-		return strdup(path);
+	अगर (is_असलolute_path(path))
+		वापस strdup(path);
 
-	astrcatf(&buf, "%s/%s", subcmd_config.prefix, path);
+	aम_जोड़ोf(&buf, "%s/%s", subcmd_config.prefix, path);
 
-	return buf;
-}
+	वापस buf;
+पूर्ण
 
-const char *extract_argv0_path(const char *argv0)
-{
-	const char *slash;
+स्थिर अक्षर *extract_argv0_path(स्थिर अक्षर *argv0)
+अणु
+	स्थिर अक्षर *slash;
 
-	if (!argv0 || !*argv0)
-		return NULL;
-	slash = argv0 + strlen(argv0);
+	अगर (!argv0 || !*argv0)
+		वापस शून्य;
+	slash = argv0 + म_माप(argv0);
 
-	while (argv0 <= slash && !is_dir_sep(*slash))
+	जबतक (argv0 <= slash && !is_dir_sep(*slash))
 		slash--;
 
-	if (slash >= argv0) {
+	अगर (slash >= argv0) अणु
 		argv0_path = strndup(argv0, slash - argv0);
-		return argv0_path ? slash + 1 : NULL;
-	}
+		वापस argv0_path ? slash + 1 : शून्य;
+	पूर्ण
 
-	return argv0;
-}
+	वापस argv0;
+पूर्ण
 
-void set_argv_exec_path(const char *exec_path)
-{
+व्योम set_argv_exec_path(स्थिर अक्षर *exec_path)
+अणु
 	argv_exec_path = exec_path;
 	/*
-	 * Propagate this setting to external programs.
+	 * Propagate this setting to बाह्यal programs.
 	 */
 	setenv(subcmd_config.exec_path_env, exec_path, 1);
-}
+पूर्ण
 
 
-/* Returns the highest-priority location to look for subprograms. */
-char *get_argv_exec_path(void)
-{
-	char *env;
+/* Returns the highest-priority location to look क्रम subprograms. */
+अक्षर *get_argv_exec_path(व्योम)
+अणु
+	अक्षर *env;
 
-	if (argv_exec_path)
-		return strdup(argv_exec_path);
+	अगर (argv_exec_path)
+		वापस strdup(argv_exec_path);
 
-	env = getenv(subcmd_config.exec_path_env);
-	if (env && *env)
-		return strdup(env);
+	env = दो_पर्या(subcmd_config.exec_path_env);
+	अगर (env && *env)
+		वापस strdup(env);
 
-	return system_path(subcmd_config.exec_path);
-}
+	वापस प्रणाली_path(subcmd_config.exec_path);
+पूर्ण
 
-static void add_path(char **out, const char *path)
-{
-	if (path && *path) {
-		if (is_absolute_path(path))
-			astrcat(out, path);
-		else
-			astrcat(out, make_nonrelative_path(path));
+अटल व्योम add_path(अक्षर **out, स्थिर अक्षर *path)
+अणु
+	अगर (path && *path) अणु
+		अगर (is_असलolute_path(path))
+			aम_जोड़ो(out, path);
+		अन्यथा
+			aम_जोड़ो(out, make_nonrelative_path(path));
 
-		astrcat(out, ":");
-	}
-}
+		aम_जोड़ो(out, ":");
+	पूर्ण
+पूर्ण
 
-void setup_path(void)
-{
-	const char *old_path = getenv("PATH");
-	char *new_path = NULL;
-	char *tmp = get_argv_exec_path();
+व्योम setup_path(व्योम)
+अणु
+	स्थिर अक्षर *old_path = दो_पर्या("PATH");
+	अक्षर *new_path = शून्य;
+	अक्षर *पंचांगp = get_argv_exec_path();
 
-	add_path(&new_path, tmp);
+	add_path(&new_path, पंचांगp);
 	add_path(&new_path, argv0_path);
-	free(tmp);
+	मुक्त(पंचांगp);
 
-	if (old_path)
-		astrcat(&new_path, old_path);
-	else
-		astrcat(&new_path, "/usr/local/bin:/usr/bin:/bin");
+	अगर (old_path)
+		aम_जोड़ो(&new_path, old_path);
+	अन्यथा
+		aम_जोड़ो(&new_path, "/usr/local/bin:/usr/bin:/bin");
 
 	setenv("PATH", new_path, 1);
 
-	free(new_path);
-}
+	मुक्त(new_path);
+पूर्ण
 
-static const char **prepare_exec_cmd(const char **argv)
-{
-	int argc;
-	const char **nargv;
+अटल स्थिर अक्षर **prepare_exec_cmd(स्थिर अक्षर **argv)
+अणु
+	पूर्णांक argc;
+	स्थिर अक्षर **nargv;
 
-	for (argc = 0; argv[argc]; argc++)
+	क्रम (argc = 0; argv[argc]; argc++)
 		; /* just counting */
-	nargv = malloc(sizeof(*nargv) * (argc + 2));
+	nargv = दो_स्मृति(माप(*nargv) * (argc + 2));
 
 	nargv[0] = subcmd_config.exec_name;
-	for (argc = 0; argv[argc]; argc++)
+	क्रम (argc = 0; argv[argc]; argc++)
 		nargv[argc + 1] = argv[argc];
-	nargv[argc + 1] = NULL;
-	return nargv;
-}
+	nargv[argc + 1] = शून्य;
+	वापस nargv;
+पूर्ण
 
-int execv_cmd(const char **argv) {
-	const char **nargv = prepare_exec_cmd(argv);
+पूर्णांक execv_cmd(स्थिर अक्षर **argv) अणु
+	स्थिर अक्षर **nargv = prepare_exec_cmd(argv);
 
-	/* execvp() can only ever return if it fails */
-	execvp(subcmd_config.exec_name, (char **)nargv);
+	/* execvp() can only ever वापस अगर it fails */
+	execvp(subcmd_config.exec_name, (अक्षर **)nargv);
 
-	free(nargv);
-	return -1;
-}
+	मुक्त(nargv);
+	वापस -1;
+पूर्ण
 
 
-int execl_cmd(const char *cmd,...)
-{
-	int argc;
-	const char *argv[MAX_ARGS + 1];
-	const char *arg;
-	va_list param;
+पूर्णांक execl_cmd(स्थिर अक्षर *cmd,...)
+अणु
+	पूर्णांक argc;
+	स्थिर अक्षर *argv[MAX_ARGS + 1];
+	स्थिर अक्षर *arg;
+	बहु_सूची param;
 
-	va_start(param, cmd);
+	बहु_शुरू(param, cmd);
 	argv[0] = cmd;
 	argc = 1;
-	while (argc < MAX_ARGS) {
-		arg = argv[argc++] = va_arg(param, char *);
-		if (!arg)
-			break;
-	}
-	va_end(param);
-	if (MAX_ARGS <= argc) {
-		fprintf(stderr, " Error: too many args to run %s\n", cmd);
-		return -1;
-	}
+	जबतक (argc < MAX_ARGS) अणु
+		arg = argv[argc++] = बहु_तर्क(param, अक्षर *);
+		अगर (!arg)
+			अवरोध;
+	पूर्ण
+	बहु_पूर्ण(param);
+	अगर (MAX_ARGS <= argc) अणु
+		ख_लिखो(मानक_त्रुटि, " Error: too many args to run %s\n", cmd);
+		वापस -1;
+	पूर्ण
 
-	argv[argc] = NULL;
-	return execv_cmd(argv);
-}
+	argv[argc] = शून्य;
+	वापस execv_cmd(argv);
+पूर्ण

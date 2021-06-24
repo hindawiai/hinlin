@@ -1,273 +1,274 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  *  Copyright (C) 2020, Jiaxun Yang <jiaxun.yang@flygoat.com>
  *  Loongson Local IO Interrupt Controller support
  */
 
-#include <linux/errno.h>
-#include <linux/init.h>
-#include <linux/types.h>
-#include <linux/interrupt.h>
-#include <linux/ioport.h>
-#include <linux/irqchip.h>
-#include <linux/of_address.h>
-#include <linux/of_irq.h>
-#include <linux/io.h>
-#include <linux/smp.h>
-#include <linux/irqchip/chained_irq.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/init.h>
+#समावेश <linux/types.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/ioport.h>
+#समावेश <linux/irqchip.h>
+#समावेश <linux/of_address.h>
+#समावेश <linux/of_irq.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/smp.h>
+#समावेश <linux/irqchip/chained_irq.h>
 
-#include <loongson.h>
+#समावेश <loongson.h>
 
-#define LIOINTC_CHIP_IRQ	32
-#define LIOINTC_NUM_PARENT 4
-#define LIOINTC_NUM_CORES	4
+#घोषणा LIOINTC_CHIP_IRQ	32
+#घोषणा LIOINTC_NUM_PARENT 4
+#घोषणा LIOINTC_NUM_CORES	4
 
-#define LIOINTC_INTC_CHIP_START	0x20
+#घोषणा LIOINTC_INTC_CHIP_START	0x20
 
-#define LIOINTC_REG_INTC_STATUS	(LIOINTC_INTC_CHIP_START + 0x20)
-#define LIOINTC_REG_INTC_EN_STATUS	(LIOINTC_INTC_CHIP_START + 0x04)
-#define LIOINTC_REG_INTC_ENABLE	(LIOINTC_INTC_CHIP_START + 0x08)
-#define LIOINTC_REG_INTC_DISABLE	(LIOINTC_INTC_CHIP_START + 0x0c)
-#define LIOINTC_REG_INTC_POL	(LIOINTC_INTC_CHIP_START + 0x10)
-#define LIOINTC_REG_INTC_EDGE	(LIOINTC_INTC_CHIP_START + 0x14)
+#घोषणा LIOINTC_REG_INTC_STATUS	(LIOINTC_INTC_CHIP_START + 0x20)
+#घोषणा LIOINTC_REG_INTC_EN_STATUS	(LIOINTC_INTC_CHIP_START + 0x04)
+#घोषणा LIOINTC_REG_INTC_ENABLE	(LIOINTC_INTC_CHIP_START + 0x08)
+#घोषणा LIOINTC_REG_INTC_DISABLE	(LIOINTC_INTC_CHIP_START + 0x0c)
+#घोषणा LIOINTC_REG_INTC_POL	(LIOINTC_INTC_CHIP_START + 0x10)
+#घोषणा LIOINTC_REG_INTC_EDGE	(LIOINTC_INTC_CHIP_START + 0x14)
 
-#define LIOINTC_SHIFT_INTx	4
+#घोषणा LIOINTC_SHIFT_INTx	4
 
-#define LIOINTC_ERRATA_IRQ	10
+#घोषणा LIOINTC_ERRATA_IRQ	10
 
-struct liointc_handler_data {
-	struct liointc_priv	*priv;
-	u32			parent_int_map;
-};
+काष्ठा lioपूर्णांकc_handler_data अणु
+	काष्ठा lioपूर्णांकc_priv	*priv;
+	u32			parent_पूर्णांक_map;
+पूर्ण;
 
-struct liointc_priv {
-	struct irq_chip_generic		*gc;
-	struct liointc_handler_data	handler[LIOINTC_NUM_PARENT];
-	void __iomem			*core_isr[LIOINTC_NUM_CORES];
+काष्ठा lioपूर्णांकc_priv अणु
+	काष्ठा irq_chip_generic		*gc;
+	काष्ठा lioपूर्णांकc_handler_data	handler[LIOINTC_NUM_PARENT];
+	व्योम __iomem			*core_isr[LIOINTC_NUM_CORES];
 	u8				map_cache[LIOINTC_CHIP_IRQ];
 	bool				has_lpc_irq_errata;
-};
+पूर्ण;
 
-static void liointc_chained_handle_irq(struct irq_desc *desc)
-{
-	struct liointc_handler_data *handler = irq_desc_get_handler_data(desc);
-	struct irq_chip *chip = irq_desc_get_chip(desc);
-	struct irq_chip_generic *gc = handler->priv->gc;
-	int core = get_ebase_cpunum() % LIOINTC_NUM_CORES;
+अटल व्योम lioपूर्णांकc_chained_handle_irq(काष्ठा irq_desc *desc)
+अणु
+	काष्ठा lioपूर्णांकc_handler_data *handler = irq_desc_get_handler_data(desc);
+	काष्ठा irq_chip *chip = irq_desc_get_chip(desc);
+	काष्ठा irq_chip_generic *gc = handler->priv->gc;
+	पूर्णांक core = get_ebase_cpunum() % LIOINTC_NUM_CORES;
 	u32 pending;
 
 	chained_irq_enter(chip, desc);
 
-	pending = readl(handler->priv->core_isr[core]);
+	pending = पढ़ोl(handler->priv->core_isr[core]);
 
-	if (!pending) {
-		/* Always blame LPC IRQ if we have that bug */
-		if (handler->priv->has_lpc_irq_errata &&
-			(handler->parent_int_map & gc->mask_cache &
+	अगर (!pending) अणु
+		/* Always blame LPC IRQ अगर we have that bug */
+		अगर (handler->priv->has_lpc_irq_errata &&
+			(handler->parent_पूर्णांक_map & gc->mask_cache &
 			BIT(LIOINTC_ERRATA_IRQ)))
 			pending = BIT(LIOINTC_ERRATA_IRQ);
-		else
-			spurious_interrupt();
-	}
+		अन्यथा
+			spurious_पूर्णांकerrupt();
+	पूर्ण
 
-	while (pending) {
-		int bit = __ffs(pending);
+	जबतक (pending) अणु
+		पूर्णांक bit = __ffs(pending);
 
-		generic_handle_irq(irq_find_mapping(gc->domain, bit));
+		generic_handle_irq(irq_find_mapping(gc->करोमुख्य, bit));
 		pending &= ~BIT(bit);
-	}
+	पूर्ण
 
-	chained_irq_exit(chip, desc);
-}
+	chained_irq_निकास(chip, desc);
+पूर्ण
 
-static void liointc_set_bit(struct irq_chip_generic *gc,
-				unsigned int offset,
+अटल व्योम lioपूर्णांकc_set_bit(काष्ठा irq_chip_generic *gc,
+				अचिन्हित पूर्णांक offset,
 				u32 mask, bool set)
-{
-	if (set)
-		writel(readl(gc->reg_base + offset) | mask,
+अणु
+	अगर (set)
+		ग_लिखोl(पढ़ोl(gc->reg_base + offset) | mask,
 				gc->reg_base + offset);
-	else
-		writel(readl(gc->reg_base + offset) & ~mask,
+	अन्यथा
+		ग_लिखोl(पढ़ोl(gc->reg_base + offset) & ~mask,
 				gc->reg_base + offset);
-}
+पूर्ण
 
-static int liointc_set_type(struct irq_data *data, unsigned int type)
-{
-	struct irq_chip_generic *gc = irq_data_get_irq_chip_data(data);
+अटल पूर्णांक lioपूर्णांकc_set_type(काष्ठा irq_data *data, अचिन्हित पूर्णांक type)
+अणु
+	काष्ठा irq_chip_generic *gc = irq_data_get_irq_chip_data(data);
 	u32 mask = data->mask;
-	unsigned long flags;
+	अचिन्हित दीर्घ flags;
 
 	irq_gc_lock_irqsave(gc, flags);
-	switch (type) {
-	case IRQ_TYPE_LEVEL_HIGH:
-		liointc_set_bit(gc, LIOINTC_REG_INTC_EDGE, mask, false);
-		liointc_set_bit(gc, LIOINTC_REG_INTC_POL, mask, true);
-		break;
-	case IRQ_TYPE_LEVEL_LOW:
-		liointc_set_bit(gc, LIOINTC_REG_INTC_EDGE, mask, false);
-		liointc_set_bit(gc, LIOINTC_REG_INTC_POL, mask, false);
-		break;
-	case IRQ_TYPE_EDGE_RISING:
-		liointc_set_bit(gc, LIOINTC_REG_INTC_EDGE, mask, true);
-		liointc_set_bit(gc, LIOINTC_REG_INTC_POL, mask, true);
-		break;
-	case IRQ_TYPE_EDGE_FALLING:
-		liointc_set_bit(gc, LIOINTC_REG_INTC_EDGE, mask, true);
-		liointc_set_bit(gc, LIOINTC_REG_INTC_POL, mask, false);
-		break;
-	default:
+	चयन (type) अणु
+	हाल IRQ_TYPE_LEVEL_HIGH:
+		lioपूर्णांकc_set_bit(gc, LIOINTC_REG_INTC_EDGE, mask, false);
+		lioपूर्णांकc_set_bit(gc, LIOINTC_REG_INTC_POL, mask, true);
+		अवरोध;
+	हाल IRQ_TYPE_LEVEL_LOW:
+		lioपूर्णांकc_set_bit(gc, LIOINTC_REG_INTC_EDGE, mask, false);
+		lioपूर्णांकc_set_bit(gc, LIOINTC_REG_INTC_POL, mask, false);
+		अवरोध;
+	हाल IRQ_TYPE_EDGE_RISING:
+		lioपूर्णांकc_set_bit(gc, LIOINTC_REG_INTC_EDGE, mask, true);
+		lioपूर्णांकc_set_bit(gc, LIOINTC_REG_INTC_POL, mask, true);
+		अवरोध;
+	हाल IRQ_TYPE_EDGE_FALLING:
+		lioपूर्णांकc_set_bit(gc, LIOINTC_REG_INTC_EDGE, mask, true);
+		lioपूर्णांकc_set_bit(gc, LIOINTC_REG_INTC_POL, mask, false);
+		अवरोध;
+	शेष:
 		irq_gc_unlock_irqrestore(gc, flags);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 	irq_gc_unlock_irqrestore(gc, flags);
 
 	irqd_set_trigger_type(data, type);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void liointc_resume(struct irq_chip_generic *gc)
-{
-	struct liointc_priv *priv = gc->private;
-	unsigned long flags;
-	int i;
+अटल व्योम lioपूर्णांकc_resume(काष्ठा irq_chip_generic *gc)
+अणु
+	काष्ठा lioपूर्णांकc_priv *priv = gc->निजी;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक i;
 
 	irq_gc_lock_irqsave(gc, flags);
 	/* Disable all at first */
-	writel(0xffffffff, gc->reg_base + LIOINTC_REG_INTC_DISABLE);
+	ग_लिखोl(0xffffffff, gc->reg_base + LIOINTC_REG_INTC_DISABLE);
 	/* Restore map cache */
-	for (i = 0; i < LIOINTC_CHIP_IRQ; i++)
-		writeb(priv->map_cache[i], gc->reg_base + i);
+	क्रम (i = 0; i < LIOINTC_CHIP_IRQ; i++)
+		ग_लिखोb(priv->map_cache[i], gc->reg_base + i);
 	/* Restore mask cache */
-	writel(gc->mask_cache, gc->reg_base + LIOINTC_REG_INTC_ENABLE);
+	ग_लिखोl(gc->mask_cache, gc->reg_base + LIOINTC_REG_INTC_ENABLE);
 	irq_gc_unlock_irqrestore(gc, flags);
-}
+पूर्ण
 
-static const char * const parent_names[] = {"int0", "int1", "int2", "int3"};
-static const char * const core_reg_names[] = {"isr0", "isr1", "isr2", "isr3"};
+अटल स्थिर अक्षर * स्थिर parent_names[] = अणु"int0", "int1", "int2", "int3"पूर्ण;
+अटल स्थिर अक्षर * स्थिर core_reg_names[] = अणु"isr0", "isr1", "isr2", "isr3"पूर्ण;
 
-static void __iomem *liointc_get_reg_byname(struct device_node *node,
-						const char *name)
-{
-	int index = of_property_match_string(node, "reg-names", name);
+अटल व्योम __iomem *lioपूर्णांकc_get_reg_byname(काष्ठा device_node *node,
+						स्थिर अक्षर *name)
+अणु
+	पूर्णांक index = of_property_match_string(node, "reg-names", name);
 
-	if (index < 0)
-		return NULL;
+	अगर (index < 0)
+		वापस शून्य;
 
-	return of_iomap(node, index);
-}
+	वापस of_iomap(node, index);
+पूर्ण
 
-static int __init liointc_of_init(struct device_node *node,
-				  struct device_node *parent)
-{
-	struct irq_chip_generic *gc;
-	struct irq_domain *domain;
-	struct irq_chip_type *ct;
-	struct liointc_priv *priv;
-	void __iomem *base;
-	u32 of_parent_int_map[LIOINTC_NUM_PARENT];
-	int parent_irq[LIOINTC_NUM_PARENT];
+अटल पूर्णांक __init lioपूर्णांकc_of_init(काष्ठा device_node *node,
+				  काष्ठा device_node *parent)
+अणु
+	काष्ठा irq_chip_generic *gc;
+	काष्ठा irq_करोमुख्य *करोमुख्य;
+	काष्ठा irq_chip_type *ct;
+	काष्ठा lioपूर्णांकc_priv *priv;
+	व्योम __iomem *base;
+	u32 of_parent_पूर्णांक_map[LIOINTC_NUM_PARENT];
+	पूर्णांक parent_irq[LIOINTC_NUM_PARENT];
 	bool have_parent = FALSE;
-	int sz, i, err = 0;
+	पूर्णांक sz, i, err = 0;
 
-	priv = kzalloc(sizeof(*priv), GFP_KERNEL);
-	if (!priv)
-		return -ENOMEM;
+	priv = kzalloc(माप(*priv), GFP_KERNEL);
+	अगर (!priv)
+		वापस -ENOMEM;
 
-	if (of_device_is_compatible(node, "loongson,liointc-2.0")) {
-		base = liointc_get_reg_byname(node, "main");
-		if (!base) {
+	अगर (of_device_is_compatible(node, "loongson,liointc-2.0")) अणु
+		base = lioपूर्णांकc_get_reg_byname(node, "main");
+		अगर (!base) अणु
 			err = -ENODEV;
-			goto out_free_priv;
-		}
+			जाओ out_मुक्त_priv;
+		पूर्ण
 
-		for (i = 0; i < LIOINTC_NUM_CORES; i++)
-			priv->core_isr[i] = liointc_get_reg_byname(node, core_reg_names[i]);
-		if (!priv->core_isr[0]) {
+		क्रम (i = 0; i < LIOINTC_NUM_CORES; i++)
+			priv->core_isr[i] = lioपूर्णांकc_get_reg_byname(node, core_reg_names[i]);
+		अगर (!priv->core_isr[0]) अणु
 			err = -ENODEV;
-			goto out_iounmap_base;
-		}
-	} else {
+			जाओ out_iounmap_base;
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		base = of_iomap(node, 0);
-		if (!base) {
+		अगर (!base) अणु
 			err = -ENODEV;
-			goto out_free_priv;
-		}
+			जाओ out_मुक्त_priv;
+		पूर्ण
 
-		for (i = 0; i < LIOINTC_NUM_CORES; i++)
+		क्रम (i = 0; i < LIOINTC_NUM_CORES; i++)
 			priv->core_isr[i] = base + LIOINTC_REG_INTC_STATUS;
-	}
+	पूर्ण
 
-	for (i = 0; i < LIOINTC_NUM_PARENT; i++) {
+	क्रम (i = 0; i < LIOINTC_NUM_PARENT; i++) अणु
 		parent_irq[i] = of_irq_get_byname(node, parent_names[i]);
-		if (parent_irq[i] > 0)
+		अगर (parent_irq[i] > 0)
 			have_parent = TRUE;
-	}
-	if (!have_parent) {
+	पूर्ण
+	अगर (!have_parent) अणु
 		err = -ENODEV;
-		goto out_iounmap_isr;
-	}
+		जाओ out_iounmap_isr;
+	पूर्ण
 
-	sz = of_property_read_variable_u32_array(node,
+	sz = of_property_पढ़ो_variable_u32_array(node,
 						"loongson,parent_int_map",
-						&of_parent_int_map[0],
+						&of_parent_पूर्णांक_map[0],
 						LIOINTC_NUM_PARENT,
 						LIOINTC_NUM_PARENT);
-	if (sz < 4) {
+	अगर (sz < 4) अणु
 		pr_err("loongson-liointc: No parent_int_map\n");
 		err = -ENODEV;
-		goto out_iounmap_isr;
-	}
+		जाओ out_iounmap_isr;
+	पूर्ण
 
-	for (i = 0; i < LIOINTC_NUM_PARENT; i++)
-		priv->handler[i].parent_int_map = of_parent_int_map[i];
+	क्रम (i = 0; i < LIOINTC_NUM_PARENT; i++)
+		priv->handler[i].parent_पूर्णांक_map = of_parent_पूर्णांक_map[i];
 
-	/* Setup IRQ domain */
-	domain = irq_domain_add_linear(node, 32,
+	/* Setup IRQ करोमुख्य */
+	करोमुख्य = irq_करोमुख्य_add_linear(node, 32,
 					&irq_generic_chip_ops, priv);
-	if (!domain) {
+	अगर (!करोमुख्य) अणु
 		pr_err("loongson-liointc: cannot add IRQ domain\n");
 		err = -EINVAL;
-		goto out_iounmap_isr;
-	}
+		जाओ out_iounmap_isr;
+	पूर्ण
 
-	err = irq_alloc_domain_generic_chips(domain, 32, 1,
+	err = irq_alloc_करोमुख्य_generic_chips(करोमुख्य, 32, 1,
 					node->full_name, handle_level_irq,
 					IRQ_NOPROBE, 0, 0);
-	if (err) {
+	अगर (err) अणु
 		pr_err("loongson-liointc: unable to register IRQ domain\n");
-		goto out_free_domain;
-	}
+		जाओ out_मुक्त_करोमुख्य;
+	पूर्ण
 
 
 	/* Disable all IRQs */
-	writel(0xffffffff, base + LIOINTC_REG_INTC_DISABLE);
+	ग_लिखोl(0xffffffff, base + LIOINTC_REG_INTC_DISABLE);
 	/* Set to level triggered */
-	writel(0x0, base + LIOINTC_REG_INTC_EDGE);
+	ग_लिखोl(0x0, base + LIOINTC_REG_INTC_EDGE);
 
 	/* Generate parent INT part of map cache */
-	for (i = 0; i < LIOINTC_NUM_PARENT; i++) {
-		u32 pending = priv->handler[i].parent_int_map;
+	क्रम (i = 0; i < LIOINTC_NUM_PARENT; i++) अणु
+		u32 pending = priv->handler[i].parent_पूर्णांक_map;
 
-		while (pending) {
-			int bit = __ffs(pending);
+		जबतक (pending) अणु
+			पूर्णांक bit = __ffs(pending);
 
 			priv->map_cache[bit] = BIT(i) << LIOINTC_SHIFT_INTx;
 			pending &= ~BIT(bit);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	for (i = 0; i < LIOINTC_CHIP_IRQ; i++) {
+	क्रम (i = 0; i < LIOINTC_CHIP_IRQ; i++) अणु
 		/* Generate core part of map cache */
 		priv->map_cache[i] |= BIT(loongson_sysconf.boot_cpu_id);
-		writeb(priv->map_cache[i], base + i);
-	}
+		ग_लिखोb(priv->map_cache[i], base + i);
+	पूर्ण
 
-	gc = irq_get_domain_generic_chip(domain, 0);
-	gc->private = priv;
+	gc = irq_get_करोमुख्य_generic_chip(करोमुख्य, 0);
+	gc->निजी = priv;
 	gc->reg_base = base;
-	gc->domain = domain;
-	gc->resume = liointc_resume;
+	gc->करोमुख्य = करोमुख्य;
+	gc->resume = lioपूर्णांकc_resume;
 
 	ct = gc->chip_types;
 	ct->regs.enable = LIOINTC_REG_INTC_ENABLE;
@@ -275,38 +276,38 @@ static int __init liointc_of_init(struct device_node *node,
 	ct->chip.irq_unmask = irq_gc_unmask_enable_reg;
 	ct->chip.irq_mask = irq_gc_mask_disable_reg;
 	ct->chip.irq_mask_ack = irq_gc_mask_disable_reg;
-	ct->chip.irq_set_type = liointc_set_type;
+	ct->chip.irq_set_type = lioपूर्णांकc_set_type;
 
 	gc->mask_cache = 0;
 	priv->gc = gc;
 
-	for (i = 0; i < LIOINTC_NUM_PARENT; i++) {
-		if (parent_irq[i] <= 0)
-			continue;
+	क्रम (i = 0; i < LIOINTC_NUM_PARENT; i++) अणु
+		अगर (parent_irq[i] <= 0)
+			जारी;
 
 		priv->handler[i].priv = priv;
 		irq_set_chained_handler_and_data(parent_irq[i],
-				liointc_chained_handle_irq, &priv->handler[i]);
-	}
+				lioपूर्णांकc_chained_handle_irq, &priv->handler[i]);
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
-out_free_domain:
-	irq_domain_remove(domain);
+out_मुक्त_करोमुख्य:
+	irq_करोमुख्य_हटाओ(करोमुख्य);
 out_iounmap_isr:
-	for (i = 0; i < LIOINTC_NUM_CORES; i++) {
-		if (!priv->core_isr[i])
-			continue;
+	क्रम (i = 0; i < LIOINTC_NUM_CORES; i++) अणु
+		अगर (!priv->core_isr[i])
+			जारी;
 		iounmap(priv->core_isr[i]);
-	}
+	पूर्ण
 out_iounmap_base:
 	iounmap(base);
-out_free_priv:
-	kfree(priv);
+out_मुक्त_priv:
+	kमुक्त(priv);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-IRQCHIP_DECLARE(loongson_liointc_1_0, "loongson,liointc-1.0", liointc_of_init);
-IRQCHIP_DECLARE(loongson_liointc_1_0a, "loongson,liointc-1.0a", liointc_of_init);
-IRQCHIP_DECLARE(loongson_liointc_2_0, "loongson,liointc-2.0", liointc_of_init);
+IRQCHIP_DECLARE(loongson_lioपूर्णांकc_1_0, "loongson,liointc-1.0", lioपूर्णांकc_of_init);
+IRQCHIP_DECLARE(loongson_lioपूर्णांकc_1_0a, "loongson,liointc-1.0a", lioपूर्णांकc_of_init);
+IRQCHIP_DECLARE(loongson_lioपूर्णांकc_2_0, "loongson,liointc-2.0", lioपूर्णांकc_of_init);

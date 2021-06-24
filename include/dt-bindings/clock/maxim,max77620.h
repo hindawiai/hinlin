@@ -1,18 +1,19 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * Copyright (C) 2016 NVIDIA CORPORATION. All rights reserved.
  *
- * Device Tree binding constants clocks for the Maxim 77620 PMIC.
+ * Device Tree binding स्थिरants घड़ीs क्रम the Maxim 77620 PMIC.
  */
 
-#ifndef _DT_BINDINGS_CLOCK_MAXIM_MAX77620_CLOCK_H
-#define _DT_BINDINGS_CLOCK_MAXIM_MAX77620_CLOCK_H
+#अगर_अघोषित _DT_BINDINGS_CLOCK_MAXIM_MAX77620_CLOCK_H
+#घोषणा _DT_BINDINGS_CLOCK_MAXIM_MAX77620_CLOCK_H
 
-/* Fixed rate clocks. */
+/* Fixed rate घड़ीs. */
 
-#define MAX77620_CLK_32K_OUT0		0
+#घोषणा MAX77620_CLK_32K_OUT0		0
 
-/* Total number of clocks. */
-#define MAX77620_CLKS_NUM		(MAX77620_CLK_32K_OUT0 + 1)
+/* Total number of घड़ीs. */
+#घोषणा MAX77620_CLKS_NUM		(MAX77620_CLK_32K_OUT0 + 1)
 
-#endif /* _DT_BINDINGS_CLOCK_MAXIM_MAX77620_CLOCK_H */
+#पूर्ण_अगर /* _DT_BINDINGS_CLOCK_MAXIM_MAX77620_CLOCK_H */

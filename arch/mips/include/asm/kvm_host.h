@@ -1,387 +1,388 @@
+<शैली गुरु>
 /*
 * This file is subject to the terms and conditions of the GNU General Public
-* License.  See the file "COPYING" in the main directory of this archive
-* for more details.
+* License.  See the file "COPYING" in the मुख्य directory of this archive
+* क्रम more details.
 *
 * Copyright (C) 2012  MIPS Technologies, Inc.  All rights reserved.
 * Authors: Sanjay Lal <sanjayl@kymasys.com>
 */
 
-#ifndef __MIPS_KVM_HOST_H__
-#define __MIPS_KVM_HOST_H__
+#अगर_अघोषित __MIPS_KVM_HOST_H__
+#घोषणा __MIPS_KVM_HOST_H__
 
-#include <linux/cpumask.h>
-#include <linux/mutex.h>
-#include <linux/hrtimer.h>
-#include <linux/interrupt.h>
-#include <linux/types.h>
-#include <linux/kvm.h>
-#include <linux/kvm_types.h>
-#include <linux/threads.h>
-#include <linux/spinlock.h>
+#समावेश <linux/cpumask.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/hrसमयr.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/types.h>
+#समावेश <linux/kvm.h>
+#समावेश <linux/kvm_types.h>
+#समावेश <linux/thपढ़ोs.h>
+#समावेश <linux/spinlock.h>
 
-#include <asm/inst.h>
-#include <asm/mipsregs.h>
+#समावेश <यंत्र/inst.h>
+#समावेश <यंत्र/mipsregs.h>
 
-#include <kvm/iodev.h>
+#समावेश <kvm/iodev.h>
 
-/* MIPS KVM register ids */
-#define MIPS_CP0_32(_R, _S)					\
+/* MIPS KVM रेजिस्टर ids */
+#घोषणा MIPS_CP0_32(_R, _S)					\
 	(KVM_REG_MIPS_CP0 | KVM_REG_SIZE_U32 | (8 * (_R) + (_S)))
 
-#define MIPS_CP0_64(_R, _S)					\
+#घोषणा MIPS_CP0_64(_R, _S)					\
 	(KVM_REG_MIPS_CP0 | KVM_REG_SIZE_U64 | (8 * (_R) + (_S)))
 
-#define KVM_REG_MIPS_CP0_INDEX		MIPS_CP0_32(0, 0)
-#define KVM_REG_MIPS_CP0_ENTRYLO0	MIPS_CP0_64(2, 0)
-#define KVM_REG_MIPS_CP0_ENTRYLO1	MIPS_CP0_64(3, 0)
-#define KVM_REG_MIPS_CP0_CONTEXT	MIPS_CP0_64(4, 0)
-#define KVM_REG_MIPS_CP0_CONTEXTCONFIG	MIPS_CP0_32(4, 1)
-#define KVM_REG_MIPS_CP0_USERLOCAL	MIPS_CP0_64(4, 2)
-#define KVM_REG_MIPS_CP0_XCONTEXTCONFIG	MIPS_CP0_64(4, 3)
-#define KVM_REG_MIPS_CP0_PAGEMASK	MIPS_CP0_32(5, 0)
-#define KVM_REG_MIPS_CP0_PAGEGRAIN	MIPS_CP0_32(5, 1)
-#define KVM_REG_MIPS_CP0_SEGCTL0	MIPS_CP0_64(5, 2)
-#define KVM_REG_MIPS_CP0_SEGCTL1	MIPS_CP0_64(5, 3)
-#define KVM_REG_MIPS_CP0_SEGCTL2	MIPS_CP0_64(5, 4)
-#define KVM_REG_MIPS_CP0_PWBASE		MIPS_CP0_64(5, 5)
-#define KVM_REG_MIPS_CP0_PWFIELD	MIPS_CP0_64(5, 6)
-#define KVM_REG_MIPS_CP0_PWSIZE		MIPS_CP0_64(5, 7)
-#define KVM_REG_MIPS_CP0_WIRED		MIPS_CP0_32(6, 0)
-#define KVM_REG_MIPS_CP0_PWCTL		MIPS_CP0_32(6, 6)
-#define KVM_REG_MIPS_CP0_HWRENA		MIPS_CP0_32(7, 0)
-#define KVM_REG_MIPS_CP0_BADVADDR	MIPS_CP0_64(8, 0)
-#define KVM_REG_MIPS_CP0_BADINSTR	MIPS_CP0_32(8, 1)
-#define KVM_REG_MIPS_CP0_BADINSTRP	MIPS_CP0_32(8, 2)
-#define KVM_REG_MIPS_CP0_COUNT		MIPS_CP0_32(9, 0)
-#define KVM_REG_MIPS_CP0_ENTRYHI	MIPS_CP0_64(10, 0)
-#define KVM_REG_MIPS_CP0_COMPARE	MIPS_CP0_32(11, 0)
-#define KVM_REG_MIPS_CP0_STATUS		MIPS_CP0_32(12, 0)
-#define KVM_REG_MIPS_CP0_INTCTL		MIPS_CP0_32(12, 1)
-#define KVM_REG_MIPS_CP0_CAUSE		MIPS_CP0_32(13, 0)
-#define KVM_REG_MIPS_CP0_EPC		MIPS_CP0_64(14, 0)
-#define KVM_REG_MIPS_CP0_PRID		MIPS_CP0_32(15, 0)
-#define KVM_REG_MIPS_CP0_EBASE		MIPS_CP0_64(15, 1)
-#define KVM_REG_MIPS_CP0_CONFIG		MIPS_CP0_32(16, 0)
-#define KVM_REG_MIPS_CP0_CONFIG1	MIPS_CP0_32(16, 1)
-#define KVM_REG_MIPS_CP0_CONFIG2	MIPS_CP0_32(16, 2)
-#define KVM_REG_MIPS_CP0_CONFIG3	MIPS_CP0_32(16, 3)
-#define KVM_REG_MIPS_CP0_CONFIG4	MIPS_CP0_32(16, 4)
-#define KVM_REG_MIPS_CP0_CONFIG5	MIPS_CP0_32(16, 5)
-#define KVM_REG_MIPS_CP0_CONFIG6	MIPS_CP0_32(16, 6)
-#define KVM_REG_MIPS_CP0_CONFIG7	MIPS_CP0_32(16, 7)
-#define KVM_REG_MIPS_CP0_MAARI		MIPS_CP0_64(17, 2)
-#define KVM_REG_MIPS_CP0_XCONTEXT	MIPS_CP0_64(20, 0)
-#define KVM_REG_MIPS_CP0_DIAG		MIPS_CP0_32(22, 0)
-#define KVM_REG_MIPS_CP0_ERROREPC	MIPS_CP0_64(30, 0)
-#define KVM_REG_MIPS_CP0_KSCRATCH1	MIPS_CP0_64(31, 2)
-#define KVM_REG_MIPS_CP0_KSCRATCH2	MIPS_CP0_64(31, 3)
-#define KVM_REG_MIPS_CP0_KSCRATCH3	MIPS_CP0_64(31, 4)
-#define KVM_REG_MIPS_CP0_KSCRATCH4	MIPS_CP0_64(31, 5)
-#define KVM_REG_MIPS_CP0_KSCRATCH5	MIPS_CP0_64(31, 6)
-#define KVM_REG_MIPS_CP0_KSCRATCH6	MIPS_CP0_64(31, 7)
+#घोषणा KVM_REG_MIPS_CP0_INDEX		MIPS_CP0_32(0, 0)
+#घोषणा KVM_REG_MIPS_CP0_ENTRYLO0	MIPS_CP0_64(2, 0)
+#घोषणा KVM_REG_MIPS_CP0_ENTRYLO1	MIPS_CP0_64(3, 0)
+#घोषणा KVM_REG_MIPS_CP0_CONTEXT	MIPS_CP0_64(4, 0)
+#घोषणा KVM_REG_MIPS_CP0_CONTEXTCONFIG	MIPS_CP0_32(4, 1)
+#घोषणा KVM_REG_MIPS_CP0_USERLOCAL	MIPS_CP0_64(4, 2)
+#घोषणा KVM_REG_MIPS_CP0_XCONTEXTCONFIG	MIPS_CP0_64(4, 3)
+#घोषणा KVM_REG_MIPS_CP0_PAGEMASK	MIPS_CP0_32(5, 0)
+#घोषणा KVM_REG_MIPS_CP0_PAGEGRAIN	MIPS_CP0_32(5, 1)
+#घोषणा KVM_REG_MIPS_CP0_SEGCTL0	MIPS_CP0_64(5, 2)
+#घोषणा KVM_REG_MIPS_CP0_SEGCTL1	MIPS_CP0_64(5, 3)
+#घोषणा KVM_REG_MIPS_CP0_SEGCTL2	MIPS_CP0_64(5, 4)
+#घोषणा KVM_REG_MIPS_CP0_PWBASE		MIPS_CP0_64(5, 5)
+#घोषणा KVM_REG_MIPS_CP0_PWFIELD	MIPS_CP0_64(5, 6)
+#घोषणा KVM_REG_MIPS_CP0_PWSIZE		MIPS_CP0_64(5, 7)
+#घोषणा KVM_REG_MIPS_CP0_WIRED		MIPS_CP0_32(6, 0)
+#घोषणा KVM_REG_MIPS_CP0_PWCTL		MIPS_CP0_32(6, 6)
+#घोषणा KVM_REG_MIPS_CP0_HWRENA		MIPS_CP0_32(7, 0)
+#घोषणा KVM_REG_MIPS_CP0_BADVADDR	MIPS_CP0_64(8, 0)
+#घोषणा KVM_REG_MIPS_CP0_BADINSTR	MIPS_CP0_32(8, 1)
+#घोषणा KVM_REG_MIPS_CP0_BADINSTRP	MIPS_CP0_32(8, 2)
+#घोषणा KVM_REG_MIPS_CP0_COUNT		MIPS_CP0_32(9, 0)
+#घोषणा KVM_REG_MIPS_CP0_ENTRYHI	MIPS_CP0_64(10, 0)
+#घोषणा KVM_REG_MIPS_CP0_COMPARE	MIPS_CP0_32(11, 0)
+#घोषणा KVM_REG_MIPS_CP0_STATUS		MIPS_CP0_32(12, 0)
+#घोषणा KVM_REG_MIPS_CP0_INTCTL		MIPS_CP0_32(12, 1)
+#घोषणा KVM_REG_MIPS_CP0_CAUSE		MIPS_CP0_32(13, 0)
+#घोषणा KVM_REG_MIPS_CP0_EPC		MIPS_CP0_64(14, 0)
+#घोषणा KVM_REG_MIPS_CP0_PRID		MIPS_CP0_32(15, 0)
+#घोषणा KVM_REG_MIPS_CP0_EBASE		MIPS_CP0_64(15, 1)
+#घोषणा KVM_REG_MIPS_CP0_CONFIG		MIPS_CP0_32(16, 0)
+#घोषणा KVM_REG_MIPS_CP0_CONFIG1	MIPS_CP0_32(16, 1)
+#घोषणा KVM_REG_MIPS_CP0_CONFIG2	MIPS_CP0_32(16, 2)
+#घोषणा KVM_REG_MIPS_CP0_CONFIG3	MIPS_CP0_32(16, 3)
+#घोषणा KVM_REG_MIPS_CP0_CONFIG4	MIPS_CP0_32(16, 4)
+#घोषणा KVM_REG_MIPS_CP0_CONFIG5	MIPS_CP0_32(16, 5)
+#घोषणा KVM_REG_MIPS_CP0_CONFIG6	MIPS_CP0_32(16, 6)
+#घोषणा KVM_REG_MIPS_CP0_CONFIG7	MIPS_CP0_32(16, 7)
+#घोषणा KVM_REG_MIPS_CP0_MAARI		MIPS_CP0_64(17, 2)
+#घोषणा KVM_REG_MIPS_CP0_XCONTEXT	MIPS_CP0_64(20, 0)
+#घोषणा KVM_REG_MIPS_CP0_DIAG		MIPS_CP0_32(22, 0)
+#घोषणा KVM_REG_MIPS_CP0_ERROREPC	MIPS_CP0_64(30, 0)
+#घोषणा KVM_REG_MIPS_CP0_KSCRATCH1	MIPS_CP0_64(31, 2)
+#घोषणा KVM_REG_MIPS_CP0_KSCRATCH2	MIPS_CP0_64(31, 3)
+#घोषणा KVM_REG_MIPS_CP0_KSCRATCH3	MIPS_CP0_64(31, 4)
+#घोषणा KVM_REG_MIPS_CP0_KSCRATCH4	MIPS_CP0_64(31, 5)
+#घोषणा KVM_REG_MIPS_CP0_KSCRATCH5	MIPS_CP0_64(31, 6)
+#घोषणा KVM_REG_MIPS_CP0_KSCRATCH6	MIPS_CP0_64(31, 7)
 
 
-#define KVM_MAX_VCPUS		16
-/* memory slots that does not exposed to userspace */
-#define KVM_PRIVATE_MEM_SLOTS	0
+#घोषणा KVM_MAX_VCPUS		16
+/* memory slots that करोes not exposed to userspace */
+#घोषणा KVM_PRIVATE_MEM_SLOTS	0
 
-#define KVM_HALT_POLL_NS_DEFAULT 500000
+#घोषणा KVM_HALT_POLL_NS_DEFAULT 500000
 
-extern unsigned long GUESTID_MASK;
-extern unsigned long GUESTID_FIRST_VERSION;
-extern unsigned long GUESTID_VERSION_MASK;
+बाह्य अचिन्हित दीर्घ GUESTID_MASK;
+बाह्य अचिन्हित दीर्घ GUESTID_FIRST_VERSION;
+बाह्य अचिन्हित दीर्घ GUESTID_VERSION_MASK;
 
-#define KVM_INVALID_ADDR		0xdeadbeef
+#घोषणा KVM_INVALID_ADDR		0xdeadbeef
 
 /*
  * EVA has overlapping user & kernel address spaces, so user VAs may be >
- * PAGE_OFFSET. For this reason we can't use the default KVM_HVA_ERR_BAD of
+ * PAGE_OFFSET. For this reason we can't use the शेष KVM_HVA_ERR_BAD of
  * PAGE_OFFSET.
  */
 
-#define KVM_HVA_ERR_BAD			(-1UL)
-#define KVM_HVA_ERR_RO_BAD		(-2UL)
+#घोषणा KVM_HVA_ERR_BAD			(-1UL)
+#घोषणा KVM_HVA_ERR_RO_BAD		(-2UL)
 
-static inline bool kvm_is_error_hva(unsigned long addr)
-{
-	return IS_ERR_VALUE(addr);
-}
+अटल अंतरभूत bool kvm_is_error_hva(अचिन्हित दीर्घ addr)
+अणु
+	वापस IS_ERR_VALUE(addr);
+पूर्ण
 
-struct kvm_vm_stat {
-	ulong remote_tlb_flush;
-};
+काष्ठा kvm_vm_stat अणु
+	uदीर्घ remote_tlb_flush;
+पूर्ण;
 
-struct kvm_vcpu_stat {
-	u64 wait_exits;
-	u64 cache_exits;
-	u64 signal_exits;
-	u64 int_exits;
-	u64 cop_unusable_exits;
-	u64 tlbmod_exits;
-	u64 tlbmiss_ld_exits;
-	u64 tlbmiss_st_exits;
-	u64 addrerr_st_exits;
-	u64 addrerr_ld_exits;
-	u64 syscall_exits;
-	u64 resvd_inst_exits;
-	u64 break_inst_exits;
-	u64 trap_inst_exits;
-	u64 msa_fpe_exits;
-	u64 fpe_exits;
-	u64 msa_disabled_exits;
-	u64 flush_dcache_exits;
-	u64 vz_gpsi_exits;
-	u64 vz_gsfc_exits;
-	u64 vz_hc_exits;
-	u64 vz_grr_exits;
-	u64 vz_gva_exits;
-	u64 vz_ghfc_exits;
-	u64 vz_gpa_exits;
-	u64 vz_resvd_exits;
-#ifdef CONFIG_CPU_LOONGSON64
-	u64 vz_cpucfg_exits;
-#endif
+काष्ठा kvm_vcpu_stat अणु
+	u64 रुको_निकासs;
+	u64 cache_निकासs;
+	u64 संकेत_निकासs;
+	u64 पूर्णांक_निकासs;
+	u64 cop_unusable_निकासs;
+	u64 tlbmod_निकासs;
+	u64 tlbmiss_ld_निकासs;
+	u64 tlbmiss_st_निकासs;
+	u64 addrerr_st_निकासs;
+	u64 addrerr_ld_निकासs;
+	u64 syscall_निकासs;
+	u64 resvd_inst_निकासs;
+	u64 अवरोध_inst_निकासs;
+	u64 trap_inst_निकासs;
+	u64 msa_fpe_निकासs;
+	u64 fpe_निकासs;
+	u64 msa_disabled_निकासs;
+	u64 flush_dcache_निकासs;
+	u64 vz_gpsi_निकासs;
+	u64 vz_gsfc_निकासs;
+	u64 vz_hc_निकासs;
+	u64 vz_grr_निकासs;
+	u64 vz_gva_निकासs;
+	u64 vz_ghfc_निकासs;
+	u64 vz_gpa_निकासs;
+	u64 vz_resvd_निकासs;
+#अगर_घोषित CONFIG_CPU_LOONGSON64
+	u64 vz_cpucfg_निकासs;
+#पूर्ण_अगर
 	u64 halt_successful_poll;
 	u64 halt_attempted_poll;
 	u64 halt_poll_success_ns;
 	u64 halt_poll_fail_ns;
 	u64 halt_poll_invalid;
 	u64 halt_wakeup;
-};
+पूर्ण;
 
-struct kvm_arch_memory_slot {
-};
+काष्ठा kvm_arch_memory_slot अणु
+पूर्ण;
 
-#ifdef CONFIG_CPU_LOONGSON64
-struct ipi_state {
-	uint32_t status;
-	uint32_t en;
-	uint32_t set;
-	uint32_t clear;
-	uint64_t buf[4];
-};
+#अगर_घोषित CONFIG_CPU_LOONGSON64
+काष्ठा ipi_state अणु
+	uपूर्णांक32_t status;
+	uपूर्णांक32_t en;
+	uपूर्णांक32_t set;
+	uपूर्णांक32_t clear;
+	uपूर्णांक64_t buf[4];
+पूर्ण;
 
-struct loongson_kvm_ipi;
+काष्ठा loongson_kvm_ipi;
 
-struct ipi_io_device {
-	int node_id;
-	struct loongson_kvm_ipi *ipi;
-	struct kvm_io_device device;
-};
+काष्ठा ipi_io_device अणु
+	पूर्णांक node_id;
+	काष्ठा loongson_kvm_ipi *ipi;
+	काष्ठा kvm_io_device device;
+पूर्ण;
 
-struct loongson_kvm_ipi {
+काष्ठा loongson_kvm_ipi अणु
 	spinlock_t lock;
-	struct kvm *kvm;
-	struct ipi_state ipistate[16];
-	struct ipi_io_device dev_ipi[4];
-};
-#endif
+	काष्ठा kvm *kvm;
+	काष्ठा ipi_state ipistate[16];
+	काष्ठा ipi_io_device dev_ipi[4];
+पूर्ण;
+#पूर्ण_अगर
 
-struct kvm_arch {
+काष्ठा kvm_arch अणु
 	/* Guest physical mm */
-	struct mm_struct gpa_mm;
+	काष्ठा mm_काष्ठा gpa_mm;
 	/* Mask of CPUs needing GPA ASID flush */
 	cpumask_t asid_flush_mask;
-#ifdef CONFIG_CPU_LOONGSON64
-	struct loongson_kvm_ipi ipi;
-#endif
-};
+#अगर_घोषित CONFIG_CPU_LOONGSON64
+	काष्ठा loongson_kvm_ipi ipi;
+#पूर्ण_अगर
+पूर्ण;
 
-#define N_MIPS_COPROC_REGS	32
-#define N_MIPS_COPROC_SEL	8
+#घोषणा N_MIPS_COPROC_REGS	32
+#घोषणा N_MIPS_COPROC_SEL	8
 
-struct mips_coproc {
-	unsigned long reg[N_MIPS_COPROC_REGS][N_MIPS_COPROC_SEL];
-#ifdef CONFIG_KVM_MIPS_DEBUG_COP0_COUNTERS
-	unsigned long stat[N_MIPS_COPROC_REGS][N_MIPS_COPROC_SEL];
-#endif
-};
+काष्ठा mips_coproc अणु
+	अचिन्हित दीर्घ reg[N_MIPS_COPROC_REGS][N_MIPS_COPROC_SEL];
+#अगर_घोषित CONFIG_KVM_MIPS_DEBUG_COP0_COUNTERS
+	अचिन्हित दीर्घ stat[N_MIPS_COPROC_REGS][N_MIPS_COPROC_SEL];
+#पूर्ण_अगर
+पूर्ण;
 
 /*
- * Coprocessor 0 register names
+ * Coprocessor 0 रेजिस्टर names
  */
-#define MIPS_CP0_TLB_INDEX	0
-#define MIPS_CP0_TLB_RANDOM	1
-#define MIPS_CP0_TLB_LOW	2
-#define MIPS_CP0_TLB_LO0	2
-#define MIPS_CP0_TLB_LO1	3
-#define MIPS_CP0_TLB_CONTEXT	4
-#define MIPS_CP0_TLB_PG_MASK	5
-#define MIPS_CP0_TLB_WIRED	6
-#define MIPS_CP0_HWRENA		7
-#define MIPS_CP0_BAD_VADDR	8
-#define MIPS_CP0_COUNT		9
-#define MIPS_CP0_TLB_HI		10
-#define MIPS_CP0_COMPARE	11
-#define MIPS_CP0_STATUS		12
-#define MIPS_CP0_CAUSE		13
-#define MIPS_CP0_EXC_PC		14
-#define MIPS_CP0_PRID		15
-#define MIPS_CP0_CONFIG		16
-#define MIPS_CP0_LLADDR		17
-#define MIPS_CP0_WATCH_LO	18
-#define MIPS_CP0_WATCH_HI	19
-#define MIPS_CP0_TLB_XCONTEXT	20
-#define MIPS_CP0_DIAG		22
-#define MIPS_CP0_ECC		26
-#define MIPS_CP0_CACHE_ERR	27
-#define MIPS_CP0_TAG_LO		28
-#define MIPS_CP0_TAG_HI		29
-#define MIPS_CP0_ERROR_PC	30
-#define MIPS_CP0_DEBUG		23
-#define MIPS_CP0_DEPC		24
-#define MIPS_CP0_PERFCNT	25
-#define MIPS_CP0_ERRCTL		26
-#define MIPS_CP0_DATA_LO	28
-#define MIPS_CP0_DATA_HI	29
-#define MIPS_CP0_DESAVE		31
+#घोषणा MIPS_CP0_TLB_INDEX	0
+#घोषणा MIPS_CP0_TLB_RANDOM	1
+#घोषणा MIPS_CP0_TLB_LOW	2
+#घोषणा MIPS_CP0_TLB_LO0	2
+#घोषणा MIPS_CP0_TLB_LO1	3
+#घोषणा MIPS_CP0_TLB_CONTEXT	4
+#घोषणा MIPS_CP0_TLB_PG_MASK	5
+#घोषणा MIPS_CP0_TLB_WIRED	6
+#घोषणा MIPS_CP0_HWRENA		7
+#घोषणा MIPS_CP0_BAD_VADDR	8
+#घोषणा MIPS_CP0_COUNT		9
+#घोषणा MIPS_CP0_TLB_HI		10
+#घोषणा MIPS_CP0_COMPARE	11
+#घोषणा MIPS_CP0_STATUS		12
+#घोषणा MIPS_CP0_CAUSE		13
+#घोषणा MIPS_CP0_EXC_PC		14
+#घोषणा MIPS_CP0_PRID		15
+#घोषणा MIPS_CP0_CONFIG		16
+#घोषणा MIPS_CP0_LLADDR		17
+#घोषणा MIPS_CP0_WATCH_LO	18
+#घोषणा MIPS_CP0_WATCH_HI	19
+#घोषणा MIPS_CP0_TLB_XCONTEXT	20
+#घोषणा MIPS_CP0_DIAG		22
+#घोषणा MIPS_CP0_ECC		26
+#घोषणा MIPS_CP0_CACHE_ERR	27
+#घोषणा MIPS_CP0_TAG_LO		28
+#घोषणा MIPS_CP0_TAG_HI		29
+#घोषणा MIPS_CP0_ERROR_PC	30
+#घोषणा MIPS_CP0_DEBUG		23
+#घोषणा MIPS_CP0_DEPC		24
+#घोषणा MIPS_CP0_PERFCNT	25
+#घोषणा MIPS_CP0_ERRCTL		26
+#घोषणा MIPS_CP0_DATA_LO	28
+#घोषणा MIPS_CP0_DATA_HI	29
+#घोषणा MIPS_CP0_DESAVE		31
 
-#define MIPS_CP0_CONFIG_SEL	0
-#define MIPS_CP0_CONFIG1_SEL	1
-#define MIPS_CP0_CONFIG2_SEL	2
-#define MIPS_CP0_CONFIG3_SEL	3
-#define MIPS_CP0_CONFIG4_SEL	4
-#define MIPS_CP0_CONFIG5_SEL	5
+#घोषणा MIPS_CP0_CONFIG_SEL	0
+#घोषणा MIPS_CP0_CONFIG1_SEL	1
+#घोषणा MIPS_CP0_CONFIG2_SEL	2
+#घोषणा MIPS_CP0_CONFIG3_SEL	3
+#घोषणा MIPS_CP0_CONFIG4_SEL	4
+#घोषणा MIPS_CP0_CONFIG5_SEL	5
 
-#define MIPS_CP0_GUESTCTL2	10
-#define MIPS_CP0_GUESTCTL2_SEL	5
-#define MIPS_CP0_GTOFFSET	12
-#define MIPS_CP0_GTOFFSET_SEL	7
+#घोषणा MIPS_CP0_GUESTCTL2	10
+#घोषणा MIPS_CP0_GUESTCTL2_SEL	5
+#घोषणा MIPS_CP0_GTOFFSET	12
+#घोषणा MIPS_CP0_GTOFFSET_SEL	7
 
 /* Resume Flags */
-#define RESUME_FLAG_DR		(1<<0)	/* Reload guest nonvolatile state? */
-#define RESUME_FLAG_HOST	(1<<1)	/* Resume host? */
+#घोषणा RESUME_FLAG_DR		(1<<0)	/* Reload guest nonअस्थिर state? */
+#घोषणा RESUME_FLAG_HOST	(1<<1)	/* Resume host? */
 
-#define RESUME_GUEST		0
-#define RESUME_GUEST_DR		RESUME_FLAG_DR
-#define RESUME_HOST		RESUME_FLAG_HOST
+#घोषणा RESUME_GUEST		0
+#घोषणा RESUME_GUEST_DR		RESUME_FLAG_DR
+#घोषणा RESUME_HOST		RESUME_FLAG_HOST
 
-enum emulation_result {
+क्रमागत emulation_result अणु
 	EMULATE_DONE,		/* no further processing */
 	EMULATE_DO_MMIO,	/* kvm_run filled with MMIO request */
-	EMULATE_FAIL,		/* can't emulate this instruction */
-	EMULATE_WAIT,		/* WAIT instruction */
+	EMULATE_FAIL,		/* can't emulate this inकाष्ठाion */
+	EMULATE_WAIT,		/* WAIT inकाष्ठाion */
 	EMULATE_PRIV_FAIL,
 	EMULATE_EXCEPT,		/* A guest exception has been generated */
-	EMULATE_HYPERCALL,	/* HYPCALL instruction */
-};
+	EMULATE_HYPERCALL,	/* HYPCALL inकाष्ठाion */
+पूर्ण;
 
-#if defined(CONFIG_64BIT)
-#define VPN2_MASK		GENMASK(cpu_vmbits - 1, 13)
-#else
-#define VPN2_MASK		0xffffe000
-#endif
-#define KVM_ENTRYHI_ASID	cpu_asid_mask(&boot_cpu_data)
-#define TLB_IS_GLOBAL(x)	((x).tlb_lo[0] & (x).tlb_lo[1] & ENTRYLO_G)
-#define TLB_VPN2(x)		((x).tlb_hi & VPN2_MASK)
-#define TLB_ASID(x)		((x).tlb_hi & KVM_ENTRYHI_ASID)
-#define TLB_LO_IDX(x, va)	(((va) >> PAGE_SHIFT) & 1)
-#define TLB_IS_VALID(x, va)	((x).tlb_lo[TLB_LO_IDX(x, va)] & ENTRYLO_V)
-#define TLB_IS_DIRTY(x, va)	((x).tlb_lo[TLB_LO_IDX(x, va)] & ENTRYLO_D)
-#define TLB_HI_VPN2_HIT(x, y)	((TLB_VPN2(x) & ~(x).tlb_mask) ==	\
+#अगर defined(CONFIG_64BIT)
+#घोषणा VPN2_MASK		GENMASK(cpu_vmbits - 1, 13)
+#अन्यथा
+#घोषणा VPN2_MASK		0xffffe000
+#पूर्ण_अगर
+#घोषणा KVM_ENTRYHI_ASID	cpu_asid_mask(&boot_cpu_data)
+#घोषणा TLB_IS_GLOBAL(x)	((x).tlb_lo[0] & (x).tlb_lo[1] & ENTRYLO_G)
+#घोषणा TLB_VPN2(x)		((x).tlb_hi & VPN2_MASK)
+#घोषणा TLB_ASID(x)		((x).tlb_hi & KVM_ENTRYHI_ASID)
+#घोषणा TLB_LO_IDX(x, va)	(((va) >> PAGE_SHIFT) & 1)
+#घोषणा TLB_IS_VALID(x, va)	((x).tlb_lo[TLB_LO_IDX(x, va)] & ENTRYLO_V)
+#घोषणा TLB_IS_सूचीTY(x, va)	((x).tlb_lo[TLB_LO_IDX(x, va)] & ENTRYLO_D)
+#घोषणा TLB_HI_VPN2_HIT(x, y)	((TLB_VPN2(x) & ~(x).tlb_mask) ==	\
 				 ((y) & VPN2_MASK & ~(x).tlb_mask))
-#define TLB_HI_ASID_HIT(x, y)	(TLB_IS_GLOBAL(x) ||			\
+#घोषणा TLB_HI_ASID_HIT(x, y)	(TLB_IS_GLOBAL(x) ||			\
 				 TLB_ASID(x) == ((y) & KVM_ENTRYHI_ASID))
 
-struct kvm_mips_tlb {
-	long tlb_mask;
-	long tlb_hi;
-	long tlb_lo[2];
-};
+काष्ठा kvm_mips_tlb अणु
+	दीर्घ tlb_mask;
+	दीर्घ tlb_hi;
+	दीर्घ tlb_lo[2];
+पूर्ण;
 
-#define KVM_MIPS_AUX_FPU	0x1
-#define KVM_MIPS_AUX_MSA	0x2
+#घोषणा KVM_MIPS_AUX_FPU	0x1
+#घोषणा KVM_MIPS_AUX_MSA	0x2
 
-struct kvm_vcpu_arch {
-	void *guest_ebase;
-	int (*vcpu_run)(struct kvm_vcpu *vcpu);
+काष्ठा kvm_vcpu_arch अणु
+	व्योम *guest_ebase;
+	पूर्णांक (*vcpu_run)(काष्ठा kvm_vcpu *vcpu);
 
-	/* Host registers preserved across guest mode execution */
-	unsigned long host_stack;
-	unsigned long host_gp;
-	unsigned long host_pgd;
-	unsigned long host_entryhi;
+	/* Host रेजिस्टरs preserved across guest mode execution */
+	अचिन्हित दीर्घ host_stack;
+	अचिन्हित दीर्घ host_gp;
+	अचिन्हित दीर्घ host_pgd;
+	अचिन्हित दीर्घ host_entryhi;
 
-	/* Host CP0 registers used when handling exits from guest */
-	unsigned long host_cp0_badvaddr;
-	unsigned long host_cp0_epc;
+	/* Host CP0 रेजिस्टरs used when handling निकासs from guest */
+	अचिन्हित दीर्घ host_cp0_badvaddr;
+	अचिन्हित दीर्घ host_cp0_epc;
 	u32 host_cp0_cause;
 	u32 host_cp0_guestctl0;
 	u32 host_cp0_badinstr;
 	u32 host_cp0_badinstrp;
 
 	/* GPRS */
-	unsigned long gprs[32];
-	unsigned long hi;
-	unsigned long lo;
-	unsigned long pc;
+	अचिन्हित दीर्घ gprs[32];
+	अचिन्हित दीर्घ hi;
+	अचिन्हित दीर्घ lo;
+	अचिन्हित दीर्घ pc;
 
 	/* FPU State */
-	struct mips_fpu_struct fpu;
+	काष्ठा mips_fpu_काष्ठा fpu;
 	/* Which auxiliary state is loaded (KVM_MIPS_AUX_*) */
-	unsigned int aux_inuse;
+	अचिन्हित पूर्णांक aux_inuse;
 
 	/* COP0 State */
-	struct mips_coproc *cop0;
+	काष्ठा mips_coproc *cop0;
 
 	/* Resume PC after MMIO completion */
-	unsigned long io_pc;
+	अचिन्हित दीर्घ io_pc;
 	/* GPR used as IO source/target */
 	u32 io_gpr;
 
-	struct hrtimer comparecount_timer;
-	/* Count timer control KVM register */
+	काष्ठा hrसमयr comparecount_समयr;
+	/* Count समयr control KVM रेजिस्टर */
 	u32 count_ctl;
-	/* Count bias from the raw time */
+	/* Count bias from the raw समय */
 	u32 count_bias;
-	/* Frequency of timer in Hz */
+	/* Frequency of समयr in Hz */
 	u32 count_hz;
-	/* Dynamic nanosecond bias (multiple of count_period) to avoid overflow */
+	/* Dynamic nanosecond bias (multiple of count_period) to aव्योम overflow */
 	s64 count_dyn_bias;
-	/* Resume time */
-	ktime_t count_resume;
-	/* Period of timer tick in ns */
+	/* Resume समय */
+	kसमय_प्रकार count_resume;
+	/* Period of समयr tick in ns */
 	u64 count_period;
 
-	/* Bitmask of exceptions that are pending */
-	unsigned long pending_exceptions;
+	/* Biपंचांगask of exceptions that are pending */
+	अचिन्हित दीर्घ pending_exceptions;
 
-	/* Bitmask of pending exceptions to be cleared */
-	unsigned long pending_exceptions_clr;
+	/* Biपंचांगask of pending exceptions to be cleared */
+	अचिन्हित दीर्घ pending_exceptions_clr;
 
 	/* Cache some mmu pages needed inside spinlock regions */
-	struct kvm_mmu_memory_cache mmu_page_cache;
+	काष्ठा kvm_mmu_memory_cache mmu_page_cache;
 
-	/* vcpu's vzguestid is different on each host cpu in an smp system */
+	/* vcpu's vzguestid is dअगरferent on each host cpu in an smp प्रणाली */
 	u32 vzguestid[NR_CPUS];
 
 	/* wired guest TLB entries */
-	struct kvm_mips_tlb *wired_tlb;
-	unsigned int wired_tlb_limit;
-	unsigned int wired_tlb_used;
+	काष्ठा kvm_mips_tlb *wired_tlb;
+	अचिन्हित पूर्णांक wired_tlb_limit;
+	अचिन्हित पूर्णांक wired_tlb_used;
 
-	/* emulated guest MAAR registers */
-	unsigned long maar[6];
+	/* emulated guest MAAR रेजिस्टरs */
+	अचिन्हित दीर्घ maar[6];
 
 	/* Last CPU the VCPU state was loaded on */
-	int last_sched_cpu;
+	पूर्णांक last_sched_cpu;
 	/* Last CPU the VCPU actually executed guest code on */
-	int last_exec_cpu;
+	पूर्णांक last_exec_cpu;
 
 	/* WAIT executed */
-	int wait;
+	पूर्णांक रुको;
 
 	u8 fpu_enabled;
 	u8 msa_enabled;
-};
+पूर्ण;
 
-static inline void _kvm_atomic_set_c0_guest_reg(unsigned long *reg,
-						unsigned long val)
-{
-	unsigned long temp;
-	do {
-		__asm__ __volatile__(
+अटल अंतरभूत व्योम _kvm_atomic_set_c0_guest_reg(अचिन्हित दीर्घ *reg,
+						अचिन्हित दीर्घ val)
+अणु
+	अचिन्हित दीर्घ temp;
+	करो अणु
+		__यंत्र__ __अस्थिर__(
 		"	.set	push				\n"
 		"	.set	"MIPS_ISA_ARCH_LEVEL"		\n"
 		"	" __LL "%0, %1				\n"
@@ -390,15 +391,15 @@ static inline void _kvm_atomic_set_c0_guest_reg(unsigned long *reg,
 		"	.set	pop				\n"
 		: "=&r" (temp), "+m" (*reg)
 		: "r" (val));
-	} while (unlikely(!temp));
-}
+	पूर्ण जबतक (unlikely(!temp));
+पूर्ण
 
-static inline void _kvm_atomic_clear_c0_guest_reg(unsigned long *reg,
-						  unsigned long val)
-{
-	unsigned long temp;
-	do {
-		__asm__ __volatile__(
+अटल अंतरभूत व्योम _kvm_atomic_clear_c0_guest_reg(अचिन्हित दीर्घ *reg,
+						  अचिन्हित दीर्घ val)
+अणु
+	अचिन्हित दीर्घ temp;
+	करो अणु
+		__यंत्र__ __अस्थिर__(
 		"	.set	push				\n"
 		"	.set	"MIPS_ISA_ARCH_LEVEL"		\n"
 		"	" __LL "%0, %1				\n"
@@ -407,16 +408,16 @@ static inline void _kvm_atomic_clear_c0_guest_reg(unsigned long *reg,
 		"	.set	pop				\n"
 		: "=&r" (temp), "+m" (*reg)
 		: "r" (~val));
-	} while (unlikely(!temp));
-}
+	पूर्ण जबतक (unlikely(!temp));
+पूर्ण
 
-static inline void _kvm_atomic_change_c0_guest_reg(unsigned long *reg,
-						   unsigned long change,
-						   unsigned long val)
-{
-	unsigned long temp;
-	do {
-		__asm__ __volatile__(
+अटल अंतरभूत व्योम _kvm_atomic_change_c0_guest_reg(अचिन्हित दीर्घ *reg,
+						   अचिन्हित दीर्घ change,
+						   अचिन्हित दीर्घ val)
+अणु
+	अचिन्हित दीर्घ temp;
+	करो अणु
+		__यंत्र__ __अस्थिर__(
 		"	.set	push				\n"
 		"	.set	"MIPS_ISA_ARCH_LEVEL"		\n"
 		"	" __LL "%0, %1				\n"
@@ -426,12 +427,12 @@ static inline void _kvm_atomic_change_c0_guest_reg(unsigned long *reg,
 		"	.set	pop				\n"
 		: "=&r" (temp), "+m" (*reg)
 		: "r" (~change), "r" (val & change));
-	} while (unlikely(!temp));
-}
+	पूर्ण जबतक (unlikely(!temp));
+पूर्ण
 
-/* Guest register types, used in accessor build below */
-#define __KVMT32	u32
-#define __KVMTl	unsigned long
+/* Guest रेजिस्टर types, used in accessor build below */
+#घोषणा __KVMT32	u32
+#घोषणा __KVMTl	अचिन्हित दीर्घ
 
 /*
  * __BUILD_KVM_$ops_SAVED(): kvm_$op_sw_gc0_$reg()
@@ -439,57 +440,57 @@ static inline void _kvm_atomic_change_c0_guest_reg(unsigned long *reg,
  */
 
 /* Generate saved context simple accessors */
-#define __BUILD_KVM_RW_SAVED(name, type, _reg, sel)			\
-static inline __KVMT##type kvm_read_sw_gc0_##name(struct mips_coproc *cop0) \
-{									\
-	return cop0->reg[(_reg)][(sel)];				\
-}									\
-static inline void kvm_write_sw_gc0_##name(struct mips_coproc *cop0,	\
+#घोषणा __BUILD_KVM_RW_SAVED(name, type, _reg, sel)			\
+अटल अंतरभूत __KVMT##type kvm_पढ़ो_sw_gc0_##name(काष्ठा mips_coproc *cop0) \
+अणु									\
+	वापस cop0->reg[(_reg)][(sel)];				\
+पूर्ण									\
+अटल अंतरभूत व्योम kvm_ग_लिखो_sw_gc0_##name(काष्ठा mips_coproc *cop0,	\
 					   __KVMT##type val)		\
-{									\
+अणु									\
 	cop0->reg[(_reg)][(sel)] = val;					\
-}
+पूर्ण
 
-/* Generate saved context bitwise modifiers */
-#define __BUILD_KVM_SET_SAVED(name, type, _reg, sel)			\
-static inline void kvm_set_sw_gc0_##name(struct mips_coproc *cop0,	\
+/* Generate saved context bitwise modअगरiers */
+#घोषणा __BUILD_KVM_SET_SAVED(name, type, _reg, sel)			\
+अटल अंतरभूत व्योम kvm_set_sw_gc0_##name(काष्ठा mips_coproc *cop0,	\
 					 __KVMT##type val)		\
-{									\
+अणु									\
 	cop0->reg[(_reg)][(sel)] |= val;				\
-}									\
-static inline void kvm_clear_sw_gc0_##name(struct mips_coproc *cop0,	\
+पूर्ण									\
+अटल अंतरभूत व्योम kvm_clear_sw_gc0_##name(काष्ठा mips_coproc *cop0,	\
 					   __KVMT##type val)		\
-{									\
+अणु									\
 	cop0->reg[(_reg)][(sel)] &= ~val;				\
-}									\
-static inline void kvm_change_sw_gc0_##name(struct mips_coproc *cop0,	\
+पूर्ण									\
+अटल अंतरभूत व्योम kvm_change_sw_gc0_##name(काष्ठा mips_coproc *cop0,	\
 					    __KVMT##type mask,		\
 					    __KVMT##type val)		\
-{									\
-	unsigned long _mask = mask;					\
+अणु									\
+	अचिन्हित दीर्घ _mask = mask;					\
 	cop0->reg[(_reg)][(sel)] &= ~_mask;				\
 	cop0->reg[(_reg)][(sel)] |= val & _mask;			\
-}
+पूर्ण
 
-/* Generate saved context atomic bitwise modifiers */
-#define __BUILD_KVM_ATOMIC_SAVED(name, type, _reg, sel)			\
-static inline void kvm_set_sw_gc0_##name(struct mips_coproc *cop0,	\
+/* Generate saved context atomic bitwise modअगरiers */
+#घोषणा __BUILD_KVM_ATOMIC_SAVED(name, type, _reg, sel)			\
+अटल अंतरभूत व्योम kvm_set_sw_gc0_##name(काष्ठा mips_coproc *cop0,	\
 					 __KVMT##type val)		\
-{									\
+अणु									\
 	_kvm_atomic_set_c0_guest_reg(&cop0->reg[(_reg)][(sel)], val);	\
-}									\
-static inline void kvm_clear_sw_gc0_##name(struct mips_coproc *cop0,	\
+पूर्ण									\
+अटल अंतरभूत व्योम kvm_clear_sw_gc0_##name(काष्ठा mips_coproc *cop0,	\
 					   __KVMT##type val)		\
-{									\
+अणु									\
 	_kvm_atomic_clear_c0_guest_reg(&cop0->reg[(_reg)][(sel)], val);	\
-}									\
-static inline void kvm_change_sw_gc0_##name(struct mips_coproc *cop0,	\
+पूर्ण									\
+अटल अंतरभूत व्योम kvm_change_sw_gc0_##name(काष्ठा mips_coproc *cop0,	\
 					    __KVMT##type mask,		\
 					    __KVMT##type val)		\
-{									\
+अणु									\
 	_kvm_atomic_change_c0_guest_reg(&cop0->reg[(_reg)][(sel)], mask, \
 					val);				\
-}
+पूर्ण
 
 /*
  * __BUILD_KVM_$ops_VZ(): kvm_$op_vz_gc0_$reg()
@@ -497,137 +498,137 @@ static inline void kvm_change_sw_gc0_##name(struct mips_coproc *cop0,	\
  */
 
 /* Generate VZ guest context simple accessors */
-#define __BUILD_KVM_RW_VZ(name, type, _reg, sel)			\
-static inline __KVMT##type kvm_read_vz_gc0_##name(struct mips_coproc *cop0) \
-{									\
-	return read_gc0_##name();					\
-}									\
-static inline void kvm_write_vz_gc0_##name(struct mips_coproc *cop0,	\
+#घोषणा __BUILD_KVM_RW_VZ(name, type, _reg, sel)			\
+अटल अंतरभूत __KVMT##type kvm_पढ़ो_vz_gc0_##name(काष्ठा mips_coproc *cop0) \
+अणु									\
+	वापस पढ़ो_gc0_##name();					\
+पूर्ण									\
+अटल अंतरभूत व्योम kvm_ग_लिखो_vz_gc0_##name(काष्ठा mips_coproc *cop0,	\
 					   __KVMT##type val)		\
-{									\
-	write_gc0_##name(val);						\
-}
+अणु									\
+	ग_लिखो_gc0_##name(val);						\
+पूर्ण
 
-/* Generate VZ guest context bitwise modifiers */
-#define __BUILD_KVM_SET_VZ(name, type, _reg, sel)			\
-static inline void kvm_set_vz_gc0_##name(struct mips_coproc *cop0,	\
+/* Generate VZ guest context bitwise modअगरiers */
+#घोषणा __BUILD_KVM_SET_VZ(name, type, _reg, sel)			\
+अटल अंतरभूत व्योम kvm_set_vz_gc0_##name(काष्ठा mips_coproc *cop0,	\
 					 __KVMT##type val)		\
-{									\
+अणु									\
 	set_gc0_##name(val);						\
-}									\
-static inline void kvm_clear_vz_gc0_##name(struct mips_coproc *cop0,	\
+पूर्ण									\
+अटल अंतरभूत व्योम kvm_clear_vz_gc0_##name(काष्ठा mips_coproc *cop0,	\
 					   __KVMT##type val)		\
-{									\
+अणु									\
 	clear_gc0_##name(val);						\
-}									\
-static inline void kvm_change_vz_gc0_##name(struct mips_coproc *cop0,	\
+पूर्ण									\
+अटल अंतरभूत व्योम kvm_change_vz_gc0_##name(काष्ठा mips_coproc *cop0,	\
 					    __KVMT##type mask,		\
 					    __KVMT##type val)		\
-{									\
+अणु									\
 	change_gc0_##name(mask, val);					\
-}
+पूर्ण
 
 /* Generate VZ guest context save/restore to/from saved context */
-#define __BUILD_KVM_SAVE_VZ(name, _reg, sel)			\
-static inline void kvm_restore_gc0_##name(struct mips_coproc *cop0)	\
-{									\
-	write_gc0_##name(cop0->reg[(_reg)][(sel)]);			\
-}									\
-static inline void kvm_save_gc0_##name(struct mips_coproc *cop0)	\
-{									\
-	cop0->reg[(_reg)][(sel)] = read_gc0_##name();			\
-}
+#घोषणा __BUILD_KVM_SAVE_VZ(name, _reg, sel)			\
+अटल अंतरभूत व्योम kvm_restore_gc0_##name(काष्ठा mips_coproc *cop0)	\
+अणु									\
+	ग_लिखो_gc0_##name(cop0->reg[(_reg)][(sel)]);			\
+पूर्ण									\
+अटल अंतरभूत व्योम kvm_save_gc0_##name(काष्ठा mips_coproc *cop0)	\
+अणु									\
+	cop0->reg[(_reg)][(sel)] = पढ़ो_gc0_##name();			\
+पूर्ण
 
 /*
  * __BUILD_KVM_$ops_WRAP(): kvm_$op_$name1() -> kvm_$op_$name2()
- * These wrap a set of operations to provide them with a different name.
+ * These wrap a set of operations to provide them with a dअगरferent name.
  */
 
 /* Generate simple accessor wrapper */
-#define __BUILD_KVM_RW_WRAP(name1, name2, type)				\
-static inline __KVMT##type kvm_read_##name1(struct mips_coproc *cop0)	\
-{									\
-	return kvm_read_##name2(cop0);					\
-}									\
-static inline void kvm_write_##name1(struct mips_coproc *cop0,		\
+#घोषणा __BUILD_KVM_RW_WRAP(name1, name2, type)				\
+अटल अंतरभूत __KVMT##type kvm_पढ़ो_##name1(काष्ठा mips_coproc *cop0)	\
+अणु									\
+	वापस kvm_पढ़ो_##name2(cop0);					\
+पूर्ण									\
+अटल अंतरभूत व्योम kvm_ग_लिखो_##name1(काष्ठा mips_coproc *cop0,		\
 				     __KVMT##type val)			\
-{									\
-	kvm_write_##name2(cop0, val);					\
-}
+अणु									\
+	kvm_ग_लिखो_##name2(cop0, val);					\
+पूर्ण
 
-/* Generate bitwise modifier wrapper */
-#define __BUILD_KVM_SET_WRAP(name1, name2, type)			\
-static inline void kvm_set_##name1(struct mips_coproc *cop0,		\
+/* Generate bitwise modअगरier wrapper */
+#घोषणा __BUILD_KVM_SET_WRAP(name1, name2, type)			\
+अटल अंतरभूत व्योम kvm_set_##name1(काष्ठा mips_coproc *cop0,		\
 				   __KVMT##type val)			\
-{									\
+अणु									\
 	kvm_set_##name2(cop0, val);					\
-}									\
-static inline void kvm_clear_##name1(struct mips_coproc *cop0,		\
+पूर्ण									\
+अटल अंतरभूत व्योम kvm_clear_##name1(काष्ठा mips_coproc *cop0,		\
 				     __KVMT##type val)			\
-{									\
+अणु									\
 	kvm_clear_##name2(cop0, val);					\
-}									\
-static inline void kvm_change_##name1(struct mips_coproc *cop0,		\
+पूर्ण									\
+अटल अंतरभूत व्योम kvm_change_##name1(काष्ठा mips_coproc *cop0,		\
 				      __KVMT##type mask,		\
 				      __KVMT##type val)			\
-{									\
+अणु									\
 	kvm_change_##name2(cop0, mask, val);				\
-}
+पूर्ण
 
 /*
  * __BUILD_KVM_$ops_SW(): kvm_$op_c0_guest_$reg() -> kvm_$op_sw_gc0_$reg()
  * These generate accessors operating on the saved context in RAM, and wrap them
- * with the common guest C0 accessors (for use by common emulation code).
+ * with the common guest C0 accessors (क्रम use by common emulation code).
  */
 
-#define __BUILD_KVM_RW_SW(name, type, _reg, sel)			\
+#घोषणा __BUILD_KVM_RW_SW(name, type, _reg, sel)			\
 	__BUILD_KVM_RW_SAVED(name, type, _reg, sel)			\
 	__BUILD_KVM_RW_WRAP(c0_guest_##name, sw_gc0_##name, type)
 
-#define __BUILD_KVM_SET_SW(name, type, _reg, sel)			\
+#घोषणा __BUILD_KVM_SET_SW(name, type, _reg, sel)			\
 	__BUILD_KVM_SET_SAVED(name, type, _reg, sel)			\
 	__BUILD_KVM_SET_WRAP(c0_guest_##name, sw_gc0_##name, type)
 
-#define __BUILD_KVM_ATOMIC_SW(name, type, _reg, sel)			\
+#घोषणा __BUILD_KVM_ATOMIC_SW(name, type, _reg, sel)			\
 	__BUILD_KVM_ATOMIC_SAVED(name, type, _reg, sel)			\
 	__BUILD_KVM_SET_WRAP(c0_guest_##name, sw_gc0_##name, type)
 
 /*
- * VZ (hardware assisted virtualisation)
- * These macros use the active guest state in VZ mode (hardware registers),
+ * VZ (hardware assisted भवisation)
+ * These macros use the active guest state in VZ mode (hardware रेजिस्टरs),
  */
 
 /*
  * __BUILD_KVM_$ops_HW(): kvm_$op_c0_guest_$reg() -> kvm_$op_vz_gc0_$reg()
  * These generate accessors operating on the VZ guest context in hardware, and
- * wrap them with the common guest C0 accessors (for use by common emulation
+ * wrap them with the common guest C0 accessors (क्रम use by common emulation
  * code).
  *
  * Accessors operating on the saved context in RAM are also generated to allow
  * convenient explicit saving and restoring of the state.
  */
 
-#define __BUILD_KVM_RW_HW(name, type, _reg, sel)			\
+#घोषणा __BUILD_KVM_RW_HW(name, type, _reg, sel)			\
 	__BUILD_KVM_RW_SAVED(name, type, _reg, sel)			\
 	__BUILD_KVM_RW_VZ(name, type, _reg, sel)			\
 	__BUILD_KVM_RW_WRAP(c0_guest_##name, vz_gc0_##name, type)	\
 	__BUILD_KVM_SAVE_VZ(name, _reg, sel)
 
-#define __BUILD_KVM_SET_HW(name, type, _reg, sel)			\
+#घोषणा __BUILD_KVM_SET_HW(name, type, _reg, sel)			\
 	__BUILD_KVM_SET_SAVED(name, type, _reg, sel)			\
 	__BUILD_KVM_SET_VZ(name, type, _reg, sel)			\
 	__BUILD_KVM_SET_WRAP(c0_guest_##name, vz_gc0_##name, type)
 
 /*
- * We can't do atomic modifications of COP0 state if hardware can modify it.
+ * We can't करो atomic modअगरications of COP0 state अगर hardware can modअगरy it.
  * Races must be handled explicitly.
  */
-#define __BUILD_KVM_ATOMIC_HW	__BUILD_KVM_SET_HW
+#घोषणा __BUILD_KVM_ATOMIC_HW	__BUILD_KVM_SET_HW
 
 /*
- * Define accessors for CP0 registers that are accessible to the guest. These
+ * Define accessors क्रम CP0 रेजिस्टरs that are accessible to the guest. These
  * are primarily used by common emulation code, which may need to access the
- * registers differently depending on the implementation.
+ * रेजिस्टरs dअगरferently depending on the implementation.
  *
  *    fns_hw/sw    name     type    reg num         select
  */
@@ -656,7 +657,7 @@ __BUILD_KVM_RW_SW(count,          32, MIPS_CP0_COUNT,        0)
 __BUILD_KVM_RW_HW(entryhi,        l,  MIPS_CP0_TLB_HI,       0)
 __BUILD_KVM_RW_HW(compare,        32, MIPS_CP0_COMPARE,      0)
 __BUILD_KVM_RW_HW(status,         32, MIPS_CP0_STATUS,       0)
-__BUILD_KVM_RW_HW(intctl,         32, MIPS_CP0_STATUS,       1)
+__BUILD_KVM_RW_HW(पूर्णांकctl,         32, MIPS_CP0_STATUS,       1)
 __BUILD_KVM_RW_HW(cause,          32, MIPS_CP0_CAUSE,        0)
 __BUILD_KVM_RW_HW(epc,            l,  MIPS_CP0_EXC_PC,       0)
 __BUILD_KVM_RW_SW(prid,           32, MIPS_CP0_PRID,         0)
@@ -681,7 +682,7 @@ __BUILD_KVM_RW_HW(kscratch6,      l,  MIPS_CP0_DESAVE,       7)
 
 /* Bitwise operations (on HW state) */
 __BUILD_KVM_SET_HW(status,        32, MIPS_CP0_STATUS,       0)
-/* Cause can be modified asynchronously from hardirq hrtimer callback */
+/* Cause can be modअगरied asynchronously from hardirq hrसमयr callback */
 __BUILD_KVM_ATOMIC_HW(cause,      32, MIPS_CP0_CAUSE,        0)
 __BUILD_KVM_SET_HW(ebase,         l,  MIPS_CP0_PRID,         1)
 
@@ -695,216 +696,216 @@ __BUILD_KVM_SET_SAVED(config5,    32, MIPS_CP0_CONFIG,       5)
 
 /* Helpers */
 
-static inline bool kvm_mips_guest_can_have_fpu(struct kvm_vcpu_arch *vcpu)
-{
-	return (!__builtin_constant_p(raw_cpu_has_fpu) || raw_cpu_has_fpu) &&
+अटल अंतरभूत bool kvm_mips_guest_can_have_fpu(काष्ठा kvm_vcpu_arch *vcpu)
+अणु
+	वापस (!__builtin_स्थिरant_p(raw_cpu_has_fpu) || raw_cpu_has_fpu) &&
 		vcpu->fpu_enabled;
-}
+पूर्ण
 
-static inline bool kvm_mips_guest_has_fpu(struct kvm_vcpu_arch *vcpu)
-{
-	return kvm_mips_guest_can_have_fpu(vcpu) &&
-		kvm_read_c0_guest_config1(vcpu->cop0) & MIPS_CONF1_FP;
-}
+अटल अंतरभूत bool kvm_mips_guest_has_fpu(काष्ठा kvm_vcpu_arch *vcpu)
+अणु
+	वापस kvm_mips_guest_can_have_fpu(vcpu) &&
+		kvm_पढ़ो_c0_guest_config1(vcpu->cop0) & MIPS_CONF1_FP;
+पूर्ण
 
-static inline bool kvm_mips_guest_can_have_msa(struct kvm_vcpu_arch *vcpu)
-{
-	return (!__builtin_constant_p(cpu_has_msa) || cpu_has_msa) &&
+अटल अंतरभूत bool kvm_mips_guest_can_have_msa(काष्ठा kvm_vcpu_arch *vcpu)
+अणु
+	वापस (!__builtin_स्थिरant_p(cpu_has_msa) || cpu_has_msa) &&
 		vcpu->msa_enabled;
-}
+पूर्ण
 
-static inline bool kvm_mips_guest_has_msa(struct kvm_vcpu_arch *vcpu)
-{
-	return kvm_mips_guest_can_have_msa(vcpu) &&
-		kvm_read_c0_guest_config3(vcpu->cop0) & MIPS_CONF3_MSA;
-}
+अटल अंतरभूत bool kvm_mips_guest_has_msa(काष्ठा kvm_vcpu_arch *vcpu)
+अणु
+	वापस kvm_mips_guest_can_have_msa(vcpu) &&
+		kvm_पढ़ो_c0_guest_config3(vcpu->cop0) & MIPS_CONF3_MSA;
+पूर्ण
 
-struct kvm_mips_callbacks {
-	int (*handle_cop_unusable)(struct kvm_vcpu *vcpu);
-	int (*handle_tlb_mod)(struct kvm_vcpu *vcpu);
-	int (*handle_tlb_ld_miss)(struct kvm_vcpu *vcpu);
-	int (*handle_tlb_st_miss)(struct kvm_vcpu *vcpu);
-	int (*handle_addr_err_st)(struct kvm_vcpu *vcpu);
-	int (*handle_addr_err_ld)(struct kvm_vcpu *vcpu);
-	int (*handle_syscall)(struct kvm_vcpu *vcpu);
-	int (*handle_res_inst)(struct kvm_vcpu *vcpu);
-	int (*handle_break)(struct kvm_vcpu *vcpu);
-	int (*handle_trap)(struct kvm_vcpu *vcpu);
-	int (*handle_msa_fpe)(struct kvm_vcpu *vcpu);
-	int (*handle_fpe)(struct kvm_vcpu *vcpu);
-	int (*handle_msa_disabled)(struct kvm_vcpu *vcpu);
-	int (*handle_guest_exit)(struct kvm_vcpu *vcpu);
-	int (*hardware_enable)(void);
-	void (*hardware_disable)(void);
-	int (*check_extension)(struct kvm *kvm, long ext);
-	int (*vcpu_init)(struct kvm_vcpu *vcpu);
-	void (*vcpu_uninit)(struct kvm_vcpu *vcpu);
-	int (*vcpu_setup)(struct kvm_vcpu *vcpu);
-	void (*prepare_flush_shadow)(struct kvm *kvm);
+काष्ठा kvm_mips_callbacks अणु
+	पूर्णांक (*handle_cop_unusable)(काष्ठा kvm_vcpu *vcpu);
+	पूर्णांक (*handle_tlb_mod)(काष्ठा kvm_vcpu *vcpu);
+	पूर्णांक (*handle_tlb_ld_miss)(काष्ठा kvm_vcpu *vcpu);
+	पूर्णांक (*handle_tlb_st_miss)(काष्ठा kvm_vcpu *vcpu);
+	पूर्णांक (*handle_addr_err_st)(काष्ठा kvm_vcpu *vcpu);
+	पूर्णांक (*handle_addr_err_ld)(काष्ठा kvm_vcpu *vcpu);
+	पूर्णांक (*handle_syscall)(काष्ठा kvm_vcpu *vcpu);
+	पूर्णांक (*handle_res_inst)(काष्ठा kvm_vcpu *vcpu);
+	पूर्णांक (*handle_अवरोध)(काष्ठा kvm_vcpu *vcpu);
+	पूर्णांक (*handle_trap)(काष्ठा kvm_vcpu *vcpu);
+	पूर्णांक (*handle_msa_fpe)(काष्ठा kvm_vcpu *vcpu);
+	पूर्णांक (*handle_fpe)(काष्ठा kvm_vcpu *vcpu);
+	पूर्णांक (*handle_msa_disabled)(काष्ठा kvm_vcpu *vcpu);
+	पूर्णांक (*handle_guest_निकास)(काष्ठा kvm_vcpu *vcpu);
+	पूर्णांक (*hardware_enable)(व्योम);
+	व्योम (*hardware_disable)(व्योम);
+	पूर्णांक (*check_extension)(काष्ठा kvm *kvm, दीर्घ ext);
+	पूर्णांक (*vcpu_init)(काष्ठा kvm_vcpu *vcpu);
+	व्योम (*vcpu_uninit)(काष्ठा kvm_vcpu *vcpu);
+	पूर्णांक (*vcpu_setup)(काष्ठा kvm_vcpu *vcpu);
+	व्योम (*prepare_flush_shaकरोw)(काष्ठा kvm *kvm);
 	gpa_t (*gva_to_gpa)(gva_t gva);
-	void (*queue_timer_int)(struct kvm_vcpu *vcpu);
-	void (*dequeue_timer_int)(struct kvm_vcpu *vcpu);
-	void (*queue_io_int)(struct kvm_vcpu *vcpu,
-			     struct kvm_mips_interrupt *irq);
-	void (*dequeue_io_int)(struct kvm_vcpu *vcpu,
-			       struct kvm_mips_interrupt *irq);
-	int (*irq_deliver)(struct kvm_vcpu *vcpu, unsigned int priority,
+	व्योम (*queue_समयr_पूर्णांक)(काष्ठा kvm_vcpu *vcpu);
+	व्योम (*dequeue_समयr_पूर्णांक)(काष्ठा kvm_vcpu *vcpu);
+	व्योम (*queue_io_पूर्णांक)(काष्ठा kvm_vcpu *vcpu,
+			     काष्ठा kvm_mips_पूर्णांकerrupt *irq);
+	व्योम (*dequeue_io_पूर्णांक)(काष्ठा kvm_vcpu *vcpu,
+			       काष्ठा kvm_mips_पूर्णांकerrupt *irq);
+	पूर्णांक (*irq_deliver)(काष्ठा kvm_vcpu *vcpu, अचिन्हित पूर्णांक priority,
 			   u32 cause);
-	int (*irq_clear)(struct kvm_vcpu *vcpu, unsigned int priority,
+	पूर्णांक (*irq_clear)(काष्ठा kvm_vcpu *vcpu, अचिन्हित पूर्णांक priority,
 			 u32 cause);
-	unsigned long (*num_regs)(struct kvm_vcpu *vcpu);
-	int (*copy_reg_indices)(struct kvm_vcpu *vcpu, u64 __user *indices);
-	int (*get_one_reg)(struct kvm_vcpu *vcpu,
-			   const struct kvm_one_reg *reg, s64 *v);
-	int (*set_one_reg)(struct kvm_vcpu *vcpu,
-			   const struct kvm_one_reg *reg, s64 v);
-	int (*vcpu_load)(struct kvm_vcpu *vcpu, int cpu);
-	int (*vcpu_put)(struct kvm_vcpu *vcpu, int cpu);
-	int (*vcpu_run)(struct kvm_vcpu *vcpu);
-	void (*vcpu_reenter)(struct kvm_vcpu *vcpu);
-};
-extern struct kvm_mips_callbacks *kvm_mips_callbacks;
-int kvm_mips_emulation_init(struct kvm_mips_callbacks **install_callbacks);
+	अचिन्हित दीर्घ (*num_regs)(काष्ठा kvm_vcpu *vcpu);
+	पूर्णांक (*copy_reg_indices)(काष्ठा kvm_vcpu *vcpu, u64 __user *indices);
+	पूर्णांक (*get_one_reg)(काष्ठा kvm_vcpu *vcpu,
+			   स्थिर काष्ठा kvm_one_reg *reg, s64 *v);
+	पूर्णांक (*set_one_reg)(काष्ठा kvm_vcpu *vcpu,
+			   स्थिर काष्ठा kvm_one_reg *reg, s64 v);
+	पूर्णांक (*vcpu_load)(काष्ठा kvm_vcpu *vcpu, पूर्णांक cpu);
+	पूर्णांक (*vcpu_put)(काष्ठा kvm_vcpu *vcpu, पूर्णांक cpu);
+	पूर्णांक (*vcpu_run)(काष्ठा kvm_vcpu *vcpu);
+	व्योम (*vcpu_reenter)(काष्ठा kvm_vcpu *vcpu);
+पूर्ण;
+बाह्य काष्ठा kvm_mips_callbacks *kvm_mips_callbacks;
+पूर्णांक kvm_mips_emulation_init(काष्ठा kvm_mips_callbacks **install_callbacks);
 
 /* Debug: dump vcpu state */
-int kvm_arch_vcpu_dump_regs(struct kvm_vcpu *vcpu);
+पूर्णांक kvm_arch_vcpu_dump_regs(काष्ठा kvm_vcpu *vcpu);
 
-extern int kvm_mips_handle_exit(struct kvm_vcpu *vcpu);
+बाह्य पूर्णांक kvm_mips_handle_निकास(काष्ठा kvm_vcpu *vcpu);
 
 /* Building of entry/exception code */
-int kvm_mips_entry_setup(void);
-void *kvm_mips_build_vcpu_run(void *addr);
-void *kvm_mips_build_tlb_refill_exception(void *addr, void *handler);
-void *kvm_mips_build_exception(void *addr, void *handler);
-void *kvm_mips_build_exit(void *addr);
+पूर्णांक kvm_mips_entry_setup(व्योम);
+व्योम *kvm_mips_build_vcpu_run(व्योम *addr);
+व्योम *kvm_mips_build_tlb_refill_exception(व्योम *addr, व्योम *handler);
+व्योम *kvm_mips_build_exception(व्योम *addr, व्योम *handler);
+व्योम *kvm_mips_build_निकास(व्योम *addr);
 
 /* FPU/MSA context management */
-void __kvm_save_fpu(struct kvm_vcpu_arch *vcpu);
-void __kvm_restore_fpu(struct kvm_vcpu_arch *vcpu);
-void __kvm_restore_fcsr(struct kvm_vcpu_arch *vcpu);
-void __kvm_save_msa(struct kvm_vcpu_arch *vcpu);
-void __kvm_restore_msa(struct kvm_vcpu_arch *vcpu);
-void __kvm_restore_msa_upper(struct kvm_vcpu_arch *vcpu);
-void __kvm_restore_msacsr(struct kvm_vcpu_arch *vcpu);
-void kvm_own_fpu(struct kvm_vcpu *vcpu);
-void kvm_own_msa(struct kvm_vcpu *vcpu);
-void kvm_drop_fpu(struct kvm_vcpu *vcpu);
-void kvm_lose_fpu(struct kvm_vcpu *vcpu);
+व्योम __kvm_save_fpu(काष्ठा kvm_vcpu_arch *vcpu);
+व्योम __kvm_restore_fpu(काष्ठा kvm_vcpu_arch *vcpu);
+व्योम __kvm_restore_fcsr(काष्ठा kvm_vcpu_arch *vcpu);
+व्योम __kvm_save_msa(काष्ठा kvm_vcpu_arch *vcpu);
+व्योम __kvm_restore_msa(काष्ठा kvm_vcpu_arch *vcpu);
+व्योम __kvm_restore_msa_upper(काष्ठा kvm_vcpu_arch *vcpu);
+व्योम __kvm_restore_msacsr(काष्ठा kvm_vcpu_arch *vcpu);
+व्योम kvm_own_fpu(काष्ठा kvm_vcpu *vcpu);
+व्योम kvm_own_msa(काष्ठा kvm_vcpu *vcpu);
+व्योम kvm_drop_fpu(काष्ठा kvm_vcpu *vcpu);
+व्योम kvm_lose_fpu(काष्ठा kvm_vcpu *vcpu);
 
 /* TLB handling */
-int kvm_mips_handle_vz_root_tlb_fault(unsigned long badvaddr,
-				      struct kvm_vcpu *vcpu, bool write_fault);
+पूर्णांक kvm_mips_handle_vz_root_tlb_fault(अचिन्हित दीर्घ badvaddr,
+				      काष्ठा kvm_vcpu *vcpu, bool ग_लिखो_fault);
 
-int kvm_vz_host_tlb_inv(struct kvm_vcpu *vcpu, unsigned long entryhi);
-int kvm_vz_guest_tlb_lookup(struct kvm_vcpu *vcpu, unsigned long gva,
-			    unsigned long *gpa);
-void kvm_vz_local_flush_roottlb_all_guests(void);
-void kvm_vz_local_flush_guesttlb_all(void);
-void kvm_vz_save_guesttlb(struct kvm_mips_tlb *buf, unsigned int index,
-			  unsigned int count);
-void kvm_vz_load_guesttlb(const struct kvm_mips_tlb *buf, unsigned int index,
-			  unsigned int count);
-#ifdef CONFIG_CPU_LOONGSON64
-void kvm_loongson_clear_guest_vtlb(void);
-void kvm_loongson_clear_guest_ftlb(void);
-#endif
+पूर्णांक kvm_vz_host_tlb_inv(काष्ठा kvm_vcpu *vcpu, अचिन्हित दीर्घ entryhi);
+पूर्णांक kvm_vz_guest_tlb_lookup(काष्ठा kvm_vcpu *vcpu, अचिन्हित दीर्घ gva,
+			    अचिन्हित दीर्घ *gpa);
+व्योम kvm_vz_local_flush_roottlb_all_guests(व्योम);
+व्योम kvm_vz_local_flush_guesttlb_all(व्योम);
+व्योम kvm_vz_save_guesttlb(काष्ठा kvm_mips_tlb *buf, अचिन्हित पूर्णांक index,
+			  अचिन्हित पूर्णांक count);
+व्योम kvm_vz_load_guesttlb(स्थिर काष्ठा kvm_mips_tlb *buf, अचिन्हित पूर्णांक index,
+			  अचिन्हित पूर्णांक count);
+#अगर_घोषित CONFIG_CPU_LOONGSON64
+व्योम kvm_loongson_clear_guest_vtlb(व्योम);
+व्योम kvm_loongson_clear_guest_ftlb(व्योम);
+#पूर्ण_अगर
 
 /* MMU handling */
 
-bool kvm_mips_flush_gpa_pt(struct kvm *kvm, gfn_t start_gfn, gfn_t end_gfn);
-int kvm_mips_mkclean_gpa_pt(struct kvm *kvm, gfn_t start_gfn, gfn_t end_gfn);
-pgd_t *kvm_pgd_alloc(void);
-void kvm_mmu_free_memory_caches(struct kvm_vcpu *vcpu);
+bool kvm_mips_flush_gpa_pt(काष्ठा kvm *kvm, gfn_t start_gfn, gfn_t end_gfn);
+पूर्णांक kvm_mips_mkclean_gpa_pt(काष्ठा kvm *kvm, gfn_t start_gfn, gfn_t end_gfn);
+pgd_t *kvm_pgd_alloc(व्योम);
+व्योम kvm_mmu_मुक्त_memory_caches(काष्ठा kvm_vcpu *vcpu);
 
-#define KVM_ARCH_WANT_MMU_NOTIFIER
+#घोषणा KVM_ARCH_WANT_MMU_NOTIFIER
 
 /* Emulation */
-enum emulation_result update_pc(struct kvm_vcpu *vcpu, u32 cause);
-int kvm_get_badinstr(u32 *opc, struct kvm_vcpu *vcpu, u32 *out);
-int kvm_get_badinstrp(u32 *opc, struct kvm_vcpu *vcpu, u32 *out);
+क्रमागत emulation_result update_pc(काष्ठा kvm_vcpu *vcpu, u32 cause);
+पूर्णांक kvm_get_badinstr(u32 *opc, काष्ठा kvm_vcpu *vcpu, u32 *out);
+पूर्णांक kvm_get_badinstrp(u32 *opc, काष्ठा kvm_vcpu *vcpu, u32 *out);
 
 /**
- * kvm_is_ifetch_fault() - Find whether a TLBL exception is due to ifetch fault.
+ * kvm_is_अगरetch_fault() - Find whether a TLBL exception is due to अगरetch fault.
  * @vcpu:	Virtual CPU.
  *
- * Returns:	Whether the TLBL exception was likely due to an instruction
+ * Returns:	Whether the TLBL exception was likely due to an inकाष्ठाion
  *		fetch fault rather than a data load fault.
  */
-static inline bool kvm_is_ifetch_fault(struct kvm_vcpu_arch *vcpu)
-{
-	unsigned long badvaddr = vcpu->host_cp0_badvaddr;
-	unsigned long epc = msk_isa16_mode(vcpu->pc);
+अटल अंतरभूत bool kvm_is_अगरetch_fault(काष्ठा kvm_vcpu_arch *vcpu)
+अणु
+	अचिन्हित दीर्घ badvaddr = vcpu->host_cp0_badvaddr;
+	अचिन्हित दीर्घ epc = msk_isa16_mode(vcpu->pc);
 	u32 cause = vcpu->host_cp0_cause;
 
-	if (epc == badvaddr)
-		return true;
+	अगर (epc == badvaddr)
+		वापस true;
 
 	/*
-	 * Branches may be 32-bit or 16-bit instructions.
+	 * Branches may be 32-bit or 16-bit inकाष्ठाions.
 	 * This isn't exact, but we don't really support MIPS16 or microMIPS yet
 	 * in KVM anyway.
 	 */
-	if ((cause & CAUSEF_BD) && badvaddr - epc <= 4)
-		return true;
+	अगर ((cause & CAUSEF_BD) && badvaddr - epc <= 4)
+		वापस true;
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-extern enum emulation_result kvm_mips_complete_mmio_load(struct kvm_vcpu *vcpu);
+बाह्य क्रमागत emulation_result kvm_mips_complete_mmio_load(काष्ठा kvm_vcpu *vcpu);
 
-u32 kvm_mips_read_count(struct kvm_vcpu *vcpu);
-void kvm_mips_write_count(struct kvm_vcpu *vcpu, u32 count);
-void kvm_mips_write_compare(struct kvm_vcpu *vcpu, u32 compare, bool ack);
-void kvm_mips_init_count(struct kvm_vcpu *vcpu, unsigned long count_hz);
-int kvm_mips_set_count_ctl(struct kvm_vcpu *vcpu, s64 count_ctl);
-int kvm_mips_set_count_resume(struct kvm_vcpu *vcpu, s64 count_resume);
-int kvm_mips_set_count_hz(struct kvm_vcpu *vcpu, s64 count_hz);
-void kvm_mips_count_enable_cause(struct kvm_vcpu *vcpu);
-void kvm_mips_count_disable_cause(struct kvm_vcpu *vcpu);
-enum hrtimer_restart kvm_mips_count_timeout(struct kvm_vcpu *vcpu);
+u32 kvm_mips_पढ़ो_count(काष्ठा kvm_vcpu *vcpu);
+व्योम kvm_mips_ग_लिखो_count(काष्ठा kvm_vcpu *vcpu, u32 count);
+व्योम kvm_mips_ग_लिखो_compare(काष्ठा kvm_vcpu *vcpu, u32 compare, bool ack);
+व्योम kvm_mips_init_count(काष्ठा kvm_vcpu *vcpu, अचिन्हित दीर्घ count_hz);
+पूर्णांक kvm_mips_set_count_ctl(काष्ठा kvm_vcpu *vcpu, s64 count_ctl);
+पूर्णांक kvm_mips_set_count_resume(काष्ठा kvm_vcpu *vcpu, s64 count_resume);
+पूर्णांक kvm_mips_set_count_hz(काष्ठा kvm_vcpu *vcpu, s64 count_hz);
+व्योम kvm_mips_count_enable_cause(काष्ठा kvm_vcpu *vcpu);
+व्योम kvm_mips_count_disable_cause(काष्ठा kvm_vcpu *vcpu);
+क्रमागत hrसमयr_restart kvm_mips_count_समयout(काष्ठा kvm_vcpu *vcpu);
 
-/* fairly internal functions requiring some care to use */
-int kvm_mips_count_disabled(struct kvm_vcpu *vcpu);
-ktime_t kvm_mips_freeze_hrtimer(struct kvm_vcpu *vcpu, u32 *count);
-int kvm_mips_restore_hrtimer(struct kvm_vcpu *vcpu, ktime_t before,
-			     u32 count, int min_drift);
+/* fairly पूर्णांकernal functions requiring some care to use */
+पूर्णांक kvm_mips_count_disabled(काष्ठा kvm_vcpu *vcpu);
+kसमय_प्रकार kvm_mips_मुक्तze_hrसमयr(काष्ठा kvm_vcpu *vcpu, u32 *count);
+पूर्णांक kvm_mips_restore_hrसमयr(काष्ठा kvm_vcpu *vcpu, kसमय_प्रकार beक्रमe,
+			     u32 count, पूर्णांक min_drअगरt);
 
-void kvm_vz_acquire_htimer(struct kvm_vcpu *vcpu);
-void kvm_vz_lose_htimer(struct kvm_vcpu *vcpu);
+व्योम kvm_vz_acquire_hसमयr(काष्ठा kvm_vcpu *vcpu);
+व्योम kvm_vz_lose_hसमयr(काष्ठा kvm_vcpu *vcpu);
 
-enum emulation_result kvm_mips_emulate_store(union mips_instruction inst,
+क्रमागत emulation_result kvm_mips_emulate_store(जोड़ mips_inकाष्ठाion inst,
 					     u32 cause,
-					     struct kvm_vcpu *vcpu);
-enum emulation_result kvm_mips_emulate_load(union mips_instruction inst,
+					     काष्ठा kvm_vcpu *vcpu);
+क्रमागत emulation_result kvm_mips_emulate_load(जोड़ mips_inकाष्ठाion inst,
 					    u32 cause,
-					    struct kvm_vcpu *vcpu);
+					    काष्ठा kvm_vcpu *vcpu);
 
 /* COP0 */
-enum emulation_result kvm_mips_emul_wait(struct kvm_vcpu *vcpu);
+क्रमागत emulation_result kvm_mips_emul_रुको(काष्ठा kvm_vcpu *vcpu);
 
 /* Hypercalls (hypcall.c) */
 
-enum emulation_result kvm_mips_emul_hypcall(struct kvm_vcpu *vcpu,
-					    union mips_instruction inst);
-int kvm_mips_handle_hypcall(struct kvm_vcpu *vcpu);
+क्रमागत emulation_result kvm_mips_emul_hypcall(काष्ठा kvm_vcpu *vcpu,
+					    जोड़ mips_inकाष्ठाion inst);
+पूर्णांक kvm_mips_handle_hypcall(काष्ठा kvm_vcpu *vcpu);
 
 /* Misc */
-extern void kvm_mips_dump_stats(struct kvm_vcpu *vcpu);
-extern unsigned long kvm_mips_get_ramsize(struct kvm *kvm);
-extern int kvm_vcpu_ioctl_interrupt(struct kvm_vcpu *vcpu,
-			     struct kvm_mips_interrupt *irq);
+बाह्य व्योम kvm_mips_dump_stats(काष्ठा kvm_vcpu *vcpu);
+बाह्य अचिन्हित दीर्घ kvm_mips_get_ramsize(काष्ठा kvm *kvm);
+बाह्य पूर्णांक kvm_vcpu_ioctl_पूर्णांकerrupt(काष्ठा kvm_vcpu *vcpu,
+			     काष्ठा kvm_mips_पूर्णांकerrupt *irq);
 
-static inline void kvm_arch_hardware_unsetup(void) {}
-static inline void kvm_arch_sync_events(struct kvm *kvm) {}
-static inline void kvm_arch_free_memslot(struct kvm *kvm,
-					 struct kvm_memory_slot *slot) {}
-static inline void kvm_arch_memslots_updated(struct kvm *kvm, u64 gen) {}
-static inline void kvm_arch_sched_in(struct kvm_vcpu *vcpu, int cpu) {}
-static inline void kvm_arch_vcpu_blocking(struct kvm_vcpu *vcpu) {}
-static inline void kvm_arch_vcpu_unblocking(struct kvm_vcpu *vcpu) {}
-static inline void kvm_arch_vcpu_block_finish(struct kvm_vcpu *vcpu) {}
+अटल अंतरभूत व्योम kvm_arch_hardware_unsetup(व्योम) अणुपूर्ण
+अटल अंतरभूत व्योम kvm_arch_sync_events(काष्ठा kvm *kvm) अणुपूर्ण
+अटल अंतरभूत व्योम kvm_arch_मुक्त_memslot(काष्ठा kvm *kvm,
+					 काष्ठा kvm_memory_slot *slot) अणुपूर्ण
+अटल अंतरभूत व्योम kvm_arch_memslots_updated(काष्ठा kvm *kvm, u64 gen) अणुपूर्ण
+अटल अंतरभूत व्योम kvm_arch_sched_in(काष्ठा kvm_vcpu *vcpu, पूर्णांक cpu) अणुपूर्ण
+अटल अंतरभूत व्योम kvm_arch_vcpu_blocking(काष्ठा kvm_vcpu *vcpu) अणुपूर्ण
+अटल अंतरभूत व्योम kvm_arch_vcpu_unblocking(काष्ठा kvm_vcpu *vcpu) अणुपूर्ण
+अटल अंतरभूत व्योम kvm_arch_vcpu_block_finish(काष्ठा kvm_vcpu *vcpu) अणुपूर्ण
 
-#define __KVM_HAVE_ARCH_FLUSH_REMOTE_TLB
-int kvm_arch_flush_remote_tlb(struct kvm *kvm);
+#घोषणा __KVM_HAVE_ARCH_FLUSH_REMOTE_TLB
+पूर्णांक kvm_arch_flush_remote_tlb(काष्ठा kvm *kvm);
 
-#endif /* __MIPS_KVM_HOST_H__ */
+#पूर्ण_अगर /* __MIPS_KVM_HOST_H__ */

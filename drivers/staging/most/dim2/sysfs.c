@@ -1,49 +1,50 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * sysfs.c - MediaLB sysfs information
+ * sysfs.c - MediaLB sysfs inक्रमmation
  *
  * Copyright (C) 2015, Microchip Technology Germany II GmbH & Co. KG
  */
 
 /* Author: Andrey Shvetsov <andrey.shvetsov@k2l.de> */
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include <linux/kernel.h>
-#include "sysfs.h"
-#include <linux/device.h>
+#समावेश <linux/kernel.h>
+#समावेश "sysfs.h"
+#समावेश <linux/device.h>
 
-static ssize_t state_show(struct device *dev, struct device_attribute *attr,
-			  char *buf)
-{
+अटल sमाप_प्रकार state_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
+			  अक्षर *buf)
+अणु
 	bool state = dim2_sysfs_get_state_cb();
 
-	return sprintf(buf, "%s\n", state ? "locked" : "");
-}
+	वापस प्र_लिखो(buf, "%s\n", state ? "locked" : "");
+पूर्ण
 
-static DEVICE_ATTR_RO(state);
+अटल DEVICE_ATTR_RO(state);
 
-static struct attribute *dev_attrs[] = {
+अटल काष्ठा attribute *dev_attrs[] = अणु
 	&dev_attr_state.attr,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-static struct attribute_group dev_attr_group = {
+अटल काष्ठा attribute_group dev_attr_group = अणु
 	.attrs = dev_attrs,
-};
+पूर्ण;
 
-static const struct attribute_group *dev_attr_groups[] = {
+अटल स्थिर काष्ठा attribute_group *dev_attr_groups[] = अणु
 	&dev_attr_group,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-int dim2_sysfs_probe(struct device *dev)
-{
+पूर्णांक dim2_sysfs_probe(काष्ठा device *dev)
+अणु
 	dev->groups = dev_attr_groups;
-	return device_register(dev);
-}
+	वापस device_रेजिस्टर(dev);
+पूर्ण
 
-void dim2_sysfs_destroy(struct device *dev)
-{
-	device_unregister(dev);
-}
+व्योम dim2_sysfs_destroy(काष्ठा device *dev)
+अणु
+	device_unरेजिस्टर(dev);
+पूर्ण

@@ -1,18 +1,19 @@
-/* SPDX-License-Identifier: MIT */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: MIT */
 /*
- * clock framework for AMD misc clocks
+ * घड़ी framework क्रम AMD misc घड़ीs
  *
  * Copyright 2018 Advanced Micro Devices, Inc.
  */
 
-#ifndef __CLK_FCH_H
-#define __CLK_FCH_H
+#अगर_अघोषित __CLK_FCH_H
+#घोषणा __CLK_FCH_H
 
-#include <linux/compiler.h>
+#समावेश <linux/compiler.h>
 
-struct fch_clk_data {
-	void __iomem *base;
+काष्ठा fch_clk_data अणु
+	व्योम __iomem *base;
 	u32 is_rv;
-};
+पूर्ण;
 
-#endif /* __CLK_FCH_H */
+#पूर्ण_अगर /* __CLK_FCH_H */

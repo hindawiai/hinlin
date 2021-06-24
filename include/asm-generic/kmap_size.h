@@ -1,12 +1,13 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _ASM_GENERIC_KMAP_SIZE_H
-#define _ASM_GENERIC_KMAP_SIZE_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _ASM_GENERIC_KMAP_SIZE_H
+#घोषणा _ASM_GENERIC_KMAP_SIZE_H
 
 /* For debug this provides guard pages between the maps */
-#ifdef CONFIG_DEBUG_KMAP_LOCAL
+#अगर_घोषित CONFIG_DEBUG_KMAP_LOCAL
 # define KM_MAX_IDX	33
-#else
+#अन्यथा
 # define KM_MAX_IDX	16
-#endif
+#पूर्ण_अगर
 
-#endif
+#पूर्ण_अगर

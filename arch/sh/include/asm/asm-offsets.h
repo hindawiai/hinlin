@@ -1,2 +1,3 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#include <generated/asm-offsets.h>
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#समावेश <generated/यंत्र-offsets.h>

@@ -1,62 +1,63 @@
+<शैली गुरु>
 /*
- * An implementation of key value pair (KVP) functionality for Linux.
+ * An implementation of key value pair (KVP) functionality क्रम Linux.
  *
  *
  * Copyright (C) 2010, Novell, Inc.
  * Author : K. Y. Srinivasan <ksrinivasan@novell.com>
  *
- * This program is free software; you can redistribute it and/or modify it
+ * This program is मुक्त software; you can redistribute it and/or modअगरy it
  * under the terms of the GNU General Public License version 2 as published
  * by the Free Software Foundation.
  *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE, GOOD TITLE or
- * NON INFRINGEMENT.  See the GNU General Public License for more
+ * NON INFRINGEMENT.  See the GNU General Public License क्रम more
  * details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
+ * aदीर्घ with this program; अगर not, ग_लिखो to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fअगरth Floor, Boston, MA 02110-1301 USA.
  *
  */
 
 
-#include <sys/poll.h>
-#include <sys/utsname.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <string.h>
-#include <ctype.h>
-#include <errno.h>
-#include <arpa/inet.h>
-#include <linux/hyperv.h>
-#include <ifaddrs.h>
-#include <netdb.h>
-#include <syslog.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <dirent.h>
-#include <net/if.h>
-#include <limits.h>
-#include <getopt.h>
+#समावेश <sys/poll.h>
+#समावेश <sys/utsname.h>
+#समावेश <मानकपन.स>
+#समावेश <मानककोष.स>
+#समावेश <unistd.h>
+#समावेश <माला.स>
+#समावेश <प्रकार.स>
+#समावेश <त्रुटिसं.स>
+#समावेश <arpa/inet.h>
+#समावेश <linux/hyperv.h>
+#समावेश <अगरaddrs.h>
+#समावेश <netdb.h>
+#समावेश <syslog.h>
+#समावेश <sys/स्थिति.स>
+#समावेश <fcntl.h>
+#समावेश <dirent.h>
+#समावेश <net/अगर.h>
+#समावेश <सीमा.स>
+#समावेश <getopt.h>
 
 /*
- * KVP protocol: The user mode component first registers with the
+ * KVP protocol: The user mode component first रेजिस्टरs with the
  * the kernel component. Subsequently, the kernel component requests, data
- * for the specified keys. In response to this message the user mode component
- * fills in the value corresponding to the specified key. We overload the
+ * क्रम the specअगरied keys. In response to this message the user mode component
+ * fills in the value corresponding to the specअगरied key. We overload the
  * sequence field in the cn_msg header to define our KVP message types.
  *
- * We use this infrastructure for also supporting queries from user mode
- * application for state that may be maintained in the KVP kernel component.
+ * We use this infraकाष्ठाure क्रम also supporting queries from user mode
+ * application क्रम state that may be मुख्यtained in the KVP kernel component.
  *
  */
 
 
-enum key_index {
-	FullyQualifiedDomainName = 0,
+क्रमागत key_index अणु
+	FullyQualअगरiedDoमुख्यName = 0,
 	IntegrationServicesVersion, /*This key is serviced in the kernel*/
 	NetworkAddressIPv4,
 	NetworkAddressIPv6,
@@ -66,210 +67,210 @@ enum key_index {
 	OSMinorVersion,
 	OSVersion,
 	ProcessorArchitecture
-};
+पूर्ण;
 
 
-enum {
+क्रमागत अणु
 	IPADDR = 0,
 	NETMASK,
 	GATEWAY,
 	DNS
-};
+पूर्ण;
 
-static int in_hand_shake;
+अटल पूर्णांक in_hand_shake;
 
-static char *os_name = "";
-static char *os_major = "";
-static char *os_minor = "";
-static char *processor_arch;
-static char *os_build;
-static char *os_version;
-static char *lic_version = "Unknown version";
-static char full_domain_name[HV_KVP_EXCHANGE_MAX_VALUE_SIZE];
-static struct utsname uts_buf;
+अटल अक्षर *os_name = "";
+अटल अक्षर *os_major = "";
+अटल अक्षर *os_minor = "";
+अटल अक्षर *processor_arch;
+अटल अक्षर *os_build;
+अटल अक्षर *os_version;
+अटल अक्षर *lic_version = "Unknown version";
+अटल अक्षर full_करोमुख्य_name[HV_KVP_EXCHANGE_MAX_VALUE_SIZE];
+अटल काष्ठा utsname uts_buf;
 
 /*
- * The location of the interface configuration file.
+ * The location of the पूर्णांकerface configuration file.
  */
 
-#define KVP_CONFIG_LOC	"/var/lib/hyperv"
+#घोषणा KVP_CONFIG_LOC	"/var/lib/hyperv"
 
-#ifndef KVP_SCRIPTS_PATH
-#define KVP_SCRIPTS_PATH "/usr/libexec/hypervkvpd/"
-#endif
+#अगर_अघोषित KVP_SCRIPTS_PATH
+#घोषणा KVP_SCRIPTS_PATH "/usr/libexec/hypervkvpd/"
+#पूर्ण_अगर
 
-#define KVP_NET_DIR "/sys/class/net/"
+#घोषणा KVP_NET_सूची "/sys/class/net/"
 
-#define MAX_FILE_NAME 100
-#define ENTRIES_PER_BLOCK 50
+#घोषणा MAX_खाता_NAME 100
+#घोषणा ENTRIES_PER_BLOCK 50
 
-struct kvp_record {
-	char key[HV_KVP_EXCHANGE_MAX_KEY_SIZE];
-	char value[HV_KVP_EXCHANGE_MAX_VALUE_SIZE];
-};
+काष्ठा kvp_record अणु
+	अक्षर key[HV_KVP_EXCHANGE_MAX_KEY_SIZE];
+	अक्षर value[HV_KVP_EXCHANGE_MAX_VALUE_SIZE];
+पूर्ण;
 
-struct kvp_file_state {
-	int fd;
-	int num_blocks;
-	struct kvp_record *records;
-	int num_records;
-	char fname[MAX_FILE_NAME];
-};
+काष्ठा kvp_file_state अणु
+	पूर्णांक fd;
+	पूर्णांक num_blocks;
+	काष्ठा kvp_record *records;
+	पूर्णांक num_records;
+	अक्षर fname[MAX_खाता_NAME];
+पूर्ण;
 
-static struct kvp_file_state kvp_file_info[KVP_POOL_COUNT];
+अटल काष्ठा kvp_file_state kvp_file_info[KVP_POOL_COUNT];
 
-static void kvp_acquire_lock(int pool)
-{
-	struct flock fl = {F_WRLCK, SEEK_SET, 0, 0, 0};
+अटल व्योम kvp_acquire_lock(पूर्णांक pool)
+अणु
+	काष्ठा flock fl = अणुF_WRLCK, शुरू_से, 0, 0, 0पूर्ण;
 	fl.l_pid = getpid();
 
-	if (fcntl(kvp_file_info[pool].fd, F_SETLKW, &fl) == -1) {
+	अगर (fcntl(kvp_file_info[pool].fd, F_SETLKW, &fl) == -1) अणु
 		syslog(LOG_ERR, "Failed to acquire the lock pool: %d; error: %d %s", pool,
-				errno, strerror(errno));
-		exit(EXIT_FAILURE);
-	}
-}
+				त्रुटि_सं, म_त्रुटि(त्रुटि_सं));
+		निकास(निकास_त्रुटि);
+	पूर्ण
+पूर्ण
 
-static void kvp_release_lock(int pool)
-{
-	struct flock fl = {F_UNLCK, SEEK_SET, 0, 0, 0};
+अटल व्योम kvp_release_lock(पूर्णांक pool)
+अणु
+	काष्ठा flock fl = अणुF_UNLCK, शुरू_से, 0, 0, 0पूर्ण;
 	fl.l_pid = getpid();
 
-	if (fcntl(kvp_file_info[pool].fd, F_SETLK, &fl) == -1) {
+	अगर (fcntl(kvp_file_info[pool].fd, F_SETLK, &fl) == -1) अणु
 		syslog(LOG_ERR, "Failed to release the lock pool: %d; error: %d %s", pool,
-				errno, strerror(errno));
-		exit(EXIT_FAILURE);
-	}
-}
+				त्रुटि_सं, म_त्रुटि(त्रुटि_सं));
+		निकास(निकास_त्रुटि);
+	पूर्ण
+पूर्ण
 
-static void kvp_update_file(int pool)
-{
-	FILE *filep;
+अटल व्योम kvp_update_file(पूर्णांक pool)
+अणु
+	खाता *filep;
 
 	/*
-	 * We are going to write our in-memory registry out to
+	 * We are going to ग_लिखो our in-memory registry out to
 	 * disk; acquire the lock first.
 	 */
 	kvp_acquire_lock(pool);
 
-	filep = fopen(kvp_file_info[pool].fname, "we");
-	if (!filep) {
+	filep = ख_खोलो(kvp_file_info[pool].fname, "we");
+	अगर (!filep) अणु
 		syslog(LOG_ERR, "Failed to open file, pool: %d; error: %d %s", pool,
-				errno, strerror(errno));
+				त्रुटि_सं, म_त्रुटि(त्रुटि_सं));
 		kvp_release_lock(pool);
-		exit(EXIT_FAILURE);
-	}
+		निकास(निकास_त्रुटि);
+	पूर्ण
 
-	fwrite(kvp_file_info[pool].records, sizeof(struct kvp_record),
+	ख_डालो(kvp_file_info[pool].records, माप(काष्ठा kvp_record),
 				kvp_file_info[pool].num_records, filep);
 
-	if (ferror(filep) || fclose(filep)) {
+	अगर (ख_त्रुटि(filep) || ख_बंद(filep)) अणु
 		kvp_release_lock(pool);
 		syslog(LOG_ERR, "Failed to write file, pool: %d", pool);
-		exit(EXIT_FAILURE);
-	}
+		निकास(निकास_त्रुटि);
+	पूर्ण
 
 	kvp_release_lock(pool);
-}
+पूर्ण
 
-static void kvp_update_mem_state(int pool)
-{
-	FILE *filep;
-	size_t records_read = 0;
-	struct kvp_record *record = kvp_file_info[pool].records;
-	struct kvp_record *readp;
-	int num_blocks = kvp_file_info[pool].num_blocks;
-	int alloc_unit = sizeof(struct kvp_record) * ENTRIES_PER_BLOCK;
+अटल व्योम kvp_update_mem_state(पूर्णांक pool)
+अणु
+	खाता *filep;
+	माप_प्रकार records_पढ़ो = 0;
+	काष्ठा kvp_record *record = kvp_file_info[pool].records;
+	काष्ठा kvp_record *पढ़ोp;
+	पूर्णांक num_blocks = kvp_file_info[pool].num_blocks;
+	पूर्णांक alloc_unit = माप(काष्ठा kvp_record) * ENTRIES_PER_BLOCK;
 
 	kvp_acquire_lock(pool);
 
-	filep = fopen(kvp_file_info[pool].fname, "re");
-	if (!filep) {
+	filep = ख_खोलो(kvp_file_info[pool].fname, "re");
+	अगर (!filep) अणु
 		syslog(LOG_ERR, "Failed to open file, pool: %d; error: %d %s", pool,
-				errno, strerror(errno));
+				त्रुटि_सं, म_त्रुटि(त्रुटि_सं));
 		kvp_release_lock(pool);
-		exit(EXIT_FAILURE);
-	}
-	for (;;) {
-		readp = &record[records_read];
-		records_read += fread(readp, sizeof(struct kvp_record),
-				ENTRIES_PER_BLOCK * num_blocks - records_read,
+		निकास(निकास_त्रुटि);
+	पूर्ण
+	क्रम (;;) अणु
+		पढ़ोp = &record[records_पढ़ो];
+		records_पढ़ो += ख_पढ़ो(पढ़ोp, माप(काष्ठा kvp_record),
+				ENTRIES_PER_BLOCK * num_blocks - records_पढ़ो,
 				filep);
 
-		if (ferror(filep)) {
+		अगर (ख_त्रुटि(filep)) अणु
 			syslog(LOG_ERR,
 				"Failed to read file, pool: %d; error: %d %s",
-				 pool, errno, strerror(errno));
+				 pool, त्रुटि_सं, म_त्रुटि(त्रुटि_सं));
 			kvp_release_lock(pool);
-			exit(EXIT_FAILURE);
-		}
+			निकास(निकास_त्रुटि);
+		पूर्ण
 
-		if (!feof(filep)) {
+		अगर (!ख_पूर्ण(filep)) अणु
 			/*
-			 * We have more data to read.
+			 * We have more data to पढ़ो.
 			 */
 			num_blocks++;
-			record = realloc(record, alloc_unit * num_blocks);
+			record = पुनः_स्मृति(record, alloc_unit * num_blocks);
 
-			if (record == NULL) {
+			अगर (record == शून्य) अणु
 				syslog(LOG_ERR, "malloc failed");
 				kvp_release_lock(pool);
-				exit(EXIT_FAILURE);
-			}
-			continue;
-		}
-		break;
-	}
+				निकास(निकास_त्रुटि);
+			पूर्ण
+			जारी;
+		पूर्ण
+		अवरोध;
+	पूर्ण
 
 	kvp_file_info[pool].num_blocks = num_blocks;
 	kvp_file_info[pool].records = record;
-	kvp_file_info[pool].num_records = records_read;
+	kvp_file_info[pool].num_records = records_पढ़ो;
 
-	fclose(filep);
+	ख_बंद(filep);
 	kvp_release_lock(pool);
-}
+पूर्ण
 
-static int kvp_file_init(void)
-{
-	int  fd;
-	char *fname;
-	int i;
-	int alloc_unit = sizeof(struct kvp_record) * ENTRIES_PER_BLOCK;
+अटल पूर्णांक kvp_file_init(व्योम)
+अणु
+	पूर्णांक  fd;
+	अक्षर *fname;
+	पूर्णांक i;
+	पूर्णांक alloc_unit = माप(काष्ठा kvp_record) * ENTRIES_PER_BLOCK;
 
-	if (access(KVP_CONFIG_LOC, F_OK)) {
-		if (mkdir(KVP_CONFIG_LOC, 0755 /* rwxr-xr-x */)) {
+	अगर (access(KVP_CONFIG_LOC, F_OK)) अणु
+		अगर (सूची_गढ़ो(KVP_CONFIG_LOC, 0755 /* rwxr-xr-x */)) अणु
 			syslog(LOG_ERR, "Failed to create '%s'; error: %d %s", KVP_CONFIG_LOC,
-					errno, strerror(errno));
-			exit(EXIT_FAILURE);
-		}
-	}
+					त्रुटि_सं, म_त्रुटि(त्रुटि_सं));
+			निकास(निकास_त्रुटि);
+		पूर्ण
+	पूर्ण
 
-	for (i = 0; i < KVP_POOL_COUNT; i++) {
+	क्रम (i = 0; i < KVP_POOL_COUNT; i++) अणु
 		fname = kvp_file_info[i].fname;
-		sprintf(fname, "%s/.kvp_pool_%d", KVP_CONFIG_LOC, i);
-		fd = open(fname, O_RDWR | O_CREAT | O_CLOEXEC, 0644 /* rw-r--r-- */);
+		प्र_लिखो(fname, "%s/.kvp_pool_%d", KVP_CONFIG_LOC, i);
+		fd = खोलो(fname, O_RDWR | O_CREAT | O_CLOEXEC, 0644 /* rw-r--r-- */);
 
-		if (fd == -1)
-			return 1;
+		अगर (fd == -1)
+			वापस 1;
 
 		kvp_file_info[i].fd = fd;
 		kvp_file_info[i].num_blocks = 1;
-		kvp_file_info[i].records = malloc(alloc_unit);
-		if (kvp_file_info[i].records == NULL)
-			return 1;
+		kvp_file_info[i].records = दो_स्मृति(alloc_unit);
+		अगर (kvp_file_info[i].records == शून्य)
+			वापस 1;
 		kvp_file_info[i].num_records = 0;
 		kvp_update_mem_state(i);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int kvp_key_delete(int pool, const __u8 *key, int key_size)
-{
-	int i;
-	int j, k;
-	int num_records;
-	struct kvp_record *record;
+अटल पूर्णांक kvp_key_delete(पूर्णांक pool, स्थिर __u8 *key, पूर्णांक key_size)
+अणु
+	पूर्णांक i;
+	पूर्णांक j, k;
+	पूर्णांक num_records;
+	काष्ठा kvp_record *record;
 
 	/*
 	 * First update the in-memory state.
@@ -279,45 +280,45 @@ static int kvp_key_delete(int pool, const __u8 *key, int key_size)
 	num_records = kvp_file_info[pool].num_records;
 	record = kvp_file_info[pool].records;
 
-	for (i = 0; i < num_records; i++) {
-		if (memcmp(key, record[i].key, key_size))
-			continue;
+	क्रम (i = 0; i < num_records; i++) अणु
+		अगर (स_भेद(key, record[i].key, key_size))
+			जारी;
 		/*
-		 * Found a match; just move the remaining
+		 * Found a match; just move the reमुख्यing
 		 * entries up.
 		 */
-		if (i == (num_records - 1)) {
+		अगर (i == (num_records - 1)) अणु
 			kvp_file_info[pool].num_records--;
 			kvp_update_file(pool);
-			return 0;
-		}
+			वापस 0;
+		पूर्ण
 
 		j = i;
 		k = j + 1;
-		for (; k < num_records; k++) {
-			strcpy(record[j].key, record[k].key);
-			strcpy(record[j].value, record[k].value);
+		क्रम (; k < num_records; k++) अणु
+			म_नकल(record[j].key, record[k].key);
+			म_नकल(record[j].value, record[k].value);
 			j++;
-		}
+		पूर्ण
 
 		kvp_file_info[pool].num_records--;
 		kvp_update_file(pool);
-		return 0;
-	}
-	return 1;
-}
+		वापस 0;
+	पूर्ण
+	वापस 1;
+पूर्ण
 
-static int kvp_key_add_or_modify(int pool, const __u8 *key, int key_size,
-				 const __u8 *value, int value_size)
-{
-	int i;
-	int num_records;
-	struct kvp_record *record;
-	int num_blocks;
+अटल पूर्णांक kvp_key_add_or_modअगरy(पूर्णांक pool, स्थिर __u8 *key, पूर्णांक key_size,
+				 स्थिर __u8 *value, पूर्णांक value_size)
+अणु
+	पूर्णांक i;
+	पूर्णांक num_records;
+	काष्ठा kvp_record *record;
+	पूर्णांक num_blocks;
 
-	if ((key_size > HV_KVP_EXCHANGE_MAX_KEY_SIZE) ||
+	अगर ((key_size > HV_KVP_EXCHANGE_MAX_KEY_SIZE) ||
 		(value_size > HV_KVP_EXCHANGE_MAX_VALUE_SIZE))
-		return 1;
+		वापस 1;
 
 	/*
 	 * First update the in-memory state.
@@ -328,49 +329,49 @@ static int kvp_key_add_or_modify(int pool, const __u8 *key, int key_size,
 	record = kvp_file_info[pool].records;
 	num_blocks = kvp_file_info[pool].num_blocks;
 
-	for (i = 0; i < num_records; i++) {
-		if (memcmp(key, record[i].key, key_size))
-			continue;
+	क्रम (i = 0; i < num_records; i++) अणु
+		अगर (स_भेद(key, record[i].key, key_size))
+			जारी;
 		/*
 		 * Found a match; just update the value -
-		 * this is the modify case.
+		 * this is the modअगरy हाल.
 		 */
-		memcpy(record[i].value, value, value_size);
+		स_नकल(record[i].value, value, value_size);
 		kvp_update_file(pool);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	/*
 	 * Need to add a new entry;
 	 */
-	if (num_records == (ENTRIES_PER_BLOCK * num_blocks)) {
-		/* Need to allocate a larger array for reg entries. */
-		record = realloc(record, sizeof(struct kvp_record) *
+	अगर (num_records == (ENTRIES_PER_BLOCK * num_blocks)) अणु
+		/* Need to allocate a larger array क्रम reg entries. */
+		record = पुनः_स्मृति(record, माप(काष्ठा kvp_record) *
 			 ENTRIES_PER_BLOCK * (num_blocks + 1));
 
-		if (record == NULL)
-			return 1;
+		अगर (record == शून्य)
+			वापस 1;
 		kvp_file_info[pool].num_blocks++;
 
-	}
-	memcpy(record[i].value, value, value_size);
-	memcpy(record[i].key, key, key_size);
+	पूर्ण
+	स_नकल(record[i].value, value, value_size);
+	स_नकल(record[i].key, key, key_size);
 	kvp_file_info[pool].records = record;
 	kvp_file_info[pool].num_records++;
 	kvp_update_file(pool);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int kvp_get_value(int pool, const __u8 *key, int key_size, __u8 *value,
-			int value_size)
-{
-	int i;
-	int num_records;
-	struct kvp_record *record;
+अटल पूर्णांक kvp_get_value(पूर्णांक pool, स्थिर __u8 *key, पूर्णांक key_size, __u8 *value,
+			पूर्णांक value_size)
+अणु
+	पूर्णांक i;
+	पूर्णांक num_records;
+	काष्ठा kvp_record *record;
 
-	if ((key_size > HV_KVP_EXCHANGE_MAX_KEY_SIZE) ||
+	अगर ((key_size > HV_KVP_EXCHANGE_MAX_KEY_SIZE) ||
 		(value_size > HV_KVP_EXCHANGE_MAX_VALUE_SIZE))
-		return 1;
+		वापस 1;
 
 	/*
 	 * First update the in-memory state.
@@ -380,23 +381,23 @@ static int kvp_get_value(int pool, const __u8 *key, int key_size, __u8 *value,
 	num_records = kvp_file_info[pool].num_records;
 	record = kvp_file_info[pool].records;
 
-	for (i = 0; i < num_records; i++) {
-		if (memcmp(key, record[i].key, key_size))
-			continue;
+	क्रम (i = 0; i < num_records; i++) अणु
+		अगर (स_भेद(key, record[i].key, key_size))
+			जारी;
 		/*
 		 * Found a match; just copy the value out.
 		 */
-		memcpy(value, record[i].value, value_size);
-		return 0;
-	}
+		स_नकल(value, record[i].value, value_size);
+		वापस 0;
+	पूर्ण
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-static int kvp_pool_enumerate(int pool, int index, __u8 *key, int key_size,
-				__u8 *value, int value_size)
-{
-	struct kvp_record *record;
+अटल पूर्णांक kvp_pool_क्रमागतerate(पूर्णांक pool, पूर्णांक index, __u8 *key, पूर्णांक key_size,
+				__u8 *value, पूर्णांक value_size)
+अणु
+	काष्ठा kvp_record *record;
 
 	/*
 	 * First update our in-memory database.
@@ -404,20 +405,20 @@ static int kvp_pool_enumerate(int pool, int index, __u8 *key, int key_size,
 	kvp_update_mem_state(pool);
 	record = kvp_file_info[pool].records;
 
-	if (index >= kvp_file_info[pool].num_records) {
-		return 1;
-	}
+	अगर (index >= kvp_file_info[pool].num_records) अणु
+		वापस 1;
+	पूर्ण
 
-	memcpy(key, record[index].key, key_size);
-	memcpy(value, record[index].value, value_size);
-	return 0;
-}
+	स_नकल(key, record[index].key, key_size);
+	स_नकल(value, record[index].value, value_size);
+	वापस 0;
+पूर्ण
 
 
-void kvp_get_os_info(void)
-{
-	FILE	*file;
-	char	*p, buf[512];
+व्योम kvp_get_os_info(व्योम)
+अणु
+	खाता	*file;
+	अक्षर	*p, buf[512];
 
 	uname(&uts_buf);
 	os_version = uts_buf.release;
@@ -427,286 +428,286 @@ void kvp_get_os_info(void)
 	processor_arch = uts_buf.machine;
 
 	/*
-	 * The current windows host (win7) expects the build
-	 * string to be of the form: x.y.z
-	 * Strip additional information we may have.
+	 * The current winकरोws host (win7) expects the build
+	 * string to be of the क्रमm: x.y.z
+	 * Strip additional inक्रमmation we may have.
 	 */
-	p = strchr(os_version, '-');
-	if (p)
+	p = म_अक्षर(os_version, '-');
+	अगर (p)
 		*p = '\0';
 
 	/*
-	 * Parse the /etc/os-release file if present:
-	 * https://www.freedesktop.org/software/systemd/man/os-release.html
+	 * Parse the /etc/os-release file अगर present:
+	 * https://www.मुक्तdesktop.org/software/प्रणालीd/man/os-release.hपंचांगl
 	 */
-	file = fopen("/etc/os-release", "r");
-	if (file != NULL) {
-		while (fgets(buf, sizeof(buf), file)) {
-			char *value, *q;
+	file = ख_खोलो("/etc/os-release", "r");
+	अगर (file != शून्य) अणु
+		जबतक (ख_माला_लो(buf, माप(buf), file)) अणु
+			अक्षर *value, *q;
 
 			/* Ignore comments */
-			if (buf[0] == '#')
-				continue;
+			अगर (buf[0] == '#')
+				जारी;
 
-			/* Split into name=value */
-			p = strchr(buf, '=');
-			if (!p)
-				continue;
+			/* Split पूर्णांकo name=value */
+			p = म_अक्षर(buf, '=');
+			अगर (!p)
+				जारी;
 			*p++ = 0;
 
 			/* Remove quotes and newline; un-escape */
 			value = p;
 			q = p;
-			while (*p) {
-				if (*p == '\\') {
+			जबतक (*p) अणु
+				अगर (*p == '\\') अणु
 					++p;
-					if (!*p)
-						break;
+					अगर (!*p)
+						अवरोध;
 					*q++ = *p++;
-				} else if (*p == '\'' || *p == '"' ||
-					   *p == '\n') {
+				पूर्ण अन्यथा अगर (*p == '\'' || *p == '"' ||
+					   *p == '\n') अणु
 					++p;
-				} else {
+				पूर्ण अन्यथा अणु
 					*q++ = *p++;
-				}
-			}
+				पूर्ण
+			पूर्ण
 			*q = 0;
 
-			if (!strcmp(buf, "NAME")) {
+			अगर (!म_भेद(buf, "NAME")) अणु
 				p = strdup(value);
-				if (!p)
-					break;
+				अगर (!p)
+					अवरोध;
 				os_name = p;
-			} else if (!strcmp(buf, "VERSION_ID")) {
+			पूर्ण अन्यथा अगर (!म_भेद(buf, "VERSION_ID")) अणु
 				p = strdup(value);
-				if (!p)
-					break;
+				अगर (!p)
+					अवरोध;
 				os_major = p;
-			}
-		}
-		fclose(file);
-		return;
-	}
+			पूर्ण
+		पूर्ण
+		ख_बंद(file);
+		वापस;
+	पूर्ण
 
-	/* Fallback for older RH/SUSE releases */
-	file = fopen("/etc/SuSE-release", "r");
-	if (file != NULL)
-		goto kvp_osinfo_found;
-	file  = fopen("/etc/redhat-release", "r");
-	if (file != NULL)
-		goto kvp_osinfo_found;
+	/* Fallback क्रम older RH/SUSE releases */
+	file = ख_खोलो("/etc/SuSE-release", "r");
+	अगर (file != शून्य)
+		जाओ kvp_osinfo_found;
+	file  = ख_खोलो("/etc/redhat-release", "r");
+	अगर (file != शून्य)
+		जाओ kvp_osinfo_found;
 
 	/*
-	 * We don't have information about the os.
+	 * We करोn't have inक्रमmation about the os.
 	 */
-	return;
+	वापस;
 
 kvp_osinfo_found:
 	/* up to three lines */
-	p = fgets(buf, sizeof(buf), file);
-	if (p) {
-		p = strchr(buf, '\n');
-		if (p)
+	p = ख_माला_लो(buf, माप(buf), file);
+	अगर (p) अणु
+		p = म_अक्षर(buf, '\n');
+		अगर (p)
 			*p = '\0';
 		p = strdup(buf);
-		if (!p)
-			goto done;
+		अगर (!p)
+			जाओ करोne;
 		os_name = p;
 
 		/* second line */
-		p = fgets(buf, sizeof(buf), file);
-		if (p) {
-			p = strchr(buf, '\n');
-			if (p)
+		p = ख_माला_लो(buf, माप(buf), file);
+		अगर (p) अणु
+			p = म_अक्षर(buf, '\n');
+			अगर (p)
 				*p = '\0';
 			p = strdup(buf);
-			if (!p)
-				goto done;
+			अगर (!p)
+				जाओ करोne;
 			os_major = p;
 
 			/* third line */
-			p = fgets(buf, sizeof(buf), file);
-			if (p)  {
-				p = strchr(buf, '\n');
-				if (p)
+			p = ख_माला_लो(buf, माप(buf), file);
+			अगर (p)  अणु
+				p = म_अक्षर(buf, '\n');
+				अगर (p)
 					*p = '\0';
 				p = strdup(buf);
-				if (p)
+				अगर (p)
 					os_minor = p;
-			}
-		}
-	}
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-done:
-	fclose(file);
-	return;
-}
+करोne:
+	ख_बंद(file);
+	वापस;
+पूर्ण
 
 
 
 /*
- * Retrieve an interface name corresponding to the specified guid.
- * If there is a match, the function returns a pointer
- * to the interface name and if not, a NULL is returned.
- * If a match is found, the caller is responsible for
- * freeing the memory.
+ * Retrieve an पूर्णांकerface name corresponding to the specअगरied guid.
+ * If there is a match, the function वापसs a poपूर्णांकer
+ * to the पूर्णांकerface name and अगर not, a शून्य is वापसed.
+ * If a match is found, the caller is responsible क्रम
+ * मुक्तing the memory.
  */
 
-static char *kvp_get_if_name(char *guid)
-{
-	DIR *dir;
-	struct dirent *entry;
-	FILE    *file;
-	char    *p, *x;
-	char    *if_name = NULL;
-	char    buf[256];
-	char dev_id[PATH_MAX];
+अटल अक्षर *kvp_get_अगर_name(अक्षर *guid)
+अणु
+	सूची *dir;
+	काष्ठा dirent *entry;
+	खाता    *file;
+	अक्षर    *p, *x;
+	अक्षर    *अगर_name = शून्य;
+	अक्षर    buf[256];
+	अक्षर dev_id[PATH_MAX];
 
-	dir = opendir(KVP_NET_DIR);
-	if (dir == NULL)
-		return NULL;
+	dir = सूची_खोलो(KVP_NET_सूची);
+	अगर (dir == शून्य)
+		वापस शून्य;
 
-	while ((entry = readdir(dir)) != NULL) {
+	जबतक ((entry = सूची_पढ़ो(dir)) != शून्य) अणु
 		/*
-		 * Set the state for the next pass.
+		 * Set the state क्रम the next pass.
 		 */
-		snprintf(dev_id, sizeof(dev_id), "%s%s/device/device_id",
-			 KVP_NET_DIR, entry->d_name);
+		snम_लिखो(dev_id, माप(dev_id), "%s%s/device/device_id",
+			 KVP_NET_सूची, entry->d_name);
 
-		file = fopen(dev_id, "r");
-		if (file == NULL)
-			continue;
+		file = ख_खोलो(dev_id, "r");
+		अगर (file == शून्य)
+			जारी;
 
-		p = fgets(buf, sizeof(buf), file);
-		if (p) {
-			x = strchr(p, '\n');
-			if (x)
+		p = ख_माला_लो(buf, माप(buf), file);
+		अगर (p) अणु
+			x = म_अक्षर(p, '\n');
+			अगर (x)
 				*x = '\0';
 
-			if (!strcmp(p, guid)) {
+			अगर (!म_भेद(p, guid)) अणु
 				/*
-				 * Found the guid match; return the interface
-				 * name. The caller will free the memory.
+				 * Found the guid match; वापस the पूर्णांकerface
+				 * name. The caller will मुक्त the memory.
 				 */
-				if_name = strdup(entry->d_name);
-				fclose(file);
-				break;
-			}
-		}
-		fclose(file);
-	}
+				अगर_name = strdup(entry->d_name);
+				ख_बंद(file);
+				अवरोध;
+			पूर्ण
+		पूर्ण
+		ख_बंद(file);
+	पूर्ण
 
-	closedir(dir);
-	return if_name;
-}
+	बंद_सूची(dir);
+	वापस अगर_name;
+पूर्ण
 
 /*
- * Retrieve the MAC address given the interface name.
+ * Retrieve the MAC address given the पूर्णांकerface name.
  */
 
-static char *kvp_if_name_to_mac(char *if_name)
-{
-	FILE    *file;
-	char    *p, *x;
-	char    buf[256];
-	char addr_file[PATH_MAX];
-	unsigned int i;
-	char *mac_addr = NULL;
+अटल अक्षर *kvp_अगर_name_to_mac(अक्षर *अगर_name)
+अणु
+	खाता    *file;
+	अक्षर    *p, *x;
+	अक्षर    buf[256];
+	अक्षर addr_file[PATH_MAX];
+	अचिन्हित पूर्णांक i;
+	अक्षर *mac_addr = शून्य;
 
-	snprintf(addr_file, sizeof(addr_file), "%s%s%s", KVP_NET_DIR,
-		 if_name, "/address");
+	snम_लिखो(addr_file, माप(addr_file), "%s%s%s", KVP_NET_सूची,
+		 अगर_name, "/address");
 
-	file = fopen(addr_file, "r");
-	if (file == NULL)
-		return NULL;
+	file = ख_खोलो(addr_file, "r");
+	अगर (file == शून्य)
+		वापस शून्य;
 
-	p = fgets(buf, sizeof(buf), file);
-	if (p) {
-		x = strchr(p, '\n');
-		if (x)
+	p = ख_माला_लो(buf, माप(buf), file);
+	अगर (p) अणु
+		x = म_अक्षर(p, '\n');
+		अगर (x)
 			*x = '\0';
-		for (i = 0; i < strlen(p); i++)
-			p[i] = toupper(p[i]);
+		क्रम (i = 0; i < म_माप(p); i++)
+			p[i] = बड़े(p[i]);
 		mac_addr = strdup(p);
-	}
+	पूर्ण
 
-	fclose(file);
-	return mac_addr;
-}
+	ख_बंद(file);
+	वापस mac_addr;
+पूर्ण
 
-static void kvp_process_ipconfig_file(char *cmd,
-					char *config_buf, unsigned int len,
-					int element_size, int offset)
-{
-	char buf[256];
-	char *p;
-	char *x;
-	FILE *file;
+अटल व्योम kvp_process_ipconfig_file(अक्षर *cmd,
+					अक्षर *config_buf, अचिन्हित पूर्णांक len,
+					पूर्णांक element_size, पूर्णांक offset)
+अणु
+	अक्षर buf[256];
+	अक्षर *p;
+	अक्षर *x;
+	खाता *file;
 
 	/*
 	 * First execute the command.
 	 */
-	file = popen(cmd, "r");
-	if (file == NULL)
-		return;
+	file = pखोलो(cmd, "r");
+	अगर (file == शून्य)
+		वापस;
 
-	if (offset == 0)
-		memset(config_buf, 0, len);
-	while ((p = fgets(buf, sizeof(buf), file)) != NULL) {
-		if (len < strlen(config_buf) + element_size + 1)
-			break;
+	अगर (offset == 0)
+		स_रखो(config_buf, 0, len);
+	जबतक ((p = ख_माला_लो(buf, माप(buf), file)) != शून्य) अणु
+		अगर (len < म_माप(config_buf) + element_size + 1)
+			अवरोध;
 
-		x = strchr(p, '\n');
-		if (x)
+		x = म_अक्षर(p, '\n');
+		अगर (x)
 			*x = '\0';
 
-		strcat(config_buf, p);
-		strcat(config_buf, ";");
-	}
-	pclose(file);
-}
+		म_जोड़ो(config_buf, p);
+		म_जोड़ो(config_buf, ";");
+	पूर्ण
+	pबंद(file);
+पूर्ण
 
-static void kvp_get_ipconfig_info(char *if_name,
-				 struct hv_kvp_ipaddr_value *buffer)
-{
-	char cmd[512];
-	char dhcp_info[128];
-	char *p;
-	FILE *file;
+अटल व्योम kvp_get_ipconfig_info(अक्षर *अगर_name,
+				 काष्ठा hv_kvp_ipaddr_value *buffer)
+अणु
+	अक्षर cmd[512];
+	अक्षर dhcp_info[128];
+	अक्षर *p;
+	खाता *file;
 
 	/*
-	 * Get the address of default gateway (ipv4).
+	 * Get the address of शेष gateway (ipv4).
 	 */
-	sprintf(cmd, "%s %s", "ip route show dev", if_name);
-	strcat(cmd, " | awk '/default/ {print $3 }'");
+	प्र_लिखो(cmd, "%s %s", "ip route show dev", अगर_name);
+	म_जोड़ो(cmd, " | awk '/default/ {print $3 }'");
 
 	/*
 	 * Execute the command to gather gateway info.
 	 */
-	kvp_process_ipconfig_file(cmd, (char *)buffer->gate_way,
+	kvp_process_ipconfig_file(cmd, (अक्षर *)buffer->gate_way,
 				(MAX_GATEWAY_SIZE * 2), INET_ADDRSTRLEN, 0);
 
 	/*
-	 * Get the address of default gateway (ipv6).
+	 * Get the address of शेष gateway (ipv6).
 	 */
-	sprintf(cmd, "%s %s", "ip -f inet6  route show dev", if_name);
-	strcat(cmd, " | awk '/default/ {print $3 }'");
+	प्र_लिखो(cmd, "%s %s", "ip -f inet6  route show dev", अगर_name);
+	म_जोड़ो(cmd, " | awk '/default/ {print $3 }'");
 
 	/*
 	 * Execute the command to gather gateway info (ipv6).
 	 */
-	kvp_process_ipconfig_file(cmd, (char *)buffer->gate_way,
+	kvp_process_ipconfig_file(cmd, (अक्षर *)buffer->gate_way,
 				(MAX_GATEWAY_SIZE * 2), INET6_ADDRSTRLEN, 1);
 
 
 	/*
 	 * Gather the DNS state.
-	 * Since there is no standard way to get this information
-	 * across various distributions of interest; we just invoke
-	 * an external script that needs to be ported across distros
-	 * of interest.
+	 * Since there is no standard way to get this inक्रमmation
+	 * across various distributions of पूर्णांकerest; we just invoke
+	 * an बाह्यal script that needs to be ported across distros
+	 * of पूर्णांकerest.
 	 *
-	 * Following is the expected format of the information from the script:
+	 * Following is the expected क्रमmat of the inक्रमmation from the script:
 	 *
 	 * ipaddr1 (nameserver1)
 	 * ipaddr2 (nameserver2)
@@ -714,502 +715,502 @@ static void kvp_get_ipconfig_info(char *if_name,
 	 * .
 	 */
 
-	sprintf(cmd, KVP_SCRIPTS_PATH "%s",  "hv_get_dns_info");
+	प्र_लिखो(cmd, KVP_SCRIPTS_PATH "%s",  "hv_get_dns_info");
 
 	/*
 	 * Execute the command to gather DNS info.
 	 */
-	kvp_process_ipconfig_file(cmd, (char *)buffer->dns_addr,
+	kvp_process_ipconfig_file(cmd, (अक्षर *)buffer->dns_addr,
 				(MAX_IP_ADDR_SIZE * 2), INET_ADDRSTRLEN, 0);
 
 	/*
 	 * Gather the DHCP state.
-	 * We will gather this state by invoking an external script.
-	 * The parameter to the script is the interface name.
+	 * We will gather this state by invoking an बाह्यal script.
+	 * The parameter to the script is the पूर्णांकerface name.
 	 * Here is the expected output:
 	 *
 	 * Enabled: DHCP enabled.
 	 */
 
-	sprintf(cmd, KVP_SCRIPTS_PATH "%s %s", "hv_get_dhcp_info", if_name);
+	प्र_लिखो(cmd, KVP_SCRIPTS_PATH "%s %s", "hv_get_dhcp_info", अगर_name);
 
-	file = popen(cmd, "r");
-	if (file == NULL)
-		return;
+	file = pखोलो(cmd, "r");
+	अगर (file == शून्य)
+		वापस;
 
-	p = fgets(dhcp_info, sizeof(dhcp_info), file);
-	if (p == NULL) {
-		pclose(file);
-		return;
-	}
+	p = ख_माला_लो(dhcp_info, माप(dhcp_info), file);
+	अगर (p == शून्य) अणु
+		pबंद(file);
+		वापस;
+	पूर्ण
 
-	if (!strncmp(p, "Enabled", 7))
+	अगर (!म_भेदन(p, "Enabled", 7))
 		buffer->dhcp_enabled = 1;
-	else
+	अन्यथा
 		buffer->dhcp_enabled = 0;
 
-	pclose(file);
-}
+	pबंद(file);
+पूर्ण
 
 
-static unsigned int hweight32(unsigned int *w)
-{
-	unsigned int res = *w - ((*w >> 1) & 0x55555555);
+अटल अचिन्हित पूर्णांक hweight32(अचिन्हित पूर्णांक *w)
+अणु
+	अचिन्हित पूर्णांक res = *w - ((*w >> 1) & 0x55555555);
 	res = (res & 0x33333333) + ((res >> 2) & 0x33333333);
 	res = (res + (res >> 4)) & 0x0F0F0F0F;
 	res = res + (res >> 8);
-	return (res + (res >> 16)) & 0x000000FF;
-}
+	वापस (res + (res >> 16)) & 0x000000FF;
+पूर्ण
 
-static int kvp_process_ip_address(void *addrp,
-				int family, char *buffer,
-				int length,  int *offset)
-{
-	struct sockaddr_in *addr;
-	struct sockaddr_in6 *addr6;
-	int addr_length;
-	char tmp[50];
-	const char *str;
+अटल पूर्णांक kvp_process_ip_address(व्योम *addrp,
+				पूर्णांक family, अक्षर *buffer,
+				पूर्णांक length,  पूर्णांक *offset)
+अणु
+	काष्ठा sockaddr_in *addr;
+	काष्ठा sockaddr_in6 *addr6;
+	पूर्णांक addr_length;
+	अक्षर पंचांगp[50];
+	स्थिर अक्षर *str;
 
-	if (family == AF_INET) {
-		addr = (struct sockaddr_in *)addrp;
-		str = inet_ntop(family, &addr->sin_addr, tmp, 50);
+	अगर (family == AF_INET) अणु
+		addr = (काष्ठा sockaddr_in *)addrp;
+		str = inet_ntop(family, &addr->sin_addr, पंचांगp, 50);
 		addr_length = INET_ADDRSTRLEN;
-	} else {
-		addr6 = (struct sockaddr_in6 *)addrp;
-		str = inet_ntop(family, &addr6->sin6_addr.s6_addr, tmp, 50);
+	पूर्ण अन्यथा अणु
+		addr6 = (काष्ठा sockaddr_in6 *)addrp;
+		str = inet_ntop(family, &addr6->sin6_addr.s6_addr, पंचांगp, 50);
 		addr_length = INET6_ADDRSTRLEN;
-	}
+	पूर्ण
 
-	if ((length - *offset) < addr_length + 2)
-		return HV_E_FAIL;
-	if (str == NULL) {
-		strcpy(buffer, "inet_ntop failed\n");
-		return HV_E_FAIL;
-	}
-	if (*offset == 0)
-		strcpy(buffer, tmp);
-	else {
-		strcat(buffer, ";");
-		strcat(buffer, tmp);
-	}
+	अगर ((length - *offset) < addr_length + 2)
+		वापस HV_E_FAIL;
+	अगर (str == शून्य) अणु
+		म_नकल(buffer, "inet_ntop failed\n");
+		वापस HV_E_FAIL;
+	पूर्ण
+	अगर (*offset == 0)
+		म_नकल(buffer, पंचांगp);
+	अन्यथा अणु
+		म_जोड़ो(buffer, ";");
+		म_जोड़ो(buffer, पंचांगp);
+	पूर्ण
 
-	*offset += strlen(str) + 1;
+	*offset += म_माप(str) + 1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-kvp_get_ip_info(int family, char *if_name, int op,
-		 void  *out_buffer, unsigned int length)
-{
-	struct ifaddrs *ifap;
-	struct ifaddrs *curp;
-	int offset = 0;
-	int sn_offset = 0;
-	int error = 0;
-	char *buffer;
-	struct hv_kvp_ipaddr_value *ip_buffer = NULL;
-	char cidr_mask[5]; /* /xyz */
-	int weight;
-	int i;
-	unsigned int *w;
-	char *sn_str;
-	struct sockaddr_in6 *addr6;
+अटल पूर्णांक
+kvp_get_ip_info(पूर्णांक family, अक्षर *अगर_name, पूर्णांक op,
+		 व्योम  *out_buffer, अचिन्हित पूर्णांक length)
+अणु
+	काष्ठा अगरaddrs *अगरap;
+	काष्ठा अगरaddrs *curp;
+	पूर्णांक offset = 0;
+	पूर्णांक sn_offset = 0;
+	पूर्णांक error = 0;
+	अक्षर *buffer;
+	काष्ठा hv_kvp_ipaddr_value *ip_buffer = शून्य;
+	अक्षर cidr_mask[5]; /* /xyz */
+	पूर्णांक weight;
+	पूर्णांक i;
+	अचिन्हित पूर्णांक *w;
+	अक्षर *sn_str;
+	काष्ठा sockaddr_in6 *addr6;
 
-	if (op == KVP_OP_ENUMERATE) {
+	अगर (op == KVP_OP_ENUMERATE) अणु
 		buffer = out_buffer;
-	} else {
+	पूर्ण अन्यथा अणु
 		ip_buffer = out_buffer;
-		buffer = (char *)ip_buffer->ip_addr;
+		buffer = (अक्षर *)ip_buffer->ip_addr;
 		ip_buffer->addr_family = 0;
-	}
+	पूर्ण
 	/*
-	 * On entry into this function, the buffer is capable of holding the
+	 * On entry पूर्णांकo this function, the buffer is capable of holding the
 	 * maximum key value.
 	 */
 
-	if (getifaddrs(&ifap)) {
-		strcpy(buffer, "getifaddrs failed\n");
-		return HV_E_FAIL;
-	}
+	अगर (getअगरaddrs(&अगरap)) अणु
+		म_नकल(buffer, "getifaddrs failed\n");
+		वापस HV_E_FAIL;
+	पूर्ण
 
-	curp = ifap;
-	while (curp != NULL) {
-		if (curp->ifa_addr == NULL) {
-			curp = curp->ifa_next;
-			continue;
-		}
+	curp = अगरap;
+	जबतक (curp != शून्य) अणु
+		अगर (curp->अगरa_addr == शून्य) अणु
+			curp = curp->अगरa_next;
+			जारी;
+		पूर्ण
 
-		if ((if_name != NULL) &&
-			(strncmp(curp->ifa_name, if_name, strlen(if_name)))) {
+		अगर ((अगर_name != शून्य) &&
+			(म_भेदन(curp->अगरa_name, अगर_name, म_माप(अगर_name)))) अणु
 			/*
-			 * We want info about a specific interface;
-			 * just continue.
+			 * We want info about a specअगरic पूर्णांकerface;
+			 * just जारी.
 			 */
-			curp = curp->ifa_next;
-			continue;
-		}
+			curp = curp->अगरa_next;
+			जारी;
+		पूर्ण
 
 		/*
 		 * We only support two address families: AF_INET and AF_INET6.
-		 * If a family value of 0 is specified, we collect both
-		 * supported address families; if not we gather info on
-		 * the specified address family.
+		 * If a family value of 0 is specअगरied, we collect both
+		 * supported address families; अगर not we gather info on
+		 * the specअगरied address family.
 		 */
-		if ((((family != 0) &&
-			 (curp->ifa_addr->sa_family != family))) ||
-			 (curp->ifa_flags & IFF_LOOPBACK)) {
-			curp = curp->ifa_next;
-			continue;
-		}
-		if ((curp->ifa_addr->sa_family != AF_INET) &&
-			(curp->ifa_addr->sa_family != AF_INET6)) {
-			curp = curp->ifa_next;
-			continue;
-		}
+		अगर ((((family != 0) &&
+			 (curp->अगरa_addr->sa_family != family))) ||
+			 (curp->अगरa_flags & IFF_LOOPBACK)) अणु
+			curp = curp->अगरa_next;
+			जारी;
+		पूर्ण
+		अगर ((curp->अगरa_addr->sa_family != AF_INET) &&
+			(curp->अगरa_addr->sa_family != AF_INET6)) अणु
+			curp = curp->अगरa_next;
+			जारी;
+		पूर्ण
 
-		if (op == KVP_OP_GET_IP_INFO) {
+		अगर (op == KVP_OP_GET_IP_INFO) अणु
 			/*
 			 * Gather info other than the IP address.
 			 * IP address info will be gathered later.
 			 */
-			if (curp->ifa_addr->sa_family == AF_INET) {
+			अगर (curp->अगरa_addr->sa_family == AF_INET) अणु
 				ip_buffer->addr_family |= ADDR_FAMILY_IPV4;
 				/*
 				 * Get subnet info.
 				 */
 				error = kvp_process_ip_address(
-							     curp->ifa_netmask,
+							     curp->अगरa_neपंचांगask,
 							     AF_INET,
-							     (char *)
+							     (अक्षर *)
 							     ip_buffer->sub_net,
 							     length,
 							     &sn_offset);
-				if (error)
-					goto gather_ipaddr;
-			} else {
+				अगर (error)
+					जाओ gather_ipaddr;
+			पूर्ण अन्यथा अणु
 				ip_buffer->addr_family |= ADDR_FAMILY_IPV6;
 
 				/*
-				 * Get subnet info in CIDR format.
+				 * Get subnet info in CIDR क्रमmat.
 				 */
 				weight = 0;
-				sn_str = (char *)ip_buffer->sub_net;
-				addr6 = (struct sockaddr_in6 *)
-					curp->ifa_netmask;
+				sn_str = (अक्षर *)ip_buffer->sub_net;
+				addr6 = (काष्ठा sockaddr_in6 *)
+					curp->अगरa_neपंचांगask;
 				w = addr6->sin6_addr.s6_addr32;
 
-				for (i = 0; i < 4; i++)
+				क्रम (i = 0; i < 4; i++)
 					weight += hweight32(&w[i]);
 
-				sprintf(cidr_mask, "/%d", weight);
-				if (length < sn_offset + strlen(cidr_mask) + 1)
-					goto gather_ipaddr;
+				प्र_लिखो(cidr_mask, "/%d", weight);
+				अगर (length < sn_offset + म_माप(cidr_mask) + 1)
+					जाओ gather_ipaddr;
 
-				if (sn_offset == 0)
-					strcpy(sn_str, cidr_mask);
-				else {
-					strcat((char *)ip_buffer->sub_net, ";");
-					strcat(sn_str, cidr_mask);
-				}
-				sn_offset += strlen(sn_str) + 1;
-			}
+				अगर (sn_offset == 0)
+					म_नकल(sn_str, cidr_mask);
+				अन्यथा अणु
+					म_जोड़ो((अक्षर *)ip_buffer->sub_net, ";");
+					म_जोड़ो(sn_str, cidr_mask);
+				पूर्ण
+				sn_offset += म_माप(sn_str) + 1;
+			पूर्ण
 
 			/*
 			 * Collect other ip related configuration info.
 			 */
 
-			kvp_get_ipconfig_info(if_name, ip_buffer);
-		}
+			kvp_get_ipconfig_info(अगर_name, ip_buffer);
+		पूर्ण
 
 gather_ipaddr:
-		error = kvp_process_ip_address(curp->ifa_addr,
-						curp->ifa_addr->sa_family,
+		error = kvp_process_ip_address(curp->अगरa_addr,
+						curp->अगरa_addr->sa_family,
 						buffer,
 						length, &offset);
-		if (error)
-			goto getaddr_done;
+		अगर (error)
+			जाओ getaddr_करोne;
 
-		curp = curp->ifa_next;
-	}
+		curp = curp->अगरa_next;
+	पूर्ण
 
-getaddr_done:
-	freeifaddrs(ifap);
-	return error;
-}
+getaddr_करोne:
+	मुक्तअगरaddrs(अगरap);
+	वापस error;
+पूर्ण
 
 /*
  * Retrieve the IP given the MAC address.
  */
-static int kvp_mac_to_ip(struct hv_kvp_ipaddr_value *kvp_ip_val)
-{
-	char *mac = (char *)kvp_ip_val->adapter_id;
-	DIR *dir;
-	struct dirent *entry;
-	FILE    *file;
-	char    *p, *x;
-	char    *if_name = NULL;
-	char    buf[256];
-	char dev_id[PATH_MAX];
-	unsigned int i;
-	int error = HV_E_FAIL;
+अटल पूर्णांक kvp_mac_to_ip(काष्ठा hv_kvp_ipaddr_value *kvp_ip_val)
+अणु
+	अक्षर *mac = (अक्षर *)kvp_ip_val->adapter_id;
+	सूची *dir;
+	काष्ठा dirent *entry;
+	खाता    *file;
+	अक्षर    *p, *x;
+	अक्षर    *अगर_name = शून्य;
+	अक्षर    buf[256];
+	अक्षर dev_id[PATH_MAX];
+	अचिन्हित पूर्णांक i;
+	पूर्णांक error = HV_E_FAIL;
 
-	dir = opendir(KVP_NET_DIR);
-	if (dir == NULL)
-		return HV_E_FAIL;
+	dir = सूची_खोलो(KVP_NET_सूची);
+	अगर (dir == शून्य)
+		वापस HV_E_FAIL;
 
-	while ((entry = readdir(dir)) != NULL) {
+	जबतक ((entry = सूची_पढ़ो(dir)) != शून्य) अणु
 		/*
-		 * Set the state for the next pass.
+		 * Set the state क्रम the next pass.
 		 */
-		snprintf(dev_id, sizeof(dev_id), "%s%s/address", KVP_NET_DIR,
+		snम_लिखो(dev_id, माप(dev_id), "%s%s/address", KVP_NET_सूची,
 			 entry->d_name);
 
-		file = fopen(dev_id, "r");
-		if (file == NULL)
-			continue;
+		file = ख_खोलो(dev_id, "r");
+		अगर (file == शून्य)
+			जारी;
 
-		p = fgets(buf, sizeof(buf), file);
-		fclose(file);
-		if (!p)
-			continue;
+		p = ख_माला_लो(buf, माप(buf), file);
+		ख_बंद(file);
+		अगर (!p)
+			जारी;
 
-		x = strchr(p, '\n');
-		if (x)
+		x = म_अक्षर(p, '\n');
+		अगर (x)
 			*x = '\0';
 
-		for (i = 0; i < strlen(p); i++)
-			p[i] = toupper(p[i]);
+		क्रम (i = 0; i < म_माप(p); i++)
+			p[i] = बड़े(p[i]);
 
-		if (strcmp(p, mac))
-			continue;
+		अगर (म_भेद(p, mac))
+			जारी;
 
 		/*
 		 * Found the MAC match.
 		 * A NIC (e.g. VF) matching the MAC, but without IP, is skipped.
 		 */
-		if_name = entry->d_name;
-		if (!if_name)
-			continue;
+		अगर_name = entry->d_name;
+		अगर (!अगर_name)
+			जारी;
 
-		error = kvp_get_ip_info(0, if_name, KVP_OP_GET_IP_INFO,
+		error = kvp_get_ip_info(0, अगर_name, KVP_OP_GET_IP_INFO,
 					kvp_ip_val, MAX_IP_ADDR_SIZE * 2);
 
-		if (!error && strlen((char *)kvp_ip_val->ip_addr))
-			break;
-	}
+		अगर (!error && म_माप((अक्षर *)kvp_ip_val->ip_addr))
+			अवरोध;
+	पूर्ण
 
-	closedir(dir);
-	return error;
-}
+	बंद_सूची(dir);
+	वापस error;
+पूर्ण
 
-static int expand_ipv6(char *addr, int type)
-{
-	int ret;
-	struct in6_addr v6_addr;
+अटल पूर्णांक expand_ipv6(अक्षर *addr, पूर्णांक type)
+अणु
+	पूर्णांक ret;
+	काष्ठा in6_addr v6_addr;
 
 	ret = inet_pton(AF_INET6, addr, &v6_addr);
 
-	if (ret != 1) {
-		if (type == NETMASK)
-			return 1;
-		return 0;
-	}
+	अगर (ret != 1) अणु
+		अगर (type == NETMASK)
+			वापस 1;
+		वापस 0;
+	पूर्ण
 
-	sprintf(addr, "%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:"
+	प्र_लिखो(addr, "%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:"
 		"%02x%02x:%02x%02x:%02x%02x",
-		(int)v6_addr.s6_addr[0], (int)v6_addr.s6_addr[1],
-		(int)v6_addr.s6_addr[2], (int)v6_addr.s6_addr[3],
-		(int)v6_addr.s6_addr[4], (int)v6_addr.s6_addr[5],
-		(int)v6_addr.s6_addr[6], (int)v6_addr.s6_addr[7],
-		(int)v6_addr.s6_addr[8], (int)v6_addr.s6_addr[9],
-		(int)v6_addr.s6_addr[10], (int)v6_addr.s6_addr[11],
-		(int)v6_addr.s6_addr[12], (int)v6_addr.s6_addr[13],
-		(int)v6_addr.s6_addr[14], (int)v6_addr.s6_addr[15]);
+		(पूर्णांक)v6_addr.s6_addr[0], (पूर्णांक)v6_addr.s6_addr[1],
+		(पूर्णांक)v6_addr.s6_addr[2], (पूर्णांक)v6_addr.s6_addr[3],
+		(पूर्णांक)v6_addr.s6_addr[4], (पूर्णांक)v6_addr.s6_addr[5],
+		(पूर्णांक)v6_addr.s6_addr[6], (पूर्णांक)v6_addr.s6_addr[7],
+		(पूर्णांक)v6_addr.s6_addr[8], (पूर्णांक)v6_addr.s6_addr[9],
+		(पूर्णांक)v6_addr.s6_addr[10], (पूर्णांक)v6_addr.s6_addr[11],
+		(पूर्णांक)v6_addr.s6_addr[12], (पूर्णांक)v6_addr.s6_addr[13],
+		(पूर्णांक)v6_addr.s6_addr[14], (पूर्णांक)v6_addr.s6_addr[15]);
 
-	return 1;
+	वापस 1;
 
-}
+पूर्ण
 
-static int is_ipv4(char *addr)
-{
-	int ret;
-	struct in_addr ipv4_addr;
+अटल पूर्णांक is_ipv4(अक्षर *addr)
+अणु
+	पूर्णांक ret;
+	काष्ठा in_addr ipv4_addr;
 
 	ret = inet_pton(AF_INET, addr, &ipv4_addr);
 
-	if (ret == 1)
-		return 1;
-	return 0;
-}
+	अगर (ret == 1)
+		वापस 1;
+	वापस 0;
+पूर्ण
 
-static int parse_ip_val_buffer(char *in_buf, int *offset,
-				char *out_buf, int out_len)
-{
-	char *x;
-	char *start;
+अटल पूर्णांक parse_ip_val_buffer(अक्षर *in_buf, पूर्णांक *offset,
+				अक्षर *out_buf, पूर्णांक out_len)
+अणु
+	अक्षर *x;
+	अक्षर *start;
 
 	/*
-	 * in_buf has sequence of characters that are separated by
-	 * the character ';'. The last sequence does not have the
-	 * terminating ";" character.
+	 * in_buf has sequence of अक्षरacters that are separated by
+	 * the अक्षरacter ';'. The last sequence करोes not have the
+	 * terminating ";" अक्षरacter.
 	 */
 	start = in_buf + *offset;
 
-	x = strchr(start, ';');
-	if (x)
+	x = म_अक्षर(start, ';');
+	अगर (x)
 		*x = 0;
-	else
-		x = start + strlen(start);
+	अन्यथा
+		x = start + म_माप(start);
 
-	if (strlen(start) != 0) {
-		int i = 0;
+	अगर (म_माप(start) != 0) अणु
+		पूर्णांक i = 0;
 		/*
 		 * Get rid of leading spaces.
 		 */
-		while (start[i] == ' ')
+		जबतक (start[i] == ' ')
 			i++;
 
-		if ((x - start) <= out_len) {
-			strcpy(out_buf, (start + i));
+		अगर ((x - start) <= out_len) अणु
+			म_नकल(out_buf, (start + i));
 			*offset += (x - start) + 1;
-			return 1;
-		}
-	}
-	return 0;
-}
+			वापस 1;
+		पूर्ण
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int kvp_write_file(FILE *f, char *s1, char *s2, char *s3)
-{
-	int ret;
+अटल पूर्णांक kvp_ग_लिखो_file(खाता *f, अक्षर *s1, अक्षर *s2, अक्षर *s3)
+अणु
+	पूर्णांक ret;
 
-	ret = fprintf(f, "%s%s%s%s\n", s1, s2, "=", s3);
+	ret = ख_लिखो(f, "%s%s%s%s\n", s1, s2, "=", s3);
 
-	if (ret < 0)
-		return HV_E_FAIL;
+	अगर (ret < 0)
+		वापस HV_E_FAIL;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
-static int process_ip_string(FILE *f, char *ip_string, int type)
-{
-	int error = 0;
-	char addr[INET6_ADDRSTRLEN];
-	int i = 0;
-	int j = 0;
-	char str[256];
-	char sub_str[13];
-	int offset = 0;
+अटल पूर्णांक process_ip_string(खाता *f, अक्षर *ip_string, पूर्णांक type)
+अणु
+	पूर्णांक error = 0;
+	अक्षर addr[INET6_ADDRSTRLEN];
+	पूर्णांक i = 0;
+	पूर्णांक j = 0;
+	अक्षर str[256];
+	अक्षर sub_str[13];
+	पूर्णांक offset = 0;
 
-	memset(addr, 0, sizeof(addr));
+	स_रखो(addr, 0, माप(addr));
 
-	while (parse_ip_val_buffer(ip_string, &offset, addr,
-					(MAX_IP_ADDR_SIZE * 2))) {
+	जबतक (parse_ip_val_buffer(ip_string, &offset, addr,
+					(MAX_IP_ADDR_SIZE * 2))) अणु
 
 		sub_str[0] = 0;
-		if (is_ipv4(addr)) {
-			switch (type) {
-			case IPADDR:
-				snprintf(str, sizeof(str), "%s", "IPADDR");
-				break;
-			case NETMASK:
-				snprintf(str, sizeof(str), "%s", "NETMASK");
-				break;
-			case GATEWAY:
-				snprintf(str, sizeof(str), "%s", "GATEWAY");
-				break;
-			case DNS:
-				snprintf(str, sizeof(str), "%s", "DNS");
-				break;
-			}
+		अगर (is_ipv4(addr)) अणु
+			चयन (type) अणु
+			हाल IPADDR:
+				snम_लिखो(str, माप(str), "%s", "IPADDR");
+				अवरोध;
+			हाल NETMASK:
+				snम_लिखो(str, माप(str), "%s", "NETMASK");
+				अवरोध;
+			हाल GATEWAY:
+				snम_लिखो(str, माप(str), "%s", "GATEWAY");
+				अवरोध;
+			हाल DNS:
+				snम_लिखो(str, माप(str), "%s", "DNS");
+				अवरोध;
+			पूर्ण
 
-			if (type == DNS) {
-				snprintf(sub_str, sizeof(sub_str), "%d", ++i);
-			} else if (type == GATEWAY && i == 0) {
+			अगर (type == DNS) अणु
+				snम_लिखो(sub_str, माप(sub_str), "%d", ++i);
+			पूर्ण अन्यथा अगर (type == GATEWAY && i == 0) अणु
 				++i;
-			} else {
-				snprintf(sub_str, sizeof(sub_str), "%d", i++);
-			}
+			पूर्ण अन्यथा अणु
+				snम_लिखो(sub_str, माप(sub_str), "%d", i++);
+			पूर्ण
 
 
-		} else if (expand_ipv6(addr, type)) {
-			switch (type) {
-			case IPADDR:
-				snprintf(str, sizeof(str), "%s", "IPV6ADDR");
-				break;
-			case NETMASK:
-				snprintf(str, sizeof(str), "%s", "IPV6NETMASK");
-				break;
-			case GATEWAY:
-				snprintf(str, sizeof(str), "%s",
+		पूर्ण अन्यथा अगर (expand_ipv6(addr, type)) अणु
+			चयन (type) अणु
+			हाल IPADDR:
+				snम_लिखो(str, माप(str), "%s", "IPV6ADDR");
+				अवरोध;
+			हाल NETMASK:
+				snम_लिखो(str, माप(str), "%s", "IPV6NETMASK");
+				अवरोध;
+			हाल GATEWAY:
+				snम_लिखो(str, माप(str), "%s",
 					"IPV6_DEFAULTGW");
-				break;
-			case DNS:
-				snprintf(str, sizeof(str), "%s",  "DNS");
-				break;
-			}
+				अवरोध;
+			हाल DNS:
+				snम_लिखो(str, माप(str), "%s",  "DNS");
+				अवरोध;
+			पूर्ण
 
-			if (type == DNS) {
-				snprintf(sub_str, sizeof(sub_str), "%d", ++i);
-			} else if (j == 0) {
+			अगर (type == DNS) अणु
+				snम_लिखो(sub_str, माप(sub_str), "%d", ++i);
+			पूर्ण अन्यथा अगर (j == 0) अणु
 				++j;
-			} else {
-				snprintf(sub_str, sizeof(sub_str), "_%d", j++);
-			}
-		} else {
-			return  HV_INVALIDARG;
-		}
+			पूर्ण अन्यथा अणु
+				snम_लिखो(sub_str, माप(sub_str), "_%d", j++);
+			पूर्ण
+		पूर्ण अन्यथा अणु
+			वापस  HV_INVALIDARG;
+		पूर्ण
 
-		error = kvp_write_file(f, str, sub_str, addr);
-		if (error)
-			return error;
-		memset(addr, 0, sizeof(addr));
-	}
+		error = kvp_ग_लिखो_file(f, str, sub_str, addr);
+		अगर (error)
+			वापस error;
+		स_रखो(addr, 0, माप(addr));
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int kvp_set_ip_info(char *if_name, struct hv_kvp_ipaddr_value *new_val)
-{
-	int error = 0;
-	char if_file[PATH_MAX];
-	FILE *file;
-	char cmd[PATH_MAX];
-	char *mac_addr;
-	int str_len;
+अटल पूर्णांक kvp_set_ip_info(अक्षर *अगर_name, काष्ठा hv_kvp_ipaddr_value *new_val)
+अणु
+	पूर्णांक error = 0;
+	अक्षर अगर_file[PATH_MAX];
+	खाता *file;
+	अक्षर cmd[PATH_MAX];
+	अक्षर *mac_addr;
+	पूर्णांक str_len;
 
 	/*
-	 * Set the configuration for the specified interface with
-	 * the information provided. Since there is no standard
-	 * way to configure an interface, we will have an external
-	 * script that does the job of configuring the interface and
+	 * Set the configuration क्रम the specअगरied पूर्णांकerface with
+	 * the inक्रमmation provided. Since there is no standard
+	 * way to configure an पूर्णांकerface, we will have an बाह्यal
+	 * script that करोes the job of configuring the पूर्णांकerface and
 	 * flushing the configuration.
 	 *
-	 * The parameters passed to this external script are:
-	 * 1. A configuration file that has the specified configuration.
+	 * The parameters passed to this बाह्यal script are:
+	 * 1. A configuration file that has the specअगरied configuration.
 	 *
-	 * We will embed the name of the interface in the configuration
-	 * file: ifcfg-ethx (where ethx is the interface name).
+	 * We will embed the name of the पूर्णांकerface in the configuration
+	 * file: अगरcfg-ethx (where ethx is the पूर्णांकerface name).
 	 *
-	 * The information provided here may be more than what is needed
-	 * in a given distro to configure the interface and so are free
-	 * ignore information that may not be relevant.
+	 * The inक्रमmation provided here may be more than what is needed
+	 * in a given distro to configure the पूर्णांकerface and so are मुक्त
+	 * ignore inक्रमmation that may not be relevant.
 	 *
-	 * Here is the format of the ip configuration file:
+	 * Here is the क्रमmat of the ip configuration file:
 	 *
 	 * HWADDR=macaddr
-	 * DEVICE=interface name
-	 * BOOTPROTO=<protocol> (where <protocol> is "dhcp" if DHCP is configured
-	 *                       or "none" if no boot-time protocol should be used)
+	 * DEVICE=पूर्णांकerface name
+	 * BOOTPROTO=<protocol> (where <protocol> is "dhcp" अगर DHCP is configured
+	 *                       or "none" अगर no boot-समय protocol should be used)
 	 *
 	 * IPADDR0=ipaddr1
 	 * IPADDR1=ipaddr2
 	 * IPADDRx=ipaddry (where y = x + 1)
 	 *
-	 * NETMASK0=netmask1
-	 * NETMASKx=netmasky (where y = x + 1)
+	 * NETMASK0=neपंचांगask1
+	 * NETMASKx=neपंचांगasky (where y = x + 1)
 	 *
 	 * GATEWAY=ipaddr1
 	 * GATEWAYx=ipaddry (where y = x + 1)
@@ -1220,251 +1221,251 @@ static int kvp_set_ip_info(char *if_name, struct hv_kvp_ipaddr_value *new_val)
 	 * tagged as IPV6_DEFAULTGW and IPV6 NETMASK will be tagged as
 	 * IPV6NETMASK.
 	 *
-	 * The host can specify multiple ipv4 and ipv6 addresses to be
-	 * configured for the interface. Furthermore, the configuration
-	 * needs to be persistent. A subsequent GET call on the interface
-	 * is expected to return the configuration that is set via the SET
+	 * The host can specअगरy multiple ipv4 and ipv6 addresses to be
+	 * configured क्रम the पूर्णांकerface. Furthermore, the configuration
+	 * needs to be persistent. A subsequent GET call on the पूर्णांकerface
+	 * is expected to वापस the configuration that is set via the SET
 	 * call.
 	 */
 
-	snprintf(if_file, sizeof(if_file), "%s%s%s", KVP_CONFIG_LOC,
-		"/ifcfg-", if_name);
+	snम_लिखो(अगर_file, माप(अगर_file), "%s%s%s", KVP_CONFIG_LOC,
+		"/ifcfg-", अगर_name);
 
-	file = fopen(if_file, "w");
+	file = ख_खोलो(अगर_file, "w");
 
-	if (file == NULL) {
+	अगर (file == शून्य) अणु
 		syslog(LOG_ERR, "Failed to open config file; error: %d %s",
-				errno, strerror(errno));
-		return HV_E_FAIL;
-	}
+				त्रुटि_सं, म_त्रुटि(त्रुटि_सं));
+		वापस HV_E_FAIL;
+	पूर्ण
 
 	/*
-	 * First write out the MAC address.
+	 * First ग_लिखो out the MAC address.
 	 */
 
-	mac_addr = kvp_if_name_to_mac(if_name);
-	if (mac_addr == NULL) {
+	mac_addr = kvp_अगर_name_to_mac(अगर_name);
+	अगर (mac_addr == शून्य) अणु
 		error = HV_E_FAIL;
-		goto setval_error;
-	}
+		जाओ setval_error;
+	पूर्ण
 
-	error = kvp_write_file(file, "HWADDR", "", mac_addr);
-	free(mac_addr);
-	if (error)
-		goto setval_error;
+	error = kvp_ग_लिखो_file(file, "HWADDR", "", mac_addr);
+	मुक्त(mac_addr);
+	अगर (error)
+		जाओ setval_error;
 
-	error = kvp_write_file(file, "DEVICE", "", if_name);
-	if (error)
-		goto setval_error;
+	error = kvp_ग_लिखो_file(file, "DEVICE", "", अगर_name);
+	अगर (error)
+		जाओ setval_error;
 
 	/*
-	 * The dhcp_enabled flag is only for IPv4. In the case the host only
+	 * The dhcp_enabled flag is only क्रम IPv4. In the हाल the host only
 	 * injects an IPv6 address, the flag is true, but we still need to
-	 * proceed to parse and pass the IPv6 information to the
-	 * disto-specific script hv_set_ifconfig.
+	 * proceed to parse and pass the IPv6 inक्रमmation to the
+	 * disto-specअगरic script hv_set_अगरconfig.
 	 */
-	if (new_val->dhcp_enabled) {
-		error = kvp_write_file(file, "BOOTPROTO", "", "dhcp");
-		if (error)
-			goto setval_error;
+	अगर (new_val->dhcp_enabled) अणु
+		error = kvp_ग_लिखो_file(file, "BOOTPROTO", "", "dhcp");
+		अगर (error)
+			जाओ setval_error;
 
-	} else {
-		error = kvp_write_file(file, "BOOTPROTO", "", "none");
-		if (error)
-			goto setval_error;
-	}
+	पूर्ण अन्यथा अणु
+		error = kvp_ग_लिखो_file(file, "BOOTPROTO", "", "none");
+		अगर (error)
+			जाओ setval_error;
+	पूर्ण
 
 	/*
-	 * Write the configuration for ipaddress, netmask, gateway and
+	 * Write the configuration क्रम ipaddress, neपंचांगask, gateway and
 	 * name servers.
 	 */
 
-	error = process_ip_string(file, (char *)new_val->ip_addr, IPADDR);
-	if (error)
-		goto setval_error;
+	error = process_ip_string(file, (अक्षर *)new_val->ip_addr, IPADDR);
+	अगर (error)
+		जाओ setval_error;
 
-	error = process_ip_string(file, (char *)new_val->sub_net, NETMASK);
-	if (error)
-		goto setval_error;
+	error = process_ip_string(file, (अक्षर *)new_val->sub_net, NETMASK);
+	अगर (error)
+		जाओ setval_error;
 
-	error = process_ip_string(file, (char *)new_val->gate_way, GATEWAY);
-	if (error)
-		goto setval_error;
+	error = process_ip_string(file, (अक्षर *)new_val->gate_way, GATEWAY);
+	अगर (error)
+		जाओ setval_error;
 
-	error = process_ip_string(file, (char *)new_val->dns_addr, DNS);
-	if (error)
-		goto setval_error;
+	error = process_ip_string(file, (अक्षर *)new_val->dns_addr, DNS);
+	अगर (error)
+		जाओ setval_error;
 
-	fclose(file);
+	ख_बंद(file);
 
 	/*
 	 * Now that we have populated the configuration file,
-	 * invoke the external script to do its magic.
+	 * invoke the बाह्यal script to करो its magic.
 	 */
 
-	str_len = snprintf(cmd, sizeof(cmd), KVP_SCRIPTS_PATH "%s %s",
-			   "hv_set_ifconfig", if_file);
+	str_len = snम_लिखो(cmd, माप(cmd), KVP_SCRIPTS_PATH "%s %s",
+			   "hv_set_ifconfig", अगर_file);
 	/*
 	 * This is a little overcautious, but it's necessary to suppress some
 	 * false warnings from gcc 8.0.1.
 	 */
-	if (str_len <= 0 || (unsigned int)str_len >= sizeof(cmd)) {
+	अगर (str_len <= 0 || (अचिन्हित पूर्णांक)str_len >= माप(cmd)) अणु
 		syslog(LOG_ERR, "Cmd '%s' (len=%d) may be too long",
 		       cmd, str_len);
-		return HV_E_FAIL;
-	}
+		वापस HV_E_FAIL;
+	पूर्ण
 
-	if (system(cmd)) {
+	अगर (प्रणाली(cmd)) अणु
 		syslog(LOG_ERR, "Failed to execute cmd '%s'; error: %d %s",
-				cmd, errno, strerror(errno));
-		return HV_E_FAIL;
-	}
-	return 0;
+				cmd, त्रुटि_सं, म_त्रुटि(त्रुटि_सं));
+		वापस HV_E_FAIL;
+	पूर्ण
+	वापस 0;
 
 setval_error:
 	syslog(LOG_ERR, "Failed to write config file");
-	fclose(file);
-	return error;
-}
+	ख_बंद(file);
+	वापस error;
+पूर्ण
 
 
-static void
-kvp_get_domain_name(char *buffer, int length)
-{
-	struct addrinfo	hints, *info ;
-	int error = 0;
+अटल व्योम
+kvp_get_करोमुख्य_name(अक्षर *buffer, पूर्णांक length)
+अणु
+	काष्ठा addrinfo	hपूर्णांकs, *info ;
+	पूर्णांक error = 0;
 
 	gethostname(buffer, length);
-	memset(&hints, 0, sizeof(hints));
-	hints.ai_family = AF_INET; /*Get only ipv4 addrinfo. */
-	hints.ai_socktype = SOCK_STREAM;
-	hints.ai_flags = AI_CANONNAME;
+	स_रखो(&hपूर्णांकs, 0, माप(hपूर्णांकs));
+	hपूर्णांकs.ai_family = AF_INET; /*Get only ipv4 addrinfo. */
+	hपूर्णांकs.ai_socktype = SOCK_STREAM;
+	hपूर्णांकs.ai_flags = AI_CANONNAME;
 
-	error = getaddrinfo(buffer, NULL, &hints, &info);
-	if (error != 0) {
-		snprintf(buffer, length, "getaddrinfo failed: 0x%x %s",
-			error, gai_strerror(error));
-		return;
-	}
-	snprintf(buffer, length, "%s", info->ai_canonname);
-	freeaddrinfo(info);
-}
+	error = getaddrinfo(buffer, शून्य, &hपूर्णांकs, &info);
+	अगर (error != 0) अणु
+		snम_लिखो(buffer, length, "getaddrinfo failed: 0x%x %s",
+			error, gai_म_त्रुटि(error));
+		वापस;
+	पूर्ण
+	snम_लिखो(buffer, length, "%s", info->ai_canonname);
+	मुक्तaddrinfo(info);
+पूर्ण
 
-void print_usage(char *argv[])
-{
-	fprintf(stderr, "Usage: %s [options]\n"
+व्योम prपूर्णांक_usage(अक्षर *argv[])
+अणु
+	ख_लिखो(मानक_त्रुटि, "Usage: %s [options]\n"
 		"Options are:\n"
 		"  -n, --no-daemon        stay in foreground, don't daemonize\n"
 		"  -h, --help             print this help\n", argv[0]);
-}
+पूर्ण
 
-int main(int argc, char *argv[])
-{
-	int kvp_fd = -1, len;
-	int error;
-	struct pollfd pfd;
-	char    *p;
-	struct hv_kvp_msg hv_msg[1];
-	char	*key_value;
-	char	*key_name;
-	int	op;
-	int	pool;
-	char	*if_name;
-	struct hv_kvp_ipaddr_value *kvp_ip_val;
-	int daemonize = 1, long_index = 0, opt;
+पूर्णांक मुख्य(पूर्णांक argc, अक्षर *argv[])
+अणु
+	पूर्णांक kvp_fd = -1, len;
+	पूर्णांक error;
+	काष्ठा pollfd pfd;
+	अक्षर    *p;
+	काष्ठा hv_kvp_msg hv_msg[1];
+	अक्षर	*key_value;
+	अक्षर	*key_name;
+	पूर्णांक	op;
+	पूर्णांक	pool;
+	अक्षर	*अगर_name;
+	काष्ठा hv_kvp_ipaddr_value *kvp_ip_val;
+	पूर्णांक daemonize = 1, दीर्घ_index = 0, opt;
 
-	static struct option long_options[] = {
-		{"help",	no_argument,	   0,  'h' },
-		{"no-daemon",	no_argument,	   0,  'n' },
-		{0,		0,		   0,  0   }
-	};
+	अटल काष्ठा option दीर्घ_options[] = अणु
+		अणु"help",	no_argument,	   0,  'h' पूर्ण,
+		अणु"no-daemon",	no_argument,	   0,  'n' पूर्ण,
+		अणु0,		0,		   0,  0   पूर्ण
+	पूर्ण;
 
-	while ((opt = getopt_long(argc, argv, "hn", long_options,
-				  &long_index)) != -1) {
-		switch (opt) {
-		case 'n':
+	जबतक ((opt = getopt_दीर्घ(argc, argv, "hn", दीर्घ_options,
+				  &दीर्घ_index)) != -1) अणु
+		चयन (opt) अणु
+		हाल 'n':
 			daemonize = 0;
-			break;
-		case 'h':
-			print_usage(argv);
-			exit(0);
-		default:
-			print_usage(argv);
-			exit(EXIT_FAILURE);
-		}
-	}
+			अवरोध;
+		हाल 'h':
+			prपूर्णांक_usage(argv);
+			निकास(0);
+		शेष:
+			prपूर्णांक_usage(argv);
+			निकास(निकास_त्रुटि);
+		पूर्ण
+	पूर्ण
 
-	if (daemonize && daemon(1, 0))
-		return 1;
+	अगर (daemonize && daemon(1, 0))
+		वापस 1;
 
-	openlog("KVP", 0, LOG_USER);
+	खोलोlog("KVP", 0, LOG_USER);
 	syslog(LOG_INFO, "KVP starting; pid is:%d", getpid());
 
 	/*
-	 * Retrieve OS release information.
+	 * Retrieve OS release inक्रमmation.
 	 */
 	kvp_get_os_info();
 	/*
-	 * Cache Fully Qualified Domain Name because getaddrinfo takes an
-	 * unpredictable amount of time to finish.
+	 * Cache Fully Qualअगरied Doमुख्य Name because getaddrinfo takes an
+	 * unpredictable amount of समय to finish.
 	 */
-	kvp_get_domain_name(full_domain_name, sizeof(full_domain_name));
+	kvp_get_करोमुख्य_name(full_करोमुख्य_name, माप(full_करोमुख्य_name));
 
-	if (kvp_file_init()) {
+	अगर (kvp_file_init()) अणु
 		syslog(LOG_ERR, "Failed to initialize the pools");
-		exit(EXIT_FAILURE);
-	}
+		निकास(निकास_त्रुटि);
+	पूर्ण
 
-reopen_kvp_fd:
-	if (kvp_fd != -1)
-		close(kvp_fd);
+reखोलो_kvp_fd:
+	अगर (kvp_fd != -1)
+		बंद(kvp_fd);
 	in_hand_shake = 1;
-	kvp_fd = open("/dev/vmbus/hv_kvp", O_RDWR | O_CLOEXEC);
+	kvp_fd = खोलो("/dev/vmbus/hv_kvp", O_RDWR | O_CLOEXEC);
 
-	if (kvp_fd < 0) {
+	अगर (kvp_fd < 0) अणु
 		syslog(LOG_ERR, "open /dev/vmbus/hv_kvp failed; error: %d %s",
-		       errno, strerror(errno));
-		exit(EXIT_FAILURE);
-	}
+		       त्रुटि_सं, म_त्रुटि(त्रुटि_सं));
+		निकास(निकास_त्रुटि);
+	पूर्ण
 
 	/*
 	 * Register ourselves with the kernel.
 	 */
 	hv_msg->kvp_hdr.operation = KVP_OP_REGISTER1;
-	len = write(kvp_fd, hv_msg, sizeof(struct hv_kvp_msg));
-	if (len != sizeof(struct hv_kvp_msg)) {
+	len = ग_लिखो(kvp_fd, hv_msg, माप(काष्ठा hv_kvp_msg));
+	अगर (len != माप(काष्ठा hv_kvp_msg)) अणु
 		syslog(LOG_ERR, "registration to kernel failed; error: %d %s",
-		       errno, strerror(errno));
-		close(kvp_fd);
-		exit(EXIT_FAILURE);
-	}
+		       त्रुटि_सं, म_त्रुटि(त्रुटि_सं));
+		बंद(kvp_fd);
+		निकास(निकास_त्रुटि);
+	पूर्ण
 
 	pfd.fd = kvp_fd;
 
-	while (1) {
+	जबतक (1) अणु
 		pfd.events = POLLIN;
 		pfd.revents = 0;
 
-		if (poll(&pfd, 1, -1) < 0) {
-			syslog(LOG_ERR, "poll failed; error: %d %s", errno, strerror(errno));
-			if (errno == EINVAL) {
-				close(kvp_fd);
-				exit(EXIT_FAILURE);
-			}
-			else
-				continue;
-		}
+		अगर (poll(&pfd, 1, -1) < 0) अणु
+			syslog(LOG_ERR, "poll failed; error: %d %s", त्रुटि_सं, म_त्रुटि(त्रुटि_सं));
+			अगर (त्रुटि_सं == EINVAL) अणु
+				बंद(kvp_fd);
+				निकास(निकास_त्रुटि);
+			पूर्ण
+			अन्यथा
+				जारी;
+		पूर्ण
 
-		len = read(kvp_fd, hv_msg, sizeof(struct hv_kvp_msg));
+		len = पढ़ो(kvp_fd, hv_msg, माप(काष्ठा hv_kvp_msg));
 
-		if (len != sizeof(struct hv_kvp_msg)) {
+		अगर (len != माप(काष्ठा hv_kvp_msg)) अणु
 			syslog(LOG_ERR, "read failed; error:%d %s",
-			       errno, strerror(errno));
-			goto reopen_kvp_fd;
-		}
+			       त्रुटि_सं, म_त्रुटि(त्रुटि_सं));
+			जाओ reखोलो_kvp_fd;
+		पूर्ण
 
 		/*
-		 * We will use the KVP header information to pass back
+		 * We will use the KVP header inक्रमmation to pass back
 		 * the error from this daemon. So, first copy the state
 		 * and set the error code to success.
 		 */
@@ -1472,167 +1473,167 @@ reopen_kvp_fd:
 		pool = hv_msg->kvp_hdr.pool;
 		hv_msg->error = HV_S_OK;
 
-		if ((in_hand_shake) && (op == KVP_OP_REGISTER1)) {
+		अगर ((in_hand_shake) && (op == KVP_OP_REGISTER1)) अणु
 			/*
-			 * Driver is registering with us; stash away the version
-			 * information.
+			 * Driver is रेजिस्टरing with us; stash away the version
+			 * inक्रमmation.
 			 */
 			in_hand_shake = 0;
-			p = (char *)hv_msg->body.kvp_register.version;
-			lic_version = malloc(strlen(p) + 1);
-			if (lic_version) {
-				strcpy(lic_version, p);
+			p = (अक्षर *)hv_msg->body.kvp_रेजिस्टर.version;
+			lic_version = दो_स्मृति(म_माप(p) + 1);
+			अगर (lic_version) अणु
+				म_नकल(lic_version, p);
 				syslog(LOG_INFO, "KVP LIC Version: %s",
 				       lic_version);
-			} else {
+			पूर्ण अन्यथा अणु
 				syslog(LOG_ERR, "malloc failed");
-			}
-			continue;
-		}
+			पूर्ण
+			जारी;
+		पूर्ण
 
-		switch (op) {
-		case KVP_OP_GET_IP_INFO:
+		चयन (op) अणु
+		हाल KVP_OP_GET_IP_INFO:
 			kvp_ip_val = &hv_msg->body.kvp_ip_val;
 
 			error = kvp_mac_to_ip(kvp_ip_val);
 
-			if (error)
+			अगर (error)
 				hv_msg->error = error;
 
-			break;
+			अवरोध;
 
-		case KVP_OP_SET_IP_INFO:
+		हाल KVP_OP_SET_IP_INFO:
 			kvp_ip_val = &hv_msg->body.kvp_ip_val;
-			if_name = kvp_get_if_name(
-					(char *)kvp_ip_val->adapter_id);
-			if (if_name == NULL) {
+			अगर_name = kvp_get_अगर_name(
+					(अक्षर *)kvp_ip_val->adapter_id);
+			अगर (अगर_name == शून्य) अणु
 				/*
 				 * We could not map the guid to an
-				 * interface name; return error.
+				 * पूर्णांकerface name; वापस error.
 				 */
 				hv_msg->error = HV_GUID_NOTFOUND;
-				break;
-			}
-			error = kvp_set_ip_info(if_name, kvp_ip_val);
-			if (error)
+				अवरोध;
+			पूर्ण
+			error = kvp_set_ip_info(अगर_name, kvp_ip_val);
+			अगर (error)
 				hv_msg->error = error;
 
-			free(if_name);
-			break;
+			मुक्त(अगर_name);
+			अवरोध;
 
-		case KVP_OP_SET:
-			if (kvp_key_add_or_modify(pool,
+		हाल KVP_OP_SET:
+			अगर (kvp_key_add_or_modअगरy(pool,
 					hv_msg->body.kvp_set.data.key,
 					hv_msg->body.kvp_set.data.key_size,
 					hv_msg->body.kvp_set.data.value,
 					hv_msg->body.kvp_set.data.value_size))
 					hv_msg->error = HV_S_CONT;
-			break;
+			अवरोध;
 
-		case KVP_OP_GET:
-			if (kvp_get_value(pool,
+		हाल KVP_OP_GET:
+			अगर (kvp_get_value(pool,
 					hv_msg->body.kvp_set.data.key,
 					hv_msg->body.kvp_set.data.key_size,
 					hv_msg->body.kvp_set.data.value,
 					hv_msg->body.kvp_set.data.value_size))
 					hv_msg->error = HV_S_CONT;
-			break;
+			अवरोध;
 
-		case KVP_OP_DELETE:
-			if (kvp_key_delete(pool,
+		हाल KVP_OP_DELETE:
+			अगर (kvp_key_delete(pool,
 					hv_msg->body.kvp_delete.key,
 					hv_msg->body.kvp_delete.key_size))
 					hv_msg->error = HV_S_CONT;
-			break;
+			अवरोध;
 
-		default:
-			break;
-		}
+		शेष:
+			अवरोध;
+		पूर्ण
 
-		if (op != KVP_OP_ENUMERATE)
-			goto kvp_done;
+		अगर (op != KVP_OP_ENUMERATE)
+			जाओ kvp_करोne;
 
 		/*
 		 * If the pool is KVP_POOL_AUTO, dynamically generate
-		 * both the key and the value; if not read from the
+		 * both the key and the value; अगर not पढ़ो from the
 		 * appropriate pool.
 		 */
-		if (pool != KVP_POOL_AUTO) {
-			if (kvp_pool_enumerate(pool,
-					hv_msg->body.kvp_enum_data.index,
-					hv_msg->body.kvp_enum_data.data.key,
+		अगर (pool != KVP_POOL_AUTO) अणु
+			अगर (kvp_pool_क्रमागतerate(pool,
+					hv_msg->body.kvp_क्रमागत_data.index,
+					hv_msg->body.kvp_क्रमागत_data.data.key,
 					HV_KVP_EXCHANGE_MAX_KEY_SIZE,
-					hv_msg->body.kvp_enum_data.data.value,
+					hv_msg->body.kvp_क्रमागत_data.data.value,
 					HV_KVP_EXCHANGE_MAX_VALUE_SIZE))
 					hv_msg->error = HV_S_CONT;
-			goto kvp_done;
-		}
+			जाओ kvp_करोne;
+		पूर्ण
 
-		key_name = (char *)hv_msg->body.kvp_enum_data.data.key;
-		key_value = (char *)hv_msg->body.kvp_enum_data.data.value;
+		key_name = (अक्षर *)hv_msg->body.kvp_क्रमागत_data.data.key;
+		key_value = (अक्षर *)hv_msg->body.kvp_क्रमागत_data.data.value;
 
-		switch (hv_msg->body.kvp_enum_data.index) {
-		case FullyQualifiedDomainName:
-			strcpy(key_value, full_domain_name);
-			strcpy(key_name, "FullyQualifiedDomainName");
-			break;
-		case IntegrationServicesVersion:
-			strcpy(key_name, "IntegrationServicesVersion");
-			strcpy(key_value, lic_version);
-			break;
-		case NetworkAddressIPv4:
-			kvp_get_ip_info(AF_INET, NULL, KVP_OP_ENUMERATE,
+		चयन (hv_msg->body.kvp_क्रमागत_data.index) अणु
+		हाल FullyQualअगरiedDoमुख्यName:
+			म_नकल(key_value, full_करोमुख्य_name);
+			म_नकल(key_name, "FullyQualifiedDomainName");
+			अवरोध;
+		हाल IntegrationServicesVersion:
+			म_नकल(key_name, "IntegrationServicesVersion");
+			म_नकल(key_value, lic_version);
+			अवरोध;
+		हाल NetworkAddressIPv4:
+			kvp_get_ip_info(AF_INET, शून्य, KVP_OP_ENUMERATE,
 				key_value, HV_KVP_EXCHANGE_MAX_VALUE_SIZE);
-			strcpy(key_name, "NetworkAddressIPv4");
-			break;
-		case NetworkAddressIPv6:
-			kvp_get_ip_info(AF_INET6, NULL, KVP_OP_ENUMERATE,
+			म_नकल(key_name, "NetworkAddressIPv4");
+			अवरोध;
+		हाल NetworkAddressIPv6:
+			kvp_get_ip_info(AF_INET6, शून्य, KVP_OP_ENUMERATE,
 				key_value, HV_KVP_EXCHANGE_MAX_VALUE_SIZE);
-			strcpy(key_name, "NetworkAddressIPv6");
-			break;
-		case OSBuildNumber:
-			strcpy(key_value, os_build);
-			strcpy(key_name, "OSBuildNumber");
-			break;
-		case OSName:
-			strcpy(key_value, os_name);
-			strcpy(key_name, "OSName");
-			break;
-		case OSMajorVersion:
-			strcpy(key_value, os_major);
-			strcpy(key_name, "OSMajorVersion");
-			break;
-		case OSMinorVersion:
-			strcpy(key_value, os_minor);
-			strcpy(key_name, "OSMinorVersion");
-			break;
-		case OSVersion:
-			strcpy(key_value, os_version);
-			strcpy(key_name, "OSVersion");
-			break;
-		case ProcessorArchitecture:
-			strcpy(key_value, processor_arch);
-			strcpy(key_name, "ProcessorArchitecture");
-			break;
-		default:
+			म_नकल(key_name, "NetworkAddressIPv6");
+			अवरोध;
+		हाल OSBuildNumber:
+			म_नकल(key_value, os_build);
+			म_नकल(key_name, "OSBuildNumber");
+			अवरोध;
+		हाल OSName:
+			म_नकल(key_value, os_name);
+			म_नकल(key_name, "OSName");
+			अवरोध;
+		हाल OSMajorVersion:
+			म_नकल(key_value, os_major);
+			म_नकल(key_name, "OSMajorVersion");
+			अवरोध;
+		हाल OSMinorVersion:
+			म_नकल(key_value, os_minor);
+			म_नकल(key_name, "OSMinorVersion");
+			अवरोध;
+		हाल OSVersion:
+			म_नकल(key_value, os_version);
+			म_नकल(key_name, "OSVersion");
+			अवरोध;
+		हाल ProcessorArchitecture:
+			म_नकल(key_value, processor_arch);
+			म_नकल(key_name, "ProcessorArchitecture");
+			अवरोध;
+		शेष:
 			hv_msg->error = HV_S_CONT;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		/*
-		 * Send the value back to the kernel. Note: the write() may
-		 * return an error due to hibernation; we can ignore the error
-		 * by resetting the dev file, i.e. closing and re-opening it.
+		 * Send the value back to the kernel. Note: the ग_लिखो() may
+		 * वापस an error due to hibernation; we can ignore the error
+		 * by resetting the dev file, i.e. closing and re-खोलोing it.
 		 */
-kvp_done:
-		len = write(kvp_fd, hv_msg, sizeof(struct hv_kvp_msg));
-		if (len != sizeof(struct hv_kvp_msg)) {
-			syslog(LOG_ERR, "write failed; error: %d %s", errno,
-			       strerror(errno));
-			goto reopen_kvp_fd;
-		}
-	}
+kvp_करोne:
+		len = ग_लिखो(kvp_fd, hv_msg, माप(काष्ठा hv_kvp_msg));
+		अगर (len != माप(काष्ठा hv_kvp_msg)) अणु
+			syslog(LOG_ERR, "write failed; error: %d %s", त्रुटि_सं,
+			       म_त्रुटि(त्रुटि_सं));
+			जाओ reखोलो_kvp_fd;
+		पूर्ण
+	पूर्ण
 
-	close(kvp_fd);
-	exit(0);
-}
+	बंद(kvp_fd);
+	निकास(0);
+पूर्ण

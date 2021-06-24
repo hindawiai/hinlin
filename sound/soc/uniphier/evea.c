@@ -1,73 +1,74 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 //
 // Socionext UniPhier EVEA ADC/DAC codec driver.
 //
 // Copyright (c) 2016-2017 Socionext Inc.
 
-#include <linux/clk.h>
-#include <linux/module.h>
-#include <linux/of.h>
-#include <linux/regmap.h>
-#include <linux/reset.h>
-#include <sound/pcm.h>
-#include <sound/soc.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of.h>
+#समावेश <linux/regmap.h>
+#समावेश <linux/reset.h>
+#समावेश <sound/pcm.h>
+#समावेश <sound/soc.h>
 
-#define DRV_NAME        "evea"
-#define EVEA_RATES      SNDRV_PCM_RATE_48000
-#define EVEA_FORMATS    SNDRV_PCM_FMTBIT_S32_LE
+#घोषणा DRV_NAME        "evea"
+#घोषणा EVEA_RATES      SNDRV_PCM_RATE_48000
+#घोषणा EVEA_FORMATS    SNDRV_PCM_FMTBIT_S32_LE
 
-#define AADCPOW(n)                           (0x0078 + 0x04 * (n))
-#define   AADCPOW_AADC_POWD                   BIT(0)
-#define ALINSW1                              0x0088
-#define   ALINSW1_SEL1_SHIFT                  3
-#define AHPOUTPOW                            0x0098
-#define   AHPOUTPOW_HP_ON                     BIT(4)
-#define ALINEPOW                             0x009c
-#define   ALINEPOW_LIN2_POWD                  BIT(3)
-#define   ALINEPOW_LIN1_POWD                  BIT(4)
-#define ALO1OUTPOW                           0x00a8
-#define   ALO1OUTPOW_LO1_ON                   BIT(4)
-#define ALO2OUTPOW                           0x00ac
-#define   ALO2OUTPOW_ADAC2_MUTE               BIT(0)
-#define   ALO2OUTPOW_LO2_ON                   BIT(4)
-#define AANAPOW                              0x00b8
-#define   AANAPOW_A_POWD                      BIT(4)
-#define ADACSEQ1(n)                          (0x0144 + 0x40 * (n))
-#define   ADACSEQ1_MMUTE                      BIT(1)
-#define ADACSEQ2(n)                          (0x0160 + 0x40 * (n))
-#define   ADACSEQ2_ADACIN_FIX                 BIT(0)
-#define ADAC1ODC                             0x0200
-#define   ADAC1ODC_HP_DIS_RES_MASK            GENMASK(2, 1)
-#define   ADAC1ODC_HP_DIS_RES_OFF             (0x0 << 1)
-#define   ADAC1ODC_HP_DIS_RES_ON              (0x3 << 1)
-#define   ADAC1ODC_ADAC_RAMPCLT_MASK          GENMASK(8, 7)
-#define   ADAC1ODC_ADAC_RAMPCLT_NORMAL        (0x0 << 7)
-#define   ADAC1ODC_ADAC_RAMPCLT_REDUCE        (0x1 << 7)
+#घोषणा AADCPOW(n)                           (0x0078 + 0x04 * (n))
+#घोषणा   AADCPOW_AADC_POWD                   BIT(0)
+#घोषणा ALINSW1                              0x0088
+#घोषणा   ALINSW1_SEL1_SHIFT                  3
+#घोषणा AHPOUTPOW                            0x0098
+#घोषणा   AHPOUTPOW_HP_ON                     BIT(4)
+#घोषणा ALINEPOW                             0x009c
+#घोषणा   ALINEPOW_LIN2_POWD                  BIT(3)
+#घोषणा   ALINEPOW_LIN1_POWD                  BIT(4)
+#घोषणा ALO1OUTPOW                           0x00a8
+#घोषणा   ALO1OUTPOW_LO1_ON                   BIT(4)
+#घोषणा ALO2OUTPOW                           0x00ac
+#घोषणा   ALO2OUTPOW_ADAC2_MUTE               BIT(0)
+#घोषणा   ALO2OUTPOW_LO2_ON                   BIT(4)
+#घोषणा AANAPOW                              0x00b8
+#घोषणा   AANAPOW_A_POWD                      BIT(4)
+#घोषणा ADACSEQ1(n)                          (0x0144 + 0x40 * (n))
+#घोषणा   ADACSEQ1_MMUTE                      BIT(1)
+#घोषणा ADACSEQ2(n)                          (0x0160 + 0x40 * (n))
+#घोषणा   ADACSEQ2_ADACIN_FIX                 BIT(0)
+#घोषणा ADAC1ODC                             0x0200
+#घोषणा   ADAC1ODC_HP_DIS_RES_MASK            GENMASK(2, 1)
+#घोषणा   ADAC1ODC_HP_DIS_RES_OFF             (0x0 << 1)
+#घोषणा   ADAC1ODC_HP_DIS_RES_ON              (0x3 << 1)
+#घोषणा   ADAC1ODC_ADAC_RAMPCLT_MASK          GENMASK(8, 7)
+#घोषणा   ADAC1ODC_ADAC_RAMPCLT_NORMAL        (0x0 << 7)
+#घोषणा   ADAC1ODC_ADAC_RAMPCLT_REDUCE        (0x1 << 7)
 
-struct evea_priv {
-	struct clk *clk, *clk_exiv;
-	struct reset_control *rst, *rst_exiv, *rst_adamv;
-	struct regmap *regmap;
+काष्ठा evea_priv अणु
+	काष्ठा clk *clk, *clk_exiv;
+	काष्ठा reset_control *rst, *rst_exiv, *rst_adamv;
+	काष्ठा regmap *regmap;
 
-	int switch_lin;
-	int switch_lo;
-	int switch_hp;
-};
+	पूर्णांक चयन_lin;
+	पूर्णांक चयन_lo;
+	पूर्णांक चयन_hp;
+पूर्ण;
 
-static const char * const linsw1_sel1_text[] = {
+अटल स्थिर अक्षर * स्थिर linsw1_sel1_text[] = अणु
 	"LIN1", "LIN2", "LIN3"
-};
+पूर्ण;
 
-static SOC_ENUM_SINGLE_DECL(linsw1_sel1_enum,
+अटल SOC_ENUM_SINGLE_DECL(linsw1_sel1_क्रमागत,
 	ALINSW1, ALINSW1_SEL1_SHIFT,
 	linsw1_sel1_text);
 
-static const struct snd_kcontrol_new linesw1_mux[] = {
-	SOC_DAPM_ENUM("Line In 1 Source", linsw1_sel1_enum),
-};
+अटल स्थिर काष्ठा snd_kcontrol_new linesw1_mux[] = अणु
+	SOC_DAPM_ENUM("Line In 1 Source", linsw1_sel1_क्रमागत),
+पूर्ण;
 
-static const struct snd_soc_dapm_widget evea_widgets[] = {
-	SND_SOC_DAPM_ADC("ADC", NULL, SND_SOC_NOPM, 0, 0),
+अटल स्थिर काष्ठा snd_soc_dapm_widget evea_widमाला_लो[] = अणु
+	SND_SOC_DAPM_ADC("ADC", शून्य, SND_SOC_NOPM, 0, 0),
 	SND_SOC_DAPM_MUX("Line In 1 Mux", SND_SOC_NOPM, 0, 0, linesw1_mux),
 	SND_SOC_DAPM_INPUT("LIN1_LP"),
 	SND_SOC_DAPM_INPUT("LIN1_RP"),
@@ -76,37 +77,37 @@ static const struct snd_soc_dapm_widget evea_widgets[] = {
 	SND_SOC_DAPM_INPUT("LIN3_LP"),
 	SND_SOC_DAPM_INPUT("LIN3_RP"),
 
-	SND_SOC_DAPM_DAC("DAC HP", NULL, SND_SOC_NOPM, 0, 0),
-	SND_SOC_DAPM_DAC("DAC LO1", NULL, SND_SOC_NOPM, 0, 0),
-	SND_SOC_DAPM_DAC("DAC LO2", NULL, SND_SOC_NOPM, 0, 0),
+	SND_SOC_DAPM_DAC("DAC HP", शून्य, SND_SOC_NOPM, 0, 0),
+	SND_SOC_DAPM_DAC("DAC LO1", शून्य, SND_SOC_NOPM, 0, 0),
+	SND_SOC_DAPM_DAC("DAC LO2", शून्य, SND_SOC_NOPM, 0, 0),
 	SND_SOC_DAPM_OUTPUT("HP1_L"),
 	SND_SOC_DAPM_OUTPUT("HP1_R"),
 	SND_SOC_DAPM_OUTPUT("LO2_L"),
 	SND_SOC_DAPM_OUTPUT("LO2_R"),
-};
+पूर्ण;
 
-static const struct snd_soc_dapm_route evea_routes[] = {
-	{ "Line In 1", NULL, "ADC" },
-	{ "ADC", NULL, "Line In 1 Mux" },
-	{ "Line In 1 Mux", "LIN1", "LIN1_LP" },
-	{ "Line In 1 Mux", "LIN1", "LIN1_RP" },
-	{ "Line In 1 Mux", "LIN2", "LIN2_LP" },
-	{ "Line In 1 Mux", "LIN2", "LIN2_RP" },
-	{ "Line In 1 Mux", "LIN3", "LIN3_LP" },
-	{ "Line In 1 Mux", "LIN3", "LIN3_RP" },
+अटल स्थिर काष्ठा snd_soc_dapm_route evea_routes[] = अणु
+	अणु "Line In 1", शून्य, "ADC" पूर्ण,
+	अणु "ADC", शून्य, "Line In 1 Mux" पूर्ण,
+	अणु "Line In 1 Mux", "LIN1", "LIN1_LP" पूर्ण,
+	अणु "Line In 1 Mux", "LIN1", "LIN1_RP" पूर्ण,
+	अणु "Line In 1 Mux", "LIN2", "LIN2_LP" पूर्ण,
+	अणु "Line In 1 Mux", "LIN2", "LIN2_RP" पूर्ण,
+	अणु "Line In 1 Mux", "LIN3", "LIN3_LP" पूर्ण,
+	अणु "Line In 1 Mux", "LIN3", "LIN3_RP" पूर्ण,
 
-	{ "DAC HP", NULL, "Headphone 1" },
-	{ "DAC LO1", NULL, "Line Out 1" },
-	{ "DAC LO2", NULL, "Line Out 2" },
-	{ "HP1_L", NULL, "DAC HP" },
-	{ "HP1_R", NULL, "DAC HP" },
-	{ "LO2_L", NULL, "DAC LO2" },
-	{ "LO2_R", NULL, "DAC LO2" },
-};
+	अणु "DAC HP", शून्य, "Headphone 1" पूर्ण,
+	अणु "DAC LO1", शून्य, "Line Out 1" पूर्ण,
+	अणु "DAC LO2", शून्य, "Line Out 2" पूर्ण,
+	अणु "HP1_L", शून्य, "DAC HP" पूर्ण,
+	अणु "HP1_R", शून्य, "DAC HP" पूर्ण,
+	अणु "LO2_L", शून्य, "DAC LO2" पूर्ण,
+	अणु "LO2_R", शून्य, "DAC LO2" पूर्ण,
+पूर्ण;
 
-static void evea_set_power_state_on(struct evea_priv *evea)
-{
-	struct regmap *map = evea->regmap;
+अटल व्योम evea_set_घातer_state_on(काष्ठा evea_priv *evea)
+अणु
+	काष्ठा regmap *map = evea->regmap;
 
 	regmap_update_bits(map, AANAPOW, AANAPOW_A_POWD,
 			   AANAPOW_A_POWD);
@@ -120,11 +121,11 @@ static void evea_set_power_state_on(struct evea_priv *evea)
 	regmap_update_bits(map, ADACSEQ2(0), ADACSEQ2_ADACIN_FIX, 0);
 	regmap_update_bits(map, ADACSEQ2(1), ADACSEQ2_ADACIN_FIX, 0);
 	regmap_update_bits(map, ADACSEQ2(2), ADACSEQ2_ADACIN_FIX, 0);
-}
+पूर्ण
 
-static void evea_set_power_state_off(struct evea_priv *evea)
-{
-	struct regmap *map = evea->regmap;
+अटल व्योम evea_set_घातer_state_off(काष्ठा evea_priv *evea)
+अणु
+	काष्ठा regmap *map = evea->regmap;
 
 	regmap_update_bits(map, ADAC1ODC, ADAC1ODC_HP_DIS_RES_MASK,
 			   ADAC1ODC_HP_DIS_RES_ON);
@@ -139,13 +140,13 @@ static void evea_set_power_state_off(struct evea_priv *evea)
 	regmap_update_bits(map, ALO1OUTPOW, ALO1OUTPOW_LO1_ON, 0);
 	regmap_update_bits(map, ALO2OUTPOW, ALO2OUTPOW_LO2_ON, 0);
 	regmap_update_bits(map, AHPOUTPOW, AHPOUTPOW_HP_ON, 0);
-}
+पूर्ण
 
-static int evea_update_switch_lin(struct evea_priv *evea)
-{
-	struct regmap *map = evea->regmap;
+अटल पूर्णांक evea_update_चयन_lin(काष्ठा evea_priv *evea)
+अणु
+	काष्ठा regmap *map = evea->regmap;
 
-	if (evea->switch_lin) {
+	अगर (evea->चयन_lin) अणु
 		regmap_update_bits(map, ALINEPOW,
 				   ALINEPOW_LIN2_POWD | ALINEPOW_LIN1_POWD,
 				   ALINEPOW_LIN2_POWD | ALINEPOW_LIN1_POWD);
@@ -154,22 +155,22 @@ static int evea_update_switch_lin(struct evea_priv *evea)
 				   AADCPOW_AADC_POWD);
 		regmap_update_bits(map, AADCPOW(1), AADCPOW_AADC_POWD,
 				   AADCPOW_AADC_POWD);
-	} else {
+	पूर्ण अन्यथा अणु
 		regmap_update_bits(map, AADCPOW(0), AADCPOW_AADC_POWD, 0);
 		regmap_update_bits(map, AADCPOW(1), AADCPOW_AADC_POWD, 0);
 
 		regmap_update_bits(map, ALINEPOW,
 				   ALINEPOW_LIN2_POWD | ALINEPOW_LIN1_POWD, 0);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int evea_update_switch_lo(struct evea_priv *evea)
-{
-	struct regmap *map = evea->regmap;
+अटल पूर्णांक evea_update_चयन_lo(काष्ठा evea_priv *evea)
+अणु
+	काष्ठा regmap *map = evea->regmap;
 
-	if (evea->switch_lo) {
+	अगर (evea->चयन_lo) अणु
 		regmap_update_bits(map, ADACSEQ1(0), ADACSEQ1_MMUTE, 0);
 		regmap_update_bits(map, ADACSEQ1(2), ADACSEQ1_MMUTE, 0);
 
@@ -178,7 +179,7 @@ static int evea_update_switch_lo(struct evea_priv *evea)
 		regmap_update_bits(map, ALO2OUTPOW,
 				   ALO2OUTPOW_ADAC2_MUTE | ALO2OUTPOW_LO2_ON,
 				   ALO2OUTPOW_ADAC2_MUTE | ALO2OUTPOW_LO2_ON);
-	} else {
+	पूर्ण अन्यथा अणु
 		regmap_update_bits(map, ADACSEQ1(0), ADACSEQ1_MMUTE,
 				   ADACSEQ1_MMUTE);
 		regmap_update_bits(map, ADACSEQ1(2), ADACSEQ1_MMUTE,
@@ -188,16 +189,16 @@ static int evea_update_switch_lo(struct evea_priv *evea)
 		regmap_update_bits(map, ALO2OUTPOW,
 				   ALO2OUTPOW_ADAC2_MUTE | ALO2OUTPOW_LO2_ON,
 				   0);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int evea_update_switch_hp(struct evea_priv *evea)
-{
-	struct regmap *map = evea->regmap;
+अटल पूर्णांक evea_update_चयन_hp(काष्ठा evea_priv *evea)
+अणु
+	काष्ठा regmap *map = evea->regmap;
 
-	if (evea->switch_hp) {
+	अगर (evea->चयन_hp) अणु
 		regmap_update_bits(map, ADACSEQ1(1), ADACSEQ1_MMUTE, 0);
 
 		regmap_update_bits(map, AHPOUTPOW, AHPOUTPOW_HP_ON,
@@ -205,7 +206,7 @@ static int evea_update_switch_hp(struct evea_priv *evea)
 
 		regmap_update_bits(map, ADAC1ODC, ADAC1ODC_HP_DIS_RES_MASK,
 				   ADAC1ODC_HP_DIS_RES_OFF);
-	} else {
+	पूर्ण अन्यथा अणु
 		regmap_update_bits(map, ADAC1ODC, ADAC1ODC_HP_DIS_RES_MASK,
 				   ADAC1ODC_HP_DIS_RES_ON);
 
@@ -213,359 +214,359 @@ static int evea_update_switch_hp(struct evea_priv *evea)
 				   ADACSEQ1_MMUTE);
 
 		regmap_update_bits(map, AHPOUTPOW, AHPOUTPOW_HP_ON, 0);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void evea_update_switch_all(struct evea_priv *evea)
-{
-	evea_update_switch_lin(evea);
-	evea_update_switch_lo(evea);
-	evea_update_switch_hp(evea);
-}
+अटल व्योम evea_update_चयन_all(काष्ठा evea_priv *evea)
+अणु
+	evea_update_चयन_lin(evea);
+	evea_update_चयन_lo(evea);
+	evea_update_चयन_hp(evea);
+पूर्ण
 
-static int evea_get_switch_lin(struct snd_kcontrol *kcontrol,
-			       struct snd_ctl_elem_value *ucontrol)
-{
-	struct snd_soc_component *component = snd_soc_kcontrol_component(kcontrol);
-	struct evea_priv *evea = snd_soc_component_get_drvdata(component);
+अटल पूर्णांक evea_get_चयन_lin(काष्ठा snd_kcontrol *kcontrol,
+			       काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	काष्ठा snd_soc_component *component = snd_soc_kcontrol_component(kcontrol);
+	काष्ठा evea_priv *evea = snd_soc_component_get_drvdata(component);
 
-	ucontrol->value.integer.value[0] = evea->switch_lin;
+	ucontrol->value.पूर्णांकeger.value[0] = evea->चयन_lin;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int evea_set_switch_lin(struct snd_kcontrol *kcontrol,
-			       struct snd_ctl_elem_value *ucontrol)
-{
-	struct snd_soc_component *component = snd_soc_kcontrol_component(kcontrol);
-	struct evea_priv *evea = snd_soc_component_get_drvdata(component);
+अटल पूर्णांक evea_set_चयन_lin(काष्ठा snd_kcontrol *kcontrol,
+			       काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	काष्ठा snd_soc_component *component = snd_soc_kcontrol_component(kcontrol);
+	काष्ठा evea_priv *evea = snd_soc_component_get_drvdata(component);
 
-	if (evea->switch_lin == ucontrol->value.integer.value[0])
-		return 0;
+	अगर (evea->चयन_lin == ucontrol->value.पूर्णांकeger.value[0])
+		वापस 0;
 
-	evea->switch_lin = ucontrol->value.integer.value[0];
+	evea->चयन_lin = ucontrol->value.पूर्णांकeger.value[0];
 
-	return evea_update_switch_lin(evea);
-}
+	वापस evea_update_चयन_lin(evea);
+पूर्ण
 
-static int evea_get_switch_lo(struct snd_kcontrol *kcontrol,
-			      struct snd_ctl_elem_value *ucontrol)
-{
-	struct snd_soc_component *component = snd_soc_kcontrol_component(kcontrol);
-	struct evea_priv *evea = snd_soc_component_get_drvdata(component);
+अटल पूर्णांक evea_get_चयन_lo(काष्ठा snd_kcontrol *kcontrol,
+			      काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	काष्ठा snd_soc_component *component = snd_soc_kcontrol_component(kcontrol);
+	काष्ठा evea_priv *evea = snd_soc_component_get_drvdata(component);
 
-	ucontrol->value.integer.value[0] = evea->switch_lo;
+	ucontrol->value.पूर्णांकeger.value[0] = evea->चयन_lo;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int evea_set_switch_lo(struct snd_kcontrol *kcontrol,
-			      struct snd_ctl_elem_value *ucontrol)
-{
-	struct snd_soc_component *component = snd_soc_kcontrol_component(kcontrol);
-	struct evea_priv *evea = snd_soc_component_get_drvdata(component);
+अटल पूर्णांक evea_set_चयन_lo(काष्ठा snd_kcontrol *kcontrol,
+			      काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	काष्ठा snd_soc_component *component = snd_soc_kcontrol_component(kcontrol);
+	काष्ठा evea_priv *evea = snd_soc_component_get_drvdata(component);
 
-	if (evea->switch_lo == ucontrol->value.integer.value[0])
-		return 0;
+	अगर (evea->चयन_lo == ucontrol->value.पूर्णांकeger.value[0])
+		वापस 0;
 
-	evea->switch_lo = ucontrol->value.integer.value[0];
+	evea->चयन_lo = ucontrol->value.पूर्णांकeger.value[0];
 
-	return evea_update_switch_lo(evea);
-}
+	वापस evea_update_चयन_lo(evea);
+पूर्ण
 
-static int evea_get_switch_hp(struct snd_kcontrol *kcontrol,
-			      struct snd_ctl_elem_value *ucontrol)
-{
-	struct snd_soc_component *component = snd_soc_kcontrol_component(kcontrol);
-	struct evea_priv *evea = snd_soc_component_get_drvdata(component);
+अटल पूर्णांक evea_get_चयन_hp(काष्ठा snd_kcontrol *kcontrol,
+			      काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	काष्ठा snd_soc_component *component = snd_soc_kcontrol_component(kcontrol);
+	काष्ठा evea_priv *evea = snd_soc_component_get_drvdata(component);
 
-	ucontrol->value.integer.value[0] = evea->switch_hp;
+	ucontrol->value.पूर्णांकeger.value[0] = evea->चयन_hp;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int evea_set_switch_hp(struct snd_kcontrol *kcontrol,
-			      struct snd_ctl_elem_value *ucontrol)
-{
-	struct snd_soc_component *component = snd_soc_kcontrol_component(kcontrol);
-	struct evea_priv *evea = snd_soc_component_get_drvdata(component);
+अटल पूर्णांक evea_set_चयन_hp(काष्ठा snd_kcontrol *kcontrol,
+			      काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	काष्ठा snd_soc_component *component = snd_soc_kcontrol_component(kcontrol);
+	काष्ठा evea_priv *evea = snd_soc_component_get_drvdata(component);
 
-	if (evea->switch_hp == ucontrol->value.integer.value[0])
-		return 0;
+	अगर (evea->चयन_hp == ucontrol->value.पूर्णांकeger.value[0])
+		वापस 0;
 
-	evea->switch_hp = ucontrol->value.integer.value[0];
+	evea->चयन_hp = ucontrol->value.पूर्णांकeger.value[0];
 
-	return evea_update_switch_hp(evea);
-}
+	वापस evea_update_चयन_hp(evea);
+पूर्ण
 
-static const struct snd_kcontrol_new evea_controls[] = {
+अटल स्थिर काष्ठा snd_kcontrol_new evea_controls[] = अणु
 	SOC_SINGLE_BOOL_EXT("Line Capture Switch", 0,
-			    evea_get_switch_lin, evea_set_switch_lin),
+			    evea_get_चयन_lin, evea_set_चयन_lin),
 	SOC_SINGLE_BOOL_EXT("Line Playback Switch", 0,
-			    evea_get_switch_lo, evea_set_switch_lo),
+			    evea_get_चयन_lo, evea_set_चयन_lo),
 	SOC_SINGLE_BOOL_EXT("Headphone Playback Switch", 0,
-			    evea_get_switch_hp, evea_set_switch_hp),
-};
+			    evea_get_चयन_hp, evea_set_चयन_hp),
+पूर्ण;
 
-static int evea_codec_probe(struct snd_soc_component *component)
-{
-	struct evea_priv *evea = snd_soc_component_get_drvdata(component);
+अटल पूर्णांक evea_codec_probe(काष्ठा snd_soc_component *component)
+अणु
+	काष्ठा evea_priv *evea = snd_soc_component_get_drvdata(component);
 
-	evea->switch_lin = 1;
-	evea->switch_lo = 1;
-	evea->switch_hp = 1;
+	evea->चयन_lin = 1;
+	evea->चयन_lo = 1;
+	evea->चयन_hp = 1;
 
-	evea_set_power_state_on(evea);
-	evea_update_switch_all(evea);
+	evea_set_घातer_state_on(evea);
+	evea_update_चयन_all(evea);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int evea_codec_suspend(struct snd_soc_component *component)
-{
-	struct evea_priv *evea = snd_soc_component_get_drvdata(component);
+अटल पूर्णांक evea_codec_suspend(काष्ठा snd_soc_component *component)
+अणु
+	काष्ठा evea_priv *evea = snd_soc_component_get_drvdata(component);
 
-	evea_set_power_state_off(evea);
+	evea_set_घातer_state_off(evea);
 
-	reset_control_assert(evea->rst_adamv);
-	reset_control_assert(evea->rst_exiv);
-	reset_control_assert(evea->rst);
+	reset_control_निश्चित(evea->rst_adamv);
+	reset_control_निश्चित(evea->rst_exiv);
+	reset_control_निश्चित(evea->rst);
 
 	clk_disable_unprepare(evea->clk_exiv);
 	clk_disable_unprepare(evea->clk);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int evea_codec_resume(struct snd_soc_component *component)
-{
-	struct evea_priv *evea = snd_soc_component_get_drvdata(component);
-	int ret;
+अटल पूर्णांक evea_codec_resume(काष्ठा snd_soc_component *component)
+अणु
+	काष्ठा evea_priv *evea = snd_soc_component_get_drvdata(component);
+	पूर्णांक ret;
 
 	ret = clk_prepare_enable(evea->clk);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ret = clk_prepare_enable(evea->clk_exiv);
-	if (ret)
-		goto err_out_clock;
+	अगर (ret)
+		जाओ err_out_घड़ी;
 
-	ret = reset_control_deassert(evea->rst);
-	if (ret)
-		goto err_out_clock_exiv;
+	ret = reset_control_deनिश्चित(evea->rst);
+	अगर (ret)
+		जाओ err_out_घड़ी_exiv;
 
-	ret = reset_control_deassert(evea->rst_exiv);
-	if (ret)
-		goto err_out_reset;
+	ret = reset_control_deनिश्चित(evea->rst_exiv);
+	अगर (ret)
+		जाओ err_out_reset;
 
-	ret = reset_control_deassert(evea->rst_adamv);
-	if (ret)
-		goto err_out_reset_exiv;
+	ret = reset_control_deनिश्चित(evea->rst_adamv);
+	अगर (ret)
+		जाओ err_out_reset_exiv;
 
-	evea_set_power_state_on(evea);
-	evea_update_switch_all(evea);
+	evea_set_घातer_state_on(evea);
+	evea_update_चयन_all(evea);
 
-	return 0;
+	वापस 0;
 
 err_out_reset_exiv:
-	reset_control_assert(evea->rst_exiv);
+	reset_control_निश्चित(evea->rst_exiv);
 
 err_out_reset:
-	reset_control_assert(evea->rst);
+	reset_control_निश्चित(evea->rst);
 
-err_out_clock_exiv:
+err_out_घड़ी_exiv:
 	clk_disable_unprepare(evea->clk_exiv);
 
-err_out_clock:
+err_out_घड़ी:
 	clk_disable_unprepare(evea->clk);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static struct snd_soc_component_driver soc_codec_evea = {
+अटल काष्ठा snd_soc_component_driver soc_codec_evea = अणु
 	.probe			= evea_codec_probe,
 	.suspend		= evea_codec_suspend,
 	.resume			= evea_codec_resume,
-	.dapm_widgets		= evea_widgets,
-	.num_dapm_widgets	= ARRAY_SIZE(evea_widgets),
+	.dapm_widमाला_लो		= evea_widमाला_लो,
+	.num_dapm_widमाला_लो	= ARRAY_SIZE(evea_widमाला_लो),
 	.dapm_routes		= evea_routes,
 	.num_dapm_routes	= ARRAY_SIZE(evea_routes),
 	.controls		= evea_controls,
 	.num_controls		= ARRAY_SIZE(evea_controls),
 	.idle_bias_on		= 1,
-	.use_pmdown_time	= 1,
+	.use_pmकरोwn_समय	= 1,
 	.endianness		= 1,
 	.non_legacy_dai_naming	= 1,
-};
+पूर्ण;
 
-static struct snd_soc_dai_driver soc_dai_evea[] = {
-	{
+अटल काष्ठा snd_soc_dai_driver soc_dai_evea[] = अणु
+	अणु
 		.name     = DRV_NAME "-line1",
-		.playback = {
+		.playback = अणु
 			.stream_name  = "Line Out 1",
-			.formats      = EVEA_FORMATS,
+			.क्रमmats      = EVEA_FORMATS,
 			.rates        = EVEA_RATES,
 			.channels_min = 2,
 			.channels_max = 2,
-		},
-		.capture = {
+		पूर्ण,
+		.capture = अणु
 			.stream_name  = "Line In 1",
-			.formats      = EVEA_FORMATS,
+			.क्रमmats      = EVEA_FORMATS,
 			.rates        = EVEA_RATES,
 			.channels_min = 2,
 			.channels_max = 2,
-		},
-	},
-	{
+		पूर्ण,
+	पूर्ण,
+	अणु
 		.name     = DRV_NAME "-hp1",
-		.playback = {
+		.playback = अणु
 			.stream_name  = "Headphone 1",
-			.formats      = EVEA_FORMATS,
+			.क्रमmats      = EVEA_FORMATS,
 			.rates        = EVEA_RATES,
 			.channels_min = 2,
 			.channels_max = 2,
-		},
-	},
-	{
+		पूर्ण,
+	पूर्ण,
+	अणु
 		.name     = DRV_NAME "-lo2",
-		.playback = {
+		.playback = अणु
 			.stream_name  = "Line Out 2",
-			.formats      = EVEA_FORMATS,
+			.क्रमmats      = EVEA_FORMATS,
 			.rates        = EVEA_RATES,
 			.channels_min = 2,
 			.channels_max = 2,
-		},
-	},
-};
+		पूर्ण,
+	पूर्ण,
+पूर्ण;
 
-static const struct regmap_config evea_regmap_config = {
+अटल स्थिर काष्ठा regmap_config evea_regmap_config = अणु
 	.reg_bits      = 32,
 	.reg_stride    = 4,
 	.val_bits      = 32,
-	.max_register  = 0xffc,
+	.max_रेजिस्टर  = 0xffc,
 	.cache_type    = REGCACHE_NONE,
-};
+पूर्ण;
 
-static int evea_probe(struct platform_device *pdev)
-{
-	struct evea_priv *evea;
-	void __iomem *preg;
-	int ret;
+अटल पूर्णांक evea_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा evea_priv *evea;
+	व्योम __iomem *preg;
+	पूर्णांक ret;
 
-	evea = devm_kzalloc(&pdev->dev, sizeof(struct evea_priv), GFP_KERNEL);
-	if (!evea)
-		return -ENOMEM;
+	evea = devm_kzalloc(&pdev->dev, माप(काष्ठा evea_priv), GFP_KERNEL);
+	अगर (!evea)
+		वापस -ENOMEM;
 
 	evea->clk = devm_clk_get(&pdev->dev, "evea");
-	if (IS_ERR(evea->clk))
-		return PTR_ERR(evea->clk);
+	अगर (IS_ERR(evea->clk))
+		वापस PTR_ERR(evea->clk);
 
 	evea->clk_exiv = devm_clk_get(&pdev->dev, "exiv");
-	if (IS_ERR(evea->clk_exiv))
-		return PTR_ERR(evea->clk_exiv);
+	अगर (IS_ERR(evea->clk_exiv))
+		वापस PTR_ERR(evea->clk_exiv);
 
 	evea->rst = devm_reset_control_get_shared(&pdev->dev, "evea");
-	if (IS_ERR(evea->rst))
-		return PTR_ERR(evea->rst);
+	अगर (IS_ERR(evea->rst))
+		वापस PTR_ERR(evea->rst);
 
 	evea->rst_exiv = devm_reset_control_get_shared(&pdev->dev, "exiv");
-	if (IS_ERR(evea->rst_exiv))
-		return PTR_ERR(evea->rst_exiv);
+	अगर (IS_ERR(evea->rst_exiv))
+		वापस PTR_ERR(evea->rst_exiv);
 
-	preg = devm_platform_ioremap_resource(pdev, 0);
-	if (IS_ERR(preg))
-		return PTR_ERR(preg);
+	preg = devm_platक्रमm_ioremap_resource(pdev, 0);
+	अगर (IS_ERR(preg))
+		वापस PTR_ERR(preg);
 
 	evea->regmap = devm_regmap_init_mmio(&pdev->dev, preg,
 					     &evea_regmap_config);
-	if (IS_ERR(evea->regmap))
-		return PTR_ERR(evea->regmap);
+	अगर (IS_ERR(evea->regmap))
+		वापस PTR_ERR(evea->regmap);
 
 	ret = clk_prepare_enable(evea->clk);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ret = clk_prepare_enable(evea->clk_exiv);
-	if (ret)
-		goto err_out_clock;
+	अगर (ret)
+		जाओ err_out_घड़ी;
 
-	ret = reset_control_deassert(evea->rst);
-	if (ret)
-		goto err_out_clock_exiv;
+	ret = reset_control_deनिश्चित(evea->rst);
+	अगर (ret)
+		जाओ err_out_घड़ी_exiv;
 
-	ret = reset_control_deassert(evea->rst_exiv);
-	if (ret)
-		goto err_out_reset;
+	ret = reset_control_deनिश्चित(evea->rst_exiv);
+	अगर (ret)
+		जाओ err_out_reset;
 
-	/* ADAMV will hangup if EXIV reset is asserted */
+	/* ADAMV will hangup अगर EXIV reset is निश्चितed */
 	evea->rst_adamv = devm_reset_control_get_shared(&pdev->dev, "adamv");
-	if (IS_ERR(evea->rst_adamv)) {
+	अगर (IS_ERR(evea->rst_adamv)) अणु
 		ret = PTR_ERR(evea->rst_adamv);
-		goto err_out_reset_exiv;
-	}
+		जाओ err_out_reset_exiv;
+	पूर्ण
 
-	ret = reset_control_deassert(evea->rst_adamv);
-	if (ret)
-		goto err_out_reset_exiv;
+	ret = reset_control_deनिश्चित(evea->rst_adamv);
+	अगर (ret)
+		जाओ err_out_reset_exiv;
 
-	platform_set_drvdata(pdev, evea);
+	platक्रमm_set_drvdata(pdev, evea);
 
-	ret = devm_snd_soc_register_component(&pdev->dev, &soc_codec_evea,
+	ret = devm_snd_soc_रेजिस्टर_component(&pdev->dev, &soc_codec_evea,
 				     soc_dai_evea, ARRAY_SIZE(soc_dai_evea));
-	if (ret)
-		goto err_out_reset_adamv;
+	अगर (ret)
+		जाओ err_out_reset_adamv;
 
-	return 0;
+	वापस 0;
 
 err_out_reset_adamv:
-	reset_control_assert(evea->rst_adamv);
+	reset_control_निश्चित(evea->rst_adamv);
 
 err_out_reset_exiv:
-	reset_control_assert(evea->rst_exiv);
+	reset_control_निश्चित(evea->rst_exiv);
 
 err_out_reset:
-	reset_control_assert(evea->rst);
+	reset_control_निश्चित(evea->rst);
 
-err_out_clock_exiv:
+err_out_घड़ी_exiv:
 	clk_disable_unprepare(evea->clk_exiv);
 
-err_out_clock:
+err_out_घड़ी:
 	clk_disable_unprepare(evea->clk);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int evea_remove(struct platform_device *pdev)
-{
-	struct evea_priv *evea = platform_get_drvdata(pdev);
+अटल पूर्णांक evea_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा evea_priv *evea = platक्रमm_get_drvdata(pdev);
 
-	reset_control_assert(evea->rst_adamv);
-	reset_control_assert(evea->rst_exiv);
-	reset_control_assert(evea->rst);
+	reset_control_निश्चित(evea->rst_adamv);
+	reset_control_निश्चित(evea->rst_exiv);
+	reset_control_निश्चित(evea->rst);
 
 	clk_disable_unprepare(evea->clk_exiv);
 	clk_disable_unprepare(evea->clk);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct of_device_id evea_of_match[] __maybe_unused = {
-	{ .compatible = "socionext,uniphier-evea", },
-	{}
-};
+अटल स्थिर काष्ठा of_device_id evea_of_match[] __maybe_unused = अणु
+	अणु .compatible = "socionext,uniphier-evea", पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, evea_of_match);
 
-static struct platform_driver evea_codec_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver evea_codec_driver = अणु
+	.driver = अणु
 		.name = DRV_NAME,
 		.of_match_table = of_match_ptr(evea_of_match),
-	},
+	पूर्ण,
 	.probe  = evea_probe,
-	.remove = evea_remove,
-};
-module_platform_driver(evea_codec_driver);
+	.हटाओ = evea_हटाओ,
+पूर्ण;
+module_platक्रमm_driver(evea_codec_driver);
 
 MODULE_AUTHOR("Katsuhiro Suzuki <suzuki.katsuhiro@socionext.com>");
 MODULE_DESCRIPTION("UniPhier EVEA codec driver");

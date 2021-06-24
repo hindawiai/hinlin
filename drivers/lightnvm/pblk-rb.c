@@ -1,138 +1,139 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * Copyright (C) 2016 CNEX Labs
- * Initial release: Javier Gonzalez <javier@cnexlabs.com>
+ * Copyright (C) 2016 CNEX Lअसल
+ * Initial release: Javier Gonzalez <javier@cnexद_असल.com>
  *
  * Based upon the circular ringbuffer.
  *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License version
+ * This program is मुक्त software; you can redistribute it and/or
+ * modअगरy it under the terms of the GNU General Public License version
  * 2 as published by the Free Software Foundation.
  *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * General Public License for more details.
+ * General Public License क्रम more details.
  *
- * pblk-rb.c - pblk's write buffer
+ * pblk-rb.c - pblk's ग_लिखो buffer
  */
 
-#include <linux/circ_buf.h>
+#समावेश <linux/circ_buf.h>
 
-#include "pblk.h"
+#समावेश "pblk.h"
 
-static DECLARE_RWSEM(pblk_rb_lock);
+अटल DECLARE_RWSEM(pblk_rb_lock);
 
-static void pblk_rb_data_free(struct pblk_rb *rb)
-{
-	struct pblk_rb_pages *p, *t;
+अटल व्योम pblk_rb_data_मुक्त(काष्ठा pblk_rb *rb)
+अणु
+	काष्ठा pblk_rb_pages *p, *t;
 
-	down_write(&pblk_rb_lock);
-	list_for_each_entry_safe(p, t, &rb->pages, list) {
-		free_pages((unsigned long)page_address(p->pages), p->order);
+	करोwn_ग_लिखो(&pblk_rb_lock);
+	list_क्रम_each_entry_safe(p, t, &rb->pages, list) अणु
+		मुक्त_pages((अचिन्हित दीर्घ)page_address(p->pages), p->order);
 		list_del(&p->list);
-		kfree(p);
-	}
-	up_write(&pblk_rb_lock);
-}
+		kमुक्त(p);
+	पूर्ण
+	up_ग_लिखो(&pblk_rb_lock);
+पूर्ण
 
-void pblk_rb_free(struct pblk_rb *rb)
-{
-	pblk_rb_data_free(rb);
-	vfree(rb->entries);
-}
+व्योम pblk_rb_मुक्त(काष्ठा pblk_rb *rb)
+अणु
+	pblk_rb_data_मुक्त(rb);
+	vमुक्त(rb->entries);
+पूर्ण
 
 /*
- * pblk_rb_calculate_size -- calculate the size of the write buffer
+ * pblk_rb_calculate_size -- calculate the size of the ग_लिखो buffer
  */
-static unsigned int pblk_rb_calculate_size(unsigned int nr_entries,
-					   unsigned int threshold)
-{
-	unsigned int thr_sz = 1 << (get_count_order(threshold + NVM_MAX_VLBA));
-	unsigned int max_sz = max(thr_sz, nr_entries);
-	unsigned int max_io;
+अटल अचिन्हित पूर्णांक pblk_rb_calculate_size(अचिन्हित पूर्णांक nr_entries,
+					   अचिन्हित पूर्णांक threshold)
+अणु
+	अचिन्हित पूर्णांक thr_sz = 1 << (get_count_order(threshold + NVM_MAX_VLBA));
+	अचिन्हित पूर्णांक max_sz = max(thr_sz, nr_entries);
+	अचिन्हित पूर्णांक max_io;
 
-	/* Alloc a write buffer that can (i) fit at least two split bios
+	/* Alloc a ग_लिखो buffer that can (i) fit at least two split bios
 	 * (considering max I/O size NVM_MAX_VLBA, and (ii) guarantee that the
 	 * threshold will be respected
 	 */
-	max_io = (1 << max((int)(get_count_order(max_sz)),
-				(int)(get_count_order(NVM_MAX_VLBA << 1))));
-	if ((threshold + NVM_MAX_VLBA) >= max_io)
+	max_io = (1 << max((पूर्णांक)(get_count_order(max_sz)),
+				(पूर्णांक)(get_count_order(NVM_MAX_VLBA << 1))));
+	अगर ((threshold + NVM_MAX_VLBA) >= max_io)
 		max_io <<= 1;
 
-	return max_io;
-}
+	वापस max_io;
+पूर्ण
 
 /*
  * Initialize ring buffer. The data and metadata buffers must be previously
- * allocated and their size must be a power of two
+ * allocated and their size must be a घातer of two
  * (Documentation/core-api/circular-buffers.rst)
  */
-int pblk_rb_init(struct pblk_rb *rb, unsigned int size, unsigned int threshold,
-		 unsigned int seg_size)
-{
-	struct pblk *pblk = container_of(rb, struct pblk, rwb);
-	struct pblk_rb_entry *entries;
-	unsigned int init_entry = 0;
-	unsigned int max_order = MAX_ORDER - 1;
-	unsigned int power_size, power_seg_sz;
-	unsigned int alloc_order, order, iter;
-	unsigned int nr_entries;
+पूर्णांक pblk_rb_init(काष्ठा pblk_rb *rb, अचिन्हित पूर्णांक size, अचिन्हित पूर्णांक threshold,
+		 अचिन्हित पूर्णांक seg_size)
+अणु
+	काष्ठा pblk *pblk = container_of(rb, काष्ठा pblk, rwb);
+	काष्ठा pblk_rb_entry *entries;
+	अचिन्हित पूर्णांक init_entry = 0;
+	अचिन्हित पूर्णांक max_order = MAX_ORDER - 1;
+	अचिन्हित पूर्णांक घातer_size, घातer_seg_sz;
+	अचिन्हित पूर्णांक alloc_order, order, iter;
+	अचिन्हित पूर्णांक nr_entries;
 
 	nr_entries = pblk_rb_calculate_size(size, threshold);
-	entries = vzalloc(array_size(nr_entries, sizeof(struct pblk_rb_entry)));
-	if (!entries)
-		return -ENOMEM;
+	entries = vzalloc(array_size(nr_entries, माप(काष्ठा pblk_rb_entry)));
+	अगर (!entries)
+		वापस -ENOMEM;
 
-	power_size = get_count_order(nr_entries);
-	power_seg_sz = get_count_order(seg_size);
+	घातer_size = get_count_order(nr_entries);
+	घातer_seg_sz = get_count_order(seg_size);
 
-	down_write(&pblk_rb_lock);
+	करोwn_ग_लिखो(&pblk_rb_lock);
 	rb->entries = entries;
-	rb->seg_size = (1 << power_seg_sz);
-	rb->nr_entries = (1 << power_size);
+	rb->seg_size = (1 << घातer_seg_sz);
+	rb->nr_entries = (1 << घातer_size);
 	rb->mem = rb->subm = rb->sync = rb->l2p_update = 0;
 	rb->back_thres = threshold;
-	rb->flush_point = EMPTY_ENTRY;
+	rb->flush_poपूर्णांक = EMPTY_ENTRY;
 
 	spin_lock_init(&rb->w_lock);
 	spin_lock_init(&rb->s_lock);
 
 	INIT_LIST_HEAD(&rb->pages);
 
-	alloc_order = power_size;
-	if (alloc_order >= max_order) {
+	alloc_order = घातer_size;
+	अगर (alloc_order >= max_order) अणु
 		order = max_order;
 		iter = (1 << (alloc_order - max_order));
-	} else {
+	पूर्ण अन्यथा अणु
 		order = alloc_order;
 		iter = 1;
-	}
+	पूर्ण
 
-	do {
-		struct pblk_rb_entry *entry;
-		struct pblk_rb_pages *page_set;
-		void *kaddr;
-		unsigned long set_size;
-		int i;
+	करो अणु
+		काष्ठा pblk_rb_entry *entry;
+		काष्ठा pblk_rb_pages *page_set;
+		व्योम *kaddr;
+		अचिन्हित दीर्घ set_size;
+		पूर्णांक i;
 
-		page_set = kmalloc(sizeof(struct pblk_rb_pages), GFP_KERNEL);
-		if (!page_set) {
-			up_write(&pblk_rb_lock);
-			vfree(entries);
-			return -ENOMEM;
-		}
+		page_set = kदो_स्मृति(माप(काष्ठा pblk_rb_pages), GFP_KERNEL);
+		अगर (!page_set) अणु
+			up_ग_लिखो(&pblk_rb_lock);
+			vमुक्त(entries);
+			वापस -ENOMEM;
+		पूर्ण
 
 		page_set->order = order;
 		page_set->pages = alloc_pages(GFP_KERNEL, order);
-		if (!page_set->pages) {
-			kfree(page_set);
-			pblk_rb_data_free(rb);
-			up_write(&pblk_rb_lock);
-			vfree(entries);
-			return -ENOMEM;
-		}
+		अगर (!page_set->pages) अणु
+			kमुक्त(page_set);
+			pblk_rb_data_मुक्त(rb);
+			up_ग_लिखो(&pblk_rb_lock);
+			vमुक्त(entries);
+			वापस -ENOMEM;
+		पूर्ण
 		kaddr = page_address(page_set->pages);
 
 		entry = &rb->entries[init_entry];
@@ -141,119 +142,119 @@ int pblk_rb_init(struct pblk_rb *rb, unsigned int size, unsigned int threshold,
 		entry->w_ctx.flags = PBLK_WRITABLE_ENTRY;
 
 		set_size = (1 << order);
-		for (i = 1; i < set_size; i++) {
+		क्रम (i = 1; i < set_size; i++) अणु
 			entry = &rb->entries[init_entry];
 			entry->cacheline = pblk_cacheline_to_addr(init_entry++);
 			entry->data = kaddr + (i * rb->seg_size);
 			entry->w_ctx.flags = PBLK_WRITABLE_ENTRY;
 			bio_list_init(&entry->w_ctx.bios);
-		}
+		पूर्ण
 
 		list_add_tail(&page_set->list, &rb->pages);
 		iter--;
-	} while (iter > 0);
-	up_write(&pblk_rb_lock);
+	पूर्ण जबतक (iter > 0);
+	up_ग_लिखो(&pblk_rb_lock);
 
-#ifdef CONFIG_NVM_PBLK_DEBUG
-	atomic_set(&rb->inflight_flush_point, 0);
-#endif
+#अगर_घोषित CONFIG_NVM_PBLK_DEBUG
+	atomic_set(&rb->inflight_flush_poपूर्णांक, 0);
+#पूर्ण_अगर
 
 	/*
-	 * Initialize rate-limiter, which controls access to the write buffer
+	 * Initialize rate-limiter, which controls access to the ग_लिखो buffer
 	 * by user and GC I/O
 	 */
 	pblk_rl_init(&pblk->rl, rb->nr_entries, threshold);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void clean_wctx(struct pblk_w_ctx *w_ctx)
-{
-	int flags;
+अटल व्योम clean_wctx(काष्ठा pblk_w_ctx *w_ctx)
+अणु
+	पूर्णांक flags;
 
 	flags = READ_ONCE(w_ctx->flags);
 	WARN_ONCE(!(flags & PBLK_SUBMITTED_ENTRY),
 			"pblk: overwriting unsubmitted data\n");
 
-	/* Release flags on context. Protect from writes and reads */
+	/* Release flags on context. Protect from ग_लिखोs and पढ़ोs */
 	smp_store_release(&w_ctx->flags, PBLK_WRITABLE_ENTRY);
 	pblk_ppa_set_empty(&w_ctx->ppa);
 	w_ctx->lba = ADDR_EMPTY;
-}
+पूर्ण
 
-#define pblk_rb_ring_count(head, tail, size) CIRC_CNT(head, tail, size)
-#define pblk_rb_ring_space(rb, head, tail, size) \
+#घोषणा pblk_rb_ring_count(head, tail, size) CIRC_CNT(head, tail, size)
+#घोषणा pblk_rb_ring_space(rb, head, tail, size) \
 					(CIRC_SPACE(head, tail, size))
 
 /*
- * Buffer space is calculated with respect to the back pointer signaling
+ * Buffer space is calculated with respect to the back poपूर्णांकer संकेतing
  * synchronized entries to the media.
  */
-static unsigned int pblk_rb_space(struct pblk_rb *rb)
-{
-	unsigned int mem = READ_ONCE(rb->mem);
-	unsigned int sync = READ_ONCE(rb->sync);
+अटल अचिन्हित पूर्णांक pblk_rb_space(काष्ठा pblk_rb *rb)
+अणु
+	अचिन्हित पूर्णांक mem = READ_ONCE(rb->mem);
+	अचिन्हित पूर्णांक sync = READ_ONCE(rb->sync);
 
-	return pblk_rb_ring_space(rb, mem, sync, rb->nr_entries);
-}
+	वापस pblk_rb_ring_space(rb, mem, sync, rb->nr_entries);
+पूर्ण
 
-unsigned int pblk_rb_ptr_wrap(struct pblk_rb *rb, unsigned int p,
-			      unsigned int nr_entries)
-{
-	return (p + nr_entries) & (rb->nr_entries - 1);
-}
+अचिन्हित पूर्णांक pblk_rb_ptr_wrap(काष्ठा pblk_rb *rb, अचिन्हित पूर्णांक p,
+			      अचिन्हित पूर्णांक nr_entries)
+अणु
+	वापस (p + nr_entries) & (rb->nr_entries - 1);
+पूर्ण
 
 /*
- * Buffer count is calculated with respect to the submission entry signaling the
+ * Buffer count is calculated with respect to the submission entry संकेतing the
  * entries that are available to send to the media
  */
-unsigned int pblk_rb_read_count(struct pblk_rb *rb)
-{
-	unsigned int mem = READ_ONCE(rb->mem);
-	unsigned int subm = READ_ONCE(rb->subm);
+अचिन्हित पूर्णांक pblk_rb_पढ़ो_count(काष्ठा pblk_rb *rb)
+अणु
+	अचिन्हित पूर्णांक mem = READ_ONCE(rb->mem);
+	अचिन्हित पूर्णांक subm = READ_ONCE(rb->subm);
 
-	return pblk_rb_ring_count(mem, subm, rb->nr_entries);
-}
+	वापस pblk_rb_ring_count(mem, subm, rb->nr_entries);
+पूर्ण
 
-unsigned int pblk_rb_sync_count(struct pblk_rb *rb)
-{
-	unsigned int mem = READ_ONCE(rb->mem);
-	unsigned int sync = READ_ONCE(rb->sync);
+अचिन्हित पूर्णांक pblk_rb_sync_count(काष्ठा pblk_rb *rb)
+अणु
+	अचिन्हित पूर्णांक mem = READ_ONCE(rb->mem);
+	अचिन्हित पूर्णांक sync = READ_ONCE(rb->sync);
 
-	return pblk_rb_ring_count(mem, sync, rb->nr_entries);
-}
+	वापस pblk_rb_ring_count(mem, sync, rb->nr_entries);
+पूर्ण
 
-unsigned int pblk_rb_read_commit(struct pblk_rb *rb, unsigned int nr_entries)
-{
-	unsigned int subm;
+अचिन्हित पूर्णांक pblk_rb_पढ़ो_commit(काष्ठा pblk_rb *rb, अचिन्हित पूर्णांक nr_entries)
+अणु
+	अचिन्हित पूर्णांक subm;
 
 	subm = READ_ONCE(rb->subm);
-	/* Commit read means updating submission pointer */
+	/* Commit पढ़ो means updating submission poपूर्णांकer */
 	smp_store_release(&rb->subm, pblk_rb_ptr_wrap(rb, subm, nr_entries));
 
-	return subm;
-}
+	वापस subm;
+पूर्ण
 
-static int __pblk_rb_update_l2p(struct pblk_rb *rb, unsigned int to_update)
-{
-	struct pblk *pblk = container_of(rb, struct pblk, rwb);
-	struct pblk_line *line;
-	struct pblk_rb_entry *entry;
-	struct pblk_w_ctx *w_ctx;
-	unsigned int user_io = 0, gc_io = 0;
-	unsigned int i;
-	int flags;
+अटल पूर्णांक __pblk_rb_update_l2p(काष्ठा pblk_rb *rb, अचिन्हित पूर्णांक to_update)
+अणु
+	काष्ठा pblk *pblk = container_of(rb, काष्ठा pblk, rwb);
+	काष्ठा pblk_line *line;
+	काष्ठा pblk_rb_entry *entry;
+	काष्ठा pblk_w_ctx *w_ctx;
+	अचिन्हित पूर्णांक user_io = 0, gc_io = 0;
+	अचिन्हित पूर्णांक i;
+	पूर्णांक flags;
 
-	for (i = 0; i < to_update; i++) {
+	क्रम (i = 0; i < to_update; i++) अणु
 		entry = &rb->entries[rb->l2p_update];
 		w_ctx = &entry->w_ctx;
 
 		flags = READ_ONCE(entry->w_ctx.flags);
-		if (flags & PBLK_IOTYPE_USER)
+		अगर (flags & PBLK_IOTYPE_USER)
 			user_io++;
-		else if (flags & PBLK_IOTYPE_GC)
+		अन्यथा अगर (flags & PBLK_IOTYPE_GC)
 			gc_io++;
-		else
+		अन्यथा
 			WARN(1, "pblk: unknown IO type\n");
 
 		pblk_update_map_dev(pblk, w_ctx->lba, w_ctx->ppa,
@@ -264,400 +265,400 @@ static int __pblk_rb_update_l2p(struct pblk_rb *rb, unsigned int to_update)
 		kref_put(&line->ref, pblk_line_put);
 		clean_wctx(w_ctx);
 		rb->l2p_update = pblk_rb_ptr_wrap(rb, rb->l2p_update, 1);
-	}
+	पूर्ण
 
 	pblk_rl_out(&pblk->rl, user_io, gc_io);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * When we move the l2p_update pointer, we update the l2p table - lookups will
- * point to the physical address instead of to the cacheline in the write buffer
+ * When we move the l2p_update poपूर्णांकer, we update the l2p table - lookups will
+ * poपूर्णांक to the physical address instead of to the cacheline in the ग_लिखो buffer
  * from this moment on.
  */
-static int pblk_rb_update_l2p(struct pblk_rb *rb, unsigned int nr_entries,
-			      unsigned int mem, unsigned int sync)
-{
-	unsigned int space, count;
-	int ret = 0;
+अटल पूर्णांक pblk_rb_update_l2p(काष्ठा pblk_rb *rb, अचिन्हित पूर्णांक nr_entries,
+			      अचिन्हित पूर्णांक mem, अचिन्हित पूर्णांक sync)
+अणु
+	अचिन्हित पूर्णांक space, count;
+	पूर्णांक ret = 0;
 
-	lockdep_assert_held(&rb->w_lock);
+	lockdep_निश्चित_held(&rb->w_lock);
 
 	/* Update l2p only as buffer entries are being overwritten */
 	space = pblk_rb_ring_space(rb, mem, rb->l2p_update, rb->nr_entries);
-	if (space > nr_entries)
-		goto out;
+	अगर (space > nr_entries)
+		जाओ out;
 
 	count = nr_entries - space;
 	/* l2p_update used exclusively under rb->w_lock */
 	ret = __pblk_rb_update_l2p(rb, count);
 
 out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
- * Update the l2p entry for all sectors stored on the write buffer. This means
- * that all future lookups to the l2p table will point to a device address, not
- * to the cacheline in the write buffer.
+ * Update the l2p entry क्रम all sectors stored on the ग_लिखो buffer. This means
+ * that all future lookups to the l2p table will poपूर्णांक to a device address, not
+ * to the cacheline in the ग_लिखो buffer.
  */
-void pblk_rb_sync_l2p(struct pblk_rb *rb)
-{
-	unsigned int sync;
-	unsigned int to_update;
+व्योम pblk_rb_sync_l2p(काष्ठा pblk_rb *rb)
+अणु
+	अचिन्हित पूर्णांक sync;
+	अचिन्हित पूर्णांक to_update;
 
 	spin_lock(&rb->w_lock);
 
-	/* Protect from reads and writes */
+	/* Protect from पढ़ोs and ग_लिखोs */
 	sync = smp_load_acquire(&rb->sync);
 
 	to_update = pblk_rb_ring_count(sync, rb->l2p_update, rb->nr_entries);
 	__pblk_rb_update_l2p(rb, to_update);
 
 	spin_unlock(&rb->w_lock);
-}
+पूर्ण
 
 /*
- * Write @nr_entries to ring buffer from @data buffer if there is enough space.
+ * Write @nr_entries to ring buffer from @data buffer अगर there is enough space.
  * Typically, 4KB data chunks coming from a bio will be copied to the ring
- * buffer, thus the write will fail if not all incoming data can be copied.
+ * buffer, thus the ग_लिखो will fail अगर not all incoming data can be copied.
  *
  */
-static void __pblk_rb_write_entry(struct pblk_rb *rb, void *data,
-				  struct pblk_w_ctx w_ctx,
-				  struct pblk_rb_entry *entry)
-{
-	memcpy(entry->data, data, rb->seg_size);
+अटल व्योम __pblk_rb_ग_लिखो_entry(काष्ठा pblk_rb *rb, व्योम *data,
+				  काष्ठा pblk_w_ctx w_ctx,
+				  काष्ठा pblk_rb_entry *entry)
+अणु
+	स_नकल(entry->data, data, rb->seg_size);
 
 	entry->w_ctx.lba = w_ctx.lba;
 	entry->w_ctx.ppa = w_ctx.ppa;
-}
+पूर्ण
 
-void pblk_rb_write_entry_user(struct pblk_rb *rb, void *data,
-			      struct pblk_w_ctx w_ctx, unsigned int ring_pos)
-{
-	struct pblk *pblk = container_of(rb, struct pblk, rwb);
-	struct pblk_rb_entry *entry;
-	int flags;
+व्योम pblk_rb_ग_लिखो_entry_user(काष्ठा pblk_rb *rb, व्योम *data,
+			      काष्ठा pblk_w_ctx w_ctx, अचिन्हित पूर्णांक ring_pos)
+अणु
+	काष्ठा pblk *pblk = container_of(rb, काष्ठा pblk, rwb);
+	काष्ठा pblk_rb_entry *entry;
+	पूर्णांक flags;
 
 	entry = &rb->entries[ring_pos];
 	flags = READ_ONCE(entry->w_ctx.flags);
-#ifdef CONFIG_NVM_PBLK_DEBUG
-	/* Caller must guarantee that the entry is free */
+#अगर_घोषित CONFIG_NVM_PBLK_DEBUG
+	/* Caller must guarantee that the entry is मुक्त */
 	BUG_ON(!(flags & PBLK_WRITABLE_ENTRY));
-#endif
+#पूर्ण_अगर
 
-	__pblk_rb_write_entry(rb, data, w_ctx, entry);
+	__pblk_rb_ग_लिखो_entry(rb, data, w_ctx, entry);
 
 	pblk_update_map_cache(pblk, w_ctx.lba, entry->cacheline);
 	flags = w_ctx.flags | PBLK_WRITTEN_DATA;
 
-	/* Release flags on write context. Protect from writes */
+	/* Release flags on ग_लिखो context. Protect from ग_लिखोs */
 	smp_store_release(&entry->w_ctx.flags, flags);
-}
+पूर्ण
 
-void pblk_rb_write_entry_gc(struct pblk_rb *rb, void *data,
-			    struct pblk_w_ctx w_ctx, struct pblk_line *line,
-			    u64 paddr, unsigned int ring_pos)
-{
-	struct pblk *pblk = container_of(rb, struct pblk, rwb);
-	struct pblk_rb_entry *entry;
-	int flags;
+व्योम pblk_rb_ग_लिखो_entry_gc(काष्ठा pblk_rb *rb, व्योम *data,
+			    काष्ठा pblk_w_ctx w_ctx, काष्ठा pblk_line *line,
+			    u64 paddr, अचिन्हित पूर्णांक ring_pos)
+अणु
+	काष्ठा pblk *pblk = container_of(rb, काष्ठा pblk, rwb);
+	काष्ठा pblk_rb_entry *entry;
+	पूर्णांक flags;
 
 	entry = &rb->entries[ring_pos];
 	flags = READ_ONCE(entry->w_ctx.flags);
-#ifdef CONFIG_NVM_PBLK_DEBUG
-	/* Caller must guarantee that the entry is free */
+#अगर_घोषित CONFIG_NVM_PBLK_DEBUG
+	/* Caller must guarantee that the entry is मुक्त */
 	BUG_ON(!(flags & PBLK_WRITABLE_ENTRY));
-#endif
+#पूर्ण_अगर
 
-	__pblk_rb_write_entry(rb, data, w_ctx, entry);
+	__pblk_rb_ग_लिखो_entry(rb, data, w_ctx, entry);
 
-	if (!pblk_update_map_gc(pblk, w_ctx.lba, entry->cacheline, line, paddr))
+	अगर (!pblk_update_map_gc(pblk, w_ctx.lba, entry->cacheline, line, paddr))
 		entry->w_ctx.lba = ADDR_EMPTY;
 
 	flags = w_ctx.flags | PBLK_WRITTEN_DATA;
 
-	/* Release flags on write context. Protect from writes */
+	/* Release flags on ग_लिखो context. Protect from ग_लिखोs */
 	smp_store_release(&entry->w_ctx.flags, flags);
-}
+पूर्ण
 
-static int pblk_rb_flush_point_set(struct pblk_rb *rb, struct bio *bio,
-				   unsigned int pos)
-{
-	struct pblk_rb_entry *entry;
-	unsigned int sync, flush_point;
+अटल पूर्णांक pblk_rb_flush_poपूर्णांक_set(काष्ठा pblk_rb *rb, काष्ठा bio *bio,
+				   अचिन्हित पूर्णांक pos)
+अणु
+	काष्ठा pblk_rb_entry *entry;
+	अचिन्हित पूर्णांक sync, flush_poपूर्णांक;
 
-	pblk_rb_sync_init(rb, NULL);
+	pblk_rb_sync_init(rb, शून्य);
 	sync = READ_ONCE(rb->sync);
 
-	if (pos == sync) {
-		pblk_rb_sync_end(rb, NULL);
-		return 0;
-	}
+	अगर (pos == sync) अणु
+		pblk_rb_sync_end(rb, शून्य);
+		वापस 0;
+	पूर्ण
 
-#ifdef CONFIG_NVM_PBLK_DEBUG
-	atomic_inc(&rb->inflight_flush_point);
-#endif
+#अगर_घोषित CONFIG_NVM_PBLK_DEBUG
+	atomic_inc(&rb->inflight_flush_poपूर्णांक);
+#पूर्ण_अगर
 
-	flush_point = (pos == 0) ? (rb->nr_entries - 1) : (pos - 1);
-	entry = &rb->entries[flush_point];
+	flush_poपूर्णांक = (pos == 0) ? (rb->nr_entries - 1) : (pos - 1);
+	entry = &rb->entries[flush_poपूर्णांक];
 
-	/* Protect flush points */
-	smp_store_release(&rb->flush_point, flush_point);
+	/* Protect flush poपूर्णांकs */
+	smp_store_release(&rb->flush_poपूर्णांक, flush_poपूर्णांक);
 
-	if (bio)
+	अगर (bio)
 		bio_list_add(&entry->w_ctx.bios, bio);
 
-	pblk_rb_sync_end(rb, NULL);
+	pblk_rb_sync_end(rb, शून्य);
 
-	return bio ? 1 : 0;
-}
+	वापस bio ? 1 : 0;
+पूर्ण
 
-static int __pblk_rb_may_write(struct pblk_rb *rb, unsigned int nr_entries,
-			       unsigned int *pos)
-{
-	unsigned int mem;
-	unsigned int sync;
-	unsigned int threshold;
+अटल पूर्णांक __pblk_rb_may_ग_लिखो(काष्ठा pblk_rb *rb, अचिन्हित पूर्णांक nr_entries,
+			       अचिन्हित पूर्णांक *pos)
+अणु
+	अचिन्हित पूर्णांक mem;
+	अचिन्हित पूर्णांक sync;
+	अचिन्हित पूर्णांक threshold;
 
 	sync = READ_ONCE(rb->sync);
 	mem = READ_ONCE(rb->mem);
 
 	threshold = nr_entries + rb->back_thres;
 
-	if (pblk_rb_ring_space(rb, mem, sync, rb->nr_entries) < threshold)
-		return 0;
+	अगर (pblk_rb_ring_space(rb, mem, sync, rb->nr_entries) < threshold)
+		वापस 0;
 
-	if (pblk_rb_update_l2p(rb, nr_entries, mem, sync))
-		return 0;
+	अगर (pblk_rb_update_l2p(rb, nr_entries, mem, sync))
+		वापस 0;
 
 	*pos = mem;
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-static int pblk_rb_may_write(struct pblk_rb *rb, unsigned int nr_entries,
-			     unsigned int *pos)
-{
-	if (!__pblk_rb_may_write(rb, nr_entries, pos))
-		return 0;
+अटल पूर्णांक pblk_rb_may_ग_लिखो(काष्ठा pblk_rb *rb, अचिन्हित पूर्णांक nr_entries,
+			     अचिन्हित पूर्णांक *pos)
+अणु
+	अगर (!__pblk_rb_may_ग_लिखो(rb, nr_entries, pos))
+		वापस 0;
 
-	/* Protect from read count */
+	/* Protect from पढ़ो count */
 	smp_store_release(&rb->mem, pblk_rb_ptr_wrap(rb, *pos, nr_entries));
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-void pblk_rb_flush(struct pblk_rb *rb)
-{
-	struct pblk *pblk = container_of(rb, struct pblk, rwb);
-	unsigned int mem = READ_ONCE(rb->mem);
+व्योम pblk_rb_flush(काष्ठा pblk_rb *rb)
+अणु
+	काष्ठा pblk *pblk = container_of(rb, काष्ठा pblk, rwb);
+	अचिन्हित पूर्णांक mem = READ_ONCE(rb->mem);
 
-	if (pblk_rb_flush_point_set(rb, NULL, mem))
-		return;
+	अगर (pblk_rb_flush_poपूर्णांक_set(rb, शून्य, mem))
+		वापस;
 
-	pblk_write_kick(pblk);
-}
+	pblk_ग_लिखो_kick(pblk);
+पूर्ण
 
-static int pblk_rb_may_write_flush(struct pblk_rb *rb, unsigned int nr_entries,
-				   unsigned int *pos, struct bio *bio,
-				   int *io_ret)
-{
-	unsigned int mem;
+अटल पूर्णांक pblk_rb_may_ग_लिखो_flush(काष्ठा pblk_rb *rb, अचिन्हित पूर्णांक nr_entries,
+				   अचिन्हित पूर्णांक *pos, काष्ठा bio *bio,
+				   पूर्णांक *io_ret)
+अणु
+	अचिन्हित पूर्णांक mem;
 
-	if (!__pblk_rb_may_write(rb, nr_entries, pos))
-		return 0;
+	अगर (!__pblk_rb_may_ग_लिखो(rb, nr_entries, pos))
+		वापस 0;
 
 	mem = pblk_rb_ptr_wrap(rb, *pos, nr_entries);
 	*io_ret = NVM_IO_DONE;
 
-	if (bio->bi_opf & REQ_PREFLUSH) {
-		struct pblk *pblk = container_of(rb, struct pblk, rwb);
+	अगर (bio->bi_opf & REQ_PREFLUSH) अणु
+		काष्ठा pblk *pblk = container_of(rb, काष्ठा pblk, rwb);
 
 		atomic64_inc(&pblk->nr_flush);
-		if (pblk_rb_flush_point_set(&pblk->rwb, bio, mem))
+		अगर (pblk_rb_flush_poपूर्णांक_set(&pblk->rwb, bio, mem))
 			*io_ret = NVM_IO_OK;
-	}
+	पूर्ण
 
-	/* Protect from read count */
+	/* Protect from पढ़ो count */
 	smp_store_release(&rb->mem, mem);
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
 /*
- * Atomically check that (i) there is space on the write buffer for the
- * incoming I/O, and (ii) the current I/O type has enough budget in the write
+ * Atomically check that (i) there is space on the ग_लिखो buffer क्रम the
+ * incoming I/O, and (ii) the current I/O type has enough budget in the ग_लिखो
  * buffer (rate-limiter).
  */
-int pblk_rb_may_write_user(struct pblk_rb *rb, struct bio *bio,
-			   unsigned int nr_entries, unsigned int *pos)
-{
-	struct pblk *pblk = container_of(rb, struct pblk, rwb);
-	int io_ret;
+पूर्णांक pblk_rb_may_ग_लिखो_user(काष्ठा pblk_rb *rb, काष्ठा bio *bio,
+			   अचिन्हित पूर्णांक nr_entries, अचिन्हित पूर्णांक *pos)
+अणु
+	काष्ठा pblk *pblk = container_of(rb, काष्ठा pblk, rwb);
+	पूर्णांक io_ret;
 
 	spin_lock(&rb->w_lock);
 	io_ret = pblk_rl_user_may_insert(&pblk->rl, nr_entries);
-	if (io_ret) {
+	अगर (io_ret) अणु
 		spin_unlock(&rb->w_lock);
-		return io_ret;
-	}
+		वापस io_ret;
+	पूर्ण
 
-	if (!pblk_rb_may_write_flush(rb, nr_entries, pos, bio, &io_ret)) {
+	अगर (!pblk_rb_may_ग_लिखो_flush(rb, nr_entries, pos, bio, &io_ret)) अणु
 		spin_unlock(&rb->w_lock);
-		return NVM_IO_REQUEUE;
-	}
+		वापस NVM_IO_REQUEUE;
+	पूर्ण
 
 	pblk_rl_user_in(&pblk->rl, nr_entries);
 	spin_unlock(&rb->w_lock);
 
-	return io_ret;
-}
+	वापस io_ret;
+पूर्ण
 
 /*
- * Look at pblk_rb_may_write_user comment
+ * Look at pblk_rb_may_ग_लिखो_user comment
  */
-int pblk_rb_may_write_gc(struct pblk_rb *rb, unsigned int nr_entries,
-			 unsigned int *pos)
-{
-	struct pblk *pblk = container_of(rb, struct pblk, rwb);
+पूर्णांक pblk_rb_may_ग_लिखो_gc(काष्ठा pblk_rb *rb, अचिन्हित पूर्णांक nr_entries,
+			 अचिन्हित पूर्णांक *pos)
+अणु
+	काष्ठा pblk *pblk = container_of(rb, काष्ठा pblk, rwb);
 
 	spin_lock(&rb->w_lock);
-	if (!pblk_rl_gc_may_insert(&pblk->rl, nr_entries)) {
+	अगर (!pblk_rl_gc_may_insert(&pblk->rl, nr_entries)) अणु
 		spin_unlock(&rb->w_lock);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	if (!pblk_rb_may_write(rb, nr_entries, pos)) {
+	अगर (!pblk_rb_may_ग_लिखो(rb, nr_entries, pos)) अणु
 		spin_unlock(&rb->w_lock);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	pblk_rl_gc_in(&pblk->rl, nr_entries);
 	spin_unlock(&rb->w_lock);
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
 /*
- * Read available entries on rb and add them to the given bio. To avoid a memory
- * copy, a page reference to the write buffer is used to be added to the bio.
+ * Read available entries on rb and add them to the given bio. To aव्योम a memory
+ * copy, a page reference to the ग_लिखो buffer is used to be added to the bio.
  *
- * This function is used by the write thread to form the write bio that will
- * persist data on the write buffer to the media.
+ * This function is used by the ग_लिखो thपढ़ो to क्रमm the ग_लिखो bio that will
+ * persist data on the ग_लिखो buffer to the media.
  */
-unsigned int pblk_rb_read_to_bio(struct pblk_rb *rb, struct nvm_rq *rqd,
-				 unsigned int pos, unsigned int nr_entries,
-				 unsigned int count)
-{
-	struct pblk *pblk = container_of(rb, struct pblk, rwb);
-	struct request_queue *q = pblk->dev->q;
-	struct pblk_c_ctx *c_ctx = nvm_rq_to_pdu(rqd);
-	struct bio *bio = rqd->bio;
-	struct pblk_rb_entry *entry;
-	struct page *page;
-	unsigned int pad = 0, to_read = nr_entries;
-	unsigned int i;
-	int flags;
+अचिन्हित पूर्णांक pblk_rb_पढ़ो_to_bio(काष्ठा pblk_rb *rb, काष्ठा nvm_rq *rqd,
+				 अचिन्हित पूर्णांक pos, अचिन्हित पूर्णांक nr_entries,
+				 अचिन्हित पूर्णांक count)
+अणु
+	काष्ठा pblk *pblk = container_of(rb, काष्ठा pblk, rwb);
+	काष्ठा request_queue *q = pblk->dev->q;
+	काष्ठा pblk_c_ctx *c_ctx = nvm_rq_to_pdu(rqd);
+	काष्ठा bio *bio = rqd->bio;
+	काष्ठा pblk_rb_entry *entry;
+	काष्ठा page *page;
+	अचिन्हित पूर्णांक pad = 0, to_पढ़ो = nr_entries;
+	अचिन्हित पूर्णांक i;
+	पूर्णांक flags;
 
-	if (count < nr_entries) {
+	अगर (count < nr_entries) अणु
 		pad = nr_entries - count;
-		to_read = count;
-	}
+		to_पढ़ो = count;
+	पूर्ण
 
-	/* Add space for packed metadata if in use*/
-	pad += (pblk->min_write_pgs - pblk->min_write_pgs_data);
+	/* Add space क्रम packed metadata अगर in use*/
+	pad += (pblk->min_ग_लिखो_pgs - pblk->min_ग_लिखो_pgs_data);
 
 	c_ctx->sentry = pos;
-	c_ctx->nr_valid = to_read;
+	c_ctx->nr_valid = to_पढ़ो;
 	c_ctx->nr_padded = pad;
 
-	for (i = 0; i < to_read; i++) {
+	क्रम (i = 0; i < to_पढ़ो; i++) अणु
 		entry = &rb->entries[pos];
 
-		/* A write has been allowed into the buffer, but data is still
-		 * being copied to it. It is ok to busy wait.
+		/* A ग_लिखो has been allowed पूर्णांकo the buffer, but data is still
+		 * being copied to it. It is ok to busy रुको.
 		 */
 try:
 		flags = READ_ONCE(entry->w_ctx.flags);
-		if (!(flags & PBLK_WRITTEN_DATA)) {
+		अगर (!(flags & PBLK_WRITTEN_DATA)) अणु
 			io_schedule();
-			goto try;
-		}
+			जाओ try;
+		पूर्ण
 
 		page = virt_to_page(entry->data);
-		if (!page) {
+		अगर (!page) अणु
 			pblk_err(pblk, "could not allocate write bio page\n");
 			flags &= ~PBLK_WRITTEN_DATA;
 			flags |= PBLK_SUBMITTED_ENTRY;
-			/* Release flags on context. Protect from writes */
+			/* Release flags on context. Protect from ग_लिखोs */
 			smp_store_release(&entry->w_ctx.flags, flags);
-			return NVM_IO_ERR;
-		}
+			वापस NVM_IO_ERR;
+		पूर्ण
 
-		if (bio_add_pc_page(q, bio, page, rb->seg_size, 0) !=
-								rb->seg_size) {
+		अगर (bio_add_pc_page(q, bio, page, rb->seg_size, 0) !=
+								rb->seg_size) अणु
 			pblk_err(pblk, "could not add page to write bio\n");
 			flags &= ~PBLK_WRITTEN_DATA;
 			flags |= PBLK_SUBMITTED_ENTRY;
-			/* Release flags on context. Protect from writes */
+			/* Release flags on context. Protect from ग_लिखोs */
 			smp_store_release(&entry->w_ctx.flags, flags);
-			return NVM_IO_ERR;
-		}
+			वापस NVM_IO_ERR;
+		पूर्ण
 
 		flags &= ~PBLK_WRITTEN_DATA;
 		flags |= PBLK_SUBMITTED_ENTRY;
 
-		/* Release flags on context. Protect from writes */
+		/* Release flags on context. Protect from ग_लिखोs */
 		smp_store_release(&entry->w_ctx.flags, flags);
 
 		pos = pblk_rb_ptr_wrap(rb, pos, 1);
-	}
+	पूर्ण
 
-	if (pad) {
-		if (pblk_bio_add_pages(pblk, bio, GFP_KERNEL, pad)) {
+	अगर (pad) अणु
+		अगर (pblk_bio_add_pages(pblk, bio, GFP_KERNEL, pad)) अणु
 			pblk_err(pblk, "could not pad page in write bio\n");
-			return NVM_IO_ERR;
-		}
+			वापस NVM_IO_ERR;
+		पूर्ण
 
-		if (pad < pblk->min_write_pgs)
+		अगर (pad < pblk->min_ग_लिखो_pgs)
 			atomic64_inc(&pblk->pad_dist[pad - 1]);
-		else
+		अन्यथा
 			pblk_warn(pblk, "padding more than min. sectors\n");
 
 		atomic64_add(pad, &pblk->pad_wa);
-	}
+	पूर्ण
 
-#ifdef CONFIG_NVM_PBLK_DEBUG
-	atomic_long_add(pad, &pblk->padded_writes);
-#endif
+#अगर_घोषित CONFIG_NVM_PBLK_DEBUG
+	atomic_दीर्घ_add(pad, &pblk->padded_ग_लिखोs);
+#पूर्ण_अगर
 
-	return NVM_IO_OK;
-}
+	वापस NVM_IO_OK;
+पूर्ण
 
 /*
- * Copy to bio only if the lba matches the one on the given cache entry.
+ * Copy to bio only अगर the lba matches the one on the given cache entry.
  * Otherwise, it means that the entry has been overwritten, and the bio should
  * be directed to disk.
  */
-int pblk_rb_copy_to_bio(struct pblk_rb *rb, struct bio *bio, sector_t lba,
-			struct ppa_addr ppa)
-{
-	struct pblk *pblk = container_of(rb, struct pblk, rwb);
-	struct pblk_rb_entry *entry;
-	struct pblk_w_ctx *w_ctx;
-	struct ppa_addr l2p_ppa;
+पूर्णांक pblk_rb_copy_to_bio(काष्ठा pblk_rb *rb, काष्ठा bio *bio, sector_t lba,
+			काष्ठा ppa_addr ppa)
+अणु
+	काष्ठा pblk *pblk = container_of(rb, काष्ठा pblk, rwb);
+	काष्ठा pblk_rb_entry *entry;
+	काष्ठा pblk_w_ctx *w_ctx;
+	काष्ठा ppa_addr l2p_ppa;
 	u64 pos = pblk_addr_to_cacheline(ppa);
-	void *data;
-	int flags;
-	int ret = 1;
+	व्योम *data;
+	पूर्णांक flags;
+	पूर्णांक ret = 1;
 
 
-#ifdef CONFIG_NVM_PBLK_DEBUG
+#अगर_घोषित CONFIG_NVM_PBLK_DEBUG
 	/* Caller must ensure that the access will not cause an overflow */
 	BUG_ON(pos >= rb->nr_entries);
-#endif
+#पूर्ण_अगर
 	entry = &rb->entries[pos];
 	w_ctx = &entry->w_ctx;
 	flags = READ_ONCE(w_ctx->flags);
@@ -667,86 +668,86 @@ int pblk_rb_copy_to_bio(struct pblk_rb *rb, struct bio *bio, sector_t lba,
 	l2p_ppa = pblk_trans_map_get(pblk, lba);
 	spin_unlock(&pblk->trans_lock);
 
-	/* Check if the entry has been overwritten or is scheduled to be */
-	if (!pblk_ppa_comp(l2p_ppa, ppa) || w_ctx->lba != lba ||
-						flags & PBLK_WRITABLE_ENTRY) {
+	/* Check अगर the entry has been overwritten or is scheduled to be */
+	अगर (!pblk_ppa_comp(l2p_ppa, ppa) || w_ctx->lba != lba ||
+						flags & PBLK_WRITABLE_ENTRY) अणु
 		ret = 0;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 	data = bio_data(bio);
-	memcpy(data, entry->data, rb->seg_size);
+	स_नकल(data, entry->data, rb->seg_size);
 
 out:
 	spin_unlock(&rb->w_lock);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-struct pblk_w_ctx *pblk_rb_w_ctx(struct pblk_rb *rb, unsigned int pos)
-{
-	unsigned int entry = pblk_rb_ptr_wrap(rb, pos, 0);
+काष्ठा pblk_w_ctx *pblk_rb_w_ctx(काष्ठा pblk_rb *rb, अचिन्हित पूर्णांक pos)
+अणु
+	अचिन्हित पूर्णांक entry = pblk_rb_ptr_wrap(rb, pos, 0);
 
-	return &rb->entries[entry].w_ctx;
-}
+	वापस &rb->entries[entry].w_ctx;
+पूर्ण
 
-unsigned int pblk_rb_sync_init(struct pblk_rb *rb, unsigned long *flags)
+अचिन्हित पूर्णांक pblk_rb_sync_init(काष्ठा pblk_rb *rb, अचिन्हित दीर्घ *flags)
 	__acquires(&rb->s_lock)
-{
-	if (flags)
+अणु
+	अगर (flags)
 		spin_lock_irqsave(&rb->s_lock, *flags);
-	else
+	अन्यथा
 		spin_lock_irq(&rb->s_lock);
 
-	return rb->sync;
-}
+	वापस rb->sync;
+पूर्ण
 
-void pblk_rb_sync_end(struct pblk_rb *rb, unsigned long *flags)
+व्योम pblk_rb_sync_end(काष्ठा pblk_rb *rb, अचिन्हित दीर्घ *flags)
 	__releases(&rb->s_lock)
-{
-	lockdep_assert_held(&rb->s_lock);
+अणु
+	lockdep_निश्चित_held(&rb->s_lock);
 
-	if (flags)
+	अगर (flags)
 		spin_unlock_irqrestore(&rb->s_lock, *flags);
-	else
+	अन्यथा
 		spin_unlock_irq(&rb->s_lock);
-}
+पूर्ण
 
-unsigned int pblk_rb_sync_advance(struct pblk_rb *rb, unsigned int nr_entries)
-{
-	unsigned int sync, flush_point;
-	lockdep_assert_held(&rb->s_lock);
+अचिन्हित पूर्णांक pblk_rb_sync_advance(काष्ठा pblk_rb *rb, अचिन्हित पूर्णांक nr_entries)
+अणु
+	अचिन्हित पूर्णांक sync, flush_poपूर्णांक;
+	lockdep_निश्चित_held(&rb->s_lock);
 
 	sync = READ_ONCE(rb->sync);
-	flush_point = READ_ONCE(rb->flush_point);
+	flush_poपूर्णांक = READ_ONCE(rb->flush_poपूर्णांक);
 
-	if (flush_point != EMPTY_ENTRY) {
-		unsigned int secs_to_flush;
+	अगर (flush_poपूर्णांक != EMPTY_ENTRY) अणु
+		अचिन्हित पूर्णांक secs_to_flush;
 
-		secs_to_flush = pblk_rb_ring_count(flush_point, sync,
+		secs_to_flush = pblk_rb_ring_count(flush_poपूर्णांक, sync,
 					rb->nr_entries);
-		if (secs_to_flush < nr_entries) {
-			/* Protect flush points */
-			smp_store_release(&rb->flush_point, EMPTY_ENTRY);
-		}
-	}
+		अगर (secs_to_flush < nr_entries) अणु
+			/* Protect flush poपूर्णांकs */
+			smp_store_release(&rb->flush_poपूर्णांक, EMPTY_ENTRY);
+		पूर्ण
+	पूर्ण
 
 	sync = pblk_rb_ptr_wrap(rb, sync, nr_entries);
 
 	/* Protect from counts */
 	smp_store_release(&rb->sync, sync);
 
-	return sync;
-}
+	वापस sync;
+पूर्ण
 
-/* Calculate how many sectors to submit up to the current flush point. */
-unsigned int pblk_rb_flush_point_count(struct pblk_rb *rb)
-{
-	unsigned int subm, sync, flush_point;
-	unsigned int submitted, to_flush;
+/* Calculate how many sectors to submit up to the current flush poपूर्णांक. */
+अचिन्हित पूर्णांक pblk_rb_flush_poपूर्णांक_count(काष्ठा pblk_rb *rb)
+अणु
+	अचिन्हित पूर्णांक subm, sync, flush_poपूर्णांक;
+	अचिन्हित पूर्णांक submitted, to_flush;
 
-	/* Protect flush points */
-	flush_point = smp_load_acquire(&rb->flush_point);
-	if (flush_point == EMPTY_ENTRY)
-		return 0;
+	/* Protect flush poपूर्णांकs */
+	flush_poपूर्णांक = smp_load_acquire(&rb->flush_poपूर्णांक);
+	अगर (flush_poपूर्णांक == EMPTY_ENTRY)
+		वापस 0;
 
 	/* Protect syncs */
 	sync = smp_load_acquire(&rb->sync);
@@ -754,105 +755,105 @@ unsigned int pblk_rb_flush_point_count(struct pblk_rb *rb)
 	subm = READ_ONCE(rb->subm);
 	submitted = pblk_rb_ring_count(subm, sync, rb->nr_entries);
 
-	/* The sync point itself counts as a sector to sync */
-	to_flush = pblk_rb_ring_count(flush_point, sync, rb->nr_entries) + 1;
+	/* The sync poपूर्णांक itself counts as a sector to sync */
+	to_flush = pblk_rb_ring_count(flush_poपूर्णांक, sync, rb->nr_entries) + 1;
 
-	return (submitted < to_flush) ? (to_flush - submitted) : 0;
-}
+	वापस (submitted < to_flush) ? (to_flush - submitted) : 0;
+पूर्ण
 
-int pblk_rb_tear_down_check(struct pblk_rb *rb)
-{
-	struct pblk_rb_entry *entry;
-	int i;
-	int ret = 0;
+पूर्णांक pblk_rb_tear_करोwn_check(काष्ठा pblk_rb *rb)
+अणु
+	काष्ठा pblk_rb_entry *entry;
+	पूर्णांक i;
+	पूर्णांक ret = 0;
 
 	spin_lock(&rb->w_lock);
 	spin_lock_irq(&rb->s_lock);
 
-	if ((rb->mem == rb->subm) && (rb->subm == rb->sync) &&
+	अगर ((rb->mem == rb->subm) && (rb->subm == rb->sync) &&
 				(rb->sync == rb->l2p_update) &&
-				(rb->flush_point == EMPTY_ENTRY)) {
-		goto out;
-	}
+				(rb->flush_poपूर्णांक == EMPTY_ENTRY)) अणु
+		जाओ out;
+	पूर्ण
 
-	if (!rb->entries) {
+	अगर (!rb->entries) अणु
 		ret = 1;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	for (i = 0; i < rb->nr_entries; i++) {
+	क्रम (i = 0; i < rb->nr_entries; i++) अणु
 		entry = &rb->entries[i];
 
-		if (!entry->data) {
+		अगर (!entry->data) अणु
 			ret = 1;
-			goto out;
-		}
-	}
+			जाओ out;
+		पूर्ण
+	पूर्ण
 
 out:
 	spin_unlock_irq(&rb->s_lock);
 	spin_unlock(&rb->w_lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-unsigned int pblk_rb_wrap_pos(struct pblk_rb *rb, unsigned int pos)
-{
-	return (pos & (rb->nr_entries - 1));
-}
+अचिन्हित पूर्णांक pblk_rb_wrap_pos(काष्ठा pblk_rb *rb, अचिन्हित पूर्णांक pos)
+अणु
+	वापस (pos & (rb->nr_entries - 1));
+पूर्ण
 
-int pblk_rb_pos_oob(struct pblk_rb *rb, u64 pos)
-{
-	return (pos >= rb->nr_entries);
-}
+पूर्णांक pblk_rb_pos_oob(काष्ठा pblk_rb *rb, u64 pos)
+अणु
+	वापस (pos >= rb->nr_entries);
+पूर्ण
 
-ssize_t pblk_rb_sysfs(struct pblk_rb *rb, char *buf)
-{
-	struct pblk *pblk = container_of(rb, struct pblk, rwb);
-	struct pblk_c_ctx *c;
-	ssize_t offset;
-	int queued_entries = 0;
+sमाप_प्रकार pblk_rb_sysfs(काष्ठा pblk_rb *rb, अक्षर *buf)
+अणु
+	काष्ठा pblk *pblk = container_of(rb, काष्ठा pblk, rwb);
+	काष्ठा pblk_c_ctx *c;
+	sमाप_प्रकार offset;
+	पूर्णांक queued_entries = 0;
 
 	spin_lock_irq(&rb->s_lock);
-	list_for_each_entry(c, &pblk->compl_list, list)
+	list_क्रम_each_entry(c, &pblk->compl_list, list)
 		queued_entries++;
 	spin_unlock_irq(&rb->s_lock);
 
-	if (rb->flush_point != EMPTY_ENTRY)
-		offset = scnprintf(buf, PAGE_SIZE,
+	अगर (rb->flush_poपूर्णांक != EMPTY_ENTRY)
+		offset = scnम_लिखो(buf, PAGE_SIZE,
 			"%u\t%u\t%u\t%u\t%u\t%u\t%u - %u/%u/%u - %d\n",
 			rb->nr_entries,
 			rb->mem,
 			rb->subm,
 			rb->sync,
 			rb->l2p_update,
-#ifdef CONFIG_NVM_PBLK_DEBUG
-			atomic_read(&rb->inflight_flush_point),
-#else
+#अगर_घोषित CONFIG_NVM_PBLK_DEBUG
+			atomic_पढ़ो(&rb->inflight_flush_poपूर्णांक),
+#अन्यथा
 			0,
-#endif
-			rb->flush_point,
-			pblk_rb_read_count(rb),
+#पूर्ण_अगर
+			rb->flush_poपूर्णांक,
+			pblk_rb_पढ़ो_count(rb),
 			pblk_rb_space(rb),
-			pblk_rb_flush_point_count(rb),
+			pblk_rb_flush_poपूर्णांक_count(rb),
 			queued_entries);
-	else
-		offset = scnprintf(buf, PAGE_SIZE,
+	अन्यथा
+		offset = scnम_लिखो(buf, PAGE_SIZE,
 			"%u\t%u\t%u\t%u\t%u\t%u\tNULL - %u/%u/%u - %d\n",
 			rb->nr_entries,
 			rb->mem,
 			rb->subm,
 			rb->sync,
 			rb->l2p_update,
-#ifdef CONFIG_NVM_PBLK_DEBUG
-			atomic_read(&rb->inflight_flush_point),
-#else
+#अगर_घोषित CONFIG_NVM_PBLK_DEBUG
+			atomic_पढ़ो(&rb->inflight_flush_poपूर्णांक),
+#अन्यथा
 			0,
-#endif
-			pblk_rb_read_count(rb),
+#पूर्ण_अगर
+			pblk_rb_पढ़ो_count(rb),
 			pblk_rb_space(rb),
-			pblk_rb_flush_point_count(rb),
+			pblk_rb_flush_poपूर्णांक_count(rb),
 			queued_entries);
 
-	return offset;
-}
+	वापस offset;
+पूर्ण

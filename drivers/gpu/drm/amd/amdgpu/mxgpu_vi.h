@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2017 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -20,14 +21,14 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#ifndef __MXGPU_VI_H__
-#define __MXGPU_VI_H__
+#अगर_अघोषित __MXGPU_VI_H__
+#घोषणा __MXGPU_VI_H__
 
-#define VI_MAILBOX_TIMEDOUT	12000
-#define VI_MAILBOX_RESET_TIME	12
+#घोषणा VI_MAILBOX_TIMEDOUT	12000
+#घोषणा VI_MAILBOX_RESET_TIME	12
 
 /* VI mailbox messages request */
-enum idh_request {
+क्रमागत idh_request अणु
 	IDH_REQ_GPU_INIT_ACCESS	= 1,
 	IDH_REL_GPU_INIT_ACCESS,
 	IDH_REQ_GPU_FINI_ACCESS,
@@ -35,24 +36,24 @@ enum idh_request {
 	IDH_REQ_GPU_RESET_ACCESS,
 
 	IDH_LOG_VF_ERROR       = 200,
-};
+पूर्ण;
 
 /* VI mailbox messages data */
-enum idh_event {
+क्रमागत idh_event अणु
 	IDH_CLR_MSG_BUF = 0,
 	IDH_READY_TO_ACCESS_GPU,
 	IDH_FLR_NOTIFICATION,
 	IDH_FLR_NOTIFICATION_CMPL,
 
 	IDH_TEXT_MESSAGE = 255
-};
+पूर्ण;
 
-extern const struct amdgpu_virt_ops xgpu_vi_virt_ops;
+बाह्य स्थिर काष्ठा amdgpu_virt_ops xgpu_vi_virt_ops;
 
-void xgpu_vi_init_golden_registers(struct amdgpu_device *adev);
-void xgpu_vi_mailbox_set_irq_funcs(struct amdgpu_device *adev);
-int xgpu_vi_mailbox_add_irq_id(struct amdgpu_device *adev);
-int xgpu_vi_mailbox_get_irq(struct amdgpu_device *adev);
-void xgpu_vi_mailbox_put_irq(struct amdgpu_device *adev);
+व्योम xgpu_vi_init_golden_रेजिस्टरs(काष्ठा amdgpu_device *adev);
+व्योम xgpu_vi_mailbox_set_irq_funcs(काष्ठा amdgpu_device *adev);
+पूर्णांक xgpu_vi_mailbox_add_irq_id(काष्ठा amdgpu_device *adev);
+पूर्णांक xgpu_vi_mailbox_get_irq(काष्ठा amdgpu_device *adev);
+व्योम xgpu_vi_mailbox_put_irq(काष्ठा amdgpu_device *adev);
 
-#endif
+#पूर्ण_अगर

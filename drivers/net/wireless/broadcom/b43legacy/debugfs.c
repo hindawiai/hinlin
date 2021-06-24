@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
 
   Broadcom B43legacy wireless driver
@@ -10,142 +11,142 @@
 
 */
 
-#include <linux/fs.h>
-#include <linux/debugfs.h>
-#include <linux/slab.h>
-#include <linux/netdevice.h>
-#include <linux/pci.h>
-#include <linux/mutex.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/debugfs.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/mutex.h>
 
-#include "b43legacy.h"
-#include "main.h"
-#include "debugfs.h"
-#include "dma.h"
-#include "pio.h"
-#include "xmit.h"
+#समावेश "b43legacy.h"
+#समावेश "main.h"
+#समावेश "debugfs.h"
+#समावेश "dma.h"
+#समावेश "pio.h"
+#समावेश "xmit.h"
 
 
 /* The root directory. */
-static struct dentry *rootdir;
+अटल काष्ठा dentry *rootdir;
 
-struct b43legacy_debugfs_fops {
-	ssize_t (*read)(struct b43legacy_wldev *dev, char *buf, size_t bufsize);
-	int (*write)(struct b43legacy_wldev *dev, const char *buf, size_t count);
-	struct file_operations fops;
-	/* Offset of struct b43legacy_dfs_file in struct b43legacy_dfsentry */
-	size_t file_struct_offset;
-	/* Take wl->irq_lock before calling read/write? */
+काष्ठा b43legacy_debugfs_fops अणु
+	sमाप_प्रकार (*पढ़ो)(काष्ठा b43legacy_wldev *dev, अक्षर *buf, माप_प्रकार bufsize);
+	पूर्णांक (*ग_लिखो)(काष्ठा b43legacy_wldev *dev, स्थिर अक्षर *buf, माप_प्रकार count);
+	काष्ठा file_operations fops;
+	/* Offset of काष्ठा b43legacy_dfs_file in काष्ठा b43legacy_dfsentry */
+	माप_प्रकार file_काष्ठा_offset;
+	/* Take wl->irq_lock beक्रमe calling पढ़ो/ग_लिखो? */
 	bool take_irqlock;
-};
+पूर्ण;
 
-static inline
-struct b43legacy_dfs_file * fops_to_dfs_file(struct b43legacy_wldev *dev,
-				       const struct b43legacy_debugfs_fops *dfops)
-{
-	void *p;
+अटल अंतरभूत
+काष्ठा b43legacy_dfs_file * fops_to_dfs_file(काष्ठा b43legacy_wldev *dev,
+				       स्थिर काष्ठा b43legacy_debugfs_fops *dfops)
+अणु
+	व्योम *p;
 
 	p = dev->dfsentry;
-	p += dfops->file_struct_offset;
+	p += dfops->file_काष्ठा_offset;
 
-	return p;
-}
+	वापस p;
+पूर्ण
 
 
-#define fappend(fmt, x...)	\
-	do {							\
-		if (bufsize - count)				\
-			count += scnprintf(buf + count,		\
+#घोषणा fappend(fmt, x...)	\
+	करो अणु							\
+		अगर (bufsize - count)				\
+			count += scnम_लिखो(buf + count,		\
 					  bufsize - count,	\
 					  fmt , ##x);		\
-		else						\
-			printk(KERN_ERR "b43legacy: fappend overflow\n"); \
-	} while (0)
+		अन्यथा						\
+			prपूर्णांकk(KERN_ERR "b43legacy: fappend overflow\n"); \
+	पूर्ण जबतक (0)
 
 
 /* wl->irq_lock is locked */
-static ssize_t tsf_read_file(struct b43legacy_wldev *dev, char *buf, size_t bufsize)
-{
-	ssize_t count = 0;
+अटल sमाप_प्रकार tsf_पढ़ो_file(काष्ठा b43legacy_wldev *dev, अक्षर *buf, माप_प्रकार bufsize)
+अणु
+	sमाप_प्रकार count = 0;
 	u64 tsf;
 
-	b43legacy_tsf_read(dev, &tsf);
+	b43legacy_tsf_पढ़ो(dev, &tsf);
 	fappend("0x%08x%08x\n",
-		(unsigned int)((tsf & 0xFFFFFFFF00000000ULL) >> 32),
-		(unsigned int)(tsf & 0xFFFFFFFFULL));
+		(अचिन्हित पूर्णांक)((tsf & 0xFFFFFFFF00000000ULL) >> 32),
+		(अचिन्हित पूर्णांक)(tsf & 0xFFFFFFFFULL));
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
 /* wl->irq_lock is locked */
-static int tsf_write_file(struct b43legacy_wldev *dev, const char *buf, size_t count)
-{
+अटल पूर्णांक tsf_ग_लिखो_file(काष्ठा b43legacy_wldev *dev, स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
 	u64 tsf;
 
-	if (sscanf(buf, "%llu", (unsigned long long *)(&tsf)) != 1)
-		return -EINVAL;
-	b43legacy_tsf_write(dev, tsf);
+	अगर (माला_पूछो(buf, "%llu", (अचिन्हित दीर्घ दीर्घ *)(&tsf)) != 1)
+		वापस -EINVAL;
+	b43legacy_tsf_ग_लिखो(dev, tsf);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* wl->irq_lock is locked */
-static ssize_t ucode_regs_read_file(struct b43legacy_wldev *dev, char *buf, size_t bufsize)
-{
-	ssize_t count = 0;
-	int i;
+अटल sमाप_प्रकार ucode_regs_पढ़ो_file(काष्ठा b43legacy_wldev *dev, अक्षर *buf, माप_प्रकार bufsize)
+अणु
+	sमाप_प्रकार count = 0;
+	पूर्णांक i;
 
-	for (i = 0; i < 64; i++) {
+	क्रम (i = 0; i < 64; i++) अणु
 		fappend("r%d = 0x%04x\n", i,
-			b43legacy_shm_read16(dev, B43legacy_SHM_WIRELESS, i));
-	}
+			b43legacy_shm_पढ़ो16(dev, B43legacy_SHM_WIRELESS, i));
+	पूर्ण
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
 /* wl->irq_lock is locked */
-static ssize_t shm_read_file(struct b43legacy_wldev *dev, char *buf, size_t bufsize)
-{
-	ssize_t count = 0;
-	int i;
-	u16 tmp;
+अटल sमाप_प्रकार shm_पढ़ो_file(काष्ठा b43legacy_wldev *dev, अक्षर *buf, माप_प्रकार bufsize)
+अणु
+	sमाप_प्रकार count = 0;
+	पूर्णांक i;
+	u16 पंचांगp;
 	__le16 *le16buf = (__le16 *)buf;
 
-	for (i = 0; i < 0x1000; i++) {
-		if (bufsize < sizeof(tmp))
-			break;
-		tmp = b43legacy_shm_read16(dev, B43legacy_SHM_SHARED, 2 * i);
-		le16buf[i] = cpu_to_le16(tmp);
-		count += sizeof(tmp);
-		bufsize -= sizeof(tmp);
-	}
+	क्रम (i = 0; i < 0x1000; i++) अणु
+		अगर (bufsize < माप(पंचांगp))
+			अवरोध;
+		पंचांगp = b43legacy_shm_पढ़ो16(dev, B43legacy_SHM_SHARED, 2 * i);
+		le16buf[i] = cpu_to_le16(पंचांगp);
+		count += माप(पंचांगp);
+		bufsize -= माप(पंचांगp);
+	पूर्ण
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static ssize_t txstat_read_file(struct b43legacy_wldev *dev, char *buf, size_t bufsize)
-{
-	struct b43legacy_txstatus_log *log = &dev->dfsentry->txstatlog;
-	ssize_t count = 0;
-	unsigned long flags;
-	int i, idx;
-	struct b43legacy_txstatus *stat;
+अटल sमाप_प्रकार txstat_पढ़ो_file(काष्ठा b43legacy_wldev *dev, अक्षर *buf, माप_प्रकार bufsize)
+अणु
+	काष्ठा b43legacy_txstatus_log *log = &dev->dfsentry->txstatlog;
+	sमाप_प्रकार count = 0;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक i, idx;
+	काष्ठा b43legacy_txstatus *stat;
 
 	spin_lock_irqsave(&log->lock, flags);
-	if (log->end < 0) {
+	अगर (log->end < 0) अणु
 		fappend("Nothing transmitted, yet\n");
-		goto out_unlock;
-	}
+		जाओ out_unlock;
+	पूर्ण
 	fappend("b43legacy TX status reports:\n\n"
 		"index | cookie | seq | phy_stat | frame_count | "
 		"rts_count | supp_reason | pm_indicated | "
 		"intermediate | for_ampdu | acked\n" "---\n");
 	i = log->end + 1;
 	idx = 0;
-	while (1) {
-		if (i == B43legacy_NR_LOGGED_TXSTATUS)
+	जबतक (1) अणु
+		अगर (i == B43legacy_NR_LOGGED_TXSTATUS)
 			i = 0;
 		stat = &(log->log[i]);
-		if (stat->cookie) {
+		अगर (stat->cookie) अणु
 			fappend("%03d | "
 				"0x%04X | 0x%04X | 0x%02X | "
 				"0x%X | 0x%X | "
@@ -155,206 +156,206 @@ static ssize_t txstat_read_file(struct b43legacy_wldev *dev, char *buf, size_t b
 				stat->cookie, stat->seq, stat->phy_stat,
 				stat->frame_count, stat->rts_count,
 				stat->supp_reason, stat->pm_indicated,
-				stat->intermediate, stat->for_ampdu,
+				stat->पूर्णांकermediate, stat->क्रम_ampdu,
 				stat->acked);
 			idx++;
-		}
-		if (i == log->end)
-			break;
+		पूर्ण
+		अगर (i == log->end)
+			अवरोध;
 		i++;
-	}
+	पूर्ण
 out_unlock:
 	spin_unlock_irqrestore(&log->lock, flags);
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
 /* wl->irq_lock is locked */
-static int restart_write_file(struct b43legacy_wldev *dev, const char *buf, size_t count)
-{
-	int err = 0;
+अटल पूर्णांक restart_ग_लिखो_file(काष्ठा b43legacy_wldev *dev, स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	पूर्णांक err = 0;
 
-	if (count > 0 && buf[0] == '1') {
+	अगर (count > 0 && buf[0] == '1') अणु
 		b43legacy_controller_restart(dev, "manually restarted");
-	} else
+	पूर्ण अन्यथा
 		err = -EINVAL;
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-#undef fappend
+#अघोषित fappend
 
-static ssize_t b43legacy_debugfs_read(struct file *file, char __user *userbuf,
-				size_t count, loff_t *ppos)
-{
-	struct b43legacy_wldev *dev;
-	struct b43legacy_debugfs_fops *dfops;
-	struct b43legacy_dfs_file *dfile;
-	ssize_t ret;
-	char *buf;
-	const size_t bufsize = 1024 * 16; /* 16 KiB buffer */
-	const size_t buforder = get_order(bufsize);
-	int err = 0;
+अटल sमाप_प्रकार b43legacy_debugfs_पढ़ो(काष्ठा file *file, अक्षर __user *userbuf,
+				माप_प्रकार count, loff_t *ppos)
+अणु
+	काष्ठा b43legacy_wldev *dev;
+	काष्ठा b43legacy_debugfs_fops *dfops;
+	काष्ठा b43legacy_dfs_file *dfile;
+	sमाप_प्रकार ret;
+	अक्षर *buf;
+	स्थिर माप_प्रकार bufsize = 1024 * 16; /* 16 KiB buffer */
+	स्थिर माप_प्रकार buक्रमder = get_order(bufsize);
+	पूर्णांक err = 0;
 
-	if (!count)
-		return 0;
-	dev = file->private_data;
-	if (!dev)
-		return -ENODEV;
+	अगर (!count)
+		वापस 0;
+	dev = file->निजी_data;
+	अगर (!dev)
+		वापस -ENODEV;
 
 	mutex_lock(&dev->wl->mutex);
-	if (b43legacy_status(dev) < B43legacy_STAT_INITIALIZED) {
+	अगर (b43legacy_status(dev) < B43legacy_STAT_INITIALIZED) अणु
 		err = -ENODEV;
-		goto out_unlock;
-	}
+		जाओ out_unlock;
+	पूर्ण
 
 	dfops = container_of(debugfs_real_fops(file),
-			     struct b43legacy_debugfs_fops, fops);
-	if (!dfops->read) {
+			     काष्ठा b43legacy_debugfs_fops, fops);
+	अगर (!dfops->पढ़ो) अणु
 		err = -ENOSYS;
-		goto out_unlock;
-	}
+		जाओ out_unlock;
+	पूर्ण
 	dfile = fops_to_dfs_file(dev, dfops);
 
-	if (!dfile->buffer) {
-		buf = (char *)__get_free_pages(GFP_KERNEL, buforder);
-		if (!buf) {
+	अगर (!dfile->buffer) अणु
+		buf = (अक्षर *)__get_मुक्त_pages(GFP_KERNEL, buक्रमder);
+		अगर (!buf) अणु
 			err = -ENOMEM;
-			goto out_unlock;
-		}
-		memset(buf, 0, bufsize);
-		if (dfops->take_irqlock) {
+			जाओ out_unlock;
+		पूर्ण
+		स_रखो(buf, 0, bufsize);
+		अगर (dfops->take_irqlock) अणु
 			spin_lock_irq(&dev->wl->irq_lock);
-			ret = dfops->read(dev, buf, bufsize);
+			ret = dfops->पढ़ो(dev, buf, bufsize);
 			spin_unlock_irq(&dev->wl->irq_lock);
-		} else
-			ret = dfops->read(dev, buf, bufsize);
-		if (ret <= 0) {
-			free_pages((unsigned long)buf, buforder);
+		पूर्ण अन्यथा
+			ret = dfops->पढ़ो(dev, buf, bufsize);
+		अगर (ret <= 0) अणु
+			मुक्त_pages((अचिन्हित दीर्घ)buf, buक्रमder);
 			err = ret;
-			goto out_unlock;
-		}
+			जाओ out_unlock;
+		पूर्ण
 		dfile->data_len = ret;
 		dfile->buffer = buf;
-	}
+	पूर्ण
 
-	ret = simple_read_from_buffer(userbuf, count, ppos,
+	ret = simple_पढ़ो_from_buffer(userbuf, count, ppos,
 				      dfile->buffer,
 				      dfile->data_len);
-	if (*ppos >= dfile->data_len) {
-		free_pages((unsigned long)dfile->buffer, buforder);
-		dfile->buffer = NULL;
+	अगर (*ppos >= dfile->data_len) अणु
+		मुक्त_pages((अचिन्हित दीर्घ)dfile->buffer, buक्रमder);
+		dfile->buffer = शून्य;
 		dfile->data_len = 0;
-	}
+	पूर्ण
 out_unlock:
 	mutex_unlock(&dev->wl->mutex);
 
-	return err ? err : ret;
-}
+	वापस err ? err : ret;
+पूर्ण
 
-static ssize_t b43legacy_debugfs_write(struct file *file,
-				 const char __user *userbuf,
-				 size_t count, loff_t *ppos)
-{
-	struct b43legacy_wldev *dev;
-	struct b43legacy_debugfs_fops *dfops;
-	char *buf;
-	int err = 0;
+अटल sमाप_प्रकार b43legacy_debugfs_ग_लिखो(काष्ठा file *file,
+				 स्थिर अक्षर __user *userbuf,
+				 माप_प्रकार count, loff_t *ppos)
+अणु
+	काष्ठा b43legacy_wldev *dev;
+	काष्ठा b43legacy_debugfs_fops *dfops;
+	अक्षर *buf;
+	पूर्णांक err = 0;
 
-	if (!count)
-		return 0;
-	if (count > PAGE_SIZE)
-		return -E2BIG;
-	dev = file->private_data;
-	if (!dev)
-		return -ENODEV;
+	अगर (!count)
+		वापस 0;
+	अगर (count > PAGE_SIZE)
+		वापस -E2BIG;
+	dev = file->निजी_data;
+	अगर (!dev)
+		वापस -ENODEV;
 
 	mutex_lock(&dev->wl->mutex);
-	if (b43legacy_status(dev) < B43legacy_STAT_INITIALIZED) {
+	अगर (b43legacy_status(dev) < B43legacy_STAT_INITIALIZED) अणु
 		err = -ENODEV;
-		goto out_unlock;
-	}
+		जाओ out_unlock;
+	पूर्ण
 
 	dfops = container_of(debugfs_real_fops(file),
-			     struct b43legacy_debugfs_fops, fops);
-	if (!dfops->write) {
+			     काष्ठा b43legacy_debugfs_fops, fops);
+	अगर (!dfops->ग_लिखो) अणु
 		err = -ENOSYS;
-		goto out_unlock;
-	}
+		जाओ out_unlock;
+	पूर्ण
 
-	buf = (char *)get_zeroed_page(GFP_KERNEL);
-	if (!buf) {
+	buf = (अक्षर *)get_zeroed_page(GFP_KERNEL);
+	अगर (!buf) अणु
 		err = -ENOMEM;
-		goto out_unlock;
-	}
-	if (copy_from_user(buf, userbuf, count)) {
+		जाओ out_unlock;
+	पूर्ण
+	अगर (copy_from_user(buf, userbuf, count)) अणु
 		err = -EFAULT;
-		goto out_freepage;
-	}
-	if (dfops->take_irqlock) {
+		जाओ out_मुक्तpage;
+	पूर्ण
+	अगर (dfops->take_irqlock) अणु
 		spin_lock_irq(&dev->wl->irq_lock);
-		err = dfops->write(dev, buf, count);
+		err = dfops->ग_लिखो(dev, buf, count);
 		spin_unlock_irq(&dev->wl->irq_lock);
-	} else
-		err = dfops->write(dev, buf, count);
-	if (err)
-		goto out_freepage;
+	पूर्ण अन्यथा
+		err = dfops->ग_लिखो(dev, buf, count);
+	अगर (err)
+		जाओ out_मुक्तpage;
 
-out_freepage:
-	free_page((unsigned long)buf);
+out_मुक्तpage:
+	मुक्त_page((अचिन्हित दीर्घ)buf);
 out_unlock:
 	mutex_unlock(&dev->wl->mutex);
 
-	return err ? err : count;
-}
+	वापस err ? err : count;
+पूर्ण
 
 
-#define B43legacy_DEBUGFS_FOPS(name, _read, _write, _take_irqlock)	\
-	static struct b43legacy_debugfs_fops fops_##name = {		\
-		.read	= _read,				\
-		.write	= _write,				\
-		.fops	= {					\
-			.open	= simple_open,				\
-			.read	= b43legacy_debugfs_read,		\
-			.write	= b43legacy_debugfs_write,		\
+#घोषणा B43legacy_DEBUGFS_FOPS(name, _पढ़ो, _ग_लिखो, _take_irqlock)	\
+	अटल काष्ठा b43legacy_debugfs_fops fops_##name = अणु		\
+		.पढ़ो	= _पढ़ो,				\
+		.ग_लिखो	= _ग_लिखो,				\
+		.fops	= अणु					\
+			.खोलो	= simple_खोलो,				\
+			.पढ़ो	= b43legacy_debugfs_पढ़ो,		\
+			.ग_लिखो	= b43legacy_debugfs_ग_लिखो,		\
 			.llseek = generic_file_llseek,			\
-		},						\
-		.file_struct_offset = offsetof(struct b43legacy_dfsentry, \
+		पूर्ण,						\
+		.file_काष्ठा_offset = दुरत्व(काष्ठा b43legacy_dfsentry, \
 					       file_##name),	\
 		.take_irqlock	= _take_irqlock,		\
-	}
+	पूर्ण
 
-B43legacy_DEBUGFS_FOPS(tsf, tsf_read_file, tsf_write_file, 1);
-B43legacy_DEBUGFS_FOPS(ucode_regs, ucode_regs_read_file, NULL, 1);
-B43legacy_DEBUGFS_FOPS(shm, shm_read_file, NULL, 1);
-B43legacy_DEBUGFS_FOPS(txstat, txstat_read_file, NULL, 0);
-B43legacy_DEBUGFS_FOPS(restart, NULL, restart_write_file, 1);
+B43legacy_DEBUGFS_FOPS(tsf, tsf_पढ़ो_file, tsf_ग_लिखो_file, 1);
+B43legacy_DEBUGFS_FOPS(ucode_regs, ucode_regs_पढ़ो_file, शून्य, 1);
+B43legacy_DEBUGFS_FOPS(shm, shm_पढ़ो_file, शून्य, 1);
+B43legacy_DEBUGFS_FOPS(txstat, txstat_पढ़ो_file, शून्य, 0);
+B43legacy_DEBUGFS_FOPS(restart, शून्य, restart_ग_लिखो_file, 1);
 
 
-int b43legacy_debug(struct b43legacy_wldev *dev, enum b43legacy_dyndbg feature)
-{
-	return !!(dev->dfsentry && dev->dfsentry->dyn_debug[feature]);
-}
+पूर्णांक b43legacy_debug(काष्ठा b43legacy_wldev *dev, क्रमागत b43legacy_dyndbg feature)
+अणु
+	वापस !!(dev->dfsentry && dev->dfsentry->dyn_debug[feature]);
+पूर्ण
 
-static void b43legacy_remove_dynamic_debug(struct b43legacy_wldev *dev)
-{
-	struct b43legacy_dfsentry *e = dev->dfsentry;
-	int i;
+अटल व्योम b43legacy_हटाओ_dynamic_debug(काष्ठा b43legacy_wldev *dev)
+अणु
+	काष्ठा b43legacy_dfsentry *e = dev->dfsentry;
+	पूर्णांक i;
 
-	for (i = 0; i < __B43legacy_NR_DYNDBG; i++)
-		debugfs_remove(e->dyn_debug_dentries[i]);
-}
+	क्रम (i = 0; i < __B43legacy_NR_DYNDBG; i++)
+		debugfs_हटाओ(e->dyn_debug_dentries[i]);
+पूर्ण
 
-static void b43legacy_add_dynamic_debug(struct b43legacy_wldev *dev)
-{
-	struct b43legacy_dfsentry *e = dev->dfsentry;
+अटल व्योम b43legacy_add_dynamic_debug(काष्ठा b43legacy_wldev *dev)
+अणु
+	काष्ठा b43legacy_dfsentry *e = dev->dfsentry;
 
-#define add_dyn_dbg(name, id, initstate) do {			\
+#घोषणा add_dyn_dbg(name, id, initstate) करो अणु			\
 	e->dyn_debug[id] = (initstate);				\
 	e->dyn_debug_dentries[id] =				\
 		debugfs_create_bool(name, 0600, e->subdir,	\
 				&(e->dyn_debug[id]));		\
-	} while (0)
+	पूर्ण जबतक (0)
 
 	add_dyn_dbg("debug_xmitpower", B43legacy_DBG_XMITPOWER, false);
 	add_dyn_dbg("debug_dmaoverflow", B43legacy_DBG_DMAOVERFLOW, false);
@@ -362,109 +363,109 @@ static void b43legacy_add_dynamic_debug(struct b43legacy_wldev *dev)
 	add_dyn_dbg("debug_pwork_fast", B43legacy_DBG_PWORK_FAST, false);
 	add_dyn_dbg("debug_pwork_stop", B43legacy_DBG_PWORK_STOP, false);
 
-#undef add_dyn_dbg
-}
+#अघोषित add_dyn_dbg
+पूर्ण
 
-void b43legacy_debugfs_add_device(struct b43legacy_wldev *dev)
-{
-	struct b43legacy_dfsentry *e;
-	struct b43legacy_txstatus_log *log;
-	char devdir[16];
+व्योम b43legacy_debugfs_add_device(काष्ठा b43legacy_wldev *dev)
+अणु
+	काष्ठा b43legacy_dfsentry *e;
+	काष्ठा b43legacy_txstatus_log *log;
+	अक्षर devdir[16];
 
 	B43legacy_WARN_ON(!dev);
-	e = kzalloc(sizeof(*e), GFP_KERNEL);
-	if (!e) {
+	e = kzalloc(माप(*e), GFP_KERNEL);
+	अगर (!e) अणु
 		b43legacyerr(dev->wl, "debugfs: add device OOM\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 	e->dev = dev;
 	log = &e->txstatlog;
-	log->log = kcalloc(B43legacy_NR_LOGGED_TXSTATUS,
-			   sizeof(struct b43legacy_txstatus), GFP_KERNEL);
-	if (!log->log) {
+	log->log = kसुस्मृति(B43legacy_NR_LOGGED_TXSTATUS,
+			   माप(काष्ठा b43legacy_txstatus), GFP_KERNEL);
+	अगर (!log->log) अणु
 		b43legacyerr(dev->wl, "debugfs: add device txstatus OOM\n");
-		kfree(e);
-		return;
-	}
+		kमुक्त(e);
+		वापस;
+	पूर्ण
 	log->end = -1;
 	spin_lock_init(&log->lock);
 
 	dev->dfsentry = e;
 
-	snprintf(devdir, sizeof(devdir), "%s", wiphy_name(dev->wl->hw->wiphy));
+	snम_लिखो(devdir, माप(devdir), "%s", wiphy_name(dev->wl->hw->wiphy));
 	e->subdir = debugfs_create_dir(devdir, rootdir);
 
-#define ADD_FILE(name, mode)	\
-	do {							\
+#घोषणा ADD_खाता(name, mode)	\
+	करो अणु							\
 		e->file_##name.dentry =				\
-			debugfs_create_file(__stringify(name),	\
+			debugfs_create_file(__stringअगरy(name),	\
 					mode, e->subdir, dev,	\
 					&fops_##name.fops);	\
-		e->file_##name.dentry = NULL;			\
-	} while (0)
+		e->file_##name.dentry = शून्य;			\
+	पूर्ण जबतक (0)
 
 
-	ADD_FILE(tsf, 0600);
-	ADD_FILE(ucode_regs, 0400);
-	ADD_FILE(shm, 0400);
-	ADD_FILE(txstat, 0400);
-	ADD_FILE(restart, 0200);
+	ADD_खाता(tsf, 0600);
+	ADD_खाता(ucode_regs, 0400);
+	ADD_खाता(shm, 0400);
+	ADD_खाता(txstat, 0400);
+	ADD_खाता(restart, 0200);
 
-#undef ADD_FILE
+#अघोषित ADD_खाता
 
 	b43legacy_add_dynamic_debug(dev);
-}
+पूर्ण
 
-void b43legacy_debugfs_remove_device(struct b43legacy_wldev *dev)
-{
-	struct b43legacy_dfsentry *e;
+व्योम b43legacy_debugfs_हटाओ_device(काष्ठा b43legacy_wldev *dev)
+अणु
+	काष्ठा b43legacy_dfsentry *e;
 
-	if (!dev)
-		return;
+	अगर (!dev)
+		वापस;
 	e = dev->dfsentry;
-	if (!e)
-		return;
-	b43legacy_remove_dynamic_debug(dev);
+	अगर (!e)
+		वापस;
+	b43legacy_हटाओ_dynamic_debug(dev);
 
-	debugfs_remove(e->file_tsf.dentry);
-	debugfs_remove(e->file_ucode_regs.dentry);
-	debugfs_remove(e->file_shm.dentry);
-	debugfs_remove(e->file_txstat.dentry);
-	debugfs_remove(e->file_restart.dentry);
+	debugfs_हटाओ(e->file_tsf.dentry);
+	debugfs_हटाओ(e->file_ucode_regs.dentry);
+	debugfs_हटाओ(e->file_shm.dentry);
+	debugfs_हटाओ(e->file_txstat.dentry);
+	debugfs_हटाओ(e->file_restart.dentry);
 
-	debugfs_remove(e->subdir);
-	kfree(e->txstatlog.log);
-	kfree(e);
-}
+	debugfs_हटाओ(e->subdir);
+	kमुक्त(e->txstatlog.log);
+	kमुक्त(e);
+पूर्ण
 
-void b43legacy_debugfs_log_txstat(struct b43legacy_wldev *dev,
-			    const struct b43legacy_txstatus *status)
-{
-	struct b43legacy_dfsentry *e = dev->dfsentry;
-	struct b43legacy_txstatus_log *log;
-	struct b43legacy_txstatus *cur;
-	int i;
+व्योम b43legacy_debugfs_log_txstat(काष्ठा b43legacy_wldev *dev,
+			    स्थिर काष्ठा b43legacy_txstatus *status)
+अणु
+	काष्ठा b43legacy_dfsentry *e = dev->dfsentry;
+	काष्ठा b43legacy_txstatus_log *log;
+	काष्ठा b43legacy_txstatus *cur;
+	पूर्णांक i;
 
-	if (!e)
-		return;
+	अगर (!e)
+		वापस;
 	log = &e->txstatlog;
 	B43legacy_WARN_ON(!irqs_disabled());
 	spin_lock(&log->lock);
 	i = log->end + 1;
-	if (i == B43legacy_NR_LOGGED_TXSTATUS)
+	अगर (i == B43legacy_NR_LOGGED_TXSTATUS)
 		i = 0;
 	log->end = i;
 	cur = &(log->log[i]);
-	memcpy(cur, status, sizeof(*cur));
+	स_नकल(cur, status, माप(*cur));
 	spin_unlock(&log->lock);
-}
+पूर्ण
 
-void b43legacy_debugfs_init(void)
-{
-	rootdir = debugfs_create_dir(KBUILD_MODNAME, NULL);
-}
+व्योम b43legacy_debugfs_init(व्योम)
+अणु
+	rootdir = debugfs_create_dir(KBUILD_MODNAME, शून्य);
+पूर्ण
 
-void b43legacy_debugfs_exit(void)
-{
-	debugfs_remove(rootdir);
-}
+व्योम b43legacy_debugfs_निकास(व्योम)
+अणु
+	debugfs_हटाओ(rootdir);
+पूर्ण

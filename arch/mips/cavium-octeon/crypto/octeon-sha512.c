@@ -1,82 +1,83 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Cryptographic API.
  *
  * SHA-512 and SHA-384 Secure Hash Algorithm.
  *
- * Adapted for OCTEON by Aaro Koskinen <aaro.koskinen@iki.fi>.
+ * Adapted क्रम OCTEON by Aaro Koskinen <aaro.koskinen@iki.fi>.
  *
  * Based on crypto/sha512_generic.c, which is:
  *
  * Copyright (c) Jean-Luc Cooke <jlcooke@certainkey.com>
- * Copyright (c) Andrew McDonald <andrew@mcdonald.org.uk>
+ * Copyright (c) Andrew McDonald <andrew@mcकरोnald.org.uk>
  * Copyright (c) 2003 Kyle McMartin <kyle@debian.org>
  */
 
-#include <linux/mm.h>
-#include <crypto/sha2.h>
-#include <linux/init.h>
-#include <linux/types.h>
-#include <linux/module.h>
-#include <asm/byteorder.h>
-#include <asm/octeon/octeon.h>
-#include <crypto/internal/hash.h>
+#समावेश <linux/mm.h>
+#समावेश <crypto/sha2.h>
+#समावेश <linux/init.h>
+#समावेश <linux/types.h>
+#समावेश <linux/module.h>
+#समावेश <यंत्र/byteorder.h>
+#समावेश <यंत्र/octeon/octeon.h>
+#समावेश <crypto/पूर्णांकernal/hash.h>
 
-#include "octeon-crypto.h"
+#समावेश "octeon-crypto.h"
 
 /*
  * We pass everything as 64-bit. OCTEON can handle misaligned data.
  */
 
-static void octeon_sha512_store_hash(struct sha512_state *sctx)
-{
-	write_octeon_64bit_hash_sha512(sctx->state[0], 0);
-	write_octeon_64bit_hash_sha512(sctx->state[1], 1);
-	write_octeon_64bit_hash_sha512(sctx->state[2], 2);
-	write_octeon_64bit_hash_sha512(sctx->state[3], 3);
-	write_octeon_64bit_hash_sha512(sctx->state[4], 4);
-	write_octeon_64bit_hash_sha512(sctx->state[5], 5);
-	write_octeon_64bit_hash_sha512(sctx->state[6], 6);
-	write_octeon_64bit_hash_sha512(sctx->state[7], 7);
-}
+अटल व्योम octeon_sha512_store_hash(काष्ठा sha512_state *sctx)
+अणु
+	ग_लिखो_octeon_64bit_hash_sha512(sctx->state[0], 0);
+	ग_लिखो_octeon_64bit_hash_sha512(sctx->state[1], 1);
+	ग_लिखो_octeon_64bit_hash_sha512(sctx->state[2], 2);
+	ग_लिखो_octeon_64bit_hash_sha512(sctx->state[3], 3);
+	ग_लिखो_octeon_64bit_hash_sha512(sctx->state[4], 4);
+	ग_लिखो_octeon_64bit_hash_sha512(sctx->state[5], 5);
+	ग_लिखो_octeon_64bit_hash_sha512(sctx->state[6], 6);
+	ग_लिखो_octeon_64bit_hash_sha512(sctx->state[7], 7);
+पूर्ण
 
-static void octeon_sha512_read_hash(struct sha512_state *sctx)
-{
-	sctx->state[0] = read_octeon_64bit_hash_sha512(0);
-	sctx->state[1] = read_octeon_64bit_hash_sha512(1);
-	sctx->state[2] = read_octeon_64bit_hash_sha512(2);
-	sctx->state[3] = read_octeon_64bit_hash_sha512(3);
-	sctx->state[4] = read_octeon_64bit_hash_sha512(4);
-	sctx->state[5] = read_octeon_64bit_hash_sha512(5);
-	sctx->state[6] = read_octeon_64bit_hash_sha512(6);
-	sctx->state[7] = read_octeon_64bit_hash_sha512(7);
-}
+अटल व्योम octeon_sha512_पढ़ो_hash(काष्ठा sha512_state *sctx)
+अणु
+	sctx->state[0] = पढ़ो_octeon_64bit_hash_sha512(0);
+	sctx->state[1] = पढ़ो_octeon_64bit_hash_sha512(1);
+	sctx->state[2] = पढ़ो_octeon_64bit_hash_sha512(2);
+	sctx->state[3] = पढ़ो_octeon_64bit_hash_sha512(3);
+	sctx->state[4] = पढ़ो_octeon_64bit_hash_sha512(4);
+	sctx->state[5] = पढ़ो_octeon_64bit_hash_sha512(5);
+	sctx->state[6] = पढ़ो_octeon_64bit_hash_sha512(6);
+	sctx->state[7] = पढ़ो_octeon_64bit_hash_sha512(7);
+पूर्ण
 
-static void octeon_sha512_transform(const void *_block)
-{
-	const u64 *block = _block;
+अटल व्योम octeon_sha512_transक्रमm(स्थिर व्योम *_block)
+अणु
+	स्थिर u64 *block = _block;
 
-	write_octeon_64bit_block_sha512(block[0], 0);
-	write_octeon_64bit_block_sha512(block[1], 1);
-	write_octeon_64bit_block_sha512(block[2], 2);
-	write_octeon_64bit_block_sha512(block[3], 3);
-	write_octeon_64bit_block_sha512(block[4], 4);
-	write_octeon_64bit_block_sha512(block[5], 5);
-	write_octeon_64bit_block_sha512(block[6], 6);
-	write_octeon_64bit_block_sha512(block[7], 7);
-	write_octeon_64bit_block_sha512(block[8], 8);
-	write_octeon_64bit_block_sha512(block[9], 9);
-	write_octeon_64bit_block_sha512(block[10], 10);
-	write_octeon_64bit_block_sha512(block[11], 11);
-	write_octeon_64bit_block_sha512(block[12], 12);
-	write_octeon_64bit_block_sha512(block[13], 13);
-	write_octeon_64bit_block_sha512(block[14], 14);
+	ग_लिखो_octeon_64bit_block_sha512(block[0], 0);
+	ग_लिखो_octeon_64bit_block_sha512(block[1], 1);
+	ग_लिखो_octeon_64bit_block_sha512(block[2], 2);
+	ग_लिखो_octeon_64bit_block_sha512(block[3], 3);
+	ग_लिखो_octeon_64bit_block_sha512(block[4], 4);
+	ग_लिखो_octeon_64bit_block_sha512(block[5], 5);
+	ग_लिखो_octeon_64bit_block_sha512(block[6], 6);
+	ग_लिखो_octeon_64bit_block_sha512(block[7], 7);
+	ग_लिखो_octeon_64bit_block_sha512(block[8], 8);
+	ग_लिखो_octeon_64bit_block_sha512(block[9], 9);
+	ग_लिखो_octeon_64bit_block_sha512(block[10], 10);
+	ग_लिखो_octeon_64bit_block_sha512(block[11], 11);
+	ग_लिखो_octeon_64bit_block_sha512(block[12], 12);
+	ग_लिखो_octeon_64bit_block_sha512(block[13], 13);
+	ग_लिखो_octeon_64bit_block_sha512(block[14], 14);
 	octeon_sha512_start(block[15]);
-}
+पूर्ण
 
-static int octeon_sha512_init(struct shash_desc *desc)
-{
-	struct sha512_state *sctx = shash_desc_ctx(desc);
+अटल पूर्णांक octeon_sha512_init(काष्ठा shash_desc *desc)
+अणु
+	काष्ठा sha512_state *sctx = shash_desc_ctx(desc);
 
 	sctx->state[0] = SHA512_H0;
 	sctx->state[1] = SHA512_H1;
@@ -88,12 +89,12 @@ static int octeon_sha512_init(struct shash_desc *desc)
 	sctx->state[7] = SHA512_H7;
 	sctx->count[0] = sctx->count[1] = 0;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int octeon_sha384_init(struct shash_desc *desc)
-{
-	struct sha512_state *sctx = shash_desc_ctx(desc);
+अटल पूर्णांक octeon_sha384_init(काष्ठा shash_desc *desc)
+अणु
+	काष्ठा sha512_state *sctx = shash_desc_ctx(desc);
 
 	sctx->state[0] = SHA384_H0;
 	sctx->state[1] = SHA384_H1;
@@ -105,80 +106,80 @@ static int octeon_sha384_init(struct shash_desc *desc)
 	sctx->state[7] = SHA384_H7;
 	sctx->count[0] = sctx->count[1] = 0;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void __octeon_sha512_update(struct sha512_state *sctx, const u8 *data,
-				   unsigned int len)
-{
-	unsigned int part_len;
-	unsigned int index;
-	unsigned int i;
+अटल व्योम __octeon_sha512_update(काष्ठा sha512_state *sctx, स्थिर u8 *data,
+				   अचिन्हित पूर्णांक len)
+अणु
+	अचिन्हित पूर्णांक part_len;
+	अचिन्हित पूर्णांक index;
+	अचिन्हित पूर्णांक i;
 
 	/* Compute number of bytes mod 128. */
 	index = sctx->count[0] % SHA512_BLOCK_SIZE;
 
 	/* Update number of bytes. */
-	if ((sctx->count[0] += len) < len)
+	अगर ((sctx->count[0] += len) < len)
 		sctx->count[1]++;
 
 	part_len = SHA512_BLOCK_SIZE - index;
 
-	/* Transform as many times as possible. */
-	if (len >= part_len) {
-		memcpy(&sctx->buf[index], data, part_len);
-		octeon_sha512_transform(sctx->buf);
+	/* Transक्रमm as many बार as possible. */
+	अगर (len >= part_len) अणु
+		स_नकल(&sctx->buf[index], data, part_len);
+		octeon_sha512_transक्रमm(sctx->buf);
 
-		for (i = part_len; i + SHA512_BLOCK_SIZE <= len;
+		क्रम (i = part_len; i + SHA512_BLOCK_SIZE <= len;
 			i += SHA512_BLOCK_SIZE)
-			octeon_sha512_transform(&data[i]);
+			octeon_sha512_transक्रमm(&data[i]);
 
 		index = 0;
-	} else {
+	पूर्ण अन्यथा अणु
 		i = 0;
-	}
+	पूर्ण
 
-	/* Buffer remaining input. */
-	memcpy(&sctx->buf[index], &data[i], len - i);
-}
+	/* Buffer reमुख्यing input. */
+	स_नकल(&sctx->buf[index], &data[i], len - i);
+पूर्ण
 
-static int octeon_sha512_update(struct shash_desc *desc, const u8 *data,
-				unsigned int len)
-{
-	struct sha512_state *sctx = shash_desc_ctx(desc);
-	struct octeon_cop2_state state;
-	unsigned long flags;
+अटल पूर्णांक octeon_sha512_update(काष्ठा shash_desc *desc, स्थिर u8 *data,
+				अचिन्हित पूर्णांक len)
+अणु
+	काष्ठा sha512_state *sctx = shash_desc_ctx(desc);
+	काष्ठा octeon_cop2_state state;
+	अचिन्हित दीर्घ flags;
 
 	/*
 	 * Small updates never reach the crypto engine, so the generic sha512 is
 	 * faster because of the heavyweight octeon_crypto_enable() /
 	 * octeon_crypto_disable().
 	 */
-	if ((sctx->count[0] % SHA512_BLOCK_SIZE) + len < SHA512_BLOCK_SIZE)
-		return crypto_sha512_update(desc, data, len);
+	अगर ((sctx->count[0] % SHA512_BLOCK_SIZE) + len < SHA512_BLOCK_SIZE)
+		वापस crypto_sha512_update(desc, data, len);
 
 	flags = octeon_crypto_enable(&state);
 	octeon_sha512_store_hash(sctx);
 
 	__octeon_sha512_update(sctx, data, len);
 
-	octeon_sha512_read_hash(sctx);
+	octeon_sha512_पढ़ो_hash(sctx);
 	octeon_crypto_disable(&state, flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int octeon_sha512_final(struct shash_desc *desc, u8 *hash)
-{
-	struct sha512_state *sctx = shash_desc_ctx(desc);
-	static u8 padding[128] = { 0x80, };
-	struct octeon_cop2_state state;
+अटल पूर्णांक octeon_sha512_final(काष्ठा shash_desc *desc, u8 *hash)
+अणु
+	काष्ठा sha512_state *sctx = shash_desc_ctx(desc);
+	अटल u8 padding[128] = अणु 0x80, पूर्ण;
+	काष्ठा octeon_cop2_state state;
 	__be64 *dst = (__be64 *)hash;
-	unsigned int pad_len;
-	unsigned long flags;
-	unsigned int index;
+	अचिन्हित पूर्णांक pad_len;
+	अचिन्हित दीर्घ flags;
+	अचिन्हित पूर्णांक index;
 	__be64 bits[2];
-	int i;
+	पूर्णांक i;
 
 	/* Save number of bits. */
 	bits[1] = cpu_to_be64(sctx->count[0] << 3);
@@ -193,78 +194,78 @@ static int octeon_sha512_final(struct shash_desc *desc, u8 *hash)
 
 	__octeon_sha512_update(sctx, padding, pad_len);
 
-	/* Append length (before padding). */
-	__octeon_sha512_update(sctx, (const u8 *)bits, sizeof(bits));
+	/* Append length (beक्रमe padding). */
+	__octeon_sha512_update(sctx, (स्थिर u8 *)bits, माप(bits));
 
-	octeon_sha512_read_hash(sctx);
+	octeon_sha512_पढ़ो_hash(sctx);
 	octeon_crypto_disable(&state, flags);
 
 	/* Store state in digest. */
-	for (i = 0; i < 8; i++)
+	क्रम (i = 0; i < 8; i++)
 		dst[i] = cpu_to_be64(sctx->state[i]);
 
-	/* Zeroize sensitive information. */
-	memset(sctx, 0, sizeof(struct sha512_state));
+	/* Zeroize sensitive inक्रमmation. */
+	स_रखो(sctx, 0, माप(काष्ठा sha512_state));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int octeon_sha384_final(struct shash_desc *desc, u8 *hash)
-{
+अटल पूर्णांक octeon_sha384_final(काष्ठा shash_desc *desc, u8 *hash)
+अणु
 	u8 D[64];
 
 	octeon_sha512_final(desc, D);
 
-	memcpy(hash, D, 48);
+	स_नकल(hash, D, 48);
 	memzero_explicit(D, 64);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct shash_alg octeon_sha512_algs[2] = { {
+अटल काष्ठा shash_alg octeon_sha512_algs[2] = अणु अणु
 	.digestsize	=	SHA512_DIGEST_SIZE,
 	.init		=	octeon_sha512_init,
 	.update		=	octeon_sha512_update,
 	.final		=	octeon_sha512_final,
-	.descsize	=	sizeof(struct sha512_state),
-	.base		=	{
+	.descsize	=	माप(काष्ठा sha512_state),
+	.base		=	अणु
 		.cra_name	=	"sha512",
 		.cra_driver_name=	"octeon-sha512",
 		.cra_priority	=	OCTEON_CR_OPCODE_PRIORITY,
 		.cra_blocksize	=	SHA512_BLOCK_SIZE,
 		.cra_module	=	THIS_MODULE,
-	}
-}, {
+	पूर्ण
+पूर्ण, अणु
 	.digestsize	=	SHA384_DIGEST_SIZE,
 	.init		=	octeon_sha384_init,
 	.update		=	octeon_sha512_update,
 	.final		=	octeon_sha384_final,
-	.descsize	=	sizeof(struct sha512_state),
-	.base		=	{
+	.descsize	=	माप(काष्ठा sha512_state),
+	.base		=	अणु
 		.cra_name	=	"sha384",
 		.cra_driver_name=	"octeon-sha384",
 		.cra_priority	=	OCTEON_CR_OPCODE_PRIORITY,
 		.cra_blocksize	=	SHA384_BLOCK_SIZE,
 		.cra_module	=	THIS_MODULE,
-	}
-} };
+	पूर्ण
+पूर्ण पूर्ण;
 
-static int __init octeon_sha512_mod_init(void)
-{
-	if (!octeon_has_crypto())
-		return -ENOTSUPP;
-	return crypto_register_shashes(octeon_sha512_algs,
+अटल पूर्णांक __init octeon_sha512_mod_init(व्योम)
+अणु
+	अगर (!octeon_has_crypto())
+		वापस -ENOTSUPP;
+	वापस crypto_रेजिस्टर_shashes(octeon_sha512_algs,
 				       ARRAY_SIZE(octeon_sha512_algs));
-}
+पूर्ण
 
-static void __exit octeon_sha512_mod_fini(void)
-{
-	crypto_unregister_shashes(octeon_sha512_algs,
+अटल व्योम __निकास octeon_sha512_mod_fini(व्योम)
+अणु
+	crypto_unरेजिस्टर_shashes(octeon_sha512_algs,
 				  ARRAY_SIZE(octeon_sha512_algs));
-}
+पूर्ण
 
 module_init(octeon_sha512_mod_init);
-module_exit(octeon_sha512_mod_fini);
+module_निकास(octeon_sha512_mod_fini);
 
 MODULE_LICENSE("GPL");
 MODULE_DESCRIPTION("SHA-512 and SHA-384 Secure Hash Algorithms (OCTEON)");

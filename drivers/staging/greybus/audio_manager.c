@@ -1,186 +1,187 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Greybus operations
  *
  * Copyright 2015-2016 Google Inc.
  */
 
-#include <linux/string.h>
-#include <linux/sysfs.h>
-#include <linux/module.h>
-#include <linux/init.h>
-#include <linux/spinlock.h>
-#include <linux/idr.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/sysfs.h>
+#समावेश <linux/module.h>
+#समावेश <linux/init.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/idr.h>
 
-#include "audio_manager.h"
-#include "audio_manager_private.h"
+#समावेश "audio_manager.h"
+#समावेश "audio_manager_private.h"
 
-static struct kset *manager_kset;
+अटल काष्ठा kset *manager_kset;
 
-static LIST_HEAD(modules_list);
-static DECLARE_RWSEM(modules_rwsem);
-static DEFINE_IDA(module_id);
+अटल LIST_HEAD(modules_list);
+अटल DECLARE_RWSEM(modules_rwsem);
+अटल DEFINE_IDA(module_id);
 
 /* helpers */
-static struct gb_audio_manager_module *gb_audio_manager_get_locked(int id)
-{
-	struct gb_audio_manager_module *module;
+अटल काष्ठा gb_audio_manager_module *gb_audio_manager_get_locked(पूर्णांक id)
+अणु
+	काष्ठा gb_audio_manager_module *module;
 
-	if (id < 0)
-		return NULL;
+	अगर (id < 0)
+		वापस शून्य;
 
-	list_for_each_entry(module, &modules_list, list) {
-		if (module->id == id)
-			return module;
-	}
+	list_क्रम_each_entry(module, &modules_list, list) अणु
+		अगर (module->id == id)
+			वापस module;
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-/* public API */
-int gb_audio_manager_add(struct gb_audio_manager_module_descriptor *desc)
-{
-	struct gb_audio_manager_module *module;
-	int id;
-	int err;
+/* खुला API */
+पूर्णांक gb_audio_manager_add(काष्ठा gb_audio_manager_module_descriptor *desc)
+अणु
+	काष्ठा gb_audio_manager_module *module;
+	पूर्णांक id;
+	पूर्णांक err;
 
 	id = ida_simple_get(&module_id, 0, 0, GFP_KERNEL);
-	if (id < 0)
-		return id;
+	अगर (id < 0)
+		वापस id;
 
 	err = gb_audio_manager_module_create(&module, manager_kset,
 					     id, desc);
-	if (err) {
-		ida_simple_remove(&module_id, id);
-		return err;
-	}
+	अगर (err) अणु
+		ida_simple_हटाओ(&module_id, id);
+		वापस err;
+	पूर्ण
 
 	/* Add it to the list */
-	down_write(&modules_rwsem);
+	करोwn_ग_लिखो(&modules_rwsem);
 	list_add_tail(&module->list, &modules_list);
-	up_write(&modules_rwsem);
+	up_ग_लिखो(&modules_rwsem);
 
-	return module->id;
-}
+	वापस module->id;
+पूर्ण
 EXPORT_SYMBOL_GPL(gb_audio_manager_add);
 
-int gb_audio_manager_remove(int id)
-{
-	struct gb_audio_manager_module *module;
+पूर्णांक gb_audio_manager_हटाओ(पूर्णांक id)
+अणु
+	काष्ठा gb_audio_manager_module *module;
 
-	down_write(&modules_rwsem);
+	करोwn_ग_लिखो(&modules_rwsem);
 
 	module = gb_audio_manager_get_locked(id);
-	if (!module) {
-		up_write(&modules_rwsem);
-		return -EINVAL;
-	}
+	अगर (!module) अणु
+		up_ग_लिखो(&modules_rwsem);
+		वापस -EINVAL;
+	पूर्ण
 	list_del(&module->list);
 	kobject_put(&module->kobj);
-	up_write(&modules_rwsem);
-	ida_simple_remove(&module_id, id);
-	return 0;
-}
-EXPORT_SYMBOL_GPL(gb_audio_manager_remove);
+	up_ग_लिखो(&modules_rwsem);
+	ida_simple_हटाओ(&module_id, id);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL_GPL(gb_audio_manager_हटाओ);
 
-void gb_audio_manager_remove_all(void)
-{
-	struct gb_audio_manager_module *module, *next;
-	int is_empty;
+व्योम gb_audio_manager_हटाओ_all(व्योम)
+अणु
+	काष्ठा gb_audio_manager_module *module, *next;
+	पूर्णांक is_empty;
 
-	down_write(&modules_rwsem);
+	करोwn_ग_लिखो(&modules_rwsem);
 
-	list_for_each_entry_safe(module, next, &modules_list, list) {
+	list_क्रम_each_entry_safe(module, next, &modules_list, list) अणु
 		list_del(&module->list);
-		ida_simple_remove(&module_id, module->id);
+		ida_simple_हटाओ(&module_id, module->id);
 		kobject_put(&module->kobj);
-	}
+	पूर्ण
 
 	is_empty = list_empty(&modules_list);
 
-	up_write(&modules_rwsem);
+	up_ग_लिखो(&modules_rwsem);
 
-	if (!is_empty)
+	अगर (!is_empty)
 		pr_warn("Not all nodes were deleted\n");
-}
-EXPORT_SYMBOL_GPL(gb_audio_manager_remove_all);
+पूर्ण
+EXPORT_SYMBOL_GPL(gb_audio_manager_हटाओ_all);
 
-struct gb_audio_manager_module *gb_audio_manager_get_module(int id)
-{
-	struct gb_audio_manager_module *module;
+काष्ठा gb_audio_manager_module *gb_audio_manager_get_module(पूर्णांक id)
+अणु
+	काष्ठा gb_audio_manager_module *module;
 
-	down_read(&modules_rwsem);
+	करोwn_पढ़ो(&modules_rwsem);
 	module = gb_audio_manager_get_locked(id);
 	kobject_get(&module->kobj);
-	up_read(&modules_rwsem);
-	return module;
-}
+	up_पढ़ो(&modules_rwsem);
+	वापस module;
+पूर्ण
 EXPORT_SYMBOL_GPL(gb_audio_manager_get_module);
 
-void gb_audio_manager_put_module(struct gb_audio_manager_module *module)
-{
+व्योम gb_audio_manager_put_module(काष्ठा gb_audio_manager_module *module)
+अणु
 	kobject_put(&module->kobj);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(gb_audio_manager_put_module);
 
-int gb_audio_manager_dump_module(int id)
-{
-	struct gb_audio_manager_module *module;
+पूर्णांक gb_audio_manager_dump_module(पूर्णांक id)
+अणु
+	काष्ठा gb_audio_manager_module *module;
 
-	down_read(&modules_rwsem);
+	करोwn_पढ़ो(&modules_rwsem);
 	module = gb_audio_manager_get_locked(id);
-	up_read(&modules_rwsem);
+	up_पढ़ो(&modules_rwsem);
 
-	if (!module)
-		return -EINVAL;
+	अगर (!module)
+		वापस -EINVAL;
 
 	gb_audio_manager_module_dump(module);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(gb_audio_manager_dump_module);
 
-void gb_audio_manager_dump_all(void)
-{
-	struct gb_audio_manager_module *module;
-	int count = 0;
+व्योम gb_audio_manager_dump_all(व्योम)
+अणु
+	काष्ठा gb_audio_manager_module *module;
+	पूर्णांक count = 0;
 
-	down_read(&modules_rwsem);
-	list_for_each_entry(module, &modules_list, list) {
+	करोwn_पढ़ो(&modules_rwsem);
+	list_क्रम_each_entry(module, &modules_list, list) अणु
 		gb_audio_manager_module_dump(module);
 		count++;
-	}
-	up_read(&modules_rwsem);
+	पूर्ण
+	up_पढ़ो(&modules_rwsem);
 
 	pr_info("Number of connected modules: %d\n", count);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(gb_audio_manager_dump_all);
 
 /*
  * module init/deinit
  */
-static int __init manager_init(void)
-{
-	manager_kset = kset_create_and_add(GB_AUDIO_MANAGER_NAME, NULL,
+अटल पूर्णांक __init manager_init(व्योम)
+अणु
+	manager_kset = kset_create_and_add(GB_AUDIO_MANAGER_NAME, शून्य,
 					   kernel_kobj);
-	if (!manager_kset)
-		return -ENOMEM;
+	अगर (!manager_kset)
+		वापस -ENOMEM;
 
-#ifdef GB_AUDIO_MANAGER_SYSFS
+#अगर_घोषित GB_AUDIO_MANAGER_SYSFS
 	gb_audio_manager_sysfs_init(&manager_kset->kobj);
-#endif
+#पूर्ण_अगर
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void __exit manager_exit(void)
-{
-	gb_audio_manager_remove_all();
-	kset_unregister(manager_kset);
+अटल व्योम __निकास manager_निकास(व्योम)
+अणु
+	gb_audio_manager_हटाओ_all();
+	kset_unरेजिस्टर(manager_kset);
 	ida_destroy(&module_id);
-}
+पूर्ण
 
 module_init(manager_init);
-module_exit(manager_exit);
+module_निकास(manager_निकास);
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Svetlin Ankov <ankov_svetlin@projectara.com>");

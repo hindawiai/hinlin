@@ -1,2634 +1,2635 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /* Copyright (C) 2009 Red Hat, Inc.
  * Copyright (C) 2006 Rusty Russell IBM Corporation
  *
  * Author: Michael S. Tsirkin <mst@redhat.com>
  *
  * Inspiration, some code, and most witty comments come from
- * Documentation/virtual/lguest/lguest.c, by Rusty Russell
+ * Documentation/भव/lguest/lguest.c, by Rusty Russell
  *
- * Generic code for virtio server in host kernel.
+ * Generic code क्रम virtio server in host kernel.
  */
 
-#include <linux/eventfd.h>
-#include <linux/vhost.h>
-#include <linux/uio.h>
-#include <linux/mm.h>
-#include <linux/miscdevice.h>
-#include <linux/mutex.h>
-#include <linux/poll.h>
-#include <linux/file.h>
-#include <linux/highmem.h>
-#include <linux/slab.h>
-#include <linux/vmalloc.h>
-#include <linux/kthread.h>
-#include <linux/cgroup.h>
-#include <linux/module.h>
-#include <linux/sort.h>
-#include <linux/sched/mm.h>
-#include <linux/sched/signal.h>
-#include <linux/interval_tree_generic.h>
-#include <linux/nospec.h>
-#include <linux/kcov.h>
+#समावेश <linux/eventfd.h>
+#समावेश <linux/vhost.h>
+#समावेश <linux/uपन.स>
+#समावेश <linux/mm.h>
+#समावेश <linux/miscdevice.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/poll.h>
+#समावेश <linux/file.h>
+#समावेश <linux/highस्मृति.स>
+#समावेश <linux/slab.h>
+#समावेश <linux/vदो_स्मृति.h>
+#समावेश <linux/kthपढ़ो.h>
+#समावेश <linux/cgroup.h>
+#समावेश <linux/module.h>
+#समावेश <linux/sort.h>
+#समावेश <linux/sched/mm.h>
+#समावेश <linux/sched/संकेत.स>
+#समावेश <linux/पूर्णांकerval_tree_generic.h>
+#समावेश <linux/nospec.h>
+#समावेश <linux/kcov.h>
 
-#include "vhost.h"
+#समावेश "vhost.h"
 
-static ushort max_mem_regions = 64;
-module_param(max_mem_regions, ushort, 0444);
+अटल uलघु max_mem_regions = 64;
+module_param(max_mem_regions, uलघु, 0444);
 MODULE_PARM_DESC(max_mem_regions,
 	"Maximum number of memory regions in memory map. (default: 64)");
-static int max_iotlb_entries = 2048;
-module_param(max_iotlb_entries, int, 0444);
+अटल पूर्णांक max_iotlb_entries = 2048;
+module_param(max_iotlb_entries, पूर्णांक, 0444);
 MODULE_PARM_DESC(max_iotlb_entries,
 	"Maximum number of iotlb entries. (default: 2048)");
 
-enum {
+क्रमागत अणु
 	VHOST_MEMORY_F_LOG = 0x1,
-};
+पूर्ण;
 
-#define vhost_used_event(vq) ((__virtio16 __user *)&vq->avail->ring[vq->num])
-#define vhost_avail_event(vq) ((__virtio16 __user *)&vq->used->ring[vq->num])
+#घोषणा vhost_used_event(vq) ((__virtio16 __user *)&vq->avail->ring[vq->num])
+#घोषणा vhost_avail_event(vq) ((__virtio16 __user *)&vq->used->ring[vq->num])
 
-#ifdef CONFIG_VHOST_CROSS_ENDIAN_LEGACY
-static void vhost_disable_cross_endian(struct vhost_virtqueue *vq)
-{
+#अगर_घोषित CONFIG_VHOST_CROSS_ENDIAN_LEGACY
+अटल व्योम vhost_disable_cross_endian(काष्ठा vhost_virtqueue *vq)
+अणु
 	vq->user_be = !virtio_legacy_is_little_endian();
-}
+पूर्ण
 
-static void vhost_enable_cross_endian_big(struct vhost_virtqueue *vq)
-{
+अटल व्योम vhost_enable_cross_endian_big(काष्ठा vhost_virtqueue *vq)
+अणु
 	vq->user_be = true;
-}
+पूर्ण
 
-static void vhost_enable_cross_endian_little(struct vhost_virtqueue *vq)
-{
+अटल व्योम vhost_enable_cross_endian_little(काष्ठा vhost_virtqueue *vq)
+अणु
 	vq->user_be = false;
-}
+पूर्ण
 
-static long vhost_set_vring_endian(struct vhost_virtqueue *vq, int __user *argp)
-{
-	struct vhost_vring_state s;
+अटल दीर्घ vhost_set_vring_endian(काष्ठा vhost_virtqueue *vq, पूर्णांक __user *argp)
+अणु
+	काष्ठा vhost_vring_state s;
 
-	if (vq->private_data)
-		return -EBUSY;
+	अगर (vq->निजी_data)
+		वापस -EBUSY;
 
-	if (copy_from_user(&s, argp, sizeof(s)))
-		return -EFAULT;
+	अगर (copy_from_user(&s, argp, माप(s)))
+		वापस -EFAULT;
 
-	if (s.num != VHOST_VRING_LITTLE_ENDIAN &&
+	अगर (s.num != VHOST_VRING_LITTLE_ENDIAN &&
 	    s.num != VHOST_VRING_BIG_ENDIAN)
-		return -EINVAL;
+		वापस -EINVAL;
 
-	if (s.num == VHOST_VRING_BIG_ENDIAN)
+	अगर (s.num == VHOST_VRING_BIG_ENDIAN)
 		vhost_enable_cross_endian_big(vq);
-	else
+	अन्यथा
 		vhost_enable_cross_endian_little(vq);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static long vhost_get_vring_endian(struct vhost_virtqueue *vq, u32 idx,
-				   int __user *argp)
-{
-	struct vhost_vring_state s = {
+अटल दीर्घ vhost_get_vring_endian(काष्ठा vhost_virtqueue *vq, u32 idx,
+				   पूर्णांक __user *argp)
+अणु
+	काष्ठा vhost_vring_state s = अणु
 		.index = idx,
 		.num = vq->user_be
-	};
+	पूर्ण;
 
-	if (copy_to_user(argp, &s, sizeof(s)))
-		return -EFAULT;
+	अगर (copy_to_user(argp, &s, माप(s)))
+		वापस -EFAULT;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void vhost_init_is_le(struct vhost_virtqueue *vq)
-{
-	/* Note for legacy virtio: user_be is initialized at reset time
-	 * according to the host endianness. If userspace does not set an
-	 * explicit endianness, the default behavior is native endian, as
+अटल व्योम vhost_init_is_le(काष्ठा vhost_virtqueue *vq)
+अणु
+	/* Note क्रम legacy virtio: user_be is initialized at reset समय
+	 * according to the host endianness. If userspace करोes not set an
+	 * explicit endianness, the शेष behavior is native endian, as
 	 * expected by legacy virtio.
 	 */
 	vq->is_le = vhost_has_feature(vq, VIRTIO_F_VERSION_1) || !vq->user_be;
-}
-#else
-static void vhost_disable_cross_endian(struct vhost_virtqueue *vq)
-{
-}
+पूर्ण
+#अन्यथा
+अटल व्योम vhost_disable_cross_endian(काष्ठा vhost_virtqueue *vq)
+अणु
+पूर्ण
 
-static long vhost_set_vring_endian(struct vhost_virtqueue *vq, int __user *argp)
-{
-	return -ENOIOCTLCMD;
-}
+अटल दीर्घ vhost_set_vring_endian(काष्ठा vhost_virtqueue *vq, पूर्णांक __user *argp)
+अणु
+	वापस -ENOIOCTLCMD;
+पूर्ण
 
-static long vhost_get_vring_endian(struct vhost_virtqueue *vq, u32 idx,
-				   int __user *argp)
-{
-	return -ENOIOCTLCMD;
-}
+अटल दीर्घ vhost_get_vring_endian(काष्ठा vhost_virtqueue *vq, u32 idx,
+				   पूर्णांक __user *argp)
+अणु
+	वापस -ENOIOCTLCMD;
+पूर्ण
 
-static void vhost_init_is_le(struct vhost_virtqueue *vq)
-{
+अटल व्योम vhost_init_is_le(काष्ठा vhost_virtqueue *vq)
+अणु
 	vq->is_le = vhost_has_feature(vq, VIRTIO_F_VERSION_1)
 		|| virtio_legacy_is_little_endian();
-}
-#endif /* CONFIG_VHOST_CROSS_ENDIAN_LEGACY */
+पूर्ण
+#पूर्ण_अगर /* CONFIG_VHOST_CROSS_ENDIAN_LEGACY */
 
-static void vhost_reset_is_le(struct vhost_virtqueue *vq)
-{
+अटल व्योम vhost_reset_is_le(काष्ठा vhost_virtqueue *vq)
+अणु
 	vhost_init_is_le(vq);
-}
+पूर्ण
 
-struct vhost_flush_struct {
-	struct vhost_work work;
-	struct completion wait_event;
-};
+काष्ठा vhost_flush_काष्ठा अणु
+	काष्ठा vhost_work work;
+	काष्ठा completion रुको_event;
+पूर्ण;
 
-static void vhost_flush_work(struct vhost_work *work)
-{
-	struct vhost_flush_struct *s;
+अटल व्योम vhost_flush_work(काष्ठा vhost_work *work)
+अणु
+	काष्ठा vhost_flush_काष्ठा *s;
 
-	s = container_of(work, struct vhost_flush_struct, work);
-	complete(&s->wait_event);
-}
+	s = container_of(work, काष्ठा vhost_flush_काष्ठा, work);
+	complete(&s->रुको_event);
+पूर्ण
 
-static void vhost_poll_func(struct file *file, wait_queue_head_t *wqh,
+अटल व्योम vhost_poll_func(काष्ठा file *file, रुको_queue_head_t *wqh,
 			    poll_table *pt)
-{
-	struct vhost_poll *poll;
+अणु
+	काष्ठा vhost_poll *poll;
 
-	poll = container_of(pt, struct vhost_poll, table);
+	poll = container_of(pt, काष्ठा vhost_poll, table);
 	poll->wqh = wqh;
-	add_wait_queue(wqh, &poll->wait);
-}
+	add_रुको_queue(wqh, &poll->रुको);
+पूर्ण
 
-static int vhost_poll_wakeup(wait_queue_entry_t *wait, unsigned mode, int sync,
-			     void *key)
-{
-	struct vhost_poll *poll = container_of(wait, struct vhost_poll, wait);
-	struct vhost_work *work = &poll->work;
+अटल पूर्णांक vhost_poll_wakeup(रुको_queue_entry_t *रुको, अचिन्हित mode, पूर्णांक sync,
+			     व्योम *key)
+अणु
+	काष्ठा vhost_poll *poll = container_of(रुको, काष्ठा vhost_poll, रुको);
+	काष्ठा vhost_work *work = &poll->work;
 
-	if (!(key_to_poll(key) & poll->mask))
-		return 0;
+	अगर (!(key_to_poll(key) & poll->mask))
+		वापस 0;
 
-	if (!poll->dev->use_worker)
+	अगर (!poll->dev->use_worker)
 		work->fn(work);
-	else
+	अन्यथा
 		vhost_poll_queue(poll);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void vhost_work_init(struct vhost_work *work, vhost_work_fn_t fn)
-{
+व्योम vhost_work_init(काष्ठा vhost_work *work, vhost_work_fn_t fn)
+अणु
 	clear_bit(VHOST_WORK_QUEUED, &work->flags);
 	work->fn = fn;
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(vhost_work_init);
 
-/* Init poll structure */
-void vhost_poll_init(struct vhost_poll *poll, vhost_work_fn_t fn,
-		     __poll_t mask, struct vhost_dev *dev)
-{
-	init_waitqueue_func_entry(&poll->wait, vhost_poll_wakeup);
+/* Init poll काष्ठाure */
+व्योम vhost_poll_init(काष्ठा vhost_poll *poll, vhost_work_fn_t fn,
+		     __poll_t mask, काष्ठा vhost_dev *dev)
+अणु
+	init_रुकोqueue_func_entry(&poll->रुको, vhost_poll_wakeup);
 	init_poll_funcptr(&poll->table, vhost_poll_func);
 	poll->mask = mask;
 	poll->dev = dev;
-	poll->wqh = NULL;
+	poll->wqh = शून्य;
 
 	vhost_work_init(&poll->work, fn);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(vhost_poll_init);
 
-/* Start polling a file. We add ourselves to file's wait queue. The caller must
+/* Start polling a file. We add ourselves to file's रुको queue. The caller must
  * keep a reference to a file until after vhost_poll_stop is called. */
-int vhost_poll_start(struct vhost_poll *poll, struct file *file)
-{
+पूर्णांक vhost_poll_start(काष्ठा vhost_poll *poll, काष्ठा file *file)
+अणु
 	__poll_t mask;
 
-	if (poll->wqh)
-		return 0;
+	अगर (poll->wqh)
+		वापस 0;
 
 	mask = vfs_poll(file, &poll->table);
-	if (mask)
-		vhost_poll_wakeup(&poll->wait, 0, 0, poll_to_key(mask));
-	if (mask & EPOLLERR) {
+	अगर (mask)
+		vhost_poll_wakeup(&poll->रुको, 0, 0, poll_to_key(mask));
+	अगर (mask & EPOLLERR) अणु
 		vhost_poll_stop(poll);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(vhost_poll_start);
 
-/* Stop polling a file. After this function returns, it becomes safe to drop the
+/* Stop polling a file. After this function वापसs, it becomes safe to drop the
  * file reference. You must also flush afterwards. */
-void vhost_poll_stop(struct vhost_poll *poll)
-{
-	if (poll->wqh) {
-		remove_wait_queue(poll->wqh, &poll->wait);
-		poll->wqh = NULL;
-	}
-}
+व्योम vhost_poll_stop(काष्ठा vhost_poll *poll)
+अणु
+	अगर (poll->wqh) अणु
+		हटाओ_रुको_queue(poll->wqh, &poll->रुको);
+		poll->wqh = शून्य;
+	पूर्ण
+पूर्ण
 EXPORT_SYMBOL_GPL(vhost_poll_stop);
 
-void vhost_work_flush(struct vhost_dev *dev, struct vhost_work *work)
-{
-	struct vhost_flush_struct flush;
+व्योम vhost_work_flush(काष्ठा vhost_dev *dev, काष्ठा vhost_work *work)
+अणु
+	काष्ठा vhost_flush_काष्ठा flush;
 
-	if (dev->worker) {
-		init_completion(&flush.wait_event);
+	अगर (dev->worker) अणु
+		init_completion(&flush.रुको_event);
 		vhost_work_init(&flush.work, vhost_flush_work);
 
 		vhost_work_queue(dev, &flush.work);
-		wait_for_completion(&flush.wait_event);
-	}
-}
+		रुको_क्रम_completion(&flush.रुको_event);
+	पूर्ण
+पूर्ण
 EXPORT_SYMBOL_GPL(vhost_work_flush);
 
-/* Flush any work that has been scheduled. When calling this, don't hold any
+/* Flush any work that has been scheduled. When calling this, करोn't hold any
  * locks that are also used by the callback. */
-void vhost_poll_flush(struct vhost_poll *poll)
-{
+व्योम vhost_poll_flush(काष्ठा vhost_poll *poll)
+अणु
 	vhost_work_flush(poll->dev, &poll->work);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(vhost_poll_flush);
 
-void vhost_work_queue(struct vhost_dev *dev, struct vhost_work *work)
-{
-	if (!dev->worker)
-		return;
+व्योम vhost_work_queue(काष्ठा vhost_dev *dev, काष्ठा vhost_work *work)
+अणु
+	अगर (!dev->worker)
+		वापस;
 
-	if (!test_and_set_bit(VHOST_WORK_QUEUED, &work->flags)) {
+	अगर (!test_and_set_bit(VHOST_WORK_QUEUED, &work->flags)) अणु
 		/* We can only add the work to the list after we're
 		 * sure it was not in the list.
 		 * test_and_set_bit() implies a memory barrier.
 		 */
 		llist_add(&work->node, &dev->work_list);
 		wake_up_process(dev->worker);
-	}
-}
+	पूर्ण
+पूर्ण
 EXPORT_SYMBOL_GPL(vhost_work_queue);
 
-/* A lockless hint for busy polling code to exit the loop */
-bool vhost_has_work(struct vhost_dev *dev)
-{
-	return !llist_empty(&dev->work_list);
-}
+/* A lockless hपूर्णांक क्रम busy polling code to निकास the loop */
+bool vhost_has_work(काष्ठा vhost_dev *dev)
+अणु
+	वापस !llist_empty(&dev->work_list);
+पूर्ण
 EXPORT_SYMBOL_GPL(vhost_has_work);
 
-void vhost_poll_queue(struct vhost_poll *poll)
-{
+व्योम vhost_poll_queue(काष्ठा vhost_poll *poll)
+अणु
 	vhost_work_queue(poll->dev, &poll->work);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(vhost_poll_queue);
 
-static void __vhost_vq_meta_reset(struct vhost_virtqueue *vq)
-{
-	int j;
+अटल व्योम __vhost_vq_meta_reset(काष्ठा vhost_virtqueue *vq)
+अणु
+	पूर्णांक j;
 
-	for (j = 0; j < VHOST_NUM_ADDRS; j++)
-		vq->meta_iotlb[j] = NULL;
-}
+	क्रम (j = 0; j < VHOST_NUM_ADDRS; j++)
+		vq->meta_iotlb[j] = शून्य;
+पूर्ण
 
-static void vhost_vq_meta_reset(struct vhost_dev *d)
-{
-	int i;
+अटल व्योम vhost_vq_meta_reset(काष्ठा vhost_dev *d)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < d->nvqs; ++i)
+	क्रम (i = 0; i < d->nvqs; ++i)
 		__vhost_vq_meta_reset(d->vqs[i]);
-}
+पूर्ण
 
-static void vhost_vring_call_reset(struct vhost_vring_call *call_ctx)
-{
-	call_ctx->ctx = NULL;
-	memset(&call_ctx->producer, 0x0, sizeof(struct irq_bypass_producer));
-}
+अटल व्योम vhost_vring_call_reset(काष्ठा vhost_vring_call *call_ctx)
+अणु
+	call_ctx->ctx = शून्य;
+	स_रखो(&call_ctx->producer, 0x0, माप(काष्ठा irq_bypass_producer));
+पूर्ण
 
-bool vhost_vq_is_setup(struct vhost_virtqueue *vq)
-{
-	return vq->avail && vq->desc && vq->used && vhost_vq_access_ok(vq);
-}
+bool vhost_vq_is_setup(काष्ठा vhost_virtqueue *vq)
+अणु
+	वापस vq->avail && vq->desc && vq->used && vhost_vq_access_ok(vq);
+पूर्ण
 EXPORT_SYMBOL_GPL(vhost_vq_is_setup);
 
-static void vhost_vq_reset(struct vhost_dev *dev,
-			   struct vhost_virtqueue *vq)
-{
+अटल व्योम vhost_vq_reset(काष्ठा vhost_dev *dev,
+			   काष्ठा vhost_virtqueue *vq)
+अणु
 	vq->num = 1;
-	vq->desc = NULL;
-	vq->avail = NULL;
-	vq->used = NULL;
+	vq->desc = शून्य;
+	vq->avail = शून्य;
+	vq->used = शून्य;
 	vq->last_avail_idx = 0;
 	vq->avail_idx = 0;
 	vq->last_used_idx = 0;
-	vq->signalled_used = 0;
-	vq->signalled_used_valid = false;
+	vq->संकेतled_used = 0;
+	vq->संकेतled_used_valid = false;
 	vq->used_flags = 0;
 	vq->log_used = false;
 	vq->log_addr = -1ull;
-	vq->private_data = NULL;
+	vq->निजी_data = शून्य;
 	vq->acked_features = 0;
 	vq->acked_backend_features = 0;
-	vq->log_base = NULL;
-	vq->error_ctx = NULL;
-	vq->kick = NULL;
-	vq->log_ctx = NULL;
+	vq->log_base = शून्य;
+	vq->error_ctx = शून्य;
+	vq->kick = शून्य;
+	vq->log_ctx = शून्य;
 	vhost_disable_cross_endian(vq);
 	vhost_reset_is_le(vq);
-	vq->busyloop_timeout = 0;
-	vq->umem = NULL;
-	vq->iotlb = NULL;
+	vq->busyloop_समयout = 0;
+	vq->umem = शून्य;
+	vq->iotlb = शून्य;
 	vhost_vring_call_reset(&vq->call_ctx);
 	__vhost_vq_meta_reset(vq);
-}
+पूर्ण
 
-static int vhost_worker(void *data)
-{
-	struct vhost_dev *dev = data;
-	struct vhost_work *work, *work_next;
-	struct llist_node *node;
+अटल पूर्णांक vhost_worker(व्योम *data)
+अणु
+	काष्ठा vhost_dev *dev = data;
+	काष्ठा vhost_work *work, *work_next;
+	काष्ठा llist_node *node;
 
-	kthread_use_mm(dev->mm);
+	kthपढ़ो_use_mm(dev->mm);
 
-	for (;;) {
-		/* mb paired w/ kthread_stop */
+	क्रम (;;) अणु
+		/* mb paired w/ kthपढ़ो_stop */
 		set_current_state(TASK_INTERRUPTIBLE);
 
-		if (kthread_should_stop()) {
+		अगर (kthपढ़ो_should_stop()) अणु
 			__set_current_state(TASK_RUNNING);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		node = llist_del_all(&dev->work_list);
-		if (!node)
+		अगर (!node)
 			schedule();
 
 		node = llist_reverse_order(node);
 		/* make sure flag is seen after deletion */
 		smp_wmb();
-		llist_for_each_entry_safe(work, work_next, node, node) {
+		llist_क्रम_each_entry_safe(work, work_next, node, node) अणु
 			clear_bit(VHOST_WORK_QUEUED, &work->flags);
 			__set_current_state(TASK_RUNNING);
 			kcov_remote_start_common(dev->kcov_handle);
 			work->fn(work);
 			kcov_remote_stop();
-			if (need_resched())
+			अगर (need_resched())
 				schedule();
-		}
-	}
-	kthread_unuse_mm(dev->mm);
-	return 0;
-}
+		पूर्ण
+	पूर्ण
+	kthपढ़ो_unuse_mm(dev->mm);
+	वापस 0;
+पूर्ण
 
-static void vhost_vq_free_iovecs(struct vhost_virtqueue *vq)
-{
-	kfree(vq->indirect);
-	vq->indirect = NULL;
-	kfree(vq->log);
-	vq->log = NULL;
-	kfree(vq->heads);
-	vq->heads = NULL;
-}
+अटल व्योम vhost_vq_मुक्त_iovecs(काष्ठा vhost_virtqueue *vq)
+अणु
+	kमुक्त(vq->indirect);
+	vq->indirect = शून्य;
+	kमुक्त(vq->log);
+	vq->log = शून्य;
+	kमुक्त(vq->heads);
+	vq->heads = शून्य;
+पूर्ण
 
-/* Helper to allocate iovec buffers for all vqs. */
-static long vhost_dev_alloc_iovecs(struct vhost_dev *dev)
-{
-	struct vhost_virtqueue *vq;
-	int i;
+/* Helper to allocate iovec buffers क्रम all vqs. */
+अटल दीर्घ vhost_dev_alloc_iovecs(काष्ठा vhost_dev *dev)
+अणु
+	काष्ठा vhost_virtqueue *vq;
+	पूर्णांक i;
 
-	for (i = 0; i < dev->nvqs; ++i) {
+	क्रम (i = 0; i < dev->nvqs; ++i) अणु
 		vq = dev->vqs[i];
-		vq->indirect = kmalloc_array(UIO_MAXIOV,
-					     sizeof(*vq->indirect),
+		vq->indirect = kदो_स्मृति_array(UIO_MAXIOV,
+					     माप(*vq->indirect),
 					     GFP_KERNEL);
-		vq->log = kmalloc_array(dev->iov_limit, sizeof(*vq->log),
+		vq->log = kदो_स्मृति_array(dev->iov_limit, माप(*vq->log),
 					GFP_KERNEL);
-		vq->heads = kmalloc_array(dev->iov_limit, sizeof(*vq->heads),
+		vq->heads = kदो_स्मृति_array(dev->iov_limit, माप(*vq->heads),
 					  GFP_KERNEL);
-		if (!vq->indirect || !vq->log || !vq->heads)
-			goto err_nomem;
-	}
-	return 0;
+		अगर (!vq->indirect || !vq->log || !vq->heads)
+			जाओ err_nomem;
+	पूर्ण
+	वापस 0;
 
 err_nomem:
-	for (; i >= 0; --i)
-		vhost_vq_free_iovecs(dev->vqs[i]);
-	return -ENOMEM;
-}
+	क्रम (; i >= 0; --i)
+		vhost_vq_मुक्त_iovecs(dev->vqs[i]);
+	वापस -ENOMEM;
+पूर्ण
 
-static void vhost_dev_free_iovecs(struct vhost_dev *dev)
-{
-	int i;
+अटल व्योम vhost_dev_मुक्त_iovecs(काष्ठा vhost_dev *dev)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < dev->nvqs; ++i)
-		vhost_vq_free_iovecs(dev->vqs[i]);
-}
+	क्रम (i = 0; i < dev->nvqs; ++i)
+		vhost_vq_मुक्त_iovecs(dev->vqs[i]);
+पूर्ण
 
-bool vhost_exceeds_weight(struct vhost_virtqueue *vq,
-			  int pkts, int total_len)
-{
-	struct vhost_dev *dev = vq->dev;
+bool vhost_exceeds_weight(काष्ठा vhost_virtqueue *vq,
+			  पूर्णांक pkts, पूर्णांक total_len)
+अणु
+	काष्ठा vhost_dev *dev = vq->dev;
 
-	if ((dev->byte_weight && total_len >= dev->byte_weight) ||
-	    pkts >= dev->weight) {
+	अगर ((dev->byte_weight && total_len >= dev->byte_weight) ||
+	    pkts >= dev->weight) अणु
 		vhost_poll_queue(&vq->poll);
-		return true;
-	}
+		वापस true;
+	पूर्ण
 
-	return false;
-}
+	वापस false;
+पूर्ण
 EXPORT_SYMBOL_GPL(vhost_exceeds_weight);
 
-static size_t vhost_get_avail_size(struct vhost_virtqueue *vq,
-				   unsigned int num)
-{
-	size_t event __maybe_unused =
+अटल माप_प्रकार vhost_get_avail_size(काष्ठा vhost_virtqueue *vq,
+				   अचिन्हित पूर्णांक num)
+अणु
+	माप_प्रकार event __maybe_unused =
 	       vhost_has_feature(vq, VIRTIO_RING_F_EVENT_IDX) ? 2 : 0;
 
-	return sizeof(*vq->avail) +
-	       sizeof(*vq->avail->ring) * num + event;
-}
+	वापस माप(*vq->avail) +
+	       माप(*vq->avail->ring) * num + event;
+पूर्ण
 
-static size_t vhost_get_used_size(struct vhost_virtqueue *vq,
-				  unsigned int num)
-{
-	size_t event __maybe_unused =
+अटल माप_प्रकार vhost_get_used_size(काष्ठा vhost_virtqueue *vq,
+				  अचिन्हित पूर्णांक num)
+अणु
+	माप_प्रकार event __maybe_unused =
 	       vhost_has_feature(vq, VIRTIO_RING_F_EVENT_IDX) ? 2 : 0;
 
-	return sizeof(*vq->used) +
-	       sizeof(*vq->used->ring) * num + event;
-}
+	वापस माप(*vq->used) +
+	       माप(*vq->used->ring) * num + event;
+पूर्ण
 
-static size_t vhost_get_desc_size(struct vhost_virtqueue *vq,
-				  unsigned int num)
-{
-	return sizeof(*vq->desc) * num;
-}
+अटल माप_प्रकार vhost_get_desc_size(काष्ठा vhost_virtqueue *vq,
+				  अचिन्हित पूर्णांक num)
+अणु
+	वापस माप(*vq->desc) * num;
+पूर्ण
 
-void vhost_dev_init(struct vhost_dev *dev,
-		    struct vhost_virtqueue **vqs, int nvqs,
-		    int iov_limit, int weight, int byte_weight,
+व्योम vhost_dev_init(काष्ठा vhost_dev *dev,
+		    काष्ठा vhost_virtqueue **vqs, पूर्णांक nvqs,
+		    पूर्णांक iov_limit, पूर्णांक weight, पूर्णांक byte_weight,
 		    bool use_worker,
-		    int (*msg_handler)(struct vhost_dev *dev,
-				       struct vhost_iotlb_msg *msg))
-{
-	struct vhost_virtqueue *vq;
-	int i;
+		    पूर्णांक (*msg_handler)(काष्ठा vhost_dev *dev,
+				       काष्ठा vhost_iotlb_msg *msg))
+अणु
+	काष्ठा vhost_virtqueue *vq;
+	पूर्णांक i;
 
 	dev->vqs = vqs;
 	dev->nvqs = nvqs;
 	mutex_init(&dev->mutex);
-	dev->log_ctx = NULL;
-	dev->umem = NULL;
-	dev->iotlb = NULL;
-	dev->mm = NULL;
-	dev->worker = NULL;
+	dev->log_ctx = शून्य;
+	dev->umem = शून्य;
+	dev->iotlb = शून्य;
+	dev->mm = शून्य;
+	dev->worker = शून्य;
 	dev->iov_limit = iov_limit;
 	dev->weight = weight;
 	dev->byte_weight = byte_weight;
 	dev->use_worker = use_worker;
 	dev->msg_handler = msg_handler;
 	init_llist_head(&dev->work_list);
-	init_waitqueue_head(&dev->wait);
-	INIT_LIST_HEAD(&dev->read_list);
+	init_रुकोqueue_head(&dev->रुको);
+	INIT_LIST_HEAD(&dev->पढ़ो_list);
 	INIT_LIST_HEAD(&dev->pending_list);
 	spin_lock_init(&dev->iotlb_lock);
 
 
-	for (i = 0; i < dev->nvqs; ++i) {
+	क्रम (i = 0; i < dev->nvqs; ++i) अणु
 		vq = dev->vqs[i];
-		vq->log = NULL;
-		vq->indirect = NULL;
-		vq->heads = NULL;
+		vq->log = शून्य;
+		vq->indirect = शून्य;
+		vq->heads = शून्य;
 		vq->dev = dev;
 		mutex_init(&vq->mutex);
 		vhost_vq_reset(dev, vq);
-		if (vq->handle_kick)
+		अगर (vq->handle_kick)
 			vhost_poll_init(&vq->poll, vq->handle_kick,
 					EPOLLIN, dev);
-	}
-}
+	पूर्ण
+पूर्ण
 EXPORT_SYMBOL_GPL(vhost_dev_init);
 
 /* Caller should have device mutex */
-long vhost_dev_check_owner(struct vhost_dev *dev)
-{
-	/* Are you the owner? If not, I don't think you mean to do that */
-	return dev->mm == current->mm ? 0 : -EPERM;
-}
+दीर्घ vhost_dev_check_owner(काष्ठा vhost_dev *dev)
+अणु
+	/* Are you the owner? If not, I करोn't think you mean to करो that */
+	वापस dev->mm == current->mm ? 0 : -EPERM;
+पूर्ण
 EXPORT_SYMBOL_GPL(vhost_dev_check_owner);
 
-struct vhost_attach_cgroups_struct {
-	struct vhost_work work;
-	struct task_struct *owner;
-	int ret;
-};
+काष्ठा vhost_attach_cgroups_काष्ठा अणु
+	काष्ठा vhost_work work;
+	काष्ठा task_काष्ठा *owner;
+	पूर्णांक ret;
+पूर्ण;
 
-static void vhost_attach_cgroups_work(struct vhost_work *work)
-{
-	struct vhost_attach_cgroups_struct *s;
+अटल व्योम vhost_attach_cgroups_work(काष्ठा vhost_work *work)
+अणु
+	काष्ठा vhost_attach_cgroups_काष्ठा *s;
 
-	s = container_of(work, struct vhost_attach_cgroups_struct, work);
+	s = container_of(work, काष्ठा vhost_attach_cgroups_काष्ठा, work);
 	s->ret = cgroup_attach_task_all(s->owner, current);
-}
+पूर्ण
 
-static int vhost_attach_cgroups(struct vhost_dev *dev)
-{
-	struct vhost_attach_cgroups_struct attach;
+अटल पूर्णांक vhost_attach_cgroups(काष्ठा vhost_dev *dev)
+अणु
+	काष्ठा vhost_attach_cgroups_काष्ठा attach;
 
 	attach.owner = current;
 	vhost_work_init(&attach.work, vhost_attach_cgroups_work);
 	vhost_work_queue(dev, &attach.work);
 	vhost_work_flush(dev, &attach.work);
-	return attach.ret;
-}
+	वापस attach.ret;
+पूर्ण
 
 /* Caller should have device mutex */
-bool vhost_dev_has_owner(struct vhost_dev *dev)
-{
-	return dev->mm;
-}
+bool vhost_dev_has_owner(काष्ठा vhost_dev *dev)
+अणु
+	वापस dev->mm;
+पूर्ण
 EXPORT_SYMBOL_GPL(vhost_dev_has_owner);
 
-static void vhost_attach_mm(struct vhost_dev *dev)
-{
+अटल व्योम vhost_attach_mm(काष्ठा vhost_dev *dev)
+अणु
 	/* No owner, become one */
-	if (dev->use_worker) {
+	अगर (dev->use_worker) अणु
 		dev->mm = get_task_mm(current);
-	} else {
-		/* vDPA device does not use worker thead, so there's
-		 * no need to hold the address space for mm. This help
-		 * to avoid deadlock in the case of mmap() which may
+	पूर्ण अन्यथा अणु
+		/* vDPA device करोes not use worker thead, so there's
+		 * no need to hold the address space क्रम mm. This help
+		 * to aव्योम deadlock in the हाल of mmap() which may
 		 * held the refcnt of the file and depends on release
-		 * method to remove vma.
+		 * method to हटाओ vma.
 		 */
 		dev->mm = current->mm;
 		mmgrab(dev->mm);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void vhost_detach_mm(struct vhost_dev *dev)
-{
-	if (!dev->mm)
-		return;
+अटल व्योम vhost_detach_mm(काष्ठा vhost_dev *dev)
+अणु
+	अगर (!dev->mm)
+		वापस;
 
-	if (dev->use_worker)
+	अगर (dev->use_worker)
 		mmput(dev->mm);
-	else
+	अन्यथा
 		mmdrop(dev->mm);
 
-	dev->mm = NULL;
-}
+	dev->mm = शून्य;
+पूर्ण
 
 /* Caller should have device mutex */
-long vhost_dev_set_owner(struct vhost_dev *dev)
-{
-	struct task_struct *worker;
-	int err;
+दीर्घ vhost_dev_set_owner(काष्ठा vhost_dev *dev)
+अणु
+	काष्ठा task_काष्ठा *worker;
+	पूर्णांक err;
 
-	/* Is there an owner already? */
-	if (vhost_dev_has_owner(dev)) {
+	/* Is there an owner alपढ़ोy? */
+	अगर (vhost_dev_has_owner(dev)) अणु
 		err = -EBUSY;
-		goto err_mm;
-	}
+		जाओ err_mm;
+	पूर्ण
 
 	vhost_attach_mm(dev);
 
 	dev->kcov_handle = kcov_common_handle();
-	if (dev->use_worker) {
-		worker = kthread_create(vhost_worker, dev,
+	अगर (dev->use_worker) अणु
+		worker = kthपढ़ो_create(vhost_worker, dev,
 					"vhost-%d", current->pid);
-		if (IS_ERR(worker)) {
+		अगर (IS_ERR(worker)) अणु
 			err = PTR_ERR(worker);
-			goto err_worker;
-		}
+			जाओ err_worker;
+		पूर्ण
 
 		dev->worker = worker;
-		wake_up_process(worker); /* avoid contributing to loadavg */
+		wake_up_process(worker); /* aव्योम contributing to loadavg */
 
 		err = vhost_attach_cgroups(dev);
-		if (err)
-			goto err_cgroup;
-	}
+		अगर (err)
+			जाओ err_cgroup;
+	पूर्ण
 
 	err = vhost_dev_alloc_iovecs(dev);
-	if (err)
-		goto err_cgroup;
+	अगर (err)
+		जाओ err_cgroup;
 
-	return 0;
+	वापस 0;
 err_cgroup:
-	if (dev->worker) {
-		kthread_stop(dev->worker);
-		dev->worker = NULL;
-	}
+	अगर (dev->worker) अणु
+		kthपढ़ो_stop(dev->worker);
+		dev->worker = शून्य;
+	पूर्ण
 err_worker:
 	vhost_detach_mm(dev);
 	dev->kcov_handle = 0;
 err_mm:
-	return err;
-}
+	वापस err;
+पूर्ण
 EXPORT_SYMBOL_GPL(vhost_dev_set_owner);
 
-static struct vhost_iotlb *iotlb_alloc(void)
-{
-	return vhost_iotlb_alloc(max_iotlb_entries,
+अटल काष्ठा vhost_iotlb *iotlb_alloc(व्योम)
+अणु
+	वापस vhost_iotlb_alloc(max_iotlb_entries,
 				 VHOST_IOTLB_FLAG_RETIRE);
-}
+पूर्ण
 
-struct vhost_iotlb *vhost_dev_reset_owner_prepare(void)
-{
-	return iotlb_alloc();
-}
+काष्ठा vhost_iotlb *vhost_dev_reset_owner_prepare(व्योम)
+अणु
+	वापस iotlb_alloc();
+पूर्ण
 EXPORT_SYMBOL_GPL(vhost_dev_reset_owner_prepare);
 
 /* Caller should have device mutex */
-void vhost_dev_reset_owner(struct vhost_dev *dev, struct vhost_iotlb *umem)
-{
-	int i;
+व्योम vhost_dev_reset_owner(काष्ठा vhost_dev *dev, काष्ठा vhost_iotlb *umem)
+अणु
+	पूर्णांक i;
 
 	vhost_dev_cleanup(dev);
 
 	dev->umem = umem;
-	/* We don't need VQ locks below since vhost_dev_cleanup makes sure
+	/* We करोn't need VQ locks below since vhost_dev_cleanup makes sure
 	 * VQs aren't running.
 	 */
-	for (i = 0; i < dev->nvqs; ++i)
+	क्रम (i = 0; i < dev->nvqs; ++i)
 		dev->vqs[i]->umem = umem;
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(vhost_dev_reset_owner);
 
-void vhost_dev_stop(struct vhost_dev *dev)
-{
-	int i;
+व्योम vhost_dev_stop(काष्ठा vhost_dev *dev)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < dev->nvqs; ++i) {
-		if (dev->vqs[i]->kick && dev->vqs[i]->handle_kick) {
+	क्रम (i = 0; i < dev->nvqs; ++i) अणु
+		अगर (dev->vqs[i]->kick && dev->vqs[i]->handle_kick) अणु
 			vhost_poll_stop(&dev->vqs[i]->poll);
 			vhost_poll_flush(&dev->vqs[i]->poll);
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 EXPORT_SYMBOL_GPL(vhost_dev_stop);
 
-static void vhost_clear_msg(struct vhost_dev *dev)
-{
-	struct vhost_msg_node *node, *n;
+अटल व्योम vhost_clear_msg(काष्ठा vhost_dev *dev)
+अणु
+	काष्ठा vhost_msg_node *node, *n;
 
 	spin_lock(&dev->iotlb_lock);
 
-	list_for_each_entry_safe(node, n, &dev->read_list, node) {
+	list_क्रम_each_entry_safe(node, n, &dev->पढ़ो_list, node) अणु
 		list_del(&node->node);
-		kfree(node);
-	}
+		kमुक्त(node);
+	पूर्ण
 
-	list_for_each_entry_safe(node, n, &dev->pending_list, node) {
+	list_क्रम_each_entry_safe(node, n, &dev->pending_list, node) अणु
 		list_del(&node->node);
-		kfree(node);
-	}
+		kमुक्त(node);
+	पूर्ण
 
 	spin_unlock(&dev->iotlb_lock);
-}
+पूर्ण
 
-void vhost_dev_cleanup(struct vhost_dev *dev)
-{
-	int i;
+व्योम vhost_dev_cleanup(काष्ठा vhost_dev *dev)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < dev->nvqs; ++i) {
-		if (dev->vqs[i]->error_ctx)
+	क्रम (i = 0; i < dev->nvqs; ++i) अणु
+		अगर (dev->vqs[i]->error_ctx)
 			eventfd_ctx_put(dev->vqs[i]->error_ctx);
-		if (dev->vqs[i]->kick)
+		अगर (dev->vqs[i]->kick)
 			fput(dev->vqs[i]->kick);
-		if (dev->vqs[i]->call_ctx.ctx)
+		अगर (dev->vqs[i]->call_ctx.ctx)
 			eventfd_ctx_put(dev->vqs[i]->call_ctx.ctx);
 		vhost_vq_reset(dev, dev->vqs[i]);
-	}
-	vhost_dev_free_iovecs(dev);
-	if (dev->log_ctx)
+	पूर्ण
+	vhost_dev_मुक्त_iovecs(dev);
+	अगर (dev->log_ctx)
 		eventfd_ctx_put(dev->log_ctx);
-	dev->log_ctx = NULL;
-	/* No one will access memory at this point */
-	vhost_iotlb_free(dev->umem);
-	dev->umem = NULL;
-	vhost_iotlb_free(dev->iotlb);
-	dev->iotlb = NULL;
+	dev->log_ctx = शून्य;
+	/* No one will access memory at this poपूर्णांक */
+	vhost_iotlb_मुक्त(dev->umem);
+	dev->umem = शून्य;
+	vhost_iotlb_मुक्त(dev->iotlb);
+	dev->iotlb = शून्य;
 	vhost_clear_msg(dev);
-	wake_up_interruptible_poll(&dev->wait, EPOLLIN | EPOLLRDNORM);
+	wake_up_पूर्णांकerruptible_poll(&dev->रुको, EPOLLIN | EPOLLRDNORM);
 	WARN_ON(!llist_empty(&dev->work_list));
-	if (dev->worker) {
-		kthread_stop(dev->worker);
-		dev->worker = NULL;
+	अगर (dev->worker) अणु
+		kthपढ़ो_stop(dev->worker);
+		dev->worker = शून्य;
 		dev->kcov_handle = 0;
-	}
+	पूर्ण
 	vhost_detach_mm(dev);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(vhost_dev_cleanup);
 
-static bool log_access_ok(void __user *log_base, u64 addr, unsigned long sz)
-{
+अटल bool log_access_ok(व्योम __user *log_base, u64 addr, अचिन्हित दीर्घ sz)
+अणु
 	u64 a = addr / VHOST_PAGE_SIZE / 8;
 
 	/* Make sure 64 bit math will not overflow. */
-	if (a > ULONG_MAX - (unsigned long)log_base ||
-	    a + (unsigned long)log_base > ULONG_MAX)
-		return false;
+	अगर (a > अच_दीर्घ_उच्च - (अचिन्हित दीर्घ)log_base ||
+	    a + (अचिन्हित दीर्घ)log_base > अच_दीर्घ_उच्च)
+		वापस false;
 
-	return access_ok(log_base + a,
+	वापस access_ok(log_base + a,
 			 (sz + VHOST_PAGE_SIZE * 8 - 1) / VHOST_PAGE_SIZE / 8);
-}
+पूर्ण
 
-static bool vhost_overflow(u64 uaddr, u64 size)
-{
+अटल bool vhost_overflow(u64 uaddr, u64 size)
+अणु
 	/* Make sure 64 bit math will not overflow. */
-	return uaddr > ULONG_MAX || size > ULONG_MAX || uaddr > ULONG_MAX - size;
-}
+	वापस uaddr > अच_दीर्घ_उच्च || size > अच_दीर्घ_उच्च || uaddr > अच_दीर्घ_उच्च - size;
+पूर्ण
 
 /* Caller should have vq mutex and device mutex. */
-static bool vq_memory_access_ok(void __user *log_base, struct vhost_iotlb *umem,
-				int log_all)
-{
-	struct vhost_iotlb_map *map;
+अटल bool vq_memory_access_ok(व्योम __user *log_base, काष्ठा vhost_iotlb *umem,
+				पूर्णांक log_all)
+अणु
+	काष्ठा vhost_iotlb_map *map;
 
-	if (!umem)
-		return false;
+	अगर (!umem)
+		वापस false;
 
-	list_for_each_entry(map, &umem->list, link) {
-		unsigned long a = map->addr;
+	list_क्रम_each_entry(map, &umem->list, link) अणु
+		अचिन्हित दीर्घ a = map->addr;
 
-		if (vhost_overflow(map->addr, map->size))
-			return false;
+		अगर (vhost_overflow(map->addr, map->size))
+			वापस false;
 
 
-		if (!access_ok((void __user *)a, map->size))
-			return false;
-		else if (log_all && !log_access_ok(log_base,
+		अगर (!access_ok((व्योम __user *)a, map->size))
+			वापस false;
+		अन्यथा अगर (log_all && !log_access_ok(log_base,
 						   map->start,
 						   map->size))
-			return false;
-	}
-	return true;
-}
+			वापस false;
+	पूर्ण
+	वापस true;
+पूर्ण
 
-static inline void __user *vhost_vq_meta_fetch(struct vhost_virtqueue *vq,
-					       u64 addr, unsigned int size,
-					       int type)
-{
-	const struct vhost_iotlb_map *map = vq->meta_iotlb[type];
+अटल अंतरभूत व्योम __user *vhost_vq_meta_fetch(काष्ठा vhost_virtqueue *vq,
+					       u64 addr, अचिन्हित पूर्णांक size,
+					       पूर्णांक type)
+अणु
+	स्थिर काष्ठा vhost_iotlb_map *map = vq->meta_iotlb[type];
 
-	if (!map)
-		return NULL;
+	अगर (!map)
+		वापस शून्य;
 
-	return (void __user *)(uintptr_t)(map->addr + addr - map->start);
-}
+	वापस (व्योम __user *)(uपूर्णांकptr_t)(map->addr + addr - map->start);
+पूर्ण
 
-/* Can we switch to this memory table? */
+/* Can we चयन to this memory table? */
 /* Caller should have device mutex but not vq mutex */
-static bool memory_access_ok(struct vhost_dev *d, struct vhost_iotlb *umem,
-			     int log_all)
-{
-	int i;
+अटल bool memory_access_ok(काष्ठा vhost_dev *d, काष्ठा vhost_iotlb *umem,
+			     पूर्णांक log_all)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < d->nvqs; ++i) {
+	क्रम (i = 0; i < d->nvqs; ++i) अणु
 		bool ok;
 		bool log;
 
 		mutex_lock(&d->vqs[i]->mutex);
 		log = log_all || vhost_has_feature(d->vqs[i], VHOST_F_LOG_ALL);
 		/* If ring is inactive, will check when it's enabled. */
-		if (d->vqs[i]->private_data)
+		अगर (d->vqs[i]->निजी_data)
 			ok = vq_memory_access_ok(d->vqs[i]->log_base,
 						 umem, log);
-		else
+		अन्यथा
 			ok = true;
 		mutex_unlock(&d->vqs[i]->mutex);
-		if (!ok)
-			return false;
-	}
-	return true;
-}
+		अगर (!ok)
+			वापस false;
+	पूर्ण
+	वापस true;
+पूर्ण
 
-static int translate_desc(struct vhost_virtqueue *vq, u64 addr, u32 len,
-			  struct iovec iov[], int iov_size, int access);
+अटल पूर्णांक translate_desc(काष्ठा vhost_virtqueue *vq, u64 addr, u32 len,
+			  काष्ठा iovec iov[], पूर्णांक iov_size, पूर्णांक access);
 
-static int vhost_copy_to_user(struct vhost_virtqueue *vq, void __user *to,
-			      const void *from, unsigned size)
-{
-	int ret;
+अटल पूर्णांक vhost_copy_to_user(काष्ठा vhost_virtqueue *vq, व्योम __user *to,
+			      स्थिर व्योम *from, अचिन्हित size)
+अणु
+	पूर्णांक ret;
 
-	if (!vq->iotlb)
-		return __copy_to_user(to, from, size);
-	else {
+	अगर (!vq->iotlb)
+		वापस __copy_to_user(to, from, size);
+	अन्यथा अणु
 		/* This function should be called after iotlb
 		 * prefetch, which means we're sure that all vq
 		 * could be access through iotlb. So -EAGAIN should
-		 * not happen in this case.
+		 * not happen in this हाल.
 		 */
-		struct iov_iter t;
-		void __user *uaddr = vhost_vq_meta_fetch(vq,
-				     (u64)(uintptr_t)to, size,
+		काष्ठा iov_iter t;
+		व्योम __user *uaddr = vhost_vq_meta_fetch(vq,
+				     (u64)(uपूर्णांकptr_t)to, size,
 				     VHOST_ADDR_USED);
 
-		if (uaddr)
-			return __copy_to_user(uaddr, from, size);
+		अगर (uaddr)
+			वापस __copy_to_user(uaddr, from, size);
 
-		ret = translate_desc(vq, (u64)(uintptr_t)to, size, vq->iotlb_iov,
+		ret = translate_desc(vq, (u64)(uपूर्णांकptr_t)to, size, vq->iotlb_iov,
 				     ARRAY_SIZE(vq->iotlb_iov),
 				     VHOST_ACCESS_WO);
-		if (ret < 0)
-			goto out;
+		अगर (ret < 0)
+			जाओ out;
 		iov_iter_init(&t, WRITE, vq->iotlb_iov, ret, size);
 		ret = copy_to_iter(from, size, &t);
-		if (ret == size)
+		अगर (ret == size)
 			ret = 0;
-	}
+	पूर्ण
 out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int vhost_copy_from_user(struct vhost_virtqueue *vq, void *to,
-				void __user *from, unsigned size)
-{
-	int ret;
+अटल पूर्णांक vhost_copy_from_user(काष्ठा vhost_virtqueue *vq, व्योम *to,
+				व्योम __user *from, अचिन्हित size)
+अणु
+	पूर्णांक ret;
 
-	if (!vq->iotlb)
-		return __copy_from_user(to, from, size);
-	else {
+	अगर (!vq->iotlb)
+		वापस __copy_from_user(to, from, size);
+	अन्यथा अणु
 		/* This function should be called after iotlb
 		 * prefetch, which means we're sure that vq
 		 * could be access through iotlb. So -EAGAIN should
-		 * not happen in this case.
+		 * not happen in this हाल.
 		 */
-		void __user *uaddr = vhost_vq_meta_fetch(vq,
-				     (u64)(uintptr_t)from, size,
+		व्योम __user *uaddr = vhost_vq_meta_fetch(vq,
+				     (u64)(uपूर्णांकptr_t)from, size,
 				     VHOST_ADDR_DESC);
-		struct iov_iter f;
+		काष्ठा iov_iter f;
 
-		if (uaddr)
-			return __copy_from_user(to, uaddr, size);
+		अगर (uaddr)
+			वापस __copy_from_user(to, uaddr, size);
 
-		ret = translate_desc(vq, (u64)(uintptr_t)from, size, vq->iotlb_iov,
+		ret = translate_desc(vq, (u64)(uपूर्णांकptr_t)from, size, vq->iotlb_iov,
 				     ARRAY_SIZE(vq->iotlb_iov),
 				     VHOST_ACCESS_RO);
-		if (ret < 0) {
+		अगर (ret < 0) अणु
 			vq_err(vq, "IOTLB translation failure: uaddr "
 			       "%p size 0x%llx\n", from,
-			       (unsigned long long) size);
-			goto out;
-		}
+			       (अचिन्हित दीर्घ दीर्घ) size);
+			जाओ out;
+		पूर्ण
 		iov_iter_init(&f, READ, vq->iotlb_iov, ret, size);
 		ret = copy_from_iter(to, size, &f);
-		if (ret == size)
+		अगर (ret == size)
 			ret = 0;
-	}
+	पूर्ण
 
 out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void __user *__vhost_get_user_slow(struct vhost_virtqueue *vq,
-					  void __user *addr, unsigned int size,
-					  int type)
-{
-	int ret;
+अटल व्योम __user *__vhost_get_user_slow(काष्ठा vhost_virtqueue *vq,
+					  व्योम __user *addr, अचिन्हित पूर्णांक size,
+					  पूर्णांक type)
+अणु
+	पूर्णांक ret;
 
-	ret = translate_desc(vq, (u64)(uintptr_t)addr, size, vq->iotlb_iov,
+	ret = translate_desc(vq, (u64)(uपूर्णांकptr_t)addr, size, vq->iotlb_iov,
 			     ARRAY_SIZE(vq->iotlb_iov),
 			     VHOST_ACCESS_RO);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		vq_err(vq, "IOTLB translation failure: uaddr "
 			"%p size 0x%llx\n", addr,
-			(unsigned long long) size);
-		return NULL;
-	}
+			(अचिन्हित दीर्घ दीर्घ) size);
+		वापस शून्य;
+	पूर्ण
 
-	if (ret != 1 || vq->iotlb_iov[0].iov_len != size) {
+	अगर (ret != 1 || vq->iotlb_iov[0].iov_len != size) अणु
 		vq_err(vq, "Non atomic userspace memory access: uaddr "
 			"%p size 0x%llx\n", addr,
-			(unsigned long long) size);
-		return NULL;
-	}
+			(अचिन्हित दीर्घ दीर्घ) size);
+		वापस शून्य;
+	पूर्ण
 
-	return vq->iotlb_iov[0].iov_base;
-}
+	वापस vq->iotlb_iov[0].iov_base;
+पूर्ण
 
 /* This function should be called after iotlb
  * prefetch, which means we're sure that vq
  * could be access through iotlb. So -EAGAIN should
- * not happen in this case.
+ * not happen in this हाल.
  */
-static inline void __user *__vhost_get_user(struct vhost_virtqueue *vq,
-					    void __user *addr, unsigned int size,
-					    int type)
-{
-	void __user *uaddr = vhost_vq_meta_fetch(vq,
-			     (u64)(uintptr_t)addr, size, type);
-	if (uaddr)
-		return uaddr;
+अटल अंतरभूत व्योम __user *__vhost_get_user(काष्ठा vhost_virtqueue *vq,
+					    व्योम __user *addr, अचिन्हित पूर्णांक size,
+					    पूर्णांक type)
+अणु
+	व्योम __user *uaddr = vhost_vq_meta_fetch(vq,
+			     (u64)(uपूर्णांकptr_t)addr, size, type);
+	अगर (uaddr)
+		वापस uaddr;
 
-	return __vhost_get_user_slow(vq, addr, size, type);
-}
+	वापस __vhost_get_user_slow(vq, addr, size, type);
+पूर्ण
 
-#define vhost_put_user(vq, x, ptr)		\
-({ \
-	int ret; \
-	if (!vq->iotlb) { \
+#घोषणा vhost_put_user(vq, x, ptr)		\
+(अणु \
+	पूर्णांक ret; \
+	अगर (!vq->iotlb) अणु \
 		ret = __put_user(x, ptr); \
-	} else { \
+	पूर्ण अन्यथा अणु \
 		__typeof__(ptr) to = \
 			(__typeof__(ptr)) __vhost_get_user(vq, ptr,	\
-					  sizeof(*ptr), VHOST_ADDR_USED); \
-		if (to != NULL) \
+					  माप(*ptr), VHOST_ADDR_USED); \
+		अगर (to != शून्य) \
 			ret = __put_user(x, to); \
-		else \
+		अन्यथा \
 			ret = -EFAULT;	\
-	} \
+	पूर्ण \
 	ret; \
-})
+पूर्ण)
 
-static inline int vhost_put_avail_event(struct vhost_virtqueue *vq)
-{
-	return vhost_put_user(vq, cpu_to_vhost16(vq, vq->avail_idx),
+अटल अंतरभूत पूर्णांक vhost_put_avail_event(काष्ठा vhost_virtqueue *vq)
+अणु
+	वापस vhost_put_user(vq, cpu_to_vhost16(vq, vq->avail_idx),
 			      vhost_avail_event(vq));
-}
+पूर्ण
 
-static inline int vhost_put_used(struct vhost_virtqueue *vq,
-				 struct vring_used_elem *head, int idx,
-				 int count)
-{
-	return vhost_copy_to_user(vq, vq->used->ring + idx, head,
-				  count * sizeof(*head));
-}
+अटल अंतरभूत पूर्णांक vhost_put_used(काष्ठा vhost_virtqueue *vq,
+				 काष्ठा vring_used_elem *head, पूर्णांक idx,
+				 पूर्णांक count)
+अणु
+	वापस vhost_copy_to_user(vq, vq->used->ring + idx, head,
+				  count * माप(*head));
+पूर्ण
 
-static inline int vhost_put_used_flags(struct vhost_virtqueue *vq)
+अटल अंतरभूत पूर्णांक vhost_put_used_flags(काष्ठा vhost_virtqueue *vq)
 
-{
-	return vhost_put_user(vq, cpu_to_vhost16(vq, vq->used_flags),
+अणु
+	वापस vhost_put_user(vq, cpu_to_vhost16(vq, vq->used_flags),
 			      &vq->used->flags);
-}
+पूर्ण
 
-static inline int vhost_put_used_idx(struct vhost_virtqueue *vq)
+अटल अंतरभूत पूर्णांक vhost_put_used_idx(काष्ठा vhost_virtqueue *vq)
 
-{
-	return vhost_put_user(vq, cpu_to_vhost16(vq, vq->last_used_idx),
+अणु
+	वापस vhost_put_user(vq, cpu_to_vhost16(vq, vq->last_used_idx),
 			      &vq->used->idx);
-}
+पूर्ण
 
-#define vhost_get_user(vq, x, ptr, type)		\
-({ \
-	int ret; \
-	if (!vq->iotlb) { \
+#घोषणा vhost_get_user(vq, x, ptr, type)		\
+(अणु \
+	पूर्णांक ret; \
+	अगर (!vq->iotlb) अणु \
 		ret = __get_user(x, ptr); \
-	} else { \
+	पूर्ण अन्यथा अणु \
 		__typeof__(ptr) from = \
 			(__typeof__(ptr)) __vhost_get_user(vq, ptr, \
-							   sizeof(*ptr), \
+							   माप(*ptr), \
 							   type); \
-		if (from != NULL) \
+		अगर (from != शून्य) \
 			ret = __get_user(x, from); \
-		else \
+		अन्यथा \
 			ret = -EFAULT; \
-	} \
+	पूर्ण \
 	ret; \
-})
+पूर्ण)
 
-#define vhost_get_avail(vq, x, ptr) \
+#घोषणा vhost_get_avail(vq, x, ptr) \
 	vhost_get_user(vq, x, ptr, VHOST_ADDR_AVAIL)
 
-#define vhost_get_used(vq, x, ptr) \
+#घोषणा vhost_get_used(vq, x, ptr) \
 	vhost_get_user(vq, x, ptr, VHOST_ADDR_USED)
 
-static void vhost_dev_lock_vqs(struct vhost_dev *d)
-{
-	int i = 0;
-	for (i = 0; i < d->nvqs; ++i)
+अटल व्योम vhost_dev_lock_vqs(काष्ठा vhost_dev *d)
+अणु
+	पूर्णांक i = 0;
+	क्रम (i = 0; i < d->nvqs; ++i)
 		mutex_lock_nested(&d->vqs[i]->mutex, i);
-}
+पूर्ण
 
-static void vhost_dev_unlock_vqs(struct vhost_dev *d)
-{
-	int i = 0;
-	for (i = 0; i < d->nvqs; ++i)
+अटल व्योम vhost_dev_unlock_vqs(काष्ठा vhost_dev *d)
+अणु
+	पूर्णांक i = 0;
+	क्रम (i = 0; i < d->nvqs; ++i)
 		mutex_unlock(&d->vqs[i]->mutex);
-}
+पूर्ण
 
-static inline int vhost_get_avail_idx(struct vhost_virtqueue *vq,
+अटल अंतरभूत पूर्णांक vhost_get_avail_idx(काष्ठा vhost_virtqueue *vq,
 				      __virtio16 *idx)
-{
-	return vhost_get_avail(vq, *idx, &vq->avail->idx);
-}
+अणु
+	वापस vhost_get_avail(vq, *idx, &vq->avail->idx);
+पूर्ण
 
-static inline int vhost_get_avail_head(struct vhost_virtqueue *vq,
-				       __virtio16 *head, int idx)
-{
-	return vhost_get_avail(vq, *head,
+अटल अंतरभूत पूर्णांक vhost_get_avail_head(काष्ठा vhost_virtqueue *vq,
+				       __virtio16 *head, पूर्णांक idx)
+अणु
+	वापस vhost_get_avail(vq, *head,
 			       &vq->avail->ring[idx & (vq->num - 1)]);
-}
+पूर्ण
 
-static inline int vhost_get_avail_flags(struct vhost_virtqueue *vq,
+अटल अंतरभूत पूर्णांक vhost_get_avail_flags(काष्ठा vhost_virtqueue *vq,
 					__virtio16 *flags)
-{
-	return vhost_get_avail(vq, *flags, &vq->avail->flags);
-}
+अणु
+	वापस vhost_get_avail(vq, *flags, &vq->avail->flags);
+पूर्ण
 
-static inline int vhost_get_used_event(struct vhost_virtqueue *vq,
+अटल अंतरभूत पूर्णांक vhost_get_used_event(काष्ठा vhost_virtqueue *vq,
 				       __virtio16 *event)
-{
-	return vhost_get_avail(vq, *event, vhost_used_event(vq));
-}
+अणु
+	वापस vhost_get_avail(vq, *event, vhost_used_event(vq));
+पूर्ण
 
-static inline int vhost_get_used_idx(struct vhost_virtqueue *vq,
+अटल अंतरभूत पूर्णांक vhost_get_used_idx(काष्ठा vhost_virtqueue *vq,
 				     __virtio16 *idx)
-{
-	return vhost_get_used(vq, *idx, &vq->used->idx);
-}
+अणु
+	वापस vhost_get_used(vq, *idx, &vq->used->idx);
+पूर्ण
 
-static inline int vhost_get_desc(struct vhost_virtqueue *vq,
-				 struct vring_desc *desc, int idx)
-{
-	return vhost_copy_from_user(vq, desc, vq->desc + idx, sizeof(*desc));
-}
+अटल अंतरभूत पूर्णांक vhost_get_desc(काष्ठा vhost_virtqueue *vq,
+				 काष्ठा vring_desc *desc, पूर्णांक idx)
+अणु
+	वापस vhost_copy_from_user(vq, desc, vq->desc + idx, माप(*desc));
+पूर्ण
 
-static void vhost_iotlb_notify_vq(struct vhost_dev *d,
-				  struct vhost_iotlb_msg *msg)
-{
-	struct vhost_msg_node *node, *n;
+अटल व्योम vhost_iotlb_notअगरy_vq(काष्ठा vhost_dev *d,
+				  काष्ठा vhost_iotlb_msg *msg)
+अणु
+	काष्ठा vhost_msg_node *node, *n;
 
 	spin_lock(&d->iotlb_lock);
 
-	list_for_each_entry_safe(node, n, &d->pending_list, node) {
-		struct vhost_iotlb_msg *vq_msg = &node->msg.iotlb;
-		if (msg->iova <= vq_msg->iova &&
+	list_क्रम_each_entry_safe(node, n, &d->pending_list, node) अणु
+		काष्ठा vhost_iotlb_msg *vq_msg = &node->msg.iotlb;
+		अगर (msg->iova <= vq_msg->iova &&
 		    msg->iova + msg->size - 1 >= vq_msg->iova &&
-		    vq_msg->type == VHOST_IOTLB_MISS) {
+		    vq_msg->type == VHOST_IOTLB_MISS) अणु
 			vhost_poll_queue(&node->vq->poll);
 			list_del(&node->node);
-			kfree(node);
-		}
-	}
+			kमुक्त(node);
+		पूर्ण
+	पूर्ण
 
 	spin_unlock(&d->iotlb_lock);
-}
+पूर्ण
 
-static bool umem_access_ok(u64 uaddr, u64 size, int access)
-{
-	unsigned long a = uaddr;
+अटल bool umem_access_ok(u64 uaddr, u64 size, पूर्णांक access)
+अणु
+	अचिन्हित दीर्घ a = uaddr;
 
 	/* Make sure 64 bit math will not overflow. */
-	if (vhost_overflow(uaddr, size))
-		return false;
+	अगर (vhost_overflow(uaddr, size))
+		वापस false;
 
-	if ((access & VHOST_ACCESS_RO) &&
-	    !access_ok((void __user *)a, size))
-		return false;
-	if ((access & VHOST_ACCESS_WO) &&
-	    !access_ok((void __user *)a, size))
-		return false;
-	return true;
-}
+	अगर ((access & VHOST_ACCESS_RO) &&
+	    !access_ok((व्योम __user *)a, size))
+		वापस false;
+	अगर ((access & VHOST_ACCESS_WO) &&
+	    !access_ok((व्योम __user *)a, size))
+		वापस false;
+	वापस true;
+पूर्ण
 
-static int vhost_process_iotlb_msg(struct vhost_dev *dev,
-				   struct vhost_iotlb_msg *msg)
-{
-	int ret = 0;
+अटल पूर्णांक vhost_process_iotlb_msg(काष्ठा vhost_dev *dev,
+				   काष्ठा vhost_iotlb_msg *msg)
+अणु
+	पूर्णांक ret = 0;
 
 	mutex_lock(&dev->mutex);
 	vhost_dev_lock_vqs(dev);
-	switch (msg->type) {
-	case VHOST_IOTLB_UPDATE:
-		if (!dev->iotlb) {
+	चयन (msg->type) अणु
+	हाल VHOST_IOTLB_UPDATE:
+		अगर (!dev->iotlb) अणु
 			ret = -EFAULT;
-			break;
-		}
-		if (!umem_access_ok(msg->uaddr, msg->size, msg->perm)) {
+			अवरोध;
+		पूर्ण
+		अगर (!umem_access_ok(msg->uaddr, msg->size, msg->perm)) अणु
 			ret = -EFAULT;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		vhost_vq_meta_reset(dev);
-		if (vhost_iotlb_add_range(dev->iotlb, msg->iova,
+		अगर (vhost_iotlb_add_range(dev->iotlb, msg->iova,
 					  msg->iova + msg->size - 1,
-					  msg->uaddr, msg->perm)) {
+					  msg->uaddr, msg->perm)) अणु
 			ret = -ENOMEM;
-			break;
-		}
-		vhost_iotlb_notify_vq(dev, msg);
-		break;
-	case VHOST_IOTLB_INVALIDATE:
-		if (!dev->iotlb) {
+			अवरोध;
+		पूर्ण
+		vhost_iotlb_notअगरy_vq(dev, msg);
+		अवरोध;
+	हाल VHOST_IOTLB_INVALIDATE:
+		अगर (!dev->iotlb) अणु
 			ret = -EFAULT;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		vhost_vq_meta_reset(dev);
 		vhost_iotlb_del_range(dev->iotlb, msg->iova,
 				      msg->iova + msg->size - 1);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		ret = -EINVAL;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	vhost_dev_unlock_vqs(dev);
 	mutex_unlock(&dev->mutex);
 
-	return ret;
-}
-ssize_t vhost_chr_write_iter(struct vhost_dev *dev,
-			     struct iov_iter *from)
-{
-	struct vhost_iotlb_msg msg;
-	size_t offset;
-	int type, ret;
+	वापस ret;
+पूर्ण
+sमाप_प्रकार vhost_chr_ग_लिखो_iter(काष्ठा vhost_dev *dev,
+			     काष्ठा iov_iter *from)
+अणु
+	काष्ठा vhost_iotlb_msg msg;
+	माप_प्रकार offset;
+	पूर्णांक type, ret;
 
-	ret = copy_from_iter(&type, sizeof(type), from);
-	if (ret != sizeof(type)) {
+	ret = copy_from_iter(&type, माप(type), from);
+	अगर (ret != माप(type)) अणु
 		ret = -EINVAL;
-		goto done;
-	}
+		जाओ करोne;
+	पूर्ण
 
-	switch (type) {
-	case VHOST_IOTLB_MSG:
-		/* There maybe a hole after type for V1 message type,
+	चयन (type) अणु
+	हाल VHOST_IOTLB_MSG:
+		/* There maybe a hole after type क्रम V1 message type,
 		 * so skip it here.
 		 */
-		offset = offsetof(struct vhost_msg, iotlb) - sizeof(int);
-		break;
-	case VHOST_IOTLB_MSG_V2:
-		offset = sizeof(__u32);
-		break;
-	default:
+		offset = दुरत्व(काष्ठा vhost_msg, iotlb) - माप(पूर्णांक);
+		अवरोध;
+	हाल VHOST_IOTLB_MSG_V2:
+		offset = माप(__u32);
+		अवरोध;
+	शेष:
 		ret = -EINVAL;
-		goto done;
-	}
+		जाओ करोne;
+	पूर्ण
 
 	iov_iter_advance(from, offset);
-	ret = copy_from_iter(&msg, sizeof(msg), from);
-	if (ret != sizeof(msg)) {
+	ret = copy_from_iter(&msg, माप(msg), from);
+	अगर (ret != माप(msg)) अणु
 		ret = -EINVAL;
-		goto done;
-	}
+		जाओ करोne;
+	पूर्ण
 
-	if (dev->msg_handler)
+	अगर (dev->msg_handler)
 		ret = dev->msg_handler(dev, &msg);
-	else
+	अन्यथा
 		ret = vhost_process_iotlb_msg(dev, &msg);
-	if (ret) {
+	अगर (ret) अणु
 		ret = -EFAULT;
-		goto done;
-	}
+		जाओ करोne;
+	पूर्ण
 
-	ret = (type == VHOST_IOTLB_MSG) ? sizeof(struct vhost_msg) :
-	      sizeof(struct vhost_msg_v2);
-done:
-	return ret;
-}
-EXPORT_SYMBOL(vhost_chr_write_iter);
+	ret = (type == VHOST_IOTLB_MSG) ? माप(काष्ठा vhost_msg) :
+	      माप(काष्ठा vhost_msg_v2);
+करोne:
+	वापस ret;
+पूर्ण
+EXPORT_SYMBOL(vhost_chr_ग_लिखो_iter);
 
-__poll_t vhost_chr_poll(struct file *file, struct vhost_dev *dev,
-			    poll_table *wait)
-{
+__poll_t vhost_chr_poll(काष्ठा file *file, काष्ठा vhost_dev *dev,
+			    poll_table *रुको)
+अणु
 	__poll_t mask = 0;
 
-	poll_wait(file, &dev->wait, wait);
+	poll_रुको(file, &dev->रुको, रुको);
 
-	if (!list_empty(&dev->read_list))
+	अगर (!list_empty(&dev->पढ़ो_list))
 		mask |= EPOLLIN | EPOLLRDNORM;
 
-	return mask;
-}
+	वापस mask;
+पूर्ण
 EXPORT_SYMBOL(vhost_chr_poll);
 
-ssize_t vhost_chr_read_iter(struct vhost_dev *dev, struct iov_iter *to,
-			    int noblock)
-{
-	DEFINE_WAIT(wait);
-	struct vhost_msg_node *node;
-	ssize_t ret = 0;
-	unsigned size = sizeof(struct vhost_msg);
+sमाप_प्रकार vhost_chr_पढ़ो_iter(काष्ठा vhost_dev *dev, काष्ठा iov_iter *to,
+			    पूर्णांक noblock)
+अणु
+	DEFINE_WAIT(रुको);
+	काष्ठा vhost_msg_node *node;
+	sमाप_प्रकार ret = 0;
+	अचिन्हित size = माप(काष्ठा vhost_msg);
 
-	if (iov_iter_count(to) < size)
-		return 0;
+	अगर (iov_iter_count(to) < size)
+		वापस 0;
 
-	while (1) {
-		if (!noblock)
-			prepare_to_wait(&dev->wait, &wait,
+	जबतक (1) अणु
+		अगर (!noblock)
+			prepare_to_रुको(&dev->रुको, &रुको,
 					TASK_INTERRUPTIBLE);
 
-		node = vhost_dequeue_msg(dev, &dev->read_list);
-		if (node)
-			break;
-		if (noblock) {
+		node = vhost_dequeue_msg(dev, &dev->पढ़ो_list);
+		अगर (node)
+			अवरोध;
+		अगर (noblock) अणु
 			ret = -EAGAIN;
-			break;
-		}
-		if (signal_pending(current)) {
+			अवरोध;
+		पूर्ण
+		अगर (संकेत_pending(current)) अणु
 			ret = -ERESTARTSYS;
-			break;
-		}
-		if (!dev->iotlb) {
+			अवरोध;
+		पूर्ण
+		अगर (!dev->iotlb) अणु
 			ret = -EBADFD;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		schedule();
-	}
+	पूर्ण
 
-	if (!noblock)
-		finish_wait(&dev->wait, &wait);
+	अगर (!noblock)
+		finish_रुको(&dev->रुको, &रुको);
 
-	if (node) {
-		struct vhost_iotlb_msg *msg;
-		void *start = &node->msg;
+	अगर (node) अणु
+		काष्ठा vhost_iotlb_msg *msg;
+		व्योम *start = &node->msg;
 
-		switch (node->msg.type) {
-		case VHOST_IOTLB_MSG:
-			size = sizeof(node->msg);
+		चयन (node->msg.type) अणु
+		हाल VHOST_IOTLB_MSG:
+			size = माप(node->msg);
 			msg = &node->msg.iotlb;
-			break;
-		case VHOST_IOTLB_MSG_V2:
-			size = sizeof(node->msg_v2);
+			अवरोध;
+		हाल VHOST_IOTLB_MSG_V2:
+			size = माप(node->msg_v2);
 			msg = &node->msg_v2.iotlb;
-			break;
-		default:
+			अवरोध;
+		शेष:
 			BUG();
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		ret = copy_to_iter(start, size, to);
-		if (ret != size || msg->type != VHOST_IOTLB_MISS) {
-			kfree(node);
-			return ret;
-		}
+		अगर (ret != size || msg->type != VHOST_IOTLB_MISS) अणु
+			kमुक्त(node);
+			वापस ret;
+		पूर्ण
 		vhost_enqueue_msg(dev, &dev->pending_list, node);
-	}
+	पूर्ण
 
-	return ret;
-}
-EXPORT_SYMBOL_GPL(vhost_chr_read_iter);
+	वापस ret;
+पूर्ण
+EXPORT_SYMBOL_GPL(vhost_chr_पढ़ो_iter);
 
-static int vhost_iotlb_miss(struct vhost_virtqueue *vq, u64 iova, int access)
-{
-	struct vhost_dev *dev = vq->dev;
-	struct vhost_msg_node *node;
-	struct vhost_iotlb_msg *msg;
+अटल पूर्णांक vhost_iotlb_miss(काष्ठा vhost_virtqueue *vq, u64 iova, पूर्णांक access)
+अणु
+	काष्ठा vhost_dev *dev = vq->dev;
+	काष्ठा vhost_msg_node *node;
+	काष्ठा vhost_iotlb_msg *msg;
 	bool v2 = vhost_backend_has_feature(vq, VHOST_BACKEND_F_IOTLB_MSG_V2);
 
 	node = vhost_new_msg(vq, v2 ? VHOST_IOTLB_MSG_V2 : VHOST_IOTLB_MSG);
-	if (!node)
-		return -ENOMEM;
+	अगर (!node)
+		वापस -ENOMEM;
 
-	if (v2) {
+	अगर (v2) अणु
 		node->msg_v2.type = VHOST_IOTLB_MSG_V2;
 		msg = &node->msg_v2.iotlb;
-	} else {
+	पूर्ण अन्यथा अणु
 		msg = &node->msg.iotlb;
-	}
+	पूर्ण
 
 	msg->type = VHOST_IOTLB_MISS;
 	msg->iova = iova;
 	msg->perm = access;
 
-	vhost_enqueue_msg(dev, &dev->read_list, node);
+	vhost_enqueue_msg(dev, &dev->पढ़ो_list, node);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static bool vq_access_ok(struct vhost_virtqueue *vq, unsigned int num,
+अटल bool vq_access_ok(काष्ठा vhost_virtqueue *vq, अचिन्हित पूर्णांक num,
 			 vring_desc_t __user *desc,
 			 vring_avail_t __user *avail,
 			 vring_used_t __user *used)
 
-{
+अणु
 	/* If an IOTLB device is present, the vring addresses are
-	 * GIOVAs. Access validation occurs at prefetch time. */
-	if (vq->iotlb)
-		return true;
+	 * GIOVAs. Access validation occurs at prefetch समय. */
+	अगर (vq->iotlb)
+		वापस true;
 
-	return access_ok(desc, vhost_get_desc_size(vq, num)) &&
+	वापस access_ok(desc, vhost_get_desc_size(vq, num)) &&
 	       access_ok(avail, vhost_get_avail_size(vq, num)) &&
 	       access_ok(used, vhost_get_used_size(vq, num));
-}
+पूर्ण
 
-static void vhost_vq_meta_update(struct vhost_virtqueue *vq,
-				 const struct vhost_iotlb_map *map,
-				 int type)
-{
-	int access = (type == VHOST_ADDR_USED) ?
+अटल व्योम vhost_vq_meta_update(काष्ठा vhost_virtqueue *vq,
+				 स्थिर काष्ठा vhost_iotlb_map *map,
+				 पूर्णांक type)
+अणु
+	पूर्णांक access = (type == VHOST_ADDR_USED) ?
 		     VHOST_ACCESS_WO : VHOST_ACCESS_RO;
 
-	if (likely(map->perm & access))
+	अगर (likely(map->perm & access))
 		vq->meta_iotlb[type] = map;
-}
+पूर्ण
 
-static bool iotlb_access_ok(struct vhost_virtqueue *vq,
-			    int access, u64 addr, u64 len, int type)
-{
-	const struct vhost_iotlb_map *map;
-	struct vhost_iotlb *umem = vq->iotlb;
+अटल bool iotlb_access_ok(काष्ठा vhost_virtqueue *vq,
+			    पूर्णांक access, u64 addr, u64 len, पूर्णांक type)
+अणु
+	स्थिर काष्ठा vhost_iotlb_map *map;
+	काष्ठा vhost_iotlb *umem = vq->iotlb;
 	u64 s = 0, size, orig_addr = addr, last = addr + len - 1;
 
-	if (vhost_vq_meta_fetch(vq, addr, len, type))
-		return true;
+	अगर (vhost_vq_meta_fetch(vq, addr, len, type))
+		वापस true;
 
-	while (len > s) {
+	जबतक (len > s) अणु
 		map = vhost_iotlb_itree_first(umem, addr, last);
-		if (map == NULL || map->start > addr) {
+		अगर (map == शून्य || map->start > addr) अणु
 			vhost_iotlb_miss(vq, addr, access);
-			return false;
-		} else if (!(map->perm & access)) {
+			वापस false;
+		पूर्ण अन्यथा अगर (!(map->perm & access)) अणु
 			/* Report the possible access violation by
 			 * request another translation from userspace.
 			 */
-			return false;
-		}
+			वापस false;
+		पूर्ण
 
 		size = map->size - addr + map->start;
 
-		if (orig_addr == addr && size >= len)
+		अगर (orig_addr == addr && size >= len)
 			vhost_vq_meta_update(vq, map, type);
 
 		s += size;
 		addr += size;
-	}
+	पूर्ण
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-int vq_meta_prefetch(struct vhost_virtqueue *vq)
-{
-	unsigned int num = vq->num;
+पूर्णांक vq_meta_prefetch(काष्ठा vhost_virtqueue *vq)
+अणु
+	अचिन्हित पूर्णांक num = vq->num;
 
-	if (!vq->iotlb)
-		return 1;
+	अगर (!vq->iotlb)
+		वापस 1;
 
-	return iotlb_access_ok(vq, VHOST_MAP_RO, (u64)(uintptr_t)vq->desc,
+	वापस iotlb_access_ok(vq, VHOST_MAP_RO, (u64)(uपूर्णांकptr_t)vq->desc,
 			       vhost_get_desc_size(vq, num), VHOST_ADDR_DESC) &&
-	       iotlb_access_ok(vq, VHOST_MAP_RO, (u64)(uintptr_t)vq->avail,
+	       iotlb_access_ok(vq, VHOST_MAP_RO, (u64)(uपूर्णांकptr_t)vq->avail,
 			       vhost_get_avail_size(vq, num),
 			       VHOST_ADDR_AVAIL) &&
-	       iotlb_access_ok(vq, VHOST_MAP_WO, (u64)(uintptr_t)vq->used,
+	       iotlb_access_ok(vq, VHOST_MAP_WO, (u64)(uपूर्णांकptr_t)vq->used,
 			       vhost_get_used_size(vq, num), VHOST_ADDR_USED);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(vq_meta_prefetch);
 
-/* Can we log writes? */
+/* Can we log ग_लिखोs? */
 /* Caller should have device mutex but not vq mutex */
-bool vhost_log_access_ok(struct vhost_dev *dev)
-{
-	return memory_access_ok(dev, dev->umem, 1);
-}
+bool vhost_log_access_ok(काष्ठा vhost_dev *dev)
+अणु
+	वापस memory_access_ok(dev, dev->umem, 1);
+पूर्ण
 EXPORT_SYMBOL_GPL(vhost_log_access_ok);
 
-static bool vq_log_used_access_ok(struct vhost_virtqueue *vq,
-				  void __user *log_base,
+अटल bool vq_log_used_access_ok(काष्ठा vhost_virtqueue *vq,
+				  व्योम __user *log_base,
 				  bool log_used,
 				  u64 log_addr)
-{
+अणु
 	/* If an IOTLB device is present, log_addr is a GIOVA that
 	 * will never be logged by log_used(). */
-	if (vq->iotlb)
-		return true;
+	अगर (vq->iotlb)
+		वापस true;
 
-	return !log_used || log_access_ok(log_base, log_addr,
+	वापस !log_used || log_access_ok(log_base, log_addr,
 					  vhost_get_used_size(vq, vq->num));
-}
+पूर्ण
 
-/* Verify access for write logging. */
+/* Verअगरy access क्रम ग_लिखो logging. */
 /* Caller should have vq mutex and device mutex */
-static bool vq_log_access_ok(struct vhost_virtqueue *vq,
-			     void __user *log_base)
-{
-	return vq_memory_access_ok(log_base, vq->umem,
+अटल bool vq_log_access_ok(काष्ठा vhost_virtqueue *vq,
+			     व्योम __user *log_base)
+अणु
+	वापस vq_memory_access_ok(log_base, vq->umem,
 				   vhost_has_feature(vq, VHOST_F_LOG_ALL)) &&
 		vq_log_used_access_ok(vq, log_base, vq->log_used, vq->log_addr);
-}
+पूर्ण
 
 /* Can we start vq? */
 /* Caller should have vq mutex and device mutex */
-bool vhost_vq_access_ok(struct vhost_virtqueue *vq)
-{
-	if (!vq_log_access_ok(vq, vq->log_base))
-		return false;
+bool vhost_vq_access_ok(काष्ठा vhost_virtqueue *vq)
+अणु
+	अगर (!vq_log_access_ok(vq, vq->log_base))
+		वापस false;
 
-	return vq_access_ok(vq, vq->num, vq->desc, vq->avail, vq->used);
-}
+	वापस vq_access_ok(vq, vq->num, vq->desc, vq->avail, vq->used);
+पूर्ण
 EXPORT_SYMBOL_GPL(vhost_vq_access_ok);
 
-static long vhost_set_memory(struct vhost_dev *d, struct vhost_memory __user *m)
-{
-	struct vhost_memory mem, *newmem;
-	struct vhost_memory_region *region;
-	struct vhost_iotlb *newumem, *oldumem;
-	unsigned long size = offsetof(struct vhost_memory, regions);
-	int i;
+अटल दीर्घ vhost_set_memory(काष्ठा vhost_dev *d, काष्ठा vhost_memory __user *m)
+अणु
+	काष्ठा vhost_memory mem, *newmem;
+	काष्ठा vhost_memory_region *region;
+	काष्ठा vhost_iotlb *newumem, *oldumem;
+	अचिन्हित दीर्घ size = दुरत्व(काष्ठा vhost_memory, regions);
+	पूर्णांक i;
 
-	if (copy_from_user(&mem, m, size))
-		return -EFAULT;
-	if (mem.padding)
-		return -EOPNOTSUPP;
-	if (mem.nregions > max_mem_regions)
-		return -E2BIG;
-	newmem = kvzalloc(struct_size(newmem, regions, mem.nregions),
+	अगर (copy_from_user(&mem, m, size))
+		वापस -EFAULT;
+	अगर (mem.padding)
+		वापस -EOPNOTSUPP;
+	अगर (mem.nregions > max_mem_regions)
+		वापस -E2BIG;
+	newmem = kvzalloc(काष्ठा_size(newmem, regions, mem.nregions),
 			GFP_KERNEL);
-	if (!newmem)
-		return -ENOMEM;
+	अगर (!newmem)
+		वापस -ENOMEM;
 
-	memcpy(newmem, &mem, size);
-	if (copy_from_user(newmem->regions, m->regions,
-			   flex_array_size(newmem, regions, mem.nregions))) {
-		kvfree(newmem);
-		return -EFAULT;
-	}
+	स_नकल(newmem, &mem, size);
+	अगर (copy_from_user(newmem->regions, m->regions,
+			   flex_array_size(newmem, regions, mem.nregions))) अणु
+		kvमुक्त(newmem);
+		वापस -EFAULT;
+	पूर्ण
 
 	newumem = iotlb_alloc();
-	if (!newumem) {
-		kvfree(newmem);
-		return -ENOMEM;
-	}
+	अगर (!newumem) अणु
+		kvमुक्त(newmem);
+		वापस -ENOMEM;
+	पूर्ण
 
-	for (region = newmem->regions;
+	क्रम (region = newmem->regions;
 	     region < newmem->regions + mem.nregions;
-	     region++) {
-		if (vhost_iotlb_add_range(newumem,
+	     region++) अणु
+		अगर (vhost_iotlb_add_range(newumem,
 					  region->guest_phys_addr,
 					  region->guest_phys_addr +
 					  region->memory_size - 1,
 					  region->userspace_addr,
 					  VHOST_MAP_RW))
-			goto err;
-	}
+			जाओ err;
+	पूर्ण
 
-	if (!memory_access_ok(d, newumem, 0))
-		goto err;
+	अगर (!memory_access_ok(d, newumem, 0))
+		जाओ err;
 
 	oldumem = d->umem;
 	d->umem = newumem;
 
-	/* All memory accesses are done under some VQ mutex. */
-	for (i = 0; i < d->nvqs; ++i) {
+	/* All memory accesses are करोne under some VQ mutex. */
+	क्रम (i = 0; i < d->nvqs; ++i) अणु
 		mutex_lock(&d->vqs[i]->mutex);
 		d->vqs[i]->umem = newumem;
 		mutex_unlock(&d->vqs[i]->mutex);
-	}
+	पूर्ण
 
-	kvfree(newmem);
-	vhost_iotlb_free(oldumem);
-	return 0;
+	kvमुक्त(newmem);
+	vhost_iotlb_मुक्त(oldumem);
+	वापस 0;
 
 err:
-	vhost_iotlb_free(newumem);
-	kvfree(newmem);
-	return -EFAULT;
-}
+	vhost_iotlb_मुक्त(newumem);
+	kvमुक्त(newmem);
+	वापस -EFAULT;
+पूर्ण
 
-static long vhost_vring_set_num(struct vhost_dev *d,
-				struct vhost_virtqueue *vq,
-				void __user *argp)
-{
-	struct vhost_vring_state s;
+अटल दीर्घ vhost_vring_set_num(काष्ठा vhost_dev *d,
+				काष्ठा vhost_virtqueue *vq,
+				व्योम __user *argp)
+अणु
+	काष्ठा vhost_vring_state s;
 
 	/* Resizing ring with an active backend?
-	 * You don't want to do that. */
-	if (vq->private_data)
-		return -EBUSY;
+	 * You करोn't want to करो that. */
+	अगर (vq->निजी_data)
+		वापस -EBUSY;
 
-	if (copy_from_user(&s, argp, sizeof s))
-		return -EFAULT;
+	अगर (copy_from_user(&s, argp, माप s))
+		वापस -EFAULT;
 
-	if (!s.num || s.num > 0xffff || (s.num & (s.num - 1)))
-		return -EINVAL;
+	अगर (!s.num || s.num > 0xffff || (s.num & (s.num - 1)))
+		वापस -EINVAL;
 	vq->num = s.num;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static long vhost_vring_set_addr(struct vhost_dev *d,
-				 struct vhost_virtqueue *vq,
-				 void __user *argp)
-{
-	struct vhost_vring_addr a;
+अटल दीर्घ vhost_vring_set_addr(काष्ठा vhost_dev *d,
+				 काष्ठा vhost_virtqueue *vq,
+				 व्योम __user *argp)
+अणु
+	काष्ठा vhost_vring_addr a;
 
-	if (copy_from_user(&a, argp, sizeof a))
-		return -EFAULT;
-	if (a.flags & ~(0x1 << VHOST_VRING_F_LOG))
-		return -EOPNOTSUPP;
+	अगर (copy_from_user(&a, argp, माप a))
+		वापस -EFAULT;
+	अगर (a.flags & ~(0x1 << VHOST_VRING_F_LOG))
+		वापस -EOPNOTSUPP;
 
-	/* For 32bit, verify that the top 32bits of the user
+	/* For 32bit, verअगरy that the top 32bits of the user
 	   data are set to zero. */
-	if ((u64)(unsigned long)a.desc_user_addr != a.desc_user_addr ||
-	    (u64)(unsigned long)a.used_user_addr != a.used_user_addr ||
-	    (u64)(unsigned long)a.avail_user_addr != a.avail_user_addr)
-		return -EFAULT;
+	अगर ((u64)(अचिन्हित दीर्घ)a.desc_user_addr != a.desc_user_addr ||
+	    (u64)(अचिन्हित दीर्घ)a.used_user_addr != a.used_user_addr ||
+	    (u64)(अचिन्हित दीर्घ)a.avail_user_addr != a.avail_user_addr)
+		वापस -EFAULT;
 
-	/* Make sure it's safe to cast pointers to vring types. */
+	/* Make sure it's safe to cast poपूर्णांकers to vring types. */
 	BUILD_BUG_ON(__alignof__ *vq->avail > VRING_AVAIL_ALIGN_SIZE);
 	BUILD_BUG_ON(__alignof__ *vq->used > VRING_USED_ALIGN_SIZE);
-	if ((a.avail_user_addr & (VRING_AVAIL_ALIGN_SIZE - 1)) ||
+	अगर ((a.avail_user_addr & (VRING_AVAIL_ALIGN_SIZE - 1)) ||
 	    (a.used_user_addr & (VRING_USED_ALIGN_SIZE - 1)) ||
 	    (a.log_guest_addr & (VRING_USED_ALIGN_SIZE - 1)))
-		return -EINVAL;
+		वापस -EINVAL;
 
-	/* We only verify access here if backend is configured.
-	 * If it is not, we don't as size might not have been setup.
-	 * We will verify when backend is configured. */
-	if (vq->private_data) {
-		if (!vq_access_ok(vq, vq->num,
-			(void __user *)(unsigned long)a.desc_user_addr,
-			(void __user *)(unsigned long)a.avail_user_addr,
-			(void __user *)(unsigned long)a.used_user_addr))
-			return -EINVAL;
+	/* We only verअगरy access here अगर backend is configured.
+	 * If it is not, we करोn't as size might not have been setup.
+	 * We will verअगरy when backend is configured. */
+	अगर (vq->निजी_data) अणु
+		अगर (!vq_access_ok(vq, vq->num,
+			(व्योम __user *)(अचिन्हित दीर्घ)a.desc_user_addr,
+			(व्योम __user *)(अचिन्हित दीर्घ)a.avail_user_addr,
+			(व्योम __user *)(अचिन्हित दीर्घ)a.used_user_addr))
+			वापस -EINVAL;
 
-		/* Also validate log access for used ring if enabled. */
-		if (!vq_log_used_access_ok(vq, vq->log_base,
+		/* Also validate log access क्रम used ring अगर enabled. */
+		अगर (!vq_log_used_access_ok(vq, vq->log_base,
 				a.flags & (0x1 << VHOST_VRING_F_LOG),
 				a.log_guest_addr))
-			return -EINVAL;
-	}
+			वापस -EINVAL;
+	पूर्ण
 
 	vq->log_used = !!(a.flags & (0x1 << VHOST_VRING_F_LOG));
-	vq->desc = (void __user *)(unsigned long)a.desc_user_addr;
-	vq->avail = (void __user *)(unsigned long)a.avail_user_addr;
+	vq->desc = (व्योम __user *)(अचिन्हित दीर्घ)a.desc_user_addr;
+	vq->avail = (व्योम __user *)(अचिन्हित दीर्घ)a.avail_user_addr;
 	vq->log_addr = a.log_guest_addr;
-	vq->used = (void __user *)(unsigned long)a.used_user_addr;
+	vq->used = (व्योम __user *)(अचिन्हित दीर्घ)a.used_user_addr;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static long vhost_vring_set_num_addr(struct vhost_dev *d,
-				     struct vhost_virtqueue *vq,
-				     unsigned int ioctl,
-				     void __user *argp)
-{
-	long r;
+अटल दीर्घ vhost_vring_set_num_addr(काष्ठा vhost_dev *d,
+				     काष्ठा vhost_virtqueue *vq,
+				     अचिन्हित पूर्णांक ioctl,
+				     व्योम __user *argp)
+अणु
+	दीर्घ r;
 
 	mutex_lock(&vq->mutex);
 
-	switch (ioctl) {
-	case VHOST_SET_VRING_NUM:
+	चयन (ioctl) अणु
+	हाल VHOST_SET_VRING_NUM:
 		r = vhost_vring_set_num(d, vq, argp);
-		break;
-	case VHOST_SET_VRING_ADDR:
+		अवरोध;
+	हाल VHOST_SET_VRING_ADDR:
 		r = vhost_vring_set_addr(d, vq, argp);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		BUG();
-	}
+	पूर्ण
 
 	mutex_unlock(&vq->mutex);
 
-	return r;
-}
-long vhost_vring_ioctl(struct vhost_dev *d, unsigned int ioctl, void __user *argp)
-{
-	struct file *eventfp, *filep = NULL;
+	वापस r;
+पूर्ण
+दीर्घ vhost_vring_ioctl(काष्ठा vhost_dev *d, अचिन्हित पूर्णांक ioctl, व्योम __user *argp)
+अणु
+	काष्ठा file *eventfp, *filep = शून्य;
 	bool pollstart = false, pollstop = false;
-	struct eventfd_ctx *ctx = NULL;
+	काष्ठा eventfd_ctx *ctx = शून्य;
 	u32 __user *idxp = argp;
-	struct vhost_virtqueue *vq;
-	struct vhost_vring_state s;
-	struct vhost_vring_file f;
+	काष्ठा vhost_virtqueue *vq;
+	काष्ठा vhost_vring_state s;
+	काष्ठा vhost_vring_file f;
 	u32 idx;
-	long r;
+	दीर्घ r;
 
 	r = get_user(idx, idxp);
-	if (r < 0)
-		return r;
-	if (idx >= d->nvqs)
-		return -ENOBUFS;
+	अगर (r < 0)
+		वापस r;
+	अगर (idx >= d->nvqs)
+		वापस -ENOBUFS;
 
 	idx = array_index_nospec(idx, d->nvqs);
 	vq = d->vqs[idx];
 
-	if (ioctl == VHOST_SET_VRING_NUM ||
-	    ioctl == VHOST_SET_VRING_ADDR) {
-		return vhost_vring_set_num_addr(d, vq, ioctl, argp);
-	}
+	अगर (ioctl == VHOST_SET_VRING_NUM ||
+	    ioctl == VHOST_SET_VRING_ADDR) अणु
+		वापस vhost_vring_set_num_addr(d, vq, ioctl, argp);
+	पूर्ण
 
 	mutex_lock(&vq->mutex);
 
-	switch (ioctl) {
-	case VHOST_SET_VRING_BASE:
+	चयन (ioctl) अणु
+	हाल VHOST_SET_VRING_BASE:
 		/* Moving base with an active backend?
-		 * You don't want to do that. */
-		if (vq->private_data) {
+		 * You करोn't want to करो that. */
+		अगर (vq->निजी_data) अणु
 			r = -EBUSY;
-			break;
-		}
-		if (copy_from_user(&s, argp, sizeof s)) {
+			अवरोध;
+		पूर्ण
+		अगर (copy_from_user(&s, argp, माप s)) अणु
 			r = -EFAULT;
-			break;
-		}
-		if (s.num > 0xffff) {
+			अवरोध;
+		पूर्ण
+		अगर (s.num > 0xffff) अणु
 			r = -EINVAL;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		vq->last_avail_idx = s.num;
 		/* Forget the cached index value. */
 		vq->avail_idx = vq->last_avail_idx;
-		break;
-	case VHOST_GET_VRING_BASE:
+		अवरोध;
+	हाल VHOST_GET_VRING_BASE:
 		s.index = idx;
 		s.num = vq->last_avail_idx;
-		if (copy_to_user(argp, &s, sizeof s))
+		अगर (copy_to_user(argp, &s, माप s))
 			r = -EFAULT;
-		break;
-	case VHOST_SET_VRING_KICK:
-		if (copy_from_user(&f, argp, sizeof f)) {
+		अवरोध;
+	हाल VHOST_SET_VRING_KICK:
+		अगर (copy_from_user(&f, argp, माप f)) अणु
 			r = -EFAULT;
-			break;
-		}
-		eventfp = f.fd == VHOST_FILE_UNBIND ? NULL : eventfd_fget(f.fd);
-		if (IS_ERR(eventfp)) {
+			अवरोध;
+		पूर्ण
+		eventfp = f.fd == VHOST_खाता_UNBIND ? शून्य : eventfd_fget(f.fd);
+		अगर (IS_ERR(eventfp)) अणु
 			r = PTR_ERR(eventfp);
-			break;
-		}
-		if (eventfp != vq->kick) {
-			pollstop = (filep = vq->kick) != NULL;
-			pollstart = (vq->kick = eventfp) != NULL;
-		} else
+			अवरोध;
+		पूर्ण
+		अगर (eventfp != vq->kick) अणु
+			pollstop = (filep = vq->kick) != शून्य;
+			pollstart = (vq->kick = eventfp) != शून्य;
+		पूर्ण अन्यथा
 			filep = eventfp;
-		break;
-	case VHOST_SET_VRING_CALL:
-		if (copy_from_user(&f, argp, sizeof f)) {
+		अवरोध;
+	हाल VHOST_SET_VRING_CALL:
+		अगर (copy_from_user(&f, argp, माप f)) अणु
 			r = -EFAULT;
-			break;
-		}
-		ctx = f.fd == VHOST_FILE_UNBIND ? NULL : eventfd_ctx_fdget(f.fd);
-		if (IS_ERR(ctx)) {
+			अवरोध;
+		पूर्ण
+		ctx = f.fd == VHOST_खाता_UNBIND ? शून्य : eventfd_ctx_fdget(f.fd);
+		अगर (IS_ERR(ctx)) अणु
 			r = PTR_ERR(ctx);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		swap(ctx, vq->call_ctx.ctx);
-		break;
-	case VHOST_SET_VRING_ERR:
-		if (copy_from_user(&f, argp, sizeof f)) {
+		अवरोध;
+	हाल VHOST_SET_VRING_ERR:
+		अगर (copy_from_user(&f, argp, माप f)) अणु
 			r = -EFAULT;
-			break;
-		}
-		ctx = f.fd == VHOST_FILE_UNBIND ? NULL : eventfd_ctx_fdget(f.fd);
-		if (IS_ERR(ctx)) {
+			अवरोध;
+		पूर्ण
+		ctx = f.fd == VHOST_खाता_UNBIND ? शून्य : eventfd_ctx_fdget(f.fd);
+		अगर (IS_ERR(ctx)) अणु
 			r = PTR_ERR(ctx);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		swap(ctx, vq->error_ctx);
-		break;
-	case VHOST_SET_VRING_ENDIAN:
+		अवरोध;
+	हाल VHOST_SET_VRING_ENDIAN:
 		r = vhost_set_vring_endian(vq, argp);
-		break;
-	case VHOST_GET_VRING_ENDIAN:
+		अवरोध;
+	हाल VHOST_GET_VRING_ENDIAN:
 		r = vhost_get_vring_endian(vq, idx, argp);
-		break;
-	case VHOST_SET_VRING_BUSYLOOP_TIMEOUT:
-		if (copy_from_user(&s, argp, sizeof(s))) {
+		अवरोध;
+	हाल VHOST_SET_VRING_BUSYLOOP_TIMEOUT:
+		अगर (copy_from_user(&s, argp, माप(s))) अणु
 			r = -EFAULT;
-			break;
-		}
-		vq->busyloop_timeout = s.num;
-		break;
-	case VHOST_GET_VRING_BUSYLOOP_TIMEOUT:
+			अवरोध;
+		पूर्ण
+		vq->busyloop_समयout = s.num;
+		अवरोध;
+	हाल VHOST_GET_VRING_BUSYLOOP_TIMEOUT:
 		s.index = idx;
-		s.num = vq->busyloop_timeout;
-		if (copy_to_user(argp, &s, sizeof(s)))
+		s.num = vq->busyloop_समयout;
+		अगर (copy_to_user(argp, &s, माप(s)))
 			r = -EFAULT;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		r = -ENOIOCTLCMD;
-	}
+	पूर्ण
 
-	if (pollstop && vq->handle_kick)
+	अगर (pollstop && vq->handle_kick)
 		vhost_poll_stop(&vq->poll);
 
-	if (!IS_ERR_OR_NULL(ctx))
+	अगर (!IS_ERR_OR_शून्य(ctx))
 		eventfd_ctx_put(ctx);
-	if (filep)
+	अगर (filep)
 		fput(filep);
 
-	if (pollstart && vq->handle_kick)
+	अगर (pollstart && vq->handle_kick)
 		r = vhost_poll_start(&vq->poll, vq->kick);
 
 	mutex_unlock(&vq->mutex);
 
-	if (pollstop && vq->handle_kick)
+	अगर (pollstop && vq->handle_kick)
 		vhost_poll_flush(&vq->poll);
-	return r;
-}
+	वापस r;
+पूर्ण
 EXPORT_SYMBOL_GPL(vhost_vring_ioctl);
 
-int vhost_init_device_iotlb(struct vhost_dev *d, bool enabled)
-{
-	struct vhost_iotlb *niotlb, *oiotlb;
-	int i;
+पूर्णांक vhost_init_device_iotlb(काष्ठा vhost_dev *d, bool enabled)
+अणु
+	काष्ठा vhost_iotlb *niotlb, *oiotlb;
+	पूर्णांक i;
 
 	niotlb = iotlb_alloc();
-	if (!niotlb)
-		return -ENOMEM;
+	अगर (!niotlb)
+		वापस -ENOMEM;
 
 	oiotlb = d->iotlb;
 	d->iotlb = niotlb;
 
-	for (i = 0; i < d->nvqs; ++i) {
-		struct vhost_virtqueue *vq = d->vqs[i];
+	क्रम (i = 0; i < d->nvqs; ++i) अणु
+		काष्ठा vhost_virtqueue *vq = d->vqs[i];
 
 		mutex_lock(&vq->mutex);
 		vq->iotlb = niotlb;
 		__vhost_vq_meta_reset(vq);
 		mutex_unlock(&vq->mutex);
-	}
+	पूर्ण
 
-	vhost_iotlb_free(oiotlb);
+	vhost_iotlb_मुक्त(oiotlb);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(vhost_init_device_iotlb);
 
 /* Caller must have device mutex */
-long vhost_dev_ioctl(struct vhost_dev *d, unsigned int ioctl, void __user *argp)
-{
-	struct eventfd_ctx *ctx;
+दीर्घ vhost_dev_ioctl(काष्ठा vhost_dev *d, अचिन्हित पूर्णांक ioctl, व्योम __user *argp)
+अणु
+	काष्ठा eventfd_ctx *ctx;
 	u64 p;
-	long r;
-	int i, fd;
+	दीर्घ r;
+	पूर्णांक i, fd;
 
 	/* If you are not the owner, you can become one */
-	if (ioctl == VHOST_SET_OWNER) {
+	अगर (ioctl == VHOST_SET_OWNER) अणु
 		r = vhost_dev_set_owner(d);
-		goto done;
-	}
+		जाओ करोne;
+	पूर्ण
 
-	/* You must be the owner to do anything else */
+	/* You must be the owner to करो anything अन्यथा */
 	r = vhost_dev_check_owner(d);
-	if (r)
-		goto done;
+	अगर (r)
+		जाओ करोne;
 
-	switch (ioctl) {
-	case VHOST_SET_MEM_TABLE:
+	चयन (ioctl) अणु
+	हाल VHOST_SET_MEM_TABLE:
 		r = vhost_set_memory(d, argp);
-		break;
-	case VHOST_SET_LOG_BASE:
-		if (copy_from_user(&p, argp, sizeof p)) {
+		अवरोध;
+	हाल VHOST_SET_LOG_BASE:
+		अगर (copy_from_user(&p, argp, माप p)) अणु
 			r = -EFAULT;
-			break;
-		}
-		if ((u64)(unsigned long)p != p) {
+			अवरोध;
+		पूर्ण
+		अगर ((u64)(अचिन्हित दीर्घ)p != p) अणु
 			r = -EFAULT;
-			break;
-		}
-		for (i = 0; i < d->nvqs; ++i) {
-			struct vhost_virtqueue *vq;
-			void __user *base = (void __user *)(unsigned long)p;
+			अवरोध;
+		पूर्ण
+		क्रम (i = 0; i < d->nvqs; ++i) अणु
+			काष्ठा vhost_virtqueue *vq;
+			व्योम __user *base = (व्योम __user *)(अचिन्हित दीर्घ)p;
 			vq = d->vqs[i];
 			mutex_lock(&vq->mutex);
 			/* If ring is inactive, will check when it's enabled. */
-			if (vq->private_data && !vq_log_access_ok(vq, base))
+			अगर (vq->निजी_data && !vq_log_access_ok(vq, base))
 				r = -EFAULT;
-			else
+			अन्यथा
 				vq->log_base = base;
 			mutex_unlock(&vq->mutex);
-		}
-		break;
-	case VHOST_SET_LOG_FD:
-		r = get_user(fd, (int __user *)argp);
-		if (r < 0)
-			break;
-		ctx = fd == VHOST_FILE_UNBIND ? NULL : eventfd_ctx_fdget(fd);
-		if (IS_ERR(ctx)) {
+		पूर्ण
+		अवरोध;
+	हाल VHOST_SET_LOG_FD:
+		r = get_user(fd, (पूर्णांक __user *)argp);
+		अगर (r < 0)
+			अवरोध;
+		ctx = fd == VHOST_खाता_UNBIND ? शून्य : eventfd_ctx_fdget(fd);
+		अगर (IS_ERR(ctx)) अणु
 			r = PTR_ERR(ctx);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		swap(ctx, d->log_ctx);
-		for (i = 0; i < d->nvqs; ++i) {
+		क्रम (i = 0; i < d->nvqs; ++i) अणु
 			mutex_lock(&d->vqs[i]->mutex);
 			d->vqs[i]->log_ctx = d->log_ctx;
 			mutex_unlock(&d->vqs[i]->mutex);
-		}
-		if (ctx)
+		पूर्ण
+		अगर (ctx)
 			eventfd_ctx_put(ctx);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		r = -ENOIOCTLCMD;
-		break;
-	}
-done:
-	return r;
-}
+		अवरोध;
+	पूर्ण
+करोne:
+	वापस r;
+पूर्ण
 EXPORT_SYMBOL_GPL(vhost_dev_ioctl);
 
 /* TODO: This is really inefficient.  We need something like get_user()
- * (instruction directly accesses the data, with an exception table entry
- * returning -EFAULT). See Documentation/x86/exception-tables.rst.
+ * (inकाष्ठाion directly accesses the data, with an exception table entry
+ * वापसing -EFAULT). See Documentation/x86/exception-tables.rst.
  */
-static int set_bit_to_user(int nr, void __user *addr)
-{
-	unsigned long log = (unsigned long)addr;
-	struct page *page;
-	void *base;
-	int bit = nr + (log % PAGE_SIZE) * 8;
-	int r;
+अटल पूर्णांक set_bit_to_user(पूर्णांक nr, व्योम __user *addr)
+अणु
+	अचिन्हित दीर्घ log = (अचिन्हित दीर्घ)addr;
+	काष्ठा page *page;
+	व्योम *base;
+	पूर्णांक bit = nr + (log % PAGE_SIZE) * 8;
+	पूर्णांक r;
 
 	r = pin_user_pages_fast(log, 1, FOLL_WRITE, &page);
-	if (r < 0)
-		return r;
+	अगर (r < 0)
+		वापस r;
 	BUG_ON(r != 1);
 	base = kmap_atomic(page);
 	set_bit(bit, base);
 	kunmap_atomic(base);
 	unpin_user_pages_dirty_lock(&page, 1, true);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int log_write(void __user *log_base,
-		     u64 write_address, u64 write_length)
-{
-	u64 write_page = write_address / VHOST_PAGE_SIZE;
-	int r;
+अटल पूर्णांक log_ग_लिखो(व्योम __user *log_base,
+		     u64 ग_लिखो_address, u64 ग_लिखो_length)
+अणु
+	u64 ग_लिखो_page = ग_लिखो_address / VHOST_PAGE_SIZE;
+	पूर्णांक r;
 
-	if (!write_length)
-		return 0;
-	write_length += write_address % VHOST_PAGE_SIZE;
-	for (;;) {
-		u64 base = (u64)(unsigned long)log_base;
-		u64 log = base + write_page / 8;
-		int bit = write_page % 8;
-		if ((u64)(unsigned long)log != log)
-			return -EFAULT;
-		r = set_bit_to_user(bit, (void __user *)(unsigned long)log);
-		if (r < 0)
-			return r;
-		if (write_length <= VHOST_PAGE_SIZE)
-			break;
-		write_length -= VHOST_PAGE_SIZE;
-		write_page += 1;
-	}
-	return r;
-}
+	अगर (!ग_लिखो_length)
+		वापस 0;
+	ग_लिखो_length += ग_लिखो_address % VHOST_PAGE_SIZE;
+	क्रम (;;) अणु
+		u64 base = (u64)(अचिन्हित दीर्घ)log_base;
+		u64 log = base + ग_लिखो_page / 8;
+		पूर्णांक bit = ग_लिखो_page % 8;
+		अगर ((u64)(अचिन्हित दीर्घ)log != log)
+			वापस -EFAULT;
+		r = set_bit_to_user(bit, (व्योम __user *)(अचिन्हित दीर्घ)log);
+		अगर (r < 0)
+			वापस r;
+		अगर (ग_लिखो_length <= VHOST_PAGE_SIZE)
+			अवरोध;
+		ग_लिखो_length -= VHOST_PAGE_SIZE;
+		ग_लिखो_page += 1;
+	पूर्ण
+	वापस r;
+पूर्ण
 
-static int log_write_hva(struct vhost_virtqueue *vq, u64 hva, u64 len)
-{
-	struct vhost_iotlb *umem = vq->umem;
-	struct vhost_iotlb_map *u;
+अटल पूर्णांक log_ग_लिखो_hva(काष्ठा vhost_virtqueue *vq, u64 hva, u64 len)
+अणु
+	काष्ठा vhost_iotlb *umem = vq->umem;
+	काष्ठा vhost_iotlb_map *u;
 	u64 start, end, l, min;
-	int r;
+	पूर्णांक r;
 	bool hit = false;
 
-	while (len) {
+	जबतक (len) अणु
 		min = len;
-		/* More than one GPAs can be mapped into a single HVA. So
+		/* More than one GPAs can be mapped पूर्णांकo a single HVA. So
 		 * iterate all possible umems here to be safe.
 		 */
-		list_for_each_entry(u, &umem->list, link) {
-			if (u->addr > hva - 1 + len ||
+		list_क्रम_each_entry(u, &umem->list, link) अणु
+			अगर (u->addr > hva - 1 + len ||
 			    u->addr - 1 + u->size < hva)
-				continue;
+				जारी;
 			start = max(u->addr, hva);
 			end = min(u->addr - 1 + u->size, hva - 1 + len);
 			l = end - start + 1;
-			r = log_write(vq->log_base,
+			r = log_ग_लिखो(vq->log_base,
 				      u->start + start - u->addr,
 				      l);
-			if (r < 0)
-				return r;
+			अगर (r < 0)
+				वापस r;
 			hit = true;
 			min = min(l, min);
-		}
+		पूर्ण
 
-		if (!hit)
-			return -EFAULT;
+		अगर (!hit)
+			वापस -EFAULT;
 
 		len -= min;
 		hva += min;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int log_used(struct vhost_virtqueue *vq, u64 used_offset, u64 len)
-{
-	struct iovec *iov = vq->log_iov;
-	int i, ret;
+अटल पूर्णांक log_used(काष्ठा vhost_virtqueue *vq, u64 used_offset, u64 len)
+अणु
+	काष्ठा iovec *iov = vq->log_iov;
+	पूर्णांक i, ret;
 
-	if (!vq->iotlb)
-		return log_write(vq->log_base, vq->log_addr + used_offset, len);
+	अगर (!vq->iotlb)
+		वापस log_ग_लिखो(vq->log_base, vq->log_addr + used_offset, len);
 
-	ret = translate_desc(vq, (uintptr_t)vq->used + used_offset,
+	ret = translate_desc(vq, (uपूर्णांकptr_t)vq->used + used_offset,
 			     len, iov, 64, VHOST_ACCESS_WO);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	for (i = 0; i < ret; i++) {
-		ret = log_write_hva(vq,	(uintptr_t)iov[i].iov_base,
+	क्रम (i = 0; i < ret; i++) अणु
+		ret = log_ग_लिखो_hva(vq,	(uपूर्णांकptr_t)iov[i].iov_base,
 				    iov[i].iov_len);
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int vhost_log_write(struct vhost_virtqueue *vq, struct vhost_log *log,
-		    unsigned int log_num, u64 len, struct iovec *iov, int count)
-{
-	int i, r;
+पूर्णांक vhost_log_ग_लिखो(काष्ठा vhost_virtqueue *vq, काष्ठा vhost_log *log,
+		    अचिन्हित पूर्णांक log_num, u64 len, काष्ठा iovec *iov, पूर्णांक count)
+अणु
+	पूर्णांक i, r;
 
-	/* Make sure data written is seen before log. */
+	/* Make sure data written is seen beक्रमe log. */
 	smp_wmb();
 
-	if (vq->iotlb) {
-		for (i = 0; i < count; i++) {
-			r = log_write_hva(vq, (uintptr_t)iov[i].iov_base,
+	अगर (vq->iotlb) अणु
+		क्रम (i = 0; i < count; i++) अणु
+			r = log_ग_लिखो_hva(vq, (uपूर्णांकptr_t)iov[i].iov_base,
 					  iov[i].iov_len);
-			if (r < 0)
-				return r;
-		}
-		return 0;
-	}
+			अगर (r < 0)
+				वापस r;
+		पूर्ण
+		वापस 0;
+	पूर्ण
 
-	for (i = 0; i < log_num; ++i) {
+	क्रम (i = 0; i < log_num; ++i) अणु
 		u64 l = min(log[i].len, len);
-		r = log_write(vq->log_base, log[i].addr, l);
-		if (r < 0)
-			return r;
+		r = log_ग_लिखो(vq->log_base, log[i].addr, l);
+		अगर (r < 0)
+			वापस r;
 		len -= l;
-		if (!len) {
-			if (vq->log_ctx)
-				eventfd_signal(vq->log_ctx, 1);
-			return 0;
-		}
-	}
+		अगर (!len) अणु
+			अगर (vq->log_ctx)
+				eventfd_संकेत(vq->log_ctx, 1);
+			वापस 0;
+		पूर्ण
+	पूर्ण
 	/* Length written exceeds what we have stored. This is a bug. */
 	BUG();
-	return 0;
-}
-EXPORT_SYMBOL_GPL(vhost_log_write);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL_GPL(vhost_log_ग_लिखो);
 
-static int vhost_update_used_flags(struct vhost_virtqueue *vq)
-{
-	void __user *used;
-	if (vhost_put_used_flags(vq))
-		return -EFAULT;
-	if (unlikely(vq->log_used)) {
-		/* Make sure the flag is seen before log. */
+अटल पूर्णांक vhost_update_used_flags(काष्ठा vhost_virtqueue *vq)
+अणु
+	व्योम __user *used;
+	अगर (vhost_put_used_flags(vq))
+		वापस -EFAULT;
+	अगर (unlikely(vq->log_used)) अणु
+		/* Make sure the flag is seen beक्रमe log. */
 		smp_wmb();
-		/* Log used flag write. */
+		/* Log used flag ग_लिखो. */
 		used = &vq->used->flags;
-		log_used(vq, (used - (void __user *)vq->used),
-			 sizeof vq->used->flags);
-		if (vq->log_ctx)
-			eventfd_signal(vq->log_ctx, 1);
-	}
-	return 0;
-}
+		log_used(vq, (used - (व्योम __user *)vq->used),
+			 माप vq->used->flags);
+		अगर (vq->log_ctx)
+			eventfd_संकेत(vq->log_ctx, 1);
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int vhost_update_avail_event(struct vhost_virtqueue *vq, u16 avail_event)
-{
-	if (vhost_put_avail_event(vq))
-		return -EFAULT;
-	if (unlikely(vq->log_used)) {
-		void __user *used;
-		/* Make sure the event is seen before log. */
+अटल पूर्णांक vhost_update_avail_event(काष्ठा vhost_virtqueue *vq, u16 avail_event)
+अणु
+	अगर (vhost_put_avail_event(vq))
+		वापस -EFAULT;
+	अगर (unlikely(vq->log_used)) अणु
+		व्योम __user *used;
+		/* Make sure the event is seen beक्रमe log. */
 		smp_wmb();
-		/* Log avail event write */
+		/* Log avail event ग_लिखो */
 		used = vhost_avail_event(vq);
-		log_used(vq, (used - (void __user *)vq->used),
-			 sizeof *vhost_avail_event(vq));
-		if (vq->log_ctx)
-			eventfd_signal(vq->log_ctx, 1);
-	}
-	return 0;
-}
+		log_used(vq, (used - (व्योम __user *)vq->used),
+			 माप *vhost_avail_event(vq));
+		अगर (vq->log_ctx)
+			eventfd_संकेत(vq->log_ctx, 1);
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-int vhost_vq_init_access(struct vhost_virtqueue *vq)
-{
+पूर्णांक vhost_vq_init_access(काष्ठा vhost_virtqueue *vq)
+अणु
 	__virtio16 last_used_idx;
-	int r;
+	पूर्णांक r;
 	bool is_le = vq->is_le;
 
-	if (!vq->private_data)
-		return 0;
+	अगर (!vq->निजी_data)
+		वापस 0;
 
 	vhost_init_is_le(vq);
 
 	r = vhost_update_used_flags(vq);
-	if (r)
-		goto err;
-	vq->signalled_used_valid = false;
-	if (!vq->iotlb &&
-	    !access_ok(&vq->used->idx, sizeof vq->used->idx)) {
+	अगर (r)
+		जाओ err;
+	vq->संकेतled_used_valid = false;
+	अगर (!vq->iotlb &&
+	    !access_ok(&vq->used->idx, माप vq->used->idx)) अणु
 		r = -EFAULT;
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 	r = vhost_get_used_idx(vq, &last_used_idx);
-	if (r) {
+	अगर (r) अणु
 		vq_err(vq, "Can't access used idx at %p\n",
 		       &vq->used->idx);
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 	vq->last_used_idx = vhost16_to_cpu(vq, last_used_idx);
-	return 0;
+	वापस 0;
 
 err:
 	vq->is_le = is_le;
-	return r;
-}
+	वापस r;
+पूर्ण
 EXPORT_SYMBOL_GPL(vhost_vq_init_access);
 
-static int translate_desc(struct vhost_virtqueue *vq, u64 addr, u32 len,
-			  struct iovec iov[], int iov_size, int access)
-{
-	const struct vhost_iotlb_map *map;
-	struct vhost_dev *dev = vq->dev;
-	struct vhost_iotlb *umem = dev->iotlb ? dev->iotlb : dev->umem;
-	struct iovec *_iov;
+अटल पूर्णांक translate_desc(काष्ठा vhost_virtqueue *vq, u64 addr, u32 len,
+			  काष्ठा iovec iov[], पूर्णांक iov_size, पूर्णांक access)
+अणु
+	स्थिर काष्ठा vhost_iotlb_map *map;
+	काष्ठा vhost_dev *dev = vq->dev;
+	काष्ठा vhost_iotlb *umem = dev->iotlb ? dev->iotlb : dev->umem;
+	काष्ठा iovec *_iov;
 	u64 s = 0;
-	int ret = 0;
+	पूर्णांक ret = 0;
 
-	while ((u64)len > s) {
+	जबतक ((u64)len > s) अणु
 		u64 size;
-		if (unlikely(ret >= iov_size)) {
+		अगर (unlikely(ret >= iov_size)) अणु
 			ret = -ENOBUFS;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		map = vhost_iotlb_itree_first(umem, addr, addr + len - 1);
-		if (map == NULL || map->start > addr) {
-			if (umem != dev->iotlb) {
+		अगर (map == शून्य || map->start > addr) अणु
+			अगर (umem != dev->iotlb) अणु
 				ret = -EFAULT;
-				break;
-			}
+				अवरोध;
+			पूर्ण
 			ret = -EAGAIN;
-			break;
-		} else if (!(map->perm & access)) {
+			अवरोध;
+		पूर्ण अन्यथा अगर (!(map->perm & access)) अणु
 			ret = -EPERM;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		_iov = iov + ret;
 		size = map->size - addr + map->start;
 		_iov->iov_len = min((u64)len - s, size);
-		_iov->iov_base = (void __user *)(unsigned long)
+		_iov->iov_base = (व्योम __user *)(अचिन्हित दीर्घ)
 				 (map->addr + addr - map->start);
 		s += size;
 		addr += size;
 		++ret;
-	}
+	पूर्ण
 
-	if (ret == -EAGAIN)
+	अगर (ret == -EAGAIN)
 		vhost_iotlb_miss(vq, addr, access);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /* Each buffer in the virtqueues is actually a chain of descriptors.  This
- * function returns the next descriptor in the chain,
- * or -1U if we're at the end. */
-static unsigned next_desc(struct vhost_virtqueue *vq, struct vring_desc *desc)
-{
-	unsigned int next;
+ * function वापसs the next descriptor in the chain,
+ * or -1U अगर we're at the end. */
+अटल अचिन्हित next_desc(काष्ठा vhost_virtqueue *vq, काष्ठा vring_desc *desc)
+अणु
+	अचिन्हित पूर्णांक next;
 
-	/* If this descriptor says it doesn't chain, we're done. */
-	if (!(desc->flags & cpu_to_vhost16(vq, VRING_DESC_F_NEXT)))
-		return -1U;
+	/* If this descriptor says it करोesn't chain, we're करोne. */
+	अगर (!(desc->flags & cpu_to_vhost16(vq, VRING_DESC_F_NEXT)))
+		वापस -1U;
 
 	/* Check they're not leading us off end of descriptors. */
 	next = vhost16_to_cpu(vq, READ_ONCE(desc->next));
-	return next;
-}
+	वापस next;
+पूर्ण
 
-static int get_indirect(struct vhost_virtqueue *vq,
-			struct iovec iov[], unsigned int iov_size,
-			unsigned int *out_num, unsigned int *in_num,
-			struct vhost_log *log, unsigned int *log_num,
-			struct vring_desc *indirect)
-{
-	struct vring_desc desc;
-	unsigned int i = 0, count, found = 0;
+अटल पूर्णांक get_indirect(काष्ठा vhost_virtqueue *vq,
+			काष्ठा iovec iov[], अचिन्हित पूर्णांक iov_size,
+			अचिन्हित पूर्णांक *out_num, अचिन्हित पूर्णांक *in_num,
+			काष्ठा vhost_log *log, अचिन्हित पूर्णांक *log_num,
+			काष्ठा vring_desc *indirect)
+अणु
+	काष्ठा vring_desc desc;
+	अचिन्हित पूर्णांक i = 0, count, found = 0;
 	u32 len = vhost32_to_cpu(vq, indirect->len);
-	struct iov_iter from;
-	int ret, access;
+	काष्ठा iov_iter from;
+	पूर्णांक ret, access;
 
 	/* Sanity check */
-	if (unlikely(len % sizeof desc)) {
+	अगर (unlikely(len % माप desc)) अणु
 		vq_err(vq, "Invalid length in indirect descriptor: "
 		       "len 0x%llx not multiple of 0x%zx\n",
-		       (unsigned long long)len,
-		       sizeof desc);
-		return -EINVAL;
-	}
+		       (अचिन्हित दीर्घ दीर्घ)len,
+		       माप desc);
+		वापस -EINVAL;
+	पूर्ण
 
 	ret = translate_desc(vq, vhost64_to_cpu(vq, indirect->addr), len, vq->indirect,
 			     UIO_MAXIOV, VHOST_ACCESS_RO);
-	if (unlikely(ret < 0)) {
-		if (ret != -EAGAIN)
+	अगर (unlikely(ret < 0)) अणु
+		अगर (ret != -EAGAIN)
 			vq_err(vq, "Translation failure %d in indirect.\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 	iov_iter_init(&from, READ, vq->indirect, ret, len);
-	count = len / sizeof desc;
+	count = len / माप desc;
 	/* Buffers are chained via a 16 bit next field, so
 	 * we can have at most 2^16 of these. */
-	if (unlikely(count > USHRT_MAX + 1)) {
+	अगर (unlikely(count > अच_लघु_उच्च + 1)) अणु
 		vq_err(vq, "Indirect buffer length too big: %d\n",
 		       indirect->len);
-		return -E2BIG;
-	}
+		वापस -E2BIG;
+	पूर्ण
 
-	do {
-		unsigned iov_count = *in_num + *out_num;
-		if (unlikely(++found > count)) {
+	करो अणु
+		अचिन्हित iov_count = *in_num + *out_num;
+		अगर (unlikely(++found > count)) अणु
 			vq_err(vq, "Loop detected: last one at %u "
 			       "indirect size %u\n",
 			       i, count);
-			return -EINVAL;
-		}
-		if (unlikely(!copy_from_iter_full(&desc, sizeof(desc), &from))) {
+			वापस -EINVAL;
+		पूर्ण
+		अगर (unlikely(!copy_from_iter_full(&desc, माप(desc), &from))) अणु
 			vq_err(vq, "Failed indirect descriptor: idx %d, %zx\n",
-			       i, (size_t)vhost64_to_cpu(vq, indirect->addr) + i * sizeof desc);
-			return -EINVAL;
-		}
-		if (unlikely(desc.flags & cpu_to_vhost16(vq, VRING_DESC_F_INDIRECT))) {
+			       i, (माप_प्रकार)vhost64_to_cpu(vq, indirect->addr) + i * माप desc);
+			वापस -EINVAL;
+		पूर्ण
+		अगर (unlikely(desc.flags & cpu_to_vhost16(vq, VRING_DESC_F_INसूचीECT))) अणु
 			vq_err(vq, "Nested indirect descriptor: idx %d, %zx\n",
-			       i, (size_t)vhost64_to_cpu(vq, indirect->addr) + i * sizeof desc);
-			return -EINVAL;
-		}
+			       i, (माप_प्रकार)vhost64_to_cpu(vq, indirect->addr) + i * माप desc);
+			वापस -EINVAL;
+		पूर्ण
 
-		if (desc.flags & cpu_to_vhost16(vq, VRING_DESC_F_WRITE))
+		अगर (desc.flags & cpu_to_vhost16(vq, VRING_DESC_F_WRITE))
 			access = VHOST_ACCESS_WO;
-		else
+		अन्यथा
 			access = VHOST_ACCESS_RO;
 
 		ret = translate_desc(vq, vhost64_to_cpu(vq, desc.addr),
 				     vhost32_to_cpu(vq, desc.len), iov + iov_count,
 				     iov_size - iov_count, access);
-		if (unlikely(ret < 0)) {
-			if (ret != -EAGAIN)
+		अगर (unlikely(ret < 0)) अणु
+			अगर (ret != -EAGAIN)
 				vq_err(vq, "Translation failure %d indirect idx %d\n",
 					ret, i);
-			return ret;
-		}
+			वापस ret;
+		पूर्ण
 		/* If this is an input descriptor, increment that count. */
-		if (access == VHOST_ACCESS_WO) {
+		अगर (access == VHOST_ACCESS_WO) अणु
 			*in_num += ret;
-			if (unlikely(log && ret)) {
+			अगर (unlikely(log && ret)) अणु
 				log[*log_num].addr = vhost64_to_cpu(vq, desc.addr);
 				log[*log_num].len = vhost32_to_cpu(vq, desc.len);
 				++*log_num;
-			}
-		} else {
+			पूर्ण
+		पूर्ण अन्यथा अणु
 			/* If it's an output descriptor, they're all supposed
-			 * to come before any input descriptors. */
-			if (unlikely(*in_num)) {
+			 * to come beक्रमe any input descriptors. */
+			अगर (unlikely(*in_num)) अणु
 				vq_err(vq, "Indirect descriptor "
 				       "has out after in: idx %d\n", i);
-				return -EINVAL;
-			}
+				वापस -EINVAL;
+			पूर्ण
 			*out_num += ret;
-		}
-	} while ((i = next_desc(vq, &desc)) != -1);
-	return 0;
-}
+		पूर्ण
+	पूर्ण जबतक ((i = next_desc(vq, &desc)) != -1);
+	वापस 0;
+पूर्ण
 
-/* This looks in the virtqueue and for the first available buffer, and converts
- * it to an iovec for convenient access.  Since descriptors consist of some
+/* This looks in the virtqueue and क्रम the first available buffer, and converts
+ * it to an iovec क्रम convenient access.  Since descriptors consist of some
  * number of output then some number of input descriptors, it's actually two
- * iovecs, but we pack them into one and note how many of each there were.
+ * iovecs, but we pack them पूर्णांकo one and note how many of each there were.
  *
- * This function returns the descriptor number found, or vq->num (which is
- * never a valid descriptor number) if none was found.  A negative code is
- * returned on error. */
-int vhost_get_vq_desc(struct vhost_virtqueue *vq,
-		      struct iovec iov[], unsigned int iov_size,
-		      unsigned int *out_num, unsigned int *in_num,
-		      struct vhost_log *log, unsigned int *log_num)
-{
-	struct vring_desc desc;
-	unsigned int i, head, found = 0;
+ * This function वापसs the descriptor number found, or vq->num (which is
+ * never a valid descriptor number) अगर none was found.  A negative code is
+ * वापसed on error. */
+पूर्णांक vhost_get_vq_desc(काष्ठा vhost_virtqueue *vq,
+		      काष्ठा iovec iov[], अचिन्हित पूर्णांक iov_size,
+		      अचिन्हित पूर्णांक *out_num, अचिन्हित पूर्णांक *in_num,
+		      काष्ठा vhost_log *log, अचिन्हित पूर्णांक *log_num)
+अणु
+	काष्ठा vring_desc desc;
+	अचिन्हित पूर्णांक i, head, found = 0;
 	u16 last_avail_idx;
 	__virtio16 avail_idx;
 	__virtio16 ring_head;
-	int ret, access;
+	पूर्णांक ret, access;
 
-	/* Check it isn't doing very strange things with descriptor numbers. */
+	/* Check it isn't करोing very strange things with descriptor numbers. */
 	last_avail_idx = vq->last_avail_idx;
 
-	if (vq->avail_idx == vq->last_avail_idx) {
-		if (unlikely(vhost_get_avail_idx(vq, &avail_idx))) {
+	अगर (vq->avail_idx == vq->last_avail_idx) अणु
+		अगर (unlikely(vhost_get_avail_idx(vq, &avail_idx))) अणु
 			vq_err(vq, "Failed to access avail idx at %p\n",
 				&vq->avail->idx);
-			return -EFAULT;
-		}
+			वापस -EFAULT;
+		पूर्ण
 		vq->avail_idx = vhost16_to_cpu(vq, avail_idx);
 
-		if (unlikely((u16)(vq->avail_idx - last_avail_idx) > vq->num)) {
+		अगर (unlikely((u16)(vq->avail_idx - last_avail_idx) > vq->num)) अणु
 			vq_err(vq, "Guest moved used index from %u to %u",
 				last_avail_idx, vq->avail_idx);
-			return -EFAULT;
-		}
+			वापस -EFAULT;
+		पूर्ण
 
-		/* If there's nothing new since last we looked, return
+		/* If there's nothing new since last we looked, वापस
 		 * invalid.
 		 */
-		if (vq->avail_idx == last_avail_idx)
-			return vq->num;
+		अगर (vq->avail_idx == last_avail_idx)
+			वापस vq->num;
 
 		/* Only get avail ring entries after they have been
 		 * exposed by guest.
 		 */
 		smp_rmb();
-	}
+	पूर्ण
 
 	/* Grab the next descriptor number they're advertising, and increment
 	 * the index we've seen. */
-	if (unlikely(vhost_get_avail_head(vq, &ring_head, last_avail_idx))) {
+	अगर (unlikely(vhost_get_avail_head(vq, &ring_head, last_avail_idx))) अणु
 		vq_err(vq, "Failed to read head: idx %d address %p\n",
 		       last_avail_idx,
 		       &vq->avail->ring[last_avail_idx % vq->num]);
-		return -EFAULT;
-	}
+		वापस -EFAULT;
+	पूर्ण
 
 	head = vhost16_to_cpu(vq, ring_head);
 
 	/* If their number is silly, that's an error. */
-	if (unlikely(head >= vq->num)) {
+	अगर (unlikely(head >= vq->num)) अणु
 		vq_err(vq, "Guest says index %u > %u is available",
 		       head, vq->num);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	/* When we start there are none of either input nor output. */
 	*out_num = *in_num = 0;
-	if (unlikely(log))
+	अगर (unlikely(log))
 		*log_num = 0;
 
 	i = head;
-	do {
-		unsigned iov_count = *in_num + *out_num;
-		if (unlikely(i >= vq->num)) {
+	करो अणु
+		अचिन्हित iov_count = *in_num + *out_num;
+		अगर (unlikely(i >= vq->num)) अणु
 			vq_err(vq, "Desc index is %u > %u, head = %u",
 			       i, vq->num, head);
-			return -EINVAL;
-		}
-		if (unlikely(++found > vq->num)) {
+			वापस -EINVAL;
+		पूर्ण
+		अगर (unlikely(++found > vq->num)) अणु
 			vq_err(vq, "Loop detected: last one at %u "
 			       "vq size %u head %u\n",
 			       i, vq->num, head);
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 		ret = vhost_get_desc(vq, &desc, i);
-		if (unlikely(ret)) {
+		अगर (unlikely(ret)) अणु
 			vq_err(vq, "Failed to get descriptor: idx %d addr %p\n",
 			       i, vq->desc + i);
-			return -EFAULT;
-		}
-		if (desc.flags & cpu_to_vhost16(vq, VRING_DESC_F_INDIRECT)) {
+			वापस -EFAULT;
+		पूर्ण
+		अगर (desc.flags & cpu_to_vhost16(vq, VRING_DESC_F_INसूचीECT)) अणु
 			ret = get_indirect(vq, iov, iov_size,
 					   out_num, in_num,
 					   log, log_num, &desc);
-			if (unlikely(ret < 0)) {
-				if (ret != -EAGAIN)
+			अगर (unlikely(ret < 0)) अणु
+				अगर (ret != -EAGAIN)
 					vq_err(vq, "Failure detected "
 						"in indirect descriptor at idx %d\n", i);
-				return ret;
-			}
-			continue;
-		}
+				वापस ret;
+			पूर्ण
+			जारी;
+		पूर्ण
 
-		if (desc.flags & cpu_to_vhost16(vq, VRING_DESC_F_WRITE))
+		अगर (desc.flags & cpu_to_vhost16(vq, VRING_DESC_F_WRITE))
 			access = VHOST_ACCESS_WO;
-		else
+		अन्यथा
 			access = VHOST_ACCESS_RO;
 		ret = translate_desc(vq, vhost64_to_cpu(vq, desc.addr),
 				     vhost32_to_cpu(vq, desc.len), iov + iov_count,
 				     iov_size - iov_count, access);
-		if (unlikely(ret < 0)) {
-			if (ret != -EAGAIN)
+		अगर (unlikely(ret < 0)) अणु
+			अगर (ret != -EAGAIN)
 				vq_err(vq, "Translation failure %d descriptor idx %d\n",
 					ret, i);
-			return ret;
-		}
-		if (access == VHOST_ACCESS_WO) {
+			वापस ret;
+		पूर्ण
+		अगर (access == VHOST_ACCESS_WO) अणु
 			/* If this is an input descriptor,
 			 * increment that count. */
 			*in_num += ret;
-			if (unlikely(log && ret)) {
+			अगर (unlikely(log && ret)) अणु
 				log[*log_num].addr = vhost64_to_cpu(vq, desc.addr);
 				log[*log_num].len = vhost32_to_cpu(vq, desc.len);
 				++*log_num;
-			}
-		} else {
+			पूर्ण
+		पूर्ण अन्यथा अणु
 			/* If it's an output descriptor, they're all supposed
-			 * to come before any input descriptors. */
-			if (unlikely(*in_num)) {
+			 * to come beक्रमe any input descriptors. */
+			अगर (unlikely(*in_num)) अणु
 				vq_err(vq, "Descriptor has out after in: "
 				       "idx %d\n", i);
-				return -EINVAL;
-			}
+				वापस -EINVAL;
+			पूर्ण
 			*out_num += ret;
-		}
-	} while ((i = next_desc(vq, &desc)) != -1);
+		पूर्ण
+	पूर्ण जबतक ((i = next_desc(vq, &desc)) != -1);
 
 	/* On success, increment avail index. */
 	vq->last_avail_idx++;
 
-	/* Assume notifications from guest are disabled at this point,
-	 * if they aren't we would need to update avail_event index. */
+	/* Assume notअगरications from guest are disabled at this poपूर्णांक,
+	 * अगर they aren't we would need to update avail_event index. */
 	BUG_ON(!(vq->used_flags & VRING_USED_F_NO_NOTIFY));
-	return head;
-}
+	वापस head;
+पूर्ण
 EXPORT_SYMBOL_GPL(vhost_get_vq_desc);
 
-/* Reverse the effect of vhost_get_vq_desc. Useful for error handling. */
-void vhost_discard_vq_desc(struct vhost_virtqueue *vq, int n)
-{
+/* Reverse the effect of vhost_get_vq_desc. Useful क्रम error handling. */
+व्योम vhost_discard_vq_desc(काष्ठा vhost_virtqueue *vq, पूर्णांक n)
+अणु
 	vq->last_avail_idx -= n;
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(vhost_discard_vq_desc);
 
 /* After we've used one of their buffers, we tell them about it.  We'll then
- * want to notify the guest, using eventfd. */
-int vhost_add_used(struct vhost_virtqueue *vq, unsigned int head, int len)
-{
-	struct vring_used_elem heads = {
+ * want to notअगरy the guest, using eventfd. */
+पूर्णांक vhost_add_used(काष्ठा vhost_virtqueue *vq, अचिन्हित पूर्णांक head, पूर्णांक len)
+अणु
+	काष्ठा vring_used_elem heads = अणु
 		cpu_to_vhost32(vq, head),
 		cpu_to_vhost32(vq, len)
-	};
+	पूर्ण;
 
-	return vhost_add_used_n(vq, &heads, 1);
-}
+	वापस vhost_add_used_n(vq, &heads, 1);
+पूर्ण
 EXPORT_SYMBOL_GPL(vhost_add_used);
 
-static int __vhost_add_used_n(struct vhost_virtqueue *vq,
-			    struct vring_used_elem *heads,
-			    unsigned count)
-{
+अटल पूर्णांक __vhost_add_used_n(काष्ठा vhost_virtqueue *vq,
+			    काष्ठा vring_used_elem *heads,
+			    अचिन्हित count)
+अणु
 	vring_used_elem_t __user *used;
 	u16 old, new;
-	int start;
+	पूर्णांक start;
 
 	start = vq->last_used_idx & (vq->num - 1);
 	used = vq->used->ring + start;
-	if (vhost_put_used(vq, heads, start, count)) {
+	अगर (vhost_put_used(vq, heads, start, count)) अणु
 		vq_err(vq, "Failed to write used");
-		return -EFAULT;
-	}
-	if (unlikely(vq->log_used)) {
-		/* Make sure data is seen before log. */
+		वापस -EFAULT;
+	पूर्ण
+	अगर (unlikely(vq->log_used)) अणु
+		/* Make sure data is seen beक्रमe log. */
 		smp_wmb();
-		/* Log used ring entry write. */
-		log_used(vq, ((void __user *)used - (void __user *)vq->used),
-			 count * sizeof *used);
-	}
+		/* Log used ring entry ग_लिखो. */
+		log_used(vq, ((व्योम __user *)used - (व्योम __user *)vq->used),
+			 count * माप *used);
+	पूर्ण
 	old = vq->last_used_idx;
 	new = (vq->last_used_idx += count);
-	/* If the driver never bothers to signal in a very long while,
+	/* If the driver never bothers to संकेत in a very दीर्घ जबतक,
 	 * used index might wrap around. If that happens, invalidate
-	 * signalled_used index we stored. TODO: make sure driver
-	 * signals at least once in 2^16 and remove this. */
-	if (unlikely((u16)(new - vq->signalled_used) < (u16)(new - old)))
-		vq->signalled_used_valid = false;
-	return 0;
-}
+	 * संकेतled_used index we stored. TODO: make sure driver
+	 * संकेतs at least once in 2^16 and हटाओ this. */
+	अगर (unlikely((u16)(new - vq->संकेतled_used) < (u16)(new - old)))
+		vq->संकेतled_used_valid = false;
+	वापस 0;
+पूर्ण
 
 /* After we've used one of their buffers, we tell them about it.  We'll then
- * want to notify the guest, using eventfd. */
-int vhost_add_used_n(struct vhost_virtqueue *vq, struct vring_used_elem *heads,
-		     unsigned count)
-{
-	int start, n, r;
+ * want to notअगरy the guest, using eventfd. */
+पूर्णांक vhost_add_used_n(काष्ठा vhost_virtqueue *vq, काष्ठा vring_used_elem *heads,
+		     अचिन्हित count)
+अणु
+	पूर्णांक start, n, r;
 
 	start = vq->last_used_idx & (vq->num - 1);
 	n = vq->num - start;
-	if (n < count) {
+	अगर (n < count) अणु
 		r = __vhost_add_used_n(vq, heads, n);
-		if (r < 0)
-			return r;
+		अगर (r < 0)
+			वापस r;
 		heads += n;
 		count -= n;
-	}
+	पूर्ण
 	r = __vhost_add_used_n(vq, heads, count);
 
-	/* Make sure buffer is written before we update index. */
+	/* Make sure buffer is written beक्रमe we update index. */
 	smp_wmb();
-	if (vhost_put_used_idx(vq)) {
+	अगर (vhost_put_used_idx(vq)) अणु
 		vq_err(vq, "Failed to increment used idx");
-		return -EFAULT;
-	}
-	if (unlikely(vq->log_used)) {
-		/* Make sure used idx is seen before log. */
+		वापस -EFAULT;
+	पूर्ण
+	अगर (unlikely(vq->log_used)) अणु
+		/* Make sure used idx is seen beक्रमe log. */
 		smp_wmb();
 		/* Log used index update. */
-		log_used(vq, offsetof(struct vring_used, idx),
-			 sizeof vq->used->idx);
-		if (vq->log_ctx)
-			eventfd_signal(vq->log_ctx, 1);
-	}
-	return r;
-}
+		log_used(vq, दुरत्व(काष्ठा vring_used, idx),
+			 माप vq->used->idx);
+		अगर (vq->log_ctx)
+			eventfd_संकेत(vq->log_ctx, 1);
+	पूर्ण
+	वापस r;
+पूर्ण
 EXPORT_SYMBOL_GPL(vhost_add_used_n);
 
-static bool vhost_notify(struct vhost_dev *dev, struct vhost_virtqueue *vq)
-{
+अटल bool vhost_notअगरy(काष्ठा vhost_dev *dev, काष्ठा vhost_virtqueue *vq)
+अणु
 	__u16 old, new;
 	__virtio16 event;
 	bool v;
 	/* Flush out used index updates. This is paired
 	 * with the barrier that the Guest executes when enabling
-	 * interrupts. */
+	 * पूर्णांकerrupts. */
 	smp_mb();
 
-	if (vhost_has_feature(vq, VIRTIO_F_NOTIFY_ON_EMPTY) &&
+	अगर (vhost_has_feature(vq, VIRTIO_F_NOTIFY_ON_EMPTY) &&
 	    unlikely(vq->avail_idx == vq->last_avail_idx))
-		return true;
+		वापस true;
 
-	if (!vhost_has_feature(vq, VIRTIO_RING_F_EVENT_IDX)) {
+	अगर (!vhost_has_feature(vq, VIRTIO_RING_F_EVENT_IDX)) अणु
 		__virtio16 flags;
-		if (vhost_get_avail_flags(vq, &flags)) {
+		अगर (vhost_get_avail_flags(vq, &flags)) अणु
 			vq_err(vq, "Failed to get flags");
-			return true;
-		}
-		return !(flags & cpu_to_vhost16(vq, VRING_AVAIL_F_NO_INTERRUPT));
-	}
-	old = vq->signalled_used;
-	v = vq->signalled_used_valid;
-	new = vq->signalled_used = vq->last_used_idx;
-	vq->signalled_used_valid = true;
+			वापस true;
+		पूर्ण
+		वापस !(flags & cpu_to_vhost16(vq, VRING_AVAIL_F_NO_INTERRUPT));
+	पूर्ण
+	old = vq->संकेतled_used;
+	v = vq->संकेतled_used_valid;
+	new = vq->संकेतled_used = vq->last_used_idx;
+	vq->संकेतled_used_valid = true;
 
-	if (unlikely(!v))
-		return true;
+	अगर (unlikely(!v))
+		वापस true;
 
-	if (vhost_get_used_event(vq, &event)) {
+	अगर (vhost_get_used_event(vq, &event)) अणु
 		vq_err(vq, "Failed to get used event idx");
-		return true;
-	}
-	return vring_need_event(vhost16_to_cpu(vq, event), new, old);
-}
+		वापस true;
+	पूर्ण
+	वापस vring_need_event(vhost16_to_cpu(vq, event), new, old);
+पूर्ण
 
-/* This actually signals the guest, using eventfd. */
-void vhost_signal(struct vhost_dev *dev, struct vhost_virtqueue *vq)
-{
+/* This actually संकेतs the guest, using eventfd. */
+व्योम vhost_संकेत(काष्ठा vhost_dev *dev, काष्ठा vhost_virtqueue *vq)
+अणु
 	/* Signal the Guest tell them we used something up. */
-	if (vq->call_ctx.ctx && vhost_notify(dev, vq))
-		eventfd_signal(vq->call_ctx.ctx, 1);
-}
-EXPORT_SYMBOL_GPL(vhost_signal);
+	अगर (vq->call_ctx.ctx && vhost_notअगरy(dev, vq))
+		eventfd_संकेत(vq->call_ctx.ctx, 1);
+पूर्ण
+EXPORT_SYMBOL_GPL(vhost_संकेत);
 
 /* And here's the combo meal deal.  Supersize me! */
-void vhost_add_used_and_signal(struct vhost_dev *dev,
-			       struct vhost_virtqueue *vq,
-			       unsigned int head, int len)
-{
+व्योम vhost_add_used_and_संकेत(काष्ठा vhost_dev *dev,
+			       काष्ठा vhost_virtqueue *vq,
+			       अचिन्हित पूर्णांक head, पूर्णांक len)
+अणु
 	vhost_add_used(vq, head, len);
-	vhost_signal(dev, vq);
-}
-EXPORT_SYMBOL_GPL(vhost_add_used_and_signal);
+	vhost_संकेत(dev, vq);
+पूर्ण
+EXPORT_SYMBOL_GPL(vhost_add_used_and_संकेत);
 
-/* multi-buffer version of vhost_add_used_and_signal */
-void vhost_add_used_and_signal_n(struct vhost_dev *dev,
-				 struct vhost_virtqueue *vq,
-				 struct vring_used_elem *heads, unsigned count)
-{
+/* multi-buffer version of vhost_add_used_and_संकेत */
+व्योम vhost_add_used_and_संकेत_n(काष्ठा vhost_dev *dev,
+				 काष्ठा vhost_virtqueue *vq,
+				 काष्ठा vring_used_elem *heads, अचिन्हित count)
+अणु
 	vhost_add_used_n(vq, heads, count);
-	vhost_signal(dev, vq);
-}
-EXPORT_SYMBOL_GPL(vhost_add_used_and_signal_n);
+	vhost_संकेत(dev, vq);
+पूर्ण
+EXPORT_SYMBOL_GPL(vhost_add_used_and_संकेत_n);
 
-/* return true if we're sure that avaiable ring is empty */
-bool vhost_vq_avail_empty(struct vhost_dev *dev, struct vhost_virtqueue *vq)
-{
+/* वापस true अगर we're sure that avaiable ring is empty */
+bool vhost_vq_avail_empty(काष्ठा vhost_dev *dev, काष्ठा vhost_virtqueue *vq)
+अणु
 	__virtio16 avail_idx;
-	int r;
+	पूर्णांक r;
 
-	if (vq->avail_idx != vq->last_avail_idx)
-		return false;
+	अगर (vq->avail_idx != vq->last_avail_idx)
+		वापस false;
 
 	r = vhost_get_avail_idx(vq, &avail_idx);
-	if (unlikely(r))
-		return false;
+	अगर (unlikely(r))
+		वापस false;
 	vq->avail_idx = vhost16_to_cpu(vq, avail_idx);
 
-	return vq->avail_idx == vq->last_avail_idx;
-}
+	वापस vq->avail_idx == vq->last_avail_idx;
+पूर्ण
 EXPORT_SYMBOL_GPL(vhost_vq_avail_empty);
 
 /* OK, now we need to know about added descriptors. */
-bool vhost_enable_notify(struct vhost_dev *dev, struct vhost_virtqueue *vq)
-{
+bool vhost_enable_notअगरy(काष्ठा vhost_dev *dev, काष्ठा vhost_virtqueue *vq)
+अणु
 	__virtio16 avail_idx;
-	int r;
+	पूर्णांक r;
 
-	if (!(vq->used_flags & VRING_USED_F_NO_NOTIFY))
-		return false;
+	अगर (!(vq->used_flags & VRING_USED_F_NO_NOTIFY))
+		वापस false;
 	vq->used_flags &= ~VRING_USED_F_NO_NOTIFY;
-	if (!vhost_has_feature(vq, VIRTIO_RING_F_EVENT_IDX)) {
+	अगर (!vhost_has_feature(vq, VIRTIO_RING_F_EVENT_IDX)) अणु
 		r = vhost_update_used_flags(vq);
-		if (r) {
+		अगर (r) अणु
 			vq_err(vq, "Failed to enable notification at %p: %d\n",
 			       &vq->used->flags, r);
-			return false;
-		}
-	} else {
+			वापस false;
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		r = vhost_update_avail_event(vq, vq->avail_idx);
-		if (r) {
+		अगर (r) अणु
 			vq_err(vq, "Failed to update avail event index at %p: %d\n",
 			       vhost_avail_event(vq), r);
-			return false;
-		}
-	}
-	/* They could have slipped one in as we were doing that: make
+			वापस false;
+		पूर्ण
+	पूर्ण
+	/* They could have slipped one in as we were करोing that: make
 	 * sure it's written, then check again. */
 	smp_mb();
 	r = vhost_get_avail_idx(vq, &avail_idx);
-	if (r) {
+	अगर (r) अणु
 		vq_err(vq, "Failed to check avail idx at %p: %d\n",
 		       &vq->avail->idx, r);
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
-	return vhost16_to_cpu(vq, avail_idx) != vq->avail_idx;
-}
-EXPORT_SYMBOL_GPL(vhost_enable_notify);
+	वापस vhost16_to_cpu(vq, avail_idx) != vq->avail_idx;
+पूर्ण
+EXPORT_SYMBOL_GPL(vhost_enable_notअगरy);
 
-/* We don't need to be notified again. */
-void vhost_disable_notify(struct vhost_dev *dev, struct vhost_virtqueue *vq)
-{
-	int r;
+/* We करोn't need to be notअगरied again. */
+व्योम vhost_disable_notअगरy(काष्ठा vhost_dev *dev, काष्ठा vhost_virtqueue *vq)
+अणु
+	पूर्णांक r;
 
-	if (vq->used_flags & VRING_USED_F_NO_NOTIFY)
-		return;
+	अगर (vq->used_flags & VRING_USED_F_NO_NOTIFY)
+		वापस;
 	vq->used_flags |= VRING_USED_F_NO_NOTIFY;
-	if (!vhost_has_feature(vq, VIRTIO_RING_F_EVENT_IDX)) {
+	अगर (!vhost_has_feature(vq, VIRTIO_RING_F_EVENT_IDX)) अणु
 		r = vhost_update_used_flags(vq);
-		if (r)
+		अगर (r)
 			vq_err(vq, "Failed to disable notification at %p: %d\n",
 			       &vq->used->flags, r);
-	}
-}
-EXPORT_SYMBOL_GPL(vhost_disable_notify);
+	पूर्ण
+पूर्ण
+EXPORT_SYMBOL_GPL(vhost_disable_notअगरy);
 
 /* Create a new message. */
-struct vhost_msg_node *vhost_new_msg(struct vhost_virtqueue *vq, int type)
-{
-	struct vhost_msg_node *node = kmalloc(sizeof *node, GFP_KERNEL);
-	if (!node)
-		return NULL;
+काष्ठा vhost_msg_node *vhost_new_msg(काष्ठा vhost_virtqueue *vq, पूर्णांक type)
+अणु
+	काष्ठा vhost_msg_node *node = kदो_स्मृति(माप *node, GFP_KERNEL);
+	अगर (!node)
+		वापस शून्य;
 
-	/* Make sure all padding within the structure is initialized. */
-	memset(&node->msg, 0, sizeof node->msg);
+	/* Make sure all padding within the काष्ठाure is initialized. */
+	स_रखो(&node->msg, 0, माप node->msg);
 	node->vq = vq;
 	node->msg.type = type;
-	return node;
-}
+	वापस node;
+पूर्ण
 EXPORT_SYMBOL_GPL(vhost_new_msg);
 
-void vhost_enqueue_msg(struct vhost_dev *dev, struct list_head *head,
-		       struct vhost_msg_node *node)
-{
+व्योम vhost_enqueue_msg(काष्ठा vhost_dev *dev, काष्ठा list_head *head,
+		       काष्ठा vhost_msg_node *node)
+अणु
 	spin_lock(&dev->iotlb_lock);
 	list_add_tail(&node->node, head);
 	spin_unlock(&dev->iotlb_lock);
 
-	wake_up_interruptible_poll(&dev->wait, EPOLLIN | EPOLLRDNORM);
-}
+	wake_up_पूर्णांकerruptible_poll(&dev->रुको, EPOLLIN | EPOLLRDNORM);
+पूर्ण
 EXPORT_SYMBOL_GPL(vhost_enqueue_msg);
 
-struct vhost_msg_node *vhost_dequeue_msg(struct vhost_dev *dev,
-					 struct list_head *head)
-{
-	struct vhost_msg_node *node = NULL;
+काष्ठा vhost_msg_node *vhost_dequeue_msg(काष्ठा vhost_dev *dev,
+					 काष्ठा list_head *head)
+अणु
+	काष्ठा vhost_msg_node *node = शून्य;
 
 	spin_lock(&dev->iotlb_lock);
-	if (!list_empty(head)) {
-		node = list_first_entry(head, struct vhost_msg_node,
+	अगर (!list_empty(head)) अणु
+		node = list_first_entry(head, काष्ठा vhost_msg_node,
 					node);
 		list_del(&node->node);
-	}
+	पूर्ण
 	spin_unlock(&dev->iotlb_lock);
 
-	return node;
-}
+	वापस node;
+पूर्ण
 EXPORT_SYMBOL_GPL(vhost_dequeue_msg);
 
-void vhost_set_backend_features(struct vhost_dev *dev, u64 features)
-{
-	struct vhost_virtqueue *vq;
-	int i;
+व्योम vhost_set_backend_features(काष्ठा vhost_dev *dev, u64 features)
+अणु
+	काष्ठा vhost_virtqueue *vq;
+	पूर्णांक i;
 
 	mutex_lock(&dev->mutex);
-	for (i = 0; i < dev->nvqs; ++i) {
+	क्रम (i = 0; i < dev->nvqs; ++i) अणु
 		vq = dev->vqs[i];
 		mutex_lock(&vq->mutex);
 		vq->acked_backend_features = features;
 		mutex_unlock(&vq->mutex);
-	}
+	पूर्ण
 	mutex_unlock(&dev->mutex);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(vhost_set_backend_features);
 
-static int __init vhost_init(void)
-{
-	return 0;
-}
+अटल पूर्णांक __init vhost_init(व्योम)
+अणु
+	वापस 0;
+पूर्ण
 
-static void __exit vhost_exit(void)
-{
-}
+अटल व्योम __निकास vhost_निकास(व्योम)
+अणु
+पूर्ण
 
 module_init(vhost_init);
-module_exit(vhost_exit);
+module_निकास(vhost_निकास);
 
 MODULE_VERSION("0.0.1");
 MODULE_LICENSE("GPL v2");

@@ -1,191 +1,192 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (C) 2014 Synopsys, Inc. (www.synopsys.com)
  */
 
-#include <linux/interrupt.h>
-#include <linux/module.h>
-#include <linux/of.h>
-#include <linux/irqdomain.h>
-#include <linux/irqchip.h>
-#include <asm/irq.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of.h>
+#समावेश <linux/irqकरोमुख्य.h>
+#समावेश <linux/irqchip.h>
+#समावेश <यंत्र/irq.h>
 
-#define NR_EXCEPTIONS	16
+#घोषणा NR_EXCEPTIONS	16
 
-struct bcr_irq_arcv2 {
-#ifdef CONFIG_CPU_BIG_ENDIAN
-	unsigned int pad:3, firq:1, prio:4, exts:8, irqs:8, ver:8;
-#else
-	unsigned int ver:8, irqs:8, exts:8, prio:4, firq:1, pad:3;
-#endif
-};
+काष्ठा bcr_irq_arcv2 अणु
+#अगर_घोषित CONFIG_CPU_BIG_ENDIAN
+	अचिन्हित पूर्णांक pad:3, firq:1, prio:4, exts:8, irqs:8, ver:8;
+#अन्यथा
+	अचिन्हित पूर्णांक ver:8, irqs:8, exts:8, prio:4, firq:1, pad:3;
+#पूर्ण_अगर
+पूर्ण;
 
 /*
- * Early Hardware specific Interrupt setup
+ * Early Hardware specअगरic Interrupt setup
  * -Called very early (start_kernel -> setup_arch -> setup_processor)
- * -Platform Independent (must for any ARC Core)
- * -Needed for each CPU (hence not foldable into init_IRQ)
+ * -Platक्रमm Independent (must क्रम any ARC Core)
+ * -Needed क्रम each CPU (hence not foldable पूर्णांकo init_IRQ)
  */
-void arc_init_IRQ(void)
-{
-	unsigned int tmp, irq_prio, i;
-	struct bcr_irq_arcv2 irq_bcr;
+व्योम arc_init_IRQ(व्योम)
+अणु
+	अचिन्हित पूर्णांक पंचांगp, irq_prio, i;
+	काष्ठा bcr_irq_arcv2 irq_bcr;
 
-	struct aux_irq_ctrl {
-#ifdef CONFIG_CPU_BIG_ENDIAN
-		unsigned int res3:18, save_idx_regs:1, res2:1,
+	काष्ठा aux_irq_ctrl अणु
+#अगर_घोषित CONFIG_CPU_BIG_ENDIAN
+		अचिन्हित पूर्णांक res3:18, save_idx_regs:1, res2:1,
 			     save_u_to_u:1, save_lp_regs:1, save_blink:1,
 			     res:4, save_nr_gpr_pairs:5;
-#else
-		unsigned int save_nr_gpr_pairs:5, res:4,
+#अन्यथा
+		अचिन्हित पूर्णांक save_nr_gpr_pairs:5, res:4,
 			     save_blink:1, save_lp_regs:1, save_u_to_u:1,
 			     res2:1, save_idx_regs:1, res3:18;
-#endif
-	} ictrl;
+#पूर्ण_अगर
+	पूर्ण ictrl;
 
-	*(unsigned int *)&ictrl = 0;
+	*(अचिन्हित पूर्णांक *)&ictrl = 0;
 
-#ifndef CONFIG_ARC_IRQ_NO_AUTOSAVE
+#अगर_अघोषित CONFIG_ARC_IRQ_NO_AUTOSAVE
 	ictrl.save_nr_gpr_pairs = 6;	/* r0 to r11 (r12 saved manually) */
 	ictrl.save_blink = 1;
 	ictrl.save_lp_regs = 1;		/* LP_COUNT, LP_START, LP_END */
 	ictrl.save_u_to_u = 0;		/* user ctxt saved on kernel stack */
 	ictrl.save_idx_regs = 1;	/* JLI, LDI, EI */
-#endif
+#पूर्ण_अगर
 
 	WRITE_AUX(AUX_IRQ_CTRL, ictrl);
 
 	/*
-	 * ARCv2 core intc provides multiple interrupt priorities (upto 16).
+	 * ARCv2 core पूर्णांकc provides multiple पूर्णांकerrupt priorities (upto 16).
 	 * Typical builds though have only two levels (0-high, 1-low)
-	 * Linux by default uses lower prio 1 for most irqs, reserving 0 for
-	 * NMI style interrupts in future (say perf)
+	 * Linux by शेष uses lower prio 1 क्रम most irqs, reserving 0 क्रम
+	 * NMI style पूर्णांकerrupts in future (say perf)
 	 */
 
 	READ_BCR(ARC_REG_IRQ_BCR, irq_bcr);
 
-	irq_prio = irq_bcr.prio;	/* Encoded as N-1 for N levels */
+	irq_prio = irq_bcr.prio;	/* Encoded as N-1 क्रम N levels */
 	pr_info("archs-intc\t: %d priority levels (default %d)%s\n",
 		irq_prio + 1, ARCV2_IRQ_DEF_PRIO,
 		irq_bcr.firq ? " FIRQ (not used)":"");
 
 	/*
-	 * Set a default priority for all available interrupts to prevent
-	 * switching of register banks if Fast IRQ and multiple register banks
+	 * Set a शेष priority क्रम all available पूर्णांकerrupts to prevent
+	 * चयनing of रेजिस्टर banks अगर Fast IRQ and multiple रेजिस्टर banks
 	 * are supported by CPU.
-	 * Also disable private-per-core IRQ lines so faulty external HW won't
-	 * trigger interrupt that kernel is not ready to handle.
+	 * Also disable निजी-per-core IRQ lines so faulty बाह्यal HW won't
+	 * trigger पूर्णांकerrupt that kernel is not पढ़ोy to handle.
 	 */
-	for (i = NR_EXCEPTIONS; i < irq_bcr.irqs + NR_EXCEPTIONS; i++) {
-		write_aux_reg(AUX_IRQ_SELECT, i);
-		write_aux_reg(AUX_IRQ_PRIORITY, ARCV2_IRQ_DEF_PRIO);
+	क्रम (i = NR_EXCEPTIONS; i < irq_bcr.irqs + NR_EXCEPTIONS; i++) अणु
+		ग_लिखो_aux_reg(AUX_IRQ_SELECT, i);
+		ग_लिखो_aux_reg(AUX_IRQ_PRIORITY, ARCV2_IRQ_DEF_PRIO);
 
 		/*
-		 * Only mask cpu private IRQs here.
-		 * "common" interrupts are masked at IDU, otherwise it would
+		 * Only mask cpu निजी IRQs here.
+		 * "common" पूर्णांकerrupts are masked at IDU, otherwise it would
 		 * need to be unmasked at each cpu, with IPIs
 		 */
-		if (i < FIRST_EXT_IRQ)
-			write_aux_reg(AUX_IRQ_ENABLE, 0);
-	}
+		अगर (i < FIRST_EXT_IRQ)
+			ग_लिखो_aux_reg(AUX_IRQ_ENABLE, 0);
+	पूर्ण
 
-	/* setup status32, don't enable intr yet as kernel doesn't want */
-	tmp = read_aux_reg(ARC_REG_STATUS32);
-	tmp |= ARCV2_IRQ_DEF_PRIO << 1;
-	tmp &= ~STATUS_IE_MASK;
-	asm volatile("kflag %0	\n"::"r"(tmp));
-}
+	/* setup status32, करोn't enable intr yet as kernel doesn't want */
+	पंचांगp = पढ़ो_aux_reg(ARC_REG_STATUS32);
+	पंचांगp |= ARCV2_IRQ_DEF_PRIO << 1;
+	पंचांगp &= ~STATUS_IE_MASK;
+	यंत्र अस्थिर("kflag %0	\n"::"r"(पंचांगp));
+पूर्ण
 
-static void arcv2_irq_mask(struct irq_data *data)
-{
-	write_aux_reg(AUX_IRQ_SELECT, data->hwirq);
-	write_aux_reg(AUX_IRQ_ENABLE, 0);
-}
+अटल व्योम arcv2_irq_mask(काष्ठा irq_data *data)
+अणु
+	ग_लिखो_aux_reg(AUX_IRQ_SELECT, data->hwirq);
+	ग_लिखो_aux_reg(AUX_IRQ_ENABLE, 0);
+पूर्ण
 
-static void arcv2_irq_unmask(struct irq_data *data)
-{
-	write_aux_reg(AUX_IRQ_SELECT, data->hwirq);
-	write_aux_reg(AUX_IRQ_ENABLE, 1);
-}
+अटल व्योम arcv2_irq_unmask(काष्ठा irq_data *data)
+अणु
+	ग_लिखो_aux_reg(AUX_IRQ_SELECT, data->hwirq);
+	ग_लिखो_aux_reg(AUX_IRQ_ENABLE, 1);
+पूर्ण
 
-void arcv2_irq_enable(struct irq_data *data)
-{
-	/* set default priority */
-	write_aux_reg(AUX_IRQ_SELECT, data->hwirq);
-	write_aux_reg(AUX_IRQ_PRIORITY, ARCV2_IRQ_DEF_PRIO);
+व्योम arcv2_irq_enable(काष्ठा irq_data *data)
+अणु
+	/* set शेष priority */
+	ग_लिखो_aux_reg(AUX_IRQ_SELECT, data->hwirq);
+	ग_लिखो_aux_reg(AUX_IRQ_PRIORITY, ARCV2_IRQ_DEF_PRIO);
 
 	/*
-	 * hw auto enables (linux unmask) all by default
-	 * So no need to do IRQ_ENABLE here
+	 * hw स्वतः enables (linux unmask) all by शेष
+	 * So no need to करो IRQ_ENABLE here
 	 * XXX: However OSCI LAN need it
 	 */
-	write_aux_reg(AUX_IRQ_ENABLE, 1);
-}
+	ग_लिखो_aux_reg(AUX_IRQ_ENABLE, 1);
+पूर्ण
 
-static struct irq_chip arcv2_irq_chip = {
+अटल काष्ठा irq_chip arcv2_irq_chip = अणु
 	.name           = "ARCv2 core Intc",
 	.irq_mask	= arcv2_irq_mask,
 	.irq_unmask	= arcv2_irq_unmask,
 	.irq_enable	= arcv2_irq_enable
-};
+पूर्ण;
 
-static int arcv2_irq_map(struct irq_domain *d, unsigned int irq,
+अटल पूर्णांक arcv2_irq_map(काष्ठा irq_करोमुख्य *d, अचिन्हित पूर्णांक irq,
 			 irq_hw_number_t hw)
-{
+अणु
 	/*
-	 * core intc IRQs [16, 23]:
-	 * Statically assigned always private-per-core (Timers, WDT, IPI, PCT)
+	 * core पूर्णांकc IRQs [16, 23]:
+	 * Statically asचिन्हित always निजी-per-core (Timers, WDT, IPI, PCT)
 	 */
-	if (hw < FIRST_EXT_IRQ) {
+	अगर (hw < FIRST_EXT_IRQ) अणु
 		/*
-		 * A subsequent request_percpu_irq() fails if percpu_devid is
+		 * A subsequent request_percpu_irq() fails अगर percpu_devid is
 		 * not set. That in turns sets NOAUTOEN, meaning each core needs
 		 * to call enable_percpu_irq()
 		 */
 		irq_set_percpu_devid(irq);
 		irq_set_chip_and_handler(irq, &arcv2_irq_chip, handle_percpu_irq);
-	} else {
+	पूर्ण अन्यथा अणु
 		irq_set_chip_and_handler(irq, &arcv2_irq_chip, handle_level_irq);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct irq_domain_ops arcv2_irq_ops = {
-	.xlate = irq_domain_xlate_onecell,
+अटल स्थिर काष्ठा irq_करोमुख्य_ops arcv2_irq_ops = अणु
+	.xlate = irq_करोमुख्य_xlate_onecell,
 	.map = arcv2_irq_map,
-};
+पूर्ण;
 
 
-static int __init
-init_onchip_IRQ(struct device_node *intc, struct device_node *parent)
-{
-	struct irq_domain *root_domain;
-	struct bcr_irq_arcv2 irq_bcr;
-	unsigned int nr_cpu_irqs;
+अटल पूर्णांक __init
+init_onchip_IRQ(काष्ठा device_node *पूर्णांकc, काष्ठा device_node *parent)
+अणु
+	काष्ठा irq_करोमुख्य *root_करोमुख्य;
+	काष्ठा bcr_irq_arcv2 irq_bcr;
+	अचिन्हित पूर्णांक nr_cpu_irqs;
 
 	READ_BCR(ARC_REG_IRQ_BCR, irq_bcr);
 	nr_cpu_irqs = irq_bcr.irqs + NR_EXCEPTIONS;
 
-	if (parent)
+	अगर (parent)
 		panic("DeviceTree incore intc not a root irq controller\n");
 
-	root_domain = irq_domain_add_linear(intc, nr_cpu_irqs, &arcv2_irq_ops, NULL);
-	if (!root_domain)
+	root_करोमुख्य = irq_करोमुख्य_add_linear(पूर्णांकc, nr_cpu_irqs, &arcv2_irq_ops, शून्य);
+	अगर (!root_करोमुख्य)
 		panic("root irq domain not avail\n");
 
 	/*
-	 * Needed for primary domain lookup to succeed
+	 * Needed क्रम primary करोमुख्य lookup to succeed
 	 * This is a primary irqchip, and can never have a parent
 	 */
-	irq_set_default_host(root_domain);
+	irq_set_शेष_host(root_करोमुख्य);
 
-#ifdef CONFIG_SMP
-	irq_create_mapping(root_domain, IPI_IRQ);
-#endif
-	irq_create_mapping(root_domain, SOFTIRQ_IRQ);
+#अगर_घोषित CONFIG_SMP
+	irq_create_mapping(root_करोमुख्य, IPI_IRQ);
+#पूर्ण_अगर
+	irq_create_mapping(root_करोमुख्य, SOFTIRQ_IRQ);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-IRQCHIP_DECLARE(arc_intc, "snps,archs-intc", init_onchip_IRQ);
+IRQCHIP_DECLARE(arc_पूर्णांकc, "snps,archs-intc", init_onchip_IRQ);

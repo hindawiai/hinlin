@@ -1,16 +1,17 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
- * header file for ADAU1701 SigmaDSP processor
+ * header file क्रम ADAU1701 SigmaDSP processor
  *
  * Copyright 2011 Analog Devices Inc.
  */
 
-#ifndef _ADAU1701_H
-#define _ADAU1701_H
+#अगर_अघोषित _ADAU1701_H
+#घोषणा _ADAU1701_H
 
-enum adau1701_clk_src {
+क्रमागत adau1701_clk_src अणु
 	ADAU1701_CLK_SRC_OSC,
 	ADAU1701_CLK_SRC_MCLK,
-};
+पूर्ण;
 
-#endif
+#पूर्ण_अगर

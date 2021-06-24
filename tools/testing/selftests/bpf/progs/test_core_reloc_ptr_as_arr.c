@@ -1,33 +1,34 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 // Copyright (c) 2019 Facebook
 
-#include <linux/bpf.h>
-#include <stdint.h>
-#include <bpf/bpf_helpers.h>
-#include <bpf/bpf_core_read.h>
+#समावेश <linux/bpf.h>
+#समावेश <मानक_निवेशt.h>
+#समावेश <bpf/bpf_helpers.h>
+#समावेश <bpf/bpf_core_पढ़ो.h>
 
-char _license[] SEC("license") = "GPL";
+अक्षर _license[] SEC("license") = "GPL";
 
-struct {
-	char in[256];
-	char out[256];
-} data = {};
+काष्ठा अणु
+	अक्षर in[256];
+	अक्षर out[256];
+पूर्ण data = अणुपूर्ण;
 
-struct core_reloc_ptr_as_arr {
-	int a;
-};
+काष्ठा core_reloc_ptr_as_arr अणु
+	पूर्णांक a;
+पूर्ण;
 
-#define CORE_READ(dst, src) bpf_core_read(dst, sizeof(*(dst)), src)
+#घोषणा CORE_READ(dst, src) bpf_core_पढ़ो(dst, माप(*(dst)), src)
 
 SEC("raw_tracepoint/sys_enter")
-int test_core_ptr_as_arr(void *ctx)
-{
-	struct core_reloc_ptr_as_arr *in = (void *)&data.in;
-	struct core_reloc_ptr_as_arr *out = (void *)&data.out;
+पूर्णांक test_core_ptr_as_arr(व्योम *ctx)
+अणु
+	काष्ठा core_reloc_ptr_as_arr *in = (व्योम *)&data.in;
+	काष्ठा core_reloc_ptr_as_arr *out = (व्योम *)&data.out;
 
-	if (CORE_READ(&out->a, &in[2].a))
-		return 1;
+	अगर (CORE_READ(&out->a, &in[2].a))
+		वापस 1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 

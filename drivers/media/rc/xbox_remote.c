@@ -1,95 +1,96 @@
-// SPDX-License-Identifier: GPL-2.0+
-// Driver for Xbox DVD Movie Playback Kit
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
+// Driver क्रम Xbox DVD Movie Playback Kit
 // Copyright (c) 2018 by Benjamin Valentin <benpicco@googlemail.com>
 
 /*
- *  Xbox DVD Movie Playback Kit USB IR dongle support
+ *  Xbox DVD Movie Playback Kit USB IR करोngle support
  *
  *  The driver was derived from the ati_remote driver 2.2.1
- *          and used information from lirc_xbox.c
+ *          and used inक्रमmation from lirc_xbox.c
  *
  *          Copyright (c) 2011, 2012 Anssi Hannula <anssi.hannula@iki.fi>
  *          Copyright (c) 2004 Torrey Hoffman <thoffman@arnor.net>
  *          Copyright (c) 2002 Vladimir Dergachev
- *          Copyright (c) 2003-2004 Paul Miller <pmiller9@users.sourceforge.net>
+ *          Copyright (c) 2003-2004 Paul Miller <pmiller9@users.sourceक्रमge.net>
  */
 
-#include <linux/slab.h>
-#include <linux/module.h>
-#include <linux/usb/input.h>
-#include <media/rc-core.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/module.h>
+#समावेश <linux/usb/input.h>
+#समावेश <media/rc-core.h>
 
 /*
- * Module and Version Information
+ * Module and Version Inक्रमmation
  */
-#define DRIVER_VERSION	"1.0.0"
-#define DRIVER_AUTHOR	"Benjamin Valentin <benpicco@googlemail.com>"
-#define DRIVER_DESC		"Xbox DVD USB Remote Control"
+#घोषणा DRIVER_VERSION	"1.0.0"
+#घोषणा DRIVER_AUTHOR	"Benjamin Valentin <benpicco@googlemail.com>"
+#घोषणा DRIVER_DESC		"Xbox DVD USB Remote Control"
 
-#define NAME_BUFSIZE      80    /* size of product name, path buffers */
-#define DATA_BUFSIZE      8     /* size of URB data buffers */
+#घोषणा NAME_बफ_मानE      80    /* size of product name, path buffers */
+#घोषणा DATA_बफ_मानE      8     /* size of URB data buffers */
 
 /*
- * USB vendor ids for XBOX DVD Dongles
+ * USB venकरोr ids क्रम XBOX DVD Dongles
  */
-#define VENDOR_GAMESTER     0x040b
-#define VENDOR_MICROSOFT    0x045e
+#घोषणा VENDOR_GAMESTER     0x040b
+#घोषणा VENDOR_MICROSOFT    0x045e
 
-static const struct usb_device_id xbox_remote_table[] = {
+अटल स्थिर काष्ठा usb_device_id xbox_remote_table[] = अणु
 	/* Gamester Xbox DVD Movie Playback Kit IR */
-	{
+	अणु
 		USB_DEVICE(VENDOR_GAMESTER, 0x6521),
-	},
+	पूर्ण,
 	/* Microsoft Xbox DVD Movie Playback Kit IR */
-	{
+	अणु
 		USB_DEVICE(VENDOR_MICROSOFT, 0x0284),
-	},
-	{}	/* Terminating entry */
-};
+	पूर्ण,
+	अणुपूर्ण	/* Terminating entry */
+पूर्ण;
 
 MODULE_DEVICE_TABLE(usb, xbox_remote_table);
 
-struct xbox_remote {
-	struct rc_dev *rdev;
-	struct usb_device *udev;
-	struct usb_interface *interface;
+काष्ठा xbox_remote अणु
+	काष्ठा rc_dev *rdev;
+	काष्ठा usb_device *udev;
+	काष्ठा usb_पूर्णांकerface *पूर्णांकerface;
 
-	struct urb *irq_urb;
-	unsigned char inbuf[DATA_BUFSIZE] __aligned(sizeof(u16));
+	काष्ठा urb *irq_urb;
+	अचिन्हित अक्षर inbuf[DATA_बफ_मानE] __aligned(माप(u16));
 
-	char rc_name[NAME_BUFSIZE];
-	char rc_phys[NAME_BUFSIZE];
-};
+	अक्षर rc_name[NAME_बफ_मानE];
+	अक्षर rc_phys[NAME_बफ_मानE];
+पूर्ण;
 
-static int xbox_remote_rc_open(struct rc_dev *rdev)
-{
-	struct xbox_remote *xbox_remote = rdev->priv;
+अटल पूर्णांक xbox_remote_rc_खोलो(काष्ठा rc_dev *rdev)
+अणु
+	काष्ठा xbox_remote *xbox_remote = rdev->priv;
 
-	/* On first open, submit the read urb which was set up previously. */
+	/* On first खोलो, submit the पढ़ो urb which was set up previously. */
 	xbox_remote->irq_urb->dev = xbox_remote->udev;
-	if (usb_submit_urb(xbox_remote->irq_urb, GFP_KERNEL)) {
-		dev_err(&xbox_remote->interface->dev,
+	अगर (usb_submit_urb(xbox_remote->irq_urb, GFP_KERNEL)) अणु
+		dev_err(&xbox_remote->पूर्णांकerface->dev,
 			"%s: usb_submit_urb failed!\n", __func__);
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void xbox_remote_rc_close(struct rc_dev *rdev)
-{
-	struct xbox_remote *xbox_remote = rdev->priv;
+अटल व्योम xbox_remote_rc_बंद(काष्ठा rc_dev *rdev)
+अणु
+	काष्ठा xbox_remote *xbox_remote = rdev->priv;
 
-	usb_kill_urb(xbox_remote->irq_urb);
-}
+	usb_समाप्त_urb(xbox_remote->irq_urb);
+पूर्ण
 
 /*
  * xbox_remote_report_input
  */
-static void xbox_remote_input_report(struct urb *urb)
-{
-	struct xbox_remote *xbox_remote = urb->context;
-	unsigned char *data = xbox_remote->inbuf;
+अटल व्योम xbox_remote_input_report(काष्ठा urb *urb)
+अणु
+	काष्ठा xbox_remote *xbox_remote = urb->context;
+	अचिन्हित अक्षर *data = xbox_remote->inbuf;
 
 	/*
 	 * data[0] = 0x00
@@ -100,206 +101,206 @@ static void xbox_remote_input_report(struct urb *urb)
 	 * data[5] = last_press_ms (high)
 	 */
 
-	/* Deal with strange looking inputs */
-	if (urb->actual_length != 6 || urb->actual_length != data[1]) {
+	/* Deal with strange looking inमाला_दो */
+	अगर (urb->actual_length != 6 || urb->actual_length != data[1]) अणु
 		dev_warn(&urb->dev->dev, "Weird data, len=%d: %*ph\n",
 			 urb->actual_length, urb->actual_length, data);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	rc_keydown(xbox_remote->rdev, RC_PROTO_XBOX_DVD,
+	rc_keyकरोwn(xbox_remote->rdev, RC_PROTO_XBOX_DVD,
 		   le16_to_cpup((__le16 *)(data + 2)), 0);
-}
+पूर्ण
 
 /*
  * xbox_remote_irq_in
  */
-static void xbox_remote_irq_in(struct urb *urb)
-{
-	struct xbox_remote *xbox_remote = urb->context;
-	int retval;
+अटल व्योम xbox_remote_irq_in(काष्ठा urb *urb)
+अणु
+	काष्ठा xbox_remote *xbox_remote = urb->context;
+	पूर्णांक retval;
 
-	switch (urb->status) {
-	case 0:			/* success */
+	चयन (urb->status) अणु
+	हाल 0:			/* success */
 		xbox_remote_input_report(urb);
-		break;
-	case -ECONNRESET:	/* unlink */
-	case -ENOENT:
-	case -ESHUTDOWN:
-		dev_dbg(&xbox_remote->interface->dev,
+		अवरोध;
+	हाल -ECONNRESET:	/* unlink */
+	हाल -ENOENT:
+	हाल -ESHUTDOWN:
+		dev_dbg(&xbox_remote->पूर्णांकerface->dev,
 			"%s: urb error status, unlink?\n",
 			__func__);
-		return;
-	default:		/* error */
-		dev_dbg(&xbox_remote->interface->dev,
+		वापस;
+	शेष:		/* error */
+		dev_dbg(&xbox_remote->पूर्णांकerface->dev,
 			"%s: Nonzero urb status %d\n",
 			__func__, urb->status);
-	}
+	पूर्ण
 
 	retval = usb_submit_urb(urb, GFP_ATOMIC);
-	if (retval)
-		dev_err(&xbox_remote->interface->dev,
+	अगर (retval)
+		dev_err(&xbox_remote->पूर्णांकerface->dev,
 			"%s: usb_submit_urb()=%d\n",
 			__func__, retval);
-}
+पूर्ण
 
-static void xbox_remote_rc_init(struct xbox_remote *xbox_remote)
-{
-	struct rc_dev *rdev = xbox_remote->rdev;
+अटल व्योम xbox_remote_rc_init(काष्ठा xbox_remote *xbox_remote)
+अणु
+	काष्ठा rc_dev *rdev = xbox_remote->rdev;
 
 	rdev->priv = xbox_remote;
 	rdev->allowed_protocols = RC_PROTO_BIT_XBOX_DVD;
 	rdev->driver_name = "xbox_remote";
 
-	rdev->open = xbox_remote_rc_open;
-	rdev->close = xbox_remote_rc_close;
+	rdev->खोलो = xbox_remote_rc_खोलो;
+	rdev->बंद = xbox_remote_rc_बंद;
 
 	rdev->device_name = xbox_remote->rc_name;
 	rdev->input_phys = xbox_remote->rc_phys;
 
-	rdev->timeout = MS_TO_US(10);
+	rdev->समयout = MS_TO_US(10);
 
 	usb_to_input_id(xbox_remote->udev, &rdev->input_id);
-	rdev->dev.parent = &xbox_remote->interface->dev;
-}
+	rdev->dev.parent = &xbox_remote->पूर्णांकerface->dev;
+पूर्ण
 
-static int xbox_remote_initialize(struct xbox_remote *xbox_remote,
-				  struct usb_endpoint_descriptor *endpoint_in)
-{
-	struct usb_device *udev = xbox_remote->udev;
-	int pipe, maxp;
+अटल पूर्णांक xbox_remote_initialize(काष्ठा xbox_remote *xbox_remote,
+				  काष्ठा usb_endpoपूर्णांक_descriptor *endpoपूर्णांक_in)
+अणु
+	काष्ठा usb_device *udev = xbox_remote->udev;
+	पूर्णांक pipe, maxp;
 
 	/* Set up irq_urb */
-	pipe = usb_rcvintpipe(udev, endpoint_in->bEndpointAddress);
+	pipe = usb_rcvपूर्णांकpipe(udev, endpoपूर्णांक_in->bEndpoपूर्णांकAddress);
 	maxp = usb_maxpacket(udev, pipe, usb_pipeout(pipe));
-	maxp = (maxp > DATA_BUFSIZE) ? DATA_BUFSIZE : maxp;
+	maxp = (maxp > DATA_बफ_मानE) ? DATA_बफ_मानE : maxp;
 
-	usb_fill_int_urb(xbox_remote->irq_urb, udev, pipe, xbox_remote->inbuf,
+	usb_fill_पूर्णांक_urb(xbox_remote->irq_urb, udev, pipe, xbox_remote->inbuf,
 			 maxp, xbox_remote_irq_in, xbox_remote,
-			 endpoint_in->bInterval);
+			 endpoपूर्णांक_in->bInterval);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * xbox_remote_probe
  */
-static int xbox_remote_probe(struct usb_interface *interface,
-			     const struct usb_device_id *id)
-{
-	struct usb_device *udev = interface_to_usbdev(interface);
-	struct usb_host_interface *iface_host = interface->cur_altsetting;
-	struct usb_endpoint_descriptor *endpoint_in;
-	struct xbox_remote *xbox_remote;
-	struct rc_dev *rc_dev;
-	int err = -ENOMEM;
+अटल पूर्णांक xbox_remote_probe(काष्ठा usb_पूर्णांकerface *पूर्णांकerface,
+			     स्थिर काष्ठा usb_device_id *id)
+अणु
+	काष्ठा usb_device *udev = पूर्णांकerface_to_usbdev(पूर्णांकerface);
+	काष्ठा usb_host_पूर्णांकerface *अगरace_host = पूर्णांकerface->cur_altsetting;
+	काष्ठा usb_endpoपूर्णांक_descriptor *endpoपूर्णांक_in;
+	काष्ठा xbox_remote *xbox_remote;
+	काष्ठा rc_dev *rc_dev;
+	पूर्णांक err = -ENOMEM;
 
-	// why is there also a device with no endpoints?
-	if (iface_host->desc.bNumEndpoints == 0)
-		return -ENODEV;
+	// why is there also a device with no endpoपूर्णांकs?
+	अगर (अगरace_host->desc.bNumEndpoपूर्णांकs == 0)
+		वापस -ENODEV;
 
-	if (iface_host->desc.bNumEndpoints != 1) {
+	अगर (अगरace_host->desc.bNumEndpoपूर्णांकs != 1) अणु
 		pr_err("%s: Unexpected desc.bNumEndpoints: %d\n",
-		       __func__, iface_host->desc.bNumEndpoints);
-		return -ENODEV;
-	}
+		       __func__, अगरace_host->desc.bNumEndpoपूर्णांकs);
+		वापस -ENODEV;
+	पूर्ण
 
-	endpoint_in = &iface_host->endpoint[0].desc;
+	endpoपूर्णांक_in = &अगरace_host->endpoपूर्णांक[0].desc;
 
-	if (!usb_endpoint_is_int_in(endpoint_in)) {
+	अगर (!usb_endpoपूर्णांक_is_पूर्णांक_in(endpoपूर्णांक_in)) अणु
 		pr_err("%s: Unexpected endpoint_in\n", __func__);
-		return -ENODEV;
-	}
-	if (le16_to_cpu(endpoint_in->wMaxPacketSize) == 0) {
+		वापस -ENODEV;
+	पूर्ण
+	अगर (le16_to_cpu(endpoपूर्णांक_in->wMaxPacketSize) == 0) अणु
 		pr_err("%s: endpoint_in message size==0?\n", __func__);
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	xbox_remote = kzalloc(sizeof(*xbox_remote), GFP_KERNEL);
+	xbox_remote = kzalloc(माप(*xbox_remote), GFP_KERNEL);
 	rc_dev = rc_allocate_device(RC_DRIVER_SCANCODE);
-	if (!xbox_remote || !rc_dev)
-		goto exit_free_dev_rdev;
+	अगर (!xbox_remote || !rc_dev)
+		जाओ निकास_मुक्त_dev_rdev;
 
 	/* Allocate URB buffer */
 	xbox_remote->irq_urb = usb_alloc_urb(0, GFP_KERNEL);
-	if (!xbox_remote->irq_urb)
-		goto exit_free_buffers;
+	अगर (!xbox_remote->irq_urb)
+		जाओ निकास_मुक्त_buffers;
 
 	xbox_remote->udev = udev;
 	xbox_remote->rdev = rc_dev;
-	xbox_remote->interface = interface;
+	xbox_remote->पूर्णांकerface = पूर्णांकerface;
 
-	usb_make_path(udev, xbox_remote->rc_phys, sizeof(xbox_remote->rc_phys));
+	usb_make_path(udev, xbox_remote->rc_phys, माप(xbox_remote->rc_phys));
 
-	strlcat(xbox_remote->rc_phys, "/input0", sizeof(xbox_remote->rc_phys));
+	strlcat(xbox_remote->rc_phys, "/input0", माप(xbox_remote->rc_phys));
 
-	snprintf(xbox_remote->rc_name, sizeof(xbox_remote->rc_name), "%s%s%s",
+	snम_लिखो(xbox_remote->rc_name, माप(xbox_remote->rc_name), "%s%s%s",
 		 udev->manufacturer ?: "",
 		 udev->manufacturer && udev->product ? " " : "",
 		 udev->product ?: "");
 
-	if (!strlen(xbox_remote->rc_name))
-		snprintf(xbox_remote->rc_name, sizeof(xbox_remote->rc_name),
+	अगर (!म_माप(xbox_remote->rc_name))
+		snम_लिखो(xbox_remote->rc_name, माप(xbox_remote->rc_name),
 			 DRIVER_DESC "(%04x,%04x)",
-			 le16_to_cpu(xbox_remote->udev->descriptor.idVendor),
+			 le16_to_cpu(xbox_remote->udev->descriptor.idVenकरोr),
 			 le16_to_cpu(xbox_remote->udev->descriptor.idProduct));
 
-	rc_dev->map_name = RC_MAP_XBOX_DVD; /* default map */
+	rc_dev->map_name = RC_MAP_XBOX_DVD; /* शेष map */
 
 	xbox_remote_rc_init(xbox_remote);
 
 	/* Device Hardware Initialization */
-	err = xbox_remote_initialize(xbox_remote, endpoint_in);
-	if (err)
-		goto exit_kill_urbs;
+	err = xbox_remote_initialize(xbox_remote, endpoपूर्णांक_in);
+	अगर (err)
+		जाओ निकास_समाप्त_urbs;
 
-	/* Set up and register rc device */
-	err = rc_register_device(xbox_remote->rdev);
-	if (err)
-		goto exit_kill_urbs;
+	/* Set up and रेजिस्टर rc device */
+	err = rc_रेजिस्टर_device(xbox_remote->rdev);
+	अगर (err)
+		जाओ निकास_समाप्त_urbs;
 
-	usb_set_intfdata(interface, xbox_remote);
+	usb_set_पूर्णांकfdata(पूर्णांकerface, xbox_remote);
 
-	return 0;
+	वापस 0;
 
-exit_kill_urbs:
-	usb_kill_urb(xbox_remote->irq_urb);
-exit_free_buffers:
-	usb_free_urb(xbox_remote->irq_urb);
-exit_free_dev_rdev:
-	rc_free_device(rc_dev);
-	kfree(xbox_remote);
+निकास_समाप्त_urbs:
+	usb_समाप्त_urb(xbox_remote->irq_urb);
+निकास_मुक्त_buffers:
+	usb_मुक्त_urb(xbox_remote->irq_urb);
+निकास_मुक्त_dev_rdev:
+	rc_मुक्त_device(rc_dev);
+	kमुक्त(xbox_remote);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /*
  * xbox_remote_disconnect
  */
-static void xbox_remote_disconnect(struct usb_interface *interface)
-{
-	struct xbox_remote *xbox_remote;
+अटल व्योम xbox_remote_disconnect(काष्ठा usb_पूर्णांकerface *पूर्णांकerface)
+अणु
+	काष्ठा xbox_remote *xbox_remote;
 
-	xbox_remote = usb_get_intfdata(interface);
-	usb_set_intfdata(interface, NULL);
-	if (!xbox_remote) {
-		dev_warn(&interface->dev, "%s - null device?\n", __func__);
-		return;
-	}
+	xbox_remote = usb_get_पूर्णांकfdata(पूर्णांकerface);
+	usb_set_पूर्णांकfdata(पूर्णांकerface, शून्य);
+	अगर (!xbox_remote) अणु
+		dev_warn(&पूर्णांकerface->dev, "%s - null device?\n", __func__);
+		वापस;
+	पूर्ण
 
-	usb_kill_urb(xbox_remote->irq_urb);
-	rc_unregister_device(xbox_remote->rdev);
-	usb_free_urb(xbox_remote->irq_urb);
-	kfree(xbox_remote);
-}
+	usb_समाप्त_urb(xbox_remote->irq_urb);
+	rc_unरेजिस्टर_device(xbox_remote->rdev);
+	usb_मुक्त_urb(xbox_remote->irq_urb);
+	kमुक्त(xbox_remote);
+पूर्ण
 
-/* usb specific object to register with the usb subsystem */
-static struct usb_driver xbox_remote_driver = {
+/* usb specअगरic object to रेजिस्टर with the usb subप्रणाली */
+अटल काष्ठा usb_driver xbox_remote_driver = अणु
 	.name         = "xbox_remote",
 	.probe        = xbox_remote_probe,
 	.disconnect   = xbox_remote_disconnect,
 	.id_table     = xbox_remote_table,
-};
+पूर्ण;
 
 module_usb_driver(xbox_remote_driver);
 

@@ -1,131 +1,132 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Copyright (C) 2019 Jeff Kletsky
  *
  * Author: Jeff Kletsky <git-commits@allycomm.com>
  */
 
-#include <linux/device.h>
-#include <linux/kernel.h>
-#include <linux/mtd/spinand.h>
+#समावेश <linux/device.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/mtd/spinand.h>
 
 
-#define SPINAND_MFR_PARAGON	0xa1
+#घोषणा SPIन_अंकD_MFR_PARAGON	0xa1
 
 
-#define PN26G0XA_STATUS_ECC_BITMASK		(3 << 4)
+#घोषणा PN26G0XA_STATUS_ECC_BITMASK		(3 << 4)
 
-#define PN26G0XA_STATUS_ECC_NONE_DETECTED	(0 << 4)
-#define PN26G0XA_STATUS_ECC_1_7_CORRECTED	(1 << 4)
-#define PN26G0XA_STATUS_ECC_ERRORED		(2 << 4)
-#define PN26G0XA_STATUS_ECC_8_CORRECTED		(3 << 4)
-
-
-static SPINAND_OP_VARIANTS(read_cache_variants,
-		SPINAND_PAGE_READ_FROM_CACHE_QUADIO_OP(0, 2, NULL, 0),
-		SPINAND_PAGE_READ_FROM_CACHE_X4_OP(0, 1, NULL, 0),
-		SPINAND_PAGE_READ_FROM_CACHE_DUALIO_OP(0, 1, NULL, 0),
-		SPINAND_PAGE_READ_FROM_CACHE_X2_OP(0, 1, NULL, 0),
-		SPINAND_PAGE_READ_FROM_CACHE_OP(true, 0, 1, NULL, 0),
-		SPINAND_PAGE_READ_FROM_CACHE_OP(false, 0, 1, NULL, 0));
-
-static SPINAND_OP_VARIANTS(write_cache_variants,
-		SPINAND_PROG_LOAD_X4(true, 0, NULL, 0),
-		SPINAND_PROG_LOAD(true, 0, NULL, 0));
-
-static SPINAND_OP_VARIANTS(update_cache_variants,
-		SPINAND_PROG_LOAD_X4(false, 0, NULL, 0),
-		SPINAND_PROG_LOAD(false, 0, NULL, 0));
+#घोषणा PN26G0XA_STATUS_ECC_NONE_DETECTED	(0 << 4)
+#घोषणा PN26G0XA_STATUS_ECC_1_7_CORRECTED	(1 << 4)
+#घोषणा PN26G0XA_STATUS_ECC_ERRORED		(2 << 4)
+#घोषणा PN26G0XA_STATUS_ECC_8_CORRECTED		(3 << 4)
 
 
-static int pn26g0xa_ooblayout_ecc(struct mtd_info *mtd, int section,
-				   struct mtd_oob_region *region)
-{
-	if (section > 3)
-		return -ERANGE;
+अटल SPIन_अंकD_OP_VARIANTS(पढ़ो_cache_variants,
+		SPIन_अंकD_PAGE_READ_FROM_CACHE_QUADIO_OP(0, 2, शून्य, 0),
+		SPIन_अंकD_PAGE_READ_FROM_CACHE_X4_OP(0, 1, शून्य, 0),
+		SPIन_अंकD_PAGE_READ_FROM_CACHE_DUALIO_OP(0, 1, शून्य, 0),
+		SPIन_अंकD_PAGE_READ_FROM_CACHE_X2_OP(0, 1, शून्य, 0),
+		SPIन_अंकD_PAGE_READ_FROM_CACHE_OP(true, 0, 1, शून्य, 0),
+		SPIन_अंकD_PAGE_READ_FROM_CACHE_OP(false, 0, 1, शून्य, 0));
+
+अटल SPIन_अंकD_OP_VARIANTS(ग_लिखो_cache_variants,
+		SPIन_अंकD_PROG_LOAD_X4(true, 0, शून्य, 0),
+		SPIन_अंकD_PROG_LOAD(true, 0, शून्य, 0));
+
+अटल SPIन_अंकD_OP_VARIANTS(update_cache_variants,
+		SPIन_अंकD_PROG_LOAD_X4(false, 0, शून्य, 0),
+		SPIन_अंकD_PROG_LOAD(false, 0, शून्य, 0));
+
+
+अटल पूर्णांक pn26g0xa_ooblayout_ecc(काष्ठा mtd_info *mtd, पूर्णांक section,
+				   काष्ठा mtd_oob_region *region)
+अणु
+	अगर (section > 3)
+		वापस -दुस्फल;
 
 	region->offset = 6 + (15 * section); /* 4 BBM + 2 user bytes */
 	region->length = 13;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int pn26g0xa_ooblayout_free(struct mtd_info *mtd, int section,
-				   struct mtd_oob_region *region)
-{
-	if (section > 4)
-		return -ERANGE;
+अटल पूर्णांक pn26g0xa_ooblayout_मुक्त(काष्ठा mtd_info *mtd, पूर्णांक section,
+				   काष्ठा mtd_oob_region *region)
+अणु
+	अगर (section > 4)
+		वापस -दुस्फल;
 
-	if (section == 4) {
+	अगर (section == 4) अणु
 		region->offset = 64;
 		region->length = 64;
-	} else {
+	पूर्ण अन्यथा अणु
 		region->offset = 4 + (15 * section);
 		region->length = 2;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int pn26g0xa_ecc_get_status(struct spinand_device *spinand,
+अटल पूर्णांक pn26g0xa_ecc_get_status(काष्ठा spinand_device *spinand,
 				   u8 status)
-{
-	switch (status & PN26G0XA_STATUS_ECC_BITMASK) {
-	case PN26G0XA_STATUS_ECC_NONE_DETECTED:
-		return 0;
+अणु
+	चयन (status & PN26G0XA_STATUS_ECC_BITMASK) अणु
+	हाल PN26G0XA_STATUS_ECC_NONE_DETECTED:
+		वापस 0;
 
-	case PN26G0XA_STATUS_ECC_1_7_CORRECTED:
-		return 7;	/* Return upper limit by convention */
+	हाल PN26G0XA_STATUS_ECC_1_7_CORRECTED:
+		वापस 7;	/* Return upper limit by convention */
 
-	case PN26G0XA_STATUS_ECC_8_CORRECTED:
-		return 8;
+	हाल PN26G0XA_STATUS_ECC_8_CORRECTED:
+		वापस 8;
 
-	case PN26G0XA_STATUS_ECC_ERRORED:
-		return -EBADMSG;
+	हाल PN26G0XA_STATUS_ECC_ERRORED:
+		वापस -EBADMSG;
 
-	default:
-		break;
-	}
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static const struct mtd_ooblayout_ops pn26g0xa_ooblayout = {
+अटल स्थिर काष्ठा mtd_ooblayout_ops pn26g0xa_ooblayout = अणु
 	.ecc = pn26g0xa_ooblayout_ecc,
-	.free = pn26g0xa_ooblayout_free,
-};
+	.मुक्त = pn26g0xa_ooblayout_मुक्त,
+पूर्ण;
 
 
-static const struct spinand_info paragon_spinand_table[] = {
-	SPINAND_INFO("PN26G01A",
-		     SPINAND_ID(SPINAND_READID_METHOD_OPCODE_DUMMY, 0xe1),
-		     NAND_MEMORG(1, 2048, 128, 64, 1024, 21, 1, 1, 1),
-		     NAND_ECCREQ(8, 512),
-		     SPINAND_INFO_OP_VARIANTS(&read_cache_variants,
-					      &write_cache_variants,
+अटल स्थिर काष्ठा spinand_info paragon_spinand_table[] = अणु
+	SPIन_अंकD_INFO("PN26G01A",
+		     SPIन_अंकD_ID(SPIन_अंकD_READID_METHOD_OPCODE_DUMMY, 0xe1),
+		     न_अंकD_MEMORG(1, 2048, 128, 64, 1024, 21, 1, 1, 1),
+		     न_अंकD_ECCREQ(8, 512),
+		     SPIन_अंकD_INFO_OP_VARIANTS(&पढ़ो_cache_variants,
+					      &ग_लिखो_cache_variants,
 					      &update_cache_variants),
 		     0,
-		     SPINAND_ECCINFO(&pn26g0xa_ooblayout,
+		     SPIन_अंकD_ECCINFO(&pn26g0xa_ooblayout,
 				     pn26g0xa_ecc_get_status)),
-	SPINAND_INFO("PN26G02A",
-		     SPINAND_ID(SPINAND_READID_METHOD_OPCODE_DUMMY, 0xe2),
-		     NAND_MEMORG(1, 2048, 128, 64, 2048, 41, 1, 1, 1),
-		     NAND_ECCREQ(8, 512),
-		     SPINAND_INFO_OP_VARIANTS(&read_cache_variants,
-					      &write_cache_variants,
+	SPIन_अंकD_INFO("PN26G02A",
+		     SPIन_अंकD_ID(SPIन_अंकD_READID_METHOD_OPCODE_DUMMY, 0xe2),
+		     न_अंकD_MEMORG(1, 2048, 128, 64, 2048, 41, 1, 1, 1),
+		     न_अंकD_ECCREQ(8, 512),
+		     SPIन_अंकD_INFO_OP_VARIANTS(&पढ़ो_cache_variants,
+					      &ग_लिखो_cache_variants,
 					      &update_cache_variants),
 		     0,
-		     SPINAND_ECCINFO(&pn26g0xa_ooblayout,
+		     SPIन_अंकD_ECCINFO(&pn26g0xa_ooblayout,
 				     pn26g0xa_ecc_get_status)),
-};
+पूर्ण;
 
-static const struct spinand_manufacturer_ops paragon_spinand_manuf_ops = {
-};
+अटल स्थिर काष्ठा spinand_manufacturer_ops paragon_spinand_manuf_ops = अणु
+पूर्ण;
 
-const struct spinand_manufacturer paragon_spinand_manufacturer = {
-	.id = SPINAND_MFR_PARAGON,
+स्थिर काष्ठा spinand_manufacturer paragon_spinand_manufacturer = अणु
+	.id = SPIन_अंकD_MFR_PARAGON,
 	.name = "Paragon",
 	.chips = paragon_spinand_table,
 	.nchips = ARRAY_SIZE(paragon_spinand_table),
 	.ops = &paragon_spinand_manuf_ops,
-};
+पूर्ण;

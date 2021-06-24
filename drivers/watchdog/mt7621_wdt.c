@@ -1,89 +1,90 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * Ralink MT7621/MT7628 built-in hardware watchdog timer
+ * Ralink MT7621/MT7628 built-in hardware watchकरोg समयr
  *
  * Copyright (C) 2014 John Crispin <john@phrozen.org>
  *
- * This driver was based on: drivers/watchdog/rt2880_wdt.c
+ * This driver was based on: drivers/watchकरोg/rt2880_wdt.c
  */
 
-#include <linux/clk.h>
-#include <linux/reset.h>
-#include <linux/module.h>
-#include <linux/kernel.h>
-#include <linux/watchdog.h>
-#include <linux/moduleparam.h>
-#include <linux/platform_device.h>
-#include <linux/mod_devicetable.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/reset.h>
+#समावेश <linux/module.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/watchकरोg.h>
+#समावेश <linux/moduleparam.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/mod_devicetable.h>
 
-#include <asm/mach-ralink/ralink_regs.h>
+#समावेश <यंत्र/mach-ralink/ralink_regs.h>
 
-#define SYSC_RSTSTAT			0x38
-#define WDT_RST_CAUSE			BIT(1)
+#घोषणा SYSC_RSTSTAT			0x38
+#घोषणा WDT_RST_CAUSE			BIT(1)
 
-#define RALINK_WDT_TIMEOUT		30
+#घोषणा RALINK_WDT_TIMEOUT		30
 
-#define TIMER_REG_TMRSTAT		0x00
-#define TIMER_REG_TMR1LOAD		0x24
-#define TIMER_REG_TMR1CTL		0x20
+#घोषणा TIMER_REG_TMRSTAT		0x00
+#घोषणा TIMER_REG_TMR1LOAD		0x24
+#घोषणा TIMER_REG_TMR1CTL		0x20
 
-#define TMR1CTL_ENABLE			BIT(7)
-#define TMR1CTL_RESTART			BIT(9)
-#define TMR1CTL_PRESCALE_SHIFT		16
+#घोषणा TMR1CTL_ENABLE			BIT(7)
+#घोषणा TMR1CTL_RESTART			BIT(9)
+#घोषणा TMR1CTL_PRESCALE_SHIFT		16
 
-static void __iomem *mt7621_wdt_base;
-static struct reset_control *mt7621_wdt_reset;
+अटल व्योम __iomem *mt7621_wdt_base;
+अटल काष्ठा reset_control *mt7621_wdt_reset;
 
-static bool nowayout = WATCHDOG_NOWAYOUT;
+अटल bool nowayout = WATCHDOG_NOWAYOUT;
 module_param(nowayout, bool, 0);
 MODULE_PARM_DESC(nowayout,
 		 "Watchdog cannot be stopped once started (default="
 		 __MODULE_STRING(WATCHDOG_NOWAYOUT) ")");
 
-static inline void rt_wdt_w32(unsigned reg, u32 val)
-{
-	iowrite32(val, mt7621_wdt_base + reg);
-}
+अटल अंतरभूत व्योम rt_wdt_w32(अचिन्हित reg, u32 val)
+अणु
+	ioग_लिखो32(val, mt7621_wdt_base + reg);
+पूर्ण
 
-static inline u32 rt_wdt_r32(unsigned reg)
-{
-	return ioread32(mt7621_wdt_base + reg);
-}
+अटल अंतरभूत u32 rt_wdt_r32(अचिन्हित reg)
+अणु
+	वापस ioपढ़ो32(mt7621_wdt_base + reg);
+पूर्ण
 
-static int mt7621_wdt_ping(struct watchdog_device *w)
-{
+अटल पूर्णांक mt7621_wdt_ping(काष्ठा watchकरोg_device *w)
+अणु
 	rt_wdt_w32(TIMER_REG_TMRSTAT, TMR1CTL_RESTART);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mt7621_wdt_set_timeout(struct watchdog_device *w, unsigned int t)
-{
-	w->timeout = t;
+अटल पूर्णांक mt7621_wdt_set_समयout(काष्ठा watchकरोg_device *w, अचिन्हित पूर्णांक t)
+अणु
+	w->समयout = t;
 	rt_wdt_w32(TIMER_REG_TMR1LOAD, t * 1000);
 	mt7621_wdt_ping(w);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mt7621_wdt_start(struct watchdog_device *w)
-{
+अटल पूर्णांक mt7621_wdt_start(काष्ठा watchकरोg_device *w)
+अणु
 	u32 t;
 
 	/* set the prescaler to 1ms == 1000us */
 	rt_wdt_w32(TIMER_REG_TMR1CTL, 1000 << TMR1CTL_PRESCALE_SHIFT);
 
-	mt7621_wdt_set_timeout(w, w->timeout);
+	mt7621_wdt_set_समयout(w, w->समयout);
 
 	t = rt_wdt_r32(TIMER_REG_TMR1CTL);
 	t |= TMR1CTL_ENABLE;
 	rt_wdt_w32(TIMER_REG_TMR1CTL, t);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mt7621_wdt_stop(struct watchdog_device *w)
-{
+अटल पूर्णांक mt7621_wdt_stop(काष्ठा watchकरोg_device *w)
+अणु
 	u32 t;
 
 	mt7621_wdt_ping(w);
@@ -92,97 +93,97 @@ static int mt7621_wdt_stop(struct watchdog_device *w)
 	t &= ~TMR1CTL_ENABLE;
 	rt_wdt_w32(TIMER_REG_TMR1CTL, t);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mt7621_wdt_bootcause(void)
-{
-	if (rt_sysc_r32(SYSC_RSTSTAT) & WDT_RST_CAUSE)
-		return WDIOF_CARDRESET;
+अटल पूर्णांक mt7621_wdt_bootcause(व्योम)
+अणु
+	अगर (rt_sysc_r32(SYSC_RSTSTAT) & WDT_RST_CAUSE)
+		वापस WDIOF_CARDRESET;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mt7621_wdt_is_running(struct watchdog_device *w)
-{
-	return !!(rt_wdt_r32(TIMER_REG_TMR1CTL) & TMR1CTL_ENABLE);
-}
+अटल पूर्णांक mt7621_wdt_is_running(काष्ठा watchकरोg_device *w)
+अणु
+	वापस !!(rt_wdt_r32(TIMER_REG_TMR1CTL) & TMR1CTL_ENABLE);
+पूर्ण
 
-static const struct watchdog_info mt7621_wdt_info = {
+अटल स्थिर काष्ठा watchकरोg_info mt7621_wdt_info = अणु
 	.identity = "Mediatek Watchdog",
 	.options = WDIOF_SETTIMEOUT | WDIOF_KEEPALIVEPING | WDIOF_MAGICCLOSE,
-};
+पूर्ण;
 
-static const struct watchdog_ops mt7621_wdt_ops = {
+अटल स्थिर काष्ठा watchकरोg_ops mt7621_wdt_ops = अणु
 	.owner = THIS_MODULE,
 	.start = mt7621_wdt_start,
 	.stop = mt7621_wdt_stop,
 	.ping = mt7621_wdt_ping,
-	.set_timeout = mt7621_wdt_set_timeout,
-};
+	.set_समयout = mt7621_wdt_set_समयout,
+पूर्ण;
 
-static struct watchdog_device mt7621_wdt_dev = {
+अटल काष्ठा watchकरोg_device mt7621_wdt_dev = अणु
 	.info = &mt7621_wdt_info,
 	.ops = &mt7621_wdt_ops,
-	.min_timeout = 1,
-	.max_timeout = 0xfffful / 1000,
-};
+	.min_समयout = 1,
+	.max_समयout = 0xfffful / 1000,
+पूर्ण;
 
-static int mt7621_wdt_probe(struct platform_device *pdev)
-{
-	struct device *dev = &pdev->dev;
-	mt7621_wdt_base = devm_platform_ioremap_resource(pdev, 0);
-	if (IS_ERR(mt7621_wdt_base))
-		return PTR_ERR(mt7621_wdt_base);
+अटल पूर्णांक mt7621_wdt_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device *dev = &pdev->dev;
+	mt7621_wdt_base = devm_platक्रमm_ioremap_resource(pdev, 0);
+	अगर (IS_ERR(mt7621_wdt_base))
+		वापस PTR_ERR(mt7621_wdt_base);
 
-	mt7621_wdt_reset = devm_reset_control_get_exclusive(dev, NULL);
-	if (!IS_ERR(mt7621_wdt_reset))
-		reset_control_deassert(mt7621_wdt_reset);
+	mt7621_wdt_reset = devm_reset_control_get_exclusive(dev, शून्य);
+	अगर (!IS_ERR(mt7621_wdt_reset))
+		reset_control_deनिश्चित(mt7621_wdt_reset);
 
 	mt7621_wdt_dev.bootstatus = mt7621_wdt_bootcause();
 
-	watchdog_init_timeout(&mt7621_wdt_dev, mt7621_wdt_dev.max_timeout,
+	watchकरोg_init_समयout(&mt7621_wdt_dev, mt7621_wdt_dev.max_समयout,
 			      dev);
-	watchdog_set_nowayout(&mt7621_wdt_dev, nowayout);
-	if (mt7621_wdt_is_running(&mt7621_wdt_dev)) {
+	watchकरोg_set_nowayout(&mt7621_wdt_dev, nowayout);
+	अगर (mt7621_wdt_is_running(&mt7621_wdt_dev)) अणु
 		/*
-		 * Make sure to apply timeout from watchdog core, taking
-		 * the prescaler of this driver here into account (the
-		 * boot loader might be using a different prescaler).
+		 * Make sure to apply समयout from watchकरोg core, taking
+		 * the prescaler of this driver here पूर्णांकo account (the
+		 * boot loader might be using a dअगरferent prescaler).
 		 *
-		 * To avoid spurious resets because of different scaling,
-		 * we first disable the watchdog, set the new prescaler
-		 * and timeout, and then re-enable the watchdog.
+		 * To aव्योम spurious resets because of dअगरferent scaling,
+		 * we first disable the watchकरोg, set the new prescaler
+		 * and समयout, and then re-enable the watchकरोg.
 		 */
 		mt7621_wdt_stop(&mt7621_wdt_dev);
 		mt7621_wdt_start(&mt7621_wdt_dev);
 		set_bit(WDOG_HW_RUNNING, &mt7621_wdt_dev.status);
-	}
+	पूर्ण
 
-	return devm_watchdog_register_device(dev, &mt7621_wdt_dev);
-}
+	वापस devm_watchकरोg_रेजिस्टर_device(dev, &mt7621_wdt_dev);
+पूर्ण
 
-static void mt7621_wdt_shutdown(struct platform_device *pdev)
-{
+अटल व्योम mt7621_wdt_shutकरोwn(काष्ठा platक्रमm_device *pdev)
+अणु
 	mt7621_wdt_stop(&mt7621_wdt_dev);
-}
+पूर्ण
 
-static const struct of_device_id mt7621_wdt_match[] = {
-	{ .compatible = "mediatek,mt7621-wdt" },
-	{},
-};
+अटल स्थिर काष्ठा of_device_id mt7621_wdt_match[] = अणु
+	अणु .compatible = "mediatek,mt7621-wdt" पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, mt7621_wdt_match);
 
-static struct platform_driver mt7621_wdt_driver = {
+अटल काष्ठा platक्रमm_driver mt7621_wdt_driver = अणु
 	.probe		= mt7621_wdt_probe,
-	.shutdown	= mt7621_wdt_shutdown,
-	.driver		= {
+	.shutकरोwn	= mt7621_wdt_shutकरोwn,
+	.driver		= अणु
 		.name		= KBUILD_MODNAME,
 		.of_match_table	= mt7621_wdt_match,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-module_platform_driver(mt7621_wdt_driver);
+module_platक्रमm_driver(mt7621_wdt_driver);
 
 MODULE_DESCRIPTION("MediaTek MT762x hardware watchdog driver");
 MODULE_AUTHOR("John Crispin <john@phrozen.org");

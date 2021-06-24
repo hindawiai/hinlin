@@ -1,73 +1,74 @@
-/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
 /*
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the main directory of this archive
- * for more details.
+ * License.  See the file "COPYING" in the मुख्य directory of this archive
+ * क्रम more details.
  *
  * Copyright (C) 1996, 1997, 1999 by Ralf Baechle
  * Copyright (C) 1999 Silicon Graphics, Inc.
  */
-#ifndef _UAPI_ASM_SIGCONTEXT_H
-#define _UAPI_ASM_SIGCONTEXT_H
+#अगर_अघोषित _UAPI_ASM_SIGCONTEXT_H
+#घोषणा _UAPI_ASM_SIGCONTEXT_H
 
-#include <linux/types.h>
-#include <asm/sgidefs.h>
+#समावेश <linux/types.h>
+#समावेश <यंत्र/sgidefs.h>
 
 /* scalar FP context was used */
-#define USED_FP			(1 << 0)
+#घोषणा USED_FP			(1 << 0)
 
 /* the value of Status.FR when context was saved */
-#define USED_FR1		(1 << 1)
+#घोषणा USED_FR1		(1 << 1)
 
-/* FR=1, but with odd singles in bits 63:32 of preceding even double */
-#define USED_HYBRID_FPRS	(1 << 2)
+/* FR=1, but with odd singles in bits 63:32 of preceding even द्विगुन */
+#घोषणा USED_HYBRID_FPRS	(1 << 2)
 
-/* extended context was used, see struct extcontext for details */
-#define USED_EXTCONTEXT		(1 << 3)
+/* extended context was used, see काष्ठा extcontext क्रम details */
+#घोषणा USED_EXTCONTEXT		(1 << 3)
 
-#if _MIPS_SIM == _MIPS_SIM_ABI32
+#अगर _MIPS_SIM == _MIPS_SIM_ABI32
 
 /*
- * Keep this struct definition in sync with the sigcontext fragment
- * in arch/mips/kernel/asm-offsets.c
+ * Keep this काष्ठा definition in sync with the sigcontext fragment
+ * in arch/mips/kernel/यंत्र-offsets.c
  */
-struct sigcontext {
-	unsigned int		sc_regmask;	/* Unused */
-	unsigned int		sc_status;	/* Unused */
-	unsigned long long	sc_pc;
-	unsigned long long	sc_regs[32];
-	unsigned long long	sc_fpregs[32];
-	unsigned int		sc_acx;		/* Was sc_ownedfp */
-	unsigned int		sc_fpc_csr;
-	unsigned int		sc_fpc_eir;	/* Unused */
-	unsigned int		sc_used_math;
-	unsigned int		sc_dsp;		/* dsp status, was sc_ssflags */
-	unsigned long long	sc_mdhi;
-	unsigned long long	sc_mdlo;
-	unsigned long		sc_hi1;		/* Was sc_cause */
-	unsigned long		sc_lo1;		/* Was sc_badvaddr */
-	unsigned long		sc_hi2;		/* Was sc_sigset[4] */
-	unsigned long		sc_lo2;
-	unsigned long		sc_hi3;
-	unsigned long		sc_lo3;
-};
+काष्ठा sigcontext अणु
+	अचिन्हित पूर्णांक		sc_regmask;	/* Unused */
+	अचिन्हित पूर्णांक		sc_status;	/* Unused */
+	अचिन्हित दीर्घ दीर्घ	sc_pc;
+	अचिन्हित दीर्घ दीर्घ	sc_regs[32];
+	अचिन्हित दीर्घ दीर्घ	sc_fpregs[32];
+	अचिन्हित पूर्णांक		sc_acx;		/* Was sc_ownedfp */
+	अचिन्हित पूर्णांक		sc_fpc_csr;
+	अचिन्हित पूर्णांक		sc_fpc_eir;	/* Unused */
+	अचिन्हित पूर्णांक		sc_used_math;
+	अचिन्हित पूर्णांक		sc_dsp;		/* dsp status, was sc_ssflags */
+	अचिन्हित दीर्घ दीर्घ	sc_mdhi;
+	अचिन्हित दीर्घ दीर्घ	sc_mdlo;
+	अचिन्हित दीर्घ		sc_hi1;		/* Was sc_cause */
+	अचिन्हित दीर्घ		sc_lo1;		/* Was sc_badvaddr */
+	अचिन्हित दीर्घ		sc_hi2;		/* Was sc_sigset[4] */
+	अचिन्हित दीर्घ		sc_lo2;
+	अचिन्हित दीर्घ		sc_hi3;
+	अचिन्हित दीर्घ		sc_lo3;
+पूर्ण;
 
-#endif /* _MIPS_SIM == _MIPS_SIM_ABI32 */
+#पूर्ण_अगर /* _MIPS_SIM == _MIPS_SIM_ABI32 */
 
-#if _MIPS_SIM == _MIPS_SIM_ABI64 || _MIPS_SIM == _MIPS_SIM_NABI32
+#अगर _MIPS_SIM == _MIPS_SIM_ABI64 || _MIPS_SIM == _MIPS_SIM_NABI32
 
-#include <linux/posix_types.h>
+#समावेश <linux/posix_types.h>
 /*
- * Keep this struct definition in sync with the sigcontext fragment
- * in arch/mips/kernel/asm-offsets.c
+ * Keep this काष्ठा definition in sync with the sigcontext fragment
+ * in arch/mips/kernel/यंत्र-offsets.c
  *
- * Warning: this structure illdefined with sc_badvaddr being just an unsigned
- * int so it was changed to unsigned long in 2.6.0-test1.  This may break
+ * Warning: this काष्ठाure illdefined with sc_badvaddr being just an अचिन्हित
+ * पूर्णांक so it was changed to अचिन्हित दीर्घ in 2.6.0-test1.  This may अवरोध
  * binary compatibility - no prisoners.
- * DSP ASE in 2.6.12-rc4.  Turn sc_mdhi and sc_mdlo into an array of four
- * entries, add sc_dsp and sc_reserved for padding.  No prisoners.
+ * DSP ASE in 2.6.12-rc4.  Turn sc_mdhi and sc_mdlo पूर्णांकo an array of four
+ * entries, add sc_dsp and sc_reserved क्रम padding.  No prisoners.
  */
-struct sigcontext {
+काष्ठा sigcontext अणु
 	__u64	sc_regs[32];
 	__u64	sc_fpregs[32];
 	__u64	sc_mdhi;
@@ -83,9 +84,9 @@ struct sigcontext {
 	__u32	sc_used_math;
 	__u32	sc_dsp;
 	__u32	sc_reserved;
-};
+पूर्ण;
 
 
-#endif /* _MIPS_SIM == _MIPS_SIM_ABI64 || _MIPS_SIM == _MIPS_SIM_NABI32 */
+#पूर्ण_अगर /* _MIPS_SIM == _MIPS_SIM_ABI64 || _MIPS_SIM == _MIPS_SIM_NABI32 */
 
-#endif /* _UAPI_ASM_SIGCONTEXT_H */
+#पूर्ण_अगर /* _UAPI_ASM_SIGCONTEXT_H */

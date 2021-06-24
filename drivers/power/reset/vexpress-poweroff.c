@@ -1,149 +1,150 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  *
  * Copyright (C) 2012 ARM Limited
  */
 
-#include <linux/delay.h>
-#include <linux/notifier.h>
-#include <linux/of.h>
-#include <linux/of_device.h>
-#include <linux/platform_device.h>
-#include <linux/reboot.h>
-#include <linux/stat.h>
-#include <linux/vexpress.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/notअगरier.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/reboot.h>
+#समावेश <linux/स्थिति.स>
+#समावेश <linux/vexpress.h>
 
-static void vexpress_reset_do(struct device *dev, const char *what)
-{
-	int err = -ENOENT;
-	struct regmap *reg = dev_get_drvdata(dev);
+अटल व्योम vexpress_reset_करो(काष्ठा device *dev, स्थिर अक्षर *what)
+अणु
+	पूर्णांक err = -ENOENT;
+	काष्ठा regmap *reg = dev_get_drvdata(dev);
 
-	if (reg) {
-		err = regmap_write(reg, 0, 0);
-		if (!err)
+	अगर (reg) अणु
+		err = regmap_ग_लिखो(reg, 0, 0);
+		अगर (!err)
 			mdelay(1000);
-	}
+	पूर्ण
 
 	dev_emerg(dev, "Unable to %s (%d)\n", what, err);
-}
+पूर्ण
 
-static struct device *vexpress_power_off_device;
-static atomic_t vexpress_restart_nb_refcnt = ATOMIC_INIT(0);
+अटल काष्ठा device *vexpress_घातer_off_device;
+अटल atomic_t vexpress_restart_nb_refcnt = ATOMIC_INIT(0);
 
-static void vexpress_power_off(void)
-{
-	vexpress_reset_do(vexpress_power_off_device, "power off");
-}
+अटल व्योम vexpress_घातer_off(व्योम)
+अणु
+	vexpress_reset_करो(vexpress_घातer_off_device, "power off");
+पूर्ण
 
-static struct device *vexpress_restart_device;
+अटल काष्ठा device *vexpress_restart_device;
 
-static int vexpress_restart(struct notifier_block *this, unsigned long mode,
-			     void *cmd)
-{
-	vexpress_reset_do(vexpress_restart_device, "restart");
+अटल पूर्णांक vexpress_restart(काष्ठा notअगरier_block *this, अचिन्हित दीर्घ mode,
+			     व्योम *cmd)
+अणु
+	vexpress_reset_करो(vexpress_restart_device, "restart");
 
-	return NOTIFY_DONE;
-}
+	वापस NOTIFY_DONE;
+पूर्ण
 
-static struct notifier_block vexpress_restart_nb = {
-	.notifier_call = vexpress_restart,
+अटल काष्ठा notअगरier_block vexpress_restart_nb = अणु
+	.notअगरier_call = vexpress_restart,
 	.priority = 128,
-};
+पूर्ण;
 
-static ssize_t vexpress_reset_active_show(struct device *dev,
-		struct device_attribute *attr, char *buf)
-{
-	return sprintf(buf, "%d\n", vexpress_restart_device == dev);
-}
+अटल sमाप_प्रकार vexpress_reset_active_show(काष्ठा device *dev,
+		काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	वापस प्र_लिखो(buf, "%d\n", vexpress_restart_device == dev);
+पूर्ण
 
-static ssize_t vexpress_reset_active_store(struct device *dev,
-		struct device_attribute *attr, const char *buf, size_t count)
-{
-	long value;
-	int err = kstrtol(buf, 0, &value);
+अटल sमाप_प्रकार vexpress_reset_active_store(काष्ठा device *dev,
+		काष्ठा device_attribute *attr, स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	दीर्घ value;
+	पूर्णांक err = kम_से_दीर्घ(buf, 0, &value);
 
-	if (!err && value)
+	अगर (!err && value)
 		vexpress_restart_device = dev;
 
-	return err ? err : count;
-}
+	वापस err ? err : count;
+पूर्ण
 
-static DEVICE_ATTR(active, S_IRUGO | S_IWUSR, vexpress_reset_active_show,
+अटल DEVICE_ATTR(active, S_IRUGO | S_IWUSR, vexpress_reset_active_show,
 		   vexpress_reset_active_store);
 
 
-enum vexpress_reset_func { FUNC_RESET, FUNC_SHUTDOWN, FUNC_REBOOT };
+क्रमागत vexpress_reset_func अणु FUNC_RESET, FUNC_SHUTDOWN, FUNC_REBOOT पूर्ण;
 
-static const struct of_device_id vexpress_reset_of_match[] = {
-	{
+अटल स्थिर काष्ठा of_device_id vexpress_reset_of_match[] = अणु
+	अणु
 		.compatible = "arm,vexpress-reset",
-		.data = (void *)FUNC_RESET,
-	}, {
+		.data = (व्योम *)FUNC_RESET,
+	पूर्ण, अणु
 		.compatible = "arm,vexpress-shutdown",
-		.data = (void *)FUNC_SHUTDOWN
-	}, {
+		.data = (व्योम *)FUNC_SHUTDOWN
+	पूर्ण, अणु
 		.compatible = "arm,vexpress-reboot",
-		.data = (void *)FUNC_REBOOT
-	},
-	{}
-};
+		.data = (व्योम *)FUNC_REBOOT
+	पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
-static int _vexpress_register_restart_handler(struct device *dev)
-{
-	int err;
+अटल पूर्णांक _vexpress_रेजिस्टर_restart_handler(काष्ठा device *dev)
+अणु
+	पूर्णांक err;
 
 	vexpress_restart_device = dev;
-	if (atomic_inc_return(&vexpress_restart_nb_refcnt) == 1) {
-		err = register_restart_handler(&vexpress_restart_nb);
-		if (err) {
+	अगर (atomic_inc_वापस(&vexpress_restart_nb_refcnt) == 1) अणु
+		err = रेजिस्टर_restart_handler(&vexpress_restart_nb);
+		अगर (err) अणु
 			dev_err(dev, "cannot register restart handler (err=%d)\n", err);
 			atomic_dec(&vexpress_restart_nb_refcnt);
-			return err;
-		}
-	}
+			वापस err;
+		पूर्ण
+	पूर्ण
 	device_create_file(dev, &dev_attr_active);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int vexpress_reset_probe(struct platform_device *pdev)
-{
-	const struct of_device_id *match =
+अटल पूर्णांक vexpress_reset_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	स्थिर काष्ठा of_device_id *match =
 			of_match_device(vexpress_reset_of_match, &pdev->dev);
-	struct regmap *regmap;
-	int ret = 0;
+	काष्ठा regmap *regmap;
+	पूर्णांक ret = 0;
 
-	if (!match)
-		return -EINVAL;
+	अगर (!match)
+		वापस -EINVAL;
 
 	regmap = devm_regmap_init_vexpress_config(&pdev->dev);
-	if (IS_ERR(regmap))
-		return PTR_ERR(regmap);
+	अगर (IS_ERR(regmap))
+		वापस PTR_ERR(regmap);
 	dev_set_drvdata(&pdev->dev, regmap);
 
-	switch ((enum vexpress_reset_func)match->data) {
-	case FUNC_SHUTDOWN:
-		vexpress_power_off_device = &pdev->dev;
-		pm_power_off = vexpress_power_off;
-		break;
-	case FUNC_RESET:
-		if (!vexpress_restart_device)
-			ret = _vexpress_register_restart_handler(&pdev->dev);
-		break;
-	case FUNC_REBOOT:
-		ret = _vexpress_register_restart_handler(&pdev->dev);
-		break;
-	}
+	चयन ((क्रमागत vexpress_reset_func)match->data) अणु
+	हाल FUNC_SHUTDOWN:
+		vexpress_घातer_off_device = &pdev->dev;
+		pm_घातer_off = vexpress_घातer_off;
+		अवरोध;
+	हाल FUNC_RESET:
+		अगर (!vexpress_restart_device)
+			ret = _vexpress_रेजिस्टर_restart_handler(&pdev->dev);
+		अवरोध;
+	हाल FUNC_REBOOT:
+		ret = _vexpress_रेजिस्टर_restart_handler(&pdev->dev);
+		अवरोध;
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static struct platform_driver vexpress_reset_driver = {
+अटल काष्ठा platक्रमm_driver vexpress_reset_driver = अणु
 	.probe = vexpress_reset_probe,
-	.driver = {
+	.driver = अणु
 		.name = "vexpress-reset",
 		.of_match_table = vexpress_reset_of_match,
 		.suppress_bind_attrs = true,
-	},
-};
-builtin_platform_driver(vexpress_reset_driver);
+	पूर्ण,
+पूर्ण;
+builtin_platक्रमm_driver(vexpress_reset_driver);

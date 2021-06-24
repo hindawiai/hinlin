@@ -1,2 +1,3 @@
-// SPDX-License-Identifier: GPL-2.0
-#include "../../../lib/cmdline.c"
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश "../../../lib/cmdline.c"

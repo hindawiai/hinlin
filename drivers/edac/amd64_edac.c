@@ -1,104 +1,105 @@
-// SPDX-License-Identifier: GPL-2.0-only
-#include "amd64_edac.h"
-#include <asm/amd_nb.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
+#समावेश "amd64_edac.h"
+#समावेश <यंत्र/amd_nb.h>
 
-static struct edac_pci_ctl_info *pci_ctl;
+अटल काष्ठा edac_pci_ctl_info *pci_ctl;
 
 /*
  * Set by command line parameter. If BIOS has enabled the ECC, this override is
  * cleared to prevent re-enabling the hardware by this driver.
  */
-static int ecc_enable_override;
-module_param(ecc_enable_override, int, 0644);
+अटल पूर्णांक ecc_enable_override;
+module_param(ecc_enable_override, पूर्णांक, 0644);
 
-static struct msr __percpu *msrs;
+अटल काष्ठा msr __percpu *msrs;
 
-static struct amd64_family_type *fam_type;
+अटल काष्ठा amd64_family_type *fam_type;
 
 /* Per-node stuff */
-static struct ecc_settings **ecc_stngs;
+अटल काष्ठा ecc_settings **ecc_stngs;
 
-/* Device for the PCI component */
-static struct device *pci_ctl_dev;
+/* Device क्रम the PCI component */
+अटल काष्ठा device *pci_ctl_dev;
 
 /*
- * Valid scrub rates for the K8 hardware memory scrubber. We map the scrubbing
+ * Valid scrub rates क्रम the K8 hardware memory scrubber. We map the scrubbing
  * bandwidth to a valid bit pattern. The 'set' operation finds the 'matching-
  * or higher value'.
  *
  *FIXME: Produce a better mapping/linearisation.
  */
-static const struct scrubrate {
-       u32 scrubval;           /* bit pattern for scrub rate */
+अटल स्थिर काष्ठा scrubrate अणु
+       u32 scrubval;           /* bit pattern क्रम scrub rate */
        u32 bandwidth;          /* bandwidth consumed (bytes/sec) */
-} scrubrates[] = {
-	{ 0x01, 1600000000UL},
-	{ 0x02, 800000000UL},
-	{ 0x03, 400000000UL},
-	{ 0x04, 200000000UL},
-	{ 0x05, 100000000UL},
-	{ 0x06, 50000000UL},
-	{ 0x07, 25000000UL},
-	{ 0x08, 12284069UL},
-	{ 0x09, 6274509UL},
-	{ 0x0A, 3121951UL},
-	{ 0x0B, 1560975UL},
-	{ 0x0C, 781440UL},
-	{ 0x0D, 390720UL},
-	{ 0x0E, 195300UL},
-	{ 0x0F, 97650UL},
-	{ 0x10, 48854UL},
-	{ 0x11, 24427UL},
-	{ 0x12, 12213UL},
-	{ 0x13, 6101UL},
-	{ 0x14, 3051UL},
-	{ 0x15, 1523UL},
-	{ 0x16, 761UL},
-	{ 0x00, 0UL},        /* scrubbing off */
-};
+पूर्ण scrubrates[] = अणु
+	अणु 0x01, 1600000000ULपूर्ण,
+	अणु 0x02, 800000000ULपूर्ण,
+	अणु 0x03, 400000000ULपूर्ण,
+	अणु 0x04, 200000000ULपूर्ण,
+	अणु 0x05, 100000000ULपूर्ण,
+	अणु 0x06, 50000000ULपूर्ण,
+	अणु 0x07, 25000000ULपूर्ण,
+	अणु 0x08, 12284069ULपूर्ण,
+	अणु 0x09, 6274509ULपूर्ण,
+	अणु 0x0A, 3121951ULपूर्ण,
+	अणु 0x0B, 1560975ULपूर्ण,
+	अणु 0x0C, 781440ULपूर्ण,
+	अणु 0x0D, 390720ULपूर्ण,
+	अणु 0x0E, 195300ULपूर्ण,
+	अणु 0x0F, 97650ULपूर्ण,
+	अणु 0x10, 48854ULपूर्ण,
+	अणु 0x11, 24427ULपूर्ण,
+	अणु 0x12, 12213ULपूर्ण,
+	अणु 0x13, 6101ULपूर्ण,
+	अणु 0x14, 3051ULपूर्ण,
+	अणु 0x15, 1523ULपूर्ण,
+	अणु 0x16, 761ULपूर्ण,
+	अणु 0x00, 0ULपूर्ण,        /* scrubbing off */
+पूर्ण;
 
-int __amd64_read_pci_cfg_dword(struct pci_dev *pdev, int offset,
-			       u32 *val, const char *func)
-{
-	int err = 0;
+पूर्णांक __amd64_पढ़ो_pci_cfg_dword(काष्ठा pci_dev *pdev, पूर्णांक offset,
+			       u32 *val, स्थिर अक्षर *func)
+अणु
+	पूर्णांक err = 0;
 
-	err = pci_read_config_dword(pdev, offset, val);
-	if (err)
+	err = pci_पढ़ो_config_dword(pdev, offset, val);
+	अगर (err)
 		amd64_warn("%s: error reading F%dx%03x.\n",
 			   func, PCI_FUNC(pdev->devfn), offset);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-int __amd64_write_pci_cfg_dword(struct pci_dev *pdev, int offset,
-				u32 val, const char *func)
-{
-	int err = 0;
+पूर्णांक __amd64_ग_लिखो_pci_cfg_dword(काष्ठा pci_dev *pdev, पूर्णांक offset,
+				u32 val, स्थिर अक्षर *func)
+अणु
+	पूर्णांक err = 0;
 
-	err = pci_write_config_dword(pdev, offset, val);
-	if (err)
+	err = pci_ग_लिखो_config_dword(pdev, offset, val);
+	अगर (err)
 		amd64_warn("%s: error writing to F%dx%03x.\n",
 			   func, PCI_FUNC(pdev->devfn), offset);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /*
  * Select DCT to which PCI cfg accesses are routed
  */
-static void f15h_select_dct(struct amd64_pvt *pvt, u8 dct)
-{
+अटल व्योम f15h_select_dct(काष्ठा amd64_pvt *pvt, u8 dct)
+अणु
 	u32 reg = 0;
 
-	amd64_read_pci_cfg(pvt->F1, DCT_CFG_SEL, &reg);
+	amd64_पढ़ो_pci_cfg(pvt->F1, DCT_CFG_SEL, &reg);
 	reg &= (pvt->model == 0x30) ? ~3 : ~1;
 	reg |= dct;
-	amd64_write_pci_cfg(pvt->F1, DCT_CFG_SEL, reg);
-}
+	amd64_ग_लिखो_pci_cfg(pvt->F1, DCT_CFG_SEL, reg);
+पूर्ण
 
 /*
  *
- * Depending on the family, F2 DCT reads need special handling:
+ * Depending on the family, F2 DCT पढ़ोs need special handling:
  *
  * K8: has a single DCT only and no address offsets >= 0x100
  *
@@ -110,297 +111,297 @@ static void f15h_select_dct(struct amd64_pvt *pvt, u8 dct)
  *
  * F15h: we select which DCT we access using F1x10C[DctCfgSel]
  */
-static inline int amd64_read_dct_pci_cfg(struct amd64_pvt *pvt, u8 dct,
-					 int offset, u32 *val)
-{
-	switch (pvt->fam) {
-	case 0xf:
-		if (dct || offset >= 0x100)
-			return -EINVAL;
-		break;
+अटल अंतरभूत पूर्णांक amd64_पढ़ो_dct_pci_cfg(काष्ठा amd64_pvt *pvt, u8 dct,
+					 पूर्णांक offset, u32 *val)
+अणु
+	चयन (pvt->fam) अणु
+	हाल 0xf:
+		अगर (dct || offset >= 0x100)
+			वापस -EINVAL;
+		अवरोध;
 
-	case 0x10:
-		if (dct) {
+	हाल 0x10:
+		अगर (dct) अणु
 			/*
 			 * Note: If ganging is enabled, barring the regs
-			 * F2x[1,0]98 and F2x[1,0]9C; reads reads to F2x1xx
-			 * return 0. (cf. Section 2.8.1 F10h BKDG)
+			 * F2x[1,0]98 and F2x[1,0]9C; पढ़ोs पढ़ोs to F2x1xx
+			 * वापस 0. (cf. Section 2.8.1 F10h BKDG)
 			 */
-			if (dct_ganging_enabled(pvt))
-				return 0;
+			अगर (dct_ganging_enabled(pvt))
+				वापस 0;
 
 			offset += 0x100;
-		}
-		break;
+		पूर्ण
+		अवरोध;
 
-	case 0x15:
+	हाल 0x15:
 		/*
-		 * F15h: F2x1xx addresses do not map explicitly to DCT1.
+		 * F15h: F2x1xx addresses करो not map explicitly to DCT1.
 		 * We should select which DCT we access using F1x10C[DctCfgSel]
 		 */
 		dct = (dct && pvt->model == 0x30) ? 3 : dct;
 		f15h_select_dct(pvt, dct);
-		break;
+		अवरोध;
 
-	case 0x16:
-		if (dct)
-			return -EINVAL;
-		break;
+	हाल 0x16:
+		अगर (dct)
+			वापस -EINVAL;
+		अवरोध;
 
-	default:
-		break;
-	}
-	return amd64_read_pci_cfg(pvt->F2, offset, val);
-}
+	शेष:
+		अवरोध;
+	पूर्ण
+	वापस amd64_पढ़ो_pci_cfg(pvt->F2, offset, val);
+पूर्ण
 
 /*
- * Memory scrubber control interface. For K8, memory scrubbing is handled by
- * hardware and can involve L2 cache, dcache as well as the main memory. With
+ * Memory scrubber control पूर्णांकerface. For K8, memory scrubbing is handled by
+ * hardware and can involve L2 cache, dcache as well as the मुख्य memory. With
  * F10, this is extended to L3 cache scrubbing on CPU models sporting that
  * functionality.
  *
- * This causes the "units" for the scrubbing speed to vary from 64 byte blocks
+ * This causes the "units" क्रम the scrubbing speed to vary from 64 byte blocks
  * (dram) over to cache lines. This is nasty, so we will use bandwidth in
- * bytes/sec for the setting.
+ * bytes/sec क्रम the setting.
  *
- * Currently, we only do dram scrubbing. If the scrubbing is done in software on
+ * Currently, we only करो dram scrubbing. If the scrubbing is करोne in software on
  * other archs, we might not have access to the caches directly.
  */
 
-static inline void __f17h_set_scrubval(struct amd64_pvt *pvt, u32 scrubval)
-{
+अटल अंतरभूत व्योम __f17h_set_scrubval(काष्ठा amd64_pvt *pvt, u32 scrubval)
+अणु
 	/*
 	 * Fam17h supports scrub values between 0x5 and 0x14. Also, the values
-	 * are shifted down by 0x5, so scrubval 0x5 is written to the register
+	 * are shअगरted करोwn by 0x5, so scrubval 0x5 is written to the रेजिस्टर
 	 * as 0x0, scrubval 0x6 as 0x1, etc.
 	 */
-	if (scrubval >= 0x5 && scrubval <= 0x14) {
+	अगर (scrubval >= 0x5 && scrubval <= 0x14) अणु
 		scrubval -= 0x5;
-		pci_write_bits32(pvt->F6, F17H_SCR_LIMIT_ADDR, scrubval, 0xF);
-		pci_write_bits32(pvt->F6, F17H_SCR_BASE_ADDR, 1, 0x1);
-	} else {
-		pci_write_bits32(pvt->F6, F17H_SCR_BASE_ADDR, 0, 0x1);
-	}
-}
+		pci_ग_लिखो_bits32(pvt->F6, F17H_SCR_LIMIT_ADDR, scrubval, 0xF);
+		pci_ग_लिखो_bits32(pvt->F6, F17H_SCR_BASE_ADDR, 1, 0x1);
+	पूर्ण अन्यथा अणु
+		pci_ग_लिखो_bits32(pvt->F6, F17H_SCR_BASE_ADDR, 0, 0x1);
+	पूर्ण
+पूर्ण
 /*
- * Scan the scrub rate mapping table for a close or matching bandwidth value to
+ * Scan the scrub rate mapping table क्रम a बंद or matching bandwidth value to
  * issue. If requested is too big, then use last maximum value found.
  */
-static int __set_scrub_rate(struct amd64_pvt *pvt, u32 new_bw, u32 min_rate)
-{
+अटल पूर्णांक __set_scrub_rate(काष्ठा amd64_pvt *pvt, u32 new_bw, u32 min_rate)
+अणु
 	u32 scrubval;
-	int i;
+	पूर्णांक i;
 
 	/*
-	 * map the configured rate (new_bw) to a value specific to the AMD64
-	 * memory controller and apply to register. Search for the first
+	 * map the configured rate (new_bw) to a value specअगरic to the AMD64
+	 * memory controller and apply to रेजिस्टर. Search क्रम the first
 	 * bandwidth entry that is greater or equal than the setting requested
 	 * and program that. If at last entry, turn off DRAM scrubbing.
 	 *
 	 * If no suitable bandwidth is found, turn off DRAM scrubbing entirely
 	 * by falling back to the last element in scrubrates[].
 	 */
-	for (i = 0; i < ARRAY_SIZE(scrubrates) - 1; i++) {
+	क्रम (i = 0; i < ARRAY_SIZE(scrubrates) - 1; i++) अणु
 		/*
 		 * skip scrub rates which aren't recommended
 		 * (see F10 BKDG, F3x58)
 		 */
-		if (scrubrates[i].scrubval < min_rate)
-			continue;
+		अगर (scrubrates[i].scrubval < min_rate)
+			जारी;
 
-		if (scrubrates[i].bandwidth <= new_bw)
-			break;
-	}
+		अगर (scrubrates[i].bandwidth <= new_bw)
+			अवरोध;
+	पूर्ण
 
 	scrubval = scrubrates[i].scrubval;
 
-	if (pvt->umc) {
+	अगर (pvt->umc) अणु
 		__f17h_set_scrubval(pvt, scrubval);
-	} else if (pvt->fam == 0x15 && pvt->model == 0x60) {
+	पूर्ण अन्यथा अगर (pvt->fam == 0x15 && pvt->model == 0x60) अणु
 		f15h_select_dct(pvt, 0);
-		pci_write_bits32(pvt->F2, F15H_M60H_SCRCTRL, scrubval, 0x001F);
+		pci_ग_लिखो_bits32(pvt->F2, F15H_M60H_SCRCTRL, scrubval, 0x001F);
 		f15h_select_dct(pvt, 1);
-		pci_write_bits32(pvt->F2, F15H_M60H_SCRCTRL, scrubval, 0x001F);
-	} else {
-		pci_write_bits32(pvt->F3, SCRCTRL, scrubval, 0x001F);
-	}
+		pci_ग_लिखो_bits32(pvt->F2, F15H_M60H_SCRCTRL, scrubval, 0x001F);
+	पूर्ण अन्यथा अणु
+		pci_ग_लिखो_bits32(pvt->F3, SCRCTRL, scrubval, 0x001F);
+	पूर्ण
 
-	if (scrubval)
-		return scrubrates[i].bandwidth;
+	अगर (scrubval)
+		वापस scrubrates[i].bandwidth;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int set_scrub_rate(struct mem_ctl_info *mci, u32 bw)
-{
-	struct amd64_pvt *pvt = mci->pvt_info;
+अटल पूर्णांक set_scrub_rate(काष्ठा mem_ctl_info *mci, u32 bw)
+अणु
+	काष्ठा amd64_pvt *pvt = mci->pvt_info;
 	u32 min_scrubrate = 0x5;
 
-	if (pvt->fam == 0xf)
+	अगर (pvt->fam == 0xf)
 		min_scrubrate = 0x0;
 
-	if (pvt->fam == 0x15) {
+	अगर (pvt->fam == 0x15) अणु
 		/* Erratum #505 */
-		if (pvt->model < 0x10)
+		अगर (pvt->model < 0x10)
 			f15h_select_dct(pvt, 0);
 
-		if (pvt->model == 0x60)
+		अगर (pvt->model == 0x60)
 			min_scrubrate = 0x6;
-	}
-	return __set_scrub_rate(pvt, bw, min_scrubrate);
-}
+	पूर्ण
+	वापस __set_scrub_rate(pvt, bw, min_scrubrate);
+पूर्ण
 
-static int get_scrub_rate(struct mem_ctl_info *mci)
-{
-	struct amd64_pvt *pvt = mci->pvt_info;
-	int i, retval = -EINVAL;
+अटल पूर्णांक get_scrub_rate(काष्ठा mem_ctl_info *mci)
+अणु
+	काष्ठा amd64_pvt *pvt = mci->pvt_info;
+	पूर्णांक i, retval = -EINVAL;
 	u32 scrubval = 0;
 
-	if (pvt->umc) {
-		amd64_read_pci_cfg(pvt->F6, F17H_SCR_BASE_ADDR, &scrubval);
-		if (scrubval & BIT(0)) {
-			amd64_read_pci_cfg(pvt->F6, F17H_SCR_LIMIT_ADDR, &scrubval);
+	अगर (pvt->umc) अणु
+		amd64_पढ़ो_pci_cfg(pvt->F6, F17H_SCR_BASE_ADDR, &scrubval);
+		अगर (scrubval & BIT(0)) अणु
+			amd64_पढ़ो_pci_cfg(pvt->F6, F17H_SCR_LIMIT_ADDR, &scrubval);
 			scrubval &= 0xF;
 			scrubval += 0x5;
-		} else {
+		पूर्ण अन्यथा अणु
 			scrubval = 0;
-		}
-	} else if (pvt->fam == 0x15) {
+		पूर्ण
+	पूर्ण अन्यथा अगर (pvt->fam == 0x15) अणु
 		/* Erratum #505 */
-		if (pvt->model < 0x10)
+		अगर (pvt->model < 0x10)
 			f15h_select_dct(pvt, 0);
 
-		if (pvt->model == 0x60)
-			amd64_read_pci_cfg(pvt->F2, F15H_M60H_SCRCTRL, &scrubval);
-		else
-			amd64_read_pci_cfg(pvt->F3, SCRCTRL, &scrubval);
-	} else {
-		amd64_read_pci_cfg(pvt->F3, SCRCTRL, &scrubval);
-	}
+		अगर (pvt->model == 0x60)
+			amd64_पढ़ो_pci_cfg(pvt->F2, F15H_M60H_SCRCTRL, &scrubval);
+		अन्यथा
+			amd64_पढ़ो_pci_cfg(pvt->F3, SCRCTRL, &scrubval);
+	पूर्ण अन्यथा अणु
+		amd64_पढ़ो_pci_cfg(pvt->F3, SCRCTRL, &scrubval);
+	पूर्ण
 
 	scrubval = scrubval & 0x001F;
 
-	for (i = 0; i < ARRAY_SIZE(scrubrates); i++) {
-		if (scrubrates[i].scrubval == scrubval) {
+	क्रम (i = 0; i < ARRAY_SIZE(scrubrates); i++) अणु
+		अगर (scrubrates[i].scrubval == scrubval) अणु
 			retval = scrubrates[i].bandwidth;
-			break;
-		}
-	}
-	return retval;
-}
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	वापस retval;
+पूर्ण
 
 /*
- * returns true if the SysAddr given by sys_addr matches the
+ * वापसs true अगर the SysAddr given by sys_addr matches the
  * DRAM base/limit associated with node_id
  */
-static bool base_limit_match(struct amd64_pvt *pvt, u64 sys_addr, u8 nid)
-{
+अटल bool base_limit_match(काष्ठा amd64_pvt *pvt, u64 sys_addr, u8 nid)
+अणु
 	u64 addr;
 
 	/* The K8 treats this as a 40-bit value.  However, bits 63-40 will be
-	 * all ones if the most significant implemented address bit is 1.
-	 * Here we discard bits 63-40.  See section 3.4.2 of AMD publication
+	 * all ones अगर the most signअगरicant implemented address bit is 1.
+	 * Here we discard bits 63-40.  See section 3.4.2 of AMD खुलाation
 	 * 24592: AMD x86-64 Architecture Programmer's Manual Volume 1
 	 * Application Programming.
 	 */
 	addr = sys_addr & 0x000000ffffffffffull;
 
-	return ((addr >= get_dram_base(pvt, nid)) &&
+	वापस ((addr >= get_dram_base(pvt, nid)) &&
 		(addr <= get_dram_limit(pvt, nid)));
-}
+पूर्ण
 
 /*
- * Attempt to map a SysAddr to a node. On success, return a pointer to the
- * mem_ctl_info structure for the node that the SysAddr maps to.
+ * Attempt to map a SysAddr to a node. On success, वापस a poपूर्णांकer to the
+ * mem_ctl_info काष्ठाure क्रम the node that the SysAddr maps to.
  *
- * On failure, return NULL.
+ * On failure, वापस शून्य.
  */
-static struct mem_ctl_info *find_mc_by_sys_addr(struct mem_ctl_info *mci,
+अटल काष्ठा mem_ctl_info *find_mc_by_sys_addr(काष्ठा mem_ctl_info *mci,
 						u64 sys_addr)
-{
-	struct amd64_pvt *pvt;
+अणु
+	काष्ठा amd64_pvt *pvt;
 	u8 node_id;
-	u32 intlv_en, bits;
+	u32 पूर्णांकlv_en, bits;
 
 	/*
 	 * Here we use the DRAM Base (section 3.4.4.1) and DRAM Limit (section
-	 * 3.4.4.2) registers to map the SysAddr to a node ID.
+	 * 3.4.4.2) रेजिस्टरs to map the SysAddr to a node ID.
 	 */
 	pvt = mci->pvt_info;
 
 	/*
-	 * The value of this field should be the same for all DRAM Base
-	 * registers.  Therefore we arbitrarily choose to read it from the
-	 * register for node 0.
+	 * The value of this field should be the same क्रम all DRAM Base
+	 * रेजिस्टरs.  Thereक्रमe we arbitrarily choose to पढ़ो it from the
+	 * रेजिस्टर क्रम node 0.
 	 */
-	intlv_en = dram_intlv_en(pvt, 0);
+	पूर्णांकlv_en = dram_पूर्णांकlv_en(pvt, 0);
 
-	if (intlv_en == 0) {
-		for (node_id = 0; node_id < DRAM_RANGES; node_id++) {
-			if (base_limit_match(pvt, sys_addr, node_id))
-				goto found;
-		}
-		goto err_no_match;
-	}
+	अगर (पूर्णांकlv_en == 0) अणु
+		क्रम (node_id = 0; node_id < DRAM_RANGES; node_id++) अणु
+			अगर (base_limit_match(pvt, sys_addr, node_id))
+				जाओ found;
+		पूर्ण
+		जाओ err_no_match;
+	पूर्ण
 
-	if (unlikely((intlv_en != 0x01) &&
-		     (intlv_en != 0x03) &&
-		     (intlv_en != 0x07))) {
-		amd64_warn("DRAM Base[IntlvEn] junk value: 0x%x, BIOS bug?\n", intlv_en);
-		return NULL;
-	}
+	अगर (unlikely((पूर्णांकlv_en != 0x01) &&
+		     (पूर्णांकlv_en != 0x03) &&
+		     (पूर्णांकlv_en != 0x07))) अणु
+		amd64_warn("DRAM Base[IntlvEn] junk value: 0x%x, BIOS bug?\n", पूर्णांकlv_en);
+		वापस शून्य;
+	पूर्ण
 
-	bits = (((u32) sys_addr) >> 12) & intlv_en;
+	bits = (((u32) sys_addr) >> 12) & पूर्णांकlv_en;
 
-	for (node_id = 0; ; ) {
-		if ((dram_intlv_sel(pvt, node_id) & intlv_en) == bits)
-			break;	/* intlv_sel field matches */
+	क्रम (node_id = 0; ; ) अणु
+		अगर ((dram_पूर्णांकlv_sel(pvt, node_id) & पूर्णांकlv_en) == bits)
+			अवरोध;	/* पूर्णांकlv_sel field matches */
 
-		if (++node_id >= DRAM_RANGES)
-			goto err_no_match;
-	}
+		अगर (++node_id >= DRAM_RANGES)
+			जाओ err_no_match;
+	पूर्ण
 
-	/* sanity test for sys_addr */
-	if (unlikely(!base_limit_match(pvt, sys_addr, node_id))) {
+	/* sanity test क्रम sys_addr */
+	अगर (unlikely(!base_limit_match(pvt, sys_addr, node_id))) अणु
 		amd64_warn("%s: sys_addr 0x%llx falls outside base/limit address"
 			   "range for node %d with node interleaving enabled.\n",
 			   __func__, sys_addr, node_id);
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
 found:
-	return edac_mc_find((int)node_id);
+	वापस edac_mc_find((पूर्णांक)node_id);
 
 err_no_match:
 	edac_dbg(2, "sys_addr 0x%lx doesn't match any node\n",
-		 (unsigned long)sys_addr);
+		 (अचिन्हित दीर्घ)sys_addr);
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
 /*
  * compute the CS base address of the @csrow on the DRAM controller @dct.
  * For details see F2x[5C:40] in the processor's BKDG
  */
-static void get_cs_base_and_mask(struct amd64_pvt *pvt, int csrow, u8 dct,
+अटल व्योम get_cs_base_and_mask(काष्ठा amd64_pvt *pvt, पूर्णांक csrow, u8 dct,
 				 u64 *base, u64 *mask)
-{
+अणु
 	u64 csbase, csmask, base_bits, mask_bits;
-	u8 addr_shift;
+	u8 addr_shअगरt;
 
-	if (pvt->fam == 0xf && pvt->ext_model < K8_REV_F) {
+	अगर (pvt->fam == 0xf && pvt->ext_model < K8_REV_F) अणु
 		csbase		= pvt->csels[dct].csbases[csrow];
 		csmask		= pvt->csels[dct].csmasks[csrow];
 		base_bits	= GENMASK_ULL(31, 21) | GENMASK_ULL(15, 9);
 		mask_bits	= GENMASK_ULL(29, 21) | GENMASK_ULL(15, 9);
-		addr_shift	= 4;
+		addr_shअगरt	= 4;
 
 	/*
-	 * F16h and F15h, models 30h and later need two addr_shift values:
-	 * 8 for high and 6 for low (cf. F16h BKDG).
+	 * F16h and F15h, models 30h and later need two addr_shअगरt values:
+	 * 8 क्रम high and 6 क्रम low (cf. F16h BKDG).
 	 */
-	} else if (pvt->fam == 0x16 ||
-		  (pvt->fam == 0x15 && pvt->model >= 0x30)) {
+	पूर्ण अन्यथा अगर (pvt->fam == 0x16 ||
+		  (pvt->fam == 0x15 && pvt->model >= 0x30)) अणु
 		csbase          = pvt->csels[dct].csbases[csrow];
 		csmask          = pvt->csels[dct].csmasks[csrow >> 1];
 
@@ -408,90 +409,90 @@ static void get_cs_base_and_mask(struct amd64_pvt *pvt, int csrow, u8 dct,
 		*base |= (csbase & GENMASK_ULL(30, 19)) << 8;
 
 		*mask = ~0ULL;
-		/* poke holes for the csmask */
+		/* poke holes क्रम the csmask */
 		*mask &= ~((GENMASK_ULL(15, 5)  << 6) |
 			   (GENMASK_ULL(30, 19) << 8));
 
 		*mask |= (csmask & GENMASK_ULL(15, 5))  << 6;
 		*mask |= (csmask & GENMASK_ULL(30, 19)) << 8;
 
-		return;
-	} else {
+		वापस;
+	पूर्ण अन्यथा अणु
 		csbase		= pvt->csels[dct].csbases[csrow];
 		csmask		= pvt->csels[dct].csmasks[csrow >> 1];
-		addr_shift	= 8;
+		addr_shअगरt	= 8;
 
-		if (pvt->fam == 0x15)
+		अगर (pvt->fam == 0x15)
 			base_bits = mask_bits =
 				GENMASK_ULL(30,19) | GENMASK_ULL(13,5);
-		else
+		अन्यथा
 			base_bits = mask_bits =
 				GENMASK_ULL(28,19) | GENMASK_ULL(13,5);
-	}
+	पूर्ण
 
-	*base  = (csbase & base_bits) << addr_shift;
+	*base  = (csbase & base_bits) << addr_shअगरt;
 
 	*mask  = ~0ULL;
-	/* poke holes for the csmask */
-	*mask &= ~(mask_bits << addr_shift);
+	/* poke holes क्रम the csmask */
+	*mask &= ~(mask_bits << addr_shअगरt);
 	/* OR them in */
-	*mask |= (csmask & mask_bits) << addr_shift;
-}
+	*mask |= (csmask & mask_bits) << addr_shअगरt;
+पूर्ण
 
-#define for_each_chip_select(i, dct, pvt) \
-	for (i = 0; i < pvt->csels[dct].b_cnt; i++)
+#घोषणा क्रम_each_chip_select(i, dct, pvt) \
+	क्रम (i = 0; i < pvt->csels[dct].b_cnt; i++)
 
-#define chip_select_base(i, dct, pvt) \
+#घोषणा chip_select_base(i, dct, pvt) \
 	pvt->csels[dct].csbases[i]
 
-#define for_each_chip_select_mask(i, dct, pvt) \
-	for (i = 0; i < pvt->csels[dct].m_cnt; i++)
+#घोषणा क्रम_each_chip_select_mask(i, dct, pvt) \
+	क्रम (i = 0; i < pvt->csels[dct].m_cnt; i++)
 
-#define for_each_umc(i) \
-	for (i = 0; i < fam_type->max_mcs; i++)
+#घोषणा क्रम_each_umc(i) \
+	क्रम (i = 0; i < fam_type->max_mcs; i++)
 
 /*
  * @input_addr is an InputAddr associated with the node given by mci. Return the
  * csrow that input_addr maps to, or -1 on failure (no csrow claims input_addr).
  */
-static int input_addr_to_csrow(struct mem_ctl_info *mci, u64 input_addr)
-{
-	struct amd64_pvt *pvt;
-	int csrow;
+अटल पूर्णांक input_addr_to_csrow(काष्ठा mem_ctl_info *mci, u64 input_addr)
+अणु
+	काष्ठा amd64_pvt *pvt;
+	पूर्णांक csrow;
 	u64 base, mask;
 
 	pvt = mci->pvt_info;
 
-	for_each_chip_select(csrow, 0, pvt) {
-		if (!csrow_enabled(csrow, 0, pvt))
-			continue;
+	क्रम_each_chip_select(csrow, 0, pvt) अणु
+		अगर (!csrow_enabled(csrow, 0, pvt))
+			जारी;
 
 		get_cs_base_and_mask(pvt, csrow, 0, &base, &mask);
 
 		mask = ~mask;
 
-		if ((input_addr & mask) == (base & mask)) {
+		अगर ((input_addr & mask) == (base & mask)) अणु
 			edac_dbg(2, "InputAddr 0x%lx matches csrow %d (node %d)\n",
-				 (unsigned long)input_addr, csrow,
+				 (अचिन्हित दीर्घ)input_addr, csrow,
 				 pvt->mc_node_id);
 
-			return csrow;
-		}
-	}
+			वापस csrow;
+		पूर्ण
+	पूर्ण
 	edac_dbg(2, "no matching csrow for InputAddr 0x%lx (MC node %d)\n",
-		 (unsigned long)input_addr, pvt->mc_node_id);
+		 (अचिन्हित दीर्घ)input_addr, pvt->mc_node_id);
 
-	return -1;
-}
+	वापस -1;
+पूर्ण
 
 /*
  * Obtain info from the DRAM Hole Address Register (section 3.4.8, pub #26094)
- * for the node represented by mci. Info is passed back in *hole_base,
- * *hole_offset, and *hole_size.  Function returns 0 if info is valid or 1 if
- * info is invalid. Info may be invalid for either of the following reasons:
+ * क्रम the node represented by mci. Info is passed back in *hole_base,
+ * *hole_offset, and *hole_size.  Function वापसs 0 अगर info is valid or 1 अगर
+ * info is invalid. Info may be invalid क्रम either of the following reasons:
  *
- * - The revision of the node is not E or greater.  In this case, the DRAM Hole
- *   Address Register does not exist.
+ * - The revision of the node is not E or greater.  In this हाल, the DRAM Hole
+ *   Address Register करोes not exist.
  *
  * - The DramHoleValid bit is cleared in the DRAM Hole Address Register,
  *   indicating that its contents are not valid.
@@ -500,29 +501,29 @@ static int input_addr_to_csrow(struct mem_ctl_info *mci, u64 input_addr)
  * complete 32-bit values despite the fact that the bitfields in the DHAR
  * only represent bits 31-24 of the base and offset values.
  */
-static int get_dram_hole_info(struct mem_ctl_info *mci, u64 *hole_base,
+अटल पूर्णांक get_dram_hole_info(काष्ठा mem_ctl_info *mci, u64 *hole_base,
 			      u64 *hole_offset, u64 *hole_size)
-{
-	struct amd64_pvt *pvt = mci->pvt_info;
+अणु
+	काष्ठा amd64_pvt *pvt = mci->pvt_info;
 
 	/* only revE and later have the DRAM Hole Address Register */
-	if (pvt->fam == 0xf && pvt->ext_model < K8_REV_E) {
+	अगर (pvt->fam == 0xf && pvt->ext_model < K8_REV_E) अणु
 		edac_dbg(1, "  revision %d for node %d does not support DHAR\n",
 			 pvt->ext_model, pvt->mc_node_id);
-		return 1;
-	}
+		वापस 1;
+	पूर्ण
 
-	/* valid for Fam10h and above */
-	if (pvt->fam >= 0x10 && !dhar_mem_hoist_valid(pvt)) {
+	/* valid क्रम Fam10h and above */
+	अगर (pvt->fam >= 0x10 && !dhar_mem_hoist_valid(pvt)) अणु
 		edac_dbg(1, "  Dram Memory Hoisting is DISABLED on this system\n");
-		return 1;
-	}
+		वापस 1;
+	पूर्ण
 
-	if (!dhar_valid(pvt)) {
+	अगर (!dhar_valid(pvt)) अणु
 		edac_dbg(1, "  Dram Memory Hoisting is DISABLED on this node %d\n",
 			 pvt->mc_node_id);
-		return 1;
-	}
+		वापस 1;
+	पूर्ण
 
 	/* This node has Memory Hoisting */
 
@@ -549,32 +550,32 @@ static int get_dram_hole_info(struct mem_ctl_info *mci, u64 *hole_base,
 					: k8_dhar_offset(pvt);
 
 	edac_dbg(1, "  DHAR info for node %d base 0x%lx offset 0x%lx size 0x%lx\n",
-		 pvt->mc_node_id, (unsigned long)*hole_base,
-		 (unsigned long)*hole_offset, (unsigned long)*hole_size);
+		 pvt->mc_node_id, (अचिन्हित दीर्घ)*hole_base,
+		 (अचिन्हित दीर्घ)*hole_offset, (अचिन्हित दीर्घ)*hole_size);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_EDAC_DEBUG
-#define EDAC_DCT_ATTR_SHOW(reg)						\
-static ssize_t reg##_show(struct device *dev,				\
-			 struct device_attribute *mattr, char *data)	\
-{									\
-	struct mem_ctl_info *mci = to_mci(dev);				\
-	struct amd64_pvt *pvt = mci->pvt_info;				\
+#अगर_घोषित CONFIG_EDAC_DEBUG
+#घोषणा EDAC_DCT_ATTR_SHOW(reg)						\
+अटल sमाप_प्रकार reg##_show(काष्ठा device *dev,				\
+			 काष्ठा device_attribute *mattr, अक्षर *data)	\
+अणु									\
+	काष्ठा mem_ctl_info *mci = to_mci(dev);				\
+	काष्ठा amd64_pvt *pvt = mci->pvt_info;				\
 									\
-	return sprintf(data, "0x%016llx\n", (u64)pvt->reg);		\
-}
+	वापस प्र_लिखो(data, "0x%016llx\n", (u64)pvt->reg);		\
+पूर्ण
 
 EDAC_DCT_ATTR_SHOW(dhar);
 EDAC_DCT_ATTR_SHOW(dbam0);
 EDAC_DCT_ATTR_SHOW(top_mem);
 EDAC_DCT_ATTR_SHOW(top_mem2);
 
-static ssize_t hole_show(struct device *dev, struct device_attribute *mattr,
-			 char *data)
-{
-	struct mem_ctl_info *mci = to_mci(dev);
+अटल sमाप_प्रकार hole_show(काष्ठा device *dev, काष्ठा device_attribute *mattr,
+			 अक्षर *data)
+अणु
+	काष्ठा mem_ctl_info *mci = to_mci(dev);
 
 	u64 hole_base = 0;
 	u64 hole_offset = 0;
@@ -582,39 +583,39 @@ static ssize_t hole_show(struct device *dev, struct device_attribute *mattr,
 
 	get_dram_hole_info(mci, &hole_base, &hole_offset, &hole_size);
 
-	return sprintf(data, "%llx %llx %llx\n", hole_base, hole_offset,
+	वापस प्र_लिखो(data, "%llx %llx %llx\n", hole_base, hole_offset,
 						 hole_size);
-}
+पूर्ण
 
 /*
- * update NUM_DBG_ATTRS in case you add new members
+ * update NUM_DBG_ATTRS in हाल you add new members
  */
-static DEVICE_ATTR(dhar, S_IRUGO, dhar_show, NULL);
-static DEVICE_ATTR(dbam, S_IRUGO, dbam0_show, NULL);
-static DEVICE_ATTR(topmem, S_IRUGO, top_mem_show, NULL);
-static DEVICE_ATTR(topmem2, S_IRUGO, top_mem2_show, NULL);
-static DEVICE_ATTR(dram_hole, S_IRUGO, hole_show, NULL);
+अटल DEVICE_ATTR(dhar, S_IRUGO, dhar_show, शून्य);
+अटल DEVICE_ATTR(dbam, S_IRUGO, dbam0_show, शून्य);
+अटल DEVICE_ATTR(topmem, S_IRUGO, top_mem_show, शून्य);
+अटल DEVICE_ATTR(topmem2, S_IRUGO, top_mem2_show, शून्य);
+अटल DEVICE_ATTR(dram_hole, S_IRUGO, hole_show, शून्य);
 
-static struct attribute *dbg_attrs[] = {
+अटल काष्ठा attribute *dbg_attrs[] = अणु
 	&dev_attr_dhar.attr,
 	&dev_attr_dbam.attr,
 	&dev_attr_topmem.attr,
 	&dev_attr_topmem2.attr,
 	&dev_attr_dram_hole.attr,
-	NULL
-};
+	शून्य
+पूर्ण;
 
-static const struct attribute_group dbg_group = {
+अटल स्थिर काष्ठा attribute_group dbg_group = अणु
 	.attrs = dbg_attrs,
-};
+पूर्ण;
 
-static ssize_t inject_section_show(struct device *dev,
-				   struct device_attribute *mattr, char *buf)
-{
-	struct mem_ctl_info *mci = to_mci(dev);
-	struct amd64_pvt *pvt = mci->pvt_info;
-	return sprintf(buf, "0x%x\n", pvt->injection.section);
-}
+अटल sमाप_प्रकार inject_section_show(काष्ठा device *dev,
+				   काष्ठा device_attribute *mattr, अक्षर *buf)
+अणु
+	काष्ठा mem_ctl_info *mci = to_mci(dev);
+	काष्ठा amd64_pvt *pvt = mci->pvt_info;
+	वापस प्र_लिखो(buf, "0x%x\n", pvt->injection.section);
+पूर्ण
 
 /*
  * store error injection section value which refers to one of 4 16-byte sections
@@ -622,35 +623,35 @@ static ssize_t inject_section_show(struct device *dev,
  *
  * range: 0..3
  */
-static ssize_t inject_section_store(struct device *dev,
-				    struct device_attribute *mattr,
-				    const char *data, size_t count)
-{
-	struct mem_ctl_info *mci = to_mci(dev);
-	struct amd64_pvt *pvt = mci->pvt_info;
-	unsigned long value;
-	int ret;
+अटल sमाप_प्रकार inject_section_store(काष्ठा device *dev,
+				    काष्ठा device_attribute *mattr,
+				    स्थिर अक्षर *data, माप_प्रकार count)
+अणु
+	काष्ठा mem_ctl_info *mci = to_mci(dev);
+	काष्ठा amd64_pvt *pvt = mci->pvt_info;
+	अचिन्हित दीर्घ value;
+	पूर्णांक ret;
 
-	ret = kstrtoul(data, 10, &value);
-	if (ret < 0)
-		return ret;
+	ret = kम_से_अदीर्घ(data, 10, &value);
+	अगर (ret < 0)
+		वापस ret;
 
-	if (value > 3) {
+	अगर (value > 3) अणु
 		amd64_warn("%s: invalid section 0x%lx\n", __func__, value);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	pvt->injection.section = (u32) value;
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static ssize_t inject_word_show(struct device *dev,
-				struct device_attribute *mattr, char *buf)
-{
-	struct mem_ctl_info *mci = to_mci(dev);
-	struct amd64_pvt *pvt = mci->pvt_info;
-	return sprintf(buf, "0x%x\n", pvt->injection.word);
-}
+अटल sमाप_प्रकार inject_word_show(काष्ठा device *dev,
+				काष्ठा device_attribute *mattr, अक्षर *buf)
+अणु
+	काष्ठा mem_ctl_info *mci = to_mci(dev);
+	काष्ठा amd64_pvt *pvt = mci->pvt_info;
+	वापस प्र_लिखो(buf, "0x%x\n", pvt->injection.word);
+पूर्ण
 
 /*
  * store error injection word value which refers to one of 9 16-bit word of the
@@ -658,119 +659,119 @@ static ssize_t inject_word_show(struct device *dev,
  *
  * range: 0..8
  */
-static ssize_t inject_word_store(struct device *dev,
-				 struct device_attribute *mattr,
-				 const char *data, size_t count)
-{
-	struct mem_ctl_info *mci = to_mci(dev);
-	struct amd64_pvt *pvt = mci->pvt_info;
-	unsigned long value;
-	int ret;
+अटल sमाप_प्रकार inject_word_store(काष्ठा device *dev,
+				 काष्ठा device_attribute *mattr,
+				 स्थिर अक्षर *data, माप_प्रकार count)
+अणु
+	काष्ठा mem_ctl_info *mci = to_mci(dev);
+	काष्ठा amd64_pvt *pvt = mci->pvt_info;
+	अचिन्हित दीर्घ value;
+	पूर्णांक ret;
 
-	ret = kstrtoul(data, 10, &value);
-	if (ret < 0)
-		return ret;
+	ret = kम_से_अदीर्घ(data, 10, &value);
+	अगर (ret < 0)
+		वापस ret;
 
-	if (value > 8) {
+	अगर (value > 8) अणु
 		amd64_warn("%s: invalid word 0x%lx\n", __func__, value);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	pvt->injection.word = (u32) value;
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static ssize_t inject_ecc_vector_show(struct device *dev,
-				      struct device_attribute *mattr,
-				      char *buf)
-{
-	struct mem_ctl_info *mci = to_mci(dev);
-	struct amd64_pvt *pvt = mci->pvt_info;
-	return sprintf(buf, "0x%x\n", pvt->injection.bit_map);
-}
+अटल sमाप_प्रकार inject_ecc_vector_show(काष्ठा device *dev,
+				      काष्ठा device_attribute *mattr,
+				      अक्षर *buf)
+अणु
+	काष्ठा mem_ctl_info *mci = to_mci(dev);
+	काष्ठा amd64_pvt *pvt = mci->pvt_info;
+	वापस प्र_लिखो(buf, "0x%x\n", pvt->injection.bit_map);
+पूर्ण
 
 /*
  * store 16 bit error injection vector which enables injecting errors to the
  * corresponding bit within the error injection word above. When used during a
- * DRAM ECC read, it holds the contents of the of the DRAM ECC bits.
+ * DRAM ECC पढ़ो, it holds the contents of the of the DRAM ECC bits.
  */
-static ssize_t inject_ecc_vector_store(struct device *dev,
-				       struct device_attribute *mattr,
-				       const char *data, size_t count)
-{
-	struct mem_ctl_info *mci = to_mci(dev);
-	struct amd64_pvt *pvt = mci->pvt_info;
-	unsigned long value;
-	int ret;
+अटल sमाप_प्रकार inject_ecc_vector_store(काष्ठा device *dev,
+				       काष्ठा device_attribute *mattr,
+				       स्थिर अक्षर *data, माप_प्रकार count)
+अणु
+	काष्ठा mem_ctl_info *mci = to_mci(dev);
+	काष्ठा amd64_pvt *pvt = mci->pvt_info;
+	अचिन्हित दीर्घ value;
+	पूर्णांक ret;
 
-	ret = kstrtoul(data, 16, &value);
-	if (ret < 0)
-		return ret;
+	ret = kम_से_अदीर्घ(data, 16, &value);
+	अगर (ret < 0)
+		वापस ret;
 
-	if (value & 0xFFFF0000) {
+	अगर (value & 0xFFFF0000) अणु
 		amd64_warn("%s: invalid EccVector: 0x%lx\n", __func__, value);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	pvt->injection.bit_map = (u32) value;
-	return count;
-}
+	वापस count;
+पूर्ण
 
 /*
- * Do a DRAM ECC read. Assemble staged values in the pvt area, format into
- * fields needed by the injection registers and read the NB Array Data Port.
+ * Do a DRAM ECC पढ़ो. Assemble staged values in the pvt area, क्रमmat पूर्णांकo
+ * fields needed by the injection रेजिस्टरs and पढ़ो the NB Array Data Port.
  */
-static ssize_t inject_read_store(struct device *dev,
-				 struct device_attribute *mattr,
-				 const char *data, size_t count)
-{
-	struct mem_ctl_info *mci = to_mci(dev);
-	struct amd64_pvt *pvt = mci->pvt_info;
-	unsigned long value;
+अटल sमाप_प्रकार inject_पढ़ो_store(काष्ठा device *dev,
+				 काष्ठा device_attribute *mattr,
+				 स्थिर अक्षर *data, माप_प्रकार count)
+अणु
+	काष्ठा mem_ctl_info *mci = to_mci(dev);
+	काष्ठा amd64_pvt *pvt = mci->pvt_info;
+	अचिन्हित दीर्घ value;
 	u32 section, word_bits;
-	int ret;
+	पूर्णांक ret;
 
-	ret = kstrtoul(data, 10, &value);
-	if (ret < 0)
-		return ret;
+	ret = kम_से_अदीर्घ(data, 10, &value);
+	अगर (ret < 0)
+		वापस ret;
 
 	/* Form value to choose 16-byte section of cacheline */
 	section = F10_NB_ARRAY_DRAM | SET_NB_ARRAY_ADDR(pvt->injection.section);
 
-	amd64_write_pci_cfg(pvt->F3, F10_NB_ARRAY_ADDR, section);
+	amd64_ग_लिखो_pci_cfg(pvt->F3, F10_NB_ARRAY_ADDR, section);
 
 	word_bits = SET_NB_DRAM_INJECTION_READ(pvt->injection);
 
-	/* Issue 'word' and 'bit' along with the READ request */
-	amd64_write_pci_cfg(pvt->F3, F10_NB_ARRAY_DATA, word_bits);
+	/* Issue 'word' and 'bit' aदीर्घ with the READ request */
+	amd64_ग_लिखो_pci_cfg(pvt->F3, F10_NB_ARRAY_DATA, word_bits);
 
 	edac_dbg(0, "section=0x%x word_bits=0x%x\n", section, word_bits);
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
 /*
- * Do a DRAM ECC write. Assemble staged values in the pvt area and format into
- * fields needed by the injection registers.
+ * Do a DRAM ECC ग_लिखो. Assemble staged values in the pvt area and क्रमmat पूर्णांकo
+ * fields needed by the injection रेजिस्टरs.
  */
-static ssize_t inject_write_store(struct device *dev,
-				  struct device_attribute *mattr,
-				  const char *data, size_t count)
-{
-	struct mem_ctl_info *mci = to_mci(dev);
-	struct amd64_pvt *pvt = mci->pvt_info;
-	u32 section, word_bits, tmp;
-	unsigned long value;
-	int ret;
+अटल sमाप_प्रकार inject_ग_लिखो_store(काष्ठा device *dev,
+				  काष्ठा device_attribute *mattr,
+				  स्थिर अक्षर *data, माप_प्रकार count)
+अणु
+	काष्ठा mem_ctl_info *mci = to_mci(dev);
+	काष्ठा amd64_pvt *pvt = mci->pvt_info;
+	u32 section, word_bits, पंचांगp;
+	अचिन्हित दीर्घ value;
+	पूर्णांक ret;
 
-	ret = kstrtoul(data, 10, &value);
-	if (ret < 0)
-		return ret;
+	ret = kम_से_अदीर्घ(data, 10, &value);
+	अगर (ret < 0)
+		वापस ret;
 
 	/* Form value to choose 16-byte section of cacheline */
 	section = F10_NB_ARRAY_DRAM | SET_NB_ARRAY_ADDR(pvt->injection.section);
 
-	amd64_write_pci_cfg(pvt->F3, F10_NB_ARRAY_ADDR, section);
+	amd64_ग_लिखो_pci_cfg(pvt->F3, F10_NB_ARRAY_ADDR, section);
 
 	word_bits = SET_NB_DRAM_INJECTION_WRITE(pvt->injection);
 
@@ -778,157 +779,157 @@ static ssize_t inject_write_store(struct device *dev,
 			"/sys/bus/machinecheck/devices/machinecheck<CPUNUM>/check_interval\n"
 			"so that you can get the error report faster.\n");
 
-	on_each_cpu(disable_caches, NULL, 1);
+	on_each_cpu(disable_caches, शून्य, 1);
 
-	/* Issue 'word' and 'bit' along with the READ request */
-	amd64_write_pci_cfg(pvt->F3, F10_NB_ARRAY_DATA, word_bits);
+	/* Issue 'word' and 'bit' aदीर्घ with the READ request */
+	amd64_ग_लिखो_pci_cfg(pvt->F3, F10_NB_ARRAY_DATA, word_bits);
 
  retry:
-	/* wait until injection happens */
-	amd64_read_pci_cfg(pvt->F3, F10_NB_ARRAY_DATA, &tmp);
-	if (tmp & F10_NB_ARR_ECC_WR_REQ) {
+	/* रुको until injection happens */
+	amd64_पढ़ो_pci_cfg(pvt->F3, F10_NB_ARRAY_DATA, &पंचांगp);
+	अगर (पंचांगp & F10_NB_ARR_ECC_WR_REQ) अणु
 		cpu_relax();
-		goto retry;
-	}
+		जाओ retry;
+	पूर्ण
 
-	on_each_cpu(enable_caches, NULL, 1);
+	on_each_cpu(enable_caches, शून्य, 1);
 
 	edac_dbg(0, "section=0x%x word_bits=0x%x\n", section, word_bits);
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
 /*
- * update NUM_INJ_ATTRS in case you add new members
+ * update NUM_INJ_ATTRS in हाल you add new members
  */
 
-static DEVICE_ATTR(inject_section, S_IRUGO | S_IWUSR,
+अटल DEVICE_ATTR(inject_section, S_IRUGO | S_IWUSR,
 		   inject_section_show, inject_section_store);
-static DEVICE_ATTR(inject_word, S_IRUGO | S_IWUSR,
+अटल DEVICE_ATTR(inject_word, S_IRUGO | S_IWUSR,
 		   inject_word_show, inject_word_store);
-static DEVICE_ATTR(inject_ecc_vector, S_IRUGO | S_IWUSR,
+अटल DEVICE_ATTR(inject_ecc_vector, S_IRUGO | S_IWUSR,
 		   inject_ecc_vector_show, inject_ecc_vector_store);
-static DEVICE_ATTR(inject_write, S_IWUSR,
-		   NULL, inject_write_store);
-static DEVICE_ATTR(inject_read,  S_IWUSR,
-		   NULL, inject_read_store);
+अटल DEVICE_ATTR(inject_ग_लिखो, S_IWUSR,
+		   शून्य, inject_ग_लिखो_store);
+अटल DEVICE_ATTR(inject_पढ़ो,  S_IWUSR,
+		   शून्य, inject_पढ़ो_store);
 
-static struct attribute *inj_attrs[] = {
+अटल काष्ठा attribute *inj_attrs[] = अणु
 	&dev_attr_inject_section.attr,
 	&dev_attr_inject_word.attr,
 	&dev_attr_inject_ecc_vector.attr,
-	&dev_attr_inject_write.attr,
-	&dev_attr_inject_read.attr,
-	NULL
-};
+	&dev_attr_inject_ग_लिखो.attr,
+	&dev_attr_inject_पढ़ो.attr,
+	शून्य
+पूर्ण;
 
-static umode_t inj_is_visible(struct kobject *kobj, struct attribute *attr, int idx)
-{
-	struct device *dev = kobj_to_dev(kobj);
-	struct mem_ctl_info *mci = container_of(dev, struct mem_ctl_info, dev);
-	struct amd64_pvt *pvt = mci->pvt_info;
+अटल umode_t inj_is_visible(काष्ठा kobject *kobj, काष्ठा attribute *attr, पूर्णांक idx)
+अणु
+	काष्ठा device *dev = kobj_to_dev(kobj);
+	काष्ठा mem_ctl_info *mci = container_of(dev, काष्ठा mem_ctl_info, dev);
+	काष्ठा amd64_pvt *pvt = mci->pvt_info;
 
 	/* Families which have that injection hw */
-	if (pvt->fam >= 0x10 && pvt->fam <= 0x16)
-		return attr->mode;
+	अगर (pvt->fam >= 0x10 && pvt->fam <= 0x16)
+		वापस attr->mode;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct attribute_group inj_group = {
+अटल स्थिर काष्ठा attribute_group inj_group = अणु
 	.attrs = inj_attrs,
 	.is_visible = inj_is_visible,
-};
-#endif /* CONFIG_EDAC_DEBUG */
+पूर्ण;
+#पूर्ण_अगर /* CONFIG_EDAC_DEBUG */
 
 /*
  * Return the DramAddr that the SysAddr given by @sys_addr maps to.  It is
  * assumed that sys_addr maps to the node given by mci.
  *
  * The first part of section 3.4.4 (p. 70) shows how the DRAM Base (section
- * 3.4.4.1) and DRAM Limit (section 3.4.4.2) registers are used to translate a
+ * 3.4.4.1) and DRAM Limit (section 3.4.4.2) रेजिस्टरs are used to translate a
  * SysAddr to a DramAddr. If the DRAM Hole Address Register (DHAR) is enabled,
  * then it is also involved in translating a SysAddr to a DramAddr. Sections
- * 3.4.8 and 3.5.8.2 describe the DHAR and how it is used for memory hoisting.
- * These parts of the documentation are unclear. I interpret them as follows:
+ * 3.4.8 and 3.5.8.2 describe the DHAR and how it is used क्रम memory hoisting.
+ * These parts of the करोcumentation are unclear. I पूर्णांकerpret them as follows:
  *
  * When node n receives a SysAddr, it processes the SysAddr as follows:
  *
  * 1. It extracts the DRAMBase and DRAMLimit values from the DRAM Base and DRAM
- *    Limit registers for node n. If the SysAddr is not within the range
- *    specified by the base and limit values, then node n ignores the Sysaddr
- *    (since it does not map to node n). Otherwise continue to step 2 below.
+ *    Limit रेजिस्टरs क्रम node n. If the SysAddr is not within the range
+ *    specअगरied by the base and limit values, then node n ignores the Sysaddr
+ *    (since it करोes not map to node n). Otherwise जारी to step 2 below.
  *
- * 2. If the DramHoleValid bit of the DHAR for node n is clear, the DHAR is
- *    disabled so skip to step 3 below. Otherwise see if the SysAddr is within
+ * 2. If the DramHoleValid bit of the DHAR क्रम node n is clear, the DHAR is
+ *    disabled so skip to step 3 below. Otherwise see अगर the SysAddr is within
  *    the range of relocated addresses (starting at 0x100000000) from the DRAM
  *    hole. If not, skip to step 3 below. Else get the value of the
  *    DramHoleOffset field from the DHAR. To obtain the DramAddr, subtract the
  *    offset defined by this value from the SysAddr.
  *
- * 3. Obtain the base address for node n from the DRAMBase field of the DRAM
- *    Base register for node n. To obtain the DramAddr, subtract the base
+ * 3. Obtain the base address क्रम node n from the DRAMBase field of the DRAM
+ *    Base रेजिस्टर क्रम node n. To obtain the DramAddr, subtract the base
  *    address from the SysAddr, as shown near the start of section 3.4.4 (p.70).
  */
-static u64 sys_addr_to_dram_addr(struct mem_ctl_info *mci, u64 sys_addr)
-{
-	struct amd64_pvt *pvt = mci->pvt_info;
+अटल u64 sys_addr_to_dram_addr(काष्ठा mem_ctl_info *mci, u64 sys_addr)
+अणु
+	काष्ठा amd64_pvt *pvt = mci->pvt_info;
 	u64 dram_base, hole_base, hole_offset, hole_size, dram_addr;
-	int ret;
+	पूर्णांक ret;
 
 	dram_base = get_dram_base(pvt, pvt->mc_node_id);
 
 	ret = get_dram_hole_info(mci, &hole_base, &hole_offset, &hole_size);
-	if (!ret) {
-		if ((sys_addr >= (1ULL << 32)) &&
-		    (sys_addr < ((1ULL << 32) + hole_size))) {
+	अगर (!ret) अणु
+		अगर ((sys_addr >= (1ULL << 32)) &&
+		    (sys_addr < ((1ULL << 32) + hole_size))) अणु
 			/* use DHAR to translate SysAddr to DramAddr */
 			dram_addr = sys_addr - hole_offset;
 
 			edac_dbg(2, "using DHAR to translate SysAddr 0x%lx to DramAddr 0x%lx\n",
-				 (unsigned long)sys_addr,
-				 (unsigned long)dram_addr);
+				 (अचिन्हित दीर्घ)sys_addr,
+				 (अचिन्हित दीर्घ)dram_addr);
 
-			return dram_addr;
-		}
-	}
+			वापस dram_addr;
+		पूर्ण
+	पूर्ण
 
 	/*
 	 * Translate the SysAddr to a DramAddr as shown near the start of
 	 * section 3.4.4 (p. 70).  Although sys_addr is a 64-bit value, the k8
-	 * only deals with 40-bit values.  Therefore we discard bits 63-40 of
+	 * only deals with 40-bit values.  Thereक्रमe we discard bits 63-40 of
 	 * sys_addr below.  If bit 39 of sys_addr is 1 then the bits we
 	 * discard are all 1s.  Otherwise the bits we discard are all 0s.  See
-	 * section 3.4.2 of AMD publication 24592: AMD x86-64 Architecture
+	 * section 3.4.2 of AMD खुलाation 24592: AMD x86-64 Architecture
 	 * Programmer's Manual Volume 1 Application Programming.
 	 */
 	dram_addr = (sys_addr & GENMASK_ULL(39, 0)) - dram_base;
 
 	edac_dbg(2, "using DRAM Base register to translate SysAddr 0x%lx to DramAddr 0x%lx\n",
-		 (unsigned long)sys_addr, (unsigned long)dram_addr);
-	return dram_addr;
-}
+		 (अचिन्हित दीर्घ)sys_addr, (अचिन्हित दीर्घ)dram_addr);
+	वापस dram_addr;
+पूर्ण
 
 /*
- * @intlv_en is the value of the IntlvEn field from a DRAM Base register
+ * @पूर्णांकlv_en is the value of the IntlvEn field from a DRAM Base रेजिस्टर
  * (section 3.4.4.1).  Return the number of bits from a SysAddr that are used
- * for node interleaving.
+ * क्रम node पूर्णांकerleaving.
  */
-static int num_node_interleave_bits(unsigned intlv_en)
-{
-	static const int intlv_shift_table[] = { 0, 1, 0, 2, 0, 0, 0, 3 };
-	int n;
+अटल पूर्णांक num_node_पूर्णांकerleave_bits(अचिन्हित पूर्णांकlv_en)
+अणु
+	अटल स्थिर पूर्णांक पूर्णांकlv_shअगरt_table[] = अणु 0, 1, 0, 2, 0, 0, 0, 3 पूर्ण;
+	पूर्णांक n;
 
-	BUG_ON(intlv_en > 7);
-	n = intlv_shift_table[intlv_en];
-	return n;
-}
+	BUG_ON(पूर्णांकlv_en > 7);
+	n = पूर्णांकlv_shअगरt_table[पूर्णांकlv_en];
+	वापस n;
+पूर्ण
 
 /* Translate the DramAddr given by @dram_addr to an InputAddr. */
-static u64 dram_addr_to_input_addr(struct mem_ctl_info *mci, u64 dram_addr)
-{
-	struct amd64_pvt *pvt;
-	int intlv_shift;
+अटल u64 dram_addr_to_input_addr(काष्ठा mem_ctl_info *mci, u64 dram_addr)
+अणु
+	काष्ठा amd64_pvt *pvt;
+	पूर्णांक पूर्णांकlv_shअगरt;
 	u64 input_addr;
 
 	pvt = mci->pvt_info;
@@ -937,108 +938,108 @@ static u64 dram_addr_to_input_addr(struct mem_ctl_info *mci, u64 dram_addr)
 	 * See the start of section 3.4.4 (p. 70, BKDG #26094, K8, revA-E)
 	 * concerning translating a DramAddr to an InputAddr.
 	 */
-	intlv_shift = num_node_interleave_bits(dram_intlv_en(pvt, 0));
-	input_addr = ((dram_addr >> intlv_shift) & GENMASK_ULL(35, 12)) +
+	पूर्णांकlv_shअगरt = num_node_पूर्णांकerleave_bits(dram_पूर्णांकlv_en(pvt, 0));
+	input_addr = ((dram_addr >> पूर्णांकlv_shअगरt) & GENMASK_ULL(35, 12)) +
 		      (dram_addr & 0xfff);
 
 	edac_dbg(2, "  Intlv Shift=%d DramAddr=0x%lx maps to InputAddr=0x%lx\n",
-		 intlv_shift, (unsigned long)dram_addr,
-		 (unsigned long)input_addr);
+		 पूर्णांकlv_shअगरt, (अचिन्हित दीर्घ)dram_addr,
+		 (अचिन्हित दीर्घ)input_addr);
 
-	return input_addr;
-}
+	वापस input_addr;
+पूर्ण
 
 /*
  * Translate the SysAddr represented by @sys_addr to an InputAddr.  It is
  * assumed that @sys_addr maps to the node given by mci.
  */
-static u64 sys_addr_to_input_addr(struct mem_ctl_info *mci, u64 sys_addr)
-{
+अटल u64 sys_addr_to_input_addr(काष्ठा mem_ctl_info *mci, u64 sys_addr)
+अणु
 	u64 input_addr;
 
 	input_addr =
 	    dram_addr_to_input_addr(mci, sys_addr_to_dram_addr(mci, sys_addr));
 
 	edac_dbg(2, "SysAddr 0x%lx translates to InputAddr 0x%lx\n",
-		 (unsigned long)sys_addr, (unsigned long)input_addr);
+		 (अचिन्हित दीर्घ)sys_addr, (अचिन्हित दीर्घ)input_addr);
 
-	return input_addr;
-}
+	वापस input_addr;
+पूर्ण
 
 /* Map the Error address to a PAGE and PAGE OFFSET. */
-static inline void error_address_to_page_and_offset(u64 error_address,
-						    struct err_info *err)
-{
+अटल अंतरभूत व्योम error_address_to_page_and_offset(u64 error_address,
+						    काष्ठा err_info *err)
+अणु
 	err->page = (u32) (error_address >> PAGE_SHIFT);
 	err->offset = ((u32) error_address) & ~PAGE_MASK;
-}
+पूर्ण
 
 /*
  * @sys_addr is an error address (a SysAddr) extracted from the MCA NB Address
- * Low (section 3.6.4.5) and MCA NB Address High (section 3.6.4.6) registers
+ * Low (section 3.6.4.5) and MCA NB Address High (section 3.6.4.6) रेजिस्टरs
  * of a node that detected an ECC memory error.  mci represents the node that
- * the error address maps to (possibly different from the node that detected
+ * the error address maps to (possibly dअगरferent from the node that detected
  * the error).  Return the number of the csrow that sys_addr maps to, or -1 on
  * error.
  */
-static int sys_addr_to_csrow(struct mem_ctl_info *mci, u64 sys_addr)
-{
-	int csrow;
+अटल पूर्णांक sys_addr_to_csrow(काष्ठा mem_ctl_info *mci, u64 sys_addr)
+अणु
+	पूर्णांक csrow;
 
 	csrow = input_addr_to_csrow(mci, sys_addr_to_input_addr(mci, sys_addr));
 
-	if (csrow == -1)
+	अगर (csrow == -1)
 		amd64_mc_err(mci, "Failed to translate InputAddr to csrow for "
-				  "address 0x%lx\n", (unsigned long)sys_addr);
-	return csrow;
-}
+				  "address 0x%lx\n", (अचिन्हित दीर्घ)sys_addr);
+	वापस csrow;
+पूर्ण
 
-static int get_channel_from_ecc_syndrome(struct mem_ctl_info *, u16);
+अटल पूर्णांक get_channel_from_ecc_syndrome(काष्ठा mem_ctl_info *, u16);
 
 /*
- * Determine if the DIMMs have ECC enabled. ECC is enabled ONLY if all the DIMMs
+ * Determine अगर the DIMMs have ECC enabled. ECC is enabled ONLY अगर all the DIMMs
  * are ECC capable.
  */
-static unsigned long determine_edac_cap(struct amd64_pvt *pvt)
-{
-	unsigned long edac_cap = EDAC_FLAG_NONE;
+अटल अचिन्हित दीर्घ determine_edac_cap(काष्ठा amd64_pvt *pvt)
+अणु
+	अचिन्हित दीर्घ edac_cap = EDAC_FLAG_NONE;
 	u8 bit;
 
-	if (pvt->umc) {
+	अगर (pvt->umc) अणु
 		u8 i, umc_en_mask = 0, dimm_ecc_en_mask = 0;
 
-		for_each_umc(i) {
-			if (!(pvt->umc[i].sdp_ctrl & UMC_SDP_INIT))
-				continue;
+		क्रम_each_umc(i) अणु
+			अगर (!(pvt->umc[i].sdp_ctrl & UMC_SDP_INIT))
+				जारी;
 
 			umc_en_mask |= BIT(i);
 
 			/* UMC Configuration bit 12 (DimmEccEn) */
-			if (pvt->umc[i].umc_cfg & BIT(12))
+			अगर (pvt->umc[i].umc_cfg & BIT(12))
 				dimm_ecc_en_mask |= BIT(i);
-		}
+		पूर्ण
 
-		if (umc_en_mask == dimm_ecc_en_mask)
+		अगर (umc_en_mask == dimm_ecc_en_mask)
 			edac_cap = EDAC_FLAG_SECDED;
-	} else {
+	पूर्ण अन्यथा अणु
 		bit = (pvt->fam > 0xf || pvt->ext_model >= K8_REV_F)
 			? 19
 			: 17;
 
-		if (pvt->dclr0 & BIT(bit))
+		अगर (pvt->dclr0 & BIT(bit))
 			edac_cap = EDAC_FLAG_SECDED;
-	}
+	पूर्ण
 
-	return edac_cap;
-}
+	वापस edac_cap;
+पूर्ण
 
-static void debug_display_dimm_sizes(struct amd64_pvt *, u8);
+अटल व्योम debug_display_dimm_sizes(काष्ठा amd64_pvt *, u8);
 
-static void debug_dump_dramcfg_low(struct amd64_pvt *pvt, u32 dclr, int chan)
-{
+अटल व्योम debug_dump_dramcfg_low(काष्ठा amd64_pvt *pvt, u32 dclr, पूर्णांक chan)
+अणु
 	edac_dbg(1, "F2x%d90 (DRAM Cfg Low): 0x%08x\n", chan, dclr);
 
-	if (pvt->dram_type == MEM_LRDDR3) {
+	अगर (pvt->dram_type == MEM_LRDDR3) अणु
 		u32 dcsm = pvt->csels[chan].csmasks[0];
 		/*
 		 * It's assumed all LRDIMMs in a DCT are going to be of
@@ -1046,7 +1047,7 @@ static void debug_dump_dramcfg_low(struct amd64_pvt *pvt, u32 dclr, int chan)
 		 * value of '0' here to get dcsm value.
 		 */
 		edac_dbg(1, " LRDIMM %dx rank multiply\n", (dcsm & 0x3));
-	}
+	पूर्ण
 
 	edac_dbg(1, "All DIMMs support ECC:%s\n",
 		    (dclr & BIT(19)) ? "yes" : "no");
@@ -1055,7 +1056,7 @@ static void debug_dump_dramcfg_low(struct amd64_pvt *pvt, u32 dclr, int chan)
 	edac_dbg(1, "  PAR/ERR parity: %s\n",
 		 (dclr & BIT(8)) ?  "enabled" : "disabled");
 
-	if (pvt->fam == 0x10)
+	अगर (pvt->fam == 0x10)
 		edac_dbg(1, "  DCT 128bit mode width: %s\n",
 			 (dclr & BIT(11)) ?  "128b" : "64b");
 
@@ -1064,40 +1065,40 @@ static void debug_dump_dramcfg_low(struct amd64_pvt *pvt, u32 dclr, int chan)
 		 (dclr & BIT(13)) ?  "yes" : "no",
 		 (dclr & BIT(14)) ?  "yes" : "no",
 		 (dclr & BIT(15)) ?  "yes" : "no");
-}
+पूर्ण
 
-#define CS_EVEN_PRIMARY		BIT(0)
-#define CS_ODD_PRIMARY		BIT(1)
-#define CS_EVEN_SECONDARY	BIT(2)
-#define CS_ODD_SECONDARY	BIT(3)
+#घोषणा CS_EVEN_PRIMARY		BIT(0)
+#घोषणा CS_ODD_PRIMARY		BIT(1)
+#घोषणा CS_EVEN_SECONDARY	BIT(2)
+#घोषणा CS_ODD_SECONDARY	BIT(3)
 
-#define CS_EVEN			(CS_EVEN_PRIMARY | CS_EVEN_SECONDARY)
-#define CS_ODD			(CS_ODD_PRIMARY | CS_ODD_SECONDARY)
+#घोषणा CS_EVEN			(CS_EVEN_PRIMARY | CS_EVEN_SECONDARY)
+#घोषणा CS_ODD			(CS_ODD_PRIMARY | CS_ODD_SECONDARY)
 
-static int f17_get_cs_mode(int dimm, u8 ctrl, struct amd64_pvt *pvt)
-{
-	int cs_mode = 0;
+अटल पूर्णांक f17_get_cs_mode(पूर्णांक dimm, u8 ctrl, काष्ठा amd64_pvt *pvt)
+अणु
+	पूर्णांक cs_mode = 0;
 
-	if (csrow_enabled(2 * dimm, ctrl, pvt))
+	अगर (csrow_enabled(2 * dimm, ctrl, pvt))
 		cs_mode |= CS_EVEN_PRIMARY;
 
-	if (csrow_enabled(2 * dimm + 1, ctrl, pvt))
+	अगर (csrow_enabled(2 * dimm + 1, ctrl, pvt))
 		cs_mode |= CS_ODD_PRIMARY;
 
 	/* Asymmetric dual-rank DIMM support. */
-	if (csrow_sec_enabled(2 * dimm + 1, ctrl, pvt))
+	अगर (csrow_sec_enabled(2 * dimm + 1, ctrl, pvt))
 		cs_mode |= CS_ODD_SECONDARY;
 
-	return cs_mode;
-}
+	वापस cs_mode;
+पूर्ण
 
-static void debug_display_dimm_sizes_df(struct amd64_pvt *pvt, u8 ctrl)
-{
-	int dimm, size0, size1, cs0, cs1, cs_mode;
+अटल व्योम debug_display_dimm_sizes_df(काष्ठा amd64_pvt *pvt, u8 ctrl)
+अणु
+	पूर्णांक dimm, size0, size1, cs0, cs1, cs_mode;
 
-	edac_printk(KERN_DEBUG, EDAC_MC, "UMC%d chip selects:\n", ctrl);
+	edac_prपूर्णांकk(KERN_DEBUG, EDAC_MC, "UMC%d chip selects:\n", ctrl);
 
-	for (dimm = 0; dimm < 2; dimm++) {
+	क्रम (dimm = 0; dimm < 2; dimm++) अणु
 		cs0 = dimm * 2;
 		cs1 = dimm * 2 + 1;
 
@@ -1109,15 +1110,15 @@ static void debug_display_dimm_sizes_df(struct amd64_pvt *pvt, u8 ctrl)
 		amd64_info(EDAC_MC ": %d: %5dMB %d: %5dMB\n",
 				cs0,	size0,
 				cs1,	size1);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void __dump_misc_regs_df(struct amd64_pvt *pvt)
-{
-	struct amd64_umc *umc;
-	u32 i, tmp, umc_base;
+अटल व्योम __dump_misc_regs_df(काष्ठा amd64_pvt *pvt)
+अणु
+	काष्ठा amd64_umc *umc;
+	u32 i, पंचांगp, umc_base;
 
-	for_each_umc(i) {
+	क्रम_each_umc(i) अणु
 		umc_base = get_umc_base(i);
 		umc = &pvt->umc[i];
 
@@ -1126,11 +1127,11 @@ static void __dump_misc_regs_df(struct amd64_pvt *pvt)
 		edac_dbg(1, "UMC%d SDP ctrl: 0x%x\n", i, umc->sdp_ctrl);
 		edac_dbg(1, "UMC%d ECC ctrl: 0x%x\n", i, umc->ecc_ctrl);
 
-		amd_smn_read(pvt->mc_node_id, umc_base + UMCCH_ECC_BAD_SYMBOL, &tmp);
-		edac_dbg(1, "UMC%d ECC bad symbol: 0x%x\n", i, tmp);
+		amd_smn_पढ़ो(pvt->mc_node_id, umc_base + UMCCH_ECC_BAD_SYMBOL, &पंचांगp);
+		edac_dbg(1, "UMC%d ECC bad symbol: 0x%x\n", i, पंचांगp);
 
-		amd_smn_read(pvt->mc_node_id, umc_base + UMCCH_UMC_CAP, &tmp);
-		edac_dbg(1, "UMC%d UMC cap: 0x%x\n", i, tmp);
+		amd_smn_पढ़ो(pvt->mc_node_id, umc_base + UMCCH_UMC_CAP, &पंचांगp);
+		edac_dbg(1, "UMC%d UMC cap: 0x%x\n", i, पंचांगp);
 		edac_dbg(1, "UMC%d UMC cap high: 0x%x\n", i, umc->umc_cap_hi);
 
 		edac_dbg(1, "UMC%d ECC capable: %s, ChipKill ECC capable: %s\n",
@@ -1143,22 +1144,22 @@ static void __dump_misc_regs_df(struct amd64_pvt *pvt)
 		edac_dbg(1, "UMC%d x16 DIMMs present: %s\n",
 				i, (umc->dimm_cfg & BIT(7)) ? "yes" : "no");
 
-		if (pvt->dram_type == MEM_LRDDR4) {
-			amd_smn_read(pvt->mc_node_id, umc_base + UMCCH_ADDR_CFG, &tmp);
+		अगर (pvt->dram_type == MEM_LRDDR4) अणु
+			amd_smn_पढ़ो(pvt->mc_node_id, umc_base + UMCCH_ADDR_CFG, &पंचांगp);
 			edac_dbg(1, "UMC%d LRDIMM %dx rank multiply\n",
-					i, 1 << ((tmp >> 4) & 0x3));
-		}
+					i, 1 << ((पंचांगp >> 4) & 0x3));
+		पूर्ण
 
 		debug_display_dimm_sizes_df(pvt, i);
-	}
+	पूर्ण
 
 	edac_dbg(1, "F0x104 (DRAM Hole Address): 0x%08x, base: 0x%08x\n",
 		 pvt->dhar, dhar_base(pvt));
-}
+पूर्ण
 
-/* Display and decode various NB registers for debug purposes. */
-static void __dump_misc_regs(struct amd64_pvt *pvt)
-{
+/* Display and decode various NB रेजिस्टरs क्रम debug purposes. */
+अटल व्योम __dump_misc_regs(काष्ठा amd64_pvt *pvt)
+अणु
 	edac_dbg(1, "F3xE8 (NB Cap): 0x%08x\n", pvt->nbcap);
 
 	edac_dbg(1, "  NB two channel DRAM capable: %s\n",
@@ -1179,370 +1180,370 @@ static void __dump_misc_regs(struct amd64_pvt *pvt)
 
 	debug_display_dimm_sizes(pvt, 0);
 
-	/* everything below this point is Fam10h and above */
-	if (pvt->fam == 0xf)
-		return;
+	/* everything below this poपूर्णांक is Fam10h and above */
+	अगर (pvt->fam == 0xf)
+		वापस;
 
 	debug_display_dimm_sizes(pvt, 1);
 
-	/* Only if NOT ganged does dclr1 have valid info */
-	if (!dct_ganging_enabled(pvt))
+	/* Only अगर NOT ganged करोes dclr1 have valid info */
+	अगर (!dct_ganging_enabled(pvt))
 		debug_dump_dramcfg_low(pvt, pvt->dclr1, 1);
-}
+पूर्ण
 
-/* Display and decode various NB registers for debug purposes. */
-static void dump_misc_regs(struct amd64_pvt *pvt)
-{
-	if (pvt->umc)
+/* Display and decode various NB रेजिस्टरs क्रम debug purposes. */
+अटल व्योम dump_misc_regs(काष्ठा amd64_pvt *pvt)
+अणु
+	अगर (pvt->umc)
 		__dump_misc_regs_df(pvt);
-	else
+	अन्यथा
 		__dump_misc_regs(pvt);
 
 	edac_dbg(1, "  DramHoleValid: %s\n", dhar_valid(pvt) ? "yes" : "no");
 
 	amd64_info("using x%u syndromes.\n", pvt->ecc_sym_sz);
-}
+पूर्ण
 
 /*
  * See BKDG, F2x[1,0][5C:40], F2[1,0][6C:60]
  */
-static void prep_chip_selects(struct amd64_pvt *pvt)
-{
-	if (pvt->fam == 0xf && pvt->ext_model < K8_REV_F) {
+अटल व्योम prep_chip_selects(काष्ठा amd64_pvt *pvt)
+अणु
+	अगर (pvt->fam == 0xf && pvt->ext_model < K8_REV_F) अणु
 		pvt->csels[0].b_cnt = pvt->csels[1].b_cnt = 8;
 		pvt->csels[0].m_cnt = pvt->csels[1].m_cnt = 8;
-	} else if (pvt->fam == 0x15 && pvt->model == 0x30) {
+	पूर्ण अन्यथा अगर (pvt->fam == 0x15 && pvt->model == 0x30) अणु
 		pvt->csels[0].b_cnt = pvt->csels[1].b_cnt = 4;
 		pvt->csels[0].m_cnt = pvt->csels[1].m_cnt = 2;
-	} else if (pvt->fam >= 0x17) {
-		int umc;
+	पूर्ण अन्यथा अगर (pvt->fam >= 0x17) अणु
+		पूर्णांक umc;
 
-		for_each_umc(umc) {
+		क्रम_each_umc(umc) अणु
 			pvt->csels[umc].b_cnt = 4;
 			pvt->csels[umc].m_cnt = 2;
-		}
+		पूर्ण
 
-	} else {
+	पूर्ण अन्यथा अणु
 		pvt->csels[0].b_cnt = pvt->csels[1].b_cnt = 8;
 		pvt->csels[0].m_cnt = pvt->csels[1].m_cnt = 4;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void read_umc_base_mask(struct amd64_pvt *pvt)
-{
+अटल व्योम पढ़ो_umc_base_mask(काष्ठा amd64_pvt *pvt)
+अणु
 	u32 umc_base_reg, umc_base_reg_sec;
 	u32 umc_mask_reg, umc_mask_reg_sec;
 	u32 base_reg, base_reg_sec;
 	u32 mask_reg, mask_reg_sec;
 	u32 *base, *base_sec;
 	u32 *mask, *mask_sec;
-	int cs, umc;
+	पूर्णांक cs, umc;
 
-	for_each_umc(umc) {
+	क्रम_each_umc(umc) अणु
 		umc_base_reg = get_umc_base(umc) + UMCCH_BASE_ADDR;
 		umc_base_reg_sec = get_umc_base(umc) + UMCCH_BASE_ADDR_SEC;
 
-		for_each_chip_select(cs, umc, pvt) {
+		क्रम_each_chip_select(cs, umc, pvt) अणु
 			base = &pvt->csels[umc].csbases[cs];
 			base_sec = &pvt->csels[umc].csbases_sec[cs];
 
 			base_reg = umc_base_reg + (cs * 4);
 			base_reg_sec = umc_base_reg_sec + (cs * 4);
 
-			if (!amd_smn_read(pvt->mc_node_id, base_reg, base))
+			अगर (!amd_smn_पढ़ो(pvt->mc_node_id, base_reg, base))
 				edac_dbg(0, "  DCSB%d[%d]=0x%08x reg: 0x%x\n",
 					 umc, cs, *base, base_reg);
 
-			if (!amd_smn_read(pvt->mc_node_id, base_reg_sec, base_sec))
+			अगर (!amd_smn_पढ़ो(pvt->mc_node_id, base_reg_sec, base_sec))
 				edac_dbg(0, "    DCSB_SEC%d[%d]=0x%08x reg: 0x%x\n",
 					 umc, cs, *base_sec, base_reg_sec);
-		}
+		पूर्ण
 
 		umc_mask_reg = get_umc_base(umc) + UMCCH_ADDR_MASK;
 		umc_mask_reg_sec = get_umc_base(umc) + UMCCH_ADDR_MASK_SEC;
 
-		for_each_chip_select_mask(cs, umc, pvt) {
+		क्रम_each_chip_select_mask(cs, umc, pvt) अणु
 			mask = &pvt->csels[umc].csmasks[cs];
 			mask_sec = &pvt->csels[umc].csmasks_sec[cs];
 
 			mask_reg = umc_mask_reg + (cs * 4);
 			mask_reg_sec = umc_mask_reg_sec + (cs * 4);
 
-			if (!amd_smn_read(pvt->mc_node_id, mask_reg, mask))
+			अगर (!amd_smn_पढ़ो(pvt->mc_node_id, mask_reg, mask))
 				edac_dbg(0, "  DCSM%d[%d]=0x%08x reg: 0x%x\n",
 					 umc, cs, *mask, mask_reg);
 
-			if (!amd_smn_read(pvt->mc_node_id, mask_reg_sec, mask_sec))
+			अगर (!amd_smn_पढ़ो(pvt->mc_node_id, mask_reg_sec, mask_sec))
 				edac_dbg(0, "    DCSM_SEC%d[%d]=0x%08x reg: 0x%x\n",
 					 umc, cs, *mask_sec, mask_reg_sec);
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
 /*
- * Function 2 Offset F10_DCSB0; read in the DCS Base and DCS Mask registers
+ * Function 2 Offset F10_DCSB0; पढ़ो in the DCS Base and DCS Mask रेजिस्टरs
  */
-static void read_dct_base_mask(struct amd64_pvt *pvt)
-{
-	int cs;
+अटल व्योम पढ़ो_dct_base_mask(काष्ठा amd64_pvt *pvt)
+अणु
+	पूर्णांक cs;
 
 	prep_chip_selects(pvt);
 
-	if (pvt->umc)
-		return read_umc_base_mask(pvt);
+	अगर (pvt->umc)
+		वापस पढ़ो_umc_base_mask(pvt);
 
-	for_each_chip_select(cs, 0, pvt) {
-		int reg0   = DCSB0 + (cs * 4);
-		int reg1   = DCSB1 + (cs * 4);
+	क्रम_each_chip_select(cs, 0, pvt) अणु
+		पूर्णांक reg0   = DCSB0 + (cs * 4);
+		पूर्णांक reg1   = DCSB1 + (cs * 4);
 		u32 *base0 = &pvt->csels[0].csbases[cs];
 		u32 *base1 = &pvt->csels[1].csbases[cs];
 
-		if (!amd64_read_dct_pci_cfg(pvt, 0, reg0, base0))
+		अगर (!amd64_पढ़ो_dct_pci_cfg(pvt, 0, reg0, base0))
 			edac_dbg(0, "  DCSB0[%d]=0x%08x reg: F2x%x\n",
 				 cs, *base0, reg0);
 
-		if (pvt->fam == 0xf)
-			continue;
+		अगर (pvt->fam == 0xf)
+			जारी;
 
-		if (!amd64_read_dct_pci_cfg(pvt, 1, reg0, base1))
+		अगर (!amd64_पढ़ो_dct_pci_cfg(pvt, 1, reg0, base1))
 			edac_dbg(0, "  DCSB1[%d]=0x%08x reg: F2x%x\n",
 				 cs, *base1, (pvt->fam == 0x10) ? reg1
 							: reg0);
-	}
+	पूर्ण
 
-	for_each_chip_select_mask(cs, 0, pvt) {
-		int reg0   = DCSM0 + (cs * 4);
-		int reg1   = DCSM1 + (cs * 4);
+	क्रम_each_chip_select_mask(cs, 0, pvt) अणु
+		पूर्णांक reg0   = DCSM0 + (cs * 4);
+		पूर्णांक reg1   = DCSM1 + (cs * 4);
 		u32 *mask0 = &pvt->csels[0].csmasks[cs];
 		u32 *mask1 = &pvt->csels[1].csmasks[cs];
 
-		if (!amd64_read_dct_pci_cfg(pvt, 0, reg0, mask0))
+		अगर (!amd64_पढ़ो_dct_pci_cfg(pvt, 0, reg0, mask0))
 			edac_dbg(0, "    DCSM0[%d]=0x%08x reg: F2x%x\n",
 				 cs, *mask0, reg0);
 
-		if (pvt->fam == 0xf)
-			continue;
+		अगर (pvt->fam == 0xf)
+			जारी;
 
-		if (!amd64_read_dct_pci_cfg(pvt, 1, reg0, mask1))
+		अगर (!amd64_पढ़ो_dct_pci_cfg(pvt, 1, reg0, mask1))
 			edac_dbg(0, "    DCSM1[%d]=0x%08x reg: F2x%x\n",
 				 cs, *mask1, (pvt->fam == 0x10) ? reg1
 							: reg0);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void determine_memory_type(struct amd64_pvt *pvt)
-{
+अटल व्योम determine_memory_type(काष्ठा amd64_pvt *pvt)
+अणु
 	u32 dram_ctrl, dcsm;
 
-	if (pvt->umc) {
-		if ((pvt->umc[0].dimm_cfg | pvt->umc[1].dimm_cfg) & BIT(5))
+	अगर (pvt->umc) अणु
+		अगर ((pvt->umc[0].dimm_cfg | pvt->umc[1].dimm_cfg) & BIT(5))
 			pvt->dram_type = MEM_LRDDR4;
-		else if ((pvt->umc[0].dimm_cfg | pvt->umc[1].dimm_cfg) & BIT(4))
+		अन्यथा अगर ((pvt->umc[0].dimm_cfg | pvt->umc[1].dimm_cfg) & BIT(4))
 			pvt->dram_type = MEM_RDDR4;
-		else
+		अन्यथा
 			pvt->dram_type = MEM_DDR4;
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	switch (pvt->fam) {
-	case 0xf:
-		if (pvt->ext_model >= K8_REV_F)
-			goto ddr3;
+	चयन (pvt->fam) अणु
+	हाल 0xf:
+		अगर (pvt->ext_model >= K8_REV_F)
+			जाओ ddr3;
 
 		pvt->dram_type = (pvt->dclr0 & BIT(18)) ? MEM_DDR : MEM_RDDR;
-		return;
+		वापस;
 
-	case 0x10:
-		if (pvt->dchr0 & DDR3_MODE)
-			goto ddr3;
+	हाल 0x10:
+		अगर (pvt->dchr0 & DDR3_MODE)
+			जाओ ddr3;
 
 		pvt->dram_type = (pvt->dclr0 & BIT(16)) ? MEM_DDR2 : MEM_RDDR2;
-		return;
+		वापस;
 
-	case 0x15:
-		if (pvt->model < 0x60)
-			goto ddr3;
+	हाल 0x15:
+		अगर (pvt->model < 0x60)
+			जाओ ddr3;
 
 		/*
 		 * Model 0x60h needs special handling:
 		 *
 		 * We use a Chip Select value of '0' to obtain dcsm.
-		 * Theoretically, it is possible to populate LRDIMMs of different
-		 * 'Rank' value on a DCT. But this is not the common case. So,
+		 * Theoretically, it is possible to populate LRDIMMs of dअगरferent
+		 * 'Rank' value on a DCT. But this is not the common हाल. So,
 		 * it's reasonable to assume all DIMMs are going to be of same
 		 * 'type' until proven otherwise.
 		 */
-		amd64_read_dct_pci_cfg(pvt, 0, DRAM_CONTROL, &dram_ctrl);
+		amd64_पढ़ो_dct_pci_cfg(pvt, 0, DRAM_CONTROL, &dram_ctrl);
 		dcsm = pvt->csels[0].csmasks[0];
 
-		if (((dram_ctrl >> 8) & 0x7) == 0x2)
+		अगर (((dram_ctrl >> 8) & 0x7) == 0x2)
 			pvt->dram_type = MEM_DDR4;
-		else if (pvt->dclr0 & BIT(16))
+		अन्यथा अगर (pvt->dclr0 & BIT(16))
 			pvt->dram_type = MEM_DDR3;
-		else if (dcsm & 0x3)
+		अन्यथा अगर (dcsm & 0x3)
 			pvt->dram_type = MEM_LRDDR3;
-		else
+		अन्यथा
 			pvt->dram_type = MEM_RDDR3;
 
-		return;
+		वापस;
 
-	case 0x16:
-		goto ddr3;
+	हाल 0x16:
+		जाओ ddr3;
 
-	default:
+	शेष:
 		WARN(1, KERN_ERR "%s: Family??? 0x%x\n", __func__, pvt->fam);
 		pvt->dram_type = MEM_EMPTY;
-	}
-	return;
+	पूर्ण
+	वापस;
 
 ddr3:
 	pvt->dram_type = (pvt->dclr0 & BIT(16)) ? MEM_DDR3 : MEM_RDDR3;
-}
+पूर्ण
 
 /* Get the number of DCT channels the memory controller is using. */
-static int k8_early_channel_count(struct amd64_pvt *pvt)
-{
-	int flag;
+अटल पूर्णांक k8_early_channel_count(काष्ठा amd64_pvt *pvt)
+अणु
+	पूर्णांक flag;
 
-	if (pvt->ext_model >= K8_REV_F)
+	अगर (pvt->ext_model >= K8_REV_F)
 		/* RevF (NPT) and later */
 		flag = pvt->dclr0 & WIDTH_128;
-	else
+	अन्यथा
 		/* RevE and earlier */
 		flag = pvt->dclr0 & REVE_WIDTH_128;
 
 	/* not used */
 	pvt->dclr1 = 0;
 
-	return (flag) ? 2 : 1;
-}
+	वापस (flag) ? 2 : 1;
+पूर्ण
 
 /* On F10h and later ErrAddr is MC4_ADDR[47:1] */
-static u64 get_error_address(struct amd64_pvt *pvt, struct mce *m)
-{
+अटल u64 get_error_address(काष्ठा amd64_pvt *pvt, काष्ठा mce *m)
+अणु
 	u16 mce_nid = topology_die_id(m->extcpu);
-	struct mem_ctl_info *mci;
+	काष्ठा mem_ctl_info *mci;
 	u8 start_bit = 1;
 	u8 end_bit   = 47;
 	u64 addr;
 
 	mci = edac_mc_find(mce_nid);
-	if (!mci)
-		return 0;
+	अगर (!mci)
+		वापस 0;
 
 	pvt = mci->pvt_info;
 
-	if (pvt->fam == 0xf) {
+	अगर (pvt->fam == 0xf) अणु
 		start_bit = 3;
 		end_bit   = 39;
-	}
+	पूर्ण
 
 	addr = m->addr & GENMASK_ULL(end_bit, start_bit);
 
 	/*
 	 * Erratum 637 workaround
 	 */
-	if (pvt->fam == 0x15) {
-		u64 cc6_base, tmp_addr;
-		u32 tmp;
-		u8 intlv_en;
+	अगर (pvt->fam == 0x15) अणु
+		u64 cc6_base, पंचांगp_addr;
+		u32 पंचांगp;
+		u8 पूर्णांकlv_en;
 
-		if ((addr & GENMASK_ULL(47, 24)) >> 24 != 0x00fdf7)
-			return addr;
+		अगर ((addr & GENMASK_ULL(47, 24)) >> 24 != 0x00fdf7)
+			वापस addr;
 
 
-		amd64_read_pci_cfg(pvt->F1, DRAM_LOCAL_NODE_LIM, &tmp);
-		intlv_en = tmp >> 21 & 0x7;
+		amd64_पढ़ो_pci_cfg(pvt->F1, DRAM_LOCAL_NODE_LIM, &पंचांगp);
+		पूर्णांकlv_en = पंचांगp >> 21 & 0x7;
 
 		/* add [47:27] + 3 trailing bits */
-		cc6_base  = (tmp & GENMASK_ULL(20, 0)) << 3;
+		cc6_base  = (पंचांगp & GENMASK_ULL(20, 0)) << 3;
 
 		/* reverse and add DramIntlvEn */
-		cc6_base |= intlv_en ^ 0x7;
+		cc6_base |= पूर्णांकlv_en ^ 0x7;
 
 		/* pin at [47:24] */
 		cc6_base <<= 24;
 
-		if (!intlv_en)
-			return cc6_base | (addr & GENMASK_ULL(23, 0));
+		अगर (!पूर्णांकlv_en)
+			वापस cc6_base | (addr & GENMASK_ULL(23, 0));
 
-		amd64_read_pci_cfg(pvt->F1, DRAM_LOCAL_NODE_BASE, &tmp);
+		amd64_पढ़ो_pci_cfg(pvt->F1, DRAM_LOCAL_NODE_BASE, &पंचांगp);
 
 							/* faster log2 */
-		tmp_addr  = (addr & GENMASK_ULL(23, 12)) << __fls(intlv_en + 1);
+		पंचांगp_addr  = (addr & GENMASK_ULL(23, 12)) << __fls(पूर्णांकlv_en + 1);
 
-		/* OR DramIntlvSel into bits [14:12] */
-		tmp_addr |= (tmp & GENMASK_ULL(23, 21)) >> 9;
+		/* OR DramIntlvSel पूर्णांकo bits [14:12] */
+		पंचांगp_addr |= (पंचांगp & GENMASK_ULL(23, 21)) >> 9;
 
-		/* add remaining [11:0] bits from original MC4_ADDR */
-		tmp_addr |= addr & GENMASK_ULL(11, 0);
+		/* add reमुख्यing [11:0] bits from original MC4_ADDR */
+		पंचांगp_addr |= addr & GENMASK_ULL(11, 0);
 
-		return cc6_base | tmp_addr;
-	}
+		वापस cc6_base | पंचांगp_addr;
+	पूर्ण
 
-	return addr;
-}
+	वापस addr;
+पूर्ण
 
-static struct pci_dev *pci_get_related_function(unsigned int vendor,
-						unsigned int device,
-						struct pci_dev *related)
-{
-	struct pci_dev *dev = NULL;
+अटल काष्ठा pci_dev *pci_get_related_function(अचिन्हित पूर्णांक venकरोr,
+						अचिन्हित पूर्णांक device,
+						काष्ठा pci_dev *related)
+अणु
+	काष्ठा pci_dev *dev = शून्य;
 
-	while ((dev = pci_get_device(vendor, device, dev))) {
-		if (pci_domain_nr(dev->bus) == pci_domain_nr(related->bus) &&
+	जबतक ((dev = pci_get_device(venकरोr, device, dev))) अणु
+		अगर (pci_करोमुख्य_nr(dev->bus) == pci_करोमुख्य_nr(related->bus) &&
 		    (dev->bus->number == related->bus->number) &&
 		    (PCI_SLOT(dev->devfn) == PCI_SLOT(related->devfn)))
-			break;
-	}
+			अवरोध;
+	पूर्ण
 
-	return dev;
-}
+	वापस dev;
+पूर्ण
 
-static void read_dram_base_limit_regs(struct amd64_pvt *pvt, unsigned range)
-{
-	struct amd_northbridge *nb;
-	struct pci_dev *f1 = NULL;
-	unsigned int pci_func;
-	int off = range << 3;
+अटल व्योम पढ़ो_dram_base_limit_regs(काष्ठा amd64_pvt *pvt, अचिन्हित range)
+अणु
+	काष्ठा amd_northbridge *nb;
+	काष्ठा pci_dev *f1 = शून्य;
+	अचिन्हित पूर्णांक pci_func;
+	पूर्णांक off = range << 3;
 	u32 llim;
 
-	amd64_read_pci_cfg(pvt->F1, DRAM_BASE_LO + off,  &pvt->ranges[range].base.lo);
-	amd64_read_pci_cfg(pvt->F1, DRAM_LIMIT_LO + off, &pvt->ranges[range].lim.lo);
+	amd64_पढ़ो_pci_cfg(pvt->F1, DRAM_BASE_LO + off,  &pvt->ranges[range].base.lo);
+	amd64_पढ़ो_pci_cfg(pvt->F1, DRAM_LIMIT_LO + off, &pvt->ranges[range].lim.lo);
 
-	if (pvt->fam == 0xf)
-		return;
+	अगर (pvt->fam == 0xf)
+		वापस;
 
-	if (!dram_rw(pvt, range))
-		return;
+	अगर (!dram_rw(pvt, range))
+		वापस;
 
-	amd64_read_pci_cfg(pvt->F1, DRAM_BASE_HI + off,  &pvt->ranges[range].base.hi);
-	amd64_read_pci_cfg(pvt->F1, DRAM_LIMIT_HI + off, &pvt->ranges[range].lim.hi);
+	amd64_पढ़ो_pci_cfg(pvt->F1, DRAM_BASE_HI + off,  &pvt->ranges[range].base.hi);
+	amd64_पढ़ो_pci_cfg(pvt->F1, DRAM_LIMIT_HI + off, &pvt->ranges[range].lim.hi);
 
-	/* F15h: factor in CC6 save area by reading dst node's limit reg */
-	if (pvt->fam != 0x15)
-		return;
+	/* F15h: factor in CC6 save area by पढ़ोing dst node's limit reg */
+	अगर (pvt->fam != 0x15)
+		वापस;
 
 	nb = node_to_amd_nb(dram_dst_node(pvt, range));
-	if (WARN_ON(!nb))
-		return;
+	अगर (WARN_ON(!nb))
+		वापस;
 
-	if (pvt->model == 0x60)
+	अगर (pvt->model == 0x60)
 		pci_func = PCI_DEVICE_ID_AMD_15H_M60H_NB_F1;
-	else if (pvt->model == 0x30)
+	अन्यथा अगर (pvt->model == 0x30)
 		pci_func = PCI_DEVICE_ID_AMD_15H_M30H_NB_F1;
-	else
+	अन्यथा
 		pci_func = PCI_DEVICE_ID_AMD_15H_NB_F1;
 
-	f1 = pci_get_related_function(nb->misc->vendor, pci_func, nb->misc);
-	if (WARN_ON(!f1))
-		return;
+	f1 = pci_get_related_function(nb->misc->venकरोr, pci_func, nb->misc);
+	अगर (WARN_ON(!f1))
+		वापस;
 
-	amd64_read_pci_cfg(f1, DRAM_LOCAL_NODE_LIM, &llim);
+	amd64_पढ़ो_pci_cfg(f1, DRAM_LOCAL_NODE_LIM, &llim);
 
 	pvt->ranges[range].lim.lo &= GENMASK_ULL(15, 0);
 
-				    /* {[39:27],111b} */
+				    /* अणु[39:27],111bपूर्ण */
 	pvt->ranges[range].lim.lo |= ((llim & 0x1fff) << 3 | 0x7) << 16;
 
 	pvt->ranges[range].lim.hi &= GENMASK_ULL(7, 0);
@@ -1551,38 +1552,38 @@ static void read_dram_base_limit_regs(struct amd64_pvt *pvt, unsigned range)
 	pvt->ranges[range].lim.hi |= llim >> 13;
 
 	pci_dev_put(f1);
-}
+पूर्ण
 
-static void k8_map_sysaddr_to_csrow(struct mem_ctl_info *mci, u64 sys_addr,
-				    struct err_info *err)
-{
-	struct amd64_pvt *pvt = mci->pvt_info;
+अटल व्योम k8_map_sysaddr_to_csrow(काष्ठा mem_ctl_info *mci, u64 sys_addr,
+				    काष्ठा err_info *err)
+अणु
+	काष्ठा amd64_pvt *pvt = mci->pvt_info;
 
 	error_address_to_page_and_offset(sys_addr, err);
 
 	/*
-	 * Find out which node the error address belongs to. This may be
-	 * different from the node that detected the error.
+	 * Find out which node the error address beदीर्घs to. This may be
+	 * dअगरferent from the node that detected the error.
 	 */
 	err->src_mci = find_mc_by_sys_addr(mci, sys_addr);
-	if (!err->src_mci) {
+	अगर (!err->src_mci) अणु
 		amd64_mc_err(mci, "failed to map error addr 0x%lx to a node\n",
-			     (unsigned long)sys_addr);
+			     (अचिन्हित दीर्घ)sys_addr);
 		err->err_code = ERR_NODE;
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/* Now map the sys_addr to a CSROW */
 	err->csrow = sys_addr_to_csrow(err->src_mci, sys_addr);
-	if (err->csrow < 0) {
+	अगर (err->csrow < 0) अणु
 		err->err_code = ERR_CSROW;
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/* CHIPKILL enabled */
-	if (pvt->nbcfg & NBCFG_CHIPKILL) {
+	अगर (pvt->nbcfg & NBCFG_CHIPKILL) अणु
 		err->channel = get_channel_from_ecc_syndrome(mci, err->syndrome);
-		if (err->channel < 0) {
+		अगर (err->channel < 0) अणु
 			/*
 			 * Syndrome didn't map, so we don't know which of the
 			 * 2 DIMMs is in error. So we need to ID 'both' of them
@@ -1592,46 +1593,46 @@ static void k8_map_sysaddr_to_csrow(struct mem_ctl_info *mci, u64 sys_addr,
 				      "possible error reporting race\n",
 				      err->syndrome);
 			err->err_code = ERR_CHANNEL;
-			return;
-		}
-	} else {
+			वापस;
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		/*
-		 * non-chipkill ecc mode
+		 * non-chipसमाप्त ecc mode
 		 *
-		 * The k8 documentation is unclear about how to determine the
-		 * channel number when using non-chipkill memory.  This method
+		 * The k8 करोcumentation is unclear about how to determine the
+		 * channel number when using non-chipसमाप्त memory.  This method
 		 * was obtained from email communication with someone at AMD.
 		 * (Wish the email was placed in this comment - norsk)
 		 */
 		err->channel = ((sys_addr & BIT(3)) != 0);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int ddr2_cs_size(unsigned i, bool dct_width)
-{
-	unsigned shift = 0;
+अटल पूर्णांक ddr2_cs_size(अचिन्हित i, bool dct_width)
+अणु
+	अचिन्हित shअगरt = 0;
 
-	if (i <= 2)
-		shift = i;
-	else if (!(i & 0x1))
-		shift = i >> 1;
-	else
-		shift = (i + 1) >> 1;
+	अगर (i <= 2)
+		shअगरt = i;
+	अन्यथा अगर (!(i & 0x1))
+		shअगरt = i >> 1;
+	अन्यथा
+		shअगरt = (i + 1) >> 1;
 
-	return 128 << (shift + !!dct_width);
-}
+	वापस 128 << (shअगरt + !!dct_width);
+पूर्ण
 
-static int k8_dbam_to_chip_select(struct amd64_pvt *pvt, u8 dct,
-				  unsigned cs_mode, int cs_mask_nr)
-{
+अटल पूर्णांक k8_dbam_to_chip_select(काष्ठा amd64_pvt *pvt, u8 dct,
+				  अचिन्हित cs_mode, पूर्णांक cs_mask_nr)
+अणु
 	u32 dclr = dct ? pvt->dclr1 : pvt->dclr0;
 
-	if (pvt->ext_model >= K8_REV_F) {
+	अगर (pvt->ext_model >= K8_REV_F) अणु
 		WARN_ON(cs_mode > 11);
-		return ddr2_cs_size(cs_mode, dclr & WIDTH_128);
-	}
-	else if (pvt->ext_model >= K8_REV_D) {
-		unsigned diff;
+		वापस ddr2_cs_size(cs_mode, dclr & WIDTH_128);
+	पूर्ण
+	अन्यथा अगर (pvt->ext_model >= K8_REV_D) अणु
+		अचिन्हित dअगरf;
 		WARN_ON(cs_mode > 10);
 
 		/*
@@ -1653,20 +1654,20 @@ static int k8_dbam_to_chip_select(struct amd64_pvt *pvt, u8 dct,
 		 * 9		1024
 		 * 10		2048
 		 *
-		 * Basically, it calculates a value with which to shift the
+		 * Basically, it calculates a value with which to shअगरt the
 		 * smallest CS size of 32MB.
 		 *
 		 * ddr[23]_cs_size have a similar purpose.
 		 */
-		diff = cs_mode/3 + (unsigned)(cs_mode > 5);
+		dअगरf = cs_mode/3 + (अचिन्हित)(cs_mode > 5);
 
-		return 32 << (cs_mode - diff);
-	}
-	else {
+		वापस 32 << (cs_mode - dअगरf);
+	पूर्ण
+	अन्यथा अणु
 		WARN_ON(cs_mode > 6);
-		return 32 << cs_mode;
-	}
-}
+		वापस 32 << cs_mode;
+	पूर्ण
+पूर्ण
 
 /*
  * Get the number of DCT channels in use.
@@ -1674,208 +1675,208 @@ static int k8_dbam_to_chip_select(struct amd64_pvt *pvt, u8 dct,
  * Return:
  *	number of Memory Channels in operation
  * Pass back:
- *	contents of the DCL0_LOW register
+ *	contents of the DCL0_LOW रेजिस्टर
  */
-static int f1x_early_channel_count(struct amd64_pvt *pvt)
-{
-	int i, j, channels = 0;
+अटल पूर्णांक f1x_early_channel_count(काष्ठा amd64_pvt *pvt)
+अणु
+	पूर्णांक i, j, channels = 0;
 
-	/* On F10h, if we are in 128 bit mode, then we are using 2 channels */
-	if (pvt->fam == 0x10 && (pvt->dclr0 & WIDTH_128))
-		return 2;
+	/* On F10h, अगर we are in 128 bit mode, then we are using 2 channels */
+	अगर (pvt->fam == 0x10 && (pvt->dclr0 & WIDTH_128))
+		वापस 2;
 
 	/*
-	 * Need to check if in unganged mode: In such, there are 2 channels,
+	 * Need to check अगर in unganged mode: In such, there are 2 channels,
 	 * but they are not in 128 bit mode and thus the above 'dclr0' status
 	 * bit will be OFF.
 	 *
-	 * Need to check DCT0[0] and DCT1[0] to see if only one of them has
-	 * their CSEnable bit on. If so, then SINGLE DIMM case.
+	 * Need to check DCT0[0] and DCT1[0] to see अगर only one of them has
+	 * their CSEnable bit on. If so, then SINGLE DIMM हाल.
 	 */
 	edac_dbg(0, "Data width is not 128 bits - need more decoding\n");
 
 	/*
-	 * Check DRAM Bank Address Mapping values for each DIMM to see if there
+	 * Check DRAM Bank Address Mapping values क्रम each DIMM to see अगर there
 	 * is more than just one DIMM present in unganged mode. Need to check
 	 * both controllers since DIMMs can be placed in either one.
 	 */
-	for (i = 0; i < 2; i++) {
+	क्रम (i = 0; i < 2; i++) अणु
 		u32 dbam = (i ? pvt->dbam1 : pvt->dbam0);
 
-		for (j = 0; j < 4; j++) {
-			if (DBAM_DIMM(j, dbam) > 0) {
+		क्रम (j = 0; j < 4; j++) अणु
+			अगर (DBAM_DIMM(j, dbam) > 0) अणु
 				channels++;
-				break;
-			}
-		}
-	}
+				अवरोध;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	if (channels > 2)
+	अगर (channels > 2)
 		channels = 2;
 
 	amd64_info("MCT channel count: %d\n", channels);
 
-	return channels;
-}
+	वापस channels;
+पूर्ण
 
-static int f17_early_channel_count(struct amd64_pvt *pvt)
-{
-	int i, channels = 0;
+अटल पूर्णांक f17_early_channel_count(काष्ठा amd64_pvt *pvt)
+अणु
+	पूर्णांक i, channels = 0;
 
-	/* SDP Control bit 31 (SdpInit) is clear for unused UMC channels */
-	for_each_umc(i)
+	/* SDP Control bit 31 (SdpInit) is clear क्रम unused UMC channels */
+	क्रम_each_umc(i)
 		channels += !!(pvt->umc[i].sdp_ctrl & UMC_SDP_INIT);
 
 	amd64_info("MCT channel count: %d\n", channels);
 
-	return channels;
-}
+	वापस channels;
+पूर्ण
 
-static int ddr3_cs_size(unsigned i, bool dct_width)
-{
-	unsigned shift = 0;
-	int cs_size = 0;
+अटल पूर्णांक ddr3_cs_size(अचिन्हित i, bool dct_width)
+अणु
+	अचिन्हित shअगरt = 0;
+	पूर्णांक cs_size = 0;
 
-	if (i == 0 || i == 3 || i == 4)
+	अगर (i == 0 || i == 3 || i == 4)
 		cs_size = -1;
-	else if (i <= 2)
-		shift = i;
-	else if (i == 12)
-		shift = 7;
-	else if (!(i & 0x1))
-		shift = i >> 1;
-	else
-		shift = (i + 1) >> 1;
+	अन्यथा अगर (i <= 2)
+		shअगरt = i;
+	अन्यथा अगर (i == 12)
+		shअगरt = 7;
+	अन्यथा अगर (!(i & 0x1))
+		shअगरt = i >> 1;
+	अन्यथा
+		shअगरt = (i + 1) >> 1;
 
-	if (cs_size != -1)
-		cs_size = (128 * (1 << !!dct_width)) << shift;
+	अगर (cs_size != -1)
+		cs_size = (128 * (1 << !!dct_width)) << shअगरt;
 
-	return cs_size;
-}
+	वापस cs_size;
+पूर्ण
 
-static int ddr3_lrdimm_cs_size(unsigned i, unsigned rank_multiply)
-{
-	unsigned shift = 0;
-	int cs_size = 0;
+अटल पूर्णांक ddr3_lrdimm_cs_size(अचिन्हित i, अचिन्हित rank_multiply)
+अणु
+	अचिन्हित shअगरt = 0;
+	पूर्णांक cs_size = 0;
 
-	if (i < 4 || i == 6)
+	अगर (i < 4 || i == 6)
 		cs_size = -1;
-	else if (i == 12)
-		shift = 7;
-	else if (!(i & 0x1))
-		shift = i >> 1;
-	else
-		shift = (i + 1) >> 1;
+	अन्यथा अगर (i == 12)
+		shअगरt = 7;
+	अन्यथा अगर (!(i & 0x1))
+		shअगरt = i >> 1;
+	अन्यथा
+		shअगरt = (i + 1) >> 1;
 
-	if (cs_size != -1)
-		cs_size = rank_multiply * (128 << shift);
+	अगर (cs_size != -1)
+		cs_size = rank_multiply * (128 << shअगरt);
 
-	return cs_size;
-}
+	वापस cs_size;
+पूर्ण
 
-static int ddr4_cs_size(unsigned i)
-{
-	int cs_size = 0;
+अटल पूर्णांक ddr4_cs_size(अचिन्हित i)
+अणु
+	पूर्णांक cs_size = 0;
 
-	if (i == 0)
+	अगर (i == 0)
 		cs_size = -1;
-	else if (i == 1)
+	अन्यथा अगर (i == 1)
 		cs_size = 1024;
-	else
+	अन्यथा
 		/* Min cs_size = 1G */
 		cs_size = 1024 * (1 << (i >> 1));
 
-	return cs_size;
-}
+	वापस cs_size;
+पूर्ण
 
-static int f10_dbam_to_chip_select(struct amd64_pvt *pvt, u8 dct,
-				   unsigned cs_mode, int cs_mask_nr)
-{
+अटल पूर्णांक f10_dbam_to_chip_select(काष्ठा amd64_pvt *pvt, u8 dct,
+				   अचिन्हित cs_mode, पूर्णांक cs_mask_nr)
+अणु
 	u32 dclr = dct ? pvt->dclr1 : pvt->dclr0;
 
 	WARN_ON(cs_mode > 11);
 
-	if (pvt->dchr0 & DDR3_MODE || pvt->dchr1 & DDR3_MODE)
-		return ddr3_cs_size(cs_mode, dclr & WIDTH_128);
-	else
-		return ddr2_cs_size(cs_mode, dclr & WIDTH_128);
-}
+	अगर (pvt->dchr0 & DDR3_MODE || pvt->dchr1 & DDR3_MODE)
+		वापस ddr3_cs_size(cs_mode, dclr & WIDTH_128);
+	अन्यथा
+		वापस ddr2_cs_size(cs_mode, dclr & WIDTH_128);
+पूर्ण
 
 /*
- * F15h supports only 64bit DCT interfaces
+ * F15h supports only 64bit DCT पूर्णांकerfaces
  */
-static int f15_dbam_to_chip_select(struct amd64_pvt *pvt, u8 dct,
-				   unsigned cs_mode, int cs_mask_nr)
-{
+अटल पूर्णांक f15_dbam_to_chip_select(काष्ठा amd64_pvt *pvt, u8 dct,
+				   अचिन्हित cs_mode, पूर्णांक cs_mask_nr)
+अणु
 	WARN_ON(cs_mode > 12);
 
-	return ddr3_cs_size(cs_mode, false);
-}
+	वापस ddr3_cs_size(cs_mode, false);
+पूर्ण
 
 /* F15h M60h supports DDR4 mapping as well.. */
-static int f15_m60h_dbam_to_chip_select(struct amd64_pvt *pvt, u8 dct,
-					unsigned cs_mode, int cs_mask_nr)
-{
-	int cs_size;
+अटल पूर्णांक f15_m60h_dbam_to_chip_select(काष्ठा amd64_pvt *pvt, u8 dct,
+					अचिन्हित cs_mode, पूर्णांक cs_mask_nr)
+अणु
+	पूर्णांक cs_size;
 	u32 dcsm = pvt->csels[dct].csmasks[cs_mask_nr];
 
 	WARN_ON(cs_mode > 12);
 
-	if (pvt->dram_type == MEM_DDR4) {
-		if (cs_mode > 9)
-			return -1;
+	अगर (pvt->dram_type == MEM_DDR4) अणु
+		अगर (cs_mode > 9)
+			वापस -1;
 
 		cs_size = ddr4_cs_size(cs_mode);
-	} else if (pvt->dram_type == MEM_LRDDR3) {
-		unsigned rank_multiply = dcsm & 0xf;
+	पूर्ण अन्यथा अगर (pvt->dram_type == MEM_LRDDR3) अणु
+		अचिन्हित rank_multiply = dcsm & 0xf;
 
-		if (rank_multiply == 3)
+		अगर (rank_multiply == 3)
 			rank_multiply = 4;
 		cs_size = ddr3_lrdimm_cs_size(cs_mode, rank_multiply);
-	} else {
-		/* Minimum cs size is 512mb for F15hM60h*/
-		if (cs_mode == 0x1)
-			return -1;
+	पूर्ण अन्यथा अणु
+		/* Minimum cs size is 512mb क्रम F15hM60h*/
+		अगर (cs_mode == 0x1)
+			वापस -1;
 
 		cs_size = ddr3_cs_size(cs_mode, false);
-	}
+	पूर्ण
 
-	return cs_size;
-}
+	वापस cs_size;
+पूर्ण
 
 /*
  * F16h and F15h model 30h have only limited cs_modes.
  */
-static int f16_dbam_to_chip_select(struct amd64_pvt *pvt, u8 dct,
-				unsigned cs_mode, int cs_mask_nr)
-{
+अटल पूर्णांक f16_dbam_to_chip_select(काष्ठा amd64_pvt *pvt, u8 dct,
+				अचिन्हित cs_mode, पूर्णांक cs_mask_nr)
+अणु
 	WARN_ON(cs_mode > 12);
 
-	if (cs_mode == 6 || cs_mode == 8 ||
+	अगर (cs_mode == 6 || cs_mode == 8 ||
 	    cs_mode == 9 || cs_mode == 12)
-		return -1;
-	else
-		return ddr3_cs_size(cs_mode, false);
-}
+		वापस -1;
+	अन्यथा
+		वापस ddr3_cs_size(cs_mode, false);
+पूर्ण
 
-static int f17_addr_mask_to_cs_size(struct amd64_pvt *pvt, u8 umc,
-				    unsigned int cs_mode, int csrow_nr)
-{
-	u32 addr_mask_orig, addr_mask_deinterleaved;
+अटल पूर्णांक f17_addr_mask_to_cs_size(काष्ठा amd64_pvt *pvt, u8 umc,
+				    अचिन्हित पूर्णांक cs_mode, पूर्णांक csrow_nr)
+अणु
+	u32 addr_mask_orig, addr_mask_deपूर्णांकerleaved;
 	u32 msb, weight, num_zero_bits;
-	int dimm, size = 0;
+	पूर्णांक dimm, size = 0;
 
 	/* No Chip Selects are enabled. */
-	if (!cs_mode)
-		return size;
+	अगर (!cs_mode)
+		वापस size;
 
 	/* Requested size of an even CS but none are enabled. */
-	if (!(cs_mode & CS_EVEN) && !(csrow_nr & 1))
-		return size;
+	अगर (!(cs_mode & CS_EVEN) && !(csrow_nr & 1))
+		वापस size;
 
 	/* Requested size of an odd CS but none are enabled. */
-	if (!(cs_mode & CS_ODD) && (csrow_nr & 1))
-		return size;
+	अगर (!(cs_mode & CS_ODD) && (csrow_nr & 1))
+		वापस size;
 
 	/*
 	 * There is one mask per DIMM, and two Chip Selects per DIMM.
@@ -1885,9 +1886,9 @@ static int f17_addr_mask_to_cs_size(struct amd64_pvt *pvt, u8 umc,
 	dimm = csrow_nr >> 1;
 
 	/* Asymmetric dual-rank DIMM support. */
-	if ((csrow_nr & 1) && (cs_mode & CS_ODD_SECONDARY))
+	अगर ((csrow_nr & 1) && (cs_mode & CS_ODD_SECONDARY))
 		addr_mask_orig = pvt->csels[umc].csmasks_sec[dimm];
-	else
+	अन्यथा
 		addr_mask_orig = pvt->csels[umc].csmasks[dimm];
 
 	/*
@@ -1898,227 +1899,227 @@ static int f17_addr_mask_to_cs_size(struct amd64_pvt *pvt, u8 umc,
 	 * always 0.
 	 */
 	msb = fls(addr_mask_orig) - 1;
-	weight = hweight_long(addr_mask_orig);
+	weight = hweight_दीर्घ(addr_mask_orig);
 	num_zero_bits = msb - weight;
 
 	/* Take the number of zero bits off from the top of the mask. */
-	addr_mask_deinterleaved = GENMASK_ULL(msb - num_zero_bits, 1);
+	addr_mask_deपूर्णांकerleaved = GENMASK_ULL(msb - num_zero_bits, 1);
 
 	edac_dbg(1, "CS%d DIMM%d AddrMasks:\n", csrow_nr, dimm);
 	edac_dbg(1, "  Original AddrMask: 0x%x\n", addr_mask_orig);
-	edac_dbg(1, "  Deinterleaved AddrMask: 0x%x\n", addr_mask_deinterleaved);
+	edac_dbg(1, "  Deinterleaved AddrMask: 0x%x\n", addr_mask_deपूर्णांकerleaved);
 
 	/* Register [31:1] = Address [39:9]. Size is in kBs here. */
-	size = (addr_mask_deinterleaved >> 2) + 1;
+	size = (addr_mask_deपूर्णांकerleaved >> 2) + 1;
 
 	/* Return size in MBs. */
-	return size >> 10;
-}
+	वापस size >> 10;
+पूर्ण
 
-static void read_dram_ctl_register(struct amd64_pvt *pvt)
-{
+अटल व्योम पढ़ो_dram_ctl_रेजिस्टर(काष्ठा amd64_pvt *pvt)
+अणु
 
-	if (pvt->fam == 0xf)
-		return;
+	अगर (pvt->fam == 0xf)
+		वापस;
 
-	if (!amd64_read_pci_cfg(pvt->F2, DCT_SEL_LO, &pvt->dct_sel_lo)) {
+	अगर (!amd64_पढ़ो_pci_cfg(pvt->F2, DCT_SEL_LO, &pvt->dct_sel_lo)) अणु
 		edac_dbg(0, "F2x110 (DCTSelLow): 0x%08x, High range addrs at: 0x%x\n",
 			 pvt->dct_sel_lo, dct_sel_baseaddr(pvt));
 
 		edac_dbg(0, "  DCTs operate in %s mode\n",
 			 (dct_ganging_enabled(pvt) ? "ganged" : "unganged"));
 
-		if (!dct_ganging_enabled(pvt))
+		अगर (!dct_ganging_enabled(pvt))
 			edac_dbg(0, "  Address range split per DCT: %s\n",
 				 (dct_high_range_enabled(pvt) ? "yes" : "no"));
 
 		edac_dbg(0, "  data interleave for ECC: %s, DRAM cleared since last warm reset: %s\n",
-			 (dct_data_intlv_enabled(pvt) ? "enabled" : "disabled"),
+			 (dct_data_पूर्णांकlv_enabled(pvt) ? "enabled" : "disabled"),
 			 (dct_memory_cleared(pvt) ? "yes" : "no"));
 
 		edac_dbg(0, "  channel interleave: %s, "
 			 "interleave bits selector: 0x%x\n",
-			 (dct_interleave_enabled(pvt) ? "enabled" : "disabled"),
-			 dct_sel_interleave_addr(pvt));
-	}
+			 (dct_पूर्णांकerleave_enabled(pvt) ? "enabled" : "disabled"),
+			 dct_sel_पूर्णांकerleave_addr(pvt));
+	पूर्ण
 
-	amd64_read_pci_cfg(pvt->F2, DCT_SEL_HI, &pvt->dct_sel_hi);
-}
+	amd64_पढ़ो_pci_cfg(pvt->F2, DCT_SEL_HI, &pvt->dct_sel_hi);
+पूर्ण
 
 /*
- * Determine channel (DCT) based on the interleaving mode (see F15h M30h BKDG,
+ * Determine channel (DCT) based on the पूर्णांकerleaving mode (see F15h M30h BKDG,
  * 2.10.12 Memory Interleaving Modes).
  */
-static u8 f15_m30h_determine_channel(struct amd64_pvt *pvt, u64 sys_addr,
-				     u8 intlv_en, int num_dcts_intlv,
+अटल u8 f15_m30h_determine_channel(काष्ठा amd64_pvt *pvt, u64 sys_addr,
+				     u8 पूर्णांकlv_en, पूर्णांक num_dcts_पूर्णांकlv,
 				     u32 dct_sel)
-{
+अणु
 	u8 channel = 0;
 	u8 select;
 
-	if (!(intlv_en))
-		return (u8)(dct_sel);
+	अगर (!(पूर्णांकlv_en))
+		वापस (u8)(dct_sel);
 
-	if (num_dcts_intlv == 2) {
+	अगर (num_dcts_पूर्णांकlv == 2) अणु
 		select = (sys_addr >> 8) & 0x3;
 		channel = select ? 0x3 : 0;
-	} else if (num_dcts_intlv == 4) {
-		u8 intlv_addr = dct_sel_interleave_addr(pvt);
-		switch (intlv_addr) {
-		case 0x4:
+	पूर्ण अन्यथा अगर (num_dcts_पूर्णांकlv == 4) अणु
+		u8 पूर्णांकlv_addr = dct_sel_पूर्णांकerleave_addr(pvt);
+		चयन (पूर्णांकlv_addr) अणु
+		हाल 0x4:
 			channel = (sys_addr >> 8) & 0x3;
-			break;
-		case 0x5:
+			अवरोध;
+		हाल 0x5:
 			channel = (sys_addr >> 9) & 0x3;
-			break;
-		}
-	}
-	return channel;
-}
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	वापस channel;
+पूर्ण
 
 /*
- * Determine channel (DCT) based on the interleaving mode: F10h BKDG, 2.8.9 Memory
+ * Determine channel (DCT) based on the पूर्णांकerleaving mode: F10h BKDG, 2.8.9 Memory
  * Interleaving Modes.
  */
-static u8 f1x_determine_channel(struct amd64_pvt *pvt, u64 sys_addr,
-				bool hi_range_sel, u8 intlv_en)
-{
+अटल u8 f1x_determine_channel(काष्ठा amd64_pvt *pvt, u64 sys_addr,
+				bool hi_range_sel, u8 पूर्णांकlv_en)
+अणु
 	u8 dct_sel_high = (pvt->dct_sel_lo >> 1) & 1;
 
-	if (dct_ganging_enabled(pvt))
-		return 0;
+	अगर (dct_ganging_enabled(pvt))
+		वापस 0;
 
-	if (hi_range_sel)
-		return dct_sel_high;
+	अगर (hi_range_sel)
+		वापस dct_sel_high;
 
 	/*
-	 * see F2x110[DctSelIntLvAddr] - channel interleave mode
+	 * see F2x110[DctSelIntLvAddr] - channel पूर्णांकerleave mode
 	 */
-	if (dct_interleave_enabled(pvt)) {
-		u8 intlv_addr = dct_sel_interleave_addr(pvt);
+	अगर (dct_पूर्णांकerleave_enabled(pvt)) अणु
+		u8 पूर्णांकlv_addr = dct_sel_पूर्णांकerleave_addr(pvt);
 
-		/* return DCT select function: 0=DCT0, 1=DCT1 */
-		if (!intlv_addr)
-			return sys_addr >> 6 & 1;
+		/* वापस DCT select function: 0=DCT0, 1=DCT1 */
+		अगर (!पूर्णांकlv_addr)
+			वापस sys_addr >> 6 & 1;
 
-		if (intlv_addr & 0x2) {
-			u8 shift = intlv_addr & 0x1 ? 9 : 6;
-			u32 temp = hweight_long((u32) ((sys_addr >> 16) & 0x1F)) & 1;
+		अगर (पूर्णांकlv_addr & 0x2) अणु
+			u8 shअगरt = पूर्णांकlv_addr & 0x1 ? 9 : 6;
+			u32 temp = hweight_दीर्घ((u32) ((sys_addr >> 16) & 0x1F)) & 1;
 
-			return ((sys_addr >> shift) & 1) ^ temp;
-		}
+			वापस ((sys_addr >> shअगरt) & 1) ^ temp;
+		पूर्ण
 
-		if (intlv_addr & 0x4) {
-			u8 shift = intlv_addr & 0x1 ? 9 : 8;
+		अगर (पूर्णांकlv_addr & 0x4) अणु
+			u8 shअगरt = पूर्णांकlv_addr & 0x1 ? 9 : 8;
 
-			return (sys_addr >> shift) & 1;
-		}
+			वापस (sys_addr >> shअगरt) & 1;
+		पूर्ण
 
-		return (sys_addr >> (12 + hweight8(intlv_en))) & 1;
-	}
+		वापस (sys_addr >> (12 + hweight8(पूर्णांकlv_en))) & 1;
+	पूर्ण
 
-	if (dct_high_range_enabled(pvt))
-		return ~dct_sel_high & 1;
+	अगर (dct_high_range_enabled(pvt))
+		वापस ~dct_sel_high & 1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* Convert the sys_addr to the normalized DCT address */
-static u64 f1x_get_norm_dct_addr(struct amd64_pvt *pvt, u8 range,
+अटल u64 f1x_get_norm_dct_addr(काष्ठा amd64_pvt *pvt, u8 range,
 				 u64 sys_addr, bool hi_rng,
 				 u32 dct_sel_base_addr)
-{
+अणु
 	u64 chan_off;
 	u64 dram_base		= get_dram_base(pvt, range);
 	u64 hole_off		= f10_dhar_offset(pvt);
 	u64 dct_sel_base_off	= (u64)(pvt->dct_sel_hi & 0xFFFFFC00) << 16;
 
-	if (hi_rng) {
+	अगर (hi_rng) अणु
 		/*
-		 * if
+		 * अगर
 		 * base address of high range is below 4Gb
 		 * (bits [47:27] at [31:11])
 		 * DRAM address space on this DCT is hoisted above 4Gb	&&
 		 * sys_addr > 4Gb
 		 *
-		 *	remove hole offset from sys_addr
-		 * else
-		 *	remove high range offset from sys_addr
+		 *	हटाओ hole offset from sys_addr
+		 * अन्यथा
+		 *	हटाओ high range offset from sys_addr
 		 */
-		if ((!(dct_sel_base_addr >> 16) ||
+		अगर ((!(dct_sel_base_addr >> 16) ||
 		     dct_sel_base_addr < dhar_base(pvt)) &&
 		    dhar_valid(pvt) &&
 		    (sys_addr >= BIT_64(32)))
 			chan_off = hole_off;
-		else
+		अन्यथा
 			chan_off = dct_sel_base_off;
-	} else {
+	पूर्ण अन्यथा अणु
 		/*
-		 * if
+		 * अगर
 		 * we have a valid hole		&&
 		 * sys_addr > 4Gb
 		 *
-		 *	remove hole
-		 * else
-		 *	remove dram base to normalize to DCT address
+		 *	हटाओ hole
+		 * अन्यथा
+		 *	हटाओ dram base to normalize to DCT address
 		 */
-		if (dhar_valid(pvt) && (sys_addr >= BIT_64(32)))
+		अगर (dhar_valid(pvt) && (sys_addr >= BIT_64(32)))
 			chan_off = hole_off;
-		else
+		अन्यथा
 			chan_off = dram_base;
-	}
+	पूर्ण
 
-	return (sys_addr & GENMASK_ULL(47,6)) - (chan_off & GENMASK_ULL(47,23));
-}
+	वापस (sys_addr & GENMASK_ULL(47,6)) - (chan_off & GENMASK_ULL(47,23));
+पूर्ण
 
 /*
- * checks if the csrow passed in is marked as SPARED, if so returns the new
+ * checks अगर the csrow passed in is marked as SPARED, अगर so वापसs the new
  * spare row
  */
-static int f10_process_possible_spare(struct amd64_pvt *pvt, u8 dct, int csrow)
-{
-	int tmp_cs;
+अटल पूर्णांक f10_process_possible_spare(काष्ठा amd64_pvt *pvt, u8 dct, पूर्णांक csrow)
+अणु
+	पूर्णांक पंचांगp_cs;
 
-	if (online_spare_swap_done(pvt, dct) &&
-	    csrow == online_spare_bad_dramcs(pvt, dct)) {
+	अगर (online_spare_swap_करोne(pvt, dct) &&
+	    csrow == online_spare_bad_dramcs(pvt, dct)) अणु
 
-		for_each_chip_select(tmp_cs, dct, pvt) {
-			if (chip_select_base(tmp_cs, dct, pvt) & 0x2) {
-				csrow = tmp_cs;
-				break;
-			}
-		}
-	}
-	return csrow;
-}
+		क्रम_each_chip_select(पंचांगp_cs, dct, pvt) अणु
+			अगर (chip_select_base(पंचांगp_cs, dct, pvt) & 0x2) अणु
+				csrow = पंचांगp_cs;
+				अवरोध;
+			पूर्ण
+		पूर्ण
+	पूर्ण
+	वापस csrow;
+पूर्ण
 
 /*
- * Iterate over the DRAM DCT "base" and "mask" registers looking for a
- * SystemAddr match on the specified 'ChannelSelect' and 'NodeID'
+ * Iterate over the DRAM DCT "base" and "mask" रेजिस्टरs looking क्रम a
+ * SystemAddr match on the specअगरied 'ChannelSelect' and 'NodeID'
  *
  * Return:
  *	-EINVAL:  NOT FOUND
  *	0..csrow = Chip-Select Row
  */
-static int f1x_lookup_addr_in_dct(u64 in_addr, u8 nid, u8 dct)
-{
-	struct mem_ctl_info *mci;
-	struct amd64_pvt *pvt;
+अटल पूर्णांक f1x_lookup_addr_in_dct(u64 in_addr, u8 nid, u8 dct)
+अणु
+	काष्ठा mem_ctl_info *mci;
+	काष्ठा amd64_pvt *pvt;
 	u64 cs_base, cs_mask;
-	int cs_found = -EINVAL;
-	int csrow;
+	पूर्णांक cs_found = -EINVAL;
+	पूर्णांक csrow;
 
 	mci = edac_mc_find(nid);
-	if (!mci)
-		return cs_found;
+	अगर (!mci)
+		वापस cs_found;
 
 	pvt = mci->pvt_info;
 
 	edac_dbg(1, "input addr: 0x%llx, DCT: %d\n", in_addr, dct);
 
-	for_each_chip_select(csrow, dct, pvt) {
-		if (!csrow_enabled(csrow, dct, pvt))
-			continue;
+	क्रम_each_chip_select(csrow, dct, pvt) अणु
+		अगर (!csrow_enabled(csrow, dct, pvt))
+			जारी;
 
 		get_cs_base_and_mask(pvt, csrow, dct, &cs_base, &cs_mask);
 
@@ -2130,83 +2131,83 @@ static int f1x_lookup_addr_in_dct(u64 in_addr, u8 nid, u8 dct)
 		edac_dbg(1, "    (InputAddr & ~CSMask)=0x%llx (CSBase & ~CSMask)=0x%llx\n",
 			 (in_addr & cs_mask), (cs_base & cs_mask));
 
-		if ((in_addr & cs_mask) == (cs_base & cs_mask)) {
-			if (pvt->fam == 0x15 && pvt->model >= 0x30) {
+		अगर ((in_addr & cs_mask) == (cs_base & cs_mask)) अणु
+			अगर (pvt->fam == 0x15 && pvt->model >= 0x30) अणु
 				cs_found =  csrow;
-				break;
-			}
+				अवरोध;
+			पूर्ण
 			cs_found = f10_process_possible_spare(pvt, dct, csrow);
 
 			edac_dbg(1, " MATCH csrow=%d\n", cs_found);
-			break;
-		}
-	}
-	return cs_found;
-}
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	वापस cs_found;
+पूर्ण
 
 /*
- * See F2x10C. Non-interleaved graphics framebuffer memory under the 16G is
+ * See F2x10C. Non-पूर्णांकerleaved graphics framebuffer memory under the 16G is
  * swapped with a region located at the bottom of memory so that the GPU can use
- * the interleaved region and thus two channels.
+ * the पूर्णांकerleaved region and thus two channels.
  */
-static u64 f1x_swap_interleaved_region(struct amd64_pvt *pvt, u64 sys_addr)
-{
-	u32 swap_reg, swap_base, swap_limit, rgn_size, tmp_addr;
+अटल u64 f1x_swap_पूर्णांकerleaved_region(काष्ठा amd64_pvt *pvt, u64 sys_addr)
+अणु
+	u32 swap_reg, swap_base, swap_limit, rgn_size, पंचांगp_addr;
 
-	if (pvt->fam == 0x10) {
+	अगर (pvt->fam == 0x10) अणु
 		/* only revC3 and revE have that feature */
-		if (pvt->model < 4 || (pvt->model < 0xa && pvt->stepping < 3))
-			return sys_addr;
-	}
+		अगर (pvt->model < 4 || (pvt->model < 0xa && pvt->stepping < 3))
+			वापस sys_addr;
+	पूर्ण
 
-	amd64_read_pci_cfg(pvt->F2, SWAP_INTLV_REG, &swap_reg);
+	amd64_पढ़ो_pci_cfg(pvt->F2, SWAP_INTLV_REG, &swap_reg);
 
-	if (!(swap_reg & 0x1))
-		return sys_addr;
+	अगर (!(swap_reg & 0x1))
+		वापस sys_addr;
 
 	swap_base	= (swap_reg >> 3) & 0x7f;
 	swap_limit	= (swap_reg >> 11) & 0x7f;
 	rgn_size	= (swap_reg >> 20) & 0x7f;
-	tmp_addr	= sys_addr >> 27;
+	पंचांगp_addr	= sys_addr >> 27;
 
-	if (!(sys_addr >> 34) &&
-	    (((tmp_addr >= swap_base) &&
-	     (tmp_addr <= swap_limit)) ||
-	     (tmp_addr < rgn_size)))
-		return sys_addr ^ (u64)swap_base << 27;
+	अगर (!(sys_addr >> 34) &&
+	    (((पंचांगp_addr >= swap_base) &&
+	     (पंचांगp_addr <= swap_limit)) ||
+	     (पंचांगp_addr < rgn_size)))
+		वापस sys_addr ^ (u64)swap_base << 27;
 
-	return sys_addr;
-}
+	वापस sys_addr;
+पूर्ण
 
-/* For a given @dram_range, check if @sys_addr falls within it. */
-static int f1x_match_to_this_node(struct amd64_pvt *pvt, unsigned range,
-				  u64 sys_addr, int *chan_sel)
-{
-	int cs_found = -EINVAL;
+/* For a given @dram_range, check अगर @sys_addr falls within it. */
+अटल पूर्णांक f1x_match_to_this_node(काष्ठा amd64_pvt *pvt, अचिन्हित range,
+				  u64 sys_addr, पूर्णांक *chan_sel)
+अणु
+	पूर्णांक cs_found = -EINVAL;
 	u64 chan_addr;
 	u32 dct_sel_base;
 	u8 channel;
 	bool high_range = false;
 
 	u8 node_id    = dram_dst_node(pvt, range);
-	u8 intlv_en   = dram_intlv_en(pvt, range);
-	u32 intlv_sel = dram_intlv_sel(pvt, range);
+	u8 पूर्णांकlv_en   = dram_पूर्णांकlv_en(pvt, range);
+	u32 पूर्णांकlv_sel = dram_पूर्णांकlv_sel(pvt, range);
 
 	edac_dbg(1, "(range %d) SystemAddr= 0x%llx Limit=0x%llx\n",
 		 range, sys_addr, get_dram_limit(pvt, range));
 
-	if (dhar_valid(pvt) &&
+	अगर (dhar_valid(pvt) &&
 	    dhar_base(pvt) <= sys_addr &&
-	    sys_addr < BIT_64(32)) {
+	    sys_addr < BIT_64(32)) अणु
 		amd64_warn("Huh? Address is in the MMIO hole: 0x%016llx\n",
 			    sys_addr);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (intlv_en && (intlv_sel != ((sys_addr >> 12) & intlv_en)))
-		return -EINVAL;
+	अगर (पूर्णांकlv_en && (पूर्णांकlv_sel != ((sys_addr >> 12) & पूर्णांकlv_en)))
+		वापस -EINVAL;
 
-	sys_addr = f1x_swap_interleaved_region(pvt, sys_addr);
+	sys_addr = f1x_swap_पूर्णांकerleaved_region(pvt, sys_addr);
 
 	dct_sel_base = dct_sel_baseaddr(pvt);
 
@@ -2214,68 +2215,68 @@ static int f1x_match_to_this_node(struct amd64_pvt *pvt, unsigned range,
 	 * check whether addresses >= DctSelBaseAddr[47:27] are to be used to
 	 * select between DCT0 and DCT1.
 	 */
-	if (dct_high_range_enabled(pvt) &&
+	अगर (dct_high_range_enabled(pvt) &&
 	   !dct_ganging_enabled(pvt) &&
 	   ((sys_addr >> 27) >= (dct_sel_base >> 11)))
 		high_range = true;
 
-	channel = f1x_determine_channel(pvt, sys_addr, high_range, intlv_en);
+	channel = f1x_determine_channel(pvt, sys_addr, high_range, पूर्णांकlv_en);
 
 	chan_addr = f1x_get_norm_dct_addr(pvt, range, sys_addr,
 					  high_range, dct_sel_base);
 
-	/* Remove node interleaving, see F1x120 */
-	if (intlv_en)
-		chan_addr = ((chan_addr >> (12 + hweight8(intlv_en))) << 12) |
+	/* Remove node पूर्णांकerleaving, see F1x120 */
+	अगर (पूर्णांकlv_en)
+		chan_addr = ((chan_addr >> (12 + hweight8(पूर्णांकlv_en))) << 12) |
 			    (chan_addr & 0xfff);
 
-	/* remove channel interleave */
-	if (dct_interleave_enabled(pvt) &&
+	/* हटाओ channel पूर्णांकerleave */
+	अगर (dct_पूर्णांकerleave_enabled(pvt) &&
 	   !dct_high_range_enabled(pvt) &&
-	   !dct_ganging_enabled(pvt)) {
+	   !dct_ganging_enabled(pvt)) अणु
 
-		if (dct_sel_interleave_addr(pvt) != 1) {
-			if (dct_sel_interleave_addr(pvt) == 0x3)
+		अगर (dct_sel_पूर्णांकerleave_addr(pvt) != 1) अणु
+			अगर (dct_sel_पूर्णांकerleave_addr(pvt) == 0x3)
 				/* hash 9 */
 				chan_addr = ((chan_addr >> 10) << 9) |
 					     (chan_addr & 0x1ff);
-			else
+			अन्यथा
 				/* A[6] or hash 6 */
 				chan_addr = ((chan_addr >> 7) << 6) |
 					     (chan_addr & 0x3f);
-		} else
+		पूर्ण अन्यथा
 			/* A[12] */
 			chan_addr = ((chan_addr >> 13) << 12) |
 				     (chan_addr & 0xfff);
-	}
+	पूर्ण
 
 	edac_dbg(1, "   Normalized DCT addr: 0x%llx\n", chan_addr);
 
 	cs_found = f1x_lookup_addr_in_dct(chan_addr, node_id, channel);
 
-	if (cs_found >= 0)
+	अगर (cs_found >= 0)
 		*chan_sel = channel;
 
-	return cs_found;
-}
+	वापस cs_found;
+पूर्ण
 
-static int f15_m30h_match_to_this_node(struct amd64_pvt *pvt, unsigned range,
-					u64 sys_addr, int *chan_sel)
-{
-	int cs_found = -EINVAL;
-	int num_dcts_intlv = 0;
+अटल पूर्णांक f15_m30h_match_to_this_node(काष्ठा amd64_pvt *pvt, अचिन्हित range,
+					u64 sys_addr, पूर्णांक *chan_sel)
+अणु
+	पूर्णांक cs_found = -EINVAL;
+	पूर्णांक num_dcts_पूर्णांकlv = 0;
 	u64 chan_addr, chan_offset;
 	u64 dct_base, dct_limit;
-	u32 dct_cont_base_reg, dct_cont_limit_reg, tmp;
+	u32 dct_cont_base_reg, dct_cont_limit_reg, पंचांगp;
 	u8 channel, alias_channel, leg_mmio_hole, dct_sel, dct_offset_en;
 
 	u64 dhar_offset		= f10_dhar_offset(pvt);
-	u8 intlv_addr		= dct_sel_interleave_addr(pvt);
+	u8 पूर्णांकlv_addr		= dct_sel_पूर्णांकerleave_addr(pvt);
 	u8 node_id		= dram_dst_node(pvt, range);
-	u8 intlv_en		= dram_intlv_en(pvt, range);
+	u8 पूर्णांकlv_en		= dram_पूर्णांकlv_en(pvt, range);
 
-	amd64_read_pci_cfg(pvt->F1, DRAM_CONT_BASE, &dct_cont_base_reg);
-	amd64_read_pci_cfg(pvt->F1, DRAM_CONT_LIMIT, &dct_cont_limit_reg);
+	amd64_पढ़ो_pci_cfg(pvt->F1, DRAM_CONT_BASE, &dct_cont_base_reg);
+	amd64_पढ़ो_pci_cfg(pvt->F1, DRAM_CONT_LIMIT, &dct_cont_limit_reg);
 
 	dct_offset_en		= (u8) ((dct_cont_base_reg >> 3) & BIT(0));
 	dct_sel			= (u8) ((dct_cont_base_reg >> 4) & 0x7);
@@ -2283,81 +2284,81 @@ static int f15_m30h_match_to_this_node(struct amd64_pvt *pvt, unsigned range,
 	edac_dbg(1, "(range %d) SystemAddr= 0x%llx Limit=0x%llx\n",
 		 range, sys_addr, get_dram_limit(pvt, range));
 
-	if (!(get_dram_base(pvt, range)  <= sys_addr) &&
+	अगर (!(get_dram_base(pvt, range)  <= sys_addr) &&
 	    !(get_dram_limit(pvt, range) >= sys_addr))
-		return -EINVAL;
+		वापस -EINVAL;
 
-	if (dhar_valid(pvt) &&
+	अगर (dhar_valid(pvt) &&
 	    dhar_base(pvt) <= sys_addr &&
-	    sys_addr < BIT_64(32)) {
+	    sys_addr < BIT_64(32)) अणु
 		amd64_warn("Huh? Address is in the MMIO hole: 0x%016llx\n",
 			    sys_addr);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	/* Verify sys_addr is within DCT Range. */
+	/* Verअगरy sys_addr is within DCT Range. */
 	dct_base = (u64) dct_sel_baseaddr(pvt);
 	dct_limit = (dct_cont_limit_reg >> 11) & 0x1FFF;
 
-	if (!(dct_cont_base_reg & BIT(0)) &&
+	अगर (!(dct_cont_base_reg & BIT(0)) &&
 	    !(dct_base <= (sys_addr >> 27) &&
 	      dct_limit >= (sys_addr >> 27)))
-		return -EINVAL;
+		वापस -EINVAL;
 
-	/* Verify number of dct's that participate in channel interleaving. */
-	num_dcts_intlv = (int) hweight8(intlv_en);
+	/* Verअगरy number of dct's that participate in channel पूर्णांकerleaving. */
+	num_dcts_पूर्णांकlv = (पूर्णांक) hweight8(पूर्णांकlv_en);
 
-	if (!(num_dcts_intlv % 2 == 0) || (num_dcts_intlv > 4))
-		return -EINVAL;
+	अगर (!(num_dcts_पूर्णांकlv % 2 == 0) || (num_dcts_पूर्णांकlv > 4))
+		वापस -EINVAL;
 
-	if (pvt->model >= 0x60)
-		channel = f1x_determine_channel(pvt, sys_addr, false, intlv_en);
-	else
-		channel = f15_m30h_determine_channel(pvt, sys_addr, intlv_en,
-						     num_dcts_intlv, dct_sel);
+	अगर (pvt->model >= 0x60)
+		channel = f1x_determine_channel(pvt, sys_addr, false, पूर्णांकlv_en);
+	अन्यथा
+		channel = f15_m30h_determine_channel(pvt, sys_addr, पूर्णांकlv_en,
+						     num_dcts_पूर्णांकlv, dct_sel);
 
-	/* Verify we stay within the MAX number of channels allowed */
-	if (channel > 3)
-		return -EINVAL;
+	/* Verअगरy we stay within the MAX number of channels allowed */
+	अगर (channel > 3)
+		वापस -EINVAL;
 
 	leg_mmio_hole = (u8) (dct_cont_base_reg >> 1 & BIT(0));
 
 	/* Get normalized DCT addr */
-	if (leg_mmio_hole && (sys_addr >= BIT_64(32)))
+	अगर (leg_mmio_hole && (sys_addr >= BIT_64(32)))
 		chan_offset = dhar_offset;
-	else
+	अन्यथा
 		chan_offset = dct_base << 27;
 
 	chan_addr = sys_addr - chan_offset;
 
-	/* remove channel interleave */
-	if (num_dcts_intlv == 2) {
-		if (intlv_addr == 0x4)
+	/* हटाओ channel पूर्णांकerleave */
+	अगर (num_dcts_पूर्णांकlv == 2) अणु
+		अगर (पूर्णांकlv_addr == 0x4)
 			chan_addr = ((chan_addr >> 9) << 8) |
 						(chan_addr & 0xff);
-		else if (intlv_addr == 0x5)
+		अन्यथा अगर (पूर्णांकlv_addr == 0x5)
 			chan_addr = ((chan_addr >> 10) << 9) |
 						(chan_addr & 0x1ff);
-		else
-			return -EINVAL;
+		अन्यथा
+			वापस -EINVAL;
 
-	} else if (num_dcts_intlv == 4) {
-		if (intlv_addr == 0x4)
+	पूर्ण अन्यथा अगर (num_dcts_पूर्णांकlv == 4) अणु
+		अगर (पूर्णांकlv_addr == 0x4)
 			chan_addr = ((chan_addr >> 10) << 8) |
 							(chan_addr & 0xff);
-		else if (intlv_addr == 0x5)
+		अन्यथा अगर (पूर्णांकlv_addr == 0x5)
 			chan_addr = ((chan_addr >> 11) << 9) |
 							(chan_addr & 0x1ff);
-		else
-			return -EINVAL;
-	}
+		अन्यथा
+			वापस -EINVAL;
+	पूर्ण
 
-	if (dct_offset_en) {
-		amd64_read_pci_cfg(pvt->F1,
-				   DRAM_CONT_HIGH_OFF + (int) channel * 4,
-				   &tmp);
-		chan_addr +=  (u64) ((tmp >> 11) & 0xfff) << 27;
-	}
+	अगर (dct_offset_en) अणु
+		amd64_पढ़ो_pci_cfg(pvt->F1,
+				   DRAM_CONT_HIGH_OFF + (पूर्णांक) channel * 4,
+				   &पंचांगp);
+		chan_addr +=  (u64) ((पंचांगp >> 11) & 0xfff) << 27;
+	पूर्ण
 
 	f15h_select_dct(pvt, channel);
 
@@ -2365,48 +2366,48 @@ static int f15_m30h_match_to_this_node(struct amd64_pvt *pvt, unsigned range,
 
 	/*
 	 * Find Chip select:
-	 * if channel = 3, then alias it to 1. This is because, in F15 M30h,
-	 * there is support for 4 DCT's, but only 2 are currently functional.
-	 * They are DCT0 and DCT3. But we have read all registers of DCT3 into
+	 * अगर channel = 3, then alias it to 1. This is because, in F15 M30h,
+	 * there is support क्रम 4 DCT's, but only 2 are currently functional.
+	 * They are DCT0 and DCT3. But we have पढ़ो all रेजिस्टरs of DCT3 पूर्णांकo
 	 * pvt->csels[1]. So we need to use '1' here to get correct info.
-	 * Refer F15 M30h BKDG Section 2.10 and 2.10.3 for clarifications.
+	 * Refer F15 M30h BKDG Section 2.10 and 2.10.3 क्रम clarअगरications.
 	 */
 	alias_channel =  (channel == 3) ? 1 : channel;
 
 	cs_found = f1x_lookup_addr_in_dct(chan_addr, node_id, alias_channel);
 
-	if (cs_found >= 0)
+	अगर (cs_found >= 0)
 		*chan_sel = alias_channel;
 
-	return cs_found;
-}
+	वापस cs_found;
+पूर्ण
 
-static int f1x_translate_sysaddr_to_cs(struct amd64_pvt *pvt,
+अटल पूर्णांक f1x_translate_sysaddr_to_cs(काष्ठा amd64_pvt *pvt,
 					u64 sys_addr,
-					int *chan_sel)
-{
-	int cs_found = -EINVAL;
-	unsigned range;
+					पूर्णांक *chan_sel)
+अणु
+	पूर्णांक cs_found = -EINVAL;
+	अचिन्हित range;
 
-	for (range = 0; range < DRAM_RANGES; range++) {
-		if (!dram_rw(pvt, range))
-			continue;
+	क्रम (range = 0; range < DRAM_RANGES; range++) अणु
+		अगर (!dram_rw(pvt, range))
+			जारी;
 
-		if (pvt->fam == 0x15 && pvt->model >= 0x30)
+		अगर (pvt->fam == 0x15 && pvt->model >= 0x30)
 			cs_found = f15_m30h_match_to_this_node(pvt, range,
 							       sys_addr,
 							       chan_sel);
 
-		else if ((get_dram_base(pvt, range)  <= sys_addr) &&
-			 (get_dram_limit(pvt, range) >= sys_addr)) {
+		अन्यथा अगर ((get_dram_base(pvt, range)  <= sys_addr) &&
+			 (get_dram_limit(pvt, range) >= sys_addr)) अणु
 			cs_found = f1x_match_to_this_node(pvt, range,
 							  sys_addr, chan_sel);
-			if (cs_found >= 0)
-				break;
-		}
-	}
-	return cs_found;
-}
+			अगर (cs_found >= 0)
+				अवरोध;
+		पूर्ण
+	पूर्ण
+	वापस cs_found;
+पूर्ण
 
 /*
  * For reference see "2.8.5 Routing DRAM Requests" in F10 BKDG. This code maps
@@ -2415,68 +2416,68 @@ static int f1x_translate_sysaddr_to_cs(struct amd64_pvt *pvt,
  * The @sys_addr is usually an error address received from the hardware
  * (MCX_ADDR).
  */
-static void f1x_map_sysaddr_to_csrow(struct mem_ctl_info *mci, u64 sys_addr,
-				     struct err_info *err)
-{
-	struct amd64_pvt *pvt = mci->pvt_info;
+अटल व्योम f1x_map_sysaddr_to_csrow(काष्ठा mem_ctl_info *mci, u64 sys_addr,
+				     काष्ठा err_info *err)
+अणु
+	काष्ठा amd64_pvt *pvt = mci->pvt_info;
 
 	error_address_to_page_and_offset(sys_addr, err);
 
 	err->csrow = f1x_translate_sysaddr_to_cs(pvt, sys_addr, &err->channel);
-	if (err->csrow < 0) {
+	अगर (err->csrow < 0) अणु
 		err->err_code = ERR_CSROW;
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/*
-	 * We need the syndromes for channel detection only when we're
-	 * ganged. Otherwise @chan should already contain the channel at
-	 * this point.
+	 * We need the syndromes क्रम channel detection only when we're
+	 * ganged. Otherwise @chan should alपढ़ोy contain the channel at
+	 * this poपूर्णांक.
 	 */
-	if (dct_ganging_enabled(pvt))
+	अगर (dct_ganging_enabled(pvt))
 		err->channel = get_channel_from_ecc_syndrome(mci, err->syndrome);
-}
+पूर्ण
 
 /*
  * debug routine to display the memory sizes of all logical DIMMs and its
  * CSROWs
  */
-static void debug_display_dimm_sizes(struct amd64_pvt *pvt, u8 ctrl)
-{
-	int dimm, size0, size1;
+अटल व्योम debug_display_dimm_sizes(काष्ठा amd64_pvt *pvt, u8 ctrl)
+अणु
+	पूर्णांक dimm, size0, size1;
 	u32 *dcsb = ctrl ? pvt->csels[1].csbases : pvt->csels[0].csbases;
 	u32 dbam  = ctrl ? pvt->dbam1 : pvt->dbam0;
 
-	if (pvt->fam == 0xf) {
+	अगर (pvt->fam == 0xf) अणु
 		/* K8 families < revF not supported yet */
-	       if (pvt->ext_model < K8_REV_F)
-			return;
-	       else
+	       अगर (pvt->ext_model < K8_REV_F)
+			वापस;
+	       अन्यथा
 		       WARN_ON(ctrl != 0);
-	}
+	पूर्ण
 
-	if (pvt->fam == 0x10) {
+	अगर (pvt->fam == 0x10) अणु
 		dbam = (ctrl && !dct_ganging_enabled(pvt)) ? pvt->dbam1
 							   : pvt->dbam0;
 		dcsb = (ctrl && !dct_ganging_enabled(pvt)) ?
 				 pvt->csels[1].csbases :
 				 pvt->csels[0].csbases;
-	} else if (ctrl) {
+	पूर्ण अन्यथा अगर (ctrl) अणु
 		dbam = pvt->dbam0;
 		dcsb = pvt->csels[1].csbases;
-	}
+	पूर्ण
 	edac_dbg(1, "F2x%d80 (DRAM Bank Address Mapping): 0x%08x\n",
 		 ctrl, dbam);
 
-	edac_printk(KERN_DEBUG, EDAC_MC, "DCT%d chip selects:\n", ctrl);
+	edac_prपूर्णांकk(KERN_DEBUG, EDAC_MC, "DCT%d chip selects:\n", ctrl);
 
-	/* Dump memory sizes for DIMM and its CSROWs */
-	for (dimm = 0; dimm < 4; dimm++) {
+	/* Dump memory sizes क्रम DIMM and its CSROWs */
+	क्रम (dimm = 0; dimm < 4; dimm++) अणु
 
 		size0 = 0;
-		if (dcsb[dimm*2] & DCSB_CS_ENABLE)
+		अगर (dcsb[dimm*2] & DCSB_CS_ENABLE)
 			/*
-			 * For F15m60h, we need multiplier for LRDIMM cs_size
+			 * For F15m60h, we need multiplier क्रम LRDIMM cs_size
 			 * calculation. We pass dimm value to the dbam_to_cs
 			 * mapper so we can find the multiplier from the
 			 * corresponding DCSM.
@@ -2486,7 +2487,7 @@ static void debug_display_dimm_sizes(struct amd64_pvt *pvt, u8 ctrl)
 						     dimm);
 
 		size1 = 0;
-		if (dcsb[dimm*2 + 1] & DCSB_CS_ENABLE)
+		अगर (dcsb[dimm*2 + 1] & DCSB_CS_ENABLE)
 			size1 = pvt->ops->dbam_to_cs(pvt, ctrl,
 						     DBAM_DIMM(dimm, dbam),
 						     dimm);
@@ -2494,157 +2495,157 @@ static void debug_display_dimm_sizes(struct amd64_pvt *pvt, u8 ctrl)
 		amd64_info(EDAC_MC ": %d: %5dMB %d: %5dMB\n",
 				dimm * 2,     size0,
 				dimm * 2 + 1, size1);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static struct amd64_family_type family_types[] = {
-	[K8_CPUS] = {
+अटल काष्ठा amd64_family_type family_types[] = अणु
+	[K8_CPUS] = अणु
 		.ctl_name = "K8",
 		.f1_id = PCI_DEVICE_ID_AMD_K8_NB_ADDRMAP,
 		.f2_id = PCI_DEVICE_ID_AMD_K8_NB_MEMCTL,
 		.max_mcs = 2,
-		.ops = {
+		.ops = अणु
 			.early_channel_count	= k8_early_channel_count,
 			.map_sysaddr_to_csrow	= k8_map_sysaddr_to_csrow,
 			.dbam_to_cs		= k8_dbam_to_chip_select,
-		}
-	},
-	[F10_CPUS] = {
+		पूर्ण
+	पूर्ण,
+	[F10_CPUS] = अणु
 		.ctl_name = "F10h",
 		.f1_id = PCI_DEVICE_ID_AMD_10H_NB_MAP,
 		.f2_id = PCI_DEVICE_ID_AMD_10H_NB_DRAM,
 		.max_mcs = 2,
-		.ops = {
+		.ops = अणु
 			.early_channel_count	= f1x_early_channel_count,
 			.map_sysaddr_to_csrow	= f1x_map_sysaddr_to_csrow,
 			.dbam_to_cs		= f10_dbam_to_chip_select,
-		}
-	},
-	[F15_CPUS] = {
+		पूर्ण
+	पूर्ण,
+	[F15_CPUS] = अणु
 		.ctl_name = "F15h",
 		.f1_id = PCI_DEVICE_ID_AMD_15H_NB_F1,
 		.f2_id = PCI_DEVICE_ID_AMD_15H_NB_F2,
 		.max_mcs = 2,
-		.ops = {
+		.ops = अणु
 			.early_channel_count	= f1x_early_channel_count,
 			.map_sysaddr_to_csrow	= f1x_map_sysaddr_to_csrow,
 			.dbam_to_cs		= f15_dbam_to_chip_select,
-		}
-	},
-	[F15_M30H_CPUS] = {
+		पूर्ण
+	पूर्ण,
+	[F15_M30H_CPUS] = अणु
 		.ctl_name = "F15h_M30h",
 		.f1_id = PCI_DEVICE_ID_AMD_15H_M30H_NB_F1,
 		.f2_id = PCI_DEVICE_ID_AMD_15H_M30H_NB_F2,
 		.max_mcs = 2,
-		.ops = {
+		.ops = अणु
 			.early_channel_count	= f1x_early_channel_count,
 			.map_sysaddr_to_csrow	= f1x_map_sysaddr_to_csrow,
 			.dbam_to_cs		= f16_dbam_to_chip_select,
-		}
-	},
-	[F15_M60H_CPUS] = {
+		पूर्ण
+	पूर्ण,
+	[F15_M60H_CPUS] = अणु
 		.ctl_name = "F15h_M60h",
 		.f1_id = PCI_DEVICE_ID_AMD_15H_M60H_NB_F1,
 		.f2_id = PCI_DEVICE_ID_AMD_15H_M60H_NB_F2,
 		.max_mcs = 2,
-		.ops = {
+		.ops = अणु
 			.early_channel_count	= f1x_early_channel_count,
 			.map_sysaddr_to_csrow	= f1x_map_sysaddr_to_csrow,
 			.dbam_to_cs		= f15_m60h_dbam_to_chip_select,
-		}
-	},
-	[F16_CPUS] = {
+		पूर्ण
+	पूर्ण,
+	[F16_CPUS] = अणु
 		.ctl_name = "F16h",
 		.f1_id = PCI_DEVICE_ID_AMD_16H_NB_F1,
 		.f2_id = PCI_DEVICE_ID_AMD_16H_NB_F2,
 		.max_mcs = 2,
-		.ops = {
+		.ops = अणु
 			.early_channel_count	= f1x_early_channel_count,
 			.map_sysaddr_to_csrow	= f1x_map_sysaddr_to_csrow,
 			.dbam_to_cs		= f16_dbam_to_chip_select,
-		}
-	},
-	[F16_M30H_CPUS] = {
+		पूर्ण
+	पूर्ण,
+	[F16_M30H_CPUS] = अणु
 		.ctl_name = "F16h_M30h",
 		.f1_id = PCI_DEVICE_ID_AMD_16H_M30H_NB_F1,
 		.f2_id = PCI_DEVICE_ID_AMD_16H_M30H_NB_F2,
 		.max_mcs = 2,
-		.ops = {
+		.ops = अणु
 			.early_channel_count	= f1x_early_channel_count,
 			.map_sysaddr_to_csrow	= f1x_map_sysaddr_to_csrow,
 			.dbam_to_cs		= f16_dbam_to_chip_select,
-		}
-	},
-	[F17_CPUS] = {
+		पूर्ण
+	पूर्ण,
+	[F17_CPUS] = अणु
 		.ctl_name = "F17h",
 		.f0_id = PCI_DEVICE_ID_AMD_17H_DF_F0,
 		.f6_id = PCI_DEVICE_ID_AMD_17H_DF_F6,
 		.max_mcs = 2,
-		.ops = {
+		.ops = अणु
 			.early_channel_count	= f17_early_channel_count,
 			.dbam_to_cs		= f17_addr_mask_to_cs_size,
-		}
-	},
-	[F17_M10H_CPUS] = {
+		पूर्ण
+	पूर्ण,
+	[F17_M10H_CPUS] = अणु
 		.ctl_name = "F17h_M10h",
 		.f0_id = PCI_DEVICE_ID_AMD_17H_M10H_DF_F0,
 		.f6_id = PCI_DEVICE_ID_AMD_17H_M10H_DF_F6,
 		.max_mcs = 2,
-		.ops = {
+		.ops = अणु
 			.early_channel_count	= f17_early_channel_count,
 			.dbam_to_cs		= f17_addr_mask_to_cs_size,
-		}
-	},
-	[F17_M30H_CPUS] = {
+		पूर्ण
+	पूर्ण,
+	[F17_M30H_CPUS] = अणु
 		.ctl_name = "F17h_M30h",
 		.f0_id = PCI_DEVICE_ID_AMD_17H_M30H_DF_F0,
 		.f6_id = PCI_DEVICE_ID_AMD_17H_M30H_DF_F6,
 		.max_mcs = 8,
-		.ops = {
+		.ops = अणु
 			.early_channel_count	= f17_early_channel_count,
 			.dbam_to_cs		= f17_addr_mask_to_cs_size,
-		}
-	},
-	[F17_M60H_CPUS] = {
+		पूर्ण
+	पूर्ण,
+	[F17_M60H_CPUS] = अणु
 		.ctl_name = "F17h_M60h",
 		.f0_id = PCI_DEVICE_ID_AMD_17H_M60H_DF_F0,
 		.f6_id = PCI_DEVICE_ID_AMD_17H_M60H_DF_F6,
 		.max_mcs = 2,
-		.ops = {
+		.ops = अणु
 			.early_channel_count	= f17_early_channel_count,
 			.dbam_to_cs		= f17_addr_mask_to_cs_size,
-		}
-	},
-	[F17_M70H_CPUS] = {
+		पूर्ण
+	पूर्ण,
+	[F17_M70H_CPUS] = अणु
 		.ctl_name = "F17h_M70h",
 		.f0_id = PCI_DEVICE_ID_AMD_17H_M70H_DF_F0,
 		.f6_id = PCI_DEVICE_ID_AMD_17H_M70H_DF_F6,
 		.max_mcs = 2,
-		.ops = {
+		.ops = अणु
 			.early_channel_count	= f17_early_channel_count,
 			.dbam_to_cs		= f17_addr_mask_to_cs_size,
-		}
-	},
-	[F19_CPUS] = {
+		पूर्ण
+	पूर्ण,
+	[F19_CPUS] = अणु
 		.ctl_name = "F19h",
 		.f0_id = PCI_DEVICE_ID_AMD_19H_DF_F0,
 		.f6_id = PCI_DEVICE_ID_AMD_19H_DF_F6,
 		.max_mcs = 8,
-		.ops = {
+		.ops = अणु
 			.early_channel_count	= f17_early_channel_count,
 			.dbam_to_cs		= f17_addr_mask_to_cs_size,
-		}
-	},
-};
+		पूर्ण
+	पूर्ण,
+पूर्ण;
 
 /*
- * These are tables of eigenvectors (one per line) which can be used for the
- * construction of the syndrome tables. The modified syndrome search algorithm
+ * These are tables of eigenvectors (one per line) which can be used क्रम the
+ * स्थिरruction of the syndrome tables. The modअगरied syndrome search algorithm
  * uses those to find the symbol in error and thus the DIMM.
  *
  * Algorithm courtesy of Ross LaFetra from AMD.
  */
-static const u16 x4_vectors[] = {
+अटल स्थिर u16 x4_vectors[] = अणु
 	0x2f57, 0x1afe, 0x66cc, 0xdd88,
 	0x11eb, 0x3396, 0x7f4c, 0xeac8,
 	0x0001, 0x0002, 0x0004, 0x0008,
@@ -2681,9 +2682,9 @@ static const u16 x4_vectors[] = {
 	0x1905, 0x2e0a, 0x5804, 0xac08,
 	0x213f, 0x132a, 0xadfc, 0x5ba8,
 	0x19a9, 0x2efe, 0xb5cc, 0x6f88,
-};
+पूर्ण;
 
-static const u16 x8_vectors[] = {
+अटल स्थिर u16 x8_vectors[] = अणु
 	0x0145, 0x028a, 0x2374, 0x43c8, 0xa1f0, 0x0520, 0x0a40, 0x1480,
 	0x0211, 0x0422, 0x0844, 0x1088, 0x01b0, 0x44e0, 0x23c0, 0xed80,
 	0x1011, 0x0116, 0x022c, 0x0458, 0x08b0, 0x8c60, 0x2740, 0x4e80,
@@ -2703,178 +2704,178 @@ static const u16 x8_vectors[] = {
 	0x0101, 0x0202, 0x0404, 0x0808, 0x1010, 0x2020, 0x4040, 0x8080,
 	0x0001, 0x0002, 0x0004, 0x0008, 0x0010, 0x0020, 0x0040, 0x0080,
 	0x0100, 0x0200, 0x0400, 0x0800, 0x1000, 0x2000, 0x4000, 0x8000,
-};
+पूर्ण;
 
-static int decode_syndrome(u16 syndrome, const u16 *vectors, unsigned num_vecs,
-			   unsigned v_dim)
-{
-	unsigned int i, err_sym;
+अटल पूर्णांक decode_syndrome(u16 syndrome, स्थिर u16 *vectors, अचिन्हित num_vecs,
+			   अचिन्हित v_dim)
+अणु
+	अचिन्हित पूर्णांक i, err_sym;
 
-	for (err_sym = 0; err_sym < num_vecs / v_dim; err_sym++) {
+	क्रम (err_sym = 0; err_sym < num_vecs / v_dim; err_sym++) अणु
 		u16 s = syndrome;
-		unsigned v_idx =  err_sym * v_dim;
-		unsigned v_end = (err_sym + 1) * v_dim;
+		अचिन्हित v_idx =  err_sym * v_dim;
+		अचिन्हित v_end = (err_sym + 1) * v_dim;
 
 		/* walk over all 16 bits of the syndrome */
-		for (i = 1; i < (1U << 16); i <<= 1) {
+		क्रम (i = 1; i < (1U << 16); i <<= 1) अणु
 
-			/* if bit is set in that eigenvector... */
-			if (v_idx < v_end && vectors[v_idx] & i) {
+			/* अगर bit is set in that eigenvector... */
+			अगर (v_idx < v_end && vectors[v_idx] & i) अणु
 				u16 ev_comp = vectors[v_idx++];
 
-				/* ... and bit set in the modified syndrome, */
-				if (s & i) {
-					/* remove it. */
+				/* ... and bit set in the modअगरied syndrome, */
+				अगर (s & i) अणु
+					/* हटाओ it. */
 					s ^= ev_comp;
 
-					if (!s)
-						return err_sym;
-				}
+					अगर (!s)
+						वापस err_sym;
+				पूर्ण
 
-			} else if (s & i)
+			पूर्ण अन्यथा अगर (s & i)
 				/* can't get to zero, move to next symbol */
-				break;
-		}
-	}
+				अवरोध;
+		पूर्ण
+	पूर्ण
 
 	edac_dbg(0, "syndrome(%x) not found\n", syndrome);
-	return -1;
-}
+	वापस -1;
+पूर्ण
 
-static int map_err_sym_to_channel(int err_sym, int sym_size)
-{
-	if (sym_size == 4)
-		switch (err_sym) {
-		case 0x20:
-		case 0x21:
-			return 0;
-		case 0x22:
-		case 0x23:
-			return 1;
-		default:
-			return err_sym >> 4;
-		}
+अटल पूर्णांक map_err_sym_to_channel(पूर्णांक err_sym, पूर्णांक sym_size)
+अणु
+	अगर (sym_size == 4)
+		चयन (err_sym) अणु
+		हाल 0x20:
+		हाल 0x21:
+			वापस 0;
+		हाल 0x22:
+		हाल 0x23:
+			वापस 1;
+		शेष:
+			वापस err_sym >> 4;
+		पूर्ण
 	/* x8 symbols */
-	else
-		switch (err_sym) {
+	अन्यथा
+		चयन (err_sym) अणु
 		/* imaginary bits not in a DIMM */
-		case 0x10:
+		हाल 0x10:
 			WARN(1, KERN_ERR "Invalid error symbol: 0x%x\n",
 					  err_sym);
-			return -1;
-		case 0x11:
-			return 0;
-		case 0x12:
-			return 1;
-		default:
-			return err_sym >> 3;
-		}
-	return -1;
-}
+			वापस -1;
+		हाल 0x11:
+			वापस 0;
+		हाल 0x12:
+			वापस 1;
+		शेष:
+			वापस err_sym >> 3;
+		पूर्ण
+	वापस -1;
+पूर्ण
 
-static int get_channel_from_ecc_syndrome(struct mem_ctl_info *mci, u16 syndrome)
-{
-	struct amd64_pvt *pvt = mci->pvt_info;
-	int err_sym = -1;
+अटल पूर्णांक get_channel_from_ecc_syndrome(काष्ठा mem_ctl_info *mci, u16 syndrome)
+अणु
+	काष्ठा amd64_pvt *pvt = mci->pvt_info;
+	पूर्णांक err_sym = -1;
 
-	if (pvt->ecc_sym_sz == 8)
+	अगर (pvt->ecc_sym_sz == 8)
 		err_sym = decode_syndrome(syndrome, x8_vectors,
 					  ARRAY_SIZE(x8_vectors),
 					  pvt->ecc_sym_sz);
-	else if (pvt->ecc_sym_sz == 4)
+	अन्यथा अगर (pvt->ecc_sym_sz == 4)
 		err_sym = decode_syndrome(syndrome, x4_vectors,
 					  ARRAY_SIZE(x4_vectors),
 					  pvt->ecc_sym_sz);
-	else {
+	अन्यथा अणु
 		amd64_warn("Illegal syndrome type: %u\n", pvt->ecc_sym_sz);
-		return err_sym;
-	}
+		वापस err_sym;
+	पूर्ण
 
-	return map_err_sym_to_channel(err_sym, pvt->ecc_sym_sz);
-}
+	वापस map_err_sym_to_channel(err_sym, pvt->ecc_sym_sz);
+पूर्ण
 
-static void __log_ecc_error(struct mem_ctl_info *mci, struct err_info *err,
+अटल व्योम __log_ecc_error(काष्ठा mem_ctl_info *mci, काष्ठा err_info *err,
 			    u8 ecc_type)
-{
-	enum hw_event_mc_err_type err_type;
-	const char *string;
+अणु
+	क्रमागत hw_event_mc_err_type err_type;
+	स्थिर अक्षर *string;
 
-	if (ecc_type == 2)
+	अगर (ecc_type == 2)
 		err_type = HW_EVENT_ERR_CORRECTED;
-	else if (ecc_type == 1)
+	अन्यथा अगर (ecc_type == 1)
 		err_type = HW_EVENT_ERR_UNCORRECTED;
-	else if (ecc_type == 3)
+	अन्यथा अगर (ecc_type == 3)
 		err_type = HW_EVENT_ERR_DEFERRED;
-	else {
+	अन्यथा अणु
 		WARN(1, "Something is rotten in the state of Denmark.\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	switch (err->err_code) {
-	case DECODE_OK:
+	चयन (err->err_code) अणु
+	हाल DECODE_OK:
 		string = "";
-		break;
-	case ERR_NODE:
+		अवरोध;
+	हाल ERR_NODE:
 		string = "Failed to map error addr to a node";
-		break;
-	case ERR_CSROW:
+		अवरोध;
+	हाल ERR_CSROW:
 		string = "Failed to map error addr to a csrow";
-		break;
-	case ERR_CHANNEL:
+		अवरोध;
+	हाल ERR_CHANNEL:
 		string = "Unknown syndrome - possible error reporting race";
-		break;
-	case ERR_SYND:
+		अवरोध;
+	हाल ERR_SYND:
 		string = "MCA_SYND not valid - unknown syndrome and csrow";
-		break;
-	case ERR_NORM_ADDR:
+		अवरोध;
+	हाल ERR_NORM_ADDR:
 		string = "Cannot decode normalized address";
-		break;
-	default:
+		अवरोध;
+	शेष:
 		string = "WTF error";
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	edac_mc_handle_error(err_type, mci, 1,
 			     err->page, err->offset, err->syndrome,
 			     err->csrow, err->channel, -1,
 			     string, "");
-}
+पूर्ण
 
-static inline void decode_bus_error(int node_id, struct mce *m)
-{
-	struct mem_ctl_info *mci;
-	struct amd64_pvt *pvt;
+अटल अंतरभूत व्योम decode_bus_error(पूर्णांक node_id, काष्ठा mce *m)
+अणु
+	काष्ठा mem_ctl_info *mci;
+	काष्ठा amd64_pvt *pvt;
 	u8 ecc_type = (m->status >> 45) & 0x3;
 	u8 xec = XEC(m->status, 0x1f);
 	u16 ec = EC(m->status);
 	u64 sys_addr;
-	struct err_info err;
+	काष्ठा err_info err;
 
 	mci = edac_mc_find(node_id);
-	if (!mci)
-		return;
+	अगर (!mci)
+		वापस;
 
 	pvt = mci->pvt_info;
 
-	/* Bail out early if this was an 'observed' error */
-	if (PP(ec) == NBSL_PP_OBS)
-		return;
+	/* Bail out early अगर this was an 'observed' error */
+	अगर (PP(ec) == NBSL_PP_OBS)
+		वापस;
 
 	/* Do only ECC errors */
-	if (xec && xec != F10_NBSL_EXT_ERR_ECC)
-		return;
+	अगर (xec && xec != F10_NBSL_EXT_ERR_ECC)
+		वापस;
 
-	memset(&err, 0, sizeof(err));
+	स_रखो(&err, 0, माप(err));
 
 	sys_addr = get_error_address(pvt, m);
 
-	if (ecc_type == 2)
+	अगर (ecc_type == 2)
 		err.syndrome = extract_syndrome(m->status);
 
 	pvt->ops->map_sysaddr_to_csrow(mci, sys_addr, &err);
 
 	__log_ecc_error(mci, &err, ecc_type);
-}
+पूर्ण
 
 /*
  * To find the UMC channel represented by this bank we need to match on its
@@ -2885,194 +2886,194 @@ static inline void decode_bus_error(int node_id, struct mce *m)
  * the instance_id. For example, instance_id=0xYXXXXX where Y is the channel
  * number.
  */
-static int find_umc_channel(struct mce *m)
-{
-	return (m->ipid & GENMASK(31, 0)) >> 20;
-}
+अटल पूर्णांक find_umc_channel(काष्ठा mce *m)
+अणु
+	वापस (m->ipid & GENMASK(31, 0)) >> 20;
+पूर्ण
 
-static void decode_umc_error(int node_id, struct mce *m)
-{
+अटल व्योम decode_umc_error(पूर्णांक node_id, काष्ठा mce *m)
+अणु
 	u8 ecc_type = (m->status >> 45) & 0x3;
-	struct mem_ctl_info *mci;
-	struct amd64_pvt *pvt;
-	struct err_info err;
+	काष्ठा mem_ctl_info *mci;
+	काष्ठा amd64_pvt *pvt;
+	काष्ठा err_info err;
 	u64 sys_addr;
 
 	mci = edac_mc_find(node_id);
-	if (!mci)
-		return;
+	अगर (!mci)
+		वापस;
 
 	pvt = mci->pvt_info;
 
-	memset(&err, 0, sizeof(err));
+	स_रखो(&err, 0, माप(err));
 
-	if (m->status & MCI_STATUS_DEFERRED)
+	अगर (m->status & MCI_STATUS_DEFERRED)
 		ecc_type = 3;
 
 	err.channel = find_umc_channel(m);
 
-	if (!(m->status & MCI_STATUS_SYNDV)) {
+	अगर (!(m->status & MCI_STATUS_SYNDV)) अणु
 		err.err_code = ERR_SYND;
-		goto log_error;
-	}
+		जाओ log_error;
+	पूर्ण
 
-	if (ecc_type == 2) {
+	अगर (ecc_type == 2) अणु
 		u8 length = (m->synd >> 18) & 0x3f;
 
-		if (length)
+		अगर (length)
 			err.syndrome = (m->synd >> 32) & GENMASK(length - 1, 0);
-		else
+		अन्यथा
 			err.err_code = ERR_CHANNEL;
-	}
+	पूर्ण
 
 	err.csrow = m->synd & 0x7;
 
-	if (umc_normaddr_to_sysaddr(m->addr, pvt->mc_node_id, err.channel, &sys_addr)) {
+	अगर (umc_normaddr_to_sysaddr(m->addr, pvt->mc_node_id, err.channel, &sys_addr)) अणु
 		err.err_code = ERR_NORM_ADDR;
-		goto log_error;
-	}
+		जाओ log_error;
+	पूर्ण
 
 	error_address_to_page_and_offset(sys_addr, &err);
 
 log_error:
 	__log_ecc_error(mci, &err, ecc_type);
-}
+पूर्ण
 
 /*
  * Use pvt->F3 which contains the F3 CPU PCI device to get the related
  * F1 (AddrMap) and F2 (Dct) devices. Return negative value on error.
- * Reserve F0 and F6 on systems with a UMC.
+ * Reserve F0 and F6 on प्रणालीs with a UMC.
  */
-static int
-reserve_mc_sibling_devs(struct amd64_pvt *pvt, u16 pci_id1, u16 pci_id2)
-{
-	if (pvt->umc) {
-		pvt->F0 = pci_get_related_function(pvt->F3->vendor, pci_id1, pvt->F3);
-		if (!pvt->F0) {
+अटल पूर्णांक
+reserve_mc_sibling_devs(काष्ठा amd64_pvt *pvt, u16 pci_id1, u16 pci_id2)
+अणु
+	अगर (pvt->umc) अणु
+		pvt->F0 = pci_get_related_function(pvt->F3->venकरोr, pci_id1, pvt->F3);
+		अगर (!pvt->F0) अणु
 			edac_dbg(1, "F0 not found, device 0x%x\n", pci_id1);
-			return -ENODEV;
-		}
+			वापस -ENODEV;
+		पूर्ण
 
-		pvt->F6 = pci_get_related_function(pvt->F3->vendor, pci_id2, pvt->F3);
-		if (!pvt->F6) {
+		pvt->F6 = pci_get_related_function(pvt->F3->venकरोr, pci_id2, pvt->F3);
+		अगर (!pvt->F6) अणु
 			pci_dev_put(pvt->F0);
-			pvt->F0 = NULL;
+			pvt->F0 = शून्य;
 
 			edac_dbg(1, "F6 not found: device 0x%x\n", pci_id2);
-			return -ENODEV;
-		}
+			वापस -ENODEV;
+		पूर्ण
 
-		if (!pci_ctl_dev)
+		अगर (!pci_ctl_dev)
 			pci_ctl_dev = &pvt->F0->dev;
 
 		edac_dbg(1, "F0: %s\n", pci_name(pvt->F0));
 		edac_dbg(1, "F3: %s\n", pci_name(pvt->F3));
 		edac_dbg(1, "F6: %s\n", pci_name(pvt->F6));
 
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	/* Reserve the ADDRESS MAP Device */
-	pvt->F1 = pci_get_related_function(pvt->F3->vendor, pci_id1, pvt->F3);
-	if (!pvt->F1) {
+	pvt->F1 = pci_get_related_function(pvt->F3->venकरोr, pci_id1, pvt->F3);
+	अगर (!pvt->F1) अणु
 		edac_dbg(1, "F1 not found: device 0x%x\n", pci_id1);
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
 	/* Reserve the DCT Device */
-	pvt->F2 = pci_get_related_function(pvt->F3->vendor, pci_id2, pvt->F3);
-	if (!pvt->F2) {
+	pvt->F2 = pci_get_related_function(pvt->F3->venकरोr, pci_id2, pvt->F3);
+	अगर (!pvt->F2) अणु
 		pci_dev_put(pvt->F1);
-		pvt->F1 = NULL;
+		pvt->F1 = शून्य;
 
 		edac_dbg(1, "F2 not found: device 0x%x\n", pci_id2);
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	if (!pci_ctl_dev)
+	अगर (!pci_ctl_dev)
 		pci_ctl_dev = &pvt->F2->dev;
 
 	edac_dbg(1, "F1: %s\n", pci_name(pvt->F1));
 	edac_dbg(1, "F2: %s\n", pci_name(pvt->F2));
 	edac_dbg(1, "F3: %s\n", pci_name(pvt->F3));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void free_mc_sibling_devs(struct amd64_pvt *pvt)
-{
-	if (pvt->umc) {
+अटल व्योम मुक्त_mc_sibling_devs(काष्ठा amd64_pvt *pvt)
+अणु
+	अगर (pvt->umc) अणु
 		pci_dev_put(pvt->F0);
 		pci_dev_put(pvt->F6);
-	} else {
+	पूर्ण अन्यथा अणु
 		pci_dev_put(pvt->F1);
 		pci_dev_put(pvt->F2);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void determine_ecc_sym_sz(struct amd64_pvt *pvt)
-{
+अटल व्योम determine_ecc_sym_sz(काष्ठा amd64_pvt *pvt)
+अणु
 	pvt->ecc_sym_sz = 4;
 
-	if (pvt->umc) {
+	अगर (pvt->umc) अणु
 		u8 i;
 
-		for_each_umc(i) {
+		क्रम_each_umc(i) अणु
 			/* Check enabled channels only: */
-			if (pvt->umc[i].sdp_ctrl & UMC_SDP_INIT) {
-				if (pvt->umc[i].ecc_ctrl & BIT(9)) {
+			अगर (pvt->umc[i].sdp_ctrl & UMC_SDP_INIT) अणु
+				अगर (pvt->umc[i].ecc_ctrl & BIT(9)) अणु
 					pvt->ecc_sym_sz = 16;
-					return;
-				} else if (pvt->umc[i].ecc_ctrl & BIT(7)) {
+					वापस;
+				पूर्ण अन्यथा अगर (pvt->umc[i].ecc_ctrl & BIT(7)) अणु
 					pvt->ecc_sym_sz = 8;
-					return;
-				}
-			}
-		}
-	} else if (pvt->fam >= 0x10) {
-		u32 tmp;
+					वापस;
+				पूर्ण
+			पूर्ण
+		पूर्ण
+	पूर्ण अन्यथा अगर (pvt->fam >= 0x10) अणु
+		u32 पंचांगp;
 
-		amd64_read_pci_cfg(pvt->F3, EXT_NB_MCA_CFG, &tmp);
-		/* F16h has only DCT0, so no need to read dbam1. */
-		if (pvt->fam != 0x16)
-			amd64_read_dct_pci_cfg(pvt, 1, DBAM0, &pvt->dbam1);
+		amd64_पढ़ो_pci_cfg(pvt->F3, EXT_NB_MCA_CFG, &पंचांगp);
+		/* F16h has only DCT0, so no need to पढ़ो dbam1. */
+		अगर (pvt->fam != 0x16)
+			amd64_पढ़ो_dct_pci_cfg(pvt, 1, DBAM0, &pvt->dbam1);
 
-		/* F10h, revD and later can do x8 ECC too. */
-		if ((pvt->fam > 0x10 || pvt->model > 7) && tmp & BIT(25))
+		/* F10h, revD and later can करो x8 ECC too. */
+		अगर ((pvt->fam > 0x10 || pvt->model > 7) && पंचांगp & BIT(25))
 			pvt->ecc_sym_sz = 8;
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
- * Retrieve the hardware registers of the memory controller.
+ * Retrieve the hardware रेजिस्टरs of the memory controller.
  */
-static void __read_mc_regs_df(struct amd64_pvt *pvt)
-{
+अटल व्योम __पढ़ो_mc_regs_df(काष्ठा amd64_pvt *pvt)
+अणु
 	u8 nid = pvt->mc_node_id;
-	struct amd64_umc *umc;
+	काष्ठा amd64_umc *umc;
 	u32 i, umc_base;
 
-	/* Read registers from each UMC */
-	for_each_umc(i) {
+	/* Read रेजिस्टरs from each UMC */
+	क्रम_each_umc(i) अणु
 
 		umc_base = get_umc_base(i);
 		umc = &pvt->umc[i];
 
-		amd_smn_read(nid, umc_base + UMCCH_DIMM_CFG, &umc->dimm_cfg);
-		amd_smn_read(nid, umc_base + UMCCH_UMC_CFG, &umc->umc_cfg);
-		amd_smn_read(nid, umc_base + UMCCH_SDP_CTRL, &umc->sdp_ctrl);
-		amd_smn_read(nid, umc_base + UMCCH_ECC_CTRL, &umc->ecc_ctrl);
-		amd_smn_read(nid, umc_base + UMCCH_UMC_CAP_HI, &umc->umc_cap_hi);
-	}
-}
+		amd_smn_पढ़ो(nid, umc_base + UMCCH_DIMM_CFG, &umc->dimm_cfg);
+		amd_smn_पढ़ो(nid, umc_base + UMCCH_UMC_CFG, &umc->umc_cfg);
+		amd_smn_पढ़ो(nid, umc_base + UMCCH_SDP_CTRL, &umc->sdp_ctrl);
+		amd_smn_पढ़ो(nid, umc_base + UMCCH_ECC_CTRL, &umc->ecc_ctrl);
+		amd_smn_पढ़ो(nid, umc_base + UMCCH_UMC_CAP_HI, &umc->umc_cap_hi);
+	पूर्ण
+पूर्ण
 
 /*
- * Retrieve the hardware registers of the memory controller (this includes the
+ * Retrieve the hardware रेजिस्टरs of the memory controller (this includes the
  * 'Address Map' and 'Misc' device regs)
  */
-static void read_mc_regs(struct amd64_pvt *pvt)
-{
-	unsigned int range;
+अटल व्योम पढ़ो_mc_regs(काष्ठा amd64_pvt *pvt)
+अणु
+	अचिन्हित पूर्णांक range;
 	u64 msr_val;
 
 	/*
@@ -3084,33 +3085,33 @@ static void read_mc_regs(struct amd64_pvt *pvt)
 
 	/* Check first whether TOP_MEM2 is enabled: */
 	rdmsrl(MSR_AMD64_SYSCFG, msr_val);
-	if (msr_val & BIT(21)) {
+	अगर (msr_val & BIT(21)) अणु
 		rdmsrl(MSR_K8_TOP_MEM2, pvt->top_mem2);
 		edac_dbg(0, "  TOP_MEM2: 0x%016llx\n", pvt->top_mem2);
-	} else {
+	पूर्ण अन्यथा अणु
 		edac_dbg(0, "  TOP_MEM2 disabled\n");
-	}
+	पूर्ण
 
-	if (pvt->umc) {
-		__read_mc_regs_df(pvt);
-		amd64_read_pci_cfg(pvt->F0, DF_DHAR, &pvt->dhar);
+	अगर (pvt->umc) अणु
+		__पढ़ो_mc_regs_df(pvt);
+		amd64_पढ़ो_pci_cfg(pvt->F0, DF_DHAR, &pvt->dhar);
 
-		goto skip;
-	}
+		जाओ skip;
+	पूर्ण
 
-	amd64_read_pci_cfg(pvt->F3, NBCAP, &pvt->nbcap);
+	amd64_पढ़ो_pci_cfg(pvt->F3, NBCAP, &pvt->nbcap);
 
-	read_dram_ctl_register(pvt);
+	पढ़ो_dram_ctl_रेजिस्टर(pvt);
 
-	for (range = 0; range < DRAM_RANGES; range++) {
+	क्रम (range = 0; range < DRAM_RANGES; range++) अणु
 		u8 rw;
 
-		/* read settings for this DRAM range */
-		read_dram_base_limit_regs(pvt, range);
+		/* पढ़ो settings क्रम this DRAM range */
+		पढ़ो_dram_base_limit_regs(pvt, range);
 
 		rw = dram_rw(pvt, range);
-		if (!rw)
-			continue;
+		अगर (!rw)
+			जारी;
 
 		edac_dbg(1, "  DRAM range[%d], base: 0x%016llx; limit: 0x%016llx\n",
 			 range,
@@ -3118,46 +3119,46 @@ static void read_mc_regs(struct amd64_pvt *pvt)
 			 get_dram_limit(pvt, range));
 
 		edac_dbg(1, "   IntlvEn=%s; Range access: %s%s IntlvSel=%d DstNode=%d\n",
-			 dram_intlv_en(pvt, range) ? "Enabled" : "Disabled",
+			 dram_पूर्णांकlv_en(pvt, range) ? "Enabled" : "Disabled",
 			 (rw & 0x1) ? "R" : "-",
 			 (rw & 0x2) ? "W" : "-",
-			 dram_intlv_sel(pvt, range),
+			 dram_पूर्णांकlv_sel(pvt, range),
 			 dram_dst_node(pvt, range));
-	}
+	पूर्ण
 
-	amd64_read_pci_cfg(pvt->F1, DHAR, &pvt->dhar);
-	amd64_read_dct_pci_cfg(pvt, 0, DBAM0, &pvt->dbam0);
+	amd64_पढ़ो_pci_cfg(pvt->F1, DHAR, &pvt->dhar);
+	amd64_पढ़ो_dct_pci_cfg(pvt, 0, DBAM0, &pvt->dbam0);
 
-	amd64_read_pci_cfg(pvt->F3, F10_ONLINE_SPARE, &pvt->online_spare);
+	amd64_पढ़ो_pci_cfg(pvt->F3, F10_ONLINE_SPARE, &pvt->online_spare);
 
-	amd64_read_dct_pci_cfg(pvt, 0, DCLR0, &pvt->dclr0);
-	amd64_read_dct_pci_cfg(pvt, 0, DCHR0, &pvt->dchr0);
+	amd64_पढ़ो_dct_pci_cfg(pvt, 0, DCLR0, &pvt->dclr0);
+	amd64_पढ़ो_dct_pci_cfg(pvt, 0, DCHR0, &pvt->dchr0);
 
-	if (!dct_ganging_enabled(pvt)) {
-		amd64_read_dct_pci_cfg(pvt, 1, DCLR0, &pvt->dclr1);
-		amd64_read_dct_pci_cfg(pvt, 1, DCHR0, &pvt->dchr1);
-	}
+	अगर (!dct_ganging_enabled(pvt)) अणु
+		amd64_पढ़ो_dct_pci_cfg(pvt, 1, DCLR0, &pvt->dclr1);
+		amd64_पढ़ो_dct_pci_cfg(pvt, 1, DCHR0, &pvt->dchr1);
+	पूर्ण
 
 skip:
-	read_dct_base_mask(pvt);
+	पढ़ो_dct_base_mask(pvt);
 
 	determine_memory_type(pvt);
 	edac_dbg(1, "  DIMM type: %s\n", edac_mem_types[pvt->dram_type]);
 
 	determine_ecc_sym_sz(pvt);
-}
+पूर्ण
 
 /*
  * NOTE: CPU Revision Dependent code
  *
  * Input:
  *	@csrow_nr ChipSelect Row Number (0..NUM_CHIPSELECTS-1)
- *	k8 private pointer to -->
- *			DRAM Bank Address mapping register
+ *	k8 निजी poपूर्णांकer to -->
+ *			DRAM Bank Address mapping रेजिस्टर
  *			node_id
- *			DCL register where dual_channel_active is
+ *			DCL रेजिस्टर where dual_channel_active is
  *
- * The DBAM register consists of 4 sets of 4 bits each definitions:
+ * The DBAM रेजिस्टर consists of 4 sets of 4 bits each definitions:
  *
  * Bits:	CSROWs
  * 0-3		CSROWs 0 and 1
@@ -3169,30 +3170,30 @@ skip:
  * The meaning of the values depends on CPU revision and dual-channel state,
  * see relevant BKDG more info.
  *
- * The memory controller provides for total of only 8 CSROWs in its current
+ * The memory controller provides क्रम total of only 8 CSROWs in its current
  * architecture. Each "pair" of CSROWs normally represents just one DIMM in
  * single channel or two (2) DIMMs in dual channel mode.
  *
- * The following code logic collapses the various tables for CSROW based on CPU
+ * The following code logic collapses the various tables क्रम CSROW based on CPU
  * revision.
  *
  * Returns:
- *	The number of PAGE_SIZE pages on the specified CSROW number it
+ *	The number of PAGE_SIZE pages on the specअगरied CSROW number it
  *	encompasses
  *
  */
-static u32 get_csrow_nr_pages(struct amd64_pvt *pvt, u8 dct, int csrow_nr_orig)
-{
+अटल u32 get_csrow_nr_pages(काष्ठा amd64_pvt *pvt, u8 dct, पूर्णांक csrow_nr_orig)
+अणु
 	u32 dbam = dct ? pvt->dbam1 : pvt->dbam0;
-	int csrow_nr = csrow_nr_orig;
+	पूर्णांक csrow_nr = csrow_nr_orig;
 	u32 cs_mode, nr_pages;
 
-	if (!pvt->umc) {
+	अगर (!pvt->umc) अणु
 		csrow_nr >>= 1;
 		cs_mode = DBAM_DIMM(csrow_nr, dbam);
-	} else {
+	पूर्ण अन्यथा अणु
 		cs_mode = f17_get_cs_mode(csrow_nr >> 1, dct, pvt);
-	}
+	पूर्ण
 
 	nr_pages   = pvt->ops->dbam_to_cs(pvt, dct, cs_mode, csrow_nr);
 	nr_pages <<= 20 - PAGE_SHIFT;
@@ -3201,35 +3202,35 @@ static u32 get_csrow_nr_pages(struct amd64_pvt *pvt, u8 dct, int csrow_nr_orig)
 		    csrow_nr_orig, dct,  cs_mode);
 	edac_dbg(0, "nr_pages/channel: %u\n", nr_pages);
 
-	return nr_pages;
-}
+	वापस nr_pages;
+पूर्ण
 
-static int init_csrows_df(struct mem_ctl_info *mci)
-{
-	struct amd64_pvt *pvt = mci->pvt_info;
-	enum edac_type edac_mode = EDAC_NONE;
-	enum dev_type dev_type = DEV_UNKNOWN;
-	struct dimm_info *dimm;
-	int empty = 1;
+अटल पूर्णांक init_csrows_df(काष्ठा mem_ctl_info *mci)
+अणु
+	काष्ठा amd64_pvt *pvt = mci->pvt_info;
+	क्रमागत edac_type edac_mode = EDAC_NONE;
+	क्रमागत dev_type dev_type = DEV_UNKNOWN;
+	काष्ठा dimm_info *dimm;
+	पूर्णांक empty = 1;
 	u8 umc, cs;
 
-	if (mci->edac_ctl_cap & EDAC_FLAG_S16ECD16ED) {
+	अगर (mci->edac_ctl_cap & EDAC_FLAG_S16ECD16ED) अणु
 		edac_mode = EDAC_S16ECD16ED;
 		dev_type = DEV_X16;
-	} else if (mci->edac_ctl_cap & EDAC_FLAG_S8ECD8ED) {
+	पूर्ण अन्यथा अगर (mci->edac_ctl_cap & EDAC_FLAG_S8ECD8ED) अणु
 		edac_mode = EDAC_S8ECD8ED;
 		dev_type = DEV_X8;
-	} else if (mci->edac_ctl_cap & EDAC_FLAG_S4ECD4ED) {
+	पूर्ण अन्यथा अगर (mci->edac_ctl_cap & EDAC_FLAG_S4ECD4ED) अणु
 		edac_mode = EDAC_S4ECD4ED;
 		dev_type = DEV_X4;
-	} else if (mci->edac_ctl_cap & EDAC_FLAG_SECDED) {
+	पूर्ण अन्यथा अगर (mci->edac_ctl_cap & EDAC_FLAG_SECDED) अणु
 		edac_mode = EDAC_SECDED;
-	}
+	पूर्ण
 
-	for_each_umc(umc) {
-		for_each_chip_select(cs, umc, pvt) {
-			if (!csrow_enabled(cs, umc, pvt))
-				continue;
+	क्रम_each_umc(umc) अणु
+		क्रम_each_chip_select(cs, umc, pvt) अणु
+			अगर (!csrow_enabled(cs, umc, pvt))
+				जारी;
 
 			empty = 0;
 			dimm = mci->csrows[cs]->channels[umc]->dimm;
@@ -3242,30 +3243,30 @@ static int init_csrows_df(struct mem_ctl_info *mci)
 			dimm->edac_mode = edac_mode;
 			dimm->dtype = dev_type;
 			dimm->grain = 64;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return empty;
-}
+	वापस empty;
+पूर्ण
 
 /*
  * Initialize the array of csrow attribute instances, based on the values
- * from pci config hardware registers.
+ * from pci config hardware रेजिस्टरs.
  */
-static int init_csrows(struct mem_ctl_info *mci)
-{
-	struct amd64_pvt *pvt = mci->pvt_info;
-	enum edac_type edac_mode = EDAC_NONE;
-	struct csrow_info *csrow;
-	struct dimm_info *dimm;
-	int i, j, empty = 1;
-	int nr_pages = 0;
+अटल पूर्णांक init_csrows(काष्ठा mem_ctl_info *mci)
+अणु
+	काष्ठा amd64_pvt *pvt = mci->pvt_info;
+	क्रमागत edac_type edac_mode = EDAC_NONE;
+	काष्ठा csrow_info *csrow;
+	काष्ठा dimm_info *dimm;
+	पूर्णांक i, j, empty = 1;
+	पूर्णांक nr_pages = 0;
 	u32 val;
 
-	if (pvt->umc)
-		return init_csrows_df(mci);
+	अगर (pvt->umc)
+		वापस init_csrows_df(mci);
 
-	amd64_read_pci_cfg(pvt->F3, NBCFG, &val);
+	amd64_पढ़ो_pci_cfg(pvt->F3, NBCFG, &val);
 
 	pvt->nbcfg = val;
 
@@ -3274,17 +3275,17 @@ static int init_csrows(struct mem_ctl_info *mci)
 		 !!(val & NBCFG_CHIPKILL), !!(val & NBCFG_ECC_ENABLE));
 
 	/*
-	 * We iterate over DCT0 here but we look at DCT1 in parallel, if needed.
+	 * We iterate over DCT0 here but we look at DCT1 in parallel, अगर needed.
 	 */
-	for_each_chip_select(i, 0, pvt) {
+	क्रम_each_chip_select(i, 0, pvt) अणु
 		bool row_dct0 = !!csrow_enabled(i, 0, pvt);
 		bool row_dct1 = false;
 
-		if (pvt->fam != 0xf)
+		अगर (pvt->fam != 0xf)
 			row_dct1 = !!csrow_enabled(i, 1, pvt);
 
-		if (!row_dct0 && !row_dct1)
-			continue;
+		अगर (!row_dct0 && !row_dct1)
+			जारी;
 
 		csrow = mci->csrows[i];
 		empty = 0;
@@ -3292,461 +3293,461 @@ static int init_csrows(struct mem_ctl_info *mci)
 		edac_dbg(1, "MC node: %d, csrow: %d\n",
 			    pvt->mc_node_id, i);
 
-		if (row_dct0) {
+		अगर (row_dct0) अणु
 			nr_pages = get_csrow_nr_pages(pvt, 0, i);
 			csrow->channels[0]->dimm->nr_pages = nr_pages;
-		}
+		पूर्ण
 
 		/* K8 has only one DCT */
-		if (pvt->fam != 0xf && row_dct1) {
-			int row_dct1_pages = get_csrow_nr_pages(pvt, 1, i);
+		अगर (pvt->fam != 0xf && row_dct1) अणु
+			पूर्णांक row_dct1_pages = get_csrow_nr_pages(pvt, 1, i);
 
 			csrow->channels[1]->dimm->nr_pages = row_dct1_pages;
 			nr_pages += row_dct1_pages;
-		}
+		पूर्ण
 
 		edac_dbg(1, "Total csrow%d pages: %u\n", i, nr_pages);
 
 		/* Determine DIMM ECC mode: */
-		if (pvt->nbcfg & NBCFG_ECC_ENABLE) {
+		अगर (pvt->nbcfg & NBCFG_ECC_ENABLE) अणु
 			edac_mode = (pvt->nbcfg & NBCFG_CHIPKILL)
 					? EDAC_S4ECD4ED
 					: EDAC_SECDED;
-		}
+		पूर्ण
 
-		for (j = 0; j < pvt->channel_count; j++) {
+		क्रम (j = 0; j < pvt->channel_count; j++) अणु
 			dimm = csrow->channels[j]->dimm;
 			dimm->mtype = pvt->dram_type;
 			dimm->edac_mode = edac_mode;
 			dimm->grain = 64;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return empty;
-}
+	वापस empty;
+पूर्ण
 
 /* get all cores on this DCT */
-static void get_cpus_on_this_dct_cpumask(struct cpumask *mask, u16 nid)
-{
-	int cpu;
+अटल व्योम get_cpus_on_this_dct_cpumask(काष्ठा cpumask *mask, u16 nid)
+अणु
+	पूर्णांक cpu;
 
-	for_each_online_cpu(cpu)
-		if (topology_die_id(cpu) == nid)
+	क्रम_each_online_cpu(cpu)
+		अगर (topology_die_id(cpu) == nid)
 			cpumask_set_cpu(cpu, mask);
-}
+पूर्ण
 
 /* check MCG_CTL on all the cpus on this node */
-static bool nb_mce_bank_enabled_on_node(u16 nid)
-{
+अटल bool nb_mce_bank_enabled_on_node(u16 nid)
+अणु
 	cpumask_var_t mask;
-	int cpu, nbe;
+	पूर्णांक cpu, nbe;
 	bool ret = false;
 
-	if (!zalloc_cpumask_var(&mask, GFP_KERNEL)) {
+	अगर (!zalloc_cpumask_var(&mask, GFP_KERNEL)) अणु
 		amd64_warn("%s: Error allocating mask\n", __func__);
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
 	get_cpus_on_this_dct_cpumask(mask, nid);
 
 	rdmsr_on_cpus(mask, MSR_IA32_MCG_CTL, msrs);
 
-	for_each_cpu(cpu, mask) {
-		struct msr *reg = per_cpu_ptr(msrs, cpu);
+	क्रम_each_cpu(cpu, mask) अणु
+		काष्ठा msr *reg = per_cpu_ptr(msrs, cpu);
 		nbe = reg->l & MSR_MCGCTL_NBE;
 
 		edac_dbg(0, "core: %u, MCG_CTL: 0x%llx, NB MSR is %s\n",
 			 cpu, reg->q,
 			 (nbe ? "enabled" : "disabled"));
 
-		if (!nbe)
-			goto out;
-	}
+		अगर (!nbe)
+			जाओ out;
+	पूर्ण
 	ret = true;
 
 out:
-	free_cpumask_var(mask);
-	return ret;
-}
+	मुक्त_cpumask_var(mask);
+	वापस ret;
+पूर्ण
 
-static int toggle_ecc_err_reporting(struct ecc_settings *s, u16 nid, bool on)
-{
+अटल पूर्णांक toggle_ecc_err_reporting(काष्ठा ecc_settings *s, u16 nid, bool on)
+अणु
 	cpumask_var_t cmask;
-	int cpu;
+	पूर्णांक cpu;
 
-	if (!zalloc_cpumask_var(&cmask, GFP_KERNEL)) {
+	अगर (!zalloc_cpumask_var(&cmask, GFP_KERNEL)) अणु
 		amd64_warn("%s: error allocating mask\n", __func__);
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	get_cpus_on_this_dct_cpumask(cmask, nid);
 
 	rdmsr_on_cpus(cmask, MSR_IA32_MCG_CTL, msrs);
 
-	for_each_cpu(cpu, cmask) {
+	क्रम_each_cpu(cpu, cmask) अणु
 
-		struct msr *reg = per_cpu_ptr(msrs, cpu);
+		काष्ठा msr *reg = per_cpu_ptr(msrs, cpu);
 
-		if (on) {
-			if (reg->l & MSR_MCGCTL_NBE)
+		अगर (on) अणु
+			अगर (reg->l & MSR_MCGCTL_NBE)
 				s->flags.nb_mce_enable = 1;
 
 			reg->l |= MSR_MCGCTL_NBE;
-		} else {
+		पूर्ण अन्यथा अणु
 			/*
-			 * Turn off NB MCE reporting only when it was off before
+			 * Turn off NB MCE reporting only when it was off beक्रमe
 			 */
-			if (!s->flags.nb_mce_enable)
+			अगर (!s->flags.nb_mce_enable)
 				reg->l &= ~MSR_MCGCTL_NBE;
-		}
-	}
+		पूर्ण
+	पूर्ण
 	wrmsr_on_cpus(cmask, MSR_IA32_MCG_CTL, msrs);
 
-	free_cpumask_var(cmask);
+	मुक्त_cpumask_var(cmask);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static bool enable_ecc_error_reporting(struct ecc_settings *s, u16 nid,
-				       struct pci_dev *F3)
-{
+अटल bool enable_ecc_error_reporting(काष्ठा ecc_settings *s, u16 nid,
+				       काष्ठा pci_dev *F3)
+अणु
 	bool ret = true;
 	u32 value, mask = 0x3;		/* UECC/CECC enable */
 
-	if (toggle_ecc_err_reporting(s, nid, ON)) {
+	अगर (toggle_ecc_err_reporting(s, nid, ON)) अणु
 		amd64_warn("Error enabling ECC reporting over MCGCTL!\n");
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
-	amd64_read_pci_cfg(F3, NBCTL, &value);
+	amd64_पढ़ो_pci_cfg(F3, NBCTL, &value);
 
 	s->old_nbctl   = value & mask;
 	s->nbctl_valid = true;
 
 	value |= mask;
-	amd64_write_pci_cfg(F3, NBCTL, value);
+	amd64_ग_लिखो_pci_cfg(F3, NBCTL, value);
 
-	amd64_read_pci_cfg(F3, NBCFG, &value);
+	amd64_पढ़ो_pci_cfg(F3, NBCFG, &value);
 
 	edac_dbg(0, "1: node %d, NBCFG=0x%08x[DramEccEn: %d]\n",
 		 nid, value, !!(value & NBCFG_ECC_ENABLE));
 
-	if (!(value & NBCFG_ECC_ENABLE)) {
+	अगर (!(value & NBCFG_ECC_ENABLE)) अणु
 		amd64_warn("DRAM ECC disabled on this node, enabling...\n");
 
 		s->flags.nb_ecc_prev = 0;
 
 		/* Attempt to turn on DRAM ECC Enable */
 		value |= NBCFG_ECC_ENABLE;
-		amd64_write_pci_cfg(F3, NBCFG, value);
+		amd64_ग_लिखो_pci_cfg(F3, NBCFG, value);
 
-		amd64_read_pci_cfg(F3, NBCFG, &value);
+		amd64_पढ़ो_pci_cfg(F3, NBCFG, &value);
 
-		if (!(value & NBCFG_ECC_ENABLE)) {
+		अगर (!(value & NBCFG_ECC_ENABLE)) अणु
 			amd64_warn("Hardware rejected DRAM ECC enable,"
 				   "check memory DIMM configuration.\n");
 			ret = false;
-		} else {
+		पूर्ण अन्यथा अणु
 			amd64_info("Hardware accepted DRAM ECC Enable\n");
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		s->flags.nb_ecc_prev = 1;
-	}
+	पूर्ण
 
 	edac_dbg(0, "2: node %d, NBCFG=0x%08x[DramEccEn: %d]\n",
 		 nid, value, !!(value & NBCFG_ECC_ENABLE));
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void restore_ecc_error_reporting(struct ecc_settings *s, u16 nid,
-					struct pci_dev *F3)
-{
+अटल व्योम restore_ecc_error_reporting(काष्ठा ecc_settings *s, u16 nid,
+					काष्ठा pci_dev *F3)
+अणु
 	u32 value, mask = 0x3;		/* UECC/CECC enable */
 
-	if (!s->nbctl_valid)
-		return;
+	अगर (!s->nbctl_valid)
+		वापस;
 
-	amd64_read_pci_cfg(F3, NBCTL, &value);
+	amd64_पढ़ो_pci_cfg(F3, NBCTL, &value);
 	value &= ~mask;
 	value |= s->old_nbctl;
 
-	amd64_write_pci_cfg(F3, NBCTL, value);
+	amd64_ग_लिखो_pci_cfg(F3, NBCTL, value);
 
-	/* restore previous BIOS DRAM ECC "off" setting we force-enabled */
-	if (!s->flags.nb_ecc_prev) {
-		amd64_read_pci_cfg(F3, NBCFG, &value);
+	/* restore previous BIOS DRAM ECC "off" setting we क्रमce-enabled */
+	अगर (!s->flags.nb_ecc_prev) अणु
+		amd64_पढ़ो_pci_cfg(F3, NBCFG, &value);
 		value &= ~NBCFG_ECC_ENABLE;
-		amd64_write_pci_cfg(F3, NBCFG, value);
-	}
+		amd64_ग_लिखो_pci_cfg(F3, NBCFG, value);
+	पूर्ण
 
 	/* restore the NB Enable MCGCTL bit */
-	if (toggle_ecc_err_reporting(s, nid, OFF))
+	अगर (toggle_ecc_err_reporting(s, nid, OFF))
 		amd64_warn("Error restoring NB MCGCTL settings!\n");
-}
+पूर्ण
 
-static bool ecc_enabled(struct amd64_pvt *pvt)
-{
+अटल bool ecc_enabled(काष्ठा amd64_pvt *pvt)
+अणु
 	u16 nid = pvt->mc_node_id;
 	bool nb_mce_en = false;
 	u8 ecc_en = 0, i;
 	u32 value;
 
-	if (boot_cpu_data.x86 >= 0x17) {
+	अगर (boot_cpu_data.x86 >= 0x17) अणु
 		u8 umc_en_mask = 0, ecc_en_mask = 0;
-		struct amd64_umc *umc;
+		काष्ठा amd64_umc *umc;
 
-		for_each_umc(i) {
+		क्रम_each_umc(i) अणु
 			umc = &pvt->umc[i];
 
 			/* Only check enabled UMCs. */
-			if (!(umc->sdp_ctrl & UMC_SDP_INIT))
-				continue;
+			अगर (!(umc->sdp_ctrl & UMC_SDP_INIT))
+				जारी;
 
 			umc_en_mask |= BIT(i);
 
-			if (umc->umc_cap_hi & UMC_ECC_ENABLED)
+			अगर (umc->umc_cap_hi & UMC_ECC_ENABLED)
 				ecc_en_mask |= BIT(i);
-		}
+		पूर्ण
 
 		/* Check whether at least one UMC is enabled: */
-		if (umc_en_mask)
+		अगर (umc_en_mask)
 			ecc_en = umc_en_mask == ecc_en_mask;
-		else
+		अन्यथा
 			edac_dbg(0, "Node %d: No enabled UMCs.\n", nid);
 
 		/* Assume UMC MCA banks are enabled. */
 		nb_mce_en = true;
-	} else {
-		amd64_read_pci_cfg(pvt->F3, NBCFG, &value);
+	पूर्ण अन्यथा अणु
+		amd64_पढ़ो_pci_cfg(pvt->F3, NBCFG, &value);
 
 		ecc_en = !!(value & NBCFG_ECC_ENABLE);
 
 		nb_mce_en = nb_mce_bank_enabled_on_node(nid);
-		if (!nb_mce_en)
+		अगर (!nb_mce_en)
 			edac_dbg(0, "NB MCE bank disabled, set MSR 0x%08x[4] on node %d to enable.\n",
 				     MSR_IA32_MCG_CTL, nid);
-	}
+	पूर्ण
 
 	edac_dbg(3, "Node %d: DRAM ECC %s.\n", nid, (ecc_en ? "enabled" : "disabled"));
 
-	if (!ecc_en || !nb_mce_en)
-		return false;
-	else
-		return true;
-}
+	अगर (!ecc_en || !nb_mce_en)
+		वापस false;
+	अन्यथा
+		वापस true;
+पूर्ण
 
-static inline void
-f17h_determine_edac_ctl_cap(struct mem_ctl_info *mci, struct amd64_pvt *pvt)
-{
+अटल अंतरभूत व्योम
+f17h_determine_edac_ctl_cap(काष्ठा mem_ctl_info *mci, काष्ठा amd64_pvt *pvt)
+अणु
 	u8 i, ecc_en = 1, cpk_en = 1, dev_x4 = 1, dev_x16 = 1;
 
-	for_each_umc(i) {
-		if (pvt->umc[i].sdp_ctrl & UMC_SDP_INIT) {
+	क्रम_each_umc(i) अणु
+		अगर (pvt->umc[i].sdp_ctrl & UMC_SDP_INIT) अणु
 			ecc_en &= !!(pvt->umc[i].umc_cap_hi & UMC_ECC_ENABLED);
 			cpk_en &= !!(pvt->umc[i].umc_cap_hi & UMC_ECC_CHIPKILL_CAP);
 
 			dev_x4  &= !!(pvt->umc[i].dimm_cfg & BIT(6));
 			dev_x16 &= !!(pvt->umc[i].dimm_cfg & BIT(7));
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	/* Set chipkill only if ECC is enabled: */
-	if (ecc_en) {
+	/* Set chipसमाप्त only अगर ECC is enabled: */
+	अगर (ecc_en) अणु
 		mci->edac_ctl_cap |= EDAC_FLAG_SECDED;
 
-		if (!cpk_en)
-			return;
+		अगर (!cpk_en)
+			वापस;
 
-		if (dev_x4)
+		अगर (dev_x4)
 			mci->edac_ctl_cap |= EDAC_FLAG_S4ECD4ED;
-		else if (dev_x16)
+		अन्यथा अगर (dev_x16)
 			mci->edac_ctl_cap |= EDAC_FLAG_S16ECD16ED;
-		else
+		अन्यथा
 			mci->edac_ctl_cap |= EDAC_FLAG_S8ECD8ED;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void setup_mci_misc_attrs(struct mem_ctl_info *mci)
-{
-	struct amd64_pvt *pvt = mci->pvt_info;
+अटल व्योम setup_mci_misc_attrs(काष्ठा mem_ctl_info *mci)
+अणु
+	काष्ठा amd64_pvt *pvt = mci->pvt_info;
 
 	mci->mtype_cap		= MEM_FLAG_DDR2 | MEM_FLAG_RDDR2;
 	mci->edac_ctl_cap	= EDAC_FLAG_NONE;
 
-	if (pvt->umc) {
+	अगर (pvt->umc) अणु
 		f17h_determine_edac_ctl_cap(mci, pvt);
-	} else {
-		if (pvt->nbcap & NBCAP_SECDED)
+	पूर्ण अन्यथा अणु
+		अगर (pvt->nbcap & NBCAP_SECDED)
 			mci->edac_ctl_cap |= EDAC_FLAG_SECDED;
 
-		if (pvt->nbcap & NBCAP_CHIPKILL)
+		अगर (pvt->nbcap & NBCAP_CHIPKILL)
 			mci->edac_ctl_cap |= EDAC_FLAG_S4ECD4ED;
-	}
+	पूर्ण
 
 	mci->edac_cap		= determine_edac_cap(pvt);
 	mci->mod_name		= EDAC_MOD_STR;
 	mci->ctl_name		= fam_type->ctl_name;
 	mci->dev_name		= pci_name(pvt->F3);
-	mci->ctl_page_to_phys	= NULL;
+	mci->ctl_page_to_phys	= शून्य;
 
-	/* memory scrubber interface */
+	/* memory scrubber पूर्णांकerface */
 	mci->set_sdram_scrub_rate = set_scrub_rate;
 	mci->get_sdram_scrub_rate = get_scrub_rate;
-}
+पूर्ण
 
 /*
- * returns a pointer to the family descriptor on success, NULL otherwise.
+ * वापसs a poपूर्णांकer to the family descriptor on success, शून्य otherwise.
  */
-static struct amd64_family_type *per_family_init(struct amd64_pvt *pvt)
-{
+अटल काष्ठा amd64_family_type *per_family_init(काष्ठा amd64_pvt *pvt)
+अणु
 	pvt->ext_model  = boot_cpu_data.x86_model >> 4;
 	pvt->stepping	= boot_cpu_data.x86_stepping;
 	pvt->model	= boot_cpu_data.x86_model;
 	pvt->fam	= boot_cpu_data.x86;
 
-	switch (pvt->fam) {
-	case 0xf:
+	चयन (pvt->fam) अणु
+	हाल 0xf:
 		fam_type	= &family_types[K8_CPUS];
 		pvt->ops	= &family_types[K8_CPUS].ops;
-		break;
+		अवरोध;
 
-	case 0x10:
+	हाल 0x10:
 		fam_type	= &family_types[F10_CPUS];
 		pvt->ops	= &family_types[F10_CPUS].ops;
-		break;
+		अवरोध;
 
-	case 0x15:
-		if (pvt->model == 0x30) {
+	हाल 0x15:
+		अगर (pvt->model == 0x30) अणु
 			fam_type = &family_types[F15_M30H_CPUS];
 			pvt->ops = &family_types[F15_M30H_CPUS].ops;
-			break;
-		} else if (pvt->model == 0x60) {
+			अवरोध;
+		पूर्ण अन्यथा अगर (pvt->model == 0x60) अणु
 			fam_type = &family_types[F15_M60H_CPUS];
 			pvt->ops = &family_types[F15_M60H_CPUS].ops;
-			break;
+			अवरोध;
 		/* Richland is only client */
-		} else if (pvt->model == 0x13) {
-			return NULL;
-		} else {
+		पूर्ण अन्यथा अगर (pvt->model == 0x13) अणु
+			वापस शून्य;
+		पूर्ण अन्यथा अणु
 			fam_type	= &family_types[F15_CPUS];
 			pvt->ops	= &family_types[F15_CPUS].ops;
-		}
-		break;
+		पूर्ण
+		अवरोध;
 
-	case 0x16:
-		if (pvt->model == 0x30) {
+	हाल 0x16:
+		अगर (pvt->model == 0x30) अणु
 			fam_type = &family_types[F16_M30H_CPUS];
 			pvt->ops = &family_types[F16_M30H_CPUS].ops;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		fam_type	= &family_types[F16_CPUS];
 		pvt->ops	= &family_types[F16_CPUS].ops;
-		break;
+		अवरोध;
 
-	case 0x17:
-		if (pvt->model >= 0x10 && pvt->model <= 0x2f) {
+	हाल 0x17:
+		अगर (pvt->model >= 0x10 && pvt->model <= 0x2f) अणु
 			fam_type = &family_types[F17_M10H_CPUS];
 			pvt->ops = &family_types[F17_M10H_CPUS].ops;
-			break;
-		} else if (pvt->model >= 0x30 && pvt->model <= 0x3f) {
+			अवरोध;
+		पूर्ण अन्यथा अगर (pvt->model >= 0x30 && pvt->model <= 0x3f) अणु
 			fam_type = &family_types[F17_M30H_CPUS];
 			pvt->ops = &family_types[F17_M30H_CPUS].ops;
-			break;
-		} else if (pvt->model >= 0x60 && pvt->model <= 0x6f) {
+			अवरोध;
+		पूर्ण अन्यथा अगर (pvt->model >= 0x60 && pvt->model <= 0x6f) अणु
 			fam_type = &family_types[F17_M60H_CPUS];
 			pvt->ops = &family_types[F17_M60H_CPUS].ops;
-			break;
-		} else if (pvt->model >= 0x70 && pvt->model <= 0x7f) {
+			अवरोध;
+		पूर्ण अन्यथा अगर (pvt->model >= 0x70 && pvt->model <= 0x7f) अणु
 			fam_type = &family_types[F17_M70H_CPUS];
 			pvt->ops = &family_types[F17_M70H_CPUS].ops;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		fallthrough;
-	case 0x18:
+	हाल 0x18:
 		fam_type	= &family_types[F17_CPUS];
 		pvt->ops	= &family_types[F17_CPUS].ops;
 
-		if (pvt->fam == 0x18)
+		अगर (pvt->fam == 0x18)
 			family_types[F17_CPUS].ctl_name = "F18h";
-		break;
+		अवरोध;
 
-	case 0x19:
-		if (pvt->model >= 0x20 && pvt->model <= 0x2f) {
+	हाल 0x19:
+		अगर (pvt->model >= 0x20 && pvt->model <= 0x2f) अणु
 			fam_type = &family_types[F17_M70H_CPUS];
 			pvt->ops = &family_types[F17_M70H_CPUS].ops;
 			fam_type->ctl_name = "F19h_M20h";
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		fam_type	= &family_types[F19_CPUS];
 		pvt->ops	= &family_types[F19_CPUS].ops;
 		family_types[F19_CPUS].ctl_name = "F19h";
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		amd64_err("Unsupported family!\n");
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
-	return fam_type;
-}
+	वापस fam_type;
+पूर्ण
 
-static const struct attribute_group *amd64_edac_attr_groups[] = {
-#ifdef CONFIG_EDAC_DEBUG
+अटल स्थिर काष्ठा attribute_group *amd64_edac_attr_groups[] = अणु
+#अगर_घोषित CONFIG_EDAC_DEBUG
 	&dbg_group,
 	&inj_group,
-#endif
-	NULL
-};
+#पूर्ण_अगर
+	शून्य
+पूर्ण;
 
-static int hw_info_get(struct amd64_pvt *pvt)
-{
+अटल पूर्णांक hw_info_get(काष्ठा amd64_pvt *pvt)
+अणु
 	u16 pci_id1, pci_id2;
-	int ret;
+	पूर्णांक ret;
 
-	if (pvt->fam >= 0x17) {
-		pvt->umc = kcalloc(fam_type->max_mcs, sizeof(struct amd64_umc), GFP_KERNEL);
-		if (!pvt->umc)
-			return -ENOMEM;
+	अगर (pvt->fam >= 0x17) अणु
+		pvt->umc = kसुस्मृति(fam_type->max_mcs, माप(काष्ठा amd64_umc), GFP_KERNEL);
+		अगर (!pvt->umc)
+			वापस -ENOMEM;
 
 		pci_id1 = fam_type->f0_id;
 		pci_id2 = fam_type->f6_id;
-	} else {
+	पूर्ण अन्यथा अणु
 		pci_id1 = fam_type->f1_id;
 		pci_id2 = fam_type->f2_id;
-	}
+	पूर्ण
 
 	ret = reserve_mc_sibling_devs(pvt, pci_id1, pci_id2);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	read_mc_regs(pvt);
+	पढ़ो_mc_regs(pvt);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void hw_info_put(struct amd64_pvt *pvt)
-{
-	if (pvt->F0 || pvt->F1)
-		free_mc_sibling_devs(pvt);
+अटल व्योम hw_info_put(काष्ठा amd64_pvt *pvt)
+अणु
+	अगर (pvt->F0 || pvt->F1)
+		मुक्त_mc_sibling_devs(pvt);
 
-	kfree(pvt->umc);
-}
+	kमुक्त(pvt->umc);
+पूर्ण
 
-static int init_one_instance(struct amd64_pvt *pvt)
-{
-	struct mem_ctl_info *mci = NULL;
-	struct edac_mc_layer layers[2];
-	int ret = -EINVAL;
+अटल पूर्णांक init_one_instance(काष्ठा amd64_pvt *pvt)
+अणु
+	काष्ठा mem_ctl_info *mci = शून्य;
+	काष्ठा edac_mc_layer layers[2];
+	पूर्णांक ret = -EINVAL;
 
 	/*
 	 * We need to determine how many memory channels there are. Then use
-	 * that information for calculating the size of the dynamic instance
-	 * tables in the 'mci' structure.
+	 * that inक्रमmation क्रम calculating the size of the dynamic instance
+	 * tables in the 'mci' काष्ठाure.
 	 */
 	pvt->channel_count = pvt->ops->early_channel_count(pvt);
-	if (pvt->channel_count < 0)
-		return ret;
+	अगर (pvt->channel_count < 0)
+		वापस ret;
 
 	ret = -ENOMEM;
 	layers[0].type = EDAC_MC_LAYER_CHIP_SELECT;
@@ -3756,108 +3757,108 @@ static int init_one_instance(struct amd64_pvt *pvt)
 
 	/*
 	 * Always allocate two channels since we can have setups with DIMMs on
-	 * only one channel. Also, this simplifies handling later for the price
+	 * only one channel. Also, this simplअगरies handling later क्रम the price
 	 * of a couple of KBs tops.
 	 */
 	layers[1].size = fam_type->max_mcs;
 	layers[1].is_virt_csrow = false;
 
 	mci = edac_mc_alloc(pvt->mc_node_id, ARRAY_SIZE(layers), layers, 0);
-	if (!mci)
-		return ret;
+	अगर (!mci)
+		वापस ret;
 
 	mci->pvt_info = pvt;
 	mci->pdev = &pvt->F3->dev;
 
 	setup_mci_misc_attrs(mci);
 
-	if (init_csrows(mci))
+	अगर (init_csrows(mci))
 		mci->edac_cap = EDAC_FLAG_NONE;
 
 	ret = -ENODEV;
-	if (edac_mc_add_mc_with_groups(mci, amd64_edac_attr_groups)) {
+	अगर (edac_mc_add_mc_with_groups(mci, amd64_edac_attr_groups)) अणु
 		edac_dbg(1, "failed edac_mc_add_mc()\n");
-		edac_mc_free(mci);
-		return ret;
-	}
+		edac_mc_मुक्त(mci);
+		वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static bool instance_has_memory(struct amd64_pvt *pvt)
-{
+अटल bool instance_has_memory(काष्ठा amd64_pvt *pvt)
+अणु
 	bool cs_enabled = false;
-	int cs = 0, dct = 0;
+	पूर्णांक cs = 0, dct = 0;
 
-	for (dct = 0; dct < fam_type->max_mcs; dct++) {
-		for_each_chip_select(cs, dct, pvt)
+	क्रम (dct = 0; dct < fam_type->max_mcs; dct++) अणु
+		क्रम_each_chip_select(cs, dct, pvt)
 			cs_enabled |= csrow_enabled(cs, dct, pvt);
-	}
+	पूर्ण
 
-	return cs_enabled;
-}
+	वापस cs_enabled;
+पूर्ण
 
-static int probe_one_instance(unsigned int nid)
-{
-	struct pci_dev *F3 = node_to_amd_nb(nid)->misc;
-	struct amd64_pvt *pvt = NULL;
-	struct ecc_settings *s;
-	int ret;
+अटल पूर्णांक probe_one_instance(अचिन्हित पूर्णांक nid)
+अणु
+	काष्ठा pci_dev *F3 = node_to_amd_nb(nid)->misc;
+	काष्ठा amd64_pvt *pvt = शून्य;
+	काष्ठा ecc_settings *s;
+	पूर्णांक ret;
 
 	ret = -ENOMEM;
-	s = kzalloc(sizeof(struct ecc_settings), GFP_KERNEL);
-	if (!s)
-		goto err_out;
+	s = kzalloc(माप(काष्ठा ecc_settings), GFP_KERNEL);
+	अगर (!s)
+		जाओ err_out;
 
 	ecc_stngs[nid] = s;
 
-	pvt = kzalloc(sizeof(struct amd64_pvt), GFP_KERNEL);
-	if (!pvt)
-		goto err_settings;
+	pvt = kzalloc(माप(काष्ठा amd64_pvt), GFP_KERNEL);
+	अगर (!pvt)
+		जाओ err_settings;
 
 	pvt->mc_node_id	= nid;
 	pvt->F3 = F3;
 
 	ret = -ENODEV;
 	fam_type = per_family_init(pvt);
-	if (!fam_type)
-		goto err_enable;
+	अगर (!fam_type)
+		जाओ err_enable;
 
 	ret = hw_info_get(pvt);
-	if (ret < 0)
-		goto err_enable;
+	अगर (ret < 0)
+		जाओ err_enable;
 
 	ret = 0;
-	if (!instance_has_memory(pvt)) {
+	अगर (!instance_has_memory(pvt)) अणु
 		amd64_info("Node %d: No DIMMs detected.\n", nid);
-		goto err_enable;
-	}
+		जाओ err_enable;
+	पूर्ण
 
-	if (!ecc_enabled(pvt)) {
+	अगर (!ecc_enabled(pvt)) अणु
 		ret = -ENODEV;
 
-		if (!ecc_enable_override)
-			goto err_enable;
+		अगर (!ecc_enable_override)
+			जाओ err_enable;
 
-		if (boot_cpu_data.x86 >= 0x17) {
+		अगर (boot_cpu_data.x86 >= 0x17) अणु
 			amd64_warn("Forcing ECC on is not recommended on newer systems. Please enable ECC in BIOS.");
-			goto err_enable;
-		} else
+			जाओ err_enable;
+		पूर्ण अन्यथा
 			amd64_warn("Forcing ECC on!\n");
 
-		if (!enable_ecc_error_reporting(s, nid, F3))
-			goto err_enable;
-	}
+		अगर (!enable_ecc_error_reporting(s, nid, F3))
+			जाओ err_enable;
+	पूर्ण
 
 	ret = init_one_instance(pvt);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		amd64_err("Error probing instance: %d\n", nid);
 
-		if (boot_cpu_data.x86 < 0x17)
+		अगर (boot_cpu_data.x86 < 0x17)
 			restore_ecc_error_reporting(s, nid, F3);
 
-		goto err_enable;
-	}
+		जाओ err_enable;
+	पूर्ण
 
 	amd64_info("%s %sdetected (node %d).\n", fam_type->ctl_name,
 		     (pvt->fam == 0xf ?
@@ -3867,170 +3868,170 @@ static int probe_one_instance(unsigned int nid)
 
 	dump_misc_regs(pvt);
 
-	return ret;
+	वापस ret;
 
 err_enable:
 	hw_info_put(pvt);
-	kfree(pvt);
+	kमुक्त(pvt);
 
 err_settings:
-	kfree(s);
-	ecc_stngs[nid] = NULL;
+	kमुक्त(s);
+	ecc_stngs[nid] = शून्य;
 
 err_out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void remove_one_instance(unsigned int nid)
-{
-	struct pci_dev *F3 = node_to_amd_nb(nid)->misc;
-	struct ecc_settings *s = ecc_stngs[nid];
-	struct mem_ctl_info *mci;
-	struct amd64_pvt *pvt;
+अटल व्योम हटाओ_one_instance(अचिन्हित पूर्णांक nid)
+अणु
+	काष्ठा pci_dev *F3 = node_to_amd_nb(nid)->misc;
+	काष्ठा ecc_settings *s = ecc_stngs[nid];
+	काष्ठा mem_ctl_info *mci;
+	काष्ठा amd64_pvt *pvt;
 
 	/* Remove from EDAC CORE tracking list */
 	mci = edac_mc_del_mc(&F3->dev);
-	if (!mci)
-		return;
+	अगर (!mci)
+		वापस;
 
 	pvt = mci->pvt_info;
 
 	restore_ecc_error_reporting(s, nid, F3);
 
-	kfree(ecc_stngs[nid]);
-	ecc_stngs[nid] = NULL;
+	kमुक्त(ecc_stngs[nid]);
+	ecc_stngs[nid] = शून्य;
 
 	/* Free the EDAC CORE resources */
-	mci->pvt_info = NULL;
+	mci->pvt_info = शून्य;
 
 	hw_info_put(pvt);
-	kfree(pvt);
-	edac_mc_free(mci);
-}
+	kमुक्त(pvt);
+	edac_mc_मुक्त(mci);
+पूर्ण
 
-static void setup_pci_device(void)
-{
-	if (pci_ctl)
-		return;
+अटल व्योम setup_pci_device(व्योम)
+अणु
+	अगर (pci_ctl)
+		वापस;
 
 	pci_ctl = edac_pci_create_generic_ctl(pci_ctl_dev, EDAC_MOD_STR);
-	if (!pci_ctl) {
+	अगर (!pci_ctl) अणु
 		pr_warn("%s(): Unable to create PCI control\n", __func__);
 		pr_warn("%s(): PCI error report via EDAC not set\n", __func__);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static const struct x86_cpu_id amd64_cpuids[] = {
-	X86_MATCH_VENDOR_FAM(AMD,	0x0F, NULL),
-	X86_MATCH_VENDOR_FAM(AMD,	0x10, NULL),
-	X86_MATCH_VENDOR_FAM(AMD,	0x15, NULL),
-	X86_MATCH_VENDOR_FAM(AMD,	0x16, NULL),
-	X86_MATCH_VENDOR_FAM(AMD,	0x17, NULL),
-	X86_MATCH_VENDOR_FAM(HYGON,	0x18, NULL),
-	X86_MATCH_VENDOR_FAM(AMD,	0x19, NULL),
-	{ }
-};
+अटल स्थिर काष्ठा x86_cpu_id amd64_cpuids[] = अणु
+	X86_MATCH_VENDOR_FAM(AMD,	0x0F, शून्य),
+	X86_MATCH_VENDOR_FAM(AMD,	0x10, शून्य),
+	X86_MATCH_VENDOR_FAM(AMD,	0x15, शून्य),
+	X86_MATCH_VENDOR_FAM(AMD,	0x16, शून्य),
+	X86_MATCH_VENDOR_FAM(AMD,	0x17, शून्य),
+	X86_MATCH_VENDOR_FAM(HYGON,	0x18, शून्य),
+	X86_MATCH_VENDOR_FAM(AMD,	0x19, शून्य),
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(x86cpu, amd64_cpuids);
 
-static int __init amd64_edac_init(void)
-{
-	const char *owner;
-	int err = -ENODEV;
-	int i;
+अटल पूर्णांक __init amd64_edac_init(व्योम)
+अणु
+	स्थिर अक्षर *owner;
+	पूर्णांक err = -ENODEV;
+	पूर्णांक i;
 
 	owner = edac_get_owner();
-	if (owner && strncmp(owner, EDAC_MOD_STR, sizeof(EDAC_MOD_STR)))
-		return -EBUSY;
+	अगर (owner && म_भेदन(owner, EDAC_MOD_STR, माप(EDAC_MOD_STR)))
+		वापस -EBUSY;
 
-	if (!x86_match_cpu(amd64_cpuids))
-		return -ENODEV;
+	अगर (!x86_match_cpu(amd64_cpuids))
+		वापस -ENODEV;
 
-	if (amd_cache_northbridges() < 0)
-		return -ENODEV;
+	अगर (amd_cache_northbridges() < 0)
+		वापस -ENODEV;
 
 	opstate_init();
 
 	err = -ENOMEM;
-	ecc_stngs = kcalloc(amd_nb_num(), sizeof(ecc_stngs[0]), GFP_KERNEL);
-	if (!ecc_stngs)
-		goto err_free;
+	ecc_stngs = kसुस्मृति(amd_nb_num(), माप(ecc_stngs[0]), GFP_KERNEL);
+	अगर (!ecc_stngs)
+		जाओ err_मुक्त;
 
 	msrs = msrs_alloc();
-	if (!msrs)
-		goto err_free;
+	अगर (!msrs)
+		जाओ err_मुक्त;
 
-	for (i = 0; i < amd_nb_num(); i++) {
+	क्रम (i = 0; i < amd_nb_num(); i++) अणु
 		err = probe_one_instance(i);
-		if (err) {
+		अगर (err) अणु
 			/* unwind properly */
-			while (--i >= 0)
-				remove_one_instance(i);
+			जबतक (--i >= 0)
+				हटाओ_one_instance(i);
 
-			goto err_pci;
-		}
-	}
+			जाओ err_pci;
+		पूर्ण
+	पूर्ण
 
-	if (!edac_has_mcs()) {
+	अगर (!edac_has_mcs()) अणु
 		err = -ENODEV;
-		goto err_pci;
-	}
+		जाओ err_pci;
+	पूर्ण
 
-	/* register stuff with EDAC MCE */
-	if (boot_cpu_data.x86 >= 0x17)
-		amd_register_ecc_decoder(decode_umc_error);
-	else
-		amd_register_ecc_decoder(decode_bus_error);
+	/* रेजिस्टर stuff with EDAC MCE */
+	अगर (boot_cpu_data.x86 >= 0x17)
+		amd_रेजिस्टर_ecc_decoder(decode_umc_error);
+	अन्यथा
+		amd_रेजिस्टर_ecc_decoder(decode_bus_error);
 
 	setup_pci_device();
 
-#ifdef CONFIG_X86_32
+#अगर_घोषित CONFIG_X86_32
 	amd64_err("%s on 32-bit is unsupported. USE AT YOUR OWN RISK!\n", EDAC_MOD_STR);
-#endif
+#पूर्ण_अगर
 
-	printk(KERN_INFO "AMD64 EDAC driver v%s\n", EDAC_AMD64_VERSION);
+	prपूर्णांकk(KERN_INFO "AMD64 EDAC driver v%s\n", EDAC_AMD64_VERSION);
 
-	return 0;
+	वापस 0;
 
 err_pci:
-	pci_ctl_dev = NULL;
+	pci_ctl_dev = शून्य;
 
-	msrs_free(msrs);
-	msrs = NULL;
+	msrs_मुक्त(msrs);
+	msrs = शून्य;
 
-err_free:
-	kfree(ecc_stngs);
-	ecc_stngs = NULL;
+err_मुक्त:
+	kमुक्त(ecc_stngs);
+	ecc_stngs = शून्य;
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void __exit amd64_edac_exit(void)
-{
-	int i;
+अटल व्योम __निकास amd64_edac_निकास(व्योम)
+अणु
+	पूर्णांक i;
 
-	if (pci_ctl)
+	अगर (pci_ctl)
 		edac_pci_release_generic_ctl(pci_ctl);
 
-	/* unregister from EDAC MCE */
-	if (boot_cpu_data.x86 >= 0x17)
-		amd_unregister_ecc_decoder(decode_umc_error);
-	else
-		amd_unregister_ecc_decoder(decode_bus_error);
+	/* unरेजिस्टर from EDAC MCE */
+	अगर (boot_cpu_data.x86 >= 0x17)
+		amd_unरेजिस्टर_ecc_decoder(decode_umc_error);
+	अन्यथा
+		amd_unरेजिस्टर_ecc_decoder(decode_bus_error);
 
-	for (i = 0; i < amd_nb_num(); i++)
-		remove_one_instance(i);
+	क्रम (i = 0; i < amd_nb_num(); i++)
+		हटाओ_one_instance(i);
 
-	kfree(ecc_stngs);
-	ecc_stngs = NULL;
+	kमुक्त(ecc_stngs);
+	ecc_stngs = शून्य;
 
-	pci_ctl_dev = NULL;
+	pci_ctl_dev = शून्य;
 
-	msrs_free(msrs);
-	msrs = NULL;
-}
+	msrs_मुक्त(msrs);
+	msrs = शून्य;
+पूर्ण
 
 module_init(amd64_edac_init);
-module_exit(amd64_edac_exit);
+module_निकास(amd64_edac_निकास);
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("SoftwareBitMaker: Doug Thompson, "
@@ -4038,5 +4039,5 @@ MODULE_AUTHOR("SoftwareBitMaker: Doug Thompson, "
 MODULE_DESCRIPTION("MC support for AMD64 memory controllers - "
 		EDAC_AMD64_VERSION);
 
-module_param(edac_op_state, int, 0444);
+module_param(edac_op_state, पूर्णांक, 0444);
 MODULE_PARM_DESC(edac_op_state, "EDAC Error Reporting state: 0=Poll,1=NMI");

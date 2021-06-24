@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /* exynos_drm_vidi.c
  *
  * Copyright (C) 2012 Samsung Electronics Co.Ltd
@@ -6,54 +7,54 @@
  *	Inki Dae <inki.dae@samsung.com>
  */
 
-#include <linux/component.h>
-#include <linux/kernel.h>
-#include <linux/platform_device.h>
-#include <linux/timer.h>
+#समावेश <linux/component.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/समयr.h>
 
-#include <drm/drm_atomic_helper.h>
-#include <drm/drm_edid.h>
-#include <drm/drm_probe_helper.h>
-#include <drm/drm_simple_kms_helper.h>
-#include <drm/drm_vblank.h>
-#include <drm/exynos_drm.h>
+#समावेश <drm/drm_atomic_helper.h>
+#समावेश <drm/drm_edid.h>
+#समावेश <drm/drm_probe_helper.h>
+#समावेश <drm/drm_simple_kms_helper.h>
+#समावेश <drm/drm_vblank.h>
+#समावेश <drm/exynos_drm.h>
 
-#include "exynos_drm_crtc.h"
-#include "exynos_drm_drv.h"
-#include "exynos_drm_fb.h"
-#include "exynos_drm_plane.h"
-#include "exynos_drm_vidi.h"
+#समावेश "exynos_drm_crtc.h"
+#समावेश "exynos_drm_drv.h"
+#समावेश "exynos_drm_fb.h"
+#समावेश "exynos_drm_plane.h"
+#समावेश "exynos_drm_vidi.h"
 
 /* VIDI uses fixed refresh rate of 50Hz */
-#define VIDI_REFRESH_TIME (1000 / 50)
+#घोषणा VIDI_REFRESH_TIME (1000 / 50)
 
-/* vidi has totally three virtual windows. */
-#define WINDOWS_NR		3
+/* vidi has totally three भव winकरोws. */
+#घोषणा WINDOWS_NR		3
 
-#define ctx_from_connector(c)	container_of(c, struct vidi_context, \
+#घोषणा ctx_from_connector(c)	container_of(c, काष्ठा vidi_context, \
 					connector)
 
-struct vidi_context {
-	struct drm_encoder		encoder;
-	struct drm_device		*drm_dev;
-	struct device			*dev;
-	struct exynos_drm_crtc		*crtc;
-	struct drm_connector		connector;
-	struct exynos_drm_plane		planes[WINDOWS_NR];
-	struct edid			*raw_edid;
-	unsigned int			clkdiv;
-	unsigned int			connected;
+काष्ठा vidi_context अणु
+	काष्ठा drm_encoder		encoder;
+	काष्ठा drm_device		*drm_dev;
+	काष्ठा device			*dev;
+	काष्ठा exynos_drm_crtc		*crtc;
+	काष्ठा drm_connector		connector;
+	काष्ठा exynos_drm_plane		planes[WINDOWS_NR];
+	काष्ठा edid			*raw_edid;
+	अचिन्हित पूर्णांक			clkभाग;
+	अचिन्हित पूर्णांक			connected;
 	bool				suspended;
-	struct timer_list		timer;
-	struct mutex			lock;
-};
+	काष्ठा समयr_list		समयr;
+	काष्ठा mutex			lock;
+पूर्ण;
 
-static inline struct vidi_context *encoder_to_vidi(struct drm_encoder *e)
-{
-	return container_of(e, struct vidi_context, encoder);
-}
+अटल अंतरभूत काष्ठा vidi_context *encoder_to_vidi(काष्ठा drm_encoder *e)
+अणु
+	वापस container_of(e, काष्ठा vidi_context, encoder);
+पूर्ण
 
-static const char fake_edid_info[] = {
+अटल स्थिर अक्षर fake_edid_info[] = अणु
 	0x00, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x00, 0x4c, 0x2d, 0x05, 0x05,
 	0x00, 0x00, 0x00, 0x00, 0x30, 0x12, 0x01, 0x03, 0x80, 0x10, 0x09, 0x78,
 	0x0a, 0xee, 0x91, 0xa3, 0x54, 0x4c, 0x99, 0x26, 0x0f, 0x50, 0x54, 0xbd,
@@ -76,54 +77,54 @@ static const char fake_edid_info[] = {
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x00, 0x00, 0x00, 0x06
-};
+पूर्ण;
 
-static const uint32_t formats[] = {
+अटल स्थिर uपूर्णांक32_t क्रमmats[] = अणु
 	DRM_FORMAT_XRGB8888,
 	DRM_FORMAT_ARGB8888,
 	DRM_FORMAT_NV12,
-};
+पूर्ण;
 
-static const enum drm_plane_type vidi_win_types[WINDOWS_NR] = {
+अटल स्थिर क्रमागत drm_plane_type vidi_win_types[WINDOWS_NR] = अणु
 	DRM_PLANE_TYPE_PRIMARY,
 	DRM_PLANE_TYPE_OVERLAY,
 	DRM_PLANE_TYPE_CURSOR,
-};
+पूर्ण;
 
-static int vidi_enable_vblank(struct exynos_drm_crtc *crtc)
-{
-	struct vidi_context *ctx = crtc->ctx;
+अटल पूर्णांक vidi_enable_vblank(काष्ठा exynos_drm_crtc *crtc)
+अणु
+	काष्ठा vidi_context *ctx = crtc->ctx;
 
-	if (ctx->suspended)
-		return -EPERM;
+	अगर (ctx->suspended)
+		वापस -EPERM;
 
-	mod_timer(&ctx->timer,
-		jiffies + msecs_to_jiffies(VIDI_REFRESH_TIME) - 1);
+	mod_समयr(&ctx->समयr,
+		jअगरfies + msecs_to_jअगरfies(VIDI_REFRESH_TIME) - 1);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void vidi_disable_vblank(struct exynos_drm_crtc *crtc)
-{
-}
+अटल व्योम vidi_disable_vblank(काष्ठा exynos_drm_crtc *crtc)
+अणु
+पूर्ण
 
-static void vidi_update_plane(struct exynos_drm_crtc *crtc,
-			      struct exynos_drm_plane *plane)
-{
-	struct drm_plane_state *state = plane->base.state;
-	struct vidi_context *ctx = crtc->ctx;
+अटल व्योम vidi_update_plane(काष्ठा exynos_drm_crtc *crtc,
+			      काष्ठा exynos_drm_plane *plane)
+अणु
+	काष्ठा drm_plane_state *state = plane->base.state;
+	काष्ठा vidi_context *ctx = crtc->ctx;
 	dma_addr_t addr;
 
-	if (ctx->suspended)
-		return;
+	अगर (ctx->suspended)
+		वापस;
 
 	addr = exynos_drm_fb_dma_addr(state->fb, 0);
 	DRM_DEV_DEBUG_KMS(ctx->dev, "dma_addr = %pad\n", &addr);
-}
+पूर्ण
 
-static void vidi_atomic_enable(struct exynos_drm_crtc *crtc)
-{
-	struct vidi_context *ctx = crtc->ctx;
+अटल व्योम vidi_atomic_enable(काष्ठा exynos_drm_crtc *crtc)
+अणु
+	काष्ठा vidi_context *ctx = crtc->ctx;
 
 	mutex_lock(&ctx->lock);
 
@@ -132,11 +133,11 @@ static void vidi_atomic_enable(struct exynos_drm_crtc *crtc)
 	mutex_unlock(&ctx->lock);
 
 	drm_crtc_vblank_on(&crtc->base);
-}
+पूर्ण
 
-static void vidi_atomic_disable(struct exynos_drm_crtc *crtc)
-{
-	struct vidi_context *ctx = crtc->ctx;
+अटल व्योम vidi_atomic_disable(काष्ठा exynos_drm_crtc *crtc)
+अणु
+	काष्ठा vidi_context *ctx = crtc->ctx;
 
 	drm_crtc_vblank_off(&crtc->base);
 
@@ -145,344 +146,344 @@ static void vidi_atomic_disable(struct exynos_drm_crtc *crtc)
 	ctx->suspended = true;
 
 	mutex_unlock(&ctx->lock);
-}
+पूर्ण
 
-static const struct exynos_drm_crtc_ops vidi_crtc_ops = {
+अटल स्थिर काष्ठा exynos_drm_crtc_ops vidi_crtc_ops = अणु
 	.atomic_enable = vidi_atomic_enable,
 	.atomic_disable = vidi_atomic_disable,
 	.enable_vblank = vidi_enable_vblank,
 	.disable_vblank = vidi_disable_vblank,
 	.update_plane = vidi_update_plane,
 	.atomic_flush = exynos_crtc_handle_event,
-};
+पूर्ण;
 
-static void vidi_fake_vblank_timer(struct timer_list *t)
-{
-	struct vidi_context *ctx = from_timer(ctx, t, timer);
+अटल व्योम vidi_fake_vblank_समयr(काष्ठा समयr_list *t)
+अणु
+	काष्ठा vidi_context *ctx = from_समयr(ctx, t, समयr);
 
-	if (drm_crtc_handle_vblank(&ctx->crtc->base))
-		mod_timer(&ctx->timer,
-			jiffies + msecs_to_jiffies(VIDI_REFRESH_TIME) - 1);
-}
+	अगर (drm_crtc_handle_vblank(&ctx->crtc->base))
+		mod_समयr(&ctx->समयr,
+			jअगरfies + msecs_to_jअगरfies(VIDI_REFRESH_TIME) - 1);
+पूर्ण
 
-static ssize_t vidi_show_connection(struct device *dev,
-				struct device_attribute *attr, char *buf)
-{
-	struct vidi_context *ctx = dev_get_drvdata(dev);
-	int rc;
+अटल sमाप_प्रकार vidi_show_connection(काष्ठा device *dev,
+				काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा vidi_context *ctx = dev_get_drvdata(dev);
+	पूर्णांक rc;
 
 	mutex_lock(&ctx->lock);
 
-	rc = sprintf(buf, "%d\n", ctx->connected);
+	rc = प्र_लिखो(buf, "%d\n", ctx->connected);
 
 	mutex_unlock(&ctx->lock);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static ssize_t vidi_store_connection(struct device *dev,
-				struct device_attribute *attr,
-				const char *buf, size_t len)
-{
-	struct vidi_context *ctx = dev_get_drvdata(dev);
-	int ret;
+अटल sमाप_प्रकार vidi_store_connection(काष्ठा device *dev,
+				काष्ठा device_attribute *attr,
+				स्थिर अक्षर *buf, माप_प्रकार len)
+अणु
+	काष्ठा vidi_context *ctx = dev_get_drvdata(dev);
+	पूर्णांक ret;
 
-	ret = kstrtoint(buf, 0, &ctx->connected);
-	if (ret)
-		return ret;
+	ret = kstrtoपूर्णांक(buf, 0, &ctx->connected);
+	अगर (ret)
+		वापस ret;
 
-	if (ctx->connected > 1)
-		return -EINVAL;
+	अगर (ctx->connected > 1)
+		वापस -EINVAL;
 
-	/* use fake edid data for test. */
-	if (!ctx->raw_edid)
-		ctx->raw_edid = (struct edid *)fake_edid_info;
+	/* use fake edid data क्रम test. */
+	अगर (!ctx->raw_edid)
+		ctx->raw_edid = (काष्ठा edid *)fake_edid_info;
 
-	/* if raw_edid isn't same as fake data then it can't be tested. */
-	if (ctx->raw_edid != (struct edid *)fake_edid_info) {
+	/* अगर raw_edid isn't same as fake data then it can't be tested. */
+	अगर (ctx->raw_edid != (काष्ठा edid *)fake_edid_info) अणु
 		DRM_DEV_DEBUG_KMS(dev, "edid data is not fake data.\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	DRM_DEV_DEBUG_KMS(dev, "requested connection.\n");
 
 	drm_helper_hpd_irq_event(ctx->drm_dev);
 
-	return len;
-}
+	वापस len;
+पूर्ण
 
-static DEVICE_ATTR(connection, 0644, vidi_show_connection,
+अटल DEVICE_ATTR(connection, 0644, vidi_show_connection,
 			vidi_store_connection);
 
-static struct attribute *vidi_attrs[] = {
+अटल काष्ठा attribute *vidi_attrs[] = अणु
 	&dev_attr_connection.attr,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 ATTRIBUTE_GROUPS(vidi);
 
-int vidi_connection_ioctl(struct drm_device *drm_dev, void *data,
-				struct drm_file *file_priv)
-{
-	struct vidi_context *ctx = dev_get_drvdata(drm_dev->dev);
-	struct drm_exynos_vidi_connection *vidi = data;
+पूर्णांक vidi_connection_ioctl(काष्ठा drm_device *drm_dev, व्योम *data,
+				काष्ठा drm_file *file_priv)
+अणु
+	काष्ठा vidi_context *ctx = dev_get_drvdata(drm_dev->dev);
+	काष्ठा drm_exynos_vidi_connection *vidi = data;
 
-	if (!vidi) {
+	अगर (!vidi) अणु
 		DRM_DEV_DEBUG_KMS(ctx->dev,
 				  "user data for vidi is null.\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (vidi->connection > 1) {
+	अगर (vidi->connection > 1) अणु
 		DRM_DEV_DEBUG_KMS(ctx->dev,
 				  "connection should be 0 or 1.\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (ctx->connected == vidi->connection) {
+	अगर (ctx->connected == vidi->connection) अणु
 		DRM_DEV_DEBUG_KMS(ctx->dev,
 				  "same connection request.\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (vidi->connection) {
-		struct edid *raw_edid;
+	अगर (vidi->connection) अणु
+		काष्ठा edid *raw_edid;
 
-		raw_edid = (struct edid *)(unsigned long)vidi->edid;
-		if (!drm_edid_is_valid(raw_edid)) {
+		raw_edid = (काष्ठा edid *)(अचिन्हित दीर्घ)vidi->edid;
+		अगर (!drm_edid_is_valid(raw_edid)) अणु
 			DRM_DEV_DEBUG_KMS(ctx->dev,
 					  "edid data is invalid.\n");
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 		ctx->raw_edid = drm_edid_duplicate(raw_edid);
-		if (!ctx->raw_edid) {
+		अगर (!ctx->raw_edid) अणु
 			DRM_DEV_DEBUG_KMS(ctx->dev,
 					  "failed to allocate raw_edid.\n");
-			return -ENOMEM;
-		}
-	} else {
+			वापस -ENOMEM;
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		/*
-		 * with connection = 0, free raw_edid
-		 * only if raw edid data isn't same as fake data.
+		 * with connection = 0, मुक्त raw_edid
+		 * only अगर raw edid data isn't same as fake data.
 		 */
-		if (ctx->raw_edid && ctx->raw_edid !=
-				(struct edid *)fake_edid_info) {
-			kfree(ctx->raw_edid);
-			ctx->raw_edid = NULL;
-		}
-	}
+		अगर (ctx->raw_edid && ctx->raw_edid !=
+				(काष्ठा edid *)fake_edid_info) अणु
+			kमुक्त(ctx->raw_edid);
+			ctx->raw_edid = शून्य;
+		पूर्ण
+	पूर्ण
 
 	ctx->connected = vidi->connection;
 	drm_helper_hpd_irq_event(ctx->drm_dev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static enum drm_connector_status vidi_detect(struct drm_connector *connector,
-			bool force)
-{
-	struct vidi_context *ctx = ctx_from_connector(connector);
+अटल क्रमागत drm_connector_status vidi_detect(काष्ठा drm_connector *connector,
+			bool क्रमce)
+अणु
+	काष्ठा vidi_context *ctx = ctx_from_connector(connector);
 
 	/*
 	 * connection request would come from user side
-	 * to do hotplug through specific ioctl.
+	 * to करो hotplug through specअगरic ioctl.
 	 */
-	return ctx->connected ? connector_status_connected :
+	वापस ctx->connected ? connector_status_connected :
 			connector_status_disconnected;
-}
+पूर्ण
 
-static void vidi_connector_destroy(struct drm_connector *connector)
-{
-}
+अटल व्योम vidi_connector_destroy(काष्ठा drm_connector *connector)
+अणु
+पूर्ण
 
-static const struct drm_connector_funcs vidi_connector_funcs = {
+अटल स्थिर काष्ठा drm_connector_funcs vidi_connector_funcs = अणु
 	.fill_modes = drm_helper_probe_single_connector_modes,
 	.detect = vidi_detect,
 	.destroy = vidi_connector_destroy,
 	.reset = drm_atomic_helper_connector_reset,
 	.atomic_duplicate_state = drm_atomic_helper_connector_duplicate_state,
 	.atomic_destroy_state = drm_atomic_helper_connector_destroy_state,
-};
+पूर्ण;
 
-static int vidi_get_modes(struct drm_connector *connector)
-{
-	struct vidi_context *ctx = ctx_from_connector(connector);
-	struct edid *edid;
-	int edid_len;
+अटल पूर्णांक vidi_get_modes(काष्ठा drm_connector *connector)
+अणु
+	काष्ठा vidi_context *ctx = ctx_from_connector(connector);
+	काष्ठा edid *edid;
+	पूर्णांक edid_len;
 
 	/*
 	 * the edid data comes from user side and it would be set
-	 * to ctx->raw_edid through specific ioctl.
+	 * to ctx->raw_edid through specअगरic ioctl.
 	 */
-	if (!ctx->raw_edid) {
+	अगर (!ctx->raw_edid) अणु
 		DRM_DEV_DEBUG_KMS(ctx->dev, "raw_edid is null.\n");
-		return -EFAULT;
-	}
+		वापस -EFAULT;
+	पूर्ण
 
 	edid_len = (1 + ctx->raw_edid->extensions) * EDID_LENGTH;
 	edid = kmemdup(ctx->raw_edid, edid_len, GFP_KERNEL);
-	if (!edid) {
+	अगर (!edid) अणु
 		DRM_DEV_DEBUG_KMS(ctx->dev, "failed to allocate edid\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	drm_connector_update_edid_property(connector, edid);
 
-	return drm_add_edid_modes(connector, edid);
-}
+	वापस drm_add_edid_modes(connector, edid);
+पूर्ण
 
-static const struct drm_connector_helper_funcs vidi_connector_helper_funcs = {
+अटल स्थिर काष्ठा drm_connector_helper_funcs vidi_connector_helper_funcs = अणु
 	.get_modes = vidi_get_modes,
-};
+पूर्ण;
 
-static int vidi_create_connector(struct drm_encoder *encoder)
-{
-	struct vidi_context *ctx = encoder_to_vidi(encoder);
-	struct drm_connector *connector = &ctx->connector;
-	int ret;
+अटल पूर्णांक vidi_create_connector(काष्ठा drm_encoder *encoder)
+अणु
+	काष्ठा vidi_context *ctx = encoder_to_vidi(encoder);
+	काष्ठा drm_connector *connector = &ctx->connector;
+	पूर्णांक ret;
 
 	connector->polled = DRM_CONNECTOR_POLL_HPD;
 
 	ret = drm_connector_init(ctx->drm_dev, connector,
 			&vidi_connector_funcs, DRM_MODE_CONNECTOR_VIRTUAL);
-	if (ret) {
+	अगर (ret) अणु
 		DRM_DEV_ERROR(ctx->dev,
 			      "Failed to initialize connector with drm\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	drm_connector_helper_add(connector, &vidi_connector_helper_funcs);
 	drm_connector_attach_encoder(connector, encoder);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void exynos_vidi_mode_set(struct drm_encoder *encoder,
-			       struct drm_display_mode *mode,
-			       struct drm_display_mode *adjusted_mode)
-{
-}
+अटल व्योम exynos_vidi_mode_set(काष्ठा drm_encoder *encoder,
+			       काष्ठा drm_display_mode *mode,
+			       काष्ठा drm_display_mode *adjusted_mode)
+अणु
+पूर्ण
 
-static void exynos_vidi_enable(struct drm_encoder *encoder)
-{
-}
+अटल व्योम exynos_vidi_enable(काष्ठा drm_encoder *encoder)
+अणु
+पूर्ण
 
-static void exynos_vidi_disable(struct drm_encoder *encoder)
-{
-}
+अटल व्योम exynos_vidi_disable(काष्ठा drm_encoder *encoder)
+अणु
+पूर्ण
 
-static const struct drm_encoder_helper_funcs exynos_vidi_encoder_helper_funcs = {
+अटल स्थिर काष्ठा drm_encoder_helper_funcs exynos_vidi_encoder_helper_funcs = अणु
 	.mode_set = exynos_vidi_mode_set,
 	.enable = exynos_vidi_enable,
 	.disable = exynos_vidi_disable,
-};
+पूर्ण;
 
-static int vidi_bind(struct device *dev, struct device *master, void *data)
-{
-	struct vidi_context *ctx = dev_get_drvdata(dev);
-	struct drm_device *drm_dev = data;
-	struct drm_encoder *encoder = &ctx->encoder;
-	struct exynos_drm_plane *exynos_plane;
-	struct exynos_drm_plane_config plane_config = { 0 };
-	unsigned int i;
-	int ret;
+अटल पूर्णांक vidi_bind(काष्ठा device *dev, काष्ठा device *master, व्योम *data)
+अणु
+	काष्ठा vidi_context *ctx = dev_get_drvdata(dev);
+	काष्ठा drm_device *drm_dev = data;
+	काष्ठा drm_encoder *encoder = &ctx->encoder;
+	काष्ठा exynos_drm_plane *exynos_plane;
+	काष्ठा exynos_drm_plane_config plane_config = अणु 0 पूर्ण;
+	अचिन्हित पूर्णांक i;
+	पूर्णांक ret;
 
 	ctx->drm_dev = drm_dev;
 
-	plane_config.pixel_formats = formats;
-	plane_config.num_pixel_formats = ARRAY_SIZE(formats);
+	plane_config.pixel_क्रमmats = क्रमmats;
+	plane_config.num_pixel_क्रमmats = ARRAY_SIZE(क्रमmats);
 
-	for (i = 0; i < WINDOWS_NR; i++) {
+	क्रम (i = 0; i < WINDOWS_NR; i++) अणु
 		plane_config.zpos = i;
 		plane_config.type = vidi_win_types[i];
 
 		ret = exynos_plane_init(drm_dev, &ctx->planes[i], i,
 					&plane_config);
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
 	exynos_plane = &ctx->planes[DEFAULT_WIN];
 	ctx->crtc = exynos_drm_crtc_create(drm_dev, &exynos_plane->base,
 			EXYNOS_DISPLAY_TYPE_VIDI, &vidi_crtc_ops, ctx);
-	if (IS_ERR(ctx->crtc)) {
+	अगर (IS_ERR(ctx->crtc)) अणु
 		DRM_DEV_ERROR(dev, "failed to create crtc.\n");
-		return PTR_ERR(ctx->crtc);
-	}
+		वापस PTR_ERR(ctx->crtc);
+	पूर्ण
 
 	drm_simple_encoder_init(drm_dev, encoder, DRM_MODE_ENCODER_TMDS);
 
 	drm_encoder_helper_add(encoder, &exynos_vidi_encoder_helper_funcs);
 
 	ret = exynos_drm_set_possible_crtcs(encoder, EXYNOS_DISPLAY_TYPE_VIDI);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	ret = vidi_create_connector(encoder);
-	if (ret) {
+	अगर (ret) अणु
 		DRM_DEV_ERROR(dev, "failed to create connector ret = %d\n",
 			      ret);
 		drm_encoder_cleanup(encoder);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
-static void vidi_unbind(struct device *dev, struct device *master, void *data)
-{
-	struct vidi_context *ctx = dev_get_drvdata(dev);
+अटल व्योम vidi_unbind(काष्ठा device *dev, काष्ठा device *master, व्योम *data)
+अणु
+	काष्ठा vidi_context *ctx = dev_get_drvdata(dev);
 
-	del_timer_sync(&ctx->timer);
-}
+	del_समयr_sync(&ctx->समयr);
+पूर्ण
 
-static const struct component_ops vidi_component_ops = {
+अटल स्थिर काष्ठा component_ops vidi_component_ops = अणु
 	.bind	= vidi_bind,
 	.unbind = vidi_unbind,
-};
+पूर्ण;
 
-static int vidi_probe(struct platform_device *pdev)
-{
-	struct vidi_context *ctx;
-	struct device *dev = &pdev->dev;
+अटल पूर्णांक vidi_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा vidi_context *ctx;
+	काष्ठा device *dev = &pdev->dev;
 
-	ctx = devm_kzalloc(dev, sizeof(*ctx), GFP_KERNEL);
-	if (!ctx)
-		return -ENOMEM;
+	ctx = devm_kzalloc(dev, माप(*ctx), GFP_KERNEL);
+	अगर (!ctx)
+		वापस -ENOMEM;
 
 	ctx->dev = dev;
 
-	timer_setup(&ctx->timer, vidi_fake_vblank_timer, 0);
+	समयr_setup(&ctx->समयr, vidi_fake_vblank_समयr, 0);
 
 	mutex_init(&ctx->lock);
 
-	platform_set_drvdata(pdev, ctx);
+	platक्रमm_set_drvdata(pdev, ctx);
 
-	return component_add(dev, &vidi_component_ops);
-}
+	वापस component_add(dev, &vidi_component_ops);
+पूर्ण
 
-static int vidi_remove(struct platform_device *pdev)
-{
-	struct vidi_context *ctx = platform_get_drvdata(pdev);
+अटल पूर्णांक vidi_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा vidi_context *ctx = platक्रमm_get_drvdata(pdev);
 
-	if (ctx->raw_edid != (struct edid *)fake_edid_info) {
-		kfree(ctx->raw_edid);
-		ctx->raw_edid = NULL;
+	अगर (ctx->raw_edid != (काष्ठा edid *)fake_edid_info) अणु
+		kमुक्त(ctx->raw_edid);
+		ctx->raw_edid = शून्य;
 
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	component_del(&pdev->dev, &vidi_component_ops);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-struct platform_driver vidi_driver = {
+काष्ठा platक्रमm_driver vidi_driver = अणु
 	.probe		= vidi_probe,
-	.remove		= vidi_remove,
-	.driver		= {
+	.हटाओ		= vidi_हटाओ,
+	.driver		= अणु
 		.name	= "exynos-drm-vidi",
 		.owner	= THIS_MODULE,
 		.dev_groups = vidi_groups,
-	},
-};
+	पूर्ण,
+पूर्ण;

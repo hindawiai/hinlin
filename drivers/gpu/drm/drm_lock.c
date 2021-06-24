@@ -1,24 +1,25 @@
+<शैली गुरु>
 /*
- * \file drm_lock.c
- * IOCTLs for locking
+ * \पile drm_lock.c
+ * IOCTLs क्रम locking
  *
- * \author Rickard E. (Rik) Faith <faith@valinux.com>
- * \author Gareth Hughes <gareth@valinux.com>
+ * \चuthor Rickard E. (Rik) Faith <faith@valinux.com>
+ * \चuthor Gareth Hughes <gareth@valinux.com>
  */
 
 /*
  * Created: Tue Feb  2 08:37:54 1999 by faith@valinux.com
  *
  * Copyright 1999 Precision Insight, Inc., Cedar Park, Texas.
- * Copyright 2000 VA Linux Systems, Inc., Sunnyvale, California.
+ * Copyright 2000 VA Linux Systems, Inc., Sunnyvale, Calअगरornia.
  * All Rights Reserved.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice (including the next
  * paragraph) shall be included in all copies or substantial portions of the
@@ -33,341 +34,341 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include <linux/export.h>
-#include <linux/sched/signal.h>
+#समावेश <linux/export.h>
+#समावेश <linux/sched/संकेत.स>
 
-#include <drm/drm.h>
-#include <drm/drm_drv.h>
-#include <drm/drm_file.h>
-#include <drm/drm_print.h>
+#समावेश <drm/drm.h>
+#समावेश <drm/drm_drv.h>
+#समावेश <drm/drm_file.h>
+#समावेश <drm/drm_prपूर्णांक.h>
 
-#include "drm_internal.h"
-#include "drm_legacy.h"
+#समावेश "drm_internal.h"
+#समावेश "drm_legacy.h"
 
-static int drm_lock_take(struct drm_lock_data *lock_data, unsigned int context);
+अटल पूर्णांक drm_lock_take(काष्ठा drm_lock_data *lock_data, अचिन्हित पूर्णांक context);
 
 /*
  * Take the heavyweight lock.
  *
- * \param lock lock pointer.
+ * \param lock lock poपूर्णांकer.
  * \param context locking context.
- * \return one if the lock is held, or zero otherwise.
+ * \लeturn one अगर the lock is held, or zero otherwise.
  *
- * Attempt to mark the lock as held by the given context, via the \p cmpxchg instruction.
+ * Attempt to mark the lock as held by the given context, via the \p cmpxchg inकाष्ठाion.
  */
-static
-int drm_lock_take(struct drm_lock_data *lock_data,
-		  unsigned int context)
-{
-	unsigned int old, new, prev;
-	volatile unsigned int *lock = &lock_data->hw_lock->lock;
+अटल
+पूर्णांक drm_lock_take(काष्ठा drm_lock_data *lock_data,
+		  अचिन्हित पूर्णांक context)
+अणु
+	अचिन्हित पूर्णांक old, new, prev;
+	अस्थिर अचिन्हित पूर्णांक *lock = &lock_data->hw_lock->lock;
 
 	spin_lock_bh(&lock_data->spinlock);
-	do {
+	करो अणु
 		old = *lock;
-		if (old & _DRM_LOCK_HELD)
+		अगर (old & _DRM_LOCK_HELD)
 			new = old | _DRM_LOCK_CONT;
-		else {
+		अन्यथा अणु
 			new = context | _DRM_LOCK_HELD |
-				((lock_data->user_waiters + lock_data->kernel_waiters > 1) ?
+				((lock_data->user_रुकोers + lock_data->kernel_रुकोers > 1) ?
 				 _DRM_LOCK_CONT : 0);
-		}
+		पूर्ण
 		prev = cmpxchg(lock, old, new);
-	} while (prev != old);
+	पूर्ण जबतक (prev != old);
 	spin_unlock_bh(&lock_data->spinlock);
 
-	if (_DRM_LOCKING_CONTEXT(old) == context) {
-		if (old & _DRM_LOCK_HELD) {
-			if (context != DRM_KERNEL_CONTEXT) {
+	अगर (_DRM_LOCKING_CONTEXT(old) == context) अणु
+		अगर (old & _DRM_LOCK_HELD) अणु
+			अगर (context != DRM_KERNEL_CONTEXT) अणु
 				DRM_ERROR("%d holds heavyweight lock\n",
 					  context);
-			}
-			return 0;
-		}
-	}
+			पूर्ण
+			वापस 0;
+		पूर्ण
+	पूर्ण
 
-	if ((_DRM_LOCKING_CONTEXT(new)) == context && (new & _DRM_LOCK_HELD)) {
+	अगर ((_DRM_LOCKING_CONTEXT(new)) == context && (new & _DRM_LOCK_HELD)) अणु
 		/* Have lock */
-		return 1;
-	}
-	return 0;
-}
+		वापस 1;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /*
- * This takes a lock forcibly and hands it to context.	Should ONLY be used
- * inside *_unlock to give lock to kernel before calling *_dma_schedule.
+ * This takes a lock क्रमcibly and hands it to context.	Should ONLY be used
+ * inside *_unlock to give lock to kernel beक्रमe calling *_dma_schedule.
  *
  * \param dev DRM device.
- * \param lock lock pointer.
+ * \param lock lock poपूर्णांकer.
  * \param context locking context.
- * \return always one.
+ * \लeturn always one.
  *
- * Resets the lock file pointer.
- * Marks the lock as held by the given context, via the \p cmpxchg instruction.
+ * Resets the lock file poपूर्णांकer.
+ * Marks the lock as held by the given context, via the \p cmpxchg inकाष्ठाion.
  */
-static int drm_lock_transfer(struct drm_lock_data *lock_data,
-			     unsigned int context)
-{
-	unsigned int old, new, prev;
-	volatile unsigned int *lock = &lock_data->hw_lock->lock;
+अटल पूर्णांक drm_lock_transfer(काष्ठा drm_lock_data *lock_data,
+			     अचिन्हित पूर्णांक context)
+अणु
+	अचिन्हित पूर्णांक old, new, prev;
+	अस्थिर अचिन्हित पूर्णांक *lock = &lock_data->hw_lock->lock;
 
-	lock_data->file_priv = NULL;
-	do {
+	lock_data->file_priv = शून्य;
+	करो अणु
 		old = *lock;
 		new = context | _DRM_LOCK_HELD;
 		prev = cmpxchg(lock, old, new);
-	} while (prev != old);
-	return 1;
-}
+	पूर्ण जबतक (prev != old);
+	वापस 1;
+पूर्ण
 
-static int drm_legacy_lock_free(struct drm_lock_data *lock_data,
-				unsigned int context)
-{
-	unsigned int old, new, prev;
-	volatile unsigned int *lock = &lock_data->hw_lock->lock;
+अटल पूर्णांक drm_legacy_lock_मुक्त(काष्ठा drm_lock_data *lock_data,
+				अचिन्हित पूर्णांक context)
+अणु
+	अचिन्हित पूर्णांक old, new, prev;
+	अस्थिर अचिन्हित पूर्णांक *lock = &lock_data->hw_lock->lock;
 
 	spin_lock_bh(&lock_data->spinlock);
-	if (lock_data->kernel_waiters != 0) {
+	अगर (lock_data->kernel_रुकोers != 0) अणु
 		drm_lock_transfer(lock_data, 0);
 		lock_data->idle_has_lock = 1;
 		spin_unlock_bh(&lock_data->spinlock);
-		return 1;
-	}
+		वापस 1;
+	पूर्ण
 	spin_unlock_bh(&lock_data->spinlock);
 
-	do {
+	करो अणु
 		old = *lock;
 		new = _DRM_LOCKING_CONTEXT(old);
 		prev = cmpxchg(lock, old, new);
-	} while (prev != old);
+	पूर्ण जबतक (prev != old);
 
-	if (_DRM_LOCK_IS_HELD(old) && _DRM_LOCKING_CONTEXT(old) != context) {
+	अगर (_DRM_LOCK_IS_HELD(old) && _DRM_LOCKING_CONTEXT(old) != context) अणु
 		DRM_ERROR("%d freed heavyweight lock held by %d\n",
 			  context, _DRM_LOCKING_CONTEXT(old));
-		return 1;
-	}
-	wake_up_interruptible(&lock_data->lock_queue);
-	return 0;
-}
+		वापस 1;
+	पूर्ण
+	wake_up_पूर्णांकerruptible(&lock_data->lock_queue);
+	वापस 0;
+पूर्ण
 
 /*
  * Lock ioctl.
  *
  * \param inode device inode.
- * \param file_priv DRM file private.
+ * \param file_priv DRM file निजी.
  * \param cmd command.
- * \param arg user argument, pointing to a drm_lock structure.
- * \return zero on success or negative number on failure.
+ * \param arg user argument, poपूर्णांकing to a drm_lock काष्ठाure.
+ * \लeturn zero on success or negative number on failure.
  *
- * Add the current task to the lock wait queue, and attempt to take to lock.
+ * Add the current task to the lock रुको queue, and attempt to take to lock.
  */
-int drm_legacy_lock(struct drm_device *dev, void *data,
-		    struct drm_file *file_priv)
-{
+पूर्णांक drm_legacy_lock(काष्ठा drm_device *dev, व्योम *data,
+		    काष्ठा drm_file *file_priv)
+अणु
 	DECLARE_WAITQUEUE(entry, current);
-	struct drm_lock *lock = data;
-	struct drm_master *master = file_priv->master;
-	int ret = 0;
+	काष्ठा drm_lock *lock = data;
+	काष्ठा drm_master *master = file_priv->master;
+	पूर्णांक ret = 0;
 
-	if (!drm_core_check_feature(dev, DRIVER_LEGACY))
-		return -EOPNOTSUPP;
+	अगर (!drm_core_check_feature(dev, DRIVER_LEGACY))
+		वापस -EOPNOTSUPP;
 
 	++file_priv->lock_count;
 
-	if (lock->context == DRM_KERNEL_CONTEXT) {
+	अगर (lock->context == DRM_KERNEL_CONTEXT) अणु
 		DRM_ERROR("Process %d using kernel context %d\n",
 			  task_pid_nr(current), lock->context);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	DRM_DEBUG("%d (pid %d) requests lock (0x%08x), flags = 0x%08x\n",
 		  lock->context, task_pid_nr(current),
 		  master->lock.hw_lock ? master->lock.hw_lock->lock : -1,
 		  lock->flags);
 
-	add_wait_queue(&master->lock.lock_queue, &entry);
+	add_रुको_queue(&master->lock.lock_queue, &entry);
 	spin_lock_bh(&master->lock.spinlock);
-	master->lock.user_waiters++;
+	master->lock.user_रुकोers++;
 	spin_unlock_bh(&master->lock.spinlock);
 
-	for (;;) {
+	क्रम (;;) अणु
 		__set_current_state(TASK_INTERRUPTIBLE);
-		if (!master->lock.hw_lock) {
-			/* Device has been unregistered */
-			send_sig(SIGTERM, current, 0);
+		अगर (!master->lock.hw_lock) अणु
+			/* Device has been unरेजिस्टरed */
+			send_sig(संक_इति, current, 0);
 			ret = -EINTR;
-			break;
-		}
-		if (drm_lock_take(&master->lock, lock->context)) {
+			अवरोध;
+		पूर्ण
+		अगर (drm_lock_take(&master->lock, lock->context)) अणु
 			master->lock.file_priv = file_priv;
-			master->lock.lock_time = jiffies;
-			break;	/* Got lock */
-		}
+			master->lock.lock_समय = jअगरfies;
+			अवरोध;	/* Got lock */
+		पूर्ण
 
 		/* Contention */
 		mutex_unlock(&drm_global_mutex);
 		schedule();
 		mutex_lock(&drm_global_mutex);
-		if (signal_pending(current)) {
+		अगर (संकेत_pending(current)) अणु
 			ret = -EINTR;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 	spin_lock_bh(&master->lock.spinlock);
-	master->lock.user_waiters--;
+	master->lock.user_रुकोers--;
 	spin_unlock_bh(&master->lock.spinlock);
 	__set_current_state(TASK_RUNNING);
-	remove_wait_queue(&master->lock.lock_queue, &entry);
+	हटाओ_रुको_queue(&master->lock.lock_queue, &entry);
 
 	DRM_DEBUG("%d %s\n", lock->context,
 		  ret ? "interrupted" : "has lock");
-	if (ret) return ret;
+	अगर (ret) वापस ret;
 
-	/* don't set the block all signals on the master process for now 
+	/* करोn't set the block all संकेतs on the master process क्रम now 
 	 * really probably not the correct answer but lets us debug xkb
- 	 * xserver for now */
-	if (!drm_is_current_master(file_priv)) {
+ 	 * xserver क्रम now */
+	अगर (!drm_is_current_master(file_priv)) अणु
 		dev->sigdata.context = lock->context;
 		dev->sigdata.lock = master->lock.hw_lock;
-	}
+	पूर्ण
 
-	if (dev->driver->dma_quiescent && (lock->flags & _DRM_LOCK_QUIESCENT))
-	{
-		if (dev->driver->dma_quiescent(dev)) {
+	अगर (dev->driver->dma_quiescent && (lock->flags & _DRM_LOCK_QUIESCENT))
+	अणु
+		अगर (dev->driver->dma_quiescent(dev)) अणु
 			DRM_DEBUG("%d waiting for DMA quiescent\n",
 				  lock->context);
-			return -EBUSY;
-		}
-	}
+			वापस -EBUSY;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * Unlock ioctl.
  *
  * \param inode device inode.
- * \param file_priv DRM file private.
+ * \param file_priv DRM file निजी.
  * \param cmd command.
- * \param arg user argument, pointing to a drm_lock structure.
- * \return zero on success or negative number on failure.
+ * \param arg user argument, poपूर्णांकing to a drm_lock काष्ठाure.
+ * \लeturn zero on success or negative number on failure.
  *
- * Transfer and free the lock.
+ * Transfer and मुक्त the lock.
  */
-int drm_legacy_unlock(struct drm_device *dev, void *data, struct drm_file *file_priv)
-{
-	struct drm_lock *lock = data;
-	struct drm_master *master = file_priv->master;
+पूर्णांक drm_legacy_unlock(काष्ठा drm_device *dev, व्योम *data, काष्ठा drm_file *file_priv)
+अणु
+	काष्ठा drm_lock *lock = data;
+	काष्ठा drm_master *master = file_priv->master;
 
-	if (!drm_core_check_feature(dev, DRIVER_LEGACY))
-		return -EOPNOTSUPP;
+	अगर (!drm_core_check_feature(dev, DRIVER_LEGACY))
+		वापस -EOPNOTSUPP;
 
-	if (lock->context == DRM_KERNEL_CONTEXT) {
+	अगर (lock->context == DRM_KERNEL_CONTEXT) अणु
 		DRM_ERROR("Process %d using kernel context %d\n",
 			  task_pid_nr(current), lock->context);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (drm_legacy_lock_free(&master->lock, lock->context)) {
+	अगर (drm_legacy_lock_मुक्त(&master->lock, lock->context)) अणु
 		/* FIXME: Should really bail out here. */
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * This function returns immediately and takes the hw lock
- * with the kernel context if it is free, otherwise it gets the highest priority when and if
+ * This function वापसs immediately and takes the hw lock
+ * with the kernel context अगर it is मुक्त, otherwise it माला_लो the highest priority when and अगर
  * it is eventually released.
  *
  * This guarantees that the kernel will _eventually_ have the lock _unless_ it is held
- * by a blocked process. (In the latter case an explicit wait for the hardware lock would cause
+ * by a blocked process. (In the latter हाल an explicit रुको क्रम the hardware lock would cause
  * a deadlock, which is why the "idlelock" was invented).
  *
- * This should be sufficient to wait for GPU idle without
+ * This should be sufficient to रुको क्रम GPU idle without
  * having to worry about starvation.
  */
-void drm_legacy_idlelock_take(struct drm_lock_data *lock_data)
-{
-	int ret;
+व्योम drm_legacy_idlelock_take(काष्ठा drm_lock_data *lock_data)
+अणु
+	पूर्णांक ret;
 
 	spin_lock_bh(&lock_data->spinlock);
-	lock_data->kernel_waiters++;
-	if (!lock_data->idle_has_lock) {
+	lock_data->kernel_रुकोers++;
+	अगर (!lock_data->idle_has_lock) अणु
 
 		spin_unlock_bh(&lock_data->spinlock);
 		ret = drm_lock_take(lock_data, DRM_KERNEL_CONTEXT);
 		spin_lock_bh(&lock_data->spinlock);
 
-		if (ret == 1)
+		अगर (ret == 1)
 			lock_data->idle_has_lock = 1;
-	}
+	पूर्ण
 	spin_unlock_bh(&lock_data->spinlock);
-}
+पूर्ण
 EXPORT_SYMBOL(drm_legacy_idlelock_take);
 
-void drm_legacy_idlelock_release(struct drm_lock_data *lock_data)
-{
-	unsigned int old, prev;
-	volatile unsigned int *lock = &lock_data->hw_lock->lock;
+व्योम drm_legacy_idlelock_release(काष्ठा drm_lock_data *lock_data)
+अणु
+	अचिन्हित पूर्णांक old, prev;
+	अस्थिर अचिन्हित पूर्णांक *lock = &lock_data->hw_lock->lock;
 
 	spin_lock_bh(&lock_data->spinlock);
-	if (--lock_data->kernel_waiters == 0) {
-		if (lock_data->idle_has_lock) {
-			do {
+	अगर (--lock_data->kernel_रुकोers == 0) अणु
+		अगर (lock_data->idle_has_lock) अणु
+			करो अणु
 				old = *lock;
 				prev = cmpxchg(lock, old, DRM_KERNEL_CONTEXT);
-			} while (prev != old);
-			wake_up_interruptible(&lock_data->lock_queue);
+			पूर्ण जबतक (prev != old);
+			wake_up_पूर्णांकerruptible(&lock_data->lock_queue);
 			lock_data->idle_has_lock = 0;
-		}
-	}
+		पूर्ण
+	पूर्ण
 	spin_unlock_bh(&lock_data->spinlock);
-}
+पूर्ण
 EXPORT_SYMBOL(drm_legacy_idlelock_release);
 
-static int drm_legacy_i_have_hw_lock(struct drm_device *dev,
-				     struct drm_file *file_priv)
-{
-	struct drm_master *master = file_priv->master;
+अटल पूर्णांक drm_legacy_i_have_hw_lock(काष्ठा drm_device *dev,
+				     काष्ठा drm_file *file_priv)
+अणु
+	काष्ठा drm_master *master = file_priv->master;
 
-	return (file_priv->lock_count && master->lock.hw_lock &&
+	वापस (file_priv->lock_count && master->lock.hw_lock &&
 		_DRM_LOCK_IS_HELD(master->lock.hw_lock->lock) &&
 		master->lock.file_priv == file_priv);
-}
+पूर्ण
 
-void drm_legacy_lock_release(struct drm_device *dev, struct file *filp)
-{
-	struct drm_file *file_priv = filp->private_data;
+व्योम drm_legacy_lock_release(काष्ठा drm_device *dev, काष्ठा file *filp)
+अणु
+	काष्ठा drm_file *file_priv = filp->निजी_data;
 
-	/* if the master has gone away we can't do anything with the lock */
-	if (!dev->master)
-		return;
+	/* अगर the master has gone away we can't करो anything with the lock */
+	अगर (!dev->master)
+		वापस;
 
-	if (drm_legacy_i_have_hw_lock(dev, file_priv)) {
+	अगर (drm_legacy_i_have_hw_lock(dev, file_priv)) अणु
 		DRM_DEBUG("File %p released, freeing lock for context %d\n",
 			  filp, _DRM_LOCKING_CONTEXT(file_priv->master->lock.hw_lock->lock));
-		drm_legacy_lock_free(&file_priv->master->lock,
+		drm_legacy_lock_मुक्त(&file_priv->master->lock,
 				     _DRM_LOCKING_CONTEXT(file_priv->master->lock.hw_lock->lock));
-	}
-}
+	पूर्ण
+पूर्ण
 
-void drm_legacy_lock_master_cleanup(struct drm_device *dev, struct drm_master *master)
-{
-	if (!drm_core_check_feature(dev, DRIVER_LEGACY))
-		return;
+व्योम drm_legacy_lock_master_cleanup(काष्ठा drm_device *dev, काष्ठा drm_master *master)
+अणु
+	अगर (!drm_core_check_feature(dev, DRIVER_LEGACY))
+		वापस;
 
 	/*
 	 * Since the master is disappearing, so is the
 	 * possibility to lock.
 	 */
-	mutex_lock(&dev->struct_mutex);
-	if (master->lock.hw_lock) {
-		if (dev->sigdata.lock == master->lock.hw_lock)
-			dev->sigdata.lock = NULL;
-		master->lock.hw_lock = NULL;
-		master->lock.file_priv = NULL;
-		wake_up_interruptible_all(&master->lock.lock_queue);
-	}
-	mutex_unlock(&dev->struct_mutex);
-}
+	mutex_lock(&dev->काष्ठा_mutex);
+	अगर (master->lock.hw_lock) अणु
+		अगर (dev->sigdata.lock == master->lock.hw_lock)
+			dev->sigdata.lock = शून्य;
+		master->lock.hw_lock = शून्य;
+		master->lock.file_priv = शून्य;
+		wake_up_पूर्णांकerruptible_all(&master->lock.lock_queue);
+	पूर्ण
+	mutex_unlock(&dev->काष्ठा_mutex);
+पूर्ण

@@ -1,110 +1,111 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * Copyright © 2020 Intel Corporation
+ * Copyright तऊ 2020 Intel Corporation
  */
 
-static struct intel_ring *mock_ring(unsigned long sz)
-{
-	struct intel_ring *ring;
+अटल काष्ठा पूर्णांकel_ring *mock_ring(अचिन्हित दीर्घ sz)
+अणु
+	काष्ठा पूर्णांकel_ring *ring;
 
-	ring = kzalloc(sizeof(*ring) + sz, GFP_KERNEL);
-	if (!ring)
-		return NULL;
+	ring = kzalloc(माप(*ring) + sz, GFP_KERNEL);
+	अगर (!ring)
+		वापस शून्य;
 
 	kref_init(&ring->ref);
 	ring->size = sz;
 	ring->wrap = BITS_PER_TYPE(ring->size) - ilog2(sz);
 	ring->effective_size = sz;
-	ring->vaddr = (void *)(ring + 1);
+	ring->vaddr = (व्योम *)(ring + 1);
 	atomic_set(&ring->pin_count, 1);
 
-	intel_ring_update_space(ring);
+	पूर्णांकel_ring_update_space(ring);
 
-	return ring;
-}
+	वापस ring;
+पूर्ण
 
-static void mock_ring_free(struct intel_ring *ring)
-{
-	kfree(ring);
-}
+अटल व्योम mock_ring_मुक्त(काष्ठा पूर्णांकel_ring *ring)
+अणु
+	kमुक्त(ring);
+पूर्ण
 
-static int check_ring_direction(struct intel_ring *ring,
+अटल पूर्णांक check_ring_direction(काष्ठा पूर्णांकel_ring *ring,
 				u32 next, u32 prev,
-				int expected)
-{
-	int result;
+				पूर्णांक expected)
+अणु
+	पूर्णांक result;
 
-	result = intel_ring_direction(ring, next, prev);
-	if (result < 0)
+	result = पूर्णांकel_ring_direction(ring, next, prev);
+	अगर (result < 0)
 		result = -1;
-	else if (result > 0)
+	अन्यथा अगर (result > 0)
 		result = 1;
 
-	if (result != expected) {
+	अगर (result != expected) अणु
 		pr_err("intel_ring_direction(%u, %u):%d != %d\n",
 		       next, prev, result, expected);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int check_ring_step(struct intel_ring *ring, u32 x, u32 step)
-{
-	u32 prev = x, next = intel_ring_wrap(ring, x + step);
-	int err = 0;
+अटल पूर्णांक check_ring_step(काष्ठा पूर्णांकel_ring *ring, u32 x, u32 step)
+अणु
+	u32 prev = x, next = पूर्णांकel_ring_wrap(ring, x + step);
+	पूर्णांक err = 0;
 
 	err |= check_ring_direction(ring, next, next,  0);
 	err |= check_ring_direction(ring, prev, prev,  0);
 	err |= check_ring_direction(ring, next, prev,  1);
 	err |= check_ring_direction(ring, prev, next, -1);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int check_ring_offset(struct intel_ring *ring, u32 x, u32 step)
-{
-	int err = 0;
+अटल पूर्णांक check_ring_offset(काष्ठा पूर्णांकel_ring *ring, u32 x, u32 step)
+अणु
+	पूर्णांक err = 0;
 
 	err |= check_ring_step(ring, x, step);
-	err |= check_ring_step(ring, intel_ring_wrap(ring, x + 1), step);
-	err |= check_ring_step(ring, intel_ring_wrap(ring, x - 1), step);
+	err |= check_ring_step(ring, पूर्णांकel_ring_wrap(ring, x + 1), step);
+	err |= check_ring_step(ring, पूर्णांकel_ring_wrap(ring, x - 1), step);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int igt_ring_direction(void *dummy)
-{
-	struct intel_ring *ring;
-	unsigned int half = 2048;
-	int step, err = 0;
+अटल पूर्णांक igt_ring_direction(व्योम *dummy)
+अणु
+	काष्ठा पूर्णांकel_ring *ring;
+	अचिन्हित पूर्णांक half = 2048;
+	पूर्णांक step, err = 0;
 
 	ring = mock_ring(2 * half);
-	if (!ring)
-		return -ENOMEM;
+	अगर (!ring)
+		वापस -ENOMEM;
 
 	GEM_BUG_ON(ring->size != 2 * half);
 
 	/* Precision of wrap detection is limited to ring->size / 2 */
-	for (step = 1; step < half; step <<= 1) {
+	क्रम (step = 1; step < half; step <<= 1) अणु
 		err |= check_ring_offset(ring, 0, step);
 		err |= check_ring_offset(ring, half, step);
-	}
+	पूर्ण
 	err |= check_ring_step(ring, 0, half - 64);
 
-	/* And check unwrapped handling for good measure */
+	/* And check unwrapped handling क्रम good measure */
 	err |= check_ring_offset(ring, 0, 2 * half + 64);
 	err |= check_ring_offset(ring, 3 * half, 1);
 
-	mock_ring_free(ring);
-	return err;
-}
+	mock_ring_मुक्त(ring);
+	वापस err;
+पूर्ण
 
-int intel_ring_mock_selftests(void)
-{
-	static const struct i915_subtest tests[] = {
+पूर्णांक पूर्णांकel_ring_mock_selftests(व्योम)
+अणु
+	अटल स्थिर काष्ठा i915_subtest tests[] = अणु
 		SUBTEST(igt_ring_direction),
-	};
+	पूर्ण;
 
-	return i915_subtests(tests, NULL);
-}
+	वापस i915_subtests(tests, शून्य);
+पूर्ण

@@ -1,135 +1,136 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * SPI NOR Software Write Protection logic.
  *
  * Copyright (C) 2005, Intec Automation Inc.
  * Copyright (C) 2014, Freescale Semiconductor, Inc.
  */
-#include <linux/mtd/mtd.h>
-#include <linux/mtd/spi-nor.h>
+#समावेश <linux/mtd/mtd.h>
+#समावेश <linux/mtd/spi-nor.h>
 
-#include "core.h"
+#समावेश "core.h"
 
-static u8 spi_nor_get_sr_bp_mask(struct spi_nor *nor)
-{
+अटल u8 spi_nor_get_sr_bp_mask(काष्ठा spi_nor *nor)
+अणु
 	u8 mask = SR_BP2 | SR_BP1 | SR_BP0;
 
-	if (nor->flags & SNOR_F_HAS_SR_BP3_BIT6)
-		return mask | SR_BP3_BIT6;
+	अगर (nor->flags & SNOR_F_HAS_SR_BP3_BIT6)
+		वापस mask | SR_BP3_BIT6;
 
-	if (nor->flags & SNOR_F_HAS_4BIT_BP)
-		return mask | SR_BP3;
+	अगर (nor->flags & SNOR_F_HAS_4BIT_BP)
+		वापस mask | SR_BP3;
 
-	return mask;
-}
+	वापस mask;
+पूर्ण
 
-static u8 spi_nor_get_sr_tb_mask(struct spi_nor *nor)
-{
-	if (nor->flags & SNOR_F_HAS_SR_TB_BIT6)
-		return SR_TB_BIT6;
-	else
-		return SR_TB_BIT5;
-}
+अटल u8 spi_nor_get_sr_tb_mask(काष्ठा spi_nor *nor)
+अणु
+	अगर (nor->flags & SNOR_F_HAS_SR_TB_BIT6)
+		वापस SR_TB_BIT6;
+	अन्यथा
+		वापस SR_TB_BIT5;
+पूर्ण
 
-static u64 spi_nor_get_min_prot_length_sr(struct spi_nor *nor)
-{
-	unsigned int bp_slots, bp_slots_needed;
+अटल u64 spi_nor_get_min_prot_length_sr(काष्ठा spi_nor *nor)
+अणु
+	अचिन्हित पूर्णांक bp_slots, bp_slots_needed;
 	u8 mask = spi_nor_get_sr_bp_mask(nor);
 
-	/* Reserved one for "protect none" and one for "protect all". */
+	/* Reserved one क्रम "protect none" and one क्रम "protect all". */
 	bp_slots = (1 << hweight8(mask)) - 2;
 	bp_slots_needed = ilog2(nor->info->n_sectors);
 
-	if (bp_slots_needed > bp_slots)
-		return nor->info->sector_size <<
+	अगर (bp_slots_needed > bp_slots)
+		वापस nor->info->sector_size <<
 			(bp_slots_needed - bp_slots);
-	else
-		return nor->info->sector_size;
-}
+	अन्यथा
+		वापस nor->info->sector_size;
+पूर्ण
 
-static void spi_nor_get_locked_range_sr(struct spi_nor *nor, u8 sr, loff_t *ofs,
-					uint64_t *len)
-{
-	struct mtd_info *mtd = &nor->mtd;
+अटल व्योम spi_nor_get_locked_range_sr(काष्ठा spi_nor *nor, u8 sr, loff_t *ofs,
+					uपूर्णांक64_t *len)
+अणु
+	काष्ठा mtd_info *mtd = &nor->mtd;
 	u64 min_prot_len;
 	u8 mask = spi_nor_get_sr_bp_mask(nor);
 	u8 tb_mask = spi_nor_get_sr_tb_mask(nor);
 	u8 bp, val = sr & mask;
 
-	if (nor->flags & SNOR_F_HAS_SR_BP3_BIT6 && val & SR_BP3_BIT6)
+	अगर (nor->flags & SNOR_F_HAS_SR_BP3_BIT6 && val & SR_BP3_BIT6)
 		val = (val & ~SR_BP3_BIT6) | SR_BP3;
 
 	bp = val >> SR_BP_SHIFT;
 
-	if (!bp) {
+	अगर (!bp) अणु
 		/* No protection */
 		*ofs = 0;
 		*len = 0;
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	min_prot_len = spi_nor_get_min_prot_length_sr(nor);
 	*len = min_prot_len << (bp - 1);
 
-	if (*len > mtd->size)
+	अगर (*len > mtd->size)
 		*len = mtd->size;
 
-	if (nor->flags & SNOR_F_HAS_SR_TB && sr & tb_mask)
+	अगर (nor->flags & SNOR_F_HAS_SR_TB && sr & tb_mask)
 		*ofs = 0;
-	else
+	अन्यथा
 		*ofs = mtd->size - *len;
-}
+पूर्ण
 
 /*
- * Return true if the entire region is locked (if @locked is true) or unlocked
- * (if @locked is false); false otherwise.
+ * Return true अगर the entire region is locked (अगर @locked is true) or unlocked
+ * (अगर @locked is false); false otherwise.
  */
-static bool spi_nor_check_lock_status_sr(struct spi_nor *nor, loff_t ofs,
-					 uint64_t len, u8 sr, bool locked)
-{
+अटल bool spi_nor_check_lock_status_sr(काष्ठा spi_nor *nor, loff_t ofs,
+					 uपूर्णांक64_t len, u8 sr, bool locked)
+अणु
 	loff_t lock_offs, lock_offs_max, offs_max;
-	uint64_t lock_len;
+	uपूर्णांक64_t lock_len;
 
-	if (!len)
-		return true;
+	अगर (!len)
+		वापस true;
 
 	spi_nor_get_locked_range_sr(nor, sr, &lock_offs, &lock_len);
 
 	lock_offs_max = lock_offs + lock_len;
 	offs_max = ofs + len;
 
-	if (locked)
+	अगर (locked)
 		/* Requested range is a sub-range of locked range */
-		return (offs_max <= lock_offs_max) && (ofs >= lock_offs);
-	else
-		/* Requested range does not overlap with locked range */
-		return (ofs >= lock_offs_max) || (offs_max <= lock_offs);
-}
+		वापस (offs_max <= lock_offs_max) && (ofs >= lock_offs);
+	अन्यथा
+		/* Requested range करोes not overlap with locked range */
+		वापस (ofs >= lock_offs_max) || (offs_max <= lock_offs);
+पूर्ण
 
-static bool spi_nor_is_locked_sr(struct spi_nor *nor, loff_t ofs, uint64_t len,
+अटल bool spi_nor_is_locked_sr(काष्ठा spi_nor *nor, loff_t ofs, uपूर्णांक64_t len,
 				 u8 sr)
-{
-	return spi_nor_check_lock_status_sr(nor, ofs, len, sr, true);
-}
+अणु
+	वापस spi_nor_check_lock_status_sr(nor, ofs, len, sr, true);
+पूर्ण
 
-static bool spi_nor_is_unlocked_sr(struct spi_nor *nor, loff_t ofs,
-				   uint64_t len, u8 sr)
-{
-	return spi_nor_check_lock_status_sr(nor, ofs, len, sr, false);
-}
+अटल bool spi_nor_is_unlocked_sr(काष्ठा spi_nor *nor, loff_t ofs,
+				   uपूर्णांक64_t len, u8 sr)
+अणु
+	वापस spi_nor_check_lock_status_sr(nor, ofs, len, sr, false);
+पूर्ण
 
 /*
  * Lock a region of the flash. Compatible with ST Micro and similar flash.
- * Supports the block protection bits BP{0,1,2}/BP{0,1,2,3} in the status
- * register
+ * Supports the block protection bits BPअणु0,1,2पूर्ण/BPअणु0,1,2,3पूर्ण in the status
+ * रेजिस्टर
  * (SR). Does not support these features found in newer SR bitfields:
  *   - SEC: sector/block protect - only handle SEC=0 (block protect)
  *   - CMP: complement protect - only support CMP=0 (range is not complemented)
  *
- * Support for the following is provided conditionally for some flash:
+ * Support क्रम the following is provided conditionally क्रम some flash:
  *   - TB: top/bottom protect
  *
- * Sample table portion for 8MB flash (Winbond w25q64fw):
+ * Sample table portion क्रम 8MB flash (Winbond w25q64fw):
  *
  *   SEC  |  TB   |  BP2  |  BP1  |  BP0  |  Prot Length  | Protected Portion
  *  --------------------------------------------------------------------------
@@ -151,277 +152,277 @@ static bool spi_nor_is_unlocked_sr(struct spi_nor *nor, loff_t ofs,
  *
  * Returns negative on errors, 0 on success.
  */
-static int spi_nor_sr_lock(struct spi_nor *nor, loff_t ofs, uint64_t len)
-{
-	struct mtd_info *mtd = &nor->mtd;
+अटल पूर्णांक spi_nor_sr_lock(काष्ठा spi_nor *nor, loff_t ofs, uपूर्णांक64_t len)
+अणु
+	काष्ठा mtd_info *mtd = &nor->mtd;
 	u64 min_prot_len;
-	int ret, status_old, status_new;
+	पूर्णांक ret, status_old, status_new;
 	u8 mask = spi_nor_get_sr_bp_mask(nor);
 	u8 tb_mask = spi_nor_get_sr_tb_mask(nor);
-	u8 pow, val;
+	u8 घात, val;
 	loff_t lock_len;
 	bool can_be_top = true, can_be_bottom = nor->flags & SNOR_F_HAS_SR_TB;
 	bool use_top;
 
-	ret = spi_nor_read_sr(nor, nor->bouncebuf);
-	if (ret)
-		return ret;
+	ret = spi_nor_पढ़ो_sr(nor, nor->bouncebuf);
+	अगर (ret)
+		वापस ret;
 
 	status_old = nor->bouncebuf[0];
 
-	/* If nothing in our range is unlocked, we don't need to do anything */
-	if (spi_nor_is_locked_sr(nor, ofs, len, status_old))
-		return 0;
+	/* If nothing in our range is unlocked, we करोn't need to करो anything */
+	अगर (spi_nor_is_locked_sr(nor, ofs, len, status_old))
+		वापस 0;
 
 	/* If anything below us is unlocked, we can't use 'bottom' protection */
-	if (!spi_nor_is_locked_sr(nor, 0, ofs, status_old))
+	अगर (!spi_nor_is_locked_sr(nor, 0, ofs, status_old))
 		can_be_bottom = false;
 
 	/* If anything above us is unlocked, we can't use 'top' protection */
-	if (!spi_nor_is_locked_sr(nor, ofs + len, mtd->size - (ofs + len),
+	अगर (!spi_nor_is_locked_sr(nor, ofs + len, mtd->size - (ofs + len),
 				  status_old))
 		can_be_top = false;
 
-	if (!can_be_bottom && !can_be_top)
-		return -EINVAL;
+	अगर (!can_be_bottom && !can_be_top)
+		वापस -EINVAL;
 
-	/* Prefer top, if both are valid */
+	/* Prefer top, अगर both are valid */
 	use_top = can_be_top;
 
 	/* lock_len: length of region that should end up locked */
-	if (use_top)
+	अगर (use_top)
 		lock_len = mtd->size - ofs;
-	else
+	अन्यथा
 		lock_len = ofs + len;
 
-	if (lock_len == mtd->size) {
+	अगर (lock_len == mtd->size) अणु
 		val = mask;
-	} else {
+	पूर्ण अन्यथा अणु
 		min_prot_len = spi_nor_get_min_prot_length_sr(nor);
-		pow = ilog2(lock_len) - ilog2(min_prot_len) + 1;
-		val = pow << SR_BP_SHIFT;
+		घात = ilog2(lock_len) - ilog2(min_prot_len) + 1;
+		val = घात << SR_BP_SHIFT;
 
-		if (nor->flags & SNOR_F_HAS_SR_BP3_BIT6 && val & SR_BP3)
+		अगर (nor->flags & SNOR_F_HAS_SR_BP3_BIT6 && val & SR_BP3)
 			val = (val & ~SR_BP3) | SR_BP3_BIT6;
 
-		if (val & ~mask)
-			return -EINVAL;
+		अगर (val & ~mask)
+			वापस -EINVAL;
 
 		/* Don't "lock" with no region! */
-		if (!(val & mask))
-			return -EINVAL;
-	}
+		अगर (!(val & mask))
+			वापस -EINVAL;
+	पूर्ण
 
 	status_new = (status_old & ~mask & ~tb_mask) | val;
 
-	/* Disallow further writes if WP pin is asserted */
+	/* Disallow further ग_लिखोs अगर WP pin is निश्चितed */
 	status_new |= SR_SRWD;
 
-	if (!use_top)
+	अगर (!use_top)
 		status_new |= tb_mask;
 
 	/* Don't bother if they're the same */
-	if (status_new == status_old)
-		return 0;
+	अगर (status_new == status_old)
+		वापस 0;
 
-	/* Only modify protection if it will not unlock other areas */
-	if ((status_new & mask) < (status_old & mask))
-		return -EINVAL;
+	/* Only modअगरy protection अगर it will not unlock other areas */
+	अगर ((status_new & mask) < (status_old & mask))
+		वापस -EINVAL;
 
-	return spi_nor_write_sr_and_check(nor, status_new);
-}
+	वापस spi_nor_ग_लिखो_sr_and_check(nor, status_new);
+पूर्ण
 
 /*
- * Unlock a region of the flash. See spi_nor_sr_lock() for more info
+ * Unlock a region of the flash. See spi_nor_sr_lock() क्रम more info
  *
  * Returns negative on errors, 0 on success.
  */
-static int spi_nor_sr_unlock(struct spi_nor *nor, loff_t ofs, uint64_t len)
-{
-	struct mtd_info *mtd = &nor->mtd;
+अटल पूर्णांक spi_nor_sr_unlock(काष्ठा spi_nor *nor, loff_t ofs, uपूर्णांक64_t len)
+अणु
+	काष्ठा mtd_info *mtd = &nor->mtd;
 	u64 min_prot_len;
-	int ret, status_old, status_new;
+	पूर्णांक ret, status_old, status_new;
 	u8 mask = spi_nor_get_sr_bp_mask(nor);
 	u8 tb_mask = spi_nor_get_sr_tb_mask(nor);
-	u8 pow, val;
+	u8 घात, val;
 	loff_t lock_len;
 	bool can_be_top = true, can_be_bottom = nor->flags & SNOR_F_HAS_SR_TB;
 	bool use_top;
 
-	ret = spi_nor_read_sr(nor, nor->bouncebuf);
-	if (ret)
-		return ret;
+	ret = spi_nor_पढ़ो_sr(nor, nor->bouncebuf);
+	अगर (ret)
+		वापस ret;
 
 	status_old = nor->bouncebuf[0];
 
-	/* If nothing in our range is locked, we don't need to do anything */
-	if (spi_nor_is_unlocked_sr(nor, ofs, len, status_old))
-		return 0;
+	/* If nothing in our range is locked, we करोn't need to करो anything */
+	अगर (spi_nor_is_unlocked_sr(nor, ofs, len, status_old))
+		वापस 0;
 
 	/* If anything below us is locked, we can't use 'top' protection */
-	if (!spi_nor_is_unlocked_sr(nor, 0, ofs, status_old))
+	अगर (!spi_nor_is_unlocked_sr(nor, 0, ofs, status_old))
 		can_be_top = false;
 
 	/* If anything above us is locked, we can't use 'bottom' protection */
-	if (!spi_nor_is_unlocked_sr(nor, ofs + len, mtd->size - (ofs + len),
+	अगर (!spi_nor_is_unlocked_sr(nor, ofs + len, mtd->size - (ofs + len),
 				    status_old))
 		can_be_bottom = false;
 
-	if (!can_be_bottom && !can_be_top)
-		return -EINVAL;
+	अगर (!can_be_bottom && !can_be_top)
+		वापस -EINVAL;
 
-	/* Prefer top, if both are valid */
+	/* Prefer top, अगर both are valid */
 	use_top = can_be_top;
 
-	/* lock_len: length of region that should remain locked */
-	if (use_top)
+	/* lock_len: length of region that should reमुख्य locked */
+	अगर (use_top)
 		lock_len = mtd->size - (ofs + len);
-	else
+	अन्यथा
 		lock_len = ofs;
 
-	if (lock_len == 0) {
+	अगर (lock_len == 0) अणु
 		val = 0; /* fully unlocked */
-	} else {
+	पूर्ण अन्यथा अणु
 		min_prot_len = spi_nor_get_min_prot_length_sr(nor);
-		pow = ilog2(lock_len) - ilog2(min_prot_len) + 1;
-		val = pow << SR_BP_SHIFT;
+		घात = ilog2(lock_len) - ilog2(min_prot_len) + 1;
+		val = घात << SR_BP_SHIFT;
 
-		if (nor->flags & SNOR_F_HAS_SR_BP3_BIT6 && val & SR_BP3)
+		अगर (nor->flags & SNOR_F_HAS_SR_BP3_BIT6 && val & SR_BP3)
 			val = (val & ~SR_BP3) | SR_BP3_BIT6;
 
-		/* Some power-of-two sizes are not supported */
-		if (val & ~mask)
-			return -EINVAL;
-	}
+		/* Some घातer-of-two sizes are not supported */
+		अगर (val & ~mask)
+			वापस -EINVAL;
+	पूर्ण
 
 	status_new = (status_old & ~mask & ~tb_mask) | val;
 
 	/* Don't protect status register if we're fully unlocked */
-	if (lock_len == 0)
+	अगर (lock_len == 0)
 		status_new &= ~SR_SRWD;
 
-	if (!use_top)
+	अगर (!use_top)
 		status_new |= tb_mask;
 
 	/* Don't bother if they're the same */
-	if (status_new == status_old)
-		return 0;
+	अगर (status_new == status_old)
+		वापस 0;
 
-	/* Only modify protection if it will not lock other areas */
-	if ((status_new & mask) > (status_old & mask))
-		return -EINVAL;
+	/* Only modअगरy protection अगर it will not lock other areas */
+	अगर ((status_new & mask) > (status_old & mask))
+		वापस -EINVAL;
 
-	return spi_nor_write_sr_and_check(nor, status_new);
-}
+	वापस spi_nor_ग_लिखो_sr_and_check(nor, status_new);
+पूर्ण
 
 /*
- * Check if a region of the flash is (completely) locked. See spi_nor_sr_lock()
- * for more info.
+ * Check अगर a region of the flash is (completely) locked. See spi_nor_sr_lock()
+ * क्रम more info.
  *
- * Returns 1 if entire region is locked, 0 if any portion is unlocked, and
+ * Returns 1 अगर entire region is locked, 0 अगर any portion is unlocked, and
  * negative on errors.
  */
-static int spi_nor_sr_is_locked(struct spi_nor *nor, loff_t ofs, uint64_t len)
-{
-	int ret;
+अटल पूर्णांक spi_nor_sr_is_locked(काष्ठा spi_nor *nor, loff_t ofs, uपूर्णांक64_t len)
+अणु
+	पूर्णांक ret;
 
-	ret = spi_nor_read_sr(nor, nor->bouncebuf);
-	if (ret)
-		return ret;
+	ret = spi_nor_पढ़ो_sr(nor, nor->bouncebuf);
+	अगर (ret)
+		वापस ret;
 
-	return spi_nor_is_locked_sr(nor, ofs, len, nor->bouncebuf[0]);
-}
+	वापस spi_nor_is_locked_sr(nor, ofs, len, nor->bouncebuf[0]);
+पूर्ण
 
-static const struct spi_nor_locking_ops spi_nor_sr_locking_ops = {
+अटल स्थिर काष्ठा spi_nor_locking_ops spi_nor_sr_locking_ops = अणु
 	.lock = spi_nor_sr_lock,
 	.unlock = spi_nor_sr_unlock,
 	.is_locked = spi_nor_sr_is_locked,
-};
+पूर्ण;
 
-void spi_nor_init_default_locking_ops(struct spi_nor *nor)
-{
+व्योम spi_nor_init_शेष_locking_ops(काष्ठा spi_nor *nor)
+अणु
 	nor->params->locking_ops = &spi_nor_sr_locking_ops;
-}
+पूर्ण
 
-static int spi_nor_lock(struct mtd_info *mtd, loff_t ofs, uint64_t len)
-{
-	struct spi_nor *nor = mtd_to_spi_nor(mtd);
-	int ret;
+अटल पूर्णांक spi_nor_lock(काष्ठा mtd_info *mtd, loff_t ofs, uपूर्णांक64_t len)
+अणु
+	काष्ठा spi_nor *nor = mtd_to_spi_nor(mtd);
+	पूर्णांक ret;
 
 	ret = spi_nor_lock_and_prep(nor);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ret = nor->params->locking_ops->lock(nor, ofs, len);
 
 	spi_nor_unlock_and_unprep(nor);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int spi_nor_unlock(struct mtd_info *mtd, loff_t ofs, uint64_t len)
-{
-	struct spi_nor *nor = mtd_to_spi_nor(mtd);
-	int ret;
+अटल पूर्णांक spi_nor_unlock(काष्ठा mtd_info *mtd, loff_t ofs, uपूर्णांक64_t len)
+अणु
+	काष्ठा spi_nor *nor = mtd_to_spi_nor(mtd);
+	पूर्णांक ret;
 
 	ret = spi_nor_lock_and_prep(nor);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ret = nor->params->locking_ops->unlock(nor, ofs, len);
 
 	spi_nor_unlock_and_unprep(nor);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int spi_nor_is_locked(struct mtd_info *mtd, loff_t ofs, uint64_t len)
-{
-	struct spi_nor *nor = mtd_to_spi_nor(mtd);
-	int ret;
+अटल पूर्णांक spi_nor_is_locked(काष्ठा mtd_info *mtd, loff_t ofs, uपूर्णांक64_t len)
+अणु
+	काष्ठा spi_nor *nor = mtd_to_spi_nor(mtd);
+	पूर्णांक ret;
 
 	ret = spi_nor_lock_and_prep(nor);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ret = nor->params->locking_ops->is_locked(nor, ofs, len);
 
 	spi_nor_unlock_and_unprep(nor);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
  * spi_nor_try_unlock_all() - Tries to unlock the entire flash memory array.
- * @nor:	pointer to a 'struct spi_nor'.
+ * @nor:	poपूर्णांकer to a 'struct spi_nor'.
  *
- * Some SPI NOR flashes are write protected by default after a power-on reset
- * cycle, in order to avoid inadvertent writes during power-up. Backward
- * compatibility imposes to unlock the entire flash memory array at power-up
- * by default.
+ * Some SPI NOR flashes are ग_लिखो रक्षित by शेष after a घातer-on reset
+ * cycle, in order to aव्योम inadvertent ग_लिखोs during घातer-up. Backward
+ * compatibility imposes to unlock the entire flash memory array at घातer-up
+ * by शेष.
  *
- * Unprotecting the entire flash array will fail for boards which are hardware
- * write-protected. Thus any errors are ignored.
+ * Unprotecting the entire flash array will fail क्रम boards which are hardware
+ * ग_लिखो-रक्षित. Thus any errors are ignored.
  */
-void spi_nor_try_unlock_all(struct spi_nor *nor)
-{
-	int ret;
+व्योम spi_nor_try_unlock_all(काष्ठा spi_nor *nor)
+अणु
+	पूर्णांक ret;
 
-	if (!(nor->flags & SNOR_F_HAS_LOCK))
-		return;
+	अगर (!(nor->flags & SNOR_F_HAS_LOCK))
+		वापस;
 
 	dev_dbg(nor->dev, "Unprotecting entire flash array\n");
 
 	ret = spi_nor_unlock(&nor->mtd, 0, nor->params->size);
-	if (ret)
+	अगर (ret)
 		dev_dbg(nor->dev, "Failed to unlock the entire flash memory array\n");
-}
+पूर्ण
 
-void spi_nor_register_locking_ops(struct spi_nor *nor)
-{
-	struct mtd_info *mtd = &nor->mtd;
+व्योम spi_nor_रेजिस्टर_locking_ops(काष्ठा spi_nor *nor)
+अणु
+	काष्ठा mtd_info *mtd = &nor->mtd;
 
-	if (!nor->params->locking_ops)
-		return;
+	अगर (!nor->params->locking_ops)
+		वापस;
 
 	mtd->_lock = spi_nor_lock;
 	mtd->_unlock = spi_nor_unlock;
 	mtd->_is_locked = spi_nor_is_locked;
-}
+पूर्ण

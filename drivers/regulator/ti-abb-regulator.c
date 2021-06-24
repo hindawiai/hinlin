@@ -1,3 +1,4 @@
+<शैली गुरु>
 /*
  * Texas Instruments SoC Adaptive Body Bias(ABB) Regulator
  *
@@ -8,26 +9,26 @@
  * Andrii Tseglytskyi <andrii.tseglytskyi@ti.com>
  * Nishanth Menon <nm@ti.com>
  *
- * This program is free software; you can redistribute it and/or modify
+ * This program is मुक्त software; you can redistribute it and/or modअगरy
  * it under the terms of the GNU General Public License version 2 as
  * published by the Free Software Foundation.
  *
  * This program is distributed "as is" WITHOUT ANY WARRANTY of any
  * kind, whether express or implied; without even the implied warranty
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU General Public License क्रम more details.
  */
-#include <linux/clk.h>
-#include <linux/delay.h>
-#include <linux/err.h>
-#include <linux/io.h>
-#include <linux/module.h>
-#include <linux/of_device.h>
-#include <linux/of.h>
-#include <linux/platform_device.h>
-#include <linux/regulator/driver.h>
-#include <linux/regulator/machine.h>
-#include <linux/regulator/of_regulator.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/err.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/module.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/of.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/regulator/driver.h>
+#समावेश <linux/regulator/machine.h>
+#समावेश <linux/regulator/of_regulator.h>
 
 /*
  * ABB LDO operating states:
@@ -35,344 +36,344 @@
  * FAST_OPP:	sets ABB LDO to Forward Body-Bias
  * SLOW_OPP:	sets ABB LDO to Reverse Body-Bias
  */
-#define TI_ABB_NOMINAL_OPP	0
-#define TI_ABB_FAST_OPP		1
-#define TI_ABB_SLOW_OPP		3
+#घोषणा TI_ABB_NOMINAL_OPP	0
+#घोषणा TI_ABB_FAST_OPP		1
+#घोषणा TI_ABB_SLOW_OPP		3
 
 /**
- * struct ti_abb_info - ABB information per voltage setting
+ * काष्ठा ti_abb_info - ABB inक्रमmation per voltage setting
  * @opp_sel:	one of TI_ABB macro
  * @vset:	(optional) vset value that LDOVBB needs to be overriden with.
  *
  * Array of per voltage entries organized in the same order as regulator_desc's
  * volt_table list. (selector is used to index from this array)
  */
-struct ti_abb_info {
+काष्ठा ti_abb_info अणु
 	u32 opp_sel;
 	u32 vset;
-};
+पूर्ण;
 
 /**
- * struct ti_abb_reg - Register description for ABB block
- * @setup_off:			setup register offset from base
- * @control_off:		control register offset from base
- * @sr2_wtcnt_value_mask:	setup register- sr2_wtcnt_value mask
- * @fbb_sel_mask:		setup register- FBB sel mask
- * @rbb_sel_mask:		setup register- RBB sel mask
- * @sr2_en_mask:		setup register- enable mask
- * @opp_change_mask:		control register - mask to trigger LDOVBB change
- * @opp_sel_mask:		control register - mask for mode to operate
+ * काष्ठा ti_abb_reg - Register description क्रम ABB block
+ * @setup_off:			setup रेजिस्टर offset from base
+ * @control_off:		control रेजिस्टर offset from base
+ * @sr2_wtcnt_value_mask:	setup रेजिस्टर- sr2_wtcnt_value mask
+ * @fbb_sel_mask:		setup रेजिस्टर- FBB sel mask
+ * @rbb_sel_mask:		setup रेजिस्टर- RBB sel mask
+ * @sr2_en_mask:		setup रेजिस्टर- enable mask
+ * @opp_change_mask:		control रेजिस्टर - mask to trigger LDOVBB change
+ * @opp_sel_mask:		control रेजिस्टर - mask क्रम mode to operate
  */
-struct ti_abb_reg {
+काष्ठा ti_abb_reg अणु
 	u32 setup_off;
 	u32 control_off;
 
-	/* Setup register fields */
+	/* Setup रेजिस्टर fields */
 	u32 sr2_wtcnt_value_mask;
 	u32 fbb_sel_mask;
 	u32 rbb_sel_mask;
 	u32 sr2_en_mask;
 
-	/* Control register fields */
+	/* Control रेजिस्टर fields */
 	u32 opp_change_mask;
 	u32 opp_sel_mask;
-};
+पूर्ण;
 
 /**
- * struct ti_abb - ABB instance data
+ * काष्ठा ti_abb - ABB instance data
  * @rdesc:			regulator descriptor
- * @clk:			clock(usually sysclk) supplying ABB block
+ * @clk:			घड़ी(usually sysclk) supplying ABB block
  * @base:			base address of ABB block
- * @setup_reg:			setup register of ABB block
- * @control_reg:		control register of ABB block
- * @int_base:			interrupt register base address
- * @efuse_base:			(optional) efuse base address for ABB modes
- * @ldo_base:			(optional) LDOVBB vset override base address
- * @regs:			pointer to struct ti_abb_reg for ABB block
- * @txdone_mask:		mask on int_base for tranxdone interrupt
- * @ldovbb_override_mask:	mask to ldo_base for overriding default LDO VBB
+ * @setup_reg:			setup रेजिस्टर of ABB block
+ * @control_reg:		control रेजिस्टर of ABB block
+ * @पूर्णांक_base:			पूर्णांकerrupt रेजिस्टर base address
+ * @efuse_base:			(optional) efuse base address क्रम ABB modes
+ * @lकरो_base:			(optional) LDOVBB vset override base address
+ * @regs:			poपूर्णांकer to काष्ठा ti_abb_reg क्रम ABB block
+ * @txकरोne_mask:		mask on पूर्णांक_base क्रम tranxकरोne पूर्णांकerrupt
+ * @lकरोvbb_override_mask:	mask to lकरो_base क्रम overriding शेष LDO VBB
  *				vset with value from efuse
- * @ldovbb_vset_mask:		mask to ldo_base for providing the VSET override
+ * @lकरोvbb_vset_mask:		mask to lकरो_base क्रम providing the VSET override
  * @info:			array to per voltage ABB configuration
  * @current_info_idx:		current index to info
- * @settling_time:		SoC specific settling time for LDO VBB
+ * @settling_समय:		SoC specअगरic settling समय क्रम LDO VBB
  */
-struct ti_abb {
-	struct regulator_desc rdesc;
-	struct clk *clk;
-	void __iomem *base;
-	void __iomem *setup_reg;
-	void __iomem *control_reg;
-	void __iomem *int_base;
-	void __iomem *efuse_base;
-	void __iomem *ldo_base;
+काष्ठा ti_abb अणु
+	काष्ठा regulator_desc rdesc;
+	काष्ठा clk *clk;
+	व्योम __iomem *base;
+	व्योम __iomem *setup_reg;
+	व्योम __iomem *control_reg;
+	व्योम __iomem *पूर्णांक_base;
+	व्योम __iomem *efuse_base;
+	व्योम __iomem *lकरो_base;
 
-	const struct ti_abb_reg *regs;
-	u32 txdone_mask;
-	u32 ldovbb_override_mask;
-	u32 ldovbb_vset_mask;
+	स्थिर काष्ठा ti_abb_reg *regs;
+	u32 txकरोne_mask;
+	u32 lकरोvbb_override_mask;
+	u32 lकरोvbb_vset_mask;
 
-	struct ti_abb_info *info;
-	int current_info_idx;
+	काष्ठा ti_abb_info *info;
+	पूर्णांक current_info_idx;
 
-	u32 settling_time;
-};
+	u32 settling_समय;
+पूर्ण;
 
 /**
- * ti_abb_rmw() - handy wrapper to set specific register bits
- * @mask:	mask for register field
- * @value:	value shifted to mask location and written
- * @reg:	register address
+ * ti_abb_rmw() - handy wrapper to set specअगरic रेजिस्टर bits
+ * @mask:	mask क्रम रेजिस्टर field
+ * @value:	value shअगरted to mask location and written
+ * @reg:	रेजिस्टर address
  *
- * Return: final register value (may be unused)
+ * Return: final रेजिस्टर value (may be unused)
  */
-static inline u32 ti_abb_rmw(u32 mask, u32 value, void __iomem *reg)
-{
+अटल अंतरभूत u32 ti_abb_rmw(u32 mask, u32 value, व्योम __iomem *reg)
+अणु
 	u32 val;
 
-	val = readl(reg);
+	val = पढ़ोl(reg);
 	val &= ~mask;
 	val |= (value << __ffs(mask)) & mask;
-	writel(val, reg);
+	ग_लिखोl(val, reg);
 
-	return val;
-}
+	वापस val;
+पूर्ण
 
 /**
- * ti_abb_check_txdone() - handy wrapper to check ABB tranxdone status
- * @abb:	pointer to the abb instance
+ * ti_abb_check_txकरोne() - handy wrapper to check ABB tranxकरोne status
+ * @abb:	poपूर्णांकer to the abb instance
  *
  * Return: true or false
  */
-static inline bool ti_abb_check_txdone(const struct ti_abb *abb)
-{
-	return !!(readl(abb->int_base) & abb->txdone_mask);
-}
+अटल अंतरभूत bool ti_abb_check_txकरोne(स्थिर काष्ठा ti_abb *abb)
+अणु
+	वापस !!(पढ़ोl(abb->पूर्णांक_base) & abb->txकरोne_mask);
+पूर्ण
 
 /**
- * ti_abb_clear_txdone() - handy wrapper to clear ABB tranxdone status
- * @abb:	pointer to the abb instance
+ * ti_abb_clear_txकरोne() - handy wrapper to clear ABB tranxकरोne status
+ * @abb:	poपूर्णांकer to the abb instance
  */
-static inline void ti_abb_clear_txdone(const struct ti_abb *abb)
-{
-	writel(abb->txdone_mask, abb->int_base);
-};
+अटल अंतरभूत व्योम ti_abb_clear_txकरोne(स्थिर काष्ठा ti_abb *abb)
+अणु
+	ग_लिखोl(abb->txकरोne_mask, abb->पूर्णांक_base);
+पूर्ण;
 
 /**
- * ti_abb_wait_tranx() - waits for ABB tranxdone event
+ * ti_abb_रुको_tranx() - रुकोs क्रम ABB tranxकरोne event
  * @dev:	device
- * @abb:	pointer to the abb instance
+ * @abb:	poपूर्णांकer to the abb instance
  *
- * Return: 0 on success or -ETIMEDOUT if the event is not cleared on time.
+ * Return: 0 on success or -ETIMEDOUT अगर the event is not cleared on समय.
  */
-static int ti_abb_wait_txdone(struct device *dev, struct ti_abb *abb)
-{
-	int timeout = 0;
+अटल पूर्णांक ti_abb_रुको_txकरोne(काष्ठा device *dev, काष्ठा ti_abb *abb)
+अणु
+	पूर्णांक समयout = 0;
 	bool status;
 
-	while (timeout++ <= abb->settling_time) {
-		status = ti_abb_check_txdone(abb);
-		if (status)
-			return 0;
+	जबतक (समयout++ <= abb->settling_समय) अणु
+		status = ti_abb_check_txकरोne(abb);
+		अगर (status)
+			वापस 0;
 
 		udelay(1);
-	}
+	पूर्ण
 
 	dev_warn_ratelimited(dev, "%s:TRANXDONE timeout(%duS) int=0x%08x\n",
-			     __func__, timeout, readl(abb->int_base));
-	return -ETIMEDOUT;
-}
+			     __func__, समयout, पढ़ोl(abb->पूर्णांक_base));
+	वापस -ETIMEDOUT;
+पूर्ण
 
 /**
- * ti_abb_clear_all_txdone() - clears ABB tranxdone event
+ * ti_abb_clear_all_txकरोne() - clears ABB tranxकरोne event
  * @dev:	device
- * @abb:	pointer to the abb instance
+ * @abb:	poपूर्णांकer to the abb instance
  *
- * Return: 0 on success or -ETIMEDOUT if the event is not cleared on time.
+ * Return: 0 on success or -ETIMEDOUT अगर the event is not cleared on समय.
  */
-static int ti_abb_clear_all_txdone(struct device *dev, const struct ti_abb *abb)
-{
-	int timeout = 0;
+अटल पूर्णांक ti_abb_clear_all_txकरोne(काष्ठा device *dev, स्थिर काष्ठा ti_abb *abb)
+अणु
+	पूर्णांक समयout = 0;
 	bool status;
 
-	while (timeout++ <= abb->settling_time) {
-		ti_abb_clear_txdone(abb);
+	जबतक (समयout++ <= abb->settling_समय) अणु
+		ti_abb_clear_txकरोne(abb);
 
-		status = ti_abb_check_txdone(abb);
-		if (!status)
-			return 0;
+		status = ti_abb_check_txकरोne(abb);
+		अगर (!status)
+			वापस 0;
 
 		udelay(1);
-	}
+	पूर्ण
 
 	dev_warn_ratelimited(dev, "%s:TRANXDONE timeout(%duS) int=0x%08x\n",
-			     __func__, timeout, readl(abb->int_base));
-	return -ETIMEDOUT;
-}
+			     __func__, समयout, पढ़ोl(abb->पूर्णांक_base));
+	वापस -ETIMEDOUT;
+पूर्ण
 
 /**
- * ti_abb_program_ldovbb() - program LDOVBB register for override value
+ * ti_abb_program_lकरोvbb() - program LDOVBB रेजिस्टर क्रम override value
  * @dev:	device
- * @abb:	pointer to the abb instance
+ * @abb:	poपूर्णांकer to the abb instance
  * @info:	ABB info to program
  */
-static void ti_abb_program_ldovbb(struct device *dev, const struct ti_abb *abb,
-				  struct ti_abb_info *info)
-{
+अटल व्योम ti_abb_program_lकरोvbb(काष्ठा device *dev, स्थिर काष्ठा ti_abb *abb,
+				  काष्ठा ti_abb_info *info)
+अणु
 	u32 val;
 
-	val = readl(abb->ldo_base);
+	val = पढ़ोl(abb->lकरो_base);
 	/* clear up previous values */
-	val &= ~(abb->ldovbb_override_mask | abb->ldovbb_vset_mask);
+	val &= ~(abb->lकरोvbb_override_mask | abb->lकरोvbb_vset_mask);
 
-	switch (info->opp_sel) {
-	case TI_ABB_SLOW_OPP:
-	case TI_ABB_FAST_OPP:
-		val |= abb->ldovbb_override_mask;
-		val |= info->vset << __ffs(abb->ldovbb_vset_mask);
-		break;
-	}
+	चयन (info->opp_sel) अणु
+	हाल TI_ABB_SLOW_OPP:
+	हाल TI_ABB_FAST_OPP:
+		val |= abb->lकरोvbb_override_mask;
+		val |= info->vset << __ffs(abb->lकरोvbb_vset_mask);
+		अवरोध;
+	पूर्ण
 
-	writel(val, abb->ldo_base);
-}
+	ग_लिखोl(val, abb->lकरो_base);
+पूर्ण
 
 /**
- * ti_abb_set_opp() - Setup ABB and LDO VBB for required bias
+ * ti_abb_set_opp() - Setup ABB and LDO VBB क्रम required bias
  * @rdev:	regulator device
- * @abb:	pointer to the abb instance
+ * @abb:	poपूर्णांकer to the abb instance
  * @info:	ABB info to program
  *
  * Return: 0 on success or appropriate error value when fails
  */
-static int ti_abb_set_opp(struct regulator_dev *rdev, struct ti_abb *abb,
-			  struct ti_abb_info *info)
-{
-	const struct ti_abb_reg *regs = abb->regs;
-	struct device *dev = &rdev->dev;
-	int ret;
+अटल पूर्णांक ti_abb_set_opp(काष्ठा regulator_dev *rdev, काष्ठा ti_abb *abb,
+			  काष्ठा ti_abb_info *info)
+अणु
+	स्थिर काष्ठा ti_abb_reg *regs = abb->regs;
+	काष्ठा device *dev = &rdev->dev;
+	पूर्णांक ret;
 
-	ret = ti_abb_clear_all_txdone(dev, abb);
-	if (ret)
-		goto out;
+	ret = ti_abb_clear_all_txकरोne(dev, abb);
+	अगर (ret)
+		जाओ out;
 
 	ti_abb_rmw(regs->fbb_sel_mask | regs->rbb_sel_mask, 0, abb->setup_reg);
 
-	switch (info->opp_sel) {
-	case TI_ABB_SLOW_OPP:
+	चयन (info->opp_sel) अणु
+	हाल TI_ABB_SLOW_OPP:
 		ti_abb_rmw(regs->rbb_sel_mask, 1, abb->setup_reg);
-		break;
-	case TI_ABB_FAST_OPP:
+		अवरोध;
+	हाल TI_ABB_FAST_OPP:
 		ti_abb_rmw(regs->fbb_sel_mask, 1, abb->setup_reg);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	/* program next state of ABB ldo */
+	/* program next state of ABB lकरो */
 	ti_abb_rmw(regs->opp_sel_mask, info->opp_sel, abb->control_reg);
 
 	/*
-	 * program LDO VBB vset override if needed for !bypass mode
-	 * XXX: Do not switch sequence - for !bypass, LDO override reset *must*
-	 * be performed *before* switch to bias mode else VBB glitches.
+	 * program LDO VBB vset override अगर needed क्रम !bypass mode
+	 * XXX: Do not चयन sequence - क्रम !bypass, LDO override reset *must*
+	 * be perक्रमmed *beक्रमe* चयन to bias mode अन्यथा VBB glitches.
 	 */
-	if (abb->ldo_base && info->opp_sel != TI_ABB_NOMINAL_OPP)
-		ti_abb_program_ldovbb(dev, abb, info);
+	अगर (abb->lकरो_base && info->opp_sel != TI_ABB_NOMINAL_OPP)
+		ti_abb_program_lकरोvbb(dev, abb, info);
 
-	/* Initiate ABB ldo change */
+	/* Initiate ABB lकरो change */
 	ti_abb_rmw(regs->opp_change_mask, 1, abb->control_reg);
 
-	/* Wait for ABB LDO to complete transition to new Bias setting */
-	ret = ti_abb_wait_txdone(dev, abb);
-	if (ret)
-		goto out;
+	/* Wait क्रम ABB LDO to complete transition to new Bias setting */
+	ret = ti_abb_रुको_txकरोne(dev, abb);
+	अगर (ret)
+		जाओ out;
 
-	ret = ti_abb_clear_all_txdone(dev, abb);
-	if (ret)
-		goto out;
+	ret = ti_abb_clear_all_txकरोne(dev, abb);
+	अगर (ret)
+		जाओ out;
 
 	/*
 	 * Reset LDO VBB vset override bypass mode
-	 * XXX: Do not switch sequence - for bypass, LDO override reset *must*
-	 * be performed *after* switch to bypass else VBB glitches.
+	 * XXX: Do not चयन sequence - क्रम bypass, LDO override reset *must*
+	 * be perक्रमmed *after* चयन to bypass अन्यथा VBB glitches.
 	 */
-	if (abb->ldo_base && info->opp_sel == TI_ABB_NOMINAL_OPP)
-		ti_abb_program_ldovbb(dev, abb, info);
+	अगर (abb->lकरो_base && info->opp_sel == TI_ABB_NOMINAL_OPP)
+		ti_abb_program_lकरोvbb(dev, abb, info);
 
 out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
  * ti_abb_set_voltage_sel() - regulator accessor function to set ABB LDO
  * @rdev:	regulator device
- * @sel:	selector to index into required ABB LDO settings (maps to
+ * @sel:	selector to index पूर्णांकo required ABB LDO settings (maps to
  *		regulator descriptor's volt_table)
  *
  * Return: 0 on success or appropriate error value when fails
  */
-static int ti_abb_set_voltage_sel(struct regulator_dev *rdev, unsigned sel)
-{
-	const struct regulator_desc *desc = rdev->desc;
-	struct ti_abb *abb = rdev_get_drvdata(rdev);
-	struct device *dev = &rdev->dev;
-	struct ti_abb_info *info, *oinfo;
-	int ret = 0;
+अटल पूर्णांक ti_abb_set_voltage_sel(काष्ठा regulator_dev *rdev, अचिन्हित sel)
+अणु
+	स्थिर काष्ठा regulator_desc *desc = rdev->desc;
+	काष्ठा ti_abb *abb = rdev_get_drvdata(rdev);
+	काष्ठा device *dev = &rdev->dev;
+	काष्ठा ti_abb_info *info, *oinfo;
+	पूर्णांक ret = 0;
 
-	if (!abb) {
+	अगर (!abb) अणु
 		dev_err_ratelimited(dev, "%s: No regulator drvdata\n",
 				    __func__);
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	if (!desc->n_voltages || !abb->info) {
+	अगर (!desc->n_voltages || !abb->info) अणु
 		dev_err_ratelimited(dev,
 				    "%s: No valid voltage table entries?\n",
 				    __func__);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (sel >= desc->n_voltages) {
+	अगर (sel >= desc->n_voltages) अणु
 		dev_err(dev, "%s: sel idx(%d) >= n_voltages(%d)\n", __func__,
 			sel, desc->n_voltages);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	/* If we are in the same index as we were, nothing to do here! */
-	if (sel == abb->current_info_idx) {
+	/* If we are in the same index as we were, nothing to करो here! */
+	अगर (sel == abb->current_info_idx) अणु
 		dev_dbg(dev, "%s: Already at sel=%d\n", __func__, sel);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	info = &abb->info[sel];
 	/*
 	 * When Linux kernel is starting up, we are'nt sure of the
 	 * Bias configuration that bootloader has configured.
-	 * So, we get to know the actual setting the first time
+	 * So, we get to know the actual setting the first समय
 	 * we are asked to transition.
 	 */
-	if (abb->current_info_idx == -EINVAL)
-		goto just_set_abb;
+	अगर (abb->current_info_idx == -EINVAL)
+		जाओ just_set_abb;
 
 	/* If data is exactly the same, then just update index, no change */
 	oinfo = &abb->info[abb->current_info_idx];
-	if (!memcmp(info, oinfo, sizeof(*info))) {
+	अगर (!स_भेद(info, oinfo, माप(*info))) अणु
 		dev_dbg(dev, "%s: Same data new idx=%d, old idx=%d\n", __func__,
 			sel, abb->current_info_idx);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 just_set_abb:
 	ret = ti_abb_set_opp(rdev, abb, info);
 
 out:
-	if (!ret)
+	अगर (!ret)
 		abb->current_info_idx = sel;
-	else
+	अन्यथा
 		dev_err_ratelimited(dev,
 				    "%s: Volt[%d] idx[%d] mode[%d] Fail(%d)\n",
 				    __func__, desc->volt_table[sel], sel,
 				    info->opp_sel, ret);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
  * ti_abb_get_voltage_sel() - Regulator accessor to get current ABB LDO setting
@@ -380,190 +381,190 @@ out:
  *
  * Return: 0 on success or appropriate error value when fails
  */
-static int ti_abb_get_voltage_sel(struct regulator_dev *rdev)
-{
-	const struct regulator_desc *desc = rdev->desc;
-	struct ti_abb *abb = rdev_get_drvdata(rdev);
-	struct device *dev = &rdev->dev;
+अटल पूर्णांक ti_abb_get_voltage_sel(काष्ठा regulator_dev *rdev)
+अणु
+	स्थिर काष्ठा regulator_desc *desc = rdev->desc;
+	काष्ठा ti_abb *abb = rdev_get_drvdata(rdev);
+	काष्ठा device *dev = &rdev->dev;
 
-	if (!abb) {
+	अगर (!abb) अणु
 		dev_err_ratelimited(dev, "%s: No regulator drvdata\n",
 				    __func__);
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	if (!desc->n_voltages || !abb->info) {
+	अगर (!desc->n_voltages || !abb->info) अणु
 		dev_err_ratelimited(dev,
 				    "%s: No valid voltage table entries?\n",
 				    __func__);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (abb->current_info_idx >= (int)desc->n_voltages) {
+	अगर (abb->current_info_idx >= (पूर्णांक)desc->n_voltages) अणु
 		dev_err(dev, "%s: Corrupted data? idx(%d) >= n_voltages(%d)\n",
 			__func__, abb->current_info_idx, desc->n_voltages);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return abb->current_info_idx;
-}
+	वापस abb->current_info_idx;
+पूर्ण
 
 /**
- * ti_abb_init_timings() - setup ABB clock timing for the current platform
+ * ti_abb_init_timings() - setup ABB घड़ी timing क्रम the current platक्रमm
  * @dev:	device
- * @abb:	pointer to the abb instance
+ * @abb:	poपूर्णांकer to the abb instance
  *
- * Return: 0 if timing is updated, else returns error result.
+ * Return: 0 अगर timing is updated, अन्यथा वापसs error result.
  */
-static int ti_abb_init_timings(struct device *dev, struct ti_abb *abb)
-{
-	u32 clock_cycles;
+अटल पूर्णांक ti_abb_init_timings(काष्ठा device *dev, काष्ठा ti_abb *abb)
+अणु
+	u32 घड़ी_cycles;
 	u32 clk_rate, sr2_wt_cnt_val, cycle_rate;
-	const struct ti_abb_reg *regs = abb->regs;
-	int ret;
-	char *pname = "ti,settling-time";
+	स्थिर काष्ठा ti_abb_reg *regs = abb->regs;
+	पूर्णांक ret;
+	अक्षर *pname = "ti,settling-time";
 
-	/* read device tree properties */
-	ret = of_property_read_u32(dev->of_node, pname, &abb->settling_time);
-	if (ret) {
+	/* पढ़ो device tree properties */
+	ret = of_property_पढ़ो_u32(dev->of_node, pname, &abb->settling_समय);
+	अगर (ret) अणु
 		dev_err(dev, "Unable to get property '%s'(%d)\n", pname, ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	/* ABB LDO cannot be settle in 0 time */
-	if (!abb->settling_time) {
+	/* ABB LDO cannot be settle in 0 समय */
+	अगर (!abb->settling_समय) अणु
 		dev_err(dev, "Invalid property:'%s' set as 0!\n", pname);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	pname = "ti,clock-cycles";
-	ret = of_property_read_u32(dev->of_node, pname, &clock_cycles);
-	if (ret) {
+	ret = of_property_पढ़ो_u32(dev->of_node, pname, &घड़ी_cycles);
+	अगर (ret) अणु
 		dev_err(dev, "Unable to get property '%s'(%d)\n", pname, ret);
-		return ret;
-	}
-	/* ABB LDO cannot be settle in 0 clock cycles */
-	if (!clock_cycles) {
+		वापस ret;
+	पूर्ण
+	/* ABB LDO cannot be settle in 0 घड़ी cycles */
+	अगर (!घड़ी_cycles) अणु
 		dev_err(dev, "Invalid property:'%s' set as 0!\n", pname);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	abb->clk = devm_clk_get(dev, NULL);
-	if (IS_ERR(abb->clk)) {
+	abb->clk = devm_clk_get(dev, शून्य);
+	अगर (IS_ERR(abb->clk)) अणु
 		ret = PTR_ERR(abb->clk);
 		dev_err(dev, "%s: Unable to get clk(%d)\n", __func__, ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	/*
-	 * SR2_WTCNT_VALUE is the settling time for the ABB ldo after a
-	 * transition and must be programmed with the correct time at boot.
-	 * The value programmed into the register is the number of SYS_CLK
-	 * clock cycles that match a given wall time profiled for the ldo.
+	 * SR2_WTCNT_VALUE is the settling समय क्रम the ABB lकरो after a
+	 * transition and must be programmed with the correct समय at boot.
+	 * The value programmed पूर्णांकo the रेजिस्टर is the number of SYS_CLK
+	 * घड़ी cycles that match a given wall समय profiled क्रम the lकरो.
 	 * This value depends on:
-	 * settling time of ldo in micro-seconds (varies per OMAP family)
-	 * # of clock cycles per SYS_CLK period (varies per OMAP family)
+	 * settling समय of lकरो in micro-seconds (varies per OMAP family)
+	 * # of घड़ी cycles per SYS_CLK period (varies per OMAP family)
 	 * the SYS_CLK frequency in MHz (varies per board)
-	 * The formula is:
+	 * The क्रमmula is:
 	 *
-	 *                      ldo settling time (in micro-seconds)
+	 *                      lकरो settling समय (in micro-seconds)
 	 * SR2_WTCNT_VALUE = ------------------------------------------
-	 *                   (# system clock cycles) * (sys_clk period)
+	 *                   (# प्रणाली घड़ी cycles) * (sys_clk period)
 	 *
 	 * Put another way:
 	 *
-	 * SR2_WTCNT_VALUE = settling time / (# SYS_CLK cycles / SYS_CLK rate))
+	 * SR2_WTCNT_VALUE = settling समय / (# SYS_CLK cycles / SYS_CLK rate))
 	 *
-	 * To avoid dividing by zero multiply both "# clock cycles" and
+	 * To aव्योम भागiding by zero multiply both "# clock cycles" and
 	 * "settling time" by 10 such that the final result is the one we want.
 	 */
 
-	/* Convert SYS_CLK rate to MHz & prevent divide by zero */
+	/* Convert SYS_CLK rate to MHz & prevent भागide by zero */
 	clk_rate = DIV_ROUND_CLOSEST(clk_get_rate(abb->clk), 1000000);
 
 	/* Calculate cycle rate */
-	cycle_rate = DIV_ROUND_CLOSEST(clock_cycles * 10, clk_rate);
+	cycle_rate = DIV_ROUND_CLOSEST(घड़ी_cycles * 10, clk_rate);
 
 	/* Calulate SR2_WTCNT_VALUE */
-	sr2_wt_cnt_val = DIV_ROUND_CLOSEST(abb->settling_time * 10, cycle_rate);
+	sr2_wt_cnt_val = DIV_ROUND_CLOSEST(abb->settling_समय * 10, cycle_rate);
 
 	dev_dbg(dev, "%s: Clk_rate=%ld, sr2_cnt=0x%08x\n", __func__,
 		clk_get_rate(abb->clk), sr2_wt_cnt_val);
 
 	ti_abb_rmw(regs->sr2_wtcnt_value_mask, sr2_wt_cnt_val, abb->setup_reg);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * ti_abb_init_table() - Initialize ABB table from device tree
  * @dev:	device
- * @abb:	pointer to the abb instance
+ * @abb:	poपूर्णांकer to the abb instance
  * @rinit_data:	regulator initdata
  *
  * Return: 0 on success or appropriate error value when fails
  */
-static int ti_abb_init_table(struct device *dev, struct ti_abb *abb,
-			     struct regulator_init_data *rinit_data)
-{
-	struct ti_abb_info *info;
-	const u32 num_values = 6;
-	char *pname = "ti,abb_info";
+अटल पूर्णांक ti_abb_init_table(काष्ठा device *dev, काष्ठा ti_abb *abb,
+			     काष्ठा regulator_init_data *rinit_data)
+अणु
+	काष्ठा ti_abb_info *info;
+	स्थिर u32 num_values = 6;
+	अक्षर *pname = "ti,abb_info";
 	u32 i;
-	unsigned int *volt_table;
-	int num_entries, min_uV = INT_MAX, max_uV = 0;
-	struct regulation_constraints *c = &rinit_data->constraints;
+	अचिन्हित पूर्णांक *volt_table;
+	पूर्णांक num_entries, min_uV = पूर्णांक_उच्च, max_uV = 0;
+	काष्ठा regulation_स्थिरraपूर्णांकs *c = &rinit_data->स्थिरraपूर्णांकs;
 
 	/*
 	 * Each abb_info is a set of n-tuple, where n is num_values, consisting
-	 * of voltage and a set of detection logic for ABB information for that
+	 * of voltage and a set of detection logic क्रम ABB inक्रमmation क्रम that
 	 * voltage to apply.
 	 */
 	num_entries = of_property_count_u32_elems(dev->of_node, pname);
-	if (num_entries < 0) {
+	अगर (num_entries < 0) अणु
 		dev_err(dev, "No '%s' property?\n", pname);
-		return num_entries;
-	}
+		वापस num_entries;
+	पूर्ण
 
-	if (!num_entries || (num_entries % num_values)) {
+	अगर (!num_entries || (num_entries % num_values)) अणु
 		dev_err(dev, "All '%s' list entries need %d vals\n", pname,
 			num_values);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 	num_entries /= num_values;
 
-	info = devm_kcalloc(dev, num_entries, sizeof(*info), GFP_KERNEL);
-	if (!info)
-		return -ENOMEM;
+	info = devm_kसुस्मृति(dev, num_entries, माप(*info), GFP_KERNEL);
+	अगर (!info)
+		वापस -ENOMEM;
 
 	abb->info = info;
 
-	volt_table = devm_kcalloc(dev, num_entries, sizeof(unsigned int),
+	volt_table = devm_kसुस्मृति(dev, num_entries, माप(अचिन्हित पूर्णांक),
 				  GFP_KERNEL);
-	if (!volt_table)
-		return -ENOMEM;
+	अगर (!volt_table)
+		वापस -ENOMEM;
 
 	abb->rdesc.n_voltages = num_entries;
 	abb->rdesc.volt_table = volt_table;
-	/* We do not know where the OPP voltage is at the moment */
+	/* We करो not know where the OPP voltage is at the moment */
 	abb->current_info_idx = -EINVAL;
 
-	for (i = 0; i < num_entries; i++, info++, volt_table++) {
+	क्रम (i = 0; i < num_entries; i++, info++, volt_table++) अणु
 		u32 efuse_offset, rbb_mask, fbb_mask, vset_mask;
 		u32 efuse_val;
 
 		/* NOTE: num_values should equal to entries picked up here */
-		of_property_read_u32_index(dev->of_node, pname, i * num_values,
+		of_property_पढ़ो_u32_index(dev->of_node, pname, i * num_values,
 					   volt_table);
-		of_property_read_u32_index(dev->of_node, pname,
+		of_property_पढ़ो_u32_index(dev->of_node, pname,
 					   i * num_values + 1, &info->opp_sel);
-		of_property_read_u32_index(dev->of_node, pname,
+		of_property_पढ़ो_u32_index(dev->of_node, pname,
 					   i * num_values + 2, &efuse_offset);
-		of_property_read_u32_index(dev->of_node, pname,
+		of_property_पढ़ो_u32_index(dev->of_node, pname,
 					   i * num_values + 3, &rbb_mask);
-		of_property_read_u32_index(dev->of_node, pname,
+		of_property_पढ़ो_u32_index(dev->of_node, pname,
 					   i * num_values + 4, &fbb_mask);
-		of_property_read_u32_index(dev->of_node, pname,
+		of_property_पढ़ो_u32_index(dev->of_node, pname,
 					   i * num_values + 5, &vset_mask);
 
 		dev_dbg(dev,
@@ -571,28 +572,28 @@ static int ti_abb_init_table(struct device *dev, struct ti_abb *abb,
 			i, *volt_table, info->opp_sel, efuse_offset, rbb_mask,
 			fbb_mask, vset_mask);
 
-		/* Find min/max for voltage set */
-		if (min_uV > *volt_table)
+		/* Find min/max क्रम voltage set */
+		अगर (min_uV > *volt_table)
 			min_uV = *volt_table;
-		if (max_uV < *volt_table)
+		अगर (max_uV < *volt_table)
 			max_uV = *volt_table;
 
-		if (!abb->efuse_base) {
+		अगर (!abb->efuse_base) अणु
 			/* Ignore invalid data, but warn to help cleanup */
-			if (efuse_offset || rbb_mask || fbb_mask || vset_mask)
+			अगर (efuse_offset || rbb_mask || fbb_mask || vset_mask)
 				dev_err(dev, "prop '%s': v=%d,bad efuse/mask\n",
 					pname, *volt_table);
-			goto check_abb;
-		}
+			जाओ check_abb;
+		पूर्ण
 
-		efuse_val = readl(abb->efuse_base + efuse_offset);
+		efuse_val = पढ़ोl(abb->efuse_base + efuse_offset);
 
 		/* Use ABB recommendation from Efuse */
-		if (efuse_val & rbb_mask)
+		अगर (efuse_val & rbb_mask)
 			info->opp_sel = TI_ABB_SLOW_OPP;
-		else if (efuse_val & fbb_mask)
+		अन्यथा अगर (efuse_val & fbb_mask)
 			info->opp_sel = TI_ABB_FAST_OPP;
-		else if (rbb_mask || fbb_mask)
+		अन्यथा अगर (rbb_mask || fbb_mask)
 			info->opp_sel = TI_ABB_NOMINAL_OPP;
 
 		dev_dbg(dev,
@@ -600,45 +601,45 @@ static int ti_abb_init_table(struct device *dev, struct ti_abb *abb,
 			i, *volt_table, efuse_val, info->opp_sel);
 
 		/* Use recommended Vset bits from Efuse */
-		if (!abb->ldo_base) {
-			if (vset_mask)
+		अगर (!abb->lकरो_base) अणु
+			अगर (vset_mask)
 				dev_err(dev, "prop'%s':v=%d vst=%x LDO base?\n",
 					pname, *volt_table, vset_mask);
-			continue;
-		}
+			जारी;
+		पूर्ण
 		info->vset = (efuse_val & vset_mask) >> __ffs(vset_mask);
 		dev_dbg(dev, "[%d]v=%d vset=%x\n", i, *volt_table, info->vset);
 check_abb:
-		switch (info->opp_sel) {
-		case TI_ABB_NOMINAL_OPP:
-		case TI_ABB_FAST_OPP:
-		case TI_ABB_SLOW_OPP:
+		चयन (info->opp_sel) अणु
+		हाल TI_ABB_NOMINAL_OPP:
+		हाल TI_ABB_FAST_OPP:
+		हाल TI_ABB_SLOW_OPP:
 			/* Valid values */
-			break;
-		default:
+			अवरोध;
+		शेष:
 			dev_err(dev, "%s:[%d]v=%d, ABB=%d is invalid! Abort!\n",
 				__func__, i, *volt_table, info->opp_sel);
-			return -EINVAL;
-		}
-	}
+			वापस -EINVAL;
+		पूर्ण
+	पूर्ण
 
-	/* Setup the min/max voltage constraints from the supported list */
+	/* Setup the min/max voltage स्थिरraपूर्णांकs from the supported list */
 	c->min_uV = min_uV;
 	c->max_uV = max_uV;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct regulator_ops ti_abb_reg_ops = {
+अटल स्थिर काष्ठा regulator_ops ti_abb_reg_ops = अणु
 	.list_voltage = regulator_list_voltage_table,
 
 	.set_voltage_sel = ti_abb_set_voltage_sel,
 	.get_voltage_sel = ti_abb_get_voltage_sel,
-};
+पूर्ण;
 
 /* Default ABB block offsets, IF this changes in future, create new one */
-static const struct ti_abb_reg abb_regs_v1 = {
-	/* WARNING: registers are wrongly documented in TRM */
+अटल स्थिर काष्ठा ti_abb_reg abb_regs_v1 = अणु
+	/* WARNING: रेजिस्टरs are wrongly करोcumented in TRM */
 	.setup_off		= 0x04,
 	.control_off		= 0x00,
 
@@ -649,9 +650,9 @@ static const struct ti_abb_reg abb_regs_v1 = {
 
 	.opp_change_mask	= (0x01 << 2),
 	.opp_sel_mask		= (0x03 << 0),
-};
+पूर्ण;
 
-static const struct ti_abb_reg abb_regs_v2 = {
+अटल स्थिर काष्ठा ti_abb_reg abb_regs_v2 = अणु
 	.setup_off		= 0x00,
 	.control_off		= 0x04,
 
@@ -662,9 +663,9 @@ static const struct ti_abb_reg abb_regs_v2 = {
 
 	.opp_change_mask	= (0x01 << 2),
 	.opp_sel_mask		= (0x03 << 0),
-};
+पूर्ण;
 
-static const struct ti_abb_reg abb_regs_generic = {
+अटल स्थिर काष्ठा ti_abb_reg abb_regs_generic = अणु
 	.sr2_wtcnt_value_mask	= (0xff << 8),
 	.fbb_sel_mask		= (0x01 << 2),
 	.rbb_sel_mask		= (0x01 << 1),
@@ -672,188 +673,188 @@ static const struct ti_abb_reg abb_regs_generic = {
 
 	.opp_change_mask	= (0x01 << 2),
 	.opp_sel_mask		= (0x03 << 0),
-};
+पूर्ण;
 
-static const struct of_device_id ti_abb_of_match[] = {
-	{.compatible = "ti,abb-v1", .data = &abb_regs_v1},
-	{.compatible = "ti,abb-v2", .data = &abb_regs_v2},
-	{.compatible = "ti,abb-v3", .data = &abb_regs_generic},
-	{ },
-};
+अटल स्थिर काष्ठा of_device_id ti_abb_of_match[] = अणु
+	अणु.compatible = "ti,abb-v1", .data = &abb_regs_v1पूर्ण,
+	अणु.compatible = "ti,abb-v2", .data = &abb_regs_v2पूर्ण,
+	अणु.compatible = "ti,abb-v3", .data = &abb_regs_genericपूर्ण,
+	अणु पूर्ण,
+पूर्ण;
 
 MODULE_DEVICE_TABLE(of, ti_abb_of_match);
 
 /**
- * ti_abb_probe() - Initialize an ABB ldo instance
- * @pdev: ABB platform device
+ * ti_abb_probe() - Initialize an ABB lकरो instance
+ * @pdev: ABB platक्रमm device
  *
- * Initializes an individual ABB LDO for required Body-Bias. ABB is used to
- * addional bias supply to SoC modules for power savings or mandatory stability
- * configuration at certain Operating Performance Points(OPPs).
+ * Initializes an inभागidual ABB LDO क्रम required Body-Bias. ABB is used to
+ * addional bias supply to SoC modules क्रम घातer savings or mandatory stability
+ * configuration at certain Operating Perक्रमmance Poपूर्णांकs(OPPs).
  *
  * Return: 0 on success or appropriate error value when fails
  */
-static int ti_abb_probe(struct platform_device *pdev)
-{
-	struct device *dev = &pdev->dev;
-	const struct of_device_id *match;
-	struct resource *res;
-	struct ti_abb *abb;
-	struct regulator_init_data *initdata = NULL;
-	struct regulator_dev *rdev = NULL;
-	struct regulator_desc *desc;
-	struct regulation_constraints *c;
-	struct regulator_config config = { };
-	char *pname;
-	int ret = 0;
+अटल पूर्णांक ti_abb_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device *dev = &pdev->dev;
+	स्थिर काष्ठा of_device_id *match;
+	काष्ठा resource *res;
+	काष्ठा ti_abb *abb;
+	काष्ठा regulator_init_data *initdata = शून्य;
+	काष्ठा regulator_dev *rdev = शून्य;
+	काष्ठा regulator_desc *desc;
+	काष्ठा regulation_स्थिरraपूर्णांकs *c;
+	काष्ठा regulator_config config = अणु पूर्ण;
+	अक्षर *pname;
+	पूर्णांक ret = 0;
 
 	match = of_match_device(ti_abb_of_match, dev);
-	if (!match) {
-		/* We do not expect this to happen */
+	अगर (!match) अणु
+		/* We करो not expect this to happen */
 		dev_err(dev, "%s: Unable to match device\n", __func__);
-		return -ENODEV;
-	}
-	if (!match->data) {
+		वापस -ENODEV;
+	पूर्ण
+	अगर (!match->data) अणु
 		dev_err(dev, "%s: Bad data in match\n", __func__);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	abb = devm_kzalloc(dev, sizeof(struct ti_abb), GFP_KERNEL);
-	if (!abb)
-		return -ENOMEM;
+	abb = devm_kzalloc(dev, माप(काष्ठा ti_abb), GFP_KERNEL);
+	अगर (!abb)
+		वापस -ENOMEM;
 	abb->regs = match->data;
 
 	/* Map ABB resources */
-	if (abb->regs->setup_off || abb->regs->control_off) {
+	अगर (abb->regs->setup_off || abb->regs->control_off) अणु
 		pname = "base-address";
-		res = platform_get_resource_byname(pdev, IORESOURCE_MEM, pname);
+		res = platक्रमm_get_resource_byname(pdev, IORESOURCE_MEM, pname);
 		abb->base = devm_ioremap_resource(dev, res);
-		if (IS_ERR(abb->base))
-			return PTR_ERR(abb->base);
+		अगर (IS_ERR(abb->base))
+			वापस PTR_ERR(abb->base);
 
 		abb->setup_reg = abb->base + abb->regs->setup_off;
 		abb->control_reg = abb->base + abb->regs->control_off;
 
-	} else {
+	पूर्ण अन्यथा अणु
 		pname = "control-address";
-		res = platform_get_resource_byname(pdev, IORESOURCE_MEM, pname);
+		res = platक्रमm_get_resource_byname(pdev, IORESOURCE_MEM, pname);
 		abb->control_reg = devm_ioremap_resource(dev, res);
-		if (IS_ERR(abb->control_reg))
-			return PTR_ERR(abb->control_reg);
+		अगर (IS_ERR(abb->control_reg))
+			वापस PTR_ERR(abb->control_reg);
 
 		pname = "setup-address";
-		res = platform_get_resource_byname(pdev, IORESOURCE_MEM, pname);
+		res = platक्रमm_get_resource_byname(pdev, IORESOURCE_MEM, pname);
 		abb->setup_reg = devm_ioremap_resource(dev, res);
-		if (IS_ERR(abb->setup_reg))
-			return PTR_ERR(abb->setup_reg);
-	}
+		अगर (IS_ERR(abb->setup_reg))
+			वापस PTR_ERR(abb->setup_reg);
+	पूर्ण
 
 	pname = "int-address";
-	res = platform_get_resource_byname(pdev, IORESOURCE_MEM, pname);
-	if (!res) {
+	res = platक्रमm_get_resource_byname(pdev, IORESOURCE_MEM, pname);
+	अगर (!res) अणु
 		dev_err(dev, "Missing '%s' IO resource\n", pname);
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 	/*
-	 * We may have shared interrupt register offsets which are
-	 * write-1-to-clear between domains ensuring exclusivity.
+	 * We may have shared पूर्णांकerrupt रेजिस्टर offsets which are
+	 * ग_लिखो-1-to-clear between करोमुख्यs ensuring exclusivity.
 	 */
-	abb->int_base = devm_ioremap(dev, res->start,
+	abb->पूर्णांक_base = devm_ioremap(dev, res->start,
 					     resource_size(res));
-	if (!abb->int_base) {
+	अगर (!abb->पूर्णांक_base) अणु
 		dev_err(dev, "Unable to map '%s'\n", pname);
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	/* Map Optional resources */
 	pname = "efuse-address";
-	res = platform_get_resource_byname(pdev, IORESOURCE_MEM, pname);
-	if (!res) {
+	res = platक्रमm_get_resource_byname(pdev, IORESOURCE_MEM, pname);
+	अगर (!res) अणु
 		dev_dbg(dev, "Missing '%s' IO resource\n", pname);
 		ret = -ENODEV;
-		goto skip_opt;
-	}
+		जाओ skip_opt;
+	पूर्ण
 
 	/*
-	 * We may have shared efuse register offsets which are read-only
-	 * between domains
+	 * We may have shared efuse रेजिस्टर offsets which are पढ़ो-only
+	 * between करोमुख्यs
 	 */
 	abb->efuse_base = devm_ioremap(dev, res->start,
 					       resource_size(res));
-	if (!abb->efuse_base) {
+	अगर (!abb->efuse_base) अणु
 		dev_err(dev, "Unable to map '%s'\n", pname);
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	pname = "ldo-address";
-	res = platform_get_resource_byname(pdev, IORESOURCE_MEM, pname);
-	if (!res) {
+	res = platक्रमm_get_resource_byname(pdev, IORESOURCE_MEM, pname);
+	अगर (!res) अणु
 		dev_dbg(dev, "Missing '%s' IO resource\n", pname);
 		ret = -ENODEV;
-		goto skip_opt;
-	}
-	abb->ldo_base = devm_ioremap_resource(dev, res);
-	if (IS_ERR(abb->ldo_base))
-		return PTR_ERR(abb->ldo_base);
+		जाओ skip_opt;
+	पूर्ण
+	abb->lकरो_base = devm_ioremap_resource(dev, res);
+	अगर (IS_ERR(abb->lकरो_base))
+		वापस PTR_ERR(abb->lकरो_base);
 
-	/* IF ldo_base is set, the following are mandatory */
+	/* IF lकरो_base is set, the following are mandatory */
 	pname = "ti,ldovbb-override-mask";
 	ret =
-	    of_property_read_u32(pdev->dev.of_node, pname,
-				 &abb->ldovbb_override_mask);
-	if (ret) {
+	    of_property_पढ़ो_u32(pdev->dev.of_node, pname,
+				 &abb->lकरोvbb_override_mask);
+	अगर (ret) अणु
 		dev_err(dev, "Missing '%s' (%d)\n", pname, ret);
-		return ret;
-	}
-	if (!abb->ldovbb_override_mask) {
+		वापस ret;
+	पूर्ण
+	अगर (!abb->lकरोvbb_override_mask) अणु
 		dev_err(dev, "Invalid property:'%s' set as 0!\n", pname);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	pname = "ti,ldovbb-vset-mask";
 	ret =
-	    of_property_read_u32(pdev->dev.of_node, pname,
-				 &abb->ldovbb_vset_mask);
-	if (ret) {
+	    of_property_पढ़ो_u32(pdev->dev.of_node, pname,
+				 &abb->lकरोvbb_vset_mask);
+	अगर (ret) अणु
 		dev_err(dev, "Missing '%s' (%d)\n", pname, ret);
-		return ret;
-	}
-	if (!abb->ldovbb_vset_mask) {
+		वापस ret;
+	पूर्ण
+	अगर (!abb->lकरोvbb_vset_mask) अणु
 		dev_err(dev, "Invalid property:'%s' set as 0!\n", pname);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 skip_opt:
 	pname = "ti,tranxdone-status-mask";
 	ret =
-	    of_property_read_u32(pdev->dev.of_node, pname,
-				 &abb->txdone_mask);
-	if (ret) {
+	    of_property_पढ़ो_u32(pdev->dev.of_node, pname,
+				 &abb->txकरोne_mask);
+	अगर (ret) अणु
 		dev_err(dev, "Missing '%s' (%d)\n", pname, ret);
-		return ret;
-	}
-	if (!abb->txdone_mask) {
+		वापस ret;
+	पूर्ण
+	अगर (!abb->txकरोne_mask) अणु
 		dev_err(dev, "Invalid property:'%s' set as 0!\n", pname);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	initdata = of_get_regulator_init_data(dev, pdev->dev.of_node,
 					      &abb->rdesc);
-	if (!initdata) {
+	अगर (!initdata) अणु
 		dev_err(dev, "%s: Unable to alloc regulator init data\n",
 			__func__);
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	/* init ABB opp_sel table */
 	ret = ti_abb_init_table(dev, abb, initdata);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	/* init ABB timing */
 	ret = ti_abb_init_timings(dev, abb);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	desc = &abb->rdesc;
 	desc->name = dev_name(dev);
@@ -861,8 +862,8 @@ skip_opt:
 	desc->type = REGULATOR_VOLTAGE;
 	desc->ops = &ti_abb_reg_ops;
 
-	c = &initdata->constraints;
-	if (desc->n_voltages > 1)
+	c = &initdata->स्थिरraपूर्णांकs;
+	अगर (desc->n_voltages > 1)
 		c->valid_ops_mask |= REGULATOR_CHANGE_VOLTAGE;
 	c->always_on = true;
 
@@ -871,31 +872,31 @@ skip_opt:
 	config.driver_data = abb;
 	config.of_node = pdev->dev.of_node;
 
-	rdev = devm_regulator_register(dev, desc, &config);
-	if (IS_ERR(rdev)) {
+	rdev = devm_regulator_रेजिस्टर(dev, desc, &config);
+	अगर (IS_ERR(rdev)) अणु
 		ret = PTR_ERR(rdev);
 		dev_err(dev, "%s: failed to register regulator(%d)\n",
 			__func__, ret);
-		return ret;
-	}
-	platform_set_drvdata(pdev, rdev);
+		वापस ret;
+	पूर्ण
+	platक्रमm_set_drvdata(pdev, rdev);
 
-	/* Enable the ldo if not already done by bootloader */
+	/* Enable the lकरो अगर not alपढ़ोy करोne by bootloader */
 	ti_abb_rmw(abb->regs->sr2_en_mask, 1, abb->setup_reg);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 MODULE_ALIAS("platform:ti_abb");
 
-static struct platform_driver ti_abb_driver = {
+अटल काष्ठा platक्रमm_driver ti_abb_driver = अणु
 	.probe = ti_abb_probe,
-	.driver = {
+	.driver = अणु
 		   .name = "ti_abb",
 		   .of_match_table = of_match_ptr(ti_abb_of_match),
-		   },
-};
-module_platform_driver(ti_abb_driver);
+		   पूर्ण,
+पूर्ण;
+module_platक्रमm_driver(ti_abb_driver);
 
 MODULE_DESCRIPTION("Texas Instruments ABB LDO regulator driver");
 MODULE_AUTHOR("Texas Instruments Inc.");

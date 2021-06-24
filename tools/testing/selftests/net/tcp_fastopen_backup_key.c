@@ -1,335 +1,336 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 
 /*
- * Test key rotation for TFO.
+ * Test key rotation क्रम TFO.
  * New keys are 'rotated' in two steps:
  * 1) Add new key as the 'backup' key 'behind' the primary key
  * 2) Make new key the primary by swapping the backup and primary keys
  *
- * The rotation is done in stages using multiple sockets bound
+ * The rotation is करोne in stages using multiple sockets bound
  * to the same port via SO_REUSEPORT. This simulates key rotation
- * behind say a load balancer. We verify that across the rotation
- * there are no cases in which a cookie is not accepted by verifying
- * that TcpExtTCPFastOpenPassiveFail remains 0.
+ * behind say a load balancer. We verअगरy that across the rotation
+ * there are no हालs in which a cookie is not accepted by verअगरying
+ * that TcpExtTCPFastOpenPassiveFail reमुख्यs 0.
  */
-#define _GNU_SOURCE
-#include <arpa/inet.h>
-#include <errno.h>
-#include <error.h>
-#include <stdbool.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <sys/epoll.h>
-#include <unistd.h>
-#include <netinet/tcp.h>
-#include <fcntl.h>
-#include <time.h>
+#घोषणा _GNU_SOURCE
+#समावेश <arpa/inet.h>
+#समावेश <त्रुटिसं.स>
+#समावेश <error.h>
+#समावेश <stdbool.h>
+#समावेश <मानकपन.स>
+#समावेश <मानककोष.स>
+#समावेश <माला.स>
+#समावेश <sys/epoll.h>
+#समावेश <unistd.h>
+#समावेश <netinet/tcp.h>
+#समावेश <fcntl.h>
+#समावेश <समय.स>
 
-#ifndef TCP_FASTOPEN_KEY
-#define TCP_FASTOPEN_KEY 33
-#endif
+#अगर_अघोषित TCP_FASTOPEN_KEY
+#घोषणा TCP_FASTOPEN_KEY 33
+#पूर्ण_अगर
 
-#define N_LISTEN 10
-#define PROC_FASTOPEN_KEY "/proc/sys/net/ipv4/tcp_fastopen_key"
-#define KEY_LENGTH 16
+#घोषणा N_LISTEN 10
+#घोषणा PROC_FASTOPEN_KEY "/proc/sys/net/ipv4/tcp_fastopen_key"
+#घोषणा KEY_LENGTH 16
 
-#ifndef ARRAY_SIZE
-#define ARRAY_SIZE(arr) (sizeof(arr) / sizeof((arr)[0]))
-#endif
+#अगर_अघोषित ARRAY_SIZE
+#घोषणा ARRAY_SIZE(arr) (माप(arr) / माप((arr)[0]))
+#पूर्ण_अगर
 
-static bool do_ipv6;
-static bool do_sockopt;
-static bool do_rotate;
-static int key_len = KEY_LENGTH;
-static int rcv_fds[N_LISTEN];
-static int proc_fd;
-static const char *IP4_ADDR = "127.0.0.1";
-static const char *IP6_ADDR = "::1";
-static const int PORT = 8891;
+अटल bool करो_ipv6;
+अटल bool करो_sockopt;
+अटल bool करो_rotate;
+अटल पूर्णांक key_len = KEY_LENGTH;
+अटल पूर्णांक rcv_fds[N_LISTEN];
+अटल पूर्णांक proc_fd;
+अटल स्थिर अक्षर *IP4_ADDR = "127.0.0.1";
+अटल स्थिर अक्षर *IP6_ADDR = "::1";
+अटल स्थिर पूर्णांक PORT = 8891;
 
-static void get_keys(int fd, uint32_t *keys)
-{
-	char buf[128];
+अटल व्योम get_keys(पूर्णांक fd, uपूर्णांक32_t *keys)
+अणु
+	अक्षर buf[128];
 	socklen_t len = KEY_LENGTH * 2;
 
-	if (do_sockopt) {
-		if (getsockopt(fd, SOL_TCP, TCP_FASTOPEN_KEY, keys, &len))
-			error(1, errno, "Unable to get key");
-		return;
-	}
-	lseek(proc_fd, 0, SEEK_SET);
-	if (read(proc_fd, buf, sizeof(buf)) <= 0)
-		error(1, errno, "Unable to read %s", PROC_FASTOPEN_KEY);
-	if (sscanf(buf, "%x-%x-%x-%x,%x-%x-%x-%x", keys, keys + 1, keys + 2,
+	अगर (करो_sockopt) अणु
+		अगर (माला_लोockopt(fd, SOL_TCP, TCP_FASTOPEN_KEY, keys, &len))
+			error(1, त्रुटि_सं, "Unable to get key");
+		वापस;
+	पूर्ण
+	lseek(proc_fd, 0, शुरू_से);
+	अगर (पढ़ो(proc_fd, buf, माप(buf)) <= 0)
+		error(1, त्रुटि_सं, "Unable to read %s", PROC_FASTOPEN_KEY);
+	अगर (माला_पूछो(buf, "%x-%x-%x-%x,%x-%x-%x-%x", keys, keys + 1, keys + 2,
 	    keys + 3, keys + 4, keys + 5, keys + 6, keys + 7) != 8)
 		error(1, 0, "Unable to parse %s", PROC_FASTOPEN_KEY);
-}
+पूर्ण
 
-static void set_keys(int fd, uint32_t *keys)
-{
-	char buf[128];
+अटल व्योम set_keys(पूर्णांक fd, uपूर्णांक32_t *keys)
+अणु
+	अक्षर buf[128];
 
-	if (do_sockopt) {
-		if (setsockopt(fd, SOL_TCP, TCP_FASTOPEN_KEY, keys,
+	अगर (करो_sockopt) अणु
+		अगर (setsockopt(fd, SOL_TCP, TCP_FASTOPEN_KEY, keys,
 		    key_len))
-			error(1, errno, "Unable to set key");
-		return;
-	}
-	if (do_rotate)
-		snprintf(buf, 128, "%08x-%08x-%08x-%08x,%08x-%08x-%08x-%08x",
+			error(1, त्रुटि_सं, "Unable to set key");
+		वापस;
+	पूर्ण
+	अगर (करो_rotate)
+		snम_लिखो(buf, 128, "%08x-%08x-%08x-%08x,%08x-%08x-%08x-%08x",
 			 keys[0], keys[1], keys[2], keys[3], keys[4], keys[5],
 			 keys[6], keys[7]);
-	else
-		snprintf(buf, 128, "%08x-%08x-%08x-%08x",
+	अन्यथा
+		snम_लिखो(buf, 128, "%08x-%08x-%08x-%08x",
 			 keys[0], keys[1], keys[2], keys[3]);
-	lseek(proc_fd, 0, SEEK_SET);
-	if (write(proc_fd, buf, sizeof(buf)) <= 0)
-		error(1, errno, "Unable to write %s", PROC_FASTOPEN_KEY);
-}
+	lseek(proc_fd, 0, शुरू_से);
+	अगर (ग_लिखो(proc_fd, buf, माप(buf)) <= 0)
+		error(1, त्रुटि_सं, "Unable to write %s", PROC_FASTOPEN_KEY);
+पूर्ण
 
-static void build_rcv_fd(int family, int proto, int *rcv_fds)
-{
-	struct sockaddr_in  addr4 = {0};
-	struct sockaddr_in6 addr6 = {0};
-	struct sockaddr *addr;
-	int opt = 1, i, sz;
-	int qlen = 100;
-	uint32_t keys[8];
+अटल व्योम build_rcv_fd(पूर्णांक family, पूर्णांक proto, पूर्णांक *rcv_fds)
+अणु
+	काष्ठा sockaddr_in  addr4 = अणु0पूर्ण;
+	काष्ठा sockaddr_in6 addr6 = अणु0पूर्ण;
+	काष्ठा sockaddr *addr;
+	पूर्णांक opt = 1, i, sz;
+	पूर्णांक qlen = 100;
+	uपूर्णांक32_t keys[8];
 
-	switch (family) {
-	case AF_INET:
+	चयन (family) अणु
+	हाल AF_INET:
 		addr4.sin_family = family;
 		addr4.sin_addr.s_addr = htonl(INADDR_ANY);
 		addr4.sin_port = htons(PORT);
-		sz = sizeof(addr4);
-		addr = (struct sockaddr *)&addr4;
-		break;
-	case AF_INET6:
+		sz = माप(addr4);
+		addr = (काष्ठा sockaddr *)&addr4;
+		अवरोध;
+	हाल AF_INET6:
 		addr6.sin6_family = AF_INET6;
 		addr6.sin6_addr = in6addr_any;
 		addr6.sin6_port = htons(PORT);
-		sz = sizeof(addr6);
-		addr = (struct sockaddr *)&addr6;
-		break;
-	default:
+		sz = माप(addr6);
+		addr = (काष्ठा sockaddr *)&addr6;
+		अवरोध;
+	शेष:
 		error(1, 0, "Unsupported family %d", family);
-		/* clang does not recognize error() above as terminating
+		/* clang करोes not recognize error() above as terminating
 		 * the program, so it complains that saddr, sz are
 		 * not initialized when this code path is taken. Silence it.
 		 */
-		return;
-	}
-	for (i = 0; i < ARRAY_SIZE(keys); i++)
-		keys[i] = rand();
-	for (i = 0; i < N_LISTEN; i++) {
+		वापस;
+	पूर्ण
+	क्रम (i = 0; i < ARRAY_SIZE(keys); i++)
+		keys[i] = अक्रम();
+	क्रम (i = 0; i < N_LISTEN; i++) अणु
 		rcv_fds[i] = socket(family, proto, 0);
-		if (rcv_fds[i] < 0)
-			error(1, errno, "failed to create receive socket");
-		if (setsockopt(rcv_fds[i], SOL_SOCKET, SO_REUSEPORT, &opt,
-			       sizeof(opt)))
-			error(1, errno, "failed to set SO_REUSEPORT");
-		if (bind(rcv_fds[i], addr, sz))
-			error(1, errno, "failed to bind receive socket");
-		if (setsockopt(rcv_fds[i], SOL_TCP, TCP_FASTOPEN, &qlen,
-			       sizeof(qlen)))
-			error(1, errno, "failed to set TCP_FASTOPEN");
+		अगर (rcv_fds[i] < 0)
+			error(1, त्रुटि_सं, "failed to create receive socket");
+		अगर (setsockopt(rcv_fds[i], SOL_SOCKET, SO_REUSEPORT, &opt,
+			       माप(opt)))
+			error(1, त्रुटि_सं, "failed to set SO_REUSEPORT");
+		अगर (bind(rcv_fds[i], addr, sz))
+			error(1, त्रुटि_सं, "failed to bind receive socket");
+		अगर (setsockopt(rcv_fds[i], SOL_TCP, TCP_FASTOPEN, &qlen,
+			       माप(qlen)))
+			error(1, त्रुटि_सं, "failed to set TCP_FASTOPEN");
 		set_keys(rcv_fds[i], keys);
-		if (proto == SOCK_STREAM && listen(rcv_fds[i], 10))
-			error(1, errno, "failed to listen on receive port");
-	}
-}
+		अगर (proto == SOCK_STREAM && listen(rcv_fds[i], 10))
+			error(1, त्रुटि_सं, "failed to listen on receive port");
+	पूर्ण
+पूर्ण
 
-static int connect_and_send(int family, int proto)
-{
-	struct sockaddr_in  saddr4 = {0};
-	struct sockaddr_in  daddr4 = {0};
-	struct sockaddr_in6 saddr6 = {0};
-	struct sockaddr_in6 daddr6 = {0};
-	struct sockaddr *saddr, *daddr;
-	int fd, sz, ret;
-	char data[1];
+अटल पूर्णांक connect_and_send(पूर्णांक family, पूर्णांक proto)
+अणु
+	काष्ठा sockaddr_in  saddr4 = अणु0पूर्ण;
+	काष्ठा sockaddr_in  daddr4 = अणु0पूर्ण;
+	काष्ठा sockaddr_in6 saddr6 = अणु0पूर्ण;
+	काष्ठा sockaddr_in6 daddr6 = अणु0पूर्ण;
+	काष्ठा sockaddr *saddr, *daddr;
+	पूर्णांक fd, sz, ret;
+	अक्षर data[1];
 
-	switch (family) {
-	case AF_INET:
+	चयन (family) अणु
+	हाल AF_INET:
 		saddr4.sin_family = AF_INET;
 		saddr4.sin_addr.s_addr = htonl(INADDR_ANY);
 		saddr4.sin_port = 0;
 
 		daddr4.sin_family = AF_INET;
-		if (!inet_pton(family, IP4_ADDR, &daddr4.sin_addr.s_addr))
-			error(1, errno, "inet_pton failed: %s", IP4_ADDR);
+		अगर (!inet_pton(family, IP4_ADDR, &daddr4.sin_addr.s_addr))
+			error(1, त्रुटि_सं, "inet_pton failed: %s", IP4_ADDR);
 		daddr4.sin_port = htons(PORT);
 
-		sz = sizeof(saddr4);
-		saddr = (struct sockaddr *)&saddr4;
-		daddr = (struct sockaddr *)&daddr4;
-		break;
-	case AF_INET6:
+		sz = माप(saddr4);
+		saddr = (काष्ठा sockaddr *)&saddr4;
+		daddr = (काष्ठा sockaddr *)&daddr4;
+		अवरोध;
+	हाल AF_INET6:
 		saddr6.sin6_family = AF_INET6;
 		saddr6.sin6_addr = in6addr_any;
 
 		daddr6.sin6_family = AF_INET6;
-		if (!inet_pton(family, IP6_ADDR, &daddr6.sin6_addr))
-			error(1, errno, "inet_pton failed: %s", IP6_ADDR);
+		अगर (!inet_pton(family, IP6_ADDR, &daddr6.sin6_addr))
+			error(1, त्रुटि_सं, "inet_pton failed: %s", IP6_ADDR);
 		daddr6.sin6_port = htons(PORT);
 
-		sz = sizeof(saddr6);
-		saddr = (struct sockaddr *)&saddr6;
-		daddr = (struct sockaddr *)&daddr6;
-		break;
-	default:
+		sz = माप(saddr6);
+		saddr = (काष्ठा sockaddr *)&saddr6;
+		daddr = (काष्ठा sockaddr *)&daddr6;
+		अवरोध;
+	शेष:
 		error(1, 0, "Unsupported family %d", family);
-		/* clang does not recognize error() above as terminating
+		/* clang करोes not recognize error() above as terminating
 		 * the program, so it complains that saddr, daddr, sz are
 		 * not initialized when this code path is taken. Silence it.
 		 */
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 	fd = socket(family, proto, 0);
-	if (fd < 0)
-		error(1, errno, "failed to create send socket");
-	if (bind(fd, saddr, sz))
-		error(1, errno, "failed to bind send socket");
+	अगर (fd < 0)
+		error(1, त्रुटि_सं, "failed to create send socket");
+	अगर (bind(fd, saddr, sz))
+		error(1, त्रुटि_सं, "failed to bind send socket");
 	data[0] = 'a';
 	ret = sendto(fd, data, 1, MSG_FASTOPEN, daddr, sz);
-	if (ret != 1)
-		error(1, errno, "failed to sendto");
+	अगर (ret != 1)
+		error(1, त्रुटि_सं, "failed to sendto");
 
-	return fd;
-}
+	वापस fd;
+पूर्ण
 
-static bool is_listen_fd(int fd)
-{
-	int i;
+अटल bool is_listen_fd(पूर्णांक fd)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < N_LISTEN; i++) {
-		if (rcv_fds[i] == fd)
-			return true;
-	}
-	return false;
-}
+	क्रम (i = 0; i < N_LISTEN; i++) अणु
+		अगर (rcv_fds[i] == fd)
+			वापस true;
+	पूर्ण
+	वापस false;
+पूर्ण
 
-static void rotate_key(int fd)
-{
-	static int iter;
-	static uint32_t new_key[4];
-	uint32_t keys[8];
-	uint32_t tmp_key[4];
-	int i;
+अटल व्योम rotate_key(पूर्णांक fd)
+अणु
+	अटल पूर्णांक iter;
+	अटल uपूर्णांक32_t new_key[4];
+	uपूर्णांक32_t keys[8];
+	uपूर्णांक32_t पंचांगp_key[4];
+	पूर्णांक i;
 
-	if (iter < N_LISTEN) {
+	अगर (iter < N_LISTEN) अणु
 		/* first set new key as backups */
-		if (iter == 0) {
-			for (i = 0; i < ARRAY_SIZE(new_key); i++)
-				new_key[i] = rand();
-		}
+		अगर (iter == 0) अणु
+			क्रम (i = 0; i < ARRAY_SIZE(new_key); i++)
+				new_key[i] = अक्रम();
+		पूर्ण
 		get_keys(fd, keys);
-		memcpy(keys + 4, new_key, KEY_LENGTH);
+		स_नकल(keys + 4, new_key, KEY_LENGTH);
 		set_keys(fd, keys);
-	} else {
+	पूर्ण अन्यथा अणु
 		/* swap the keys */
 		get_keys(fd, keys);
-		memcpy(tmp_key, keys + 4, KEY_LENGTH);
-		memcpy(keys + 4, keys, KEY_LENGTH);
-		memcpy(keys, tmp_key, KEY_LENGTH);
+		स_नकल(पंचांगp_key, keys + 4, KEY_LENGTH);
+		स_नकल(keys + 4, keys, KEY_LENGTH);
+		स_नकल(keys, पंचांगp_key, KEY_LENGTH);
 		set_keys(fd, keys);
-	}
-	if (++iter >= (N_LISTEN * 2))
+	पूर्ण
+	अगर (++iter >= (N_LISTEN * 2))
 		iter = 0;
-}
+पूर्ण
 
-static void run_one_test(int family)
-{
-	struct epoll_event ev;
-	int i, send_fd;
-	int n_loops = 10000;
-	int rotate_key_fd = 0;
-	int key_rotate_interval = 50;
-	int fd, epfd;
-	char buf[1];
+अटल व्योम run_one_test(पूर्णांक family)
+अणु
+	काष्ठा epoll_event ev;
+	पूर्णांक i, send_fd;
+	पूर्णांक n_loops = 10000;
+	पूर्णांक rotate_key_fd = 0;
+	पूर्णांक key_rotate_पूर्णांकerval = 50;
+	पूर्णांक fd, epfd;
+	अक्षर buf[1];
 
 	build_rcv_fd(family, SOCK_STREAM, rcv_fds);
 	epfd = epoll_create(1);
-	if (epfd < 0)
-		error(1, errno, "failed to create epoll");
+	अगर (epfd < 0)
+		error(1, त्रुटि_सं, "failed to create epoll");
 	ev.events = EPOLLIN;
-	for (i = 0; i < N_LISTEN; i++) {
+	क्रम (i = 0; i < N_LISTEN; i++) अणु
 		ev.data.fd = rcv_fds[i];
-		if (epoll_ctl(epfd, EPOLL_CTL_ADD, rcv_fds[i], &ev))
-			error(1, errno, "failed to register sock epoll");
-	}
-	while (n_loops--) {
+		अगर (epoll_ctl(epfd, EPOLL_CTL_ADD, rcv_fds[i], &ev))
+			error(1, त्रुटि_सं, "failed to register sock epoll");
+	पूर्ण
+	जबतक (n_loops--) अणु
 		send_fd = connect_and_send(family, SOCK_STREAM);
-		if (do_rotate && ((n_loops % key_rotate_interval) == 0)) {
+		अगर (करो_rotate && ((n_loops % key_rotate_पूर्णांकerval) == 0)) अणु
 			rotate_key(rcv_fds[rotate_key_fd]);
-			if (++rotate_key_fd >= N_LISTEN)
+			अगर (++rotate_key_fd >= N_LISTEN)
 				rotate_key_fd = 0;
-		}
-		while (1) {
-			i = epoll_wait(epfd, &ev, 1, -1);
-			if (i < 0)
-				error(1, errno, "epoll_wait failed");
-			if (is_listen_fd(ev.data.fd)) {
-				fd = accept(ev.data.fd, NULL, NULL);
-				if (fd < 0)
-					error(1, errno, "failed to accept");
+		पूर्ण
+		जबतक (1) अणु
+			i = epoll_रुको(epfd, &ev, 1, -1);
+			अगर (i < 0)
+				error(1, त्रुटि_सं, "epoll_wait failed");
+			अगर (is_listen_fd(ev.data.fd)) अणु
+				fd = accept(ev.data.fd, शून्य, शून्य);
+				अगर (fd < 0)
+					error(1, त्रुटि_सं, "failed to accept");
 				ev.data.fd = fd;
-				if (epoll_ctl(epfd, EPOLL_CTL_ADD, fd, &ev))
-					error(1, errno, "failed epoll add");
-				continue;
-			}
-			i = recv(ev.data.fd, buf, sizeof(buf), 0);
-			if (i != 1)
-				error(1, errno, "failed recv data");
-			if (epoll_ctl(epfd, EPOLL_CTL_DEL, ev.data.fd, NULL))
-				error(1, errno, "failed epoll del");
-			close(ev.data.fd);
-			break;
-		}
-		close(send_fd);
-	}
-	for (i = 0; i < N_LISTEN; i++)
-		close(rcv_fds[i]);
-}
+				अगर (epoll_ctl(epfd, EPOLL_CTL_ADD, fd, &ev))
+					error(1, त्रुटि_सं, "failed epoll add");
+				जारी;
+			पूर्ण
+			i = recv(ev.data.fd, buf, माप(buf), 0);
+			अगर (i != 1)
+				error(1, त्रुटि_सं, "failed recv data");
+			अगर (epoll_ctl(epfd, EPOLL_CTL_DEL, ev.data.fd, शून्य))
+				error(1, त्रुटि_सं, "failed epoll del");
+			बंद(ev.data.fd);
+			अवरोध;
+		पूर्ण
+		बंद(send_fd);
+	पूर्ण
+	क्रम (i = 0; i < N_LISTEN; i++)
+		बंद(rcv_fds[i]);
+पूर्ण
 
-static void parse_opts(int argc, char **argv)
-{
-	int c;
+अटल व्योम parse_opts(पूर्णांक argc, अक्षर **argv)
+अणु
+	पूर्णांक c;
 
-	while ((c = getopt(argc, argv, "46sr")) != -1) {
-		switch (c) {
-		case '4':
-			do_ipv6 = false;
-			break;
-		case '6':
-			do_ipv6 = true;
-			break;
-		case 's':
-			do_sockopt = true;
-			break;
-		case 'r':
-			do_rotate = true;
+	जबतक ((c = getopt(argc, argv, "46sr")) != -1) अणु
+		चयन (c) अणु
+		हाल '4':
+			करो_ipv6 = false;
+			अवरोध;
+		हाल '6':
+			करो_ipv6 = true;
+			अवरोध;
+		हाल 's':
+			करो_sockopt = true;
+			अवरोध;
+		हाल 'r':
+			करो_rotate = true;
 			key_len = KEY_LENGTH * 2;
-			break;
-		default:
+			अवरोध;
+		शेष:
 			error(1, 0, "%s: parse error", argv[0]);
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-int main(int argc, char **argv)
-{
+पूर्णांक मुख्य(पूर्णांक argc, अक्षर **argv)
+अणु
 	parse_opts(argc, argv);
-	proc_fd = open(PROC_FASTOPEN_KEY, O_RDWR);
-	if (proc_fd < 0)
-		error(1, errno, "Unable to open %s", PROC_FASTOPEN_KEY);
-	srand(time(NULL));
-	if (do_ipv6)
+	proc_fd = खोलो(PROC_FASTOPEN_KEY, O_RDWR);
+	अगर (proc_fd < 0)
+		error(1, त्रुटि_सं, "Unable to open %s", PROC_FASTOPEN_KEY);
+	बेक्रम(समय(शून्य));
+	अगर (करो_ipv6)
 		run_one_test(AF_INET6);
-	else
+	अन्यथा
 		run_one_test(AF_INET);
-	close(proc_fd);
-	fprintf(stderr, "PASS\n");
-	return 0;
-}
+	बंद(proc_fd);
+	ख_लिखो(मानक_त्रुटि, "PASS\n");
+	वापस 0;
+पूर्ण

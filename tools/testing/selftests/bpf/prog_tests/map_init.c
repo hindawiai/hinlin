@@ -1,84 +1,85 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /* Copyright (c) 2020 Tessares SA <http://www.tessares.net> */
 
-#include <test_progs.h>
-#include "test_map_init.skel.h"
+#समावेश <test_progs.h>
+#समावेश "test_map_init.skel.h"
 
-#define TEST_VALUE 0x1234
-#define FILL_VALUE 0xdeadbeef
+#घोषणा TEST_VALUE 0x1234
+#घोषणा FILL_VALUE 0xdeadbeef
 
-static int nr_cpus;
-static int duration;
+अटल पूर्णांक nr_cpus;
+अटल पूर्णांक duration;
 
-typedef unsigned long long map_key_t;
-typedef unsigned long long map_value_t;
-typedef struct {
+प्रकार अचिन्हित दीर्घ दीर्घ map_key_t;
+प्रकार अचिन्हित दीर्घ दीर्घ map_value_t;
+प्रकार काष्ठा अणु
 	map_value_t v; /* padding */
-} __bpf_percpu_val_align pcpu_map_value_t;
+पूर्ण __bpf_percpu_val_align pcpu_map_value_t;
 
 
-static int map_populate(int map_fd, int num)
-{
+अटल पूर्णांक map_populate(पूर्णांक map_fd, पूर्णांक num)
+अणु
 	pcpu_map_value_t value[nr_cpus];
-	int i, err;
+	पूर्णांक i, err;
 	map_key_t key;
 
-	for (i = 0; i < nr_cpus; i++)
+	क्रम (i = 0; i < nr_cpus; i++)
 		bpf_percpu(value, i) = FILL_VALUE;
 
-	for (key = 1; key <= num; key++) {
+	क्रम (key = 1; key <= num; key++) अणु
 		err = bpf_map_update_elem(map_fd, &key, value, BPF_NOEXIST);
-		if (!ASSERT_OK(err, "bpf_map_update_elem"))
-			return -1;
-	}
+		अगर (!ASSERT_OK(err, "bpf_map_update_elem"))
+			वापस -1;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct test_map_init *setup(enum bpf_map_type map_type, int map_sz,
-			    int *map_fd, int populate)
-{
-	struct test_map_init *skel;
-	int err;
+अटल काष्ठा test_map_init *setup(क्रमागत bpf_map_type map_type, पूर्णांक map_sz,
+			    पूर्णांक *map_fd, पूर्णांक populate)
+अणु
+	काष्ठा test_map_init *skel;
+	पूर्णांक err;
 
-	skel = test_map_init__open();
-	if (!ASSERT_OK_PTR(skel, "skel_open"))
-		return NULL;
+	skel = test_map_init__खोलो();
+	अगर (!ASSERT_OK_PTR(skel, "skel_open"))
+		वापस शून्य;
 
 	err = bpf_map__set_type(skel->maps.hashmap1, map_type);
-	if (!ASSERT_OK(err, "bpf_map__set_type"))
-		goto error;
+	अगर (!ASSERT_OK(err, "bpf_map__set_type"))
+		जाओ error;
 
 	err = bpf_map__set_max_entries(skel->maps.hashmap1, map_sz);
-	if (!ASSERT_OK(err, "bpf_map__set_max_entries"))
-		goto error;
+	अगर (!ASSERT_OK(err, "bpf_map__set_max_entries"))
+		जाओ error;
 
 	err = test_map_init__load(skel);
-	if (!ASSERT_OK(err, "skel_load"))
-		goto error;
+	अगर (!ASSERT_OK(err, "skel_load"))
+		जाओ error;
 
 	*map_fd = bpf_map__fd(skel->maps.hashmap1);
-	if (CHECK(*map_fd < 0, "bpf_map__fd", "failed\n"))
-		goto error;
+	अगर (CHECK(*map_fd < 0, "bpf_map__fd", "failed\n"))
+		जाओ error;
 
 	err = map_populate(*map_fd, populate);
-	if (!ASSERT_OK(err, "map_populate"))
-		goto error_map;
+	अगर (!ASSERT_OK(err, "map_populate"))
+		जाओ error_map;
 
-	return skel;
+	वापस skel;
 
 error_map:
-	close(*map_fd);
+	बंद(*map_fd);
 error:
 	test_map_init__destroy(skel);
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
 /* executes bpf program that updates map with key, value */
-static int prog_run_insert_elem(struct test_map_init *skel, map_key_t key,
+अटल पूर्णांक prog_run_insert_elem(काष्ठा test_map_init *skel, map_key_t key,
 				map_value_t value)
-{
-	struct test_map_init__bss *bss;
+अणु
+	काष्ठा test_map_init__bss *bss;
 
 	bss = skel->bss;
 
@@ -86,129 +87,129 @@ static int prog_run_insert_elem(struct test_map_init *skel, map_key_t key,
 	bss->inValue = value;
 	bss->inPid = getpid();
 
-	if (!ASSERT_OK(test_map_init__attach(skel), "skel_attach"))
-		return -1;
+	अगर (!ASSERT_OK(test_map_init__attach(skel), "skel_attach"))
+		वापस -1;
 
-	/* Let tracepoint trigger */
+	/* Let tracepoपूर्णांक trigger */
 	syscall(__NR_getpgid);
 
 	test_map_init__detach(skel);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int check_values_one_cpu(pcpu_map_value_t *value, map_value_t expected)
-{
-	int i, nzCnt = 0;
+अटल पूर्णांक check_values_one_cpu(pcpu_map_value_t *value, map_value_t expected)
+अणु
+	पूर्णांक i, nzCnt = 0;
 	map_value_t val;
 
-	for (i = 0; i < nr_cpus; i++) {
+	क्रम (i = 0; i < nr_cpus; i++) अणु
 		val = bpf_percpu(value, i);
-		if (val) {
-			if (CHECK(val != expected, "map value",
+		अगर (val) अणु
+			अगर (CHECK(val != expected, "map value",
 				  "unexpected for cpu %d: 0x%llx\n", i, val))
-				return -1;
+				वापस -1;
 			nzCnt++;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (CHECK(nzCnt != 1, "map value", "set for %d CPUs instead of 1!\n",
+	अगर (CHECK(nzCnt != 1, "map value", "set for %d CPUs instead of 1!\n",
 		  nzCnt))
-		return -1;
+		वापस -1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* Add key=1 elem with values set for all CPUs
+/* Add key=1 elem with values set क्रम all CPUs
  * Delete elem key=1
  * Run bpf prog that inserts new key=1 elem with value=0x1234
- *   (bpf prog can only set value for current CPU)
- * Lookup Key=1 and check value is as expected for all CPUs:
- *   value set by bpf prog for one CPU, 0 for all others
+ *   (bpf prog can only set value क्रम current CPU)
+ * Lookup Key=1 and check value is as expected क्रम all CPUs:
+ *   value set by bpf prog क्रम one CPU, 0 क्रम all others
  */
-static void test_pcpu_map_init(void)
-{
+अटल व्योम test_pcpu_map_init(व्योम)
+अणु
 	pcpu_map_value_t value[nr_cpus];
-	struct test_map_init *skel;
-	int map_fd, err;
+	काष्ठा test_map_init *skel;
+	पूर्णांक map_fd, err;
 	map_key_t key;
 
-	/* max 1 elem in map so insertion is forced to reuse freed entry */
+	/* max 1 elem in map so insertion is क्रमced to reuse मुक्तd entry */
 	skel = setup(BPF_MAP_TYPE_PERCPU_HASH, 1, &map_fd, 1);
-	if (!ASSERT_OK_PTR(skel, "prog_setup"))
-		return;
+	अगर (!ASSERT_OK_PTR(skel, "prog_setup"))
+		वापस;
 
 	/* delete element so the entry can be re-used*/
 	key = 1;
 	err = bpf_map_delete_elem(map_fd, &key);
-	if (!ASSERT_OK(err, "bpf_map_delete_elem"))
-		goto cleanup;
+	अगर (!ASSERT_OK(err, "bpf_map_delete_elem"))
+		जाओ cleanup;
 
-	/* run bpf prog that inserts new elem, re-using the slot just freed */
+	/* run bpf prog that inserts new elem, re-using the slot just मुक्तd */
 	err = prog_run_insert_elem(skel, key, TEST_VALUE);
-	if (!ASSERT_OK(err, "prog_run_insert_elem"))
-		goto cleanup;
+	अगर (!ASSERT_OK(err, "prog_run_insert_elem"))
+		जाओ cleanup;
 
 	/* check that key=1 was re-created by bpf prog */
 	err = bpf_map_lookup_elem(map_fd, &key, value);
-	if (!ASSERT_OK(err, "bpf_map_lookup_elem"))
-		goto cleanup;
+	अगर (!ASSERT_OK(err, "bpf_map_lookup_elem"))
+		जाओ cleanup;
 
 	/* and has expected values */
 	check_values_one_cpu(value, TEST_VALUE);
 
 cleanup:
 	test_map_init__destroy(skel);
-}
+पूर्ण
 
-/* Add key=1 and key=2 elems with values set for all CPUs
+/* Add key=1 and key=2 elems with values set क्रम all CPUs
  * Run bpf prog that inserts new key=3 elem
- *   (only for current cpu; other cpus should have initial value = 0)
- * Lookup Key=1 and check value is as expected for all CPUs
+ *   (only क्रम current cpu; other cpus should have initial value = 0)
+ * Lookup Key=1 and check value is as expected क्रम all CPUs
  */
-static void test_pcpu_lru_map_init(void)
-{
+अटल व्योम test_pcpu_lru_map_init(व्योम)
+अणु
 	pcpu_map_value_t value[nr_cpus];
-	struct test_map_init *skel;
-	int map_fd, err;
+	काष्ठा test_map_init *skel;
+	पूर्णांक map_fd, err;
 	map_key_t key;
 
-	/* Set up LRU map with 2 elements, values filled for all CPUs.
+	/* Set up LRU map with 2 elements, values filled क्रम all CPUs.
 	 * With these 2 elements, the LRU map is full
 	 */
 	skel = setup(BPF_MAP_TYPE_LRU_PERCPU_HASH, 2, &map_fd, 2);
-	if (!ASSERT_OK_PTR(skel, "prog_setup"))
-		return;
+	अगर (!ASSERT_OK_PTR(skel, "prog_setup"))
+		वापस;
 
 	/* run bpf prog that inserts new key=3 element, re-using LRU slot */
 	key = 3;
 	err = prog_run_insert_elem(skel, key, TEST_VALUE);
-	if (!ASSERT_OK(err, "prog_run_insert_elem"))
-		goto cleanup;
+	अगर (!ASSERT_OK(err, "prog_run_insert_elem"))
+		जाओ cleanup;
 
 	/* check that key=3 replaced one of earlier elements */
 	err = bpf_map_lookup_elem(map_fd, &key, value);
-	if (!ASSERT_OK(err, "bpf_map_lookup_elem"))
-		goto cleanup;
+	अगर (!ASSERT_OK(err, "bpf_map_lookup_elem"))
+		जाओ cleanup;
 
 	/* and has expected values */
 	check_values_one_cpu(value, TEST_VALUE);
 
 cleanup:
 	test_map_init__destroy(skel);
-}
+पूर्ण
 
-void test_map_init(void)
-{
+व्योम test_map_init(व्योम)
+अणु
 	nr_cpus = bpf_num_possible_cpus();
-	if (nr_cpus <= 1) {
-		printf("%s:SKIP: >1 cpu needed for this test\n", __func__);
+	अगर (nr_cpus <= 1) अणु
+		म_लिखो("%s:SKIP: >1 cpu needed for this test\n", __func__);
 		test__skip();
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (test__start_subtest("pcpu_map_init"))
+	अगर (test__start_subtest("pcpu_map_init"))
 		test_pcpu_map_init();
-	if (test__start_subtest("pcpu_lru_map_init"))
+	अगर (test__start_subtest("pcpu_lru_map_init"))
 		test_pcpu_lru_map_init();
-}
+पूर्ण

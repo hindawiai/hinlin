@@ -1,3 +1,4 @@
+<शैली गुरु>
 /*
  *  ATI Frame Buffer Device Driver Core
  *
@@ -9,7 +10,7 @@
  *  This driver supports the following ATI graphics chips:
  *    - ATI Mach64
  *
- *  To do: add support for
+ *  To करो: add support क्रम
  *    - ATI Rage128 (from aty128fb.c)
  *    - ATI Radeon (from radeonfb.c)
  *
@@ -26,13 +27,13 @@
  *			   Anthony Tong <atong@uiuc.edu>
  *
  *  Generic LCD support written by Daniel Mantione, ported from 2.4.20 by Alex Kern
- *  Many Thanks to Ville Syrjälä for patches and fixing nasting 16 bit color bug.
+ *  Many Thanks to Ville Syrjथअlथअ क्रम patches and fixing nasting 16 bit color bug.
  *
  *  This file is subject to the terms and conditions of the GNU General Public
- *  License. See the file COPYING in the main directory of this archive for
+ *  License. See the file COPYING in the मुख्य directory of this archive क्रम
  *  more details.
  *
- *  Many thanks to Nitya from ATI devrel for support and patience !
+ *  Many thanks to Nitya from ATI devrel क्रम support and patience !
  */
 
 /******************************************************************************
@@ -41,100 +42,100 @@
 
     - cursor support on all cards and all ramdacs.
     - cursor parameters controlable via ioctl()s.
-    - guess PLL and MCLK based on the original PLL register values initialized
-      by Open Firmware (if they are initialized). BIOS is done
+    - guess PLL and MCLK based on the original PLL रेजिस्टर values initialized
+      by Open Firmware (अगर they are initialized). BIOS is करोne
 
     (Anyone with Mac to help with this?)
 
 ******************************************************************************/
 
-#include <linux/compat.h>
-#include <linux/module.h>
-#include <linux/moduleparam.h>
-#include <linux/kernel.h>
-#include <linux/errno.h>
-#include <linux/string.h>
-#include <linux/mm.h>
-#include <linux/slab.h>
-#include <linux/vmalloc.h>
-#include <linux/delay.h>
-#include <linux/compiler.h>
-#include <linux/console.h>
-#include <linux/fb.h>
-#include <linux/init.h>
-#include <linux/pci.h>
-#include <linux/interrupt.h>
-#include <linux/spinlock.h>
-#include <linux/wait.h>
-#include <linux/backlight.h>
-#include <linux/reboot.h>
-#include <linux/dmi.h>
+#समावेश <linux/compat.h>
+#समावेश <linux/module.h>
+#समावेश <linux/moduleparam.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/माला.स>
+#समावेश <linux/mm.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/vदो_स्मृति.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/compiler.h>
+#समावेश <linux/console.h>
+#समावेश <linux/fb.h>
+#समावेश <linux/init.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/रुको.h>
+#समावेश <linux/backlight.h>
+#समावेश <linux/reboot.h>
+#समावेश <linux/dmi.h>
 
-#include <asm/io.h>
-#include <linux/uaccess.h>
+#समावेश <यंत्र/पन.स>
+#समावेश <linux/uaccess.h>
 
-#include <video/mach64.h>
-#include "atyfb.h"
-#include "ati_ids.h"
+#समावेश <video/mach64.h>
+#समावेश "atyfb.h"
+#समावेश "ati_ids.h"
 
-#ifdef __powerpc__
-#include <asm/machdep.h>
-#include <asm/prom.h>
-#include "../macmodes.h"
-#endif
-#ifdef __sparc__
-#include <asm/fbio.h>
-#include <asm/oplib.h>
-#include <asm/prom.h>
-#endif
+#अगर_घोषित __घातerpc__
+#समावेश <यंत्र/machdep.h>
+#समावेश <यंत्र/prom.h>
+#समावेश "../macmodes.h"
+#पूर्ण_अगर
+#अगर_घोषित __sparc__
+#समावेश <यंत्र/fbपन.स>
+#समावेश <यंत्र/oplib.h>
+#समावेश <यंत्र/prom.h>
+#पूर्ण_अगर
 
-#ifdef CONFIG_ADB_PMU
-#include <linux/adb.h>
-#include <linux/pmu.h>
-#endif
-#ifdef CONFIG_BOOTX_TEXT
-#include <asm/btext.h>
-#endif
-#ifdef CONFIG_PMAC_BACKLIGHT
-#include <asm/backlight.h>
-#endif
+#अगर_घोषित CONFIG_ADB_PMU
+#समावेश <linux/adb.h>
+#समावेश <linux/pmu.h>
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_BOOTX_TEXT
+#समावेश <यंत्र/btext.h>
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_PMAC_BACKLIGHT
+#समावेश <यंत्र/backlight.h>
+#पूर्ण_अगर
 
 /*
  * Debug flags.
  */
-#undef DEBUG
-/*#define DEBUG*/
+#अघोषित DEBUG
+/*#घोषणा DEBUG*/
 
-/* Make sure n * PAGE_SIZE is protected at end of Aperture for GUI-regs */
+/* Make sure n * PAGE_SIZE is रक्षित at end of Aperture क्रम GUI-regs */
 /*  - must be large enough to catch all GUI-Regs   */
 /*  - must be aligned to a PAGE boundary           */
-#define GUI_RESERVE	(1 * PAGE_SIZE)
+#घोषणा GUI_RESERVE	(1 * PAGE_SIZE)
 
-/* FIXME: remove the FAIL definition */
-#define FAIL(msg) do { \
-	if (!(var->activate & FB_ACTIVATE_TEST)) \
-		printk(KERN_CRIT "atyfb: " msg "\n"); \
-	return -EINVAL; \
-} while (0)
-#define FAIL_MAX(msg, x, _max_) do { \
-	if (x > _max_) { \
-		if (!(var->activate & FB_ACTIVATE_TEST)) \
-			printk(KERN_CRIT "atyfb: " msg " %x(%x)\n", x, _max_); \
-		return -EINVAL; \
-	} \
-} while (0)
-#ifdef DEBUG
-#define DPRINTK(fmt, args...)	printk(KERN_DEBUG "atyfb: " fmt, ## args)
-#else
-#define DPRINTK(fmt, args...)	no_printk(fmt, ##args)
-#endif
+/* FIXME: हटाओ the FAIL definition */
+#घोषणा FAIL(msg) करो अणु \
+	अगर (!(var->activate & FB_ACTIVATE_TEST)) \
+		prपूर्णांकk(KERN_CRIT "atyfb: " msg "\n"); \
+	वापस -EINVAL; \
+पूर्ण जबतक (0)
+#घोषणा FAIL_MAX(msg, x, _max_) करो अणु \
+	अगर (x > _max_) अणु \
+		अगर (!(var->activate & FB_ACTIVATE_TEST)) \
+			prपूर्णांकk(KERN_CRIT "atyfb: " msg " %x(%x)\n", x, _max_); \
+		वापस -EINVAL; \
+	पूर्ण \
+पूर्ण जबतक (0)
+#अगर_घोषित DEBUG
+#घोषणा DPRINTK(fmt, args...)	prपूर्णांकk(KERN_DEBUG "atyfb: " fmt, ## args)
+#अन्यथा
+#घोषणा DPRINTK(fmt, args...)	no_prपूर्णांकk(fmt, ##args)
+#पूर्ण_अगर
 
-#define PRINTKI(fmt, args...)	printk(KERN_INFO "atyfb: " fmt, ## args)
-#define PRINTKE(fmt, args...)	printk(KERN_ERR "atyfb: " fmt, ## args)
+#घोषणा PRINTKI(fmt, args...)	prपूर्णांकk(KERN_INFO "atyfb: " fmt, ## args)
+#घोषणा PRINTKE(fmt, args...)	prपूर्णांकk(KERN_ERR "atyfb: " fmt, ## args)
 
-#if defined(CONFIG_PMAC_BACKLIGHT) || defined(CONFIG_FB_ATY_GENERIC_LCD) || \
+#अगर defined(CONFIG_PMAC_BACKLIGHT) || defined(CONFIG_FB_ATY_GENERIC_LCD) || \
 defined(CONFIG_FB_ATY_BACKLIGHT) || defined (CONFIG_PPC_PMAC)
-static const u32 lt_lcd_regs[] = {
+अटल स्थिर u32 lt_lcd_regs[] = अणु
 	CNFG_PANEL_LG,
 	LCD_GEN_CNTL_LG,
 	DSTN_CONTROL_LG,
@@ -144,162 +145,162 @@ static const u32 lt_lcd_regs[] = {
 	0, /* EXT_VERT_STRETCH */
 	LT_GIO_LG,
 	POWER_MANAGEMENT_LG
-};
+पूर्ण;
 
-void aty_st_lcd(int index, u32 val, const struct atyfb_par *par)
-{
-	if (M64_HAS(LT_LCD_REGS)) {
+व्योम aty_st_lcd(पूर्णांक index, u32 val, स्थिर काष्ठा atyfb_par *par)
+अणु
+	अगर (M64_HAS(LT_LCD_REGS)) अणु
 		aty_st_le32(lt_lcd_regs[index], val, par);
-	} else {
-		unsigned long temp;
+	पूर्ण अन्यथा अणु
+		अचिन्हित दीर्घ temp;
 
-		/* write addr byte */
+		/* ग_लिखो addr byte */
 		temp = aty_ld_le32(LCD_INDEX, par);
 		aty_st_le32(LCD_INDEX, (temp & ~LCD_INDEX_MASK) | index, par);
-		/* write the register value */
+		/* ग_लिखो the रेजिस्टर value */
 		aty_st_le32(LCD_DATA, val, par);
-	}
-}
+	पूर्ण
+पूर्ण
 
-u32 aty_ld_lcd(int index, const struct atyfb_par *par)
-{
-	if (M64_HAS(LT_LCD_REGS)) {
-		return aty_ld_le32(lt_lcd_regs[index], par);
-	} else {
-		unsigned long temp;
+u32 aty_ld_lcd(पूर्णांक index, स्थिर काष्ठा atyfb_par *par)
+अणु
+	अगर (M64_HAS(LT_LCD_REGS)) अणु
+		वापस aty_ld_le32(lt_lcd_regs[index], par);
+	पूर्ण अन्यथा अणु
+		अचिन्हित दीर्घ temp;
 
-		/* write addr byte */
+		/* ग_लिखो addr byte */
 		temp = aty_ld_le32(LCD_INDEX, par);
 		aty_st_le32(LCD_INDEX, (temp & ~LCD_INDEX_MASK) | index, par);
-		/* read the register value */
-		return aty_ld_le32(LCD_DATA, par);
-	}
-}
-#else /* defined(CONFIG_PMAC_BACKLIGHT) || defined(CONFIG_FB_ATY_BACKLIGHT) ||
+		/* पढ़ो the रेजिस्टर value */
+		वापस aty_ld_le32(LCD_DATA, par);
+	पूर्ण
+पूर्ण
+#अन्यथा /* defined(CONFIG_PMAC_BACKLIGHT) || defined(CONFIG_FB_ATY_BACKLIGHT) ||
 	 defined(CONFIG_FB_ATY_GENERIC_LCD) || defined(CONFIG_PPC_PMAC) */
-void aty_st_lcd(int index, u32 val, const struct atyfb_par *par)
-{ }
+व्योम aty_st_lcd(पूर्णांक index, u32 val, स्थिर काष्ठा atyfb_par *par)
+अणु पूर्ण
 
-u32 aty_ld_lcd(int index, const struct atyfb_par *par)
-{
-	return 0;
-}
-#endif /* defined(CONFIG_PMAC_BACKLIGHT) || defined(CONFIG_FB_ATY_BACKLIGHT) ||
+u32 aty_ld_lcd(पूर्णांक index, स्थिर काष्ठा atyfb_par *par)
+अणु
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर /* defined(CONFIG_PMAC_BACKLIGHT) || defined(CONFIG_FB_ATY_BACKLIGHT) ||
 	  defined (CONFIG_FB_ATY_GENERIC_LCD) || defined(CONFIG_PPC_PMAC) */
 
-#ifdef CONFIG_FB_ATY_GENERIC_LCD
+#अगर_घोषित CONFIG_FB_ATY_GENERIC_LCD
 /*
  * ATIReduceRatio --
  *
- * Reduce a fraction by factoring out the largest common divider of the
+ * Reduce a fraction by factoring out the largest common भागider of the
  * fraction's numerator and denominator.
  */
-static void ATIReduceRatio(int *Numerator, int *Denominator)
-{
-	int Multiplier, Divider, Remainder;
+अटल व्योम ATIReduceRatio(पूर्णांक *Numerator, पूर्णांक *Denominator)
+अणु
+	पूर्णांक Multiplier, Divider, Reमुख्यder;
 
 	Multiplier = *Numerator;
 	Divider = *Denominator;
 
-	while ((Remainder = Multiplier % Divider)) {
+	जबतक ((Reमुख्यder = Multiplier % Divider)) अणु
 		Multiplier = Divider;
-		Divider = Remainder;
-	}
+		Divider = Reमुख्यder;
+	पूर्ण
 
 	*Numerator /= Divider;
 	*Denominator /= Divider;
-}
-#endif
+पूर्ण
+#पूर्ण_अगर
 /*
- * The Hardware parameters for each card
+ * The Hardware parameters क्रम each card
  */
 
-struct pci_mmap_map {
-	unsigned long voff;
-	unsigned long poff;
-	unsigned long size;
-	unsigned long prot_flag;
-	unsigned long prot_mask;
-};
+काष्ठा pci_mmap_map अणु
+	अचिन्हित दीर्घ voff;
+	अचिन्हित दीर्घ poff;
+	अचिन्हित दीर्घ size;
+	अचिन्हित दीर्घ prot_flag;
+	अचिन्हित दीर्घ prot_mask;
+पूर्ण;
 
-static const struct fb_fix_screeninfo atyfb_fix = {
+अटल स्थिर काष्ठा fb_fix_screeninfo atyfb_fix = अणु
 	.id		= "ATY Mach64",
 	.type		= FB_TYPE_PACKED_PIXELS,
 	.visual		= FB_VISUAL_PSEUDOCOLOR,
 	.xpanstep	= 8,
 	.ypanstep	= 1,
-};
+पूर्ण;
 
 /*
  * Frame buffer device API
  */
 
-static int atyfb_open(struct fb_info *info, int user);
-static int atyfb_release(struct fb_info *info, int user);
-static int atyfb_check_var(struct fb_var_screeninfo *var,
-			   struct fb_info *info);
-static int atyfb_set_par(struct fb_info *info);
-static int atyfb_setcolreg(u_int regno, u_int red, u_int green, u_int blue,
-			   u_int transp, struct fb_info *info);
-static int atyfb_pan_display(struct fb_var_screeninfo *var,
-			     struct fb_info *info);
-static int atyfb_blank(int blank, struct fb_info *info);
-static int atyfb_ioctl(struct fb_info *info, u_int cmd, u_long arg);
-#ifdef CONFIG_COMPAT
-static int atyfb_compat_ioctl(struct fb_info *info, u_int cmd, u_long arg)
-{
-	return atyfb_ioctl(info, cmd, (u_long)compat_ptr(arg));
-}
-#endif
+अटल पूर्णांक atyfb_खोलो(काष्ठा fb_info *info, पूर्णांक user);
+अटल पूर्णांक atyfb_release(काष्ठा fb_info *info, पूर्णांक user);
+अटल पूर्णांक atyfb_check_var(काष्ठा fb_var_screeninfo *var,
+			   काष्ठा fb_info *info);
+अटल पूर्णांक atyfb_set_par(काष्ठा fb_info *info);
+अटल पूर्णांक atyfb_setcolreg(u_पूर्णांक regno, u_पूर्णांक red, u_पूर्णांक green, u_पूर्णांक blue,
+			   u_पूर्णांक transp, काष्ठा fb_info *info);
+अटल पूर्णांक atyfb_pan_display(काष्ठा fb_var_screeninfo *var,
+			     काष्ठा fb_info *info);
+अटल पूर्णांक atyfb_blank(पूर्णांक blank, काष्ठा fb_info *info);
+अटल पूर्णांक atyfb_ioctl(काष्ठा fb_info *info, u_पूर्णांक cmd, u_दीर्घ arg);
+#अगर_घोषित CONFIG_COMPAT
+अटल पूर्णांक atyfb_compat_ioctl(काष्ठा fb_info *info, u_पूर्णांक cmd, u_दीर्घ arg)
+अणु
+	वापस atyfb_ioctl(info, cmd, (u_दीर्घ)compat_ptr(arg));
+पूर्ण
+#पूर्ण_अगर
 
-#ifdef __sparc__
-static int atyfb_mmap(struct fb_info *info, struct vm_area_struct *vma);
-#endif
-static int atyfb_sync(struct fb_info *info);
+#अगर_घोषित __sparc__
+अटल पूर्णांक atyfb_mmap(काष्ठा fb_info *info, काष्ठा vm_area_काष्ठा *vma);
+#पूर्ण_अगर
+अटल पूर्णांक atyfb_sync(काष्ठा fb_info *info);
 
 /*
  * Internal routines
  */
 
-static int aty_init(struct fb_info *info);
+अटल पूर्णांक aty_init(काष्ठा fb_info *info);
 
-static void aty_get_crtc(const struct atyfb_par *par, struct crtc *crtc);
+अटल व्योम aty_get_crtc(स्थिर काष्ठा atyfb_par *par, काष्ठा crtc *crtc);
 
-static void aty_set_crtc(const struct atyfb_par *par, const struct crtc *crtc);
-static int aty_var_to_crtc(const struct fb_info *info,
-			   const struct fb_var_screeninfo *var,
-			   struct crtc *crtc);
-static int aty_crtc_to_var(const struct crtc *crtc,
-			   struct fb_var_screeninfo *var);
-static void set_off_pitch(struct atyfb_par *par, const struct fb_info *info);
-#ifdef CONFIG_PPC
-static int read_aty_sense(const struct atyfb_par *par);
-#endif
+अटल व्योम aty_set_crtc(स्थिर काष्ठा atyfb_par *par, स्थिर काष्ठा crtc *crtc);
+अटल पूर्णांक aty_var_to_crtc(स्थिर काष्ठा fb_info *info,
+			   स्थिर काष्ठा fb_var_screeninfo *var,
+			   काष्ठा crtc *crtc);
+अटल पूर्णांक aty_crtc_to_var(स्थिर काष्ठा crtc *crtc,
+			   काष्ठा fb_var_screeninfo *var);
+अटल व्योम set_off_pitch(काष्ठा atyfb_par *par, स्थिर काष्ठा fb_info *info);
+#अगर_घोषित CONFIG_PPC
+अटल पूर्णांक पढ़ो_aty_sense(स्थिर काष्ठा atyfb_par *par);
+#पूर्ण_अगर
 
-static DEFINE_MUTEX(reboot_lock);
-static struct fb_info *reboot_info;
+अटल DEFINE_MUTEX(reboot_lock);
+अटल काष्ठा fb_info *reboot_info;
 
 /*
  * Interface used by the world
  */
 
-static struct fb_var_screeninfo default_var = {
-	/* 640x480, 60 Hz, Non-Interlaced (25.175 MHz dotclock) */
+अटल काष्ठा fb_var_screeninfo शेष_var = अणु
+	/* 640x480, 60 Hz, Non-Interlaced (25.175 MHz करोtघड़ी) */
 	640, 480, 640, 480, 0, 0, 8, 0,
-	{0, 8, 0}, {0, 8, 0}, {0, 8, 0}, {0, 0, 0},
+	अणु0, 8, 0पूर्ण, अणु0, 8, 0पूर्ण, अणु0, 8, 0पूर्ण, अणु0, 0, 0पूर्ण,
 	0, 0, -1, -1, 0, 39722, 48, 16, 33, 10, 96, 2,
 	0, FB_VMODE_NONINTERLACED
-};
+पूर्ण;
 
-static const struct fb_videomode defmode = {
+अटल स्थिर काष्ठा fb_videomode deभ_शेषe = अणु
 	/* 640x480 @ 60 Hz, 31.5 kHz hsync */
-	NULL, 60, 640, 480, 39721, 40, 24, 32, 11, 96, 2,
+	शून्य, 60, 640, 480, 39721, 40, 24, 32, 11, 96, 2,
 	0, FB_VMODE_NONINTERLACED
-};
+पूर्ण;
 
-static struct fb_ops atyfb_ops = {
+अटल काष्ठा fb_ops atyfb_ops = अणु
 	.owner		= THIS_MODULE,
-	.fb_open	= atyfb_open,
+	.fb_खोलो	= atyfb_खोलो,
 	.fb_release	= atyfb_release,
 	.fb_check_var	= atyfb_check_var,
 	.fb_set_par	= atyfb_set_par,
@@ -307,164 +308,164 @@ static struct fb_ops atyfb_ops = {
 	.fb_pan_display	= atyfb_pan_display,
 	.fb_blank	= atyfb_blank,
 	.fb_ioctl	= atyfb_ioctl,
-#ifdef CONFIG_COMPAT
+#अगर_घोषित CONFIG_COMPAT
 	.fb_compat_ioctl = atyfb_compat_ioctl,
-#endif
+#पूर्ण_अगर
 	.fb_fillrect	= atyfb_fillrect,
 	.fb_copyarea	= atyfb_copyarea,
 	.fb_imageblit	= atyfb_imageblit,
-#ifdef __sparc__
+#अगर_घोषित __sparc__
 	.fb_mmap	= atyfb_mmap,
-#endif
+#पूर्ण_अगर
 	.fb_sync	= atyfb_sync,
-};
+पूर्ण;
 
-static bool noaccel;
-static bool nomtrr;
-static int vram;
-static int pll;
-static int mclk;
-static int xclk;
-static int comp_sync = -1;
-static char *mode;
-static int backlight = IS_BUILTIN(CONFIG_PMAC_BACKLIGHT);
+अटल bool noaccel;
+अटल bool nomtrr;
+अटल पूर्णांक vram;
+अटल पूर्णांक pll;
+अटल पूर्णांक mclk;
+अटल पूर्णांक xclk;
+अटल पूर्णांक comp_sync = -1;
+अटल अक्षर *mode;
+अटल पूर्णांक backlight = IS_BUILTIN(CONFIG_PMAC_BACKLIGHT);
 
-#ifdef CONFIG_PPC
-static int default_vmode = VMODE_CHOOSE;
-static int default_cmode = CMODE_CHOOSE;
+#अगर_घोषित CONFIG_PPC
+अटल पूर्णांक शेष_vmode = VMODE_CHOOSE;
+अटल पूर्णांक शेष_cmode = CMODE_CHOOSE;
 
-module_param_named(vmode, default_vmode, int, 0);
+module_param_named(vmode, शेष_vmode, पूर्णांक, 0);
 MODULE_PARM_DESC(vmode, "int: video mode for mac");
-module_param_named(cmode, default_cmode, int, 0);
+module_param_named(cmode, शेष_cmode, पूर्णांक, 0);
 MODULE_PARM_DESC(cmode, "int: color mode for mac");
-#endif
+#पूर्ण_अगर
 
-#ifdef CONFIG_ATARI
-static unsigned int mach64_count = 0;
-static unsigned long phys_vmembase[FB_MAX] = { 0, };
-static unsigned long phys_size[FB_MAX] = { 0, };
-static unsigned long phys_guiregbase[FB_MAX] = { 0, };
-#endif
+#अगर_घोषित CONFIG_ATARI
+अटल अचिन्हित पूर्णांक mach64_count = 0;
+अटल अचिन्हित दीर्घ phys_vmembase[FB_MAX] = अणु 0, पूर्ण;
+अटल अचिन्हित दीर्घ phys_size[FB_MAX] = अणु 0, पूर्ण;
+अटल अचिन्हित दीर्घ phys_guiregbase[FB_MAX] = अणु 0, पूर्ण;
+#पूर्ण_अगर
 
-/* top -> down is an evolution of mach64 chipset, any corrections? */
-#define ATI_CHIP_88800GX   (M64F_GX)
-#define ATI_CHIP_88800CX   (M64F_GX)
+/* top -> करोwn is an evolution of mach64 chipset, any corrections? */
+#घोषणा ATI_CHIP_88800GX   (M64F_GX)
+#घोषणा ATI_CHIP_88800CX   (M64F_GX)
 
-#define ATI_CHIP_264CT     (M64F_CT | M64F_INTEGRATED | M64F_CT_BUS | M64F_MAGIC_FIFO)
-#define ATI_CHIP_264ET     (M64F_CT | M64F_INTEGRATED | M64F_CT_BUS | M64F_MAGIC_FIFO)
+#घोषणा ATI_CHIP_264CT     (M64F_CT | M64F_INTEGRATED | M64F_CT_BUS | M64F_MAGIC_FIFO)
+#घोषणा ATI_CHIP_264ET     (M64F_CT | M64F_INTEGRATED | M64F_CT_BUS | M64F_MAGIC_FIFO)
 
-#define ATI_CHIP_264VT     (M64F_VT | M64F_INTEGRATED | M64F_VT_BUS | M64F_MAGIC_FIFO)
-#define ATI_CHIP_264GT     (M64F_GT | M64F_INTEGRATED               | M64F_MAGIC_FIFO | M64F_EXTRA_BRIGHT)
+#घोषणा ATI_CHIP_264VT     (M64F_VT | M64F_INTEGRATED | M64F_VT_BUS | M64F_MAGIC_FIFO)
+#घोषणा ATI_CHIP_264GT     (M64F_GT | M64F_INTEGRATED               | M64F_MAGIC_FIFO | M64F_EXTRA_BRIGHT)
 
-#define ATI_CHIP_264VTB    (M64F_VT | M64F_INTEGRATED | M64F_VT_BUS | M64F_GTB_DSP)
-#define ATI_CHIP_264VT3    (M64F_VT | M64F_INTEGRATED | M64F_VT_BUS | M64F_GTB_DSP | M64F_SDRAM_MAGIC_PLL)
-#define ATI_CHIP_264VT4    (M64F_VT | M64F_INTEGRATED               | M64F_GTB_DSP)
+#घोषणा ATI_CHIP_264VTB    (M64F_VT | M64F_INTEGRATED | M64F_VT_BUS | M64F_GTB_DSP)
+#घोषणा ATI_CHIP_264VT3    (M64F_VT | M64F_INTEGRATED | M64F_VT_BUS | M64F_GTB_DSP | M64F_SDRAM_MAGIC_PLL)
+#घोषणा ATI_CHIP_264VT4    (M64F_VT | M64F_INTEGRATED               | M64F_GTB_DSP)
 
 /* FIXME what is this chip? */
-#define ATI_CHIP_264LT     (M64F_GT | M64F_INTEGRATED               | M64F_GTB_DSP)
+#घोषणा ATI_CHIP_264LT     (M64F_GT | M64F_INTEGRATED               | M64F_GTB_DSP)
 
-/* make sets shorter */
-#define ATI_MODERN_SET     (M64F_GT | M64F_INTEGRATED               | M64F_GTB_DSP | M64F_EXTRA_BRIGHT)
+/* make sets लघुer */
+#घोषणा ATI_MODERN_SET     (M64F_GT | M64F_INTEGRATED               | M64F_GTB_DSP | M64F_EXTRA_BRIGHT)
 
-#define ATI_CHIP_264GTB    (ATI_MODERN_SET | M64F_SDRAM_MAGIC_PLL)
-/*#define ATI_CHIP_264GTDVD  ?*/
-#define ATI_CHIP_264LTG    (ATI_MODERN_SET | M64F_SDRAM_MAGIC_PLL)
+#घोषणा ATI_CHIP_264GTB    (ATI_MODERN_SET | M64F_SDRAM_MAGIC_PLL)
+/*#घोषणा ATI_CHIP_264GTDVD  ?*/
+#घोषणा ATI_CHIP_264LTG    (ATI_MODERN_SET | M64F_SDRAM_MAGIC_PLL)
 
-#define ATI_CHIP_264GT2C   (ATI_MODERN_SET | M64F_SDRAM_MAGIC_PLL | M64F_HW_TRIPLE)
-#define ATI_CHIP_264GTPRO  (ATI_MODERN_SET | M64F_SDRAM_MAGIC_PLL | M64F_HW_TRIPLE | M64F_FIFO_32 | M64F_RESET_3D)
-#define ATI_CHIP_264LTPRO  (ATI_MODERN_SET | M64F_HW_TRIPLE | M64F_FIFO_32 | M64F_RESET_3D)
+#घोषणा ATI_CHIP_264GT2C   (ATI_MODERN_SET | M64F_SDRAM_MAGIC_PLL | M64F_HW_TRIPLE)
+#घोषणा ATI_CHIP_264GTPRO  (ATI_MODERN_SET | M64F_SDRAM_MAGIC_PLL | M64F_HW_TRIPLE | M64F_FIFO_32 | M64F_RESET_3D)
+#घोषणा ATI_CHIP_264LTPRO  (ATI_MODERN_SET | M64F_HW_TRIPLE | M64F_FIFO_32 | M64F_RESET_3D)
 
-#define ATI_CHIP_264XL     (ATI_MODERN_SET | M64F_HW_TRIPLE | M64F_FIFO_32 | M64F_RESET_3D | M64F_XL_DLL | M64F_MFB_FORCE_4 | M64F_XL_MEM)
-#define ATI_CHIP_MOBILITY  (ATI_MODERN_SET | M64F_HW_TRIPLE | M64F_FIFO_32 | M64F_RESET_3D | M64F_XL_DLL | M64F_MFB_FORCE_4 | M64F_XL_MEM | M64F_MOBIL_BUS)
+#घोषणा ATI_CHIP_264XL     (ATI_MODERN_SET | M64F_HW_TRIPLE | M64F_FIFO_32 | M64F_RESET_3D | M64F_XL_DLL | M64F_MFB_FORCE_4 | M64F_XL_MEM)
+#घोषणा ATI_CHIP_MOBILITY  (ATI_MODERN_SET | M64F_HW_TRIPLE | M64F_FIFO_32 | M64F_RESET_3D | M64F_XL_DLL | M64F_MFB_FORCE_4 | M64F_XL_MEM | M64F_MOBIL_BUS)
 
-static struct {
+अटल काष्ठा अणु
 	u16 pci_id;
-	const char *name;
-	int pll, mclk, xclk, ecp_max;
+	स्थिर अक्षर *name;
+	पूर्णांक pll, mclk, xclk, ecp_max;
 	u32 features;
-} aty_chips[] = {
-#ifdef CONFIG_FB_ATY_GX
+पूर्ण aty_chips[] = अणु
+#अगर_घोषित CONFIG_FB_ATY_GX
 	/* Mach64 GX */
-	{ PCI_CHIP_MACH64GX, "ATI888GX00 (Mach64 GX)", 135, 50, 50, 0, ATI_CHIP_88800GX },
-	{ PCI_CHIP_MACH64CX, "ATI888CX00 (Mach64 CX)", 135, 50, 50, 0, ATI_CHIP_88800CX },
-#endif /* CONFIG_FB_ATY_GX */
+	अणु PCI_CHIP_MACH64GX, "ATI888GX00 (Mach64 GX)", 135, 50, 50, 0, ATI_CHIP_88800GX पूर्ण,
+	अणु PCI_CHIP_MACH64CX, "ATI888CX00 (Mach64 CX)", 135, 50, 50, 0, ATI_CHIP_88800CX पूर्ण,
+#पूर्ण_अगर /* CONFIG_FB_ATY_GX */
 
-#ifdef CONFIG_FB_ATY_CT
-	{ PCI_CHIP_MACH64CT, "ATI264CT (Mach64 CT)", 135, 60, 60, 0, ATI_CHIP_264CT },
-	{ PCI_CHIP_MACH64ET, "ATI264ET (Mach64 ET)", 135, 60, 60, 0, ATI_CHIP_264ET },
+#अगर_घोषित CONFIG_FB_ATY_CT
+	अणु PCI_CHIP_MACH64CT, "ATI264CT (Mach64 CT)", 135, 60, 60, 0, ATI_CHIP_264CT पूर्ण,
+	अणु PCI_CHIP_MACH64ET, "ATI264ET (Mach64 ET)", 135, 60, 60, 0, ATI_CHIP_264ET पूर्ण,
 
 	/* FIXME what is this chip? */
-	{ PCI_CHIP_MACH64LT, "ATI264LT (Mach64 LT)", 135, 63, 63, 0, ATI_CHIP_264LT },
+	अणु PCI_CHIP_MACH64LT, "ATI264LT (Mach64 LT)", 135, 63, 63, 0, ATI_CHIP_264LT पूर्ण,
 
-	{ PCI_CHIP_MACH64VT, "ATI264VT (Mach64 VT)", 170, 67, 67, 80, ATI_CHIP_264VT },
-	{ PCI_CHIP_MACH64GT, "3D RAGE (Mach64 GT)", 135, 63, 63, 80, ATI_CHIP_264GT },
+	अणु PCI_CHIP_MACH64VT, "ATI264VT (Mach64 VT)", 170, 67, 67, 80, ATI_CHIP_264VT पूर्ण,
+	अणु PCI_CHIP_MACH64GT, "3D RAGE (Mach64 GT)", 135, 63, 63, 80, ATI_CHIP_264GT पूर्ण,
 
-	{ PCI_CHIP_MACH64VU, "ATI264VT3 (Mach64 VU)", 200, 67, 67, 80, ATI_CHIP_264VT3 },
-	{ PCI_CHIP_MACH64GU, "3D RAGE II+ (Mach64 GU)", 200, 67, 67, 100, ATI_CHIP_264GTB },
+	अणु PCI_CHIP_MACH64VU, "ATI264VT3 (Mach64 VU)", 200, 67, 67, 80, ATI_CHIP_264VT3 पूर्ण,
+	अणु PCI_CHIP_MACH64GU, "3D RAGE II+ (Mach64 GU)", 200, 67, 67, 100, ATI_CHIP_264GTB पूर्ण,
 
-	{ PCI_CHIP_MACH64LG, "3D RAGE LT (Mach64 LG)", 230, 63, 63, 100, ATI_CHIP_264LTG | M64F_LT_LCD_REGS | M64F_G3_PB_1024x768 },
+	अणु PCI_CHIP_MACH64LG, "3D RAGE LT (Mach64 LG)", 230, 63, 63, 100, ATI_CHIP_264LTG | M64F_LT_LCD_REGS | M64F_G3_PB_1024x768 पूर्ण,
 
-	{ PCI_CHIP_MACH64VV, "ATI264VT4 (Mach64 VV)", 230, 83, 83, 100, ATI_CHIP_264VT4 },
+	अणु PCI_CHIP_MACH64VV, "ATI264VT4 (Mach64 VV)", 230, 83, 83, 100, ATI_CHIP_264VT4 पूर्ण,
 
-	{ PCI_CHIP_MACH64GV, "3D RAGE IIC (Mach64 GV, PCI)", 230, 83, 83, 100, ATI_CHIP_264GT2C },
-	{ PCI_CHIP_MACH64GW, "3D RAGE IIC (Mach64 GW, AGP)", 230, 83, 83, 100, ATI_CHIP_264GT2C },
-	{ PCI_CHIP_MACH64GY, "3D RAGE IIC (Mach64 GY, PCI)", 230, 83, 83, 100, ATI_CHIP_264GT2C },
-	{ PCI_CHIP_MACH64GZ, "3D RAGE IIC (Mach64 GZ, AGP)", 230, 83, 83, 100, ATI_CHIP_264GT2C },
+	अणु PCI_CHIP_MACH64GV, "3D RAGE IIC (Mach64 GV, PCI)", 230, 83, 83, 100, ATI_CHIP_264GT2C पूर्ण,
+	अणु PCI_CHIP_MACH64GW, "3D RAGE IIC (Mach64 GW, AGP)", 230, 83, 83, 100, ATI_CHIP_264GT2C पूर्ण,
+	अणु PCI_CHIP_MACH64GY, "3D RAGE IIC (Mach64 GY, PCI)", 230, 83, 83, 100, ATI_CHIP_264GT2C पूर्ण,
+	अणु PCI_CHIP_MACH64GZ, "3D RAGE IIC (Mach64 GZ, AGP)", 230, 83, 83, 100, ATI_CHIP_264GT2C पूर्ण,
 
-	{ PCI_CHIP_MACH64GB, "3D RAGE PRO (Mach64 GB, BGA, AGP)", 230, 100, 100, 125, ATI_CHIP_264GTPRO },
-	{ PCI_CHIP_MACH64GD, "3D RAGE PRO (Mach64 GD, BGA, AGP 1x)", 230, 100, 100, 125, ATI_CHIP_264GTPRO },
-	{ PCI_CHIP_MACH64GI, "3D RAGE PRO (Mach64 GI, BGA, PCI)", 230, 100, 100, 125, ATI_CHIP_264GTPRO | M64F_MAGIC_VRAM_SIZE },
-	{ PCI_CHIP_MACH64GP, "3D RAGE PRO (Mach64 GP, PQFP, PCI)", 230, 100, 100, 125, ATI_CHIP_264GTPRO },
-	{ PCI_CHIP_MACH64GQ, "3D RAGE PRO (Mach64 GQ, PQFP, PCI, limited 3D)", 230, 100, 100, 125, ATI_CHIP_264GTPRO },
+	अणु PCI_CHIP_MACH64GB, "3D RAGE PRO (Mach64 GB, BGA, AGP)", 230, 100, 100, 125, ATI_CHIP_264GTPRO पूर्ण,
+	अणु PCI_CHIP_MACH64GD, "3D RAGE PRO (Mach64 GD, BGA, AGP 1x)", 230, 100, 100, 125, ATI_CHIP_264GTPRO पूर्ण,
+	अणु PCI_CHIP_MACH64GI, "3D RAGE PRO (Mach64 GI, BGA, PCI)", 230, 100, 100, 125, ATI_CHIP_264GTPRO | M64F_MAGIC_VRAM_SIZE पूर्ण,
+	अणु PCI_CHIP_MACH64GP, "3D RAGE PRO (Mach64 GP, PQFP, PCI)", 230, 100, 100, 125, ATI_CHIP_264GTPRO पूर्ण,
+	अणु PCI_CHIP_MACH64GQ, "3D RAGE PRO (Mach64 GQ, PQFP, PCI, limited 3D)", 230, 100, 100, 125, ATI_CHIP_264GTPRO पूर्ण,
 
-	{ PCI_CHIP_MACH64LB, "3D RAGE LT PRO (Mach64 LB, AGP)", 236, 75, 100, 135, ATI_CHIP_264LTPRO },
-	{ PCI_CHIP_MACH64LD, "3D RAGE LT PRO (Mach64 LD, AGP)", 230, 100, 100, 135, ATI_CHIP_264LTPRO },
-	{ PCI_CHIP_MACH64LI, "3D RAGE LT PRO (Mach64 LI, PCI)", 230, 100, 100, 135, ATI_CHIP_264LTPRO | M64F_G3_PB_1_1 | M64F_G3_PB_1024x768 },
-	{ PCI_CHIP_MACH64LP, "3D RAGE LT PRO (Mach64 LP, PCI)", 230, 100, 100, 135, ATI_CHIP_264LTPRO | M64F_G3_PB_1024x768 },
-	{ PCI_CHIP_MACH64LQ, "3D RAGE LT PRO (Mach64 LQ, PCI)", 230, 100, 100, 135, ATI_CHIP_264LTPRO },
+	अणु PCI_CHIP_MACH64LB, "3D RAGE LT PRO (Mach64 LB, AGP)", 236, 75, 100, 135, ATI_CHIP_264LTPRO पूर्ण,
+	अणु PCI_CHIP_MACH64LD, "3D RAGE LT PRO (Mach64 LD, AGP)", 230, 100, 100, 135, ATI_CHIP_264LTPRO पूर्ण,
+	अणु PCI_CHIP_MACH64LI, "3D RAGE LT PRO (Mach64 LI, PCI)", 230, 100, 100, 135, ATI_CHIP_264LTPRO | M64F_G3_PB_1_1 | M64F_G3_PB_1024x768 पूर्ण,
+	अणु PCI_CHIP_MACH64LP, "3D RAGE LT PRO (Mach64 LP, PCI)", 230, 100, 100, 135, ATI_CHIP_264LTPRO | M64F_G3_PB_1024x768 पूर्ण,
+	अणु PCI_CHIP_MACH64LQ, "3D RAGE LT PRO (Mach64 LQ, PCI)", 230, 100, 100, 135, ATI_CHIP_264LTPRO पूर्ण,
 
-	{ PCI_CHIP_MACH64GM, "3D RAGE XL (Mach64 GM, AGP 2x)", 230, 83, 63, 135, ATI_CHIP_264XL },
-	{ PCI_CHIP_MACH64GN, "3D RAGE XC (Mach64 GN, AGP 2x)", 230, 83, 63, 135, ATI_CHIP_264XL },
-	{ PCI_CHIP_MACH64GO, "3D RAGE XL (Mach64 GO, PCI-66)", 230, 83, 63, 135, ATI_CHIP_264XL },
-	{ PCI_CHIP_MACH64GL, "3D RAGE XC (Mach64 GL, PCI-66)", 230, 83, 63, 135, ATI_CHIP_264XL },
-	{ PCI_CHIP_MACH64GR, "3D RAGE XL (Mach64 GR, PCI-33)", 230, 83, 63, 135, ATI_CHIP_264XL | M64F_SDRAM_MAGIC_PLL },
-	{ PCI_CHIP_MACH64GS, "3D RAGE XC (Mach64 GS, PCI-33)", 230, 83, 63, 135, ATI_CHIP_264XL },
+	अणु PCI_CHIP_MACH64GM, "3D RAGE XL (Mach64 GM, AGP 2x)", 230, 83, 63, 135, ATI_CHIP_264XL पूर्ण,
+	अणु PCI_CHIP_MACH64GN, "3D RAGE XC (Mach64 GN, AGP 2x)", 230, 83, 63, 135, ATI_CHIP_264XL पूर्ण,
+	अणु PCI_CHIP_MACH64GO, "3D RAGE XL (Mach64 GO, PCI-66)", 230, 83, 63, 135, ATI_CHIP_264XL पूर्ण,
+	अणु PCI_CHIP_MACH64GL, "3D RAGE XC (Mach64 GL, PCI-66)", 230, 83, 63, 135, ATI_CHIP_264XL पूर्ण,
+	अणु PCI_CHIP_MACH64GR, "3D RAGE XL (Mach64 GR, PCI-33)", 230, 83, 63, 135, ATI_CHIP_264XL | M64F_SDRAM_MAGIC_PLL पूर्ण,
+	अणु PCI_CHIP_MACH64GS, "3D RAGE XC (Mach64 GS, PCI-33)", 230, 83, 63, 135, ATI_CHIP_264XL पूर्ण,
 
-	{ PCI_CHIP_MACH64LM, "3D RAGE Mobility P/M (Mach64 LM, AGP 2x)", 230, 83, 125, 135, ATI_CHIP_MOBILITY },
-	{ PCI_CHIP_MACH64LN, "3D RAGE Mobility L (Mach64 LN, AGP 2x)", 230, 83, 125, 135, ATI_CHIP_MOBILITY },
-	{ PCI_CHIP_MACH64LR, "3D RAGE Mobility P/M (Mach64 LR, PCI)", 230, 83, 125, 135, ATI_CHIP_MOBILITY },
-	{ PCI_CHIP_MACH64LS, "3D RAGE Mobility L (Mach64 LS, PCI)", 230, 83, 125, 135, ATI_CHIP_MOBILITY },
-#endif /* CONFIG_FB_ATY_CT */
-};
+	अणु PCI_CHIP_MACH64LM, "3D RAGE Mobility P/M (Mach64 LM, AGP 2x)", 230, 83, 125, 135, ATI_CHIP_MOBILITY पूर्ण,
+	अणु PCI_CHIP_MACH64LN, "3D RAGE Mobility L (Mach64 LN, AGP 2x)", 230, 83, 125, 135, ATI_CHIP_MOBILITY पूर्ण,
+	अणु PCI_CHIP_MACH64LR, "3D RAGE Mobility P/M (Mach64 LR, PCI)", 230, 83, 125, 135, ATI_CHIP_MOBILITY पूर्ण,
+	अणु PCI_CHIP_MACH64LS, "3D RAGE Mobility L (Mach64 LS, PCI)", 230, 83, 125, 135, ATI_CHIP_MOBILITY पूर्ण,
+#पूर्ण_अगर /* CONFIG_FB_ATY_CT */
+पूर्ण;
 
 /*
  * Last page of 8 MB (4 MB on ISA) aperture is MMIO,
- * unless the auxiliary register aperture is used.
+ * unless the auxiliary रेजिस्टर aperture is used.
  */
-static void aty_fudge_framebuffer_len(struct fb_info *info)
-{
-	struct atyfb_par *par = (struct atyfb_par *) info->par;
+अटल व्योम aty_fudge_framebuffer_len(काष्ठा fb_info *info)
+अणु
+	काष्ठा atyfb_par *par = (काष्ठा atyfb_par *) info->par;
 
-	if (!par->aux_start &&
+	अगर (!par->aux_start &&
 	    (info->fix.smem_len == 0x800000 ||
 	     (par->bus_type == ISA && info->fix.smem_len == 0x400000)))
 		info->fix.smem_len -= GUI_RESERVE;
-}
+पूर्ण
 
-static int correct_chipset(struct atyfb_par *par)
-{
+अटल पूर्णांक correct_chipset(काष्ठा atyfb_par *par)
+अणु
 	u8 rev;
 	u16 type;
 	u32 chip_id;
-	const char *name;
-	int i;
+	स्थिर अक्षर *name;
+	पूर्णांक i;
 
-	for (i = (int)ARRAY_SIZE(aty_chips) - 1; i >= 0; i--)
-		if (par->pci_id == aty_chips[i].pci_id)
-			break;
+	क्रम (i = (पूर्णांक)ARRAY_SIZE(aty_chips) - 1; i >= 0; i--)
+		अगर (par->pci_id == aty_chips[i].pci_id)
+			अवरोध;
 
-	if (i < 0)
-		return -ENODEV;
+	अगर (i < 0)
+		वापस -ENODEV;
 
 	name = aty_chips[i].name;
 	par->pll_limits.pll_max = aty_chips[i].pll;
@@ -477,149 +478,149 @@ static int correct_chipset(struct atyfb_par *par)
 	type = chip_id & CFG_CHIP_TYPE;
 	rev = (chip_id & CFG_CHIP_REV) >> 24;
 
-	switch (par->pci_id) {
-#ifdef CONFIG_FB_ATY_GX
-	case PCI_CHIP_MACH64GX:
-		if (type != 0x00d7)
-			return -ENODEV;
-		break;
-	case PCI_CHIP_MACH64CX:
-		if (type != 0x0057)
-			return -ENODEV;
-		break;
-#endif
-#ifdef CONFIG_FB_ATY_CT
-	case PCI_CHIP_MACH64VT:
-		switch (rev & 0x07) {
-		case 0x00:
-			switch (rev & 0xc0) {
-			case 0x00:
+	चयन (par->pci_id) अणु
+#अगर_घोषित CONFIG_FB_ATY_GX
+	हाल PCI_CHIP_MACH64GX:
+		अगर (type != 0x00d7)
+			वापस -ENODEV;
+		अवरोध;
+	हाल PCI_CHIP_MACH64CX:
+		अगर (type != 0x0057)
+			वापस -ENODEV;
+		अवरोध;
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_FB_ATY_CT
+	हाल PCI_CHIP_MACH64VT:
+		चयन (rev & 0x07) अणु
+		हाल 0x00:
+			चयन (rev & 0xc0) अणु
+			हाल 0x00:
 				name = "ATI264VT (A3) (Mach64 VT)";
 				par->pll_limits.pll_max = 170;
 				par->pll_limits.mclk = 67;
 				par->pll_limits.xclk = 67;
 				par->pll_limits.ecp_max = 80;
 				par->features = ATI_CHIP_264VT;
-				break;
-			case 0x40:
+				अवरोध;
+			हाल 0x40:
 				name = "ATI264VT2 (A4) (Mach64 VT)";
 				par->pll_limits.pll_max = 200;
 				par->pll_limits.mclk = 67;
 				par->pll_limits.xclk = 67;
 				par->pll_limits.ecp_max = 80;
 				par->features = ATI_CHIP_264VT | M64F_MAGIC_POSTDIV;
-				break;
-			}
-			break;
-		case 0x01:
+				अवरोध;
+			पूर्ण
+			अवरोध;
+		हाल 0x01:
 			name = "ATI264VT3 (B1) (Mach64 VT)";
 			par->pll_limits.pll_max = 200;
 			par->pll_limits.mclk = 67;
 			par->pll_limits.xclk = 67;
 			par->pll_limits.ecp_max = 80;
 			par->features = ATI_CHIP_264VTB;
-			break;
-		case 0x02:
+			अवरोध;
+		हाल 0x02:
 			name = "ATI264VT3 (B2) (Mach64 VT)";
 			par->pll_limits.pll_max = 200;
 			par->pll_limits.mclk = 67;
 			par->pll_limits.xclk = 67;
 			par->pll_limits.ecp_max = 80;
 			par->features = ATI_CHIP_264VT3;
-			break;
-		}
-		break;
-	case PCI_CHIP_MACH64GT:
-		switch (rev & 0x07) {
-		case 0x01:
+			अवरोध;
+		पूर्ण
+		अवरोध;
+	हाल PCI_CHIP_MACH64GT:
+		चयन (rev & 0x07) अणु
+		हाल 0x01:
 			name = "3D RAGE II (Mach64 GT)";
 			par->pll_limits.pll_max = 170;
 			par->pll_limits.mclk = 67;
 			par->pll_limits.xclk = 67;
 			par->pll_limits.ecp_max = 80;
 			par->features = ATI_CHIP_264GTB;
-			break;
-		case 0x02:
+			अवरोध;
+		हाल 0x02:
 			name = "3D RAGE II+ (Mach64 GT)";
 			par->pll_limits.pll_max = 200;
 			par->pll_limits.mclk = 67;
 			par->pll_limits.xclk = 67;
 			par->pll_limits.ecp_max = 100;
 			par->features = ATI_CHIP_264GTB;
-			break;
-		}
-		break;
-#endif
-	}
+			अवरोध;
+		पूर्ण
+		अवरोध;
+#पूर्ण_अगर
+	पूर्ण
 
 	PRINTKI("%s [0x%04x rev 0x%02x]\n", name, type, rev);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static char ram_dram[] __maybe_unused = "DRAM";
-static char ram_resv[] __maybe_unused = "RESV";
-#ifdef CONFIG_FB_ATY_GX
-static char ram_vram[] = "VRAM";
-#endif /* CONFIG_FB_ATY_GX */
-#ifdef CONFIG_FB_ATY_CT
-static char ram_edo[] = "EDO";
-static char ram_sdram[] = "SDRAM (1:1)";
-static char ram_sgram[] = "SGRAM (1:1)";
-static char ram_sdram32[] = "SDRAM (2:1) (32-bit)";
-static char ram_wram[] = "WRAM";
-static char ram_off[] = "OFF";
-#endif /* CONFIG_FB_ATY_CT */
+अटल अक्षर ram_dram[] __maybe_unused = "DRAM";
+अटल अक्षर ram_resv[] __maybe_unused = "RESV";
+#अगर_घोषित CONFIG_FB_ATY_GX
+अटल अक्षर ram_vram[] = "VRAM";
+#पूर्ण_अगर /* CONFIG_FB_ATY_GX */
+#अगर_घोषित CONFIG_FB_ATY_CT
+अटल अक्षर ram_eकरो[] = "EDO";
+अटल अक्षर ram_sdram[] = "SDRAM (1:1)";
+अटल अक्षर ram_sgram[] = "SGRAM (1:1)";
+अटल अक्षर ram_sdram32[] = "SDRAM (2:1) (32-bit)";
+अटल अक्षर ram_wram[] = "WRAM";
+अटल अक्षर ram_off[] = "OFF";
+#पूर्ण_अगर /* CONFIG_FB_ATY_CT */
 
 
-#ifdef CONFIG_FB_ATY_GX
-static char *aty_gx_ram[8] = {
+#अगर_घोषित CONFIG_FB_ATY_GX
+अटल अक्षर *aty_gx_ram[8] = अणु
 	ram_dram, ram_vram, ram_vram, ram_dram,
 	ram_dram, ram_vram, ram_vram, ram_resv
-};
-#endif /* CONFIG_FB_ATY_GX */
+पूर्ण;
+#पूर्ण_अगर /* CONFIG_FB_ATY_GX */
 
-#ifdef CONFIG_FB_ATY_CT
-static char *aty_ct_ram[8] = {
-	ram_off, ram_dram, ram_edo, ram_edo,
+#अगर_घोषित CONFIG_FB_ATY_CT
+अटल अक्षर *aty_ct_ram[8] = अणु
+	ram_off, ram_dram, ram_eकरो, ram_eकरो,
 	ram_sdram, ram_sgram, ram_wram, ram_resv
-};
-static char *aty_xl_ram[8] = {
-	ram_off, ram_dram, ram_edo, ram_edo,
+पूर्ण;
+अटल अक्षर *aty_xl_ram[8] = अणु
+	ram_off, ram_dram, ram_eकरो, ram_eकरो,
 	ram_sdram, ram_sgram, ram_sdram32, ram_resv
-};
-#endif /* CONFIG_FB_ATY_CT */
+पूर्ण;
+#पूर्ण_अगर /* CONFIG_FB_ATY_CT */
 
-static u32 atyfb_get_pixclock(struct fb_var_screeninfo *var,
-			      struct atyfb_par *par)
-{
-	u32 pixclock = var->pixclock;
-#ifdef CONFIG_FB_ATY_GENERIC_LCD
+अटल u32 atyfb_get_pixघड़ी(काष्ठा fb_var_screeninfo *var,
+			      काष्ठा atyfb_par *par)
+अणु
+	u32 pixघड़ी = var->pixघड़ी;
+#अगर_घोषित CONFIG_FB_ATY_GENERIC_LCD
 	u32 lcd_on_off;
 	par->pll.ct.xres = 0;
-	if (par->lcd_table != 0) {
+	अगर (par->lcd_table != 0) अणु
 		lcd_on_off = aty_ld_lcd(LCD_GEN_CNTL, par);
-		if (lcd_on_off & LCD_ON) {
+		अगर (lcd_on_off & LCD_ON) अणु
 			par->pll.ct.xres = var->xres;
-			pixclock = par->lcd_pixclock;
-		}
-	}
-#endif
-	return pixclock;
-}
+			pixघड़ी = par->lcd_pixघड़ी;
+		पूर्ण
+	पूर्ण
+#पूर्ण_अगर
+	वापस pixघड़ी;
+पूर्ण
 
-#if defined(CONFIG_PPC)
+#अगर defined(CONFIG_PPC)
 
 /*
  * Apple monitor sense
  */
 
-static int read_aty_sense(const struct atyfb_par *par)
-{
-	int sense, i;
+अटल पूर्णांक पढ़ो_aty_sense(स्थिर काष्ठा atyfb_par *par)
+अणु
+	पूर्णांक sense, i;
 
-	aty_st_le32(GP_IO, 0x31003100, par); /* drive outputs high */
+	aty_st_le32(GP_IO, 0x31003100, par); /* drive outमाला_दो high */
 	__delay(200);
-	aty_st_le32(GP_IO, 0, par); /* turn off outputs */
+	aty_st_le32(GP_IO, 0, par); /* turn off outमाला_दो */
 	__delay(2000);
 	i = aty_ld_le32(GP_IO, par); /* get primary sense value */
 	sense = ((i & 0x3000) >> 3) | (i & 0x100);
@@ -642,11 +643,11 @@ static int read_aty_sense(const struct atyfb_par *par)
 	aty_st_le32(GP_IO, 0x01000000, par); /* drive C low */
 	__delay(2000);
 	sense |= (aty_ld_le32(GP_IO, par) & 0x3000) >> 12;
-	aty_st_le32(GP_IO, 0, par); /* turn off outputs */
-	return sense;
-}
+	aty_st_le32(GP_IO, 0, par); /* turn off outमाला_दो */
+	वापस sense;
+पूर्ण
 
-#endif /* defined(CONFIG_PPC) */
+#पूर्ण_अगर /* defined(CONFIG_PPC) */
 
 /* ------------------------------------------------------------------------- */
 
@@ -654,29 +655,29 @@ static int read_aty_sense(const struct atyfb_par *par)
  * CRTC programming
  */
 
-static void aty_get_crtc(const struct atyfb_par *par, struct crtc *crtc)
-{
-#ifdef CONFIG_FB_ATY_GENERIC_LCD
-	if (par->lcd_table != 0) {
-		if (!M64_HAS(LT_LCD_REGS)) {
+अटल व्योम aty_get_crtc(स्थिर काष्ठा atyfb_par *par, काष्ठा crtc *crtc)
+अणु
+#अगर_घोषित CONFIG_FB_ATY_GENERIC_LCD
+	अगर (par->lcd_table != 0) अणु
+		अगर (!M64_HAS(LT_LCD_REGS)) अणु
 			crtc->lcd_index = aty_ld_le32(LCD_INDEX, par);
 			aty_st_le32(LCD_INDEX, crtc->lcd_index, par);
-		}
+		पूर्ण
 		crtc->lcd_config_panel = aty_ld_lcd(CNFG_PANEL, par);
 		crtc->lcd_gen_cntl = aty_ld_lcd(LCD_GEN_CNTL, par);
 
 
-		/* switch to non shadow registers */
+		/* चयन to non shaकरोw रेजिस्टरs */
 		aty_st_lcd(LCD_GEN_CNTL, crtc->lcd_gen_cntl &
 			   ~(CRTC_RW_SELECT | SHADOW_EN | SHADOW_RW_EN), par);
 
 		/* save stretching */
 		crtc->horz_stretching = aty_ld_lcd(HORZ_STRETCHING, par);
 		crtc->vert_stretching = aty_ld_lcd(VERT_STRETCHING, par);
-		if (!M64_HAS(LT_LCD_REGS))
+		अगर (!M64_HAS(LT_LCD_REGS))
 			crtc->ext_vert_stretch = aty_ld_lcd(EXT_VERT_STRETCH, par);
-	}
-#endif
+	पूर्ण
+#पूर्ण_अगर
 	crtc->h_tot_disp = aty_ld_le32(CRTC_H_TOTAL_DISP, par);
 	crtc->h_sync_strt_wid = aty_ld_le32(CRTC_H_SYNC_STRT_WID, par);
 	crtc->v_tot_disp = aty_ld_le32(CRTC_V_TOTAL_DISP, par);
@@ -685,31 +686,31 @@ static void aty_get_crtc(const struct atyfb_par *par, struct crtc *crtc)
 	crtc->off_pitch = aty_ld_le32(CRTC_OFF_PITCH, par);
 	crtc->gen_cntl = aty_ld_le32(CRTC_GEN_CNTL, par);
 
-#ifdef CONFIG_FB_ATY_GENERIC_LCD
-	if (par->lcd_table != 0) {
-		/* switch to shadow registers */
+#अगर_घोषित CONFIG_FB_ATY_GENERIC_LCD
+	अगर (par->lcd_table != 0) अणु
+		/* चयन to shaकरोw रेजिस्टरs */
 		aty_st_lcd(LCD_GEN_CNTL, (crtc->lcd_gen_cntl & ~CRTC_RW_SELECT) |
 			   SHADOW_EN | SHADOW_RW_EN, par);
 
-		crtc->shadow_h_tot_disp = aty_ld_le32(CRTC_H_TOTAL_DISP, par);
-		crtc->shadow_h_sync_strt_wid = aty_ld_le32(CRTC_H_SYNC_STRT_WID, par);
-		crtc->shadow_v_tot_disp = aty_ld_le32(CRTC_V_TOTAL_DISP, par);
-		crtc->shadow_v_sync_strt_wid = aty_ld_le32(CRTC_V_SYNC_STRT_WID, par);
+		crtc->shaकरोw_h_tot_disp = aty_ld_le32(CRTC_H_TOTAL_DISP, par);
+		crtc->shaकरोw_h_sync_strt_wid = aty_ld_le32(CRTC_H_SYNC_STRT_WID, par);
+		crtc->shaकरोw_v_tot_disp = aty_ld_le32(CRTC_V_TOTAL_DISP, par);
+		crtc->shaकरोw_v_sync_strt_wid = aty_ld_le32(CRTC_V_SYNC_STRT_WID, par);
 
 		aty_st_le32(LCD_GEN_CNTL, crtc->lcd_gen_cntl, par);
-	}
-#endif /* CONFIG_FB_ATY_GENERIC_LCD */
-}
+	पूर्ण
+#पूर्ण_अगर /* CONFIG_FB_ATY_GENERIC_LCD */
+पूर्ण
 
-static void aty_set_crtc(const struct atyfb_par *par, const struct crtc *crtc)
-{
-#ifdef CONFIG_FB_ATY_GENERIC_LCD
-	if (par->lcd_table != 0) {
+अटल व्योम aty_set_crtc(स्थिर काष्ठा atyfb_par *par, स्थिर काष्ठा crtc *crtc)
+अणु
+#अगर_घोषित CONFIG_FB_ATY_GENERIC_LCD
+	अगर (par->lcd_table != 0) अणु
 		/* stop CRTC */
 		aty_st_le32(CRTC_GEN_CNTL, crtc->gen_cntl &
 			    ~(CRTC_EXT_DISP_EN | CRTC_EN), par);
 
-		/* update non-shadow registers first */
+		/* update non-shaकरोw रेजिस्टरs first */
 		aty_st_lcd(CNFG_PANEL, crtc->lcd_config_panel, par);
 		aty_st_lcd(LCD_GEN_CNTL, crtc->lcd_gen_cntl &
 			   ~(CRTC_RW_SELECT | SHADOW_EN | SHADOW_RW_EN), par);
@@ -720,8 +721,8 @@ static void aty_set_crtc(const struct atyfb_par *par, const struct crtc *crtc)
 		aty_st_lcd(VERT_STRETCHING, crtc->vert_stretching &
 			   ~(VERT_STRETCH_RATIO1 | VERT_STRETCH_RATIO2 |
 			     VERT_STRETCH_USE0 | VERT_STRETCH_EN), par);
-	}
-#endif
+	पूर्ण
+#पूर्ण_अगर
 	/* turn off CRT */
 	aty_st_le32(CRTC_GEN_CNTL, crtc->gen_cntl & ~CRTC_EN, par);
 
@@ -749,73 +750,73 @@ static void aty_set_crtc(const struct atyfb_par *par, const struct crtc *crtc)
 	aty_st_le32(CRTC_VLINE_CRNT_VLINE, crtc->vline_crnt_vline, par);
 
 	aty_st_le32(CRTC_GEN_CNTL, crtc->gen_cntl, par);
-#if 0
+#अगर 0
 	FIXME
-	if (par->accel_flags & FB_ACCELF_TEXT)
+	अगर (par->accel_flags & FB_ACCELF_TEXT)
 		aty_init_engine(par, info);
-#endif
-#ifdef CONFIG_FB_ATY_GENERIC_LCD
-	/* after setting the CRTC registers we should set the LCD registers. */
-	if (par->lcd_table != 0) {
-		/* switch to shadow registers */
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_FB_ATY_GENERIC_LCD
+	/* after setting the CRTC रेजिस्टरs we should set the LCD रेजिस्टरs. */
+	अगर (par->lcd_table != 0) अणु
+		/* चयन to shaकरोw रेजिस्टरs */
 		aty_st_lcd(LCD_GEN_CNTL, (crtc->lcd_gen_cntl & ~CRTC_RW_SELECT) |
 			   SHADOW_EN | SHADOW_RW_EN, par);
 
 		DPRINTK("set shadow CRT to %ix%i %c%c\n",
-			((((crtc->shadow_h_tot_disp >> 16) & 0xff) + 1) << 3),
-			(((crtc->shadow_v_tot_disp >> 16) & 0x7ff) + 1),
-			(crtc->shadow_h_sync_strt_wid & 0x200000) ? 'N' : 'P',
-			(crtc->shadow_v_sync_strt_wid & 0x200000) ? 'N' : 'P');
+			((((crtc->shaकरोw_h_tot_disp >> 16) & 0xff) + 1) << 3),
+			(((crtc->shaकरोw_v_tot_disp >> 16) & 0x7ff) + 1),
+			(crtc->shaकरोw_h_sync_strt_wid & 0x200000) ? 'N' : 'P',
+			(crtc->shaकरोw_v_sync_strt_wid & 0x200000) ? 'N' : 'P');
 
 		DPRINTK("SHADOW CRTC_H_TOTAL_DISP: %x\n",
-			crtc->shadow_h_tot_disp);
+			crtc->shaकरोw_h_tot_disp);
 		DPRINTK("SHADOW CRTC_H_SYNC_STRT_WID: %x\n",
-			crtc->shadow_h_sync_strt_wid);
+			crtc->shaकरोw_h_sync_strt_wid);
 		DPRINTK("SHADOW CRTC_V_TOTAL_DISP: %x\n",
-			crtc->shadow_v_tot_disp);
+			crtc->shaकरोw_v_tot_disp);
 		DPRINTK("SHADOW CRTC_V_SYNC_STRT_WID: %x\n",
-			crtc->shadow_v_sync_strt_wid);
+			crtc->shaकरोw_v_sync_strt_wid);
 
-		aty_st_le32(CRTC_H_TOTAL_DISP, crtc->shadow_h_tot_disp, par);
-		aty_st_le32(CRTC_H_SYNC_STRT_WID, crtc->shadow_h_sync_strt_wid, par);
-		aty_st_le32(CRTC_V_TOTAL_DISP, crtc->shadow_v_tot_disp, par);
-		aty_st_le32(CRTC_V_SYNC_STRT_WID, crtc->shadow_v_sync_strt_wid, par);
+		aty_st_le32(CRTC_H_TOTAL_DISP, crtc->shaकरोw_h_tot_disp, par);
+		aty_st_le32(CRTC_H_SYNC_STRT_WID, crtc->shaकरोw_h_sync_strt_wid, par);
+		aty_st_le32(CRTC_V_TOTAL_DISP, crtc->shaकरोw_v_tot_disp, par);
+		aty_st_le32(CRTC_V_SYNC_STRT_WID, crtc->shaकरोw_v_sync_strt_wid, par);
 
-		/* restore CRTC selection & shadow state and enable stretching */
+		/* restore CRTC selection & shaकरोw state and enable stretching */
 		DPRINTK("LCD_GEN_CNTL: %x\n", crtc->lcd_gen_cntl);
 		DPRINTK("HORZ_STRETCHING: %x\n", crtc->horz_stretching);
 		DPRINTK("VERT_STRETCHING: %x\n", crtc->vert_stretching);
-		if (!M64_HAS(LT_LCD_REGS))
+		अगर (!M64_HAS(LT_LCD_REGS))
 			DPRINTK("EXT_VERT_STRETCH: %x\n", crtc->ext_vert_stretch);
 
 		aty_st_lcd(LCD_GEN_CNTL, crtc->lcd_gen_cntl, par);
 		aty_st_lcd(HORZ_STRETCHING, crtc->horz_stretching, par);
 		aty_st_lcd(VERT_STRETCHING, crtc->vert_stretching, par);
-		if (!M64_HAS(LT_LCD_REGS)) {
+		अगर (!M64_HAS(LT_LCD_REGS)) अणु
 			aty_st_lcd(EXT_VERT_STRETCH, crtc->ext_vert_stretch, par);
 			aty_ld_le32(LCD_INDEX, par);
 			aty_st_le32(LCD_INDEX, crtc->lcd_index, par);
-		}
-	}
-#endif /* CONFIG_FB_ATY_GENERIC_LCD */
-}
+		पूर्ण
+	पूर्ण
+#पूर्ण_अगर /* CONFIG_FB_ATY_GENERIC_LCD */
+पूर्ण
 
-static u32 calc_line_length(struct atyfb_par *par, u32 vxres, u32 bpp)
-{
+अटल u32 calc_line_length(काष्ठा atyfb_par *par, u32 vxres, u32 bpp)
+अणु
 	u32 line_length = vxres * bpp / 8;
 
-	if (par->ram_type == SGRAM ||
+	अगर (par->ram_type == SGRAM ||
 	    (!M64_HAS(XL_MEM) && par->ram_type == WRAM))
 		line_length = (line_length + 63) & ~63;
 
-	return line_length;
-}
+	वापस line_length;
+पूर्ण
 
-static int aty_var_to_crtc(const struct fb_info *info,
-			   const struct fb_var_screeninfo *var,
-			   struct crtc *crtc)
-{
-	struct atyfb_par *par = (struct atyfb_par *) info->par;
+अटल पूर्णांक aty_var_to_crtc(स्थिर काष्ठा fb_info *info,
+			   स्थिर काष्ठा fb_var_screeninfo *var,
+			   काष्ठा crtc *crtc)
+अणु
+	काष्ठा atyfb_par *par = (काष्ठा atyfb_par *) info->par;
 	u32 xres, yres, vxres, vyres, xoffset, yoffset, bpp;
 	u32 sync, vmode;
 	u32 h_total, h_disp, h_sync_strt, h_sync_end, h_sync_dly, h_sync_wid, h_sync_pol;
@@ -826,70 +827,70 @@ static int aty_var_to_crtc(const struct fb_info *info,
 	/* input */
 	xres = (var->xres + 7) & ~7;
 	yres = var->yres;
-	vxres = (var->xres_virtual + 7) & ~7;
-	vyres = var->yres_virtual;
+	vxres = (var->xres_भव + 7) & ~7;
+	vyres = var->yres_भव;
 	xoffset = (var->xoffset + 7) & ~7;
 	yoffset = var->yoffset;
 	bpp = var->bits_per_pixel;
-	if (bpp == 16)
+	अगर (bpp == 16)
 		bpp = (var->green.length == 5) ? 15 : 16;
 	sync = var->sync;
 	vmode = var->vmode;
 
 	/* convert (and round up) and validate */
-	if (vxres < xres + xoffset)
+	अगर (vxres < xres + xoffset)
 		vxres = xres + xoffset;
 	h_disp = xres;
 
-	if (vyres < yres + yoffset)
+	अगर (vyres < yres + yoffset)
 		vyres = yres + yoffset;
 	v_disp = yres;
 
-	if (bpp <= 8) {
+	अगर (bpp <= 8) अणु
 		bpp = 8;
 		pix_width = CRTC_PIX_WIDTH_8BPP;
 		dp_pix_width = HOST_8BPP | SRC_8BPP | DST_8BPP |
 			BYTE_ORDER_LSB_TO_MSB;
 		dp_chain_mask = DP_CHAIN_8BPP;
-	} else if (bpp <= 15) {
+	पूर्ण अन्यथा अगर (bpp <= 15) अणु
 		bpp = 16;
 		pix_width = CRTC_PIX_WIDTH_15BPP;
 		dp_pix_width = HOST_15BPP | SRC_15BPP | DST_15BPP |
 			BYTE_ORDER_LSB_TO_MSB;
 		dp_chain_mask = DP_CHAIN_15BPP;
-	} else if (bpp <= 16) {
+	पूर्ण अन्यथा अगर (bpp <= 16) अणु
 		bpp = 16;
 		pix_width = CRTC_PIX_WIDTH_16BPP;
 		dp_pix_width = HOST_16BPP | SRC_16BPP | DST_16BPP |
 			BYTE_ORDER_LSB_TO_MSB;
 		dp_chain_mask = DP_CHAIN_16BPP;
-	} else if (bpp <= 24 && M64_HAS(INTEGRATED)) {
+	पूर्ण अन्यथा अगर (bpp <= 24 && M64_HAS(INTEGRATED)) अणु
 		bpp = 24;
 		pix_width = CRTC_PIX_WIDTH_24BPP;
 		dp_pix_width = HOST_8BPP | SRC_8BPP | DST_8BPP |
 			BYTE_ORDER_LSB_TO_MSB;
 		dp_chain_mask = DP_CHAIN_24BPP;
-	} else if (bpp <= 32) {
+	पूर्ण अन्यथा अगर (bpp <= 32) अणु
 		bpp = 32;
 		pix_width = CRTC_PIX_WIDTH_32BPP;
 		dp_pix_width = HOST_32BPP | SRC_32BPP | DST_32BPP |
 			BYTE_ORDER_LSB_TO_MSB;
 		dp_chain_mask = DP_CHAIN_32BPP;
-	} else
+	पूर्ण अन्यथा
 		FAIL("invalid bpp");
 
 	line_length = calc_line_length(par, vxres, bpp);
 
-	if (vyres * line_length > info->fix.smem_len)
+	अगर (vyres * line_length > info->fix.smem_len)
 		FAIL("not enough video RAM");
 
 	h_sync_pol = sync & FB_SYNC_HOR_HIGH_ACT ? 0 : 1;
 	v_sync_pol = sync & FB_SYNC_VERT_HIGH_ACT ? 0 : 1;
 
-	if ((xres > 1920) || (yres > 1200)) {
+	अगर ((xres > 1920) || (yres > 1200)) अणु
 		FAIL("MACH64 chips are designed for max 1920x1200\n"
 		     "select another resolution.");
-	}
+	पूर्ण
 	h_sync_strt = h_disp + var->right_margin;
 	h_sync_end = h_sync_strt + var->hsync_len;
 	h_sync_dly  = var->right_margin & 7;
@@ -899,17 +900,17 @@ static int aty_var_to_crtc(const struct fb_info *info,
 	v_sync_end = v_sync_strt + var->vsync_len;
 	v_total = v_sync_end + var->upper_margin;
 
-#ifdef CONFIG_FB_ATY_GENERIC_LCD
-	if (par->lcd_table != 0) {
-		if (!M64_HAS(LT_LCD_REGS)) {
+#अगर_घोषित CONFIG_FB_ATY_GENERIC_LCD
+	अगर (par->lcd_table != 0) अणु
+		अगर (!M64_HAS(LT_LCD_REGS)) अणु
 			u32 lcd_index = aty_ld_le32(LCD_INDEX, par);
 			crtc->lcd_index = lcd_index &
 				~(LCD_INDEX_MASK | LCD_DISPLAY_DIS |
 				  LCD_SRC_SEL | CRTC2_DISPLAY_DIS);
 			aty_st_le32(LCD_INDEX, lcd_index, par);
-		}
+		पूर्ण
 
-		if (!M64_HAS(MOBIL_BUS))
+		अगर (!M64_HAS(MOBIL_BUS))
 			crtc->lcd_index |= CRTC2_DISPLAY_DIS;
 
 		crtc->lcd_config_panel = aty_ld_lcd(CNFG_PANEL, par) | 0x4000;
@@ -921,52 +922,52 @@ static int aty_var_to_crtc(const struct fb_info *info,
 			USE_SHADOWED_ROWCUR | SHADOW_EN | SHADOW_RW_EN);
 		crtc->lcd_gen_cntl |= DONT_SHADOW_VPAR | LOCK_8DOT;
 
-		if ((crtc->lcd_gen_cntl & LCD_ON) &&
-		    ((xres > par->lcd_width) || (yres > par->lcd_height))) {
+		अगर ((crtc->lcd_gen_cntl & LCD_ON) &&
+		    ((xres > par->lcd_width) || (yres > par->lcd_height))) अणु
 			/*
 			 * We cannot display the mode on the LCD. If the CRT is
 			 * enabled we can turn off the LCD.
-			 * If the CRT is off, it isn't a good idea to switch it
-			 * on; we don't know if one is connected. So it's better
+			 * If the CRT is off, it isn't a good idea to चयन it
+			 * on; we करोn't know if one is connected. So it's better
 			 * to fail then.
 			 */
-			if (crtc->lcd_gen_cntl & CRT_ON) {
-				if (!(var->activate & FB_ACTIVATE_TEST))
+			अगर (crtc->lcd_gen_cntl & CRT_ON) अणु
+				अगर (!(var->activate & FB_ACTIVATE_TEST))
 					PRINTKI("Disable LCD panel, because video mode does not fit.\n");
 				crtc->lcd_gen_cntl &= ~LCD_ON;
 				/*aty_st_lcd(LCD_GEN_CNTL, crtc->lcd_gen_cntl, par);*/
-			} else {
-				if (!(var->activate & FB_ACTIVATE_TEST))
+			पूर्ण अन्यथा अणु
+				अगर (!(var->activate & FB_ACTIVATE_TEST))
 					PRINTKE("Video mode exceeds size of LCD panel.\nConnect this computer to a conventional monitor if you really need this mode.\n");
-				return -EINVAL;
-			}
-		}
-	}
+				वापस -EINVAL;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	if ((par->lcd_table != 0) && (crtc->lcd_gen_cntl & LCD_ON)) {
-		int VScan = 1;
+	अगर ((par->lcd_table != 0) && (crtc->lcd_gen_cntl & LCD_ON)) अणु
+		पूर्णांक VScan = 1;
 		/* bpp -> bytespp, 1,4 -> 0; 8 -> 2; 15,16 -> 1; 24 -> 6; 32 -> 5
-		const u8 DFP_h_sync_dly_LT[] = { 0, 2, 1, 6, 5 };
-		const u8 ADD_to_strt_wid_and_dly_LT_DAC[] = { 0, 5, 6, 9, 9, 12, 12 };  */
+		स्थिर u8 DFP_h_sync_dly_LT[] = अणु 0, 2, 1, 6, 5 पूर्ण;
+		स्थिर u8 ADD_to_strt_wid_and_dly_LT_DAC[] = अणु 0, 5, 6, 9, 9, 12, 12 पूर्ण;  */
 
 		vmode &= ~(FB_VMODE_DOUBLE | FB_VMODE_INTERLACED);
 
 		/*
 		 * This is horror! When we simulate, say 640x480 on an 800x600
-		 * LCD monitor, the CRTC should be programmed 800x600 values for
-		 * the non visible part, but 640x480 for the visible part.
+		 * LCD monitor, the CRTC should be programmed 800x600 values क्रम
+		 * the non visible part, but 640x480 क्रम the visible part.
 		 * This code has been tested on a laptop with it's 1400x1050 LCD
-		 * monitor and a conventional monitor both switched on.
+		 * monitor and a conventional monitor both चयनed on.
 		 * Tested modes: 1280x1024, 1152x864, 1024x768, 800x600,
 		 * works with little glitches also with DOUBLESCAN modes
 		 */
-		if (yres < par->lcd_height) {
+		अगर (yres < par->lcd_height) अणु
 			VScan = par->lcd_height / yres;
-			if (VScan > 1) {
+			अगर (VScan > 1) अणु
 				VScan = 2;
 				vmode |= FB_VMODE_DOUBLE;
-			}
-		}
+			पूर्ण
+		पूर्ण
 
 		h_sync_strt = h_disp + par->lcd_right_margin;
 		h_sync_end = h_sync_strt + par->lcd_hsync_len;
@@ -976,8 +977,8 @@ static int aty_var_to_crtc(const struct fb_info *info,
 		v_sync_strt = v_disp + par->lcd_lower_margin / VScan;
 		v_sync_end = v_sync_strt + par->lcd_vsync_len / VScan;
 		v_total = v_disp + par->lcd_vblank_len / VScan;
-	}
-#endif /* CONFIG_FB_ATY_GENERIC_LCD */
+	पूर्ण
+#पूर्ण_अगर /* CONFIG_FB_ATY_GENERIC_LCD */
 
 	h_disp = (h_disp >> 3) - 1;
 	h_sync_strt = (h_sync_strt >> 3) - 1;
@@ -988,16 +989,16 @@ static int aty_var_to_crtc(const struct fb_info *info,
 	FAIL_MAX("h_disp too large", h_disp, 0xff);
 	FAIL_MAX("h_sync_strt too large", h_sync_strt, 0x1ff);
 	/*FAIL_MAX("h_sync_wid too large", h_sync_wid, 0x1f);*/
-	if (h_sync_wid > 0x1f)
+	अगर (h_sync_wid > 0x1f)
 		h_sync_wid = 0x1f;
 	FAIL_MAX("h_total too large", h_total, 0x1ff);
 
-	if (vmode & FB_VMODE_DOUBLE) {
+	अगर (vmode & FB_VMODE_DOUBLE) अणु
 		v_disp <<= 1;
 		v_sync_strt <<= 1;
 		v_sync_end <<= 1;
 		v_total <<= 1;
-	}
+	पूर्ण
 
 	v_disp--;
 	v_sync_strt--;
@@ -1008,7 +1009,7 @@ static int aty_var_to_crtc(const struct fb_info *info,
 	FAIL_MAX("v_disp too large", v_disp, 0x7ff);
 	FAIL_MAX("v_sync_stsrt too large", v_sync_strt, 0x7ff);
 	/*FAIL_MAX("v_sync_wid too large", v_sync_wid, 0x1f);*/
-	if (v_sync_wid > 0x1f)
+	अगर (v_sync_wid > 0x1f)
 		v_sync_wid = 0x1f;
 	FAIL_MAX("v_total too large", v_total, 0x7ff);
 
@@ -1037,16 +1038,16 @@ static int aty_var_to_crtc(const struct fb_info *info,
 	crtc->gen_cntl = CRTC_EXT_DISP_EN | CRTC_EN | pix_width | c_sync;
 	crtc->gen_cntl |= CRTC_VGA_LINEAR;
 
-	/* Enable doublescan mode if requested */
-	if (vmode & FB_VMODE_DOUBLE)
+	/* Enable द्विगुनscan mode अगर requested */
+	अगर (vmode & FB_VMODE_DOUBLE)
 		crtc->gen_cntl |= CRTC_DBL_SCAN_EN;
-	/* Enable interlaced mode if requested */
-	if (vmode & FB_VMODE_INTERLACED)
+	/* Enable पूर्णांकerlaced mode अगर requested */
+	अगर (vmode & FB_VMODE_INTERLACED)
 		crtc->gen_cntl |= CRTC_INTERLACE_EN;
-#ifdef CONFIG_FB_ATY_GENERIC_LCD
-	if (par->lcd_table != 0) {
+#अगर_घोषित CONFIG_FB_ATY_GENERIC_LCD
+	अगर (par->lcd_table != 0) अणु
 		u32 vdisplay = yres;
-		if (vmode & FB_VMODE_DOUBLE)
+		अगर (vmode & FB_VMODE_DOUBLE)
 			vdisplay <<= 1;
 		crtc->gen_cntl &= ~(CRTC2_EN | CRTC2_PIX_WIDTH);
 		crtc->lcd_gen_cntl &= ~(HORZ_DIVBY2_EN | DIS_HOR_CRT_DIVBY2 |
@@ -1058,119 +1059,119 @@ static int aty_var_to_crtc(const struct fb_info *info,
 
 		/* MOBILITY M1 tested, FIXME: LT */
 		crtc->horz_stretching = aty_ld_lcd(HORZ_STRETCHING, par);
-		if (!M64_HAS(LT_LCD_REGS))
+		अगर (!M64_HAS(LT_LCD_REGS))
 			crtc->ext_vert_stretch = aty_ld_lcd(EXT_VERT_STRETCH, par) &
 				~(AUTO_VERT_RATIO | VERT_STRETCH_MODE | VERT_STRETCH_RATIO3);
 
 		crtc->horz_stretching &= ~(HORZ_STRETCH_RATIO |
 					   HORZ_STRETCH_LOOP | AUTO_HORZ_RATIO |
 					   HORZ_STRETCH_MODE | HORZ_STRETCH_EN);
-		if (xres < par->lcd_width && crtc->lcd_gen_cntl & LCD_ON) {
-			do {
+		अगर (xres < par->lcd_width && crtc->lcd_gen_cntl & LCD_ON) अणु
+			करो अणु
 				/*
 				 * The horizontal blender misbehaves when
 				 * HDisplay is less than a certain threshold
-				 * (440 for a 1024-wide panel).  It doesn't
+				 * (440 क्रम a 1024-wide panel).  It करोesn't
 				 * stretch such modes enough.  Use pixel
 				 * replication instead of blending to stretch
 				 * modes that can be made to exactly fit the
-				 * panel width.  The undocumented "NoLCDBlend"
+				 * panel width.  The unकरोcumented "NoLCDBlend"
 				 * option allows the pixel-replicated mode to
 				 * be slightly wider or narrower than the
 				 * panel width.  It also causes a mode that is
 				 * exactly half as wide as the panel to be
 				 * pixel-replicated, rather than blended.
 				 */
-				int HDisplay  = xres & ~7;
-				int nStretch  = par->lcd_width / HDisplay;
-				int Remainder = par->lcd_width % HDisplay;
+				पूर्णांक HDisplay  = xres & ~7;
+				पूर्णांक nStretch  = par->lcd_width / HDisplay;
+				पूर्णांक Reमुख्यder = par->lcd_width % HDisplay;
 
-				if ((!Remainder && ((nStretch > 2))) ||
-				    (((HDisplay * 16) / par->lcd_width) < 7)) {
-					static const char StretchLoops[] = { 10, 12, 13, 15, 16 };
-					int horz_stretch_loop = -1, BestRemainder;
-					int Numerator = HDisplay, Denominator = par->lcd_width;
-					int Index = 5;
+				अगर ((!Reमुख्यder && ((nStretch > 2))) ||
+				    (((HDisplay * 16) / par->lcd_width) < 7)) अणु
+					अटल स्थिर अक्षर StretchLoops[] = अणु 10, 12, 13, 15, 16 पूर्ण;
+					पूर्णांक horz_stretch_loop = -1, BestReमुख्यder;
+					पूर्णांक Numerator = HDisplay, Denominator = par->lcd_width;
+					पूर्णांक Index = 5;
 					ATIReduceRatio(&Numerator, &Denominator);
 
-					BestRemainder = (Numerator * 16) / Denominator;
-					while (--Index >= 0) {
-						Remainder = ((Denominator - Numerator) * StretchLoops[Index]) %
+					BestReमुख्यder = (Numerator * 16) / Denominator;
+					जबतक (--Index >= 0) अणु
+						Reमुख्यder = ((Denominator - Numerator) * StretchLoops[Index]) %
 							Denominator;
-						if (Remainder < BestRemainder) {
+						अगर (Reमुख्यder < BestReमुख्यder) अणु
 							horz_stretch_loop = Index;
-							if (!(BestRemainder = Remainder))
-								break;
-						}
-					}
+							अगर (!(BestReमुख्यder = Reमुख्यder))
+								अवरोध;
+						पूर्ण
+					पूर्ण
 
-					if ((horz_stretch_loop >= 0) && !BestRemainder) {
-						int horz_stretch_ratio = 0, Accumulator = 0;
-						int reuse_previous = 1;
+					अगर ((horz_stretch_loop >= 0) && !BestReमुख्यder) अणु
+						पूर्णांक horz_stretch_ratio = 0, Accumulator = 0;
+						पूर्णांक reuse_previous = 1;
 
 						Index = StretchLoops[horz_stretch_loop];
 
-						while (--Index >= 0) {
-							if (Accumulator > 0)
+						जबतक (--Index >= 0) अणु
+							अगर (Accumulator > 0)
 								horz_stretch_ratio |= reuse_previous;
-							else
+							अन्यथा
 								Accumulator += Denominator;
 							Accumulator -= Numerator;
 							reuse_previous <<= 1;
-						}
+						पूर्ण
 
 						crtc->horz_stretching |= (HORZ_STRETCH_EN |
 							((horz_stretch_loop & HORZ_STRETCH_LOOP) << 16) |
 							(horz_stretch_ratio & HORZ_STRETCH_RATIO));
-						break;      /* Out of the do { ... } while (0) */
-					}
-				}
+						अवरोध;      /* Out of the करो अणु ... पूर्ण जबतक (0) */
+					पूर्ण
+				पूर्ण
 
 				crtc->horz_stretching |= (HORZ_STRETCH_MODE | HORZ_STRETCH_EN |
 					(((HDisplay * (HORZ_STRETCH_BLEND + 1)) / par->lcd_width) & HORZ_STRETCH_BLEND));
-			} while (0);
-		}
+			पूर्ण जबतक (0);
+		पूर्ण
 
-		if (vdisplay < par->lcd_height && crtc->lcd_gen_cntl & LCD_ON) {
+		अगर (vdisplay < par->lcd_height && crtc->lcd_gen_cntl & LCD_ON) अणु
 			crtc->vert_stretching = (VERT_STRETCH_USE0 | VERT_STRETCH_EN |
 				(((vdisplay * (VERT_STRETCH_RATIO0 + 1)) / par->lcd_height) & VERT_STRETCH_RATIO0));
 
-			if (!M64_HAS(LT_LCD_REGS) &&
+			अगर (!M64_HAS(LT_LCD_REGS) &&
 			    xres <= (M64_HAS(MOBIL_BUS) ? 1024 : 800))
 				crtc->ext_vert_stretch |= VERT_STRETCH_MODE;
-		} else {
+		पूर्ण अन्यथा अणु
 			/*
-			 * Don't use vertical blending if the mode is too wide
+			 * Don't use vertical blending अगर the mode is too wide
 			 * or not vertically stretched.
 			 */
 			crtc->vert_stretching = 0;
-		}
-		/* copy to shadow crtc */
-		crtc->shadow_h_tot_disp = crtc->h_tot_disp;
-		crtc->shadow_h_sync_strt_wid = crtc->h_sync_strt_wid;
-		crtc->shadow_v_tot_disp = crtc->v_tot_disp;
-		crtc->shadow_v_sync_strt_wid = crtc->v_sync_strt_wid;
-	}
-#endif /* CONFIG_FB_ATY_GENERIC_LCD */
+		पूर्ण
+		/* copy to shaकरोw crtc */
+		crtc->shaकरोw_h_tot_disp = crtc->h_tot_disp;
+		crtc->shaकरोw_h_sync_strt_wid = crtc->h_sync_strt_wid;
+		crtc->shaकरोw_v_tot_disp = crtc->v_tot_disp;
+		crtc->shaकरोw_v_sync_strt_wid = crtc->v_sync_strt_wid;
+	पूर्ण
+#पूर्ण_अगर /* CONFIG_FB_ATY_GENERIC_LCD */
 
-	if (M64_HAS(MAGIC_FIFO)) {
+	अगर (M64_HAS(MAGIC_FIFO)) अणु
 		/* FIXME: display FIFO low watermark values */
 		crtc->gen_cntl |= (aty_ld_le32(CRTC_GEN_CNTL, par) & CRTC_FIFO_LWM);
-	}
+	पूर्ण
 	crtc->dp_pix_width = dp_pix_width;
 	crtc->dp_chain_mask = dp_chain_mask;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int aty_crtc_to_var(const struct crtc *crtc,
-			   struct fb_var_screeninfo *var)
-{
+अटल पूर्णांक aty_crtc_to_var(स्थिर काष्ठा crtc *crtc,
+			   काष्ठा fb_var_screeninfo *var)
+अणु
 	u32 xres, yres, bpp, left, right, upper, lower, hslen, vslen, sync;
 	u32 h_total, h_disp, h_sync_strt, h_sync_dly, h_sync_wid, h_sync_pol;
 	u32 v_total, v_disp, v_sync_strt, v_sync_wid, v_sync_pol, c_sync;
 	u32 pix_width;
-	u32 double_scan, interlace;
+	u32 द्विगुन_scan, पूर्णांकerlace;
 
 	/* input */
 	h_total = crtc->h_tot_disp & 0x1ff;
@@ -1186,8 +1187,8 @@ static int aty_crtc_to_var(const struct crtc *crtc,
 	v_sync_pol = (crtc->v_sync_strt_wid >> 21) & 0x1;
 	c_sync = crtc->gen_cntl & CRTC_CSYNC_EN ? 1 : 0;
 	pix_width = crtc->gen_cntl & CRTC_PIX_WIDTH_MASK;
-	double_scan = crtc->gen_cntl & CRTC_DBL_SCAN_EN;
-	interlace = crtc->gen_cntl & CRTC_INTERLACE_EN;
+	द्विगुन_scan = crtc->gen_cntl & CRTC_DBL_SCAN_EN;
+	पूर्णांकerlace = crtc->gen_cntl & CRTC_INTERLACE_EN;
 
 	/* convert */
 	xres = (h_disp + 1) * 8;
@@ -1202,8 +1203,8 @@ static int aty_crtc_to_var(const struct crtc *crtc,
 		(v_sync_pol ? 0 : FB_SYNC_VERT_HIGH_ACT) |
 		(c_sync ? FB_SYNC_COMP_HIGH_ACT : 0);
 
-	switch (pix_width) {
-	case CRTC_PIX_WIDTH_8BPP:
+	चयन (pix_width) अणु
+	हाल CRTC_PIX_WIDTH_8BPP:
 		bpp = 8;
 		var->red.offset = 0;
 		var->red.length = 8;
@@ -1213,8 +1214,8 @@ static int aty_crtc_to_var(const struct crtc *crtc,
 		var->blue.length = 8;
 		var->transp.offset = 0;
 		var->transp.length = 0;
-		break;
-	case CRTC_PIX_WIDTH_15BPP:	/* RGB 555 */
+		अवरोध;
+	हाल CRTC_PIX_WIDTH_15BPP:	/* RGB 555 */
 		bpp = 16;
 		var->red.offset = 10;
 		var->red.length = 5;
@@ -1224,8 +1225,8 @@ static int aty_crtc_to_var(const struct crtc *crtc,
 		var->blue.length = 5;
 		var->transp.offset = 0;
 		var->transp.length = 0;
-		break;
-	case CRTC_PIX_WIDTH_16BPP:	/* RGB 565 */
+		अवरोध;
+	हाल CRTC_PIX_WIDTH_16BPP:	/* RGB 565 */
 		bpp = 16;
 		var->red.offset = 11;
 		var->red.length = 5;
@@ -1235,8 +1236,8 @@ static int aty_crtc_to_var(const struct crtc *crtc,
 		var->blue.length = 5;
 		var->transp.offset = 0;
 		var->transp.length = 0;
-		break;
-	case CRTC_PIX_WIDTH_24BPP:	/* RGB 888 */
+		अवरोध;
+	हाल CRTC_PIX_WIDTH_24BPP:	/* RGB 888 */
 		bpp = 24;
 		var->red.offset = 16;
 		var->red.length = 8;
@@ -1246,8 +1247,8 @@ static int aty_crtc_to_var(const struct crtc *crtc,
 		var->blue.length = 8;
 		var->transp.offset = 0;
 		var->transp.length = 0;
-		break;
-	case CRTC_PIX_WIDTH_32BPP:	/* ARGB 8888 */
+		अवरोध;
+	हाल CRTC_PIX_WIDTH_32BPP:	/* ARGB 8888 */
 		bpp = 32;
 		var->red.offset = 16;
 		var->red.length = 8;
@@ -1257,17 +1258,17 @@ static int aty_crtc_to_var(const struct crtc *crtc,
 		var->blue.length = 8;
 		var->transp.offset = 24;
 		var->transp.length = 8;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		PRINTKE("Invalid pixel width\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	/* output */
 	var->xres = xres;
 	var->yres = yres;
-	var->xres_virtual = crtc->vxres;
-	var->yres_virtual = crtc->vyres;
+	var->xres_भव = crtc->vxres;
+	var->yres_भव = crtc->vyres;
 	var->bits_per_pixel = bpp;
 	var->left_margin = left;
 	var->right_margin = right;
@@ -1278,87 +1279,87 @@ static int aty_crtc_to_var(const struct crtc *crtc,
 	var->sync = sync;
 	var->vmode = FB_VMODE_NONINTERLACED;
 	/*
-	 * In double scan mode, the vertical parameters are doubled,
+	 * In द्विगुन scan mode, the vertical parameters are द्विगुनd,
 	 * so we need to halve them to get the right values.
-	 * In interlaced mode the values are already correct,
+	 * In पूर्णांकerlaced mode the values are alपढ़ोy correct,
 	 * so no correction is necessary.
 	 */
-	if (interlace)
+	अगर (पूर्णांकerlace)
 		var->vmode = FB_VMODE_INTERLACED;
 
-	if (double_scan) {
+	अगर (द्विगुन_scan) अणु
 		var->vmode = FB_VMODE_DOUBLE;
 		var->yres >>= 1;
 		var->upper_margin >>= 1;
 		var->lower_margin >>= 1;
 		var->vsync_len >>= 1;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* ------------------------------------------------------------------------- */
 
-static int atyfb_set_par(struct fb_info *info)
-{
-	struct atyfb_par *par = (struct atyfb_par *) info->par;
-	struct fb_var_screeninfo *var = &info->var;
-	u32 tmp, pixclock;
-	int err;
-#ifdef DEBUG
-	struct fb_var_screeninfo debug;
-	u32 pixclock_in_ps;
-#endif
-	if (par->asleep)
-		return 0;
+अटल पूर्णांक atyfb_set_par(काष्ठा fb_info *info)
+अणु
+	काष्ठा atyfb_par *par = (काष्ठा atyfb_par *) info->par;
+	काष्ठा fb_var_screeninfo *var = &info->var;
+	u32 पंचांगp, pixघड़ी;
+	पूर्णांक err;
+#अगर_घोषित DEBUG
+	काष्ठा fb_var_screeninfo debug;
+	u32 pixघड़ी_in_ps;
+#पूर्ण_अगर
+	अगर (par->asleep)
+		वापस 0;
 
 	err = aty_var_to_crtc(info, var, &par->crtc);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	pixclock = atyfb_get_pixclock(var, par);
+	pixघड़ी = atyfb_get_pixघड़ी(var, par);
 
-	if (pixclock == 0) {
+	अगर (pixघड़ी == 0) अणु
 		PRINTKE("Invalid pixclock\n");
-		return -EINVAL;
-	} else {
-		err = par->pll_ops->var_to_pll(info, pixclock,
+		वापस -EINVAL;
+	पूर्ण अन्यथा अणु
+		err = par->pll_ops->var_to_pll(info, pixघड़ी,
 					       var->bits_per_pixel, &par->pll);
-		if (err)
-			return err;
-	}
+		अगर (err)
+			वापस err;
+	पूर्ण
 
 	par->accel_flags = var->accel_flags; /* hack */
 
-	if (var->accel_flags) {
+	अगर (var->accel_flags) अणु
 		atyfb_ops.fb_sync = atyfb_sync;
 		info->flags &= ~FBINFO_HWACCEL_DISABLED;
-	} else {
-		atyfb_ops.fb_sync = NULL;
+	पूर्ण अन्यथा अणु
+		atyfb_ops.fb_sync = शून्य;
 		info->flags |= FBINFO_HWACCEL_DISABLED;
-	}
+	पूर्ण
 
-	if (par->blitter_may_be_busy)
-		wait_for_idle(par);
+	अगर (par->blitter_may_be_busy)
+		रुको_क्रम_idle(par);
 
 	aty_set_crtc(par, &par->crtc);
 	par->dac_ops->set_dac(info, &par->pll,
 			      var->bits_per_pixel, par->accel_flags);
 	par->pll_ops->set_pll(info, &par->pll);
 
-#ifdef DEBUG
-	if (par->pll_ops && par->pll_ops->pll_to_var)
-		pixclock_in_ps = par->pll_ops->pll_to_var(info, &par->pll);
-	else
-		pixclock_in_ps = 0;
+#अगर_घोषित DEBUG
+	अगर (par->pll_ops && par->pll_ops->pll_to_var)
+		pixघड़ी_in_ps = par->pll_ops->pll_to_var(info, &par->pll);
+	अन्यथा
+		pixघड़ी_in_ps = 0;
 
-	if (0 == pixclock_in_ps) {
+	अगर (0 == pixघड़ी_in_ps) अणु
 		PRINTKE("ALERT ops->pll_to_var get 0\n");
-		pixclock_in_ps = pixclock;
-	}
+		pixघड़ी_in_ps = pixघड़ी;
+	पूर्ण
 
-	memset(&debug, 0, sizeof(debug));
-	if (!aty_crtc_to_var(&par->crtc, &debug)) {
+	स_रखो(&debug, 0, माप(debug));
+	अगर (!aty_crtc_to_var(&par->crtc, &debug)) अणु
 		u32 hSync, vRefresh;
 		u32 h_disp, h_sync_strt, h_sync_end, h_total;
 		u32 v_disp, v_sync_strt, v_sync_end, v_total;
@@ -1372,11 +1373,11 @@ static int atyfb_set_par(struct fb_info *info)
 		v_sync_end = v_sync_strt + debug.vsync_len;
 		v_total = v_sync_end + debug.upper_margin;
 
-		hSync = 1000000000 / (pixclock_in_ps * h_total);
+		hSync = 1000000000 / (pixघड़ी_in_ps * h_total);
 		vRefresh = (hSync * 1000) / v_total;
-		if (par->crtc.gen_cntl & CRTC_INTERLACE_EN)
+		अगर (par->crtc.gen_cntl & CRTC_INTERLACE_EN)
 			vRefresh *= 2;
-		if (par->crtc.gen_cntl & CRTC_DBL_SCAN_EN)
+		अगर (par->crtc.gen_cntl & CRTC_DBL_SCAN_EN)
 			vRefresh /= 2;
 
 		DPRINTK("atyfb_set_par\n");
@@ -1384,191 +1385,191 @@ static int atyfb_set_par(struct fb_info *info)
 			var->xres, var->yres, var->bits_per_pixel);
 		DPRINTK(" Virtual resolution %ix%i, "
 			"pixclock_in_ps %i (calculated %i)\n",
-			var->xres_virtual, var->yres_virtual,
-			pixclock, pixclock_in_ps);
+			var->xres_भव, var->yres_भव,
+			pixघड़ी, pixघड़ी_in_ps);
 		DPRINTK(" Dot clock:           %i MHz\n",
-			1000000 / pixclock_in_ps);
+			1000000 / pixघड़ी_in_ps);
 		DPRINTK(" Horizontal sync:     %i kHz\n", hSync);
 		DPRINTK(" Vertical refresh:    %i Hz\n", vRefresh);
 		DPRINTK(" x  style: %i.%03i %i %i %i %i   %i %i %i %i\n",
-			1000000 / pixclock_in_ps, 1000000 % pixclock_in_ps,
+			1000000 / pixघड़ी_in_ps, 1000000 % pixघड़ी_in_ps,
 			h_disp, h_sync_strt, h_sync_end, h_total,
 			v_disp, v_sync_strt, v_sync_end, v_total);
 		DPRINTK(" fb style: %i  %i %i %i %i %i %i %i %i\n",
-			pixclock_in_ps,
+			pixघड़ी_in_ps,
 			debug.left_margin, h_disp, debug.right_margin, debug.hsync_len,
 			debug.upper_margin, v_disp, debug.lower_margin, debug.vsync_len);
-	}
-#endif /* DEBUG */
+	पूर्ण
+#पूर्ण_अगर /* DEBUG */
 
-	if (!M64_HAS(INTEGRATED)) {
-		/* Don't forget MEM_CNTL */
-		tmp = aty_ld_le32(MEM_CNTL, par) & 0xf0ffffff;
-		switch (var->bits_per_pixel) {
-		case 8:
-			tmp |= 0x02000000;
-			break;
-		case 16:
-			tmp |= 0x03000000;
-			break;
-		case 32:
-			tmp |= 0x06000000;
-			break;
-		}
-		aty_st_le32(MEM_CNTL, tmp, par);
-	} else {
-		tmp = aty_ld_le32(MEM_CNTL, par) & 0xf00fffff;
-		if (!M64_HAS(MAGIC_POSTDIV))
-			tmp |= par->mem_refresh_rate << 20;
-		switch (var->bits_per_pixel) {
-		case 8:
-		case 24:
-			tmp |= 0x00000000;
-			break;
-		case 16:
-			tmp |= 0x04000000;
-			break;
-		case 32:
-			tmp |= 0x08000000;
-			break;
-		}
-		if (M64_HAS(CT_BUS)) {
+	अगर (!M64_HAS(INTEGRATED)) अणु
+		/* Don't क्रमget MEM_CNTL */
+		पंचांगp = aty_ld_le32(MEM_CNTL, par) & 0xf0ffffff;
+		चयन (var->bits_per_pixel) अणु
+		हाल 8:
+			पंचांगp |= 0x02000000;
+			अवरोध;
+		हाल 16:
+			पंचांगp |= 0x03000000;
+			अवरोध;
+		हाल 32:
+			पंचांगp |= 0x06000000;
+			अवरोध;
+		पूर्ण
+		aty_st_le32(MEM_CNTL, पंचांगp, par);
+	पूर्ण अन्यथा अणु
+		पंचांगp = aty_ld_le32(MEM_CNTL, par) & 0xf00fffff;
+		अगर (!M64_HAS(MAGIC_POSTDIV))
+			पंचांगp |= par->mem_refresh_rate << 20;
+		चयन (var->bits_per_pixel) अणु
+		हाल 8:
+		हाल 24:
+			पंचांगp |= 0x00000000;
+			अवरोध;
+		हाल 16:
+			पंचांगp |= 0x04000000;
+			अवरोध;
+		हाल 32:
+			पंचांगp |= 0x08000000;
+			अवरोध;
+		पूर्ण
+		अगर (M64_HAS(CT_BUS)) अणु
 			aty_st_le32(DAC_CNTL, 0x87010184, par);
 			aty_st_le32(BUS_CNTL, 0x680000f9, par);
-		} else if (M64_HAS(VT_BUS)) {
+		पूर्ण अन्यथा अगर (M64_HAS(VT_BUS)) अणु
 			aty_st_le32(DAC_CNTL, 0x87010184, par);
 			aty_st_le32(BUS_CNTL, 0x680000f9, par);
-		} else if (M64_HAS(MOBIL_BUS)) {
+		पूर्ण अन्यथा अगर (M64_HAS(MOBIL_BUS)) अणु
 			aty_st_le32(DAC_CNTL, 0x80010102, par);
 			aty_st_le32(BUS_CNTL, 0x7b33a040 | (par->aux_start ? BUS_APER_REG_DIS : 0), par);
-		} else {
+		पूर्ण अन्यथा अणु
 			/* GT */
 			aty_st_le32(DAC_CNTL, 0x86010102, par);
 			aty_st_le32(BUS_CNTL, 0x7b23a040 | (par->aux_start ? BUS_APER_REG_DIS : 0), par);
 			aty_st_le32(EXT_MEM_CNTL, aty_ld_le32(EXT_MEM_CNTL, par) | 0x5000001, par);
-		}
-		aty_st_le32(MEM_CNTL, tmp, par);
-	}
+		पूर्ण
+		aty_st_le32(MEM_CNTL, पंचांगp, par);
+	पूर्ण
 	aty_st_8(DAC_MASK, 0xff, par);
 
-	info->fix.line_length = calc_line_length(par, var->xres_virtual,
+	info->fix.line_length = calc_line_length(par, var->xres_भव,
 						 var->bits_per_pixel);
 
 	info->fix.visual = var->bits_per_pixel <= 8 ?
-		FB_VISUAL_PSEUDOCOLOR : FB_VISUAL_DIRECTCOLOR;
+		FB_VISUAL_PSEUDOCOLOR : FB_VISUAL_सूचीECTCOLOR;
 
 	/* Initialize the graphics engine */
-	if (par->accel_flags & FB_ACCELF_TEXT)
+	अगर (par->accel_flags & FB_ACCELF_TEXT)
 		aty_init_engine(par, info);
 
-#ifdef CONFIG_BOOTX_TEXT
+#अगर_घोषित CONFIG_BOOTX_TEXT
 	btext_update_display(info->fix.smem_start,
 		(((par->crtc.h_tot_disp >> 16) & 0xff) + 1) * 8,
 		((par->crtc.v_tot_disp >> 16) & 0x7ff) + 1,
 		var->bits_per_pixel,
 		par->crtc.vxres * var->bits_per_pixel / 8);
-#endif /* CONFIG_BOOTX_TEXT */
-#ifdef DEBUG
-{
-	/* dump non shadow CRTC, pll, LCD registers */
-	int i; u32 base;
+#पूर्ण_अगर /* CONFIG_BOOTX_TEXT */
+#अगर_घोषित DEBUG
+अणु
+	/* dump non shaकरोw CRTC, pll, LCD रेजिस्टरs */
+	पूर्णांक i; u32 base;
 
-	/* CRTC registers */
+	/* CRTC रेजिस्टरs */
 	base = 0x2000;
-	printk("debug atyfb: Mach64 non-shadow register values:");
-	for (i = 0; i < 256; i = i+4) {
-		if (i % 16 == 0) {
+	prपूर्णांकk("debug atyfb: Mach64 non-shadow register values:");
+	क्रम (i = 0; i < 256; i = i+4) अणु
+		अगर (i % 16 == 0) अणु
 			pr_cont("\n");
-			printk("debug atyfb: 0x%04X: ", base + i);
-		}
+			prपूर्णांकk("debug atyfb: 0x%04X: ", base + i);
+		पूर्ण
 		pr_cont(" %08X", aty_ld_le32(i, par));
-	}
+	पूर्ण
 	pr_cont("\n\n");
 
-#ifdef CONFIG_FB_ATY_CT
-	/* PLL registers */
+#अगर_घोषित CONFIG_FB_ATY_CT
+	/* PLL रेजिस्टरs */
 	base = 0x00;
-	printk("debug atyfb: Mach64 PLL register values:");
-	for (i = 0; i < 64; i++) {
-		if (i % 16 == 0) {
+	prपूर्णांकk("debug atyfb: Mach64 PLL register values:");
+	क्रम (i = 0; i < 64; i++) अणु
+		अगर (i % 16 == 0) अणु
 			pr_cont("\n");
-			printk("debug atyfb: 0x%02X: ", base + i);
-		}
-		if (i % 4 == 0)
+			prपूर्णांकk("debug atyfb: 0x%02X: ", base + i);
+		पूर्ण
+		अगर (i % 4 == 0)
 			pr_cont(" ");
 		pr_cont("%02X", aty_ld_pll_ct(i, par));
-	}
+	पूर्ण
 	pr_cont("\n\n");
-#endif	/* CONFIG_FB_ATY_CT */
+#पूर्ण_अगर	/* CONFIG_FB_ATY_CT */
 
-#ifdef CONFIG_FB_ATY_GENERIC_LCD
-	if (par->lcd_table != 0) {
-		/* LCD registers */
+#अगर_घोषित CONFIG_FB_ATY_GENERIC_LCD
+	अगर (par->lcd_table != 0) अणु
+		/* LCD रेजिस्टरs */
 		base = 0x00;
-		printk("debug atyfb: LCD register values:");
-		if (M64_HAS(LT_LCD_REGS)) {
-			for (i = 0; i <= POWER_MANAGEMENT; i++) {
-				if (i == EXT_VERT_STRETCH)
-					continue;
+		prपूर्णांकk("debug atyfb: LCD register values:");
+		अगर (M64_HAS(LT_LCD_REGS)) अणु
+			क्रम (i = 0; i <= POWER_MANAGEMENT; i++) अणु
+				अगर (i == EXT_VERT_STRETCH)
+					जारी;
 				pr_cont("\ndebug atyfb: 0x%04X: ",
 				       lt_lcd_regs[i]);
 				pr_cont(" %08X", aty_ld_lcd(i, par));
-			}
-		} else {
-			for (i = 0; i < 64; i++) {
-				if (i % 4 == 0)
+			पूर्ण
+		पूर्ण अन्यथा अणु
+			क्रम (i = 0; i < 64; i++) अणु
+				अगर (i % 4 == 0)
 					pr_cont("\ndebug atyfb: 0x%02X: ",
 					       base + i);
 				pr_cont(" %08X", aty_ld_lcd(i, par));
-			}
-		}
+			पूर्ण
+		पूर्ण
 		pr_cont("\n\n");
-	}
-#endif /* CONFIG_FB_ATY_GENERIC_LCD */
-}
-#endif /* DEBUG */
-	return 0;
-}
+	पूर्ण
+#पूर्ण_अगर /* CONFIG_FB_ATY_GENERIC_LCD */
+पूर्ण
+#पूर्ण_अगर /* DEBUG */
+	वापस 0;
+पूर्ण
 
-static int atyfb_check_var(struct fb_var_screeninfo *var, struct fb_info *info)
-{
-	struct atyfb_par *par = (struct atyfb_par *) info->par;
-	int err;
-	struct crtc crtc;
-	union aty_pll pll;
-	u32 pixclock;
+अटल पूर्णांक atyfb_check_var(काष्ठा fb_var_screeninfo *var, काष्ठा fb_info *info)
+अणु
+	काष्ठा atyfb_par *par = (काष्ठा atyfb_par *) info->par;
+	पूर्णांक err;
+	काष्ठा crtc crtc;
+	जोड़ aty_pll pll;
+	u32 pixघड़ी;
 
-	memcpy(&pll, &par->pll, sizeof(pll));
+	स_नकल(&pll, &par->pll, माप(pll));
 
 	err = aty_var_to_crtc(info, var, &crtc);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	pixclock = atyfb_get_pixclock(var, par);
+	pixघड़ी = atyfb_get_pixघड़ी(var, par);
 
-	if (pixclock == 0) {
-		if (!(var->activate & FB_ACTIVATE_TEST))
+	अगर (pixघड़ी == 0) अणु
+		अगर (!(var->activate & FB_ACTIVATE_TEST))
 			PRINTKE("Invalid pixclock\n");
-		return -EINVAL;
-	} else {
-		err = par->pll_ops->var_to_pll(info, pixclock,
+		वापस -EINVAL;
+	पूर्ण अन्यथा अणु
+		err = par->pll_ops->var_to_pll(info, pixघड़ी,
 					       var->bits_per_pixel, &pll);
-		if (err)
-			return err;
-	}
+		अगर (err)
+			वापस err;
+	पूर्ण
 
-	if (var->accel_flags & FB_ACCELF_TEXT)
+	अगर (var->accel_flags & FB_ACCELF_TEXT)
 		info->var.accel_flags = FB_ACCELF_TEXT;
-	else
+	अन्यथा
 		info->var.accel_flags = 0;
 
 	aty_crtc_to_var(&crtc, var);
-	var->pixclock = par->pll_ops->pll_to_var(info, &pll);
-	return 0;
-}
+	var->pixघड़ी = par->pll_ops->pll_to_var(info, &pll);
+	वापस 0;
+पूर्ण
 
-static void set_off_pitch(struct atyfb_par *par, const struct fb_info *info)
-{
+अटल व्योम set_off_pitch(काष्ठा atyfb_par *par, स्थिर काष्ठा fb_info *info)
+अणु
 	u32 xoffset = info->var.xoffset;
 	u32 yoffset = info->var.yoffset;
 	u32 line_length = info->fix.line_length;
@@ -1577,156 +1578,156 @@ static void set_off_pitch(struct atyfb_par *par, const struct fb_info *info)
 	par->crtc.off_pitch =
 		((yoffset * line_length + xoffset * bpp / 8) / 8) |
 		((line_length / bpp) << 22);
-}
+पूर्ण
 
 
 /*
  * Open/Release the frame buffer device
  */
 
-static int atyfb_open(struct fb_info *info, int user)
-{
-	struct atyfb_par *par = (struct atyfb_par *) info->par;
+अटल पूर्णांक atyfb_खोलो(काष्ठा fb_info *info, पूर्णांक user)
+अणु
+	काष्ठा atyfb_par *par = (काष्ठा atyfb_par *) info->par;
 
-	if (user) {
-		par->open++;
-#ifdef __sparc__
+	अगर (user) अणु
+		par->खोलो++;
+#अगर_घोषित __sparc__
 		par->mmaped = 0;
-#endif
-	}
-	return 0;
-}
+#पूर्ण_अगर
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static irqreturn_t aty_irq(int irq, void *dev_id)
-{
-	struct atyfb_par *par = dev_id;
-	int handled = 0;
-	u32 int_cntl;
+अटल irqवापस_t aty_irq(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा atyfb_par *par = dev_id;
+	पूर्णांक handled = 0;
+	u32 पूर्णांक_cntl;
 
-	spin_lock(&par->int_lock);
+	spin_lock(&par->पूर्णांक_lock);
 
-	int_cntl = aty_ld_le32(CRTC_INT_CNTL, par);
+	पूर्णांक_cntl = aty_ld_le32(CRTC_INT_CNTL, par);
 
-	if (int_cntl & CRTC_VBLANK_INT) {
-		/* clear interrupt */
-		aty_st_le32(CRTC_INT_CNTL, (int_cntl & CRTC_INT_EN_MASK) |
+	अगर (पूर्णांक_cntl & CRTC_VBLANK_INT) अणु
+		/* clear पूर्णांकerrupt */
+		aty_st_le32(CRTC_INT_CNTL, (पूर्णांक_cntl & CRTC_INT_EN_MASK) |
 			    CRTC_VBLANK_INT_AK, par);
 		par->vblank.count++;
-		if (par->vblank.pan_display) {
+		अगर (par->vblank.pan_display) अणु
 			par->vblank.pan_display = 0;
 			aty_st_le32(CRTC_OFF_PITCH, par->crtc.off_pitch, par);
-		}
-		wake_up_interruptible(&par->vblank.wait);
+		पूर्ण
+		wake_up_पूर्णांकerruptible(&par->vblank.रुको);
 		handled = 1;
-	}
+	पूर्ण
 
-	spin_unlock(&par->int_lock);
+	spin_unlock(&par->पूर्णांक_lock);
 
-	return IRQ_RETVAL(handled);
-}
+	वापस IRQ_RETVAL(handled);
+पूर्ण
 
-static int aty_enable_irq(struct atyfb_par *par, int reenable)
-{
-	u32 int_cntl;
+अटल पूर्णांक aty_enable_irq(काष्ठा atyfb_par *par, पूर्णांक reenable)
+अणु
+	u32 पूर्णांक_cntl;
 
-	if (!test_and_set_bit(0, &par->irq_flags)) {
-		if (request_irq(par->irq, aty_irq, IRQF_SHARED, "atyfb", par)) {
+	अगर (!test_and_set_bit(0, &par->irq_flags)) अणु
+		अगर (request_irq(par->irq, aty_irq, IRQF_SHARED, "atyfb", par)) अणु
 			clear_bit(0, &par->irq_flags);
-			return -EINVAL;
-		}
-		spin_lock_irq(&par->int_lock);
-		int_cntl = aty_ld_le32(CRTC_INT_CNTL, par) & CRTC_INT_EN_MASK;
-		/* clear interrupt */
-		aty_st_le32(CRTC_INT_CNTL, int_cntl | CRTC_VBLANK_INT_AK, par);
-		/* enable interrupt */
-		aty_st_le32(CRTC_INT_CNTL, int_cntl | CRTC_VBLANK_INT_EN, par);
-		spin_unlock_irq(&par->int_lock);
-	} else if (reenable) {
-		spin_lock_irq(&par->int_lock);
-		int_cntl = aty_ld_le32(CRTC_INT_CNTL, par) & CRTC_INT_EN_MASK;
-		if (!(int_cntl & CRTC_VBLANK_INT_EN)) {
-			printk("atyfb: someone disabled IRQ [%08x]\n",
-			       int_cntl);
-			/* re-enable interrupt */
-			aty_st_le32(CRTC_INT_CNTL, int_cntl |
+			वापस -EINVAL;
+		पूर्ण
+		spin_lock_irq(&par->पूर्णांक_lock);
+		पूर्णांक_cntl = aty_ld_le32(CRTC_INT_CNTL, par) & CRTC_INT_EN_MASK;
+		/* clear पूर्णांकerrupt */
+		aty_st_le32(CRTC_INT_CNTL, पूर्णांक_cntl | CRTC_VBLANK_INT_AK, par);
+		/* enable पूर्णांकerrupt */
+		aty_st_le32(CRTC_INT_CNTL, पूर्णांक_cntl | CRTC_VBLANK_INT_EN, par);
+		spin_unlock_irq(&par->पूर्णांक_lock);
+	पूर्ण अन्यथा अगर (reenable) अणु
+		spin_lock_irq(&par->पूर्णांक_lock);
+		पूर्णांक_cntl = aty_ld_le32(CRTC_INT_CNTL, par) & CRTC_INT_EN_MASK;
+		अगर (!(पूर्णांक_cntl & CRTC_VBLANK_INT_EN)) अणु
+			prपूर्णांकk("atyfb: someone disabled IRQ [%08x]\n",
+			       पूर्णांक_cntl);
+			/* re-enable पूर्णांकerrupt */
+			aty_st_le32(CRTC_INT_CNTL, पूर्णांक_cntl |
 				    CRTC_VBLANK_INT_EN, par);
-		}
-		spin_unlock_irq(&par->int_lock);
-	}
+		पूर्ण
+		spin_unlock_irq(&par->पूर्णांक_lock);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int aty_disable_irq(struct atyfb_par *par)
-{
-	u32 int_cntl;
+अटल पूर्णांक aty_disable_irq(काष्ठा atyfb_par *par)
+अणु
+	u32 पूर्णांक_cntl;
 
-	if (test_and_clear_bit(0, &par->irq_flags)) {
-		if (par->vblank.pan_display) {
+	अगर (test_and_clear_bit(0, &par->irq_flags)) अणु
+		अगर (par->vblank.pan_display) अणु
 			par->vblank.pan_display = 0;
 			aty_st_le32(CRTC_OFF_PITCH, par->crtc.off_pitch, par);
-		}
-		spin_lock_irq(&par->int_lock);
-		int_cntl = aty_ld_le32(CRTC_INT_CNTL, par) & CRTC_INT_EN_MASK;
-		/* disable interrupt */
-		aty_st_le32(CRTC_INT_CNTL, int_cntl & ~CRTC_VBLANK_INT_EN, par);
-		spin_unlock_irq(&par->int_lock);
-		free_irq(par->irq, par);
-	}
+		पूर्ण
+		spin_lock_irq(&par->पूर्णांक_lock);
+		पूर्णांक_cntl = aty_ld_le32(CRTC_INT_CNTL, par) & CRTC_INT_EN_MASK;
+		/* disable पूर्णांकerrupt */
+		aty_st_le32(CRTC_INT_CNTL, पूर्णांक_cntl & ~CRTC_VBLANK_INT_EN, par);
+		spin_unlock_irq(&par->पूर्णांक_lock);
+		मुक्त_irq(par->irq, par);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int atyfb_release(struct fb_info *info, int user)
-{
-	struct atyfb_par *par = (struct atyfb_par *) info->par;
-#ifdef __sparc__
-	int was_mmaped;
-#endif
+अटल पूर्णांक atyfb_release(काष्ठा fb_info *info, पूर्णांक user)
+अणु
+	काष्ठा atyfb_par *par = (काष्ठा atyfb_par *) info->par;
+#अगर_घोषित __sparc__
+	पूर्णांक was_mmaped;
+#पूर्ण_अगर
 
-	if (!user)
-		return 0;
+	अगर (!user)
+		वापस 0;
 
-	par->open--;
+	par->खोलो--;
 	mdelay(1);
-	wait_for_idle(par);
+	रुको_क्रम_idle(par);
 
-	if (par->open)
-		return 0;
+	अगर (par->खोलो)
+		वापस 0;
 
-#ifdef __sparc__
+#अगर_घोषित __sparc__
 	was_mmaped = par->mmaped;
 
 	par->mmaped = 0;
 
-	if (was_mmaped) {
-		struct fb_var_screeninfo var;
+	अगर (was_mmaped) अणु
+		काष्ठा fb_var_screeninfo var;
 
 		/*
-		 * Now reset the default display config, we have
+		 * Now reset the शेष display config, we have
 		 * no idea what the program(s) which mmap'd the
 		 * chip did to the configuration, nor whether it
 		 * restored it correctly.
 		 */
-		var = default_var;
-		if (noaccel)
+		var = शेष_var;
+		अगर (noaccel)
 			var.accel_flags &= ~FB_ACCELF_TEXT;
-		else
+		अन्यथा
 			var.accel_flags |= FB_ACCELF_TEXT;
-		if (var.yres == var.yres_virtual) {
+		अगर (var.yres == var.yres_भव) अणु
 			u32 videoram = (info->fix.smem_len - (PAGE_SIZE << 2));
-			var.yres_virtual =
+			var.yres_भव =
 				((videoram * 8) / var.bits_per_pixel) /
-				var.xres_virtual;
-			if (var.yres_virtual < var.yres)
-				var.yres_virtual = var.yres;
-		}
-	}
-#endif
+				var.xres_भव;
+			अगर (var.yres_भव < var.yres)
+				var.yres_भव = var.yres;
+		पूर्ण
+	पूर्ण
+#पूर्ण_अगर
 	aty_disable_irq(par);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * Pan or Wrap the Display
@@ -1734,166 +1735,166 @@ static int atyfb_release(struct fb_info *info, int user)
  * This call looks only at xoffset, yoffset and the FB_VMODE_YWRAP flag
  */
 
-static int atyfb_pan_display(struct fb_var_screeninfo *var,
-			     struct fb_info *info)
-{
-	struct atyfb_par *par = (struct atyfb_par *) info->par;
+अटल पूर्णांक atyfb_pan_display(काष्ठा fb_var_screeninfo *var,
+			     काष्ठा fb_info *info)
+अणु
+	काष्ठा atyfb_par *par = (काष्ठा atyfb_par *) info->par;
 	u32 xres, yres, xoffset, yoffset;
 
 	xres = (((par->crtc.h_tot_disp >> 16) & 0xff) + 1) * 8;
 	yres = ((par->crtc.v_tot_disp >> 16) & 0x7ff) + 1;
-	if (par->crtc.gen_cntl & CRTC_DBL_SCAN_EN)
+	अगर (par->crtc.gen_cntl & CRTC_DBL_SCAN_EN)
 		yres >>= 1;
 	xoffset = (var->xoffset + 7) & ~7;
 	yoffset = var->yoffset;
-	if (xoffset + xres > par->crtc.vxres ||
+	अगर (xoffset + xres > par->crtc.vxres ||
 	    yoffset + yres > par->crtc.vyres)
-		return -EINVAL;
+		वापस -EINVAL;
 	info->var.xoffset = xoffset;
 	info->var.yoffset = yoffset;
-	if (par->asleep)
-		return 0;
+	अगर (par->asleep)
+		वापस 0;
 
 	set_off_pitch(par, info);
-	if ((var->activate & FB_ACTIVATE_VBL) && !aty_enable_irq(par, 0)) {
+	अगर ((var->activate & FB_ACTIVATE_VBL) && !aty_enable_irq(par, 0)) अणु
 		par->vblank.pan_display = 1;
-	} else {
+	पूर्ण अन्यथा अणु
 		par->vblank.pan_display = 0;
 		aty_st_le32(CRTC_OFF_PITCH, par->crtc.off_pitch, par);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int aty_waitforvblank(struct atyfb_par *par, u32 crtc)
-{
-	struct aty_interrupt *vbl;
-	unsigned int count;
-	int ret;
+अटल पूर्णांक aty_रुकोक्रमvblank(काष्ठा atyfb_par *par, u32 crtc)
+अणु
+	काष्ठा aty_पूर्णांकerrupt *vbl;
+	अचिन्हित पूर्णांक count;
+	पूर्णांक ret;
 
-	switch (crtc) {
-	case 0:
+	चयन (crtc) अणु
+	हाल 0:
 		vbl = &par->vblank;
-		break;
-	default:
-		return -ENODEV;
-	}
+		अवरोध;
+	शेष:
+		वापस -ENODEV;
+	पूर्ण
 
 	ret = aty_enable_irq(par, 0);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	count = vbl->count;
-	ret = wait_event_interruptible_timeout(vbl->wait,
+	ret = रुको_event_पूर्णांकerruptible_समयout(vbl->रुको,
 					       count != vbl->count, HZ/10);
-	if (ret < 0)
-		return ret;
-	if (ret == 0) {
+	अगर (ret < 0)
+		वापस ret;
+	अगर (ret == 0) अणु
 		aty_enable_irq(par, 1);
-		return -ETIMEDOUT;
-	}
+		वापस -ETIMEDOUT;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
-#ifdef DEBUG
-#define ATYIO_CLKR		0x41545900	/* ATY\00 */
-#define ATYIO_CLKW		0x41545901	/* ATY\01 */
+#अगर_घोषित DEBUG
+#घोषणा ATYIO_CLKR		0x41545900	/* ATY\00 */
+#घोषणा ATYIO_CLKW		0x41545901	/* ATY\01 */
 
-struct atyclk {
+काष्ठा atyclk अणु
 	u32 ref_clk_per;
-	u8 pll_ref_div;
-	u8 mclk_fb_div;
-	u8 mclk_post_div;	/* 1,2,3,4,8 */
+	u8 pll_ref_भाग;
+	u8 mclk_fb_भाग;
+	u8 mclk_post_भाग;	/* 1,2,3,4,8 */
 	u8 mclk_fb_mult;	/* 2 or 4 */
-	u8 xclk_post_div;	/* 1,2,3,4,8 */
-	u8 vclk_fb_div;
-	u8 vclk_post_div;	/* 1,2,3,4,6,8,12 */
+	u8 xclk_post_भाग;	/* 1,2,3,4,8 */
+	u8 vclk_fb_भाग;
+	u8 vclk_post_भाग;	/* 1,2,3,4,6,8,12 */
 	u32 dsp_xclks_per_row;	/* 0-16383 */
 	u32 dsp_loop_latency;	/* 0-15 */
 	u32 dsp_precision;	/* 0-7 */
 	u32 dsp_on;		/* 0-2047 */
 	u32 dsp_off;		/* 0-2047 */
-};
+पूर्ण;
 
-#define ATYIO_FEATR		0x41545902	/* ATY\02 */
-#define ATYIO_FEATW		0x41545903	/* ATY\03 */
-#endif
+#घोषणा ATYIO_FEATR		0x41545902	/* ATY\02 */
+#घोषणा ATYIO_FEATW		0x41545903	/* ATY\03 */
+#पूर्ण_अगर
 
-static int atyfb_ioctl(struct fb_info *info, u_int cmd, u_long arg)
-{
-	struct atyfb_par *par = (struct atyfb_par *) info->par;
-#ifdef __sparc__
-	struct fbtype fbtyp;
-#endif
+अटल पूर्णांक atyfb_ioctl(काष्ठा fb_info *info, u_पूर्णांक cmd, u_दीर्घ arg)
+अणु
+	काष्ठा atyfb_par *par = (काष्ठा atyfb_par *) info->par;
+#अगर_घोषित __sparc__
+	काष्ठा fbtype fbtyp;
+#पूर्ण_अगर
 
-	switch (cmd) {
-#ifdef __sparc__
-	case FBIOGTYPE:
+	चयन (cmd) अणु
+#अगर_घोषित __sparc__
+	हाल FBIOGTYPE:
 		fbtyp.fb_type = FBTYPE_PCI_GENERIC;
 		fbtyp.fb_width = par->crtc.vxres;
 		fbtyp.fb_height = par->crtc.vyres;
 		fbtyp.fb_depth = info->var.bits_per_pixel;
 		fbtyp.fb_cmsize = info->cmap.len;
 		fbtyp.fb_size = info->fix.smem_len;
-		if (copy_to_user((struct fbtype __user *) arg, &fbtyp,
-				 sizeof(fbtyp)))
-			return -EFAULT;
-		break;
-#endif /* __sparc__ */
+		अगर (copy_to_user((काष्ठा fbtype __user *) arg, &fbtyp,
+				 माप(fbtyp)))
+			वापस -EFAULT;
+		अवरोध;
+#पूर्ण_अगर /* __sparc__ */
 
-	case FBIO_WAITFORVSYNC:
-		{
+	हाल FBIO_WAITFORVSYNC:
+		अणु
 			u32 crtc;
 
-			if (get_user(crtc, (__u32 __user *) arg))
-				return -EFAULT;
+			अगर (get_user(crtc, (__u32 __user *) arg))
+				वापस -EFAULT;
 
-			return aty_waitforvblank(par, crtc);
-		}
+			वापस aty_रुकोक्रमvblank(par, crtc);
+		पूर्ण
 
-#if defined(DEBUG) && defined(CONFIG_FB_ATY_CT)
-	case ATYIO_CLKR:
-		if (M64_HAS(INTEGRATED)) {
-			struct atyclk clk = { 0 };
-			union aty_pll *pll = &par->pll;
+#अगर defined(DEBUG) && defined(CONFIG_FB_ATY_CT)
+	हाल ATYIO_CLKR:
+		अगर (M64_HAS(INTEGRATED)) अणु
+			काष्ठा atyclk clk = अणु 0 पूर्ण;
+			जोड़ aty_pll *pll = &par->pll;
 			u32 dsp_config = pll->ct.dsp_config;
 			u32 dsp_on_off = pll->ct.dsp_on_off;
 			clk.ref_clk_per = par->ref_clk_per;
-			clk.pll_ref_div = pll->ct.pll_ref_div;
-			clk.mclk_fb_div = pll->ct.mclk_fb_div;
-			clk.mclk_post_div = pll->ct.mclk_post_div_real;
+			clk.pll_ref_भाग = pll->ct.pll_ref_भाग;
+			clk.mclk_fb_भाग = pll->ct.mclk_fb_भाग;
+			clk.mclk_post_भाग = pll->ct.mclk_post_भाग_real;
 			clk.mclk_fb_mult = pll->ct.mclk_fb_mult;
-			clk.xclk_post_div = pll->ct.xclk_post_div_real;
-			clk.vclk_fb_div = pll->ct.vclk_fb_div;
-			clk.vclk_post_div = pll->ct.vclk_post_div_real;
+			clk.xclk_post_भाग = pll->ct.xclk_post_भाग_real;
+			clk.vclk_fb_भाग = pll->ct.vclk_fb_भाग;
+			clk.vclk_post_भाग = pll->ct.vclk_post_भाग_real;
 			clk.dsp_xclks_per_row = dsp_config & 0x3fff;
 			clk.dsp_loop_latency = (dsp_config >> 16) & 0xf;
 			clk.dsp_precision = (dsp_config >> 20) & 7;
 			clk.dsp_off = dsp_on_off & 0x7ff;
 			clk.dsp_on = (dsp_on_off >> 16) & 0x7ff;
-			if (copy_to_user((struct atyclk __user *) arg, &clk,
-					 sizeof(clk)))
-				return -EFAULT;
-		} else
-			return -EINVAL;
-		break;
-	case ATYIO_CLKW:
-		if (M64_HAS(INTEGRATED)) {
-			struct atyclk clk;
-			union aty_pll *pll = &par->pll;
-			if (copy_from_user(&clk, (struct atyclk __user *) arg,
-					   sizeof(clk)))
-				return -EFAULT;
+			अगर (copy_to_user((काष्ठा atyclk __user *) arg, &clk,
+					 माप(clk)))
+				वापस -EFAULT;
+		पूर्ण अन्यथा
+			वापस -EINVAL;
+		अवरोध;
+	हाल ATYIO_CLKW:
+		अगर (M64_HAS(INTEGRATED)) अणु
+			काष्ठा atyclk clk;
+			जोड़ aty_pll *pll = &par->pll;
+			अगर (copy_from_user(&clk, (काष्ठा atyclk __user *) arg,
+					   माप(clk)))
+				वापस -EFAULT;
 			par->ref_clk_per = clk.ref_clk_per;
-			pll->ct.pll_ref_div = clk.pll_ref_div;
-			pll->ct.mclk_fb_div = clk.mclk_fb_div;
-			pll->ct.mclk_post_div_real = clk.mclk_post_div;
+			pll->ct.pll_ref_भाग = clk.pll_ref_भाग;
+			pll->ct.mclk_fb_भाग = clk.mclk_fb_भाग;
+			pll->ct.mclk_post_भाग_real = clk.mclk_post_भाग;
 			pll->ct.mclk_fb_mult = clk.mclk_fb_mult;
-			pll->ct.xclk_post_div_real = clk.xclk_post_div;
-			pll->ct.vclk_fb_div = clk.vclk_fb_div;
-			pll->ct.vclk_post_div_real = clk.vclk_post_div;
+			pll->ct.xclk_post_भाग_real = clk.xclk_post_भाग;
+			pll->ct.vclk_fb_भाग = clk.vclk_fb_भाग;
+			pll->ct.vclk_post_भाग_real = clk.vclk_post_भाग;
 			pll->ct.dsp_config = (clk.dsp_xclks_per_row & 0x3fff) |
 				((clk.dsp_loop_latency & 0xf) << 16) |
 				((clk.dsp_precision & 7) << 20);
@@ -1901,121 +1902,121 @@ static int atyfb_ioctl(struct fb_info *info, u_int cmd, u_long arg)
 				((clk.dsp_on & 0x7ff) << 16);
 			/*aty_calc_pll_ct(info, &pll->ct);*/
 			aty_set_pll_ct(info, pll);
-		} else
-			return -EINVAL;
-		break;
-	case ATYIO_FEATR:
-		if (get_user(par->features, (u32 __user *) arg))
-			return -EFAULT;
-		break;
-	case ATYIO_FEATW:
-		if (put_user(par->features, (u32 __user *) arg))
-			return -EFAULT;
-		break;
-#endif /* DEBUG && CONFIG_FB_ATY_CT */
-	default:
-		return -EINVAL;
-	}
-	return 0;
-}
+		पूर्ण अन्यथा
+			वापस -EINVAL;
+		अवरोध;
+	हाल ATYIO_FEATR:
+		अगर (get_user(par->features, (u32 __user *) arg))
+			वापस -EFAULT;
+		अवरोध;
+	हाल ATYIO_FEATW:
+		अगर (put_user(par->features, (u32 __user *) arg))
+			वापस -EFAULT;
+		अवरोध;
+#पूर्ण_अगर /* DEBUG && CONFIG_FB_ATY_CT */
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int atyfb_sync(struct fb_info *info)
-{
-	struct atyfb_par *par = (struct atyfb_par *) info->par;
+अटल पूर्णांक atyfb_sync(काष्ठा fb_info *info)
+अणु
+	काष्ठा atyfb_par *par = (काष्ठा atyfb_par *) info->par;
 
-	if (par->blitter_may_be_busy)
-		wait_for_idle(par);
-	return 0;
-}
+	अगर (par->blitter_may_be_busy)
+		रुको_क्रम_idle(par);
+	वापस 0;
+पूर्ण
 
-#ifdef __sparc__
-static int atyfb_mmap(struct fb_info *info, struct vm_area_struct *vma)
-{
-	struct atyfb_par *par = (struct atyfb_par *) info->par;
-	unsigned int size, page, map_size = 0;
-	unsigned long map_offset = 0;
-	unsigned long off;
-	int i;
+#अगर_घोषित __sparc__
+अटल पूर्णांक atyfb_mmap(काष्ठा fb_info *info, काष्ठा vm_area_काष्ठा *vma)
+अणु
+	काष्ठा atyfb_par *par = (काष्ठा atyfb_par *) info->par;
+	अचिन्हित पूर्णांक size, page, map_size = 0;
+	अचिन्हित दीर्घ map_offset = 0;
+	अचिन्हित दीर्घ off;
+	पूर्णांक i;
 
-	if (!par->mmap_map)
-		return -ENXIO;
+	अगर (!par->mmap_map)
+		वापस -ENXIO;
 
-	if (vma->vm_pgoff > (~0UL >> PAGE_SHIFT))
-		return -EINVAL;
+	अगर (vma->vm_pgoff > (~0UL >> PAGE_SHIFT))
+		वापस -EINVAL;
 
 	off = vma->vm_pgoff << PAGE_SHIFT;
 	size = vma->vm_end - vma->vm_start;
 
 	/* VM_IO | VM_DONTEXPAND | VM_DONTDUMP are set by remap_pfn_range() */
 
-	if (((vma->vm_pgoff == 0) && (size == info->fix.smem_len)) ||
+	अगर (((vma->vm_pgoff == 0) && (size == info->fix.smem_len)) ||
 	    ((off == info->fix.smem_len) && (size == PAGE_SIZE)))
 		off += 0x8000000000000000UL;
 
 	vma->vm_pgoff = off >> PAGE_SHIFT;	/* propagate off changes */
 
 	/* Each page, see which map applies */
-	for (page = 0; page < size;) {
+	क्रम (page = 0; page < size;) अणु
 		map_size = 0;
-		for (i = 0; par->mmap_map[i].size; i++) {
-			unsigned long start = par->mmap_map[i].voff;
-			unsigned long end = start + par->mmap_map[i].size;
-			unsigned long offset = off + page;
+		क्रम (i = 0; par->mmap_map[i].size; i++) अणु
+			अचिन्हित दीर्घ start = par->mmap_map[i].voff;
+			अचिन्हित दीर्घ end = start + par->mmap_map[i].size;
+			अचिन्हित दीर्घ offset = off + page;
 
-			if (start > offset)
-				continue;
-			if (offset >= end)
-				continue;
+			अगर (start > offset)
+				जारी;
+			अगर (offset >= end)
+				जारी;
 
 			map_size = par->mmap_map[i].size - (offset - start);
 			map_offset = par->mmap_map[i].poff + (offset - start);
-			break;
-		}
-		if (!map_size) {
+			अवरोध;
+		पूर्ण
+		अगर (!map_size) अणु
 			page += PAGE_SIZE;
-			continue;
-		}
-		if (page + map_size > size)
+			जारी;
+		पूर्ण
+		अगर (page + map_size > size)
 			map_size = size - page;
 
 		pgprot_val(vma->vm_page_prot) &= ~(par->mmap_map[i].prot_mask);
 		pgprot_val(vma->vm_page_prot) |= par->mmap_map[i].prot_flag;
 
-		if (remap_pfn_range(vma, vma->vm_start + page,
+		अगर (remap_pfn_range(vma, vma->vm_start + page,
 			map_offset >> PAGE_SHIFT, map_size, vma->vm_page_prot))
-			return -EAGAIN;
+			वापस -EAGAIN;
 
 		page += map_size;
-	}
+	पूर्ण
 
-	if (!map_size)
-		return -EINVAL;
+	अगर (!map_size)
+		वापस -EINVAL;
 
-	if (!par->mmaped)
+	अगर (!par->mmaped)
 		par->mmaped = 1;
-	return 0;
-}
-#endif /* __sparc__ */
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर /* __sparc__ */
 
 
 
-#if defined(CONFIG_PCI)
+#अगर defined(CONFIG_PCI)
 
-#ifdef CONFIG_PPC_PMAC
-/* Power management routines. Those are used for PowerBook sleep.
+#अगर_घोषित CONFIG_PPC_PMAC
+/* Power management routines. Those are used क्रम PowerBook sleep.
  */
-static int aty_power_mgmt(int sleep, struct atyfb_par *par)
-{
+अटल पूर्णांक aty_घातer_mgmt(पूर्णांक sleep, काष्ठा atyfb_par *par)
+अणु
 	u32 pm;
-	int timeout;
+	पूर्णांक समयout;
 
 	pm = aty_ld_lcd(POWER_MANAGEMENT, par);
 	pm = (pm & ~PWR_MGT_MODE_MASK) | PWR_MGT_MODE_REG;
 	aty_st_lcd(POWER_MANAGEMENT, pm, par);
 	pm = aty_ld_lcd(POWER_MANAGEMENT, par);
 
-	timeout = 2000;
-	if (sleep) {
+	समयout = 2000;
+	अगर (sleep) अणु
 		/* Sleep */
 		pm &= ~PWR_MGT_ON;
 		aty_st_lcd(POWER_MANAGEMENT, pm, par);
@@ -2028,13 +2029,13 @@ static int aty_power_mgmt(int sleep, struct atyfb_par *par)
 		udelay(10);
 		pm |= PWR_MGT_ON;
 		aty_st_lcd(POWER_MANAGEMENT, pm, par);
-		do {
+		करो अणु
 			pm = aty_ld_lcd(POWER_MANAGEMENT, par);
 			mdelay(1);
-			if ((--timeout) == 0)
-				break;
-		} while ((pm & PWR_MGT_STATUS_MASK) != PWR_MGT_STATUS_SUSPEND);
-	} else {
+			अगर ((--समयout) == 0)
+				अवरोध;
+		पूर्ण जबतक ((pm & PWR_MGT_STATUS_MASK) != PWR_MGT_STATUS_SUSPEND);
+	पूर्ण अन्यथा अणु
 		/* Wakeup */
 		pm &= ~PWR_MGT_ON;
 		aty_st_lcd(POWER_MANAGEMENT, pm, par);
@@ -2047,34 +2048,34 @@ static int aty_power_mgmt(int sleep, struct atyfb_par *par)
 		udelay(10);
 		pm |= PWR_MGT_ON;
 		aty_st_lcd(POWER_MANAGEMENT, pm, par);
-		do {
+		करो अणु
 			pm = aty_ld_lcd(POWER_MANAGEMENT, par);
 			mdelay(1);
-			if ((--timeout) == 0)
-				break;
-		} while ((pm & PWR_MGT_STATUS_MASK) != 0);
-	}
+			अगर ((--समयout) == 0)
+				अवरोध;
+		पूर्ण जबतक ((pm & PWR_MGT_STATUS_MASK) != 0);
+	पूर्ण
 	mdelay(500);
 
-	return timeout ? 0 : -EIO;
-}
-#endif /* CONFIG_PPC_PMAC */
+	वापस समयout ? 0 : -EIO;
+पूर्ण
+#पूर्ण_अगर /* CONFIG_PPC_PMAC */
 
-static int atyfb_pci_suspend_late(struct device *dev, pm_message_t state)
-{
-	struct pci_dev *pdev = to_pci_dev(dev);
-	struct fb_info *info = pci_get_drvdata(pdev);
-	struct atyfb_par *par = (struct atyfb_par *) info->par;
+अटल पूर्णांक atyfb_pci_suspend_late(काष्ठा device *dev, pm_message_t state)
+अणु
+	काष्ठा pci_dev *pdev = to_pci_dev(dev);
+	काष्ठा fb_info *info = pci_get_drvdata(pdev);
+	काष्ठा atyfb_par *par = (काष्ठा atyfb_par *) info->par;
 
-	if (state.event == pdev->dev.power.power_state.event)
-		return 0;
+	अगर (state.event == pdev->dev.घातer.घातer_state.event)
+		वापस 0;
 
 	console_lock();
 
 	fb_set_suspend(info, 1);
 
 	/* Idle & reset engine */
-	wait_for_idle(par);
+	रुको_क्रम_idle(par);
 	aty_reset_engine(par);
 
 	/* Blank display and LCD */
@@ -2089,62 +2090,62 @@ static int atyfb_pci_suspend_late(struct device *dev, pm_message_t state)
 	 * restore it properly on resume.
 	 */
 
-#ifdef CONFIG_PPC_PMAC
+#अगर_घोषित CONFIG_PPC_PMAC
 	/* Set chip to "suspend" mode */
-	if (machine_is(powermac) && aty_power_mgmt(1, par)) {
+	अगर (machine_is(घातermac) && aty_घातer_mgmt(1, par)) अणु
 		par->asleep = 0;
 		par->lock_blank = 0;
 		atyfb_blank(FB_BLANK_UNBLANK, info);
 		fb_set_suspend(info, 0);
 		console_unlock();
-		return -EIO;
-	}
-#endif
+		वापस -EIO;
+	पूर्ण
+#पूर्ण_अगर
 
 	console_unlock();
 
-	pdev->dev.power.power_state = state;
+	pdev->dev.घातer.घातer_state = state;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __maybe_unused atyfb_pci_suspend(struct device *dev)
-{
-	return atyfb_pci_suspend_late(dev, PMSG_SUSPEND);
-}
+अटल पूर्णांक __maybe_unused atyfb_pci_suspend(काष्ठा device *dev)
+अणु
+	वापस atyfb_pci_suspend_late(dev, PMSG_SUSPEND);
+पूर्ण
 
-static int __maybe_unused atyfb_pci_hibernate(struct device *dev)
-{
-	return atyfb_pci_suspend_late(dev, PMSG_HIBERNATE);
-}
+अटल पूर्णांक __maybe_unused atyfb_pci_hibernate(काष्ठा device *dev)
+अणु
+	वापस atyfb_pci_suspend_late(dev, PMSG_HIBERNATE);
+पूर्ण
 
-static int __maybe_unused atyfb_pci_freeze(struct device *dev)
-{
-	return atyfb_pci_suspend_late(dev, PMSG_FREEZE);
-}
+अटल पूर्णांक __maybe_unused atyfb_pci_मुक्तze(काष्ठा device *dev)
+अणु
+	वापस atyfb_pci_suspend_late(dev, PMSG_FREEZE);
+पूर्ण
 
-static void aty_resume_chip(struct fb_info *info)
-{
-	struct atyfb_par *par = info->par;
+अटल व्योम aty_resume_chip(काष्ठा fb_info *info)
+अणु
+	काष्ठा atyfb_par *par = info->par;
 
 	aty_st_le32(MEM_CNTL, par->mem_cntl, par);
 
-	if (par->pll_ops->resume_pll)
+	अगर (par->pll_ops->resume_pll)
 		par->pll_ops->resume_pll(info, &par->pll);
 
-	if (par->aux_start)
+	अगर (par->aux_start)
 		aty_st_le32(BUS_CNTL,
 			aty_ld_le32(BUS_CNTL, par) | BUS_APER_REG_DIS, par);
-}
+पूर्ण
 
-static int __maybe_unused atyfb_pci_resume(struct device *dev)
-{
-	struct pci_dev *pdev = to_pci_dev(dev);
-	struct fb_info *info = pci_get_drvdata(pdev);
-	struct atyfb_par *par = (struct atyfb_par *) info->par;
+अटल पूर्णांक __maybe_unused atyfb_pci_resume(काष्ठा device *dev)
+अणु
+	काष्ठा pci_dev *pdev = to_pci_dev(dev);
+	काष्ठा fb_info *info = pci_get_drvdata(pdev);
+	काष्ठा atyfb_par *par = (काष्ठा atyfb_par *) info->par;
 
-	if (pdev->dev.power.power_state.event == PM_EVENT_ON)
-		return 0;
+	अगर (pdev->dev.घातer.घातer_state.event == PM_EVENT_ON)
+		वापस 0;
 
 	console_lock();
 
@@ -2154,11 +2155,11 @@ static int __maybe_unused atyfb_pci_resume(struct device *dev)
 	 * restored
 	 */
 
-#ifdef CONFIG_PPC_PMAC
-	if (machine_is(powermac) &&
-	    pdev->dev.power.power_state.event == PM_EVENT_SUSPEND)
-		aty_power_mgmt(0, par);
-#endif
+#अगर_घोषित CONFIG_PPC_PMAC
+	अगर (machine_is(घातermac) &&
+	    pdev->dev.घातer.घातer_state.event == PM_EVENT_SUSPEND)
+		aty_घातer_mgmt(0, par);
+#पूर्ण_अगर
 
 	aty_resume_chip(info);
 
@@ -2176,291 +2177,291 @@ static int __maybe_unused atyfb_pci_resume(struct device *dev)
 
 	console_unlock();
 
-	pdev->dev.power.power_state = PMSG_ON;
+	pdev->dev.घातer.घातer_state = PMSG_ON;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct dev_pm_ops atyfb_pci_pm_ops = {
-#ifdef CONFIG_PM_SLEEP
+अटल स्थिर काष्ठा dev_pm_ops atyfb_pci_pm_ops = अणु
+#अगर_घोषित CONFIG_PM_SLEEP
 	.suspend	= atyfb_pci_suspend,
 	.resume		= atyfb_pci_resume,
-	.freeze		= atyfb_pci_freeze,
+	.मुक्तze		= atyfb_pci_मुक्तze,
 	.thaw		= atyfb_pci_resume,
-	.poweroff	= atyfb_pci_hibernate,
+	.घातeroff	= atyfb_pci_hibernate,
 	.restore	= atyfb_pci_resume,
-#endif /* CONFIG_PM_SLEEP */
-};
+#पूर्ण_अगर /* CONFIG_PM_SLEEP */
+पूर्ण;
 
-#endif /*  defined(CONFIG_PCI) */
+#पूर्ण_अगर /*  defined(CONFIG_PCI) */
 
 /* Backlight */
-#ifdef CONFIG_FB_ATY_BACKLIGHT
-#define MAX_LEVEL 0xFF
+#अगर_घोषित CONFIG_FB_ATY_BACKLIGHT
+#घोषणा MAX_LEVEL 0xFF
 
-static int aty_bl_get_level_brightness(struct atyfb_par *par, int level)
-{
-	struct fb_info *info = pci_get_drvdata(par->pdev);
-	int atylevel;
+अटल पूर्णांक aty_bl_get_level_brightness(काष्ठा atyfb_par *par, पूर्णांक level)
+अणु
+	काष्ठा fb_info *info = pci_get_drvdata(par->pdev);
+	पूर्णांक atylevel;
 
 	/* Get and convert the value */
-	/* No locking of bl_curve since we read a single value */
+	/* No locking of bl_curve since we पढ़ो a single value */
 	atylevel = info->bl_curve[level] * FB_BACKLIGHT_MAX / MAX_LEVEL;
 
-	if (atylevel < 0)
+	अगर (atylevel < 0)
 		atylevel = 0;
-	else if (atylevel > MAX_LEVEL)
+	अन्यथा अगर (atylevel > MAX_LEVEL)
 		atylevel = MAX_LEVEL;
 
-	return atylevel;
-}
+	वापस atylevel;
+पूर्ण
 
-static int aty_bl_update_status(struct backlight_device *bd)
-{
-	struct atyfb_par *par = bl_get_data(bd);
-	unsigned int reg = aty_ld_lcd(LCD_MISC_CNTL, par);
-	int level;
+अटल पूर्णांक aty_bl_update_status(काष्ठा backlight_device *bd)
+अणु
+	काष्ठा atyfb_par *par = bl_get_data(bd);
+	अचिन्हित पूर्णांक reg = aty_ld_lcd(LCD_MISC_CNTL, par);
+	पूर्णांक level;
 
-	if (bd->props.power != FB_BLANK_UNBLANK ||
+	अगर (bd->props.घातer != FB_BLANK_UNBLANK ||
 	    bd->props.fb_blank != FB_BLANK_UNBLANK)
 		level = 0;
-	else
+	अन्यथा
 		level = bd->props.brightness;
 
 	reg |= (BLMOD_EN | BIASMOD_EN);
-	if (level > 0) {
+	अगर (level > 0) अणु
 		reg &= ~BIAS_MOD_LEVEL_MASK;
 		reg |= (aty_bl_get_level_brightness(par, level) << BIAS_MOD_LEVEL_SHIFT);
-	} else {
+	पूर्ण अन्यथा अणु
 		reg &= ~BIAS_MOD_LEVEL_MASK;
 		reg |= (aty_bl_get_level_brightness(par, 0) << BIAS_MOD_LEVEL_SHIFT);
-	}
+	पूर्ण
 	aty_st_lcd(LCD_MISC_CNTL, reg, par);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct backlight_ops aty_bl_data = {
+अटल स्थिर काष्ठा backlight_ops aty_bl_data = अणु
 	.update_status	= aty_bl_update_status,
-};
+पूर्ण;
 
-static void aty_bl_init(struct atyfb_par *par)
-{
-	struct backlight_properties props;
-	struct fb_info *info = pci_get_drvdata(par->pdev);
-	struct backlight_device *bd;
-	char name[12];
+अटल व्योम aty_bl_init(काष्ठा atyfb_par *par)
+अणु
+	काष्ठा backlight_properties props;
+	काष्ठा fb_info *info = pci_get_drvdata(par->pdev);
+	काष्ठा backlight_device *bd;
+	अक्षर name[12];
 
-#ifdef CONFIG_PMAC_BACKLIGHT
-	if (!pmac_has_backlight_type("ati"))
-		return;
-#endif
+#अगर_घोषित CONFIG_PMAC_BACKLIGHT
+	अगर (!pmac_has_backlight_type("ati"))
+		वापस;
+#पूर्ण_अगर
 
-	snprintf(name, sizeof(name), "atybl%d", info->node);
+	snम_लिखो(name, माप(name), "atybl%d", info->node);
 
-	memset(&props, 0, sizeof(struct backlight_properties));
+	स_रखो(&props, 0, माप(काष्ठा backlight_properties));
 	props.type = BACKLIGHT_RAW;
 	props.max_brightness = FB_BACKLIGHT_LEVELS - 1;
-	bd = backlight_device_register(name, info->dev, par, &aty_bl_data,
+	bd = backlight_device_रेजिस्टर(name, info->dev, par, &aty_bl_data,
 				       &props);
-	if (IS_ERR(bd)) {
-		info->bl_dev = NULL;
-		printk(KERN_WARNING "aty: Backlight registration failed\n");
-		goto error;
-	}
+	अगर (IS_ERR(bd)) अणु
+		info->bl_dev = शून्य;
+		prपूर्णांकk(KERN_WARNING "aty: Backlight registration failed\n");
+		जाओ error;
+	पूर्ण
 
 	info->bl_dev = bd;
-	fb_bl_default_curve(info, 0,
+	fb_bl_शेष_curve(info, 0,
 			    0x3F * FB_BACKLIGHT_MAX / MAX_LEVEL,
 			    0xFF * FB_BACKLIGHT_MAX / MAX_LEVEL);
 
 	bd->props.brightness = bd->props.max_brightness;
-	bd->props.power = FB_BLANK_UNBLANK;
+	bd->props.घातer = FB_BLANK_UNBLANK;
 	backlight_update_status(bd);
 
-	printk("aty: Backlight initialized (%s)\n", name);
+	prपूर्णांकk("aty: Backlight initialized (%s)\n", name);
 
-	return;
+	वापस;
 
 error:
-	return;
-}
+	वापस;
+पूर्ण
 
-#ifdef CONFIG_PCI
-static void aty_bl_exit(struct backlight_device *bd)
-{
-	backlight_device_unregister(bd);
-	printk("aty: Backlight unloaded\n");
-}
-#endif /* CONFIG_PCI */
+#अगर_घोषित CONFIG_PCI
+अटल व्योम aty_bl_निकास(काष्ठा backlight_device *bd)
+अणु
+	backlight_device_unरेजिस्टर(bd);
+	prपूर्णांकk("aty: Backlight unloaded\n");
+पूर्ण
+#पूर्ण_अगर /* CONFIG_PCI */
 
-#endif /* CONFIG_FB_ATY_BACKLIGHT */
+#पूर्ण_अगर /* CONFIG_FB_ATY_BACKLIGHT */
 
-static void aty_calc_mem_refresh(struct atyfb_par *par, int xclk)
-{
-	static const int ragepro_tbl[] = {
+अटल व्योम aty_calc_mem_refresh(काष्ठा atyfb_par *par, पूर्णांक xclk)
+अणु
+	अटल स्थिर पूर्णांक ragepro_tbl[] = अणु
 		44, 50, 55, 66, 75, 80, 100
-	};
-	static const int ragexl_tbl[] = {
+	पूर्ण;
+	अटल स्थिर पूर्णांक ragexl_tbl[] = अणु
 		50, 66, 75, 83, 90, 95, 100, 105,
 		110, 115, 120, 125, 133, 143, 166
-	};
-	const int *refresh_tbl;
-	int i, size;
+	पूर्ण;
+	स्थिर पूर्णांक *refresh_tbl;
+	पूर्णांक i, size;
 
-	if (M64_HAS(XL_MEM)) {
+	अगर (M64_HAS(XL_MEM)) अणु
 		refresh_tbl = ragexl_tbl;
 		size = ARRAY_SIZE(ragexl_tbl);
-	} else {
+	पूर्ण अन्यथा अणु
 		refresh_tbl = ragepro_tbl;
 		size = ARRAY_SIZE(ragepro_tbl);
-	}
+	पूर्ण
 
-	for (i = 0; i < size; i++) {
-		if (xclk < refresh_tbl[i])
-			break;
-	}
+	क्रम (i = 0; i < size; i++) अणु
+		अगर (xclk < refresh_tbl[i])
+			अवरोध;
+	पूर्ण
 	par->mem_refresh_rate = i;
-}
+पूर्ण
 
 /*
  * Initialisation
  */
 
-static struct fb_info *fb_list = NULL;
+अटल काष्ठा fb_info *fb_list = शून्य;
 
-#if defined(__i386__) && defined(CONFIG_FB_ATY_GENERIC_LCD)
-static int atyfb_get_timings_from_lcd(struct atyfb_par *par,
-				      struct fb_var_screeninfo *var)
-{
-	int ret = -EINVAL;
+#अगर defined(__i386__) && defined(CONFIG_FB_ATY_GENERIC_LCD)
+अटल पूर्णांक atyfb_get_timings_from_lcd(काष्ठा atyfb_par *par,
+				      काष्ठा fb_var_screeninfo *var)
+अणु
+	पूर्णांक ret = -EINVAL;
 
-	if (par->lcd_table != 0 && (aty_ld_lcd(LCD_GEN_CNTL, par) & LCD_ON)) {
-		*var = default_var;
-		var->xres = var->xres_virtual = par->lcd_hdisp;
+	अगर (par->lcd_table != 0 && (aty_ld_lcd(LCD_GEN_CNTL, par) & LCD_ON)) अणु
+		*var = शेष_var;
+		var->xres = var->xres_भव = par->lcd_hdisp;
 		var->right_margin = par->lcd_right_margin;
 		var->left_margin = par->lcd_hblank_len -
 			(par->lcd_right_margin + par->lcd_hsync_dly +
 			 par->lcd_hsync_len);
 		var->hsync_len = par->lcd_hsync_len + par->lcd_hsync_dly;
-		var->yres = var->yres_virtual = par->lcd_vdisp;
+		var->yres = var->yres_भव = par->lcd_vdisp;
 		var->lower_margin = par->lcd_lower_margin;
 		var->upper_margin = par->lcd_vblank_len -
 			(par->lcd_lower_margin + par->lcd_vsync_len);
 		var->vsync_len = par->lcd_vsync_len;
-		var->pixclock = par->lcd_pixclock;
+		var->pixघड़ी = par->lcd_pixघड़ी;
 		ret = 0;
-	}
+	पूर्ण
 
-	return ret;
-}
-#endif /* defined(__i386__) && defined(CONFIG_FB_ATY_GENERIC_LCD) */
+	वापस ret;
+पूर्ण
+#पूर्ण_अगर /* defined(__i386__) && defined(CONFIG_FB_ATY_GENERIC_LCD) */
 
-static int aty_init(struct fb_info *info)
-{
-	struct atyfb_par *par = (struct atyfb_par *) info->par;
-	const char *ramname = NULL, *xtal;
-	int gtb_memsize, has_var = 0;
-	struct fb_var_screeninfo var;
-	int ret;
-#ifdef CONFIG_ATARI
+अटल पूर्णांक aty_init(काष्ठा fb_info *info)
+अणु
+	काष्ठा atyfb_par *par = (काष्ठा atyfb_par *) info->par;
+	स्थिर अक्षर *ramname = शून्य, *xtal;
+	पूर्णांक gtb_memsize, has_var = 0;
+	काष्ठा fb_var_screeninfo var;
+	पूर्णांक ret;
+#अगर_घोषित CONFIG_ATARI
 	u8 dac_type;
-#endif
+#पूर्ण_अगर
 
-	init_waitqueue_head(&par->vblank.wait);
-	spin_lock_init(&par->int_lock);
+	init_रुकोqueue_head(&par->vblank.रुको);
+	spin_lock_init(&par->पूर्णांक_lock);
 
-#ifdef CONFIG_FB_ATY_GX
-	if (!M64_HAS(INTEGRATED)) {
+#अगर_घोषित CONFIG_FB_ATY_GX
+	अगर (!M64_HAS(INTEGRATED)) अणु
 		u32 stat0;
 		u8 dac_subtype, clk_type;
 		stat0 = aty_ld_le32(CNFG_STAT0, par);
 		par->bus_type = (stat0 >> 0) & 0x07;
 		par->ram_type = (stat0 >> 3) & 0x07;
 		ramname = aty_gx_ram[par->ram_type];
-		/* FIXME: clockchip/RAMDAC probing? */
-#ifdef CONFIG_ATARI
+		/* FIXME: घड़ीchip/RAMDAC probing? */
+#अगर_घोषित CONFIG_ATARI
 		clk_type = CLK_ATI18818_1;
 		dac_type = (stat0 >> 9) & 0x07;
-		if (dac_type == 0x07)
+		अगर (dac_type == 0x07)
 			dac_subtype = DAC_ATT20C408;
-		else
+		अन्यथा
 			dac_subtype = (aty_ld_8(SCRATCH_REG1 + 1, par) & 0xF0) | dac_type;
-#else
+#अन्यथा
 		dac_subtype = DAC_IBMRGB514;
 		clk_type = CLK_IBMRGB514;
-#endif
-		switch (dac_subtype) {
-		case DAC_IBMRGB514:
+#पूर्ण_अगर
+		चयन (dac_subtype) अणु
+		हाल DAC_IBMRGB514:
 			par->dac_ops = &aty_dac_ibm514;
-			break;
-#ifdef CONFIG_ATARI
-		case DAC_ATI68860_B:
-		case DAC_ATI68860_C:
+			अवरोध;
+#अगर_घोषित CONFIG_ATARI
+		हाल DAC_ATI68860_B:
+		हाल DAC_ATI68860_C:
 			par->dac_ops = &aty_dac_ati68860b;
-			break;
-		case DAC_ATT20C408:
-		case DAC_ATT21C498:
+			अवरोध;
+		हाल DAC_ATT20C408:
+		हाल DAC_ATT21C498:
 			par->dac_ops = &aty_dac_att21c498;
-			break;
-#endif
-		default:
+			अवरोध;
+#पूर्ण_अगर
+		शेष:
 			PRINTKI("aty_init: DAC type not implemented yet!\n");
 			par->dac_ops = &aty_dac_unsupported;
-			break;
-		}
-		switch (clk_type) {
-#ifdef CONFIG_ATARI
-		case CLK_ATI18818_1:
+			अवरोध;
+		पूर्ण
+		चयन (clk_type) अणु
+#अगर_घोषित CONFIG_ATARI
+		हाल CLK_ATI18818_1:
 			par->pll_ops = &aty_pll_ati18818_1;
-			break;
-#else
-		case CLK_IBMRGB514:
+			अवरोध;
+#अन्यथा
+		हाल CLK_IBMRGB514:
 			par->pll_ops = &aty_pll_ibm514;
-			break;
-#endif
-		default:
+			अवरोध;
+#पूर्ण_अगर
+		शेष:
 			PRINTKI("aty_init: CLK type not implemented yet!");
 			par->pll_ops = &aty_pll_unsupported;
-			break;
-		}
-	}
-#endif /* CONFIG_FB_ATY_GX */
-#ifdef CONFIG_FB_ATY_CT
-	if (M64_HAS(INTEGRATED)) {
+			अवरोध;
+		पूर्ण
+	पूर्ण
+#पूर्ण_अगर /* CONFIG_FB_ATY_GX */
+#अगर_घोषित CONFIG_FB_ATY_CT
+	अगर (M64_HAS(INTEGRATED)) अणु
 		par->dac_ops = &aty_dac_ct;
 		par->pll_ops = &aty_pll_ct;
 		par->bus_type = PCI;
 		par->ram_type = (aty_ld_le32(CNFG_STAT0, par) & 0x07);
-		if (M64_HAS(XL_MEM))
+		अगर (M64_HAS(XL_MEM))
 			ramname = aty_xl_ram[par->ram_type];
-		else
+		अन्यथा
 			ramname = aty_ct_ram[par->ram_type];
-		/* for many chips, the mclk is 67 MHz for SDRAM, 63 MHz otherwise */
-		if (par->pll_limits.mclk == 67 && par->ram_type < SDRAM)
+		/* क्रम many chips, the mclk is 67 MHz क्रम SDRAM, 63 MHz otherwise */
+		अगर (par->pll_limits.mclk == 67 && par->ram_type < SDRAM)
 			par->pll_limits.mclk = 63;
-		/* Mobility + 32bit memory interface need halved XCLK. */
-		if (M64_HAS(MOBIL_BUS) && par->ram_type == SDRAM32)
+		/* Mobility + 32bit memory पूर्णांकerface need halved XCLK. */
+		अगर (M64_HAS(MOBIL_BUS) && par->ram_type == SDRAM32)
 			par->pll_limits.xclk = (par->pll_limits.xclk + 1) >> 1;
-	}
-#endif
-#ifdef CONFIG_PPC_PMAC
+	पूर्ण
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_PPC_PMAC
 	/*
 	 * The Apple iBook1 uses non-standard memory frequencies.
 	 * We detect it and set the frequency manually.
 	 */
-	if (of_machine_is_compatible("PowerBook2,1")) {
+	अगर (of_machine_is_compatible("PowerBook2,1")) अणु
 		par->pll_limits.mclk = 70;
 		par->pll_limits.xclk = 53;
-	}
-#endif
+	पूर्ण
+#पूर्ण_अगर
 
-	/* Allow command line to override clocks. */
-	if (pll)
+	/* Allow command line to override घड़ीs. */
+	अगर (pll)
 		par->pll_limits.pll_max = pll;
-	if (mclk)
+	अगर (mclk)
 		par->pll_limits.mclk = mclk;
-	if (xclk)
+	अगर (xclk)
 		par->pll_limits.xclk = xclk;
 
 	aty_calc_mem_refresh(par, par->pll_limits.xclk);
@@ -2471,122 +2472,122 @@ static int aty_init(struct fb_info *info)
 	par->ref_clk_per = 1000000000000ULL / 14318180;
 	xtal = "14.31818";
 
-#ifdef CONFIG_FB_ATY_CT
-	if (M64_HAS(GTB_DSP)) {
-		u8 pll_ref_div = aty_ld_pll_ct(PLL_REF_DIV, par);
+#अगर_घोषित CONFIG_FB_ATY_CT
+	अगर (M64_HAS(GTB_DSP)) अणु
+		u8 pll_ref_भाग = aty_ld_pll_ct(PLL_REF_DIV, par);
 
-		if (pll_ref_div) {
-			int diff1, diff2;
-			diff1 = 510 * 14 / pll_ref_div - par->pll_limits.pll_max;
-			diff2 = 510 * 29 / pll_ref_div - par->pll_limits.pll_max;
-			if (diff1 < 0)
-				diff1 = -diff1;
-			if (diff2 < 0)
-				diff2 = -diff2;
-			if (diff2 < diff1) {
+		अगर (pll_ref_भाग) अणु
+			पूर्णांक dअगरf1, dअगरf2;
+			dअगरf1 = 510 * 14 / pll_ref_भाग - par->pll_limits.pll_max;
+			dअगरf2 = 510 * 29 / pll_ref_भाग - par->pll_limits.pll_max;
+			अगर (dअगरf1 < 0)
+				dअगरf1 = -dअगरf1;
+			अगर (dअगरf2 < 0)
+				dअगरf2 = -dअगरf2;
+			अगर (dअगरf2 < dअगरf1) अणु
 				par->ref_clk_per = 1000000000000ULL / 29498928;
 				xtal = "29.498928";
-			}
-		}
-	}
-#endif /* CONFIG_FB_ATY_CT */
+			पूर्ण
+		पूर्ण
+	पूर्ण
+#पूर्ण_अगर /* CONFIG_FB_ATY_CT */
 
 	/* save previous video mode */
 	aty_get_crtc(par, &par->saved_crtc);
-	if (par->pll_ops->get_pll)
+	अगर (par->pll_ops->get_pll)
 		par->pll_ops->get_pll(info, &par->saved_pll);
 
 	par->mem_cntl = aty_ld_le32(MEM_CNTL, par);
 	gtb_memsize = M64_HAS(GTB_DSP);
-	if (gtb_memsize)
+	अगर (gtb_memsize)
 		/* 0xF used instead of MEM_SIZE_ALIAS */
-		switch (par->mem_cntl & 0xF) {
-		case MEM_SIZE_512K:
+		चयन (par->mem_cntl & 0xF) अणु
+		हाल MEM_SIZE_512K:
 			info->fix.smem_len = 0x80000;
-			break;
-		case MEM_SIZE_1M:
+			अवरोध;
+		हाल MEM_SIZE_1M:
 			info->fix.smem_len = 0x100000;
-			break;
-		case MEM_SIZE_2M_GTB:
+			अवरोध;
+		हाल MEM_SIZE_2M_GTB:
 			info->fix.smem_len = 0x200000;
-			break;
-		case MEM_SIZE_4M_GTB:
+			अवरोध;
+		हाल MEM_SIZE_4M_GTB:
 			info->fix.smem_len = 0x400000;
-			break;
-		case MEM_SIZE_6M_GTB:
+			अवरोध;
+		हाल MEM_SIZE_6M_GTB:
 			info->fix.smem_len = 0x600000;
-			break;
-		case MEM_SIZE_8M_GTB:
+			अवरोध;
+		हाल MEM_SIZE_8M_GTB:
 			info->fix.smem_len = 0x800000;
-			break;
-		default:
+			अवरोध;
+		शेष:
 			info->fix.smem_len = 0x80000;
-	} else
-		switch (par->mem_cntl & MEM_SIZE_ALIAS) {
-		case MEM_SIZE_512K:
+	पूर्ण अन्यथा
+		चयन (par->mem_cntl & MEM_SIZE_ALIAS) अणु
+		हाल MEM_SIZE_512K:
 			info->fix.smem_len = 0x80000;
-			break;
-		case MEM_SIZE_1M:
+			अवरोध;
+		हाल MEM_SIZE_1M:
 			info->fix.smem_len = 0x100000;
-			break;
-		case MEM_SIZE_2M:
+			अवरोध;
+		हाल MEM_SIZE_2M:
 			info->fix.smem_len = 0x200000;
-			break;
-		case MEM_SIZE_4M:
+			अवरोध;
+		हाल MEM_SIZE_4M:
 			info->fix.smem_len = 0x400000;
-			break;
-		case MEM_SIZE_6M:
+			अवरोध;
+		हाल MEM_SIZE_6M:
 			info->fix.smem_len = 0x600000;
-			break;
-		case MEM_SIZE_8M:
+			अवरोध;
+		हाल MEM_SIZE_8M:
 			info->fix.smem_len = 0x800000;
-			break;
-		default:
+			अवरोध;
+		शेष:
 			info->fix.smem_len = 0x80000;
-		}
+		पूर्ण
 
-	if (M64_HAS(MAGIC_VRAM_SIZE)) {
-		if (aty_ld_le32(CNFG_STAT1, par) & 0x40000000)
+	अगर (M64_HAS(MAGIC_VRAM_SIZE)) अणु
+		अगर (aty_ld_le32(CNFG_STAT1, par) & 0x40000000)
 			info->fix.smem_len += 0x400000;
-	}
+	पूर्ण
 
-	if (vram) {
+	अगर (vram) अणु
 		info->fix.smem_len = vram * 1024;
 		par->mem_cntl &= ~(gtb_memsize ? 0xF : MEM_SIZE_ALIAS);
-		if (info->fix.smem_len <= 0x80000)
+		अगर (info->fix.smem_len <= 0x80000)
 			par->mem_cntl |= MEM_SIZE_512K;
-		else if (info->fix.smem_len <= 0x100000)
+		अन्यथा अगर (info->fix.smem_len <= 0x100000)
 			par->mem_cntl |= MEM_SIZE_1M;
-		else if (info->fix.smem_len <= 0x200000)
+		अन्यथा अगर (info->fix.smem_len <= 0x200000)
 			par->mem_cntl |= gtb_memsize ? MEM_SIZE_2M_GTB : MEM_SIZE_2M;
-		else if (info->fix.smem_len <= 0x400000)
+		अन्यथा अगर (info->fix.smem_len <= 0x400000)
 			par->mem_cntl |= gtb_memsize ? MEM_SIZE_4M_GTB : MEM_SIZE_4M;
-		else if (info->fix.smem_len <= 0x600000)
+		अन्यथा अगर (info->fix.smem_len <= 0x600000)
 			par->mem_cntl |= gtb_memsize ? MEM_SIZE_6M_GTB : MEM_SIZE_6M;
-		else
+		अन्यथा
 			par->mem_cntl |= gtb_memsize ? MEM_SIZE_8M_GTB : MEM_SIZE_8M;
 		aty_st_le32(MEM_CNTL, par->mem_cntl, par);
-	}
+	पूर्ण
 
 	/*
 	 * Reg Block 0 (CT-compatible block) is at mmio_start
-	 * Reg Block 1 (multimedia extensions) is at mmio_start - 0x400
+	 * Reg Block 1 (mulसमयdia extensions) is at mmio_start - 0x400
 	 */
-	if (M64_HAS(GX)) {
+	अगर (M64_HAS(GX)) अणु
 		info->fix.mmio_len = 0x400;
 		info->fix.accel = FB_ACCEL_ATI_MACH64GX;
-	} else if (M64_HAS(CT)) {
+	पूर्ण अन्यथा अगर (M64_HAS(CT)) अणु
 		info->fix.mmio_len = 0x400;
 		info->fix.accel = FB_ACCEL_ATI_MACH64CT;
-	} else if (M64_HAS(VT)) {
+	पूर्ण अन्यथा अगर (M64_HAS(VT)) अणु
 		info->fix.mmio_start -= 0x400;
 		info->fix.mmio_len = 0x800;
 		info->fix.accel = FB_ACCEL_ATI_MACH64VT;
-	} else {/* GT */
+	पूर्ण अन्यथा अणु/* GT */
 		info->fix.mmio_start -= 0x400;
 		info->fix.mmio_len = 0x800;
 		info->fix.accel = FB_ACCEL_ATI_MACH64GT;
-	}
+	पूर्ण
 
 	PRINTKI("%d%c %s, %s MHz XTAL, %d MHz PLL, %d Mhz MCLK, %d MHz XCLK\n",
 		info->fix.smem_len == 0x80000 ? 512 : (info->fix.smem_len>>20),
@@ -2594,10 +2595,10 @@ static int aty_init(struct fb_info *info)
 		par->pll_limits.pll_max, par->pll_limits.mclk,
 		par->pll_limits.xclk);
 
-#if defined(DEBUG) && defined(CONFIG_FB_ATY_CT)
-	if (M64_HAS(INTEGRATED)) {
-		int i;
-		printk("debug atyfb: BUS_CNTL DAC_CNTL MEM_CNTL "
+#अगर defined(DEBUG) && defined(CONFIG_FB_ATY_CT)
+	अगर (M64_HAS(INTEGRATED)) अणु
+		पूर्णांक i;
+		prपूर्णांकk("debug atyfb: BUS_CNTL DAC_CNTL MEM_CNTL "
 		       "EXT_MEM_CNTL CRTC_GEN_CNTL DSP_CONFIG "
 		       "DSP_ON_OFF CLOCK_CNTL\n"
 		       "debug atyfb: %08x %08x %08x "
@@ -2612,28 +2613,28 @@ static int aty_init(struct fb_info *info)
 		       aty_ld_le32(DSP_CONFIG, par),
 		       aty_ld_le32(DSP_ON_OFF, par),
 		       aty_ld_le32(CLOCK_CNTL, par));
-		for (i = 0; i < 40; i++)
+		क्रम (i = 0; i < 40; i++)
 			pr_cont(" %02x", aty_ld_pll_ct(i, par));
 		pr_cont("\n");
-	}
-#endif
-	if (par->pll_ops->init_pll)
+	पूर्ण
+#पूर्ण_अगर
+	अगर (par->pll_ops->init_pll)
 		par->pll_ops->init_pll(info, &par->pll);
-	if (par->pll_ops->resume_pll)
+	अगर (par->pll_ops->resume_pll)
 		par->pll_ops->resume_pll(info, &par->pll);
 
 	aty_fudge_framebuffer_len(info);
 
 	/*
-	 * Disable register access through the linear aperture
-	 * if the auxiliary aperture is used so we can access
+	 * Disable रेजिस्टर access through the linear aperture
+	 * अगर the auxiliary aperture is used so we can access
 	 * the full 8 MB of video RAM on 8 MB boards.
 	 */
-	if (par->aux_start)
+	अगर (par->aux_start)
 		aty_st_le32(BUS_CNTL, aty_ld_le32(BUS_CNTL, par) |
 			    BUS_APER_REG_DIS, par);
 
-	if (!nomtrr)
+	अगर (!nomtrr)
 		/*
 		 * Only the ioremap_wc()'d area will get WC here
 		 * since ioremap_uc() was used on the entire PCI BAR.
@@ -2642,7 +2643,7 @@ static int aty_init(struct fb_info *info)
 						  par->res_size);
 
 	info->fbops = &atyfb_ops;
-	info->pseudo_palette = par->pseudo_palette;
+	info->pseuकरो_palette = par->pseuकरो_palette;
 	info->flags = FBINFO_DEFAULT           |
 		      FBINFO_HWACCEL_IMAGEBLIT |
 		      FBINFO_HWACCEL_FILLRECT  |
@@ -2650,246 +2651,246 @@ static int aty_init(struct fb_info *info)
 		      FBINFO_HWACCEL_YPAN      |
 		      FBINFO_READS_FAST;
 
-#ifdef CONFIG_PMAC_BACKLIGHT
-	if (M64_HAS(G3_PB_1_1) && of_machine_is_compatible("PowerBook1,1")) {
+#अगर_घोषित CONFIG_PMAC_BACKLIGHT
+	अगर (M64_HAS(G3_PB_1_1) && of_machine_is_compatible("PowerBook1,1")) अणु
 		/*
-		 * these bits let the 101 powerbook
+		 * these bits let the 101 घातerbook
 		 * wake up from sleep -- paulus
 		 */
 		aty_st_lcd(POWER_MANAGEMENT, aty_ld_lcd(POWER_MANAGEMENT, par) |
 			   USE_F32KHZ | TRISTATE_MEM_EN, par);
-	} else
-#endif
-	if (M64_HAS(MOBIL_BUS) && backlight) {
-#ifdef CONFIG_FB_ATY_BACKLIGHT
+	पूर्ण अन्यथा
+#पूर्ण_अगर
+	अगर (M64_HAS(MOBIL_BUS) && backlight) अणु
+#अगर_घोषित CONFIG_FB_ATY_BACKLIGHT
 		aty_bl_init(par);
-#endif
-	}
+#पूर्ण_अगर
+	पूर्ण
 
-	memset(&var, 0, sizeof(var));
-#ifdef CONFIG_PPC
-	if (machine_is(powermac)) {
+	स_रखो(&var, 0, माप(var));
+#अगर_घोषित CONFIG_PPC
+	अगर (machine_is(घातermac)) अणु
 		/*
-		 * FIXME: The NVRAM stuff should be put in a Mac-specific file,
+		 * FIXME: The NVRAM stuff should be put in a Mac-specअगरic file,
 		 *        as it applies to all Mac video cards
 		 */
-		if (mode) {
-			if (mac_find_mode(&var, info, mode, 8))
+		अगर (mode) अणु
+			अगर (mac_find_mode(&var, info, mode, 8))
 				has_var = 1;
-		} else {
-			if (default_vmode == VMODE_CHOOSE) {
-				int sense;
-				if (M64_HAS(G3_PB_1024x768))
+		पूर्ण अन्यथा अणु
+			अगर (शेष_vmode == VMODE_CHOOSE) अणु
+				पूर्णांक sense;
+				अगर (M64_HAS(G3_PB_1024x768))
 					/* G3 PowerBook with 1024x768 LCD */
-					default_vmode = VMODE_1024_768_60;
-				else if (of_machine_is_compatible("iMac"))
-					default_vmode = VMODE_1024_768_75;
-				else if (of_machine_is_compatible("PowerBook2,1"))
+					शेष_vmode = VMODE_1024_768_60;
+				अन्यथा अगर (of_machine_is_compatible("iMac"))
+					शेष_vmode = VMODE_1024_768_75;
+				अन्यथा अगर (of_machine_is_compatible("PowerBook2,1"))
 					/* iBook with 800x600 LCD */
-					default_vmode = VMODE_800_600_60;
-				else
-					default_vmode = VMODE_640_480_67;
-				sense = read_aty_sense(par);
+					शेष_vmode = VMODE_800_600_60;
+				अन्यथा
+					शेष_vmode = VMODE_640_480_67;
+				sense = पढ़ो_aty_sense(par);
 				PRINTKI("monitor sense=%x, mode %d\n",
 					sense,  mac_map_monitor_sense(sense));
-			}
-			if (default_vmode <= 0 || default_vmode > VMODE_MAX)
-				default_vmode = VMODE_640_480_60;
-			if (default_cmode < CMODE_8 || default_cmode > CMODE_32)
-				default_cmode = CMODE_8;
-			if (!mac_vmode_to_var(default_vmode, default_cmode,
+			पूर्ण
+			अगर (शेष_vmode <= 0 || शेष_vmode > VMODE_MAX)
+				शेष_vmode = VMODE_640_480_60;
+			अगर (शेष_cmode < CMODE_8 || शेष_cmode > CMODE_32)
+				शेष_cmode = CMODE_8;
+			अगर (!mac_vmode_to_var(शेष_vmode, शेष_cmode,
 					      &var))
 				has_var = 1;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-#endif /* !CONFIG_PPC */
+#पूर्ण_अगर /* !CONFIG_PPC */
 
-#if defined(__i386__) && defined(CONFIG_FB_ATY_GENERIC_LCD)
-	if (!atyfb_get_timings_from_lcd(par, &var))
+#अगर defined(__i386__) && defined(CONFIG_FB_ATY_GENERIC_LCD)
+	अगर (!atyfb_get_timings_from_lcd(par, &var))
 		has_var = 1;
-#endif
+#पूर्ण_अगर
 
-	if (mode && fb_find_mode(&var, info, mode, NULL, 0, &defmode, 8))
+	अगर (mode && fb_find_mode(&var, info, mode, शून्य, 0, &deभ_शेषe, 8))
 		has_var = 1;
 
-	if (!has_var)
-		var = default_var;
+	अगर (!has_var)
+		var = शेष_var;
 
-	if (noaccel)
+	अगर (noaccel)
 		var.accel_flags &= ~FB_ACCELF_TEXT;
-	else
+	अन्यथा
 		var.accel_flags |= FB_ACCELF_TEXT;
 
-	if (comp_sync != -1) {
-		if (!comp_sync)
+	अगर (comp_sync != -1) अणु
+		अगर (!comp_sync)
 			var.sync &= ~FB_SYNC_COMP_HIGH_ACT;
-		else
+		अन्यथा
 			var.sync |= FB_SYNC_COMP_HIGH_ACT;
-	}
+	पूर्ण
 
-	if (var.yres == var.yres_virtual) {
+	अगर (var.yres == var.yres_भव) अणु
 		u32 videoram = (info->fix.smem_len - (PAGE_SIZE << 2));
-		var.yres_virtual = ((videoram * 8) / var.bits_per_pixel) / var.xres_virtual;
-		if (var.yres_virtual < var.yres)
-			var.yres_virtual = var.yres;
-	}
+		var.yres_भव = ((videoram * 8) / var.bits_per_pixel) / var.xres_भव;
+		अगर (var.yres_भव < var.yres)
+			var.yres_भव = var.yres;
+	पूर्ण
 
 	ret = atyfb_check_var(&var, info);
-	if (ret) {
+	अगर (ret) अणु
 		PRINTKE("can't set default video mode\n");
-		goto aty_init_exit;
-	}
+		जाओ aty_init_निकास;
+	पूर्ण
 
-#ifdef CONFIG_FB_ATY_CT
-	if (!noaccel && M64_HAS(INTEGRATED))
+#अगर_घोषित CONFIG_FB_ATY_CT
+	अगर (!noaccel && M64_HAS(INTEGRATED))
 		aty_init_cursor(info, &atyfb_ops);
-#endif /* CONFIG_FB_ATY_CT */
+#पूर्ण_अगर /* CONFIG_FB_ATY_CT */
 	info->var = var;
 
 	ret = fb_alloc_cmap(&info->cmap, 256, 0);
-	if (ret < 0)
-		goto aty_init_exit;
+	अगर (ret < 0)
+		जाओ aty_init_निकास;
 
-	ret = register_framebuffer(info);
-	if (ret < 0) {
+	ret = रेजिस्टर_framebuffer(info);
+	अगर (ret < 0) अणु
 		fb_dealloc_cmap(&info->cmap);
-		goto aty_init_exit;
-	}
+		जाओ aty_init_निकास;
+	पूर्ण
 
 	fb_list = info;
 
 	PRINTKI("fb%d: %s frame buffer device on %s\n",
 		info->node, info->fix.id, par->bus_type == ISA ? "ISA" : "PCI");
-	return 0;
+	वापस 0;
 
-aty_init_exit:
+aty_init_निकास:
 	/* restore video mode */
 	aty_set_crtc(par, &par->saved_crtc);
 	par->pll_ops->set_pll(info, &par->saved_pll);
 	arch_phys_wc_del(par->wc_cookie);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-#if defined(CONFIG_ATARI) && !defined(MODULE)
-static int store_video_par(char *video_str, unsigned char m64_num)
-{
-	char *p;
-	unsigned long vmembase, size, guiregbase;
+#अगर defined(CONFIG_ATARI) && !defined(MODULE)
+अटल पूर्णांक store_video_par(अक्षर *video_str, अचिन्हित अक्षर m64_num)
+अणु
+	अक्षर *p;
+	अचिन्हित दीर्घ vmembase, size, guiregbase;
 
 	PRINTKI("store_video_par() '%s' \n", video_str);
 
-	if (!(p = strsep(&video_str, ";")) || !*p)
-		goto mach64_invalid;
-	vmembase = simple_strtoul(p, NULL, 0);
-	if (!(p = strsep(&video_str, ";")) || !*p)
-		goto mach64_invalid;
-	size = simple_strtoul(p, NULL, 0);
-	if (!(p = strsep(&video_str, ";")) || !*p)
-		goto mach64_invalid;
-	guiregbase = simple_strtoul(p, NULL, 0);
+	अगर (!(p = strsep(&video_str, ";")) || !*p)
+		जाओ mach64_invalid;
+	vmembase = simple_म_से_अदीर्घ(p, शून्य, 0);
+	अगर (!(p = strsep(&video_str, ";")) || !*p)
+		जाओ mach64_invalid;
+	size = simple_म_से_अदीर्घ(p, शून्य, 0);
+	अगर (!(p = strsep(&video_str, ";")) || !*p)
+		जाओ mach64_invalid;
+	guiregbase = simple_म_से_अदीर्घ(p, शून्य, 0);
 
 	phys_vmembase[m64_num] = vmembase;
 	phys_size[m64_num] = size;
 	phys_guiregbase[m64_num] = guiregbase;
 	PRINTKI("stored them all: $%08lX $%08lX $%08lX \n", vmembase, size,
 		guiregbase);
-	return 0;
+	वापस 0;
 
  mach64_invalid:
 	phys_vmembase[m64_num] = 0;
-	return -1;
-}
-#endif /* CONFIG_ATARI && !MODULE */
+	वापस -1;
+पूर्ण
+#पूर्ण_अगर /* CONFIG_ATARI && !MODULE */
 
 /*
  * Blank the display.
  */
 
-static int atyfb_blank(int blank, struct fb_info *info)
-{
-	struct atyfb_par *par = (struct atyfb_par *) info->par;
+अटल पूर्णांक atyfb_blank(पूर्णांक blank, काष्ठा fb_info *info)
+अणु
+	काष्ठा atyfb_par *par = (काष्ठा atyfb_par *) info->par;
 	u32 gen_cntl;
 
-	if (par->lock_blank || par->asleep)
-		return 0;
+	अगर (par->lock_blank || par->asleep)
+		वापस 0;
 
-#ifdef CONFIG_FB_ATY_GENERIC_LCD
-	if (par->lcd_table && blank > FB_BLANK_NORMAL &&
-	    (aty_ld_lcd(LCD_GEN_CNTL, par) & LCD_ON)) {
+#अगर_घोषित CONFIG_FB_ATY_GENERIC_LCD
+	अगर (par->lcd_table && blank > FB_BLANK_NORMAL &&
+	    (aty_ld_lcd(LCD_GEN_CNTL, par) & LCD_ON)) अणु
 		u32 pm = aty_ld_lcd(POWER_MANAGEMENT, par);
 		pm &= ~PWR_BLON;
 		aty_st_lcd(POWER_MANAGEMENT, pm, par);
-	}
-#endif
+	पूर्ण
+#पूर्ण_अगर
 
 	gen_cntl = aty_ld_le32(CRTC_GEN_CNTL, par);
 	gen_cntl &= ~0x400004c;
-	switch (blank) {
-	case FB_BLANK_UNBLANK:
-		break;
-	case FB_BLANK_NORMAL:
+	चयन (blank) अणु
+	हाल FB_BLANK_UNBLANK:
+		अवरोध;
+	हाल FB_BLANK_NORMAL:
 		gen_cntl |= 0x4000040;
-		break;
-	case FB_BLANK_VSYNC_SUSPEND:
+		अवरोध;
+	हाल FB_BLANK_VSYNC_SUSPEND:
 		gen_cntl |= 0x4000048;
-		break;
-	case FB_BLANK_HSYNC_SUSPEND:
+		अवरोध;
+	हाल FB_BLANK_HSYNC_SUSPEND:
 		gen_cntl |= 0x4000044;
-		break;
-	case FB_BLANK_POWERDOWN:
+		अवरोध;
+	हाल FB_BLANK_POWERDOWN:
 		gen_cntl |= 0x400004c;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 	aty_st_le32(CRTC_GEN_CNTL, gen_cntl, par);
 
-#ifdef CONFIG_FB_ATY_GENERIC_LCD
-	if (par->lcd_table && blank <= FB_BLANK_NORMAL &&
-	    (aty_ld_lcd(LCD_GEN_CNTL, par) & LCD_ON)) {
+#अगर_घोषित CONFIG_FB_ATY_GENERIC_LCD
+	अगर (par->lcd_table && blank <= FB_BLANK_NORMAL &&
+	    (aty_ld_lcd(LCD_GEN_CNTL, par) & LCD_ON)) अणु
 		u32 pm = aty_ld_lcd(POWER_MANAGEMENT, par);
 		pm |= PWR_BLON;
 		aty_st_lcd(POWER_MANAGEMENT, pm, par);
-	}
-#endif
+	पूर्ण
+#पूर्ण_अगर
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void aty_st_pal(u_int regno, u_int red, u_int green, u_int blue,
-		       const struct atyfb_par *par)
-{
+अटल व्योम aty_st_pal(u_पूर्णांक regno, u_पूर्णांक red, u_पूर्णांक green, u_पूर्णांक blue,
+		       स्थिर काष्ठा atyfb_par *par)
+अणु
 	aty_st_8(DAC_W_INDEX, regno, par);
 	aty_st_8(DAC_DATA, red, par);
 	aty_st_8(DAC_DATA, green, par);
 	aty_st_8(DAC_DATA, blue, par);
-}
+पूर्ण
 
 /*
- * Set a single color register. The values supplied are already
- * rounded down to the hardware's capabilities (according to the
- * entries in the var structure). Return != 0 for invalid regno.
- * !! 4 & 8 =  PSEUDO, > 8 = DIRECTCOLOR
+ * Set a single color रेजिस्टर. The values supplied are alपढ़ोy
+ * rounded करोwn to the hardware's capabilities (according to the
+ * entries in the var काष्ठाure). Return != 0 क्रम invalid regno.
+ * !! 4 & 8 =  PSEUDO, > 8 = सूचीECTCOLOR
  */
 
-static int atyfb_setcolreg(u_int regno, u_int red, u_int green, u_int blue,
-			   u_int transp, struct fb_info *info)
-{
-	struct atyfb_par *par = (struct atyfb_par *) info->par;
-	int i, depth;
-	u32 *pal = info->pseudo_palette;
+अटल पूर्णांक atyfb_setcolreg(u_पूर्णांक regno, u_पूर्णांक red, u_पूर्णांक green, u_पूर्णांक blue,
+			   u_पूर्णांक transp, काष्ठा fb_info *info)
+अणु
+	काष्ठा atyfb_par *par = (काष्ठा atyfb_par *) info->par;
+	पूर्णांक i, depth;
+	u32 *pal = info->pseuकरो_palette;
 
 	depth = info->var.bits_per_pixel;
-	if (depth == 16)
+	अगर (depth == 16)
 		depth = (info->var.green.length == 5) ? 15 : 16;
 
-	if (par->asleep)
-		return 0;
+	अगर (par->asleep)
+		वापस 0;
 
-	if (regno > 255 ||
+	अगर (regno > 255 ||
 	    (depth == 16 && regno > 63) ||
 	    (depth == 15 && regno > 31))
-		return 1;
+		वापस 1;
 
 	red >>= 8;
 	green >>= 8;
@@ -2899,92 +2900,92 @@ static int atyfb_setcolreg(u_int regno, u_int red, u_int green, u_int blue,
 	par->palette[regno].green = green;
 	par->palette[regno].blue = blue;
 
-	if (regno < 16) {
-		switch (depth) {
-		case 15:
+	अगर (regno < 16) अणु
+		चयन (depth) अणु
+		हाल 15:
 			pal[regno] = (regno << 10) | (regno << 5) | regno;
-			break;
-		case 16:
+			अवरोध;
+		हाल 16:
 			pal[regno] = (regno << 11) | (regno << 5) | regno;
-			break;
-		case 24:
+			अवरोध;
+		हाल 24:
 			pal[regno] = (regno << 16) | (regno << 8) | regno;
-			break;
-		case 32:
+			अवरोध;
+		हाल 32:
 			i = (regno << 8) | regno;
 			pal[regno] = (i << 16) | i;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
 	i = aty_ld_8(DAC_CNTL, par) & 0xfc;
-	if (M64_HAS(EXTRA_BRIGHT))
-		i |= 0x2; /* DAC_CNTL | 0x2 turns off the extra brightness for gt */
+	अगर (M64_HAS(EXTRA_BRIGHT))
+		i |= 0x2; /* DAC_CNTL | 0x2 turns off the extra brightness क्रम gt */
 	aty_st_8(DAC_CNTL, i, par);
 	aty_st_8(DAC_MASK, 0xff, par);
 
-	if (M64_HAS(INTEGRATED)) {
-		if (depth == 16) {
-			if (regno < 32)
+	अगर (M64_HAS(INTEGRATED)) अणु
+		अगर (depth == 16) अणु
+			अगर (regno < 32)
 				aty_st_pal(regno << 3, red,
 					   par->palette[regno << 1].green,
 					   blue, par);
 			red = par->palette[regno >> 1].red;
 			blue = par->palette[regno >> 1].blue;
 			regno <<= 2;
-		} else if (depth == 15) {
+		पूर्ण अन्यथा अगर (depth == 15) अणु
 			regno <<= 3;
-			for (i = 0; i < 8; i++)
+			क्रम (i = 0; i < 8; i++)
 				aty_st_pal(regno + i, red, green, blue, par);
-		}
-	}
+		पूर्ण
+	पूर्ण
 	aty_st_pal(regno, red, green, blue, par);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_PCI
+#अगर_घोषित CONFIG_PCI
 
-#ifdef __sparc__
+#अगर_घोषित __sparc__
 
-static int atyfb_setup_sparc(struct pci_dev *pdev, struct fb_info *info,
-			     unsigned long addr)
-{
-	struct atyfb_par *par = info->par;
-	struct device_node *dp;
+अटल पूर्णांक atyfb_setup_sparc(काष्ठा pci_dev *pdev, काष्ठा fb_info *info,
+			     अचिन्हित दीर्घ addr)
+अणु
+	काष्ठा atyfb_par *par = info->par;
+	काष्ठा device_node *dp;
 	u32 mem, chip_id;
-	int i, j, ret;
+	पूर्णांक i, j, ret;
 
 	/*
-	 * Map memory-mapped registers.
+	 * Map memory-mapped रेजिस्टरs.
 	 */
-	par->ati_regbase = (void *)addr + 0x7ffc00UL;
+	par->ati_regbase = (व्योम *)addr + 0x7ffc00UL;
 	info->fix.mmio_start = addr + 0x7ffc00UL;
 
 	/*
 	 * Map in big-endian aperture.
 	 */
-	info->screen_base = (char *) (addr + 0x800000UL);
+	info->screen_base = (अक्षर *) (addr + 0x800000UL);
 	info->fix.smem_start = addr + 0x800000UL;
 
 	/*
 	 * Figure mmap addresses from PCI config space.
 	 * Split Framebuffer in big- and little-endian halfs.
 	 */
-	for (i = 0; i < 6 && pdev->resource[i].start; i++)
+	क्रम (i = 0; i < 6 && pdev->resource[i].start; i++)
 		/* nothing */ ;
 	j = i + 4;
 
-	par->mmap_map = kcalloc(j, sizeof(*par->mmap_map), GFP_ATOMIC);
-	if (!par->mmap_map) {
+	par->mmap_map = kसुस्मृति(j, माप(*par->mmap_map), GFP_ATOMIC);
+	अगर (!par->mmap_map) अणु
 		PRINTKE("atyfb_setup_sparc() can't alloc mmap_map\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
-	for (i = 0, j = 2; i < 6 && pdev->resource[i].start; i++) {
-		struct resource *rp = &pdev->resource[i];
-		int io, breg = PCI_BASE_ADDRESS_0 + (i << 2);
-		unsigned long base;
+	क्रम (i = 0, j = 2; i < 6 && pdev->resource[i].start; i++) अणु
+		काष्ठा resource *rp = &pdev->resource[i];
+		पूर्णांक io, breg = PCI_BASE_ADDRESS_0 + (i << 2);
+		अचिन्हित दीर्घ base;
 		u32 size, pbase;
 
 		base = rp->start;
@@ -2993,31 +2994,31 @@ static int atyfb_setup_sparc(struct pci_dev *pdev, struct fb_info *info,
 
 		size = rp->end - base + 1;
 
-		pci_read_config_dword(pdev, breg, &pbase);
+		pci_पढ़ो_config_dword(pdev, breg, &pbase);
 
-		if (io)
+		अगर (io)
 			size &= ~1;
 
 		/*
-		 * Map the framebuffer a second time, this time without
+		 * Map the framebuffer a second समय, this समय without
 		 * the braindead _PAGE_IE setting. This is used by the
-		 * fixed Xserver, but we need to maintain the old mapping
+		 * fixed Xserver, but we need to मुख्यtain the old mapping
 		 * to stay compatible with older ones...
 		 */
-		if (base == addr) {
+		अगर (base == addr) अणु
 			par->mmap_map[j].voff = (pbase + 0x10000000) & PAGE_MASK;
 			par->mmap_map[j].poff = base & PAGE_MASK;
 			par->mmap_map[j].size = (size + ~PAGE_MASK) & PAGE_MASK;
 			par->mmap_map[j].prot_mask = _PAGE_CACHE;
 			par->mmap_map[j].prot_flag = _PAGE_E;
 			j++;
-		}
+		पूर्ण
 
 		/*
 		 * Here comes the old framebuffer mapping with _PAGE_IE
-		 * set for the big endian half of the framebuffer...
+		 * set क्रम the big endian half of the framebuffer...
 		 */
-		if (base == addr) {
+		अगर (base == addr) अणु
 			par->mmap_map[j].voff = (pbase + 0x800000) & PAGE_MASK;
 			par->mmap_map[j].poff = (base + 0x800000) & PAGE_MASK;
 			par->mmap_map[j].size = 0x800000;
@@ -3025,7 +3026,7 @@ static int atyfb_setup_sparc(struct pci_dev *pdev, struct fb_info *info,
 			par->mmap_map[j].prot_flag = _PAGE_E | _PAGE_IE;
 			size -= 0x800000;
 			j++;
-		}
+		पूर्ण
 
 		par->mmap_map[j].voff = pbase & PAGE_MASK;
 		par->mmap_map[j].poff = base & PAGE_MASK;
@@ -3033,53 +3034,53 @@ static int atyfb_setup_sparc(struct pci_dev *pdev, struct fb_info *info,
 		par->mmap_map[j].prot_mask = _PAGE_CACHE;
 		par->mmap_map[j].prot_flag = _PAGE_E;
 		j++;
-	}
+	पूर्ण
 
 	ret = correct_chipset(par);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	if (IS_XL(pdev->device)) {
+	अगर (IS_XL(pdev->device)) अणु
 		/*
 		 * Fix PROMs idea of MEM_CNTL settings...
 		 */
 		mem = aty_ld_le32(MEM_CNTL, par);
 		chip_id = aty_ld_le32(CNFG_CHIP_ID, par);
-		if (((chip_id & CFG_CHIP_TYPE) == VT_CHIP_ID) && !((chip_id >> 24) & 1)) {
-			switch (mem & 0x0f) {
-			case 3:
+		अगर (((chip_id & CFG_CHIP_TYPE) == VT_CHIP_ID) && !((chip_id >> 24) & 1)) अणु
+			चयन (mem & 0x0f) अणु
+			हाल 3:
 				mem = (mem & ~(0x0f)) | 2;
-				break;
-			case 7:
+				अवरोध;
+			हाल 7:
 				mem = (mem & ~(0x0f)) | 3;
-				break;
-			case 9:
+				अवरोध;
+			हाल 9:
 				mem = (mem & ~(0x0f)) | 4;
-				break;
-			case 11:
+				अवरोध;
+			हाल 11:
 				mem = (mem & ~(0x0f)) | 5;
-				break;
-			default:
-				break;
-			}
-			if ((aty_ld_le32(CNFG_STAT0, par) & 7) >= SDRAM)
+				अवरोध;
+			शेष:
+				अवरोध;
+			पूर्ण
+			अगर ((aty_ld_le32(CNFG_STAT0, par) & 7) >= SDRAM)
 				mem &= ~(0x00700000);
-		}
-		mem &= ~(0xcf80e000);	/* Turn off all undocumented bits. */
+		पूर्ण
+		mem &= ~(0xcf80e000);	/* Turn off all unकरोcumented bits. */
 		aty_st_le32(MEM_CNTL, mem, par);
-	}
+	पूर्ण
 
 	dp = pci_device_to_OF_node(pdev);
-	if (dp == of_console_device) {
-		struct fb_var_screeninfo *var = &default_var;
-		unsigned int N, P, Q, M, T, R;
-		struct crtc crtc;
+	अगर (dp == of_console_device) अणु
+		काष्ठा fb_var_screeninfo *var = &शेष_var;
+		अचिन्हित पूर्णांक N, P, Q, M, T, R;
+		काष्ठा crtc crtc;
 		u8 pll_regs[16];
-		u8 clock_cntl;
+		u8 घड़ी_cntl;
 
-		crtc.vxres = of_getintprop_default(dp, "width", 1024);
-		crtc.vyres = of_getintprop_default(dp, "height", 768);
-		var->bits_per_pixel = of_getintprop_default(dp, "depth", 8);
+		crtc.vxres = of_getपूर्णांकprop_शेष(dp, "width", 1024);
+		crtc.vyres = of_getपूर्णांकprop_शेष(dp, "height", 768);
+		var->bits_per_pixel = of_getपूर्णांकprop_शेष(dp, "depth", 8);
 		var->xoffset = var->yoffset = 0;
 		crtc.h_tot_disp = aty_ld_le32(CRTC_H_TOTAL_DISP, par);
 		crtc.h_sync_strt_wid = aty_ld_le32(CRTC_H_SYNC_STRT_WID, par);
@@ -3091,9 +3092,9 @@ static int atyfb_setup_sparc(struct pci_dev *pdev, struct fb_info *info,
 		/*
 		 * Read the PLL to figure actual Refresh Rate.
 		 */
-		clock_cntl = aty_ld_8(CLOCK_CNTL, par);
-		/* DPRINTK("CLOCK_CNTL %02x\n", clock_cntl); */
-		for (i = 0; i < 16; i++)
+		घड़ी_cntl = aty_ld_8(CLOCK_CNTL, par);
+		/* DPRINTK("CLOCK_CNTL %02x\n", घड़ी_cntl); */
+		क्रम (i = 0; i < 16; i++)
 			pll_regs[i] = aty_ld_pll_ct(i, par);
 
 		/*
@@ -3104,13 +3105,13 @@ static int atyfb_setup_sparc(struct pci_dev *pdev, struct fb_info *info,
 		/*
 		 * PLL Feedback Divider N (Dependent on CLOCK_CNTL):
 		 */
-		N = pll_regs[VCLK0_FB_DIV + (clock_cntl & 3)];
+		N = pll_regs[VCLK0_FB_DIV + (घड़ी_cntl & 3)];
 
 		/*
 		 * PLL Post Divider P (Dependent on CLOCK_CNTL):
 		 */
-		P = aty_postdividers[((pll_regs[VCLK_POST_DIV] >> ((clock_cntl & 3) << 1)) & 3) |
-		                     ((pll_regs[PLL_EXT_CNTL] >> (2 + (clock_cntl & 3))) & 4)];
+		P = aty_postभागiders[((pll_regs[VCLK_POST_DIV] >> ((घड़ी_cntl & 3) << 1)) & 3) |
+		                     ((pll_regs[PLL_EXT_CNTL] >> (2 + (घड़ी_cntl & 3))) & 4)];
 
 		/*
 		 * PLL Divider Q:
@@ -3126,185 +3127,185 @@ static int atyfb_setup_sparc(struct pci_dev *pdev, struct fb_info *info,
 		 *
 		 * where R is XTALIN (= 14318 or 29498 kHz).
 		 */
-		if (IS_XL(pdev->device))
+		अगर (IS_XL(pdev->device))
 			R = 29498;
-		else
+		अन्यथा
 			R = 14318;
 
 		T = 2 * Q * R / M;
 
-		default_var.pixclock = 1000000000 / T;
-	}
+		शेष_var.pixघड़ी = 1000000000 / T;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#else /* __sparc__ */
+#अन्यथा /* __sparc__ */
 
-#ifdef __i386__
-#ifdef CONFIG_FB_ATY_GENERIC_LCD
-static void aty_init_lcd(struct atyfb_par *par, u32 bios_base)
-{
+#अगर_घोषित __i386__
+#अगर_घोषित CONFIG_FB_ATY_GENERIC_LCD
+अटल व्योम aty_init_lcd(काष्ठा atyfb_par *par, u32 bios_base)
+अणु
 	u32 driv_inf_tab, sig;
 	u16 lcd_ofs;
 
 	/*
 	 * To support an LCD panel, we should know it's dimensions and
-	 *  it's desired pixel clock.
-	 * There are two ways to do it:
+	 *  it's desired pixel घड़ी.
+	 * There are two ways to करो it:
 	 *  - Check the startup video mode and calculate the panel
 	 *    size from it. This is unreliable.
-	 *  - Read it from the driver information table in the video BIOS.
+	 *  - Read it from the driver inक्रमmation table in the video BIOS.
 	 */
-	/* Address of driver information table is at offset 0x78. */
+	/* Address of driver inक्रमmation table is at offset 0x78. */
 	driv_inf_tab = bios_base + *((u16 *)(bios_base+0x78));
 
-	/* Check for the driver information table signature. */
+	/* Check क्रम the driver inक्रमmation table signature. */
 	sig = *(u32 *)driv_inf_tab;
-	if ((sig == 0x54504c24) || /* Rage LT pro */
+	अगर ((sig == 0x54504c24) || /* Rage LT pro */
 	    (sig == 0x544d5224) || /* Rage mobility */
 	    (sig == 0x54435824) || /* Rage XC */
-	    (sig == 0x544c5824)) { /* Rage XL */
+	    (sig == 0x544c5824)) अणु /* Rage XL */
 		PRINTKI("BIOS contains driver information table.\n");
 		lcd_ofs = *(u16 *)(driv_inf_tab + 10);
 		par->lcd_table = 0;
-		if (lcd_ofs != 0)
+		अगर (lcd_ofs != 0)
 			par->lcd_table = bios_base + lcd_ofs;
-	}
+	पूर्ण
 
-	if (par->lcd_table != 0) {
-		char model[24];
-		char strbuf[16];
-		char refresh_rates_buf[100];
-		int id, tech, f, i, m, default_refresh_rate;
-		char *txtcolour;
-		char *txtmonitor;
-		char *txtdual;
-		char *txtformat;
+	अगर (par->lcd_table != 0) अणु
+		अक्षर model[24];
+		अक्षर strbuf[16];
+		अक्षर refresh_rates_buf[100];
+		पूर्णांक id, tech, f, i, m, शेष_refresh_rate;
+		अक्षर *txtcolour;
+		अक्षर *txपंचांगonitor;
+		अक्षर *txtdual;
+		अक्षर *txtक्रमmat;
 		u16 width, height, panel_type, refresh_rates;
 		u16 *lcdmodeptr;
-		u32 format;
-		u8 lcd_refresh_rates[16] = { 50, 56, 60, 67, 70, 72, 75, 76, 85,
-					     90, 100, 120, 140, 150, 160, 200 };
+		u32 क्रमmat;
+		u8 lcd_refresh_rates[16] = अणु 50, 56, 60, 67, 70, 72, 75, 76, 85,
+					     90, 100, 120, 140, 150, 160, 200 पूर्ण;
 		/*
-		 * The most important information is the panel size at
-		 * offset 25 and 27, but there's some other nice information
-		 * which we print to the screen.
+		 * The most important inक्रमmation is the panel size at
+		 * offset 25 and 27, but there's some other nice inक्रमmation
+		 * which we prपूर्णांक to the screen.
 		 */
 		id = *(u8 *)par->lcd_table;
-		strncpy(model, (char *)par->lcd_table+1, 24);
+		म_नकलन(model, (अक्षर *)par->lcd_table+1, 24);
 		model[23] = 0;
 
 		width = par->lcd_width = *(u16 *)(par->lcd_table+25);
 		height = par->lcd_height = *(u16 *)(par->lcd_table+27);
 		panel_type = *(u16 *)(par->lcd_table+29);
-		if (panel_type & 1)
+		अगर (panel_type & 1)
 			txtcolour = "colour";
-		else
+		अन्यथा
 			txtcolour = "monochrome";
-		if (panel_type & 2)
+		अगर (panel_type & 2)
 			txtdual = "dual (split) ";
-		else
+		अन्यथा
 			txtdual = "";
 		tech = (panel_type >> 2) & 63;
-		switch (tech) {
-		case 0:
-			txtmonitor = "passive matrix";
-			break;
-		case 1:
-			txtmonitor = "active matrix";
-			break;
-		case 2:
-			txtmonitor = "active addressed STN";
-			break;
-		case 3:
-			txtmonitor = "EL";
-			break;
-		case 4:
-			txtmonitor = "plasma";
-			break;
-		default:
-			txtmonitor = "unknown";
-		}
-		format = *(u32 *)(par->lcd_table+57);
-		if (tech == 0 || tech == 2) {
-			switch (format & 7) {
-			case 0:
-				txtformat = "12 bit interface";
-				break;
-			case 1:
-				txtformat = "16 bit interface";
-				break;
-			case 2:
-				txtformat = "24 bit interface";
-				break;
-			default:
-				txtformat = "unknown format";
-			}
-		} else {
-			switch (format & 7) {
-			case 0:
-				txtformat = "8 colours";
-				break;
-			case 1:
-				txtformat = "512 colours";
-				break;
-			case 2:
-				txtformat = "4096 colours";
-				break;
-			case 4:
-				txtformat = "262144 colours (LT mode)";
-				break;
-			case 5:
-				txtformat = "16777216 colours";
-				break;
-			case 6:
-				txtformat = "262144 colours (FDPI-2 mode)";
-				break;
-			default:
-				txtformat = "unknown format";
-			}
-		}
+		चयन (tech) अणु
+		हाल 0:
+			txपंचांगonitor = "passive matrix";
+			अवरोध;
+		हाल 1:
+			txपंचांगonitor = "active matrix";
+			अवरोध;
+		हाल 2:
+			txपंचांगonitor = "active addressed STN";
+			अवरोध;
+		हाल 3:
+			txपंचांगonitor = "EL";
+			अवरोध;
+		हाल 4:
+			txपंचांगonitor = "plasma";
+			अवरोध;
+		शेष:
+			txपंचांगonitor = "unknown";
+		पूर्ण
+		क्रमmat = *(u32 *)(par->lcd_table+57);
+		अगर (tech == 0 || tech == 2) अणु
+			चयन (क्रमmat & 7) अणु
+			हाल 0:
+				txtक्रमmat = "12 bit interface";
+				अवरोध;
+			हाल 1:
+				txtक्रमmat = "16 bit interface";
+				अवरोध;
+			हाल 2:
+				txtक्रमmat = "24 bit interface";
+				अवरोध;
+			शेष:
+				txtक्रमmat = "unknown format";
+			पूर्ण
+		पूर्ण अन्यथा अणु
+			चयन (क्रमmat & 7) अणु
+			हाल 0:
+				txtक्रमmat = "8 colours";
+				अवरोध;
+			हाल 1:
+				txtक्रमmat = "512 colours";
+				अवरोध;
+			हाल 2:
+				txtक्रमmat = "4096 colours";
+				अवरोध;
+			हाल 4:
+				txtक्रमmat = "262144 colours (LT mode)";
+				अवरोध;
+			हाल 5:
+				txtक्रमmat = "16777216 colours";
+				अवरोध;
+			हाल 6:
+				txtक्रमmat = "262144 colours (FDPI-2 mode)";
+				अवरोध;
+			शेष:
+				txtक्रमmat = "unknown format";
+			पूर्ण
+		पूर्ण
 		PRINTKI("%s%s %s monitor detected: %s\n",
-			txtdual, txtcolour, txtmonitor, model);
+			txtdual, txtcolour, txपंचांगonitor, model);
 		PRINTKI("       id=%d, %dx%d pixels, %s\n",
-			id, width, height, txtformat);
+			id, width, height, txtक्रमmat);
 		refresh_rates_buf[0] = 0;
 		refresh_rates = *(u16 *)(par->lcd_table+62);
 		m = 1;
 		f = 0;
-		for (i = 0; i < 16; i++) {
-			if (refresh_rates & m) {
-				if (f == 0) {
-					sprintf(strbuf, "%d",
+		क्रम (i = 0; i < 16; i++) अणु
+			अगर (refresh_rates & m) अणु
+				अगर (f == 0) अणु
+					प्र_लिखो(strbuf, "%d",
 						lcd_refresh_rates[i]);
 					f++;
-				} else {
-					sprintf(strbuf, ",%d",
+				पूर्ण अन्यथा अणु
+					प्र_लिखो(strbuf, ",%d",
 						lcd_refresh_rates[i]);
-				}
-				strcat(refresh_rates_buf, strbuf);
-			}
+				पूर्ण
+				म_जोड़ो(refresh_rates_buf, strbuf);
+			पूर्ण
 			m = m << 1;
-		}
-		default_refresh_rate = (*(u8 *)(par->lcd_table+61) & 0xf0) >> 4;
+		पूर्ण
+		शेष_refresh_rate = (*(u8 *)(par->lcd_table+61) & 0xf0) >> 4;
 		PRINTKI("       supports refresh rates [%s], default %d Hz\n",
-			refresh_rates_buf, lcd_refresh_rates[default_refresh_rate]);
-		par->lcd_refreshrate = lcd_refresh_rates[default_refresh_rate];
+			refresh_rates_buf, lcd_refresh_rates[शेष_refresh_rate]);
+		par->lcd_refreshrate = lcd_refresh_rates[शेष_refresh_rate];
 		/*
-		 * We now need to determine the crtc parameters for the
+		 * We now need to determine the crtc parameters क्रम the
 		 * LCD monitor. This is tricky, because they are not stored
-		 * individually in the BIOS. Instead, the BIOS contains a
-		 * table of display modes that work for this monitor.
+		 * inभागidually in the BIOS. Instead, the BIOS contains a
+		 * table of display modes that work क्रम this monitor.
 		 *
-		 * The idea is that we search for a mode of the same dimensions
+		 * The idea is that we search क्रम a mode of the same dimensions
 		 * as the dimensions of the LCD monitor. Say our LCD monitor
-		 * is 800x600 pixels, we search for a 800x600 monitor.
+		 * is 800x600 pixels, we search क्रम a 800x600 monitor.
 		 * The CRTC parameters we find here are the ones that we need
 		 * to use to simulate other resolutions on the LCD screen.
 		 */
 		lcdmodeptr = (u16 *)(par->lcd_table + 64);
-		while (*lcdmodeptr != 0) {
+		जबतक (*lcdmodeptr != 0) अणु
 			u32 modeptr;
 			u16 mwidth, mheight, lcd_hsync_start, lcd_vsync_start;
 			modeptr = bios_base + *lcdmodeptr;
@@ -3312,8 +3313,8 @@ static void aty_init_lcd(struct atyfb_par *par, u32 bios_base)
 			mwidth = *((u16 *)(modeptr+0));
 			mheight = *((u16 *)(modeptr+2));
 
-			if (mwidth == width && mheight == height) {
-				par->lcd_pixclock = 100000000 / *((u16 *)(modeptr+9));
+			अगर (mwidth == width && mheight == height) अणु
+				par->lcd_pixघड़ी = 100000000 / *((u16 *)(modeptr+9));
 				par->lcd_htotal = *((u16 *)(modeptr+17)) & 511;
 				par->lcd_hdisp = *((u16 *)(modeptr+19)) & 511;
 				lcd_hsync_start = *((u16 *)(modeptr+21)) & 511;
@@ -3338,17 +3339,17 @@ static void aty_init_lcd(struct atyfb_par *par, u32 bios_base)
 				par->lcd_lower_margin = lcd_vsync_start - par->lcd_vdisp;
 				par->lcd_hblank_len = par->lcd_htotal - par->lcd_hdisp;
 				par->lcd_vblank_len = par->lcd_vtotal - par->lcd_vdisp;
-				break;
-			}
+				अवरोध;
+			पूर्ण
 
 			lcdmodeptr++;
-		}
-		if (*lcdmodeptr == 0) {
+		पूर्ण
+		अगर (*lcdmodeptr == 0) अणु
 			PRINTKE("LCD monitor CRTC parameters not found!!!\n");
-			/* To do: Switch to CRT if possible. */
-		} else {
+			/* To करो: Switch to CRT अगर possible. */
+		पूर्ण अन्यथा अणु
 			PRINTKI("       LCD CRTC parameters: %d.%d  %d %d %d %d  %d %d %d %d\n",
-				1000000 / par->lcd_pixclock, 1000000 % par->lcd_pixclock,
+				1000000 / par->lcd_pixघड़ी, 1000000 % par->lcd_pixघड़ी,
 				par->lcd_hdisp,
 				par->lcd_hdisp + par->lcd_right_margin,
 				par->lcd_hdisp + par->lcd_right_margin
@@ -3359,7 +3360,7 @@ static void aty_init_lcd(struct atyfb_par *par, u32 bios_base)
 				par->lcd_vdisp + par->lcd_lower_margin + par->lcd_vsync_len,
 				par->lcd_vtotal);
 			PRINTKI("                          : %d %d %d %d %d %d %d %d %d\n",
-				par->lcd_pixclock,
+				par->lcd_pixघड़ी,
 				par->lcd_hblank_len - (par->lcd_right_margin +
 					par->lcd_hsync_dly + par->lcd_hsync_len),
 				par->lcd_hdisp,
@@ -3369,21 +3370,21 @@ static void aty_init_lcd(struct atyfb_par *par, u32 bios_base)
 				par->lcd_vdisp,
 				par->lcd_lower_margin,
 				par->lcd_vsync_len);
-		}
-	}
-}
-#endif /* CONFIG_FB_ATY_GENERIC_LCD */
+		पूर्ण
+	पूर्ण
+पूर्ण
+#पूर्ण_अगर /* CONFIG_FB_ATY_GENERIC_LCD */
 
-static int init_from_bios(struct atyfb_par *par)
-{
+अटल पूर्णांक init_from_bios(काष्ठा atyfb_par *par)
+अणु
 	u32 bios_base, rom_addr;
-	int ret;
+	पूर्णांक ret;
 
 	rom_addr = 0xc0000 + ((aty_ld_le32(SCRATCH_REG1, par) & 0x7f) << 11);
-	bios_base = (unsigned long)ioremap(rom_addr, 0x10000);
+	bios_base = (अचिन्हित दीर्घ)ioremap(rom_addr, 0x10000);
 
 	/* The BIOS starts with 0xaa55. */
-	if (*((u16 *)bios_base) == 0xaa55) {
+	अगर (*((u16 *)bios_base) == 0xaa55) अणु
 
 		u8 *bios_ptr;
 		u16 rom_table_offset, freq_table_offset;
@@ -3391,16 +3392,16 @@ static int init_from_bios(struct atyfb_par *par)
 
 		PRINTKI("Mach64 BIOS is located at %x, mapped at %x.\n", rom_addr, bios_base);
 
-		/* check for frequncy table */
+		/* check क्रम frequncy table */
 		bios_ptr = (u8*)bios_base;
 		rom_table_offset = (u16)(bios_ptr[0x48] | (bios_ptr[0x49] << 8));
 		freq_table_offset = bios_ptr[rom_table_offset + 16] | (bios_ptr[rom_table_offset + 17] << 8);
-		memcpy(&pll_block, bios_ptr + freq_table_offset, sizeof(PLL_BLOCK_MACH64));
+		स_नकल(&pll_block, bios_ptr + freq_table_offset, माप(PLL_BLOCK_MACH64));
 
 		PRINTKI("BIOS frequency table:\n");
 		PRINTKI("PCLK_min_freq %d, PCLK_max_freq %d, ref_freq %d, ref_divider %d\n",
 			pll_block.PCLK_min_freq, pll_block.PCLK_max_freq,
-			pll_block.ref_freq, pll_block.ref_divider);
+			pll_block.ref_freq, pll_block.ref_भागider);
 		PRINTKI("MCLK_pwd %d, MCLK_max_freq %d, XCLK_max_freq %d, SCLK_freq %d\n",
 			pll_block.MCLK_pwd, pll_block.MCLK_max_freq,
 			pll_block.XCLK_max_freq, pll_block.SCLK_freq);
@@ -3408,69 +3409,69 @@ static int init_from_bios(struct atyfb_par *par)
 		par->pll_limits.pll_min = pll_block.PCLK_min_freq/100;
 		par->pll_limits.pll_max = pll_block.PCLK_max_freq/100;
 		par->pll_limits.ref_clk = pll_block.ref_freq/100;
-		par->pll_limits.ref_div = pll_block.ref_divider;
+		par->pll_limits.ref_भाग = pll_block.ref_भागider;
 		par->pll_limits.sclk = pll_block.SCLK_freq/100;
 		par->pll_limits.mclk = pll_block.MCLK_max_freq/100;
 		par->pll_limits.mclk_pm = pll_block.MCLK_pwd/100;
 		par->pll_limits.xclk = pll_block.XCLK_max_freq/100;
-#ifdef CONFIG_FB_ATY_GENERIC_LCD
+#अगर_घोषित CONFIG_FB_ATY_GENERIC_LCD
 		aty_init_lcd(par, bios_base);
-#endif
+#पूर्ण_अगर
 		ret = 0;
-	} else {
+	पूर्ण अन्यथा अणु
 		PRINTKE("no BIOS frequency table found, use parameters\n");
 		ret = -ENXIO;
-	}
-	iounmap((void __iomem *)bios_base);
+	पूर्ण
+	iounmap((व्योम __iomem *)bios_base);
 
-	return ret;
-}
-#endif /* __i386__ */
+	वापस ret;
+पूर्ण
+#पूर्ण_अगर /* __i386__ */
 
-static int atyfb_setup_generic(struct pci_dev *pdev, struct fb_info *info,
-			       unsigned long addr)
-{
-	struct atyfb_par *par = info->par;
-	u16 tmp;
-	unsigned long raddr;
-	struct resource *rrp;
-	int ret = 0;
+अटल पूर्णांक atyfb_setup_generic(काष्ठा pci_dev *pdev, काष्ठा fb_info *info,
+			       अचिन्हित दीर्घ addr)
+अणु
+	काष्ठा atyfb_par *par = info->par;
+	u16 पंचांगp;
+	अचिन्हित दीर्घ raddr;
+	काष्ठा resource *rrp;
+	पूर्णांक ret = 0;
 
 	raddr = addr + 0x7ff000UL;
 	rrp = &pdev->resource[2];
-	if ((rrp->flags & IORESOURCE_MEM) &&
-	    request_mem_region(rrp->start, resource_size(rrp), "atyfb")) {
+	अगर ((rrp->flags & IORESOURCE_MEM) &&
+	    request_mem_region(rrp->start, resource_size(rrp), "atyfb")) अणु
 		par->aux_start = rrp->start;
 		par->aux_size = resource_size(rrp);
 		raddr = rrp->start;
 		PRINTKI("using auxiliary register aperture\n");
-	}
+	पूर्ण
 
 	info->fix.mmio_start = raddr;
 	/*
-	 * By using strong UC we force the MTRR to never have an
-	 * effect on the MMIO region on both non-PAT and PAT systems.
+	 * By using strong UC we क्रमce the MTRR to never have an
+	 * effect on the MMIO region on both non-PAT and PAT प्रणालीs.
 	 */
 	par->ati_regbase = ioremap_uc(info->fix.mmio_start, 0x1000);
-	if (par->ati_regbase == NULL)
-		return -ENOMEM;
+	अगर (par->ati_regbase == शून्य)
+		वापस -ENOMEM;
 
 	info->fix.mmio_start += par->aux_start ? 0x400 : 0xc00;
 	par->ati_regbase += par->aux_start ? 0x400 : 0xc00;
 
 	/*
 	 * Enable memory-space accesses using config-space
-	 * command register.
+	 * command रेजिस्टर.
 	 */
-	pci_read_config_word(pdev, PCI_COMMAND, &tmp);
-	if (!(tmp & PCI_COMMAND_MEMORY)) {
-		tmp |= PCI_COMMAND_MEMORY;
-		pci_write_config_word(pdev, PCI_COMMAND, tmp);
-	}
-#ifdef __BIG_ENDIAN
+	pci_पढ़ो_config_word(pdev, PCI_COMMAND, &पंचांगp);
+	अगर (!(पंचांगp & PCI_COMMAND_MEMORY)) अणु
+		पंचांगp |= PCI_COMMAND_MEMORY;
+		pci_ग_लिखो_config_word(pdev, PCI_COMMAND, पंचांगp);
+	पूर्ण
+#अगर_घोषित __BIG_ENDIAN
 	/* Use the big-endian aperture */
 	addr += 0x800000;
-#endif
+#पूर्ण_अगर
 
 	/* Map in frame buffer */
 	info->fix.smem_start = addr;
@@ -3481,10 +3482,10 @@ static int atyfb_setup_generic(struct pci_dev *pdev, struct fb_info *info,
 	 * of the BAR. aty_init() will later correct it to match the actual
 	 * framebuffer size.
 	 *
-	 * On devices that don't have the auxiliary register aperture, the
-	 * registers are housed at the top end of the framebuffer PCI BAR.
+	 * On devices that करोn't have the auxiliary रेजिस्टर aperture, the
+	 * रेजिस्टरs are housed at the top end of the framebuffer PCI BAR.
 	 * aty_fudge_framebuffer_len() is used to reduce smem_len to not
-	 * overlap with the registers.
+	 * overlap with the रेजिस्टरs.
 	 */
 	info->fix.smem_len = 0x800000;
 
@@ -3492,74 +3493,74 @@ static int atyfb_setup_generic(struct pci_dev *pdev, struct fb_info *info,
 
 	info->screen_base = ioremap_wc(info->fix.smem_start,
 				       info->fix.smem_len);
-	if (info->screen_base == NULL) {
+	अगर (info->screen_base == शून्य) अणु
 		ret = -ENOMEM;
-		goto atyfb_setup_generic_fail;
-	}
+		जाओ atyfb_setup_generic_fail;
+	पूर्ण
 
 	ret = correct_chipset(par);
-	if (ret)
-		goto atyfb_setup_generic_fail;
-#ifdef __i386__
+	अगर (ret)
+		जाओ atyfb_setup_generic_fail;
+#अगर_घोषित __i386__
 	ret = init_from_bios(par);
-	if (ret)
-		goto atyfb_setup_generic_fail;
-#endif
-	if (!(aty_ld_le32(CRTC_GEN_CNTL, par) & CRTC_EXT_DISP_EN))
+	अगर (ret)
+		जाओ atyfb_setup_generic_fail;
+#पूर्ण_अगर
+	अगर (!(aty_ld_le32(CRTC_GEN_CNTL, par) & CRTC_EXT_DISP_EN))
 		par->clk_wr_offset = (inb(R_GENMO) & 0x0CU) >> 2;
-	else
+	अन्यथा
 		par->clk_wr_offset = aty_ld_8(CLOCK_CNTL, par) & 0x03U;
 
-	/* according to ATI, we should use clock 3 for acelerated mode */
+	/* according to ATI, we should use घड़ी 3 क्रम acelerated mode */
 	par->clk_wr_offset = 3;
 
-	return 0;
+	वापस 0;
 
 atyfb_setup_generic_fail:
 	iounmap(par->ati_regbase);
-	par->ati_regbase = NULL;
-	if (info->screen_base) {
+	par->ati_regbase = शून्य;
+	अगर (info->screen_base) अणु
 		iounmap(info->screen_base);
-		info->screen_base = NULL;
-	}
-	return ret;
-}
+		info->screen_base = शून्य;
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-#endif /* !__sparc__ */
+#पूर्ण_अगर /* !__sparc__ */
 
-static int atyfb_pci_probe(struct pci_dev *pdev,
-			   const struct pci_device_id *ent)
-{
-	unsigned long addr, res_start, res_size;
-	struct fb_info *info;
-	struct resource *rp;
-	struct atyfb_par *par;
-	int rc = -ENOMEM;
+अटल पूर्णांक atyfb_pci_probe(काष्ठा pci_dev *pdev,
+			   स्थिर काष्ठा pci_device_id *ent)
+अणु
+	अचिन्हित दीर्घ addr, res_start, res_size;
+	काष्ठा fb_info *info;
+	काष्ठा resource *rp;
+	काष्ठा atyfb_par *par;
+	पूर्णांक rc = -ENOMEM;
 
 	/* Enable device in PCI config */
-	if (pci_enable_device(pdev)) {
+	अगर (pci_enable_device(pdev)) अणु
 		PRINTKE("Cannot enable PCI device\n");
-		return -ENXIO;
-	}
+		वापस -ENXIO;
+	पूर्ण
 
 	/* Find which resource to use */
 	rp = &pdev->resource[0];
-	if (rp->flags & IORESOURCE_IO)
+	अगर (rp->flags & IORESOURCE_IO)
 		rp = &pdev->resource[1];
 	addr = rp->start;
-	if (!addr)
-		return -ENXIO;
+	अगर (!addr)
+		वापस -ENXIO;
 
 	/* Reserve space */
 	res_start = rp->start;
 	res_size = resource_size(rp);
-	if (!request_mem_region(res_start, res_size, "atyfb"))
-		return -EBUSY;
+	अगर (!request_mem_region(res_start, res_size, "atyfb"))
+		वापस -EBUSY;
 
 	/* Allocate framebuffer */
-	info = framebuffer_alloc(sizeof(struct atyfb_par), &pdev->dev);
-	if (!info)
-		return -ENOMEM;
+	info = framebuffer_alloc(माप(काष्ठा atyfb_par), &pdev->dev);
+	अगर (!info)
+		वापस -ENOMEM;
 
 	par = info->par;
 	par->bus_type = PCI;
@@ -3571,93 +3572,93 @@ static int atyfb_pci_probe(struct pci_dev *pdev,
 	par->irq = pdev->irq;
 	par->pdev = pdev;
 
-	/* Setup "info" structure */
-#ifdef __sparc__
+	/* Setup "info" काष्ठाure */
+#अगर_घोषित __sparc__
 	rc = atyfb_setup_sparc(pdev, info, addr);
-#else
+#अन्यथा
 	rc = atyfb_setup_generic(pdev, info, addr);
-#endif
-	if (rc)
-		goto err_release_mem;
+#पूर्ण_अगर
+	अगर (rc)
+		जाओ err_release_mem;
 
 	pci_set_drvdata(pdev, info);
 
-	/* Init chip & register framebuffer */
+	/* Init chip & रेजिस्टर framebuffer */
 	rc = aty_init(info);
-	if (rc)
-		goto err_release_io;
+	अगर (rc)
+		जाओ err_release_io;
 
-#ifdef __sparc__
+#अगर_घोषित __sparc__
 	/*
 	 * Add /dev/fb mmap values.
 	 */
 	par->mmap_map[0].voff = 0x8000000000000000UL;
-	par->mmap_map[0].poff = (unsigned long) info->screen_base & PAGE_MASK;
+	par->mmap_map[0].poff = (अचिन्हित दीर्घ) info->screen_base & PAGE_MASK;
 	par->mmap_map[0].size = info->fix.smem_len;
 	par->mmap_map[0].prot_mask = _PAGE_CACHE;
 	par->mmap_map[0].prot_flag = _PAGE_E;
 	par->mmap_map[1].voff = par->mmap_map[0].voff + info->fix.smem_len;
-	par->mmap_map[1].poff = (long)par->ati_regbase & PAGE_MASK;
+	par->mmap_map[1].poff = (दीर्घ)par->ati_regbase & PAGE_MASK;
 	par->mmap_map[1].size = PAGE_SIZE;
 	par->mmap_map[1].prot_mask = _PAGE_CACHE;
 	par->mmap_map[1].prot_flag = _PAGE_E;
-#endif /* __sparc__ */
+#पूर्ण_अगर /* __sparc__ */
 
 	mutex_lock(&reboot_lock);
-	if (!reboot_info)
+	अगर (!reboot_info)
 		reboot_info = info;
 	mutex_unlock(&reboot_lock);
 
-	return 0;
+	वापस 0;
 
 err_release_io:
-#ifdef __sparc__
-	kfree(par->mmap_map);
-#else
-	if (par->ati_regbase)
+#अगर_घोषित __sparc__
+	kमुक्त(par->mmap_map);
+#अन्यथा
+	अगर (par->ati_regbase)
 		iounmap(par->ati_regbase);
-	if (info->screen_base)
+	अगर (info->screen_base)
 		iounmap(info->screen_base);
-#endif
+#पूर्ण_अगर
 err_release_mem:
-	if (par->aux_start)
+	अगर (par->aux_start)
 		release_mem_region(par->aux_start, par->aux_size);
 
 	release_mem_region(par->res_start, par->res_size);
 	framebuffer_release(info);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-#endif /* CONFIG_PCI */
+#पूर्ण_अगर /* CONFIG_PCI */
 
-#ifdef CONFIG_ATARI
+#अगर_घोषित CONFIG_ATARI
 
-static int __init atyfb_atari_probe(void)
-{
-	struct atyfb_par *par;
-	struct fb_info *info;
-	int m64_num;
-	u32 clock_r;
-	int num_found = 0;
+अटल पूर्णांक __init atyfb_atari_probe(व्योम)
+अणु
+	काष्ठा atyfb_par *par;
+	काष्ठा fb_info *info;
+	पूर्णांक m64_num;
+	u32 घड़ी_r;
+	पूर्णांक num_found = 0;
 
-	for (m64_num = 0; m64_num < mach64_count; m64_num++) {
-		if (!phys_vmembase[m64_num] || !phys_size[m64_num] ||
-		    !phys_guiregbase[m64_num]) {
+	क्रम (m64_num = 0; m64_num < mach64_count; m64_num++) अणु
+		अगर (!phys_vmembase[m64_num] || !phys_size[m64_num] ||
+		    !phys_guiregbase[m64_num]) अणु
 			PRINTKI("phys_*[%d] parameters not set => "
 				"returning early. \n", m64_num);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		info = framebuffer_alloc(sizeof(struct atyfb_par), NULL);
-		if (!info)
-			return -ENOMEM;
+		info = framebuffer_alloc(माप(काष्ठा atyfb_par), शून्य);
+		अगर (!info)
+			वापस -ENOMEM;
 
 		par = info->par;
 
 		info->fix = atyfb_fix;
 
-		par->irq = (unsigned int) -1; /* something invalid */
+		par->irq = (अचिन्हित पूर्णांक) -1; /* something invalid */
 
 		/*
 		 * Map the video memory (physical address given)
@@ -3665,259 +3666,259 @@ static int __init atyfb_atari_probe(void)
 		 */
 		info->screen_base = ioremap_wc(phys_vmembase[m64_num],
 					       phys_size[m64_num]);
-		info->fix.smem_start = (unsigned long)info->screen_base; /* Fake! */
+		info->fix.smem_start = (अचिन्हित दीर्घ)info->screen_base; /* Fake! */
 		par->ati_regbase = ioremap(phys_guiregbase[m64_num], 0x10000) +
 						0xFC00ul;
-		info->fix.mmio_start = (unsigned long)par->ati_regbase; /* Fake! */
+		info->fix.mmio_start = (अचिन्हित दीर्घ)par->ati_regbase; /* Fake! */
 
 		aty_st_le32(CLOCK_CNTL, 0x12345678, par);
-		clock_r = aty_ld_le32(CLOCK_CNTL, par);
+		घड़ी_r = aty_ld_le32(CLOCK_CNTL, par);
 
-		switch (clock_r & 0x003F) {
-		case 0x12:
+		चयन (घड़ी_r & 0x003F) अणु
+		हाल 0x12:
 			par->clk_wr_offset = 3; /*  */
-			break;
-		case 0x34:
+			अवरोध;
+		हाल 0x34:
 			par->clk_wr_offset = 2; /* Medusa ST-IO ISA Adapter etc. */
-			break;
-		case 0x16:
+			अवरोध;
+		हाल 0x16:
 			par->clk_wr_offset = 1; /*  */
-			break;
-		case 0x38:
+			अवरोध;
+		हाल 0x38:
 			par->clk_wr_offset = 0; /* Panther 1 ISA Adapter (Gerald) */
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		/* Fake pci_id for correct_chipset() */
-		switch (aty_ld_le32(CNFG_CHIP_ID, par) & CFG_CHIP_TYPE) {
-		case 0x00d7:
+		/* Fake pci_id क्रम correct_chipset() */
+		चयन (aty_ld_le32(CNFG_CHIP_ID, par) & CFG_CHIP_TYPE) अणु
+		हाल 0x00d7:
 			par->pci_id = PCI_CHIP_MACH64GX;
-			break;
-		case 0x0057:
+			अवरोध;
+		हाल 0x0057:
 			par->pci_id = PCI_CHIP_MACH64CX;
-			break;
-		default:
-			break;
-		}
+			अवरोध;
+		शेष:
+			अवरोध;
+		पूर्ण
 
-		if (correct_chipset(par) || aty_init(info)) {
+		अगर (correct_chipset(par) || aty_init(info)) अणु
 			iounmap(info->screen_base);
 			iounmap(par->ati_regbase);
 			framebuffer_release(info);
-		} else {
+		पूर्ण अन्यथा अणु
 			num_found++;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return num_found ? 0 : -ENXIO;
-}
+	वापस num_found ? 0 : -ENXIO;
+पूर्ण
 
-#endif /* CONFIG_ATARI */
+#पूर्ण_अगर /* CONFIG_ATARI */
 
-#ifdef CONFIG_PCI
+#अगर_घोषित CONFIG_PCI
 
-static void atyfb_remove(struct fb_info *info)
-{
-	struct atyfb_par *par = (struct atyfb_par *) info->par;
+अटल व्योम atyfb_हटाओ(काष्ठा fb_info *info)
+अणु
+	काष्ठा atyfb_par *par = (काष्ठा atyfb_par *) info->par;
 
 	/* restore video mode */
 	aty_set_crtc(par, &par->saved_crtc);
 	par->pll_ops->set_pll(info, &par->saved_pll);
 
-	unregister_framebuffer(info);
+	unरेजिस्टर_framebuffer(info);
 
-#ifdef CONFIG_FB_ATY_BACKLIGHT
-	if (M64_HAS(MOBIL_BUS))
-		aty_bl_exit(info->bl_dev);
-#endif
+#अगर_घोषित CONFIG_FB_ATY_BACKLIGHT
+	अगर (M64_HAS(MOBIL_BUS))
+		aty_bl_निकास(info->bl_dev);
+#पूर्ण_अगर
 	arch_phys_wc_del(par->wc_cookie);
 
-#ifndef __sparc__
-	if (par->ati_regbase)
+#अगर_अघोषित __sparc__
+	अगर (par->ati_regbase)
 		iounmap(par->ati_regbase);
-	if (info->screen_base)
+	अगर (info->screen_base)
 		iounmap(info->screen_base);
-#ifdef __BIG_ENDIAN
-	if (info->sprite.addr)
+#अगर_घोषित __BIG_ENDIAN
+	अगर (info->sprite.addr)
 		iounmap(info->sprite.addr);
-#endif
-#endif
-#ifdef __sparc__
-	kfree(par->mmap_map);
-#endif
-	if (par->aux_start)
+#पूर्ण_अगर
+#पूर्ण_अगर
+#अगर_घोषित __sparc__
+	kमुक्त(par->mmap_map);
+#पूर्ण_अगर
+	अगर (par->aux_start)
 		release_mem_region(par->aux_start, par->aux_size);
 
-	if (par->res_start)
+	अगर (par->res_start)
 		release_mem_region(par->res_start, par->res_size);
 
 	framebuffer_release(info);
-}
+पूर्ण
 
 
-static void atyfb_pci_remove(struct pci_dev *pdev)
-{
-	struct fb_info *info = pci_get_drvdata(pdev);
+अटल व्योम atyfb_pci_हटाओ(काष्ठा pci_dev *pdev)
+अणु
+	काष्ठा fb_info *info = pci_get_drvdata(pdev);
 
 	mutex_lock(&reboot_lock);
-	if (reboot_info == info)
-		reboot_info = NULL;
+	अगर (reboot_info == info)
+		reboot_info = शून्य;
 	mutex_unlock(&reboot_lock);
 
-	atyfb_remove(info);
-}
+	atyfb_हटाओ(info);
+पूर्ण
 
-static const struct pci_device_id atyfb_pci_tbl[] = {
-#ifdef CONFIG_FB_ATY_GX
-	{ PCI_DEVICE(PCI_VENDOR_ID_ATI, PCI_CHIP_MACH64GX) },
-	{ PCI_DEVICE(PCI_VENDOR_ID_ATI, PCI_CHIP_MACH64CX) },
-#endif /* CONFIG_FB_ATY_GX */
+अटल स्थिर काष्ठा pci_device_id atyfb_pci_tbl[] = अणु
+#अगर_घोषित CONFIG_FB_ATY_GX
+	अणु PCI_DEVICE(PCI_VENDOR_ID_ATI, PCI_CHIP_MACH64GX) पूर्ण,
+	अणु PCI_DEVICE(PCI_VENDOR_ID_ATI, PCI_CHIP_MACH64CX) पूर्ण,
+#पूर्ण_अगर /* CONFIG_FB_ATY_GX */
 
-#ifdef CONFIG_FB_ATY_CT
-	{ PCI_DEVICE(PCI_VENDOR_ID_ATI, PCI_CHIP_MACH64CT) },
-	{ PCI_DEVICE(PCI_VENDOR_ID_ATI, PCI_CHIP_MACH64ET) },
+#अगर_घोषित CONFIG_FB_ATY_CT
+	अणु PCI_DEVICE(PCI_VENDOR_ID_ATI, PCI_CHIP_MACH64CT) पूर्ण,
+	अणु PCI_DEVICE(PCI_VENDOR_ID_ATI, PCI_CHIP_MACH64ET) पूर्ण,
 
-	{ PCI_DEVICE(PCI_VENDOR_ID_ATI, PCI_CHIP_MACH64LT) },
+	अणु PCI_DEVICE(PCI_VENDOR_ID_ATI, PCI_CHIP_MACH64LT) पूर्ण,
 
-	{ PCI_DEVICE(PCI_VENDOR_ID_ATI, PCI_CHIP_MACH64VT) },
-	{ PCI_DEVICE(PCI_VENDOR_ID_ATI, PCI_CHIP_MACH64GT) },
+	अणु PCI_DEVICE(PCI_VENDOR_ID_ATI, PCI_CHIP_MACH64VT) पूर्ण,
+	अणु PCI_DEVICE(PCI_VENDOR_ID_ATI, PCI_CHIP_MACH64GT) पूर्ण,
 
-	{ PCI_DEVICE(PCI_VENDOR_ID_ATI, PCI_CHIP_MACH64VU) },
-	{ PCI_DEVICE(PCI_VENDOR_ID_ATI, PCI_CHIP_MACH64GU) },
+	अणु PCI_DEVICE(PCI_VENDOR_ID_ATI, PCI_CHIP_MACH64VU) पूर्ण,
+	अणु PCI_DEVICE(PCI_VENDOR_ID_ATI, PCI_CHIP_MACH64GU) पूर्ण,
 
-	{ PCI_DEVICE(PCI_VENDOR_ID_ATI, PCI_CHIP_MACH64LG) },
+	अणु PCI_DEVICE(PCI_VENDOR_ID_ATI, PCI_CHIP_MACH64LG) पूर्ण,
 
-	{ PCI_DEVICE(PCI_VENDOR_ID_ATI, PCI_CHIP_MACH64VV) },
+	अणु PCI_DEVICE(PCI_VENDOR_ID_ATI, PCI_CHIP_MACH64VV) पूर्ण,
 
-	{ PCI_DEVICE(PCI_VENDOR_ID_ATI, PCI_CHIP_MACH64GV) },
-	{ PCI_DEVICE(PCI_VENDOR_ID_ATI, PCI_CHIP_MACH64GW) },
-	{ PCI_DEVICE(PCI_VENDOR_ID_ATI, PCI_CHIP_MACH64GY) },
-	{ PCI_DEVICE(PCI_VENDOR_ID_ATI, PCI_CHIP_MACH64GZ) },
+	अणु PCI_DEVICE(PCI_VENDOR_ID_ATI, PCI_CHIP_MACH64GV) पूर्ण,
+	अणु PCI_DEVICE(PCI_VENDOR_ID_ATI, PCI_CHIP_MACH64GW) पूर्ण,
+	अणु PCI_DEVICE(PCI_VENDOR_ID_ATI, PCI_CHIP_MACH64GY) पूर्ण,
+	अणु PCI_DEVICE(PCI_VENDOR_ID_ATI, PCI_CHIP_MACH64GZ) पूर्ण,
 
-	{ PCI_DEVICE(PCI_VENDOR_ID_ATI, PCI_CHIP_MACH64GB) },
-	{ PCI_DEVICE(PCI_VENDOR_ID_ATI, PCI_CHIP_MACH64GD) },
-	{ PCI_DEVICE(PCI_VENDOR_ID_ATI, PCI_CHIP_MACH64GI) },
-	{ PCI_DEVICE(PCI_VENDOR_ID_ATI, PCI_CHIP_MACH64GP) },
-	{ PCI_DEVICE(PCI_VENDOR_ID_ATI, PCI_CHIP_MACH64GQ) },
+	अणु PCI_DEVICE(PCI_VENDOR_ID_ATI, PCI_CHIP_MACH64GB) पूर्ण,
+	अणु PCI_DEVICE(PCI_VENDOR_ID_ATI, PCI_CHIP_MACH64GD) पूर्ण,
+	अणु PCI_DEVICE(PCI_VENDOR_ID_ATI, PCI_CHIP_MACH64GI) पूर्ण,
+	अणु PCI_DEVICE(PCI_VENDOR_ID_ATI, PCI_CHIP_MACH64GP) पूर्ण,
+	अणु PCI_DEVICE(PCI_VENDOR_ID_ATI, PCI_CHIP_MACH64GQ) पूर्ण,
 
-	{ PCI_DEVICE(PCI_VENDOR_ID_ATI, PCI_CHIP_MACH64LB) },
-	{ PCI_DEVICE(PCI_VENDOR_ID_ATI, PCI_CHIP_MACH64LD) },
-	{ PCI_DEVICE(PCI_VENDOR_ID_ATI, PCI_CHIP_MACH64LI) },
-	{ PCI_DEVICE(PCI_VENDOR_ID_ATI, PCI_CHIP_MACH64LP) },
-	{ PCI_DEVICE(PCI_VENDOR_ID_ATI, PCI_CHIP_MACH64LQ) },
+	अणु PCI_DEVICE(PCI_VENDOR_ID_ATI, PCI_CHIP_MACH64LB) पूर्ण,
+	अणु PCI_DEVICE(PCI_VENDOR_ID_ATI, PCI_CHIP_MACH64LD) पूर्ण,
+	अणु PCI_DEVICE(PCI_VENDOR_ID_ATI, PCI_CHIP_MACH64LI) पूर्ण,
+	अणु PCI_DEVICE(PCI_VENDOR_ID_ATI, PCI_CHIP_MACH64LP) पूर्ण,
+	अणु PCI_DEVICE(PCI_VENDOR_ID_ATI, PCI_CHIP_MACH64LQ) पूर्ण,
 
-	{ PCI_DEVICE(PCI_VENDOR_ID_ATI, PCI_CHIP_MACH64GM) },
-	{ PCI_DEVICE(PCI_VENDOR_ID_ATI, PCI_CHIP_MACH64GN) },
-	{ PCI_DEVICE(PCI_VENDOR_ID_ATI, PCI_CHIP_MACH64GO) },
-	{ PCI_DEVICE(PCI_VENDOR_ID_ATI, PCI_CHIP_MACH64GL) },
-	{ PCI_DEVICE(PCI_VENDOR_ID_ATI, PCI_CHIP_MACH64GR) },
-	{ PCI_DEVICE(PCI_VENDOR_ID_ATI, PCI_CHIP_MACH64GS) },
+	अणु PCI_DEVICE(PCI_VENDOR_ID_ATI, PCI_CHIP_MACH64GM) पूर्ण,
+	अणु PCI_DEVICE(PCI_VENDOR_ID_ATI, PCI_CHIP_MACH64GN) पूर्ण,
+	अणु PCI_DEVICE(PCI_VENDOR_ID_ATI, PCI_CHIP_MACH64GO) पूर्ण,
+	अणु PCI_DEVICE(PCI_VENDOR_ID_ATI, PCI_CHIP_MACH64GL) पूर्ण,
+	अणु PCI_DEVICE(PCI_VENDOR_ID_ATI, PCI_CHIP_MACH64GR) पूर्ण,
+	अणु PCI_DEVICE(PCI_VENDOR_ID_ATI, PCI_CHIP_MACH64GS) पूर्ण,
 
-	{ PCI_DEVICE(PCI_VENDOR_ID_ATI, PCI_CHIP_MACH64LM) },
-	{ PCI_DEVICE(PCI_VENDOR_ID_ATI, PCI_CHIP_MACH64LN) },
-	{ PCI_DEVICE(PCI_VENDOR_ID_ATI, PCI_CHIP_MACH64LR) },
-	{ PCI_DEVICE(PCI_VENDOR_ID_ATI, PCI_CHIP_MACH64LS) },
-#endif /* CONFIG_FB_ATY_CT */
-	{ }
-};
+	अणु PCI_DEVICE(PCI_VENDOR_ID_ATI, PCI_CHIP_MACH64LM) पूर्ण,
+	अणु PCI_DEVICE(PCI_VENDOR_ID_ATI, PCI_CHIP_MACH64LN) पूर्ण,
+	अणु PCI_DEVICE(PCI_VENDOR_ID_ATI, PCI_CHIP_MACH64LR) पूर्ण,
+	अणु PCI_DEVICE(PCI_VENDOR_ID_ATI, PCI_CHIP_MACH64LS) पूर्ण,
+#पूर्ण_अगर /* CONFIG_FB_ATY_CT */
+	अणु पूर्ण
+पूर्ण;
 
 MODULE_DEVICE_TABLE(pci, atyfb_pci_tbl);
 
-static struct pci_driver atyfb_driver = {
+अटल काष्ठा pci_driver atyfb_driver = अणु
 	.name		= "atyfb",
 	.id_table	= atyfb_pci_tbl,
 	.probe		= atyfb_pci_probe,
-	.remove		= atyfb_pci_remove,
+	.हटाओ		= atyfb_pci_हटाओ,
 	.driver.pm	= &atyfb_pci_pm_ops,
-};
+पूर्ण;
 
-#endif /* CONFIG_PCI */
+#पूर्ण_अगर /* CONFIG_PCI */
 
-#ifndef MODULE
-static int __init atyfb_setup(char *options)
-{
-	char *this_opt;
+#अगर_अघोषित MODULE
+अटल पूर्णांक __init atyfb_setup(अक्षर *options)
+अणु
+	अक्षर *this_opt;
 
-	if (!options || !*options)
-		return 0;
+	अगर (!options || !*options)
+		वापस 0;
 
-	while ((this_opt = strsep(&options, ",")) != NULL) {
-		if (!strncmp(this_opt, "noaccel", 7)) {
+	जबतक ((this_opt = strsep(&options, ",")) != शून्य) अणु
+		अगर (!म_भेदन(this_opt, "noaccel", 7)) अणु
 			noaccel = true;
-		} else if (!strncmp(this_opt, "nomtrr", 6)) {
+		पूर्ण अन्यथा अगर (!म_भेदन(this_opt, "nomtrr", 6)) अणु
 			nomtrr = true;
-		} else if (!strncmp(this_opt, "vram:", 5))
-			vram = simple_strtoul(this_opt + 5, NULL, 0);
-		else if (!strncmp(this_opt, "pll:", 4))
-			pll = simple_strtoul(this_opt + 4, NULL, 0);
-		else if (!strncmp(this_opt, "mclk:", 5))
-			mclk = simple_strtoul(this_opt + 5, NULL, 0);
-		else if (!strncmp(this_opt, "xclk:", 5))
-			xclk = simple_strtoul(this_opt+5, NULL, 0);
-		else if (!strncmp(this_opt, "comp_sync:", 10))
-			comp_sync = simple_strtoul(this_opt+10, NULL, 0);
-		else if (!strncmp(this_opt, "backlight:", 10))
-			backlight = simple_strtoul(this_opt+10, NULL, 0);
-#ifdef CONFIG_PPC
-		else if (!strncmp(this_opt, "vmode:", 6)) {
-			unsigned int vmode =
-			    simple_strtoul(this_opt + 6, NULL, 0);
-			if (vmode > 0 && vmode <= VMODE_MAX)
-				default_vmode = vmode;
-		} else if (!strncmp(this_opt, "cmode:", 6)) {
-			unsigned int cmode =
-			    simple_strtoul(this_opt + 6, NULL, 0);
-			switch (cmode) {
-			case 0:
-			case 8:
-				default_cmode = CMODE_8;
-				break;
-			case 15:
-			case 16:
-				default_cmode = CMODE_16;
-				break;
-			case 24:
-			case 32:
-				default_cmode = CMODE_32;
-				break;
-			}
-		}
-#endif
-#ifdef CONFIG_ATARI
+		पूर्ण अन्यथा अगर (!म_भेदन(this_opt, "vram:", 5))
+			vram = simple_म_से_अदीर्घ(this_opt + 5, शून्य, 0);
+		अन्यथा अगर (!म_भेदन(this_opt, "pll:", 4))
+			pll = simple_म_से_अदीर्घ(this_opt + 4, शून्य, 0);
+		अन्यथा अगर (!म_भेदन(this_opt, "mclk:", 5))
+			mclk = simple_म_से_अदीर्घ(this_opt + 5, शून्य, 0);
+		अन्यथा अगर (!म_भेदन(this_opt, "xclk:", 5))
+			xclk = simple_म_से_अदीर्घ(this_opt+5, शून्य, 0);
+		अन्यथा अगर (!म_भेदन(this_opt, "comp_sync:", 10))
+			comp_sync = simple_म_से_अदीर्घ(this_opt+10, शून्य, 0);
+		अन्यथा अगर (!म_भेदन(this_opt, "backlight:", 10))
+			backlight = simple_म_से_अदीर्घ(this_opt+10, शून्य, 0);
+#अगर_घोषित CONFIG_PPC
+		अन्यथा अगर (!म_भेदन(this_opt, "vmode:", 6)) अणु
+			अचिन्हित पूर्णांक vmode =
+			    simple_म_से_अदीर्घ(this_opt + 6, शून्य, 0);
+			अगर (vmode > 0 && vmode <= VMODE_MAX)
+				शेष_vmode = vmode;
+		पूर्ण अन्यथा अगर (!म_भेदन(this_opt, "cmode:", 6)) अणु
+			अचिन्हित पूर्णांक cmode =
+			    simple_म_से_अदीर्घ(this_opt + 6, शून्य, 0);
+			चयन (cmode) अणु
+			हाल 0:
+			हाल 8:
+				शेष_cmode = CMODE_8;
+				अवरोध;
+			हाल 15:
+			हाल 16:
+				शेष_cmode = CMODE_16;
+				अवरोध;
+			हाल 24:
+			हाल 32:
+				शेष_cmode = CMODE_32;
+				अवरोध;
+			पूर्ण
+		पूर्ण
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_ATARI
 		/*
-		 * Why do we need this silly Mach64 argument?
-		 * We are already here because of mach64= so its redundant.
+		 * Why करो we need this silly Mach64 argument?
+		 * We are alपढ़ोy here because of mach64= so its redundant.
 		 */
-		else if (MACH_IS_ATARI
-			 && (!strncmp(this_opt, "Mach64:", 7))) {
-			static unsigned char m64_num;
-			static char mach64_str[80];
-			strlcpy(mach64_str, this_opt + 7, sizeof(mach64_str));
-			if (!store_video_par(mach64_str, m64_num)) {
+		अन्यथा अगर (MACH_IS_ATARI
+			 && (!म_भेदन(this_opt, "Mach64:", 7))) अणु
+			अटल अचिन्हित अक्षर m64_num;
+			अटल अक्षर mach64_str[80];
+			strlcpy(mach64_str, this_opt + 7, माप(mach64_str));
+			अगर (!store_video_par(mach64_str, m64_num)) अणु
 				m64_num++;
 				mach64_count = m64_num;
-			}
-		}
-#endif
-		else
+			पूर्ण
+		पूर्ण
+#पूर्ण_अगर
+		अन्यथा
 			mode = this_opt;
-	}
-	return 0;
-}
-#endif  /*  MODULE  */
+	पूर्ण
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर  /*  MODULE  */
 
-static int atyfb_reboot_notify(struct notifier_block *nb,
-			       unsigned long code, void *unused)
-{
-	struct atyfb_par *par;
+अटल पूर्णांक atyfb_reboot_notअगरy(काष्ठा notअगरier_block *nb,
+			       अचिन्हित दीर्घ code, व्योम *unused)
+अणु
+	काष्ठा atyfb_par *par;
 
-	if (code != SYS_RESTART)
-		return NOTIFY_DONE;
+	अगर (code != SYS_RESTART)
+		वापस NOTIFY_DONE;
 
 	mutex_lock(&reboot_lock);
 
-	if (!reboot_info)
-		goto out;
+	अगर (!reboot_info)
+		जाओ out;
 
 	lock_fb_info(reboot_info);
 
@@ -3935,84 +3936,84 @@ static int atyfb_reboot_notify(struct notifier_block *nb,
  out:
 	mutex_unlock(&reboot_lock);
 
-	return NOTIFY_DONE;
-}
+	वापस NOTIFY_DONE;
+पूर्ण
 
-static struct notifier_block atyfb_reboot_notifier = {
-	.notifier_call = atyfb_reboot_notify,
-};
+अटल काष्ठा notअगरier_block atyfb_reboot_notअगरier = अणु
+	.notअगरier_call = atyfb_reboot_notअगरy,
+पूर्ण;
 
-static const struct dmi_system_id atyfb_reboot_ids[] __initconst = {
-	{
+अटल स्थिर काष्ठा dmi_प्रणाली_id atyfb_reboot_ids[] __initस्थिर = अणु
+	अणु
 		.ident = "HP OmniBook 500",
-		.matches = {
+		.matches = अणु
 			DMI_MATCH(DMI_SYS_VENDOR, "Hewlett-Packard"),
 			DMI_MATCH(DMI_PRODUCT_NAME, "HP OmniBook PC"),
 			DMI_MATCH(DMI_PRODUCT_VERSION, "HP OmniBook 500 FA"),
-		},
-	},
+		पूर्ण,
+	पूर्ण,
 
-	{ }
-};
-static bool registered_notifier = false;
+	अणु पूर्ण
+पूर्ण;
+अटल bool रेजिस्टरed_notअगरier = false;
 
-static int __init atyfb_init(void)
-{
-	int err1 = 1, err2 = 1;
-#ifndef MODULE
-	char *option = NULL;
+अटल पूर्णांक __init atyfb_init(व्योम)
+अणु
+	पूर्णांक err1 = 1, err2 = 1;
+#अगर_अघोषित MODULE
+	अक्षर *option = शून्य;
 
-	if (fb_get_options("atyfb", &option))
-		return -ENODEV;
+	अगर (fb_get_options("atyfb", &option))
+		वापस -ENODEV;
 	atyfb_setup(option);
-#endif
+#पूर्ण_अगर
 
-#ifdef CONFIG_PCI
-	err1 = pci_register_driver(&atyfb_driver);
-#endif
-#ifdef CONFIG_ATARI
+#अगर_घोषित CONFIG_PCI
+	err1 = pci_रेजिस्टर_driver(&atyfb_driver);
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_ATARI
 	err2 = atyfb_atari_probe();
-#endif
+#पूर्ण_अगर
 
-	if (err1 && err2)
-		return -ENODEV;
+	अगर (err1 && err2)
+		वापस -ENODEV;
 
-	if (dmi_check_system(atyfb_reboot_ids)) {
-		register_reboot_notifier(&atyfb_reboot_notifier);
-		registered_notifier = true;
-	}
+	अगर (dmi_check_प्रणाली(atyfb_reboot_ids)) अणु
+		रेजिस्टर_reboot_notअगरier(&atyfb_reboot_notअगरier);
+		रेजिस्टरed_notअगरier = true;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void __exit atyfb_exit(void)
-{
-	if (registered_notifier)
-		unregister_reboot_notifier(&atyfb_reboot_notifier);
+अटल व्योम __निकास atyfb_निकास(व्योम)
+अणु
+	अगर (रेजिस्टरed_notअगरier)
+		unरेजिस्टर_reboot_notअगरier(&atyfb_reboot_notअगरier);
 
-#ifdef CONFIG_PCI
-	pci_unregister_driver(&atyfb_driver);
-#endif
-}
+#अगर_घोषित CONFIG_PCI
+	pci_unरेजिस्टर_driver(&atyfb_driver);
+#पूर्ण_अगर
+पूर्ण
 
 module_init(atyfb_init);
-module_exit(atyfb_exit);
+module_निकास(atyfb_निकास);
 
 MODULE_DESCRIPTION("FBDev driver for ATI Mach64 cards");
 MODULE_LICENSE("GPL");
 module_param(noaccel, bool, 0);
 MODULE_PARM_DESC(noaccel, "bool: disable acceleration");
-module_param(vram, int, 0);
+module_param(vram, पूर्णांक, 0);
 MODULE_PARM_DESC(vram, "int: override size of video ram");
-module_param(pll, int, 0);
+module_param(pll, पूर्णांक, 0);
 MODULE_PARM_DESC(pll, "int: override video clock");
-module_param(mclk, int, 0);
+module_param(mclk, पूर्णांक, 0);
 MODULE_PARM_DESC(mclk, "int: override memory clock");
-module_param(xclk, int, 0);
+module_param(xclk, पूर्णांक, 0);
 MODULE_PARM_DESC(xclk, "int: override accelerated engine clock");
-module_param(comp_sync, int, 0);
+module_param(comp_sync, पूर्णांक, 0);
 MODULE_PARM_DESC(comp_sync, "Set composite sync signal to low (0) or high (1)");
-module_param(mode, charp, 0);
+module_param(mode, अक्षरp, 0);
 MODULE_PARM_DESC(mode, "Specify resolution as \"<xres>x<yres>[-<bpp>][@<refresh>]\" ");
 module_param(nomtrr, bool, 0);
 MODULE_PARM_DESC(nomtrr, "bool: disable use of MTRR registers");

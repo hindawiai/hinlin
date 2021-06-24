@@ -1,76 +1,77 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * (C) Copyright David Gibson <dwg@au1.ibm.com>, IBM Corporation.  2005.
  */
 
-#include "dtc.h"
+#समावेश "dtc.h"
 
-#include <dirent.h>
-#include <sys/stat.h>
+#समावेश <dirent.h>
+#समावेश <sys/स्थिति.स>
 
-static struct node *read_fstree(const char *dirname)
-{
-	DIR *d;
-	struct dirent *de;
-	struct stat st;
-	struct node *tree;
+अटल काष्ठा node *पढ़ो_fstree(स्थिर अक्षर *स_नाम)
+अणु
+	सूची *d;
+	काष्ठा dirent *de;
+	काष्ठा stat st;
+	काष्ठा node *tree;
 
-	d = opendir(dirname);
-	if (!d)
-		die("Couldn't opendir() \"%s\": %s\n", dirname, strerror(errno));
+	d = सूची_खोलो(स_नाम);
+	अगर (!d)
+		die("Couldn't opendir() \"%s\": %s\n", स_नाम, म_त्रुटि(त्रुटि_सं));
 
-	tree = build_node(NULL, NULL, NULL);
+	tree = build_node(शून्य, शून्य, शून्य);
 
-	while ((de = readdir(d)) != NULL) {
-		char *tmpname;
+	जबतक ((de = सूची_पढ़ो(d)) != शून्य) अणु
+		अक्षर *क्षणिकe;
 
-		if (streq(de->d_name, ".")
+		अगर (streq(de->d_name, ".")
 		    || streq(de->d_name, ".."))
-			continue;
+			जारी;
 
-		tmpname = join_path(dirname, de->d_name);
+		क्षणिकe = join_path(स_नाम, de->d_name);
 
-		if (stat(tmpname, &st) < 0)
-			die("stat(%s): %s\n", tmpname, strerror(errno));
+		अगर (stat(क्षणिकe, &st) < 0)
+			die("stat(%s): %s\n", क्षणिकe, म_त्रुटि(त्रुटि_सं));
 
-		if (S_ISREG(st.st_mode)) {
-			struct property *prop;
-			FILE *pfile;
+		अगर (S_ISREG(st.st_mode)) अणु
+			काष्ठा property *prop;
+			खाता *pfile;
 
-			pfile = fopen(tmpname, "rb");
-			if (! pfile) {
-				fprintf(stderr,
+			pfile = ख_खोलो(क्षणिकe, "rb");
+			अगर (! pfile) अणु
+				ख_लिखो(मानक_त्रुटि,
 					"WARNING: Cannot open %s: %s\n",
-					tmpname, strerror(errno));
-			} else {
+					क्षणिकe, म_त्रुटि(त्रुटि_सं));
+			पूर्ण अन्यथा अणु
 				prop = build_property(xstrdup(de->d_name),
 						      data_copy_file(pfile,
 								     st.st_size),
-						      NULL);
+						      शून्य);
 				add_property(tree, prop);
-				fclose(pfile);
-			}
-		} else if (S_ISDIR(st.st_mode)) {
-			struct node *newchild;
+				ख_बंद(pfile);
+			पूर्ण
+		पूर्ण अन्यथा अगर (S_ISसूची(st.st_mode)) अणु
+			काष्ठा node *newchild;
 
-			newchild = read_fstree(tmpname);
+			newchild = पढ़ो_fstree(क्षणिकe);
 			newchild = name_node(newchild, xstrdup(de->d_name));
 			add_child(tree, newchild);
-		}
+		पूर्ण
 
-		free(tmpname);
-	}
+		मुक्त(क्षणिकe);
+	पूर्ण
 
-	closedir(d);
-	return tree;
-}
+	बंद_सूची(d);
+	वापस tree;
+पूर्ण
 
-struct dt_info *dt_from_fs(const char *dirname)
-{
-	struct node *tree;
+काष्ठा dt_info *dt_from_fs(स्थिर अक्षर *स_नाम)
+अणु
+	काष्ठा node *tree;
 
-	tree = read_fstree(dirname);
+	tree = पढ़ो_fstree(स_नाम);
 	tree = name_node(tree, "");
 
-	return build_dt_info(DTSF_V1, NULL, tree, guess_boot_cpuid(tree));
-}
+	वापस build_dt_info(DTSF_V1, शून्य, tree, guess_boot_cpuid(tree));
+पूर्ण

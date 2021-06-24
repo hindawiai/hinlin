@@ -1,57 +1,58 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * Copyright (c) 2016-2017, The Linux Foundation. All rights reserved.
  */
 
-#ifndef _QCOM_BAM_DMA_H
-#define _QCOM_BAM_DMA_H
+#अगर_अघोषित _QCOM_BAM_DMA_H
+#घोषणा _QCOM_BAM_DMA_H
 
-#include <asm/byteorder.h>
+#समावेश <यंत्र/byteorder.h>
 
 /*
  * This data type corresponds to the native Command Element
  * supported by BAM DMA Engine.
  *
- * @cmd_and_addr - upper 8 bits command and lower 24 bits register address.
- * @data - for write command: content to be written into peripheral register.
- *	   for read command: dest addr to write peripheral register value.
- * @mask - register mask.
- * @reserved - for future usage.
+ * @cmd_and_addr - upper 8 bits command and lower 24 bits रेजिस्टर address.
+ * @data - क्रम ग_लिखो command: content to be written पूर्णांकo peripheral रेजिस्टर.
+ *	   क्रम पढ़ो command: dest addr to ग_लिखो peripheral रेजिस्टर value.
+ * @mask - रेजिस्टर mask.
+ * @reserved - क्रम future usage.
  *
  */
-struct bam_cmd_element {
+काष्ठा bam_cmd_element अणु
 	__le32 cmd_and_addr;
 	__le32 data;
 	__le32 mask;
 	__le32 reserved;
-};
+पूर्ण;
 
 /*
- * This enum indicates the command type in a command element
+ * This क्रमागत indicates the command type in a command element
  */
-enum bam_command_type {
+क्रमागत bam_command_type अणु
 	BAM_WRITE_COMMAND = 0,
 	BAM_READ_COMMAND,
-};
+पूर्ण;
 
 /*
  * prep_bam_ce_le32 - Wrapper function to prepare a single BAM command
- * element with the data already in le32 format.
+ * element with the data alपढ़ोy in le32 क्रमmat.
  *
  * @bam_ce: bam command element
  * @addr: target address
  * @cmd: BAM command
- * @data: actual data for write and dest addr for read in le32
+ * @data: actual data क्रम ग_लिखो and dest addr क्रम पढ़ो in le32
  */
-static inline void
-bam_prep_ce_le32(struct bam_cmd_element *bam_ce, u32 addr,
-		 enum bam_command_type cmd, __le32 data)
-{
+अटल अंतरभूत व्योम
+bam_prep_ce_le32(काष्ठा bam_cmd_element *bam_ce, u32 addr,
+		 क्रमागत bam_command_type cmd, __le32 data)
+अणु
 	bam_ce->cmd_and_addr =
 		cpu_to_le32((addr & 0xffffff) | ((cmd & 0xff) << 24));
 	bam_ce->data = data;
 	bam_ce->mask = cpu_to_le32(0xffffffff);
-}
+पूर्ण
 
 /*
  * bam_prep_ce - Wrapper function to prepare a single BAM command element
@@ -60,12 +61,12 @@ bam_prep_ce_le32(struct bam_cmd_element *bam_ce, u32 addr,
  * @bam_ce: BAM command element
  * @addr: target address
  * @cmd: BAM command
- * @data: actual data for write and dest addr for read
+ * @data: actual data क्रम ग_लिखो and dest addr क्रम पढ़ो
  */
-static inline void
-bam_prep_ce(struct bam_cmd_element *bam_ce, u32 addr,
-	    enum bam_command_type cmd, u32 data)
-{
+अटल अंतरभूत व्योम
+bam_prep_ce(काष्ठा bam_cmd_element *bam_ce, u32 addr,
+	    क्रमागत bam_command_type cmd, u32 data)
+अणु
 	bam_prep_ce_le32(bam_ce, addr, cmd, cpu_to_le32(data));
-}
-#endif
+पूर्ण
+#पूर्ण_अगर

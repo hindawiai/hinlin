@@ -1,1078 +1,1079 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Simple CPU accounting cgroup controller
  */
-#include "sched.h"
+#समावेश "sched.h"
 
-#ifdef CONFIG_IRQ_TIME_ACCOUNTING
+#अगर_घोषित CONFIG_IRQ_TIME_ACCOUNTING
 
 /*
- * There are no locks covering percpu hardirq/softirq time.
- * They are only modified in vtime_account, on corresponding CPU
- * with interrupts disabled. So, writes are safe.
- * They are read and saved off onto struct rq in update_rq_clock().
- * This may result in other CPU reading this CPU's irq time and can
- * race with irq/vtime_account on this CPU. We would either get old
- * or new value with a side effect of accounting a slice of irq time to wrong
- * task when irq is in progress while we read rq->clock. That is a worthy
- * compromise in place of having locks on each irq in account_system_time.
+ * There are no locks covering percpu hardirq/softirq समय.
+ * They are only modअगरied in vसमय_account, on corresponding CPU
+ * with पूर्णांकerrupts disabled. So, ग_लिखोs are safe.
+ * They are पढ़ो and saved off onto काष्ठा rq in update_rq_घड़ी().
+ * This may result in other CPU पढ़ोing this CPU's irq समय and can
+ * race with irq/vसमय_account on this CPU. We would either get old
+ * or new value with a side effect of accounting a slice of irq समय to wrong
+ * task when irq is in progress जबतक we पढ़ो rq->घड़ी. That is a worthy
+ * compromise in place of having locks on each irq in account_प्रणाली_समय.
  */
-DEFINE_PER_CPU(struct irqtime, cpu_irqtime);
+DEFINE_PER_CPU(काष्ठा irqसमय, cpu_irqसमय);
 
-static int sched_clock_irqtime;
+अटल पूर्णांक sched_घड़ी_irqसमय;
 
-void enable_sched_clock_irqtime(void)
-{
-	sched_clock_irqtime = 1;
-}
+व्योम enable_sched_घड़ी_irqसमय(व्योम)
+अणु
+	sched_घड़ी_irqसमय = 1;
+पूर्ण
 
-void disable_sched_clock_irqtime(void)
-{
-	sched_clock_irqtime = 0;
-}
+व्योम disable_sched_घड़ी_irqसमय(व्योम)
+अणु
+	sched_घड़ी_irqसमय = 0;
+पूर्ण
 
-static void irqtime_account_delta(struct irqtime *irqtime, u64 delta,
-				  enum cpu_usage_stat idx)
-{
+अटल व्योम irqसमय_account_delta(काष्ठा irqसमय *irqसमय, u64 delta,
+				  क्रमागत cpu_usage_stat idx)
+अणु
 	u64 *cpustat = kcpustat_this_cpu->cpustat;
 
-	u64_stats_update_begin(&irqtime->sync);
+	u64_stats_update_begin(&irqसमय->sync);
 	cpustat[idx] += delta;
-	irqtime->total += delta;
-	irqtime->tick_delta += delta;
-	u64_stats_update_end(&irqtime->sync);
-}
+	irqसमय->total += delta;
+	irqसमय->tick_delta += delta;
+	u64_stats_update_end(&irqसमय->sync);
+पूर्ण
 
 /*
- * Called after incrementing preempt_count on {soft,}irq_enter
- * and before decrementing preempt_count on {soft,}irq_exit.
+ * Called after incrementing preempt_count on अणुsoft,पूर्णirq_enter
+ * and beक्रमe decrementing preempt_count on अणुsoft,पूर्णirq_निकास.
  */
-void irqtime_account_irq(struct task_struct *curr, unsigned int offset)
-{
-	struct irqtime *irqtime = this_cpu_ptr(&cpu_irqtime);
-	unsigned int pc;
+व्योम irqसमय_account_irq(काष्ठा task_काष्ठा *curr, अचिन्हित पूर्णांक offset)
+अणु
+	काष्ठा irqसमय *irqसमय = this_cpu_ptr(&cpu_irqसमय);
+	अचिन्हित पूर्णांक pc;
 	s64 delta;
-	int cpu;
+	पूर्णांक cpu;
 
-	if (!sched_clock_irqtime)
-		return;
+	अगर (!sched_घड़ी_irqसमय)
+		वापस;
 
 	cpu = smp_processor_id();
-	delta = sched_clock_cpu(cpu) - irqtime->irq_start_time;
-	irqtime->irq_start_time += delta;
+	delta = sched_घड़ी_cpu(cpu) - irqसमय->irq_start_समय;
+	irqसमय->irq_start_समय += delta;
 	pc = irq_count() - offset;
 
 	/*
-	 * We do not account for softirq time from ksoftirqd here.
-	 * We want to continue accounting softirq time to ksoftirqd thread
-	 * in that case, so as not to confuse scheduler with a special task
-	 * that do not consume any time, but still wants to run.
+	 * We करो not account क्रम softirq समय from ksoftirqd here.
+	 * We want to जारी accounting softirq समय to ksoftirqd thपढ़ो
+	 * in that हाल, so as not to confuse scheduler with a special task
+	 * that करो not consume any समय, but still wants to run.
 	 */
-	if (pc & HARDIRQ_MASK)
-		irqtime_account_delta(irqtime, delta, CPUTIME_IRQ);
-	else if ((pc & SOFTIRQ_OFFSET) && curr != this_cpu_ksoftirqd())
-		irqtime_account_delta(irqtime, delta, CPUTIME_SOFTIRQ);
-}
+	अगर (pc & HARसूचीQ_MASK)
+		irqसमय_account_delta(irqसमय, delta, CPUTIME_IRQ);
+	अन्यथा अगर ((pc & SOFTIRQ_OFFSET) && curr != this_cpu_ksoftirqd())
+		irqसमय_account_delta(irqसमय, delta, CPUTIME_SOFTIRQ);
+पूर्ण
 
-static u64 irqtime_tick_accounted(u64 maxtime)
-{
-	struct irqtime *irqtime = this_cpu_ptr(&cpu_irqtime);
+अटल u64 irqसमय_प्रकारick_accounted(u64 maxसमय)
+अणु
+	काष्ठा irqसमय *irqसमय = this_cpu_ptr(&cpu_irqसमय);
 	u64 delta;
 
-	delta = min(irqtime->tick_delta, maxtime);
-	irqtime->tick_delta -= delta;
+	delta = min(irqसमय->tick_delta, maxसमय);
+	irqसमय->tick_delta -= delta;
 
-	return delta;
-}
+	वापस delta;
+पूर्ण
 
-#else /* CONFIG_IRQ_TIME_ACCOUNTING */
+#अन्यथा /* CONFIG_IRQ_TIME_ACCOUNTING */
 
-#define sched_clock_irqtime	(0)
+#घोषणा sched_घड़ी_irqसमय	(0)
 
-static u64 irqtime_tick_accounted(u64 dummy)
-{
-	return 0;
-}
+अटल u64 irqसमय_प्रकारick_accounted(u64 dummy)
+अणु
+	वापस 0;
+पूर्ण
 
-#endif /* !CONFIG_IRQ_TIME_ACCOUNTING */
+#पूर्ण_अगर /* !CONFIG_IRQ_TIME_ACCOUNTING */
 
-static inline void task_group_account_field(struct task_struct *p, int index,
-					    u64 tmp)
-{
+अटल अंतरभूत व्योम task_group_account_field(काष्ठा task_काष्ठा *p, पूर्णांक index,
+					    u64 पंचांगp)
+अणु
 	/*
 	 * Since all updates are sure to touch the root cgroup, we
 	 * get ourselves ahead and touch it first. If the root cgroup
-	 * is the only cgroup, then nothing else should be necessary.
+	 * is the only cgroup, then nothing अन्यथा should be necessary.
 	 *
 	 */
-	__this_cpu_add(kernel_cpustat.cpustat[index], tmp);
+	__this_cpu_add(kernel_cpustat.cpustat[index], पंचांगp);
 
-	cgroup_account_cputime_field(p, index, tmp);
-}
+	cgroup_account_cpuसमय_field(p, index, पंचांगp);
+पूर्ण
 
 /*
- * Account user CPU time to a process.
- * @p: the process that the CPU time gets accounted to
- * @cputime: the CPU time spent in user space since the last update
+ * Account user CPU समय to a process.
+ * @p: the process that the CPU समय माला_लो accounted to
+ * @cpuसमय: the CPU समय spent in user space since the last update
  */
-void account_user_time(struct task_struct *p, u64 cputime)
-{
-	int index;
+व्योम account_user_समय(काष्ठा task_काष्ठा *p, u64 cpuसमय)
+अणु
+	पूर्णांक index;
 
-	/* Add user time to process. */
-	p->utime += cputime;
-	account_group_user_time(p, cputime);
+	/* Add user समय to process. */
+	p->uसमय += cpuसमय;
+	account_group_user_समय(p, cpuसमय);
 
 	index = (task_nice(p) > 0) ? CPUTIME_NICE : CPUTIME_USER;
 
-	/* Add user time to cpustat. */
-	task_group_account_field(p, index, cputime);
+	/* Add user समय to cpustat. */
+	task_group_account_field(p, index, cpuसमय);
 
-	/* Account for user time used */
-	acct_account_cputime(p);
-}
+	/* Account क्रम user समय used */
+	acct_account_cpuसमय(p);
+पूर्ण
 
 /*
- * Account guest CPU time to a process.
- * @p: the process that the CPU time gets accounted to
- * @cputime: the CPU time spent in virtual machine since the last update
+ * Account guest CPU समय to a process.
+ * @p: the process that the CPU समय माला_लो accounted to
+ * @cpuसमय: the CPU समय spent in भव machine since the last update
  */
-void account_guest_time(struct task_struct *p, u64 cputime)
-{
+व्योम account_guest_समय(काष्ठा task_काष्ठा *p, u64 cpuसमय)
+अणु
 	u64 *cpustat = kcpustat_this_cpu->cpustat;
 
-	/* Add guest time to process. */
-	p->utime += cputime;
-	account_group_user_time(p, cputime);
-	p->gtime += cputime;
+	/* Add guest समय to process. */
+	p->uसमय += cpuसमय;
+	account_group_user_समय(p, cpuसमय);
+	p->gसमय += cpuसमय;
 
-	/* Add guest time to cpustat. */
-	if (task_nice(p) > 0) {
-		cpustat[CPUTIME_NICE] += cputime;
-		cpustat[CPUTIME_GUEST_NICE] += cputime;
-	} else {
-		cpustat[CPUTIME_USER] += cputime;
-		cpustat[CPUTIME_GUEST] += cputime;
-	}
-}
+	/* Add guest समय to cpustat. */
+	अगर (task_nice(p) > 0) अणु
+		cpustat[CPUTIME_NICE] += cpuसमय;
+		cpustat[CPUTIME_GUEST_NICE] += cpuसमय;
+	पूर्ण अन्यथा अणु
+		cpustat[CPUTIME_USER] += cpuसमय;
+		cpustat[CPUTIME_GUEST] += cpuसमय;
+	पूर्ण
+पूर्ण
 
 /*
- * Account system CPU time to a process and desired cpustat field
- * @p: the process that the CPU time gets accounted to
- * @cputime: the CPU time spent in kernel space since the last update
- * @index: pointer to cpustat field that has to be updated
+ * Account प्रणाली CPU समय to a process and desired cpustat field
+ * @p: the process that the CPU समय माला_लो accounted to
+ * @cpuसमय: the CPU समय spent in kernel space since the last update
+ * @index: poपूर्णांकer to cpustat field that has to be updated
  */
-void account_system_index_time(struct task_struct *p,
-			       u64 cputime, enum cpu_usage_stat index)
-{
-	/* Add system time to process. */
-	p->stime += cputime;
-	account_group_system_time(p, cputime);
+व्योम account_प्रणाली_index_समय(काष्ठा task_काष्ठा *p,
+			       u64 cpuसमय, क्रमागत cpu_usage_stat index)
+अणु
+	/* Add प्रणाली समय to process. */
+	p->sसमय += cpuसमय;
+	account_group_प्रणाली_समय(p, cpuसमय);
 
-	/* Add system time to cpustat. */
-	task_group_account_field(p, index, cputime);
+	/* Add प्रणाली समय to cpustat. */
+	task_group_account_field(p, index, cpuसमय);
 
-	/* Account for system time used */
-	acct_account_cputime(p);
-}
+	/* Account क्रम प्रणाली समय used */
+	acct_account_cpuसमय(p);
+पूर्ण
 
 /*
- * Account system CPU time to a process.
- * @p: the process that the CPU time gets accounted to
+ * Account प्रणाली CPU समय to a process.
+ * @p: the process that the CPU समय माला_लो accounted to
  * @hardirq_offset: the offset to subtract from hardirq_count()
- * @cputime: the CPU time spent in kernel space since the last update
+ * @cpuसमय: the CPU समय spent in kernel space since the last update
  */
-void account_system_time(struct task_struct *p, int hardirq_offset, u64 cputime)
-{
-	int index;
+व्योम account_प्रणाली_समय(काष्ठा task_काष्ठा *p, पूर्णांक hardirq_offset, u64 cpuसमय)
+अणु
+	पूर्णांक index;
 
-	if ((p->flags & PF_VCPU) && (irq_count() - hardirq_offset == 0)) {
-		account_guest_time(p, cputime);
-		return;
-	}
+	अगर ((p->flags & PF_VCPU) && (irq_count() - hardirq_offset == 0)) अणु
+		account_guest_समय(p, cpuसमय);
+		वापस;
+	पूर्ण
 
-	if (hardirq_count() - hardirq_offset)
+	अगर (hardirq_count() - hardirq_offset)
 		index = CPUTIME_IRQ;
-	else if (in_serving_softirq())
+	अन्यथा अगर (in_serving_softirq())
 		index = CPUTIME_SOFTIRQ;
-	else
+	अन्यथा
 		index = CPUTIME_SYSTEM;
 
-	account_system_index_time(p, cputime, index);
-}
+	account_प्रणाली_index_समय(p, cpuसमय, index);
+पूर्ण
 
 /*
- * Account for involuntary wait time.
- * @cputime: the CPU time spent in involuntary wait
+ * Account क्रम involuntary रुको समय.
+ * @cpuसमय: the CPU समय spent in involuntary रुको
  */
-void account_steal_time(u64 cputime)
-{
+व्योम account_steal_समय(u64 cpuसमय)
+अणु
 	u64 *cpustat = kcpustat_this_cpu->cpustat;
 
-	cpustat[CPUTIME_STEAL] += cputime;
-}
+	cpustat[CPUTIME_STEAL] += cpuसमय;
+पूर्ण
 
 /*
- * Account for idle time.
- * @cputime: the CPU time spent in idle wait
+ * Account क्रम idle समय.
+ * @cpuसमय: the CPU समय spent in idle रुको
  */
-void account_idle_time(u64 cputime)
-{
+व्योम account_idle_समय(u64 cpuसमय)
+अणु
 	u64 *cpustat = kcpustat_this_cpu->cpustat;
-	struct rq *rq = this_rq();
+	काष्ठा rq *rq = this_rq();
 
-	if (atomic_read(&rq->nr_iowait) > 0)
-		cpustat[CPUTIME_IOWAIT] += cputime;
-	else
-		cpustat[CPUTIME_IDLE] += cputime;
-}
+	अगर (atomic_पढ़ो(&rq->nr_ioरुको) > 0)
+		cpustat[CPUTIME_IOWAIT] += cpuसमय;
+	अन्यथा
+		cpustat[CPUTIME_IDLE] += cpuसमय;
+पूर्ण
 
 /*
- * When a guest is interrupted for a longer amount of time, missed clock
+ * When a guest is पूर्णांकerrupted क्रम a दीर्घer amount of समय, missed घड़ी
  * ticks are not redelivered later. Due to that, this function may on
- * occasion account more time than the calling functions think elapsed.
+ * occasion account more समय than the calling functions think elapsed.
  */
-static __always_inline u64 steal_account_process_time(u64 maxtime)
-{
-#ifdef CONFIG_PARAVIRT
-	if (static_key_false(&paravirt_steal_enabled)) {
+अटल __always_अंतरभूत u64 steal_account_process_समय(u64 maxसमय)
+अणु
+#अगर_घोषित CONFIG_PARAVIRT
+	अगर (अटल_key_false(&paravirt_steal_enabled)) अणु
 		u64 steal;
 
-		steal = paravirt_steal_clock(smp_processor_id());
-		steal -= this_rq()->prev_steal_time;
-		steal = min(steal, maxtime);
-		account_steal_time(steal);
-		this_rq()->prev_steal_time += steal;
+		steal = paravirt_steal_घड़ी(smp_processor_id());
+		steal -= this_rq()->prev_steal_समय;
+		steal = min(steal, maxसमय);
+		account_steal_समय(steal);
+		this_rq()->prev_steal_समय += steal;
 
-		return steal;
-	}
-#endif
-	return 0;
-}
+		वापस steal;
+	पूर्ण
+#पूर्ण_अगर
+	वापस 0;
+पूर्ण
 
 /*
- * Account how much elapsed time was spent in steal, irq, or softirq time.
+ * Account how much elapsed समय was spent in steal, irq, or softirq समय.
  */
-static inline u64 account_other_time(u64 max)
-{
+अटल अंतरभूत u64 account_other_समय(u64 max)
+अणु
 	u64 accounted;
 
-	lockdep_assert_irqs_disabled();
+	lockdep_निश्चित_irqs_disabled();
 
-	accounted = steal_account_process_time(max);
+	accounted = steal_account_process_समय(max);
 
-	if (accounted < max)
-		accounted += irqtime_tick_accounted(max - accounted);
+	अगर (accounted < max)
+		accounted += irqसमय_प्रकारick_accounted(max - accounted);
 
-	return accounted;
-}
+	वापस accounted;
+पूर्ण
 
-#ifdef CONFIG_64BIT
-static inline u64 read_sum_exec_runtime(struct task_struct *t)
-{
-	return t->se.sum_exec_runtime;
-}
-#else
-static u64 read_sum_exec_runtime(struct task_struct *t)
-{
+#अगर_घोषित CONFIG_64BIT
+अटल अंतरभूत u64 पढ़ो_sum_exec_runसमय(काष्ठा task_काष्ठा *t)
+अणु
+	वापस t->se.sum_exec_runसमय;
+पूर्ण
+#अन्यथा
+अटल u64 पढ़ो_sum_exec_runसमय(काष्ठा task_काष्ठा *t)
+अणु
 	u64 ns;
-	struct rq_flags rf;
-	struct rq *rq;
+	काष्ठा rq_flags rf;
+	काष्ठा rq *rq;
 
 	rq = task_rq_lock(t, &rf);
-	ns = t->se.sum_exec_runtime;
+	ns = t->se.sum_exec_runसमय;
 	task_rq_unlock(rq, t, &rf);
 
-	return ns;
-}
-#endif
+	वापस ns;
+पूर्ण
+#पूर्ण_अगर
 
 /*
- * Accumulate raw cputime values of dead tasks (sig->[us]time) and live
- * tasks (sum on group iteration) belonging to @tsk's group.
+ * Accumulate raw cpuसमय values of dead tasks (sig->[us]समय) and live
+ * tasks (sum on group iteration) beदीर्घing to @tsk's group.
  */
-void thread_group_cputime(struct task_struct *tsk, struct task_cputime *times)
-{
-	struct signal_struct *sig = tsk->signal;
-	u64 utime, stime;
-	struct task_struct *t;
-	unsigned int seq, nextseq;
-	unsigned long flags;
+व्योम thपढ़ो_group_cpuसमय(काष्ठा task_काष्ठा *tsk, काष्ठा task_cpuसमय *बार)
+अणु
+	काष्ठा संकेत_काष्ठा *sig = tsk->संकेत;
+	u64 uसमय, sसमय;
+	काष्ठा task_काष्ठा *t;
+	अचिन्हित पूर्णांक seq, nextseq;
+	अचिन्हित दीर्घ flags;
 
 	/*
-	 * Update current task runtime to account pending time since last
-	 * scheduler action or thread_group_cputime() call. This thread group
-	 * might have other running tasks on different CPUs, but updating
-	 * their runtime can affect syscall performance, so we skip account
-	 * those pending times and rely only on values updated on tick or
+	 * Update current task runसमय to account pending समय since last
+	 * scheduler action or thपढ़ो_group_cpuसमय() call. This thपढ़ो group
+	 * might have other running tasks on dअगरferent CPUs, but updating
+	 * their runसमय can affect syscall perक्रमmance, so we skip account
+	 * those pending बार and rely only on values updated on tick or
 	 * other scheduler action.
 	 */
-	if (same_thread_group(current, tsk))
-		(void) task_sched_runtime(current);
+	अगर (same_thपढ़ो_group(current, tsk))
+		(व्योम) task_sched_runसमय(current);
 
-	rcu_read_lock();
-	/* Attempt a lockless read on the first round. */
+	rcu_पढ़ो_lock();
+	/* Attempt a lockless पढ़ो on the first round. */
 	nextseq = 0;
-	do {
+	करो अणु
 		seq = nextseq;
-		flags = read_seqbegin_or_lock_irqsave(&sig->stats_lock, &seq);
-		times->utime = sig->utime;
-		times->stime = sig->stime;
-		times->sum_exec_runtime = sig->sum_sched_runtime;
+		flags = पढ़ो_seqbegin_or_lock_irqsave(&sig->stats_lock, &seq);
+		बार->uसमय = sig->uसमय;
+		बार->sसमय = sig->sसमय;
+		बार->sum_exec_runसमय = sig->sum_sched_runसमय;
 
-		for_each_thread(tsk, t) {
-			task_cputime(t, &utime, &stime);
-			times->utime += utime;
-			times->stime += stime;
-			times->sum_exec_runtime += read_sum_exec_runtime(t);
-		}
+		क्रम_each_thपढ़ो(tsk, t) अणु
+			task_cpuसमय(t, &uसमय, &sसमय);
+			बार->uसमय += uसमय;
+			बार->sसमय += sसमय;
+			बार->sum_exec_runसमय += पढ़ो_sum_exec_runसमय(t);
+		पूर्ण
 		/* If lockless access failed, take the lock. */
 		nextseq = 1;
-	} while (need_seqretry(&sig->stats_lock, seq));
-	done_seqretry_irqrestore(&sig->stats_lock, seq, flags);
-	rcu_read_unlock();
-}
+	पूर्ण जबतक (need_seqretry(&sig->stats_lock, seq));
+	करोne_seqretry_irqrestore(&sig->stats_lock, seq, flags);
+	rcu_पढ़ो_unlock();
+पूर्ण
 
-#ifdef CONFIG_IRQ_TIME_ACCOUNTING
+#अगर_घोषित CONFIG_IRQ_TIME_ACCOUNTING
 /*
  * Account a tick to a process and cpustat
- * @p: the process that the CPU time gets accounted to
+ * @p: the process that the CPU समय माला_लो accounted to
  * @user_tick: is the tick from userspace
- * @rq: the pointer to rq
+ * @rq: the poपूर्णांकer to rq
  *
  * Tick demultiplexing follows the order
  * - pending hardirq update
  * - pending softirq update
- * - user_time
- * - idle_time
- * - system time
- *   - check for guest_time
- *   - else account as system_time
+ * - user_समय
+ * - idle_समय
+ * - प्रणाली समय
+ *   - check क्रम guest_समय
+ *   - अन्यथा account as प्रणाली_समय
  *
- * Check for hardirq is done both for system and user time as there is
- * no timer going off while we are on hardirq and hence we may never get an
- * opportunity to update it solely in system time.
- * p->stime and friends are only updated on system time and not on irq
- * softirq as those do not count in task exec_runtime any more.
+ * Check क्रम hardirq is करोne both क्रम प्रणाली and user समय as there is
+ * no समयr going off जबतक we are on hardirq and hence we may never get an
+ * opportunity to update it solely in प्रणाली समय.
+ * p->sसमय and मित्रs are only updated on प्रणाली समय and not on irq
+ * softirq as those करो not count in task exec_runसमय any more.
  */
-static void irqtime_account_process_tick(struct task_struct *p, int user_tick,
-					 int ticks)
-{
-	u64 other, cputime = TICK_NSEC * ticks;
+अटल व्योम irqसमय_account_process_tick(काष्ठा task_काष्ठा *p, पूर्णांक user_tick,
+					 पूर्णांक ticks)
+अणु
+	u64 other, cpuसमय = TICK_NSEC * ticks;
 
 	/*
-	 * When returning from idle, many ticks can get accounted at
-	 * once, including some ticks of steal, irq, and softirq time.
-	 * Subtract those ticks from the amount of time accounted to
-	 * idle, or potentially user or system time. Due to rounding,
-	 * other time can exceed ticks occasionally.
+	 * When वापसing from idle, many ticks can get accounted at
+	 * once, including some ticks of steal, irq, and softirq समय.
+	 * Subtract those ticks from the amount of समय accounted to
+	 * idle, or potentially user or प्रणाली समय. Due to rounding,
+	 * other समय can exceed ticks occasionally.
 	 */
-	other = account_other_time(ULONG_MAX);
-	if (other >= cputime)
-		return;
+	other = account_other_समय(अच_दीर्घ_उच्च);
+	अगर (other >= cpuसमय)
+		वापस;
 
-	cputime -= other;
+	cpuसमय -= other;
 
-	if (this_cpu_ksoftirqd() == p) {
+	अगर (this_cpu_ksoftirqd() == p) अणु
 		/*
-		 * ksoftirqd time do not get accounted in cpu_softirq_time.
+		 * ksoftirqd समय करो not get accounted in cpu_softirq_समय.
 		 * So, we have to handle it separately here.
-		 * Also, p->stime needs to be updated for ksoftirqd.
+		 * Also, p->sसमय needs to be updated क्रम ksoftirqd.
 		 */
-		account_system_index_time(p, cputime, CPUTIME_SOFTIRQ);
-	} else if (user_tick) {
-		account_user_time(p, cputime);
-	} else if (p == this_rq()->idle) {
-		account_idle_time(cputime);
-	} else if (p->flags & PF_VCPU) { /* System time or guest time */
-		account_guest_time(p, cputime);
-	} else {
-		account_system_index_time(p, cputime, CPUTIME_SYSTEM);
-	}
-}
+		account_प्रणाली_index_समय(p, cpuसमय, CPUTIME_SOFTIRQ);
+	पूर्ण अन्यथा अगर (user_tick) अणु
+		account_user_समय(p, cpuसमय);
+	पूर्ण अन्यथा अगर (p == this_rq()->idle) अणु
+		account_idle_समय(cpuसमय);
+	पूर्ण अन्यथा अगर (p->flags & PF_VCPU) अणु /* System समय or guest समय */
+		account_guest_समय(p, cpuसमय);
+	पूर्ण अन्यथा अणु
+		account_प्रणाली_index_समय(p, cpuसमय, CPUTIME_SYSTEM);
+	पूर्ण
+पूर्ण
 
-static void irqtime_account_idle_ticks(int ticks)
-{
-	irqtime_account_process_tick(current, 0, ticks);
-}
-#else /* CONFIG_IRQ_TIME_ACCOUNTING */
-static inline void irqtime_account_idle_ticks(int ticks) { }
-static inline void irqtime_account_process_tick(struct task_struct *p, int user_tick,
-						int nr_ticks) { }
-#endif /* CONFIG_IRQ_TIME_ACCOUNTING */
+अटल व्योम irqसमय_account_idle_ticks(पूर्णांक ticks)
+अणु
+	irqसमय_account_process_tick(current, 0, ticks);
+पूर्ण
+#अन्यथा /* CONFIG_IRQ_TIME_ACCOUNTING */
+अटल अंतरभूत व्योम irqसमय_account_idle_ticks(पूर्णांक ticks) अणु पूर्ण
+अटल अंतरभूत व्योम irqसमय_account_process_tick(काष्ठा task_काष्ठा *p, पूर्णांक user_tick,
+						पूर्णांक nr_ticks) अणु पूर्ण
+#पूर्ण_अगर /* CONFIG_IRQ_TIME_ACCOUNTING */
 
 /*
- * Use precise platform statistics if available:
+ * Use precise platक्रमm statistics अगर available:
  */
-#ifdef CONFIG_VIRT_CPU_ACCOUNTING_NATIVE
+#अगर_घोषित CONFIG_VIRT_CPU_ACCOUNTING_NATIVE
 
-# ifndef __ARCH_HAS_VTIME_TASK_SWITCH
-void vtime_task_switch(struct task_struct *prev)
-{
-	if (is_idle_task(prev))
-		vtime_account_idle(prev);
-	else
-		vtime_account_kernel(prev);
+# अगरndef __ARCH_HAS_VTIME_TASK_SWITCH
+व्योम vसमय_प्रकारask_चयन(काष्ठा task_काष्ठा *prev)
+अणु
+	अगर (is_idle_task(prev))
+		vसमय_account_idle(prev);
+	अन्यथा
+		vसमय_account_kernel(prev);
 
-	vtime_flush(prev);
-	arch_vtime_task_switch(prev);
-}
-# endif
+	vसमय_flush(prev);
+	arch_vसमय_प्रकारask_चयन(prev);
+पूर्ण
+# endअगर
 
-void vtime_account_irq(struct task_struct *tsk, unsigned int offset)
-{
-	unsigned int pc = irq_count() - offset;
+व्योम vसमय_account_irq(काष्ठा task_काष्ठा *tsk, अचिन्हित पूर्णांक offset)
+अणु
+	अचिन्हित पूर्णांक pc = irq_count() - offset;
 
-	if (pc & HARDIRQ_OFFSET) {
-		vtime_account_hardirq(tsk);
-	} else if (pc & SOFTIRQ_OFFSET) {
-		vtime_account_softirq(tsk);
-	} else if (!IS_ENABLED(CONFIG_HAVE_VIRT_CPU_ACCOUNTING_IDLE) &&
-		   is_idle_task(tsk)) {
-		vtime_account_idle(tsk);
-	} else {
-		vtime_account_kernel(tsk);
-	}
-}
+	अगर (pc & HARसूचीQ_OFFSET) अणु
+		vसमय_account_hardirq(tsk);
+	पूर्ण अन्यथा अगर (pc & SOFTIRQ_OFFSET) अणु
+		vसमय_account_softirq(tsk);
+	पूर्ण अन्यथा अगर (!IS_ENABLED(CONFIG_HAVE_VIRT_CPU_ACCOUNTING_IDLE) &&
+		   is_idle_task(tsk)) अणु
+		vसमय_account_idle(tsk);
+	पूर्ण अन्यथा अणु
+		vसमय_account_kernel(tsk);
+	पूर्ण
+पूर्ण
 
-void cputime_adjust(struct task_cputime *curr, struct prev_cputime *prev,
+व्योम cpuसमय_adjust(काष्ठा task_cpuसमय *curr, काष्ठा prev_cpuसमय *prev,
 		    u64 *ut, u64 *st)
-{
-	*ut = curr->utime;
-	*st = curr->stime;
-}
+अणु
+	*ut = curr->uसमय;
+	*st = curr->sसमय;
+पूर्ण
 
-void task_cputime_adjusted(struct task_struct *p, u64 *ut, u64 *st)
-{
-	*ut = p->utime;
-	*st = p->stime;
-}
-EXPORT_SYMBOL_GPL(task_cputime_adjusted);
+व्योम task_cpuसमय_adjusted(काष्ठा task_काष्ठा *p, u64 *ut, u64 *st)
+अणु
+	*ut = p->uसमय;
+	*st = p->sसमय;
+पूर्ण
+EXPORT_SYMBOL_GPL(task_cpuसमय_adjusted);
 
-void thread_group_cputime_adjusted(struct task_struct *p, u64 *ut, u64 *st)
-{
-	struct task_cputime cputime;
+व्योम thपढ़ो_group_cpuसमय_adjusted(काष्ठा task_काष्ठा *p, u64 *ut, u64 *st)
+अणु
+	काष्ठा task_cpuसमय cpuसमय;
 
-	thread_group_cputime(p, &cputime);
+	thपढ़ो_group_cpuसमय(p, &cpuसमय);
 
-	*ut = cputime.utime;
-	*st = cputime.stime;
-}
+	*ut = cpuसमय.uसमय;
+	*st = cpuसमय.sसमय;
+पूर्ण
 
-#else /* !CONFIG_VIRT_CPU_ACCOUNTING_NATIVE: */
+#अन्यथा /* !CONFIG_VIRT_CPU_ACCOUNTING_NATIVE: */
 
 /*
- * Account a single tick of CPU time.
- * @p: the process that the CPU time gets accounted to
- * @user_tick: indicates if the tick is a user or a system tick
+ * Account a single tick of CPU समय.
+ * @p: the process that the CPU समय माला_लो accounted to
+ * @user_tick: indicates अगर the tick is a user or a प्रणाली tick
  */
-void account_process_tick(struct task_struct *p, int user_tick)
-{
-	u64 cputime, steal;
+व्योम account_process_tick(काष्ठा task_काष्ठा *p, पूर्णांक user_tick)
+अणु
+	u64 cpuसमय, steal;
 
-	if (vtime_accounting_enabled_this_cpu())
-		return;
+	अगर (vसमय_accounting_enabled_this_cpu())
+		वापस;
 
-	if (sched_clock_irqtime) {
-		irqtime_account_process_tick(p, user_tick, 1);
-		return;
-	}
+	अगर (sched_घड़ी_irqसमय) अणु
+		irqसमय_account_process_tick(p, user_tick, 1);
+		वापस;
+	पूर्ण
 
-	cputime = TICK_NSEC;
-	steal = steal_account_process_time(ULONG_MAX);
+	cpuसमय = TICK_NSEC;
+	steal = steal_account_process_समय(अच_दीर्घ_उच्च);
 
-	if (steal >= cputime)
-		return;
+	अगर (steal >= cpuसमय)
+		वापस;
 
-	cputime -= steal;
+	cpuसमय -= steal;
 
-	if (user_tick)
-		account_user_time(p, cputime);
-	else if ((p != this_rq()->idle) || (irq_count() != HARDIRQ_OFFSET))
-		account_system_time(p, HARDIRQ_OFFSET, cputime);
-	else
-		account_idle_time(cputime);
-}
+	अगर (user_tick)
+		account_user_समय(p, cpuसमय);
+	अन्यथा अगर ((p != this_rq()->idle) || (irq_count() != HARसूचीQ_OFFSET))
+		account_प्रणाली_समय(p, HARसूचीQ_OFFSET, cpuसमय);
+	अन्यथा
+		account_idle_समय(cpuसमय);
+पूर्ण
 
 /*
- * Account multiple ticks of idle time.
+ * Account multiple ticks of idle समय.
  * @ticks: number of stolen ticks
  */
-void account_idle_ticks(unsigned long ticks)
-{
-	u64 cputime, steal;
+व्योम account_idle_ticks(अचिन्हित दीर्घ ticks)
+अणु
+	u64 cpuसमय, steal;
 
-	if (sched_clock_irqtime) {
-		irqtime_account_idle_ticks(ticks);
-		return;
-	}
+	अगर (sched_घड़ी_irqसमय) अणु
+		irqसमय_account_idle_ticks(ticks);
+		वापस;
+	पूर्ण
 
-	cputime = ticks * TICK_NSEC;
-	steal = steal_account_process_time(ULONG_MAX);
+	cpuसमय = ticks * TICK_NSEC;
+	steal = steal_account_process_समय(अच_दीर्घ_उच्च);
 
-	if (steal >= cputime)
-		return;
+	अगर (steal >= cpuसमय)
+		वापस;
 
-	cputime -= steal;
-	account_idle_time(cputime);
-}
+	cpuसमय -= steal;
+	account_idle_समय(cpuसमय);
+पूर्ण
 
 /*
- * Adjust tick based cputime random precision against scheduler runtime
+ * Adjust tick based cpuसमय अक्रमom precision against scheduler runसमय
  * accounting.
  *
- * Tick based cputime accounting depend on random scheduling timeslices of a
- * task to be interrupted or not by the timer.  Depending on these
- * circumstances, the number of these interrupts may be over or
- * under-optimistic, matching the real user and system cputime with a variable
+ * Tick based cpuसमय accounting depend on अक्रमom scheduling बारlices of a
+ * task to be पूर्णांकerrupted or not by the समयr.  Depending on these
+ * circumstances, the number of these पूर्णांकerrupts may be over or
+ * under-optimistic, matching the real user and प्रणाली cpuसमय with a variable
  * precision.
  *
- * Fix this by scaling these tick based values against the total runtime
+ * Fix this by scaling these tick based values against the total runसमय
  * accounted by the CFS scheduler.
  *
  * This code provides the following guarantees:
  *
- *   stime + utime == rtime
- *   stime_i+1 >= stime_i, utime_i+1 >= utime_i
+ *   sसमय + uसमय == rसमय
+ *   sसमय_i+1 >= sसमय_i, uसमय_i+1 >= uसमय_i
  *
- * Assuming that rtime_i+1 >= rtime_i.
+ * Assuming that rसमय_i+1 >= rसमय_i.
  */
-void cputime_adjust(struct task_cputime *curr, struct prev_cputime *prev,
+व्योम cpuसमय_adjust(काष्ठा task_cpuसमय *curr, काष्ठा prev_cpuसमय *prev,
 		    u64 *ut, u64 *st)
-{
-	u64 rtime, stime, utime;
-	unsigned long flags;
+अणु
+	u64 rसमय, sसमय, uसमय;
+	अचिन्हित दीर्घ flags;
 
 	/* Serialize concurrent callers such that we can honour our guarantees */
 	raw_spin_lock_irqsave(&prev->lock, flags);
-	rtime = curr->sum_exec_runtime;
+	rसमय = curr->sum_exec_runसमय;
 
 	/*
 	 * This is possible under two circumstances:
-	 *  - rtime isn't monotonic after all (a bug);
+	 *  - rसमय isn't monotonic after all (a bug);
 	 *  - we got reordered by the lock.
 	 *
-	 * In both cases this acts as a filter such that the rest of the code
-	 * can assume it is monotonic regardless of anything else.
+	 * In both हालs this acts as a filter such that the rest of the code
+	 * can assume it is monotonic regardless of anything अन्यथा.
 	 */
-	if (prev->stime + prev->utime >= rtime)
-		goto out;
+	अगर (prev->sसमय + prev->uसमय >= rसमय)
+		जाओ out;
 
-	stime = curr->stime;
-	utime = curr->utime;
+	sसमय = curr->sसमय;
+	uसमय = curr->uसमय;
 
 	/*
-	 * If either stime or utime are 0, assume all runtime is userspace.
-	 * Once a task gets some ticks, the monotonicity code at 'update:'
+	 * If either sसमय or uसमय are 0, assume all runसमय is userspace.
+	 * Once a task माला_लो some ticks, the monotonicity code at 'update:'
 	 * will ensure things converge to the observed ratio.
 	 */
-	if (stime == 0) {
-		utime = rtime;
-		goto update;
-	}
+	अगर (sसमय == 0) अणु
+		uसमय = rसमय;
+		जाओ update;
+	पूर्ण
 
-	if (utime == 0) {
-		stime = rtime;
-		goto update;
-	}
+	अगर (uसमय == 0) अणु
+		sसमय = rसमय;
+		जाओ update;
+	पूर्ण
 
-	stime = mul_u64_u64_div_u64(stime, rtime, stime + utime);
+	sसमय = mul_u64_u64_भाग_u64(sसमय, rसमय, sसमय + uसमय);
 
 update:
 	/*
-	 * Make sure stime doesn't go backwards; this preserves monotonicity
-	 * for utime because rtime is monotonic.
+	 * Make sure sसमय करोesn't go backwards; this preserves monotonicity
+	 * क्रम uसमय because rसमय is monotonic.
 	 *
-	 *  utime_i+1 = rtime_i+1 - stime_i
-	 *            = rtime_i+1 - (rtime_i - utime_i)
-	 *            = (rtime_i+1 - rtime_i) + utime_i
-	 *            >= utime_i
+	 *  uसमय_i+1 = rसमय_i+1 - sसमय_i
+	 *            = rसमय_i+1 - (rसमय_i - uसमय_i)
+	 *            = (rसमय_i+1 - rसमय_i) + uसमय_i
+	 *            >= uसमय_i
 	 */
-	if (stime < prev->stime)
-		stime = prev->stime;
-	utime = rtime - stime;
+	अगर (sसमय < prev->sसमय)
+		sसमय = prev->sसमय;
+	uसमय = rसमय - sसमय;
 
 	/*
-	 * Make sure utime doesn't go backwards; this still preserves
-	 * monotonicity for stime, analogous argument to above.
+	 * Make sure uसमय करोesn't go backwards; this still preserves
+	 * monotonicity क्रम sसमय, analogous argument to above.
 	 */
-	if (utime < prev->utime) {
-		utime = prev->utime;
-		stime = rtime - utime;
-	}
+	अगर (uसमय < prev->uसमय) अणु
+		uसमय = prev->uसमय;
+		sसमय = rसमय - uसमय;
+	पूर्ण
 
-	prev->stime = stime;
-	prev->utime = utime;
+	prev->sसमय = sसमय;
+	prev->uसमय = uसमय;
 out:
-	*ut = prev->utime;
-	*st = prev->stime;
+	*ut = prev->uसमय;
+	*st = prev->sसमय;
 	raw_spin_unlock_irqrestore(&prev->lock, flags);
-}
+पूर्ण
 
-void task_cputime_adjusted(struct task_struct *p, u64 *ut, u64 *st)
-{
-	struct task_cputime cputime = {
-		.sum_exec_runtime = p->se.sum_exec_runtime,
-	};
+व्योम task_cpuसमय_adjusted(काष्ठा task_काष्ठा *p, u64 *ut, u64 *st)
+अणु
+	काष्ठा task_cpuसमय cpuसमय = अणु
+		.sum_exec_runसमय = p->se.sum_exec_runसमय,
+	पूर्ण;
 
-	task_cputime(p, &cputime.utime, &cputime.stime);
-	cputime_adjust(&cputime, &p->prev_cputime, ut, st);
-}
-EXPORT_SYMBOL_GPL(task_cputime_adjusted);
+	task_cpuसमय(p, &cpuसमय.uसमय, &cpuसमय.sसमय);
+	cpuसमय_adjust(&cpuसमय, &p->prev_cpuसमय, ut, st);
+पूर्ण
+EXPORT_SYMBOL_GPL(task_cpuसमय_adjusted);
 
-void thread_group_cputime_adjusted(struct task_struct *p, u64 *ut, u64 *st)
-{
-	struct task_cputime cputime;
+व्योम thपढ़ो_group_cpuसमय_adjusted(काष्ठा task_काष्ठा *p, u64 *ut, u64 *st)
+अणु
+	काष्ठा task_cpuसमय cpuसमय;
 
-	thread_group_cputime(p, &cputime);
-	cputime_adjust(&cputime, &p->signal->prev_cputime, ut, st);
-}
-#endif /* !CONFIG_VIRT_CPU_ACCOUNTING_NATIVE */
+	thपढ़ो_group_cpuसमय(p, &cpuसमय);
+	cpuसमय_adjust(&cpuसमय, &p->संकेत->prev_cpuसमय, ut, st);
+पूर्ण
+#पूर्ण_अगर /* !CONFIG_VIRT_CPU_ACCOUNTING_NATIVE */
 
-#ifdef CONFIG_VIRT_CPU_ACCOUNTING_GEN
-static u64 vtime_delta(struct vtime *vtime)
-{
-	unsigned long long clock;
+#अगर_घोषित CONFIG_VIRT_CPU_ACCOUNTING_GEN
+अटल u64 vसमय_delta(काष्ठा vसमय *vसमय)
+अणु
+	अचिन्हित दीर्घ दीर्घ घड़ी;
 
-	clock = sched_clock();
-	if (clock < vtime->starttime)
-		return 0;
+	घड़ी = sched_घड़ी();
+	अगर (घड़ी < vसमय->startसमय)
+		वापस 0;
 
-	return clock - vtime->starttime;
-}
+	वापस घड़ी - vसमय->startसमय;
+पूर्ण
 
-static u64 get_vtime_delta(struct vtime *vtime)
-{
-	u64 delta = vtime_delta(vtime);
+अटल u64 get_vसमय_delta(काष्ठा vसमय *vसमय)
+अणु
+	u64 delta = vसमय_delta(vसमय);
 	u64 other;
 
 	/*
-	 * Unlike tick based timing, vtime based timing never has lost
-	 * ticks, and no need for steal time accounting to make up for
-	 * lost ticks. Vtime accounts a rounded version of actual
-	 * elapsed time. Limit account_other_time to prevent rounding
-	 * errors from causing elapsed vtime to go negative.
+	 * Unlike tick based timing, vसमय based timing never has lost
+	 * ticks, and no need क्रम steal समय accounting to make up क्रम
+	 * lost ticks. Vसमय accounts a rounded version of actual
+	 * elapsed समय. Limit account_other_समय to prevent rounding
+	 * errors from causing elapsed vसमय to go negative.
 	 */
-	other = account_other_time(delta);
-	WARN_ON_ONCE(vtime->state == VTIME_INACTIVE);
-	vtime->starttime += delta;
+	other = account_other_समय(delta);
+	WARN_ON_ONCE(vसमय->state == VTIME_INACTIVE);
+	vसमय->startसमय += delta;
 
-	return delta - other;
-}
+	वापस delta - other;
+पूर्ण
 
-static void vtime_account_system(struct task_struct *tsk,
-				 struct vtime *vtime)
-{
-	vtime->stime += get_vtime_delta(vtime);
-	if (vtime->stime >= TICK_NSEC) {
-		account_system_time(tsk, irq_count(), vtime->stime);
-		vtime->stime = 0;
-	}
-}
+अटल व्योम vसमय_account_प्रणाली(काष्ठा task_काष्ठा *tsk,
+				 काष्ठा vसमय *vसमय)
+अणु
+	vसमय->sसमय += get_vसमय_delta(vसमय);
+	अगर (vसमय->sसमय >= TICK_NSEC) अणु
+		account_प्रणाली_समय(tsk, irq_count(), vसमय->sसमय);
+		vसमय->sसमय = 0;
+	पूर्ण
+पूर्ण
 
-static void vtime_account_guest(struct task_struct *tsk,
-				struct vtime *vtime)
-{
-	vtime->gtime += get_vtime_delta(vtime);
-	if (vtime->gtime >= TICK_NSEC) {
-		account_guest_time(tsk, vtime->gtime);
-		vtime->gtime = 0;
-	}
-}
+अटल व्योम vसमय_account_guest(काष्ठा task_काष्ठा *tsk,
+				काष्ठा vसमय *vसमय)
+अणु
+	vसमय->gसमय += get_vसमय_delta(vसमय);
+	अगर (vसमय->gसमय >= TICK_NSEC) अणु
+		account_guest_समय(tsk, vसमय->gसमय);
+		vसमय->gसमय = 0;
+	पूर्ण
+पूर्ण
 
-static void __vtime_account_kernel(struct task_struct *tsk,
-				   struct vtime *vtime)
-{
+अटल व्योम __vसमय_account_kernel(काष्ठा task_काष्ठा *tsk,
+				   काष्ठा vसमय *vसमय)
+अणु
 	/* We might have scheduled out from guest path */
-	if (vtime->state == VTIME_GUEST)
-		vtime_account_guest(tsk, vtime);
-	else
-		vtime_account_system(tsk, vtime);
-}
+	अगर (vसमय->state == VTIME_GUEST)
+		vसमय_account_guest(tsk, vसमय);
+	अन्यथा
+		vसमय_account_प्रणाली(tsk, vसमय);
+पूर्ण
 
-void vtime_account_kernel(struct task_struct *tsk)
-{
-	struct vtime *vtime = &tsk->vtime;
+व्योम vसमय_account_kernel(काष्ठा task_काष्ठा *tsk)
+अणु
+	काष्ठा vसमय *vसमय = &tsk->vसमय;
 
-	if (!vtime_delta(vtime))
-		return;
+	अगर (!vसमय_delta(vसमय))
+		वापस;
 
-	write_seqcount_begin(&vtime->seqcount);
-	__vtime_account_kernel(tsk, vtime);
-	write_seqcount_end(&vtime->seqcount);
-}
+	ग_लिखो_seqcount_begin(&vसमय->seqcount);
+	__vसमय_account_kernel(tsk, vसमय);
+	ग_लिखो_seqcount_end(&vसमय->seqcount);
+पूर्ण
 
-void vtime_user_enter(struct task_struct *tsk)
-{
-	struct vtime *vtime = &tsk->vtime;
+व्योम vसमय_user_enter(काष्ठा task_काष्ठा *tsk)
+अणु
+	काष्ठा vसमय *vसमय = &tsk->vसमय;
 
-	write_seqcount_begin(&vtime->seqcount);
-	vtime_account_system(tsk, vtime);
-	vtime->state = VTIME_USER;
-	write_seqcount_end(&vtime->seqcount);
-}
+	ग_लिखो_seqcount_begin(&vसमय->seqcount);
+	vसमय_account_प्रणाली(tsk, vसमय);
+	vसमय->state = VTIME_USER;
+	ग_लिखो_seqcount_end(&vसमय->seqcount);
+पूर्ण
 
-void vtime_user_exit(struct task_struct *tsk)
-{
-	struct vtime *vtime = &tsk->vtime;
+व्योम vसमय_user_निकास(काष्ठा task_काष्ठा *tsk)
+अणु
+	काष्ठा vसमय *vसमय = &tsk->vसमय;
 
-	write_seqcount_begin(&vtime->seqcount);
-	vtime->utime += get_vtime_delta(vtime);
-	if (vtime->utime >= TICK_NSEC) {
-		account_user_time(tsk, vtime->utime);
-		vtime->utime = 0;
-	}
-	vtime->state = VTIME_SYS;
-	write_seqcount_end(&vtime->seqcount);
-}
+	ग_लिखो_seqcount_begin(&vसमय->seqcount);
+	vसमय->uसमय += get_vसमय_delta(vसमय);
+	अगर (vसमय->uसमय >= TICK_NSEC) अणु
+		account_user_समय(tsk, vसमय->uसमय);
+		vसमय->uसमय = 0;
+	पूर्ण
+	vसमय->state = VTIME_SYS;
+	ग_लिखो_seqcount_end(&vसमय->seqcount);
+पूर्ण
 
-void vtime_guest_enter(struct task_struct *tsk)
-{
-	struct vtime *vtime = &tsk->vtime;
+व्योम vसमय_guest_enter(काष्ठा task_काष्ठा *tsk)
+अणु
+	काष्ठा vसमय *vसमय = &tsk->vसमय;
 	/*
 	 * The flags must be updated under the lock with
-	 * the vtime_starttime flush and update.
-	 * That enforces a right ordering and update sequence
-	 * synchronization against the reader (task_gtime())
+	 * the vसमय_startसमय flush and update.
+	 * That enक्रमces a right ordering and update sequence
+	 * synchronization against the पढ़ोer (task_gसमय())
 	 * that can thus safely catch up with a tickless delta.
 	 */
-	write_seqcount_begin(&vtime->seqcount);
-	vtime_account_system(tsk, vtime);
+	ग_लिखो_seqcount_begin(&vसमय->seqcount);
+	vसमय_account_प्रणाली(tsk, vसमय);
 	tsk->flags |= PF_VCPU;
-	vtime->state = VTIME_GUEST;
-	write_seqcount_end(&vtime->seqcount);
-}
-EXPORT_SYMBOL_GPL(vtime_guest_enter);
+	vसमय->state = VTIME_GUEST;
+	ग_लिखो_seqcount_end(&vसमय->seqcount);
+पूर्ण
+EXPORT_SYMBOL_GPL(vसमय_guest_enter);
 
-void vtime_guest_exit(struct task_struct *tsk)
-{
-	struct vtime *vtime = &tsk->vtime;
+व्योम vसमय_guest_निकास(काष्ठा task_काष्ठा *tsk)
+अणु
+	काष्ठा vसमय *vसमय = &tsk->vसमय;
 
-	write_seqcount_begin(&vtime->seqcount);
-	vtime_account_guest(tsk, vtime);
+	ग_लिखो_seqcount_begin(&vसमय->seqcount);
+	vसमय_account_guest(tsk, vसमय);
 	tsk->flags &= ~PF_VCPU;
-	vtime->state = VTIME_SYS;
-	write_seqcount_end(&vtime->seqcount);
-}
-EXPORT_SYMBOL_GPL(vtime_guest_exit);
+	vसमय->state = VTIME_SYS;
+	ग_लिखो_seqcount_end(&vसमय->seqcount);
+पूर्ण
+EXPORT_SYMBOL_GPL(vसमय_guest_निकास);
 
-void vtime_account_idle(struct task_struct *tsk)
-{
-	account_idle_time(get_vtime_delta(&tsk->vtime));
-}
+व्योम vसमय_account_idle(काष्ठा task_काष्ठा *tsk)
+अणु
+	account_idle_समय(get_vसमय_delta(&tsk->vसमय));
+पूर्ण
 
-void vtime_task_switch_generic(struct task_struct *prev)
-{
-	struct vtime *vtime = &prev->vtime;
+व्योम vसमय_प्रकारask_चयन_generic(काष्ठा task_काष्ठा *prev)
+अणु
+	काष्ठा vसमय *vसमय = &prev->vसमय;
 
-	write_seqcount_begin(&vtime->seqcount);
-	if (vtime->state == VTIME_IDLE)
-		vtime_account_idle(prev);
-	else
-		__vtime_account_kernel(prev, vtime);
-	vtime->state = VTIME_INACTIVE;
-	vtime->cpu = -1;
-	write_seqcount_end(&vtime->seqcount);
+	ग_लिखो_seqcount_begin(&vसमय->seqcount);
+	अगर (vसमय->state == VTIME_IDLE)
+		vसमय_account_idle(prev);
+	अन्यथा
+		__vसमय_account_kernel(prev, vसमय);
+	vसमय->state = VTIME_INACTIVE;
+	vसमय->cpu = -1;
+	ग_लिखो_seqcount_end(&vसमय->seqcount);
 
-	vtime = &current->vtime;
+	vसमय = &current->vसमय;
 
-	write_seqcount_begin(&vtime->seqcount);
-	if (is_idle_task(current))
-		vtime->state = VTIME_IDLE;
-	else if (current->flags & PF_VCPU)
-		vtime->state = VTIME_GUEST;
-	else
-		vtime->state = VTIME_SYS;
-	vtime->starttime = sched_clock();
-	vtime->cpu = smp_processor_id();
-	write_seqcount_end(&vtime->seqcount);
-}
+	ग_लिखो_seqcount_begin(&vसमय->seqcount);
+	अगर (is_idle_task(current))
+		vसमय->state = VTIME_IDLE;
+	अन्यथा अगर (current->flags & PF_VCPU)
+		vसमय->state = VTIME_GUEST;
+	अन्यथा
+		vसमय->state = VTIME_SYS;
+	vसमय->startसमय = sched_घड़ी();
+	vसमय->cpu = smp_processor_id();
+	ग_लिखो_seqcount_end(&vसमय->seqcount);
+पूर्ण
 
-void vtime_init_idle(struct task_struct *t, int cpu)
-{
-	struct vtime *vtime = &t->vtime;
-	unsigned long flags;
+व्योम vसमय_init_idle(काष्ठा task_काष्ठा *t, पूर्णांक cpu)
+अणु
+	काष्ठा vसमय *vसमय = &t->vसमय;
+	अचिन्हित दीर्घ flags;
 
 	local_irq_save(flags);
-	write_seqcount_begin(&vtime->seqcount);
-	vtime->state = VTIME_IDLE;
-	vtime->starttime = sched_clock();
-	vtime->cpu = cpu;
-	write_seqcount_end(&vtime->seqcount);
+	ग_लिखो_seqcount_begin(&vसमय->seqcount);
+	vसमय->state = VTIME_IDLE;
+	vसमय->startसमय = sched_घड़ी();
+	vसमय->cpu = cpu;
+	ग_लिखो_seqcount_end(&vसमय->seqcount);
 	local_irq_restore(flags);
-}
+पूर्ण
 
-u64 task_gtime(struct task_struct *t)
-{
-	struct vtime *vtime = &t->vtime;
-	unsigned int seq;
-	u64 gtime;
+u64 task_gसमय(काष्ठा task_काष्ठा *t)
+अणु
+	काष्ठा vसमय *vसमय = &t->vसमय;
+	अचिन्हित पूर्णांक seq;
+	u64 gसमय;
 
-	if (!vtime_accounting_enabled())
-		return t->gtime;
+	अगर (!vसमय_accounting_enabled())
+		वापस t->gसमय;
 
-	do {
-		seq = read_seqcount_begin(&vtime->seqcount);
+	करो अणु
+		seq = पढ़ो_seqcount_begin(&vसमय->seqcount);
 
-		gtime = t->gtime;
-		if (vtime->state == VTIME_GUEST)
-			gtime += vtime->gtime + vtime_delta(vtime);
+		gसमय = t->gसमय;
+		अगर (vसमय->state == VTIME_GUEST)
+			gसमय += vसमय->gसमय + vसमय_delta(vसमय);
 
-	} while (read_seqcount_retry(&vtime->seqcount, seq));
+	पूर्ण जबतक (पढ़ो_seqcount_retry(&vसमय->seqcount, seq));
 
-	return gtime;
-}
+	वापस gसमय;
+पूर्ण
 
 /*
- * Fetch cputime raw values from fields of task_struct and
- * add up the pending nohz execution time since the last
- * cputime snapshot.
+ * Fetch cpuसमय raw values from fields of task_काष्ठा and
+ * add up the pending nohz execution समय since the last
+ * cpuसमय snapshot.
  */
-void task_cputime(struct task_struct *t, u64 *utime, u64 *stime)
-{
-	struct vtime *vtime = &t->vtime;
-	unsigned int seq;
+व्योम task_cpuसमय(काष्ठा task_काष्ठा *t, u64 *uसमय, u64 *sसमय)
+अणु
+	काष्ठा vसमय *vसमय = &t->vसमय;
+	अचिन्हित पूर्णांक seq;
 	u64 delta;
 
-	if (!vtime_accounting_enabled()) {
-		*utime = t->utime;
-		*stime = t->stime;
-		return;
-	}
+	अगर (!vसमय_accounting_enabled()) अणु
+		*uसमय = t->uसमय;
+		*sसमय = t->sसमय;
+		वापस;
+	पूर्ण
 
-	do {
-		seq = read_seqcount_begin(&vtime->seqcount);
+	करो अणु
+		seq = पढ़ो_seqcount_begin(&vसमय->seqcount);
 
-		*utime = t->utime;
-		*stime = t->stime;
+		*uसमय = t->uसमय;
+		*sसमय = t->sसमय;
 
 		/* Task is sleeping or idle, nothing to add */
-		if (vtime->state < VTIME_SYS)
-			continue;
+		अगर (vसमय->state < VTIME_SYS)
+			जारी;
 
-		delta = vtime_delta(vtime);
+		delta = vसमय_delta(vसमय);
 
 		/*
 		 * Task runs either in user (including guest) or kernel space,
-		 * add pending nohz time to the right place.
+		 * add pending nohz समय to the right place.
 		 */
-		if (vtime->state == VTIME_SYS)
-			*stime += vtime->stime + delta;
-		else
-			*utime += vtime->utime + delta;
-	} while (read_seqcount_retry(&vtime->seqcount, seq));
-}
+		अगर (vसमय->state == VTIME_SYS)
+			*sसमय += vसमय->sसमय + delta;
+		अन्यथा
+			*uसमय += vसमय->uसमय + delta;
+	पूर्ण जबतक (पढ़ो_seqcount_retry(&vसमय->seqcount, seq));
+पूर्ण
 
-static int vtime_state_fetch(struct vtime *vtime, int cpu)
-{
-	int state = READ_ONCE(vtime->state);
+अटल पूर्णांक vसमय_state_fetch(काष्ठा vसमय *vसमय, पूर्णांक cpu)
+अणु
+	पूर्णांक state = READ_ONCE(vसमय->state);
 
 	/*
-	 * We raced against a context switch, fetch the
+	 * We raced against a context चयन, fetch the
 	 * kcpustat task again.
 	 */
-	if (vtime->cpu != cpu && vtime->cpu != -1)
-		return -EAGAIN;
+	अगर (vसमय->cpu != cpu && vसमय->cpu != -1)
+		वापस -EAGAIN;
 
 	/*
 	 * Two possible things here:
 	 * 1) We are seeing the scheduling out task (prev) or any past one.
 	 * 2) We are seeing the scheduling in task (next) but it hasn't
-	 *    passed though vtime_task_switch() yet so the pending
-	 *    cputime of the prev task may not be flushed yet.
+	 *    passed though vसमय_प्रकारask_चयन() yet so the pending
+	 *    cpuसमय of the prev task may not be flushed yet.
 	 *
-	 * Case 1) is ok but 2) is not. So wait for a safe VTIME state.
+	 * Case 1) is ok but 2) is not. So रुको क्रम a safe VTIME state.
 	 */
-	if (state == VTIME_INACTIVE)
-		return -EAGAIN;
+	अगर (state == VTIME_INACTIVE)
+		वापस -EAGAIN;
 
-	return state;
-}
+	वापस state;
+पूर्ण
 
-static u64 kcpustat_user_vtime(struct vtime *vtime)
-{
-	if (vtime->state == VTIME_USER)
-		return vtime->utime + vtime_delta(vtime);
-	else if (vtime->state == VTIME_GUEST)
-		return vtime->gtime + vtime_delta(vtime);
-	return 0;
-}
+अटल u64 kcpustat_user_vसमय(काष्ठा vसमय *vसमय)
+अणु
+	अगर (vसमय->state == VTIME_USER)
+		वापस vसमय->uसमय + vसमय_delta(vसमय);
+	अन्यथा अगर (vसमय->state == VTIME_GUEST)
+		वापस vसमय->gसमय + vसमय_delta(vसमय);
+	वापस 0;
+पूर्ण
 
-static int kcpustat_field_vtime(u64 *cpustat,
-				struct task_struct *tsk,
-				enum cpu_usage_stat usage,
-				int cpu, u64 *val)
-{
-	struct vtime *vtime = &tsk->vtime;
-	unsigned int seq;
+अटल पूर्णांक kcpustat_field_vसमय(u64 *cpustat,
+				काष्ठा task_काष्ठा *tsk,
+				क्रमागत cpu_usage_stat usage,
+				पूर्णांक cpu, u64 *val)
+अणु
+	काष्ठा vसमय *vसमय = &tsk->vसमय;
+	अचिन्हित पूर्णांक seq;
 
-	do {
-		int state;
+	करो अणु
+		पूर्णांक state;
 
-		seq = read_seqcount_begin(&vtime->seqcount);
+		seq = पढ़ो_seqcount_begin(&vसमय->seqcount);
 
-		state = vtime_state_fetch(vtime, cpu);
-		if (state < 0)
-			return state;
+		state = vसमय_state_fetch(vसमय, cpu);
+		अगर (state < 0)
+			वापस state;
 
 		*val = cpustat[usage];
 
 		/*
-		 * Nice VS unnice cputime accounting may be inaccurate if
-		 * the nice value has changed since the last vtime update.
-		 * But proper fix would involve interrupting target on nice
+		 * Nice VS unnice cpuसमय accounting may be inaccurate अगर
+		 * the nice value has changed since the last vसमय update.
+		 * But proper fix would involve पूर्णांकerrupting target on nice
 		 * updates which is a no go on nohz_full (although the scheduler
-		 * may still interrupt the target if rescheduling is needed...)
+		 * may still पूर्णांकerrupt the target अगर rescheduling is needed...)
 		 */
-		switch (usage) {
-		case CPUTIME_SYSTEM:
-			if (state == VTIME_SYS)
-				*val += vtime->stime + vtime_delta(vtime);
-			break;
-		case CPUTIME_USER:
-			if (task_nice(tsk) <= 0)
-				*val += kcpustat_user_vtime(vtime);
-			break;
-		case CPUTIME_NICE:
-			if (task_nice(tsk) > 0)
-				*val += kcpustat_user_vtime(vtime);
-			break;
-		case CPUTIME_GUEST:
-			if (state == VTIME_GUEST && task_nice(tsk) <= 0)
-				*val += vtime->gtime + vtime_delta(vtime);
-			break;
-		case CPUTIME_GUEST_NICE:
-			if (state == VTIME_GUEST && task_nice(tsk) > 0)
-				*val += vtime->gtime + vtime_delta(vtime);
-			break;
-		default:
-			break;
-		}
-	} while (read_seqcount_retry(&vtime->seqcount, seq));
+		चयन (usage) अणु
+		हाल CPUTIME_SYSTEM:
+			अगर (state == VTIME_SYS)
+				*val += vसमय->sसमय + vसमय_delta(vसमय);
+			अवरोध;
+		हाल CPUTIME_USER:
+			अगर (task_nice(tsk) <= 0)
+				*val += kcpustat_user_vसमय(vसमय);
+			अवरोध;
+		हाल CPUTIME_NICE:
+			अगर (task_nice(tsk) > 0)
+				*val += kcpustat_user_vसमय(vसमय);
+			अवरोध;
+		हाल CPUTIME_GUEST:
+			अगर (state == VTIME_GUEST && task_nice(tsk) <= 0)
+				*val += vसमय->gसमय + vसमय_delta(vसमय);
+			अवरोध;
+		हाल CPUTIME_GUEST_NICE:
+			अगर (state == VTIME_GUEST && task_nice(tsk) > 0)
+				*val += vसमय->gसमय + vसमय_delta(vसमय);
+			अवरोध;
+		शेष:
+			अवरोध;
+		पूर्ण
+	पूर्ण जबतक (पढ़ो_seqcount_retry(&vसमय->seqcount, seq));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-u64 kcpustat_field(struct kernel_cpustat *kcpustat,
-		   enum cpu_usage_stat usage, int cpu)
-{
+u64 kcpustat_field(काष्ठा kernel_cpustat *kcpustat,
+		   क्रमागत cpu_usage_stat usage, पूर्णांक cpu)
+अणु
 	u64 *cpustat = kcpustat->cpustat;
 	u64 val = cpustat[usage];
-	struct rq *rq;
-	int err;
+	काष्ठा rq *rq;
+	पूर्णांक err;
 
-	if (!vtime_accounting_enabled_cpu(cpu))
-		return val;
+	अगर (!vसमय_accounting_enabled_cpu(cpu))
+		वापस val;
 
 	rq = cpu_rq(cpu);
 
-	for (;;) {
-		struct task_struct *curr;
+	क्रम (;;) अणु
+		काष्ठा task_काष्ठा *curr;
 
-		rcu_read_lock();
+		rcu_पढ़ो_lock();
 		curr = rcu_dereference(rq->curr);
-		if (WARN_ON_ONCE(!curr)) {
-			rcu_read_unlock();
-			return cpustat[usage];
-		}
+		अगर (WARN_ON_ONCE(!curr)) अणु
+			rcu_पढ़ो_unlock();
+			वापस cpustat[usage];
+		पूर्ण
 
-		err = kcpustat_field_vtime(cpustat, curr, usage, cpu, &val);
-		rcu_read_unlock();
+		err = kcpustat_field_vसमय(cpustat, curr, usage, cpu, &val);
+		rcu_पढ़ो_unlock();
 
-		if (!err)
-			return val;
+		अगर (!err)
+			वापस val;
 
 		cpu_relax();
-	}
-}
+	पूर्ण
+पूर्ण
 EXPORT_SYMBOL_GPL(kcpustat_field);
 
-static int kcpustat_cpu_fetch_vtime(struct kernel_cpustat *dst,
-				    const struct kernel_cpustat *src,
-				    struct task_struct *tsk, int cpu)
-{
-	struct vtime *vtime = &tsk->vtime;
-	unsigned int seq;
+अटल पूर्णांक kcpustat_cpu_fetch_vसमय(काष्ठा kernel_cpustat *dst,
+				    स्थिर काष्ठा kernel_cpustat *src,
+				    काष्ठा task_काष्ठा *tsk, पूर्णांक cpu)
+अणु
+	काष्ठा vसमय *vसमय = &tsk->vसमय;
+	अचिन्हित पूर्णांक seq;
 
-	do {
+	करो अणु
 		u64 *cpustat;
 		u64 delta;
-		int state;
+		पूर्णांक state;
 
-		seq = read_seqcount_begin(&vtime->seqcount);
+		seq = पढ़ो_seqcount_begin(&vसमय->seqcount);
 
-		state = vtime_state_fetch(vtime, cpu);
-		if (state < 0)
-			return state;
+		state = vसमय_state_fetch(vसमय, cpu);
+		अगर (state < 0)
+			वापस state;
 
 		*dst = *src;
 		cpustat = dst->cpustat;
 
 		/* Task is sleeping, dead or idle, nothing to add */
-		if (state < VTIME_SYS)
-			continue;
+		अगर (state < VTIME_SYS)
+			जारी;
 
-		delta = vtime_delta(vtime);
+		delta = vसमय_delta(vसमय);
 
 		/*
 		 * Task runs either in user (including guest) or kernel space,
-		 * add pending nohz time to the right place.
+		 * add pending nohz समय to the right place.
 		 */
-		if (state == VTIME_SYS) {
-			cpustat[CPUTIME_SYSTEM] += vtime->stime + delta;
-		} else if (state == VTIME_USER) {
-			if (task_nice(tsk) > 0)
-				cpustat[CPUTIME_NICE] += vtime->utime + delta;
-			else
-				cpustat[CPUTIME_USER] += vtime->utime + delta;
-		} else {
+		अगर (state == VTIME_SYS) अणु
+			cpustat[CPUTIME_SYSTEM] += vसमय->sसमय + delta;
+		पूर्ण अन्यथा अगर (state == VTIME_USER) अणु
+			अगर (task_nice(tsk) > 0)
+				cpustat[CPUTIME_NICE] += vसमय->uसमय + delta;
+			अन्यथा
+				cpustat[CPUTIME_USER] += vसमय->uसमय + delta;
+		पूर्ण अन्यथा अणु
 			WARN_ON_ONCE(state != VTIME_GUEST);
-			if (task_nice(tsk) > 0) {
-				cpustat[CPUTIME_GUEST_NICE] += vtime->gtime + delta;
-				cpustat[CPUTIME_NICE] += vtime->gtime + delta;
-			} else {
-				cpustat[CPUTIME_GUEST] += vtime->gtime + delta;
-				cpustat[CPUTIME_USER] += vtime->gtime + delta;
-			}
-		}
-	} while (read_seqcount_retry(&vtime->seqcount, seq));
+			अगर (task_nice(tsk) > 0) अणु
+				cpustat[CPUTIME_GUEST_NICE] += vसमय->gसमय + delta;
+				cpustat[CPUTIME_NICE] += vसमय->gसमय + delta;
+			पूर्ण अन्यथा अणु
+				cpustat[CPUTIME_GUEST] += vसमय->gसमय + delta;
+				cpustat[CPUTIME_USER] += vसमय->gसमय + delta;
+			पूर्ण
+		पूर्ण
+	पूर्ण जबतक (पढ़ो_seqcount_retry(&vसमय->seqcount, seq));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void kcpustat_cpu_fetch(struct kernel_cpustat *dst, int cpu)
-{
-	const struct kernel_cpustat *src = &kcpustat_cpu(cpu);
-	struct rq *rq;
-	int err;
+व्योम kcpustat_cpu_fetch(काष्ठा kernel_cpustat *dst, पूर्णांक cpu)
+अणु
+	स्थिर काष्ठा kernel_cpustat *src = &kcpustat_cpu(cpu);
+	काष्ठा rq *rq;
+	पूर्णांक err;
 
-	if (!vtime_accounting_enabled_cpu(cpu)) {
+	अगर (!vसमय_accounting_enabled_cpu(cpu)) अणु
 		*dst = *src;
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	rq = cpu_rq(cpu);
 
-	for (;;) {
-		struct task_struct *curr;
+	क्रम (;;) अणु
+		काष्ठा task_काष्ठा *curr;
 
-		rcu_read_lock();
+		rcu_पढ़ो_lock();
 		curr = rcu_dereference(rq->curr);
-		if (WARN_ON_ONCE(!curr)) {
-			rcu_read_unlock();
+		अगर (WARN_ON_ONCE(!curr)) अणु
+			rcu_पढ़ो_unlock();
 			*dst = *src;
-			return;
-		}
+			वापस;
+		पूर्ण
 
-		err = kcpustat_cpu_fetch_vtime(dst, src, curr, cpu);
-		rcu_read_unlock();
+		err = kcpustat_cpu_fetch_vसमय(dst, src, curr, cpu);
+		rcu_पढ़ो_unlock();
 
-		if (!err)
-			return;
+		अगर (!err)
+			वापस;
 
 		cpu_relax();
-	}
-}
+	पूर्ण
+पूर्ण
 EXPORT_SYMBOL_GPL(kcpustat_cpu_fetch);
 
-#endif /* CONFIG_VIRT_CPU_ACCOUNTING_GEN */
+#पूर्ण_अगर /* CONFIG_VIRT_CPU_ACCOUNTING_GEN */

@@ -1,31 +1,32 @@
-/* SPDX-License-Identifier: BSD-3-Clause */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: BSD-3-Clause */
 
-#ifndef _UAPI_LINUX_VIRTIO_BT_H
-#define _UAPI_LINUX_VIRTIO_BT_H
+#अगर_अघोषित _UAPI_LINUX_VIRTIO_BT_H
+#घोषणा _UAPI_LINUX_VIRTIO_BT_H
 
-#include <linux/virtio_types.h>
+#समावेश <linux/virtio_types.h>
 
 /* Feature bits */
-#define VIRTIO_BT_F_VND_HCI	0	/* Indicates vendor command support */
-#define VIRTIO_BT_F_MSFT_EXT	1	/* Indicates MSFT vendor support */
-#define VIRTIO_BT_F_AOSP_EXT	2	/* Indicates AOSP vendor support */
+#घोषणा VIRTIO_BT_F_VND_HCI	0	/* Indicates venकरोr command support */
+#घोषणा VIRTIO_BT_F_MSFT_EXT	1	/* Indicates MSFT venकरोr support */
+#घोषणा VIRTIO_BT_F_AOSP_EXT	2	/* Indicates AOSP venकरोr support */
 
-enum virtio_bt_config_type {
+क्रमागत virtio_bt_config_type अणु
 	VIRTIO_BT_CONFIG_TYPE_PRIMARY	= 0,
 	VIRTIO_BT_CONFIG_TYPE_AMP	= 1,
-};
+पूर्ण;
 
-enum virtio_bt_config_vendor {
+क्रमागत virtio_bt_config_venकरोr अणु
 	VIRTIO_BT_CONFIG_VENDOR_NONE	= 0,
 	VIRTIO_BT_CONFIG_VENDOR_ZEPHYR	= 1,
 	VIRTIO_BT_CONFIG_VENDOR_INTEL	= 2,
 	VIRTIO_BT_CONFIG_VENDOR_REALTEK	= 3,
-};
+पूर्ण;
 
-struct virtio_bt_config {
+काष्ठा virtio_bt_config अणु
 	__u8  type;
-	__u16 vendor;
+	__u16 venकरोr;
 	__u16 msft_opcode;
-} __attribute__((packed));
+पूर्ण __attribute__((packed));
 
-#endif /* _UAPI_LINUX_VIRTIO_BT_H */
+#पूर्ण_अगर /* _UAPI_LINUX_VIRTIO_BT_H */

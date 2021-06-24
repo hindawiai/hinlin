@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * timb_dma.h timberdale FPGA DMA driver defines
  * Copyright (c) 2010 Intel Corporation
@@ -8,36 +9,36 @@
  * Timberdale FPGA DMA engine
  */
 
-#ifndef _LINUX_TIMB_DMA_H
-#define _LINUX_TIMB_DMA_H
+#अगर_अघोषित _LINUX_TIMB_DMA_H
+#घोषणा _LINUX_TIMB_DMA_H
 
 /**
- * struct timb_dma_platform_data_channel - Description of each individual
- *	DMA channel for the timberdale DMA driver
- * @rx:			true if this channel handles data in the direction to
+ * काष्ठा timb_dma_platक्रमm_data_channel - Description of each inभागidual
+ *	DMA channel क्रम the timberdale DMA driver
+ * @rx:			true अगर this channel handles data in the direction to
  *	the CPU.
- * @bytes_per_line:	Number of bytes per line, this is specific for channels
+ * @bytes_per_line:	Number of bytes per line, this is specअगरic क्रम channels
  *	handling video data. For other channels this shall be left to 0.
- * @descriptors:	Number of descriptors to allocate for this channel.
+ * @descriptors:	Number of descriptors to allocate क्रम this channel.
  * @descriptor_elements: Number of elements in each descriptor.
  *
  */
-struct timb_dma_platform_data_channel {
+काष्ठा timb_dma_platक्रमm_data_channel अणु
 	bool rx;
-	unsigned int bytes_per_line;
-	unsigned int descriptors;
-	unsigned int descriptor_elements;
-};
+	अचिन्हित पूर्णांक bytes_per_line;
+	अचिन्हित पूर्णांक descriptors;
+	अचिन्हित पूर्णांक descriptor_elements;
+पूर्ण;
 
 /**
- * struct timb_dma_platform_data - Platform data of the timberdale DMA driver
+ * काष्ठा timb_dma_platक्रमm_data - Platक्रमm data of the timberdale DMA driver
  * @nr_channels:	Number of defined channels in the channels array.
  * @channels:		Definition of the each channel.
  *
  */
-struct timb_dma_platform_data {
-	unsigned nr_channels;
-	struct timb_dma_platform_data_channel channels[32];
-};
+काष्ठा timb_dma_platक्रमm_data अणु
+	अचिन्हित nr_channels;
+	काष्ठा timb_dma_platक्रमm_data_channel channels[32];
+पूर्ण;
 
-#endif
+#पूर्ण_अगर

@@ -1,284 +1,285 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * turbostat -- show CPU frequency and C-state residency
  * on modern Intel and AMD processors.
  *
  * Copyright (c) 2021 Intel Corporation.
- * Len Brown <len.brown@intel.com>
+ * Len Brown <len.brown@पूर्णांकel.com>
  */
 
-#define _GNU_SOURCE
-#include MSRHEADER
-#include INTEL_FAMILY_HEADER
-#include <stdarg.h>
-#include <stdio.h>
-#include <err.h>
-#include <unistd.h>
-#include <sys/types.h>
-#include <sys/wait.h>
-#include <sys/stat.h>
-#include <sys/select.h>
-#include <sys/resource.h>
-#include <fcntl.h>
-#include <signal.h>
-#include <sys/time.h>
-#include <stdlib.h>
-#include <getopt.h>
-#include <dirent.h>
-#include <string.h>
-#include <ctype.h>
-#include <sched.h>
-#include <time.h>
-#include <cpuid.h>
-#include <sys/capability.h>
-#include <errno.h>
-#include <math.h>
-#include <linux/perf_event.h>
-#include <asm/unistd.h>
-#include <stdbool.h>
+#घोषणा _GNU_SOURCE
+#समावेश MSRHEADER
+#समावेश INTEL_FAMILY_HEADER
+#समावेश <मानकतर्क.स>
+#समावेश <मानकपन.स>
+#समावेश <err.h>
+#समावेश <unistd.h>
+#समावेश <sys/types.h>
+#समावेश <sys/रुको.h>
+#समावेश <sys/स्थिति.स>
+#समावेश <sys/select.h>
+#समावेश <sys/resource.h>
+#समावेश <fcntl.h>
+#समावेश <संकेत.स>
+#समावेश <sys/समय.स>
+#समावेश <मानककोष.स>
+#समावेश <getopt.h>
+#समावेश <dirent.h>
+#समावेश <माला.स>
+#समावेश <प्रकार.स>
+#समावेश <sched.h>
+#समावेश <समय.स>
+#समावेश <cpuid.h>
+#समावेश <sys/capability.h>
+#समावेश <त्रुटिसं.स>
+#समावेश <गणित.स>
+#समावेश <linux/perf_event.h>
+#समावेश <यंत्र/unistd.h>
+#समावेश <stdbool.h>
 
-char *proc_stat = "/proc/stat";
-FILE *outf;
-int *fd_percpu;
-int *fd_instr_count_percpu;
-struct timeval interval_tv = { 5, 0 };
-struct timespec interval_ts = { 5, 0 };
+अक्षर *proc_stat = "/proc/stat";
+खाता *outf;
+पूर्णांक *fd_percpu;
+पूर्णांक *fd_instr_count_percpu;
+काष्ठा समयval पूर्णांकerval_tv = अणु 5, 0 पूर्ण;
+काष्ठा बारpec पूर्णांकerval_ts = अणु 5, 0 पूर्ण;
 
 /* Save original CPU model */
-unsigned int model_orig;
+अचिन्हित पूर्णांक model_orig;
 
-unsigned int num_iterations;
-unsigned int debug;
-unsigned int quiet;
-unsigned int shown;
-unsigned int sums_need_wide_columns;
-unsigned int rapl_joules;
-unsigned int summary_only;
-unsigned int list_header_only;
-unsigned int dump_only;
-unsigned int do_snb_cstates;
-unsigned int do_knl_cstates;
-unsigned int do_slm_cstates;
-unsigned int use_c1_residency_msr;
-unsigned int has_aperf;
-unsigned int has_epb;
-unsigned int do_irtl_snb;
-unsigned int do_irtl_hsw;
-unsigned int units = 1000000;	/* MHz etc */
-unsigned int genuine_intel;
-unsigned int authentic_amd;
-unsigned int hygon_genuine;
-unsigned int max_level, max_extended_level;
-unsigned int has_invariant_tsc;
-unsigned int do_nhm_platform_info;
-unsigned int no_MSR_MISC_PWR_MGMT;
-unsigned int aperf_mperf_multiplier = 1;
-double bclk;
-double base_hz;
-unsigned int has_base_hz;
-double tsc_tweak = 1.0;
-unsigned int show_pkg_only;
-unsigned int show_core_only;
-char *output_buffer, *outp;
-unsigned int do_rapl;
-unsigned int do_dts;
-unsigned int do_ptm;
-unsigned int do_ipc;
-unsigned long long gfx_cur_rc6_ms;
-unsigned long long cpuidle_cur_cpu_lpi_us;
-unsigned long long cpuidle_cur_sys_lpi_us;
-unsigned int gfx_cur_mhz;
-unsigned int gfx_act_mhz;
-unsigned int tj_max;
-unsigned int tj_max_override;
-int tcc_offset_bits;
-double rapl_power_units, rapl_time_units;
-double rapl_dram_energy_units, rapl_energy_units;
-double rapl_joule_counter_range;
-unsigned int do_core_perf_limit_reasons;
-unsigned int has_automatic_cstate_conversion;
-unsigned int dis_cstate_prewake;
-unsigned int do_gfx_perf_limit_reasons;
-unsigned int do_ring_perf_limit_reasons;
-unsigned int crystal_hz;
-unsigned long long tsc_hz;
-int base_cpu;
-double discover_bclk(unsigned int family, unsigned int model);
-unsigned int has_hwp;		/* IA32_PM_ENABLE, IA32_HWP_CAPABILITIES */
+अचिन्हित पूर्णांक num_iterations;
+अचिन्हित पूर्णांक debug;
+अचिन्हित पूर्णांक quiet;
+अचिन्हित पूर्णांक shown;
+अचिन्हित पूर्णांक sums_need_wide_columns;
+अचिन्हित पूर्णांक rapl_joules;
+अचिन्हित पूर्णांक summary_only;
+अचिन्हित पूर्णांक list_header_only;
+अचिन्हित पूर्णांक dump_only;
+अचिन्हित पूर्णांक करो_snb_cstates;
+अचिन्हित पूर्णांक करो_knl_cstates;
+अचिन्हित पूर्णांक करो_slm_cstates;
+अचिन्हित पूर्णांक use_c1_residency_msr;
+अचिन्हित पूर्णांक has_aperf;
+अचिन्हित पूर्णांक has_epb;
+अचिन्हित पूर्णांक करो_irtl_snb;
+अचिन्हित पूर्णांक करो_irtl_hsw;
+अचिन्हित पूर्णांक units = 1000000;	/* MHz etc */
+अचिन्हित पूर्णांक genuine_पूर्णांकel;
+अचिन्हित पूर्णांक authentic_amd;
+अचिन्हित पूर्णांक hygon_genuine;
+अचिन्हित पूर्णांक max_level, max_extended_level;
+अचिन्हित पूर्णांक has_invariant_tsc;
+अचिन्हित पूर्णांक करो_nhm_platक्रमm_info;
+अचिन्हित पूर्णांक no_MSR_MISC_PWR_MGMT;
+अचिन्हित पूर्णांक aperf_mperf_multiplier = 1;
+द्विगुन bclk;
+द्विगुन base_hz;
+अचिन्हित पूर्णांक has_base_hz;
+द्विगुन tsc_tweak = 1.0;
+अचिन्हित पूर्णांक show_pkg_only;
+अचिन्हित पूर्णांक show_core_only;
+अक्षर *output_buffer, *outp;
+अचिन्हित पूर्णांक करो_rapl;
+अचिन्हित पूर्णांक करो_dts;
+अचिन्हित पूर्णांक करो_pपंचांग;
+अचिन्हित पूर्णांक करो_ipc;
+अचिन्हित दीर्घ दीर्घ gfx_cur_rc6_ms;
+अचिन्हित दीर्घ दीर्घ cpuidle_cur_cpu_lpi_us;
+अचिन्हित दीर्घ दीर्घ cpuidle_cur_sys_lpi_us;
+अचिन्हित पूर्णांक gfx_cur_mhz;
+अचिन्हित पूर्णांक gfx_act_mhz;
+अचिन्हित पूर्णांक tj_max;
+अचिन्हित पूर्णांक tj_max_override;
+पूर्णांक tcc_offset_bits;
+द्विगुन rapl_घातer_units, rapl_समय_units;
+द्विगुन rapl_dram_energy_units, rapl_energy_units;
+द्विगुन rapl_joule_counter_range;
+अचिन्हित पूर्णांक करो_core_perf_limit_reasons;
+अचिन्हित पूर्णांक has_स्वतःmatic_cstate_conversion;
+अचिन्हित पूर्णांक dis_cstate_prewake;
+अचिन्हित पूर्णांक करो_gfx_perf_limit_reasons;
+अचिन्हित पूर्णांक करो_ring_perf_limit_reasons;
+अचिन्हित पूर्णांक crystal_hz;
+अचिन्हित दीर्घ दीर्घ tsc_hz;
+पूर्णांक base_cpu;
+द्विगुन discover_bclk(अचिन्हित पूर्णांक family, अचिन्हित पूर्णांक model);
+अचिन्हित पूर्णांक has_hwp;		/* IA32_PM_ENABLE, IA32_HWP_CAPABILITIES */
 			/* IA32_HWP_REQUEST, IA32_HWP_STATUS */
-unsigned int has_hwp_notify;	/* IA32_HWP_INTERRUPT */
-unsigned int has_hwp_activity_window;	/* IA32_HWP_REQUEST[bits 41:32] */
-unsigned int has_hwp_epp;	/* IA32_HWP_REQUEST[bits 31:24] */
-unsigned int has_hwp_pkg;	/* IA32_HWP_REQUEST_PKG */
-unsigned int has_misc_feature_control;
-unsigned int first_counter_read = 1;
-int ignore_stdin;
+अचिन्हित पूर्णांक has_hwp_notअगरy;	/* IA32_HWP_INTERRUPT */
+अचिन्हित पूर्णांक has_hwp_activity_winकरोw;	/* IA32_HWP_REQUEST[bits 41:32] */
+अचिन्हित पूर्णांक has_hwp_epp;	/* IA32_HWP_REQUEST[bits 31:24] */
+अचिन्हित पूर्णांक has_hwp_pkg;	/* IA32_HWP_REQUEST_PKG */
+अचिन्हित पूर्णांक has_misc_feature_control;
+अचिन्हित पूर्णांक first_counter_पढ़ो = 1;
+पूर्णांक ignore_मानक_निवेश;
 
-#define RAPL_PKG		(1 << 0)
+#घोषणा RAPL_PKG		(1 << 0)
 					/* 0x610 MSR_PKG_POWER_LIMIT */
 					/* 0x611 MSR_PKG_ENERGY_STATUS */
-#define RAPL_PKG_PERF_STATUS	(1 << 1)
+#घोषणा RAPL_PKG_PERF_STATUS	(1 << 1)
 					/* 0x613 MSR_PKG_PERF_STATUS */
-#define RAPL_PKG_POWER_INFO	(1 << 2)
+#घोषणा RAPL_PKG_POWER_INFO	(1 << 2)
 					/* 0x614 MSR_PKG_POWER_INFO */
 
-#define RAPL_DRAM		(1 << 3)
+#घोषणा RAPL_DRAM		(1 << 3)
 					/* 0x618 MSR_DRAM_POWER_LIMIT */
 					/* 0x619 MSR_DRAM_ENERGY_STATUS */
-#define RAPL_DRAM_PERF_STATUS	(1 << 4)
+#घोषणा RAPL_DRAM_PERF_STATUS	(1 << 4)
 					/* 0x61b MSR_DRAM_PERF_STATUS */
-#define RAPL_DRAM_POWER_INFO	(1 << 5)
+#घोषणा RAPL_DRAM_POWER_INFO	(1 << 5)
 					/* 0x61c MSR_DRAM_POWER_INFO */
 
-#define RAPL_CORES_POWER_LIMIT	(1 << 6)
+#घोषणा RAPL_CORES_POWER_LIMIT	(1 << 6)
 					/* 0x638 MSR_PP0_POWER_LIMIT */
-#define RAPL_CORE_POLICY	(1 << 7)
+#घोषणा RAPL_CORE_POLICY	(1 << 7)
 					/* 0x63a MSR_PP0_POLICY */
 
-#define RAPL_GFX		(1 << 8)
+#घोषणा RAPL_GFX		(1 << 8)
 					/* 0x640 MSR_PP1_POWER_LIMIT */
 					/* 0x641 MSR_PP1_ENERGY_STATUS */
 					/* 0x642 MSR_PP1_POLICY */
 
-#define RAPL_CORES_ENERGY_STATUS	(1 << 9)
+#घोषणा RAPL_CORES_ENERGY_STATUS	(1 << 9)
 					/* 0x639 MSR_PP0_ENERGY_STATUS */
-#define RAPL_PER_CORE_ENERGY	(1 << 10)
+#घोषणा RAPL_PER_CORE_ENERGY	(1 << 10)
 					/* Indicates cores energy collection is per-core,
 					 * not per-package. */
-#define RAPL_AMD_F17H		(1 << 11)
+#घोषणा RAPL_AMD_F17H		(1 << 11)
 					/* 0xc0010299 MSR_RAPL_PWR_UNIT */
 					/* 0xc001029a MSR_CORE_ENERGY_STAT */
 					/* 0xc001029b MSR_PKG_ENERGY_STAT */
-#define RAPL_CORES (RAPL_CORES_ENERGY_STATUS | RAPL_CORES_POWER_LIMIT)
-#define	TJMAX_DEFAULT	100
+#घोषणा RAPL_CORES (RAPL_CORES_ENERGY_STATUS | RAPL_CORES_POWER_LIMIT)
+#घोषणा	TJMAX_DEFAULT	100
 
 /* MSRs that are not yet in the kernel-provided header. */
-#define MSR_RAPL_PWR_UNIT	0xc0010299
-#define MSR_CORE_ENERGY_STAT	0xc001029a
-#define MSR_PKG_ENERGY_STAT	0xc001029b
+#घोषणा MSR_RAPL_PWR_UNIT	0xc0010299
+#घोषणा MSR_CORE_ENERGY_STAT	0xc001029a
+#घोषणा MSR_PKG_ENERGY_STAT	0xc001029b
 
-#define MAX(a, b) ((a) > (b) ? (a) : (b))
+#घोषणा MAX(a, b) ((a) > (b) ? (a) : (b))
 
 /*
- * buffer size used by sscanf() for added column names
- * Usually truncated to 7 characters, but also handles 18 columns for raw 64-bit counters
+ * buffer size used by माला_पूछो() क्रम added column names
+ * Usually truncated to 7 अक्षरacters, but also handles 18 columns क्रम raw 64-bit counters
  */
-#define	NAME_BYTES 20
-#define PATH_BYTES 128
+#घोषणा	NAME_BYTES 20
+#घोषणा PATH_BYTES 128
 
-int backwards_count;
-char *progname;
+पूर्णांक backwards_count;
+अक्षर *progname;
 
-#define CPU_SUBSET_MAXCPUS	1024	/* need to use before probe... */
+#घोषणा CPU_SUBSET_MAXCPUS	1024	/* need to use beक्रमe probe... */
 cpu_set_t *cpu_present_set, *cpu_affinity_set, *cpu_subset;
-size_t cpu_present_setsize, cpu_affinity_setsize, cpu_subset_size;
-#define MAX_ADDED_COUNTERS 8
-#define MAX_ADDED_THREAD_COUNTERS 24
-#define BITMASK_SIZE 32
+माप_प्रकार cpu_present_setsize, cpu_affinity_setsize, cpu_subset_size;
+#घोषणा MAX_ADDED_COUNTERS 8
+#घोषणा MAX_ADDED_THREAD_COUNTERS 24
+#घोषणा BITMASK_SIZE 32
 
-struct thread_data {
-	struct timeval tv_begin;
-	struct timeval tv_end;
-	struct timeval tv_delta;
-	unsigned long long tsc;
-	unsigned long long aperf;
-	unsigned long long mperf;
-	unsigned long long c1;
-	unsigned long long instr_count;
-	unsigned long long irq_count;
-	unsigned int smi_count;
-	unsigned int cpu_id;
-	unsigned int apic_id;
-	unsigned int x2apic_id;
-	unsigned int flags;
+काष्ठा thपढ़ो_data अणु
+	काष्ठा समयval tv_begin;
+	काष्ठा समयval tv_end;
+	काष्ठा समयval tv_delta;
+	अचिन्हित दीर्घ दीर्घ tsc;
+	अचिन्हित दीर्घ दीर्घ aperf;
+	अचिन्हित दीर्घ दीर्घ mperf;
+	अचिन्हित दीर्घ दीर्घ c1;
+	अचिन्हित दीर्घ दीर्घ instr_count;
+	अचिन्हित दीर्घ दीर्घ irq_count;
+	अचिन्हित पूर्णांक smi_count;
+	अचिन्हित पूर्णांक cpu_id;
+	अचिन्हित पूर्णांक apic_id;
+	अचिन्हित पूर्णांक x2apic_id;
+	अचिन्हित पूर्णांक flags;
 	bool is_atom;
-#define CPU_IS_FIRST_THREAD_IN_CORE	0x2
-#define CPU_IS_FIRST_CORE_IN_PACKAGE	0x4
-	unsigned long long counter[MAX_ADDED_THREAD_COUNTERS];
-} *thread_even, *thread_odd;
+#घोषणा CPU_IS_FIRST_THREAD_IN_CORE	0x2
+#घोषणा CPU_IS_FIRST_CORE_IN_PACKAGE	0x4
+	अचिन्हित दीर्घ दीर्घ counter[MAX_ADDED_THREAD_COUNTERS];
+पूर्ण *thपढ़ो_even, *thपढ़ो_odd;
 
-struct core_data {
-	unsigned long long c3;
-	unsigned long long c6;
-	unsigned long long c7;
-	unsigned long long mc6_us;	/* duplicate as per-core for now, even though per module */
-	unsigned int core_temp_c;
-	unsigned int core_energy;	/* MSR_CORE_ENERGY_STAT */
-	unsigned int core_id;
-	unsigned long long counter[MAX_ADDED_COUNTERS];
-} *core_even, *core_odd;
+काष्ठा core_data अणु
+	अचिन्हित दीर्घ दीर्घ c3;
+	अचिन्हित दीर्घ दीर्घ c6;
+	अचिन्हित दीर्घ दीर्घ c7;
+	अचिन्हित दीर्घ दीर्घ mc6_us;	/* duplicate as per-core क्रम now, even though per module */
+	अचिन्हित पूर्णांक core_temp_c;
+	अचिन्हित पूर्णांक core_energy;	/* MSR_CORE_ENERGY_STAT */
+	अचिन्हित पूर्णांक core_id;
+	अचिन्हित दीर्घ दीर्घ counter[MAX_ADDED_COUNTERS];
+पूर्ण *core_even, *core_odd;
 
-struct pkg_data {
-	unsigned long long pc2;
-	unsigned long long pc3;
-	unsigned long long pc6;
-	unsigned long long pc7;
-	unsigned long long pc8;
-	unsigned long long pc9;
-	unsigned long long pc10;
-	unsigned long long cpu_lpi;
-	unsigned long long sys_lpi;
-	unsigned long long pkg_wtd_core_c0;
-	unsigned long long pkg_any_core_c0;
-	unsigned long long pkg_any_gfxe_c0;
-	unsigned long long pkg_both_core_gfxe_c0;
-	long long gfx_rc6_ms;
-	unsigned int gfx_mhz;
-	unsigned int gfx_act_mhz;
-	unsigned int package_id;
-	unsigned long long energy_pkg;	/* MSR_PKG_ENERGY_STATUS */
-	unsigned long long energy_dram;	/* MSR_DRAM_ENERGY_STATUS */
-	unsigned long long energy_cores;	/* MSR_PP0_ENERGY_STATUS */
-	unsigned long long energy_gfx;	/* MSR_PP1_ENERGY_STATUS */
-	unsigned long long rapl_pkg_perf_status;	/* MSR_PKG_PERF_STATUS */
-	unsigned long long rapl_dram_perf_status;	/* MSR_DRAM_PERF_STATUS */
-	unsigned int pkg_temp_c;
-	unsigned long long counter[MAX_ADDED_COUNTERS];
-} *package_even, *package_odd;
+काष्ठा pkg_data अणु
+	अचिन्हित दीर्घ दीर्घ pc2;
+	अचिन्हित दीर्घ दीर्घ pc3;
+	अचिन्हित दीर्घ दीर्घ pc6;
+	अचिन्हित दीर्घ दीर्घ pc7;
+	अचिन्हित दीर्घ दीर्घ pc8;
+	अचिन्हित दीर्घ दीर्घ pc9;
+	अचिन्हित दीर्घ दीर्घ pc10;
+	अचिन्हित दीर्घ दीर्घ cpu_lpi;
+	अचिन्हित दीर्घ दीर्घ sys_lpi;
+	अचिन्हित दीर्घ दीर्घ pkg_wtd_core_c0;
+	अचिन्हित दीर्घ दीर्घ pkg_any_core_c0;
+	अचिन्हित दीर्घ दीर्घ pkg_any_gfxe_c0;
+	अचिन्हित दीर्घ दीर्घ pkg_both_core_gfxe_c0;
+	दीर्घ दीर्घ gfx_rc6_ms;
+	अचिन्हित पूर्णांक gfx_mhz;
+	अचिन्हित पूर्णांक gfx_act_mhz;
+	अचिन्हित पूर्णांक package_id;
+	अचिन्हित दीर्घ दीर्घ energy_pkg;	/* MSR_PKG_ENERGY_STATUS */
+	अचिन्हित दीर्घ दीर्घ energy_dram;	/* MSR_DRAM_ENERGY_STATUS */
+	अचिन्हित दीर्घ दीर्घ energy_cores;	/* MSR_PP0_ENERGY_STATUS */
+	अचिन्हित दीर्घ दीर्घ energy_gfx;	/* MSR_PP1_ENERGY_STATUS */
+	अचिन्हित दीर्घ दीर्घ rapl_pkg_perf_status;	/* MSR_PKG_PERF_STATUS */
+	अचिन्हित दीर्घ दीर्घ rapl_dram_perf_status;	/* MSR_DRAM_PERF_STATUS */
+	अचिन्हित पूर्णांक pkg_temp_c;
+	अचिन्हित दीर्घ दीर्घ counter[MAX_ADDED_COUNTERS];
+पूर्ण *package_even, *package_odd;
 
-#define ODD_COUNTERS thread_odd, core_odd, package_odd
-#define EVEN_COUNTERS thread_even, core_even, package_even
+#घोषणा ODD_COUNTERS thपढ़ो_odd, core_odd, package_odd
+#घोषणा EVEN_COUNTERS thपढ़ो_even, core_even, package_even
 
-#define GET_THREAD(thread_base, thread_no, core_no, node_no, pkg_no)	      \
-	((thread_base) +						      \
+#घोषणा GET_THREAD(thपढ़ो_base, thपढ़ो_no, core_no, node_no, pkg_no)	      \
+	((thपढ़ो_base) +						      \
 	 ((pkg_no) *							      \
-	  topo.nodes_per_pkg * topo.cores_per_node * topo.threads_per_core) + \
-	 ((node_no) * topo.cores_per_node * topo.threads_per_core) +	      \
-	 ((core_no) * topo.threads_per_core) +				      \
-	 (thread_no))
+	  topo.nodes_per_pkg * topo.cores_per_node * topo.thपढ़ोs_per_core) + \
+	 ((node_no) * topo.cores_per_node * topo.thपढ़ोs_per_core) +	      \
+	 ((core_no) * topo.thपढ़ोs_per_core) +				      \
+	 (thपढ़ो_no))
 
-#define GET_CORE(core_base, core_no, node_no, pkg_no)			\
+#घोषणा GET_CORE(core_base, core_no, node_no, pkg_no)			\
 	((core_base) +							\
 	 ((pkg_no) *  topo.nodes_per_pkg * topo.cores_per_node) +	\
 	 ((node_no) * topo.cores_per_node) +				\
 	 (core_no))
 
-#define GET_PKG(pkg_base, pkg_no) (pkg_base + pkg_no)
+#घोषणा GET_PKG(pkg_base, pkg_no) (pkg_base + pkg_no)
 
-enum counter_scope { SCOPE_CPU, SCOPE_CORE, SCOPE_PACKAGE };
-enum counter_type { COUNTER_ITEMS, COUNTER_CYCLES, COUNTER_SECONDS, COUNTER_USEC };
-enum counter_format { FORMAT_RAW, FORMAT_DELTA, FORMAT_PERCENT };
+क्रमागत counter_scope अणु SCOPE_CPU, SCOPE_CORE, SCOPE_PACKAGE पूर्ण;
+क्रमागत counter_type अणु COUNTER_ITEMS, COUNTER_CYCLES, COUNTER_SECONDS, COUNTER_USEC पूर्ण;
+क्रमागत counter_क्रमmat अणु FORMAT_RAW, FORMAT_DELTA, FORMAT_PERCENT पूर्ण;
 
-struct msr_counter {
-	unsigned int msr_num;
-	char name[NAME_BYTES];
-	char path[PATH_BYTES];
-	unsigned int width;
-	enum counter_type type;
-	enum counter_format format;
-	struct msr_counter *next;
-	unsigned int flags;
-#define	FLAGS_HIDE	(1 << 0)
-#define	FLAGS_SHOW	(1 << 1)
-#define	SYSFS_PERCPU	(1 << 1)
-};
+काष्ठा msr_counter अणु
+	अचिन्हित पूर्णांक msr_num;
+	अक्षर name[NAME_BYTES];
+	अक्षर path[PATH_BYTES];
+	अचिन्हित पूर्णांक width;
+	क्रमागत counter_type type;
+	क्रमागत counter_क्रमmat क्रमmat;
+	काष्ठा msr_counter *next;
+	अचिन्हित पूर्णांक flags;
+#घोषणा	FLAGS_HIDE	(1 << 0)
+#घोषणा	FLAGS_SHOW	(1 << 1)
+#घोषणा	SYSFS_PERCPU	(1 << 1)
+पूर्ण;
 
 /*
  * The accumulated sum of MSR is defined as a monotonic
  * increasing MSR, it will be accumulated periodically,
- * despite its register's bit width.
+ * despite its रेजिस्टर's bit width.
  */
-enum {
+क्रमागत अणु
 	IDX_PKG_ENERGY,
 	IDX_DRAM_ENERGY,
 	IDX_PP0_ENERGY,
@@ -286,418 +287,418 @@ enum {
 	IDX_PKG_PERF,
 	IDX_DRAM_PERF,
 	IDX_COUNT,
-};
+पूर्ण;
 
-int get_msr_sum(int cpu, off_t offset, unsigned long long *msr);
+पूर्णांक get_msr_sum(पूर्णांक cpu, off_t offset, अचिन्हित दीर्घ दीर्घ *msr);
 
-struct msr_sum_array {
+काष्ठा msr_sum_array अणु
 	/* get_msr_sum() = sum + (get_msr() - last) */
-	struct {
-		/*The accumulated MSR value is updated by the timer */
-		unsigned long long sum;
-		/*The MSR footprint recorded in last timer */
-		unsigned long long last;
-	} entries[IDX_COUNT];
-};
+	काष्ठा अणु
+		/*The accumulated MSR value is updated by the समयr */
+		अचिन्हित दीर्घ दीर्घ sum;
+		/*The MSR footprपूर्णांक recorded in last समयr */
+		अचिन्हित दीर्घ दीर्घ last;
+	पूर्ण entries[IDX_COUNT];
+पूर्ण;
 
 /* The percpu MSR sum array.*/
-struct msr_sum_array *per_cpu_msr_sum;
+काष्ठा msr_sum_array *per_cpu_msr_sum;
 
-off_t idx_to_offset(int idx)
-{
+off_t idx_to_offset(पूर्णांक idx)
+अणु
 	off_t offset;
 
-	switch (idx) {
-	case IDX_PKG_ENERGY:
-		if (do_rapl & RAPL_AMD_F17H)
+	चयन (idx) अणु
+	हाल IDX_PKG_ENERGY:
+		अगर (करो_rapl & RAPL_AMD_F17H)
 			offset = MSR_PKG_ENERGY_STAT;
-		else
+		अन्यथा
 			offset = MSR_PKG_ENERGY_STATUS;
-		break;
-	case IDX_DRAM_ENERGY:
+		अवरोध;
+	हाल IDX_DRAM_ENERGY:
 		offset = MSR_DRAM_ENERGY_STATUS;
-		break;
-	case IDX_PP0_ENERGY:
+		अवरोध;
+	हाल IDX_PP0_ENERGY:
 		offset = MSR_PP0_ENERGY_STATUS;
-		break;
-	case IDX_PP1_ENERGY:
+		अवरोध;
+	हाल IDX_PP1_ENERGY:
 		offset = MSR_PP1_ENERGY_STATUS;
-		break;
-	case IDX_PKG_PERF:
+		अवरोध;
+	हाल IDX_PKG_PERF:
 		offset = MSR_PKG_PERF_STATUS;
-		break;
-	case IDX_DRAM_PERF:
+		अवरोध;
+	हाल IDX_DRAM_PERF:
 		offset = MSR_DRAM_PERF_STATUS;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		offset = -1;
-	}
-	return offset;
-}
+	पूर्ण
+	वापस offset;
+पूर्ण
 
-int offset_to_idx(off_t offset)
-{
-	int idx;
+पूर्णांक offset_to_idx(off_t offset)
+अणु
+	पूर्णांक idx;
 
-	switch (offset) {
-	case MSR_PKG_ENERGY_STATUS:
-	case MSR_PKG_ENERGY_STAT:
+	चयन (offset) अणु
+	हाल MSR_PKG_ENERGY_STATUS:
+	हाल MSR_PKG_ENERGY_STAT:
 		idx = IDX_PKG_ENERGY;
-		break;
-	case MSR_DRAM_ENERGY_STATUS:
+		अवरोध;
+	हाल MSR_DRAM_ENERGY_STATUS:
 		idx = IDX_DRAM_ENERGY;
-		break;
-	case MSR_PP0_ENERGY_STATUS:
+		अवरोध;
+	हाल MSR_PP0_ENERGY_STATUS:
 		idx = IDX_PP0_ENERGY;
-		break;
-	case MSR_PP1_ENERGY_STATUS:
+		अवरोध;
+	हाल MSR_PP1_ENERGY_STATUS:
 		idx = IDX_PP1_ENERGY;
-		break;
-	case MSR_PKG_PERF_STATUS:
+		अवरोध;
+	हाल MSR_PKG_PERF_STATUS:
 		idx = IDX_PKG_PERF;
-		break;
-	case MSR_DRAM_PERF_STATUS:
+		अवरोध;
+	हाल MSR_DRAM_PERF_STATUS:
 		idx = IDX_DRAM_PERF;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		idx = -1;
-	}
-	return idx;
-}
+	पूर्ण
+	वापस idx;
+पूर्ण
 
-int idx_valid(int idx)
-{
-	switch (idx) {
-	case IDX_PKG_ENERGY:
-		return do_rapl & (RAPL_PKG | RAPL_AMD_F17H);
-	case IDX_DRAM_ENERGY:
-		return do_rapl & RAPL_DRAM;
-	case IDX_PP0_ENERGY:
-		return do_rapl & RAPL_CORES_ENERGY_STATUS;
-	case IDX_PP1_ENERGY:
-		return do_rapl & RAPL_GFX;
-	case IDX_PKG_PERF:
-		return do_rapl & RAPL_PKG_PERF_STATUS;
-	case IDX_DRAM_PERF:
-		return do_rapl & RAPL_DRAM_PERF_STATUS;
-	default:
-		return 0;
-	}
-}
+पूर्णांक idx_valid(पूर्णांक idx)
+अणु
+	चयन (idx) अणु
+	हाल IDX_PKG_ENERGY:
+		वापस करो_rapl & (RAPL_PKG | RAPL_AMD_F17H);
+	हाल IDX_DRAM_ENERGY:
+		वापस करो_rapl & RAPL_DRAM;
+	हाल IDX_PP0_ENERGY:
+		वापस करो_rapl & RAPL_CORES_ENERGY_STATUS;
+	हाल IDX_PP1_ENERGY:
+		वापस करो_rapl & RAPL_GFX;
+	हाल IDX_PKG_PERF:
+		वापस करो_rapl & RAPL_PKG_PERF_STATUS;
+	हाल IDX_DRAM_PERF:
+		वापस करो_rapl & RAPL_DRAM_PERF_STATUS;
+	शेष:
+		वापस 0;
+	पूर्ण
+पूर्ण
 
-struct sys_counters {
-	unsigned int added_thread_counters;
-	unsigned int added_core_counters;
-	unsigned int added_package_counters;
-	struct msr_counter *tp;
-	struct msr_counter *cp;
-	struct msr_counter *pp;
-} sys;
+काष्ठा sys_counters अणु
+	अचिन्हित पूर्णांक added_thपढ़ो_counters;
+	अचिन्हित पूर्णांक added_core_counters;
+	अचिन्हित पूर्णांक added_package_counters;
+	काष्ठा msr_counter *tp;
+	काष्ठा msr_counter *cp;
+	काष्ठा msr_counter *pp;
+पूर्ण sys;
 
-struct system_summary {
-	struct thread_data threads;
-	struct core_data cores;
-	struct pkg_data packages;
-} average;
+काष्ठा प्रणाली_summary अणु
+	काष्ठा thपढ़ो_data thपढ़ोs;
+	काष्ठा core_data cores;
+	काष्ठा pkg_data packages;
+पूर्ण average;
 
-struct cpu_topology {
-	int physical_package_id;
-	int die_id;
-	int logical_cpu_id;
-	int physical_node_id;
-	int logical_node_id;	/* 0-based count within the package */
-	int physical_core_id;
-	int thread_id;
-	cpu_set_t *put_ids;	/* Processing Unit/Thread IDs */
-} *cpus;
+काष्ठा cpu_topology अणु
+	पूर्णांक physical_package_id;
+	पूर्णांक die_id;
+	पूर्णांक logical_cpu_id;
+	पूर्णांक physical_node_id;
+	पूर्णांक logical_node_id;	/* 0-based count within the package */
+	पूर्णांक physical_core_id;
+	पूर्णांक thपढ़ो_id;
+	cpu_set_t *put_ids;	/* Processing Unit/Thपढ़ो IDs */
+पूर्ण *cpus;
 
-struct topo_params {
-	int num_packages;
-	int num_die;
-	int num_cpus;
-	int num_cores;
-	int max_cpu_num;
-	int max_node_num;
-	int nodes_per_pkg;
-	int cores_per_node;
-	int threads_per_core;
-} topo;
+काष्ठा topo_params अणु
+	पूर्णांक num_packages;
+	पूर्णांक num_die;
+	पूर्णांक num_cpus;
+	पूर्णांक num_cores;
+	पूर्णांक max_cpu_num;
+	पूर्णांक max_node_num;
+	पूर्णांक nodes_per_pkg;
+	पूर्णांक cores_per_node;
+	पूर्णांक thपढ़ोs_per_core;
+पूर्ण topo;
 
-struct timeval tv_even, tv_odd, tv_delta;
+काष्ठा समयval tv_even, tv_odd, tv_delta;
 
-int *irq_column_2_cpu;		/* /proc/interrupts column numbers */
-int *irqs_per_cpu;		/* indexed by cpu_num */
+पूर्णांक *irq_column_2_cpu;		/* /proc/पूर्णांकerrupts column numbers */
+पूर्णांक *irqs_per_cpu;		/* indexed by cpu_num */
 
-void setup_all_buffers(void);
+व्योम setup_all_buffers(व्योम);
 
-char *sys_lpi_file;
-char *sys_lpi_file_sysfs = "/sys/devices/system/cpu/cpuidle/low_power_idle_system_residency_us";
-char *sys_lpi_file_debugfs = "/sys/kernel/debug/pmc_core/slp_s0_residency_usec";
+अक्षर *sys_lpi_file;
+अक्षर *sys_lpi_file_sysfs = "/sys/devices/system/cpu/cpuidle/low_power_idle_system_residency_us";
+अक्षर *sys_lpi_file_debugfs = "/sys/kernel/debug/pmc_core/slp_s0_residency_usec";
 
-int cpu_is_not_present(int cpu)
-{
-	return !CPU_ISSET_S(cpu, cpu_present_setsize, cpu_present_set);
-}
+पूर्णांक cpu_is_not_present(पूर्णांक cpu)
+अणु
+	वापस !CPU_ISSET_S(cpu, cpu_present_setsize, cpu_present_set);
+पूर्ण
 
 /*
- * run func(thread, core, package) in topology order
+ * run func(thपढ़ो, core, package) in topology order
  * skip non-present cpus
  */
 
-int for_all_cpus(int (func) (struct thread_data *, struct core_data *, struct pkg_data *),
-		 struct thread_data *thread_base, struct core_data *core_base, struct pkg_data *pkg_base)
-{
-	int retval, pkg_no, core_no, thread_no, node_no;
+पूर्णांक क्रम_all_cpus(पूर्णांक (func) (काष्ठा thपढ़ो_data *, काष्ठा core_data *, काष्ठा pkg_data *),
+		 काष्ठा thपढ़ो_data *thपढ़ो_base, काष्ठा core_data *core_base, काष्ठा pkg_data *pkg_base)
+अणु
+	पूर्णांक retval, pkg_no, core_no, thपढ़ो_no, node_no;
 
-	for (pkg_no = 0; pkg_no < topo.num_packages; ++pkg_no) {
-		for (node_no = 0; node_no < topo.nodes_per_pkg; node_no++) {
-			for (core_no = 0; core_no < topo.cores_per_node; ++core_no) {
-				for (thread_no = 0; thread_no < topo.threads_per_core; ++thread_no) {
-					struct thread_data *t;
-					struct core_data *c;
-					struct pkg_data *p;
+	क्रम (pkg_no = 0; pkg_no < topo.num_packages; ++pkg_no) अणु
+		क्रम (node_no = 0; node_no < topo.nodes_per_pkg; node_no++) अणु
+			क्रम (core_no = 0; core_no < topo.cores_per_node; ++core_no) अणु
+				क्रम (thपढ़ो_no = 0; thपढ़ो_no < topo.thपढ़ोs_per_core; ++thपढ़ो_no) अणु
+					काष्ठा thपढ़ो_data *t;
+					काष्ठा core_data *c;
+					काष्ठा pkg_data *p;
 
-					t = GET_THREAD(thread_base, thread_no, core_no, node_no, pkg_no);
+					t = GET_THREAD(thपढ़ो_base, thपढ़ो_no, core_no, node_no, pkg_no);
 
-					if (cpu_is_not_present(t->cpu_id))
-						continue;
+					अगर (cpu_is_not_present(t->cpu_id))
+						जारी;
 
 					c = GET_CORE(core_base, core_no, node_no, pkg_no);
 					p = GET_PKG(pkg_base, pkg_no);
 
 					retval = func(t, c, p);
-					if (retval)
-						return retval;
-				}
-			}
-		}
-	}
-	return 0;
-}
+					अगर (retval)
+						वापस retval;
+				पूर्ण
+			पूर्ण
+		पूर्ण
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-int cpu_migrate(int cpu)
-{
+पूर्णांक cpu_migrate(पूर्णांक cpu)
+अणु
 	CPU_ZERO_S(cpu_affinity_setsize, cpu_affinity_set);
 	CPU_SET_S(cpu, cpu_affinity_setsize, cpu_affinity_set);
-	if (sched_setaffinity(0, cpu_affinity_setsize, cpu_affinity_set) == -1)
-		return -1;
-	else
-		return 0;
-}
+	अगर (sched_setaffinity(0, cpu_affinity_setsize, cpu_affinity_set) == -1)
+		वापस -1;
+	अन्यथा
+		वापस 0;
+पूर्ण
 
-int get_msr_fd(int cpu)
-{
-	char pathname[32];
-	int fd;
+पूर्णांक get_msr_fd(पूर्णांक cpu)
+अणु
+	अक्षर pathname[32];
+	पूर्णांक fd;
 
 	fd = fd_percpu[cpu];
 
-	if (fd)
-		return fd;
+	अगर (fd)
+		वापस fd;
 
-	sprintf(pathname, "/dev/cpu/%d/msr", cpu);
-	fd = open(pathname, O_RDONLY);
-	if (fd < 0)
+	प्र_लिखो(pathname, "/dev/cpu/%d/msr", cpu);
+	fd = खोलो(pathname, O_RDONLY);
+	अगर (fd < 0)
 		err(-1, "%s open failed, try chown or chmod +r /dev/cpu/*/msr, or run as root", pathname);
 
 	fd_percpu[cpu] = fd;
 
-	return fd;
-}
+	वापस fd;
+पूर्ण
 
-static long perf_event_open(struct perf_event_attr *hw_event, pid_t pid, int cpu, int group_fd, unsigned long flags)
-{
-	return syscall(__NR_perf_event_open, hw_event, pid, cpu, group_fd, flags);
-}
+अटल दीर्घ perf_event_खोलो(काष्ठा perf_event_attr *hw_event, pid_t pid, पूर्णांक cpu, पूर्णांक group_fd, अचिन्हित दीर्घ flags)
+अणु
+	वापस syscall(__NR_perf_event_खोलो, hw_event, pid, cpu, group_fd, flags);
+पूर्ण
 
-static int perf_instr_count_open(int cpu_num)
-{
-	struct perf_event_attr pea;
-	int fd;
+अटल पूर्णांक perf_instr_count_खोलो(पूर्णांक cpu_num)
+अणु
+	काष्ठा perf_event_attr pea;
+	पूर्णांक fd;
 
-	memset(&pea, 0, sizeof(struct perf_event_attr));
+	स_रखो(&pea, 0, माप(काष्ठा perf_event_attr));
 	pea.type = PERF_TYPE_HARDWARE;
-	pea.size = sizeof(struct perf_event_attr);
+	pea.size = माप(काष्ठा perf_event_attr);
 	pea.config = PERF_COUNT_HW_INSTRUCTIONS;
 
-	/* counter for cpu_num, including user + kernel and all processes */
-	fd = perf_event_open(&pea, -1, cpu_num, -1, 0);
-	if (fd == -1)
+	/* counter क्रम cpu_num, including user + kernel and all processes */
+	fd = perf_event_खोलो(&pea, -1, cpu_num, -1, 0);
+	अगर (fd == -1)
 		err(-1, "cpu%d: perf instruction counter\n", cpu_num);
 
-	return fd;
-}
+	वापस fd;
+पूर्ण
 
-int get_instr_count_fd(int cpu)
-{
-	if (fd_instr_count_percpu[cpu])
-		return fd_instr_count_percpu[cpu];
+पूर्णांक get_instr_count_fd(पूर्णांक cpu)
+अणु
+	अगर (fd_instr_count_percpu[cpu])
+		वापस fd_instr_count_percpu[cpu];
 
-	fd_instr_count_percpu[cpu] = perf_instr_count_open(cpu);
+	fd_instr_count_percpu[cpu] = perf_instr_count_खोलो(cpu);
 
-	return fd_instr_count_percpu[cpu];
-}
+	वापस fd_instr_count_percpu[cpu];
+पूर्ण
 
-int get_msr(int cpu, off_t offset, unsigned long long *msr)
-{
-	ssize_t retval;
+पूर्णांक get_msr(पूर्णांक cpu, off_t offset, अचिन्हित दीर्घ दीर्घ *msr)
+अणु
+	sमाप_प्रकार retval;
 
-	retval = pread(get_msr_fd(cpu), msr, sizeof(*msr), offset);
+	retval = pपढ़ो(get_msr_fd(cpu), msr, माप(*msr), offset);
 
-	if (retval != sizeof *msr)
-		err(-1, "cpu%d: msr offset 0x%llx read failed", cpu, (unsigned long long)offset);
+	अगर (retval != माप *msr)
+		err(-1, "cpu%d: msr offset 0x%llx read failed", cpu, (अचिन्हित दीर्घ दीर्घ)offset);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * This list matches the column headers, except
- * 1. built-in only, the sysfs counters are not here -- we learn of those at run-time
+ * 1. built-in only, the sysfs counters are not here -- we learn of those at run-समय
  * 2. Core and CPU are moved to the end, we can't have strings that contain them
- *    matching on them for --show and --hide.
+ *    matching on them क्रम --show and --hide.
  */
-struct msr_counter bic[] = {
-	{ 0x0, "usec" },
-	{ 0x0, "Time_Of_Day_Seconds" },
-	{ 0x0, "Package" },
-	{ 0x0, "Node" },
-	{ 0x0, "Avg_MHz" },
-	{ 0x0, "Busy%" },
-	{ 0x0, "Bzy_MHz" },
-	{ 0x0, "TSC_MHz" },
-	{ 0x0, "IRQ" },
-	{ 0x0, "SMI", "", 32, 0, FORMAT_DELTA, NULL },
-	{ 0x0, "sysfs" },
-	{ 0x0, "CPU%c1" },
-	{ 0x0, "CPU%c3" },
-	{ 0x0, "CPU%c6" },
-	{ 0x0, "CPU%c7" },
-	{ 0x0, "ThreadC" },
-	{ 0x0, "CoreTmp" },
-	{ 0x0, "CoreCnt" },
-	{ 0x0, "PkgTmp" },
-	{ 0x0, "GFX%rc6" },
-	{ 0x0, "GFXMHz" },
-	{ 0x0, "Pkg%pc2" },
-	{ 0x0, "Pkg%pc3" },
-	{ 0x0, "Pkg%pc6" },
-	{ 0x0, "Pkg%pc7" },
-	{ 0x0, "Pkg%pc8" },
-	{ 0x0, "Pkg%pc9" },
-	{ 0x0, "Pk%pc10" },
-	{ 0x0, "CPU%LPI" },
-	{ 0x0, "SYS%LPI" },
-	{ 0x0, "PkgWatt" },
-	{ 0x0, "CorWatt" },
-	{ 0x0, "GFXWatt" },
-	{ 0x0, "PkgCnt" },
-	{ 0x0, "RAMWatt" },
-	{ 0x0, "PKG_%" },
-	{ 0x0, "RAM_%" },
-	{ 0x0, "Pkg_J" },
-	{ 0x0, "Cor_J" },
-	{ 0x0, "GFX_J" },
-	{ 0x0, "RAM_J" },
-	{ 0x0, "Mod%c6" },
-	{ 0x0, "Totl%C0" },
-	{ 0x0, "Any%C0" },
-	{ 0x0, "GFX%C0" },
-	{ 0x0, "CPUGFX%" },
-	{ 0x0, "Core" },
-	{ 0x0, "CPU" },
-	{ 0x0, "APIC" },
-	{ 0x0, "X2APIC" },
-	{ 0x0, "Die" },
-	{ 0x0, "GFXAMHz" },
-	{ 0x0, "IPC" },
-};
+काष्ठा msr_counter bic[] = अणु
+	अणु 0x0, "usec" पूर्ण,
+	अणु 0x0, "Time_Of_Day_Seconds" पूर्ण,
+	अणु 0x0, "Package" पूर्ण,
+	अणु 0x0, "Node" पूर्ण,
+	अणु 0x0, "Avg_MHz" पूर्ण,
+	अणु 0x0, "Busy%" पूर्ण,
+	अणु 0x0, "Bzy_MHz" पूर्ण,
+	अणु 0x0, "TSC_MHz" पूर्ण,
+	अणु 0x0, "IRQ" पूर्ण,
+	अणु 0x0, "SMI", "", 32, 0, FORMAT_DELTA, शून्य पूर्ण,
+	अणु 0x0, "sysfs" पूर्ण,
+	अणु 0x0, "CPU%c1" पूर्ण,
+	अणु 0x0, "CPU%c3" पूर्ण,
+	अणु 0x0, "CPU%c6" पूर्ण,
+	अणु 0x0, "CPU%c7" पूर्ण,
+	अणु 0x0, "ThreadC" पूर्ण,
+	अणु 0x0, "CoreTmp" पूर्ण,
+	अणु 0x0, "CoreCnt" पूर्ण,
+	अणु 0x0, "PkgTmp" पूर्ण,
+	अणु 0x0, "GFX%rc6" पूर्ण,
+	अणु 0x0, "GFXMHz" पूर्ण,
+	अणु 0x0, "Pkg%pc2" पूर्ण,
+	अणु 0x0, "Pkg%pc3" पूर्ण,
+	अणु 0x0, "Pkg%pc6" पूर्ण,
+	अणु 0x0, "Pkg%pc7" पूर्ण,
+	अणु 0x0, "Pkg%pc8" पूर्ण,
+	अणु 0x0, "Pkg%pc9" पूर्ण,
+	अणु 0x0, "Pk%pc10" पूर्ण,
+	अणु 0x0, "CPU%LPI" पूर्ण,
+	अणु 0x0, "SYS%LPI" पूर्ण,
+	अणु 0x0, "PkgWatt" पूर्ण,
+	अणु 0x0, "CorWatt" पूर्ण,
+	अणु 0x0, "GFXWatt" पूर्ण,
+	अणु 0x0, "PkgCnt" पूर्ण,
+	अणु 0x0, "RAMWatt" पूर्ण,
+	अणु 0x0, "PKG_%" पूर्ण,
+	अणु 0x0, "RAM_%" पूर्ण,
+	अणु 0x0, "Pkg_J" पूर्ण,
+	अणु 0x0, "Cor_J" पूर्ण,
+	अणु 0x0, "GFX_J" पूर्ण,
+	अणु 0x0, "RAM_J" पूर्ण,
+	अणु 0x0, "Mod%c6" पूर्ण,
+	अणु 0x0, "Totl%C0" पूर्ण,
+	अणु 0x0, "Any%C0" पूर्ण,
+	अणु 0x0, "GFX%C0" पूर्ण,
+	अणु 0x0, "CPUGFX%" पूर्ण,
+	अणु 0x0, "Core" पूर्ण,
+	अणु 0x0, "CPU" पूर्ण,
+	अणु 0x0, "APIC" पूर्ण,
+	अणु 0x0, "X2APIC" पूर्ण,
+	अणु 0x0, "Die" पूर्ण,
+	अणु 0x0, "GFXAMHz" पूर्ण,
+	अणु 0x0, "IPC" पूर्ण,
+पूर्ण;
 
-#define MAX_BIC (sizeof(bic) / sizeof(struct msr_counter))
-#define	BIC_USEC	(1ULL << 0)
-#define	BIC_TOD		(1ULL << 1)
-#define	BIC_Package	(1ULL << 2)
-#define	BIC_Node	(1ULL << 3)
-#define	BIC_Avg_MHz	(1ULL << 4)
-#define	BIC_Busy	(1ULL << 5)
-#define	BIC_Bzy_MHz	(1ULL << 6)
-#define	BIC_TSC_MHz	(1ULL << 7)
-#define	BIC_IRQ		(1ULL << 8)
-#define	BIC_SMI		(1ULL << 9)
-#define	BIC_sysfs	(1ULL << 10)
-#define	BIC_CPU_c1	(1ULL << 11)
-#define	BIC_CPU_c3	(1ULL << 12)
-#define	BIC_CPU_c6	(1ULL << 13)
-#define	BIC_CPU_c7	(1ULL << 14)
-#define	BIC_ThreadC	(1ULL << 15)
-#define	BIC_CoreTmp	(1ULL << 16)
-#define	BIC_CoreCnt	(1ULL << 17)
-#define	BIC_PkgTmp	(1ULL << 18)
-#define	BIC_GFX_rc6	(1ULL << 19)
-#define	BIC_GFXMHz	(1ULL << 20)
-#define	BIC_Pkgpc2	(1ULL << 21)
-#define	BIC_Pkgpc3	(1ULL << 22)
-#define	BIC_Pkgpc6	(1ULL << 23)
-#define	BIC_Pkgpc7	(1ULL << 24)
-#define	BIC_Pkgpc8	(1ULL << 25)
-#define	BIC_Pkgpc9	(1ULL << 26)
-#define	BIC_Pkgpc10	(1ULL << 27)
-#define BIC_CPU_LPI	(1ULL << 28)
-#define BIC_SYS_LPI	(1ULL << 29)
-#define	BIC_PkgWatt	(1ULL << 30)
-#define	BIC_CorWatt	(1ULL << 31)
-#define	BIC_GFXWatt	(1ULL << 32)
-#define	BIC_PkgCnt	(1ULL << 33)
-#define	BIC_RAMWatt	(1ULL << 34)
-#define	BIC_PKG__	(1ULL << 35)
-#define	BIC_RAM__	(1ULL << 36)
-#define	BIC_Pkg_J	(1ULL << 37)
-#define	BIC_Cor_J	(1ULL << 38)
-#define	BIC_GFX_J	(1ULL << 39)
-#define	BIC_RAM_J	(1ULL << 40)
-#define	BIC_Mod_c6	(1ULL << 41)
-#define	BIC_Totl_c0	(1ULL << 42)
-#define	BIC_Any_c0	(1ULL << 43)
-#define	BIC_GFX_c0	(1ULL << 44)
-#define	BIC_CPUGFX	(1ULL << 45)
-#define	BIC_Core	(1ULL << 46)
-#define	BIC_CPU		(1ULL << 47)
-#define	BIC_APIC	(1ULL << 48)
-#define	BIC_X2APIC	(1ULL << 49)
-#define	BIC_Die		(1ULL << 50)
-#define	BIC_GFXACTMHz	(1ULL << 51)
-#define	BIC_IPC		(1ULL << 52)
+#घोषणा MAX_BIC (माप(bic) / माप(काष्ठा msr_counter))
+#घोषणा	BIC_USEC	(1ULL << 0)
+#घोषणा	BIC_TOD		(1ULL << 1)
+#घोषणा	BIC_Package	(1ULL << 2)
+#घोषणा	BIC_Node	(1ULL << 3)
+#घोषणा	BIC_Avg_MHz	(1ULL << 4)
+#घोषणा	BIC_Busy	(1ULL << 5)
+#घोषणा	BIC_Bzy_MHz	(1ULL << 6)
+#घोषणा	BIC_TSC_MHz	(1ULL << 7)
+#घोषणा	BIC_IRQ		(1ULL << 8)
+#घोषणा	BIC_SMI		(1ULL << 9)
+#घोषणा	BIC_sysfs	(1ULL << 10)
+#घोषणा	BIC_CPU_c1	(1ULL << 11)
+#घोषणा	BIC_CPU_c3	(1ULL << 12)
+#घोषणा	BIC_CPU_c6	(1ULL << 13)
+#घोषणा	BIC_CPU_c7	(1ULL << 14)
+#घोषणा	BIC_Thपढ़ोC	(1ULL << 15)
+#घोषणा	BIC_CoreTmp	(1ULL << 16)
+#घोषणा	BIC_CoreCnt	(1ULL << 17)
+#घोषणा	BIC_PkgTmp	(1ULL << 18)
+#घोषणा	BIC_GFX_rc6	(1ULL << 19)
+#घोषणा	BIC_GFXMHz	(1ULL << 20)
+#घोषणा	BIC_Pkgpc2	(1ULL << 21)
+#घोषणा	BIC_Pkgpc3	(1ULL << 22)
+#घोषणा	BIC_Pkgpc6	(1ULL << 23)
+#घोषणा	BIC_Pkgpc7	(1ULL << 24)
+#घोषणा	BIC_Pkgpc8	(1ULL << 25)
+#घोषणा	BIC_Pkgpc9	(1ULL << 26)
+#घोषणा	BIC_Pkgpc10	(1ULL << 27)
+#घोषणा BIC_CPU_LPI	(1ULL << 28)
+#घोषणा BIC_SYS_LPI	(1ULL << 29)
+#घोषणा	BIC_PkgWatt	(1ULL << 30)
+#घोषणा	BIC_CorWatt	(1ULL << 31)
+#घोषणा	BIC_GFXWatt	(1ULL << 32)
+#घोषणा	BIC_PkgCnt	(1ULL << 33)
+#घोषणा	BIC_RAMWatt	(1ULL << 34)
+#घोषणा	BIC_PKG__	(1ULL << 35)
+#घोषणा	BIC_RAM__	(1ULL << 36)
+#घोषणा	BIC_Pkg_J	(1ULL << 37)
+#घोषणा	BIC_Cor_J	(1ULL << 38)
+#घोषणा	BIC_GFX_J	(1ULL << 39)
+#घोषणा	BIC_RAM_J	(1ULL << 40)
+#घोषणा	BIC_Mod_c6	(1ULL << 41)
+#घोषणा	BIC_Totl_c0	(1ULL << 42)
+#घोषणा	BIC_Any_c0	(1ULL << 43)
+#घोषणा	BIC_GFX_c0	(1ULL << 44)
+#घोषणा	BIC_CPUGFX	(1ULL << 45)
+#घोषणा	BIC_Core	(1ULL << 46)
+#घोषणा	BIC_CPU		(1ULL << 47)
+#घोषणा	BIC_APIC	(1ULL << 48)
+#घोषणा	BIC_X2APIC	(1ULL << 49)
+#घोषणा	BIC_Die		(1ULL << 50)
+#घोषणा	BIC_GFXACTMHz	(1ULL << 51)
+#घोषणा	BIC_IPC		(1ULL << 52)
 
-#define BIC_TOPOLOGY (BIC_Package | BIC_Node | BIC_CoreCnt | BIC_PkgCnt | BIC_Core | BIC_CPU | BIC_Die )
-#define BIC_THERMAL_PWR ( BIC_CoreTmp | BIC_PkgTmp | BIC_PkgWatt | BIC_CorWatt | BIC_GFXWatt | BIC_RAMWatt | BIC_PKG__ | BIC_RAM__)
-#define BIC_FREQUENCY ( BIC_Avg_MHz | BIC_Busy | BIC_Bzy_MHz | BIC_TSC_MHz | BIC_GFXMHz | BIC_GFXACTMHz )
-#define BIC_IDLE ( BIC_sysfs | BIC_CPU_c1 | BIC_CPU_c3 | BIC_CPU_c6 | BIC_CPU_c7 | BIC_GFX_rc6 | BIC_Pkgpc2 | BIC_Pkgpc3 | BIC_Pkgpc6 | BIC_Pkgpc7 | BIC_Pkgpc8 | BIC_Pkgpc9 | BIC_Pkgpc10 | BIC_CPU_LPI | BIC_SYS_LPI | BIC_Mod_c6 | BIC_Totl_c0 | BIC_Any_c0 | BIC_GFX_c0 | BIC_CPUGFX)
-#define BIC_OTHER ( BIC_IRQ | BIC_SMI | BIC_ThreadC | BIC_CoreTmp | BIC_IPC)
+#घोषणा BIC_TOPOLOGY (BIC_Package | BIC_Node | BIC_CoreCnt | BIC_PkgCnt | BIC_Core | BIC_CPU | BIC_Die )
+#घोषणा BIC_THERMAL_PWR ( BIC_CoreTmp | BIC_PkgTmp | BIC_PkgWatt | BIC_CorWatt | BIC_GFXWatt | BIC_RAMWatt | BIC_PKG__ | BIC_RAM__)
+#घोषणा BIC_FREQUENCY ( BIC_Avg_MHz | BIC_Busy | BIC_Bzy_MHz | BIC_TSC_MHz | BIC_GFXMHz | BIC_GFXACTMHz )
+#घोषणा BIC_IDLE ( BIC_sysfs | BIC_CPU_c1 | BIC_CPU_c3 | BIC_CPU_c6 | BIC_CPU_c7 | BIC_GFX_rc6 | BIC_Pkgpc2 | BIC_Pkgpc3 | BIC_Pkgpc6 | BIC_Pkgpc7 | BIC_Pkgpc8 | BIC_Pkgpc9 | BIC_Pkgpc10 | BIC_CPU_LPI | BIC_SYS_LPI | BIC_Mod_c6 | BIC_Totl_c0 | BIC_Any_c0 | BIC_GFX_c0 | BIC_CPUGFX)
+#घोषणा BIC_OTHER ( BIC_IRQ | BIC_SMI | BIC_Thपढ़ोC | BIC_CoreTmp | BIC_IPC)
 
-#define BIC_DISABLED_BY_DEFAULT	(BIC_USEC | BIC_TOD | BIC_APIC | BIC_X2APIC)
+#घोषणा BIC_DISABLED_BY_DEFAULT	(BIC_USEC | BIC_TOD | BIC_APIC | BIC_X2APIC)
 
-unsigned long long bic_enabled = (0xFFFFFFFFFFFFFFFFULL & ~BIC_DISABLED_BY_DEFAULT);
-unsigned long long bic_present = BIC_USEC | BIC_TOD | BIC_sysfs | BIC_APIC | BIC_X2APIC;
+अचिन्हित दीर्घ दीर्घ bic_enabled = (0xFFFFFFFFFFFFFFFFULL & ~BIC_DISABLED_BY_DEFAULT);
+अचिन्हित दीर्घ दीर्घ bic_present = BIC_USEC | BIC_TOD | BIC_sysfs | BIC_APIC | BIC_X2APIC;
 
-#define DO_BIC(COUNTER_NAME) (bic_enabled & bic_present & COUNTER_NAME)
-#define DO_BIC_READ(COUNTER_NAME) (bic_present & COUNTER_NAME)
-#define ENABLE_BIC(COUNTER_NAME) (bic_enabled |= COUNTER_NAME)
-#define BIC_PRESENT(COUNTER_BIT) (bic_present |= COUNTER_BIT)
-#define BIC_NOT_PRESENT(COUNTER_BIT) (bic_present &= ~COUNTER_BIT)
-#define BIC_IS_ENABLED(COUNTER_BIT) (bic_enabled & COUNTER_BIT)
+#घोषणा DO_BIC(COUNTER_NAME) (bic_enabled & bic_present & COUNTER_NAME)
+#घोषणा DO_BIC_READ(COUNTER_NAME) (bic_present & COUNTER_NAME)
+#घोषणा ENABLE_BIC(COUNTER_NAME) (bic_enabled |= COUNTER_NAME)
+#घोषणा BIC_PRESENT(COUNTER_BIT) (bic_present |= COUNTER_BIT)
+#घोषणा BIC_NOT_PRESENT(COUNTER_BIT) (bic_present &= ~COUNTER_BIT)
+#घोषणा BIC_IS_ENABLED(COUNTER_BIT) (bic_enabled & COUNTER_BIT)
 
-#define MAX_DEFERRED 16
-char *deferred_skip_names[MAX_DEFERRED];
-int deferred_skip_index;
+#घोषणा MAX_DEFERRED 16
+अक्षर *deferred_skip_names[MAX_DEFERRED];
+पूर्णांक deferred_skip_index;
 
 /*
- * HIDE_LIST - hide this list of counters, show the rest [default]
+ * HIDE_LIST - hide this list of counters, show the rest [शेष]
  * SHOW_LIST - show this list of counters, hide the rest
  */
-enum show_hide_mode { SHOW_LIST, HIDE_LIST } global_show_hide_mode = HIDE_LIST;
+क्रमागत show_hide_mode अणु SHOW_LIST, HIDE_LIST पूर्ण global_show_hide_mode = HIDE_LIST;
 
-void help(void)
-{
-	fprintf(outf,
+व्योम help(व्योम)
+अणु
+	ख_लिखो(outf,
 		"Usage: turbostat [OPTIONS][(--interval seconds) | COMMAND ...]\n"
 		"\n"
 		"Turbostat forks the specified COMMAND and prints statistics\n"
@@ -732,698 +733,698 @@ void help(void)
 		"		  degrees Celsius\n"
 		"  -h, --help	print this help message\n"
 		"  -v, --version	print version information\n" "\n" "For more help, run \"man turbostat\"\n");
-}
+पूर्ण
 
 /*
  * bic_lookup
- * for all the strings in comma separate name_list,
- * set the approprate bit in return value.
+ * क्रम all the strings in comma separate name_list,
+ * set the approprate bit in वापस value.
  */
-unsigned long long bic_lookup(char *name_list, enum show_hide_mode mode)
-{
-	int i;
-	unsigned long long retval = 0;
+अचिन्हित दीर्घ दीर्घ bic_lookup(अक्षर *name_list, क्रमागत show_hide_mode mode)
+अणु
+	पूर्णांक i;
+	अचिन्हित दीर्घ दीर्घ retval = 0;
 
-	while (name_list) {
-		char *comma;
+	जबतक (name_list) अणु
+		अक्षर *comma;
 
-		comma = strchr(name_list, ',');
+		comma = म_अक्षर(name_list, ',');
 
-		if (comma)
+		अगर (comma)
 			*comma = '\0';
 
-		if (!strcmp(name_list, "all"))
-			return ~0;
-		if (!strcmp(name_list, "topology"))
-			return BIC_TOPOLOGY;
-		if (!strcmp(name_list, "power"))
-			return BIC_THERMAL_PWR;
-		if (!strcmp(name_list, "idle"))
-			return BIC_IDLE;
-		if (!strcmp(name_list, "frequency"))
-			return BIC_FREQUENCY;
-		if (!strcmp(name_list, "other"))
-			return BIC_OTHER;
-		if (!strcmp(name_list, "all"))
-			return 0;
+		अगर (!म_भेद(name_list, "all"))
+			वापस ~0;
+		अगर (!म_भेद(name_list, "topology"))
+			वापस BIC_TOPOLOGY;
+		अगर (!म_भेद(name_list, "power"))
+			वापस BIC_THERMAL_PWR;
+		अगर (!म_भेद(name_list, "idle"))
+			वापस BIC_IDLE;
+		अगर (!म_भेद(name_list, "frequency"))
+			वापस BIC_FREQUENCY;
+		अगर (!म_भेद(name_list, "other"))
+			वापस BIC_OTHER;
+		अगर (!म_भेद(name_list, "all"))
+			वापस 0;
 
-		for (i = 0; i < MAX_BIC; ++i) {
-			if (!strcmp(name_list, bic[i].name)) {
+		क्रम (i = 0; i < MAX_BIC; ++i) अणु
+			अगर (!म_भेद(name_list, bic[i].name)) अणु
 				retval |= (1ULL << i);
-				break;
-			}
-		}
-		if (i == MAX_BIC) {
-			if (mode == SHOW_LIST) {
-				fprintf(stderr, "Invalid counter name: %s\n", name_list);
-				exit(-1);
-			}
+				अवरोध;
+			पूर्ण
+		पूर्ण
+		अगर (i == MAX_BIC) अणु
+			अगर (mode == SHOW_LIST) अणु
+				ख_लिखो(मानक_त्रुटि, "Invalid counter name: %s\n", name_list);
+				निकास(-1);
+			पूर्ण
 			deferred_skip_names[deferred_skip_index++] = name_list;
-			if (debug)
-				fprintf(stderr, "deferred \"%s\"\n", name_list);
-			if (deferred_skip_index >= MAX_DEFERRED) {
-				fprintf(stderr, "More than max %d un-recognized --skip options '%s'\n",
+			अगर (debug)
+				ख_लिखो(मानक_त्रुटि, "deferred \"%s\"\n", name_list);
+			अगर (deferred_skip_index >= MAX_DEFERRED) अणु
+				ख_लिखो(मानक_त्रुटि, "More than max %d un-recognized --skip options '%s'\n",
 					MAX_DEFERRED, name_list);
 				help();
-				exit(1);
-			}
-		}
+				निकास(1);
+			पूर्ण
+		पूर्ण
 
 		name_list = comma;
-		if (name_list)
+		अगर (name_list)
 			name_list++;
 
-	}
-	return retval;
-}
+	पूर्ण
+	वापस retval;
+पूर्ण
 
-void print_header(char *delim)
-{
-	struct msr_counter *mp;
-	int printed = 0;
+व्योम prपूर्णांक_header(अक्षर *delim)
+अणु
+	काष्ठा msr_counter *mp;
+	पूर्णांक prपूर्णांकed = 0;
 
-	if (DO_BIC(BIC_USEC))
-		outp += sprintf(outp, "%susec", (printed++ ? delim : ""));
-	if (DO_BIC(BIC_TOD))
-		outp += sprintf(outp, "%sTime_Of_Day_Seconds", (printed++ ? delim : ""));
-	if (DO_BIC(BIC_Package))
-		outp += sprintf(outp, "%sPackage", (printed++ ? delim : ""));
-	if (DO_BIC(BIC_Die))
-		outp += sprintf(outp, "%sDie", (printed++ ? delim : ""));
-	if (DO_BIC(BIC_Node))
-		outp += sprintf(outp, "%sNode", (printed++ ? delim : ""));
-	if (DO_BIC(BIC_Core))
-		outp += sprintf(outp, "%sCore", (printed++ ? delim : ""));
-	if (DO_BIC(BIC_CPU))
-		outp += sprintf(outp, "%sCPU", (printed++ ? delim : ""));
-	if (DO_BIC(BIC_APIC))
-		outp += sprintf(outp, "%sAPIC", (printed++ ? delim : ""));
-	if (DO_BIC(BIC_X2APIC))
-		outp += sprintf(outp, "%sX2APIC", (printed++ ? delim : ""));
-	if (DO_BIC(BIC_Avg_MHz))
-		outp += sprintf(outp, "%sAvg_MHz", (printed++ ? delim : ""));
-	if (DO_BIC(BIC_Busy))
-		outp += sprintf(outp, "%sBusy%%", (printed++ ? delim : ""));
-	if (DO_BIC(BIC_Bzy_MHz))
-		outp += sprintf(outp, "%sBzy_MHz", (printed++ ? delim : ""));
-	if (DO_BIC(BIC_TSC_MHz))
-		outp += sprintf(outp, "%sTSC_MHz", (printed++ ? delim : ""));
+	अगर (DO_BIC(BIC_USEC))
+		outp += प्र_लिखो(outp, "%susec", (prपूर्णांकed++ ? delim : ""));
+	अगर (DO_BIC(BIC_TOD))
+		outp += प्र_लिखो(outp, "%sTime_Of_Day_Seconds", (prपूर्णांकed++ ? delim : ""));
+	अगर (DO_BIC(BIC_Package))
+		outp += प्र_लिखो(outp, "%sPackage", (prपूर्णांकed++ ? delim : ""));
+	अगर (DO_BIC(BIC_Die))
+		outp += प्र_लिखो(outp, "%sDie", (prपूर्णांकed++ ? delim : ""));
+	अगर (DO_BIC(BIC_Node))
+		outp += प्र_लिखो(outp, "%sNode", (prपूर्णांकed++ ? delim : ""));
+	अगर (DO_BIC(BIC_Core))
+		outp += प्र_लिखो(outp, "%sCore", (prपूर्णांकed++ ? delim : ""));
+	अगर (DO_BIC(BIC_CPU))
+		outp += प्र_लिखो(outp, "%sCPU", (prपूर्णांकed++ ? delim : ""));
+	अगर (DO_BIC(BIC_APIC))
+		outp += प्र_लिखो(outp, "%sAPIC", (prपूर्णांकed++ ? delim : ""));
+	अगर (DO_BIC(BIC_X2APIC))
+		outp += प्र_लिखो(outp, "%sX2APIC", (prपूर्णांकed++ ? delim : ""));
+	अगर (DO_BIC(BIC_Avg_MHz))
+		outp += प्र_लिखो(outp, "%sAvg_MHz", (prपूर्णांकed++ ? delim : ""));
+	अगर (DO_BIC(BIC_Busy))
+		outp += प्र_लिखो(outp, "%sBusy%%", (prपूर्णांकed++ ? delim : ""));
+	अगर (DO_BIC(BIC_Bzy_MHz))
+		outp += प्र_लिखो(outp, "%sBzy_MHz", (prपूर्णांकed++ ? delim : ""));
+	अगर (DO_BIC(BIC_TSC_MHz))
+		outp += प्र_लिखो(outp, "%sTSC_MHz", (prपूर्णांकed++ ? delim : ""));
 
-	if (DO_BIC(BIC_IPC))
-		outp += sprintf(outp, "%sIPC", (printed++ ? delim : ""));
+	अगर (DO_BIC(BIC_IPC))
+		outp += प्र_लिखो(outp, "%sIPC", (prपूर्णांकed++ ? delim : ""));
 
-	if (DO_BIC(BIC_IRQ)) {
-		if (sums_need_wide_columns)
-			outp += sprintf(outp, "%s     IRQ", (printed++ ? delim : ""));
-		else
-			outp += sprintf(outp, "%sIRQ", (printed++ ? delim : ""));
-	}
+	अगर (DO_BIC(BIC_IRQ)) अणु
+		अगर (sums_need_wide_columns)
+			outp += प्र_लिखो(outp, "%s     IRQ", (prपूर्णांकed++ ? delim : ""));
+		अन्यथा
+			outp += प्र_लिखो(outp, "%sIRQ", (prपूर्णांकed++ ? delim : ""));
+	पूर्ण
 
-	if (DO_BIC(BIC_SMI))
-		outp += sprintf(outp, "%sSMI", (printed++ ? delim : ""));
+	अगर (DO_BIC(BIC_SMI))
+		outp += प्र_लिखो(outp, "%sSMI", (prपूर्णांकed++ ? delim : ""));
 
-	for (mp = sys.tp; mp; mp = mp->next) {
+	क्रम (mp = sys.tp; mp; mp = mp->next) अणु
 
-		if (mp->format == FORMAT_RAW) {
-			if (mp->width == 64)
-				outp += sprintf(outp, "%s%18.18s", (printed++ ? delim : ""), mp->name);
-			else
-				outp += sprintf(outp, "%s%10.10s", (printed++ ? delim : ""), mp->name);
-		} else {
-			if ((mp->type == COUNTER_ITEMS) && sums_need_wide_columns)
-				outp += sprintf(outp, "%s%8s", (printed++ ? delim : ""), mp->name);
-			else
-				outp += sprintf(outp, "%s%s", (printed++ ? delim : ""), mp->name);
-		}
-	}
+		अगर (mp->क्रमmat == FORMAT_RAW) अणु
+			अगर (mp->width == 64)
+				outp += प्र_लिखो(outp, "%s%18.18s", (prपूर्णांकed++ ? delim : ""), mp->name);
+			अन्यथा
+				outp += प्र_लिखो(outp, "%s%10.10s", (prपूर्णांकed++ ? delim : ""), mp->name);
+		पूर्ण अन्यथा अणु
+			अगर ((mp->type == COUNTER_ITEMS) && sums_need_wide_columns)
+				outp += प्र_लिखो(outp, "%s%8s", (prपूर्णांकed++ ? delim : ""), mp->name);
+			अन्यथा
+				outp += प्र_लिखो(outp, "%s%s", (prपूर्णांकed++ ? delim : ""), mp->name);
+		पूर्ण
+	पूर्ण
 
-	if (DO_BIC(BIC_CPU_c1))
-		outp += sprintf(outp, "%sCPU%%c1", (printed++ ? delim : ""));
-	if (DO_BIC(BIC_CPU_c3))
-		outp += sprintf(outp, "%sCPU%%c3", (printed++ ? delim : ""));
-	if (DO_BIC(BIC_CPU_c6))
-		outp += sprintf(outp, "%sCPU%%c6", (printed++ ? delim : ""));
-	if (DO_BIC(BIC_CPU_c7))
-		outp += sprintf(outp, "%sCPU%%c7", (printed++ ? delim : ""));
+	अगर (DO_BIC(BIC_CPU_c1))
+		outp += प्र_लिखो(outp, "%sCPU%%c1", (prपूर्णांकed++ ? delim : ""));
+	अगर (DO_BIC(BIC_CPU_c3))
+		outp += प्र_लिखो(outp, "%sCPU%%c3", (prपूर्णांकed++ ? delim : ""));
+	अगर (DO_BIC(BIC_CPU_c6))
+		outp += प्र_लिखो(outp, "%sCPU%%c6", (prपूर्णांकed++ ? delim : ""));
+	अगर (DO_BIC(BIC_CPU_c7))
+		outp += प्र_लिखो(outp, "%sCPU%%c7", (prपूर्णांकed++ ? delim : ""));
 
-	if (DO_BIC(BIC_Mod_c6))
-		outp += sprintf(outp, "%sMod%%c6", (printed++ ? delim : ""));
+	अगर (DO_BIC(BIC_Mod_c6))
+		outp += प्र_लिखो(outp, "%sMod%%c6", (prपूर्णांकed++ ? delim : ""));
 
-	if (DO_BIC(BIC_CoreTmp))
-		outp += sprintf(outp, "%sCoreTmp", (printed++ ? delim : ""));
+	अगर (DO_BIC(BIC_CoreTmp))
+		outp += प्र_लिखो(outp, "%sCoreTmp", (prपूर्णांकed++ ? delim : ""));
 
-	if (do_rapl && !rapl_joules) {
-		if (DO_BIC(BIC_CorWatt) && (do_rapl & RAPL_PER_CORE_ENERGY))
-			outp += sprintf(outp, "%sCorWatt", (printed++ ? delim : ""));
-	} else if (do_rapl && rapl_joules) {
-		if (DO_BIC(BIC_Cor_J) && (do_rapl & RAPL_PER_CORE_ENERGY))
-			outp += sprintf(outp, "%sCor_J", (printed++ ? delim : ""));
-	}
+	अगर (करो_rapl && !rapl_joules) अणु
+		अगर (DO_BIC(BIC_CorWatt) && (करो_rapl & RAPL_PER_CORE_ENERGY))
+			outp += प्र_लिखो(outp, "%sCorWatt", (prपूर्णांकed++ ? delim : ""));
+	पूर्ण अन्यथा अगर (करो_rapl && rapl_joules) अणु
+		अगर (DO_BIC(BIC_Cor_J) && (करो_rapl & RAPL_PER_CORE_ENERGY))
+			outp += प्र_लिखो(outp, "%sCor_J", (prपूर्णांकed++ ? delim : ""));
+	पूर्ण
 
-	for (mp = sys.cp; mp; mp = mp->next) {
-		if (mp->format == FORMAT_RAW) {
-			if (mp->width == 64)
-				outp += sprintf(outp, "%s%18.18s", delim, mp->name);
-			else
-				outp += sprintf(outp, "%s%10.10s", delim, mp->name);
-		} else {
-			if ((mp->type == COUNTER_ITEMS) && sums_need_wide_columns)
-				outp += sprintf(outp, "%s%8s", delim, mp->name);
-			else
-				outp += sprintf(outp, "%s%s", delim, mp->name);
-		}
-	}
+	क्रम (mp = sys.cp; mp; mp = mp->next) अणु
+		अगर (mp->क्रमmat == FORMAT_RAW) अणु
+			अगर (mp->width == 64)
+				outp += प्र_लिखो(outp, "%s%18.18s", delim, mp->name);
+			अन्यथा
+				outp += प्र_लिखो(outp, "%s%10.10s", delim, mp->name);
+		पूर्ण अन्यथा अणु
+			अगर ((mp->type == COUNTER_ITEMS) && sums_need_wide_columns)
+				outp += प्र_लिखो(outp, "%s%8s", delim, mp->name);
+			अन्यथा
+				outp += प्र_लिखो(outp, "%s%s", delim, mp->name);
+		पूर्ण
+	पूर्ण
 
-	if (DO_BIC(BIC_PkgTmp))
-		outp += sprintf(outp, "%sPkgTmp", (printed++ ? delim : ""));
+	अगर (DO_BIC(BIC_PkgTmp))
+		outp += प्र_लिखो(outp, "%sPkgTmp", (prपूर्णांकed++ ? delim : ""));
 
-	if (DO_BIC(BIC_GFX_rc6))
-		outp += sprintf(outp, "%sGFX%%rc6", (printed++ ? delim : ""));
+	अगर (DO_BIC(BIC_GFX_rc6))
+		outp += प्र_लिखो(outp, "%sGFX%%rc6", (prपूर्णांकed++ ? delim : ""));
 
-	if (DO_BIC(BIC_GFXMHz))
-		outp += sprintf(outp, "%sGFXMHz", (printed++ ? delim : ""));
+	अगर (DO_BIC(BIC_GFXMHz))
+		outp += प्र_लिखो(outp, "%sGFXMHz", (prपूर्णांकed++ ? delim : ""));
 
-	if (DO_BIC(BIC_GFXACTMHz))
-		outp += sprintf(outp, "%sGFXAMHz", (printed++ ? delim : ""));
+	अगर (DO_BIC(BIC_GFXACTMHz))
+		outp += प्र_लिखो(outp, "%sGFXAMHz", (prपूर्णांकed++ ? delim : ""));
 
-	if (DO_BIC(BIC_Totl_c0))
-		outp += sprintf(outp, "%sTotl%%C0", (printed++ ? delim : ""));
-	if (DO_BIC(BIC_Any_c0))
-		outp += sprintf(outp, "%sAny%%C0", (printed++ ? delim : ""));
-	if (DO_BIC(BIC_GFX_c0))
-		outp += sprintf(outp, "%sGFX%%C0", (printed++ ? delim : ""));
-	if (DO_BIC(BIC_CPUGFX))
-		outp += sprintf(outp, "%sCPUGFX%%", (printed++ ? delim : ""));
+	अगर (DO_BIC(BIC_Totl_c0))
+		outp += प्र_लिखो(outp, "%sTotl%%C0", (prपूर्णांकed++ ? delim : ""));
+	अगर (DO_BIC(BIC_Any_c0))
+		outp += प्र_लिखो(outp, "%sAny%%C0", (prपूर्णांकed++ ? delim : ""));
+	अगर (DO_BIC(BIC_GFX_c0))
+		outp += प्र_लिखो(outp, "%sGFX%%C0", (prपूर्णांकed++ ? delim : ""));
+	अगर (DO_BIC(BIC_CPUGFX))
+		outp += प्र_लिखो(outp, "%sCPUGFX%%", (prपूर्णांकed++ ? delim : ""));
 
-	if (DO_BIC(BIC_Pkgpc2))
-		outp += sprintf(outp, "%sPkg%%pc2", (printed++ ? delim : ""));
-	if (DO_BIC(BIC_Pkgpc3))
-		outp += sprintf(outp, "%sPkg%%pc3", (printed++ ? delim : ""));
-	if (DO_BIC(BIC_Pkgpc6))
-		outp += sprintf(outp, "%sPkg%%pc6", (printed++ ? delim : ""));
-	if (DO_BIC(BIC_Pkgpc7))
-		outp += sprintf(outp, "%sPkg%%pc7", (printed++ ? delim : ""));
-	if (DO_BIC(BIC_Pkgpc8))
-		outp += sprintf(outp, "%sPkg%%pc8", (printed++ ? delim : ""));
-	if (DO_BIC(BIC_Pkgpc9))
-		outp += sprintf(outp, "%sPkg%%pc9", (printed++ ? delim : ""));
-	if (DO_BIC(BIC_Pkgpc10))
-		outp += sprintf(outp, "%sPk%%pc10", (printed++ ? delim : ""));
-	if (DO_BIC(BIC_CPU_LPI))
-		outp += sprintf(outp, "%sCPU%%LPI", (printed++ ? delim : ""));
-	if (DO_BIC(BIC_SYS_LPI))
-		outp += sprintf(outp, "%sSYS%%LPI", (printed++ ? delim : ""));
+	अगर (DO_BIC(BIC_Pkgpc2))
+		outp += प्र_लिखो(outp, "%sPkg%%pc2", (prपूर्णांकed++ ? delim : ""));
+	अगर (DO_BIC(BIC_Pkgpc3))
+		outp += प्र_लिखो(outp, "%sPkg%%pc3", (prपूर्णांकed++ ? delim : ""));
+	अगर (DO_BIC(BIC_Pkgpc6))
+		outp += प्र_लिखो(outp, "%sPkg%%pc6", (prपूर्णांकed++ ? delim : ""));
+	अगर (DO_BIC(BIC_Pkgpc7))
+		outp += प्र_लिखो(outp, "%sPkg%%pc7", (prपूर्णांकed++ ? delim : ""));
+	अगर (DO_BIC(BIC_Pkgpc8))
+		outp += प्र_लिखो(outp, "%sPkg%%pc8", (prपूर्णांकed++ ? delim : ""));
+	अगर (DO_BIC(BIC_Pkgpc9))
+		outp += प्र_लिखो(outp, "%sPkg%%pc9", (prपूर्णांकed++ ? delim : ""));
+	अगर (DO_BIC(BIC_Pkgpc10))
+		outp += प्र_लिखो(outp, "%sPk%%pc10", (prपूर्णांकed++ ? delim : ""));
+	अगर (DO_BIC(BIC_CPU_LPI))
+		outp += प्र_लिखो(outp, "%sCPU%%LPI", (prपूर्णांकed++ ? delim : ""));
+	अगर (DO_BIC(BIC_SYS_LPI))
+		outp += प्र_लिखो(outp, "%sSYS%%LPI", (prपूर्णांकed++ ? delim : ""));
 
-	if (do_rapl && !rapl_joules) {
-		if (DO_BIC(BIC_PkgWatt))
-			outp += sprintf(outp, "%sPkgWatt", (printed++ ? delim : ""));
-		if (DO_BIC(BIC_CorWatt) && !(do_rapl & RAPL_PER_CORE_ENERGY))
-			outp += sprintf(outp, "%sCorWatt", (printed++ ? delim : ""));
-		if (DO_BIC(BIC_GFXWatt))
-			outp += sprintf(outp, "%sGFXWatt", (printed++ ? delim : ""));
-		if (DO_BIC(BIC_RAMWatt))
-			outp += sprintf(outp, "%sRAMWatt", (printed++ ? delim : ""));
-		if (DO_BIC(BIC_PKG__))
-			outp += sprintf(outp, "%sPKG_%%", (printed++ ? delim : ""));
-		if (DO_BIC(BIC_RAM__))
-			outp += sprintf(outp, "%sRAM_%%", (printed++ ? delim : ""));
-	} else if (do_rapl && rapl_joules) {
-		if (DO_BIC(BIC_Pkg_J))
-			outp += sprintf(outp, "%sPkg_J", (printed++ ? delim : ""));
-		if (DO_BIC(BIC_Cor_J) && !(do_rapl & RAPL_PER_CORE_ENERGY))
-			outp += sprintf(outp, "%sCor_J", (printed++ ? delim : ""));
-		if (DO_BIC(BIC_GFX_J))
-			outp += sprintf(outp, "%sGFX_J", (printed++ ? delim : ""));
-		if (DO_BIC(BIC_RAM_J))
-			outp += sprintf(outp, "%sRAM_J", (printed++ ? delim : ""));
-		if (DO_BIC(BIC_PKG__))
-			outp += sprintf(outp, "%sPKG_%%", (printed++ ? delim : ""));
-		if (DO_BIC(BIC_RAM__))
-			outp += sprintf(outp, "%sRAM_%%", (printed++ ? delim : ""));
-	}
-	for (mp = sys.pp; mp; mp = mp->next) {
-		if (mp->format == FORMAT_RAW) {
-			if (mp->width == 64)
-				outp += sprintf(outp, "%s%18.18s", delim, mp->name);
-			else
-				outp += sprintf(outp, "%s%10.10s", delim, mp->name);
-		} else {
-			if ((mp->type == COUNTER_ITEMS) && sums_need_wide_columns)
-				outp += sprintf(outp, "%s%8s", delim, mp->name);
-			else
-				outp += sprintf(outp, "%s%s", delim, mp->name);
-		}
-	}
+	अगर (करो_rapl && !rapl_joules) अणु
+		अगर (DO_BIC(BIC_PkgWatt))
+			outp += प्र_लिखो(outp, "%sPkgWatt", (prपूर्णांकed++ ? delim : ""));
+		अगर (DO_BIC(BIC_CorWatt) && !(करो_rapl & RAPL_PER_CORE_ENERGY))
+			outp += प्र_लिखो(outp, "%sCorWatt", (prपूर्णांकed++ ? delim : ""));
+		अगर (DO_BIC(BIC_GFXWatt))
+			outp += प्र_लिखो(outp, "%sGFXWatt", (prपूर्णांकed++ ? delim : ""));
+		अगर (DO_BIC(BIC_RAMWatt))
+			outp += प्र_लिखो(outp, "%sRAMWatt", (prपूर्णांकed++ ? delim : ""));
+		अगर (DO_BIC(BIC_PKG__))
+			outp += प्र_लिखो(outp, "%sPKG_%%", (prपूर्णांकed++ ? delim : ""));
+		अगर (DO_BIC(BIC_RAM__))
+			outp += प्र_लिखो(outp, "%sRAM_%%", (prपूर्णांकed++ ? delim : ""));
+	पूर्ण अन्यथा अगर (करो_rapl && rapl_joules) अणु
+		अगर (DO_BIC(BIC_Pkg_J))
+			outp += प्र_लिखो(outp, "%sPkg_J", (prपूर्णांकed++ ? delim : ""));
+		अगर (DO_BIC(BIC_Cor_J) && !(करो_rapl & RAPL_PER_CORE_ENERGY))
+			outp += प्र_लिखो(outp, "%sCor_J", (prपूर्णांकed++ ? delim : ""));
+		अगर (DO_BIC(BIC_GFX_J))
+			outp += प्र_लिखो(outp, "%sGFX_J", (prपूर्णांकed++ ? delim : ""));
+		अगर (DO_BIC(BIC_RAM_J))
+			outp += प्र_लिखो(outp, "%sRAM_J", (prपूर्णांकed++ ? delim : ""));
+		अगर (DO_BIC(BIC_PKG__))
+			outp += प्र_लिखो(outp, "%sPKG_%%", (prपूर्णांकed++ ? delim : ""));
+		अगर (DO_BIC(BIC_RAM__))
+			outp += प्र_लिखो(outp, "%sRAM_%%", (prपूर्णांकed++ ? delim : ""));
+	पूर्ण
+	क्रम (mp = sys.pp; mp; mp = mp->next) अणु
+		अगर (mp->क्रमmat == FORMAT_RAW) अणु
+			अगर (mp->width == 64)
+				outp += प्र_लिखो(outp, "%s%18.18s", delim, mp->name);
+			अन्यथा
+				outp += प्र_लिखो(outp, "%s%10.10s", delim, mp->name);
+		पूर्ण अन्यथा अणु
+			अगर ((mp->type == COUNTER_ITEMS) && sums_need_wide_columns)
+				outp += प्र_लिखो(outp, "%s%8s", delim, mp->name);
+			अन्यथा
+				outp += प्र_लिखो(outp, "%s%s", delim, mp->name);
+		पूर्ण
+	पूर्ण
 
-	outp += sprintf(outp, "\n");
-}
+	outp += प्र_लिखो(outp, "\n");
+पूर्ण
 
-int dump_counters(struct thread_data *t, struct core_data *c, struct pkg_data *p)
-{
-	int i;
-	struct msr_counter *mp;
+पूर्णांक dump_counters(काष्ठा thपढ़ो_data *t, काष्ठा core_data *c, काष्ठा pkg_data *p)
+अणु
+	पूर्णांक i;
+	काष्ठा msr_counter *mp;
 
-	outp += sprintf(outp, "t %p, c %p, p %p\n", t, c, p);
+	outp += प्र_लिखो(outp, "t %p, c %p, p %p\n", t, c, p);
 
-	if (t) {
-		outp += sprintf(outp, "CPU: %d flags 0x%x\n", t->cpu_id, t->flags);
-		outp += sprintf(outp, "TSC: %016llX\n", t->tsc);
-		outp += sprintf(outp, "aperf: %016llX\n", t->aperf);
-		outp += sprintf(outp, "mperf: %016llX\n", t->mperf);
-		outp += sprintf(outp, "c1: %016llX\n", t->c1);
+	अगर (t) अणु
+		outp += प्र_लिखो(outp, "CPU: %d flags 0x%x\n", t->cpu_id, t->flags);
+		outp += प्र_लिखो(outp, "TSC: %016llX\n", t->tsc);
+		outp += प्र_लिखो(outp, "aperf: %016llX\n", t->aperf);
+		outp += प्र_लिखो(outp, "mperf: %016llX\n", t->mperf);
+		outp += प्र_लिखो(outp, "c1: %016llX\n", t->c1);
 
-		if (DO_BIC(BIC_IPC))
-			outp += sprintf(outp, "IPC: %lld\n", t->instr_count);
+		अगर (DO_BIC(BIC_IPC))
+			outp += प्र_लिखो(outp, "IPC: %lld\n", t->instr_count);
 
-		if (DO_BIC(BIC_IRQ))
-			outp += sprintf(outp, "IRQ: %lld\n", t->irq_count);
-		if (DO_BIC(BIC_SMI))
-			outp += sprintf(outp, "SMI: %d\n", t->smi_count);
+		अगर (DO_BIC(BIC_IRQ))
+			outp += प्र_लिखो(outp, "IRQ: %lld\n", t->irq_count);
+		अगर (DO_BIC(BIC_SMI))
+			outp += प्र_लिखो(outp, "SMI: %d\n", t->smi_count);
 
-		for (i = 0, mp = sys.tp; mp; i++, mp = mp->next) {
-			outp += sprintf(outp, "tADDED [%d] msr0x%x: %08llX\n", i, mp->msr_num, t->counter[i]);
-		}
-	}
+		क्रम (i = 0, mp = sys.tp; mp; i++, mp = mp->next) अणु
+			outp += प्र_लिखो(outp, "tADDED [%d] msr0x%x: %08llX\n", i, mp->msr_num, t->counter[i]);
+		पूर्ण
+	पूर्ण
 
-	if (c) {
-		outp += sprintf(outp, "core: %d\n", c->core_id);
-		outp += sprintf(outp, "c3: %016llX\n", c->c3);
-		outp += sprintf(outp, "c6: %016llX\n", c->c6);
-		outp += sprintf(outp, "c7: %016llX\n", c->c7);
-		outp += sprintf(outp, "DTS: %dC\n", c->core_temp_c);
-		outp += sprintf(outp, "Joules: %0X\n", c->core_energy);
+	अगर (c) अणु
+		outp += प्र_लिखो(outp, "core: %d\n", c->core_id);
+		outp += प्र_लिखो(outp, "c3: %016llX\n", c->c3);
+		outp += प्र_लिखो(outp, "c6: %016llX\n", c->c6);
+		outp += प्र_लिखो(outp, "c7: %016llX\n", c->c7);
+		outp += प्र_लिखो(outp, "DTS: %dC\n", c->core_temp_c);
+		outp += प्र_लिखो(outp, "Joules: %0X\n", c->core_energy);
 
-		for (i = 0, mp = sys.cp; mp; i++, mp = mp->next) {
-			outp += sprintf(outp, "cADDED [%d] msr0x%x: %08llX\n", i, mp->msr_num, c->counter[i]);
-		}
-		outp += sprintf(outp, "mc6_us: %016llX\n", c->mc6_us);
-	}
+		क्रम (i = 0, mp = sys.cp; mp; i++, mp = mp->next) अणु
+			outp += प्र_लिखो(outp, "cADDED [%d] msr0x%x: %08llX\n", i, mp->msr_num, c->counter[i]);
+		पूर्ण
+		outp += प्र_लिखो(outp, "mc6_us: %016llX\n", c->mc6_us);
+	पूर्ण
 
-	if (p) {
-		outp += sprintf(outp, "package: %d\n", p->package_id);
+	अगर (p) अणु
+		outp += प्र_लिखो(outp, "package: %d\n", p->package_id);
 
-		outp += sprintf(outp, "Weighted cores: %016llX\n", p->pkg_wtd_core_c0);
-		outp += sprintf(outp, "Any cores: %016llX\n", p->pkg_any_core_c0);
-		outp += sprintf(outp, "Any GFX: %016llX\n", p->pkg_any_gfxe_c0);
-		outp += sprintf(outp, "CPU + GFX: %016llX\n", p->pkg_both_core_gfxe_c0);
+		outp += प्र_लिखो(outp, "Weighted cores: %016llX\n", p->pkg_wtd_core_c0);
+		outp += प्र_लिखो(outp, "Any cores: %016llX\n", p->pkg_any_core_c0);
+		outp += प्र_लिखो(outp, "Any GFX: %016llX\n", p->pkg_any_gfxe_c0);
+		outp += प्र_लिखो(outp, "CPU + GFX: %016llX\n", p->pkg_both_core_gfxe_c0);
 
-		outp += sprintf(outp, "pc2: %016llX\n", p->pc2);
-		if (DO_BIC(BIC_Pkgpc3))
-			outp += sprintf(outp, "pc3: %016llX\n", p->pc3);
-		if (DO_BIC(BIC_Pkgpc6))
-			outp += sprintf(outp, "pc6: %016llX\n", p->pc6);
-		if (DO_BIC(BIC_Pkgpc7))
-			outp += sprintf(outp, "pc7: %016llX\n", p->pc7);
-		outp += sprintf(outp, "pc8: %016llX\n", p->pc8);
-		outp += sprintf(outp, "pc9: %016llX\n", p->pc9);
-		outp += sprintf(outp, "pc10: %016llX\n", p->pc10);
-		outp += sprintf(outp, "cpu_lpi: %016llX\n", p->cpu_lpi);
-		outp += sprintf(outp, "sys_lpi: %016llX\n", p->sys_lpi);
-		outp += sprintf(outp, "Joules PKG: %0llX\n", p->energy_pkg);
-		outp += sprintf(outp, "Joules COR: %0llX\n", p->energy_cores);
-		outp += sprintf(outp, "Joules GFX: %0llX\n", p->energy_gfx);
-		outp += sprintf(outp, "Joules RAM: %0llX\n", p->energy_dram);
-		outp += sprintf(outp, "Throttle PKG: %0llX\n", p->rapl_pkg_perf_status);
-		outp += sprintf(outp, "Throttle RAM: %0llX\n", p->rapl_dram_perf_status);
-		outp += sprintf(outp, "PTM: %dC\n", p->pkg_temp_c);
+		outp += प्र_लिखो(outp, "pc2: %016llX\n", p->pc2);
+		अगर (DO_BIC(BIC_Pkgpc3))
+			outp += प्र_लिखो(outp, "pc3: %016llX\n", p->pc3);
+		अगर (DO_BIC(BIC_Pkgpc6))
+			outp += प्र_लिखो(outp, "pc6: %016llX\n", p->pc6);
+		अगर (DO_BIC(BIC_Pkgpc7))
+			outp += प्र_लिखो(outp, "pc7: %016llX\n", p->pc7);
+		outp += प्र_लिखो(outp, "pc8: %016llX\n", p->pc8);
+		outp += प्र_लिखो(outp, "pc9: %016llX\n", p->pc9);
+		outp += प्र_लिखो(outp, "pc10: %016llX\n", p->pc10);
+		outp += प्र_लिखो(outp, "cpu_lpi: %016llX\n", p->cpu_lpi);
+		outp += प्र_लिखो(outp, "sys_lpi: %016llX\n", p->sys_lpi);
+		outp += प्र_लिखो(outp, "Joules PKG: %0llX\n", p->energy_pkg);
+		outp += प्र_लिखो(outp, "Joules COR: %0llX\n", p->energy_cores);
+		outp += प्र_लिखो(outp, "Joules GFX: %0llX\n", p->energy_gfx);
+		outp += प्र_लिखो(outp, "Joules RAM: %0llX\n", p->energy_dram);
+		outp += प्र_लिखो(outp, "Throttle PKG: %0llX\n", p->rapl_pkg_perf_status);
+		outp += प्र_लिखो(outp, "Throttle RAM: %0llX\n", p->rapl_dram_perf_status);
+		outp += प्र_लिखो(outp, "PTM: %dC\n", p->pkg_temp_c);
 
-		for (i = 0, mp = sys.pp; mp; i++, mp = mp->next) {
-			outp += sprintf(outp, "pADDED [%d] msr0x%x: %08llX\n", i, mp->msr_num, p->counter[i]);
-		}
-	}
+		क्रम (i = 0, mp = sys.pp; mp; i++, mp = mp->next) अणु
+			outp += प्र_लिखो(outp, "pADDED [%d] msr0x%x: %08llX\n", i, mp->msr_num, p->counter[i]);
+		पूर्ण
+	पूर्ण
 
-	outp += sprintf(outp, "\n");
+	outp += प्र_लिखो(outp, "\n");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * column formatting convention & formats
+ * column क्रमmatting convention & क्रमmats
  */
-int format_counters(struct thread_data *t, struct core_data *c, struct pkg_data *p)
-{
-	double interval_float, tsc;
-	char *fmt8;
-	int i;
-	struct msr_counter *mp;
-	char *delim = "\t";
-	int printed = 0;
+पूर्णांक क्रमmat_counters(काष्ठा thपढ़ो_data *t, काष्ठा core_data *c, काष्ठा pkg_data *p)
+अणु
+	द्विगुन पूर्णांकerval_भग्न, tsc;
+	अक्षर *fmt8;
+	पूर्णांक i;
+	काष्ठा msr_counter *mp;
+	अक्षर *delim = "\t";
+	पूर्णांक prपूर्णांकed = 0;
 
-	/* if showing only 1st thread in core and this isn't one, bail out */
-	if (show_core_only && !(t->flags & CPU_IS_FIRST_THREAD_IN_CORE))
-		return 0;
+	/* अगर showing only 1st thपढ़ो in core and this isn't one, bail out */
+	अगर (show_core_only && !(t->flags & CPU_IS_FIRST_THREAD_IN_CORE))
+		वापस 0;
 
-	/* if showing only 1st thread in pkg and this isn't one, bail out */
-	if (show_pkg_only && !(t->flags & CPU_IS_FIRST_CORE_IN_PACKAGE))
-		return 0;
+	/* अगर showing only 1st thपढ़ो in pkg and this isn't one, bail out */
+	अगर (show_pkg_only && !(t->flags & CPU_IS_FIRST_CORE_IN_PACKAGE))
+		वापस 0;
 
-	/*if not summary line and --cpu is used */
-	if ((t != &average.threads) && (cpu_subset && !CPU_ISSET_S(t->cpu_id, cpu_subset_size, cpu_subset)))
-		return 0;
+	/*अगर not summary line and --cpu is used */
+	अगर ((t != &average.thपढ़ोs) && (cpu_subset && !CPU_ISSET_S(t->cpu_id, cpu_subset_size, cpu_subset)))
+		वापस 0;
 
-	if (DO_BIC(BIC_USEC)) {
-		/* on each row, print how many usec each timestamp took to gather */
-		struct timeval tv;
+	अगर (DO_BIC(BIC_USEC)) अणु
+		/* on each row, prपूर्णांक how many usec each बारtamp took to gather */
+		काष्ठा समयval tv;
 
-		timersub(&t->tv_end, &t->tv_begin, &tv);
-		outp += sprintf(outp, "%5ld\t", tv.tv_sec * 1000000 + tv.tv_usec);
-	}
+		समयrsub(&t->tv_end, &t->tv_begin, &tv);
+		outp += प्र_लिखो(outp, "%5ld\t", tv.tv_sec * 1000000 + tv.tv_usec);
+	पूर्ण
 
-	/* Time_Of_Day_Seconds: on each row, print sec.usec last timestamp taken */
-	if (DO_BIC(BIC_TOD))
-		outp += sprintf(outp, "%10ld.%06ld\t", t->tv_end.tv_sec, t->tv_end.tv_usec);
+	/* Time_Of_Day_Seconds: on each row, prपूर्णांक sec.usec last बारtamp taken */
+	अगर (DO_BIC(BIC_TOD))
+		outp += प्र_लिखो(outp, "%10ld.%06ld\t", t->tv_end.tv_sec, t->tv_end.tv_usec);
 
-	interval_float = t->tv_delta.tv_sec + t->tv_delta.tv_usec / 1000000.0;
+	पूर्णांकerval_भग्न = t->tv_delta.tv_sec + t->tv_delta.tv_usec / 1000000.0;
 
 	tsc = t->tsc * tsc_tweak;
 
-	/* topo columns, print blanks on 1st (average) line */
-	if (t == &average.threads) {
-		if (DO_BIC(BIC_Package))
-			outp += sprintf(outp, "%s-", (printed++ ? delim : ""));
-		if (DO_BIC(BIC_Die))
-			outp += sprintf(outp, "%s-", (printed++ ? delim : ""));
-		if (DO_BIC(BIC_Node))
-			outp += sprintf(outp, "%s-", (printed++ ? delim : ""));
-		if (DO_BIC(BIC_Core))
-			outp += sprintf(outp, "%s-", (printed++ ? delim : ""));
-		if (DO_BIC(BIC_CPU))
-			outp += sprintf(outp, "%s-", (printed++ ? delim : ""));
-		if (DO_BIC(BIC_APIC))
-			outp += sprintf(outp, "%s-", (printed++ ? delim : ""));
-		if (DO_BIC(BIC_X2APIC))
-			outp += sprintf(outp, "%s-", (printed++ ? delim : ""));
-	} else {
-		if (DO_BIC(BIC_Package)) {
-			if (p)
-				outp += sprintf(outp, "%s%d", (printed++ ? delim : ""), p->package_id);
-			else
-				outp += sprintf(outp, "%s-", (printed++ ? delim : ""));
-		}
-		if (DO_BIC(BIC_Die)) {
-			if (c)
-				outp += sprintf(outp, "%s%d", (printed++ ? delim : ""), cpus[t->cpu_id].die_id);
-			else
-				outp += sprintf(outp, "%s-", (printed++ ? delim : ""));
-		}
-		if (DO_BIC(BIC_Node)) {
-			if (t)
-				outp += sprintf(outp, "%s%d",
-						(printed++ ? delim : ""), cpus[t->cpu_id].physical_node_id);
-			else
-				outp += sprintf(outp, "%s-", (printed++ ? delim : ""));
-		}
-		if (DO_BIC(BIC_Core)) {
-			if (c)
-				outp += sprintf(outp, "%s%d", (printed++ ? delim : ""), c->core_id);
-			else
-				outp += sprintf(outp, "%s-", (printed++ ? delim : ""));
-		}
-		if (DO_BIC(BIC_CPU))
-			outp += sprintf(outp, "%s%d", (printed++ ? delim : ""), t->cpu_id);
-		if (DO_BIC(BIC_APIC))
-			outp += sprintf(outp, "%s%d", (printed++ ? delim : ""), t->apic_id);
-		if (DO_BIC(BIC_X2APIC))
-			outp += sprintf(outp, "%s%d", (printed++ ? delim : ""), t->x2apic_id);
-	}
+	/* topo columns, prपूर्णांक blanks on 1st (average) line */
+	अगर (t == &average.thपढ़ोs) अणु
+		अगर (DO_BIC(BIC_Package))
+			outp += प्र_लिखो(outp, "%s-", (prपूर्णांकed++ ? delim : ""));
+		अगर (DO_BIC(BIC_Die))
+			outp += प्र_लिखो(outp, "%s-", (prपूर्णांकed++ ? delim : ""));
+		अगर (DO_BIC(BIC_Node))
+			outp += प्र_लिखो(outp, "%s-", (prपूर्णांकed++ ? delim : ""));
+		अगर (DO_BIC(BIC_Core))
+			outp += प्र_लिखो(outp, "%s-", (prपूर्णांकed++ ? delim : ""));
+		अगर (DO_BIC(BIC_CPU))
+			outp += प्र_लिखो(outp, "%s-", (prपूर्णांकed++ ? delim : ""));
+		अगर (DO_BIC(BIC_APIC))
+			outp += प्र_लिखो(outp, "%s-", (prपूर्णांकed++ ? delim : ""));
+		अगर (DO_BIC(BIC_X2APIC))
+			outp += प्र_लिखो(outp, "%s-", (prपूर्णांकed++ ? delim : ""));
+	पूर्ण अन्यथा अणु
+		अगर (DO_BIC(BIC_Package)) अणु
+			अगर (p)
+				outp += प्र_लिखो(outp, "%s%d", (prपूर्णांकed++ ? delim : ""), p->package_id);
+			अन्यथा
+				outp += प्र_लिखो(outp, "%s-", (prपूर्णांकed++ ? delim : ""));
+		पूर्ण
+		अगर (DO_BIC(BIC_Die)) अणु
+			अगर (c)
+				outp += प्र_लिखो(outp, "%s%d", (prपूर्णांकed++ ? delim : ""), cpus[t->cpu_id].die_id);
+			अन्यथा
+				outp += प्र_लिखो(outp, "%s-", (prपूर्णांकed++ ? delim : ""));
+		पूर्ण
+		अगर (DO_BIC(BIC_Node)) अणु
+			अगर (t)
+				outp += प्र_लिखो(outp, "%s%d",
+						(prपूर्णांकed++ ? delim : ""), cpus[t->cpu_id].physical_node_id);
+			अन्यथा
+				outp += प्र_लिखो(outp, "%s-", (prपूर्णांकed++ ? delim : ""));
+		पूर्ण
+		अगर (DO_BIC(BIC_Core)) अणु
+			अगर (c)
+				outp += प्र_लिखो(outp, "%s%d", (prपूर्णांकed++ ? delim : ""), c->core_id);
+			अन्यथा
+				outp += प्र_लिखो(outp, "%s-", (prपूर्णांकed++ ? delim : ""));
+		पूर्ण
+		अगर (DO_BIC(BIC_CPU))
+			outp += प्र_लिखो(outp, "%s%d", (prपूर्णांकed++ ? delim : ""), t->cpu_id);
+		अगर (DO_BIC(BIC_APIC))
+			outp += प्र_लिखो(outp, "%s%d", (prपूर्णांकed++ ? delim : ""), t->apic_id);
+		अगर (DO_BIC(BIC_X2APIC))
+			outp += प्र_लिखो(outp, "%s%d", (prपूर्णांकed++ ? delim : ""), t->x2apic_id);
+	पूर्ण
 
-	if (DO_BIC(BIC_Avg_MHz))
-		outp += sprintf(outp, "%s%.0f", (printed++ ? delim : ""), 1.0 / units * t->aperf / interval_float);
+	अगर (DO_BIC(BIC_Avg_MHz))
+		outp += प्र_लिखो(outp, "%s%.0f", (prपूर्णांकed++ ? delim : ""), 1.0 / units * t->aperf / पूर्णांकerval_भग्न);
 
-	if (DO_BIC(BIC_Busy))
-		outp += sprintf(outp, "%s%.2f", (printed++ ? delim : ""), 100.0 * t->mperf / tsc);
+	अगर (DO_BIC(BIC_Busy))
+		outp += प्र_लिखो(outp, "%s%.2f", (prपूर्णांकed++ ? delim : ""), 100.0 * t->mperf / tsc);
 
-	if (DO_BIC(BIC_Bzy_MHz)) {
-		if (has_base_hz)
+	अगर (DO_BIC(BIC_Bzy_MHz)) अणु
+		अगर (has_base_hz)
 			outp +=
-			    sprintf(outp, "%s%.0f", (printed++ ? delim : ""), base_hz / units * t->aperf / t->mperf);
-		else
-			outp += sprintf(outp, "%s%.0f", (printed++ ? delim : ""),
-					tsc / units * t->aperf / t->mperf / interval_float);
-	}
+			    प्र_लिखो(outp, "%s%.0f", (prपूर्णांकed++ ? delim : ""), base_hz / units * t->aperf / t->mperf);
+		अन्यथा
+			outp += प्र_लिखो(outp, "%s%.0f", (prपूर्णांकed++ ? delim : ""),
+					tsc / units * t->aperf / t->mperf / पूर्णांकerval_भग्न);
+	पूर्ण
 
-	if (DO_BIC(BIC_TSC_MHz))
-		outp += sprintf(outp, "%s%.0f", (printed++ ? delim : ""), 1.0 * t->tsc / units / interval_float);
+	अगर (DO_BIC(BIC_TSC_MHz))
+		outp += प्र_लिखो(outp, "%s%.0f", (prपूर्णांकed++ ? delim : ""), 1.0 * t->tsc / units / पूर्णांकerval_भग्न);
 
-	if (DO_BIC(BIC_IPC))
-		outp += sprintf(outp, "%s%.2f", (printed++ ? delim : ""), 1.0 * t->instr_count / t->aperf);
+	अगर (DO_BIC(BIC_IPC))
+		outp += प्र_लिखो(outp, "%s%.2f", (prपूर्णांकed++ ? delim : ""), 1.0 * t->instr_count / t->aperf);
 
 	/* IRQ */
-	if (DO_BIC(BIC_IRQ)) {
-		if (sums_need_wide_columns)
-			outp += sprintf(outp, "%s%8lld", (printed++ ? delim : ""), t->irq_count);
-		else
-			outp += sprintf(outp, "%s%lld", (printed++ ? delim : ""), t->irq_count);
-	}
+	अगर (DO_BIC(BIC_IRQ)) अणु
+		अगर (sums_need_wide_columns)
+			outp += प्र_लिखो(outp, "%s%8lld", (prपूर्णांकed++ ? delim : ""), t->irq_count);
+		अन्यथा
+			outp += प्र_लिखो(outp, "%s%lld", (prपूर्णांकed++ ? delim : ""), t->irq_count);
+	पूर्ण
 
 	/* SMI */
-	if (DO_BIC(BIC_SMI))
-		outp += sprintf(outp, "%s%d", (printed++ ? delim : ""), t->smi_count);
+	अगर (DO_BIC(BIC_SMI))
+		outp += प्र_लिखो(outp, "%s%d", (prपूर्णांकed++ ? delim : ""), t->smi_count);
 
 	/* Added counters */
-	for (i = 0, mp = sys.tp; mp; i++, mp = mp->next) {
-		if (mp->format == FORMAT_RAW) {
-			if (mp->width == 32)
+	क्रम (i = 0, mp = sys.tp; mp; i++, mp = mp->next) अणु
+		अगर (mp->क्रमmat == FORMAT_RAW) अणु
+			अगर (mp->width == 32)
 				outp +=
-				    sprintf(outp, "%s0x%08x", (printed++ ? delim : ""), (unsigned int)t->counter[i]);
-			else
-				outp += sprintf(outp, "%s0x%016llx", (printed++ ? delim : ""), t->counter[i]);
-		} else if (mp->format == FORMAT_DELTA) {
-			if ((mp->type == COUNTER_ITEMS) && sums_need_wide_columns)
-				outp += sprintf(outp, "%s%8lld", (printed++ ? delim : ""), t->counter[i]);
-			else
-				outp += sprintf(outp, "%s%lld", (printed++ ? delim : ""), t->counter[i]);
-		} else if (mp->format == FORMAT_PERCENT) {
-			if (mp->type == COUNTER_USEC)
+				    प्र_लिखो(outp, "%s0x%08x", (prपूर्णांकed++ ? delim : ""), (अचिन्हित पूर्णांक)t->counter[i]);
+			अन्यथा
+				outp += प्र_लिखो(outp, "%s0x%016llx", (prपूर्णांकed++ ? delim : ""), t->counter[i]);
+		पूर्ण अन्यथा अगर (mp->क्रमmat == FORMAT_DELTA) अणु
+			अगर ((mp->type == COUNTER_ITEMS) && sums_need_wide_columns)
+				outp += प्र_लिखो(outp, "%s%8lld", (prपूर्णांकed++ ? delim : ""), t->counter[i]);
+			अन्यथा
+				outp += प्र_लिखो(outp, "%s%lld", (prपूर्णांकed++ ? delim : ""), t->counter[i]);
+		पूर्ण अन्यथा अगर (mp->क्रमmat == FORMAT_PERCENT) अणु
+			अगर (mp->type == COUNTER_USEC)
 				outp +=
-				    sprintf(outp, "%s%.2f", (printed++ ? delim : ""),
-					    t->counter[i] / interval_float / 10000);
-			else
-				outp += sprintf(outp, "%s%.2f", (printed++ ? delim : ""), 100.0 * t->counter[i] / tsc);
-		}
-	}
+				    प्र_लिखो(outp, "%s%.2f", (prपूर्णांकed++ ? delim : ""),
+					    t->counter[i] / पूर्णांकerval_भग्न / 10000);
+			अन्यथा
+				outp += प्र_लिखो(outp, "%s%.2f", (prपूर्णांकed++ ? delim : ""), 100.0 * t->counter[i] / tsc);
+		पूर्ण
+	पूर्ण
 
 	/* C1 */
-	if (DO_BIC(BIC_CPU_c1))
-		outp += sprintf(outp, "%s%.2f", (printed++ ? delim : ""), 100.0 * t->c1 / tsc);
+	अगर (DO_BIC(BIC_CPU_c1))
+		outp += प्र_लिखो(outp, "%s%.2f", (prपूर्णांकed++ ? delim : ""), 100.0 * t->c1 / tsc);
 
-	/* print per-core data only for 1st thread in core */
-	if (!(t->flags & CPU_IS_FIRST_THREAD_IN_CORE))
-		goto done;
+	/* prपूर्णांक per-core data only क्रम 1st thपढ़ो in core */
+	अगर (!(t->flags & CPU_IS_FIRST_THREAD_IN_CORE))
+		जाओ करोne;
 
-	if (DO_BIC(BIC_CPU_c3))
-		outp += sprintf(outp, "%s%.2f", (printed++ ? delim : ""), 100.0 * c->c3 / tsc);
-	if (DO_BIC(BIC_CPU_c6))
-		outp += sprintf(outp, "%s%.2f", (printed++ ? delim : ""), 100.0 * c->c6 / tsc);
-	if (DO_BIC(BIC_CPU_c7))
-		outp += sprintf(outp, "%s%.2f", (printed++ ? delim : ""), 100.0 * c->c7 / tsc);
+	अगर (DO_BIC(BIC_CPU_c3))
+		outp += प्र_लिखो(outp, "%s%.2f", (prपूर्णांकed++ ? delim : ""), 100.0 * c->c3 / tsc);
+	अगर (DO_BIC(BIC_CPU_c6))
+		outp += प्र_लिखो(outp, "%s%.2f", (prपूर्णांकed++ ? delim : ""), 100.0 * c->c6 / tsc);
+	अगर (DO_BIC(BIC_CPU_c7))
+		outp += प्र_लिखो(outp, "%s%.2f", (prपूर्णांकed++ ? delim : ""), 100.0 * c->c7 / tsc);
 
 	/* Mod%c6 */
-	if (DO_BIC(BIC_Mod_c6))
-		outp += sprintf(outp, "%s%.2f", (printed++ ? delim : ""), 100.0 * c->mc6_us / tsc);
+	अगर (DO_BIC(BIC_Mod_c6))
+		outp += प्र_लिखो(outp, "%s%.2f", (prपूर्णांकed++ ? delim : ""), 100.0 * c->mc6_us / tsc);
 
-	if (DO_BIC(BIC_CoreTmp))
-		outp += sprintf(outp, "%s%d", (printed++ ? delim : ""), c->core_temp_c);
+	अगर (DO_BIC(BIC_CoreTmp))
+		outp += प्र_लिखो(outp, "%s%d", (prपूर्णांकed++ ? delim : ""), c->core_temp_c);
 
-	for (i = 0, mp = sys.cp; mp; i++, mp = mp->next) {
-		if (mp->format == FORMAT_RAW) {
-			if (mp->width == 32)
+	क्रम (i = 0, mp = sys.cp; mp; i++, mp = mp->next) अणु
+		अगर (mp->क्रमmat == FORMAT_RAW) अणु
+			अगर (mp->width == 32)
 				outp +=
-				    sprintf(outp, "%s0x%08x", (printed++ ? delim : ""), (unsigned int)c->counter[i]);
-			else
-				outp += sprintf(outp, "%s0x%016llx", (printed++ ? delim : ""), c->counter[i]);
-		} else if (mp->format == FORMAT_DELTA) {
-			if ((mp->type == COUNTER_ITEMS) && sums_need_wide_columns)
-				outp += sprintf(outp, "%s%8lld", (printed++ ? delim : ""), c->counter[i]);
-			else
-				outp += sprintf(outp, "%s%lld", (printed++ ? delim : ""), c->counter[i]);
-		} else if (mp->format == FORMAT_PERCENT) {
-			outp += sprintf(outp, "%s%.2f", (printed++ ? delim : ""), 100.0 * c->counter[i] / tsc);
-		}
-	}
+				    प्र_लिखो(outp, "%s0x%08x", (prपूर्णांकed++ ? delim : ""), (अचिन्हित पूर्णांक)c->counter[i]);
+			अन्यथा
+				outp += प्र_लिखो(outp, "%s0x%016llx", (prपूर्णांकed++ ? delim : ""), c->counter[i]);
+		पूर्ण अन्यथा अगर (mp->क्रमmat == FORMAT_DELTA) अणु
+			अगर ((mp->type == COUNTER_ITEMS) && sums_need_wide_columns)
+				outp += प्र_लिखो(outp, "%s%8lld", (prपूर्णांकed++ ? delim : ""), c->counter[i]);
+			अन्यथा
+				outp += प्र_लिखो(outp, "%s%lld", (prपूर्णांकed++ ? delim : ""), c->counter[i]);
+		पूर्ण अन्यथा अगर (mp->क्रमmat == FORMAT_PERCENT) अणु
+			outp += प्र_लिखो(outp, "%s%.2f", (prपूर्णांकed++ ? delim : ""), 100.0 * c->counter[i] / tsc);
+		पूर्ण
+	पूर्ण
 
 	fmt8 = "%s%.2f";
 
-	if (DO_BIC(BIC_CorWatt) && (do_rapl & RAPL_PER_CORE_ENERGY))
+	अगर (DO_BIC(BIC_CorWatt) && (करो_rapl & RAPL_PER_CORE_ENERGY))
 		outp +=
-		    sprintf(outp, fmt8, (printed++ ? delim : ""), c->core_energy * rapl_energy_units / interval_float);
-	if (DO_BIC(BIC_Cor_J) && (do_rapl & RAPL_PER_CORE_ENERGY))
-		outp += sprintf(outp, fmt8, (printed++ ? delim : ""), c->core_energy * rapl_energy_units);
+		    प्र_लिखो(outp, fmt8, (prपूर्णांकed++ ? delim : ""), c->core_energy * rapl_energy_units / पूर्णांकerval_भग्न);
+	अगर (DO_BIC(BIC_Cor_J) && (करो_rapl & RAPL_PER_CORE_ENERGY))
+		outp += प्र_लिखो(outp, fmt8, (prपूर्णांकed++ ? delim : ""), c->core_energy * rapl_energy_units);
 
-	/* print per-package data only for 1st core in package */
-	if (!(t->flags & CPU_IS_FIRST_CORE_IN_PACKAGE))
-		goto done;
+	/* prपूर्णांक per-package data only क्रम 1st core in package */
+	अगर (!(t->flags & CPU_IS_FIRST_CORE_IN_PACKAGE))
+		जाओ करोne;
 
 	/* PkgTmp */
-	if (DO_BIC(BIC_PkgTmp))
-		outp += sprintf(outp, "%s%d", (printed++ ? delim : ""), p->pkg_temp_c);
+	अगर (DO_BIC(BIC_PkgTmp))
+		outp += प्र_लिखो(outp, "%s%d", (prपूर्णांकed++ ? delim : ""), p->pkg_temp_c);
 
 	/* GFXrc6 */
-	if (DO_BIC(BIC_GFX_rc6)) {
-		if (p->gfx_rc6_ms == -1) {	/* detect GFX counter reset */
-			outp += sprintf(outp, "%s**.**", (printed++ ? delim : ""));
-		} else {
-			outp += sprintf(outp, "%s%.2f", (printed++ ? delim : ""),
-					p->gfx_rc6_ms / 10.0 / interval_float);
-		}
-	}
+	अगर (DO_BIC(BIC_GFX_rc6)) अणु
+		अगर (p->gfx_rc6_ms == -1) अणु	/* detect GFX counter reset */
+			outp += प्र_लिखो(outp, "%s**.**", (prपूर्णांकed++ ? delim : ""));
+		पूर्ण अन्यथा अणु
+			outp += प्र_लिखो(outp, "%s%.2f", (prपूर्णांकed++ ? delim : ""),
+					p->gfx_rc6_ms / 10.0 / पूर्णांकerval_भग्न);
+		पूर्ण
+	पूर्ण
 
 	/* GFXMHz */
-	if (DO_BIC(BIC_GFXMHz))
-		outp += sprintf(outp, "%s%d", (printed++ ? delim : ""), p->gfx_mhz);
+	अगर (DO_BIC(BIC_GFXMHz))
+		outp += प्र_लिखो(outp, "%s%d", (prपूर्णांकed++ ? delim : ""), p->gfx_mhz);
 
 	/* GFXACTMHz */
-	if (DO_BIC(BIC_GFXACTMHz))
-		outp += sprintf(outp, "%s%d", (printed++ ? delim : ""), p->gfx_act_mhz);
+	अगर (DO_BIC(BIC_GFXACTMHz))
+		outp += प्र_लिखो(outp, "%s%d", (prपूर्णांकed++ ? delim : ""), p->gfx_act_mhz);
 
 	/* Totl%C0, Any%C0 GFX%C0 CPUGFX% */
-	if (DO_BIC(BIC_Totl_c0))
-		outp += sprintf(outp, "%s%.2f", (printed++ ? delim : ""), 100.0 * p->pkg_wtd_core_c0 / tsc);
-	if (DO_BIC(BIC_Any_c0))
-		outp += sprintf(outp, "%s%.2f", (printed++ ? delim : ""), 100.0 * p->pkg_any_core_c0 / tsc);
-	if (DO_BIC(BIC_GFX_c0))
-		outp += sprintf(outp, "%s%.2f", (printed++ ? delim : ""), 100.0 * p->pkg_any_gfxe_c0 / tsc);
-	if (DO_BIC(BIC_CPUGFX))
-		outp += sprintf(outp, "%s%.2f", (printed++ ? delim : ""), 100.0 * p->pkg_both_core_gfxe_c0 / tsc);
+	अगर (DO_BIC(BIC_Totl_c0))
+		outp += प्र_लिखो(outp, "%s%.2f", (prपूर्णांकed++ ? delim : ""), 100.0 * p->pkg_wtd_core_c0 / tsc);
+	अगर (DO_BIC(BIC_Any_c0))
+		outp += प्र_लिखो(outp, "%s%.2f", (prपूर्णांकed++ ? delim : ""), 100.0 * p->pkg_any_core_c0 / tsc);
+	अगर (DO_BIC(BIC_GFX_c0))
+		outp += प्र_लिखो(outp, "%s%.2f", (prपूर्णांकed++ ? delim : ""), 100.0 * p->pkg_any_gfxe_c0 / tsc);
+	अगर (DO_BIC(BIC_CPUGFX))
+		outp += प्र_लिखो(outp, "%s%.2f", (prपूर्णांकed++ ? delim : ""), 100.0 * p->pkg_both_core_gfxe_c0 / tsc);
 
-	if (DO_BIC(BIC_Pkgpc2))
-		outp += sprintf(outp, "%s%.2f", (printed++ ? delim : ""), 100.0 * p->pc2 / tsc);
-	if (DO_BIC(BIC_Pkgpc3))
-		outp += sprintf(outp, "%s%.2f", (printed++ ? delim : ""), 100.0 * p->pc3 / tsc);
-	if (DO_BIC(BIC_Pkgpc6))
-		outp += sprintf(outp, "%s%.2f", (printed++ ? delim : ""), 100.0 * p->pc6 / tsc);
-	if (DO_BIC(BIC_Pkgpc7))
-		outp += sprintf(outp, "%s%.2f", (printed++ ? delim : ""), 100.0 * p->pc7 / tsc);
-	if (DO_BIC(BIC_Pkgpc8))
-		outp += sprintf(outp, "%s%.2f", (printed++ ? delim : ""), 100.0 * p->pc8 / tsc);
-	if (DO_BIC(BIC_Pkgpc9))
-		outp += sprintf(outp, "%s%.2f", (printed++ ? delim : ""), 100.0 * p->pc9 / tsc);
-	if (DO_BIC(BIC_Pkgpc10))
-		outp += sprintf(outp, "%s%.2f", (printed++ ? delim : ""), 100.0 * p->pc10 / tsc);
+	अगर (DO_BIC(BIC_Pkgpc2))
+		outp += प्र_लिखो(outp, "%s%.2f", (prपूर्णांकed++ ? delim : ""), 100.0 * p->pc2 / tsc);
+	अगर (DO_BIC(BIC_Pkgpc3))
+		outp += प्र_लिखो(outp, "%s%.2f", (prपूर्णांकed++ ? delim : ""), 100.0 * p->pc3 / tsc);
+	अगर (DO_BIC(BIC_Pkgpc6))
+		outp += प्र_लिखो(outp, "%s%.2f", (prपूर्णांकed++ ? delim : ""), 100.0 * p->pc6 / tsc);
+	अगर (DO_BIC(BIC_Pkgpc7))
+		outp += प्र_लिखो(outp, "%s%.2f", (prपूर्णांकed++ ? delim : ""), 100.0 * p->pc7 / tsc);
+	अगर (DO_BIC(BIC_Pkgpc8))
+		outp += प्र_लिखो(outp, "%s%.2f", (prपूर्णांकed++ ? delim : ""), 100.0 * p->pc8 / tsc);
+	अगर (DO_BIC(BIC_Pkgpc9))
+		outp += प्र_लिखो(outp, "%s%.2f", (prपूर्णांकed++ ? delim : ""), 100.0 * p->pc9 / tsc);
+	अगर (DO_BIC(BIC_Pkgpc10))
+		outp += प्र_लिखो(outp, "%s%.2f", (prपूर्णांकed++ ? delim : ""), 100.0 * p->pc10 / tsc);
 
-	if (DO_BIC(BIC_CPU_LPI))
+	अगर (DO_BIC(BIC_CPU_LPI))
 		outp +=
-		    sprintf(outp, "%s%.2f", (printed++ ? delim : ""), 100.0 * p->cpu_lpi / 1000000.0 / interval_float);
-	if (DO_BIC(BIC_SYS_LPI))
+		    प्र_लिखो(outp, "%s%.2f", (prपूर्णांकed++ ? delim : ""), 100.0 * p->cpu_lpi / 1000000.0 / पूर्णांकerval_भग्न);
+	अगर (DO_BIC(BIC_SYS_LPI))
 		outp +=
-		    sprintf(outp, "%s%.2f", (printed++ ? delim : ""), 100.0 * p->sys_lpi / 1000000.0 / interval_float);
+		    प्र_लिखो(outp, "%s%.2f", (prपूर्णांकed++ ? delim : ""), 100.0 * p->sys_lpi / 1000000.0 / पूर्णांकerval_भग्न);
 
-	if (DO_BIC(BIC_PkgWatt))
+	अगर (DO_BIC(BIC_PkgWatt))
 		outp +=
-		    sprintf(outp, fmt8, (printed++ ? delim : ""), p->energy_pkg * rapl_energy_units / interval_float);
-	if (DO_BIC(BIC_CorWatt) && !(do_rapl & RAPL_PER_CORE_ENERGY))
+		    प्र_लिखो(outp, fmt8, (prपूर्णांकed++ ? delim : ""), p->energy_pkg * rapl_energy_units / पूर्णांकerval_भग्न);
+	अगर (DO_BIC(BIC_CorWatt) && !(करो_rapl & RAPL_PER_CORE_ENERGY))
 		outp +=
-		    sprintf(outp, fmt8, (printed++ ? delim : ""), p->energy_cores * rapl_energy_units / interval_float);
-	if (DO_BIC(BIC_GFXWatt))
+		    प्र_लिखो(outp, fmt8, (prपूर्णांकed++ ? delim : ""), p->energy_cores * rapl_energy_units / पूर्णांकerval_भग्न);
+	अगर (DO_BIC(BIC_GFXWatt))
 		outp +=
-		    sprintf(outp, fmt8, (printed++ ? delim : ""), p->energy_gfx * rapl_energy_units / interval_float);
-	if (DO_BIC(BIC_RAMWatt))
+		    प्र_लिखो(outp, fmt8, (prपूर्णांकed++ ? delim : ""), p->energy_gfx * rapl_energy_units / पूर्णांकerval_भग्न);
+	अगर (DO_BIC(BIC_RAMWatt))
 		outp +=
-		    sprintf(outp, fmt8, (printed++ ? delim : ""),
-			    p->energy_dram * rapl_dram_energy_units / interval_float);
-	if (DO_BIC(BIC_Pkg_J))
-		outp += sprintf(outp, fmt8, (printed++ ? delim : ""), p->energy_pkg * rapl_energy_units);
-	if (DO_BIC(BIC_Cor_J) && !(do_rapl & RAPL_PER_CORE_ENERGY))
-		outp += sprintf(outp, fmt8, (printed++ ? delim : ""), p->energy_cores * rapl_energy_units);
-	if (DO_BIC(BIC_GFX_J))
-		outp += sprintf(outp, fmt8, (printed++ ? delim : ""), p->energy_gfx * rapl_energy_units);
-	if (DO_BIC(BIC_RAM_J))
-		outp += sprintf(outp, fmt8, (printed++ ? delim : ""), p->energy_dram * rapl_dram_energy_units);
-	if (DO_BIC(BIC_PKG__))
+		    प्र_लिखो(outp, fmt8, (prपूर्णांकed++ ? delim : ""),
+			    p->energy_dram * rapl_dram_energy_units / पूर्णांकerval_भग्न);
+	अगर (DO_BIC(BIC_Pkg_J))
+		outp += प्र_लिखो(outp, fmt8, (prपूर्णांकed++ ? delim : ""), p->energy_pkg * rapl_energy_units);
+	अगर (DO_BIC(BIC_Cor_J) && !(करो_rapl & RAPL_PER_CORE_ENERGY))
+		outp += प्र_लिखो(outp, fmt8, (prपूर्णांकed++ ? delim : ""), p->energy_cores * rapl_energy_units);
+	अगर (DO_BIC(BIC_GFX_J))
+		outp += प्र_लिखो(outp, fmt8, (prपूर्णांकed++ ? delim : ""), p->energy_gfx * rapl_energy_units);
+	अगर (DO_BIC(BIC_RAM_J))
+		outp += प्र_लिखो(outp, fmt8, (prपूर्णांकed++ ? delim : ""), p->energy_dram * rapl_dram_energy_units);
+	अगर (DO_BIC(BIC_PKG__))
 		outp +=
-		    sprintf(outp, fmt8, (printed++ ? delim : ""),
-			    100.0 * p->rapl_pkg_perf_status * rapl_time_units / interval_float);
-	if (DO_BIC(BIC_RAM__))
+		    प्र_लिखो(outp, fmt8, (prपूर्णांकed++ ? delim : ""),
+			    100.0 * p->rapl_pkg_perf_status * rapl_समय_units / पूर्णांकerval_भग्न);
+	अगर (DO_BIC(BIC_RAM__))
 		outp +=
-		    sprintf(outp, fmt8, (printed++ ? delim : ""),
-			    100.0 * p->rapl_dram_perf_status * rapl_time_units / interval_float);
+		    प्र_लिखो(outp, fmt8, (prपूर्णांकed++ ? delim : ""),
+			    100.0 * p->rapl_dram_perf_status * rapl_समय_units / पूर्णांकerval_भग्न);
 
-	for (i = 0, mp = sys.pp; mp; i++, mp = mp->next) {
-		if (mp->format == FORMAT_RAW) {
-			if (mp->width == 32)
+	क्रम (i = 0, mp = sys.pp; mp; i++, mp = mp->next) अणु
+		अगर (mp->क्रमmat == FORMAT_RAW) अणु
+			अगर (mp->width == 32)
 				outp +=
-				    sprintf(outp, "%s0x%08x", (printed++ ? delim : ""), (unsigned int)p->counter[i]);
-			else
-				outp += sprintf(outp, "%s0x%016llx", (printed++ ? delim : ""), p->counter[i]);
-		} else if (mp->format == FORMAT_DELTA) {
-			if ((mp->type == COUNTER_ITEMS) && sums_need_wide_columns)
-				outp += sprintf(outp, "%s%8lld", (printed++ ? delim : ""), p->counter[i]);
-			else
-				outp += sprintf(outp, "%s%lld", (printed++ ? delim : ""), p->counter[i]);
-		} else if (mp->format == FORMAT_PERCENT) {
-			outp += sprintf(outp, "%s%.2f", (printed++ ? delim : ""), 100.0 * p->counter[i] / tsc);
-		}
-	}
+				    प्र_लिखो(outp, "%s0x%08x", (prपूर्णांकed++ ? delim : ""), (अचिन्हित पूर्णांक)p->counter[i]);
+			अन्यथा
+				outp += प्र_लिखो(outp, "%s0x%016llx", (prपूर्णांकed++ ? delim : ""), p->counter[i]);
+		पूर्ण अन्यथा अगर (mp->क्रमmat == FORMAT_DELTA) अणु
+			अगर ((mp->type == COUNTER_ITEMS) && sums_need_wide_columns)
+				outp += प्र_लिखो(outp, "%s%8lld", (prपूर्णांकed++ ? delim : ""), p->counter[i]);
+			अन्यथा
+				outp += प्र_लिखो(outp, "%s%lld", (prपूर्णांकed++ ? delim : ""), p->counter[i]);
+		पूर्ण अन्यथा अगर (mp->क्रमmat == FORMAT_PERCENT) अणु
+			outp += प्र_लिखो(outp, "%s%.2f", (prपूर्णांकed++ ? delim : ""), 100.0 * p->counter[i] / tsc);
+		पूर्ण
+	पूर्ण
 
-done:
-	if (*(outp - 1) != '\n')
-		outp += sprintf(outp, "\n");
+करोne:
+	अगर (*(outp - 1) != '\n')
+		outp += प्र_लिखो(outp, "\n");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void flush_output_stdout(void)
-{
-	FILE *filep;
+व्योम flush_output_मानक_निकास(व्योम)
+अणु
+	खाता *filep;
 
-	if (outf == stderr)
-		filep = stdout;
-	else
+	अगर (outf == मानक_त्रुटि)
+		filep = मानक_निकास;
+	अन्यथा
 		filep = outf;
 
-	fputs(output_buffer, filep);
-	fflush(filep);
+	ख_माला_दो(output_buffer, filep);
+	ख_साफ(filep);
 
 	outp = output_buffer;
-}
+पूर्ण
 
-void flush_output_stderr(void)
-{
-	fputs(output_buffer, outf);
-	fflush(outf);
+व्योम flush_output_मानक_त्रुटि(व्योम)
+अणु
+	ख_माला_दो(output_buffer, outf);
+	ख_साफ(outf);
 	outp = output_buffer;
-}
+पूर्ण
 
-void format_all_counters(struct thread_data *t, struct core_data *c, struct pkg_data *p)
-{
-	static int printed;
+व्योम क्रमmat_all_counters(काष्ठा thपढ़ो_data *t, काष्ठा core_data *c, काष्ठा pkg_data *p)
+अणु
+	अटल पूर्णांक prपूर्णांकed;
 
-	if (!printed || !summary_only)
-		print_header("\t");
+	अगर (!prपूर्णांकed || !summary_only)
+		prपूर्णांक_header("\t");
 
-	format_counters(&average.threads, &average.cores, &average.packages);
+	क्रमmat_counters(&average.thपढ़ोs, &average.cores, &average.packages);
 
-	printed = 1;
+	prपूर्णांकed = 1;
 
-	if (summary_only)
-		return;
+	अगर (summary_only)
+		वापस;
 
-	for_all_cpus(format_counters, t, c, p);
-}
+	क्रम_all_cpus(क्रमmat_counters, t, c, p);
+पूर्ण
 
-#define DELTA_WRAP32(new, old)			\
-	old = ((((unsigned long long)new << 32) - ((unsigned long long)old << 32)) >> 32);
+#घोषणा DELTA_WRAP32(new, old)			\
+	old = ((((अचिन्हित दीर्घ दीर्घ)new << 32) - ((अचिन्हित दीर्घ दीर्घ)old << 32)) >> 32);
 
-int delta_package(struct pkg_data *new, struct pkg_data *old)
-{
-	int i;
-	struct msr_counter *mp;
+पूर्णांक delta_package(काष्ठा pkg_data *new, काष्ठा pkg_data *old)
+अणु
+	पूर्णांक i;
+	काष्ठा msr_counter *mp;
 
-	if (DO_BIC(BIC_Totl_c0))
+	अगर (DO_BIC(BIC_Totl_c0))
 		old->pkg_wtd_core_c0 = new->pkg_wtd_core_c0 - old->pkg_wtd_core_c0;
-	if (DO_BIC(BIC_Any_c0))
+	अगर (DO_BIC(BIC_Any_c0))
 		old->pkg_any_core_c0 = new->pkg_any_core_c0 - old->pkg_any_core_c0;
-	if (DO_BIC(BIC_GFX_c0))
+	अगर (DO_BIC(BIC_GFX_c0))
 		old->pkg_any_gfxe_c0 = new->pkg_any_gfxe_c0 - old->pkg_any_gfxe_c0;
-	if (DO_BIC(BIC_CPUGFX))
+	अगर (DO_BIC(BIC_CPUGFX))
 		old->pkg_both_core_gfxe_c0 = new->pkg_both_core_gfxe_c0 - old->pkg_both_core_gfxe_c0;
 
 	old->pc2 = new->pc2 - old->pc2;
-	if (DO_BIC(BIC_Pkgpc3))
+	अगर (DO_BIC(BIC_Pkgpc3))
 		old->pc3 = new->pc3 - old->pc3;
-	if (DO_BIC(BIC_Pkgpc6))
+	अगर (DO_BIC(BIC_Pkgpc6))
 		old->pc6 = new->pc6 - old->pc6;
-	if (DO_BIC(BIC_Pkgpc7))
+	अगर (DO_BIC(BIC_Pkgpc7))
 		old->pc7 = new->pc7 - old->pc7;
 	old->pc8 = new->pc8 - old->pc8;
 	old->pc9 = new->pc9 - old->pc9;
@@ -1433,9 +1434,9 @@ int delta_package(struct pkg_data *new, struct pkg_data *old)
 	old->pkg_temp_c = new->pkg_temp_c;
 
 	/* flag an error when rc6 counter resets/wraps */
-	if (old->gfx_rc6_ms > new->gfx_rc6_ms)
+	अगर (old->gfx_rc6_ms > new->gfx_rc6_ms)
 		old->gfx_rc6_ms = -1;
-	else
+	अन्यथा
 		old->gfx_rc6_ms = new->gfx_rc6_ms - old->gfx_rc6_ms;
 
 	old->gfx_mhz = new->gfx_mhz;
@@ -1448,20 +1449,20 @@ int delta_package(struct pkg_data *new, struct pkg_data *old)
 	old->rapl_pkg_perf_status = new->rapl_pkg_perf_status - old->rapl_pkg_perf_status;
 	old->rapl_dram_perf_status = new->rapl_dram_perf_status - old->rapl_dram_perf_status;
 
-	for (i = 0, mp = sys.pp; mp; i++, mp = mp->next) {
-		if (mp->format == FORMAT_RAW)
+	क्रम (i = 0, mp = sys.pp; mp; i++, mp = mp->next) अणु
+		अगर (mp->क्रमmat == FORMAT_RAW)
 			old->counter[i] = new->counter[i];
-		else
+		अन्यथा
 			old->counter[i] = new->counter[i] - old->counter[i];
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void delta_core(struct core_data *new, struct core_data *old)
-{
-	int i;
-	struct msr_counter *mp;
+व्योम delta_core(काष्ठा core_data *new, काष्ठा core_data *old)
+अणु
+	पूर्णांक i;
+	काष्ठा msr_counter *mp;
 
 	old->c3 = new->c3 - old->c3;
 	old->c6 = new->c6 - old->c6;
@@ -1471,134 +1472,134 @@ void delta_core(struct core_data *new, struct core_data *old)
 
 	DELTA_WRAP32(new->core_energy, old->core_energy);
 
-	for (i = 0, mp = sys.cp; mp; i++, mp = mp->next) {
-		if (mp->format == FORMAT_RAW)
+	क्रम (i = 0, mp = sys.cp; mp; i++, mp = mp->next) अणु
+		अगर (mp->क्रमmat == FORMAT_RAW)
 			old->counter[i] = new->counter[i];
-		else
+		अन्यथा
 			old->counter[i] = new->counter[i] - old->counter[i];
-	}
-}
+	पूर्ण
+पूर्ण
 
-int soft_c1_residency_display(int bic)
-{
-	if (!DO_BIC(BIC_CPU_c1) || use_c1_residency_msr)
-		return 0;
+पूर्णांक soft_c1_residency_display(पूर्णांक bic)
+अणु
+	अगर (!DO_BIC(BIC_CPU_c1) || use_c1_residency_msr)
+		वापस 0;
 
-	return DO_BIC_READ(bic);
-}
+	वापस DO_BIC_READ(bic);
+पूर्ण
 
 /*
  * old = new - old
  */
-int delta_thread(struct thread_data *new, struct thread_data *old, struct core_data *core_delta)
-{
-	int i;
-	struct msr_counter *mp;
+पूर्णांक delta_thपढ़ो(काष्ठा thपढ़ो_data *new, काष्ठा thपढ़ो_data *old, काष्ठा core_data *core_delta)
+अणु
+	पूर्णांक i;
+	काष्ठा msr_counter *mp;
 
-	/* we run cpuid just the 1st time, copy the results */
-	if (DO_BIC(BIC_APIC))
+	/* we run cpuid just the 1st समय, copy the results */
+	अगर (DO_BIC(BIC_APIC))
 		new->apic_id = old->apic_id;
-	if (DO_BIC(BIC_X2APIC))
+	अगर (DO_BIC(BIC_X2APIC))
 		new->x2apic_id = old->x2apic_id;
 
 	/*
-	 * the timestamps from start of measurement interval are in "old"
-	 * the timestamp from end of measurement interval are in "new"
-	 * over-write old w/ new so we can print end of interval values
+	 * the बारtamps from start of measurement पूर्णांकerval are in "old"
+	 * the बारtamp from end of measurement पूर्णांकerval are in "new"
+	 * over-ग_लिखो old w/ new so we can prपूर्णांक end of पूर्णांकerval values
 	 */
 
-	timersub(&new->tv_begin, &old->tv_begin, &old->tv_delta);
+	समयrsub(&new->tv_begin, &old->tv_begin, &old->tv_delta);
 	old->tv_begin = new->tv_begin;
 	old->tv_end = new->tv_end;
 
 	old->tsc = new->tsc - old->tsc;
 
-	/* check for TSC < 1 Mcycles over interval */
-	if (old->tsc < (1000 * 1000))
+	/* check क्रम TSC < 1 Mcycles over पूर्णांकerval */
+	अगर (old->tsc < (1000 * 1000))
 		errx(-3, "Insanely slow TSC rate, TSC stops in idle?\n"
 		     "You can disable all c-states by booting with \"idle=poll\"\n"
 		     "or just the deep ones with \"processor.max_cstate=1\"");
 
 	old->c1 = new->c1 - old->c1;
 
-	if (DO_BIC(BIC_Avg_MHz) || DO_BIC(BIC_Busy) || DO_BIC(BIC_Bzy_MHz) || soft_c1_residency_display(BIC_Avg_MHz)) {
-		if ((new->aperf > old->aperf) && (new->mperf > old->mperf)) {
+	अगर (DO_BIC(BIC_Avg_MHz) || DO_BIC(BIC_Busy) || DO_BIC(BIC_Bzy_MHz) || soft_c1_residency_display(BIC_Avg_MHz)) अणु
+		अगर ((new->aperf > old->aperf) && (new->mperf > old->mperf)) अणु
 			old->aperf = new->aperf - old->aperf;
 			old->mperf = new->mperf - old->mperf;
-		} else {
-			return -1;
-		}
-	}
+		पूर्ण अन्यथा अणु
+			वापस -1;
+		पूर्ण
+	पूर्ण
 
-	if (use_c1_residency_msr) {
+	अगर (use_c1_residency_msr) अणु
 		/*
 		 * Some models have a dedicated C1 residency MSR,
 		 * which should be more accurate than the derivation below.
 		 */
-	} else {
+	पूर्ण अन्यथा अणु
 		/*
 		 * As counter collection is not atomic,
-		 * it is possible for mperf's non-halted cycles + idle states
-		 * to exceed TSC's all cycles: show c1 = 0% in that case.
+		 * it is possible क्रम mperf's non-halted cycles + idle states
+		 * to exceed TSC's all cycles: show c1 = 0% in that हाल.
 		 */
-		if ((old->mperf + core_delta->c3 + core_delta->c6 + core_delta->c7) > (old->tsc * tsc_tweak))
+		अगर ((old->mperf + core_delta->c3 + core_delta->c6 + core_delta->c7) > (old->tsc * tsc_tweak))
 			old->c1 = 0;
-		else {
-			/* normal case, derive c1 */
+		अन्यथा अणु
+			/* normal हाल, derive c1 */
 			old->c1 = (old->tsc * tsc_tweak) - old->mperf - core_delta->c3
 			    - core_delta->c6 - core_delta->c7;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (old->mperf == 0) {
-		if (debug > 1)
-			fprintf(outf, "cpu%d MPERF 0!\n", old->cpu_id);
-		old->mperf = 1;	/* divide by 0 protection */
-	}
+	अगर (old->mperf == 0) अणु
+		अगर (debug > 1)
+			ख_लिखो(outf, "cpu%d MPERF 0!\n", old->cpu_id);
+		old->mperf = 1;	/* भागide by 0 protection */
+	पूर्ण
 
-	if (DO_BIC(BIC_IPC))
+	अगर (DO_BIC(BIC_IPC))
 		old->instr_count = new->instr_count - old->instr_count;
 
-	if (DO_BIC(BIC_IRQ))
+	अगर (DO_BIC(BIC_IRQ))
 		old->irq_count = new->irq_count - old->irq_count;
 
-	if (DO_BIC(BIC_SMI))
+	अगर (DO_BIC(BIC_SMI))
 		old->smi_count = new->smi_count - old->smi_count;
 
-	for (i = 0, mp = sys.tp; mp; i++, mp = mp->next) {
-		if (mp->format == FORMAT_RAW)
+	क्रम (i = 0, mp = sys.tp; mp; i++, mp = mp->next) अणु
+		अगर (mp->क्रमmat == FORMAT_RAW)
 			old->counter[i] = new->counter[i];
-		else
+		अन्यथा
 			old->counter[i] = new->counter[i] - old->counter[i];
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-int delta_cpu(struct thread_data *t, struct core_data *c,
-	      struct pkg_data *p, struct thread_data *t2, struct core_data *c2, struct pkg_data *p2)
-{
-	int retval = 0;
+पूर्णांक delta_cpu(काष्ठा thपढ़ो_data *t, काष्ठा core_data *c,
+	      काष्ठा pkg_data *p, काष्ठा thपढ़ो_data *t2, काष्ठा core_data *c2, काष्ठा pkg_data *p2)
+अणु
+	पूर्णांक retval = 0;
 
-	/* calculate core delta only for 1st thread in core */
-	if (t->flags & CPU_IS_FIRST_THREAD_IN_CORE)
+	/* calculate core delta only क्रम 1st thपढ़ो in core */
+	अगर (t->flags & CPU_IS_FIRST_THREAD_IN_CORE)
 		delta_core(c, c2);
 
-	/* always calculate thread delta */
-	retval = delta_thread(t, t2, c2);	/* c2 is core delta */
-	if (retval)
-		return retval;
+	/* always calculate thपढ़ो delta */
+	retval = delta_thपढ़ो(t, t2, c2);	/* c2 is core delta */
+	अगर (retval)
+		वापस retval;
 
-	/* calculate package delta only for 1st core in package */
-	if (t->flags & CPU_IS_FIRST_CORE_IN_PACKAGE)
+	/* calculate package delta only क्रम 1st core in package */
+	अगर (t->flags & CPU_IS_FIRST_CORE_IN_PACKAGE)
 		retval = delta_package(p, p2);
 
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
-void clear_counters(struct thread_data *t, struct core_data *c, struct pkg_data *p)
-{
-	int i;
-	struct msr_counter *mp;
+व्योम clear_counters(काष्ठा thपढ़ो_data *t, काष्ठा core_data *c, काष्ठा pkg_data *p)
+अणु
+	पूर्णांक i;
+	काष्ठा msr_counter *mp;
 
 	t->tv_begin.tv_sec = 0;
 	t->tv_begin.tv_usec = 0;
@@ -1617,7 +1618,7 @@ void clear_counters(struct thread_data *t, struct core_data *c, struct pkg_data 
 	t->irq_count = 0;
 	t->smi_count = 0;
 
-	/* tells format_counters to dump all fields from this set */
+	/* tells क्रमmat_counters to dump all fields from this set */
 	t->flags = CPU_IS_FIRST_THREAD_IN_CORE | CPU_IS_FIRST_CORE_IN_PACKAGE;
 
 	c->c3 = 0;
@@ -1633,11 +1634,11 @@ void clear_counters(struct thread_data *t, struct core_data *c, struct pkg_data 
 	p->pkg_both_core_gfxe_c0 = 0;
 
 	p->pc2 = 0;
-	if (DO_BIC(BIC_Pkgpc3))
+	अगर (DO_BIC(BIC_Pkgpc3))
 		p->pc3 = 0;
-	if (DO_BIC(BIC_Pkgpc6))
+	अगर (DO_BIC(BIC_Pkgpc6))
 		p->pc6 = 0;
-	if (DO_BIC(BIC_Pkgpc7))
+	अगर (DO_BIC(BIC_Pkgpc7))
 		p->pc7 = 0;
 	p->pc8 = 0;
 	p->pc9 = 0;
@@ -1656,53 +1657,53 @@ void clear_counters(struct thread_data *t, struct core_data *c, struct pkg_data 
 	p->gfx_rc6_ms = 0;
 	p->gfx_mhz = 0;
 	p->gfx_act_mhz = 0;
-	for (i = 0, mp = sys.tp; mp; i++, mp = mp->next)
+	क्रम (i = 0, mp = sys.tp; mp; i++, mp = mp->next)
 		t->counter[i] = 0;
 
-	for (i = 0, mp = sys.cp; mp; i++, mp = mp->next)
+	क्रम (i = 0, mp = sys.cp; mp; i++, mp = mp->next)
 		c->counter[i] = 0;
 
-	for (i = 0, mp = sys.pp; mp; i++, mp = mp->next)
+	क्रम (i = 0, mp = sys.pp; mp; i++, mp = mp->next)
 		p->counter[i] = 0;
-}
+पूर्ण
 
-int sum_counters(struct thread_data *t, struct core_data *c, struct pkg_data *p)
-{
-	int i;
-	struct msr_counter *mp;
+पूर्णांक sum_counters(काष्ठा thपढ़ो_data *t, काष्ठा core_data *c, काष्ठा pkg_data *p)
+अणु
+	पूर्णांक i;
+	काष्ठा msr_counter *mp;
 
 	/* copy un-changing apic_id's */
-	if (DO_BIC(BIC_APIC))
-		average.threads.apic_id = t->apic_id;
-	if (DO_BIC(BIC_X2APIC))
-		average.threads.x2apic_id = t->x2apic_id;
+	अगर (DO_BIC(BIC_APIC))
+		average.thपढ़ोs.apic_id = t->apic_id;
+	अगर (DO_BIC(BIC_X2APIC))
+		average.thपढ़ोs.x2apic_id = t->x2apic_id;
 
 	/* remember first tv_begin */
-	if (average.threads.tv_begin.tv_sec == 0)
-		average.threads.tv_begin = t->tv_begin;
+	अगर (average.thपढ़ोs.tv_begin.tv_sec == 0)
+		average.thपढ़ोs.tv_begin = t->tv_begin;
 
 	/* remember last tv_end */
-	average.threads.tv_end = t->tv_end;
+	average.thपढ़ोs.tv_end = t->tv_end;
 
-	average.threads.tsc += t->tsc;
-	average.threads.aperf += t->aperf;
-	average.threads.mperf += t->mperf;
-	average.threads.c1 += t->c1;
+	average.thपढ़ोs.tsc += t->tsc;
+	average.thपढ़ोs.aperf += t->aperf;
+	average.thपढ़ोs.mperf += t->mperf;
+	average.thपढ़ोs.c1 += t->c1;
 
-	average.threads.instr_count += t->instr_count;
+	average.thपढ़ोs.instr_count += t->instr_count;
 
-	average.threads.irq_count += t->irq_count;
-	average.threads.smi_count += t->smi_count;
+	average.thपढ़ोs.irq_count += t->irq_count;
+	average.thपढ़ोs.smi_count += t->smi_count;
 
-	for (i = 0, mp = sys.tp; mp; i++, mp = mp->next) {
-		if (mp->format == FORMAT_RAW)
-			continue;
-		average.threads.counter[i] += t->counter[i];
-	}
+	क्रम (i = 0, mp = sys.tp; mp; i++, mp = mp->next) अणु
+		अगर (mp->क्रमmat == FORMAT_RAW)
+			जारी;
+		average.thपढ़ोs.counter[i] += t->counter[i];
+	पूर्ण
 
-	/* sum per-core values only for 1st thread in core */
-	if (!(t->flags & CPU_IS_FIRST_THREAD_IN_CORE))
-		return 0;
+	/* sum per-core values only क्रम 1st thपढ़ो in core */
+	अगर (!(t->flags & CPU_IS_FIRST_THREAD_IN_CORE))
+		वापस 0;
 
 	average.cores.c3 += c->c3;
 	average.cores.c6 += c->c6;
@@ -1713,31 +1714,31 @@ int sum_counters(struct thread_data *t, struct core_data *c, struct pkg_data *p)
 
 	average.cores.core_energy += c->core_energy;
 
-	for (i = 0, mp = sys.cp; mp; i++, mp = mp->next) {
-		if (mp->format == FORMAT_RAW)
-			continue;
+	क्रम (i = 0, mp = sys.cp; mp; i++, mp = mp->next) अणु
+		अगर (mp->क्रमmat == FORMAT_RAW)
+			जारी;
 		average.cores.counter[i] += c->counter[i];
-	}
+	पूर्ण
 
-	/* sum per-pkg values only for 1st core in pkg */
-	if (!(t->flags & CPU_IS_FIRST_CORE_IN_PACKAGE))
-		return 0;
+	/* sum per-pkg values only क्रम 1st core in pkg */
+	अगर (!(t->flags & CPU_IS_FIRST_CORE_IN_PACKAGE))
+		वापस 0;
 
-	if (DO_BIC(BIC_Totl_c0))
+	अगर (DO_BIC(BIC_Totl_c0))
 		average.packages.pkg_wtd_core_c0 += p->pkg_wtd_core_c0;
-	if (DO_BIC(BIC_Any_c0))
+	अगर (DO_BIC(BIC_Any_c0))
 		average.packages.pkg_any_core_c0 += p->pkg_any_core_c0;
-	if (DO_BIC(BIC_GFX_c0))
+	अगर (DO_BIC(BIC_GFX_c0))
 		average.packages.pkg_any_gfxe_c0 += p->pkg_any_gfxe_c0;
-	if (DO_BIC(BIC_CPUGFX))
+	अगर (DO_BIC(BIC_CPUGFX))
 		average.packages.pkg_both_core_gfxe_c0 += p->pkg_both_core_gfxe_c0;
 
 	average.packages.pc2 += p->pc2;
-	if (DO_BIC(BIC_Pkgpc3))
+	अगर (DO_BIC(BIC_Pkgpc3))
 		average.packages.pc3 += p->pc3;
-	if (DO_BIC(BIC_Pkgpc6))
+	अगर (DO_BIC(BIC_Pkgpc6))
 		average.packages.pc6 += p->pc6;
-	if (DO_BIC(BIC_Pkgpc7))
+	अगर (DO_BIC(BIC_Pkgpc7))
 		average.packages.pc7 += p->pc7;
 	average.packages.pc8 += p->pc8;
 	average.packages.pc9 += p->pc9;
@@ -1760,37 +1761,37 @@ int sum_counters(struct thread_data *t, struct core_data *c, struct pkg_data *p)
 	average.packages.rapl_pkg_perf_status += p->rapl_pkg_perf_status;
 	average.packages.rapl_dram_perf_status += p->rapl_dram_perf_status;
 
-	for (i = 0, mp = sys.pp; mp; i++, mp = mp->next) {
-		if (mp->format == FORMAT_RAW)
-			continue;
+	क्रम (i = 0, mp = sys.pp; mp; i++, mp = mp->next) अणु
+		अगर (mp->क्रमmat == FORMAT_RAW)
+			जारी;
 		average.packages.counter[i] += p->counter[i];
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /*
- * sum the counters for all cpus in the system
+ * sum the counters क्रम all cpus in the प्रणाली
  * compute the weighted average
  */
-void compute_average(struct thread_data *t, struct core_data *c, struct pkg_data *p)
-{
-	int i;
-	struct msr_counter *mp;
+व्योम compute_average(काष्ठा thपढ़ो_data *t, काष्ठा core_data *c, काष्ठा pkg_data *p)
+अणु
+	पूर्णांक i;
+	काष्ठा msr_counter *mp;
 
-	clear_counters(&average.threads, &average.cores, &average.packages);
+	clear_counters(&average.thपढ़ोs, &average.cores, &average.packages);
 
-	for_all_cpus(sum_counters, t, c, p);
+	क्रम_all_cpus(sum_counters, t, c, p);
 
-	/* Use the global time delta for the average. */
-	average.threads.tv_delta = tv_delta;
+	/* Use the global समय delta क्रम the average. */
+	average.thपढ़ोs.tv_delta = tv_delta;
 
-	average.threads.tsc /= topo.num_cpus;
-	average.threads.aperf /= topo.num_cpus;
-	average.threads.mperf /= topo.num_cpus;
-	average.threads.instr_count /= topo.num_cpus;
-	average.threads.c1 /= topo.num_cpus;
+	average.thपढ़ोs.tsc /= topo.num_cpus;
+	average.thपढ़ोs.aperf /= topo.num_cpus;
+	average.thपढ़ोs.mperf /= topo.num_cpus;
+	average.thपढ़ोs.instr_count /= topo.num_cpus;
+	average.thपढ़ोs.c1 /= topo.num_cpus;
 
-	if (average.threads.irq_count > 9999999)
+	अगर (average.thपढ़ोs.irq_count > 9999999)
 		sums_need_wide_columns = 1;
 
 	average.cores.c3 /= topo.num_cores;
@@ -1798,765 +1799,765 @@ void compute_average(struct thread_data *t, struct core_data *c, struct pkg_data
 	average.cores.c7 /= topo.num_cores;
 	average.cores.mc6_us /= topo.num_cores;
 
-	if (DO_BIC(BIC_Totl_c0))
+	अगर (DO_BIC(BIC_Totl_c0))
 		average.packages.pkg_wtd_core_c0 /= topo.num_packages;
-	if (DO_BIC(BIC_Any_c0))
+	अगर (DO_BIC(BIC_Any_c0))
 		average.packages.pkg_any_core_c0 /= topo.num_packages;
-	if (DO_BIC(BIC_GFX_c0))
+	अगर (DO_BIC(BIC_GFX_c0))
 		average.packages.pkg_any_gfxe_c0 /= topo.num_packages;
-	if (DO_BIC(BIC_CPUGFX))
+	अगर (DO_BIC(BIC_CPUGFX))
 		average.packages.pkg_both_core_gfxe_c0 /= topo.num_packages;
 
 	average.packages.pc2 /= topo.num_packages;
-	if (DO_BIC(BIC_Pkgpc3))
+	अगर (DO_BIC(BIC_Pkgpc3))
 		average.packages.pc3 /= topo.num_packages;
-	if (DO_BIC(BIC_Pkgpc6))
+	अगर (DO_BIC(BIC_Pkgpc6))
 		average.packages.pc6 /= topo.num_packages;
-	if (DO_BIC(BIC_Pkgpc7))
+	अगर (DO_BIC(BIC_Pkgpc7))
 		average.packages.pc7 /= topo.num_packages;
 
 	average.packages.pc8 /= topo.num_packages;
 	average.packages.pc9 /= topo.num_packages;
 	average.packages.pc10 /= topo.num_packages;
 
-	for (i = 0, mp = sys.tp; mp; i++, mp = mp->next) {
-		if (mp->format == FORMAT_RAW)
-			continue;
-		if (mp->type == COUNTER_ITEMS) {
-			if (average.threads.counter[i] > 9999999)
+	क्रम (i = 0, mp = sys.tp; mp; i++, mp = mp->next) अणु
+		अगर (mp->क्रमmat == FORMAT_RAW)
+			जारी;
+		अगर (mp->type == COUNTER_ITEMS) अणु
+			अगर (average.thपढ़ोs.counter[i] > 9999999)
 				sums_need_wide_columns = 1;
-			continue;
-		}
-		average.threads.counter[i] /= topo.num_cpus;
-	}
-	for (i = 0, mp = sys.cp; mp; i++, mp = mp->next) {
-		if (mp->format == FORMAT_RAW)
-			continue;
-		if (mp->type == COUNTER_ITEMS) {
-			if (average.cores.counter[i] > 9999999)
+			जारी;
+		पूर्ण
+		average.thपढ़ोs.counter[i] /= topo.num_cpus;
+	पूर्ण
+	क्रम (i = 0, mp = sys.cp; mp; i++, mp = mp->next) अणु
+		अगर (mp->क्रमmat == FORMAT_RAW)
+			जारी;
+		अगर (mp->type == COUNTER_ITEMS) अणु
+			अगर (average.cores.counter[i] > 9999999)
 				sums_need_wide_columns = 1;
-		}
+		पूर्ण
 		average.cores.counter[i] /= topo.num_cores;
-	}
-	for (i = 0, mp = sys.pp; mp; i++, mp = mp->next) {
-		if (mp->format == FORMAT_RAW)
-			continue;
-		if (mp->type == COUNTER_ITEMS) {
-			if (average.packages.counter[i] > 9999999)
+	पूर्ण
+	क्रम (i = 0, mp = sys.pp; mp; i++, mp = mp->next) अणु
+		अगर (mp->क्रमmat == FORMAT_RAW)
+			जारी;
+		अगर (mp->type == COUNTER_ITEMS) अणु
+			अगर (average.packages.counter[i] > 9999999)
 				sums_need_wide_columns = 1;
-		}
+		पूर्ण
 		average.packages.counter[i] /= topo.num_packages;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static unsigned long long rdtsc(void)
-{
-	unsigned int low, high;
+अटल अचिन्हित दीर्घ दीर्घ rdtsc(व्योम)
+अणु
+	अचिन्हित पूर्णांक low, high;
 
-	asm volatile ("rdtsc":"=a" (low), "=d"(high));
+	यंत्र अस्थिर ("rdtsc":"=a" (low), "=d"(high));
 
-	return low | ((unsigned long long)high) << 32;
-}
+	वापस low | ((अचिन्हित दीर्घ दीर्घ)high) << 32;
+पूर्ण
 
 /*
- * Open a file, and exit on failure
+ * Open a file, and निकास on failure
  */
-FILE *fopen_or_die(const char *path, const char *mode)
-{
-	FILE *filep = fopen(path, mode);
+खाता *ख_खोलो_or_die(स्थिर अक्षर *path, स्थिर अक्षर *mode)
+अणु
+	खाता *filep = ख_खोलो(path, mode);
 
-	if (!filep)
+	अगर (!filep)
 		err(1, "%s: open failed", path);
-	return filep;
-}
+	वापस filep;
+पूर्ण
 
 /*
  * snapshot_sysfs_counter()
  *
- * return snapshot of given counter
+ * वापस snapshot of given counter
  */
-unsigned long long snapshot_sysfs_counter(char *path)
-{
-	FILE *fp;
-	int retval;
-	unsigned long long counter;
+अचिन्हित दीर्घ दीर्घ snapshot_sysfs_counter(अक्षर *path)
+अणु
+	खाता *fp;
+	पूर्णांक retval;
+	अचिन्हित दीर्घ दीर्घ counter;
 
-	fp = fopen_or_die(path, "r");
+	fp = ख_खोलो_or_die(path, "r");
 
-	retval = fscanf(fp, "%lld", &counter);
-	if (retval != 1)
+	retval = ख_पूछो(fp, "%lld", &counter);
+	अगर (retval != 1)
 		err(1, "snapshot_sysfs_counter(%s)", path);
 
-	fclose(fp);
+	ख_बंद(fp);
 
-	return counter;
-}
+	वापस counter;
+पूर्ण
 
-int get_mp(int cpu, struct msr_counter *mp, unsigned long long *counterp)
-{
-	if (mp->msr_num != 0) {
-		if (get_msr(cpu, mp->msr_num, counterp))
-			return -1;
-	} else {
-		char path[128 + PATH_BYTES];
+पूर्णांक get_mp(पूर्णांक cpu, काष्ठा msr_counter *mp, अचिन्हित दीर्घ दीर्घ *counterp)
+अणु
+	अगर (mp->msr_num != 0) अणु
+		अगर (get_msr(cpu, mp->msr_num, counterp))
+			वापस -1;
+	पूर्ण अन्यथा अणु
+		अक्षर path[128 + PATH_BYTES];
 
-		if (mp->flags & SYSFS_PERCPU) {
-			sprintf(path, "/sys/devices/system/cpu/cpu%d/%s", cpu, mp->path);
+		अगर (mp->flags & SYSFS_PERCPU) अणु
+			प्र_लिखो(path, "/sys/devices/system/cpu/cpu%d/%s", cpu, mp->path);
 
 			*counterp = snapshot_sysfs_counter(path);
-		} else {
+		पूर्ण अन्यथा अणु
 			*counterp = snapshot_sysfs_counter(mp->path);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int get_epb(int cpu)
-{
-	char path[128 + PATH_BYTES];
-	unsigned long long msr;
-	int ret, epb = -1;
-	FILE *fp;
+पूर्णांक get_epb(पूर्णांक cpu)
+अणु
+	अक्षर path[128 + PATH_BYTES];
+	अचिन्हित दीर्घ दीर्घ msr;
+	पूर्णांक ret, epb = -1;
+	खाता *fp;
 
-	sprintf(path, "/sys/devices/system/cpu/cpu%d/power/energy_perf_bias", cpu);
+	प्र_लिखो(path, "/sys/devices/system/cpu/cpu%d/power/energy_perf_bias", cpu);
 
-	fp = fopen(path, "r");
-	if (!fp)
-		goto msr_fallback;
+	fp = ख_खोलो(path, "r");
+	अगर (!fp)
+		जाओ msr_fallback;
 
-	ret = fscanf(fp, "%d", &epb);
-	if (ret != 1)
+	ret = ख_पूछो(fp, "%d", &epb);
+	अगर (ret != 1)
 		err(1, "%s(%s)", __func__, path);
 
-	fclose(fp);
+	ख_बंद(fp);
 
-	return epb;
+	वापस epb;
 
 msr_fallback:
 	get_msr(cpu, MSR_IA32_ENERGY_PERF_BIAS, &msr);
 
-	return msr & 0xf;
-}
+	वापस msr & 0xf;
+पूर्ण
 
-void get_apic_id(struct thread_data *t)
-{
-	unsigned int eax, ebx, ecx, edx;
+व्योम get_apic_id(काष्ठा thपढ़ो_data *t)
+अणु
+	अचिन्हित पूर्णांक eax, ebx, ecx, edx;
 
-	if (DO_BIC(BIC_APIC)) {
+	अगर (DO_BIC(BIC_APIC)) अणु
 		eax = ebx = ecx = edx = 0;
 		__cpuid(1, eax, ebx, ecx, edx);
 
 		t->apic_id = (ebx >> 24) & 0xff;
-	}
+	पूर्ण
 
-	if (!DO_BIC(BIC_X2APIC))
-		return;
+	अगर (!DO_BIC(BIC_X2APIC))
+		वापस;
 
-	if (authentic_amd || hygon_genuine) {
-		unsigned int topology_extensions;
+	अगर (authentic_amd || hygon_genuine) अणु
+		अचिन्हित पूर्णांक topology_extensions;
 
-		if (max_extended_level < 0x8000001e)
-			return;
+		अगर (max_extended_level < 0x8000001e)
+			वापस;
 
 		eax = ebx = ecx = edx = 0;
 		__cpuid(0x80000001, eax, ebx, ecx, edx);
 		topology_extensions = ecx & (1 << 22);
 
-		if (topology_extensions == 0)
-			return;
+		अगर (topology_extensions == 0)
+			वापस;
 
 		eax = ebx = ecx = edx = 0;
 		__cpuid(0x8000001e, eax, ebx, ecx, edx);
 
 		t->x2apic_id = eax;
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (!genuine_intel)
-		return;
+	अगर (!genuine_पूर्णांकel)
+		वापस;
 
-	if (max_level < 0xb)
-		return;
+	अगर (max_level < 0xb)
+		वापस;
 
 	ecx = 0;
 	__cpuid(0xb, eax, ebx, ecx, edx);
 	t->x2apic_id = edx;
 
-	if (debug && (t->apic_id != (t->x2apic_id & 0xff)))
-		fprintf(outf, "cpu%d: BIOS BUG: apic 0x%x x2apic 0x%x\n", t->cpu_id, t->apic_id, t->x2apic_id);
-}
+	अगर (debug && (t->apic_id != (t->x2apic_id & 0xff)))
+		ख_लिखो(outf, "cpu%d: BIOS BUG: apic 0x%x x2apic 0x%x\n", t->cpu_id, t->apic_id, t->x2apic_id);
+पूर्ण
 
 /*
  * get_counters(...)
  * migrate to cpu
- * acquire and record local counters for that cpu
+ * acquire and record local counters क्रम that cpu
  */
-int get_counters(struct thread_data *t, struct core_data *c, struct pkg_data *p)
-{
-	int cpu = t->cpu_id;
-	unsigned long long msr;
-	int aperf_mperf_retry_count = 0;
-	struct msr_counter *mp;
-	int i;
+पूर्णांक get_counters(काष्ठा thपढ़ो_data *t, काष्ठा core_data *c, काष्ठा pkg_data *p)
+अणु
+	पूर्णांक cpu = t->cpu_id;
+	अचिन्हित दीर्घ दीर्घ msr;
+	पूर्णांक aperf_mperf_retry_count = 0;
+	काष्ठा msr_counter *mp;
+	पूर्णांक i;
 
-	if (cpu_migrate(cpu)) {
-		fprintf(outf, "get_counters: Could not migrate to CPU %d\n", cpu);
-		return -1;
-	}
+	अगर (cpu_migrate(cpu)) अणु
+		ख_लिखो(outf, "get_counters: Could not migrate to CPU %d\n", cpu);
+		वापस -1;
+	पूर्ण
 
-	gettimeofday(&t->tv_begin, (struct timezone *)NULL);
+	समय_लोofday(&t->tv_begin, (काष्ठा समयzone *)शून्य);
 
-	if (first_counter_read)
+	अगर (first_counter_पढ़ो)
 		get_apic_id(t);
 retry:
-	t->tsc = rdtsc();	/* we are running on local CPU of interest */
+	t->tsc = rdtsc();	/* we are running on local CPU of पूर्णांकerest */
 
-	if (DO_BIC(BIC_Avg_MHz) || DO_BIC(BIC_Busy) || DO_BIC(BIC_Bzy_MHz) || soft_c1_residency_display(BIC_Avg_MHz)) {
-		unsigned long long tsc_before, tsc_between, tsc_after, aperf_time, mperf_time;
+	अगर (DO_BIC(BIC_Avg_MHz) || DO_BIC(BIC_Busy) || DO_BIC(BIC_Bzy_MHz) || soft_c1_residency_display(BIC_Avg_MHz)) अणु
+		अचिन्हित दीर्घ दीर्घ tsc_beक्रमe, tsc_between, tsc_after, aperf_समय, mperf_समय;
 
 		/*
-		 * The TSC, APERF and MPERF must be read together for
+		 * The TSC, APERF and MPERF must be पढ़ो together क्रम
 		 * APERF/MPERF and MPERF/TSC to give accurate results.
 		 *
-		 * Unfortunately, APERF and MPERF are read by
-		 * individual system call, so delays may occur
-		 * between them.  If the time to read them
-		 * varies by a large amount, we re-read them.
+		 * Unक्रमtunately, APERF and MPERF are पढ़ो by
+		 * inभागidual प्रणाली call, so delays may occur
+		 * between them.  If the समय to पढ़ो them
+		 * varies by a large amount, we re-पढ़ो them.
 		 */
 
 		/*
-		 * This initial dummy APERF read has been seen to
-		 * reduce jitter in the subsequent reads.
+		 * This initial dummy APERF पढ़ो has been seen to
+		 * reduce jitter in the subsequent पढ़ोs.
 		 */
 
-		if (get_msr(cpu, MSR_IA32_APERF, &t->aperf))
-			return -3;
+		अगर (get_msr(cpu, MSR_IA32_APERF, &t->aperf))
+			वापस -3;
 
-		t->tsc = rdtsc();	/* re-read close to APERF */
+		t->tsc = rdtsc();	/* re-पढ़ो बंद to APERF */
 
-		tsc_before = t->tsc;
+		tsc_beक्रमe = t->tsc;
 
-		if (get_msr(cpu, MSR_IA32_APERF, &t->aperf))
-			return -3;
+		अगर (get_msr(cpu, MSR_IA32_APERF, &t->aperf))
+			वापस -3;
 
 		tsc_between = rdtsc();
 
-		if (get_msr(cpu, MSR_IA32_MPERF, &t->mperf))
-			return -4;
+		अगर (get_msr(cpu, MSR_IA32_MPERF, &t->mperf))
+			वापस -4;
 
 		tsc_after = rdtsc();
 
-		aperf_time = tsc_between - tsc_before;
-		mperf_time = tsc_after - tsc_between;
+		aperf_समय = tsc_between - tsc_beक्रमe;
+		mperf_समय = tsc_after - tsc_between;
 
 		/*
-		 * If the system call latency to read APERF and MPERF
-		 * differ by more than 2x, then try again.
+		 * If the प्रणाली call latency to पढ़ो APERF and MPERF
+		 * dअगरfer by more than 2x, then try again.
 		 */
-		if ((aperf_time > (2 * mperf_time)) || (mperf_time > (2 * aperf_time))) {
+		अगर ((aperf_समय > (2 * mperf_समय)) || (mperf_समय > (2 * aperf_समय))) अणु
 			aperf_mperf_retry_count++;
-			if (aperf_mperf_retry_count < 5)
-				goto retry;
-			else
-				warnx("cpu%d jitter %lld %lld", cpu, aperf_time, mperf_time);
-		}
+			अगर (aperf_mperf_retry_count < 5)
+				जाओ retry;
+			अन्यथा
+				warnx("cpu%d jitter %lld %lld", cpu, aperf_समय, mperf_समय);
+		पूर्ण
 		aperf_mperf_retry_count = 0;
 
 		t->aperf = t->aperf * aperf_mperf_multiplier;
 		t->mperf = t->mperf * aperf_mperf_multiplier;
-	}
+	पूर्ण
 
-	if (DO_BIC(BIC_IPC))
-		if (read(get_instr_count_fd(cpu), &t->instr_count, sizeof(long long)) != sizeof(long long))
-			return -4;
+	अगर (DO_BIC(BIC_IPC))
+		अगर (पढ़ो(get_instr_count_fd(cpu), &t->instr_count, माप(दीर्घ दीर्घ)) != माप(दीर्घ दीर्घ))
+			वापस -4;
 
-	if (DO_BIC(BIC_IRQ))
+	अगर (DO_BIC(BIC_IRQ))
 		t->irq_count = irqs_per_cpu[cpu];
-	if (DO_BIC(BIC_SMI)) {
-		if (get_msr(cpu, MSR_SMI_COUNT, &msr))
-			return -5;
+	अगर (DO_BIC(BIC_SMI)) अणु
+		अगर (get_msr(cpu, MSR_SMI_COUNT, &msr))
+			वापस -5;
 		t->smi_count = msr & 0xFFFFFFFF;
-	}
-	if (DO_BIC(BIC_CPU_c1) && use_c1_residency_msr) {
-		if (get_msr(cpu, MSR_CORE_C1_RES, &t->c1))
-			return -6;
-	}
+	पूर्ण
+	अगर (DO_BIC(BIC_CPU_c1) && use_c1_residency_msr) अणु
+		अगर (get_msr(cpu, MSR_CORE_C1_RES, &t->c1))
+			वापस -6;
+	पूर्ण
 
-	for (i = 0, mp = sys.tp; mp; i++, mp = mp->next) {
-		if (get_mp(cpu, mp, &t->counter[i]))
-			return -10;
-	}
+	क्रम (i = 0, mp = sys.tp; mp; i++, mp = mp->next) अणु
+		अगर (get_mp(cpu, mp, &t->counter[i]))
+			वापस -10;
+	पूर्ण
 
-	/* collect core counters only for 1st thread in core */
-	if (!(t->flags & CPU_IS_FIRST_THREAD_IN_CORE))
-		goto done;
+	/* collect core counters only क्रम 1st thपढ़ो in core */
+	अगर (!(t->flags & CPU_IS_FIRST_THREAD_IN_CORE))
+		जाओ करोne;
 
-	if (DO_BIC(BIC_CPU_c3) || soft_c1_residency_display(BIC_CPU_c3)) {
-		if (get_msr(cpu, MSR_CORE_C3_RESIDENCY, &c->c3))
-			return -6;
-	}
+	अगर (DO_BIC(BIC_CPU_c3) || soft_c1_residency_display(BIC_CPU_c3)) अणु
+		अगर (get_msr(cpu, MSR_CORE_C3_RESIDENCY, &c->c3))
+			वापस -6;
+	पूर्ण
 
-	if ((DO_BIC(BIC_CPU_c6) || soft_c1_residency_display(BIC_CPU_c6)) && !do_knl_cstates) {
-		if (get_msr(cpu, MSR_CORE_C6_RESIDENCY, &c->c6))
-			return -7;
-	} else if (do_knl_cstates || soft_c1_residency_display(BIC_CPU_c6)) {
-		if (get_msr(cpu, MSR_KNL_CORE_C6_RESIDENCY, &c->c6))
-			return -7;
-	}
+	अगर ((DO_BIC(BIC_CPU_c6) || soft_c1_residency_display(BIC_CPU_c6)) && !करो_knl_cstates) अणु
+		अगर (get_msr(cpu, MSR_CORE_C6_RESIDENCY, &c->c6))
+			वापस -7;
+	पूर्ण अन्यथा अगर (करो_knl_cstates || soft_c1_residency_display(BIC_CPU_c6)) अणु
+		अगर (get_msr(cpu, MSR_KNL_CORE_C6_RESIDENCY, &c->c6))
+			वापस -7;
+	पूर्ण
 
-	if (DO_BIC(BIC_CPU_c7) || soft_c1_residency_display(BIC_CPU_c7)) {
-		if (get_msr(cpu, MSR_CORE_C7_RESIDENCY, &c->c7))
-			return -8;
-		else if (t->is_atom) {
+	अगर (DO_BIC(BIC_CPU_c7) || soft_c1_residency_display(BIC_CPU_c7)) अणु
+		अगर (get_msr(cpu, MSR_CORE_C7_RESIDENCY, &c->c7))
+			वापस -8;
+		अन्यथा अगर (t->is_atom) अणु
 			/*
 			 * For Atom CPUs that has core cstate deeper than c6,
-			 * MSR_CORE_C6_RESIDENCY returns residency of cc6 and deeper.
+			 * MSR_CORE_C6_RESIDENCY वापसs residency of cc6 and deeper.
 			 * Minus CC7 (and deeper cstates) residency to get
 			 * accturate cc6 residency.
 			 */
 			c->c6 -= c->c7;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (DO_BIC(BIC_Mod_c6))
-		if (get_msr(cpu, MSR_MODULE_C6_RES_MS, &c->mc6_us))
-			return -8;
+	अगर (DO_BIC(BIC_Mod_c6))
+		अगर (get_msr(cpu, MSR_MODULE_C6_RES_MS, &c->mc6_us))
+			वापस -8;
 
-	if (DO_BIC(BIC_CoreTmp)) {
-		if (get_msr(cpu, MSR_IA32_THERM_STATUS, &msr))
-			return -9;
+	अगर (DO_BIC(BIC_CoreTmp)) अणु
+		अगर (get_msr(cpu, MSR_IA32_THERM_STATUS, &msr))
+			वापस -9;
 		c->core_temp_c = tj_max - ((msr >> 16) & 0x7F);
-	}
+	पूर्ण
 
-	if (do_rapl & RAPL_AMD_F17H) {
-		if (get_msr(cpu, MSR_CORE_ENERGY_STAT, &msr))
-			return -14;
+	अगर (करो_rapl & RAPL_AMD_F17H) अणु
+		अगर (get_msr(cpu, MSR_CORE_ENERGY_STAT, &msr))
+			वापस -14;
 		c->core_energy = msr & 0xFFFFFFFF;
-	}
+	पूर्ण
 
-	for (i = 0, mp = sys.cp; mp; i++, mp = mp->next) {
-		if (get_mp(cpu, mp, &c->counter[i]))
-			return -10;
-	}
+	क्रम (i = 0, mp = sys.cp; mp; i++, mp = mp->next) अणु
+		अगर (get_mp(cpu, mp, &c->counter[i]))
+			वापस -10;
+	पूर्ण
 
-	/* collect package counters only for 1st core in package */
-	if (!(t->flags & CPU_IS_FIRST_CORE_IN_PACKAGE))
-		goto done;
+	/* collect package counters only क्रम 1st core in package */
+	अगर (!(t->flags & CPU_IS_FIRST_CORE_IN_PACKAGE))
+		जाओ करोne;
 
-	if (DO_BIC(BIC_Totl_c0)) {
-		if (get_msr(cpu, MSR_PKG_WEIGHTED_CORE_C0_RES, &p->pkg_wtd_core_c0))
-			return -10;
-	}
-	if (DO_BIC(BIC_Any_c0)) {
-		if (get_msr(cpu, MSR_PKG_ANY_CORE_C0_RES, &p->pkg_any_core_c0))
-			return -11;
-	}
-	if (DO_BIC(BIC_GFX_c0)) {
-		if (get_msr(cpu, MSR_PKG_ANY_GFXE_C0_RES, &p->pkg_any_gfxe_c0))
-			return -12;
-	}
-	if (DO_BIC(BIC_CPUGFX)) {
-		if (get_msr(cpu, MSR_PKG_BOTH_CORE_GFXE_C0_RES, &p->pkg_both_core_gfxe_c0))
-			return -13;
-	}
-	if (DO_BIC(BIC_Pkgpc3))
-		if (get_msr(cpu, MSR_PKG_C3_RESIDENCY, &p->pc3))
-			return -9;
-	if (DO_BIC(BIC_Pkgpc6)) {
-		if (do_slm_cstates) {
-			if (get_msr(cpu, MSR_ATOM_PKG_C6_RESIDENCY, &p->pc6))
-				return -10;
-		} else {
-			if (get_msr(cpu, MSR_PKG_C6_RESIDENCY, &p->pc6))
-				return -10;
-		}
-	}
+	अगर (DO_BIC(BIC_Totl_c0)) अणु
+		अगर (get_msr(cpu, MSR_PKG_WEIGHTED_CORE_C0_RES, &p->pkg_wtd_core_c0))
+			वापस -10;
+	पूर्ण
+	अगर (DO_BIC(BIC_Any_c0)) अणु
+		अगर (get_msr(cpu, MSR_PKG_ANY_CORE_C0_RES, &p->pkg_any_core_c0))
+			वापस -11;
+	पूर्ण
+	अगर (DO_BIC(BIC_GFX_c0)) अणु
+		अगर (get_msr(cpu, MSR_PKG_ANY_GFXE_C0_RES, &p->pkg_any_gfxe_c0))
+			वापस -12;
+	पूर्ण
+	अगर (DO_BIC(BIC_CPUGFX)) अणु
+		अगर (get_msr(cpu, MSR_PKG_BOTH_CORE_GFXE_C0_RES, &p->pkg_both_core_gfxe_c0))
+			वापस -13;
+	पूर्ण
+	अगर (DO_BIC(BIC_Pkgpc3))
+		अगर (get_msr(cpu, MSR_PKG_C3_RESIDENCY, &p->pc3))
+			वापस -9;
+	अगर (DO_BIC(BIC_Pkgpc6)) अणु
+		अगर (करो_slm_cstates) अणु
+			अगर (get_msr(cpu, MSR_ATOM_PKG_C6_RESIDENCY, &p->pc6))
+				वापस -10;
+		पूर्ण अन्यथा अणु
+			अगर (get_msr(cpu, MSR_PKG_C6_RESIDENCY, &p->pc6))
+				वापस -10;
+		पूर्ण
+	पूर्ण
 
-	if (DO_BIC(BIC_Pkgpc2))
-		if (get_msr(cpu, MSR_PKG_C2_RESIDENCY, &p->pc2))
-			return -11;
-	if (DO_BIC(BIC_Pkgpc7))
-		if (get_msr(cpu, MSR_PKG_C7_RESIDENCY, &p->pc7))
-			return -12;
-	if (DO_BIC(BIC_Pkgpc8))
-		if (get_msr(cpu, MSR_PKG_C8_RESIDENCY, &p->pc8))
-			return -13;
-	if (DO_BIC(BIC_Pkgpc9))
-		if (get_msr(cpu, MSR_PKG_C9_RESIDENCY, &p->pc9))
-			return -13;
-	if (DO_BIC(BIC_Pkgpc10))
-		if (get_msr(cpu, MSR_PKG_C10_RESIDENCY, &p->pc10))
-			return -13;
+	अगर (DO_BIC(BIC_Pkgpc2))
+		अगर (get_msr(cpu, MSR_PKG_C2_RESIDENCY, &p->pc2))
+			वापस -11;
+	अगर (DO_BIC(BIC_Pkgpc7))
+		अगर (get_msr(cpu, MSR_PKG_C7_RESIDENCY, &p->pc7))
+			वापस -12;
+	अगर (DO_BIC(BIC_Pkgpc8))
+		अगर (get_msr(cpu, MSR_PKG_C8_RESIDENCY, &p->pc8))
+			वापस -13;
+	अगर (DO_BIC(BIC_Pkgpc9))
+		अगर (get_msr(cpu, MSR_PKG_C9_RESIDENCY, &p->pc9))
+			वापस -13;
+	अगर (DO_BIC(BIC_Pkgpc10))
+		अगर (get_msr(cpu, MSR_PKG_C10_RESIDENCY, &p->pc10))
+			वापस -13;
 
-	if (DO_BIC(BIC_CPU_LPI))
+	अगर (DO_BIC(BIC_CPU_LPI))
 		p->cpu_lpi = cpuidle_cur_cpu_lpi_us;
-	if (DO_BIC(BIC_SYS_LPI))
+	अगर (DO_BIC(BIC_SYS_LPI))
 		p->sys_lpi = cpuidle_cur_sys_lpi_us;
 
-	if (do_rapl & RAPL_PKG) {
-		if (get_msr_sum(cpu, MSR_PKG_ENERGY_STATUS, &msr))
-			return -13;
+	अगर (करो_rapl & RAPL_PKG) अणु
+		अगर (get_msr_sum(cpu, MSR_PKG_ENERGY_STATUS, &msr))
+			वापस -13;
 		p->energy_pkg = msr;
-	}
-	if (do_rapl & RAPL_CORES_ENERGY_STATUS) {
-		if (get_msr_sum(cpu, MSR_PP0_ENERGY_STATUS, &msr))
-			return -14;
+	पूर्ण
+	अगर (करो_rapl & RAPL_CORES_ENERGY_STATUS) अणु
+		अगर (get_msr_sum(cpu, MSR_PP0_ENERGY_STATUS, &msr))
+			वापस -14;
 		p->energy_cores = msr;
-	}
-	if (do_rapl & RAPL_DRAM) {
-		if (get_msr_sum(cpu, MSR_DRAM_ENERGY_STATUS, &msr))
-			return -15;
+	पूर्ण
+	अगर (करो_rapl & RAPL_DRAM) अणु
+		अगर (get_msr_sum(cpu, MSR_DRAM_ENERGY_STATUS, &msr))
+			वापस -15;
 		p->energy_dram = msr;
-	}
-	if (do_rapl & RAPL_GFX) {
-		if (get_msr_sum(cpu, MSR_PP1_ENERGY_STATUS, &msr))
-			return -16;
+	पूर्ण
+	अगर (करो_rapl & RAPL_GFX) अणु
+		अगर (get_msr_sum(cpu, MSR_PP1_ENERGY_STATUS, &msr))
+			वापस -16;
 		p->energy_gfx = msr;
-	}
-	if (do_rapl & RAPL_PKG_PERF_STATUS) {
-		if (get_msr_sum(cpu, MSR_PKG_PERF_STATUS, &msr))
-			return -16;
+	पूर्ण
+	अगर (करो_rapl & RAPL_PKG_PERF_STATUS) अणु
+		अगर (get_msr_sum(cpu, MSR_PKG_PERF_STATUS, &msr))
+			वापस -16;
 		p->rapl_pkg_perf_status = msr;
-	}
-	if (do_rapl & RAPL_DRAM_PERF_STATUS) {
-		if (get_msr_sum(cpu, MSR_DRAM_PERF_STATUS, &msr))
-			return -16;
+	पूर्ण
+	अगर (करो_rapl & RAPL_DRAM_PERF_STATUS) अणु
+		अगर (get_msr_sum(cpu, MSR_DRAM_PERF_STATUS, &msr))
+			वापस -16;
 		p->rapl_dram_perf_status = msr;
-	}
-	if (do_rapl & RAPL_AMD_F17H) {
-		if (get_msr_sum(cpu, MSR_PKG_ENERGY_STAT, &msr))
-			return -13;
+	पूर्ण
+	अगर (करो_rapl & RAPL_AMD_F17H) अणु
+		अगर (get_msr_sum(cpu, MSR_PKG_ENERGY_STAT, &msr))
+			वापस -13;
 		p->energy_pkg = msr;
-	}
-	if (DO_BIC(BIC_PkgTmp)) {
-		if (get_msr(cpu, MSR_IA32_PACKAGE_THERM_STATUS, &msr))
-			return -17;
+	पूर्ण
+	अगर (DO_BIC(BIC_PkgTmp)) अणु
+		अगर (get_msr(cpu, MSR_IA32_PACKAGE_THERM_STATUS, &msr))
+			वापस -17;
 		p->pkg_temp_c = tj_max - ((msr >> 16) & 0x7F);
-	}
+	पूर्ण
 
-	if (DO_BIC(BIC_GFX_rc6))
+	अगर (DO_BIC(BIC_GFX_rc6))
 		p->gfx_rc6_ms = gfx_cur_rc6_ms;
 
-	if (DO_BIC(BIC_GFXMHz))
+	अगर (DO_BIC(BIC_GFXMHz))
 		p->gfx_mhz = gfx_cur_mhz;
 
-	if (DO_BIC(BIC_GFXACTMHz))
+	अगर (DO_BIC(BIC_GFXACTMHz))
 		p->gfx_act_mhz = gfx_act_mhz;
 
-	for (i = 0, mp = sys.pp; mp; i++, mp = mp->next) {
-		if (get_mp(cpu, mp, &p->counter[i]))
-			return -10;
-	}
-done:
-	gettimeofday(&t->tv_end, (struct timezone *)NULL);
+	क्रम (i = 0, mp = sys.pp; mp; i++, mp = mp->next) अणु
+		अगर (get_mp(cpu, mp, &p->counter[i]))
+			वापस -10;
+	पूर्ण
+करोne:
+	समय_लोofday(&t->tv_end, (काष्ठा समयzone *)शून्य);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * MSR_PKG_CST_CONFIG_CONTROL decoding for pkg_cstate_limit:
+ * MSR_PKG_CST_CONFIG_CONTROL decoding क्रम pkg_cstate_limit:
  * If you change the values, note they are used both in comparisons
  * (>= PCL__7) and to index pkg_cstate_limit_strings[].
  */
 
-#define PCLUKN 0		/* Unknown */
-#define PCLRSV 1		/* Reserved */
-#define PCL__0 2		/* PC0 */
-#define PCL__1 3		/* PC1 */
-#define PCL__2 4		/* PC2 */
-#define PCL__3 5		/* PC3 */
-#define PCL__4 6		/* PC4 */
-#define PCL__6 7		/* PC6 */
-#define PCL_6N 8		/* PC6 No Retention */
-#define PCL_6R 9		/* PC6 Retention */
-#define PCL__7 10		/* PC7 */
-#define PCL_7S 11		/* PC7 Shrink */
-#define PCL__8 12		/* PC8 */
-#define PCL__9 13		/* PC9 */
-#define PCL_10 14		/* PC10 */
-#define PCLUNL 15		/* Unlimited */
+#घोषणा PCLUKN 0		/* Unknown */
+#घोषणा PCLRSV 1		/* Reserved */
+#घोषणा PCL__0 2		/* PC0 */
+#घोषणा PCL__1 3		/* PC1 */
+#घोषणा PCL__2 4		/* PC2 */
+#घोषणा PCL__3 5		/* PC3 */
+#घोषणा PCL__4 6		/* PC4 */
+#घोषणा PCL__6 7		/* PC6 */
+#घोषणा PCL_6N 8		/* PC6 No Retention */
+#घोषणा PCL_6R 9		/* PC6 Retention */
+#घोषणा PCL__7 10		/* PC7 */
+#घोषणा PCL_7S 11		/* PC7 Shrink */
+#घोषणा PCL__8 12		/* PC8 */
+#घोषणा PCL__9 13		/* PC9 */
+#घोषणा PCL_10 14		/* PC10 */
+#घोषणा PCLUNL 15		/* Unlimited */
 
-int pkg_cstate_limit = PCLUKN;
-char *pkg_cstate_limit_strings[] = { "reserved", "unknown", "pc0", "pc1", "pc2",
+पूर्णांक pkg_cstate_limit = PCLUKN;
+अक्षर *pkg_cstate_limit_strings[] = अणु "reserved", "unknown", "pc0", "pc1", "pc2",
 	"pc3", "pc4", "pc6", "pc6n", "pc6r", "pc7", "pc7s", "pc8", "pc9", "pc10", "unlimited"
-};
+पूर्ण;
 
-int nhm_pkg_cstate_limits[16] =
-    { PCL__0, PCL__1, PCL__3, PCL__6, PCL__7, PCLRSV, PCLRSV, PCLUNL, PCLRSV, PCLRSV, PCLRSV, PCLRSV, PCLRSV, PCLRSV,
+पूर्णांक nhm_pkg_cstate_limits[16] =
+    अणु PCL__0, PCL__1, PCL__3, PCL__6, PCL__7, PCLRSV, PCLRSV, PCLUNL, PCLRSV, PCLRSV, PCLRSV, PCLRSV, PCLRSV, PCLRSV,
 	PCLRSV, PCLRSV
-};
+पूर्ण;
 
-int snb_pkg_cstate_limits[16] =
-    { PCL__0, PCL__2, PCL_6N, PCL_6R, PCL__7, PCL_7S, PCLRSV, PCLUNL, PCLRSV, PCLRSV, PCLRSV, PCLRSV, PCLRSV, PCLRSV,
+पूर्णांक snb_pkg_cstate_limits[16] =
+    अणु PCL__0, PCL__2, PCL_6N, PCL_6R, PCL__7, PCL_7S, PCLRSV, PCLUNL, PCLRSV, PCLRSV, PCLRSV, PCLRSV, PCLRSV, PCLRSV,
 	PCLRSV, PCLRSV
-};
+पूर्ण;
 
-int hsw_pkg_cstate_limits[16] =
-    { PCL__0, PCL__2, PCL__3, PCL__6, PCL__7, PCL_7S, PCL__8, PCL__9, PCLUNL, PCLRSV, PCLRSV, PCLRSV, PCLRSV, PCLRSV,
+पूर्णांक hsw_pkg_cstate_limits[16] =
+    अणु PCL__0, PCL__2, PCL__3, PCL__6, PCL__7, PCL_7S, PCL__8, PCL__9, PCLUNL, PCLRSV, PCLRSV, PCLRSV, PCLRSV, PCLRSV,
 	PCLRSV, PCLRSV
-};
+पूर्ण;
 
-int slv_pkg_cstate_limits[16] =
-    { PCL__0, PCL__1, PCLRSV, PCLRSV, PCL__4, PCLRSV, PCL__6, PCL__7, PCLRSV, PCLRSV, PCLRSV, PCLRSV, PCLRSV, PCLRSV,
+पूर्णांक slv_pkg_cstate_limits[16] =
+    अणु PCL__0, PCL__1, PCLRSV, PCLRSV, PCL__4, PCLRSV, PCL__6, PCL__7, PCLRSV, PCLRSV, PCLRSV, PCLRSV, PCLRSV, PCLRSV,
 	PCL__6, PCL__7
-};
+पूर्ण;
 
-int amt_pkg_cstate_limits[16] =
-    { PCLUNL, PCL__1, PCL__2, PCLRSV, PCLRSV, PCLRSV, PCL__6, PCL__7, PCLRSV, PCLRSV, PCLRSV, PCLRSV, PCLRSV, PCLRSV,
+पूर्णांक amt_pkg_cstate_limits[16] =
+    अणु PCLUNL, PCL__1, PCL__2, PCLRSV, PCLRSV, PCLRSV, PCL__6, PCL__7, PCLRSV, PCLRSV, PCLRSV, PCLRSV, PCLRSV, PCLRSV,
 	PCLRSV, PCLRSV
-};
+पूर्ण;
 
-int phi_pkg_cstate_limits[16] =
-    { PCL__0, PCL__2, PCL_6N, PCL_6R, PCLRSV, PCLRSV, PCLRSV, PCLUNL, PCLRSV, PCLRSV, PCLRSV, PCLRSV, PCLRSV, PCLRSV,
+पूर्णांक phi_pkg_cstate_limits[16] =
+    अणु PCL__0, PCL__2, PCL_6N, PCL_6R, PCLRSV, PCLRSV, PCLRSV, PCLUNL, PCLRSV, PCLRSV, PCLRSV, PCLRSV, PCLRSV, PCLRSV,
 	PCLRSV, PCLRSV
-};
+पूर्ण;
 
-int glm_pkg_cstate_limits[16] =
-    { PCLUNL, PCL__1, PCL__3, PCL__6, PCL__7, PCL_7S, PCL__8, PCL__9, PCL_10, PCLRSV, PCLRSV, PCLRSV, PCLRSV, PCLRSV,
+पूर्णांक glm_pkg_cstate_limits[16] =
+    अणु PCLUNL, PCL__1, PCL__3, PCL__6, PCL__7, PCL_7S, PCL__8, PCL__9, PCL_10, PCLRSV, PCLRSV, PCLRSV, PCLRSV, PCLRSV,
 	PCLRSV, PCLRSV
-};
+पूर्ण;
 
-int skx_pkg_cstate_limits[16] =
-    { PCL__0, PCL__2, PCL_6N, PCL_6R, PCLRSV, PCLRSV, PCLRSV, PCLUNL, PCLRSV, PCLRSV, PCLRSV, PCLRSV, PCLRSV, PCLRSV,
+पूर्णांक skx_pkg_cstate_limits[16] =
+    अणु PCL__0, PCL__2, PCL_6N, PCL_6R, PCLRSV, PCLRSV, PCLRSV, PCLUNL, PCLRSV, PCLRSV, PCLRSV, PCLRSV, PCLRSV, PCLRSV,
 	PCLRSV, PCLRSV
-};
+पूर्ण;
 
-int icx_pkg_cstate_limits[16] =
-    { PCL__0, PCL__2, PCL__6, PCLRSV, PCLRSV, PCLRSV, PCLRSV, PCLUNL, PCLRSV, PCLRSV, PCLRSV, PCLRSV, PCLRSV, PCLRSV,
+पूर्णांक icx_pkg_cstate_limits[16] =
+    अणु PCL__0, PCL__2, PCL__6, PCLRSV, PCLRSV, PCLRSV, PCLRSV, PCLUNL, PCLRSV, PCLRSV, PCLRSV, PCLRSV, PCLRSV, PCLRSV,
 	PCLRSV, PCLRSV
-};
+पूर्ण;
 
-static void calculate_tsc_tweak()
-{
+अटल व्योम calculate_tsc_tweak()
+अणु
 	tsc_tweak = base_hz / tsc_hz;
-}
+पूर्ण
 
-void prewake_cstate_probe(unsigned int family, unsigned int model);
+व्योम prewake_cstate_probe(अचिन्हित पूर्णांक family, अचिन्हित पूर्णांक model);
 
-static void dump_nhm_platform_info(void)
-{
-	unsigned long long msr;
-	unsigned int ratio;
+अटल व्योम dump_nhm_platक्रमm_info(व्योम)
+अणु
+	अचिन्हित दीर्घ दीर्घ msr;
+	अचिन्हित पूर्णांक ratio;
 
 	get_msr(base_cpu, MSR_PLATFORM_INFO, &msr);
 
-	fprintf(outf, "cpu%d: MSR_PLATFORM_INFO: 0x%08llx\n", base_cpu, msr);
+	ख_लिखो(outf, "cpu%d: MSR_PLATFORM_INFO: 0x%08llx\n", base_cpu, msr);
 
 	ratio = (msr >> 40) & 0xFF;
-	fprintf(outf, "%d * %.1f = %.1f MHz max efficiency frequency\n", ratio, bclk, ratio * bclk);
+	ख_लिखो(outf, "%d * %.1f = %.1f MHz max efficiency frequency\n", ratio, bclk, ratio * bclk);
 
 	ratio = (msr >> 8) & 0xFF;
-	fprintf(outf, "%d * %.1f = %.1f MHz base frequency\n", ratio, bclk, ratio * bclk);
+	ख_लिखो(outf, "%d * %.1f = %.1f MHz base frequency\n", ratio, bclk, ratio * bclk);
 
 	get_msr(base_cpu, MSR_IA32_POWER_CTL, &msr);
-	fprintf(outf, "cpu%d: MSR_IA32_POWER_CTL: 0x%08llx (C1E auto-promotion: %sabled)\n",
+	ख_लिखो(outf, "cpu%d: MSR_IA32_POWER_CTL: 0x%08llx (C1E auto-promotion: %sabled)\n",
 		base_cpu, msr, msr & 0x2 ? "EN" : "DIS");
 
 	/* C-state Pre-wake Disable (CSTATE_PREWAKE_DISABLE) */
-	if (dis_cstate_prewake)
-		fprintf(outf, "C-state Pre-wake: %sabled\n", msr & 0x40000000 ? "DIS" : "EN");
+	अगर (dis_cstate_prewake)
+		ख_लिखो(outf, "C-state Pre-wake: %sabled\n", msr & 0x40000000 ? "DIS" : "EN");
 
-	return;
-}
+	वापस;
+पूर्ण
 
-static void dump_hsw_turbo_ratio_limits(void)
-{
-	unsigned long long msr;
-	unsigned int ratio;
+अटल व्योम dump_hsw_turbo_ratio_limits(व्योम)
+अणु
+	अचिन्हित दीर्घ दीर्घ msr;
+	अचिन्हित पूर्णांक ratio;
 
 	get_msr(base_cpu, MSR_TURBO_RATIO_LIMIT2, &msr);
 
-	fprintf(outf, "cpu%d: MSR_TURBO_RATIO_LIMIT2: 0x%08llx\n", base_cpu, msr);
+	ख_लिखो(outf, "cpu%d: MSR_TURBO_RATIO_LIMIT2: 0x%08llx\n", base_cpu, msr);
 
 	ratio = (msr >> 8) & 0xFF;
-	if (ratio)
-		fprintf(outf, "%d * %.1f = %.1f MHz max turbo 18 active cores\n", ratio, bclk, ratio * bclk);
+	अगर (ratio)
+		ख_लिखो(outf, "%d * %.1f = %.1f MHz max turbo 18 active cores\n", ratio, bclk, ratio * bclk);
 
 	ratio = (msr >> 0) & 0xFF;
-	if (ratio)
-		fprintf(outf, "%d * %.1f = %.1f MHz max turbo 17 active cores\n", ratio, bclk, ratio * bclk);
-	return;
-}
+	अगर (ratio)
+		ख_लिखो(outf, "%d * %.1f = %.1f MHz max turbo 17 active cores\n", ratio, bclk, ratio * bclk);
+	वापस;
+पूर्ण
 
-static void dump_ivt_turbo_ratio_limits(void)
-{
-	unsigned long long msr;
-	unsigned int ratio;
+अटल व्योम dump_ivt_turbo_ratio_limits(व्योम)
+अणु
+	अचिन्हित दीर्घ दीर्घ msr;
+	अचिन्हित पूर्णांक ratio;
 
 	get_msr(base_cpu, MSR_TURBO_RATIO_LIMIT1, &msr);
 
-	fprintf(outf, "cpu%d: MSR_TURBO_RATIO_LIMIT1: 0x%08llx\n", base_cpu, msr);
+	ख_लिखो(outf, "cpu%d: MSR_TURBO_RATIO_LIMIT1: 0x%08llx\n", base_cpu, msr);
 
 	ratio = (msr >> 56) & 0xFF;
-	if (ratio)
-		fprintf(outf, "%d * %.1f = %.1f MHz max turbo 16 active cores\n", ratio, bclk, ratio * bclk);
+	अगर (ratio)
+		ख_लिखो(outf, "%d * %.1f = %.1f MHz max turbo 16 active cores\n", ratio, bclk, ratio * bclk);
 
 	ratio = (msr >> 48) & 0xFF;
-	if (ratio)
-		fprintf(outf, "%d * %.1f = %.1f MHz max turbo 15 active cores\n", ratio, bclk, ratio * bclk);
+	अगर (ratio)
+		ख_लिखो(outf, "%d * %.1f = %.1f MHz max turbo 15 active cores\n", ratio, bclk, ratio * bclk);
 
 	ratio = (msr >> 40) & 0xFF;
-	if (ratio)
-		fprintf(outf, "%d * %.1f = %.1f MHz max turbo 14 active cores\n", ratio, bclk, ratio * bclk);
+	अगर (ratio)
+		ख_लिखो(outf, "%d * %.1f = %.1f MHz max turbo 14 active cores\n", ratio, bclk, ratio * bclk);
 
 	ratio = (msr >> 32) & 0xFF;
-	if (ratio)
-		fprintf(outf, "%d * %.1f = %.1f MHz max turbo 13 active cores\n", ratio, bclk, ratio * bclk);
+	अगर (ratio)
+		ख_लिखो(outf, "%d * %.1f = %.1f MHz max turbo 13 active cores\n", ratio, bclk, ratio * bclk);
 
 	ratio = (msr >> 24) & 0xFF;
-	if (ratio)
-		fprintf(outf, "%d * %.1f = %.1f MHz max turbo 12 active cores\n", ratio, bclk, ratio * bclk);
+	अगर (ratio)
+		ख_लिखो(outf, "%d * %.1f = %.1f MHz max turbo 12 active cores\n", ratio, bclk, ratio * bclk);
 
 	ratio = (msr >> 16) & 0xFF;
-	if (ratio)
-		fprintf(outf, "%d * %.1f = %.1f MHz max turbo 11 active cores\n", ratio, bclk, ratio * bclk);
+	अगर (ratio)
+		ख_लिखो(outf, "%d * %.1f = %.1f MHz max turbo 11 active cores\n", ratio, bclk, ratio * bclk);
 
 	ratio = (msr >> 8) & 0xFF;
-	if (ratio)
-		fprintf(outf, "%d * %.1f = %.1f MHz max turbo 10 active cores\n", ratio, bclk, ratio * bclk);
+	अगर (ratio)
+		ख_लिखो(outf, "%d * %.1f = %.1f MHz max turbo 10 active cores\n", ratio, bclk, ratio * bclk);
 
 	ratio = (msr >> 0) & 0xFF;
-	if (ratio)
-		fprintf(outf, "%d * %.1f = %.1f MHz max turbo 9 active cores\n", ratio, bclk, ratio * bclk);
-	return;
-}
+	अगर (ratio)
+		ख_लिखो(outf, "%d * %.1f = %.1f MHz max turbo 9 active cores\n", ratio, bclk, ratio * bclk);
+	वापस;
+पूर्ण
 
-int has_turbo_ratio_group_limits(int family, int model)
-{
+पूर्णांक has_turbo_ratio_group_limits(पूर्णांक family, पूर्णांक model)
+अणु
 
-	if (!genuine_intel)
-		return 0;
+	अगर (!genuine_पूर्णांकel)
+		वापस 0;
 
-	switch (model) {
-	case INTEL_FAM6_ATOM_GOLDMONT:
-	case INTEL_FAM6_SKYLAKE_X:
-	case INTEL_FAM6_ICELAKE_X:
-	case INTEL_FAM6_ATOM_GOLDMONT_D:
-	case INTEL_FAM6_ATOM_TREMONT_D:
-		return 1;
-	}
-	return 0;
-}
+	चयन (model) अणु
+	हाल INTEL_FAM6_ATOM_GOLDMONT:
+	हाल INTEL_FAM6_SKYLAKE_X:
+	हाल INTEL_FAM6_ICELAKE_X:
+	हाल INTEL_FAM6_ATOM_GOLDMONT_D:
+	हाल INTEL_FAM6_ATOM_TREMONT_D:
+		वापस 1;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static void dump_turbo_ratio_limits(int family, int model)
-{
-	unsigned long long msr, core_counts;
-	unsigned int ratio, group_size;
+अटल व्योम dump_turbo_ratio_limits(पूर्णांक family, पूर्णांक model)
+अणु
+	अचिन्हित दीर्घ दीर्घ msr, core_counts;
+	अचिन्हित पूर्णांक ratio, group_size;
 
 	get_msr(base_cpu, MSR_TURBO_RATIO_LIMIT, &msr);
-	fprintf(outf, "cpu%d: MSR_TURBO_RATIO_LIMIT: 0x%08llx\n", base_cpu, msr);
+	ख_लिखो(outf, "cpu%d: MSR_TURBO_RATIO_LIMIT: 0x%08llx\n", base_cpu, msr);
 
-	if (has_turbo_ratio_group_limits(family, model)) {
+	अगर (has_turbo_ratio_group_limits(family, model)) अणु
 		get_msr(base_cpu, MSR_TURBO_RATIO_LIMIT1, &core_counts);
-		fprintf(outf, "cpu%d: MSR_TURBO_RATIO_LIMIT1: 0x%08llx\n", base_cpu, core_counts);
-	} else {
+		ख_लिखो(outf, "cpu%d: MSR_TURBO_RATIO_LIMIT1: 0x%08llx\n", base_cpu, core_counts);
+	पूर्ण अन्यथा अणु
 		core_counts = 0x0807060504030201;
-	}
+	पूर्ण
 
 	ratio = (msr >> 56) & 0xFF;
 	group_size = (core_counts >> 56) & 0xFF;
-	if (ratio)
-		fprintf(outf, "%d * %.1f = %.1f MHz max turbo %d active cores\n",
+	अगर (ratio)
+		ख_लिखो(outf, "%d * %.1f = %.1f MHz max turbo %d active cores\n",
 			ratio, bclk, ratio * bclk, group_size);
 
 	ratio = (msr >> 48) & 0xFF;
 	group_size = (core_counts >> 48) & 0xFF;
-	if (ratio)
-		fprintf(outf, "%d * %.1f = %.1f MHz max turbo %d active cores\n",
+	अगर (ratio)
+		ख_लिखो(outf, "%d * %.1f = %.1f MHz max turbo %d active cores\n",
 			ratio, bclk, ratio * bclk, group_size);
 
 	ratio = (msr >> 40) & 0xFF;
 	group_size = (core_counts >> 40) & 0xFF;
-	if (ratio)
-		fprintf(outf, "%d * %.1f = %.1f MHz max turbo %d active cores\n",
+	अगर (ratio)
+		ख_लिखो(outf, "%d * %.1f = %.1f MHz max turbo %d active cores\n",
 			ratio, bclk, ratio * bclk, group_size);
 
 	ratio = (msr >> 32) & 0xFF;
 	group_size = (core_counts >> 32) & 0xFF;
-	if (ratio)
-		fprintf(outf, "%d * %.1f = %.1f MHz max turbo %d active cores\n",
+	अगर (ratio)
+		ख_लिखो(outf, "%d * %.1f = %.1f MHz max turbo %d active cores\n",
 			ratio, bclk, ratio * bclk, group_size);
 
 	ratio = (msr >> 24) & 0xFF;
 	group_size = (core_counts >> 24) & 0xFF;
-	if (ratio)
-		fprintf(outf, "%d * %.1f = %.1f MHz max turbo %d active cores\n",
+	अगर (ratio)
+		ख_लिखो(outf, "%d * %.1f = %.1f MHz max turbo %d active cores\n",
 			ratio, bclk, ratio * bclk, group_size);
 
 	ratio = (msr >> 16) & 0xFF;
 	group_size = (core_counts >> 16) & 0xFF;
-	if (ratio)
-		fprintf(outf, "%d * %.1f = %.1f MHz max turbo %d active cores\n",
+	अगर (ratio)
+		ख_लिखो(outf, "%d * %.1f = %.1f MHz max turbo %d active cores\n",
 			ratio, bclk, ratio * bclk, group_size);
 
 	ratio = (msr >> 8) & 0xFF;
 	group_size = (core_counts >> 8) & 0xFF;
-	if (ratio)
-		fprintf(outf, "%d * %.1f = %.1f MHz max turbo %d active cores\n",
+	अगर (ratio)
+		ख_लिखो(outf, "%d * %.1f = %.1f MHz max turbo %d active cores\n",
 			ratio, bclk, ratio * bclk, group_size);
 
 	ratio = (msr >> 0) & 0xFF;
 	group_size = (core_counts >> 0) & 0xFF;
-	if (ratio)
-		fprintf(outf, "%d * %.1f = %.1f MHz max turbo %d active cores\n",
+	अगर (ratio)
+		ख_लिखो(outf, "%d * %.1f = %.1f MHz max turbo %d active cores\n",
 			ratio, bclk, ratio * bclk, group_size);
-	return;
-}
+	वापस;
+पूर्ण
 
-static void dump_atom_turbo_ratio_limits(void)
-{
-	unsigned long long msr;
-	unsigned int ratio;
+अटल व्योम dump_atom_turbo_ratio_limits(व्योम)
+अणु
+	अचिन्हित दीर्घ दीर्घ msr;
+	अचिन्हित पूर्णांक ratio;
 
 	get_msr(base_cpu, MSR_ATOM_CORE_RATIOS, &msr);
-	fprintf(outf, "cpu%d: MSR_ATOM_CORE_RATIOS: 0x%08llx\n", base_cpu, msr & 0xFFFFFFFF);
+	ख_लिखो(outf, "cpu%d: MSR_ATOM_CORE_RATIOS: 0x%08llx\n", base_cpu, msr & 0xFFFFFFFF);
 
 	ratio = (msr >> 0) & 0x3F;
-	if (ratio)
-		fprintf(outf, "%d * %.1f = %.1f MHz minimum operating frequency\n", ratio, bclk, ratio * bclk);
+	अगर (ratio)
+		ख_लिखो(outf, "%d * %.1f = %.1f MHz minimum operating frequency\n", ratio, bclk, ratio * bclk);
 
 	ratio = (msr >> 8) & 0x3F;
-	if (ratio)
-		fprintf(outf, "%d * %.1f = %.1f MHz low frequency mode (LFM)\n", ratio, bclk, ratio * bclk);
+	अगर (ratio)
+		ख_लिखो(outf, "%d * %.1f = %.1f MHz low frequency mode (LFM)\n", ratio, bclk, ratio * bclk);
 
 	ratio = (msr >> 16) & 0x3F;
-	if (ratio)
-		fprintf(outf, "%d * %.1f = %.1f MHz base frequency\n", ratio, bclk, ratio * bclk);
+	अगर (ratio)
+		ख_लिखो(outf, "%d * %.1f = %.1f MHz base frequency\n", ratio, bclk, ratio * bclk);
 
 	get_msr(base_cpu, MSR_ATOM_CORE_TURBO_RATIOS, &msr);
-	fprintf(outf, "cpu%d: MSR_ATOM_CORE_TURBO_RATIOS: 0x%08llx\n", base_cpu, msr & 0xFFFFFFFF);
+	ख_लिखो(outf, "cpu%d: MSR_ATOM_CORE_TURBO_RATIOS: 0x%08llx\n", base_cpu, msr & 0xFFFFFFFF);
 
 	ratio = (msr >> 24) & 0x3F;
-	if (ratio)
-		fprintf(outf, "%d * %.1f = %.1f MHz max turbo 4 active cores\n", ratio, bclk, ratio * bclk);
+	अगर (ratio)
+		ख_लिखो(outf, "%d * %.1f = %.1f MHz max turbo 4 active cores\n", ratio, bclk, ratio * bclk);
 
 	ratio = (msr >> 16) & 0x3F;
-	if (ratio)
-		fprintf(outf, "%d * %.1f = %.1f MHz max turbo 3 active cores\n", ratio, bclk, ratio * bclk);
+	अगर (ratio)
+		ख_लिखो(outf, "%d * %.1f = %.1f MHz max turbo 3 active cores\n", ratio, bclk, ratio * bclk);
 
 	ratio = (msr >> 8) & 0x3F;
-	if (ratio)
-		fprintf(outf, "%d * %.1f = %.1f MHz max turbo 2 active cores\n", ratio, bclk, ratio * bclk);
+	अगर (ratio)
+		ख_लिखो(outf, "%d * %.1f = %.1f MHz max turbo 2 active cores\n", ratio, bclk, ratio * bclk);
 
 	ratio = (msr >> 0) & 0x3F;
-	if (ratio)
-		fprintf(outf, "%d * %.1f = %.1f MHz max turbo 1 active core\n", ratio, bclk, ratio * bclk);
-}
+	अगर (ratio)
+		ख_लिखो(outf, "%d * %.1f = %.1f MHz max turbo 1 active core\n", ratio, bclk, ratio * bclk);
+पूर्ण
 
-static void dump_knl_turbo_ratio_limits(void)
-{
-	const unsigned int buckets_no = 7;
+अटल व्योम dump_knl_turbo_ratio_limits(व्योम)
+अणु
+	स्थिर अचिन्हित पूर्णांक buckets_no = 7;
 
-	unsigned long long msr;
-	int delta_cores, delta_ratio;
-	int i, b_nr;
-	unsigned int cores[buckets_no];
-	unsigned int ratio[buckets_no];
+	अचिन्हित दीर्घ दीर्घ msr;
+	पूर्णांक delta_cores, delta_ratio;
+	पूर्णांक i, b_nr;
+	अचिन्हित पूर्णांक cores[buckets_no];
+	अचिन्हित पूर्णांक ratio[buckets_no];
 
 	get_msr(base_cpu, MSR_TURBO_RATIO_LIMIT, &msr);
 
-	fprintf(outf, "cpu%d: MSR_TURBO_RATIO_LIMIT: 0x%08llx\n", base_cpu, msr);
+	ख_लिखो(outf, "cpu%d: MSR_TURBO_RATIO_LIMIT: 0x%08llx\n", base_cpu, msr);
 
 	/*
 	 * Turbo encoding in KNL is as follows:
@@ -2585,252 +2586,252 @@ static void dump_knl_turbo_ratio_limits(void)
 	cores[b_nr] = (msr & 0xFF) >> 1;
 	ratio[b_nr] = (msr >> 8) & 0xFF;
 
-	for (i = 16; i < 64; i += 8) {
+	क्रम (i = 16; i < 64; i += 8) अणु
 		delta_cores = (msr >> i) & 0x1F;
 		delta_ratio = (msr >> (i + 5)) & 0x7;
 
 		cores[b_nr + 1] = cores[b_nr] + delta_cores;
 		ratio[b_nr + 1] = ratio[b_nr] - delta_ratio;
 		b_nr++;
-	}
+	पूर्ण
 
-	for (i = buckets_no - 1; i >= 0; i--)
-		if (i > 0 ? ratio[i] != ratio[i - 1] : 1)
-			fprintf(outf,
+	क्रम (i = buckets_no - 1; i >= 0; i--)
+		अगर (i > 0 ? ratio[i] != ratio[i - 1] : 1)
+			ख_लिखो(outf,
 				"%d * %.1f = %.1f MHz max turbo %d active cores\n",
 				ratio[i], bclk, ratio[i] * bclk, cores[i]);
-}
+पूर्ण
 
-static void dump_nhm_cst_cfg(void)
-{
-	unsigned long long msr;
+अटल व्योम dump_nhm_cst_cfg(व्योम)
+अणु
+	अचिन्हित दीर्घ दीर्घ msr;
 
 	get_msr(base_cpu, MSR_PKG_CST_CONFIG_CONTROL, &msr);
 
-	fprintf(outf, "cpu%d: MSR_PKG_CST_CONFIG_CONTROL: 0x%08llx", base_cpu, msr);
+	ख_लिखो(outf, "cpu%d: MSR_PKG_CST_CONFIG_CONTROL: 0x%08llx", base_cpu, msr);
 
-	fprintf(outf, " (%s%s%s%s%slocked, pkg-cstate-limit=%d (%s)",
+	ख_लिखो(outf, " (%s%s%s%s%slocked, pkg-cstate-limit=%d (%s)",
 		(msr & SNB_C3_AUTO_UNDEMOTE) ? "UNdemote-C3, " : "",
 		(msr & SNB_C1_AUTO_UNDEMOTE) ? "UNdemote-C1, " : "",
 		(msr & NHM_C3_AUTO_DEMOTE) ? "demote-C3, " : "",
 		(msr & NHM_C1_AUTO_DEMOTE) ? "demote-C1, " : "",
-		(msr & (1 << 15)) ? "" : "UN", (unsigned int)msr & 0xF, pkg_cstate_limit_strings[pkg_cstate_limit]);
+		(msr & (1 << 15)) ? "" : "UN", (अचिन्हित पूर्णांक)msr & 0xF, pkg_cstate_limit_strings[pkg_cstate_limit]);
 
-#define AUTOMATIC_CSTATE_CONVERSION		(1UL << 16)
-	if (has_automatic_cstate_conversion) {
-		fprintf(outf, ", automatic c-state conversion=%s", (msr & AUTOMATIC_CSTATE_CONVERSION) ? "on" : "off");
-	}
+#घोषणा AUTOMATIC_CSTATE_CONVERSION		(1UL << 16)
+	अगर (has_स्वतःmatic_cstate_conversion) अणु
+		ख_लिखो(outf, ", automatic c-state conversion=%s", (msr & AUTOMATIC_CSTATE_CONVERSION) ? "on" : "off");
+	पूर्ण
 
-	fprintf(outf, ")\n");
+	ख_लिखो(outf, ")\n");
 
-	return;
-}
+	वापस;
+पूर्ण
 
-static void dump_config_tdp(void)
-{
-	unsigned long long msr;
+अटल व्योम dump_config_tdp(व्योम)
+अणु
+	अचिन्हित दीर्घ दीर्घ msr;
 
 	get_msr(base_cpu, MSR_CONFIG_TDP_NOMINAL, &msr);
-	fprintf(outf, "cpu%d: MSR_CONFIG_TDP_NOMINAL: 0x%08llx", base_cpu, msr);
-	fprintf(outf, " (base_ratio=%d)\n", (unsigned int)msr & 0xFF);
+	ख_लिखो(outf, "cpu%d: MSR_CONFIG_TDP_NOMINAL: 0x%08llx", base_cpu, msr);
+	ख_लिखो(outf, " (base_ratio=%d)\n", (अचिन्हित पूर्णांक)msr & 0xFF);
 
 	get_msr(base_cpu, MSR_CONFIG_TDP_LEVEL_1, &msr);
-	fprintf(outf, "cpu%d: MSR_CONFIG_TDP_LEVEL_1: 0x%08llx (", base_cpu, msr);
-	if (msr) {
-		fprintf(outf, "PKG_MIN_PWR_LVL1=%d ", (unsigned int)(msr >> 48) & 0x7FFF);
-		fprintf(outf, "PKG_MAX_PWR_LVL1=%d ", (unsigned int)(msr >> 32) & 0x7FFF);
-		fprintf(outf, "LVL1_RATIO=%d ", (unsigned int)(msr >> 16) & 0xFF);
-		fprintf(outf, "PKG_TDP_LVL1=%d", (unsigned int)(msr) & 0x7FFF);
-	}
-	fprintf(outf, ")\n");
+	ख_लिखो(outf, "cpu%d: MSR_CONFIG_TDP_LEVEL_1: 0x%08llx (", base_cpu, msr);
+	अगर (msr) अणु
+		ख_लिखो(outf, "PKG_MIN_PWR_LVL1=%d ", (अचिन्हित पूर्णांक)(msr >> 48) & 0x7FFF);
+		ख_लिखो(outf, "PKG_MAX_PWR_LVL1=%d ", (अचिन्हित पूर्णांक)(msr >> 32) & 0x7FFF);
+		ख_लिखो(outf, "LVL1_RATIO=%d ", (अचिन्हित पूर्णांक)(msr >> 16) & 0xFF);
+		ख_लिखो(outf, "PKG_TDP_LVL1=%d", (अचिन्हित पूर्णांक)(msr) & 0x7FFF);
+	पूर्ण
+	ख_लिखो(outf, ")\n");
 
 	get_msr(base_cpu, MSR_CONFIG_TDP_LEVEL_2, &msr);
-	fprintf(outf, "cpu%d: MSR_CONFIG_TDP_LEVEL_2: 0x%08llx (", base_cpu, msr);
-	if (msr) {
-		fprintf(outf, "PKG_MIN_PWR_LVL2=%d ", (unsigned int)(msr >> 48) & 0x7FFF);
-		fprintf(outf, "PKG_MAX_PWR_LVL2=%d ", (unsigned int)(msr >> 32) & 0x7FFF);
-		fprintf(outf, "LVL2_RATIO=%d ", (unsigned int)(msr >> 16) & 0xFF);
-		fprintf(outf, "PKG_TDP_LVL2=%d", (unsigned int)(msr) & 0x7FFF);
-	}
-	fprintf(outf, ")\n");
+	ख_लिखो(outf, "cpu%d: MSR_CONFIG_TDP_LEVEL_2: 0x%08llx (", base_cpu, msr);
+	अगर (msr) अणु
+		ख_लिखो(outf, "PKG_MIN_PWR_LVL2=%d ", (अचिन्हित पूर्णांक)(msr >> 48) & 0x7FFF);
+		ख_लिखो(outf, "PKG_MAX_PWR_LVL2=%d ", (अचिन्हित पूर्णांक)(msr >> 32) & 0x7FFF);
+		ख_लिखो(outf, "LVL2_RATIO=%d ", (अचिन्हित पूर्णांक)(msr >> 16) & 0xFF);
+		ख_लिखो(outf, "PKG_TDP_LVL2=%d", (अचिन्हित पूर्णांक)(msr) & 0x7FFF);
+	पूर्ण
+	ख_लिखो(outf, ")\n");
 
 	get_msr(base_cpu, MSR_CONFIG_TDP_CONTROL, &msr);
-	fprintf(outf, "cpu%d: MSR_CONFIG_TDP_CONTROL: 0x%08llx (", base_cpu, msr);
-	if ((msr) & 0x3)
-		fprintf(outf, "TDP_LEVEL=%d ", (unsigned int)(msr) & 0x3);
-	fprintf(outf, " lock=%d", (unsigned int)(msr >> 31) & 1);
-	fprintf(outf, ")\n");
+	ख_लिखो(outf, "cpu%d: MSR_CONFIG_TDP_CONTROL: 0x%08llx (", base_cpu, msr);
+	अगर ((msr) & 0x3)
+		ख_लिखो(outf, "TDP_LEVEL=%d ", (अचिन्हित पूर्णांक)(msr) & 0x3);
+	ख_लिखो(outf, " lock=%d", (अचिन्हित पूर्णांक)(msr >> 31) & 1);
+	ख_लिखो(outf, ")\n");
 
 	get_msr(base_cpu, MSR_TURBO_ACTIVATION_RATIO, &msr);
-	fprintf(outf, "cpu%d: MSR_TURBO_ACTIVATION_RATIO: 0x%08llx (", base_cpu, msr);
-	fprintf(outf, "MAX_NON_TURBO_RATIO=%d", (unsigned int)(msr) & 0xFF);
-	fprintf(outf, " lock=%d", (unsigned int)(msr >> 31) & 1);
-	fprintf(outf, ")\n");
-}
+	ख_लिखो(outf, "cpu%d: MSR_TURBO_ACTIVATION_RATIO: 0x%08llx (", base_cpu, msr);
+	ख_लिखो(outf, "MAX_NON_TURBO_RATIO=%d", (अचिन्हित पूर्णांक)(msr) & 0xFF);
+	ख_लिखो(outf, " lock=%d", (अचिन्हित पूर्णांक)(msr >> 31) & 1);
+	ख_लिखो(outf, ")\n");
+पूर्ण
 
-unsigned int irtl_time_units[] = { 1, 32, 1024, 32768, 1048576, 33554432, 0, 0 };
+अचिन्हित पूर्णांक irtl_समय_units[] = अणु 1, 32, 1024, 32768, 1048576, 33554432, 0, 0 पूर्ण;
 
-void print_irtl(void)
-{
-	unsigned long long msr;
+व्योम prपूर्णांक_irtl(व्योम)
+अणु
+	अचिन्हित दीर्घ दीर्घ msr;
 
 	get_msr(base_cpu, MSR_PKGC3_IRTL, &msr);
-	fprintf(outf, "cpu%d: MSR_PKGC3_IRTL: 0x%08llx (", base_cpu, msr);
-	fprintf(outf, "%svalid, %lld ns)\n", msr & (1 << 15) ? "" : "NOT",
-		(msr & 0x3FF) * irtl_time_units[(msr >> 10) & 0x3]);
+	ख_लिखो(outf, "cpu%d: MSR_PKGC3_IRTL: 0x%08llx (", base_cpu, msr);
+	ख_लिखो(outf, "%svalid, %lld ns)\n", msr & (1 << 15) ? "" : "NOT",
+		(msr & 0x3FF) * irtl_समय_units[(msr >> 10) & 0x3]);
 
 	get_msr(base_cpu, MSR_PKGC6_IRTL, &msr);
-	fprintf(outf, "cpu%d: MSR_PKGC6_IRTL: 0x%08llx (", base_cpu, msr);
-	fprintf(outf, "%svalid, %lld ns)\n", msr & (1 << 15) ? "" : "NOT",
-		(msr & 0x3FF) * irtl_time_units[(msr >> 10) & 0x3]);
+	ख_लिखो(outf, "cpu%d: MSR_PKGC6_IRTL: 0x%08llx (", base_cpu, msr);
+	ख_लिखो(outf, "%svalid, %lld ns)\n", msr & (1 << 15) ? "" : "NOT",
+		(msr & 0x3FF) * irtl_समय_units[(msr >> 10) & 0x3]);
 
 	get_msr(base_cpu, MSR_PKGC7_IRTL, &msr);
-	fprintf(outf, "cpu%d: MSR_PKGC7_IRTL: 0x%08llx (", base_cpu, msr);
-	fprintf(outf, "%svalid, %lld ns)\n", msr & (1 << 15) ? "" : "NOT",
-		(msr & 0x3FF) * irtl_time_units[(msr >> 10) & 0x3]);
+	ख_लिखो(outf, "cpu%d: MSR_PKGC7_IRTL: 0x%08llx (", base_cpu, msr);
+	ख_लिखो(outf, "%svalid, %lld ns)\n", msr & (1 << 15) ? "" : "NOT",
+		(msr & 0x3FF) * irtl_समय_units[(msr >> 10) & 0x3]);
 
-	if (!do_irtl_hsw)
-		return;
+	अगर (!करो_irtl_hsw)
+		वापस;
 
 	get_msr(base_cpu, MSR_PKGC8_IRTL, &msr);
-	fprintf(outf, "cpu%d: MSR_PKGC8_IRTL: 0x%08llx (", base_cpu, msr);
-	fprintf(outf, "%svalid, %lld ns)\n", msr & (1 << 15) ? "" : "NOT",
-		(msr & 0x3FF) * irtl_time_units[(msr >> 10) & 0x3]);
+	ख_लिखो(outf, "cpu%d: MSR_PKGC8_IRTL: 0x%08llx (", base_cpu, msr);
+	ख_लिखो(outf, "%svalid, %lld ns)\n", msr & (1 << 15) ? "" : "NOT",
+		(msr & 0x3FF) * irtl_समय_units[(msr >> 10) & 0x3]);
 
 	get_msr(base_cpu, MSR_PKGC9_IRTL, &msr);
-	fprintf(outf, "cpu%d: MSR_PKGC9_IRTL: 0x%08llx (", base_cpu, msr);
-	fprintf(outf, "%svalid, %lld ns)\n", msr & (1 << 15) ? "" : "NOT",
-		(msr & 0x3FF) * irtl_time_units[(msr >> 10) & 0x3]);
+	ख_लिखो(outf, "cpu%d: MSR_PKGC9_IRTL: 0x%08llx (", base_cpu, msr);
+	ख_लिखो(outf, "%svalid, %lld ns)\n", msr & (1 << 15) ? "" : "NOT",
+		(msr & 0x3FF) * irtl_समय_units[(msr >> 10) & 0x3]);
 
 	get_msr(base_cpu, MSR_PKGC10_IRTL, &msr);
-	fprintf(outf, "cpu%d: MSR_PKGC10_IRTL: 0x%08llx (", base_cpu, msr);
-	fprintf(outf, "%svalid, %lld ns)\n", msr & (1 << 15) ? "" : "NOT",
-		(msr & 0x3FF) * irtl_time_units[(msr >> 10) & 0x3]);
+	ख_लिखो(outf, "cpu%d: MSR_PKGC10_IRTL: 0x%08llx (", base_cpu, msr);
+	ख_लिखो(outf, "%svalid, %lld ns)\n", msr & (1 << 15) ? "" : "NOT",
+		(msr & 0x3FF) * irtl_समय_units[(msr >> 10) & 0x3]);
 
-}
+पूर्ण
 
-void free_fd_percpu(void)
-{
-	int i;
+व्योम मुक्त_fd_percpu(व्योम)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < topo.max_cpu_num + 1; ++i) {
-		if (fd_percpu[i] != 0)
-			close(fd_percpu[i]);
-	}
+	क्रम (i = 0; i < topo.max_cpu_num + 1; ++i) अणु
+		अगर (fd_percpu[i] != 0)
+			बंद(fd_percpu[i]);
+	पूर्ण
 
-	free(fd_percpu);
-}
+	मुक्त(fd_percpu);
+पूर्ण
 
-void free_all_buffers(void)
-{
-	int i;
+व्योम मुक्त_all_buffers(व्योम)
+अणु
+	पूर्णांक i;
 
 	CPU_FREE(cpu_present_set);
-	cpu_present_set = NULL;
+	cpu_present_set = शून्य;
 	cpu_present_setsize = 0;
 
 	CPU_FREE(cpu_affinity_set);
-	cpu_affinity_set = NULL;
+	cpu_affinity_set = शून्य;
 	cpu_affinity_setsize = 0;
 
-	free(thread_even);
-	free(core_even);
-	free(package_even);
+	मुक्त(thपढ़ो_even);
+	मुक्त(core_even);
+	मुक्त(package_even);
 
-	thread_even = NULL;
-	core_even = NULL;
-	package_even = NULL;
+	thपढ़ो_even = शून्य;
+	core_even = शून्य;
+	package_even = शून्य;
 
-	free(thread_odd);
-	free(core_odd);
-	free(package_odd);
+	मुक्त(thपढ़ो_odd);
+	मुक्त(core_odd);
+	मुक्त(package_odd);
 
-	thread_odd = NULL;
-	core_odd = NULL;
-	package_odd = NULL;
+	thपढ़ो_odd = शून्य;
+	core_odd = शून्य;
+	package_odd = शून्य;
 
-	free(output_buffer);
-	output_buffer = NULL;
-	outp = NULL;
+	मुक्त(output_buffer);
+	output_buffer = शून्य;
+	outp = शून्य;
 
-	free_fd_percpu();
+	मुक्त_fd_percpu();
 
-	free(irq_column_2_cpu);
-	free(irqs_per_cpu);
+	मुक्त(irq_column_2_cpu);
+	मुक्त(irqs_per_cpu);
 
-	for (i = 0; i <= topo.max_cpu_num; ++i) {
-		if (cpus[i].put_ids)
+	क्रम (i = 0; i <= topo.max_cpu_num; ++i) अणु
+		अगर (cpus[i].put_ids)
 			CPU_FREE(cpus[i].put_ids);
-	}
-	free(cpus);
-}
+	पूर्ण
+	मुक्त(cpus);
+पूर्ण
 
 /*
- * Parse a file containing a single int.
- * Return 0 if file can not be opened
- * Exit if file can be opened, but can not be parsed
+ * Parse a file containing a single पूर्णांक.
+ * Return 0 अगर file can not be खोलोed
+ * Exit अगर file can be खोलोed, but can not be parsed
  */
-int parse_int_file(const char *fmt, ...)
-{
-	va_list args;
-	char path[PATH_MAX];
-	FILE *filep;
-	int value;
+पूर्णांक parse_पूर्णांक_file(स्थिर अक्षर *fmt, ...)
+अणु
+	बहु_सूची args;
+	अक्षर path[PATH_MAX];
+	खाता *filep;
+	पूर्णांक value;
 
-	va_start(args, fmt);
-	vsnprintf(path, sizeof(path), fmt, args);
-	va_end(args);
-	filep = fopen(path, "r");
-	if (!filep)
-		return 0;
-	if (fscanf(filep, "%d", &value) != 1)
+	बहु_शुरू(args, fmt);
+	vsnम_लिखो(path, माप(path), fmt, args);
+	बहु_पूर्ण(args);
+	filep = ख_खोलो(path, "r");
+	अगर (!filep)
+		वापस 0;
+	अगर (ख_पूछो(filep, "%d", &value) != 1)
 		err(1, "%s: failed to parse number from file", path);
-	fclose(filep);
-	return value;
-}
+	ख_बंद(filep);
+	वापस value;
+पूर्ण
 
 /*
  * cpu_is_first_core_in_package(cpu)
- * return 1 if given CPU is 1st core in package
+ * वापस 1 अगर given CPU is 1st core in package
  */
-int cpu_is_first_core_in_package(int cpu)
-{
-	return cpu == parse_int_file("/sys/devices/system/cpu/cpu%d/topology/core_siblings_list", cpu);
-}
+पूर्णांक cpu_is_first_core_in_package(पूर्णांक cpu)
+अणु
+	वापस cpu == parse_पूर्णांक_file("/sys/devices/system/cpu/cpu%d/topology/core_siblings_list", cpu);
+पूर्ण
 
-int get_physical_package_id(int cpu)
-{
-	return parse_int_file("/sys/devices/system/cpu/cpu%d/topology/physical_package_id", cpu);
-}
+पूर्णांक get_physical_package_id(पूर्णांक cpu)
+अणु
+	वापस parse_पूर्णांक_file("/sys/devices/system/cpu/cpu%d/topology/physical_package_id", cpu);
+पूर्ण
 
-int get_die_id(int cpu)
-{
-	return parse_int_file("/sys/devices/system/cpu/cpu%d/topology/die_id", cpu);
-}
+पूर्णांक get_die_id(पूर्णांक cpu)
+अणु
+	वापस parse_पूर्णांक_file("/sys/devices/system/cpu/cpu%d/topology/die_id", cpu);
+पूर्ण
 
-int get_core_id(int cpu)
-{
-	return parse_int_file("/sys/devices/system/cpu/cpu%d/topology/core_id", cpu);
-}
+पूर्णांक get_core_id(पूर्णांक cpu)
+अणु
+	वापस parse_पूर्णांक_file("/sys/devices/system/cpu/cpu%d/topology/core_id", cpu);
+पूर्ण
 
-void set_node_data(void)
-{
-	int pkg, node, lnode, cpu, cpux;
-	int cpu_count;
+व्योम set_node_data(व्योम)
+अणु
+	पूर्णांक pkg, node, lnode, cpu, cpux;
+	पूर्णांक cpu_count;
 
 	/* initialize logical_node_id */
-	for (cpu = 0; cpu <= topo.max_cpu_num; ++cpu)
+	क्रम (cpu = 0; cpu <= topo.max_cpu_num; ++cpu)
 		cpus[cpu].logical_node_id = -1;
 
 	cpu_count = 0;
-	for (pkg = 0; pkg < topo.num_packages; pkg++) {
+	क्रम (pkg = 0; pkg < topo.num_packages; pkg++) अणु
 		lnode = 0;
-		for (cpu = 0; cpu <= topo.max_cpu_num; ++cpu) {
-			if (cpus[cpu].physical_package_id != pkg)
-				continue;
+		क्रम (cpu = 0; cpu <= topo.max_cpu_num; ++cpu) अणु
+			अगर (cpus[cpu].physical_package_id != pkg)
+				जारी;
 			/* find a cpu with an unset logical_node_id */
-			if (cpus[cpu].logical_node_id != -1)
-				continue;
+			अगर (cpus[cpu].logical_node_id != -1)
+				जारी;
 			cpus[cpu].logical_node_id = lnode;
 			node = cpus[cpu].physical_node_id;
 			cpu_count++;
@@ -2838,114 +2839,114 @@ void set_node_data(void)
 			 * find all matching cpus on this pkg and set
 			 * the logical_node_id
 			 */
-			for (cpux = cpu; cpux <= topo.max_cpu_num; cpux++) {
-				if ((cpus[cpux].physical_package_id == pkg) && (cpus[cpux].physical_node_id == node)) {
+			क्रम (cpux = cpu; cpux <= topo.max_cpu_num; cpux++) अणु
+				अगर ((cpus[cpux].physical_package_id == pkg) && (cpus[cpux].physical_node_id == node)) अणु
 					cpus[cpux].logical_node_id = lnode;
 					cpu_count++;
-				}
-			}
+				पूर्ण
+			पूर्ण
 			lnode++;
-			if (lnode > topo.nodes_per_pkg)
+			अगर (lnode > topo.nodes_per_pkg)
 				topo.nodes_per_pkg = lnode;
-		}
-		if (cpu_count >= topo.max_cpu_num)
-			break;
-	}
-}
+		पूर्ण
+		अगर (cpu_count >= topo.max_cpu_num)
+			अवरोध;
+	पूर्ण
+पूर्ण
 
-int get_physical_node_id(struct cpu_topology *thiscpu)
-{
-	char path[80];
-	FILE *filep;
-	int i;
-	int cpu = thiscpu->logical_cpu_id;
+पूर्णांक get_physical_node_id(काष्ठा cpu_topology *thiscpu)
+अणु
+	अक्षर path[80];
+	खाता *filep;
+	पूर्णांक i;
+	पूर्णांक cpu = thiscpu->logical_cpu_id;
 
-	for (i = 0; i <= topo.max_cpu_num; i++) {
-		sprintf(path, "/sys/devices/system/cpu/cpu%d/node%i/cpulist", cpu, i);
-		filep = fopen(path, "r");
-		if (!filep)
-			continue;
-		fclose(filep);
-		return i;
-	}
-	return -1;
-}
+	क्रम (i = 0; i <= topo.max_cpu_num; i++) अणु
+		प्र_लिखो(path, "/sys/devices/system/cpu/cpu%d/node%i/cpulist", cpu, i);
+		filep = ख_खोलो(path, "r");
+		अगर (!filep)
+			जारी;
+		ख_बंद(filep);
+		वापस i;
+	पूर्ण
+	वापस -1;
+पूर्ण
 
-int get_thread_siblings(struct cpu_topology *thiscpu)
-{
-	char path[80], character;
-	FILE *filep;
-	unsigned long map;
-	int so, shift, sib_core;
-	int cpu = thiscpu->logical_cpu_id;
-	int offset = topo.max_cpu_num + 1;
-	size_t size;
-	int thread_id = 0;
+पूर्णांक get_thपढ़ो_siblings(काष्ठा cpu_topology *thiscpu)
+अणु
+	अक्षर path[80], अक्षरacter;
+	खाता *filep;
+	अचिन्हित दीर्घ map;
+	पूर्णांक so, shअगरt, sib_core;
+	पूर्णांक cpu = thiscpu->logical_cpu_id;
+	पूर्णांक offset = topo.max_cpu_num + 1;
+	माप_प्रकार size;
+	पूर्णांक thपढ़ो_id = 0;
 
 	thiscpu->put_ids = CPU_ALLOC((topo.max_cpu_num + 1));
-	if (thiscpu->thread_id < 0)
-		thiscpu->thread_id = thread_id++;
-	if (!thiscpu->put_ids)
-		return -1;
+	अगर (thiscpu->thपढ़ो_id < 0)
+		thiscpu->thपढ़ो_id = thपढ़ो_id++;
+	अगर (!thiscpu->put_ids)
+		वापस -1;
 
 	size = CPU_ALLOC_SIZE((topo.max_cpu_num + 1));
 	CPU_ZERO_S(size, thiscpu->put_ids);
 
-	sprintf(path, "/sys/devices/system/cpu/cpu%d/topology/thread_siblings", cpu);
-	filep = fopen(path, "r");
+	प्र_लिखो(path, "/sys/devices/system/cpu/cpu%d/topology/thread_siblings", cpu);
+	filep = ख_खोलो(path, "r");
 
-	if (!filep) {
+	अगर (!filep) अणु
 		warnx("%s: open failed", path);
-		return -1;
-	}
-	do {
+		वापस -1;
+	पूर्ण
+	करो अणु
 		offset -= BITMASK_SIZE;
-		if (fscanf(filep, "%lx%c", &map, &character) != 2)
+		अगर (ख_पूछो(filep, "%lx%c", &map, &अक्षरacter) != 2)
 			err(1, "%s: failed to parse file", path);
-		for (shift = 0; shift < BITMASK_SIZE; shift++) {
-			if ((map >> shift) & 0x1) {
-				so = shift + offset;
+		क्रम (shअगरt = 0; shअगरt < BITMASK_SIZE; shअगरt++) अणु
+			अगर ((map >> shअगरt) & 0x1) अणु
+				so = shअगरt + offset;
 				sib_core = get_core_id(so);
-				if (sib_core == thiscpu->physical_core_id) {
+				अगर (sib_core == thiscpu->physical_core_id) अणु
 					CPU_SET_S(so, size, thiscpu->put_ids);
-					if ((so != cpu) && (cpus[so].thread_id < 0))
-						cpus[so].thread_id = thread_id++;
-				}
-			}
-		}
-	} while (!strncmp(&character, ",", 1));
-	fclose(filep);
+					अगर ((so != cpu) && (cpus[so].thपढ़ो_id < 0))
+						cpus[so].thपढ़ो_id = thपढ़ो_id++;
+				पूर्ण
+			पूर्ण
+		पूर्ण
+	पूर्ण जबतक (!म_भेदन(&अक्षरacter, ",", 1));
+	ख_बंद(filep);
 
-	return CPU_COUNT_S(size, thiscpu->put_ids);
-}
+	वापस CPU_COUNT_S(size, thiscpu->put_ids);
+पूर्ण
 
 /*
- * run func(thread, core, package) in topology order
+ * run func(thपढ़ो, core, package) in topology order
  * skip non-present cpus
  */
 
-int for_all_cpus_2(int (func) (struct thread_data *, struct core_data *,
-			       struct pkg_data *, struct thread_data *, struct core_data *,
-			       struct pkg_data *), struct thread_data *thread_base,
-		   struct core_data *core_base, struct pkg_data *pkg_base,
-		   struct thread_data *thread_base2, struct core_data *core_base2, struct pkg_data *pkg_base2)
-{
-	int retval, pkg_no, node_no, core_no, thread_no;
+पूर्णांक क्रम_all_cpus_2(पूर्णांक (func) (काष्ठा thपढ़ो_data *, काष्ठा core_data *,
+			       काष्ठा pkg_data *, काष्ठा thपढ़ो_data *, काष्ठा core_data *,
+			       काष्ठा pkg_data *), काष्ठा thपढ़ो_data *thपढ़ो_base,
+		   काष्ठा core_data *core_base, काष्ठा pkg_data *pkg_base,
+		   काष्ठा thपढ़ो_data *thपढ़ो_base2, काष्ठा core_data *core_base2, काष्ठा pkg_data *pkg_base2)
+अणु
+	पूर्णांक retval, pkg_no, node_no, core_no, thपढ़ो_no;
 
-	for (pkg_no = 0; pkg_no < topo.num_packages; ++pkg_no) {
-		for (node_no = 0; node_no < topo.nodes_per_pkg; ++node_no) {
-			for (core_no = 0; core_no < topo.cores_per_node; ++core_no) {
-				for (thread_no = 0; thread_no < topo.threads_per_core; ++thread_no) {
-					struct thread_data *t, *t2;
-					struct core_data *c, *c2;
-					struct pkg_data *p, *p2;
+	क्रम (pkg_no = 0; pkg_no < topo.num_packages; ++pkg_no) अणु
+		क्रम (node_no = 0; node_no < topo.nodes_per_pkg; ++node_no) अणु
+			क्रम (core_no = 0; core_no < topo.cores_per_node; ++core_no) अणु
+				क्रम (thपढ़ो_no = 0; thपढ़ो_no < topo.thपढ़ोs_per_core; ++thपढ़ो_no) अणु
+					काष्ठा thपढ़ो_data *t, *t2;
+					काष्ठा core_data *c, *c2;
+					काष्ठा pkg_data *p, *p2;
 
-					t = GET_THREAD(thread_base, thread_no, core_no, node_no, pkg_no);
+					t = GET_THREAD(thपढ़ो_base, thपढ़ो_no, core_no, node_no, pkg_no);
 
-					if (cpu_is_not_present(t->cpu_id))
-						continue;
+					अगर (cpu_is_not_present(t->cpu_id))
+						जारी;
 
-					t2 = GET_THREAD(thread_base2, thread_no, core_no, node_no, pkg_no);
+					t2 = GET_THREAD(thपढ़ो_base2, thपढ़ो_no, core_no, node_no, pkg_no);
 
 					c = GET_CORE(core_base, core_no, node_no, pkg_no);
 					c2 = GET_CORE(core_base2, core_no, node_no, pkg_no);
@@ -2954,181 +2955,181 @@ int for_all_cpus_2(int (func) (struct thread_data *, struct core_data *,
 					p2 = GET_PKG(pkg_base2, pkg_no);
 
 					retval = func(t, c, p, t2, c2, p2);
-					if (retval)
-						return retval;
-				}
-			}
-		}
-	}
-	return 0;
-}
+					अगर (retval)
+						वापस retval;
+				पूर्ण
+			पूर्ण
+		पूर्ण
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /*
  * run func(cpu) on every cpu in /proc/stat
- * return max_cpu number
+ * वापस max_cpu number
  */
-int for_all_proc_cpus(int (func) (int))
-{
-	FILE *fp;
-	int cpu_num;
-	int retval;
+पूर्णांक क्रम_all_proc_cpus(पूर्णांक (func) (पूर्णांक))
+अणु
+	खाता *fp;
+	पूर्णांक cpu_num;
+	पूर्णांक retval;
 
-	fp = fopen_or_die(proc_stat, "r");
+	fp = ख_खोलो_or_die(proc_stat, "r");
 
-	retval = fscanf(fp, "cpu %*d %*d %*d %*d %*d %*d %*d %*d %*d %*d\n");
-	if (retval != 0)
+	retval = ख_पूछो(fp, "cpu %*d %*d %*d %*d %*d %*d %*d %*d %*d %*d\n");
+	अगर (retval != 0)
 		err(1, "%s: failed to parse format", proc_stat);
 
-	while (1) {
-		retval = fscanf(fp, "cpu%u %*d %*d %*d %*d %*d %*d %*d %*d %*d %*d\n", &cpu_num);
-		if (retval != 1)
-			break;
+	जबतक (1) अणु
+		retval = ख_पूछो(fp, "cpu%u %*d %*d %*d %*d %*d %*d %*d %*d %*d %*d\n", &cpu_num);
+		अगर (retval != 1)
+			अवरोध;
 
 		retval = func(cpu_num);
-		if (retval) {
-			fclose(fp);
-			return (retval);
-		}
-	}
-	fclose(fp);
-	return 0;
-}
+		अगर (retval) अणु
+			ख_बंद(fp);
+			वापस (retval);
+		पूर्ण
+	पूर्ण
+	ख_बंद(fp);
+	वापस 0;
+पूर्ण
 
-void re_initialize(void)
-{
-	free_all_buffers();
+व्योम re_initialize(व्योम)
+अणु
+	मुक्त_all_buffers();
 	setup_all_buffers();
-	fprintf(outf, "turbostat: re-initialized with num_cpus %d\n", topo.num_cpus);
-}
+	ख_लिखो(outf, "turbostat: re-initialized with num_cpus %d\n", topo.num_cpus);
+पूर्ण
 
-void set_max_cpu_num(void)
-{
-	FILE *filep;
-	int base_cpu;
-	unsigned long dummy;
-	char pathname[64];
+व्योम set_max_cpu_num(व्योम)
+अणु
+	खाता *filep;
+	पूर्णांक base_cpu;
+	अचिन्हित दीर्घ dummy;
+	अक्षर pathname[64];
 
-	base_cpu = sched_getcpu();
-	if (base_cpu < 0)
+	base_cpu = sched_अ_लोpu();
+	अगर (base_cpu < 0)
 		err(1, "cannot find calling cpu ID");
-	sprintf(pathname, "/sys/devices/system/cpu/cpu%d/topology/thread_siblings", base_cpu);
+	प्र_लिखो(pathname, "/sys/devices/system/cpu/cpu%d/topology/thread_siblings", base_cpu);
 
-	filep = fopen_or_die(pathname, "r");
+	filep = ख_खोलो_or_die(pathname, "r");
 	topo.max_cpu_num = 0;
-	while (fscanf(filep, "%lx,", &dummy) == 1)
+	जबतक (ख_पूछो(filep, "%lx,", &dummy) == 1)
 		topo.max_cpu_num += BITMASK_SIZE;
-	fclose(filep);
+	ख_बंद(filep);
 	topo.max_cpu_num--;	/* 0 based */
-}
+पूर्ण
 
 /*
  * count_cpus()
  * remember the last one seen, it will be the max
  */
-int count_cpus(int cpu)
-{
+पूर्णांक count_cpus(पूर्णांक cpu)
+अणु
 	topo.num_cpus++;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int mark_cpu_present(int cpu)
-{
+पूर्णांक mark_cpu_present(पूर्णांक cpu)
+अणु
 	CPU_SET_S(cpu, cpu_present_setsize, cpu_present_set);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int init_thread_id(int cpu)
-{
-	cpus[cpu].thread_id = -1;
-	return 0;
-}
+पूर्णांक init_thपढ़ो_id(पूर्णांक cpu)
+अणु
+	cpus[cpu].thपढ़ो_id = -1;
+	वापस 0;
+पूर्ण
 
 /*
- * snapshot_proc_interrupts()
+ * snapshot_proc_पूर्णांकerrupts()
  *
- * read and record summary of /proc/interrupts
+ * पढ़ो and record summary of /proc/पूर्णांकerrupts
  *
- * return 1 if config change requires a restart, else return 0
+ * वापस 1 अगर config change requires a restart, अन्यथा वापस 0
  */
-int snapshot_proc_interrupts(void)
-{
-	static FILE *fp;
-	int column, retval;
+पूर्णांक snapshot_proc_पूर्णांकerrupts(व्योम)
+अणु
+	अटल खाता *fp;
+	पूर्णांक column, retval;
 
-	if (fp == NULL)
-		fp = fopen_or_die("/proc/interrupts", "r");
-	else
-		rewind(fp);
+	अगर (fp == शून्य)
+		fp = ख_खोलो_or_die("/proc/interrupts", "r");
+	अन्यथा
+		शुरुआत(fp);
 
-	/* read 1st line of /proc/interrupts to get cpu* name for each column */
-	for (column = 0; column < topo.num_cpus; ++column) {
-		int cpu_number;
+	/* पढ़ो 1st line of /proc/पूर्णांकerrupts to get cpu* name क्रम each column */
+	क्रम (column = 0; column < topo.num_cpus; ++column) अणु
+		पूर्णांक cpu_number;
 
-		retval = fscanf(fp, " CPU%d", &cpu_number);
-		if (retval != 1)
-			break;
+		retval = ख_पूछो(fp, " CPU%d", &cpu_number);
+		अगर (retval != 1)
+			अवरोध;
 
-		if (cpu_number > topo.max_cpu_num) {
+		अगर (cpu_number > topo.max_cpu_num) अणु
 			warn("/proc/interrupts: cpu%d: > %d", cpu_number, topo.max_cpu_num);
-			return 1;
-		}
+			वापस 1;
+		पूर्ण
 
 		irq_column_2_cpu[column] = cpu_number;
 		irqs_per_cpu[cpu_number] = 0;
-	}
+	पूर्ण
 
-	/* read /proc/interrupt count lines and sum up irqs per cpu */
-	while (1) {
-		int column;
-		char buf[64];
+	/* पढ़ो /proc/पूर्णांकerrupt count lines and sum up irqs per cpu */
+	जबतक (1) अणु
+		पूर्णांक column;
+		अक्षर buf[64];
 
-		retval = fscanf(fp, " %s:", buf);	/* flush irq# "N:" */
-		if (retval != 1)
-			break;
+		retval = ख_पूछो(fp, " %s:", buf);	/* flush irq# "N:" */
+		अगर (retval != 1)
+			अवरोध;
 
-		/* read the count per cpu */
-		for (column = 0; column < topo.num_cpus; ++column) {
+		/* पढ़ो the count per cpu */
+		क्रम (column = 0; column < topo.num_cpus; ++column) अणु
 
-			int cpu_number, irq_count;
+			पूर्णांक cpu_number, irq_count;
 
-			retval = fscanf(fp, " %d", &irq_count);
-			if (retval != 1)
-				break;
+			retval = ख_पूछो(fp, " %d", &irq_count);
+			अगर (retval != 1)
+				अवरोध;
 
 			cpu_number = irq_column_2_cpu[column];
 			irqs_per_cpu[cpu_number] += irq_count;
 
-		}
+		पूर्ण
 
-		while (getc(fp) != '\n') ;	/* flush interrupt description */
+		जबतक (अ_लो(fp) != '\n') ;	/* flush पूर्णांकerrupt description */
 
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /*
  * snapshot_gfx_rc6_ms()
  *
  * record snapshot of
- * /sys/class/drm/card0/power/rc6_residency_ms
+ * /sys/class/drm/card0/घातer/rc6_residency_ms
  *
- * return 1 if config change requires a restart, else return 0
+ * वापस 1 अगर config change requires a restart, अन्यथा वापस 0
  */
-int snapshot_gfx_rc6_ms(void)
-{
-	FILE *fp;
-	int retval;
+पूर्णांक snapshot_gfx_rc6_ms(व्योम)
+अणु
+	खाता *fp;
+	पूर्णांक retval;
 
-	fp = fopen_or_die("/sys/class/drm/card0/power/rc6_residency_ms", "r");
+	fp = ख_खोलो_or_die("/sys/class/drm/card0/power/rc6_residency_ms", "r");
 
-	retval = fscanf(fp, "%lld", &gfx_cur_rc6_ms);
-	if (retval != 1)
+	retval = ख_पूछो(fp, "%lld", &gfx_cur_rc6_ms);
+	अगर (retval != 1)
 		err(1, "GFX rc6");
 
-	fclose(fp);
+	ख_बंद(fp);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * snapshot_gfx_mhz()
@@ -3136,26 +3137,26 @@ int snapshot_gfx_rc6_ms(void)
  * record snapshot of
  * /sys/class/graphics/fb0/device/drm/card0/gt_cur_freq_mhz
  *
- * return 1 if config change requires a restart, else return 0
+ * वापस 1 अगर config change requires a restart, अन्यथा वापस 0
  */
-int snapshot_gfx_mhz(void)
-{
-	static FILE *fp;
-	int retval;
+पूर्णांक snapshot_gfx_mhz(व्योम)
+अणु
+	अटल खाता *fp;
+	पूर्णांक retval;
 
-	if (fp == NULL)
-		fp = fopen_or_die("/sys/class/graphics/fb0/device/drm/card0/gt_cur_freq_mhz", "r");
-	else {
-		rewind(fp);
-		fflush(fp);
-	}
+	अगर (fp == शून्य)
+		fp = ख_खोलो_or_die("/sys/class/graphics/fb0/device/drm/card0/gt_cur_freq_mhz", "r");
+	अन्यथा अणु
+		शुरुआत(fp);
+		ख_साफ(fp);
+	पूर्ण
 
-	retval = fscanf(fp, "%d", &gfx_cur_mhz);
-	if (retval != 1)
+	retval = ख_पूछो(fp, "%d", &gfx_cur_mhz);
+	अगर (retval != 1)
 		err(1, "GFX MHz");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * snapshot_gfx_cur_mhz()
@@ -3163,315 +3164,315 @@ int snapshot_gfx_mhz(void)
  * record snapshot of
  * /sys/class/graphics/fb0/device/drm/card0/gt_act_freq_mhz
  *
- * return 1 if config change requires a restart, else return 0
+ * वापस 1 अगर config change requires a restart, अन्यथा वापस 0
  */
-int snapshot_gfx_act_mhz(void)
-{
-	static FILE *fp;
-	int retval;
+पूर्णांक snapshot_gfx_act_mhz(व्योम)
+अणु
+	अटल खाता *fp;
+	पूर्णांक retval;
 
-	if (fp == NULL)
-		fp = fopen_or_die("/sys/class/graphics/fb0/device/drm/card0/gt_act_freq_mhz", "r");
-	else {
-		rewind(fp);
-		fflush(fp);
-	}
+	अगर (fp == शून्य)
+		fp = ख_खोलो_or_die("/sys/class/graphics/fb0/device/drm/card0/gt_act_freq_mhz", "r");
+	अन्यथा अणु
+		शुरुआत(fp);
+		ख_साफ(fp);
+	पूर्ण
 
-	retval = fscanf(fp, "%d", &gfx_act_mhz);
-	if (retval != 1)
+	retval = ख_पूछो(fp, "%d", &gfx_act_mhz);
+	अगर (retval != 1)
 		err(1, "GFX ACT MHz");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * snapshot_cpu_lpi()
  *
  * record snapshot of
- * /sys/devices/system/cpu/cpuidle/low_power_idle_cpu_residency_us
+ * /sys/devices/प्रणाली/cpu/cpuidle/low_घातer_idle_cpu_residency_us
  */
-int snapshot_cpu_lpi_us(void)
-{
-	FILE *fp;
-	int retval;
+पूर्णांक snapshot_cpu_lpi_us(व्योम)
+अणु
+	खाता *fp;
+	पूर्णांक retval;
 
-	fp = fopen_or_die("/sys/devices/system/cpu/cpuidle/low_power_idle_cpu_residency_us", "r");
+	fp = ख_खोलो_or_die("/sys/devices/system/cpu/cpuidle/low_power_idle_cpu_residency_us", "r");
 
-	retval = fscanf(fp, "%lld", &cpuidle_cur_cpu_lpi_us);
-	if (retval != 1) {
-		fprintf(stderr, "Disabling Low Power Idle CPU output\n");
+	retval = ख_पूछो(fp, "%lld", &cpuidle_cur_cpu_lpi_us);
+	अगर (retval != 1) अणु
+		ख_लिखो(मानक_त्रुटि, "Disabling Low Power Idle CPU output\n");
 		BIC_NOT_PRESENT(BIC_CPU_LPI);
-		fclose(fp);
-		return -1;
-	}
+		ख_बंद(fp);
+		वापस -1;
+	पूर्ण
 
-	fclose(fp);
+	ख_बंद(fp);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * snapshot_sys_lpi()
  *
  * record snapshot of sys_lpi_file
  */
-int snapshot_sys_lpi_us(void)
-{
-	FILE *fp;
-	int retval;
+पूर्णांक snapshot_sys_lpi_us(व्योम)
+अणु
+	खाता *fp;
+	पूर्णांक retval;
 
-	fp = fopen_or_die(sys_lpi_file, "r");
+	fp = ख_खोलो_or_die(sys_lpi_file, "r");
 
-	retval = fscanf(fp, "%lld", &cpuidle_cur_sys_lpi_us);
-	if (retval != 1) {
-		fprintf(stderr, "Disabling Low Power Idle System output\n");
+	retval = ख_पूछो(fp, "%lld", &cpuidle_cur_sys_lpi_us);
+	अगर (retval != 1) अणु
+		ख_लिखो(मानक_त्रुटि, "Disabling Low Power Idle System output\n");
 		BIC_NOT_PRESENT(BIC_SYS_LPI);
-		fclose(fp);
-		return -1;
-	}
-	fclose(fp);
+		ख_बंद(fp);
+		वापस -1;
+	पूर्ण
+	ख_बंद(fp);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * snapshot /proc and /sys files
  *
- * return 1 if configuration restart needed, else return 0
+ * वापस 1 अगर configuration restart needed, अन्यथा वापस 0
  */
-int snapshot_proc_sysfs_files(void)
-{
-	if (DO_BIC(BIC_IRQ))
-		if (snapshot_proc_interrupts())
-			return 1;
+पूर्णांक snapshot_proc_sysfs_files(व्योम)
+अणु
+	अगर (DO_BIC(BIC_IRQ))
+		अगर (snapshot_proc_पूर्णांकerrupts())
+			वापस 1;
 
-	if (DO_BIC(BIC_GFX_rc6))
+	अगर (DO_BIC(BIC_GFX_rc6))
 		snapshot_gfx_rc6_ms();
 
-	if (DO_BIC(BIC_GFXMHz))
+	अगर (DO_BIC(BIC_GFXMHz))
 		snapshot_gfx_mhz();
 
-	if (DO_BIC(BIC_GFXACTMHz))
+	अगर (DO_BIC(BIC_GFXACTMHz))
 		snapshot_gfx_act_mhz();
 
-	if (DO_BIC(BIC_CPU_LPI))
+	अगर (DO_BIC(BIC_CPU_LPI))
 		snapshot_cpu_lpi_us();
 
-	if (DO_BIC(BIC_SYS_LPI))
+	अगर (DO_BIC(BIC_SYS_LPI))
 		snapshot_sys_lpi_us();
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int exit_requested;
+पूर्णांक निकास_requested;
 
-static void signal_handler(int signal)
-{
-	switch (signal) {
-	case SIGINT:
-		exit_requested = 1;
-		if (debug)
-			fprintf(stderr, " SIGINT\n");
-		break;
-	case SIGUSR1:
-		if (debug > 1)
-			fprintf(stderr, "SIGUSR1\n");
-		break;
-	}
-}
+अटल व्योम संकेत_handler(पूर्णांक संकेत)
+अणु
+	चयन (संकेत) अणु
+	हाल संक_विघ्न:
+		निकास_requested = 1;
+		अगर (debug)
+			ख_लिखो(मानक_त्रुटि, " SIGINT\n");
+		अवरोध;
+	हाल SIGUSR1:
+		अगर (debug > 1)
+			ख_लिखो(मानक_त्रुटि, "SIGUSR1\n");
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-void setup_signal_handler(void)
-{
-	struct sigaction sa;
+व्योम setup_संकेत_handler(व्योम)
+अणु
+	काष्ठा sigaction sa;
 
-	memset(&sa, 0, sizeof(sa));
+	स_रखो(&sa, 0, माप(sa));
 
-	sa.sa_handler = &signal_handler;
+	sa.sa_handler = &संकेत_handler;
 
-	if (sigaction(SIGINT, &sa, NULL) < 0)
+	अगर (sigaction(संक_विघ्न, &sa, शून्य) < 0)
 		err(1, "sigaction SIGINT");
-	if (sigaction(SIGUSR1, &sa, NULL) < 0)
+	अगर (sigaction(SIGUSR1, &sa, शून्य) < 0)
 		err(1, "sigaction SIGUSR1");
-}
+पूर्ण
 
-void do_sleep(void)
-{
-	struct timeval tout;
-	struct timespec rest;
-	fd_set readfds;
-	int retval;
+व्योम करो_sleep(व्योम)
+अणु
+	काष्ठा समयval tout;
+	काष्ठा बारpec rest;
+	fd_set पढ़ोfds;
+	पूर्णांक retval;
 
-	FD_ZERO(&readfds);
-	FD_SET(0, &readfds);
+	FD_ZERO(&पढ़ोfds);
+	FD_SET(0, &पढ़ोfds);
 
-	if (ignore_stdin) {
-		nanosleep(&interval_ts, NULL);
-		return;
-	}
+	अगर (ignore_मानक_निवेश) अणु
+		nanosleep(&पूर्णांकerval_ts, शून्य);
+		वापस;
+	पूर्ण
 
-	tout = interval_tv;
-	retval = select(1, &readfds, NULL, NULL, &tout);
+	tout = पूर्णांकerval_tv;
+	retval = select(1, &पढ़ोfds, शून्य, शून्य, &tout);
 
-	if (retval == 1) {
-		switch (getc(stdin)) {
-		case 'q':
-			exit_requested = 1;
-			break;
-		case EOF:
+	अगर (retval == 1) अणु
+		चयन (अ_लो(मानक_निवेश)) अणु
+		हाल 'q':
+			निकास_requested = 1;
+			अवरोध;
+		हाल खातापूर्ण:
 			/*
-			 * 'stdin' is a pipe closed on the other end. There
+			 * 'stdin' is a pipe बंदd on the other end. There
 			 * won't be any further input.
 			 */
-			ignore_stdin = 1;
-			/* Sleep the rest of the time */
+			ignore_मानक_निवेश = 1;
+			/* Sleep the rest of the समय */
 			rest.tv_sec = (tout.tv_sec + tout.tv_usec / 1000000);
 			rest.tv_nsec = (tout.tv_usec % 1000000) * 1000;
-			nanosleep(&rest, NULL);
-		}
-	}
-}
+			nanosleep(&rest, शून्य);
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-int get_msr_sum(int cpu, off_t offset, unsigned long long *msr)
-{
-	int ret, idx;
-	unsigned long long msr_cur, msr_last;
+पूर्णांक get_msr_sum(पूर्णांक cpu, off_t offset, अचिन्हित दीर्घ दीर्घ *msr)
+अणु
+	पूर्णांक ret, idx;
+	अचिन्हित दीर्घ दीर्घ msr_cur, msr_last;
 
-	if (!per_cpu_msr_sum)
-		return 1;
+	अगर (!per_cpu_msr_sum)
+		वापस 1;
 
 	idx = offset_to_idx(offset);
-	if (idx < 0)
-		return idx;
+	अगर (idx < 0)
+		वापस idx;
 	/* get_msr_sum() = sum + (get_msr() - last) */
 	ret = get_msr(cpu, offset, &msr_cur);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 	msr_last = per_cpu_msr_sum[cpu].entries[idx].last;
 	DELTA_WRAP32(msr_cur, msr_last);
 	*msr = msr_last + per_cpu_msr_sum[cpu].entries[idx].sum;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-timer_t timerid;
+समयr_t समयrid;
 
 /* Timer callback, update the sum of MSRs periodically. */
-static int update_msr_sum(struct thread_data *t, struct core_data *c, struct pkg_data *p)
-{
-	int i, ret;
-	int cpu = t->cpu_id;
+अटल पूर्णांक update_msr_sum(काष्ठा thपढ़ो_data *t, काष्ठा core_data *c, काष्ठा pkg_data *p)
+अणु
+	पूर्णांक i, ret;
+	पूर्णांक cpu = t->cpu_id;
 
-	for (i = IDX_PKG_ENERGY; i < IDX_COUNT; i++) {
-		unsigned long long msr_cur, msr_last;
+	क्रम (i = IDX_PKG_ENERGY; i < IDX_COUNT; i++) अणु
+		अचिन्हित दीर्घ दीर्घ msr_cur, msr_last;
 		off_t offset;
 
-		if (!idx_valid(i))
-			continue;
+		अगर (!idx_valid(i))
+			जारी;
 		offset = idx_to_offset(i);
-		if (offset < 0)
-			continue;
+		अगर (offset < 0)
+			जारी;
 		ret = get_msr(cpu, offset, &msr_cur);
-		if (ret) {
-			fprintf(outf, "Can not update msr(0x%llx)\n", (unsigned long long)offset);
-			continue;
-		}
+		अगर (ret) अणु
+			ख_लिखो(outf, "Can not update msr(0x%llx)\n", (अचिन्हित दीर्घ दीर्घ)offset);
+			जारी;
+		पूर्ण
 
 		msr_last = per_cpu_msr_sum[cpu].entries[i].last;
 		per_cpu_msr_sum[cpu].entries[i].last = msr_cur & 0xffffffff;
 
 		DELTA_WRAP32(msr_cur, msr_last);
 		per_cpu_msr_sum[cpu].entries[i].sum += msr_last;
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static void msr_record_handler(union sigval v)
-{
-	for_all_cpus(update_msr_sum, EVEN_COUNTERS);
-}
+अटल व्योम msr_record_handler(जोड़ sigval v)
+अणु
+	क्रम_all_cpus(update_msr_sum, EVEN_COUNTERS);
+पूर्ण
 
-void msr_sum_record(void)
-{
-	struct itimerspec its;
-	struct sigevent sev;
+व्योम msr_sum_record(व्योम)
+अणु
+	काष्ठा iसमयrspec its;
+	काष्ठा sigevent sev;
 
-	per_cpu_msr_sum = calloc(topo.max_cpu_num + 1, sizeof(struct msr_sum_array));
-	if (!per_cpu_msr_sum) {
-		fprintf(outf, "Can not allocate memory for long time MSR.\n");
-		return;
-	}
+	per_cpu_msr_sum = सुस्मृति(topo.max_cpu_num + 1, माप(काष्ठा msr_sum_array));
+	अगर (!per_cpu_msr_sum) अणु
+		ख_लिखो(outf, "Can not allocate memory for long time MSR.\n");
+		वापस;
+	पूर्ण
 	/*
-	 * Signal handler might be restricted, so use thread notifier instead.
+	 * Signal handler might be restricted, so use thपढ़ो notअगरier instead.
 	 */
-	memset(&sev, 0, sizeof(struct sigevent));
-	sev.sigev_notify = SIGEV_THREAD;
-	sev.sigev_notify_function = msr_record_handler;
+	स_रखो(&sev, 0, माप(काष्ठा sigevent));
+	sev.sigev_notअगरy = SIGEV_THREAD;
+	sev.sigev_notअगरy_function = msr_record_handler;
 
-	sev.sigev_value.sival_ptr = &timerid;
-	if (timer_create(CLOCK_REALTIME, &sev, &timerid) == -1) {
-		fprintf(outf, "Can not create timer.\n");
-		goto release_msr;
-	}
+	sev.sigev_value.sival_ptr = &समयrid;
+	अगर (समयr_create(CLOCK_REALTIME, &sev, &समयrid) == -1) अणु
+		ख_लिखो(outf, "Can not create timer.\n");
+		जाओ release_msr;
+	पूर्ण
 
 	its.it_value.tv_sec = 0;
 	its.it_value.tv_nsec = 1;
 	/*
-	 * A wraparound time has been calculated early.
-	 * Some sources state that the peak power for a
-	 * microprocessor is usually 1.5 times the TDP rating,
-	 * use 2 * TDP for safety.
+	 * A wraparound समय has been calculated early.
+	 * Some sources state that the peak घातer क्रम a
+	 * microprocessor is usually 1.5 बार the TDP rating,
+	 * use 2 * TDP क्रम safety.
 	 */
-	its.it_interval.tv_sec = rapl_joule_counter_range / 2;
-	its.it_interval.tv_nsec = 0;
+	its.it_पूर्णांकerval.tv_sec = rapl_joule_counter_range / 2;
+	its.it_पूर्णांकerval.tv_nsec = 0;
 
-	if (timer_settime(timerid, 0, &its, NULL) == -1) {
-		fprintf(outf, "Can not set timer.\n");
-		goto release_timer;
-	}
-	return;
+	अगर (समयr_समय_रखो(समयrid, 0, &its, शून्य) == -1) अणु
+		ख_लिखो(outf, "Can not set timer.\n");
+		जाओ release_समयr;
+	पूर्ण
+	वापस;
 
-release_timer:
-	timer_delete(timerid);
+release_समयr:
+	समयr_delete(समयrid);
 release_msr:
-	free(per_cpu_msr_sum);
-}
+	मुक्त(per_cpu_msr_sum);
+पूर्ण
 
 /*
  * set_my_sched_priority(pri)
- * return previous
+ * वापस previous
  */
-int set_my_sched_priority(int priority)
-{
-	int retval;
-	int original_priority;
+पूर्णांक set_my_sched_priority(पूर्णांक priority)
+अणु
+	पूर्णांक retval;
+	पूर्णांक original_priority;
 
-	errno = 0;
+	त्रुटि_सं = 0;
 	original_priority = getpriority(PRIO_PROCESS, 0);
-	if (errno && (original_priority == -1))
-		err(errno, "getpriority");
+	अगर (त्रुटि_सं && (original_priority == -1))
+		err(त्रुटि_सं, "getpriority");
 
 	retval = setpriority(PRIO_PROCESS, 0, priority);
-	if (retval)
+	अगर (retval)
 		err(retval, "setpriority(%d)", priority);
 
-	errno = 0;
+	त्रुटि_सं = 0;
 	retval = getpriority(PRIO_PROCESS, 0);
-	if (retval != priority)
+	अगर (retval != priority)
 		err(-1, "getpriority(%d) != setpriority(%d)", retval, priority);
 
-	return original_priority;
-}
+	वापस original_priority;
+पूर्ण
 
-void turbostat_loop()
-{
-	int retval;
-	int restarted = 0;
-	int done_iters = 0;
+व्योम turbostat_loop()
+अणु
+	पूर्णांक retval;
+	पूर्णांक restarted = 0;
+	पूर्णांक करोne_iters = 0;
 
-	setup_signal_handler();
+	setup_संकेत_handler();
 
 	/*
-	 * elevate own priority for interval mode
+	 * elevate own priority क्रम पूर्णांकerval mode
 	 */
 	set_my_sched_priority(-20);
 
@@ -3479,140 +3480,140 @@ restart:
 	restarted++;
 
 	snapshot_proc_sysfs_files();
-	retval = for_all_cpus(get_counters, EVEN_COUNTERS);
-	first_counter_read = 0;
-	if (retval < -1) {
-		exit(retval);
-	} else if (retval == -1) {
-		if (restarted > 10) {
-			exit(retval);
-		}
+	retval = क्रम_all_cpus(get_counters, EVEN_COUNTERS);
+	first_counter_पढ़ो = 0;
+	अगर (retval < -1) अणु
+		निकास(retval);
+	पूर्ण अन्यथा अगर (retval == -1) अणु
+		अगर (restarted > 10) अणु
+			निकास(retval);
+		पूर्ण
 		re_initialize();
-		goto restart;
-	}
+		जाओ restart;
+	पूर्ण
 	restarted = 0;
-	done_iters = 0;
-	gettimeofday(&tv_even, (struct timezone *)NULL);
+	करोne_iters = 0;
+	समय_लोofday(&tv_even, (काष्ठा समयzone *)शून्य);
 
-	while (1) {
-		if (for_all_proc_cpus(cpu_is_not_present)) {
+	जबतक (1) अणु
+		अगर (क्रम_all_proc_cpus(cpu_is_not_present)) अणु
 			re_initialize();
-			goto restart;
-		}
-		do_sleep();
-		if (snapshot_proc_sysfs_files())
-			goto restart;
-		retval = for_all_cpus(get_counters, ODD_COUNTERS);
-		if (retval < -1) {
-			exit(retval);
-		} else if (retval == -1) {
+			जाओ restart;
+		पूर्ण
+		करो_sleep();
+		अगर (snapshot_proc_sysfs_files())
+			जाओ restart;
+		retval = क्रम_all_cpus(get_counters, ODD_COUNTERS);
+		अगर (retval < -1) अणु
+			निकास(retval);
+		पूर्ण अन्यथा अगर (retval == -1) अणु
 			re_initialize();
-			goto restart;
-		}
-		gettimeofday(&tv_odd, (struct timezone *)NULL);
-		timersub(&tv_odd, &tv_even, &tv_delta);
-		if (for_all_cpus_2(delta_cpu, ODD_COUNTERS, EVEN_COUNTERS)) {
+			जाओ restart;
+		पूर्ण
+		समय_लोofday(&tv_odd, (काष्ठा समयzone *)शून्य);
+		समयrsub(&tv_odd, &tv_even, &tv_delta);
+		अगर (क्रम_all_cpus_2(delta_cpu, ODD_COUNTERS, EVEN_COUNTERS)) अणु
 			re_initialize();
-			goto restart;
-		}
+			जाओ restart;
+		पूर्ण
 		compute_average(EVEN_COUNTERS);
-		format_all_counters(EVEN_COUNTERS);
-		flush_output_stdout();
-		if (exit_requested)
-			break;
-		if (num_iterations && ++done_iters >= num_iterations)
-			break;
-		do_sleep();
-		if (snapshot_proc_sysfs_files())
-			goto restart;
-		retval = for_all_cpus(get_counters, EVEN_COUNTERS);
-		if (retval < -1) {
-			exit(retval);
-		} else if (retval == -1) {
+		क्रमmat_all_counters(EVEN_COUNTERS);
+		flush_output_मानक_निकास();
+		अगर (निकास_requested)
+			अवरोध;
+		अगर (num_iterations && ++करोne_iters >= num_iterations)
+			अवरोध;
+		करो_sleep();
+		अगर (snapshot_proc_sysfs_files())
+			जाओ restart;
+		retval = क्रम_all_cpus(get_counters, EVEN_COUNTERS);
+		अगर (retval < -1) अणु
+			निकास(retval);
+		पूर्ण अन्यथा अगर (retval == -1) अणु
 			re_initialize();
-			goto restart;
-		}
-		gettimeofday(&tv_even, (struct timezone *)NULL);
-		timersub(&tv_even, &tv_odd, &tv_delta);
-		if (for_all_cpus_2(delta_cpu, EVEN_COUNTERS, ODD_COUNTERS)) {
+			जाओ restart;
+		पूर्ण
+		समय_लोofday(&tv_even, (काष्ठा समयzone *)शून्य);
+		समयrsub(&tv_even, &tv_odd, &tv_delta);
+		अगर (क्रम_all_cpus_2(delta_cpu, EVEN_COUNTERS, ODD_COUNTERS)) अणु
 			re_initialize();
-			goto restart;
-		}
+			जाओ restart;
+		पूर्ण
 		compute_average(ODD_COUNTERS);
-		format_all_counters(ODD_COUNTERS);
-		flush_output_stdout();
-		if (exit_requested)
-			break;
-		if (num_iterations && ++done_iters >= num_iterations)
-			break;
-	}
-}
+		क्रमmat_all_counters(ODD_COUNTERS);
+		flush_output_मानक_निकास();
+		अगर (निकास_requested)
+			अवरोध;
+		अगर (num_iterations && ++करोne_iters >= num_iterations)
+			अवरोध;
+	पूर्ण
+पूर्ण
 
-void check_dev_msr()
-{
-	struct stat sb;
-	char pathname[32];
+व्योम check_dev_msr()
+अणु
+	काष्ठा stat sb;
+	अक्षर pathname[32];
 
-	sprintf(pathname, "/dev/cpu/%d/msr", base_cpu);
-	if (stat(pathname, &sb))
-		if (system("/sbin/modprobe msr > /dev/null 2>&1"))
+	प्र_लिखो(pathname, "/dev/cpu/%d/msr", base_cpu);
+	अगर (stat(pathname, &sb))
+		अगर (प्रणाली("/sbin/modprobe msr > /dev/null 2>&1"))
 			err(-5, "no /dev/cpu/0/msr, Try \"# modprobe msr\" ");
-}
+पूर्ण
 
 /*
- * check for CAP_SYS_RAWIO
- * return 0 on success
- * return 1 on fail
+ * check क्रम CAP_SYS_RAWIO
+ * वापस 0 on success
+ * वापस 1 on fail
  */
-int check_for_cap_sys_rawio(void)
-{
+पूर्णांक check_क्रम_cap_sys_rawio(व्योम)
+अणु
 	cap_t caps;
 	cap_flag_value_t cap_flag_value;
 
 	caps = cap_get_proc();
-	if (caps == NULL)
+	अगर (caps == शून्य)
 		err(-6, "cap_get_proc\n");
 
-	if (cap_get_flag(caps, CAP_SYS_RAWIO, CAP_EFFECTIVE, &cap_flag_value))
+	अगर (cap_get_flag(caps, CAP_SYS_RAWIO, CAP_EFFECTIVE, &cap_flag_value))
 		err(-6, "cap_get\n");
 
-	if (cap_flag_value != CAP_SET) {
+	अगर (cap_flag_value != CAP_SET) अणु
 		warnx("capget(CAP_SYS_RAWIO) failed," " try \"# setcap cap_sys_rawio=ep %s\"", progname);
-		return 1;
-	}
+		वापस 1;
+	पूर्ण
 
-	if (cap_free(caps) == -1)
+	अगर (cap_मुक्त(caps) == -1)
 		err(-6, "cap_free\n");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void check_permissions(void)
-{
-	int do_exit = 0;
-	char pathname[32];
+व्योम check_permissions(व्योम)
+अणु
+	पूर्णांक करो_निकास = 0;
+	अक्षर pathname[32];
 
-	/* check for CAP_SYS_RAWIO */
-	do_exit += check_for_cap_sys_rawio();
+	/* check क्रम CAP_SYS_RAWIO */
+	करो_निकास += check_क्रम_cap_sys_rawio();
 
 	/* test file permissions */
-	sprintf(pathname, "/dev/cpu/%d/msr", base_cpu);
-	if (euidaccess(pathname, R_OK)) {
-		do_exit++;
+	प्र_लिखो(pathname, "/dev/cpu/%d/msr", base_cpu);
+	अगर (euidaccess(pathname, R_OK)) अणु
+		करो_निकास++;
 		warn("/dev/cpu/0/msr open failed, try chown or chmod +r /dev/cpu/*/msr");
-	}
+	पूर्ण
 
-	/* if all else fails, thell them to be root */
-	if (do_exit)
-		if (getuid() != 0)
+	/* अगर all अन्यथा fails, thell them to be root */
+	अगर (करो_निकास)
+		अगर (getuid() != 0)
 			warnx("... or simply run as root");
 
-	if (do_exit)
-		exit(-6);
-}
+	अगर (करो_निकास)
+		निकास(-6);
+पूर्ण
 
 /*
- * NHM adds support for additional MSRs:
+ * NHM adds support क्रम additional MSRs:
  *
  * MSR_SMI_COUNT                   0x00000034
  *
@@ -3630,74 +3631,74 @@ void check_permissions(void)
  * sets global pkg_cstate_limit to decode MSR_PKG_CST_CONFIG_CONTROL
  * sets has_misc_feature_control
  */
-int probe_nhm_msrs(unsigned int family, unsigned int model)
-{
-	unsigned long long msr;
-	unsigned int base_ratio;
-	int *pkg_cstate_limits;
+पूर्णांक probe_nhm_msrs(अचिन्हित पूर्णांक family, अचिन्हित पूर्णांक model)
+अणु
+	अचिन्हित दीर्घ दीर्घ msr;
+	अचिन्हित पूर्णांक base_ratio;
+	पूर्णांक *pkg_cstate_limits;
 
-	if (!genuine_intel)
-		return 0;
+	अगर (!genuine_पूर्णांकel)
+		वापस 0;
 
-	if (family != 6)
-		return 0;
+	अगर (family != 6)
+		वापस 0;
 
 	bclk = discover_bclk(family, model);
 
-	switch (model) {
-	case INTEL_FAM6_NEHALEM:	/* Core i7 and i5 Processor - Clarksfield, Lynnfield, Jasper Forest */
-	case INTEL_FAM6_NEHALEM_EX:	/* Nehalem-EX Xeon - Beckton */
+	चयन (model) अणु
+	हाल INTEL_FAM6_NEHALEM:	/* Core i7 and i5 Processor - Clarksfield, Lynnfield, Jasper Forest */
+	हाल INTEL_FAM6_NEHALEM_EX:	/* Nehalem-EX Xeon - Beckton */
 		pkg_cstate_limits = nhm_pkg_cstate_limits;
-		break;
-	case INTEL_FAM6_SANDYBRIDGE:	/* SNB */
-	case INTEL_FAM6_SANDYBRIDGE_X:	/* SNB Xeon */
-	case INTEL_FAM6_IVYBRIDGE:	/* IVB */
-	case INTEL_FAM6_IVYBRIDGE_X:	/* IVB Xeon */
+		अवरोध;
+	हाल INTEL_FAM6_SANDYBRIDGE:	/* SNB */
+	हाल INTEL_FAM6_SANDYBRIDGE_X:	/* SNB Xeon */
+	हाल INTEL_FAM6_IVYBRIDGE:	/* IVB */
+	हाल INTEL_FAM6_IVYBRIDGE_X:	/* IVB Xeon */
 		pkg_cstate_limits = snb_pkg_cstate_limits;
 		has_misc_feature_control = 1;
-		break;
-	case INTEL_FAM6_HASWELL:	/* HSW */
-	case INTEL_FAM6_HASWELL_G:	/* HSW */
-	case INTEL_FAM6_HASWELL_X:	/* HSX */
-	case INTEL_FAM6_HASWELL_L:	/* HSW */
-	case INTEL_FAM6_BROADWELL:	/* BDW */
-	case INTEL_FAM6_BROADWELL_G:	/* BDW */
-	case INTEL_FAM6_BROADWELL_X:	/* BDX */
-	case INTEL_FAM6_SKYLAKE_L:	/* SKL */
-	case INTEL_FAM6_CANNONLAKE_L:	/* CNL */
+		अवरोध;
+	हाल INTEL_FAM6_HASWELL:	/* HSW */
+	हाल INTEL_FAM6_HASWELL_G:	/* HSW */
+	हाल INTEL_FAM6_HASWELL_X:	/* HSX */
+	हाल INTEL_FAM6_HASWELL_L:	/* HSW */
+	हाल INTEL_FAM6_BROADWELL:	/* BDW */
+	हाल INTEL_FAM6_BROADWELL_G:	/* BDW */
+	हाल INTEL_FAM6_BROADWELL_X:	/* BDX */
+	हाल INTEL_FAM6_SKYLAKE_L:	/* SKL */
+	हाल INTEL_FAM6_CANNONLAKE_L:	/* CNL */
 		pkg_cstate_limits = hsw_pkg_cstate_limits;
 		has_misc_feature_control = 1;
-		break;
-	case INTEL_FAM6_SKYLAKE_X:	/* SKX */
+		अवरोध;
+	हाल INTEL_FAM6_SKYLAKE_X:	/* SKX */
 		pkg_cstate_limits = skx_pkg_cstate_limits;
 		has_misc_feature_control = 1;
-		break;
-	case INTEL_FAM6_ICELAKE_X:	/* ICX */
+		अवरोध;
+	हाल INTEL_FAM6_ICELAKE_X:	/* ICX */
 		pkg_cstate_limits = icx_pkg_cstate_limits;
 		has_misc_feature_control = 1;
-		break;
-	case INTEL_FAM6_ATOM_SILVERMONT:	/* BYT */
+		अवरोध;
+	हाल INTEL_FAM6_ATOM_SILVERMONT:	/* BYT */
 		no_MSR_MISC_PWR_MGMT = 1;
-	case INTEL_FAM6_ATOM_SILVERMONT_D:	/* AVN */
+	हाल INTEL_FAM6_ATOM_SILVERMONT_D:	/* AVN */
 		pkg_cstate_limits = slv_pkg_cstate_limits;
-		break;
-	case INTEL_FAM6_ATOM_AIRMONT:	/* AMT */
+		अवरोध;
+	हाल INTEL_FAM6_ATOM_AIRMONT:	/* AMT */
 		pkg_cstate_limits = amt_pkg_cstate_limits;
 		no_MSR_MISC_PWR_MGMT = 1;
-		break;
-	case INTEL_FAM6_XEON_PHI_KNL:	/* PHI */
+		अवरोध;
+	हाल INTEL_FAM6_XEON_PHI_KNL:	/* PHI */
 		pkg_cstate_limits = phi_pkg_cstate_limits;
-		break;
-	case INTEL_FAM6_ATOM_GOLDMONT:	/* BXT */
-	case INTEL_FAM6_ATOM_GOLDMONT_PLUS:
-	case INTEL_FAM6_ATOM_GOLDMONT_D:	/* DNV */
-	case INTEL_FAM6_ATOM_TREMONT:	/* EHL */
-	case INTEL_FAM6_ATOM_TREMONT_D:	/* JVL */
+		अवरोध;
+	हाल INTEL_FAM6_ATOM_GOLDMONT:	/* BXT */
+	हाल INTEL_FAM6_ATOM_GOLDMONT_PLUS:
+	हाल INTEL_FAM6_ATOM_GOLDMONT_D:	/* DNV */
+	हाल INTEL_FAM6_ATOM_TREMONT:	/* EHL */
+	हाल INTEL_FAM6_ATOM_TREMONT_D:	/* JVL */
 		pkg_cstate_limits = glm_pkg_cstate_limits;
-		break;
-	default:
-		return 0;
-	}
+		अवरोध;
+	शेष:
+		वापस 0;
+	पूर्ण
 	get_msr(base_cpu, MSR_PKG_CST_CONFIG_CONTROL, &msr);
 	pkg_cstate_limit = pkg_cstate_limits[msr & 0xF];
 
@@ -3706,224 +3707,224 @@ int probe_nhm_msrs(unsigned int family, unsigned int model)
 
 	base_hz = base_ratio * bclk * 1000000;
 	has_base_hz = 1;
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
 /*
- * SLV client has support for unique MSRs:
+ * SLV client has support क्रम unique MSRs:
  *
  * MSR_CC6_DEMOTION_POLICY_CONFIG
  * MSR_MC6_DEMOTION_POLICY_CONFIG
  */
 
-int has_slv_msrs(unsigned int family, unsigned int model)
-{
-	if (!genuine_intel)
-		return 0;
+पूर्णांक has_slv_msrs(अचिन्हित पूर्णांक family, अचिन्हित पूर्णांक model)
+अणु
+	अगर (!genuine_पूर्णांकel)
+		वापस 0;
 
-	switch (model) {
-	case INTEL_FAM6_ATOM_SILVERMONT:
-	case INTEL_FAM6_ATOM_SILVERMONT_MID:
-	case INTEL_FAM6_ATOM_AIRMONT_MID:
-		return 1;
-	}
-	return 0;
-}
+	चयन (model) अणु
+	हाल INTEL_FAM6_ATOM_SILVERMONT:
+	हाल INTEL_FAM6_ATOM_SILVERMONT_MID:
+	हाल INTEL_FAM6_ATOM_AIRMONT_MID:
+		वापस 1;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-int is_dnv(unsigned int family, unsigned int model)
-{
+पूर्णांक is_dnv(अचिन्हित पूर्णांक family, अचिन्हित पूर्णांक model)
+अणु
 
-	if (!genuine_intel)
-		return 0;
+	अगर (!genuine_पूर्णांकel)
+		वापस 0;
 
-	switch (model) {
-	case INTEL_FAM6_ATOM_GOLDMONT_D:
-		return 1;
-	}
-	return 0;
-}
+	चयन (model) अणु
+	हाल INTEL_FAM6_ATOM_GOLDMONT_D:
+		वापस 1;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-int is_bdx(unsigned int family, unsigned int model)
-{
+पूर्णांक is_bdx(अचिन्हित पूर्णांक family, अचिन्हित पूर्णांक model)
+अणु
 
-	if (!genuine_intel)
-		return 0;
+	अगर (!genuine_पूर्णांकel)
+		वापस 0;
 
-	switch (model) {
-	case INTEL_FAM6_BROADWELL_X:
-		return 1;
-	}
-	return 0;
-}
+	चयन (model) अणु
+	हाल INTEL_FAM6_BROADWELL_X:
+		वापस 1;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-int is_skx(unsigned int family, unsigned int model)
-{
+पूर्णांक is_skx(अचिन्हित पूर्णांक family, अचिन्हित पूर्णांक model)
+अणु
 
-	if (!genuine_intel)
-		return 0;
+	अगर (!genuine_पूर्णांकel)
+		वापस 0;
 
-	switch (model) {
-	case INTEL_FAM6_SKYLAKE_X:
-		return 1;
-	}
-	return 0;
-}
+	चयन (model) अणु
+	हाल INTEL_FAM6_SKYLAKE_X:
+		वापस 1;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-int is_icx(unsigned int family, unsigned int model)
-{
+पूर्णांक is_icx(अचिन्हित पूर्णांक family, अचिन्हित पूर्णांक model)
+अणु
 
-	if (!genuine_intel)
-		return 0;
+	अगर (!genuine_पूर्णांकel)
+		वापस 0;
 
-	switch (model) {
-	case INTEL_FAM6_ICELAKE_X:
-		return 1;
-	}
-	return 0;
-}
+	चयन (model) अणु
+	हाल INTEL_FAM6_ICELAKE_X:
+		वापस 1;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-int is_ehl(unsigned int family, unsigned int model)
-{
-	if (!genuine_intel)
-		return 0;
+पूर्णांक is_ehl(अचिन्हित पूर्णांक family, अचिन्हित पूर्णांक model)
+अणु
+	अगर (!genuine_पूर्णांकel)
+		वापस 0;
 
-	switch (model) {
-	case INTEL_FAM6_ATOM_TREMONT:
-		return 1;
-	}
-	return 0;
-}
+	चयन (model) अणु
+	हाल INTEL_FAM6_ATOM_TREMONT:
+		वापस 1;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-int is_jvl(unsigned int family, unsigned int model)
-{
-	if (!genuine_intel)
-		return 0;
+पूर्णांक is_jvl(अचिन्हित पूर्णांक family, अचिन्हित पूर्णांक model)
+अणु
+	अगर (!genuine_पूर्णांकel)
+		वापस 0;
 
-	switch (model) {
-	case INTEL_FAM6_ATOM_TREMONT_D:
-		return 1;
-	}
-	return 0;
-}
+	चयन (model) अणु
+	हाल INTEL_FAM6_ATOM_TREMONT_D:
+		वापस 1;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-int has_turbo_ratio_limit(unsigned int family, unsigned int model)
-{
-	if (has_slv_msrs(family, model))
-		return 0;
+पूर्णांक has_turbo_ratio_limit(अचिन्हित पूर्णांक family, अचिन्हित पूर्णांक model)
+अणु
+	अगर (has_slv_msrs(family, model))
+		वापस 0;
 
-	switch (model) {
-		/* Nehalem compatible, but do not include turbo-ratio limit support */
-	case INTEL_FAM6_NEHALEM_EX:	/* Nehalem-EX Xeon - Beckton */
-	case INTEL_FAM6_XEON_PHI_KNL:	/* PHI - Knights Landing (different MSR definition) */
-		return 0;
-	default:
-		return 1;
-	}
-}
+	चयन (model) अणु
+		/* Nehalem compatible, but करो not include turbo-ratio limit support */
+	हाल INTEL_FAM6_NEHALEM_EX:	/* Nehalem-EX Xeon - Beckton */
+	हाल INTEL_FAM6_XEON_PHI_KNL:	/* PHI - Knights Landing (dअगरferent MSR definition) */
+		वापस 0;
+	शेष:
+		वापस 1;
+	पूर्ण
+पूर्ण
 
-int has_atom_turbo_ratio_limit(unsigned int family, unsigned int model)
-{
-	if (has_slv_msrs(family, model))
-		return 1;
+पूर्णांक has_atom_turbo_ratio_limit(अचिन्हित पूर्णांक family, अचिन्हित पूर्णांक model)
+अणु
+	अगर (has_slv_msrs(family, model))
+		वापस 1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int has_ivt_turbo_ratio_limit(unsigned int family, unsigned int model)
-{
-	if (!genuine_intel)
-		return 0;
+पूर्णांक has_ivt_turbo_ratio_limit(अचिन्हित पूर्णांक family, अचिन्हित पूर्णांक model)
+अणु
+	अगर (!genuine_पूर्णांकel)
+		वापस 0;
 
-	if (family != 6)
-		return 0;
+	अगर (family != 6)
+		वापस 0;
 
-	switch (model) {
-	case INTEL_FAM6_IVYBRIDGE_X:	/* IVB Xeon */
-	case INTEL_FAM6_HASWELL_X:	/* HSW Xeon */
-		return 1;
-	default:
-		return 0;
-	}
-}
+	चयन (model) अणु
+	हाल INTEL_FAM6_IVYBRIDGE_X:	/* IVB Xeon */
+	हाल INTEL_FAM6_HASWELL_X:	/* HSW Xeon */
+		वापस 1;
+	शेष:
+		वापस 0;
+	पूर्ण
+पूर्ण
 
-int has_hsw_turbo_ratio_limit(unsigned int family, unsigned int model)
-{
-	if (!genuine_intel)
-		return 0;
+पूर्णांक has_hsw_turbo_ratio_limit(अचिन्हित पूर्णांक family, अचिन्हित पूर्णांक model)
+अणु
+	अगर (!genuine_पूर्णांकel)
+		वापस 0;
 
-	if (family != 6)
-		return 0;
+	अगर (family != 6)
+		वापस 0;
 
-	switch (model) {
-	case INTEL_FAM6_HASWELL_X:	/* HSW Xeon */
-		return 1;
-	default:
-		return 0;
-	}
-}
+	चयन (model) अणु
+	हाल INTEL_FAM6_HASWELL_X:	/* HSW Xeon */
+		वापस 1;
+	शेष:
+		वापस 0;
+	पूर्ण
+पूर्ण
 
-int has_knl_turbo_ratio_limit(unsigned int family, unsigned int model)
-{
-	if (!genuine_intel)
-		return 0;
+पूर्णांक has_knl_turbo_ratio_limit(अचिन्हित पूर्णांक family, अचिन्हित पूर्णांक model)
+अणु
+	अगर (!genuine_पूर्णांकel)
+		वापस 0;
 
-	if (family != 6)
-		return 0;
+	अगर (family != 6)
+		वापस 0;
 
-	switch (model) {
-	case INTEL_FAM6_XEON_PHI_KNL:	/* Knights Landing */
-		return 1;
-	default:
-		return 0;
-	}
-}
+	चयन (model) अणु
+	हाल INTEL_FAM6_XEON_PHI_KNL:	/* Knights Landing */
+		वापस 1;
+	शेष:
+		वापस 0;
+	पूर्ण
+पूर्ण
 
-int has_glm_turbo_ratio_limit(unsigned int family, unsigned int model)
-{
-	if (!genuine_intel)
-		return 0;
+पूर्णांक has_glm_turbo_ratio_limit(अचिन्हित पूर्णांक family, अचिन्हित पूर्णांक model)
+अणु
+	अगर (!genuine_पूर्णांकel)
+		वापस 0;
 
-	if (family != 6)
-		return 0;
+	अगर (family != 6)
+		वापस 0;
 
-	switch (model) {
-	case INTEL_FAM6_ATOM_GOLDMONT:
-	case INTEL_FAM6_SKYLAKE_X:
-	case INTEL_FAM6_ICELAKE_X:
-		return 1;
-	default:
-		return 0;
-	}
-}
+	चयन (model) अणु
+	हाल INTEL_FAM6_ATOM_GOLDMONT:
+	हाल INTEL_FAM6_SKYLAKE_X:
+	हाल INTEL_FAM6_ICELAKE_X:
+		वापस 1;
+	शेष:
+		वापस 0;
+	पूर्ण
+पूर्ण
 
-int has_config_tdp(unsigned int family, unsigned int model)
-{
-	if (!genuine_intel)
-		return 0;
+पूर्णांक has_config_tdp(अचिन्हित पूर्णांक family, अचिन्हित पूर्णांक model)
+अणु
+	अगर (!genuine_पूर्णांकel)
+		वापस 0;
 
-	if (family != 6)
-		return 0;
+	अगर (family != 6)
+		वापस 0;
 
-	switch (model) {
-	case INTEL_FAM6_IVYBRIDGE:	/* IVB */
-	case INTEL_FAM6_HASWELL:	/* HSW */
-	case INTEL_FAM6_HASWELL_X:	/* HSX */
-	case INTEL_FAM6_HASWELL_L:	/* HSW */
-	case INTEL_FAM6_HASWELL_G:	/* HSW */
-	case INTEL_FAM6_BROADWELL:	/* BDW */
-	case INTEL_FAM6_BROADWELL_G:	/* BDW */
-	case INTEL_FAM6_BROADWELL_X:	/* BDX */
-	case INTEL_FAM6_SKYLAKE_L:	/* SKL */
-	case INTEL_FAM6_CANNONLAKE_L:	/* CNL */
-	case INTEL_FAM6_SKYLAKE_X:	/* SKX */
-	case INTEL_FAM6_ICELAKE_X:	/* ICX */
+	चयन (model) अणु
+	हाल INTEL_FAM6_IVYBRIDGE:	/* IVB */
+	हाल INTEL_FAM6_HASWELL:	/* HSW */
+	हाल INTEL_FAM6_HASWELL_X:	/* HSX */
+	हाल INTEL_FAM6_HASWELL_L:	/* HSW */
+	हाल INTEL_FAM6_HASWELL_G:	/* HSW */
+	हाल INTEL_FAM6_BROADWELL:	/* BDW */
+	हाल INTEL_FAM6_BROADWELL_G:	/* BDW */
+	हाल INTEL_FAM6_BROADWELL_X:	/* BDX */
+	हाल INTEL_FAM6_SKYLAKE_L:	/* SKL */
+	हाल INTEL_FAM6_CANNONLAKE_L:	/* CNL */
+	हाल INTEL_FAM6_SKYLAKE_X:	/* SKX */
+	हाल INTEL_FAM6_ICELAKE_X:	/* ICX */
 
-	case INTEL_FAM6_XEON_PHI_KNL:	/* Knights Landing */
-		return 1;
-	default:
-		return 0;
-	}
-}
+	हाल INTEL_FAM6_XEON_PHI_KNL:	/* Knights Landing */
+		वापस 1;
+	शेष:
+		वापस 0;
+	पूर्ण
+पूर्ण
 
 /*
  * tcc_offset_bits:
@@ -3931,344 +3932,344 @@ int has_config_tdp(unsigned int family, unsigned int model)
  * 6: Bit 29:24 of MSR_PLATFORM_INFO
  * 4: Bit 27:24 of MSR_PLATFORM_INFO
  */
-void check_tcc_offset(int model)
-{
-	unsigned long long msr;
+व्योम check_tcc_offset(पूर्णांक model)
+अणु
+	अचिन्हित दीर्घ दीर्घ msr;
 
-	if (!genuine_intel)
-		return;
+	अगर (!genuine_पूर्णांकel)
+		वापस;
 
-	switch (model) {
-	case INTEL_FAM6_SKYLAKE_L:
-	case INTEL_FAM6_SKYLAKE:
-	case INTEL_FAM6_KABYLAKE_L:
-	case INTEL_FAM6_KABYLAKE:
-	case INTEL_FAM6_ICELAKE_L:
-	case INTEL_FAM6_ICELAKE:
-	case INTEL_FAM6_TIGERLAKE_L:
-	case INTEL_FAM6_TIGERLAKE:
-	case INTEL_FAM6_COMETLAKE:
-		if (!get_msr(base_cpu, MSR_PLATFORM_INFO, &msr)) {
+	चयन (model) अणु
+	हाल INTEL_FAM6_SKYLAKE_L:
+	हाल INTEL_FAM6_SKYLAKE:
+	हाल INTEL_FAM6_KABYLAKE_L:
+	हाल INTEL_FAM6_KABYLAKE:
+	हाल INTEL_FAM6_ICELAKE_L:
+	हाल INTEL_FAM6_ICELAKE:
+	हाल INTEL_FAM6_TIGERLAKE_L:
+	हाल INTEL_FAM6_TIGERLAKE:
+	हाल INTEL_FAM6_COMETLAKE:
+		अगर (!get_msr(base_cpu, MSR_PLATFORM_INFO, &msr)) अणु
 			msr = (msr >> 30) & 1;
-			if (msr)
+			अगर (msr)
 				tcc_offset_bits = 6;
-		}
-		return;
-	default:
-		return;
-	}
-}
+		पूर्ण
+		वापस;
+	शेष:
+		वापस;
+	पूर्ण
+पूर्ण
 
-static void remove_underbar(char *s)
-{
-	char *to = s;
+अटल व्योम हटाओ_underbar(अक्षर *s)
+अणु
+	अक्षर *to = s;
 
-	while (*s) {
-		if (*s != '_')
+	जबतक (*s) अणु
+		अगर (*s != '_')
 			*to++ = *s;
 		s++;
-	}
+	पूर्ण
 
 	*to = 0;
-}
+पूर्ण
 
-static void dump_cstate_pstate_config_info(unsigned int family, unsigned int model)
-{
-	if (!do_nhm_platform_info)
-		return;
+अटल व्योम dump_cstate_pstate_config_info(अचिन्हित पूर्णांक family, अचिन्हित पूर्णांक model)
+अणु
+	अगर (!करो_nhm_platक्रमm_info)
+		वापस;
 
-	dump_nhm_platform_info();
+	dump_nhm_platक्रमm_info();
 
-	if (has_hsw_turbo_ratio_limit(family, model))
+	अगर (has_hsw_turbo_ratio_limit(family, model))
 		dump_hsw_turbo_ratio_limits();
 
-	if (has_ivt_turbo_ratio_limit(family, model))
+	अगर (has_ivt_turbo_ratio_limit(family, model))
 		dump_ivt_turbo_ratio_limits();
 
-	if (has_turbo_ratio_limit(family, model))
+	अगर (has_turbo_ratio_limit(family, model))
 		dump_turbo_ratio_limits(family, model);
 
-	if (has_atom_turbo_ratio_limit(family, model))
+	अगर (has_atom_turbo_ratio_limit(family, model))
 		dump_atom_turbo_ratio_limits();
 
-	if (has_knl_turbo_ratio_limit(family, model))
+	अगर (has_knl_turbo_ratio_limit(family, model))
 		dump_knl_turbo_ratio_limits();
 
-	if (has_config_tdp(family, model))
+	अगर (has_config_tdp(family, model))
 		dump_config_tdp();
 
 	dump_nhm_cst_cfg();
-}
+पूर्ण
 
-static void dump_sysfs_file(char *path)
-{
-	FILE *input;
-	char cpuidle_buf[64];
+अटल व्योम dump_sysfs_file(अक्षर *path)
+अणु
+	खाता *input;
+	अक्षर cpuidle_buf[64];
 
-	input = fopen(path, "r");
-	if (input == NULL) {
-		if (debug)
-			fprintf(outf, "NSFOD %s\n", path);
-		return;
-	}
-	if (!fgets(cpuidle_buf, sizeof(cpuidle_buf), input))
+	input = ख_खोलो(path, "r");
+	अगर (input == शून्य) अणु
+		अगर (debug)
+			ख_लिखो(outf, "NSFOD %s\n", path);
+		वापस;
+	पूर्ण
+	अगर (!ख_माला_लो(cpuidle_buf, माप(cpuidle_buf), input))
 		err(1, "%s: failed to read file", path);
-	fclose(input);
+	ख_बंद(input);
 
-	fprintf(outf, "%s: %s", strrchr(path, '/') + 1, cpuidle_buf);
-}
+	ख_लिखो(outf, "%s: %s", म_खोजप(path, '/') + 1, cpuidle_buf);
+पूर्ण
 
-static void dump_sysfs_cstate_config(void)
-{
-	char path[64];
-	char name_buf[16];
-	char desc[64];
-	FILE *input;
-	int state;
-	char *sp;
+अटल व्योम dump_sysfs_cstate_config(व्योम)
+अणु
+	अक्षर path[64];
+	अक्षर name_buf[16];
+	अक्षर desc[64];
+	खाता *input;
+	पूर्णांक state;
+	अक्षर *sp;
 
-	if (access("/sys/devices/system/cpu/cpuidle", R_OK)) {
-		fprintf(outf, "cpuidle not loaded\n");
-		return;
-	}
+	अगर (access("/sys/devices/system/cpu/cpuidle", R_OK)) अणु
+		ख_लिखो(outf, "cpuidle not loaded\n");
+		वापस;
+	पूर्ण
 
 	dump_sysfs_file("/sys/devices/system/cpu/cpuidle/current_driver");
 	dump_sysfs_file("/sys/devices/system/cpu/cpuidle/current_governor");
 	dump_sysfs_file("/sys/devices/system/cpu/cpuidle/current_governor_ro");
 
-	for (state = 0; state < 10; ++state) {
+	क्रम (state = 0; state < 10; ++state) अणु
 
-		sprintf(path, "/sys/devices/system/cpu/cpu%d/cpuidle/state%d/name", base_cpu, state);
-		input = fopen(path, "r");
-		if (input == NULL)
-			continue;
-		if (!fgets(name_buf, sizeof(name_buf), input))
+		प्र_लिखो(path, "/sys/devices/system/cpu/cpu%d/cpuidle/state%d/name", base_cpu, state);
+		input = ख_खोलो(path, "r");
+		अगर (input == शून्य)
+			जारी;
+		अगर (!ख_माला_लो(name_buf, माप(name_buf), input))
 			err(1, "%s: failed to read file", path);
 
 		/* truncate "C1-HSW\n" to "C1", or truncate "C1\n" to "C1" */
-		sp = strchr(name_buf, '-');
-		if (!sp)
-			sp = strchrnul(name_buf, '\n');
+		sp = म_अक्षर(name_buf, '-');
+		अगर (!sp)
+			sp = म_अक्षरnul(name_buf, '\n');
 		*sp = '\0';
-		fclose(input);
+		ख_बंद(input);
 
-		remove_underbar(name_buf);
+		हटाओ_underbar(name_buf);
 
-		sprintf(path, "/sys/devices/system/cpu/cpu%d/cpuidle/state%d/desc", base_cpu, state);
-		input = fopen(path, "r");
-		if (input == NULL)
-			continue;
-		if (!fgets(desc, sizeof(desc), input))
+		प्र_लिखो(path, "/sys/devices/system/cpu/cpu%d/cpuidle/state%d/desc", base_cpu, state);
+		input = ख_खोलो(path, "r");
+		अगर (input == शून्य)
+			जारी;
+		अगर (!ख_माला_लो(desc, माप(desc), input))
 			err(1, "%s: failed to read file", path);
 
-		fprintf(outf, "cpu%d: %s: %s", base_cpu, name_buf, desc);
-		fclose(input);
-	}
-}
+		ख_लिखो(outf, "cpu%d: %s: %s", base_cpu, name_buf, desc);
+		ख_बंद(input);
+	पूर्ण
+पूर्ण
 
-static void dump_sysfs_pstate_config(void)
-{
-	char path[64];
-	char driver_buf[64];
-	char governor_buf[64];
-	FILE *input;
-	int turbo;
+अटल व्योम dump_sysfs_pstate_config(व्योम)
+अणु
+	अक्षर path[64];
+	अक्षर driver_buf[64];
+	अक्षर governor_buf[64];
+	खाता *input;
+	पूर्णांक turbo;
 
-	sprintf(path, "/sys/devices/system/cpu/cpu%d/cpufreq/scaling_driver", base_cpu);
-	input = fopen(path, "r");
-	if (input == NULL) {
-		fprintf(outf, "NSFOD %s\n", path);
-		return;
-	}
-	if (!fgets(driver_buf, sizeof(driver_buf), input))
+	प्र_लिखो(path, "/sys/devices/system/cpu/cpu%d/cpufreq/scaling_driver", base_cpu);
+	input = ख_खोलो(path, "r");
+	अगर (input == शून्य) अणु
+		ख_लिखो(outf, "NSFOD %s\n", path);
+		वापस;
+	पूर्ण
+	अगर (!ख_माला_लो(driver_buf, माप(driver_buf), input))
 		err(1, "%s: failed to read file", path);
-	fclose(input);
+	ख_बंद(input);
 
-	sprintf(path, "/sys/devices/system/cpu/cpu%d/cpufreq/scaling_governor", base_cpu);
-	input = fopen(path, "r");
-	if (input == NULL) {
-		fprintf(outf, "NSFOD %s\n", path);
-		return;
-	}
-	if (!fgets(governor_buf, sizeof(governor_buf), input))
+	प्र_लिखो(path, "/sys/devices/system/cpu/cpu%d/cpufreq/scaling_governor", base_cpu);
+	input = ख_खोलो(path, "r");
+	अगर (input == शून्य) अणु
+		ख_लिखो(outf, "NSFOD %s\n", path);
+		वापस;
+	पूर्ण
+	अगर (!ख_माला_लो(governor_buf, माप(governor_buf), input))
 		err(1, "%s: failed to read file", path);
-	fclose(input);
+	ख_बंद(input);
 
-	fprintf(outf, "cpu%d: cpufreq driver: %s", base_cpu, driver_buf);
-	fprintf(outf, "cpu%d: cpufreq governor: %s", base_cpu, governor_buf);
+	ख_लिखो(outf, "cpu%d: cpufreq driver: %s", base_cpu, driver_buf);
+	ख_लिखो(outf, "cpu%d: cpufreq governor: %s", base_cpu, governor_buf);
 
-	sprintf(path, "/sys/devices/system/cpu/cpufreq/boost");
-	input = fopen(path, "r");
-	if (input != NULL) {
-		if (fscanf(input, "%d", &turbo) != 1)
+	प्र_लिखो(path, "/sys/devices/system/cpu/cpufreq/boost");
+	input = ख_खोलो(path, "r");
+	अगर (input != शून्य) अणु
+		अगर (ख_पूछो(input, "%d", &turbo) != 1)
 			err(1, "%s: failed to parse number from file", path);
-		fprintf(outf, "cpufreq boost: %d\n", turbo);
-		fclose(input);
-	}
+		ख_लिखो(outf, "cpufreq boost: %d\n", turbo);
+		ख_बंद(input);
+	पूर्ण
 
-	sprintf(path, "/sys/devices/system/cpu/intel_pstate/no_turbo");
-	input = fopen(path, "r");
-	if (input != NULL) {
-		if (fscanf(input, "%d", &turbo) != 1)
+	प्र_लिखो(path, "/sys/devices/system/cpu/intel_pstate/no_turbo");
+	input = ख_खोलो(path, "r");
+	अगर (input != शून्य) अणु
+		अगर (ख_पूछो(input, "%d", &turbo) != 1)
 			err(1, "%s: failed to parse number from file", path);
-		fprintf(outf, "cpufreq intel_pstate no_turbo: %d\n", turbo);
-		fclose(input);
-	}
-}
+		ख_लिखो(outf, "cpufreq intel_pstate no_turbo: %d\n", turbo);
+		ख_बंद(input);
+	पूर्ण
+पूर्ण
 
 /*
- * print_epb()
+ * prपूर्णांक_epb()
  * Decode the ENERGY_PERF_BIAS MSR
  */
-int print_epb(struct thread_data *t, struct core_data *c, struct pkg_data *p)
-{
-	char *epb_string;
-	int cpu, epb;
+पूर्णांक prपूर्णांक_epb(काष्ठा thपढ़ो_data *t, काष्ठा core_data *c, काष्ठा pkg_data *p)
+अणु
+	अक्षर *epb_string;
+	पूर्णांक cpu, epb;
 
-	if (!has_epb)
-		return 0;
+	अगर (!has_epb)
+		वापस 0;
 
 	cpu = t->cpu_id;
 
 	/* EPB is per-package */
-	if (!(t->flags & CPU_IS_FIRST_THREAD_IN_CORE) || !(t->flags & CPU_IS_FIRST_CORE_IN_PACKAGE))
-		return 0;
+	अगर (!(t->flags & CPU_IS_FIRST_THREAD_IN_CORE) || !(t->flags & CPU_IS_FIRST_CORE_IN_PACKAGE))
+		वापस 0;
 
-	if (cpu_migrate(cpu)) {
-		fprintf(outf, "print_epb: Could not migrate to CPU %d\n", cpu);
-		return -1;
-	}
+	अगर (cpu_migrate(cpu)) अणु
+		ख_लिखो(outf, "print_epb: Could not migrate to CPU %d\n", cpu);
+		वापस -1;
+	पूर्ण
 
 	epb = get_epb(cpu);
-	if (epb < 0)
-		return 0;
+	अगर (epb < 0)
+		वापस 0;
 
-	switch (epb) {
-	case ENERGY_PERF_BIAS_PERFORMANCE:
+	चयन (epb) अणु
+	हाल ENERGY_PERF_BIAS_PERFORMANCE:
 		epb_string = "performance";
-		break;
-	case ENERGY_PERF_BIAS_NORMAL:
+		अवरोध;
+	हाल ENERGY_PERF_BIAS_NORMAL:
 		epb_string = "balanced";
-		break;
-	case ENERGY_PERF_BIAS_POWERSAVE:
+		अवरोध;
+	हाल ENERGY_PERF_BIAS_POWERSAVE:
 		epb_string = "powersave";
-		break;
-	default:
+		अवरोध;
+	शेष:
 		epb_string = "custom";
-		break;
-	}
-	fprintf(outf, "cpu%d: EPB: %d (%s)\n", cpu, epb, epb_string);
+		अवरोध;
+	पूर्ण
+	ख_लिखो(outf, "cpu%d: EPB: %d (%s)\n", cpu, epb, epb_string);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * print_hwp()
+ * prपूर्णांक_hwp()
  * Decode the MSR_HWP_CAPABILITIES
  */
-int print_hwp(struct thread_data *t, struct core_data *c, struct pkg_data *p)
-{
-	unsigned long long msr;
-	int cpu;
+पूर्णांक prपूर्णांक_hwp(काष्ठा thपढ़ो_data *t, काष्ठा core_data *c, काष्ठा pkg_data *p)
+अणु
+	अचिन्हित दीर्घ दीर्घ msr;
+	पूर्णांक cpu;
 
-	if (!has_hwp)
-		return 0;
+	अगर (!has_hwp)
+		वापस 0;
 
 	cpu = t->cpu_id;
 
 	/* MSR_HWP_CAPABILITIES is per-package */
-	if (!(t->flags & CPU_IS_FIRST_THREAD_IN_CORE) || !(t->flags & CPU_IS_FIRST_CORE_IN_PACKAGE))
-		return 0;
+	अगर (!(t->flags & CPU_IS_FIRST_THREAD_IN_CORE) || !(t->flags & CPU_IS_FIRST_CORE_IN_PACKAGE))
+		वापस 0;
 
-	if (cpu_migrate(cpu)) {
-		fprintf(outf, "print_hwp: Could not migrate to CPU %d\n", cpu);
-		return -1;
-	}
+	अगर (cpu_migrate(cpu)) अणु
+		ख_लिखो(outf, "print_hwp: Could not migrate to CPU %d\n", cpu);
+		वापस -1;
+	पूर्ण
 
-	if (get_msr(cpu, MSR_PM_ENABLE, &msr))
-		return 0;
+	अगर (get_msr(cpu, MSR_PM_ENABLE, &msr))
+		वापस 0;
 
-	fprintf(outf, "cpu%d: MSR_PM_ENABLE: 0x%08llx (%sHWP)\n", cpu, msr, (msr & (1 << 0)) ? "" : "No-");
+	ख_लिखो(outf, "cpu%d: MSR_PM_ENABLE: 0x%08llx (%sHWP)\n", cpu, msr, (msr & (1 << 0)) ? "" : "No-");
 
-	/* MSR_PM_ENABLE[1] == 1 if HWP is enabled and MSRs visible */
-	if ((msr & (1 << 0)) == 0)
-		return 0;
+	/* MSR_PM_ENABLE[1] == 1 अगर HWP is enabled and MSRs visible */
+	अगर ((msr & (1 << 0)) == 0)
+		वापस 0;
 
-	if (get_msr(cpu, MSR_HWP_CAPABILITIES, &msr))
-		return 0;
+	अगर (get_msr(cpu, MSR_HWP_CAPABILITIES, &msr))
+		वापस 0;
 
-	fprintf(outf, "cpu%d: MSR_HWP_CAPABILITIES: 0x%08llx "
+	ख_लिखो(outf, "cpu%d: MSR_HWP_CAPABILITIES: 0x%08llx "
 		"(high %d guar %d eff %d low %d)\n",
 		cpu, msr,
-		(unsigned int)HWP_HIGHEST_PERF(msr),
-		(unsigned int)HWP_GUARANTEED_PERF(msr),
-		(unsigned int)HWP_MOSTEFFICIENT_PERF(msr), (unsigned int)HWP_LOWEST_PERF(msr));
+		(अचिन्हित पूर्णांक)HWP_HIGHEST_PERF(msr),
+		(अचिन्हित पूर्णांक)HWP_GUARANTEED_PERF(msr),
+		(अचिन्हित पूर्णांक)HWP_MOSTEFFICIENT_PERF(msr), (अचिन्हित पूर्णांक)HWP_LOWEST_PERF(msr));
 
-	if (get_msr(cpu, MSR_HWP_REQUEST, &msr))
-		return 0;
+	अगर (get_msr(cpu, MSR_HWP_REQUEST, &msr))
+		वापस 0;
 
-	fprintf(outf, "cpu%d: MSR_HWP_REQUEST: 0x%08llx "
+	ख_लिखो(outf, "cpu%d: MSR_HWP_REQUEST: 0x%08llx "
 		"(min %d max %d des %d epp 0x%x window 0x%x pkg 0x%x)\n",
 		cpu, msr,
-		(unsigned int)(((msr) >> 0) & 0xff),
-		(unsigned int)(((msr) >> 8) & 0xff),
-		(unsigned int)(((msr) >> 16) & 0xff),
-		(unsigned int)(((msr) >> 24) & 0xff),
-		(unsigned int)(((msr) >> 32) & 0xff3), (unsigned int)(((msr) >> 42) & 0x1));
+		(अचिन्हित पूर्णांक)(((msr) >> 0) & 0xff),
+		(अचिन्हित पूर्णांक)(((msr) >> 8) & 0xff),
+		(अचिन्हित पूर्णांक)(((msr) >> 16) & 0xff),
+		(अचिन्हित पूर्णांक)(((msr) >> 24) & 0xff),
+		(अचिन्हित पूर्णांक)(((msr) >> 32) & 0xff3), (अचिन्हित पूर्णांक)(((msr) >> 42) & 0x1));
 
-	if (has_hwp_pkg) {
-		if (get_msr(cpu, MSR_HWP_REQUEST_PKG, &msr))
-			return 0;
+	अगर (has_hwp_pkg) अणु
+		अगर (get_msr(cpu, MSR_HWP_REQUEST_PKG, &msr))
+			वापस 0;
 
-		fprintf(outf, "cpu%d: MSR_HWP_REQUEST_PKG: 0x%08llx "
+		ख_लिखो(outf, "cpu%d: MSR_HWP_REQUEST_PKG: 0x%08llx "
 			"(min %d max %d des %d epp 0x%x window 0x%x)\n",
 			cpu, msr,
-			(unsigned int)(((msr) >> 0) & 0xff),
-			(unsigned int)(((msr) >> 8) & 0xff),
-			(unsigned int)(((msr) >> 16) & 0xff),
-			(unsigned int)(((msr) >> 24) & 0xff), (unsigned int)(((msr) >> 32) & 0xff3));
-	}
-	if (has_hwp_notify) {
-		if (get_msr(cpu, MSR_HWP_INTERRUPT, &msr))
-			return 0;
+			(अचिन्हित पूर्णांक)(((msr) >> 0) & 0xff),
+			(अचिन्हित पूर्णांक)(((msr) >> 8) & 0xff),
+			(अचिन्हित पूर्णांक)(((msr) >> 16) & 0xff),
+			(अचिन्हित पूर्णांक)(((msr) >> 24) & 0xff), (अचिन्हित पूर्णांक)(((msr) >> 32) & 0xff3));
+	पूर्ण
+	अगर (has_hwp_notअगरy) अणु
+		अगर (get_msr(cpu, MSR_HWP_INTERRUPT, &msr))
+			वापस 0;
 
-		fprintf(outf, "cpu%d: MSR_HWP_INTERRUPT: 0x%08llx "
+		ख_लिखो(outf, "cpu%d: MSR_HWP_INTERRUPT: 0x%08llx "
 			"(%s_Guaranteed_Perf_Change, %s_Excursion_Min)\n",
 			cpu, msr, ((msr) & 0x1) ? "EN" : "Dis", ((msr) & 0x2) ? "EN" : "Dis");
-	}
-	if (get_msr(cpu, MSR_HWP_STATUS, &msr))
-		return 0;
+	पूर्ण
+	अगर (get_msr(cpu, MSR_HWP_STATUS, &msr))
+		वापस 0;
 
-	fprintf(outf, "cpu%d: MSR_HWP_STATUS: 0x%08llx "
+	ख_लिखो(outf, "cpu%d: MSR_HWP_STATUS: 0x%08llx "
 		"(%sGuaranteed_Perf_Change, %sExcursion_Min)\n",
 		cpu, msr, ((msr) & 0x1) ? "" : "No-", ((msr) & 0x2) ? "" : "No-");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * print_perf_limit()
+ * prपूर्णांक_perf_limit()
  */
-int print_perf_limit(struct thread_data *t, struct core_data *c, struct pkg_data *p)
-{
-	unsigned long long msr;
-	int cpu;
+पूर्णांक prपूर्णांक_perf_limit(काष्ठा thपढ़ो_data *t, काष्ठा core_data *c, काष्ठा pkg_data *p)
+अणु
+	अचिन्हित दीर्घ दीर्घ msr;
+	पूर्णांक cpu;
 
 	cpu = t->cpu_id;
 
 	/* per-package */
-	if (!(t->flags & CPU_IS_FIRST_THREAD_IN_CORE) || !(t->flags & CPU_IS_FIRST_CORE_IN_PACKAGE))
-		return 0;
+	अगर (!(t->flags & CPU_IS_FIRST_THREAD_IN_CORE) || !(t->flags & CPU_IS_FIRST_CORE_IN_PACKAGE))
+		वापस 0;
 
-	if (cpu_migrate(cpu)) {
-		fprintf(outf, "print_perf_limit: Could not migrate to CPU %d\n", cpu);
-		return -1;
-	}
+	अगर (cpu_migrate(cpu)) अणु
+		ख_लिखो(outf, "print_perf_limit: Could not migrate to CPU %d\n", cpu);
+		वापस -1;
+	पूर्ण
 
-	if (do_core_perf_limit_reasons) {
+	अगर (करो_core_perf_limit_reasons) अणु
 		get_msr(cpu, MSR_CORE_PERF_LIMIT_REASONS, &msr);
-		fprintf(outf, "cpu%d: MSR_CORE_PERF_LIMIT_REASONS, 0x%08llx", cpu, msr);
-		fprintf(outf, " (Active: %s%s%s%s%s%s%s%s%s%s%s%s%s%s)",
+		ख_लिखो(outf, "cpu%d: MSR_CORE_PERF_LIMIT_REASONS, 0x%08llx", cpu, msr);
+		ख_लिखो(outf, " (Active: %s%s%s%s%s%s%s%s%s%s%s%s%s%s)",
 			(msr & 1 << 15) ? "bit15, " : "",
 			(msr & 1 << 14) ? "bit14, " : "",
 			(msr & 1 << 13) ? "Transitions, " : "",
@@ -4282,7 +4283,7 @@ int print_perf_limit(struct thread_data *t, struct core_data *c, struct pkg_data
 			(msr & 1 << 4) ? "Graphics, " : "",
 			(msr & 1 << 2) ? "bit2, " : "",
 			(msr & 1 << 1) ? "ThermStatus, " : "", (msr & 1 << 0) ? "PROCHOT, " : "");
-		fprintf(outf, " (Logged: %s%s%s%s%s%s%s%s%s%s%s%s%s%s)\n",
+		ख_लिखो(outf, " (Logged: %s%s%s%s%s%s%s%s%s%s%s%s%s%s)\n",
 			(msr & 1 << 31) ? "bit31, " : "",
 			(msr & 1 << 30) ? "bit30, " : "",
 			(msr & 1 << 29) ? "Transitions, " : "",
@@ -4297,11 +4298,11 @@ int print_perf_limit(struct thread_data *t, struct core_data *c, struct pkg_data
 			(msr & 1 << 18) ? "bit18, " : "",
 			(msr & 1 << 17) ? "ThermStatus, " : "", (msr & 1 << 16) ? "PROCHOT, " : "");
 
-	}
-	if (do_gfx_perf_limit_reasons) {
+	पूर्ण
+	अगर (करो_gfx_perf_limit_reasons) अणु
 		get_msr(cpu, MSR_GFX_PERF_LIMIT_REASONS, &msr);
-		fprintf(outf, "cpu%d: MSR_GFX_PERF_LIMIT_REASONS, 0x%08llx", cpu, msr);
-		fprintf(outf, " (Active: %s%s%s%s%s%s%s%s)",
+		ख_लिखो(outf, "cpu%d: MSR_GFX_PERF_LIMIT_REASONS, 0x%08llx", cpu, msr);
+		ख_लिखो(outf, " (Active: %s%s%s%s%s%s%s%s)",
 			(msr & 1 << 0) ? "PROCHOT, " : "",
 			(msr & 1 << 1) ? "ThermStatus, " : "",
 			(msr & 1 << 4) ? "Graphics, " : "",
@@ -4309,7 +4310,7 @@ int print_perf_limit(struct thread_data *t, struct core_data *c, struct pkg_data
 			(msr & 1 << 8) ? "Amps, " : "",
 			(msr & 1 << 9) ? "GFXPwr, " : "",
 			(msr & 1 << 10) ? "PkgPwrL1, " : "", (msr & 1 << 11) ? "PkgPwrL2, " : "");
-		fprintf(outf, " (Logged: %s%s%s%s%s%s%s%s)\n",
+		ख_लिखो(outf, " (Logged: %s%s%s%s%s%s%s%s)\n",
 			(msr & 1 << 16) ? "PROCHOT, " : "",
 			(msr & 1 << 17) ? "ThermStatus, " : "",
 			(msr & 1 << 20) ? "Graphics, " : "",
@@ -4317,547 +4318,547 @@ int print_perf_limit(struct thread_data *t, struct core_data *c, struct pkg_data
 			(msr & 1 << 24) ? "Amps, " : "",
 			(msr & 1 << 25) ? "GFXPwr, " : "",
 			(msr & 1 << 26) ? "PkgPwrL1, " : "", (msr & 1 << 27) ? "PkgPwrL2, " : "");
-	}
-	if (do_ring_perf_limit_reasons) {
+	पूर्ण
+	अगर (करो_ring_perf_limit_reasons) अणु
 		get_msr(cpu, MSR_RING_PERF_LIMIT_REASONS, &msr);
-		fprintf(outf, "cpu%d: MSR_RING_PERF_LIMIT_REASONS, 0x%08llx", cpu, msr);
-		fprintf(outf, " (Active: %s%s%s%s%s%s)",
+		ख_लिखो(outf, "cpu%d: MSR_RING_PERF_LIMIT_REASONS, 0x%08llx", cpu, msr);
+		ख_लिखो(outf, " (Active: %s%s%s%s%s%s)",
 			(msr & 1 << 0) ? "PROCHOT, " : "",
 			(msr & 1 << 1) ? "ThermStatus, " : "",
 			(msr & 1 << 6) ? "VR-Therm, " : "",
 			(msr & 1 << 8) ? "Amps, " : "",
 			(msr & 1 << 10) ? "PkgPwrL1, " : "", (msr & 1 << 11) ? "PkgPwrL2, " : "");
-		fprintf(outf, " (Logged: %s%s%s%s%s%s)\n",
+		ख_लिखो(outf, " (Logged: %s%s%s%s%s%s)\n",
 			(msr & 1 << 16) ? "PROCHOT, " : "",
 			(msr & 1 << 17) ? "ThermStatus, " : "",
 			(msr & 1 << 22) ? "VR-Therm, " : "",
 			(msr & 1 << 24) ? "Amps, " : "",
 			(msr & 1 << 26) ? "PkgPwrL1, " : "", (msr & 1 << 27) ? "PkgPwrL2, " : "");
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-#define	RAPL_POWER_GRANULARITY	0x7FFF	/* 15 bit power granularity */
-#define	RAPL_TIME_GRANULARITY	0x3F	/* 6 bit time granularity */
+#घोषणा	RAPL_POWER_GRANULARITY	0x7FFF	/* 15 bit घातer granularity */
+#घोषणा	RAPL_TIME_GRANULARITY	0x3F	/* 6 bit समय granularity */
 
-double get_tdp_intel(unsigned int model)
-{
-	unsigned long long msr;
+द्विगुन get_tdp_पूर्णांकel(अचिन्हित पूर्णांक model)
+अणु
+	अचिन्हित दीर्घ दीर्घ msr;
 
-	if (do_rapl & RAPL_PKG_POWER_INFO)
-		if (!get_msr(base_cpu, MSR_PKG_POWER_INFO, &msr))
-			return ((msr >> 0) & RAPL_POWER_GRANULARITY) * rapl_power_units;
+	अगर (करो_rapl & RAPL_PKG_POWER_INFO)
+		अगर (!get_msr(base_cpu, MSR_PKG_POWER_INFO, &msr))
+			वापस ((msr >> 0) & RAPL_POWER_GRANULARITY) * rapl_घातer_units;
 
-	switch (model) {
-	case INTEL_FAM6_ATOM_SILVERMONT:
-	case INTEL_FAM6_ATOM_SILVERMONT_D:
-		return 30.0;
-	default:
-		return 135.0;
-	}
-}
+	चयन (model) अणु
+	हाल INTEL_FAM6_ATOM_SILVERMONT:
+	हाल INTEL_FAM6_ATOM_SILVERMONT_D:
+		वापस 30.0;
+	शेष:
+		वापस 135.0;
+	पूर्ण
+पूर्ण
 
-double get_tdp_amd(unsigned int family)
-{
+द्विगुन get_tdp_amd(अचिन्हित पूर्णांक family)
+अणु
 	/* This is the max stock TDP of HEDT/Server Fam17h+ chips */
-	return 280.0;
-}
+	वापस 280.0;
+पूर्ण
 
 /*
  * rapl_dram_energy_units_probe()
  * Energy units are either hard-coded, or come from RAPL Energy Unit MSR.
  */
-static double rapl_dram_energy_units_probe(int model, double rapl_energy_units)
-{
-	/* only called for genuine_intel, family 6 */
+अटल द्विगुन rapl_dram_energy_units_probe(पूर्णांक model, द्विगुन rapl_energy_units)
+अणु
+	/* only called क्रम genuine_पूर्णांकel, family 6 */
 
-	switch (model) {
-	case INTEL_FAM6_HASWELL_X:	/* HSX */
-	case INTEL_FAM6_BROADWELL_X:	/* BDX */
-	case INTEL_FAM6_SKYLAKE_X:	/* SKX */
-	case INTEL_FAM6_XEON_PHI_KNL:	/* KNL */
-		return (rapl_dram_energy_units = 15.3 / 1000000);
-	default:
-		return (rapl_energy_units);
-	}
-}
+	चयन (model) अणु
+	हाल INTEL_FAM6_HASWELL_X:	/* HSX */
+	हाल INTEL_FAM6_BROADWELL_X:	/* BDX */
+	हाल INTEL_FAM6_SKYLAKE_X:	/* SKX */
+	हाल INTEL_FAM6_XEON_PHI_KNL:	/* KNL */
+		वापस (rapl_dram_energy_units = 15.3 / 1000000);
+	शेष:
+		वापस (rapl_energy_units);
+	पूर्ण
+पूर्ण
 
-void rapl_probe_intel(unsigned int family, unsigned int model)
-{
-	unsigned long long msr;
-	unsigned int time_unit;
-	double tdp;
+व्योम rapl_probe_पूर्णांकel(अचिन्हित पूर्णांक family, अचिन्हित पूर्णांक model)
+अणु
+	अचिन्हित दीर्घ दीर्घ msr;
+	अचिन्हित पूर्णांक समय_unit;
+	द्विगुन tdp;
 
-	if (family != 6)
-		return;
+	अगर (family != 6)
+		वापस;
 
-	switch (model) {
-	case INTEL_FAM6_SANDYBRIDGE:
-	case INTEL_FAM6_IVYBRIDGE:
-	case INTEL_FAM6_HASWELL:	/* HSW */
-	case INTEL_FAM6_HASWELL_L:	/* HSW */
-	case INTEL_FAM6_HASWELL_G:	/* HSW */
-	case INTEL_FAM6_BROADWELL:	/* BDW */
-	case INTEL_FAM6_BROADWELL_G:	/* BDW */
-		do_rapl = RAPL_PKG | RAPL_CORES | RAPL_CORE_POLICY | RAPL_GFX | RAPL_PKG_POWER_INFO;
-		if (rapl_joules) {
+	चयन (model) अणु
+	हाल INTEL_FAM6_SANDYBRIDGE:
+	हाल INTEL_FAM6_IVYBRIDGE:
+	हाल INTEL_FAM6_HASWELL:	/* HSW */
+	हाल INTEL_FAM6_HASWELL_L:	/* HSW */
+	हाल INTEL_FAM6_HASWELL_G:	/* HSW */
+	हाल INTEL_FAM6_BROADWELL:	/* BDW */
+	हाल INTEL_FAM6_BROADWELL_G:	/* BDW */
+		करो_rapl = RAPL_PKG | RAPL_CORES | RAPL_CORE_POLICY | RAPL_GFX | RAPL_PKG_POWER_INFO;
+		अगर (rapl_joules) अणु
 			BIC_PRESENT(BIC_Pkg_J);
 			BIC_PRESENT(BIC_Cor_J);
 			BIC_PRESENT(BIC_GFX_J);
-		} else {
+		पूर्ण अन्यथा अणु
 			BIC_PRESENT(BIC_PkgWatt);
 			BIC_PRESENT(BIC_CorWatt);
 			BIC_PRESENT(BIC_GFXWatt);
-		}
-		break;
-	case INTEL_FAM6_ATOM_GOLDMONT:	/* BXT */
-	case INTEL_FAM6_ATOM_GOLDMONT_PLUS:
-		do_rapl = RAPL_PKG | RAPL_PKG_POWER_INFO;
-		if (rapl_joules)
+		पूर्ण
+		अवरोध;
+	हाल INTEL_FAM6_ATOM_GOLDMONT:	/* BXT */
+	हाल INTEL_FAM6_ATOM_GOLDMONT_PLUS:
+		करो_rapl = RAPL_PKG | RAPL_PKG_POWER_INFO;
+		अगर (rapl_joules)
 			BIC_PRESENT(BIC_Pkg_J);
-		else
+		अन्यथा
 			BIC_PRESENT(BIC_PkgWatt);
-		break;
-	case INTEL_FAM6_ATOM_TREMONT:	/* EHL */
-		do_rapl =
+		अवरोध;
+	हाल INTEL_FAM6_ATOM_TREMONT:	/* EHL */
+		करो_rapl =
 		    RAPL_PKG | RAPL_CORES | RAPL_CORE_POLICY | RAPL_DRAM | RAPL_DRAM_PERF_STATUS | RAPL_PKG_PERF_STATUS
 		    | RAPL_GFX | RAPL_PKG_POWER_INFO;
-		if (rapl_joules) {
+		अगर (rapl_joules) अणु
 			BIC_PRESENT(BIC_Pkg_J);
 			BIC_PRESENT(BIC_Cor_J);
 			BIC_PRESENT(BIC_RAM_J);
 			BIC_PRESENT(BIC_GFX_J);
-		} else {
+		पूर्ण अन्यथा अणु
 			BIC_PRESENT(BIC_PkgWatt);
 			BIC_PRESENT(BIC_CorWatt);
 			BIC_PRESENT(BIC_RAMWatt);
 			BIC_PRESENT(BIC_GFXWatt);
-		}
-		break;
-	case INTEL_FAM6_ATOM_TREMONT_D:	/* JVL */
-		do_rapl = RAPL_PKG | RAPL_PKG_PERF_STATUS | RAPL_PKG_POWER_INFO;
+		पूर्ण
+		अवरोध;
+	हाल INTEL_FAM6_ATOM_TREMONT_D:	/* JVL */
+		करो_rapl = RAPL_PKG | RAPL_PKG_PERF_STATUS | RAPL_PKG_POWER_INFO;
 		BIC_PRESENT(BIC_PKG__);
-		if (rapl_joules)
+		अगर (rapl_joules)
 			BIC_PRESENT(BIC_Pkg_J);
-		else
+		अन्यथा
 			BIC_PRESENT(BIC_PkgWatt);
-		break;
-	case INTEL_FAM6_SKYLAKE_L:	/* SKL */
-	case INTEL_FAM6_CANNONLAKE_L:	/* CNL */
-		do_rapl =
+		अवरोध;
+	हाल INTEL_FAM6_SKYLAKE_L:	/* SKL */
+	हाल INTEL_FAM6_CANNONLAKE_L:	/* CNL */
+		करो_rapl =
 		    RAPL_PKG | RAPL_CORES | RAPL_CORE_POLICY | RAPL_DRAM | RAPL_DRAM_PERF_STATUS | RAPL_PKG_PERF_STATUS
 		    | RAPL_GFX | RAPL_PKG_POWER_INFO;
 		BIC_PRESENT(BIC_PKG__);
 		BIC_PRESENT(BIC_RAM__);
-		if (rapl_joules) {
+		अगर (rapl_joules) अणु
 			BIC_PRESENT(BIC_Pkg_J);
 			BIC_PRESENT(BIC_Cor_J);
 			BIC_PRESENT(BIC_RAM_J);
 			BIC_PRESENT(BIC_GFX_J);
-		} else {
+		पूर्ण अन्यथा अणु
 			BIC_PRESENT(BIC_PkgWatt);
 			BIC_PRESENT(BIC_CorWatt);
 			BIC_PRESENT(BIC_RAMWatt);
 			BIC_PRESENT(BIC_GFXWatt);
-		}
-		break;
-	case INTEL_FAM6_HASWELL_X:	/* HSX */
-	case INTEL_FAM6_BROADWELL_X:	/* BDX */
-	case INTEL_FAM6_SKYLAKE_X:	/* SKX */
-	case INTEL_FAM6_ICELAKE_X:	/* ICX */
-	case INTEL_FAM6_XEON_PHI_KNL:	/* KNL */
-		do_rapl =
+		पूर्ण
+		अवरोध;
+	हाल INTEL_FAM6_HASWELL_X:	/* HSX */
+	हाल INTEL_FAM6_BROADWELL_X:	/* BDX */
+	हाल INTEL_FAM6_SKYLAKE_X:	/* SKX */
+	हाल INTEL_FAM6_ICELAKE_X:	/* ICX */
+	हाल INTEL_FAM6_XEON_PHI_KNL:	/* KNL */
+		करो_rapl =
 		    RAPL_PKG | RAPL_DRAM | RAPL_DRAM_POWER_INFO | RAPL_DRAM_PERF_STATUS | RAPL_PKG_PERF_STATUS |
 		    RAPL_PKG_POWER_INFO;
 		BIC_PRESENT(BIC_PKG__);
 		BIC_PRESENT(BIC_RAM__);
-		if (rapl_joules) {
+		अगर (rapl_joules) अणु
 			BIC_PRESENT(BIC_Pkg_J);
 			BIC_PRESENT(BIC_RAM_J);
-		} else {
+		पूर्ण अन्यथा अणु
 			BIC_PRESENT(BIC_PkgWatt);
 			BIC_PRESENT(BIC_RAMWatt);
-		}
-		break;
-	case INTEL_FAM6_SANDYBRIDGE_X:
-	case INTEL_FAM6_IVYBRIDGE_X:
-		do_rapl =
+		पूर्ण
+		अवरोध;
+	हाल INTEL_FAM6_SANDYBRIDGE_X:
+	हाल INTEL_FAM6_IVYBRIDGE_X:
+		करो_rapl =
 		    RAPL_PKG | RAPL_CORES | RAPL_CORE_POLICY | RAPL_DRAM | RAPL_DRAM_POWER_INFO | RAPL_PKG_PERF_STATUS |
 		    RAPL_DRAM_PERF_STATUS | RAPL_PKG_POWER_INFO;
 		BIC_PRESENT(BIC_PKG__);
 		BIC_PRESENT(BIC_RAM__);
-		if (rapl_joules) {
+		अगर (rapl_joules) अणु
 			BIC_PRESENT(BIC_Pkg_J);
 			BIC_PRESENT(BIC_Cor_J);
 			BIC_PRESENT(BIC_RAM_J);
-		} else {
+		पूर्ण अन्यथा अणु
 			BIC_PRESENT(BIC_PkgWatt);
 			BIC_PRESENT(BIC_CorWatt);
 			BIC_PRESENT(BIC_RAMWatt);
-		}
-		break;
-	case INTEL_FAM6_ATOM_SILVERMONT:	/* BYT */
-	case INTEL_FAM6_ATOM_SILVERMONT_D:	/* AVN */
-		do_rapl = RAPL_PKG | RAPL_CORES;
-		if (rapl_joules) {
+		पूर्ण
+		अवरोध;
+	हाल INTEL_FAM6_ATOM_SILVERMONT:	/* BYT */
+	हाल INTEL_FAM6_ATOM_SILVERMONT_D:	/* AVN */
+		करो_rapl = RAPL_PKG | RAPL_CORES;
+		अगर (rapl_joules) अणु
 			BIC_PRESENT(BIC_Pkg_J);
 			BIC_PRESENT(BIC_Cor_J);
-		} else {
+		पूर्ण अन्यथा अणु
 			BIC_PRESENT(BIC_PkgWatt);
 			BIC_PRESENT(BIC_CorWatt);
-		}
-		break;
-	case INTEL_FAM6_ATOM_GOLDMONT_D:	/* DNV */
-		do_rapl =
+		पूर्ण
+		अवरोध;
+	हाल INTEL_FAM6_ATOM_GOLDMONT_D:	/* DNV */
+		करो_rapl =
 		    RAPL_PKG | RAPL_DRAM | RAPL_DRAM_POWER_INFO | RAPL_DRAM_PERF_STATUS | RAPL_PKG_PERF_STATUS |
 		    RAPL_PKG_POWER_INFO | RAPL_CORES_ENERGY_STATUS;
 		BIC_PRESENT(BIC_PKG__);
 		BIC_PRESENT(BIC_RAM__);
-		if (rapl_joules) {
+		अगर (rapl_joules) अणु
 			BIC_PRESENT(BIC_Pkg_J);
 			BIC_PRESENT(BIC_Cor_J);
 			BIC_PRESENT(BIC_RAM_J);
-		} else {
+		पूर्ण अन्यथा अणु
 			BIC_PRESENT(BIC_PkgWatt);
 			BIC_PRESENT(BIC_CorWatt);
 			BIC_PRESENT(BIC_RAMWatt);
-		}
-		break;
-	default:
-		return;
-	}
+		पूर्ण
+		अवरोध;
+	शेष:
+		वापस;
+	पूर्ण
 
-	/* units on package 0, verify later other packages match */
-	if (get_msr(base_cpu, MSR_RAPL_POWER_UNIT, &msr))
-		return;
+	/* units on package 0, verअगरy later other packages match */
+	अगर (get_msr(base_cpu, MSR_RAPL_POWER_UNIT, &msr))
+		वापस;
 
-	rapl_power_units = 1.0 / (1 << (msr & 0xF));
-	if (model == INTEL_FAM6_ATOM_SILVERMONT)
+	rapl_घातer_units = 1.0 / (1 << (msr & 0xF));
+	अगर (model == INTEL_FAM6_ATOM_SILVERMONT)
 		rapl_energy_units = 1.0 * (1 << (msr >> 8 & 0x1F)) / 1000000;
-	else
+	अन्यथा
 		rapl_energy_units = 1.0 / (1 << (msr >> 8 & 0x1F));
 
 	rapl_dram_energy_units = rapl_dram_energy_units_probe(model, rapl_energy_units);
 
-	time_unit = msr >> 16 & 0xF;
-	if (time_unit == 0)
-		time_unit = 0xA;
+	समय_unit = msr >> 16 & 0xF;
+	अगर (समय_unit == 0)
+		समय_unit = 0xA;
 
-	rapl_time_units = 1.0 / (1 << (time_unit));
+	rapl_समय_units = 1.0 / (1 << (समय_unit));
 
-	tdp = get_tdp_intel(model);
+	tdp = get_tdp_पूर्णांकel(model);
 
 	rapl_joule_counter_range = 0xFFFFFFFF * rapl_energy_units / tdp;
-	if (!quiet)
-		fprintf(outf, "RAPL: %.0f sec. Joule Counter Range, at %.0f Watts\n", rapl_joule_counter_range, tdp);
-}
+	अगर (!quiet)
+		ख_लिखो(outf, "RAPL: %.0f sec. Joule Counter Range, at %.0f Watts\n", rapl_joule_counter_range, tdp);
+पूर्ण
 
-void rapl_probe_amd(unsigned int family, unsigned int model)
-{
-	unsigned long long msr;
-	unsigned int eax, ebx, ecx, edx;
-	unsigned int has_rapl = 0;
-	double tdp;
+व्योम rapl_probe_amd(अचिन्हित पूर्णांक family, अचिन्हित पूर्णांक model)
+अणु
+	अचिन्हित दीर्घ दीर्घ msr;
+	अचिन्हित पूर्णांक eax, ebx, ecx, edx;
+	अचिन्हित पूर्णांक has_rapl = 0;
+	द्विगुन tdp;
 
-	if (max_extended_level >= 0x80000007) {
+	अगर (max_extended_level >= 0x80000007) अणु
 		__cpuid(0x80000007, eax, ebx, ecx, edx);
 		/* RAPL (Fam 17h+) */
 		has_rapl = edx & (1 << 14);
-	}
+	पूर्ण
 
-	if (!has_rapl || family < 0x17)
-		return;
+	अगर (!has_rapl || family < 0x17)
+		वापस;
 
-	do_rapl = RAPL_AMD_F17H | RAPL_PER_CORE_ENERGY;
-	if (rapl_joules) {
+	करो_rapl = RAPL_AMD_F17H | RAPL_PER_CORE_ENERGY;
+	अगर (rapl_joules) अणु
 		BIC_PRESENT(BIC_Pkg_J);
 		BIC_PRESENT(BIC_Cor_J);
-	} else {
+	पूर्ण अन्यथा अणु
 		BIC_PRESENT(BIC_PkgWatt);
 		BIC_PRESENT(BIC_CorWatt);
-	}
+	पूर्ण
 
-	if (get_msr(base_cpu, MSR_RAPL_PWR_UNIT, &msr))
-		return;
+	अगर (get_msr(base_cpu, MSR_RAPL_PWR_UNIT, &msr))
+		वापस;
 
-	rapl_time_units = ldexp(1.0, -(msr >> 16 & 0xf));
+	rapl_समय_units = ldexp(1.0, -(msr >> 16 & 0xf));
 	rapl_energy_units = ldexp(1.0, -(msr >> 8 & 0x1f));
-	rapl_power_units = ldexp(1.0, -(msr & 0xf));
+	rapl_घातer_units = ldexp(1.0, -(msr & 0xf));
 
 	tdp = get_tdp_amd(family);
 
 	rapl_joule_counter_range = 0xFFFFFFFF * rapl_energy_units / tdp;
-	if (!quiet)
-		fprintf(outf, "RAPL: %.0f sec. Joule Counter Range, at %.0f Watts\n", rapl_joule_counter_range, tdp);
-}
+	अगर (!quiet)
+		ख_लिखो(outf, "RAPL: %.0f sec. Joule Counter Range, at %.0f Watts\n", rapl_joule_counter_range, tdp);
+पूर्ण
 
 /*
  * rapl_probe()
  *
- * sets do_rapl, rapl_power_units, rapl_energy_units, rapl_time_units
+ * sets करो_rapl, rapl_घातer_units, rapl_energy_units, rapl_समय_units
  */
-void rapl_probe(unsigned int family, unsigned int model)
-{
-	if (genuine_intel)
-		rapl_probe_intel(family, model);
-	if (authentic_amd || hygon_genuine)
+व्योम rapl_probe(अचिन्हित पूर्णांक family, अचिन्हित पूर्णांक model)
+अणु
+	अगर (genuine_पूर्णांकel)
+		rapl_probe_पूर्णांकel(family, model);
+	अगर (authentic_amd || hygon_genuine)
 		rapl_probe_amd(family, model);
-}
+पूर्ण
 
-void perf_limit_reasons_probe(unsigned int family, unsigned int model)
-{
-	if (!genuine_intel)
-		return;
+व्योम perf_limit_reasons_probe(अचिन्हित पूर्णांक family, अचिन्हित पूर्णांक model)
+अणु
+	अगर (!genuine_पूर्णांकel)
+		वापस;
 
-	if (family != 6)
-		return;
+	अगर (family != 6)
+		वापस;
 
-	switch (model) {
-	case INTEL_FAM6_HASWELL:	/* HSW */
-	case INTEL_FAM6_HASWELL_L:	/* HSW */
-	case INTEL_FAM6_HASWELL_G:	/* HSW */
-		do_gfx_perf_limit_reasons = 1;
-	case INTEL_FAM6_HASWELL_X:	/* HSX */
-		do_core_perf_limit_reasons = 1;
-		do_ring_perf_limit_reasons = 1;
-	default:
-		return;
-	}
-}
+	चयन (model) अणु
+	हाल INTEL_FAM6_HASWELL:	/* HSW */
+	हाल INTEL_FAM6_HASWELL_L:	/* HSW */
+	हाल INTEL_FAM6_HASWELL_G:	/* HSW */
+		करो_gfx_perf_limit_reasons = 1;
+	हाल INTEL_FAM6_HASWELL_X:	/* HSX */
+		करो_core_perf_limit_reasons = 1;
+		करो_ring_perf_limit_reasons = 1;
+	शेष:
+		वापस;
+	पूर्ण
+पूर्ण
 
-void automatic_cstate_conversion_probe(unsigned int family, unsigned int model)
-{
-	if (is_skx(family, model) || is_bdx(family, model) || is_icx(family, model))
-		has_automatic_cstate_conversion = 1;
-}
+व्योम स्वतःmatic_cstate_conversion_probe(अचिन्हित पूर्णांक family, अचिन्हित पूर्णांक model)
+अणु
+	अगर (is_skx(family, model) || is_bdx(family, model) || is_icx(family, model))
+		has_स्वतःmatic_cstate_conversion = 1;
+पूर्ण
 
-void prewake_cstate_probe(unsigned int family, unsigned int model)
-{
-	if (is_icx(family, model))
+व्योम prewake_cstate_probe(अचिन्हित पूर्णांक family, अचिन्हित पूर्णांक model)
+अणु
+	अगर (is_icx(family, model))
 		dis_cstate_prewake = 1;
-}
+पूर्ण
 
-int print_thermal(struct thread_data *t, struct core_data *c, struct pkg_data *p)
-{
-	unsigned long long msr;
-	unsigned int dts, dts2;
-	int cpu;
+पूर्णांक prपूर्णांक_thermal(काष्ठा thपढ़ो_data *t, काष्ठा core_data *c, काष्ठा pkg_data *p)
+अणु
+	अचिन्हित दीर्घ दीर्घ msr;
+	अचिन्हित पूर्णांक dts, dts2;
+	पूर्णांक cpu;
 
-	if (!(do_dts || do_ptm))
-		return 0;
+	अगर (!(करो_dts || करो_pपंचांग))
+		वापस 0;
 
 	cpu = t->cpu_id;
 
-	/* DTS is per-core, no need to print for each thread */
-	if (!(t->flags & CPU_IS_FIRST_THREAD_IN_CORE))
-		return 0;
+	/* DTS is per-core, no need to prपूर्णांक क्रम each thपढ़ो */
+	अगर (!(t->flags & CPU_IS_FIRST_THREAD_IN_CORE))
+		वापस 0;
 
-	if (cpu_migrate(cpu)) {
-		fprintf(outf, "print_thermal: Could not migrate to CPU %d\n", cpu);
-		return -1;
-	}
+	अगर (cpu_migrate(cpu)) अणु
+		ख_लिखो(outf, "print_thermal: Could not migrate to CPU %d\n", cpu);
+		वापस -1;
+	पूर्ण
 
-	if (do_ptm && (t->flags & CPU_IS_FIRST_CORE_IN_PACKAGE)) {
-		if (get_msr(cpu, MSR_IA32_PACKAGE_THERM_STATUS, &msr))
-			return 0;
+	अगर (करो_pपंचांग && (t->flags & CPU_IS_FIRST_CORE_IN_PACKAGE)) अणु
+		अगर (get_msr(cpu, MSR_IA32_PACKAGE_THERM_STATUS, &msr))
+			वापस 0;
 
 		dts = (msr >> 16) & 0x7F;
-		fprintf(outf, "cpu%d: MSR_IA32_PACKAGE_THERM_STATUS: 0x%08llx (%d C)\n", cpu, msr, tj_max - dts);
+		ख_लिखो(outf, "cpu%d: MSR_IA32_PACKAGE_THERM_STATUS: 0x%08llx (%d C)\n", cpu, msr, tj_max - dts);
 
-		if (get_msr(cpu, MSR_IA32_PACKAGE_THERM_INTERRUPT, &msr))
-			return 0;
+		अगर (get_msr(cpu, MSR_IA32_PACKAGE_THERM_INTERRUPT, &msr))
+			वापस 0;
 
 		dts = (msr >> 16) & 0x7F;
 		dts2 = (msr >> 8) & 0x7F;
-		fprintf(outf, "cpu%d: MSR_IA32_PACKAGE_THERM_INTERRUPT: 0x%08llx (%d C, %d C)\n",
+		ख_लिखो(outf, "cpu%d: MSR_IA32_PACKAGE_THERM_INTERRUPT: 0x%08llx (%d C, %d C)\n",
 			cpu, msr, tj_max - dts, tj_max - dts2);
-	}
+	पूर्ण
 
-	if (do_dts && debug) {
-		unsigned int resolution;
+	अगर (करो_dts && debug) अणु
+		अचिन्हित पूर्णांक resolution;
 
-		if (get_msr(cpu, MSR_IA32_THERM_STATUS, &msr))
-			return 0;
+		अगर (get_msr(cpu, MSR_IA32_THERM_STATUS, &msr))
+			वापस 0;
 
 		dts = (msr >> 16) & 0x7F;
 		resolution = (msr >> 27) & 0xF;
-		fprintf(outf, "cpu%d: MSR_IA32_THERM_STATUS: 0x%08llx (%d C +/- %d)\n",
+		ख_लिखो(outf, "cpu%d: MSR_IA32_THERM_STATUS: 0x%08llx (%d C +/- %d)\n",
 			cpu, msr, tj_max - dts, resolution);
 
-		if (get_msr(cpu, MSR_IA32_THERM_INTERRUPT, &msr))
-			return 0;
+		अगर (get_msr(cpu, MSR_IA32_THERM_INTERRUPT, &msr))
+			वापस 0;
 
 		dts = (msr >> 16) & 0x7F;
 		dts2 = (msr >> 8) & 0x7F;
-		fprintf(outf, "cpu%d: MSR_IA32_THERM_INTERRUPT: 0x%08llx (%d C, %d C)\n",
+		ख_लिखो(outf, "cpu%d: MSR_IA32_THERM_INTERRUPT: 0x%08llx (%d C, %d C)\n",
 			cpu, msr, tj_max - dts, tj_max - dts2);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void print_power_limit_msr(int cpu, unsigned long long msr, char *label)
-{
-	fprintf(outf, "cpu%d: %s: %sabled (%f Watts, %f sec, clamp %sabled)\n",
+व्योम prपूर्णांक_घातer_limit_msr(पूर्णांक cpu, अचिन्हित दीर्घ दीर्घ msr, अक्षर *label)
+अणु
+	ख_लिखो(outf, "cpu%d: %s: %sabled (%f Watts, %f sec, clamp %sabled)\n",
 		cpu, label,
 		((msr >> 15) & 1) ? "EN" : "DIS",
-		((msr >> 0) & 0x7FFF) * rapl_power_units,
-		(1.0 + (((msr >> 22) & 0x3) / 4.0)) * (1 << ((msr >> 17) & 0x1F)) * rapl_time_units,
+		((msr >> 0) & 0x7FFF) * rapl_घातer_units,
+		(1.0 + (((msr >> 22) & 0x3) / 4.0)) * (1 << ((msr >> 17) & 0x1F)) * rapl_समय_units,
 		(((msr >> 16) & 1) ? "EN" : "DIS"));
 
-	return;
-}
+	वापस;
+पूर्ण
 
-int print_rapl(struct thread_data *t, struct core_data *c, struct pkg_data *p)
-{
-	unsigned long long msr;
-	const char *msr_name;
-	int cpu;
+पूर्णांक prपूर्णांक_rapl(काष्ठा thपढ़ो_data *t, काष्ठा core_data *c, काष्ठा pkg_data *p)
+अणु
+	अचिन्हित दीर्घ दीर्घ msr;
+	स्थिर अक्षर *msr_name;
+	पूर्णांक cpu;
 
-	if (!do_rapl)
-		return 0;
+	अगर (!करो_rapl)
+		वापस 0;
 
-	/* RAPL counters are per package, so print only for 1st thread/package */
-	if (!(t->flags & CPU_IS_FIRST_THREAD_IN_CORE) || !(t->flags & CPU_IS_FIRST_CORE_IN_PACKAGE))
-		return 0;
+	/* RAPL counters are per package, so prपूर्णांक only क्रम 1st thपढ़ो/package */
+	अगर (!(t->flags & CPU_IS_FIRST_THREAD_IN_CORE) || !(t->flags & CPU_IS_FIRST_CORE_IN_PACKAGE))
+		वापस 0;
 
 	cpu = t->cpu_id;
-	if (cpu_migrate(cpu)) {
-		fprintf(outf, "print_rapl: Could not migrate to CPU %d\n", cpu);
-		return -1;
-	}
+	अगर (cpu_migrate(cpu)) अणु
+		ख_लिखो(outf, "print_rapl: Could not migrate to CPU %d\n", cpu);
+		वापस -1;
+	पूर्ण
 
-	if (do_rapl & RAPL_AMD_F17H) {
+	अगर (करो_rapl & RAPL_AMD_F17H) अणु
 		msr_name = "MSR_RAPL_PWR_UNIT";
-		if (get_msr(cpu, MSR_RAPL_PWR_UNIT, &msr))
-			return -1;
-	} else {
+		अगर (get_msr(cpu, MSR_RAPL_PWR_UNIT, &msr))
+			वापस -1;
+	पूर्ण अन्यथा अणु
 		msr_name = "MSR_RAPL_POWER_UNIT";
-		if (get_msr(cpu, MSR_RAPL_POWER_UNIT, &msr))
-			return -1;
-	}
+		अगर (get_msr(cpu, MSR_RAPL_POWER_UNIT, &msr))
+			वापस -1;
+	पूर्ण
 
-	fprintf(outf, "cpu%d: %s: 0x%08llx (%f Watts, %f Joules, %f sec.)\n", cpu, msr_name, msr,
-		rapl_power_units, rapl_energy_units, rapl_time_units);
+	ख_लिखो(outf, "cpu%d: %s: 0x%08llx (%f Watts, %f Joules, %f sec.)\n", cpu, msr_name, msr,
+		rapl_घातer_units, rapl_energy_units, rapl_समय_units);
 
-	if (do_rapl & RAPL_PKG_POWER_INFO) {
+	अगर (करो_rapl & RAPL_PKG_POWER_INFO) अणु
 
-		if (get_msr(cpu, MSR_PKG_POWER_INFO, &msr))
-			return -5;
+		अगर (get_msr(cpu, MSR_PKG_POWER_INFO, &msr))
+			वापस -5;
 
-		fprintf(outf, "cpu%d: MSR_PKG_POWER_INFO: 0x%08llx (%.0f W TDP, RAPL %.0f - %.0f W, %f sec.)\n",
+		ख_लिखो(outf, "cpu%d: MSR_PKG_POWER_INFO: 0x%08llx (%.0f W TDP, RAPL %.0f - %.0f W, %f sec.)\n",
 			cpu, msr,
-			((msr >> 0) & RAPL_POWER_GRANULARITY) * rapl_power_units,
-			((msr >> 16) & RAPL_POWER_GRANULARITY) * rapl_power_units,
-			((msr >> 32) & RAPL_POWER_GRANULARITY) * rapl_power_units,
-			((msr >> 48) & RAPL_TIME_GRANULARITY) * rapl_time_units);
+			((msr >> 0) & RAPL_POWER_GRANULARITY) * rapl_घातer_units,
+			((msr >> 16) & RAPL_POWER_GRANULARITY) * rapl_घातer_units,
+			((msr >> 32) & RAPL_POWER_GRANULARITY) * rapl_घातer_units,
+			((msr >> 48) & RAPL_TIME_GRANULARITY) * rapl_समय_units);
 
-	}
-	if (do_rapl & RAPL_PKG) {
+	पूर्ण
+	अगर (करो_rapl & RAPL_PKG) अणु
 
-		if (get_msr(cpu, MSR_PKG_POWER_LIMIT, &msr))
-			return -9;
+		अगर (get_msr(cpu, MSR_PKG_POWER_LIMIT, &msr))
+			वापस -9;
 
-		fprintf(outf, "cpu%d: MSR_PKG_POWER_LIMIT: 0x%08llx (%slocked)\n",
+		ख_लिखो(outf, "cpu%d: MSR_PKG_POWER_LIMIT: 0x%08llx (%slocked)\n",
 			cpu, msr, (msr >> 63) & 1 ? "" : "UN");
 
-		print_power_limit_msr(cpu, msr, "PKG Limit #1");
-		fprintf(outf, "cpu%d: PKG Limit #2: %sabled (%f Watts, %f* sec, clamp %sabled)\n",
+		prपूर्णांक_घातer_limit_msr(cpu, msr, "PKG Limit #1");
+		ख_लिखो(outf, "cpu%d: PKG Limit #2: %sabled (%f Watts, %f* sec, clamp %sabled)\n",
 			cpu,
 			((msr >> 47) & 1) ? "EN" : "DIS",
-			((msr >> 32) & 0x7FFF) * rapl_power_units,
-			(1.0 + (((msr >> 54) & 0x3) / 4.0)) * (1 << ((msr >> 49) & 0x1F)) * rapl_time_units,
+			((msr >> 32) & 0x7FFF) * rapl_घातer_units,
+			(1.0 + (((msr >> 54) & 0x3) / 4.0)) * (1 << ((msr >> 49) & 0x1F)) * rapl_समय_units,
 			((msr >> 48) & 1) ? "EN" : "DIS");
-	}
+	पूर्ण
 
-	if (do_rapl & RAPL_DRAM_POWER_INFO) {
-		if (get_msr(cpu, MSR_DRAM_POWER_INFO, &msr))
-			return -6;
+	अगर (करो_rapl & RAPL_DRAM_POWER_INFO) अणु
+		अगर (get_msr(cpu, MSR_DRAM_POWER_INFO, &msr))
+			वापस -6;
 
-		fprintf(outf, "cpu%d: MSR_DRAM_POWER_INFO,: 0x%08llx (%.0f W TDP, RAPL %.0f - %.0f W, %f sec.)\n",
+		ख_लिखो(outf, "cpu%d: MSR_DRAM_POWER_INFO,: 0x%08llx (%.0f W TDP, RAPL %.0f - %.0f W, %f sec.)\n",
 			cpu, msr,
-			((msr >> 0) & RAPL_POWER_GRANULARITY) * rapl_power_units,
-			((msr >> 16) & RAPL_POWER_GRANULARITY) * rapl_power_units,
-			((msr >> 32) & RAPL_POWER_GRANULARITY) * rapl_power_units,
-			((msr >> 48) & RAPL_TIME_GRANULARITY) * rapl_time_units);
-	}
-	if (do_rapl & RAPL_DRAM) {
-		if (get_msr(cpu, MSR_DRAM_POWER_LIMIT, &msr))
-			return -9;
-		fprintf(outf, "cpu%d: MSR_DRAM_POWER_LIMIT: 0x%08llx (%slocked)\n",
+			((msr >> 0) & RAPL_POWER_GRANULARITY) * rapl_घातer_units,
+			((msr >> 16) & RAPL_POWER_GRANULARITY) * rapl_घातer_units,
+			((msr >> 32) & RAPL_POWER_GRANULARITY) * rapl_घातer_units,
+			((msr >> 48) & RAPL_TIME_GRANULARITY) * rapl_समय_units);
+	पूर्ण
+	अगर (करो_rapl & RAPL_DRAM) अणु
+		अगर (get_msr(cpu, MSR_DRAM_POWER_LIMIT, &msr))
+			वापस -9;
+		ख_लिखो(outf, "cpu%d: MSR_DRAM_POWER_LIMIT: 0x%08llx (%slocked)\n",
 			cpu, msr, (msr >> 31) & 1 ? "" : "UN");
 
-		print_power_limit_msr(cpu, msr, "DRAM Limit");
-	}
-	if (do_rapl & RAPL_CORE_POLICY) {
-		if (get_msr(cpu, MSR_PP0_POLICY, &msr))
-			return -7;
+		prपूर्णांक_घातer_limit_msr(cpu, msr, "DRAM Limit");
+	पूर्ण
+	अगर (करो_rapl & RAPL_CORE_POLICY) अणु
+		अगर (get_msr(cpu, MSR_PP0_POLICY, &msr))
+			वापस -7;
 
-		fprintf(outf, "cpu%d: MSR_PP0_POLICY: %lld\n", cpu, msr & 0xF);
-	}
-	if (do_rapl & RAPL_CORES_POWER_LIMIT) {
-		if (get_msr(cpu, MSR_PP0_POWER_LIMIT, &msr))
-			return -9;
-		fprintf(outf, "cpu%d: MSR_PP0_POWER_LIMIT: 0x%08llx (%slocked)\n",
+		ख_लिखो(outf, "cpu%d: MSR_PP0_POLICY: %lld\n", cpu, msr & 0xF);
+	पूर्ण
+	अगर (करो_rapl & RAPL_CORES_POWER_LIMIT) अणु
+		अगर (get_msr(cpu, MSR_PP0_POWER_LIMIT, &msr))
+			वापस -9;
+		ख_लिखो(outf, "cpu%d: MSR_PP0_POWER_LIMIT: 0x%08llx (%slocked)\n",
 			cpu, msr, (msr >> 31) & 1 ? "" : "UN");
-		print_power_limit_msr(cpu, msr, "Cores Limit");
-	}
-	if (do_rapl & RAPL_GFX) {
-		if (get_msr(cpu, MSR_PP1_POLICY, &msr))
-			return -8;
+		prपूर्णांक_घातer_limit_msr(cpu, msr, "Cores Limit");
+	पूर्ण
+	अगर (करो_rapl & RAPL_GFX) अणु
+		अगर (get_msr(cpu, MSR_PP1_POLICY, &msr))
+			वापस -8;
 
-		fprintf(outf, "cpu%d: MSR_PP1_POLICY: %lld\n", cpu, msr & 0xF);
+		ख_लिखो(outf, "cpu%d: MSR_PP1_POLICY: %lld\n", cpu, msr & 0xF);
 
-		if (get_msr(cpu, MSR_PP1_POWER_LIMIT, &msr))
-			return -9;
-		fprintf(outf, "cpu%d: MSR_PP1_POWER_LIMIT: 0x%08llx (%slocked)\n",
+		अगर (get_msr(cpu, MSR_PP1_POWER_LIMIT, &msr))
+			वापस -9;
+		ख_लिखो(outf, "cpu%d: MSR_PP1_POWER_LIMIT: 0x%08llx (%slocked)\n",
 			cpu, msr, (msr >> 31) & 1 ? "" : "UN");
-		print_power_limit_msr(cpu, msr, "GFX Limit");
-	}
-	return 0;
-}
+		prपूर्णांक_घातer_limit_msr(cpu, msr, "GFX Limit");
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /*
- * SNB adds support for additional MSRs:
+ * SNB adds support क्रम additional MSRs:
  *
  * MSR_PKG_C7_RESIDENCY            0x000003fa
  * MSR_CORE_C7_RESIDENCY           0x000003fe
  * MSR_PKG_C2_RESIDENCY            0x0000060d
  */
 
-int has_snb_msrs(unsigned int family, unsigned int model)
-{
-	if (!genuine_intel)
-		return 0;
+पूर्णांक has_snb_msrs(अचिन्हित पूर्णांक family, अचिन्हित पूर्णांक model)
+अणु
+	अगर (!genuine_पूर्णांकel)
+		वापस 0;
 
-	switch (model) {
-	case INTEL_FAM6_SANDYBRIDGE:
-	case INTEL_FAM6_SANDYBRIDGE_X:
-	case INTEL_FAM6_IVYBRIDGE:	/* IVB */
-	case INTEL_FAM6_IVYBRIDGE_X:	/* IVB Xeon */
-	case INTEL_FAM6_HASWELL:	/* HSW */
-	case INTEL_FAM6_HASWELL_X:	/* HSW */
-	case INTEL_FAM6_HASWELL_L:	/* HSW */
-	case INTEL_FAM6_HASWELL_G:	/* HSW */
-	case INTEL_FAM6_BROADWELL:	/* BDW */
-	case INTEL_FAM6_BROADWELL_G:	/* BDW */
-	case INTEL_FAM6_BROADWELL_X:	/* BDX */
-	case INTEL_FAM6_SKYLAKE_L:	/* SKL */
-	case INTEL_FAM6_CANNONLAKE_L:	/* CNL */
-	case INTEL_FAM6_SKYLAKE_X:	/* SKX */
-	case INTEL_FAM6_ICELAKE_X:	/* ICX */
-	case INTEL_FAM6_ATOM_GOLDMONT:	/* BXT */
-	case INTEL_FAM6_ATOM_GOLDMONT_PLUS:
-	case INTEL_FAM6_ATOM_GOLDMONT_D:	/* DNV */
-	case INTEL_FAM6_ATOM_TREMONT:	/* EHL */
-	case INTEL_FAM6_ATOM_TREMONT_D:	/* JVL */
-		return 1;
-	}
-	return 0;
-}
+	चयन (model) अणु
+	हाल INTEL_FAM6_SANDYBRIDGE:
+	हाल INTEL_FAM6_SANDYBRIDGE_X:
+	हाल INTEL_FAM6_IVYBRIDGE:	/* IVB */
+	हाल INTEL_FAM6_IVYBRIDGE_X:	/* IVB Xeon */
+	हाल INTEL_FAM6_HASWELL:	/* HSW */
+	हाल INTEL_FAM6_HASWELL_X:	/* HSW */
+	हाल INTEL_FAM6_HASWELL_L:	/* HSW */
+	हाल INTEL_FAM6_HASWELL_G:	/* HSW */
+	हाल INTEL_FAM6_BROADWELL:	/* BDW */
+	हाल INTEL_FAM6_BROADWELL_G:	/* BDW */
+	हाल INTEL_FAM6_BROADWELL_X:	/* BDX */
+	हाल INTEL_FAM6_SKYLAKE_L:	/* SKL */
+	हाल INTEL_FAM6_CANNONLAKE_L:	/* CNL */
+	हाल INTEL_FAM6_SKYLAKE_X:	/* SKX */
+	हाल INTEL_FAM6_ICELAKE_X:	/* ICX */
+	हाल INTEL_FAM6_ATOM_GOLDMONT:	/* BXT */
+	हाल INTEL_FAM6_ATOM_GOLDMONT_PLUS:
+	हाल INTEL_FAM6_ATOM_GOLDMONT_D:	/* DNV */
+	हाल INTEL_FAM6_ATOM_TREMONT:	/* EHL */
+	हाल INTEL_FAM6_ATOM_TREMONT_D:	/* JVL */
+		वापस 1;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /*
- * HSW ULT added support for C8/C9/C10 MSRs:
+ * HSW ULT added support क्रम C8/C9/C10 MSRs:
  *
  * MSR_PKG_C8_RESIDENCY		0x00000630
  * MSR_PKG_C9_RESIDENCY		0x00000631
@@ -4868,452 +4869,452 @@ int has_snb_msrs(unsigned int family, unsigned int model)
  * MSR_PKGC10_IRTL		0x00000635
  *
  */
-int has_c8910_msrs(unsigned int family, unsigned int model)
-{
-	if (!genuine_intel)
-		return 0;
+पूर्णांक has_c8910_msrs(अचिन्हित पूर्णांक family, अचिन्हित पूर्णांक model)
+अणु
+	अगर (!genuine_पूर्णांकel)
+		वापस 0;
 
-	switch (model) {
-	case INTEL_FAM6_HASWELL_L:	/* HSW */
-	case INTEL_FAM6_BROADWELL:	/* BDW */
-	case INTEL_FAM6_SKYLAKE_L:	/* SKL */
-	case INTEL_FAM6_CANNONLAKE_L:	/* CNL */
-	case INTEL_FAM6_ATOM_GOLDMONT:	/* BXT */
-	case INTEL_FAM6_ATOM_GOLDMONT_PLUS:
-	case INTEL_FAM6_ATOM_TREMONT:	/* EHL */
-		return 1;
-	}
-	return 0;
-}
+	चयन (model) अणु
+	हाल INTEL_FAM6_HASWELL_L:	/* HSW */
+	हाल INTEL_FAM6_BROADWELL:	/* BDW */
+	हाल INTEL_FAM6_SKYLAKE_L:	/* SKL */
+	हाल INTEL_FAM6_CANNONLAKE_L:	/* CNL */
+	हाल INTEL_FAM6_ATOM_GOLDMONT:	/* BXT */
+	हाल INTEL_FAM6_ATOM_GOLDMONT_PLUS:
+	हाल INTEL_FAM6_ATOM_TREMONT:	/* EHL */
+		वापस 1;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /*
- * SKL adds support for additional MSRS:
+ * SKL adds support क्रम additional MSRS:
  *
  * MSR_PKG_WEIGHTED_CORE_C0_RES    0x00000658
  * MSR_PKG_ANY_CORE_C0_RES         0x00000659
  * MSR_PKG_ANY_GFXE_C0_RES         0x0000065A
  * MSR_PKG_BOTH_CORE_GFXE_C0_RES   0x0000065B
  */
-int has_skl_msrs(unsigned int family, unsigned int model)
-{
-	if (!genuine_intel)
-		return 0;
+पूर्णांक has_skl_msrs(अचिन्हित पूर्णांक family, अचिन्हित पूर्णांक model)
+अणु
+	अगर (!genuine_पूर्णांकel)
+		वापस 0;
 
-	switch (model) {
-	case INTEL_FAM6_SKYLAKE_L:	/* SKL */
-	case INTEL_FAM6_CANNONLAKE_L:	/* CNL */
-		return 1;
-	}
-	return 0;
-}
+	चयन (model) अणु
+	हाल INTEL_FAM6_SKYLAKE_L:	/* SKL */
+	हाल INTEL_FAM6_CANNONLAKE_L:	/* CNL */
+		वापस 1;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-int is_slm(unsigned int family, unsigned int model)
-{
-	if (!genuine_intel)
-		return 0;
-	switch (model) {
-	case INTEL_FAM6_ATOM_SILVERMONT:	/* BYT */
-	case INTEL_FAM6_ATOM_SILVERMONT_D:	/* AVN */
-		return 1;
-	}
-	return 0;
-}
+पूर्णांक is_slm(अचिन्हित पूर्णांक family, अचिन्हित पूर्णांक model)
+अणु
+	अगर (!genuine_पूर्णांकel)
+		वापस 0;
+	चयन (model) अणु
+	हाल INTEL_FAM6_ATOM_SILVERMONT:	/* BYT */
+	हाल INTEL_FAM6_ATOM_SILVERMONT_D:	/* AVN */
+		वापस 1;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-int is_knl(unsigned int family, unsigned int model)
-{
-	if (!genuine_intel)
-		return 0;
-	switch (model) {
-	case INTEL_FAM6_XEON_PHI_KNL:	/* KNL */
-		return 1;
-	}
-	return 0;
-}
+पूर्णांक is_knl(अचिन्हित पूर्णांक family, अचिन्हित पूर्णांक model)
+अणु
+	अगर (!genuine_पूर्णांकel)
+		वापस 0;
+	चयन (model) अणु
+	हाल INTEL_FAM6_XEON_PHI_KNL:	/* KNL */
+		वापस 1;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-int is_cnl(unsigned int family, unsigned int model)
-{
-	if (!genuine_intel)
-		return 0;
+पूर्णांक is_cnl(अचिन्हित पूर्णांक family, अचिन्हित पूर्णांक model)
+अणु
+	अगर (!genuine_पूर्णांकel)
+		वापस 0;
 
-	switch (model) {
-	case INTEL_FAM6_CANNONLAKE_L:	/* CNL */
-		return 1;
-	}
+	चयन (model) अणु
+	हाल INTEL_FAM6_CANNONLAKE_L:	/* CNL */
+		वापस 1;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-unsigned int get_aperf_mperf_multiplier(unsigned int family, unsigned int model)
-{
-	if (is_knl(family, model))
-		return 1024;
-	return 1;
-}
+अचिन्हित पूर्णांक get_aperf_mperf_multiplier(अचिन्हित पूर्णांक family, अचिन्हित पूर्णांक model)
+अणु
+	अगर (is_knl(family, model))
+		वापस 1024;
+	वापस 1;
+पूर्ण
 
-#define SLM_BCLK_FREQS 5
-double slm_freq_table[SLM_BCLK_FREQS] = { 83.3, 100.0, 133.3, 116.7, 80.0 };
+#घोषणा SLM_BCLK_FREQS 5
+द्विगुन slm_freq_table[SLM_BCLK_FREQS] = अणु 83.3, 100.0, 133.3, 116.7, 80.0 पूर्ण;
 
-double slm_bclk(void)
-{
-	unsigned long long msr = 3;
-	unsigned int i;
-	double freq;
+द्विगुन slm_bclk(व्योम)
+अणु
+	अचिन्हित दीर्घ दीर्घ msr = 3;
+	अचिन्हित पूर्णांक i;
+	द्विगुन freq;
 
-	if (get_msr(base_cpu, MSR_FSB_FREQ, &msr))
-		fprintf(outf, "SLM BCLK: unknown\n");
+	अगर (get_msr(base_cpu, MSR_FSB_FREQ, &msr))
+		ख_लिखो(outf, "SLM BCLK: unknown\n");
 
 	i = msr & 0xf;
-	if (i >= SLM_BCLK_FREQS) {
-		fprintf(outf, "SLM BCLK[%d] invalid\n", i);
+	अगर (i >= SLM_BCLK_FREQS) अणु
+		ख_लिखो(outf, "SLM BCLK[%d] invalid\n", i);
 		i = 3;
-	}
+	पूर्ण
 	freq = slm_freq_table[i];
 
-	if (!quiet)
-		fprintf(outf, "SLM BCLK: %.1f Mhz\n", freq);
+	अगर (!quiet)
+		ख_लिखो(outf, "SLM BCLK: %.1f Mhz\n", freq);
 
-	return freq;
-}
+	वापस freq;
+पूर्ण
 
-double discover_bclk(unsigned int family, unsigned int model)
-{
-	if (has_snb_msrs(family, model) || is_knl(family, model))
-		return 100.00;
-	else if (is_slm(family, model))
-		return slm_bclk();
-	else
-		return 133.33;
-}
+द्विगुन discover_bclk(अचिन्हित पूर्णांक family, अचिन्हित पूर्णांक model)
+अणु
+	अगर (has_snb_msrs(family, model) || is_knl(family, model))
+		वापस 100.00;
+	अन्यथा अगर (is_slm(family, model))
+		वापस slm_bclk();
+	अन्यथा
+		वापस 133.33;
+पूर्ण
 
-int get_cpu_type(struct thread_data *t, struct core_data *c, struct pkg_data *p)
-{
-	unsigned int eax, ebx, ecx, edx;
+पूर्णांक get_cpu_type(काष्ठा thपढ़ो_data *t, काष्ठा core_data *c, काष्ठा pkg_data *p)
+अणु
+	अचिन्हित पूर्णांक eax, ebx, ecx, edx;
 
-	if (!genuine_intel)
-		return 0;
+	अगर (!genuine_पूर्णांकel)
+		वापस 0;
 
-	if (cpu_migrate(t->cpu_id)) {
-		fprintf(outf, "Could not migrate to CPU %d\n", t->cpu_id);
-		return -1;
-	}
+	अगर (cpu_migrate(t->cpu_id)) अणु
+		ख_लिखो(outf, "Could not migrate to CPU %d\n", t->cpu_id);
+		वापस -1;
+	पूर्ण
 
-	if (max_level < 0x1a)
-		return 0;
+	अगर (max_level < 0x1a)
+		वापस 0;
 
 	__cpuid(0x1a, eax, ebx, ecx, edx);
 	eax = (eax >> 24) & 0xFF;
-	if (eax == 0x20)
+	अगर (eax == 0x20)
 		t->is_atom = true;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * MSR_IA32_TEMPERATURE_TARGET indicates the temperature where
  * the Thermal Control Circuit (TCC) activates.
  * This is usually equal to tjMax.
  *
- * Older processors do not have this MSR, so there we guess,
+ * Older processors करो not have this MSR, so there we guess,
  * but also allow cmdline over-ride with -T.
  *
  * Several MSR temperature values are in units of degrees-C
  * below this value, including the Digital Thermal Sensor (DTS),
  * Package Thermal Management Sensor (PTM), and thermal event thresholds.
  */
-int set_temperature_target(struct thread_data *t, struct core_data *c, struct pkg_data *p)
-{
-	unsigned long long msr;
-	unsigned int tcc_default, tcc_offset;
-	int cpu;
+पूर्णांक set_temperature_target(काष्ठा thपढ़ो_data *t, काष्ठा core_data *c, काष्ठा pkg_data *p)
+अणु
+	अचिन्हित दीर्घ दीर्घ msr;
+	अचिन्हित पूर्णांक tcc_शेष, tcc_offset;
+	पूर्णांक cpu;
 
-	/* tj_max is used only for dts or ptm */
-	if (!(do_dts || do_ptm))
-		return 0;
+	/* tj_max is used only क्रम dts or pपंचांग */
+	अगर (!(करो_dts || करो_pपंचांग))
+		वापस 0;
 
 	/* this is a per-package concept */
-	if (!(t->flags & CPU_IS_FIRST_THREAD_IN_CORE) || !(t->flags & CPU_IS_FIRST_CORE_IN_PACKAGE))
-		return 0;
+	अगर (!(t->flags & CPU_IS_FIRST_THREAD_IN_CORE) || !(t->flags & CPU_IS_FIRST_CORE_IN_PACKAGE))
+		वापस 0;
 
 	cpu = t->cpu_id;
-	if (cpu_migrate(cpu)) {
-		fprintf(outf, "Could not migrate to CPU %d\n", cpu);
-		return -1;
-	}
+	अगर (cpu_migrate(cpu)) अणु
+		ख_लिखो(outf, "Could not migrate to CPU %d\n", cpu);
+		वापस -1;
+	पूर्ण
 
-	if (tj_max_override != 0) {
+	अगर (tj_max_override != 0) अणु
 		tj_max = tj_max_override;
-		fprintf(outf, "cpu%d: Using cmdline TCC Target (%d C)\n", cpu, tj_max);
-		return 0;
-	}
+		ख_लिखो(outf, "cpu%d: Using cmdline TCC Target (%d C)\n", cpu, tj_max);
+		वापस 0;
+	पूर्ण
 
 	/* Temperature Target MSR is Nehalem and newer only */
-	if (!do_nhm_platform_info)
-		goto guess;
+	अगर (!करो_nhm_platक्रमm_info)
+		जाओ guess;
 
-	if (get_msr(base_cpu, MSR_IA32_TEMPERATURE_TARGET, &msr))
-		goto guess;
+	अगर (get_msr(base_cpu, MSR_IA32_TEMPERATURE_TARGET, &msr))
+		जाओ guess;
 
-	tcc_default = (msr >> 16) & 0xFF;
+	tcc_शेष = (msr >> 16) & 0xFF;
 
-	if (!quiet) {
-		switch (tcc_offset_bits) {
-		case 4:
+	अगर (!quiet) अणु
+		चयन (tcc_offset_bits) अणु
+		हाल 4:
 			tcc_offset = (msr >> 24) & 0xF;
-			fprintf(outf, "cpu%d: MSR_IA32_TEMPERATURE_TARGET: 0x%08llx (%d C) (%d default - %d offset)\n",
-				cpu, msr, tcc_default - tcc_offset, tcc_default, tcc_offset);
-			break;
-		case 6:
+			ख_लिखो(outf, "cpu%d: MSR_IA32_TEMPERATURE_TARGET: 0x%08llx (%d C) (%d default - %d offset)\n",
+				cpu, msr, tcc_शेष - tcc_offset, tcc_शेष, tcc_offset);
+			अवरोध;
+		हाल 6:
 			tcc_offset = (msr >> 24) & 0x3F;
-			fprintf(outf, "cpu%d: MSR_IA32_TEMPERATURE_TARGET: 0x%08llx (%d C) (%d default - %d offset)\n",
-				cpu, msr, tcc_default - tcc_offset, tcc_default, tcc_offset);
-			break;
-		default:
-			fprintf(outf, "cpu%d: MSR_IA32_TEMPERATURE_TARGET: 0x%08llx (%d C)\n", cpu, msr, tcc_default);
-			break;
-		}
-	}
+			ख_लिखो(outf, "cpu%d: MSR_IA32_TEMPERATURE_TARGET: 0x%08llx (%d C) (%d default - %d offset)\n",
+				cpu, msr, tcc_शेष - tcc_offset, tcc_शेष, tcc_offset);
+			अवरोध;
+		शेष:
+			ख_लिखो(outf, "cpu%d: MSR_IA32_TEMPERATURE_TARGET: 0x%08llx (%d C)\n", cpu, msr, tcc_शेष);
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	if (!tcc_default)
-		goto guess;
+	अगर (!tcc_शेष)
+		जाओ guess;
 
-	tj_max = tcc_default;
+	tj_max = tcc_शेष;
 
-	return 0;
+	वापस 0;
 
 guess:
 	tj_max = TJMAX_DEFAULT;
-	fprintf(outf, "cpu%d: Guessing tjMax %d C, Please use -T to specify\n", cpu, tj_max);
+	ख_लिखो(outf, "cpu%d: Guessing tjMax %d C, Please use -T to specify\n", cpu, tj_max);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void decode_feature_control_msr(void)
-{
-	unsigned long long msr;
+व्योम decode_feature_control_msr(व्योम)
+अणु
+	अचिन्हित दीर्घ दीर्घ msr;
 
-	if (!get_msr(base_cpu, MSR_IA32_FEAT_CTL, &msr))
-		fprintf(outf, "cpu%d: MSR_IA32_FEATURE_CONTROL: 0x%08llx (%sLocked %s)\n",
+	अगर (!get_msr(base_cpu, MSR_IA32_FEAT_CTL, &msr))
+		ख_लिखो(outf, "cpu%d: MSR_IA32_FEATURE_CONTROL: 0x%08llx (%sLocked %s)\n",
 			base_cpu, msr, msr & FEAT_CTL_LOCKED ? "" : "UN-", msr & (1 << 18) ? "SGX" : "");
-}
+पूर्ण
 
-void decode_misc_enable_msr(void)
-{
-	unsigned long long msr;
+व्योम decode_misc_enable_msr(व्योम)
+अणु
+	अचिन्हित दीर्घ दीर्घ msr;
 
-	if (!genuine_intel)
-		return;
+	अगर (!genuine_पूर्णांकel)
+		वापस;
 
-	if (!get_msr(base_cpu, MSR_IA32_MISC_ENABLE, &msr))
-		fprintf(outf, "cpu%d: MSR_IA32_MISC_ENABLE: 0x%08llx (%sTCC %sEIST %sMWAIT %sPREFETCH %sTURBO)\n",
+	अगर (!get_msr(base_cpu, MSR_IA32_MISC_ENABLE, &msr))
+		ख_लिखो(outf, "cpu%d: MSR_IA32_MISC_ENABLE: 0x%08llx (%sTCC %sEIST %sMWAIT %sPREFETCH %sTURBO)\n",
 			base_cpu, msr,
 			msr & MSR_IA32_MISC_ENABLE_TM1 ? "" : "No-",
 			msr & MSR_IA32_MISC_ENABLE_ENHANCED_SPEEDSTEP ? "" : "No-",
 			msr & MSR_IA32_MISC_ENABLE_MWAIT ? "" : "No-",
 			msr & MSR_IA32_MISC_ENABLE_PREFETCH_DISABLE ? "No-" : "",
 			msr & MSR_IA32_MISC_ENABLE_TURBO_DISABLE ? "No-" : "");
-}
+पूर्ण
 
-void decode_misc_feature_control(void)
-{
-	unsigned long long msr;
+व्योम decode_misc_feature_control(व्योम)
+अणु
+	अचिन्हित दीर्घ दीर्घ msr;
 
-	if (!has_misc_feature_control)
-		return;
+	अगर (!has_misc_feature_control)
+		वापस;
 
-	if (!get_msr(base_cpu, MSR_MISC_FEATURE_CONTROL, &msr))
-		fprintf(outf,
+	अगर (!get_msr(base_cpu, MSR_MISC_FEATURE_CONTROL, &msr))
+		ख_लिखो(outf,
 			"cpu%d: MSR_MISC_FEATURE_CONTROL: 0x%08llx (%sL2-Prefetch %sL2-Prefetch-pair %sL1-Prefetch %sL1-IP-Prefetch)\n",
 			base_cpu, msr, msr & (0 << 0) ? "No-" : "", msr & (1 << 0) ? "No-" : "",
 			msr & (2 << 0) ? "No-" : "", msr & (3 << 0) ? "No-" : "");
-}
+पूर्ण
 
 /*
  * Decode MSR_MISC_PWR_MGMT
  *
- * Decode the bits according to the Nehalem documentation
- * bit[0] seems to continue to have same meaning going forward
+ * Decode the bits according to the Nehalem करोcumentation
+ * bit[0] seems to जारी to have same meaning going क्रमward
  * bit[1] less so...
  */
-void decode_misc_pwr_mgmt_msr(void)
-{
-	unsigned long long msr;
+व्योम decode_misc_pwr_mgmt_msr(व्योम)
+अणु
+	अचिन्हित दीर्घ दीर्घ msr;
 
-	if (!do_nhm_platform_info)
-		return;
+	अगर (!करो_nhm_platक्रमm_info)
+		वापस;
 
-	if (no_MSR_MISC_PWR_MGMT)
-		return;
+	अगर (no_MSR_MISC_PWR_MGMT)
+		वापस;
 
-	if (!get_msr(base_cpu, MSR_MISC_PWR_MGMT, &msr))
-		fprintf(outf, "cpu%d: MSR_MISC_PWR_MGMT: 0x%08llx (%sable-EIST_Coordination %sable-EPB %sable-OOB)\n",
+	अगर (!get_msr(base_cpu, MSR_MISC_PWR_MGMT, &msr))
+		ख_लिखो(outf, "cpu%d: MSR_MISC_PWR_MGMT: 0x%08llx (%sable-EIST_Coordination %sable-EPB %sable-OOB)\n",
 			base_cpu, msr,
 			msr & (1 << 0) ? "DIS" : "EN", msr & (1 << 1) ? "EN" : "DIS", msr & (1 << 8) ? "EN" : "DIS");
-}
+पूर्ण
 
 /*
  * Decode MSR_CC6_DEMOTION_POLICY_CONFIG, MSR_MC6_DEMOTION_POLICY_CONFIG
  *
  * This MSRs are present on Silvermont processors,
- * Intel Atom processor E3000 series (Baytrail), and friends.
+ * Intel Atom processor E3000 series (Baytrail), and मित्रs.
  */
-void decode_c6_demotion_policy_msr(void)
-{
-	unsigned long long msr;
+व्योम decode_c6_demotion_policy_msr(व्योम)
+अणु
+	अचिन्हित दीर्घ दीर्घ msr;
 
-	if (!get_msr(base_cpu, MSR_CC6_DEMOTION_POLICY_CONFIG, &msr))
-		fprintf(outf, "cpu%d: MSR_CC6_DEMOTION_POLICY_CONFIG: 0x%08llx (%sable-CC6-Demotion)\n",
+	अगर (!get_msr(base_cpu, MSR_CC6_DEMOTION_POLICY_CONFIG, &msr))
+		ख_लिखो(outf, "cpu%d: MSR_CC6_DEMOTION_POLICY_CONFIG: 0x%08llx (%sable-CC6-Demotion)\n",
 			base_cpu, msr, msr & (1 << 0) ? "EN" : "DIS");
 
-	if (!get_msr(base_cpu, MSR_MC6_DEMOTION_POLICY_CONFIG, &msr))
-		fprintf(outf, "cpu%d: MSR_MC6_DEMOTION_POLICY_CONFIG: 0x%08llx (%sable-MC6-Demotion)\n",
+	अगर (!get_msr(base_cpu, MSR_MC6_DEMOTION_POLICY_CONFIG, &msr))
+		ख_लिखो(outf, "cpu%d: MSR_MC6_DEMOTION_POLICY_CONFIG: 0x%08llx (%sable-MC6-Demotion)\n",
 			base_cpu, msr, msr & (1 << 0) ? "EN" : "DIS");
-}
+पूर्ण
 
 /*
- * When models are the same, for the purpose of turbostat, reuse
+ * When models are the same, क्रम the purpose of turbostat, reuse
  */
-unsigned int intel_model_duplicates(unsigned int model)
-{
+अचिन्हित पूर्णांक पूर्णांकel_model_duplicates(अचिन्हित पूर्णांक model)
+अणु
 
-	switch (model) {
-	case INTEL_FAM6_NEHALEM_EP:	/* Core i7, Xeon 5500 series - Bloomfield, Gainstown NHM-EP */
-	case INTEL_FAM6_NEHALEM:	/* Core i7 and i5 Processor - Clarksfield, Lynnfield, Jasper Forest */
-	case 0x1F:		/* Core i7 and i5 Processor - Nehalem */
-	case INTEL_FAM6_WESTMERE:	/* Westmere Client - Clarkdale, Arrandale */
-	case INTEL_FAM6_WESTMERE_EP:	/* Westmere EP - Gulftown */
-		return INTEL_FAM6_NEHALEM;
+	चयन (model) अणु
+	हाल INTEL_FAM6_NEHALEM_EP:	/* Core i7, Xeon 5500 series - Bloomfield, Gainstown NHM-EP */
+	हाल INTEL_FAM6_NEHALEM:	/* Core i7 and i5 Processor - Clarksfield, Lynnfield, Jasper Forest */
+	हाल 0x1F:		/* Core i7 and i5 Processor - Nehalem */
+	हाल INTEL_FAM6_WESTMERE:	/* Wesपंचांगere Client - Clarkdale, Arअक्रमale */
+	हाल INTEL_FAM6_WESTMERE_EP:	/* Wesपंचांगere EP - Gulftown */
+		वापस INTEL_FAM6_NEHALEM;
 
-	case INTEL_FAM6_NEHALEM_EX:	/* Nehalem-EX Xeon - Beckton */
-	case INTEL_FAM6_WESTMERE_EX:	/* Westmere-EX Xeon - Eagleton */
-		return INTEL_FAM6_NEHALEM_EX;
+	हाल INTEL_FAM6_NEHALEM_EX:	/* Nehalem-EX Xeon - Beckton */
+	हाल INTEL_FAM6_WESTMERE_EX:	/* Wesपंचांगere-EX Xeon - Eagleton */
+		वापस INTEL_FAM6_NEHALEM_EX;
 
-	case INTEL_FAM6_XEON_PHI_KNM:
-		return INTEL_FAM6_XEON_PHI_KNL;
+	हाल INTEL_FAM6_XEON_PHI_KNM:
+		वापस INTEL_FAM6_XEON_PHI_KNL;
 
-	case INTEL_FAM6_BROADWELL_X:
-	case INTEL_FAM6_BROADWELL_D:	/* BDX-DE */
-		return INTEL_FAM6_BROADWELL_X;
+	हाल INTEL_FAM6_BROADWELL_X:
+	हाल INTEL_FAM6_BROADWELL_D:	/* BDX-DE */
+		वापस INTEL_FAM6_BROADWELL_X;
 
-	case INTEL_FAM6_SKYLAKE_L:
-	case INTEL_FAM6_SKYLAKE:
-	case INTEL_FAM6_KABYLAKE_L:
-	case INTEL_FAM6_KABYLAKE:
-	case INTEL_FAM6_COMETLAKE_L:
-	case INTEL_FAM6_COMETLAKE:
-		return INTEL_FAM6_SKYLAKE_L;
+	हाल INTEL_FAM6_SKYLAKE_L:
+	हाल INTEL_FAM6_SKYLAKE:
+	हाल INTEL_FAM6_KABYLAKE_L:
+	हाल INTEL_FAM6_KABYLAKE:
+	हाल INTEL_FAM6_COMETLAKE_L:
+	हाल INTEL_FAM6_COMETLAKE:
+		वापस INTEL_FAM6_SKYLAKE_L;
 
-	case INTEL_FAM6_ICELAKE_L:
-	case INTEL_FAM6_ICELAKE_NNPI:
-	case INTEL_FAM6_TIGERLAKE_L:
-	case INTEL_FAM6_TIGERLAKE:
-	case INTEL_FAM6_ROCKETLAKE:
-	case INTEL_FAM6_LAKEFIELD:
-	case INTEL_FAM6_ALDERLAKE:
-	case INTEL_FAM6_ALDERLAKE_L:
-		return INTEL_FAM6_CANNONLAKE_L;
+	हाल INTEL_FAM6_ICELAKE_L:
+	हाल INTEL_FAM6_ICELAKE_NNPI:
+	हाल INTEL_FAM6_TIGERLAKE_L:
+	हाल INTEL_FAM6_TIGERLAKE:
+	हाल INTEL_FAM6_ROCKETLAKE:
+	हाल INTEL_FAM6_LAKEFIELD:
+	हाल INTEL_FAM6_ALDERLAKE:
+	हाल INTEL_FAM6_ALDERLAKE_L:
+		वापस INTEL_FAM6_CANNONLAKE_L;
 
-	case INTEL_FAM6_ATOM_TREMONT_L:
-		return INTEL_FAM6_ATOM_TREMONT;
+	हाल INTEL_FAM6_ATOM_TREMONT_L:
+		वापस INTEL_FAM6_ATOM_TREMONT;
 
-	case INTEL_FAM6_ICELAKE_D:
-	case INTEL_FAM6_SAPPHIRERAPIDS_X:
-		return INTEL_FAM6_ICELAKE_X;
-	}
-	return model;
-}
+	हाल INTEL_FAM6_ICELAKE_D:
+	हाल INTEL_FAM6_SAPPHIRERAPIDS_X:
+		वापस INTEL_FAM6_ICELAKE_X;
+	पूर्ण
+	वापस model;
+पूर्ण
 
-void print_dev_latency(void)
-{
-	char *path = "/dev/cpu_dma_latency";
-	int fd;
-	int value;
-	int retval;
+व्योम prपूर्णांक_dev_latency(व्योम)
+अणु
+	अक्षर *path = "/dev/cpu_dma_latency";
+	पूर्णांक fd;
+	पूर्णांक value;
+	पूर्णांक retval;
 
-	fd = open(path, O_RDONLY);
-	if (fd < 0) {
+	fd = खोलो(path, O_RDONLY);
+	अगर (fd < 0) अणु
 		warn("fopen %s\n", path);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	retval = read(fd, (void *)&value, sizeof(int));
-	if (retval != sizeof(int)) {
+	retval = पढ़ो(fd, (व्योम *)&value, माप(पूर्णांक));
+	अगर (retval != माप(पूर्णांक)) अणु
 		warn("read %s\n", path);
-		close(fd);
-		return;
-	}
-	fprintf(outf, "/dev/cpu_dma_latency: %d usec (%s)\n", value, value == 2000000000 ? "default" : "constrained");
+		बंद(fd);
+		वापस;
+	पूर्ण
+	ख_लिखो(outf, "/dev/cpu_dma_latency: %d usec (%s)\n", value, value == 2000000000 ? "default" : "constrained");
 
-	close(fd);
-}
+	बंद(fd);
+पूर्ण
 
 /*
- * Linux-perf manages the the HW instructions-retired counter
+ * Linux-perf manages the the HW inकाष्ठाions-retired counter
  * by enabling when requested, and hiding rollover
  */
-void linux_perf_init(void)
-{
-	if (!BIC_IS_ENABLED(BIC_IPC))
-		return;
+व्योम linux_perf_init(व्योम)
+अणु
+	अगर (!BIC_IS_ENABLED(BIC_IPC))
+		वापस;
 
-	if (access("/proc/sys/kernel/perf_event_paranoid", F_OK))
-		return;
+	अगर (access("/proc/sys/kernel/perf_event_paranoid", F_OK))
+		वापस;
 
-	fd_instr_count_percpu = calloc(topo.max_cpu_num + 1, sizeof(int));
-	if (fd_instr_count_percpu == NULL)
+	fd_instr_count_percpu = सुस्मृति(topo.max_cpu_num + 1, माप(पूर्णांक));
+	अगर (fd_instr_count_percpu == शून्य)
 		err(-1, "calloc fd_instr_count_percpu");
 
 	BIC_PRESENT(BIC_IPC);
-}
+पूर्ण
 
-void process_cpuid()
-{
-	unsigned int eax, ebx, ecx, edx;
-	unsigned int fms, family, model, stepping, ecx_flags, edx_flags;
-	unsigned int has_turbo;
-	unsigned long long ucode_patch = 0;
+व्योम process_cpuid()
+अणु
+	अचिन्हित पूर्णांक eax, ebx, ecx, edx;
+	अचिन्हित पूर्णांक fms, family, model, stepping, ecx_flags, edx_flags;
+	अचिन्हित पूर्णांक has_turbo;
+	अचिन्हित दीर्घ दीर्घ ucode_patch = 0;
 
 	eax = ebx = ecx = edx = 0;
 
 	__cpuid(0, max_level, ebx, ecx, edx);
 
-	if (ebx == 0x756e6547 && ecx == 0x6c65746e && edx == 0x49656e69)
-		genuine_intel = 1;
-	else if (ebx == 0x68747541 && ecx == 0x444d4163 && edx == 0x69746e65)
+	अगर (ebx == 0x756e6547 && ecx == 0x6c65746e && edx == 0x49656e69)
+		genuine_पूर्णांकel = 1;
+	अन्यथा अगर (ebx == 0x68747541 && ecx == 0x444d4163 && edx == 0x69746e65)
 		authentic_amd = 1;
-	else if (ebx == 0x6f677948 && ecx == 0x656e6975 && edx == 0x6e65476e)
+	अन्यथा अगर (ebx == 0x6f677948 && ecx == 0x656e6975 && edx == 0x6e65476e)
 		hygon_genuine = 1;
 
-	if (!quiet)
-		fprintf(outf, "CPUID(0): %.4s%.4s%.4s 0x%x CPUID levels\n",
-			(char *)&ebx, (char *)&edx, (char *)&ecx, max_level);
+	अगर (!quiet)
+		ख_लिखो(outf, "CPUID(0): %.4s%.4s%.4s 0x%x CPUID levels\n",
+			(अक्षर *)&ebx, (अक्षर *)&edx, (अक्षर *)&ecx, max_level);
 
 	__cpuid(1, fms, ebx, ecx, edx);
 	family = (fms >> 8) & 0xf;
 	model = (fms >> 4) & 0xf;
 	stepping = fms & 0xf;
-	if (family == 0xf)
+	अगर (family == 0xf)
 		family += (fms >> 20) & 0xff;
-	if (family >= 6)
+	अगर (family >= 6)
 		model += ((fms >> 16) & 0xf) << 4;
 	ecx_flags = ecx;
 	edx_flags = edx;
 
-	if (get_msr(sched_getcpu(), MSR_IA32_UCODE_REV, &ucode_patch))
+	अगर (get_msr(sched_अ_लोpu(), MSR_IA32_UCODE_REV, &ucode_patch))
 		warnx("get_msr(UCODE)\n");
 
 	/*
 	 * check max extended function levels of CPUID.
-	 * This is needed to check for invariant TSC.
-	 * This check is valid for both Intel and AMD.
+	 * This is needed to check क्रम invariant TSC.
+	 * This check is valid क्रम both Intel and AMD.
 	 */
 	ebx = ecx = edx = 0;
 	__cpuid(0x80000000, max_extended_level, ebx, ecx, edx);
 
-	if (!quiet) {
-		fprintf(outf, "CPUID(1): family:model:stepping 0x%x:%x:%x (%d:%d:%d) microcode 0x%x\n",
+	अगर (!quiet) अणु
+		ख_लिखो(outf, "CPUID(1): family:model:stepping 0x%x:%x:%x (%d:%d:%d) microcode 0x%x\n",
 			family, model, stepping, family, model, stepping,
-			(unsigned int)((ucode_patch >> 32) & 0xFFFFFFFF));
-		fprintf(outf, "CPUID(0x80000000): max_extended_levels: 0x%x\n", max_extended_level);
-		fprintf(outf, "CPUID(1): %s %s %s %s %s %s %s %s %s %s\n",
+			(अचिन्हित पूर्णांक)((ucode_patch >> 32) & 0xFFFFFFFF));
+		ख_लिखो(outf, "CPUID(0x80000000): max_extended_levels: 0x%x\n", max_extended_level);
+		ख_लिखो(outf, "CPUID(1): %s %s %s %s %s %s %s %s %s %s\n",
 			ecx_flags & (1 << 0) ? "SSE3" : "-",
 			ecx_flags & (1 << 3) ? "MONITOR" : "-",
 			ecx_flags & (1 << 6) ? "SMX" : "-",
@@ -5323,83 +5324,83 @@ void process_cpuid()
 			edx_flags & (1 << 5) ? "MSR" : "-",
 			edx_flags & (1 << 22) ? "ACPI-TM" : "-",
 			edx_flags & (1 << 28) ? "HT" : "-", edx_flags & (1 << 29) ? "TM" : "-");
-	}
-	if (genuine_intel) {
+	पूर्ण
+	अगर (genuine_पूर्णांकel) अणु
 		model_orig = model;
-		model = intel_model_duplicates(model);
-	}
+		model = पूर्णांकel_model_duplicates(model);
+	पूर्ण
 
-	if (!(edx_flags & (1 << 5)))
+	अगर (!(edx_flags & (1 << 5)))
 		errx(1, "CPUID: no MSR");
 
-	if (max_extended_level >= 0x80000007) {
+	अगर (max_extended_level >= 0x80000007) अणु
 
 		/*
 		 * Non-Stop TSC is advertised by CPUID.EAX=0x80000007: EDX.bit8
-		 * this check is valid for both Intel and AMD
+		 * this check is valid क्रम both Intel and AMD
 		 */
 		__cpuid(0x80000007, eax, ebx, ecx, edx);
 		has_invariant_tsc = edx & (1 << 8);
-	}
+	पूर्ण
 
 	/*
 	 * APERF/MPERF is advertised by CPUID.EAX=0x6: ECX.bit0
-	 * this check is valid for both Intel and AMD
+	 * this check is valid क्रम both Intel and AMD
 	 */
 
 	__cpuid(0x6, eax, ebx, ecx, edx);
 	has_aperf = ecx & (1 << 0);
-	if (has_aperf) {
+	अगर (has_aperf) अणु
 		BIC_PRESENT(BIC_Avg_MHz);
 		BIC_PRESENT(BIC_Busy);
 		BIC_PRESENT(BIC_Bzy_MHz);
-	}
-	do_dts = eax & (1 << 0);
-	if (do_dts)
+	पूर्ण
+	करो_dts = eax & (1 << 0);
+	अगर (करो_dts)
 		BIC_PRESENT(BIC_CoreTmp);
 	has_turbo = eax & (1 << 1);
-	do_ptm = eax & (1 << 6);
-	if (do_ptm)
+	करो_pपंचांग = eax & (1 << 6);
+	अगर (करो_pपंचांग)
 		BIC_PRESENT(BIC_PkgTmp);
 	has_hwp = eax & (1 << 7);
-	has_hwp_notify = eax & (1 << 8);
-	has_hwp_activity_window = eax & (1 << 9);
+	has_hwp_notअगरy = eax & (1 << 8);
+	has_hwp_activity_winकरोw = eax & (1 << 9);
 	has_hwp_epp = eax & (1 << 10);
 	has_hwp_pkg = eax & (1 << 11);
 	has_epb = ecx & (1 << 3);
 
-	if (!quiet)
-		fprintf(outf, "CPUID(6): %sAPERF, %sTURBO, %sDTS, %sPTM, %sHWP, "
+	अगर (!quiet)
+		ख_लिखो(outf, "CPUID(6): %sAPERF, %sTURBO, %sDTS, %sPTM, %sHWP, "
 			"%sHWPnotify, %sHWPwindow, %sHWPepp, %sHWPpkg, %sEPB\n",
 			has_aperf ? "" : "No-",
 			has_turbo ? "" : "No-",
-			do_dts ? "" : "No-",
-			do_ptm ? "" : "No-",
+			करो_dts ? "" : "No-",
+			करो_pपंचांग ? "" : "No-",
 			has_hwp ? "" : "No-",
-			has_hwp_notify ? "" : "No-",
-			has_hwp_activity_window ? "" : "No-",
+			has_hwp_notअगरy ? "" : "No-",
+			has_hwp_activity_winकरोw ? "" : "No-",
 			has_hwp_epp ? "" : "No-", has_hwp_pkg ? "" : "No-", has_epb ? "" : "No-");
 
-	if (!quiet)
+	अगर (!quiet)
 		decode_misc_enable_msr();
 
-	if (max_level >= 0x7 && !quiet) {
-		int has_sgx;
+	अगर (max_level >= 0x7 && !quiet) अणु
+		पूर्णांक has_sgx;
 
 		ecx = 0;
 
 		__cpuid_count(0x7, 0, eax, ebx, ecx, edx);
 
 		has_sgx = ebx & (1 << 2);
-		fprintf(outf, "CPUID(7): %sSGX\n", has_sgx ? "" : "No-");
+		ख_लिखो(outf, "CPUID(7): %sSGX\n", has_sgx ? "" : "No-");
 
-		if (has_sgx)
+		अगर (has_sgx)
 			decode_feature_control_msr();
-	}
+	पूर्ण
 
-	if (max_level >= 0x15) {
-		unsigned int eax_crystal;
-		unsigned int ebx_tsc;
+	अगर (max_level >= 0x15) अणु
+		अचिन्हित पूर्णांक eax_crystal;
+		अचिन्हित पूर्णांक ebx_tsc;
 
 		/*
 		 * CPUID 15H TSC/Crystal ratio, possibly Crystal Hz
@@ -5407,38 +5408,38 @@ void process_cpuid()
 		eax_crystal = ebx_tsc = crystal_hz = edx = 0;
 		__cpuid(0x15, eax_crystal, ebx_tsc, crystal_hz, edx);
 
-		if (ebx_tsc != 0) {
+		अगर (ebx_tsc != 0) अणु
 
-			if (!quiet && (ebx != 0))
-				fprintf(outf, "CPUID(0x15): eax_crystal: %d ebx_tsc: %d ecx_crystal_hz: %d\n",
+			अगर (!quiet && (ebx != 0))
+				ख_लिखो(outf, "CPUID(0x15): eax_crystal: %d ebx_tsc: %d ecx_crystal_hz: %d\n",
 					eax_crystal, ebx_tsc, crystal_hz);
 
-			if (crystal_hz == 0)
-				switch (model) {
-				case INTEL_FAM6_SKYLAKE_L:	/* SKL */
+			अगर (crystal_hz == 0)
+				चयन (model) अणु
+				हाल INTEL_FAM6_SKYLAKE_L:	/* SKL */
 					crystal_hz = 24000000;	/* 24.0 MHz */
-					break;
-				case INTEL_FAM6_ATOM_GOLDMONT_D:	/* DNV */
+					अवरोध;
+				हाल INTEL_FAM6_ATOM_GOLDMONT_D:	/* DNV */
 					crystal_hz = 25000000;	/* 25.0 MHz */
-					break;
-				case INTEL_FAM6_ATOM_GOLDMONT:	/* BXT */
-				case INTEL_FAM6_ATOM_GOLDMONT_PLUS:
+					अवरोध;
+				हाल INTEL_FAM6_ATOM_GOLDMONT:	/* BXT */
+				हाल INTEL_FAM6_ATOM_GOLDMONT_PLUS:
 					crystal_hz = 19200000;	/* 19.2 MHz */
-					break;
-				default:
+					अवरोध;
+				शेष:
 					crystal_hz = 0;
-				}
+				पूर्ण
 
-			if (crystal_hz) {
-				tsc_hz = (unsigned long long)crystal_hz *ebx_tsc / eax_crystal;
-				if (!quiet)
-					fprintf(outf, "TSC: %lld MHz (%d Hz * %d / %d / 1000000)\n",
+			अगर (crystal_hz) अणु
+				tsc_hz = (अचिन्हित दीर्घ दीर्घ)crystal_hz *ebx_tsc / eax_crystal;
+				अगर (!quiet)
+					ख_लिखो(outf, "TSC: %lld MHz (%d Hz * %d / %d / 1000000)\n",
 						tsc_hz / 1000000, crystal_hz, ebx_tsc, eax_crystal);
-			}
-		}
-	}
-	if (max_level >= 0x16) {
-		unsigned int base_mhz, max_mhz, bus_mhz, edx;
+			पूर्ण
+		पूर्ण
+	पूर्ण
+	अगर (max_level >= 0x16) अणु
+		अचिन्हित पूर्णांक base_mhz, max_mhz, bus_mhz, edx;
 
 		/*
 		 * CPUID 16H Base MHz, Max MHz, Bus MHz
@@ -5446,427 +5447,427 @@ void process_cpuid()
 		base_mhz = max_mhz = bus_mhz = edx = 0;
 
 		__cpuid(0x16, base_mhz, max_mhz, bus_mhz, edx);
-		if (!quiet)
-			fprintf(outf, "CPUID(0x16): base_mhz: %d max_mhz: %d bus_mhz: %d\n",
+		अगर (!quiet)
+			ख_लिखो(outf, "CPUID(0x16): base_mhz: %d max_mhz: %d bus_mhz: %d\n",
 				base_mhz, max_mhz, bus_mhz);
-	}
+	पूर्ण
 
-	if (has_aperf)
+	अगर (has_aperf)
 		aperf_mperf_multiplier = get_aperf_mperf_multiplier(family, model);
 
 	BIC_PRESENT(BIC_IRQ);
 	BIC_PRESENT(BIC_TSC_MHz);
 
-	if (probe_nhm_msrs(family, model)) {
-		do_nhm_platform_info = 1;
+	अगर (probe_nhm_msrs(family, model)) अणु
+		करो_nhm_platक्रमm_info = 1;
 		BIC_PRESENT(BIC_CPU_c1);
 		BIC_PRESENT(BIC_CPU_c3);
 		BIC_PRESENT(BIC_CPU_c6);
 		BIC_PRESENT(BIC_SMI);
-	}
-	do_snb_cstates = has_snb_msrs(family, model);
+	पूर्ण
+	करो_snb_cstates = has_snb_msrs(family, model);
 
-	if (do_snb_cstates)
+	अगर (करो_snb_cstates)
 		BIC_PRESENT(BIC_CPU_c7);
 
-	do_irtl_snb = has_snb_msrs(family, model);
-	if (do_snb_cstates && (pkg_cstate_limit >= PCL__2))
+	करो_irtl_snb = has_snb_msrs(family, model);
+	अगर (करो_snb_cstates && (pkg_cstate_limit >= PCL__2))
 		BIC_PRESENT(BIC_Pkgpc2);
-	if (pkg_cstate_limit >= PCL__3)
+	अगर (pkg_cstate_limit >= PCL__3)
 		BIC_PRESENT(BIC_Pkgpc3);
-	if (pkg_cstate_limit >= PCL__6)
+	अगर (pkg_cstate_limit >= PCL__6)
 		BIC_PRESENT(BIC_Pkgpc6);
-	if (do_snb_cstates && (pkg_cstate_limit >= PCL__7))
+	अगर (करो_snb_cstates && (pkg_cstate_limit >= PCL__7))
 		BIC_PRESENT(BIC_Pkgpc7);
-	if (has_slv_msrs(family, model)) {
+	अगर (has_slv_msrs(family, model)) अणु
 		BIC_NOT_PRESENT(BIC_Pkgpc2);
 		BIC_NOT_PRESENT(BIC_Pkgpc3);
 		BIC_PRESENT(BIC_Pkgpc6);
 		BIC_NOT_PRESENT(BIC_Pkgpc7);
 		BIC_PRESENT(BIC_Mod_c6);
 		use_c1_residency_msr = 1;
-	}
-	if (is_jvl(family, model)) {
+	पूर्ण
+	अगर (is_jvl(family, model)) अणु
 		BIC_NOT_PRESENT(BIC_CPU_c3);
 		BIC_NOT_PRESENT(BIC_CPU_c7);
 		BIC_NOT_PRESENT(BIC_Pkgpc2);
 		BIC_NOT_PRESENT(BIC_Pkgpc3);
 		BIC_NOT_PRESENT(BIC_Pkgpc6);
 		BIC_NOT_PRESENT(BIC_Pkgpc7);
-	}
-	if (is_dnv(family, model)) {
+	पूर्ण
+	अगर (is_dnv(family, model)) अणु
 		BIC_PRESENT(BIC_CPU_c1);
 		BIC_NOT_PRESENT(BIC_CPU_c3);
 		BIC_NOT_PRESENT(BIC_Pkgpc3);
 		BIC_NOT_PRESENT(BIC_CPU_c7);
 		BIC_NOT_PRESENT(BIC_Pkgpc7);
 		use_c1_residency_msr = 1;
-	}
-	if (is_skx(family, model) || is_icx(family, model)) {
+	पूर्ण
+	अगर (is_skx(family, model) || is_icx(family, model)) अणु
 		BIC_NOT_PRESENT(BIC_CPU_c3);
 		BIC_NOT_PRESENT(BIC_Pkgpc3);
 		BIC_NOT_PRESENT(BIC_CPU_c7);
 		BIC_NOT_PRESENT(BIC_Pkgpc7);
-	}
-	if (is_bdx(family, model)) {
+	पूर्ण
+	अगर (is_bdx(family, model)) अणु
 		BIC_NOT_PRESENT(BIC_CPU_c7);
 		BIC_NOT_PRESENT(BIC_Pkgpc7);
-	}
-	if (has_c8910_msrs(family, model)) {
-		if (pkg_cstate_limit >= PCL__8)
+	पूर्ण
+	अगर (has_c8910_msrs(family, model)) अणु
+		अगर (pkg_cstate_limit >= PCL__8)
 			BIC_PRESENT(BIC_Pkgpc8);
-		if (pkg_cstate_limit >= PCL__9)
+		अगर (pkg_cstate_limit >= PCL__9)
 			BIC_PRESENT(BIC_Pkgpc9);
-		if (pkg_cstate_limit >= PCL_10)
+		अगर (pkg_cstate_limit >= PCL_10)
 			BIC_PRESENT(BIC_Pkgpc10);
-	}
-	do_irtl_hsw = has_c8910_msrs(family, model);
-	if (has_skl_msrs(family, model)) {
+	पूर्ण
+	करो_irtl_hsw = has_c8910_msrs(family, model);
+	अगर (has_skl_msrs(family, model)) अणु
 		BIC_PRESENT(BIC_Totl_c0);
 		BIC_PRESENT(BIC_Any_c0);
 		BIC_PRESENT(BIC_GFX_c0);
 		BIC_PRESENT(BIC_CPUGFX);
-	}
-	do_slm_cstates = is_slm(family, model);
-	do_knl_cstates = is_knl(family, model);
+	पूर्ण
+	करो_slm_cstates = is_slm(family, model);
+	करो_knl_cstates = is_knl(family, model);
 
-	if (do_slm_cstates || do_knl_cstates || is_cnl(family, model) || is_ehl(family, model))
+	अगर (करो_slm_cstates || करो_knl_cstates || is_cnl(family, model) || is_ehl(family, model))
 		BIC_NOT_PRESENT(BIC_CPU_c3);
 
-	if (!quiet)
+	अगर (!quiet)
 		decode_misc_pwr_mgmt_msr();
 
-	if (!quiet && has_slv_msrs(family, model))
+	अगर (!quiet && has_slv_msrs(family, model))
 		decode_c6_demotion_policy_msr();
 
 	rapl_probe(family, model);
 	perf_limit_reasons_probe(family, model);
-	automatic_cstate_conversion_probe(family, model);
+	स्वतःmatic_cstate_conversion_probe(family, model);
 
 	check_tcc_offset(model_orig);
 
-	if (!quiet)
+	अगर (!quiet)
 		dump_cstate_pstate_config_info(family, model);
 
-	if (!quiet)
-		print_dev_latency();
-	if (!quiet)
+	अगर (!quiet)
+		prपूर्णांक_dev_latency();
+	अगर (!quiet)
 		dump_sysfs_cstate_config();
-	if (!quiet)
+	अगर (!quiet)
 		dump_sysfs_pstate_config();
 
-	if (has_skl_msrs(family, model) || is_ehl(family, model))
+	अगर (has_skl_msrs(family, model) || is_ehl(family, model))
 		calculate_tsc_tweak();
 
-	if (!access("/sys/class/drm/card0/power/rc6_residency_ms", R_OK))
+	अगर (!access("/sys/class/drm/card0/power/rc6_residency_ms", R_OK))
 		BIC_PRESENT(BIC_GFX_rc6);
 
-	if (!access("/sys/class/graphics/fb0/device/drm/card0/gt_cur_freq_mhz", R_OK))
+	अगर (!access("/sys/class/graphics/fb0/device/drm/card0/gt_cur_freq_mhz", R_OK))
 		BIC_PRESENT(BIC_GFXMHz);
 
-	if (!access("/sys/class/graphics/fb0/device/drm/card0/gt_act_freq_mhz", R_OK))
+	अगर (!access("/sys/class/graphics/fb0/device/drm/card0/gt_act_freq_mhz", R_OK))
 		BIC_PRESENT(BIC_GFXACTMHz);
 
-	if (!access("/sys/devices/system/cpu/cpuidle/low_power_idle_cpu_residency_us", R_OK))
+	अगर (!access("/sys/devices/system/cpu/cpuidle/low_power_idle_cpu_residency_us", R_OK))
 		BIC_PRESENT(BIC_CPU_LPI);
-	else
+	अन्यथा
 		BIC_NOT_PRESENT(BIC_CPU_LPI);
 
-	if (!access(sys_lpi_file_sysfs, R_OK)) {
+	अगर (!access(sys_lpi_file_sysfs, R_OK)) अणु
 		sys_lpi_file = sys_lpi_file_sysfs;
 		BIC_PRESENT(BIC_SYS_LPI);
-	} else if (!access(sys_lpi_file_debugfs, R_OK)) {
+	पूर्ण अन्यथा अगर (!access(sys_lpi_file_debugfs, R_OK)) अणु
 		sys_lpi_file = sys_lpi_file_debugfs;
 		BIC_PRESENT(BIC_SYS_LPI);
-	} else {
-		sys_lpi_file_sysfs = NULL;
+	पूर्ण अन्यथा अणु
+		sys_lpi_file_sysfs = शून्य;
 		BIC_NOT_PRESENT(BIC_SYS_LPI);
-	}
+	पूर्ण
 
-	if (!quiet)
+	अगर (!quiet)
 		decode_misc_feature_control();
 
-	return;
-}
+	वापस;
+पूर्ण
 
 /*
- * in /dev/cpu/ return success for names that are numbers
+ * in /dev/cpu/ वापस success क्रम names that are numbers
  * ie. filter out ".", "..", "microcode".
  */
-int dir_filter(const struct dirent *dirp)
-{
-	if (isdigit(dirp->d_name[0]))
-		return 1;
-	else
-		return 0;
-}
+पूर्णांक dir_filter(स्थिर काष्ठा dirent *dirp)
+अणु
+	अगर (है_अंक(dirp->d_name[0]))
+		वापस 1;
+	अन्यथा
+		वापस 0;
+पूर्ण
 
-int open_dev_cpu_msr(int dummy1)
-{
-	return 0;
-}
+पूर्णांक खोलो_dev_cpu_msr(पूर्णांक dummy1)
+अणु
+	वापस 0;
+पूर्ण
 
-void topology_probe()
-{
-	int i;
-	int max_core_id = 0;
-	int max_package_id = 0;
-	int max_die_id = 0;
-	int max_siblings = 0;
+व्योम topology_probe()
+अणु
+	पूर्णांक i;
+	पूर्णांक max_core_id = 0;
+	पूर्णांक max_package_id = 0;
+	पूर्णांक max_die_id = 0;
+	पूर्णांक max_siblings = 0;
 
 	/* Initialize num_cpus, max_cpu_num */
 	set_max_cpu_num();
 	topo.num_cpus = 0;
-	for_all_proc_cpus(count_cpus);
-	if (!summary_only && topo.num_cpus > 1)
+	क्रम_all_proc_cpus(count_cpus);
+	अगर (!summary_only && topo.num_cpus > 1)
 		BIC_PRESENT(BIC_CPU);
 
-	if (debug > 1)
-		fprintf(outf, "num_cpus %d max_cpu_num %d\n", topo.num_cpus, topo.max_cpu_num);
+	अगर (debug > 1)
+		ख_लिखो(outf, "num_cpus %d max_cpu_num %d\n", topo.num_cpus, topo.max_cpu_num);
 
-	cpus = calloc(1, (topo.max_cpu_num + 1) * sizeof(struct cpu_topology));
-	if (cpus == NULL)
+	cpus = सुस्मृति(1, (topo.max_cpu_num + 1) * माप(काष्ठा cpu_topology));
+	अगर (cpus == शून्य)
 		err(1, "calloc cpus");
 
 	/*
 	 * Allocate and initialize cpu_present_set
 	 */
 	cpu_present_set = CPU_ALLOC((topo.max_cpu_num + 1));
-	if (cpu_present_set == NULL)
+	अगर (cpu_present_set == शून्य)
 		err(3, "CPU_ALLOC");
 	cpu_present_setsize = CPU_ALLOC_SIZE((topo.max_cpu_num + 1));
 	CPU_ZERO_S(cpu_present_setsize, cpu_present_set);
-	for_all_proc_cpus(mark_cpu_present);
+	क्रम_all_proc_cpus(mark_cpu_present);
 
 	/*
 	 * Validate that all cpus in cpu_subset are also in cpu_present_set
 	 */
-	for (i = 0; i < CPU_SUBSET_MAXCPUS; ++i) {
-		if (CPU_ISSET_S(i, cpu_subset_size, cpu_subset))
-			if (!CPU_ISSET_S(i, cpu_present_setsize, cpu_present_set))
+	क्रम (i = 0; i < CPU_SUBSET_MAXCPUS; ++i) अणु
+		अगर (CPU_ISSET_S(i, cpu_subset_size, cpu_subset))
+			अगर (!CPU_ISSET_S(i, cpu_present_setsize, cpu_present_set))
 				err(1, "cpu%d not present", i);
-	}
+	पूर्ण
 
 	/*
 	 * Allocate and initialize cpu_affinity_set
 	 */
 	cpu_affinity_set = CPU_ALLOC((topo.max_cpu_num + 1));
-	if (cpu_affinity_set == NULL)
+	अगर (cpu_affinity_set == शून्य)
 		err(3, "CPU_ALLOC");
 	cpu_affinity_setsize = CPU_ALLOC_SIZE((topo.max_cpu_num + 1));
 	CPU_ZERO_S(cpu_affinity_setsize, cpu_affinity_set);
 
-	for_all_proc_cpus(init_thread_id);
+	क्रम_all_proc_cpus(init_thपढ़ो_id);
 
 	/*
 	 * For online cpus
 	 * find max_core_id, max_package_id
 	 */
-	for (i = 0; i <= topo.max_cpu_num; ++i) {
-		int siblings;
+	क्रम (i = 0; i <= topo.max_cpu_num; ++i) अणु
+		पूर्णांक siblings;
 
-		if (cpu_is_not_present(i)) {
-			if (debug > 1)
-				fprintf(outf, "cpu%d NOT PRESENT\n", i);
-			continue;
-		}
+		अगर (cpu_is_not_present(i)) अणु
+			अगर (debug > 1)
+				ख_लिखो(outf, "cpu%d NOT PRESENT\n", i);
+			जारी;
+		पूर्ण
 
 		cpus[i].logical_cpu_id = i;
 
-		/* get package information */
+		/* get package inक्रमmation */
 		cpus[i].physical_package_id = get_physical_package_id(i);
-		if (cpus[i].physical_package_id > max_package_id)
+		अगर (cpus[i].physical_package_id > max_package_id)
 			max_package_id = cpus[i].physical_package_id;
 
-		/* get die information */
+		/* get die inक्रमmation */
 		cpus[i].die_id = get_die_id(i);
-		if (cpus[i].die_id > max_die_id)
+		अगर (cpus[i].die_id > max_die_id)
 			max_die_id = cpus[i].die_id;
 
-		/* get numa node information */
+		/* get numa node inक्रमmation */
 		cpus[i].physical_node_id = get_physical_node_id(&cpus[i]);
-		if (cpus[i].physical_node_id > topo.max_node_num)
+		अगर (cpus[i].physical_node_id > topo.max_node_num)
 			topo.max_node_num = cpus[i].physical_node_id;
 
-		/* get core information */
+		/* get core inक्रमmation */
 		cpus[i].physical_core_id = get_core_id(i);
-		if (cpus[i].physical_core_id > max_core_id)
+		अगर (cpus[i].physical_core_id > max_core_id)
 			max_core_id = cpus[i].physical_core_id;
 
-		/* get thread information */
-		siblings = get_thread_siblings(&cpus[i]);
-		if (siblings > max_siblings)
+		/* get thपढ़ो inक्रमmation */
+		siblings = get_thपढ़ो_siblings(&cpus[i]);
+		अगर (siblings > max_siblings)
 			max_siblings = siblings;
-		if (cpus[i].thread_id == 0)
+		अगर (cpus[i].thपढ़ो_id == 0)
 			topo.num_cores++;
-	}
+	पूर्ण
 
 	topo.cores_per_node = max_core_id + 1;
-	if (debug > 1)
-		fprintf(outf, "max_core_id %d, sizing for %d cores per package\n", max_core_id, topo.cores_per_node);
-	if (!summary_only && topo.cores_per_node > 1)
+	अगर (debug > 1)
+		ख_लिखो(outf, "max_core_id %d, sizing for %d cores per package\n", max_core_id, topo.cores_per_node);
+	अगर (!summary_only && topo.cores_per_node > 1)
 		BIC_PRESENT(BIC_Core);
 
 	topo.num_die = max_die_id + 1;
-	if (debug > 1)
-		fprintf(outf, "max_die_id %d, sizing for %d die\n", max_die_id, topo.num_die);
-	if (!summary_only && topo.num_die > 1)
+	अगर (debug > 1)
+		ख_लिखो(outf, "max_die_id %d, sizing for %d die\n", max_die_id, topo.num_die);
+	अगर (!summary_only && topo.num_die > 1)
 		BIC_PRESENT(BIC_Die);
 
 	topo.num_packages = max_package_id + 1;
-	if (debug > 1)
-		fprintf(outf, "max_package_id %d, sizing for %d packages\n", max_package_id, topo.num_packages);
-	if (!summary_only && topo.num_packages > 1)
+	अगर (debug > 1)
+		ख_लिखो(outf, "max_package_id %d, sizing for %d packages\n", max_package_id, topo.num_packages);
+	अगर (!summary_only && topo.num_packages > 1)
 		BIC_PRESENT(BIC_Package);
 
 	set_node_data();
-	if (debug > 1)
-		fprintf(outf, "nodes_per_pkg %d\n", topo.nodes_per_pkg);
-	if (!summary_only && topo.nodes_per_pkg > 1)
+	अगर (debug > 1)
+		ख_लिखो(outf, "nodes_per_pkg %d\n", topo.nodes_per_pkg);
+	अगर (!summary_only && topo.nodes_per_pkg > 1)
 		BIC_PRESENT(BIC_Node);
 
-	topo.threads_per_core = max_siblings;
-	if (debug > 1)
-		fprintf(outf, "max_siblings %d\n", max_siblings);
+	topo.thपढ़ोs_per_core = max_siblings;
+	अगर (debug > 1)
+		ख_लिखो(outf, "max_siblings %d\n", max_siblings);
 
-	if (debug < 1)
-		return;
+	अगर (debug < 1)
+		वापस;
 
-	for (i = 0; i <= topo.max_cpu_num; ++i) {
-		if (cpu_is_not_present(i))
-			continue;
-		fprintf(outf,
+	क्रम (i = 0; i <= topo.max_cpu_num; ++i) अणु
+		अगर (cpu_is_not_present(i))
+			जारी;
+		ख_लिखो(outf,
 			"cpu %d pkg %d die %d node %d lnode %d core %d thread %d\n",
 			i, cpus[i].physical_package_id, cpus[i].die_id,
-			cpus[i].physical_node_id, cpus[i].logical_node_id, cpus[i].physical_core_id, cpus[i].thread_id);
-	}
+			cpus[i].physical_node_id, cpus[i].logical_node_id, cpus[i].physical_core_id, cpus[i].thपढ़ो_id);
+	पूर्ण
 
-}
+पूर्ण
 
-void allocate_counters(struct thread_data **t, struct core_data **c, struct pkg_data **p)
-{
-	int i;
-	int num_cores = topo.cores_per_node * topo.nodes_per_pkg * topo.num_packages;
-	int num_threads = topo.threads_per_core * num_cores;
+व्योम allocate_counters(काष्ठा thपढ़ो_data **t, काष्ठा core_data **c, काष्ठा pkg_data **p)
+अणु
+	पूर्णांक i;
+	पूर्णांक num_cores = topo.cores_per_node * topo.nodes_per_pkg * topo.num_packages;
+	पूर्णांक num_thपढ़ोs = topo.thपढ़ोs_per_core * num_cores;
 
-	*t = calloc(num_threads, sizeof(struct thread_data));
-	if (*t == NULL)
-		goto error;
+	*t = सुस्मृति(num_thपढ़ोs, माप(काष्ठा thपढ़ो_data));
+	अगर (*t == शून्य)
+		जाओ error;
 
-	for (i = 0; i < num_threads; i++)
+	क्रम (i = 0; i < num_thपढ़ोs; i++)
 		(*t)[i].cpu_id = -1;
 
-	*c = calloc(num_cores, sizeof(struct core_data));
-	if (*c == NULL)
-		goto error;
+	*c = सुस्मृति(num_cores, माप(काष्ठा core_data));
+	अगर (*c == शून्य)
+		जाओ error;
 
-	for (i = 0; i < num_cores; i++)
+	क्रम (i = 0; i < num_cores; i++)
 		(*c)[i].core_id = -1;
 
-	*p = calloc(topo.num_packages, sizeof(struct pkg_data));
-	if (*p == NULL)
-		goto error;
+	*p = सुस्मृति(topo.num_packages, माप(काष्ठा pkg_data));
+	अगर (*p == शून्य)
+		जाओ error;
 
-	for (i = 0; i < topo.num_packages; i++)
+	क्रम (i = 0; i < topo.num_packages; i++)
 		(*p)[i].package_id = i;
 
-	return;
+	वापस;
 error:
 	err(1, "calloc counters");
-}
+पूर्ण
 
 /*
  * init_counter()
  *
  * set FIRST_THREAD_IN_CORE and FIRST_CORE_IN_PACKAGE
  */
-void init_counter(struct thread_data *thread_base, struct core_data *core_base, struct pkg_data *pkg_base, int cpu_id)
-{
-	int pkg_id = cpus[cpu_id].physical_package_id;
-	int node_id = cpus[cpu_id].logical_node_id;
-	int core_id = cpus[cpu_id].physical_core_id;
-	int thread_id = cpus[cpu_id].thread_id;
-	struct thread_data *t;
-	struct core_data *c;
-	struct pkg_data *p;
+व्योम init_counter(काष्ठा thपढ़ो_data *thपढ़ो_base, काष्ठा core_data *core_base, काष्ठा pkg_data *pkg_base, पूर्णांक cpu_id)
+अणु
+	पूर्णांक pkg_id = cpus[cpu_id].physical_package_id;
+	पूर्णांक node_id = cpus[cpu_id].logical_node_id;
+	पूर्णांक core_id = cpus[cpu_id].physical_core_id;
+	पूर्णांक thपढ़ो_id = cpus[cpu_id].thपढ़ो_id;
+	काष्ठा thपढ़ो_data *t;
+	काष्ठा core_data *c;
+	काष्ठा pkg_data *p;
 
-	/* Workaround for systems where physical_node_id==-1
+	/* Workaround क्रम प्रणालीs where physical_node_id==-1
 	 * and logical_node_id==(-1 - topo.num_cpus)
 	 */
-	if (node_id < 0)
+	अगर (node_id < 0)
 		node_id = 0;
 
-	t = GET_THREAD(thread_base, thread_id, core_id, node_id, pkg_id);
+	t = GET_THREAD(thपढ़ो_base, thपढ़ो_id, core_id, node_id, pkg_id);
 	c = GET_CORE(core_base, core_id, node_id, pkg_id);
 	p = GET_PKG(pkg_base, pkg_id);
 
 	t->cpu_id = cpu_id;
-	if (thread_id == 0) {
+	अगर (thपढ़ो_id == 0) अणु
 		t->flags |= CPU_IS_FIRST_THREAD_IN_CORE;
-		if (cpu_is_first_core_in_package(cpu_id))
+		अगर (cpu_is_first_core_in_package(cpu_id))
 			t->flags |= CPU_IS_FIRST_CORE_IN_PACKAGE;
-	}
+	पूर्ण
 
 	c->core_id = core_id;
 	p->package_id = pkg_id;
-}
+पूर्ण
 
-int initialize_counters(int cpu_id)
-{
+पूर्णांक initialize_counters(पूर्णांक cpu_id)
+अणु
 	init_counter(EVEN_COUNTERS, cpu_id);
 	init_counter(ODD_COUNTERS, cpu_id);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void allocate_output_buffer()
-{
-	output_buffer = calloc(1, (1 + topo.num_cpus) * 2048);
+व्योम allocate_output_buffer()
+अणु
+	output_buffer = सुस्मृति(1, (1 + topo.num_cpus) * 2048);
 	outp = output_buffer;
-	if (outp == NULL)
+	अगर (outp == शून्य)
 		err(-1, "calloc output buffer");
-}
+पूर्ण
 
-void allocate_fd_percpu(void)
-{
-	fd_percpu = calloc(topo.max_cpu_num + 1, sizeof(int));
-	if (fd_percpu == NULL)
+व्योम allocate_fd_percpu(व्योम)
+अणु
+	fd_percpu = सुस्मृति(topo.max_cpu_num + 1, माप(पूर्णांक));
+	अगर (fd_percpu == शून्य)
 		err(-1, "calloc fd_percpu");
-}
+पूर्ण
 
-void allocate_irq_buffers(void)
-{
-	irq_column_2_cpu = calloc(topo.num_cpus, sizeof(int));
-	if (irq_column_2_cpu == NULL)
+व्योम allocate_irq_buffers(व्योम)
+अणु
+	irq_column_2_cpu = सुस्मृति(topo.num_cpus, माप(पूर्णांक));
+	अगर (irq_column_2_cpu == शून्य)
 		err(-1, "calloc %d", topo.num_cpus);
 
-	irqs_per_cpu = calloc(topo.max_cpu_num + 1, sizeof(int));
-	if (irqs_per_cpu == NULL)
+	irqs_per_cpu = सुस्मृति(topo.max_cpu_num + 1, माप(पूर्णांक));
+	अगर (irqs_per_cpu == शून्य)
 		err(-1, "calloc %d", topo.max_cpu_num + 1);
-}
+पूर्ण
 
-void setup_all_buffers(void)
-{
+व्योम setup_all_buffers(व्योम)
+अणु
 	topology_probe();
 	allocate_irq_buffers();
 	allocate_fd_percpu();
-	allocate_counters(&thread_even, &core_even, &package_even);
-	allocate_counters(&thread_odd, &core_odd, &package_odd);
+	allocate_counters(&thपढ़ो_even, &core_even, &package_even);
+	allocate_counters(&thपढ़ो_odd, &core_odd, &package_odd);
 	allocate_output_buffer();
-	for_all_proc_cpus(initialize_counters);
-}
+	क्रम_all_proc_cpus(initialize_counters);
+पूर्ण
 
-void set_base_cpu(void)
-{
-	base_cpu = sched_getcpu();
-	if (base_cpu < 0)
+व्योम set_base_cpu(व्योम)
+अणु
+	base_cpu = sched_अ_लोpu();
+	अगर (base_cpu < 0)
 		err(-ENODEV, "No valid cpus found");
 
-	if (debug > 1)
-		fprintf(outf, "base_cpu = %d\n", base_cpu);
-}
+	अगर (debug > 1)
+		ख_लिखो(outf, "base_cpu = %d\n", base_cpu);
+पूर्ण
 
-void turbostat_init()
-{
+व्योम turbostat_init()
+अणु
 	setup_all_buffers();
 	set_base_cpu();
 	check_dev_msr();
@@ -5874,372 +5875,372 @@ void turbostat_init()
 	process_cpuid();
 	linux_perf_init();
 
-	if (!quiet)
-		for_all_cpus(print_hwp, ODD_COUNTERS);
+	अगर (!quiet)
+		क्रम_all_cpus(prपूर्णांक_hwp, ODD_COUNTERS);
 
-	if (!quiet)
-		for_all_cpus(print_epb, ODD_COUNTERS);
+	अगर (!quiet)
+		क्रम_all_cpus(prपूर्णांक_epb, ODD_COUNTERS);
 
-	if (!quiet)
-		for_all_cpus(print_perf_limit, ODD_COUNTERS);
+	अगर (!quiet)
+		क्रम_all_cpus(prपूर्णांक_perf_limit, ODD_COUNTERS);
 
-	if (!quiet)
-		for_all_cpus(print_rapl, ODD_COUNTERS);
+	अगर (!quiet)
+		क्रम_all_cpus(prपूर्णांक_rapl, ODD_COUNTERS);
 
-	for_all_cpus(set_temperature_target, ODD_COUNTERS);
+	क्रम_all_cpus(set_temperature_target, ODD_COUNTERS);
 
-	for_all_cpus(get_cpu_type, ODD_COUNTERS);
-	for_all_cpus(get_cpu_type, EVEN_COUNTERS);
+	क्रम_all_cpus(get_cpu_type, ODD_COUNTERS);
+	क्रम_all_cpus(get_cpu_type, EVEN_COUNTERS);
 
-	if (!quiet)
-		for_all_cpus(print_thermal, ODD_COUNTERS);
+	अगर (!quiet)
+		क्रम_all_cpus(prपूर्णांक_thermal, ODD_COUNTERS);
 
-	if (!quiet && do_irtl_snb)
-		print_irtl();
-}
+	अगर (!quiet && करो_irtl_snb)
+		prपूर्णांक_irtl();
+पूर्ण
 
-int fork_it(char **argv)
-{
+पूर्णांक विभाजन_it(अक्षर **argv)
+अणु
 	pid_t child_pid;
-	int status;
+	पूर्णांक status;
 
 	snapshot_proc_sysfs_files();
-	status = for_all_cpus(get_counters, EVEN_COUNTERS);
-	first_counter_read = 0;
-	if (status)
-		exit(status);
+	status = क्रम_all_cpus(get_counters, EVEN_COUNTERS);
+	first_counter_पढ़ो = 0;
+	अगर (status)
+		निकास(status);
 	/* clear affinity side-effect of get_counters() */
 	sched_setaffinity(0, cpu_present_setsize, cpu_present_set);
-	gettimeofday(&tv_even, (struct timezone *)NULL);
+	समय_लोofday(&tv_even, (काष्ठा समयzone *)शून्य);
 
-	child_pid = fork();
-	if (!child_pid) {
+	child_pid = विभाजन();
+	अगर (!child_pid) अणु
 		/* child */
 		execvp(argv[0], argv);
-		err(errno, "exec %s", argv[0]);
-	} else {
+		err(त्रुटि_सं, "exec %s", argv[0]);
+	पूर्ण अन्यथा अणु
 
 		/* parent */
-		if (child_pid == -1)
+		अगर (child_pid == -1)
 			err(1, "fork");
 
-		signal(SIGINT, SIG_IGN);
-		signal(SIGQUIT, SIG_IGN);
-		if (waitpid(child_pid, &status, 0) == -1)
+		संकेत(संक_विघ्न, संक_छोड़ो);
+		संकेत(SIGQUIT, संक_छोड़ो);
+		अगर (रुकोpid(child_pid, &status, 0) == -1)
 			err(status, "waitpid");
 
-		if (WIFEXITED(status))
+		अगर (WIFEXITED(status))
 			status = WEXITSTATUS(status);
-	}
+	पूर्ण
 	/*
-	 * n.b. fork_it() does not check for errors from for_all_cpus()
-	 * because re-starting is problematic when forking
+	 * n.b. विभाजन_it() करोes not check क्रम errors from क्रम_all_cpus()
+	 * because re-starting is problematic when विभाजनing
 	 */
 	snapshot_proc_sysfs_files();
-	for_all_cpus(get_counters, ODD_COUNTERS);
-	gettimeofday(&tv_odd, (struct timezone *)NULL);
-	timersub(&tv_odd, &tv_even, &tv_delta);
-	if (for_all_cpus_2(delta_cpu, ODD_COUNTERS, EVEN_COUNTERS))
-		fprintf(outf, "%s: Counter reset detected\n", progname);
-	else {
+	क्रम_all_cpus(get_counters, ODD_COUNTERS);
+	समय_लोofday(&tv_odd, (काष्ठा समयzone *)शून्य);
+	समयrsub(&tv_odd, &tv_even, &tv_delta);
+	अगर (क्रम_all_cpus_2(delta_cpu, ODD_COUNTERS, EVEN_COUNTERS))
+		ख_लिखो(outf, "%s: Counter reset detected\n", progname);
+	अन्यथा अणु
 		compute_average(EVEN_COUNTERS);
-		format_all_counters(EVEN_COUNTERS);
-	}
+		क्रमmat_all_counters(EVEN_COUNTERS);
+	पूर्ण
 
-	fprintf(outf, "%.6f sec\n", tv_delta.tv_sec + tv_delta.tv_usec / 1000000.0);
+	ख_लिखो(outf, "%.6f sec\n", tv_delta.tv_sec + tv_delta.tv_usec / 1000000.0);
 
-	flush_output_stderr();
+	flush_output_मानक_त्रुटि();
 
-	return status;
-}
+	वापस status;
+पूर्ण
 
-int get_and_dump_counters(void)
-{
-	int status;
+पूर्णांक get_and_dump_counters(व्योम)
+अणु
+	पूर्णांक status;
 
 	snapshot_proc_sysfs_files();
-	status = for_all_cpus(get_counters, ODD_COUNTERS);
-	if (status)
-		return status;
+	status = क्रम_all_cpus(get_counters, ODD_COUNTERS);
+	अगर (status)
+		वापस status;
 
-	status = for_all_cpus(dump_counters, ODD_COUNTERS);
-	if (status)
-		return status;
+	status = क्रम_all_cpus(dump_counters, ODD_COUNTERS);
+	अगर (status)
+		वापस status;
 
-	flush_output_stdout();
+	flush_output_मानक_निकास();
 
-	return status;
-}
+	वापस status;
+पूर्ण
 
-void print_version()
-{
-	fprintf(outf, "turbostat version 21.05.04" " - Len Brown <lenb@kernel.org>\n");
-}
+व्योम prपूर्णांक_version()
+अणु
+	ख_लिखो(outf, "turbostat version 21.05.04" " - Len Brown <lenb@kernel.org>\n");
+पूर्ण
 
-int add_counter(unsigned int msr_num, char *path, char *name,
-		unsigned int width, enum counter_scope scope,
-		enum counter_type type, enum counter_format format, int flags)
-{
-	struct msr_counter *msrp;
+पूर्णांक add_counter(अचिन्हित पूर्णांक msr_num, अक्षर *path, अक्षर *name,
+		अचिन्हित पूर्णांक width, क्रमागत counter_scope scope,
+		क्रमागत counter_type type, क्रमागत counter_क्रमmat क्रमmat, पूर्णांक flags)
+अणु
+	काष्ठा msr_counter *msrp;
 
-	msrp = calloc(1, sizeof(struct msr_counter));
-	if (msrp == NULL) {
-		perror("calloc");
-		exit(1);
-	}
+	msrp = सुस्मृति(1, माप(काष्ठा msr_counter));
+	अगर (msrp == शून्य) अणु
+		लिखो_त्रुटि("calloc");
+		निकास(1);
+	पूर्ण
 
 	msrp->msr_num = msr_num;
-	strncpy(msrp->name, name, NAME_BYTES - 1);
-	if (path)
-		strncpy(msrp->path, path, PATH_BYTES - 1);
+	म_नकलन(msrp->name, name, NAME_BYTES - 1);
+	अगर (path)
+		म_नकलन(msrp->path, path, PATH_BYTES - 1);
 	msrp->width = width;
 	msrp->type = type;
-	msrp->format = format;
+	msrp->क्रमmat = क्रमmat;
 	msrp->flags = flags;
 
-	switch (scope) {
+	चयन (scope) अणु
 
-	case SCOPE_CPU:
+	हाल SCOPE_CPU:
 		msrp->next = sys.tp;
 		sys.tp = msrp;
-		sys.added_thread_counters++;
-		if (sys.added_thread_counters > MAX_ADDED_THREAD_COUNTERS) {
-			fprintf(stderr, "exceeded max %d added thread counters\n", MAX_ADDED_COUNTERS);
-			exit(-1);
-		}
-		break;
+		sys.added_thपढ़ो_counters++;
+		अगर (sys.added_thपढ़ो_counters > MAX_ADDED_THREAD_COUNTERS) अणु
+			ख_लिखो(मानक_त्रुटि, "exceeded max %d added thread counters\n", MAX_ADDED_COUNTERS);
+			निकास(-1);
+		पूर्ण
+		अवरोध;
 
-	case SCOPE_CORE:
+	हाल SCOPE_CORE:
 		msrp->next = sys.cp;
 		sys.cp = msrp;
 		sys.added_core_counters++;
-		if (sys.added_core_counters > MAX_ADDED_COUNTERS) {
-			fprintf(stderr, "exceeded max %d added core counters\n", MAX_ADDED_COUNTERS);
-			exit(-1);
-		}
-		break;
+		अगर (sys.added_core_counters > MAX_ADDED_COUNTERS) अणु
+			ख_लिखो(मानक_त्रुटि, "exceeded max %d added core counters\n", MAX_ADDED_COUNTERS);
+			निकास(-1);
+		पूर्ण
+		अवरोध;
 
-	case SCOPE_PACKAGE:
+	हाल SCOPE_PACKAGE:
 		msrp->next = sys.pp;
 		sys.pp = msrp;
 		sys.added_package_counters++;
-		if (sys.added_package_counters > MAX_ADDED_COUNTERS) {
-			fprintf(stderr, "exceeded max %d added package counters\n", MAX_ADDED_COUNTERS);
-			exit(-1);
-		}
-		break;
-	}
+		अगर (sys.added_package_counters > MAX_ADDED_COUNTERS) अणु
+			ख_लिखो(मानक_त्रुटि, "exceeded max %d added package counters\n", MAX_ADDED_COUNTERS);
+			निकास(-1);
+		पूर्ण
+		अवरोध;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void parse_add_command(char *add_command)
-{
-	int msr_num = 0;
-	char *path = NULL;
-	char name_buffer[NAME_BYTES] = "";
-	int width = 64;
-	int fail = 0;
-	enum counter_scope scope = SCOPE_CPU;
-	enum counter_type type = COUNTER_CYCLES;
-	enum counter_format format = FORMAT_DELTA;
+व्योम parse_add_command(अक्षर *add_command)
+अणु
+	पूर्णांक msr_num = 0;
+	अक्षर *path = शून्य;
+	अक्षर name_buffer[NAME_BYTES] = "";
+	पूर्णांक width = 64;
+	पूर्णांक fail = 0;
+	क्रमागत counter_scope scope = SCOPE_CPU;
+	क्रमागत counter_type type = COUNTER_CYCLES;
+	क्रमागत counter_क्रमmat क्रमmat = FORMAT_DELTA;
 
-	while (add_command) {
+	जबतक (add_command) अणु
 
-		if (sscanf(add_command, "msr0x%x", &msr_num) == 1)
-			goto next;
+		अगर (माला_पूछो(add_command, "msr0x%x", &msr_num) == 1)
+			जाओ next;
 
-		if (sscanf(add_command, "msr%d", &msr_num) == 1)
-			goto next;
+		अगर (माला_पूछो(add_command, "msr%d", &msr_num) == 1)
+			जाओ next;
 
-		if (*add_command == '/') {
+		अगर (*add_command == '/') अणु
 			path = add_command;
-			goto next;
-		}
+			जाओ next;
+		पूर्ण
 
-		if (sscanf(add_command, "u%d", &width) == 1) {
-			if ((width == 32) || (width == 64))
-				goto next;
+		अगर (माला_पूछो(add_command, "u%d", &width) == 1) अणु
+			अगर ((width == 32) || (width == 64))
+				जाओ next;
 			width = 64;
-		}
-		if (!strncmp(add_command, "cpu", strlen("cpu"))) {
+		पूर्ण
+		अगर (!म_भेदन(add_command, "cpu", म_माप("cpu"))) अणु
 			scope = SCOPE_CPU;
-			goto next;
-		}
-		if (!strncmp(add_command, "core", strlen("core"))) {
+			जाओ next;
+		पूर्ण
+		अगर (!म_भेदन(add_command, "core", म_माप("core"))) अणु
 			scope = SCOPE_CORE;
-			goto next;
-		}
-		if (!strncmp(add_command, "package", strlen("package"))) {
+			जाओ next;
+		पूर्ण
+		अगर (!म_भेदन(add_command, "package", म_माप("package"))) अणु
 			scope = SCOPE_PACKAGE;
-			goto next;
-		}
-		if (!strncmp(add_command, "cycles", strlen("cycles"))) {
+			जाओ next;
+		पूर्ण
+		अगर (!म_भेदन(add_command, "cycles", म_माप("cycles"))) अणु
 			type = COUNTER_CYCLES;
-			goto next;
-		}
-		if (!strncmp(add_command, "seconds", strlen("seconds"))) {
+			जाओ next;
+		पूर्ण
+		अगर (!म_भेदन(add_command, "seconds", म_माप("seconds"))) अणु
 			type = COUNTER_SECONDS;
-			goto next;
-		}
-		if (!strncmp(add_command, "usec", strlen("usec"))) {
+			जाओ next;
+		पूर्ण
+		अगर (!म_भेदन(add_command, "usec", म_माप("usec"))) अणु
 			type = COUNTER_USEC;
-			goto next;
-		}
-		if (!strncmp(add_command, "raw", strlen("raw"))) {
-			format = FORMAT_RAW;
-			goto next;
-		}
-		if (!strncmp(add_command, "delta", strlen("delta"))) {
-			format = FORMAT_DELTA;
-			goto next;
-		}
-		if (!strncmp(add_command, "percent", strlen("percent"))) {
-			format = FORMAT_PERCENT;
-			goto next;
-		}
+			जाओ next;
+		पूर्ण
+		अगर (!म_भेदन(add_command, "raw", म_माप("raw"))) अणु
+			क्रमmat = FORMAT_RAW;
+			जाओ next;
+		पूर्ण
+		अगर (!म_भेदन(add_command, "delta", म_माप("delta"))) अणु
+			क्रमmat = FORMAT_DELTA;
+			जाओ next;
+		पूर्ण
+		अगर (!म_भेदन(add_command, "percent", म_माप("percent"))) अणु
+			क्रमmat = FORMAT_PERCENT;
+			जाओ next;
+		पूर्ण
 
-		if (sscanf(add_command, "%18s,%*s", name_buffer) == 1) {	/* 18 < NAME_BYTES */
-			char *eos;
+		अगर (माला_पूछो(add_command, "%18s,%*s", name_buffer) == 1) अणु	/* 18 < NAME_BYTES */
+			अक्षर *eos;
 
-			eos = strchr(name_buffer, ',');
-			if (eos)
+			eos = म_अक्षर(name_buffer, ',');
+			अगर (eos)
 				*eos = '\0';
-			goto next;
-		}
+			जाओ next;
+		पूर्ण
 
 next:
-		add_command = strchr(add_command, ',');
-		if (add_command) {
+		add_command = म_अक्षर(add_command, ',');
+		अगर (add_command) अणु
 			*add_command = '\0';
 			add_command++;
-		}
+		पूर्ण
 
-	}
-	if ((msr_num == 0) && (path == NULL)) {
-		fprintf(stderr, "--add: (msrDDD | msr0xXXX | /path_to_counter ) required\n");
+	पूर्ण
+	अगर ((msr_num == 0) && (path == शून्य)) अणु
+		ख_लिखो(मानक_त्रुटि, "--add: (msrDDD | msr0xXXX | /path_to_counter ) required\n");
 		fail++;
-	}
+	पूर्ण
 
-	/* generate default column header */
-	if (*name_buffer == '\0') {
-		if (width == 32)
-			sprintf(name_buffer, "M0x%x%s", msr_num, format == FORMAT_PERCENT ? "%" : "");
-		else
-			sprintf(name_buffer, "M0X%x%s", msr_num, format == FORMAT_PERCENT ? "%" : "");
-	}
+	/* generate शेष column header */
+	अगर (*name_buffer == '\0') अणु
+		अगर (width == 32)
+			प्र_लिखो(name_buffer, "M0x%x%s", msr_num, क्रमmat == FORMAT_PERCENT ? "%" : "");
+		अन्यथा
+			प्र_लिखो(name_buffer, "M0X%x%s", msr_num, क्रमmat == FORMAT_PERCENT ? "%" : "");
+	पूर्ण
 
-	if (add_counter(msr_num, path, name_buffer, width, scope, type, format, 0))
+	अगर (add_counter(msr_num, path, name_buffer, width, scope, type, क्रमmat, 0))
 		fail++;
 
-	if (fail) {
+	अगर (fail) अणु
 		help();
-		exit(1);
-	}
-}
+		निकास(1);
+	पूर्ण
+पूर्ण
 
-int is_deferred_skip(char *name)
-{
-	int i;
+पूर्णांक is_deferred_skip(अक्षर *name)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < deferred_skip_index; ++i)
-		if (!strcmp(name, deferred_skip_names[i]))
-			return 1;
-	return 0;
-}
+	क्रम (i = 0; i < deferred_skip_index; ++i)
+		अगर (!म_भेद(name, deferred_skip_names[i]))
+			वापस 1;
+	वापस 0;
+पूर्ण
 
-void probe_sysfs(void)
-{
-	char path[64];
-	char name_buf[16];
-	FILE *input;
-	int state;
-	char *sp;
+व्योम probe_sysfs(व्योम)
+अणु
+	अक्षर path[64];
+	अक्षर name_buf[16];
+	खाता *input;
+	पूर्णांक state;
+	अक्षर *sp;
 
-	if (!DO_BIC(BIC_sysfs))
-		return;
+	अगर (!DO_BIC(BIC_sysfs))
+		वापस;
 
-	for (state = 10; state >= 0; --state) {
+	क्रम (state = 10; state >= 0; --state) अणु
 
-		sprintf(path, "/sys/devices/system/cpu/cpu%d/cpuidle/state%d/name", base_cpu, state);
-		input = fopen(path, "r");
-		if (input == NULL)
-			continue;
-		if (!fgets(name_buf, sizeof(name_buf), input))
+		प्र_लिखो(path, "/sys/devices/system/cpu/cpu%d/cpuidle/state%d/name", base_cpu, state);
+		input = ख_खोलो(path, "r");
+		अगर (input == शून्य)
+			जारी;
+		अगर (!ख_माला_लो(name_buf, माप(name_buf), input))
 			err(1, "%s: failed to read file", path);
 
 		/* truncate "C1-HSW\n" to "C1", or truncate "C1\n" to "C1" */
-		sp = strchr(name_buf, '-');
-		if (!sp)
-			sp = strchrnul(name_buf, '\n');
+		sp = म_अक्षर(name_buf, '-');
+		अगर (!sp)
+			sp = म_अक्षरnul(name_buf, '\n');
 		*sp = '%';
 		*(sp + 1) = '\0';
 
-		remove_underbar(name_buf);
+		हटाओ_underbar(name_buf);
 
-		fclose(input);
+		ख_बंद(input);
 
-		sprintf(path, "cpuidle/state%d/time", state);
+		प्र_लिखो(path, "cpuidle/state%d/time", state);
 
-		if (is_deferred_skip(name_buf))
-			continue;
+		अगर (is_deferred_skip(name_buf))
+			जारी;
 
 		add_counter(0, path, name_buf, 64, SCOPE_CPU, COUNTER_USEC, FORMAT_PERCENT, SYSFS_PERCPU);
-	}
+	पूर्ण
 
-	for (state = 10; state >= 0; --state) {
+	क्रम (state = 10; state >= 0; --state) अणु
 
-		sprintf(path, "/sys/devices/system/cpu/cpu%d/cpuidle/state%d/name", base_cpu, state);
-		input = fopen(path, "r");
-		if (input == NULL)
-			continue;
-		if (!fgets(name_buf, sizeof(name_buf), input))
+		प्र_लिखो(path, "/sys/devices/system/cpu/cpu%d/cpuidle/state%d/name", base_cpu, state);
+		input = ख_खोलो(path, "r");
+		अगर (input == शून्य)
+			जारी;
+		अगर (!ख_माला_लो(name_buf, माप(name_buf), input))
 			err(1, "%s: failed to read file", path);
 		/* truncate "C1-HSW\n" to "C1", or truncate "C1\n" to "C1" */
-		sp = strchr(name_buf, '-');
-		if (!sp)
-			sp = strchrnul(name_buf, '\n');
+		sp = म_अक्षर(name_buf, '-');
+		अगर (!sp)
+			sp = म_अक्षरnul(name_buf, '\n');
 		*sp = '\0';
-		fclose(input);
+		ख_बंद(input);
 
-		remove_underbar(name_buf);
+		हटाओ_underbar(name_buf);
 
-		sprintf(path, "cpuidle/state%d/usage", state);
+		प्र_लिखो(path, "cpuidle/state%d/usage", state);
 
-		if (is_deferred_skip(name_buf))
-			continue;
+		अगर (is_deferred_skip(name_buf))
+			जारी;
 
 		add_counter(0, path, name_buf, 64, SCOPE_CPU, COUNTER_ITEMS, FORMAT_DELTA, SYSFS_PERCPU);
-	}
+	पूर्ण
 
-}
+पूर्ण
 
 /*
  * parse cpuset with following syntax
  * 1,2,4..6,8-10 and set bits in cpu_subset
  */
-void parse_cpu_command(char *optarg)
-{
-	unsigned int start, end;
-	char *next;
+व्योम parse_cpu_command(अक्षर *optarg)
+अणु
+	अचिन्हित पूर्णांक start, end;
+	अक्षर *next;
 
-	if (!strcmp(optarg, "core")) {
-		if (cpu_subset)
-			goto error;
+	अगर (!म_भेद(optarg, "core")) अणु
+		अगर (cpu_subset)
+			जाओ error;
 		show_core_only++;
-		return;
-	}
-	if (!strcmp(optarg, "package")) {
-		if (cpu_subset)
-			goto error;
+		वापस;
+	पूर्ण
+	अगर (!म_भेद(optarg, "package")) अणु
+		अगर (cpu_subset)
+			जाओ error;
 		show_pkg_only++;
-		return;
-	}
-	if (show_core_only || show_pkg_only)
-		goto error;
+		वापस;
+	पूर्ण
+	अगर (show_core_only || show_pkg_only)
+		जाओ error;
 
 	cpu_subset = CPU_ALLOC(CPU_SUBSET_MAXCPUS);
-	if (cpu_subset == NULL)
+	अगर (cpu_subset == शून्य)
 		err(3, "CPU_ALLOC");
 	cpu_subset_size = CPU_ALLOC_SIZE(CPU_SUBSET_MAXCPUS);
 
@@ -6247,210 +6248,210 @@ void parse_cpu_command(char *optarg)
 
 	next = optarg;
 
-	while (next && *next) {
+	जबतक (next && *next) अणु
 
-		if (*next == '-')	/* no negative cpu numbers */
-			goto error;
+		अगर (*next == '-')	/* no negative cpu numbers */
+			जाओ error;
 
-		start = strtoul(next, &next, 10);
+		start = म_से_अदीर्घ(next, &next, 10);
 
-		if (start >= CPU_SUBSET_MAXCPUS)
-			goto error;
+		अगर (start >= CPU_SUBSET_MAXCPUS)
+			जाओ error;
 		CPU_SET_S(start, cpu_subset_size, cpu_subset);
 
-		if (*next == '\0')
-			break;
+		अगर (*next == '\0')
+			अवरोध;
 
-		if (*next == ',') {
+		अगर (*next == ',') अणु
 			next += 1;
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		if (*next == '-') {
+		अगर (*next == '-') अणु
 			next += 1;	/* start range */
-		} else if (*next == '.') {
+		पूर्ण अन्यथा अगर (*next == '.') अणु
 			next += 1;
-			if (*next == '.')
+			अगर (*next == '.')
 				next += 1;	/* start range */
-			else
-				goto error;
-		}
+			अन्यथा
+				जाओ error;
+		पूर्ण
 
-		end = strtoul(next, &next, 10);
-		if (end <= start)
-			goto error;
+		end = म_से_अदीर्घ(next, &next, 10);
+		अगर (end <= start)
+			जाओ error;
 
-		while (++start <= end) {
-			if (start >= CPU_SUBSET_MAXCPUS)
-				goto error;
+		जबतक (++start <= end) अणु
+			अगर (start >= CPU_SUBSET_MAXCPUS)
+				जाओ error;
 			CPU_SET_S(start, cpu_subset_size, cpu_subset);
-		}
+		पूर्ण
 
-		if (*next == ',')
+		अगर (*next == ',')
 			next += 1;
-		else if (*next != '\0')
-			goto error;
-	}
+		अन्यथा अगर (*next != '\0')
+			जाओ error;
+	पूर्ण
 
-	return;
+	वापस;
 
 error:
-	fprintf(stderr, "\"--cpu %s\" malformed\n", optarg);
+	ख_लिखो(मानक_त्रुटि, "\"--cpu %s\" malformed\n", optarg);
 	help();
-	exit(-1);
-}
+	निकास(-1);
+पूर्ण
 
-void cmdline(int argc, char **argv)
-{
-	int opt;
-	int option_index = 0;
-	static struct option long_options[] = {
-		{ "add", required_argument, 0, 'a' },
-		{ "cpu", required_argument, 0, 'c' },
-		{ "Dump", no_argument, 0, 'D' },
-		{ "debug", no_argument, 0, 'd' },	/* internal, not documented */
-		{ "enable", required_argument, 0, 'e' },
-		{ "interval", required_argument, 0, 'i' },
-		{ "IPC", no_argument, 0, 'I' },
-		{ "num_iterations", required_argument, 0, 'n' },
-		{ "help", no_argument, 0, 'h' },
-		{ "hide", required_argument, 0, 'H' },	// meh, -h taken by --help
-		{ "Joules", no_argument, 0, 'J' },
-		{ "list", no_argument, 0, 'l' },
-		{ "out", required_argument, 0, 'o' },
-		{ "quiet", no_argument, 0, 'q' },
-		{ "show", required_argument, 0, 's' },
-		{ "Summary", no_argument, 0, 'S' },
-		{ "TCC", required_argument, 0, 'T' },
-		{ "version", no_argument, 0, 'v' },
-		{ 0, 0, 0, 0 }
-	};
+व्योम cmdline(पूर्णांक argc, अक्षर **argv)
+अणु
+	पूर्णांक opt;
+	पूर्णांक option_index = 0;
+	अटल काष्ठा option दीर्घ_options[] = अणु
+		अणु "add", required_argument, 0, 'a' पूर्ण,
+		अणु "cpu", required_argument, 0, 'c' पूर्ण,
+		अणु "Dump", no_argument, 0, 'D' पूर्ण,
+		अणु "debug", no_argument, 0, 'd' पूर्ण,	/* पूर्णांकernal, not करोcumented */
+		अणु "enable", required_argument, 0, 'e' पूर्ण,
+		अणु "interval", required_argument, 0, 'i' पूर्ण,
+		अणु "IPC", no_argument, 0, 'I' पूर्ण,
+		अणु "num_iterations", required_argument, 0, 'n' पूर्ण,
+		अणु "help", no_argument, 0, 'h' पूर्ण,
+		अणु "hide", required_argument, 0, 'H' पूर्ण,	// meh, -h taken by --help
+		अणु "Joules", no_argument, 0, 'J' पूर्ण,
+		अणु "list", no_argument, 0, 'l' पूर्ण,
+		अणु "out", required_argument, 0, 'o' पूर्ण,
+		अणु "quiet", no_argument, 0, 'q' पूर्ण,
+		अणु "show", required_argument, 0, 's' पूर्ण,
+		अणु "Summary", no_argument, 0, 'S' पूर्ण,
+		अणु "TCC", required_argument, 0, 'T' पूर्ण,
+		अणु "version", no_argument, 0, 'v' पूर्ण,
+		अणु 0, 0, 0, 0 पूर्ण
+	पूर्ण;
 
 	progname = argv[0];
 
-	while ((opt = getopt_long_only(argc, argv, "+C:c:Dde:hi:Jn:o:qST:v", long_options, &option_index)) != -1) {
-		switch (opt) {
-		case 'a':
+	जबतक ((opt = getopt_दीर्घ_only(argc, argv, "+C:c:Dde:hi:Jn:o:qST:v", दीर्घ_options, &option_index)) != -1) अणु
+		चयन (opt) अणु
+		हाल 'a':
 			parse_add_command(optarg);
-			break;
-		case 'c':
+			अवरोध;
+		हाल 'c':
 			parse_cpu_command(optarg);
-			break;
-		case 'D':
+			अवरोध;
+		हाल 'D':
 			dump_only++;
-			break;
-		case 'e':
-			/* --enable specified counter */
+			अवरोध;
+		हाल 'e':
+			/* --enable specअगरied counter */
 			bic_enabled = bic_enabled | bic_lookup(optarg, SHOW_LIST);
-			break;
-		case 'd':
+			अवरोध;
+		हाल 'd':
 			debug++;
 			ENABLE_BIC(BIC_DISABLED_BY_DEFAULT);
-			break;
-		case 'H':
+			अवरोध;
+		हाल 'H':
 			/*
-			 * --hide: do not show those specified
+			 * --hide: करो not show those specअगरied
 			 *  multiple invocations simply clear more bits in enabled mask
 			 */
 			bic_enabled &= ~bic_lookup(optarg, HIDE_LIST);
-			break;
-		case 'h':
-		default:
+			अवरोध;
+		हाल 'h':
+		शेष:
 			help();
-			exit(1);
-		case 'i':
-			{
-				double interval = strtod(optarg, NULL);
+			निकास(1);
+		हाल 'i':
+			अणु
+				द्विगुन पूर्णांकerval = म_से_भग्न(optarg, शून्य);
 
-				if (interval < 0.001) {
-					fprintf(outf, "interval %f seconds is too small\n", interval);
-					exit(2);
-				}
+				अगर (पूर्णांकerval < 0.001) अणु
+					ख_लिखो(outf, "interval %f seconds is too small\n", पूर्णांकerval);
+					निकास(2);
+				पूर्ण
 
-				interval_tv.tv_sec = interval_ts.tv_sec = interval;
-				interval_tv.tv_usec = (interval - interval_tv.tv_sec) * 1000000;
-				interval_ts.tv_nsec = (interval - interval_ts.tv_sec) * 1000000000;
-			}
-			break;
-		case 'J':
+				पूर्णांकerval_tv.tv_sec = पूर्णांकerval_ts.tv_sec = पूर्णांकerval;
+				पूर्णांकerval_tv.tv_usec = (पूर्णांकerval - पूर्णांकerval_tv.tv_sec) * 1000000;
+				पूर्णांकerval_ts.tv_nsec = (पूर्णांकerval - पूर्णांकerval_ts.tv_sec) * 1000000000;
+			पूर्ण
+			अवरोध;
+		हाल 'J':
 			rapl_joules++;
-			break;
-		case 'l':
+			अवरोध;
+		हाल 'l':
 			ENABLE_BIC(BIC_DISABLED_BY_DEFAULT);
 			list_header_only++;
 			quiet++;
-			break;
-		case 'o':
-			outf = fopen_or_die(optarg, "w");
-			break;
-		case 'q':
+			अवरोध;
+		हाल 'o':
+			outf = ख_खोलो_or_die(optarg, "w");
+			अवरोध;
+		हाल 'q':
 			quiet = 1;
-			break;
-		case 'n':
-			num_iterations = strtod(optarg, NULL);
+			अवरोध;
+		हाल 'n':
+			num_iterations = म_से_भग्न(optarg, शून्य);
 
-			if (num_iterations <= 0) {
-				fprintf(outf, "iterations %d should be positive number\n", num_iterations);
-				exit(2);
-			}
-			break;
-		case 's':
+			अगर (num_iterations <= 0) अणु
+				ख_लिखो(outf, "iterations %d should be positive number\n", num_iterations);
+				निकास(2);
+			पूर्ण
+			अवरोध;
+		हाल 's':
 			/*
-			 * --show: show only those specified
+			 * --show: show only those specअगरied
 			 *  The 1st invocation will clear and replace the enabled mask
 			 *  subsequent invocations can add to it.
 			 */
-			if (shown == 0)
+			अगर (shown == 0)
 				bic_enabled = bic_lookup(optarg, SHOW_LIST);
-			else
+			अन्यथा
 				bic_enabled |= bic_lookup(optarg, SHOW_LIST);
 			shown = 1;
-			break;
-		case 'S':
+			अवरोध;
+		हाल 'S':
 			summary_only++;
-			break;
-		case 'T':
-			tj_max_override = atoi(optarg);
-			break;
-		case 'v':
-			print_version();
-			exit(0);
-			break;
-		}
-	}
-}
+			अवरोध;
+		हाल 'T':
+			tj_max_override = म_से_प(optarg);
+			अवरोध;
+		हाल 'v':
+			prपूर्णांक_version();
+			निकास(0);
+			अवरोध;
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-int main(int argc, char **argv)
-{
-	outf = stderr;
+पूर्णांक मुख्य(पूर्णांक argc, अक्षर **argv)
+अणु
+	outf = मानक_त्रुटि;
 	cmdline(argc, argv);
 
-	if (!quiet)
-		print_version();
+	अगर (!quiet)
+		prपूर्णांक_version();
 
 	probe_sysfs();
 
 	turbostat_init();
 
-	/* dump counters and exit */
-	if (dump_only)
-		return get_and_dump_counters();
+	/* dump counters and निकास */
+	अगर (dump_only)
+		वापस get_and_dump_counters();
 
-	/* list header and exit */
-	if (list_header_only) {
-		print_header(",");
-		flush_output_stdout();
-		return 0;
-	}
+	/* list header and निकास */
+	अगर (list_header_only) अणु
+		prपूर्णांक_header(",");
+		flush_output_मानक_निकास();
+		वापस 0;
+	पूर्ण
 
 	msr_sum_record();
 	/*
-	 * if any params left, it must be a command to fork
+	 * अगर any params left, it must be a command to विभाजन
 	 */
-	if (argc - optind)
-		return fork_it(argv + optind);
-	else
+	अगर (argc - optind)
+		वापस विभाजन_it(argv + optind);
+	अन्यथा
 		turbostat_loop();
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

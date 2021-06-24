@@ -1,8 +1,9 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * INET		An implementation of the TCP/IP protocol suite for the LINUX
- *		operating system.  INET is implemented using the  BSD Socket
- *		interface as the means of communication with the user level.
+ * INET		An implementation of the TCP/IP protocol suite क्रम the LINUX
+ *		operating प्रणाली.  INET is implemented using the  BSD Socket
+ *		पूर्णांकerface as the means of communication with the user level.
  *
  *		Implementation of the Transmission Control Protocol(TCP).
  *
@@ -15,784 +16,784 @@
  *		Linus Torvalds, <torvalds@cs.helsinki.fi>
  *		Alan Cox, <gw4pts@gw4pts.ampr.org>
  *		Matthew Dillon, <dillon@apollo.west.oic.com>
- *		Arnt Gulbrandsen, <agulbra@nvg.unit.no>
+ *		Arnt Gulbअक्रमsen, <agulbra@nvg.unit.no>
  *		Jorge Cwik, <jorge@laser.satlink.net>
  */
 
-#include <linux/module.h>
-#include <linux/gfp.h>
-#include <net/tcp.h>
+#समावेश <linux/module.h>
+#समावेश <linux/gfp.h>
+#समावेश <net/tcp.h>
 
-static u32 tcp_clamp_rto_to_user_timeout(const struct sock *sk)
-{
-	struct inet_connection_sock *icsk = inet_csk(sk);
+अटल u32 tcp_clamp_rto_to_user_समयout(स्थिर काष्ठा sock *sk)
+अणु
+	काष्ठा inet_connection_sock *icsk = inet_csk(sk);
 	u32 elapsed, start_ts;
-	s32 remaining;
+	s32 reमुख्यing;
 
 	start_ts = tcp_sk(sk)->retrans_stamp;
-	if (!icsk->icsk_user_timeout)
-		return icsk->icsk_rto;
-	elapsed = tcp_time_stamp(tcp_sk(sk)) - start_ts;
-	remaining = icsk->icsk_user_timeout - elapsed;
-	if (remaining <= 0)
-		return 1; /* user timeout has passed; fire ASAP */
+	अगर (!icsk->icsk_user_समयout)
+		वापस icsk->icsk_rto;
+	elapsed = tcp_समय_stamp(tcp_sk(sk)) - start_ts;
+	reमुख्यing = icsk->icsk_user_समयout - elapsed;
+	अगर (reमुख्यing <= 0)
+		वापस 1; /* user समयout has passed; fire ASAP */
 
-	return min_t(u32, icsk->icsk_rto, msecs_to_jiffies(remaining));
-}
+	वापस min_t(u32, icsk->icsk_rto, msecs_to_jअगरfies(reमुख्यing));
+पूर्ण
 
-u32 tcp_clamp_probe0_to_user_timeout(const struct sock *sk, u32 when)
-{
-	struct inet_connection_sock *icsk = inet_csk(sk);
-	u32 remaining;
+u32 tcp_clamp_probe0_to_user_समयout(स्थिर काष्ठा sock *sk, u32 when)
+अणु
+	काष्ठा inet_connection_sock *icsk = inet_csk(sk);
+	u32 reमुख्यing;
 	s32 elapsed;
 
-	if (!icsk->icsk_user_timeout || !icsk->icsk_probes_tstamp)
-		return when;
+	अगर (!icsk->icsk_user_समयout || !icsk->icsk_probes_tstamp)
+		वापस when;
 
-	elapsed = tcp_jiffies32 - icsk->icsk_probes_tstamp;
-	if (unlikely(elapsed < 0))
+	elapsed = tcp_jअगरfies32 - icsk->icsk_probes_tstamp;
+	अगर (unlikely(elapsed < 0))
 		elapsed = 0;
-	remaining = msecs_to_jiffies(icsk->icsk_user_timeout) - elapsed;
-	remaining = max_t(u32, remaining, TCP_TIMEOUT_MIN);
+	reमुख्यing = msecs_to_jअगरfies(icsk->icsk_user_समयout) - elapsed;
+	reमुख्यing = max_t(u32, reमुख्यing, TCP_TIMEOUT_MIN);
 
-	return min_t(u32, remaining, when);
-}
+	वापस min_t(u32, reमुख्यing, when);
+पूर्ण
 
 /**
- *  tcp_write_err() - close socket and save error info
+ *  tcp_ग_लिखो_err() - बंद socket and save error info
  *  @sk:  The socket the error has appeared on.
  *
- *  Returns: Nothing (void)
+ *  Returns: Nothing (व्योम)
  */
 
-static void tcp_write_err(struct sock *sk)
-{
+अटल व्योम tcp_ग_लिखो_err(काष्ठा sock *sk)
+अणु
 	sk->sk_err = sk->sk_err_soft ? : ETIMEDOUT;
 	sk->sk_error_report(sk);
 
-	tcp_write_queue_purge(sk);
-	tcp_done(sk);
+	tcp_ग_लिखो_queue_purge(sk);
+	tcp_करोne(sk);
 	__NET_INC_STATS(sock_net(sk), LINUX_MIB_TCPABORTONTIMEOUT);
-}
+पूर्ण
 
 /**
- *  tcp_out_of_resources() - Close socket if out of resources
- *  @sk:        pointer to current socket
- *  @do_reset:  send a last packet with reset flag
+ *  tcp_out_of_resources() - Close socket अगर out of resources
+ *  @sk:        poपूर्णांकer to current socket
+ *  @करो_reset:  send a last packet with reset flag
  *
  *  Do not allow orphaned sockets to eat all our resources.
  *  This is direct violation of TCP specs, but it is required
- *  to prevent DoS attacks. It is called when a retransmission timeout
- *  or zero probe timeout occurs on orphaned socket.
+ *  to prevent DoS attacks. It is called when a retransmission समयout
+ *  or zero probe समयout occurs on orphaned socket.
  *
- *  Also close if our net namespace is exiting; in that case there is no
- *  hope of ever communicating again since all netns interfaces are already
- *  down (or about to be down), and we need to release our dst references,
- *  which have been moved to the netns loopback interface, so the namespace
- *  can finish exiting.  This condition is only possible if we are a kernel
- *  socket, as those do not hold references to the namespace.
+ *  Also बंद अगर our net namespace is निकासing; in that हाल there is no
+ *  hope of ever communicating again since all netns पूर्णांकerfaces are alपढ़ोy
+ *  करोwn (or about to be करोwn), and we need to release our dst references,
+ *  which have been moved to the netns loopback पूर्णांकerface, so the namespace
+ *  can finish निकासing.  This condition is only possible अगर we are a kernel
+ *  socket, as those करो not hold references to the namespace.
  *
  *  Criteria is still not confirmed experimentally and may change.
- *  We kill the socket, if:
+ *  We समाप्त the socket, अगर:
  *  1. If number of orphaned sockets exceeds an administratively configured
  *     limit.
  *  2. If we have strong memory pressure.
- *  3. If our net namespace is exiting.
+ *  3. If our net namespace is निकासing.
  */
-static int tcp_out_of_resources(struct sock *sk, bool do_reset)
-{
-	struct tcp_sock *tp = tcp_sk(sk);
-	int shift = 0;
+अटल पूर्णांक tcp_out_of_resources(काष्ठा sock *sk, bool करो_reset)
+अणु
+	काष्ठा tcp_sock *tp = tcp_sk(sk);
+	पूर्णांक shअगरt = 0;
 
-	/* If peer does not open window for long time, or did not transmit
-	 * anything for long time, penalize it. */
-	if ((s32)(tcp_jiffies32 - tp->lsndtime) > 2*TCP_RTO_MAX || !do_reset)
-		shift++;
+	/* If peer करोes not खोलो winकरोw क्रम दीर्घ समय, or did not transmit
+	 * anything क्रम दीर्घ समय, penalize it. */
+	अगर ((s32)(tcp_jअगरfies32 - tp->lsndसमय) > 2*TCP_RTO_MAX || !करो_reset)
+		shअगरt++;
 
 	/* If some dubious ICMP arrived, penalize even more. */
-	if (sk->sk_err_soft)
-		shift++;
+	अगर (sk->sk_err_soft)
+		shअगरt++;
 
-	if (tcp_check_oom(sk, shift)) {
-		/* Catch exceptional cases, when connection requires reset.
+	अगर (tcp_check_oom(sk, shअगरt)) अणु
+		/* Catch exceptional हालs, when connection requires reset.
 		 *      1. Last segment was sent recently. */
-		if ((s32)(tcp_jiffies32 - tp->lsndtime) <= TCP_TIMEWAIT_LEN ||
-		    /*  2. Window is closed. */
+		अगर ((s32)(tcp_jअगरfies32 - tp->lsndसमय) <= TCP_TIMEWAIT_LEN ||
+		    /*  2. Winकरोw is बंदd. */
 		    (!tp->snd_wnd && !tp->packets_out))
-			do_reset = true;
-		if (do_reset)
+			करो_reset = true;
+		अगर (करो_reset)
 			tcp_send_active_reset(sk, GFP_ATOMIC);
-		tcp_done(sk);
+		tcp_करोne(sk);
 		__NET_INC_STATS(sock_net(sk), LINUX_MIB_TCPABORTONMEMORY);
-		return 1;
-	}
+		वापस 1;
+	पूर्ण
 
-	if (!check_net(sock_net(sk))) {
-		/* Not possible to send reset; just close */
-		tcp_done(sk);
-		return 1;
-	}
+	अगर (!check_net(sock_net(sk))) अणु
+		/* Not possible to send reset; just बंद */
+		tcp_करोne(sk);
+		वापस 1;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  *  tcp_orphan_retries() - Returns maximal number of retries on an orphaned socket
- *  @sk:    Pointer to the current socket.
+ *  @sk:    Poपूर्णांकer to the current socket.
  *  @alive: bool, socket alive state
  */
-static int tcp_orphan_retries(struct sock *sk, bool alive)
-{
-	int retries = sock_net(sk)->ipv4.sysctl_tcp_orphan_retries; /* May be zero. */
+अटल पूर्णांक tcp_orphan_retries(काष्ठा sock *sk, bool alive)
+अणु
+	पूर्णांक retries = sock_net(sk)->ipv4.sysctl_tcp_orphan_retries; /* May be zero. */
 
 	/* We know from an ICMP that something is wrong. */
-	if (sk->sk_err_soft && !alive)
+	अगर (sk->sk_err_soft && !alive)
 		retries = 0;
 
-	/* However, if socket sent something recently, select some safe
+	/* However, अगर socket sent something recently, select some safe
 	 * number of retries. 8 corresponds to >100 seconds with minimal
 	 * RTO of 200msec. */
-	if (retries == 0 && alive)
+	अगर (retries == 0 && alive)
 		retries = 8;
-	return retries;
-}
+	वापस retries;
+पूर्ण
 
-static void tcp_mtu_probing(struct inet_connection_sock *icsk, struct sock *sk)
-{
-	const struct net *net = sock_net(sk);
-	int mss;
+अटल व्योम tcp_mtu_probing(काष्ठा inet_connection_sock *icsk, काष्ठा sock *sk)
+अणु
+	स्थिर काष्ठा net *net = sock_net(sk);
+	पूर्णांक mss;
 
 	/* Black hole detection */
-	if (!net->ipv4.sysctl_tcp_mtu_probing)
-		return;
+	अगर (!net->ipv4.sysctl_tcp_mtu_probing)
+		वापस;
 
-	if (!icsk->icsk_mtup.enabled) {
+	अगर (!icsk->icsk_mtup.enabled) अणु
 		icsk->icsk_mtup.enabled = 1;
-		icsk->icsk_mtup.probe_timestamp = tcp_jiffies32;
-	} else {
+		icsk->icsk_mtup.probe_बारtamp = tcp_jअगरfies32;
+	पूर्ण अन्यथा अणु
 		mss = tcp_mtu_to_mss(sk, icsk->icsk_mtup.search_low) >> 1;
 		mss = min(net->ipv4.sysctl_tcp_base_mss, mss);
-		mss = max(mss, net->ipv4.sysctl_tcp_mtu_probe_floor);
+		mss = max(mss, net->ipv4.sysctl_tcp_mtu_probe_न्यूनमान);
 		mss = max(mss, net->ipv4.sysctl_tcp_min_snd_mss);
 		icsk->icsk_mtup.search_low = tcp_mss_to_mtu(sk, mss);
-	}
+	पूर्ण
 	tcp_sync_mss(sk, icsk->icsk_pmtu_cookie);
-}
+पूर्ण
 
-static unsigned int tcp_model_timeout(struct sock *sk,
-				      unsigned int boundary,
-				      unsigned int rto_base)
-{
-	unsigned int linear_backoff_thresh, timeout;
+अटल अचिन्हित पूर्णांक tcp_model_समयout(काष्ठा sock *sk,
+				      अचिन्हित पूर्णांक boundary,
+				      अचिन्हित पूर्णांक rto_base)
+अणु
+	अचिन्हित पूर्णांक linear_backoff_thresh, समयout;
 
 	linear_backoff_thresh = ilog2(TCP_RTO_MAX / rto_base);
-	if (boundary <= linear_backoff_thresh)
-		timeout = ((2 << boundary) - 1) * rto_base;
-	else
-		timeout = ((2 << linear_backoff_thresh) - 1) * rto_base +
+	अगर (boundary <= linear_backoff_thresh)
+		समयout = ((2 << boundary) - 1) * rto_base;
+	अन्यथा
+		समयout = ((2 << linear_backoff_thresh) - 1) * rto_base +
 			(boundary - linear_backoff_thresh) * TCP_RTO_MAX;
-	return jiffies_to_msecs(timeout);
-}
+	वापस jअगरfies_to_msecs(समयout);
+पूर्ण
 /**
- *  retransmits_timed_out() - returns true if this connection has timed out
+ *  retransmits_समयd_out() - वापसs true अगर this connection has समयd out
  *  @sk:       The current socket
  *  @boundary: max number of retransmissions
- *  @timeout:  A custom timeout value.
- *             If set to 0 the default timeout is calculated and used.
+ *  @समयout:  A custom समयout value.
+ *             If set to 0 the शेष समयout is calculated and used.
  *             Using TCP_RTO_MIN and the number of unsuccessful retransmits.
  *
- * The default "timeout" value this function can calculate and use
- * is equivalent to the timeout of a TCP Connection
+ * The शेष "timeout" value this function can calculate and use
+ * is equivalent to the समयout of a TCP Connection
  * after "boundary" unsuccessful, exponentially backed-off
  * retransmissions with an initial RTO of TCP_RTO_MIN.
  */
-static bool retransmits_timed_out(struct sock *sk,
-				  unsigned int boundary,
-				  unsigned int timeout)
-{
-	unsigned int start_ts;
+अटल bool retransmits_समयd_out(काष्ठा sock *sk,
+				  अचिन्हित पूर्णांक boundary,
+				  अचिन्हित पूर्णांक समयout)
+अणु
+	अचिन्हित पूर्णांक start_ts;
 
-	if (!inet_csk(sk)->icsk_retransmits)
-		return false;
+	अगर (!inet_csk(sk)->icsk_retransmits)
+		वापस false;
 
 	start_ts = tcp_sk(sk)->retrans_stamp;
-	if (likely(timeout == 0)) {
-		unsigned int rto_base = TCP_RTO_MIN;
+	अगर (likely(समयout == 0)) अणु
+		अचिन्हित पूर्णांक rto_base = TCP_RTO_MIN;
 
-		if ((1 << sk->sk_state) & (TCPF_SYN_SENT | TCPF_SYN_RECV))
-			rto_base = tcp_timeout_init(sk);
-		timeout = tcp_model_timeout(sk, boundary, rto_base);
-	}
+		अगर ((1 << sk->sk_state) & (TCPF_SYN_SENT | TCPF_SYN_RECV))
+			rto_base = tcp_समयout_init(sk);
+		समयout = tcp_model_समयout(sk, boundary, rto_base);
+	पूर्ण
 
-	return (s32)(tcp_time_stamp(tcp_sk(sk)) - start_ts - timeout) >= 0;
-}
+	वापस (s32)(tcp_समय_stamp(tcp_sk(sk)) - start_ts - समयout) >= 0;
+पूर्ण
 
-/* A write timeout has occurred. Process the after effects. */
-static int tcp_write_timeout(struct sock *sk)
-{
-	struct inet_connection_sock *icsk = inet_csk(sk);
-	struct tcp_sock *tp = tcp_sk(sk);
-	struct net *net = sock_net(sk);
-	bool expired = false, do_reset;
-	int retry_until;
+/* A ग_लिखो समयout has occurred. Process the after effects. */
+अटल पूर्णांक tcp_ग_लिखो_समयout(काष्ठा sock *sk)
+अणु
+	काष्ठा inet_connection_sock *icsk = inet_csk(sk);
+	काष्ठा tcp_sock *tp = tcp_sk(sk);
+	काष्ठा net *net = sock_net(sk);
+	bool expired = false, करो_reset;
+	पूर्णांक retry_until;
 
-	if ((1 << sk->sk_state) & (TCPF_SYN_SENT | TCPF_SYN_RECV)) {
-		if (icsk->icsk_retransmits)
+	अगर ((1 << sk->sk_state) & (TCPF_SYN_SENT | TCPF_SYN_RECV)) अणु
+		अगर (icsk->icsk_retransmits)
 			__dst_negative_advice(sk);
 		retry_until = icsk->icsk_syn_retries ? : net->ipv4.sysctl_tcp_syn_retries;
 		expired = icsk->icsk_retransmits >= retry_until;
-	} else {
-		if (retransmits_timed_out(sk, net->ipv4.sysctl_tcp_retries1, 0)) {
+	पूर्ण अन्यथा अणु
+		अगर (retransmits_समयd_out(sk, net->ipv4.sysctl_tcp_retries1, 0)) अणु
 			/* Black hole detection */
 			tcp_mtu_probing(icsk, sk);
 
 			__dst_negative_advice(sk);
-		}
+		पूर्ण
 
 		retry_until = net->ipv4.sysctl_tcp_retries2;
-		if (sock_flag(sk, SOCK_DEAD)) {
-			const bool alive = icsk->icsk_rto < TCP_RTO_MAX;
+		अगर (sock_flag(sk, SOCK_DEAD)) अणु
+			स्थिर bool alive = icsk->icsk_rto < TCP_RTO_MAX;
 
 			retry_until = tcp_orphan_retries(sk, alive);
-			do_reset = alive ||
-				!retransmits_timed_out(sk, retry_until, 0);
+			करो_reset = alive ||
+				!retransmits_समयd_out(sk, retry_until, 0);
 
-			if (tcp_out_of_resources(sk, do_reset))
-				return 1;
-		}
-	}
-	if (!expired)
-		expired = retransmits_timed_out(sk, retry_until,
-						icsk->icsk_user_timeout);
-	tcp_fastopen_active_detect_blackhole(sk, expired);
+			अगर (tcp_out_of_resources(sk, करो_reset))
+				वापस 1;
+		पूर्ण
+	पूर्ण
+	अगर (!expired)
+		expired = retransmits_समयd_out(sk, retry_until,
+						icsk->icsk_user_समयout);
+	tcp_fastखोलो_active_detect_blackhole(sk, expired);
 
-	if (BPF_SOCK_OPS_TEST_FLAG(tp, BPF_SOCK_OPS_RTO_CB_FLAG))
+	अगर (BPF_SOCK_OPS_TEST_FLAG(tp, BPF_SOCK_OPS_RTO_CB_FLAG))
 		tcp_call_bpf_3arg(sk, BPF_SOCK_OPS_RTO_CB,
 				  icsk->icsk_retransmits,
-				  icsk->icsk_rto, (int)expired);
+				  icsk->icsk_rto, (पूर्णांक)expired);
 
-	if (expired) {
+	अगर (expired) अणु
 		/* Has it gone just too far? */
-		tcp_write_err(sk);
-		return 1;
-	}
+		tcp_ग_लिखो_err(sk);
+		वापस 1;
+	पूर्ण
 
-	if (sk_rethink_txhash(sk)) {
-		tp->timeout_rehash++;
+	अगर (sk_rethink_txhash(sk)) अणु
+		tp->समयout_rehash++;
 		__NET_INC_STATS(sock_net(sk), LINUX_MIB_TCPTIMEOUTREHASH);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* Called with BH disabled */
-void tcp_delack_timer_handler(struct sock *sk)
-{
-	struct inet_connection_sock *icsk = inet_csk(sk);
+व्योम tcp_delack_समयr_handler(काष्ठा sock *sk)
+अणु
+	काष्ठा inet_connection_sock *icsk = inet_csk(sk);
 
 	sk_mem_reclaim_partial(sk);
 
-	if (((1 << sk->sk_state) & (TCPF_CLOSE | TCPF_LISTEN)) ||
+	अगर (((1 << sk->sk_state) & (TCPF_CLOSE | TCPF_LISTEN)) ||
 	    !(icsk->icsk_ack.pending & ICSK_ACK_TIMER))
-		goto out;
+		जाओ out;
 
-	if (time_after(icsk->icsk_ack.timeout, jiffies)) {
-		sk_reset_timer(sk, &icsk->icsk_delack_timer, icsk->icsk_ack.timeout);
-		goto out;
-	}
+	अगर (समय_after(icsk->icsk_ack.समयout, jअगरfies)) अणु
+		sk_reset_समयr(sk, &icsk->icsk_delack_समयr, icsk->icsk_ack.समयout);
+		जाओ out;
+	पूर्ण
 	icsk->icsk_ack.pending &= ~ICSK_ACK_TIMER;
 
-	if (inet_csk_ack_scheduled(sk)) {
-		if (!inet_csk_in_pingpong_mode(sk)) {
+	अगर (inet_csk_ack_scheduled(sk)) अणु
+		अगर (!inet_csk_in_pingpong_mode(sk)) अणु
 			/* Delayed ACK missed: inflate ATO. */
 			icsk->icsk_ack.ato = min(icsk->icsk_ack.ato << 1, icsk->icsk_rto);
-		} else {
+		पूर्ण अन्यथा अणु
 			/* Delayed ACK missed: leave pingpong mode and
 			 * deflate ATO.
 			 */
-			inet_csk_exit_pingpong_mode(sk);
+			inet_csk_निकास_pingpong_mode(sk);
 			icsk->icsk_ack.ato      = TCP_ATO_MIN;
-		}
+		पूर्ण
 		tcp_mstamp_refresh(tcp_sk(sk));
 		tcp_send_ack(sk);
 		__NET_INC_STATS(sock_net(sk), LINUX_MIB_DELAYEDACKS);
-	}
+	पूर्ण
 
 out:
-	if (tcp_under_memory_pressure(sk))
+	अगर (tcp_under_memory_pressure(sk))
 		sk_mem_reclaim(sk);
-}
+पूर्ण
 
 
 /**
- *  tcp_delack_timer() - The TCP delayed ACK timeout handler
- *  @t:  Pointer to the timer. (gets casted to struct sock *)
+ *  tcp_delack_समयr() - The TCP delayed ACK समयout handler
+ *  @t:  Poपूर्णांकer to the समयr. (माला_लो casted to काष्ठा sock *)
  *
- *  This function gets (indirectly) called when the kernel timer for a TCP packet
- *  of this socket expires. Calls tcp_delack_timer_handler() to do the actual work.
+ *  This function माला_लो (indirectly) called when the kernel समयr क्रम a TCP packet
+ *  of this socket expires. Calls tcp_delack_समयr_handler() to करो the actual work.
  *
- *  Returns: Nothing (void)
+ *  Returns: Nothing (व्योम)
  */
-static void tcp_delack_timer(struct timer_list *t)
-{
-	struct inet_connection_sock *icsk =
-			from_timer(icsk, t, icsk_delack_timer);
-	struct sock *sk = &icsk->icsk_inet.sk;
+अटल व्योम tcp_delack_समयr(काष्ठा समयr_list *t)
+अणु
+	काष्ठा inet_connection_sock *icsk =
+			from_समयr(icsk, t, icsk_delack_समयr);
+	काष्ठा sock *sk = &icsk->icsk_inet.sk;
 
 	bh_lock_sock(sk);
-	if (!sock_owned_by_user(sk)) {
-		tcp_delack_timer_handler(sk);
-	} else {
+	अगर (!sock_owned_by_user(sk)) अणु
+		tcp_delack_समयr_handler(sk);
+	पूर्ण अन्यथा अणु
 		__NET_INC_STATS(sock_net(sk), LINUX_MIB_DELAYEDACKLOCKED);
 		/* deleguate our work to tcp_release_cb() */
-		if (!test_and_set_bit(TCP_DELACK_TIMER_DEFERRED, &sk->sk_tsq_flags))
+		अगर (!test_and_set_bit(TCP_DELACK_TIMER_DEFERRED, &sk->sk_tsq_flags))
 			sock_hold(sk);
-	}
+	पूर्ण
 	bh_unlock_sock(sk);
 	sock_put(sk);
-}
+पूर्ण
 
-static void tcp_probe_timer(struct sock *sk)
-{
-	struct inet_connection_sock *icsk = inet_csk(sk);
-	struct sk_buff *skb = tcp_send_head(sk);
-	struct tcp_sock *tp = tcp_sk(sk);
-	int max_probes;
+अटल व्योम tcp_probe_समयr(काष्ठा sock *sk)
+अणु
+	काष्ठा inet_connection_sock *icsk = inet_csk(sk);
+	काष्ठा sk_buff *skb = tcp_send_head(sk);
+	काष्ठा tcp_sock *tp = tcp_sk(sk);
+	पूर्णांक max_probes;
 
-	if (tp->packets_out || !skb) {
+	अगर (tp->packets_out || !skb) अणु
 		icsk->icsk_probes_out = 0;
 		icsk->icsk_probes_tstamp = 0;
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	/* RFC 1122 4.2.2.17 requires the sender to stay open indefinitely as
-	 * long as the receiver continues to respond probes. We support this by
-	 * default and reset icsk_probes_out with incoming ACKs. But if the
-	 * socket is orphaned or the user specifies TCP_USER_TIMEOUT, we
-	 * kill the socket when the retry count and the time exceeds the
-	 * corresponding system limit. We also implement similar policy when
-	 * we use RTO to probe window in tcp_retransmit_timer().
+	/* RFC 1122 4.2.2.17 requires the sender to stay खोलो indefinitely as
+	 * दीर्घ as the receiver जारीs to respond probes. We support this by
+	 * शेष and reset icsk_probes_out with incoming ACKs. But अगर the
+	 * socket is orphaned or the user specअगरies TCP_USER_TIMEOUT, we
+	 * समाप्त the socket when the retry count and the समय exceeds the
+	 * corresponding प्रणाली limit. We also implement similar policy when
+	 * we use RTO to probe winकरोw in tcp_retransmit_समयr().
 	 */
-	if (!icsk->icsk_probes_tstamp)
-		icsk->icsk_probes_tstamp = tcp_jiffies32;
-	else if (icsk->icsk_user_timeout &&
-		 (s32)(tcp_jiffies32 - icsk->icsk_probes_tstamp) >=
-		 msecs_to_jiffies(icsk->icsk_user_timeout))
-		goto abort;
+	अगर (!icsk->icsk_probes_tstamp)
+		icsk->icsk_probes_tstamp = tcp_jअगरfies32;
+	अन्यथा अगर (icsk->icsk_user_समयout &&
+		 (s32)(tcp_jअगरfies32 - icsk->icsk_probes_tstamp) >=
+		 msecs_to_jअगरfies(icsk->icsk_user_समयout))
+		जाओ पात;
 
 	max_probes = sock_net(sk)->ipv4.sysctl_tcp_retries2;
-	if (sock_flag(sk, SOCK_DEAD)) {
-		const bool alive = inet_csk_rto_backoff(icsk, TCP_RTO_MAX) < TCP_RTO_MAX;
+	अगर (sock_flag(sk, SOCK_DEAD)) अणु
+		स्थिर bool alive = inet_csk_rto_backoff(icsk, TCP_RTO_MAX) < TCP_RTO_MAX;
 
 		max_probes = tcp_orphan_retries(sk, alive);
-		if (!alive && icsk->icsk_backoff >= max_probes)
-			goto abort;
-		if (tcp_out_of_resources(sk, true))
-			return;
-	}
+		अगर (!alive && icsk->icsk_backoff >= max_probes)
+			जाओ पात;
+		अगर (tcp_out_of_resources(sk, true))
+			वापस;
+	पूर्ण
 
-	if (icsk->icsk_probes_out >= max_probes) {
-abort:		tcp_write_err(sk);
-	} else {
-		/* Only send another probe if we didn't close things up. */
+	अगर (icsk->icsk_probes_out >= max_probes) अणु
+पात:		tcp_ग_लिखो_err(sk);
+	पूर्ण अन्यथा अणु
+		/* Only send another probe अगर we didn't बंद things up. */
 		tcp_send_probe0(sk);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
- *	Timer for Fast Open socket to retransmit SYNACK. Note that the
+ *	Timer क्रम Fast Open socket to retransmit SYNACK. Note that the
  *	sk here is the child socket, not the parent (listener) socket.
  */
-static void tcp_fastopen_synack_timer(struct sock *sk, struct request_sock *req)
-{
-	struct inet_connection_sock *icsk = inet_csk(sk);
-	int max_retries = icsk->icsk_syn_retries ? :
-	    sock_net(sk)->ipv4.sysctl_tcp_synack_retries + 1; /* add one more retry for fastopen */
-	struct tcp_sock *tp = tcp_sk(sk);
+अटल व्योम tcp_fastखोलो_synack_समयr(काष्ठा sock *sk, काष्ठा request_sock *req)
+अणु
+	काष्ठा inet_connection_sock *icsk = inet_csk(sk);
+	पूर्णांक max_retries = icsk->icsk_syn_retries ? :
+	    sock_net(sk)->ipv4.sysctl_tcp_synack_retries + 1; /* add one more retry क्रम fastखोलो */
+	काष्ठा tcp_sock *tp = tcp_sk(sk);
 
-	req->rsk_ops->syn_ack_timeout(req);
+	req->rsk_ops->syn_ack_समयout(req);
 
-	if (req->num_timeout >= max_retries) {
-		tcp_write_err(sk);
-		return;
-	}
-	/* Lower cwnd after certain SYNACK timeout like tcp_init_transfer() */
-	if (icsk->icsk_retransmits == 1)
+	अगर (req->num_समयout >= max_retries) अणु
+		tcp_ग_लिखो_err(sk);
+		वापस;
+	पूर्ण
+	/* Lower cwnd after certain SYNACK समयout like tcp_init_transfer() */
+	अगर (icsk->icsk_retransmits == 1)
 		tcp_enter_loss(sk);
 	/* XXX (TFO) - Unlike regular SYN-ACK retransmit, we ignore error
-	 * returned from rtx_syn_ack() to make it more persistent like
-	 * regular retransmit because if the child socket has been accepted
+	 * वापसed from rtx_syn_ack() to make it more persistent like
+	 * regular retransmit because अगर the child socket has been accepted
 	 * it's not good to give up too easily.
 	 */
 	inet_rtx_syn_ack(sk, req);
-	req->num_timeout++;
+	req->num_समयout++;
 	icsk->icsk_retransmits++;
-	if (!tp->retrans_stamp)
-		tp->retrans_stamp = tcp_time_stamp(tp);
-	inet_csk_reset_xmit_timer(sk, ICSK_TIME_RETRANS,
-			  TCP_TIMEOUT_INIT << req->num_timeout, TCP_RTO_MAX);
-}
+	अगर (!tp->retrans_stamp)
+		tp->retrans_stamp = tcp_समय_stamp(tp);
+	inet_csk_reset_xmit_समयr(sk, ICSK_TIME_RETRANS,
+			  TCP_TIMEOUT_INIT << req->num_समयout, TCP_RTO_MAX);
+पूर्ण
 
 
 /**
- *  tcp_retransmit_timer() - The TCP retransmit timeout handler
- *  @sk:  Pointer to the current socket.
+ *  tcp_retransmit_समयr() - The TCP retransmit समयout handler
+ *  @sk:  Poपूर्णांकer to the current socket.
  *
- *  This function gets called when the kernel timer for a TCP packet
+ *  This function माला_लो called when the kernel समयr क्रम a TCP packet
  *  of this socket expires.
  *
- *  It handles retransmission, timer adjustment and other necesarry measures.
+ *  It handles retransmission, समयr adjusपंचांगent and other necesarry measures.
  *
- *  Returns: Nothing (void)
+ *  Returns: Nothing (व्योम)
  */
-void tcp_retransmit_timer(struct sock *sk)
-{
-	struct tcp_sock *tp = tcp_sk(sk);
-	struct net *net = sock_net(sk);
-	struct inet_connection_sock *icsk = inet_csk(sk);
-	struct request_sock *req;
-	struct sk_buff *skb;
+व्योम tcp_retransmit_समयr(काष्ठा sock *sk)
+अणु
+	काष्ठा tcp_sock *tp = tcp_sk(sk);
+	काष्ठा net *net = sock_net(sk);
+	काष्ठा inet_connection_sock *icsk = inet_csk(sk);
+	काष्ठा request_sock *req;
+	काष्ठा sk_buff *skb;
 
-	req = rcu_dereference_protected(tp->fastopen_rsk,
+	req = rcu_dereference_रक्षित(tp->fastखोलो_rsk,
 					lockdep_sock_is_held(sk));
-	if (req) {
+	अगर (req) अणु
 		WARN_ON_ONCE(sk->sk_state != TCP_SYN_RECV &&
 			     sk->sk_state != TCP_FIN_WAIT1);
-		tcp_fastopen_synack_timer(sk, req);
-		/* Before we receive ACK to our SYN-ACK don't retransmit
-		 * anything else (e.g., data or FIN segments).
+		tcp_fastखोलो_synack_समयr(sk, req);
+		/* Beक्रमe we receive ACK to our SYN-ACK करोn't retransmit
+		 * anything अन्यथा (e.g., data or FIN segments).
 		 */
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (!tp->packets_out)
-		return;
+	अगर (!tp->packets_out)
+		वापस;
 
 	skb = tcp_rtx_queue_head(sk);
-	if (WARN_ON_ONCE(!skb))
-		return;
+	अगर (WARN_ON_ONCE(!skb))
+		वापस;
 
 	tp->tlp_high_seq = 0;
 
-	if (!tp->snd_wnd && !sock_flag(sk, SOCK_DEAD) &&
-	    !((1 << sk->sk_state) & (TCPF_SYN_SENT | TCPF_SYN_RECV))) {
-		/* Receiver dastardly shrinks window. Our retransmits
-		 * become zero probes, but we should not timeout this
-		 * connection. If the socket is an orphan, time it out,
+	अगर (!tp->snd_wnd && !sock_flag(sk, SOCK_DEAD) &&
+	    !((1 << sk->sk_state) & (TCPF_SYN_SENT | TCPF_SYN_RECV))) अणु
+		/* Receiver dastardly shrinks winकरोw. Our retransmits
+		 * become zero probes, but we should not समयout this
+		 * connection. If the socket is an orphan, समय it out,
 		 * we cannot allow such beasts to hang infinitely.
 		 */
-		struct inet_sock *inet = inet_sk(sk);
-		if (sk->sk_family == AF_INET) {
+		काष्ठा inet_sock *inet = inet_sk(sk);
+		अगर (sk->sk_family == AF_INET) अणु
 			net_dbg_ratelimited("Peer %pI4:%u/%u unexpectedly shrunk window %u:%u (repaired)\n",
 					    &inet->inet_daddr,
 					    ntohs(inet->inet_dport),
 					    inet->inet_num,
 					    tp->snd_una, tp->snd_nxt);
-		}
-#if IS_ENABLED(CONFIG_IPV6)
-		else if (sk->sk_family == AF_INET6) {
+		पूर्ण
+#अगर IS_ENABLED(CONFIG_IPV6)
+		अन्यथा अगर (sk->sk_family == AF_INET6) अणु
 			net_dbg_ratelimited("Peer %pI6:%u/%u unexpectedly shrunk window %u:%u (repaired)\n",
 					    &sk->sk_v6_daddr,
 					    ntohs(inet->inet_dport),
 					    inet->inet_num,
 					    tp->snd_una, tp->snd_nxt);
-		}
-#endif
-		if (tcp_jiffies32 - tp->rcv_tstamp > TCP_RTO_MAX) {
-			tcp_write_err(sk);
-			goto out;
-		}
+		पूर्ण
+#पूर्ण_अगर
+		अगर (tcp_jअगरfies32 - tp->rcv_tstamp > TCP_RTO_MAX) अणु
+			tcp_ग_लिखो_err(sk);
+			जाओ out;
+		पूर्ण
 		tcp_enter_loss(sk);
 		tcp_retransmit_skb(sk, skb, 1);
 		__sk_dst_reset(sk);
-		goto out_reset_timer;
-	}
+		जाओ out_reset_समयr;
+	पूर्ण
 
 	__NET_INC_STATS(sock_net(sk), LINUX_MIB_TCPTIMEOUTS);
-	if (tcp_write_timeout(sk))
-		goto out;
+	अगर (tcp_ग_लिखो_समयout(sk))
+		जाओ out;
 
-	if (icsk->icsk_retransmits == 0) {
-		int mib_idx = 0;
+	अगर (icsk->icsk_retransmits == 0) अणु
+		पूर्णांक mib_idx = 0;
 
-		if (icsk->icsk_ca_state == TCP_CA_Recovery) {
-			if (tcp_is_sack(tp))
+		अगर (icsk->icsk_ca_state == TCP_CA_Recovery) अणु
+			अगर (tcp_is_sack(tp))
 				mib_idx = LINUX_MIB_TCPSACKRECOVERYFAIL;
-			else
+			अन्यथा
 				mib_idx = LINUX_MIB_TCPRENORECOVERYFAIL;
-		} else if (icsk->icsk_ca_state == TCP_CA_Loss) {
+		पूर्ण अन्यथा अगर (icsk->icsk_ca_state == TCP_CA_Loss) अणु
 			mib_idx = LINUX_MIB_TCPLOSSFAILURES;
-		} else if ((icsk->icsk_ca_state == TCP_CA_Disorder) ||
-			   tp->sacked_out) {
-			if (tcp_is_sack(tp))
+		पूर्ण अन्यथा अगर ((icsk->icsk_ca_state == TCP_CA_Disorder) ||
+			   tp->sacked_out) अणु
+			अगर (tcp_is_sack(tp))
 				mib_idx = LINUX_MIB_TCPSACKFAILURES;
-			else
+			अन्यथा
 				mib_idx = LINUX_MIB_TCPRENOFAILURES;
-		}
-		if (mib_idx)
+		पूर्ण
+		अगर (mib_idx)
 			__NET_INC_STATS(sock_net(sk), mib_idx);
-	}
+	पूर्ण
 
 	tcp_enter_loss(sk);
 
 	icsk->icsk_retransmits++;
-	if (tcp_retransmit_skb(sk, tcp_rtx_queue_head(sk), 1) > 0) {
+	अगर (tcp_retransmit_skb(sk, tcp_rtx_queue_head(sk), 1) > 0) अणु
 		/* Retransmission failed because of local congestion,
-		 * Let senders fight for local resources conservatively.
+		 * Let senders fight क्रम local resources conservatively.
 		 */
-		inet_csk_reset_xmit_timer(sk, ICSK_TIME_RETRANS,
+		inet_csk_reset_xmit_समयr(sk, ICSK_TIME_RETRANS,
 					  TCP_RESOURCE_PROBE_INTERVAL,
 					  TCP_RTO_MAX);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	/* Increase the timeout each time we retransmit.  Note that
-	 * we do not increase the rtt estimate.  rto is initialized
+	/* Increase the समयout each समय we retransmit.  Note that
+	 * we करो not increase the rtt estimate.  rto is initialized
 	 * from rtt, but increases here.  Jacobson (SIGCOMM 88) suggests
-	 * that doubling rto each time is the least we can get away with.
-	 * In KA9Q, Karn uses this for the first few times, and then
-	 * goes to quadratic.  netBSD doubles, but only goes up to *64,
+	 * that करोubling rto each समय is the least we can get away with.
+	 * In KA9Q, Karn uses this क्रम the first few बार, and then
+	 * goes to quadratic.  netBSD द्विगुनs, but only goes up to *64,
 	 * and clamps at 1 to 64 sec afterwards.  Note that 120 sec is
 	 * defined in the protocol as the maximum possible RTT.  I guess
 	 * we'll have to use something other than TCP to talk to the
 	 * University of Mars.
 	 *
-	 * PAWS allows us longer timeouts and large windows, so once
+	 * PAWS allows us दीर्घer समयouts and large winकरोws, so once
 	 * implemented ftp to mars will work nicely. We will have to fix
 	 * the 120 second clamps though!
 	 */
 	icsk->icsk_backoff++;
 
-out_reset_timer:
-	/* If stream is thin, use linear timeouts. Since 'icsk_backoff' is
-	 * used to reset timer, set to 0. Recalculate 'icsk_rto' as this
-	 * might be increased if the stream oscillates between thin and thick,
-	 * thus the old value might already be too high compared to the value
+out_reset_समयr:
+	/* If stream is thin, use linear समयouts. Since 'icsk_backoff' is
+	 * used to reset समयr, set to 0. Recalculate 'icsk_rto' as this
+	 * might be increased अगर the stream oscillates between thin and thick,
+	 * thus the old value might alपढ़ोy be too high compared to the value
 	 * set by 'tcp_set_rto' in tcp_input.c which resets the rto without
-	 * backoff. Limit to TCP_THIN_LINEAR_RETRIES before initiating
-	 * exponential backoff behaviour to avoid continue hammering
-	 * linear-timeout retransmissions into a black hole
+	 * backoff. Limit to TCP_THIN_LINEAR_RETRIES beक्रमe initiating
+	 * exponential backoff behaviour to aव्योम जारी hammering
+	 * linear-समयout retransmissions पूर्णांकo a black hole
 	 */
-	if (sk->sk_state == TCP_ESTABLISHED &&
-	    (tp->thin_lto || net->ipv4.sysctl_tcp_thin_linear_timeouts) &&
+	अगर (sk->sk_state == TCP_ESTABLISHED &&
+	    (tp->thin_lto || net->ipv4.sysctl_tcp_thin_linear_समयouts) &&
 	    tcp_stream_is_thin(tp) &&
-	    icsk->icsk_retransmits <= TCP_THIN_LINEAR_RETRIES) {
+	    icsk->icsk_retransmits <= TCP_THIN_LINEAR_RETRIES) अणु
 		icsk->icsk_backoff = 0;
 		icsk->icsk_rto = min(__tcp_set_rto(tp), TCP_RTO_MAX);
-	} else {
+	पूर्ण अन्यथा अणु
 		/* Use normal (exponential) backoff */
 		icsk->icsk_rto = min(icsk->icsk_rto << 1, TCP_RTO_MAX);
-	}
-	inet_csk_reset_xmit_timer(sk, ICSK_TIME_RETRANS,
-				  tcp_clamp_rto_to_user_timeout(sk), TCP_RTO_MAX);
-	if (retransmits_timed_out(sk, net->ipv4.sysctl_tcp_retries1 + 1, 0))
+	पूर्ण
+	inet_csk_reset_xmit_समयr(sk, ICSK_TIME_RETRANS,
+				  tcp_clamp_rto_to_user_समयout(sk), TCP_RTO_MAX);
+	अगर (retransmits_समयd_out(sk, net->ipv4.sysctl_tcp_retries1 + 1, 0))
 		__sk_dst_reset(sk);
 
 out:;
-}
+पूर्ण
 
 /* Called with bottom-half processing disabled.
-   Called by tcp_write_timer() */
-void tcp_write_timer_handler(struct sock *sk)
-{
-	struct inet_connection_sock *icsk = inet_csk(sk);
-	int event;
+   Called by tcp_ग_लिखो_समयr() */
+व्योम tcp_ग_लिखो_समयr_handler(काष्ठा sock *sk)
+अणु
+	काष्ठा inet_connection_sock *icsk = inet_csk(sk);
+	पूर्णांक event;
 
-	if (((1 << sk->sk_state) & (TCPF_CLOSE | TCPF_LISTEN)) ||
+	अगर (((1 << sk->sk_state) & (TCPF_CLOSE | TCPF_LISTEN)) ||
 	    !icsk->icsk_pending)
-		goto out;
+		जाओ out;
 
-	if (time_after(icsk->icsk_timeout, jiffies)) {
-		sk_reset_timer(sk, &icsk->icsk_retransmit_timer, icsk->icsk_timeout);
-		goto out;
-	}
+	अगर (समय_after(icsk->icsk_समयout, jअगरfies)) अणु
+		sk_reset_समयr(sk, &icsk->icsk_retransmit_समयr, icsk->icsk_समयout);
+		जाओ out;
+	पूर्ण
 
 	tcp_mstamp_refresh(tcp_sk(sk));
 	event = icsk->icsk_pending;
 
-	switch (event) {
-	case ICSK_TIME_REO_TIMEOUT:
-		tcp_rack_reo_timeout(sk);
-		break;
-	case ICSK_TIME_LOSS_PROBE:
+	चयन (event) अणु
+	हाल ICSK_TIME_REO_TIMEOUT:
+		tcp_rack_reo_समयout(sk);
+		अवरोध;
+	हाल ICSK_TIME_LOSS_PROBE:
 		tcp_send_loss_probe(sk);
-		break;
-	case ICSK_TIME_RETRANS:
+		अवरोध;
+	हाल ICSK_TIME_RETRANS:
 		icsk->icsk_pending = 0;
-		tcp_retransmit_timer(sk);
-		break;
-	case ICSK_TIME_PROBE0:
+		tcp_retransmit_समयr(sk);
+		अवरोध;
+	हाल ICSK_TIME_PROBE0:
 		icsk->icsk_pending = 0;
-		tcp_probe_timer(sk);
-		break;
-	}
+		tcp_probe_समयr(sk);
+		अवरोध;
+	पूर्ण
 
 out:
 	sk_mem_reclaim(sk);
-}
+पूर्ण
 
-static void tcp_write_timer(struct timer_list *t)
-{
-	struct inet_connection_sock *icsk =
-			from_timer(icsk, t, icsk_retransmit_timer);
-	struct sock *sk = &icsk->icsk_inet.sk;
+अटल व्योम tcp_ग_लिखो_समयr(काष्ठा समयr_list *t)
+अणु
+	काष्ठा inet_connection_sock *icsk =
+			from_समयr(icsk, t, icsk_retransmit_समयr);
+	काष्ठा sock *sk = &icsk->icsk_inet.sk;
 
 	bh_lock_sock(sk);
-	if (!sock_owned_by_user(sk)) {
-		tcp_write_timer_handler(sk);
-	} else {
+	अगर (!sock_owned_by_user(sk)) अणु
+		tcp_ग_लिखो_समयr_handler(sk);
+	पूर्ण अन्यथा अणु
 		/* delegate our work to tcp_release_cb() */
-		if (!test_and_set_bit(TCP_WRITE_TIMER_DEFERRED, &sk->sk_tsq_flags))
+		अगर (!test_and_set_bit(TCP_WRITE_TIMER_DEFERRED, &sk->sk_tsq_flags))
 			sock_hold(sk);
-	}
+	पूर्ण
 	bh_unlock_sock(sk);
 	sock_put(sk);
-}
+पूर्ण
 
-void tcp_syn_ack_timeout(const struct request_sock *req)
-{
-	struct net *net = read_pnet(&inet_rsk(req)->ireq_net);
+व्योम tcp_syn_ack_समयout(स्थिर काष्ठा request_sock *req)
+अणु
+	काष्ठा net *net = पढ़ो_pnet(&inet_rsk(req)->ireq_net);
 
 	__NET_INC_STATS(net, LINUX_MIB_TCPTIMEOUTS);
-}
-EXPORT_SYMBOL(tcp_syn_ack_timeout);
+पूर्ण
+EXPORT_SYMBOL(tcp_syn_ack_समयout);
 
-void tcp_set_keepalive(struct sock *sk, int val)
-{
-	if ((1 << sk->sk_state) & (TCPF_CLOSE | TCPF_LISTEN))
-		return;
+व्योम tcp_set_keepalive(काष्ठा sock *sk, पूर्णांक val)
+अणु
+	अगर ((1 << sk->sk_state) & (TCPF_CLOSE | TCPF_LISTEN))
+		वापस;
 
-	if (val && !sock_flag(sk, SOCK_KEEPOPEN))
-		inet_csk_reset_keepalive_timer(sk, keepalive_time_when(tcp_sk(sk)));
-	else if (!val)
-		inet_csk_delete_keepalive_timer(sk);
-}
+	अगर (val && !sock_flag(sk, SOCK_KEEPOPEN))
+		inet_csk_reset_keepalive_समयr(sk, keepalive_समय_when(tcp_sk(sk)));
+	अन्यथा अगर (!val)
+		inet_csk_delete_keepalive_समयr(sk);
+पूर्ण
 EXPORT_SYMBOL_GPL(tcp_set_keepalive);
 
 
-static void tcp_keepalive_timer (struct timer_list *t)
-{
-	struct sock *sk = from_timer(sk, t, sk_timer);
-	struct inet_connection_sock *icsk = inet_csk(sk);
-	struct tcp_sock *tp = tcp_sk(sk);
+अटल व्योम tcp_keepalive_समयr (काष्ठा समयr_list *t)
+अणु
+	काष्ठा sock *sk = from_समयr(sk, t, sk_समयr);
+	काष्ठा inet_connection_sock *icsk = inet_csk(sk);
+	काष्ठा tcp_sock *tp = tcp_sk(sk);
 	u32 elapsed;
 
-	/* Only process if socket is not in use. */
+	/* Only process अगर socket is not in use. */
 	bh_lock_sock(sk);
-	if (sock_owned_by_user(sk)) {
+	अगर (sock_owned_by_user(sk)) अणु
 		/* Try again later. */
-		inet_csk_reset_keepalive_timer (sk, HZ/20);
-		goto out;
-	}
+		inet_csk_reset_keepalive_समयr (sk, HZ/20);
+		जाओ out;
+	पूर्ण
 
-	if (sk->sk_state == TCP_LISTEN) {
+	अगर (sk->sk_state == TCP_LISTEN) अणु
 		pr_err("Hmm... keepalive on a LISTEN ???\n");
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	tcp_mstamp_refresh(tp);
-	if (sk->sk_state == TCP_FIN_WAIT2 && sock_flag(sk, SOCK_DEAD)) {
-		if (tp->linger2 >= 0) {
-			const int tmo = tcp_fin_time(sk) - TCP_TIMEWAIT_LEN;
+	अगर (sk->sk_state == TCP_FIN_WAIT2 && sock_flag(sk, SOCK_DEAD)) अणु
+		अगर (tp->linger2 >= 0) अणु
+			स्थिर पूर्णांक पंचांगo = tcp_fin_समय(sk) - TCP_TIMEWAIT_LEN;
 
-			if (tmo > 0) {
-				tcp_time_wait(sk, TCP_FIN_WAIT2, tmo);
-				goto out;
-			}
-		}
+			अगर (पंचांगo > 0) अणु
+				tcp_समय_रुको(sk, TCP_FIN_WAIT2, पंचांगo);
+				जाओ out;
+			पूर्ण
+		पूर्ण
 		tcp_send_active_reset(sk, GFP_ATOMIC);
-		goto death;
-	}
+		जाओ death;
+	पूर्ण
 
-	if (!sock_flag(sk, SOCK_KEEPOPEN) ||
+	अगर (!sock_flag(sk, SOCK_KEEPOPEN) ||
 	    ((1 << sk->sk_state) & (TCPF_CLOSE | TCPF_SYN_SENT)))
-		goto out;
+		जाओ out;
 
-	elapsed = keepalive_time_when(tp);
+	elapsed = keepalive_समय_when(tp);
 
 	/* It is alive without keepalive 8) */
-	if (tp->packets_out || !tcp_write_queue_empty(sk))
-		goto resched;
+	अगर (tp->packets_out || !tcp_ग_लिखो_queue_empty(sk))
+		जाओ resched;
 
-	elapsed = keepalive_time_elapsed(tp);
+	elapsed = keepalive_समय_elapsed(tp);
 
-	if (elapsed >= keepalive_time_when(tp)) {
+	अगर (elapsed >= keepalive_समय_when(tp)) अणु
 		/* If the TCP_USER_TIMEOUT option is enabled, use that
-		 * to determine when to timeout instead.
+		 * to determine when to समयout instead.
 		 */
-		if ((icsk->icsk_user_timeout != 0 &&
-		    elapsed >= msecs_to_jiffies(icsk->icsk_user_timeout) &&
+		अगर ((icsk->icsk_user_समयout != 0 &&
+		    elapsed >= msecs_to_jअगरfies(icsk->icsk_user_समयout) &&
 		    icsk->icsk_probes_out > 0) ||
-		    (icsk->icsk_user_timeout == 0 &&
-		    icsk->icsk_probes_out >= keepalive_probes(tp))) {
+		    (icsk->icsk_user_समयout == 0 &&
+		    icsk->icsk_probes_out >= keepalive_probes(tp))) अणु
 			tcp_send_active_reset(sk, GFP_ATOMIC);
-			tcp_write_err(sk);
-			goto out;
-		}
-		if (tcp_write_wakeup(sk, LINUX_MIB_TCPKEEPALIVE) <= 0) {
+			tcp_ग_लिखो_err(sk);
+			जाओ out;
+		पूर्ण
+		अगर (tcp_ग_लिखो_wakeup(sk, LINUX_MIB_TCPKEEPALIVE) <= 0) अणु
 			icsk->icsk_probes_out++;
-			elapsed = keepalive_intvl_when(tp);
-		} else {
+			elapsed = keepalive_पूर्णांकvl_when(tp);
+		पूर्ण अन्यथा अणु
 			/* If keepalive was lost due to local congestion,
 			 * try harder.
 			 */
 			elapsed = TCP_RESOURCE_PROBE_INTERVAL;
-		}
-	} else {
-		/* It is tp->rcv_tstamp + keepalive_time_when(tp) */
-		elapsed = keepalive_time_when(tp) - elapsed;
-	}
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		/* It is tp->rcv_tstamp + keepalive_समय_when(tp) */
+		elapsed = keepalive_समय_when(tp) - elapsed;
+	पूर्ण
 
 	sk_mem_reclaim(sk);
 
 resched:
-	inet_csk_reset_keepalive_timer (sk, elapsed);
-	goto out;
+	inet_csk_reset_keepalive_समयr (sk, elapsed);
+	जाओ out;
 
 death:
-	tcp_done(sk);
+	tcp_करोne(sk);
 
 out:
 	bh_unlock_sock(sk);
 	sock_put(sk);
-}
+पूर्ण
 
-static enum hrtimer_restart tcp_compressed_ack_kick(struct hrtimer *timer)
-{
-	struct tcp_sock *tp = container_of(timer, struct tcp_sock, compressed_ack_timer);
-	struct sock *sk = (struct sock *)tp;
+अटल क्रमागत hrसमयr_restart tcp_compressed_ack_kick(काष्ठा hrसमयr *समयr)
+अणु
+	काष्ठा tcp_sock *tp = container_of(समयr, काष्ठा tcp_sock, compressed_ack_समयr);
+	काष्ठा sock *sk = (काष्ठा sock *)tp;
 
 	bh_lock_sock(sk);
-	if (!sock_owned_by_user(sk)) {
-		if (tp->compressed_ack) {
+	अगर (!sock_owned_by_user(sk)) अणु
+		अगर (tp->compressed_ack) अणु
 			/* Since we have to send one ack finally,
 			 * substract one from tp->compressed_ack to keep
 			 * LINUX_MIB_TCPACKCOMPRESSED accurate.
 			 */
 			tp->compressed_ack--;
 			tcp_send_ack(sk);
-		}
-	} else {
-		if (!test_and_set_bit(TCP_DELACK_TIMER_DEFERRED,
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		अगर (!test_and_set_bit(TCP_DELACK_TIMER_DEFERRED,
 				      &sk->sk_tsq_flags))
 			sock_hold(sk);
-	}
+	पूर्ण
 	bh_unlock_sock(sk);
 
 	sock_put(sk);
 
-	return HRTIMER_NORESTART;
-}
+	वापस HRTIMER_NORESTART;
+पूर्ण
 
-void tcp_init_xmit_timers(struct sock *sk)
-{
-	inet_csk_init_xmit_timers(sk, &tcp_write_timer, &tcp_delack_timer,
-				  &tcp_keepalive_timer);
-	hrtimer_init(&tcp_sk(sk)->pacing_timer, CLOCK_MONOTONIC,
+व्योम tcp_init_xmit_समयrs(काष्ठा sock *sk)
+अणु
+	inet_csk_init_xmit_समयrs(sk, &tcp_ग_लिखो_समयr, &tcp_delack_समयr,
+				  &tcp_keepalive_समयr);
+	hrसमयr_init(&tcp_sk(sk)->pacing_समयr, CLOCK_MONOTONIC,
 		     HRTIMER_MODE_ABS_PINNED_SOFT);
-	tcp_sk(sk)->pacing_timer.function = tcp_pace_kick;
+	tcp_sk(sk)->pacing_समयr.function = tcp_pace_kick;
 
-	hrtimer_init(&tcp_sk(sk)->compressed_ack_timer, CLOCK_MONOTONIC,
+	hrसमयr_init(&tcp_sk(sk)->compressed_ack_समयr, CLOCK_MONOTONIC,
 		     HRTIMER_MODE_REL_PINNED_SOFT);
-	tcp_sk(sk)->compressed_ack_timer.function = tcp_compressed_ack_kick;
-}
+	tcp_sk(sk)->compressed_ack_समयr.function = tcp_compressed_ack_kick;
+पूर्ण

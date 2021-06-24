@@ -1,108 +1,109 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * bios-less APM driver for hp680
+ * bios-less APM driver क्रम hp680
  *
  * Copyright 2005 (c) Andriy Skulysh <askulysh@gmail.com>
  * Copyright 2008 (c) Kristoffer Ericson <kristoffer.ericson@gmail.com>
  */
-#include <linux/module.h>
-#include <linux/kernel.h>
-#include <linux/init.h>
-#include <linux/interrupt.h>
-#include <linux/apm-emulation.h>
-#include <linux/io.h>
-#include <asm/adc.h>
-#include <mach/hp6xx.h>
+#समावेश <linux/module.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/init.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/apm-emulation.h>
+#समावेश <linux/पन.स>
+#समावेश <यंत्र/adc.h>
+#समावेश <mach/hp6xx.h>
 
 /* percentage values */
-#define APM_CRITICAL			10
-#define APM_LOW				30
+#घोषणा APM_CRITICAL			10
+#घोषणा APM_LOW				30
 
 /* resonably sane values */
-#define HP680_BATTERY_MAX		898
-#define HP680_BATTERY_MIN		486
-#define HP680_BATTERY_AC_ON		1023
+#घोषणा HP680_BATTERY_MAX		898
+#घोषणा HP680_BATTERY_MIN		486
+#घोषणा HP680_BATTERY_AC_ON		1023
 
-#define MODNAME "hp6x0_apm"
+#घोषणा MODNAME "hp6x0_apm"
 
-#define PGDR	0xa400012c
+#घोषणा PGDR	0xa400012c
 
-static void hp6x0_apm_get_power_status(struct apm_power_info *info)
-{
-	int battery, backup, charging, percentage;
+अटल व्योम hp6x0_apm_get_घातer_status(काष्ठा apm_घातer_info *info)
+अणु
+	पूर्णांक battery, backup, अक्षरging, percentage;
 	u8 pgdr;
 
 	battery		= adc_single(ADC_CHANNEL_BATTERY);
 	backup		= adc_single(ADC_CHANNEL_BACKUP);
-	charging	= adc_single(ADC_CHANNEL_CHARGE);
+	अक्षरging	= adc_single(ADC_CHANNEL_CHARGE);
 
 	percentage = 100 * (battery - HP680_BATTERY_MIN) /
 			   (HP680_BATTERY_MAX - HP680_BATTERY_MIN);
 
 	/* % of full battery */
-	info->battery_life = percentage;
+	info->battery_lअगरe = percentage;
 
 	/* We want our estimates in minutes */
 	info->units = 0;
 
 	/* Extremely(!!) rough estimate, we will replace this with a datalist later on */
-	info->time = (2 * battery);
+	info->समय = (2 * battery);
 
 	info->ac_line_status = (battery > HP680_BATTERY_AC_ON) ?
 			 APM_AC_ONLINE : APM_AC_OFFLINE;
 
-	pgdr = __raw_readb(PGDR);
-	if (pgdr & PGDR_MAIN_BATTERY_OUT) {
+	pgdr = __raw_पढ़ोb(PGDR);
+	अगर (pgdr & PGDR_MAIN_BATTERY_OUT) अणु
 		info->battery_status	= APM_BATTERY_STATUS_NOT_PRESENT;
 		info->battery_flag	= 0x80;
-	} else if (charging < 8) {
+	पूर्ण अन्यथा अगर (अक्षरging < 8) अणु
 		info->battery_status	= APM_BATTERY_STATUS_CHARGING;
 		info->battery_flag	= 0x08;
 		info->ac_line_status	= 0x01;
-	} else if (percentage <= APM_CRITICAL) {
+	पूर्ण अन्यथा अगर (percentage <= APM_CRITICAL) अणु
 		info->battery_status	= APM_BATTERY_STATUS_CRITICAL;
 		info->battery_flag	= 0x04;
-	} else if (percentage <= APM_LOW) {
+	पूर्ण अन्यथा अगर (percentage <= APM_LOW) अणु
 		info->battery_status	= APM_BATTERY_STATUS_LOW;
 		info->battery_flag	= 0x02;
-	} else {
+	पूर्ण अन्यथा अणु
 		info->battery_status	= APM_BATTERY_STATUS_HIGH;
 		info->battery_flag	= 0x01;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static irqreturn_t hp6x0_apm_interrupt(int irq, void *dev)
-{
-	if (!APM_DISABLED)
+अटल irqवापस_t hp6x0_apm_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev)
+अणु
+	अगर (!APM_DISABLED)
 		apm_queue_event(APM_USER_SUSPEND);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static int __init hp6x0_apm_init(void)
-{
-	int ret;
+अटल पूर्णांक __init hp6x0_apm_init(व्योम)
+अणु
+	पूर्णांक ret;
 
-	ret = request_irq(HP680_BTN_IRQ, hp6x0_apm_interrupt,
-			  0, MODNAME, NULL);
-	if (unlikely(ret < 0)) {
-		printk(KERN_ERR MODNAME ": IRQ %d request failed\n",
+	ret = request_irq(HP680_BTN_IRQ, hp6x0_apm_पूर्णांकerrupt,
+			  0, MODNAME, शून्य);
+	अगर (unlikely(ret < 0)) अणु
+		prपूर्णांकk(KERN_ERR MODNAME ": IRQ %d request failed\n",
 		       HP680_BTN_IRQ);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	apm_get_power_status = hp6x0_apm_get_power_status;
+	apm_get_घातer_status = hp6x0_apm_get_घातer_status;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void __exit hp6x0_apm_exit(void)
-{
-	free_irq(HP680_BTN_IRQ, 0);
-}
+अटल व्योम __निकास hp6x0_apm_निकास(व्योम)
+अणु
+	मुक्त_irq(HP680_BTN_IRQ, 0);
+पूर्ण
 
 module_init(hp6x0_apm_init);
-module_exit(hp6x0_apm_exit);
+module_निकास(hp6x0_apm_निकास);
 
 MODULE_AUTHOR("Adriy Skulysh");
 MODULE_DESCRIPTION("hp6xx Advanced Power Management");

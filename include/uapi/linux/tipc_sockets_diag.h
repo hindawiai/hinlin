@@ -1,17 +1,18 @@
-/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
-/* AF_TIPC sock_diag interface for querying open sockets */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
+/* AF_TIPC sock_diag पूर्णांकerface क्रम querying खोलो sockets */
 
-#ifndef _UAPI__TIPC_SOCKETS_DIAG_H__
-#define _UAPI__TIPC_SOCKETS_DIAG_H__
+#अगर_अघोषित _UAPI__TIPC_SOCKETS_DIAG_H__
+#घोषणा _UAPI__TIPC_SOCKETS_DIAG_H__
 
-#include <linux/types.h>
-#include <linux/sock_diag.h>
+#समावेश <linux/types.h>
+#समावेश <linux/sock_diag.h>
 
 /* Request */
-struct tipc_sock_diag_req {
+काष्ठा tipc_sock_diag_req अणु
 	__u8	sdiag_family;	/* must be AF_TIPC */
 	__u8	sdiag_protocol;	/* must be 0 */
 	__u16	pad;		/* must be 0 */
 	__u32	tidiag_states;	/* query*/
-};
-#endif /* _UAPI__TIPC_SOCKETS_DIAG_H__ */
+पूर्ण;
+#पूर्ण_अगर /* _UAPI__TIPC_SOCKETS_DIAG_H__ */

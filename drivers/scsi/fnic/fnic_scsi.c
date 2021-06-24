@@ -1,8 +1,9 @@
+<शैली गुरु>
 /*
  * Copyright 2008 Cisco Systems, Inc.  All rights reserved.
  * Copyright 2007 Nuova Systems, Inc.  All rights reserved.
  *
- * This program is free software; you may redistribute it and/or modify
+ * This program is मुक्त software; you may redistribute it and/or modअगरy
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; version 2 of the License.
  *
@@ -15,47 +16,47 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-#include <linux/mempool.h>
-#include <linux/errno.h>
-#include <linux/init.h>
-#include <linux/workqueue.h>
-#include <linux/pci.h>
-#include <linux/scatterlist.h>
-#include <linux/skbuff.h>
-#include <linux/spinlock.h>
-#include <linux/etherdevice.h>
-#include <linux/if_ether.h>
-#include <linux/if_vlan.h>
-#include <linux/delay.h>
-#include <linux/gfp.h>
-#include <scsi/scsi.h>
-#include <scsi/scsi_host.h>
-#include <scsi/scsi_device.h>
-#include <scsi/scsi_cmnd.h>
-#include <scsi/scsi_tcq.h>
-#include <scsi/fc/fc_els.h>
-#include <scsi/fc/fc_fcoe.h>
-#include <scsi/libfc.h>
-#include <scsi/fc_frame.h>
-#include "fnic_io.h"
-#include "fnic.h"
+#समावेश <linux/mempool.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/init.h>
+#समावेश <linux/workqueue.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/scatterlist.h>
+#समावेश <linux/skbuff.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/etherdevice.h>
+#समावेश <linux/अगर_ether.h>
+#समावेश <linux/अगर_vlan.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/gfp.h>
+#समावेश <scsi/scsi.h>
+#समावेश <scsi/scsi_host.h>
+#समावेश <scsi/scsi_device.h>
+#समावेश <scsi/scsi_cmnd.h>
+#समावेश <scsi/scsi_tcq.h>
+#समावेश <scsi/fc/fc_els.h>
+#समावेश <scsi/fc/fc_fcoe.h>
+#समावेश <scsi/libfc.h>
+#समावेश <scsi/fc_frame.h>
+#समावेश "fnic_io.h"
+#समावेश "fnic.h"
 
-const char *fnic_state_str[] = {
+स्थिर अक्षर *fnic_state_str[] = अणु
 	[FNIC_IN_FC_MODE] =           "FNIC_IN_FC_MODE",
 	[FNIC_IN_FC_TRANS_ETH_MODE] = "FNIC_IN_FC_TRANS_ETH_MODE",
 	[FNIC_IN_ETH_MODE] =          "FNIC_IN_ETH_MODE",
 	[FNIC_IN_ETH_TRANS_FC_MODE] = "FNIC_IN_ETH_TRANS_FC_MODE",
-};
+पूर्ण;
 
-static const char *fnic_ioreq_state_str[] = {
+अटल स्थिर अक्षर *fnic_ioreq_state_str[] = अणु
 	[FNIC_IOREQ_NOT_INITED] = "FNIC_IOREQ_NOT_INITED",
 	[FNIC_IOREQ_CMD_PENDING] = "FNIC_IOREQ_CMD_PENDING",
 	[FNIC_IOREQ_ABTS_PENDING] = "FNIC_IOREQ_ABTS_PENDING",
 	[FNIC_IOREQ_ABTS_COMPLETE] = "FNIC_IOREQ_ABTS_COMPLETE",
 	[FNIC_IOREQ_CMD_COMPLETE] = "FNIC_IOREQ_CMD_COMPLETE",
-};
+पूर्ण;
 
-static const char *fcpio_status_str[] =  {
+अटल स्थिर अक्षर *fcpio_status_str[] =  अणु
 	[FCPIO_SUCCESS] = "FCPIO_SUCCESS", /*0x0*/
 	[FCPIO_INVALID_HEADER] = "FCPIO_INVALID_HEADER",
 	[FCPIO_OUT_OF_RESOURCE] = "FCPIO_OUT_OF_RESOURCE",
@@ -75,93 +76,93 @@ static const char *fcpio_status_str[] =  {
 	[FCPIO_NO_PATH_AVAIL] = "FCPIO_NO_PATH_AVAIL",
 	[FCPIO_PATH_FAILED] = "FCPIO_PATH_FAILED",
 	[FCPIO_LUNMAP_CHNG_PEND] = "FCPIO_LUNHMAP_CHNG_PEND",
-};
+पूर्ण;
 
-const char *fnic_state_to_str(unsigned int state)
-{
-	if (state >= ARRAY_SIZE(fnic_state_str) || !fnic_state_str[state])
-		return "unknown";
+स्थिर अक्षर *fnic_state_to_str(अचिन्हित पूर्णांक state)
+अणु
+	अगर (state >= ARRAY_SIZE(fnic_state_str) || !fnic_state_str[state])
+		वापस "unknown";
 
-	return fnic_state_str[state];
-}
+	वापस fnic_state_str[state];
+पूर्ण
 
-static const char *fnic_ioreq_state_to_str(unsigned int state)
-{
-	if (state >= ARRAY_SIZE(fnic_ioreq_state_str) ||
+अटल स्थिर अक्षर *fnic_ioreq_state_to_str(अचिन्हित पूर्णांक state)
+अणु
+	अगर (state >= ARRAY_SIZE(fnic_ioreq_state_str) ||
 	    !fnic_ioreq_state_str[state])
-		return "unknown";
+		वापस "unknown";
 
-	return fnic_ioreq_state_str[state];
-}
+	वापस fnic_ioreq_state_str[state];
+पूर्ण
 
-static const char *fnic_fcpio_status_to_str(unsigned int status)
-{
-	if (status >= ARRAY_SIZE(fcpio_status_str) || !fcpio_status_str[status])
-		return "unknown";
+अटल स्थिर अक्षर *fnic_fcpio_status_to_str(अचिन्हित पूर्णांक status)
+अणु
+	अगर (status >= ARRAY_SIZE(fcpio_status_str) || !fcpio_status_str[status])
+		वापस "unknown";
 
-	return fcpio_status_str[status];
-}
+	वापस fcpio_status_str[status];
+पूर्ण
 
-static void fnic_cleanup_io(struct fnic *fnic);
+अटल व्योम fnic_cleanup_io(काष्ठा fnic *fnic);
 
-static inline spinlock_t *fnic_io_lock_hash(struct fnic *fnic,
-					    struct scsi_cmnd *sc)
-{
+अटल अंतरभूत spinlock_t *fnic_io_lock_hash(काष्ठा fnic *fnic,
+					    काष्ठा scsi_cmnd *sc)
+अणु
 	u32 hash = sc->request->tag & (FNIC_IO_LOCKS - 1);
 
-	return &fnic->io_req_lock[hash];
-}
+	वापस &fnic->io_req_lock[hash];
+पूर्ण
 
-static inline spinlock_t *fnic_io_lock_tag(struct fnic *fnic,
-					    int tag)
-{
-	return &fnic->io_req_lock[tag & (FNIC_IO_LOCKS - 1)];
-}
+अटल अंतरभूत spinlock_t *fnic_io_lock_tag(काष्ठा fnic *fnic,
+					    पूर्णांक tag)
+अणु
+	वापस &fnic->io_req_lock[tag & (FNIC_IO_LOCKS - 1)];
+पूर्ण
 
 /*
- * Unmap the data buffer and sense buffer for an io_req,
- * also unmap and free the device-private scatter/gather list.
+ * Unmap the data buffer and sense buffer क्रम an io_req,
+ * also unmap and मुक्त the device-निजी scatter/gather list.
  */
-static void fnic_release_ioreq_buf(struct fnic *fnic,
-				   struct fnic_io_req *io_req,
-				   struct scsi_cmnd *sc)
-{
-	if (io_req->sgl_list_pa)
+अटल व्योम fnic_release_ioreq_buf(काष्ठा fnic *fnic,
+				   काष्ठा fnic_io_req *io_req,
+				   काष्ठा scsi_cmnd *sc)
+अणु
+	अगर (io_req->sgl_list_pa)
 		dma_unmap_single(&fnic->pdev->dev, io_req->sgl_list_pa,
-				 sizeof(io_req->sgl_list[0]) * io_req->sgl_cnt,
+				 माप(io_req->sgl_list[0]) * io_req->sgl_cnt,
 				 DMA_TO_DEVICE);
 	scsi_dma_unmap(sc);
 
-	if (io_req->sgl_cnt)
-		mempool_free(io_req->sgl_list_alloc,
+	अगर (io_req->sgl_cnt)
+		mempool_मुक्त(io_req->sgl_list_alloc,
 			     fnic->io_sgl_pool[io_req->sgl_type]);
-	if (io_req->sense_buf_pa)
+	अगर (io_req->sense_buf_pa)
 		dma_unmap_single(&fnic->pdev->dev, io_req->sense_buf_pa,
 				 SCSI_SENSE_BUFFERSIZE, DMA_FROM_DEVICE);
-}
+पूर्ण
 
 /* Free up Copy Wq descriptors. Called with copy_wq lock held */
-static int free_wq_copy_descs(struct fnic *fnic, struct vnic_wq_copy *wq)
-{
-	/* if no Ack received from firmware, then nothing to clean */
-	if (!fnic->fw_ack_recd[0])
-		return 1;
+अटल पूर्णांक मुक्त_wq_copy_descs(काष्ठा fnic *fnic, काष्ठा vnic_wq_copy *wq)
+अणु
+	/* अगर no Ack received from firmware, then nothing to clean */
+	अगर (!fnic->fw_ack_recd[0])
+		वापस 1;
 
 	/*
-	 * Update desc_available count based on number of freed descriptors
-	 * Account for wraparound
+	 * Update desc_available count based on number of मुक्तd descriptors
+	 * Account क्रम wraparound
 	 */
-	if (wq->to_clean_index <= fnic->fw_ack_index[0])
+	अगर (wq->to_clean_index <= fnic->fw_ack_index[0])
 		wq->ring.desc_avail += (fnic->fw_ack_index[0]
 					- wq->to_clean_index + 1);
-	else
+	अन्यथा
 		wq->ring.desc_avail += (wq->ring.desc_count
 					- wq->to_clean_index
 					+ fnic->fw_ack_index[0] + 1);
 
 	/*
-	 * just bump clean index to ack_index+1 accounting for wraparound
-	 * this will essentially free up all descriptors between
+	 * just bump clean index to ack_index+1 accounting क्रम wraparound
+	 * this will essentially मुक्त up all descriptors between
 	 * to_clean_index and fw_ack_index, both inclusive
 	 */
 	wq->to_clean_index =
@@ -169,45 +170,45 @@ static int free_wq_copy_descs(struct fnic *fnic, struct vnic_wq_copy *wq)
 
 	/* we have processed the acks received so far */
 	fnic->fw_ack_recd[0] = 0;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
 /*
  * __fnic_set_state_flags
  * Sets/Clears bits in fnic's state_flags
  **/
-void
-__fnic_set_state_flags(struct fnic *fnic, unsigned long st_flags,
-			unsigned long clearbits)
-{
-	unsigned long flags = 0;
-	unsigned long host_lock_flags = 0;
+व्योम
+__fnic_set_state_flags(काष्ठा fnic *fnic, अचिन्हित दीर्घ st_flags,
+			अचिन्हित दीर्घ clearbits)
+अणु
+	अचिन्हित दीर्घ flags = 0;
+	अचिन्हित दीर्घ host_lock_flags = 0;
 
 	spin_lock_irqsave(&fnic->fnic_lock, flags);
 	spin_lock_irqsave(fnic->lport->host->host_lock, host_lock_flags);
 
-	if (clearbits)
+	अगर (clearbits)
 		fnic->state_flags &= ~st_flags;
-	else
+	अन्यथा
 		fnic->state_flags |= st_flags;
 
 	spin_unlock_irqrestore(fnic->lport->host->host_lock, host_lock_flags);
 	spin_unlock_irqrestore(&fnic->fnic_lock, flags);
 
-	return;
-}
+	वापस;
+पूर्ण
 
 
 /*
  * fnic_fw_reset_handler
  * Routine to send reset msg to fw
  */
-int fnic_fw_reset_handler(struct fnic *fnic)
-{
-	struct vnic_wq_copy *wq = &fnic->wq_copy[0];
-	int ret = 0;
-	unsigned long flags;
+पूर्णांक fnic_fw_reset_handler(काष्ठा fnic *fnic)
+अणु
+	काष्ठा vnic_wq_copy *wq = &fnic->wq_copy[0];
+	पूर्णांक ret = 0;
+	अचिन्हित दीर्घ flags;
 
 	/* indicate fwreset to io path */
 	fnic_set_state_flags(fnic, FNIC_FLAGS_FWRESET);
@@ -215,75 +216,75 @@ int fnic_fw_reset_handler(struct fnic *fnic)
 	skb_queue_purge(&fnic->frame_queue);
 	skb_queue_purge(&fnic->tx_queue);
 
-	/* wait for io cmpl */
-	while (atomic_read(&fnic->in_flight))
-		schedule_timeout(msecs_to_jiffies(1));
+	/* रुको क्रम io cmpl */
+	जबतक (atomic_पढ़ो(&fnic->in_flight))
+		schedule_समयout(msecs_to_jअगरfies(1));
 
 	spin_lock_irqsave(&fnic->wq_copy_lock[0], flags);
 
-	if (vnic_wq_copy_desc_avail(wq) <= fnic->wq_copy_desc_low[0])
-		free_wq_copy_descs(fnic, wq);
+	अगर (vnic_wq_copy_desc_avail(wq) <= fnic->wq_copy_desc_low[0])
+		मुक्त_wq_copy_descs(fnic, wq);
 
-	if (!vnic_wq_copy_desc_avail(wq))
+	अगर (!vnic_wq_copy_desc_avail(wq))
 		ret = -EAGAIN;
-	else {
+	अन्यथा अणु
 		fnic_queue_wq_copy_desc_fw_reset(wq, SCSI_NO_TAG);
 		atomic64_inc(&fnic->fnic_stats.fw_stats.active_fw_reqs);
-		if (atomic64_read(&fnic->fnic_stats.fw_stats.active_fw_reqs) >
-			  atomic64_read(&fnic->fnic_stats.fw_stats.max_fw_reqs))
+		अगर (atomic64_पढ़ो(&fnic->fnic_stats.fw_stats.active_fw_reqs) >
+			  atomic64_पढ़ो(&fnic->fnic_stats.fw_stats.max_fw_reqs))
 			atomic64_set(&fnic->fnic_stats.fw_stats.max_fw_reqs,
-				atomic64_read(
+				atomic64_पढ़ो(
 				  &fnic->fnic_stats.fw_stats.active_fw_reqs));
-	}
+	पूर्ण
 
 	spin_unlock_irqrestore(&fnic->wq_copy_lock[0], flags);
 
-	if (!ret) {
+	अगर (!ret) अणु
 		atomic64_inc(&fnic->fnic_stats.reset_stats.fw_resets);
 		FNIC_SCSI_DBG(KERN_DEBUG, fnic->lport->host,
 			      "Issued fw reset\n");
-	} else {
+	पूर्ण अन्यथा अणु
 		fnic_clear_state_flags(fnic, FNIC_FLAGS_FWRESET);
 		FNIC_SCSI_DBG(KERN_DEBUG, fnic->lport->host,
 			      "Failed to issue fw reset\n");
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 
 /*
  * fnic_flogi_reg_handler
- * Routine to send flogi register msg to fw
+ * Routine to send flogi रेजिस्टर msg to fw
  */
-int fnic_flogi_reg_handler(struct fnic *fnic, u32 fc_id)
-{
-	struct vnic_wq_copy *wq = &fnic->wq_copy[0];
-	enum fcpio_flogi_reg_format_type format;
-	struct fc_lport *lp = fnic->lport;
+पूर्णांक fnic_flogi_reg_handler(काष्ठा fnic *fnic, u32 fc_id)
+अणु
+	काष्ठा vnic_wq_copy *wq = &fnic->wq_copy[0];
+	क्रमागत fcpio_flogi_reg_क्रमmat_type क्रमmat;
+	काष्ठा fc_lport *lp = fnic->lport;
 	u8 gw_mac[ETH_ALEN];
-	int ret = 0;
-	unsigned long flags;
+	पूर्णांक ret = 0;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&fnic->wq_copy_lock[0], flags);
 
-	if (vnic_wq_copy_desc_avail(wq) <= fnic->wq_copy_desc_low[0])
-		free_wq_copy_descs(fnic, wq);
+	अगर (vnic_wq_copy_desc_avail(wq) <= fnic->wq_copy_desc_low[0])
+		मुक्त_wq_copy_descs(fnic, wq);
 
-	if (!vnic_wq_copy_desc_avail(wq)) {
+	अगर (!vnic_wq_copy_desc_avail(wq)) अणु
 		ret = -EAGAIN;
-		goto flogi_reg_ioreq_end;
-	}
+		जाओ flogi_reg_ioreq_end;
+	पूर्ण
 
-	if (fnic->ctlr.map_dest) {
+	अगर (fnic->ctlr.map_dest) अणु
 		eth_broadcast_addr(gw_mac);
-		format = FCPIO_FLOGI_REG_DEF_DEST;
-	} else {
-		memcpy(gw_mac, fnic->ctlr.dest_addr, ETH_ALEN);
-		format = FCPIO_FLOGI_REG_GW_DEST;
-	}
+		क्रमmat = FCPIO_FLOGI_REG_DEF_DEST;
+	पूर्ण अन्यथा अणु
+		स_नकल(gw_mac, fnic->ctlr.dest_addr, ETH_ALEN);
+		क्रमmat = FCPIO_FLOGI_REG_GW_DEST;
+	पूर्ण
 
-	if ((fnic->config.flags & VFCF_FIP_CAPABLE) && !fnic->ctlr.map_dest) {
+	अगर ((fnic->config.flags & VFCF_FIP_CAPABLE) && !fnic->ctlr.map_dest) अणु
 		fnic_queue_wq_copy_desc_fip_reg(wq, SCSI_NO_TAG,
 						fc_id, gw_mac,
 						fnic->data_src_addr,
@@ -291,102 +292,102 @@ int fnic_flogi_reg_handler(struct fnic *fnic, u32 fc_id)
 		FNIC_SCSI_DBG(KERN_DEBUG, fnic->lport->host,
 			      "FLOGI FIP reg issued fcid %x src %pM dest %pM\n",
 			      fc_id, fnic->data_src_addr, gw_mac);
-	} else {
+	पूर्ण अन्यथा अणु
 		fnic_queue_wq_copy_desc_flogi_reg(wq, SCSI_NO_TAG,
-						  format, fc_id, gw_mac);
+						  क्रमmat, fc_id, gw_mac);
 		FNIC_SCSI_DBG(KERN_DEBUG, fnic->lport->host,
 			      "FLOGI reg issued fcid %x map %d dest %pM\n",
 			      fc_id, fnic->ctlr.map_dest, gw_mac);
-	}
+	पूर्ण
 
 	atomic64_inc(&fnic->fnic_stats.fw_stats.active_fw_reqs);
-	if (atomic64_read(&fnic->fnic_stats.fw_stats.active_fw_reqs) >
-		  atomic64_read(&fnic->fnic_stats.fw_stats.max_fw_reqs))
+	अगर (atomic64_पढ़ो(&fnic->fnic_stats.fw_stats.active_fw_reqs) >
+		  atomic64_पढ़ो(&fnic->fnic_stats.fw_stats.max_fw_reqs))
 		atomic64_set(&fnic->fnic_stats.fw_stats.max_fw_reqs,
-		  atomic64_read(&fnic->fnic_stats.fw_stats.active_fw_reqs));
+		  atomic64_पढ़ो(&fnic->fnic_stats.fw_stats.active_fw_reqs));
 
 flogi_reg_ioreq_end:
 	spin_unlock_irqrestore(&fnic->wq_copy_lock[0], flags);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
  * fnic_queue_wq_copy_desc
  * Routine to enqueue a wq copy desc
  */
-static inline int fnic_queue_wq_copy_desc(struct fnic *fnic,
-					  struct vnic_wq_copy *wq,
-					  struct fnic_io_req *io_req,
-					  struct scsi_cmnd *sc,
-					  int sg_count)
-{
-	struct scatterlist *sg;
-	struct fc_rport *rport = starget_to_rport(scsi_target(sc->device));
-	struct fc_rport_libfc_priv *rp = rport->dd_data;
-	struct host_sg_desc *desc;
-	struct misc_stats *misc_stats = &fnic->fnic_stats.misc_stats;
-	unsigned int i;
-	unsigned long intr_flags;
-	int flags;
+अटल अंतरभूत पूर्णांक fnic_queue_wq_copy_desc(काष्ठा fnic *fnic,
+					  काष्ठा vnic_wq_copy *wq,
+					  काष्ठा fnic_io_req *io_req,
+					  काष्ठा scsi_cmnd *sc,
+					  पूर्णांक sg_count)
+अणु
+	काष्ठा scatterlist *sg;
+	काष्ठा fc_rport *rport = starget_to_rport(scsi_target(sc->device));
+	काष्ठा fc_rport_libfc_priv *rp = rport->dd_data;
+	काष्ठा host_sg_desc *desc;
+	काष्ठा misc_stats *misc_stats = &fnic->fnic_stats.misc_stats;
+	अचिन्हित पूर्णांक i;
+	अचिन्हित दीर्घ पूर्णांकr_flags;
+	पूर्णांक flags;
 	u8 exch_flags;
-	struct scsi_lun fc_lun;
+	काष्ठा scsi_lun fc_lun;
 
-	if (sg_count) {
+	अगर (sg_count) अणु
 		/* For each SGE, create a device desc entry */
 		desc = io_req->sgl_list;
-		for_each_sg(scsi_sglist(sc), sg, sg_count, i) {
+		क्रम_each_sg(scsi_sglist(sc), sg, sg_count, i) अणु
 			desc->addr = cpu_to_le64(sg_dma_address(sg));
 			desc->len = cpu_to_le32(sg_dma_len(sg));
 			desc->_resvd = 0;
 			desc++;
-		}
+		पूर्ण
 
 		io_req->sgl_list_pa = dma_map_single(&fnic->pdev->dev,
 				io_req->sgl_list,
-				sizeof(io_req->sgl_list[0]) * sg_count,
+				माप(io_req->sgl_list[0]) * sg_count,
 				DMA_TO_DEVICE);
-		if (dma_mapping_error(&fnic->pdev->dev, io_req->sgl_list_pa)) {
-			printk(KERN_ERR "DMA mapping failed\n");
-			return SCSI_MLQUEUE_HOST_BUSY;
-		}
-	}
+		अगर (dma_mapping_error(&fnic->pdev->dev, io_req->sgl_list_pa)) अणु
+			prपूर्णांकk(KERN_ERR "DMA mapping failed\n");
+			वापस SCSI_MLQUEUE_HOST_BUSY;
+		पूर्ण
+	पूर्ण
 
 	io_req->sense_buf_pa = dma_map_single(&fnic->pdev->dev,
 					      sc->sense_buffer,
 					      SCSI_SENSE_BUFFERSIZE,
 					      DMA_FROM_DEVICE);
-	if (dma_mapping_error(&fnic->pdev->dev, io_req->sense_buf_pa)) {
+	अगर (dma_mapping_error(&fnic->pdev->dev, io_req->sense_buf_pa)) अणु
 		dma_unmap_single(&fnic->pdev->dev, io_req->sgl_list_pa,
-				sizeof(io_req->sgl_list[0]) * sg_count,
+				माप(io_req->sgl_list[0]) * sg_count,
 				DMA_TO_DEVICE);
-		printk(KERN_ERR "DMA mapping failed\n");
-		return SCSI_MLQUEUE_HOST_BUSY;
-	}
+		prपूर्णांकk(KERN_ERR "DMA mapping failed\n");
+		वापस SCSI_MLQUEUE_HOST_BUSY;
+	पूर्ण
 
-	int_to_scsilun(sc->device->lun, &fc_lun);
+	पूर्णांक_to_scsilun(sc->device->lun, &fc_lun);
 
 	/* Enqueue the descriptor in the Copy WQ */
-	spin_lock_irqsave(&fnic->wq_copy_lock[0], intr_flags);
+	spin_lock_irqsave(&fnic->wq_copy_lock[0], पूर्णांकr_flags);
 
-	if (vnic_wq_copy_desc_avail(wq) <= fnic->wq_copy_desc_low[0])
-		free_wq_copy_descs(fnic, wq);
+	अगर (vnic_wq_copy_desc_avail(wq) <= fnic->wq_copy_desc_low[0])
+		मुक्त_wq_copy_descs(fnic, wq);
 
-	if (unlikely(!vnic_wq_copy_desc_avail(wq))) {
-		spin_unlock_irqrestore(&fnic->wq_copy_lock[0], intr_flags);
+	अगर (unlikely(!vnic_wq_copy_desc_avail(wq))) अणु
+		spin_unlock_irqrestore(&fnic->wq_copy_lock[0], पूर्णांकr_flags);
 		FNIC_SCSI_DBG(KERN_INFO, fnic->lport->host,
 			  "fnic_queue_wq_copy_desc failure - no descriptors\n");
 		atomic64_inc(&misc_stats->io_cpwq_alloc_failures);
-		return SCSI_MLQUEUE_HOST_BUSY;
-	}
+		वापस SCSI_MLQUEUE_HOST_BUSY;
+	पूर्ण
 
 	flags = 0;
-	if (sc->sc_data_direction == DMA_FROM_DEVICE)
+	अगर (sc->sc_data_direction == DMA_FROM_DEVICE)
 		flags = FCPIO_ICMND_RDDATA;
-	else if (sc->sc_data_direction == DMA_TO_DEVICE)
+	अन्यथा अगर (sc->sc_data_direction == DMA_TO_DEVICE)
 		flags = FCPIO_ICMND_WRDATA;
 
 	exch_flags = 0;
-	if ((fnic->config.flags & VFCF_FCP_SEQ_LVL_ERR) &&
+	अगर ((fnic->config.flags & VFCF_FCP_SEQ_LVL_ERR) &&
 	    (rp->flags & FC_RP_FLAGS_RETRY))
 		exch_flags |= FCPIO_ICMND_SRFLAG_RETRY;
 
@@ -406,148 +407,148 @@ static inline int fnic_queue_wq_copy_desc(struct fnic *fnic,
 					 rp->e_d_tov);
 
 	atomic64_inc(&fnic->fnic_stats.fw_stats.active_fw_reqs);
-	if (atomic64_read(&fnic->fnic_stats.fw_stats.active_fw_reqs) >
-		  atomic64_read(&fnic->fnic_stats.fw_stats.max_fw_reqs))
+	अगर (atomic64_पढ़ो(&fnic->fnic_stats.fw_stats.active_fw_reqs) >
+		  atomic64_पढ़ो(&fnic->fnic_stats.fw_stats.max_fw_reqs))
 		atomic64_set(&fnic->fnic_stats.fw_stats.max_fw_reqs,
-		  atomic64_read(&fnic->fnic_stats.fw_stats.active_fw_reqs));
+		  atomic64_पढ़ो(&fnic->fnic_stats.fw_stats.active_fw_reqs));
 
-	spin_unlock_irqrestore(&fnic->wq_copy_lock[0], intr_flags);
-	return 0;
-}
+	spin_unlock_irqrestore(&fnic->wq_copy_lock[0], पूर्णांकr_flags);
+	वापस 0;
+पूर्ण
 
 /*
  * fnic_queuecommand
  * Routine to send a scsi cdb
- * Called with host_lock held and interrupts disabled.
+ * Called with host_lock held and पूर्णांकerrupts disabled.
  */
-static int fnic_queuecommand_lck(struct scsi_cmnd *sc, void (*done)(struct scsi_cmnd *))
-{
-	struct fc_lport *lp = shost_priv(sc->device->host);
-	struct fc_rport *rport;
-	struct fnic_io_req *io_req = NULL;
-	struct fnic *fnic = lport_priv(lp);
-	struct fnic_stats *fnic_stats = &fnic->fnic_stats;
-	struct vnic_wq_copy *wq;
-	int ret;
+अटल पूर्णांक fnic_queuecommand_lck(काष्ठा scsi_cmnd *sc, व्योम (*करोne)(काष्ठा scsi_cmnd *))
+अणु
+	काष्ठा fc_lport *lp = shost_priv(sc->device->host);
+	काष्ठा fc_rport *rport;
+	काष्ठा fnic_io_req *io_req = शून्य;
+	काष्ठा fnic *fnic = lport_priv(lp);
+	काष्ठा fnic_stats *fnic_stats = &fnic->fnic_stats;
+	काष्ठा vnic_wq_copy *wq;
+	पूर्णांक ret;
 	u64 cmd_trace;
-	int sg_count = 0;
-	unsigned long flags = 0;
-	unsigned long ptr;
-	spinlock_t *io_lock = NULL;
-	int io_lock_acquired = 0;
-	struct fc_rport_libfc_priv *rp;
+	पूर्णांक sg_count = 0;
+	अचिन्हित दीर्घ flags = 0;
+	अचिन्हित दीर्घ ptr;
+	spinlock_t *io_lock = शून्य;
+	पूर्णांक io_lock_acquired = 0;
+	काष्ठा fc_rport_libfc_priv *rp;
 
-	if (unlikely(fnic_chk_state_flags_locked(fnic, FNIC_FLAGS_IO_BLOCKED)))
-		return SCSI_MLQUEUE_HOST_BUSY;
+	अगर (unlikely(fnic_chk_state_flags_locked(fnic, FNIC_FLAGS_IO_BLOCKED)))
+		वापस SCSI_MLQUEUE_HOST_BUSY;
 
-	if (unlikely(fnic_chk_state_flags_locked(fnic, FNIC_FLAGS_FWRESET)))
-		return SCSI_MLQUEUE_HOST_BUSY;
+	अगर (unlikely(fnic_chk_state_flags_locked(fnic, FNIC_FLAGS_FWRESET)))
+		वापस SCSI_MLQUEUE_HOST_BUSY;
 
 	rport = starget_to_rport(scsi_target(sc->device));
-	if (!rport) {
+	अगर (!rport) अणु
 		FNIC_SCSI_DBG(KERN_DEBUG, fnic->lport->host,
 				"returning DID_NO_CONNECT for IO as rport is NULL\n");
 		sc->result = DID_NO_CONNECT << 16;
-		done(sc);
-		return 0;
-	}
+		करोne(sc);
+		वापस 0;
+	पूर्ण
 
-	ret = fc_remote_port_chkready(rport);
-	if (ret) {
+	ret = fc_remote_port_chkपढ़ोy(rport);
+	अगर (ret) अणु
 		FNIC_SCSI_DBG(KERN_DEBUG, fnic->lport->host,
 				"rport is not ready\n");
-		atomic64_inc(&fnic_stats->misc_stats.rport_not_ready);
+		atomic64_inc(&fnic_stats->misc_stats.rport_not_पढ़ोy);
 		sc->result = ret;
-		done(sc);
-		return 0;
-	}
+		करोne(sc);
+		वापस 0;
+	पूर्ण
 
 	rp = rport->dd_data;
-	if (!rp || rp->rp_state == RPORT_ST_DELETE) {
+	अगर (!rp || rp->rp_state == RPORT_ST_DELETE) अणु
 		FNIC_SCSI_DBG(KERN_DEBUG, fnic->lport->host,
 			"rport 0x%x removed, returning DID_NO_CONNECT\n",
 			rport->port_id);
 
-		atomic64_inc(&fnic_stats->misc_stats.rport_not_ready);
+		atomic64_inc(&fnic_stats->misc_stats.rport_not_पढ़ोy);
 		sc->result = DID_NO_CONNECT<<16;
-		done(sc);
-		return 0;
-	}
+		करोne(sc);
+		वापस 0;
+	पूर्ण
 
-	if (rp->rp_state != RPORT_ST_READY) {
+	अगर (rp->rp_state != RPORT_ST_READY) अणु
 		FNIC_SCSI_DBG(KERN_DEBUG, fnic->lport->host,
 			"rport 0x%x in state 0x%x, returning DID_IMM_RETRY\n",
 			rport->port_id, rp->rp_state);
 
 		sc->result = DID_IMM_RETRY << 16;
-		done(sc);
-		return 0;
-	}
+		करोne(sc);
+		वापस 0;
+	पूर्ण
 
-	if (lp->state != LPORT_ST_READY || !(lp->link_up))
-		return SCSI_MLQUEUE_HOST_BUSY;
+	अगर (lp->state != LPORT_ST_READY || !(lp->link_up))
+		वापस SCSI_MLQUEUE_HOST_BUSY;
 
 	atomic_inc(&fnic->in_flight);
 
 	/*
-	 * Release host lock, use driver resource specific locks from here.
-	 * Don't re-enable interrupts in case they were disabled prior to the
+	 * Release host lock, use driver resource specअगरic locks from here.
+	 * Don't re-enable पूर्णांकerrupts in हाल they were disabled prior to the
 	 * caller disabling them.
 	 */
 	spin_unlock(lp->host->host_lock);
 	CMD_STATE(sc) = FNIC_IOREQ_NOT_INITED;
 	CMD_FLAGS(sc) = FNIC_NO_FLAGS;
 
-	/* Get a new io_req for this SCSI IO */
+	/* Get a new io_req क्रम this SCSI IO */
 	io_req = mempool_alloc(fnic->io_req_pool, GFP_ATOMIC);
-	if (!io_req) {
+	अगर (!io_req) अणु
 		atomic64_inc(&fnic_stats->io_stats.alloc_failures);
 		ret = SCSI_MLQUEUE_HOST_BUSY;
-		goto out;
-	}
-	memset(io_req, 0, sizeof(*io_req));
+		जाओ out;
+	पूर्ण
+	स_रखो(io_req, 0, माप(*io_req));
 
 	/* Map the data buffer */
 	sg_count = scsi_dma_map(sc);
-	if (sg_count < 0) {
+	अगर (sg_count < 0) अणु
 		FNIC_TRACE(fnic_queuecommand, sc->device->host->host_no,
 			  sc->request->tag, sc, 0, sc->cmnd[0],
 			  sg_count, CMD_STATE(sc));
-		mempool_free(io_req, fnic->io_req_pool);
-		goto out;
-	}
+		mempool_मुक्त(io_req, fnic->io_req_pool);
+		जाओ out;
+	पूर्ण
 
 	/* Determine the type of scatter/gather list we need */
 	io_req->sgl_cnt = sg_count;
 	io_req->sgl_type = FNIC_SGL_CACHE_DFLT;
-	if (sg_count > FNIC_DFLT_SG_DESC_CNT)
+	अगर (sg_count > FNIC_DFLT_SG_DESC_CNT)
 		io_req->sgl_type = FNIC_SGL_CACHE_MAX;
 
-	if (sg_count) {
+	अगर (sg_count) अणु
 		io_req->sgl_list =
 			mempool_alloc(fnic->io_sgl_pool[io_req->sgl_type],
 				      GFP_ATOMIC);
-		if (!io_req->sgl_list) {
+		अगर (!io_req->sgl_list) अणु
 			atomic64_inc(&fnic_stats->io_stats.alloc_failures);
 			ret = SCSI_MLQUEUE_HOST_BUSY;
 			scsi_dma_unmap(sc);
-			mempool_free(io_req, fnic->io_req_pool);
-			goto out;
-		}
+			mempool_मुक्त(io_req, fnic->io_req_pool);
+			जाओ out;
+		पूर्ण
 
-		/* Cache sgl list allocated address before alignment */
+		/* Cache sgl list allocated address beक्रमe alignment */
 		io_req->sgl_list_alloc = io_req->sgl_list;
-		ptr = (unsigned long) io_req->sgl_list;
-		if (ptr % FNIC_SG_DESC_ALIGN) {
-			io_req->sgl_list = (struct host_sg_desc *)
-				(((unsigned long) ptr
+		ptr = (अचिन्हित दीर्घ) io_req->sgl_list;
+		अगर (ptr % FNIC_SG_DESC_ALIGN) अणु
+			io_req->sgl_list = (काष्ठा host_sg_desc *)
+				(((अचिन्हित दीर्घ) ptr
 				  + FNIC_SG_DESC_ALIGN - 1)
 				 & ~(FNIC_SG_DESC_ALIGN - 1));
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	/*
-	* Will acquire lock defore setting to IO initialized.
+	* Will acquire lock deक्रमe setting to IO initialized.
 	*/
 
 	io_lock = fnic_io_lock_hash(fnic, sc);
@@ -556,46 +557,46 @@ static int fnic_queuecommand_lck(struct scsi_cmnd *sc, void (*done)(struct scsi_
 	/* initialize rest of io_req */
 	io_lock_acquired = 1;
 	io_req->port_id = rport->port_id;
-	io_req->start_time = jiffies;
+	io_req->start_समय = jअगरfies;
 	CMD_STATE(sc) = FNIC_IOREQ_CMD_PENDING;
-	CMD_SP(sc) = (char *)io_req;
+	CMD_SP(sc) = (अक्षर *)io_req;
 	CMD_FLAGS(sc) |= FNIC_IO_INITIALIZED;
-	sc->scsi_done = done;
+	sc->scsi_करोne = करोne;
 
 	/* create copy wq desc and enqueue it */
 	wq = &fnic->wq_copy[0];
 	ret = fnic_queue_wq_copy_desc(fnic, wq, io_req, sc, sg_count);
-	if (ret) {
+	अगर (ret) अणु
 		/*
-		 * In case another thread cancelled the request,
-		 * refetch the pointer under the lock.
+		 * In हाल another thपढ़ो cancelled the request,
+		 * refetch the poपूर्णांकer under the lock.
 		 */
 		FNIC_TRACE(fnic_queuecommand, sc->device->host->host_no,
 			  sc->request->tag, sc, 0, 0, 0,
 			  (((u64)CMD_FLAGS(sc) << 32) | CMD_STATE(sc)));
-		io_req = (struct fnic_io_req *)CMD_SP(sc);
-		CMD_SP(sc) = NULL;
+		io_req = (काष्ठा fnic_io_req *)CMD_SP(sc);
+		CMD_SP(sc) = शून्य;
 		CMD_STATE(sc) = FNIC_IOREQ_CMD_COMPLETE;
 		spin_unlock_irqrestore(io_lock, flags);
-		if (io_req) {
+		अगर (io_req) अणु
 			fnic_release_ioreq_buf(fnic, io_req, sc);
-			mempool_free(io_req, fnic->io_req_pool);
-		}
+			mempool_मुक्त(io_req, fnic->io_req_pool);
+		पूर्ण
 		atomic_dec(&fnic->in_flight);
-		/* acquire host lock before returning to SCSI */
+		/* acquire host lock beक्रमe वापसing to SCSI */
 		spin_lock(lp->host->host_lock);
-		return ret;
-	} else {
+		वापस ret;
+	पूर्ण अन्यथा अणु
 		atomic64_inc(&fnic_stats->io_stats.active_ios);
 		atomic64_inc(&fnic_stats->io_stats.num_ios);
-		if (atomic64_read(&fnic_stats->io_stats.active_ios) >
-			  atomic64_read(&fnic_stats->io_stats.max_active_ios))
+		अगर (atomic64_पढ़ो(&fnic_stats->io_stats.active_ios) >
+			  atomic64_पढ़ो(&fnic_stats->io_stats.max_active_ios))
 			atomic64_set(&fnic_stats->io_stats.max_active_ios,
-			     atomic64_read(&fnic_stats->io_stats.active_ios));
+			     atomic64_पढ़ो(&fnic_stats->io_stats.active_ios));
 
 		/* REVISIT: Use per IO lock in the final code */
 		CMD_FLAGS(sc) |= FNIC_IO_ISSUED;
-	}
+	पूर्ण
 out:
 	cmd_trace = ((u64)sc->cmnd[0] << 56 | (u64)sc->cmnd[7] << 40 |
 			(u64)sc->cmnd[8] << 32 | (u64)sc->cmnd[2] << 24 |
@@ -607,15 +608,15 @@ out:
 		  sg_count, cmd_trace,
 		  (((u64)CMD_FLAGS(sc) >> 32) | CMD_STATE(sc)));
 
-	/* if only we issued IO, will we have the io lock */
-	if (io_lock_acquired)
+	/* अगर only we issued IO, will we have the io lock */
+	अगर (io_lock_acquired)
 		spin_unlock_irqrestore(io_lock, flags);
 
 	atomic_dec(&fnic->in_flight);
-	/* acquire host lock before returning to SCSI */
+	/* acquire host lock beक्रमe वापसing to SCSI */
 	spin_lock(lp->host->host_lock);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 DEF_SCSI_QCMD(fnic_queuecommand)
 
@@ -623,15 +624,15 @@ DEF_SCSI_QCMD(fnic_queuecommand)
  * fnic_fcpio_fw_reset_cmpl_handler
  * Routine to handle fw reset completion
  */
-static int fnic_fcpio_fw_reset_cmpl_handler(struct fnic *fnic,
-					    struct fcpio_fw_req *desc)
-{
+अटल पूर्णांक fnic_fcpio_fw_reset_cmpl_handler(काष्ठा fnic *fnic,
+					    काष्ठा fcpio_fw_req *desc)
+अणु
 	u8 type;
 	u8 hdr_status;
-	struct fcpio_tag tag;
-	int ret = 0;
-	unsigned long flags;
-	struct reset_stats *reset_stats = &fnic->fnic_stats.reset_stats;
+	काष्ठा fcpio_tag tag;
+	पूर्णांक ret = 0;
+	अचिन्हित दीर्घ flags;
+	काष्ठा reset_stats *reset_stats = &fnic->fnic_stats.reset_stats;
 
 	fcpio_header_dec(&desc->hdr, &type, &hdr_status, &tag);
 
@@ -647,14 +648,14 @@ static int fnic_fcpio_fw_reset_cmpl_handler(struct fnic *fnic,
 	spin_lock_irqsave(&fnic->fnic_lock, flags);
 
 	/* fnic should be in FC_TRANS_ETH_MODE */
-	if (fnic->state == FNIC_IN_FC_TRANS_ETH_MODE) {
+	अगर (fnic->state == FNIC_IN_FC_TRANS_ETH_MODE) अणु
 		/* Check status of reset completion */
-		if (!hdr_status) {
+		अगर (!hdr_status) अणु
 			FNIC_SCSI_DBG(KERN_DEBUG, fnic->lport->host,
 				      "reset cmpl success\n");
 			/* Ready to send flogi out */
 			fnic->state = FNIC_IN_ETH_MODE;
-		} else {
+		पूर्ण अन्यथा अणु
 			FNIC_SCSI_DBG(KERN_DEBUG,
 				      fnic->lport->host,
 				      "fnic fw_reset : failed %s\n",
@@ -669,29 +670,29 @@ static int fnic_fcpio_fw_reset_cmpl_handler(struct fnic *fnic,
 			fnic->state = FNIC_IN_FC_MODE;
 			atomic64_inc(&reset_stats->fw_reset_failures);
 			ret = -1;
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		FNIC_SCSI_DBG(KERN_DEBUG,
 			      fnic->lport->host,
 			      "Unexpected state %s while processing"
 			      " reset cmpl\n", fnic_state_to_str(fnic->state));
 		atomic64_inc(&reset_stats->fw_reset_failures);
 		ret = -1;
-	}
+	पूर्ण
 
-	/* Thread removing device blocks till firmware reset is complete */
-	if (fnic->remove_wait)
-		complete(fnic->remove_wait);
+	/* Thपढ़ो removing device blocks till firmware reset is complete */
+	अगर (fnic->हटाओ_रुको)
+		complete(fnic->हटाओ_रुको);
 
 	/*
-	 * If fnic is being removed, or fw reset failed
-	 * free the flogi frame. Else, send it out
+	 * If fnic is being हटाओd, or fw reset failed
+	 * मुक्त the flogi frame. Else, send it out
 	 */
-	if (fnic->remove_wait || ret) {
+	अगर (fnic->हटाओ_रुको || ret) अणु
 		spin_unlock_irqrestore(&fnic->fnic_lock, flags);
 		skb_queue_purge(&fnic->tx_queue);
-		goto reset_cmpl_handler_end;
-	}
+		जाओ reset_cmpl_handler_end;
+	पूर्ण
 
 	spin_unlock_irqrestore(&fnic->fnic_lock, flags);
 
@@ -700,110 +701,110 @@ static int fnic_fcpio_fw_reset_cmpl_handler(struct fnic *fnic,
  reset_cmpl_handler_end:
 	fnic_clear_state_flags(fnic, FNIC_FLAGS_FWRESET);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
  * fnic_fcpio_flogi_reg_cmpl_handler
- * Routine to handle flogi register completion
+ * Routine to handle flogi रेजिस्टर completion
  */
-static int fnic_fcpio_flogi_reg_cmpl_handler(struct fnic *fnic,
-					     struct fcpio_fw_req *desc)
-{
+अटल पूर्णांक fnic_fcpio_flogi_reg_cmpl_handler(काष्ठा fnic *fnic,
+					     काष्ठा fcpio_fw_req *desc)
+अणु
 	u8 type;
 	u8 hdr_status;
-	struct fcpio_tag tag;
-	int ret = 0;
-	unsigned long flags;
+	काष्ठा fcpio_tag tag;
+	पूर्णांक ret = 0;
+	अचिन्हित दीर्घ flags;
 
 	fcpio_header_dec(&desc->hdr, &type, &hdr_status, &tag);
 
 	/* Update fnic state based on status of flogi reg completion */
 	spin_lock_irqsave(&fnic->fnic_lock, flags);
 
-	if (fnic->state == FNIC_IN_ETH_TRANS_FC_MODE) {
+	अगर (fnic->state == FNIC_IN_ETH_TRANS_FC_MODE) अणु
 
 		/* Check flogi registration completion status */
-		if (!hdr_status) {
+		अगर (!hdr_status) अणु
 			FNIC_SCSI_DBG(KERN_DEBUG, fnic->lport->host,
 				      "flog reg succeeded\n");
 			fnic->state = FNIC_IN_FC_MODE;
-		} else {
+		पूर्ण अन्यथा अणु
 			FNIC_SCSI_DBG(KERN_DEBUG,
 				      fnic->lport->host,
 				      "fnic flogi reg :failed %s\n",
 				      fnic_fcpio_status_to_str(hdr_status));
 			fnic->state = FNIC_IN_ETH_MODE;
 			ret = -1;
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		FNIC_SCSI_DBG(KERN_DEBUG, fnic->lport->host,
 			      "Unexpected fnic state %s while"
 			      " processing flogi reg completion\n",
 			      fnic_state_to_str(fnic->state));
 		ret = -1;
-	}
+	पूर्ण
 
-	if (!ret) {
-		if (fnic->stop_rx_link_events) {
+	अगर (!ret) अणु
+		अगर (fnic->stop_rx_link_events) अणु
 			spin_unlock_irqrestore(&fnic->fnic_lock, flags);
-			goto reg_cmpl_handler_end;
-		}
+			जाओ reg_cmpl_handler_end;
+		पूर्ण
 		spin_unlock_irqrestore(&fnic->fnic_lock, flags);
 
 		fnic_flush_tx(fnic);
 		queue_work(fnic_event_queue, &fnic->frame_work);
-	} else {
+	पूर्ण अन्यथा अणु
 		spin_unlock_irqrestore(&fnic->fnic_lock, flags);
-	}
+	पूर्ण
 
 reg_cmpl_handler_end:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static inline int is_ack_index_in_range(struct vnic_wq_copy *wq,
+अटल अंतरभूत पूर्णांक is_ack_index_in_range(काष्ठा vnic_wq_copy *wq,
 					u16 request_out)
-{
-	if (wq->to_clean_index <= wq->to_use_index) {
+अणु
+	अगर (wq->to_clean_index <= wq->to_use_index) अणु
 		/* out of range, stale request_out index */
-		if (request_out < wq->to_clean_index ||
+		अगर (request_out < wq->to_clean_index ||
 		    request_out >= wq->to_use_index)
-			return 0;
-	} else {
+			वापस 0;
+	पूर्ण अन्यथा अणु
 		/* out of range, stale request_out index */
-		if (request_out < wq->to_clean_index &&
+		अगर (request_out < wq->to_clean_index &&
 		    request_out >= wq->to_use_index)
-			return 0;
-	}
+			वापस 0;
+	पूर्ण
 	/* request_out index is in range */
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
 
 /*
  * Mark that ack received and store the Ack index. If there are multiple
- * acks received before Tx thread cleans it up, the latest value will be
+ * acks received beक्रमe Tx thपढ़ो cleans it up, the latest value will be
  * used which is correct behavior. This state should be in the copy Wq
  * instead of in the fnic
  */
-static inline void fnic_fcpio_ack_handler(struct fnic *fnic,
-					  unsigned int cq_index,
-					  struct fcpio_fw_req *desc)
-{
-	struct vnic_wq_copy *wq;
+अटल अंतरभूत व्योम fnic_fcpio_ack_handler(काष्ठा fnic *fnic,
+					  अचिन्हित पूर्णांक cq_index,
+					  काष्ठा fcpio_fw_req *desc)
+अणु
+	काष्ठा vnic_wq_copy *wq;
 	u16 request_out = desc->u.ack.request_out;
-	unsigned long flags;
-	u64 *ox_id_tag = (u64 *)(void *)desc;
+	अचिन्हित दीर्घ flags;
+	u64 *ox_id_tag = (u64 *)(व्योम *)desc;
 
 	/* mark the ack state */
 	wq = &fnic->wq_copy[cq_index - fnic->raw_wq_count - fnic->rq_count];
 	spin_lock_irqsave(&fnic->wq_copy_lock[0], flags);
 
-	fnic->fnic_stats.misc_stats.last_ack_time = jiffies;
-	if (is_ack_index_in_range(wq, request_out)) {
+	fnic->fnic_stats.misc_stats.last_ack_समय = jअगरfies;
+	अगर (is_ack_index_in_range(wq, request_out)) अणु
 		fnic->fw_ack_index[0] = request_out;
 		fnic->fw_ack_recd[0] = 1;
-	} else
+	पूर्ण अन्यथा
 		atomic64_inc(
 			&fnic->fnic_stats.misc_stats.ack_index_out_of_range);
 
@@ -811,47 +812,47 @@ static inline void fnic_fcpio_ack_handler(struct fnic *fnic,
 	FNIC_TRACE(fnic_fcpio_ack_handler,
 		  fnic->lport->host->host_no, 0, 0, ox_id_tag[2], ox_id_tag[3],
 		  ox_id_tag[4], ox_id_tag[5]);
-}
+पूर्ण
 
 /*
  * fnic_fcpio_icmnd_cmpl_handler
  * Routine to handle icmnd completions
  */
-static void fnic_fcpio_icmnd_cmpl_handler(struct fnic *fnic,
-					 struct fcpio_fw_req *desc)
-{
+अटल व्योम fnic_fcpio_icmnd_cmpl_handler(काष्ठा fnic *fnic,
+					 काष्ठा fcpio_fw_req *desc)
+अणु
 	u8 type;
 	u8 hdr_status;
-	struct fcpio_tag tag;
+	काष्ठा fcpio_tag tag;
 	u32 id;
 	u64 xfer_len = 0;
-	struct fcpio_icmnd_cmpl *icmnd_cmpl;
-	struct fnic_io_req *io_req;
-	struct scsi_cmnd *sc;
-	struct fnic_stats *fnic_stats = &fnic->fnic_stats;
-	unsigned long flags;
+	काष्ठा fcpio_icmnd_cmpl *icmnd_cmpl;
+	काष्ठा fnic_io_req *io_req;
+	काष्ठा scsi_cmnd *sc;
+	काष्ठा fnic_stats *fnic_stats = &fnic->fnic_stats;
+	अचिन्हित दीर्घ flags;
 	spinlock_t *io_lock;
 	u64 cmd_trace;
-	unsigned long start_time;
-	unsigned long io_duration_time;
+	अचिन्हित दीर्घ start_समय;
+	अचिन्हित दीर्घ io_duration_समय;
 
 	/* Decode the cmpl description to get the io_req id */
 	fcpio_header_dec(&desc->hdr, &type, &hdr_status, &tag);
 	fcpio_tag_id_dec(&tag, &id);
 	icmnd_cmpl = &desc->u.icmnd_cmpl;
 
-	if (id >= fnic->fnic_max_tag_id) {
-		shost_printk(KERN_ERR, fnic->lport->host,
+	अगर (id >= fnic->fnic_max_tag_id) अणु
+		shost_prपूर्णांकk(KERN_ERR, fnic->lport->host,
 			"Tag out of range tag %x hdr status = %s\n",
 			     id, fnic_fcpio_status_to_str(hdr_status));
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	sc = scsi_host_find_tag(fnic->lport->host, id);
 	WARN_ON_ONCE(!sc);
-	if (!sc) {
+	अगर (!sc) अणु
 		atomic64_inc(&fnic_stats->io_stats.sc_null);
-		shost_printk(KERN_ERR, fnic->lport->host,
+		shost_prपूर्णांकk(KERN_ERR, fnic->lport->host,
 			  "icmnd_cmpl sc is null - "
 			  "hdr status = %s tag = 0x%x desc = 0x%p\n",
 			  fnic_fcpio_status_to_str(hdr_status), id, desc);
@@ -863,42 +864,42 @@ static void fnic_fcpio_icmnd_cmpl_handler(struct fnic *fnic,
 			  (u64)icmnd_cmpl->scsi_status << 8 |
 			  (u64)icmnd_cmpl->flags), desc,
 			  (u64)icmnd_cmpl->residual, 0);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	io_lock = fnic_io_lock_hash(fnic, sc);
 	spin_lock_irqsave(io_lock, flags);
-	io_req = (struct fnic_io_req *)CMD_SP(sc);
+	io_req = (काष्ठा fnic_io_req *)CMD_SP(sc);
 	WARN_ON_ONCE(!io_req);
-	if (!io_req) {
+	अगर (!io_req) अणु
 		atomic64_inc(&fnic_stats->io_stats.ioreq_null);
-		CMD_FLAGS(sc) |= FNIC_IO_REQ_NULL;
+		CMD_FLAGS(sc) |= FNIC_IO_REQ_शून्य;
 		spin_unlock_irqrestore(io_lock, flags);
-		shost_printk(KERN_ERR, fnic->lport->host,
+		shost_prपूर्णांकk(KERN_ERR, fnic->lport->host,
 			  "icmnd_cmpl io_req is null - "
 			  "hdr status = %s tag = 0x%x sc 0x%p\n",
 			  fnic_fcpio_status_to_str(hdr_status), id, sc);
-		return;
-	}
-	start_time = io_req->start_time;
+		वापस;
+	पूर्ण
+	start_समय = io_req->start_समय;
 
 	/* firmware completed the io */
 	io_req->io_completed = 1;
 
 	/*
-	 *  if SCSI-ML has already issued abort on this command,
+	 *  अगर SCSI-ML has alपढ़ोy issued पात on this command,
 	 *  set completion of the IO. The abts path will clean it up
 	 */
-	if (CMD_STATE(sc) == FNIC_IOREQ_ABTS_PENDING) {
+	अगर (CMD_STATE(sc) == FNIC_IOREQ_ABTS_PENDING) अणु
 
 		/*
-		 * set the FNIC_IO_DONE so that this doesn't get
-		 * flagged as 'out of order' if it was not aborted
+		 * set the FNIC_IO_DONE so that this करोesn't get
+		 * flagged as 'out of order' अगर it was not पातed
 		 */
 		CMD_FLAGS(sc) |= FNIC_IO_DONE;
 		CMD_FLAGS(sc) |= FNIC_IO_ABTS_PENDING;
 		spin_unlock_irqrestore(io_lock, flags);
-		if(FCPIO_ABORTED == hdr_status)
+		अगर(FCPIO_ABORTED == hdr_status)
 			CMD_FLAGS(sc) |= FNIC_IO_ABORTED;
 
 		FNIC_SCSI_DBG(KERN_INFO, fnic->lport->host,
@@ -909,95 +910,95 @@ static void fnic_fcpio_icmnd_cmpl_handler(struct fnic *fnic,
 			  id, sc,
 			  icmnd_cmpl->scsi_status,
 			  icmnd_cmpl->residual);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/* Mark the IO as complete */
 	CMD_STATE(sc) = FNIC_IOREQ_CMD_COMPLETE;
 
 	icmnd_cmpl = &desc->u.icmnd_cmpl;
 
-	switch (hdr_status) {
-	case FCPIO_SUCCESS:
+	चयन (hdr_status) अणु
+	हाल FCPIO_SUCCESS:
 		sc->result = (DID_OK << 16) | icmnd_cmpl->scsi_status;
 		xfer_len = scsi_bufflen(sc);
 
-		if (icmnd_cmpl->flags & FCPIO_ICMND_CMPL_RESID_UNDER) {
+		अगर (icmnd_cmpl->flags & FCPIO_ICMND_CMPL_RESID_UNDER) अणु
 			xfer_len -= icmnd_cmpl->residual;
 			scsi_set_resid(sc, icmnd_cmpl->residual);
-		}
+		पूर्ण
 
-		if (icmnd_cmpl->scsi_status == SAM_STAT_CHECK_CONDITION)
+		अगर (icmnd_cmpl->scsi_status == SAM_STAT_CHECK_CONDITION)
 			atomic64_inc(&fnic_stats->misc_stats.check_condition);
 
-		if (icmnd_cmpl->scsi_status == SAM_STAT_TASK_SET_FULL)
+		अगर (icmnd_cmpl->scsi_status == SAM_STAT_TASK_SET_FULL)
 			atomic64_inc(&fnic_stats->misc_stats.queue_fulls);
-		break;
+		अवरोध;
 
-	case FCPIO_TIMEOUT:          /* request was timed out */
-		atomic64_inc(&fnic_stats->misc_stats.fcpio_timeout);
+	हाल FCPIO_TIMEOUT:          /* request was समयd out */
+		atomic64_inc(&fnic_stats->misc_stats.fcpio_समयout);
 		sc->result = (DID_TIME_OUT << 16) | icmnd_cmpl->scsi_status;
-		break;
+		अवरोध;
 
-	case FCPIO_ABORTED:          /* request was aborted */
-		atomic64_inc(&fnic_stats->misc_stats.fcpio_aborted);
+	हाल FCPIO_ABORTED:          /* request was पातed */
+		atomic64_inc(&fnic_stats->misc_stats.fcpio_पातed);
 		sc->result = (DID_ERROR << 16) | icmnd_cmpl->scsi_status;
-		break;
+		अवरोध;
 
-	case FCPIO_DATA_CNT_MISMATCH: /* recv/sent more/less data than exp. */
+	हाल FCPIO_DATA_CNT_MISMATCH: /* recv/sent more/less data than exp. */
 		atomic64_inc(&fnic_stats->misc_stats.data_count_mismatch);
 		scsi_set_resid(sc, icmnd_cmpl->residual);
 		sc->result = (DID_ERROR << 16) | icmnd_cmpl->scsi_status;
-		break;
+		अवरोध;
 
-	case FCPIO_OUT_OF_RESOURCE:  /* out of resources to complete request */
+	हाल FCPIO_OUT_OF_RESOURCE:  /* out of resources to complete request */
 		atomic64_inc(&fnic_stats->fw_stats.fw_out_of_resources);
 		sc->result = (DID_REQUEUE << 16) | icmnd_cmpl->scsi_status;
-		break;
+		अवरोध;
 
-	case FCPIO_IO_NOT_FOUND:     /* requested I/O was not found */
+	हाल FCPIO_IO_NOT_FOUND:     /* requested I/O was not found */
 		atomic64_inc(&fnic_stats->io_stats.io_not_found);
 		sc->result = (DID_ERROR << 16) | icmnd_cmpl->scsi_status;
-		break;
+		अवरोध;
 
-	case FCPIO_SGL_INVALID:      /* request was aborted due to sgl error */
+	हाल FCPIO_SGL_INVALID:      /* request was पातed due to sgl error */
 		atomic64_inc(&fnic_stats->misc_stats.sgl_invalid);
 		sc->result = (DID_ERROR << 16) | icmnd_cmpl->scsi_status;
-		break;
+		अवरोध;
 
-	case FCPIO_FW_ERR:           /* request was terminated due fw error */
+	हाल FCPIO_FW_ERR:           /* request was terminated due fw error */
 		atomic64_inc(&fnic_stats->fw_stats.io_fw_errs);
 		sc->result = (DID_ERROR << 16) | icmnd_cmpl->scsi_status;
-		break;
+		अवरोध;
 
-	case FCPIO_MSS_INVALID:      /* request was aborted due to mss error */
+	हाल FCPIO_MSS_INVALID:      /* request was पातed due to mss error */
 		atomic64_inc(&fnic_stats->misc_stats.mss_invalid);
 		sc->result = (DID_ERROR << 16) | icmnd_cmpl->scsi_status;
-		break;
+		अवरोध;
 
-	case FCPIO_INVALID_HEADER:   /* header contains invalid data */
-	case FCPIO_INVALID_PARAM:    /* some parameter in request invalid */
-	case FCPIO_REQ_NOT_SUPPORTED:/* request type is not supported */
-	default:
+	हाल FCPIO_INVALID_HEADER:   /* header contains invalid data */
+	हाल FCPIO_INVALID_PARAM:    /* some parameter in request invalid */
+	हाल FCPIO_REQ_NOT_SUPPORTED:/* request type is not supported */
+	शेष:
 		sc->result = (DID_ERROR << 16) | icmnd_cmpl->scsi_status;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	/* Break link with the SCSI command */
-	CMD_SP(sc) = NULL;
+	CMD_SP(sc) = शून्य;
 	CMD_FLAGS(sc) |= FNIC_IO_DONE;
 
 	spin_unlock_irqrestore(io_lock, flags);
 
-	if (hdr_status != FCPIO_SUCCESS) {
+	अगर (hdr_status != FCPIO_SUCCESS) अणु
 		atomic64_inc(&fnic_stats->io_stats.io_failures);
-		shost_printk(KERN_ERR, fnic->lport->host, "hdr status = %s\n",
+		shost_prपूर्णांकk(KERN_ERR, fnic->lport->host, "hdr status = %s\n",
 			     fnic_fcpio_status_to_str(hdr_status));
-	}
+	पूर्ण
 
 	fnic_release_ioreq_buf(fnic, io_req, sc);
 
-	mempool_free(io_req, fnic->io_req_pool);
+	mempool_मुक्त(io_req, fnic->io_req_pool);
 
 	cmd_trace = ((u64)hdr_status << 56) |
 		  (u64)icmnd_cmpl->scsi_status << 48 |
@@ -1009,196 +1010,196 @@ static void fnic_fcpio_icmnd_cmpl_handler(struct fnic *fnic,
 		  sc->device->host->host_no, id, sc,
 		  ((u64)icmnd_cmpl->_resvd0[1] << 56 |
 		  (u64)icmnd_cmpl->_resvd0[0] << 48 |
-		  jiffies_to_msecs(jiffies - start_time)),
+		  jअगरfies_to_msecs(jअगरfies - start_समय)),
 		  desc, cmd_trace,
 		  (((u64)CMD_FLAGS(sc) << 32) | CMD_STATE(sc)));
 
-	if (sc->sc_data_direction == DMA_FROM_DEVICE) {
+	अगर (sc->sc_data_direction == DMA_FROM_DEVICE) अणु
 		fnic->lport->host_stats.fcp_input_requests++;
 		fnic->fcp_input_bytes += xfer_len;
-	} else if (sc->sc_data_direction == DMA_TO_DEVICE) {
+	पूर्ण अन्यथा अगर (sc->sc_data_direction == DMA_TO_DEVICE) अणु
 		fnic->lport->host_stats.fcp_output_requests++;
 		fnic->fcp_output_bytes += xfer_len;
-	} else
+	पूर्ण अन्यथा
 		fnic->lport->host_stats.fcp_control_requests++;
 
 	atomic64_dec(&fnic_stats->io_stats.active_ios);
-	if (atomic64_read(&fnic->io_cmpl_skip))
+	अगर (atomic64_पढ़ो(&fnic->io_cmpl_skip))
 		atomic64_dec(&fnic->io_cmpl_skip);
-	else
+	अन्यथा
 		atomic64_inc(&fnic_stats->io_stats.io_completions);
 
 
-	io_duration_time = jiffies_to_msecs(jiffies) -
-						jiffies_to_msecs(start_time);
+	io_duration_समय = jअगरfies_to_msecs(jअगरfies) -
+						jअगरfies_to_msecs(start_समय);
 
-	if(io_duration_time <= 10)
+	अगर(io_duration_समय <= 10)
 		atomic64_inc(&fnic_stats->io_stats.io_btw_0_to_10_msec);
-	else if(io_duration_time <= 100)
+	अन्यथा अगर(io_duration_समय <= 100)
 		atomic64_inc(&fnic_stats->io_stats.io_btw_10_to_100_msec);
-	else if(io_duration_time <= 500)
+	अन्यथा अगर(io_duration_समय <= 500)
 		atomic64_inc(&fnic_stats->io_stats.io_btw_100_to_500_msec);
-	else if(io_duration_time <= 5000)
+	अन्यथा अगर(io_duration_समय <= 5000)
 		atomic64_inc(&fnic_stats->io_stats.io_btw_500_to_5000_msec);
-	else if(io_duration_time <= 10000)
+	अन्यथा अगर(io_duration_समय <= 10000)
 		atomic64_inc(&fnic_stats->io_stats.io_btw_5000_to_10000_msec);
-	else if(io_duration_time <= 30000)
+	अन्यथा अगर(io_duration_समय <= 30000)
 		atomic64_inc(&fnic_stats->io_stats.io_btw_10000_to_30000_msec);
-	else {
+	अन्यथा अणु
 		atomic64_inc(&fnic_stats->io_stats.io_greater_than_30000_msec);
 
-		if(io_duration_time > atomic64_read(&fnic_stats->io_stats.current_max_io_time))
-			atomic64_set(&fnic_stats->io_stats.current_max_io_time, io_duration_time);
-	}
+		अगर(io_duration_समय > atomic64_पढ़ो(&fnic_stats->io_stats.current_max_io_समय))
+			atomic64_set(&fnic_stats->io_stats.current_max_io_समय, io_duration_समय);
+	पूर्ण
 
 	/* Call SCSI completion function to complete the IO */
-	if (sc->scsi_done)
-		sc->scsi_done(sc);
-}
+	अगर (sc->scsi_करोne)
+		sc->scsi_करोne(sc);
+पूर्ण
 
-/* fnic_fcpio_itmf_cmpl_handler
- * Routine to handle itmf completions
+/* fnic_fcpio_iपंचांगf_cmpl_handler
+ * Routine to handle iपंचांगf completions
  */
-static void fnic_fcpio_itmf_cmpl_handler(struct fnic *fnic,
-					struct fcpio_fw_req *desc)
-{
+अटल व्योम fnic_fcpio_iपंचांगf_cmpl_handler(काष्ठा fnic *fnic,
+					काष्ठा fcpio_fw_req *desc)
+अणु
 	u8 type;
 	u8 hdr_status;
-	struct fcpio_tag tag;
+	काष्ठा fcpio_tag tag;
 	u32 id;
-	struct scsi_cmnd *sc;
-	struct fnic_io_req *io_req;
-	struct fnic_stats *fnic_stats = &fnic->fnic_stats;
-	struct abort_stats *abts_stats = &fnic->fnic_stats.abts_stats;
-	struct terminate_stats *term_stats = &fnic->fnic_stats.term_stats;
-	struct misc_stats *misc_stats = &fnic->fnic_stats.misc_stats;
-	unsigned long flags;
+	काष्ठा scsi_cmnd *sc;
+	काष्ठा fnic_io_req *io_req;
+	काष्ठा fnic_stats *fnic_stats = &fnic->fnic_stats;
+	काष्ठा पात_stats *abts_stats = &fnic->fnic_stats.abts_stats;
+	काष्ठा terminate_stats *term_stats = &fnic->fnic_stats.term_stats;
+	काष्ठा misc_stats *misc_stats = &fnic->fnic_stats.misc_stats;
+	अचिन्हित दीर्घ flags;
 	spinlock_t *io_lock;
-	unsigned long start_time;
+	अचिन्हित दीर्घ start_समय;
 
 	fcpio_header_dec(&desc->hdr, &type, &hdr_status, &tag);
 	fcpio_tag_id_dec(&tag, &id);
 
-	if ((id & FNIC_TAG_MASK) >= fnic->fnic_max_tag_id) {
-		shost_printk(KERN_ERR, fnic->lport->host,
+	अगर ((id & FNIC_TAG_MASK) >= fnic->fnic_max_tag_id) अणु
+		shost_prपूर्णांकk(KERN_ERR, fnic->lport->host,
 		"Tag out of range tag %x hdr status = %s\n",
 		id, fnic_fcpio_status_to_str(hdr_status));
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	sc = scsi_host_find_tag(fnic->lport->host, id & FNIC_TAG_MASK);
 	WARN_ON_ONCE(!sc);
-	if (!sc) {
+	अगर (!sc) अणु
 		atomic64_inc(&fnic_stats->io_stats.sc_null);
-		shost_printk(KERN_ERR, fnic->lport->host,
+		shost_prपूर्णांकk(KERN_ERR, fnic->lport->host,
 			  "itmf_cmpl sc is null - hdr status = %s tag = 0x%x\n",
 			  fnic_fcpio_status_to_str(hdr_status), id);
-		return;
-	}
+		वापस;
+	पूर्ण
 	io_lock = fnic_io_lock_hash(fnic, sc);
 	spin_lock_irqsave(io_lock, flags);
-	io_req = (struct fnic_io_req *)CMD_SP(sc);
+	io_req = (काष्ठा fnic_io_req *)CMD_SP(sc);
 	WARN_ON_ONCE(!io_req);
-	if (!io_req) {
+	अगर (!io_req) अणु
 		atomic64_inc(&fnic_stats->io_stats.ioreq_null);
 		spin_unlock_irqrestore(io_lock, flags);
-		CMD_FLAGS(sc) |= FNIC_IO_ABT_TERM_REQ_NULL;
-		shost_printk(KERN_ERR, fnic->lport->host,
+		CMD_FLAGS(sc) |= FNIC_IO_ABT_TERM_REQ_शून्य;
+		shost_prपूर्णांकk(KERN_ERR, fnic->lport->host,
 			  "itmf_cmpl io_req is null - "
 			  "hdr status = %s tag = 0x%x sc 0x%p\n",
 			  fnic_fcpio_status_to_str(hdr_status), id, sc);
-		return;
-	}
-	start_time = io_req->start_time;
+		वापस;
+	पूर्ण
+	start_समय = io_req->start_समय;
 
-	if ((id & FNIC_TAG_ABORT) && (id & FNIC_TAG_DEV_RST)) {
+	अगर ((id & FNIC_TAG_ABORT) && (id & FNIC_TAG_DEV_RST)) अणु
 		/* Abort and terminate completion of device reset req */
-		/* REVISIT : Add asserts about various flags */
+		/* REVISIT : Add निश्चितs about various flags */
 		FNIC_SCSI_DBG(KERN_DEBUG, fnic->lport->host,
 			      "dev reset abts cmpl recd. id %x status %s\n",
 			      id, fnic_fcpio_status_to_str(hdr_status));
 		CMD_STATE(sc) = FNIC_IOREQ_ABTS_COMPLETE;
 		CMD_ABTS_STATUS(sc) = hdr_status;
 		CMD_FLAGS(sc) |= FNIC_DEV_RST_DONE;
-		if (io_req->abts_done)
-			complete(io_req->abts_done);
+		अगर (io_req->abts_करोne)
+			complete(io_req->abts_करोne);
 		spin_unlock_irqrestore(io_lock, flags);
-	} else if (id & FNIC_TAG_ABORT) {
-		/* Completion of abort cmd */
-		switch (hdr_status) {
-		case FCPIO_SUCCESS:
-			break;
-		case FCPIO_TIMEOUT:
-			if (CMD_FLAGS(sc) & FNIC_IO_ABTS_ISSUED)
-				atomic64_inc(&abts_stats->abort_fw_timeouts);
-			else
+	पूर्ण अन्यथा अगर (id & FNIC_TAG_ABORT) अणु
+		/* Completion of पात cmd */
+		चयन (hdr_status) अणु
+		हाल FCPIO_SUCCESS:
+			अवरोध;
+		हाल FCPIO_TIMEOUT:
+			अगर (CMD_FLAGS(sc) & FNIC_IO_ABTS_ISSUED)
+				atomic64_inc(&abts_stats->पात_fw_समयouts);
+			अन्यथा
 				atomic64_inc(
-					&term_stats->terminate_fw_timeouts);
-			break;
-		case FCPIO_ITMF_REJECTED:
+					&term_stats->terminate_fw_समयouts);
+			अवरोध;
+		हाल FCPIO_ITMF_REJECTED:
 			FNIC_SCSI_DBG(KERN_INFO, fnic->lport->host,
 				"abort reject recd. id %d\n",
-				(int)(id & FNIC_TAG_MASK));
-			break;
-		case FCPIO_IO_NOT_FOUND:
-			if (CMD_FLAGS(sc) & FNIC_IO_ABTS_ISSUED)
-				atomic64_inc(&abts_stats->abort_io_not_found);
-			else
+				(पूर्णांक)(id & FNIC_TAG_MASK));
+			अवरोध;
+		हाल FCPIO_IO_NOT_FOUND:
+			अगर (CMD_FLAGS(sc) & FNIC_IO_ABTS_ISSUED)
+				atomic64_inc(&abts_stats->पात_io_not_found);
+			अन्यथा
 				atomic64_inc(
 					&term_stats->terminate_io_not_found);
-			break;
-		default:
-			if (CMD_FLAGS(sc) & FNIC_IO_ABTS_ISSUED)
-				atomic64_inc(&abts_stats->abort_failures);
-			else
+			अवरोध;
+		शेष:
+			अगर (CMD_FLAGS(sc) & FNIC_IO_ABTS_ISSUED)
+				atomic64_inc(&abts_stats->पात_failures);
+			अन्यथा
 				atomic64_inc(
 					&term_stats->terminate_failures);
-			break;
-		}
-		if (CMD_STATE(sc) != FNIC_IOREQ_ABTS_PENDING) {
+			अवरोध;
+		पूर्ण
+		अगर (CMD_STATE(sc) != FNIC_IOREQ_ABTS_PENDING) अणु
 			/* This is a late completion. Ignore it */
 			spin_unlock_irqrestore(io_lock, flags);
-			return;
-		}
+			वापस;
+		पूर्ण
 
 		CMD_FLAGS(sc) |= FNIC_IO_ABT_TERM_DONE;
 		CMD_ABTS_STATUS(sc) = hdr_status;
 
 		/* If the status is IO not found consider it as success */
-		if (hdr_status == FCPIO_IO_NOT_FOUND)
+		अगर (hdr_status == FCPIO_IO_NOT_FOUND)
 			CMD_ABTS_STATUS(sc) = FCPIO_SUCCESS;
 
-		if (!(CMD_FLAGS(sc) & (FNIC_IO_ABORTED | FNIC_IO_DONE)))
-			atomic64_inc(&misc_stats->no_icmnd_itmf_cmpls);
+		अगर (!(CMD_FLAGS(sc) & (FNIC_IO_ABORTED | FNIC_IO_DONE)))
+			atomic64_inc(&misc_stats->no_icmnd_iपंचांगf_cmpls);
 
 		FNIC_SCSI_DBG(KERN_DEBUG, fnic->lport->host,
 			      "abts cmpl recd. id %d status %s\n",
-			      (int)(id & FNIC_TAG_MASK),
+			      (पूर्णांक)(id & FNIC_TAG_MASK),
 			      fnic_fcpio_status_to_str(hdr_status));
 
 		/*
-		 * If scsi_eh thread is blocked waiting for abts to complete,
-		 * signal completion to it. IO will be cleaned in the thread
-		 * else clean it in this context
+		 * If scsi_eh thपढ़ो is blocked रुकोing क्रम abts to complete,
+		 * संकेत completion to it. IO will be cleaned in the thपढ़ो
+		 * अन्यथा clean it in this context
 		 */
-		if (io_req->abts_done) {
-			complete(io_req->abts_done);
+		अगर (io_req->abts_करोne) अणु
+			complete(io_req->abts_करोne);
 			spin_unlock_irqrestore(io_lock, flags);
-		} else {
+		पूर्ण अन्यथा अणु
 			FNIC_SCSI_DBG(KERN_DEBUG, fnic->lport->host,
 				      "abts cmpl, completing IO\n");
-			CMD_SP(sc) = NULL;
+			CMD_SP(sc) = शून्य;
 			sc->result = (DID_ERROR << 16);
 
 			spin_unlock_irqrestore(io_lock, flags);
 
 			fnic_release_ioreq_buf(fnic, io_req, sc);
-			mempool_free(io_req, fnic->io_req_pool);
-			if (sc->scsi_done) {
-				FNIC_TRACE(fnic_fcpio_itmf_cmpl_handler,
+			mempool_मुक्त(io_req, fnic->io_req_pool);
+			अगर (sc->scsi_करोne) अणु
+				FNIC_TRACE(fnic_fcpio_iपंचांगf_cmpl_handler,
 					sc->device->host->host_no, id,
 					sc,
-					jiffies_to_msecs(jiffies - start_time),
+					jअगरfies_to_msecs(jअगरfies - start_समय),
 					desc,
 					(((u64)hdr_status << 40) |
 					(u64)sc->cmnd[0] << 32 |
@@ -1207,506 +1208,506 @@ static void fnic_fcpio_itmf_cmpl_handler(struct fnic *fnic,
 					(u64)sc->cmnd[4] << 8 | sc->cmnd[5]),
 					(((u64)CMD_FLAGS(sc) << 32) |
 					CMD_STATE(sc)));
-				sc->scsi_done(sc);
+				sc->scsi_करोne(sc);
 				atomic64_dec(&fnic_stats->io_stats.active_ios);
-				if (atomic64_read(&fnic->io_cmpl_skip))
+				अगर (atomic64_पढ़ो(&fnic->io_cmpl_skip))
 					atomic64_dec(&fnic->io_cmpl_skip);
-				else
+				अन्यथा
 					atomic64_inc(&fnic_stats->io_stats.io_completions);
-			}
-		}
+			पूर्ण
+		पूर्ण
 
-	} else if (id & FNIC_TAG_DEV_RST) {
+	पूर्ण अन्यथा अगर (id & FNIC_TAG_DEV_RST) अणु
 		/* Completion of device reset */
 		CMD_LR_STATUS(sc) = hdr_status;
-		if (CMD_STATE(sc) == FNIC_IOREQ_ABTS_PENDING) {
+		अगर (CMD_STATE(sc) == FNIC_IOREQ_ABTS_PENDING) अणु
 			spin_unlock_irqrestore(io_lock, flags);
 			CMD_FLAGS(sc) |= FNIC_DEV_RST_ABTS_PENDING;
-			FNIC_TRACE(fnic_fcpio_itmf_cmpl_handler,
+			FNIC_TRACE(fnic_fcpio_iपंचांगf_cmpl_handler,
 				  sc->device->host->host_no, id, sc,
-				  jiffies_to_msecs(jiffies - start_time),
+				  jअगरfies_to_msecs(jअगरfies - start_समय),
 				  desc, 0,
 				  (((u64)CMD_FLAGS(sc) << 32) | CMD_STATE(sc)));
 			FNIC_SCSI_DBG(KERN_DEBUG, fnic->lport->host,
 				"Terminate pending "
 				"dev reset cmpl recd. id %d status %s\n",
-				(int)(id & FNIC_TAG_MASK),
+				(पूर्णांक)(id & FNIC_TAG_MASK),
 				fnic_fcpio_status_to_str(hdr_status));
-			return;
-		}
-		if (CMD_FLAGS(sc) & FNIC_DEV_RST_TIMED_OUT) {
-			/* Need to wait for terminate completion */
+			वापस;
+		पूर्ण
+		अगर (CMD_FLAGS(sc) & FNIC_DEV_RST_TIMED_OUT) अणु
+			/* Need to रुको क्रम terminate completion */
 			spin_unlock_irqrestore(io_lock, flags);
-			FNIC_TRACE(fnic_fcpio_itmf_cmpl_handler,
+			FNIC_TRACE(fnic_fcpio_iपंचांगf_cmpl_handler,
 				  sc->device->host->host_no, id, sc,
-				  jiffies_to_msecs(jiffies - start_time),
+				  jअगरfies_to_msecs(jअगरfies - start_समय),
 				  desc, 0,
 				  (((u64)CMD_FLAGS(sc) << 32) | CMD_STATE(sc)));
 			FNIC_SCSI_DBG(KERN_DEBUG, fnic->lport->host,
 				"dev reset cmpl recd after time out. "
 				"id %d status %s\n",
-				(int)(id & FNIC_TAG_MASK),
+				(पूर्णांक)(id & FNIC_TAG_MASK),
 				fnic_fcpio_status_to_str(hdr_status));
-			return;
-		}
+			वापस;
+		पूर्ण
 		CMD_STATE(sc) = FNIC_IOREQ_CMD_COMPLETE;
 		CMD_FLAGS(sc) |= FNIC_DEV_RST_DONE;
 		FNIC_SCSI_DBG(KERN_DEBUG, fnic->lport->host,
 			      "dev reset cmpl recd. id %d status %s\n",
-			      (int)(id & FNIC_TAG_MASK),
+			      (पूर्णांक)(id & FNIC_TAG_MASK),
 			      fnic_fcpio_status_to_str(hdr_status));
-		if (io_req->dr_done)
-			complete(io_req->dr_done);
+		अगर (io_req->dr_करोne)
+			complete(io_req->dr_करोne);
 		spin_unlock_irqrestore(io_lock, flags);
 
-	} else {
-		shost_printk(KERN_ERR, fnic->lport->host,
+	पूर्ण अन्यथा अणु
+		shost_prपूर्णांकk(KERN_ERR, fnic->lport->host,
 			     "Unexpected itmf io state %s tag %x\n",
 			     fnic_ioreq_state_to_str(CMD_STATE(sc)), id);
 		spin_unlock_irqrestore(io_lock, flags);
-	}
+	पूर्ण
 
-}
+पूर्ण
 
 /*
  * fnic_fcpio_cmpl_handler
- * Routine to service the cq for wq_copy
+ * Routine to service the cq क्रम wq_copy
  */
-static int fnic_fcpio_cmpl_handler(struct vnic_dev *vdev,
-				   unsigned int cq_index,
-				   struct fcpio_fw_req *desc)
-{
-	struct fnic *fnic = vnic_dev_priv(vdev);
+अटल पूर्णांक fnic_fcpio_cmpl_handler(काष्ठा vnic_dev *vdev,
+				   अचिन्हित पूर्णांक cq_index,
+				   काष्ठा fcpio_fw_req *desc)
+अणु
+	काष्ठा fnic *fnic = vnic_dev_priv(vdev);
 
-	switch (desc->hdr.type) {
-	case FCPIO_ICMND_CMPL: /* fw completed a command */
-	case FCPIO_ITMF_CMPL: /* fw completed itmf (abort cmd, lun reset)*/
-	case FCPIO_FLOGI_REG_CMPL: /* fw completed flogi_reg */
-	case FCPIO_FLOGI_FIP_REG_CMPL: /* fw completed flogi_fip_reg */
-	case FCPIO_RESET_CMPL: /* fw completed reset */
+	चयन (desc->hdr.type) अणु
+	हाल FCPIO_ICMND_CMPL: /* fw completed a command */
+	हाल FCPIO_ITMF_CMPL: /* fw completed iपंचांगf (पात cmd, lun reset)*/
+	हाल FCPIO_FLOGI_REG_CMPL: /* fw completed flogi_reg */
+	हाल FCPIO_FLOGI_FIP_REG_CMPL: /* fw completed flogi_fip_reg */
+	हाल FCPIO_RESET_CMPL: /* fw completed reset */
 		atomic64_dec(&fnic->fnic_stats.fw_stats.active_fw_reqs);
-		break;
-	default:
-		break;
-	}
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	switch (desc->hdr.type) {
-	case FCPIO_ACK: /* fw copied copy wq desc to its queue */
+	चयन (desc->hdr.type) अणु
+	हाल FCPIO_ACK: /* fw copied copy wq desc to its queue */
 		fnic_fcpio_ack_handler(fnic, cq_index, desc);
-		break;
+		अवरोध;
 
-	case FCPIO_ICMND_CMPL: /* fw completed a command */
+	हाल FCPIO_ICMND_CMPL: /* fw completed a command */
 		fnic_fcpio_icmnd_cmpl_handler(fnic, desc);
-		break;
+		अवरोध;
 
-	case FCPIO_ITMF_CMPL: /* fw completed itmf (abort cmd, lun reset)*/
-		fnic_fcpio_itmf_cmpl_handler(fnic, desc);
-		break;
+	हाल FCPIO_ITMF_CMPL: /* fw completed iपंचांगf (पात cmd, lun reset)*/
+		fnic_fcpio_iपंचांगf_cmpl_handler(fnic, desc);
+		अवरोध;
 
-	case FCPIO_FLOGI_REG_CMPL: /* fw completed flogi_reg */
-	case FCPIO_FLOGI_FIP_REG_CMPL: /* fw completed flogi_fip_reg */
+	हाल FCPIO_FLOGI_REG_CMPL: /* fw completed flogi_reg */
+	हाल FCPIO_FLOGI_FIP_REG_CMPL: /* fw completed flogi_fip_reg */
 		fnic_fcpio_flogi_reg_cmpl_handler(fnic, desc);
-		break;
+		अवरोध;
 
-	case FCPIO_RESET_CMPL: /* fw completed reset */
+	हाल FCPIO_RESET_CMPL: /* fw completed reset */
 		fnic_fcpio_fw_reset_cmpl_handler(fnic, desc);
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		FNIC_SCSI_DBG(KERN_DEBUG, fnic->lport->host,
 			      "firmware completion type %d\n",
 			      desc->hdr.type);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * fnic_wq_copy_cmpl_handler
  * Routine to process wq copy
  */
-int fnic_wq_copy_cmpl_handler(struct fnic *fnic, int copy_work_to_do)
-{
-	unsigned int wq_work_done = 0;
-	unsigned int i, cq_index;
-	unsigned int cur_work_done;
-	struct misc_stats *misc_stats = &fnic->fnic_stats.misc_stats;
-	u64 start_jiffies = 0;
-	u64 end_jiffies = 0;
-	u64 delta_jiffies = 0;
+पूर्णांक fnic_wq_copy_cmpl_handler(काष्ठा fnic *fnic, पूर्णांक copy_work_to_करो)
+अणु
+	अचिन्हित पूर्णांक wq_work_करोne = 0;
+	अचिन्हित पूर्णांक i, cq_index;
+	अचिन्हित पूर्णांक cur_work_करोne;
+	काष्ठा misc_stats *misc_stats = &fnic->fnic_stats.misc_stats;
+	u64 start_jअगरfies = 0;
+	u64 end_jअगरfies = 0;
+	u64 delta_jअगरfies = 0;
 	u64 delta_ms = 0;
 
-	for (i = 0; i < fnic->wq_copy_count; i++) {
+	क्रम (i = 0; i < fnic->wq_copy_count; i++) अणु
 		cq_index = i + fnic->raw_wq_count + fnic->rq_count;
 
-		start_jiffies = jiffies;
-		cur_work_done = vnic_cq_copy_service(&fnic->cq[cq_index],
+		start_jअगरfies = jअगरfies;
+		cur_work_करोne = vnic_cq_copy_service(&fnic->cq[cq_index],
 						     fnic_fcpio_cmpl_handler,
-						     copy_work_to_do);
-		end_jiffies = jiffies;
+						     copy_work_to_करो);
+		end_jअगरfies = jअगरfies;
 
-		wq_work_done += cur_work_done;
-		delta_jiffies = end_jiffies - start_jiffies;
-		if (delta_jiffies >
-			(u64) atomic64_read(&misc_stats->max_isr_jiffies)) {
-			atomic64_set(&misc_stats->max_isr_jiffies,
-					delta_jiffies);
-			delta_ms = jiffies_to_msecs(delta_jiffies);
-			atomic64_set(&misc_stats->max_isr_time_ms, delta_ms);
-			atomic64_set(&misc_stats->corr_work_done,
-					cur_work_done);
-		}
-	}
-	return wq_work_done;
-}
+		wq_work_करोne += cur_work_करोne;
+		delta_jअगरfies = end_jअगरfies - start_jअगरfies;
+		अगर (delta_jअगरfies >
+			(u64) atomic64_पढ़ो(&misc_stats->max_isr_jअगरfies)) अणु
+			atomic64_set(&misc_stats->max_isr_jअगरfies,
+					delta_jअगरfies);
+			delta_ms = jअगरfies_to_msecs(delta_jअगरfies);
+			atomic64_set(&misc_stats->max_isr_समय_ms, delta_ms);
+			atomic64_set(&misc_stats->corr_work_करोne,
+					cur_work_करोne);
+		पूर्ण
+	पूर्ण
+	वापस wq_work_करोne;
+पूर्ण
 
-static bool fnic_cleanup_io_iter(struct scsi_cmnd *sc, void *data,
+अटल bool fnic_cleanup_io_iter(काष्ठा scsi_cmnd *sc, व्योम *data,
 				 bool reserved)
-{
-	struct fnic *fnic = data;
-	struct fnic_io_req *io_req;
-	unsigned long flags = 0;
+अणु
+	काष्ठा fnic *fnic = data;
+	काष्ठा fnic_io_req *io_req;
+	अचिन्हित दीर्घ flags = 0;
 	spinlock_t *io_lock;
-	unsigned long start_time = 0;
-	struct fnic_stats *fnic_stats = &fnic->fnic_stats;
+	अचिन्हित दीर्घ start_समय = 0;
+	काष्ठा fnic_stats *fnic_stats = &fnic->fnic_stats;
 
 	io_lock = fnic_io_lock_tag(fnic, sc->request->tag);
 	spin_lock_irqsave(io_lock, flags);
 
-	io_req = (struct fnic_io_req *)CMD_SP(sc);
-	if ((CMD_FLAGS(sc) & FNIC_DEVICE_RESET) &&
-	    !(CMD_FLAGS(sc) & FNIC_DEV_RST_DONE)) {
+	io_req = (काष्ठा fnic_io_req *)CMD_SP(sc);
+	अगर ((CMD_FLAGS(sc) & FNIC_DEVICE_RESET) &&
+	    !(CMD_FLAGS(sc) & FNIC_DEV_RST_DONE)) अणु
 		/*
 		 * We will be here only when FW completes reset
-		 * without sending completions for outstanding ios.
+		 * without sending completions क्रम outstanding ios.
 		 */
 		CMD_FLAGS(sc) |= FNIC_DEV_RST_DONE;
-		if (io_req && io_req->dr_done)
-			complete(io_req->dr_done);
-		else if (io_req && io_req->abts_done)
-			complete(io_req->abts_done);
+		अगर (io_req && io_req->dr_करोne)
+			complete(io_req->dr_करोne);
+		अन्यथा अगर (io_req && io_req->abts_करोne)
+			complete(io_req->abts_करोne);
 		spin_unlock_irqrestore(io_lock, flags);
-		return true;
-	} else if (CMD_FLAGS(sc) & FNIC_DEVICE_RESET) {
+		वापस true;
+	पूर्ण अन्यथा अगर (CMD_FLAGS(sc) & FNIC_DEVICE_RESET) अणु
 		spin_unlock_irqrestore(io_lock, flags);
-		return true;
-	}
-	if (!io_req) {
+		वापस true;
+	पूर्ण
+	अगर (!io_req) अणु
 		spin_unlock_irqrestore(io_lock, flags);
-		goto cleanup_scsi_cmd;
-	}
+		जाओ cleanup_scsi_cmd;
+	पूर्ण
 
-	CMD_SP(sc) = NULL;
+	CMD_SP(sc) = शून्य;
 
 	spin_unlock_irqrestore(io_lock, flags);
 
 	/*
 	 * If there is a scsi_cmnd associated with this io_req, then
-	 * free the corresponding state
+	 * मुक्त the corresponding state
 	 */
-	start_time = io_req->start_time;
+	start_समय = io_req->start_समय;
 	fnic_release_ioreq_buf(fnic, io_req, sc);
-	mempool_free(io_req, fnic->io_req_pool);
+	mempool_मुक्त(io_req, fnic->io_req_pool);
 
 cleanup_scsi_cmd:
 	sc->result = DID_TRANSPORT_DISRUPTED << 16;
 	FNIC_SCSI_DBG(KERN_DEBUG, fnic->lport->host,
 		      "fnic_cleanup_io: tag:0x%x : sc:0x%p duration = %lu DID_TRANSPORT_DISRUPTED\n",
-		      sc->request->tag, sc, (jiffies - start_time));
+		      sc->request->tag, sc, (jअगरfies - start_समय));
 
-	if (atomic64_read(&fnic->io_cmpl_skip))
+	अगर (atomic64_पढ़ो(&fnic->io_cmpl_skip))
 		atomic64_dec(&fnic->io_cmpl_skip);
-	else
+	अन्यथा
 		atomic64_inc(&fnic_stats->io_stats.io_completions);
 
 	/* Complete the command to SCSI */
-	if (sc->scsi_done) {
-		if (!(CMD_FLAGS(sc) & FNIC_IO_ISSUED))
-			shost_printk(KERN_ERR, fnic->lport->host,
+	अगर (sc->scsi_करोne) अणु
+		अगर (!(CMD_FLAGS(sc) & FNIC_IO_ISSUED))
+			shost_prपूर्णांकk(KERN_ERR, fnic->lport->host,
 				     "Calling done for IO not issued to fw: tag:0x%x sc:0x%p\n",
 				     sc->request->tag, sc);
 
 		FNIC_TRACE(fnic_cleanup_io,
 			   sc->device->host->host_no, sc->request->tag, sc,
-			   jiffies_to_msecs(jiffies - start_time),
+			   jअगरfies_to_msecs(jअगरfies - start_समय),
 			   0, ((u64)sc->cmnd[0] << 32 |
 			       (u64)sc->cmnd[2] << 24 |
 			       (u64)sc->cmnd[3] << 16 |
 			       (u64)sc->cmnd[4] << 8 | sc->cmnd[5]),
 			   (((u64)CMD_FLAGS(sc) << 32) | CMD_STATE(sc)));
 
-		sc->scsi_done(sc);
-	}
-	return true;
-}
+		sc->scsi_करोne(sc);
+	पूर्ण
+	वापस true;
+पूर्ण
 
-static void fnic_cleanup_io(struct fnic *fnic)
-{
+अटल व्योम fnic_cleanup_io(काष्ठा fnic *fnic)
+अणु
 	scsi_host_busy_iter(fnic->lport->host,
 			    fnic_cleanup_io_iter, fnic);
-}
+पूर्ण
 
-void fnic_wq_copy_cleanup_handler(struct vnic_wq_copy *wq,
-				  struct fcpio_host_req *desc)
-{
+व्योम fnic_wq_copy_cleanup_handler(काष्ठा vnic_wq_copy *wq,
+				  काष्ठा fcpio_host_req *desc)
+अणु
 	u32 id;
-	struct fnic *fnic = vnic_dev_priv(wq->vdev);
-	struct fnic_io_req *io_req;
-	struct scsi_cmnd *sc;
-	unsigned long flags;
+	काष्ठा fnic *fnic = vnic_dev_priv(wq->vdev);
+	काष्ठा fnic_io_req *io_req;
+	काष्ठा scsi_cmnd *sc;
+	अचिन्हित दीर्घ flags;
 	spinlock_t *io_lock;
-	unsigned long start_time = 0;
+	अचिन्हित दीर्घ start_समय = 0;
 
 	/* get the tag reference */
 	fcpio_tag_id_dec(&desc->hdr.tag, &id);
 	id &= FNIC_TAG_MASK;
 
-	if (id >= fnic->fnic_max_tag_id)
-		return;
+	अगर (id >= fnic->fnic_max_tag_id)
+		वापस;
 
 	sc = scsi_host_find_tag(fnic->lport->host, id);
-	if (!sc)
-		return;
+	अगर (!sc)
+		वापस;
 
 	io_lock = fnic_io_lock_hash(fnic, sc);
 	spin_lock_irqsave(io_lock, flags);
 
 	/* Get the IO context which this desc refers to */
-	io_req = (struct fnic_io_req *)CMD_SP(sc);
+	io_req = (काष्ठा fnic_io_req *)CMD_SP(sc);
 
-	/* fnic interrupts are turned off by now */
+	/* fnic पूर्णांकerrupts are turned off by now */
 
-	if (!io_req) {
+	अगर (!io_req) अणु
 		spin_unlock_irqrestore(io_lock, flags);
-		goto wq_copy_cleanup_scsi_cmd;
-	}
+		जाओ wq_copy_cleanup_scsi_cmd;
+	पूर्ण
 
-	CMD_SP(sc) = NULL;
+	CMD_SP(sc) = शून्य;
 
 	spin_unlock_irqrestore(io_lock, flags);
 
-	start_time = io_req->start_time;
+	start_समय = io_req->start_समय;
 	fnic_release_ioreq_buf(fnic, io_req, sc);
-	mempool_free(io_req, fnic->io_req_pool);
+	mempool_मुक्त(io_req, fnic->io_req_pool);
 
 wq_copy_cleanup_scsi_cmd:
 	sc->result = DID_NO_CONNECT << 16;
 	FNIC_SCSI_DBG(KERN_DEBUG, fnic->lport->host, "wq_copy_cleanup_handler:"
 		      " DID_NO_CONNECT\n");
 
-	if (sc->scsi_done) {
+	अगर (sc->scsi_करोne) अणु
 		FNIC_TRACE(fnic_wq_copy_cleanup_handler,
 			  sc->device->host->host_no, id, sc,
-			  jiffies_to_msecs(jiffies - start_time),
+			  jअगरfies_to_msecs(jअगरfies - start_समय),
 			  0, ((u64)sc->cmnd[0] << 32 |
 			  (u64)sc->cmnd[2] << 24 | (u64)sc->cmnd[3] << 16 |
 			  (u64)sc->cmnd[4] << 8 | sc->cmnd[5]),
 			  (((u64)CMD_FLAGS(sc) << 32) | CMD_STATE(sc)));
 
-		sc->scsi_done(sc);
-	}
-}
+		sc->scsi_करोne(sc);
+	पूर्ण
+पूर्ण
 
-static inline int fnic_queue_abort_io_req(struct fnic *fnic, int tag,
+अटल अंतरभूत पूर्णांक fnic_queue_पात_io_req(काष्ठा fnic *fnic, पूर्णांक tag,
 					  u32 task_req, u8 *fc_lun,
-					  struct fnic_io_req *io_req)
-{
-	struct vnic_wq_copy *wq = &fnic->wq_copy[0];
-	struct Scsi_Host *host = fnic->lport->host;
-	struct misc_stats *misc_stats = &fnic->fnic_stats.misc_stats;
-	unsigned long flags;
+					  काष्ठा fnic_io_req *io_req)
+अणु
+	काष्ठा vnic_wq_copy *wq = &fnic->wq_copy[0];
+	काष्ठा Scsi_Host *host = fnic->lport->host;
+	काष्ठा misc_stats *misc_stats = &fnic->fnic_stats.misc_stats;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(host->host_lock, flags);
-	if (unlikely(fnic_chk_state_flags_locked(fnic,
-						FNIC_FLAGS_IO_BLOCKED))) {
+	अगर (unlikely(fnic_chk_state_flags_locked(fnic,
+						FNIC_FLAGS_IO_BLOCKED))) अणु
 		spin_unlock_irqrestore(host->host_lock, flags);
-		return 1;
-	} else
+		वापस 1;
+	पूर्ण अन्यथा
 		atomic_inc(&fnic->in_flight);
 	spin_unlock_irqrestore(host->host_lock, flags);
 
 	spin_lock_irqsave(&fnic->wq_copy_lock[0], flags);
 
-	if (vnic_wq_copy_desc_avail(wq) <= fnic->wq_copy_desc_low[0])
-		free_wq_copy_descs(fnic, wq);
+	अगर (vnic_wq_copy_desc_avail(wq) <= fnic->wq_copy_desc_low[0])
+		मुक्त_wq_copy_descs(fnic, wq);
 
-	if (!vnic_wq_copy_desc_avail(wq)) {
+	अगर (!vnic_wq_copy_desc_avail(wq)) अणु
 		spin_unlock_irqrestore(&fnic->wq_copy_lock[0], flags);
 		atomic_dec(&fnic->in_flight);
 		FNIC_SCSI_DBG(KERN_DEBUG, fnic->lport->host,
 			"fnic_queue_abort_io_req: failure: no descriptors\n");
 		atomic64_inc(&misc_stats->abts_cpwq_alloc_failures);
-		return 1;
-	}
-	fnic_queue_wq_copy_desc_itmf(wq, tag | FNIC_TAG_ABORT,
+		वापस 1;
+	पूर्ण
+	fnic_queue_wq_copy_desc_iपंचांगf(wq, tag | FNIC_TAG_ABORT,
 				     0, task_req, tag, fc_lun, io_req->port_id,
 				     fnic->config.ra_tov, fnic->config.ed_tov);
 
 	atomic64_inc(&fnic->fnic_stats.fw_stats.active_fw_reqs);
-	if (atomic64_read(&fnic->fnic_stats.fw_stats.active_fw_reqs) >
-		  atomic64_read(&fnic->fnic_stats.fw_stats.max_fw_reqs))
+	अगर (atomic64_पढ़ो(&fnic->fnic_stats.fw_stats.active_fw_reqs) >
+		  atomic64_पढ़ो(&fnic->fnic_stats.fw_stats.max_fw_reqs))
 		atomic64_set(&fnic->fnic_stats.fw_stats.max_fw_reqs,
-		  atomic64_read(&fnic->fnic_stats.fw_stats.active_fw_reqs));
+		  atomic64_पढ़ो(&fnic->fnic_stats.fw_stats.active_fw_reqs));
 
 	spin_unlock_irqrestore(&fnic->wq_copy_lock[0], flags);
 	atomic_dec(&fnic->in_flight);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-struct fnic_rport_abort_io_iter_data {
-	struct fnic *fnic;
+काष्ठा fnic_rport_पात_io_iter_data अणु
+	काष्ठा fnic *fnic;
 	u32 port_id;
-	int term_cnt;
-};
+	पूर्णांक term_cnt;
+पूर्ण;
 
-static bool fnic_rport_abort_io_iter(struct scsi_cmnd *sc, void *data,
+अटल bool fnic_rport_पात_io_iter(काष्ठा scsi_cmnd *sc, व्योम *data,
 				     bool reserved)
-{
-	struct fnic_rport_abort_io_iter_data *iter_data = data;
-	struct fnic *fnic = iter_data->fnic;
-	int abt_tag = sc->request->tag;
-	struct fnic_io_req *io_req;
+अणु
+	काष्ठा fnic_rport_पात_io_iter_data *iter_data = data;
+	काष्ठा fnic *fnic = iter_data->fnic;
+	पूर्णांक abt_tag = sc->request->tag;
+	काष्ठा fnic_io_req *io_req;
 	spinlock_t *io_lock;
-	unsigned long flags;
-	struct reset_stats *reset_stats = &fnic->fnic_stats.reset_stats;
-	struct terminate_stats *term_stats = &fnic->fnic_stats.term_stats;
-	struct scsi_lun fc_lun;
-	enum fnic_ioreq_state old_ioreq_state;
+	अचिन्हित दीर्घ flags;
+	काष्ठा reset_stats *reset_stats = &fnic->fnic_stats.reset_stats;
+	काष्ठा terminate_stats *term_stats = &fnic->fnic_stats.term_stats;
+	काष्ठा scsi_lun fc_lun;
+	क्रमागत fnic_ioreq_state old_ioreq_state;
 
 	io_lock = fnic_io_lock_tag(fnic, abt_tag);
 	spin_lock_irqsave(io_lock, flags);
 
-	io_req = (struct fnic_io_req *)CMD_SP(sc);
+	io_req = (काष्ठा fnic_io_req *)CMD_SP(sc);
 
-	if (!io_req || io_req->port_id != iter_data->port_id) {
+	अगर (!io_req || io_req->port_id != iter_data->port_id) अणु
 		spin_unlock_irqrestore(io_lock, flags);
-		return true;
-	}
+		वापस true;
+	पूर्ण
 
-	if ((CMD_FLAGS(sc) & FNIC_DEVICE_RESET) &&
-	    (!(CMD_FLAGS(sc) & FNIC_DEV_RST_ISSUED))) {
+	अगर ((CMD_FLAGS(sc) & FNIC_DEVICE_RESET) &&
+	    (!(CMD_FLAGS(sc) & FNIC_DEV_RST_ISSUED))) अणु
 		FNIC_SCSI_DBG(KERN_DEBUG, fnic->lport->host,
 			"fnic_rport_exch_reset dev rst not pending sc 0x%p\n",
 			sc);
 		spin_unlock_irqrestore(io_lock, flags);
-		return true;
-	}
+		वापस true;
+	पूर्ण
 
 	/*
 	 * Found IO that is still pending with firmware and
-	 * belongs to rport that went away
+	 * beदीर्घs to rport that went away
 	 */
-	if (CMD_STATE(sc) == FNIC_IOREQ_ABTS_PENDING) {
+	अगर (CMD_STATE(sc) == FNIC_IOREQ_ABTS_PENDING) अणु
 		spin_unlock_irqrestore(io_lock, flags);
-		return true;
-	}
-	if (io_req->abts_done) {
-		shost_printk(KERN_ERR, fnic->lport->host,
+		वापस true;
+	पूर्ण
+	अगर (io_req->abts_करोne) अणु
+		shost_prपूर्णांकk(KERN_ERR, fnic->lport->host,
 			"fnic_rport_exch_reset: io_req->abts_done is set "
 			"state is %s\n",
 			fnic_ioreq_state_to_str(CMD_STATE(sc)));
-	}
+	पूर्ण
 
-	if (!(CMD_FLAGS(sc) & FNIC_IO_ISSUED)) {
-		shost_printk(KERN_ERR, fnic->lport->host,
+	अगर (!(CMD_FLAGS(sc) & FNIC_IO_ISSUED)) अणु
+		shost_prपूर्णांकk(KERN_ERR, fnic->lport->host,
 			     "rport_exch_reset "
 			     "IO not yet issued %p tag 0x%x flags "
 			     "%x state %d\n",
 			     sc, abt_tag, CMD_FLAGS(sc), CMD_STATE(sc));
-	}
+	पूर्ण
 	old_ioreq_state = CMD_STATE(sc);
 	CMD_STATE(sc) = FNIC_IOREQ_ABTS_PENDING;
 	CMD_ABTS_STATUS(sc) = FCPIO_INVALID_CODE;
-	if (CMD_FLAGS(sc) & FNIC_DEVICE_RESET) {
+	अगर (CMD_FLAGS(sc) & FNIC_DEVICE_RESET) अणु
 		atomic64_inc(&reset_stats->device_reset_terminates);
 		abt_tag |= FNIC_TAG_DEV_RST;
-	}
+	पूर्ण
 	FNIC_SCSI_DBG(KERN_DEBUG, fnic->lport->host,
 		      "fnic_rport_exch_reset dev rst sc 0x%p\n", sc);
-	BUG_ON(io_req->abts_done);
+	BUG_ON(io_req->abts_करोne);
 
 	FNIC_SCSI_DBG(KERN_DEBUG, fnic->lport->host,
 		      "fnic_rport_reset_exch: Issuing abts\n");
 
 	spin_unlock_irqrestore(io_lock, flags);
 
-	/* Now queue the abort command to firmware */
-	int_to_scsilun(sc->device->lun, &fc_lun);
+	/* Now queue the पात command to firmware */
+	पूर्णांक_to_scsilun(sc->device->lun, &fc_lun);
 
-	if (fnic_queue_abort_io_req(fnic, abt_tag,
+	अगर (fnic_queue_पात_io_req(fnic, abt_tag,
 				    FCPIO_ITMF_ABT_TASK_TERM,
-				    fc_lun.scsi_lun, io_req)) {
+				    fc_lun.scsi_lun, io_req)) अणु
 		/*
-		 * Revert the cmd state back to old state, if
+		 * Revert the cmd state back to old state, अगर
 		 * it hasn't changed in between. This cmd will get
-		 * aborted later by scsi_eh, or cleaned up during
+		 * पातed later by scsi_eh, or cleaned up during
 		 * lun reset
 		 */
 		spin_lock_irqsave(io_lock, flags);
-		if (CMD_STATE(sc) == FNIC_IOREQ_ABTS_PENDING)
+		अगर (CMD_STATE(sc) == FNIC_IOREQ_ABTS_PENDING)
 			CMD_STATE(sc) = old_ioreq_state;
 		spin_unlock_irqrestore(io_lock, flags);
-	} else {
+	पूर्ण अन्यथा अणु
 		spin_lock_irqsave(io_lock, flags);
-		if (CMD_FLAGS(sc) & FNIC_DEVICE_RESET)
+		अगर (CMD_FLAGS(sc) & FNIC_DEVICE_RESET)
 			CMD_FLAGS(sc) |= FNIC_DEV_RST_TERM_ISSUED;
-		else
+		अन्यथा
 			CMD_FLAGS(sc) |= FNIC_IO_INTERNAL_TERM_ISSUED;
 		spin_unlock_irqrestore(io_lock, flags);
 		atomic64_inc(&term_stats->terminates);
 		iter_data->term_cnt++;
-	}
-	return true;
-}
+	पूर्ण
+	वापस true;
+पूर्ण
 
-static void fnic_rport_exch_reset(struct fnic *fnic, u32 port_id)
-{
-	struct terminate_stats *term_stats = &fnic->fnic_stats.term_stats;
-	struct fnic_rport_abort_io_iter_data iter_data = {
+अटल व्योम fnic_rport_exch_reset(काष्ठा fnic *fnic, u32 port_id)
+अणु
+	काष्ठा terminate_stats *term_stats = &fnic->fnic_stats.term_stats;
+	काष्ठा fnic_rport_पात_io_iter_data iter_data = अणु
 		.fnic = fnic,
 		.port_id = port_id,
 		.term_cnt = 0,
-	};
+	पूर्ण;
 
 	FNIC_SCSI_DBG(KERN_DEBUG,
 		      fnic->lport->host,
 		      "fnic_rport_exch_reset called portid 0x%06x\n",
 		      port_id);
 
-	if (fnic->in_remove)
-		return;
+	अगर (fnic->in_हटाओ)
+		वापस;
 
-	scsi_host_busy_iter(fnic->lport->host, fnic_rport_abort_io_iter,
+	scsi_host_busy_iter(fnic->lport->host, fnic_rport_पात_io_iter,
 			    &iter_data);
-	if (iter_data.term_cnt > atomic64_read(&term_stats->max_terminates))
+	अगर (iter_data.term_cnt > atomic64_पढ़ो(&term_stats->max_terminates))
 		atomic64_set(&term_stats->max_terminates, iter_data.term_cnt);
 
-}
+पूर्ण
 
-void fnic_terminate_rport_io(struct fc_rport *rport)
-{
-	struct fc_rport_libfc_priv *rdata;
-	struct fc_lport *lport;
-	struct fnic *fnic;
+व्योम fnic_terminate_rport_io(काष्ठा fc_rport *rport)
+अणु
+	काष्ठा fc_rport_libfc_priv *rdata;
+	काष्ठा fc_lport *lport;
+	काष्ठा fnic *fnic;
 
-	if (!rport) {
-		printk(KERN_ERR "fnic_terminate_rport_io: rport is NULL\n");
-		return;
-	}
+	अगर (!rport) अणु
+		prपूर्णांकk(KERN_ERR "fnic_terminate_rport_io: rport is NULL\n");
+		वापस;
+	पूर्ण
 	rdata = rport->dd_data;
 
-	if (!rdata) {
-		printk(KERN_ERR "fnic_terminate_rport_io: rdata is NULL\n");
-		return;
-	}
+	अगर (!rdata) अणु
+		prपूर्णांकk(KERN_ERR "fnic_terminate_rport_io: rdata is NULL\n");
+		वापस;
+	पूर्ण
 	lport = rdata->local_port;
 
-	if (!lport) {
-		printk(KERN_ERR "fnic_terminate_rport_io: lport is NULL\n");
-		return;
-	}
+	अगर (!lport) अणु
+		prपूर्णांकk(KERN_ERR "fnic_terminate_rport_io: lport is NULL\n");
+		वापस;
+	पूर्ण
 	fnic = lport_priv(lport);
 	FNIC_SCSI_DBG(KERN_DEBUG,
 		      fnic->lport->host, "fnic_terminate_rport_io called"
@@ -1714,41 +1715,41 @@ void fnic_terminate_rport_io(struct fc_rport *rport)
 		      rport->port_name, rport->node_name, rport,
 		      rport->port_id);
 
-	if (fnic->in_remove)
-		return;
+	अगर (fnic->in_हटाओ)
+		वापस;
 
 	fnic_rport_exch_reset(fnic, rport->port_id);
-}
+पूर्ण
 
 /*
- * This function is exported to SCSI for sending abort cmnds.
+ * This function is exported to SCSI क्रम sending पात cmnds.
  * A SCSI IO is represented by a io_req in the driver.
  * The ioreq is linked to the SCSI Cmd, thus a link with the ULP's IO.
  */
-int fnic_abort_cmd(struct scsi_cmnd *sc)
-{
-	struct fc_lport *lp;
-	struct fnic *fnic;
-	struct fnic_io_req *io_req = NULL;
-	struct fc_rport *rport;
+पूर्णांक fnic_पात_cmd(काष्ठा scsi_cmnd *sc)
+अणु
+	काष्ठा fc_lport *lp;
+	काष्ठा fnic *fnic;
+	काष्ठा fnic_io_req *io_req = शून्य;
+	काष्ठा fc_rport *rport;
 	spinlock_t *io_lock;
-	unsigned long flags;
-	unsigned long start_time = 0;
-	int ret = SUCCESS;
+	अचिन्हित दीर्घ flags;
+	अचिन्हित दीर्घ start_समय = 0;
+	पूर्णांक ret = SUCCESS;
 	u32 task_req = 0;
-	struct scsi_lun fc_lun;
-	struct fnic_stats *fnic_stats;
-	struct abort_stats *abts_stats;
-	struct terminate_stats *term_stats;
-	enum fnic_ioreq_state old_ioreq_state;
-	int tag;
-	unsigned long abt_issued_time;
-	DECLARE_COMPLETION_ONSTACK(tm_done);
+	काष्ठा scsi_lun fc_lun;
+	काष्ठा fnic_stats *fnic_stats;
+	काष्ठा पात_stats *abts_stats;
+	काष्ठा terminate_stats *term_stats;
+	क्रमागत fnic_ioreq_state old_ioreq_state;
+	पूर्णांक tag;
+	अचिन्हित दीर्घ abt_issued_समय;
+	DECLARE_COMPLETION_ONSTACK(पंचांग_करोne);
 
-	/* Wait for rport to unblock */
+	/* Wait क्रम rport to unblock */
 	fc_block_scsi_eh(sc);
 
-	/* Get local-port, check ready and link up */
+	/* Get local-port, check पढ़ोy and link up */
 	lp = shost_priv(sc->device->host);
 
 	fnic = lport_priv(lp);
@@ -1765,61 +1766,61 @@ int fnic_abort_cmd(struct scsi_cmnd *sc)
 
 	CMD_FLAGS(sc) = FNIC_NO_FLAGS;
 
-	if (lp->state != LPORT_ST_READY || !(lp->link_up)) {
+	अगर (lp->state != LPORT_ST_READY || !(lp->link_up)) अणु
 		ret = FAILED;
-		goto fnic_abort_cmd_end;
-	}
+		जाओ fnic_पात_cmd_end;
+	पूर्ण
 
 	/*
-	 * Avoid a race between SCSI issuing the abort and the device
+	 * Aव्योम a race between SCSI issuing the पात and the device
 	 * completing the command.
 	 *
-	 * If the command is already completed by the fw cmpl code,
-	 * we just return SUCCESS from here. This means that the abort
-	 * succeeded. In the SCSI ML, since the timeout for command has
+	 * If the command is alपढ़ोy completed by the fw cmpl code,
+	 * we just वापस SUCCESS from here. This means that the पात
+	 * succeeded. In the SCSI ML, since the समयout क्रम command has
 	 * happened, the completion wont actually complete the command
-	 * and it will be considered as an aborted command
+	 * and it will be considered as an पातed command
 	 *
-	 * The CMD_SP will not be cleared except while holding io_req_lock.
+	 * The CMD_SP will not be cleared except जबतक holding io_req_lock.
 	 */
 	io_lock = fnic_io_lock_hash(fnic, sc);
 	spin_lock_irqsave(io_lock, flags);
-	io_req = (struct fnic_io_req *)CMD_SP(sc);
-	if (!io_req) {
+	io_req = (काष्ठा fnic_io_req *)CMD_SP(sc);
+	अगर (!io_req) अणु
 		spin_unlock_irqrestore(io_lock, flags);
-		goto fnic_abort_cmd_end;
-	}
+		जाओ fnic_पात_cmd_end;
+	पूर्ण
 
-	io_req->abts_done = &tm_done;
+	io_req->abts_करोne = &पंचांग_करोne;
 
-	if (CMD_STATE(sc) == FNIC_IOREQ_ABTS_PENDING) {
+	अगर (CMD_STATE(sc) == FNIC_IOREQ_ABTS_PENDING) अणु
 		spin_unlock_irqrestore(io_lock, flags);
-		goto wait_pending;
-	}
+		जाओ रुको_pending;
+	पूर्ण
 
-	abt_issued_time = jiffies_to_msecs(jiffies) - jiffies_to_msecs(io_req->start_time);
-	if (abt_issued_time <= 6000)
-		atomic64_inc(&abts_stats->abort_issued_btw_0_to_6_sec);
-	else if (abt_issued_time > 6000 && abt_issued_time <= 20000)
-		atomic64_inc(&abts_stats->abort_issued_btw_6_to_20_sec);
-	else if (abt_issued_time > 20000 && abt_issued_time <= 30000)
-		atomic64_inc(&abts_stats->abort_issued_btw_20_to_30_sec);
-	else if (abt_issued_time > 30000 && abt_issued_time <= 40000)
-		atomic64_inc(&abts_stats->abort_issued_btw_30_to_40_sec);
-	else if (abt_issued_time > 40000 && abt_issued_time <= 50000)
-		atomic64_inc(&abts_stats->abort_issued_btw_40_to_50_sec);
-	else if (abt_issued_time > 50000 && abt_issued_time <= 60000)
-		atomic64_inc(&abts_stats->abort_issued_btw_50_to_60_sec);
-	else
-		atomic64_inc(&abts_stats->abort_issued_greater_than_60_sec);
+	abt_issued_समय = jअगरfies_to_msecs(jअगरfies) - jअगरfies_to_msecs(io_req->start_समय);
+	अगर (abt_issued_समय <= 6000)
+		atomic64_inc(&abts_stats->पात_issued_btw_0_to_6_sec);
+	अन्यथा अगर (abt_issued_समय > 6000 && abt_issued_समय <= 20000)
+		atomic64_inc(&abts_stats->पात_issued_btw_6_to_20_sec);
+	अन्यथा अगर (abt_issued_समय > 20000 && abt_issued_समय <= 30000)
+		atomic64_inc(&abts_stats->पात_issued_btw_20_to_30_sec);
+	अन्यथा अगर (abt_issued_समय > 30000 && abt_issued_समय <= 40000)
+		atomic64_inc(&abts_stats->पात_issued_btw_30_to_40_sec);
+	अन्यथा अगर (abt_issued_समय > 40000 && abt_issued_समय <= 50000)
+		atomic64_inc(&abts_stats->पात_issued_btw_40_to_50_sec);
+	अन्यथा अगर (abt_issued_समय > 50000 && abt_issued_समय <= 60000)
+		atomic64_inc(&abts_stats->पात_issued_btw_50_to_60_sec);
+	अन्यथा
+		atomic64_inc(&abts_stats->पात_issued_greater_than_60_sec);
 
 	FNIC_SCSI_DBG(KERN_INFO, fnic->lport->host,
-		"CBD Opcode: %02x Abort issued time: %lu msec\n", sc->cmnd[0], abt_issued_time);
+		"CBD Opcode: %02x Abort issued time: %lu msec\n", sc->cmnd[0], abt_issued_समय);
 	/*
-	 * Command is still pending, need to abort it
-	 * If the firmware completes the command after this point,
-	 * the completion wont be done till mid-layer, since abort
-	 * has already started.
+	 * Command is still pending, need to पात it
+	 * If the firmware completes the command after this poपूर्णांक,
+	 * the completion wont be करोne till mid-layer, since पात
+	 * has alपढ़ोy started.
 	 */
 	old_ioreq_state = CMD_STATE(sc);
 	CMD_STATE(sc) = FNIC_IOREQ_ABTS_PENDING;
@@ -1828,124 +1829,124 @@ int fnic_abort_cmd(struct scsi_cmnd *sc)
 	spin_unlock_irqrestore(io_lock, flags);
 
 	/*
-	 * Check readiness of the remote port. If the path to remote
+	 * Check पढ़ोiness of the remote port. If the path to remote
 	 * port is up, then send abts to the remote port to terminate
 	 * the IO. Else, just locally terminate the IO in the firmware
 	 */
-	if (fc_remote_port_chkready(rport) == 0)
+	अगर (fc_remote_port_chkपढ़ोy(rport) == 0)
 		task_req = FCPIO_ITMF_ABT_TASK;
-	else {
-		atomic64_inc(&fnic_stats->misc_stats.rport_not_ready);
+	अन्यथा अणु
+		atomic64_inc(&fnic_stats->misc_stats.rport_not_पढ़ोy);
 		task_req = FCPIO_ITMF_ABT_TASK_TERM;
-	}
+	पूर्ण
 
-	/* Now queue the abort command to firmware */
-	int_to_scsilun(sc->device->lun, &fc_lun);
+	/* Now queue the पात command to firmware */
+	पूर्णांक_to_scsilun(sc->device->lun, &fc_lun);
 
-	if (fnic_queue_abort_io_req(fnic, sc->request->tag, task_req,
-				    fc_lun.scsi_lun, io_req)) {
+	अगर (fnic_queue_पात_io_req(fnic, sc->request->tag, task_req,
+				    fc_lun.scsi_lun, io_req)) अणु
 		spin_lock_irqsave(io_lock, flags);
-		if (CMD_STATE(sc) == FNIC_IOREQ_ABTS_PENDING)
+		अगर (CMD_STATE(sc) == FNIC_IOREQ_ABTS_PENDING)
 			CMD_STATE(sc) = old_ioreq_state;
-		io_req = (struct fnic_io_req *)CMD_SP(sc);
-		if (io_req)
-			io_req->abts_done = NULL;
+		io_req = (काष्ठा fnic_io_req *)CMD_SP(sc);
+		अगर (io_req)
+			io_req->abts_करोne = शून्य;
 		spin_unlock_irqrestore(io_lock, flags);
 		ret = FAILED;
-		goto fnic_abort_cmd_end;
-	}
-	if (task_req == FCPIO_ITMF_ABT_TASK) {
+		जाओ fnic_पात_cmd_end;
+	पूर्ण
+	अगर (task_req == FCPIO_ITMF_ABT_TASK) अणु
 		CMD_FLAGS(sc) |= FNIC_IO_ABTS_ISSUED;
-		atomic64_inc(&fnic_stats->abts_stats.aborts);
-	} else {
+		atomic64_inc(&fnic_stats->abts_stats.पातs);
+	पूर्ण अन्यथा अणु
 		CMD_FLAGS(sc) |= FNIC_IO_TERM_ISSUED;
 		atomic64_inc(&fnic_stats->term_stats.terminates);
-	}
+	पूर्ण
 
 	/*
-	 * We queued an abort IO, wait for its completion.
-	 * Once the firmware completes the abort command, it will
-	 * wake up this thread.
+	 * We queued an पात IO, रुको क्रम its completion.
+	 * Once the firmware completes the पात command, it will
+	 * wake up this thपढ़ो.
 	 */
- wait_pending:
-	wait_for_completion_timeout(&tm_done,
-				    msecs_to_jiffies
+ रुको_pending:
+	रुको_क्रम_completion_समयout(&पंचांग_करोne,
+				    msecs_to_jअगरfies
 				    (2 * fnic->config.ra_tov +
 				     fnic->config.ed_tov));
 
-	/* Check the abort status */
+	/* Check the पात status */
 	spin_lock_irqsave(io_lock, flags);
 
-	io_req = (struct fnic_io_req *)CMD_SP(sc);
-	if (!io_req) {
+	io_req = (काष्ठा fnic_io_req *)CMD_SP(sc);
+	अगर (!io_req) अणु
 		atomic64_inc(&fnic_stats->io_stats.ioreq_null);
 		spin_unlock_irqrestore(io_lock, flags);
-		CMD_FLAGS(sc) |= FNIC_IO_ABT_TERM_REQ_NULL;
+		CMD_FLAGS(sc) |= FNIC_IO_ABT_TERM_REQ_शून्य;
 		ret = FAILED;
-		goto fnic_abort_cmd_end;
-	}
-	io_req->abts_done = NULL;
+		जाओ fnic_पात_cmd_end;
+	पूर्ण
+	io_req->abts_करोne = शून्य;
 
-	/* fw did not complete abort, timed out */
-	if (CMD_ABTS_STATUS(sc) == FCPIO_INVALID_CODE) {
+	/* fw did not complete पात, समयd out */
+	अगर (CMD_ABTS_STATUS(sc) == FCPIO_INVALID_CODE) अणु
 		spin_unlock_irqrestore(io_lock, flags);
-		if (task_req == FCPIO_ITMF_ABT_TASK) {
-			atomic64_inc(&abts_stats->abort_drv_timeouts);
-		} else {
-			atomic64_inc(&term_stats->terminate_drv_timeouts);
-		}
+		अगर (task_req == FCPIO_ITMF_ABT_TASK) अणु
+			atomic64_inc(&abts_stats->पात_drv_समयouts);
+		पूर्ण अन्यथा अणु
+			atomic64_inc(&term_stats->terminate_drv_समयouts);
+		पूर्ण
 		CMD_FLAGS(sc) |= FNIC_IO_ABT_TERM_TIMED_OUT;
 		ret = FAILED;
-		goto fnic_abort_cmd_end;
-	}
+		जाओ fnic_पात_cmd_end;
+	पूर्ण
 
 	/* IO out of order */
 
-	if (!(CMD_FLAGS(sc) & (FNIC_IO_ABORTED | FNIC_IO_DONE))) {
+	अगर (!(CMD_FLAGS(sc) & (FNIC_IO_ABORTED | FNIC_IO_DONE))) अणु
 		spin_unlock_irqrestore(io_lock, flags);
 		FNIC_SCSI_DBG(KERN_DEBUG, fnic->lport->host,
 			"Issuing Host reset due to out of order IO\n");
 
 		ret = FAILED;
-		goto fnic_abort_cmd_end;
-	}
+		जाओ fnic_पात_cmd_end;
+	पूर्ण
 
 	CMD_STATE(sc) = FNIC_IOREQ_ABTS_COMPLETE;
 
-	start_time = io_req->start_time;
+	start_समय = io_req->start_समय;
 	/*
-	 * firmware completed the abort, check the status,
-	 * free the io_req if successful. If abort fails,
+	 * firmware completed the पात, check the status,
+	 * मुक्त the io_req अगर successful. If पात fails,
 	 * Device reset will clean the I/O.
 	 */
-	if (CMD_ABTS_STATUS(sc) == FCPIO_SUCCESS)
-		CMD_SP(sc) = NULL;
-	else {
+	अगर (CMD_ABTS_STATUS(sc) == FCPIO_SUCCESS)
+		CMD_SP(sc) = शून्य;
+	अन्यथा अणु
 		ret = FAILED;
 		spin_unlock_irqrestore(io_lock, flags);
-		goto fnic_abort_cmd_end;
-	}
+		जाओ fnic_पात_cmd_end;
+	पूर्ण
 
 	spin_unlock_irqrestore(io_lock, flags);
 
 	fnic_release_ioreq_buf(fnic, io_req, sc);
-	mempool_free(io_req, fnic->io_req_pool);
+	mempool_मुक्त(io_req, fnic->io_req_pool);
 
-	if (sc->scsi_done) {
+	अगर (sc->scsi_करोne) अणु
 	/* Call SCSI completion function to complete the IO */
 		sc->result = (DID_ABORT << 16);
-		sc->scsi_done(sc);
+		sc->scsi_करोne(sc);
 		atomic64_dec(&fnic_stats->io_stats.active_ios);
-		if (atomic64_read(&fnic->io_cmpl_skip))
+		अगर (atomic64_पढ़ो(&fnic->io_cmpl_skip))
 			atomic64_dec(&fnic->io_cmpl_skip);
-		else
+		अन्यथा
 			atomic64_inc(&fnic_stats->io_stats.io_completions);
-	}
+	पूर्ण
 
-fnic_abort_cmd_end:
-	FNIC_TRACE(fnic_abort_cmd, sc->device->host->host_no,
+fnic_पात_cmd_end:
+	FNIC_TRACE(fnic_पात_cmd, sc->device->host->host_no,
 		  sc->request->tag, sc,
-		  jiffies_to_msecs(jiffies - start_time),
+		  jअगरfies_to_msecs(jअगरfies - start_समय),
 		  0, ((u64)sc->cmnd[0] << 32 |
 		  (u64)sc->cmnd[2] << 24 | (u64)sc->cmnd[3] << 16 |
 		  (u64)sc->cmnd[4] << 8 | sc->cmnd[5]),
@@ -1955,310 +1956,310 @@ fnic_abort_cmd_end:
 		      "Returning from abort cmd type %x %s\n", task_req,
 		      (ret == SUCCESS) ?
 		      "SUCCESS" : "FAILED");
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static inline int fnic_queue_dr_io_req(struct fnic *fnic,
-				       struct scsi_cmnd *sc,
-				       struct fnic_io_req *io_req)
-{
-	struct vnic_wq_copy *wq = &fnic->wq_copy[0];
-	struct Scsi_Host *host = fnic->lport->host;
-	struct misc_stats *misc_stats = &fnic->fnic_stats.misc_stats;
-	struct scsi_lun fc_lun;
-	int ret = 0;
-	unsigned long intr_flags;
+अटल अंतरभूत पूर्णांक fnic_queue_dr_io_req(काष्ठा fnic *fnic,
+				       काष्ठा scsi_cmnd *sc,
+				       काष्ठा fnic_io_req *io_req)
+अणु
+	काष्ठा vnic_wq_copy *wq = &fnic->wq_copy[0];
+	काष्ठा Scsi_Host *host = fnic->lport->host;
+	काष्ठा misc_stats *misc_stats = &fnic->fnic_stats.misc_stats;
+	काष्ठा scsi_lun fc_lun;
+	पूर्णांक ret = 0;
+	अचिन्हित दीर्घ पूर्णांकr_flags;
 
-	spin_lock_irqsave(host->host_lock, intr_flags);
-	if (unlikely(fnic_chk_state_flags_locked(fnic,
-						FNIC_FLAGS_IO_BLOCKED))) {
-		spin_unlock_irqrestore(host->host_lock, intr_flags);
-		return FAILED;
-	} else
+	spin_lock_irqsave(host->host_lock, पूर्णांकr_flags);
+	अगर (unlikely(fnic_chk_state_flags_locked(fnic,
+						FNIC_FLAGS_IO_BLOCKED))) अणु
+		spin_unlock_irqrestore(host->host_lock, पूर्णांकr_flags);
+		वापस FAILED;
+	पूर्ण अन्यथा
 		atomic_inc(&fnic->in_flight);
-	spin_unlock_irqrestore(host->host_lock, intr_flags);
+	spin_unlock_irqrestore(host->host_lock, पूर्णांकr_flags);
 
-	spin_lock_irqsave(&fnic->wq_copy_lock[0], intr_flags);
+	spin_lock_irqsave(&fnic->wq_copy_lock[0], पूर्णांकr_flags);
 
-	if (vnic_wq_copy_desc_avail(wq) <= fnic->wq_copy_desc_low[0])
-		free_wq_copy_descs(fnic, wq);
+	अगर (vnic_wq_copy_desc_avail(wq) <= fnic->wq_copy_desc_low[0])
+		मुक्त_wq_copy_descs(fnic, wq);
 
-	if (!vnic_wq_copy_desc_avail(wq)) {
+	अगर (!vnic_wq_copy_desc_avail(wq)) अणु
 		FNIC_SCSI_DBG(KERN_DEBUG, fnic->lport->host,
 			  "queue_dr_io_req failure - no descriptors\n");
 		atomic64_inc(&misc_stats->devrst_cpwq_alloc_failures);
 		ret = -EAGAIN;
-		goto lr_io_req_end;
-	}
+		जाओ lr_io_req_end;
+	पूर्ण
 
 	/* fill in the lun info */
-	int_to_scsilun(sc->device->lun, &fc_lun);
+	पूर्णांक_to_scsilun(sc->device->lun, &fc_lun);
 
-	fnic_queue_wq_copy_desc_itmf(wq, sc->request->tag | FNIC_TAG_DEV_RST,
+	fnic_queue_wq_copy_desc_iपंचांगf(wq, sc->request->tag | FNIC_TAG_DEV_RST,
 				     0, FCPIO_ITMF_LUN_RESET, SCSI_NO_TAG,
 				     fc_lun.scsi_lun, io_req->port_id,
 				     fnic->config.ra_tov, fnic->config.ed_tov);
 
 	atomic64_inc(&fnic->fnic_stats.fw_stats.active_fw_reqs);
-	if (atomic64_read(&fnic->fnic_stats.fw_stats.active_fw_reqs) >
-		  atomic64_read(&fnic->fnic_stats.fw_stats.max_fw_reqs))
+	अगर (atomic64_पढ़ो(&fnic->fnic_stats.fw_stats.active_fw_reqs) >
+		  atomic64_पढ़ो(&fnic->fnic_stats.fw_stats.max_fw_reqs))
 		atomic64_set(&fnic->fnic_stats.fw_stats.max_fw_reqs,
-		  atomic64_read(&fnic->fnic_stats.fw_stats.active_fw_reqs));
+		  atomic64_पढ़ो(&fnic->fnic_stats.fw_stats.active_fw_reqs));
 
 lr_io_req_end:
-	spin_unlock_irqrestore(&fnic->wq_copy_lock[0], intr_flags);
+	spin_unlock_irqrestore(&fnic->wq_copy_lock[0], पूर्णांकr_flags);
 	atomic_dec(&fnic->in_flight);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-struct fnic_pending_aborts_iter_data {
-	struct fnic *fnic;
-	struct scsi_cmnd *lr_sc;
-	struct scsi_device *lun_dev;
-	int ret;
-};
+काष्ठा fnic_pending_पातs_iter_data अणु
+	काष्ठा fnic *fnic;
+	काष्ठा scsi_cmnd *lr_sc;
+	काष्ठा scsi_device *lun_dev;
+	पूर्णांक ret;
+पूर्ण;
 
-static bool fnic_pending_aborts_iter(struct scsi_cmnd *sc,
-				     void *data, bool reserved)
-{
-	struct fnic_pending_aborts_iter_data *iter_data = data;
-	struct fnic *fnic = iter_data->fnic;
-	struct scsi_device *lun_dev = iter_data->lun_dev;
-	int abt_tag = sc->request->tag;
-	struct fnic_io_req *io_req;
+अटल bool fnic_pending_पातs_iter(काष्ठा scsi_cmnd *sc,
+				     व्योम *data, bool reserved)
+अणु
+	काष्ठा fnic_pending_पातs_iter_data *iter_data = data;
+	काष्ठा fnic *fnic = iter_data->fnic;
+	काष्ठा scsi_device *lun_dev = iter_data->lun_dev;
+	पूर्णांक abt_tag = sc->request->tag;
+	काष्ठा fnic_io_req *io_req;
 	spinlock_t *io_lock;
-	unsigned long flags;
-	struct scsi_lun fc_lun;
-	DECLARE_COMPLETION_ONSTACK(tm_done);
-	enum fnic_ioreq_state old_ioreq_state;
+	अचिन्हित दीर्घ flags;
+	काष्ठा scsi_lun fc_lun;
+	DECLARE_COMPLETION_ONSTACK(पंचांग_करोne);
+	क्रमागत fnic_ioreq_state old_ioreq_state;
 
-	if (sc == iter_data->lr_sc || sc->device != lun_dev)
-		return true;
-	if (reserved)
-		return true;
+	अगर (sc == iter_data->lr_sc || sc->device != lun_dev)
+		वापस true;
+	अगर (reserved)
+		वापस true;
 
 	io_lock = fnic_io_lock_tag(fnic, abt_tag);
 	spin_lock_irqsave(io_lock, flags);
-	io_req = (struct fnic_io_req *)CMD_SP(sc);
-	if (!io_req) {
+	io_req = (काष्ठा fnic_io_req *)CMD_SP(sc);
+	अगर (!io_req) अणु
 		spin_unlock_irqrestore(io_lock, flags);
-		return true;
-	}
+		वापस true;
+	पूर्ण
 
 	/*
 	 * Found IO that is still pending with firmware and
-	 * belongs to the LUN that we are resetting
+	 * beदीर्घs to the LUN that we are resetting
 	 */
 	FNIC_SCSI_DBG(KERN_DEBUG, fnic->lport->host,
 		      "Found IO in %s on lun\n",
 		      fnic_ioreq_state_to_str(CMD_STATE(sc)));
 
-	if (CMD_STATE(sc) == FNIC_IOREQ_ABTS_PENDING) {
+	अगर (CMD_STATE(sc) == FNIC_IOREQ_ABTS_PENDING) अणु
 		spin_unlock_irqrestore(io_lock, flags);
-		return true;
-	}
-	if ((CMD_FLAGS(sc) & FNIC_DEVICE_RESET) &&
-	    (!(CMD_FLAGS(sc) & FNIC_DEV_RST_ISSUED))) {
+		वापस true;
+	पूर्ण
+	अगर ((CMD_FLAGS(sc) & FNIC_DEVICE_RESET) &&
+	    (!(CMD_FLAGS(sc) & FNIC_DEV_RST_ISSUED))) अणु
 		FNIC_SCSI_DBG(KERN_INFO, fnic->lport->host,
 			      "%s dev rst not pending sc 0x%p\n", __func__,
 			      sc);
 		spin_unlock_irqrestore(io_lock, flags);
-		return true;
-	}
+		वापस true;
+	पूर्ण
 
-	if (io_req->abts_done)
-		shost_printk(KERN_ERR, fnic->lport->host,
+	अगर (io_req->abts_करोne)
+		shost_prपूर्णांकk(KERN_ERR, fnic->lport->host,
 			     "%s: io_req->abts_done is set state is %s\n",
 			     __func__, fnic_ioreq_state_to_str(CMD_STATE(sc)));
 	old_ioreq_state = CMD_STATE(sc);
 	/*
 	 * Any pending IO issued prior to reset is expected to be
-	 * in abts pending state, if not we need to set
-	 * FNIC_IOREQ_ABTS_PENDING to indicate the IO is abort pending.
+	 * in abts pending state, अगर not we need to set
+	 * FNIC_IOREQ_ABTS_PENDING to indicate the IO is पात pending.
 	 * When IO is completed, the IO will be handed over and
 	 * handled in this function.
 	 */
 	CMD_STATE(sc) = FNIC_IOREQ_ABTS_PENDING;
 
-	BUG_ON(io_req->abts_done);
+	BUG_ON(io_req->abts_करोne);
 
-	if (CMD_FLAGS(sc) & FNIC_DEVICE_RESET) {
+	अगर (CMD_FLAGS(sc) & FNIC_DEVICE_RESET) अणु
 		abt_tag |= FNIC_TAG_DEV_RST;
 		FNIC_SCSI_DBG(KERN_INFO, fnic->lport->host,
 			      "%s: dev rst sc 0x%p\n", __func__, sc);
-	}
+	पूर्ण
 
 	CMD_ABTS_STATUS(sc) = FCPIO_INVALID_CODE;
-	io_req->abts_done = &tm_done;
+	io_req->abts_करोne = &पंचांग_करोne;
 	spin_unlock_irqrestore(io_lock, flags);
 
-	/* Now queue the abort command to firmware */
-	int_to_scsilun(sc->device->lun, &fc_lun);
+	/* Now queue the पात command to firmware */
+	पूर्णांक_to_scsilun(sc->device->lun, &fc_lun);
 
-	if (fnic_queue_abort_io_req(fnic, abt_tag,
+	अगर (fnic_queue_पात_io_req(fnic, abt_tag,
 				    FCPIO_ITMF_ABT_TASK_TERM,
-				    fc_lun.scsi_lun, io_req)) {
+				    fc_lun.scsi_lun, io_req)) अणु
 		spin_lock_irqsave(io_lock, flags);
-		io_req = (struct fnic_io_req *)CMD_SP(sc);
-		if (io_req)
-			io_req->abts_done = NULL;
-		if (CMD_STATE(sc) == FNIC_IOREQ_ABTS_PENDING)
+		io_req = (काष्ठा fnic_io_req *)CMD_SP(sc);
+		अगर (io_req)
+			io_req->abts_करोne = शून्य;
+		अगर (CMD_STATE(sc) == FNIC_IOREQ_ABTS_PENDING)
 			CMD_STATE(sc) = old_ioreq_state;
 		spin_unlock_irqrestore(io_lock, flags);
 		iter_data->ret = FAILED;
-		return false;
-	} else {
+		वापस false;
+	पूर्ण अन्यथा अणु
 		spin_lock_irqsave(io_lock, flags);
-		if (CMD_FLAGS(sc) & FNIC_DEVICE_RESET)
+		अगर (CMD_FLAGS(sc) & FNIC_DEVICE_RESET)
 			CMD_FLAGS(sc) |= FNIC_DEV_RST_TERM_ISSUED;
 		spin_unlock_irqrestore(io_lock, flags);
-	}
+	पूर्ण
 	CMD_FLAGS(sc) |= FNIC_IO_INTERNAL_TERM_ISSUED;
 
-	wait_for_completion_timeout(&tm_done, msecs_to_jiffies
+	रुको_क्रम_completion_समयout(&पंचांग_करोne, msecs_to_jअगरfies
 				    (fnic->config.ed_tov));
 
-	/* Recheck cmd state to check if it is now aborted */
+	/* Recheck cmd state to check अगर it is now पातed */
 	spin_lock_irqsave(io_lock, flags);
-	io_req = (struct fnic_io_req *)CMD_SP(sc);
-	if (!io_req) {
+	io_req = (काष्ठा fnic_io_req *)CMD_SP(sc);
+	अगर (!io_req) अणु
 		spin_unlock_irqrestore(io_lock, flags);
-		CMD_FLAGS(sc) |= FNIC_IO_ABT_TERM_REQ_NULL;
-		return true;
-	}
+		CMD_FLAGS(sc) |= FNIC_IO_ABT_TERM_REQ_शून्य;
+		वापस true;
+	पूर्ण
 
-	io_req->abts_done = NULL;
+	io_req->abts_करोne = शून्य;
 
-	/* if abort is still pending with fw, fail */
-	if (CMD_ABTS_STATUS(sc) == FCPIO_INVALID_CODE) {
+	/* अगर पात is still pending with fw, fail */
+	अगर (CMD_ABTS_STATUS(sc) == FCPIO_INVALID_CODE) अणु
 		spin_unlock_irqrestore(io_lock, flags);
 		CMD_FLAGS(sc) |= FNIC_IO_ABT_TERM_DONE;
 		iter_data->ret = FAILED;
-		return false;
-	}
+		वापस false;
+	पूर्ण
 	CMD_STATE(sc) = FNIC_IOREQ_ABTS_COMPLETE;
 
-	/* original sc used for lr is handled by dev reset code */
-	if (sc != iter_data->lr_sc)
-		CMD_SP(sc) = NULL;
+	/* original sc used क्रम lr is handled by dev reset code */
+	अगर (sc != iter_data->lr_sc)
+		CMD_SP(sc) = शून्य;
 	spin_unlock_irqrestore(io_lock, flags);
 
-	/* original sc used for lr is handled by dev reset code */
-	if (sc != iter_data->lr_sc) {
+	/* original sc used क्रम lr is handled by dev reset code */
+	अगर (sc != iter_data->lr_sc) अणु
 		fnic_release_ioreq_buf(fnic, io_req, sc);
-		mempool_free(io_req, fnic->io_req_pool);
-	}
+		mempool_मुक्त(io_req, fnic->io_req_pool);
+	पूर्ण
 
 	/*
-	 * Any IO is returned during reset, it needs to call scsi_done
-	 * to return the scsi_cmnd to upper layer.
+	 * Any IO is वापसed during reset, it needs to call scsi_करोne
+	 * to वापस the scsi_cmnd to upper layer.
 	 */
-	if (sc->scsi_done) {
+	अगर (sc->scsi_करोne) अणु
 		/* Set result to let upper SCSI layer retry */
 		sc->result = DID_RESET << 16;
-		sc->scsi_done(sc);
-	}
-	return true;
-}
+		sc->scsi_करोne(sc);
+	पूर्ण
+	वापस true;
+पूर्ण
 
 /*
- * Clean up any pending aborts on the lun
- * For each outstanding IO on this lun, whose abort is not completed by fw,
- * issue a local abort. Wait for abort to complete. Return 0 if all commands
- * successfully aborted, 1 otherwise
+ * Clean up any pending पातs on the lun
+ * For each outstanding IO on this lun, whose पात is not completed by fw,
+ * issue a local पात. Wait क्रम पात to complete. Return 0 अगर all commands
+ * successfully पातed, 1 otherwise
  */
-static int fnic_clean_pending_aborts(struct fnic *fnic,
-				     struct scsi_cmnd *lr_sc,
+अटल पूर्णांक fnic_clean_pending_पातs(काष्ठा fnic *fnic,
+				     काष्ठा scsi_cmnd *lr_sc,
 				     bool new_sc)
 
-{
-	int ret = SUCCESS;
-	struct fnic_pending_aborts_iter_data iter_data = {
+अणु
+	पूर्णांक ret = SUCCESS;
+	काष्ठा fnic_pending_पातs_iter_data iter_data = अणु
 		.fnic = fnic,
 		.lun_dev = lr_sc->device,
 		.ret = SUCCESS,
-	};
+	पूर्ण;
 
-	if (new_sc)
+	अगर (new_sc)
 		iter_data.lr_sc = lr_sc;
 
 	scsi_host_busy_iter(fnic->lport->host,
-			    fnic_pending_aborts_iter, &iter_data);
-	if (iter_data.ret == FAILED) {
+			    fnic_pending_पातs_iter, &iter_data);
+	अगर (iter_data.ret == FAILED) अणु
 		ret = iter_data.ret;
-		goto clean_pending_aborts_end;
-	}
-	schedule_timeout(msecs_to_jiffies(2 * fnic->config.ed_tov));
+		जाओ clean_pending_पातs_end;
+	पूर्ण
+	schedule_समयout(msecs_to_jअगरfies(2 * fnic->config.ed_tov));
 
-	/* walk again to check, if IOs are still pending in fw */
-	if (fnic_is_abts_pending(fnic, lr_sc))
+	/* walk again to check, अगर IOs are still pending in fw */
+	अगर (fnic_is_abts_pending(fnic, lr_sc))
 		ret = FAILED;
 
-clean_pending_aborts_end:
-	return ret;
-}
+clean_pending_पातs_end:
+	वापस ret;
+पूर्ण
 
 /*
  * fnic_scsi_host_start_tag
  * Allocates tagid from host's tag list
  **/
-static inline int
-fnic_scsi_host_start_tag(struct fnic *fnic, struct scsi_cmnd *sc)
-{
-	struct request_queue *q = sc->request->q;
-	struct request *dummy;
+अटल अंतरभूत पूर्णांक
+fnic_scsi_host_start_tag(काष्ठा fnic *fnic, काष्ठा scsi_cmnd *sc)
+अणु
+	काष्ठा request_queue *q = sc->request->q;
+	काष्ठा request *dummy;
 
 	dummy = blk_mq_alloc_request(q, REQ_OP_WRITE, BLK_MQ_REQ_NOWAIT);
-	if (IS_ERR(dummy))
-		return SCSI_NO_TAG;
+	अगर (IS_ERR(dummy))
+		वापस SCSI_NO_TAG;
 
 	sc->tag = sc->request->tag = dummy->tag;
-	sc->host_scribble = (unsigned char *)dummy;
+	sc->host_scribble = (अचिन्हित अक्षर *)dummy;
 
-	return dummy->tag;
-}
+	वापस dummy->tag;
+पूर्ण
 
 /*
  * fnic_scsi_host_end_tag
- * frees tag allocated by fnic_scsi_host_start_tag.
+ * मुक्तs tag allocated by fnic_scsi_host_start_tag.
  **/
-static inline void
-fnic_scsi_host_end_tag(struct fnic *fnic, struct scsi_cmnd *sc)
-{
-	struct request *dummy = (struct request *)sc->host_scribble;
+अटल अंतरभूत व्योम
+fnic_scsi_host_end_tag(काष्ठा fnic *fnic, काष्ठा scsi_cmnd *sc)
+अणु
+	काष्ठा request *dummy = (काष्ठा request *)sc->host_scribble;
 
-	blk_mq_free_request(dummy);
-}
+	blk_mq_मुक्त_request(dummy);
+पूर्ण
 
 /*
- * SCSI Eh thread issues a Lun Reset when one or more commands on a LUN
- * fail to get aborted. It calls driver's eh_device_reset with a SCSI command
+ * SCSI Eh thपढ़ो issues a Lun Reset when one or more commands on a LUN
+ * fail to get पातed. It calls driver's eh_device_reset with a SCSI command
  * on the LUN.
  */
-int fnic_device_reset(struct scsi_cmnd *sc)
-{
-	struct fc_lport *lp;
-	struct fnic *fnic;
-	struct fnic_io_req *io_req = NULL;
-	struct fc_rport *rport;
-	int status;
-	int ret = FAILED;
+पूर्णांक fnic_device_reset(काष्ठा scsi_cmnd *sc)
+अणु
+	काष्ठा fc_lport *lp;
+	काष्ठा fnic *fnic;
+	काष्ठा fnic_io_req *io_req = शून्य;
+	काष्ठा fc_rport *rport;
+	पूर्णांक status;
+	पूर्णांक ret = FAILED;
 	spinlock_t *io_lock;
-	unsigned long flags;
-	unsigned long start_time = 0;
-	struct scsi_lun fc_lun;
-	struct fnic_stats *fnic_stats;
-	struct reset_stats *reset_stats;
-	int tag = 0;
-	DECLARE_COMPLETION_ONSTACK(tm_done);
-	int tag_gen_flag = 0;   /*to track tags allocated by fnic driver*/
+	अचिन्हित दीर्घ flags;
+	अचिन्हित दीर्घ start_समय = 0;
+	काष्ठा scsi_lun fc_lun;
+	काष्ठा fnic_stats *fnic_stats;
+	काष्ठा reset_stats *reset_stats;
+	पूर्णांक tag = 0;
+	DECLARE_COMPLETION_ONSTACK(पंचांग_करोne);
+	पूर्णांक tag_gen_flag = 0;   /*to track tags allocated by fnic driver*/
 	bool new_sc = 0;
 
-	/* Wait for rport to unblock */
+	/* Wait क्रम rport to unblock */
 	fc_block_scsi_eh(sc);
 
-	/* Get local-port, check ready and link up */
+	/* Get local-port, check पढ़ोy and link up */
 	lp = shost_priv(sc->device->host);
 
 	fnic = lport_priv(lp);
@@ -2272,49 +2273,49 @@ int fnic_device_reset(struct scsi_cmnd *sc)
 		      "Device reset called FCID 0x%x, LUN 0x%llx sc 0x%p\n",
 		      rport->port_id, sc->device->lun, sc);
 
-	if (lp->state != LPORT_ST_READY || !(lp->link_up))
-		goto fnic_device_reset_end;
+	अगर (lp->state != LPORT_ST_READY || !(lp->link_up))
+		जाओ fnic_device_reset_end;
 
-	/* Check if remote port up */
-	if (fc_remote_port_chkready(rport)) {
-		atomic64_inc(&fnic_stats->misc_stats.rport_not_ready);
-		goto fnic_device_reset_end;
-	}
+	/* Check अगर remote port up */
+	अगर (fc_remote_port_chkपढ़ोy(rport)) अणु
+		atomic64_inc(&fnic_stats->misc_stats.rport_not_पढ़ोy);
+		जाओ fnic_device_reset_end;
+	पूर्ण
 
 	CMD_FLAGS(sc) = FNIC_DEVICE_RESET;
-	/* Allocate tag if not present */
+	/* Allocate tag अगर not present */
 
 	tag = sc->request->tag;
-	if (unlikely(tag < 0)) {
+	अगर (unlikely(tag < 0)) अणु
 		/*
 		 * Really should fix the midlayer to pass in a proper
-		 * request for ioctls...
+		 * request क्रम ioctls...
 		 */
 		tag = fnic_scsi_host_start_tag(fnic, sc);
-		if (unlikely(tag == SCSI_NO_TAG))
-			goto fnic_device_reset_end;
+		अगर (unlikely(tag == SCSI_NO_TAG))
+			जाओ fnic_device_reset_end;
 		tag_gen_flag = 1;
 		new_sc = 1;
-	}
+	पूर्ण
 	io_lock = fnic_io_lock_hash(fnic, sc);
 	spin_lock_irqsave(io_lock, flags);
-	io_req = (struct fnic_io_req *)CMD_SP(sc);
+	io_req = (काष्ठा fnic_io_req *)CMD_SP(sc);
 
 	/*
 	 * If there is a io_req attached to this command, then use it,
-	 * else allocate a new one.
+	 * अन्यथा allocate a new one.
 	 */
-	if (!io_req) {
+	अगर (!io_req) अणु
 		io_req = mempool_alloc(fnic->io_req_pool, GFP_ATOMIC);
-		if (!io_req) {
+		अगर (!io_req) अणु
 			spin_unlock_irqrestore(io_lock, flags);
-			goto fnic_device_reset_end;
-		}
-		memset(io_req, 0, sizeof(*io_req));
+			जाओ fnic_device_reset_end;
+		पूर्ण
+		स_रखो(io_req, 0, माप(*io_req));
 		io_req->port_id = rport->port_id;
-		CMD_SP(sc) = (char *)io_req;
-	}
-	io_req->dr_done = &tm_done;
+		CMD_SP(sc) = (अक्षर *)io_req;
+	पूर्ण
+	io_req->dr_करोne = &पंचांग_करोne;
 	CMD_STATE(sc) = FNIC_IOREQ_CMD_PENDING;
 	CMD_LR_STATUS(sc) = FCPIO_INVALID_CODE;
 	spin_unlock_irqrestore(io_lock, flags);
@@ -2322,152 +2323,152 @@ int fnic_device_reset(struct scsi_cmnd *sc)
 	FNIC_SCSI_DBG(KERN_DEBUG, fnic->lport->host, "TAG %x\n", tag);
 
 	/*
-	 * issue the device reset, if enqueue failed, clean up the ioreq
-	 * and break assoc with scsi cmd
+	 * issue the device reset, अगर enqueue failed, clean up the ioreq
+	 * and अवरोध assoc with scsi cmd
 	 */
-	if (fnic_queue_dr_io_req(fnic, sc, io_req)) {
+	अगर (fnic_queue_dr_io_req(fnic, sc, io_req)) अणु
 		spin_lock_irqsave(io_lock, flags);
-		io_req = (struct fnic_io_req *)CMD_SP(sc);
-		if (io_req)
-			io_req->dr_done = NULL;
-		goto fnic_device_reset_clean;
-	}
+		io_req = (काष्ठा fnic_io_req *)CMD_SP(sc);
+		अगर (io_req)
+			io_req->dr_करोne = शून्य;
+		जाओ fnic_device_reset_clean;
+	पूर्ण
 	spin_lock_irqsave(io_lock, flags);
 	CMD_FLAGS(sc) |= FNIC_DEV_RST_ISSUED;
 	spin_unlock_irqrestore(io_lock, flags);
 
 	/*
-	 * Wait on the local completion for LUN reset.  The io_req may be
-	 * freed while we wait since we hold no lock.
+	 * Wait on the local completion क्रम LUN reset.  The io_req may be
+	 * मुक्तd जबतक we रुको since we hold no lock.
 	 */
-	wait_for_completion_timeout(&tm_done,
-				    msecs_to_jiffies(FNIC_LUN_RESET_TIMEOUT));
+	रुको_क्रम_completion_समयout(&पंचांग_करोne,
+				    msecs_to_jअगरfies(FNIC_LUN_RESET_TIMEOUT));
 
 	spin_lock_irqsave(io_lock, flags);
-	io_req = (struct fnic_io_req *)CMD_SP(sc);
-	if (!io_req) {
+	io_req = (काष्ठा fnic_io_req *)CMD_SP(sc);
+	अगर (!io_req) अणु
 		spin_unlock_irqrestore(io_lock, flags);
 		FNIC_SCSI_DBG(KERN_DEBUG, fnic->lport->host,
 				"io_req is null tag 0x%x sc 0x%p\n", tag, sc);
-		goto fnic_device_reset_end;
-	}
-	io_req->dr_done = NULL;
+		जाओ fnic_device_reset_end;
+	पूर्ण
+	io_req->dr_करोne = शून्य;
 
 	status = CMD_LR_STATUS(sc);
 
 	/*
 	 * If lun reset not completed, bail out with failed. io_req
-	 * gets cleaned up during higher levels of EH
+	 * माला_लो cleaned up during higher levels of EH
 	 */
-	if (status == FCPIO_INVALID_CODE) {
-		atomic64_inc(&reset_stats->device_reset_timeouts);
+	अगर (status == FCPIO_INVALID_CODE) अणु
+		atomic64_inc(&reset_stats->device_reset_समयouts);
 		FNIC_SCSI_DBG(KERN_DEBUG, fnic->lport->host,
 			      "Device reset timed out\n");
 		CMD_FLAGS(sc) |= FNIC_DEV_RST_TIMED_OUT;
 		spin_unlock_irqrestore(io_lock, flags);
-		int_to_scsilun(sc->device->lun, &fc_lun);
+		पूर्णांक_to_scsilun(sc->device->lun, &fc_lun);
 		/*
-		 * Issue abort and terminate on device reset request.
+		 * Issue पात and terminate on device reset request.
 		 * If q'ing of terminate fails, retry it after a delay.
 		 */
-		while (1) {
+		जबतक (1) अणु
 			spin_lock_irqsave(io_lock, flags);
-			if (CMD_FLAGS(sc) & FNIC_DEV_RST_TERM_ISSUED) {
+			अगर (CMD_FLAGS(sc) & FNIC_DEV_RST_TERM_ISSUED) अणु
 				spin_unlock_irqrestore(io_lock, flags);
-				break;
-			}
+				अवरोध;
+			पूर्ण
 			spin_unlock_irqrestore(io_lock, flags);
-			if (fnic_queue_abort_io_req(fnic,
+			अगर (fnic_queue_पात_io_req(fnic,
 				tag | FNIC_TAG_DEV_RST,
 				FCPIO_ITMF_ABT_TASK_TERM,
-				fc_lun.scsi_lun, io_req)) {
-				wait_for_completion_timeout(&tm_done,
-				msecs_to_jiffies(FNIC_ABT_TERM_DELAY_TIMEOUT));
-			} else {
+				fc_lun.scsi_lun, io_req)) अणु
+				रुको_क्रम_completion_समयout(&पंचांग_करोne,
+				msecs_to_jअगरfies(FNIC_ABT_TERM_DELAY_TIMEOUT));
+			पूर्ण अन्यथा अणु
 				spin_lock_irqsave(io_lock, flags);
 				CMD_FLAGS(sc) |= FNIC_DEV_RST_TERM_ISSUED;
 				CMD_STATE(sc) = FNIC_IOREQ_ABTS_PENDING;
-				io_req->abts_done = &tm_done;
+				io_req->abts_करोne = &पंचांग_करोne;
 				spin_unlock_irqrestore(io_lock, flags);
 				FNIC_SCSI_DBG(KERN_DEBUG, fnic->lport->host,
 				"Abort and terminate issued on Device reset "
 				"tag 0x%x sc 0x%p\n", tag, sc);
-				break;
-			}
-		}
-		while (1) {
+				अवरोध;
+			पूर्ण
+		पूर्ण
+		जबतक (1) अणु
 			spin_lock_irqsave(io_lock, flags);
-			if (!(CMD_FLAGS(sc) & FNIC_DEV_RST_DONE)) {
+			अगर (!(CMD_FLAGS(sc) & FNIC_DEV_RST_DONE)) अणु
 				spin_unlock_irqrestore(io_lock, flags);
-				wait_for_completion_timeout(&tm_done,
-				msecs_to_jiffies(FNIC_LUN_RESET_TIMEOUT));
-				break;
-			} else {
-				io_req = (struct fnic_io_req *)CMD_SP(sc);
-				io_req->abts_done = NULL;
-				goto fnic_device_reset_clean;
-			}
-		}
-	} else {
+				रुको_क्रम_completion_समयout(&पंचांग_करोne,
+				msecs_to_jअगरfies(FNIC_LUN_RESET_TIMEOUT));
+				अवरोध;
+			पूर्ण अन्यथा अणु
+				io_req = (काष्ठा fnic_io_req *)CMD_SP(sc);
+				io_req->abts_करोne = शून्य;
+				जाओ fnic_device_reset_clean;
+			पूर्ण
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		spin_unlock_irqrestore(io_lock, flags);
-	}
+	पूर्ण
 
-	/* Completed, but not successful, clean up the io_req, return fail */
-	if (status != FCPIO_SUCCESS) {
+	/* Completed, but not successful, clean up the io_req, वापस fail */
+	अगर (status != FCPIO_SUCCESS) अणु
 		spin_lock_irqsave(io_lock, flags);
 		FNIC_SCSI_DBG(KERN_DEBUG,
 			      fnic->lport->host,
 			      "Device reset completed - failed\n");
-		io_req = (struct fnic_io_req *)CMD_SP(sc);
-		goto fnic_device_reset_clean;
-	}
+		io_req = (काष्ठा fnic_io_req *)CMD_SP(sc);
+		जाओ fnic_device_reset_clean;
+	पूर्ण
 
 	/*
-	 * Clean up any aborts on this lun that have still not
+	 * Clean up any पातs on this lun that have still not
 	 * completed. If any of these fail, then LUN reset fails.
-	 * clean_pending_aborts cleans all cmds on this lun except
+	 * clean_pending_पातs cleans all cmds on this lun except
 	 * the lun reset cmd. If all cmds get cleaned, the lun reset
 	 * succeeds
 	 */
-	if (fnic_clean_pending_aborts(fnic, sc, new_sc)) {
+	अगर (fnic_clean_pending_पातs(fnic, sc, new_sc)) अणु
 		spin_lock_irqsave(io_lock, flags);
-		io_req = (struct fnic_io_req *)CMD_SP(sc);
+		io_req = (काष्ठा fnic_io_req *)CMD_SP(sc);
 		FNIC_SCSI_DBG(KERN_DEBUG, fnic->lport->host,
 			      "Device reset failed"
 			      " since could not abort all IOs\n");
-		goto fnic_device_reset_clean;
-	}
+		जाओ fnic_device_reset_clean;
+	पूर्ण
 
 	/* Clean lun reset command */
 	spin_lock_irqsave(io_lock, flags);
-	io_req = (struct fnic_io_req *)CMD_SP(sc);
-	if (io_req)
+	io_req = (काष्ठा fnic_io_req *)CMD_SP(sc);
+	अगर (io_req)
 		/* Completed, and successful */
 		ret = SUCCESS;
 
 fnic_device_reset_clean:
-	if (io_req)
-		CMD_SP(sc) = NULL;
+	अगर (io_req)
+		CMD_SP(sc) = शून्य;
 
 	spin_unlock_irqrestore(io_lock, flags);
 
-	if (io_req) {
-		start_time = io_req->start_time;
+	अगर (io_req) अणु
+		start_समय = io_req->start_समय;
 		fnic_release_ioreq_buf(fnic, io_req, sc);
-		mempool_free(io_req, fnic->io_req_pool);
-	}
+		mempool_मुक्त(io_req, fnic->io_req_pool);
+	पूर्ण
 
 fnic_device_reset_end:
 	FNIC_TRACE(fnic_device_reset, sc->device->host->host_no,
 		  sc->request->tag, sc,
-		  jiffies_to_msecs(jiffies - start_time),
+		  jअगरfies_to_msecs(jअगरfies - start_समय),
 		  0, ((u64)sc->cmnd[0] << 32 |
 		  (u64)sc->cmnd[2] << 24 | (u64)sc->cmnd[3] << 16 |
 		  (u64)sc->cmnd[4] << 8 | sc->cmnd[5]),
 		  (((u64)CMD_FLAGS(sc) << 32) | CMD_STATE(sc)));
 
-	/* free tag if it is allocated */
-	if (unlikely(tag_gen_flag))
+	/* मुक्त tag अगर it is allocated */
+	अगर (unlikely(tag_gen_flag))
 		fnic_scsi_host_end_tag(fnic, sc);
 
 	FNIC_SCSI_DBG(KERN_DEBUG, fnic->lport->host,
@@ -2475,19 +2476,19 @@ fnic_device_reset_end:
 		      (ret == SUCCESS) ?
 		      "SUCCESS" : "FAILED");
 
-	if (ret == FAILED)
+	अगर (ret == FAILED)
 		atomic64_inc(&reset_stats->device_reset_failures);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /* Clean up all IOs, clean up libFC local port */
-int fnic_reset(struct Scsi_Host *shost)
-{
-	struct fc_lport *lp;
-	struct fnic *fnic;
-	int ret = 0;
-	struct reset_stats *reset_stats;
+पूर्णांक fnic_reset(काष्ठा Scsi_Host *shost)
+अणु
+	काष्ठा fc_lport *lp;
+	काष्ठा fnic *fnic;
+	पूर्णांक ret = 0;
+	काष्ठा reset_stats *reset_stats;
 
 	lp = shost_priv(shost);
 	fnic = lport_priv(lp);
@@ -2500,7 +2501,7 @@ int fnic_reset(struct Scsi_Host *shost)
 
 	/*
 	 * Reset local port, this will clean up libFC exchanges,
-	 * reset remote port sessions, and if link is up, begin flogi
+	 * reset remote port sessions, and अगर link is up, begin flogi
 	 */
 	ret = fc_lport_reset(lp);
 
@@ -2509,250 +2510,250 @@ int fnic_reset(struct Scsi_Host *shost)
 		      (ret == 0) ?
 		      "SUCCESS" : "FAILED");
 
-	if (ret == 0)
+	अगर (ret == 0)
 		atomic64_inc(&reset_stats->fnic_reset_completions);
-	else
+	अन्यथा
 		atomic64_inc(&reset_stats->fnic_reset_failures);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
- * SCSI Error handling calls driver's eh_host_reset if all prior
- * error handling levels return FAILED. If host reset completes
- * successfully, and if link is up, then Fabric login begins.
+ * SCSI Error handling calls driver's eh_host_reset अगर all prior
+ * error handling levels वापस FAILED. If host reset completes
+ * successfully, and अगर link is up, then Fabric login begins.
  *
  * Host Reset is the highest level of error recovery. If this fails, then
  * host is offlined by SCSI.
  *
  */
-int fnic_host_reset(struct scsi_cmnd *sc)
-{
-	int ret;
-	unsigned long wait_host_tmo;
-	struct Scsi_Host *shost = sc->device->host;
-	struct fc_lport *lp = shost_priv(shost);
-	struct fnic *fnic = lport_priv(lp);
-	unsigned long flags;
+पूर्णांक fnic_host_reset(काष्ठा scsi_cmnd *sc)
+अणु
+	पूर्णांक ret;
+	अचिन्हित दीर्घ रुको_host_पंचांगo;
+	काष्ठा Scsi_Host *shost = sc->device->host;
+	काष्ठा fc_lport *lp = shost_priv(shost);
+	काष्ठा fnic *fnic = lport_priv(lp);
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&fnic->fnic_lock, flags);
-	if (!fnic->internal_reset_inprogress) {
-		fnic->internal_reset_inprogress = true;
-	} else {
+	अगर (!fnic->पूर्णांकernal_reset_inprogress) अणु
+		fnic->पूर्णांकernal_reset_inprogress = true;
+	पूर्ण अन्यथा अणु
 		spin_unlock_irqrestore(&fnic->fnic_lock, flags);
 		FNIC_SCSI_DBG(KERN_DEBUG, fnic->lport->host,
 			"host reset in progress skipping another host reset\n");
-		return SUCCESS;
-	}
+		वापस SUCCESS;
+	पूर्ण
 	spin_unlock_irqrestore(&fnic->fnic_lock, flags);
 
 	/*
-	 * If fnic_reset is successful, wait for fabric login to complete
-	 * scsi-ml tries to send a TUR to every device if host reset is
-	 * successful, so before returning to scsi, fabric should be up
+	 * If fnic_reset is successful, रुको क्रम fabric login to complete
+	 * scsi-ml tries to send a TUR to every device अगर host reset is
+	 * successful, so beक्रमe वापसing to scsi, fabric should be up
 	 */
 	ret = (fnic_reset(shost) == 0) ? SUCCESS : FAILED;
-	if (ret == SUCCESS) {
-		wait_host_tmo = jiffies + FNIC_HOST_RESET_SETTLE_TIME * HZ;
+	अगर (ret == SUCCESS) अणु
+		रुको_host_पंचांगo = jअगरfies + FNIC_HOST_RESET_SETTLE_TIME * HZ;
 		ret = FAILED;
-		while (time_before(jiffies, wait_host_tmo)) {
-			if ((lp->state == LPORT_ST_READY) &&
-			    (lp->link_up)) {
+		जबतक (समय_beक्रमe(jअगरfies, रुको_host_पंचांगo)) अणु
+			अगर ((lp->state == LPORT_ST_READY) &&
+			    (lp->link_up)) अणु
 				ret = SUCCESS;
-				break;
-			}
+				अवरोध;
+			पूर्ण
 			ssleep(1);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	spin_lock_irqsave(&fnic->fnic_lock, flags);
-	fnic->internal_reset_inprogress = false;
+	fnic->पूर्णांकernal_reset_inprogress = false;
 	spin_unlock_irqrestore(&fnic->fnic_lock, flags);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
- * This fxn is called from libFC when host is removed
+ * This fxn is called from libFC when host is हटाओd
  */
-void fnic_scsi_abort_io(struct fc_lport *lp)
-{
-	int err = 0;
-	unsigned long flags;
-	enum fnic_state old_state;
-	struct fnic *fnic = lport_priv(lp);
-	DECLARE_COMPLETION_ONSTACK(remove_wait);
+व्योम fnic_scsi_पात_io(काष्ठा fc_lport *lp)
+अणु
+	पूर्णांक err = 0;
+	अचिन्हित दीर्घ flags;
+	क्रमागत fnic_state old_state;
+	काष्ठा fnic *fnic = lport_priv(lp);
+	DECLARE_COMPLETION_ONSTACK(हटाओ_रुको);
 
-	/* Issue firmware reset for fnic, wait for reset to complete */
+	/* Issue firmware reset क्रम fnic, रुको क्रम reset to complete */
 retry_fw_reset:
 	spin_lock_irqsave(&fnic->fnic_lock, flags);
-	if (unlikely(fnic->state == FNIC_IN_FC_TRANS_ETH_MODE) &&
-		     fnic->link_events) {
-		/* fw reset is in progress, poll for its completion */
+	अगर (unlikely(fnic->state == FNIC_IN_FC_TRANS_ETH_MODE) &&
+		     fnic->link_events) अणु
+		/* fw reset is in progress, poll क्रम its completion */
 		spin_unlock_irqrestore(&fnic->fnic_lock, flags);
-		schedule_timeout(msecs_to_jiffies(100));
-		goto retry_fw_reset;
-	}
+		schedule_समयout(msecs_to_jअगरfies(100));
+		जाओ retry_fw_reset;
+	पूर्ण
 
-	fnic->remove_wait = &remove_wait;
+	fnic->हटाओ_रुको = &हटाओ_रुको;
 	old_state = fnic->state;
 	fnic->state = FNIC_IN_FC_TRANS_ETH_MODE;
 	fnic_update_mac_locked(fnic, fnic->ctlr.ctl_src_addr);
 	spin_unlock_irqrestore(&fnic->fnic_lock, flags);
 
 	err = fnic_fw_reset_handler(fnic);
-	if (err) {
+	अगर (err) अणु
 		spin_lock_irqsave(&fnic->fnic_lock, flags);
-		if (fnic->state == FNIC_IN_FC_TRANS_ETH_MODE)
+		अगर (fnic->state == FNIC_IN_FC_TRANS_ETH_MODE)
 			fnic->state = old_state;
-		fnic->remove_wait = NULL;
+		fnic->हटाओ_रुको = शून्य;
 		spin_unlock_irqrestore(&fnic->fnic_lock, flags);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	/* Wait for firmware reset to complete */
-	wait_for_completion_timeout(&remove_wait,
-				    msecs_to_jiffies(FNIC_RMDEVICE_TIMEOUT));
+	/* Wait क्रम firmware reset to complete */
+	रुको_क्रम_completion_समयout(&हटाओ_रुको,
+				    msecs_to_jअगरfies(FNIC_RMDEVICE_TIMEOUT));
 
 	spin_lock_irqsave(&fnic->fnic_lock, flags);
-	fnic->remove_wait = NULL;
+	fnic->हटाओ_रुको = शून्य;
 	FNIC_SCSI_DBG(KERN_DEBUG, fnic->lport->host,
 		      "fnic_scsi_abort_io %s\n",
 		      (fnic->state == FNIC_IN_ETH_MODE) ?
 		      "SUCCESS" : "FAILED");
 	spin_unlock_irqrestore(&fnic->fnic_lock, flags);
 
-}
+पूर्ण
 
 /*
- * This fxn called from libFC to clean up driver IO state on link down
+ * This fxn called from libFC to clean up driver IO state on link करोwn
  */
-void fnic_scsi_cleanup(struct fc_lport *lp)
-{
-	unsigned long flags;
-	enum fnic_state old_state;
-	struct fnic *fnic = lport_priv(lp);
+व्योम fnic_scsi_cleanup(काष्ठा fc_lport *lp)
+अणु
+	अचिन्हित दीर्घ flags;
+	क्रमागत fnic_state old_state;
+	काष्ठा fnic *fnic = lport_priv(lp);
 
 	/* issue fw reset */
 retry_fw_reset:
 	spin_lock_irqsave(&fnic->fnic_lock, flags);
-	if (unlikely(fnic->state == FNIC_IN_FC_TRANS_ETH_MODE)) {
-		/* fw reset is in progress, poll for its completion */
+	अगर (unlikely(fnic->state == FNIC_IN_FC_TRANS_ETH_MODE)) अणु
+		/* fw reset is in progress, poll क्रम its completion */
 		spin_unlock_irqrestore(&fnic->fnic_lock, flags);
-		schedule_timeout(msecs_to_jiffies(100));
-		goto retry_fw_reset;
-	}
+		schedule_समयout(msecs_to_jअगरfies(100));
+		जाओ retry_fw_reset;
+	पूर्ण
 	old_state = fnic->state;
 	fnic->state = FNIC_IN_FC_TRANS_ETH_MODE;
 	fnic_update_mac_locked(fnic, fnic->ctlr.ctl_src_addr);
 	spin_unlock_irqrestore(&fnic->fnic_lock, flags);
 
-	if (fnic_fw_reset_handler(fnic)) {
+	अगर (fnic_fw_reset_handler(fnic)) अणु
 		spin_lock_irqsave(&fnic->fnic_lock, flags);
-		if (fnic->state == FNIC_IN_FC_TRANS_ETH_MODE)
+		अगर (fnic->state == FNIC_IN_FC_TRANS_ETH_MODE)
 			fnic->state = old_state;
 		spin_unlock_irqrestore(&fnic->fnic_lock, flags);
-	}
+	पूर्ण
 
-}
+पूर्ण
 
-void fnic_empty_scsi_cleanup(struct fc_lport *lp)
-{
-}
+व्योम fnic_empty_scsi_cleanup(काष्ठा fc_lport *lp)
+अणु
+पूर्ण
 
-void fnic_exch_mgr_reset(struct fc_lport *lp, u32 sid, u32 did)
-{
-	struct fnic *fnic = lport_priv(lp);
+व्योम fnic_exch_mgr_reset(काष्ठा fc_lport *lp, u32 sid, u32 did)
+अणु
+	काष्ठा fnic *fnic = lport_priv(lp);
 
-	/* Non-zero sid, nothing to do */
-	if (sid)
-		goto call_fc_exch_mgr_reset;
+	/* Non-zero sid, nothing to करो */
+	अगर (sid)
+		जाओ call_fc_exch_mgr_reset;
 
-	if (did) {
+	अगर (did) अणु
 		fnic_rport_exch_reset(fnic, did);
-		goto call_fc_exch_mgr_reset;
-	}
+		जाओ call_fc_exch_mgr_reset;
+	पूर्ण
 
 	/*
 	 * sid = 0, did = 0
-	 * link down or device being removed
+	 * link करोwn or device being हटाओd
 	 */
-	if (!fnic->in_remove)
+	अगर (!fnic->in_हटाओ)
 		fnic_scsi_cleanup(lp);
-	else
-		fnic_scsi_abort_io(lp);
+	अन्यथा
+		fnic_scsi_पात_io(lp);
 
 	/* call libFC exch mgr reset to reset its exchanges */
 call_fc_exch_mgr_reset:
 	fc_exch_mgr_reset(lp, sid, did);
 
-}
+पूर्ण
 
-static bool fnic_abts_pending_iter(struct scsi_cmnd *sc, void *data,
+अटल bool fnic_abts_pending_iter(काष्ठा scsi_cmnd *sc, व्योम *data,
 				   bool reserved)
-{
-	struct fnic_pending_aborts_iter_data *iter_data = data;
-	struct fnic *fnic = iter_data->fnic;
-	int cmd_state;
-	struct fnic_io_req *io_req;
+अणु
+	काष्ठा fnic_pending_पातs_iter_data *iter_data = data;
+	काष्ठा fnic *fnic = iter_data->fnic;
+	पूर्णांक cmd_state;
+	काष्ठा fnic_io_req *io_req;
 	spinlock_t *io_lock;
-	unsigned long flags;
+	अचिन्हित दीर्घ flags;
 
 	/*
-	 * ignore this lun reset cmd or cmds that do not belong to
+	 * ignore this lun reset cmd or cmds that करो not beदीर्घ to
 	 * this lun
 	 */
-	if (iter_data->lr_sc && sc == iter_data->lr_sc)
-		return true;
-	if (iter_data->lun_dev && sc->device != iter_data->lun_dev)
-		return true;
+	अगर (iter_data->lr_sc && sc == iter_data->lr_sc)
+		वापस true;
+	अगर (iter_data->lun_dev && sc->device != iter_data->lun_dev)
+		वापस true;
 
 	io_lock = fnic_io_lock_hash(fnic, sc);
 	spin_lock_irqsave(io_lock, flags);
 
-	io_req = (struct fnic_io_req *)CMD_SP(sc);
-	if (!io_req) {
+	io_req = (काष्ठा fnic_io_req *)CMD_SP(sc);
+	अगर (!io_req) अणु
 		spin_unlock_irqrestore(io_lock, flags);
-		return true;
-	}
+		वापस true;
+	पूर्ण
 
 	/*
 	 * Found IO that is still pending with firmware and
-	 * belongs to the LUN that we are resetting
+	 * beदीर्घs to the LUN that we are resetting
 	 */
 	FNIC_SCSI_DBG(KERN_INFO, fnic->lport->host,
 		      "Found IO in %s on lun\n",
 		      fnic_ioreq_state_to_str(CMD_STATE(sc)));
 	cmd_state = CMD_STATE(sc);
 	spin_unlock_irqrestore(io_lock, flags);
-	if (cmd_state == FNIC_IOREQ_ABTS_PENDING)
+	अगर (cmd_state == FNIC_IOREQ_ABTS_PENDING)
 		iter_data->ret = 1;
 
-	return iter_data->ret ? false : true;
-}
+	वापस iter_data->ret ? false : true;
+पूर्ण
 
 /*
  * fnic_is_abts_pending() is a helper function that
- * walks through tag map to check if there is any IOs pending,if there is one,
- * then it returns 1 (true), otherwise 0 (false)
- * if @lr_sc is non NULL, then it checks IOs specific to particular LUN,
- * otherwise, it checks for all IOs.
+ * walks through tag map to check अगर there is any IOs pending,अगर there is one,
+ * then it वापसs 1 (true), otherwise 0 (false)
+ * अगर @lr_sc is non शून्य, then it checks IOs specअगरic to particular LUN,
+ * otherwise, it checks क्रम all IOs.
  */
-int fnic_is_abts_pending(struct fnic *fnic, struct scsi_cmnd *lr_sc)
-{
-	struct fnic_pending_aborts_iter_data iter_data = {
+पूर्णांक fnic_is_abts_pending(काष्ठा fnic *fnic, काष्ठा scsi_cmnd *lr_sc)
+अणु
+	काष्ठा fnic_pending_पातs_iter_data iter_data = अणु
 		.fnic = fnic,
-		.lun_dev = NULL,
+		.lun_dev = शून्य,
 		.ret = 0,
-	};
+	पूर्ण;
 
-	if (lr_sc) {
+	अगर (lr_sc) अणु
 		iter_data.lun_dev = lr_sc->device;
 		iter_data.lr_sc = lr_sc;
-	}
+	पूर्ण
 
-	/* walk again to check, if IOs are still pending in fw */
+	/* walk again to check, अगर IOs are still pending in fw */
 	scsi_host_busy_iter(fnic->lport->host,
 			    fnic_abts_pending_iter, &iter_data);
 
-	return iter_data.ret;
-}
+	वापस iter_data.ret;
+पूर्ण

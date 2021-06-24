@@ -1,7 +1,8 @@
+<शैली गुरु>
 /*
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the main directory of this archive
- * for more details.
+ * License.  See the file "COPYING" in the मुख्य directory of this archive
+ * क्रम more details.
  *
  * KVM/MIPS: Interrupt delivery
  *
@@ -9,48 +10,48 @@
  * Authors: Sanjay Lal <sanjayl@kymasys.com>
  */
 
-#include <linux/errno.h>
-#include <linux/err.h>
-#include <linux/vmalloc.h>
-#include <linux/fs.h>
-#include <linux/memblock.h>
-#include <asm/page.h>
-#include <asm/cacheflush.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/err.h>
+#समावेश <linux/vदो_स्मृति.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/memblock.h>
+#समावेश <यंत्र/page.h>
+#समावेश <यंत्र/cacheflush.h>
 
-#include <linux/kvm_host.h>
+#समावेश <linux/kvm_host.h>
 
-#include "interrupt.h"
+#समावेश "interrupt.h"
 
-void kvm_mips_deliver_interrupts(struct kvm_vcpu *vcpu, u32 cause)
-{
-	unsigned long *pending = &vcpu->arch.pending_exceptions;
-	unsigned long *pending_clr = &vcpu->arch.pending_exceptions_clr;
-	unsigned int priority;
+व्योम kvm_mips_deliver_पूर्णांकerrupts(काष्ठा kvm_vcpu *vcpu, u32 cause)
+अणु
+	अचिन्हित दीर्घ *pending = &vcpu->arch.pending_exceptions;
+	अचिन्हित दीर्घ *pending_clr = &vcpu->arch.pending_exceptions_clr;
+	अचिन्हित पूर्णांक priority;
 
-	if (!(*pending) && !(*pending_clr))
-		return;
+	अगर (!(*pending) && !(*pending_clr))
+		वापस;
 
 	priority = __ffs(*pending_clr);
-	while (priority <= MIPS_EXC_MAX) {
+	जबतक (priority <= MIPS_EXC_MAX) अणु
 		kvm_mips_callbacks->irq_clear(vcpu, priority, cause);
 
 		priority = find_next_bit(pending_clr,
-					 BITS_PER_BYTE * sizeof(*pending_clr),
+					 BITS_PER_BYTE * माप(*pending_clr),
 					 priority + 1);
-	}
+	पूर्ण
 
 	priority = __ffs(*pending);
-	while (priority <= MIPS_EXC_MAX) {
+	जबतक (priority <= MIPS_EXC_MAX) अणु
 		kvm_mips_callbacks->irq_deliver(vcpu, priority, cause);
 
 		priority = find_next_bit(pending,
-					 BITS_PER_BYTE * sizeof(*pending),
+					 BITS_PER_BYTE * माप(*pending),
 					 priority + 1);
-	}
+	पूर्ण
 
-}
+पूर्ण
 
-int kvm_mips_pending_timer(struct kvm_vcpu *vcpu)
-{
-	return test_bit(MIPS_EXC_INT_TIMER, &vcpu->arch.pending_exceptions);
-}
+पूर्णांक kvm_mips_pending_समयr(काष्ठा kvm_vcpu *vcpu)
+अणु
+	वापस test_bit(MIPS_EXC_INT_TIMER, &vcpu->arch.pending_exceptions);
+पूर्ण

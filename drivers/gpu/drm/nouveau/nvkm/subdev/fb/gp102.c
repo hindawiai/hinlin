@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2016 Red Hat Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -21,28 +22,28 @@
  *
  * Authors: Ben Skeggs <bskeggs@redhat.com>
  */
-#include "gf100.h"
-#include "ram.h"
+#समावेश "gf100.h"
+#समावेश "ram.h"
 
-#include <core/firmware.h>
-#include <core/memory.h>
-#include <nvfw/fw.h>
-#include <nvfw/hs.h>
-#include <engine/nvdec.h>
+#समावेश <core/firmware.h>
+#समावेश <core/memory.h>
+#समावेश <nvfw/fw.h>
+#समावेश <nvfw/hs.h>
+#समावेश <engine/nvdec.h>
 
-int
-gp102_fb_vpr_scrub(struct nvkm_fb *fb)
-{
-	struct nvkm_subdev *subdev = &fb->subdev;
-	struct nvkm_device *device = subdev->device;
-	struct nvkm_falcon *falcon = &device->nvdec[0]->falcon;
-	struct nvkm_blob *blob = &fb->vpr_scrubber;
-	const struct nvfw_bin_hdr *hsbin_hdr;
-	const struct nvfw_hs_header *fw_hdr;
-	const struct nvfw_hs_load_header *lhdr;
-	void *scrub_data;
+पूर्णांक
+gp102_fb_vpr_scrub(काष्ठा nvkm_fb *fb)
+अणु
+	काष्ठा nvkm_subdev *subdev = &fb->subdev;
+	काष्ठा nvkm_device *device = subdev->device;
+	काष्ठा nvkm_falcon *falcon = &device->nvdec[0]->falcon;
+	काष्ठा nvkm_blob *blob = &fb->vpr_scrubber;
+	स्थिर काष्ठा nvfw_bin_hdr *hsbin_hdr;
+	स्थिर काष्ठा nvfw_hs_header *fw_hdr;
+	स्थिर काष्ठा nvfw_hs_load_header *lhdr;
+	व्योम *scrub_data;
 	u32 patch_loc, patch_sig;
-	int ret;
+	पूर्णांक ret;
 
 	nvkm_falcon_get(falcon, subdev);
 
@@ -53,18 +54,18 @@ gp102_fb_vpr_scrub(struct nvkm_fb *fb)
 
 	patch_loc = *(u32 *)(blob->data + fw_hdr->patch_loc);
 	patch_sig = *(u32 *)(blob->data + fw_hdr->patch_sig);
-	if (falcon->debug) {
-		memcpy(scrub_data + patch_loc,
+	अगर (falcon->debug) अणु
+		स_नकल(scrub_data + patch_loc,
 		       blob->data + fw_hdr->sig_dbg_offset + patch_sig,
 		       fw_hdr->sig_dbg_size);
-	} else {
-		memcpy(scrub_data + patch_loc,
+	पूर्ण अन्यथा अणु
+		स_नकल(scrub_data + patch_loc,
 		       blob->data + fw_hdr->sig_prod_offset + patch_sig,
 		       fw_hdr->sig_prod_size);
-	}
+	पूर्ण
 
 	nvkm_falcon_reset(falcon);
-	nvkm_falcon_bind_context(falcon, NULL);
+	nvkm_falcon_bind_context(falcon, शून्य);
 
 	nvkm_falcon_load_imem(falcon, scrub_data, lhdr->non_sec_code_off,
 			      lhdr->non_sec_code_size,
@@ -79,29 +80,29 @@ gp102_fb_vpr_scrub(struct nvkm_fb *fb)
 	nvkm_falcon_set_start_addr(falcon, 0x0);
 	nvkm_falcon_start(falcon);
 
-	ret = nvkm_falcon_wait_for_halt(falcon, 500);
-	if (ret < 0) {
+	ret = nvkm_falcon_रुको_क्रम_halt(falcon, 500);
+	अगर (ret < 0) अणु
 		ret = -ETIMEDOUT;
-		goto end;
-	}
+		जाओ end;
+	पूर्ण
 
-	/* put nvdec in clean state - without reset it will remain in HS mode */
+	/* put nvdec in clean state - without reset it will reमुख्य in HS mode */
 	nvkm_falcon_reset(falcon);
 end:
 	nvkm_falcon_put(falcon, subdev);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 bool
-gp102_fb_vpr_scrub_required(struct nvkm_fb *fb)
-{
-	struct nvkm_device *device = fb->subdev.device;
+gp102_fb_vpr_scrub_required(काष्ठा nvkm_fb *fb)
+अणु
+	काष्ठा nvkm_device *device = fb->subdev.device;
 	nvkm_wr32(device, 0x100cd0, 0x2);
-	return (nvkm_rd32(device, 0x100cd0) & 0x00000010) != 0;
-}
+	वापस (nvkm_rd32(device, 0x100cd0) & 0x00000010) != 0;
+पूर्ण
 
-static const struct nvkm_fb_func
-gp102_fb = {
+अटल स्थिर काष्ठा nvkm_fb_func
+gp102_fb = अणु
 	.dtor = gf100_fb_dtor,
 	.oneinit = gf100_fb_oneinit,
 	.init = gp100_fb_init,
@@ -110,26 +111,26 @@ gp102_fb = {
 	.vpr.scrub_required = gp102_fb_vpr_scrub_required,
 	.vpr.scrub = gp102_fb_vpr_scrub,
 	.ram_new = gp100_ram_new,
-};
+पूर्ण;
 
-int
-gp102_fb_new_(const struct nvkm_fb_func *func, struct nvkm_device *device,
-	      enum nvkm_subdev_type type, int inst, struct nvkm_fb **pfb)
-{
-	int ret = gf100_fb_new_(func, device, type, inst, pfb);
-	if (ret)
-		return ret;
+पूर्णांक
+gp102_fb_new_(स्थिर काष्ठा nvkm_fb_func *func, काष्ठा nvkm_device *device,
+	      क्रमागत nvkm_subdev_type type, पूर्णांक inst, काष्ठा nvkm_fb **pfb)
+अणु
+	पूर्णांक ret = gf100_fb_new_(func, device, type, inst, pfb);
+	अगर (ret)
+		वापस ret;
 
 	nvkm_firmware_load_blob(&(*pfb)->subdev, "nvdec/scrubber", "", 0,
 				&(*pfb)->vpr_scrubber);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int
-gp102_fb_new(struct nvkm_device *device, enum nvkm_subdev_type type, int inst, struct nvkm_fb **pfb)
-{
-	return gp102_fb_new_(&gp102_fb, device, type, inst, pfb);
-}
+पूर्णांक
+gp102_fb_new(काष्ठा nvkm_device *device, क्रमागत nvkm_subdev_type type, पूर्णांक inst, काष्ठा nvkm_fb **pfb)
+अणु
+	वापस gp102_fb_new_(&gp102_fb, device, type, inst, pfb);
+पूर्ण
 
 MODULE_FIRMWARE("nvidia/gp102/nvdec/scrubber.bin");
 MODULE_FIRMWARE("nvidia/gp104/nvdec/scrubber.bin");

@@ -1,33 +1,34 @@
-/* SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0
  *
- * include/asm-sh/cpu-sh4/sq.h
+ * include/यंत्र-sh/cpu-sh4/sq.h
  *
  * Copyright (C) 2001, 2002, 2003  Paul Mundt
  * Copyright (C) 2001, 2002  M. R. Brown
  */
-#ifndef __ASM_CPU_SH4_SQ_H
-#define __ASM_CPU_SH4_SQ_H
+#अगर_अघोषित __ASM_CPU_SH4_SQ_H
+#घोषणा __ASM_CPU_SH4_SQ_H
 
-#include <asm/addrspace.h>
-#include <asm/page.h>
+#समावेश <यंत्र/addrspace.h>
+#समावेश <यंत्र/page.h>
 
 /*
  * Store queues range from e0000000-e3fffffc, allowing approx. 64MB to be
  * mapped to any physical address space. Since data is written (and aligned)
  * to 32-byte boundaries, we need to be sure that all allocations are aligned.
  */
-#define SQ_SIZE                 32
-#define SQ_ALIGN_MASK           (~(SQ_SIZE - 1))
-#define SQ_ALIGN(addr)          (((addr)+SQ_SIZE-1) & SQ_ALIGN_MASK)
+#घोषणा SQ_SIZE                 32
+#घोषणा SQ_ALIGN_MASK           (~(SQ_SIZE - 1))
+#घोषणा SQ_ALIGN(addr)          (((addr)+SQ_SIZE-1) & SQ_ALIGN_MASK)
 
-#define SQ_QACR0		(P4SEG_REG_BASE  + 0x38)
-#define SQ_QACR1		(P4SEG_REG_BASE  + 0x3c)
-#define SQ_ADDRMAX              (P4SEG_STORE_QUE + 0x04000000)
+#घोषणा SQ_QACR0		(P4SEG_REG_BASE  + 0x38)
+#घोषणा SQ_QACR1		(P4SEG_REG_BASE  + 0x3c)
+#घोषणा SQ_ADDRMAX              (P4SEG_STORE_QUE + 0x04000000)
 
 /* arch/sh/kernel/cpu/sh4/sq.c */
-unsigned long sq_remap(unsigned long phys, unsigned int size,
-		       const char *name, pgprot_t prot);
-void sq_unmap(unsigned long vaddr);
-void sq_flush_range(unsigned long start, unsigned int len);
+अचिन्हित दीर्घ sq_remap(अचिन्हित दीर्घ phys, अचिन्हित पूर्णांक size,
+		       स्थिर अक्षर *name, pgprot_t prot);
+व्योम sq_unmap(अचिन्हित दीर्घ vaddr);
+व्योम sq_flush_range(अचिन्हित दीर्घ start, अचिन्हित पूर्णांक len);
 
-#endif /* __ASM_CPU_SH4_SQ_H */
+#पूर्ण_अगर /* __ASM_CPU_SH4_SQ_H */

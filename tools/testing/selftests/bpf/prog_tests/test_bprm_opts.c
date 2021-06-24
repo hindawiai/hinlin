@@ -1,116 +1,117 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 
 /*
  * Copyright (C) 2020 Google LLC.
  */
 
-#include <test_progs.h>
-#include <linux/limits.h>
+#समावेश <test_progs.h>
+#समावेश <linux/सीमा.स>
 
-#include "bprm_opts.skel.h"
-#include "network_helpers.h"
+#समावेश "bprm_opts.skel.h"
+#समावेश "network_helpers.h"
 
-#ifndef __NR_pidfd_open
-#define __NR_pidfd_open 434
-#endif
+#अगर_अघोषित __NR_pidfd_खोलो
+#घोषणा __NR_pidfd_खोलो 434
+#पूर्ण_अगर
 
-static const char * const bash_envp[] = { "TMPDIR=shouldnotbeset", NULL };
+अटल स्थिर अक्षर * स्थिर bash_envp[] = अणु "TMPDIR=shouldnotbeset", शून्य पूर्ण;
 
-static inline int sys_pidfd_open(pid_t pid, unsigned int flags)
-{
-	return syscall(__NR_pidfd_open, pid, flags);
-}
+अटल अंतरभूत पूर्णांक sys_pidfd_खोलो(pid_t pid, अचिन्हित पूर्णांक flags)
+अणु
+	वापस syscall(__NR_pidfd_खोलो, pid, flags);
+पूर्ण
 
-static int update_storage(int map_fd, int secureexec)
-{
-	int task_fd, ret = 0;
+अटल पूर्णांक update_storage(पूर्णांक map_fd, पूर्णांक secureexec)
+अणु
+	पूर्णांक task_fd, ret = 0;
 
-	task_fd = sys_pidfd_open(getpid(), 0);
-	if (task_fd < 0)
-		return errno;
+	task_fd = sys_pidfd_खोलो(getpid(), 0);
+	अगर (task_fd < 0)
+		वापस त्रुटि_सं;
 
 	ret = bpf_map_update_elem(map_fd, &task_fd, &secureexec, BPF_NOEXIST);
-	if (ret)
-		ret = errno;
+	अगर (ret)
+		ret = त्रुटि_सं;
 
-	close(task_fd);
-	return ret;
-}
+	बंद(task_fd);
+	वापस ret;
+पूर्ण
 
-static int run_set_secureexec(int map_fd, int secureexec)
-{
-	int child_pid, child_status, ret, null_fd;
+अटल पूर्णांक run_set_secureexec(पूर्णांक map_fd, पूर्णांक secureexec)
+अणु
+	पूर्णांक child_pid, child_status, ret, null_fd;
 
-	child_pid = fork();
-	if (child_pid == 0) {
-		null_fd = open("/dev/null", O_WRONLY);
-		if (null_fd == -1)
-			exit(errno);
-		dup2(null_fd, STDOUT_FILENO);
-		dup2(null_fd, STDERR_FILENO);
-		close(null_fd);
+	child_pid = विभाजन();
+	अगर (child_pid == 0) अणु
+		null_fd = खोलो("/dev/null", O_WRONLY);
+		अगर (null_fd == -1)
+			निकास(त्रुटि_सं);
+		dup2(null_fd, STDOUT_खाताNO);
+		dup2(null_fd, STDERR_खाताNO);
+		बंद(null_fd);
 
 		/* Ensure that all executions from hereon are
-		 * secure by setting a local storage which is read by
-		 * the bprm_creds_for_exec hook and sets bprm->secureexec.
+		 * secure by setting a local storage which is पढ़ो by
+		 * the bprm_creds_क्रम_exec hook and sets bprm->secureexec.
 		 */
 		ret = update_storage(map_fd, secureexec);
-		if (ret)
-			exit(ret);
+		अगर (ret)
+			निकास(ret);
 
 		/* If the binary is executed with securexec=1, the dynamic
 		 * loader ingores and unsets certain variables like LD_PRELOAD,
-		 * TMPDIR etc. TMPDIR is used here to simplify the example, as
+		 * TMPसूची etc. TMPसूची is used here to simplअगरy the example, as
 		 * LD_PRELOAD requires a real .so file.
 		 *
-		 * If the value of TMPDIR is set, the bash command returns 10
-		 * and if the value is unset, it returns 20.
+		 * If the value of TMPसूची is set, the bash command वापसs 10
+		 * and अगर the value is unset, it वापसs 20.
 		 */
 		execle("/bin/bash", "bash", "-c",
-		       "[[ -z \"${TMPDIR}\" ]] || exit 10 && exit 20", NULL,
+		       "[[ -z \"${TMPDIR}\" ]] || exit 10 && exit 20", शून्य,
 		       bash_envp);
-		exit(errno);
-	} else if (child_pid > 0) {
-		waitpid(child_pid, &child_status, 0);
+		निकास(त्रुटि_सं);
+	पूर्ण अन्यथा अगर (child_pid > 0) अणु
+		रुकोpid(child_pid, &child_status, 0);
 		ret = WEXITSTATUS(child_status);
 
-		/* If a secureexec occurred, the exit status should be 20 */
-		if (secureexec && ret == 20)
-			return 0;
+		/* If a secureexec occurred, the निकास status should be 20 */
+		अगर (secureexec && ret == 20)
+			वापस 0;
 
-		/* If normal execution happened, the exit code should be 10 */
-		if (!secureexec && ret == 10)
-			return 0;
-	}
+		/* If normal execution happened, the निकास code should be 10 */
+		अगर (!secureexec && ret == 10)
+			वापस 0;
+	पूर्ण
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-void test_test_bprm_opts(void)
-{
-	int err, duration = 0;
-	struct bprm_opts *skel = NULL;
+व्योम test_test_bprm_opts(व्योम)
+अणु
+	पूर्णांक err, duration = 0;
+	काष्ठा bprm_opts *skel = शून्य;
 
-	skel = bprm_opts__open_and_load();
-	if (CHECK(!skel, "skel_load", "skeleton failed\n"))
-		goto close_prog;
+	skel = bprm_opts__खोलो_and_load();
+	अगर (CHECK(!skel, "skel_load", "skeleton failed\n"))
+		जाओ बंद_prog;
 
 	err = bprm_opts__attach(skel);
-	if (CHECK(err, "attach", "attach failed: %d\n", err))
-		goto close_prog;
+	अगर (CHECK(err, "attach", "attach failed: %d\n", err))
+		जाओ बंद_prog;
 
 	/* Run the test with the secureexec bit unset */
 	err = run_set_secureexec(bpf_map__fd(skel->maps.secure_exec_task_map),
 				 0 /* secureexec */);
-	if (CHECK(err, "run_set_secureexec:0", "err = %d\n", err))
-		goto close_prog;
+	अगर (CHECK(err, "run_set_secureexec:0", "err = %d\n", err))
+		जाओ बंद_prog;
 
 	/* Run the test with the secureexec bit set */
 	err = run_set_secureexec(bpf_map__fd(skel->maps.secure_exec_task_map),
 				 1 /* secureexec */);
-	if (CHECK(err, "run_set_secureexec:1", "err = %d\n", err))
-		goto close_prog;
+	अगर (CHECK(err, "run_set_secureexec:1", "err = %d\n", err))
+		जाओ बंद_prog;
 
-close_prog:
+बंद_prog:
 	bprm_opts__destroy(skel);
-}
+पूर्ण

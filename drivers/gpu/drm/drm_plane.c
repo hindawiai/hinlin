@@ -1,68 +1,69 @@
+<शैली गुरु>
 /*
  * Copyright (c) 2016 Intel Corporation
  *
- * Permission to use, copy, modify, distribute, and sell this software and its
- * documentation for any purpose is hereby granted without fee, provided that
+ * Permission to use, copy, modअगरy, distribute, and sell this software and its
+ * करोcumentation क्रम any purpose is hereby granted without fee, provided that
  * the above copyright notice appear in all copies and that both that copyright
- * notice and this permission notice appear in supporting documentation, and
+ * notice and this permission notice appear in supporting करोcumentation, and
  * that the name of the copyright holders not be used in advertising or
- * publicity pertaining to distribution of the software without specific,
+ * खुलाity pertaining to distribution of the software without specअगरic,
  * written prior permission.  The copyright holders make no representations
- * about the suitability of this software for any purpose.  It is provided "as
+ * about the suitability of this software क्रम any purpose.  It is provided "as
  * is" without express or implied warranty.
  *
  * THE COPYRIGHT HOLDERS DISCLAIM ALL WARRANTIES WITH REGARD TO THIS SOFTWARE,
  * INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS, IN NO
- * EVENT SHALL THE COPYRIGHT HOLDERS BE LIABLE FOR ANY SPECIAL, INDIRECT OR
+ * EVENT SHALL THE COPYRIGHT HOLDERS BE LIABLE FOR ANY SPECIAL, INसूचीECT OR
  * CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE,
  * DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER
  * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE
  * OF THIS SOFTWARE.
  */
 
-#include <linux/slab.h>
-#include <linux/uaccess.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/uaccess.h>
 
-#include <drm/drm_plane.h>
-#include <drm/drm_drv.h>
-#include <drm/drm_print.h>
-#include <drm/drm_framebuffer.h>
-#include <drm/drm_file.h>
-#include <drm/drm_crtc.h>
-#include <drm/drm_fourcc.h>
-#include <drm/drm_managed.h>
-#include <drm/drm_vblank.h>
+#समावेश <drm/drm_plane.h>
+#समावेश <drm/drm_drv.h>
+#समावेश <drm/drm_prपूर्णांक.h>
+#समावेश <drm/drm_framebuffer.h>
+#समावेश <drm/drm_file.h>
+#समावेश <drm/drm_crtc.h>
+#समावेश <drm/drm_fourcc.h>
+#समावेश <drm/drm_managed.h>
+#समावेश <drm/drm_vblank.h>
 
-#include "drm_crtc_internal.h"
+#समावेश "drm_crtc_internal.h"
 
 /**
  * DOC: overview
  *
  * A plane represents an image source that can be blended with or overlayed on
  * top of a CRTC during the scanout process. Planes take their input data from a
- * &drm_framebuffer object. The plane itself specifies the cropping and scaling
+ * &drm_framebuffer object. The plane itself specअगरies the cropping and scaling
  * of that image, and where it is placed on the visible area of a display
  * pipeline, represented by &drm_crtc. A plane can also have additional
- * properties that specify how the pixels are positioned and blended, like
+ * properties that specअगरy how the pixels are positioned and blended, like
  * rotation or Z-position. All these properties are stored in &drm_plane_state.
  *
  * To create a plane, a KMS drivers allocates and zeroes an instances of
- * &struct drm_plane (possibly as part of a larger structure) and registers it
+ * &काष्ठा drm_plane (possibly as part of a larger काष्ठाure) and रेजिस्टरs it
  * with a call to drm_universal_plane_init().
  *
- * Each plane has a type, see enum drm_plane_type. A plane can be compatible
+ * Each plane has a type, see क्रमागत drm_plane_type. A plane can be compatible
  * with multiple CRTCs, see &drm_plane.possible_crtcs.
  *
  * Each CRTC must have a unique primary plane userspace can attach to enable
- * the CRTC. In other words, userspace must be able to attach a different
- * primary plane to each CRTC at the same time. Primary planes can still be
+ * the CRTC. In other words, userspace must be able to attach a dअगरferent
+ * primary plane to each CRTC at the same समय. Primary planes can still be
  * compatible with multiple CRTCs. There must be exactly as many primary planes
  * as there are CRTCs.
  *
- * Legacy uAPI doesn't expose the primary and cursor planes directly. DRM core
+ * Legacy uAPI करोesn't expose the primary and cursor planes directly. DRM core
  * relies on the driver to set the primary and optionally the cursor plane used
- * for legacy IOCTLs. This is done by calling drm_crtc_init_with_planes(). All
- * drivers must provide one primary plane per CRTC to avoid surprising legacy
+ * क्रम legacy IOCTLs. This is करोne by calling drm_crtc_init_with_planes(). All
+ * drivers must provide one primary plane per CRTC to aव्योम surprising legacy
  * userspace too much.
  */
 
@@ -75,23 +76,23 @@
  *     Immutable property describing the type of the plane.
  *
  *     For user-space which has enabled the &DRM_CLIENT_CAP_ATOMIC capability,
- *     the plane type is just a hint and is mostly superseded by atomic
- *     test-only commits. The type hint can still be used to come up more
+ *     the plane type is just a hपूर्णांक and is mostly superseded by atomic
+ *     test-only commits. The type hपूर्णांक can still be used to come up more
  *     easily with a plane configuration accepted by the driver.
  *
  *     The value of this property can be one of the following:
  *
  *     "Primary":
  *         To light up a CRTC, attaching a primary plane is the most likely to
- *         work if it covers the whole CRTC and doesn't have scaling or
+ *         work अगर it covers the whole CRTC and करोesn't have scaling or
  *         cropping set up.
  *
- *         Drivers may support more features for the primary plane, user-space
+ *         Drivers may support more features क्रम the primary plane, user-space
  *         can find out with test-only atomic commits.
  *
  *         Some primary planes are implicitly used by the kernel in the legacy
  *         IOCTLs &DRM_IOCTL_MODE_SETCRTC and &DRM_IOCTL_MODE_PAGE_FLIP.
- *         Therefore user-space must not mix explicit usage of any primary
+ *         Thereक्रमe user-space must not mix explicit usage of any primary
  *         plane (e.g. through an atomic commit) with these legacy IOCTLs.
  *
  *     "Cursor":
@@ -102,19 +103,19 @@
  *         - If the driver provides the capabilities &DRM_CAP_CURSOR_WIDTH and
  *           &DRM_CAP_CURSOR_HEIGHT, create the framebuffer with this size.
  *           Otherwise, create a framebuffer with the size 64x64.
- *         - If the driver doesn't support modifiers, create a framebuffer with
+ *         - If the driver करोesn't support modअगरiers, create a framebuffer with
  *           a linear layout. Otherwise, use the IN_FORMATS plane property.
  *
- *         Drivers may support more features for the cursor plane, user-space
+ *         Drivers may support more features क्रम the cursor plane, user-space
  *         can find out with test-only atomic commits.
  *
  *         Some cursor planes are implicitly used by the kernel in the legacy
  *         IOCTLs &DRM_IOCTL_MODE_CURSOR and &DRM_IOCTL_MODE_CURSOR2.
- *         Therefore user-space must not mix explicit usage of any cursor
+ *         Thereक्रमe user-space must not mix explicit usage of any cursor
  *         plane (e.g. through an atomic commit) with these legacy IOCTLs.
  *
- *         Some drivers may support cursors even if no cursor plane is exposed.
- *         In this case, the legacy cursor IOCTLs can be used to configure the
+ *         Some drivers may support cursors even अगर no cursor plane is exposed.
+ *         In this हाल, the legacy cursor IOCTLs can be used to configure the
  *         cursor.
  *
  *     "Overlay":
@@ -124,191 +125,191 @@
  *         &DRM_CLIENT_CAP_UNIVERSAL_PLANES capability is disabled.
  *
  * IN_FORMATS:
- *     Blob property which contains the set of buffer format and modifier
- *     pairs supported by this plane. The blob is a struct
- *     drm_format_modifier_blob. Without this property the plane doesn't
- *     support buffers with modifiers. Userspace cannot change this property.
+ *     Blob property which contains the set of buffer क्रमmat and modअगरier
+ *     pairs supported by this plane. The blob is a काष्ठा
+ *     drm_क्रमmat_modअगरier_blob. Without this property the plane करोesn't
+ *     support buffers with modअगरiers. Userspace cannot change this property.
  */
 
-static unsigned int drm_num_planes(struct drm_device *dev)
-{
-	unsigned int num = 0;
-	struct drm_plane *tmp;
+अटल अचिन्हित पूर्णांक drm_num_planes(काष्ठा drm_device *dev)
+अणु
+	अचिन्हित पूर्णांक num = 0;
+	काष्ठा drm_plane *पंचांगp;
 
-	drm_for_each_plane(tmp, dev) {
+	drm_क्रम_each_plane(पंचांगp, dev) अणु
 		num++;
-	}
+	पूर्ण
 
-	return num;
-}
+	वापस num;
+पूर्ण
 
-static inline u32 *
-formats_ptr(struct drm_format_modifier_blob *blob)
-{
-	return (u32 *)(((char *)blob) + blob->formats_offset);
-}
+अटल अंतरभूत u32 *
+क्रमmats_ptr(काष्ठा drm_क्रमmat_modअगरier_blob *blob)
+अणु
+	वापस (u32 *)(((अक्षर *)blob) + blob->क्रमmats_offset);
+पूर्ण
 
-static inline struct drm_format_modifier *
-modifiers_ptr(struct drm_format_modifier_blob *blob)
-{
-	return (struct drm_format_modifier *)(((char *)blob) + blob->modifiers_offset);
-}
+अटल अंतरभूत काष्ठा drm_क्रमmat_modअगरier *
+modअगरiers_ptr(काष्ठा drm_क्रमmat_modअगरier_blob *blob)
+अणु
+	वापस (काष्ठा drm_क्रमmat_modअगरier *)(((अक्षर *)blob) + blob->modअगरiers_offset);
+पूर्ण
 
-static int create_in_format_blob(struct drm_device *dev, struct drm_plane *plane)
-{
-	const struct drm_mode_config *config = &dev->mode_config;
-	struct drm_property_blob *blob;
-	struct drm_format_modifier *mod;
-	size_t blob_size, formats_size, modifiers_size;
-	struct drm_format_modifier_blob *blob_data;
-	unsigned int i, j;
+अटल पूर्णांक create_in_क्रमmat_blob(काष्ठा drm_device *dev, काष्ठा drm_plane *plane)
+अणु
+	स्थिर काष्ठा drm_mode_config *config = &dev->mode_config;
+	काष्ठा drm_property_blob *blob;
+	काष्ठा drm_क्रमmat_modअगरier *mod;
+	माप_प्रकार blob_size, क्रमmats_size, modअगरiers_size;
+	काष्ठा drm_क्रमmat_modअगरier_blob *blob_data;
+	अचिन्हित पूर्णांक i, j;
 
-	formats_size = sizeof(__u32) * plane->format_count;
-	if (WARN_ON(!formats_size)) {
-		/* 0 formats are never expected */
-		return 0;
-	}
+	क्रमmats_size = माप(__u32) * plane->क्रमmat_count;
+	अगर (WARN_ON(!क्रमmats_size)) अणु
+		/* 0 क्रमmats are never expected */
+		वापस 0;
+	पूर्ण
 
-	modifiers_size =
-		sizeof(struct drm_format_modifier) * plane->modifier_count;
+	modअगरiers_size =
+		माप(काष्ठा drm_क्रमmat_modअगरier) * plane->modअगरier_count;
 
-	blob_size = sizeof(struct drm_format_modifier_blob);
-	/* Modifiers offset is a pointer to a struct with a 64 bit field so it
+	blob_size = माप(काष्ठा drm_क्रमmat_modअगरier_blob);
+	/* Modअगरiers offset is a poपूर्णांकer to a काष्ठा with a 64 bit field so it
 	 * should be naturally aligned to 8B.
 	 */
-	BUILD_BUG_ON(sizeof(struct drm_format_modifier_blob) % 8);
-	blob_size += ALIGN(formats_size, 8);
-	blob_size += modifiers_size;
+	BUILD_BUG_ON(माप(काष्ठा drm_क्रमmat_modअगरier_blob) % 8);
+	blob_size += ALIGN(क्रमmats_size, 8);
+	blob_size += modअगरiers_size;
 
-	blob = drm_property_create_blob(dev, blob_size, NULL);
-	if (IS_ERR(blob))
-		return -1;
+	blob = drm_property_create_blob(dev, blob_size, शून्य);
+	अगर (IS_ERR(blob))
+		वापस -1;
 
 	blob_data = blob->data;
 	blob_data->version = FORMAT_BLOB_CURRENT;
-	blob_data->count_formats = plane->format_count;
-	blob_data->formats_offset = sizeof(struct drm_format_modifier_blob);
-	blob_data->count_modifiers = plane->modifier_count;
+	blob_data->count_क्रमmats = plane->क्रमmat_count;
+	blob_data->क्रमmats_offset = माप(काष्ठा drm_क्रमmat_modअगरier_blob);
+	blob_data->count_modअगरiers = plane->modअगरier_count;
 
-	blob_data->modifiers_offset =
-		ALIGN(blob_data->formats_offset + formats_size, 8);
+	blob_data->modअगरiers_offset =
+		ALIGN(blob_data->क्रमmats_offset + क्रमmats_size, 8);
 
-	memcpy(formats_ptr(blob_data), plane->format_types, formats_size);
+	स_नकल(क्रमmats_ptr(blob_data), plane->क्रमmat_types, क्रमmats_size);
 
 	/* If we can't determine support, just bail */
-	if (!plane->funcs->format_mod_supported)
-		goto done;
+	अगर (!plane->funcs->क्रमmat_mod_supported)
+		जाओ करोne;
 
-	mod = modifiers_ptr(blob_data);
-	for (i = 0; i < plane->modifier_count; i++) {
-		for (j = 0; j < plane->format_count; j++) {
-			if (plane->funcs->format_mod_supported(plane,
-							       plane->format_types[j],
-							       plane->modifiers[i])) {
+	mod = modअगरiers_ptr(blob_data);
+	क्रम (i = 0; i < plane->modअगरier_count; i++) अणु
+		क्रम (j = 0; j < plane->क्रमmat_count; j++) अणु
+			अगर (plane->funcs->क्रमmat_mod_supported(plane,
+							       plane->क्रमmat_types[j],
+							       plane->modअगरiers[i])) अणु
 
-				mod->formats |= 1ULL << j;
-			}
-		}
+				mod->क्रमmats |= 1ULL << j;
+			पूर्ण
+		पूर्ण
 
-		mod->modifier = plane->modifiers[i];
+		mod->modअगरier = plane->modअगरiers[i];
 		mod->offset = 0;
 		mod->pad = 0;
 		mod++;
-	}
+	पूर्ण
 
-done:
-	drm_object_attach_property(&plane->base, config->modifiers_property,
+करोne:
+	drm_object_attach_property(&plane->base, config->modअगरiers_property,
 				   blob->base.id);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-__printf(9, 0)
-static int __drm_universal_plane_init(struct drm_device *dev,
-				      struct drm_plane *plane,
-				      uint32_t possible_crtcs,
-				      const struct drm_plane_funcs *funcs,
-				      const uint32_t *formats,
-				      unsigned int format_count,
-				      const uint64_t *format_modifiers,
-				      enum drm_plane_type type,
-				      const char *name, va_list ap)
-{
-	struct drm_mode_config *config = &dev->mode_config;
-	unsigned int format_modifier_count = 0;
-	int ret;
+__म_लिखो(9, 0)
+अटल पूर्णांक __drm_universal_plane_init(काष्ठा drm_device *dev,
+				      काष्ठा drm_plane *plane,
+				      uपूर्णांक32_t possible_crtcs,
+				      स्थिर काष्ठा drm_plane_funcs *funcs,
+				      स्थिर uपूर्णांक32_t *क्रमmats,
+				      अचिन्हित पूर्णांक क्रमmat_count,
+				      स्थिर uपूर्णांक64_t *क्रमmat_modअगरiers,
+				      क्रमागत drm_plane_type type,
+				      स्थिर अक्षर *name, बहु_सूची ap)
+अणु
+	काष्ठा drm_mode_config *config = &dev->mode_config;
+	अचिन्हित पूर्णांक क्रमmat_modअगरier_count = 0;
+	पूर्णांक ret;
 
-	/* plane index is used with 32bit bitmasks */
-	if (WARN_ON(config->num_total_plane >= 32))
-		return -EINVAL;
+	/* plane index is used with 32bit biपंचांगasks */
+	अगर (WARN_ON(config->num_total_plane >= 32))
+		वापस -EINVAL;
 
 	WARN_ON(drm_drv_uses_atomic_modeset(dev) &&
 		(!funcs->atomic_destroy_state ||
 		 !funcs->atomic_duplicate_state));
 
 	ret = drm_mode_object_add(dev, &plane->base, DRM_MODE_OBJECT_PLANE);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	drm_modeset_lock_init(&plane->mutex);
 
 	plane->base.properties = &plane->properties;
 	plane->dev = dev;
 	plane->funcs = funcs;
-	plane->format_types = kmalloc_array(format_count, sizeof(uint32_t),
+	plane->क्रमmat_types = kदो_स्मृति_array(क्रमmat_count, माप(uपूर्णांक32_t),
 					    GFP_KERNEL);
-	if (!plane->format_types) {
+	अगर (!plane->क्रमmat_types) अणु
 		DRM_DEBUG_KMS("out of memory when allocating plane\n");
-		drm_mode_object_unregister(dev, &plane->base);
-		return -ENOMEM;
-	}
+		drm_mode_object_unरेजिस्टर(dev, &plane->base);
+		वापस -ENOMEM;
+	पूर्ण
 
 	/*
-	 * First driver to need more than 64 formats needs to fix this. Each
-	 * format is encoded as a bit and the current code only supports a u64.
+	 * First driver to need more than 64 क्रमmats needs to fix this. Each
+	 * क्रमmat is encoded as a bit and the current code only supports a u64.
 	 */
-	if (WARN_ON(format_count > 64))
-		return -EINVAL;
+	अगर (WARN_ON(क्रमmat_count > 64))
+		वापस -EINVAL;
 
-	if (format_modifiers) {
-		const uint64_t *temp_modifiers = format_modifiers;
+	अगर (क्रमmat_modअगरiers) अणु
+		स्थिर uपूर्णांक64_t *temp_modअगरiers = क्रमmat_modअगरiers;
 
-		while (*temp_modifiers++ != DRM_FORMAT_MOD_INVALID)
-			format_modifier_count++;
-	}
+		जबतक (*temp_modअगरiers++ != DRM_FORMAT_MOD_INVALID)
+			क्रमmat_modअगरier_count++;
+	पूर्ण
 
-	if (format_modifier_count)
-		config->allow_fb_modifiers = true;
+	अगर (क्रमmat_modअगरier_count)
+		config->allow_fb_modअगरiers = true;
 
-	plane->modifier_count = format_modifier_count;
-	plane->modifiers = kmalloc_array(format_modifier_count,
-					 sizeof(format_modifiers[0]),
+	plane->modअगरier_count = क्रमmat_modअगरier_count;
+	plane->modअगरiers = kदो_स्मृति_array(क्रमmat_modअगरier_count,
+					 माप(क्रमmat_modअगरiers[0]),
 					 GFP_KERNEL);
 
-	if (format_modifier_count && !plane->modifiers) {
+	अगर (क्रमmat_modअगरier_count && !plane->modअगरiers) अणु
 		DRM_DEBUG_KMS("out of memory when allocating plane\n");
-		kfree(plane->format_types);
-		drm_mode_object_unregister(dev, &plane->base);
-		return -ENOMEM;
-	}
+		kमुक्त(plane->क्रमmat_types);
+		drm_mode_object_unरेजिस्टर(dev, &plane->base);
+		वापस -ENOMEM;
+	पूर्ण
 
-	if (name) {
-		plane->name = kvasprintf(GFP_KERNEL, name, ap);
-	} else {
-		plane->name = kasprintf(GFP_KERNEL, "plane-%d",
+	अगर (name) अणु
+		plane->name = kvaप्र_लिखो(GFP_KERNEL, name, ap);
+	पूर्ण अन्यथा अणु
+		plane->name = kaप्र_लिखो(GFP_KERNEL, "plane-%d",
 					drm_num_planes(dev));
-	}
-	if (!plane->name) {
-		kfree(plane->format_types);
-		kfree(plane->modifiers);
-		drm_mode_object_unregister(dev, &plane->base);
-		return -ENOMEM;
-	}
+	पूर्ण
+	अगर (!plane->name) अणु
+		kमुक्त(plane->क्रमmat_types);
+		kमुक्त(plane->modअगरiers);
+		drm_mode_object_unरेजिस्टर(dev, &plane->base);
+		वापस -ENOMEM;
+	पूर्ण
 
-	memcpy(plane->format_types, formats, format_count * sizeof(uint32_t));
-	plane->format_count = format_count;
-	memcpy(plane->modifiers, format_modifiers,
-	       format_modifier_count * sizeof(format_modifiers[0]));
+	स_नकल(plane->क्रमmat_types, क्रमmats, क्रमmat_count * माप(uपूर्णांक32_t));
+	plane->क्रमmat_count = क्रमmat_count;
+	स_नकल(plane->modअगरiers, क्रमmat_modअगरiers,
+	       क्रमmat_modअगरier_count * माप(क्रमmat_modअगरiers[0]));
 	plane->possible_crtcs = possible_crtcs;
 	plane->type = type;
 
@@ -319,7 +320,7 @@ static int __drm_universal_plane_init(struct drm_device *dev,
 				   config->plane_type_property,
 				   plane->type);
 
-	if (drm_core_check_feature(dev, DRIVER_ATOMIC)) {
+	अगर (drm_core_check_feature(dev, DRIVER_ATOMIC)) अणु
 		drm_object_attach_property(&plane->base, config->prop_fb_id, 0);
 		drm_object_attach_property(&plane->base, config->prop_in_fence_fd, -1);
 		drm_object_attach_property(&plane->base, config->prop_crtc_id, 0);
@@ -331,151 +332,151 @@ static int __drm_universal_plane_init(struct drm_device *dev,
 		drm_object_attach_property(&plane->base, config->prop_src_y, 0);
 		drm_object_attach_property(&plane->base, config->prop_src_w, 0);
 		drm_object_attach_property(&plane->base, config->prop_src_h, 0);
-	}
+	पूर्ण
 
-	if (config->allow_fb_modifiers)
-		create_in_format_blob(dev, plane);
+	अगर (config->allow_fb_modअगरiers)
+		create_in_क्रमmat_blob(dev, plane);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * drm_universal_plane_init - Initialize a new universal plane object
  * @dev: DRM device
  * @plane: plane object to init
- * @possible_crtcs: bitmask of possible CRTCs
- * @funcs: callbacks for the new plane
- * @formats: array of supported formats (DRM_FORMAT\_\*)
- * @format_count: number of elements in @formats
- * @format_modifiers: array of struct drm_format modifiers terminated by
+ * @possible_crtcs: biपंचांगask of possible CRTCs
+ * @funcs: callbacks क्रम the new plane
+ * @क्रमmats: array of supported क्रमmats (DRM_FORMAT\_\*)
+ * @क्रमmat_count: number of elements in @क्रमmats
+ * @क्रमmat_modअगरiers: array of काष्ठा drm_क्रमmat modअगरiers terminated by
  *                    DRM_FORMAT_MOD_INVALID
  * @type: type of plane (overlay, primary, cursor)
- * @name: printf style format string for the plane name, or NULL for default name
+ * @name: म_लिखो style क्रमmat string क्रम the plane name, or शून्य क्रम शेष name
  *
  * Initializes a plane object of type @type. The &drm_plane_funcs.destroy hook
- * should call drm_plane_cleanup() and kfree() the plane structure. The plane
- * structure should not be allocated with devm_kzalloc().
+ * should call drm_plane_cleanup() and kमुक्त() the plane काष्ठाure. The plane
+ * काष्ठाure should not be allocated with devm_kzalloc().
  *
  * Note: consider using drmm_universal_plane_alloc() instead of
- * drm_universal_plane_init() to let the DRM managed resource infrastructure
+ * drm_universal_plane_init() to let the DRM managed resource infraकाष्ठाure
  * take care of cleanup and deallocation.
  *
  * Returns:
  * Zero on success, error code on failure.
  */
-int drm_universal_plane_init(struct drm_device *dev, struct drm_plane *plane,
-			     uint32_t possible_crtcs,
-			     const struct drm_plane_funcs *funcs,
-			     const uint32_t *formats, unsigned int format_count,
-			     const uint64_t *format_modifiers,
-			     enum drm_plane_type type,
-			     const char *name, ...)
-{
-	va_list ap;
-	int ret;
+पूर्णांक drm_universal_plane_init(काष्ठा drm_device *dev, काष्ठा drm_plane *plane,
+			     uपूर्णांक32_t possible_crtcs,
+			     स्थिर काष्ठा drm_plane_funcs *funcs,
+			     स्थिर uपूर्णांक32_t *क्रमmats, अचिन्हित पूर्णांक क्रमmat_count,
+			     स्थिर uपूर्णांक64_t *क्रमmat_modअगरiers,
+			     क्रमागत drm_plane_type type,
+			     स्थिर अक्षर *name, ...)
+अणु
+	बहु_सूची ap;
+	पूर्णांक ret;
 
 	WARN_ON(!funcs->destroy);
 
-	va_start(ap, name);
+	बहु_शुरू(ap, name);
 	ret = __drm_universal_plane_init(dev, plane, possible_crtcs, funcs,
-					 formats, format_count, format_modifiers,
+					 क्रमmats, क्रमmat_count, क्रमmat_modअगरiers,
 					 type, name, ap);
-	va_end(ap);
-	return ret;
-}
+	बहु_पूर्ण(ap);
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL(drm_universal_plane_init);
 
-static void drmm_universal_plane_alloc_release(struct drm_device *dev, void *ptr)
-{
-	struct drm_plane *plane = ptr;
+अटल व्योम drmm_universal_plane_alloc_release(काष्ठा drm_device *dev, व्योम *ptr)
+अणु
+	काष्ठा drm_plane *plane = ptr;
 
-	if (WARN_ON(!plane->dev))
-		return;
+	अगर (WARN_ON(!plane->dev))
+		वापस;
 
 	drm_plane_cleanup(plane);
-}
+पूर्ण
 
-void *__drmm_universal_plane_alloc(struct drm_device *dev, size_t size,
-				   size_t offset, uint32_t possible_crtcs,
-				   const struct drm_plane_funcs *funcs,
-				   const uint32_t *formats, unsigned int format_count,
-				   const uint64_t *format_modifiers,
-				   enum drm_plane_type type,
-				   const char *name, ...)
-{
-	void *container;
-	struct drm_plane *plane;
-	va_list ap;
-	int ret;
+व्योम *__drmm_universal_plane_alloc(काष्ठा drm_device *dev, माप_प्रकार size,
+				   माप_प्रकार offset, uपूर्णांक32_t possible_crtcs,
+				   स्थिर काष्ठा drm_plane_funcs *funcs,
+				   स्थिर uपूर्णांक32_t *क्रमmats, अचिन्हित पूर्णांक क्रमmat_count,
+				   स्थिर uपूर्णांक64_t *क्रमmat_modअगरiers,
+				   क्रमागत drm_plane_type type,
+				   स्थिर अक्षर *name, ...)
+अणु
+	व्योम *container;
+	काष्ठा drm_plane *plane;
+	बहु_सूची ap;
+	पूर्णांक ret;
 
-	if (WARN_ON(!funcs || funcs->destroy))
-		return ERR_PTR(-EINVAL);
+	अगर (WARN_ON(!funcs || funcs->destroy))
+		वापस ERR_PTR(-EINVAL);
 
 	container = drmm_kzalloc(dev, size, GFP_KERNEL);
-	if (!container)
-		return ERR_PTR(-ENOMEM);
+	अगर (!container)
+		वापस ERR_PTR(-ENOMEM);
 
 	plane = container + offset;
 
-	va_start(ap, name);
+	बहु_शुरू(ap, name);
 	ret = __drm_universal_plane_init(dev, plane, possible_crtcs, funcs,
-					 formats, format_count, format_modifiers,
+					 क्रमmats, क्रमmat_count, क्रमmat_modअगरiers,
 					 type, name, ap);
-	va_end(ap);
-	if (ret)
-		return ERR_PTR(ret);
+	बहु_पूर्ण(ap);
+	अगर (ret)
+		वापस ERR_PTR(ret);
 
 	ret = drmm_add_action_or_reset(dev, drmm_universal_plane_alloc_release,
 				       plane);
-	if (ret)
-		return ERR_PTR(ret);
+	अगर (ret)
+		वापस ERR_PTR(ret);
 
-	return container;
-}
+	वापस container;
+पूर्ण
 EXPORT_SYMBOL(__drmm_universal_plane_alloc);
 
-int drm_plane_register_all(struct drm_device *dev)
-{
-	unsigned int num_planes = 0;
-	unsigned int num_zpos = 0;
-	struct drm_plane *plane;
-	int ret = 0;
+पूर्णांक drm_plane_रेजिस्टर_all(काष्ठा drm_device *dev)
+अणु
+	अचिन्हित पूर्णांक num_planes = 0;
+	अचिन्हित पूर्णांक num_zpos = 0;
+	काष्ठा drm_plane *plane;
+	पूर्णांक ret = 0;
 
-	drm_for_each_plane(plane, dev) {
-		if (plane->funcs->late_register)
-			ret = plane->funcs->late_register(plane);
-		if (ret)
-			return ret;
+	drm_क्रम_each_plane(plane, dev) अणु
+		अगर (plane->funcs->late_रेजिस्टर)
+			ret = plane->funcs->late_रेजिस्टर(plane);
+		अगर (ret)
+			वापस ret;
 
-		if (plane->zpos_property)
+		अगर (plane->zpos_property)
 			num_zpos++;
 		num_planes++;
-	}
+	पूर्ण
 
 	drm_WARN(dev, num_zpos && num_planes != num_zpos,
 		 "Mixing planes with and without zpos property is invalid\n");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void drm_plane_unregister_all(struct drm_device *dev)
-{
-	struct drm_plane *plane;
+व्योम drm_plane_unरेजिस्टर_all(काष्ठा drm_device *dev)
+अणु
+	काष्ठा drm_plane *plane;
 
-	drm_for_each_plane(plane, dev) {
-		if (plane->funcs->early_unregister)
-			plane->funcs->early_unregister(plane);
-	}
-}
+	drm_क्रम_each_plane(plane, dev) अणु
+		अगर (plane->funcs->early_unरेजिस्टर)
+			plane->funcs->early_unरेजिस्टर(plane);
+	पूर्ण
+पूर्ण
 
 /**
  * drm_plane_init - Initialize a legacy plane
  * @dev: DRM device
  * @plane: plane object to init
- * @possible_crtcs: bitmask of possible CRTCs
- * @funcs: callbacks for the new plane
- * @formats: array of supported formats (DRM_FORMAT\_\*)
- * @format_count: number of elements in @formats
+ * @possible_crtcs: biपंचांगask of possible CRTCs
+ * @funcs: callbacks क्रम the new plane
+ * @क्रमmats: array of supported क्रमmats (DRM_FORMAT\_\*)
+ * @क्रमmat_count: number of elements in @क्रमmats
  * @is_primary: plane type (primary vs overlay)
  *
  * Legacy API to initialize a DRM plane.
@@ -485,43 +486,43 @@ void drm_plane_unregister_all(struct drm_device *dev)
  * Returns:
  * Zero on success, error code on failure.
  */
-int drm_plane_init(struct drm_device *dev, struct drm_plane *plane,
-		   uint32_t possible_crtcs,
-		   const struct drm_plane_funcs *funcs,
-		   const uint32_t *formats, unsigned int format_count,
+पूर्णांक drm_plane_init(काष्ठा drm_device *dev, काष्ठा drm_plane *plane,
+		   uपूर्णांक32_t possible_crtcs,
+		   स्थिर काष्ठा drm_plane_funcs *funcs,
+		   स्थिर uपूर्णांक32_t *क्रमmats, अचिन्हित पूर्णांक क्रमmat_count,
 		   bool is_primary)
-{
-	enum drm_plane_type type;
+अणु
+	क्रमागत drm_plane_type type;
 
 	type = is_primary ? DRM_PLANE_TYPE_PRIMARY : DRM_PLANE_TYPE_OVERLAY;
-	return drm_universal_plane_init(dev, plane, possible_crtcs, funcs,
-					formats, format_count,
-					NULL, type, NULL);
-}
+	वापस drm_universal_plane_init(dev, plane, possible_crtcs, funcs,
+					क्रमmats, क्रमmat_count,
+					शून्य, type, शून्य);
+पूर्ण
 EXPORT_SYMBOL(drm_plane_init);
 
 /**
  * drm_plane_cleanup - Clean up the core plane usage
  * @plane: plane to cleanup
  *
- * This function cleans up @plane and removes it from the DRM mode setting
- * core. Note that the function does *not* free the plane structure itself,
+ * This function cleans up @plane and हटाओs it from the DRM mode setting
+ * core. Note that the function करोes *not* मुक्त the plane काष्ठाure itself,
  * this is the responsibility of the caller.
  */
-void drm_plane_cleanup(struct drm_plane *plane)
-{
-	struct drm_device *dev = plane->dev;
+व्योम drm_plane_cleanup(काष्ठा drm_plane *plane)
+अणु
+	काष्ठा drm_device *dev = plane->dev;
 
 	drm_modeset_lock_fini(&plane->mutex);
 
-	kfree(plane->format_types);
-	kfree(plane->modifiers);
-	drm_mode_object_unregister(dev, &plane->base);
+	kमुक्त(plane->क्रमmat_types);
+	kमुक्त(plane->modअगरiers);
+	drm_mode_object_unरेजिस्टर(dev, &plane->base);
 
 	BUG_ON(list_empty(&plane->head));
 
-	/* Note that the plane_list is considered to be static; should we
-	 * remove the drm_plane at runtime we would have to decrement all
+	/* Note that the plane_list is considered to be अटल; should we
+	 * हटाओ the drm_plane at runसमय we would have to decrement all
 	 * the indices on the drm_plane after us in the plane_list.
 	 */
 
@@ -529,38 +530,38 @@ void drm_plane_cleanup(struct drm_plane *plane)
 	dev->mode_config.num_total_plane--;
 
 	WARN_ON(plane->state && !plane->funcs->atomic_destroy_state);
-	if (plane->state && plane->funcs->atomic_destroy_state)
+	अगर (plane->state && plane->funcs->atomic_destroy_state)
 		plane->funcs->atomic_destroy_state(plane, plane->state);
 
-	kfree(plane->name);
+	kमुक्त(plane->name);
 
-	memset(plane, 0, sizeof(*plane));
-}
+	स_रखो(plane, 0, माप(*plane));
+पूर्ण
 EXPORT_SYMBOL(drm_plane_cleanup);
 
 /**
- * drm_plane_from_index - find the registered plane at an index
+ * drm_plane_from_index - find the रेजिस्टरed plane at an index
  * @dev: DRM device
- * @idx: index of registered plane to find for
+ * @idx: index of रेजिस्टरed plane to find क्रम
  *
- * Given a plane index, return the registered plane from DRM device's
+ * Given a plane index, वापस the रेजिस्टरed plane from DRM device's
  * list of planes with matching index. This is the inverse of drm_plane_index().
  */
-struct drm_plane *
-drm_plane_from_index(struct drm_device *dev, int idx)
-{
-	struct drm_plane *plane;
+काष्ठा drm_plane *
+drm_plane_from_index(काष्ठा drm_device *dev, पूर्णांक idx)
+अणु
+	काष्ठा drm_plane *plane;
 
-	drm_for_each_plane(plane, dev)
-		if (idx == plane->index)
-			return plane;
+	drm_क्रम_each_plane(plane, dev)
+		अगर (idx == plane->index)
+			वापस plane;
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 EXPORT_SYMBOL(drm_plane_from_index);
 
 /**
- * drm_plane_force_disable - Forcibly disable a plane
+ * drm_plane_क्रमce_disable - Forcibly disable a plane
  * @plane: plane to disable
  *
  * Forces the plane to be disabled.
@@ -568,130 +569,130 @@ EXPORT_SYMBOL(drm_plane_from_index);
  * Used when the plane's current framebuffer is destroyed,
  * and when restoring fbdev mode.
  *
- * Note that this function is not suitable for atomic drivers, since it doesn't
+ * Note that this function is not suitable क्रम atomic drivers, since it करोesn't
  * wire through the lock acquisition context properly and hence can't handle
- * retries or driver private locks. You probably want to use
+ * retries or driver निजी locks. You probably want to use
  * drm_atomic_helper_disable_plane() or
  * drm_atomic_helper_disable_planes_on_crtc() instead.
  */
-void drm_plane_force_disable(struct drm_plane *plane)
-{
-	int ret;
+व्योम drm_plane_क्रमce_disable(काष्ठा drm_plane *plane)
+अणु
+	पूर्णांक ret;
 
-	if (!plane->fb)
-		return;
+	अगर (!plane->fb)
+		वापस;
 
 	WARN_ON(drm_drv_uses_atomic_modeset(plane->dev));
 
 	plane->old_fb = plane->fb;
-	ret = plane->funcs->disable_plane(plane, NULL);
-	if (ret) {
+	ret = plane->funcs->disable_plane(plane, शून्य);
+	अगर (ret) अणु
 		DRM_ERROR("failed to disable plane with busy fb\n");
-		plane->old_fb = NULL;
-		return;
-	}
+		plane->old_fb = शून्य;
+		वापस;
+	पूर्ण
 	/* disconnect the plane from the fb and crtc: */
 	drm_framebuffer_put(plane->old_fb);
-	plane->old_fb = NULL;
-	plane->fb = NULL;
-	plane->crtc = NULL;
-}
-EXPORT_SYMBOL(drm_plane_force_disable);
+	plane->old_fb = शून्य;
+	plane->fb = शून्य;
+	plane->crtc = शून्य;
+पूर्ण
+EXPORT_SYMBOL(drm_plane_क्रमce_disable);
 
 /**
  * drm_mode_plane_set_obj_prop - set the value of a property
- * @plane: drm plane object to set property value for
+ * @plane: drm plane object to set property value क्रम
  * @property: property to set
  * @value: value the property should be set to
  *
  * This functions sets a given property on a given plane object. This function
  * calls the driver's ->set_property callback and changes the software state of
- * the property if the callback succeeds.
+ * the property अगर the callback succeeds.
  *
  * Returns:
  * Zero on success, error code on failure.
  */
-int drm_mode_plane_set_obj_prop(struct drm_plane *plane,
-				struct drm_property *property,
-				uint64_t value)
-{
-	int ret = -EINVAL;
-	struct drm_mode_object *obj = &plane->base;
+पूर्णांक drm_mode_plane_set_obj_prop(काष्ठा drm_plane *plane,
+				काष्ठा drm_property *property,
+				uपूर्णांक64_t value)
+अणु
+	पूर्णांक ret = -EINVAL;
+	काष्ठा drm_mode_object *obj = &plane->base;
 
-	if (plane->funcs->set_property)
+	अगर (plane->funcs->set_property)
 		ret = plane->funcs->set_property(plane, property, value);
-	if (!ret)
+	अगर (!ret)
 		drm_object_property_set_value(obj, property, value);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL(drm_mode_plane_set_obj_prop);
 
-int drm_mode_getplane_res(struct drm_device *dev, void *data,
-			  struct drm_file *file_priv)
-{
-	struct drm_mode_get_plane_res *plane_resp = data;
-	struct drm_plane *plane;
-	uint32_t __user *plane_ptr;
-	int count = 0;
+पूर्णांक drm_mode_getplane_res(काष्ठा drm_device *dev, व्योम *data,
+			  काष्ठा drm_file *file_priv)
+अणु
+	काष्ठा drm_mode_get_plane_res *plane_resp = data;
+	काष्ठा drm_plane *plane;
+	uपूर्णांक32_t __user *plane_ptr;
+	पूर्णांक count = 0;
 
-	if (!drm_core_check_feature(dev, DRIVER_MODESET))
-		return -EOPNOTSUPP;
+	अगर (!drm_core_check_feature(dev, DRIVER_MODESET))
+		वापस -EOPNOTSUPP;
 
 	plane_ptr = u64_to_user_ptr(plane_resp->plane_id_ptr);
 
 	/*
 	 * This ioctl is called twice, once to determine how much space is
-	 * needed, and the 2nd time to fill it.
+	 * needed, and the 2nd समय to fill it.
 	 */
-	drm_for_each_plane(plane, dev) {
+	drm_क्रम_each_plane(plane, dev) अणु
 		/*
 		 * Unless userspace set the 'universal planes'
 		 * capability bit, only advertise overlays.
 		 */
-		if (plane->type != DRM_PLANE_TYPE_OVERLAY &&
+		अगर (plane->type != DRM_PLANE_TYPE_OVERLAY &&
 		    !file_priv->universal_planes)
-			continue;
+			जारी;
 
-		if (drm_lease_held(file_priv, plane->base.id)) {
-			if (count < plane_resp->count_planes &&
+		अगर (drm_lease_held(file_priv, plane->base.id)) अणु
+			अगर (count < plane_resp->count_planes &&
 			    put_user(plane->base.id, plane_ptr + count))
-				return -EFAULT;
+				वापस -EFAULT;
 			count++;
-		}
-	}
+		पूर्ण
+	पूर्ण
 	plane_resp->count_planes = count;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int drm_mode_getplane(struct drm_device *dev, void *data,
-		      struct drm_file *file_priv)
-{
-	struct drm_mode_get_plane *plane_resp = data;
-	struct drm_plane *plane;
-	uint32_t __user *format_ptr;
+पूर्णांक drm_mode_getplane(काष्ठा drm_device *dev, व्योम *data,
+		      काष्ठा drm_file *file_priv)
+अणु
+	काष्ठा drm_mode_get_plane *plane_resp = data;
+	काष्ठा drm_plane *plane;
+	uपूर्णांक32_t __user *क्रमmat_ptr;
 
-	if (!drm_core_check_feature(dev, DRIVER_MODESET))
-		return -EOPNOTSUPP;
+	अगर (!drm_core_check_feature(dev, DRIVER_MODESET))
+		वापस -EOPNOTSUPP;
 
 	plane = drm_plane_find(dev, file_priv, plane_resp->plane_id);
-	if (!plane)
-		return -ENOENT;
+	अगर (!plane)
+		वापस -ENOENT;
 
-	drm_modeset_lock(&plane->mutex, NULL);
-	if (plane->state && plane->state->crtc && drm_lease_held(file_priv, plane->state->crtc->base.id))
+	drm_modeset_lock(&plane->mutex, शून्य);
+	अगर (plane->state && plane->state->crtc && drm_lease_held(file_priv, plane->state->crtc->base.id))
 		plane_resp->crtc_id = plane->state->crtc->base.id;
-	else if (!plane->state && plane->crtc && drm_lease_held(file_priv, plane->crtc->base.id))
+	अन्यथा अगर (!plane->state && plane->crtc && drm_lease_held(file_priv, plane->crtc->base.id))
 		plane_resp->crtc_id = plane->crtc->base.id;
-	else
+	अन्यथा
 		plane_resp->crtc_id = 0;
 
-	if (plane->state && plane->state->fb)
+	अगर (plane->state && plane->state->fb)
 		plane_resp->fb_id = plane->state->fb->base.id;
-	else if (!plane->state && plane->fb)
+	अन्यथा अगर (!plane->state && plane->fb)
 		plane_resp->fb_id = plane->fb->base.id;
-	else
+	अन्यथा
 		plane_resp->fb_id = 0;
 	drm_modeset_unlock(&plane->mutex);
 
@@ -703,753 +704,753 @@ int drm_mode_getplane(struct drm_device *dev, void *data,
 
 	/*
 	 * This ioctl is called twice, once to determine how much space is
-	 * needed, and the 2nd time to fill it.
+	 * needed, and the 2nd समय to fill it.
 	 */
-	if (plane->format_count &&
-	    (plane_resp->count_format_types >= plane->format_count)) {
-		format_ptr = (uint32_t __user *)(unsigned long)plane_resp->format_type_ptr;
-		if (copy_to_user(format_ptr,
-				 plane->format_types,
-				 sizeof(uint32_t) * plane->format_count)) {
-			return -EFAULT;
-		}
-	}
-	plane_resp->count_format_types = plane->format_count;
+	अगर (plane->क्रमmat_count &&
+	    (plane_resp->count_क्रमmat_types >= plane->क्रमmat_count)) अणु
+		क्रमmat_ptr = (uपूर्णांक32_t __user *)(अचिन्हित दीर्घ)plane_resp->क्रमmat_type_ptr;
+		अगर (copy_to_user(क्रमmat_ptr,
+				 plane->क्रमmat_types,
+				 माप(uपूर्णांक32_t) * plane->क्रमmat_count)) अणु
+			वापस -EFAULT;
+		पूर्ण
+	पूर्ण
+	plane_resp->count_क्रमmat_types = plane->क्रमmat_count;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int drm_plane_check_pixel_format(struct drm_plane *plane,
-				 u32 format, u64 modifier)
-{
-	unsigned int i;
+पूर्णांक drm_plane_check_pixel_क्रमmat(काष्ठा drm_plane *plane,
+				 u32 क्रमmat, u64 modअगरier)
+अणु
+	अचिन्हित पूर्णांक i;
 
-	for (i = 0; i < plane->format_count; i++) {
-		if (format == plane->format_types[i])
-			break;
-	}
-	if (i == plane->format_count)
-		return -EINVAL;
+	क्रम (i = 0; i < plane->क्रमmat_count; i++) अणु
+		अगर (क्रमmat == plane->क्रमmat_types[i])
+			अवरोध;
+	पूर्ण
+	अगर (i == plane->क्रमmat_count)
+		वापस -EINVAL;
 
-	if (plane->funcs->format_mod_supported) {
-		if (!plane->funcs->format_mod_supported(plane, format, modifier))
-			return -EINVAL;
-	} else {
-		if (!plane->modifier_count)
-			return 0;
+	अगर (plane->funcs->क्रमmat_mod_supported) अणु
+		अगर (!plane->funcs->क्रमmat_mod_supported(plane, क्रमmat, modअगरier))
+			वापस -EINVAL;
+	पूर्ण अन्यथा अणु
+		अगर (!plane->modअगरier_count)
+			वापस 0;
 
-		for (i = 0; i < plane->modifier_count; i++) {
-			if (modifier == plane->modifiers[i])
-				break;
-		}
-		if (i == plane->modifier_count)
-			return -EINVAL;
-	}
+		क्रम (i = 0; i < plane->modअगरier_count; i++) अणु
+			अगर (modअगरier == plane->modअगरiers[i])
+				अवरोध;
+		पूर्ण
+		अगर (i == plane->modअगरier_count)
+			वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __setplane_check(struct drm_plane *plane,
-			    struct drm_crtc *crtc,
-			    struct drm_framebuffer *fb,
-			    int32_t crtc_x, int32_t crtc_y,
-			    uint32_t crtc_w, uint32_t crtc_h,
-			    uint32_t src_x, uint32_t src_y,
-			    uint32_t src_w, uint32_t src_h)
-{
-	int ret;
+अटल पूर्णांक __setplane_check(काष्ठा drm_plane *plane,
+			    काष्ठा drm_crtc *crtc,
+			    काष्ठा drm_framebuffer *fb,
+			    पूर्णांक32_t crtc_x, पूर्णांक32_t crtc_y,
+			    uपूर्णांक32_t crtc_w, uपूर्णांक32_t crtc_h,
+			    uपूर्णांक32_t src_x, uपूर्णांक32_t src_y,
+			    uपूर्णांक32_t src_w, uपूर्णांक32_t src_h)
+अणु
+	पूर्णांक ret;
 
 	/* Check whether this plane is usable on this CRTC */
-	if (!(plane->possible_crtcs & drm_crtc_mask(crtc))) {
+	अगर (!(plane->possible_crtcs & drm_crtc_mask(crtc))) अणु
 		DRM_DEBUG_KMS("Invalid crtc for plane\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	/* Check whether this plane supports the fb pixel format. */
-	ret = drm_plane_check_pixel_format(plane, fb->format->format,
-					   fb->modifier);
-	if (ret) {
+	/* Check whether this plane supports the fb pixel क्रमmat. */
+	ret = drm_plane_check_pixel_क्रमmat(plane, fb->क्रमmat->क्रमmat,
+					   fb->modअगरier);
+	अगर (ret) अणु
 		DRM_DEBUG_KMS("Invalid pixel format %p4cc, modifier 0x%llx\n",
-			      &fb->format->format, fb->modifier);
-		return ret;
-	}
+			      &fb->क्रमmat->क्रमmat, fb->modअगरier);
+		वापस ret;
+	पूर्ण
 
-	/* Give drivers some help against integer overflows */
-	if (crtc_w > INT_MAX ||
-	    crtc_x > INT_MAX - (int32_t) crtc_w ||
-	    crtc_h > INT_MAX ||
-	    crtc_y > INT_MAX - (int32_t) crtc_h) {
+	/* Give drivers some help against पूर्णांकeger overflows */
+	अगर (crtc_w > पूर्णांक_उच्च ||
+	    crtc_x > पूर्णांक_उच्च - (पूर्णांक32_t) crtc_w ||
+	    crtc_h > पूर्णांक_उच्च ||
+	    crtc_y > पूर्णांक_उच्च - (पूर्णांक32_t) crtc_h) अणु
 		DRM_DEBUG_KMS("Invalid CRTC coordinates %ux%u+%d+%d\n",
 			      crtc_w, crtc_h, crtc_x, crtc_y);
-		return -ERANGE;
-	}
+		वापस -दुस्फल;
+	पूर्ण
 
 	ret = drm_framebuffer_check_src_coords(src_x, src_y, src_w, src_h, fb);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * drm_any_plane_has_format - Check whether any plane supports this format and modifier combination
+ * drm_any_plane_has_क्रमmat - Check whether any plane supports this क्रमmat and modअगरier combination
  * @dev: DRM device
- * @format: pixel format (DRM_FORMAT_*)
- * @modifier: data layout modifier
+ * @क्रमmat: pixel क्रमmat (DRM_FORMAT_*)
+ * @modअगरier: data layout modअगरier
  *
  * Returns:
- * Whether at least one plane supports the specified format and modifier combination.
+ * Whether at least one plane supports the specअगरied क्रमmat and modअगरier combination.
  */
-bool drm_any_plane_has_format(struct drm_device *dev,
-			      u32 format, u64 modifier)
-{
-	struct drm_plane *plane;
+bool drm_any_plane_has_क्रमmat(काष्ठा drm_device *dev,
+			      u32 क्रमmat, u64 modअगरier)
+अणु
+	काष्ठा drm_plane *plane;
 
-	drm_for_each_plane(plane, dev) {
-		if (drm_plane_check_pixel_format(plane, format, modifier) == 0)
-			return true;
-	}
+	drm_क्रम_each_plane(plane, dev) अणु
+		अगर (drm_plane_check_pixel_क्रमmat(plane, क्रमmat, modअगरier) == 0)
+			वापस true;
+	पूर्ण
 
-	return false;
-}
-EXPORT_SYMBOL(drm_any_plane_has_format);
+	वापस false;
+पूर्ण
+EXPORT_SYMBOL(drm_any_plane_has_क्रमmat);
 
 /*
- * __setplane_internal - setplane handler for internal callers
+ * __setplane_पूर्णांकernal - setplane handler क्रम पूर्णांकernal callers
  *
- * This function will take a reference on the new fb for the plane
+ * This function will take a reference on the new fb क्रम the plane
  * on success.
  *
- * src_{x,y,w,h} are provided in 16.16 fixed point format
+ * src_अणुx,y,w,hपूर्ण are provided in 16.16 fixed poपूर्णांक क्रमmat
  */
-static int __setplane_internal(struct drm_plane *plane,
-			       struct drm_crtc *crtc,
-			       struct drm_framebuffer *fb,
-			       int32_t crtc_x, int32_t crtc_y,
-			       uint32_t crtc_w, uint32_t crtc_h,
-			       /* src_{x,y,w,h} values are 16.16 fixed point */
-			       uint32_t src_x, uint32_t src_y,
-			       uint32_t src_w, uint32_t src_h,
-			       struct drm_modeset_acquire_ctx *ctx)
-{
-	int ret = 0;
+अटल पूर्णांक __setplane_पूर्णांकernal(काष्ठा drm_plane *plane,
+			       काष्ठा drm_crtc *crtc,
+			       काष्ठा drm_framebuffer *fb,
+			       पूर्णांक32_t crtc_x, पूर्णांक32_t crtc_y,
+			       uपूर्णांक32_t crtc_w, uपूर्णांक32_t crtc_h,
+			       /* src_अणुx,y,w,hपूर्ण values are 16.16 fixed poपूर्णांक */
+			       uपूर्णांक32_t src_x, uपूर्णांक32_t src_y,
+			       uपूर्णांक32_t src_w, uपूर्णांक32_t src_h,
+			       काष्ठा drm_modeset_acquire_ctx *ctx)
+अणु
+	पूर्णांक ret = 0;
 
 	WARN_ON(drm_drv_uses_atomic_modeset(plane->dev));
 
-	/* No fb means shut it down */
-	if (!fb) {
+	/* No fb means shut it करोwn */
+	अगर (!fb) अणु
 		plane->old_fb = plane->fb;
 		ret = plane->funcs->disable_plane(plane, ctx);
-		if (!ret) {
-			plane->crtc = NULL;
-			plane->fb = NULL;
-		} else {
-			plane->old_fb = NULL;
-		}
-		goto out;
-	}
+		अगर (!ret) अणु
+			plane->crtc = शून्य;
+			plane->fb = शून्य;
+		पूर्ण अन्यथा अणु
+			plane->old_fb = शून्य;
+		पूर्ण
+		जाओ out;
+	पूर्ण
 
 	ret = __setplane_check(plane, crtc, fb,
 			       crtc_x, crtc_y, crtc_w, crtc_h,
 			       src_x, src_y, src_w, src_h);
-	if (ret)
-		goto out;
+	अगर (ret)
+		जाओ out;
 
 	plane->old_fb = plane->fb;
 	ret = plane->funcs->update_plane(plane, crtc, fb,
 					 crtc_x, crtc_y, crtc_w, crtc_h,
 					 src_x, src_y, src_w, src_h, ctx);
-	if (!ret) {
+	अगर (!ret) अणु
 		plane->crtc = crtc;
 		plane->fb = fb;
 		drm_framebuffer_get(plane->fb);
-	} else {
-		plane->old_fb = NULL;
-	}
+	पूर्ण अन्यथा अणु
+		plane->old_fb = शून्य;
+	पूर्ण
 
 out:
-	if (plane->old_fb)
+	अगर (plane->old_fb)
 		drm_framebuffer_put(plane->old_fb);
-	plane->old_fb = NULL;
+	plane->old_fb = शून्य;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int __setplane_atomic(struct drm_plane *plane,
-			     struct drm_crtc *crtc,
-			     struct drm_framebuffer *fb,
-			     int32_t crtc_x, int32_t crtc_y,
-			     uint32_t crtc_w, uint32_t crtc_h,
-			     uint32_t src_x, uint32_t src_y,
-			     uint32_t src_w, uint32_t src_h,
-			     struct drm_modeset_acquire_ctx *ctx)
-{
-	int ret;
+अटल पूर्णांक __setplane_atomic(काष्ठा drm_plane *plane,
+			     काष्ठा drm_crtc *crtc,
+			     काष्ठा drm_framebuffer *fb,
+			     पूर्णांक32_t crtc_x, पूर्णांक32_t crtc_y,
+			     uपूर्णांक32_t crtc_w, uपूर्णांक32_t crtc_h,
+			     uपूर्णांक32_t src_x, uपूर्णांक32_t src_y,
+			     uपूर्णांक32_t src_w, uपूर्णांक32_t src_h,
+			     काष्ठा drm_modeset_acquire_ctx *ctx)
+अणु
+	पूर्णांक ret;
 
 	WARN_ON(!drm_drv_uses_atomic_modeset(plane->dev));
 
-	/* No fb means shut it down */
-	if (!fb)
-		return plane->funcs->disable_plane(plane, ctx);
+	/* No fb means shut it करोwn */
+	अगर (!fb)
+		वापस plane->funcs->disable_plane(plane, ctx);
 
 	/*
 	 * FIXME: This is redundant with drm_atomic_plane_check(),
 	 * but the legacy cursor/"async" .update_plane() tricks
-	 * don't call that so we still need this here. Should remove
+	 * करोn't call that so we still need this here. Should हटाओ
 	 * this when all .update_plane() implementations have been
 	 * fixed to call drm_atomic_plane_check().
 	 */
 	ret = __setplane_check(plane, crtc, fb,
 			       crtc_x, crtc_y, crtc_w, crtc_h,
 			       src_x, src_y, src_w, src_h);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	return plane->funcs->update_plane(plane, crtc, fb,
+	वापस plane->funcs->update_plane(plane, crtc, fb,
 					  crtc_x, crtc_y, crtc_w, crtc_h,
 					  src_x, src_y, src_w, src_h, ctx);
-}
+पूर्ण
 
-static int setplane_internal(struct drm_plane *plane,
-			     struct drm_crtc *crtc,
-			     struct drm_framebuffer *fb,
-			     int32_t crtc_x, int32_t crtc_y,
-			     uint32_t crtc_w, uint32_t crtc_h,
-			     /* src_{x,y,w,h} values are 16.16 fixed point */
-			     uint32_t src_x, uint32_t src_y,
-			     uint32_t src_w, uint32_t src_h)
-{
-	struct drm_modeset_acquire_ctx ctx;
-	int ret;
+अटल पूर्णांक setplane_पूर्णांकernal(काष्ठा drm_plane *plane,
+			     काष्ठा drm_crtc *crtc,
+			     काष्ठा drm_framebuffer *fb,
+			     पूर्णांक32_t crtc_x, पूर्णांक32_t crtc_y,
+			     uपूर्णांक32_t crtc_w, uपूर्णांक32_t crtc_h,
+			     /* src_अणुx,y,w,hपूर्ण values are 16.16 fixed poपूर्णांक */
+			     uपूर्णांक32_t src_x, uपूर्णांक32_t src_y,
+			     uपूर्णांक32_t src_w, uपूर्णांक32_t src_h)
+अणु
+	काष्ठा drm_modeset_acquire_ctx ctx;
+	पूर्णांक ret;
 
 	DRM_MODESET_LOCK_ALL_BEGIN(plane->dev, ctx,
 				   DRM_MODESET_ACQUIRE_INTERRUPTIBLE, ret);
 
-	if (drm_drv_uses_atomic_modeset(plane->dev))
+	अगर (drm_drv_uses_atomic_modeset(plane->dev))
 		ret = __setplane_atomic(plane, crtc, fb,
 					crtc_x, crtc_y, crtc_w, crtc_h,
 					src_x, src_y, src_w, src_h, &ctx);
-	else
-		ret = __setplane_internal(plane, crtc, fb,
+	अन्यथा
+		ret = __setplane_पूर्णांकernal(plane, crtc, fb,
 					  crtc_x, crtc_y, crtc_w, crtc_h,
 					  src_x, src_y, src_w, src_h, &ctx);
 
 	DRM_MODESET_LOCK_ALL_END(plane->dev, ctx, ret);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int drm_mode_setplane(struct drm_device *dev, void *data,
-		      struct drm_file *file_priv)
-{
-	struct drm_mode_set_plane *plane_req = data;
-	struct drm_plane *plane;
-	struct drm_crtc *crtc = NULL;
-	struct drm_framebuffer *fb = NULL;
-	int ret;
+पूर्णांक drm_mode_setplane(काष्ठा drm_device *dev, व्योम *data,
+		      काष्ठा drm_file *file_priv)
+अणु
+	काष्ठा drm_mode_set_plane *plane_req = data;
+	काष्ठा drm_plane *plane;
+	काष्ठा drm_crtc *crtc = शून्य;
+	काष्ठा drm_framebuffer *fb = शून्य;
+	पूर्णांक ret;
 
-	if (!drm_core_check_feature(dev, DRIVER_MODESET))
-		return -EOPNOTSUPP;
+	अगर (!drm_core_check_feature(dev, DRIVER_MODESET))
+		वापस -EOPNOTSUPP;
 
 	/*
 	 * First, find the plane, crtc, and fb objects.  If not available,
-	 * we don't bother to call the driver.
+	 * we करोn't bother to call the driver.
 	 */
 	plane = drm_plane_find(dev, file_priv, plane_req->plane_id);
-	if (!plane) {
+	अगर (!plane) अणु
 		DRM_DEBUG_KMS("Unknown plane ID %d\n",
 			      plane_req->plane_id);
-		return -ENOENT;
-	}
+		वापस -ENOENT;
+	पूर्ण
 
-	if (plane_req->fb_id) {
+	अगर (plane_req->fb_id) अणु
 		fb = drm_framebuffer_lookup(dev, file_priv, plane_req->fb_id);
-		if (!fb) {
+		अगर (!fb) अणु
 			DRM_DEBUG_KMS("Unknown framebuffer ID %d\n",
 				      plane_req->fb_id);
-			return -ENOENT;
-		}
+			वापस -ENOENT;
+		पूर्ण
 
 		crtc = drm_crtc_find(dev, file_priv, plane_req->crtc_id);
-		if (!crtc) {
+		अगर (!crtc) अणु
 			drm_framebuffer_put(fb);
 			DRM_DEBUG_KMS("Unknown crtc ID %d\n",
 				      plane_req->crtc_id);
-			return -ENOENT;
-		}
-	}
+			वापस -ENOENT;
+		पूर्ण
+	पूर्ण
 
-	ret = setplane_internal(plane, crtc, fb,
+	ret = setplane_पूर्णांकernal(plane, crtc, fb,
 				plane_req->crtc_x, plane_req->crtc_y,
 				plane_req->crtc_w, plane_req->crtc_h,
 				plane_req->src_x, plane_req->src_y,
 				plane_req->src_w, plane_req->src_h);
 
-	if (fb)
+	अगर (fb)
 		drm_framebuffer_put(fb);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int drm_mode_cursor_universal(struct drm_crtc *crtc,
-				     struct drm_mode_cursor2 *req,
-				     struct drm_file *file_priv,
-				     struct drm_modeset_acquire_ctx *ctx)
-{
-	struct drm_device *dev = crtc->dev;
-	struct drm_plane *plane = crtc->cursor;
-	struct drm_framebuffer *fb = NULL;
-	struct drm_mode_fb_cmd2 fbreq = {
+अटल पूर्णांक drm_mode_cursor_universal(काष्ठा drm_crtc *crtc,
+				     काष्ठा drm_mode_cursor2 *req,
+				     काष्ठा drm_file *file_priv,
+				     काष्ठा drm_modeset_acquire_ctx *ctx)
+अणु
+	काष्ठा drm_device *dev = crtc->dev;
+	काष्ठा drm_plane *plane = crtc->cursor;
+	काष्ठा drm_framebuffer *fb = शून्य;
+	काष्ठा drm_mode_fb_cmd2 fbreq = अणु
 		.width = req->width,
 		.height = req->height,
-		.pixel_format = DRM_FORMAT_ARGB8888,
-		.pitches = { req->width * 4 },
-		.handles = { req->handle },
-	};
-	int32_t crtc_x, crtc_y;
-	uint32_t crtc_w = 0, crtc_h = 0;
-	uint32_t src_w = 0, src_h = 0;
-	int ret = 0;
+		.pixel_क्रमmat = DRM_FORMAT_ARGB8888,
+		.pitches = अणु req->width * 4 पूर्ण,
+		.handles = अणु req->handle पूर्ण,
+	पूर्ण;
+	पूर्णांक32_t crtc_x, crtc_y;
+	uपूर्णांक32_t crtc_w = 0, crtc_h = 0;
+	uपूर्णांक32_t src_w = 0, src_h = 0;
+	पूर्णांक ret = 0;
 
 	BUG_ON(!plane);
-	WARN_ON(plane->crtc != crtc && plane->crtc != NULL);
+	WARN_ON(plane->crtc != crtc && plane->crtc != शून्य);
 
 	/*
 	 * Obtain fb we'll be using (either new or existing) and take an extra
-	 * reference to it if fb != null.  setplane will take care of dropping
-	 * the reference if the plane update fails.
+	 * reference to it अगर fb != null.  setplane will take care of dropping
+	 * the reference अगर the plane update fails.
 	 */
-	if (req->flags & DRM_MODE_CURSOR_BO) {
-		if (req->handle) {
-			fb = drm_internal_framebuffer_create(dev, &fbreq, file_priv);
-			if (IS_ERR(fb)) {
+	अगर (req->flags & DRM_MODE_CURSOR_BO) अणु
+		अगर (req->handle) अणु
+			fb = drm_पूर्णांकernal_framebuffer_create(dev, &fbreq, file_priv);
+			अगर (IS_ERR(fb)) अणु
 				DRM_DEBUG_KMS("failed to wrap cursor buffer in drm framebuffer\n");
-				return PTR_ERR(fb);
-			}
+				वापस PTR_ERR(fb);
+			पूर्ण
 
 			fb->hot_x = req->hot_x;
 			fb->hot_y = req->hot_y;
-		} else {
-			fb = NULL;
-		}
-	} else {
-		if (plane->state)
+		पूर्ण अन्यथा अणु
+			fb = शून्य;
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		अगर (plane->state)
 			fb = plane->state->fb;
-		else
+		अन्यथा
 			fb = plane->fb;
 
-		if (fb)
+		अगर (fb)
 			drm_framebuffer_get(fb);
-	}
+	पूर्ण
 
-	if (req->flags & DRM_MODE_CURSOR_MOVE) {
+	अगर (req->flags & DRM_MODE_CURSOR_MOVE) अणु
 		crtc_x = req->x;
 		crtc_y = req->y;
-	} else {
+	पूर्ण अन्यथा अणु
 		crtc_x = crtc->cursor_x;
 		crtc_y = crtc->cursor_y;
-	}
+	पूर्ण
 
-	if (fb) {
+	अगर (fb) अणु
 		crtc_w = fb->width;
 		crtc_h = fb->height;
 		src_w = fb->width << 16;
 		src_h = fb->height << 16;
-	}
+	पूर्ण
 
-	if (drm_drv_uses_atomic_modeset(dev))
+	अगर (drm_drv_uses_atomic_modeset(dev))
 		ret = __setplane_atomic(plane, crtc, fb,
 					crtc_x, crtc_y, crtc_w, crtc_h,
 					0, 0, src_w, src_h, ctx);
-	else
-		ret = __setplane_internal(plane, crtc, fb,
+	अन्यथा
+		ret = __setplane_पूर्णांकernal(plane, crtc, fb,
 					  crtc_x, crtc_y, crtc_w, crtc_h,
 					  0, 0, src_w, src_h, ctx);
 
-	if (fb)
+	अगर (fb)
 		drm_framebuffer_put(fb);
 
-	/* Update successful; save new cursor position, if necessary */
-	if (ret == 0 && req->flags & DRM_MODE_CURSOR_MOVE) {
+	/* Update successful; save new cursor position, अगर necessary */
+	अगर (ret == 0 && req->flags & DRM_MODE_CURSOR_MOVE) अणु
 		crtc->cursor_x = req->x;
 		crtc->cursor_y = req->y;
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int drm_mode_cursor_common(struct drm_device *dev,
-				  struct drm_mode_cursor2 *req,
-				  struct drm_file *file_priv)
-{
-	struct drm_crtc *crtc;
-	struct drm_modeset_acquire_ctx ctx;
-	int ret = 0;
+अटल पूर्णांक drm_mode_cursor_common(काष्ठा drm_device *dev,
+				  काष्ठा drm_mode_cursor2 *req,
+				  काष्ठा drm_file *file_priv)
+अणु
+	काष्ठा drm_crtc *crtc;
+	काष्ठा drm_modeset_acquire_ctx ctx;
+	पूर्णांक ret = 0;
 
-	if (!drm_core_check_feature(dev, DRIVER_MODESET))
-		return -EOPNOTSUPP;
+	अगर (!drm_core_check_feature(dev, DRIVER_MODESET))
+		वापस -EOPNOTSUPP;
 
-	if (!req->flags || (~DRM_MODE_CURSOR_FLAGS & req->flags))
-		return -EINVAL;
+	अगर (!req->flags || (~DRM_MODE_CURSOR_FLAGS & req->flags))
+		वापस -EINVAL;
 
 	crtc = drm_crtc_find(dev, file_priv, req->crtc_id);
-	if (!crtc) {
+	अगर (!crtc) अणु
 		DRM_DEBUG_KMS("Unknown CRTC ID %d\n", req->crtc_id);
-		return -ENOENT;
-	}
+		वापस -ENOENT;
+	पूर्ण
 
 	drm_modeset_acquire_init(&ctx, DRM_MODESET_ACQUIRE_INTERRUPTIBLE);
 retry:
 	ret = drm_modeset_lock(&crtc->mutex, &ctx);
-	if (ret)
-		goto out;
+	अगर (ret)
+		जाओ out;
 	/*
 	 * If this crtc has a universal cursor plane, call that plane's update
 	 * handler rather than using legacy cursor handlers.
 	 */
-	if (crtc->cursor) {
+	अगर (crtc->cursor) अणु
 		ret = drm_modeset_lock(&crtc->cursor->mutex, &ctx);
-		if (ret)
-			goto out;
+		अगर (ret)
+			जाओ out;
 
-		if (!drm_lease_held(file_priv, crtc->cursor->base.id)) {
+		अगर (!drm_lease_held(file_priv, crtc->cursor->base.id)) अणु
 			ret = -EACCES;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
 		ret = drm_mode_cursor_universal(crtc, req, file_priv, &ctx);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (req->flags & DRM_MODE_CURSOR_BO) {
-		if (!crtc->funcs->cursor_set && !crtc->funcs->cursor_set2) {
+	अगर (req->flags & DRM_MODE_CURSOR_BO) अणु
+		अगर (!crtc->funcs->cursor_set && !crtc->funcs->cursor_set2) अणु
 			ret = -ENXIO;
-			goto out;
-		}
-		/* Turns off the cursor if handle is 0 */
-		if (crtc->funcs->cursor_set2)
+			जाओ out;
+		पूर्ण
+		/* Turns off the cursor अगर handle is 0 */
+		अगर (crtc->funcs->cursor_set2)
 			ret = crtc->funcs->cursor_set2(crtc, file_priv, req->handle,
 						      req->width, req->height, req->hot_x, req->hot_y);
-		else
+		अन्यथा
 			ret = crtc->funcs->cursor_set(crtc, file_priv, req->handle,
 						      req->width, req->height);
-	}
+	पूर्ण
 
-	if (req->flags & DRM_MODE_CURSOR_MOVE) {
-		if (crtc->funcs->cursor_move) {
+	अगर (req->flags & DRM_MODE_CURSOR_MOVE) अणु
+		अगर (crtc->funcs->cursor_move) अणु
 			ret = crtc->funcs->cursor_move(crtc, req->x, req->y);
-		} else {
+		पूर्ण अन्यथा अणु
 			ret = -EFAULT;
-			goto out;
-		}
-	}
+			जाओ out;
+		पूर्ण
+	पूर्ण
 out:
-	if (ret == -EDEADLK) {
+	अगर (ret == -EDEADLK) अणु
 		ret = drm_modeset_backoff(&ctx);
-		if (!ret)
-			goto retry;
-	}
+		अगर (!ret)
+			जाओ retry;
+	पूर्ण
 
 	drm_modeset_drop_locks(&ctx);
 	drm_modeset_acquire_fini(&ctx);
 
-	return ret;
+	वापस ret;
 
-}
+पूर्ण
 
 
-int drm_mode_cursor_ioctl(struct drm_device *dev,
-			  void *data, struct drm_file *file_priv)
-{
-	struct drm_mode_cursor *req = data;
-	struct drm_mode_cursor2 new_req;
+पूर्णांक drm_mode_cursor_ioctl(काष्ठा drm_device *dev,
+			  व्योम *data, काष्ठा drm_file *file_priv)
+अणु
+	काष्ठा drm_mode_cursor *req = data;
+	काष्ठा drm_mode_cursor2 new_req;
 
-	memcpy(&new_req, req, sizeof(struct drm_mode_cursor));
+	स_नकल(&new_req, req, माप(काष्ठा drm_mode_cursor));
 	new_req.hot_x = new_req.hot_y = 0;
 
-	return drm_mode_cursor_common(dev, &new_req, file_priv);
-}
+	वापस drm_mode_cursor_common(dev, &new_req, file_priv);
+पूर्ण
 
 /*
  * Set the cursor configuration based on user request. This implements the 2nd
- * version of the cursor ioctl, which allows userspace to additionally specify
- * the hotspot of the pointer.
+ * version of the cursor ioctl, which allows userspace to additionally specअगरy
+ * the hotspot of the poपूर्णांकer.
  */
-int drm_mode_cursor2_ioctl(struct drm_device *dev,
-			   void *data, struct drm_file *file_priv)
-{
-	struct drm_mode_cursor2 *req = data;
+पूर्णांक drm_mode_cursor2_ioctl(काष्ठा drm_device *dev,
+			   व्योम *data, काष्ठा drm_file *file_priv)
+अणु
+	काष्ठा drm_mode_cursor2 *req = data;
 
-	return drm_mode_cursor_common(dev, req, file_priv);
-}
+	वापस drm_mode_cursor_common(dev, req, file_priv);
+पूर्ण
 
-int drm_mode_page_flip_ioctl(struct drm_device *dev,
-			     void *data, struct drm_file *file_priv)
-{
-	struct drm_mode_crtc_page_flip_target *page_flip = data;
-	struct drm_crtc *crtc;
-	struct drm_plane *plane;
-	struct drm_framebuffer *fb = NULL, *old_fb;
-	struct drm_pending_vblank_event *e = NULL;
+पूर्णांक drm_mode_page_flip_ioctl(काष्ठा drm_device *dev,
+			     व्योम *data, काष्ठा drm_file *file_priv)
+अणु
+	काष्ठा drm_mode_crtc_page_flip_target *page_flip = data;
+	काष्ठा drm_crtc *crtc;
+	काष्ठा drm_plane *plane;
+	काष्ठा drm_framebuffer *fb = शून्य, *old_fb;
+	काष्ठा drm_pending_vblank_event *e = शून्य;
 	u32 target_vblank = page_flip->sequence;
-	struct drm_modeset_acquire_ctx ctx;
-	int ret = -EINVAL;
+	काष्ठा drm_modeset_acquire_ctx ctx;
+	पूर्णांक ret = -EINVAL;
 
-	if (!drm_core_check_feature(dev, DRIVER_MODESET))
-		return -EOPNOTSUPP;
+	अगर (!drm_core_check_feature(dev, DRIVER_MODESET))
+		वापस -EOPNOTSUPP;
 
-	if (page_flip->flags & ~DRM_MODE_PAGE_FLIP_FLAGS)
-		return -EINVAL;
+	अगर (page_flip->flags & ~DRM_MODE_PAGE_FLIP_FLAGS)
+		वापस -EINVAL;
 
-	if (page_flip->sequence != 0 && !(page_flip->flags & DRM_MODE_PAGE_FLIP_TARGET))
-		return -EINVAL;
+	अगर (page_flip->sequence != 0 && !(page_flip->flags & DRM_MODE_PAGE_FLIP_TARGET))
+		वापस -EINVAL;
 
 	/* Only one of the DRM_MODE_PAGE_FLIP_TARGET_ABSOLUTE/RELATIVE flags
-	 * can be specified
+	 * can be specअगरied
 	 */
-	if ((page_flip->flags & DRM_MODE_PAGE_FLIP_TARGET) == DRM_MODE_PAGE_FLIP_TARGET)
-		return -EINVAL;
+	अगर ((page_flip->flags & DRM_MODE_PAGE_FLIP_TARGET) == DRM_MODE_PAGE_FLIP_TARGET)
+		वापस -EINVAL;
 
-	if ((page_flip->flags & DRM_MODE_PAGE_FLIP_ASYNC) && !dev->mode_config.async_page_flip)
-		return -EINVAL;
+	अगर ((page_flip->flags & DRM_MODE_PAGE_FLIP_ASYNC) && !dev->mode_config.async_page_flip)
+		वापस -EINVAL;
 
 	crtc = drm_crtc_find(dev, file_priv, page_flip->crtc_id);
-	if (!crtc)
-		return -ENOENT;
+	अगर (!crtc)
+		वापस -ENOENT;
 
 	plane = crtc->primary;
 
-	if (!drm_lease_held(file_priv, plane->base.id))
-		return -EACCES;
+	अगर (!drm_lease_held(file_priv, plane->base.id))
+		वापस -EACCES;
 
-	if (crtc->funcs->page_flip_target) {
+	अगर (crtc->funcs->page_flip_target) अणु
 		u32 current_vblank;
-		int r;
+		पूर्णांक r;
 
 		r = drm_crtc_vblank_get(crtc);
-		if (r)
-			return r;
+		अगर (r)
+			वापस r;
 
 		current_vblank = (u32)drm_crtc_vblank_count(crtc);
 
-		switch (page_flip->flags & DRM_MODE_PAGE_FLIP_TARGET) {
-		case DRM_MODE_PAGE_FLIP_TARGET_ABSOLUTE:
-			if ((int)(target_vblank - current_vblank) > 1) {
+		चयन (page_flip->flags & DRM_MODE_PAGE_FLIP_TARGET) अणु
+		हाल DRM_MODE_PAGE_FLIP_TARGET_ABSOLUTE:
+			अगर ((पूर्णांक)(target_vblank - current_vblank) > 1) अणु
 				DRM_DEBUG("Invalid absolute flip target %u, "
 					  "must be <= %u\n", target_vblank,
 					  current_vblank + 1);
 				drm_crtc_vblank_put(crtc);
-				return -EINVAL;
-			}
-			break;
-		case DRM_MODE_PAGE_FLIP_TARGET_RELATIVE:
-			if (target_vblank != 0 && target_vblank != 1) {
+				वापस -EINVAL;
+			पूर्ण
+			अवरोध;
+		हाल DRM_MODE_PAGE_FLIP_TARGET_RELATIVE:
+			अगर (target_vblank != 0 && target_vblank != 1) अणु
 				DRM_DEBUG("Invalid relative flip target %u, "
 					  "must be 0 or 1\n", target_vblank);
 				drm_crtc_vblank_put(crtc);
-				return -EINVAL;
-			}
+				वापस -EINVAL;
+			पूर्ण
 			target_vblank += current_vblank;
-			break;
-		default:
+			अवरोध;
+		शेष:
 			target_vblank = current_vblank +
 				!(page_flip->flags & DRM_MODE_PAGE_FLIP_ASYNC);
-			break;
-		}
-	} else if (crtc->funcs->page_flip == NULL ||
-		   (page_flip->flags & DRM_MODE_PAGE_FLIP_TARGET)) {
-		return -EINVAL;
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण अन्यथा अगर (crtc->funcs->page_flip == शून्य ||
+		   (page_flip->flags & DRM_MODE_PAGE_FLIP_TARGET)) अणु
+		वापस -EINVAL;
+	पूर्ण
 
 	drm_modeset_acquire_init(&ctx, DRM_MODESET_ACQUIRE_INTERRUPTIBLE);
 retry:
 	ret = drm_modeset_lock(&crtc->mutex, &ctx);
-	if (ret)
-		goto out;
+	अगर (ret)
+		जाओ out;
 	ret = drm_modeset_lock(&plane->mutex, &ctx);
-	if (ret)
-		goto out;
+	अगर (ret)
+		जाओ out;
 
-	if (plane->state)
+	अगर (plane->state)
 		old_fb = plane->state->fb;
-	else
+	अन्यथा
 		old_fb = plane->fb;
 
-	if (old_fb == NULL) {
+	अगर (old_fb == शून्य) अणु
 		/* The framebuffer is currently unbound, presumably
 		 * due to a hotplug event, that userspace has not
 		 * yet discovered.
 		 */
 		ret = -EBUSY;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	fb = drm_framebuffer_lookup(dev, file_priv, page_flip->fb_id);
-	if (!fb) {
+	अगर (!fb) अणु
 		ret = -ENOENT;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (plane->state) {
-		const struct drm_plane_state *state = plane->state;
+	अगर (plane->state) अणु
+		स्थिर काष्ठा drm_plane_state *state = plane->state;
 
 		ret = drm_framebuffer_check_src_coords(state->src_x,
 						       state->src_y,
 						       state->src_w,
 						       state->src_h,
 						       fb);
-	} else {
+	पूर्ण अन्यथा अणु
 		ret = drm_crtc_check_viewport(crtc, crtc->x, crtc->y,
 					      &crtc->mode, fb);
-	}
-	if (ret)
-		goto out;
+	पूर्ण
+	अगर (ret)
+		जाओ out;
 
 	/*
-	 * Only check the FOURCC format code, excluding modifiers. This is
-	 * enough for all legacy drivers. Atomic drivers have their own
+	 * Only check the FOURCC क्रमmat code, excluding modअगरiers. This is
+	 * enough क्रम all legacy drivers. Atomic drivers have their own
 	 * checks in their ->atomic_check implementation, which will
-	 * return -EINVAL if any hw or driver constraint is violated due
-	 * to modifier changes.
+	 * वापस -EINVAL अगर any hw or driver स्थिरraपूर्णांक is violated due
+	 * to modअगरier changes.
 	 */
-	if (old_fb->format->format != fb->format->format) {
+	अगर (old_fb->क्रमmat->क्रमmat != fb->क्रमmat->क्रमmat) अणु
 		DRM_DEBUG_KMS("Page flip is not allowed to change frame buffer format.\n");
 		ret = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (page_flip->flags & DRM_MODE_PAGE_FLIP_EVENT) {
-		e = kzalloc(sizeof *e, GFP_KERNEL);
-		if (!e) {
+	अगर (page_flip->flags & DRM_MODE_PAGE_FLIP_EVENT) अणु
+		e = kzalloc(माप *e, GFP_KERNEL);
+		अगर (!e) अणु
 			ret = -ENOMEM;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
 		e->event.base.type = DRM_EVENT_FLIP_COMPLETE;
-		e->event.base.length = sizeof(e->event);
+		e->event.base.length = माप(e->event);
 		e->event.vbl.user_data = page_flip->user_data;
 		e->event.vbl.crtc_id = crtc->base.id;
 
 		ret = drm_event_reserve_init(dev, file_priv, &e->base, &e->event.base);
-		if (ret) {
-			kfree(e);
-			e = NULL;
-			goto out;
-		}
-	}
+		अगर (ret) अणु
+			kमुक्त(e);
+			e = शून्य;
+			जाओ out;
+		पूर्ण
+	पूर्ण
 
 	plane->old_fb = plane->fb;
-	if (crtc->funcs->page_flip_target)
+	अगर (crtc->funcs->page_flip_target)
 		ret = crtc->funcs->page_flip_target(crtc, fb, e,
 						    page_flip->flags,
 						    target_vblank,
 						    &ctx);
-	else
+	अन्यथा
 		ret = crtc->funcs->page_flip(crtc, fb, e, page_flip->flags,
 					     &ctx);
-	if (ret) {
-		if (page_flip->flags & DRM_MODE_PAGE_FLIP_EVENT)
-			drm_event_cancel_free(dev, &e->base);
-		/* Keep the old fb, don't unref it. */
-		plane->old_fb = NULL;
-	} else {
-		if (!plane->state) {
+	अगर (ret) अणु
+		अगर (page_flip->flags & DRM_MODE_PAGE_FLIP_EVENT)
+			drm_event_cancel_मुक्त(dev, &e->base);
+		/* Keep the old fb, करोn't unref it. */
+		plane->old_fb = शून्य;
+	पूर्ण अन्यथा अणु
+		अगर (!plane->state) अणु
 			plane->fb = fb;
 			drm_framebuffer_get(fb);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 out:
-	if (fb)
+	अगर (fb)
 		drm_framebuffer_put(fb);
-	if (plane->old_fb)
+	अगर (plane->old_fb)
 		drm_framebuffer_put(plane->old_fb);
-	plane->old_fb = NULL;
+	plane->old_fb = शून्य;
 
-	if (ret == -EDEADLK) {
+	अगर (ret == -EDEADLK) अणु
 		ret = drm_modeset_backoff(&ctx);
-		if (!ret)
-			goto retry;
-	}
+		अगर (!ret)
+			जाओ retry;
+	पूर्ण
 
 	drm_modeset_drop_locks(&ctx);
 	drm_modeset_acquire_fini(&ctx);
 
-	if (ret && crtc->funcs->page_flip_target)
+	अगर (ret && crtc->funcs->page_flip_target)
 		drm_crtc_vblank_put(crtc);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-struct drm_property *
-drm_create_scaling_filter_prop(struct drm_device *dev,
-			       unsigned int supported_filters)
-{
-	struct drm_property *prop;
-	static const struct drm_prop_enum_list props[] = {
-		{ DRM_SCALING_FILTER_DEFAULT, "Default" },
-		{ DRM_SCALING_FILTER_NEAREST_NEIGHBOR, "Nearest Neighbor" },
-	};
-	unsigned int valid_mode_mask = BIT(DRM_SCALING_FILTER_DEFAULT) |
+काष्ठा drm_property *
+drm_create_scaling_filter_prop(काष्ठा drm_device *dev,
+			       अचिन्हित पूर्णांक supported_filters)
+अणु
+	काष्ठा drm_property *prop;
+	अटल स्थिर काष्ठा drm_prop_क्रमागत_list props[] = अणु
+		अणु DRM_SCALING_FILTER_DEFAULT, "Default" पूर्ण,
+		अणु DRM_SCALING_FILTER_NEAREST_NEIGHBOR, "Nearest Neighbor" पूर्ण,
+	पूर्ण;
+	अचिन्हित पूर्णांक valid_mode_mask = BIT(DRM_SCALING_FILTER_DEFAULT) |
 				       BIT(DRM_SCALING_FILTER_NEAREST_NEIGHBOR);
-	int i;
+	पूर्णांक i;
 
-	if (WARN_ON((supported_filters & ~valid_mode_mask) ||
+	अगर (WARN_ON((supported_filters & ~valid_mode_mask) ||
 		    ((supported_filters & BIT(DRM_SCALING_FILTER_DEFAULT)) == 0)))
-		return ERR_PTR(-EINVAL);
+		वापस ERR_PTR(-EINVAL);
 
 	prop = drm_property_create(dev, DRM_MODE_PROP_ENUM,
 				   "SCALING_FILTER",
 				   hweight32(supported_filters));
-	if (!prop)
-		return ERR_PTR(-ENOMEM);
+	अगर (!prop)
+		वापस ERR_PTR(-ENOMEM);
 
-	for (i = 0; i < ARRAY_SIZE(props); i++) {
-		int ret;
+	क्रम (i = 0; i < ARRAY_SIZE(props); i++) अणु
+		पूर्णांक ret;
 
-		if (!(BIT(props[i].type) & supported_filters))
-			continue;
+		अगर (!(BIT(props[i].type) & supported_filters))
+			जारी;
 
-		ret = drm_property_add_enum(prop, props[i].type,
+		ret = drm_property_add_क्रमागत(prop, props[i].type,
 					    props[i].name);
 
-		if (ret) {
+		अगर (ret) अणु
 			drm_property_destroy(dev, prop);
 
-			return ERR_PTR(ret);
-		}
-	}
+			वापस ERR_PTR(ret);
+		पूर्ण
+	पूर्ण
 
-	return prop;
-}
+	वापस prop;
+पूर्ण
 
 /**
  * drm_plane_create_scaling_filter_property - create a new scaling filter
  * property
  *
  * @plane: drm plane
- * @supported_filters: bitmask of supported scaling filters, must include
+ * @supported_filters: biपंचांगask of supported scaling filters, must include
  *		       BIT(DRM_SCALING_FILTER_DEFAULT).
  *
  * This function lets driver to enable the scaling filter property on a given
  * plane.
  *
  * RETURNS:
- * Zero for success or -errno
+ * Zero क्रम success or -त्रुटि_सं
  */
-int drm_plane_create_scaling_filter_property(struct drm_plane *plane,
-					     unsigned int supported_filters)
-{
-	struct drm_property *prop =
+पूर्णांक drm_plane_create_scaling_filter_property(काष्ठा drm_plane *plane,
+					     अचिन्हित पूर्णांक supported_filters)
+अणु
+	काष्ठा drm_property *prop =
 		drm_create_scaling_filter_prop(plane->dev, supported_filters);
 
-	if (IS_ERR(prop))
-		return PTR_ERR(prop);
+	अगर (IS_ERR(prop))
+		वापस PTR_ERR(prop);
 
 	drm_object_attach_property(&plane->base, prop,
 				   DRM_SCALING_FILTER_DEFAULT);
 	plane->scaling_filter_property = prop;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(drm_plane_create_scaling_filter_property);

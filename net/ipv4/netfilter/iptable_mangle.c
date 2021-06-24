@@ -1,50 +1,51 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * This is the 1999 rewrite of IP Firewalling, aiming for kernel 2.3.x.
+ * This is the 1999 reग_लिखो of IP Firewalling, aiming क्रम kernel 2.3.x.
  *
  * Copyright (C) 1999 Paul `Rusty' Russell & Michael J. Neuling
  * Copyright (C) 2000-2004 Netfilter Core Team <coreteam@netfilter.org>
  */
-#include <linux/module.h>
-#include <linux/netfilter_ipv4/ip_tables.h>
-#include <linux/netdevice.h>
-#include <linux/skbuff.h>
-#include <linux/slab.h>
-#include <net/sock.h>
-#include <net/route.h>
-#include <linux/ip.h>
-#include <net/ip.h>
+#समावेश <linux/module.h>
+#समावेश <linux/netfilter_ipv4/ip_tables.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/skbuff.h>
+#समावेश <linux/slab.h>
+#समावेश <net/sock.h>
+#समावेश <net/route.h>
+#समावेश <linux/ip.h>
+#समावेश <net/ip.h>
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Netfilter Core Team <coreteam@netfilter.org>");
 MODULE_DESCRIPTION("iptables mangle table");
 
-#define MANGLE_VALID_HOOKS ((1 << NF_INET_PRE_ROUTING) | \
+#घोषणा MANGLE_VALID_HOOKS ((1 << NF_INET_PRE_ROUTING) | \
 			    (1 << NF_INET_LOCAL_IN) | \
 			    (1 << NF_INET_FORWARD) | \
 			    (1 << NF_INET_LOCAL_OUT) | \
 			    (1 << NF_INET_POST_ROUTING))
 
-static int __net_init iptable_mangle_table_init(struct net *net);
+अटल पूर्णांक __net_init iptable_mangle_table_init(काष्ठा net *net);
 
-static const struct xt_table packet_mangler = {
+अटल स्थिर काष्ठा xt_table packet_mangler = अणु
 	.name		= "mangle",
 	.valid_hooks	= MANGLE_VALID_HOOKS,
 	.me		= THIS_MODULE,
 	.af		= NFPROTO_IPV4,
 	.priority	= NF_IP_PRI_MANGLE,
 	.table_init	= iptable_mangle_table_init,
-};
+पूर्ण;
 
-static unsigned int
-ipt_mangle_out(struct sk_buff *skb, const struct nf_hook_state *state, void *priv)
-{
-	unsigned int ret;
-	const struct iphdr *iph;
-	u_int8_t tos;
+अटल अचिन्हित पूर्णांक
+ipt_mangle_out(काष्ठा sk_buff *skb, स्थिर काष्ठा nf_hook_state *state, व्योम *priv)
+अणु
+	अचिन्हित पूर्णांक ret;
+	स्थिर काष्ठा iphdr *iph;
+	u_पूर्णांक8_t tos;
 	__be32 saddr, daddr;
-	u_int32_t mark;
-	int err;
+	u_पूर्णांक32_t mark;
+	पूर्णांक err;
 
 	/* Save things which could affect route */
 	mark = skb->mark;
@@ -53,94 +54,94 @@ ipt_mangle_out(struct sk_buff *skb, const struct nf_hook_state *state, void *pri
 	daddr = iph->daddr;
 	tos = iph->tos;
 
-	ret = ipt_do_table(skb, state, priv);
-	/* Reroute for ANY change. */
-	if (ret != NF_DROP && ret != NF_STOLEN) {
+	ret = ipt_करो_table(skb, state, priv);
+	/* Reroute क्रम ANY change. */
+	अगर (ret != NF_DROP && ret != NF_STOLEN) अणु
 		iph = ip_hdr(skb);
 
-		if (iph->saddr != saddr ||
+		अगर (iph->saddr != saddr ||
 		    iph->daddr != daddr ||
 		    skb->mark != mark ||
-		    iph->tos != tos) {
+		    iph->tos != tos) अणु
 			err = ip_route_me_harder(state->net, state->sk, skb, RTN_UNSPEC);
-			if (err < 0)
+			अगर (err < 0)
 				ret = NF_DROP_ERR(err);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /* The work comes in here from netfilter.c. */
-static unsigned int
-iptable_mangle_hook(void *priv,
-		     struct sk_buff *skb,
-		     const struct nf_hook_state *state)
-{
-	if (state->hook == NF_INET_LOCAL_OUT)
-		return ipt_mangle_out(skb, state, priv);
-	return ipt_do_table(skb, state, priv);
-}
+अटल अचिन्हित पूर्णांक
+iptable_mangle_hook(व्योम *priv,
+		     काष्ठा sk_buff *skb,
+		     स्थिर काष्ठा nf_hook_state *state)
+अणु
+	अगर (state->hook == NF_INET_LOCAL_OUT)
+		वापस ipt_mangle_out(skb, state, priv);
+	वापस ipt_करो_table(skb, state, priv);
+पूर्ण
 
-static struct nf_hook_ops *mangle_ops __read_mostly;
-static int __net_init iptable_mangle_table_init(struct net *net)
-{
-	struct ipt_replace *repl;
-	int ret;
+अटल काष्ठा nf_hook_ops *mangle_ops __पढ़ो_mostly;
+अटल पूर्णांक __net_init iptable_mangle_table_init(काष्ठा net *net)
+अणु
+	काष्ठा ipt_replace *repl;
+	पूर्णांक ret;
 
 	repl = ipt_alloc_initial_table(&packet_mangler);
-	if (repl == NULL)
-		return -ENOMEM;
-	ret = ipt_register_table(net, &packet_mangler, repl, mangle_ops);
-	kfree(repl);
-	return ret;
-}
+	अगर (repl == शून्य)
+		वापस -ENOMEM;
+	ret = ipt_रेजिस्टर_table(net, &packet_mangler, repl, mangle_ops);
+	kमुक्त(repl);
+	वापस ret;
+पूर्ण
 
-static void __net_exit iptable_mangle_net_pre_exit(struct net *net)
-{
-	ipt_unregister_table_pre_exit(net, "mangle");
-}
+अटल व्योम __net_निकास iptable_mangle_net_pre_निकास(काष्ठा net *net)
+अणु
+	ipt_unरेजिस्टर_table_pre_निकास(net, "mangle");
+पूर्ण
 
-static void __net_exit iptable_mangle_net_exit(struct net *net)
-{
-	ipt_unregister_table_exit(net, "mangle");
-}
+अटल व्योम __net_निकास iptable_mangle_net_निकास(काष्ठा net *net)
+अणु
+	ipt_unरेजिस्टर_table_निकास(net, "mangle");
+पूर्ण
 
-static struct pernet_operations iptable_mangle_net_ops = {
-	.pre_exit = iptable_mangle_net_pre_exit,
-	.exit = iptable_mangle_net_exit,
-};
+अटल काष्ठा pernet_operations iptable_mangle_net_ops = अणु
+	.pre_निकास = iptable_mangle_net_pre_निकास,
+	.निकास = iptable_mangle_net_निकास,
+पूर्ण;
 
-static int __init iptable_mangle_init(void)
-{
-	int ret;
+अटल पूर्णांक __init iptable_mangle_init(व्योम)
+अणु
+	पूर्णांक ret;
 
 	mangle_ops = xt_hook_ops_alloc(&packet_mangler, iptable_mangle_hook);
-	if (IS_ERR(mangle_ops)) {
+	अगर (IS_ERR(mangle_ops)) अणु
 		ret = PTR_ERR(mangle_ops);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	ret = register_pernet_subsys(&iptable_mangle_net_ops);
-	if (ret < 0) {
-		kfree(mangle_ops);
-		return ret;
-	}
+	ret = रेजिस्टर_pernet_subsys(&iptable_mangle_net_ops);
+	अगर (ret < 0) अणु
+		kमुक्त(mangle_ops);
+		वापस ret;
+	पूर्ण
 
 	ret = iptable_mangle_table_init(&init_net);
-	if (ret) {
-		unregister_pernet_subsys(&iptable_mangle_net_ops);
-		kfree(mangle_ops);
-	}
+	अगर (ret) अणु
+		unरेजिस्टर_pernet_subsys(&iptable_mangle_net_ops);
+		kमुक्त(mangle_ops);
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void __exit iptable_mangle_fini(void)
-{
-	unregister_pernet_subsys(&iptable_mangle_net_ops);
-	kfree(mangle_ops);
-}
+अटल व्योम __निकास iptable_mangle_fini(व्योम)
+अणु
+	unरेजिस्टर_pernet_subsys(&iptable_mangle_net_ops);
+	kमुक्त(mangle_ops);
+पूर्ण
 
 module_init(iptable_mangle_init);
-module_exit(iptable_mangle_fini);
+module_निकास(iptable_mangle_fini);

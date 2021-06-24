@@ -1,191 +1,192 @@
-/* SPDX-License-Identifier: GPL-2.0
- * Definitions for kernel modules using Dell WMI System Management Driver
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0
+ * Definitions क्रम kernel modules using Dell WMI System Management Driver
  *
  *  Copyright (c) 2020 Dell Inc.
  */
 
-#ifndef _DELL_WMI_BIOS_ATTR_H_
-#define _DELL_WMI_BIOS_ATTR_H_
+#अगर_अघोषित _DELL_WMI_BIOS_ATTR_H_
+#घोषणा _DELL_WMI_BIOS_ATTR_H_
 
-#include <linux/wmi.h>
-#include <linux/device.h>
-#include <linux/module.h>
-#include <linux/kernel.h>
-#include <linux/capability.h>
+#समावेश <linux/wmi.h>
+#समावेश <linux/device.h>
+#समावेश <linux/module.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/capability.h>
 
-#define DRIVER_NAME					"dell-wmi-sysman"
-#define MAX_BUFF  512
+#घोषणा DRIVER_NAME					"dell-wmi-sysman"
+#घोषणा MAX_BUFF  512
 
-#define DELL_WMI_BIOS_ENUMERATION_ATTRIBUTE_GUID	"F1DDEE52-063C-4784-A11E-8A06684B9BF5"
-#define DELL_WMI_BIOS_INTEGER_ATTRIBUTE_GUID		"F1DDEE52-063C-4784-A11E-8A06684B9BFA"
-#define DELL_WMI_BIOS_STRING_ATTRIBUTE_GUID		"F1DDEE52-063C-4784-A11E-8A06684B9BF9"
-#define DELL_WMI_BIOS_PASSOBJ_ATTRIBUTE_GUID		"0894B8D6-44A6-4719-97D7-6AD24108BFD4"
-#define DELL_WMI_BIOS_ATTRIBUTES_INTERFACE_GUID		"F1DDEE52-063C-4784-A11E-8A06684B9BF4"
-#define DELL_WMI_BIOS_PASSWORD_INTERFACE_GUID		"70FE8229-D03B-4214-A1C6-1F884B1A892A"
+#घोषणा DELL_WMI_BIOS_ENUMERATION_ATTRIBUTE_GUID	"F1DDEE52-063C-4784-A11E-8A06684B9BF5"
+#घोषणा DELL_WMI_BIOS_INTEGER_ATTRIBUTE_GUID		"F1DDEE52-063C-4784-A11E-8A06684B9BFA"
+#घोषणा DELL_WMI_BIOS_STRING_ATTRIBUTE_GUID		"F1DDEE52-063C-4784-A11E-8A06684B9BF9"
+#घोषणा DELL_WMI_BIOS_PASSOBJ_ATTRIBUTE_GUID		"0894B8D6-44A6-4719-97D7-6AD24108BFD4"
+#घोषणा DELL_WMI_BIOS_ATTRIBUTES_INTERFACE_GUID		"F1DDEE52-063C-4784-A11E-8A06684B9BF4"
+#घोषणा DELL_WMI_BIOS_PASSWORD_INTERFACE_GUID		"70FE8229-D03B-4214-A1C6-1F884B1A892A"
 
-struct enumeration_data {
-	struct kobject *attr_name_kobj;
-	char display_name_language_code[MAX_BUFF];
-	char dell_value_modifier[MAX_BUFF];
-	char possible_values[MAX_BUFF];
-	char attribute_name[MAX_BUFF];
-	char default_value[MAX_BUFF];
-	char dell_modifier[MAX_BUFF];
-	char display_name[MAX_BUFF];
-};
+काष्ठा क्रमागतeration_data अणु
+	काष्ठा kobject *attr_name_kobj;
+	अक्षर display_name_language_code[MAX_BUFF];
+	अक्षर dell_value_modअगरier[MAX_BUFF];
+	अक्षर possible_values[MAX_BUFF];
+	अक्षर attribute_name[MAX_BUFF];
+	अक्षर शेष_value[MAX_BUFF];
+	अक्षर dell_modअगरier[MAX_BUFF];
+	अक्षर display_name[MAX_BUFF];
+पूर्ण;
 
-struct integer_data {
-	struct kobject *attr_name_kobj;
-	char display_name_language_code[MAX_BUFF];
-	char attribute_name[MAX_BUFF];
-	char dell_modifier[MAX_BUFF];
-	char display_name[MAX_BUFF];
-	int scalar_increment;
-	int default_value;
-	int min_value;
-	int max_value;
-};
+काष्ठा पूर्णांकeger_data अणु
+	काष्ठा kobject *attr_name_kobj;
+	अक्षर display_name_language_code[MAX_BUFF];
+	अक्षर attribute_name[MAX_BUFF];
+	अक्षर dell_modअगरier[MAX_BUFF];
+	अक्षर display_name[MAX_BUFF];
+	पूर्णांक scalar_increment;
+	पूर्णांक शेष_value;
+	पूर्णांक min_value;
+	पूर्णांक max_value;
+पूर्ण;
 
-struct str_data {
-	struct kobject *attr_name_kobj;
-	char display_name_language_code[MAX_BUFF];
-	char attribute_name[MAX_BUFF];
-	char display_name[MAX_BUFF];
-	char default_value[MAX_BUFF];
-	char dell_modifier[MAX_BUFF];
-	int min_length;
-	int max_length;
-};
+काष्ठा str_data अणु
+	काष्ठा kobject *attr_name_kobj;
+	अक्षर display_name_language_code[MAX_BUFF];
+	अक्षर attribute_name[MAX_BUFF];
+	अक्षर display_name[MAX_BUFF];
+	अक्षर शेष_value[MAX_BUFF];
+	अक्षर dell_modअगरier[MAX_BUFF];
+	पूर्णांक min_length;
+	पूर्णांक max_length;
+पूर्ण;
 
-struct po_data {
-	struct kobject *attr_name_kobj;
-	char attribute_name[MAX_BUFF];
-	int min_password_length;
-	int max_password_length;
-};
+काष्ठा po_data अणु
+	काष्ठा kobject *attr_name_kobj;
+	अक्षर attribute_name[MAX_BUFF];
+	पूर्णांक min_password_length;
+	पूर्णांक max_password_length;
+पूर्ण;
 
-struct wmi_sysman_priv {
-	char current_admin_password[MAX_BUFF];
-	char current_system_password[MAX_BUFF];
-	struct wmi_device *password_attr_wdev;
-	struct wmi_device *bios_attr_wdev;
-	struct kset *authentication_dir_kset;
-	struct kset *main_dir_kset;
-	struct device *class_dev;
-	struct enumeration_data *enumeration_data;
-	int enumeration_instances_count;
-	struct integer_data *integer_data;
-	int integer_instances_count;
-	struct str_data *str_data;
-	int str_instances_count;
-	struct po_data *po_data;
-	int po_instances_count;
+काष्ठा wmi_sysman_priv अणु
+	अक्षर current_admin_password[MAX_BUFF];
+	अक्षर current_प्रणाली_password[MAX_BUFF];
+	काष्ठा wmi_device *password_attr_wdev;
+	काष्ठा wmi_device *bios_attr_wdev;
+	काष्ठा kset *authentication_dir_kset;
+	काष्ठा kset *मुख्य_dir_kset;
+	काष्ठा device *class_dev;
+	काष्ठा क्रमागतeration_data *क्रमागतeration_data;
+	पूर्णांक क्रमागतeration_instances_count;
+	काष्ठा पूर्णांकeger_data *पूर्णांकeger_data;
+	पूर्णांक पूर्णांकeger_instances_count;
+	काष्ठा str_data *str_data;
+	पूर्णांक str_instances_count;
+	काष्ठा po_data *po_data;
+	पूर्णांक po_instances_count;
 	bool pending_changes;
-	struct mutex mutex;
-};
+	काष्ठा mutex mutex;
+पूर्ण;
 
-/* global structure used by multiple WMI interfaces */
-extern struct wmi_sysman_priv wmi_priv;
+/* global काष्ठाure used by multiple WMI पूर्णांकerfaces */
+बाह्य काष्ठा wmi_sysman_priv wmi_priv;
 
-enum { ENUM, INT, STR, PO };
+क्रमागत अणु ENUM, INT, STR, PO पूर्ण;
 
-enum {
+क्रमागत अणु
 	ATTR_NAME,
 	DISPL_NAME_LANG_CODE,
 	DISPLAY_NAME,
 	DEFAULT_VAL,
 	CURRENT_VAL,
 	MODIFIER
-};
+पूर्ण;
 
-#define get_instance_id(type)							\
-static int get_##type##_instance_id(struct kobject *kobj)			\
-{										\
-	int i;									\
-	for (i = 0; i <= wmi_priv.type##_instances_count; i++) {		\
-		if (!(strcmp(kobj->name, wmi_priv.type##_data[i].attribute_name)))\
-			return i;						\
-	}									\
-	return -EIO;								\
-}
+#घोषणा get_instance_id(type)							\
+अटल पूर्णांक get_##type##_instance_id(काष्ठा kobject *kobj)			\
+अणु										\
+	पूर्णांक i;									\
+	क्रम (i = 0; i <= wmi_priv.type##_instances_count; i++) अणु		\
+		अगर (!(म_भेद(kobj->name, wmi_priv.type##_data[i].attribute_name)))\
+			वापस i;						\
+	पूर्ण									\
+	वापस -EIO;								\
+पूर्ण
 
-#define attribute_s_property_show(name, type)					\
-static ssize_t name##_show(struct kobject *kobj, struct kobj_attribute *attr,	\
-			   char *buf)						\
-{										\
-	int i = get_##type##_instance_id(kobj);					\
-	if (i >= 0)								\
-		return sprintf(buf, "%s\n", wmi_priv.type##_data[i].name);	\
-	return 0;								\
-}
+#घोषणा attribute_s_property_show(name, type)					\
+अटल sमाप_प्रकार name##_show(काष्ठा kobject *kobj, काष्ठा kobj_attribute *attr,	\
+			   अक्षर *buf)						\
+अणु										\
+	पूर्णांक i = get_##type##_instance_id(kobj);					\
+	अगर (i >= 0)								\
+		वापस प्र_लिखो(buf, "%s\n", wmi_priv.type##_data[i].name);	\
+	वापस 0;								\
+पूर्ण
 
-#define attribute_n_property_show(name, type)					\
-static ssize_t name##_show(struct kobject *kobj, struct kobj_attribute *attr,	\
-			   char *buf)						\
-{										\
-	int i = get_##type##_instance_id(kobj);					\
-	if (i >= 0)								\
-		return sprintf(buf, "%d\n", wmi_priv.type##_data[i].name);	\
-	return 0;								\
-}
+#घोषणा attribute_n_property_show(name, type)					\
+अटल sमाप_प्रकार name##_show(काष्ठा kobject *kobj, काष्ठा kobj_attribute *attr,	\
+			   अक्षर *buf)						\
+अणु										\
+	पूर्णांक i = get_##type##_instance_id(kobj);					\
+	अगर (i >= 0)								\
+		वापस प्र_लिखो(buf, "%d\n", wmi_priv.type##_data[i].name);	\
+	वापस 0;								\
+पूर्ण
 
-#define attribute_property_store(curr_val, type)				\
-static ssize_t curr_val##_store(struct kobject *kobj,				\
-				struct kobj_attribute *attr,			\
-				const char *buf, size_t count)			\
-{										\
-	char *p, *buf_cp;							\
-	int i, ret = -EIO;							\
+#घोषणा attribute_property_store(curr_val, type)				\
+अटल sमाप_प्रकार curr_val##_store(काष्ठा kobject *kobj,				\
+				काष्ठा kobj_attribute *attr,			\
+				स्थिर अक्षर *buf, माप_प्रकार count)			\
+अणु										\
+	अक्षर *p, *buf_cp;							\
+	पूर्णांक i, ret = -EIO;							\
 	buf_cp = kstrdup(buf, GFP_KERNEL);					\
-	if (!buf_cp)								\
-		return -ENOMEM;							\
-	p = memchr(buf_cp, '\n', count);					\
+	अगर (!buf_cp)								\
+		वापस -ENOMEM;							\
+	p = स_प्रथम(buf_cp, '\n', count);					\
 										\
-	if (p != NULL)								\
+	अगर (p != शून्य)								\
 		*p = '\0';							\
 	i = get_##type##_instance_id(kobj);					\
-	if (i >= 0)								\
+	अगर (i >= 0)								\
 		ret = validate_##type##_input(i, buf_cp);			\
-	if (!ret)								\
+	अगर (!ret)								\
 		ret = set_attribute(kobj->name, buf_cp);			\
-	kfree(buf_cp);								\
-	return ret ? ret : count;						\
-}
+	kमुक्त(buf_cp);								\
+	वापस ret ? ret : count;						\
+पूर्ण
 
-union acpi_object *get_wmiobj_pointer(int instance_id, const char *guid_string);
-int get_instance_count(const char *guid_string);
-void strlcpy_attr(char *dest, char *src);
+जोड़ acpi_object *get_wmiobj_poपूर्णांकer(पूर्णांक instance_id, स्थिर अक्षर *guid_string);
+पूर्णांक get_instance_count(स्थिर अक्षर *guid_string);
+व्योम strlcpy_attr(अक्षर *dest, अक्षर *src);
 
-int populate_enum_data(union acpi_object *enumeration_obj, int instance_id,
-			struct kobject *attr_name_kobj);
-int alloc_enum_data(void);
-void exit_enum_attributes(void);
+पूर्णांक populate_क्रमागत_data(जोड़ acpi_object *क्रमागतeration_obj, पूर्णांक instance_id,
+			काष्ठा kobject *attr_name_kobj);
+पूर्णांक alloc_क्रमागत_data(व्योम);
+व्योम निकास_क्रमागत_attributes(व्योम);
 
-int populate_int_data(union acpi_object *integer_obj, int instance_id,
-			struct kobject *attr_name_kobj);
-int alloc_int_data(void);
-void exit_int_attributes(void);
+पूर्णांक populate_पूर्णांक_data(जोड़ acpi_object *पूर्णांकeger_obj, पूर्णांक instance_id,
+			काष्ठा kobject *attr_name_kobj);
+पूर्णांक alloc_पूर्णांक_data(व्योम);
+व्योम निकास_पूर्णांक_attributes(व्योम);
 
-int populate_str_data(union acpi_object *str_obj, int instance_id, struct kobject *attr_name_kobj);
-int alloc_str_data(void);
-void exit_str_attributes(void);
+पूर्णांक populate_str_data(जोड़ acpi_object *str_obj, पूर्णांक instance_id, काष्ठा kobject *attr_name_kobj);
+पूर्णांक alloc_str_data(व्योम);
+व्योम निकास_str_attributes(व्योम);
 
-int populate_po_data(union acpi_object *po_obj, int instance_id, struct kobject *attr_name_kobj);
-int alloc_po_data(void);
-void exit_po_attributes(void);
+पूर्णांक populate_po_data(जोड़ acpi_object *po_obj, पूर्णांक instance_id, काष्ठा kobject *attr_name_kobj);
+पूर्णांक alloc_po_data(व्योम);
+व्योम निकास_po_attributes(व्योम);
 
-int set_attribute(const char *a_name, const char *a_value);
-int set_bios_defaults(u8 defType);
+पूर्णांक set_attribute(स्थिर अक्षर *a_name, स्थिर अक्षर *a_value);
+पूर्णांक set_bios_शेषs(u8 defType);
 
-void exit_bios_attr_set_interface(void);
-int init_bios_attr_set_interface(void);
-int map_wmi_error(int error_code);
-size_t calculate_string_buffer(const char *str);
-size_t calculate_security_buffer(char *authentication);
-void populate_security_buffer(char *buffer, char *authentication);
-ssize_t populate_string_buffer(char *buffer, size_t buffer_len, const char *str);
-int set_new_password(const char *password_type, const char *new);
-int init_bios_attr_pass_interface(void);
-void exit_bios_attr_pass_interface(void);
+व्योम निकास_bios_attr_set_पूर्णांकerface(व्योम);
+पूर्णांक init_bios_attr_set_पूर्णांकerface(व्योम);
+पूर्णांक map_wmi_error(पूर्णांक error_code);
+माप_प्रकार calculate_string_buffer(स्थिर अक्षर *str);
+माप_प्रकार calculate_security_buffer(अक्षर *authentication);
+व्योम populate_security_buffer(अक्षर *buffer, अक्षर *authentication);
+sमाप_प्रकार populate_string_buffer(अक्षर *buffer, माप_प्रकार buffer_len, स्थिर अक्षर *str);
+पूर्णांक set_new_password(स्थिर अक्षर *password_type, स्थिर अक्षर *new);
+पूर्णांक init_bios_attr_pass_पूर्णांकerface(व्योम);
+व्योम निकास_bios_attr_pass_पूर्णांकerface(व्योम);
 
-#endif
+#पूर्ण_अगर

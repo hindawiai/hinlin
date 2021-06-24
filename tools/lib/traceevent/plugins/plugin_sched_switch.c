@@ -1,45 +1,46 @@
-// SPDX-License-Identifier: LGPL-2.1
+<शैली गुरु>
+// SPDX-License-Identअगरier: LGPL-2.1
 /*
  * Copyright (C) 2009, 2010 Red Hat Inc, Steven Rostedt <srostedt@redhat.com>
  */
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+#समावेश <मानकपन.स>
+#समावेश <मानककोष.स>
+#समावेश <माला.स>
 
-#include "event-parse.h"
-#include "trace-seq.h"
+#समावेश "event-parse.h"
+#समावेश "trace-seq.h"
 
-static void write_state(struct trace_seq *s, int val)
-{
-	const char states[] = "SDTtZXxW";
-	int found = 0;
-	int i;
+अटल व्योम ग_लिखो_state(काष्ठा trace_seq *s, पूर्णांक val)
+अणु
+	स्थिर अक्षर states[] = "SDTtZXxW";
+	पूर्णांक found = 0;
+	पूर्णांक i;
 
-	for (i = 0; i < (sizeof(states) - 1); i++) {
-		if (!(val & (1 << i)))
-			continue;
+	क्रम (i = 0; i < (माप(states) - 1); i++) अणु
+		अगर (!(val & (1 << i)))
+			जारी;
 
-		if (found)
-			trace_seq_putc(s, '|');
+		अगर (found)
+			trace_seq_अ_दो(s, '|');
 
 		found = 1;
-		trace_seq_putc(s, states[i]);
-	}
+		trace_seq_अ_दो(s, states[i]);
+	पूर्ण
 
-	if (!found)
-		trace_seq_putc(s, 'R');
-}
+	अगर (!found)
+		trace_seq_अ_दो(s, 'R');
+पूर्ण
 
-static void write_and_save_comm(struct tep_format_field *field,
-				struct tep_record *record,
-				struct trace_seq *s, int pid)
-{
-	const char *comm;
-	int len;
+अटल व्योम ग_लिखो_and_save_comm(काष्ठा tep_क्रमmat_field *field,
+				काष्ठा tep_record *record,
+				काष्ठा trace_seq *s, पूर्णांक pid)
+अणु
+	स्थिर अक्षर *comm;
+	पूर्णांक len;
 
-	comm = (char *)(record->data + field->offset);
+	comm = (अक्षर *)(record->data + field->offset);
 	len = s->len;
-	trace_seq_printf(s, "%.*s",
+	trace_seq_म_लिखो(s, "%.*s",
 			 field->size, comm);
 
 	/* make sure the comm has a \0 at the end. */
@@ -47,100 +48,100 @@ static void write_and_save_comm(struct tep_format_field *field,
 	comm = &s->buffer[len];
 
 	/* Help out the comm to ids. This will handle dups */
-	tep_register_comm(field->event->tep, comm, pid);
-}
+	tep_रेजिस्टर_comm(field->event->tep, comm, pid);
+पूर्ण
 
-static int sched_wakeup_handler(struct trace_seq *s,
-				struct tep_record *record,
-				struct tep_event *event, void *context)
-{
-	struct tep_format_field *field;
-	unsigned long long val;
+अटल पूर्णांक sched_wakeup_handler(काष्ठा trace_seq *s,
+				काष्ठा tep_record *record,
+				काष्ठा tep_event *event, व्योम *context)
+अणु
+	काष्ठा tep_क्रमmat_field *field;
+	अचिन्हित दीर्घ दीर्घ val;
 
-	if (tep_get_field_val(s, event, "pid", record, &val, 1))
-		return trace_seq_putc(s, '!');
+	अगर (tep_get_field_val(s, event, "pid", record, &val, 1))
+		वापस trace_seq_अ_दो(s, '!');
 
 	field = tep_find_any_field(event, "comm");
-	if (field) {
-		write_and_save_comm(field, record, s, val);
-		trace_seq_putc(s, ':');
-	}
-	trace_seq_printf(s, "%lld", val);
+	अगर (field) अणु
+		ग_लिखो_and_save_comm(field, record, s, val);
+		trace_seq_अ_दो(s, ':');
+	पूर्ण
+	trace_seq_म_लिखो(s, "%lld", val);
 
-	if (tep_get_field_val(s, event, "prio", record, &val, 0) == 0)
-		trace_seq_printf(s, " [%lld]", val);
+	अगर (tep_get_field_val(s, event, "prio", record, &val, 0) == 0)
+		trace_seq_म_लिखो(s, " [%lld]", val);
 
-	if (tep_get_field_val(s, event, "success", record, &val, 1) == 0)
-		trace_seq_printf(s, " success=%lld", val);
+	अगर (tep_get_field_val(s, event, "success", record, &val, 1) == 0)
+		trace_seq_म_लिखो(s, " success=%lld", val);
 
-	if (tep_get_field_val(s, event, "target_cpu", record, &val, 0) == 0)
-		trace_seq_printf(s, " CPU:%03llu", val);
+	अगर (tep_get_field_val(s, event, "target_cpu", record, &val, 0) == 0)
+		trace_seq_म_लिखो(s, " CPU:%03llu", val);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sched_switch_handler(struct trace_seq *s,
-				struct tep_record *record,
-				struct tep_event *event, void *context)
-{
-	struct tep_format_field *field;
-	unsigned long long val;
+अटल पूर्णांक sched_चयन_handler(काष्ठा trace_seq *s,
+				काष्ठा tep_record *record,
+				काष्ठा tep_event *event, व्योम *context)
+अणु
+	काष्ठा tep_क्रमmat_field *field;
+	अचिन्हित दीर्घ दीर्घ val;
 
-	if (tep_get_field_val(s, event, "prev_pid", record, &val, 1))
-		return trace_seq_putc(s, '!');
+	अगर (tep_get_field_val(s, event, "prev_pid", record, &val, 1))
+		वापस trace_seq_अ_दो(s, '!');
 
 	field = tep_find_any_field(event, "prev_comm");
-	if (field) {
-		write_and_save_comm(field, record, s, val);
-		trace_seq_putc(s, ':');
-	}
-	trace_seq_printf(s, "%lld ", val);
+	अगर (field) अणु
+		ग_लिखो_and_save_comm(field, record, s, val);
+		trace_seq_अ_दो(s, ':');
+	पूर्ण
+	trace_seq_म_लिखो(s, "%lld ", val);
 
-	if (tep_get_field_val(s, event, "prev_prio", record, &val, 0) == 0)
-		trace_seq_printf(s, "[%d] ", (int) val);
+	अगर (tep_get_field_val(s, event, "prev_prio", record, &val, 0) == 0)
+		trace_seq_म_लिखो(s, "[%d] ", (पूर्णांक) val);
 
-	if (tep_get_field_val(s,  event, "prev_state", record, &val, 0) == 0)
-		write_state(s, val);
+	अगर (tep_get_field_val(s,  event, "prev_state", record, &val, 0) == 0)
+		ग_लिखो_state(s, val);
 
-	trace_seq_puts(s, " ==> ");
+	trace_seq_माला_दो(s, " ==> ");
 
-	if (tep_get_field_val(s, event, "next_pid", record, &val, 1))
-		return trace_seq_putc(s, '!');
+	अगर (tep_get_field_val(s, event, "next_pid", record, &val, 1))
+		वापस trace_seq_अ_दो(s, '!');
 
 	field = tep_find_any_field(event, "next_comm");
-	if (field) {
-		write_and_save_comm(field, record, s, val);
-		trace_seq_putc(s, ':');
-	}
-	trace_seq_printf(s, "%lld", val);
+	अगर (field) अणु
+		ग_लिखो_and_save_comm(field, record, s, val);
+		trace_seq_अ_दो(s, ':');
+	पूर्ण
+	trace_seq_म_लिखो(s, "%lld", val);
 
-	if (tep_get_field_val(s, event, "next_prio", record, &val, 0) == 0)
-		trace_seq_printf(s, " [%d]", (int) val);
+	अगर (tep_get_field_val(s, event, "next_prio", record, &val, 0) == 0)
+		trace_seq_म_लिखो(s, " [%d]", (पूर्णांक) val);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int TEP_PLUGIN_LOADER(struct tep_handle *tep)
-{
-	tep_register_event_handler(tep, -1, "sched", "sched_switch",
-				   sched_switch_handler, NULL);
+पूर्णांक TEP_PLUGIN_LOADER(काष्ठा tep_handle *tep)
+अणु
+	tep_रेजिस्टर_event_handler(tep, -1, "sched", "sched_switch",
+				   sched_चयन_handler, शून्य);
 
-	tep_register_event_handler(tep, -1, "sched", "sched_wakeup",
-				   sched_wakeup_handler, NULL);
+	tep_रेजिस्टर_event_handler(tep, -1, "sched", "sched_wakeup",
+				   sched_wakeup_handler, शून्य);
 
-	tep_register_event_handler(tep, -1, "sched", "sched_wakeup_new",
-				   sched_wakeup_handler, NULL);
-	return 0;
-}
+	tep_रेजिस्टर_event_handler(tep, -1, "sched", "sched_wakeup_new",
+				   sched_wakeup_handler, शून्य);
+	वापस 0;
+पूर्ण
 
-void TEP_PLUGIN_UNLOADER(struct tep_handle *tep)
-{
-	tep_unregister_event_handler(tep, -1, "sched", "sched_switch",
-				     sched_switch_handler, NULL);
+व्योम TEP_PLUGIN_UNLOADER(काष्ठा tep_handle *tep)
+अणु
+	tep_unरेजिस्टर_event_handler(tep, -1, "sched", "sched_switch",
+				     sched_चयन_handler, शून्य);
 
-	tep_unregister_event_handler(tep, -1, "sched", "sched_wakeup",
-				     sched_wakeup_handler, NULL);
+	tep_unरेजिस्टर_event_handler(tep, -1, "sched", "sched_wakeup",
+				     sched_wakeup_handler, शून्य);
 
-	tep_unregister_event_handler(tep, -1, "sched", "sched_wakeup_new",
-				     sched_wakeup_handler, NULL);
-}
+	tep_unरेजिस्टर_event_handler(tep, -1, "sched", "sched_wakeup_new",
+				     sched_wakeup_handler, शून्य);
+पूर्ण

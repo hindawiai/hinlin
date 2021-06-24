@@ -1,20 +1,21 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 // Copyright (C) 2013,2018 Intel Corporation
 
-#include <linux/bitops.h>
-#include <linux/dmaengine.h>
-#include <linux/errno.h>
-#include <linux/slab.h>
-#include <linux/types.h>
+#समावेश <linux/bitops.h>
+#समावेश <linux/dmaengine.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/slab.h>
+#समावेश <linux/types.h>
 
-#include "internal.h"
+#समावेश "internal.h"
 
-static void idma32_initialize_chan(struct dw_dma_chan *dwc)
-{
+अटल व्योम idma32_initialize_chan(काष्ठा dw_dma_chan *dwc)
+अणु
 	u32 cfghi = 0;
 	u32 cfglo = 0;
 
-	/* Set default burst alignment */
+	/* Set शेष burst alignment */
 	cfglo |= IDMA32C_CFGL_DST_BURST_ALIGN | IDMA32C_CFGL_SRC_BURST_ALIGN;
 
 	/* Low 4 bits of the request lines */
@@ -25,113 +26,113 @@ static void idma32_initialize_chan(struct dw_dma_chan *dwc)
 	cfghi |= IDMA32C_CFGH_DST_PER_EXT(dwc->dws.dst_id >> 4 & 0x3);
 	cfghi |= IDMA32C_CFGH_SRC_PER_EXT(dwc->dws.src_id >> 4 & 0x3);
 
-	channel_writel(dwc, CFG_LO, cfglo);
-	channel_writel(dwc, CFG_HI, cfghi);
-}
+	channel_ग_लिखोl(dwc, CFG_LO, cfglo);
+	channel_ग_लिखोl(dwc, CFG_HI, cfghi);
+पूर्ण
 
-static void idma32_suspend_chan(struct dw_dma_chan *dwc, bool drain)
-{
-	u32 cfglo = channel_readl(dwc, CFG_LO);
+अटल व्योम idma32_suspend_chan(काष्ठा dw_dma_chan *dwc, bool drain)
+अणु
+	u32 cfglo = channel_पढ़ोl(dwc, CFG_LO);
 
-	if (drain)
+	अगर (drain)
 		cfglo |= IDMA32C_CFGL_CH_DRAIN;
 
-	channel_writel(dwc, CFG_LO, cfglo | DWC_CFGL_CH_SUSP);
-}
+	channel_ग_लिखोl(dwc, CFG_LO, cfglo | DWC_CFGL_CH_SUSP);
+पूर्ण
 
-static void idma32_resume_chan(struct dw_dma_chan *dwc, bool drain)
-{
-	u32 cfglo = channel_readl(dwc, CFG_LO);
+अटल व्योम idma32_resume_chan(काष्ठा dw_dma_chan *dwc, bool drain)
+अणु
+	u32 cfglo = channel_पढ़ोl(dwc, CFG_LO);
 
-	if (drain)
+	अगर (drain)
 		cfglo &= ~IDMA32C_CFGL_CH_DRAIN;
 
-	channel_writel(dwc, CFG_LO, cfglo & ~DWC_CFGL_CH_SUSP);
-}
+	channel_ग_लिखोl(dwc, CFG_LO, cfglo & ~DWC_CFGL_CH_SUSP);
+पूर्ण
 
-static u32 idma32_bytes2block(struct dw_dma_chan *dwc,
-			      size_t bytes, unsigned int width, size_t *len)
-{
+अटल u32 idma32_bytes2block(काष्ठा dw_dma_chan *dwc,
+			      माप_प्रकार bytes, अचिन्हित पूर्णांक width, माप_प्रकार *len)
+अणु
 	u32 block;
 
-	if (bytes > dwc->block_size) {
+	अगर (bytes > dwc->block_size) अणु
 		block = dwc->block_size;
 		*len = dwc->block_size;
-	} else {
+	पूर्ण अन्यथा अणु
 		block = bytes;
 		*len = bytes;
-	}
+	पूर्ण
 
-	return block;
-}
+	वापस block;
+पूर्ण
 
-static size_t idma32_block2bytes(struct dw_dma_chan *dwc, u32 block, u32 width)
-{
-	return IDMA32C_CTLH_BLOCK_TS(block);
-}
+अटल माप_प्रकार idma32_block2bytes(काष्ठा dw_dma_chan *dwc, u32 block, u32 width)
+अणु
+	वापस IDMA32C_CTLH_BLOCK_TS(block);
+पूर्ण
 
-static u32 idma32_prepare_ctllo(struct dw_dma_chan *dwc)
-{
-	struct dma_slave_config	*sconfig = &dwc->dma_sconfig;
+अटल u32 idma32_prepare_ctllo(काष्ठा dw_dma_chan *dwc)
+अणु
+	काष्ठा dma_slave_config	*sconfig = &dwc->dma_sconfig;
 	u8 smsize = (dwc->direction == DMA_DEV_TO_MEM) ? sconfig->src_maxburst : 0;
 	u8 dmsize = (dwc->direction == DMA_MEM_TO_DEV) ? sconfig->dst_maxburst : 0;
 
-	return DWC_CTLL_LLP_D_EN | DWC_CTLL_LLP_S_EN |
+	वापस DWC_CTLL_LLP_D_EN | DWC_CTLL_LLP_S_EN |
 	       DWC_CTLL_DST_MSIZE(dmsize) | DWC_CTLL_SRC_MSIZE(smsize);
-}
+पूर्ण
 
-static void idma32_encode_maxburst(struct dw_dma_chan *dwc, u32 *maxburst)
-{
+अटल व्योम idma32_encode_maxburst(काष्ठा dw_dma_chan *dwc, u32 *maxburst)
+अणु
 	*maxburst = *maxburst > 1 ? fls(*maxburst) - 1 : 0;
-}
+पूर्ण
 
-static void idma32_set_device_name(struct dw_dma *dw, int id)
-{
-	snprintf(dw->name, sizeof(dw->name), "idma32:dmac%d", id);
-}
+अटल व्योम idma32_set_device_name(काष्ठा dw_dma *dw, पूर्णांक id)
+अणु
+	snम_लिखो(dw->name, माप(dw->name), "idma32:dmac%d", id);
+पूर्ण
 
 /*
  * Program FIFO size of channels.
  *
- * By default full FIFO (512 bytes) is assigned to channel 0. Here we
+ * By शेष full FIFO (512 bytes) is asचिन्हित to channel 0. Here we
  * slice FIFO on equal parts between channels.
  */
-static void idma32_fifo_partition(struct dw_dma *dw)
-{
+अटल व्योम idma32_fअगरo_partition(काष्ठा dw_dma *dw)
+अणु
 	u64 value = IDMA32C_FP_PSIZE_CH0(64) | IDMA32C_FP_PSIZE_CH1(64) |
 		    IDMA32C_FP_UPDATE;
-	u64 fifo_partition = 0;
+	u64 fअगरo_partition = 0;
 
 	/* Fill FIFO_PARTITION low bits (Channels 0..1, 4..5) */
-	fifo_partition |= value << 0;
+	fअगरo_partition |= value << 0;
 
 	/* Fill FIFO_PARTITION high bits (Channels 2..3, 6..7) */
-	fifo_partition |= value << 32;
+	fअगरo_partition |= value << 32;
 
-	/* Program FIFO Partition registers - 64 bytes per channel */
-	idma32_writeq(dw, FIFO_PARTITION1, fifo_partition);
-	idma32_writeq(dw, FIFO_PARTITION0, fifo_partition);
-}
+	/* Program FIFO Partition रेजिस्टरs - 64 bytes per channel */
+	idma32_ग_लिखोq(dw, FIFO_PARTITION1, fअगरo_partition);
+	idma32_ग_लिखोq(dw, FIFO_PARTITION0, fअगरo_partition);
+पूर्ण
 
-static void idma32_disable(struct dw_dma *dw)
-{
-	do_dw_dma_off(dw);
-	idma32_fifo_partition(dw);
-}
+अटल व्योम idma32_disable(काष्ठा dw_dma *dw)
+अणु
+	करो_dw_dma_off(dw);
+	idma32_fअगरo_partition(dw);
+पूर्ण
 
-static void idma32_enable(struct dw_dma *dw)
-{
-	idma32_fifo_partition(dw);
-	do_dw_dma_on(dw);
-}
+अटल व्योम idma32_enable(काष्ठा dw_dma *dw)
+अणु
+	idma32_fअगरo_partition(dw);
+	करो_dw_dma_on(dw);
+पूर्ण
 
-int idma32_dma_probe(struct dw_dma_chip *chip)
-{
-	struct dw_dma *dw;
+पूर्णांक idma32_dma_probe(काष्ठा dw_dma_chip *chip)
+अणु
+	काष्ठा dw_dma *dw;
 
-	dw = devm_kzalloc(chip->dev, sizeof(*dw), GFP_KERNEL);
-	if (!dw)
-		return -ENOMEM;
+	dw = devm_kzalloc(chip->dev, माप(*dw), GFP_KERNEL);
+	अगर (!dw)
+		वापस -ENOMEM;
 
 	/* Channel operations */
 	dw->initialize_chan = idma32_initialize_chan;
@@ -148,12 +149,12 @@ int idma32_dma_probe(struct dw_dma_chip *chip)
 	dw->enable = idma32_enable;
 
 	chip->dw = dw;
-	return do_dma_probe(chip);
-}
+	वापस करो_dma_probe(chip);
+पूर्ण
 EXPORT_SYMBOL_GPL(idma32_dma_probe);
 
-int idma32_dma_remove(struct dw_dma_chip *chip)
-{
-	return do_dma_remove(chip);
-}
-EXPORT_SYMBOL_GPL(idma32_dma_remove);
+पूर्णांक idma32_dma_हटाओ(काष्ठा dw_dma_chip *chip)
+अणु
+	वापस करो_dma_हटाओ(chip);
+पूर्ण
+EXPORT_SYMBOL_GPL(idma32_dma_हटाओ);

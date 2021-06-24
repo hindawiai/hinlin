@@ -1,349 +1,350 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /* Copyright (c) 2015-2018, The Linux Foundation. All rights reserved.
  */
 
-#define pr_fmt(fmt)	"[drm:%s:%d] " fmt, __func__, __LINE__
+#घोषणा pr_fmt(fmt)	"[drm:%s:%d] " fmt, __func__, __LINE__
 
-#include <linux/debugfs.h>
-#include <linux/delay.h>
+#समावेश <linux/debugfs.h>
+#समावेश <linux/delay.h>
 
-#include "dpu_vbif.h"
-#include "dpu_hw_vbif.h"
-#include "dpu_trace.h"
+#समावेश "dpu_vbif.h"
+#समावेश "dpu_hw_vbif.h"
+#समावेश "dpu_trace.h"
 
 /**
- * _dpu_vbif_wait_for_xin_halt - wait for the xin to halt
- * @vbif:	Pointer to hardware vbif driver
- * @xin_id:	Client interface identifier
- * @return:	0 if success; error code otherwise
+ * _dpu_vbअगर_रुको_क्रम_xin_halt - रुको क्रम the xin to halt
+ * @vbअगर:	Poपूर्णांकer to hardware vbअगर driver
+ * @xin_id:	Client पूर्णांकerface identअगरier
+ * @वापस:	0 अगर success; error code otherwise
  */
-static int _dpu_vbif_wait_for_xin_halt(struct dpu_hw_vbif *vbif, u32 xin_id)
-{
-	ktime_t timeout;
+अटल पूर्णांक _dpu_vbअगर_रुको_क्रम_xin_halt(काष्ठा dpu_hw_vbअगर *vbअगर, u32 xin_id)
+अणु
+	kसमय_प्रकार समयout;
 	bool status;
-	int rc;
+	पूर्णांक rc;
 
-	if (!vbif || !vbif->cap || !vbif->ops.get_halt_ctrl) {
-		DPU_ERROR("invalid arguments vbif %d\n", vbif != NULL);
-		return -EINVAL;
-	}
+	अगर (!vbअगर || !vbअगर->cap || !vbअगर->ops.get_halt_ctrl) अणु
+		DPU_ERROR("invalid arguments vbif %d\n", vbअगर != शून्य);
+		वापस -EINVAL;
+	पूर्ण
 
-	timeout = ktime_add_us(ktime_get(), vbif->cap->xin_halt_timeout);
-	for (;;) {
-		status = vbif->ops.get_halt_ctrl(vbif, xin_id);
-		if (status)
-			break;
-		if (ktime_compare_safe(ktime_get(), timeout) > 0) {
-			status = vbif->ops.get_halt_ctrl(vbif, xin_id);
-			break;
-		}
+	समयout = kसमय_add_us(kसमय_get(), vbअगर->cap->xin_halt_समयout);
+	क्रम (;;) अणु
+		status = vbअगर->ops.get_halt_ctrl(vbअगर, xin_id);
+		अगर (status)
+			अवरोध;
+		अगर (kसमय_compare_safe(kसमय_get(), समयout) > 0) अणु
+			status = vbअगर->ops.get_halt_ctrl(vbअगर, xin_id);
+			अवरोध;
+		पूर्ण
 		usleep_range(501, 1000);
-	}
+	पूर्ण
 
-	if (!status) {
+	अगर (!status) अणु
 		rc = -ETIMEDOUT;
 		DPU_ERROR("VBIF %d client %d not halting. TIMEDOUT.\n",
-				vbif->idx - VBIF_0, xin_id);
-	} else {
+				vbअगर->idx - VBIF_0, xin_id);
+	पूर्ण अन्यथा अणु
 		rc = 0;
 		DPU_DEBUG("VBIF %d client %d is halted\n",
-				vbif->idx - VBIF_0, xin_id);
-	}
+				vbअगर->idx - VBIF_0, xin_id);
+	पूर्ण
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
 /**
- * _dpu_vbif_apply_dynamic_ot_limit - determine OT based on usecase parameters
- * @vbif:	Pointer to hardware vbif driver
- * @ot_lim:	Pointer to OT limit to be modified
- * @params:	Pointer to usecase parameters
+ * _dpu_vbअगर_apply_dynamic_ot_limit - determine OT based on useहाल parameters
+ * @vbअगर:	Poपूर्णांकer to hardware vbअगर driver
+ * @ot_lim:	Poपूर्णांकer to OT limit to be modअगरied
+ * @params:	Poपूर्णांकer to useहाल parameters
  */
-static void _dpu_vbif_apply_dynamic_ot_limit(struct dpu_hw_vbif *vbif,
-		u32 *ot_lim, struct dpu_vbif_set_ot_params *params)
-{
+अटल व्योम _dpu_vbअगर_apply_dynamic_ot_limit(काष्ठा dpu_hw_vbअगर *vbअगर,
+		u32 *ot_lim, काष्ठा dpu_vbअगर_set_ot_params *params)
+अणु
 	u64 pps;
-	const struct dpu_vbif_dynamic_ot_tbl *tbl;
+	स्थिर काष्ठा dpu_vbअगर_dynamic_ot_tbl *tbl;
 	u32 i;
 
-	if (!vbif || !(vbif->cap->features & BIT(DPU_VBIF_QOS_OTLIM)))
-		return;
+	अगर (!vbअगर || !(vbअगर->cap->features & BIT(DPU_VBIF_QOS_OTLIM)))
+		वापस;
 
-	/* Dynamic OT setting done only for WFD */
-	if (!params->is_wfd)
-		return;
+	/* Dynamic OT setting करोne only क्रम WFD */
+	अगर (!params->is_wfd)
+		वापस;
 
 	pps = params->frame_rate;
 	pps *= params->width;
 	pps *= params->height;
 
-	tbl = params->rd ? &vbif->cap->dynamic_ot_rd_tbl :
-			&vbif->cap->dynamic_ot_wr_tbl;
+	tbl = params->rd ? &vbअगर->cap->dynamic_ot_rd_tbl :
+			&vbअगर->cap->dynamic_ot_wr_tbl;
 
-	for (i = 0; i < tbl->count; i++) {
-		if (pps <= tbl->cfg[i].pps) {
+	क्रम (i = 0; i < tbl->count; i++) अणु
+		अगर (pps <= tbl->cfg[i].pps) अणु
 			*ot_lim = tbl->cfg[i].ot_limit;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
 	DPU_DEBUG("vbif:%d xin:%d w:%d h:%d fps:%d pps:%llu ot:%u\n",
-			vbif->idx - VBIF_0, params->xin_id,
+			vbअगर->idx - VBIF_0, params->xin_id,
 			params->width, params->height, params->frame_rate,
 			pps, *ot_lim);
-}
+पूर्ण
 
 /**
- * _dpu_vbif_get_ot_limit - get OT based on usecase & configuration parameters
- * @vbif:	Pointer to hardware vbif driver
- * @params:	Pointer to usecase parameters
- * @return:	OT limit
+ * _dpu_vbअगर_get_ot_limit - get OT based on useहाल & configuration parameters
+ * @vbअगर:	Poपूर्णांकer to hardware vbअगर driver
+ * @params:	Poपूर्णांकer to useहाल parameters
+ * @वापस:	OT limit
  */
-static u32 _dpu_vbif_get_ot_limit(struct dpu_hw_vbif *vbif,
-	struct dpu_vbif_set_ot_params *params)
-{
+अटल u32 _dpu_vbअगर_get_ot_limit(काष्ठा dpu_hw_vbअगर *vbअगर,
+	काष्ठा dpu_vbअगर_set_ot_params *params)
+अणु
 	u32 ot_lim = 0;
 	u32 val;
 
-	if (!vbif || !vbif->cap) {
-		DPU_ERROR("invalid arguments vbif %d\n", vbif != NULL);
-		return -EINVAL;
-	}
+	अगर (!vbअगर || !vbअगर->cap) अणु
+		DPU_ERROR("invalid arguments vbif %d\n", vbअगर != शून्य);
+		वापस -EINVAL;
+	पूर्ण
 
-	if (vbif->cap->default_ot_wr_limit && !params->rd)
-		ot_lim = vbif->cap->default_ot_wr_limit;
-	else if (vbif->cap->default_ot_rd_limit && params->rd)
-		ot_lim = vbif->cap->default_ot_rd_limit;
+	अगर (vbअगर->cap->शेष_ot_wr_limit && !params->rd)
+		ot_lim = vbअगर->cap->शेष_ot_wr_limit;
+	अन्यथा अगर (vbअगर->cap->शेष_ot_rd_limit && params->rd)
+		ot_lim = vbअगर->cap->शेष_ot_rd_limit;
 
 	/*
-	 * If default ot is not set from dt/catalog,
-	 * then do not configure it.
+	 * If शेष ot is not set from dt/catalog,
+	 * then करो not configure it.
 	 */
-	if (ot_lim == 0)
-		goto exit;
+	अगर (ot_lim == 0)
+		जाओ निकास;
 
-	/* Modify the limits if the target and the use case requires it */
-	_dpu_vbif_apply_dynamic_ot_limit(vbif, &ot_lim, params);
+	/* Modअगरy the limits अगर the target and the use हाल requires it */
+	_dpu_vbअगर_apply_dynamic_ot_limit(vbअगर, &ot_lim, params);
 
-	if (vbif && vbif->ops.get_limit_conf) {
-		val = vbif->ops.get_limit_conf(vbif,
+	अगर (vbअगर && vbअगर->ops.get_limit_conf) अणु
+		val = vbअगर->ops.get_limit_conf(vbअगर,
 				params->xin_id, params->rd);
-		if (val == ot_lim)
+		अगर (val == ot_lim)
 			ot_lim = 0;
-	}
+	पूर्ण
 
-exit:
+निकास:
 	DPU_DEBUG("vbif:%d xin:%d ot_lim:%d\n",
-			vbif->idx - VBIF_0, params->xin_id, ot_lim);
-	return ot_lim;
-}
+			vbअगर->idx - VBIF_0, params->xin_id, ot_lim);
+	वापस ot_lim;
+पूर्ण
 
 /**
- * dpu_vbif_set_ot_limit - set OT based on usecase & configuration parameters
+ * dpu_vbअगर_set_ot_limit - set OT based on useहाल & configuration parameters
  * @dpu_kms:	DPU handler
- * @params:	Pointer to usecase parameters
+ * @params:	Poपूर्णांकer to useहाल parameters
  *
- * Note this function would block waiting for bus halt.
+ * Note this function would block रुकोing क्रम bus halt.
  */
-void dpu_vbif_set_ot_limit(struct dpu_kms *dpu_kms,
-		struct dpu_vbif_set_ot_params *params)
-{
-	struct dpu_hw_vbif *vbif = NULL;
-	struct dpu_hw_mdp *mdp;
-	bool forced_on = false;
+व्योम dpu_vbअगर_set_ot_limit(काष्ठा dpu_kms *dpu_kms,
+		काष्ठा dpu_vbअगर_set_ot_params *params)
+अणु
+	काष्ठा dpu_hw_vbअगर *vbअगर = शून्य;
+	काष्ठा dpu_hw_mdp *mdp;
+	bool क्रमced_on = false;
 	u32 ot_lim;
-	int ret, i;
+	पूर्णांक ret, i;
 
 	mdp = dpu_kms->hw_mdp;
 
-	for (i = 0; i < ARRAY_SIZE(dpu_kms->hw_vbif); i++) {
-		if (dpu_kms->hw_vbif[i] &&
-				dpu_kms->hw_vbif[i]->idx == params->vbif_idx)
-			vbif = dpu_kms->hw_vbif[i];
-	}
+	क्रम (i = 0; i < ARRAY_SIZE(dpu_kms->hw_vbअगर); i++) अणु
+		अगर (dpu_kms->hw_vbअगर[i] &&
+				dpu_kms->hw_vbअगर[i]->idx == params->vbअगर_idx)
+			vbअगर = dpu_kms->hw_vbअगर[i];
+	पूर्ण
 
-	if (!vbif || !mdp) {
+	अगर (!vbअगर || !mdp) अणु
 		DPU_DEBUG("invalid arguments vbif %d mdp %d\n",
-				vbif != NULL, mdp != NULL);
-		return;
-	}
+				vbअगर != शून्य, mdp != शून्य);
+		वापस;
+	पूर्ण
 
-	if (!mdp->ops.setup_clk_force_ctrl ||
-			!vbif->ops.set_limit_conf ||
-			!vbif->ops.set_halt_ctrl)
-		return;
+	अगर (!mdp->ops.setup_clk_क्रमce_ctrl ||
+			!vbअगर->ops.set_limit_conf ||
+			!vbअगर->ops.set_halt_ctrl)
+		वापस;
 
-	/* set write_gather_en for all write clients */
-	if (vbif->ops.set_write_gather_en && !params->rd)
-		vbif->ops.set_write_gather_en(vbif, params->xin_id);
+	/* set ग_लिखो_gather_en क्रम all ग_लिखो clients */
+	अगर (vbअगर->ops.set_ग_लिखो_gather_en && !params->rd)
+		vbअगर->ops.set_ग_लिखो_gather_en(vbअगर, params->xin_id);
 
-	ot_lim = _dpu_vbif_get_ot_limit(vbif, params) & 0xFF;
+	ot_lim = _dpu_vbअगर_get_ot_limit(vbअगर, params) & 0xFF;
 
-	if (ot_lim == 0)
-		return;
+	अगर (ot_lim == 0)
+		वापस;
 
 	trace_dpu_perf_set_ot(params->num, params->xin_id, ot_lim,
-		params->vbif_idx);
+		params->vbअगर_idx);
 
-	forced_on = mdp->ops.setup_clk_force_ctrl(mdp, params->clk_ctrl, true);
+	क्रमced_on = mdp->ops.setup_clk_क्रमce_ctrl(mdp, params->clk_ctrl, true);
 
-	vbif->ops.set_limit_conf(vbif, params->xin_id, params->rd, ot_lim);
+	vbअगर->ops.set_limit_conf(vbअगर, params->xin_id, params->rd, ot_lim);
 
-	vbif->ops.set_halt_ctrl(vbif, params->xin_id, true);
+	vbअगर->ops.set_halt_ctrl(vbअगर, params->xin_id, true);
 
-	ret = _dpu_vbif_wait_for_xin_halt(vbif, params->xin_id);
-	if (ret)
-		trace_dpu_vbif_wait_xin_halt_fail(vbif->idx, params->xin_id);
+	ret = _dpu_vbअगर_रुको_क्रम_xin_halt(vbअगर, params->xin_id);
+	अगर (ret)
+		trace_dpu_vbअगर_रुको_xin_halt_fail(vbअगर->idx, params->xin_id);
 
-	vbif->ops.set_halt_ctrl(vbif, params->xin_id, false);
+	vbअगर->ops.set_halt_ctrl(vbअगर, params->xin_id, false);
 
-	if (forced_on)
-		mdp->ops.setup_clk_force_ctrl(mdp, params->clk_ctrl, false);
-}
+	अगर (क्रमced_on)
+		mdp->ops.setup_clk_क्रमce_ctrl(mdp, params->clk_ctrl, false);
+पूर्ण
 
-void dpu_vbif_set_qos_remap(struct dpu_kms *dpu_kms,
-		struct dpu_vbif_set_qos_params *params)
-{
-	struct dpu_hw_vbif *vbif = NULL;
-	struct dpu_hw_mdp *mdp;
-	bool forced_on = false;
-	const struct dpu_vbif_qos_tbl *qos_tbl;
-	int i;
+व्योम dpu_vbअगर_set_qos_remap(काष्ठा dpu_kms *dpu_kms,
+		काष्ठा dpu_vbअगर_set_qos_params *params)
+अणु
+	काष्ठा dpu_hw_vbअगर *vbअगर = शून्य;
+	काष्ठा dpu_hw_mdp *mdp;
+	bool क्रमced_on = false;
+	स्थिर काष्ठा dpu_vbअगर_qos_tbl *qos_tbl;
+	पूर्णांक i;
 
-	if (!params || !dpu_kms->hw_mdp) {
+	अगर (!params || !dpu_kms->hw_mdp) अणु
 		DPU_ERROR("invalid arguments\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 	mdp = dpu_kms->hw_mdp;
 
-	for (i = 0; i < ARRAY_SIZE(dpu_kms->hw_vbif); i++) {
-		if (dpu_kms->hw_vbif[i] &&
-				dpu_kms->hw_vbif[i]->idx == params->vbif_idx) {
-			vbif = dpu_kms->hw_vbif[i];
-			break;
-		}
-	}
+	क्रम (i = 0; i < ARRAY_SIZE(dpu_kms->hw_vbअगर); i++) अणु
+		अगर (dpu_kms->hw_vbअगर[i] &&
+				dpu_kms->hw_vbअगर[i]->idx == params->vbअगर_idx) अणु
+			vbअगर = dpu_kms->hw_vbअगर[i];
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	if (!vbif || !vbif->cap) {
-		DPU_ERROR("invalid vbif %d\n", params->vbif_idx);
-		return;
-	}
+	अगर (!vbअगर || !vbअगर->cap) अणु
+		DPU_ERROR("invalid vbif %d\n", params->vbअगर_idx);
+		वापस;
+	पूर्ण
 
-	if (!vbif->ops.set_qos_remap || !mdp->ops.setup_clk_force_ctrl) {
+	अगर (!vbअगर->ops.set_qos_remap || !mdp->ops.setup_clk_क्रमce_ctrl) अणु
 		DPU_DEBUG("qos remap not supported\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	qos_tbl = params->is_rt ? &vbif->cap->qos_rt_tbl :
-			&vbif->cap->qos_nrt_tbl;
+	qos_tbl = params->is_rt ? &vbअगर->cap->qos_rt_tbl :
+			&vbअगर->cap->qos_nrt_tbl;
 
-	if (!qos_tbl->npriority_lvl || !qos_tbl->priority_lvl) {
+	अगर (!qos_tbl->npriority_lvl || !qos_tbl->priority_lvl) अणु
 		DPU_DEBUG("qos tbl not defined\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	forced_on = mdp->ops.setup_clk_force_ctrl(mdp, params->clk_ctrl, true);
+	क्रमced_on = mdp->ops.setup_clk_क्रमce_ctrl(mdp, params->clk_ctrl, true);
 
-	for (i = 0; i < qos_tbl->npriority_lvl; i++) {
+	क्रम (i = 0; i < qos_tbl->npriority_lvl; i++) अणु
 		DPU_DEBUG("vbif:%d xin:%d lvl:%d/%d\n",
-				params->vbif_idx, params->xin_id, i,
+				params->vbअगर_idx, params->xin_id, i,
 				qos_tbl->priority_lvl[i]);
-		vbif->ops.set_qos_remap(vbif, params->xin_id, i,
+		vbअगर->ops.set_qos_remap(vbअगर, params->xin_id, i,
 				qos_tbl->priority_lvl[i]);
-	}
+	पूर्ण
 
-	if (forced_on)
-		mdp->ops.setup_clk_force_ctrl(mdp, params->clk_ctrl, false);
-}
+	अगर (क्रमced_on)
+		mdp->ops.setup_clk_क्रमce_ctrl(mdp, params->clk_ctrl, false);
+पूर्ण
 
-void dpu_vbif_clear_errors(struct dpu_kms *dpu_kms)
-{
-	struct dpu_hw_vbif *vbif;
+व्योम dpu_vbअगर_clear_errors(काष्ठा dpu_kms *dpu_kms)
+अणु
+	काष्ठा dpu_hw_vbअगर *vbअगर;
 	u32 i, pnd, src;
 
-	for (i = 0; i < ARRAY_SIZE(dpu_kms->hw_vbif); i++) {
-		vbif = dpu_kms->hw_vbif[i];
-		if (vbif && vbif->ops.clear_errors) {
-			vbif->ops.clear_errors(vbif, &pnd, &src);
-			if (pnd || src) {
+	क्रम (i = 0; i < ARRAY_SIZE(dpu_kms->hw_vbअगर); i++) अणु
+		vbअगर = dpu_kms->hw_vbअगर[i];
+		अगर (vbअगर && vbअगर->ops.clear_errors) अणु
+			vbअगर->ops.clear_errors(vbअगर, &pnd, &src);
+			अगर (pnd || src) अणु
 				DRM_DEBUG_KMS("VBIF %d: pnd 0x%X, src 0x%X\n",
-					      vbif->idx - VBIF_0, pnd, src);
-			}
-		}
-	}
-}
+					      vbअगर->idx - VBIF_0, pnd, src);
+			पूर्ण
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-void dpu_vbif_init_memtypes(struct dpu_kms *dpu_kms)
-{
-	struct dpu_hw_vbif *vbif;
-	int i, j;
+व्योम dpu_vbअगर_init_memtypes(काष्ठा dpu_kms *dpu_kms)
+अणु
+	काष्ठा dpu_hw_vbअगर *vbअगर;
+	पूर्णांक i, j;
 
-	for (i = 0; i < ARRAY_SIZE(dpu_kms->hw_vbif); i++) {
-		vbif = dpu_kms->hw_vbif[i];
-		if (vbif && vbif->cap && vbif->ops.set_mem_type) {
-			for (j = 0; j < vbif->cap->memtype_count; j++)
-				vbif->ops.set_mem_type(
-						vbif, j, vbif->cap->memtype[j]);
-		}
-	}
-}
+	क्रम (i = 0; i < ARRAY_SIZE(dpu_kms->hw_vbअगर); i++) अणु
+		vbअगर = dpu_kms->hw_vbअगर[i];
+		अगर (vbअगर && vbअगर->cap && vbअगर->ops.set_mem_type) अणु
+			क्रम (j = 0; j < vbअगर->cap->memtype_count; j++)
+				vbअगर->ops.set_mem_type(
+						vbअगर, j, vbअगर->cap->memtype[j]);
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-#ifdef CONFIG_DEBUG_FS
+#अगर_घोषित CONFIG_DEBUG_FS
 
-void dpu_debugfs_vbif_init(struct dpu_kms *dpu_kms, struct dentry *debugfs_root)
-{
-	char vbif_name[32];
-	struct dentry *entry, *debugfs_vbif;
-	int i, j;
+व्योम dpu_debugfs_vbअगर_init(काष्ठा dpu_kms *dpu_kms, काष्ठा dentry *debugfs_root)
+अणु
+	अक्षर vbअगर_name[32];
+	काष्ठा dentry *entry, *debugfs_vbअगर;
+	पूर्णांक i, j;
 
 	entry = debugfs_create_dir("vbif", debugfs_root);
 
-	for (i = 0; i < dpu_kms->catalog->vbif_count; i++) {
-		const struct dpu_vbif_cfg *vbif = &dpu_kms->catalog->vbif[i];
+	क्रम (i = 0; i < dpu_kms->catalog->vbअगर_count; i++) अणु
+		स्थिर काष्ठा dpu_vbअगर_cfg *vbअगर = &dpu_kms->catalog->vbअगर[i];
 
-		snprintf(vbif_name, sizeof(vbif_name), "%d", vbif->id);
+		snम_लिखो(vbअगर_name, माप(vbअगर_name), "%d", vbअगर->id);
 
-		debugfs_vbif = debugfs_create_dir(vbif_name, entry);
+		debugfs_vbअगर = debugfs_create_dir(vbअगर_name, entry);
 
-		debugfs_create_u32("features", 0600, debugfs_vbif,
-			(u32 *)&vbif->features);
+		debugfs_create_u32("features", 0600, debugfs_vbअगर,
+			(u32 *)&vbअगर->features);
 
-		debugfs_create_u32("xin_halt_timeout", 0400, debugfs_vbif,
-			(u32 *)&vbif->xin_halt_timeout);
+		debugfs_create_u32("xin_halt_timeout", 0400, debugfs_vbअगर,
+			(u32 *)&vbअगर->xin_halt_समयout);
 
-		debugfs_create_u32("default_rd_ot_limit", 0400, debugfs_vbif,
-			(u32 *)&vbif->default_ot_rd_limit);
+		debugfs_create_u32("default_rd_ot_limit", 0400, debugfs_vbअगर,
+			(u32 *)&vbअगर->शेष_ot_rd_limit);
 
-		debugfs_create_u32("default_wr_ot_limit", 0400, debugfs_vbif,
-			(u32 *)&vbif->default_ot_wr_limit);
+		debugfs_create_u32("default_wr_ot_limit", 0400, debugfs_vbअगर,
+			(u32 *)&vbअगर->शेष_ot_wr_limit);
 
-		for (j = 0; j < vbif->dynamic_ot_rd_tbl.count; j++) {
-			const struct dpu_vbif_dynamic_ot_cfg *cfg =
-					&vbif->dynamic_ot_rd_tbl.cfg[j];
+		क्रम (j = 0; j < vbअगर->dynamic_ot_rd_tbl.count; j++) अणु
+			स्थिर काष्ठा dpu_vbअगर_dynamic_ot_cfg *cfg =
+					&vbअगर->dynamic_ot_rd_tbl.cfg[j];
 
-			snprintf(vbif_name, sizeof(vbif_name),
+			snम_लिखो(vbअगर_name, माप(vbअगर_name),
 					"dynamic_ot_rd_%d_pps", j);
-			debugfs_create_u64(vbif_name, 0400, debugfs_vbif,
+			debugfs_create_u64(vbअगर_name, 0400, debugfs_vbअगर,
 					(u64 *)&cfg->pps);
-			snprintf(vbif_name, sizeof(vbif_name),
+			snम_लिखो(vbअगर_name, माप(vbअगर_name),
 					"dynamic_ot_rd_%d_ot_limit", j);
-			debugfs_create_u32(vbif_name, 0400, debugfs_vbif,
+			debugfs_create_u32(vbअगर_name, 0400, debugfs_vbअगर,
 					(u32 *)&cfg->ot_limit);
-		}
+		पूर्ण
 
-		for (j = 0; j < vbif->dynamic_ot_wr_tbl.count; j++) {
-			const struct dpu_vbif_dynamic_ot_cfg *cfg =
-					&vbif->dynamic_ot_wr_tbl.cfg[j];
+		क्रम (j = 0; j < vbअगर->dynamic_ot_wr_tbl.count; j++) अणु
+			स्थिर काष्ठा dpu_vbअगर_dynamic_ot_cfg *cfg =
+					&vbअगर->dynamic_ot_wr_tbl.cfg[j];
 
-			snprintf(vbif_name, sizeof(vbif_name),
+			snम_लिखो(vbअगर_name, माप(vbअगर_name),
 					"dynamic_ot_wr_%d_pps", j);
-			debugfs_create_u64(vbif_name, 0400, debugfs_vbif,
+			debugfs_create_u64(vbअगर_name, 0400, debugfs_vbअगर,
 					(u64 *)&cfg->pps);
-			snprintf(vbif_name, sizeof(vbif_name),
+			snम_लिखो(vbअगर_name, माप(vbअगर_name),
 					"dynamic_ot_wr_%d_ot_limit", j);
-			debugfs_create_u32(vbif_name, 0400, debugfs_vbif,
+			debugfs_create_u32(vbअगर_name, 0400, debugfs_vbअगर,
 					(u32 *)&cfg->ot_limit);
-		}
-	}
-}
-#endif
+		पूर्ण
+	पूर्ण
+पूर्ण
+#पूर्ण_अगर

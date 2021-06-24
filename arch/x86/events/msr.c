@@ -1,11 +1,12 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <linux/perf_event.h>
-#include <linux/sysfs.h>
-#include <linux/nospec.h>
-#include <asm/intel-family.h>
-#include "probe.h"
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <linux/perf_event.h>
+#समावेश <linux/sysfs.h>
+#समावेश <linux/nospec.h>
+#समावेश <यंत्र/पूर्णांकel-family.h>
+#समावेश "probe.h"
 
-enum perf_msr_id {
+क्रमागत perf_msr_id अणु
 	PERF_MSR_TSC			= 0,
 	PERF_MSR_APERF			= 1,
 	PERF_MSR_MPERF			= 2,
@@ -15,100 +16,100 @@ enum perf_msr_id {
 	PERF_MSR_IRPERF			= 6,
 	PERF_MSR_THERM			= 7,
 	PERF_MSR_EVENT_MAX,
-};
+पूर्ण;
 
-static bool test_aperfmperf(int idx, void *data)
-{
-	return boot_cpu_has(X86_FEATURE_APERFMPERF);
-}
+अटल bool test_aperfmperf(पूर्णांक idx, व्योम *data)
+अणु
+	वापस boot_cpu_has(X86_FEATURE_APERFMPERF);
+पूर्ण
 
-static bool test_ptsc(int idx, void *data)
-{
-	return boot_cpu_has(X86_FEATURE_PTSC);
-}
+अटल bool test_ptsc(पूर्णांक idx, व्योम *data)
+अणु
+	वापस boot_cpu_has(X86_FEATURE_PTSC);
+पूर्ण
 
-static bool test_irperf(int idx, void *data)
-{
-	return boot_cpu_has(X86_FEATURE_IRPERF);
-}
+अटल bool test_irperf(पूर्णांक idx, व्योम *data)
+अणु
+	वापस boot_cpu_has(X86_FEATURE_IRPERF);
+पूर्ण
 
-static bool test_therm_status(int idx, void *data)
-{
-	return boot_cpu_has(X86_FEATURE_DTHERM);
-}
+अटल bool test_therm_status(पूर्णांक idx, व्योम *data)
+अणु
+	वापस boot_cpu_has(X86_FEATURE_DTHERM);
+पूर्ण
 
-static bool test_intel(int idx, void *data)
-{
-	if (boot_cpu_data.x86_vendor != X86_VENDOR_INTEL ||
+अटल bool test_पूर्णांकel(पूर्णांक idx, व्योम *data)
+अणु
+	अगर (boot_cpu_data.x86_venकरोr != X86_VENDOR_INTEL ||
 	    boot_cpu_data.x86 != 6)
-		return false;
+		वापस false;
 
-	switch (boot_cpu_data.x86_model) {
-	case INTEL_FAM6_NEHALEM:
-	case INTEL_FAM6_NEHALEM_G:
-	case INTEL_FAM6_NEHALEM_EP:
-	case INTEL_FAM6_NEHALEM_EX:
+	चयन (boot_cpu_data.x86_model) अणु
+	हाल INTEL_FAM6_NEHALEM:
+	हाल INTEL_FAM6_NEHALEM_G:
+	हाल INTEL_FAM6_NEHALEM_EP:
+	हाल INTEL_FAM6_NEHALEM_EX:
 
-	case INTEL_FAM6_WESTMERE:
-	case INTEL_FAM6_WESTMERE_EP:
-	case INTEL_FAM6_WESTMERE_EX:
+	हाल INTEL_FAM6_WESTMERE:
+	हाल INTEL_FAM6_WESTMERE_EP:
+	हाल INTEL_FAM6_WESTMERE_EX:
 
-	case INTEL_FAM6_SANDYBRIDGE:
-	case INTEL_FAM6_SANDYBRIDGE_X:
+	हाल INTEL_FAM6_SANDYBRIDGE:
+	हाल INTEL_FAM6_SANDYBRIDGE_X:
 
-	case INTEL_FAM6_IVYBRIDGE:
-	case INTEL_FAM6_IVYBRIDGE_X:
+	हाल INTEL_FAM6_IVYBRIDGE:
+	हाल INTEL_FAM6_IVYBRIDGE_X:
 
-	case INTEL_FAM6_HASWELL:
-	case INTEL_FAM6_HASWELL_X:
-	case INTEL_FAM6_HASWELL_L:
-	case INTEL_FAM6_HASWELL_G:
+	हाल INTEL_FAM6_HASWELL:
+	हाल INTEL_FAM6_HASWELL_X:
+	हाल INTEL_FAM6_HASWELL_L:
+	हाल INTEL_FAM6_HASWELL_G:
 
-	case INTEL_FAM6_BROADWELL:
-	case INTEL_FAM6_BROADWELL_D:
-	case INTEL_FAM6_BROADWELL_G:
-	case INTEL_FAM6_BROADWELL_X:
+	हाल INTEL_FAM6_BROADWELL:
+	हाल INTEL_FAM6_BROADWELL_D:
+	हाल INTEL_FAM6_BROADWELL_G:
+	हाल INTEL_FAM6_BROADWELL_X:
 
-	case INTEL_FAM6_ATOM_SILVERMONT:
-	case INTEL_FAM6_ATOM_SILVERMONT_D:
-	case INTEL_FAM6_ATOM_AIRMONT:
+	हाल INTEL_FAM6_ATOM_SILVERMONT:
+	हाल INTEL_FAM6_ATOM_SILVERMONT_D:
+	हाल INTEL_FAM6_ATOM_AIRMONT:
 
-	case INTEL_FAM6_ATOM_GOLDMONT:
-	case INTEL_FAM6_ATOM_GOLDMONT_D:
-	case INTEL_FAM6_ATOM_GOLDMONT_PLUS:
-	case INTEL_FAM6_ATOM_TREMONT_D:
-	case INTEL_FAM6_ATOM_TREMONT:
-	case INTEL_FAM6_ATOM_TREMONT_L:
+	हाल INTEL_FAM6_ATOM_GOLDMONT:
+	हाल INTEL_FAM6_ATOM_GOLDMONT_D:
+	हाल INTEL_FAM6_ATOM_GOLDMONT_PLUS:
+	हाल INTEL_FAM6_ATOM_TREMONT_D:
+	हाल INTEL_FAM6_ATOM_TREMONT:
+	हाल INTEL_FAM6_ATOM_TREMONT_L:
 
-	case INTEL_FAM6_XEON_PHI_KNL:
-	case INTEL_FAM6_XEON_PHI_KNM:
-		if (idx == PERF_MSR_SMI)
-			return true;
-		break;
+	हाल INTEL_FAM6_XEON_PHI_KNL:
+	हाल INTEL_FAM6_XEON_PHI_KNM:
+		अगर (idx == PERF_MSR_SMI)
+			वापस true;
+		अवरोध;
 
-	case INTEL_FAM6_SKYLAKE_L:
-	case INTEL_FAM6_SKYLAKE:
-	case INTEL_FAM6_SKYLAKE_X:
-	case INTEL_FAM6_KABYLAKE_L:
-	case INTEL_FAM6_KABYLAKE:
-	case INTEL_FAM6_COMETLAKE_L:
-	case INTEL_FAM6_COMETLAKE:
-	case INTEL_FAM6_ICELAKE_L:
-	case INTEL_FAM6_ICELAKE:
-	case INTEL_FAM6_ICELAKE_X:
-	case INTEL_FAM6_ICELAKE_D:
-	case INTEL_FAM6_TIGERLAKE_L:
-	case INTEL_FAM6_TIGERLAKE:
-	case INTEL_FAM6_ROCKETLAKE:
-	case INTEL_FAM6_ALDERLAKE:
-	case INTEL_FAM6_ALDERLAKE_L:
-		if (idx == PERF_MSR_SMI || idx == PERF_MSR_PPERF)
-			return true;
-		break;
-	}
+	हाल INTEL_FAM6_SKYLAKE_L:
+	हाल INTEL_FAM6_SKYLAKE:
+	हाल INTEL_FAM6_SKYLAKE_X:
+	हाल INTEL_FAM6_KABYLAKE_L:
+	हाल INTEL_FAM6_KABYLAKE:
+	हाल INTEL_FAM6_COMETLAKE_L:
+	हाल INTEL_FAM6_COMETLAKE:
+	हाल INTEL_FAM6_ICELAKE_L:
+	हाल INTEL_FAM6_ICELAKE:
+	हाल INTEL_FAM6_ICELAKE_X:
+	हाल INTEL_FAM6_ICELAKE_D:
+	हाल INTEL_FAM6_TIGERLAKE_L:
+	हाल INTEL_FAM6_TIGERLAKE:
+	हाल INTEL_FAM6_ROCKETLAKE:
+	हाल INTEL_FAM6_ALDERLAKE:
+	हाल INTEL_FAM6_ALDERLAKE_L:
+		अगर (idx == PERF_MSR_SMI || idx == PERF_MSR_PPERF)
+			वापस true;
+		अवरोध;
+	पूर्ण
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
 PMU_EVENT_ATTR_STRING(tsc,				attr_tsc,		"event=0x00"	);
 PMU_EVENT_ATTR_STRING(aperf,				attr_aperf,		"event=0x01"	);
@@ -121,7 +122,7 @@ PMU_EVENT_ATTR_STRING(cpu_thermal_margin,		attr_therm,		"event=0x07"	);
 PMU_EVENT_ATTR_STRING(cpu_thermal_margin.snapshot,	attr_therm_snap,	"1"		);
 PMU_EVENT_ATTR_STRING(cpu_thermal_margin.unit,		attr_therm_unit,	"C"		);
 
-static unsigned long msr_mask;
+अटल अचिन्हित दीर्घ msr_mask;
 
 PMU_EVENT_GROUP(events, aperf);
 PMU_EVENT_GROUP(events, mperf);
@@ -130,56 +131,56 @@ PMU_EVENT_GROUP(events, smi);
 PMU_EVENT_GROUP(events, ptsc);
 PMU_EVENT_GROUP(events, irperf);
 
-static struct attribute *attrs_therm[] = {
+अटल काष्ठा attribute *attrs_therm[] = अणु
 	&attr_therm.attr.attr,
 	&attr_therm_snap.attr.attr,
 	&attr_therm_unit.attr.attr,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-static struct attribute_group group_therm = {
+अटल काष्ठा attribute_group group_therm = अणु
 	.name  = "events",
 	.attrs = attrs_therm,
-};
+पूर्ण;
 
-static struct perf_msr msr[] = {
-	[PERF_MSR_TSC]		= { .no_check = true,								},
-	[PERF_MSR_APERF]	= { MSR_IA32_APERF,		&group_aperf,		test_aperfmperf,	},
-	[PERF_MSR_MPERF]	= { MSR_IA32_MPERF,		&group_mperf,		test_aperfmperf,	},
-	[PERF_MSR_PPERF]	= { MSR_PPERF,			&group_pperf,		test_intel,		},
-	[PERF_MSR_SMI]		= { MSR_SMI_COUNT,		&group_smi,		test_intel,		},
-	[PERF_MSR_PTSC]		= { MSR_F15H_PTSC,		&group_ptsc,		test_ptsc,		},
-	[PERF_MSR_IRPERF]	= { MSR_F17H_IRPERF,		&group_irperf,		test_irperf,		},
-	[PERF_MSR_THERM]	= { MSR_IA32_THERM_STATUS,	&group_therm,		test_therm_status,	},
-};
+अटल काष्ठा perf_msr msr[] = अणु
+	[PERF_MSR_TSC]		= अणु .no_check = true,								पूर्ण,
+	[PERF_MSR_APERF]	= अणु MSR_IA32_APERF,		&group_aperf,		test_aperfmperf,	पूर्ण,
+	[PERF_MSR_MPERF]	= अणु MSR_IA32_MPERF,		&group_mperf,		test_aperfmperf,	पूर्ण,
+	[PERF_MSR_PPERF]	= अणु MSR_PPERF,			&group_pperf,		test_पूर्णांकel,		पूर्ण,
+	[PERF_MSR_SMI]		= अणु MSR_SMI_COUNT,		&group_smi,		test_पूर्णांकel,		पूर्ण,
+	[PERF_MSR_PTSC]		= अणु MSR_F15H_PTSC,		&group_ptsc,		test_ptsc,		पूर्ण,
+	[PERF_MSR_IRPERF]	= अणु MSR_F17H_IRPERF,		&group_irperf,		test_irperf,		पूर्ण,
+	[PERF_MSR_THERM]	= अणु MSR_IA32_THERM_STATUS,	&group_therm,		test_therm_status,	पूर्ण,
+पूर्ण;
 
-static struct attribute *events_attrs[] = {
+अटल काष्ठा attribute *events_attrs[] = अणु
 	&attr_tsc.attr.attr,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-static struct attribute_group events_attr_group = {
+अटल काष्ठा attribute_group events_attr_group = अणु
 	.name = "events",
 	.attrs = events_attrs,
-};
+पूर्ण;
 
 PMU_FORMAT_ATTR(event, "config:0-63");
-static struct attribute *format_attrs[] = {
-	&format_attr_event.attr,
-	NULL,
-};
-static struct attribute_group format_attr_group = {
+अटल काष्ठा attribute *क्रमmat_attrs[] = अणु
+	&क्रमmat_attr_event.attr,
+	शून्य,
+पूर्ण;
+अटल काष्ठा attribute_group क्रमmat_attr_group = अणु
 	.name = "format",
-	.attrs = format_attrs,
-};
+	.attrs = क्रमmat_attrs,
+पूर्ण;
 
-static const struct attribute_group *attr_groups[] = {
+अटल स्थिर काष्ठा attribute_group *attr_groups[] = अणु
 	&events_attr_group,
-	&format_attr_group,
-	NULL,
-};
+	&क्रमmat_attr_group,
+	शून्य,
+पूर्ण;
 
-static const struct attribute_group *attr_update[] = {
+अटल स्थिर काष्ठा attribute_group *attr_update[] = अणु
 	&group_aperf,
 	&group_mperf,
 	&group_pperf,
@@ -187,99 +188,99 @@ static const struct attribute_group *attr_update[] = {
 	&group_ptsc,
 	&group_irperf,
 	&group_therm,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-static int msr_event_init(struct perf_event *event)
-{
+अटल पूर्णांक msr_event_init(काष्ठा perf_event *event)
+अणु
 	u64 cfg = event->attr.config;
 
-	if (event->attr.type != event->pmu->type)
-		return -ENOENT;
+	अगर (event->attr.type != event->pmu->type)
+		वापस -ENOENT;
 
 	/* unsupported modes and filters */
-	if (event->attr.sample_period) /* no sampling */
-		return -EINVAL;
+	अगर (event->attr.sample_period) /* no sampling */
+		वापस -EINVAL;
 
-	if (cfg >= PERF_MSR_EVENT_MAX)
-		return -EINVAL;
+	अगर (cfg >= PERF_MSR_EVENT_MAX)
+		वापस -EINVAL;
 
-	cfg = array_index_nospec((unsigned long)cfg, PERF_MSR_EVENT_MAX);
+	cfg = array_index_nospec((अचिन्हित दीर्घ)cfg, PERF_MSR_EVENT_MAX);
 
-	if (!(msr_mask & (1 << cfg)))
-		return -EINVAL;
+	अगर (!(msr_mask & (1 << cfg)))
+		वापस -EINVAL;
 
 	event->hw.idx		= -1;
 	event->hw.event_base	= msr[cfg].msr;
 	event->hw.config	= cfg;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static inline u64 msr_read_counter(struct perf_event *event)
-{
+अटल अंतरभूत u64 msr_पढ़ो_counter(काष्ठा perf_event *event)
+अणु
 	u64 now;
 
-	if (event->hw.event_base)
+	अगर (event->hw.event_base)
 		rdmsrl(event->hw.event_base, now);
-	else
+	अन्यथा
 		now = rdtsc_ordered();
 
-	return now;
-}
+	वापस now;
+पूर्ण
 
-static void msr_event_update(struct perf_event *event)
-{
+अटल व्योम msr_event_update(काष्ठा perf_event *event)
+अणु
 	u64 prev, now;
 	s64 delta;
 
-	/* Careful, an NMI might modify the previous event value: */
+	/* Careful, an NMI might modअगरy the previous event value: */
 again:
-	prev = local64_read(&event->hw.prev_count);
-	now = msr_read_counter(event);
+	prev = local64_पढ़ो(&event->hw.prev_count);
+	now = msr_पढ़ो_counter(event);
 
-	if (local64_cmpxchg(&event->hw.prev_count, prev, now) != prev)
-		goto again;
+	अगर (local64_cmpxchg(&event->hw.prev_count, prev, now) != prev)
+		जाओ again;
 
 	delta = now - prev;
-	if (unlikely(event->hw.event_base == MSR_SMI_COUNT)) {
+	अगर (unlikely(event->hw.event_base == MSR_SMI_COUNT)) अणु
 		delta = sign_extend64(delta, 31);
 		local64_add(delta, &event->count);
-	} else if (unlikely(event->hw.event_base == MSR_IA32_THERM_STATUS)) {
-		/* If valid, extract digital readout, otherwise set to -1: */
+	पूर्ण अन्यथा अगर (unlikely(event->hw.event_base == MSR_IA32_THERM_STATUS)) अणु
+		/* If valid, extract digital पढ़ोout, otherwise set to -1: */
 		now = now & (1ULL << 31) ? (now >> 16) & 0x3f :  -1;
 		local64_set(&event->count, now);
-	} else {
+	पूर्ण अन्यथा अणु
 		local64_add(delta, &event->count);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void msr_event_start(struct perf_event *event, int flags)
-{
-	u64 now = msr_read_counter(event);
+अटल व्योम msr_event_start(काष्ठा perf_event *event, पूर्णांक flags)
+अणु
+	u64 now = msr_पढ़ो_counter(event);
 
 	local64_set(&event->hw.prev_count, now);
-}
+पूर्ण
 
-static void msr_event_stop(struct perf_event *event, int flags)
-{
+अटल व्योम msr_event_stop(काष्ठा perf_event *event, पूर्णांक flags)
+अणु
 	msr_event_update(event);
-}
+पूर्ण
 
-static void msr_event_del(struct perf_event *event, int flags)
-{
+अटल व्योम msr_event_del(काष्ठा perf_event *event, पूर्णांक flags)
+अणु
 	msr_event_stop(event, PERF_EF_UPDATE);
-}
+पूर्ण
 
-static int msr_event_add(struct perf_event *event, int flags)
-{
-	if (flags & PERF_EF_START)
+अटल पूर्णांक msr_event_add(काष्ठा perf_event *event, पूर्णांक flags)
+अणु
+	अगर (flags & PERF_EF_START)
 		msr_event_start(event, flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct pmu pmu_msr = {
+अटल काष्ठा pmu pmu_msr = अणु
 	.task_ctx_nr	= perf_sw_context,
 	.attr_groups	= attr_groups,
 	.event_init	= msr_event_init,
@@ -287,22 +288,22 @@ static struct pmu pmu_msr = {
 	.del		= msr_event_del,
 	.start		= msr_event_start,
 	.stop		= msr_event_stop,
-	.read		= msr_event_update,
+	.पढ़ो		= msr_event_update,
 	.capabilities	= PERF_PMU_CAP_NO_INTERRUPT | PERF_PMU_CAP_NO_EXCLUDE,
 	.attr_update	= attr_update,
-};
+पूर्ण;
 
-static int __init msr_init(void)
-{
-	if (!boot_cpu_has(X86_FEATURE_TSC)) {
+अटल पूर्णांक __init msr_init(व्योम)
+अणु
+	अगर (!boot_cpu_has(X86_FEATURE_TSC)) अणु
 		pr_cont("no MSR PMU driver.\n");
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	msr_mask = perf_msr_probe(msr, PERF_MSR_EVENT_MAX, true, NULL);
+	msr_mask = perf_msr_probe(msr, PERF_MSR_EVENT_MAX, true, शून्य);
 
-	perf_pmu_register(&pmu_msr, "msr", -1);
+	perf_pmu_रेजिस्टर(&pmu_msr, "msr", -1);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 device_initcall(msr_init);

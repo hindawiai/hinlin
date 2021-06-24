@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * fs/kernfs/inode.c - kernfs inode implementation
  *
@@ -7,50 +8,50 @@
  * Copyright (c) 2007, 2013 Tejun Heo <tj@kernel.org>
  */
 
-#include <linux/pagemap.h>
-#include <linux/backing-dev.h>
-#include <linux/capability.h>
-#include <linux/errno.h>
-#include <linux/slab.h>
-#include <linux/xattr.h>
-#include <linux/security.h>
+#समावेश <linux/pagemap.h>
+#समावेश <linux/backing-dev.h>
+#समावेश <linux/capability.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/slab.h>
+#समावेश <linux/xattr.h>
+#समावेश <linux/security.h>
 
-#include "kernfs-internal.h"
+#समावेश "kernfs-internal.h"
 
-static const struct address_space_operations kernfs_aops = {
-	.readpage	= simple_readpage,
-	.write_begin	= simple_write_begin,
-	.write_end	= simple_write_end,
-};
+अटल स्थिर काष्ठा address_space_operations kernfs_aops = अणु
+	.पढ़ोpage	= simple_पढ़ोpage,
+	.ग_लिखो_begin	= simple_ग_लिखो_begin,
+	.ग_लिखो_end	= simple_ग_लिखो_end,
+पूर्ण;
 
-static const struct inode_operations kernfs_iops = {
+अटल स्थिर काष्ठा inode_operations kernfs_iops = अणु
 	.permission	= kernfs_iop_permission,
 	.setattr	= kernfs_iop_setattr,
 	.getattr	= kernfs_iop_getattr,
 	.listxattr	= kernfs_iop_listxattr,
-};
+पूर्ण;
 
-static struct kernfs_iattrs *__kernfs_iattrs(struct kernfs_node *kn, int alloc)
-{
-	static DEFINE_MUTEX(iattr_mutex);
-	struct kernfs_iattrs *ret;
+अटल काष्ठा kernfs_iattrs *__kernfs_iattrs(काष्ठा kernfs_node *kn, पूर्णांक alloc)
+अणु
+	अटल DEFINE_MUTEX(iattr_mutex);
+	काष्ठा kernfs_iattrs *ret;
 
 	mutex_lock(&iattr_mutex);
 
-	if (kn->iattr || !alloc)
-		goto out_unlock;
+	अगर (kn->iattr || !alloc)
+		जाओ out_unlock;
 
 	kn->iattr = kmem_cache_zalloc(kernfs_iattrs_cache, GFP_KERNEL);
-	if (!kn->iattr)
-		goto out_unlock;
+	अगर (!kn->iattr)
+		जाओ out_unlock;
 
-	/* assign default attributes */
+	/* assign शेष attributes */
 	kn->iattr->ia_uid = GLOBAL_ROOT_UID;
 	kn->iattr->ia_gid = GLOBAL_ROOT_GID;
 
-	ktime_get_real_ts64(&kn->iattr->ia_atime);
-	kn->iattr->ia_mtime = kn->iattr->ia_atime;
-	kn->iattr->ia_ctime = kn->iattr->ia_atime;
+	kसमय_get_real_ts64(&kn->iattr->ia_aसमय);
+	kn->iattr->ia_mसमय = kn->iattr->ia_aसमय;
+	kn->iattr->ia_स_समय = kn->iattr->ia_aसमय;
 
 	simple_xattrs_init(&kn->iattr->xattrs);
 	atomic_set(&kn->iattr->nr_user_xattrs, 0);
@@ -58,383 +59,383 @@ static struct kernfs_iattrs *__kernfs_iattrs(struct kernfs_node *kn, int alloc)
 out_unlock:
 	ret = kn->iattr;
 	mutex_unlock(&iattr_mutex);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static struct kernfs_iattrs *kernfs_iattrs(struct kernfs_node *kn)
-{
-	return __kernfs_iattrs(kn, 1);
-}
+अटल काष्ठा kernfs_iattrs *kernfs_iattrs(काष्ठा kernfs_node *kn)
+अणु
+	वापस __kernfs_iattrs(kn, 1);
+पूर्ण
 
-static struct kernfs_iattrs *kernfs_iattrs_noalloc(struct kernfs_node *kn)
-{
-	return __kernfs_iattrs(kn, 0);
-}
+अटल काष्ठा kernfs_iattrs *kernfs_iattrs_noalloc(काष्ठा kernfs_node *kn)
+अणु
+	वापस __kernfs_iattrs(kn, 0);
+पूर्ण
 
-int __kernfs_setattr(struct kernfs_node *kn, const struct iattr *iattr)
-{
-	struct kernfs_iattrs *attrs;
-	unsigned int ia_valid = iattr->ia_valid;
+पूर्णांक __kernfs_setattr(काष्ठा kernfs_node *kn, स्थिर काष्ठा iattr *iattr)
+अणु
+	काष्ठा kernfs_iattrs *attrs;
+	अचिन्हित पूर्णांक ia_valid = iattr->ia_valid;
 
 	attrs = kernfs_iattrs(kn);
-	if (!attrs)
-		return -ENOMEM;
+	अगर (!attrs)
+		वापस -ENOMEM;
 
-	if (ia_valid & ATTR_UID)
+	अगर (ia_valid & ATTR_UID)
 		attrs->ia_uid = iattr->ia_uid;
-	if (ia_valid & ATTR_GID)
+	अगर (ia_valid & ATTR_GID)
 		attrs->ia_gid = iattr->ia_gid;
-	if (ia_valid & ATTR_ATIME)
-		attrs->ia_atime = iattr->ia_atime;
-	if (ia_valid & ATTR_MTIME)
-		attrs->ia_mtime = iattr->ia_mtime;
-	if (ia_valid & ATTR_CTIME)
-		attrs->ia_ctime = iattr->ia_ctime;
-	if (ia_valid & ATTR_MODE)
+	अगर (ia_valid & ATTR_ATIME)
+		attrs->ia_aसमय = iattr->ia_aसमय;
+	अगर (ia_valid & ATTR_MTIME)
+		attrs->ia_mसमय = iattr->ia_mसमय;
+	अगर (ia_valid & ATTR_CTIME)
+		attrs->ia_स_समय = iattr->ia_स_समय;
+	अगर (ia_valid & ATTR_MODE)
 		kn->mode = iattr->ia_mode;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * kernfs_setattr - set iattr on a node
  * @kn: target node
  * @iattr: iattr to set
  *
- * Returns 0 on success, -errno on failure.
+ * Returns 0 on success, -त्रुटि_सं on failure.
  */
-int kernfs_setattr(struct kernfs_node *kn, const struct iattr *iattr)
-{
-	int ret;
+पूर्णांक kernfs_setattr(काष्ठा kernfs_node *kn, स्थिर काष्ठा iattr *iattr)
+अणु
+	पूर्णांक ret;
 
 	mutex_lock(&kernfs_mutex);
 	ret = __kernfs_setattr(kn, iattr);
 	mutex_unlock(&kernfs_mutex);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int kernfs_iop_setattr(struct user_namespace *mnt_userns, struct dentry *dentry,
-		       struct iattr *iattr)
-{
-	struct inode *inode = d_inode(dentry);
-	struct kernfs_node *kn = inode->i_private;
-	int error;
+पूर्णांक kernfs_iop_setattr(काष्ठा user_namespace *mnt_userns, काष्ठा dentry *dentry,
+		       काष्ठा iattr *iattr)
+अणु
+	काष्ठा inode *inode = d_inode(dentry);
+	काष्ठा kernfs_node *kn = inode->i_निजी;
+	पूर्णांक error;
 
-	if (!kn)
-		return -EINVAL;
+	अगर (!kn)
+		वापस -EINVAL;
 
 	mutex_lock(&kernfs_mutex);
 	error = setattr_prepare(&init_user_ns, dentry, iattr);
-	if (error)
-		goto out;
+	अगर (error)
+		जाओ out;
 
 	error = __kernfs_setattr(kn, iattr);
-	if (error)
-		goto out;
+	अगर (error)
+		जाओ out;
 
 	/* this ignores size changes */
 	setattr_copy(&init_user_ns, inode, iattr);
 
 out:
 	mutex_unlock(&kernfs_mutex);
-	return error;
-}
+	वापस error;
+पूर्ण
 
-ssize_t kernfs_iop_listxattr(struct dentry *dentry, char *buf, size_t size)
-{
-	struct kernfs_node *kn = kernfs_dentry_node(dentry);
-	struct kernfs_iattrs *attrs;
+sमाप_प्रकार kernfs_iop_listxattr(काष्ठा dentry *dentry, अक्षर *buf, माप_प्रकार size)
+अणु
+	काष्ठा kernfs_node *kn = kernfs_dentry_node(dentry);
+	काष्ठा kernfs_iattrs *attrs;
 
 	attrs = kernfs_iattrs(kn);
-	if (!attrs)
-		return -ENOMEM;
+	अगर (!attrs)
+		वापस -ENOMEM;
 
-	return simple_xattr_list(d_inode(dentry), &attrs->xattrs, buf, size);
-}
+	वापस simple_xattr_list(d_inode(dentry), &attrs->xattrs, buf, size);
+पूर्ण
 
-static inline void set_default_inode_attr(struct inode *inode, umode_t mode)
-{
+अटल अंतरभूत व्योम set_शेष_inode_attr(काष्ठा inode *inode, umode_t mode)
+अणु
 	inode->i_mode = mode;
-	inode->i_atime = inode->i_mtime =
-		inode->i_ctime = current_time(inode);
-}
+	inode->i_aसमय = inode->i_mसमय =
+		inode->i_स_समय = current_समय(inode);
+पूर्ण
 
-static inline void set_inode_attr(struct inode *inode,
-				  struct kernfs_iattrs *attrs)
-{
+अटल अंतरभूत व्योम set_inode_attr(काष्ठा inode *inode,
+				  काष्ठा kernfs_iattrs *attrs)
+अणु
 	inode->i_uid = attrs->ia_uid;
 	inode->i_gid = attrs->ia_gid;
-	inode->i_atime = attrs->ia_atime;
-	inode->i_mtime = attrs->ia_mtime;
-	inode->i_ctime = attrs->ia_ctime;
-}
+	inode->i_aसमय = attrs->ia_aसमय;
+	inode->i_mसमय = attrs->ia_mसमय;
+	inode->i_स_समय = attrs->ia_स_समय;
+पूर्ण
 
-static void kernfs_refresh_inode(struct kernfs_node *kn, struct inode *inode)
-{
-	struct kernfs_iattrs *attrs = kn->iattr;
+अटल व्योम kernfs_refresh_inode(काष्ठा kernfs_node *kn, काष्ठा inode *inode)
+अणु
+	काष्ठा kernfs_iattrs *attrs = kn->iattr;
 
 	inode->i_mode = kn->mode;
-	if (attrs)
+	अगर (attrs)
 		/*
-		 * kernfs_node has non-default attributes get them from
+		 * kernfs_node has non-शेष attributes get them from
 		 * persistent copy in kernfs_node.
 		 */
 		set_inode_attr(inode, attrs);
 
-	if (kernfs_type(kn) == KERNFS_DIR)
+	अगर (kernfs_type(kn) == KERNFS_सूची)
 		set_nlink(inode, kn->dir.subdirs + 2);
-}
+पूर्ण
 
-int kernfs_iop_getattr(struct user_namespace *mnt_userns,
-		       const struct path *path, struct kstat *stat,
-		       u32 request_mask, unsigned int query_flags)
-{
-	struct inode *inode = d_inode(path->dentry);
-	struct kernfs_node *kn = inode->i_private;
+पूर्णांक kernfs_iop_getattr(काष्ठा user_namespace *mnt_userns,
+		       स्थिर काष्ठा path *path, काष्ठा kstat *stat,
+		       u32 request_mask, अचिन्हित पूर्णांक query_flags)
+अणु
+	काष्ठा inode *inode = d_inode(path->dentry);
+	काष्ठा kernfs_node *kn = inode->i_निजी;
 
 	mutex_lock(&kernfs_mutex);
 	kernfs_refresh_inode(kn, inode);
 	mutex_unlock(&kernfs_mutex);
 
 	generic_fillattr(&init_user_ns, inode, stat);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void kernfs_init_inode(struct kernfs_node *kn, struct inode *inode)
-{
+अटल व्योम kernfs_init_inode(काष्ठा kernfs_node *kn, काष्ठा inode *inode)
+अणु
 	kernfs_get(kn);
-	inode->i_private = kn;
+	inode->i_निजी = kn;
 	inode->i_mapping->a_ops = &kernfs_aops;
 	inode->i_op = &kernfs_iops;
 	inode->i_generation = kernfs_gen(kn);
 
-	set_default_inode_attr(inode, kn->mode);
+	set_शेष_inode_attr(inode, kn->mode);
 	kernfs_refresh_inode(kn, inode);
 
 	/* initialize inode according to type */
-	switch (kernfs_type(kn)) {
-	case KERNFS_DIR:
+	चयन (kernfs_type(kn)) अणु
+	हाल KERNFS_सूची:
 		inode->i_op = &kernfs_dir_iops;
 		inode->i_fop = &kernfs_dir_fops;
-		if (kn->flags & KERNFS_EMPTY_DIR)
+		अगर (kn->flags & KERNFS_EMPTY_सूची)
 			make_empty_dir_inode(inode);
-		break;
-	case KERNFS_FILE:
+		अवरोध;
+	हाल KERNFS_खाता:
 		inode->i_size = kn->attr.size;
 		inode->i_fop = &kernfs_file_fops;
-		break;
-	case KERNFS_LINK:
+		अवरोध;
+	हाल KERNFS_LINK:
 		inode->i_op = &kernfs_symlink_iops;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		BUG();
-	}
+	पूर्ण
 
 	unlock_new_inode(inode);
-}
+पूर्ण
 
 /**
- *	kernfs_get_inode - get inode for kernfs_node
+ *	kernfs_get_inode - get inode क्रम kernfs_node
  *	@sb: super block
- *	@kn: kernfs_node to allocate inode for
+ *	@kn: kernfs_node to allocate inode क्रम
  *
- *	Get inode for @kn.  If such inode doesn't exist, a new inode is
- *	allocated and basics are initialized.  New inode is returned
+ *	Get inode क्रम @kn.  If such inode करोesn't exist, a new inode is
+ *	allocated and basics are initialized.  New inode is वापसed
  *	locked.
  *
  *	LOCKING:
- *	Kernel thread context (may sleep).
+ *	Kernel thपढ़ो context (may sleep).
  *
  *	RETURNS:
- *	Pointer to allocated inode on success, NULL on failure.
+ *	Poपूर्णांकer to allocated inode on success, शून्य on failure.
  */
-struct inode *kernfs_get_inode(struct super_block *sb, struct kernfs_node *kn)
-{
-	struct inode *inode;
+काष्ठा inode *kernfs_get_inode(काष्ठा super_block *sb, काष्ठा kernfs_node *kn)
+अणु
+	काष्ठा inode *inode;
 
 	inode = iget_locked(sb, kernfs_ino(kn));
-	if (inode && (inode->i_state & I_NEW))
+	अगर (inode && (inode->i_state & I_NEW))
 		kernfs_init_inode(kn, inode);
 
-	return inode;
-}
+	वापस inode;
+पूर्ण
 
 /*
- * The kernfs_node serves as both an inode and a directory entry for
- * kernfs.  To prevent the kernfs inode numbers from being freed
+ * The kernfs_node serves as both an inode and a directory entry क्रम
+ * kernfs.  To prevent the kernfs inode numbers from being मुक्तd
  * prematurely we take a reference to kernfs_node from the kernfs inode.  A
  * super_operations.evict_inode() implementation is needed to drop that
- * reference upon inode destruction.
+ * reference upon inode deकाष्ठाion.
  */
-void kernfs_evict_inode(struct inode *inode)
-{
-	struct kernfs_node *kn = inode->i_private;
+व्योम kernfs_evict_inode(काष्ठा inode *inode)
+अणु
+	काष्ठा kernfs_node *kn = inode->i_निजी;
 
 	truncate_inode_pages_final(&inode->i_data);
 	clear_inode(inode);
 	kernfs_put(kn);
-}
+पूर्ण
 
-int kernfs_iop_permission(struct user_namespace *mnt_userns,
-			  struct inode *inode, int mask)
-{
-	struct kernfs_node *kn;
+पूर्णांक kernfs_iop_permission(काष्ठा user_namespace *mnt_userns,
+			  काष्ठा inode *inode, पूर्णांक mask)
+अणु
+	काष्ठा kernfs_node *kn;
 
-	if (mask & MAY_NOT_BLOCK)
-		return -ECHILD;
+	अगर (mask & MAY_NOT_BLOCK)
+		वापस -ECHILD;
 
-	kn = inode->i_private;
+	kn = inode->i_निजी;
 
 	mutex_lock(&kernfs_mutex);
 	kernfs_refresh_inode(kn, inode);
 	mutex_unlock(&kernfs_mutex);
 
-	return generic_permission(&init_user_ns, inode, mask);
-}
+	वापस generic_permission(&init_user_ns, inode, mask);
+पूर्ण
 
-int kernfs_xattr_get(struct kernfs_node *kn, const char *name,
-		     void *value, size_t size)
-{
-	struct kernfs_iattrs *attrs = kernfs_iattrs_noalloc(kn);
-	if (!attrs)
-		return -ENODATA;
+पूर्णांक kernfs_xattr_get(काष्ठा kernfs_node *kn, स्थिर अक्षर *name,
+		     व्योम *value, माप_प्रकार size)
+अणु
+	काष्ठा kernfs_iattrs *attrs = kernfs_iattrs_noalloc(kn);
+	अगर (!attrs)
+		वापस -ENODATA;
 
-	return simple_xattr_get(&attrs->xattrs, name, value, size);
-}
+	वापस simple_xattr_get(&attrs->xattrs, name, value, size);
+पूर्ण
 
-int kernfs_xattr_set(struct kernfs_node *kn, const char *name,
-		     const void *value, size_t size, int flags)
-{
-	struct kernfs_iattrs *attrs = kernfs_iattrs(kn);
-	if (!attrs)
-		return -ENOMEM;
+पूर्णांक kernfs_xattr_set(काष्ठा kernfs_node *kn, स्थिर अक्षर *name,
+		     स्थिर व्योम *value, माप_प्रकार size, पूर्णांक flags)
+अणु
+	काष्ठा kernfs_iattrs *attrs = kernfs_iattrs(kn);
+	अगर (!attrs)
+		वापस -ENOMEM;
 
-	return simple_xattr_set(&attrs->xattrs, name, value, size, flags, NULL);
-}
+	वापस simple_xattr_set(&attrs->xattrs, name, value, size, flags, शून्य);
+पूर्ण
 
-static int kernfs_vfs_xattr_get(const struct xattr_handler *handler,
-				struct dentry *unused, struct inode *inode,
-				const char *suffix, void *value, size_t size)
-{
-	const char *name = xattr_full_name(handler, suffix);
-	struct kernfs_node *kn = inode->i_private;
+अटल पूर्णांक kernfs_vfs_xattr_get(स्थिर काष्ठा xattr_handler *handler,
+				काष्ठा dentry *unused, काष्ठा inode *inode,
+				स्थिर अक्षर *suffix, व्योम *value, माप_प्रकार size)
+अणु
+	स्थिर अक्षर *name = xattr_full_name(handler, suffix);
+	काष्ठा kernfs_node *kn = inode->i_निजी;
 
-	return kernfs_xattr_get(kn, name, value, size);
-}
+	वापस kernfs_xattr_get(kn, name, value, size);
+पूर्ण
 
-static int kernfs_vfs_xattr_set(const struct xattr_handler *handler,
-				struct user_namespace *mnt_userns,
-				struct dentry *unused, struct inode *inode,
-				const char *suffix, const void *value,
-				size_t size, int flags)
-{
-	const char *name = xattr_full_name(handler, suffix);
-	struct kernfs_node *kn = inode->i_private;
+अटल पूर्णांक kernfs_vfs_xattr_set(स्थिर काष्ठा xattr_handler *handler,
+				काष्ठा user_namespace *mnt_userns,
+				काष्ठा dentry *unused, काष्ठा inode *inode,
+				स्थिर अक्षर *suffix, स्थिर व्योम *value,
+				माप_प्रकार size, पूर्णांक flags)
+अणु
+	स्थिर अक्षर *name = xattr_full_name(handler, suffix);
+	काष्ठा kernfs_node *kn = inode->i_निजी;
 
-	return kernfs_xattr_set(kn, name, value, size, flags);
-}
+	वापस kernfs_xattr_set(kn, name, value, size, flags);
+पूर्ण
 
-static int kernfs_vfs_user_xattr_add(struct kernfs_node *kn,
-				     const char *full_name,
-				     struct simple_xattrs *xattrs,
-				     const void *value, size_t size, int flags)
-{
+अटल पूर्णांक kernfs_vfs_user_xattr_add(काष्ठा kernfs_node *kn,
+				     स्थिर अक्षर *full_name,
+				     काष्ठा simple_xattrs *xattrs,
+				     स्थिर व्योम *value, माप_प्रकार size, पूर्णांक flags)
+अणु
 	atomic_t *sz = &kn->iattr->user_xattr_size;
 	atomic_t *nr = &kn->iattr->nr_user_xattrs;
-	ssize_t removed_size;
-	int ret;
+	sमाप_प्रकार हटाओd_size;
+	पूर्णांक ret;
 
-	if (atomic_inc_return(nr) > KERNFS_MAX_USER_XATTRS) {
+	अगर (atomic_inc_वापस(nr) > KERNFS_MAX_USER_XATTRS) अणु
 		ret = -ENOSPC;
-		goto dec_count_out;
-	}
+		जाओ dec_count_out;
+	पूर्ण
 
-	if (atomic_add_return(size, sz) > KERNFS_USER_XATTR_SIZE_LIMIT) {
+	अगर (atomic_add_वापस(size, sz) > KERNFS_USER_XATTR_SIZE_LIMIT) अणु
 		ret = -ENOSPC;
-		goto dec_size_out;
-	}
+		जाओ dec_size_out;
+	पूर्ण
 
 	ret = simple_xattr_set(xattrs, full_name, value, size, flags,
-			       &removed_size);
+			       &हटाओd_size);
 
-	if (!ret && removed_size >= 0)
-		size = removed_size;
-	else if (!ret)
-		return 0;
+	अगर (!ret && हटाओd_size >= 0)
+		size = हटाओd_size;
+	अन्यथा अगर (!ret)
+		वापस 0;
 dec_size_out:
 	atomic_sub(size, sz);
 dec_count_out:
 	atomic_dec(nr);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int kernfs_vfs_user_xattr_rm(struct kernfs_node *kn,
-				    const char *full_name,
-				    struct simple_xattrs *xattrs,
-				    const void *value, size_t size, int flags)
-{
+अटल पूर्णांक kernfs_vfs_user_xattr_rm(काष्ठा kernfs_node *kn,
+				    स्थिर अक्षर *full_name,
+				    काष्ठा simple_xattrs *xattrs,
+				    स्थिर व्योम *value, माप_प्रकार size, पूर्णांक flags)
+अणु
 	atomic_t *sz = &kn->iattr->user_xattr_size;
 	atomic_t *nr = &kn->iattr->nr_user_xattrs;
-	ssize_t removed_size;
-	int ret;
+	sमाप_प्रकार हटाओd_size;
+	पूर्णांक ret;
 
 	ret = simple_xattr_set(xattrs, full_name, value, size, flags,
-			       &removed_size);
+			       &हटाओd_size);
 
-	if (removed_size >= 0) {
-		atomic_sub(removed_size, sz);
+	अगर (हटाओd_size >= 0) अणु
+		atomic_sub(हटाओd_size, sz);
 		atomic_dec(nr);
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int kernfs_vfs_user_xattr_set(const struct xattr_handler *handler,
-				     struct user_namespace *mnt_userns,
-				     struct dentry *unused, struct inode *inode,
-				     const char *suffix, const void *value,
-				     size_t size, int flags)
-{
-	const char *full_name = xattr_full_name(handler, suffix);
-	struct kernfs_node *kn = inode->i_private;
-	struct kernfs_iattrs *attrs;
+अटल पूर्णांक kernfs_vfs_user_xattr_set(स्थिर काष्ठा xattr_handler *handler,
+				     काष्ठा user_namespace *mnt_userns,
+				     काष्ठा dentry *unused, काष्ठा inode *inode,
+				     स्थिर अक्षर *suffix, स्थिर व्योम *value,
+				     माप_प्रकार size, पूर्णांक flags)
+अणु
+	स्थिर अक्षर *full_name = xattr_full_name(handler, suffix);
+	काष्ठा kernfs_node *kn = inode->i_निजी;
+	काष्ठा kernfs_iattrs *attrs;
 
-	if (!(kernfs_root(kn)->flags & KERNFS_ROOT_SUPPORT_USER_XATTR))
-		return -EOPNOTSUPP;
+	अगर (!(kernfs_root(kn)->flags & KERNFS_ROOT_SUPPORT_USER_XATTR))
+		वापस -EOPNOTSUPP;
 
 	attrs = kernfs_iattrs(kn);
-	if (!attrs)
-		return -ENOMEM;
+	अगर (!attrs)
+		वापस -ENOMEM;
 
-	if (value)
-		return kernfs_vfs_user_xattr_add(kn, full_name, &attrs->xattrs,
+	अगर (value)
+		वापस kernfs_vfs_user_xattr_add(kn, full_name, &attrs->xattrs,
 						 value, size, flags);
-	else
-		return kernfs_vfs_user_xattr_rm(kn, full_name, &attrs->xattrs,
+	अन्यथा
+		वापस kernfs_vfs_user_xattr_rm(kn, full_name, &attrs->xattrs,
 						value, size, flags);
 
-}
+पूर्ण
 
-static const struct xattr_handler kernfs_trusted_xattr_handler = {
+अटल स्थिर काष्ठा xattr_handler kernfs_trusted_xattr_handler = अणु
 	.prefix = XATTR_TRUSTED_PREFIX,
 	.get = kernfs_vfs_xattr_get,
 	.set = kernfs_vfs_xattr_set,
-};
+पूर्ण;
 
-static const struct xattr_handler kernfs_security_xattr_handler = {
+अटल स्थिर काष्ठा xattr_handler kernfs_security_xattr_handler = अणु
 	.prefix = XATTR_SECURITY_PREFIX,
 	.get = kernfs_vfs_xattr_get,
 	.set = kernfs_vfs_xattr_set,
-};
+पूर्ण;
 
-static const struct xattr_handler kernfs_user_xattr_handler = {
+अटल स्थिर काष्ठा xattr_handler kernfs_user_xattr_handler = अणु
 	.prefix = XATTR_USER_PREFIX,
 	.get = kernfs_vfs_xattr_get,
 	.set = kernfs_vfs_user_xattr_set,
-};
+पूर्ण;
 
-const struct xattr_handler *kernfs_xattr_handlers[] = {
+स्थिर काष्ठा xattr_handler *kernfs_xattr_handlers[] = अणु
 	&kernfs_trusted_xattr_handler,
 	&kernfs_security_xattr_handler,
 	&kernfs_user_xattr_handler,
-	NULL
-};
+	शून्य
+पूर्ण;

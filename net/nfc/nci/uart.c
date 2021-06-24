@@ -1,14 +1,15 @@
+<शैली गुरु>
 /*
  * Copyright (C) 2015, Marvell International Ltd.
  *
  * This software file (the "File") is distributed by Marvell International
  * Ltd. under the terms of the GNU General Public License Version 2, June 1991
- * (the "License").  You may use, redistribute and/or modify this File in
+ * (the "License").  You may use, redistribute and/or modअगरy this File in
  * accordance with the terms and conditions of the License, a copy of which
  * is available on the worldwide web at
  * http://www.gnu.org/licenses/old-licenses/gpl-2.0.txt.
  *
- * THE FILE IS DISTRIBUTED AS-IS, WITHOUT WARRANTY OF ANY KIND, AND THE
+ * THE खाता IS DISTRIBUTED AS-IS, WITHOUT WARRANTY OF ANY KIND, AND THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE
  * ARE EXPRESSLY DISCLAIMED.  The License provides additional details about
  * this warranty disclaimer.
@@ -18,257 +19,257 @@
  *
  *  Copyright (C) 2000-2001  Qualcomm Incorporated
  *  Copyright (C) 2002-2003  Maxim Krasnyansky <maxk@qualcomm.com>
- *  Copyright (C) 2004-2005  Marcel Holtmann <marcel@holtmann.org>
+ *  Copyright (C) 2004-2005  Marcel Holपंचांगann <marcel@holपंचांगann.org>
  */
 
-#include <linux/module.h>
+#समावेश <linux/module.h>
 
-#include <linux/kernel.h>
-#include <linux/init.h>
-#include <linux/types.h>
-#include <linux/fcntl.h>
-#include <linux/interrupt.h>
-#include <linux/ptrace.h>
-#include <linux/poll.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/init.h>
+#समावेश <linux/types.h>
+#समावेश <linux/fcntl.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/ptrace.h>
+#समावेश <linux/poll.h>
 
-#include <linux/slab.h>
-#include <linux/tty.h>
-#include <linux/errno.h>
-#include <linux/string.h>
-#include <linux/signal.h>
-#include <linux/ioctl.h>
-#include <linux/skbuff.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/tty.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/माला.स>
+#समावेश <linux/संकेत.स>
+#समावेश <linux/ioctl.h>
+#समावेश <linux/skbuff.h>
 
-#include <net/nfc/nci.h>
-#include <net/nfc/nci_core.h>
+#समावेश <net/nfc/nci.h>
+#समावेश <net/nfc/nci_core.h>
 
 /* TX states  */
-#define NCI_UART_SENDING	1
-#define NCI_UART_TX_WAKEUP	2
+#घोषणा NCI_UART_SENDING	1
+#घोषणा NCI_UART_TX_WAKEUP	2
 
-static struct nci_uart *nci_uart_drivers[NCI_UART_DRIVER_MAX];
+अटल काष्ठा nci_uart *nci_uart_drivers[NCI_UART_DRIVER_MAX];
 
-static inline struct sk_buff *nci_uart_dequeue(struct nci_uart *nu)
-{
-	struct sk_buff *skb = nu->tx_skb;
+अटल अंतरभूत काष्ठा sk_buff *nci_uart_dequeue(काष्ठा nci_uart *nu)
+अणु
+	काष्ठा sk_buff *skb = nu->tx_skb;
 
-	if (!skb)
+	अगर (!skb)
 		skb = skb_dequeue(&nu->tx_q);
-	else
-		nu->tx_skb = NULL;
+	अन्यथा
+		nu->tx_skb = शून्य;
 
-	return skb;
-}
+	वापस skb;
+पूर्ण
 
-static inline int nci_uart_queue_empty(struct nci_uart *nu)
-{
-	if (nu->tx_skb)
-		return 0;
+अटल अंतरभूत पूर्णांक nci_uart_queue_empty(काष्ठा nci_uart *nu)
+अणु
+	अगर (nu->tx_skb)
+		वापस 0;
 
-	return skb_queue_empty(&nu->tx_q);
-}
+	वापस skb_queue_empty(&nu->tx_q);
+पूर्ण
 
-static int nci_uart_tx_wakeup(struct nci_uart *nu)
-{
-	if (test_and_set_bit(NCI_UART_SENDING, &nu->tx_state)) {
+अटल पूर्णांक nci_uart_tx_wakeup(काष्ठा nci_uart *nu)
+अणु
+	अगर (test_and_set_bit(NCI_UART_SENDING, &nu->tx_state)) अणु
 		set_bit(NCI_UART_TX_WAKEUP, &nu->tx_state);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	schedule_work(&nu->write_work);
+	schedule_work(&nu->ग_लिखो_work);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void nci_uart_write_work(struct work_struct *work)
-{
-	struct nci_uart *nu = container_of(work, struct nci_uart, write_work);
-	struct tty_struct *tty = nu->tty;
-	struct sk_buff *skb;
+अटल व्योम nci_uart_ग_लिखो_work(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा nci_uart *nu = container_of(work, काष्ठा nci_uart, ग_लिखो_work);
+	काष्ठा tty_काष्ठा *tty = nu->tty;
+	काष्ठा sk_buff *skb;
 
 restart:
 	clear_bit(NCI_UART_TX_WAKEUP, &nu->tx_state);
 
-	if (nu->ops.tx_start)
+	अगर (nu->ops.tx_start)
 		nu->ops.tx_start(nu);
 
-	while ((skb = nci_uart_dequeue(nu))) {
-		int len;
+	जबतक ((skb = nci_uart_dequeue(nu))) अणु
+		पूर्णांक len;
 
 		set_bit(TTY_DO_WRITE_WAKEUP, &tty->flags);
-		len = tty->ops->write(tty, skb->data, skb->len);
+		len = tty->ops->ग_लिखो(tty, skb->data, skb->len);
 		skb_pull(skb, len);
-		if (skb->len) {
+		अगर (skb->len) अणु
 			nu->tx_skb = skb;
-			break;
-		}
-		kfree_skb(skb);
-	}
+			अवरोध;
+		पूर्ण
+		kमुक्त_skb(skb);
+	पूर्ण
 
-	if (test_bit(NCI_UART_TX_WAKEUP, &nu->tx_state))
-		goto restart;
+	अगर (test_bit(NCI_UART_TX_WAKEUP, &nu->tx_state))
+		जाओ restart;
 
-	if (nu->ops.tx_done && nci_uart_queue_empty(nu))
-		nu->ops.tx_done(nu);
+	अगर (nu->ops.tx_करोne && nci_uart_queue_empty(nu))
+		nu->ops.tx_करोne(nu);
 
 	clear_bit(NCI_UART_SENDING, &nu->tx_state);
-}
+पूर्ण
 
-static int nci_uart_set_driver(struct tty_struct *tty, unsigned int driver)
-{
-	struct nci_uart *nu = NULL;
-	int ret;
+अटल पूर्णांक nci_uart_set_driver(काष्ठा tty_काष्ठा *tty, अचिन्हित पूर्णांक driver)
+अणु
+	काष्ठा nci_uart *nu = शून्य;
+	पूर्णांक ret;
 
-	if (driver >= NCI_UART_DRIVER_MAX)
-		return -EINVAL;
+	अगर (driver >= NCI_UART_DRIVER_MAX)
+		वापस -EINVAL;
 
-	if (!nci_uart_drivers[driver])
-		return -ENOENT;
+	अगर (!nci_uart_drivers[driver])
+		वापस -ENOENT;
 
-	nu = kzalloc(sizeof(*nu), GFP_KERNEL);
-	if (!nu)
-		return -ENOMEM;
+	nu = kzalloc(माप(*nu), GFP_KERNEL);
+	अगर (!nu)
+		वापस -ENOMEM;
 
-	memcpy(nu, nci_uart_drivers[driver], sizeof(struct nci_uart));
+	स_नकल(nu, nci_uart_drivers[driver], माप(काष्ठा nci_uart));
 	nu->tty = tty;
 	tty->disc_data = nu;
 	skb_queue_head_init(&nu->tx_q);
-	INIT_WORK(&nu->write_work, nci_uart_write_work);
+	INIT_WORK(&nu->ग_लिखो_work, nci_uart_ग_लिखो_work);
 	spin_lock_init(&nu->rx_lock);
 
-	ret = nu->ops.open(nu);
-	if (ret) {
-		tty->disc_data = NULL;
-		kfree(nu);
-	} else if (!try_module_get(nu->owner)) {
-		nu->ops.close(nu);
-		tty->disc_data = NULL;
-		kfree(nu);
-		return -ENOENT;
-	}
-	return ret;
-}
+	ret = nu->ops.खोलो(nu);
+	अगर (ret) अणु
+		tty->disc_data = शून्य;
+		kमुक्त(nu);
+	पूर्ण अन्यथा अगर (!try_module_get(nu->owner)) अणु
+		nu->ops.बंद(nu);
+		tty->disc_data = शून्य;
+		kमुक्त(nu);
+		वापस -ENOENT;
+	पूर्ण
+	वापस ret;
+पूर्ण
 
 /* ------ LDISC part ------ */
 
-/* nci_uart_tty_open
+/* nci_uart_tty_खोलो
  *
  *     Called when line discipline changed to NCI_UART.
  *
  * Arguments:
- *     tty    pointer to tty info structure
+ *     tty    poपूर्णांकer to tty info काष्ठाure
  * Return Value:
- *     0 if success, otherwise error code
+ *     0 अगर success, otherwise error code
  */
-static int nci_uart_tty_open(struct tty_struct *tty)
-{
-	/* Error if the tty has no write op instead of leaving an exploitable
+अटल पूर्णांक nci_uart_tty_खोलो(काष्ठा tty_काष्ठा *tty)
+अणु
+	/* Error अगर the tty has no ग_लिखो op instead of leaving an exploitable
 	 * hole
 	 */
-	if (!tty->ops->write)
-		return -EOPNOTSUPP;
+	अगर (!tty->ops->ग_लिखो)
+		वापस -EOPNOTSUPP;
 
-	tty->disc_data = NULL;
+	tty->disc_data = शून्य;
 	tty->receive_room = 65536;
 
-	/* Flush any pending characters in the driver */
+	/* Flush any pending अक्षरacters in the driver */
 	tty_driver_flush_buffer(tty);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* nci_uart_tty_close()
+/* nci_uart_tty_बंद()
  *
  *    Called when the line discipline is changed to something
- *    else, the tty is closed, or the tty detects a hangup.
+ *    अन्यथा, the tty is बंदd, or the tty detects a hangup.
  */
-static void nci_uart_tty_close(struct tty_struct *tty)
-{
-	struct nci_uart *nu = (void *)tty->disc_data;
+अटल व्योम nci_uart_tty_बंद(काष्ठा tty_काष्ठा *tty)
+अणु
+	काष्ठा nci_uart *nu = (व्योम *)tty->disc_data;
 
 	/* Detach from the tty */
-	tty->disc_data = NULL;
+	tty->disc_data = शून्य;
 
-	if (!nu)
-		return;
+	अगर (!nu)
+		वापस;
 
-	kfree_skb(nu->tx_skb);
-	kfree_skb(nu->rx_skb);
+	kमुक्त_skb(nu->tx_skb);
+	kमुक्त_skb(nu->rx_skb);
 
 	skb_queue_purge(&nu->tx_q);
 
-	nu->ops.close(nu);
-	nu->tty = NULL;
+	nu->ops.बंद(nu);
+	nu->tty = शून्य;
 	module_put(nu->owner);
 
-	cancel_work_sync(&nu->write_work);
+	cancel_work_sync(&nu->ग_लिखो_work);
 
-	kfree(nu);
-}
+	kमुक्त(nu);
+पूर्ण
 
 /* nci_uart_tty_wakeup()
  *
- *    Callback for transmit wakeup. Called when low level
+ *    Callback क्रम transmit wakeup. Called when low level
  *    device driver can accept more send data.
  *
- * Arguments:        tty    pointer to associated tty instance data
+ * Arguments:        tty    poपूर्णांकer to associated tty instance data
  * Return Value:    None
  */
-static void nci_uart_tty_wakeup(struct tty_struct *tty)
-{
-	struct nci_uart *nu = (void *)tty->disc_data;
+अटल व्योम nci_uart_tty_wakeup(काष्ठा tty_काष्ठा *tty)
+अणु
+	काष्ठा nci_uart *nu = (व्योम *)tty->disc_data;
 
-	if (!nu)
-		return;
+	अगर (!nu)
+		वापस;
 
 	clear_bit(TTY_DO_WRITE_WAKEUP, &tty->flags);
 
-	if (tty != nu->tty)
-		return;
+	अगर (tty != nu->tty)
+		वापस;
 
 	nci_uart_tx_wakeup(nu);
-}
+पूर्ण
 
 /* -- Default recv_buf handler --
  *
  * This handler supposes that NCI frames are sent over UART link without any
- * framing. It reads NCI header, retrieve the packet size and once all packet
- * bytes are received it passes it to nci_uart driver for processing.
+ * framing. It पढ़ोs NCI header, retrieve the packet size and once all packet
+ * bytes are received it passes it to nci_uart driver क्रम processing.
  */
-static int nci_uart_default_recv_buf(struct nci_uart *nu, const u8 *data,
-				     int count)
-{
-	int chunk_len;
+अटल पूर्णांक nci_uart_शेष_recv_buf(काष्ठा nci_uart *nu, स्थिर u8 *data,
+				     पूर्णांक count)
+अणु
+	पूर्णांक chunk_len;
 
-	if (!nu->ndev) {
+	अगर (!nu->ndev) अणु
 		nfc_err(nu->tty->dev,
 			"receive data from tty but no NCI dev is attached yet, drop buffer\n");
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	/* Decode all incoming data in packets
-	 * and enqueue then for processing.
+	 * and enqueue then क्रम processing.
 	 */
-	while (count > 0) {
+	जबतक (count > 0) अणु
 		/* If this is the first data of a packet, allocate a buffer */
-		if (!nu->rx_skb) {
+		अगर (!nu->rx_skb) अणु
 			nu->rx_packet_len = -1;
 			nu->rx_skb = nci_skb_alloc(nu->ndev,
 						   NCI_MAX_PACKET_SIZE,
 						   GFP_ATOMIC);
-			if (!nu->rx_skb)
-				return -ENOMEM;
-		}
+			अगर (!nu->rx_skb)
+				वापस -ENOMEM;
+		पूर्ण
 
 		/* Eat byte after byte till full packet header is received */
-		if (nu->rx_skb->len < NCI_CTRL_HDR_SIZE) {
+		अगर (nu->rx_skb->len < NCI_CTRL_HDR_SIZE) अणु
 			skb_put_u8(nu->rx_skb, *data++);
 			--count;
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		/* Header was received but packet len was not read */
-		if (nu->rx_packet_len < 0)
+		/* Header was received but packet len was not पढ़ो */
+		अगर (nu->rx_packet_len < 0)
 			nu->rx_packet_len = NCI_CTRL_HDR_SIZE +
 				nci_plen(nu->rx_skb->data);
 
@@ -276,196 +277,196 @@ static int nci_uart_default_recv_buf(struct nci_uart *nu, const u8 *data,
 		 * be consumed.
 		 */
 		chunk_len = nu->rx_packet_len - nu->rx_skb->len;
-		if (count < chunk_len)
+		अगर (count < chunk_len)
 			chunk_len = count;
 		skb_put_data(nu->rx_skb, data, chunk_len);
 		data += chunk_len;
 		count -= chunk_len;
 
-		/* Check if packet is fully received */
-		if (nu->rx_packet_len == nu->rx_skb->len) {
+		/* Check अगर packet is fully received */
+		अगर (nu->rx_packet_len == nu->rx_skb->len) अणु
 			/* Pass RX packet to driver */
-			if (nu->ops.recv(nu, nu->rx_skb) != 0)
+			अगर (nu->ops.recv(nu, nu->rx_skb) != 0)
 				nfc_err(nu->tty->dev, "corrupted RX packet\n");
 			/* Next packet will be a new one */
-			nu->rx_skb = NULL;
-		}
-	}
+			nu->rx_skb = शून्य;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* nci_uart_tty_receive()
  *
  *     Called by tty low level driver when receive data is
  *     available.
  *
- * Arguments:  tty          pointer to tty instance data
- *             data         pointer to received data
- *             flags        pointer to flags for data
+ * Arguments:  tty          poपूर्णांकer to tty instance data
+ *             data         poपूर्णांकer to received data
+ *             flags        poपूर्णांकer to flags क्रम data
  *             count        count of received data in bytes
  *
  * Return Value:    None
  */
-static void nci_uart_tty_receive(struct tty_struct *tty, const u8 *data,
-				 char *flags, int count)
-{
-	struct nci_uart *nu = (void *)tty->disc_data;
+अटल व्योम nci_uart_tty_receive(काष्ठा tty_काष्ठा *tty, स्थिर u8 *data,
+				 अक्षर *flags, पूर्णांक count)
+अणु
+	काष्ठा nci_uart *nu = (व्योम *)tty->disc_data;
 
-	if (!nu || tty != nu->tty)
-		return;
+	अगर (!nu || tty != nu->tty)
+		वापस;
 
 	spin_lock(&nu->rx_lock);
-	nci_uart_default_recv_buf(nu, data, count);
+	nci_uart_शेष_recv_buf(nu, data, count);
 	spin_unlock(&nu->rx_lock);
 
 	tty_unthrottle(tty);
-}
+पूर्ण
 
 /* nci_uart_tty_ioctl()
  *
- *    Process IOCTL system call for the tty device.
+ *    Process IOCTL प्रणाली call क्रम the tty device.
  *
  * Arguments:
  *
- *    tty        pointer to tty instance data
- *    file       pointer to open file object for device
+ *    tty        poपूर्णांकer to tty instance data
+ *    file       poपूर्णांकer to खोलो file object क्रम device
  *    cmd        IOCTL command code
- *    arg        argument for IOCTL call (cmd dependent)
+ *    arg        argument क्रम IOCTL call (cmd dependent)
  *
  * Return Value:    Command dependent
  */
-static int nci_uart_tty_ioctl(struct tty_struct *tty, struct file *file,
-			      unsigned int cmd, unsigned long arg)
-{
-	struct nci_uart *nu = (void *)tty->disc_data;
-	int err = 0;
+अटल पूर्णांक nci_uart_tty_ioctl(काष्ठा tty_काष्ठा *tty, काष्ठा file *file,
+			      अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
+अणु
+	काष्ठा nci_uart *nu = (व्योम *)tty->disc_data;
+	पूर्णांक err = 0;
 
-	switch (cmd) {
-	case NCIUARTSETDRIVER:
-		if (!nu)
-			return nci_uart_set_driver(tty, (unsigned int)arg);
-		else
-			return -EBUSY;
-		break;
-	default:
+	चयन (cmd) अणु
+	हाल NCIUARTSETDRIVER:
+		अगर (!nu)
+			वापस nci_uart_set_driver(tty, (अचिन्हित पूर्णांक)arg);
+		अन्यथा
+			वापस -EBUSY;
+		अवरोध;
+	शेष:
 		err = n_tty_ioctl_helper(tty, file, cmd, arg);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-/* We don't provide read/write/poll interface for user space. */
-static ssize_t nci_uart_tty_read(struct tty_struct *tty, struct file *file,
-				 unsigned char *buf, size_t nr,
-				 void **cookie, unsigned long offset)
-{
-	return 0;
-}
+/* We करोn't provide पढ़ो/ग_लिखो/poll पूर्णांकerface क्रम user space. */
+अटल sमाप_प्रकार nci_uart_tty_पढ़ो(काष्ठा tty_काष्ठा *tty, काष्ठा file *file,
+				 अचिन्हित अक्षर *buf, माप_प्रकार nr,
+				 व्योम **cookie, अचिन्हित दीर्घ offset)
+अणु
+	वापस 0;
+पूर्ण
 
-static ssize_t nci_uart_tty_write(struct tty_struct *tty, struct file *file,
-				  const unsigned char *data, size_t count)
-{
-	return 0;
-}
+अटल sमाप_प्रकार nci_uart_tty_ग_लिखो(काष्ठा tty_काष्ठा *tty, काष्ठा file *file,
+				  स्थिर अचिन्हित अक्षर *data, माप_प्रकार count)
+अणु
+	वापस 0;
+पूर्ण
 
-static __poll_t nci_uart_tty_poll(struct tty_struct *tty,
-				      struct file *filp, poll_table *wait)
-{
-	return 0;
-}
+अटल __poll_t nci_uart_tty_poll(काष्ठा tty_काष्ठा *tty,
+				      काष्ठा file *filp, poll_table *रुको)
+अणु
+	वापस 0;
+पूर्ण
 
-static int nci_uart_send(struct nci_uart *nu, struct sk_buff *skb)
-{
+अटल पूर्णांक nci_uart_send(काष्ठा nci_uart *nu, काष्ठा sk_buff *skb)
+अणु
 	/* Queue TX packet */
 	skb_queue_tail(&nu->tx_q, skb);
 
-	/* Try to start TX (if possible) */
+	/* Try to start TX (अगर possible) */
 	nci_uart_tx_wakeup(nu);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int nci_uart_register(struct nci_uart *nu)
-{
-	if (!nu || !nu->ops.open ||
-	    !nu->ops.recv || !nu->ops.close)
-		return -EINVAL;
+पूर्णांक nci_uart_रेजिस्टर(काष्ठा nci_uart *nu)
+अणु
+	अगर (!nu || !nu->ops.खोलो ||
+	    !nu->ops.recv || !nu->ops.बंद)
+		वापस -EINVAL;
 
 	/* Set the send callback */
 	nu->ops.send = nci_uart_send;
 
 	/* Add this driver in the driver list */
-	if (nci_uart_drivers[nu->driver]) {
+	अगर (nci_uart_drivers[nu->driver]) अणु
 		pr_err("driver %d is already registered\n", nu->driver);
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 	nci_uart_drivers[nu->driver] = nu;
 
 	pr_info("NCI uart driver '%s [%d]' registered\n", nu->name, nu->driver);
 
-	return 0;
-}
-EXPORT_SYMBOL_GPL(nci_uart_register);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL_GPL(nci_uart_रेजिस्टर);
 
-void nci_uart_unregister(struct nci_uart *nu)
-{
+व्योम nci_uart_unरेजिस्टर(काष्ठा nci_uart *nu)
+अणु
 	pr_info("NCI uart driver '%s [%d]' unregistered\n", nu->name,
 		nu->driver);
 
 	/* Remove this driver from the driver list */
-	nci_uart_drivers[nu->driver] = NULL;
-}
-EXPORT_SYMBOL_GPL(nci_uart_unregister);
+	nci_uart_drivers[nu->driver] = शून्य;
+पूर्ण
+EXPORT_SYMBOL_GPL(nci_uart_unरेजिस्टर);
 
-void nci_uart_set_config(struct nci_uart *nu, int baudrate, int flow_ctrl)
-{
-	struct ktermios new_termios;
+व्योम nci_uart_set_config(काष्ठा nci_uart *nu, पूर्णांक baudrate, पूर्णांक flow_ctrl)
+अणु
+	काष्ठा ktermios new_termios;
 
-	if (!nu->tty)
-		return;
+	अगर (!nu->tty)
+		वापस;
 
-	down_read(&nu->tty->termios_rwsem);
+	करोwn_पढ़ो(&nu->tty->termios_rwsem);
 	new_termios = nu->tty->termios;
-	up_read(&nu->tty->termios_rwsem);
+	up_पढ़ो(&nu->tty->termios_rwsem);
 	tty_termios_encode_baud_rate(&new_termios, baudrate, baudrate);
 
-	if (flow_ctrl)
+	अगर (flow_ctrl)
 		new_termios.c_cflag |= CRTSCTS;
-	else
+	अन्यथा
 		new_termios.c_cflag &= ~CRTSCTS;
 
 	tty_set_termios(nu->tty, &new_termios);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(nci_uart_set_config);
 
-static struct tty_ldisc_ops nci_uart_ldisc = {
+अटल काष्ठा tty_ldisc_ops nci_uart_ldisc = अणु
 	.owner		= THIS_MODULE,
 	.name		= "n_nci",
-	.open		= nci_uart_tty_open,
-	.close		= nci_uart_tty_close,
-	.read		= nci_uart_tty_read,
-	.write		= nci_uart_tty_write,
+	.खोलो		= nci_uart_tty_खोलो,
+	.बंद		= nci_uart_tty_बंद,
+	.पढ़ो		= nci_uart_tty_पढ़ो,
+	.ग_लिखो		= nci_uart_tty_ग_लिखो,
 	.poll		= nci_uart_tty_poll,
 	.receive_buf	= nci_uart_tty_receive,
-	.write_wakeup	= nci_uart_tty_wakeup,
+	.ग_लिखो_wakeup	= nci_uart_tty_wakeup,
 	.ioctl		= nci_uart_tty_ioctl,
 	.compat_ioctl	= nci_uart_tty_ioctl,
-};
+पूर्ण;
 
-static int __init nci_uart_init(void)
-{
-	return tty_register_ldisc(N_NCI, &nci_uart_ldisc);
-}
+अटल पूर्णांक __init nci_uart_init(व्योम)
+अणु
+	वापस tty_रेजिस्टर_ldisc(N_NCI, &nci_uart_ldisc);
+पूर्ण
 
-static void __exit nci_uart_exit(void)
-{
-	tty_unregister_ldisc(N_NCI);
-}
+अटल व्योम __निकास nci_uart_निकास(व्योम)
+अणु
+	tty_unरेजिस्टर_ldisc(N_NCI);
+पूर्ण
 
 module_init(nci_uart_init);
-module_exit(nci_uart_exit);
+module_निकास(nci_uart_निकास);
 
 MODULE_AUTHOR("Marvell International Ltd.");
 MODULE_DESCRIPTION("NFC NCI UART driver");

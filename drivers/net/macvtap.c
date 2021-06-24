@@ -1,248 +1,249 @@
-// SPDX-License-Identifier: GPL-2.0-only
-#include <linux/etherdevice.h>
-#include <linux/if_macvlan.h>
-#include <linux/if_tap.h>
-#include <linux/if_vlan.h>
-#include <linux/interrupt.h>
-#include <linux/nsproxy.h>
-#include <linux/compat.h>
-#include <linux/if_tun.h>
-#include <linux/module.h>
-#include <linux/skbuff.h>
-#include <linux/cache.h>
-#include <linux/sched/signal.h>
-#include <linux/types.h>
-#include <linux/slab.h>
-#include <linux/wait.h>
-#include <linux/cdev.h>
-#include <linux/idr.h>
-#include <linux/fs.h>
-#include <linux/uio.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
+#समावेश <linux/etherdevice.h>
+#समावेश <linux/अगर_macvlan.h>
+#समावेश <linux/अगर_tap.h>
+#समावेश <linux/अगर_vlan.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/nsproxy.h>
+#समावेश <linux/compat.h>
+#समावेश <linux/अगर_tun.h>
+#समावेश <linux/module.h>
+#समावेश <linux/skbuff.h>
+#समावेश <linux/cache.h>
+#समावेश <linux/sched/संकेत.स>
+#समावेश <linux/types.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/रुको.h>
+#समावेश <linux/cdev.h>
+#समावेश <linux/idr.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/uपन.स>
 
-#include <net/net_namespace.h>
-#include <net/rtnetlink.h>
-#include <net/sock.h>
-#include <linux/virtio_net.h>
-#include <linux/skb_array.h>
+#समावेश <net/net_namespace.h>
+#समावेश <net/rtnetlink.h>
+#समावेश <net/sock.h>
+#समावेश <linux/virtio_net.h>
+#समावेश <linux/skb_array.h>
 
-struct macvtap_dev {
-	struct macvlan_dev vlan;
-	struct tap_dev    tap;
-};
+काष्ठा macvtap_dev अणु
+	काष्ठा macvlan_dev vlan;
+	काष्ठा tap_dev    tap;
+पूर्ण;
 
 /*
- * Variables for dealing with macvtaps device numbers.
+ * Variables क्रम dealing with macvtaps device numbers.
  */
-static dev_t macvtap_major;
+अटल dev_t macvtap_major;
 
-static const void *macvtap_net_namespace(struct device *d)
-{
-	struct net_device *dev = to_net_dev(d->parent);
-	return dev_net(dev);
-}
+अटल स्थिर व्योम *macvtap_net_namespace(काष्ठा device *d)
+अणु
+	काष्ठा net_device *dev = to_net_dev(d->parent);
+	वापस dev_net(dev);
+पूर्ण
 
-static struct class macvtap_class = {
+अटल काष्ठा class macvtap_class = अणु
 	.name = "macvtap",
 	.owner = THIS_MODULE,
 	.ns_type = &net_ns_type_operations,
 	.namespace = macvtap_net_namespace,
-};
-static struct cdev macvtap_cdev;
+पूर्ण;
+अटल काष्ठा cdev macvtap_cdev;
 
-#define TUN_OFFLOADS (NETIF_F_HW_CSUM | NETIF_F_TSO_ECN | NETIF_F_TSO | \
+#घोषणा TUN_OFFLOADS (NETIF_F_HW_CSUM | NETIF_F_TSO_ECN | NETIF_F_TSO | \
 		      NETIF_F_TSO6)
 
-static void macvtap_count_tx_dropped(struct tap_dev *tap)
-{
-	struct macvtap_dev *vlantap = container_of(tap, struct macvtap_dev, tap);
-	struct macvlan_dev *vlan = &vlantap->vlan;
+अटल व्योम macvtap_count_tx_dropped(काष्ठा tap_dev *tap)
+अणु
+	काष्ठा macvtap_dev *vlantap = container_of(tap, काष्ठा macvtap_dev, tap);
+	काष्ठा macvlan_dev *vlan = &vlantap->vlan;
 
 	this_cpu_inc(vlan->pcpu_stats->tx_dropped);
-}
+पूर्ण
 
-static void macvtap_count_rx_dropped(struct tap_dev *tap)
-{
-	struct macvtap_dev *vlantap = container_of(tap, struct macvtap_dev, tap);
-	struct macvlan_dev *vlan = &vlantap->vlan;
+अटल व्योम macvtap_count_rx_dropped(काष्ठा tap_dev *tap)
+अणु
+	काष्ठा macvtap_dev *vlantap = container_of(tap, काष्ठा macvtap_dev, tap);
+	काष्ठा macvlan_dev *vlan = &vlantap->vlan;
 
 	macvlan_count_rx(vlan, 0, 0, 0);
-}
+पूर्ण
 
-static void macvtap_update_features(struct tap_dev *tap,
+अटल व्योम macvtap_update_features(काष्ठा tap_dev *tap,
 				    netdev_features_t features)
-{
-	struct macvtap_dev *vlantap = container_of(tap, struct macvtap_dev, tap);
-	struct macvlan_dev *vlan = &vlantap->vlan;
+अणु
+	काष्ठा macvtap_dev *vlantap = container_of(tap, काष्ठा macvtap_dev, tap);
+	काष्ठा macvlan_dev *vlan = &vlantap->vlan;
 
 	vlan->set_features = features;
 	netdev_update_features(vlan->dev);
-}
+पूर्ण
 
-static int macvtap_newlink(struct net *src_net, struct net_device *dev,
-			   struct nlattr *tb[], struct nlattr *data[],
-			   struct netlink_ext_ack *extack)
-{
-	struct macvtap_dev *vlantap = netdev_priv(dev);
-	int err;
+अटल पूर्णांक macvtap_newlink(काष्ठा net *src_net, काष्ठा net_device *dev,
+			   काष्ठा nlattr *tb[], काष्ठा nlattr *data[],
+			   काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा macvtap_dev *vlantap = netdev_priv(dev);
+	पूर्णांक err;
 
 	INIT_LIST_HEAD(&vlantap->tap.queue_list);
 
-	/* Since macvlan supports all offloads by default, make
+	/* Since macvlan supports all offloads by शेष, make
 	 * tap support all offloads also.
 	 */
 	vlantap->tap.tap_features = TUN_OFFLOADS;
 
-	/* Register callbacks for rx/tx drops accounting and updating
+	/* Register callbacks क्रम rx/tx drops accounting and updating
 	 * net_device features
 	 */
 	vlantap->tap.count_tx_dropped = macvtap_count_tx_dropped;
 	vlantap->tap.count_rx_dropped = macvtap_count_rx_dropped;
 	vlantap->tap.update_features  = macvtap_update_features;
 
-	err = netdev_rx_handler_register(dev, tap_handle_frame, &vlantap->tap);
-	if (err)
-		return err;
+	err = netdev_rx_handler_रेजिस्टर(dev, tap_handle_frame, &vlantap->tap);
+	अगर (err)
+		वापस err;
 
 	/* Don't put anything that may fail after macvlan_common_newlink
-	 * because we can't undo what it does.
+	 * because we can't unकरो what it करोes.
 	 */
 	err = macvlan_common_newlink(src_net, dev, tb, data, extack);
-	if (err) {
-		netdev_rx_handler_unregister(dev);
-		return err;
-	}
+	अगर (err) अणु
+		netdev_rx_handler_unरेजिस्टर(dev);
+		वापस err;
+	पूर्ण
 
 	vlantap->tap.dev = vlantap->vlan.dev;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void macvtap_dellink(struct net_device *dev,
-			    struct list_head *head)
-{
-	struct macvtap_dev *vlantap = netdev_priv(dev);
+अटल व्योम macvtap_dellink(काष्ठा net_device *dev,
+			    काष्ठा list_head *head)
+अणु
+	काष्ठा macvtap_dev *vlantap = netdev_priv(dev);
 
-	netdev_rx_handler_unregister(dev);
+	netdev_rx_handler_unरेजिस्टर(dev);
 	tap_del_queues(&vlantap->tap);
 	macvlan_dellink(dev, head);
-}
+पूर्ण
 
-static void macvtap_setup(struct net_device *dev)
-{
+अटल व्योम macvtap_setup(काष्ठा net_device *dev)
+अणु
 	macvlan_common_setup(dev);
 	dev->tx_queue_len = TUN_READQ_SIZE;
-}
+पूर्ण
 
-static struct rtnl_link_ops macvtap_link_ops __read_mostly = {
+अटल काष्ठा rtnl_link_ops macvtap_link_ops __पढ़ो_mostly = अणु
 	.kind		= "macvtap",
 	.setup		= macvtap_setup,
 	.newlink	= macvtap_newlink,
 	.dellink	= macvtap_dellink,
-	.priv_size      = sizeof(struct macvtap_dev),
-};
+	.priv_size      = माप(काष्ठा macvtap_dev),
+पूर्ण;
 
-static int macvtap_device_event(struct notifier_block *unused,
-				unsigned long event, void *ptr)
-{
-	struct net_device *dev = netdev_notifier_info_to_dev(ptr);
-	struct macvtap_dev *vlantap;
-	struct device *classdev;
+अटल पूर्णांक macvtap_device_event(काष्ठा notअगरier_block *unused,
+				अचिन्हित दीर्घ event, व्योम *ptr)
+अणु
+	काष्ठा net_device *dev = netdev_notअगरier_info_to_dev(ptr);
+	काष्ठा macvtap_dev *vlantap;
+	काष्ठा device *classdev;
 	dev_t devt;
-	int err;
-	char tap_name[IFNAMSIZ];
+	पूर्णांक err;
+	अक्षर tap_name[IFNAMSIZ];
 
-	if (dev->rtnl_link_ops != &macvtap_link_ops)
-		return NOTIFY_DONE;
+	अगर (dev->rtnl_link_ops != &macvtap_link_ops)
+		वापस NOTIFY_DONE;
 
-	snprintf(tap_name, IFNAMSIZ, "tap%d", dev->ifindex);
+	snम_लिखो(tap_name, IFNAMSIZ, "tap%d", dev->अगरindex);
 	vlantap = netdev_priv(dev);
 
-	switch (event) {
-	case NETDEV_REGISTER:
+	चयन (event) अणु
+	हाल NETDEV_REGISTER:
 		/* Create the device node here after the network device has
-		 * been registered but before register_netdevice has
+		 * been रेजिस्टरed but beक्रमe रेजिस्टर_netdevice has
 		 * finished running.
 		 */
 		err = tap_get_minor(macvtap_major, &vlantap->tap);
-		if (err)
-			return notifier_from_errno(err);
+		अगर (err)
+			वापस notअगरier_from_त्रुटि_सं(err);
 
 		devt = MKDEV(MAJOR(macvtap_major), vlantap->tap.minor);
 		classdev = device_create(&macvtap_class, &dev->dev, devt,
 					 dev, tap_name);
-		if (IS_ERR(classdev)) {
-			tap_free_minor(macvtap_major, &vlantap->tap);
-			return notifier_from_errno(PTR_ERR(classdev));
-		}
+		अगर (IS_ERR(classdev)) अणु
+			tap_मुक्त_minor(macvtap_major, &vlantap->tap);
+			वापस notअगरier_from_त्रुटि_सं(PTR_ERR(classdev));
+		पूर्ण
 		err = sysfs_create_link(&dev->dev.kobj, &classdev->kobj,
 					tap_name);
-		if (err)
-			return notifier_from_errno(err);
-		break;
-	case NETDEV_UNREGISTER:
-		/* vlan->minor == 0 if NETDEV_REGISTER above failed */
-		if (vlantap->tap.minor == 0)
-			break;
-		sysfs_remove_link(&dev->dev.kobj, tap_name);
+		अगर (err)
+			वापस notअगरier_from_त्रुटि_सं(err);
+		अवरोध;
+	हाल NETDEV_UNREGISTER:
+		/* vlan->minor == 0 अगर NETDEV_REGISTER above failed */
+		अगर (vlantap->tap.minor == 0)
+			अवरोध;
+		sysfs_हटाओ_link(&dev->dev.kobj, tap_name);
 		devt = MKDEV(MAJOR(macvtap_major), vlantap->tap.minor);
 		device_destroy(&macvtap_class, devt);
-		tap_free_minor(macvtap_major, &vlantap->tap);
-		break;
-	case NETDEV_CHANGE_TX_QUEUE_LEN:
-		if (tap_queue_resize(&vlantap->tap))
-			return NOTIFY_BAD;
-		break;
-	}
+		tap_मुक्त_minor(macvtap_major, &vlantap->tap);
+		अवरोध;
+	हाल NETDEV_CHANGE_TX_QUEUE_LEN:
+		अगर (tap_queue_resize(&vlantap->tap))
+			वापस NOTIFY_BAD;
+		अवरोध;
+	पूर्ण
 
-	return NOTIFY_DONE;
-}
+	वापस NOTIFY_DONE;
+पूर्ण
 
-static struct notifier_block macvtap_notifier_block __read_mostly = {
-	.notifier_call	= macvtap_device_event,
-};
+अटल काष्ठा notअगरier_block macvtap_notअगरier_block __पढ़ो_mostly = अणु
+	.notअगरier_call	= macvtap_device_event,
+पूर्ण;
 
-static int macvtap_init(void)
-{
-	int err;
+अटल पूर्णांक macvtap_init(व्योम)
+अणु
+	पूर्णांक err;
 
 	err = tap_create_cdev(&macvtap_cdev, &macvtap_major, "macvtap",
 			      THIS_MODULE);
-	if (err)
-		goto out1;
+	अगर (err)
+		जाओ out1;
 
-	err = class_register(&macvtap_class);
-	if (err)
-		goto out2;
+	err = class_रेजिस्टर(&macvtap_class);
+	अगर (err)
+		जाओ out2;
 
-	err = register_netdevice_notifier(&macvtap_notifier_block);
-	if (err)
-		goto out3;
+	err = रेजिस्टर_netdevice_notअगरier(&macvtap_notअगरier_block);
+	अगर (err)
+		जाओ out3;
 
-	err = macvlan_link_register(&macvtap_link_ops);
-	if (err)
-		goto out4;
+	err = macvlan_link_रेजिस्टर(&macvtap_link_ops);
+	अगर (err)
+		जाओ out4;
 
-	return 0;
+	वापस 0;
 
 out4:
-	unregister_netdevice_notifier(&macvtap_notifier_block);
+	unरेजिस्टर_netdevice_notअगरier(&macvtap_notअगरier_block);
 out3:
-	class_unregister(&macvtap_class);
+	class_unरेजिस्टर(&macvtap_class);
 out2:
 	tap_destroy_cdev(macvtap_major, &macvtap_cdev);
 out1:
-	return err;
-}
+	वापस err;
+पूर्ण
 module_init(macvtap_init);
 
-static void macvtap_exit(void)
-{
-	rtnl_link_unregister(&macvtap_link_ops);
-	unregister_netdevice_notifier(&macvtap_notifier_block);
-	class_unregister(&macvtap_class);
+अटल व्योम macvtap_निकास(व्योम)
+अणु
+	rtnl_link_unरेजिस्टर(&macvtap_link_ops);
+	unरेजिस्टर_netdevice_notअगरier(&macvtap_notअगरier_block);
+	class_unरेजिस्टर(&macvtap_class);
 	tap_destroy_cdev(macvtap_major, &macvtap_cdev);
-}
-module_exit(macvtap_exit);
+पूर्ण
+module_निकास(macvtap_निकास);
 
 MODULE_ALIAS_RTNL_LINK("macvtap");
 MODULE_AUTHOR("Arnd Bergmann <arnd@arndb.de>");

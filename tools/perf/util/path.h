@@ -1,16 +1,17 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _PERF_PATH_H
-#define _PERF_PATH_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _PERF_PATH_H
+#घोषणा _PERF_PATH_H
 
-#include <stddef.h>
-#include <stdbool.h>
+#समावेश <मानकघोष.स>
+#समावेश <stdbool.h>
 
-struct dirent;
+काष्ठा dirent;
 
-int path__join(char *bf, size_t size, const char *path1, const char *path2);
-int path__join3(char *bf, size_t size, const char *path1, const char *path2, const char *path3);
+पूर्णांक path__join(अक्षर *bf, माप_प्रकार size, स्थिर अक्षर *path1, स्थिर अक्षर *path2);
+पूर्णांक path__join3(अक्षर *bf, माप_प्रकार size, स्थिर अक्षर *path1, स्थिर अक्षर *path2, स्थिर अक्षर *path3);
 
-bool is_regular_file(const char *file);
-bool is_directory(const char *base_path, const struct dirent *dent);
+bool is_regular_file(स्थिर अक्षर *file);
+bool is_directory(स्थिर अक्षर *base_path, स्थिर काष्ठा dirent *dent);
 
-#endif /* _PERF_PATH_H */
+#पूर्ण_अगर /* _PERF_PATH_H */

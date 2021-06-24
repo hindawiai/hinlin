@@ -1,25 +1,26 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __ASM_SH_CMPXCHG_CAS_H
-#define __ASM_SH_CMPXCHG_CAS_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __ASM_SH_CMPXCHG_CAS_H
+#घोषणा __ASM_SH_CMPXCHG_CAS_H
 
-static inline unsigned long
-__cmpxchg_u32(volatile u32 *m, unsigned long old, unsigned long new)
-{
-	__asm__ __volatile__("cas.l %1,%0,@r0"
+अटल अंतरभूत अचिन्हित दीर्घ
+__cmpxchg_u32(अस्थिर u32 *m, अचिन्हित दीर्घ old, अचिन्हित दीर्घ new)
+अणु
+	__यंत्र__ __अस्थिर__("cas.l %1,%0,@r0"
 		: "+r"(new)
 		: "r"(old), "z"(m)
 		: "t", "memory" );
-	return new;
-}
+	वापस new;
+पूर्ण
 
-static inline unsigned long xchg_u32(volatile u32 *m, unsigned long val)
-{
-	unsigned long old;
-	do old = *m;
-	while (__cmpxchg_u32(m, old, val) != old);
-	return old;
-}
+अटल अंतरभूत अचिन्हित दीर्घ xchg_u32(अस्थिर u32 *m, अचिन्हित दीर्घ val)
+अणु
+	अचिन्हित दीर्घ old;
+	करो old = *m;
+	जबतक (__cmpxchg_u32(m, old, val) != old);
+	वापस old;
+पूर्ण
 
-#include <asm/cmpxchg-xchg.h>
+#समावेश <यंत्र/cmpxchg-xchg.h>
 
-#endif /* __ASM_SH_CMPXCHG_CAS_H */
+#पूर्ण_अगर /* __ASM_SH_CMPXCHG_CAS_H */

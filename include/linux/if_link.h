@@ -1,12 +1,13 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _LINUX_IF_LINK_H
-#define _LINUX_IF_LINK_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _LINUX_IF_LINK_H
+#घोषणा _LINUX_IF_LINK_H
 
-#include <uapi/linux/if_link.h>
+#समावेश <uapi/linux/अगर_link.h>
 
 
-/* We don't want this structure exposed to user space */
-struct ifla_vf_stats {
+/* We करोn't want this काष्ठाure exposed to user space */
+काष्ठा अगरla_vf_stats अणु
 	__u64 rx_packets;
 	__u64 tx_packets;
 	__u64 rx_bytes;
@@ -15,9 +16,9 @@ struct ifla_vf_stats {
 	__u64 multicast;
 	__u64 rx_dropped;
 	__u64 tx_dropped;
-};
+पूर्ण;
 
-struct ifla_vf_info {
+काष्ठा अगरla_vf_info अणु
 	__u32 vf;
 	__u8 mac[32];
 	__u32 vlan;
@@ -29,5 +30,5 @@ struct ifla_vf_info {
 	__u32 rss_query_en;
 	__u32 trusted;
 	__be16 vlan_proto;
-};
-#endif /* _LINUX_IF_LINK_H */
+पूर्ण;
+#पूर्ण_अगर /* _LINUX_IF_LINK_H */

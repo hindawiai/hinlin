@@ -1,62 +1,63 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
-   au0828-vbi.c - VBI driver for au0828
+   au0828-vbi.c - VBI driver क्रम au0828
 
-   Copyright (C) 2010 Devin Heitmueller <dheitmueller@kernellabs.com>
+   Copyright (C) 2010 Devin Heiपंचांगueller <dheiपंचांगueller@kernelद_असल.com>
 
    This work was sponsored by GetWellNetwork Inc.
 
  */
 
-#include "au0828.h"
+#समावेश "au0828.h"
 
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/init.h>
-#include <linux/slab.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/init.h>
+#समावेश <linux/slab.h>
 
 /* ------------------------------------------------------------------ */
 
-static int vbi_queue_setup(struct vb2_queue *vq,
-			   unsigned int *nbuffers, unsigned int *nplanes,
-			   unsigned int sizes[], struct device *alloc_devs[])
-{
-	struct au0828_dev *dev = vb2_get_drv_priv(vq);
-	unsigned long size = dev->vbi_width * dev->vbi_height * 2;
+अटल पूर्णांक vbi_queue_setup(काष्ठा vb2_queue *vq,
+			   अचिन्हित पूर्णांक *nbuffers, अचिन्हित पूर्णांक *nplanes,
+			   अचिन्हित पूर्णांक sizes[], काष्ठा device *alloc_devs[])
+अणु
+	काष्ठा au0828_dev *dev = vb2_get_drv_priv(vq);
+	अचिन्हित दीर्घ size = dev->vbi_width * dev->vbi_height * 2;
 
-	if (*nplanes)
-		return sizes[0] < size ? -EINVAL : 0;
+	अगर (*nplanes)
+		वापस sizes[0] < size ? -EINVAL : 0;
 	*nplanes = 1;
 	sizes[0] = size;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int vbi_buffer_prepare(struct vb2_buffer *vb)
-{
-	struct au0828_dev *dev = vb2_get_drv_priv(vb->vb2_queue);
-	unsigned long size;
+अटल पूर्णांक vbi_buffer_prepare(काष्ठा vb2_buffer *vb)
+अणु
+	काष्ठा au0828_dev *dev = vb2_get_drv_priv(vb->vb2_queue);
+	अचिन्हित दीर्घ size;
 
 	size = dev->vbi_width * dev->vbi_height * 2;
 
-	if (vb2_plane_size(vb, 0) < size) {
+	अगर (vb2_plane_size(vb, 0) < size) अणु
 		pr_err("%s data will not fit into plane (%lu < %lu)\n",
 			__func__, vb2_plane_size(vb, 0), size);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 	vb2_set_plane_payload(vb, 0, size);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void
-vbi_buffer_queue(struct vb2_buffer *vb)
-{
-	struct au0828_dev *dev = vb2_get_drv_priv(vb->vb2_queue);
-	struct vb2_v4l2_buffer *vbuf = to_vb2_v4l2_buffer(vb);
-	struct au0828_buffer *buf =
-			container_of(vbuf, struct au0828_buffer, vb);
-	struct au0828_dmaqueue *vbiq = &dev->vbiq;
-	unsigned long flags = 0;
+अटल व्योम
+vbi_buffer_queue(काष्ठा vb2_buffer *vb)
+अणु
+	काष्ठा au0828_dev *dev = vb2_get_drv_priv(vb->vb2_queue);
+	काष्ठा vb2_v4l2_buffer *vbuf = to_vb2_v4l2_buffer(vb);
+	काष्ठा au0828_buffer *buf =
+			container_of(vbuf, काष्ठा au0828_buffer, vb);
+	काष्ठा au0828_dmaqueue *vbiq = &dev->vbiq;
+	अचिन्हित दीर्घ flags = 0;
 
 	buf->mem = vb2_plane_vaddr(vb, 0);
 	buf->length = vb2_plane_size(vb, 0);
@@ -64,14 +65,14 @@ vbi_buffer_queue(struct vb2_buffer *vb)
 	spin_lock_irqsave(&dev->slock, flags);
 	list_add_tail(&buf->list, &vbiq->active);
 	spin_unlock_irqrestore(&dev->slock, flags);
-}
+पूर्ण
 
-const struct vb2_ops au0828_vbi_qops = {
+स्थिर काष्ठा vb2_ops au0828_vbi_qops = अणु
 	.queue_setup     = vbi_queue_setup,
 	.buf_prepare     = vbi_buffer_prepare,
 	.buf_queue       = vbi_buffer_queue,
 	.start_streaming = au0828_start_analog_streaming,
 	.stop_streaming  = au0828_stop_vbi_streaming,
-	.wait_prepare    = vb2_ops_wait_prepare,
-	.wait_finish     = vb2_ops_wait_finish,
-};
+	.रुको_prepare    = vb2_ops_रुको_prepare,
+	.रुको_finish     = vb2_ops_रुको_finish,
+पूर्ण;

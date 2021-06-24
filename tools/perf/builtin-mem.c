@@ -1,73 +1,74 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <inttypes.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <unistd.h>
-#include "builtin.h"
-#include "perf.h"
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <पूर्णांकtypes.h>
+#समावेश <sys/types.h>
+#समावेश <sys/स्थिति.स>
+#समावेश <unistd.h>
+#समावेश "builtin.h"
+#समावेश "perf.h"
 
-#include <subcmd/parse-options.h>
-#include "util/auxtrace.h"
-#include "util/trace-event.h"
-#include "util/tool.h"
-#include "util/session.h"
-#include "util/data.h"
-#include "util/map_symbol.h"
-#include "util/mem-events.h"
-#include "util/debug.h"
-#include "util/dso.h"
-#include "util/map.h"
-#include "util/symbol.h"
-#include <linux/err.h>
+#समावेश <subcmd/parse-options.h>
+#समावेश "util/auxtrace.h"
+#समावेश "util/trace-event.h"
+#समावेश "util/tool.h"
+#समावेश "util/session.h"
+#समावेश "util/data.h"
+#समावेश "util/map_symbol.h"
+#समावेश "util/mem-events.h"
+#समावेश "util/debug.h"
+#समावेश "util/dso.h"
+#समावेश "util/map.h"
+#समावेश "util/symbol.h"
+#समावेश <linux/err.h>
 
-#define MEM_OPERATION_LOAD	0x1
-#define MEM_OPERATION_STORE	0x2
+#घोषणा MEM_OPERATION_LOAD	0x1
+#घोषणा MEM_OPERATION_STORE	0x2
 
-struct perf_mem {
-	struct perf_tool	tool;
-	char const		*input_name;
+काष्ठा perf_mem अणु
+	काष्ठा perf_tool	tool;
+	अक्षर स्थिर		*input_name;
 	bool			hide_unresolved;
 	bool			dump_raw;
-	bool			force;
+	bool			क्रमce;
 	bool			phys_addr;
 	bool			data_page_size;
-	int			operation;
-	const char		*cpu_list;
-	DECLARE_BITMAP(cpu_bitmap, MAX_NR_CPUS);
-};
+	पूर्णांक			operation;
+	स्थिर अक्षर		*cpu_list;
+	DECLARE_BITMAP(cpu_biपंचांगap, MAX_NR_CPUS);
+पूर्ण;
 
-static int parse_record_events(const struct option *opt,
-			       const char *str, int unset __maybe_unused)
-{
-	struct perf_mem *mem = *(struct perf_mem **)opt->value;
+अटल पूर्णांक parse_record_events(स्थिर काष्ठा option *opt,
+			       स्थिर अक्षर *str, पूर्णांक unset __maybe_unused)
+अणु
+	काष्ठा perf_mem *mem = *(काष्ठा perf_mem **)opt->value;
 
-	if (!strcmp(str, "list")) {
+	अगर (!म_भेद(str, "list")) अणु
 		perf_mem_events__list();
-		exit(0);
-	}
-	if (perf_mem_events__parse(str))
-		exit(-1);
+		निकास(0);
+	पूर्ण
+	अगर (perf_mem_events__parse(str))
+		निकास(-1);
 
 	mem->operation = 0;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const char * const __usage[] = {
+अटल स्थिर अक्षर * स्थिर __usage[] = अणु
 	"perf mem record [<options>] [<command>]",
 	"perf mem record [<options>] -- <command> [<options>]",
-	NULL
-};
+	शून्य
+पूर्ण;
 
-static const char * const *record_mem_usage = __usage;
+अटल स्थिर अक्षर * स्थिर *record_mem_usage = __usage;
 
-static int __cmd_record(int argc, const char **argv, struct perf_mem *mem)
-{
-	int rec_argc, i = 0, j;
-	const char **rec_argv;
-	int ret;
+अटल पूर्णांक __cmd_record(पूर्णांक argc, स्थिर अक्षर **argv, काष्ठा perf_mem *mem)
+अणु
+	पूर्णांक rec_argc, i = 0, j;
+	स्थिर अक्षर **rec_argv;
+	पूर्णांक ret;
 	bool all_user = false, all_kernel = false;
-	struct perf_mem_event *e;
-	struct option options[] = {
+	काष्ठा perf_mem_event *e;
+	काष्ठा option options[] = अणु
 	OPT_CALLBACK('e', "event", &mem, "event",
 		     "event selector. use 'perf mem record -e list' to list available events",
 		     parse_record_events),
@@ -77,20 +78,20 @@ static int __cmd_record(int argc, const char **argv, struct perf_mem *mem)
 	OPT_BOOLEAN('U', "all-user", &all_user, "collect only user level data"),
 	OPT_BOOLEAN('K', "all-kernel", &all_kernel, "collect only kernel level data"),
 	OPT_END()
-	};
+	पूर्ण;
 
-	if (perf_mem_events__init()) {
+	अगर (perf_mem_events__init()) अणु
 		pr_err("failed: memory events not supported\n");
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
 	argc = parse_options(argc, argv, options, record_mem_usage,
 			     PARSE_OPT_KEEP_UNKNOWN);
 
 	rec_argc = argc + 9; /* max number of arguments */
-	rec_argv = calloc(rec_argc + 1, sizeof(char *));
-	if (!rec_argv)
-		return -1;
+	rec_argv = सुस्मृति(rec_argc + 1, माप(अक्षर *));
+	अगर (!rec_argv)
+		वापस -1;
 
 	rec_argv[i++] = "record";
 
@@ -98,107 +99,107 @@ static int __cmd_record(int argc, const char **argv, struct perf_mem *mem)
 
 	/*
 	 * The load and store operations are required, use the event
-	 * PERF_MEM_EVENTS__LOAD_STORE if it is supported.
+	 * PERF_MEM_EVENTS__LOAD_STORE अगर it is supported.
 	 */
-	if (e->tag &&
+	अगर (e->tag &&
 	    (mem->operation & MEM_OPERATION_LOAD) &&
-	    (mem->operation & MEM_OPERATION_STORE)) {
+	    (mem->operation & MEM_OPERATION_STORE)) अणु
 		e->record = true;
-	} else {
-		if (mem->operation & MEM_OPERATION_LOAD) {
+	पूर्ण अन्यथा अणु
+		अगर (mem->operation & MEM_OPERATION_LOAD) अणु
 			e = perf_mem_events__ptr(PERF_MEM_EVENTS__LOAD);
 			e->record = true;
-		}
+		पूर्ण
 
-		if (mem->operation & MEM_OPERATION_STORE) {
+		अगर (mem->operation & MEM_OPERATION_STORE) अणु
 			e = perf_mem_events__ptr(PERF_MEM_EVENTS__STORE);
 			e->record = true;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	e = perf_mem_events__ptr(PERF_MEM_EVENTS__LOAD);
-	if (e->record)
+	अगर (e->record)
 		rec_argv[i++] = "-W";
 
 	rec_argv[i++] = "-d";
 
-	if (mem->phys_addr)
+	अगर (mem->phys_addr)
 		rec_argv[i++] = "--phys-data";
 
-	if (mem->data_page_size)
+	अगर (mem->data_page_size)
 		rec_argv[i++] = "--data-page-size";
 
-	for (j = 0; j < PERF_MEM_EVENTS__MAX; j++) {
+	क्रम (j = 0; j < PERF_MEM_EVENTS__MAX; j++) अणु
 		e = perf_mem_events__ptr(j);
-		if (!e->record)
-			continue;
+		अगर (!e->record)
+			जारी;
 
-		if (!e->supported) {
+		अगर (!e->supported) अणु
 			pr_err("failed: event '%s' not supported\n",
 			       perf_mem_events__name(j));
-			free(rec_argv);
-			return -1;
-		}
+			मुक्त(rec_argv);
+			वापस -1;
+		पूर्ण
 
 		rec_argv[i++] = "-e";
 		rec_argv[i++] = perf_mem_events__name(j);
-	}
+	पूर्ण
 
-	if (all_user)
+	अगर (all_user)
 		rec_argv[i++] = "--all-user";
 
-	if (all_kernel)
+	अगर (all_kernel)
 		rec_argv[i++] = "--all-kernel";
 
-	for (j = 0; j < argc; j++, i++)
+	क्रम (j = 0; j < argc; j++, i++)
 		rec_argv[i] = argv[j];
 
-	if (verbose > 0) {
+	अगर (verbose > 0) अणु
 		pr_debug("calling: record ");
 
-		while (rec_argv[j]) {
+		जबतक (rec_argv[j]) अणु
 			pr_debug("%s ", rec_argv[j]);
 			j++;
-		}
+		पूर्ण
 		pr_debug("\n");
-	}
+	पूर्ण
 
 	ret = cmd_record(i, rec_argv);
-	free(rec_argv);
-	return ret;
-}
+	मुक्त(rec_argv);
+	वापस ret;
+पूर्ण
 
-static int
-dump_raw_samples(struct perf_tool *tool,
-		 union perf_event *event,
-		 struct perf_sample *sample,
-		 struct machine *machine)
-{
-	struct perf_mem *mem = container_of(tool, struct perf_mem, tool);
-	struct addr_location al;
-	const char *fmt, *field_sep;
-	char str[PAGE_SIZE_NAME_LEN];
+अटल पूर्णांक
+dump_raw_samples(काष्ठा perf_tool *tool,
+		 जोड़ perf_event *event,
+		 काष्ठा perf_sample *sample,
+		 काष्ठा machine *machine)
+अणु
+	काष्ठा perf_mem *mem = container_of(tool, काष्ठा perf_mem, tool);
+	काष्ठा addr_location al;
+	स्थिर अक्षर *fmt, *field_sep;
+	अक्षर str[PAGE_SIZE_NAME_LEN];
 
-	if (machine__resolve(machine, &al, sample) < 0) {
-		fprintf(stderr, "problem processing %d event, skipping it.\n",
+	अगर (machine__resolve(machine, &al, sample) < 0) अणु
+		ख_लिखो(मानक_त्रुटि, "problem processing %d event, skipping it.\n",
 				event->header.type);
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
-	if (al.filtered || (mem->hide_unresolved && al.sym == NULL))
-		goto out_put;
+	अगर (al.filtered || (mem->hide_unresolved && al.sym == शून्य))
+		जाओ out_put;
 
-	if (al.map != NULL)
+	अगर (al.map != शून्य)
 		al.map->dso->hit = 1;
 
 	field_sep = symbol_conf.field_sep;
-	if (field_sep) {
+	अगर (field_sep) अणु
 		fmt = "%d%s%d%s0x%"PRIx64"%s0x%"PRIx64"%s";
-	} else {
+	पूर्ण अन्यथा अणु
 		fmt = "%5d%s%5d%s0x%016"PRIx64"%s0x016%"PRIx64"%s";
 		symbol_conf.field_sep = " ";
-	}
-	printf(fmt,
+	पूर्ण
+	म_लिखो(fmt,
 		sample->pid,
 		symbol_conf.field_sep,
 		sample->tid,
@@ -208,230 +209,230 @@ dump_raw_samples(struct perf_tool *tool,
 		sample->addr,
 		symbol_conf.field_sep);
 
-	if (mem->phys_addr) {
-		printf("0x%016"PRIx64"%s",
+	अगर (mem->phys_addr) अणु
+		म_लिखो("0x%016"PRIx64"%s",
 			sample->phys_addr,
 			symbol_conf.field_sep);
-	}
+	पूर्ण
 
-	if (mem->data_page_size) {
-		printf("%s%s",
+	अगर (mem->data_page_size) अणु
+		म_लिखो("%s%s",
 			get_page_size_name(sample->data_page_size, str),
 			symbol_conf.field_sep);
-	}
+	पूर्ण
 
-	if (field_sep)
+	अगर (field_sep)
 		fmt = "%"PRIu64"%s0x%"PRIx64"%s%s:%s\n";
-	else
+	अन्यथा
 		fmt = "%5"PRIu64"%s0x%06"PRIx64"%s%s:%s\n";
 
-	printf(fmt,
+	म_लिखो(fmt,
 		sample->weight,
 		symbol_conf.field_sep,
 		sample->data_src,
 		symbol_conf.field_sep,
-		al.map ? (al.map->dso ? al.map->dso->long_name : "???") : "???",
+		al.map ? (al.map->dso ? al.map->dso->दीर्घ_name : "???") : "???",
 		al.sym ? al.sym->name : "???");
 out_put:
 	addr_location__put(&al);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int process_sample_event(struct perf_tool *tool,
-				union perf_event *event,
-				struct perf_sample *sample,
-				struct evsel *evsel __maybe_unused,
-				struct machine *machine)
-{
-	return dump_raw_samples(tool, event, sample, machine);
-}
+अटल पूर्णांक process_sample_event(काष्ठा perf_tool *tool,
+				जोड़ perf_event *event,
+				काष्ठा perf_sample *sample,
+				काष्ठा evsel *evsel __maybe_unused,
+				काष्ठा machine *machine)
+अणु
+	वापस dump_raw_samples(tool, event, sample, machine);
+पूर्ण
 
-static int report_raw_events(struct perf_mem *mem)
-{
-	struct itrace_synth_opts itrace_synth_opts = {
+अटल पूर्णांक report_raw_events(काष्ठा perf_mem *mem)
+अणु
+	काष्ठा itrace_synth_opts itrace_synth_opts = अणु
 		.set = true,
 		.mem = true,	/* Only enable memory event */
-		.default_no_sample = true,
-	};
+		.शेष_no_sample = true,
+	पूर्ण;
 
-	struct perf_data data = {
+	काष्ठा perf_data data = अणु
 		.path  = input_name,
 		.mode  = PERF_DATA_MODE_READ,
-		.force = mem->force,
-	};
-	int ret;
-	struct perf_session *session = perf_session__new(&data, false,
+		.क्रमce = mem->क्रमce,
+	पूर्ण;
+	पूर्णांक ret;
+	काष्ठा perf_session *session = perf_session__new(&data, false,
 							 &mem->tool);
 
-	if (IS_ERR(session))
-		return PTR_ERR(session);
+	अगर (IS_ERR(session))
+		वापस PTR_ERR(session);
 
 	session->itrace_synth_opts = &itrace_synth_opts;
 
-	if (mem->cpu_list) {
-		ret = perf_session__cpu_bitmap(session, mem->cpu_list,
-					       mem->cpu_bitmap);
-		if (ret < 0)
-			goto out_delete;
-	}
+	अगर (mem->cpu_list) अणु
+		ret = perf_session__cpu_biपंचांगap(session, mem->cpu_list,
+					       mem->cpu_biपंचांगap);
+		अगर (ret < 0)
+			जाओ out_delete;
+	पूर्ण
 
 	ret = symbol__init(&session->header.env);
-	if (ret < 0)
-		goto out_delete;
+	अगर (ret < 0)
+		जाओ out_delete;
 
-	printf("# PID, TID, IP, ADDR, ");
+	म_लिखो("# PID, TID, IP, ADDR, ");
 
-	if (mem->phys_addr)
-		printf("PHYS ADDR, ");
+	अगर (mem->phys_addr)
+		म_लिखो("PHYS ADDR, ");
 
-	if (mem->data_page_size)
-		printf("DATA PAGE SIZE, ");
+	अगर (mem->data_page_size)
+		म_लिखो("DATA PAGE SIZE, ");
 
-	printf("LOCAL WEIGHT, DSRC, SYMBOL\n");
+	म_लिखो("LOCAL WEIGHT, DSRC, SYMBOL\n");
 
 	ret = perf_session__process_events(session);
 
 out_delete:
 	perf_session__delete(session);
-	return ret;
-}
-static char *get_sort_order(struct perf_mem *mem)
-{
+	वापस ret;
+पूर्ण
+अटल अक्षर *get_sort_order(काष्ठा perf_mem *mem)
+अणु
 	bool has_extra_options = (mem->phys_addr | mem->data_page_size) ? true : false;
-	char sort[128];
+	अक्षर sort[128];
 
 	/*
-	 * there is no weight (cost) associated with stores, so don't print
+	 * there is no weight (cost) associated with stores, so करोn't prपूर्णांक
 	 * the column
 	 */
-	if (!(mem->operation & MEM_OPERATION_LOAD)) {
-		strcpy(sort, "--sort=mem,sym,dso,symbol_daddr,"
+	अगर (!(mem->operation & MEM_OPERATION_LOAD)) अणु
+		म_नकल(sort, "--sort=mem,sym,dso,symbol_daddr,"
 			     "dso_daddr,tlb,locked");
-	} else if (has_extra_options) {
-		strcpy(sort, "--sort=local_weight,mem,sym,dso,symbol_daddr,"
+	पूर्ण अन्यथा अगर (has_extra_options) अणु
+		म_नकल(sort, "--sort=local_weight,mem,sym,dso,symbol_daddr,"
 			     "dso_daddr,snoop,tlb,locked,blocked");
-	} else
-		return NULL;
+	पूर्ण अन्यथा
+		वापस शून्य;
 
-	if (mem->phys_addr)
-		strcat(sort, ",phys_daddr");
+	अगर (mem->phys_addr)
+		म_जोड़ो(sort, ",phys_daddr");
 
-	if (mem->data_page_size)
-		strcat(sort, ",data_page_size");
+	अगर (mem->data_page_size)
+		म_जोड़ो(sort, ",data_page_size");
 
-	return strdup(sort);
-}
+	वापस strdup(sort);
+पूर्ण
 
-static int report_events(int argc, const char **argv, struct perf_mem *mem)
-{
-	const char **rep_argv;
-	int ret, i = 0, j, rep_argc;
-	char *new_sort_order;
+अटल पूर्णांक report_events(पूर्णांक argc, स्थिर अक्षर **argv, काष्ठा perf_mem *mem)
+अणु
+	स्थिर अक्षर **rep_argv;
+	पूर्णांक ret, i = 0, j, rep_argc;
+	अक्षर *new_sort_order;
 
-	if (mem->dump_raw)
-		return report_raw_events(mem);
+	अगर (mem->dump_raw)
+		वापस report_raw_events(mem);
 
 	rep_argc = argc + 3;
-	rep_argv = calloc(rep_argc + 1, sizeof(char *));
-	if (!rep_argv)
-		return -1;
+	rep_argv = सुस्मृति(rep_argc + 1, माप(अक्षर *));
+	अगर (!rep_argv)
+		वापस -1;
 
 	rep_argv[i++] = "report";
 	rep_argv[i++] = "--mem-mode";
 	rep_argv[i++] = "-n"; /* display number of samples */
 
 	new_sort_order = get_sort_order(mem);
-	if (new_sort_order)
+	अगर (new_sort_order)
 		rep_argv[i++] = new_sort_order;
 
-	for (j = 1; j < argc; j++, i++)
+	क्रम (j = 1; j < argc; j++, i++)
 		rep_argv[i] = argv[j];
 
 	ret = cmd_report(i, rep_argv);
-	free(rep_argv);
-	return ret;
-}
+	मुक्त(rep_argv);
+	वापस ret;
+पूर्ण
 
-struct mem_mode {
-	const char *name;
-	int mode;
-};
+काष्ठा mem_mode अणु
+	स्थिर अक्षर *name;
+	पूर्णांक mode;
+पूर्ण;
 
-#define MEM_OPT(n, m) \
-	{ .name = n, .mode = (m) }
+#घोषणा MEM_OPT(n, m) \
+	अणु .name = n, .mode = (m) पूर्ण
 
-#define MEM_END { .name = NULL }
+#घोषणा MEM_END अणु .name = शून्य पूर्ण
 
-static const struct mem_mode mem_modes[]={
+अटल स्थिर काष्ठा mem_mode mem_modes[]=अणु
 	MEM_OPT("load", MEM_OPERATION_LOAD),
 	MEM_OPT("store", MEM_OPERATION_STORE),
 	MEM_END
-};
+पूर्ण;
 
-static int
-parse_mem_ops(const struct option *opt, const char *str, int unset)
-{
-	int *mode = (int *)opt->value;
-	const struct mem_mode *m;
-	char *s, *os = NULL, *p;
-	int ret = -1;
+अटल पूर्णांक
+parse_mem_ops(स्थिर काष्ठा option *opt, स्थिर अक्षर *str, पूर्णांक unset)
+अणु
+	पूर्णांक *mode = (पूर्णांक *)opt->value;
+	स्थिर काष्ठा mem_mode *m;
+	अक्षर *s, *os = शून्य, *p;
+	पूर्णांक ret = -1;
 
-	if (unset)
-		return 0;
+	अगर (unset)
+		वापस 0;
 
-	/* str may be NULL in case no arg is passed to -t */
-	if (str) {
-		/* because str is read-only */
+	/* str may be शून्य in हाल no arg is passed to -t */
+	अगर (str) अणु
+		/* because str is पढ़ो-only */
 		s = os = strdup(str);
-		if (!s)
-			return -1;
+		अगर (!s)
+			वापस -1;
 
 		/* reset mode */
 		*mode = 0;
 
-		for (;;) {
-			p = strchr(s, ',');
-			if (p)
+		क्रम (;;) अणु
+			p = म_अक्षर(s, ',');
+			अगर (p)
 				*p = '\0';
 
-			for (m = mem_modes; m->name; m++) {
-				if (!strcasecmp(s, m->name))
-					break;
-			}
-			if (!m->name) {
-				fprintf(stderr, "unknown sampling op %s,"
+			क्रम (m = mem_modes; m->name; m++) अणु
+				अगर (!strहालcmp(s, m->name))
+					अवरोध;
+			पूर्ण
+			अगर (!m->name) अणु
+				ख_लिखो(मानक_त्रुटि, "unknown sampling op %s,"
 					    " check man page\n", s);
-				goto error;
-			}
+				जाओ error;
+			पूर्ण
 
 			*mode |= m->mode;
 
-			if (!p)
-				break;
+			अगर (!p)
+				अवरोध;
 
 			s = p + 1;
-		}
-	}
+		पूर्ण
+	पूर्ण
 	ret = 0;
 
-	if (*mode == 0)
+	अगर (*mode == 0)
 		*mode = MEM_OPERATION_LOAD;
 error:
-	free(os);
-	return ret;
-}
+	मुक्त(os);
+	वापस ret;
+पूर्ण
 
-int cmd_mem(int argc, const char **argv)
-{
-	struct stat st;
-	struct perf_mem mem = {
-		.tool = {
+पूर्णांक cmd_mem(पूर्णांक argc, स्थिर अक्षर **argv)
+अणु
+	काष्ठा stat st;
+	काष्ठा perf_mem mem = अणु
+		.tool = अणु
 			.sample		= process_sample_event,
 			.mmap		= perf_event__process_mmap,
 			.mmap2		= perf_event__process_mmap2,
 			.comm		= perf_event__process_comm,
 			.lost		= perf_event__process_lost,
-			.fork		= perf_event__process_fork,
+			.विभाजन		= perf_event__process_विभाजन,
 			.attr		= perf_event__process_attr,
 			.build_id	= perf_event__process_build_id,
 			.namespaces	= perf_event__process_namespaces,
@@ -439,20 +440,20 @@ int cmd_mem(int argc, const char **argv)
 			.auxtrace       = perf_event__process_auxtrace,
 			.auxtrace_error = perf_event__process_auxtrace_error,
 			.ordered_events	= true,
-		},
+		पूर्ण,
 		.input_name		 = "perf.data",
 		/*
-		 * default to both load an store sampling
+		 * शेष to both load an store sampling
 		 */
 		.operation		 = MEM_OPERATION_LOAD | MEM_OPERATION_STORE,
-	};
-	const struct option mem_options[] = {
+	पूर्ण;
+	स्थिर काष्ठा option mem_options[] = अणु
 	OPT_CALLBACK('t', "type", &mem.operation,
 		   "type", "memory operations(load,store) Default load,store",
 		    parse_mem_ops),
 	OPT_BOOLEAN('D', "dump-raw-samples", &mem.dump_raw,
 		    "dump raw samples in ASCII"),
-	OPT_BOOLEAN('U', "hide-unresolved", &mem.hide_unresolved,
+	OPT_BOOLEAN('U', "hide-unresolved", &स्मृति.सide_unresolved,
 		    "Only display entries resolved to a symbol"),
 	OPT_STRING('i', "input", &input_name, "file",
 		   "input file name"),
@@ -462,36 +463,36 @@ int cmd_mem(int argc, const char **argv)
 		   "separator",
 		   "separator for columns, no spaces will be added"
 		   " between columns '.' is reserved."),
-	OPT_BOOLEAN('f', "force", &mem.force, "don't complain, do it"),
+	OPT_BOOLEAN('f', "force", &mem.force, "don't complain, करो it"),
 	OPT_BOOLEAN('p', "phys-data", &mem.phys_addr, "Record/Report sample physical addresses"),
 	OPT_BOOLEAN(0, "data-page-size", &mem.data_page_size, "Record/Report sample data address page size"),
 	OPT_END()
-	};
-	const char *const mem_subcommands[] = { "record", "report", NULL };
-	const char *mem_usage[] = {
-		NULL,
-		NULL
-	};
+	पूर्ण;
+	स्थिर अक्षर *स्थिर mem_subcommands[] = अणु "record", "report", शून्य पूर्ण;
+	स्थिर अक्षर *mem_usage[] = अणु
+		शून्य,
+		शून्य
+	पूर्ण;
 
 	argc = parse_options_subcommand(argc, argv, mem_options, mem_subcommands,
 					mem_usage, PARSE_OPT_KEEP_UNKNOWN);
 
-	if (!argc || !(strncmp(argv[0], "rec", 3) || mem.operation))
+	अगर (!argc || !(म_भेदन(argv[0], "rec", 3) || mem.operation))
 		usage_with_options(mem_usage, mem_options);
 
-	if (!mem.input_name || !strlen(mem.input_name)) {
-		if (!fstat(STDIN_FILENO, &st) && S_ISFIFO(st.st_mode))
+	अगर (!mem.input_name || !म_माप(mem.input_name)) अणु
+		अगर (!ख_स्थिति(STDIN_खाताNO, &st) && S_ISFIFO(st.st_mode))
 			mem.input_name = "-";
-		else
+		अन्यथा
 			mem.input_name = "perf.data";
-	}
+	पूर्ण
 
-	if (!strncmp(argv[0], "rec", 3))
-		return __cmd_record(argc, argv, &mem);
-	else if (!strncmp(argv[0], "rep", 3))
-		return report_events(argc, argv, &mem);
-	else
+	अगर (!म_भेदन(argv[0], "rec", 3))
+		वापस __cmd_record(argc, argv, &mem);
+	अन्यथा अगर (!म_भेदन(argv[0], "rep", 3))
+		वापस report_events(argc, argv, &mem);
+	अन्यथा
 		usage_with_options(mem_usage, mem_options);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

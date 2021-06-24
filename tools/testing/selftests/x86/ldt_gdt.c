@@ -1,259 +1,260 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * ldt_gdt.c - Test cases for LDT and GDT access
+ * ldt_gdt.c - Test हालs क्रम LDT and GDT access
  * Copyright (c) 2015 Andrew Lutomirski
  */
 
-#define _GNU_SOURCE
-#include <err.h>
-#include <stdio.h>
-#include <stdint.h>
-#include <signal.h>
-#include <setjmp.h>
-#include <stdlib.h>
-#include <string.h>
-#include <errno.h>
-#include <unistd.h>
-#include <sys/syscall.h>
-#include <asm/ldt.h>
-#include <sys/types.h>
-#include <sys/wait.h>
-#include <stdbool.h>
-#include <pthread.h>
-#include <sched.h>
-#include <linux/futex.h>
-#include <sys/mman.h>
-#include <asm/prctl.h>
-#include <sys/prctl.h>
+#घोषणा _GNU_SOURCE
+#समावेश <err.h>
+#समावेश <मानकपन.स>
+#समावेश <मानक_निवेशt.h>
+#समावेश <संकेत.स>
+#समावेश <समलाँघ.स>
+#समावेश <मानककोष.स>
+#समावेश <माला.स>
+#समावेश <त्रुटिसं.स>
+#समावेश <unistd.h>
+#समावेश <sys/syscall.h>
+#समावेश <यंत्र/ldt.h>
+#समावेश <sys/types.h>
+#समावेश <sys/रुको.h>
+#समावेश <stdbool.h>
+#समावेश <pthपढ़ो.h>
+#समावेश <sched.h>
+#समावेश <linux/futex.h>
+#समावेश <sys/mman.h>
+#समावेश <यंत्र/prctl.h>
+#समावेश <sys/prctl.h>
 
-#define AR_ACCESSED		(1<<8)
+#घोषणा AR_ACCESSED		(1<<8)
 
-#define AR_TYPE_RODATA		(0 * (1<<9))
-#define AR_TYPE_RWDATA		(1 * (1<<9))
-#define AR_TYPE_RODATA_EXPDOWN	(2 * (1<<9))
-#define AR_TYPE_RWDATA_EXPDOWN	(3 * (1<<9))
-#define AR_TYPE_XOCODE		(4 * (1<<9))
-#define AR_TYPE_XRCODE		(5 * (1<<9))
-#define AR_TYPE_XOCODE_CONF	(6 * (1<<9))
-#define AR_TYPE_XRCODE_CONF	(7 * (1<<9))
+#घोषणा AR_TYPE_RODATA		(0 * (1<<9))
+#घोषणा AR_TYPE_RWDATA		(1 * (1<<9))
+#घोषणा AR_TYPE_RODATA_EXPDOWN	(2 * (1<<9))
+#घोषणा AR_TYPE_RWDATA_EXPDOWN	(3 * (1<<9))
+#घोषणा AR_TYPE_XOCODE		(4 * (1<<9))
+#घोषणा AR_TYPE_XRCODE		(5 * (1<<9))
+#घोषणा AR_TYPE_XOCODE_CONF	(6 * (1<<9))
+#घोषणा AR_TYPE_XRCODE_CONF	(7 * (1<<9))
 
-#define AR_DPL3			(3 * (1<<13))
+#घोषणा AR_DPL3			(3 * (1<<13))
 
-#define AR_S			(1 << 12)
-#define AR_P			(1 << 15)
-#define AR_AVL			(1 << 20)
-#define AR_L			(1 << 21)
-#define AR_DB			(1 << 22)
-#define AR_G			(1 << 23)
+#घोषणा AR_S			(1 << 12)
+#घोषणा AR_P			(1 << 15)
+#घोषणा AR_AVL			(1 << 20)
+#घोषणा AR_L			(1 << 21)
+#घोषणा AR_DB			(1 << 22)
+#घोषणा AR_G			(1 << 23)
 
-#ifdef __x86_64__
+#अगर_घोषित __x86_64__
 # define INT80_CLOBBERS "r8", "r9", "r10", "r11"
-#else
+#अन्यथा
 # define INT80_CLOBBERS
-#endif
+#पूर्ण_अगर
 
-static int nerrs;
+अटल पूर्णांक nerrs;
 
-/* Points to an array of 1024 ints, each holding its own index. */
-static const unsigned int *counter_page;
-static struct user_desc *low_user_desc;
-static struct user_desc *low_user_desc_clear;  /* Use to delete GDT entry */
-static int gdt_entry_num;
+/* Poपूर्णांकs to an array of 1024 पूर्णांकs, each holding its own index. */
+अटल स्थिर अचिन्हित पूर्णांक *counter_page;
+अटल काष्ठा user_desc *low_user_desc;
+अटल काष्ठा user_desc *low_user_desc_clear;  /* Use to delete GDT entry */
+अटल पूर्णांक gdt_entry_num;
 
-static void check_invalid_segment(uint16_t index, int ldt)
-{
-	uint32_t has_limit = 0, has_ar = 0, limit, ar;
-	uint32_t selector = (index << 3) | (ldt << 2) | 3;
+अटल व्योम check_invalid_segment(uपूर्णांक16_t index, पूर्णांक ldt)
+अणु
+	uपूर्णांक32_t has_limit = 0, has_ar = 0, limit, ar;
+	uपूर्णांक32_t selector = (index << 3) | (ldt << 2) | 3;
 
-	asm ("lsl %[selector], %[limit]\n\t"
+	यंत्र ("lsl %[selector], %[limit]\n\t"
 	     "jnz 1f\n\t"
 	     "movl $1, %[has_limit]\n\t"
 	     "1:"
 	     : [limit] "=r" (limit), [has_limit] "+rm" (has_limit)
 	     : [selector] "r" (selector));
-	asm ("larl %[selector], %[ar]\n\t"
+	यंत्र ("larl %[selector], %[ar]\n\t"
 	     "jnz 1f\n\t"
 	     "movl $1, %[has_ar]\n\t"
 	     "1:"
 	     : [ar] "=r" (ar), [has_ar] "+rm" (has_ar)
 	     : [selector] "r" (selector));
 
-	if (has_limit || has_ar) {
-		printf("[FAIL]\t%s entry %hu is valid but should be invalid\n",
+	अगर (has_limit || has_ar) अणु
+		म_लिखो("[FAIL]\t%s entry %hu is valid but should be invalid\n",
 		       (ldt ? "LDT" : "GDT"), index);
 		nerrs++;
-	} else {
-		printf("[OK]\t%s entry %hu is invalid\n",
+	पूर्ण अन्यथा अणु
+		म_लिखो("[OK]\t%s entry %hu is invalid\n",
 		       (ldt ? "LDT" : "GDT"), index);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void check_valid_segment(uint16_t index, int ldt,
-				uint32_t expected_ar, uint32_t expected_limit,
+अटल व्योम check_valid_segment(uपूर्णांक16_t index, पूर्णांक ldt,
+				uपूर्णांक32_t expected_ar, uपूर्णांक32_t expected_limit,
 				bool verbose)
-{
-	uint32_t has_limit = 0, has_ar = 0, limit, ar;
-	uint32_t selector = (index << 3) | (ldt << 2) | 3;
+अणु
+	uपूर्णांक32_t has_limit = 0, has_ar = 0, limit, ar;
+	uपूर्णांक32_t selector = (index << 3) | (ldt << 2) | 3;
 
-	asm ("lsl %[selector], %[limit]\n\t"
+	यंत्र ("lsl %[selector], %[limit]\n\t"
 	     "jnz 1f\n\t"
 	     "movl $1, %[has_limit]\n\t"
 	     "1:"
 	     : [limit] "=r" (limit), [has_limit] "+rm" (has_limit)
 	     : [selector] "r" (selector));
-	asm ("larl %[selector], %[ar]\n\t"
+	यंत्र ("larl %[selector], %[ar]\n\t"
 	     "jnz 1f\n\t"
 	     "movl $1, %[has_ar]\n\t"
 	     "1:"
 	     : [ar] "=r" (ar), [has_ar] "+rm" (has_ar)
 	     : [selector] "r" (selector));
 
-	if (!has_limit || !has_ar) {
-		printf("[FAIL]\t%s entry %hu is invalid but should be valid\n",
+	अगर (!has_limit || !has_ar) अणु
+		म_लिखो("[FAIL]\t%s entry %hu is invalid but should be valid\n",
 		       (ldt ? "LDT" : "GDT"), index);
 		nerrs++;
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/* The SDM says "bits 19:16 are undefined".  Thanks. */
 	ar &= ~0xF0000;
 
 	/*
-	 * NB: Different Linux versions do different things with the
-	 * accessed bit in set_thread_area().
+	 * NB: Dअगरferent Linux versions करो dअगरferent things with the
+	 * accessed bit in set_thपढ़ो_area().
 	 */
-	if (ar != expected_ar && ar != (expected_ar | AR_ACCESSED)) {
-		printf("[FAIL]\t%s entry %hu has AR 0x%08X but expected 0x%08X\n",
+	अगर (ar != expected_ar && ar != (expected_ar | AR_ACCESSED)) अणु
+		म_लिखो("[FAIL]\t%s entry %hu has AR 0x%08X but expected 0x%08X\n",
 		       (ldt ? "LDT" : "GDT"), index, ar, expected_ar);
 		nerrs++;
-	} else if (limit != expected_limit) {
-		printf("[FAIL]\t%s entry %hu has limit 0x%08X but expected 0x%08X\n",
+	पूर्ण अन्यथा अगर (limit != expected_limit) अणु
+		म_लिखो("[FAIL]\t%s entry %hu has limit 0x%08X but expected 0x%08X\n",
 		       (ldt ? "LDT" : "GDT"), index, limit, expected_limit);
 		nerrs++;
-	} else if (verbose) {
-		printf("[OK]\t%s entry %hu has AR 0x%08X and limit 0x%08X\n",
+	पूर्ण अन्यथा अगर (verbose) अणु
+		म_लिखो("[OK]\t%s entry %hu has AR 0x%08X and limit 0x%08X\n",
 		       (ldt ? "LDT" : "GDT"), index, ar, limit);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static bool install_valid_mode(const struct user_desc *d, uint32_t ar,
+अटल bool install_valid_mode(स्थिर काष्ठा user_desc *d, uपूर्णांक32_t ar,
 			       bool oldmode, bool ldt)
-{
-	struct user_desc desc = *d;
-	int ret;
+अणु
+	काष्ठा user_desc desc = *d;
+	पूर्णांक ret;
 
-	if (!ldt) {
-#ifndef __i386__
-		/* No point testing set_thread_area in a 64-bit build */
-		return false;
-#endif
-		if (!gdt_entry_num)
-			return false;
+	अगर (!ldt) अणु
+#अगर_अघोषित __i386__
+		/* No poपूर्णांक testing set_thपढ़ो_area in a 64-bit build */
+		वापस false;
+#पूर्ण_अगर
+		अगर (!gdt_entry_num)
+			वापस false;
 		desc.entry_number = gdt_entry_num;
 
-		ret = syscall(SYS_set_thread_area, &desc);
-	} else {
-		ret = syscall(SYS_modify_ldt, oldmode ? 1 : 0x11,
-			      &desc, sizeof(desc));
+		ret = syscall(SYS_set_thपढ़ो_area, &desc);
+	पूर्ण अन्यथा अणु
+		ret = syscall(SYS_modअगरy_ldt, oldmode ? 1 : 0x11,
+			      &desc, माप(desc));
 
-		if (ret < -1)
-			errno = -ret;
+		अगर (ret < -1)
+			त्रुटि_सं = -ret;
 
-		if (ret != 0 && errno == ENOSYS) {
-			printf("[OK]\tmodify_ldt returned -ENOSYS\n");
-			return false;
-		}
-	}
+		अगर (ret != 0 && त्रुटि_सं == ENOSYS) अणु
+			म_लिखो("[OK]\tmodify_ldt returned -ENOSYS\n");
+			वापस false;
+		पूर्ण
+	पूर्ण
 
-	if (ret == 0) {
-		uint32_t limit = desc.limit;
-		if (desc.limit_in_pages)
+	अगर (ret == 0) अणु
+		uपूर्णांक32_t limit = desc.limit;
+		अगर (desc.limit_in_pages)
 			limit = (limit << 12) + 4095;
 		check_valid_segment(desc.entry_number, ldt, ar, limit, true);
-		return true;
-	} else {
-		if (desc.seg_32bit) {
-			printf("[FAIL]\tUnexpected %s failure %d\n",
+		वापस true;
+	पूर्ण अन्यथा अणु
+		अगर (desc.seg_32bit) अणु
+			म_लिखो("[FAIL]\tUnexpected %s failure %d\n",
 			       ldt ? "modify_ldt" : "set_thread_area",
-			       errno);
+			       त्रुटि_सं);
 			nerrs++;
-			return false;
-		} else {
-			printf("[OK]\t%s rejected 16 bit segment\n",
+			वापस false;
+		पूर्ण अन्यथा अणु
+			म_लिखो("[OK]\t%s rejected 16 bit segment\n",
 			       ldt ? "modify_ldt" : "set_thread_area");
-			return false;
-		}
-	}
-}
+			वापस false;
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static bool install_valid(const struct user_desc *desc, uint32_t ar)
-{
+अटल bool install_valid(स्थिर काष्ठा user_desc *desc, uपूर्णांक32_t ar)
+अणु
 	bool ret = install_valid_mode(desc, ar, false, true);
 
-	if (desc->contents <= 1 && desc->seg_32bit &&
-	    !desc->seg_not_present) {
+	अगर (desc->contents <= 1 && desc->seg_32bit &&
+	    !desc->seg_not_present) अणु
 		/* Should work in the GDT, too. */
 		install_valid_mode(desc, ar, false, false);
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void install_invalid(const struct user_desc *desc, bool oldmode)
-{
-	int ret = syscall(SYS_modify_ldt, oldmode ? 1 : 0x11,
-			  desc, sizeof(*desc));
-	if (ret < -1)
-		errno = -ret;
-	if (ret == 0) {
+अटल व्योम install_invalid(स्थिर काष्ठा user_desc *desc, bool oldmode)
+अणु
+	पूर्णांक ret = syscall(SYS_modअगरy_ldt, oldmode ? 1 : 0x11,
+			  desc, माप(*desc));
+	अगर (ret < -1)
+		त्रुटि_सं = -ret;
+	अगर (ret == 0) अणु
 		check_invalid_segment(desc->entry_number, 1);
-	} else if (errno == ENOSYS) {
-		printf("[OK]\tmodify_ldt returned -ENOSYS\n");
-	} else {
-		if (desc->seg_32bit) {
-			printf("[FAIL]\tUnexpected modify_ldt failure %d\n",
-			       errno);
+	पूर्ण अन्यथा अगर (त्रुटि_सं == ENOSYS) अणु
+		म_लिखो("[OK]\tmodify_ldt returned -ENOSYS\n");
+	पूर्ण अन्यथा अणु
+		अगर (desc->seg_32bit) अणु
+			म_लिखो("[FAIL]\tUnexpected modify_ldt failure %d\n",
+			       त्रुटि_सं);
 			nerrs++;
-		} else {
-			printf("[OK]\tmodify_ldt rejected 16 bit segment\n");
-		}
-	}
-}
+		पूर्ण अन्यथा अणु
+			म_लिखो("[OK]\tmodify_ldt rejected 16 bit segment\n");
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static int safe_modify_ldt(int func, struct user_desc *ptr,
-			   unsigned long bytecount)
-{
-	int ret = syscall(SYS_modify_ldt, 0x11, ptr, bytecount);
-	if (ret < -1)
-		errno = -ret;
-	return ret;
-}
+अटल पूर्णांक safe_modअगरy_ldt(पूर्णांक func, काष्ठा user_desc *ptr,
+			   अचिन्हित दीर्घ bytecount)
+अणु
+	पूर्णांक ret = syscall(SYS_modअगरy_ldt, 0x11, ptr, bytecount);
+	अगर (ret < -1)
+		त्रुटि_सं = -ret;
+	वापस ret;
+पूर्ण
 
-static void fail_install(struct user_desc *desc)
-{
-	if (safe_modify_ldt(0x11, desc, sizeof(*desc)) == 0) {
-		printf("[FAIL]\tmodify_ldt accepted a bad descriptor\n");
+अटल व्योम fail_install(काष्ठा user_desc *desc)
+अणु
+	अगर (safe_modअगरy_ldt(0x11, desc, माप(*desc)) == 0) अणु
+		म_लिखो("[FAIL]\tmodify_ldt accepted a bad descriptor\n");
 		nerrs++;
-	} else if (errno == ENOSYS) {
-		printf("[OK]\tmodify_ldt returned -ENOSYS\n");
-	} else {
-		printf("[OK]\tmodify_ldt failure %d\n", errno);
-	}
-}
+	पूर्ण अन्यथा अगर (त्रुटि_सं == ENOSYS) अणु
+		म_लिखो("[OK]\tmodify_ldt returned -ENOSYS\n");
+	पूर्ण अन्यथा अणु
+		म_लिखो("[OK]\tmodify_ldt failure %d\n", त्रुटि_सं);
+	पूर्ण
+पूर्ण
 
-static void do_simple_tests(void)
-{
-	struct user_desc desc = {
+अटल व्योम करो_simple_tests(व्योम)
+अणु
+	काष्ठा user_desc desc = अणु
 		.entry_number    = 0,
 		.base_addr       = 0,
 		.limit           = 10,
 		.seg_32bit       = 1,
-		.contents        = 2, /* Code, not conforming */
-		.read_exec_only  = 0,
+		.contents        = 2, /* Code, not conक्रमming */
+		.पढ़ो_exec_only  = 0,
 		.limit_in_pages  = 0,
 		.seg_not_present = 0,
 		.useable         = 0
-	};
+	पूर्ण;
 	install_valid(&desc, AR_DPL3 | AR_TYPE_XRCODE | AR_S | AR_P | AR_DB);
 
 	desc.limit_in_pages = 1;
@@ -289,7 +290,7 @@ static void do_simple_tests(void)
 	install_valid(&desc, AR_DPL3 | AR_TYPE_RWDATA |
 		      AR_S | AR_DB | AR_G | AR_AVL);
 
-	desc.read_exec_only = 1;
+	desc.पढ़ो_exec_only = 1;
 	install_valid(&desc, AR_DPL3 | AR_TYPE_RODATA |
 		      AR_S | AR_DB | AR_G | AR_AVL);
 
@@ -297,7 +298,7 @@ static void do_simple_tests(void)
 	install_valid(&desc, AR_DPL3 | AR_TYPE_RODATA_EXPDOWN |
 		      AR_S | AR_DB | AR_G | AR_AVL);
 
-	desc.read_exec_only = 0;
+	desc.पढ़ो_exec_only = 0;
 	desc.limit_in_pages = 0;
 	install_valid(&desc, AR_DPL3 | AR_TYPE_RWDATA_EXPDOWN |
 		      AR_S | AR_DB | AR_AVL);
@@ -306,92 +307,92 @@ static void do_simple_tests(void)
 	install_valid(&desc, AR_DPL3 | AR_TYPE_XRCODE_CONF |
 		      AR_S | AR_DB | AR_AVL);
 
-	desc.read_exec_only = 1;
+	desc.पढ़ो_exec_only = 1;
 	install_valid(&desc, AR_DPL3 | AR_TYPE_XOCODE_CONF |
 		      AR_S | AR_DB | AR_AVL);
 
-	desc.read_exec_only = 0;
+	desc.पढ़ो_exec_only = 0;
 	desc.contents = 2;
 	install_valid(&desc, AR_DPL3 | AR_TYPE_XRCODE |
 		      AR_S | AR_DB | AR_AVL);
 
-	desc.read_exec_only = 1;
+	desc.पढ़ो_exec_only = 1;
 
-#ifdef __x86_64__
+#अगर_घोषित __x86_64__
 	desc.lm = 1;
 	install_valid(&desc, AR_DPL3 | AR_TYPE_XOCODE |
 		      AR_S | AR_DB | AR_AVL);
 	desc.lm = 0;
-#endif
+#पूर्ण_अगर
 
 	bool entry1_okay = install_valid(&desc, AR_DPL3 | AR_TYPE_XOCODE |
 					 AR_S | AR_DB | AR_AVL);
 
-	if (entry1_okay) {
-		printf("[RUN]\tTest fork\n");
-		pid_t child = fork();
-		if (child == 0) {
+	अगर (entry1_okay) अणु
+		म_लिखो("[RUN]\tTest fork\n");
+		pid_t child = विभाजन();
+		अगर (child == 0) अणु
 			nerrs = 0;
 			check_valid_segment(desc.entry_number, 1,
 					    AR_DPL3 | AR_TYPE_XOCODE |
 					    AR_S | AR_DB | AR_AVL, desc.limit,
 					    true);
 			check_invalid_segment(1, 1);
-			exit(nerrs ? 1 : 0);
-		} else {
-			int status;
-			if (waitpid(child, &status, 0) != child ||
-			    !WIFEXITED(status)) {
-				printf("[FAIL]\tChild died\n");
+			निकास(nerrs ? 1 : 0);
+		पूर्ण अन्यथा अणु
+			पूर्णांक status;
+			अगर (रुकोpid(child, &status, 0) != child ||
+			    !WIFEXITED(status)) अणु
+				म_लिखो("[FAIL]\tChild died\n");
 				nerrs++;
-			} else if (WEXITSTATUS(status) != 0) {
-				printf("[FAIL]\tChild failed\n");
+			पूर्ण अन्यथा अगर (WEXITSTATUS(status) != 0) अणु
+				म_लिखो("[FAIL]\tChild failed\n");
 				nerrs++;
-			} else {
-				printf("[OK]\tChild succeeded\n");
-			}
-		}
+			पूर्ण अन्यथा अणु
+				म_लिखो("[OK]\tChild succeeded\n");
+			पूर्ण
+		पूर्ण
 
-		printf("[RUN]\tTest size\n");
-		int i;
-		for (i = 0; i < 8192; i++) {
+		म_लिखो("[RUN]\tTest size\n");
+		पूर्णांक i;
+		क्रम (i = 0; i < 8192; i++) अणु
 			desc.entry_number = i;
 			desc.limit = i;
-			if (safe_modify_ldt(0x11, &desc, sizeof(desc)) != 0) {
-				printf("[FAIL]\tFailed to install entry %d\n", i);
+			अगर (safe_modअगरy_ldt(0x11, &desc, माप(desc)) != 0) अणु
+				म_लिखो("[FAIL]\tFailed to install entry %d\n", i);
 				nerrs++;
-				break;
-			}
-		}
-		for (int j = 0; j < i; j++) {
+				अवरोध;
+			पूर्ण
+		पूर्ण
+		क्रम (पूर्णांक j = 0; j < i; j++) अणु
 			check_valid_segment(j, 1, AR_DPL3 | AR_TYPE_XOCODE |
 					    AR_S | AR_DB | AR_AVL, j, false);
-		}
-		printf("[DONE]\tSize test\n");
-	} else {
-		printf("[SKIP]\tSkipping fork and size tests because we have no LDT\n");
-	}
+		पूर्ण
+		म_लिखो("[DONE]\tSize test\n");
+	पूर्ण अन्यथा अणु
+		म_लिखो("[SKIP]\tSkipping fork and size tests because we have no LDT\n");
+	पूर्ण
 
 	/* Test entry_number too high. */
 	desc.entry_number = 8192;
 	fail_install(&desc);
 
-	/* Test deletion and actions mistakeable for deletion. */
-	memset(&desc, 0, sizeof(desc));
+	/* Test deletion and actions mistakeable क्रम deletion. */
+	स_रखो(&desc, 0, माप(desc));
 	install_valid(&desc, AR_DPL3 | AR_TYPE_RWDATA | AR_S | AR_P);
 
 	desc.seg_not_present = 1;
 	install_valid(&desc, AR_DPL3 | AR_TYPE_RWDATA | AR_S);
 
 	desc.seg_not_present = 0;
-	desc.read_exec_only = 1;
+	desc.पढ़ो_exec_only = 1;
 	install_valid(&desc, AR_DPL3 | AR_TYPE_RODATA | AR_S | AR_P);
 
-	desc.read_exec_only = 0;
+	desc.पढ़ो_exec_only = 0;
 	desc.seg_not_present = 1;
 	install_valid(&desc, AR_DPL3 | AR_TYPE_RWDATA | AR_S);
 
-	desc.read_exec_only = 1;
+	desc.पढ़ो_exec_only = 1;
 	desc.limit = 1;
 	install_valid(&desc, AR_DPL3 | AR_TYPE_RODATA | AR_S);
 
@@ -404,7 +405,7 @@ static void do_simple_tests(void)
 
 	desc.seg_not_present = 0;
 	desc.seg_32bit = 1;
-	desc.read_exec_only = 0;
+	desc.पढ़ो_exec_only = 0;
 	desc.limit = 0xfffff;
 
 	install_valid(&desc, AR_DPL3 | AR_TYPE_RWDATA | AR_S | AR_P | AR_DB);
@@ -412,516 +413,516 @@ static void do_simple_tests(void)
 	desc.limit_in_pages = 1;
 
 	install_valid(&desc, AR_DPL3 | AR_TYPE_RWDATA | AR_S | AR_P | AR_DB | AR_G);
-	desc.read_exec_only = 1;
+	desc.पढ़ो_exec_only = 1;
 	install_valid(&desc, AR_DPL3 | AR_TYPE_RODATA | AR_S | AR_P | AR_DB | AR_G);
 	desc.contents = 1;
-	desc.read_exec_only = 0;
+	desc.पढ़ो_exec_only = 0;
 	install_valid(&desc, AR_DPL3 | AR_TYPE_RWDATA_EXPDOWN | AR_S | AR_P | AR_DB | AR_G);
-	desc.read_exec_only = 1;
+	desc.पढ़ो_exec_only = 1;
 	install_valid(&desc, AR_DPL3 | AR_TYPE_RODATA_EXPDOWN | AR_S | AR_P | AR_DB | AR_G);
 
 	desc.limit = 0;
 	install_invalid(&desc, true);
-}
+पूर्ण
 
 /*
- * 0: thread is idle
- * 1: thread armed
- * 2: thread should clear LDT entry 0
- * 3: thread should exit
+ * 0: thपढ़ो is idle
+ * 1: thपढ़ो armed
+ * 2: thपढ़ो should clear LDT entry 0
+ * 3: thपढ़ो should निकास
  */
-static volatile unsigned int ftx;
+अटल अस्थिर अचिन्हित पूर्णांक ftx;
 
-static void *threadproc(void *ctx)
-{
+अटल व्योम *thपढ़ोproc(व्योम *ctx)
+अणु
 	cpu_set_t cpuset;
 	CPU_ZERO(&cpuset);
 	CPU_SET(1, &cpuset);
-	if (sched_setaffinity(0, sizeof(cpuset), &cpuset) != 0)
+	अगर (sched_setaffinity(0, माप(cpuset), &cpuset) != 0)
 		err(1, "sched_setaffinity to CPU 1");	/* should never fail */
 
-	while (1) {
-		syscall(SYS_futex, &ftx, FUTEX_WAIT, 0, NULL, NULL, 0);
-		while (ftx != 2) {
-			if (ftx >= 3)
-				return NULL;
-		}
+	जबतक (1) अणु
+		syscall(SYS_futex, &ftx, FUTEX_WAIT, 0, शून्य, शून्य, 0);
+		जबतक (ftx != 2) अणु
+			अगर (ftx >= 3)
+				वापस शून्य;
+		पूर्ण
 
 		/* clear LDT entry 0 */
-		const struct user_desc desc = {};
-		if (syscall(SYS_modify_ldt, 1, &desc, sizeof(desc)) != 0)
+		स्थिर काष्ठा user_desc desc = अणुपूर्ण;
+		अगर (syscall(SYS_modअगरy_ldt, 1, &desc, माप(desc)) != 0)
 			err(1, "modify_ldt");
 
 		/* If ftx == 2, set it to zero.  If ftx == 100, quit. */
-		unsigned int x = -2;
-		asm volatile ("lock xaddl %[x], %[ftx]" :
+		अचिन्हित पूर्णांक x = -2;
+		यंत्र अस्थिर ("lock xaddl %[x], %[ftx]" :
 			      [x] "+r" (x), [ftx] "+m" (ftx));
-		if (x != 2)
-			return NULL;
-	}
-}
+		अगर (x != 2)
+			वापस शून्य;
+	पूर्ण
+पूर्ण
 
-#ifdef __i386__
+#अगर_घोषित __i386__
 
-#ifndef SA_RESTORE
-#define SA_RESTORER 0x04000000
-#endif
+#अगर_अघोषित SA_RESTORE
+#घोषणा SA_RESTORER 0x04000000
+#पूर्ण_अगर
 
 /*
  * The UAPI header calls this 'struct sigaction', which conflicts with
  * glibc.  Sigh.
  */
-struct fake_ksigaction {
-	void *handler;  /* the real type is nasty */
-	unsigned long sa_flags;
-	void (*sa_restorer)(void);
-	unsigned char sigset[8];
-};
+काष्ठा fake_ksigaction अणु
+	व्योम *handler;  /* the real type is nasty */
+	अचिन्हित दीर्घ sa_flags;
+	व्योम (*sa_restorer)(व्योम);
+	अचिन्हित अक्षर sigset[8];
+पूर्ण;
 
-static void fix_sa_restorer(int sig)
-{
-	struct fake_ksigaction ksa;
+अटल व्योम fix_sa_restorer(पूर्णांक sig)
+अणु
+	काष्ठा fake_ksigaction ksa;
 
-	if (syscall(SYS_rt_sigaction, sig, NULL, &ksa, 8) == 0) {
+	अगर (syscall(SYS_rt_sigaction, sig, शून्य, &ksa, 8) == 0) अणु
 		/*
-		 * glibc has a nasty bug: it sometimes writes garbage to
-		 * sa_restorer.  This interacts quite badly with anything
+		 * glibc has a nasty bug: it someबार ग_लिखोs garbage to
+		 * sa_restorer.  This पूर्णांकeracts quite badly with anything
 		 * that fiddles with SS because it can trigger legacy
-		 * stack switching.  Patch it up.  See:
+		 * stack चयनing.  Patch it up.  See:
 		 *
 		 * https://sourceware.org/bugzilla/show_bug.cgi?id=21269
 		 */
-		if (!(ksa.sa_flags & SA_RESTORER) && ksa.sa_restorer) {
-			ksa.sa_restorer = NULL;
-			if (syscall(SYS_rt_sigaction, sig, &ksa, NULL,
-				    sizeof(ksa.sigset)) != 0)
+		अगर (!(ksa.sa_flags & SA_RESTORER) && ksa.sa_restorer) अणु
+			ksa.sa_restorer = शून्य;
+			अगर (syscall(SYS_rt_sigaction, sig, &ksa, शून्य,
+				    माप(ksa.sigset)) != 0)
 				err(1, "rt_sigaction");
-		}
-	}
-}
-#else
-static void fix_sa_restorer(int sig)
-{
+		पूर्ण
+	पूर्ण
+पूर्ण
+#अन्यथा
+अटल व्योम fix_sa_restorer(पूर्णांक sig)
+अणु
 	/* 64-bit glibc works fine. */
-}
-#endif
+पूर्ण
+#पूर्ण_अगर
 
-static void sethandler(int sig, void (*handler)(int, siginfo_t *, void *),
-		       int flags)
-{
-	struct sigaction sa;
-	memset(&sa, 0, sizeof(sa));
+अटल व्योम sethandler(पूर्णांक sig, व्योम (*handler)(पूर्णांक, siginfo_t *, व्योम *),
+		       पूर्णांक flags)
+अणु
+	काष्ठा sigaction sa;
+	स_रखो(&sa, 0, माप(sa));
 	sa.sa_sigaction = handler;
 	sa.sa_flags = SA_SIGINFO | flags;
 	sigemptyset(&sa.sa_mask);
-	if (sigaction(sig, &sa, 0))
+	अगर (sigaction(sig, &sa, 0))
 		err(1, "sigaction");
 
 	fix_sa_restorer(sig);
-}
+पूर्ण
 
-static jmp_buf jmpbuf;
+अटल लाँघ_बफ jmpbuf;
 
-static void sigsegv(int sig, siginfo_t *info, void *ctx_void)
-{
-	siglongjmp(jmpbuf, 1);
-}
+अटल व्योम sigsegv(पूर्णांक sig, siginfo_t *info, व्योम *ctx_व्योम)
+अणु
+	sigदीर्घ_लाँघ(jmpbuf, 1);
+पूर्ण
 
-static void do_multicpu_tests(void)
-{
+अटल व्योम करो_multicpu_tests(व्योम)
+अणु
 	cpu_set_t cpuset;
-	pthread_t thread;
-	int failures = 0, iters = 5, i;
-	unsigned short orig_ss;
+	pthपढ़ो_t thपढ़ो;
+	पूर्णांक failures = 0, iters = 5, i;
+	अचिन्हित लघु orig_ss;
 
 	CPU_ZERO(&cpuset);
 	CPU_SET(1, &cpuset);
-	if (sched_setaffinity(0, sizeof(cpuset), &cpuset) != 0) {
-		printf("[SKIP]\tCannot set affinity to CPU 1\n");
-		return;
-	}
+	अगर (sched_setaffinity(0, माप(cpuset), &cpuset) != 0) अणु
+		म_लिखो("[SKIP]\tCannot set affinity to CPU 1\n");
+		वापस;
+	पूर्ण
 
 	CPU_ZERO(&cpuset);
 	CPU_SET(0, &cpuset);
-	if (sched_setaffinity(0, sizeof(cpuset), &cpuset) != 0) {
-		printf("[SKIP]\tCannot set affinity to CPU 0\n");
-		return;
-	}
+	अगर (sched_setaffinity(0, माप(cpuset), &cpuset) != 0) अणु
+		म_लिखो("[SKIP]\tCannot set affinity to CPU 0\n");
+		वापस;
+	पूर्ण
 
-	sethandler(SIGSEGV, sigsegv, 0);
-#ifdef __i386__
-	/* True 32-bit kernels send SIGILL instead of SIGSEGV on IRET faults. */
-	sethandler(SIGILL, sigsegv, 0);
-#endif
+	sethandler(संक_अंश, sigsegv, 0);
+#अगर_घोषित __i386__
+	/* True 32-bit kernels send संक_अवैध instead of संक_अंश on IRET faults. */
+	sethandler(संक_अवैध, sigsegv, 0);
+#पूर्ण_अगर
 
-	printf("[RUN]\tCross-CPU LDT invalidation\n");
+	म_लिखो("[RUN]\tCross-CPU LDT invalidation\n");
 
-	if (pthread_create(&thread, 0, threadproc, 0) != 0)
+	अगर (pthपढ़ो_create(&thपढ़ो, 0, thपढ़ोproc, 0) != 0)
 		err(1, "pthread_create");
 
-	asm volatile ("mov %%ss, %0" : "=rm" (orig_ss));
+	यंत्र अस्थिर ("mov %%ss, %0" : "=rm" (orig_ss));
 
-	for (i = 0; i < 5; i++) {
-		if (sigsetjmp(jmpbuf, 1) != 0)
-			continue;
+	क्रम (i = 0; i < 5; i++) अणु
+		अगर (sigबनाओ_लाँघ(jmpbuf, 1) != 0)
+			जारी;
 
-		/* Make sure the thread is ready after the last test. */
-		while (ftx != 0)
+		/* Make sure the thपढ़ो is पढ़ोy after the last test. */
+		जबतक (ftx != 0)
 			;
 
-		struct user_desc desc = {
+		काष्ठा user_desc desc = अणु
 			.entry_number    = 0,
 			.base_addr       = 0,
 			.limit           = 0xfffff,
 			.seg_32bit       = 1,
 			.contents        = 0, /* Data */
-			.read_exec_only  = 0,
+			.पढ़ो_exec_only  = 0,
 			.limit_in_pages  = 1,
 			.seg_not_present = 0,
 			.useable         = 0
-		};
+		पूर्ण;
 
-		if (safe_modify_ldt(0x11, &desc, sizeof(desc)) != 0) {
-			if (errno != ENOSYS)
+		अगर (safe_modअगरy_ldt(0x11, &desc, माप(desc)) != 0) अणु
+			अगर (त्रुटि_सं != ENOSYS)
 				err(1, "modify_ldt");
-			printf("[SKIP]\tmodify_ldt unavailable\n");
-			break;
-		}
+			म_लिखो("[SKIP]\tmodify_ldt unavailable\n");
+			अवरोध;
+		पूर्ण
 
-		/* Arm the thread. */
+		/* Arm the thपढ़ो. */
 		ftx = 1;
-		syscall(SYS_futex, &ftx, FUTEX_WAKE, 0, NULL, NULL, 0);
+		syscall(SYS_futex, &ftx, FUTEX_WAKE, 0, शून्य, शून्य, 0);
 
-		asm volatile ("mov %0, %%ss" : : "r" (0x7));
+		यंत्र अस्थिर ("mov %0, %%ss" : : "r" (0x7));
 
 		/* Go! */
 		ftx = 2;
 
-		while (ftx != 0)
+		जबतक (ftx != 0)
 			;
 
 		/*
-		 * On success, modify_ldt will segfault us synchronously,
-		 * and we'll escape via siglongjmp.
+		 * On success, modअगरy_ldt will segfault us synchronously,
+		 * and we'll escape via sigदीर्घ_लाँघ.
 		 */
 
 		failures++;
-		asm volatile ("mov %0, %%ss" : : "rm" (orig_ss));
-	}
+		यंत्र अस्थिर ("mov %0, %%ss" : : "rm" (orig_ss));
+	पूर्ण
 
-	ftx = 100;  /* Kill the thread. */
-	syscall(SYS_futex, &ftx, FUTEX_WAKE, 0, NULL, NULL, 0);
+	ftx = 100;  /* Kill the thपढ़ो. */
+	syscall(SYS_futex, &ftx, FUTEX_WAKE, 0, शून्य, शून्य, 0);
 
-	if (pthread_join(thread, NULL) != 0)
+	अगर (pthपढ़ो_join(thपढ़ो, शून्य) != 0)
 		err(1, "pthread_join");
 
-	if (failures) {
-		printf("[FAIL]\t%d of %d iterations failed\n", failures, iters);
+	अगर (failures) अणु
+		म_लिखो("[FAIL]\t%d of %d iterations failed\n", failures, iters);
 		nerrs++;
-	} else {
-		printf("[OK]\tAll %d iterations succeeded\n", iters);
-	}
-}
+	पूर्ण अन्यथा अणु
+		म_लिखो("[OK]\tAll %d iterations succeeded\n", iters);
+	पूर्ण
+पूर्ण
 
-static int finish_exec_test(void)
-{
+अटल पूर्णांक finish_exec_test(व्योम)
+अणु
 	/*
 	 * Older kernel versions did inherit the LDT on exec() which is
 	 * wrong because exec() starts from a clean state.
 	 */
 	check_invalid_segment(0, 1);
 
-	return nerrs ? 1 : 0;
-}
+	वापस nerrs ? 1 : 0;
+पूर्ण
 
-static void do_exec_test(void)
-{
-	printf("[RUN]\tTest exec\n");
+अटल व्योम करो_exec_test(व्योम)
+अणु
+	म_लिखो("[RUN]\tTest exec\n");
 
-	struct user_desc desc = {
+	काष्ठा user_desc desc = अणु
 		.entry_number    = 0,
 		.base_addr       = 0,
 		.limit           = 42,
 		.seg_32bit       = 1,
-		.contents        = 2, /* Code, not conforming */
-		.read_exec_only  = 0,
+		.contents        = 2, /* Code, not conक्रमming */
+		.पढ़ो_exec_only  = 0,
 		.limit_in_pages  = 0,
 		.seg_not_present = 0,
 		.useable         = 0
-	};
+	पूर्ण;
 	install_valid(&desc, AR_DPL3 | AR_TYPE_XRCODE | AR_S | AR_P | AR_DB);
 
-	pid_t child = fork();
-	if (child == 0) {
-		execl("/proc/self/exe", "ldt_gdt_test_exec", NULL);
-		printf("[FAIL]\tCould not exec self\n");
-		exit(1);	/* exec failed */
-	} else {
-		int status;
-		if (waitpid(child, &status, 0) != child ||
-		    !WIFEXITED(status)) {
-			printf("[FAIL]\tChild died\n");
+	pid_t child = विभाजन();
+	अगर (child == 0) अणु
+		execl("/proc/self/exe", "ldt_gdt_test_exec", शून्य);
+		म_लिखो("[FAIL]\tCould not exec self\n");
+		निकास(1);	/* exec failed */
+	पूर्ण अन्यथा अणु
+		पूर्णांक status;
+		अगर (रुकोpid(child, &status, 0) != child ||
+		    !WIFEXITED(status)) अणु
+			म_लिखो("[FAIL]\tChild died\n");
 			nerrs++;
-		} else if (WEXITSTATUS(status) != 0) {
-			printf("[FAIL]\tChild failed\n");
+		पूर्ण अन्यथा अगर (WEXITSTATUS(status) != 0) अणु
+			म_लिखो("[FAIL]\tChild failed\n");
 			nerrs++;
-		} else {
-			printf("[OK]\tChild succeeded\n");
-		}
-	}
-}
+		पूर्ण अन्यथा अणु
+			म_लिखो("[OK]\tChild succeeded\n");
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static void setup_counter_page(void)
-{
-	unsigned int *page = mmap(NULL, 4096, PROT_READ | PROT_WRITE,
+अटल व्योम setup_counter_page(व्योम)
+अणु
+	अचिन्हित पूर्णांक *page = mmap(शून्य, 4096, PROT_READ | PROT_WRITE,
 			 MAP_ANONYMOUS | MAP_PRIVATE | MAP_32BIT, -1, 0);
-	if (page == MAP_FAILED)
+	अगर (page == MAP_FAILED)
 		err(1, "mmap");
 
-	for (int i = 0; i < 1024; i++)
+	क्रम (पूर्णांक i = 0; i < 1024; i++)
 		page[i] = i;
 	counter_page = page;
-}
+पूर्ण
 
-static int invoke_set_thread_area(void)
-{
-	int ret;
-	asm volatile ("int $0x80"
+अटल पूर्णांक invoke_set_thपढ़ो_area(व्योम)
+अणु
+	पूर्णांक ret;
+	यंत्र अस्थिर ("int $0x80"
 		      : "=a" (ret), "+m" (low_user_desc) :
 			"a" (243), "b" (low_user_desc)
 		      : INT80_CLOBBERS);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void setup_low_user_desc(void)
-{
-	low_user_desc = mmap(NULL, 2 * sizeof(struct user_desc),
+अटल व्योम setup_low_user_desc(व्योम)
+अणु
+	low_user_desc = mmap(शून्य, 2 * माप(काष्ठा user_desc),
 			     PROT_READ | PROT_WRITE,
 			     MAP_ANONYMOUS | MAP_PRIVATE | MAP_32BIT, -1, 0);
-	if (low_user_desc == MAP_FAILED)
+	अगर (low_user_desc == MAP_FAILED)
 		err(1, "mmap");
 
 	low_user_desc->entry_number	= -1;
-	low_user_desc->base_addr	= (unsigned long)&counter_page[1];
+	low_user_desc->base_addr	= (अचिन्हित दीर्घ)&counter_page[1];
 	low_user_desc->limit		= 0xfffff;
 	low_user_desc->seg_32bit	= 1;
 	low_user_desc->contents		= 0; /* Data, grow-up*/
-	low_user_desc->read_exec_only	= 0;
+	low_user_desc->पढ़ो_exec_only	= 0;
 	low_user_desc->limit_in_pages	= 1;
 	low_user_desc->seg_not_present	= 0;
 	low_user_desc->useable		= 0;
 
-	if (invoke_set_thread_area() == 0) {
+	अगर (invoke_set_thपढ़ो_area() == 0) अणु
 		gdt_entry_num = low_user_desc->entry_number;
-		printf("[NOTE]\tset_thread_area is available; will use GDT index %d\n", gdt_entry_num);
-	} else {
-		printf("[NOTE]\tset_thread_area is unavailable\n");
-	}
+		म_लिखो("[NOTE]\tset_thread_area is available; will use GDT index %d\n", gdt_entry_num);
+	पूर्ण अन्यथा अणु
+		म_लिखो("[NOTE]\tset_thread_area is unavailable\n");
+	पूर्ण
 
 	low_user_desc_clear = low_user_desc + 1;
 	low_user_desc_clear->entry_number = gdt_entry_num;
-	low_user_desc_clear->read_exec_only = 1;
+	low_user_desc_clear->पढ़ो_exec_only = 1;
 	low_user_desc_clear->seg_not_present = 1;
-}
+पूर्ण
 
-static void test_gdt_invalidation(void)
-{
-	if (!gdt_entry_num)
-		return;	/* 64-bit only system -- we can't use set_thread_area */
+अटल व्योम test_gdt_invalidation(व्योम)
+अणु
+	अगर (!gdt_entry_num)
+		वापस;	/* 64-bit only प्रणाली -- we can't use set_thपढ़ो_area */
 
-	unsigned short prev_sel;
-	unsigned short sel;
-	unsigned int eax;
-	const char *result;
-#ifdef __x86_64__
-	unsigned long saved_base;
-	unsigned long new_base;
-#endif
+	अचिन्हित लघु prev_sel;
+	अचिन्हित लघु sel;
+	अचिन्हित पूर्णांक eax;
+	स्थिर अक्षर *result;
+#अगर_घोषित __x86_64__
+	अचिन्हित दीर्घ saved_base;
+	अचिन्हित दीर्घ new_base;
+#पूर्ण_अगर
 
 	/* Test DS */
-	invoke_set_thread_area();
+	invoke_set_thपढ़ो_area();
 	eax = 243;
 	sel = (gdt_entry_num << 3) | 3;
-	asm volatile ("movw %%ds, %[prev_sel]\n\t"
+	यंत्र अस्थिर ("movw %%ds, %[prev_sel]\n\t"
 		      "movw %[sel], %%ds\n\t"
-#ifdef __i386__
+#अगर_घोषित __i386__
 		      "pushl %%ebx\n\t"
-#endif
+#पूर्ण_अगर
 		      "movl %[arg1], %%ebx\n\t"
 		      "int $0x80\n\t"	/* Should invalidate ds */
-#ifdef __i386__
+#अगर_घोषित __i386__
 		      "popl %%ebx\n\t"
-#endif
+#पूर्ण_अगर
 		      "movw %%ds, %[sel]\n\t"
 		      "movw %[prev_sel], %%ds"
 		      : [prev_sel] "=&r" (prev_sel), [sel] "+r" (sel),
 			"+a" (eax)
 		      : "m" (low_user_desc_clear),
-			[arg1] "r" ((unsigned int)(unsigned long)low_user_desc_clear)
+			[arg1] "r" ((अचिन्हित पूर्णांक)(अचिन्हित दीर्घ)low_user_desc_clear)
 		      : INT80_CLOBBERS);
 
-	if (sel != 0) {
+	अगर (sel != 0) अणु
 		result = "FAIL";
 		nerrs++;
-	} else {
+	पूर्ण अन्यथा अणु
 		result = "OK";
-	}
-	printf("[%s]\tInvalidate DS with set_thread_area: new DS = 0x%hx\n",
+	पूर्ण
+	म_लिखो("[%s]\tInvalidate DS with set_thread_area: new DS = 0x%hx\n",
 	       result, sel);
 
 	/* Test ES */
-	invoke_set_thread_area();
+	invoke_set_thपढ़ो_area();
 	eax = 243;
 	sel = (gdt_entry_num << 3) | 3;
-	asm volatile ("movw %%es, %[prev_sel]\n\t"
+	यंत्र अस्थिर ("movw %%es, %[prev_sel]\n\t"
 		      "movw %[sel], %%es\n\t"
-#ifdef __i386__
+#अगर_घोषित __i386__
 		      "pushl %%ebx\n\t"
-#endif
+#पूर्ण_अगर
 		      "movl %[arg1], %%ebx\n\t"
 		      "int $0x80\n\t"	/* Should invalidate es */
-#ifdef __i386__
+#अगर_घोषित __i386__
 		      "popl %%ebx\n\t"
-#endif
+#पूर्ण_अगर
 		      "movw %%es, %[sel]\n\t"
 		      "movw %[prev_sel], %%es"
 		      : [prev_sel] "=&r" (prev_sel), [sel] "+r" (sel),
 			"+a" (eax)
 		      : "m" (low_user_desc_clear),
-			[arg1] "r" ((unsigned int)(unsigned long)low_user_desc_clear)
+			[arg1] "r" ((अचिन्हित पूर्णांक)(अचिन्हित दीर्घ)low_user_desc_clear)
 		      : INT80_CLOBBERS);
 
-	if (sel != 0) {
+	अगर (sel != 0) अणु
 		result = "FAIL";
 		nerrs++;
-	} else {
+	पूर्ण अन्यथा अणु
 		result = "OK";
-	}
-	printf("[%s]\tInvalidate ES with set_thread_area: new ES = 0x%hx\n",
+	पूर्ण
+	म_लिखो("[%s]\tInvalidate ES with set_thread_area: new ES = 0x%hx\n",
 	       result, sel);
 
 	/* Test FS */
-	invoke_set_thread_area();
+	invoke_set_thपढ़ो_area();
 	eax = 243;
 	sel = (gdt_entry_num << 3) | 3;
-#ifdef __x86_64__
+#अगर_घोषित __x86_64__
 	syscall(SYS_arch_prctl, ARCH_GET_FS, &saved_base);
-#endif
-	asm volatile ("movw %%fs, %[prev_sel]\n\t"
+#पूर्ण_अगर
+	यंत्र अस्थिर ("movw %%fs, %[prev_sel]\n\t"
 		      "movw %[sel], %%fs\n\t"
-#ifdef __i386__
+#अगर_घोषित __i386__
 		      "pushl %%ebx\n\t"
-#endif
+#पूर्ण_अगर
 		      "movl %[arg1], %%ebx\n\t"
 		      "int $0x80\n\t"	/* Should invalidate fs */
-#ifdef __i386__
+#अगर_घोषित __i386__
 		      "popl %%ebx\n\t"
-#endif
+#पूर्ण_अगर
 		      "movw %%fs, %[sel]\n\t"
 		      : [prev_sel] "=&r" (prev_sel), [sel] "+r" (sel),
 			"+a" (eax)
 		      : "m" (low_user_desc_clear),
-			[arg1] "r" ((unsigned int)(unsigned long)low_user_desc_clear)
+			[arg1] "r" ((अचिन्हित पूर्णांक)(अचिन्हित दीर्घ)low_user_desc_clear)
 		      : INT80_CLOBBERS);
 
-#ifdef __x86_64__
+#अगर_घोषित __x86_64__
 	syscall(SYS_arch_prctl, ARCH_GET_FS, &new_base);
-#endif
+#पूर्ण_अगर
 
-	/* Restore FS/BASE for glibc */
-	asm volatile ("movw %[prev_sel], %%fs" : : [prev_sel] "rm" (prev_sel));
-#ifdef __x86_64__
-	if (saved_base)
+	/* Restore FS/BASE क्रम glibc */
+	यंत्र अस्थिर ("movw %[prev_sel], %%fs" : : [prev_sel] "rm" (prev_sel));
+#अगर_घोषित __x86_64__
+	अगर (saved_base)
 		syscall(SYS_arch_prctl, ARCH_SET_FS, saved_base);
-#endif
+#पूर्ण_अगर
 
-	if (sel != 0) {
+	अगर (sel != 0) अणु
 		result = "FAIL";
 		nerrs++;
-	} else {
+	पूर्ण अन्यथा अणु
 		result = "OK";
-	}
-	printf("[%s]\tInvalidate FS with set_thread_area: new FS = 0x%hx\n",
+	पूर्ण
+	म_लिखो("[%s]\tInvalidate FS with set_thread_area: new FS = 0x%hx\n",
 	       result, sel);
 
-#ifdef __x86_64__
-	if (sel == 0 && new_base != 0) {
+#अगर_घोषित __x86_64__
+	अगर (sel == 0 && new_base != 0) अणु
 		nerrs++;
-		printf("[FAIL]\tNew FSBASE was 0x%lx\n", new_base);
-	} else {
-		printf("[OK]\tNew FSBASE was zero\n");
-	}
-#endif
+		म_लिखो("[FAIL]\tNew FSBASE was 0x%lx\n", new_base);
+	पूर्ण अन्यथा अणु
+		म_लिखो("[OK]\tNew FSBASE was zero\n");
+	पूर्ण
+#पूर्ण_अगर
 
 	/* Test GS */
-	invoke_set_thread_area();
+	invoke_set_thपढ़ो_area();
 	eax = 243;
 	sel = (gdt_entry_num << 3) | 3;
-#ifdef __x86_64__
+#अगर_घोषित __x86_64__
 	syscall(SYS_arch_prctl, ARCH_GET_GS, &saved_base);
-#endif
-	asm volatile ("movw %%gs, %[prev_sel]\n\t"
+#पूर्ण_अगर
+	यंत्र अस्थिर ("movw %%gs, %[prev_sel]\n\t"
 		      "movw %[sel], %%gs\n\t"
-#ifdef __i386__
+#अगर_घोषित __i386__
 		      "pushl %%ebx\n\t"
-#endif
+#पूर्ण_अगर
 		      "movl %[arg1], %%ebx\n\t"
 		      "int $0x80\n\t"	/* Should invalidate gs */
-#ifdef __i386__
+#अगर_घोषित __i386__
 		      "popl %%ebx\n\t"
-#endif
+#पूर्ण_अगर
 		      "movw %%gs, %[sel]\n\t"
 		      : [prev_sel] "=&r" (prev_sel), [sel] "+r" (sel),
 			"+a" (eax)
 		      : "m" (low_user_desc_clear),
-			[arg1] "r" ((unsigned int)(unsigned long)low_user_desc_clear)
+			[arg1] "r" ((अचिन्हित पूर्णांक)(अचिन्हित दीर्घ)low_user_desc_clear)
 		      : INT80_CLOBBERS);
 
-#ifdef __x86_64__
+#अगर_घोषित __x86_64__
 	syscall(SYS_arch_prctl, ARCH_GET_GS, &new_base);
-#endif
+#पूर्ण_अगर
 
-	/* Restore GS/BASE for glibc */
-	asm volatile ("movw %[prev_sel], %%gs" : : [prev_sel] "rm" (prev_sel));
-#ifdef __x86_64__
-	if (saved_base)
+	/* Restore GS/BASE क्रम glibc */
+	यंत्र अस्थिर ("movw %[prev_sel], %%gs" : : [prev_sel] "rm" (prev_sel));
+#अगर_घोषित __x86_64__
+	अगर (saved_base)
 		syscall(SYS_arch_prctl, ARCH_SET_GS, saved_base);
-#endif
+#पूर्ण_अगर
 
-	if (sel != 0) {
+	अगर (sel != 0) अणु
 		result = "FAIL";
 		nerrs++;
-	} else {
+	पूर्ण अन्यथा अणु
 		result = "OK";
-	}
-	printf("[%s]\tInvalidate GS with set_thread_area: new GS = 0x%hx\n",
+	पूर्ण
+	म_लिखो("[%s]\tInvalidate GS with set_thread_area: new GS = 0x%hx\n",
 	       result, sel);
 
-#ifdef __x86_64__
-	if (sel == 0 && new_base != 0) {
+#अगर_घोषित __x86_64__
+	अगर (sel == 0 && new_base != 0) अणु
 		nerrs++;
-		printf("[FAIL]\tNew GSBASE was 0x%lx\n", new_base);
-	} else {
-		printf("[OK]\tNew GSBASE was zero\n");
-	}
-#endif
-}
+		म_लिखो("[FAIL]\tNew GSBASE was 0x%lx\n", new_base);
+	पूर्ण अन्यथा अणु
+		म_लिखो("[OK]\tNew GSBASE was zero\n");
+	पूर्ण
+#पूर्ण_अगर
+पूर्ण
 
-int main(int argc, char **argv)
-{
-	if (argc == 1 && !strcmp(argv[0], "ldt_gdt_test_exec"))
-		return finish_exec_test();
+पूर्णांक मुख्य(पूर्णांक argc, अक्षर **argv)
+अणु
+	अगर (argc == 1 && !म_भेद(argv[0], "ldt_gdt_test_exec"))
+		वापस finish_exec_test();
 
 	setup_counter_page();
 	setup_low_user_desc();
 
-	do_simple_tests();
+	करो_simple_tests();
 
-	do_multicpu_tests();
+	करो_multicpu_tests();
 
-	do_exec_test();
+	करो_exec_test();
 
 	test_gdt_invalidation();
 
-	return nerrs ? 1 : 0;
-}
+	वापस nerrs ? 1 : 0;
+पूर्ण

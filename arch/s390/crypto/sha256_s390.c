@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
  * Cryptographic API.
  *
@@ -8,18 +9,18 @@
  *   Copyright IBM Corp. 2005, 2011
  *   Author(s): Jan Glauber (jang@de.ibm.com)
  */
-#include <crypto/internal/hash.h>
-#include <linux/init.h>
-#include <linux/module.h>
-#include <linux/cpufeature.h>
-#include <crypto/sha2.h>
-#include <asm/cpacf.h>
+#समावेश <crypto/पूर्णांकernal/hash.h>
+#समावेश <linux/init.h>
+#समावेश <linux/module.h>
+#समावेश <linux/cpufeature.h>
+#समावेश <crypto/sha2.h>
+#समावेश <यंत्र/cpacf.h>
 
-#include "sha.h"
+#समावेश "sha.h"
 
-static int s390_sha256_init(struct shash_desc *desc)
-{
-	struct s390_sha_ctx *sctx = shash_desc_ctx(desc);
+अटल पूर्णांक s390_sha256_init(काष्ठा shash_desc *desc)
+अणु
+	काष्ठा s390_sha_ctx *sctx = shash_desc_ctx(desc);
 
 	sctx->state[0] = SHA256_H0;
 	sctx->state[1] = SHA256_H1;
@@ -32,53 +33,53 @@ static int s390_sha256_init(struct shash_desc *desc)
 	sctx->count = 0;
 	sctx->func = CPACF_KIMD_SHA_256;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sha256_export(struct shash_desc *desc, void *out)
-{
-	struct s390_sha_ctx *sctx = shash_desc_ctx(desc);
-	struct sha256_state *octx = out;
+अटल पूर्णांक sha256_export(काष्ठा shash_desc *desc, व्योम *out)
+अणु
+	काष्ठा s390_sha_ctx *sctx = shash_desc_ctx(desc);
+	काष्ठा sha256_state *octx = out;
 
 	octx->count = sctx->count;
-	memcpy(octx->state, sctx->state, sizeof(octx->state));
-	memcpy(octx->buf, sctx->buf, sizeof(octx->buf));
-	return 0;
-}
+	स_नकल(octx->state, sctx->state, माप(octx->state));
+	स_नकल(octx->buf, sctx->buf, माप(octx->buf));
+	वापस 0;
+पूर्ण
 
-static int sha256_import(struct shash_desc *desc, const void *in)
-{
-	struct s390_sha_ctx *sctx = shash_desc_ctx(desc);
-	const struct sha256_state *ictx = in;
+अटल पूर्णांक sha256_import(काष्ठा shash_desc *desc, स्थिर व्योम *in)
+अणु
+	काष्ठा s390_sha_ctx *sctx = shash_desc_ctx(desc);
+	स्थिर काष्ठा sha256_state *ictx = in;
 
 	sctx->count = ictx->count;
-	memcpy(sctx->state, ictx->state, sizeof(ictx->state));
-	memcpy(sctx->buf, ictx->buf, sizeof(ictx->buf));
+	स_नकल(sctx->state, ictx->state, माप(ictx->state));
+	स_नकल(sctx->buf, ictx->buf, माप(ictx->buf));
 	sctx->func = CPACF_KIMD_SHA_256;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct shash_alg sha256_alg = {
+अटल काष्ठा shash_alg sha256_alg = अणु
 	.digestsize	=	SHA256_DIGEST_SIZE,
 	.init		=	s390_sha256_init,
 	.update		=	s390_sha_update,
 	.final		=	s390_sha_final,
 	.export		=	sha256_export,
 	.import		=	sha256_import,
-	.descsize	=	sizeof(struct s390_sha_ctx),
-	.statesize	=	sizeof(struct sha256_state),
-	.base		=	{
+	.descsize	=	माप(काष्ठा s390_sha_ctx),
+	.statesize	=	माप(काष्ठा sha256_state),
+	.base		=	अणु
 		.cra_name	=	"sha256",
 		.cra_driver_name=	"sha256-s390",
 		.cra_priority	=	300,
 		.cra_blocksize	=	SHA256_BLOCK_SIZE,
 		.cra_module	=	THIS_MODULE,
-	}
-};
+	पूर्ण
+पूर्ण;
 
-static int s390_sha224_init(struct shash_desc *desc)
-{
-	struct s390_sha_ctx *sctx = shash_desc_ctx(desc);
+अटल पूर्णांक s390_sha224_init(काष्ठा shash_desc *desc)
+अणु
+	काष्ठा s390_sha_ctx *sctx = shash_desc_ctx(desc);
 
 	sctx->state[0] = SHA224_H0;
 	sctx->state[1] = SHA224_H1;
@@ -91,51 +92,51 @@ static int s390_sha224_init(struct shash_desc *desc)
 	sctx->count = 0;
 	sctx->func = CPACF_KIMD_SHA_256;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct shash_alg sha224_alg = {
+अटल काष्ठा shash_alg sha224_alg = अणु
 	.digestsize	=	SHA224_DIGEST_SIZE,
 	.init		=	s390_sha224_init,
 	.update		=	s390_sha_update,
 	.final		=	s390_sha_final,
 	.export		=	sha256_export,
 	.import		=	sha256_import,
-	.descsize	=	sizeof(struct s390_sha_ctx),
-	.statesize	=	sizeof(struct sha256_state),
-	.base		=	{
+	.descsize	=	माप(काष्ठा s390_sha_ctx),
+	.statesize	=	माप(काष्ठा sha256_state),
+	.base		=	अणु
 		.cra_name	=	"sha224",
 		.cra_driver_name=	"sha224-s390",
 		.cra_priority	=	300,
 		.cra_blocksize	=	SHA224_BLOCK_SIZE,
 		.cra_module	=	THIS_MODULE,
-	}
-};
+	पूर्ण
+पूर्ण;
 
-static int __init sha256_s390_init(void)
-{
-	int ret;
+अटल पूर्णांक __init sha256_s390_init(व्योम)
+अणु
+	पूर्णांक ret;
 
-	if (!cpacf_query_func(CPACF_KIMD, CPACF_KIMD_SHA_256))
-		return -ENODEV;
-	ret = crypto_register_shash(&sha256_alg);
-	if (ret < 0)
-		goto out;
-	ret = crypto_register_shash(&sha224_alg);
-	if (ret < 0)
-		crypto_unregister_shash(&sha256_alg);
+	अगर (!cpacf_query_func(CPACF_KIMD, CPACF_KIMD_SHA_256))
+		वापस -ENODEV;
+	ret = crypto_रेजिस्टर_shash(&sha256_alg);
+	अगर (ret < 0)
+		जाओ out;
+	ret = crypto_रेजिस्टर_shash(&sha224_alg);
+	अगर (ret < 0)
+		crypto_unरेजिस्टर_shash(&sha256_alg);
 out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void __exit sha256_s390_fini(void)
-{
-	crypto_unregister_shash(&sha224_alg);
-	crypto_unregister_shash(&sha256_alg);
-}
+अटल व्योम __निकास sha256_s390_fini(व्योम)
+अणु
+	crypto_unरेजिस्टर_shash(&sha224_alg);
+	crypto_unरेजिस्टर_shash(&sha256_alg);
+पूर्ण
 
 module_cpu_feature_match(MSA, sha256_s390_init);
-module_exit(sha256_s390_fini);
+module_निकास(sha256_s390_fini);
 
 MODULE_ALIAS_CRYPTO("sha256");
 MODULE_ALIAS_CRYPTO("sha224");

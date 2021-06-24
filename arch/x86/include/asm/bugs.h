@@ -1,17 +1,18 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _ASM_X86_BUGS_H
-#define _ASM_X86_BUGS_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _ASM_X86_BUGS_H
+#घोषणा _ASM_X86_BUGS_H
 
-#include <asm/processor.h>
+#समावेश <यंत्र/processor.h>
 
-extern void check_bugs(void);
+बाह्य व्योम check_bugs(व्योम);
 
-#if defined(CONFIG_CPU_SUP_INTEL) && defined(CONFIG_X86_32)
-int ppro_with_ram_bug(void);
-#else
-static inline int ppro_with_ram_bug(void) { return 0; }
-#endif
+#अगर defined(CONFIG_CPU_SUP_INTEL) && defined(CONFIG_X86_32)
+पूर्णांक ppro_with_ram_bug(व्योम);
+#अन्यथा
+अटल अंतरभूत पूर्णांक ppro_with_ram_bug(व्योम) अणु वापस 0; पूर्ण
+#पूर्ण_अगर
 
-extern void cpu_bugs_smt_update(void);
+बाह्य व्योम cpu_bugs_smt_update(व्योम);
 
-#endif /* _ASM_X86_BUGS_H */
+#पूर्ण_अगर /* _ASM_X86_BUGS_H */

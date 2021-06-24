@@ -1,358 +1,359 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- *  Based on drivers/char/serial.c, by Linus Torvalds, Theodore Ts'o.
+ *  Based on drivers/अक्षर/serial.c, by Linus Torvalds, Theoकरोre Ts'o.
  *
  * Copyright (C) 2004 Infineon IFAP DC COM CPE
- * Copyright (C) 2007 Felix Fietkau <nbd@openwrt.org>
+ * Copyright (C) 2007 Felix Fietkau <nbd@खोलोwrt.org>
  * Copyright (C) 2007 John Crispin <john@phrozen.org>
  * Copyright (C) 2010 Thomas Langer, <thomas.langer@lantiq.com>
  */
 
-#include <linux/clk.h>
-#include <linux/console.h>
-#include <linux/device.h>
-#include <linux/init.h>
-#include <linux/io.h>
-#include <linux/ioport.h>
-#include <linux/lantiq.h>
-#include <linux/module.h>
-#include <linux/of_address.h>
-#include <linux/of_irq.h>
-#include <linux/of_platform.h>
-#include <linux/serial.h>
-#include <linux/serial_core.h>
-#include <linux/slab.h>
-#include <linux/sysrq.h>
-#include <linux/tty.h>
-#include <linux/tty_flip.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/console.h>
+#समावेश <linux/device.h>
+#समावेश <linux/init.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/ioport.h>
+#समावेश <linux/lantiq.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of_address.h>
+#समावेश <linux/of_irq.h>
+#समावेश <linux/of_platक्रमm.h>
+#समावेश <linux/serial.h>
+#समावेश <linux/serial_core.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/sysrq.h>
+#समावेश <linux/tty.h>
+#समावेश <linux/tty_flip.h>
 
-#define PORT_LTQ_ASC		111
-#define MAXPORTS		2
-#define UART_DUMMY_UER_RX	1
-#define DRVNAME			"lantiq,asc"
-#ifdef __BIG_ENDIAN
-#define LTQ_ASC_TBUF		(0x0020 + 3)
-#define LTQ_ASC_RBUF		(0x0024 + 3)
-#else
-#define LTQ_ASC_TBUF		0x0020
-#define LTQ_ASC_RBUF		0x0024
-#endif
-#define LTQ_ASC_FSTAT		0x0048
-#define LTQ_ASC_WHBSTATE	0x0018
-#define LTQ_ASC_STATE		0x0014
-#define LTQ_ASC_IRNCR		0x00F8
-#define LTQ_ASC_CLC		0x0000
-#define LTQ_ASC_ID		0x0008
-#define LTQ_ASC_PISEL		0x0004
-#define LTQ_ASC_TXFCON		0x0044
-#define LTQ_ASC_RXFCON		0x0040
-#define LTQ_ASC_CON		0x0010
-#define LTQ_ASC_BG		0x0050
-#define LTQ_ASC_IRNREN		0x00F4
+#घोषणा PORT_LTQ_ASC		111
+#घोषणा MAXPORTS		2
+#घोषणा UART_DUMMY_UER_RX	1
+#घोषणा DRVNAME			"lantiq,asc"
+#अगर_घोषित __BIG_ENDIAN
+#घोषणा LTQ_ASC_TBUF		(0x0020 + 3)
+#घोषणा LTQ_ASC_RBUF		(0x0024 + 3)
+#अन्यथा
+#घोषणा LTQ_ASC_TBUF		0x0020
+#घोषणा LTQ_ASC_RBUF		0x0024
+#पूर्ण_अगर
+#घोषणा LTQ_ASC_FSTAT		0x0048
+#घोषणा LTQ_ASC_WHBSTATE	0x0018
+#घोषणा LTQ_ASC_STATE		0x0014
+#घोषणा LTQ_ASC_IRNCR		0x00F8
+#घोषणा LTQ_ASC_CLC		0x0000
+#घोषणा LTQ_ASC_ID		0x0008
+#घोषणा LTQ_ASC_PISEL		0x0004
+#घोषणा LTQ_ASC_TXFCON		0x0044
+#घोषणा LTQ_ASC_RXFCON		0x0040
+#घोषणा LTQ_ASC_CON		0x0010
+#घोषणा LTQ_ASC_BG		0x0050
+#घोषणा LTQ_ASC_IRNREN		0x00F4
 
-#define ASC_IRNREN_TX		0x1
-#define ASC_IRNREN_RX		0x2
-#define ASC_IRNREN_ERR		0x4
-#define ASC_IRNREN_TX_BUF	0x8
-#define ASC_IRNCR_TIR		0x1
-#define ASC_IRNCR_RIR		0x2
-#define ASC_IRNCR_EIR		0x4
-#define ASC_IRNCR_MASK		GENMASK(2, 0)
+#घोषणा ASC_IRNREN_TX		0x1
+#घोषणा ASC_IRNREN_RX		0x2
+#घोषणा ASC_IRNREN_ERR		0x4
+#घोषणा ASC_IRNREN_TX_BUF	0x8
+#घोषणा ASC_IRNCR_TIR		0x1
+#घोषणा ASC_IRNCR_RIR		0x2
+#घोषणा ASC_IRNCR_EIR		0x4
+#घोषणा ASC_IRNCR_MASK		GENMASK(2, 0)
 
-#define ASCOPT_CSIZE		0x3
-#define TXFIFO_FL		1
-#define RXFIFO_FL		1
-#define ASCCLC_DISS		0x2
-#define ASCCLC_RMCMASK		0x0000FF00
-#define ASCCLC_RMCOFFSET	8
-#define ASCCON_M_8ASYNC		0x0
-#define ASCCON_M_7ASYNC		0x2
-#define ASCCON_ODD		0x00000020
-#define ASCCON_STP		0x00000080
-#define ASCCON_BRS		0x00000100
-#define ASCCON_FDE		0x00000200
-#define ASCCON_R		0x00008000
-#define ASCCON_FEN		0x00020000
-#define ASCCON_ROEN		0x00080000
-#define ASCCON_TOEN		0x00100000
-#define ASCSTATE_PE		0x00010000
-#define ASCSTATE_FE		0x00020000
-#define ASCSTATE_ROE		0x00080000
-#define ASCSTATE_ANY		(ASCSTATE_ROE|ASCSTATE_PE|ASCSTATE_FE)
-#define ASCWHBSTATE_CLRREN	0x00000001
-#define ASCWHBSTATE_SETREN	0x00000002
-#define ASCWHBSTATE_CLRPE	0x00000004
-#define ASCWHBSTATE_CLRFE	0x00000008
-#define ASCWHBSTATE_CLRROE	0x00000020
-#define ASCTXFCON_TXFEN		0x0001
-#define ASCTXFCON_TXFFLU	0x0002
-#define ASCTXFCON_TXFITLMASK	0x3F00
-#define ASCTXFCON_TXFITLOFF	8
-#define ASCRXFCON_RXFEN		0x0001
-#define ASCRXFCON_RXFFLU	0x0002
-#define ASCRXFCON_RXFITLMASK	0x3F00
-#define ASCRXFCON_RXFITLOFF	8
-#define ASCFSTAT_RXFFLMASK	0x003F
-#define ASCFSTAT_TXFFLMASK	0x3F00
-#define ASCFSTAT_TXFREEMASK	0x3F000000
-#define ASCFSTAT_TXFREEOFF	24
+#घोषणा ASCOPT_CSIZE		0x3
+#घोषणा TXFIFO_FL		1
+#घोषणा RXFIFO_FL		1
+#घोषणा ASCCLC_DISS		0x2
+#घोषणा ASCCLC_RMCMASK		0x0000FF00
+#घोषणा ASCCLC_RMCOFFSET	8
+#घोषणा ASCCON_M_8ASYNC		0x0
+#घोषणा ASCCON_M_7ASYNC		0x2
+#घोषणा ASCCON_ODD		0x00000020
+#घोषणा ASCCON_STP		0x00000080
+#घोषणा ASCCON_BRS		0x00000100
+#घोषणा ASCCON_FDE		0x00000200
+#घोषणा ASCCON_R		0x00008000
+#घोषणा ASCCON_FEN		0x00020000
+#घोषणा ASCCON_ROEN		0x00080000
+#घोषणा ASCCON_TOEN		0x00100000
+#घोषणा ASCSTATE_PE		0x00010000
+#घोषणा ASCSTATE_FE		0x00020000
+#घोषणा ASCSTATE_ROE		0x00080000
+#घोषणा ASCSTATE_ANY		(ASCSTATE_ROE|ASCSTATE_PE|ASCSTATE_FE)
+#घोषणा ASCWHBSTATE_CLRREN	0x00000001
+#घोषणा ASCWHBSTATE_SETREN	0x00000002
+#घोषणा ASCWHBSTATE_CLRPE	0x00000004
+#घोषणा ASCWHBSTATE_CLRFE	0x00000008
+#घोषणा ASCWHBSTATE_CLRROE	0x00000020
+#घोषणा ASCTXFCON_TXFEN		0x0001
+#घोषणा ASCTXFCON_TXFFLU	0x0002
+#घोषणा ASCTXFCON_TXFITLMASK	0x3F00
+#घोषणा ASCTXFCON_TXFITLOFF	8
+#घोषणा ASCRXFCON_RXFEN		0x0001
+#घोषणा ASCRXFCON_RXFFLU	0x0002
+#घोषणा ASCRXFCON_RXFITLMASK	0x3F00
+#घोषणा ASCRXFCON_RXFITLOFF	8
+#घोषणा ASCFSTAT_RXFFLMASK	0x003F
+#घोषणा ASCFSTAT_TXFFLMASK	0x3F00
+#घोषणा ASCFSTAT_TXFREEMASK	0x3F000000
+#घोषणा ASCFSTAT_TXFREखातापूर्णF	24
 
-static void lqasc_tx_chars(struct uart_port *port);
-static struct ltq_uart_port *lqasc_port[MAXPORTS];
-static struct uart_driver lqasc_reg;
+अटल व्योम lqasc_tx_अक्षरs(काष्ठा uart_port *port);
+अटल काष्ठा ltq_uart_port *lqasc_port[MAXPORTS];
+अटल काष्ठा uart_driver lqasc_reg;
 
-struct ltq_soc_data {
-	int	(*fetch_irq)(struct device *dev, struct ltq_uart_port *ltq_port);
-	int	(*request_irq)(struct uart_port *port);
-	void	(*free_irq)(struct uart_port *port);
-};
+काष्ठा ltq_soc_data अणु
+	पूर्णांक	(*fetch_irq)(काष्ठा device *dev, काष्ठा ltq_uart_port *ltq_port);
+	पूर्णांक	(*request_irq)(काष्ठा uart_port *port);
+	व्योम	(*मुक्त_irq)(काष्ठा uart_port *port);
+पूर्ण;
 
-struct ltq_uart_port {
-	struct uart_port	port;
-	/* clock used to derive divider */
-	struct clk		*freqclk;
-	/* clock gating of the ASC core */
-	struct clk		*clk;
-	unsigned int		tx_irq;
-	unsigned int		rx_irq;
-	unsigned int		err_irq;
-	unsigned int		common_irq;
-	spinlock_t		lock; /* exclusive access for multi core */
+काष्ठा ltq_uart_port अणु
+	काष्ठा uart_port	port;
+	/* घड़ी used to derive भागider */
+	काष्ठा clk		*freqclk;
+	/* घड़ी gating of the ASC core */
+	काष्ठा clk		*clk;
+	अचिन्हित पूर्णांक		tx_irq;
+	अचिन्हित पूर्णांक		rx_irq;
+	अचिन्हित पूर्णांक		err_irq;
+	अचिन्हित पूर्णांक		common_irq;
+	spinlock_t		lock; /* exclusive access क्रम multi core */
 
-	const struct ltq_soc_data	*soc;
-};
+	स्थिर काष्ठा ltq_soc_data	*soc;
+पूर्ण;
 
-static inline void asc_update_bits(u32 clear, u32 set, void __iomem *reg)
-{
-	u32 tmp = __raw_readl(reg);
+अटल अंतरभूत व्योम asc_update_bits(u32 clear, u32 set, व्योम __iomem *reg)
+अणु
+	u32 पंचांगp = __raw_पढ़ोl(reg);
 
-	__raw_writel((tmp & ~clear) | set, reg);
-}
+	__raw_ग_लिखोl((पंचांगp & ~clear) | set, reg);
+पूर्ण
 
-static inline struct
-ltq_uart_port *to_ltq_uart_port(struct uart_port *port)
-{
-	return container_of(port, struct ltq_uart_port, port);
-}
+अटल अंतरभूत काष्ठा
+ltq_uart_port *to_ltq_uart_port(काष्ठा uart_port *port)
+अणु
+	वापस container_of(port, काष्ठा ltq_uart_port, port);
+पूर्ण
 
-static void
-lqasc_stop_tx(struct uart_port *port)
-{
-	return;
-}
+अटल व्योम
+lqasc_stop_tx(काष्ठा uart_port *port)
+अणु
+	वापस;
+पूर्ण
 
-static void
-lqasc_start_tx(struct uart_port *port)
-{
-	unsigned long flags;
-	struct ltq_uart_port *ltq_port = to_ltq_uart_port(port);
+अटल व्योम
+lqasc_start_tx(काष्ठा uart_port *port)
+अणु
+	अचिन्हित दीर्घ flags;
+	काष्ठा ltq_uart_port *ltq_port = to_ltq_uart_port(port);
 
 	spin_lock_irqsave(&ltq_port->lock, flags);
-	lqasc_tx_chars(port);
+	lqasc_tx_अक्षरs(port);
 	spin_unlock_irqrestore(&ltq_port->lock, flags);
-	return;
-}
+	वापस;
+पूर्ण
 
-static void
-lqasc_stop_rx(struct uart_port *port)
-{
-	__raw_writel(ASCWHBSTATE_CLRREN, port->membase + LTQ_ASC_WHBSTATE);
-}
+अटल व्योम
+lqasc_stop_rx(काष्ठा uart_port *port)
+अणु
+	__raw_ग_लिखोl(ASCWHBSTATE_CLRREN, port->membase + LTQ_ASC_WHBSTATE);
+पूर्ण
 
-static int
-lqasc_rx_chars(struct uart_port *port)
-{
-	struct tty_port *tport = &port->state->port;
-	unsigned int ch = 0, rsr = 0, fifocnt;
+अटल पूर्णांक
+lqasc_rx_अक्षरs(काष्ठा uart_port *port)
+अणु
+	काष्ठा tty_port *tport = &port->state->port;
+	अचिन्हित पूर्णांक ch = 0, rsr = 0, fअगरocnt;
 
-	fifocnt = __raw_readl(port->membase + LTQ_ASC_FSTAT) &
+	fअगरocnt = __raw_पढ़ोl(port->membase + LTQ_ASC_FSTAT) &
 		  ASCFSTAT_RXFFLMASK;
-	while (fifocnt--) {
+	जबतक (fअगरocnt--) अणु
 		u8 flag = TTY_NORMAL;
-		ch = readb(port->membase + LTQ_ASC_RBUF);
-		rsr = (__raw_readl(port->membase + LTQ_ASC_STATE)
+		ch = पढ़ोb(port->membase + LTQ_ASC_RBUF);
+		rsr = (__raw_पढ़ोl(port->membase + LTQ_ASC_STATE)
 			& ASCSTATE_ANY) | UART_DUMMY_UER_RX;
 		tty_flip_buffer_push(tport);
 		port->icount.rx++;
 
 		/*
 		 * Note that the error handling code is
-		 * out of the main execution path
+		 * out of the मुख्य execution path
 		 */
-		if (rsr & ASCSTATE_ANY) {
-			if (rsr & ASCSTATE_PE) {
+		अगर (rsr & ASCSTATE_ANY) अणु
+			अगर (rsr & ASCSTATE_PE) अणु
 				port->icount.parity++;
 				asc_update_bits(0, ASCWHBSTATE_CLRPE,
 					port->membase + LTQ_ASC_WHBSTATE);
-			} else if (rsr & ASCSTATE_FE) {
+			पूर्ण अन्यथा अगर (rsr & ASCSTATE_FE) अणु
 				port->icount.frame++;
 				asc_update_bits(0, ASCWHBSTATE_CLRFE,
 					port->membase + LTQ_ASC_WHBSTATE);
-			}
-			if (rsr & ASCSTATE_ROE) {
+			पूर्ण
+			अगर (rsr & ASCSTATE_ROE) अणु
 				port->icount.overrun++;
 				asc_update_bits(0, ASCWHBSTATE_CLRROE,
 					port->membase + LTQ_ASC_WHBSTATE);
-			}
+			पूर्ण
 
-			rsr &= port->read_status_mask;
+			rsr &= port->पढ़ो_status_mask;
 
-			if (rsr & ASCSTATE_PE)
+			अगर (rsr & ASCSTATE_PE)
 				flag = TTY_PARITY;
-			else if (rsr & ASCSTATE_FE)
+			अन्यथा अगर (rsr & ASCSTATE_FE)
 				flag = TTY_FRAME;
-		}
+		पूर्ण
 
-		if ((rsr & port->ignore_status_mask) == 0)
-			tty_insert_flip_char(tport, ch, flag);
+		अगर ((rsr & port->ignore_status_mask) == 0)
+			tty_insert_flip_अक्षर(tport, ch, flag);
 
-		if (rsr & ASCSTATE_ROE)
+		अगर (rsr & ASCSTATE_ROE)
 			/*
 			 * Overrun is special, since it's reported
-			 * immediately, and doesn't affect the current
-			 * character
+			 * immediately, and करोesn't affect the current
+			 * अक्षरacter
 			 */
-			tty_insert_flip_char(tport, 0, TTY_OVERRUN);
-	}
+			tty_insert_flip_अक्षर(tport, 0, TTY_OVERRUN);
+	पूर्ण
 
-	if (ch != 0)
+	अगर (ch != 0)
 		tty_flip_buffer_push(tport);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void
-lqasc_tx_chars(struct uart_port *port)
-{
-	struct circ_buf *xmit = &port->state->xmit;
-	if (uart_tx_stopped(port)) {
+अटल व्योम
+lqasc_tx_अक्षरs(काष्ठा uart_port *port)
+अणु
+	काष्ठा circ_buf *xmit = &port->state->xmit;
+	अगर (uart_tx_stopped(port)) अणु
 		lqasc_stop_tx(port);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	while (((__raw_readl(port->membase + LTQ_ASC_FSTAT) &
-		ASCFSTAT_TXFREEMASK) >> ASCFSTAT_TXFREEOFF) != 0) {
-		if (port->x_char) {
-			writeb(port->x_char, port->membase + LTQ_ASC_TBUF);
+	जबतक (((__raw_पढ़ोl(port->membase + LTQ_ASC_FSTAT) &
+		ASCFSTAT_TXFREEMASK) >> ASCFSTAT_TXFREखातापूर्णF) != 0) अणु
+		अगर (port->x_अक्षर) अणु
+			ग_लिखोb(port->x_अक्षर, port->membase + LTQ_ASC_TBUF);
 			port->icount.tx++;
-			port->x_char = 0;
-			continue;
-		}
+			port->x_अक्षर = 0;
+			जारी;
+		पूर्ण
 
-		if (uart_circ_empty(xmit))
-			break;
+		अगर (uart_circ_empty(xmit))
+			अवरोध;
 
-		writeb(port->state->xmit.buf[port->state->xmit.tail],
+		ग_लिखोb(port->state->xmit.buf[port->state->xmit.tail],
 			port->membase + LTQ_ASC_TBUF);
 		xmit->tail = (xmit->tail + 1) & (UART_XMIT_SIZE - 1);
 		port->icount.tx++;
-	}
+	पूर्ण
 
-	if (uart_circ_chars_pending(xmit) < WAKEUP_CHARS)
-		uart_write_wakeup(port);
-}
+	अगर (uart_circ_अक्षरs_pending(xmit) < WAKEUP_CHARS)
+		uart_ग_लिखो_wakeup(port);
+पूर्ण
 
-static irqreturn_t
-lqasc_tx_int(int irq, void *_port)
-{
-	unsigned long flags;
-	struct uart_port *port = (struct uart_port *)_port;
-	struct ltq_uart_port *ltq_port = to_ltq_uart_port(port);
+अटल irqवापस_t
+lqasc_tx_पूर्णांक(पूर्णांक irq, व्योम *_port)
+अणु
+	अचिन्हित दीर्घ flags;
+	काष्ठा uart_port *port = (काष्ठा uart_port *)_port;
+	काष्ठा ltq_uart_port *ltq_port = to_ltq_uart_port(port);
 
 	spin_lock_irqsave(&ltq_port->lock, flags);
-	__raw_writel(ASC_IRNCR_TIR, port->membase + LTQ_ASC_IRNCR);
+	__raw_ग_लिखोl(ASC_IRNCR_TIR, port->membase + LTQ_ASC_IRNCR);
 	spin_unlock_irqrestore(&ltq_port->lock, flags);
 	lqasc_start_tx(port);
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static irqreturn_t
-lqasc_err_int(int irq, void *_port)
-{
-	unsigned long flags;
-	struct uart_port *port = (struct uart_port *)_port;
-	struct ltq_uart_port *ltq_port = to_ltq_uart_port(port);
+अटल irqवापस_t
+lqasc_err_पूर्णांक(पूर्णांक irq, व्योम *_port)
+अणु
+	अचिन्हित दीर्घ flags;
+	काष्ठा uart_port *port = (काष्ठा uart_port *)_port;
+	काष्ठा ltq_uart_port *ltq_port = to_ltq_uart_port(port);
 
 	spin_lock_irqsave(&ltq_port->lock, flags);
-	/* clear any pending interrupts */
+	/* clear any pending पूर्णांकerrupts */
 	asc_update_bits(0, ASCWHBSTATE_CLRPE | ASCWHBSTATE_CLRFE |
 		ASCWHBSTATE_CLRROE, port->membase + LTQ_ASC_WHBSTATE);
 	spin_unlock_irqrestore(&ltq_port->lock, flags);
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static irqreturn_t
-lqasc_rx_int(int irq, void *_port)
-{
-	unsigned long flags;
-	struct uart_port *port = (struct uart_port *)_port;
-	struct ltq_uart_port *ltq_port = to_ltq_uart_port(port);
+अटल irqवापस_t
+lqasc_rx_पूर्णांक(पूर्णांक irq, व्योम *_port)
+अणु
+	अचिन्हित दीर्घ flags;
+	काष्ठा uart_port *port = (काष्ठा uart_port *)_port;
+	काष्ठा ltq_uart_port *ltq_port = to_ltq_uart_port(port);
 
 	spin_lock_irqsave(&ltq_port->lock, flags);
-	__raw_writel(ASC_IRNCR_RIR, port->membase + LTQ_ASC_IRNCR);
-	lqasc_rx_chars(port);
+	__raw_ग_लिखोl(ASC_IRNCR_RIR, port->membase + LTQ_ASC_IRNCR);
+	lqasc_rx_अक्षरs(port);
 	spin_unlock_irqrestore(&ltq_port->lock, flags);
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static irqreturn_t lqasc_irq(int irq, void *p)
-{
-	unsigned long flags;
+अटल irqवापस_t lqasc_irq(पूर्णांक irq, व्योम *p)
+अणु
+	अचिन्हित दीर्घ flags;
 	u32 stat;
-	struct uart_port *port = p;
-	struct ltq_uart_port *ltq_port = to_ltq_uart_port(port);
+	काष्ठा uart_port *port = p;
+	काष्ठा ltq_uart_port *ltq_port = to_ltq_uart_port(port);
 
 	spin_lock_irqsave(&ltq_port->lock, flags);
-	stat = readl(port->membase + LTQ_ASC_IRNCR);
+	stat = पढ़ोl(port->membase + LTQ_ASC_IRNCR);
 	spin_unlock_irqrestore(&ltq_port->lock, flags);
-	if (!(stat & ASC_IRNCR_MASK))
-		return IRQ_NONE;
+	अगर (!(stat & ASC_IRNCR_MASK))
+		वापस IRQ_NONE;
 
-	if (stat & ASC_IRNCR_TIR)
-		lqasc_tx_int(irq, p);
+	अगर (stat & ASC_IRNCR_TIR)
+		lqasc_tx_पूर्णांक(irq, p);
 
-	if (stat & ASC_IRNCR_RIR)
-		lqasc_rx_int(irq, p);
+	अगर (stat & ASC_IRNCR_RIR)
+		lqasc_rx_पूर्णांक(irq, p);
 
-	if (stat & ASC_IRNCR_EIR)
-		lqasc_err_int(irq, p);
+	अगर (stat & ASC_IRNCR_EIR)
+		lqasc_err_पूर्णांक(irq, p);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static unsigned int
-lqasc_tx_empty(struct uart_port *port)
-{
-	int status;
-	status = __raw_readl(port->membase + LTQ_ASC_FSTAT) &
+अटल अचिन्हित पूर्णांक
+lqasc_tx_empty(काष्ठा uart_port *port)
+अणु
+	पूर्णांक status;
+	status = __raw_पढ़ोl(port->membase + LTQ_ASC_FSTAT) &
 		 ASCFSTAT_TXFFLMASK;
-	return status ? 0 : TIOCSER_TEMT;
-}
+	वापस status ? 0 : TIOCSER_TEMT;
+पूर्ण
 
-static unsigned int
-lqasc_get_mctrl(struct uart_port *port)
-{
-	return TIOCM_CTS | TIOCM_CAR | TIOCM_DSR;
-}
+अटल अचिन्हित पूर्णांक
+lqasc_get_mctrl(काष्ठा uart_port *port)
+अणु
+	वापस TIOCM_CTS | TIOCM_CAR | TIOCM_DSR;
+पूर्ण
 
-static void
-lqasc_set_mctrl(struct uart_port *port, u_int mctrl)
-{
-}
+अटल व्योम
+lqasc_set_mctrl(काष्ठा uart_port *port, u_पूर्णांक mctrl)
+अणु
+पूर्ण
 
-static void
-lqasc_break_ctl(struct uart_port *port, int break_state)
-{
-}
+अटल व्योम
+lqasc_अवरोध_ctl(काष्ठा uart_port *port, पूर्णांक अवरोध_state)
+अणु
+पूर्ण
 
-static int
-lqasc_startup(struct uart_port *port)
-{
-	struct ltq_uart_port *ltq_port = to_ltq_uart_port(port);
-	int retval;
-	unsigned long flags;
+अटल पूर्णांक
+lqasc_startup(काष्ठा uart_port *port)
+अणु
+	काष्ठा ltq_uart_port *ltq_port = to_ltq_uart_port(port);
+	पूर्णांक retval;
+	अचिन्हित दीर्घ flags;
 
-	if (!IS_ERR(ltq_port->clk))
+	अगर (!IS_ERR(ltq_port->clk))
 		clk_prepare_enable(ltq_port->clk);
 	port->uartclk = clk_get_rate(ltq_port->freqclk);
 
@@ -360,16 +361,16 @@ lqasc_startup(struct uart_port *port)
 	asc_update_bits(ASCCLC_DISS | ASCCLC_RMCMASK, (1 << ASCCLC_RMCOFFSET),
 		port->membase + LTQ_ASC_CLC);
 
-	__raw_writel(0, port->membase + LTQ_ASC_PISEL);
-	__raw_writel(
+	__raw_ग_लिखोl(0, port->membase + LTQ_ASC_PISEL);
+	__raw_ग_लिखोl(
 		((TXFIFO_FL << ASCTXFCON_TXFITLOFF) & ASCTXFCON_TXFITLMASK) |
 		ASCTXFCON_TXFEN | ASCTXFCON_TXFFLU,
 		port->membase + LTQ_ASC_TXFCON);
-	__raw_writel(
+	__raw_ग_लिखोl(
 		((RXFIFO_FL << ASCRXFCON_RXFITLOFF) & ASCRXFCON_RXFITLMASK)
 		| ASCRXFCON_RXFEN | ASCRXFCON_RXFFLU,
 		port->membase + LTQ_ASC_RXFCON);
-	/* make sure other settings are written to hardware before
+	/* make sure other settings are written to hardware beक्रमe
 	 * setting enable bits
 	 */
 	wmb();
@@ -379,95 +380,95 @@ lqasc_startup(struct uart_port *port)
 	spin_unlock_irqrestore(&ltq_port->lock, flags);
 
 	retval = ltq_port->soc->request_irq(port);
-	if (retval)
-		return retval;
+	अगर (retval)
+		वापस retval;
 
-	__raw_writel(ASC_IRNREN_RX | ASC_IRNREN_ERR | ASC_IRNREN_TX,
+	__raw_ग_लिखोl(ASC_IRNREN_RX | ASC_IRNREN_ERR | ASC_IRNREN_TX,
 		port->membase + LTQ_ASC_IRNREN);
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
-static void
-lqasc_shutdown(struct uart_port *port)
-{
-	struct ltq_uart_port *ltq_port = to_ltq_uart_port(port);
-	unsigned long flags;
+अटल व्योम
+lqasc_shutकरोwn(काष्ठा uart_port *port)
+अणु
+	काष्ठा ltq_uart_port *ltq_port = to_ltq_uart_port(port);
+	अचिन्हित दीर्घ flags;
 
-	ltq_port->soc->free_irq(port);
+	ltq_port->soc->मुक्त_irq(port);
 
 	spin_lock_irqsave(&ltq_port->lock, flags);
-	__raw_writel(0, port->membase + LTQ_ASC_CON);
+	__raw_ग_लिखोl(0, port->membase + LTQ_ASC_CON);
 	asc_update_bits(ASCRXFCON_RXFEN, ASCRXFCON_RXFFLU,
 		port->membase + LTQ_ASC_RXFCON);
 	asc_update_bits(ASCTXFCON_TXFEN, ASCTXFCON_TXFFLU,
 		port->membase + LTQ_ASC_TXFCON);
 	spin_unlock_irqrestore(&ltq_port->lock, flags);
-	if (!IS_ERR(ltq_port->clk))
+	अगर (!IS_ERR(ltq_port->clk))
 		clk_disable_unprepare(ltq_port->clk);
-}
+पूर्ण
 
-static void
-lqasc_set_termios(struct uart_port *port,
-	struct ktermios *new, struct ktermios *old)
-{
-	unsigned int cflag;
-	unsigned int iflag;
-	unsigned int divisor;
-	unsigned int baud;
-	unsigned int con = 0;
-	unsigned long flags;
-	struct ltq_uart_port *ltq_port = to_ltq_uart_port(port);
+अटल व्योम
+lqasc_set_termios(काष्ठा uart_port *port,
+	काष्ठा ktermios *new, काष्ठा ktermios *old)
+अणु
+	अचिन्हित पूर्णांक cflag;
+	अचिन्हित पूर्णांक अगरlag;
+	अचिन्हित पूर्णांक भागisor;
+	अचिन्हित पूर्णांक baud;
+	अचिन्हित पूर्णांक con = 0;
+	अचिन्हित दीर्घ flags;
+	काष्ठा ltq_uart_port *ltq_port = to_ltq_uart_port(port);
 
 	cflag = new->c_cflag;
-	iflag = new->c_iflag;
+	अगरlag = new->c_अगरlag;
 
-	switch (cflag & CSIZE) {
-	case CS7:
+	चयन (cflag & CSIZE) अणु
+	हाल CS7:
 		con = ASCCON_M_7ASYNC;
-		break;
+		अवरोध;
 
-	case CS5:
-	case CS6:
-	default:
+	हाल CS5:
+	हाल CS6:
+	शेष:
 		new->c_cflag &= ~ CSIZE;
 		new->c_cflag |= CS8;
 		con = ASCCON_M_8ASYNC;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	cflag &= ~CMSPAR; /* Mark/Space parity is not supported */
 
-	if (cflag & CSTOPB)
+	अगर (cflag & CSTOPB)
 		con |= ASCCON_STP;
 
-	if (cflag & PARENB) {
-		if (!(cflag & PARODD))
+	अगर (cflag & PARENB) अणु
+		अगर (!(cflag & PARODD))
 			con &= ~ASCCON_ODD;
-		else
+		अन्यथा
 			con |= ASCCON_ODD;
-	}
+	पूर्ण
 
-	port->read_status_mask = ASCSTATE_ROE;
-	if (iflag & INPCK)
-		port->read_status_mask |= ASCSTATE_FE | ASCSTATE_PE;
+	port->पढ़ो_status_mask = ASCSTATE_ROE;
+	अगर (अगरlag & INPCK)
+		port->पढ़ो_status_mask |= ASCSTATE_FE | ASCSTATE_PE;
 
 	port->ignore_status_mask = 0;
-	if (iflag & IGNPAR)
+	अगर (अगरlag & IGNPAR)
 		port->ignore_status_mask |= ASCSTATE_FE | ASCSTATE_PE;
 
-	if (iflag & IGNBRK) {
+	अगर (अगरlag & IGNBRK) अणु
 		/*
-		 * If we're ignoring parity and break indicators,
-		 * ignore overruns too (for real raw support).
+		 * If we're ignoring parity and अवरोध indicators,
+		 * ignore overruns too (क्रम real raw support).
 		 */
-		if (iflag & IGNPAR)
+		अगर (अगरlag & IGNPAR)
 			port->ignore_status_mask |= ASCSTATE_ROE;
-	}
+	पूर्ण
 
-	if ((cflag & CREAD) == 0)
+	अगर ((cflag & CREAD) == 0)
 		port->ignore_status_mask |= UART_DUMMY_UER_RX;
 
-	/* set error signals  - framing, parity  and overrun, enable receiver */
+	/* set error संकेतs  - framing, parity  and overrun, enable receiver */
 	con |= ASCCON_FEN | ASCCON_TOEN | ASCCON_ROEN;
 
 	spin_lock_irqsave(&ltq_port->lock, flags);
@@ -475,247 +476,247 @@ lqasc_set_termios(struct uart_port *port,
 	/* set up CON */
 	asc_update_bits(0, con, port->membase + LTQ_ASC_CON);
 
-	/* Set baud rate - take a divider of 2 into account */
+	/* Set baud rate - take a भागider of 2 पूर्णांकo account */
 	baud = uart_get_baud_rate(port, new, old, 0, port->uartclk / 16);
-	divisor = uart_get_divisor(port, baud);
-	divisor = divisor / 2 - 1;
+	भागisor = uart_get_भागisor(port, baud);
+	भागisor = भागisor / 2 - 1;
 
 	/* disable the baudrate generator */
 	asc_update_bits(ASCCON_R, 0, port->membase + LTQ_ASC_CON);
 
-	/* make sure the fractional divider is off */
+	/* make sure the fractional भागider is off */
 	asc_update_bits(ASCCON_FDE, 0, port->membase + LTQ_ASC_CON);
 
-	/* set up to use divisor of 2 */
+	/* set up to use भागisor of 2 */
 	asc_update_bits(ASCCON_BRS, 0, port->membase + LTQ_ASC_CON);
 
-	/* now we can write the new baudrate into the register */
-	__raw_writel(divisor, port->membase + LTQ_ASC_BG);
+	/* now we can ग_लिखो the new baudrate पूर्णांकo the रेजिस्टर */
+	__raw_ग_लिखोl(भागisor, port->membase + LTQ_ASC_BG);
 
 	/* turn the baudrate generator back on */
 	asc_update_bits(0, ASCCON_R, port->membase + LTQ_ASC_CON);
 
 	/* enable rx */
-	__raw_writel(ASCWHBSTATE_SETREN, port->membase + LTQ_ASC_WHBSTATE);
+	__raw_ग_लिखोl(ASCWHBSTATE_SETREN, port->membase + LTQ_ASC_WHBSTATE);
 
 	spin_unlock_irqrestore(&ltq_port->lock, flags);
 
-	/* Don't rewrite B0 */
-	if (tty_termios_baud_rate(new))
+	/* Don't reग_लिखो B0 */
+	अगर (tty_termios_baud_rate(new))
 		tty_termios_encode_baud_rate(new, baud, baud);
 
-	uart_update_timeout(port, cflag, baud);
-}
+	uart_update_समयout(port, cflag, baud);
+पूर्ण
 
-static const char*
-lqasc_type(struct uart_port *port)
-{
-	if (port->type == PORT_LTQ_ASC)
-		return DRVNAME;
-	else
-		return NULL;
-}
+अटल स्थिर अक्षर*
+lqasc_type(काष्ठा uart_port *port)
+अणु
+	अगर (port->type == PORT_LTQ_ASC)
+		वापस DRVNAME;
+	अन्यथा
+		वापस शून्य;
+पूर्ण
 
-static void
-lqasc_release_port(struct uart_port *port)
-{
-	struct platform_device *pdev = to_platform_device(port->dev);
+अटल व्योम
+lqasc_release_port(काष्ठा uart_port *port)
+अणु
+	काष्ठा platक्रमm_device *pdev = to_platक्रमm_device(port->dev);
 
-	if (port->flags & UPF_IOREMAP) {
+	अगर (port->flags & UPF_IOREMAP) अणु
 		devm_iounmap(&pdev->dev, port->membase);
-		port->membase = NULL;
-	}
-}
+		port->membase = शून्य;
+	पूर्ण
+पूर्ण
 
-static int
-lqasc_request_port(struct uart_port *port)
-{
-	struct platform_device *pdev = to_platform_device(port->dev);
-	struct resource *res;
-	int size;
+अटल पूर्णांक
+lqasc_request_port(काष्ठा uart_port *port)
+अणु
+	काष्ठा platक्रमm_device *pdev = to_platक्रमm_device(port->dev);
+	काष्ठा resource *res;
+	पूर्णांक size;
 
-	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
-	if (!res) {
+	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
+	अगर (!res) अणु
 		dev_err(&pdev->dev, "cannot obtain I/O memory region");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 	size = resource_size(res);
 
 	res = devm_request_mem_region(&pdev->dev, res->start,
 		size, dev_name(&pdev->dev));
-	if (!res) {
+	अगर (!res) अणु
 		dev_err(&pdev->dev, "cannot request I/O memory region");
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 
-	if (port->flags & UPF_IOREMAP) {
+	अगर (port->flags & UPF_IOREMAP) अणु
 		port->membase = devm_ioremap(&pdev->dev,
 			port->mapbase, size);
-		if (port->membase == NULL)
-			return -ENOMEM;
-	}
-	return 0;
-}
+		अगर (port->membase == शून्य)
+			वापस -ENOMEM;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static void
-lqasc_config_port(struct uart_port *port, int flags)
-{
-	if (flags & UART_CONFIG_TYPE) {
+अटल व्योम
+lqasc_config_port(काष्ठा uart_port *port, पूर्णांक flags)
+अणु
+	अगर (flags & UART_CONFIG_TYPE) अणु
 		port->type = PORT_LTQ_ASC;
 		lqasc_request_port(port);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int
-lqasc_verify_port(struct uart_port *port,
-	struct serial_struct *ser)
-{
-	int ret = 0;
-	if (ser->type != PORT_UNKNOWN && ser->type != PORT_LTQ_ASC)
+अटल पूर्णांक
+lqasc_verअगरy_port(काष्ठा uart_port *port,
+	काष्ठा serial_काष्ठा *ser)
+अणु
+	पूर्णांक ret = 0;
+	अगर (ser->type != PORT_UNKNOWN && ser->type != PORT_LTQ_ASC)
 		ret = -EINVAL;
-	if (ser->irq < 0 || ser->irq >= NR_IRQS)
+	अगर (ser->irq < 0 || ser->irq >= NR_IRQS)
 		ret = -EINVAL;
-	if (ser->baud_base < 9600)
+	अगर (ser->baud_base < 9600)
 		ret = -EINVAL;
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const struct uart_ops lqasc_pops = {
+अटल स्थिर काष्ठा uart_ops lqasc_pops = अणु
 	.tx_empty =	lqasc_tx_empty,
 	.set_mctrl =	lqasc_set_mctrl,
 	.get_mctrl =	lqasc_get_mctrl,
 	.stop_tx =	lqasc_stop_tx,
 	.start_tx =	lqasc_start_tx,
 	.stop_rx =	lqasc_stop_rx,
-	.break_ctl =	lqasc_break_ctl,
+	.अवरोध_ctl =	lqasc_अवरोध_ctl,
 	.startup =	lqasc_startup,
-	.shutdown =	lqasc_shutdown,
+	.shutकरोwn =	lqasc_shutकरोwn,
 	.set_termios =	lqasc_set_termios,
 	.type =		lqasc_type,
 	.release_port =	lqasc_release_port,
 	.request_port =	lqasc_request_port,
 	.config_port =	lqasc_config_port,
-	.verify_port =	lqasc_verify_port,
-};
+	.verअगरy_port =	lqasc_verअगरy_port,
+पूर्ण;
 
-#ifdef CONFIG_SERIAL_LANTIQ_CONSOLE
-static void
-lqasc_console_putchar(struct uart_port *port, int ch)
-{
-	int fifofree;
+#अगर_घोषित CONFIG_SERIAL_LANTIQ_CONSOLE
+अटल व्योम
+lqasc_console_अक्षर_दो(काष्ठा uart_port *port, पूर्णांक ch)
+अणु
+	पूर्णांक fअगरoमुक्त;
 
-	if (!port->membase)
-		return;
+	अगर (!port->membase)
+		वापस;
 
-	do {
-		fifofree = (__raw_readl(port->membase + LTQ_ASC_FSTAT)
-			& ASCFSTAT_TXFREEMASK) >> ASCFSTAT_TXFREEOFF;
-	} while (fifofree == 0);
-	writeb(ch, port->membase + LTQ_ASC_TBUF);
-}
+	करो अणु
+		fअगरoमुक्त = (__raw_पढ़ोl(port->membase + LTQ_ASC_FSTAT)
+			& ASCFSTAT_TXFREEMASK) >> ASCFSTAT_TXFREखातापूर्णF;
+	पूर्ण जबतक (fअगरoमुक्त == 0);
+	ग_लिखोb(ch, port->membase + LTQ_ASC_TBUF);
+पूर्ण
 
-static void lqasc_serial_port_write(struct uart_port *port, const char *s,
-				    u_int count)
-{
-	uart_console_write(port, s, count, lqasc_console_putchar);
-}
+अटल व्योम lqasc_serial_port_ग_लिखो(काष्ठा uart_port *port, स्थिर अक्षर *s,
+				    u_पूर्णांक count)
+अणु
+	uart_console_ग_लिखो(port, s, count, lqasc_console_अक्षर_दो);
+पूर्ण
 
-static void
-lqasc_console_write(struct console *co, const char *s, u_int count)
-{
-	struct ltq_uart_port *ltq_port;
-	unsigned long flags;
+अटल व्योम
+lqasc_console_ग_लिखो(काष्ठा console *co, स्थिर अक्षर *s, u_पूर्णांक count)
+अणु
+	काष्ठा ltq_uart_port *ltq_port;
+	अचिन्हित दीर्घ flags;
 
-	if (co->index >= MAXPORTS)
-		return;
+	अगर (co->index >= MAXPORTS)
+		वापस;
 
 	ltq_port = lqasc_port[co->index];
-	if (!ltq_port)
-		return;
+	अगर (!ltq_port)
+		वापस;
 
 	spin_lock_irqsave(&ltq_port->lock, flags);
-	lqasc_serial_port_write(&ltq_port->port, s, count);
+	lqasc_serial_port_ग_लिखो(&ltq_port->port, s, count);
 	spin_unlock_irqrestore(&ltq_port->lock, flags);
-}
+पूर्ण
 
-static int __init
-lqasc_console_setup(struct console *co, char *options)
-{
-	struct ltq_uart_port *ltq_port;
-	struct uart_port *port;
-	int baud = 115200;
-	int bits = 8;
-	int parity = 'n';
-	int flow = 'n';
+अटल पूर्णांक __init
+lqasc_console_setup(काष्ठा console *co, अक्षर *options)
+अणु
+	काष्ठा ltq_uart_port *ltq_port;
+	काष्ठा uart_port *port;
+	पूर्णांक baud = 115200;
+	पूर्णांक bits = 8;
+	पूर्णांक parity = 'n';
+	पूर्णांक flow = 'n';
 
-	if (co->index >= MAXPORTS)
-		return -ENODEV;
+	अगर (co->index >= MAXPORTS)
+		वापस -ENODEV;
 
 	ltq_port = lqasc_port[co->index];
-	if (!ltq_port)
-		return -ENODEV;
+	अगर (!ltq_port)
+		वापस -ENODEV;
 
 	port = &ltq_port->port;
 
-	if (!IS_ERR(ltq_port->clk))
+	अगर (!IS_ERR(ltq_port->clk))
 		clk_prepare_enable(ltq_port->clk);
 
 	port->uartclk = clk_get_rate(ltq_port->freqclk);
 
-	if (options)
+	अगर (options)
 		uart_parse_options(options, &baud, &parity, &bits, &flow);
-	return uart_set_options(port, co, baud, parity, bits, flow);
-}
+	वापस uart_set_options(port, co, baud, parity, bits, flow);
+पूर्ण
 
-static struct console lqasc_console = {
+अटल काष्ठा console lqasc_console = अणु
 	.name =		"ttyLTQ",
-	.write =	lqasc_console_write,
+	.ग_लिखो =	lqasc_console_ग_लिखो,
 	.device =	uart_console_device,
 	.setup =	lqasc_console_setup,
 	.flags =	CON_PRINTBUFFER,
 	.index =	-1,
 	.data =		&lqasc_reg,
-};
+पूर्ण;
 
-static int __init
-lqasc_console_init(void)
-{
-	register_console(&lqasc_console);
-	return 0;
-}
+अटल पूर्णांक __init
+lqasc_console_init(व्योम)
+अणु
+	रेजिस्टर_console(&lqasc_console);
+	वापस 0;
+पूर्ण
 console_initcall(lqasc_console_init);
 
-static void lqasc_serial_early_console_write(struct console *co,
-					     const char *s,
-					     u_int count)
-{
-	struct earlycon_device *dev = co->data;
+अटल व्योम lqasc_serial_early_console_ग_लिखो(काष्ठा console *co,
+					     स्थिर अक्षर *s,
+					     u_पूर्णांक count)
+अणु
+	काष्ठा earlycon_device *dev = co->data;
 
-	lqasc_serial_port_write(&dev->port, s, count);
-}
+	lqasc_serial_port_ग_लिखो(&dev->port, s, count);
+पूर्ण
 
-static int __init
-lqasc_serial_early_console_setup(struct earlycon_device *device,
-				 const char *opt)
-{
-	if (!device->port.membase)
-		return -ENODEV;
+अटल पूर्णांक __init
+lqasc_serial_early_console_setup(काष्ठा earlycon_device *device,
+				 स्थिर अक्षर *opt)
+अणु
+	अगर (!device->port.membase)
+		वापस -ENODEV;
 
-	device->con->write = lqasc_serial_early_console_write;
-	return 0;
-}
+	device->con->ग_लिखो = lqasc_serial_early_console_ग_लिखो;
+	वापस 0;
+पूर्ण
 OF_EARLYCON_DECLARE(lantiq, "lantiq,asc", lqasc_serial_early_console_setup);
 OF_EARLYCON_DECLARE(lantiq, "intel,lgm-asc", lqasc_serial_early_console_setup);
 
-#define LANTIQ_SERIAL_CONSOLE	(&lqasc_console)
+#घोषणा LANTIQ_SERIAL_CONSOLE	(&lqasc_console)
 
-#else
+#अन्यथा
 
-#define LANTIQ_SERIAL_CONSOLE	NULL
+#घोषणा LANTIQ_SERIAL_CONSOLE	शून्य
 
-#endif /* CONFIG_SERIAL_LANTIQ_CONSOLE */
+#पूर्ण_अगर /* CONFIG_SERIAL_LANTIQ_CONSOLE */
 
-static struct uart_driver lqasc_reg = {
+अटल काष्ठा uart_driver lqasc_reg = अणु
 	.owner =	THIS_MODULE,
 	.driver_name =	DRVNAME,
 	.dev_name =	"ttyLTQ",
@@ -723,250 +724,250 @@ static struct uart_driver lqasc_reg = {
 	.minor =	0,
 	.nr =		MAXPORTS,
 	.cons =		LANTIQ_SERIAL_CONSOLE,
-};
+पूर्ण;
 
-static int fetch_irq_lantiq(struct device *dev, struct ltq_uart_port *ltq_port)
-{
-	struct uart_port *port = &ltq_port->port;
-	struct resource irqres[3];
-	int ret;
+अटल पूर्णांक fetch_irq_lantiq(काष्ठा device *dev, काष्ठा ltq_uart_port *ltq_port)
+अणु
+	काष्ठा uart_port *port = &ltq_port->port;
+	काष्ठा resource irqres[3];
+	पूर्णांक ret;
 
 	ret = of_irq_to_resource_table(dev->of_node, irqres, 3);
-	if (ret != 3) {
+	अगर (ret != 3) अणु
 		dev_err(dev,
 			"failed to get IRQs for serial port\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 	ltq_port->tx_irq = irqres[0].start;
 	ltq_port->rx_irq = irqres[1].start;
 	ltq_port->err_irq = irqres[2].start;
 	port->irq = irqres[0].start;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int request_irq_lantiq(struct uart_port *port)
-{
-	struct ltq_uart_port *ltq_port = to_ltq_uart_port(port);
-	int retval;
+अटल पूर्णांक request_irq_lantiq(काष्ठा uart_port *port)
+अणु
+	काष्ठा ltq_uart_port *ltq_port = to_ltq_uart_port(port);
+	पूर्णांक retval;
 
-	retval = request_irq(ltq_port->tx_irq, lqasc_tx_int,
+	retval = request_irq(ltq_port->tx_irq, lqasc_tx_पूर्णांक,
 			     0, "asc_tx", port);
-	if (retval) {
+	अगर (retval) अणु
 		dev_err(port->dev, "failed to request asc_tx\n");
-		return retval;
-	}
+		वापस retval;
+	पूर्ण
 
-	retval = request_irq(ltq_port->rx_irq, lqasc_rx_int,
+	retval = request_irq(ltq_port->rx_irq, lqasc_rx_पूर्णांक,
 			     0, "asc_rx", port);
-	if (retval) {
+	अगर (retval) अणु
 		dev_err(port->dev, "failed to request asc_rx\n");
-		goto err1;
-	}
+		जाओ err1;
+	पूर्ण
 
-	retval = request_irq(ltq_port->err_irq, lqasc_err_int,
+	retval = request_irq(ltq_port->err_irq, lqasc_err_पूर्णांक,
 			     0, "asc_err", port);
-	if (retval) {
+	अगर (retval) अणु
 		dev_err(port->dev, "failed to request asc_err\n");
-		goto err2;
-	}
-	return 0;
+		जाओ err2;
+	पूर्ण
+	वापस 0;
 
 err2:
-	free_irq(ltq_port->rx_irq, port);
+	मुक्त_irq(ltq_port->rx_irq, port);
 err1:
-	free_irq(ltq_port->tx_irq, port);
-	return retval;
-}
+	मुक्त_irq(ltq_port->tx_irq, port);
+	वापस retval;
+पूर्ण
 
-static void free_irq_lantiq(struct uart_port *port)
-{
-	struct ltq_uart_port *ltq_port = to_ltq_uart_port(port);
+अटल व्योम मुक्त_irq_lantiq(काष्ठा uart_port *port)
+अणु
+	काष्ठा ltq_uart_port *ltq_port = to_ltq_uart_port(port);
 
-	free_irq(ltq_port->tx_irq, port);
-	free_irq(ltq_port->rx_irq, port);
-	free_irq(ltq_port->err_irq, port);
-}
+	मुक्त_irq(ltq_port->tx_irq, port);
+	मुक्त_irq(ltq_port->rx_irq, port);
+	मुक्त_irq(ltq_port->err_irq, port);
+पूर्ण
 
-static int fetch_irq_intel(struct device *dev, struct ltq_uart_port *ltq_port)
-{
-	struct uart_port *port = &ltq_port->port;
-	int ret;
+अटल पूर्णांक fetch_irq_पूर्णांकel(काष्ठा device *dev, काष्ठा ltq_uart_port *ltq_port)
+अणु
+	काष्ठा uart_port *port = &ltq_port->port;
+	पूर्णांक ret;
 
 	ret = of_irq_get(dev->of_node, 0);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(dev, "failed to fetch IRQ for serial port\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 	ltq_port->common_irq = ret;
 	port->irq = ret;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int request_irq_intel(struct uart_port *port)
-{
-	struct ltq_uart_port *ltq_port = to_ltq_uart_port(port);
-	int retval;
+अटल पूर्णांक request_irq_पूर्णांकel(काष्ठा uart_port *port)
+अणु
+	काष्ठा ltq_uart_port *ltq_port = to_ltq_uart_port(port);
+	पूर्णांक retval;
 
 	retval = request_irq(ltq_port->common_irq, lqasc_irq, 0,
 			     "asc_irq", port);
-	if (retval)
+	अगर (retval)
 		dev_err(port->dev, "failed to request asc_irq\n");
 
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
-static void free_irq_intel(struct uart_port *port)
-{
-	struct ltq_uart_port *ltq_port = to_ltq_uart_port(port);
+अटल व्योम मुक्त_irq_पूर्णांकel(काष्ठा uart_port *port)
+अणु
+	काष्ठा ltq_uart_port *ltq_port = to_ltq_uart_port(port);
 
-	free_irq(ltq_port->common_irq, port);
-}
+	मुक्त_irq(ltq_port->common_irq, port);
+पूर्ण
 
-static int lqasc_probe(struct platform_device *pdev)
-{
-	struct device_node *node = pdev->dev.of_node;
-	struct ltq_uart_port *ltq_port;
-	struct uart_port *port;
-	struct resource *mmres;
-	int line;
-	int ret;
+अटल पूर्णांक lqasc_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device_node *node = pdev->dev.of_node;
+	काष्ठा ltq_uart_port *ltq_port;
+	काष्ठा uart_port *port;
+	काष्ठा resource *mmres;
+	पूर्णांक line;
+	पूर्णांक ret;
 
-	mmres = platform_get_resource(pdev, IORESOURCE_MEM, 0);
-	if (!mmres) {
+	mmres = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
+	अगर (!mmres) अणु
 		dev_err(&pdev->dev,
 			"failed to get memory for serial port\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	ltq_port = devm_kzalloc(&pdev->dev, sizeof(struct ltq_uart_port),
+	ltq_port = devm_kzalloc(&pdev->dev, माप(काष्ठा ltq_uart_port),
 				GFP_KERNEL);
-	if (!ltq_port)
-		return -ENOMEM;
+	अगर (!ltq_port)
+		वापस -ENOMEM;
 
 	port = &ltq_port->port;
 
 	ltq_port->soc = of_device_get_match_data(&pdev->dev);
 	ret = ltq_port->soc->fetch_irq(&pdev->dev, ltq_port);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	/* get serial id */
 	line = of_alias_get_id(node, "serial");
-	if (line < 0) {
-		if (IS_ENABLED(CONFIG_LANTIQ)) {
-			if (mmres->start == CPHYSADDR(LTQ_EARLY_ASC))
+	अगर (line < 0) अणु
+		अगर (IS_ENABLED(CONFIG_LANTIQ)) अणु
+			अगर (mmres->start == CPHYSADDR(LTQ_EARLY_ASC))
 				line = 0;
-			else
+			अन्यथा
 				line = 1;
-		} else {
+		पूर्ण अन्यथा अणु
 			dev_err(&pdev->dev, "failed to get alias id, errno %d\n",
 				line);
-			return line;
-		}
-	}
+			वापस line;
+		पूर्ण
+	पूर्ण
 
-	if (lqasc_port[line]) {
+	अगर (lqasc_port[line]) अणु
 		dev_err(&pdev->dev, "port %d already allocated\n", line);
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 
 	port->iotype	= SERIAL_IO_MEM;
 	port->flags	= UPF_BOOT_AUTOCONF | UPF_IOREMAP;
 	port->ops	= &lqasc_pops;
-	port->fifosize	= 16;
+	port->fअगरosize	= 16;
 	port->type	= PORT_LTQ_ASC;
 	port->line	= line;
 	port->dev	= &pdev->dev;
 	/* unused, just to be backward-compatible */
 	port->mapbase	= mmres->start;
 
-	if (IS_ENABLED(CONFIG_LANTIQ) && !IS_ENABLED(CONFIG_COMMON_CLK))
+	अगर (IS_ENABLED(CONFIG_LANTIQ) && !IS_ENABLED(CONFIG_COMMON_CLK))
 		ltq_port->freqclk = clk_get_fpi();
-	else
+	अन्यथा
 		ltq_port->freqclk = devm_clk_get(&pdev->dev, "freq");
 
 
-	if (IS_ERR(ltq_port->freqclk)) {
+	अगर (IS_ERR(ltq_port->freqclk)) अणु
 		pr_err("failed to get fpi clk\n");
-		return -ENOENT;
-	}
+		वापस -ENOENT;
+	पूर्ण
 
-	/* not all asc ports have clock gates, lets ignore the return code */
-	if (IS_ENABLED(CONFIG_LANTIQ) && !IS_ENABLED(CONFIG_COMMON_CLK))
-		ltq_port->clk = clk_get(&pdev->dev, NULL);
-	else
+	/* not all asc ports have घड़ी gates, lets ignore the वापस code */
+	अगर (IS_ENABLED(CONFIG_LANTIQ) && !IS_ENABLED(CONFIG_COMMON_CLK))
+		ltq_port->clk = clk_get(&pdev->dev, शून्य);
+	अन्यथा
 		ltq_port->clk = devm_clk_get(&pdev->dev, "asc");
 
 	spin_lock_init(&ltq_port->lock);
 	lqasc_port[line] = ltq_port;
-	platform_set_drvdata(pdev, ltq_port);
+	platक्रमm_set_drvdata(pdev, ltq_port);
 
 	ret = uart_add_one_port(&lqasc_reg, port);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int lqasc_remove(struct platform_device *pdev)
-{
-	struct uart_port *port = platform_get_drvdata(pdev);
+अटल पूर्णांक lqasc_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा uart_port *port = platक्रमm_get_drvdata(pdev);
 
-	return uart_remove_one_port(&lqasc_reg, port);
-}
+	वापस uart_हटाओ_one_port(&lqasc_reg, port);
+पूर्ण
 
-static const struct ltq_soc_data soc_data_lantiq = {
+अटल स्थिर काष्ठा ltq_soc_data soc_data_lantiq = अणु
 	.fetch_irq = fetch_irq_lantiq,
 	.request_irq = request_irq_lantiq,
-	.free_irq = free_irq_lantiq,
-};
+	.मुक्त_irq = मुक्त_irq_lantiq,
+पूर्ण;
 
-static const struct ltq_soc_data soc_data_intel = {
-	.fetch_irq = fetch_irq_intel,
-	.request_irq = request_irq_intel,
-	.free_irq = free_irq_intel,
-};
+अटल स्थिर काष्ठा ltq_soc_data soc_data_पूर्णांकel = अणु
+	.fetch_irq = fetch_irq_पूर्णांकel,
+	.request_irq = request_irq_पूर्णांकel,
+	.मुक्त_irq = मुक्त_irq_पूर्णांकel,
+पूर्ण;
 
-static const struct of_device_id ltq_asc_match[] = {
-	{ .compatible = "lantiq,asc", .data = &soc_data_lantiq },
-	{ .compatible = "intel,lgm-asc", .data = &soc_data_intel },
-	{},
-};
+अटल स्थिर काष्ठा of_device_id ltq_asc_match[] = अणु
+	अणु .compatible = "lantiq,asc", .data = &soc_data_lantiq पूर्ण,
+	अणु .compatible = "intel,lgm-asc", .data = &soc_data_पूर्णांकel पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, ltq_asc_match);
 
-static struct platform_driver lqasc_driver = {
+अटल काष्ठा platक्रमm_driver lqasc_driver = अणु
 	.probe		= lqasc_probe,
-	.remove		= lqasc_remove,
-	.driver		= {
+	.हटाओ		= lqasc_हटाओ,
+	.driver		= अणु
 		.name	= DRVNAME,
 		.of_match_table = ltq_asc_match,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static int __init
-init_lqasc(void)
-{
-	int ret;
+अटल पूर्णांक __init
+init_lqasc(व्योम)
+अणु
+	पूर्णांक ret;
 
-	ret = uart_register_driver(&lqasc_reg);
-	if (ret != 0)
-		return ret;
+	ret = uart_रेजिस्टर_driver(&lqasc_reg);
+	अगर (ret != 0)
+		वापस ret;
 
-	ret = platform_driver_register(&lqasc_driver);
-	if (ret != 0)
-		uart_unregister_driver(&lqasc_reg);
+	ret = platक्रमm_driver_रेजिस्टर(&lqasc_driver);
+	अगर (ret != 0)
+		uart_unरेजिस्टर_driver(&lqasc_reg);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void __exit exit_lqasc(void)
-{
-	platform_driver_unregister(&lqasc_driver);
-	uart_unregister_driver(&lqasc_reg);
-}
+अटल व्योम __निकास निकास_lqasc(व्योम)
+अणु
+	platक्रमm_driver_unरेजिस्टर(&lqasc_driver);
+	uart_unरेजिस्टर_driver(&lqasc_reg);
+पूर्ण
 
 module_init(init_lqasc);
-module_exit(exit_lqasc);
+module_निकास(निकास_lqasc);
 
 MODULE_DESCRIPTION("Serial driver for Lantiq & Intel gateway SoCs");
 MODULE_LICENSE("GPL v2");

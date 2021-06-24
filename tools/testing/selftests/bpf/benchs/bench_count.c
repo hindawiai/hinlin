@@ -1,91 +1,92 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /* Copyright (c) 2020 Facebook */
-#include "bench.h"
+#समावेश "bench.h"
 
 /* COUNT-GLOBAL benchmark */
 
-static struct count_global_ctx {
-	struct counter hits;
-} count_global_ctx;
+अटल काष्ठा count_global_ctx अणु
+	काष्ठा counter hits;
+पूर्ण count_global_ctx;
 
-static void *count_global_producer(void *input)
-{
-	struct count_global_ctx *ctx = &count_global_ctx;
+अटल व्योम *count_global_producer(व्योम *input)
+अणु
+	काष्ठा count_global_ctx *ctx = &count_global_ctx;
 
-	while (true) {
+	जबतक (true) अणु
 		atomic_inc(&ctx->hits.value);
-	}
-	return NULL;
-}
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
-static void *count_global_consumer(void *input)
-{
-	return NULL;
-}
+अटल व्योम *count_global_consumer(व्योम *input)
+अणु
+	वापस शून्य;
+पूर्ण
 
-static void count_global_measure(struct bench_res *res)
-{
-	struct count_global_ctx *ctx = &count_global_ctx;
+अटल व्योम count_global_measure(काष्ठा bench_res *res)
+अणु
+	काष्ठा count_global_ctx *ctx = &count_global_ctx;
 
 	res->hits = atomic_swap(&ctx->hits.value, 0);
-}
+पूर्ण
 
 /* COUNT-local benchmark */
 
-static struct count_local_ctx {
-	struct counter *hits;
-} count_local_ctx;
+अटल काष्ठा count_local_ctx अणु
+	काष्ठा counter *hits;
+पूर्ण count_local_ctx;
 
-static void count_local_setup()
-{
-	struct count_local_ctx *ctx = &count_local_ctx;
+अटल व्योम count_local_setup()
+अणु
+	काष्ठा count_local_ctx *ctx = &count_local_ctx;
 
-	ctx->hits = calloc(env.consumer_cnt, sizeof(*ctx->hits));
-	if (!ctx->hits)
-		exit(1);
-}
+	ctx->hits = सुस्मृति(env.consumer_cnt, माप(*ctx->hits));
+	अगर (!ctx->hits)
+		निकास(1);
+पूर्ण
 
-static void *count_local_producer(void *input)
-{
-	struct count_local_ctx *ctx = &count_local_ctx;
-	int idx = (long)input;
+अटल व्योम *count_local_producer(व्योम *input)
+अणु
+	काष्ठा count_local_ctx *ctx = &count_local_ctx;
+	पूर्णांक idx = (दीर्घ)input;
 
-	while (true) {
+	जबतक (true) अणु
 		atomic_inc(&ctx->hits[idx].value);
-	}
-	return NULL;
-}
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
-static void *count_local_consumer(void *input)
-{
-	return NULL;
-}
+अटल व्योम *count_local_consumer(व्योम *input)
+अणु
+	वापस शून्य;
+पूर्ण
 
-static void count_local_measure(struct bench_res *res)
-{
-	struct count_local_ctx *ctx = &count_local_ctx;
-	int i;
+अटल व्योम count_local_measure(काष्ठा bench_res *res)
+अणु
+	काष्ठा count_local_ctx *ctx = &count_local_ctx;
+	पूर्णांक i;
 
-	for (i = 0; i < env.producer_cnt; i++) {
+	क्रम (i = 0; i < env.producer_cnt; i++) अणु
 		res->hits += atomic_swap(&ctx->hits[i].value, 0);
-	}
-}
+	पूर्ण
+पूर्ण
 
-const struct bench bench_count_global = {
+स्थिर काष्ठा bench bench_count_global = अणु
 	.name = "count-global",
-	.producer_thread = count_global_producer,
-	.consumer_thread = count_global_consumer,
+	.producer_thपढ़ो = count_global_producer,
+	.consumer_thपढ़ो = count_global_consumer,
 	.measure = count_global_measure,
 	.report_progress = hits_drops_report_progress,
 	.report_final = hits_drops_report_final,
-};
+पूर्ण;
 
-const struct bench bench_count_local = {
+स्थिर काष्ठा bench bench_count_local = अणु
 	.name = "count-local",
 	.setup = count_local_setup,
-	.producer_thread = count_local_producer,
-	.consumer_thread = count_local_consumer,
+	.producer_thपढ़ो = count_local_producer,
+	.consumer_thपढ़ो = count_local_consumer,
 	.measure = count_local_measure,
 	.report_progress = hits_drops_report_progress,
 	.report_final = hits_drops_report_final,
-};
+पूर्ण;

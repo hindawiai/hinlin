@@ -1,23 +1,24 @@
+<शैली गुरु>
 /*
  * Copyright (c) 2017, Mellanox Technologies, Ltd.  All rights reserved.
  *
  * This software is available to you under a choice of one of two
  * licenses.  You may choose to be licensed under the terms of the GNU
  * General Public License (GPL) Version 2, available from the file
- * COPYING in the main directory of this source tree, or the
+ * COPYING in the मुख्य directory of this source tree, or the
  * OpenIB.org BSD license below:
  *
- *     Redistribution and use in source and binary forms, with or
- *     without modification, are permitted provided that the following
+ *     Redistribution and use in source and binary क्रमms, with or
+ *     without modअगरication, are permitted provided that the following
  *     conditions are met:
  *
  *      - Redistributions of source code must retain the above
  *        copyright notice, this list of conditions and the following
  *        disclaimer.
  *
- *      - Redistributions in binary form must reproduce the above
+ *      - Redistributions in binary क्रमm must reproduce the above
  *        copyright notice, this list of conditions and the following
- *        disclaimer in the documentation and/or other materials
+ *        disclaimer in the करोcumentation and/or other materials
  *        provided with the distribution.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
@@ -30,35 +31,35 @@
  * SOFTWARE.
  */
 
-#ifndef __LIB_MLX5_H__
-#define __LIB_MLX5_H__
+#अगर_अघोषित __LIB_MLX5_H__
+#घोषणा __LIB_MLX5_H__
 
-#include "mlx5_core.h"
+#समावेश "mlx5_core.h"
 
-void mlx5_init_reserved_gids(struct mlx5_core_dev *dev);
-void mlx5_cleanup_reserved_gids(struct mlx5_core_dev *dev);
-int  mlx5_core_reserve_gids(struct mlx5_core_dev *dev, unsigned int count);
-void mlx5_core_unreserve_gids(struct mlx5_core_dev *dev, unsigned int count);
-int  mlx5_core_reserved_gid_alloc(struct mlx5_core_dev *dev, int *gid_index);
-void mlx5_core_reserved_gid_free(struct mlx5_core_dev *dev, int gid_index);
-int mlx5_crdump_enable(struct mlx5_core_dev *dev);
-void mlx5_crdump_disable(struct mlx5_core_dev *dev);
-int mlx5_crdump_collect(struct mlx5_core_dev *dev, u32 *cr_data);
+व्योम mlx5_init_reserved_gids(काष्ठा mlx5_core_dev *dev);
+व्योम mlx5_cleanup_reserved_gids(काष्ठा mlx5_core_dev *dev);
+पूर्णांक  mlx5_core_reserve_gids(काष्ठा mlx5_core_dev *dev, अचिन्हित पूर्णांक count);
+व्योम mlx5_core_unreserve_gids(काष्ठा mlx5_core_dev *dev, अचिन्हित पूर्णांक count);
+पूर्णांक  mlx5_core_reserved_gid_alloc(काष्ठा mlx5_core_dev *dev, पूर्णांक *gid_index);
+व्योम mlx5_core_reserved_gid_मुक्त(काष्ठा mlx5_core_dev *dev, पूर्णांक gid_index);
+पूर्णांक mlx5_crdump_enable(काष्ठा mlx5_core_dev *dev);
+व्योम mlx5_crdump_disable(काष्ठा mlx5_core_dev *dev);
+पूर्णांक mlx5_crdump_collect(काष्ठा mlx5_core_dev *dev, u32 *cr_data);
 
 /* TODO move to lib/events.h */
 
-#define PORT_MODULE_EVENT_MODULE_STATUS_MASK 0xF
-#define PORT_MODULE_EVENT_ERROR_TYPE_MASK    0xF
+#घोषणा PORT_MODULE_EVENT_MODULE_STATUS_MASK 0xF
+#घोषणा PORT_MODULE_EVENT_ERROR_TYPE_MASK    0xF
 
-enum port_module_event_status_type {
+क्रमागत port_module_event_status_type अणु
 	MLX5_MODULE_STATUS_PLUGGED   = 0x1,
 	MLX5_MODULE_STATUS_UNPLUGGED = 0x2,
 	MLX5_MODULE_STATUS_ERROR     = 0x3,
 	MLX5_MODULE_STATUS_DISABLED  = 0x4,
 	MLX5_MODULE_STATUS_NUM,
-};
+पूर्ण;
 
-enum  port_module_event_error_type {
+क्रमागत  port_module_event_error_type अणु
 	MLX5_MODULE_EVENT_ERROR_POWER_BUDGET_EXCEEDED    = 0x0,
 	MLX5_MODULE_EVENT_ERROR_LONG_RANGE_FOR_NON_MLNX  = 0x1,
 	MLX5_MODULE_EVENT_ERROR_BUS_STUCK                = 0x2,
@@ -69,39 +70,39 @@ enum  port_module_event_error_type {
 	MLX5_MODULE_EVENT_ERROR_BAD_CABLE                = 0x7,
 	MLX5_MODULE_EVENT_ERROR_PCIE_POWER_SLOT_EXCEEDED = 0xc,
 	MLX5_MODULE_EVENT_ERROR_NUM,
-};
+पूर्ण;
 
-struct mlx5_pme_stats {
+काष्ठा mlx5_pme_stats अणु
 	u64 status_counters[MLX5_MODULE_STATUS_NUM];
 	u64 error_counters[MLX5_MODULE_EVENT_ERROR_NUM];
-};
+पूर्ण;
 
-void mlx5_get_pme_stats(struct mlx5_core_dev *dev, struct mlx5_pme_stats *stats);
-int mlx5_notifier_call_chain(struct mlx5_events *events, unsigned int event, void *data);
+व्योम mlx5_get_pme_stats(काष्ठा mlx5_core_dev *dev, काष्ठा mlx5_pme_stats *stats);
+पूर्णांक mlx5_notअगरier_call_chain(काष्ठा mlx5_events *events, अचिन्हित पूर्णांक event, व्योम *data);
 
 /* Crypto */
-enum {
+क्रमागत अणु
 	MLX5_ACCEL_OBJ_TLS_KEY = MLX5_GENERAL_OBJECT_TYPE_ENCRYPTION_KEY_TYPE_TLS,
 	MLX5_ACCEL_OBJ_IPSEC_KEY = MLX5_GENERAL_OBJECT_TYPE_ENCRYPTION_KEY_TYPE_IPSEC,
-};
+पूर्ण;
 
-int mlx5_create_encryption_key(struct mlx5_core_dev *mdev,
-			       void *key, u32 sz_bytes,
+पूर्णांक mlx5_create_encryption_key(काष्ठा mlx5_core_dev *mdev,
+			       व्योम *key, u32 sz_bytes,
 			       u32 key_type, u32 *p_key_id);
-void mlx5_destroy_encryption_key(struct mlx5_core_dev *mdev, u32 key_id);
+व्योम mlx5_destroy_encryption_key(काष्ठा mlx5_core_dev *mdev, u32 key_id);
 
-static inline struct net *mlx5_core_net(struct mlx5_core_dev *dev)
-{
-	return devlink_net(priv_to_devlink(dev));
-}
+अटल अंतरभूत काष्ठा net *mlx5_core_net(काष्ठा mlx5_core_dev *dev)
+अणु
+	वापस devlink_net(priv_to_devlink(dev));
+पूर्ण
 
-static inline void mlx5_uplink_netdev_set(struct mlx5_core_dev *mdev, struct net_device *netdev)
-{
+अटल अंतरभूत व्योम mlx5_uplink_netdev_set(काष्ठा mlx5_core_dev *mdev, काष्ठा net_device *netdev)
+अणु
 	mdev->mlx5e_res.uplink_netdev = netdev;
-}
+पूर्ण
 
-static inline struct net_device *mlx5_uplink_netdev_get(struct mlx5_core_dev *mdev)
-{
-	return mdev->mlx5e_res.uplink_netdev;
-}
-#endif
+अटल अंतरभूत काष्ठा net_device *mlx5_uplink_netdev_get(काष्ठा mlx5_core_dev *mdev)
+अणु
+	वापस mdev->mlx5e_res.uplink_netdev;
+पूर्ण
+#पूर्ण_अगर

@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * Thunderbolt driver - bus logic (NHI independent)
  *
@@ -6,302 +7,302 @@
  * Copyright (C) 2018, Intel Corporation
  */
 
-#ifndef TB_H_
-#define TB_H_
+#अगर_अघोषित TB_H_
+#घोषणा TB_H_
 
-#include <linux/nvmem-provider.h>
-#include <linux/pci.h>
-#include <linux/thunderbolt.h>
-#include <linux/uuid.h>
+#समावेश <linux/nvmem-provider.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/thunderbolt.h>
+#समावेश <linux/uuid.h>
 
-#include "tb_regs.h"
-#include "ctl.h"
-#include "dma_port.h"
+#समावेश "tb_regs.h"
+#समावेश "ctl.h"
+#समावेश "dma_port.h"
 
-#define NVM_MIN_SIZE		SZ_32K
-#define NVM_MAX_SIZE		SZ_512K
+#घोषणा NVM_MIN_SIZE		SZ_32K
+#घोषणा NVM_MAX_SIZE		SZ_512K
 
-/* Intel specific NVM offsets */
-#define NVM_DEVID		0x05
-#define NVM_VERSION		0x08
-#define NVM_FLASH_SIZE		0x45
+/* Intel specअगरic NVM offsets */
+#घोषणा NVM_DEVID		0x05
+#घोषणा NVM_VERSION		0x08
+#घोषणा NVM_FLASH_SIZE		0x45
 
 /**
- * struct tb_nvm - Structure holding NVM information
+ * काष्ठा tb_nvm - Structure holding NVM inक्रमmation
  * @dev: Owner of the NVM
  * @major: Major version number of the active NVM portion
  * @minor: Minor version number of the active NVM portion
- * @id: Identifier used with both NVM portions
+ * @id: Identअगरier used with both NVM portions
  * @active: Active portion NVMem device
  * @non_active: Non-active portion NVMem device
- * @buf: Buffer where the NVM image is stored before it is written to
+ * @buf: Buffer where the NVM image is stored beक्रमe it is written to
  *	 the actual NVM flash device
  * @buf_data_size: Number of bytes actually consumed by the new NVM
  *		   image
  * @authenticating: The device is authenticating the new NVM
  * @flushed: The image has been flushed to the storage area
  *
- * The user of this structure needs to handle serialization of possible
+ * The user of this काष्ठाure needs to handle serialization of possible
  * concurrent access.
  */
-struct tb_nvm {
-	struct device *dev;
+काष्ठा tb_nvm अणु
+	काष्ठा device *dev;
 	u8 major;
 	u8 minor;
-	int id;
-	struct nvmem_device *active;
-	struct nvmem_device *non_active;
-	void *buf;
-	size_t buf_data_size;
+	पूर्णांक id;
+	काष्ठा nvmem_device *active;
+	काष्ठा nvmem_device *non_active;
+	व्योम *buf;
+	माप_प्रकार buf_data_size;
 	bool authenticating;
 	bool flushed;
-};
+पूर्ण;
 
-#define TB_SWITCH_KEY_SIZE		32
-#define TB_SWITCH_MAX_DEPTH		6
-#define USB4_SWITCH_MAX_DEPTH		5
+#घोषणा TB_SWITCH_KEY_SIZE		32
+#घोषणा TB_SWITCH_MAX_DEPTH		6
+#घोषणा USB4_SWITCH_MAX_DEPTH		5
 
 /**
- * enum tb_switch_tmu_rate - TMU refresh rate
+ * क्रमागत tb_चयन_पंचांगu_rate - TMU refresh rate
  * @TB_SWITCH_TMU_RATE_OFF: %0 (Disable Time Sync handshake)
- * @TB_SWITCH_TMU_RATE_HIFI: %16 us time interval between successive
+ * @TB_SWITCH_TMU_RATE_HIFI: %16 us समय पूर्णांकerval between successive
  *			     transmission of the Delay Request TSNOS
- *			     (Time Sync Notification Ordered Set) on a Link
- * @TB_SWITCH_TMU_RATE_NORMAL: %1 ms time interval between successive
+ *			     (Time Sync Notअगरication Ordered Set) on a Link
+ * @TB_SWITCH_TMU_RATE_NORMAL: %1 ms समय पूर्णांकerval between successive
  *			       transmission of the Delay Request TSNOS on
  *			       a Link
  */
-enum tb_switch_tmu_rate {
+क्रमागत tb_चयन_पंचांगu_rate अणु
 	TB_SWITCH_TMU_RATE_OFF = 0,
 	TB_SWITCH_TMU_RATE_HIFI = 16,
 	TB_SWITCH_TMU_RATE_NORMAL = 1000,
-};
+पूर्ण;
 
 /**
- * struct tb_switch_tmu - Structure holding switch TMU configuration
- * @cap: Offset to the TMU capability (%0 if not found)
- * @has_ucap: Does the switch support uni-directional mode
- * @rate: TMU refresh rate related to upstream switch. In case of root
- *	  switch this holds the domain rate.
+ * काष्ठा tb_चयन_पंचांगu - Structure holding चयन TMU configuration
+ * @cap: Offset to the TMU capability (%0 अगर not found)
+ * @has_ucap: Does the चयन support uni-directional mode
+ * @rate: TMU refresh rate related to upstream चयन. In हाल of root
+ *	  चयन this holds the करोमुख्य rate.
  * @unidirectional: Is the TMU in uni-directional or bi-directional mode
- *		    related to upstream switch. Don't case for root switch.
+ *		    related to upstream चयन. Don't हाल क्रम root चयन.
  */
-struct tb_switch_tmu {
-	int cap;
+काष्ठा tb_चयन_पंचांगu अणु
+	पूर्णांक cap;
 	bool has_ucap;
-	enum tb_switch_tmu_rate rate;
+	क्रमागत tb_चयन_पंचांगu_rate rate;
 	bool unidirectional;
-};
+पूर्ण;
 
 /**
- * struct tb_switch - a thunderbolt switch
- * @dev: Device for the switch
+ * काष्ठा tb_चयन - a thunderbolt चयन
+ * @dev: Device क्रम the चयन
  * @config: Switch configuration
- * @ports: Ports in this switch
- * @dma_port: If the switch has port supporting DMA configuration based
- *	      mailbox this will hold the pointer to that (%NULL
- *	      otherwise). If set it also means the switch has
+ * @ports: Ports in this चयन
+ * @dma_port: If the चयन has port supporting DMA configuration based
+ *	      mailbox this will hold the poपूर्णांकer to that (%शून्य
+ *	      otherwise). If set it also means the चयन has
  *	      upgradeable NVM.
- * @tmu: The switch TMU configuration
- * @tb: Pointer to the domain the switch belongs to
- * @uid: Unique ID of the switch
- * @uuid: UUID of the switch (or %NULL if not supported)
- * @vendor: Vendor ID of the switch
- * @device: Device ID of the switch
- * @vendor_name: Name of the vendor (or %NULL if not known)
- * @device_name: Name of the device (or %NULL if not known)
+ * @पंचांगu: The चयन TMU configuration
+ * @tb: Poपूर्णांकer to the करोमुख्य the चयन beदीर्घs to
+ * @uid: Unique ID of the चयन
+ * @uuid: UUID of the चयन (or %शून्य अगर not supported)
+ * @venकरोr: Venकरोr ID of the चयन
+ * @device: Device ID of the चयन
+ * @venकरोr_name: Name of the venकरोr (or %शून्य अगर not known)
+ * @device_name: Name of the device (or %शून्य अगर not known)
  * @link_speed: Speed of the link in Gb/s
  * @link_width: Width of the link (1 or 2)
  * @link_usb4: Upstream link is USB4
  * @generation: Switch Thunderbolt generation
- * @cap_plug_events: Offset to the plug events capability (%0 if not found)
- * @cap_lc: Offset to the link controller capability (%0 if not found)
- * @is_unplugged: The switch is going away
- * @drom: DROM of the switch (%NULL if not found)
- * @nvm: Pointer to the NVM if the switch has one (%NULL otherwise)
- * @no_nvm_upgrade: Prevent NVM upgrade of this switch
- * @safe_mode: The switch is in safe-mode
- * @boot: Whether the switch was already authorized on boot or not
- * @rpm: The switch supports runtime PM
- * @authorized: Whether the switch is authorized by user or policy
+ * @cap_plug_events: Offset to the plug events capability (%0 अगर not found)
+ * @cap_lc: Offset to the link controller capability (%0 अगर not found)
+ * @is_unplugged: The चयन is going away
+ * @drom: DROM of the चयन (%शून्य अगर not found)
+ * @nvm: Poपूर्णांकer to the NVM अगर the चयन has one (%शून्य otherwise)
+ * @no_nvm_upgrade: Prevent NVM upgrade of this चयन
+ * @safe_mode: The चयन is in safe-mode
+ * @boot: Whether the चयन was alपढ़ोy authorized on boot or not
+ * @rpm: The चयन supports runसमय PM
+ * @authorized: Whether the चयन is authorized by user or policy
  * @security_level: Switch supported security level
- * @debugfs_dir: Pointer to the debugfs structure
- * @key: Contains the key used to challenge the device or %NULL if not
+ * @debugfs_dir: Poपूर्णांकer to the debugfs काष्ठाure
+ * @key: Contains the key used to challenge the device or %शून्य अगर not
  *	 supported. Size of the key is %TB_SWITCH_KEY_SIZE.
  * @connection_id: Connection ID used with ICM messaging
  * @connection_key: Connection key used with ICM messaging
- * @link: Root switch link this switch is connected (ICM only)
- * @depth: Depth in the chain this switch is connected (ICM only)
- * @rpm_complete: Completion used to wait for runtime resume to
+ * @link: Root चयन link this चयन is connected (ICM only)
+ * @depth: Depth in the chain this चयन is connected (ICM only)
+ * @rpm_complete: Completion used to रुको क्रम runसमय resume to
  *		  complete (ICM only)
- * @quirks: Quirks used for this Thunderbolt switch
+ * @quirks: Quirks used क्रम this Thunderbolt चयन
  *
- * When the switch is being added or removed to the domain (other
- * switches) you need to have domain lock held.
+ * When the चयन is being added or हटाओd to the करोमुख्य (other
+ * चयनes) you need to have करोमुख्य lock held.
  *
- * In USB4 terminology this structure represents a router.
+ * In USB4 terminology this काष्ठाure represents a router.
  */
-struct tb_switch {
-	struct device dev;
-	struct tb_regs_switch_header config;
-	struct tb_port *ports;
-	struct tb_dma_port *dma_port;
-	struct tb_switch_tmu tmu;
-	struct tb *tb;
+काष्ठा tb_चयन अणु
+	काष्ठा device dev;
+	काष्ठा tb_regs_चयन_header config;
+	काष्ठा tb_port *ports;
+	काष्ठा tb_dma_port *dma_port;
+	काष्ठा tb_चयन_पंचांगu पंचांगu;
+	काष्ठा tb *tb;
 	u64 uid;
 	uuid_t *uuid;
-	u16 vendor;
+	u16 venकरोr;
 	u16 device;
-	const char *vendor_name;
-	const char *device_name;
-	unsigned int link_speed;
-	unsigned int link_width;
+	स्थिर अक्षर *venकरोr_name;
+	स्थिर अक्षर *device_name;
+	अचिन्हित पूर्णांक link_speed;
+	अचिन्हित पूर्णांक link_width;
 	bool link_usb4;
-	unsigned int generation;
-	int cap_plug_events;
-	int cap_lc;
+	अचिन्हित पूर्णांक generation;
+	पूर्णांक cap_plug_events;
+	पूर्णांक cap_lc;
 	bool is_unplugged;
 	u8 *drom;
-	struct tb_nvm *nvm;
+	काष्ठा tb_nvm *nvm;
 	bool no_nvm_upgrade;
 	bool safe_mode;
 	bool boot;
 	bool rpm;
-	unsigned int authorized;
-	enum tb_security_level security_level;
-	struct dentry *debugfs_dir;
+	अचिन्हित पूर्णांक authorized;
+	क्रमागत tb_security_level security_level;
+	काष्ठा dentry *debugfs_dir;
 	u8 *key;
 	u8 connection_id;
 	u8 connection_key;
 	u8 link;
 	u8 depth;
-	struct completion rpm_complete;
-	unsigned long quirks;
-};
+	काष्ठा completion rpm_complete;
+	अचिन्हित दीर्घ quirks;
+पूर्ण;
 
 /**
- * struct tb_port - a thunderbolt port, part of a tb_switch
- * @config: Cached port configuration read from registers
- * @sw: Switch the port belongs to
- * @remote: Remote port (%NULL if not connected)
- * @xdomain: Remote host (%NULL if not connected)
- * @cap_phy: Offset, zero if not found
- * @cap_tmu: Offset of the adapter specific TMU capability (%0 if not present)
- * @cap_adap: Offset of the adapter specific capability (%0 if not present)
- * @cap_usb4: Offset to the USB4 port capability (%0 if not present)
- * @port: Port number on switch
+ * काष्ठा tb_port - a thunderbolt port, part of a tb_चयन
+ * @config: Cached port configuration पढ़ो from रेजिस्टरs
+ * @sw: Switch the port beदीर्घs to
+ * @remote: Remote port (%शून्य अगर not connected)
+ * @xकरोमुख्य: Remote host (%शून्य अगर not connected)
+ * @cap_phy: Offset, zero अगर not found
+ * @cap_पंचांगu: Offset of the adapter specअगरic TMU capability (%0 अगर not present)
+ * @cap_adap: Offset of the adapter specअगरic capability (%0 अगर not present)
+ * @cap_usb4: Offset to the USB4 port capability (%0 अगर not present)
+ * @port: Port number on चयन
  * @disabled: Disabled by eeprom or enabled but not implemented
- * @bonded: true if the port is bonded (two lanes combined as one)
- * @dual_link_port: If the switch is connected using two ports, points
+ * @bonded: true अगर the port is bonded (two lanes combined as one)
+ * @dual_link_port: If the चयन is connected using two ports, poपूर्णांकs
  *		    to the other port.
  * @link_nr: Is this primary or secondary port on the dual_link.
  * @in_hopids: Currently allocated input HopIDs
  * @out_hopids: Currently allocated output HopIDs
  * @list: Used to link ports to DP resources list
  *
- * In USB4 terminology this structure represents an adapter (protocol or
+ * In USB4 terminology this काष्ठाure represents an adapter (protocol or
  * lane adapter).
  */
-struct tb_port {
-	struct tb_regs_port_header config;
-	struct tb_switch *sw;
-	struct tb_port *remote;
-	struct tb_xdomain *xdomain;
-	int cap_phy;
-	int cap_tmu;
-	int cap_adap;
-	int cap_usb4;
+काष्ठा tb_port अणु
+	काष्ठा tb_regs_port_header config;
+	काष्ठा tb_चयन *sw;
+	काष्ठा tb_port *remote;
+	काष्ठा tb_xकरोमुख्य *xकरोमुख्य;
+	पूर्णांक cap_phy;
+	पूर्णांक cap_पंचांगu;
+	पूर्णांक cap_adap;
+	पूर्णांक cap_usb4;
 	u8 port;
 	bool disabled;
 	bool bonded;
-	struct tb_port *dual_link_port;
+	काष्ठा tb_port *dual_link_port;
 	u8 link_nr:1;
-	struct ida in_hopids;
-	struct ida out_hopids;
-	struct list_head list;
-};
+	काष्ठा ida in_hopids;
+	काष्ठा ida out_hopids;
+	काष्ठा list_head list;
+पूर्ण;
 
 /**
- * tb_retimer: Thunderbolt retimer
- * @dev: Device for the retimer
- * @tb: Pointer to the domain the retimer belongs to
- * @index: Retimer index facing the router USB4 port
- * @vendor: Vendor ID of the retimer
- * @device: Device ID of the retimer
- * @port: Pointer to the lane 0 adapter
- * @nvm: Pointer to the NVM if the retimer has one (%NULL otherwise)
+ * tb_reसमयr: Thunderbolt reसमयr
+ * @dev: Device क्रम the reसमयr
+ * @tb: Poपूर्णांकer to the करोमुख्य the reसमयr beदीर्घs to
+ * @index: Reसमयr index facing the router USB4 port
+ * @venकरोr: Venकरोr ID of the reसमयr
+ * @device: Device ID of the reसमयr
+ * @port: Poपूर्णांकer to the lane 0 adapter
+ * @nvm: Poपूर्णांकer to the NVM अगर the reसमयr has one (%शून्य otherwise)
  * @auth_status: Status of last NVM authentication
  */
-struct tb_retimer {
-	struct device dev;
-	struct tb *tb;
+काष्ठा tb_reसमयr अणु
+	काष्ठा device dev;
+	काष्ठा tb *tb;
 	u8 index;
-	u32 vendor;
+	u32 venकरोr;
 	u32 device;
-	struct tb_port *port;
-	struct tb_nvm *nvm;
+	काष्ठा tb_port *port;
+	काष्ठा tb_nvm *nvm;
 	u32 auth_status;
-};
+पूर्ण;
 
 /**
- * struct tb_path_hop - routing information for a tb_path
- * @in_port: Ingress port of a switch
- * @out_port: Egress port of a switch where the packet is routed out
- *	      (must be on the same switch than @in_port)
+ * काष्ठा tb_path_hop - routing inक्रमmation क्रम a tb_path
+ * @in_port: Ingress port of a चयन
+ * @out_port: Egress port of a चयन where the packet is routed out
+ *	      (must be on the same चयन than @in_port)
  * @in_hop_index: HopID where the path configuration entry is placed in
  *		  the path config space of @in_port.
  * @in_counter_index: Used counter index (not used in the driver
  *		      currently, %-1 to disable)
  * @next_hop_index: HopID of the packet when it is routed out from @out_port
- * @initial_credits: Number of initial flow control credits allocated for
+ * @initial_credits: Number of initial flow control credits allocated क्रम
  *		     the path
  *
- * Hop configuration is always done on the IN port of a switch.
- * in_port and out_port have to be on the same switch. Packets arriving on
+ * Hop configuration is always करोne on the IN port of a चयन.
+ * in_port and out_port have to be on the same चयन. Packets arriving on
  * in_port with "hop" = in_hop_index will get routed to through out_port. The
  * next hop to take (on out_port->remote) is determined by
- * next_hop_index. When routing packet to another switch (out->remote is
+ * next_hop_index. When routing packet to another चयन (out->remote is
  * set) the @next_hop_index must match the @in_hop_index of that next
  * hop to make routing possible.
  *
  * in_counter_index is the index of a counter (in TB_CFG_COUNTERS) on the in
  * port.
  */
-struct tb_path_hop {
-	struct tb_port *in_port;
-	struct tb_port *out_port;
-	int in_hop_index;
-	int in_counter_index;
-	int next_hop_index;
-	unsigned int initial_credits;
-};
+काष्ठा tb_path_hop अणु
+	काष्ठा tb_port *in_port;
+	काष्ठा tb_port *out_port;
+	पूर्णांक in_hop_index;
+	पूर्णांक in_counter_index;
+	पूर्णांक next_hop_index;
+	अचिन्हित पूर्णांक initial_credits;
+पूर्ण;
 
 /**
- * enum tb_path_port - path options mask
+ * क्रमागत tb_path_port - path options mask
  * @TB_PATH_NONE: Do not activate on any hop on path
  * @TB_PATH_SOURCE: Activate on the first hop (out of src)
- * @TB_PATH_INTERNAL: Activate on the intermediate hops (not the first/last)
- * @TB_PATH_DESTINATION: Activate on the last hop (into dst)
+ * @TB_PATH_INTERNAL: Activate on the पूर्णांकermediate hops (not the first/last)
+ * @TB_PATH_DESTINATION: Activate on the last hop (पूर्णांकo dst)
  * @TB_PATH_ALL: Activate on all hops on the path
  */
-enum tb_path_port {
+क्रमागत tb_path_port अणु
 	TB_PATH_NONE = 0,
 	TB_PATH_SOURCE = 1,
 	TB_PATH_INTERNAL = 2,
 	TB_PATH_DESTINATION = 4,
 	TB_PATH_ALL = 7,
-};
+पूर्ण;
 
 /**
- * struct tb_path - a unidirectional path between two ports
- * @tb: Pointer to the domain structure
- * @name: Name of the path (used for debugging)
- * @nfc_credits: Number of non flow controlled credits allocated for the path
- * @ingress_shared_buffer: Shared buffering used for ingress ports on the path
- * @egress_shared_buffer: Shared buffering used for egress ports on the path
- * @ingress_fc_enable: Flow control for ingress ports on the path
- * @egress_fc_enable: Flow control for egress ports on the path
- * @priority: Priority group if the path
+ * काष्ठा tb_path - a unidirectional path between two ports
+ * @tb: Poपूर्णांकer to the करोमुख्य काष्ठाure
+ * @name: Name of the path (used क्रम debugging)
+ * @nfc_credits: Number of non flow controlled credits allocated क्रम the path
+ * @ingress_shared_buffer: Shared buffering used क्रम ingress ports on the path
+ * @egress_shared_buffer: Shared buffering used क्रम egress ports on the path
+ * @ingress_fc_enable: Flow control क्रम ingress ports on the path
+ * @egress_fc_enable: Flow control क्रम egress ports on the path
+ * @priority: Priority group अगर the path
  * @weight: Weight of the path inside the priority group
  * @drop_packages: Drop packages from queue tail or head
  * @activated: Is the path active
@@ -310,759 +311,759 @@ enum tb_path_port {
  * @hops: Path hops
  * @path_length: How many hops the path uses
  *
- * A path consists of a number of hops (see &struct tb_path_hop). To
+ * A path consists of a number of hops (see &काष्ठा tb_path_hop). To
  * establish a PCIe tunnel two paths have to be created between the two
  * PCIe ports.
  */
-struct tb_path {
-	struct tb *tb;
-	const char *name;
-	int nfc_credits;
-	enum tb_path_port ingress_shared_buffer;
-	enum tb_path_port egress_shared_buffer;
-	enum tb_path_port ingress_fc_enable;
-	enum tb_path_port egress_fc_enable;
+काष्ठा tb_path अणु
+	काष्ठा tb *tb;
+	स्थिर अक्षर *name;
+	पूर्णांक nfc_credits;
+	क्रमागत tb_path_port ingress_shared_buffer;
+	क्रमागत tb_path_port egress_shared_buffer;
+	क्रमागत tb_path_port ingress_fc_enable;
+	क्रमागत tb_path_port egress_fc_enable;
 
-	unsigned int priority:3;
-	int weight:4;
+	अचिन्हित पूर्णांक priority:3;
+	पूर्णांक weight:4;
 	bool drop_packages;
 	bool activated;
 	bool clear_fc;
-	struct tb_path_hop *hops;
-	int path_length;
-};
+	काष्ठा tb_path_hop *hops;
+	पूर्णांक path_length;
+पूर्ण;
 
 /* HopIDs 0-7 are reserved by the Thunderbolt protocol */
-#define TB_PATH_MIN_HOPID	8
+#घोषणा TB_PATH_MIN_HOPID	8
 /*
  * Support paths from the farthest (depth 6) router to the host and back
  * to the same level (not necessarily to the same router).
  */
-#define TB_PATH_MAX_HOPS	(7 * 2)
+#घोषणा TB_PATH_MAX_HOPS	(7 * 2)
 
 /* Possible wake types */
-#define TB_WAKE_ON_CONNECT	BIT(0)
-#define TB_WAKE_ON_DISCONNECT	BIT(1)
-#define TB_WAKE_ON_USB4		BIT(2)
-#define TB_WAKE_ON_USB3		BIT(3)
-#define TB_WAKE_ON_PCIE		BIT(4)
+#घोषणा TB_WAKE_ON_CONNECT	BIT(0)
+#घोषणा TB_WAKE_ON_DISCONNECT	BIT(1)
+#घोषणा TB_WAKE_ON_USB4		BIT(2)
+#घोषणा TB_WAKE_ON_USB3		BIT(3)
+#घोषणा TB_WAKE_ON_PCIE		BIT(4)
 
 /**
- * struct tb_cm_ops - Connection manager specific operations vector
- * @driver_ready: Called right after control channel is started. Used by
- *		  ICM to send driver ready message to the firmware.
- * @start: Starts the domain
- * @stop: Stops the domain
- * @suspend_noirq: Connection manager specific suspend_noirq
- * @resume_noirq: Connection manager specific resume_noirq
- * @suspend: Connection manager specific suspend
- * @freeze_noirq: Connection manager specific freeze_noirq
- * @thaw_noirq: Connection manager specific thaw_noirq
- * @complete: Connection manager specific complete
- * @runtime_suspend: Connection manager specific runtime_suspend
- * @runtime_resume: Connection manager specific runtime_resume
- * @runtime_suspend_switch: Runtime suspend a switch
- * @runtime_resume_switch: Runtime resume a switch
+ * काष्ठा tb_cm_ops - Connection manager specअगरic operations vector
+ * @driver_पढ़ोy: Called right after control channel is started. Used by
+ *		  ICM to send driver पढ़ोy message to the firmware.
+ * @start: Starts the करोमुख्य
+ * @stop: Stops the करोमुख्य
+ * @suspend_noirq: Connection manager specअगरic suspend_noirq
+ * @resume_noirq: Connection manager specअगरic resume_noirq
+ * @suspend: Connection manager specअगरic suspend
+ * @मुक्तze_noirq: Connection manager specअगरic मुक्तze_noirq
+ * @thaw_noirq: Connection manager specअगरic thaw_noirq
+ * @complete: Connection manager specअगरic complete
+ * @runसमय_suspend: Connection manager specअगरic runसमय_suspend
+ * @runसमय_resume: Connection manager specअगरic runसमय_resume
+ * @runसमय_suspend_चयन: Runसमय suspend a चयन
+ * @runसमय_resume_चयन: Runसमय resume a चयन
  * @handle_event: Handle thunderbolt event
  * @get_boot_acl: Get boot ACL list
  * @set_boot_acl: Set boot ACL list
- * @disapprove_switch: Disapprove switch (disconnect PCIe tunnel)
- * @approve_switch: Approve switch
- * @add_switch_key: Add key to switch
- * @challenge_switch_key: Challenge switch using key
- * @disconnect_pcie_paths: Disconnects PCIe paths before NVM update
- * @approve_xdomain_paths: Approve (establish) XDomain DMA paths
- * @disconnect_xdomain_paths: Disconnect XDomain DMA paths
- * @usb4_switch_op: Optional proxy for USB4 router operations. If set
+ * @disapprove_चयन: Disapprove चयन (disconnect PCIe tunnel)
+ * @approve_चयन: Approve चयन
+ * @add_चयन_key: Add key to चयन
+ * @challenge_चयन_key: Challenge चयन using key
+ * @disconnect_pcie_paths: Disconnects PCIe paths beक्रमe NVM update
+ * @approve_xकरोमुख्य_paths: Approve (establish) XDoमुख्य DMA paths
+ * @disconnect_xकरोमुख्य_paths: Disconnect XDoमुख्य DMA paths
+ * @usb4_चयन_op: Optional proxy क्रम USB4 router operations. If set
  *		    this will be called whenever USB4 router operation is
- *		    performed. If this returns %-EOPNOTSUPP then the
+ *		    perक्रमmed. If this वापसs %-EOPNOTSUPP then the
  *		    native USB4 router operation is called.
- * @usb4_switch_nvm_authenticate_status: Optional callback that the CM
+ * @usb4_चयन_nvm_authenticate_status: Optional callback that the CM
  *					 implementation can be used to
- *					 return status of USB4 NVM_AUTH
+ *					 वापस status of USB4 NVM_AUTH
  *					 router operation.
  */
-struct tb_cm_ops {
-	int (*driver_ready)(struct tb *tb);
-	int (*start)(struct tb *tb);
-	void (*stop)(struct tb *tb);
-	int (*suspend_noirq)(struct tb *tb);
-	int (*resume_noirq)(struct tb *tb);
-	int (*suspend)(struct tb *tb);
-	int (*freeze_noirq)(struct tb *tb);
-	int (*thaw_noirq)(struct tb *tb);
-	void (*complete)(struct tb *tb);
-	int (*runtime_suspend)(struct tb *tb);
-	int (*runtime_resume)(struct tb *tb);
-	int (*runtime_suspend_switch)(struct tb_switch *sw);
-	int (*runtime_resume_switch)(struct tb_switch *sw);
-	void (*handle_event)(struct tb *tb, enum tb_cfg_pkg_type,
-			     const void *buf, size_t size);
-	int (*get_boot_acl)(struct tb *tb, uuid_t *uuids, size_t nuuids);
-	int (*set_boot_acl)(struct tb *tb, const uuid_t *uuids, size_t nuuids);
-	int (*disapprove_switch)(struct tb *tb, struct tb_switch *sw);
-	int (*approve_switch)(struct tb *tb, struct tb_switch *sw);
-	int (*add_switch_key)(struct tb *tb, struct tb_switch *sw);
-	int (*challenge_switch_key)(struct tb *tb, struct tb_switch *sw,
-				    const u8 *challenge, u8 *response);
-	int (*disconnect_pcie_paths)(struct tb *tb);
-	int (*approve_xdomain_paths)(struct tb *tb, struct tb_xdomain *xd,
-				     int transmit_path, int transmit_ring,
-				     int receive_path, int receive_ring);
-	int (*disconnect_xdomain_paths)(struct tb *tb, struct tb_xdomain *xd,
-					int transmit_path, int transmit_ring,
-					int receive_path, int receive_ring);
-	int (*usb4_switch_op)(struct tb_switch *sw, u16 opcode, u32 *metadata,
-			      u8 *status, const void *tx_data, size_t tx_data_len,
-			      void *rx_data, size_t rx_data_len);
-	int (*usb4_switch_nvm_authenticate_status)(struct tb_switch *sw,
+काष्ठा tb_cm_ops अणु
+	पूर्णांक (*driver_पढ़ोy)(काष्ठा tb *tb);
+	पूर्णांक (*start)(काष्ठा tb *tb);
+	व्योम (*stop)(काष्ठा tb *tb);
+	पूर्णांक (*suspend_noirq)(काष्ठा tb *tb);
+	पूर्णांक (*resume_noirq)(काष्ठा tb *tb);
+	पूर्णांक (*suspend)(काष्ठा tb *tb);
+	पूर्णांक (*मुक्तze_noirq)(काष्ठा tb *tb);
+	पूर्णांक (*thaw_noirq)(काष्ठा tb *tb);
+	व्योम (*complete)(काष्ठा tb *tb);
+	पूर्णांक (*runसमय_suspend)(काष्ठा tb *tb);
+	पूर्णांक (*runसमय_resume)(काष्ठा tb *tb);
+	पूर्णांक (*runसमय_suspend_चयन)(काष्ठा tb_चयन *sw);
+	पूर्णांक (*runसमय_resume_चयन)(काष्ठा tb_चयन *sw);
+	व्योम (*handle_event)(काष्ठा tb *tb, क्रमागत tb_cfg_pkg_type,
+			     स्थिर व्योम *buf, माप_प्रकार size);
+	पूर्णांक (*get_boot_acl)(काष्ठा tb *tb, uuid_t *uuids, माप_प्रकार nuuids);
+	पूर्णांक (*set_boot_acl)(काष्ठा tb *tb, स्थिर uuid_t *uuids, माप_प्रकार nuuids);
+	पूर्णांक (*disapprove_चयन)(काष्ठा tb *tb, काष्ठा tb_चयन *sw);
+	पूर्णांक (*approve_चयन)(काष्ठा tb *tb, काष्ठा tb_चयन *sw);
+	पूर्णांक (*add_चयन_key)(काष्ठा tb *tb, काष्ठा tb_चयन *sw);
+	पूर्णांक (*challenge_चयन_key)(काष्ठा tb *tb, काष्ठा tb_चयन *sw,
+				    स्थिर u8 *challenge, u8 *response);
+	पूर्णांक (*disconnect_pcie_paths)(काष्ठा tb *tb);
+	पूर्णांक (*approve_xकरोमुख्य_paths)(काष्ठा tb *tb, काष्ठा tb_xकरोमुख्य *xd,
+				     पूर्णांक transmit_path, पूर्णांक transmit_ring,
+				     पूर्णांक receive_path, पूर्णांक receive_ring);
+	पूर्णांक (*disconnect_xकरोमुख्य_paths)(काष्ठा tb *tb, काष्ठा tb_xकरोमुख्य *xd,
+					पूर्णांक transmit_path, पूर्णांक transmit_ring,
+					पूर्णांक receive_path, पूर्णांक receive_ring);
+	पूर्णांक (*usb4_चयन_op)(काष्ठा tb_चयन *sw, u16 opcode, u32 *metadata,
+			      u8 *status, स्थिर व्योम *tx_data, माप_प्रकार tx_data_len,
+			      व्योम *rx_data, माप_प्रकार rx_data_len);
+	पूर्णांक (*usb4_चयन_nvm_authenticate_status)(काष्ठा tb_चयन *sw,
 						   u32 *status);
-};
+पूर्ण;
 
-static inline void *tb_priv(struct tb *tb)
-{
-	return (void *)tb->privdata;
-}
+अटल अंतरभूत व्योम *tb_priv(काष्ठा tb *tb)
+अणु
+	वापस (व्योम *)tb->privdata;
+पूर्ण
 
-#define TB_AUTOSUSPEND_DELAY		15000 /* ms */
+#घोषणा TB_AUTOSUSPEND_DELAY		15000 /* ms */
 
 /* helper functions & macros */
 
 /**
- * tb_upstream_port() - return the upstream port of a switch
+ * tb_upstream_port() - वापस the upstream port of a चयन
  *
- * Every switch has an upstream port (for the root switch it is the NHI).
+ * Every चयन has an upstream port (क्रम the root चयन it is the NHI).
  *
- * During switch alloc/init tb_upstream_port()->remote may be NULL, even for
- * non root switches (on the NHI port remote is always NULL).
+ * During चयन alloc/init tb_upstream_port()->remote may be शून्य, even क्रम
+ * non root चयनes (on the NHI port remote is always शून्य).
  *
- * Return: Returns the upstream port of the switch.
+ * Return: Returns the upstream port of the चयन.
  */
-static inline struct tb_port *tb_upstream_port(struct tb_switch *sw)
-{
-	return &sw->ports[sw->config.upstream_port_number];
-}
+अटल अंतरभूत काष्ठा tb_port *tb_upstream_port(काष्ठा tb_चयन *sw)
+अणु
+	वापस &sw->ports[sw->config.upstream_port_number];
+पूर्ण
 
 /**
  * tb_is_upstream_port() - Is the port upstream facing
  * @port: Port to check
  *
- * Returns true if @port is upstream facing port. In case of dual link
- * ports both return true.
+ * Returns true अगर @port is upstream facing port. In हाल of dual link
+ * ports both वापस true.
  */
-static inline bool tb_is_upstream_port(const struct tb_port *port)
-{
-	const struct tb_port *upstream_port = tb_upstream_port(port->sw);
-	return port == upstream_port || port->dual_link_port == upstream_port;
-}
+अटल अंतरभूत bool tb_is_upstream_port(स्थिर काष्ठा tb_port *port)
+अणु
+	स्थिर काष्ठा tb_port *upstream_port = tb_upstream_port(port->sw);
+	वापस port == upstream_port || port->dual_link_port == upstream_port;
+पूर्ण
 
-static inline u64 tb_route(const struct tb_switch *sw)
-{
-	return ((u64) sw->config.route_hi) << 32 | sw->config.route_lo;
-}
+अटल अंतरभूत u64 tb_route(स्थिर काष्ठा tb_चयन *sw)
+अणु
+	वापस ((u64) sw->config.route_hi) << 32 | sw->config.route_lo;
+पूर्ण
 
-static inline struct tb_port *tb_port_at(u64 route, struct tb_switch *sw)
-{
+अटल अंतरभूत काष्ठा tb_port *tb_port_at(u64 route, काष्ठा tb_चयन *sw)
+अणु
 	u8 port;
 
 	port = route >> (sw->config.depth * 8);
-	if (WARN_ON(port > sw->config.max_port_number))
-		return NULL;
-	return &sw->ports[port];
-}
+	अगर (WARN_ON(port > sw->config.max_port_number))
+		वापस शून्य;
+	वापस &sw->ports[port];
+पूर्ण
 
 /**
- * tb_port_has_remote() - Does the port have switch connected downstream
+ * tb_port_has_remote() - Does the port have चयन connected करोwnstream
  * @port: Port to check
  *
  * Returns true only when the port is primary port and has remote set.
  */
-static inline bool tb_port_has_remote(const struct tb_port *port)
-{
-	if (tb_is_upstream_port(port))
-		return false;
-	if (!port->remote)
-		return false;
-	if (port->dual_link_port && port->link_nr)
-		return false;
+अटल अंतरभूत bool tb_port_has_remote(स्थिर काष्ठा tb_port *port)
+अणु
+	अगर (tb_is_upstream_port(port))
+		वापस false;
+	अगर (!port->remote)
+		वापस false;
+	अगर (port->dual_link_port && port->link_nr)
+		वापस false;
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static inline bool tb_port_is_null(const struct tb_port *port)
-{
-	return port && port->port && port->config.type == TB_TYPE_PORT;
-}
+अटल अंतरभूत bool tb_port_is_null(स्थिर काष्ठा tb_port *port)
+अणु
+	वापस port && port->port && port->config.type == TB_TYPE_PORT;
+पूर्ण
 
-static inline bool tb_port_is_nhi(const struct tb_port *port)
-{
-	return port && port->config.type == TB_TYPE_NHI;
-}
+अटल अंतरभूत bool tb_port_is_nhi(स्थिर काष्ठा tb_port *port)
+अणु
+	वापस port && port->config.type == TB_TYPE_NHI;
+पूर्ण
 
-static inline bool tb_port_is_pcie_down(const struct tb_port *port)
-{
-	return port && port->config.type == TB_TYPE_PCIE_DOWN;
-}
+अटल अंतरभूत bool tb_port_is_pcie_करोwn(स्थिर काष्ठा tb_port *port)
+अणु
+	वापस port && port->config.type == TB_TYPE_PCIE_DOWN;
+पूर्ण
 
-static inline bool tb_port_is_pcie_up(const struct tb_port *port)
-{
-	return port && port->config.type == TB_TYPE_PCIE_UP;
-}
+अटल अंतरभूत bool tb_port_is_pcie_up(स्थिर काष्ठा tb_port *port)
+अणु
+	वापस port && port->config.type == TB_TYPE_PCIE_UP;
+पूर्ण
 
-static inline bool tb_port_is_dpin(const struct tb_port *port)
-{
-	return port && port->config.type == TB_TYPE_DP_HDMI_IN;
-}
+अटल अंतरभूत bool tb_port_is_dpin(स्थिर काष्ठा tb_port *port)
+अणु
+	वापस port && port->config.type == TB_TYPE_DP_HDMI_IN;
+पूर्ण
 
-static inline bool tb_port_is_dpout(const struct tb_port *port)
-{
-	return port && port->config.type == TB_TYPE_DP_HDMI_OUT;
-}
+अटल अंतरभूत bool tb_port_is_dpout(स्थिर काष्ठा tb_port *port)
+अणु
+	वापस port && port->config.type == TB_TYPE_DP_HDMI_OUT;
+पूर्ण
 
-static inline bool tb_port_is_usb3_down(const struct tb_port *port)
-{
-	return port && port->config.type == TB_TYPE_USB3_DOWN;
-}
+अटल अंतरभूत bool tb_port_is_usb3_करोwn(स्थिर काष्ठा tb_port *port)
+अणु
+	वापस port && port->config.type == TB_TYPE_USB3_DOWN;
+पूर्ण
 
-static inline bool tb_port_is_usb3_up(const struct tb_port *port)
-{
-	return port && port->config.type == TB_TYPE_USB3_UP;
-}
+अटल अंतरभूत bool tb_port_is_usb3_up(स्थिर काष्ठा tb_port *port)
+अणु
+	वापस port && port->config.type == TB_TYPE_USB3_UP;
+पूर्ण
 
-static inline int tb_sw_read(struct tb_switch *sw, void *buffer,
-			     enum tb_cfg_space space, u32 offset, u32 length)
-{
-	if (sw->is_unplugged)
-		return -ENODEV;
-	return tb_cfg_read(sw->tb->ctl,
+अटल अंतरभूत पूर्णांक tb_sw_पढ़ो(काष्ठा tb_चयन *sw, व्योम *buffer,
+			     क्रमागत tb_cfg_space space, u32 offset, u32 length)
+अणु
+	अगर (sw->is_unplugged)
+		वापस -ENODEV;
+	वापस tb_cfg_पढ़ो(sw->tb->ctl,
 			   buffer,
 			   tb_route(sw),
 			   0,
 			   space,
 			   offset,
 			   length);
-}
+पूर्ण
 
-static inline int tb_sw_write(struct tb_switch *sw, const void *buffer,
-			      enum tb_cfg_space space, u32 offset, u32 length)
-{
-	if (sw->is_unplugged)
-		return -ENODEV;
-	return tb_cfg_write(sw->tb->ctl,
+अटल अंतरभूत पूर्णांक tb_sw_ग_लिखो(काष्ठा tb_चयन *sw, स्थिर व्योम *buffer,
+			      क्रमागत tb_cfg_space space, u32 offset, u32 length)
+अणु
+	अगर (sw->is_unplugged)
+		वापस -ENODEV;
+	वापस tb_cfg_ग_लिखो(sw->tb->ctl,
 			    buffer,
 			    tb_route(sw),
 			    0,
 			    space,
 			    offset,
 			    length);
-}
+पूर्ण
 
-static inline int tb_port_read(struct tb_port *port, void *buffer,
-			       enum tb_cfg_space space, u32 offset, u32 length)
-{
-	if (port->sw->is_unplugged)
-		return -ENODEV;
-	return tb_cfg_read(port->sw->tb->ctl,
+अटल अंतरभूत पूर्णांक tb_port_पढ़ो(काष्ठा tb_port *port, व्योम *buffer,
+			       क्रमागत tb_cfg_space space, u32 offset, u32 length)
+अणु
+	अगर (port->sw->is_unplugged)
+		वापस -ENODEV;
+	वापस tb_cfg_पढ़ो(port->sw->tb->ctl,
 			   buffer,
 			   tb_route(port->sw),
 			   port->port,
 			   space,
 			   offset,
 			   length);
-}
+पूर्ण
 
-static inline int tb_port_write(struct tb_port *port, const void *buffer,
-				enum tb_cfg_space space, u32 offset, u32 length)
-{
-	if (port->sw->is_unplugged)
-		return -ENODEV;
-	return tb_cfg_write(port->sw->tb->ctl,
+अटल अंतरभूत पूर्णांक tb_port_ग_लिखो(काष्ठा tb_port *port, स्थिर व्योम *buffer,
+				क्रमागत tb_cfg_space space, u32 offset, u32 length)
+अणु
+	अगर (port->sw->is_unplugged)
+		वापस -ENODEV;
+	वापस tb_cfg_ग_लिखो(port->sw->tb->ctl,
 			    buffer,
 			    tb_route(port->sw),
 			    port->port,
 			    space,
 			    offset,
 			    length);
-}
+पूर्ण
 
-#define tb_err(tb, fmt, arg...) dev_err(&(tb)->nhi->pdev->dev, fmt, ## arg)
-#define tb_WARN(tb, fmt, arg...) dev_WARN(&(tb)->nhi->pdev->dev, fmt, ## arg)
-#define tb_warn(tb, fmt, arg...) dev_warn(&(tb)->nhi->pdev->dev, fmt, ## arg)
-#define tb_info(tb, fmt, arg...) dev_info(&(tb)->nhi->pdev->dev, fmt, ## arg)
-#define tb_dbg(tb, fmt, arg...) dev_dbg(&(tb)->nhi->pdev->dev, fmt, ## arg)
+#घोषणा tb_err(tb, fmt, arg...) dev_err(&(tb)->nhi->pdev->dev, fmt, ## arg)
+#घोषणा tb_WARN(tb, fmt, arg...) dev_WARN(&(tb)->nhi->pdev->dev, fmt, ## arg)
+#घोषणा tb_warn(tb, fmt, arg...) dev_warn(&(tb)->nhi->pdev->dev, fmt, ## arg)
+#घोषणा tb_info(tb, fmt, arg...) dev_info(&(tb)->nhi->pdev->dev, fmt, ## arg)
+#घोषणा tb_dbg(tb, fmt, arg...) dev_dbg(&(tb)->nhi->pdev->dev, fmt, ## arg)
 
-#define __TB_SW_PRINT(level, sw, fmt, arg...)           \
-	do {                                            \
-		const struct tb_switch *__sw = (sw);    \
+#घोषणा __TB_SW_PRINT(level, sw, fmt, arg...)           \
+	करो अणु                                            \
+		स्थिर काष्ठा tb_चयन *__sw = (sw);    \
 		level(__sw->tb, "%llx: " fmt,           \
 		      tb_route(__sw), ## arg);          \
-	} while (0)
-#define tb_sw_WARN(sw, fmt, arg...) __TB_SW_PRINT(tb_WARN, sw, fmt, ##arg)
-#define tb_sw_warn(sw, fmt, arg...) __TB_SW_PRINT(tb_warn, sw, fmt, ##arg)
-#define tb_sw_info(sw, fmt, arg...) __TB_SW_PRINT(tb_info, sw, fmt, ##arg)
-#define tb_sw_dbg(sw, fmt, arg...) __TB_SW_PRINT(tb_dbg, sw, fmt, ##arg)
+	पूर्ण जबतक (0)
+#घोषणा tb_sw_WARN(sw, fmt, arg...) __TB_SW_PRINT(tb_WARN, sw, fmt, ##arg)
+#घोषणा tb_sw_warn(sw, fmt, arg...) __TB_SW_PRINT(tb_warn, sw, fmt, ##arg)
+#घोषणा tb_sw_info(sw, fmt, arg...) __TB_SW_PRINT(tb_info, sw, fmt, ##arg)
+#घोषणा tb_sw_dbg(sw, fmt, arg...) __TB_SW_PRINT(tb_dbg, sw, fmt, ##arg)
 
-#define __TB_PORT_PRINT(level, _port, fmt, arg...)                      \
-	do {                                                            \
-		const struct tb_port *__port = (_port);                 \
+#घोषणा __TB_PORT_PRINT(level, _port, fmt, arg...)                      \
+	करो अणु                                                            \
+		स्थिर काष्ठा tb_port *__port = (_port);                 \
 		level(__port->sw->tb, "%llx:%x: " fmt,                  \
 		      tb_route(__port->sw), __port->port, ## arg);      \
-	} while (0)
-#define tb_port_WARN(port, fmt, arg...) \
+	पूर्ण जबतक (0)
+#घोषणा tb_port_WARN(port, fmt, arg...) \
 	__TB_PORT_PRINT(tb_WARN, port, fmt, ##arg)
-#define tb_port_warn(port, fmt, arg...) \
+#घोषणा tb_port_warn(port, fmt, arg...) \
 	__TB_PORT_PRINT(tb_warn, port, fmt, ##arg)
-#define tb_port_info(port, fmt, arg...) \
+#घोषणा tb_port_info(port, fmt, arg...) \
 	__TB_PORT_PRINT(tb_info, port, fmt, ##arg)
-#define tb_port_dbg(port, fmt, arg...) \
+#घोषणा tb_port_dbg(port, fmt, arg...) \
 	__TB_PORT_PRINT(tb_dbg, port, fmt, ##arg)
 
-struct tb *icm_probe(struct tb_nhi *nhi);
-struct tb *tb_probe(struct tb_nhi *nhi);
+काष्ठा tb *icm_probe(काष्ठा tb_nhi *nhi);
+काष्ठा tb *tb_probe(काष्ठा tb_nhi *nhi);
 
-extern struct device_type tb_domain_type;
-extern struct device_type tb_retimer_type;
-extern struct device_type tb_switch_type;
+बाह्य काष्ठा device_type tb_करोमुख्य_type;
+बाह्य काष्ठा device_type tb_reसमयr_type;
+बाह्य काष्ठा device_type tb_चयन_type;
 
-int tb_domain_init(void);
-void tb_domain_exit(void);
-int tb_xdomain_init(void);
-void tb_xdomain_exit(void);
+पूर्णांक tb_करोमुख्य_init(व्योम);
+व्योम tb_करोमुख्य_निकास(व्योम);
+पूर्णांक tb_xकरोमुख्य_init(व्योम);
+व्योम tb_xकरोमुख्य_निकास(व्योम);
 
-struct tb *tb_domain_alloc(struct tb_nhi *nhi, int timeout_msec, size_t privsize);
-int tb_domain_add(struct tb *tb);
-void tb_domain_remove(struct tb *tb);
-int tb_domain_suspend_noirq(struct tb *tb);
-int tb_domain_resume_noirq(struct tb *tb);
-int tb_domain_suspend(struct tb *tb);
-int tb_domain_freeze_noirq(struct tb *tb);
-int tb_domain_thaw_noirq(struct tb *tb);
-void tb_domain_complete(struct tb *tb);
-int tb_domain_runtime_suspend(struct tb *tb);
-int tb_domain_runtime_resume(struct tb *tb);
-int tb_domain_disapprove_switch(struct tb *tb, struct tb_switch *sw);
-int tb_domain_approve_switch(struct tb *tb, struct tb_switch *sw);
-int tb_domain_approve_switch_key(struct tb *tb, struct tb_switch *sw);
-int tb_domain_challenge_switch_key(struct tb *tb, struct tb_switch *sw);
-int tb_domain_disconnect_pcie_paths(struct tb *tb);
-int tb_domain_approve_xdomain_paths(struct tb *tb, struct tb_xdomain *xd,
-				    int transmit_path, int transmit_ring,
-				    int receive_path, int receive_ring);
-int tb_domain_disconnect_xdomain_paths(struct tb *tb, struct tb_xdomain *xd,
-				       int transmit_path, int transmit_ring,
-				       int receive_path, int receive_ring);
-int tb_domain_disconnect_all_paths(struct tb *tb);
+काष्ठा tb *tb_करोमुख्य_alloc(काष्ठा tb_nhi *nhi, पूर्णांक समयout_msec, माप_प्रकार privsize);
+पूर्णांक tb_करोमुख्य_add(काष्ठा tb *tb);
+व्योम tb_करोमुख्य_हटाओ(काष्ठा tb *tb);
+पूर्णांक tb_करोमुख्य_suspend_noirq(काष्ठा tb *tb);
+पूर्णांक tb_करोमुख्य_resume_noirq(काष्ठा tb *tb);
+पूर्णांक tb_करोमुख्य_suspend(काष्ठा tb *tb);
+पूर्णांक tb_करोमुख्य_मुक्तze_noirq(काष्ठा tb *tb);
+पूर्णांक tb_करोमुख्य_thaw_noirq(काष्ठा tb *tb);
+व्योम tb_करोमुख्य_complete(काष्ठा tb *tb);
+पूर्णांक tb_करोमुख्य_runसमय_suspend(काष्ठा tb *tb);
+पूर्णांक tb_करोमुख्य_runसमय_resume(काष्ठा tb *tb);
+पूर्णांक tb_करोमुख्य_disapprove_चयन(काष्ठा tb *tb, काष्ठा tb_चयन *sw);
+पूर्णांक tb_करोमुख्य_approve_चयन(काष्ठा tb *tb, काष्ठा tb_चयन *sw);
+पूर्णांक tb_करोमुख्य_approve_चयन_key(काष्ठा tb *tb, काष्ठा tb_चयन *sw);
+पूर्णांक tb_करोमुख्य_challenge_चयन_key(काष्ठा tb *tb, काष्ठा tb_चयन *sw);
+पूर्णांक tb_करोमुख्य_disconnect_pcie_paths(काष्ठा tb *tb);
+पूर्णांक tb_करोमुख्य_approve_xकरोमुख्य_paths(काष्ठा tb *tb, काष्ठा tb_xकरोमुख्य *xd,
+				    पूर्णांक transmit_path, पूर्णांक transmit_ring,
+				    पूर्णांक receive_path, पूर्णांक receive_ring);
+पूर्णांक tb_करोमुख्य_disconnect_xकरोमुख्य_paths(काष्ठा tb *tb, काष्ठा tb_xकरोमुख्य *xd,
+				       पूर्णांक transmit_path, पूर्णांक transmit_ring,
+				       पूर्णांक receive_path, पूर्णांक receive_ring);
+पूर्णांक tb_करोमुख्य_disconnect_all_paths(काष्ठा tb *tb);
 
-static inline struct tb *tb_domain_get(struct tb *tb)
-{
-	if (tb)
+अटल अंतरभूत काष्ठा tb *tb_करोमुख्य_get(काष्ठा tb *tb)
+अणु
+	अगर (tb)
 		get_device(&tb->dev);
-	return tb;
-}
+	वापस tb;
+पूर्ण
 
-static inline void tb_domain_put(struct tb *tb)
-{
+अटल अंतरभूत व्योम tb_करोमुख्य_put(काष्ठा tb *tb)
+अणु
 	put_device(&tb->dev);
-}
+पूर्ण
 
-struct tb_nvm *tb_nvm_alloc(struct device *dev);
-int tb_nvm_add_active(struct tb_nvm *nvm, size_t size, nvmem_reg_read_t reg_read);
-int tb_nvm_write_buf(struct tb_nvm *nvm, unsigned int offset, void *val,
-		     size_t bytes);
-int tb_nvm_add_non_active(struct tb_nvm *nvm, size_t size,
-			  nvmem_reg_write_t reg_write);
-void tb_nvm_free(struct tb_nvm *nvm);
-void tb_nvm_exit(void);
+काष्ठा tb_nvm *tb_nvm_alloc(काष्ठा device *dev);
+पूर्णांक tb_nvm_add_active(काष्ठा tb_nvm *nvm, माप_प्रकार size, nvmem_reg_पढ़ो_t reg_पढ़ो);
+पूर्णांक tb_nvm_ग_लिखो_buf(काष्ठा tb_nvm *nvm, अचिन्हित पूर्णांक offset, व्योम *val,
+		     माप_प्रकार bytes);
+पूर्णांक tb_nvm_add_non_active(काष्ठा tb_nvm *nvm, माप_प्रकार size,
+			  nvmem_reg_ग_लिखो_t reg_ग_लिखो);
+व्योम tb_nvm_मुक्त(काष्ठा tb_nvm *nvm);
+व्योम tb_nvm_निकास(व्योम);
 
-struct tb_switch *tb_switch_alloc(struct tb *tb, struct device *parent,
+काष्ठा tb_चयन *tb_चयन_alloc(काष्ठा tb *tb, काष्ठा device *parent,
 				  u64 route);
-struct tb_switch *tb_switch_alloc_safe_mode(struct tb *tb,
-			struct device *parent, u64 route);
-int tb_switch_configure(struct tb_switch *sw);
-int tb_switch_add(struct tb_switch *sw);
-void tb_switch_remove(struct tb_switch *sw);
-void tb_switch_suspend(struct tb_switch *sw, bool runtime);
-int tb_switch_resume(struct tb_switch *sw);
-int tb_switch_reset(struct tb_switch *sw);
-void tb_sw_set_unplugged(struct tb_switch *sw);
-struct tb_port *tb_switch_find_port(struct tb_switch *sw,
-				    enum tb_port_type type);
-struct tb_switch *tb_switch_find_by_link_depth(struct tb *tb, u8 link,
+काष्ठा tb_चयन *tb_चयन_alloc_safe_mode(काष्ठा tb *tb,
+			काष्ठा device *parent, u64 route);
+पूर्णांक tb_चयन_configure(काष्ठा tb_चयन *sw);
+पूर्णांक tb_चयन_add(काष्ठा tb_चयन *sw);
+व्योम tb_चयन_हटाओ(काष्ठा tb_चयन *sw);
+व्योम tb_चयन_suspend(काष्ठा tb_चयन *sw, bool runसमय);
+पूर्णांक tb_चयन_resume(काष्ठा tb_चयन *sw);
+पूर्णांक tb_चयन_reset(काष्ठा tb_चयन *sw);
+व्योम tb_sw_set_unplugged(काष्ठा tb_चयन *sw);
+काष्ठा tb_port *tb_चयन_find_port(काष्ठा tb_चयन *sw,
+				    क्रमागत tb_port_type type);
+काष्ठा tb_चयन *tb_चयन_find_by_link_depth(काष्ठा tb *tb, u8 link,
 					       u8 depth);
-struct tb_switch *tb_switch_find_by_uuid(struct tb *tb, const uuid_t *uuid);
-struct tb_switch *tb_switch_find_by_route(struct tb *tb, u64 route);
+काष्ठा tb_चयन *tb_चयन_find_by_uuid(काष्ठा tb *tb, स्थिर uuid_t *uuid);
+काष्ठा tb_चयन *tb_चयन_find_by_route(काष्ठा tb *tb, u64 route);
 
 /**
- * tb_switch_for_each_port() - Iterate over each switch port
+ * tb_चयन_क्रम_each_port() - Iterate over each चयन port
  * @sw: Switch whose ports to iterate
  * @p: Port used as iterator
  *
- * Iterates over each switch port skipping the control port (port %0).
+ * Iterates over each चयन port skipping the control port (port %0).
  */
-#define tb_switch_for_each_port(sw, p)					\
-	for ((p) = &(sw)->ports[1];					\
+#घोषणा tb_चयन_क्रम_each_port(sw, p)					\
+	क्रम ((p) = &(sw)->ports[1];					\
 	     (p) <= &(sw)->ports[(sw)->config.max_port_number]; (p)++)
 
-static inline struct tb_switch *tb_switch_get(struct tb_switch *sw)
-{
-	if (sw)
+अटल अंतरभूत काष्ठा tb_चयन *tb_चयन_get(काष्ठा tb_चयन *sw)
+अणु
+	अगर (sw)
 		get_device(&sw->dev);
-	return sw;
-}
+	वापस sw;
+पूर्ण
 
-static inline void tb_switch_put(struct tb_switch *sw)
-{
+अटल अंतरभूत व्योम tb_चयन_put(काष्ठा tb_चयन *sw)
+अणु
 	put_device(&sw->dev);
-}
+पूर्ण
 
-static inline bool tb_is_switch(const struct device *dev)
-{
-	return dev->type == &tb_switch_type;
-}
+अटल अंतरभूत bool tb_is_चयन(स्थिर काष्ठा device *dev)
+अणु
+	वापस dev->type == &tb_चयन_type;
+पूर्ण
 
-static inline struct tb_switch *tb_to_switch(struct device *dev)
-{
-	if (tb_is_switch(dev))
-		return container_of(dev, struct tb_switch, dev);
-	return NULL;
-}
+अटल अंतरभूत काष्ठा tb_चयन *tb_to_चयन(काष्ठा device *dev)
+अणु
+	अगर (tb_is_चयन(dev))
+		वापस container_of(dev, काष्ठा tb_चयन, dev);
+	वापस शून्य;
+पूर्ण
 
-static inline struct tb_switch *tb_switch_parent(struct tb_switch *sw)
-{
-	return tb_to_switch(sw->dev.parent);
-}
+अटल अंतरभूत काष्ठा tb_चयन *tb_चयन_parent(काष्ठा tb_चयन *sw)
+अणु
+	वापस tb_to_चयन(sw->dev.parent);
+पूर्ण
 
-static inline bool tb_switch_is_light_ridge(const struct tb_switch *sw)
-{
-	return sw->config.vendor_id == PCI_VENDOR_ID_INTEL &&
+अटल अंतरभूत bool tb_चयन_is_light_ridge(स्थिर काष्ठा tb_चयन *sw)
+अणु
+	वापस sw->config.venकरोr_id == PCI_VENDOR_ID_INTEL &&
 	       sw->config.device_id == PCI_DEVICE_ID_INTEL_LIGHT_RIDGE;
-}
+पूर्ण
 
-static inline bool tb_switch_is_eagle_ridge(const struct tb_switch *sw)
-{
-	return sw->config.vendor_id == PCI_VENDOR_ID_INTEL &&
+अटल अंतरभूत bool tb_चयन_is_eagle_ridge(स्थिर काष्ठा tb_चयन *sw)
+अणु
+	वापस sw->config.venकरोr_id == PCI_VENDOR_ID_INTEL &&
 	       sw->config.device_id == PCI_DEVICE_ID_INTEL_EAGLE_RIDGE;
-}
+पूर्ण
 
-static inline bool tb_switch_is_cactus_ridge(const struct tb_switch *sw)
-{
-	if (sw->config.vendor_id == PCI_VENDOR_ID_INTEL) {
-		switch (sw->config.device_id) {
-		case PCI_DEVICE_ID_INTEL_CACTUS_RIDGE_2C:
-		case PCI_DEVICE_ID_INTEL_CACTUS_RIDGE_4C:
-			return true;
-		}
-	}
-	return false;
-}
+अटल अंतरभूत bool tb_चयन_is_cactus_ridge(स्थिर काष्ठा tb_चयन *sw)
+अणु
+	अगर (sw->config.venकरोr_id == PCI_VENDOR_ID_INTEL) अणु
+		चयन (sw->config.device_id) अणु
+		हाल PCI_DEVICE_ID_INTEL_CACTUS_RIDGE_2C:
+		हाल PCI_DEVICE_ID_INTEL_CACTUS_RIDGE_4C:
+			वापस true;
+		पूर्ण
+	पूर्ण
+	वापस false;
+पूर्ण
 
-static inline bool tb_switch_is_falcon_ridge(const struct tb_switch *sw)
-{
-	if (sw->config.vendor_id == PCI_VENDOR_ID_INTEL) {
-		switch (sw->config.device_id) {
-		case PCI_DEVICE_ID_INTEL_FALCON_RIDGE_2C_BRIDGE:
-		case PCI_DEVICE_ID_INTEL_FALCON_RIDGE_4C_BRIDGE:
-			return true;
-		}
-	}
-	return false;
-}
+अटल अंतरभूत bool tb_चयन_is_falcon_ridge(स्थिर काष्ठा tb_चयन *sw)
+अणु
+	अगर (sw->config.venकरोr_id == PCI_VENDOR_ID_INTEL) अणु
+		चयन (sw->config.device_id) अणु
+		हाल PCI_DEVICE_ID_INTEL_FALCON_RIDGE_2C_BRIDGE:
+		हाल PCI_DEVICE_ID_INTEL_FALCON_RIDGE_4C_BRIDGE:
+			वापस true;
+		पूर्ण
+	पूर्ण
+	वापस false;
+पूर्ण
 
-static inline bool tb_switch_is_alpine_ridge(const struct tb_switch *sw)
-{
-	if (sw->config.vendor_id == PCI_VENDOR_ID_INTEL) {
-		switch (sw->config.device_id) {
-		case PCI_DEVICE_ID_INTEL_ALPINE_RIDGE_2C_BRIDGE:
-		case PCI_DEVICE_ID_INTEL_ALPINE_RIDGE_LP_BRIDGE:
-		case PCI_DEVICE_ID_INTEL_ALPINE_RIDGE_C_4C_BRIDGE:
-		case PCI_DEVICE_ID_INTEL_ALPINE_RIDGE_C_2C_BRIDGE:
-			return true;
-		}
-	}
-	return false;
-}
+अटल अंतरभूत bool tb_चयन_is_alpine_ridge(स्थिर काष्ठा tb_चयन *sw)
+अणु
+	अगर (sw->config.venकरोr_id == PCI_VENDOR_ID_INTEL) अणु
+		चयन (sw->config.device_id) अणु
+		हाल PCI_DEVICE_ID_INTEL_ALPINE_RIDGE_2C_BRIDGE:
+		हाल PCI_DEVICE_ID_INTEL_ALPINE_RIDGE_LP_BRIDGE:
+		हाल PCI_DEVICE_ID_INTEL_ALPINE_RIDGE_C_4C_BRIDGE:
+		हाल PCI_DEVICE_ID_INTEL_ALPINE_RIDGE_C_2C_BRIDGE:
+			वापस true;
+		पूर्ण
+	पूर्ण
+	वापस false;
+पूर्ण
 
-static inline bool tb_switch_is_titan_ridge(const struct tb_switch *sw)
-{
-	if (sw->config.vendor_id == PCI_VENDOR_ID_INTEL) {
-		switch (sw->config.device_id) {
-		case PCI_DEVICE_ID_INTEL_TITAN_RIDGE_2C_BRIDGE:
-		case PCI_DEVICE_ID_INTEL_TITAN_RIDGE_4C_BRIDGE:
-		case PCI_DEVICE_ID_INTEL_TITAN_RIDGE_DD_BRIDGE:
-			return true;
-		}
-	}
-	return false;
-}
+अटल अंतरभूत bool tb_चयन_is_titan_ridge(स्थिर काष्ठा tb_चयन *sw)
+अणु
+	अगर (sw->config.venकरोr_id == PCI_VENDOR_ID_INTEL) अणु
+		चयन (sw->config.device_id) अणु
+		हाल PCI_DEVICE_ID_INTEL_TITAN_RIDGE_2C_BRIDGE:
+		हाल PCI_DEVICE_ID_INTEL_TITAN_RIDGE_4C_BRIDGE:
+		हाल PCI_DEVICE_ID_INTEL_TITAN_RIDGE_DD_BRIDGE:
+			वापस true;
+		पूर्ण
+	पूर्ण
+	वापस false;
+पूर्ण
 
 /**
- * tb_switch_is_usb4() - Is the switch USB4 compliant
+ * tb_चयन_is_usb4() - Is the चयन USB4 compliant
  * @sw: Switch to check
  *
- * Returns true if the @sw is USB4 compliant router, false otherwise.
+ * Returns true अगर the @sw is USB4 compliant router, false otherwise.
  */
-static inline bool tb_switch_is_usb4(const struct tb_switch *sw)
-{
-	return sw->config.thunderbolt_version == USB4_VERSION_1_0;
-}
+अटल अंतरभूत bool tb_चयन_is_usb4(स्थिर काष्ठा tb_चयन *sw)
+अणु
+	वापस sw->config.thunderbolt_version == USB4_VERSION_1_0;
+पूर्ण
 
 /**
- * tb_switch_is_icm() - Is the switch handled by ICM firmware
+ * tb_चयन_is_icm() - Is the चयन handled by ICM firmware
  * @sw: Switch to check
  *
- * In case there is a need to differentiate whether ICM firmware or SW CM
+ * In हाल there is a need to dअगरferentiate whether ICM firmware or SW CM
  * is handling @sw this function can be called. It is valid to call this
- * after tb_switch_alloc() and tb_switch_configure() has been called
- * (latter only for SW CM case).
+ * after tb_चयन_alloc() and tb_चयन_configure() has been called
+ * (latter only क्रम SW CM हाल).
  */
-static inline bool tb_switch_is_icm(const struct tb_switch *sw)
-{
-	return !sw->config.enabled;
-}
+अटल अंतरभूत bool tb_चयन_is_icm(स्थिर काष्ठा tb_चयन *sw)
+अणु
+	वापस !sw->config.enabled;
+पूर्ण
 
-int tb_switch_lane_bonding_enable(struct tb_switch *sw);
-void tb_switch_lane_bonding_disable(struct tb_switch *sw);
-int tb_switch_configure_link(struct tb_switch *sw);
-void tb_switch_unconfigure_link(struct tb_switch *sw);
+पूर्णांक tb_चयन_lane_bonding_enable(काष्ठा tb_चयन *sw);
+व्योम tb_चयन_lane_bonding_disable(काष्ठा tb_चयन *sw);
+पूर्णांक tb_चयन_configure_link(काष्ठा tb_चयन *sw);
+व्योम tb_चयन_unconfigure_link(काष्ठा tb_चयन *sw);
 
-bool tb_switch_query_dp_resource(struct tb_switch *sw, struct tb_port *in);
-int tb_switch_alloc_dp_resource(struct tb_switch *sw, struct tb_port *in);
-void tb_switch_dealloc_dp_resource(struct tb_switch *sw, struct tb_port *in);
+bool tb_चयन_query_dp_resource(काष्ठा tb_चयन *sw, काष्ठा tb_port *in);
+पूर्णांक tb_चयन_alloc_dp_resource(काष्ठा tb_चयन *sw, काष्ठा tb_port *in);
+व्योम tb_चयन_dealloc_dp_resource(काष्ठा tb_चयन *sw, काष्ठा tb_port *in);
 
-int tb_switch_tmu_init(struct tb_switch *sw);
-int tb_switch_tmu_post_time(struct tb_switch *sw);
-int tb_switch_tmu_disable(struct tb_switch *sw);
-int tb_switch_tmu_enable(struct tb_switch *sw);
+पूर्णांक tb_चयन_पंचांगu_init(काष्ठा tb_चयन *sw);
+पूर्णांक tb_चयन_पंचांगu_post_समय(काष्ठा tb_चयन *sw);
+पूर्णांक tb_चयन_पंचांगu_disable(काष्ठा tb_चयन *sw);
+पूर्णांक tb_चयन_पंचांगu_enable(काष्ठा tb_चयन *sw);
 
-static inline bool tb_switch_tmu_is_enabled(const struct tb_switch *sw)
-{
-	return sw->tmu.rate == TB_SWITCH_TMU_RATE_HIFI &&
-	       !sw->tmu.unidirectional;
-}
+अटल अंतरभूत bool tb_चयन_पंचांगu_is_enabled(स्थिर काष्ठा tb_चयन *sw)
+अणु
+	वापस sw->पंचांगu.rate == TB_SWITCH_TMU_RATE_HIFI &&
+	       !sw->पंचांगu.unidirectional;
+पूर्ण
 
-int tb_wait_for_port(struct tb_port *port, bool wait_if_unplugged);
-int tb_port_add_nfc_credits(struct tb_port *port, int credits);
-int tb_port_clear_counter(struct tb_port *port, int counter);
-int tb_port_unlock(struct tb_port *port);
-int tb_port_enable(struct tb_port *port);
-int tb_port_disable(struct tb_port *port);
-int tb_port_alloc_in_hopid(struct tb_port *port, int hopid, int max_hopid);
-void tb_port_release_in_hopid(struct tb_port *port, int hopid);
-int tb_port_alloc_out_hopid(struct tb_port *port, int hopid, int max_hopid);
-void tb_port_release_out_hopid(struct tb_port *port, int hopid);
-struct tb_port *tb_next_port_on_path(struct tb_port *start, struct tb_port *end,
-				     struct tb_port *prev);
+पूर्णांक tb_रुको_क्रम_port(काष्ठा tb_port *port, bool रुको_अगर_unplugged);
+पूर्णांक tb_port_add_nfc_credits(काष्ठा tb_port *port, पूर्णांक credits);
+पूर्णांक tb_port_clear_counter(काष्ठा tb_port *port, पूर्णांक counter);
+पूर्णांक tb_port_unlock(काष्ठा tb_port *port);
+पूर्णांक tb_port_enable(काष्ठा tb_port *port);
+पूर्णांक tb_port_disable(काष्ठा tb_port *port);
+पूर्णांक tb_port_alloc_in_hopid(काष्ठा tb_port *port, पूर्णांक hopid, पूर्णांक max_hopid);
+व्योम tb_port_release_in_hopid(काष्ठा tb_port *port, पूर्णांक hopid);
+पूर्णांक tb_port_alloc_out_hopid(काष्ठा tb_port *port, पूर्णांक hopid, पूर्णांक max_hopid);
+व्योम tb_port_release_out_hopid(काष्ठा tb_port *port, पूर्णांक hopid);
+काष्ठा tb_port *tb_next_port_on_path(काष्ठा tb_port *start, काष्ठा tb_port *end,
+				     काष्ठा tb_port *prev);
 
 /**
- * tb_for_each_port_on_path() - Iterate over each port on path
+ * tb_क्रम_each_port_on_path() - Iterate over each port on path
  * @src: Source port
  * @dst: Destination port
  * @p: Port used as iterator
  *
  * Walks over each port on path from @src to @dst.
  */
-#define tb_for_each_port_on_path(src, dst, p)				\
-	for ((p) = tb_next_port_on_path((src), (dst), NULL); (p);	\
+#घोषणा tb_क्रम_each_port_on_path(src, dst, p)				\
+	क्रम ((p) = tb_next_port_on_path((src), (dst), शून्य); (p);	\
 	     (p) = tb_next_port_on_path((src), (dst), (p)))
 
-int tb_port_get_link_speed(struct tb_port *port);
-int tb_port_get_link_width(struct tb_port *port);
-int tb_port_state(struct tb_port *port);
-int tb_port_lane_bonding_enable(struct tb_port *port);
-void tb_port_lane_bonding_disable(struct tb_port *port);
+पूर्णांक tb_port_get_link_speed(काष्ठा tb_port *port);
+पूर्णांक tb_port_get_link_width(काष्ठा tb_port *port);
+पूर्णांक tb_port_state(काष्ठा tb_port *port);
+पूर्णांक tb_port_lane_bonding_enable(काष्ठा tb_port *port);
+व्योम tb_port_lane_bonding_disable(काष्ठा tb_port *port);
 
-int tb_switch_find_vse_cap(struct tb_switch *sw, enum tb_switch_vse_cap vsec);
-int tb_switch_find_cap(struct tb_switch *sw, enum tb_switch_cap cap);
-int tb_switch_next_cap(struct tb_switch *sw, unsigned int offset);
-int tb_port_find_cap(struct tb_port *port, enum tb_port_cap cap);
-int tb_port_next_cap(struct tb_port *port, unsigned int offset);
-bool tb_port_is_enabled(struct tb_port *port);
+पूर्णांक tb_चयन_find_vse_cap(काष्ठा tb_चयन *sw, क्रमागत tb_चयन_vse_cap vsec);
+पूर्णांक tb_चयन_find_cap(काष्ठा tb_चयन *sw, क्रमागत tb_चयन_cap cap);
+पूर्णांक tb_चयन_next_cap(काष्ठा tb_चयन *sw, अचिन्हित पूर्णांक offset);
+पूर्णांक tb_port_find_cap(काष्ठा tb_port *port, क्रमागत tb_port_cap cap);
+पूर्णांक tb_port_next_cap(काष्ठा tb_port *port, अचिन्हित पूर्णांक offset);
+bool tb_port_is_enabled(काष्ठा tb_port *port);
 
-bool tb_usb3_port_is_enabled(struct tb_port *port);
-int tb_usb3_port_enable(struct tb_port *port, bool enable);
+bool tb_usb3_port_is_enabled(काष्ठा tb_port *port);
+पूर्णांक tb_usb3_port_enable(काष्ठा tb_port *port, bool enable);
 
-bool tb_pci_port_is_enabled(struct tb_port *port);
-int tb_pci_port_enable(struct tb_port *port, bool enable);
+bool tb_pci_port_is_enabled(काष्ठा tb_port *port);
+पूर्णांक tb_pci_port_enable(काष्ठा tb_port *port, bool enable);
 
-int tb_dp_port_hpd_is_active(struct tb_port *port);
-int tb_dp_port_hpd_clear(struct tb_port *port);
-int tb_dp_port_set_hops(struct tb_port *port, unsigned int video,
-			unsigned int aux_tx, unsigned int aux_rx);
-bool tb_dp_port_is_enabled(struct tb_port *port);
-int tb_dp_port_enable(struct tb_port *port, bool enable);
+पूर्णांक tb_dp_port_hpd_is_active(काष्ठा tb_port *port);
+पूर्णांक tb_dp_port_hpd_clear(काष्ठा tb_port *port);
+पूर्णांक tb_dp_port_set_hops(काष्ठा tb_port *port, अचिन्हित पूर्णांक video,
+			अचिन्हित पूर्णांक aux_tx, अचिन्हित पूर्णांक aux_rx);
+bool tb_dp_port_is_enabled(काष्ठा tb_port *port);
+पूर्णांक tb_dp_port_enable(काष्ठा tb_port *port, bool enable);
 
-struct tb_path *tb_path_discover(struct tb_port *src, int src_hopid,
-				 struct tb_port *dst, int dst_hopid,
-				 struct tb_port **last, const char *name);
-struct tb_path *tb_path_alloc(struct tb *tb, struct tb_port *src, int src_hopid,
-			      struct tb_port *dst, int dst_hopid, int link_nr,
-			      const char *name);
-void tb_path_free(struct tb_path *path);
-int tb_path_activate(struct tb_path *path);
-void tb_path_deactivate(struct tb_path *path);
-bool tb_path_is_invalid(struct tb_path *path);
-bool tb_path_port_on_path(const struct tb_path *path,
-			  const struct tb_port *port);
+काष्ठा tb_path *tb_path_discover(काष्ठा tb_port *src, पूर्णांक src_hopid,
+				 काष्ठा tb_port *dst, पूर्णांक dst_hopid,
+				 काष्ठा tb_port **last, स्थिर अक्षर *name);
+काष्ठा tb_path *tb_path_alloc(काष्ठा tb *tb, काष्ठा tb_port *src, पूर्णांक src_hopid,
+			      काष्ठा tb_port *dst, पूर्णांक dst_hopid, पूर्णांक link_nr,
+			      स्थिर अक्षर *name);
+व्योम tb_path_मुक्त(काष्ठा tb_path *path);
+पूर्णांक tb_path_activate(काष्ठा tb_path *path);
+व्योम tb_path_deactivate(काष्ठा tb_path *path);
+bool tb_path_is_invalid(काष्ठा tb_path *path);
+bool tb_path_port_on_path(स्थिर काष्ठा tb_path *path,
+			  स्थिर काष्ठा tb_port *port);
 
-int tb_drom_read(struct tb_switch *sw);
-int tb_drom_read_uid_only(struct tb_switch *sw, u64 *uid);
+पूर्णांक tb_drom_पढ़ो(काष्ठा tb_चयन *sw);
+पूर्णांक tb_drom_पढ़ो_uid_only(काष्ठा tb_चयन *sw, u64 *uid);
 
-int tb_lc_read_uuid(struct tb_switch *sw, u32 *uuid);
-int tb_lc_configure_port(struct tb_port *port);
-void tb_lc_unconfigure_port(struct tb_port *port);
-int tb_lc_configure_xdomain(struct tb_port *port);
-void tb_lc_unconfigure_xdomain(struct tb_port *port);
-int tb_lc_start_lane_initialization(struct tb_port *port);
-int tb_lc_set_wake(struct tb_switch *sw, unsigned int flags);
-int tb_lc_set_sleep(struct tb_switch *sw);
-bool tb_lc_lane_bonding_possible(struct tb_switch *sw);
-bool tb_lc_dp_sink_query(struct tb_switch *sw, struct tb_port *in);
-int tb_lc_dp_sink_alloc(struct tb_switch *sw, struct tb_port *in);
-int tb_lc_dp_sink_dealloc(struct tb_switch *sw, struct tb_port *in);
-int tb_lc_force_power(struct tb_switch *sw);
+पूर्णांक tb_lc_पढ़ो_uuid(काष्ठा tb_चयन *sw, u32 *uuid);
+पूर्णांक tb_lc_configure_port(काष्ठा tb_port *port);
+व्योम tb_lc_unconfigure_port(काष्ठा tb_port *port);
+पूर्णांक tb_lc_configure_xकरोमुख्य(काष्ठा tb_port *port);
+व्योम tb_lc_unconfigure_xकरोमुख्य(काष्ठा tb_port *port);
+पूर्णांक tb_lc_start_lane_initialization(काष्ठा tb_port *port);
+पूर्णांक tb_lc_set_wake(काष्ठा tb_चयन *sw, अचिन्हित पूर्णांक flags);
+पूर्णांक tb_lc_set_sleep(काष्ठा tb_चयन *sw);
+bool tb_lc_lane_bonding_possible(काष्ठा tb_चयन *sw);
+bool tb_lc_dp_sink_query(काष्ठा tb_चयन *sw, काष्ठा tb_port *in);
+पूर्णांक tb_lc_dp_sink_alloc(काष्ठा tb_चयन *sw, काष्ठा tb_port *in);
+पूर्णांक tb_lc_dp_sink_dealloc(काष्ठा tb_चयन *sw, काष्ठा tb_port *in);
+पूर्णांक tb_lc_क्रमce_घातer(काष्ठा tb_चयन *sw);
 
-static inline int tb_route_length(u64 route)
-{
-	return (fls64(route) + TB_ROUTE_SHIFT - 1) / TB_ROUTE_SHIFT;
-}
+अटल अंतरभूत पूर्णांक tb_route_length(u64 route)
+अणु
+	वापस (fls64(route) + TB_ROUTE_SHIFT - 1) / TB_ROUTE_SHIFT;
+पूर्ण
 
 /**
- * tb_downstream_route() - get route to downstream switch
+ * tb_करोwnstream_route() - get route to करोwnstream चयन
  *
  * Port must not be the upstream port (otherwise a loop is created).
  *
- * Return: Returns a route to the switch behind @port.
+ * Return: Returns a route to the चयन behind @port.
  */
-static inline u64 tb_downstream_route(struct tb_port *port)
-{
-	return tb_route(port->sw)
+अटल अंतरभूत u64 tb_करोwnstream_route(काष्ठा tb_port *port)
+अणु
+	वापस tb_route(port->sw)
 	       | ((u64) port->port << (port->sw->config.depth * 8));
-}
+पूर्ण
 
-bool tb_is_xdomain_enabled(void);
-bool tb_xdomain_handle_request(struct tb *tb, enum tb_cfg_pkg_type type,
-			       const void *buf, size_t size);
-struct tb_xdomain *tb_xdomain_alloc(struct tb *tb, struct device *parent,
-				    u64 route, const uuid_t *local_uuid,
-				    const uuid_t *remote_uuid);
-void tb_xdomain_add(struct tb_xdomain *xd);
-void tb_xdomain_remove(struct tb_xdomain *xd);
-struct tb_xdomain *tb_xdomain_find_by_link_depth(struct tb *tb, u8 link,
+bool tb_is_xकरोमुख्य_enabled(व्योम);
+bool tb_xकरोमुख्य_handle_request(काष्ठा tb *tb, क्रमागत tb_cfg_pkg_type type,
+			       स्थिर व्योम *buf, माप_प्रकार size);
+काष्ठा tb_xकरोमुख्य *tb_xकरोमुख्य_alloc(काष्ठा tb *tb, काष्ठा device *parent,
+				    u64 route, स्थिर uuid_t *local_uuid,
+				    स्थिर uuid_t *remote_uuid);
+व्योम tb_xकरोमुख्य_add(काष्ठा tb_xकरोमुख्य *xd);
+व्योम tb_xकरोमुख्य_हटाओ(काष्ठा tb_xकरोमुख्य *xd);
+काष्ठा tb_xकरोमुख्य *tb_xकरोमुख्य_find_by_link_depth(काष्ठा tb *tb, u8 link,
 						 u8 depth);
 
-int tb_retimer_scan(struct tb_port *port);
-void tb_retimer_remove_all(struct tb_port *port);
+पूर्णांक tb_reसमयr_scan(काष्ठा tb_port *port);
+व्योम tb_reसमयr_हटाओ_all(काष्ठा tb_port *port);
 
-static inline bool tb_is_retimer(const struct device *dev)
-{
-	return dev->type == &tb_retimer_type;
-}
+अटल अंतरभूत bool tb_is_reसमयr(स्थिर काष्ठा device *dev)
+अणु
+	वापस dev->type == &tb_reसमयr_type;
+पूर्ण
 
-static inline struct tb_retimer *tb_to_retimer(struct device *dev)
-{
-	if (tb_is_retimer(dev))
-		return container_of(dev, struct tb_retimer, dev);
-	return NULL;
-}
+अटल अंतरभूत काष्ठा tb_reसमयr *tb_to_reसमयr(काष्ठा device *dev)
+अणु
+	अगर (tb_is_reसमयr(dev))
+		वापस container_of(dev, काष्ठा tb_reसमयr, dev);
+	वापस शून्य;
+पूर्ण
 
-int usb4_switch_setup(struct tb_switch *sw);
-int usb4_switch_read_uid(struct tb_switch *sw, u64 *uid);
-int usb4_switch_drom_read(struct tb_switch *sw, unsigned int address, void *buf,
-			  size_t size);
-bool usb4_switch_lane_bonding_possible(struct tb_switch *sw);
-int usb4_switch_set_wake(struct tb_switch *sw, unsigned int flags);
-int usb4_switch_set_sleep(struct tb_switch *sw);
-int usb4_switch_nvm_sector_size(struct tb_switch *sw);
-int usb4_switch_nvm_read(struct tb_switch *sw, unsigned int address, void *buf,
-			 size_t size);
-int usb4_switch_nvm_write(struct tb_switch *sw, unsigned int address,
-			  const void *buf, size_t size);
-int usb4_switch_nvm_authenticate(struct tb_switch *sw);
-int usb4_switch_nvm_authenticate_status(struct tb_switch *sw, u32 *status);
-bool usb4_switch_query_dp_resource(struct tb_switch *sw, struct tb_port *in);
-int usb4_switch_alloc_dp_resource(struct tb_switch *sw, struct tb_port *in);
-int usb4_switch_dealloc_dp_resource(struct tb_switch *sw, struct tb_port *in);
-struct tb_port *usb4_switch_map_pcie_down(struct tb_switch *sw,
-					  const struct tb_port *port);
-struct tb_port *usb4_switch_map_usb3_down(struct tb_switch *sw,
-					  const struct tb_port *port);
+पूर्णांक usb4_चयन_setup(काष्ठा tb_चयन *sw);
+पूर्णांक usb4_चयन_पढ़ो_uid(काष्ठा tb_चयन *sw, u64 *uid);
+पूर्णांक usb4_चयन_drom_पढ़ो(काष्ठा tb_चयन *sw, अचिन्हित पूर्णांक address, व्योम *buf,
+			  माप_प्रकार size);
+bool usb4_चयन_lane_bonding_possible(काष्ठा tb_चयन *sw);
+पूर्णांक usb4_चयन_set_wake(काष्ठा tb_चयन *sw, अचिन्हित पूर्णांक flags);
+पूर्णांक usb4_चयन_set_sleep(काष्ठा tb_चयन *sw);
+पूर्णांक usb4_चयन_nvm_sector_size(काष्ठा tb_चयन *sw);
+पूर्णांक usb4_चयन_nvm_पढ़ो(काष्ठा tb_चयन *sw, अचिन्हित पूर्णांक address, व्योम *buf,
+			 माप_प्रकार size);
+पूर्णांक usb4_चयन_nvm_ग_लिखो(काष्ठा tb_चयन *sw, अचिन्हित पूर्णांक address,
+			  स्थिर व्योम *buf, माप_प्रकार size);
+पूर्णांक usb4_चयन_nvm_authenticate(काष्ठा tb_चयन *sw);
+पूर्णांक usb4_चयन_nvm_authenticate_status(काष्ठा tb_चयन *sw, u32 *status);
+bool usb4_चयन_query_dp_resource(काष्ठा tb_चयन *sw, काष्ठा tb_port *in);
+पूर्णांक usb4_चयन_alloc_dp_resource(काष्ठा tb_चयन *sw, काष्ठा tb_port *in);
+पूर्णांक usb4_चयन_dealloc_dp_resource(काष्ठा tb_चयन *sw, काष्ठा tb_port *in);
+काष्ठा tb_port *usb4_चयन_map_pcie_करोwn(काष्ठा tb_चयन *sw,
+					  स्थिर काष्ठा tb_port *port);
+काष्ठा tb_port *usb4_चयन_map_usb3_करोwn(काष्ठा tb_चयन *sw,
+					  स्थिर काष्ठा tb_port *port);
 
-int usb4_port_unlock(struct tb_port *port);
-int usb4_port_configure(struct tb_port *port);
-void usb4_port_unconfigure(struct tb_port *port);
-int usb4_port_configure_xdomain(struct tb_port *port);
-void usb4_port_unconfigure_xdomain(struct tb_port *port);
-int usb4_port_enumerate_retimers(struct tb_port *port);
+पूर्णांक usb4_port_unlock(काष्ठा tb_port *port);
+पूर्णांक usb4_port_configure(काष्ठा tb_port *port);
+व्योम usb4_port_unconfigure(काष्ठा tb_port *port);
+पूर्णांक usb4_port_configure_xकरोमुख्य(काष्ठा tb_port *port);
+व्योम usb4_port_unconfigure_xकरोमुख्य(काष्ठा tb_port *port);
+पूर्णांक usb4_port_क्रमागतerate_reसमयrs(काष्ठा tb_port *port);
 
-int usb4_port_retimer_read(struct tb_port *port, u8 index, u8 reg, void *buf,
+पूर्णांक usb4_port_reसमयr_पढ़ो(काष्ठा tb_port *port, u8 index, u8 reg, व्योम *buf,
 			   u8 size);
-int usb4_port_retimer_write(struct tb_port *port, u8 index, u8 reg,
-			    const void *buf, u8 size);
-int usb4_port_retimer_is_last(struct tb_port *port, u8 index);
-int usb4_port_retimer_nvm_sector_size(struct tb_port *port, u8 index);
-int usb4_port_retimer_nvm_write(struct tb_port *port, u8 index,
-				unsigned int address, const void *buf,
-				size_t size);
-int usb4_port_retimer_nvm_authenticate(struct tb_port *port, u8 index);
-int usb4_port_retimer_nvm_authenticate_status(struct tb_port *port, u8 index,
+पूर्णांक usb4_port_reसमयr_ग_लिखो(काष्ठा tb_port *port, u8 index, u8 reg,
+			    स्थिर व्योम *buf, u8 size);
+पूर्णांक usb4_port_reसमयr_is_last(काष्ठा tb_port *port, u8 index);
+पूर्णांक usb4_port_reसमयr_nvm_sector_size(काष्ठा tb_port *port, u8 index);
+पूर्णांक usb4_port_reसमयr_nvm_ग_लिखो(काष्ठा tb_port *port, u8 index,
+				अचिन्हित पूर्णांक address, स्थिर व्योम *buf,
+				माप_प्रकार size);
+पूर्णांक usb4_port_reसमयr_nvm_authenticate(काष्ठा tb_port *port, u8 index);
+पूर्णांक usb4_port_reसमयr_nvm_authenticate_status(काष्ठा tb_port *port, u8 index,
 					      u32 *status);
-int usb4_port_retimer_nvm_read(struct tb_port *port, u8 index,
-			       unsigned int address, void *buf, size_t size);
+पूर्णांक usb4_port_reसमयr_nvm_पढ़ो(काष्ठा tb_port *port, u8 index,
+			       अचिन्हित पूर्णांक address, व्योम *buf, माप_प्रकार size);
 
-int usb4_usb3_port_max_link_rate(struct tb_port *port);
-int usb4_usb3_port_actual_link_rate(struct tb_port *port);
-int usb4_usb3_port_allocated_bandwidth(struct tb_port *port, int *upstream_bw,
-				       int *downstream_bw);
-int usb4_usb3_port_allocate_bandwidth(struct tb_port *port, int *upstream_bw,
-				      int *downstream_bw);
-int usb4_usb3_port_release_bandwidth(struct tb_port *port, int *upstream_bw,
-				     int *downstream_bw);
+पूर्णांक usb4_usb3_port_max_link_rate(काष्ठा tb_port *port);
+पूर्णांक usb4_usb3_port_actual_link_rate(काष्ठा tb_port *port);
+पूर्णांक usb4_usb3_port_allocated_bandwidth(काष्ठा tb_port *port, पूर्णांक *upstream_bw,
+				       पूर्णांक *करोwnstream_bw);
+पूर्णांक usb4_usb3_port_allocate_bandwidth(काष्ठा tb_port *port, पूर्णांक *upstream_bw,
+				      पूर्णांक *करोwnstream_bw);
+पूर्णांक usb4_usb3_port_release_bandwidth(काष्ठा tb_port *port, पूर्णांक *upstream_bw,
+				     पूर्णांक *करोwnstream_bw);
 
 /* Keep link controller awake during update */
-#define QUIRK_FORCE_POWER_LINK_CONTROLLER		BIT(0)
+#घोषणा QUIRK_FORCE_POWER_LINK_CONTROLLER		BIT(0)
 
-void tb_check_quirks(struct tb_switch *sw);
+व्योम tb_check_quirks(काष्ठा tb_चयन *sw);
 
-#ifdef CONFIG_ACPI
-void tb_acpi_add_links(struct tb_nhi *nhi);
+#अगर_घोषित CONFIG_ACPI
+व्योम tb_acpi_add_links(काष्ठा tb_nhi *nhi);
 
-bool tb_acpi_is_native(void);
-bool tb_acpi_may_tunnel_usb3(void);
-bool tb_acpi_may_tunnel_dp(void);
-bool tb_acpi_may_tunnel_pcie(void);
-bool tb_acpi_is_xdomain_allowed(void);
-#else
-static inline void tb_acpi_add_links(struct tb_nhi *nhi) { }
+bool tb_acpi_is_native(व्योम);
+bool tb_acpi_may_tunnel_usb3(व्योम);
+bool tb_acpi_may_tunnel_dp(व्योम);
+bool tb_acpi_may_tunnel_pcie(व्योम);
+bool tb_acpi_is_xकरोमुख्य_allowed(व्योम);
+#अन्यथा
+अटल अंतरभूत व्योम tb_acpi_add_links(काष्ठा tb_nhi *nhi) अणु पूर्ण
 
-static inline bool tb_acpi_is_native(void) { return true; }
-static inline bool tb_acpi_may_tunnel_usb3(void) { return true; }
-static inline bool tb_acpi_may_tunnel_dp(void) { return true; }
-static inline bool tb_acpi_may_tunnel_pcie(void) { return true; }
-static inline bool tb_acpi_is_xdomain_allowed(void) { return true; }
-#endif
+अटल अंतरभूत bool tb_acpi_is_native(व्योम) अणु वापस true; पूर्ण
+अटल अंतरभूत bool tb_acpi_may_tunnel_usb3(व्योम) अणु वापस true; पूर्ण
+अटल अंतरभूत bool tb_acpi_may_tunnel_dp(व्योम) अणु वापस true; पूर्ण
+अटल अंतरभूत bool tb_acpi_may_tunnel_pcie(व्योम) अणु वापस true; पूर्ण
+अटल अंतरभूत bool tb_acpi_is_xकरोमुख्य_allowed(व्योम) अणु वापस true; पूर्ण
+#पूर्ण_अगर
 
-#ifdef CONFIG_DEBUG_FS
-void tb_debugfs_init(void);
-void tb_debugfs_exit(void);
-void tb_switch_debugfs_init(struct tb_switch *sw);
-void tb_switch_debugfs_remove(struct tb_switch *sw);
-void tb_service_debugfs_init(struct tb_service *svc);
-void tb_service_debugfs_remove(struct tb_service *svc);
-#else
-static inline void tb_debugfs_init(void) { }
-static inline void tb_debugfs_exit(void) { }
-static inline void tb_switch_debugfs_init(struct tb_switch *sw) { }
-static inline void tb_switch_debugfs_remove(struct tb_switch *sw) { }
-static inline void tb_service_debugfs_init(struct tb_service *svc) { }
-static inline void tb_service_debugfs_remove(struct tb_service *svc) { }
-#endif
+#अगर_घोषित CONFIG_DEBUG_FS
+व्योम tb_debugfs_init(व्योम);
+व्योम tb_debugfs_निकास(व्योम);
+व्योम tb_चयन_debugfs_init(काष्ठा tb_चयन *sw);
+व्योम tb_चयन_debugfs_हटाओ(काष्ठा tb_चयन *sw);
+व्योम tb_service_debugfs_init(काष्ठा tb_service *svc);
+व्योम tb_service_debugfs_हटाओ(काष्ठा tb_service *svc);
+#अन्यथा
+अटल अंतरभूत व्योम tb_debugfs_init(व्योम) अणु पूर्ण
+अटल अंतरभूत व्योम tb_debugfs_निकास(व्योम) अणु पूर्ण
+अटल अंतरभूत व्योम tb_चयन_debugfs_init(काष्ठा tb_चयन *sw) अणु पूर्ण
+अटल अंतरभूत व्योम tb_चयन_debugfs_हटाओ(काष्ठा tb_चयन *sw) अणु पूर्ण
+अटल अंतरभूत व्योम tb_service_debugfs_init(काष्ठा tb_service *svc) अणु पूर्ण
+अटल अंतरभूत व्योम tb_service_debugfs_हटाओ(काष्ठा tb_service *svc) अणु पूर्ण
+#पूर्ण_अगर
 
-#ifdef CONFIG_USB4_KUNIT_TEST
-int tb_test_init(void);
-void tb_test_exit(void);
-#else
-static inline int tb_test_init(void) { return 0; }
-static inline void tb_test_exit(void) { }
-#endif
+#अगर_घोषित CONFIG_USB4_KUNIT_TEST
+पूर्णांक tb_test_init(व्योम);
+व्योम tb_test_निकास(व्योम);
+#अन्यथा
+अटल अंतरभूत पूर्णांक tb_test_init(व्योम) अणु वापस 0; पूर्ण
+अटल अंतरभूत व्योम tb_test_निकास(व्योम) अणु पूर्ण
+#पूर्ण_अगर
 
-#endif
+#पूर्ण_अगर

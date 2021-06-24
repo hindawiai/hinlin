@@ -1,10 +1,11 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef FXOS8700_H_
-#define FXOS8700_H_
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित FXOS8700_H_
+#घोषणा FXOS8700_H_
 
-extern const struct regmap_config fxos8700_regmap_config;
+बाह्य स्थिर काष्ठा regmap_config fxos8700_regmap_config;
 
-int fxos8700_core_probe(struct device *dev, struct regmap *regmap,
-			const char *name, bool use_spi);
+पूर्णांक fxos8700_core_probe(काष्ठा device *dev, काष्ठा regmap *regmap,
+			स्थिर अक्षर *name, bool use_spi);
 
-#endif  /* FXOS8700_H_ */
+#पूर्ण_अगर  /* FXOS8700_H_ */

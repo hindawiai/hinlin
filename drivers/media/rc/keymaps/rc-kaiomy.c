@@ -1,83 +1,84 @@
-// SPDX-License-Identifier: GPL-2.0+
-// kaiomy.h - Keytable for kaiomy Remote Controller
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
+// kaiomy.h - Keytable क्रम kaiomy Remote Controller
 //
 // keymap imported from ir-keymaps.c
 //
 // Copyright (c) 2010 by Mauro Carvalho Chehab
 
-#include <media/rc-map.h>
-#include <linux/module.h>
+#समावेश <media/rc-map.h>
+#समावेश <linux/module.h>
 
 /* Kaiomy TVnPC U2
    Mauro Carvalho Chehab <mchehab@kernel.org>
  */
 
-static struct rc_map_table kaiomy[] = {
-	{ 0x43, KEY_POWER2},
-	{ 0x01, KEY_LIST},
-	{ 0x0b, KEY_ZOOM},
-	{ 0x03, KEY_POWER},
+अटल काष्ठा rc_map_table kaiomy[] = अणु
+	अणु 0x43, KEY_POWER2पूर्ण,
+	अणु 0x01, KEY_LISTपूर्ण,
+	अणु 0x0b, KEY_ZOOMपूर्ण,
+	अणु 0x03, KEY_POWERपूर्ण,
 
-	{ 0x04, KEY_NUMERIC_1},
-	{ 0x08, KEY_NUMERIC_2},
-	{ 0x02, KEY_NUMERIC_3},
+	अणु 0x04, KEY_NUMERIC_1पूर्ण,
+	अणु 0x08, KEY_NUMERIC_2पूर्ण,
+	अणु 0x02, KEY_NUMERIC_3पूर्ण,
 
-	{ 0x0f, KEY_NUMERIC_4},
-	{ 0x05, KEY_NUMERIC_5},
-	{ 0x06, KEY_NUMERIC_6},
+	अणु 0x0f, KEY_NUMERIC_4पूर्ण,
+	अणु 0x05, KEY_NUMERIC_5पूर्ण,
+	अणु 0x06, KEY_NUMERIC_6पूर्ण,
 
-	{ 0x0c, KEY_NUMERIC_7},
-	{ 0x0d, KEY_NUMERIC_8},
-	{ 0x0a, KEY_NUMERIC_9},
+	अणु 0x0c, KEY_NUMERIC_7पूर्ण,
+	अणु 0x0d, KEY_NUMERIC_8पूर्ण,
+	अणु 0x0a, KEY_NUMERIC_9पूर्ण,
 
-	{ 0x11, KEY_NUMERIC_0},
+	अणु 0x11, KEY_NUMERIC_0पूर्ण,
 
-	{ 0x09, KEY_CHANNELUP},
-	{ 0x07, KEY_CHANNELDOWN},
+	अणु 0x09, KEY_CHANNELUPपूर्ण,
+	अणु 0x07, KEY_CHANNELDOWNपूर्ण,
 
-	{ 0x0e, KEY_VOLUMEUP},
-	{ 0x13, KEY_VOLUMEDOWN},
+	अणु 0x0e, KEY_VOLUMEUPपूर्ण,
+	अणु 0x13, KEY_VOLUMEDOWNपूर्ण,
 
-	{ 0x10, KEY_HOME},
-	{ 0x12, KEY_ENTER},
+	अणु 0x10, KEY_HOMEपूर्ण,
+	अणु 0x12, KEY_ENTERपूर्ण,
 
-	{ 0x14, KEY_RECORD},
-	{ 0x15, KEY_STOP},
-	{ 0x16, KEY_PLAY},
-	{ 0x17, KEY_MUTE},
+	अणु 0x14, KEY_RECORDपूर्ण,
+	अणु 0x15, KEY_STOPपूर्ण,
+	अणु 0x16, KEY_PLAYपूर्ण,
+	अणु 0x17, KEY_MUTEपूर्ण,
 
-	{ 0x18, KEY_UP},
-	{ 0x19, KEY_DOWN},
-	{ 0x1a, KEY_LEFT},
-	{ 0x1b, KEY_RIGHT},
+	अणु 0x18, KEY_UPपूर्ण,
+	अणु 0x19, KEY_DOWNपूर्ण,
+	अणु 0x1a, KEY_LEFTपूर्ण,
+	अणु 0x1b, KEY_RIGHTपूर्ण,
 
-	{ 0x1c, KEY_RED},
-	{ 0x1d, KEY_GREEN},
-	{ 0x1e, KEY_YELLOW},
-	{ 0x1f, KEY_BLUE},
-};
+	अणु 0x1c, KEY_REDपूर्ण,
+	अणु 0x1d, KEY_GREENपूर्ण,
+	अणु 0x1e, KEY_YELLOWपूर्ण,
+	अणु 0x1f, KEY_BLUEपूर्ण,
+पूर्ण;
 
-static struct rc_map_list kaiomy_map = {
-	.map = {
+अटल काष्ठा rc_map_list kaiomy_map = अणु
+	.map = अणु
 		.scan     = kaiomy,
 		.size     = ARRAY_SIZE(kaiomy),
 		.rc_proto = RC_PROTO_UNKNOWN,	/* Legacy IR type */
 		.name     = RC_MAP_KAIOMY,
-	}
-};
+	पूर्ण
+पूर्ण;
 
-static int __init init_rc_map_kaiomy(void)
-{
-	return rc_map_register(&kaiomy_map);
-}
+अटल पूर्णांक __init init_rc_map_kaiomy(व्योम)
+अणु
+	वापस rc_map_रेजिस्टर(&kaiomy_map);
+पूर्ण
 
-static void __exit exit_rc_map_kaiomy(void)
-{
-	rc_map_unregister(&kaiomy_map);
-}
+अटल व्योम __निकास निकास_rc_map_kaiomy(व्योम)
+अणु
+	rc_map_unरेजिस्टर(&kaiomy_map);
+पूर्ण
 
 module_init(init_rc_map_kaiomy)
-module_exit(exit_rc_map_kaiomy)
+module_निकास(निकास_rc_map_kaiomy)
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Mauro Carvalho Chehab");

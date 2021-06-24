@@ -1,87 +1,88 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _ASM_WORD_AT_A_TIME_H
-#define _ASM_WORD_AT_A_TIME_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _ASM_WORD_AT_A_TIME_H
+#घोषणा _ASM_WORD_AT_A_TIME_H
 
-#include <linux/kernel.h>
+#समावेश <linux/kernel.h>
 
 /*
- * This is largely generic for little-endian machines, but the
+ * This is largely generic क्रम little-endian machines, but the
  * optimal byte mask counting is probably going to be something
- * that is architecture-specific. If you have a reliably fast
- * bit count instruction, that might be better than the multiply
- * and shift, for example.
+ * that is architecture-specअगरic. If you have a reliably fast
+ * bit count inकाष्ठाion, that might be better than the multiply
+ * and shअगरt, क्रम example.
  */
-struct word_at_a_time {
-	const unsigned long one_bits, high_bits;
-};
+काष्ठा word_at_a_समय अणु
+	स्थिर अचिन्हित दीर्घ one_bits, high_bits;
+पूर्ण;
 
-#define WORD_AT_A_TIME_CONSTANTS { REPEAT_BYTE(0x01), REPEAT_BYTE(0x80) }
+#घोषणा WORD_AT_A_TIME_CONSTANTS अणु REPEAT_BYTE(0x01), REPEAT_BYTE(0x80) पूर्ण
 
-#ifdef CONFIG_64BIT
+#अगर_घोषित CONFIG_64BIT
 
 /*
  * Jan Achrenius on G+: microoptimized version of
  * the simpler "(mask & ONEBYTES) * ONEBYTES >> 56"
- * that works for the bytemasks without having to
+ * that works क्रम the bytemasks without having to
  * mask them first.
  */
-static inline long count_masked_bytes(unsigned long mask)
-{
-	return mask*0x0001020304050608ul >> 56;
-}
+अटल अंतरभूत दीर्घ count_masked_bytes(अचिन्हित दीर्घ mask)
+अणु
+	वापस mask*0x0001020304050608ul >> 56;
+पूर्ण
 
-#else	/* 32-bit case */
+#अन्यथा	/* 32-bit हाल */
 
-/* Carl Chatfield / Jan Achrenius G+ version for 32-bit */
-static inline long count_masked_bytes(long mask)
-{
+/* Carl Chatfield / Jan Achrenius G+ version क्रम 32-bit */
+अटल अंतरभूत दीर्घ count_masked_bytes(दीर्घ mask)
+अणु
 	/* (000000 0000ff 00ffff ffffff) -> ( 1 1 2 3 ) */
-	long a = (0x0ff0001+mask) >> 23;
-	/* Fix the 1 for 00 case */
-	return a & mask;
-}
+	दीर्घ a = (0x0ff0001+mask) >> 23;
+	/* Fix the 1 क्रम 00 हाल */
+	वापस a & mask;
+पूर्ण
 
-#endif
+#पूर्ण_अगर
 
-/* Return nonzero if it has a zero */
-static inline unsigned long has_zero(unsigned long a, unsigned long *bits, const struct word_at_a_time *c)
-{
-	unsigned long mask = ((a - c->one_bits) & ~a) & c->high_bits;
+/* Return nonzero अगर it has a zero */
+अटल अंतरभूत अचिन्हित दीर्घ has_zero(अचिन्हित दीर्घ a, अचिन्हित दीर्घ *bits, स्थिर काष्ठा word_at_a_समय *c)
+अणु
+	अचिन्हित दीर्घ mask = ((a - c->one_bits) & ~a) & c->high_bits;
 	*bits = mask;
-	return mask;
-}
+	वापस mask;
+पूर्ण
 
-static inline unsigned long prep_zero_mask(unsigned long a, unsigned long bits, const struct word_at_a_time *c)
-{
-	return bits;
-}
+अटल अंतरभूत अचिन्हित दीर्घ prep_zero_mask(अचिन्हित दीर्घ a, अचिन्हित दीर्घ bits, स्थिर काष्ठा word_at_a_समय *c)
+अणु
+	वापस bits;
+पूर्ण
 
-static inline unsigned long create_zero_mask(unsigned long bits)
-{
+अटल अंतरभूत अचिन्हित दीर्घ create_zero_mask(अचिन्हित दीर्घ bits)
+अणु
 	bits = (bits - 1) & ~bits;
-	return bits >> 7;
-}
+	वापस bits >> 7;
+पूर्ण
 
 /* The mask we created is directly usable as a bytemask */
-#define zero_bytemask(mask) (mask)
+#घोषणा zero_bytemask(mask) (mask)
 
-static inline unsigned long find_zero(unsigned long mask)
-{
-	return count_masked_bytes(mask);
-}
+अटल अंतरभूत अचिन्हित दीर्घ find_zero(अचिन्हित दीर्घ mask)
+अणु
+	वापस count_masked_bytes(mask);
+पूर्ण
 
 /*
  * Load an unaligned word from kernel space.
  *
- * In the (very unlikely) case of the word being a page-crosser
+ * In the (very unlikely) हाल of the word being a page-crosser
  * and the next page not being mapped, take the exception and
- * return zeroes in the non-existing part.
+ * वापस zeroes in the non-existing part.
  */
-static inline unsigned long load_unaligned_zeropad(const void *addr)
-{
-	unsigned long ret, dummy;
+अटल अंतरभूत अचिन्हित दीर्घ load_unaligned_zeropad(स्थिर व्योम *addr)
+अणु
+	अचिन्हित दीर्घ ret, dummy;
 
-	asm(
+	यंत्र(
 		"1:\tmov %2,%0\n"
 		"2:\n"
 		".section .fixup,\"ax\"\n"
@@ -97,10 +98,10 @@ static inline unsigned long load_unaligned_zeropad(const void *addr)
 		".previous\n"
 		_ASM_EXTABLE(1b, 3b)
 		:"=&r" (ret),"=&c" (dummy)
-		:"m" (*(unsigned long *)addr),
-		 "i" (-sizeof(unsigned long)),
-		 "i" (sizeof(unsigned long)-1));
-	return ret;
-}
+		:"m" (*(अचिन्हित दीर्घ *)addr),
+		 "i" (-माप(अचिन्हित दीर्घ)),
+		 "i" (माप(अचिन्हित दीर्घ)-1));
+	वापस ret;
+पूर्ण
 
-#endif /* _ASM_WORD_AT_A_TIME_H */
+#पूर्ण_अगर /* _ASM_WORD_AT_A_TIME_H */

@@ -1,9 +1,10 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
-#ifndef RTL8180_GRF5101_H
-#define RTL8180_GRF5101_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
+#अगर_अघोषित RTL8180_GRF5101_H
+#घोषणा RTL8180_GRF5101_H
 
 /*
- * Radio tuning for GCT GRF5101 on RTL8180
+ * Radio tuning क्रम GCT GRF5101 on RTL8180
  *
  * Copyright 2007 Andrea Merello <andrea.merello@gmail.com>
  *
@@ -13,13 +14,13 @@
  * I want to thanks the Authors of such projects and the Ndiswrapper
  * project Authors.
  *
- * A special Big Thanks also is for all people who donated me cards,
+ * A special Big Thanks also is क्रम all people who करोnated me cards,
  * making possible the creation of the original rtl8180 driver
  * from which this code is derived!
  */
 
-#define GRF5101_ANTENNA 0xA3
+#घोषणा GRF5101_ANTENNA 0xA3
 
-extern const struct rtl818x_rf_ops grf5101_rf_ops;
+बाह्य स्थिर काष्ठा rtl818x_rf_ops grf5101_rf_ops;
 
-#endif /* RTL8180_GRF5101_H */
+#पूर्ण_अगर /* RTL8180_GRF5101_H */

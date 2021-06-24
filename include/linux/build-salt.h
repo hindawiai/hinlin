@@ -1,20 +1,21 @@
-#ifndef __BUILD_SALT_H
-#define __BUILD_SALT_H
+<शैली गुरु>
+#अगर_अघोषित __BUILD_SALT_H
+#घोषणा __BUILD_SALT_H
 
-#include <linux/elfnote.h>
+#समावेश <linux/elfnote.h>
 
-#define LINUX_ELFNOTE_BUILD_SALT       0x100
+#घोषणा LINUX_ELFNOTE_BUILD_SALT       0x100
 
-#ifdef __ASSEMBLER__
+#अगर_घोषित __ASSEMBLER__
 
-#define BUILD_SALT \
+#घोषणा BUILD_SALT \
        ELFNOTE(Linux, LINUX_ELFNOTE_BUILD_SALT, .asciz CONFIG_BUILD_SALT)
 
-#else
+#अन्यथा
 
-#define BUILD_SALT \
+#घोषणा BUILD_SALT \
        ELFNOTE32("Linux", LINUX_ELFNOTE_BUILD_SALT, CONFIG_BUILD_SALT)
 
-#endif
+#पूर्ण_अगर
 
-#endif /* __BUILD_SALT_H */
+#पूर्ण_अगर /* __BUILD_SALT_H */

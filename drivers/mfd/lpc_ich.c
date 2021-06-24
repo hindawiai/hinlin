@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- *  lpc_ich.c - LPC interface for Intel ICH
+ *  lpc_ich.c - LPC पूर्णांकerface क्रम Intel ICH
  *
  *  LPC bridge function of the Intel ICH contains many other
  *  functional units, such as Interrupt controllers, Timers,
@@ -13,144 +14,144 @@
  *  Author: Aaron Sierra <asierra@xes-inc.com>
  *
  *  This driver supports the following I/O Controller hubs:
- *	(See the intel documentation on http://developer.intel.com.)
- *	document number 290655-003, 290677-014: 82801AA (ICH), 82801AB (ICHO)
- *	document number 290687-002, 298242-027: 82801BA (ICH2)
- *	document number 290733-003, 290739-013: 82801CA (ICH3-S)
- *	document number 290716-001, 290718-007: 82801CAM (ICH3-M)
- *	document number 290744-001, 290745-025: 82801DB (ICH4)
- *	document number 252337-001, 252663-008: 82801DBM (ICH4-M)
- *	document number 273599-001, 273645-002: 82801E (C-ICH)
- *	document number 252516-001, 252517-028: 82801EB (ICH5), 82801ER (ICH5R)
- *	document number 300641-004, 300884-013: 6300ESB
- *	document number 301473-002, 301474-026: 82801F (ICH6)
- *	document number 313082-001, 313075-006: 631xESB, 632xESB
- *	document number 307013-003, 307014-024: 82801G (ICH7)
- *	document number 322896-001, 322897-001: NM10
- *	document number 313056-003, 313057-017: 82801H (ICH8)
- *	document number 316972-004, 316973-012: 82801I (ICH9)
- *	document number 319973-002, 319974-002: 82801J (ICH10)
- *	document number 322169-001, 322170-003: 5 Series, 3400 Series (PCH)
- *	document number 320066-003, 320257-008: EP80597 (IICH)
- *	document number 324645-001, 324646-001: Cougar Point (CPT)
+ *	(See the पूर्णांकel करोcumentation on http://developer.पूर्णांकel.com.)
+ *	करोcument number 290655-003, 290677-014: 82801AA (ICH), 82801AB (ICHO)
+ *	करोcument number 290687-002, 298242-027: 82801BA (ICH2)
+ *	करोcument number 290733-003, 290739-013: 82801CA (ICH3-S)
+ *	करोcument number 290716-001, 290718-007: 82801CAM (ICH3-M)
+ *	करोcument number 290744-001, 290745-025: 82801DB (ICH4)
+ *	करोcument number 252337-001, 252663-008: 82801DBM (ICH4-M)
+ *	करोcument number 273599-001, 273645-002: 82801E (C-ICH)
+ *	करोcument number 252516-001, 252517-028: 82801EB (ICH5), 82801ER (ICH5R)
+ *	करोcument number 300641-004, 300884-013: 6300ESB
+ *	करोcument number 301473-002, 301474-026: 82801F (ICH6)
+ *	करोcument number 313082-001, 313075-006: 631xESB, 632xESB
+ *	करोcument number 307013-003, 307014-024: 82801G (ICH7)
+ *	करोcument number 322896-001, 322897-001: NM10
+ *	करोcument number 313056-003, 313057-017: 82801H (ICH8)
+ *	करोcument number 316972-004, 316973-012: 82801I (ICH9)
+ *	करोcument number 319973-002, 319974-002: 82801J (ICH10)
+ *	करोcument number 322169-001, 322170-003: 5 Series, 3400 Series (PCH)
+ *	करोcument number 320066-003, 320257-008: EP80597 (IICH)
+ *	करोcument number 324645-001, 324646-001: Cougar Poपूर्णांक (CPT)
  */
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/errno.h>
-#include <linux/acpi.h>
-#include <linux/pci.h>
-#include <linux/mfd/core.h>
-#include <linux/mfd/lpc_ich.h>
-#include <linux/platform_data/itco_wdt.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/acpi.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/mfd/core.h>
+#समावेश <linux/mfd/lpc_ich.h>
+#समावेश <linux/platक्रमm_data/itco_wdt.h>
 
-#define ACPIBASE		0x40
-#define ACPIBASE_GPE_OFF	0x28
-#define ACPIBASE_GPE_END	0x2f
-#define ACPIBASE_SMI_OFF	0x30
-#define ACPIBASE_SMI_END	0x33
-#define ACPIBASE_PMC_OFF	0x08
-#define ACPIBASE_PMC_END	0x0c
-#define ACPIBASE_TCO_OFF	0x60
-#define ACPIBASE_TCO_END	0x7f
-#define ACPICTRL_PMCBASE	0x44
+#घोषणा ACPIBASE		0x40
+#घोषणा ACPIBASE_GPE_OFF	0x28
+#घोषणा ACPIBASE_GPE_END	0x2f
+#घोषणा ACPIBASE_SMI_OFF	0x30
+#घोषणा ACPIBASE_SMI_END	0x33
+#घोषणा ACPIBASE_PMC_OFF	0x08
+#घोषणा ACPIBASE_PMC_END	0x0c
+#घोषणा ACPIBASE_TCO_OFF	0x60
+#घोषणा ACPIBASE_TCO_END	0x7f
+#घोषणा ACPICTRL_PMCBASE	0x44
 
-#define ACPIBASE_GCS_OFF	0x3410
-#define ACPIBASE_GCS_END	0x3414
+#घोषणा ACPIBASE_GCS_OFF	0x3410
+#घोषणा ACPIBASE_GCS_END	0x3414
 
-#define SPIBASE_BYT		0x54
-#define SPIBASE_BYT_SZ		512
-#define SPIBASE_BYT_EN		BIT(1)
+#घोषणा SPIBASE_BYT		0x54
+#घोषणा SPIBASE_BYT_SZ		512
+#घोषणा SPIBASE_BYT_EN		BIT(1)
 
-#define SPIBASE_LPT		0x3800
-#define SPIBASE_LPT_SZ		512
-#define BCR			0xdc
-#define BCR_WPD			BIT(0)
+#घोषणा SPIBASE_LPT		0x3800
+#घोषणा SPIBASE_LPT_SZ		512
+#घोषणा BCR			0xdc
+#घोषणा BCR_WPD			BIT(0)
 
-#define SPIBASE_APL_SZ		4096
+#घोषणा SPIBASE_APL_SZ		4096
 
-#define GPIOBASE_ICH0		0x58
-#define GPIOCTRL_ICH0		0x5C
-#define GPIOBASE_ICH6		0x48
-#define GPIOCTRL_ICH6		0x4C
+#घोषणा GPIOBASE_ICH0		0x58
+#घोषणा GPIOCTRL_ICH0		0x5C
+#घोषणा GPIOBASE_ICH6		0x48
+#घोषणा GPIOCTRL_ICH6		0x4C
 
-#define RCBABASE		0xf0
+#घोषणा RCBABASE		0xf0
 
-#define wdt_io_res(i) wdt_res(0, i)
-#define wdt_mem_res(i) wdt_res(ICH_RES_MEM_OFF, i)
-#define wdt_res(b, i) (&wdt_ich_res[(b) + (i)])
+#घोषणा wdt_io_res(i) wdt_res(0, i)
+#घोषणा wdt_mem_res(i) wdt_res(ICH_RES_MEM_OFF, i)
+#घोषणा wdt_res(b, i) (&wdt_ich_res[(b) + (i)])
 
-struct lpc_ich_priv {
-	int chipset;
+काष्ठा lpc_ich_priv अणु
+	पूर्णांक chipset;
 
-	int abase;		/* ACPI base */
-	int actrl_pbase;	/* ACPI control or PMC base */
-	int gbase;		/* GPIO base */
-	int gctrl;		/* GPIO control */
+	पूर्णांक abase;		/* ACPI base */
+	पूर्णांक actrl_pbase;	/* ACPI control or PMC base */
+	पूर्णांक gbase;		/* GPIO base */
+	पूर्णांक gctrl;		/* GPIO control */
 
-	int abase_save;		/* Cached ACPI base value */
-	int actrl_pbase_save;		/* Cached ACPI control or PMC base value */
-	int gctrl_save;		/* Cached GPIO control value */
-};
+	पूर्णांक abase_save;		/* Cached ACPI base value */
+	पूर्णांक actrl_pbase_save;		/* Cached ACPI control or PMC base value */
+	पूर्णांक gctrl_save;		/* Cached GPIO control value */
+पूर्ण;
 
-static struct resource wdt_ich_res[] = {
+अटल काष्ठा resource wdt_ich_res[] = अणु
 	/* ACPI - TCO */
-	{
+	अणु
 		.flags = IORESOURCE_IO,
-	},
+	पूर्ण,
 	/* ACPI - SMI */
-	{
+	अणु
 		.flags = IORESOURCE_IO,
-	},
+	पूर्ण,
 	/* GCS or PMC */
-	{
+	अणु
 		.flags = IORESOURCE_MEM,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static struct resource gpio_ich_res[] = {
+अटल काष्ठा resource gpio_ich_res[] = अणु
 	/* GPIO */
-	{
+	अणु
 		.flags = IORESOURCE_IO,
-	},
+	पूर्ण,
 	/* ACPI - GPE0 */
-	{
+	अणु
 		.flags = IORESOURCE_IO,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static struct resource intel_spi_res[] = {
-	{
+अटल काष्ठा resource पूर्णांकel_spi_res[] = अणु
+	अणु
 		.flags = IORESOURCE_MEM,
-	}
-};
+	पूर्ण
+पूर्ण;
 
-static struct mfd_cell lpc_ich_wdt_cell = {
+अटल काष्ठा mfd_cell lpc_ich_wdt_cell = अणु
 	.name = "iTCO_wdt",
 	.num_resources = ARRAY_SIZE(wdt_ich_res),
 	.resources = wdt_ich_res,
 	.ignore_resource_conflicts = true,
-};
+पूर्ण;
 
-static struct mfd_cell lpc_ich_gpio_cell = {
+अटल काष्ठा mfd_cell lpc_ich_gpio_cell = अणु
 	.name = "gpio_ich",
 	.num_resources = ARRAY_SIZE(gpio_ich_res),
 	.resources = gpio_ich_res,
 	.ignore_resource_conflicts = true,
-};
+पूर्ण;
 
 
-static struct mfd_cell lpc_ich_spi_cell = {
+अटल काष्ठा mfd_cell lpc_ich_spi_cell = अणु
 	.name = "intel-spi",
-	.num_resources = ARRAY_SIZE(intel_spi_res),
-	.resources = intel_spi_res,
+	.num_resources = ARRAY_SIZE(पूर्णांकel_spi_res),
+	.resources = पूर्णांकel_spi_res,
 	.ignore_resource_conflicts = true,
-};
+पूर्ण;
 
 /* chipset related info */
-enum lpc_chipsets {
+क्रमागत lpc_chipsets अणु
 	LPC_ICH = 0,	/* ICH */
 	LPC_ICH0,	/* ICH0 */
 	LPC_ICH2,	/* ICH2 */
@@ -202,829 +203,829 @@ enum lpc_chipsets {
 	LPC_3420,	/* 3420 */
 	LPC_3450,	/* 3450 */
 	LPC_EP80579,	/* EP80579 */
-	LPC_CPT,	/* Cougar Point */
-	LPC_CPTD,	/* Cougar Point Desktop */
-	LPC_CPTM,	/* Cougar Point Mobile */
+	LPC_CPT,	/* Cougar Poपूर्णांक */
+	LPC_CPTD,	/* Cougar Poपूर्णांक Desktop */
+	LPC_CPTM,	/* Cougar Poपूर्णांक Mobile */
 	LPC_PBG,	/* Patsburg */
 	LPC_DH89XXCC,	/* DH89xxCC */
-	LPC_PPT,	/* Panther Point */
-	LPC_LPT,	/* Lynx Point */
-	LPC_LPT_LP,	/* Lynx Point-LP */
+	LPC_PPT,	/* Panther Poपूर्णांक */
+	LPC_LPT,	/* Lynx Poपूर्णांक */
+	LPC_LPT_LP,	/* Lynx Poपूर्णांक-LP */
 	LPC_WBG,	/* Wellsburg */
 	LPC_AVN,	/* Avoton SoC */
 	LPC_BAYTRAIL,   /* Bay Trail SoC */
 	LPC_COLETO,	/* Coleto Creek */
-	LPC_WPT_LP,	/* Wildcat Point-LP */
+	LPC_WPT_LP,	/* Wildcat Poपूर्णांक-LP */
 	LPC_BRASWELL,	/* Braswell SoC */
 	LPC_LEWISBURG,	/* Lewisburg */
 	LPC_9S,		/* 9 Series */
 	LPC_APL,	/* Apollo Lake SoC */
 	LPC_GLK,	/* Gemini Lake SoC */
 	LPC_COUGARMOUNTAIN,/* Cougar Mountain SoC*/
-};
+पूर्ण;
 
-static struct lpc_ich_info lpc_chipset_info[] = {
-	[LPC_ICH] = {
+अटल काष्ठा lpc_ich_info lpc_chipset_info[] = अणु
+	[LPC_ICH] = अणु
 		.name = "ICH",
 		.iTCO_version = 1,
-	},
-	[LPC_ICH0] = {
+	पूर्ण,
+	[LPC_ICH0] = अणु
 		.name = "ICH0",
 		.iTCO_version = 1,
-	},
-	[LPC_ICH2] = {
+	पूर्ण,
+	[LPC_ICH2] = अणु
 		.name = "ICH2",
 		.iTCO_version = 1,
-	},
-	[LPC_ICH2M] = {
+	पूर्ण,
+	[LPC_ICH2M] = अणु
 		.name = "ICH2-M",
 		.iTCO_version = 1,
-	},
-	[LPC_ICH3] = {
+	पूर्ण,
+	[LPC_ICH3] = अणु
 		.name = "ICH3-S",
 		.iTCO_version = 1,
-	},
-	[LPC_ICH3M] = {
+	पूर्ण,
+	[LPC_ICH3M] = अणु
 		.name = "ICH3-M",
 		.iTCO_version = 1,
-	},
-	[LPC_ICH4] = {
+	पूर्ण,
+	[LPC_ICH4] = अणु
 		.name = "ICH4",
 		.iTCO_version = 1,
-	},
-	[LPC_ICH4M] = {
+	पूर्ण,
+	[LPC_ICH4M] = अणु
 		.name = "ICH4-M",
 		.iTCO_version = 1,
-	},
-	[LPC_CICH] = {
+	पूर्ण,
+	[LPC_CICH] = अणु
 		.name = "C-ICH",
 		.iTCO_version = 1,
-	},
-	[LPC_ICH5] = {
+	पूर्ण,
+	[LPC_ICH5] = अणु
 		.name = "ICH5 or ICH5R",
 		.iTCO_version = 1,
-	},
-	[LPC_6300ESB] = {
+	पूर्ण,
+	[LPC_6300ESB] = अणु
 		.name = "6300ESB",
 		.iTCO_version = 1,
-	},
-	[LPC_ICH6] = {
+	पूर्ण,
+	[LPC_ICH6] = अणु
 		.name = "ICH6 or ICH6R",
 		.iTCO_version = 2,
 		.gpio_version = ICH_V6_GPIO,
-	},
-	[LPC_ICH6M] = {
+	पूर्ण,
+	[LPC_ICH6M] = अणु
 		.name = "ICH6-M",
 		.iTCO_version = 2,
 		.gpio_version = ICH_V6_GPIO,
-	},
-	[LPC_ICH6W] = {
+	पूर्ण,
+	[LPC_ICH6W] = अणु
 		.name = "ICH6W or ICH6RW",
 		.iTCO_version = 2,
 		.gpio_version = ICH_V6_GPIO,
-	},
-	[LPC_631XESB] = {
+	पूर्ण,
+	[LPC_631XESB] = अणु
 		.name = "631xESB/632xESB",
 		.iTCO_version = 2,
 		.gpio_version = ICH_V6_GPIO,
-	},
-	[LPC_ICH7] = {
+	पूर्ण,
+	[LPC_ICH7] = अणु
 		.name = "ICH7 or ICH7R",
 		.iTCO_version = 2,
 		.gpio_version = ICH_V7_GPIO,
-	},
-	[LPC_ICH7DH] = {
+	पूर्ण,
+	[LPC_ICH7DH] = अणु
 		.name = "ICH7DH",
 		.iTCO_version = 2,
 		.gpio_version = ICH_V7_GPIO,
-	},
-	[LPC_ICH7M] = {
+	पूर्ण,
+	[LPC_ICH7M] = अणु
 		.name = "ICH7-M or ICH7-U",
 		.iTCO_version = 2,
 		.gpio_version = ICH_V7_GPIO,
-	},
-	[LPC_ICH7MDH] = {
+	पूर्ण,
+	[LPC_ICH7MDH] = अणु
 		.name = "ICH7-M DH",
 		.iTCO_version = 2,
 		.gpio_version = ICH_V7_GPIO,
-	},
-	[LPC_NM10] = {
+	पूर्ण,
+	[LPC_NM10] = अणु
 		.name = "NM10",
 		.iTCO_version = 2,
 		.gpio_version = ICH_V7_GPIO,
-	},
-	[LPC_ICH8] = {
+	पूर्ण,
+	[LPC_ICH8] = अणु
 		.name = "ICH8 or ICH8R",
 		.iTCO_version = 2,
 		.gpio_version = ICH_V7_GPIO,
-	},
-	[LPC_ICH8DH] = {
+	पूर्ण,
+	[LPC_ICH8DH] = अणु
 		.name = "ICH8DH",
 		.iTCO_version = 2,
 		.gpio_version = ICH_V7_GPIO,
-	},
-	[LPC_ICH8DO] = {
+	पूर्ण,
+	[LPC_ICH8DO] = अणु
 		.name = "ICH8DO",
 		.iTCO_version = 2,
 		.gpio_version = ICH_V7_GPIO,
-	},
-	[LPC_ICH8M] = {
+	पूर्ण,
+	[LPC_ICH8M] = अणु
 		.name = "ICH8M",
 		.iTCO_version = 2,
 		.gpio_version = ICH_V7_GPIO,
-	},
-	[LPC_ICH8ME] = {
+	पूर्ण,
+	[LPC_ICH8ME] = अणु
 		.name = "ICH8M-E",
 		.iTCO_version = 2,
 		.gpio_version = ICH_V7_GPIO,
-	},
-	[LPC_ICH9] = {
+	पूर्ण,
+	[LPC_ICH9] = अणु
 		.name = "ICH9",
 		.iTCO_version = 2,
 		.gpio_version = ICH_V9_GPIO,
-	},
-	[LPC_ICH9R] = {
+	पूर्ण,
+	[LPC_ICH9R] = अणु
 		.name = "ICH9R",
 		.iTCO_version = 2,
 		.gpio_version = ICH_V9_GPIO,
-	},
-	[LPC_ICH9DH] = {
+	पूर्ण,
+	[LPC_ICH9DH] = अणु
 		.name = "ICH9DH",
 		.iTCO_version = 2,
 		.gpio_version = ICH_V9_GPIO,
-	},
-	[LPC_ICH9DO] = {
+	पूर्ण,
+	[LPC_ICH9DO] = अणु
 		.name = "ICH9DO",
 		.iTCO_version = 2,
 		.gpio_version = ICH_V9_GPIO,
-	},
-	[LPC_ICH9M] = {
+	पूर्ण,
+	[LPC_ICH9M] = अणु
 		.name = "ICH9M",
 		.iTCO_version = 2,
 		.gpio_version = ICH_V9_GPIO,
-	},
-	[LPC_ICH9ME] = {
+	पूर्ण,
+	[LPC_ICH9ME] = अणु
 		.name = "ICH9M-E",
 		.iTCO_version = 2,
 		.gpio_version = ICH_V9_GPIO,
-	},
-	[LPC_ICH10] = {
+	पूर्ण,
+	[LPC_ICH10] = अणु
 		.name = "ICH10",
 		.iTCO_version = 2,
 		.gpio_version = ICH_V10CONS_GPIO,
-	},
-	[LPC_ICH10R] = {
+	पूर्ण,
+	[LPC_ICH10R] = अणु
 		.name = "ICH10R",
 		.iTCO_version = 2,
 		.gpio_version = ICH_V10CONS_GPIO,
-	},
-	[LPC_ICH10D] = {
+	पूर्ण,
+	[LPC_ICH10D] = अणु
 		.name = "ICH10D",
 		.iTCO_version = 2,
 		.gpio_version = ICH_V10CORP_GPIO,
-	},
-	[LPC_ICH10DO] = {
+	पूर्ण,
+	[LPC_ICH10DO] = अणु
 		.name = "ICH10DO",
 		.iTCO_version = 2,
 		.gpio_version = ICH_V10CORP_GPIO,
-	},
-	[LPC_PCH] = {
+	पूर्ण,
+	[LPC_PCH] = अणु
 		.name = "PCH Desktop Full Featured",
 		.iTCO_version = 2,
 		.gpio_version = ICH_V5_GPIO,
-	},
-	[LPC_PCHM] = {
+	पूर्ण,
+	[LPC_PCHM] = अणु
 		.name = "PCH Mobile Full Featured",
 		.iTCO_version = 2,
 		.gpio_version = ICH_V5_GPIO,
-	},
-	[LPC_P55] = {
+	पूर्ण,
+	[LPC_P55] = अणु
 		.name = "P55",
 		.iTCO_version = 2,
 		.gpio_version = ICH_V5_GPIO,
-	},
-	[LPC_PM55] = {
+	पूर्ण,
+	[LPC_PM55] = अणु
 		.name = "PM55",
 		.iTCO_version = 2,
 		.gpio_version = ICH_V5_GPIO,
-	},
-	[LPC_H55] = {
+	पूर्ण,
+	[LPC_H55] = अणु
 		.name = "H55",
 		.iTCO_version = 2,
 		.gpio_version = ICH_V5_GPIO,
-	},
-	[LPC_QM57] = {
+	पूर्ण,
+	[LPC_QM57] = अणु
 		.name = "QM57",
 		.iTCO_version = 2,
 		.gpio_version = ICH_V5_GPIO,
-	},
-	[LPC_H57] = {
+	पूर्ण,
+	[LPC_H57] = अणु
 		.name = "H57",
 		.iTCO_version = 2,
 		.gpio_version = ICH_V5_GPIO,
-	},
-	[LPC_HM55] = {
+	पूर्ण,
+	[LPC_HM55] = अणु
 		.name = "HM55",
 		.iTCO_version = 2,
 		.gpio_version = ICH_V5_GPIO,
-	},
-	[LPC_Q57] = {
+	पूर्ण,
+	[LPC_Q57] = अणु
 		.name = "Q57",
 		.iTCO_version = 2,
 		.gpio_version = ICH_V5_GPIO,
-	},
-	[LPC_HM57] = {
+	पूर्ण,
+	[LPC_HM57] = अणु
 		.name = "HM57",
 		.iTCO_version = 2,
 		.gpio_version = ICH_V5_GPIO,
-	},
-	[LPC_PCHMSFF] = {
+	पूर्ण,
+	[LPC_PCHMSFF] = अणु
 		.name = "PCH Mobile SFF Full Featured",
 		.iTCO_version = 2,
 		.gpio_version = ICH_V5_GPIO,
-	},
-	[LPC_QS57] = {
+	पूर्ण,
+	[LPC_QS57] = अणु
 		.name = "QS57",
 		.iTCO_version = 2,
 		.gpio_version = ICH_V5_GPIO,
-	},
-	[LPC_3400] = {
+	पूर्ण,
+	[LPC_3400] = अणु
 		.name = "3400",
 		.iTCO_version = 2,
 		.gpio_version = ICH_V5_GPIO,
-	},
-	[LPC_3420] = {
+	पूर्ण,
+	[LPC_3420] = अणु
 		.name = "3420",
 		.iTCO_version = 2,
 		.gpio_version = ICH_V5_GPIO,
-	},
-	[LPC_3450] = {
+	पूर्ण,
+	[LPC_3450] = अणु
 		.name = "3450",
 		.iTCO_version = 2,
 		.gpio_version = ICH_V5_GPIO,
-	},
-	[LPC_EP80579] = {
+	पूर्ण,
+	[LPC_EP80579] = अणु
 		.name = "EP80579",
 		.iTCO_version = 2,
-	},
-	[LPC_CPT] = {
+	पूर्ण,
+	[LPC_CPT] = अणु
 		.name = "Cougar Point",
 		.iTCO_version = 2,
 		.gpio_version = ICH_V5_GPIO,
-	},
-	[LPC_CPTD] = {
+	पूर्ण,
+	[LPC_CPTD] = अणु
 		.name = "Cougar Point Desktop",
 		.iTCO_version = 2,
 		.gpio_version = ICH_V5_GPIO,
-	},
-	[LPC_CPTM] = {
+	पूर्ण,
+	[LPC_CPTM] = अणु
 		.name = "Cougar Point Mobile",
 		.iTCO_version = 2,
 		.gpio_version = ICH_V5_GPIO,
-	},
-	[LPC_PBG] = {
+	पूर्ण,
+	[LPC_PBG] = अणु
 		.name = "Patsburg",
 		.iTCO_version = 2,
-	},
-	[LPC_DH89XXCC] = {
+	पूर्ण,
+	[LPC_DH89XXCC] = अणु
 		.name = "DH89xxCC",
 		.iTCO_version = 2,
-	},
-	[LPC_PPT] = {
+	पूर्ण,
+	[LPC_PPT] = अणु
 		.name = "Panther Point",
 		.iTCO_version = 2,
 		.gpio_version = ICH_V5_GPIO,
-	},
-	[LPC_LPT] = {
+	पूर्ण,
+	[LPC_LPT] = अणु
 		.name = "Lynx Point",
 		.iTCO_version = 2,
 		.gpio_version = ICH_V5_GPIO,
 		.spi_type = INTEL_SPI_LPT,
-	},
-	[LPC_LPT_LP] = {
+	पूर्ण,
+	[LPC_LPT_LP] = अणु
 		.name = "Lynx Point_LP",
 		.iTCO_version = 2,
 		.spi_type = INTEL_SPI_LPT,
-	},
-	[LPC_WBG] = {
+	पूर्ण,
+	[LPC_WBG] = अणु
 		.name = "Wellsburg",
 		.iTCO_version = 2,
-	},
-	[LPC_AVN] = {
+	पूर्ण,
+	[LPC_AVN] = अणु
 		.name = "Avoton SoC",
 		.iTCO_version = 3,
 		.gpio_version = AVOTON_GPIO,
 		.spi_type = INTEL_SPI_BYT,
-	},
-	[LPC_BAYTRAIL] = {
+	पूर्ण,
+	[LPC_BAYTRAIL] = अणु
 		.name = "Bay Trail SoC",
 		.iTCO_version = 3,
 		.spi_type = INTEL_SPI_BYT,
-	},
-	[LPC_COLETO] = {
+	पूर्ण,
+	[LPC_COLETO] = अणु
 		.name = "Coleto Creek",
 		.iTCO_version = 2,
-	},
-	[LPC_WPT_LP] = {
+	पूर्ण,
+	[LPC_WPT_LP] = अणु
 		.name = "Wildcat Point_LP",
 		.iTCO_version = 2,
 		.spi_type = INTEL_SPI_LPT,
-	},
-	[LPC_BRASWELL] = {
+	पूर्ण,
+	[LPC_BRASWELL] = अणु
 		.name = "Braswell SoC",
 		.iTCO_version = 3,
 		.spi_type = INTEL_SPI_BYT,
-	},
-	[LPC_LEWISBURG] = {
+	पूर्ण,
+	[LPC_LEWISBURG] = अणु
 		.name = "Lewisburg",
 		.iTCO_version = 2,
-	},
-	[LPC_9S] = {
+	पूर्ण,
+	[LPC_9S] = अणु
 		.name = "9 Series",
 		.iTCO_version = 2,
 		.gpio_version = ICH_V5_GPIO,
-	},
-	[LPC_APL] = {
+	पूर्ण,
+	[LPC_APL] = अणु
 		.name = "Apollo Lake SoC",
 		.iTCO_version = 5,
 		.spi_type = INTEL_SPI_BXT,
-	},
-	[LPC_GLK] = {
+	पूर्ण,
+	[LPC_GLK] = अणु
 		.name = "Gemini Lake SoC",
 		.spi_type = INTEL_SPI_BXT,
-	},
-	[LPC_COUGARMOUNTAIN] = {
+	पूर्ण,
+	[LPC_COUGARMOUNTAIN] = अणु
 		.name = "Cougar Mountain SoC",
 		.iTCO_version = 3,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
 /*
- * This data only exists for exporting the supported PCI ids
- * via MODULE_DEVICE_TABLE.  We do not actually register a
+ * This data only exists क्रम exporting the supported PCI ids
+ * via MODULE_DEVICE_TABLE.  We करो not actually रेजिस्टर a
  * pci_driver, because the I/O Controller Hub has also other
- * functions that probably will be registered by other drivers.
+ * functions that probably will be रेजिस्टरed by other drivers.
  */
-static const struct pci_device_id lpc_ich_ids[] = {
-	{ PCI_VDEVICE(INTEL, 0x0f1c), LPC_BAYTRAIL},
-	{ PCI_VDEVICE(INTEL, 0x1c41), LPC_CPT},
-	{ PCI_VDEVICE(INTEL, 0x1c42), LPC_CPTD},
-	{ PCI_VDEVICE(INTEL, 0x1c43), LPC_CPTM},
-	{ PCI_VDEVICE(INTEL, 0x1c44), LPC_CPT},
-	{ PCI_VDEVICE(INTEL, 0x1c45), LPC_CPT},
-	{ PCI_VDEVICE(INTEL, 0x1c46), LPC_CPT},
-	{ PCI_VDEVICE(INTEL, 0x1c47), LPC_CPT},
-	{ PCI_VDEVICE(INTEL, 0x1c48), LPC_CPT},
-	{ PCI_VDEVICE(INTEL, 0x1c49), LPC_CPT},
-	{ PCI_VDEVICE(INTEL, 0x1c4a), LPC_CPT},
-	{ PCI_VDEVICE(INTEL, 0x1c4b), LPC_CPT},
-	{ PCI_VDEVICE(INTEL, 0x1c4c), LPC_CPT},
-	{ PCI_VDEVICE(INTEL, 0x1c4d), LPC_CPT},
-	{ PCI_VDEVICE(INTEL, 0x1c4e), LPC_CPT},
-	{ PCI_VDEVICE(INTEL, 0x1c4f), LPC_CPT},
-	{ PCI_VDEVICE(INTEL, 0x1c50), LPC_CPT},
-	{ PCI_VDEVICE(INTEL, 0x1c51), LPC_CPT},
-	{ PCI_VDEVICE(INTEL, 0x1c52), LPC_CPT},
-	{ PCI_VDEVICE(INTEL, 0x1c53), LPC_CPT},
-	{ PCI_VDEVICE(INTEL, 0x1c54), LPC_CPT},
-	{ PCI_VDEVICE(INTEL, 0x1c55), LPC_CPT},
-	{ PCI_VDEVICE(INTEL, 0x1c56), LPC_CPT},
-	{ PCI_VDEVICE(INTEL, 0x1c57), LPC_CPT},
-	{ PCI_VDEVICE(INTEL, 0x1c58), LPC_CPT},
-	{ PCI_VDEVICE(INTEL, 0x1c59), LPC_CPT},
-	{ PCI_VDEVICE(INTEL, 0x1c5a), LPC_CPT},
-	{ PCI_VDEVICE(INTEL, 0x1c5b), LPC_CPT},
-	{ PCI_VDEVICE(INTEL, 0x1c5c), LPC_CPT},
-	{ PCI_VDEVICE(INTEL, 0x1c5d), LPC_CPT},
-	{ PCI_VDEVICE(INTEL, 0x1c5e), LPC_CPT},
-	{ PCI_VDEVICE(INTEL, 0x1c5f), LPC_CPT},
-	{ PCI_VDEVICE(INTEL, 0x1d40), LPC_PBG},
-	{ PCI_VDEVICE(INTEL, 0x1d41), LPC_PBG},
-	{ PCI_VDEVICE(INTEL, 0x1e40), LPC_PPT},
-	{ PCI_VDEVICE(INTEL, 0x1e41), LPC_PPT},
-	{ PCI_VDEVICE(INTEL, 0x1e42), LPC_PPT},
-	{ PCI_VDEVICE(INTEL, 0x1e43), LPC_PPT},
-	{ PCI_VDEVICE(INTEL, 0x1e44), LPC_PPT},
-	{ PCI_VDEVICE(INTEL, 0x1e45), LPC_PPT},
-	{ PCI_VDEVICE(INTEL, 0x1e46), LPC_PPT},
-	{ PCI_VDEVICE(INTEL, 0x1e47), LPC_PPT},
-	{ PCI_VDEVICE(INTEL, 0x1e48), LPC_PPT},
-	{ PCI_VDEVICE(INTEL, 0x1e49), LPC_PPT},
-	{ PCI_VDEVICE(INTEL, 0x1e4a), LPC_PPT},
-	{ PCI_VDEVICE(INTEL, 0x1e4b), LPC_PPT},
-	{ PCI_VDEVICE(INTEL, 0x1e4c), LPC_PPT},
-	{ PCI_VDEVICE(INTEL, 0x1e4d), LPC_PPT},
-	{ PCI_VDEVICE(INTEL, 0x1e4e), LPC_PPT},
-	{ PCI_VDEVICE(INTEL, 0x1e4f), LPC_PPT},
-	{ PCI_VDEVICE(INTEL, 0x1e50), LPC_PPT},
-	{ PCI_VDEVICE(INTEL, 0x1e51), LPC_PPT},
-	{ PCI_VDEVICE(INTEL, 0x1e52), LPC_PPT},
-	{ PCI_VDEVICE(INTEL, 0x1e53), LPC_PPT},
-	{ PCI_VDEVICE(INTEL, 0x1e54), LPC_PPT},
-	{ PCI_VDEVICE(INTEL, 0x1e55), LPC_PPT},
-	{ PCI_VDEVICE(INTEL, 0x1e56), LPC_PPT},
-	{ PCI_VDEVICE(INTEL, 0x1e57), LPC_PPT},
-	{ PCI_VDEVICE(INTEL, 0x1e58), LPC_PPT},
-	{ PCI_VDEVICE(INTEL, 0x1e59), LPC_PPT},
-	{ PCI_VDEVICE(INTEL, 0x1e5a), LPC_PPT},
-	{ PCI_VDEVICE(INTEL, 0x1e5b), LPC_PPT},
-	{ PCI_VDEVICE(INTEL, 0x1e5c), LPC_PPT},
-	{ PCI_VDEVICE(INTEL, 0x1e5d), LPC_PPT},
-	{ PCI_VDEVICE(INTEL, 0x1e5e), LPC_PPT},
-	{ PCI_VDEVICE(INTEL, 0x1e5f), LPC_PPT},
-	{ PCI_VDEVICE(INTEL, 0x1f38), LPC_AVN},
-	{ PCI_VDEVICE(INTEL, 0x1f39), LPC_AVN},
-	{ PCI_VDEVICE(INTEL, 0x1f3a), LPC_AVN},
-	{ PCI_VDEVICE(INTEL, 0x1f3b), LPC_AVN},
-	{ PCI_VDEVICE(INTEL, 0x229c), LPC_BRASWELL},
-	{ PCI_VDEVICE(INTEL, 0x2310), LPC_DH89XXCC},
-	{ PCI_VDEVICE(INTEL, 0x2390), LPC_COLETO},
-	{ PCI_VDEVICE(INTEL, 0x2410), LPC_ICH},
-	{ PCI_VDEVICE(INTEL, 0x2420), LPC_ICH0},
-	{ PCI_VDEVICE(INTEL, 0x2440), LPC_ICH2},
-	{ PCI_VDEVICE(INTEL, 0x244c), LPC_ICH2M},
-	{ PCI_VDEVICE(INTEL, 0x2450), LPC_CICH},
-	{ PCI_VDEVICE(INTEL, 0x2480), LPC_ICH3},
-	{ PCI_VDEVICE(INTEL, 0x248c), LPC_ICH3M},
-	{ PCI_VDEVICE(INTEL, 0x24c0), LPC_ICH4},
-	{ PCI_VDEVICE(INTEL, 0x24cc), LPC_ICH4M},
-	{ PCI_VDEVICE(INTEL, 0x24d0), LPC_ICH5},
-	{ PCI_VDEVICE(INTEL, 0x25a1), LPC_6300ESB},
-	{ PCI_VDEVICE(INTEL, 0x2640), LPC_ICH6},
-	{ PCI_VDEVICE(INTEL, 0x2641), LPC_ICH6M},
-	{ PCI_VDEVICE(INTEL, 0x2642), LPC_ICH6W},
-	{ PCI_VDEVICE(INTEL, 0x2670), LPC_631XESB},
-	{ PCI_VDEVICE(INTEL, 0x2671), LPC_631XESB},
-	{ PCI_VDEVICE(INTEL, 0x2672), LPC_631XESB},
-	{ PCI_VDEVICE(INTEL, 0x2673), LPC_631XESB},
-	{ PCI_VDEVICE(INTEL, 0x2674), LPC_631XESB},
-	{ PCI_VDEVICE(INTEL, 0x2675), LPC_631XESB},
-	{ PCI_VDEVICE(INTEL, 0x2676), LPC_631XESB},
-	{ PCI_VDEVICE(INTEL, 0x2677), LPC_631XESB},
-	{ PCI_VDEVICE(INTEL, 0x2678), LPC_631XESB},
-	{ PCI_VDEVICE(INTEL, 0x2679), LPC_631XESB},
-	{ PCI_VDEVICE(INTEL, 0x267a), LPC_631XESB},
-	{ PCI_VDEVICE(INTEL, 0x267b), LPC_631XESB},
-	{ PCI_VDEVICE(INTEL, 0x267c), LPC_631XESB},
-	{ PCI_VDEVICE(INTEL, 0x267d), LPC_631XESB},
-	{ PCI_VDEVICE(INTEL, 0x267e), LPC_631XESB},
-	{ PCI_VDEVICE(INTEL, 0x267f), LPC_631XESB},
-	{ PCI_VDEVICE(INTEL, 0x27b0), LPC_ICH7DH},
-	{ PCI_VDEVICE(INTEL, 0x27b8), LPC_ICH7},
-	{ PCI_VDEVICE(INTEL, 0x27b9), LPC_ICH7M},
-	{ PCI_VDEVICE(INTEL, 0x27bc), LPC_NM10},
-	{ PCI_VDEVICE(INTEL, 0x27bd), LPC_ICH7MDH},
-	{ PCI_VDEVICE(INTEL, 0x2810), LPC_ICH8},
-	{ PCI_VDEVICE(INTEL, 0x2811), LPC_ICH8ME},
-	{ PCI_VDEVICE(INTEL, 0x2812), LPC_ICH8DH},
-	{ PCI_VDEVICE(INTEL, 0x2814), LPC_ICH8DO},
-	{ PCI_VDEVICE(INTEL, 0x2815), LPC_ICH8M},
-	{ PCI_VDEVICE(INTEL, 0x2912), LPC_ICH9DH},
-	{ PCI_VDEVICE(INTEL, 0x2914), LPC_ICH9DO},
-	{ PCI_VDEVICE(INTEL, 0x2916), LPC_ICH9R},
-	{ PCI_VDEVICE(INTEL, 0x2917), LPC_ICH9ME},
-	{ PCI_VDEVICE(INTEL, 0x2918), LPC_ICH9},
-	{ PCI_VDEVICE(INTEL, 0x2919), LPC_ICH9M},
-	{ PCI_VDEVICE(INTEL, 0x3197), LPC_GLK},
-	{ PCI_VDEVICE(INTEL, 0x2b9c), LPC_COUGARMOUNTAIN},
-	{ PCI_VDEVICE(INTEL, 0x3a14), LPC_ICH10DO},
-	{ PCI_VDEVICE(INTEL, 0x3a16), LPC_ICH10R},
-	{ PCI_VDEVICE(INTEL, 0x3a18), LPC_ICH10},
-	{ PCI_VDEVICE(INTEL, 0x3a1a), LPC_ICH10D},
-	{ PCI_VDEVICE(INTEL, 0x3b00), LPC_PCH},
-	{ PCI_VDEVICE(INTEL, 0x3b01), LPC_PCHM},
-	{ PCI_VDEVICE(INTEL, 0x3b02), LPC_P55},
-	{ PCI_VDEVICE(INTEL, 0x3b03), LPC_PM55},
-	{ PCI_VDEVICE(INTEL, 0x3b06), LPC_H55},
-	{ PCI_VDEVICE(INTEL, 0x3b07), LPC_QM57},
-	{ PCI_VDEVICE(INTEL, 0x3b08), LPC_H57},
-	{ PCI_VDEVICE(INTEL, 0x3b09), LPC_HM55},
-	{ PCI_VDEVICE(INTEL, 0x3b0a), LPC_Q57},
-	{ PCI_VDEVICE(INTEL, 0x3b0b), LPC_HM57},
-	{ PCI_VDEVICE(INTEL, 0x3b0d), LPC_PCHMSFF},
-	{ PCI_VDEVICE(INTEL, 0x3b0f), LPC_QS57},
-	{ PCI_VDEVICE(INTEL, 0x3b12), LPC_3400},
-	{ PCI_VDEVICE(INTEL, 0x3b14), LPC_3420},
-	{ PCI_VDEVICE(INTEL, 0x3b16), LPC_3450},
-	{ PCI_VDEVICE(INTEL, 0x5031), LPC_EP80579},
-	{ PCI_VDEVICE(INTEL, 0x5ae8), LPC_APL},
-	{ PCI_VDEVICE(INTEL, 0x8c40), LPC_LPT},
-	{ PCI_VDEVICE(INTEL, 0x8c41), LPC_LPT},
-	{ PCI_VDEVICE(INTEL, 0x8c42), LPC_LPT},
-	{ PCI_VDEVICE(INTEL, 0x8c43), LPC_LPT},
-	{ PCI_VDEVICE(INTEL, 0x8c44), LPC_LPT},
-	{ PCI_VDEVICE(INTEL, 0x8c45), LPC_LPT},
-	{ PCI_VDEVICE(INTEL, 0x8c46), LPC_LPT},
-	{ PCI_VDEVICE(INTEL, 0x8c47), LPC_LPT},
-	{ PCI_VDEVICE(INTEL, 0x8c48), LPC_LPT},
-	{ PCI_VDEVICE(INTEL, 0x8c49), LPC_LPT},
-	{ PCI_VDEVICE(INTEL, 0x8c4a), LPC_LPT},
-	{ PCI_VDEVICE(INTEL, 0x8c4b), LPC_LPT},
-	{ PCI_VDEVICE(INTEL, 0x8c4c), LPC_LPT},
-	{ PCI_VDEVICE(INTEL, 0x8c4d), LPC_LPT},
-	{ PCI_VDEVICE(INTEL, 0x8c4e), LPC_LPT},
-	{ PCI_VDEVICE(INTEL, 0x8c4f), LPC_LPT},
-	{ PCI_VDEVICE(INTEL, 0x8c50), LPC_LPT},
-	{ PCI_VDEVICE(INTEL, 0x8c51), LPC_LPT},
-	{ PCI_VDEVICE(INTEL, 0x8c52), LPC_LPT},
-	{ PCI_VDEVICE(INTEL, 0x8c53), LPC_LPT},
-	{ PCI_VDEVICE(INTEL, 0x8c54), LPC_LPT},
-	{ PCI_VDEVICE(INTEL, 0x8c55), LPC_LPT},
-	{ PCI_VDEVICE(INTEL, 0x8c56), LPC_LPT},
-	{ PCI_VDEVICE(INTEL, 0x8c57), LPC_LPT},
-	{ PCI_VDEVICE(INTEL, 0x8c58), LPC_LPT},
-	{ PCI_VDEVICE(INTEL, 0x8c59), LPC_LPT},
-	{ PCI_VDEVICE(INTEL, 0x8c5a), LPC_LPT},
-	{ PCI_VDEVICE(INTEL, 0x8c5b), LPC_LPT},
-	{ PCI_VDEVICE(INTEL, 0x8c5c), LPC_LPT},
-	{ PCI_VDEVICE(INTEL, 0x8c5d), LPC_LPT},
-	{ PCI_VDEVICE(INTEL, 0x8c5e), LPC_LPT},
-	{ PCI_VDEVICE(INTEL, 0x8c5f), LPC_LPT},
-	{ PCI_VDEVICE(INTEL, 0x8cc1), LPC_9S},
-	{ PCI_VDEVICE(INTEL, 0x8cc2), LPC_9S},
-	{ PCI_VDEVICE(INTEL, 0x8cc3), LPC_9S},
-	{ PCI_VDEVICE(INTEL, 0x8cc4), LPC_9S},
-	{ PCI_VDEVICE(INTEL, 0x8cc6), LPC_9S},
-	{ PCI_VDEVICE(INTEL, 0x8d40), LPC_WBG},
-	{ PCI_VDEVICE(INTEL, 0x8d41), LPC_WBG},
-	{ PCI_VDEVICE(INTEL, 0x8d42), LPC_WBG},
-	{ PCI_VDEVICE(INTEL, 0x8d43), LPC_WBG},
-	{ PCI_VDEVICE(INTEL, 0x8d44), LPC_WBG},
-	{ PCI_VDEVICE(INTEL, 0x8d45), LPC_WBG},
-	{ PCI_VDEVICE(INTEL, 0x8d46), LPC_WBG},
-	{ PCI_VDEVICE(INTEL, 0x8d47), LPC_WBG},
-	{ PCI_VDEVICE(INTEL, 0x8d48), LPC_WBG},
-	{ PCI_VDEVICE(INTEL, 0x8d49), LPC_WBG},
-	{ PCI_VDEVICE(INTEL, 0x8d4a), LPC_WBG},
-	{ PCI_VDEVICE(INTEL, 0x8d4b), LPC_WBG},
-	{ PCI_VDEVICE(INTEL, 0x8d4c), LPC_WBG},
-	{ PCI_VDEVICE(INTEL, 0x8d4d), LPC_WBG},
-	{ PCI_VDEVICE(INTEL, 0x8d4e), LPC_WBG},
-	{ PCI_VDEVICE(INTEL, 0x8d4f), LPC_WBG},
-	{ PCI_VDEVICE(INTEL, 0x8d50), LPC_WBG},
-	{ PCI_VDEVICE(INTEL, 0x8d51), LPC_WBG},
-	{ PCI_VDEVICE(INTEL, 0x8d52), LPC_WBG},
-	{ PCI_VDEVICE(INTEL, 0x8d53), LPC_WBG},
-	{ PCI_VDEVICE(INTEL, 0x8d54), LPC_WBG},
-	{ PCI_VDEVICE(INTEL, 0x8d55), LPC_WBG},
-	{ PCI_VDEVICE(INTEL, 0x8d56), LPC_WBG},
-	{ PCI_VDEVICE(INTEL, 0x8d57), LPC_WBG},
-	{ PCI_VDEVICE(INTEL, 0x8d58), LPC_WBG},
-	{ PCI_VDEVICE(INTEL, 0x8d59), LPC_WBG},
-	{ PCI_VDEVICE(INTEL, 0x8d5a), LPC_WBG},
-	{ PCI_VDEVICE(INTEL, 0x8d5b), LPC_WBG},
-	{ PCI_VDEVICE(INTEL, 0x8d5c), LPC_WBG},
-	{ PCI_VDEVICE(INTEL, 0x8d5d), LPC_WBG},
-	{ PCI_VDEVICE(INTEL, 0x8d5e), LPC_WBG},
-	{ PCI_VDEVICE(INTEL, 0x8d5f), LPC_WBG},
-	{ PCI_VDEVICE(INTEL, 0x9c40), LPC_LPT_LP},
-	{ PCI_VDEVICE(INTEL, 0x9c41), LPC_LPT_LP},
-	{ PCI_VDEVICE(INTEL, 0x9c42), LPC_LPT_LP},
-	{ PCI_VDEVICE(INTEL, 0x9c43), LPC_LPT_LP},
-	{ PCI_VDEVICE(INTEL, 0x9c44), LPC_LPT_LP},
-	{ PCI_VDEVICE(INTEL, 0x9c45), LPC_LPT_LP},
-	{ PCI_VDEVICE(INTEL, 0x9c46), LPC_LPT_LP},
-	{ PCI_VDEVICE(INTEL, 0x9c47), LPC_LPT_LP},
-	{ PCI_VDEVICE(INTEL, 0x9cc1), LPC_WPT_LP},
-	{ PCI_VDEVICE(INTEL, 0x9cc2), LPC_WPT_LP},
-	{ PCI_VDEVICE(INTEL, 0x9cc3), LPC_WPT_LP},
-	{ PCI_VDEVICE(INTEL, 0x9cc5), LPC_WPT_LP},
-	{ PCI_VDEVICE(INTEL, 0x9cc6), LPC_WPT_LP},
-	{ PCI_VDEVICE(INTEL, 0x9cc7), LPC_WPT_LP},
-	{ PCI_VDEVICE(INTEL, 0x9cc9), LPC_WPT_LP},
-	{ PCI_VDEVICE(INTEL, 0xa1c1), LPC_LEWISBURG},
-	{ PCI_VDEVICE(INTEL, 0xa1c2), LPC_LEWISBURG},
-	{ PCI_VDEVICE(INTEL, 0xa1c3), LPC_LEWISBURG},
-	{ PCI_VDEVICE(INTEL, 0xa1c4), LPC_LEWISBURG},
-	{ PCI_VDEVICE(INTEL, 0xa1c5), LPC_LEWISBURG},
-	{ PCI_VDEVICE(INTEL, 0xa1c6), LPC_LEWISBURG},
-	{ PCI_VDEVICE(INTEL, 0xa1c7), LPC_LEWISBURG},
-	{ PCI_VDEVICE(INTEL, 0xa242), LPC_LEWISBURG},
-	{ PCI_VDEVICE(INTEL, 0xa243), LPC_LEWISBURG},
-	{ 0, },			/* End of list */
-};
+अटल स्थिर काष्ठा pci_device_id lpc_ich_ids[] = अणु
+	अणु PCI_VDEVICE(INTEL, 0x0f1c), LPC_BAYTRAILपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x1c41), LPC_CPTपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x1c42), LPC_CPTDपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x1c43), LPC_CPTMपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x1c44), LPC_CPTपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x1c45), LPC_CPTपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x1c46), LPC_CPTपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x1c47), LPC_CPTपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x1c48), LPC_CPTपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x1c49), LPC_CPTपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x1c4a), LPC_CPTपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x1c4b), LPC_CPTपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x1c4c), LPC_CPTपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x1c4d), LPC_CPTपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x1c4e), LPC_CPTपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x1c4f), LPC_CPTपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x1c50), LPC_CPTपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x1c51), LPC_CPTपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x1c52), LPC_CPTपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x1c53), LPC_CPTपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x1c54), LPC_CPTपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x1c55), LPC_CPTपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x1c56), LPC_CPTपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x1c57), LPC_CPTपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x1c58), LPC_CPTपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x1c59), LPC_CPTपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x1c5a), LPC_CPTपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x1c5b), LPC_CPTपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x1c5c), LPC_CPTपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x1c5d), LPC_CPTपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x1c5e), LPC_CPTपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x1c5f), LPC_CPTपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x1d40), LPC_PBGपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x1d41), LPC_PBGपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x1e40), LPC_PPTपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x1e41), LPC_PPTपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x1e42), LPC_PPTपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x1e43), LPC_PPTपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x1e44), LPC_PPTपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x1e45), LPC_PPTपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x1e46), LPC_PPTपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x1e47), LPC_PPTपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x1e48), LPC_PPTपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x1e49), LPC_PPTपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x1e4a), LPC_PPTपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x1e4b), LPC_PPTपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x1e4c), LPC_PPTपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x1e4d), LPC_PPTपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x1e4e), LPC_PPTपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x1e4f), LPC_PPTपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x1e50), LPC_PPTपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x1e51), LPC_PPTपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x1e52), LPC_PPTपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x1e53), LPC_PPTपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x1e54), LPC_PPTपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x1e55), LPC_PPTपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x1e56), LPC_PPTपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x1e57), LPC_PPTपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x1e58), LPC_PPTपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x1e59), LPC_PPTपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x1e5a), LPC_PPTपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x1e5b), LPC_PPTपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x1e5c), LPC_PPTपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x1e5d), LPC_PPTपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x1e5e), LPC_PPTपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x1e5f), LPC_PPTपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x1f38), LPC_AVNपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x1f39), LPC_AVNपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x1f3a), LPC_AVNपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x1f3b), LPC_AVNपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x229c), LPC_BRASWELLपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x2310), LPC_DH89XXCCपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x2390), LPC_COLETOपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x2410), LPC_ICHपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x2420), LPC_ICH0पूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x2440), LPC_ICH2पूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x244c), LPC_ICH2Mपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x2450), LPC_CICHपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x2480), LPC_ICH3पूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x248c), LPC_ICH3Mपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x24c0), LPC_ICH4पूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x24cc), LPC_ICH4Mपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x24d0), LPC_ICH5पूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x25a1), LPC_6300ESBपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x2640), LPC_ICH6पूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x2641), LPC_ICH6Mपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x2642), LPC_ICH6Wपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x2670), LPC_631XESBपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x2671), LPC_631XESBपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x2672), LPC_631XESBपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x2673), LPC_631XESBपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x2674), LPC_631XESBपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x2675), LPC_631XESBपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x2676), LPC_631XESBपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x2677), LPC_631XESBपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x2678), LPC_631XESBपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x2679), LPC_631XESBपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x267a), LPC_631XESBपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x267b), LPC_631XESBपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x267c), LPC_631XESBपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x267d), LPC_631XESBपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x267e), LPC_631XESBपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x267f), LPC_631XESBपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x27b0), LPC_ICH7DHपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x27b8), LPC_ICH7पूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x27b9), LPC_ICH7Mपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x27bc), LPC_NM10पूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x27bd), LPC_ICH7MDHपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x2810), LPC_ICH8पूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x2811), LPC_ICH8MEपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x2812), LPC_ICH8DHपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x2814), LPC_ICH8DOपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x2815), LPC_ICH8Mपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x2912), LPC_ICH9DHपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x2914), LPC_ICH9DOपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x2916), LPC_ICH9Rपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x2917), LPC_ICH9MEपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x2918), LPC_ICH9पूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x2919), LPC_ICH9Mपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x3197), LPC_GLKपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x2b9c), LPC_COUGARMOUNTAINपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x3a14), LPC_ICH10DOपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x3a16), LPC_ICH10Rपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x3a18), LPC_ICH10पूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x3a1a), LPC_ICH10Dपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x3b00), LPC_PCHपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x3b01), LPC_PCHMपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x3b02), LPC_P55पूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x3b03), LPC_PM55पूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x3b06), LPC_H55पूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x3b07), LPC_QM57पूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x3b08), LPC_H57पूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x3b09), LPC_HM55पूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x3b0a), LPC_Q57पूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x3b0b), LPC_HM57पूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x3b0d), LPC_PCHMSFFपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x3b0f), LPC_QS57पूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x3b12), LPC_3400पूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x3b14), LPC_3420पूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x3b16), LPC_3450पूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x5031), LPC_EP80579पूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x5ae8), LPC_APLपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x8c40), LPC_LPTपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x8c41), LPC_LPTपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x8c42), LPC_LPTपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x8c43), LPC_LPTपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x8c44), LPC_LPTपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x8c45), LPC_LPTपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x8c46), LPC_LPTपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x8c47), LPC_LPTपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x8c48), LPC_LPTपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x8c49), LPC_LPTपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x8c4a), LPC_LPTपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x8c4b), LPC_LPTपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x8c4c), LPC_LPTपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x8c4d), LPC_LPTपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x8c4e), LPC_LPTपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x8c4f), LPC_LPTपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x8c50), LPC_LPTपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x8c51), LPC_LPTपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x8c52), LPC_LPTपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x8c53), LPC_LPTपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x8c54), LPC_LPTपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x8c55), LPC_LPTपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x8c56), LPC_LPTपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x8c57), LPC_LPTपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x8c58), LPC_LPTपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x8c59), LPC_LPTपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x8c5a), LPC_LPTपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x8c5b), LPC_LPTपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x8c5c), LPC_LPTपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x8c5d), LPC_LPTपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x8c5e), LPC_LPTपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x8c5f), LPC_LPTपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x8cc1), LPC_9Sपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x8cc2), LPC_9Sपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x8cc3), LPC_9Sपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x8cc4), LPC_9Sपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x8cc6), LPC_9Sपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x8d40), LPC_WBGपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x8d41), LPC_WBGपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x8d42), LPC_WBGपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x8d43), LPC_WBGपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x8d44), LPC_WBGपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x8d45), LPC_WBGपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x8d46), LPC_WBGपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x8d47), LPC_WBGपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x8d48), LPC_WBGपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x8d49), LPC_WBGपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x8d4a), LPC_WBGपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x8d4b), LPC_WBGपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x8d4c), LPC_WBGपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x8d4d), LPC_WBGपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x8d4e), LPC_WBGपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x8d4f), LPC_WBGपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x8d50), LPC_WBGपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x8d51), LPC_WBGपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x8d52), LPC_WBGपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x8d53), LPC_WBGपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x8d54), LPC_WBGपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x8d55), LPC_WBGपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x8d56), LPC_WBGपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x8d57), LPC_WBGपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x8d58), LPC_WBGपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x8d59), LPC_WBGपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x8d5a), LPC_WBGपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x8d5b), LPC_WBGपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x8d5c), LPC_WBGपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x8d5d), LPC_WBGपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x8d5e), LPC_WBGपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x8d5f), LPC_WBGपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x9c40), LPC_LPT_LPपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x9c41), LPC_LPT_LPपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x9c42), LPC_LPT_LPपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x9c43), LPC_LPT_LPपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x9c44), LPC_LPT_LPपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x9c45), LPC_LPT_LPपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x9c46), LPC_LPT_LPपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x9c47), LPC_LPT_LPपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x9cc1), LPC_WPT_LPपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x9cc2), LPC_WPT_LPपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x9cc3), LPC_WPT_LPपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x9cc5), LPC_WPT_LPपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x9cc6), LPC_WPT_LPपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x9cc7), LPC_WPT_LPपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x9cc9), LPC_WPT_LPपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0xa1c1), LPC_LEWISBURGपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0xa1c2), LPC_LEWISBURGपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0xa1c3), LPC_LEWISBURGपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0xa1c4), LPC_LEWISBURGपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0xa1c5), LPC_LEWISBURGपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0xa1c6), LPC_LEWISBURGपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0xa1c7), LPC_LEWISBURGपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0xa242), LPC_LEWISBURGपूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0xa243), LPC_LEWISBURGपूर्ण,
+	अणु 0, पूर्ण,			/* End of list */
+पूर्ण;
 MODULE_DEVICE_TABLE(pci, lpc_ich_ids);
 
-static void lpc_ich_restore_config_space(struct pci_dev *dev)
-{
-	struct lpc_ich_priv *priv = pci_get_drvdata(dev);
+अटल व्योम lpc_ich_restore_config_space(काष्ठा pci_dev *dev)
+अणु
+	काष्ठा lpc_ich_priv *priv = pci_get_drvdata(dev);
 
-	if (priv->abase_save >= 0) {
-		pci_write_config_byte(dev, priv->abase, priv->abase_save);
+	अगर (priv->abase_save >= 0) अणु
+		pci_ग_लिखो_config_byte(dev, priv->abase, priv->abase_save);
 		priv->abase_save = -1;
-	}
+	पूर्ण
 
-	if (priv->actrl_pbase_save >= 0) {
-		pci_write_config_byte(dev, priv->actrl_pbase,
+	अगर (priv->actrl_pbase_save >= 0) अणु
+		pci_ग_लिखो_config_byte(dev, priv->actrl_pbase,
 			priv->actrl_pbase_save);
 		priv->actrl_pbase_save = -1;
-	}
+	पूर्ण
 
-	if (priv->gctrl_save >= 0) {
-		pci_write_config_byte(dev, priv->gctrl, priv->gctrl_save);
+	अगर (priv->gctrl_save >= 0) अणु
+		pci_ग_लिखो_config_byte(dev, priv->gctrl, priv->gctrl_save);
 		priv->gctrl_save = -1;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void lpc_ich_enable_acpi_space(struct pci_dev *dev)
-{
-	struct lpc_ich_priv *priv = pci_get_drvdata(dev);
+अटल व्योम lpc_ich_enable_acpi_space(काष्ठा pci_dev *dev)
+अणु
+	काष्ठा lpc_ich_priv *priv = pci_get_drvdata(dev);
 	u8 reg_save;
 
-	switch (lpc_chipset_info[priv->chipset].iTCO_version) {
-	case 3:
+	चयन (lpc_chipset_info[priv->chipset].iTCO_version) अणु
+	हाल 3:
 		/*
 		 * Some chipsets (eg Avoton) enable the ACPI space in the
-		 * ACPI BASE register.
+		 * ACPI BASE रेजिस्टर.
 		 */
-		pci_read_config_byte(dev, priv->abase, &reg_save);
-		pci_write_config_byte(dev, priv->abase, reg_save | 0x2);
+		pci_पढ़ो_config_byte(dev, priv->abase, &reg_save);
+		pci_ग_लिखो_config_byte(dev, priv->abase, reg_save | 0x2);
 		priv->abase_save = reg_save;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		/*
 		 * Most chipsets enable the ACPI space in the ACPI control
-		 * register.
+		 * रेजिस्टर.
 		 */
-		pci_read_config_byte(dev, priv->actrl_pbase, &reg_save);
-		pci_write_config_byte(dev, priv->actrl_pbase, reg_save | 0x80);
+		pci_पढ़ो_config_byte(dev, priv->actrl_pbase, &reg_save);
+		pci_ग_लिखो_config_byte(dev, priv->actrl_pbase, reg_save | 0x80);
 		priv->actrl_pbase_save = reg_save;
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static void lpc_ich_enable_gpio_space(struct pci_dev *dev)
-{
-	struct lpc_ich_priv *priv = pci_get_drvdata(dev);
+अटल व्योम lpc_ich_enable_gpio_space(काष्ठा pci_dev *dev)
+अणु
+	काष्ठा lpc_ich_priv *priv = pci_get_drvdata(dev);
 	u8 reg_save;
 
-	pci_read_config_byte(dev, priv->gctrl, &reg_save);
-	pci_write_config_byte(dev, priv->gctrl, reg_save | 0x10);
+	pci_पढ़ो_config_byte(dev, priv->gctrl, &reg_save);
+	pci_ग_लिखो_config_byte(dev, priv->gctrl, reg_save | 0x10);
 	priv->gctrl_save = reg_save;
-}
+पूर्ण
 
-static void lpc_ich_enable_pmc_space(struct pci_dev *dev)
-{
-	struct lpc_ich_priv *priv = pci_get_drvdata(dev);
+अटल व्योम lpc_ich_enable_pmc_space(काष्ठा pci_dev *dev)
+अणु
+	काष्ठा lpc_ich_priv *priv = pci_get_drvdata(dev);
 	u8 reg_save;
 
-	pci_read_config_byte(dev, priv->actrl_pbase, &reg_save);
-	pci_write_config_byte(dev, priv->actrl_pbase, reg_save | 0x2);
+	pci_पढ़ो_config_byte(dev, priv->actrl_pbase, &reg_save);
+	pci_ग_लिखो_config_byte(dev, priv->actrl_pbase, reg_save | 0x2);
 
 	priv->actrl_pbase_save = reg_save;
-}
+पूर्ण
 
-static int lpc_ich_finalize_wdt_cell(struct pci_dev *dev)
-{
-	struct itco_wdt_platform_data *pdata;
-	struct lpc_ich_priv *priv = pci_get_drvdata(dev);
-	struct lpc_ich_info *info;
-	struct mfd_cell *cell = &lpc_ich_wdt_cell;
+अटल पूर्णांक lpc_ich_finalize_wdt_cell(काष्ठा pci_dev *dev)
+अणु
+	काष्ठा itco_wdt_platक्रमm_data *pdata;
+	काष्ठा lpc_ich_priv *priv = pci_get_drvdata(dev);
+	काष्ठा lpc_ich_info *info;
+	काष्ठा mfd_cell *cell = &lpc_ich_wdt_cell;
 
-	pdata = devm_kzalloc(&dev->dev, sizeof(*pdata), GFP_KERNEL);
-	if (!pdata)
-		return -ENOMEM;
+	pdata = devm_kzalloc(&dev->dev, माप(*pdata), GFP_KERNEL);
+	अगर (!pdata)
+		वापस -ENOMEM;
 
 	info = &lpc_chipset_info[priv->chipset];
 
 	pdata->version = info->iTCO_version;
-	strlcpy(pdata->name, info->name, sizeof(pdata->name));
+	strlcpy(pdata->name, info->name, माप(pdata->name));
 
-	cell->platform_data = pdata;
-	cell->pdata_size = sizeof(*pdata);
-	return 0;
-}
+	cell->platक्रमm_data = pdata;
+	cell->pdata_size = माप(*pdata);
+	वापस 0;
+पूर्ण
 
-static void lpc_ich_finalize_gpio_cell(struct pci_dev *dev)
-{
-	struct lpc_ich_priv *priv = pci_get_drvdata(dev);
-	struct mfd_cell *cell = &lpc_ich_gpio_cell;
+अटल व्योम lpc_ich_finalize_gpio_cell(काष्ठा pci_dev *dev)
+अणु
+	काष्ठा lpc_ich_priv *priv = pci_get_drvdata(dev);
+	काष्ठा mfd_cell *cell = &lpc_ich_gpio_cell;
 
-	cell->platform_data = &lpc_chipset_info[priv->chipset];
-	cell->pdata_size = sizeof(struct lpc_ich_info);
-}
+	cell->platक्रमm_data = &lpc_chipset_info[priv->chipset];
+	cell->pdata_size = माप(काष्ठा lpc_ich_info);
+पूर्ण
 
 /*
- * We don't check for resource conflict globally. There are 2 or 3 independent
+ * We करोn't check क्रम resource conflict globally. There are 2 or 3 independent
  * GPIO groups and it's enough to have access to one of these to instantiate
  * the device.
  */
-static int lpc_ich_check_conflict_gpio(struct resource *res)
-{
-	int ret;
+अटल पूर्णांक lpc_ich_check_conflict_gpio(काष्ठा resource *res)
+अणु
+	पूर्णांक ret;
 	u8 use_gpio = 0;
 
-	if (resource_size(res) >= 0x50 &&
+	अगर (resource_size(res) >= 0x50 &&
 	    !acpi_check_region(res->start + 0x40, 0x10, "LPC ICH GPIO3"))
 		use_gpio |= 1 << 2;
 
-	if (!acpi_check_region(res->start + 0x30, 0x10, "LPC ICH GPIO2"))
+	अगर (!acpi_check_region(res->start + 0x30, 0x10, "LPC ICH GPIO2"))
 		use_gpio |= 1 << 1;
 
 	ret = acpi_check_region(res->start + 0x00, 0x30, "LPC ICH GPIO1");
-	if (!ret)
+	अगर (!ret)
 		use_gpio |= 1 << 0;
 
-	return use_gpio ? use_gpio : ret;
-}
+	वापस use_gpio ? use_gpio : ret;
+पूर्ण
 
-static int lpc_ich_init_gpio(struct pci_dev *dev)
-{
-	struct lpc_ich_priv *priv = pci_get_drvdata(dev);
+अटल पूर्णांक lpc_ich_init_gpio(काष्ठा pci_dev *dev)
+अणु
+	काष्ठा lpc_ich_priv *priv = pci_get_drvdata(dev);
 	u32 base_addr_cfg;
 	u32 base_addr;
-	int ret;
+	पूर्णांक ret;
 	bool acpi_conflict = false;
-	struct resource *res;
+	काष्ठा resource *res;
 
-	/* Setup power management base register */
-	pci_read_config_dword(dev, priv->abase, &base_addr_cfg);
+	/* Setup घातer management base रेजिस्टर */
+	pci_पढ़ो_config_dword(dev, priv->abase, &base_addr_cfg);
 	base_addr = base_addr_cfg & 0x0000ff80;
-	if (!base_addr) {
+	अगर (!base_addr) अणु
 		dev_notice(&dev->dev, "I/O space for ACPI uninitialized\n");
 		lpc_ich_gpio_cell.num_resources--;
-		goto gpe0_done;
-	}
+		जाओ gpe0_करोne;
+	पूर्ण
 
 	res = &gpio_ich_res[ICH_RES_GPE0];
 	res->start = base_addr + ACPIBASE_GPE_OFF;
 	res->end = base_addr + ACPIBASE_GPE_END;
 	ret = acpi_check_resource_conflict(res);
-	if (ret) {
+	अगर (ret) अणु
 		/*
-		 * This isn't fatal for the GPIO, but we have to make sure that
-		 * the platform_device subsystem doesn't see this resource
-		 * or it will register an invalid region.
+		 * This isn't fatal क्रम the GPIO, but we have to make sure that
+		 * the platक्रमm_device subप्रणाली करोesn't see this resource
+		 * or it will रेजिस्टर an invalid region.
 		 */
 		lpc_ich_gpio_cell.num_resources--;
 		acpi_conflict = true;
-	} else {
+	पूर्ण अन्यथा अणु
 		lpc_ich_enable_acpi_space(dev);
-	}
+	पूर्ण
 
-gpe0_done:
-	/* Setup GPIO base register */
-	pci_read_config_dword(dev, priv->gbase, &base_addr_cfg);
+gpe0_करोne:
+	/* Setup GPIO base रेजिस्टर */
+	pci_पढ़ो_config_dword(dev, priv->gbase, &base_addr_cfg);
 	base_addr = base_addr_cfg & 0x0000ff80;
-	if (!base_addr) {
+	अगर (!base_addr) अणु
 		dev_notice(&dev->dev, "I/O space for GPIO uninitialized\n");
 		ret = -ENODEV;
-		goto gpio_done;
-	}
+		जाओ gpio_करोne;
+	पूर्ण
 
 	/* Older devices provide fewer GPIO and have a smaller resource size. */
 	res = &gpio_ich_res[ICH_RES_GPIO];
 	res->start = base_addr;
-	switch (lpc_chipset_info[priv->chipset].gpio_version) {
-	case ICH_V5_GPIO:
-	case ICH_V10CORP_GPIO:
+	चयन (lpc_chipset_info[priv->chipset].gpio_version) अणु
+	हाल ICH_V5_GPIO:
+	हाल ICH_V10CORP_GPIO:
 		res->end = res->start + 128 - 1;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		res->end = res->start + 64 - 1;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	ret = lpc_ich_check_conflict_gpio(res);
-	if (ret < 0) {
-		/* this isn't necessarily fatal for the GPIO */
+	अगर (ret < 0) अणु
+		/* this isn't necessarily fatal क्रम the GPIO */
 		acpi_conflict = true;
-		goto gpio_done;
-	}
+		जाओ gpio_करोne;
+	पूर्ण
 	lpc_chipset_info[priv->chipset].use_gpio = ret;
 	lpc_ich_enable_gpio_space(dev);
 
 	lpc_ich_finalize_gpio_cell(dev);
 	ret = mfd_add_devices(&dev->dev, PLATFORM_DEVID_AUTO,
-			      &lpc_ich_gpio_cell, 1, NULL, 0, NULL);
+			      &lpc_ich_gpio_cell, 1, शून्य, 0, शून्य);
 
-gpio_done:
-	if (acpi_conflict)
+gpio_करोne:
+	अगर (acpi_conflict)
 		pr_warn("Resource conflict(s) found affecting %s\n",
 				lpc_ich_gpio_cell.name);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int lpc_ich_init_wdt(struct pci_dev *dev)
-{
-	struct lpc_ich_priv *priv = pci_get_drvdata(dev);
+अटल पूर्णांक lpc_ich_init_wdt(काष्ठा pci_dev *dev)
+अणु
+	काष्ठा lpc_ich_priv *priv = pci_get_drvdata(dev);
 	u32 base_addr_cfg;
 	u32 base_addr;
-	int ret;
-	struct resource *res;
+	पूर्णांक ret;
+	काष्ठा resource *res;
 
-	/* If we have ACPI based watchdog use that instead */
-	if (acpi_has_watchdog())
-		return -ENODEV;
+	/* If we have ACPI based watchकरोg use that instead */
+	अगर (acpi_has_watchकरोg())
+		वापस -ENODEV;
 
-	/* Setup power management base register */
-	pci_read_config_dword(dev, priv->abase, &base_addr_cfg);
+	/* Setup घातer management base रेजिस्टर */
+	pci_पढ़ो_config_dword(dev, priv->abase, &base_addr_cfg);
 	base_addr = base_addr_cfg & 0x0000ff80;
-	if (!base_addr) {
+	अगर (!base_addr) अणु
 		dev_notice(&dev->dev, "I/O space for ACPI uninitialized\n");
 		ret = -ENODEV;
-		goto wdt_done;
-	}
+		जाओ wdt_करोne;
+	पूर्ण
 
 	res = wdt_io_res(ICH_RES_IO_TCO);
 	res->start = base_addr + ACPIBASE_TCO_OFF;
@@ -1038,135 +1039,135 @@ static int lpc_ich_init_wdt(struct pci_dev *dev)
 
 	/*
 	 * iTCO v2:
-	 * Get the Memory-Mapped GCS register. To get access to it
-	 * we have to read RCBA from PCI Config space 0xf0 and use
+	 * Get the Memory-Mapped GCS रेजिस्टर. To get access to it
+	 * we have to पढ़ो RCBA from PCI Config space 0xf0 and use
 	 * it as base. GCS = RCBA + ICH6_GCS(0x3410).
 	 *
 	 * iTCO v3:
-	 * Get the Power Management Configuration register.  To get access
-	 * to it we have to read the PMC BASE from config space and address
-	 * the register at offset 0x8.
+	 * Get the Power Management Configuration रेजिस्टर.  To get access
+	 * to it we have to पढ़ो the PMC BASE from config space and address
+	 * the रेजिस्टर at offset 0x8.
 	 */
-	if (lpc_chipset_info[priv->chipset].iTCO_version == 1) {
-		/* Don't register iomem for TCO ver 1 */
+	अगर (lpc_chipset_info[priv->chipset].iTCO_version == 1) अणु
+		/* Don't रेजिस्टर iomem क्रम TCO ver 1 */
 		lpc_ich_wdt_cell.num_resources--;
-	} else if (lpc_chipset_info[priv->chipset].iTCO_version == 2) {
-		pci_read_config_dword(dev, RCBABASE, &base_addr_cfg);
+	पूर्ण अन्यथा अगर (lpc_chipset_info[priv->chipset].iTCO_version == 2) अणु
+		pci_पढ़ो_config_dword(dev, RCBABASE, &base_addr_cfg);
 		base_addr = base_addr_cfg & 0xffffc000;
-		if (!(base_addr_cfg & 1)) {
+		अगर (!(base_addr_cfg & 1)) अणु
 			dev_notice(&dev->dev, "RCBA is disabled by "
 					"hardware/BIOS, device disabled\n");
 			ret = -ENODEV;
-			goto wdt_done;
-		}
+			जाओ wdt_करोne;
+		पूर्ण
 		res = wdt_mem_res(ICH_RES_MEM_GCS_PMC);
 		res->start = base_addr + ACPIBASE_GCS_OFF;
 		res->end = base_addr + ACPIBASE_GCS_END;
-	} else if (lpc_chipset_info[priv->chipset].iTCO_version == 3) {
+	पूर्ण अन्यथा अगर (lpc_chipset_info[priv->chipset].iTCO_version == 3) अणु
 		lpc_ich_enable_pmc_space(dev);
-		pci_read_config_dword(dev, ACPICTRL_PMCBASE, &base_addr_cfg);
+		pci_पढ़ो_config_dword(dev, ACPICTRL_PMCBASE, &base_addr_cfg);
 		base_addr = base_addr_cfg & 0xfffffe00;
 
 		res = wdt_mem_res(ICH_RES_MEM_GCS_PMC);
 		res->start = base_addr + ACPIBASE_PMC_OFF;
 		res->end = base_addr + ACPIBASE_PMC_END;
-	}
+	पूर्ण
 
 	ret = lpc_ich_finalize_wdt_cell(dev);
-	if (ret)
-		goto wdt_done;
+	अगर (ret)
+		जाओ wdt_करोne;
 
 	ret = mfd_add_devices(&dev->dev, PLATFORM_DEVID_AUTO,
-			      &lpc_ich_wdt_cell, 1, NULL, 0, NULL);
+			      &lpc_ich_wdt_cell, 1, शून्य, 0, शून्य);
 
-wdt_done:
-	return ret;
-}
+wdt_करोne:
+	वापस ret;
+पूर्ण
 
-static int lpc_ich_init_spi(struct pci_dev *dev)
-{
-	struct lpc_ich_priv *priv = pci_get_drvdata(dev);
-	struct resource *res = &intel_spi_res[0];
-	struct intel_spi_boardinfo *info;
+अटल पूर्णांक lpc_ich_init_spi(काष्ठा pci_dev *dev)
+अणु
+	काष्ठा lpc_ich_priv *priv = pci_get_drvdata(dev);
+	काष्ठा resource *res = &पूर्णांकel_spi_res[0];
+	काष्ठा पूर्णांकel_spi_boardinfo *info;
 	u32 spi_base, rcba, bcr;
 
-	info = devm_kzalloc(&dev->dev, sizeof(*info), GFP_KERNEL);
-	if (!info)
-		return -ENOMEM;
+	info = devm_kzalloc(&dev->dev, माप(*info), GFP_KERNEL);
+	अगर (!info)
+		वापस -ENOMEM;
 
 	info->type = lpc_chipset_info[priv->chipset].spi_type;
 
-	switch (info->type) {
-	case INTEL_SPI_BYT:
-		pci_read_config_dword(dev, SPIBASE_BYT, &spi_base);
-		if (spi_base & SPIBASE_BYT_EN) {
+	चयन (info->type) अणु
+	हाल INTEL_SPI_BYT:
+		pci_पढ़ो_config_dword(dev, SPIBASE_BYT, &spi_base);
+		अगर (spi_base & SPIBASE_BYT_EN) अणु
 			res->start = spi_base & ~(SPIBASE_BYT_SZ - 1);
 			res->end = res->start + SPIBASE_BYT_SZ - 1;
-		}
-		break;
+		पूर्ण
+		अवरोध;
 
-	case INTEL_SPI_LPT:
-		pci_read_config_dword(dev, RCBABASE, &rcba);
-		if (rcba & 1) {
-			spi_base = round_down(rcba, SPIBASE_LPT_SZ);
+	हाल INTEL_SPI_LPT:
+		pci_पढ़ो_config_dword(dev, RCBABASE, &rcba);
+		अगर (rcba & 1) अणु
+			spi_base = round_करोwn(rcba, SPIBASE_LPT_SZ);
 			res->start = spi_base + SPIBASE_LPT;
 			res->end = res->start + SPIBASE_LPT_SZ - 1;
 
-			pci_read_config_dword(dev, BCR, &bcr);
-			info->writeable = !!(bcr & BCR_WPD);
-		}
-		break;
+			pci_पढ़ो_config_dword(dev, BCR, &bcr);
+			info->ग_लिखोable = !!(bcr & BCR_WPD);
+		पूर्ण
+		अवरोध;
 
-	case INTEL_SPI_BXT: {
-		unsigned int p2sb = PCI_DEVFN(13, 0);
-		unsigned int spi = PCI_DEVFN(13, 2);
-		struct pci_bus *bus = dev->bus;
+	हाल INTEL_SPI_BXT: अणु
+		अचिन्हित पूर्णांक p2sb = PCI_DEVFN(13, 0);
+		अचिन्हित पूर्णांक spi = PCI_DEVFN(13, 2);
+		काष्ठा pci_bus *bus = dev->bus;
 
 		/*
 		 * The P2SB is hidden by BIOS and we need to unhide it in
-		 * order to read BAR of the SPI flash device. Once that is
-		 * done we hide it again.
+		 * order to पढ़ो BAR of the SPI flash device. Once that is
+		 * करोne we hide it again.
 		 */
-		pci_bus_write_config_byte(bus, p2sb, 0xe1, 0x0);
-		pci_bus_read_config_dword(bus, spi, PCI_BASE_ADDRESS_0,
+		pci_bus_ग_लिखो_config_byte(bus, p2sb, 0xe1, 0x0);
+		pci_bus_पढ़ो_config_dword(bus, spi, PCI_BASE_ADDRESS_0,
 					  &spi_base);
-		if (spi_base != ~0) {
+		अगर (spi_base != ~0) अणु
 			res->start = spi_base & 0xfffffff0;
 			res->end = res->start + SPIBASE_APL_SZ - 1;
 
-			pci_bus_read_config_dword(bus, spi, BCR, &bcr);
-			info->writeable = !!(bcr & BCR_WPD);
-		}
+			pci_bus_पढ़ो_config_dword(bus, spi, BCR, &bcr);
+			info->ग_लिखोable = !!(bcr & BCR_WPD);
+		पूर्ण
 
-		pci_bus_write_config_byte(bus, p2sb, 0xe1, 0x1);
-		break;
-	}
+		pci_bus_ग_लिखो_config_byte(bus, p2sb, 0xe1, 0x1);
+		अवरोध;
+	पूर्ण
 
-	default:
-		return -EINVAL;
-	}
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	if (!res->start)
-		return -ENODEV;
+	अगर (!res->start)
+		वापस -ENODEV;
 
-	lpc_ich_spi_cell.platform_data = info;
-	lpc_ich_spi_cell.pdata_size = sizeof(*info);
+	lpc_ich_spi_cell.platक्रमm_data = info;
+	lpc_ich_spi_cell.pdata_size = माप(*info);
 
-	return mfd_add_devices(&dev->dev, PLATFORM_DEVID_NONE,
-			       &lpc_ich_spi_cell, 1, NULL, 0, NULL);
-}
+	वापस mfd_add_devices(&dev->dev, PLATFORM_DEVID_NONE,
+			       &lpc_ich_spi_cell, 1, शून्य, 0, शून्य);
+पूर्ण
 
-static int lpc_ich_probe(struct pci_dev *dev,
-				const struct pci_device_id *id)
-{
-	struct lpc_ich_priv *priv;
-	int ret;
+अटल पूर्णांक lpc_ich_probe(काष्ठा pci_dev *dev,
+				स्थिर काष्ठा pci_device_id *id)
+अणु
+	काष्ठा lpc_ich_priv *priv;
+	पूर्णांक ret;
 	bool cell_added = false;
 
 	priv = devm_kzalloc(&dev->dev,
-			    sizeof(struct lpc_ich_priv), GFP_KERNEL);
-	if (!priv)
-		return -ENOMEM;
+			    माप(काष्ठा lpc_ich_priv), GFP_KERNEL);
+	अगर (!priv)
+		वापस -ENOMEM;
 
 	priv->chipset = id->driver_data;
 
@@ -1177,59 +1178,59 @@ static int lpc_ich_probe(struct pci_dev *dev,
 	priv->actrl_pbase = ACPICTRL_PMCBASE;
 
 	priv->gctrl_save = -1;
-	if (priv->chipset <= LPC_ICH5) {
+	अगर (priv->chipset <= LPC_ICH5) अणु
 		priv->gbase = GPIOBASE_ICH0;
 		priv->gctrl = GPIOCTRL_ICH0;
-	} else {
+	पूर्ण अन्यथा अणु
 		priv->gbase = GPIOBASE_ICH6;
 		priv->gctrl = GPIOCTRL_ICH6;
-	}
+	पूर्ण
 
 	pci_set_drvdata(dev, priv);
 
-	if (lpc_chipset_info[priv->chipset].iTCO_version) {
+	अगर (lpc_chipset_info[priv->chipset].iTCO_version) अणु
 		ret = lpc_ich_init_wdt(dev);
-		if (!ret)
+		अगर (!ret)
 			cell_added = true;
-	}
+	पूर्ण
 
-	if (lpc_chipset_info[priv->chipset].gpio_version) {
+	अगर (lpc_chipset_info[priv->chipset].gpio_version) अणु
 		ret = lpc_ich_init_gpio(dev);
-		if (!ret)
+		अगर (!ret)
 			cell_added = true;
-	}
+	पूर्ण
 
-	if (lpc_chipset_info[priv->chipset].spi_type) {
+	अगर (lpc_chipset_info[priv->chipset].spi_type) अणु
 		ret = lpc_ich_init_spi(dev);
-		if (!ret)
+		अगर (!ret)
 			cell_added = true;
-	}
+	पूर्ण
 
 	/*
-	 * We only care if at least one or none of the cells registered
+	 * We only care अगर at least one or none of the cells रेजिस्टरed
 	 * successfully.
 	 */
-	if (!cell_added) {
+	अगर (!cell_added) अणु
 		dev_warn(&dev->dev, "No MFD cells added\n");
 		lpc_ich_restore_config_space(dev);
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void lpc_ich_remove(struct pci_dev *dev)
-{
-	mfd_remove_devices(&dev->dev);
+अटल व्योम lpc_ich_हटाओ(काष्ठा pci_dev *dev)
+अणु
+	mfd_हटाओ_devices(&dev->dev);
 	lpc_ich_restore_config_space(dev);
-}
+पूर्ण
 
-static struct pci_driver lpc_ich_driver = {
+अटल काष्ठा pci_driver lpc_ich_driver = अणु
 	.name		= "lpc_ich",
 	.id_table	= lpc_ich_ids,
 	.probe		= lpc_ich_probe,
-	.remove		= lpc_ich_remove,
-};
+	.हटाओ		= lpc_ich_हटाओ,
+पूर्ण;
 
 module_pci_driver(lpc_ich_driver);
 

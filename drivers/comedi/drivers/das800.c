@@ -1,8 +1,9 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
  * comedi/drivers/das800.c
- * Driver for Keitley das800 series boards and compatibles
- * Copyright (C) 2000 Frank Mori Hess <fmhess@users.sourceforge.net>
+ * Driver क्रम Keitley das800 series boards and compatibles
+ * Copyright (C) 2000 Frank Mori Hess <fmhess@users.sourceक्रमge.net>
  *
  * COMEDI - Linux Control and Measurement Device Interface
  * Copyright (C) 2000 David A. Schleef <ds@schleef.org>
@@ -10,20 +11,20 @@
 /*
  * Driver: das800
  * Description: Keithley Metrabyte DAS800 (& compatibles)
- * Author: Frank Mori Hess <fmhess@users.sourceforge.net>
+ * Author: Frank Mori Hess <fmhess@users.sourceक्रमge.net>
  * Devices: [Keithley Metrabyte] DAS-800 (das-800), DAS-801 (das-801),
  * DAS-802 (das-802),
  * [Measurement Computing] CIO-DAS800 (cio-das800),
  * CIO-DAS801 (cio-das801), CIO-DAS802 (cio-das802),
  * CIO-DAS802/16 (cio-das802/16)
- * Status: works, cio-das802/16 untested - email me if you have tested it
+ * Status: works, cio-das802/16 untested - email me अगर you have tested it
  *
  * Configuration options:
  * [0] - I/O port base address
- * [1] - IRQ (optional, required for timed or externally triggered conversions)
+ * [1] - IRQ (optional, required क्रम समयd or बाह्यally triggered conversions)
  *
  * Notes:
- *	IRQ can be omitted, although the cmd interface will not work without it.
+ *	IRQ can be omitted, although the cmd पूर्णांकerface will not work without it.
  *
  *	All entries in the channel/gain list must use the same gain and be
  *	consecutive channels counting upwards in channel number (these are
@@ -32,8 +33,8 @@
  *	I've never tested the gain setting stuff since I only have a
  *	DAS-800 board with fixed gain.
  *
- *	The cio-das802/16 does not have a fifo-empty status bit!  Therefore
- *	only fifo-half-full transfers are possible with this card.
+ *	The cio-das802/16 करोes not have a fअगरo-empty status bit!  Thereक्रमe
+ *	only fअगरo-half-full transfers are possible with this card.
  *
  * cmd triggers supported:
  *	start_src:      TRIG_NOW | TRIG_EXT
@@ -43,59 +44,59 @@
  *	stop_src:       TRIG_NONE | TRIG_COUNT
  */
 
-#include <linux/module.h>
-#include <linux/interrupt.h>
-#include <linux/delay.h>
+#समावेश <linux/module.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/delay.h>
 
-#include "../comedidev.h"
+#समावेश "../comedidev.h"
 
-#include "comedi_8254.h"
+#समावेश "comedi_8254.h"
 
-#define N_CHAN_AI             8	/*  number of analog input channels */
+#घोषणा N_CHAN_AI             8	/*  number of analog input channels */
 
-/* Registers for the das800 */
+/* Registers क्रम the das800 */
 
-#define DAS800_LSB            0
-#define   FIFO_EMPTY            0x1
-#define   FIFO_OVF              0x2
-#define DAS800_MSB            1
-#define DAS800_CONTROL1       2
-#define   CONTROL1_INTE         0x8
-#define DAS800_CONV_CONTROL   2
-#define   ITE                   0x1
-#define   CASC                  0x2
-#define   DTEN                  0x4
-#define   IEOC                  0x8
-#define   EACS                  0x10
-#define   CONV_HCEN             0x80
-#define DAS800_SCAN_LIMITS    2
-#define DAS800_STATUS         2
-#define   IRQ                   0x8
-#define   BUSY                  0x80
-#define DAS800_GAIN           3
-#define   CIO_FFOV              0x8   /* cio-das802/16 fifo overflow */
-#define   CIO_ENHF              0x90  /* cio-das802/16 fifo half full int ena */
-#define   CONTROL1              0x80
-#define   CONV_CONTROL          0xa0
-#define   SCAN_LIMITS           0xc0
-#define   ID                    0xe0
-#define DAS800_8254           4
-#define DAS800_STATUS2        7
-#define   STATUS2_HCEN          0x80
-#define   STATUS2_INTE          0X20
-#define DAS800_ID             7
+#घोषणा DAS800_LSB            0
+#घोषणा   FIFO_EMPTY            0x1
+#घोषणा   FIFO_OVF              0x2
+#घोषणा DAS800_MSB            1
+#घोषणा DAS800_CONTROL1       2
+#घोषणा   CONTROL1_INTE         0x8
+#घोषणा DAS800_CONV_CONTROL   2
+#घोषणा   ITE                   0x1
+#घोषणा   CASC                  0x2
+#घोषणा   DTEN                  0x4
+#घोषणा   IEOC                  0x8
+#घोषणा   EACS                  0x10
+#घोषणा   CONV_HCEN             0x80
+#घोषणा DAS800_SCAN_LIMITS    2
+#घोषणा DAS800_STATUS         2
+#घोषणा   IRQ                   0x8
+#घोषणा   BUSY                  0x80
+#घोषणा DAS800_GAIN           3
+#घोषणा   CIO_FFOV              0x8   /* cio-das802/16 fअगरo overflow */
+#घोषणा   CIO_ENHF              0x90  /* cio-das802/16 fअगरo half full पूर्णांक ena */
+#घोषणा   CONTROL1              0x80
+#घोषणा   CONV_CONTROL          0xa0
+#घोषणा   SCAN_LIMITS           0xc0
+#घोषणा   ID                    0xe0
+#घोषणा DAS800_8254           4
+#घोषणा DAS800_STATUS2        7
+#घोषणा   STATUS2_HCEN          0x80
+#घोषणा   STATUS2_INTE          0X20
+#घोषणा DAS800_ID             7
 
-#define DAS802_16_HALF_FIFO_SZ	128
+#घोषणा DAS802_16_HALF_FIFO_SZ	128
 
-struct das800_board {
-	const char *name;
-	int ai_speed;
-	const struct comedi_lrange *ai_range;
-	int resolution;
-};
+काष्ठा das800_board अणु
+	स्थिर अक्षर *name;
+	पूर्णांक ai_speed;
+	स्थिर काष्ठा comedi_lrange *ai_range;
+	पूर्णांक resolution;
+पूर्ण;
 
-static const struct comedi_lrange range_das801_ai = {
-	9, {
+अटल स्थिर काष्ठा comedi_lrange range_das801_ai = अणु
+	9, अणु
 		BIP_RANGE(5),
 		BIP_RANGE(10),
 		UNI_RANGE(10),
@@ -105,11 +106,11 @@ static const struct comedi_lrange range_das801_ai = {
 		UNI_RANGE(0.1),
 		BIP_RANGE(0.01),
 		UNI_RANGE(0.02)
-	}
-};
+	पूर्ण
+पूर्ण;
 
-static const struct comedi_lrange range_cio_das801_ai = {
-	9, {
+अटल स्थिर काष्ठा comedi_lrange range_cio_das801_ai = अणु
+	9, अणु
 		BIP_RANGE(5),
 		BIP_RANGE(10),
 		UNI_RANGE(10),
@@ -119,11 +120,11 @@ static const struct comedi_lrange range_cio_das801_ai = {
 		UNI_RANGE(0.1),
 		BIP_RANGE(0.005),
 		UNI_RANGE(0.01)
-	}
-};
+	पूर्ण
+पूर्ण;
 
-static const struct comedi_lrange range_das802_ai = {
-	9, {
+अटल स्थिर काष्ठा comedi_lrange range_das802_ai = अणु
+	9, अणु
 		BIP_RANGE(5),
 		BIP_RANGE(10),
 		UNI_RANGE(10),
@@ -133,11 +134,11 @@ static const struct comedi_lrange range_das802_ai = {
 		UNI_RANGE(2.5),
 		BIP_RANGE(0.625),
 		UNI_RANGE(1.25)
-	}
-};
+	पूर्ण
+पूर्ण;
 
-static const struct comedi_lrange range_das80216_ai = {
-	8, {
+अटल स्थिर काष्ठा comedi_lrange range_das80216_ai = अणु
+	8, अणु
 		BIP_RANGE(10),
 		UNI_RANGE(10),
 		BIP_RANGE(5),
@@ -146,10 +147,10 @@ static const struct comedi_lrange range_das80216_ai = {
 		UNI_RANGE(2.5),
 		BIP_RANGE(1.25),
 		UNI_RANGE(1.25)
-	}
-};
+	पूर्ण
+पूर्ण;
 
-enum das800_boardinfo {
+क्रमागत das800_boardinfo अणु
 	BOARD_DAS800,
 	BOARD_CIODAS800,
 	BOARD_DAS801,
@@ -157,147 +158,147 @@ enum das800_boardinfo {
 	BOARD_DAS802,
 	BOARD_CIODAS802,
 	BOARD_CIODAS80216,
-};
+पूर्ण;
 
-static const struct das800_board das800_boards[] = {
-	[BOARD_DAS800] = {
+अटल स्थिर काष्ठा das800_board das800_boards[] = अणु
+	[BOARD_DAS800] = अणु
 		.name		= "das-800",
 		.ai_speed	= 25000,
 		.ai_range	= &range_bipolar5,
 		.resolution	= 12,
-	},
-	[BOARD_CIODAS800] = {
+	पूर्ण,
+	[BOARD_CIODAS800] = अणु
 		.name		= "cio-das800",
 		.ai_speed	= 20000,
 		.ai_range	= &range_bipolar5,
 		.resolution	= 12,
-	},
-	[BOARD_DAS801] = {
+	पूर्ण,
+	[BOARD_DAS801] = अणु
 		.name		= "das-801",
 		.ai_speed	= 25000,
 		.ai_range	= &range_das801_ai,
 		.resolution	= 12,
-	},
-	[BOARD_CIODAS801] = {
+	पूर्ण,
+	[BOARD_CIODAS801] = अणु
 		.name		= "cio-das801",
 		.ai_speed	= 20000,
 		.ai_range	= &range_cio_das801_ai,
 		.resolution	= 12,
-	},
-	[BOARD_DAS802] = {
+	पूर्ण,
+	[BOARD_DAS802] = अणु
 		.name		= "das-802",
 		.ai_speed	= 25000,
 		.ai_range	= &range_das802_ai,
 		.resolution	= 12,
-	},
-	[BOARD_CIODAS802] = {
+	पूर्ण,
+	[BOARD_CIODAS802] = अणु
 		.name		= "cio-das802",
 		.ai_speed	= 20000,
 		.ai_range	= &range_das802_ai,
 		.resolution	= 12,
-	},
-	[BOARD_CIODAS80216] = {
+	पूर्ण,
+	[BOARD_CIODAS80216] = अणु
 		.name		= "cio-das802/16",
 		.ai_speed	= 10000,
 		.ai_range	= &range_das80216_ai,
 		.resolution	= 16,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-struct das800_private {
-	unsigned int do_bits;	/* digital output bits */
-};
+काष्ठा das800_निजी अणु
+	अचिन्हित पूर्णांक करो_bits;	/* digital output bits */
+पूर्ण;
 
-static void das800_ind_write(struct comedi_device *dev,
-			     unsigned int val, unsigned int reg)
-{
+अटल व्योम das800_ind_ग_लिखो(काष्ठा comedi_device *dev,
+			     अचिन्हित पूर्णांक val, अचिन्हित पूर्णांक reg)
+अणु
 	/*
-	 * Select dev->iobase + 2 to be desired register
-	 * then write to that register.
+	 * Select dev->iobase + 2 to be desired रेजिस्टर
+	 * then ग_लिखो to that रेजिस्टर.
 	 */
 	outb(reg, dev->iobase + DAS800_GAIN);
 	outb(val, dev->iobase + 2);
-}
+पूर्ण
 
-static unsigned int das800_ind_read(struct comedi_device *dev, unsigned int reg)
-{
+अटल अचिन्हित पूर्णांक das800_ind_पढ़ो(काष्ठा comedi_device *dev, अचिन्हित पूर्णांक reg)
+अणु
 	/*
-	 * Select dev->iobase + 7 to be desired register
-	 * then read from that register.
+	 * Select dev->iobase + 7 to be desired रेजिस्टर
+	 * then पढ़ो from that रेजिस्टर.
 	 */
 	outb(reg, dev->iobase + DAS800_GAIN);
-	return inb(dev->iobase + 7);
-}
+	वापस inb(dev->iobase + 7);
+पूर्ण
 
-static void das800_enable(struct comedi_device *dev)
-{
-	const struct das800_board *board = dev->board_ptr;
-	struct das800_private *devpriv = dev->private;
-	unsigned long irq_flags;
+अटल व्योम das800_enable(काष्ठा comedi_device *dev)
+अणु
+	स्थिर काष्ठा das800_board *board = dev->board_ptr;
+	काष्ठा das800_निजी *devpriv = dev->निजी;
+	अचिन्हित दीर्घ irq_flags;
 
 	spin_lock_irqsave(&dev->spinlock, irq_flags);
-	/*  enable fifo-half full interrupts for cio-das802/16 */
-	if (board->resolution == 16)
+	/*  enable fअगरo-half full पूर्णांकerrupts क्रम cio-das802/16 */
+	अगर (board->resolution == 16)
 		outb(CIO_ENHF, dev->iobase + DAS800_GAIN);
 	/* enable hardware triggering */
-	das800_ind_write(dev, CONV_HCEN, CONV_CONTROL);
-	/* enable card's interrupt */
-	das800_ind_write(dev, CONTROL1_INTE | devpriv->do_bits, CONTROL1);
+	das800_ind_ग_लिखो(dev, CONV_HCEN, CONV_CONTROL);
+	/* enable card's पूर्णांकerrupt */
+	das800_ind_ग_लिखो(dev, CONTROL1_INTE | devpriv->करो_bits, CONTROL1);
 	spin_unlock_irqrestore(&dev->spinlock, irq_flags);
-}
+पूर्ण
 
-static void das800_disable(struct comedi_device *dev)
-{
-	unsigned long irq_flags;
+अटल व्योम das800_disable(काष्ठा comedi_device *dev)
+अणु
+	अचिन्हित दीर्घ irq_flags;
 
 	spin_lock_irqsave(&dev->spinlock, irq_flags);
 	/* disable hardware triggering of conversions */
-	das800_ind_write(dev, 0x0, CONV_CONTROL);
+	das800_ind_ग_लिखो(dev, 0x0, CONV_CONTROL);
 	spin_unlock_irqrestore(&dev->spinlock, irq_flags);
-}
+पूर्ण
 
-static int das800_cancel(struct comedi_device *dev, struct comedi_subdevice *s)
-{
+अटल पूर्णांक das800_cancel(काष्ठा comedi_device *dev, काष्ठा comedi_subdevice *s)
+अणु
 	das800_disable(dev);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int das800_ai_check_chanlist(struct comedi_device *dev,
-				    struct comedi_subdevice *s,
-				    struct comedi_cmd *cmd)
-{
-	unsigned int chan0 = CR_CHAN(cmd->chanlist[0]);
-	unsigned int range0 = CR_RANGE(cmd->chanlist[0]);
-	int i;
+अटल पूर्णांक das800_ai_check_chanlist(काष्ठा comedi_device *dev,
+				    काष्ठा comedi_subdevice *s,
+				    काष्ठा comedi_cmd *cmd)
+अणु
+	अचिन्हित पूर्णांक chan0 = CR_CHAN(cmd->chanlist[0]);
+	अचिन्हित पूर्णांक range0 = CR_RANGE(cmd->chanlist[0]);
+	पूर्णांक i;
 
-	for (i = 1; i < cmd->chanlist_len; i++) {
-		unsigned int chan = CR_CHAN(cmd->chanlist[i]);
-		unsigned int range = CR_RANGE(cmd->chanlist[i]);
+	क्रम (i = 1; i < cmd->chanlist_len; i++) अणु
+		अचिन्हित पूर्णांक chan = CR_CHAN(cmd->chanlist[i]);
+		अचिन्हित पूर्णांक range = CR_RANGE(cmd->chanlist[i]);
 
-		if (chan != (chan0 + i) % s->n_chan) {
+		अगर (chan != (chan0 + i) % s->n_chan) अणु
 			dev_dbg(dev->class_dev,
 				"chanlist must be consecutive, counting upwards\n");
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
-		if (range != range0) {
+		अगर (range != range0) अणु
 			dev_dbg(dev->class_dev,
 				"chanlist must all have the same gain\n");
-			return -EINVAL;
-		}
-	}
+			वापस -EINVAL;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int das800_ai_do_cmdtest(struct comedi_device *dev,
-				struct comedi_subdevice *s,
-				struct comedi_cmd *cmd)
-{
-	const struct das800_board *board = dev->board_ptr;
-	int err = 0;
+अटल पूर्णांक das800_ai_करो_cmdtest(काष्ठा comedi_device *dev,
+				काष्ठा comedi_subdevice *s,
+				काष्ठा comedi_cmd *cmd)
+अणु
+	स्थिर काष्ठा das800_board *board = dev->board_ptr;
+	पूर्णांक err = 0;
 
-	/* Step 1 : check if triggers are trivially valid */
+	/* Step 1 : check अगर triggers are trivially valid */
 
 	err |= comedi_check_trigger_src(&cmd->start_src, TRIG_NOW | TRIG_EXT);
 	err |= comedi_check_trigger_src(&cmd->scan_begin_src, TRIG_FOLLOW);
@@ -306,8 +307,8 @@ static int das800_ai_do_cmdtest(struct comedi_device *dev,
 	err |= comedi_check_trigger_src(&cmd->scan_end_src, TRIG_COUNT);
 	err |= comedi_check_trigger_src(&cmd->stop_src, TRIG_COUNT | TRIG_NONE);
 
-	if (err)
-		return 1;
+	अगर (err)
+		वापस 1;
 
 	/* Step 2a : make sure trigger sources are unique */
 
@@ -317,388 +318,388 @@ static int das800_ai_do_cmdtest(struct comedi_device *dev,
 
 	/* Step 2b : and mutually compatible */
 
-	if (err)
-		return 2;
+	अगर (err)
+		वापस 2;
 
-	/* Step 3: check if arguments are trivially valid */
+	/* Step 3: check अगर arguments are trivially valid */
 
 	err |= comedi_check_trigger_arg_is(&cmd->start_arg, 0);
 
-	if (cmd->convert_src == TRIG_TIMER) {
+	अगर (cmd->convert_src == TRIG_TIMER) अणु
 		err |= comedi_check_trigger_arg_min(&cmd->convert_arg,
 						    board->ai_speed);
-	}
+	पूर्ण
 
 	err |= comedi_check_trigger_arg_min(&cmd->chanlist_len, 1);
 	err |= comedi_check_trigger_arg_is(&cmd->scan_end_arg,
 					   cmd->chanlist_len);
 
-	if (cmd->stop_src == TRIG_COUNT)
+	अगर (cmd->stop_src == TRIG_COUNT)
 		err |= comedi_check_trigger_arg_min(&cmd->stop_arg, 1);
-	else	/* TRIG_NONE */
+	अन्यथा	/* TRIG_NONE */
 		err |= comedi_check_trigger_arg_is(&cmd->stop_arg, 0);
 
-	if (err)
-		return 3;
+	अगर (err)
+		वापस 3;
 
 	/* step 4: fix up any arguments */
 
-	if (cmd->convert_src == TRIG_TIMER) {
-		unsigned int arg = cmd->convert_arg;
+	अगर (cmd->convert_src == TRIG_TIMER) अणु
+		अचिन्हित पूर्णांक arg = cmd->convert_arg;
 
-		comedi_8254_cascade_ns_to_timer(dev->pacer, &arg, cmd->flags);
+		comedi_8254_cascade_ns_to_समयr(dev->pacer, &arg, cmd->flags);
 		err |= comedi_check_trigger_arg_is(&cmd->convert_arg, arg);
-	}
+	पूर्ण
 
-	if (err)
-		return 4;
+	अगर (err)
+		वापस 4;
 
-	/* Step 5: check channel list if it exists */
-	if (cmd->chanlist && cmd->chanlist_len > 0)
+	/* Step 5: check channel list अगर it exists */
+	अगर (cmd->chanlist && cmd->chanlist_len > 0)
 		err |= das800_ai_check_chanlist(dev, s, cmd);
 
-	if (err)
-		return 5;
+	अगर (err)
+		वापस 5;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int das800_ai_do_cmd(struct comedi_device *dev,
-			    struct comedi_subdevice *s)
-{
-	const struct das800_board *board = dev->board_ptr;
-	struct comedi_async *async = s->async;
-	struct comedi_cmd *cmd = &async->cmd;
-	unsigned int gain = CR_RANGE(cmd->chanlist[0]);
-	unsigned int start_chan = CR_CHAN(cmd->chanlist[0]);
-	unsigned int end_chan = (start_chan + cmd->chanlist_len - 1) % 8;
-	unsigned int scan_chans = (end_chan << 3) | start_chan;
-	int conv_bits;
-	unsigned long irq_flags;
+अटल पूर्णांक das800_ai_करो_cmd(काष्ठा comedi_device *dev,
+			    काष्ठा comedi_subdevice *s)
+अणु
+	स्थिर काष्ठा das800_board *board = dev->board_ptr;
+	काष्ठा comedi_async *async = s->async;
+	काष्ठा comedi_cmd *cmd = &async->cmd;
+	अचिन्हित पूर्णांक gain = CR_RANGE(cmd->chanlist[0]);
+	अचिन्हित पूर्णांक start_chan = CR_CHAN(cmd->chanlist[0]);
+	अचिन्हित पूर्णांक end_chan = (start_chan + cmd->chanlist_len - 1) % 8;
+	अचिन्हित पूर्णांक scan_chans = (end_chan << 3) | start_chan;
+	पूर्णांक conv_bits;
+	अचिन्हित दीर्घ irq_flags;
 
 	das800_disable(dev);
 
 	spin_lock_irqsave(&dev->spinlock, irq_flags);
 	/* set scan limits */
-	das800_ind_write(dev, scan_chans, SCAN_LIMITS);
+	das800_ind_ग_लिखो(dev, scan_chans, SCAN_LIMITS);
 	spin_unlock_irqrestore(&dev->spinlock, irq_flags);
 
 	/* set gain */
-	if (board->resolution == 12 && gain > 0)
+	अगर (board->resolution == 12 && gain > 0)
 		gain += 0x7;
 	gain &= 0xf;
 	outb(gain, dev->iobase + DAS800_GAIN);
 
-	/* enable auto channel scan, send interrupts on end of conversion
-	 * and set clock source to internal or external
+	/* enable स्वतः channel scan, send पूर्णांकerrupts on end of conversion
+	 * and set घड़ी source to पूर्णांकernal or बाह्यal
 	 */
 	conv_bits = 0;
 	conv_bits |= EACS | IEOC;
-	if (cmd->start_src == TRIG_EXT)
+	अगर (cmd->start_src == TRIG_EXT)
 		conv_bits |= DTEN;
-	if (cmd->convert_src == TRIG_TIMER) {
+	अगर (cmd->convert_src == TRIG_TIMER) अणु
 		conv_bits |= CASC | ITE;
-		comedi_8254_update_divisors(dev->pacer);
+		comedi_8254_update_भागisors(dev->pacer);
 		comedi_8254_pacer_enable(dev->pacer, 1, 2, true);
-	}
+	पूर्ण
 
 	spin_lock_irqsave(&dev->spinlock, irq_flags);
-	das800_ind_write(dev, conv_bits, CONV_CONTROL);
+	das800_ind_ग_लिखो(dev, conv_bits, CONV_CONTROL);
 	spin_unlock_irqrestore(&dev->spinlock, irq_flags);
 
 	das800_enable(dev);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static unsigned int das800_ai_get_sample(struct comedi_device *dev)
-{
-	unsigned int lsb = inb(dev->iobase + DAS800_LSB);
-	unsigned int msb = inb(dev->iobase + DAS800_MSB);
+अटल अचिन्हित पूर्णांक das800_ai_get_sample(काष्ठा comedi_device *dev)
+अणु
+	अचिन्हित पूर्णांक lsb = inb(dev->iobase + DAS800_LSB);
+	अचिन्हित पूर्णांक msb = inb(dev->iobase + DAS800_MSB);
 
-	return (msb << 8) | lsb;
-}
+	वापस (msb << 8) | lsb;
+पूर्ण
 
-static irqreturn_t das800_interrupt(int irq, void *d)
-{
-	struct comedi_device *dev = d;
-	struct das800_private *devpriv = dev->private;
-	struct comedi_subdevice *s = dev->read_subdev;
-	struct comedi_async *async;
-	struct comedi_cmd *cmd;
-	unsigned long irq_flags;
-	unsigned int status;
-	unsigned short val;
-	bool fifo_empty;
-	bool fifo_overflow;
-	int i;
+अटल irqवापस_t das800_पूर्णांकerrupt(पूर्णांक irq, व्योम *d)
+अणु
+	काष्ठा comedi_device *dev = d;
+	काष्ठा das800_निजी *devpriv = dev->निजी;
+	काष्ठा comedi_subdevice *s = dev->पढ़ो_subdev;
+	काष्ठा comedi_async *async;
+	काष्ठा comedi_cmd *cmd;
+	अचिन्हित दीर्घ irq_flags;
+	अचिन्हित पूर्णांक status;
+	अचिन्हित लघु val;
+	bool fअगरo_empty;
+	bool fअगरo_overflow;
+	पूर्णांक i;
 
 	status = inb(dev->iobase + DAS800_STATUS);
-	if (!(status & IRQ))
-		return IRQ_NONE;
-	if (!dev->attached)
-		return IRQ_HANDLED;
+	अगर (!(status & IRQ))
+		वापस IRQ_NONE;
+	अगर (!dev->attached)
+		वापस IRQ_HANDLED;
 
 	async = s->async;
 	cmd = &async->cmd;
 
 	spin_lock_irqsave(&dev->spinlock, irq_flags);
-	status = das800_ind_read(dev, CONTROL1) & STATUS2_HCEN;
+	status = das800_ind_पढ़ो(dev, CONTROL1) & STATUS2_HCEN;
 	/*
 	 * Don't release spinlock yet since we want to make sure
-	 * no one else disables hardware conversions.
+	 * no one अन्यथा disables hardware conversions.
 	 */
 
-	/* if hardware conversions are not enabled, then quit */
-	if (status == 0) {
+	/* अगर hardware conversions are not enabled, then quit */
+	अगर (status == 0) अणु
 		spin_unlock_irqrestore(&dev->spinlock, irq_flags);
-		return IRQ_HANDLED;
-	}
+		वापस IRQ_HANDLED;
+	पूर्ण
 
-	for (i = 0; i < DAS802_16_HALF_FIFO_SZ; i++) {
+	क्रम (i = 0; i < DAS802_16_HALF_FIFO_SZ; i++) अणु
 		val = das800_ai_get_sample(dev);
-		if (s->maxdata == 0x0fff) {
-			fifo_empty = !!(val & FIFO_EMPTY);
-			fifo_overflow = !!(val & FIFO_OVF);
-		} else {
-			/* cio-das802/16 has no fifo empty status bit */
-			fifo_empty = false;
-			fifo_overflow = !!(inb(dev->iobase + DAS800_GAIN) &
+		अगर (s->maxdata == 0x0fff) अणु
+			fअगरo_empty = !!(val & FIFO_EMPTY);
+			fअगरo_overflow = !!(val & FIFO_OVF);
+		पूर्ण अन्यथा अणु
+			/* cio-das802/16 has no fअगरo empty status bit */
+			fअगरo_empty = false;
+			fअगरo_overflow = !!(inb(dev->iobase + DAS800_GAIN) &
 						CIO_FFOV);
-		}
-		if (fifo_empty || fifo_overflow)
-			break;
+		पूर्ण
+		अगर (fअगरo_empty || fअगरo_overflow)
+			अवरोध;
 
-		if (s->maxdata == 0x0fff)
+		अगर (s->maxdata == 0x0fff)
 			val >>= 4;	/* 12-bit sample */
 
 		val &= s->maxdata;
-		comedi_buf_write_samples(s, &val, 1);
+		comedi_buf_ग_लिखो_samples(s, &val, 1);
 
-		if (cmd->stop_src == TRIG_COUNT &&
-		    async->scans_done >= cmd->stop_arg) {
+		अगर (cmd->stop_src == TRIG_COUNT &&
+		    async->scans_करोne >= cmd->stop_arg) अणु
 			async->events |= COMEDI_CB_EOA;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	if (fifo_overflow) {
+	अगर (fअगरo_overflow) अणु
 		spin_unlock_irqrestore(&dev->spinlock, irq_flags);
 		async->events |= COMEDI_CB_ERROR;
 		comedi_handle_events(dev, s);
-		return IRQ_HANDLED;
-	}
+		वापस IRQ_HANDLED;
+	पूर्ण
 
-	if (!(async->events & COMEDI_CB_CANCEL_MASK)) {
+	अगर (!(async->events & COMEDI_CB_CANCEL_MASK)) अणु
 		/*
-		 * Re-enable card's interrupt.
-		 * We already have spinlock, so indirect addressing is safe
+		 * Re-enable card's पूर्णांकerrupt.
+		 * We alपढ़ोy have spinlock, so indirect addressing is safe
 		 */
-		das800_ind_write(dev, CONTROL1_INTE | devpriv->do_bits,
+		das800_ind_ग_लिखो(dev, CONTROL1_INTE | devpriv->करो_bits,
 				 CONTROL1);
 		spin_unlock_irqrestore(&dev->spinlock, irq_flags);
-	} else {
+	पूर्ण अन्यथा अणु
 		/* otherwise, stop taking data */
 		spin_unlock_irqrestore(&dev->spinlock, irq_flags);
 		das800_disable(dev);
-	}
+	पूर्ण
 	comedi_handle_events(dev, s);
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static int das800_ai_eoc(struct comedi_device *dev,
-			 struct comedi_subdevice *s,
-			 struct comedi_insn *insn,
-			 unsigned long context)
-{
-	unsigned int status;
+अटल पूर्णांक das800_ai_eoc(काष्ठा comedi_device *dev,
+			 काष्ठा comedi_subdevice *s,
+			 काष्ठा comedi_insn *insn,
+			 अचिन्हित दीर्घ context)
+अणु
+	अचिन्हित पूर्णांक status;
 
 	status = inb(dev->iobase + DAS800_STATUS);
-	if ((status & BUSY) == 0)
-		return 0;
-	return -EBUSY;
-}
+	अगर ((status & BUSY) == 0)
+		वापस 0;
+	वापस -EBUSY;
+पूर्ण
 
-static int das800_ai_insn_read(struct comedi_device *dev,
-			       struct comedi_subdevice *s,
-			       struct comedi_insn *insn,
-			       unsigned int *data)
-{
-	struct das800_private *devpriv = dev->private;
-	unsigned int chan = CR_CHAN(insn->chanspec);
-	unsigned int range = CR_RANGE(insn->chanspec);
-	unsigned long irq_flags;
-	unsigned int val;
-	int ret;
-	int i;
+अटल पूर्णांक das800_ai_insn_पढ़ो(काष्ठा comedi_device *dev,
+			       काष्ठा comedi_subdevice *s,
+			       काष्ठा comedi_insn *insn,
+			       अचिन्हित पूर्णांक *data)
+अणु
+	काष्ठा das800_निजी *devpriv = dev->निजी;
+	अचिन्हित पूर्णांक chan = CR_CHAN(insn->chanspec);
+	अचिन्हित पूर्णांक range = CR_RANGE(insn->chanspec);
+	अचिन्हित दीर्घ irq_flags;
+	अचिन्हित पूर्णांक val;
+	पूर्णांक ret;
+	पूर्णांक i;
 
 	das800_disable(dev);
 
 	/* set multiplexer */
 	spin_lock_irqsave(&dev->spinlock, irq_flags);
-	das800_ind_write(dev, chan | devpriv->do_bits, CONTROL1);
+	das800_ind_ग_लिखो(dev, chan | devpriv->करो_bits, CONTROL1);
 	spin_unlock_irqrestore(&dev->spinlock, irq_flags);
 
 	/* set gain / range */
-	if (s->maxdata == 0x0fff && range)
+	अगर (s->maxdata == 0x0fff && range)
 		range += 0x7;
 	range &= 0xf;
 	outb(range, dev->iobase + DAS800_GAIN);
 
 	udelay(5);
 
-	for (i = 0; i < insn->n; i++) {
+	क्रम (i = 0; i < insn->n; i++) अणु
 		/* trigger conversion */
 		outb_p(0, dev->iobase + DAS800_MSB);
 
-		ret = comedi_timeout(dev, s, insn, das800_ai_eoc, 0);
-		if (ret)
-			return ret;
+		ret = comedi_समयout(dev, s, insn, das800_ai_eoc, 0);
+		अगर (ret)
+			वापस ret;
 
 		val = das800_ai_get_sample(dev);
-		if (s->maxdata == 0x0fff)
+		अगर (s->maxdata == 0x0fff)
 			val >>= 4;	/* 12-bit sample */
 		data[i] = val & s->maxdata;
-	}
+	पूर्ण
 
-	return insn->n;
-}
+	वापस insn->n;
+पूर्ण
 
-static int das800_di_insn_bits(struct comedi_device *dev,
-			       struct comedi_subdevice *s,
-			       struct comedi_insn *insn,
-			       unsigned int *data)
-{
+अटल पूर्णांक das800_di_insn_bits(काष्ठा comedi_device *dev,
+			       काष्ठा comedi_subdevice *s,
+			       काष्ठा comedi_insn *insn,
+			       अचिन्हित पूर्णांक *data)
+अणु
 	data[1] = (inb(dev->iobase + DAS800_STATUS) >> 4) & 0x7;
 
-	return insn->n;
-}
+	वापस insn->n;
+पूर्ण
 
-static int das800_do_insn_bits(struct comedi_device *dev,
-			       struct comedi_subdevice *s,
-			       struct comedi_insn *insn,
-			       unsigned int *data)
-{
-	struct das800_private *devpriv = dev->private;
-	unsigned long irq_flags;
+अटल पूर्णांक das800_करो_insn_bits(काष्ठा comedi_device *dev,
+			       काष्ठा comedi_subdevice *s,
+			       काष्ठा comedi_insn *insn,
+			       अचिन्हित पूर्णांक *data)
+अणु
+	काष्ठा das800_निजी *devpriv = dev->निजी;
+	अचिन्हित दीर्घ irq_flags;
 
-	if (comedi_dio_update_state(s, data)) {
-		devpriv->do_bits = s->state << 4;
+	अगर (comedi_dio_update_state(s, data)) अणु
+		devpriv->करो_bits = s->state << 4;
 
 		spin_lock_irqsave(&dev->spinlock, irq_flags);
-		das800_ind_write(dev, CONTROL1_INTE | devpriv->do_bits,
+		das800_ind_ग_लिखो(dev, CONTROL1_INTE | devpriv->करो_bits,
 				 CONTROL1);
 		spin_unlock_irqrestore(&dev->spinlock, irq_flags);
-	}
+	पूर्ण
 
 	data[1] = s->state;
 
-	return insn->n;
-}
+	वापस insn->n;
+पूर्ण
 
-static const struct das800_board *das800_probe(struct comedi_device *dev)
-{
-	const struct das800_board *board = dev->board_ptr;
-	int index = board ? board - das800_boards : -EINVAL;
-	int id_bits;
-	unsigned long irq_flags;
+अटल स्थिर काष्ठा das800_board *das800_probe(काष्ठा comedi_device *dev)
+अणु
+	स्थिर काष्ठा das800_board *board = dev->board_ptr;
+	पूर्णांक index = board ? board - das800_boards : -EINVAL;
+	पूर्णांक id_bits;
+	अचिन्हित दीर्घ irq_flags;
 
 	/*
-	 * The dev->board_ptr will be set by comedi_device_attach() if the
+	 * The dev->board_ptr will be set by comedi_device_attach() अगर the
 	 * board name provided by the user matches a board->name in this
-	 * driver. If so, this function sanity checks the id_bits to verify
+	 * driver. If so, this function sanity checks the id_bits to verअगरy
 	 * that the board is correct.
 	 *
 	 * If the dev->board_ptr is not set, the user is trying to attach
-	 * an unspecified board to this driver. In this case the id_bits
-	 * are used to 'probe' for the correct dev->board_ptr.
+	 * an unspecअगरied board to this driver. In this हाल the id_bits
+	 * are used to 'probe' क्रम the correct dev->board_ptr.
 	 */
 	spin_lock_irqsave(&dev->spinlock, irq_flags);
-	id_bits = das800_ind_read(dev, ID) & 0x3;
+	id_bits = das800_ind_पढ़ो(dev, ID) & 0x3;
 	spin_unlock_irqrestore(&dev->spinlock, irq_flags);
 
-	switch (id_bits) {
-	case 0x0:
-		if (index == BOARD_DAS800 || index == BOARD_CIODAS800)
-			return board;
+	चयन (id_bits) अणु
+	हाल 0x0:
+		अगर (index == BOARD_DAS800 || index == BOARD_CIODAS800)
+			वापस board;
 		index = BOARD_DAS800;
-		break;
-	case 0x2:
-		if (index == BOARD_DAS801 || index == BOARD_CIODAS801)
-			return board;
+		अवरोध;
+	हाल 0x2:
+		अगर (index == BOARD_DAS801 || index == BOARD_CIODAS801)
+			वापस board;
 		index = BOARD_DAS801;
-		break;
-	case 0x3:
-		if (index == BOARD_DAS802 || index == BOARD_CIODAS802 ||
+		अवरोध;
+	हाल 0x3:
+		अगर (index == BOARD_DAS802 || index == BOARD_CIODAS802 ||
 		    index == BOARD_CIODAS80216)
-			return board;
+			वापस board;
 		index = BOARD_DAS802;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		dev_dbg(dev->class_dev, "Board model: 0x%x (unknown)\n",
 			id_bits);
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 	dev_dbg(dev->class_dev, "Board model (probed): %s series\n",
 		das800_boards[index].name);
 
-	return &das800_boards[index];
-}
+	वापस &das800_boards[index];
+पूर्ण
 
-static int das800_attach(struct comedi_device *dev, struct comedi_devconfig *it)
-{
-	const struct das800_board *board;
-	struct das800_private *devpriv;
-	struct comedi_subdevice *s;
-	unsigned int irq = it->options[1];
-	unsigned long irq_flags;
-	int ret;
+अटल पूर्णांक das800_attach(काष्ठा comedi_device *dev, काष्ठा comedi_devconfig *it)
+अणु
+	स्थिर काष्ठा das800_board *board;
+	काष्ठा das800_निजी *devpriv;
+	काष्ठा comedi_subdevice *s;
+	अचिन्हित पूर्णांक irq = it->options[1];
+	अचिन्हित दीर्घ irq_flags;
+	पूर्णांक ret;
 
-	devpriv = comedi_alloc_devpriv(dev, sizeof(*devpriv));
-	if (!devpriv)
-		return -ENOMEM;
+	devpriv = comedi_alloc_devpriv(dev, माप(*devpriv));
+	अगर (!devpriv)
+		वापस -ENOMEM;
 
 	ret = comedi_request_region(dev, it->options[0], 0x8);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	board = das800_probe(dev);
-	if (!board)
-		return -ENODEV;
+	अगर (!board)
+		वापस -ENODEV;
 	dev->board_ptr = board;
 	dev->board_name = board->name;
 
-	if (irq > 1 && irq <= 7) {
-		ret = request_irq(irq, das800_interrupt, 0, "das800",
+	अगर (irq > 1 && irq <= 7) अणु
+		ret = request_irq(irq, das800_पूर्णांकerrupt, 0, "das800",
 				  dev);
-		if (ret == 0)
+		अगर (ret == 0)
 			dev->irq = irq;
-	}
+	पूर्ण
 
 	dev->pacer = comedi_8254_init(dev->iobase + DAS800_8254,
 				      I8254_OSC_BASE_1MHZ, I8254_IO8, 0);
-	if (!dev->pacer)
-		return -ENOMEM;
+	अगर (!dev->pacer)
+		वापस -ENOMEM;
 
 	ret = comedi_alloc_subdevices(dev, 3);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	/* Analog Input subdevice */
 	s = &dev->subdevices[0];
-	dev->read_subdev = s;
+	dev->पढ़ो_subdev = s;
 	s->type		= COMEDI_SUBD_AI;
 	s->subdev_flags	= SDF_READABLE | SDF_GROUND;
 	s->n_chan	= 8;
 	s->maxdata	= (1 << board->resolution) - 1;
 	s->range_table	= board->ai_range;
-	s->insn_read	= das800_ai_insn_read;
-	if (dev->irq) {
+	s->insn_पढ़ो	= das800_ai_insn_पढ़ो;
+	अगर (dev->irq) अणु
 		s->subdev_flags	|= SDF_CMD_READ;
 		s->len_chanlist	= 8;
-		s->do_cmdtest	= das800_ai_do_cmdtest;
-		s->do_cmd	= das800_ai_do_cmd;
+		s->करो_cmdtest	= das800_ai_करो_cmdtest;
+		s->करो_cmd	= das800_ai_करो_cmd;
 		s->cancel	= das800_cancel;
-	}
+	पूर्ण
 
 	/* Digital Input subdevice */
 	s = &dev->subdevices[1];
@@ -716,27 +717,27 @@ static int das800_attach(struct comedi_device *dev, struct comedi_devconfig *it)
 	s->n_chan	= 4;
 	s->maxdata	= 1;
 	s->range_table	= &range_digital;
-	s->insn_bits	= das800_do_insn_bits;
+	s->insn_bits	= das800_करो_insn_bits;
 
 	das800_disable(dev);
 
 	/* initialize digital out channels */
 	spin_lock_irqsave(&dev->spinlock, irq_flags);
-	das800_ind_write(dev, CONTROL1_INTE | devpriv->do_bits, CONTROL1);
+	das800_ind_ग_लिखो(dev, CONTROL1_INTE | devpriv->करो_bits, CONTROL1);
 	spin_unlock_irqrestore(&dev->spinlock, irq_flags);
 
-	return 0;
-};
+	वापस 0;
+पूर्ण;
 
-static struct comedi_driver driver_das800 = {
+अटल काष्ठा comedi_driver driver_das800 = अणु
 	.driver_name	= "das800",
 	.module		= THIS_MODULE,
 	.attach		= das800_attach,
 	.detach		= comedi_legacy_detach,
 	.num_names	= ARRAY_SIZE(das800_boards),
 	.board_name	= &das800_boards[0].name,
-	.offset		= sizeof(struct das800_board),
-};
+	.offset		= माप(काष्ठा das800_board),
+पूर्ण;
 module_comedi_driver(driver_das800);
 
 MODULE_AUTHOR("Comedi https://www.comedi.org");

@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * Frame buffer driver for Trident TGUI, Blade and Image series
+ * Frame buffer driver क्रम Trident TGUI, Blade and Image series
  *
  * Copyright 2001, 2002 - Jani Monoses   <jani@iv.ro>
  * Copyright 2009 Krzysztof Helt <krzysztof.h1@wp.pl>
@@ -16,99 +17,99 @@
  *	timing value tweaking so it looks good on every monitor in every mode
  */
 
-#include <linux/module.h>
-#include <linux/fb.h>
-#include <linux/init.h>
-#include <linux/pci.h>
-#include <linux/slab.h>
+#समावेश <linux/module.h>
+#समावेश <linux/fb.h>
+#समावेश <linux/init.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/slab.h>
 
-#include <linux/delay.h>
-#include <video/vga.h>
-#include <video/trident.h>
+#समावेश <linux/delay.h>
+#समावेश <video/vga.h>
+#समावेश <video/trident.h>
 
-#include <linux/i2c.h>
-#include <linux/i2c-algo-bit.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/i2c-algo-bit.h>
 
-struct tridentfb_par {
-	void __iomem *io_virt;	/* iospace virtual memory address */
-	u32 pseudo_pal[16];
-	int chip_id;
-	int flatpanel;
-	void (*init_accel) (struct tridentfb_par *, int, int);
-	void (*wait_engine) (struct tridentfb_par *);
-	void (*fill_rect)
-		(struct tridentfb_par *par, u32, u32, u32, u32, u32, u32);
-	void (*copy_rect)
-		(struct tridentfb_par *par, u32, u32, u32, u32, u32, u32);
-	void (*image_blit)
-		(struct tridentfb_par *par, const char*,
+काष्ठा tridentfb_par अणु
+	व्योम __iomem *io_virt;	/* iospace भव memory address */
+	u32 pseuकरो_pal[16];
+	पूर्णांक chip_id;
+	पूर्णांक flatpanel;
+	व्योम (*init_accel) (काष्ठा tridentfb_par *, पूर्णांक, पूर्णांक);
+	व्योम (*रुको_engine) (काष्ठा tridentfb_par *);
+	व्योम (*fill_rect)
+		(काष्ठा tridentfb_par *par, u32, u32, u32, u32, u32, u32);
+	व्योम (*copy_rect)
+		(काष्ठा tridentfb_par *par, u32, u32, u32, u32, u32, u32);
+	व्योम (*image_blit)
+		(काष्ठा tridentfb_par *par, स्थिर अक्षर*,
 		 u32, u32, u32, u32, u32, u32);
-	unsigned char eng_oper;	/* engine operation... */
-	bool ddc_registered;
-	struct i2c_adapter ddc_adapter;
-	struct i2c_algo_bit_data ddc_algo;
-};
+	अचिन्हित अक्षर eng_oper;	/* engine operation... */
+	bool ddc_रेजिस्टरed;
+	काष्ठा i2c_adapter ddc_adapter;
+	काष्ठा i2c_algo_bit_data ddc_algo;
+पूर्ण;
 
-static struct fb_fix_screeninfo tridentfb_fix = {
+अटल काष्ठा fb_fix_screeninfo tridentfb_fix = अणु
 	.id = "Trident",
 	.type = FB_TYPE_PACKED_PIXELS,
 	.ypanstep = 1,
 	.visual = FB_VISUAL_PSEUDOCOLOR,
 	.accel = FB_ACCEL_NONE,
-};
+पूर्ण;
 
-/* defaults which are normally overriden by user values */
+/* शेषs which are normally overriden by user values */
 
 /* video mode */
-static char *mode_option;
-static int bpp = 8;
+अटल अक्षर *mode_option;
+अटल पूर्णांक bpp = 8;
 
-static int noaccel;
+अटल पूर्णांक noaccel;
 
-static int center;
-static int stretch;
+अटल पूर्णांक center;
+अटल पूर्णांक stretch;
 
-static int fp;
-static int crt;
+अटल पूर्णांक fp;
+अटल पूर्णांक crt;
 
-static int memsize;
-static int memdiff;
-static int nativex;
+अटल पूर्णांक memsize;
+अटल पूर्णांक memdअगरf;
+अटल पूर्णांक nativex;
 
-module_param(mode_option, charp, 0);
+module_param(mode_option, अक्षरp, 0);
 MODULE_PARM_DESC(mode_option, "Initial video mode e.g. '648x480-8@60'");
-module_param_named(mode, mode_option, charp, 0);
+module_param_named(mode, mode_option, अक्षरp, 0);
 MODULE_PARM_DESC(mode, "Initial video mode e.g. '648x480-8@60' (deprecated)");
-module_param(bpp, int, 0);
-module_param(center, int, 0);
-module_param(stretch, int, 0);
-module_param(noaccel, int, 0);
-module_param(memsize, int, 0);
-module_param(memdiff, int, 0);
-module_param(nativex, int, 0);
-module_param(fp, int, 0);
+module_param(bpp, पूर्णांक, 0);
+module_param(center, पूर्णांक, 0);
+module_param(stretch, पूर्णांक, 0);
+module_param(noaccel, पूर्णांक, 0);
+module_param(memsize, पूर्णांक, 0);
+module_param(memdअगरf, पूर्णांक, 0);
+module_param(nativex, पूर्णांक, 0);
+module_param(fp, पूर्णांक, 0);
 MODULE_PARM_DESC(fp, "Define if flatpanel is connected");
-module_param(crt, int, 0);
+module_param(crt, पूर्णांक, 0);
 MODULE_PARM_DESC(crt, "Define if CRT is connected");
 
-static inline int is_oldclock(int id)
-{
-	return	(id == TGUI9440) ||
+अटल अंतरभूत पूर्णांक is_oldघड़ी(पूर्णांक id)
+अणु
+	वापस	(id == TGUI9440) ||
 		(id == TGUI9660) ||
 		(id == CYBER9320);
-}
+पूर्ण
 
-static inline int is_oldprotect(int id)
-{
-	return	is_oldclock(id) ||
+अटल अंतरभूत पूर्णांक is_oldprotect(पूर्णांक id)
+अणु
+	वापस	is_oldघड़ी(id) ||
 		(id == PROVIDIA9685) ||
 		(id == CYBER9382) ||
 		(id == CYBER9385);
-}
+पूर्ण
 
-static inline int is_blade(int id)
-{
-	return	(id == BLADE3D) ||
+अटल अंतरभूत पूर्णांक is_blade(पूर्णांक id)
+अणु
+	वापस	(id == BLADE3D) ||
 		(id == CYBERBLADEE4) ||
 		(id == CYBERBLADEi7) ||
 		(id == CYBERBLADEi7D) ||
@@ -116,1029 +117,1029 @@ static inline int is_blade(int id)
 		(id == CYBERBLADEi1D) ||
 		(id == CYBERBLADEAi1) ||
 		(id == CYBERBLADEAi1D);
-}
+पूर्ण
 
-static inline int is_xp(int id)
-{
-	return	(id == CYBERBLADEXPAi1) ||
+अटल अंतरभूत पूर्णांक is_xp(पूर्णांक id)
+अणु
+	वापस	(id == CYBERBLADEXPAi1) ||
 		(id == CYBERBLADEXPm8) ||
 		(id == CYBERBLADEXPm16);
-}
+पूर्ण
 
-static inline int is3Dchip(int id)
-{
-	return	is_blade(id) || is_xp(id) ||
+अटल अंतरभूत पूर्णांक is3Dchip(पूर्णांक id)
+अणु
+	वापस	is_blade(id) || is_xp(id) ||
 		(id == CYBER9397) || (id == CYBER9397DVD) ||
 		(id == CYBER9520) || (id == CYBER9525DVD) ||
 		(id == IMAGE975) || (id == IMAGE985);
-}
+पूर्ण
 
-static inline int iscyber(int id)
-{
-	switch (id) {
-	case CYBER9388:
-	case CYBER9382:
-	case CYBER9385:
-	case CYBER9397:
-	case CYBER9397DVD:
-	case CYBER9520:
-	case CYBER9525DVD:
-	case CYBERBLADEE4:
-	case CYBERBLADEi7D:
-	case CYBERBLADEi1:
-	case CYBERBLADEi1D:
-	case CYBERBLADEAi1:
-	case CYBERBLADEAi1D:
-	case CYBERBLADEXPAi1:
-		return 1;
+अटल अंतरभूत पूर्णांक iscyber(पूर्णांक id)
+अणु
+	चयन (id) अणु
+	हाल CYBER9388:
+	हाल CYBER9382:
+	हाल CYBER9385:
+	हाल CYBER9397:
+	हाल CYBER9397DVD:
+	हाल CYBER9520:
+	हाल CYBER9525DVD:
+	हाल CYBERBLADEE4:
+	हाल CYBERBLADEi7D:
+	हाल CYBERBLADEi1:
+	हाल CYBERBLADEi1D:
+	हाल CYBERBLADEAi1:
+	हाल CYBERBLADEAi1D:
+	हाल CYBERBLADEXPAi1:
+		वापस 1;
 
-	case CYBER9320:
-	case CYBERBLADEi7:	/* VIA MPV4 integrated version */
-	default:
-		/* case CYBERBLDAEXPm8:  Strange */
-		/* case CYBERBLDAEXPm16: Strange */
-		return 0;
-	}
-}
+	हाल CYBER9320:
+	हाल CYBERBLADEi7:	/* VIA MPV4 पूर्णांकegrated version */
+	शेष:
+		/* हाल CYBERBLDAEXPm8:  Strange */
+		/* हाल CYBERBLDAEXPm16: Strange */
+		वापस 0;
+	पूर्ण
+पूर्ण
 
-static inline void t_outb(struct tridentfb_par *p, u8 val, u16 reg)
-{
-	fb_writeb(val, p->io_virt + reg);
-}
+अटल अंतरभूत व्योम t_outb(काष्ठा tridentfb_par *p, u8 val, u16 reg)
+अणु
+	fb_ग_लिखोb(val, p->io_virt + reg);
+पूर्ण
 
-static inline u8 t_inb(struct tridentfb_par *p, u16 reg)
-{
-	return fb_readb(p->io_virt + reg);
-}
+अटल अंतरभूत u8 t_inb(काष्ठा tridentfb_par *p, u16 reg)
+अणु
+	वापस fb_पढ़ोb(p->io_virt + reg);
+पूर्ण
 
-static inline void writemmr(struct tridentfb_par *par, u16 r, u32 v)
-{
-	fb_writel(v, par->io_virt + r);
-}
+अटल अंतरभूत व्योम ग_लिखोmmr(काष्ठा tridentfb_par *par, u16 r, u32 v)
+अणु
+	fb_ग_लिखोl(v, par->io_virt + r);
+पूर्ण
 
-static inline u32 readmmr(struct tridentfb_par *par, u16 r)
-{
-	return fb_readl(par->io_virt + r);
-}
+अटल अंतरभूत u32 पढ़ोmmr(काष्ठा tridentfb_par *par, u16 r)
+अणु
+	वापस fb_पढ़ोl(par->io_virt + r);
+पूर्ण
 
-#define DDC_SDA_TGUI		BIT(0)
-#define DDC_SCL_TGUI		BIT(1)
-#define DDC_SCL_DRIVE_TGUI	BIT(2)
-#define DDC_SDA_DRIVE_TGUI	BIT(3)
-#define DDC_MASK_TGUI		(DDC_SCL_DRIVE_TGUI | DDC_SDA_DRIVE_TGUI)
+#घोषणा DDC_SDA_TGUI		BIT(0)
+#घोषणा DDC_SCL_TGUI		BIT(1)
+#घोषणा DDC_SCL_DRIVE_TGUI	BIT(2)
+#घोषणा DDC_SDA_DRIVE_TGUI	BIT(3)
+#घोषणा DDC_MASK_TGUI		(DDC_SCL_DRIVE_TGUI | DDC_SDA_DRIVE_TGUI)
 
-static void tridentfb_ddc_setscl_tgui(void *data, int val)
-{
-	struct tridentfb_par *par = data;
+अटल व्योम tridentfb_ddc_setscl_tgui(व्योम *data, पूर्णांक val)
+अणु
+	काष्ठा tridentfb_par *par = data;
 	u8 reg = vga_mm_rcrt(par->io_virt, I2C) & DDC_MASK_TGUI;
 
-	if (val)
-		reg &= ~DDC_SCL_DRIVE_TGUI; /* disable drive - don't drive hi */
-	else
+	अगर (val)
+		reg &= ~DDC_SCL_DRIVE_TGUI; /* disable drive - करोn't drive hi */
+	अन्यथा
 		reg |= DDC_SCL_DRIVE_TGUI; /* drive low */
 
 	vga_mm_wcrt(par->io_virt, I2C, reg);
-}
+पूर्ण
 
-static void tridentfb_ddc_setsda_tgui(void *data, int val)
-{
-	struct tridentfb_par *par = data;
+अटल व्योम tridentfb_ddc_setsda_tgui(व्योम *data, पूर्णांक val)
+अणु
+	काष्ठा tridentfb_par *par = data;
 	u8 reg = vga_mm_rcrt(par->io_virt, I2C) & DDC_MASK_TGUI;
 
-	if (val)
-		reg &= ~DDC_SDA_DRIVE_TGUI; /* disable drive - don't drive hi */
-	else
+	अगर (val)
+		reg &= ~DDC_SDA_DRIVE_TGUI; /* disable drive - करोn't drive hi */
+	अन्यथा
 		reg |= DDC_SDA_DRIVE_TGUI; /* drive low */
 
 	vga_mm_wcrt(par->io_virt, I2C, reg);
-}
+पूर्ण
 
-static int tridentfb_ddc_getsda_tgui(void *data)
-{
-	struct tridentfb_par *par = data;
+अटल पूर्णांक tridentfb_ddc_माला_लोda_tgui(व्योम *data)
+अणु
+	काष्ठा tridentfb_par *par = data;
 
-	return !!(vga_mm_rcrt(par->io_virt, I2C) & DDC_SDA_TGUI);
-}
+	वापस !!(vga_mm_rcrt(par->io_virt, I2C) & DDC_SDA_TGUI);
+पूर्ण
 
-#define DDC_SDA_IN	BIT(0)
-#define DDC_SCL_OUT	BIT(1)
-#define DDC_SDA_OUT	BIT(3)
-#define DDC_SCL_IN	BIT(6)
-#define DDC_MASK	(DDC_SCL_OUT | DDC_SDA_OUT)
+#घोषणा DDC_SDA_IN	BIT(0)
+#घोषणा DDC_SCL_OUT	BIT(1)
+#घोषणा DDC_SDA_OUT	BIT(3)
+#घोषणा DDC_SCL_IN	BIT(6)
+#घोषणा DDC_MASK	(DDC_SCL_OUT | DDC_SDA_OUT)
 
-static void tridentfb_ddc_setscl(void *data, int val)
-{
-	struct tridentfb_par *par = data;
-	unsigned char reg;
+अटल व्योम tridentfb_ddc_setscl(व्योम *data, पूर्णांक val)
+अणु
+	काष्ठा tridentfb_par *par = data;
+	अचिन्हित अक्षर reg;
 
 	reg = vga_mm_rcrt(par->io_virt, I2C) & DDC_MASK;
-	if (val)
+	अगर (val)
 		reg |= DDC_SCL_OUT;
-	else
+	अन्यथा
 		reg &= ~DDC_SCL_OUT;
 	vga_mm_wcrt(par->io_virt, I2C, reg);
-}
+पूर्ण
 
-static void tridentfb_ddc_setsda(void *data, int val)
-{
-	struct tridentfb_par *par = data;
-	unsigned char reg;
+अटल व्योम tridentfb_ddc_setsda(व्योम *data, पूर्णांक val)
+अणु
+	काष्ठा tridentfb_par *par = data;
+	अचिन्हित अक्षर reg;
 
 	reg = vga_mm_rcrt(par->io_virt, I2C) & DDC_MASK;
-	if (!val)
+	अगर (!val)
 		reg |= DDC_SDA_OUT;
-	else
+	अन्यथा
 		reg &= ~DDC_SDA_OUT;
 	vga_mm_wcrt(par->io_virt, I2C, reg);
-}
+पूर्ण
 
-static int tridentfb_ddc_getscl(void *data)
-{
-	struct tridentfb_par *par = data;
+अटल पूर्णांक tridentfb_ddc_माला_लोcl(व्योम *data)
+अणु
+	काष्ठा tridentfb_par *par = data;
 
-	return !!(vga_mm_rcrt(par->io_virt, I2C) & DDC_SCL_IN);
-}
+	वापस !!(vga_mm_rcrt(par->io_virt, I2C) & DDC_SCL_IN);
+पूर्ण
 
-static int tridentfb_ddc_getsda(void *data)
-{
-	struct tridentfb_par *par = data;
+अटल पूर्णांक tridentfb_ddc_माला_लोda(व्योम *data)
+अणु
+	काष्ठा tridentfb_par *par = data;
 
-	return !!(vga_mm_rcrt(par->io_virt, I2C) & DDC_SDA_IN);
-}
+	वापस !!(vga_mm_rcrt(par->io_virt, I2C) & DDC_SDA_IN);
+पूर्ण
 
-static int tridentfb_setup_ddc_bus(struct fb_info *info)
-{
-	struct tridentfb_par *par = info->par;
+अटल पूर्णांक tridentfb_setup_ddc_bus(काष्ठा fb_info *info)
+अणु
+	काष्ठा tridentfb_par *par = info->par;
 
 	strlcpy(par->ddc_adapter.name, info->fix.id,
-		sizeof(par->ddc_adapter.name));
+		माप(par->ddc_adapter.name));
 	par->ddc_adapter.owner		= THIS_MODULE;
 	par->ddc_adapter.class		= I2C_CLASS_DDC;
 	par->ddc_adapter.algo_data	= &par->ddc_algo;
 	par->ddc_adapter.dev.parent	= info->device;
-	if (is_oldclock(par->chip_id)) { /* not sure if this check is OK */
+	अगर (is_oldघड़ी(par->chip_id)) अणु /* not sure अगर this check is OK */
 		par->ddc_algo.setsda	= tridentfb_ddc_setsda_tgui;
 		par->ddc_algo.setscl	= tridentfb_ddc_setscl_tgui;
-		par->ddc_algo.getsda	= tridentfb_ddc_getsda_tgui;
-		/* no getscl */
-	} else {
+		par->ddc_algo.माला_लोda	= tridentfb_ddc_माला_लोda_tgui;
+		/* no माला_लोcl */
+	पूर्ण अन्यथा अणु
 		par->ddc_algo.setsda	= tridentfb_ddc_setsda;
 		par->ddc_algo.setscl	= tridentfb_ddc_setscl;
-		par->ddc_algo.getsda	= tridentfb_ddc_getsda;
-		par->ddc_algo.getscl	= tridentfb_ddc_getscl;
-	}
+		par->ddc_algo.माला_लोda	= tridentfb_ddc_माला_लोda;
+		par->ddc_algo.माला_लोcl	= tridentfb_ddc_माला_लोcl;
+	पूर्ण
 	par->ddc_algo.udelay		= 10;
-	par->ddc_algo.timeout		= 20;
+	par->ddc_algo.समयout		= 20;
 	par->ddc_algo.data		= par;
 
 	i2c_set_adapdata(&par->ddc_adapter, par);
 
-	return i2c_bit_add_bus(&par->ddc_adapter);
-}
+	वापस i2c_bit_add_bus(&par->ddc_adapter);
+पूर्ण
 
 /*
- * Blade specific acceleration.
+ * Blade specअगरic acceleration.
  */
 
-#define point(x, y) ((y) << 16 | (x))
+#घोषणा poपूर्णांक(x, y) ((y) << 16 | (x))
 
-static void blade_init_accel(struct tridentfb_par *par, int pitch, int bpp)
-{
-	int v1 = (pitch >> 3) << 20;
-	int tmp = bpp == 24 ? 2 : (bpp >> 4);
-	int v2 = v1 | (tmp << 29);
+अटल व्योम blade_init_accel(काष्ठा tridentfb_par *par, पूर्णांक pitch, पूर्णांक bpp)
+अणु
+	पूर्णांक v1 = (pitch >> 3) << 20;
+	पूर्णांक पंचांगp = bpp == 24 ? 2 : (bpp >> 4);
+	पूर्णांक v2 = v1 | (पंचांगp << 29);
 
-	writemmr(par, 0x21C0, v2);
-	writemmr(par, 0x21C4, v2);
-	writemmr(par, 0x21B8, v2);
-	writemmr(par, 0x21BC, v2);
-	writemmr(par, 0x21D0, v1);
-	writemmr(par, 0x21D4, v1);
-	writemmr(par, 0x21C8, v1);
-	writemmr(par, 0x21CC, v1);
-	writemmr(par, 0x216C, 0);
-}
+	ग_लिखोmmr(par, 0x21C0, v2);
+	ग_लिखोmmr(par, 0x21C4, v2);
+	ग_लिखोmmr(par, 0x21B8, v2);
+	ग_लिखोmmr(par, 0x21BC, v2);
+	ग_लिखोmmr(par, 0x21D0, v1);
+	ग_लिखोmmr(par, 0x21D4, v1);
+	ग_लिखोmmr(par, 0x21C8, v1);
+	ग_लिखोmmr(par, 0x21CC, v1);
+	ग_लिखोmmr(par, 0x216C, 0);
+पूर्ण
 
-static void blade_wait_engine(struct tridentfb_par *par)
-{
-	while (readmmr(par, STATUS) & 0xFA800000)
+अटल व्योम blade_रुको_engine(काष्ठा tridentfb_par *par)
+अणु
+	जबतक (पढ़ोmmr(par, STATUS) & 0xFA800000)
 		cpu_relax();
-}
+पूर्ण
 
-static void blade_fill_rect(struct tridentfb_par *par,
+अटल व्योम blade_fill_rect(काष्ठा tridentfb_par *par,
 			    u32 x, u32 y, u32 w, u32 h, u32 c, u32 rop)
-{
-	writemmr(par, COLOR, c);
-	writemmr(par, ROP, rop ? ROP_X : ROP_S);
-	writemmr(par, CMD, 0x20000000 | 1 << 19 | 1 << 4 | 2 << 2);
+अणु
+	ग_लिखोmmr(par, COLOR, c);
+	ग_लिखोmmr(par, ROP, rop ? ROP_X : ROP_S);
+	ग_लिखोmmr(par, CMD, 0x20000000 | 1 << 19 | 1 << 4 | 2 << 2);
 
-	writemmr(par, DST1, point(x, y));
-	writemmr(par, DST2, point(x + w - 1, y + h - 1));
-}
+	ग_लिखोmmr(par, DST1, poपूर्णांक(x, y));
+	ग_लिखोmmr(par, DST2, poपूर्णांक(x + w - 1, y + h - 1));
+पूर्ण
 
-static void blade_image_blit(struct tridentfb_par *par, const char *data,
+अटल व्योम blade_image_blit(काष्ठा tridentfb_par *par, स्थिर अक्षर *data,
 			     u32 x, u32 y, u32 w, u32 h, u32 c, u32 b)
-{
-	unsigned size = ((w + 31) >> 5) * h;
+अणु
+	अचिन्हित size = ((w + 31) >> 5) * h;
 
-	writemmr(par, COLOR, c);
-	writemmr(par, BGCOLOR, b);
-	writemmr(par, CMD, 0xa0000000 | 3 << 19);
+	ग_लिखोmmr(par, COLOR, c);
+	ग_लिखोmmr(par, BGCOLOR, b);
+	ग_लिखोmmr(par, CMD, 0xa0000000 | 3 << 19);
 
-	writemmr(par, DST1, point(x, y));
-	writemmr(par, DST2, point(x + w - 1, y + h - 1));
+	ग_लिखोmmr(par, DST1, poपूर्णांक(x, y));
+	ग_लिखोmmr(par, DST2, poपूर्णांक(x + w - 1, y + h - 1));
 
-	iowrite32_rep(par->io_virt + 0x10000, data, size);
-}
+	ioग_लिखो32_rep(par->io_virt + 0x10000, data, size);
+पूर्ण
 
-static void blade_copy_rect(struct tridentfb_par *par,
+अटल व्योम blade_copy_rect(काष्ठा tridentfb_par *par,
 			    u32 x1, u32 y1, u32 x2, u32 y2, u32 w, u32 h)
-{
-	int direction = 2;
-	u32 s1 = point(x1, y1);
-	u32 s2 = point(x1 + w - 1, y1 + h - 1);
-	u32 d1 = point(x2, y2);
-	u32 d2 = point(x2 + w - 1, y2 + h - 1);
+अणु
+	पूर्णांक direction = 2;
+	u32 s1 = poपूर्णांक(x1, y1);
+	u32 s2 = poपूर्णांक(x1 + w - 1, y1 + h - 1);
+	u32 d1 = poपूर्णांक(x2, y2);
+	u32 d2 = poपूर्णांक(x2 + w - 1, y2 + h - 1);
 
-	if ((y1 > y2) || ((y1 == y2) && (x1 > x2)))
+	अगर ((y1 > y2) || ((y1 == y2) && (x1 > x2)))
 		direction = 0;
 
-	writemmr(par, ROP, ROP_S);
-	writemmr(par, CMD, 0xE0000000 | 1 << 19 | 1 << 4 | 1 << 2 | direction);
+	ग_लिखोmmr(par, ROP, ROP_S);
+	ग_लिखोmmr(par, CMD, 0xE0000000 | 1 << 19 | 1 << 4 | 1 << 2 | direction);
 
-	writemmr(par, SRC1, direction ? s2 : s1);
-	writemmr(par, SRC2, direction ? s1 : s2);
-	writemmr(par, DST1, direction ? d2 : d1);
-	writemmr(par, DST2, direction ? d1 : d2);
-}
+	ग_लिखोmmr(par, SRC1, direction ? s2 : s1);
+	ग_लिखोmmr(par, SRC2, direction ? s1 : s2);
+	ग_लिखोmmr(par, DST1, direction ? d2 : d1);
+	ग_लिखोmmr(par, DST2, direction ? d1 : d2);
+पूर्ण
 
 /*
- * BladeXP specific acceleration functions
+ * BladeXP specअगरic acceleration functions
  */
 
-static void xp_init_accel(struct tridentfb_par *par, int pitch, int bpp)
-{
-	unsigned char x = bpp == 24 ? 3 : (bpp >> 4);
-	int v1 = pitch << (bpp == 24 ? 20 : (18 + x));
+अटल व्योम xp_init_accel(काष्ठा tridentfb_par *par, पूर्णांक pitch, पूर्णांक bpp)
+अणु
+	अचिन्हित अक्षर x = bpp == 24 ? 3 : (bpp >> 4);
+	पूर्णांक v1 = pitch << (bpp == 24 ? 20 : (18 + x));
 
-	switch (pitch << (bpp >> 3)) {
-	case 8192:
-	case 512:
+	चयन (pitch << (bpp >> 3)) अणु
+	हाल 8192:
+	हाल 512:
 		x |= 0x00;
-		break;
-	case 1024:
+		अवरोध;
+	हाल 1024:
 		x |= 0x04;
-		break;
-	case 2048:
+		अवरोध;
+	हाल 2048:
 		x |= 0x08;
-		break;
-	case 4096:
+		अवरोध;
+	हाल 4096:
 		x |= 0x0C;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	t_outb(par, x, 0x2125);
 
 	par->eng_oper = x | 0x40;
 
-	writemmr(par, 0x2154, v1);
-	writemmr(par, 0x2150, v1);
+	ग_लिखोmmr(par, 0x2154, v1);
+	ग_लिखोmmr(par, 0x2150, v1);
 	t_outb(par, 3, 0x2126);
-}
+पूर्ण
 
-static void xp_wait_engine(struct tridentfb_par *par)
-{
-	int count = 0;
-	int timeout = 0;
+अटल व्योम xp_रुको_engine(काष्ठा tridentfb_par *par)
+अणु
+	पूर्णांक count = 0;
+	पूर्णांक समयout = 0;
 
-	while (t_inb(par, STATUS) & 0x80) {
+	जबतक (t_inb(par, STATUS) & 0x80) अणु
 		count++;
-		if (count == 10000000) {
+		अगर (count == 10000000) अणु
 			/* Timeout */
 			count = 9990000;
-			timeout++;
-			if (timeout == 8) {
+			समयout++;
+			अगर (समयout == 8) अणु
 				/* Reset engine */
 				t_outb(par, 0x00, STATUS);
-				return;
-			}
-		}
+				वापस;
+			पूर्ण
+		पूर्ण
 		cpu_relax();
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void xp_fill_rect(struct tridentfb_par *par,
+अटल व्योम xp_fill_rect(काष्ठा tridentfb_par *par,
 			 u32 x, u32 y, u32 w, u32 h, u32 c, u32 rop)
-{
-	writemmr(par, 0x2127, ROP_P);
-	writemmr(par, 0x2158, c);
-	writemmr(par, DRAWFL, 0x4000);
-	writemmr(par, OLDDIM, point(h, w));
-	writemmr(par, OLDDST, point(y, x));
+अणु
+	ग_लिखोmmr(par, 0x2127, ROP_P);
+	ग_लिखोmmr(par, 0x2158, c);
+	ग_लिखोmmr(par, DRAWFL, 0x4000);
+	ग_लिखोmmr(par, OLDDIM, poपूर्णांक(h, w));
+	ग_लिखोmmr(par, OLDDST, poपूर्णांक(y, x));
 	t_outb(par, 0x01, OLDCMD);
 	t_outb(par, par->eng_oper, 0x2125);
-}
+पूर्ण
 
-static void xp_copy_rect(struct tridentfb_par *par,
+अटल व्योम xp_copy_rect(काष्ठा tridentfb_par *par,
 			 u32 x1, u32 y1, u32 x2, u32 y2, u32 w, u32 h)
-{
-	u32 x1_tmp, x2_tmp, y1_tmp, y2_tmp;
-	int direction = 0x0004;
+अणु
+	u32 x1_पंचांगp, x2_पंचांगp, y1_पंचांगp, y2_पंचांगp;
+	पूर्णांक direction = 0x0004;
 
-	if ((x1 < x2) && (y1 == y2)) {
+	अगर ((x1 < x2) && (y1 == y2)) अणु
 		direction |= 0x0200;
-		x1_tmp = x1 + w - 1;
-		x2_tmp = x2 + w - 1;
-	} else {
-		x1_tmp = x1;
-		x2_tmp = x2;
-	}
+		x1_पंचांगp = x1 + w - 1;
+		x2_पंचांगp = x2 + w - 1;
+	पूर्ण अन्यथा अणु
+		x1_पंचांगp = x1;
+		x2_पंचांगp = x2;
+	पूर्ण
 
-	if (y1 < y2) {
+	अगर (y1 < y2) अणु
 		direction |= 0x0100;
-		y1_tmp = y1 + h - 1;
-		y2_tmp = y2 + h - 1;
-	} else {
-		y1_tmp = y1;
-		y2_tmp = y2;
-	}
+		y1_पंचांगp = y1 + h - 1;
+		y2_पंचांगp = y2 + h - 1;
+	पूर्ण अन्यथा अणु
+		y1_पंचांगp = y1;
+		y2_पंचांगp = y2;
+	पूर्ण
 
-	writemmr(par, DRAWFL, direction);
+	ग_लिखोmmr(par, DRAWFL, direction);
 	t_outb(par, ROP_S, 0x2127);
-	writemmr(par, OLDSRC, point(y1_tmp, x1_tmp));
-	writemmr(par, OLDDST, point(y2_tmp, x2_tmp));
-	writemmr(par, OLDDIM, point(h, w));
+	ग_लिखोmmr(par, OLDSRC, poपूर्णांक(y1_पंचांगp, x1_पंचांगp));
+	ग_लिखोmmr(par, OLDDST, poपूर्णांक(y2_पंचांगp, x2_पंचांगp));
+	ग_लिखोmmr(par, OLDDIM, poपूर्णांक(h, w));
 	t_outb(par, 0x01, OLDCMD);
-}
+पूर्ण
 
 /*
- * Image specific acceleration functions
+ * Image specअगरic acceleration functions
  */
-static void image_init_accel(struct tridentfb_par *par, int pitch, int bpp)
-{
-	int tmp = bpp == 24 ? 2: (bpp >> 4);
+अटल व्योम image_init_accel(काष्ठा tridentfb_par *par, पूर्णांक pitch, पूर्णांक bpp)
+अणु
+	पूर्णांक पंचांगp = bpp == 24 ? 2: (bpp >> 4);
 
-	writemmr(par, 0x2120, 0xF0000000);
-	writemmr(par, 0x2120, 0x40000000 | tmp);
-	writemmr(par, 0x2120, 0x80000000);
-	writemmr(par, 0x2144, 0x00000000);
-	writemmr(par, 0x2148, 0x00000000);
-	writemmr(par, 0x2150, 0x00000000);
-	writemmr(par, 0x2154, 0x00000000);
-	writemmr(par, 0x2120, 0x60000000 | (pitch << 16) | pitch);
-	writemmr(par, 0x216C, 0x00000000);
-	writemmr(par, 0x2170, 0x00000000);
-	writemmr(par, 0x217C, 0x00000000);
-	writemmr(par, 0x2120, 0x10000000);
-	writemmr(par, 0x2130, (2047 << 16) | 2047);
-}
+	ग_लिखोmmr(par, 0x2120, 0xF0000000);
+	ग_लिखोmmr(par, 0x2120, 0x40000000 | पंचांगp);
+	ग_लिखोmmr(par, 0x2120, 0x80000000);
+	ग_लिखोmmr(par, 0x2144, 0x00000000);
+	ग_लिखोmmr(par, 0x2148, 0x00000000);
+	ग_लिखोmmr(par, 0x2150, 0x00000000);
+	ग_लिखोmmr(par, 0x2154, 0x00000000);
+	ग_लिखोmmr(par, 0x2120, 0x60000000 | (pitch << 16) | pitch);
+	ग_लिखोmmr(par, 0x216C, 0x00000000);
+	ग_लिखोmmr(par, 0x2170, 0x00000000);
+	ग_लिखोmmr(par, 0x217C, 0x00000000);
+	ग_लिखोmmr(par, 0x2120, 0x10000000);
+	ग_लिखोmmr(par, 0x2130, (2047 << 16) | 2047);
+पूर्ण
 
-static void image_wait_engine(struct tridentfb_par *par)
-{
-	while (readmmr(par, 0x2164) & 0xF0000000)
+अटल व्योम image_रुको_engine(काष्ठा tridentfb_par *par)
+अणु
+	जबतक (पढ़ोmmr(par, 0x2164) & 0xF0000000)
 		cpu_relax();
-}
+पूर्ण
 
-static void image_fill_rect(struct tridentfb_par *par,
+अटल व्योम image_fill_rect(काष्ठा tridentfb_par *par,
 			    u32 x, u32 y, u32 w, u32 h, u32 c, u32 rop)
-{
-	writemmr(par, 0x2120, 0x80000000);
-	writemmr(par, 0x2120, 0x90000000 | ROP_S);
+अणु
+	ग_लिखोmmr(par, 0x2120, 0x80000000);
+	ग_लिखोmmr(par, 0x2120, 0x90000000 | ROP_S);
 
-	writemmr(par, 0x2144, c);
+	ग_लिखोmmr(par, 0x2144, c);
 
-	writemmr(par, DST1, point(x, y));
-	writemmr(par, DST2, point(x + w - 1, y + h - 1));
+	ग_लिखोmmr(par, DST1, poपूर्णांक(x, y));
+	ग_लिखोmmr(par, DST2, poपूर्णांक(x + w - 1, y + h - 1));
 
-	writemmr(par, 0x2124, 0x80000000 | 3 << 22 | 1 << 10 | 1 << 9);
-}
+	ग_लिखोmmr(par, 0x2124, 0x80000000 | 3 << 22 | 1 << 10 | 1 << 9);
+पूर्ण
 
-static void image_copy_rect(struct tridentfb_par *par,
+अटल व्योम image_copy_rect(काष्ठा tridentfb_par *par,
 			    u32 x1, u32 y1, u32 x2, u32 y2, u32 w, u32 h)
-{
-	int direction = 0x4;
-	u32 s1 = point(x1, y1);
-	u32 s2 = point(x1 + w - 1, y1 + h - 1);
-	u32 d1 = point(x2, y2);
-	u32 d2 = point(x2 + w - 1, y2 + h - 1);
+अणु
+	पूर्णांक direction = 0x4;
+	u32 s1 = poपूर्णांक(x1, y1);
+	u32 s2 = poपूर्णांक(x1 + w - 1, y1 + h - 1);
+	u32 d1 = poपूर्णांक(x2, y2);
+	u32 d2 = poपूर्णांक(x2 + w - 1, y2 + h - 1);
 
-	if ((y1 > y2) || ((y1 == y2) && (x1 > x2)))
+	अगर ((y1 > y2) || ((y1 == y2) && (x1 > x2)))
 		direction = 0;
 
-	writemmr(par, 0x2120, 0x80000000);
-	writemmr(par, 0x2120, 0x90000000 | ROP_S);
+	ग_लिखोmmr(par, 0x2120, 0x80000000);
+	ग_लिखोmmr(par, 0x2120, 0x90000000 | ROP_S);
 
-	writemmr(par, SRC1, direction ? s2 : s1);
-	writemmr(par, SRC2, direction ? s1 : s2);
-	writemmr(par, DST1, direction ? d2 : d1);
-	writemmr(par, DST2, direction ? d1 : d2);
-	writemmr(par, 0x2124,
+	ग_लिखोmmr(par, SRC1, direction ? s2 : s1);
+	ग_लिखोmmr(par, SRC2, direction ? s1 : s2);
+	ग_लिखोmmr(par, DST1, direction ? d2 : d1);
+	ग_लिखोmmr(par, DST2, direction ? d1 : d2);
+	ग_लिखोmmr(par, 0x2124,
 		 0x80000000 | 1 << 22 | 1 << 10 | 1 << 7 | direction);
-}
+पूर्ण
 
 /*
  * TGUI 9440/96XX acceleration
  */
 
-static void tgui_init_accel(struct tridentfb_par *par, int pitch, int bpp)
-{
-	unsigned char x = bpp == 24 ? 3 : (bpp >> 4);
+अटल व्योम tgui_init_accel(काष्ठा tridentfb_par *par, पूर्णांक pitch, पूर्णांक bpp)
+अणु
+	अचिन्हित अक्षर x = bpp == 24 ? 3 : (bpp >> 4);
 
 	/* disable clipping */
-	writemmr(par, 0x2148, 0);
-	writemmr(par, 0x214C, point(4095, 2047));
+	ग_लिखोmmr(par, 0x2148, 0);
+	ग_लिखोmmr(par, 0x214C, poपूर्णांक(4095, 2047));
 
-	switch ((pitch * bpp) / 8) {
-	case 8192:
-	case 512:
+	चयन ((pitch * bpp) / 8) अणु
+	हाल 8192:
+	हाल 512:
 		x |= 0x00;
-		break;
-	case 1024:
+		अवरोध;
+	हाल 1024:
 		x |= 0x04;
-		break;
-	case 2048:
+		अवरोध;
+	हाल 2048:
 		x |= 0x08;
-		break;
-	case 4096:
+		अवरोध;
+	हाल 4096:
 		x |= 0x0C;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	fb_writew(x, par->io_virt + 0x2122);
-}
+	fb_ग_लिखोw(x, par->io_virt + 0x2122);
+पूर्ण
 
-static void tgui_fill_rect(struct tridentfb_par *par,
+अटल व्योम tgui_fill_rect(काष्ठा tridentfb_par *par,
 			   u32 x, u32 y, u32 w, u32 h, u32 c, u32 rop)
-{
+अणु
 	t_outb(par, ROP_P, 0x2127);
-	writemmr(par, OLDCLR, c);
-	writemmr(par, DRAWFL, 0x4020);
-	writemmr(par, OLDDIM, point(w - 1, h - 1));
-	writemmr(par, OLDDST, point(x, y));
+	ग_लिखोmmr(par, OLDCLR, c);
+	ग_लिखोmmr(par, DRAWFL, 0x4020);
+	ग_लिखोmmr(par, OLDDIM, poपूर्णांक(w - 1, h - 1));
+	ग_लिखोmmr(par, OLDDST, poपूर्णांक(x, y));
 	t_outb(par, 1, OLDCMD);
-}
+पूर्ण
 
-static void tgui_copy_rect(struct tridentfb_par *par,
+अटल व्योम tgui_copy_rect(काष्ठा tridentfb_par *par,
 			   u32 x1, u32 y1, u32 x2, u32 y2, u32 w, u32 h)
-{
-	int flags = 0;
-	u16 x1_tmp, x2_tmp, y1_tmp, y2_tmp;
+अणु
+	पूर्णांक flags = 0;
+	u16 x1_पंचांगp, x2_पंचांगp, y1_पंचांगp, y2_पंचांगp;
 
-	if ((x1 < x2) && (y1 == y2)) {
+	अगर ((x1 < x2) && (y1 == y2)) अणु
 		flags |= 0x0200;
-		x1_tmp = x1 + w - 1;
-		x2_tmp = x2 + w - 1;
-	} else {
-		x1_tmp = x1;
-		x2_tmp = x2;
-	}
+		x1_पंचांगp = x1 + w - 1;
+		x2_पंचांगp = x2 + w - 1;
+	पूर्ण अन्यथा अणु
+		x1_पंचांगp = x1;
+		x2_पंचांगp = x2;
+	पूर्ण
 
-	if (y1 < y2) {
+	अगर (y1 < y2) अणु
 		flags |= 0x0100;
-		y1_tmp = y1 + h - 1;
-		y2_tmp = y2 + h - 1;
-	} else {
-		y1_tmp = y1;
-		y2_tmp = y2;
-	}
+		y1_पंचांगp = y1 + h - 1;
+		y2_पंचांगp = y2 + h - 1;
+	पूर्ण अन्यथा अणु
+		y1_पंचांगp = y1;
+		y2_पंचांगp = y2;
+	पूर्ण
 
-	writemmr(par, DRAWFL, 0x4 | flags);
+	ग_लिखोmmr(par, DRAWFL, 0x4 | flags);
 	t_outb(par, ROP_S, 0x2127);
-	writemmr(par, OLDSRC, point(x1_tmp, y1_tmp));
-	writemmr(par, OLDDST, point(x2_tmp, y2_tmp));
-	writemmr(par, OLDDIM, point(w - 1, h - 1));
+	ग_लिखोmmr(par, OLDSRC, poपूर्णांक(x1_पंचांगp, y1_पंचांगp));
+	ग_लिखोmmr(par, OLDDST, poपूर्णांक(x2_पंचांगp, y2_पंचांगp));
+	ग_लिखोmmr(par, OLDDIM, poपूर्णांक(w - 1, h - 1));
 	t_outb(par, 1, OLDCMD);
-}
+पूर्ण
 
 /*
  * Accel functions called by the upper layers
  */
-static void tridentfb_fillrect(struct fb_info *info,
-			       const struct fb_fillrect *fr)
-{
-	struct tridentfb_par *par = info->par;
-	int col;
+अटल व्योम tridentfb_fillrect(काष्ठा fb_info *info,
+			       स्थिर काष्ठा fb_fillrect *fr)
+अणु
+	काष्ठा tridentfb_par *par = info->par;
+	पूर्णांक col;
 
-	if (info->flags & FBINFO_HWACCEL_DISABLED) {
+	अगर (info->flags & FBINFO_HWACCEL_DISABLED) अणु
 		cfb_fillrect(info, fr);
-		return;
-	}
-	if (info->var.bits_per_pixel == 8) {
+		वापस;
+	पूर्ण
+	अगर (info->var.bits_per_pixel == 8) अणु
 		col = fr->color;
 		col |= col << 8;
 		col |= col << 16;
-	} else
-		col = ((u32 *)(info->pseudo_palette))[fr->color];
+	पूर्ण अन्यथा
+		col = ((u32 *)(info->pseuकरो_palette))[fr->color];
 
-	par->wait_engine(par);
+	par->रुको_engine(par);
 	par->fill_rect(par, fr->dx, fr->dy, fr->width,
 		       fr->height, col, fr->rop);
-}
+पूर्ण
 
-static void tridentfb_imageblit(struct fb_info *info,
-				const struct fb_image *img)
-{
-	struct tridentfb_par *par = info->par;
-	int col, bgcol;
+अटल व्योम tridentfb_imageblit(काष्ठा fb_info *info,
+				स्थिर काष्ठा fb_image *img)
+अणु
+	काष्ठा tridentfb_par *par = info->par;
+	पूर्णांक col, bgcol;
 
-	if ((info->flags & FBINFO_HWACCEL_DISABLED) || img->depth != 1) {
+	अगर ((info->flags & FBINFO_HWACCEL_DISABLED) || img->depth != 1) अणु
 		cfb_imageblit(info, img);
-		return;
-	}
-	if (info->var.bits_per_pixel == 8) {
+		वापस;
+	पूर्ण
+	अगर (info->var.bits_per_pixel == 8) अणु
 		col = img->fg_color;
 		col |= col << 8;
 		col |= col << 16;
 		bgcol = img->bg_color;
 		bgcol |= bgcol << 8;
 		bgcol |= bgcol << 16;
-	} else {
-		col = ((u32 *)(info->pseudo_palette))[img->fg_color];
-		bgcol = ((u32 *)(info->pseudo_palette))[img->bg_color];
-	}
+	पूर्ण अन्यथा अणु
+		col = ((u32 *)(info->pseuकरो_palette))[img->fg_color];
+		bgcol = ((u32 *)(info->pseuकरो_palette))[img->bg_color];
+	पूर्ण
 
-	par->wait_engine(par);
-	if (par->image_blit)
+	par->रुको_engine(par);
+	अगर (par->image_blit)
 		par->image_blit(par, img->data, img->dx, img->dy,
 				img->width, img->height, col, bgcol);
-	else
+	अन्यथा
 		cfb_imageblit(info, img);
-}
+पूर्ण
 
-static void tridentfb_copyarea(struct fb_info *info,
-			       const struct fb_copyarea *ca)
-{
-	struct tridentfb_par *par = info->par;
+अटल व्योम tridentfb_copyarea(काष्ठा fb_info *info,
+			       स्थिर काष्ठा fb_copyarea *ca)
+अणु
+	काष्ठा tridentfb_par *par = info->par;
 
-	if (info->flags & FBINFO_HWACCEL_DISABLED) {
+	अगर (info->flags & FBINFO_HWACCEL_DISABLED) अणु
 		cfb_copyarea(info, ca);
-		return;
-	}
-	par->wait_engine(par);
+		वापस;
+	पूर्ण
+	par->रुको_engine(par);
 	par->copy_rect(par, ca->sx, ca->sy, ca->dx, ca->dy,
 		       ca->width, ca->height);
-}
+पूर्ण
 
-static int tridentfb_sync(struct fb_info *info)
-{
-	struct tridentfb_par *par = info->par;
+अटल पूर्णांक tridentfb_sync(काष्ठा fb_info *info)
+अणु
+	काष्ठा tridentfb_par *par = info->par;
 
-	if (!(info->flags & FBINFO_HWACCEL_DISABLED))
-		par->wait_engine(par);
-	return 0;
-}
+	अगर (!(info->flags & FBINFO_HWACCEL_DISABLED))
+		par->रुको_engine(par);
+	वापस 0;
+पूर्ण
 
 /*
  * Hardware access functions
  */
 
-static inline unsigned char read3X4(struct tridentfb_par *par, int reg)
-{
-	return vga_mm_rcrt(par->io_virt, reg);
-}
+अटल अंतरभूत अचिन्हित अक्षर पढ़ो3X4(काष्ठा tridentfb_par *par, पूर्णांक reg)
+अणु
+	वापस vga_mm_rcrt(par->io_virt, reg);
+पूर्ण
 
-static inline void write3X4(struct tridentfb_par *par, int reg,
-			    unsigned char val)
-{
+अटल अंतरभूत व्योम ग_लिखो3X4(काष्ठा tridentfb_par *par, पूर्णांक reg,
+			    अचिन्हित अक्षर val)
+अणु
 	vga_mm_wcrt(par->io_virt, reg, val);
-}
+पूर्ण
 
-static inline unsigned char read3CE(struct tridentfb_par *par,
-				    unsigned char reg)
-{
-	return vga_mm_rgfx(par->io_virt, reg);
-}
+अटल अंतरभूत अचिन्हित अक्षर पढ़ो3CE(काष्ठा tridentfb_par *par,
+				    अचिन्हित अक्षर reg)
+अणु
+	वापस vga_mm_rgfx(par->io_virt, reg);
+पूर्ण
 
-static inline void writeAttr(struct tridentfb_par *par, int reg,
-			     unsigned char val)
-{
-	fb_readb(par->io_virt + VGA_IS1_RC);	/* flip-flop to index */
+अटल अंतरभूत व्योम ग_लिखोAttr(काष्ठा tridentfb_par *par, पूर्णांक reg,
+			     अचिन्हित अक्षर val)
+अणु
+	fb_पढ़ोb(par->io_virt + VGA_IS1_RC);	/* flip-flop to index */
 	vga_mm_wattr(par->io_virt, reg, val);
-}
+पूर्ण
 
-static inline void write3CE(struct tridentfb_par *par, int reg,
-			    unsigned char val)
-{
+अटल अंतरभूत व्योम ग_लिखो3CE(काष्ठा tridentfb_par *par, पूर्णांक reg,
+			    अचिन्हित अक्षर val)
+अणु
 	vga_mm_wgfx(par->io_virt, reg, val);
-}
+पूर्ण
 
-static void enable_mmio(struct tridentfb_par *par)
-{
+अटल व्योम enable_mmio(काष्ठा tridentfb_par *par)
+अणु
 	/* Goto New Mode */
 	vga_io_rseq(0x0B);
 
-	/* Unprotect registers */
+	/* Unprotect रेजिस्टरs */
 	vga_io_wseq(NewMode1, 0x80);
-	if (!is_oldprotect(par->chip_id))
+	अगर (!is_oldprotect(par->chip_id))
 		vga_io_wseq(Protection, 0x92);
 
 	/* Enable MMIO */
 	outb(PCIReg, 0x3D4);
 	outb(inb(0x3D5) | 0x01, 0x3D5);
-}
+पूर्ण
 
-static void disable_mmio(struct tridentfb_par *par)
-{
+अटल व्योम disable_mmio(काष्ठा tridentfb_par *par)
+अणु
 	/* Goto New Mode */
 	vga_mm_rseq(par->io_virt, 0x0B);
 
-	/* Unprotect registers */
+	/* Unprotect रेजिस्टरs */
 	vga_mm_wseq(par->io_virt, NewMode1, 0x80);
-	if (!is_oldprotect(par->chip_id))
+	अगर (!is_oldprotect(par->chip_id))
 		vga_mm_wseq(par->io_virt, Protection, 0x92);
 
 	/* Disable MMIO */
 	t_outb(par, PCIReg, 0x3D4);
 	t_outb(par, t_inb(par, 0x3D5) & ~0x01, 0x3D5);
-}
+पूर्ण
 
-static inline void crtc_unlock(struct tridentfb_par *par)
-{
-	write3X4(par, VGA_CRTC_V_SYNC_END,
-		 read3X4(par, VGA_CRTC_V_SYNC_END) & 0x7F);
-}
+अटल अंतरभूत व्योम crtc_unlock(काष्ठा tridentfb_par *par)
+अणु
+	ग_लिखो3X4(par, VGA_CRTC_V_SYNC_END,
+		 पढ़ो3X4(par, VGA_CRTC_V_SYNC_END) & 0x7F);
+पूर्ण
 
 /*  Return flat panel's maximum x resolution */
-static int get_nativex(struct tridentfb_par *par)
-{
-	int x, y, tmp;
+अटल पूर्णांक get_nativex(काष्ठा tridentfb_par *par)
+अणु
+	पूर्णांक x, y, पंचांगp;
 
-	if (nativex)
-		return nativex;
+	अगर (nativex)
+		वापस nativex;
 
-	tmp = (read3CE(par, VertStretch) >> 4) & 3;
+	पंचांगp = (पढ़ो3CE(par, VertStretch) >> 4) & 3;
 
-	switch (tmp) {
-	case 0:
+	चयन (पंचांगp) अणु
+	हाल 0:
 		x = 1280; y = 1024;
-		break;
-	case 2:
+		अवरोध;
+	हाल 2:
 		x = 1024; y = 768;
-		break;
-	case 3:
+		अवरोध;
+	हाल 3:
 		x = 800; y = 600;
-		break;
-	case 1:
-	default:
+		अवरोध;
+	हाल 1:
+	शेष:
 		x = 640;  y = 480;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	output("%dx%d flat panel found\n", x, y);
-	return x;
-}
+	वापस x;
+पूर्ण
 
 /* Set pitch */
-static inline void set_lwidth(struct tridentfb_par *par, int width)
-{
-	write3X4(par, VGA_CRTC_OFFSET, width & 0xFF);
+अटल अंतरभूत व्योम set_lwidth(काष्ठा tridentfb_par *par, पूर्णांक width)
+अणु
+	ग_लिखो3X4(par, VGA_CRTC_OFFSET, width & 0xFF);
 	/* chips older than TGUI9660 have only 1 width bit in AddColReg */
-	/* touching the other one breaks I2C/DDC */
-	if (par->chip_id == TGUI9440 || par->chip_id == CYBER9320)
-		write3X4(par, AddColReg,
-		     (read3X4(par, AddColReg) & 0xEF) | ((width & 0x100) >> 4));
-	else
-		write3X4(par, AddColReg,
-		     (read3X4(par, AddColReg) & 0xCF) | ((width & 0x300) >> 4));
-}
+	/* touching the other one अवरोधs I2C/DDC */
+	अगर (par->chip_id == TGUI9440 || par->chip_id == CYBER9320)
+		ग_लिखो3X4(par, AddColReg,
+		     (पढ़ो3X4(par, AddColReg) & 0xEF) | ((width & 0x100) >> 4));
+	अन्यथा
+		ग_लिखो3X4(par, AddColReg,
+		     (पढ़ो3X4(par, AddColReg) & 0xCF) | ((width & 0x300) >> 4));
+पूर्ण
 
 /* For resolutions smaller than FP resolution stretch */
-static void screen_stretch(struct tridentfb_par *par)
-{
-	if (par->chip_id != CYBERBLADEXPAi1)
-		write3CE(par, BiosReg, 0);
-	else
-		write3CE(par, BiosReg, 8);
-	write3CE(par, VertStretch, (read3CE(par, VertStretch) & 0x7C) | 1);
-	write3CE(par, HorStretch, (read3CE(par, HorStretch) & 0x7C) | 1);
-}
+अटल व्योम screen_stretch(काष्ठा tridentfb_par *par)
+अणु
+	अगर (par->chip_id != CYBERBLADEXPAi1)
+		ग_लिखो3CE(par, BiosReg, 0);
+	अन्यथा
+		ग_लिखो3CE(par, BiosReg, 8);
+	ग_लिखो3CE(par, VertStretch, (पढ़ो3CE(par, VertStretch) & 0x7C) | 1);
+	ग_लिखो3CE(par, HorStretch, (पढ़ो3CE(par, HorStretch) & 0x7C) | 1);
+पूर्ण
 
 /* For resolutions smaller than FP resolution center */
-static inline void screen_center(struct tridentfb_par *par)
-{
-	write3CE(par, VertStretch, (read3CE(par, VertStretch) & 0x7C) | 0x80);
-	write3CE(par, HorStretch, (read3CE(par, HorStretch) & 0x7C) | 0x80);
-}
+अटल अंतरभूत व्योम screen_center(काष्ठा tridentfb_par *par)
+अणु
+	ग_लिखो3CE(par, VertStretch, (पढ़ो3CE(par, VertStretch) & 0x7C) | 0x80);
+	ग_लिखो3CE(par, HorStretch, (पढ़ो3CE(par, HorStretch) & 0x7C) | 0x80);
+पूर्ण
 
 /* Address of first shown pixel in display memory */
-static void set_screen_start(struct tridentfb_par *par, int base)
-{
-	u8 tmp;
-	write3X4(par, VGA_CRTC_START_LO, base & 0xFF);
-	write3X4(par, VGA_CRTC_START_HI, (base & 0xFF00) >> 8);
-	tmp = read3X4(par, CRTCModuleTest) & 0xDF;
-	write3X4(par, CRTCModuleTest, tmp | ((base & 0x10000) >> 11));
-	tmp = read3X4(par, CRTHiOrd) & 0xF8;
-	write3X4(par, CRTHiOrd, tmp | ((base & 0xE0000) >> 17));
-}
+अटल व्योम set_screen_start(काष्ठा tridentfb_par *par, पूर्णांक base)
+अणु
+	u8 पंचांगp;
+	ग_लिखो3X4(par, VGA_CRTC_START_LO, base & 0xFF);
+	ग_लिखो3X4(par, VGA_CRTC_START_HI, (base & 0xFF00) >> 8);
+	पंचांगp = पढ़ो3X4(par, CRTCModuleTest) & 0xDF;
+	ग_लिखो3X4(par, CRTCModuleTest, पंचांगp | ((base & 0x10000) >> 11));
+	पंचांगp = पढ़ो3X4(par, CRTHiOrd) & 0xF8;
+	ग_लिखो3X4(par, CRTHiOrd, पंचांगp | ((base & 0xE0000) >> 17));
+पूर्ण
 
-/* Set dotclock frequency */
-static void set_vclk(struct tridentfb_par *par, unsigned long freq)
-{
-	int m, n, k;
-	unsigned long fi, d, di;
-	unsigned char best_m = 0, best_n = 0, best_k = 0;
-	unsigned char hi, lo;
-	unsigned char shift = !is_oldclock(par->chip_id) ? 2 : 1;
+/* Set करोtघड़ी frequency */
+अटल व्योम set_vclk(काष्ठा tridentfb_par *par, अचिन्हित दीर्घ freq)
+अणु
+	पूर्णांक m, n, k;
+	अचिन्हित दीर्घ fi, d, di;
+	अचिन्हित अक्षर best_m = 0, best_n = 0, best_k = 0;
+	अचिन्हित अक्षर hi, lo;
+	अचिन्हित अक्षर shअगरt = !is_oldघड़ी(par->chip_id) ? 2 : 1;
 
 	d = 20000;
-	for (k = shift; k >= 0; k--)
-		for (m = 1; m < 32; m++) {
-			n = ((m + 2) << shift) - 8;
-			for (n = (n < 0 ? 0 : n); n < 122; n++) {
+	क्रम (k = shअगरt; k >= 0; k--)
+		क्रम (m = 1; m < 32; m++) अणु
+			n = ((m + 2) << shअगरt) - 8;
+			क्रम (n = (n < 0 ? 0 : n); n < 122; n++) अणु
 				fi = ((14318l * (n + 8)) / (m + 2)) >> k;
-				di = abs(fi - freq);
-				if (di < d || (di == d && k == best_k)) {
+				di = असल(fi - freq);
+				अगर (di < d || (di == d && k == best_k)) अणु
 					d = di;
 					best_n = n;
 					best_m = m;
 					best_k = k;
-				}
-				if (fi > freq)
-					break;
-			}
-		}
+				पूर्ण
+				अगर (fi > freq)
+					अवरोध;
+			पूर्ण
+		पूर्ण
 
-	if (is_oldclock(par->chip_id)) {
+	अगर (is_oldघड़ी(par->chip_id)) अणु
 		lo = best_n | (best_m << 7);
 		hi = (best_m >> 1) | (best_k << 4);
-	} else {
+	पूर्ण अन्यथा अणु
 		lo = best_n;
 		hi = best_m | (best_k << 6);
-	}
+	पूर्ण
 
-	if (is3Dchip(par->chip_id)) {
+	अगर (is3Dchip(par->chip_id)) अणु
 		vga_mm_wseq(par->io_virt, ClockHigh, hi);
 		vga_mm_wseq(par->io_virt, ClockLow, lo);
-	} else {
+	पूर्ण अन्यथा अणु
 		t_outb(par, lo, 0x43C8);
 		t_outb(par, hi, 0x43C9);
-	}
+	पूर्ण
 	debug("VCLK = %X %X\n", hi, lo);
-}
+पूर्ण
 
-/* Set number of lines for flat panels*/
-static void set_number_of_lines(struct tridentfb_par *par, int lines)
-{
-	int tmp = read3CE(par, CyberEnhance) & 0x8F;
-	if (lines > 1024)
-		tmp |= 0x50;
-	else if (lines > 768)
-		tmp |= 0x30;
-	else if (lines > 600)
-		tmp |= 0x20;
-	else if (lines > 480)
-		tmp |= 0x10;
-	write3CE(par, CyberEnhance, tmp);
-}
+/* Set number of lines क्रम flat panels*/
+अटल व्योम set_number_of_lines(काष्ठा tridentfb_par *par, पूर्णांक lines)
+अणु
+	पूर्णांक पंचांगp = पढ़ो3CE(par, CyberEnhance) & 0x8F;
+	अगर (lines > 1024)
+		पंचांगp |= 0x50;
+	अन्यथा अगर (lines > 768)
+		पंचांगp |= 0x30;
+	अन्यथा अगर (lines > 600)
+		पंचांगp |= 0x20;
+	अन्यथा अगर (lines > 480)
+		पंचांगp |= 0x10;
+	ग_लिखो3CE(par, CyberEnhance, पंचांगp);
+पूर्ण
 
 /*
  * If we see that FP is active we assume we have one.
  * Otherwise we have a CRT display. User can override.
  */
-static int is_flatpanel(struct tridentfb_par *par)
-{
-	if (fp)
-		return 1;
-	if (crt || !iscyber(par->chip_id))
-		return 0;
-	return (read3CE(par, FPConfig) & 0x10) ? 1 : 0;
-}
+अटल पूर्णांक is_flatpanel(काष्ठा tridentfb_par *par)
+अणु
+	अगर (fp)
+		वापस 1;
+	अगर (crt || !iscyber(par->chip_id))
+		वापस 0;
+	वापस (पढ़ो3CE(par, FPConfig) & 0x10) ? 1 : 0;
+पूर्ण
 
 /* Try detecting the video memory size */
-static unsigned int get_memsize(struct tridentfb_par *par)
-{
-	unsigned char tmp, tmp2;
-	unsigned int k;
+अटल अचिन्हित पूर्णांक get_memsize(काष्ठा tridentfb_par *par)
+अणु
+	अचिन्हित अक्षर पंचांगp, पंचांगp2;
+	अचिन्हित पूर्णांक k;
 
 	/* If memory size provided by user */
-	if (memsize)
+	अगर (memsize)
 		k = memsize * Kb;
-	else
-		switch (par->chip_id) {
-		case CYBER9525DVD:
+	अन्यथा
+		चयन (par->chip_id) अणु
+		हाल CYBER9525DVD:
 			k = 2560 * Kb;
-			break;
-		default:
-			tmp = read3X4(par, SPR) & 0x0F;
-			switch (tmp) {
+			अवरोध;
+		शेष:
+			पंचांगp = पढ़ो3X4(par, SPR) & 0x0F;
+			चयन (पंचांगp) अणु
 
-			case 0x01:
+			हाल 0x01:
 				k = 512 * Kb;
-				break;
-			case 0x02:
+				अवरोध;
+			हाल 0x02:
 				k = 6 * Mb;	/* XP */
-				break;
-			case 0x03:
+				अवरोध;
+			हाल 0x03:
 				k = 1 * Mb;
-				break;
-			case 0x04:
+				अवरोध;
+			हाल 0x04:
 				k = 8 * Mb;
-				break;
-			case 0x06:
+				अवरोध;
+			हाल 0x06:
 				k = 10 * Mb;	/* XP */
-				break;
-			case 0x07:
+				अवरोध;
+			हाल 0x07:
 				k = 2 * Mb;
-				break;
-			case 0x08:
+				अवरोध;
+			हाल 0x08:
 				k = 12 * Mb;	/* XP */
-				break;
-			case 0x0A:
+				अवरोध;
+			हाल 0x0A:
 				k = 14 * Mb;	/* XP */
-				break;
-			case 0x0C:
+				अवरोध;
+			हाल 0x0C:
 				k = 16 * Mb;	/* XP */
-				break;
-			case 0x0E:		/* XP */
+				अवरोध;
+			हाल 0x0E:		/* XP */
 
-				tmp2 = vga_mm_rseq(par->io_virt, 0xC1);
-				switch (tmp2) {
-				case 0x00:
+				पंचांगp2 = vga_mm_rseq(par->io_virt, 0xC1);
+				चयन (पंचांगp2) अणु
+				हाल 0x00:
 					k = 20 * Mb;
-					break;
-				case 0x01:
+					अवरोध;
+				हाल 0x01:
 					k = 24 * Mb;
-					break;
-				case 0x10:
+					अवरोध;
+				हाल 0x10:
 					k = 28 * Mb;
-					break;
-				case 0x11:
+					अवरोध;
+				हाल 0x11:
 					k = 32 * Mb;
-					break;
-				default:
+					अवरोध;
+				शेष:
 					k = 1 * Mb;
-					break;
-				}
-				break;
+					अवरोध;
+				पूर्ण
+				अवरोध;
 
-			case 0x0F:
+			हाल 0x0F:
 				k = 4 * Mb;
-				break;
-			default:
+				अवरोध;
+			शेष:
 				k = 1 * Mb;
-				break;
-			}
-		}
+				अवरोध;
+			पूर्ण
+		पूर्ण
 
-	k -= memdiff * Kb;
+	k -= memdअगरf * Kb;
 	output("framebuffer size = %d Kb\n", k / Kb);
-	return k;
-}
+	वापस k;
+पूर्ण
 
-/* See if we can handle the video mode described in var */
-static int tridentfb_check_var(struct fb_var_screeninfo *var,
-			       struct fb_info *info)
-{
-	struct tridentfb_par *par = info->par;
-	int bpp = var->bits_per_pixel;
-	int line_length;
-	int ramdac = 230000; /* 230MHz for most 3D chips */
+/* See अगर we can handle the video mode described in var */
+अटल पूर्णांक tridentfb_check_var(काष्ठा fb_var_screeninfo *var,
+			       काष्ठा fb_info *info)
+अणु
+	काष्ठा tridentfb_par *par = info->par;
+	पूर्णांक bpp = var->bits_per_pixel;
+	पूर्णांक line_length;
+	पूर्णांक ramdac = 230000; /* 230MHz क्रम most 3D chips */
 	debug("enter\n");
 
 	/* check color depth */
-	if (bpp == 24)
+	अगर (bpp == 24)
 		bpp = var->bits_per_pixel = 32;
-	if (bpp != 8 && bpp != 16 && bpp != 32)
-		return -EINVAL;
-	if (par->chip_id == TGUI9440 && bpp == 32)
-		return -EINVAL;
+	अगर (bpp != 8 && bpp != 16 && bpp != 32)
+		वापस -EINVAL;
+	अगर (par->chip_id == TGUI9440 && bpp == 32)
+		वापस -EINVAL;
 	/* check whether resolution fits on panel and in memory */
-	if (par->flatpanel && nativex && var->xres > nativex)
-		return -EINVAL;
+	अगर (par->flatpanel && nativex && var->xres > nativex)
+		वापस -EINVAL;
 	/* various resolution checks */
 	var->xres = (var->xres + 7) & ~0x7;
-	if (var->xres > var->xres_virtual)
-		var->xres_virtual = var->xres;
-	if (var->yres > var->yres_virtual)
-		var->yres_virtual = var->yres;
-	if (var->xres_virtual > 4095 || var->yres > 2048)
-		return -EINVAL;
-	/* prevent from position overflow for acceleration */
-	if (var->yres_virtual > 0xffff)
-		return -EINVAL;
-	line_length = var->xres_virtual * bpp / 8;
+	अगर (var->xres > var->xres_भव)
+		var->xres_भव = var->xres;
+	अगर (var->yres > var->yres_भव)
+		var->yres_भव = var->yres;
+	अगर (var->xres_भव > 4095 || var->yres > 2048)
+		वापस -EINVAL;
+	/* prevent from position overflow क्रम acceleration */
+	अगर (var->yres_भव > 0xffff)
+		वापस -EINVAL;
+	line_length = var->xres_भव * bpp / 8;
 
-	if (!is3Dchip(par->chip_id) &&
-	    !(info->flags & FBINFO_HWACCEL_DISABLED)) {
-		/* acceleration requires line length to be power of 2 */
-		if (line_length <= 512)
-			var->xres_virtual = 512 * 8 / bpp;
-		else if (line_length <= 1024)
-			var->xres_virtual = 1024 * 8 / bpp;
-		else if (line_length <= 2048)
-			var->xres_virtual = 2048 * 8 / bpp;
-		else if (line_length <= 4096)
-			var->xres_virtual = 4096 * 8 / bpp;
-		else if (line_length <= 8192)
-			var->xres_virtual = 8192 * 8 / bpp;
-		else
-			return -EINVAL;
+	अगर (!is3Dchip(par->chip_id) &&
+	    !(info->flags & FBINFO_HWACCEL_DISABLED)) अणु
+		/* acceleration requires line length to be घातer of 2 */
+		अगर (line_length <= 512)
+			var->xres_भव = 512 * 8 / bpp;
+		अन्यथा अगर (line_length <= 1024)
+			var->xres_भव = 1024 * 8 / bpp;
+		अन्यथा अगर (line_length <= 2048)
+			var->xres_भव = 2048 * 8 / bpp;
+		अन्यथा अगर (line_length <= 4096)
+			var->xres_भव = 4096 * 8 / bpp;
+		अन्यथा अगर (line_length <= 8192)
+			var->xres_भव = 8192 * 8 / bpp;
+		अन्यथा
+			वापस -EINVAL;
 
-		line_length = var->xres_virtual * bpp / 8;
-	}
+		line_length = var->xres_भव * bpp / 8;
+	पूर्ण
 
-	/* datasheet specifies how to set panning only up to 4 MB */
-	if (line_length * (var->yres_virtual - var->yres) > (4 << 20))
-		var->yres_virtual = ((4 << 20) / line_length) + var->yres;
+	/* datasheet specअगरies how to set panning only up to 4 MB */
+	अगर (line_length * (var->yres_भव - var->yres) > (4 << 20))
+		var->yres_भव = ((4 << 20) / line_length) + var->yres;
 
-	if (line_length * var->yres_virtual > info->fix.smem_len)
-		return -EINVAL;
+	अगर (line_length * var->yres_भव > info->fix.smem_len)
+		वापस -EINVAL;
 
-	switch (bpp) {
-	case 8:
+	चयन (bpp) अणु
+	हाल 8:
 		var->red.offset = 0;
 		var->red.length = 8;
 		var->green = var->red;
 		var->blue = var->red;
-		break;
-	case 16:
+		अवरोध;
+	हाल 16:
 		var->red.offset = 11;
 		var->green.offset = 5;
 		var->blue.offset = 0;
 		var->red.length = 5;
 		var->green.length = 6;
 		var->blue.length = 5;
-		break;
-	case 32:
+		अवरोध;
+	हाल 32:
 		var->red.offset = 16;
 		var->green.offset = 8;
 		var->blue.offset = 0;
 		var->red.length = 8;
 		var->green.length = 8;
 		var->blue.length = 8;
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	if (is_xp(par->chip_id))
+	अगर (is_xp(par->chip_id))
 		ramdac = 350000;
 
-	switch (par->chip_id) {
-	case TGUI9440:
+	चयन (par->chip_id) अणु
+	हाल TGUI9440:
 		ramdac = (bpp >= 16) ? 45000 : 90000;
-		break;
-	case CYBER9320:
-	case TGUI9660:
+		अवरोध;
+	हाल CYBER9320:
+	हाल TGUI9660:
 		ramdac = 135000;
-		break;
-	case PROVIDIA9685:
-	case CYBER9388:
-	case CYBER9382:
-	case CYBER9385:
+		अवरोध;
+	हाल PROVIDIA9685:
+	हाल CYBER9388:
+	हाल CYBER9382:
+	हाल CYBER9385:
 		ramdac = 170000;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	/* The clock is doubled for 32 bpp */
-	if (bpp == 32)
+	/* The घड़ी is द्विगुनd क्रम 32 bpp */
+	अगर (bpp == 32)
 		ramdac /= 2;
 
-	if (PICOS2KHZ(var->pixclock) > ramdac)
-		return -EINVAL;
+	अगर (PICOS2KHZ(var->pixघड़ी) > ramdac)
+		वापस -EINVAL;
 
 	debug("exit\n");
 
-	return 0;
+	वापस 0;
 
-}
+पूर्ण
 
 /* Pan the display */
-static int tridentfb_pan_display(struct fb_var_screeninfo *var,
-				 struct fb_info *info)
-{
-	struct tridentfb_par *par = info->par;
-	unsigned int offset;
+अटल पूर्णांक tridentfb_pan_display(काष्ठा fb_var_screeninfo *var,
+				 काष्ठा fb_info *info)
+अणु
+	काष्ठा tridentfb_par *par = info->par;
+	अचिन्हित पूर्णांक offset;
 
 	debug("enter\n");
-	offset = (var->xoffset + (var->yoffset * info->var.xres_virtual))
+	offset = (var->xoffset + (var->yoffset * info->var.xres_भव))
 		* info->var.bits_per_pixel / 32;
 	set_screen_start(par, offset);
 	debug("exit\n");
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static inline void shadowmode_on(struct tridentfb_par *par)
-{
-	write3CE(par, CyberControl, read3CE(par, CyberControl) | 0x81);
-}
+अटल अंतरभूत व्योम shaकरोwmode_on(काष्ठा tridentfb_par *par)
+अणु
+	ग_लिखो3CE(par, CyberControl, पढ़ो3CE(par, CyberControl) | 0x81);
+पूर्ण
 
-static inline void shadowmode_off(struct tridentfb_par *par)
-{
-	write3CE(par, CyberControl, read3CE(par, CyberControl) & 0x7E);
-}
+अटल अंतरभूत व्योम shaकरोwmode_off(काष्ठा tridentfb_par *par)
+अणु
+	ग_लिखो3CE(par, CyberControl, पढ़ो3CE(par, CyberControl) & 0x7E);
+पूर्ण
 
 /* Set the hardware to the requested video mode */
-static int tridentfb_set_par(struct fb_info *info)
-{
-	struct tridentfb_par *par = info->par;
+अटल पूर्णांक tridentfb_set_par(काष्ठा fb_info *info)
+अणु
+	काष्ठा tridentfb_par *par = info->par;
 	u32 htotal, hdispend, hsyncstart, hsyncend, hblankstart, hblankend;
 	u32 vtotal, vdispend, vsyncstart, vsyncend, vblankstart, vblankend;
-	struct fb_var_screeninfo *var = &info->var;
-	int bpp = var->bits_per_pixel;
-	unsigned char tmp;
-	unsigned long vclk;
+	काष्ठा fb_var_screeninfo *var = &info->var;
+	पूर्णांक bpp = var->bits_per_pixel;
+	अचिन्हित अक्षर पंचांगp;
+	अचिन्हित दीर्घ vclk;
 
 	debug("enter\n");
 	hdispend = var->xres / 8 - 1;
@@ -1156,220 +1157,220 @@ static int tridentfb_set_par(struct fb_info *info)
 	vblankstart = vdispend + 1;
 	vblankend = vtotal;
 
-	if (info->var.vmode & FB_VMODE_INTERLACED) {
+	अगर (info->var.vmode & FB_VMODE_INTERLACED) अणु
 		vtotal /= 2;
 		vdispend /= 2;
 		vsyncstart /= 2;
 		vsyncend /= 2;
 		vblankstart /= 2;
 		vblankend /= 2;
-	}
+	पूर्ण
 
 	enable_mmio(par);
 	crtc_unlock(par);
-	write3CE(par, CyberControl, 8);
-	tmp = 0xEB;
-	if (var->sync & FB_SYNC_HOR_HIGH_ACT)
-		tmp &= ~0x40;
-	if (var->sync & FB_SYNC_VERT_HIGH_ACT)
-		tmp &= ~0x80;
+	ग_लिखो3CE(par, CyberControl, 8);
+	पंचांगp = 0xEB;
+	अगर (var->sync & FB_SYNC_HOR_HIGH_ACT)
+		पंचांगp &= ~0x40;
+	अगर (var->sync & FB_SYNC_VERT_HIGH_ACT)
+		पंचांगp &= ~0x80;
 
-	if (par->flatpanel && var->xres < nativex) {
+	अगर (par->flatpanel && var->xres < nativex) अणु
 		/*
 		 * on flat panels with native size larger
 		 * than requested resolution decide whether
 		 * we stretch or center
 		 */
-		t_outb(par, tmp | 0xC0, VGA_MIS_W);
+		t_outb(par, पंचांगp | 0xC0, VGA_MIS_W);
 
-		shadowmode_on(par);
+		shaकरोwmode_on(par);
 
-		if (center)
+		अगर (center)
 			screen_center(par);
-		else if (stretch)
+		अन्यथा अगर (stretch)
 			screen_stretch(par);
 
-	} else {
-		t_outb(par, tmp, VGA_MIS_W);
-		write3CE(par, CyberControl, 8);
-	}
+	पूर्ण अन्यथा अणु
+		t_outb(par, पंचांगp, VGA_MIS_W);
+		ग_लिखो3CE(par, CyberControl, 8);
+	पूर्ण
 
 	/* vertical timing values */
-	write3X4(par, VGA_CRTC_V_TOTAL, vtotal & 0xFF);
-	write3X4(par, VGA_CRTC_V_DISP_END, vdispend & 0xFF);
-	write3X4(par, VGA_CRTC_V_SYNC_START, vsyncstart & 0xFF);
-	write3X4(par, VGA_CRTC_V_SYNC_END, (vsyncend & 0x0F));
-	write3X4(par, VGA_CRTC_V_BLANK_START, vblankstart & 0xFF);
-	write3X4(par, VGA_CRTC_V_BLANK_END, vblankend & 0xFF);
+	ग_लिखो3X4(par, VGA_CRTC_V_TOTAL, vtotal & 0xFF);
+	ग_लिखो3X4(par, VGA_CRTC_V_DISP_END, vdispend & 0xFF);
+	ग_लिखो3X4(par, VGA_CRTC_V_SYNC_START, vsyncstart & 0xFF);
+	ग_लिखो3X4(par, VGA_CRTC_V_SYNC_END, (vsyncend & 0x0F));
+	ग_लिखो3X4(par, VGA_CRTC_V_BLANK_START, vblankstart & 0xFF);
+	ग_लिखो3X4(par, VGA_CRTC_V_BLANK_END, vblankend & 0xFF);
 
 	/* horizontal timing values */
-	write3X4(par, VGA_CRTC_H_TOTAL, htotal & 0xFF);
-	write3X4(par, VGA_CRTC_H_DISP, hdispend & 0xFF);
-	write3X4(par, VGA_CRTC_H_SYNC_START, hsyncstart & 0xFF);
-	write3X4(par, VGA_CRTC_H_SYNC_END,
+	ग_लिखो3X4(par, VGA_CRTC_H_TOTAL, htotal & 0xFF);
+	ग_लिखो3X4(par, VGA_CRTC_H_DISP, hdispend & 0xFF);
+	ग_लिखो3X4(par, VGA_CRTC_H_SYNC_START, hsyncstart & 0xFF);
+	ग_लिखो3X4(par, VGA_CRTC_H_SYNC_END,
 		 (hsyncend & 0x1F) | ((hblankend & 0x20) << 2));
-	write3X4(par, VGA_CRTC_H_BLANK_START, hblankstart & 0xFF);
-	write3X4(par, VGA_CRTC_H_BLANK_END, hblankend & 0x1F);
+	ग_लिखो3X4(par, VGA_CRTC_H_BLANK_START, hblankstart & 0xFF);
+	ग_लिखो3X4(par, VGA_CRTC_H_BLANK_END, hblankend & 0x1F);
 
 	/* higher bits of vertical timing values */
-	tmp = 0x10;
-	if (vtotal & 0x100) tmp |= 0x01;
-	if (vdispend & 0x100) tmp |= 0x02;
-	if (vsyncstart & 0x100) tmp |= 0x04;
-	if (vblankstart & 0x100) tmp |= 0x08;
+	पंचांगp = 0x10;
+	अगर (vtotal & 0x100) पंचांगp |= 0x01;
+	अगर (vdispend & 0x100) पंचांगp |= 0x02;
+	अगर (vsyncstart & 0x100) पंचांगp |= 0x04;
+	अगर (vblankstart & 0x100) पंचांगp |= 0x08;
 
-	if (vtotal & 0x200) tmp |= 0x20;
-	if (vdispend & 0x200) tmp |= 0x40;
-	if (vsyncstart & 0x200) tmp |= 0x80;
-	write3X4(par, VGA_CRTC_OVERFLOW, tmp);
+	अगर (vtotal & 0x200) पंचांगp |= 0x20;
+	अगर (vdispend & 0x200) पंचांगp |= 0x40;
+	अगर (vsyncstart & 0x200) पंचांगp |= 0x80;
+	ग_लिखो3X4(par, VGA_CRTC_OVERFLOW, पंचांगp);
 
-	tmp = read3X4(par, CRTHiOrd) & 0x07;
-	tmp |= 0x08;	/* line compare bit 10 */
-	if (vtotal & 0x400) tmp |= 0x80;
-	if (vblankstart & 0x400) tmp |= 0x40;
-	if (vsyncstart & 0x400) tmp |= 0x20;
-	if (vdispend & 0x400) tmp |= 0x10;
-	write3X4(par, CRTHiOrd, tmp);
+	पंचांगp = पढ़ो3X4(par, CRTHiOrd) & 0x07;
+	पंचांगp |= 0x08;	/* line compare bit 10 */
+	अगर (vtotal & 0x400) पंचांगp |= 0x80;
+	अगर (vblankstart & 0x400) पंचांगp |= 0x40;
+	अगर (vsyncstart & 0x400) पंचांगp |= 0x20;
+	अगर (vdispend & 0x400) पंचांगp |= 0x10;
+	ग_लिखो3X4(par, CRTHiOrd, पंचांगp);
 
-	tmp = (htotal >> 8) & 0x01;
-	tmp |= (hdispend >> 7) & 0x02;
-	tmp |= (hsyncstart >> 5) & 0x08;
-	tmp |= (hblankstart >> 4) & 0x10;
-	write3X4(par, HorizOverflow, tmp);
+	पंचांगp = (htotal >> 8) & 0x01;
+	पंचांगp |= (hdispend >> 7) & 0x02;
+	पंचांगp |= (hsyncstart >> 5) & 0x08;
+	पंचांगp |= (hblankstart >> 4) & 0x10;
+	ग_लिखो3X4(par, HorizOverflow, पंचांगp);
 
-	tmp = 0x40;
-	if (vblankstart & 0x200) tmp |= 0x20;
-//FIXME	if (info->var.vmode & FB_VMODE_DOUBLE) tmp |= 0x80;  /* double scan for 200 line modes */
-	write3X4(par, VGA_CRTC_MAX_SCAN, tmp);
+	पंचांगp = 0x40;
+	अगर (vblankstart & 0x200) पंचांगp |= 0x20;
+//FIXME	अगर (info->var.vmode & FB_VMODE_DOUBLE) पंचांगp |= 0x80;  /* द्विगुन scan क्रम 200 line modes */
+	ग_लिखो3X4(par, VGA_CRTC_MAX_SCAN, पंचांगp);
 
-	write3X4(par, VGA_CRTC_LINE_COMPARE, 0xFF);
-	write3X4(par, VGA_CRTC_PRESET_ROW, 0);
-	write3X4(par, VGA_CRTC_MODE, 0xC3);
+	ग_लिखो3X4(par, VGA_CRTC_LINE_COMPARE, 0xFF);
+	ग_लिखो3X4(par, VGA_CRTC_PRESET_ROW, 0);
+	ग_लिखो3X4(par, VGA_CRTC_MODE, 0xC3);
 
-	write3X4(par, LinearAddReg, 0x20);	/* enable linear addressing */
+	ग_लिखो3X4(par, LinearAddReg, 0x20);	/* enable linear addressing */
 
-	tmp = (info->var.vmode & FB_VMODE_INTERLACED) ? 0x84 : 0x80;
+	पंचांगp = (info->var.vmode & FB_VMODE_INTERLACED) ? 0x84 : 0x80;
 	/* enable access extended memory */
-	write3X4(par, CRTCModuleTest, tmp);
-	tmp = read3CE(par, MiscIntContReg) & ~0x4;
-	if (info->var.vmode & FB_VMODE_INTERLACED)
-		tmp |= 0x4;
-	write3CE(par, MiscIntContReg, tmp);
+	ग_लिखो3X4(par, CRTCModuleTest, पंचांगp);
+	पंचांगp = पढ़ो3CE(par, MiscIntContReg) & ~0x4;
+	अगर (info->var.vmode & FB_VMODE_INTERLACED)
+		पंचांगp |= 0x4;
+	ग_लिखो3CE(par, MiscIntContReg, पंचांगp);
 
-	/* enable GE for text acceleration */
-	write3X4(par, GraphEngReg, 0x80);
+	/* enable GE क्रम text acceleration */
+	ग_लिखो3X4(par, GraphEngReg, 0x80);
 
-	switch (bpp) {
-	case 8:
-		tmp = 0x00;
-		break;
-	case 16:
-		tmp = 0x05;
-		break;
-	case 24:
-		tmp = 0x29;
-		break;
-	case 32:
-		tmp = 0x09;
-		break;
-	}
+	चयन (bpp) अणु
+	हाल 8:
+		पंचांगp = 0x00;
+		अवरोध;
+	हाल 16:
+		पंचांगp = 0x05;
+		अवरोध;
+	हाल 24:
+		पंचांगp = 0x29;
+		अवरोध;
+	हाल 32:
+		पंचांगp = 0x09;
+		अवरोध;
+	पूर्ण
 
-	write3X4(par, PixelBusReg, tmp);
+	ग_लिखो3X4(par, PixelBusReg, पंचांगp);
 
-	tmp = read3X4(par, DRAMControl);
-	if (!is_oldprotect(par->chip_id))
-		tmp |= 0x10;
-	if (iscyber(par->chip_id))
-		tmp |= 0x20;
-	write3X4(par, DRAMControl, tmp);	/* both IO, linear enable */
+	पंचांगp = पढ़ो3X4(par, DRAMControl);
+	अगर (!is_oldprotect(par->chip_id))
+		पंचांगp |= 0x10;
+	अगर (iscyber(par->chip_id))
+		पंचांगp |= 0x20;
+	ग_लिखो3X4(par, DRAMControl, पंचांगp);	/* both IO, linear enable */
 
-	write3X4(par, InterfaceSel, read3X4(par, InterfaceSel) | 0x40);
-	if (!is_xp(par->chip_id))
-		write3X4(par, Performance, read3X4(par, Performance) | 0x10);
-	/* MMIO & PCI read and write burst enable */
-	if (par->chip_id != TGUI9440 && par->chip_id != IMAGE975)
-		write3X4(par, PCIReg, read3X4(par, PCIReg) | 0x06);
+	ग_लिखो3X4(par, InterfaceSel, पढ़ो3X4(par, InterfaceSel) | 0x40);
+	अगर (!is_xp(par->chip_id))
+		ग_लिखो3X4(par, Perक्रमmance, पढ़ो3X4(par, Perक्रमmance) | 0x10);
+	/* MMIO & PCI पढ़ो and ग_लिखो burst enable */
+	अगर (par->chip_id != TGUI9440 && par->chip_id != IMAGE975)
+		ग_लिखो3X4(par, PCIReg, पढ़ो3X4(par, PCIReg) | 0x06);
 
 	vga_mm_wseq(par->io_virt, 0, 3);
-	vga_mm_wseq(par->io_virt, 1, 1); /* set char clock 8 dots wide */
+	vga_mm_wseq(par->io_virt, 1, 1); /* set अक्षर घड़ी 8 करोts wide */
 	/* enable 4 maps because needed in chain4 mode */
 	vga_mm_wseq(par->io_virt, 2, 0x0F);
 	vga_mm_wseq(par->io_virt, 3, 0);
-	vga_mm_wseq(par->io_virt, 4, 0x0E); /* memory mode enable bitmaps ?? */
+	vga_mm_wseq(par->io_virt, 4, 0x0E); /* memory mode enable biपंचांगaps ?? */
 
 	/* convert from picoseconds to kHz */
-	vclk = PICOS2KHZ(info->var.pixclock);
+	vclk = PICOS2KHZ(info->var.pixघड़ी);
 
-	/* divide clock by 2 if 32bpp chain4 mode display and CPU path */
-	tmp = read3CE(par, MiscExtFunc) & 0xF0;
-	if (bpp == 32 || (par->chip_id == TGUI9440 && bpp == 16)) {
-		tmp |= 8;
+	/* भागide घड़ी by 2 अगर 32bpp chain4 mode display and CPU path */
+	पंचांगp = पढ़ो3CE(par, MiscExtFunc) & 0xF0;
+	अगर (bpp == 32 || (par->chip_id == TGUI9440 && bpp == 16)) अणु
+		पंचांगp |= 8;
 		vclk *= 2;
-	}
+	पूर्ण
 	set_vclk(par, vclk);
-	write3CE(par, MiscExtFunc, tmp | 0x12);
-	write3CE(par, 0x5, 0x40);	/* no CGA compat, allow 256 col */
-	write3CE(par, 0x6, 0x05);	/* graphics mode */
-	write3CE(par, 0x7, 0x0F);	/* planes? */
+	ग_लिखो3CE(par, MiscExtFunc, पंचांगp | 0x12);
+	ग_लिखो3CE(par, 0x5, 0x40);	/* no CGA compat, allow 256 col */
+	ग_लिखो3CE(par, 0x6, 0x05);	/* graphics mode */
+	ग_लिखो3CE(par, 0x7, 0x0F);	/* planes? */
 
 	/* graphics mode and support 256 color modes */
-	writeAttr(par, 0x10, 0x41);
-	writeAttr(par, 0x12, 0x0F);	/* planes */
-	writeAttr(par, 0x13, 0);	/* horizontal pel panning */
+	ग_लिखोAttr(par, 0x10, 0x41);
+	ग_लिखोAttr(par, 0x12, 0x0F);	/* planes */
+	ग_लिखोAttr(par, 0x13, 0);	/* horizontal pel panning */
 
 	/* colors */
-	for (tmp = 0; tmp < 0x10; tmp++)
-		writeAttr(par, tmp, tmp);
-	fb_readb(par->io_virt + VGA_IS1_RC);	/* flip-flop to index */
+	क्रम (पंचांगp = 0; पंचांगp < 0x10; पंचांगp++)
+		ग_लिखोAttr(par, पंचांगp, पंचांगp);
+	fb_पढ़ोb(par->io_virt + VGA_IS1_RC);	/* flip-flop to index */
 	t_outb(par, 0x20, VGA_ATT_W);		/* enable attr */
 
-	switch (bpp) {
-	case 8:
-		tmp = 0;
-		break;
-	case 16:
-		tmp = 0x30;
-		break;
-	case 24:
-	case 32:
-		tmp = 0xD0;
-		break;
-	}
+	चयन (bpp) अणु
+	हाल 8:
+		पंचांगp = 0;
+		अवरोध;
+	हाल 16:
+		पंचांगp = 0x30;
+		अवरोध;
+	हाल 24:
+	हाल 32:
+		पंचांगp = 0xD0;
+		अवरोध;
+	पूर्ण
 
 	t_inb(par, VGA_PEL_IW);
 	t_inb(par, VGA_PEL_MSK);
 	t_inb(par, VGA_PEL_MSK);
 	t_inb(par, VGA_PEL_MSK);
 	t_inb(par, VGA_PEL_MSK);
-	t_outb(par, tmp, VGA_PEL_MSK);
+	t_outb(par, पंचांगp, VGA_PEL_MSK);
 	t_inb(par, VGA_PEL_IW);
 
-	if (par->flatpanel)
+	अगर (par->flatpanel)
 		set_number_of_lines(par, info->var.yres);
-	info->fix.line_length = info->var.xres_virtual * bpp / 8;
+	info->fix.line_length = info->var.xres_भव * bpp / 8;
 	set_lwidth(par, info->fix.line_length / 8);
 
-	if (!(info->flags & FBINFO_HWACCEL_DISABLED))
-		par->init_accel(par, info->var.xres_virtual, bpp);
+	अगर (!(info->flags & FBINFO_HWACCEL_DISABLED))
+		par->init_accel(par, info->var.xres_भव, bpp);
 
 	info->fix.visual = (bpp == 8) ? FB_VISUAL_PSEUDOCOLOR : FB_VISUAL_TRUECOLOR;
 	info->cmap.len = (bpp == 8) ? 256 : 16;
 	debug("exit\n");
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* Set one color register */
-static int tridentfb_setcolreg(unsigned regno, unsigned red, unsigned green,
-			       unsigned blue, unsigned transp,
-			       struct fb_info *info)
-{
-	int bpp = info->var.bits_per_pixel;
-	struct tridentfb_par *par = info->par;
+/* Set one color रेजिस्टर */
+अटल पूर्णांक tridentfb_setcolreg(अचिन्हित regno, अचिन्हित red, अचिन्हित green,
+			       अचिन्हित blue, अचिन्हित transp,
+			       काष्ठा fb_info *info)
+अणु
+	पूर्णांक bpp = info->var.bits_per_pixel;
+	काष्ठा tridentfb_par *par = info->par;
 
-	if (regno >= info->cmap.len)
-		return 1;
+	अगर (regno >= info->cmap.len)
+		वापस 1;
 
-	if (bpp == 8) {
+	अगर (bpp == 8) अणु
 		t_outb(par, 0xFF, VGA_PEL_MSK);
 		t_outb(par, regno, VGA_PEL_IW);
 
@@ -1377,73 +1378,73 @@ static int tridentfb_setcolreg(unsigned regno, unsigned red, unsigned green,
 		t_outb(par, green >> 10, VGA_PEL_D);
 		t_outb(par, blue >> 10, VGA_PEL_D);
 
-	} else if (regno < 16) {
-		if (bpp == 16) {	/* RGB 565 */
+	पूर्ण अन्यथा अगर (regno < 16) अणु
+		अगर (bpp == 16) अणु	/* RGB 565 */
 			u32 col;
 
 			col = (red & 0xF800) | ((green & 0xFC00) >> 5) |
 				((blue & 0xF800) >> 11);
 			col |= col << 16;
-			((u32 *)(info->pseudo_palette))[regno] = col;
-		} else if (bpp == 32)		/* ARGB 8888 */
-			((u32 *)info->pseudo_palette)[regno] =
+			((u32 *)(info->pseuकरो_palette))[regno] = col;
+		पूर्ण अन्यथा अगर (bpp == 32)		/* ARGB 8888 */
+			((u32 *)info->pseuकरो_palette)[regno] =
 				((transp & 0xFF00) << 16)	|
 				((red & 0xFF00) << 8)		|
 				((green & 0xFF00))		|
 				((blue & 0xFF00) >> 8);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* Try blanking the screen. For flat panels it does nothing */
-static int tridentfb_blank(int blank_mode, struct fb_info *info)
-{
-	unsigned char PMCont, DPMSCont;
-	struct tridentfb_par *par = info->par;
+/* Try blanking the screen. For flat panels it करोes nothing */
+अटल पूर्णांक tridentfb_blank(पूर्णांक blank_mode, काष्ठा fb_info *info)
+अणु
+	अचिन्हित अक्षर PMCont, DPMSCont;
+	काष्ठा tridentfb_par *par = info->par;
 
 	debug("enter\n");
-	if (par->flatpanel)
-		return 0;
+	अगर (par->flatpanel)
+		वापस 0;
 	t_outb(par, 0x04, 0x83C8); /* Read DPMS Control */
 	PMCont = t_inb(par, 0x83C6) & 0xFC;
-	DPMSCont = read3CE(par, PowerStatus) & 0xFC;
-	switch (blank_mode) {
-	case FB_BLANK_UNBLANK:
+	DPMSCont = पढ़ो3CE(par, PowerStatus) & 0xFC;
+	चयन (blank_mode) अणु
+	हाल FB_BLANK_UNBLANK:
 		/* Screen: On, HSync: On, VSync: On */
-	case FB_BLANK_NORMAL:
+	हाल FB_BLANK_NORMAL:
 		/* Screen: Off, HSync: On, VSync: On */
 		PMCont |= 0x03;
 		DPMSCont |= 0x00;
-		break;
-	case FB_BLANK_HSYNC_SUSPEND:
+		अवरोध;
+	हाल FB_BLANK_HSYNC_SUSPEND:
 		/* Screen: Off, HSync: Off, VSync: On */
 		PMCont |= 0x02;
 		DPMSCont |= 0x01;
-		break;
-	case FB_BLANK_VSYNC_SUSPEND:
+		अवरोध;
+	हाल FB_BLANK_VSYNC_SUSPEND:
 		/* Screen: Off, HSync: On, VSync: Off */
 		PMCont |= 0x02;
 		DPMSCont |= 0x02;
-		break;
-	case FB_BLANK_POWERDOWN:
+		अवरोध;
+	हाल FB_BLANK_POWERDOWN:
 		/* Screen: Off, HSync: Off, VSync: Off */
 		PMCont |= 0x00;
 		DPMSCont |= 0x03;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	write3CE(par, PowerStatus, DPMSCont);
+	ग_लिखो3CE(par, PowerStatus, DPMSCont);
 	t_outb(par, 4, 0x83C8);
 	t_outb(par, PMCont, 0x83C6);
 
 	debug("exit\n");
 
-	/* let fbcon do a softblank for us */
-	return (blank_mode == FB_BLANK_NORMAL) ? 1 : 0;
-}
+	/* let fbcon करो a softblank क्रम us */
+	वापस (blank_mode == FB_BLANK_NORMAL) ? 1 : 0;
+पूर्ण
 
-static const struct fb_ops tridentfb_ops = {
+अटल स्थिर काष्ठा fb_ops tridentfb_ops = अणु
 	.owner = THIS_MODULE,
 	.fb_setcolreg = tridentfb_setcolreg,
 	.fb_pan_display = tridentfb_pan_display,
@@ -1454,165 +1455,165 @@ static const struct fb_ops tridentfb_ops = {
 	.fb_copyarea = tridentfb_copyarea,
 	.fb_imageblit = tridentfb_imageblit,
 	.fb_sync = tridentfb_sync,
-};
+पूर्ण;
 
-static int trident_pci_probe(struct pci_dev *dev,
-			     const struct pci_device_id *id)
-{
-	int err;
-	unsigned char revision;
-	struct fb_info *info;
-	struct tridentfb_par *default_par;
-	int chip3D;
-	int chip_id;
+अटल पूर्णांक trident_pci_probe(काष्ठा pci_dev *dev,
+			     स्थिर काष्ठा pci_device_id *id)
+अणु
+	पूर्णांक err;
+	अचिन्हित अक्षर revision;
+	काष्ठा fb_info *info;
+	काष्ठा tridentfb_par *शेष_par;
+	पूर्णांक chip3D;
+	पूर्णांक chip_id;
 	bool found = false;
 
 	err = pci_enable_device(dev);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	info = framebuffer_alloc(sizeof(struct tridentfb_par), &dev->dev);
-	if (!info)
-		return -ENOMEM;
-	default_par = info->par;
+	info = framebuffer_alloc(माप(काष्ठा tridentfb_par), &dev->dev);
+	अगर (!info)
+		वापस -ENOMEM;
+	शेष_par = info->par;
 
 	chip_id = id->device;
 
 	/* If PCI id is 0x9660 then further detect chip type */
 
-	if (chip_id == TGUI9660) {
+	अगर (chip_id == TGUI9660) अणु
 		revision = vga_io_rseq(RevisionID);
 
-		switch (revision) {
-		case 0x21:
+		चयन (revision) अणु
+		हाल 0x21:
 			chip_id = PROVIDIA9685;
-			break;
-		case 0x22:
-		case 0x23:
+			अवरोध;
+		हाल 0x22:
+		हाल 0x23:
 			chip_id = CYBER9397;
-			break;
-		case 0x2A:
+			अवरोध;
+		हाल 0x2A:
 			chip_id = CYBER9397DVD;
-			break;
-		case 0x30:
-		case 0x33:
-		case 0x34:
-		case 0x35:
-		case 0x38:
-		case 0x3A:
-		case 0xB3:
+			अवरोध;
+		हाल 0x30:
+		हाल 0x33:
+		हाल 0x34:
+		हाल 0x35:
+		हाल 0x38:
+		हाल 0x3A:
+		हाल 0xB3:
 			chip_id = CYBER9385;
-			break;
-		case 0x40 ... 0x43:
+			अवरोध;
+		हाल 0x40 ... 0x43:
 			chip_id = CYBER9382;
-			break;
-		case 0x4A:
+			अवरोध;
+		हाल 0x4A:
 			chip_id = CYBER9388;
-			break;
-		default:
-			break;
-		}
-	}
+			अवरोध;
+		शेष:
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
 	chip3D = is3Dchip(chip_id);
 
-	if (is_xp(chip_id)) {
-		default_par->init_accel = xp_init_accel;
-		default_par->wait_engine = xp_wait_engine;
-		default_par->fill_rect = xp_fill_rect;
-		default_par->copy_rect = xp_copy_rect;
+	अगर (is_xp(chip_id)) अणु
+		शेष_par->init_accel = xp_init_accel;
+		शेष_par->रुको_engine = xp_रुको_engine;
+		शेष_par->fill_rect = xp_fill_rect;
+		शेष_par->copy_rect = xp_copy_rect;
 		tridentfb_fix.accel = FB_ACCEL_TRIDENT_BLADEXP;
-	} else if (is_blade(chip_id)) {
-		default_par->init_accel = blade_init_accel;
-		default_par->wait_engine = blade_wait_engine;
-		default_par->fill_rect = blade_fill_rect;
-		default_par->copy_rect = blade_copy_rect;
-		default_par->image_blit = blade_image_blit;
+	पूर्ण अन्यथा अगर (is_blade(chip_id)) अणु
+		शेष_par->init_accel = blade_init_accel;
+		शेष_par->रुको_engine = blade_रुको_engine;
+		शेष_par->fill_rect = blade_fill_rect;
+		शेष_par->copy_rect = blade_copy_rect;
+		शेष_par->image_blit = blade_image_blit;
 		tridentfb_fix.accel = FB_ACCEL_TRIDENT_BLADE3D;
-	} else if (chip3D) {			/* 3DImage family left */
-		default_par->init_accel = image_init_accel;
-		default_par->wait_engine = image_wait_engine;
-		default_par->fill_rect = image_fill_rect;
-		default_par->copy_rect = image_copy_rect;
+	पूर्ण अन्यथा अगर (chip3D) अणु			/* 3DImage family left */
+		शेष_par->init_accel = image_init_accel;
+		शेष_par->रुको_engine = image_रुको_engine;
+		शेष_par->fill_rect = image_fill_rect;
+		शेष_par->copy_rect = image_copy_rect;
 		tridentfb_fix.accel = FB_ACCEL_TRIDENT_3DIMAGE;
-	} else { 				/* TGUI 9440/96XX family */
-		default_par->init_accel = tgui_init_accel;
-		default_par->wait_engine = xp_wait_engine;
-		default_par->fill_rect = tgui_fill_rect;
-		default_par->copy_rect = tgui_copy_rect;
+	पूर्ण अन्यथा अणु 				/* TGUI 9440/96XX family */
+		शेष_par->init_accel = tgui_init_accel;
+		शेष_par->रुको_engine = xp_रुको_engine;
+		शेष_par->fill_rect = tgui_fill_rect;
+		शेष_par->copy_rect = tgui_copy_rect;
 		tridentfb_fix.accel = FB_ACCEL_TRIDENT_TGUI;
-	}
+	पूर्ण
 
-	default_par->chip_id = chip_id;
+	शेष_par->chip_id = chip_id;
 
 	/* setup MMIO region */
 	tridentfb_fix.mmio_start = pci_resource_start(dev, 1);
 	tridentfb_fix.mmio_len = pci_resource_len(dev, 1);
 
-	if (!request_mem_region(tridentfb_fix.mmio_start,
-				tridentfb_fix.mmio_len, "tridentfb")) {
+	अगर (!request_mem_region(tridentfb_fix.mmio_start,
+				tridentfb_fix.mmio_len, "tridentfb")) अणु
 		debug("request_region failed!\n");
 		framebuffer_release(info);
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
-	default_par->io_virt = ioremap(tridentfb_fix.mmio_start,
+	शेष_par->io_virt = ioremap(tridentfb_fix.mmio_start,
 					       tridentfb_fix.mmio_len);
 
-	if (!default_par->io_virt) {
+	अगर (!शेष_par->io_virt) अणु
 		debug("ioremap failed\n");
 		err = -1;
-		goto out_unmap1;
-	}
+		जाओ out_unmap1;
+	पूर्ण
 
-	enable_mmio(default_par);
+	enable_mmio(शेष_par);
 
 	/* setup framebuffer memory */
 	tridentfb_fix.smem_start = pci_resource_start(dev, 0);
-	tridentfb_fix.smem_len = get_memsize(default_par);
+	tridentfb_fix.smem_len = get_memsize(शेष_par);
 
-	if (!request_mem_region(tridentfb_fix.smem_start,
-				tridentfb_fix.smem_len, "tridentfb")) {
+	अगर (!request_mem_region(tridentfb_fix.smem_start,
+				tridentfb_fix.smem_len, "tridentfb")) अणु
 		debug("request_mem_region failed!\n");
 		disable_mmio(info->par);
 		err = -1;
-		goto out_unmap1;
-	}
+		जाओ out_unmap1;
+	पूर्ण
 
 	info->screen_base = ioremap(tridentfb_fix.smem_start,
 					    tridentfb_fix.smem_len);
 
-	if (!info->screen_base) {
+	अगर (!info->screen_base) अणु
 		debug("ioremap failed\n");
 		err = -1;
-		goto out_unmap2;
-	}
+		जाओ out_unmap2;
+	पूर्ण
 
-	default_par->flatpanel = is_flatpanel(default_par);
+	शेष_par->flatpanel = is_flatpanel(शेष_par);
 
-	if (default_par->flatpanel)
-		nativex = get_nativex(default_par);
+	अगर (शेष_par->flatpanel)
+		nativex = get_nativex(शेष_par);
 
 	info->fix = tridentfb_fix;
 	info->fbops = &tridentfb_ops;
-	info->pseudo_palette = default_par->pseudo_pal;
+	info->pseuकरो_palette = शेष_par->pseuकरो_pal;
 
 	info->flags = FBINFO_DEFAULT | FBINFO_HWACCEL_YPAN;
-	if (!noaccel && default_par->init_accel) {
+	अगर (!noaccel && शेष_par->init_accel) अणु
 		info->flags &= ~FBINFO_HWACCEL_DISABLED;
 		info->flags |= FBINFO_HWACCEL_COPYAREA;
 		info->flags |= FBINFO_HWACCEL_FILLRECT;
-	} else
+	पूर्ण अन्यथा
 		info->flags |= FBINFO_HWACCEL_DISABLED;
 
-	if (is_blade(chip_id) && chip_id != BLADE3D)
+	अगर (is_blade(chip_id) && chip_id != BLADE3D)
 		info->flags |= FBINFO_READS_FAST;
 
-	info->pixmap.addr = kmalloc(4096, GFP_KERNEL);
-	if (!info->pixmap.addr) {
+	info->pixmap.addr = kदो_स्मृति(4096, GFP_KERNEL);
+	अगर (!info->pixmap.addr) अणु
 		err = -ENOMEM;
-		goto out_unmap2;
-	}
+		जाओ out_unmap2;
+	पूर्ण
 
 	info->pixmap.size = 4096;
 	info->pixmap.buf_align = 4;
@@ -1621,212 +1622,212 @@ static int trident_pci_probe(struct pci_dev *dev,
 	info->pixmap.flags = FB_PIXMAP_SYSTEM;
 	info->var.bits_per_pixel = 8;
 
-	if (default_par->image_blit) {
+	अगर (शेष_par->image_blit) अणु
 		info->flags |= FBINFO_HWACCEL_IMAGEBLIT;
 		info->pixmap.scan_align = 4;
-	}
+	पूर्ण
 
-	if (noaccel) {
-		printk(KERN_DEBUG "disabling acceleration\n");
+	अगर (noaccel) अणु
+		prपूर्णांकk(KERN_DEBUG "disabling acceleration\n");
 		info->flags |= FBINFO_HWACCEL_DISABLED;
 		info->pixmap.scan_align = 1;
-	}
+	पूर्ण
 
-	if (tridentfb_setup_ddc_bus(info) == 0) {
-		u8 *edid = fb_ddc_read(&default_par->ddc_adapter);
+	अगर (tridentfb_setup_ddc_bus(info) == 0) अणु
+		u8 *edid = fb_ddc_पढ़ो(&शेष_par->ddc_adapter);
 
-		default_par->ddc_registered = true;
-		if (edid) {
+		शेष_par->ddc_रेजिस्टरed = true;
+		अगर (edid) अणु
 			fb_edid_to_monspecs(edid, &info->monspecs);
-			kfree(edid);
-			if (!info->monspecs.modedb)
+			kमुक्त(edid);
+			अगर (!info->monspecs.modedb)
 				dev_err(info->device, "error getting mode database\n");
-			else {
-				const struct fb_videomode *m;
+			अन्यथा अणु
+				स्थिर काष्ठा fb_videomode *m;
 
 				fb_videomode_to_modelist(info->monspecs.modedb,
 						 info->monspecs.modedb_len,
 						 &info->modelist);
 				m = fb_find_best_display(&info->monspecs,
 							 &info->modelist);
-				if (m) {
+				अगर (m) अणु
 					fb_videomode_to_var(&info->var, m);
 					/* fill all other info->var's fields */
-					if (tridentfb_check_var(&info->var,
+					अगर (tridentfb_check_var(&info->var,
 								info) == 0)
 						found = true;
-				}
-			}
-		}
-	}
+				पूर्ण
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	if (!mode_option && !found)
+	अगर (!mode_option && !found)
 		mode_option = "640x480-8@60";
 
 	/* Prepare startup mode */
-	if (mode_option) {
+	अगर (mode_option) अणु
 		err = fb_find_mode(&info->var, info, mode_option,
 				   info->monspecs.modedb,
 				   info->monspecs.modedb_len,
-				   NULL, info->var.bits_per_pixel);
-		if (!err || err == 4) {
+				   शून्य, info->var.bits_per_pixel);
+		अगर (!err || err == 4) अणु
 			err = -EINVAL;
 			dev_err(info->device, "mode %s not found\n",
 								mode_option);
 			fb_destroy_modedb(info->monspecs.modedb);
-			info->monspecs.modedb = NULL;
-			goto out_unmap2;
-		}
-	}
+			info->monspecs.modedb = शून्य;
+			जाओ out_unmap2;
+		पूर्ण
+	पूर्ण
 
 	fb_destroy_modedb(info->monspecs.modedb);
-	info->monspecs.modedb = NULL;
+	info->monspecs.modedb = शून्य;
 
 	err = fb_alloc_cmap(&info->cmap, 256, 0);
-	if (err < 0)
-		goto out_unmap2;
+	अगर (err < 0)
+		जाओ out_unmap2;
 
 	info->var.activate |= FB_ACTIVATE_NOW;
 	info->device = &dev->dev;
-	if (register_framebuffer(info) < 0) {
-		printk(KERN_ERR "tridentfb: could not register framebuffer\n");
+	अगर (रेजिस्टर_framebuffer(info) < 0) अणु
+		prपूर्णांकk(KERN_ERR "tridentfb: could not register framebuffer\n");
 		fb_dealloc_cmap(&info->cmap);
 		err = -EINVAL;
-		goto out_unmap2;
-	}
+		जाओ out_unmap2;
+	पूर्ण
 	output("fb%d: %s frame buffer device %dx%d-%dbpp\n",
 	   info->node, info->fix.id, info->var.xres,
 	   info->var.yres, info->var.bits_per_pixel);
 
 	pci_set_drvdata(dev, info);
-	return 0;
+	वापस 0;
 
 out_unmap2:
-	if (default_par->ddc_registered)
-		i2c_del_adapter(&default_par->ddc_adapter);
-	kfree(info->pixmap.addr);
-	if (info->screen_base)
+	अगर (शेष_par->ddc_रेजिस्टरed)
+		i2c_del_adapter(&शेष_par->ddc_adapter);
+	kमुक्त(info->pixmap.addr);
+	अगर (info->screen_base)
 		iounmap(info->screen_base);
 	release_mem_region(tridentfb_fix.smem_start, tridentfb_fix.smem_len);
 	disable_mmio(info->par);
 out_unmap1:
-	if (default_par->io_virt)
-		iounmap(default_par->io_virt);
+	अगर (शेष_par->io_virt)
+		iounmap(शेष_par->io_virt);
 	release_mem_region(tridentfb_fix.mmio_start, tridentfb_fix.mmio_len);
 	framebuffer_release(info);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void trident_pci_remove(struct pci_dev *dev)
-{
-	struct fb_info *info = pci_get_drvdata(dev);
-	struct tridentfb_par *par = info->par;
+अटल व्योम trident_pci_हटाओ(काष्ठा pci_dev *dev)
+अणु
+	काष्ठा fb_info *info = pci_get_drvdata(dev);
+	काष्ठा tridentfb_par *par = info->par;
 
-	unregister_framebuffer(info);
-	if (par->ddc_registered)
+	unरेजिस्टर_framebuffer(info);
+	अगर (par->ddc_रेजिस्टरed)
 		i2c_del_adapter(&par->ddc_adapter);
 	iounmap(par->io_virt);
 	iounmap(info->screen_base);
 	release_mem_region(tridentfb_fix.smem_start, tridentfb_fix.smem_len);
 	release_mem_region(tridentfb_fix.mmio_start, tridentfb_fix.mmio_len);
-	kfree(info->pixmap.addr);
+	kमुक्त(info->pixmap.addr);
 	fb_dealloc_cmap(&info->cmap);
 	framebuffer_release(info);
-}
+पूर्ण
 
 /* List of boards that we are trying to support */
-static const struct pci_device_id trident_devices[] = {
-	{PCI_VENDOR_ID_TRIDENT,	BLADE3D, PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0},
-	{PCI_VENDOR_ID_TRIDENT,	CYBERBLADEi7, PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0},
-	{PCI_VENDOR_ID_TRIDENT,	CYBERBLADEi7D, PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0},
-	{PCI_VENDOR_ID_TRIDENT,	CYBERBLADEi1, PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0},
-	{PCI_VENDOR_ID_TRIDENT,	CYBERBLADEi1D, PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0},
-	{PCI_VENDOR_ID_TRIDENT,	CYBERBLADEAi1, PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0},
-	{PCI_VENDOR_ID_TRIDENT,	CYBERBLADEAi1D, PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0},
-	{PCI_VENDOR_ID_TRIDENT,	CYBERBLADEE4, PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0},
-	{PCI_VENDOR_ID_TRIDENT,	TGUI9440, PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0},
-	{PCI_VENDOR_ID_TRIDENT,	TGUI9660, PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0},
-	{PCI_VENDOR_ID_TRIDENT,	IMAGE975, PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0},
-	{PCI_VENDOR_ID_TRIDENT,	IMAGE985, PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0},
-	{PCI_VENDOR_ID_TRIDENT,	CYBER9320, PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0},
-	{PCI_VENDOR_ID_TRIDENT,	CYBER9388, PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0},
-	{PCI_VENDOR_ID_TRIDENT,	CYBER9520, PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0},
-	{PCI_VENDOR_ID_TRIDENT,	CYBER9525DVD, PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0},
-	{PCI_VENDOR_ID_TRIDENT,	CYBER9397, PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0},
-	{PCI_VENDOR_ID_TRIDENT,	CYBER9397DVD, PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0},
-	{PCI_VENDOR_ID_TRIDENT,	CYBERBLADEXPAi1, PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0},
-	{PCI_VENDOR_ID_TRIDENT,	CYBERBLADEXPm8, PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0},
-	{PCI_VENDOR_ID_TRIDENT,	CYBERBLADEXPm16, PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0},
-	{0,}
-};
+अटल स्थिर काष्ठा pci_device_id trident_devices[] = अणु
+	अणुPCI_VENDOR_ID_TRIDENT,	BLADE3D, PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0पूर्ण,
+	अणुPCI_VENDOR_ID_TRIDENT,	CYBERBLADEi7, PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0पूर्ण,
+	अणुPCI_VENDOR_ID_TRIDENT,	CYBERBLADEi7D, PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0पूर्ण,
+	अणुPCI_VENDOR_ID_TRIDENT,	CYBERBLADEi1, PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0पूर्ण,
+	अणुPCI_VENDOR_ID_TRIDENT,	CYBERBLADEi1D, PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0पूर्ण,
+	अणुPCI_VENDOR_ID_TRIDENT,	CYBERBLADEAi1, PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0पूर्ण,
+	अणुPCI_VENDOR_ID_TRIDENT,	CYBERBLADEAi1D, PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0पूर्ण,
+	अणुPCI_VENDOR_ID_TRIDENT,	CYBERBLADEE4, PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0पूर्ण,
+	अणुPCI_VENDOR_ID_TRIDENT,	TGUI9440, PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0पूर्ण,
+	अणुPCI_VENDOR_ID_TRIDENT,	TGUI9660, PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0पूर्ण,
+	अणुPCI_VENDOR_ID_TRIDENT,	IMAGE975, PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0पूर्ण,
+	अणुPCI_VENDOR_ID_TRIDENT,	IMAGE985, PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0पूर्ण,
+	अणुPCI_VENDOR_ID_TRIDENT,	CYBER9320, PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0पूर्ण,
+	अणुPCI_VENDOR_ID_TRIDENT,	CYBER9388, PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0पूर्ण,
+	अणुPCI_VENDOR_ID_TRIDENT,	CYBER9520, PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0पूर्ण,
+	अणुPCI_VENDOR_ID_TRIDENT,	CYBER9525DVD, PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0पूर्ण,
+	अणुPCI_VENDOR_ID_TRIDENT,	CYBER9397, PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0पूर्ण,
+	अणुPCI_VENDOR_ID_TRIDENT,	CYBER9397DVD, PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0पूर्ण,
+	अणुPCI_VENDOR_ID_TRIDENT,	CYBERBLADEXPAi1, PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0पूर्ण,
+	अणुPCI_VENDOR_ID_TRIDENT,	CYBERBLADEXPm8, PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0पूर्ण,
+	अणुPCI_VENDOR_ID_TRIDENT,	CYBERBLADEXPm16, PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0पूर्ण,
+	अणु0,पूर्ण
+पूर्ण;
 
 MODULE_DEVICE_TABLE(pci, trident_devices);
 
-static struct pci_driver tridentfb_pci_driver = {
+अटल काष्ठा pci_driver tridentfb_pci_driver = अणु
 	.name = "tridentfb",
 	.id_table = trident_devices,
 	.probe = trident_pci_probe,
-	.remove = trident_pci_remove,
-};
+	.हटाओ = trident_pci_हटाओ,
+पूर्ण;
 
 /*
- * Parse user specified options (`video=trident:')
+ * Parse user specअगरied options (`video=trident:')
  * example:
  *	video=trident:800x600,bpp=16,noaccel
  */
-#ifndef MODULE
-static int __init tridentfb_setup(char *options)
-{
-	char *opt;
-	if (!options || !*options)
-		return 0;
-	while ((opt = strsep(&options, ",")) != NULL) {
-		if (!*opt)
-			continue;
-		if (!strncmp(opt, "noaccel", 7))
+#अगर_अघोषित MODULE
+अटल पूर्णांक __init tridentfb_setup(अक्षर *options)
+अणु
+	अक्षर *opt;
+	अगर (!options || !*options)
+		वापस 0;
+	जबतक ((opt = strsep(&options, ",")) != शून्य) अणु
+		अगर (!*opt)
+			जारी;
+		अगर (!म_भेदन(opt, "noaccel", 7))
 			noaccel = 1;
-		else if (!strncmp(opt, "fp", 2))
+		अन्यथा अगर (!म_भेदन(opt, "fp", 2))
 			fp = 1;
-		else if (!strncmp(opt, "crt", 3))
+		अन्यथा अगर (!म_भेदन(opt, "crt", 3))
 			fp = 0;
-		else if (!strncmp(opt, "bpp=", 4))
-			bpp = simple_strtoul(opt + 4, NULL, 0);
-		else if (!strncmp(opt, "center", 6))
+		अन्यथा अगर (!म_भेदन(opt, "bpp=", 4))
+			bpp = simple_म_से_अदीर्घ(opt + 4, शून्य, 0);
+		अन्यथा अगर (!म_भेदन(opt, "center", 6))
 			center = 1;
-		else if (!strncmp(opt, "stretch", 7))
+		अन्यथा अगर (!म_भेदन(opt, "stretch", 7))
 			stretch = 1;
-		else if (!strncmp(opt, "memsize=", 8))
-			memsize = simple_strtoul(opt + 8, NULL, 0);
-		else if (!strncmp(opt, "memdiff=", 8))
-			memdiff = simple_strtoul(opt + 8, NULL, 0);
-		else if (!strncmp(opt, "nativex=", 8))
-			nativex = simple_strtoul(opt + 8, NULL, 0);
-		else
+		अन्यथा अगर (!म_भेदन(opt, "memsize=", 8))
+			memsize = simple_म_से_अदीर्घ(opt + 8, शून्य, 0);
+		अन्यथा अगर (!म_भेदन(opt, "memdiff=", 8))
+			memdअगरf = simple_म_से_अदीर्घ(opt + 8, शून्य, 0);
+		अन्यथा अगर (!म_भेदन(opt, "nativex=", 8))
+			nativex = simple_म_से_अदीर्घ(opt + 8, शून्य, 0);
+		अन्यथा
 			mode_option = opt;
-	}
-	return 0;
-}
-#endif
+	पूर्ण
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
-static int __init tridentfb_init(void)
-{
-#ifndef MODULE
-	char *option = NULL;
+अटल पूर्णांक __init tridentfb_init(व्योम)
+अणु
+#अगर_अघोषित MODULE
+	अक्षर *option = शून्य;
 
-	if (fb_get_options("tridentfb", &option))
-		return -ENODEV;
+	अगर (fb_get_options("tridentfb", &option))
+		वापस -ENODEV;
 	tridentfb_setup(option);
-#endif
-	return pci_register_driver(&tridentfb_pci_driver);
-}
+#पूर्ण_अगर
+	वापस pci_रेजिस्टर_driver(&tridentfb_pci_driver);
+पूर्ण
 
-static void __exit tridentfb_exit(void)
-{
-	pci_unregister_driver(&tridentfb_pci_driver);
-}
+अटल व्योम __निकास tridentfb_निकास(व्योम)
+अणु
+	pci_unरेजिस्टर_driver(&tridentfb_pci_driver);
+पूर्ण
 
 module_init(tridentfb_init);
-module_exit(tridentfb_exit);
+module_निकास(tridentfb_निकास);
 
 MODULE_AUTHOR("Jani Monoses <jani@iv.ro>");
 MODULE_DESCRIPTION("Framebuffer driver for Trident cards");

@@ -1,9 +1,10 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
- * Device driver for the SYMBIOS/LSILOGIC 53C8XX and 53C1010 family 
+ * Device driver क्रम the SYMBIOS/LSILOGIC 53C8XX and 53C1010 family 
  * of PCI-SCSI IO processors.
  *
- * Copyright (C) 1999-2001  Gerard Roudier <groudier@free.fr>
+ * Copyright (C) 1999-2001  Gerard Roudier <groudier@मुक्त.fr>
  *
  * This driver is derived from the Linux sym53c8xx driver.
  * Copyright (C) 1998-2000  Gerard Roudier
@@ -11,105 +12,105 @@
  * The sym53c8xx driver is derived from the ncr53c8xx driver that had been 
  * a port of the FreeBSD ncr driver to Linux-1.2.13.
  *
- * The original ncr driver has been written for 386bsd and FreeBSD by
+ * The original ncr driver has been written क्रम 386bsd and FreeBSD by
  *         Wolfgang Stanglmeier        <wolf@cologne.de>
  *         Stefan Esser                <se@mi.Uni-Koeln.de>
  * Copyright (C) 1994  Wolfgang Stanglmeier
  *
  * Other major contributions:
  *
- * NVRAM detection and reading.
- * Copyright (C) 1997 Richard Waltham <dormouse@farsrobt.demon.co.uk>
+ * NVRAM detection and पढ़ोing.
+ * Copyright (C) 1997 Riअक्षरd Waltham <करोrmouse@farsrobt.demon.co.uk>
  *
  *-----------------------------------------------------------------------------
  */
 
 /*
- *  Scripts for SYMBIOS-Processor
+ *  Scripts क्रम SYMBIOS-Processor
  *
- *  We have to know the offsets of all labels before we reach 
- *  them (for forward jumps). Therefore we declare a struct 
+ *  We have to know the offsets of all labels beक्रमe we reach 
+ *  them (क्रम क्रमward jumps). Thereक्रमe we declare a काष्ठा 
  *  here. If you make changes inside the script,
  *
  *  DONT FORGET TO CHANGE THE LENGTHS HERE!
  */
 
 /*
- *  Script fragments which are loaded into the on-chip RAM 
+ *  Script fragments which are loaded पूर्णांकo the on-chip RAM 
  *  of 825A, 875, 876, 895, 895A, 896 and 1010 chips.
  *  Must not exceed 4K bytes.
  */
-struct SYM_FWA_SCR {
+काष्ठा SYM_FWA_SCR अणु
 	u32 start		[ 14];
 	u32 getjob_begin	[  4];
 	u32 getjob_end		[  4];
-#ifdef SYM_CONF_TARGET_ROLE_SUPPORT
+#अगर_घोषित SYM_CONF_TARGET_ROLE_SUPPORT
 	u32 select		[  6];
-#else
+#अन्यथा
 	u32 select		[  4];
-#endif
-#if	SYM_CONF_DMA_ADDRESSING_MODE == 2
+#पूर्ण_अगर
+#अगर	SYM_CONF_DMA_ADDRESSING_MODE == 2
 	u32 is_dmap_dirty	[  4];
-#endif
-	u32 wf_sel_done		[  2];
-	u32 sel_done		[  2];
+#पूर्ण_अगर
+	u32 wf_sel_करोne		[  2];
+	u32 sel_करोne		[  2];
 	u32 send_ident		[  2];
-#ifdef SYM_CONF_IARB_SUPPORT
+#अगर_घोषित SYM_CONF_IARB_SUPPORT
 	u32 select2		[  8];
-#else
+#अन्यथा
 	u32 select2		[  2];
-#endif
+#पूर्ण_अगर
 	u32 command		[  2];
 	u32 dispatch		[ 28];
 	u32 sel_no_cmd		[ 10];
 	u32 init		[  6];
 	u32 clrack		[  4];
-	u32 datai_done		[ 10];
-	u32 datai_done_wsr	[ 20];
-	u32 datao_done		[ 10];
-	u32 datao_done_wss	[  6];
+	u32 datai_करोne		[ 10];
+	u32 datai_करोne_wsr	[ 20];
+	u32 datao_करोne		[ 10];
+	u32 datao_करोne_wss	[  6];
 	u32 datai_phase		[  4];
 	u32 datao_phase		[  6];
 	u32 msg_in		[  2];
 	u32 msg_in2		[ 10];
-#ifdef SYM_CONF_IARB_SUPPORT
+#अगर_घोषित SYM_CONF_IARB_SUPPORT
 	u32 status		[ 14];
-#else
+#अन्यथा
 	u32 status		[ 10];
-#endif
+#पूर्ण_अगर
 	u32 complete		[  6];
 	u32 complete2		[ 12];
-	u32 done		[ 14];
-	u32 done_end		[  2];
+	u32 करोne		[ 14];
+	u32 करोne_end		[  2];
 	u32 complete_error	[  4];
 	u32 save_dp		[ 12];
 	u32 restore_dp		[  8];
 	u32 disconnect		[ 12];
-#ifdef SYM_CONF_IARB_SUPPORT
+#अगर_घोषित SYM_CONF_IARB_SUPPORT
 	u32 idle		[  4];
-#else
+#अन्यथा
 	u32 idle		[  2];
-#endif
-#ifdef SYM_CONF_IARB_SUPPORT
+#पूर्ण_अगर
+#अगर_घोषित SYM_CONF_IARB_SUPPORT
 	u32 ungetjob		[  6];
-#else
+#अन्यथा
 	u32 ungetjob		[  4];
-#endif
-#ifdef SYM_CONF_TARGET_ROLE_SUPPORT
+#पूर्ण_अगर
+#अगर_घोषित SYM_CONF_TARGET_ROLE_SUPPORT
 	u32 reselect		[  4];
-#else
+#अन्यथा
 	u32 reselect		[  2];
-#endif
+#पूर्ण_अगर
 	u32 reselected		[ 22];
 	u32 resel_scntl4	[ 20];
 	u32 resel_lun0		[  6];
-#if   SYM_CONF_MAX_TASK*4 > 512
+#अगर   SYM_CONF_MAX_TASK*4 > 512
 	u32 resel_tag		[ 26];
-#elif SYM_CONF_MAX_TASK*4 > 256
+#या_अगर SYM_CONF_MAX_TASK*4 > 256
 	u32 resel_tag		[ 20];
-#else
+#अन्यथा
 	u32 resel_tag		[ 16];
-#endif
+#पूर्ण_अगर
 	u32 resel_dsa		[  2];
 	u32 resel_dsa1		[  4];
 	u32 resel_no_tag	[  6];
@@ -123,21 +124,21 @@ struct SYM_FWA_SCR {
 	u32 pm1_data		[ 12];
 	u32 pm1_data_out	[  6];
 	u32 pm1_data_end	[  6];
-};
+पूर्ण;
 
 /*
- *  Script fragments which stay in main memory for all chips 
- *  except for chips that support 8K on-chip RAM.
+ *  Script fragments which stay in मुख्य memory क्रम all chips 
+ *  except क्रम chips that support 8K on-chip RAM.
  */
-struct SYM_FWB_SCR {
+काष्ठा SYM_FWB_SCR अणु
 	u32 start64		[  2];
 	u32 no_data		[  2];
-#ifdef SYM_CONF_TARGET_ROLE_SUPPORT
-	u32 sel_for_abort	[ 18];
-#else
-	u32 sel_for_abort	[ 16];
-#endif
-	u32 sel_for_abort_1	[  2];
+#अगर_घोषित SYM_CONF_TARGET_ROLE_SUPPORT
+	u32 sel_क्रम_पात	[ 18];
+#अन्यथा
+	u32 sel_क्रम_पात	[ 16];
+#पूर्ण_अगर
+	u32 sel_क्रम_पात_1	[  2];
 	u32 msg_in_etc		[ 12];
 	u32 msg_received	[  4];
 	u32 msg_weird_seen	[  4];
@@ -154,14 +155,14 @@ struct SYM_FWB_SCR {
 	u32 send_ppr		[  4];
 	u32 nego_bad_phase	[  4];
 	u32 msg_out		[  4];
-	u32 msg_out_done	[  4];
+	u32 msg_out_करोne	[  4];
 	u32 data_ovrun		[  2];
 	u32 data_ovrun1		[ 22];
 	u32 data_ovrun2		[  8];
-	u32 abort_resel		[ 16];
+	u32 पात_resel		[ 16];
 	u32 resend_ident	[  4];
-	u32 ident_break		[  4];
-	u32 ident_break_atn	[  4];
+	u32 ident_अवरोध		[  4];
+	u32 ident_अवरोध_atn	[  4];
 	u32 sdata_in		[  6];
 	u32 resel_bad_lun	[  4];
 	u32 bad_i_t_l		[  4];
@@ -183,25 +184,25 @@ struct SYM_FWB_SCR {
 	u32 scratch		[  1];
 	u32 pm0_data_addr	[  1];
 	u32 pm1_data_addr	[  1];
-	u32 done_pos		[  1];
+	u32 करोne_pos		[  1];
 	u32 startpos		[  1];
 	u32 targtbl		[  1];
-};
+पूर्ण;
 
 /*
  *  Script fragments used at initialisations.
- *  Only runs out of main memory.
+ *  Only runs out of मुख्य memory.
  */
-struct SYM_FWZ_SCR {
+काष्ठा SYM_FWZ_SCR अणु
 	u32 snooptest		[  6];
-	u32 snoopend		[  2];
-};
+	u32 snoखोलोd		[  2];
+पूर्ण;
 
-static struct SYM_FWA_SCR SYM_FWA_SCR = {
-/*--------------------------< START >----------------------------*/ {
+अटल काष्ठा SYM_FWA_SCR SYM_FWA_SCR = अणु
+/*--------------------------< START >----------------------------*/ अणु
 	/*
 	 *  Switch the LED on.
-	 *  Will be patched with a NO_OP if LED
+	 *  Will be patched with a NO_OP अगर LED
 	 *  not needed or not desired.
 	 */
 	SCR_REG_REG (gpreg, SCR_AND, 0xfe),
@@ -212,7 +213,7 @@ static struct SYM_FWA_SCR SYM_FWA_SCR = {
 	SCR_FROM_REG (ctest2),
 		0,
 	/*
-	 *  Stop here if the C code wants to perform 
+	 *  Stop here अगर the C code wants to perक्रमm 
 	 *  some error recovery procedure manually.
 	 *  (Indicate this by setting SEM in ISTAT)
 	 */
@@ -230,51 +231,51 @@ static struct SYM_FWA_SCR SYM_FWA_SCR = {
 	/*
 	 *  Start the next job.
 	 *
-	 *  @DSA     = start point for this job.
+	 *  @DSA     = start poपूर्णांक क्रम this job.
 	 *  SCRATCHA = address of this job in the start queue.
 	 *
-	 *  We will restore startpos with SCRATCHA if we fails the 
-	 *  arbitration or if it is the idle job.
+	 *  We will restore startpos with SCRATCHA अगर we fails the 
+	 *  arbitration or अगर it is the idle job.
 	 *
 	 *  The below GETJOB_BEGIN to GETJOB_END section of SCRIPTS 
 	 *  is a critical path. If it is partially executed, it then 
 	 *  may happen that the job address is not yet in the DSA 
-	 *  and the next queue position points to the next JOB.
+	 *  and the next queue position poपूर्णांकs to the next JOB.
 	 */
 	SCR_LOAD_ABS (dsa, 4),
 		PADDR_B (startpos),
 	SCR_LOAD_REL (temp, 4),
 		4,
-}/*-------------------------< GETJOB_BEGIN >---------------------*/,{
+पूर्ण/*-------------------------< GETJOB_BEGIN >---------------------*/,अणु
 	SCR_STORE_ABS (temp, 4),
 		PADDR_B (startpos),
 	SCR_LOAD_REL (dsa, 4),
 		0,
-}/*-------------------------< GETJOB_END >-----------------------*/,{
+पूर्ण/*-------------------------< GETJOB_END >-----------------------*/,अणु
 	SCR_LOAD_REL (temp, 4),
 		0,
 	SCR_RETURN,
 		0,
-}/*-------------------------< SELECT >---------------------------*/,{
+पूर्ण/*-------------------------< SELECT >---------------------------*/,अणु
 	/*
 	 *  DSA	contains the address of a scheduled
-	 *  	data structure.
+	 *  	data काष्ठाure.
 	 *
 	 *  SCRATCHA contains the address of the start queue  
-	 *  	entry which points to the next job.
+	 *  	entry which poपूर्णांकs to the next job.
 	 *
 	 *  Set Initiator mode.
 	 *
-	 *  (Target mode is left as an exercise for the reader)
+	 *  (Target mode is left as an exercise क्रम the पढ़ोer)
 	 */
-#ifdef SYM_CONF_TARGET_ROLE_SUPPORT
+#अगर_घोषित SYM_CONF_TARGET_ROLE_SUPPORT
 	SCR_CLR (SCR_TRG),
 		0,
-#endif
+#पूर्ण_अगर
 	/*
 	 *      And try to select this target.
 	 */
-	SCR_SEL_TBL_ATN ^ offsetof (struct sym_dsb, select),
+	SCR_SEL_TBL_ATN ^ दुरत्व (काष्ठा sym_dsb, select),
 		PADDR_A (ungetjob),
 	/*
 	 *  Now there are 4 possibilities:
@@ -282,66 +283,66 @@ static struct SYM_FWA_SCR SYM_FWA_SCR = {
 	 *  (1) The chip loses arbitration.
 	 *  This is ok, because it will try again,
 	 *  when the bus becomes idle.
-	 *  (But beware of the timeout function!)
+	 *  (But beware of the समयout function!)
 	 *
 	 *  (2) The chip is reselected.
 	 *  Then the script processor takes the jump
 	 *  to the RESELECT label.
 	 *
 	 *  (3) The chip wins arbitration.
-	 *  Then it will execute SCRIPTS instruction until 
-	 *  the next instruction that checks SCSI phase.
-	 *  Then will stop and wait for selection to be 
-	 *  complete or selection time-out to occur.
+	 *  Then it will execute SCRIPTS inकाष्ठाion until 
+	 *  the next inकाष्ठाion that checks SCSI phase.
+	 *  Then will stop and रुको क्रम selection to be 
+	 *  complete or selection समय-out to occur.
 	 *
 	 *  After having won arbitration, the SCRIPTS  
-	 *  processor is able to execute instructions while 
-	 *  the SCSI core is performing SCSI selection.
+	 *  processor is able to execute inकाष्ठाions जबतक 
+	 *  the SCSI core is perक्रमming SCSI selection.
 	 */
 	/*
-	 *      Initialize the status registers
+	 *      Initialize the status रेजिस्टरs
 	 */
 	SCR_LOAD_REL (scr0, 4),
-		offsetof (struct sym_ccb, phys.head.status),
+		दुरत्व (काष्ठा sym_ccb, phys.head.status),
 	/*
-	 *  We may need help from CPU if the DMA segment 
-	 *  registers aren't up-to-date for this IO.
-	 *  Patched with NOOP for chips that donnot 
+	 *  We may need help from CPU अगर the DMA segment 
+	 *  रेजिस्टरs aren't up-to-date क्रम this IO.
+	 *  Patched with NOOP क्रम chips that करोnnot 
 	 *  support DAC addressing.
 	 */
-#if	SYM_CONF_DMA_ADDRESSING_MODE == 2
-}/*-------------------------< IS_DMAP_DIRTY >--------------------*/,{
+#अगर	SYM_CONF_DMA_ADDRESSING_MODE == 2
+पूर्ण/*-------------------------< IS_DMAP_सूचीTY >--------------------*/,अणु
 	SCR_FROM_REG (HX_REG),
 		0,
-	SCR_INT ^ IFTRUE (MASK (HX_DMAP_DIRTY, HX_DMAP_DIRTY)),
-		SIR_DMAP_DIRTY,
-#endif
-}/*-------------------------< WF_SEL_DONE >----------------------*/,{
+	SCR_INT ^ IFTRUE (MASK (HX_DMAP_सूचीTY, HX_DMAP_सूचीTY)),
+		SIR_DMAP_सूचीTY,
+#पूर्ण_अगर
+पूर्ण/*-------------------------< WF_SEL_DONE >----------------------*/,अणु
 	SCR_INT ^ IFFALSE (WHEN (SCR_MSG_OUT)),
 		SIR_SEL_ATN_NO_MSG_OUT,
-}/*-------------------------< SEL_DONE >-------------------------*/,{
+पूर्ण/*-------------------------< SEL_DONE >-------------------------*/,अणु
 	/*
 	 *  C1010-33 errata work-around.
 	 *  Due to a race, the SCSI core may not have 
-	 *  loaded SCNTL3 on SEL_TBL instruction.
+	 *  loaded SCNTL3 on SEL_TBL inकाष्ठाion.
 	 *  We reload it once phase is stable.
-	 *  Patched with a NOOP for other chips.
+	 *  Patched with a NOOP क्रम other chips.
 	 */
 	SCR_LOAD_REL (scntl3, 1),
-		offsetof(struct sym_dsb, select.sel_scntl3),
-}/*-------------------------< SEND_IDENT >-----------------------*/,{
+		दुरत्व(काष्ठा sym_dsb, select.sel_scntl3),
+पूर्ण/*-------------------------< SEND_IDENT >-----------------------*/,अणु
 	/*
 	 *  Selection complete.
 	 *  Send the IDENTIFY and possibly the TAG message 
-	 *  and negotiation message if present.
+	 *  and negotiation message अगर present.
 	 */
 	SCR_MOVE_TBL ^ SCR_MSG_OUT,
-		offsetof (struct sym_dsb, smsg),
-}/*-------------------------< SELECT2 >--------------------------*/,{
-#ifdef SYM_CONF_IARB_SUPPORT
+		दुरत्व (काष्ठा sym_dsb, smsg),
+पूर्ण/*-------------------------< SELECT2 >--------------------------*/,अणु
+#अगर_घोषित SYM_CONF_IARB_SUPPORT
 	/*
-	 *  Set IMMEDIATE ARBITRATION if we have been given 
-	 *  a hint to do so. (Some job to do after this one).
+	 *  Set IMMEDIATE ARBITRATION अगर we have been given 
+	 *  a hपूर्णांक to करो so. (Some job to करो after this one).
 	 */
 	SCR_FROM_REG (HF_REG),
 		0,
@@ -349,23 +350,23 @@ static struct SYM_FWA_SCR SYM_FWA_SCR = {
 		8,
 	SCR_REG_REG (scntl1, SCR_OR, IARB),
 		0,
-#endif
+#पूर्ण_अगर
 	/*
 	 *  Anticipate the COMMAND phase.
-	 *  This is the PHASE we expect at this point.
+	 *  This is the PHASE we expect at this poपूर्णांक.
 	 */
 	SCR_JUMP ^ IFFALSE (WHEN (SCR_COMMAND)),
 		PADDR_A (sel_no_cmd),
-}/*-------------------------< COMMAND >--------------------------*/,{
+पूर्ण/*-------------------------< COMMAND >--------------------------*/,अणु
 	/*
 	 *  ... and send the command
 	 */
 	SCR_MOVE_TBL ^ SCR_COMMAND,
-		offsetof (struct sym_dsb, cmd),
-}/*-------------------------< DISPATCH >-------------------------*/,{
+		दुरत्व (काष्ठा sym_dsb, cmd),
+पूर्ण/*-------------------------< DISPATCH >-------------------------*/,अणु
 	/*
 	 *  MSG_IN is the only phase that shall be 
-	 *  entered at least once for each (re)selection.
+	 *  entered at least once क्रम each (re)selection.
 	 *  So we test it first.
 	 */
 	SCR_JUMP ^ IFTRUE (WHEN (SCR_MSG_IN)),
@@ -400,9 +401,9 @@ static struct SYM_FWA_SCR SYM_FWA_SCR = {
 		SIR_BAD_PHASE,
 	SCR_JUMP,
 		PADDR_A (dispatch),
-}/*-------------------------< SEL_NO_CMD >-----------------------*/,{
+पूर्ण/*-------------------------< SEL_NO_CMD >-----------------------*/,अणु
 	/*
-	 *  The target does not switch to command 
+	 *  The target करोes not चयन to command 
 	 *  phase after IDENTIFY has been sent.
 	 *
 	 *  If it stays in MSG OUT phase send it 
@@ -411,8 +412,8 @@ static struct SYM_FWA_SCR SYM_FWA_SCR = {
 	SCR_JUMP ^ IFTRUE (WHEN (SCR_MSG_OUT)),
 		PADDR_B (resend_ident),
 	/*
-	 *  If target does not switch to MSG IN phase 
-	 *  and we sent a negotiation, assert the 
+	 *  If target करोes not चयन to MSG IN phase 
+	 *  and we sent a negotiation, निश्चित the 
 	 *  failure immediately.
 	 */
 	SCR_JUMP ^ IFTRUE (WHEN (SCR_MSG_IN)),
@@ -426,12 +427,12 @@ static struct SYM_FWA_SCR SYM_FWA_SCR = {
 	 */
 	SCR_JUMP,
 		PADDR_A (dispatch),
-}/*-------------------------< INIT >-----------------------------*/,{
+पूर्ण/*-------------------------< INIT >-----------------------------*/,अणु
 	/*
-	 *  Wait for the SCSI RESET signal to be 
-	 *  inactive before restarting operations, 
+	 *  Wait क्रम the SCSI RESET संकेत to be 
+	 *  inactive beक्रमe restarting operations, 
 	 *  since the chip may hang on SEL_ATN 
-	 *  if SCSI RESET is active.
+	 *  अगर SCSI RESET is active.
 	 */
 	SCR_FROM_REG (sstat0),
 		0,
@@ -439,7 +440,7 @@ static struct SYM_FWA_SCR SYM_FWA_SCR = {
 		-16,
 	SCR_JUMP,
 		PADDR_A (start),
-}/*-------------------------< CLRACK >---------------------------*/,{
+पूर्ण/*-------------------------< CLRACK >---------------------------*/,अणु
 	/*
 	 *  Terminate possible pending message phase.
 	 */
@@ -447,12 +448,12 @@ static struct SYM_FWA_SCR SYM_FWA_SCR = {
 		0,
 	SCR_JUMP,
 		PADDR_A (dispatch),
-}/*-------------------------< DATAI_DONE >-----------------------*/,{
+पूर्ण/*-------------------------< DATAI_DONE >-----------------------*/,अणु
 	/*
-	 *  Save current pointer to LASTP.
+	 *  Save current poपूर्णांकer to LASTP.
 	 */
 	SCR_STORE_REL (temp, 4),
-		offsetof (struct sym_ccb, phys.head.lastp),
+		दुरत्व (काष्ठा sym_ccb, phys.head.lastp),
 	/*
 	 *  If the SWIDE is not full, jump to dispatcher.
 	 *  We anticipate a STATUS phase.
@@ -460,12 +461,12 @@ static struct SYM_FWA_SCR SYM_FWA_SCR = {
 	SCR_FROM_REG (scntl2),
 		0,
 	SCR_JUMP ^ IFTRUE (MASK (WSR, WSR)),
-		PADDR_A (datai_done_wsr),
+		PADDR_A (datai_करोne_wsr),
 	SCR_JUMP ^ IFTRUE (WHEN (SCR_STATUS)),
 		PADDR_A (status),
 	SCR_JUMP,
 		PADDR_A (dispatch),
-}/*-------------------------< DATAI_DONE_WSR >-------------------*/,{
+पूर्ण/*-------------------------< DATAI_DONE_WSR >-------------------*/,अणु
 	/*
 	 *  The SWIDE is full.
 	 *  Clear this condition.
@@ -485,7 +486,7 @@ static struct SYM_FWA_SCR SYM_FWA_SCR = {
 	 *  We are in MSG_IN phase,
 	 *  Read the first byte of the message.
 	 *  If it is not an IGNORE RESIDUE message,
-	 *  signal overrun and jump to message 
+	 *  संकेत overrun and jump to message 
 	 *  processing.
 	 */
 	SCR_MOVE_ABS (1) ^ SCR_MSG_IN,
@@ -506,12 +507,12 @@ static struct SYM_FWA_SCR SYM_FWA_SCR = {
 		0,
 	SCR_JUMP,
 		PADDR_A (dispatch),
-}/*-------------------------< DATAO_DONE >-----------------------*/,{
+पूर्ण/*-------------------------< DATAO_DONE >-----------------------*/,अणु
 	/*
-	 *  Save current pointer to LASTP.
+	 *  Save current poपूर्णांकer to LASTP.
 	 */
 	SCR_STORE_REL (temp, 4),
-		offsetof (struct sym_ccb, phys.head.lastp),
+		दुरत्व (काष्ठा sym_ccb, phys.head.lastp),
 	/*
 	 *  If the SODL is not full jump to dispatcher.
 	 *  We anticipate a STATUS phase.
@@ -519,59 +520,59 @@ static struct SYM_FWA_SCR SYM_FWA_SCR = {
 	SCR_FROM_REG (scntl2),
 		0,
 	SCR_JUMP ^ IFTRUE (MASK (WSS, WSS)),
-		PADDR_A (datao_done_wss),
+		PADDR_A (datao_करोne_wss),
 	SCR_JUMP ^ IFTRUE (WHEN (SCR_STATUS)),
 		PADDR_A (status),
 	SCR_JUMP,
 		PADDR_A (dispatch),
-}/*-------------------------< DATAO_DONE_WSS >-------------------*/,{
+पूर्ण/*-------------------------< DATAO_DONE_WSS >-------------------*/,अणु
 	/*
 	 *  The SODL is full, clear this condition.
 	 */
 	SCR_REG_REG (scntl2, SCR_OR, WSS),
 		0,
 	/*
-	 *  And signal a DATA UNDERRUN condition 
+	 *  And संकेत a DATA UNDERRUN condition 
 	 *  to the C code.
 	 */
 	SCR_INT,
 		SIR_SODL_UNDERRUN,
 	SCR_JUMP,
 		PADDR_A (dispatch),
-}/*-------------------------< DATAI_PHASE >----------------------*/,{
+पूर्ण/*-------------------------< DATAI_PHASE >----------------------*/,अणु
 	/*
-	 *  Jump to current pointer.
+	 *  Jump to current poपूर्णांकer.
 	 */
 	SCR_LOAD_REL (temp, 4),
-		offsetof (struct sym_ccb, phys.head.lastp),
+		दुरत्व (काष्ठा sym_ccb, phys.head.lastp),
 	SCR_RETURN,
 		0,
-}/*-------------------------< DATAO_PHASE >----------------------*/,{
+पूर्ण/*-------------------------< DATAO_PHASE >----------------------*/,अणु
 	/*
 	 *  C1010-66 errata work-around.
-	 *  Extra clocks of data hold must be inserted 
+	 *  Extra घड़ीs of data hold must be inserted 
 	 *  in DATA OUT phase on 33 MHz PCI BUS.
-	 *  Patched with a NOOP for other chips.
+	 *  Patched with a NOOP क्रम other chips.
 	 */
 	SCR_REG_REG (scntl4, SCR_OR, (XCLKH_DT|XCLKH_ST)),
 		0,
 	/*
-	 *  Jump to current pointer.
+	 *  Jump to current poपूर्णांकer.
 	 */
 	SCR_LOAD_REL (temp, 4),
-		offsetof (struct sym_ccb, phys.head.lastp),
+		दुरत्व (काष्ठा sym_ccb, phys.head.lastp),
 	SCR_RETURN,
 		0,
-}/*-------------------------< MSG_IN >---------------------------*/,{
+पूर्ण/*-------------------------< MSG_IN >---------------------------*/,अणु
 	/*
 	 *  Get the first byte of the message.
 	 *
-	 *  The script processor doesn't negate the
-	 *  ACK signal after this transfer.
+	 *  The script processor करोesn't negate the
+	 *  ACK संकेत after this transfer.
 	 */
 	SCR_MOVE_ABS (1) ^ SCR_MSG_IN,
 		HADDR_1 (msgin[0]),
-}/*-------------------------< MSG_IN2 >--------------------------*/,{
+पूर्ण/*-------------------------< MSG_IN2 >--------------------------*/,अणु
 	/*
 	 *  Check first against 1 byte messages 
 	 *  that we handle from SCRIPTS.
@@ -587,17 +588,17 @@ static struct SYM_FWA_SCR SYM_FWA_SCR = {
 	/*
 	 *  We handle all other messages from the 
 	 *  C code, so no need to waste on-chip RAM 
-	 *  for those ones.
+	 *  क्रम those ones.
 	 */
 	SCR_JUMP,
 		PADDR_B (msg_in_etc),
-}/*-------------------------< STATUS >---------------------------*/,{
+पूर्ण/*-------------------------< STATUS >---------------------------*/,अणु
 	/*
 	 *  get the status
 	 */
 	SCR_MOVE_ABS (1) ^ SCR_STATUS,
 		HADDR_1 (scratch),
-#ifdef SYM_CONF_IARB_SUPPORT
+#अगर_घोषित SYM_CONF_IARB_SUPPORT
 	/*
 	 *  If STATUS is not GOOD, clear IMMEDIATE ARBITRATION, 
 	 *  since we may have to tamper the start queue from 
@@ -607,7 +608,7 @@ static struct SYM_FWA_SCR SYM_FWA_SCR = {
 		8,
 	SCR_REG_REG (scntl1, SCR_AND, ~IARB),
 		0,
-#endif
+#पूर्ण_अगर
 	/*
 	 *  save status to scsi_status.
 	 *  mark as complete.
@@ -617,21 +618,21 @@ static struct SYM_FWA_SCR SYM_FWA_SCR = {
 	SCR_LOAD_REG (HS_REG, HS_COMPLETE),
 		0,
 	/*
-	 *  Anticipate the MESSAGE PHASE for 
+	 *  Anticipate the MESSAGE PHASE क्रम 
 	 *  the TASK COMPLETE message.
 	 */
 	SCR_JUMP ^ IFTRUE (WHEN (SCR_MSG_IN)),
 		PADDR_A (msg_in),
 	SCR_JUMP,
 		PADDR_A (dispatch),
-}/*-------------------------< COMPLETE >-------------------------*/,{
+पूर्ण/*-------------------------< COMPLETE >-------------------------*/,अणु
 	/*
 	 *  Complete message.
 	 *
 	 *  When we terminate the cycle by clearing ACK,
 	 *  the target may disconnect immediately.
 	 *
-	 *  We don't want to be told of an "unexpected disconnect",
+	 *  We करोn't want to be told of an "unexpected disconnect",
 	 *  so we disable this feature.
 	 */
 	SCR_REG_REG (scntl2, SCR_AND, 0x7f),
@@ -642,82 +643,82 @@ static struct SYM_FWA_SCR SYM_FWA_SCR = {
 	SCR_CLR (SCR_ACK|SCR_ATN),
 		0,
 	/*
-	 *  ... and wait for the disconnect.
+	 *  ... and रुको क्रम the disconnect.
 	 */
 	SCR_WAIT_DISC,
 		0,
-}/*-------------------------< COMPLETE2 >------------------------*/,{
+पूर्ण/*-------------------------< COMPLETE2 >------------------------*/,अणु
 	/*
 	 *  Save host status.
 	 */
 	SCR_STORE_REL (scr0, 4),
-		offsetof (struct sym_ccb, phys.head.status),
+		दुरत्व (काष्ठा sym_ccb, phys.head.status),
 	/*
-	 *  Some bridges may reorder DMA writes to memory.
-	 *  We donnot want the CPU to deal with completions  
-	 *  without all the posted write having been flushed 
+	 *  Some bridges may reorder DMA ग_लिखोs to memory.
+	 *  We करोnnot want the CPU to deal with completions  
+	 *  without all the posted ग_लिखो having been flushed 
 	 *  to memory. This DUMMY READ should flush posted 
 	 *  buffers prior to the CPU having to deal with 
 	 *  completions.
 	 */
 	SCR_LOAD_REL (scr0, 4),	/* DUMMY READ */
-		offsetof (struct sym_ccb, phys.head.status),
+		दुरत्व (काष्ठा sym_ccb, phys.head.status),
 
 	/*
 	 *  If command resulted in not GOOD status,
-	 *  call the C code if needed.
+	 *  call the C code अगर needed.
 	 */
 	SCR_FROM_REG (SS_REG),
 		0,
 	SCR_CALL ^ IFFALSE (DATA (S_GOOD)),
 		PADDR_B (bad_status),
 	/*
-	 *  If we performed an auto-sense, call 
-	 *  the C code to synchronyze task aborts 
+	 *  If we perक्रमmed an स्वतः-sense, call 
+	 *  the C code to synchronyze task पातs 
 	 *  with UNIT ATTENTION conditions.
 	 */
 	SCR_FROM_REG (HF_REG),
 		0,
 	SCR_JUMP ^ IFFALSE (MASK (0 ,(HF_SENSE|HF_EXT_ERR))),
 		PADDR_A (complete_error),
-}/*-------------------------< DONE >-----------------------------*/,{
+पूर्ण/*-------------------------< DONE >-----------------------------*/,अणु
 	/*
 	 *  Copy the DSA to the DONE QUEUE and 
-	 *  signal completion to the host.
-	 *  If we are interrupted between DONE 
+	 *  संकेत completion to the host.
+	 *  If we are पूर्णांकerrupted between DONE 
 	 *  and DONE_END, we must reset, otherwise 
 	 *  the completed CCB may be lost.
 	 */
 	SCR_STORE_ABS (dsa, 4),
 		PADDR_B (scratch),
 	SCR_LOAD_ABS (dsa, 4),
-		PADDR_B (done_pos),
+		PADDR_B (करोne_pos),
 	SCR_LOAD_ABS (scratcha, 4),
 		PADDR_B (scratch),
 	SCR_STORE_REL (scratcha, 4),
 		0,
 	/*
-	 *  The instruction below reads the DONE QUEUE next 
-	 *  free position from memory.
-	 *  In addition it ensures that all PCI posted writes  
-	 *  are flushed and so the DSA value of the done 
-	 *  CCB is visible by the CPU before INTFLY is raised.
+	 *  The inकाष्ठाion below पढ़ोs the DONE QUEUE next 
+	 *  मुक्त position from memory.
+	 *  In addition it ensures that all PCI posted ग_लिखोs  
+	 *  are flushed and so the DSA value of the करोne 
+	 *  CCB is visible by the CPU beक्रमe INTFLY is उठाओd.
 	 */
 	SCR_LOAD_REL (scratcha, 4),
 		4,
 	SCR_INT_FLY,
 		0,
 	SCR_STORE_ABS (scratcha, 4),
-		PADDR_B (done_pos),
-}/*-------------------------< DONE_END >-------------------------*/,{
+		PADDR_B (करोne_pos),
+पूर्ण/*-------------------------< DONE_END >-------------------------*/,अणु
 	SCR_JUMP,
 		PADDR_A (start),
-}/*-------------------------< COMPLETE_ERROR >-------------------*/,{
+पूर्ण/*-------------------------< COMPLETE_ERROR >-------------------*/,अणु
 	SCR_LOAD_ABS (scratcha, 4),
 		PADDR_B (startpos),
 	SCR_INT,
 		SIR_COMPLETE_ERROR,
-}/*-------------------------< SAVE_DP >--------------------------*/,{
+पूर्ण/*-------------------------< SAVE_DP >--------------------------*/,अणु
 	/*
 	 *  Clear ACK immediately.
 	 *  No need to delay it.
@@ -726,8 +727,8 @@ static struct SYM_FWA_SCR SYM_FWA_SCR = {
 		0,
 	/*
 	 *  Keep track we received a SAVE DP, so 
-	 *  we will switch to the other PM context 
-	 *  on the next PM since the DP may point 
+	 *  we will चयन to the other PM context 
+	 *  on the next PM since the DP may poपूर्णांक 
 	 *  to the current PM context.
 	 */
 	SCR_REG_REG (HF_REG, SCR_OR, HF_DP_SAVED),
@@ -737,18 +738,18 @@ static struct SYM_FWA_SCR SYM_FWA_SCR = {
 	 *  Copy LASTP to SAVEP.
 	 */
 	SCR_LOAD_REL (scratcha, 4),
-		offsetof (struct sym_ccb, phys.head.lastp),
+		दुरत्व (काष्ठा sym_ccb, phys.head.lastp),
 	SCR_STORE_REL (scratcha, 4),
-		offsetof (struct sym_ccb, phys.head.savep),
+		दुरत्व (काष्ठा sym_ccb, phys.head.savep),
 	/*
-	 *  Anticipate the MESSAGE PHASE for 
+	 *  Anticipate the MESSAGE PHASE क्रम 
 	 *  the DISCONNECT message.
 	 */
 	SCR_JUMP ^ IFTRUE (WHEN (SCR_MSG_IN)),
 		PADDR_A (msg_in),
 	SCR_JUMP,
 		PADDR_A (dispatch),
-}/*-------------------------< RESTORE_DP >-----------------------*/,{
+पूर्ण/*-------------------------< RESTORE_DP >-----------------------*/,अणु
 	/*
 	 *  Clear ACK immediately.
 	 *  No need to delay it.
@@ -759,24 +760,24 @@ static struct SYM_FWA_SCR SYM_FWA_SCR = {
 	 *  Copy SAVEP to LASTP.
 	 */
 	SCR_LOAD_REL  (scratcha, 4),
-		offsetof (struct sym_ccb, phys.head.savep),
+		दुरत्व (काष्ठा sym_ccb, phys.head.savep),
 	SCR_STORE_REL (scratcha, 4),
-		offsetof (struct sym_ccb, phys.head.lastp),
+		दुरत्व (काष्ठा sym_ccb, phys.head.lastp),
 	SCR_JUMP,
 		PADDR_A (dispatch),
-}/*-------------------------< DISCONNECT >-----------------------*/,{
+पूर्ण/*-------------------------< DISCONNECT >-----------------------*/,अणु
 	/*
 	 *  DISCONNECTing  ...
 	 *
 	 *  disable the "unexpected disconnect" feature,
-	 *  and remove the ACK signal.
+	 *  and हटाओ the ACK संकेत.
 	 */
 	SCR_REG_REG (scntl2, SCR_AND, 0x7f),
 		0,
 	SCR_CLR (SCR_ACK|SCR_ATN),
 		0,
 	/*
-	 *  Wait for the disconnect.
+	 *  Wait क्रम the disconnect.
 	 */
 	SCR_WAIT_DISC,
 		0,
@@ -789,35 +790,35 @@ static struct SYM_FWA_SCR SYM_FWA_SCR = {
 	 *  Save host status.
 	 */
 	SCR_STORE_REL (scr0, 4),
-		offsetof (struct sym_ccb, phys.head.status),
+		दुरत्व (काष्ठा sym_ccb, phys.head.status),
 	SCR_JUMP,
 		PADDR_A (start),
-}/*-------------------------< IDLE >-----------------------------*/,{
+पूर्ण/*-------------------------< IDLE >-----------------------------*/,अणु
 	/*
-	 *  Nothing to do?
-	 *  Switch the LED off and wait for reselect.
-	 *  Will be patched with a NO_OP if LED
+	 *  Nothing to करो?
+	 *  Switch the LED off and रुको क्रम reselect.
+	 *  Will be patched with a NO_OP अगर LED
 	 *  not needed or not desired.
 	 */
 	SCR_REG_REG (gpreg, SCR_OR, 0x01),
 		0,
-#ifdef SYM_CONF_IARB_SUPPORT
+#अगर_घोषित SYM_CONF_IARB_SUPPORT
 	SCR_JUMPR,
 		8,
-#endif
-}/*-------------------------< UNGETJOB >-------------------------*/,{
-#ifdef SYM_CONF_IARB_SUPPORT
+#पूर्ण_अगर
+पूर्ण/*-------------------------< UNGETJOB >-------------------------*/,अणु
+#अगर_घोषित SYM_CONF_IARB_SUPPORT
 	/*
-	 *  Set IMMEDIATE ARBITRATION, for the next time.
+	 *  Set IMMEDIATE ARBITRATION, क्रम the next समय.
 	 *  This will give us better chance to win arbitration 
-	 *  for the job we just wanted to do.
+	 *  क्रम the job we just wanted to करो.
 	 */
 	SCR_REG_REG (scntl1, SCR_OR, IARB),
 		0,
-#endif
+#पूर्ण_अगर
 	/*
-	 *  We are not able to restart the SCRIPTS if we are 
-	 *  interrupted and these instruction haven't been 
+	 *  We are not able to restart the SCRIPTS अगर we are 
+	 *  पूर्णांकerrupted and these inकाष्ठाion haven't been 
 	 *  all executed. BTW, this is very unlikely to 
 	 *  happen, but we check that from the C code.
 	 */
@@ -825,29 +826,29 @@ static struct SYM_FWA_SCR SYM_FWA_SCR = {
 		0,
 	SCR_STORE_ABS (scratcha, 4),
 		PADDR_B (startpos),
-}/*-------------------------< RESELECT >-------------------------*/,{
-#ifdef SYM_CONF_TARGET_ROLE_SUPPORT
+पूर्ण/*-------------------------< RESELECT >-------------------------*/,अणु
+#अगर_घोषित SYM_CONF_TARGET_ROLE_SUPPORT
 	/*
 	 *  Make sure we are in initiator mode.
 	 */
 	SCR_CLR (SCR_TRG),
 		0,
-#endif
+#पूर्ण_अगर
 	/*
-	 *  Sleep waiting for a reselection.
+	 *  Sleep रुकोing क्रम a reselection.
 	 */
 	SCR_WAIT_RESEL,
 		PADDR_A(start),
-}/*-------------------------< RESELECTED >-----------------------*/,{
+पूर्ण/*-------------------------< RESELECTED >-----------------------*/,अणु
 	/*
 	 *  Switch the LED on.
-	 *  Will be patched with a NO_OP if LED
+	 *  Will be patched with a NO_OP अगर LED
 	 *  not needed or not desired.
 	 */
 	SCR_REG_REG (gpreg, SCR_AND, 0xfe),
 		0,
 	/*
-	 *  load the target id into the sdid
+	 *  load the target id पूर्णांकo the sdid
 	 */
 	SCR_REG_SFBR (ssid, SCR_AND, 0x8F),
 		0,
@@ -873,19 +874,19 @@ static struct SYM_FWA_SCR SYM_FWA_SCR = {
 	SCR_INT ^ IFFALSE (WHEN (SCR_MSG_IN)),
 		SIR_RESEL_NO_MSG_IN,
 	/*
-	 *  Load the legacy synchronous transfer registers.
+	 *  Load the legacy synchronous transfer रेजिस्टरs.
 	 */
 	SCR_LOAD_REL (scntl3, 1),
-		offsetof(struct sym_tcb, head.wval),
+		दुरत्व(काष्ठा sym_tcb, head.wval),
 	SCR_LOAD_REL (sxfer, 1),
-		offsetof(struct sym_tcb, head.sval),
-}/*-------------------------< RESEL_SCNTL4 >---------------------*/,{
+		दुरत्व(काष्ठा sym_tcb, head.sval),
+पूर्ण/*-------------------------< RESEL_SCNTL4 >---------------------*/,अणु
 	/*
 	 *  The C1010 uses a new synchronous timing scheme.
-	 *  Will be patched with a NO_OP if not a C1010.
+	 *  Will be patched with a NO_OP अगर not a C1010.
 	 */
 	SCR_LOAD_REL (scntl4, 1),
-		offsetof(struct sym_tcb, head.uval),
+		दुरत्व(काष्ठा sym_tcb, head.uval),
 	/*
 	 *  Get the IDENTIFY message.
 	 */
@@ -893,7 +894,7 @@ static struct SYM_FWA_SCR SYM_FWA_SCR = {
 		HADDR_1 (msgin),
 	/*
 	 *  If IDENTIFY LUN #0, use a faster path 
-	 *  to find the LCB structure.
+	 *  to find the LCB काष्ठाure.
 	 */
 	SCR_JUMP ^ IFTRUE (MASK (0x80, 0xbf)),
 		PADDR_A (resel_lun0),
@@ -908,7 +909,7 @@ static struct SYM_FWA_SCR SYM_FWA_SCR = {
 	 *  Load the LUN control block address.
 	 */
 	SCR_LOAD_REL (dsa, 4),
-		offsetof(struct sym_tcb, head.luntbl_sa),
+		दुरत्व(काष्ठा sym_tcb, head.luntbl_sa),
 	SCR_SFBR_REG (dsa, SCR_SHL, 0),
 		0,
 	SCR_REG_REG (dsa, SCR_SHL, 0),
@@ -919,21 +920,21 @@ static struct SYM_FWA_SCR SYM_FWA_SCR = {
 		0,
 	SCR_JUMPR,
 		8,
-}/*-------------------------< RESEL_LUN0 >-----------------------*/,{
+पूर्ण/*-------------------------< RESEL_LUN0 >-----------------------*/,अणु
 	/*
-	 *  LUN 0 special case (but usual one :))
+	 *  LUN 0 special हाल (but usual one :))
 	 */
 	SCR_LOAD_REL (dsa, 4),
-		offsetof(struct sym_tcb, head.lun0_sa),
+		दुरत्व(काष्ठा sym_tcb, head.lun0_sa),
 	/*
-	 *  Jump indirectly to the reselect action for this LUN.
+	 *  Jump indirectly to the reselect action क्रम this LUN.
 	 */
 	SCR_LOAD_REL (temp, 4),
-		offsetof(struct sym_lcb, head.resel_sa),
+		दुरत्व(काष्ठा sym_lcb, head.resel_sa),
 	SCR_RETURN,
 		0,
 	/* In normal situations, we jump to RESEL_TAG or RESEL_NO_TAG */
-}/*-------------------------< RESEL_TAG >------------------------*/,{
+पूर्ण/*-------------------------< RESEL_TAG >------------------------*/,अणु
 	/*
 	 *  ACK the IDENTIFY previously received.
 	 */
@@ -948,18 +949,18 @@ static struct SYM_FWA_SCR SYM_FWA_SCR = {
 	SCR_MOVE_ABS (2) ^ SCR_MSG_IN,
 		HADDR_1 (msgin),
 	/*
-	 *  Load the pointer to the tagged task 
-	 *  table for this LUN.
+	 *  Load the poपूर्णांकer to the tagged task 
+	 *  table क्रम this LUN.
 	 */
 	SCR_LOAD_REL (dsa, 4),
-		offsetof(struct sym_lcb, head.itlq_tbl_sa),
+		दुरत्व(काष्ठा sym_lcb, head.itlq_tbl_sa),
 	/*
 	 *  The SIDL still contains the TAG value.
 	 *  Aggressive optimization, isn't it? :):)
 	 */
 	SCR_REG_SFBR (sidl, SCR_SHL, 0),
 		0,
-#if SYM_CONF_MAX_TASK*4 > 512
+#अगर SYM_CONF_MAX_TASK*4 > 512
 	SCR_JUMPR ^ IFFALSE (CARRYSET),
 		8,
 	SCR_REG_REG (dsa1, SCR_OR, 2),
@@ -970,91 +971,91 @@ static struct SYM_FWA_SCR SYM_FWA_SCR = {
 		8,
 	SCR_REG_REG (dsa1, SCR_OR, 1),
 		0,
-#elif SYM_CONF_MAX_TASK*4 > 256
+#या_अगर SYM_CONF_MAX_TASK*4 > 256
 	SCR_JUMPR ^ IFFALSE (CARRYSET),
 		8,
 	SCR_REG_REG (dsa1, SCR_OR, 1),
 		0,
-#endif
+#पूर्ण_अगर
 	/*
 	 *  Retrieve the DSA of this task.
-	 *  JUMP indirectly to the restart point of the CCB.
+	 *  JUMP indirectly to the restart poपूर्णांक of the CCB.
 	 */
 	SCR_SFBR_REG (dsa, SCR_AND, 0xfc),
 		0,
 	SCR_LOAD_REL (dsa, 4),
 		0,
 	SCR_LOAD_REL (temp, 4),
-		offsetof(struct sym_ccb, phys.head.go.restart),
+		दुरत्व(काष्ठा sym_ccb, phys.head.go.restart),
 	SCR_RETURN,
 		0,
 	/* In normal situations we branch to RESEL_DSA */
-}/*-------------------------< RESEL_DSA >------------------------*/,{
+पूर्ण/*-------------------------< RESEL_DSA >------------------------*/,अणु
 	/*
 	 *  ACK the IDENTIFY or TAG previously received.
 	 */
 	SCR_CLR (SCR_ACK),
 		0,
-}/*-------------------------< RESEL_DSA1 >-----------------------*/,{
+पूर्ण/*-------------------------< RESEL_DSA1 >-----------------------*/,अणु
 	/*
-	 *      Initialize the status registers
+	 *      Initialize the status रेजिस्टरs
 	 */
 	SCR_LOAD_REL (scr0, 4),
-		offsetof (struct sym_ccb, phys.head.status),
+		दुरत्व (काष्ठा sym_ccb, phys.head.status),
 	/*
 	 *  Jump to dispatcher.
 	 */
 	SCR_JUMP,
 		PADDR_A (dispatch),
-}/*-------------------------< RESEL_NO_TAG >---------------------*/,{
+पूर्ण/*-------------------------< RESEL_NO_TAG >---------------------*/,अणु
 	/*
 	 *  Load the DSA with the unique ITL task.
 	 */
 	SCR_LOAD_REL (dsa, 4),
-		offsetof(struct sym_lcb, head.itl_task_sa),
+		दुरत्व(काष्ठा sym_lcb, head.itl_task_sa),
 	/*
-	 *  JUMP indirectly to the restart point of the CCB.
+	 *  JUMP indirectly to the restart poपूर्णांक of the CCB.
 	 */
 	SCR_LOAD_REL (temp, 4),
-		offsetof(struct sym_ccb, phys.head.go.restart),
+		दुरत्व(काष्ठा sym_ccb, phys.head.go.restart),
 	SCR_RETURN,
 		0,
 	/* In normal situations we branch to RESEL_DSA */
-}/*-------------------------< DATA_IN >--------------------------*/,{
+पूर्ण/*-------------------------< DATA_IN >--------------------------*/,अणु
 /*
  *  Because the size depends on the
- *  #define SYM_CONF_MAX_SG parameter,
- *  it is filled in at runtime.
+ *  #घोषणा SYM_CONF_MAX_SG parameter,
+ *  it is filled in at runसमय.
  *
  *  ##===========< i=0; i<SYM_CONF_MAX_SG >=========
  *  ||	SCR_CHMOV_TBL ^ SCR_DATA_IN,
- *  ||		offsetof (struct sym_dsb, data[ i]),
+ *  ||		दुरत्व (काष्ठा sym_dsb, data[ i]),
  *  ##==========================================
  */
 0
-}/*-------------------------< DATA_IN2 >-------------------------*/,{
+पूर्ण/*-------------------------< DATA_IN2 >-------------------------*/,अणु
 	SCR_CALL,
-		PADDR_A (datai_done),
+		PADDR_A (datai_करोne),
 	SCR_JUMP,
 		PADDR_B (data_ovrun),
-}/*-------------------------< DATA_OUT >-------------------------*/,{
+पूर्ण/*-------------------------< DATA_OUT >-------------------------*/,अणु
 /*
  *  Because the size depends on the
- *  #define SYM_CONF_MAX_SG parameter,
- *  it is filled in at runtime.
+ *  #घोषणा SYM_CONF_MAX_SG parameter,
+ *  it is filled in at runसमय.
  *
  *  ##===========< i=0; i<SYM_CONF_MAX_SG >=========
  *  ||	SCR_CHMOV_TBL ^ SCR_DATA_OUT,
- *  ||		offsetof (struct sym_dsb, data[ i]),
+ *  ||		दुरत्व (काष्ठा sym_dsb, data[ i]),
  *  ##==========================================
  */
 0
-}/*-------------------------< DATA_OUT2 >------------------------*/,{
+पूर्ण/*-------------------------< DATA_OUT2 >------------------------*/,अणु
 	SCR_CALL,
-		PADDR_A (datao_done),
+		PADDR_A (datao_करोne),
 	SCR_JUMP,
 		PADDR_B (data_ovrun),
-}/*-------------------------< PM0_DATA >-------------------------*/,{
+पूर्ण/*-------------------------< PM0_DATA >-------------------------*/,अणु
 	/*
 	 *  Read our host flags to SFBR, so we will be able 
 	 *  to check against the data direction we expect.
@@ -1082,10 +1083,10 @@ static struct SYM_FWA_SCR SYM_FWA_SCR = {
 	 *  Move the data to memory.
 	 */
 	SCR_CHMOV_TBL ^ SCR_DATA_IN,
-		offsetof (struct sym_ccb, phys.pm0.sg),
+		दुरत्व (काष्ठा sym_ccb, phys.pm0.sg),
 	SCR_JUMP,
 		PADDR_A (pm0_data_end),
-}/*-------------------------< PM0_DATA_OUT >---------------------*/,{
+पूर्ण/*-------------------------< PM0_DATA_OUT >---------------------*/,अणु
 	/*
 	 *  Actual phase is DATA OUT.
 	 *  Check against expected direction.
@@ -1102,8 +1103,8 @@ static struct SYM_FWA_SCR SYM_FWA_SCR = {
 	 *  Move the data from memory.
 	 */
 	SCR_CHMOV_TBL ^ SCR_DATA_OUT,
-		offsetof (struct sym_ccb, phys.pm0.sg),
-}/*-------------------------< PM0_DATA_END >---------------------*/,{
+		दुरत्व (काष्ठा sym_ccb, phys.pm0.sg),
+पूर्ण/*-------------------------< PM0_DATA_END >---------------------*/,अणु
 	/*
 	 *  Clear the flag that told we were moving  
 	 *  data from the PM0 DATA mini-script.
@@ -1112,14 +1113,14 @@ static struct SYM_FWA_SCR SYM_FWA_SCR = {
 		0,
 	/*
 	 *  Return to the previous DATA script which 
-	 *  is guaranteed by design (if no bug) to be 
-	 *  the main DATA script for this transfer.
+	 *  is guaranteed by design (अगर no bug) to be 
+	 *  the मुख्य DATA script क्रम this transfer.
 	 */
 	SCR_LOAD_REL (temp, 4),
-		offsetof (struct sym_ccb, phys.pm0.ret),
+		दुरत्व (काष्ठा sym_ccb, phys.pm0.ret),
 	SCR_RETURN,
 		0,
-}/*-------------------------< PM1_DATA >-------------------------*/,{
+पूर्ण/*-------------------------< PM1_DATA >-------------------------*/,अणु
 	/*
 	 *  Read our host flags to SFBR, so we will be able 
 	 *  to check against the data direction we expect.
@@ -1147,10 +1148,10 @@ static struct SYM_FWA_SCR SYM_FWA_SCR = {
 	 *  Move the data to memory.
 	 */
 	SCR_CHMOV_TBL ^ SCR_DATA_IN,
-		offsetof (struct sym_ccb, phys.pm1.sg),
+		दुरत्व (काष्ठा sym_ccb, phys.pm1.sg),
 	SCR_JUMP,
 		PADDR_A (pm1_data_end),
-}/*-------------------------< PM1_DATA_OUT >---------------------*/,{
+पूर्ण/*-------------------------< PM1_DATA_OUT >---------------------*/,अणु
 	/*
 	 *  Actual phase is DATA OUT.
 	 *  Check against expected direction.
@@ -1167,8 +1168,8 @@ static struct SYM_FWA_SCR SYM_FWA_SCR = {
 	 *  Move the data from memory.
 	 */
 	SCR_CHMOV_TBL ^ SCR_DATA_OUT,
-		offsetof (struct sym_ccb, phys.pm1.sg),
-}/*-------------------------< PM1_DATA_END >---------------------*/,{
+		दुरत्व (काष्ठा sym_ccb, phys.pm1.sg),
+पूर्ण/*-------------------------< PM1_DATA_END >---------------------*/,अणु
 	/*
 	 *  Clear the flag that told we were moving  
 	 *  data from the PM1 DATA mini-script.
@@ -1177,51 +1178,51 @@ static struct SYM_FWA_SCR SYM_FWA_SCR = {
 		0,
 	/*
 	 *  Return to the previous DATA script which 
-	 *  is guaranteed by design (if no bug) to be 
-	 *  the main DATA script for this transfer.
+	 *  is guaranteed by design (अगर no bug) to be 
+	 *  the मुख्य DATA script क्रम this transfer.
 	 */
 	SCR_LOAD_REL (temp, 4),
-		offsetof (struct sym_ccb, phys.pm1.ret),
+		दुरत्व (काष्ठा sym_ccb, phys.pm1.ret),
 	SCR_RETURN,
 		0,
-}/*-------------------------<>-----------------------------------*/
-};
+पूर्ण/*-------------------------<>-----------------------------------*/
+पूर्ण;
 
-static struct SYM_FWB_SCR SYM_FWB_SCR = {
-/*--------------------------< START64 >--------------------------*/ {
+अटल काष्ठा SYM_FWB_SCR SYM_FWB_SCR = अणु
+/*--------------------------< START64 >--------------------------*/ अणु
 	/*
-	 *  SCRIPT entry point for the 895A, 896 and 1010.
-	 *  For now, there is no specific stuff for those 
-	 *  chips at this point, but this may come.
+	 *  SCRIPT entry poपूर्णांक क्रम the 895A, 896 and 1010.
+	 *  For now, there is no specअगरic stuff क्रम those 
+	 *  chips at this poपूर्णांक, but this may come.
 	 */
 	SCR_JUMP,
 		PADDR_A (init),
-}/*-------------------------< NO_DATA >--------------------------*/,{
+पूर्ण/*-------------------------< NO_DATA >--------------------------*/,अणु
 	SCR_JUMP,
 		PADDR_B (data_ovrun),
-}/*-------------------------< SEL_FOR_ABORT >--------------------*/,{
+पूर्ण/*-------------------------< SEL_FOR_ABORT >--------------------*/,अणु
 	/*
-	 *  We are jumped here by the C code, if we have 
+	 *  We are jumped here by the C code, अगर we have 
 	 *  some target to reset or some disconnected 
-	 *  job to abort. Since error recovery is a serious 
-	 *  busyness, we will really reset the SCSI BUS, if 
-	 *  case of a SCSI interrupt occurring in this path.
+	 *  job to पात. Since error recovery is a serious 
+	 *  busyness, we will really reset the SCSI BUS, अगर 
+	 *  हाल of a SCSI पूर्णांकerrupt occurring in this path.
 	 */
-#ifdef SYM_CONF_TARGET_ROLE_SUPPORT
+#अगर_घोषित SYM_CONF_TARGET_ROLE_SUPPORT
 	/*
 	 *  Set initiator mode.
 	 */
 	SCR_CLR (SCR_TRG),
 		0,
-#endif
+#पूर्ण_अगर
 	/*
 	 *      And try to select this target.
 	 */
-	SCR_SEL_TBL_ATN ^ offsetof (struct sym_hcb, abrt_sel),
+	SCR_SEL_TBL_ATN ^ दुरत्व (काष्ठा sym_hcb, abrt_sel),
 		PADDR_A (reselect),
 	/*
-	 *  Wait for the selection to complete or 
-	 *  the selection to time out.
+	 *  Wait क्रम the selection to complete or 
+	 *  the selection to समय out.
 	 */
 	SCR_JUMPR ^ IFFALSE (WHEN (SCR_MSG_OUT)),
 		-8,
@@ -1231,7 +1232,7 @@ static struct SYM_FWB_SCR SYM_FWB_SCR = {
 	SCR_INT,
 		SIR_TARGET_SELECTED,
 	/*
-	 *  The C code should let us continue here. 
+	 *  The C code should let us जारी here. 
 	 *  Send the 'kiss of death' message.
 	 *  We expect an immediate disconnect once 
 	 *  the target has eaten the message.
@@ -1239,23 +1240,23 @@ static struct SYM_FWB_SCR SYM_FWB_SCR = {
 	SCR_REG_REG (scntl2, SCR_AND, 0x7f),
 		0,
 	SCR_MOVE_TBL ^ SCR_MSG_OUT,
-		offsetof (struct sym_hcb, abrt_tbl),
+		दुरत्व (काष्ठा sym_hcb, abrt_tbl),
 	SCR_CLR (SCR_ACK|SCR_ATN),
 		0,
 	SCR_WAIT_DISC,
 		0,
 	/*
-	 *  Tell the C code that we are done.
+	 *  Tell the C code that we are करोne.
 	 */
 	SCR_INT,
 		SIR_ABORT_SENT,
-}/*-------------------------< SEL_FOR_ABORT_1 >------------------*/,{
+पूर्ण/*-------------------------< SEL_FOR_ABORT_1 >------------------*/,अणु
 	/*
 	 *  Jump at scheduler.
 	 */
 	SCR_JUMP,
 		PADDR_A (start),
-}/*-------------------------< MSG_IN_ETC >-----------------------*/,{
+पूर्ण/*-------------------------< MSG_IN_ETC >-----------------------*/,अणु
 	/*
 	 *  If it is an EXTENDED (variable size message)
 	 *  Handle it.
@@ -1271,7 +1272,7 @@ static struct SYM_FWB_SCR SYM_FWB_SCR = {
 	SCR_JUMP ^ IFTRUE (MASK (0x10, 0xf0)),
 		PADDR_B (msg_received),
 	/*
-	 *  We donnot handle 2 bytes messages from SCRIPTS.
+	 *  We करोnnot handle 2 bytes messages from SCRIPTS.
 	 *  So, let the C code deal with these ones too.
 	 */
 	SCR_JUMP ^ IFFALSE (MASK (0x20, 0xf0)),
@@ -1280,17 +1281,17 @@ static struct SYM_FWB_SCR SYM_FWB_SCR = {
 		0,
 	SCR_MOVE_ABS (1) ^ SCR_MSG_IN,
 		HADDR_1 (msgin[1]),
-}/*-------------------------< MSG_RECEIVED >---------------------*/,{
+पूर्ण/*-------------------------< MSG_RECEIVED >---------------------*/,अणु
 	SCR_LOAD_REL (scratcha, 4),	/* DUMMY READ */
 		0,
 	SCR_INT,
 		SIR_MSG_RECEIVED,
-}/*-------------------------< MSG_WEIRD_SEEN >-------------------*/,{
+पूर्ण/*-------------------------< MSG_WEIRD_SEEN >-------------------*/,अणु
 	SCR_LOAD_REL (scratcha, 4),	/* DUMMY READ */
 		0,
 	SCR_INT,
 		SIR_MSG_WEIRD,
-}/*-------------------------< MSG_EXTENDED >---------------------*/,{
+पूर्ण/*-------------------------< MSG_EXTENDED >---------------------*/,अणु
 	/*
 	 *  Clear ACK and get the next byte 
 	 *  assumed to be the message length.
@@ -1312,19 +1313,19 @@ static struct SYM_FWB_SCR SYM_FWB_SCR = {
 	SCR_JUMP ^ IFTRUE (CARRYSET),
 		PADDR_B (msg_weird_seen),
 	/*
-	 *  We donnot handle extended messages from SCRIPTS.
+	 *  We करोnnot handle extended messages from SCRIPTS.
 	 *  Read the amount of data corresponding to the 
 	 *  message length and call the C code.
 	 */
 	SCR_STORE_REL (scratcha, 1),
-		offsetof (struct sym_dsb, smsg_ext.size),
+		दुरत्व (काष्ठा sym_dsb, smsg_ext.size),
 	SCR_CLR (SCR_ACK),
 		0,
 	SCR_MOVE_TBL ^ SCR_MSG_IN,
-		offsetof (struct sym_dsb, smsg_ext),
+		दुरत्व (काष्ठा sym_dsb, smsg_ext),
 	SCR_JUMP,
 		PADDR_B (msg_received),
-}/*-------------------------< MSG_BAD >--------------------------*/,{
+पूर्ण/*-------------------------< MSG_BAD >--------------------------*/,अणु
 	/*
 	 *  unimplemented message - reject it.
 	 */
@@ -1334,7 +1335,7 @@ static struct SYM_FWB_SCR SYM_FWB_SCR = {
 		0,
 	SCR_JUMP,
 		PADDR_A (clrack),
-}/*-------------------------< MSG_WEIRD >------------------------*/,{
+पूर्ण/*-------------------------< MSG_WEIRD >------------------------*/,अणु
 	/*
 	 *  weird message received
 	 *  ignore all MSG IN phases and reject it.
@@ -1343,7 +1344,7 @@ static struct SYM_FWB_SCR SYM_FWB_SCR = {
 		SIR_REJECT_TO_SEND,
 	SCR_SET (SCR_ATN),
 		0,
-}/*-------------------------< MSG_WEIRD1 >-----------------------*/,{
+पूर्ण/*-------------------------< MSG_WEIRD1 >-----------------------*/,अणु
 	SCR_CLR (SCR_ACK),
 		0,
 	SCR_JUMP ^ IFFALSE (WHEN (SCR_MSG_IN)),
@@ -1352,7 +1353,7 @@ static struct SYM_FWB_SCR SYM_FWB_SCR = {
 		HADDR_1 (scratch),
 	SCR_JUMP,
 		PADDR_B (msg_weird1),
-}/*-------------------------< WDTR_RESP >------------------------*/,{
+पूर्ण/*-------------------------< WDTR_RESP >------------------------*/,अणु
 	/*
 	 *  let the target fetch our answer.
 	 */
@@ -1362,15 +1363,15 @@ static struct SYM_FWB_SCR SYM_FWB_SCR = {
 		0,
 	SCR_JUMP ^ IFFALSE (WHEN (SCR_MSG_OUT)),
 		PADDR_B (nego_bad_phase),
-}/*-------------------------< SEND_WDTR >------------------------*/,{
+पूर्ण/*-------------------------< SEND_WDTR >------------------------*/,अणु
 	/*
 	 *  Send the M_X_WIDE_REQ
 	 */
 	SCR_MOVE_ABS (4) ^ SCR_MSG_OUT,
 		HADDR_1 (msgout),
 	SCR_JUMP,
-		PADDR_B (msg_out_done),
-}/*-------------------------< SDTR_RESP >------------------------*/,{
+		PADDR_B (msg_out_करोne),
+पूर्ण/*-------------------------< SDTR_RESP >------------------------*/,अणु
 	/*
 	 *  let the target fetch our answer.
 	 */
@@ -1380,15 +1381,15 @@ static struct SYM_FWB_SCR SYM_FWB_SCR = {
 		0,
 	SCR_JUMP ^ IFFALSE (WHEN (SCR_MSG_OUT)),
 		PADDR_B (nego_bad_phase),
-}/*-------------------------< SEND_SDTR >------------------------*/,{
+पूर्ण/*-------------------------< SEND_SDTR >------------------------*/,अणु
 	/*
 	 *  Send the M_X_SYNC_REQ
 	 */
 	SCR_MOVE_ABS (5) ^ SCR_MSG_OUT,
 		HADDR_1 (msgout),
 	SCR_JUMP,
-		PADDR_B (msg_out_done),
-}/*-------------------------< PPR_RESP >-------------------------*/,{
+		PADDR_B (msg_out_करोne),
+पूर्ण/*-------------------------< PPR_RESP >-------------------------*/,अणु
 	/*
 	 *  let the target fetch our answer.
 	 */
@@ -1398,34 +1399,34 @@ static struct SYM_FWB_SCR SYM_FWB_SCR = {
 		0,
 	SCR_JUMP ^ IFFALSE (WHEN (SCR_MSG_OUT)),
 		PADDR_B (nego_bad_phase),
-}/*-------------------------< SEND_PPR >-------------------------*/,{
+पूर्ण/*-------------------------< SEND_PPR >-------------------------*/,अणु
 	/*
 	 *  Send the M_X_PPR_REQ
 	 */
 	SCR_MOVE_ABS (8) ^ SCR_MSG_OUT,
 		HADDR_1 (msgout),
 	SCR_JUMP,
-		PADDR_B (msg_out_done),
-}/*-------------------------< NEGO_BAD_PHASE >-------------------*/,{
+		PADDR_B (msg_out_करोne),
+पूर्ण/*-------------------------< NEGO_BAD_PHASE >-------------------*/,अणु
 	SCR_INT,
 		SIR_NEGO_PROTO,
 	SCR_JUMP,
 		PADDR_A (dispatch),
-}/*-------------------------< MSG_OUT >--------------------------*/,{
+पूर्ण/*-------------------------< MSG_OUT >--------------------------*/,अणु
 	/*
 	 *  The target requests a message.
-	 *  We donnot send messages that may 
-	 *  require the device to go to bus free.
+	 *  We करोnnot send messages that may 
+	 *  require the device to go to bus मुक्त.
 	 */
 	SCR_MOVE_ABS (1) ^ SCR_MSG_OUT,
 		HADDR_1 (msgout),
 	/*
-	 *  ... wait for the next phase
-	 *  if it's a message out, send it again, ...
+	 *  ... रुको क्रम the next phase
+	 *  अगर it's a message out, send it again, ...
 	 */
 	SCR_JUMP ^ IFTRUE (WHEN (SCR_MSG_OUT)),
 		PADDR_B (msg_out),
-}/*-------------------------< MSG_OUT_DONE >---------------------*/,{
+पूर्ण/*-------------------------< MSG_OUT_DONE >---------------------*/,अणु
 	/*
 	 *  Let the C code be aware of the 
 	 *  sent message and clear the message.
@@ -1437,17 +1438,17 @@ static struct SYM_FWB_SCR SYM_FWB_SCR = {
 	 */
 	SCR_JUMP,
 		PADDR_A (dispatch),
-}/*-------------------------< DATA_OVRUN >-----------------------*/,{
+पूर्ण/*-------------------------< DATA_OVRUN >-----------------------*/,अणु
 	/*
 	 *  Use scratcha to count the extra bytes.
 	 */
 	SCR_LOAD_ABS (scratcha, 4),
 		PADDR_B (zero),
-}/*-------------------------< DATA_OVRUN1 >----------------------*/,{
+पूर्ण/*-------------------------< DATA_OVRUN1 >----------------------*/,अणु
 	/*
 	 *  The target may want to transfer too much data.
 	 *
-	 *  If phase is DATA OUT write 1 byte and count it.
+	 *  If phase is DATA OUT ग_लिखो 1 byte and count it.
 	 */
 	SCR_JUMPR ^ IFFALSE (WHEN (SCR_DATA_OUT)),
 		16,
@@ -1470,7 +1471,7 @@ static struct SYM_FWB_SCR SYM_FWB_SCR = {
 	/*
 	 *  Finally check against DATA IN phase.
 	 *  Signal data overrun to the C code 
-	 *  and jump to dispatcher if not so.
+	 *  and jump to dispatcher अगर not so.
 	 *  Read 1 byte otherwise and count it.
 	 */
 	SCR_JUMPR ^ IFTRUE (WHEN (SCR_DATA_IN)),
@@ -1481,10 +1482,10 @@ static struct SYM_FWB_SCR SYM_FWB_SCR = {
 		PADDR_A (dispatch),
 	SCR_CHMOV_ABS (1) ^ SCR_DATA_IN,
 		HADDR_1 (scratch),
-}/*-------------------------< DATA_OVRUN2 >----------------------*/,{
+पूर्ण/*-------------------------< DATA_OVRUN2 >----------------------*/,अणु
 	/*
 	 *  Count this byte.
-	 *  This will allow to return a negative 
+	 *  This will allow to वापस a negative 
 	 *  residual to user.
 	 */
 	SCR_REG_REG (scratcha,  SCR_ADD,  0x01),
@@ -1498,13 +1499,13 @@ static struct SYM_FWB_SCR SYM_FWB_SCR = {
 	 */
 	SCR_JUMP,
 		PADDR_B (data_ovrun1),
-}/*-------------------------< ABORT_RESEL >----------------------*/,{
+पूर्ण/*-------------------------< ABORT_RESEL >----------------------*/,अणु
 	SCR_SET (SCR_ATN),
 		0,
 	SCR_CLR (SCR_ACK),
 		0,
 	/*
-	 *  send the abort/abortag/reset message
+	 *  send the पात/पातag/reset message
 	 *  we expect an immediate disconnect
 	 */
 	SCR_REG_REG (scntl2, SCR_AND, 0x7f),
@@ -1519,69 +1520,69 @@ static struct SYM_FWB_SCR SYM_FWB_SCR = {
 		SIR_RESEL_ABORTED,
 	SCR_JUMP,
 		PADDR_A (start),
-}/*-------------------------< RESEND_IDENT >---------------------*/,{
+पूर्ण/*-------------------------< RESEND_IDENT >---------------------*/,अणु
 	/*
 	 *  The target stays in MSG OUT phase after having acked 
-	 *  Identify [+ Tag [+ Extended message ]]. Targets shall
+	 *  Identअगरy [+ Tag [+ Extended message ]]. Tarमाला_लो shall
 	 *  behave this way on parity error.
 	 *  We must send it again all the messages.
 	 */
-	SCR_SET (SCR_ATN), /* Shall be asserted 2 deskew delays before the  */
+	SCR_SET (SCR_ATN), /* Shall be निश्चितed 2 deskew delays beक्रमe the  */
 		0,         /* 1rst ACK = 90 ns. Hope the chip isn't too fast */
 	SCR_JUMP,
 		PADDR_A (send_ident),
-}/*-------------------------< IDENT_BREAK >----------------------*/,{
+पूर्ण/*-------------------------< IDENT_BREAK >----------------------*/,अणु
 	SCR_CLR (SCR_ATN),
 		0,
 	SCR_JUMP,
 		PADDR_A (select2),
-}/*-------------------------< IDENT_BREAK_ATN >------------------*/,{
+पूर्ण/*-------------------------< IDENT_BREAK_ATN >------------------*/,अणु
 	SCR_SET (SCR_ATN),
 		0,
 	SCR_JUMP,
 		PADDR_A (select2),
-}/*-------------------------< SDATA_IN >-------------------------*/,{
+पूर्ण/*-------------------------< SDATA_IN >-------------------------*/,अणु
 	SCR_CHMOV_TBL ^ SCR_DATA_IN,
-		offsetof (struct sym_dsb, sense),
+		दुरत्व (काष्ठा sym_dsb, sense),
 	SCR_CALL,
-		PADDR_A (datai_done),
+		PADDR_A (datai_करोne),
 	SCR_JUMP,
 		PADDR_B (data_ovrun),
-}/*-------------------------< RESEL_BAD_LUN >--------------------*/,{
+पूर्ण/*-------------------------< RESEL_BAD_LUN >--------------------*/,अणु
 	/*
 	 *  Message is an IDENTIFY, but lun is unknown.
-	 *  Signal problem to C code for logging the event.
+	 *  Signal problem to C code क्रम logging the event.
 	 *  Send a M_ABORT to clear all pending tasks.
 	 */
 	SCR_INT,
 		SIR_RESEL_BAD_LUN,
 	SCR_JUMP,
-		PADDR_B (abort_resel),
-}/*-------------------------< BAD_I_T_L >------------------------*/,{
+		PADDR_B (पात_resel),
+पूर्ण/*-------------------------< BAD_I_T_L >------------------------*/,अणु
 	/*
-	 *  We donnot have a task for that I_T_L.
-	 *  Signal problem to C code for logging the event.
+	 *  We करोnnot have a task क्रम that I_T_L.
+	 *  Signal problem to C code क्रम logging the event.
 	 *  Send a M_ABORT message.
 	 */
 	SCR_INT,
 		SIR_RESEL_BAD_I_T_L,
 	SCR_JUMP,
-		PADDR_B (abort_resel),
-}/*-------------------------< BAD_I_T_L_Q >----------------------*/,{
+		PADDR_B (पात_resel),
+पूर्ण/*-------------------------< BAD_I_T_L_Q >----------------------*/,अणु
 	/*
-	 *  We donnot have a task that matches the tag.
-	 *  Signal problem to C code for logging the event.
+	 *  We करोnnot have a task that matches the tag.
+	 *  Signal problem to C code क्रम logging the event.
 	 *  Send a M_ABORTTAG message.
 	 */
 	SCR_INT,
 		SIR_RESEL_BAD_I_T_L_Q,
 	SCR_JUMP,
-		PADDR_B (abort_resel),
-}/*-------------------------< BAD_STATUS >-----------------------*/,{
+		PADDR_B (पात_resel),
+पूर्ण/*-------------------------< BAD_STATUS >-----------------------*/,अणु
 	/*
-	 *  Anything different from INTERMEDIATE 
+	 *  Anything dअगरferent from INTERMEDIATE 
 	 *  CONDITION MET should be a bad SCSI status, 
-	 *  given that GOOD status has already been tested.
+	 *  given that GOOD status has alपढ़ोy been tested.
 	 *  Call the C code.
 	 */
 	SCR_LOAD_ABS (scratcha, 4),
@@ -1590,11 +1591,11 @@ static struct SYM_FWB_SCR SYM_FWB_SCR = {
 		SIR_BAD_SCSI_STATUS,
 	SCR_RETURN,
 		0,
-}/*-------------------------< PM_HANDLE >------------------------*/,{
+पूर्ण/*-------------------------< PM_HANDLE >------------------------*/,अणु
 	/*
 	 *  Phase mismatch handling.
 	 *
-	 *  Since we have to deal with 2 SCSI data pointers  
+	 *  Since we have to deal with 2 SCSI data poपूर्णांकers  
 	 *  (current and saved), we need at least 2 contexts.
 	 *  Each context (pm0 and pm1) has a saved area, a 
 	 *  SAVE mini-script and a DATA phase mini-script.
@@ -1605,15 +1606,15 @@ static struct SYM_FWB_SCR SYM_FWB_SCR = {
 	SCR_FROM_REG (HF_REG),
 		0,
 	/*
-	 *  If no flags (1rst PM for example), avoid 
+	 *  If no flags (1rst PM क्रम example), aव्योम 
 	 *  all the below heavy flags testing.
-	 *  This makes the normal case a bit faster.
+	 *  This makes the normal हाल a bit faster.
 	 */
 	SCR_JUMP ^ IFTRUE (MASK (0, (HF_IN_PM0 | HF_IN_PM1 | HF_DP_SAVED))),
 		PADDR_B (pm_handle1),
 	/*
-	 *  If we received a SAVE DP, switch to the 
-	 *  other PM context since the savep may point 
+	 *  If we received a SAVE DP, चयन to the 
+	 *  other PM context since the savep may poपूर्णांक 
 	 *  to the current PM context.
 	 */
 	SCR_JUMPR ^ IFFALSE (MASK (HF_DP_SAVED, HF_DP_SAVED)),
@@ -1621,38 +1622,38 @@ static struct SYM_FWB_SCR SYM_FWB_SCR = {
 	SCR_REG_REG (sfbr, SCR_XOR, HF_ACT_PM),
 		0,
 	/*
-	 *  If we have been interrupt in a PM DATA mini-script,
-	 *  we take the return address from the corresponding 
+	 *  If we have been पूर्णांकerrupt in a PM DATA mini-script,
+	 *  we take the वापस address from the corresponding 
 	 *  saved area.
-	 *  This ensure the return address always points to the 
-	 *  main DATA script for this transfer.
+	 *  This ensure the वापस address always poपूर्णांकs to the 
+	 *  मुख्य DATA script क्रम this transfer.
 	 */
 	SCR_JUMP ^ IFTRUE (MASK (0, (HF_IN_PM0 | HF_IN_PM1))),
 		PADDR_B (pm_handle1),
 	SCR_JUMPR ^ IFFALSE (MASK (HF_IN_PM0, HF_IN_PM0)),
 		16,
 	SCR_LOAD_REL (ia, 4),
-		offsetof(struct sym_ccb, phys.pm0.ret),
+		दुरत्व(काष्ठा sym_ccb, phys.pm0.ret),
 	SCR_JUMP,
 		PADDR_B (pm_save),
 	SCR_LOAD_REL (ia, 4),
-		offsetof(struct sym_ccb, phys.pm1.ret),
+		दुरत्व(काष्ठा sym_ccb, phys.pm1.ret),
 	SCR_JUMP,
 		PADDR_B (pm_save),
-}/*-------------------------< PM_HANDLE1 >-----------------------*/,{
+पूर्ण/*-------------------------< PM_HANDLE1 >-----------------------*/,अणु
 	/*
-	 *  Normal case.
-	 *  Update the return address so that it 
-	 *  will point after the interrupted MOVE.
+	 *  Normal हाल.
+	 *  Update the वापस address so that it 
+	 *  will poपूर्णांक after the पूर्णांकerrupted MOVE.
 	 */
 	SCR_REG_REG (ia, SCR_ADD, 8),
 		0,
 	SCR_REG_REG (ia1, SCR_ADDC, 0),
 		0,
-}/*-------------------------< PM_SAVE >--------------------------*/,{
+पूर्ण/*-------------------------< PM_SAVE >--------------------------*/,अणु
 	/*
-	 *  Clear all the flags that told us if we were 
-	 *  interrupted in a PM DATA mini-script and/or 
+	 *  Clear all the flags that told us अगर we were 
+	 *  पूर्णांकerrupted in a PM DATA mini-script and/or 
 	 *  we received a SAVE DP.
 	 */
 	SCR_SFBR_REG (HF_REG, SCR_AND, (~(HF_IN_PM0|HF_IN_PM1|HF_DP_SAVED))),
@@ -1662,9 +1663,9 @@ static struct SYM_FWB_SCR SYM_FWB_SCR = {
 	 */
 	SCR_JUMP ^ IFTRUE (MASK (HF_ACT_PM, HF_ACT_PM)),
 		PADDR_B (pm1_save),
-}/*-------------------------< PM0_SAVE >-------------------------*/,{
+पूर्ण/*-------------------------< PM0_SAVE >-------------------------*/,अणु
 	SCR_STORE_REL (ia, 4),
-		offsetof(struct sym_ccb, phys.pm0.ret),
+		दुरत्व(काष्ठा sym_ccb, phys.pm0.ret),
 	/*
 	 *  If WSR bit is set, either UA and RBC may 
 	 *  have to be changed whether the device wants 
@@ -1675,26 +1676,26 @@ static struct SYM_FWB_SCR SYM_FWB_SCR = {
 	SCR_CALL ^ IFTRUE (MASK (WSR, WSR)),
 		PADDR_B (pm_wsr_handle),
 	/*
-	 *  Save the remaining byte count, the updated 
-	 *  address and the return address.
+	 *  Save the reमुख्यing byte count, the updated 
+	 *  address and the वापस address.
 	 */
 	SCR_STORE_REL (rbc, 4),
-		offsetof(struct sym_ccb, phys.pm0.sg.size),
+		दुरत्व(काष्ठा sym_ccb, phys.pm0.sg.size),
 	SCR_STORE_REL (ua, 4),
-		offsetof(struct sym_ccb, phys.pm0.sg.addr),
+		दुरत्व(काष्ठा sym_ccb, phys.pm0.sg.addr),
 	/*
-	 *  Set the current pointer at the PM0 DATA mini-script.
+	 *  Set the current poपूर्णांकer at the PM0 DATA mini-script.
 	 */
 	SCR_LOAD_ABS (ia, 4),
 		PADDR_B (pm0_data_addr),
-}/*-------------------------< PM_SAVE_END >----------------------*/,{
+पूर्ण/*-------------------------< PM_SAVE_END >----------------------*/,अणु
 	SCR_STORE_REL (ia, 4),
-		offsetof(struct sym_ccb, phys.head.lastp),
+		दुरत्व(काष्ठा sym_ccb, phys.head.lastp),
 	SCR_JUMP,
 		PADDR_A (dispatch),
-}/*-------------------------< PM1_SAVE >-------------------------*/,{
+पूर्ण/*-------------------------< PM1_SAVE >-------------------------*/,अणु
 	SCR_STORE_REL (ia, 4),
-		offsetof(struct sym_ccb, phys.pm1.ret),
+		दुरत्व(काष्ठा sym_ccb, phys.pm1.ret),
 	/*
 	 *  If WSR bit is set, either UA and RBC may 
 	 *  have to be changed whether the device wants 
@@ -1705,24 +1706,24 @@ static struct SYM_FWB_SCR SYM_FWB_SCR = {
 	SCR_CALL ^ IFTRUE (MASK (WSR, WSR)),
 		PADDR_B (pm_wsr_handle),
 	/*
-	 *  Save the remaining byte count, the updated 
-	 *  address and the return address.
+	 *  Save the reमुख्यing byte count, the updated 
+	 *  address and the वापस address.
 	 */
 	SCR_STORE_REL (rbc, 4),
-		offsetof(struct sym_ccb, phys.pm1.sg.size),
+		दुरत्व(काष्ठा sym_ccb, phys.pm1.sg.size),
 	SCR_STORE_REL (ua, 4),
-		offsetof(struct sym_ccb, phys.pm1.sg.addr),
+		दुरत्व(काष्ठा sym_ccb, phys.pm1.sg.addr),
 	/*
-	 *  Set the current pointer at the PM1 DATA mini-script.
+	 *  Set the current poपूर्णांकer at the PM1 DATA mini-script.
 	 */
 	SCR_LOAD_ABS (ia, 4),
 		PADDR_B (pm1_data_addr),
 	SCR_JUMP,
 		PADDR_B (pm_save_end),
-}/*-------------------------< PM_WSR_HANDLE >--------------------*/,{
+पूर्ण/*-------------------------< PM_WSR_HANDLE >--------------------*/,अणु
 	/*
 	 *  Phase mismatch handling from SCRIPT with WSR set.
-	 *  Such a condition can occur if the chip wants to 
+	 *  Such a condition can occur अगर the chip wants to 
 	 *  execute a CHMOV(size > 1) when the WSR bit is 
 	 *  set and the target changes PHASE.
 	 *
@@ -1733,7 +1734,7 @@ static struct SYM_FWB_SCR SYM_FWB_SCR = {
 	 *  Move it to the table indirect.
 	 */
 	SCR_STORE_REL (ua, 4),
-		offsetof (struct sym_ccb, phys.wresid.addr),
+		दुरत्व (काष्ठा sym_ccb, phys.wresid.addr),
 	/*
 	 *  Increment UA (move address to next position).
 	 */
@@ -1762,26 +1763,26 @@ static struct SYM_FWB_SCR SYM_FWB_SCR = {
 	 *  Move this value to the table indirect.
 	 */
 	SCR_STORE_REL (scratcha, 4),
-		offsetof (struct sym_ccb, phys.wresid.size),
+		दुरत्व (काष्ठा sym_ccb, phys.wresid.size),
 	/*
-	 *  Wait for a valid phase.
+	 *  Wait क्रम a valid phase.
 	 *  While testing with bogus QUANTUM drives, the C1010 
-	 *  sometimes raised a spurious phase mismatch with 
+	 *  someबार उठाओd a spurious phase mismatch with 
 	 *  WSR and the CHMOV(1) triggered another PM.
-	 *  Waiting explicitly for the PHASE seemed to avoid
+	 *  Waiting explicitly क्रम the PHASE seemed to aव्योम
 	 *  the nested phase mismatch. Btw, this didn't happen 
 	 *  using my IBM drives.
 	 */
 	SCR_JUMPR ^ IFFALSE (WHEN (SCR_DATA_IN)),
 		0,
 	/*
-	 *  Perform the move of the residual byte.
+	 *  Perक्रमm the move of the residual byte.
 	 */
 	SCR_CHMOV_TBL ^ SCR_DATA_IN,
-		offsetof (struct sym_ccb, phys.wresid),
+		दुरत्व (काष्ठा sym_ccb, phys.wresid),
 	/*
 	 *  We can now handle the phase mismatch with UA fixed.
-	 *  RBC[0..23]=0 is a special case that does not require 
+	 *  RBC[0..23]=0 is a special हाल that करोes not require 
 	 *  a PM context. The C code also checks against this.
 	 */
 	SCR_FROM_REG (rbc),
@@ -1798,65 +1799,65 @@ static struct SYM_FWB_SCR SYM_FWB_SCR = {
 		0,
 	/*
 	 *  RBC[0..23]=0.
-	 *  Not only we donnot need a PM context, but this would 
+	 *  Not only we करोnnot need a PM context, but this would 
 	 *  lead to a bogus CHMOV(0). This condition means that 
 	 *  the residual was the last byte to move from this CHMOV.
-	 *  So, we just have to move the current data script pointer 
+	 *  So, we just have to move the current data script poपूर्णांकer 
 	 *  (i.e. TEMP) to the SCRIPTS address following the 
-	 *  interrupted CHMOV and jump to dispatcher.
-	 *  IA contains the data pointer to save.
+	 *  पूर्णांकerrupted CHMOV and jump to dispatcher.
+	 *  IA contains the data poपूर्णांकer to save.
 	 */
 	SCR_JUMP,
 		PADDR_B (pm_save_end),
-}/*-------------------------< WSR_MA_HELPER >--------------------*/,{
+पूर्ण/*-------------------------< WSR_MA_HELPER >--------------------*/,अणु
 	/*
-	 *  Helper for the C code when WSR bit is set.
-	 *  Perform the move of the residual byte.
+	 *  Helper क्रम the C code when WSR bit is set.
+	 *  Perक्रमm the move of the residual byte.
 	 */
 	SCR_CHMOV_TBL ^ SCR_DATA_IN,
-		offsetof (struct sym_ccb, phys.wresid),
+		दुरत्व (काष्ठा sym_ccb, phys.wresid),
 	SCR_JUMP,
 		PADDR_A (dispatch),
 
-}/*-------------------------< ZERO >-----------------------------*/,{
+पूर्ण/*-------------------------< ZERO >-----------------------------*/,अणु
 	SCR_DATA_ZERO,
-}/*-------------------------< SCRATCH >--------------------------*/,{
+पूर्ण/*-------------------------< SCRATCH >--------------------------*/,अणु
 	SCR_DATA_ZERO,
-}/*-------------------------< PM0_DATA_ADDR >--------------------*/,{
+पूर्ण/*-------------------------< PM0_DATA_ADDR >--------------------*/,अणु
 	SCR_DATA_ZERO,
-}/*-------------------------< PM1_DATA_ADDR >--------------------*/,{
+पूर्ण/*-------------------------< PM1_DATA_ADDR >--------------------*/,अणु
 	SCR_DATA_ZERO,
-}/*-------------------------< DONE_POS >-------------------------*/,{
+पूर्ण/*-------------------------< DONE_POS >-------------------------*/,अणु
 	SCR_DATA_ZERO,
-}/*-------------------------< STARTPOS >-------------------------*/,{
+पूर्ण/*-------------------------< STARTPOS >-------------------------*/,अणु
 	SCR_DATA_ZERO,
-}/*-------------------------< TARGTBL >--------------------------*/,{
+पूर्ण/*-------------------------< TARGTBL >--------------------------*/,अणु
 	SCR_DATA_ZERO,
-}/*-------------------------<>-----------------------------------*/
-};
+पूर्ण/*-------------------------<>-----------------------------------*/
+पूर्ण;
 
-static struct SYM_FWZ_SCR SYM_FWZ_SCR = {
- /*-------------------------< SNOOPTEST >------------------------*/{
+अटल काष्ठा SYM_FWZ_SCR SYM_FWZ_SCR = अणु
+ /*-------------------------< SNOOPTEST >------------------------*/अणु
 	/*
 	 *  Read the variable from memory.
 	 */
 	SCR_LOAD_REL (scratcha, 4),
-		offsetof(struct sym_hcb, scratch),
+		दुरत्व(काष्ठा sym_hcb, scratch),
 	/*
 	 *  Write the variable to memory.
 	 */
 	SCR_STORE_REL (temp, 4),
-		offsetof(struct sym_hcb, scratch),
+		दुरत्व(काष्ठा sym_hcb, scratch),
 	/*
 	 *  Read back the variable from memory.
 	 */
 	SCR_LOAD_REL (temp, 4),
-		offsetof(struct sym_hcb, scratch),
-}/*-------------------------< SNOOPEND >-------------------------*/,{
+		दुरत्व(काष्ठा sym_hcb, scratch),
+पूर्ण/*-------------------------< SNOOPEND >-------------------------*/,अणु
 	/*
 	 *  And stop.
 	 */
 	SCR_INT,
 		99,
-}/*-------------------------<>-----------------------------------*/
-};
+पूर्ण/*-------------------------<>-----------------------------------*/
+पूर्ण;
